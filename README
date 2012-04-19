@@ -1,0 +1,11 @@
+Welcom to bulk_extractor.
+
+bulk_extractor is a C++ program that scans a disk image, a file, or a directory of files and extracts useful information without parsing the file system or file system structures. The results are stored in feature files that can be easily inspected, parsed, or processed with automated tools. bulk_extractor also creates histograms of features that it finds, as features that are more common tend to be more important. 
+
+Bulk Extractor Viewer (BEViewer) is a User Interface for browsing features that have been extracted via the bulk_extractor feature extraction tool. BEViewer supports browsing multiple images and bookmarking and exporting features. BEViewer also provides a User Interface for launching bulk_extractor scans.
+
+Please click the Wiki button for information on bulk_extractor at
+https://github.com/simsong/bulk_extractor/wiki.
+
+For downloads, please use
+https://github.com/simsong/bulk_extractor/downloads
