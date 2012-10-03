@@ -1,0 +1,72 @@
+/* See dotguide Figure 9, constrained ranks for where these ideas came from.
+ * This is a test file for our big visualization project
+ */
+
+digraph g {
+  graph [
+     rankdir=TB
+     ranksep=1.5
+  ];
+
+  /* This creates the rank graph along the left side of the paper */
+  { node [shape=plaintext,fontsize=16, fontname="arial" ];
+    "remote ip" -> "gateway" -> "local ip" -> "local ether";
+  }
+
+  /* This creates the legend */
+  legend [shape=plaintext,fontsize=16,fontname="arial",label= <
+<table>
+<tr><td colspan="2"><b>Legend</b></td></tr>
+<tr><td bgcolor="antiquewhite"></td><td>Remote IP</td></tr>
+<tr><td bgcolor="yellow"></td><td>Router MAC</td></tr>
+<tr><td bgcolor="skyblue"></td><td>Local IP or MAC</td></tr>
+</table>
+>
+ ];
+
+
+  /* Packets from remote systems have a remote IP address but Ethernet MAC of the router */
+
+  "205.155.65.103" [  fillcolor="antiquewhite" style="filled" shape = "oval" label =<
+205.155.65.103<BR/>
+<FONT POINT-SIZE="12">3 packets</FONT>
+> ];
+  "18.9.22.69" [  fillcolor="antiquewhite" style="filled" shape = "oval" label =<
+18.9.22.69<BR/>
+<FONT POINT-SIZE="12">4 packets</FONT>
+> ];
+
+
+  "10.10.1.10" [  fillcolor="antiquewhite" style="filled" shape = "oval" label =<
+10.10.1.10<BR/>
+<FONT POINT-SIZE="12">324 packets</FONT>
+> ];
+
+
+  /* Routers */
+  "0:15:17:93:69:f2" [shape="box" fillcolor="yellow" style="filled" fontname="courier-bold"];
+
+  /* These lines can be inferred from single packets: */
+  "205.155.65.103" -> "0:15:17:93:69:f2" -> "172.27.46.196" -> "70:56:81:a2:1f:f9" [dir=both] ;
+  "18.9.22.69"     -> "0:15:17:93:69:f2" -> "172.27.46.196" -> "70:56:81:a2:1f:f9" [dir=reverse];
+  "10.10.1.10"     -> "0:15:17:93:69:f2" -> "172.27.46.196" -> "70:56:81:a2:1f:f9" [dir=none];
+
+  /* Local IP addresses and Local ethernet */
+  "172.27.46.196" [ label = "172.27.46.196"   shape = "oval" fillcolor="skyblue" style="filled"];
+
+
+  "70:56:81:a2:1f:f9" [ style="filled" fillcolor="skyblue" shape = "box"
+
+     label = <
+<FONT FACE="courier-bold">70:56:81:a2:1f:f9</FONT><BR/>
+air2-2012-09-21.E01
+>
+    ];
+
+    {rank = same; "gateway"    ; "0:15:17:93:69:f2"};
+    {rank = same; "remote ip"  ; "205.155.65.103"};
+    {rank = same; "local ip"  ; "172.27.46.196"};
+    {rank = same; "local ether"; "70:56:81:a2:1f:f9"};
+    {rank = sink; legend};
+
+}
