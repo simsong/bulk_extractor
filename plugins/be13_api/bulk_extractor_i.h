@@ -21,9 +21,9 @@
  * By design, this file can be read without reading config.h
  * This is the only file that needs to be included for a scanner.
  *
- * \li \c phase0 - scanners are loaded and register the names of the feature files they want.
- * \li \c phase1 - each scanner is called to analyze 1 or more sbufs.
- * \li \c phase2 - scanners are given a chance to shutdown
+ * \li \c phase_startup - scanners are loaded and register the names of the feature files they want.
+ * \li \c phase_scan - each scanner is called to analyze 1 or more sbufs.
+ * \li \c phase_shutdown - scanners are given a chance to shutdown
  */
 
 #ifndef	__cplusplus
@@ -32,7 +32,6 @@
 
 #include "sbuf.h"
 #include "cppmutex.h"
-#include "xml.h"			// must be before feature_recorder 
 #include "feature_recorder.h"
 #include "feature_recorder_set.h"
 #include "utf8.h"
@@ -231,8 +230,6 @@ void disable_all_scanners();
 typedef vector<scanner_def *> scanner_vector;
 extern scanner_vector current_scanners;				// current scanners
 extern histograms_t histograms;
-void phase2(feature_recorder_set &fs, xml &xreport);
-void phase3(feature_recorder_set &fs, xml &xreport);
 void enable_feature_recorders(feature_file_names_t &feature_file_names);
 
 

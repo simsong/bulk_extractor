@@ -40,10 +40,11 @@ using namespace std;
 #include <pthread.h>
 #include <stdarg.h>
 #include <fstream>
+#include <set>
+#include <map>
 
 #include "md5.h"
 #include "regex.h"
-//#include "histogram.h"
 
 class feature_recorder {
 private:
