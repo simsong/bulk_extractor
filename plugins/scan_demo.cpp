@@ -36,7 +36,8 @@ extern "C"
 void  scan_demo(const class scanner_params &sp,const recursion_control_block &rcb)
 {
     if(sp.sp_version!=scanner_params::CURRENT_SP_VERSION){
-	cerr << "scan_demo requires sp version 1; got version " << sp.sp_version << "\n";
+	std::cerr << "scan_demo requires sp version " << scanner_params::CURRENT_SP_VERSION << "; "
+		  << "got version " << sp.sp_version << "\n";
 	exit(1);
     }
 
