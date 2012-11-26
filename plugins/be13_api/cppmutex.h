@@ -12,10 +12,17 @@
  * Create a cppmutex::lock(M) object to get a lock; delete the object to free it.
  */
 #include <pthread.h>
-
+#include <exception>
 
 class cppmutex {
     pthread_mutex_t M;
+    class not_impl: public exception {
+	const char *what() const throw() {
+	    return "copying feature_recorder objects is not implemented.";
+	}
+    };
+    cppmutex(const cppmutex &c) __attribute__((__noreturn__)):M(){throw new not_impl();}
+    const cppmutex &operator=(const cppmutex &cp){ throw new not_impl();}
 public:
     cppmutex():M(){
 	if(pthread_mutex_init(&M,NULL)){
@@ -23,12 +30,13 @@ public:
 	    exit(1);
 	}
     }
-    ~cppmutex(){
+    virtual ~cppmutex(){
 	pthread_mutex_destroy(&M);
     }
     class lock {			// get
     private:
-	cppmutex &myMutex;
+	cppmutex &myMutex;	
+	lock(const lock &lock_):myMutex(lock_.myMutex){}
     public:
 	lock(cppmutex &m):myMutex(m){
 	    pthread_mutex_lock(&myMutex.M);

@@ -269,8 +269,8 @@ private:
 	throw new not_impl();
     }
     /* Empty allocator is never allowed */
-    explicit sbuf_t():fd(0),should_unmap(false),should_free(false),should_close(0),
-	     page_number(0),pos0(),parent(0),children(0),buf(0),bufsize(0),pagesize(0){
+    explicit sbuf_t() __attribute__((__noreturn__)):fd(0),should_unmap(false),should_free(false),should_close(0),
+	     page_number(0),pos0(),parent(0),children(0),buf(0),bufsize(0),pagesize(0) {
 	std::cerr << "sbuf_t() empty allocator is never allowed\n";
 	throw new not_impl();
     }
@@ -375,7 +375,9 @@ public:
     }
 
     /* Allocate a sbuf from a file mapped into memory */
-    static sbuf_t *map_file(const std::string &fname); // map a file and return a sbuf if success, 0 if failure.
+    static sbuf_t *map_file(const std::string &fname,const pos0_t &pos0); 
+    static sbuf_t *map_file(const std::string &fname,const pos0_t &pos0,int fd); 
+    static std::string U10001C;		// delimeter character in bulk_extractor
 
     /* Properties */
     size_t size() const {return bufsize;} // return the number of bytes
@@ -523,10 +525,11 @@ public:
 
     /**
      * The [] operator safely returns what's at index [i] or else returns 0 if out of range.
-     * We made a decision taht this would not throw the exception
+     * We made a decision that this would not throw the exception
+     * Notice that we don't need to check to see if i<0 because i is unsigned.
      */
     uint8_t operator [](size_t i) const {
-	return (i>=0 && i<bufsize) ? buf[i] : 0;
+	return (i<bufsize) ? buf[i] : 0;
     }
 
     /**
@@ -569,7 +572,7 @@ public:
     template<class Type>
     const Type * get_struct_ptr(uint32_t pos) const {
 	if (pos + sizeof(Type) <= bufsize) {
-	    return (const Type *) (buf+pos);
+	    return reinterpret_cast<const Type *> (buf+pos);
 	}
 	return NULL;
     }

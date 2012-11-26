@@ -41,7 +41,6 @@ using namespace std;
 #include <stdarg.h>
 #include <fstream>
 #include <set>
-#include <map>
 
 #include "md5.h"
 #include "regex.h"
@@ -57,10 +56,13 @@ private:
 	    return "copying feature_recorder objects is not implemented.";
 	}
     };
-    feature_recorder(const feature_recorder &fr):
+    feature_recorder(const feature_recorder &fr) __attribute__((__noreturn__)) :
 	flags(0),histogram_enabled(false),
 	outdir(),name(),count(0),ios(),Mf(),Mr(),
-	stop_list_recorder(0),carved_set(),file_number(0),file_extension(){ throw new not_impl(); }
+	stop_list_recorder(0),carved_set(),file_number(0),file_extension()
+	{
+	throw new not_impl();
+    }
     const feature_recorder &operator=(const feature_recorder &fr){ throw new not_impl(); }
     /****************************************************************/
 
@@ -101,6 +103,8 @@ public:
     static const string bulk_extractor_version_header;
     static const uint8_t UTF8_BOM[3];	// UTF-8 byte order mark
     static const string BOM_EXPLAINATION; // what is this BOM thing? Put at the top of each file
+    static uint32_t opt_max_context_size;
+    static uint32_t opt_max_feature_size;
     static size_t context_window;	// global option
     static int64_t offset_add;		// added to every reported offset, for use with hadoop
     static string banner_file;		// banner for top of every file
@@ -166,7 +170,7 @@ public:
      * Carving writes the filename to the feature file; the context is the file's MD5
      * Automatically de-duplicates.
      */
-    set<md5_t>	carved_set;		/* set of MD5 hash codes of objects we've carved;  */
+    std::set<md5_t>	carved_set;		/* set of MD5 hash codes of objects we've carved;  */
     int64_t	file_number;		/* starts at 0; gets incremented by carve() */
     string	file_extension;		/* includes "."; must be set by caller */
     virtual void carve(const sbuf_t &sbuf,size_t pos,size_t len);

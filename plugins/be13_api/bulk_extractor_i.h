@@ -34,10 +34,37 @@
 #include "cppmutex.h"
 #include "feature_recorder.h"
 #include "feature_recorder_set.h"
+#include "xml.h"
 #include "utf8.h"
 
 #include <vector>
 #include <set>
+
+/****************************************************************
+ *** pcap.h --- If we don't have it, fake it. ---
+ ***/
+#if defined(HAVE_LIBPCAP)
+
+/* pcap.h has redundant definitions */
+#  ifdef GNUC_HAS_DIAGNOSTIC_PRAGMA
+#    pragma GCC diagnostic ignored "-Wredundant-decls"
+#  endif
+
+#  ifdef HAVE_PCAP_PCAP_H
+#    include <pcap/pcap.h>
+#  else
+#    include <pcap.h>
+#  endif
+
+#  ifdef GNUC_HAS_DIAGNOSTIC_PRAGMA
+#    pragma GCC diagnostic warning "-Wredundant-decls"
+#  endif
+
+#else
+#  include "pcap_fake.h"
+#endif
+
+
 
 /**
  * \class scanner_params
@@ -88,22 +115,45 @@ inline bool operator !=(class histogram_def h1,class histogram_def h2)  {
     return h1.feature!=h2.feature || h1.pattern!=h2.pattern || h1.suffix!=h2.suffix;
 };
 
+class packet_info {
+public:
+    packet_info(const struct timeval &ts_,const uint8_t *data_,unsigned int caplen_,uint32_t vlan_):
+	ts(ts_),data(data_),caplen(caplen_),family(),vlan(vlan_){}
+    const struct timeval &ts;
+    const uint8_t *data;
+    uint32_t caplen;
+    uint32_t family;
+    uint32_t vlan;
+};
 typedef void scanner_t(const class scanner_params &sp,const class recursion_control_block &rcb);
 typedef void process_t(const class scanner_params &sp); 
+typedef void packet_callback_t(void *user,const packet_info &pi);
 
 /** scanner_info gets filled in by the scanner to tell the caller about the scanner.
  */
 class scanner_info {
+private:
+    class not_impl: public exception {
+	virtual const char *what() const throw() {
+	    return "copying feature_recorder objects is not implemented.";
+	}
+    };
+    scanner_info(const scanner_info &i) __attribute__((__noreturn__))
+    :si_version(),name(),author(),description(),url(),
+					scanner_version(),flags(),feature_names(),histogram_defs(),
+					packet_user(),packet_cb(){
+	throw new not_impl();}
+    ;
+    const scanner_info &operator=(const scanner_info &i){ throw new not_impl();}
  public:
     static const int SCANNER_DISABLED=0x01;		/* v1: enabled by default */
     static const int SCANNER_NO_USAGE=0x02;		/* v1: do not show scanner in usage */
     static const int SCANNER_NO_ALL  =0x04;		// v2: do not enable with -eALL
-    static const int CURRENT_SI_VERSION=1;
+    static const int CURRENT_SI_VERSION=2;
 
     scanner_info():si_version(CURRENT_SI_VERSION),
-		   name(),author(),description(),url(),scanner_version(),
-		   flags(0),feature_names(),
-		    histogram_defs(){}
+		   name(),author(),description(),url(),scanner_version(),flags(0),feature_names(),
+		   histogram_defs(),packet_user(),packet_cb(){}
     int		si_version;		// version number for this structure
     string	name;			// v1: scanner name
     string	author;			// v1: who wrote me?
@@ -113,18 +163,19 @@ class scanner_info {
     uint64_t	flags;			// v1: flags
     set<string> feature_names;		// v1: features I need
     histograms_t histogram_defs;	// v1: histogram definition info
+    void	*packet_user;		// v2: user data provided to packet_cb
+    packet_callback_t *packet_cb;	// v2: packet handler, or NULL if not present.
 };
 
-#include <tr1/unordered_map>
+#include <map>
 class scanner_params {
  public:
     /** Construct a scanner_params from a sbuf and other sensible defaults.
      *
      */
     enum print_mode_t {MODE_NONE=0,MODE_HEX,MODE_RAW,MODE_HTTP};
-    static const int CURRENT_SP_VERSION=2;
+    static const int CURRENT_SP_VERSION=3;
 
-    //typedef tr1::unordered_map<string,string> PrintOptions;
     typedef std::map<string,string> PrintOptions;
     static print_mode_t getPrintMode(const PrintOptions &po){
 	PrintOptions::const_iterator p = po.find("print_mode_t");
@@ -157,15 +208,19 @@ class scanner_params {
     scanner_params(phase_t phase_,const sbuf_t &sbuf_,class feature_recorder_set &fs_,
 		   PrintOptions &print_options_):
 	sp_version(CURRENT_SP_VERSION),
-	phase(phase_),sbuf(sbuf_),fs(fs_),depth(0),
-	print_options(print_options_),info(0){
+	phase(phase_),sbuf(sbuf_),fs(fs_),depth(0),print_options(print_options_),info(0),sbufxml(0){
     }
 
     /* A scanner params with no print options*/
     scanner_params(phase_t phase_,const sbuf_t &sbuf_,class feature_recorder_set &fs_):
 	sp_version(CURRENT_SP_VERSION),
-	phase(phase_),sbuf(sbuf_),fs(fs_),depth(0),
-	print_options(no_options),info(0){
+	phase(phase_),sbuf(sbuf_),fs(fs_),depth(0),print_options(no_options),info(0),sbufxml(0){
+    }
+
+    /* A scanner params with no print options but xmlstream */
+    scanner_params(phase_t phase_,const sbuf_t &sbuf_,class feature_recorder_set &fs_,std::stringstream *xmladd):
+	sp_version(CURRENT_SP_VERSION),
+	phase(phase_),sbuf(sbuf_),fs(fs_),depth(0),print_options(no_options),info(0),sbufxml(xmladd){
     }
 
     /** Construct a scanner_params for recursion from an existing sp and a new sbuf.
@@ -174,7 +229,7 @@ class scanner_params {
     scanner_params(const scanner_params &sp_existing,const sbuf_t &sbuf_new):
 	sp_version(CURRENT_SP_VERSION),phase(sp_existing.phase),
 	sbuf(sbuf_new),fs(sp_existing.fs),depth(sp_existing.depth+1),
-	print_options(sp_existing.print_options),info(0){
+	print_options(sp_existing.print_options),info(0),sbufxml(0){
 	assert(sp_existing.sp_version==CURRENT_SP_VERSION);
     };
 
@@ -188,9 +243,9 @@ class scanner_params {
     class feature_recorder_set &fs;	/* v1: where to put the results*/
     uint32_t   depth;			/* v1: how far down are we? */
 
-    /* These are for printing */
     PrintOptions  &print_options;	/* v1: how to print */
-    scanner_info  *info;		/* v1: get parameters on startup; info's are stored in a the scanner_def vector */
+    scanner_info  *info;		/* v2: get parameters on startup; info's are stored in a the scanner_def vector */
+    std::stringstream *sbufxml;		/* v3: tags added to the sbuf's XML stream */
 };
 
 
@@ -213,24 +268,36 @@ class recursion_control_block {
     bool returnAfterFound;	/* only run once */
 };
     
-/* plugin.cpp */
+/* plugin.cpp. This will become a class...  */
 class scanner_def {
 public:;
     static uint32_t max_depth;
     scanner_def():scanner(0),enabled(false),info(),pathPrefix(){};
-    const scanner_t  *scanner;		// pointer to the primary entry point
+    scanner_t  *scanner;		// pointer to the primary entry point
     bool	enabled;		// is enabled?
     scanner_info info;
     string	pathPrefix;		/* path prefix for recursive scanners */
 };
-void load_scanner(const scanner_t &scanner,histograms_t &histograms);
-void load_scanners(const scanner_t *scanners[],histograms_t &histograms);		// load the scan_ plugins
-void load_scanner_directory(const string &dirname,histograms_t &histograms);		// load the scan_ plugins
-void disable_all_scanners();
+void load_scanner(scanner_t scanner);
+void load_scanners(scanner_t * const *scanners);		// load the scan_ plugins
+void load_scanner_directory(const string &dirname);		// load the scan_ plugins
 typedef vector<scanner_def *> scanner_vector;
 extern scanner_vector current_scanners;				// current scanners
-extern histograms_t histograms;
+void enable_alert_recorder(feature_file_names_t &feature_file_names);
 void enable_feature_recorders(feature_file_names_t &feature_file_names);
+// print info about the scanners:
+void info_scanners(bool detailed,scanner_t * const *scanners_builtin,const char enable_opt,const char disable_opt);
+void scanners_enable(const std::string &name); // saves a command to enable this scanner
+void scanners_enable_all();		       // enable all of them
+void scanners_disable(const std::string &name); // saves a command to disable this scanner
+void scanners_disable_all();			// saves a command to disable all
+void scanners_process_commands();		// process the saved commands
+
+/* plugin.cpp */
+void phase_shutdown(feature_recorder_set &fs, xml &xreport);
+void phase_histogram(feature_recorder_set &fs, xml &xreport);
+void process_sbuf(const class scanner_params &sp);				/* process for feature extraction */
+void process_packet_info(const packet_info &pi);
 
 
 inline std::string itos(int i){ std::stringstream ss; ss << i;return ss.str();}
@@ -256,30 +323,5 @@ inline int isxdigit(int c)
     return (c>='0' && c<='9') || (c>='a' && c<='f') || (c>='A' && c<='F');
 }
 #endif
-
-
-
-
-
-/* Useful functions for scanners */
-#define ONE_HUNDRED_NANO_SEC_TO_SECONDS 10000000
-#define SECONDS_BETWEEN_WIN32_EPOCH_AND_UNIX_EPOCH 11644473600LL
-/*
- * 11644473600 is the number of seconds between the Win32 epoch
- * and the Unix epoch.
- *
- * http://arstechnica.com/civis/viewtopic.php?f=20&t=111992
- */
-
-inline std::string microsoftDateToISODate(const uint64_t &time)
-{
-    time_t tmp = (time / ONE_HUNDRED_NANO_SEC_TO_SECONDS) - SECONDS_BETWEEN_WIN32_EPOCH_AND_UNIX_EPOCH;
-    
-    struct tm time_tm;
-    gmtime_r(&tmp, &time_tm);
-    char buf[256];
-    strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%SZ", &time_tm); // Zulu time
-    return string(buf);
-}
 
 #endif
