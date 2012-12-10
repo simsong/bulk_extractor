@@ -134,20 +134,25 @@ if(__name__=="__main__"):
         if args.threshold<0 or args.threshold>1:
             raise RuntimeError("threshold should be between 0 and 1; you supplied "+str(args.threshold))
 
-
-    # Create the correlators
+    # Create the correlators, one for each feature file
     correlators = set()
     for name in args.idfeatures.split(","):
         correlators.add(Correlator(name))
         
-    # Create the br readers
+    # Create the br readers, one for each report
     br_readers  = set()
-    for fn in args.reports:
-        try:
-            br_readers.add(bulk_extractor_reader.BulkReport(fn))
-        except IOError:
-            print("{} is an invalid bulk_extractor report. Cannot continue. STOP.\n".format(fn))
-            exit(1)
+    for fname in args.reports:
+        # On windows the '*' may not be expanded....
+        if '*' in fname:
+            fns = glob.glob(fname)
+        else:
+            fns = [fname]
+        for fn in fnames:
+            try:
+                br_readers.add(bulk_extractor_reader.BulkReport(fn))
+            except IOError:
+                print("{} is an invalid bulk_extractor report. Cannot continue. STOP.\n".format(fn))
+                exit(1)
 
     # Now read each feature file from each reader
     # Either ingest (in the case of cda) or create the context stop list (if making combined)
