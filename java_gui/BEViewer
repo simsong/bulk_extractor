@@ -1,0 +1,2 @@
+#!/bin/sh
+exec java -Xmx1g -jar `dirname $0`/BEViewer.jar "$@"

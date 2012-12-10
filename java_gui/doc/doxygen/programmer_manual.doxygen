@@ -1,0 +1,38 @@
+/** \mainpage Bulk_Extractor Viewer (BEViewer) Summary
+ * Bulk Extractor Viewer (\a BEViewer) is a User Interface
+ * for browsing features that have been extracted
+ * via the bulk_extractor feature extraction tool.
+ * \a BEViewer supports browsing multiple images
+ * and bookmarking and exporting features.
+ * \a BEViewer also provides a User Interface for launching bulk_extractor scans. 
+ * Here is a screenshot of the \a BEViewer User Interface:
+ * \image latex BEViewer_blank.eps "The \a BEViewer UI when \a BEViewer is first opened." width=10cm
+ * \image html BEViewer_blank.png "The \a BEViewer UI when \a BEViewer is first opened."
+
+\section architecture Architecture Overview
+\a BEViewer consists of several parts:
+- Data providers, in particular ReportsModel, FeaturesModel, and ImageModel.
+These models signal changed events to registered listeners.
+Model information may also be requested.
+- Primary panes, specifically ReportsPane, FeaturesPane, and NavigationPane.
+- Component renderers for the primary panes,
+  specifically ReportsTreeCellRenderer, BasicFeaturesUI, and BasicImageUI.
+- User Interface pop-up windows, named W*.java.
+- Support utilities such as menus, toolbars, and icons, typically named BE*.java.
+ */
+/** \page Threading Threading Issues
+To keep the UI state from becoming corrupted, Java runs on one thread, the Swing thread.
+Some user actions can take time, such as reading Feature files and opening Images.
+These actions must be run on separate threads.
+But everything from these separate threads, specifically, completion tasks,
+progress tracking, and error reporting, must run from the Swing thread.
+To manage this, completion signals and error reporting actions are scheduled as tasks on the Swing thread.
+
+Java 7 provides Thread and timeout interfaces for managing tasks run outside the Swing thread.
+It would be nice to simplify threading by taking advantage of these threading provisions.
+ */
+
+/** \page Testing
+ * \copydoc BETests
+ */
+

@@ -1,0 +1,10 @@
+in the function yy_scan_bytes, "int i" should actually be yy_size_t i"
+
+Why are these 'char' and not 'const char' ?
+
+	char *yy_ch_buf;		/* input buffer */
+	char *yy_buf_pos;		/* current position in input buffer */
+
+
+Use yy_buf_pos instead of 'pos'
+call yyterminate() when yy_buf_pos is between end of page and end of buffer in '.'

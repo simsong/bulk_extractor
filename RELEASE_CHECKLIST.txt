@@ -1,0 +1,14 @@
+Manual checklist for release.
+
+This document should be *printed* and hand-checked.
+
+[ ] Compiles and executes "make check" on clean install of Fedora Core ____.
+
+[ ] Compiles and executes "make check" on clean install of Ubuntu ___.
+
+[ ] Compiles and executes "make check" on clean install of MacOS ___.
+
+[ ] Included bulk_extractor32.exe and bulk_extractor64.exe both work.
+
+[ ] Restart Checked: Running program on ubnist1, type control-C, then up-arrow, and restart works.
+

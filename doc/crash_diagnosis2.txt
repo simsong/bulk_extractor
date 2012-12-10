@@ -1,0 +1,313 @@
+Eamonn,
+
+Thanks for reporting the bug. I added the instrumentation that we discussed to devtree of bulk_extractor and was able to find an important bug in the pdf scanner. It has been corrected. I also was able to make a significant performance improvement. Thanks again. 
+
+Below is the document I have written that describes how I fixed the bug. Please look it over and let me know what you think. If it is clear, I will post it to the user's list and put on the website.
+
+Thanks again.
+
+Simson
+
++++
+
+A user reported that disk #0005.aff was taking a surprising amount of time to complete processing---more than 50 minutes. We ran bulk_extractor on the disk:
+
+$ src/bulk_extractor -o test5 0005.aff 
+Hostname: t
+Input file: 0005.aff
+Output directory: test5
+Disk Size: 130351104
+Threads: 8
+Phase 1.
+17:18:00 Page 0 (0.00%) Completed. Done in n/a
+17:18:02 Page 1 (12.50%) Completed. Done in  0:00:46
+17:18:04 Page 2 (25.00%) Completed. Done in  0:00:26
+17:18:06 Page 3 (37.50%) Completed. Done in  0:00:18
+17:18:08 Page 4 (50.00%) Completed. Done in  0:00:12
+17:18:10 Page 5 (62.50%) Completed. Done in  0:00:09
+17:18:13 Page 6 (75.00%) Completed. Done in  0:00:06
+17:18:13 Page 7 (87.50%) Completed. Done in  0:00:02
+All Data is Read; waiting for threads to finish...
+
+Time elapsed waiting for 1 thread to finish: 60 min 1 sec  (wait at least 50 min))
+
+ ... this shouldn't take more than an hour. Exiting ... 
+ ... Please report to the bulk_extractor maintainer ... 
+All Threads Finished!
+Phase 2. Shutting down scanners
+Phase 3. Creating Histograms
+0: make_histogram(,histogram) -> test5/ccn_histogram.txt
+0: make_histogram(,histogram) -> test5/ccn_track2_histogram.txt
+0: make_histogram(,histogram) -> test5/domain_histogram.txt
+0: make_histogram(,histogram) -> test5/email_histogram.txt
+0: make_histogram(([^(]+),histogram) -> test5/ether_histogram.txt
+0: make_histogram(([^(]+),histogram) -> test5/ip_histogram.txt
+0: make_histogram(,histogram) -> test5/tcp_histogram.txt
+0: make_histogram(,histogram) -> test5/telephone_histogram.txt
+0: make_histogram(,histogram) -> test5/url_histogram.txt
+0: make_histogram(://([^/]+),services) -> test5/url_services.txt
+0: make_histogram(://(cid-[0-9a-f])+[a-z.].live.com/),microsoft-live) -> test5/url_microsoft-live.txt
+0: make_histogram(://[-_a-z0-9.]+facebook.com/.*(id=[0-9]+),facebook-id) -> test5/url_facebook-id.txt
+0: make_histogram(search.*[?&/;fF][pq]=([^&/]+),searches) -> test5/url_searches.txt
+# elapsed time: 3618.5 seconds
+
+As can be seen, the program terminated itself when one of the threads required more than 60 minutes to complete activity.
+
+The file report.xml in the output directory contains an accounting of how many times each scanner is called. Given that there are 8 pages in the file 0005.aff, each scanner should be called 8 times at the top level. Here is a section of the file:
+
+  <scanners>
+    <path>
+      <name>ACCTS</name>
+      <calls>8</calls>
+      <seconds>19.733836</seconds>
+    </path>
+    <path>
+      <name>BASE64</name>
+      <calls>8</calls>
+      <seconds>2.000809</seconds>
+    </path>
+    <path>
+      <name>EMAIL</name>
+      <calls>8</calls>
+      <seconds>24.539532</seconds>
+    </path>
+    <path>
+      <name>EXIF</name>
+      <calls>8</calls>
+      <seconds>28.422602</seconds>
+    </path>
+    <path>
+      <name>FIND</name>
+      <calls>8</calls>
+      <seconds>10.511128</seconds>
+    </path>
+    <path>
+      <name>GPS</name>
+      <calls>8</calls>
+      <seconds>26.975640</seconds>
+    </path>
+    <path>
+      <name>GZIP</name>
+      <calls>8</calls>
+      <seconds>1.215070</seconds>
+    </path>
+    <path>
+      <name>HIBER</name>
+      <calls>7</calls>
+      <seconds>0.712045</seconds>
+    </path>
+    <path>
+      <name>JSON</name>
+      <calls>8</calls>
+      <seconds>3.598577</seconds>
+    </path>
+    <path>
+      <name>KML</name>
+      <calls>8</calls>
+      <seconds>13.851020</seconds>
+    </path>
+    <path>
+      <name>NET</name>
+      <calls>8</calls>
+      <seconds>116.055016</seconds>
+    </path>
+    <path>
+      <name>PDF</name>
+      <calls>7</calls>
+      <seconds>317.052024</seconds>
+    </path>
+    <path>
+      <name>WINPREFETCH</name>
+      <calls>7</calls>
+      <seconds>5.515840</seconds>
+    </path>
+    <path>
+      <name>ZIP</name>
+      <calls>8</calls>
+      <seconds>6.532860</seconds>
+    </path>
+    <path>
+      <name>ZIP-ACCTS</name>
+      <calls>1</calls>
+      <seconds>0.426945</seconds>
+    </path>
+    <path>
+      <name>ZIP-BASE64</name>
+      <calls>1</calls>
+      <seconds>0.025480</seconds>
+    </path>
+    <path>
+      <name>ZIP-EMAIL</name>
+      <calls>1</calls>
+      <seconds>0.463570</seconds>
+    </path>
+    <path>
+      <name>ZIP-EXIF</name>
+      <calls>1</calls>
+      <seconds>0.473475</seconds>
+    </path>
+    <path>
+      <name>ZIP-FIND</name>
+      <calls>1</calls>
+      <seconds>0.245742</seconds>
+    </path>
+    <path>
+      <name>ZIP-GPS</name>
+      <calls>1</calls>
+      <seconds>0.394898</seconds>
+    </path>
+    <path>
+      <name>ZIP-GZIP</name>
+      <calls>1</calls>
+      <seconds>0.013586</seconds>
+    </path>
+    <path>
+      <name>ZIP-HIBER</name>
+      <calls>1</calls>
+      <seconds>0.013528</seconds>
+    </path>
+    <path>
+      <name>ZIP-JSON</name>
+      <calls>1</calls>
+      <seconds>0.038624</seconds>
+    </path>
+    <path>
+      <name>ZIP-KML</name>
+      <calls>1</calls>
+      <seconds>0.295015</seconds>
+    </path>
+    <path>
+      <name>ZIP-NET</name>
+      <calls>1</calls>
+      <seconds>2.536063</seconds>
+    </path>
+    <path>
+      <name>ZIP-PDF</name>
+      <calls>1</calls>
+      <seconds>0.242040</seconds>
+    </path>
+    <path>
+      <name>ZIP-WINPREFETCH</name>
+      <calls>1</calls>
+      <seconds>0.110463</seconds>
+    </path>
+    <path>
+      <name>ZIP-ZIP</name>
+      <calls>1</calls>
+      <seconds>0.013513</seconds>
+    </path>
+  </scanners>
+
+As can be seen, the scanner PDF is only called 7 times, not 8. That's because the 8th time it was called it never finished, and was instead interrupted by the driver program.
+
+To verify that scan_pdf was the problem, we ran bulk_extractor on the test disk with the PDF scanner disabled:
+
+simsong@t:~/domex/src/bulk_extractor$ src/bulk_extractor -xpdf -o test6 0005.aff 
+Hostname: t
+Input file: 0005.aff
+Output directory: test6
+Disk Size: 130351104
+Threads: 8
+Phase 1.
+18:21:56 Page 0 (0.00%) Completed. Done in n/a
+18:21:58 Page 1 (12.50%) Completed. Done in  0:00:42
+18:22:00 Page 2 (25.00%) Completed. Done in  0:00:24
+18:22:02 Page 3 (37.50%) Completed. Done in  0:00:17
+18:22:04 Page 4 (50.00%) Completed. Done in  0:00:11
+18:22:05 Page 5 (62.50%) Completed. Done in  0:00:08
+18:22:08 Page 6 (75.00%) Completed. Done in  0:00:05
+18:22:08 Page 7 (87.50%) Completed. Done in  0:00:02
+All Data is Read; waiting for threads to finish...
+
+Time elapsed waiting for 1 thread to finish: 37 sec  (wait at least 50 min)All Threads Finished!
+Phase 2. Shutting down scanners
+Phase 3. Creating Histograms
+0: make_histogram(,histogram) -> test6/ccn_histogram.txt
+0: make_histogram(,histogram) -> test6/ccn_track2_histogram.txt
+0: make_histogram(,histogram) -> test6/domain_histogram.txt
+0: make_histogram(,histogram) -> test6/email_histogram.txt
+0: make_histogram(([^(]+),histogram) -> test6/ether_histogram.txt
+0: make_histogram(([^(]+),histogram) -> test6/ip_histogram.txt
+0: make_histogram(,histogram) -> test6/tcp_histogram.txt
+0: make_histogram(,histogram) -> test6/telephone_histogram.txt
+0: make_histogram(,histogram) -> test6/url_histogram.txt
+0: make_histogram(://([^/]+),services) -> test6/url_services.txt
+0: make_histogram(://(cid-[0-9a-f])+[a-z.].live.com/),microsoft-live) -> test6/url_microsoft-live.txt
+0: make_histogram(://[-_a-z0-9.]+facebook.com/.*(id=[0-9]+),facebook-id) -> test6/url_facebook-id.txt
+0: make_histogram(search.*[?&/;fF][pq]=([^&/]+),searches) -> test6/url_searches.txt
+# elapsed time: 52.9 seconds
+simsong@t:~/domex/src/bulk_extractor$ src/bulk_extractor -Epdf -o test7 0005.aff 
+
+
+Now the program finished in 52.9 seconds.
+
+We re-ran bulk_extractor under the GDB debugger, this time with ONLY the PDF scanner enabled. When the was only one thread remaining, we interrupted the program:
+
+(gdb) run -Epdf -o test7 0005.aff
+Starting program: /home/simsong/domex/src/bulk_extractor/src/bulk_extractor -Epdf -o test7 0005.aff
+[Thread debugging using libthread_db enabled]
+Hostname: t
+Input file: 0005.aff
+Output directory: test7
+Disk Size: 130351104
+Threads: 8
+[New Thread 0x7ffff4c82700 (LWP 1042)]
+[New Thread 0x7ffff4431700 (LWP 1044)]
+[New Thread 0x7ffff3be0700 (LWP 1045)]
+[New Thread 0x7ffff338f700 (LWP 1046)]
+[New Thread 0x7ffff2b3e700 (LWP 1048)]
+[New Thread 0x7ffff22ed700 (LWP 1050)]
+[New Thread 0x7ffff1a9c700 (LWP 1052)]
+[New Thread 0x7ffff124b700 (LWP 1053)]
+Phase 1.
+18:31:41 Page 0 (0.00%) Completed. Done in n/a
+18:31:44 Page 1 (12.50%) Completed. Done in  0:00:42
+18:31:46 Page 2 (25.00%) Completed. Done in  0:00:24
+18:31:48 Page 3 (37.50%) Completed. Done in  0:00:17
+18:31:49 Page 4 (50.00%) Completed. Done in  0:00:11
+18:31:51 Page 5 (62.50%) Completed. Done in  0:00:08
+18:31:53 Page 6 (75.00%) Completed. Done in  0:00:05
+18:31:53 Page 7 (87.50%) Completed. Done in  0:00:02
+All Data is Read; waiting for threads to finish...
+Time elapsed waiting for 1 thread to finish: 24 min 48 sec  (wait at least 50 min)  
+
+At this point we interrupt and use GDB to figure out which thread is having problems:
+
+Time elapsed waiting for 1 thread to finish: 24 min 48 sec  (wait at least 50 min)  C-c C-c
+Program received signal SIGINT, Interrupt.
+0x00007ffff5be25ad in nanosleep () from /lib/x86_64-linux-gnu/libc.so.6
+(gdb) where
+#0  0x00007ffff5be25ad in nanosleep () from /lib/x86_64-linux-gnu/libc.so.6
+#1  0x00007ffff5c13984 in usleep () from /lib/x86_64-linux-gnu/libc.so.6
+#2  0x000000000040d621 in do_phase1 (fn=0x7fffffffe45d "0005.aff", cp=..., p=0xa38010, fs=..., xreport=.\
+.., page_number=@0x7fffffffdaa8, total_bytes=@0x7fffffffd888, timer=...) at bulk_extractor.cpp:769
+#3  0x000000000040f46c in main (argc=1, argv=0x7fffffffe0d8) at bulk_extractor.cpp:1022
+(gdb) thread
+[Current thread is 1 (Thread 0x7ffff7fcf740 (LWP 977))]
+(gdb) thread 2
+[Switching to thread 2 (Thread 0x7ffff4c82700 (LWP 1042))]#0  0x00007ffff5ed4bac in pthread_cond_wait@@GLIBC_2.3.\
+2 () from /lib/x86_64-linux-gnu/libpthread.so.0
+(gdb) where
+#0  0x00007ffff5ed4bac in pthread_cond_wait@@GLIBC_2.3.2 () from /lib/x86_64-linux-gnu/libpthread.so.0
+#1  0x000000000041a121 in worker::run (this=0xa3ffc0) at threadpool.cpp:163
+#2  0x000000000041a2f7 in worker::start_worker (arg=0xa3ffc0) at threadpool.h:60
+#3  0x00007ffff5ecfd8c in start_thread () from /lib/x86_64-linux-gnu/libpthread.so.0
+#4  0x00007ffff5c1b04d in clone () from /lib/x86_64-linux-gnu/libc.so.6
+#5  0x0000000000000000 in ?? ()
+(gdb) thread 3
+[Switching to thread 3 (Thread 0x7ffff4431700 (LWP 1044))]#0  scan_pdf (sp=..., rcb=...) at scan_pdf.cpp:83
+(gdb) where
+#0  scan_pdf (sp=..., rcb=...) at scan_pdf.cpp:83
+#1  0x000000000040c3d8 in process_extract (sp=...) at bulk_extractor.cpp:576
+#2  0x000000000041a254 in worker::do_work (this=0xa40e20, sbuf=0x3d41f00) at threadpool.cpp:187
+#3  0x000000000041a1c6 in worker::run (this=0xa40e20) at threadpool.cpp:173
+#4  0x000000000041a2f7 in worker::start_worker (arg=0xa40e20) at threadpool.h:60
+#5  0x00007ffff5ecfd8c in start_thread () from /lib/x86_64-linux-gnu/libpthread.so.0
+#6  0x00007ffff5c1b04d in clone () from /lib/x86_64-linux-gnu/libc.so.6
+#7  0x0000000000000000 in ?? ()
+(gdb) 
+
+As expected, the problem is in scan_pdf.cpp (at line 83, in fact).
+
+At this point we were able to identify the bug in scan_pdf that was causing an infinite loop and eliminate the problem.
+

@@ -1,0 +1,1639 @@
+2012-11-25  Simson Garfinkel  <simsong@mncrnpsedu.local>
+
+	* src/be13_api/feature_recorder.cpp (feature_recorder::carve): fixed bad mode on mkdir
+
+2012-11-22  Simson Garfinkel  <simsong@Mucha.local>
+
+	* src/scan_aes.cpp (rotate): changed implementation to avoid casting error.
+
+	* src/be13_api/bulk_extractor_i.h (class scanner_def): const scanner_t *changed to scanner_t for compliance with clang.
+
+	* src/be13_api/sbuf.h (class sbuf_t): changed cast for clang
+
+2012-11-21  Simson Garfinkel  <simsong@ubuntu>
+
+	* src/utils.h: moved ishexnumber from bulk_extractor.h to utils.h
+
+2012-11-14  Simson Garfinkel  <simsong@npsair.local>
+
+	* src/plugin.cpp (process_sbuf): renamed process_extract to process_sbuf and put it here.
+
+	* src/bulk_extractor.h: removed lowerstr() as it wasn't being used.
+
+	* src/word_and_context_list.h: replaced multimap with tr1/unordered_map
+
+2012-11-06  Simson Garfinkel  <simsong@mncrnpsedu.local>
+
+	* src/scan_email.flex (Host): maximum URL size increased to 384 bytes
+
+2012-11-05  Simson Garfinkel  <simsong@npsair.local>
+
+	* src/be13_api/feature_recorder_set.h (class feature_recorder_set): changed constructor so that ALERT_RECORDER is now created in bulk_extractor.cpp and not in the constructor. This improves code reuse in other programs
+
+	* src/feature_recorder_set.cpp (feature_recorder_set::get_alert_recorder): changed ALERT_RECORDER to ALERT_RECORDER_NAME. 
+
+2012-10-27  Simson Garfinkel  <simsong@npsair.local>
+
+	* src/sbuf_private.h (sbuf_t::get16i): fixed get16i return error.
+
+2012-10-29  Simson Garfinkel  <simsong@air2.local>
+
+	* src/Makefile.am: updated for be13_api directory
+
+2012-10-22  Simson Garfinkel  <simsong@air2.local>
+
+	* src/sbuf_private.h (sbuf_t::get16u): fixed typo in get16u().
+
+2012-10-14  user  <user@localhost.localdomain>
+
+	* src_win/Makefile.am (EXTRA_DIST): folded CONFIGURE_LIBRARIES into CONFIGURE_FC17.sh. Modified script so that tre gets built static under windows.
+
+2012-10-09  Simson Garfinkel  <simsong@air2.local>
+
+	* Makefile.am (release): removed AM_CFLAGS   = -Wall; AM_CPPFLAGS = -Wall ; AM_CXXFLAGS = -Wall as they didn't do anything
+
+
+
+2012-09-29  Simson Garfinkel  <simsong@air2.local>
+
+	* java_gui/BEViewer: added #!/bin/sh 
+
+2012-09-20  Simson Garfinkel  <simsong@air2.local>
+
+	* configure.ac: version 1.3
+
+	* src/xml.cpp (xml::add_DFXML_build_environment): now checks for TRE version
+
+2012-09-16  Simson Garfinkel  <simsong@Mucha.local>
+
+	* src/xml.cpp (xml::add_DFXML_execution_environment): replaced call to gmtime with gmtime_r
+
+2012-09-13  Simson Garfinkel  <simsong@mncrnpsedu.local>
+
+	* configure.ac: fixed introduced bug with GET_DIAGNOSTIC_PRAGMA and exiv2
+
+2012-09-13  Simson Garfinkel  <simsong@air2.local>
+
+	* configure.ac (HAVE_ASM_CPUID): now choses -O3
+
+2012-09-13  Simson Garfinkel  <simsong@mncrnpsedu.local>
+
+	* src/feature_recorder.cpp (feature_recorder::write_tag): #ifdef'ed out write_tag debug point 
+
+2012-09-12  Simson Garfinkel  <simsong@air2.local>
+
+	* src/bulk_extractor.cpp (phase1): removed trapping of zero-length pages. Yes, pages may be zero length. Now it just iterates through them. Who knows, some scanner may want to count them.
+
+2012-09-05  Simson Garfinkel  <simsong@air2>
+
+	* src/exif_entry.cpp (add_user_comment_entry): corrected potential overflow error
+
+2012-09-03  Simson Garfinkel  <simsong@air2.local>
+
+	* src/scan_net.cpp (class packet_carver): no longer reports bad checksums unless option is set. (option is not set by default and there is no way to set it)
+
+2012-09-02  Simson Garfinkel  <simsong@air2.local>
+
+	* src/scan_email.flex (Host): added a cast for both sides of the for loop.
+
+	* src/bulk_extractor.cpp (main): now reports overall performance in MBytes/sec and total number of email features found after each rune.
+
+2012-09-03  Simson Garfinkel  <simsong@imac3.local>
+
+	* src/xml.cpp (xml::add_DFXML_build_environment): added support for libtree in DFXML output.
+
+2012-09-02  Simson Garfinkel  <simsong@FC17>
+
+	* src/xml.cpp (add_rusage): now reports win32 usage information.
+
+2012-09-01  Simson Garfinkel  <simsong@localhost.localdomain>
+
+	* configure.ac: removed FlexLexer.h test, as we no longer use the c++ flex
+
+2012-08-27  Simson Garfinkel  <simsong@mncrnpsedu.local>
+
+	* src/image_process.cpp (image_process_open):  now gives error if directory specified but opt_recurse not set
+
+	* configure.ac: removed fts; imageprocess will now use dig.
+
+2012-08-25  Simson Garfinkel  <simsong@FC17>
+
+	* configure.ac: increased version number to 1.3b8
+
+2012-08-22  Simson Garfinkel  <simsong@imac3.local>
+
+	* src/bulk_extractor_i.h: phase2 now can flush report
+
+	* src/scan_email.flex (Host): no longer reports ethernet addresses 00:00:00:00:00:00 and 00:11:22:33:44:55
+
+2012-08-21  Simson Garfinkel  <simsong@imac3.local>
+
+	* src/bulk_extractor.cpp: pagesize moved back to 16MiB
+
+2012-08-21  Simson Garfinkel  <simsong@FC17>
+
+	* src/scan_winprefetch.cpp (p): added initializations for declared variables.
+
+2012-08-20  Simson Garfinkel  <simsong@FC17>
+
+	* configure.ac: removed ,,[AC_MSG_WARN([libewf_handle_get_utf8_header_value_notes not found, no E01 Header Notes])]) warning, becuase I'm really tired of seeing it. If they don't have the right libewf they won't get the notes.
+
+2012-08-12  Simson Garfinkel  <simsong@Mucha.local>
+
+	* src/Makefile.am (bulk_extractor_SOURCES): removed regex_list.h; it's now in beregex.h
+
+	* src/beregex.h: myregex.h renamed to beregex.h. 
+	(class beregex): bulk_extractor regular expressions are now pure regular expressions, and not globs
+
+2012-08-11  Simson Garfinkel  <simsong@FC17>
+
+	* src/base64_forensic.cpp (b64_pton_forensic): added initializers to avoid warnings.
+
+2012-08-08  Simson Garfinkel  <simsong@imac3.local>
+
+	* src/scan_bulk.cpp (sd_autocorrelation_cosine_variance): removed alloca, since it is bad. 
+
+2012-08-05  Simson Garfinkel  <simsong@Mucha.local>
+
+	* python/Makefile.am (EXTRA_DIST): cda2.py removed  cda_test.py removed
+
+2012-08-04  Simson Garfinkel  <simsong@mncrnpsedu.local>
+
+	* python/bulk_diff.py: minor changes to sort order and formatting; increased vesion number to 1.3
+
+	* src/word_and_context_list.cpp (word_and_context_list::readfile): changed printout
+
+2012-07-29  Simson Garfinkel  <simsong@FC17>
+
+	* src/utils.cpp (get_filesize): changed pread64() to ::pread64 to avoid some weird linking problem that never showed up before.
+
+	* src/cppmutex.h: added <string.h>, as strerror is defined there on Linux
+
+	* configure.ac (HAVE_ASM_CPUID): now only adds -D_FORTIFY_SOURCE=2 if we are compiling with the optimizer
+
+	* src/utils.cpp: renamed utils.c to be utils.cpp
+
+	* src/utils.c: removed support for PRIVATE_REGEX
+
+	* configure.ac (HAVE_REGEX_H): removed support for PRIVATE_REGEX
+
+	* src_win/CONFIGURE_FC17.sh (MPKGS): now adds mingw64-libgnurx and mingw32-libgnurx
+
+2012-07-29  Simson Garfinkel  <simsong@Mucha.local>
+
+	* src/exif_entry.cpp (exif_entry::get_full_name): made invalid ifd type return that as a message, rather than assert(0)
+
+2012-07-26  Simson Garfinkel  <simsong@ncr.nps.edu>
+
+	* src/sbuf.h: added #define SBUF_TRACK to disable reference tracking (causing crash in scan_net)
+
+2012-07-20  Simson Garfinkel  <simsong@ncr.nps.edu>
+
+	* src/histogram.cpp (HistogramMaker::add): now catches utf8->utf16 and utf16->utf8 conversion exceptions when FLAG_LOWERCASE or FLAG_NUMERIC is specified.
+
+2012-07-22  Simson Garfinkel  <simsong@ncr.nps.edu>
+
+	* src/scan_find.cpp (scan_find): find now makes a histogram
+
+2012-07-21  Simson Garfinkel  <simsong@Mucha.local>
+
+	* src/sbuf.h (class sbuf_t): made sbuf_t() empty allocator private.
+	(class sbuf_t): cleaned up code by adding some explicits, per "More Effective C++"
+
+2012-07-17  Simson Garfinkel  <simsong@Mucha.local>
+
+	* src/sbuf.cpp (sbuf_t::map_file): was not closing files when MMAP was not included.
+
+	* src/bulk_extractor.cpp (phase1): added debug:exception to report.xml
+
+2012-07-16  Simson Garfinkel  <simsong@Mucha.local>
+
+	* configure.ac: increased version to 1.3b5
+
+	* Makefile.am (EXTRA_DIST): changed from CONFIGURE_F17.sh to CONFIGURE_FC17.sh
+
+2012-07-14  Simson Garfinkel  <simsong@mncrnpsedu.local>
+
+	* src/bulk_extractor.cpp: default pagesize changed to 4MiB; default margin size changed to 4MiB.
+
+	* configure.ac: version number bumped to 1.3b4
+
+2012-07-12  Simson Garfinkel  <simsong@mncrnpsedu.local>
+
+	* src/threadpool.cpp (worker::do_work): added threadid to debug:work_end (why wasn't it there?)
+
+	* src/utils.c (gmtime_r): moved to utils.c
+	(localtime_r): moved to utils.c
+
+>>>>>>> .r10097
+2012-07-07  Simson Garfinkel  <simsong@mncrnpsedu.local>
+
+	* src/scan_windirs.cpp (scan_ntfsdirs): scan_windirs now prints $NOFILENAME for no file name
+
+2012-07-05  Simson Garfinkel  <simsong@mncrnpsedu.local>
+
+	* src/histogram.cpp: added UTF-8 escaping to histogram file.
+
+2012-07-04  Simson Garfinkel  <simsong@mncrnpsedu.local>
+
+	* src/unicode_escape.cpp (validateOrEscapeUTF8): UTF-8 that expands to surrogate pairs is now also invalid UTF-8
+
+	* src/threadpool.h (class threadpool): added thread_status vector
+
+	* src/scan_json.cpp (scan_json): the json scanner now writes the MD5 hash of the feature as its context
+
+2012-07-01  Simson Garfinkel  <simsong@ncr.nps.edu>
+
+	* configure.ac: upgraded version number to 1.3b1-dev1
+
+2012-06-23  Simson Garfinkel  <simsong@mncrnpsedu.local>
+
+	* src/Makefile.am (bulk_extractor_SOURCES): added TSK3 includes
+
+	* COPYING: clarified copyright.
+
+2012-06-15  Simson Garfinkel  <simsong@ncr.nps.edu>
+
+	* src/scan_kml.cpp: Complete rewrite on KML scanner. Faster now.
+
+	* src/scan_accts.flex: modified regular expressions, replaced [^0-9] with [^0-9a-z] so that a CCN or phone number can't be immediately prefixed with a letter.
+
+2012-06-13  Simson Garfinkel  <simsong@mncrnpsedu.local>
+
+	* src/sbuf.h (class sbuf_t): fixed error when adding an size_t
+	offset to an sbuf where the offset was larger than the pagesize.
+
+2012-06-03  Simson Garfinkel  <simsong@Mucha.local>
+
+	* src/bulk_extractor_i.h (class scanner_params): added phase_t as an additional quantifier to all scanner_params
+
+	* src/scan_lift/linear_binary_svm.h (class LinearBinarySVM): added wt_max(), which is the maximum weights read.
+	(class LinearBinarySVM): changed classifier numbers from signed to unsigned
+
+2012-05-29  Simson Garfinkel  <simsong@mncrnpsedu.local>
+
+	* src/scan_lift/linear_binary_svm.cpp (LinearBinarySVM::clear): replaced REP(i,wt_capacity) weights[i]=0 with memset(weights,0,sizeof(weights[0])*wt_capacity);
+
+	* configure.ac: increased version to 1.3-devel_005
+
+2012-05-24  Bruce Allen  <bdallen@nps.edu>
+
+	* ../branches/: Added and then removed testing branch
+	../branches/1.2.x_Bruce, r9369 for testing scan_winprefetch on
+	Windows.
+
+2012-05-24  Bruce Allen  <bdallen@nps.edu>
+
+	* ../branches/: Added ../branches/ directory to stage work on older
+	revisions.  bulk_extractor V1.2.x is r8561.  bulk_extractor V1.2.0 is
+	r8193.  Removed ../tags/1.2.x and ../tags/1.2.0.
+
+2012-05-16  Simson Garfinkel  <simsong@Mucha.local>
+
+	* src/feature_recorder.h (class feature_recorder): banner_stamp is no longer static, as we now want to put the name in the feature file.
+
+	* src/scan_base16.flex (public): changed from case-insensitive to sensitive. Let's see if that gets rid of the junk.
+
+2012-05-08  Simson Garfinkel  <simsong@mncrnpsedu.local>
+
+	* src/sbuf.h (class sbuf_t): get32i changed to get32u (because that's what it is)
+
+2012-05-07  Simson Garfinkel  <simsong@mncrnpsedu.local>
+
+	* src/scan_zip.cpp (scan_zip): now only processes buffer in phase 1
+
+	* src/scan_wordlist.cpp (scan_wordlist): now only processes buffer in phase 1
+
+	* src/scan_winprefetch.cpp (scan_winprefetch): now only processes buffer in phase 1
+
+	* src/scan_vcard.cpp (scan_vcard): now only processes buffer in phase 1
+
+	* src/scan_pipe.cpp (scan_pipe): now only processes buffer in phase 1
+
+	* src/scan_pdf.cpp (scan_pdf): now only processes buffer in phase 1
+
+	* src/scan_net.cpp (scan_net): now only processes buffer in phase 1
+
+	* src/scan_json.cpp (scan_json): now only processes buffer in phase 1
+
+	* src/scan_hiberfile.cpp (scan_hiberfile): now only processes buffer in phase 1
+
+	* src/scan_gzip.cpp (scan_gzip): now only processes buffer in phase 1
+
+	* src/scan_gps.flex: now only processes buffer in phase 1
+
+	* src/scan_exiv2.cpp (scan_exiv2): now only processes buffer in phase 1
+
+	* src/scan_exif.cpp (scan_exif): now only processes buffer in phase 1
+
+	* src/scan_email.flex (Host): now only processes buffer in phase 1
+
+	* src/scan_base64.cpp (scan_base64): now only processes buffer in phase 1
+
+	* src/scan_ascii85.cpp (scan_ascii84): now only processes buffer in phase 1
+
+	* src/scan_aes.cpp (scan_aes): now only processes buffer in phase 1
+
+	* src/scan_accts.flex (dob): now only processes scanner in phase1
+
+2012-04-27  Simson Garfinkel  <simsong@Mucha.local>
+
+	* src/bulk_extractor.cpp (validate_fn): usage now goes to stdout.
+
+2012-04-25  Simson Garfinkel  <simsong@Mucha.local>
+
+	* src/scan_email.flex (Host): ethernet "MAC" suppressed there is a : on either side
+
+	* src/scan_accts.cpp (scan_accts): added author information.
+
+2012-04-22  Simson Garfinkel  <simsong@ncr.nps.edu>
+
+	* src/bulk_extractor.cpp (usage): usage now sorts scanners
+
+2012-04-21  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/scan_exif.cpp: renamed from scan_be_exif.cpp
+
+	* src/scan_exiv2.cpp: renamed from scan_exif.cpp
+
+2012-04-20  Simson Garfinkel  <slgarfin@submit-0.local>
+
+	* src/bulk_extractor.cpp: scan_be_exif now enabled by default.
+
+2012-04-20  Simson Garfinkel  <simsong@imac3.home>
+
+	* configure.ac: incremented to 1.3-devel_003
+
+	* src/scan_exif.cpp (scan_exif): disabled by default now.
+
+	* src/scan_be_exif.cpp (scan_be_exif): enabled by default.
+
+2012-03-27  Simson Garfinkel  <simsong@mncrnpsedu.local>
+
+	* src/scan_base64.cpp: changed startup code to be called in Phase 1. (Why didn't I do that before?)
+
+	* src/scan_winprefetch.cpp (class PrefetchDecoder): now stops if string has fewewr than 8 characters
+
+2012-03-27  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/cppmutex.h: added stdlib.h 
+
+	* src/scan_headers.flex: updated scanner for years in 201x
+
+2012-03-26  Simson Garfinkel  <simsong@imac3.home>
+
+	* configure.ac: increased devel to 002
+
+	* src/scan_zip.cpp (scan_zip): changed sanity check so that compr_size and uncompr_size need to be <0, not <=0.
+
+2012-03-19  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/scan_accts.flex: YEAR now accepts dates in years 2010-2009
+
+2012-03-12  Simson Garfinkel  <simsong@mncrnpsedu.local>
+
+	* src/bulk_extractor_i.h (class scanner_params): moved #include <tr1/unordered_map> to bulk_extractor_i.h
+
+2012-03-03  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/scan_winprefetch.cpp (PrefetchDecoder::identifyBuf): patches provided by Ketil Froyn and Luis Garcia fixes behavior under for Windows 7 Super Prefetch.
+
+2012-02-22  Simson Garfinkel  <simsong@Mucha.local>
+
+	* configure.ac: changed revision to 1.3-devel_001
+
+2012-03-09  Simson Garfinkel  <simsong@Mucha.local>
+
+	* src/threadpool.cpp (threadpool::win32_init): created for administrative simplification.
+
+	* src/threadpool.h (class cppmutex): moved cppmutex to this file.
+
+	* src/feature_recorder.h: replaced #include "cppmutex.h" with #include "threadpool.h"
+
+2012-03-06  Simson Garfinkel  <simsong@Mucha.local>
+
+	* src/xml.cpp (xml::close): removed dtd making
+
+2012-03-05  Simson Garfinkel  <simsong@Mucha.local>
+
+	* src/cppmutex.h: added cppmutex.h
+
+	* src/feature_recorder.h (class feature_recorder): replaced pthread_mutex_t with cppmutex, a C++ cover class for mutexes.
+
+	* src/bulk_extractor.cpp (phase1): added #ifdef HAVE_LOCALTIME_R to cover systems that do not have localtime_r.
+
+	* src/aftimer.h (aftimer::eta_time): changed from 'when' to 't' for consistency.
+
+2012-02-21  Simson Garfinkel  <simsong@Mucha.local>
+
+	* src/scan_aes.cpp (scan_aes): added check -- if sp.buf.bufsize<WINDOW_SIZE, don't scan.
+
+2012-02-15  Simson Garfinkel  <simsong@arlington-8-30-72-63.ncr.vt.edu>
+
+	* python/Makefile.am (EXTRA_DIST): version 1.2.0 released.
+
+2012-02-11  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/regex_list.h (class regex_list): removed globbing
+
+2012-02-05  Simson Garfinkel  <simsong@ncr.nps.edu>
+
+	* src/scan_zip.cpp (scan_zip): now detects decmopression bomb attack and changes mode of operation so that buffers are hashed prior to being decompressed and the same buffer will only be hashed just one.
+
+2012-02-04  Simson Garfinkel  <simsong@ncr.nps.edu>
+
+	* src/feature_recorder_set.cpp (scan_zip): alert_recorder is now in feature_recorder_set.
+
+2012-02-03  Simson Garfinkel  <simsong@Mucha.local>
+
+	* src/feature_recorder.cpp (feature_recorder::banner_stamp): banner_stamp moved to feature_recorder
+
+	* src/bulk_extractor.h: opt_banner_file moved to feature_recorder
+
+	* src/bulk_extractor.cpp (main): outdir now an instance variable
+
+	* src/feature_recorder_set.h (class feature_recorder_set): outdir now an instance variable
+
+	* src/feature_recorder_set.cpp (feature_recorder_set::feature_recorder_set): outdir now an instance variable
+
+	* src/feature_recorder.h (class feature_recorder): outdir now an instance variables
+
+	* src/feature_recorder.cpp (feature_recorder::feature_recorder): outdir now an instance variable
+
+	* src/scan_net.cpp (class packet_carver): outdir now read from feature recorder.
+
+	* src/scan_wordlist.cpp (wordlist_split_and_dedup): outdir now read from feature recorder.
+
+	* src/MANY - outdir is no longer global.
+
+2012-02-01  Simson Garfinkel  <simsong@ncr.nps.edu>
+
+	* src/bulk_extractor.cpp (main): added -G to specify page size
+
+2012-01-29  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/xml.h (class xml): added svn_version to DFXML output.
+
+	* src/scan_net.cpp: now carries its own ipv6 implementation.
+
+2012-01-27  Simson Garfinkel  <simsong@Mucha.local>
+
+	* configure.ac: advanced version number to 1.2.0RC1
+	GNUC_HAS_DIAGNOSTIC_PRAGMA now set in configure.ac
+
+	* src/bulk_extractor.cpp (main): the -s (context-sensitive stop
+	list) option is removed. The -r (alert list) and -w (stop list)
+	will now take a list of regular expressions, a list of globs or
+	feature files.
+
+	* src/feature_recorder.cpp (feature_recorder::make_histogram): removed get_line_offset(); no longer needed
+
+2012-01-20  Simson Garfinkel  <simsong@ncr.nps.edu>
+
+	* src/scan_email.flex: eliminated an increment in LexerInput()
+	validate_email now inline.
+	find_domain_in_email now inline.
+	find_domain_in_url now inline
+
+2012-01-18  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/scan_aes.cpp (scan_aes): scan_aes now runs in 15% the time of the original version. It is now, therefore, enabled by default.
+
+2012-01-16  Simson Garfinkel  <simsong@ncr.nps.edu>
+
+	* src/feature_recorder_set.cpp (feature_recorder_set::dump_stats): seconds scanners in states changed to scanner_times
+
+2012-01-13  Simson Garfinkel  <simsong@ncr.nps.edu>
+
+	* src/bulk_extractor.h: removed gnuexif
+
+	* src/bulk_extractor.cpp (scanners_builtin): removed gnuexif info.
+
+	* src/scan_gnuexif.cpp: removed file.
+
+	* src/xml.cpp (xml::add_DFXML_build_environment): removed gnuexif support.
+
+	* configure.ac (HAVE_LIBEWF_H): removed gnuexif support.
+
+2011-12-29  Simson Garfinkel  <simsong@Mucha.local>
+
+	* configure.ac: removed check for libpcap because we don't actually use it.
+
+	* src/scan_net.cpp: removed #include for libpcap because we didn't actually use it.
+
+	* Makefile.am (EXTRA_DIST): added m4/ax_pthread.m4 to EXTRA_DIST.
+
+2011-12-25  Simson Garfinkel  <simsong@Mucha.local>
+
+	* src/scan_exif.cpp (scan_exif): removed md5hex_4k since the code was already in sbuf_t.
+
+2011-12-20  Simson Garfinkel  <simsong@arlington-8-30-79-4.ncr.vt.edu>
+
+	* src/sbuf.h (class sbuf_t): whoops. should have been assert(bufsize>=pagesize), not vice-versa
+	(class pos0_t): stoi64() moved to pos0_t.
+
+2011-12-18  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/sbuf.h (class sbuf_t): When we create a new sbuf with the + operator, we need to also add +i to the pos0.
+	(class sbuf_t): + now asserts that bufsize cannot be smaller than pagesize.
+
+	* src/scan_exif.cpp (md5hex_4k): Whoops. Should be hashing min of the pagesize and 4096, not max.
+
+2011-12-14  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/xml.cpp: now works with older and newer versions of exiv2
+
+2011-12-01  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/histogram.cpp (HistogramMaker::add): looks for \000 in utf16 strings converted to utf8 and erases them (We were getting them in histograms)
+
+2011-11-26  Simson Garfinkel  <simsong@ncr.nps.edu>
+
+	* src/scan_wordlist.cpp (wordlist_split_and_dedup): no longer adds zero-length words to wordlist
+
+	* src/feature_recorder.cpp (feature_recorder::make_histogram): histograms no longer banner stamp or version stamp if there is no corresponding feature.
+
+2011-11-25  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/scan_net.cpp (pcap_writepkt): changed file extension from .dmp to .pcap for packets
+
+2011-11-23  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/bulk_extractor.cpp (phase1): added -Y  start-end notation in addition to -Y start notation.
+	* src/bulk_extractor.cpp (phase1): added -A offset to add an offset.
+
+	* src/feature_recorder.cpp (feature_recorder::write): added support for opt_offset_add to allow output to be shifted (for parallelizing across multiple systems.)
+
+	* src/sbuf.h (class pos0_t): removed snprintf; now uses stringstream.
+	(operator +): changed most functions to take const & rather than a new object.
+
+	* src/feature_recorder.cpp (feature_recorder::write): now always writes out the second \t for the context, even if there is no context.
+
+2011-11-21  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* configure.ac: advanced to beta9
+	added AC_PROG_CC AC_PROG_CXX and AC_PROG_INSTALL
+
+	* src/Makefile.am (.flex.o): FlexLexer.h moved to MyFlexLexer.h to support CentOS where an out-of-date flex is installed.
+
+2011-11-16  Simson Garfinkel  <simsong@FC15>
+
+	* src/bulk_extractor.cpp (process_path): fixed handling of /h and /r with -p option
+
+2011-11-12  Simson Garfinkel  <simsong@imac3.home>
+
+	* configure.ac: removed pcap.h tests becuase its not needed
+	increased to beta4
+
+2011-11-05  Simson Garfinkel  <simsong@ncr.nps.edu>
+
+	* src/scan_email.flex (Host): now only writes domains>0.
+
+	* src/scan_zip.cpp (scan_zip): zip components with no name are now given <NONAME>
+
+	* src/scan_winprefetch.cpp (scan_winprefetch): modified to only write out prefect files with non-zero exec name
+
+	* src/scan_net.cpp (scan_net): significant update --- I don't need libpcap to do packet carving!
+
+2011-11-09  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* configure.ac: updated to beta3
+
+2011-11-08  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* src/image_process.cpp (sbuf_alloc): added a new iterator method it->pos0() returns the pos0 of the sbuf to be allocated by it->sbuf_alloc()
+	(sbuf_alloc): changed calloc to malloc for performance
+	(process_aff::sbuf_alloc): now thorws bad_alloc if an exception is encountered
+	(process_ewf::sbuf_alloc): now thorws bad_alloc
+	(process_raw::sbuf_alloc): now thorws bad_alloc
+
+2011-11-07  Simson Garfinkel  <simsong@alphonse-mucha>
+
+	* src/bulk_extractor.cpp: removed scanner_enabled().
+
+	* src/Makefile.am (bulk_extractor_SOURCES): removed checkpoint.h
+
+	* src/bulk_extractor.cpp (main): checkpoint removed; restarting now done through dfxml file.
+	(phase1): do_phase1 renamed phase1; just_phase1 renamed do_phase1. phase1 and phase2 flags removed. Now automatic.
+	(main): -2 option removed
+
+2011-11-04  Simson Garfinkel  <simsong@arlington-8-30-77-137.ncr.vt.edu>
+
+	* src/image_process_fts.cpp (process_dir::process_dir): added E01 detection.
+
+2011-11-04  Simson Garfinkel  <simsong@t.nitroba.org>
+
+	* src/scan_email.flex (Host): fixed crashing bug on context extraction in MAKESTRING6.
+
+	* configure.ac: fixed conforming/non-conforming test for strchr
+
+2011-11-03  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/bulk_extractor.cpp: added HTTP_EOL which is \r\n in Unix and Mac and 
+
+2011-10-19  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* src/histogram.cpp (HistogramMaker::looks_like_utf16): now recognizes both little-endian and big-endian UTF-16 strings and properly converts them.
+
+	* regress.py (analyze): now enables all scanners including wordlist
+
+	* python/bulk_extractor.py (BulkReport.open): openfile renamed open
+
+2011-10-18  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* src/bulk_extractor.cpp (process_find_file): now ignores lines that begin with #
+
+2011-10-17  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* src/scan_winprefetch.cpp (P): changed utf16_string to wstring (which is the standard).
+
+	* src/scan_accts.flex: replaced unicode16_to_string with utf16to8
+
+2011-10-16  Simson Garfinkel  <simsong@alphonse-mucha.home>
+
+	* configure.ac: increased version to 1.1.0_alpha3
+
+2011-10-15  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* src/checkpoint.h (load): named and val no longer shadow values
+
+2011-10-11  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* src/histogram.h (>): big surprise: it turns out that you should not subclass STL containers! Who knew? Well, a lot of people, apparently:
+	http://stackoverflow.com/questions/4353203/thou-shalt-not-inherit-from-stdvector
+	http://stackoverflow.com/questions/245475/how-do-i-create-a-generic-stdvector-destructor
+	http://stackoverflow.com/questions/3601431/base-class-class-stdvector-has-a-non-virtual-destructor
+	http://stackoverflow.com/questions/1647298/why-dont-stl-containers-have-virtual-destructors
+
+	* src/threadpool.cpp (threadpool): modified so that master and worker are now references, rather than pointers.
+
+2011-10-11  Simson Garfinkel  <simsong@alphonse-mucha>
+
+	* configure.ac (HAVE_PTHREAD): added warnings for C++
+
+	* src/base64_forensic.cpp: cleaned up prototypes.
+
+2011-10-07  Simson Garfinkel  <simsong@alphonse-mucha.home>
+
+	* src/scan_aes.cpp (valid_aes256_schedule): updated off-by-one problem.
+	(valid_aes192_schedule): updated off-by-one problem.
+	(valid_aes128_schedule): updated off-by-one problem.
+
+2011-09-29  Simson Garfinkel  <simsong@alphonse-mucha.home>
+
+	* configure.ac: updated version to 1.0.7; don't want anyone using 1.0.5
+
+	* python/identify_filenames.py: updated for 0-fill files
+
+	* configure.ac: updated version to 1.0.6; don't want anyone using 1.0.5
+
+2011-09-29  System Administrator  <root@arlington-8-30-77-137.ncr.vt.edu>
+
+	* src/sbuf.h (class sbuf_t): whoops! Fixed bug in find() where it was running off the end.
+
+	* src/bulk_extractor.cpp (do_phase1): -Y (opt_offst_start) was not implemented. Now it is.
+
+2011-09-29  Simson Garfinkel  <simsong@arlington-8-30-77-137.ncr.vt.edu>
+
+	* src/scan_email.flex: removed #include utils.h; now uses private ISHEXNUMBER implementation. All to avoid including config.h
+
+	* src/Makefile.am (EXTRA_DIST): removed flexpp.pl 
+	(bulk_extractor_SOURCES): broke feature_recorder_set into its own file
+
+	* configure.ac: config header renamed from config.h to src/config.h to deal with flex compile issue
+
+2011-09-29  Simson Garfinkel  <simsong@alphonse-mucha.home>
+
+	* configure.ac: increased version number to 1.0.5
+
+	* src/scan_pdf.cpp (scan_pdf): individual searches for beginstream and endstream replaced with find commands.
+
+	* src/bulk_extractor.cpp (main): -3 option changed to -2, since there is no longer a phase 3.
+	(main): -Z option added to zap output directory.
+
+2011-09-28  Simson Garfinkel  <simsong@arlington-8-30-77-137.ncr.vt.edu>
+
+	* src/sbuf.h (class sbuf_t): added find for strings.
+
+	* src/scan_pdf.cpp (scan_pdf): modified to not call recursively if no data is found.
+
+2011-09-28  Simson Garfinkel  <simsong@ncr.nps.edu>
+
+	* src/bulk_extractor.cpp (process_find_file): no longer prints added find expressions.
+	(main): prints package version on start up.
+
+2011-09-28  Simson Garfinkel  <simsong@alphonse-mucha.home>
+
+	* src/feature_recorder.cpp (unquote_string): fixed termination bug. Function no longer modifies its argument. I really should stop doing that.
+
+2011-09-27  Simson Garfinkel  <simsong@alphonse-mucha.home>
+
+	* configure.ac: updated to 1.0.4
+
+	* src/scan_pdf.cpp: added termination code to handle with infinite loop in image 0005.aff
+
+2011-09-26  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* configure.ac: increased version number to 1.0.3.
+
+	* configure.ac: Fixed CPPFLAG issue
+
+2011-09-25  Simson Garfinkel  <simsong@alphonse-mucha.home>
+
+	* src/feature_recorder.cpp (feature_recorder_set): added mechanisms for recording number of calls
+
+2011-09-22  Simson Garfinkel  <simsong@FC15>
+
+	* src/md5.h (md5_t): added some #include files for md5_t class.
+
+2011-09-19  Simson Garfinkel  <simsong@dhcp184-49-148-159.whfp.phl.wayport.net>
+
+	* configure.ac: changed #include on strchr test from #include <cstring> to #include <string.h>
+
+2011-09-18  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/md5.h (class md5_t): bulk_extractor now has its own md5 implementation and no longer relies on openssl.
+
+	* src/bulk_extractor_i.h (class scanner_info): histograms_defs_t has been renamed histograms_t.
+
+2011-09-13  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* configure.ac: turns out that adding -I/opt/usr/include to CPPFLAGS was not causing the directory to be added on compiles. This caused bulk_extractor to crash when compiled on MacOS X 10.7 when the OpenSSL library in /opt was incompatiable with the include files in /usr/. Now -I flags are added to CFLAGS, CXXFLAGS, and CPPFLAGS. Also the plugins are now not compiled as part of bulk_extractor, so we can remove bulk_extractor's usage of libtool
+
+2011-08-22  Simson Garfinkel  <simsong@Alphonse-Mucha.cust.hotspot.t-mobile.com>
+
+	* src/scan_email.flex (Host): domains.txt now includes domains from email.txt and url.txt
+
+2011-08-22  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* src/feature_recorder.h (class feature_recorder): DISALBED renamed FLAG_DISABLED.  FLAG_NOCONTEXT created.
+
+	* src/feature_recorder.cpp (feature_recorder::write): write now takes a std::string &, instead of a buf*, as prelude to eliminating FILE *.
+
+2011-08-21  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* src/scan_json.cpp: added json carver
+
+2011-08-17  Simson Garfinkel  <simsong@imac3.local>
+
+	* src/scan_email.flex (Host): added finding of ethernet addresses in ASCII
+	(Host): added histograms for microsoft-live and facebook-id
+
+2011-08-14  Simson Garfinkel  <simsong@t.nitroba.org>
+
+	* src/bulk_extractor.cpp (usage): To remove the OpenSSL dependency, the wordlist is now deduplciated with a red/black tree, and not with a bloom filter. This may require the use of a 64-bit computer in some cases.
+
+2011-07-31  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* README: added information to the README.
+
+2011-07-25  Simson Garfinkel  <simsong@imac3.home>
+
+	* python/identify_filenames.py (featuredb.add): fixed off-by-one erro
+
+2011-07-24  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/feature_recorder.cpp: feature_recorder now escapes features and context with \000 (octal) notation.
+
+2011-07-17  Simson Garfinkel  <simsong@imac3.home>
+
+	* configure.ac: increased version number to 1.0.1
+
+2011-06-27  Simson Garfinkel  <simsong@163.sub-75-195-180.myvzw.com>
+
+	* src/scan_exif.cpp (scan_exif): increased exif_gulp_size from 64K to 1MiB
+
+2011-06-20  Simson L. Garfinkel  <simsong@ps14412.dreamhostps.com>
+
+	* Makefile.am (ACLOCAL_AMFLAGS): Added -ldl because dlopen must now be explicitly logged in on new versions of Linux.
+
+2011-06-17  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* src/bulk_extractor.cpp (main): sp.fs is now set on phase 2 in plug-in
+
+2011-06-14  Simson Garfinkel  <simsong@imac3.home>
+
+	* configure.ac: updated to version 1.0.0
+
+	* Makefile.am (ACLOCAL_AMFLAGS): fixed longstanding -I m4 error in Makefile.am; (should have been -Im4)
+
+	* man/bulk_extractor.1: updated man page.
+
+2011-06-14  Simson Garfinkel  <simsong@alphonse-mucha.local.tld>
+
+	* src/bulk_extractor_i.h (class scanner_info): added author, description, and other fields to scanner_info.
+
+2011-06-13  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/bulk_extractor.cpp (process_extract): removed crash protection; it was causing incorrect errors when the system wasn't crashing.
+
+2011-06-13  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* src/scan_exif.cpp (md5hex_4k): fixed CRASHING BUG present in 0.7.25 (and other versions) in which the first 4k of the buffer was being hashed, even when the buffer was less than 4K in size.
+
+2011-06-08  Simson L. Garfinkel  <simsong@ps14412.dreamhostps.com>
+
+	* src/feature_recorder.h: added support for flags, for disabled recorders, for ALERT_ONLY.
+
+	* src/bulk_extractor.cpp (process_path_printer): now passes sp.fs through to next sp when calling self recursively.
+
+
+2011-06-01  Simson Garfinkel  <simsong@alphonse-mucha>
+
+	* src/scan_pdf.cpp (scan_pdf): corrected cc[1]=='\n' to cc[7]==']\n';
+
+2011-05-24  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* configure.ac: increased version to 0.8.0
+
+	* src/scan_gps.flex: added with support for Garmin <trkpt> records
+
+2011-05-14  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* src/bulk_extractor.cpp: bulk_extractor now automatically computes the MD5 of any disk image that it reads and reports the MD5 in the report.xml file. If there is a bad block or break in the data the MD5 is not reported.
+
+2011-05-11  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* src/scan_wordlist.cpp: changed max_outfile_size back to 100M
+
+2011-05-09  Simson Garfinkel  <simsong@75.sub-75-208-78.myvzw.com>
+
+	* configure.ac (HAVE_EXIV2): changed all LIBS to LDFLAGS; wonder why they stopped working? Perhaps I'm now using an older version of autoconf/automake?
+	increased version counter to 0.7.24
+
+2011-05-07  Simson Garfinkel  <simsong@imac3.home>
+
+	* configure.ac: increased version number to 0.7.23
+
+	* src/image_process.h: fixed iterator comparision and initialization problems.
+
+	* configure.ac: cleaned up error message when libexiv2-dev is not installed.
+
+2011-05-07  Simson Garfinkel  <simsong@alphonse-mucha.home>
+
+	* src/bulk_extractor.cpp (main): now only creates histograms if there is an actual feature recorder.
+
+2011-05-06  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* configure.ac: increased version number to 0.7.21
+
+	* src/bulk_extractor.cpp (main): added explicit exit if error count is exceeded.
+
+	* src/image_process.cpp (process_dir::sbuf_alloc): now can set EOF flag in iterator if reaches end of file.
+
+2011-05-05  Simson Garfinkel  <simsong@alphonse-mucha.home>
+
+	* src/utils.c (get_filesize): significantly cleaner handling of systems with 4-byte off_t that don't have pread64.
+
+2011-05-05  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/image_process.cpp (process_dir::process_dir): fts is incompatiable with -D_FILE_OFFSET_BITS==64 on some systems.
+	(process_raw::pread): removed lseek; now only uses ::pread.
+
+	* configure.ac: fixed -DUTC_OFFSET bug 
+
+2011-05-04  Simson L. Garfinkel  <simsong@ps14412.dreamhostps.com>
+
+	* src/image_process.cpp (end): removed using_raw_offset and using_page_counter as they were redundent.
+
+2011-05-01  Simson Garfinkel  <simsong@localhost6.localdomain6>
+
+	* src/bulk_extractor.cpp (main): hostname is now always reported.
+
+	* src/image_process.h: cleaned up include files. removed wincrypt.
+
+2011-04-23  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/bulk_extractor.cpp (load_scanner_file): dlopen() is now conditional
+
+	* src/image_process.h: removed wincrypt.h
+
+	* src/sbuf.cpp: removed wincrypt.h
+
+	* src/support.cpp (lowerstr): commented out wincrypt.h
+
+2011-04-20  Simson Garfinkel  <simsong@213.sub-75-243-6.myvzw.com>
+
+	* src/bulk_extractor.cpp (main): outer tag changed from <bulk_extractor> to <dfxml>
+
+2011-04-15  Simson Garfinkel  <simsong@Magneto.local>
+
+	* src/bulk_extractor.cpp (scanners_builtin): removed scan_bulk, as it is now a plug_in
+	(usage): loadable plugins implemented
+
+	* src/feature_recorder.h: made pthread mandatory
+
+	* src/bulk_extractor.cpp: made pthread mandatory
+
+2011-04-13  Simson Garfinkel  <simsong@Magneto.local>
+
+	* src/support.cpp: changed #ifdef WIN to appropriate #ifdefs
+
+	* src/scan_email.flex: #ifdef WIN32 and #include malloc removed, as we are now using C++ objects.
+
+	* src/bulk_extractor.h: largefile defines moved to image_process.h
+
+2011-03-24  Simson Garfinkel  <simsong@imac3.home>
+
+	* configure.ac: updated version number
+
+2011-03-23  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/bulk_extractor.cpp (usage): fixed usage.
+
+2011-03-20  Simson Garfinkel  <simsong@imac3.home>
+
+	* configure.ac: added -D_FORTIFY_SOURCE=2 to configure script.
+	increased version number to 0.7.17
+
+2011-01-29  User User  <user@ubuntu>
+
+	* src/image_process.cpp: added #include <string.h> for sterrror on Linux
+	added #include <algorithm> to get transform()
+
+2011-03-19  Simson Garfinkel  <simsong@imac3.home>
+
+	* Makefile.am (EXTRA_DIST): removed FlexLexer.h from libs.
+
+2011-03-16  Simson Garfinkel  <simsong@imac3.local>
+
+	* src/scan_wordlist.cpp (wordlist_split_and_dedup): moved to scan_wordlist.cpp
+
+	* src/bulk_extractor.cpp (set): significant rewrite to enable plug-in system.
+
+	* src/feature_recorder.cpp (feature_recorder::write_buf): all feature recorders are now context recorders. If you don't want to record context, don't call write_buf.
+
+2011-03-07  Simson Garfinkel  <simsong@imac3.home>
+
+	* configure.ac: increased version to 0.7.16
+
+2011-03-03  simsong  <simsong@domex.nps.edu>
+
+	* src/bulk_extractor.cpp (process_path_printer): fixed handling of http options for compound paths
+
+2011-03-01  Simson Garfinkel  <simsong@Silver-Surfer.local>
+
+	* configure.ac: incremented to 0.7.15
+
+	* src/image_process.cpp (process_ewf::pread): better handling of libewf not present, and of errno not being declared in the scope (which seems weird)
+
+2011-02-26  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/scan_zip.cpp (scan_zip): no longer carves zero-length names or with compr_size or uncompr_size less than 0.
+	(scan_zip): 
+
+2011-02-26  Simson Garfinkel  <simsong@imac3.local>
+
+	* src/bulk_extractor.cpp (process_path_printer): now handles byte-range requested larger than the 16MB page.
+
+2011-02-25  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/bulk_extractor.cpp (main): fixed error message
+
+2011-02-24  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/bulk_extractor.cpp (main): restart logic now checks to make
+	sure that the restart directory is valid.
+
+2011-02-23  Simson Garfinkel  <simsong@imac3.local>
+
+	* src/bulk_extractor.cpp (usage): now suppresses scanner usage for scanners that have no usage.
+
+2011-02-23  Simson Garfinkel  <simsong@m-ern-nps-edu.local>
+
+	* configure.ac: version updated to 0.7.14
+
+	* src/bulk_extractor.cpp (main): better status reporting at end of scan.
+
+2011-02-23  Simson Garfinkel  <simsong@imac3.local>
+
+	* src/scan_find.cpp (scan_find): made a bit faster and defended against 0-length patterns.
+
+2011-02-22  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/bulk_extractor.cpp (process_extract): now has alerts.txt.
+
+	* src/scan_accts.flex: now finds bitlocker recovery keys in text and UTF-16 and writes them to alerts.txt
+
+2011-02-22  Simson Garfinkel  <simsong@216.sub-75-197-79.myvzw.com>
+
+	* src/bulk_extractor.cpp (main): scan_find no longer appears in usage (it was confusing people.)
+
+2011-02-22  Simson Garfinkel  <simsong@m-ern-nps-edu.local>
+
+	* configure.ac: increased version counter to 0.7.13
+
+	* src/bulk_extractor.cpp (process_path_printer): fixed http handling for Content-Range specifications at end of a compressed region.
+
+2011-02-18  Simson Garfinkel  <simsong@imac3.local>
+
+	* configure.ac: updated to version 0.7.12
+
+	* src/bulk_extractor.cpp (process_path): removed final "." on raw printing
+	(process_path_printer): fixed http handling.
+
+2011-02-15  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/image_process.h: added #include sbuf.h, <vector>
+	(class process_raw): removed process_with_callback.
+
+	* configure.ac: incremented version counter
+
+	* src/bulk_extractor.cpp (main): added -C switch to set context window size.
+
+2011-02-13  Simson Garfinkel  <simsong@imac3.home>
+
+	* configure.ac: version number increased to 0.7.10
+
+	* src/bulk_extractor.cpp (process_path): options now reset after each HTTP GET
+	(process_path_printer): Overcomes off by one on print_len.
+
+2011-02-07  Simson Garfinkel  <simsong@imac3.local>
+
+	* src/bulk_extractor.cpp (process_path_printer): updated http mode to termiante lines \r\n and not\n.
+	(remove_cr): removed \r at the end of input HTTP lines
+
+2011-02-06  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/bulk_extractor.cpp (process_path_printer): added full support for HTTP interface for GUI
+
+2011-01-31  Simson Garfinkel  <simsong@imac3.local>
+
+	* configure.ac: version increased to 0.7.9
+	
+	* configure.ac: added python tools to distribution
+	
+
+2011-01-27  Simson Garfinkel  <simsong@Silver-Surfer.local>
+
+	* src/bulk_extractor.cpp (main): -R removed. Restart is now automatic.
+	(main): Completely rewrote the restart logic so that now you can just hit up-arrow and restart.
+
+2011-01-24  Simson Garfinkel  <simsong@Silver-Surfer.local>
+
+	* src/bulk_extractor.cpp (usage): removed -k option.
+
+	* man/bulk_extractor.1: significant updates to man page to make it correct.
+
+2011-01-23  Simson Garfinkel  <simsong@Silver-Surfer.local>
+
+	* src/Makefile.am (bulk_SCANNERS): added scan_aes.cpp
+
+2011-01-23  Simson Garfinkel  <simsong@imac3.local>
+
+	* configure.ac: increased version counter to 0.7.7
+
+2011-01-22  Simson Garfinkel  <simsong@imac3.local>
+
+	* src/scan_find.cpp (scan_find): fixed scanner; it actually works now.
+
+	* src/bulk_extractor.cpp (set_scanner_enabled): removed     feature_recorder_control since child scanners are no longer run.
+	(main): cleaned up code for set_scanner_enabled()
+
+2011-01-21  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/image_process.h (class process_ewf): removed process_with_callback
+
+	* src/bulk_extractor.cpp (main): removed report.txt. Removed -P and -T.
+
+	* src/feature_recorder.h (feature_recorder *>): removed num_slots and this_slot, mandating that we will only support -P threading.
+
+2011-01-18  Simson Garfinkel  <simsong@imac3.home>
+
+	* Makefile.am (RELEASE_USER): added win32/bulk_extractor_dlls.zip to distribution
+
+	* src/feature_recorder.cpp (feature_recorder::carve): mkdir=>MKDIR for compilation on windows
+
+2011-01-17  Simson Garfinkel  <slgarfin@submit-0.local>
+
+	* src/image_process.cpp (open): opening up invalid AFF files now produces error
+
+	* src/scan_hiberfile.cpp (scan_hiberfile): modified so it won't call itself recursively. 
+	(scan_hiberfile): 
+
+2011-01-16  simsong  <simsong@domex.nps.edu>
+
+	* src/scan_hiberfile.cpp (scan_hiberfile): error in memory allocation found and fixed.
+
+2011-01-15  Simson Garfinkel  <simsong@silver-surfer.home>
+
+	* src/feature_recorder.cpp (feature_recorder::carve): KML carving works
+
+2011-01-12  Simson Garfinkel  <simsong@imac3.home>
+
+	* configure.ac: version number incremented to 0.7.6
+
+	* src/scan_pdf.cpp (pdf_extract_text): rewritten to avoid the allocation of strings.
+
+2011-01-11  Simson Garfinkel  <simsong@imac3.home>
+
+	* configure.ac: version number increased to 0.7.5
+
+	* src/bulk_extractor.h (class scanner_params): moved print_raw flag into the constructor
+
+2011-01-10  Simson Garfinkel  <slgarfin@compute-1-33.local>
+
+	* src/bulk_extractor.cpp (numCPU): now picks up number of cores on RHEL systems where only _SC_NPROCESSORS_ONLN is defined.
+
+2011-01-07  Simson Garfinkel  <simsong@imac3.local>
+
+	* src/bulk_extractor.cpp (main): now turns off opt_pthread if -S is specified.
+
+2011-01-06  Simson Garfinkel  <simsong@imac3.home>
+
+	* configure.ac: increased verison to 0.7.4
+
+	* src/scan_accts.flex: added more context to the email scanner. No more false positives from PDF files.
+
+	* src/feature_recorder.cpp (feature_recorder::write): write with context now calls write.
+
+	* src/feature_recorder.cpp (feature_recorder::write): Created a new mutex for redlist file.
+
+2011-01-04  Simson Garfinkel  <simsong@imac3.local>
+
+	* configure.ac: increased version number to 0.7.3
+
+2011-01-04  Simson Garfinkel  <slgarfin@submit-0.local>
+
+	* src/xml.h: fixed overloading problem
+
+	* configure.ac: updated to use _lseeki64
+
+	* src/utils.c: changed to use _lseeki64 instead of lseek64
+
+2011-01-04  Simson Garfinkel  <simsong@Silver-Surfer.local>
+
+	* src/image_process.cpp: added #define HAVE_STL for new AFFLIB
+
+2010-12-31  Simson Garfinkel  <simsong@imac3.local>
+
+	* configure.ac: increased version number to 0.7.1
+
+	* src/Makefile.am (bulk_SCANNERS): removed scan_net.h; it's now part of scan_net.cpp
+
+	* src/bulk_extractor.cpp: changed opt_margin to 1MiB after testing.
+
+	* src/scan_wordlist.cpp (scan_wordlist): scan to the end of the page
+
+	* src/scan_net.cpp (scan_net): only scan to the end of the page
+
+	* src/scan_bulk.cpp (scan_bulk): only scan to the end of the page
+
+	* src/scan_find.cpp (scan_find): only scan to the end of the page
+
+	* src/scan_hiberfile.cpp (scan_hiberfile): only scans to end of the page.
+
+	* src/scan_pdf.cpp (scan_pdf): only scans to end of page.
+
+	* src/scan_base64.cpp (scan_base64): only scans to end of page, not end of buffer.
+
+	* src/scan_gzip.cpp (scan_gzip): only scans to end of the page, not end of the buffer
+
+	* src/scan_zip.cpp (scan_zip): only scans to end of page, not end of buffer (ignores zipfiles starting in margin)
+
+	* src/bulk_extractor.cpp: increased pagesize to 16MiB and Margin
+	to 4MiB after testing revealed that larger margins found
+	significantly more features.
+
+2010-12-22  Simson Garfinkel  <simsong@Silver-Surfer.local>
+
+	* src/utils.h: cleaned up __BEGIN_DECLS and __END_DECLS
+
+	* src/utils.c: moved atoi64 to here.
+
+	* src/sbuf.cpp: moreve dto an independent file
+
+	* src/sbuf.h: moved to an independent file.
+
+2010-12-21  Simson Garfinkel  <simsong@Silver-Surfer.local>
+
+	* src/scan_hiberfile.cpp (scan_hiberfile): if max_uncompr_size<4096, set it to 4096. (A full page.)
+
+	* src/bulk_extractor.cpp (histogram_files): added ip, tcp and ether to the list of histogram_files.
+
+2010-12-20  Simson Garfinkel  <slgarfin@submit-0.local>
+
+	* src/image_process.cpp (open): err message now prints name of libewf that can't be opened.
+
+2010-12-18  Simson Garfinkel  <simsong@imac3.local>
+
+	* src/scan_*.cpp (scan_zip):  now all free their decompression buf before returning in case of rcb.returnAfterFound.
+
+	* src/bulk_extractor.cpp (process_path_printer): only prints process_path_printer in debug mode.
+
+	* src/scan_*.cpp (scan_wordlist): sp.fs==0 on -p traversal, so sp.feature_names!=0 now used to indicate no scanning necessary.
+
+	* src/scan_zip.cpp (scan_zip): added name to XML <zipinfo> structure; I can't believe it wasn't there!
+	(scan_zip): added crc32 to zip structure
+	(scan_zip): added extra_field_len to structure.
+
+	* src/bulk_extractor.cpp (usage): announced EXIV2 prominently in usage
+	(main): added hostname reporting
+
+	* configure.ac: increased version number to 0.7.0
+
+	* src/bulk_extractor.cpp (main): set POSIX threads to be the default.
+
+2010-12-17  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/image_process.cpp (process_ewf::open): open() now returns -1 if it fails, rather than 0
+	(process_ewf::open): Now states if E01 is not compiled in.
+
+	* src/bulk_extractor.cpp: removed call to increase number of file descriptors with setrlimit, as it is no longer needed
+
+	* configure.ac: removed check for setrlimit and limits.h
+
+2010-12-16  Simson Garfinkel  <simsong@247.sub-69-99-140.myvzw.com>
+
+	* src/bulk_extractor.h (class scanner_params): added print_raw field.
+
+	* src/bulk_extractor.cpp (process_path): added /r support for printing raw.
+
+2010-12-14  Simson Garfinkel  <simsong@m.ern.nps.edu>
+
+	* src/support.cpp: added #include <stdarg.h>
+
+2010-12-13  Simson Garfinkel  <simsong@m.ern.nps.edu>
+
+	* configure.ac: increased version number to 0.6.7.
+
+	* src/bulk_extractor.cpp: added /c to the feature files we wanted
+	to histogram because they were all the context-enabled feature
+	files.
+	
+	* src/bulk_extractor.cpp: re-enabled histogram files
+
+	
+
+2010-12-13  Simson Garfinkel  <simsong@Silver-Surfer.local>
+
+	* src/bulk_extractor.cpp (process_extract): re-worked
+	scanner_params so be passed in, not constructed.
+
+2010-12-12  Simson Garfinkel  <simsong@silver-surfer.home>
+
+	* configure.ac: increased version counter to 0.6.6
+
+	* src/bulk_extractor.cpp (process_extract): depth processing moved
+	from feature_recorder_set to scanner_params, since POSIX threading
+	uses a single fs structure for all threads.
+
+2010-12-10  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/support.cpp: added windows defs
+
+2010-12-10  Simson Garfinkel  <simsong@silver-surfer.home>
+
+	* configure.ac: increased version counter to 0.6.5.
+
+	* src/bulk_extractor.cpp: changed default from -P to -T
+
+	* src/bulk_extractor.h: documented that putting /c on a feature name causes the feature file to be context enabled.
+
+	* configure.ac: increased version counter to 0.6.4
+
+2010-12-08  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/bulk_extractor.cpp (scanners): cleaned up multi threading a bit more
+
+	* src/scan_pdf.cpp (scan_pdf_text): fixed PDF handling
+
+2010-12-06  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/bulk_extractor.cpp (usage): detects number of CPUs and enables -P by default.
+	(restart): changed this_num to -1  for recombining
+
+2010-12-06  Simson Garfinkel  <simsong@imac3.local>
+
+	* src/Makefile.am (bulk_SCANNERS): added scan_net.h
+
+	* src/scan_net.cpp (testSockAddrIn): added HAVE_SOCKADDR_IN_SIN_LEN check
+
+	* configure.ac (HAVE_SOCKADDR_IN): added HAVE_SOCKADDR_IN_SIN_LEN test
+
+2010-12-06  sansforensics  <sansforensics@SIFT-Workstation>
+
+	* src/image_process.cpp (pread): updated to use libewf_read_random when old libewf is present
+
+2010-12-05  Simson Garfinkel  <simsong@imac3.local>
+
+	* configure.ac: increased version number to 0.6.2
+
+	* configure.ac: fixed test because uname -a works on Msys but not on darwin
+
+
+2010-12-05  Robert Beverly <rbeverly@nps.edu>
+
+	* configure.ac: check for netinet/ip.h
+
+	* src/scan_tcp.cpp: renamed to scan_net.cpp as it's more general than tcp
+
+        * src/scan_net.cpp: added Ethernet, sockaddr_in carving
+
+ 2010-12-05  Robert Beverly <rbeverly@nps.edu>
+
+	* src/image_process.cpp: fix macros for EWF
+
+2010-12-05  Simson Garfinkel  <simsong@imac3.local>
+
+	* configure.ac: updated to 0.6.1
+
+2010-12-04  Simson L. Garfinkel  <simsong@ps14412.dreamhostps.com>
+
+	* src/utils.c (get_filesize): updated for Linux. 
+
+	* src/bulk_extractor.cpp: updated resource limits to work properly on Linux.
+
+	* configure.ac (HAVE_EXIV2): updated to make work in Linux.
+
+2010-12-04  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/utils.c (get_filesize): changed all u_int64_t to uint64_t.
+
+	* configure.ac: added /usr/local/ssl to the list of searched directories
+
+2010-12-03  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/feature_recorder.cpp (feature_recorder::write): Implemented margin. removed recent_offsets hack. Not needed with margin
+	(feature_recorder::write): removed debugging code
+
+2010-12-02  Simson Garfinkel  <simsong@Silver-Surfer.local>
+
+	* src/bulk_extractor.cpp (process_extract): added "once" to recursion control block so that printer only prints 4096 bytes (and doesn't keep printing other areas).
+
+2010-12-01  Simson Garfinkel  <simsong@m.ern.nps.edu>
+
+	* src/scan_pdf.cpp (scan_pdf): ignore inflate() return and reprocess if zs.total_out>0;
+
+2010-11-30  Simson Garfinkel  <simsong@m.ern.nps.edu>
+
+	* src/bulk_extractor.cpp (process_extract): suppression of identical pages removed.
+
+2010-11-28  Simson Garfinkel  <simsong@Silver-Surfer.local>
+
+	* src/bulk_extractor.cpp (main): opt_margin can now be specified by the user.
+
+	* configure.ac: version number incremented to 0.6.0.
+
+	* src/scan_find.cpp (scan_find): added.
+
+	* src/myregex.h (class myregex): made search threadsafe
+
+	* src/scan_exif.cpp (md5hex_4k): moved to scan_exif.cpp.
+
+	* src/feature_recorder.h: removed Bloom from feature_recorder. Now
+	it is only used for deduplication of the wordlist.
+
+2010-11-26  Simson Garfinkel  <simsong@Silver-Surfer.local>
+
+	* src/feature_recorder.cpp (feature_recorder::write): removed
+	"unique" feature from feature recorder. uniqueness is now done in
+	post-processing (only wordlist employs uniqueness.)
+
+2010-11-25  Simson Garfinkel  <simsong@223.sub-75-222-6.myvzw.com>
+
+	* src/bulk_extractor.cpp (main): path processing now works with the -p option.
+
+2010-11-24  Simson Garfinkel  <simsong@silver-surfer.home>
+
+	* src/bulk_extractor.h (struct recursion_control_block): added so
+	that recursive scanners can callback to a different caller than
+	process_extract. This allows the process_path_printer to decode a path.
+
+	* src/scan_zip.cpp (scan_zip): changed compr_size and uncompr_size
+	from u_int to int in an attempt to fix the crashing problem.  I
+	suspect that they are being caused by improper sign extension
+	under Windows.
+	
+	* (scan_zip): fixed bug where a name extending beyond the end of the
+	zip region might cause a crash.
+
+2010-11-22  Simson Garfinkel  <simsong@imac3.local>
+
+	* configure.ac: increased version counter to 0.5.8
+
+2010-11-21  Simson Garfinkel  <simsong@imac3.local>
+
+	* src/scan_zip.cpp (scan_zip): changed r==0 to r>=0 so that it will process partially decompressed stream
+
+2010-11-20  Simson Garfinkel  <simsong@imac3.local>
+
+	* src/feature_recorder.h (feature_recorder *>): removed histogram_all; histograms now specified in bulk_extractor.
+
+	* src/bulk_extractor.cpp (scanners): added scan_pdf to remove the text from PDF files.
+
+2010-11-03  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/image_process.cpp (process_raw::process): now handles multi-volume VMDK files as well
+
+2010-11-01  Simson Garfinkel  <simsong@m.ern.nps.edu>
+
+	* src/feature_recorder.h (feature_recorder *>): getname() now
+	generates an error if the feature file doesn't exist. We don't
+	want to have a file created in just one high-numbered thread
+
+	* src/checkpoint.h (class checkpoint): added debug option.
+
+2010-10-31  Simson Garfinkel  <simsong@imac3.home>
+
+	* configure.ac: updated version number to 0.5.5
+
+	* src/scan_zip.cpp (scan_zip): now scans on any decompression that results in partial results.
+
+2010-10-29  Simson Garfinkel  <simsong@imac3.local>
+
+	* src/bulk_extractor.cpp (main): added quotes to progname and outdir when run under windows.
+
+2010-10-27  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/bulk_extractor.cpp (seen_sbuf): renamed seen_page to seen_sbuf and process_page to process_sbuf
+
+2010-10-27  Simson Garfinkel  <simsong@imac3.local>
+
+	* src/image_process.cpp (process_raw::process): big bug - wasn't freeing data allocated in reading raw
+
+2010-10-19  Simson Garfinkel  <simsong@Silver-Surfer.local>
+
+	* src/bulk_extractor.h: removed a lot of legacy junk.
+
+2010-10-15  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/bulk_extractor.cpp (itos): itos now takes 64bit number to avoid 32-bit overflow.
+
+2010-10-15  Simson Garfinkel  <simsong@imac3.local>
+
+	* Patches applied to add support for additional credit card numbers.
+
+2010-10-13  Simson Garfinkel  <simsong@Silver-Surfer.local>
+
+	* src/image_process.cpp (process_ewf::open_ewf): removed routine that print the libewf filenames on globbing
+
+2010-10-12  Simson Garfinkel  <simsong@Silver-Surfer.local>
+
+	* src/bulk_extractor.cpp: word_min changed to 6.
+
+	* removed "margin" feature.
+
+	* src/feature_recorder.h (class feature_recorder): pos0 is now a type, pos0_t, which has more info
+
+	* src/feature_recorder.h (class feature_recorder): changed order of write_buf arguments.
+
+2010-10-01  Simson Garfinkel  <simsong@fc13>
+
+	* src/image_process.cpp: moved get_filesize to image_process.cpp
+
+2010-09-27  simsong  <simsong@domex.nps.edu>
+
+	* src/image_process.cpp (process_ewf::process): now works with older libewf
+
+2010-09-22  Simson Garfinkel  <simsong@Silver-Surfer.local>
+
+	* src/scan_exif.cpp (scan_exif): removed offset and sector from exif XML. It broke the stop list.
+
+2010-09-13  Simson Garfinkel  <simsong@Silver-Surfer.local>
+
+	* src/image_process.cpp (image_process::seen_page): previously seen_page only ran if we had MD5. Now it runs all the time and we need to have a local MD5 implementation.
+
+2010-08-26  Simson Garfinkel  <simsong@Silver-Surfer.local>
+
+	* src/feature_recorder.h (feature_recorder *>): removed outdir from all of the prototypes; it's never changed, so it only needs to be in one place.
+
+	* src/bulk_extractor.cpp (main): significant changes in handling
+	of scanners. Now we enable or disable scanners (not feature
+	recorders), and disabled scanners do not run (rather than having
+	them run but not record their results.) This will improve speed significantly.
+
+2010-08-25  Simson Garfinkel  <simsong@Silver-Surfer.local>
+
+	* src/bulk_extractor.cpp (main): wordlist disabled by default.
+
+2010-08-04  Simson Garfinkel  <simsong@host-241-211.pubnet.pdx.edu>
+
+	* src/feature_recorder.cpp (feature_recorder::write): removes invalid text from feature
+
+2010-08-02  Simson Garfinkel  <simsong@host-241-211.pubnet.pdx.edu>
+
+	* configure.ac: increased the version to 0.3.5
+
+	* src/feature_recorder.cpp: now uses atoi64() instead of atoi() for recombining feature files, to avoid negative offsets.
+
+2010-07-13  Simson Garfinkel  <simsong@Silver-Surfer.local>
+
+	* src/bulk_extractor.cpp (main): now prints version number with -V.
+
+2010-07-02  Simson L. Garfinkel  <simsong@imac2.home>
+
+	* src/image_process.cpp: now handles split-raw files. Just specify filename.000 or filename.001 as the first file, and it will search for and use them all.
+
+2010-06-26  Simson Garfinkel  <simsong@Silver-Surfer.local>
+
+	* src/image_process.cpp (process): created with code from bulk_extractor.cpp. 
+
+	* src/image_process.h (image_process_): created with code from bulk_extractor.cpp
+
+	* src/bulk_extractor.cpp (main): now using nsrl_print_usage print_usage into 
+
+2010-06-22  Simson Garfinkel  <simsong@Silver-Surfer.local>
+
+	* removed ringbuffer.h
+
+2010-06-04  Simson L. Garfinkel  <simsong@imac2.local>
+
+	* src/scan_accts.flex: fixed regular expression scan_accts.flex:REGEX7 to allow:
+	  - no space between (800)555-1212
+	  - periods to terminate (800)555-1212.
+	
+
+2010-06-03  Simson Garfinkel  <simsong@m.ern.nps.edu>
+
+	* src/bulk_extractor.cpp (process_aff::process): fixed bug where multi-threading did not work with AFF files.
+
+2010-06-02  Simson Garfinkel  <simsong@Silver-Surfer.local>
+
+	* src/scan_email.flex (Host): fixed bug in which domains.txt had the offset of the original email address, not the domain itself.
+
+2010-06-01  Simson L. Garfinkel  <simsong@imac2.local>
+
+	* src/utils.c (get_filesize): fixed search feature to operate properly with raw partitions with mingw, which apparenly handles << differently than on Unix.
+
+2010-06-01  Simson Garfinkel  <simsong@m.ern.nps.edu>
+
+	* src/bulk_extractor.cpp (main): added _ to url_searches.txt and url_services.txt
+	(process_aff::process): fixed handling of AFF files.
+
+2010-05-24  Simson L. Garfinkel  <simsong@imac2.local>
+
+	* configure.ac: increased version number to 0.3.2
+
+	* src/scan_email.flex (Host): fixed crashing bug on some numeric IP addresses.
+
+2010-05-22  Simson L. Garfinkel  <simsong@imac2.local>
+
+	* configure.ac: increased version number to 0.3.1
+
+2010-05-17  Simson Garfinkel  <simsong@t>
+
+	* src/scan_accts.flex: Credit Card number detector now requirest 15-digit Amex numbers or 16-digit Visas.
+
+2010-05-16  Simson Garfinkel  <simsong@t>
+
+	* src/scan_tcp.cpp: modified scan_tcp.cpp to work with any header style.
+
+2010-05-13  Simson Garfinkel  <simsong@Silver-Surfer.local>
+
+	* Added recognition of phone numbers and fedex numbers.
+
+2010-05-01  Simson Garfinkel  <simsong@Silver-Surfer.local>
+
+	* released version 0.3.0
+
+2010-04-25  Simson Garfinkel  <simsong@Silver-Surfer.local>
+
+	* configure.ac: version increased to 0.2.1
+
+2010-04-24  Simson Garfinkel  <simsong@Silver-Surfer.local>
+
+	* src/bulk_extractor.cpp (found_feature): fixed a bug in which COOKIES caused crash in CCN handler.
+
+2010-04-12  Simson Garfinkel  <simsong@Silver-Surfer.local>
+
+
+	* configure.ac: version increased to 0.1.0
+	* src/bulk_reporter.cpp (bulk_reporter): created file; simplified histogram creation.
+
+2010-04-08  Simson Garfinkel  <simsong@46.sub-75-211-31.myvzw.com>
+
+	* src/scan_wordlist.cpp: added support for extracting wordlist.
+	* src/bulk_extractor.cpp (main): removed verbose flag.
+	* Added explicit support for E01 files.
+	* implemented two-phase process with lots of easy-to-use temp files.
+	
+2009-10-05  Simson Garfinkel  <simsong@Silver-Surver.local>
+
+	* configure.ac: version counter bumped to 0.0.13
+
+	* java/Makefile.am (CONFIG_CLEAN_FILES): extensive work to make "make dist", "make distcheck" and "make distclean" work.
+
+	* java/BinaryLexer.flex: made TokenObject an embedded class inside BinaryLexer to avoid compilation order issues in autoconf "make distcheck"
+
+2009-10-01  Simson L. Garfinkel  <simsong@imac2.local>
+
+	* src/bloom.c: updated for Win32
+
+2008-11-15  Simson Garfinkel  <simsong@Silver-Surfer.lan>
+
+	* src/bulk_extractor.cpp (feature_found): removed -a option; now use -m for low memory
+
+2008-10-07  Simson Garfinkel  <simsong@Silver-Surfer.local>
+
+	* configure.ac: incremented version number to 0.0.8.
+
+	* src/scan_email.fp (Cookie): added emaillex_destroy() to scan_email.fp. This was the memory leak!
+
+2008-08-29  Simson Garfinkel  <simsong@m.ern.nps.edu>
+
+	* src/bulk_extractor.cpp (main): added -s option to specify starting page number.
+
+	Will no longer overwrite existing output files.
+	
+

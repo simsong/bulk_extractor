@@ -1,0 +1,462 @@
+BEViewer (with bulk_extractor v1.2):
+Readable Feature entries:
+Features in the scrollable Feature list will be formatted based on their type
+(namely GPS, IP, TCP, and JSON)
+and will print the result in the scrollable Feature list rather than the original Feature text.
+
+================================================================
+BEViewer (with bulk_extractor v1.1):
+Feature view:
+Features in the scrollable Feature list has been corrected to display actual values
+rather than octal notation, which was incorrect.
+
+Feature files that are Stoplist files, as identified by extension "_stopped.txt"
+will not show in the list of feature files unless specifically requested
+by new menu control "View | Show Stoplist Features"
+
+================================================================
+Subject: Announcing bulk_extractor Release version 0.7.0
+From: Simson L. Garfinkel
+Date: Dec 4, 2010
+
+bulk_extractor 0.7.0 is released. Significant new features include:
+
+* Automatic detection and decompression of Windows HIBERFIL.SYS means
+  that you'll get more URLs, email addresses, and other artifacts out
+  of system memory.
+
+* Improved crash protection.
+
+* POSIX threading is now enabled by default, and bulk_extractor
+  automatically determines the right number of threads to use based on
+  how many cores your CPU has.
+
+* Improved extraction of ZIP files.
+  
+bulk_extractor is nearly feature complete. When it is we'll push the
+revision number to 1.0.0 and and put the system in maintenance mode
+while we work on the GUI and some post-processing scripts.
+
+
+================================================================
+Subject: Announcing bulk_extractor Release version 0.6.0
+From: Simson L. Garfinkel
+Date: Dec 4, 2010
+
+bulk_extractor 0.6.0 is released. Signifiacnt new features include:
+
+* Recovery of text from certain kinds of PDF files.  (This will improve with time.)
+
+* Improved recovery and reliability when recovering ZIP components.
+
+* Improved recovery from GZIP streams.
+
+* (EXPERIMENTAL) Posix threading via a thread poool on Linux and
+  Macos. Specify -P to test it. The thread pool uses 1 thread to read
+  the disk image and -jN threads to process each buffer as the thread
+  becomes available. This provides for dramatically more efficient I/O
+  and proper utilization of multiple threads. (ie: bulk_extractor will
+  no longer schedule threads that are not needed.)
+
+  >>> POSIX threading is recommended for MacOS but has not been thoroughly 
+      tested under Linux. It will not work under Windows.
+
+* -p option that allows you to view any forensic "path" that where a
+  feature is found this allows you to view the contents of compressed
+  files, for example.
+
+* -f option allows you to search for arbitrary regular expressions. 
+   BE CAREFUL! This can dramatically impact performance.
+
+* -c "Crash Protection" option sets a signal handler that will cause
+  bulk_extractor to automatically restart from some crashes.  By
+  default this is diabled, but it will be enabled by default in the
+  future. 
+
+* Directly handles multi-volume VMDK files.
+
+* Memory allocation bug in reading raw images fixed.
+
+* Margin can now be specified.
+
+* bulk_extractor now supports the following scanners:
+
+   -x accts     - disable scanner accts
+   -x base64    - disable scanner base64
+   -x email     - disable scanner email
+   -x exif      - disable scanner exif
+   -x zip       - disable scanner zip
+   -x gzip      - disable scanner gzip
+   -x pdf       - disable scanner pdf
+   -e tcp       - enable scanner tcp
+   -e bulk      - enable scanner bulk
+   -e find      - enable scanner find
+   -e wordlist  - enable scanner wordlist
+
+
+
+================================================================
+Date: Oct. 11, 2010
+
+Subject: Announcing bulk_extractor Release version 0.5.0
+From: Simson L. Garfinkel
+
+bulk_extractor 0.5.0 is released. Significant new features include:
+
+* Automatic carving of gzip-compressed residual data. This is
+  particularly useful when encountering web browser caches that were
+  downloaded with GZIP compression.
+
+* A "Repeat Crash" mode (-R) which causes bulk_extractor to
+  re-analyzing the last page analyzed by each thread after a
+  crash. This makes it easy to run the program under a debugger and
+  quickly replicate the crash, for the purpose of fixing the relevant
+  scanner. (A future "restart" mode will cause bulk_extractor to keep
+  going after a crash.)
+
+* Post-processing of the wordlist to create a set of 100 megabyte
+  deduplicated terms suitable for directly providing to a
+  password-cracking program.
+
+
+* Bug fixes in the PKZIP carving.
+
+
+Date: Sept. 27, 2010
+Subject: Announcing bulk_extractor Release version 0.4.2.
+From: Simson L. Garfinkel
+
+bulk_extractor 0.4.2 is released. Significant features include:
+
+
+ * Support for context-based stop lists
+ * Automatic carving of PKZIP files
+ * Improved support for EXIF carving
+
+
+Context-based stop list
+=======================
+
+Many users of bulk_extractor report surprise at the large number of
+email addresses, URLs, JPEGs, and other information that are contained
+within the standard Microsoft Windows and Linux distributions. For
+example, Microsoft Windows XPSP3 contains 306 distinct email
+addresses, including not just addresses like piracy@microsoft.com and
+info@valicert.com, but email addresses that look like they belonging
+to individuals such as mojemeno@msn.com and mittnavn@msn.com.
+
+The initial way that we attempted to resolve this issue was by
+creating a "stop list" of the distribution email addresses and
+building that stoplist into the bulk_extractor binary. The problem
+with this approach, we quickly learned, is that these problematic
+email addresses might appear in a variety of contexts, but we only
+want them suppressed when they are harvested as part of the operating
+system files. For example, we don't want to be alerted to the
+mojemeno@msn.com email address when it appears as part of Microsoft
+Windows, but we do want this email address reported if it is found
+elsewhere.
+
+To resolve this problem bulk_extractor now supports a context-based
+stop list. Instead of simply a list of email addresses that should be
+suppressed, the context-based stop list conatins both the email
+address and the context in which that email address occures. Here we
+define "context" to mean the 8 characters before the email address and
+the 8 characters following the email address in the disk image.
+
+The context-based stop list is distributed as a specially formatted
+text file that contains the element to be suppressed, a tab, and the
+element in context. Unprintable characters are reported as
+underbars. For example, these two entries suppress the two occuresses
+of the mojemeno@msn.com email address in Windows XPSP3:
+
+
+mojemeno@msn.com    ail.com_mojemeno@msn.com_priklad
+mojemeno@msn.com    il.com__mojemeno@msn.com__prikla
+
+
+All items suppressed by the traditional regular-expression stop list
+or the context-based stop list are now presented in separate feature
+files --- for example, email_stop.txt. In no case is information
+actually suppressed. Presenting the suppressed results is important in
+for tool validation, both in testing and when the tool is actually
+run. Stopped terms may also useful for performing a profile of the
+hard drive.
+
+bulk_extractor now comes with a Python program called
+make_context_stop_list.py. This program will process the output of
+bulk_extractor from multiple runs and create a single context-based
+stop list.  We are also distributing a sample context-based stop list
+which is derrived from the following operating systems:
+
+   fedora12-64
+   redhat54-ent-64
+   w2k3-32bit
+   w2k3-64bit
+   win2008-r2-64
+   win7-ent-32
+   win7-utl-64
+   winXP-32bit-sp3
+   winXP-64bit
+      
+You can download version 1.0 of the stoplist from:
+
+    http://afflib.org/downloads/feature_context.1.0.zip
+
+Be sure to decompress the list first!  We are distributing it in ZIP
+form because is the 70 megabytes in length. A future version of
+bulk_extarctor may read the compressed list directly.
+
+Context-based stop lists correct the stop-list problem that surfaced with
+bulk_extractor 0.4.0. That version simply suppressed terms that were
+already present in the Windows and Linux distributions. Unfortunately
+this created an attack vector in which attackers could register and
+use these email addresses and in so doing escape detection.
+
+
+PKZIP Carving
+=============
+
+Version 0.4.2 introduces carving of PKZIP components. Whenever
+bulk_extractor finds a component of a ZIP file that includes a valid
+header, it attempts to decompress the fragment and then recursively
+reprocesses the decompressed data with all of the extractors.
+
+Currently the results of ZIP carving are reported with standard
+offsets. In the feature the offsets will be reported NNNNNN-ZIP where
+NNNNN is the byte offset of the ZIP component.
+
+
+Improved support for EXIF Carving
+=================================
+
+Version 0.4.2 finds and carves EXIF headers of JPEG files. All of the
+results are stored in a feature file that consists of the MD5 hash of
+the first 4K of the JPEG and an XML structure. bulk_extractor now also
+comes with a program called post_process_exif.py which reads this file
+and creates a tab-delimited file that can be imported into Microsoft
+Excel that breaks each EXIF field into its own spreadsheet column.
+
+
+Download Information
+====================
+As always, the current version of bulk_extractor can be downloaded
+from the website at http://afflib.org/.
+
+
+
+
+
+
+================================================================
+Date: Sept. 6, 2010
+Subject: Announcing bulk_extractor Release version 0.4.0.
+From: Simson L. Garfinkel
+
+bulk_extractor 0.4.0 is released. This version has several new
+features based on user-feedback, and a few bug fixes based on a
+thorough code review.
+
+New features:
+
+exif.txt - this file contains information on all of the carved EXIFs
+	   found on the subject media. The output file consists of the
+	   offset of the JPEG or MPEG that contains the EXIF, the MD5
+	   of the first 4096 bytes of the file, and an XML structure
+	   containing all of the extractable fields less than 10,000
+	   bytes in length.  
+
+	   The program post_process_exif.py, also included with the
+	   distribution, will turn exif.txt into a comma-separated
+	   value file that can be easily imported into Microsoft
+	   Excel.
+
+stoplist - bulk_extractor now includes a default stoplist that
+	   suppresses all of the domain names, email addresses,
+	   telephone numbers, etc., that appear in any of the
+	   following operating systems:
+
+	   Fedora 12 (64 bit)
+	   Redhat 5.4 Enterprise (64 bit)
+	   Windows 2003 (32 bit)
+	   Windows 2003 (64 bit)
+	   Windows 2008 R2 (64 bit)
+	   Windows 7 Enterprise (32 bit)
+	   Windows 7 Ultimate (64 bit)
+	   Windows XP SP3 (32 bit)
+	   Windows XP SP3 (64 bit)
+	   Ubuntu 8.10 (32 bit)
+	   Ubuntu 10.10 (32 bit)
+
+	   The stoplist is enabled automatically, but you can disable
+	   it with the "-s" flag. 
+
+	   You can dump the stoplist with the "-S" flag.  The 0.4.0
+	   release is 155,476 terms in the stoplist, from
+	   (000)-000-0000 to zzzcomputing.com.
+
+
+General Improvements:
+	- The domain and IP address finders now have lower false
+	positive rates.
+
+Incompatabilities:
+	- bulk_extractor now *requires* the experimental, alpha-version
+	of libewf version 2. You are best off with libewf-alpha-20100907 or later.
+
+bulk_extractor can be downloaded from http://www.afflib/org/
+
+
+================================================================
+
+Date: May 15, 2010
+Subject: Announcing bulk_extractor Release version 0.3.1.
+From: Simson L. Garfinkel
+
+bulk_extractor 0.3.1 is released. This version has several new
+features based on user-feedback, and a few bug fixes based on a
+thorough code review.
+
+New Features:
+
+* url_services.txt - a histogram of all URLs by domain.
+* url_searches.txt - a histogram of all search terms, including
+                     Google, Yahoo, Bing, and any other search service
+		     with "search" in the domain and "q=" or "p=" in 
+		     the URL.
+* ccn.txt - this file now reports Federal Express account numbers,
+            SSNs (if properly formatted or prefixed), DOBs, and other info.
+
+* tcp.txt - This experimental feature looks for IP and TCP packets in
+  PAGEFILE.SYS, memory dumps and hibernation files, and stores the results.
+
+* the whitelist and redlist files may now contain globbed terms. For example, put
+  *@company.com in the redlist and any mention of anyone@company.com will be flagged
+  and also put into a special file called redlist_found.txt.
+
+* CONTEXT: The ccn.txt now show the context from which the matched
+  information was taken. hosts.txt shows context for numeric IP addresses.
+
+Bug Fixes:
+
+* Improved handling of raw devices and files.
+* bulk_extractor is now less likely to error on some input data sets.
+
+
+
+
+================================================================
+Date: May 2, 2010
+Subject: Announcing bulk_extractor Release version 0.3.0.
+From: Simson L. Garfinkel
+
+I am pleased to announce the release of bulk_extractor 0.3.0,
+available immediately for Windows, MacOS and Linux.
+
+bulk_extractor is a fast feature extractor and histogram analysis
+tool. This program operates below the file level, extracting email
+addresses, URLs, Cookies, credit card numbers, and other information
+from disk images.  bulk_extractor has native support for raw, AFF and
+E01 file formats, allowing you to start extracting immediately without
+file conversion.
+
+bulk_extractor 0.3.0 adds multi-threading support. This is important,
+as most extractions are CPU-bound, not I/O bound.  Multi-core support
+allows you to turn any CPU-bound task into an I/O bound
+task. Multi-core support is available on all supported platforms.
+
+Performance with the multi_core support is quite exciting. A recent
+extraction of a 17GB E01 file required approximately 70
+minutes. Running the same extraction with the "-j4" flag (meaning, run
+4 simultaneous extractions on each of 4 cores) lowered the the time to
+just 18 minutes.
+
+You can download bulk_extractor from http://afflib.org/.
+
+The precompiled version for Windows can be downloaded from
+http://afflib.org/downloads/bulk_extractor-0.3.0.exe
+
+
+
+
+
+================================================================
+Date: April 13, 2010
+Subject: Announcing bulk_extractor Release version 0.1.0.
+From: Simson L. Garfinkel
+
+I am pleased to announce the release of bulk_extractor 0.1.0.
+
+bulk_extractor 0.1.0 is a C++ program that will scan a disk image (or
+any other file) and extract useful information without parsing the
+file system. It is like a combination of "strings" and "grep" with a
+whole bunch of useful patterns. bulk_extractor will also perform a
+histogram analysis on the resulting extracted features.
+
+
+Release version 0.1.0 brings two significant changes to the C++ bulk_extractor:
+ 1 - New extractors - credit card numbers and "wordlist"
+ 2 - New two-phase design to support big data sets and low-memory situations.
+ 3 - Direct support for Encase-formatted E01 files
+ 4 - ETA when doing large extractions.
+
+The Java bulk_extractor (which runs 3 times faster) has not been
+updated. This would make a nice term project for a student interested
+in computer forensics. If we don't have forward progresson on the Java
+version within a few months we will remove the Java bulk_extractor
+from the C++ version and package it separately.
+
+1. New Extractors.
+
+bulk_extractor will now recognize credit card numbers.
+
+bulk_extractor can now make a "word list" of every "word" that appears
+on the hard drive. This can be useful for building a list of words
+that can be used to crack password-based cryptography.
+
+2. Two-phase design
+
+bulk_extractor has been redesigned to have a two-pass process. 
+
+phase 1 - the hard drive image is analyzed and "extracted feature files" are created. 
+
+  phase 1 is the time-intensive part which requires scanning the entire
+  input hard drive. This redeisgn allows phase 1 to run in constant
+  memory.
+
+phase 2 - the extracted feature files are analyzed for a report.
+
+  phase 2 is the memory-intensive part. Now if the report generation
+  fails, you still have the files that were produced during phase 1. You
+  can then move these files to a computer with more memory and re-run
+  just phase 2.
+
+bulk_extractor now creates an output directory that has the following layout:
+  logfile.txt  - reports what was done
+  domains.txt  - domain names intermediate file
+  emails.txt   - email addresses intermediate file
+  ccns.txt     - credit card numbers intermediate file
+  wordlist.txt - wordlist
+
+  
+3. Direct support for EnCase E01 files
+
+bulk_extractor now has direct support for E01 files. It turns out that
+this is much faster than going through the AFFLIB virtual file
+system. 
+
+4. ETA when doing large extractions.
+
+bulk_extractor now evaluates how fast it is running and reports and
+Estimated Time of Completion (ETA).
+
+bulk_extractor can be downloaded in source code form from
+http://afflib.org/. We should have a command-line windows version
+released shortly.
+
+================================================================
+Release version 0.0.10.
+ - Removed -a switch for "all". Now the default is "all." 
+   For low memory situations, use the "-m" flag (which uses a bloom filter to suppress items that only appear once.)
+
+ - Added support for ASCII Unicode extraction.
+ - Added support for URL extraction.

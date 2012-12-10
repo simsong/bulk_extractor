@@ -21,3 +21,9 @@ plugins/config.status
 plugins/config.guess
 plugins/configure
 plugins/missing
+stamp-h
+install-sh
+depcomp
+configure
+missing
+config.h.in

@@ -1,0 +1,206 @@
+		    Announcing bulk_extractor 1.2.
+
+bulk_extractor Version 1.2 has been released for Linux, MacOS and Windows.
+Key features of Version 1.2 include:
+
+* Dramatically improved performance of the AES and IP packet
+  scanning modules. (scan_aes runs in 15% the time of the
+  original implementation.) As a result, scan_aes and
+  scan_net are now enabled by default.
+
+* The stop-list and context-sensitive stop-list processing
+  has been rewritten:
+  
+  - Feature files can now be used as context-sensitive stop
+    lists.
+
+  - Feature files with different sized contxt windows can be
+    freely intermixed as stop lists.
+
+  - The program make_context_stop_list.py is no longer used.
+
+  - Stop-list files that are not feature files may contain
+    literals or regular expressions.
+
+  In practice, this means that the -s option has been
+  removed. You can use -w with a text file that is a list of
+  words, a list of regular expressions, or a feature
+  file. If it is a feature file, it should just work as a
+  context-sensitive stop list. It turns out that it was
+  easier to write it this way than to have different
+  switches for the different kinds of stop lists and then to
+  throw error messages when the wrong kind of list was given
+  to the wrong option.
+
+* The find ("-f") option now searches for regular
+  expressions, not globs.
+
+* Dramatically improved defenses against compression
+  bombs. Now bulk_extractor detects that it is decompressing
+  a compression bomb and goes into a "safe decompress" mode
+  in which new compressed regions are not decompressed
+  if they have an MD5 that matches other compressed regions
+  that have been decompressed. A notation is written into
+  the zip.txt feature file that a compression bomb was
+  encountered.
+
+* scan_net now carves both IPv4 and IPv6 packets.  As in
+  Version 1.1, the resulting packets are put into PCAP files.
+
+* A new -G option allows the page size to be specified.
+
+* The pre-compiled Windows binary now runs faster than the
+  Linux binary, although this is because it is not running
+  scan_exif.
+
+* Wordlist deduplication is significantly faster.
+
+PERFORMANCE STATISTICS
+
+Disk image: /corp/drives/nps/nps-2009-ubnist1/ubnist1.gen3.E01
+     	    /corp/drives/nps/nps-2009-ubnist1/ubnist1.gen3.E02
+
+	    Media size:		1.9 GiB (2106589184 bytes)
+	    MD5:  		49a775d8b109a469d9dd01dc92e0db9c
+	    
+Hardware:   MacBook Pro 2 Ghz Intel Core i7, 8GB 1333 Mhz DDR3
+
+OS:	    MacOS 10.7.3
+
+Compiler:   i686-apple-darwin11-llvm-g++-4.2 (GCC) 4.2.1
+	    (Based on Apple Inc. build 5658) 
+	    (LLVM build 2336.1.00)
+
+
+bulk_extractor version 1.1.3:	468.6 seconds (4.28 MBytes/sec)
+bulk_extractor version 1.2.0:	350.7 seconds (5.72 MBytes/sec)
+
+Windows 7, same platform, scan_exiv disabled:
+
+bulk_extractor.exe 1.2.0: 	207.4 seconds (9.69 MBytes/sec)
+
+
+
+Current list of bulk_extractor scanners:
+
+scan_accts   - Looks for phone numbers, credit card numbers, etc
+scan_base64  - decodes BASE64 text
+scan_kml     - Detects KML files
+scan_gps     - Detects XML from Garmin GPS devices
+scan_aes     - Detects in-memory AES keys from their key schedules
+scan_json    - Detects JavaScript Object Notation files
+scan_exif    - Detects EXIF structures from JPEGs
+scan_zip     - Detects and decompresses ZIP files and zlib streams
+scan_gzip    - Detects and decompresses GZIP files and gzip stream
+scan_pdf     - Extracts text from some kinds of PDF files
+scan_hiber   - Detects and decompresses Windows hibernation
+               file fragments
+scan_winprefetch 
+             - Detects and extracts fields from Windows
+               prefetch files and file fragments.
+
+
+Current list of bulk_extractor feature files:
+
+aes_keys.txt - AES encryption keys
+alerts.txt   - Features found on alert list (redlist)
+ccn.txt      - credit card numbers
+ccn_track2.txt - Track 2 information
+domain.txt   - All extracted domain names and IP addresses
+email.txt    - extracted email addresses
+ether.txt    - extracted ethernet addresses. Currently
+ 	       overcollecting due to a failure to consider
+	       local context.
+exif.txt     - All exif fields from JPEGs; extracted as XML.
+find.txt     - Hits on find command.
+gps.txt	     - Extracted GPS coordinates from Garmin XML and
+	       GPS-enabled JPEG files
+ip.txt	     - Extracted IP addresses from scan_net
+	       cksum-bad indicates checksum test failed;
+	       those are less likely to actually be IP
+	       addresses.
+json.txt     - Extracted and validated JavaScript Object
+	       Notation fragments.
+kml.txt	     - Extracted KML files
+report.xml   - The DFXML file that explains what happened.
+rfc822.txt   - All extracted RFC822 headers
+tcp.txt	     - Summaries of all extracted UDP and TCP packets.
+telephone.txt- Extracted phone numbers
+url.txt      - Extracted URLs
+  url_facebook-id - extracted Facebook IDs
+  url_microsoft-live - extracted Microsoft Live IDs
+  url_searches       - extracted search terms
+  url_services       - extracted services from URLs
+winprefetch.txt - Windows prefetch files and fragments,
+                  recoded as XML for easy processing.
+wordlist.txt - All the words 
+zip.txt      - Information about all ZIP files and zip
+               components.
+
+
+
+Feature List for 1.3:
+
+We are considering the following features for 1.3:
+
+* Putting a BOM at the beginning of all feature files and
+  forcing the coding of the features to UTF-8 (The context
+  will still be reported as ASCII with octal escaping of
+  values outside the printable range.)
+
+* Replacing FTS with a new implementation for searching
+  files.
+
+* Replacing exiv2 with our own EXIF processor.
+
+* Automatically detecting and reporting Window shortcut
+  files and IE history.
+
+* Scanning for the start of bitlocker protected volumes.
+
+* Support for checkpointing using BLCR.
+
+* Improved restarting, so that each page is retried once but
+  only once. (Frankly, the improved reliability in verson
+  1.2 made this request less important.)
+
+* Support on distributed computing arrays.
+
+We are also considering the following scanners (and need
+help!):
+
+* LZMA decompression
+
+* RAR & RAR2 decompression
+
+* BZIP2 decompression
+
+* MSI decompression
+
+* CAB decompression
+
+* NTFS decompression
+
+* VCARD detection
+
+* PE Header Detection
+
+* Better handling of MIME encoding
+
+* SQLite database identification
+
+* Processing of physical drives
+
+* Scanning for MD5 hash codes
+
+* Scanning for word lsts
+
+* Python bridge, so scanners can be written in python
+
+
+
+
+
+
+
+

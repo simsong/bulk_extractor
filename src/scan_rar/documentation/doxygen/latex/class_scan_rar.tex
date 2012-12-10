@@ -1,0 +1,116 @@
+\hypertarget{class_scan_rar}{\section{Scan\-Rar Class Reference}
+\label{class_scan_rar}\index{Scan\-Rar@{Scan\-Rar}}
+}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \hyperlink{class_scan_rar_ab1173860c67e3ce1ccb43834e63ae592}{Start\-Without\-Password} (std\-::vector$<$ char $>$ \&filebytes, int location, int length, const unsigned int myunpacksize)
+\item 
+void \hyperlink{class_scan_rar_adb319adfbd7d37b0f8417b8eb31dc265}{Start\-With\-Password} (std\-::vector$<$ char $>$ \&filebytes, int location, int length, const unsigned int myunpacksize, char $\ast$pword)
+\item 
+void \hyperlink{class_scan_rar_adbae11e6aa128e779ef7493836b5aedb}{Start\-Decompression} (std\-::vector$<$ char $>$ \&filebytes, int location, int length, const unsigned int myunpacksize, char $\ast$$\ast$parameters, int numparameters)
+\item 
+void \hyperlink{class_scan_rar_a08c437e40d6f3fff77341759aa1c3ff1}{Print\-Results} (unsigned int amount, byte $\ast$unpackedfiles)
+\end{DoxyCompactItemize}
+
+
+\subsection{Member Function Documentation}
+\hypertarget{class_scan_rar_a08c437e40d6f3fff77341759aa1c3ff1}{\index{Scan\-Rar@{Scan\-Rar}!Print\-Results@{Print\-Results}}
+\index{Print\-Results@{Print\-Results}!ScanRar@{Scan\-Rar}}
+\subsubsection[{Print\-Results}]{\setlength{\rightskip}{0pt plus 5cm}void Scan\-Rar\-::\-Print\-Results (
+\begin{DoxyParamCaption}
+\item[{unsigned int}]{amount, }
+\item[{byte $\ast$}]{unpackedfiles}
+\end{DoxyParamCaption}
+)}}\label{class_scan_rar_a08c437e40d6f3fff77341759aa1c3ff1}
+This function just prints the information from the {\ttfamily data} variable to standard out. 
+\begin{DoxyParams}{Parameters}
+{\em amount} & -\/ The amount of memory that should be printed, in bytes \\
+\hline
+{\em unpackedfiles} & -\/ the raw data extracted from the R\-A\-R file \\
+\hline
+\end{DoxyParams}
+\hypertarget{class_scan_rar_adbae11e6aa128e779ef7493836b5aedb}{\index{Scan\-Rar@{Scan\-Rar}!Start\-Decompression@{Start\-Decompression}}
+\index{Start\-Decompression@{Start\-Decompression}!ScanRar@{Scan\-Rar}}
+\subsubsection[{Start\-Decompression}]{\setlength{\rightskip}{0pt plus 5cm}void Scan\-Rar\-::\-Start\-Decompression (
+\begin{DoxyParamCaption}
+\item[{std\-::vector$<$ char $>$ \&}]{filebytes, }
+\item[{int}]{location, }
+\item[{int}]{length, }
+\item[{const unsigned int}]{myunpacksize, }
+\item[{char $\ast$$\ast$}]{parameters, }
+\item[{int}]{numparameters}
+\end{DoxyParamCaption}
+)}}\label{class_scan_rar_adbae11e6aa128e779ef7493836b5aedb}
+The function performs the decompression, decryption, and unpacking of a R\-A\-R file. The data will be available once the {\ttfamily extract.\-Do\-Extract(...)} has been called. The actual data will be located in the {\ttfamily data} variable.
+
+
+\begin{DoxyParams}{Parameters}
+{\em filebytes} & -\/ the R\-A\-R file in memory \\
+\hline
+{\em location} & -\/ the location, in filebytes, where the start of the R\-A\-R file is located \\
+\hline
+{\em length} & -\/ length of the file that we can search \\
+\hline
+{\em myunpacksize} & -\/ length of the size that we are allowed \\
+\hline
+{\em parameters} & -\/ Contains all the parameters for the parser to work correctly \\
+\hline
+{\em numparameters} & -\/ number of parameters that have been supplied \\
+\hline
+\end{DoxyParams}
+\hypertarget{class_scan_rar_ab1173860c67e3ce1ccb43834e63ae592}{\index{Scan\-Rar@{Scan\-Rar}!Start\-Without\-Password@{Start\-Without\-Password}}
+\index{Start\-Without\-Password@{Start\-Without\-Password}!ScanRar@{Scan\-Rar}}
+\subsubsection[{Start\-Without\-Password}]{\setlength{\rightskip}{0pt plus 5cm}void Scan\-Rar\-::\-Start\-Without\-Password (
+\begin{DoxyParamCaption}
+\item[{std\-::vector$<$ char $>$ \&}]{filebytes, }
+\item[{int}]{location, }
+\item[{int}]{length, }
+\item[{const unsigned int}]{myunpacksize}
+\end{DoxyParamCaption}
+)}}\label{class_scan_rar_ab1173860c67e3ce1ccb43834e63ae592}
+A function to start the unrar process that needs to be decrypted without a password
+
+
+\begin{DoxyParams}{Parameters}
+{\em filebytes} & -\/ The bytes that need to be read in order to obtain the data \\
+\hline
+{\em location} & -\/ The location of the start of the R\-A\-R file signature within the {\ttfamily filebytes} memory \\
+\hline
+{\em length} & -\/ The length of the {\ttfamily filebytes} argument in terms of bytes \\
+\hline
+{\em myunpacksize} & -\/ The size of the buffer where the information obtained in the R\-A\-R file can be written. This is in terms of bytes \\
+\hline
+\end{DoxyParams}
+\hypertarget{class_scan_rar_adb319adfbd7d37b0f8417b8eb31dc265}{\index{Scan\-Rar@{Scan\-Rar}!Start\-With\-Password@{Start\-With\-Password}}
+\index{Start\-With\-Password@{Start\-With\-Password}!ScanRar@{Scan\-Rar}}
+\subsubsection[{Start\-With\-Password}]{\setlength{\rightskip}{0pt plus 5cm}void Scan\-Rar\-::\-Start\-With\-Password (
+\begin{DoxyParamCaption}
+\item[{std\-::vector$<$ char $>$ \&}]{filebytes, }
+\item[{int}]{location, }
+\item[{int}]{length, }
+\item[{const unsigned int}]{myunpacksize, }
+\item[{char $\ast$}]{pword}
+\end{DoxyParamCaption}
+)}}\label{class_scan_rar_adb319adfbd7d37b0f8417b8eb31dc265}
+A function to start the unrar process that needs to be decrypted with a password
+
+
+\begin{DoxyParams}{Parameters}
+{\em filebytes} & -\/ The bytes that need to be read in order to obtain the data \\
+\hline
+{\em location} & -\/ The location of the start of the R\-A\-R file signature within the {\ttfamily filebytes} memory \\
+\hline
+{\em length} & -\/ The length of the {\ttfamily filebytes} argument in terms of bytes \\
+\hline
+{\em myunpacksize} & -\/ The size of the buffer where the information obtained in the R\-A\-R file can be written. This is in terms of bytes \\
+\hline
+{\em pword} & -\/ The password to decrypt the file. \\
+\hline
+\end{DoxyParams}
+
+
+The documentation for this class was generated from the following files\-:\begin{DoxyCompactItemize}
+\item 
+/\-Users/salazbr1/\-Documents/\-N\-P\-S/final\-\_\-unrarbulk\-\_\-extractor\-\_\-07-\/26-\/12/code/scan\-\_\-rar.\-hpp\item 
+/\-Users/salazbr1/\-Documents/\-N\-P\-S/final\-\_\-unrarbulk\-\_\-extractor\-\_\-07-\/26-\/12/code/scan\-\_\-rar.\-cpp\end{DoxyCompactItemize}

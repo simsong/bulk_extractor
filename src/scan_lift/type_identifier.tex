@@ -1,0 +1,107 @@
+\documentclass{report}
+\usepackage{color}
+\setlength{\paperwidth}{8.5in}
+
+\begin{document}
+
+\centerline{\sc \large \textbf{Lift Class Documentation}}
+\vspace{.5pc}
+\centerline{\sc Original Creation Date: May 16 2012}
+\centerline{\sc Last Modifed: May 21, 2012}
+
+\textbf{Purpose}\\
+The purpose of this document is to describe the characteristics, and relationships amongst classes within lift as well as operational relationship with bulk\_extractor in the lift (type\_identifier) library. The Linear OVA (One Versus All) SVM (Support Vector Machine) utilizes a one versus all strategy in which the highest number that is associated to a fragment is the fragment type which is then associated by the recognizer.
+\\
+Essentially, the following calls are made during the execution from bulk\_extractor to lift:
+\\
+
+\begin{description}
+\item[Instantiation]: The object is instantiated by the lift constructor: lift\_svm() and the model and class files are loaded.  Essentially, populating a map used to map integer values to the classification types, and strings which represent the classification types.
+\item[Identification]: Identifying the file fragments.
+\end{description}
+
+\textbf{Class Descriptions}\\
+\textbf{1.0 lift\_svm}\\
+\textbf{Characteristics:}\\
+lift\_svm acts as the primary class to interface to the support vector machine (SVM). The class when instantiated performs the following actions within its constructor when initialized:
+
+\begin{enumerate}
+\item Loads the model file and category file into the recognizer, the files are pre-built and located in the type\_identifier directory in the model directory.
+\item Creates a recognizer object of type LinearOvaSVM\* and a map of classification names (class\_names) used in conjunction when performing identification. 
+\end{enumerate}
+
+The instantiation of the lift\_svm object occurs only once.
+\\
+\textbf{Operational Relationship with Bulk Extractor}\\
+\textbf{Phase 0}
+The lift\_svm object is initialized and the files loaded into the recognizer.  If the files are not loaded Lift is uninitalized - usually caused by the training file not being in the 
+the correct directory - therefore we will exit without bringing down BE by either setting sp to phase 2 or another graceful mechanism.
+\\
+\textbf{Phase 1}
+Bulk\_extractor passes const sbuf objects to the classifier.  If a result is generated then it will produce a string which represents the extension of the file fragment it recognized and stores the information into a feature file provided by bulk\_extractor.  If a result is not generated it will return nothing.
+\\
+\textbf{Relationships within lift\_svm: Purpose of Class / Recognizer}
+\\
+\textbf{lift\_svm Mutable / Immutable}
+\\
+The above bulleted items are only changed once.  Once the lift\_svm object is instantiated the items:
+
+\begin{itemize}
+\renewcommand{\labelitemi}{$\bullet$}
+\item const map\textless \textgreater ptr\_classNames is mutable
+\item const LinearOvaSVM recognizer is mutable
+\end{itemize}
+
+
+\textbf{ Map Purpose: const map \textless int, string \textgreater ptr\_classNames : Fragment Type Map}
++ Statically defined after instantiation
+\\
+{\color{blue} const LinearOvaSVM* recognizer : Recognize Fragmented Data } \\
++ Algorithm which deduces the fragment type
+\\
+\\
+\textbf{{\color{blue} Map Purpose: const map \textless int, string\textgreater* ptr\_classNames}}\\
+\textbf{Purpose:}
+\\
+The purpose of \textbf{const map \textless int, string \textgreater ptr\_classNames} is to perform the following with the int, string pair.  The <string\textgreater represents the fragment type.  The fragment type is determined by the data that the SVM is trained upon.  The \textless int \textgreater represents the index value associated to the \textless string \textgreater .  Essentially, the SVM counts the maximum index found within a targeted fragment returned from the recognizer until it reaches the maximum index, once reached the maximum index represents the file type associated with the fragment.  The index number is then referenced and the fragment type is returned as a string.  If a fragment type is not found then nothing is returned.
+\\
+\\
+\textbf{{\color{blue} 2.0 Recognizer Purpose: const LinearOvaSVM* recognizer;}}
+\\
+\textbf{Purpose:}
+\\
+The purpose of the recognizer is produce a quantitative value in which a lookup can be performed on the map\textless \textgreater ptr\_classname abstract data type.  Further description of the LinearOvaSVM* recognizer will be described in the following section.
+\\
+\textbf{The purpose of lift\_svm::create\_ngram(sbuf, feature)}
+\\
+Within lift\_svm prior to recognition of a sbuf the sbuf is sent to create an ngram which is loaded into a feature, i.e. typedef vector \textless pair \textless int, double\textgreater, which is then sent to the recognizer to compare to produce a score.  Once scored the value is then referenced and a string is retrieved based on the score which represents the filetype.
+\\
+\textbf{\color{blue}3.0 Classification Class: LinearOvaSVM }
+\\
+\textbf{Purpose}
+\\
+The purpose of the LinearOvaSVM class is to provide essentially a lookup and then calculate the type to type identify a file fragment. The application works as follows:
+\begin{itemize}
+\renewcommand{\labelitemi}{$\bullet$}
+\item Once an sbuf is converted into a Document type needed for recognition,
+\item the document is scored and a resultant vector is produced which contains an integer and double which then represents the fragment of interest,
+\item whereas an additionaly lookup is needed to return the string associated with the max value in which the classifier has identified.
+\end{itemize}
+
+\textbf{Two Functions used for Recognition}
+\\
+There are two Abstract Data Types (ADT)s used for recognition that is highly needed stl:map and stl:vector. 
+\\
+(1) vector \textless pair \textless int, double \textgreater \textgreater LinearOvaSVM::get\_classifier\_score( const Document \&d ) const
+\\
+(2) double LinearBinarySVM::get\_classifier\_score\_for\_class(const Document \& d , int class\_id )
+\\
+\\textbf{Running Valgrind}
+\\
+Valgrind was run to detect memory leaks in the classifier with the following flags:
+\\
+valgrind --tool=memcheck --leak-check=yes
+
+
+
+\end{document}

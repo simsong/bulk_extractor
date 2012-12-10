@@ -1,0 +1,97 @@
+Event Flows:
+
+Reports Pane:
+  User clicks tree: TreeSelectionListener in ReportsPane
+                    calls reportSelectionManager.setReportSelection(imageFile, featuresFile).
+
+            featuresFileTypeModel fires changed event and has FeaturesFileTypeModel.FileType.
+
+      FeaturesPane has featuresComponent and referencedFeatuersComponent
+      that provide featuresModel and referencedFeaturesModel instances of FeaturesModel.
+      They both respond to featuresFileTypeModel changed events to reload their features
+      using FeaturesParserThread.
+
+
+  User clicks a feature line in featuresComponent or referencedFeaturesComponent:
+
+       if the feature line is HISTOGRAM: set filter in referencedFeaturesModel to featue line text.
+       if feature line is ADDRESS or PATH: set image model with feature line.
+
+
+  Image Model gets set by selecting a feature line in featuresComponent
+                    or by selecting a feature line from history or bookmarks:
+
+       Thread reads image, produces data structure ImagePage, and provides that to ImageView.
+       ImageView calculates the renderable image view and fires an ImageView event.
+       User highlight changes also change ImageView.  See ImageView for event types.
+
+------------------------------------------------------------
+Choice of Java jar launcher launch4j over winrun4j:
+http://stackoverflow.com/questions/9330209/whats-the-best-way-to-start-java-applications-on-windows-7
+Problems with winrun4j: 1) JVM used, 32-bit or 64-bit, is determined by launcher used,
+32-bit or 64-bit, and can be confusing to the user.  2) I believe a signed winrun4j launcher
+can be stolen and reconfigured to launch any Java program, so I don't want to ship one.
+
+Choice of msi installer nsis over WiX:
+WiX is harder to install for use:
+WiX requires interaction to install, which is an inconvenience.
+Also, WiX requires Mono and Wine for its compiler and linker.
+new bulk_extractor version names required a new configuration script
+Installation and removal are made atomic, which prevents a broken state.
+
+nsis is easy to install and use:
+nsis is a Fedora package.  The nsis script is good across new bulk_extractor versions.
+The uninstall process can fail, leaving residue.  The uninstaller checks to make sure
+bulk_extractor and BEViewer are uninstalled, and installations go into separate paths,
+so this limitation is not expected to be an issue.
+------------------------------------------------------------
+Using svn:ignore to set SVN ignore file list for directory:
+From the desired directory (dir .): "svn propedit svn:ignore ."
+Note: define in .bashrc using editor that takes the terminal (e.g. vim): "export SVN_EDITOR=vim"
+
+------------------------------------------------------------
+Validating the distribution: make distcheck
+
+------------------------------------------------------------
+Conditionally make java_gui AND introduce doxygen:
+http://chris-miceli.blogspot.com/2011/01/integrating-doxygen-with-autotools.html
+
+------------------------------------------------------------
+Compile and run using multiple Java compilers:
+Install OpenJDK and libGCJ.
+Type "java -version" to see which Java is in use.
+Type: "alternatives --config java" to select which Java environment to use.
+
+------------------------------------------------------------
+Sysadmin support at NCR: Michael Shick
+
+EXIV in bulk_extractor: from 7/2/12 10:59:
+
+On 06/26/2012 02:55 PM, Garfinkel, Simson (CIV) wrote:
+> I didn't want you to remove exiv2. I just wanted you to remove the warning. …
+>
+> Let's make the rest of the changes next week. Specifically:
+>
+>
+>> 1) HAVE_LIBICONV
+>> I think I can get rid of HAVE_LIBICONV.  This should mean that mingw no longer needs iconv.dll or libiconv-2.dll.
+> Yep. Let's get rid of it.
+>
+>> 2) HAVE_LIBEXPAT
+>> I think I can get rid of HAVE_LIBEXPAT.  This should mean that mingw no longer needs libexpat-1.dll.
+> Keep it. I want to replace my hacky XML parser with expat.
+>
+>> 3) GNUC_HAS_DIAGNOSTIC_PRAGMA.  This is used outside of exiv2 and should be retained.  It should be in its own section titled "Check GCC for diagnostic pragma".
+> Agreed. After JUNE 30.
+>
+>> 4) LDFLAGS="$LDFLAGS -shared-libgcc" # allows exiv2 to throw an exception that's caught elsewhere
+>> If this flag is just for exiv2, this flag should be removed.
+> Agreed. Let's get rid of the flag after JUNE 30.
+>
+>> Shall I make these changes, or would you like me to leave this alone until next week?
+>> Thanks,
+>> -Bruce
+>>
+
+
+

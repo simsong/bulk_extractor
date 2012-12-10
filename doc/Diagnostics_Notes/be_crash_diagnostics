@@ -1,0 +1,90 @@
+This is from http://afflib.org/software/bulk_extractor/diagnosing-and-overcoming-bulk_extractor-crashes
+
+
+
+
+crash diagnosis
+
+Diagnosing and Overcoming bulk_extractor crashes
+
+All forensic programs occasionally crash on some input files, and bulk_extractor is no different. Given some input files, bulk_extractor will crash. These crashes are usually the result of input data that is corrupted or damaged in some way. Unfortunately we can’t go back to the bad guys and ask them to give us clean data, so forensic software needs to be tolerant of any kind of input. Although it is possible to write such software, it can be exceedingly difficult to cover every possible data corruption case.
+
+The good news is that bulk_extractor has a variety of command-line switches that you can use to get past most crashes.
+
+bulk_extractor is organized as a framework treats your disk image as a series of 16 Megabyte pages. Each page is read one-by-one and processed by one or more scanners. Most scanners look for a single kind of data and store it in the feature_files. For example, the email scanner looks for email addresses and domain names and stores them in the email.txt and domain.txt files.
+
+Some bulk_extractor scanners are recursive. When these scanners find certain data in the page they will transform it into a new page and then recursively re-analyze it will all of the scanners. The GZIP and ZIP scanners, for example, will recognize compressed data, decompress it, and then re-analyze it. The pages analyzed by the recursive scanners can be of any size, from a single byte to hundreds of megabytes.
+
+You can control bulk_extractor’s behavior by turning on or off individual scanners. To find out which scanners are enabled by default, run bulk_extractor with the “-h” option.
+
+STEP ONE: VERIFY IF A SCANNER IS AT FAULT
+
+The first thing to do after a crash is to verify that the crash is with a scanner and not with the bulk_extractor framework. You can do this by running bulk_extractor with a single scanner that doesn’t look for anything. The easiest way to do this is with the bulk scanner.
+
+The “-E” flag turns off all scanners except the scanner specified after the flag. It can be followed by additional flags to turn on individual scanners.
+
+So if you get a crash, the first thing to do is to verify that the framework is enact.
+
+% bulk_extractor -o out10 -E bulk disk_image.raw
+
+(Where out10 is the output directory and disk_image.raw is the disk image.)
+
+STEP TWO: FIND THE SCANNER THAT’S MAKING YOU CRASH
+
+The next step is to disable scanners one-by-one until you find the scanner that’s making bulk_extractor crash. Typically this will be a single scanner. You can find out which scanners are enabled by default with the “-h” option.
+
+For example, here is the bottom of a typical -h output:
+
+Control of Scanners (feature recorders):
+-E scanner – turn off all scanners except scanner
+-x accts – disable scanner accts (ccn/c ccn_track2/c telephone/c )
+-x base64 – disable scanner base64 ()
+-x email – disable scanner email (domain/c email/c rfc822/c url/c )
+-x exif – disable scanner exif (exif/c )
+-x zip – disable scanner zip (zip )
+-x gzip – disable scanner gzip ()
+-x pdf – disable scanner pdf ()
+-x hiber – disable scanner hiber ()
+-e net – enable scanner net (ether ip tcp )
+-e bulk – enable scanner bulk ()
+-e find – enable scanner find (find/c )
+-e wordlist – enable scanner wordlist (wordlist )
+
+In this example, you can disabled the accts, base64, email, exit, zip, gzip, pdf and hiber scanners. So you might want to try the following command lines to see the one that stops the crashing:
+
+% bulk_extractor -o out-xaccts -x accts disk_image.raw
+% bulk_extractor -o out-base64 -x base64 disk_image.raw
+% bulk_extractor -o out-xemail -x email disk_image.raw
+% bulk_extractor -o out-xexif -x exif disk_image.raw
+% bulk_extractor -o out-xzip -x zip disk_image.raw
+% bulk_extractor -o out-xgzip -x gzip disk_image.raw
+% bulk_extractor -o out-xpdf -x pdf disk_image.raw
+% bulk_extractor -o out-xhiber -x hiber disk_image.raw
+
+Notice that in each case the output directory has been named to indicate which scanner was disabled.
+
+In most cases that we have seen, the crash results from a combination of a regular scanner and a recursive scanner. This means that you may be able to stop the crash by turning off one of two scanners—for example, either the email scanner or the gzip scanner. Some experimentation may be necessary to find the optimal settings.
+
+If you wish to assist in the debugging of bulk_extractor, it is useful to find out the smallest number of scanners that, when enabled, cause bulk_extractor to crash with your particular disk image. You can turn off all of the scanners except the email scanner with the “-E email” command. You can then enable individual scanners by preceding the scanner name with the “-e” command. For example, to run just email and gzip, use this command:
+
+% bulk_extractor -o out10 -E email -e gzip disk_image.raw
+
+STEP THREE: INVESTIGATE OTHER PARAMETERS
+
+There are several other parameters that you can adjust to perhaps get past a crash.
+
+3a – Enable Crash Protection will allow bulk_extractor to recover from certain kinds of crashes. Unfortunately the recovery mode is inconsistent. For this reason crash protection is disabled by default.
+
+To enable Crash Protection, run bulk_extractor with the “-c” command.
+
+3b – Set the maximum recursion depth.
+
+By default, bulk_extractor will recurse a maximum of five times. You may discover that you can prevent it from crashing on some media by limiting the number of recursions to 1 or 2. To do that use the “-M” command:
+
+% bulk_extractor -o out10 -M 2 disk_image.raw
+
+STEP FOUR: CAPTURE A TRACE
+
+bulk_extractor is multi-threaded, which means that multiple threads of execution run at the same time within the program. In standard use bulk_extractor creates one thread to read all of the pages from the disk. Between 1 and NN threads are then created to process the pages. Pages are not processed roughly in order, although different different pages take different amounts of time to process, so it is likely that some pages will start processing before other pages finish.
+
+You can have bulk_extractor print every time it starts and exits a scanner with the “-d1″ option. It’s not clear that this will actually help you debug the problem you encounter, but it might.

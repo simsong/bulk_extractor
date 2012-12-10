@@ -1,0 +1,320 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="1138.23">
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+    p.p3 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Courier}
+    p.p4 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Courier; min-height: 14.0px}
+  </style>
+</head>
+<body>
+<p class="p1">A user reported that disk #0005.aff was taking a surprising amount of time to complete processing---more than 50 minutes. We ran bulk_extractor on the disk:</p>
+<p class="p2"><br></p>
+<p class="p1">$ src/bulk_extractor -o test5 0005.aff<span class="Apple-converted-space"> </span></p>
+<p class="p1">Hostname: t</p>
+<p class="p1">Input file: 0005.aff</p>
+<p class="p1">Output directory: test5</p>
+<p class="p1">Disk Size: 130351104</p>
+<p class="p1">Threads: 8</p>
+<p class="p1">Phase 1.</p>
+<p class="p1">17:18:00 Page 0 (0.00%) Completed. Done in n/a</p>
+<p class="p1">17:18:02 Page 1 (12.50%) Completed. Done in<span class="Apple-converted-space">  </span>0:00:46</p>
+<p class="p1">17:18:04 Page 2 (25.00%) Completed. Done in<span class="Apple-converted-space">  </span>0:00:26</p>
+<p class="p1">17:18:06 Page 3 (37.50%) Completed. Done in<span class="Apple-converted-space">  </span>0:00:18</p>
+<p class="p1">17:18:08 Page 4 (50.00%) Completed. Done in<span class="Apple-converted-space">  </span>0:00:12</p>
+<p class="p1">17:18:10 Page 5 (62.50%) Completed. Done in<span class="Apple-converted-space">  </span>0:00:09</p>
+<p class="p1">17:18:13 Page 6 (75.00%) Completed. Done in<span class="Apple-converted-space">  </span>0:00:06</p>
+<p class="p1">17:18:13 Page 7 (87.50%) Completed. Done in<span class="Apple-converted-space">  </span>0:00:02</p>
+<p class="p1">All Data is Read; waiting for threads to finish...</p>
+<p class="p2"><br></p>
+<p class="p1">Time elapsed waiting for 1 thread to finish: 60 min 1 sec<span class="Apple-converted-space">  </span>(wait at least 50 min))</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space"> </span>... this shouldn't take more than an hour. Exiting ...<span class="Apple-converted-space"> </span></p>
+<p class="p1"><span class="Apple-converted-space"> </span>... Please report to the bulk_extractor maintainer ...<span class="Apple-converted-space"> </span></p>
+<p class="p1">All Threads Finished!</p>
+<p class="p1">Phase 2. Shutting down scanners</p>
+<p class="p1">Phase 3. Creating Histograms</p>
+<p class="p1">0: make_histogram(,histogram) -&gt; test5/ccn_histogram.txt</p>
+<p class="p1">0: make_histogram(,histogram) -&gt; test5/ccn_track2_histogram.txt</p>
+<p class="p1">0: make_histogram(,histogram) -&gt; test5/domain_histogram.txt</p>
+<p class="p1">0: make_histogram(,histogram) -&gt; test5/email_histogram.txt</p>
+<p class="p1">0: make_histogram(([^(]+),histogram) -&gt; test5/ether_histogram.txt</p>
+<p class="p1">0: make_histogram(([^(]+),histogram) -&gt; test5/ip_histogram.txt</p>
+<p class="p1">0: make_histogram(,histogram) -&gt; test5/tcp_histogram.txt</p>
+<p class="p1">0: make_histogram(,histogram) -&gt; test5/telephone_histogram.txt</p>
+<p class="p1">0: make_histogram(,histogram) -&gt; test5/url_histogram.txt</p>
+<p class="p1">0: make_histogram(://([^/]+),services) -&gt; test5/url_services.txt</p>
+<p class="p1">0: make_histogram(://(cid-[0-9a-f])+[a-z.].live.com/),microsoft-live) -&gt; test5/url_microsoft-live.txt</p>
+<p class="p1">0: make_histogram(://[-_a-z0-9.]+facebook.com/.*(id=[0-9]+),facebook-id) -&gt; test5/url_facebook-id.txt</p>
+<p class="p1">0: make_histogram(search.*[?&amp;/;fF][pq]=([^&amp;/]+),searches) -&gt; test5/url_searches.txt</p>
+<p class="p1"># elapsed time: 3618.5 seconds</p>
+<p class="p2"><br></p>
+<p class="p1">As can be seen, the program terminated itself when one of the threads required more than 60 minutes to complete activity.</p>
+<p class="p2"><br></p>
+<p class="p1">The file report.xml in the output directory contains an accounting of how many times each scanner is called. Given that there are 8 pages in the file 0005.aff, each scanner should be called 8 times at the top level. Here is a section of the file:</p>
+<p class="p2"><br></p>
+<p class="p3"><span class="Apple-converted-space">  </span>&lt;scanners&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;name&gt;ACCTS&lt;/name&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;calls&gt;8&lt;/calls&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;seconds&gt;19.733836&lt;/seconds&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;/path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;name&gt;BASE64&lt;/name&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;calls&gt;8&lt;/calls&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;seconds&gt;2.000809&lt;/seconds&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;/path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;name&gt;EMAIL&lt;/name&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;calls&gt;8&lt;/calls&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;seconds&gt;24.539532&lt;/seconds&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;/path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;name&gt;EXIF&lt;/name&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;calls&gt;8&lt;/calls&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;seconds&gt;28.422602&lt;/seconds&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;/path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;name&gt;FIND&lt;/name&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;calls&gt;8&lt;/calls&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;seconds&gt;10.511128&lt;/seconds&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;/path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;name&gt;GPS&lt;/name&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;calls&gt;8&lt;/calls&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;seconds&gt;26.975640&lt;/seconds&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;/path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;name&gt;GZIP&lt;/name&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;calls&gt;8&lt;/calls&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;seconds&gt;1.215070&lt;/seconds&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;/path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;name&gt;HIBER&lt;/name&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;calls&gt;7&lt;/calls&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;seconds&gt;0.712045&lt;/seconds&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;/path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;name&gt;JSON&lt;/name&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;calls&gt;8&lt;/calls&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;seconds&gt;3.598577&lt;/seconds&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;/path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;name&gt;KML&lt;/name&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;calls&gt;8&lt;/calls&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;seconds&gt;13.851020&lt;/seconds&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;/path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;name&gt;NET&lt;/name&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;calls&gt;8&lt;/calls&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;seconds&gt;116.055016&lt;/seconds&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;/path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;name&gt;PDF&lt;/name&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;calls&gt;7&lt;/calls&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;seconds&gt;317.052024&lt;/seconds&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;/path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;name&gt;WINPREFETCH&lt;/name&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;calls&gt;7&lt;/calls&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;seconds&gt;5.515840&lt;/seconds&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;/path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;name&gt;ZIP&lt;/name&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;calls&gt;8&lt;/calls&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;seconds&gt;6.532860&lt;/seconds&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;/path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;name&gt;ZIP-ACCTS&lt;/name&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;calls&gt;1&lt;/calls&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;seconds&gt;0.426945&lt;/seconds&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;/path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;name&gt;ZIP-BASE64&lt;/name&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;calls&gt;1&lt;/calls&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;seconds&gt;0.025480&lt;/seconds&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;/path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;name&gt;ZIP-EMAIL&lt;/name&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;calls&gt;1&lt;/calls&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;seconds&gt;0.463570&lt;/seconds&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;/path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;name&gt;ZIP-EXIF&lt;/name&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;calls&gt;1&lt;/calls&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;seconds&gt;0.473475&lt;/seconds&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;/path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;name&gt;ZIP-FIND&lt;/name&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;calls&gt;1&lt;/calls&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;seconds&gt;0.245742&lt;/seconds&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;/path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;name&gt;ZIP-GPS&lt;/name&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;calls&gt;1&lt;/calls&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;seconds&gt;0.394898&lt;/seconds&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;/path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;name&gt;ZIP-GZIP&lt;/name&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;calls&gt;1&lt;/calls&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;seconds&gt;0.013586&lt;/seconds&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;/path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;name&gt;ZIP-HIBER&lt;/name&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;calls&gt;1&lt;/calls&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;seconds&gt;0.013528&lt;/seconds&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;/path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;name&gt;ZIP-JSON&lt;/name&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;calls&gt;1&lt;/calls&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;seconds&gt;0.038624&lt;/seconds&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;/path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;name&gt;ZIP-KML&lt;/name&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;calls&gt;1&lt;/calls&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;seconds&gt;0.295015&lt;/seconds&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;/path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;name&gt;ZIP-NET&lt;/name&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;calls&gt;1&lt;/calls&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;seconds&gt;2.536063&lt;/seconds&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;/path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;name&gt;ZIP-PDF&lt;/name&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;calls&gt;1&lt;/calls&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;seconds&gt;0.242040&lt;/seconds&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;/path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;name&gt;ZIP-WINPREFETCH&lt;/name&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;calls&gt;1&lt;/calls&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;seconds&gt;0.110463&lt;/seconds&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;/path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;name&gt;ZIP-ZIP&lt;/name&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;calls&gt;1&lt;/calls&gt;</p>
+<p class="p3"><span class="Apple-converted-space">      </span>&lt;seconds&gt;0.013513&lt;/seconds&gt;</p>
+<p class="p3"><span class="Apple-converted-space">    </span>&lt;/path&gt;</p>
+<p class="p3"><span class="Apple-converted-space">  </span>&lt;/scanners&gt;</p>
+<p class="p4"><br></p>
+<p class="p1">As can be seen, the scanner PDF is only called 7 times, not 8. That's because the 8th time it was called it never finished, and was instead interrupted by the driver program.</p>
+<p class="p2"><br></p>
+<p class="p1">To verify that scan_pdf was the problem, we ran bulk_extractor on the test disk with the PDF scanner disabled:</p>
+<p class="p2"><br></p>
+<p class="p3">simsong@t:~/domex/src/bulk_extractor$ src/bulk_extractor -xpdf -o test6 0005.aff<span class="Apple-converted-space"> </span></p>
+<p class="p3">Hostname: t</p>
+<p class="p3">Input file: 0005.aff</p>
+<p class="p3">Output directory: test6</p>
+<p class="p3">Disk Size: 130351104</p>
+<p class="p3">Threads: 8</p>
+<p class="p3">Phase 1.</p>
+<p class="p3">18:21:56 Page 0 (0.00%) Completed. Done in n/a</p>
+<p class="p3">18:21:58 Page 1 (12.50%) Completed. Done in<span class="Apple-converted-space">  </span>0:00:42</p>
+<p class="p3">18:22:00 Page 2 (25.00%) Completed. Done in<span class="Apple-converted-space">  </span>0:00:24</p>
+<p class="p3">18:22:02 Page 3 (37.50%) Completed. Done in<span class="Apple-converted-space">  </span>0:00:17</p>
+<p class="p3">18:22:04 Page 4 (50.00%) Completed. Done in<span class="Apple-converted-space">  </span>0:00:11</p>
+<p class="p3">18:22:05 Page 5 (62.50%) Completed. Done in<span class="Apple-converted-space">  </span>0:00:08</p>
+<p class="p3">18:22:08 Page 6 (75.00%) Completed. Done in<span class="Apple-converted-space">  </span>0:00:05</p>
+<p class="p3">18:22:08 Page 7 (87.50%) Completed. Done in<span class="Apple-converted-space">  </span>0:00:02</p>
+<p class="p3">All Data is Read; waiting for threads to finish...</p>
+<p class="p4"><br></p>
+<p class="p3">Time elapsed waiting for 1 thread to finish: 37 sec<span class="Apple-converted-space">  </span>(wait at least 50 min)All Threads Finished!</p>
+<p class="p3">Phase 2. Shutting down scanners</p>
+<p class="p3">Phase 3. Creating Histograms</p>
+<p class="p3">0: make_histogram(,histogram) -&gt; test6/ccn_histogram.txt</p>
+<p class="p3">0: make_histogram(,histogram) -&gt; test6/ccn_track2_histogram.txt</p>
+<p class="p3">0: make_histogram(,histogram) -&gt; test6/domain_histogram.txt</p>
+<p class="p3">0: make_histogram(,histogram) -&gt; test6/email_histogram.txt</p>
+<p class="p3">0: make_histogram(([^(]+),histogram) -&gt; test6/ether_histogram.txt</p>
+<p class="p3">0: make_histogram(([^(]+),histogram) -&gt; test6/ip_histogram.txt</p>
+<p class="p3">0: make_histogram(,histogram) -&gt; test6/tcp_histogram.txt</p>
+<p class="p3">0: make_histogram(,histogram) -&gt; test6/telephone_histogram.txt</p>
+<p class="p3">0: make_histogram(,histogram) -&gt; test6/url_histogram.txt</p>
+<p class="p3">0: make_histogram(://([^/]+),services) -&gt; test6/url_services.txt</p>
+<p class="p3">0: make_histogram(://(cid-[0-9a-f])+[a-z.].live.com/),microsoft-live) -&gt; test6/url_microsoft-live.txt</p>
+<p class="p3">0: make_histogram(://[-_a-z0-9.]+facebook.com/.*(id=[0-9]+),facebook-id) -&gt; test6/url_facebook-id.txt</p>
+<p class="p3">0: make_histogram(search.*[?&amp;/;fF][pq]=([^&amp;/]+),searches) -&gt; test6/url_searches.txt</p>
+<p class="p3"># elapsed time: 52.9 seconds</p>
+<p class="p3">simsong@t:~/domex/src/bulk_extractor$ src/bulk_extractor -Epdf -o test7 0005.aff<span class="Apple-converted-space"> </span></p>
+<p class="p2"><br></p>
+<p class="p2"><br></p>
+<p class="p1">Now the program finished in 52.9 seconds.</p>
+<p class="p2"><br></p>
+<p class="p1">We re-ran bulk_extractor under the GDB debugger, this time with ONLY the PDF scanner enabled. When the was only one thread remaining, we interrupted the program:</p>
+<p class="p2"><br></p>
+<p class="p3">(gdb) run -Epdf -o test7 0005.aff</p>
+<p class="p3">Starting program: /home/simsong/domex/src/bulk_extractor/src/bulk_extractor -Epdf -o test7 0005.aff</p>
+<p class="p3">[Thread debugging using libthread_db enabled]</p>
+<p class="p3">Hostname: t</p>
+<p class="p3">Input file: 0005.aff</p>
+<p class="p3">Output directory: test7</p>
+<p class="p3">Disk Size: 130351104</p>
+<p class="p3">Threads: 8</p>
+<p class="p3">[New Thread 0x7ffff4c82700 (LWP 1042)]</p>
+<p class="p3">[New Thread 0x7ffff4431700 (LWP 1044)]</p>
+<p class="p3">[New Thread 0x7ffff3be0700 (LWP 1045)]</p>
+<p class="p3">[New Thread 0x7ffff338f700 (LWP 1046)]</p>
+<p class="p3">[New Thread 0x7ffff2b3e700 (LWP 1048)]</p>
+<p class="p3">[New Thread 0x7ffff22ed700 (LWP 1050)]</p>
+<p class="p3">[New Thread 0x7ffff1a9c700 (LWP 1052)]</p>
+<p class="p3">[New Thread 0x7ffff124b700 (LWP 1053)]</p>
+<p class="p3">Phase 1.</p>
+<p class="p3">18:31:41 Page 0 (0.00%) Completed. Done in n/a</p>
+<p class="p3">18:31:44 Page 1 (12.50%) Completed. Done in<span class="Apple-converted-space">  </span>0:00:42</p>
+<p class="p3">18:31:46 Page 2 (25.00%) Completed. Done in<span class="Apple-converted-space">  </span>0:00:24</p>
+<p class="p3">18:31:48 Page 3 (37.50%) Completed. Done in<span class="Apple-converted-space">  </span>0:00:17</p>
+<p class="p3">18:31:49 Page 4 (50.00%) Completed. Done in<span class="Apple-converted-space">  </span>0:00:11</p>
+<p class="p3">18:31:51 Page 5 (62.50%) Completed. Done in<span class="Apple-converted-space">  </span>0:00:08</p>
+<p class="p3">18:31:53 Page 6 (75.00%) Completed. Done in<span class="Apple-converted-space">  </span>0:00:05</p>
+<p class="p3">18:31:53 Page 7 (87.50%) Completed. Done in<span class="Apple-converted-space">  </span>0:00:02</p>
+<p class="p3">All Data is Read; waiting for threads to finish...</p>
+<p class="p3">Time elapsed waiting for 1 thread to finish: 24 min 48 sec<span class="Apple-converted-space">  </span>(wait at least 50 min) <span class="Apple-converted-space"> </span></p>
+<p class="p2"><br></p>
+<p class="p1">At this point we interrupt and use GDB to figure out which thread is having problems:</p>
+<p class="p2"><br></p>
+<p class="p3">Time elapsed waiting for 1 thread to finish: 24 min 48 sec<span class="Apple-converted-space">  </span>(wait at least 50 min)<span class="Apple-converted-space">  </span>C-c C-c</p>
+<p class="p3">Program received signal SIGINT, Interrupt.</p>
+<p class="p3">0x00007ffff5be25ad in nanosleep () from /lib/x86_64-linux-gnu/libc.so.6</p>
+<p class="p3">(gdb) where</p>
+<p class="p3">#0<span class="Apple-converted-space">  </span>0x00007ffff5be25ad in nanosleep () from /lib/x86_64-linux-gnu/libc.so.6</p>
+<p class="p3">#1<span class="Apple-converted-space">  </span>0x00007ffff5c13984 in usleep () from /lib/x86_64-linux-gnu/libc.so.6</p>
+<p class="p3">#2<span class="Apple-converted-space">  </span>0x000000000040d621 in do_phase1 (fn=0x7fffffffe45d "0005.aff", cp=..., p=0xa38010, fs=..., xreport=.\</p>
+<p class="p3">.., page_number=@0x7fffffffdaa8, total_bytes=@0x7fffffffd888, timer=...) at bulk_extractor.cpp:769</p>
+<p class="p3">#3<span class="Apple-converted-space">  </span>0x000000000040f46c in main (argc=1, argv=0x7fffffffe0d8) at bulk_extractor.cpp:1022</p>
+<p class="p3">(gdb) thread</p>
+<p class="p3">[Current thread is 1 (Thread 0x7ffff7fcf740 (LWP 977))]</p>
+<p class="p3">(gdb) thread 2</p>
+<p class="p3">[Switching to thread 2 (Thread 0x7ffff4c82700 (LWP 1042))]#0<span class="Apple-converted-space">  </span>0x00007ffff5ed4bac in pthread_cond_wait@@GLIBC_2.3.\</p>
+<p class="p3">2 () from /lib/x86_64-linux-gnu/libpthread.so.0</p>
+<p class="p3">(gdb) where</p>
+<p class="p3">#0<span class="Apple-converted-space">  </span>0x00007ffff5ed4bac in pthread_cond_wait@@GLIBC_2.3.2 () from /lib/x86_64-linux-gnu/libpthread.so.0</p>
+<p class="p3">#1<span class="Apple-converted-space">  </span>0x000000000041a121 in worker::run (this=0xa3ffc0) at threadpool.cpp:163</p>
+<p class="p3">#2<span class="Apple-converted-space">  </span>0x000000000041a2f7 in worker::start_worker (arg=0xa3ffc0) at threadpool.h:60</p>
+<p class="p3">#3<span class="Apple-converted-space">  </span>0x00007ffff5ecfd8c in start_thread () from /lib/x86_64-linux-gnu/libpthread.so.0</p>
+<p class="p3">#4<span class="Apple-converted-space">  </span>0x00007ffff5c1b04d in clone () from /lib/x86_64-linux-gnu/libc.so.6</p>
+<p class="p3">#5<span class="Apple-converted-space">  </span>0x0000000000000000 in ?? ()</p>
+<p class="p3">(gdb) thread 3</p>
+<p class="p3">[Switching to thread 3 (Thread 0x7ffff4431700 (LWP 1044))]#0<span class="Apple-converted-space">  </span>scan_pdf (sp=..., rcb=...) at scan_pdf.cpp:83</p>
+<p class="p3">(gdb) where</p>
+<p class="p3">#0<span class="Apple-converted-space">  </span>scan_pdf (sp=..., rcb=...) at scan_pdf.cpp:83</p>
+<p class="p3">#1<span class="Apple-converted-space">  </span>0x000000000040c3d8 in process_extract (sp=...) at bulk_extractor.cpp:576</p>
+<p class="p3">#2<span class="Apple-converted-space">  </span>0x000000000041a254 in worker::do_work (this=0xa40e20, sbuf=0x3d41f00) at threadpool.cpp:187</p>
+<p class="p3">#3<span class="Apple-converted-space">  </span>0x000000000041a1c6 in worker::run (this=0xa40e20) at threadpool.cpp:173</p>
+<p class="p3">#4<span class="Apple-converted-space">  </span>0x000000000041a2f7 in worker::start_worker (arg=0xa40e20) at threadpool.h:60</p>
+<p class="p3">#5<span class="Apple-converted-space">  </span>0x00007ffff5ecfd8c in start_thread () from /lib/x86_64-linux-gnu/libpthread.so.0</p>
+<p class="p3">#6<span class="Apple-converted-space">  </span>0x00007ffff5c1b04d in clone () from /lib/x86_64-linux-gnu/libc.so.6</p>
+<p class="p3">#7<span class="Apple-converted-space">  </span>0x0000000000000000 in ?? ()</p>
+<p class="p3">(gdb)<span class="Apple-converted-space"> </span></p>
+<p class="p2"><br></p>
+<p class="p1">As expected, the problem is in scan_pdf.cpp (at line 83, in fact).</p>
+<p class="p2"><br></p>
+<p class="p1">At this point we were able to identify the bug in scan_pdf that was causing an infinite loop and eliminate the problem.</p>
+<p class="p2"><br></p>
+<p class="p2"><br></p>
+</body>
+</html>

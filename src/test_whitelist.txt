@@ -1,0 +1,3 @@
+astarikovskiy@suse.de
+tiwai@suse.de
+ubuntu-users@lists.ubuntu.com

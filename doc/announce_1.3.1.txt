@@ -1,0 +1,91 @@
+		    Announcing bulk_extractor 1.3.1
+			    Nov 25, 2013
+
+bulk_extractor Version 1.3.1 has been released for Linux, MacOS and Windows.
+
+Version 1.3.1. is a maintenance release that fixes bugs and increases
+compiler support, but which does not introduce new features.
+
+Bug fixes:
+
+* context-sensitive stop lists longer than a million lines now
+  work. Previously there was an O(n log n) dependency which caused
+  poor performance when the number of lines in the stop list exceeded
+  10,000 and caused bulk_extractor to essentially stop functioning
+  when the length exceeded 100,000.
+
+* Fixed mkdir bug which was preventing KML file carving from working
+  properly in some cases.
+
+OS and Compiler Support:
+
+* MacOS: bulk_extractor can now be compiled with clang/clang++ 
+* This release tested under Fedora FC17 and Ubuntu 64-bit 12.10
+
+As always, please validate your tools before you using them!
+
+plugin API:
+
+* The bulk_extractor plug-in API has undergone subtle changes in the
+  header files.
+
+* All header files and necessary .c and .cpp files are now
+  src/be13_api/ . This makes it easier to support other programs that
+  use the BE13 API, such as tcpflow.
+
+================================================================
+Planned Feature List for 1.4:
+
+* RAR & RAR2 decompression
+
+* BZIP2 decompression
+
+* Automatically detecting and reporting Window shortcut
+  files and IE history.
+
+* Scanning for the start of bitlocker protected volumes.
+
+* SQLite database identification
+
+================================================================
+Beyond 1.4:
+
+We are also considering the following scanners and are interested in
+feedback regarding support:
+
+* LZMA decompression
+
+* MSI decompression
+
+* CAB decompression
+
+* NTFS decompression
+
+* Better handling of MIME encoding
+
+* Processing of physical drives under Windows
+
+
+We have tabled the following ideas, for the following reasons:
+
+
+* Improved restarting, so that each page is retried once but only
+  once. (The improved reliability in verson 1.2 made this request less
+  important.)
+
+* Support on distributed computing arrays. (May be less important
+  given the low cost of 64-core machines)
+
+* Python Bridge. (We cannot have multiple instances of the Python
+  interperter running in the same address space, so we would need to
+  run multiple Pythons in multiple address spaces. Frankly, it's a lot
+  of work, and Python is really slow, so we're just not doing this.)
+
+
+
+
+
+
+
+
+

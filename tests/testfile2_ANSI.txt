@@ -1,0 +1,10 @@
+This is a tesfile for bulk_extractor with some german text
+
+Weit hinten, hinter den Wortbergen, fern der Länder Vokalien und Konsonantien leben die Blindtexte. Abgeschieden wohnen Sie in Buchstabenhausen an der Küste der Semantik, eines großen Sprachozeans. Ein kleines Bächlein namens Duden fließt durch ihren Ort und versorgt sie mit Regularien. 
+
+Und jetzt noch ein paar Wörter ohne Zusammenhang
+Passwörter
+Möglichkeiten
+Straßenzug
+Beschäftigung
+Wählerverzeichnis

@@ -1,0 +1,188 @@
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="generator" content="Adobe RoboHelp - www.adobe.com">
+<title>Test Credit Card Account Numbers</title>
+<link rel="stylesheet" href="default_ns.css"><script type="text/javascript" language="JavaScript" title="WebHelpSplitCss">
+<!--
+if (navigator.appName !="Netscape")
+{   document.write("<link rel='stylesheet' href='default.css'>");}
+//-->
+</script>
+<style type="text/css">
+<!--
+table.whs1 { x-border-left:1px table-solid; x-border-top:1px table-solid; x-border-right:1px table-solid; x-border-bottom:1px table-solid; border-collapse:separate; }
+col.whs2 { width:248px; }
+col.whs3 { width:363px; }
+td.whs4 { width:248px; }
+td.whs5 { width:363px; }
+td.whs6 { width:611px; }
+-->
+</style><script type="text/javascript" language="JavaScript" title="WebHelpInlineScript">
+<!--
+function reDo() {
+  if (innerWidth != origWidth || innerHeight != origHeight)
+     location.reload();
+}
+if ((parseInt(navigator.appVersion) == 4) && (navigator.appName == "Netscape")) {
+	origWidth = innerWidth;
+	origHeight = innerHeight;
+	onresize = reDo;
+}
+onerror = null; 
+//-->
+</script>
+<style type="text/css">
+<!--
+div.WebHelpPopupMenu { position:absolute; left:0px; top:0px; z-index:4; visibility:hidden; }
+-->
+</style><script type="text/javascript" language="javascript1.2" src="whmsg.js"></script>
+<script type="text/javascript" language="javascript" src="whver.js"></script>
+<script type="text/javascript" language="javascript1.2" src="whproxy.js"></script>
+<script type="text/javascript" language="javascript1.2" src="whutils.js"></script>
+<script type="text/javascript" language="javascript1.2" src="whlang.js"></script>
+<script type="text/javascript" language="javascript1.2" src="whtopic.js"></script>
+</head>
+<body><script type="text/javascript" language="javascript1.2">
+<!--
+if (window.gbWhTopic)
+{
+	if (window.addTocInfo)
+	{
+	addButton("show",BTN_TEXT,"Show","","","","",0,0,"","","");
+
+	}
+	if (window.writeBtnStyle)
+		writeBtnStyle();
+
+	if (window.writeIntopicBar)
+		writeIntopicBar(1);
+
+	if(1)
+	{
+	
+	}
+
+	if (window.setRelStartPage)
+	{
+	setRelStartPage("paypalmanager.htm");
+
+		autoSync(0);
+		sendSyncInfo();
+		sendAveInfoOut();
+	}
+}
+else
+	if (window.gbIE4)
+		document.location.reload();
+
+//-->
+</script>
+<h1>Test Credit Card Account Numbers</h1>
+<p>While testing, use only the credit card numbers listed here. Other numbers 
+ produce an error.</p>
+<p><span style="font-weight: bold;"><B>Expiration Date</B></span> must be a valid 
+ date in the future (use the <span style="font-weight: bold;"><B>mmyy</B></span> 
+ format).</p>
+<h2>Test Credit Card Account Numbers</h2>
+<table x-use-null-cells border="1" class="whs1">
+<col class="whs2">
+<col class="whs3">
+
+<tr><td colspan="1" rowspan="1" width="248px" class="whs4">
+<p class=CellBody style="font-weight: bold;">Credit Card Type</td>
+<td colspan="1" rowspan="1" width="363px" class="whs5">
+<p class=CellBody style="font-weight: bold;">Credit Card Number</td></tr>
+<tr><td rowspan="1" colspan="1" width="248px" class="whs4">
+<p class=CellBody>American Express</td>
+<td rowspan="1" colspan="1" width="363px" class="whs5">
+<p class=CellBody>378282246310005</td></tr>
+<tr><td rowspan="1" colspan="1" width="248px" class="whs4">
+<p class=CellBody>American Express</td>
+<td rowspan="1" colspan="1" width="363px" class="whs5">
+<p class=CellBody>371449635398431</td></tr>
+<tr><td rowspan="1" colspan="1" width="248px" class="whs4">
+<p class=CellBody>American Express Corporate</td>
+<td rowspan="1" colspan="1" width="363px" class="whs5">
+<p class=CellBody>378734493671000</td></tr>
+<tr><td rowspan="1" colspan="1" width="248px" class="whs4">
+<p class=CellBody>Australian BankCard</td>
+<td rowspan="1" colspan="1" width="363px" class="whs5">
+<p class=CellBody>5610591081018250</td></tr>
+<tr><td rowspan="1" colspan="1" width="248px" class="whs4">
+<p class=CellBody>Diners Club</td>
+<td rowspan="1" colspan="1" width="363px" class="whs5">
+<p class=CellBody>30569309025904</td></tr>
+<tr><td rowspan="1" colspan="1" width="248px" class="whs4">
+<p class=CellBody>Diners Club</td>
+<td rowspan="1" colspan="1" width="363px" class="whs5">
+<p class=CellBody>38520000023237</td></tr>
+<tr><td rowspan="1" colspan="1" width="248px" class="whs4">
+<p class=CellBody>Discover</td>
+<td rowspan="1" colspan="1" width="363px" class="whs5">
+<p class=CellBody>6011111111111117</td></tr>
+<tr><td rowspan="1" colspan="1" width="248px" class="whs4">
+<p class=CellBody>Discover</td>
+<td rowspan="1" colspan="1" width="363px" class="whs5">
+<p class=CellBody>6011000990139424</td></tr>
+<tr><td rowspan="1" colspan="1" width="248px" class="whs4">
+<p class=CellBody>JCB</td>
+<td rowspan="1" colspan="1" width="363px" class="whs5">
+<p class=CellBody>3530111333300000</td></tr>
+<tr><td rowspan="1" colspan="1" width="248px" class="whs4">
+<p class=CellBody>JCB</td>
+<td rowspan="1" colspan="1" width="363px" class="whs5">
+<p class=CellBody>3566002020360505</td></tr>
+<tr><td rowspan="1" colspan="1" width="248px" class="whs4">
+<p class=CellBody>MasterCard</td>
+<td rowspan="1" colspan="1" width="363px" class="whs5">
+<p class=CellBody>5555555555554444</td></tr>
+<tr><td rowspan="1" colspan="1" width="248px" class="whs4">
+<p class=CellBody>MasterCard</td>
+<td rowspan="1" colspan="1" width="363px" class="whs5">
+<p class=CellBody>5105105105105100</td></tr>
+<tr><td rowspan="1" colspan="1" width="248px" class="whs4">
+<p class=CellBody>Visa</td>
+<td rowspan="1" colspan="1" width="363px" class="whs5">
+<p class=CellBody>4111111111111111</td></tr>
+<tr><td rowspan="1" colspan="1" width="248px" class="whs4">
+<p class=CellBody>Visa</td>
+<td rowspan="1" colspan="1" width="363px" class="whs5">
+<p class=CellBody>4012888888881881</td></tr>
+<tr><td rowspan="1" colspan="1" width="248px" class="whs4">
+<p class=CellBody>Visa</td>
+<td rowspan="1" colspan="1" width="363px" class="whs5">
+<p class=CellBody>4222222222222</p>
+<p class=CellBody><em class=Bold><span style="font-style: normal; font-weight: bold;"><B>Note</em> 
+ :</B></span> Even though this number has a different character count than 
+ the other test numbers, it is the correct and functional number.</td></tr>
+<tr><td rowspan="1" colspan="2" width="611px" class="whs6">
+<p class=CellBody>Processor-specific Cards</td>
+</tr>
+<tr><td rowspan="1" colspan="1" width="248px" class="whs4">
+<p class=CellBody>Dankort (PBS)</td>
+<td rowspan="1" colspan="1" width="363px" class="whs5">
+<p class=CellBody>76009244561</td></tr>
+<tr><td rowspan="1" colspan="1" width="248px" class="whs4">
+<p class=CellBody>Dankort (PBS)</td>
+<td rowspan="1" colspan="1" width="363px" class="whs5">
+<p class=CellBody>5019717010103742</td></tr>
+<tr><td rowspan="1" colspan="1" width="248px" class="whs4">
+<p class=CellBody>Switch/Solo (Paymentech)</td>
+<td rowspan="1" colspan="1" width="363px" class="whs5">
+<p class=CellBody>6331101999990016</td></tr>
+</table>
+<script type="text/javascript" language="javascript1.2">
+<!--
+highlightSearch();
+if (window.writeIntopicBar)
+	writeIntopicBar(0);
+if(0)
+{
+
+}
+//-->
+</script>
+</body>
+</html>

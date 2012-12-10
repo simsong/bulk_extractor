@@ -1,0 +1,335 @@
+6/16/10
+Raw text view:
+The raw bytes view of the raw file readily shows byte characters or "standard" unicode characters.
+Any character set may be shown by piping raw bytes through InputStreamReader,
+configured to use CharsetDecoder.
+The CharsetDecoder may be selected using a spinner.
+
+
+Files to view entries from: User's selection view:
+Currently, the user picks a "project" directory, then sees a list of all files in that directory.
+The user then selects one file in this list to obtain a list view of the file's entries.
+
+Instead, the user could pick a "project" directory, but see a list of types of things to view,
+for example "email addresses", "URLs", etc.
+When the user selects a view type, the list view of entries for the file
+(or multiple files, if BulkExtractor is currently running with multiple threads) is shown.
+
+
+Files to view entries from: Categories of viewable files:
+I see three categories of files in a "project" directory: "histogram", "addressed", and "status".
+
+"Histogram" files have a "match string" and a "parent file" from which they were computed.
+The user can click on a histogram entry to 1) select the "parent file" and 2) filter on the "match string".
+Histogram files do not navigate the "raw file" view.
+
+"Addressed" files have an "address" and a "match string".
+The user clicks on an addressed entry to navigate to it in the "raw file" view.
+
+"Status" files and unrecognized files do not map to a "parent file" or to the "raw file".
+Clicking on "status" entries does nothing.
+
+
+6/17/10
+The buffered input stream offers mark and reset.  Their support is not guaranteed,
+so markSupported() is provided.  Regardless, this does not support random access.
+To approximate random access, close the stream, open a new stream, and issue skip().
+
+java.io.RandomAccessFile offers seek() for positioning from the beginning of the file.
+
+Sun provides java.nio for new channels, which should extend to reading files across a network.
+I will use a java.nio interface for local files, for now.
+java.nio should also permit bulk reads directly from the disk device to their space in memory, enhancing efficiency.
+
+java.nio provides abstract buffer, file, socket, etc. classes
+and are not intended to be used directly.
+Instead, get nio accessors from the older io classes that have been updated to support them.
+For example using io.FileInputStream, use io.FileInputStream.getChannel() to obtain nio.FileChannel.
+Then use nio.FileChannel.map to randomly map a portion of the file to nio.mappedByteBuffer
+which extends nio.ByteBuffer.  Use nio.ByteBuffer for raw access.
+
+Class io.RandomAccessFile is also functional, both directly via RandomAccessFile.seek()
+and indirectly via nio.FileChannel.  I use io.FileInputStream with nio.FileChannel
+rather than either io.RandomAccessFile approach because 1) RandomAccessFile supports RW
+and I only need RO, and 2) RandomAccessFile.seek() is unlikely to offer the seek efficiency
+expected by using nio.FileChannel.map.
+
+
+6/18/10
+Replacing JList View implementations with JTextArea View implementations:
+The Entries View and Raw File View were based on JList.
+A list view is inappropriate for these two view contexts.
+The Entries View needs to support specific text highlighting, which is supported
+via Highlighter with JTextArea.  JList does not provide specific text highlighting,
+although a list cell renderer could be made to do so.
+The Entries View and Raw File View both need to support text selection (via Caret API).
+The JTextArea View implementation will support highlighting (Highlighter) and
+text selection (Caret).
+
+This change requires that the Entries Model and Raw File Model
+implement the PlainDocument model (the PlainDocument model is the default used by JTextArea).
+All listeners of the Entries Model and Raw File Model will be changed
+to respond to Document events rather than ListModel events.
+An alternative to using PlainDocument is to simply use String
+and then use Observable and Observed for change notifications,
+but PlainDocument is the intended mechanism for JTextArea, and we may want to use it later.
+
+JTextArea was chosen over JTextComponent because JTextComponent's heavier mixed font features
+are not required.  JTextArea was chosen over JTextField because JTextField is for short text
+and does not support text selection.
+
+7/7/10
+The DefaultStyledDocument Document model used in the EntriesPane JTextArea view
+cannot handle large files.  Specifically, sample 171MB Domex file wordlist.txt
+causes OutOfMemoryError in DefaultStyledDocument when the large file string is
+copied into Document via Document.insertString.
+
+A search filter that produces less output works successfully,
+but takes over a minute to run, indicating the need for filter redesign.
+Specifically, this filter produces a second string from the first string
+by iterating across the first string using Matcher on the "compiled" Pattern.
+
+The Document view loses its place when a filter is applied and then unapplied,
+which is disorienting.  It would be nice to preserve the view or at least relocate to the top.
+
+Conclusion: javax.swing.text.DefaultStyledDocument is unacceptable as is because
+it cannot ingest large text.  I will replace DefaultStyledDocument with PlainDocument,
+which maintains data differently.  Specifically, it maintains a map of all lines
+delimited by CR.  If this still fails, I may need to adapt PlainDocument.
+Search filter performance and document position will be considered in this change.
+
+7/8/10
+We have two performance issues relating to managing the viewing of entries:
+  1) Ingesting large files into the view takes too long and takes too much memory.
+  2) Applying filters to large datasets using Java's Pattern regex provision is too slow.
+
+I discuss each of these issues, and request recommendation for both.
+
+
+1) Reading large files into the Document Model:
+The Document model is not built to handle massive content.
+It fails with a memory error when reading too much,
+and takes minutes for the JTextArea component to ingest and render a view.
+Once ingested, the view is very responsive to scrolling, which is good.
+
+The List data model used by JList would be nice, but it does not provide Highlight functionality.
+
+An easier solution is to limit the size of data to, say 100 KBytes, and alert the user
+that not all data was read.  The user would get alerts until a filter is applied that
+filters the data size to below 100 KBytes.
+This solution uses the existing JTextArea component and Document data model.
+
+A stronger solution is to create my own Swing component and data model.
+The component would be similar to JTextArea, but would consume data from my data model.
+My data model would preprocess data into a Map.
+
+Preprocessing is required in order to obtain the number of lines (number of \n tokens)
+and to associate the start address and length of each line.
+The resultant data structure consists of the following:
+  String really_long_string;
+  int[] line_begin_index;
+  int[] line_length;
+  int total_number_of_lines;
+Note that really_long_string must fit on the JVM's heap
+and that the total number of newlines must be less than MAXINT.
+
+An alternative, which handles more data, is still limited in lines by MAXINT,
+but introduces some runtime latency, is to still preprocess line variables,
+but not maintain String really_long_string.  Instead, provide text during
+runtime using a buffered file reader based on positioning obtained during preprocessing.
+
+
+2) Filtering using regex
+Java provides regex parsing using its Pattern class.  This facility processes
+data from data sources that implement the CharSequence interface.  It is slow.
+
+I would like to upgrade filtering in two ways:
+  1) Have it produce output in the form of the data structure decided upon above
+     so that filter output is immediately available for consumption by the View.
+
+  2) use a faster, possibly simpler regex algorithm.
+
+My question for (2) is: What should I use for regex?
+I would like to use JFlex, but it requires precompiled tokens, not runtime tokens.
+Should we provide only a basic filter that only matches a literal string with no wildcards?
+Should we allow literal strings, ".", and ".*" only, and not support all other regex constructs?
+
+
+7/20/10: entries is renamed to features; the entries are features.
+
+7/21/10: I cannot use the Document interface:
+I was planning on implementing the Document interface and using it as the data provider
+for the Features View.  This would have allowed the Features View to use the
+JTextArea Swing component as is.
+
+A problem with the Document interface is that it relies on Element objects
+to delineate text lines separated by NEWLINE.  I was going to create a subset of
+Element objects on demand as required by the View
+because it is impractical to create one for every line of a large file.
+It turns out that the DocumentEvent Interface requires arrays of all
+new and deleted Elements when the Document model changes,
+i.e. it requires that all Element objects be instantiated, which is unacceptable.
+As a result, I cannot implement the Document interface.
+As a result, I cannot use the JTextArea Swing component as is.
+
+I will replace the Document model with new "LineDataModel"
+which will be simple: non-editable, single-font, and no line wrapping.
+
+I will replace Swing component JTextArea with new "JLineArea".
+It will provide a text area view, but it will obtain data from the LineDataModel
+rather than the Document model.  It will fire simple Observable events
+rather than DocumentEvent events.
+It will support highlighting and selectability.
+
+
+8/5/10: Parsing the Features File to obtain lines:
+(Note: reading lines and filtering lines is a separate topic.)
+We require indexed lines for viewing entries in the Features File.
+Requirement 1: The Features File must be able to be larger than MAXINT bytes in size.
+Requirement 2: The number of lines must be less than MAXINT because lines are indexed
+by arrays, and array size is limited by MAXINT.  In fact, the number of lines
+must be less than MAXINT so that arrays can fit in memory.  Specifically,
+we hardcode max lines as an array of type long[20,000,000].  The value of 20,000,000
+was arbitrarily chosen; the point is that the value is not flexible because we are not
+allocating an adjustable set of Long Objects.  This hardcoded line limitation
+may need to be redesigned later.  For example we can dynamically create multiple
+sets of long[1M] line arrays, as needed.
+
+We parse the bytes of the Features File in 64 KByte sections looking for '\n' bytes.
+Note that we do not parse for CR or CR/n.  We impose this formatting restriction
+in order to improve parsing efficiency.
+We do not use character readers because we do not need to translate bytes into characters
+at this stage.
+We do not need random file access because the parsing is linear.
+We read 64 KBytes and copy it into a 64 KByte array for searching for '\n' bytes.
+We perform a redundant data copy for two reasons: 1) mapping file data directly
+onto a byte array via the MappedByteBuffer.array() interface is not supported
+on my JVM (32-bit Intel, Ubuntu Linux), and 2) the bytewise fetch operation
+incurs a function call for each byte, which I believe is more expensive than
+copying the data to a byte array and accessing the array using subscripts.
+
+We do not use java.nio, we use java.io  In fact, we do not use BufferedReader in java.io
+because we read directly into our own 64 KByte buffer sections.
+
+9/2/10: Using Java Web Start:
+NOTE 1: Java files are cached and may require specific deletion from the user's Java environment
+using Java's ControlPanel.
+On Linux, run Java app "ControlPanel" to view cached files and delete cached files
+or configure Java to not cache.
+
+NOTE 2: The Browser must support Java Web Start, which is likely.
+The client must run J2SE 1.6+; the minimum Java Version is enforced by the .jnlp file.
+The minimum Java Version may be lowered by compiling or testing on an earlier version of Java.
+The 1 GByte heap size specified in the .jnlp file may not be compatible with everyone's JRE.
+
+We use XML file BEViewer.jnlp in conjunction with a JNLP-configured Servr to serve BEViewer.jar.
+Both these files are at /htdocs/BulkExtractorViewer/.
+Run BEViewer by browsing to 'http://domex.nps.edu/BulkExtractorViewer/BEViewer.jnlp'
+or click the link at https://domex.nps.edu/domex/wiki/Bulk_Extractor_Viewer_User_Interface.
+
+Java Web Start uses a Security Manager that controls access to files and other resources.
+The default configuration of Java Web Start runs the Java application in a sandbox.
+BEViewer cannot run with default sandbox settings.
+To run BEViewer, we must either:
+  1) Enable each action that is controlled by the Java Security Manager.
+     The user is prompted each time the Security Manager flags a request to a controlled resource.
+  2) Sign the .jar file and run without the Security Manager.
+     The user is prompted when the application starts.
+     In our case, the user is warned that the signature is not verified.
+I chose (2).
+
+Alternatives to Web Start are:
+  1) Run via "java -Xmx1g -jar BEViewer.jar" or a script that invokes this command.
+  2) Wrap the .jar in a .exe, but this works on Windows only.
+I chose Web Start.
+
+Note that a large Java heap space is required to support large Feature lists.
+I chose a 1GB heap space because this is about as large as my JVM allows on my system.
+
+9/15/10: Updating the Raw File highlight address:
+The Raw File highlight address is set when a feature is selected.
+The Raw File highlight address is cleared when a new raw file is loaded.
+Problem: the interface to set the highlight address is inside the raw file component,
+the trigger to set the highlight address is from the features component, and these
+components are isolated.
+Solution: create relay in BEViewer since that is at the top. 
+Solution: no: create public static interface in FeaturePane for adding feature line selection listeners.
+
+10/20/10: tasks
+Corrected address paint bug in BasicFeaturesUI.java: de-highlight on first line.
+Corrected clipboard bug that manifests on Windows.
+Added javadoc comments and Refactored in BEViewer.
+
+10/22/10: tasks
+Corrected address paint bug in BasicFeaturesUI.java: de-select previous when selecting next.
+
+11/15/10: Testing E01 files:
+file serialization: hardcode serialization sequence, inspect boundaries for sequence.  Done.
+
+Header Section: Open an E01 file and observe case number and examiner name.
+
+Media blocks:
+Using file IN10-0117, 1) create Feature files via bulk_extractor,
+and 2) create .raw from .E01 files.  For BOTH formats:
+* Spot check that features align in the raw file view.
+* Check addresses > MAXINT (> 0xffffffff).
+* For .E01, Use .raw to check for continuity across page boundaries and file boundaries.
+* Check that the last read request on the last file succeeds
+  and that the address matches the filesize.
+
+Alternate E01 formats:
+Verify a proper media read when the Table Section Base Offset is non-zero.
+Verify a proper media read on an old E01 file with no Table Section checksum.
+
+
+12/2/10: tasks: Reworked readers to accept random reads rather than being limited to aligned reads only.
+12/3/10: tasks:
+Corrected Open Task default checkbox selection to match default values.
+Changed WOpen to set default on first open only.
+Changed file chooser to create new chooser each invocation because JFileChooser mode fails to transition between modes.
+
+12/7/10 tasks:
+Changed EWF and serial raw readers to allow unaligned random access reads.
+
+Refactored EWF API into three modules, without static methods, in order to allow multiple use
+and thread safety.
+
+Replaced custom logging features with the popular log4j API.  Wrote an appender class
+to forward log4j logs to BEViewer's log window.
+
+2/11/11: Fix event management for Highlighting:
+HighlightModel generates events, repeating media reads unnecessarily.
+Fix by changing HighlightModel to HighlightProvider and managing HighlightProvider
+through interfaces under ImageModel.  ImageModel manages the image view.
+
+2/14/11: Fixed timer thread in ProcessWatchdog.
+2/14/11: Features selection corrected to deselect when navigation navigates elsewhere.
+2/15/11: Consolidated histogramModel and featureSelectionModel into FeatureModel to remove
+         complexity and reduce events
+2/15/11 Moved report progress setPercent to Swing queue to synchronize variables and the view
+2/16/11: Corrected report removal enabled buttons by simplifying the ReportsModel interfaces.
+2/16/11: Corrected report removal set fault.
+2/16/11: Tested operation with missing report files and report files deleted during runtime.
+         Corrected null exception and improved failure wording.
+2/16/11: Added save/restore bookmark preferences.
+2/18/11: Corrected load and failure synchronization issues in Features and image readers.
+2/22/11: Added import/export settings.  Improved failure performance when attempting to import
+         bookmark feature lines that cannot load because feature files are not present.
+2/22/11: Received working HTTP path GET bulk_extractor code.  Integrated code, tested.
+2/22/11: Started code cleanup.
+
+3/1/11: Fixed byte range error in reader when there are highlight bytes but no data.
+3/1/11: Added menu switch to enable/disable Java Media reader.
+3/1/11: Diagnosed bulk_extractor range bug, sent report.
+3/1/11: Changed Reports model to be based on report.xml rather than directory and image.
+3/1/11: Changed Report loader to select report.xml rather than report directory.
+
+4/13/11: Improved file, field, and combobox null views to be deselected and italic
+         with text "None" when null.
+4/13/11: Corrected size of combobox.  Corrected initialized sizes of all expandable fields.
+4/14/11: Corrected Reports Tree collapse bug.
+
+After BEViewer v0.2.9:
+6/2/11: Corrected misleading visual feedback when bulk_extractor scanner finishes.
+6/2/11: Corrected file selector mode in Open Project window.
+

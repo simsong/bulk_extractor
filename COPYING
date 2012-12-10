@@ -1,0 +1,44 @@
+Public Domain Software
+Simson L. Garfinkel
+Naval Postgraduate School
+
+Last updated December 10, 2012
+
+Except as otherwise noted, bulk_extractor source code files are public domain
+software. 
+
+The software provided here is released by the Naval Postgraduate
+School, an agency of the U.S. Department of Navy.  The software bears
+no warranty, either expressed or implied. NPS does not assume legal
+liability nor responsibility for a User's use of the software or the
+results of such use.
+
+Please note that within the United States, copyright protection, under
+Section 105 of the United States Code, Title 17, is not available for
+any work of the United States Government and/or for any works created
+by United States Government employees. 
+
+However, because some bulk_extractor source modules (e.g. pyxpress.c)
+are covered under the GNU Public License, the compiled bulk_extractor
+executable is covered under the GPL copyright. This means that binary
+distributions of bulk_extractor must include the full source code (or
+have the source code be made easily available.)
+
+...
+
+bulk_extractor uses some SleuthKit 3 include files. There are present
+in the directory src/tsk3. 
+
+tsk3 includes are Copyright (C) 2010 Brian Carrier and covered under
+the Common Public License 1.0
+
+utf8.h is Copyright 2006 Nemanja Trifunovic
+
+base64_forensic.cpp is Copyright (C) 1996-1999 by Internet Software Consortium, with
+ portions Copyright (c) 1995 by International Business Machines, Inc.
+
+scan_ascii85.cpp is  Copyright (C) 2011 Remy Oukaour
+
+scan_json.cpp is Copyright (c) 2005 JSON.org
+
+pyxpress.c is Copyright 2008 (c) Matthieu Suiche. <msuiche[at]gmail.com> 

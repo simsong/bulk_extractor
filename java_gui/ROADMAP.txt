@@ -1,0 +1,116 @@
+
+COMPLETED:
+
+Check for timing issue when scanners list fails to show.
+Fixed: Poll aborted in 200ms.  Changed poll to abort in 5s.
+
+Make "Run bulk_extractor" window scrollable.
+Fixed: Removed window tabs and made the window scrollable.
+
+* Change for compatibility with hex escape codes rather than decimal escape codes.
+Fixed acceptably for 1.3.  Specifically, I now keep the Feature bytes in binary,
+in escaped format, as they come from the Feature file, as long as possible.
+When it is time to use them (to display them or filter using them) I convert them
+to usable form using a simple approach: Use of \0 indicates UTF16 so take out \0 to get UTF8.
+No use of \0 indicates UTF8 so put \0 between bytes to get UTF16 pattern.
+The UTF8 is created by removing the \0 bytes.
+The UTF16 is created by adding \0 bytes between the UTF8 bytes.
+The UTF16 is not valid because it does not have \0 in front or at the end (it is neither LE or BE)
+but it suitable for searching and for highlighting.
+
+Fixed: Removed the md5 field from exif output.
+
+* Install the DigiCert code signing certificate for the Windows installer. Done.
+
+* Check that the windows installer works fine (it should). Done.
+
+* Fully integrate BEViewer into bulk_extractor so that if people have the requisite packages, it will make. Done.
+
+* Check for proper operation of "-R" and U+100001C. Done.  Specifically, a new line type is introduced.  These line types are displayed with a space rather than with U+100001C, but they cannot be browsed to.
+
+* The JSON view is acceptable.  Also, the elf and winpe views have been updated.  The elf and winpe data is in XML.  The view could be read in XML and formatted, but it is currently displayed as raw text, which is acceptable for now.
+
+* For the Macintosh L&F: Keyboard shortcuts are completed.  There are other issues that could be addressed later, in particular the "Open File" dialog box, which is not mac-like.  See "Making Java look like mac"
+
+----------------------------------------
+For Version 1.4:
+
+* change the up/down arrow behavior in the feature listing so that when a Feature is selected and up/down is pressed, the next feature in the listing is navigated to in the Navigation area rather than scrolling the feature listing.
+
+* Read Reports from .zip:
+Allow Open Report to select .zip file instead of report.xml.
+Postponed until 1.4: I am disappointed to say that I can't get BEViewer to read Report files from .zip files for 1.3.  BEViewer Report files are File based and Java's ZIP files are not File based (in Java, you have a ZipFile class from which you list or stream zip entries).  Both File and ZipFile approaches provide InputStream, which is fine.  I'll need to write a new ReportProvider class that accepts Reports from files or zip archives and provides InputStream.  I'll then change BEViewer to work with ReportProvider rather than File.
+
+* Show Classification Level postponed until 1.4.
+Classification Level also needs to be embedded into output from bulk_extractor.
+
+* Excessive Warning pop-up:
+After first warning, Do not say "image file not available for this feature".
+Instead, have checkbox: "Do not show this warning again for this Image".
+Postponed: A proper implementation will require a window similar to JDialog, but allowing a checkbox for "Don't show this again".  The dialog class may contain an enumerator such that when checkbox=true it does not call setVisible().
+
+1.4: for exif view: prioritize and sort fields.
+
+1.4: Add regex filter in Feature parser to improve search.  Inspired by "boiled down" phone numbers.
+
+
+
+
+************************************************************
+Old, From DEEP wiki:
+
+This page documents potential future Bulk Extractor Viewer functionality.
+Please feel free to comment on these features or submit additional feature requests here: [mailto:bulk_extractor-users@googlegroups.com email].
+Please visit the Bulk Extractor Users Group here: [http://groups.google.com/group/bulk_extractor-users Bulk Extractor Users Group].
+
+=== Add Batch Capability when Running bulk_extractor ===
+Provide support allowing bulk_extractor to process a list of image files in addition to the ability to process a single specified image file.
+
+=== Improve Copy Functionality ===
+Feature and Image lines may be copied by selecting a range, then copying the range.
+Currently, the range is selected by pressing the mouse, dragging across the range, then releasing the mouse.
+This limited capability may be improved by supporting standard functionality:
+# Improve Copy functionality by providing Menu | Edit | Select All functionality.
+# Improve range selection capability by allowing the user to click on a line, press CRTL, and click on another line to select the inclusive range.
+
+=== Associate Sectors with Files ===
+Using DFXML, filenames can be identified and displayed along with the media offsets of Features.  Additionally, filenames can be selected so that their contents can be displayed and scrolled through in the viewer's Image scroll area.  The basic idea is here: [http://domex.nps.edu/deep/begui/map_offset_to_file.pdf Access Files from Feature Offsets].The proposed implementation for this functionality is described here: [http://domex.nps.edu/deep/begui/dfxml_BEViewer.pdf Corrrelating Sectors with Files].
+
+=== Provide Additional Bookmarking Capability ===
+Currently, single features are bookmarked by clicking the Bookmark button when the feature is navigated to.
+Would it be useful to bookmark Histograms as well?
+Or to group-bookmark all Features associated with a selected Histogram?
+
+The current direction is to retain functionality for bookmarking single features.
+Functionality will not support bookmarking feature groups or histogram groups.
+New capability will be directed toward filtering feature sets, not toward bookmarking feature sets.
+
+=== Support Filtering and Highlighting for Multiple Items ===
+Currently, only single items are filtered and highlighted.
+Functionality may be introduced for filtering and highlighting a list of items, each delineated by a carriage return.
+Input will consist of basic text (no regex and no wildcards).
+
+=== Highlight all Features Present on an Image Page ===
+Currently, the selected Feature is highlighted in the Image view.  It would be nice to provide additional highlighting so that all features identified from all Feature files may be simultaneously highlighted in the Image view.
+
+This capability is computationally intensive.  A "find now" button and a progress bar may be introduced for supporting this feature as a "check now" operation.
+
+=== Select Features from the Image View ===
+Currently, the Image View does not respond to selections in its content (except to copy it).  Functionality can be added so that selecting a Feature in the Image View 1) selects the associated Histogram Feature file and 2) selects the Feature so that it shows up in the Referenced Feature File listing.  This functionality enables quick traversal to the Histogram file and to the Referenced Feature listing.  Currently, the equivalent process is performed by identifying the Feature type, selecting its associated Histogram file in the Reports area, then selecting the Feature entry in the Histogram listing matching the path to the feature in the Image View.
+
+=== Correct AFF Deficiency ===
+Image files encoded in the AFF format cannot be read if they are encrypted.  To enable support for reading encrypted AFF Image files, AFF passpharases must be managed.  The proposed interface for managing AFF passpharases is [http://domex.nps.edu/deep/begui/Managing_AFF_Passphrases.pdf here].
+
+=== Provide Highlighting for IP Addresses ===
+IP addresses are not highlighted in the Image view.  This is because IP Feature entries and IP values are managed differently from other types of Features.  Specifically, 1) the Feature offset points to the start of the IPv4 header rather than to the IP address itself, and 2) the IP address is encoded in memory as four consecutive bytes rather than as the decoded text present in the Feature line.
+We can add code to specifically manage highlighting for IP addresses.  For example use "struct ip R (src)" or "struct ip L (dst)" to determine offsets for Left and Right IP addresses.
+
+=== Provide Highlighting for other Feature types ===
+In addition to IP addresses, other Feature types may benefit from highlighting specific data structure fields.  Highlighting would be based on knowledge of the data structure of the associated feature type.  New provisions for highlighting may be examined as special Feature types are introduced.
+
+=== View Features in a more Native Setting ===
+Currently, features are viewed by observing characters (text view) or bytes (hex view) in the image view.  It would be nice to provide a more native view according to their classification:
+* For text of various language formats, allow the text to be viewed in selectable language formats.
+* For images, allow the image to be rendered.
+* For formats embedded in data structures such as IP features, show the data framed within its data structure.
+

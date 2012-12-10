@@ -1,0 +1,29 @@
+Install the mingw environment using CONFIGURE_FC17.sh.
+Install additional packages using CONFIGURE_LIBRARIES.sh.
+
+Enable the Windows installer by running configure: "./configure --enable-win_installer".
+Type "cd win_src && make" to create the unsigned windows installer.
+
+----------------------------------------
+
+The following instructions describe creating a signed Windows installer:
+
+Signing tool "osslsigncode" for Authenticode signing of EXE/CAB files is required.
+Please install package osslsigncode.
+
+Please define and export these Environment variables in order to sign files:
+Environment variable FOUO_BE_CERT must point to the code signing certificate.
+Environment variable FOUO_BE_CERT_PASSWORD must contain the password for the code signing certificate.
+
+File uninstall.exe must also be present so that it, too, can be signed.
+Unfortunately, obtaining it is convoluted:
+    1) Create the unsigned installer by typing "make", as described above.
+    2) Run the unsigned installer on a Windows system.  This action will
+       additionally install the uninstaller.
+    3) Copy the uninstaller from the Windows system back into this directory.
+       It should be at path \c:\Program Files (x86)\Bulk Extractor <version>\uninstall.exe.
+If the system clock on your Windows system is slower, you may need to "touch uninstall.exe"
+after it is installed in this directory.
+
+Now, run "make signed".
+

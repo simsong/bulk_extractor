@@ -1,0 +1,2 @@
+[a-z]*@f3c.com
+[a-z]*@redellipse.net

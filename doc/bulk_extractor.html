@@ -1,0 +1,65 @@
+<p><b>bulk_extractor</b> is a C++ program that scans a disk image, a file, or a
+directory of files and extracts useful information 
+without parsing the file system or file system
+structures. The results are stored in <i>feature files</i> that can be easily inspected, parsed, or processed with automated tools. <b>bulk_extractor</b> also created a histograms of features that it finds, as features that are more common tend to be more important.</p>
+
+<p>In addition to <b>bulk_extractor</b>, we have made available a small number of python programs that perform automated processing on the feature files. </p>
+
+<p><b>bulk_extractor</b> is distinguished from other forensic tools
+by its <i>speed</i> and <i>thoroughness</i>. Because it ignores file system structure, <b>bulk_extractor</b> can process different parts of the disk in parallel. In practice, the program splits the disk up into 16MiByte pages and processes one page on each available core. This means that 24-core machines process a disk roughly 24 times faster than a 1-core machine. <b>bulk_extractor</b> is also thorough. That's because <b>bulk_extractor</b> automatically detects, decompresses, and recursively re-processes compressed data that is compressed with a variety of algorithms. Our testing has shown that there is a significant amount of compressed data in the unallocated regions of file systems that is missed by most forensic tools that are commonly in use today.</p>
+
+<p>Another advantage of ignoring file systems is that <b>bulk_extractor</b> can be used to process any digital media. We have used the program to process hard drives, SSDs, optical media, camera cards, cell phones, network packet dumps, and other kinds of digital information.</p>
+
+<h2>Output Feature Files</h2>
+<p><b>bulk_extractor</b> now creates an output directory that has the following layout:</p>
+<dl>
+<dt>alerts.txt</td><dd>Processing errors.</dd>
+<dt>ccn.txt</td><dd>Credit card numbers</dd>
+<dt>ccn_track2.txt</td><dd>Credit card "track 2" informaiton, which has previously been found in some bank card fraud cases.</dd>
+<dt>domain.txt</td><dd>Internet domains found on the drive, including dotted-quad addresses found in text.</dd>
+<dt>email.txt</td><dd>Email addresses.</dd>
+<dt>ether.txt</td><dd>Ethernet MAC addresses found through IP packet carving of swap files and compressed system hibernation files and file fragments.</dd>
+<dt>exif.txt</td><dd>EXIFs from JPEGs and video segments. This feature file contains all of the EXIF fields, expanded as XML records.</dd>
+<dt>find.txt</td><dd>The results of specific regular expression search requests.</dd>
+<dt>ip.txt</td><dd>IP addresses found through IP packet carving.</dd>
+<dt>rfc822.txt</td><dd>Email message headers including Date:, Subject: and Message-ID: fields.</dd>
+<dt>tcp.txt</td><dd>TCP flow information found through IP packet carving.</dd>
+<dt>telephone.txt</td><dd>US and international telephone numbers.</dd>
+<dt>url.txt</td><dd>URLs, typically found in browser caches, email messages, and pre-compiled into executables.</dd>
+<dt>url_searches.txt</td><dd>A histogram of terms used in Internet searches from services such as Google, Bing, Yahoo, and others.</dd>
+<dt>url_services.txt</td><dd>A histogram of the domain name portion of all the URLs found on the media.</dd>
+<dt>wordlist.txt</td><dd>A list of all "words" extracted from the disk, useful for password cracking.</dd>
+<dt>wordlist_*.txt</td><dd>The wordlist with duplicates removed, formatted in a form that can be easily imported into a popular password-cracking program.</dd>
+<dt>zip.txt</td><dd>A file containing information regarding every ZIP file component found on the media. This is exceptionally useful as ZIP files contain internal structure and ZIP is increasingly the compound file format of choice for a variety of products such as Microsoft Office</dd>
+</dl>
+
+For each of the above, two additional files may be created:
+<dl>
+<dt>*_stopped.txt</dt><dd><b>bulk_extractor</b> supports a <i>stop list</i>, or a list of items that do not need to be brought to the user's attention. However rather than simply suppressing this information, which might cause something critical to be hidden, stopped entries are stored in the stopped files.</dd>
+<dt>*_histogram.txt</dt><dd><b>bulk_extractor</b> can also create histograms of features. This is important, as experience has shown that email addresses, domain names, URLs, and other informaiton that appear more frequently on a hard drive or in a cell phone's memory can be used to rapidly create a <i>pattern of life</i> report.</dd>
+</dl>
+
+Bulk extractor also creates a file that captures the provenance of the run:
+<dl>
+<dt>report.xml</dt><dd>A Digital Forensics XML report that includes information about the source media, how the <b>bulk_extractor</b> program was compiled and run, the time to process the digital evidence, and a meta report of the information that was found.</dd>
+</dl>
+
+<h2>Post-Processing</h2>
+
+We have developed four programs for post-processing the <b>bulk_extractor</b> output:
+<dl>
+<dt>bulk_diff.py</dt><dd>This program reports the differences between two <b>bulk_extractor</b> runs. The intent is to image a computer, run <b>bulk_extractor</b> on a disk image, let the computer run for a period of time, re-image the computer, run <b>bulk_extractor</b> on the second image, and then report the differences. This can be used to infer the user's activities within a time period.</dd>
+<dt>cda_tool.py</dt><dd>This tool, currently under development, reads multiple <b>bulk_extractor</b> reports from multiple runs against multiple drives and performs a multi-drive correlation using Garfinkel's Cross Drive Analysis technique. This can be used to automatically identify new social networks or to identify new members of existing networks.</dd>
+<dt>file_location.py</dt><dd>In the <b>bulk_extractor</b> feature file, each feature is annotated with the byte offset from the beginning of the image in which it was found. The program takes as input a <b>bulk_extractor</b> feature file and a DFXML file containing the locations of each file on the drive (produced with Garfinkel's fiwalk program) and produces an annotated feature file that contains the offset, feature, and the file in which the feature was found.</dd>
+<dt>make_context_stop_list.py</dt><dd>Although forensic analysts frequently make "stop lists"---for example, a lsit of email addresses that appear in the operating system and should therefore be ignored---such lists have a significant problem. Because it is relatively easy to get an email address into the binary of an open source application, ignoring all of these email addresses may make it possible to cloak email addresses from forensic analysis. Our solution is to create <i>context-sensitive stop lists</i>, in which the feature to be stopped is presented with the context in which it occures. The make_context_stop_list.py program takes the results of multiple <b>bulk_extractor</b> runs and creates a single context-sensitive stop list that can then be used to suppress features when found in a specific context. One such stop list constructed from Windows and Linux operating systems is available on the bulk extractor website.
+</dl>
+
+
+<h2>Demonstrations</h2>
+We have demonstrations of how <b>bulk_extractor</b> runs on several disks images from the NPS Realistic Corpus:
+<ul>
+ <li><a href="http://afflib.org/<b>bulk_extractor</b>_demos/nps-2009-domexusers/">nps-2009-domexusers</a></li>
+ <li><a href="http://afflib.org/<b>bulk_extractor</b>_demos/nps-2009-domexusers.redacted/">nps-2009-domexusers.redacted</a></li>
+ <li><a href="http://afflib.org/<b>bulk_extractor</b>_demos/nps-2009-ubnist1.gen3">nps-2009-ubnist1.gen3 </a></li>
+</ul>
+

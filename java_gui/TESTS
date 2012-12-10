@@ -1,0 +1,50 @@
+* Automated tests:
+Run regression tests under menu Help | Test.
+This tests:
+  runtime-persistent state.
+  Ability to read a queue of features.
+
+The mechanism for reading features is simply an automation of opening and automating a Case.
+Create a case file manually by opening several Reports, bookmarking several Features
+from several Feature Files from several Reports, selecting relative and embedded paths,
+and saving the Case.
+
+* Manual tests:
+In addition to automated tests, currently, manuall testing is required for GUI systems.
+Specifically, GUI actions start processes, most notably these two:
+  1) Selecting a Feature file.
+  2) Selecting a Feature.
+Because these files can take a long time to read, These actions start readers on a non-Swing Thread.
+When errors occur, they are reported using report requests that schedule on the Swing Thread.
+
+This mechanism is loosely tested by selecting very large Feature files in the Reports pane
+and verifying that the busy indicator engages during the read and that the Swing thread is free
+(by typing text into a field, resizing the window, selecting another feature file, etc.)
+If possible, we may want to read >7G Feature files.
+
+Also, load-test the readers by selcting large feature files and feature entries
+rapidly in succession.  This validates the ability to preempt selections that are loading, 
+which is different from the automated tests, which load feature entries in succession.
+
+* Features and Histograms:
+Also note that there are two types of Feature files: regular Feature files and Histogram files.
+They are treated differently: For Feature files, entries in Feature files are displayed in
+the Features listing.  For Histogram files, Histogram entries are displayed in the Features
+listing and Features from the Histogram file's associated Feature file is displayed in the
+Referenced Feature listing.
+
+This is loosely tested by selecting both feature file types in the Reports tree
+and inspecting that the Feature listings are rendered.
+
+* UI Capabilities:  Test the following:
+- test highlighting by validating that feature text and user text are highlighted.
+There are two formats for feature text: formatted feature text and image highlighting bytes.
+These formats are generic for some feature files and specific to feature type for other feature files.
+- test filtering by typing in a Feature Filter value and validating that only matching values
+are highlighted.
+Note that feature filters do not match the way highlighting does.
+This will be confusing and needs to be changed.
+The concern is that the change will run too slowly for large files.
+- test buttons, text areas, and menu commands.  Verify that disablable controls are disabled
+at the right times.
+

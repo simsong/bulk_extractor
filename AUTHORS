@@ -1,0 +1,13 @@
+bulk_extractor is a group effort from many authors and contributors, including:
+
+Simson L. Garfinkel <slgarfin@nps.edu>  (overall design)
+Bruce Allen <bdallen@nps.edu>           (BEViewer, exif analyzer, windows prefetch rewrite)
+Alex Eubanks <endeavor@rainbowsandpwnies.com>  (pe and ELF scanners)
+Luis E. Garcia II <legarcia@nps.edu>    (Initial windows prefetch implementation)
+Michael Shick <mfshick@nps.edu>         (odds and ends)
+
+LIFT was developed by CMU under contract to the Department of Defense. The team members were:
+  Siddharth Gopal <sgopall@cs.cmu.edu>
+  Yiming Yang <yiming@cs.cmu.edu>
+  Konstantin Salomatin <ksalomat@cs.cmu.edu>
+  Jaime Carbonell <jgc@cs.cmu.edu>

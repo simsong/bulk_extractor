@@ -1,0 +1,24 @@
+From Simson, 3/26/12 6:06PM:
+
+All,
+
+Another example today as to why it's to our benefit to have bulk_extractor being an open source tool.
+
+Over the weekend there was a significant amount of chatter on the linux_forensics mailing list requesting a tool that would scan through a disk image and report all instances of a keyword (in this case, a person's name). Rather than just saying "use bulk_extractor," I put together an example and posted it online:
+
+http://afflib.org/software/bulk_extractor/bulk_extractorstring-search
+
+Well, the person with the problem (below) took my example and his test case, which involved Open Office, and found that bulk_extractor's string search doesn't work with open office (!).   He made a test case which demonstrated the flaw and sent it to me.
+
+Using the test case, I was able to determine that the ZIP files that Open Office makes are not compliant with the ZIP specification. That doesn't impact Open Office users, of course, but it did impact bulk_extractor.  Once I knew of the bug I was able to find it in just a few minutes and we now have a fix in version 1.3, which will be released this summer. 
+
+Interestingly, the bug was not present in an earlier version of bulk_extractor; it got added as the result of some error checks and "sanity tests" that were added in version 1.2.  
+
+So unless we want to dramatically improve our conformance testing and regression testing --- probably to the tune of an additional $500K to $1M a year --- relying on the open source community for testing such as this is going to be our best bet.
+
+Simson
+
+(ps: "The Dog's Bollix" is a consultant who provides forensics support to a number of organizations, apparently.)
+
+
+

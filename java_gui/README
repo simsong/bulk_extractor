@@ -1,0 +1,2 @@
+Please run the .jar file from the command line with more memory than Java provides by default
+by typing "java -Xmx1g -jar BEViewer.jar" from the command line.

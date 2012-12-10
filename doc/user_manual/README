@@ -1,0 +1,15 @@
+The Makefile for this document is not completely automated
+because it needs graphics compiled and the Glossary generated.
+
+Compiling graphics:
+We archive the generated .pdf images, so they do not need to be generated.
+They may be generated via "make graphics", but inkscape must be installed to do so.
+Note that inkscape asks to embed or link each image to be prepared.
+For each image: select "embed", which is the default, to continue.
+
+Compiling with a correct Glossary:
+1) Run make, which generates the document but does not build Glossary links.
+2) Run "make glossary" to build the requisite glossary files.
+3) touch the timestamp of beviewer-um.pdf so that it can be remade.
+4) Run make to generate the document with the correctly generated glossary information.
+

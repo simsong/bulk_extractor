@@ -1,0 +1,10 @@
+Doxygen is not integrated into autotools yet.
+
+To use: type "make" which is currently equivalent to "doxygen Doxyfile".
+
+To compile latex: "cd latex; make"
+
+File Doxyfile was configured for bulk_extractor using doxywizard UI.
+Currently, it is configured to create HTML and LaTeX outputs.
+To update Doxyfile: "doxywizard Doxyfile"
+

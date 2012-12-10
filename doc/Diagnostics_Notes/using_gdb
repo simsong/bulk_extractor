@@ -1,0 +1,7 @@
+(taken from Re:Abort trap? 6/5/12 1:41PM)
+
+Try compiling bulk_extractor with symbols on and optimization turns off.  When you run ./configure say ./configure --with-noopt
+
+Then run "gdb bulk_extractor"
+
+Then "run" from the gdb prompt.

@@ -1,0 +1,189 @@
+.\" Process this file with
+.\" groff -man -Tascii foo.1
+.\"
+.TH BULK_EXTRACTOR 1 "MAY 2010" "User Manuals"
+.SH NAME
+bulk_extractor \- Scans a disk image for regular expressions and other content.
+.SH SYNOPSIS
+.B bulk_extractor -o 
+.I output_dir 
+[options] 
+.I [ image | -R dir ]
+.SH DESCRIPTION
+.B bulk_extractor
+scans a disk image (or any other file) for a large number of pre-defined regular expressions and 
+other kinds of content. These items are called 
+.I features.
+When it finds a feature, 
+.B bulk_extractor
+writes the output to an output file. Each line of the output file
+contains a byte offset at which the feature was found, a tab, and the actual
+feature. Features therefore cannot contain the end-of-line character.
+
+.B bulk_extractor
+includes native support for EnCase (.E01) and AFFLIB (.aff) files, if
+it compiled and linked on a system containing those
+libraries. Alternatively, the -R option can be used to recursively
+scan and process a directory of individual files (disk images in such
+a directory will be treated as files, not as disk images).
+
+.B bulk_extractor
+is multi-threaded. By specifying the
+.B -j
+option, multiple copies of the program can be run. Each thread writes
+its results into its own feature file. The files are then combined by
+the primary thread when all of the secondary threads complete.
+
+.B bulk_extractor
+is a two-phase program. In phase 1 the features are extracted. In
+phase 2 a histogram is created of relevant features.
+
+.B bulk_extractor
+will also create a 
+.I wordlist
+of all the words that are found in the disk image. This can be used as
+a dictionary for cracking encryption.
+
+The options are as follows:
+.IP "-o outdir"
+Specifies the output directory, which will be created by 
+.B bulk_extractor.
+
+.IP "-b bannerfile.txt"
+Read the contents of 
+.I bannerfile.txt 
+and stamp it at the beginning of each output file. This might be useful if
+you have some kind of privacy banner that needs to be stamped at the
+top of all of your files. 
+
+.IP "-r alert_list.txt"
+Specifies an
+.I alert list,
+(or red list), which is a list of terms that, if found, will be specifically flagged
+in a special
+.I alert file
+that begins with the letters
+.I ALERT.
+The alert list may contain individual terms, which
+must be found in their entirity and are case-sensitive, or wildcards with standard Unix
+globbing (e.g. *@company.com). Globbed terms are case-insensitive. 
+
+.IP "-w stop_list.txt"
+Specifies a 
+.I stop list,
+(or white list),
+which is a list of terms that, if found, will be placed in a special 
+.I "stopped"
+file (rather than in the main file). The whitelist may also contain
+globbed terms.
+
+.IP "-s context_stoplist.txt"
+Specifies a 
+.I context-dependent stoplist,
+which is a list of tokens to be stopped (but only when they have a
+particular context).
+
+.IP "-p path/format"
+Open a disk image and print the information found at 
+.I path.
+The 
+.I format
+specification may be
+.I r
+for raw output and 
+.I h 
+for hex output.
+
+.IP "-F <rfile>"
+Specifies a file of regular expressions to be used as search terms.
+
+.IP "-f <regex>"
+Specifies a regular expression to be used as a search term.
+
+.IP "-q nn"
+Quiet mode. Only prints every 
+.I nn
+status reports.
+
+These commands are useful for tuning operation:
+
+.IP "-C n"
+Specifies the size of the context window.
+
+.IP "-g n"
+Specifies the size of the margin in bytes.
+
+.IP "-Wn1:n2"
+The 
+.I scan_wordlist
+scanner should only extract words that are between 
+.I n1
+and
+.I n2
+characters in length. 
+
+.IP "-j n"
+Use 
+.I n
+threads for analysis. Normally you do not need specify this, as the
+default is the number of processors on the current computer.
+
+The following commands are useful for debugging:
+
+.IP "-V"
+Print the version number
+
+.IP "-R outdir"
+Restarts the program from where it left off for a particular directory.
+
+.IP "-B nn"
+Set the dedup Bloom filter to 
+.I nn
+bits. This is used by the 
+.I scan_wordlist
+scanner.
+
+.IP "-M nn"
+Specifies a maximum recursion depth of 
+.I nn.
+
+.IP "-z pagenum"
+Start on page number
+.I pagenum.
+
+.IP "-Y offset"
+Start at offset 
+.IP offset.
+
+.IP "-dN"
+Enable debugging level 
+.I N.
+
+Finally, you can control scanners with these options:
+
+.IP "-P <dir>"
+Specifies a directory in which to find plugins.
+
+.IP "-E scanner"
+Turns off all scanners, then enabled scanner scanner.
+
+.IP "-e scanner"
+Enables a scanner.
+
+.IP "-x scanner"
+Disables a scanner.
+
+
+.SH HISTORY
+.BR "bulk_extractor" 
+is based on a feature extractor and named entity
+recognizer developed for SBook in 1991. The feature extractor was
+repurposed for disk images in 2003. The stand-alone 
+.B bulk_extractor
+program was rewritten in 2005 and publicly released in 2007. The
+multi-threaded 
+.B bulk_extractor
+was released in May 2010.
+.SH AUTHOR
+Simson Garfinkel <simsong@acm.org>
+

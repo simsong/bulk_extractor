@@ -1,0 +1,30 @@
+#!/usr/bin/bash
+
+# certificate and password environment variables must be set to sign .exe files.
+if test -z "$FOUO_BE_CERT"
+then
+    CERTDIR=$HOME/fouo/certs/bulk_extractor
+    CERTFN=$CERTDIR/DigiCert_certificate.p12
+    echo $CERTFN
+    if test -r $CERTFN ; then
+      export FOUO_BE_CERT=$CERTFN
+      export FOUO_BE_CERT_PASSWORD=`cat $CERTDIR/password.txt`
+    fi
+fi
+if test -z "$FOUO_BE_CERT"
+then
+    echo "Error: Environment variable FOUO_BE_CERT is not set."
+    echo "Environment variable FOUO_BE_CERT must be set to the code signing certificate file"
+    echo "and environment variable FOUO_BE_CERT_PASSWORD must contain the password for the code signing certificate file."
+    exit 1
+fi
+if test -z "$FOUO_BE_CERT_PASSWORD"
+then
+    echo "Error: Environment variable FOUO_BE_CERT_PASSWORD is not set."
+    echo "Environment variable FOUO_BE_CERT must be set to the code signing certificate file"
+    echo "and environment variable FOUO_BE_CERT_PASSWORD must contain the password for the code signing certificate file."
+    exit 1
+fi
+
+osslsigncode -pkcs12 $FOUO_BE_CERT -pass $FOUO_BE_CERT_PASSWORD -in $1 -out $2
+

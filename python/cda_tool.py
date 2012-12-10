@@ -55,8 +55,10 @@ class Correlator:
     def longest_feature_name(self):
         return max([len(s) for s in self.items.keys()])
 
-    def ingest_feature_file(self,f):
+    def ingest_feature_file(self,f,context_stop_list):
+        """Read the lines in a feature file; returns how many lines were procesed"""
         drivename = None
+        count = 0
         for line in f:
             if type(line)==bytes:
                 line = line.decode('utf-8')
@@ -68,9 +70,16 @@ class Correlator:
                     print("Scanning {} for {}".format(drivename,self.name))
             if bulk_extractor_reader.is_comment_line(line):
                 continue
+            count += 1
+            if context_stop_list != None:
+                (offset,feature,context) = line.split("\t")
+                context_stop_list.add((feature,context))
+                continue
             feature = line.split("\t")[1]
             featuredict = self.features[feature]
             featuredict[drivename] = featuredict.get(drivename,0)+1
+        print("   processed {} features".format(count))
+        return count
 
     def ingest_histogram_file(self,f):
         drivename = None
@@ -113,6 +122,7 @@ if(__name__=="__main__"):
     parser.add_argument("--idcor",help="Perform identity-based correlation",action="store_true")
     parser.add_argument("--makestop",help="Make a stop list of identity features on more than THRESHOLD (0..1) drives",type=str)
     parser.add_argument("--threshold",help="Specify the faction of drives for the threshold",type=float,default=.667)
+    parser.add_argument("--makecombined",help="Combine multiple feature files into a single context stop list with no offests",action='store_true')
     parser.add_argument("--idfeatures",help="Specifies feature files used for identity operations",
                         type=str,default="email,ccn,telephone")
     parser.add_argument('reports', type=str, nargs='+', help='bulk_extractor report directories or ZIP files')
@@ -123,6 +133,7 @@ if(__name__=="__main__"):
             raise IOError(args.makestop+": file exists")
         if args.threshold<0 or args.threshold>1:
             raise RuntimeError("threshold should be between 0 and 1; you supplied "+str(args.threshold))
+
 
     # Create the correlators
     correlators = set()
@@ -138,10 +149,25 @@ if(__name__=="__main__"):
             print("{} is an invalid bulk_extractor report. Cannot continue. STOP.\n".format(fn))
             exit(1)
 
-    # Now run each correlator on each reader
-    for br in br_readers:
-        for c in correlators:
-            c.ingest_feature_file(br.open(c.name+".txt",mode='r'))
+    # Now read each feature file from each reader
+    # Either ingest (in the case of cda) or create the context stop list (if making combined)
+    for c in correlators:
+        context_stop_list = set()
+        for br in br_readers:
+            b = br.open(c.name+".txt",mode='r')
+            if args.makecombined:
+                count = c.ingest_feature_file(b,context_stop_list)
+            else:
+                count = c.ingest_feature_file(b,None)
+        if args.makecombined:
+            fn = "combined-" + c.name + ".txt"
+            with open(fn,mode='w') as f:
+                for (feature,context) in context_stop_list:
+                    f.write("".join(['','\t',feature,'\t',context,'\n']))
+            print("Created {} with {} lines\n".format(fn,len(context_stop_list)))
+    if args.makecombined:
+        print("DONE")
+        exit(0)
 
     # Does the user want to make a stoplist?
     if args.makestop:
@@ -165,6 +191,7 @@ if(__name__=="__main__"):
         print("DPF = Drives per Feature")
         print("Only features on {} or more drives were written.".format(drive_threshold))
         
+
 
     # Perhaps the user wants to perform identity-based correlation?
     # This will calculate a correlation coefficient between each pair of drives

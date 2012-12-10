@@ -1,0 +1,38 @@
+Bug Fixes
+================
+this output is in zip.txt when processing domexusers. The offsets are wrong.
+
+0	[Content_Types].xml	<zipinfo><name>[Content_Types].xml</name><name_len>19</name_len><version>20</version><compression_method>6</compression_method><uncompr_size>540</uncompr_size><compr_size>250</compr_size><lastmodtime>8</lastmodtime><lastmoddate>0</lastmoddate><crc32>331123330</crc32><extra_field_len>0</extra_field_len><disposition bytes='540'>decompressed</disposition></zipinfo>
+0	[Content_Types].xml	<zipinfo><name>[Content_Types].xml</name><name_len>19</name_len><version>20</version><compression_method>6</compression_method><uncompr_size>540</uncompr_size><compr_size>250</compr_size><lastmodtime>8</lastmodtime><lastmoddate>0</lastmoddate><crc32>331123330</crc32><extra_field_len>0</extra_field_len><disposition bytes='540'>decompressed</disposition></zipinfo>
+299	_rels/.rels	<zipinfo><name>_rels/.rels</name><name_len>11</name_len><version>20</version><compression_method>6</compression_method><uncompr_size>310</uncompr_size><compr_size>192</compr_size><lastmodtime>8</lastmodtime><lastmoddate>0</lastmoddate><crc32>3886536357</crc32><extra_field_len>0</extra_field_len><disposition bytes='310'>decompressed</disposition></zipinfo>
+299	_rels/.rels	<zipinfo><name>_rels/.rels</name><name_len>11</name_len><version>20</version><compression_method>6</compression_method><uncompr_size>310</uncompr_size><compr_size>192</compr_size><lastmodtime>8</lastmodtime><lastmoddate>0</lastmoddate><crc32>3886536357</crc32><extra_field_len>0</extra_field_len><disposition bytes='310'>decompressed</disposition></zipinfo>
+532	theme/theme/themeManager.xml	<zipinfo><name>theme/theme/themeManager.xml</name><name_len>28</name_len><version>20</version><compression_method>6</compression_method><uncompr_size>138</uncompr_size><compr_size>131</compr_size><lastmodtime>8</lastmodtime><lastmoddate>0</lastmoddate><crc32>378960235</crc32><extra_field_len>0</extra_field_len><disposition bytes='138'>decompressed</disposition></zipinfo>
+532	theme/theme/themeManager.xml	<zipinfo><name>theme/theme/themeManager.xml</name><name_len>28</name_len><version>20</version><compression_method>6</compression_method><uncompr_size>138</uncompr_size><compr_size>131</compr_size><lastmodtime>8</lastmodtime><lastmoddate>0</lastmoddate><crc32>378960235</crc32><extra_field_len>0</extra_field_len><disposition bytes='138'>decompressed</disposition></zipinfo>
+721	theme/theme/theme1.xml	<zipinfo><name>theme/theme/theme1.xml</name><name_len>22</name_len><version>20</version><compression_method>6</compression_method><uncompr_size>6992</uncompr_size><compr_size>1686</compr_size><lastmodtime>8</lastmodtime><lastmoddate>0</lastmoddate><crc32>3803035030</crc32><extra_field_len>0</extra_field_len><disposition bytes='2597'>decompressed</disposition></zipinfo>
+721	theme/theme/theme1.xml	<zipinfo><name>theme/theme/theme1.xml</name><name_len>22</name_len><version>20</version><compression_method>6</compression_method><uncompr_size>6992</uncompr_size><compr_size>1686</compr_size><lastmodtime>8</lastmodtime><lastmoddate>0</lastmoddate><crc32>3803035030</crc32><extra_field_len>0</extra_field_len><disposition bytes='6992'>decompressed</disposition></zipinfo>
+
+================
+False positives for ethernet MAC addresses:
+29991722342     66:77:88:99:AA:BB       :11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF:00:
+29991722360     CC:DD:EE:FF:00:11       :77:88:99:AA:BB:CC:DD:EE:FF:00:11:22:33\000BAAAAAABD
+29991722516     75:E0:AB:B6:13:85       bG9iYWxTaWdu\000\000\000\00075:E0:AB:B6:13:85:12:27:1C:04:F8:
+29991722534     12:27:1C:04:F8:5F       :E0:AB:B6:13:85:12:27:1C:04:F8:5F:DD:DE:38:E4:B7:
+29991722552     DD:DE:38:E4:B7:24       :27:1C:04:F8:5F:DD:DE:38:E4:B7:24:2E:FE\000BAAAAAABF
+29991722724     B1:BC:96:8B:D4:F4       IFJvb3QgQ0E=\000\000\000\000B1:BC:96:8B:D4:F4:9D:62:2A:A8:9A:
+29991722742     9D:62:2A:A8:9A:81       :BC:96:8B:D4:F4:9D:62:2A:A8:9A:81:F2:15:01:52:A4:
+29991722760     F2:15:01:52:A4:1D       :62:2A:A8:9A:81:F2:15:01:52:A4:1D:82:9C\000GlobalSig
+29991723084     B3:1E:B1:B7:40:E3       dXRob3JpdHk=\000\000\000\000B3:1E:B1:B7:40:E3:6C:84:02:DA:DC:
+29991723102     6C:84:02:DA:DC:37       :1E:B1:B7:40:E3:6C:84:02:DA:DC:37:D4:4D:F5:D4:67:
+29991723120     D4:4D:F5:D4:67:49       :84:02:DA:DC:37:D4:4D:F5:D4:67:49:52:F9\000Entrust E
+29991723356     74:F8:A3:C3:EF:E7       dGhvcml0eQ==\000\000\000\00074:F8:A3:C3:EF:E7:B3:90:06:4B:83:
+29991723374     B3:90:06:4B:83:90       :F8:A3:C3:EF:E7:B3:90:06:4B:83:90:3C:21:64:60:20:
+29991723392     3C:21:64:60:20:E5       :90:06:4B:83:90:3C:21:64:60:20:E5:DF:CE\000Network S
+29991723580     CA:3A:FB:CF:12:40       b290IENBIDI=\000\000\000\000CA:3A:FB:CF:12:40:36:4B:44:B2:16:
+29991723598     36:4B:44:B2:16:20       :3A:FB:CF:12:40:36:4B:44:B2:16:20:88:80:48:39:19:
+29991723616     88:80:48:39:19:93       :4B:44:B2:16:20:88:80:48:39:19:93:7C:F7\000Quo Vadis
+29991723872     5F:B7:EE:06:33:E2       IFJvb3QgQ0E=\000\000\000\0005F:B7:EE:06:33:E2:59:DB:AD:0C:4C:
+29991723890     59:DB:AD:0C:4C:9A       :B7:EE:06:33:E2:59:DB:AD:0C:4C:9A:E6:D3:8F:1A:61:
+29991723908     E6:D3:8F:1A:61:C7       :DB:AD:0C:4C:9A:E6:D3:8F:1A:61:C7:DC:25\000DigiCert
+29991724124     AD:7E:1C:28:B0:64       dGhvcml0eQ==\000\000\000\000AD:7E:1C:28:B0:64:EF:8F:60:03:40:
+29991724142     EF:8F:60:03:40:20       :7E:1C:28:B0:64:EF:8F:60:03:40:20:14:C3:D0:E3:37:
+================
