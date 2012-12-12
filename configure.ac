@@ -93,11 +93,11 @@ if test "$LEX" != flex; then
 fi
 
 ## Determine if we can use flex -R
-if eval "echo %% | flex -R -t > /dev/null 2>&1"
+if eval "echo %% | $LEX -R -t > /dev/null 2>&1"
 then 
-  AC_MSG_NOTICE([flex supports -R])
+  AC_MSG_NOTICE([$LEX supports -R])
 else
-  AC_MSG_ERROR([flex does not support -R.  Please get a modern version of gnu flex])
+  AC_MSG_ERROR([$LEX does not support -R.  Please get a modern version of gnu flex])
 fi
 
 
