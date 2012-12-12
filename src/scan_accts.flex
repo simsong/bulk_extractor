@@ -1,8 +1,10 @@
 %{
 
 #include "config.h"
-#include "bulk_extractor_i.h"
+#include "be13_api/bulk_extractor_i.h"
 #include "histogram.h"
+#include "scan_ccns2.h"
+#include "sbuf_flex_scanner.h"
 
 /*
  * http://flex.sourceforge.net/manual/Cxx.html
@@ -15,10 +17,6 @@
 
 size_t min_phone_digits=6;
 
-#include "bulk_extractor_i.h"
-#include "scan_ccns2.h"
-
-#include "sbuf_flex_scanner.h"
 class accts_scanner : public sbuf_scanner {
 public:
 	accts_scanner(const scanner_params &sp):
