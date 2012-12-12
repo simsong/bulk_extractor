@@ -47,3 +47,4 @@ src_win/Makefile
 stamp-h
 stamp-h1
 tests/Makefile
+src/bulk_extractor
