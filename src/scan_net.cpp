@@ -51,7 +51,7 @@ typedef char sa_family_t;
 /****************************************************************/
 
 #ifdef HAVE_PCAP_PCAP_H
-#ifdef GNUC_HAS_DIAGNOSTIC_PRAGMA
+#ifdef HAVE_DIAGNOSTIC_REDUNDANT_DECLS
 #  pragma GCC diagnostic ignored "-Wredundant-decls"
 #endif
 #endif

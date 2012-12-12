@@ -8,8 +8,10 @@
 
 
 #define ZLIB_CONST
-#ifdef GNUC_HAS_DIAGNOSTIC_PRAGMA
+#ifdef HAVE_DIAGNOSTIC_UNDEF
 #  pragma GCC diagnostic ignored "-Wundef"
+#endif
+#ifdef HAVE_DIAGNOSTIC_CAST_QUAL
 #  pragma GCC diagnostic ignored "-Wcast-qual"
 #endif
 #include <zlib.h>

@@ -103,7 +103,7 @@ image_process::iterator process_aff::end()
  */
 #ifdef HAVE_LIBAFFLIB
 __BEGIN_DECLS
-#ifdef GNUC_HAS_DIAGNOSTIC_PRAGMA
+#ifdef HAVE_DIAGNOSTIC_REDUNDANT_DECLS
 #pragma GCC diagnostic ignored "-Wredundant-decls"
 #endif
 int	af_get_pagesize(AFFILE *af);	// returns page size, or -1
