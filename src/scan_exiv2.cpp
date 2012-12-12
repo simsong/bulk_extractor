@@ -20,8 +20,10 @@
 #ifdef HAVE_EXIV2
 
 /* exiv2 has errors */
-#ifdef GNUC_HAS_DIAGNOSTIC_PRAGMA
+#ifdef HAVE_DIAGNOSTIC_SHADOW
 #pragma GCC diagnostic ignored "-Wshadow"
+#endif
+#ifdef HAVE_DIAGNOSTIC_EFFCPP
 #pragma GCC diagnostic ignored "-Weffc++"
 #endif
 

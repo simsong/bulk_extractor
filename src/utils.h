@@ -67,28 +67,28 @@ inline int ishexnumber(int c)
 __END_DECLS
 
 /* Useful functions for scanners */
-#if defined(__cplusplus)
-#include <string>
-#define ONE_HUNDRED_NANO_SEC_TO_SECONDS 10000000
-#define SECONDS_BETWEEN_WIN32_EPOCH_AND_UNIX_EPOCH 11644473600LL
-/*
- * 11644473600 is the number of seconds between the Win32 epoch
- * and the Unix epoch.
- *
- * http://arstechnica.com/civis/viewtopic.php?f=20&t=111992
- */
-
-inline std::string microsoftDateToISODate(const uint64_t &time)
-{
-    time_t tmp = (time / ONE_HUNDRED_NANO_SEC_TO_SECONDS) - SECONDS_BETWEEN_WIN32_EPOCH_AND_UNIX_EPOCH;
-    
-    struct tm time_tm;
-    gmtime_r(&tmp, &time_tm);
-    char buf[256];
-    strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%SZ", &time_tm); // Zulu time
-    return std::string(buf);
-}
-#endif
+//#if defined(__cplusplus)
+//#include <string>
+//#define ONE_HUNDRED_NANO_SEC_TO_SECONDS 10000000
+//#define SECONDS_BETWEEN_WIN32_EPOCH_AND_UNIX_EPOCH 11644473600LL
+///*
+// * 11644473600 is the number of seconds between the Win32 epoch
+// * and the Unix epoch.
+// *
+// * http://arstechnica.com/civis/viewtopic.php?f=20&t=111992
+// */
+//
+//inline std::string microsoftDateToISODate(const uint64_t &time)
+//{
+//    time_t tmp = (time / ONE_HUNDRED_NANO_SEC_TO_SECONDS) - SECONDS_BETWEEN_WIN32_EPOCH_AND_UNIX_EPOCH;
+//    
+//    struct tm time_tm;
+//    gmtime_r(&tmp, &time_tm);
+//    char buf[256];
+//    strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%SZ", &time_tm); // Zulu time
+//    return std::string(buf);
+//}
+//#endif
 
 
 #endif

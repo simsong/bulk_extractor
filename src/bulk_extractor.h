@@ -148,12 +148,6 @@
 
 #include "utils.h"
 
-//This is now done automatically in configure.ac
-//#if (__GNUC__*1000+__GNUC_MINOR__) > 4001
-//#define GNUC_HAS_DIAGNOSTIC_PRAGMA
-//#endif
-
-
 #if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 7)
 # define ATTR_FORMAT(param,arg) __attribute__ ((__printf__,param,arg))
 #else
