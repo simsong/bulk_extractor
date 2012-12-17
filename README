@@ -1,5 +1,12 @@
 Welcome to bulk_extractor!
 
+Release files can be downloaded from:
+
+   http://digitalcorpora.org/downloads/bulk_extractor/
+
+
+
+================================================================
 To install on a Linux/MacOS/Mingw system, use:
    $ ./configure
    $ make
