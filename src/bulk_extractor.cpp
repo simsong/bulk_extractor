@@ -1016,9 +1016,9 @@ int main(int argc,char **argv)
 
     /* Load all the scanners and enable the ones we care about */
     load_scanners(scanners_builtin/*,histograms*/);		 
-    if(find_list.size()>0){
+/*    if(find_list.size()>0){
 	scanners_enable("find");
-    }
+    }*/
     scanners_process_commands();
 
     if(opt_path){

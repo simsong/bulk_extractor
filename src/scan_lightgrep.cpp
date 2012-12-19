@@ -1,5 +1,6 @@
 #include "bulk_extractor.h"
 #include "beregex.h"
+#include "histogram.h"
 
 // if liblightgrep isn't present, compiles to nothing
 #ifdef HAVE_LIBLIGHTGREP
@@ -62,6 +63,7 @@ namespace { // local namespace hides these from other translation units
     sp.info->description     = "Searches for patterns";
     sp.info->scanner_version = "0.1";
     sp.info->feature_names.insert("lightgrep");
+    sp.info->histogram_defs.insert(histogram_def("lightgrep", "", "histogram", HistogramMaker::FLAG_LOWERCASE));
 
     vector< string > patterns  = makePatterns(),
                      encodings = makeEncodings();
@@ -105,11 +107,20 @@ namespace { // local namespace hides these from other translation units
     cleanup(pattern, fsm);
   }
 
+  struct HitData {
+    feature_recorder* Fr;
+    const sbuf_t*     Sbuf;
+    uint64_t          Count;
+
+    HitData(feature_recorder* f, const sbuf_t* sb): Fr(f), Sbuf(sb), Count(0) {}
+  };
+
   void gotHit(void* userData, const LG_SearchHit* hit) {
     // hit callback
-    pair<feature_recorder*, const sbuf_t* const> *data = reinterpret_cast<pair<feature_recorder*, const sbuf_t* const>* >(userData);
+    HitData* data = reinterpret_cast<HitData*>(userData);
 
-    data->first->write_buf(*data->second, hit->Start, hit->End - hit->Start);
+    data->Fr->write_buf(*data->Sbuf, hit->Start, hit->End - hit->Start);
+    ++data->Count;
   }
 }
 
@@ -127,6 +138,7 @@ void scan_lightgrep(const class scanner_params &sp, const recursion_control_bloc
     if (!(lgPatternMap && lg_pattern_map_size(lgPatternMap) && lgProgram)) {
       return;
     }
+    // std::cout << "lightgrep scanning..." << std::endl;
     LG_ContextOptions ctxOpts;
     // these are debugging options that we'll remove
     ctxOpts.TraceBegin = 0xffffffffffffffff;
@@ -137,16 +149,18 @@ void scan_lightgrep(const class scanner_params &sp, const recursion_control_bloc
     LG_HCONTEXT ctx = lg_create_context(lgProgram, &ctxOpts);
 
     const sbuf_t &sbuf   = sp.sbuf;
-    feature_recorder *fr = sp.fs.get_name("lightgrep");
-    pair<feature_recorder*, const sbuf_t* const> data = make_pair(fr, &sbuf);
+
+    HitData data(sp.fs.get_name("lightgrep"), &sbuf);
 
     // search the buffer all in one go
-    lg_search(ctx, (const char*)sbuf.buf, (const char*)sbuf.buf + sbuf.bufsize, sbuf.pos0.offset, &data, gotHit);
+    lg_search(ctx, (const char*)sbuf.buf, (const char*)sbuf.buf + sbuf.bufsize, 0, &data, gotHit);
     // if there are any hits at the end of the buffer that could extend with more data, lg_closeout_search will flush them out
     lg_closeout_search(ctx, &data, gotHit);
 
     // cleanup
     lg_destroy_context(ctx);
+
+    // std::cout << data.Count << " hits on block " << sbuf.pos0 << std::endl;
   }
 }
 
