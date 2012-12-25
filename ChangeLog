@@ -1,3 +1,11 @@
+2012-12-25  Simson Garfinkel  <simsong@Mucha.local>
+
+	* python/identify_filenames.py (process_featurefile): added #'s to report printed at bottom
+	(process_featurefile): added format
+
+	* python/bulk_extractor_reader.py (is_feature_line): Now handles annotated feature files.
+	(BulkReport.__init__.validate): added programmer notice for error of providing a feature file instead of a report directory
+
 2012-11-25  Simson Garfinkel  <simsong@mncrnpsedu.local>
 
 	* src/be13_api/feature_recorder.cpp (feature_recorder::carve): fixed bad mode on mkdir
