@@ -207,9 +207,6 @@ using namespace std;
 void	be_mkdir(std::string dir);
 void	validate_fn(std::string &fn);
 
-typedef std::map<std::string,std::string>  be_config_t;
-extern be_config_t be_config; // system configuration
-
 #include "be13_api/bulk_extractor_i.h"
 
 /****************************************************************
