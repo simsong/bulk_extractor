@@ -3,9 +3,9 @@
 
 if [ ! -d src/be13_api/.git ] ;
 then
-  echo bringing in submodules
-  echo next time check out with git clone --recursive
-  git submodule init
+  # echo bringing in submodules
+  # echo next time check out with git clone --recursive
+  # git submodule init
   git submodule update
 fi
 
