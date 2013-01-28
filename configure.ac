@@ -122,16 +122,13 @@ case $host in
      ;;
 
   *-*-mingw32*)   
-     LIBS="-lpsapi -lws2_32 -lgdi32 $LIBS"  # previously had -liberty 
+     LIBS="-lpsapi -lws2_32 -lgdi32 $LIBS"  
      CPPFLAGS="-DUNICODE -D_UNICODE -D__MSVCRT_VERSION__=0x0601 -DWINVER=0x0500 -D_WIN32_WINNT=0x0500 -g $CPPFLAGS"
-     # Removed: -DHAVE_STRUCT_TIMESPEC 
-     CXXFLAGS="$CXXFLAGS -Wno-format "  # compiler mingw-4.3.0 is broken on I64u formats
+     CPPFLAGS="$CPPFLAGS --static "
      CFLAGS="$CFLAGS --static"
-     CPPFLAGS="$CPPFLAGS --static"
-     CXXFLAGS="$CXXFLAGS --static"
+     CXXFLAGS="$CXXFLAGS -Wno-format "  # compiler mingw-4.3.0 is broken on I64u formats
+     CXXFLAGS="$CXXFLAGS --static -static-libgcc -static-libstdc++"
      LDFLAGS="$LDFLAGS --static"
-     # Removed
-     # LDFLAGS="$LDFLAGS -shared-libgcc" # allows exiv2 to throw an exception that's caught elsewhere
      mingw="yes"
      ;;		 		     
 esac
@@ -373,8 +370,9 @@ AC_ARG_WITH([opt], AC_HELP_STRING([--without-opt], [Drop all -O C flags]))
 # Or maybe just tone it down a bit?
 AC_ARG_WITH([o3], AC_HELP_STRING([--without-o3], [Do not force O3 optimization; use default level]))
 
+#
 # ZLIB is required:
-#  Not you cannot put comments in the AC_MSG_ERROR for some reason
+#  Note you cannot put comments in the AC_MSG_ERROR for some reason
 AC_CHECK_LIB([z],[uncompress],,
 	AC_MSG_ERROR([zlib libraries not installed; try installing zlib-dev zlib-devel zlib1g-dev or libz-dev]))
 
