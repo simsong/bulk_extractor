@@ -101,19 +101,13 @@ echo "Building and installing TRE for mingw"
 wget http://laurikari.net/tre/tre-0.8.0.zip
 unzip tre-0.8.0.zip
 cd tre-0.8.0
-echo
-echo tre mingw32
-mingw32-configure --enable-static >/dev/null
-make               >/dev/null
-sudo make install  >/dev/null
-make distclean    >/dev/null
-echo
-echo tre mingw64
-mingw64-configure --enable-static >/dev/null
-make               >/dev/null
-sudo make install  >/dev/null
-make distclean    >/dev/null
-
+mingw32-configure --enable-static
+make
+sudo make install
+make distclean
+mingw64-configure --enable-static
+make
+sudo make install
 cd ..
 echo "TRE mingw installation complete."
 
@@ -124,16 +118,16 @@ tar xfz libewf-$EWFVER.tar.gz
 cd libewf-$EWFVER
 echo
 echo libewf mingw32
-mingw32-configure --enable-static >/dev/null
-make		  >/dev/null
-sudo make install >/dev/null
-make distclean    >/dev/null
+mingw32-configure --enable-static
+make
+sudo make install
+make distclean
 echo
 echo libewf mingw64
-mingw64-configure --enable-static >/dev/null
-make		  >/dev/null
-sudo make install >/dev/null
-make distclean    >/dev/null
+mingw64-configure --enable-static
+make
+sudo make install
+make distclean
 cd ..
 
 echo "Cleaning up"
