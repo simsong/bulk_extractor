@@ -172,8 +172,8 @@ struct tcpt_object {
     uint32_t t1;
     uint32_t t2;
     uint32_t t3;
-    struct be13::in_addr dst;
-    struct be13::in_addr src;
+    struct be13::ip4_addr dst;
+    struct be13::ip4_addr src;
     uint16_t dst_port;
     uint16_t src_port;
 };
@@ -444,12 +444,12 @@ static bool invalidIP(const uint8_t addr[16], sa_family_t family) {
 //}
 //#endif
 
-//static bool invalidIP(const struct be13::in_addr *const a) 
+//static bool invalidIP(const struct be13::ip4_addr *const a) 
 //{
 //    return invalidIP4((const uint8_t *) &(a->s_addr));
 //}
 
-static string ip2string(const struct be13::in_addr *const a)
+static string ip2string(const struct be13::ip4_addr *const a)
 {
     const uint8_t *b = (const uint8_t *)a;
 
@@ -547,8 +547,8 @@ static bool sanityCheckIPHeader(const sbuf_t &sbuf, bool *checksum_valid, generi
 //	src[3] = ip->ip_src;
 //	dst[3] = ip->ip_dst;
 //#else
-	memcpy(&src[3],&ip->ip_src.s_addr,4);
-	memcpy(&dst[3],&ip->ip_dst.s_addr,4);
+	memcpy(&src[3],&ip->ip_src.addr,4);
+	memcpy(&dst[3],&ip->ip_dst.addr,4);
 //#endif
 	memcpy(h->src, src, sizeof(src));
 	memcpy(h->dst, dst, sizeof(dst)); 
@@ -940,7 +940,7 @@ public:
 	/* Only use candidate with ports we believe most likely */
 	if (!sanePort(in->sin_port)) return 0;
 	
-	ip_recorder->write(sb2.pos0, ip2string((const be13::in_addr *)&(in->sin_addr)), "sockaddr_in");
+	ip_recorder->write(sb2.pos0, ip2string((const be13::ip4_addr *)&(in->sin_addr)), "sockaddr_in");
 	return sizeof(struct sockaddr_in);
     }
 
