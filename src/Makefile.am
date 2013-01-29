@@ -40,6 +40,7 @@ BE13_API = \
 	be13_api/utils.cpp
 
 
+
 TSK3INCS = \
 	tsk3/auto/tsk_auto.h\
 	tsk3/base/tsk_base.h\
@@ -125,8 +126,6 @@ bulk_extractor_SOURCES = \
 	support.cpp \
 	threadpool.cpp \
 	threadpool.h \
-	utils.cpp \
-	utils.h \
 	word_and_context_list.cpp \
 	word_and_context_list.h \
 	$(bulk_scanners) $(TSK3INCS)  $(BE13_API)

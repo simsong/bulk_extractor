@@ -60,8 +60,14 @@ typedef char sa_family_t;
 #define DLT_EN10MB	1	/* Ethernet (10Mb) */
 #endif
 
+#ifndef ETHER_ADDR_LEN
 #define ETHER_ADDR_LEN      6
+#endif
+
+#ifndef ETHER_HEAD_LEN
 #define ETHER_HEAD_LEN      14
+#endif
+
 #define ETHERTYPE_IP        0x0800  /* IP protocol */
 #define	ETHERTYPE_VLAN	    0x8100		/* IEEE 802.1Q VLAN tagging */
 #define	ETHERTYPE_IPV6	    0x86dd		/* IP protocol version 6 */
@@ -78,9 +84,11 @@ static const char *default_filename = "packets.pcap";
  * Previously this was a set, but unordered_sets are faster.
  * It doesn't need to be mutex locked, because we do the tests for each thread.
  */
-typedef struct ether_addr {
-    u_char octet[ETHER_ADDR_LEN];
-} ether_addr_t;
+// This is now in be13_api/net_ethernet.h
+//typedef struct ether_addr {
+//    u_char octet[ETHER_ADDR_LEN];
+//} ether_addr_t;
+typedef struct ether_addr ether_addr_t;
 
 /* generic ip header for IPv4 and IPv6 packets */
 typedef struct generic_iphdr {
@@ -192,6 +200,7 @@ struct be_udphdr {
     uint16_t uh_sum;
 };
 
+#if 0
 #ifdef HAVE_NETINET_IP_H
 #include <netinet/ip.h>
 #else
@@ -244,6 +253,7 @@ struct ip {
     uint32_t ip_dst;	/* source and dest address */
 };
 #endif
+#endif	// if 0
 
 
 /* Computes the checksum for IPv6 TCP, UDP and ICMPv6. 
@@ -412,9 +422,9 @@ static bool invalidMAC(const ether_addr *const e)
     int zero_octets = 0;
     int ff_octets = 0;
     for (int i=0;i<ETHER_ADDR_LEN;i++) {
-        if (e->octet[i] == 0x00)
+        if (e->ether_addr_octet[i] == 0x00)
             zero_octets++;
-        if (e->octet[i] == 0xFF)
+        if (e->ether_addr_octet[i] == 0xFF)
             ff_octets++;
         if ( (zero_octets > 1) || (ff_octets > 1) )
             return true;
@@ -473,8 +483,8 @@ static string mac2string(const struct ether_addr *const e)
 {
     char addr[32];
     snprintf(addr,sizeof(addr),"%02X:%02X:%02X:%02X:%02X:%02X",
-	     e->octet[0], e->octet[1], e->octet[2],
-	     e->octet[3], e->octet[4], e->octet[5]);
+	     e->ether_addr_octet[0], e->ether_addr_octet[1], e->ether_addr_octet[2],
+	     e->ether_addr_octet[3], e->ether_addr_octet[4], e->ether_addr_octet[5]);
     string res(addr);
     return res;
 }
@@ -528,13 +538,13 @@ static bool sanityCheckIPHeader(const sbuf_t &sbuf, bool *checksum_valid, generi
 	/* similar to tcpip.c from tcpflow code */
 	uint32_t src[4] = {0, 0, 0, 0};
 	uint32_t dst[4] = {0, 0, 0, 0};
-#ifdef _WIN32
-	src[3] = ip->ip_src;
-	dst[3] = ip->ip_dst;
-#else
+//#ifdef _WIN32
+//	src[3] = ip->ip_src;
+//	dst[3] = ip->ip_dst;
+//#else
 	memcpy(&src[3],&ip->ip_src.s_addr,4);
 	memcpy(&dst[3],&ip->ip_dst.s_addr,4);
-#endif
+//#endif
 	memcpy(h->src, src, sizeof(src));
 	memcpy(h->dst, dst, sizeof(dst)); 
 	h->ttl = ip->ip_ttl;
