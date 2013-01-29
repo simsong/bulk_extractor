@@ -134,5 +134,3 @@ echo You are now ready to cross-compile for win32 and win64.
 echo 'You may be able to do this by typing "make win32" or "make win64"'
 echo 'You can also type "mingw64-configure && make"'
 echo
-echo "Please additionally install the recommended LIBEWF and TRE"
-echo 'libraries by running "./CONFIGURE_LIBRARIES.sh"'.
