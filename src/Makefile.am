@@ -35,7 +35,9 @@ BE13_API = \
         be13_api/xml.cpp \
         be13_api/xml.h \
 	be13_api/unicode_escape.cpp\
-	be13_api/unicode_escape.h 
+	be13_api/unicode_escape.h \
+	be13_api/utils.h \
+	be13_api/utils.cpp
 
 
 TSK3INCS = \

@@ -15,16 +15,11 @@ mingw32 and 64.  Please perform the following steps:
         http://fedoraproject.org/en/get-fedora-options#formats
    1b - Create a new VM using this ISO as the boot.
        
-2. Plese put this CONFIGURE_FC17.sh script and script CONFIGURE_LIBRARIES.sh
-   in you home directory.
+2. Plese put this CONFIGURE_FC17.sh script in you home directory.
 
 3. Run this script to configure the system to cross-compile bulk_extractor.
    This script must be run as root.  You can do that by typing:
           sudo sh CONFIGURE_F17.sh
-
-4. Plese also install the optional LIBEWF and TRE libraries.
-   You can do that by typing:
-          ./CONFIGURE_LIBRARIES.sh
 
 press any key to continue...
 EOF

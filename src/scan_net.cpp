@@ -63,8 +63,8 @@ typedef char sa_family_t;
 #define ETHER_ADDR_LEN      6
 #define ETHER_HEAD_LEN      14
 #define ETHERTYPE_IP        0x0800  /* IP protocol */
-#define	ETHERTYPE_VLAN		0x8100		/* IEEE 802.1Q VLAN tagging */
-#define	ETHERTYPE_IPV6		0x86dd		/* IP protocol version 6 */
+#define	ETHERTYPE_VLAN	    0x8100		/* IEEE 802.1Q VLAN tagging */
+#define	ETHERTYPE_IPV6	    0x86dd		/* IP protocol version 6 */
 
 #define PCAP_MAX_PKT_LEN    65535               // The longest a packet may be; longer values make wireshark refuse to load
 

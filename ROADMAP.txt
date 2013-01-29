@@ -14,7 +14,7 @@ BUGFIXES:
 FEATURES:
 - Instrument debug to track number of bytes processed
 - Construction of a stop-list from standard installs of OS and Apps
-
+- Inverting bytes
 
 - slg: scan_net.cpp - replace all buffer arithmetic with sbuf pointer get.
  - Figure out why this is causing a assertion failure:
@@ -22,13 +22,10 @@ FEATURES:
 - simplify beregex_vector, word_and_context_list, and regex_list into a single structure.
 
 - Integrate Digital Assembly video carving
-- "Wall of bulk_extractor" - grid-based multiprocessing
-  - Don't do if its not needed on the 64-core machine
 - Filter mode - reads from stdin and writes from stdout.
 - It's not BASE64 unless you have at least X characters from above 16; 
 - It's not BASE16 unless you have at least X characters from above 10
 - It's not BASE85 unless you have at least X characters from above 64
-
 
 - scan_rar — integrate JHUAPL code
    detect the presence of RAR-compressed data, report it,
@@ -84,6 +81,12 @@ BEViewer (Requested but not assigned):
 - Display the file path, if there is one, of selected Features.
 We may use fiwalk and identify_filenames to additionally display the file
 associated with the Feature that is currently navigated to.
+
+WILL NOT BE DONE:
+
+- "Wall of bulk_extractor" - grid-based multiprocessing
+  - Don't do if its not needed on the 64-core machine
+
 
 
 ==============================================================================
