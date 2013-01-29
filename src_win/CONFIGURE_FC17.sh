@@ -25,7 +25,7 @@ press any key to continue...
 EOF
 read
 
-MPKGS="autoconf automake gcc gcc-c++ osslsigncode mingw32-nsis flex wine wget"
+MPKGS="autoconf automake gcc gcc-c++ osslsigncode mingw32-nsis flex wine wget "
 MPKGS+="mingw32-gcc mingw32-gcc-c++ mingw32-zlib mingw32-zlib-static mingw32-libgnurx-static "
 MPKGS+="mingw64-gcc mingw64-gcc-c++ mingw64-zlib mingw64-zlib-static mingw64-libgnurx-static "
 
@@ -101,30 +101,31 @@ echo "Building and installing TRE for mingw"
 wget http://laurikari.net/tre/tre-0.8.0.zip
 unzip tre-0.8.0.zip
 cd tre-0.8.0
-mingw32-configure --enable-static
-make
-sudo make install
-mingw64-configure --enable-static
-make
-sudo make install
+mingw32-configure --enable-static >/dev/null
+make               >/dev/null
+sudo make install  >/dev/null
+mingw64-configure --enable-static >/dev/null
+make               >/dev/null
+sudo make install  >/dev/null
 cd ..
 rm tre-0.8.0.zip
 rm -rf tre-0.8.0
 echo "TRE mingw installation complete."
 
 echo "Building and installing LIBEWF for mingw"
-wget http://libewf.googlecode.com/files/libewf-experimental-20120809.tar.gz
-tar -zxf libewf-experimental-20120809.tar.gz
-cd libewf-20120809
-mingw32-configure --enable-static
-make
-sudo make install
-mingw64-configure --enable-static
-make
-sudo make install
+EWFVER=20130128
+wget http://libewf.googlecode.com/files/libewf-$EWFVER.tar.gz
+tar xfz libewf-$EWFVER.tar.gz
+cd libewf-$EWFVER
+mingw32-configure --enable-static >/dev/null
+make		  >/dev/null
+sudo make install >/dev/null
+mingw64-configure --enable-static >/dev/null
+make		  >/dev/null
+sudo make install >/dev/null
 cd ..
-rm libewf-experimental-20120809.tar.gz
-rm -rf libewf-20120809
+rm libewf-$EWFVER.tar.gz
+rm -rf libewf-$EWFVER
 echo "LIBEWF mingw installation complete."
 
 echo ================================================================
