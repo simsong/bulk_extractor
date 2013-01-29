@@ -222,10 +222,10 @@ std::string threadpool::get_thread_status(uint32_t id)
  * attribute, but then when the attribute is given, GCC complains that it has
  * a return statement!
  */
-#ifdef HAVE_DIAGNOSTIC_SUGGEST_ATTRIBUTE
-#pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
-#endif
-void *worker::run()
+//#ifdef HAVE_DIAGNOSTIC_SUGGEST_ATTRIBUTE
+//#pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
+//#endif
+void *worker::run() 
 {
     while(true){
 	/* Get the lock, then wait for the queue to be empty.
@@ -261,6 +261,6 @@ void *worker::run()
 	pthread_cond_signal(&master.TOMAIN); // tell the master that we are free!
 	pthread_mutex_unlock(&master.M);     // should wake up the master
     }
-    return 0;
+    //return 0;
 }
 

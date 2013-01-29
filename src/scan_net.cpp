@@ -88,7 +88,7 @@ static const char *default_filename = "packets.pcap";
 //typedef struct ether_addr {
 //    u_char octet[ETHER_ADDR_LEN];
 //} ether_addr_t;
-typedef struct ether_addr ether_addr_t;
+//typedef struct ether_addr ether_addr_t;
 
 /* generic ip header for IPv4 and IPv6 packets */
 typedef struct generic_iphdr {
@@ -103,10 +103,10 @@ typedef struct generic_iphdr {
 
 /* pseudo-header of our making */
 struct macip {
-    ether_addr_t ether_dhost;
-    ether_addr_t ether_shost;
-    u_short ether_type;
-    u_char ipv;
+    be13::ether_addr ether_dhost;
+    be13::ether_addr ether_shost;
+    uint16_t ether_type;
+    uint8_t ipv;
 };
 
 /****************************************************************/
@@ -172,8 +172,8 @@ struct tcpt_object {
     uint32_t t1;
     uint32_t t2;
     uint32_t t3;
-    struct in_addr dst;
-    struct in_addr src;
+    struct be13::in_addr dst;
+    struct be13::in_addr src;
     uint16_t dst_port;
     uint16_t src_port;
 };
@@ -182,15 +182,15 @@ struct tcpt_object {
 /* create a bulk_extractor specific tcp structure to avoid
    FAVOR_BSD type differences among systems */
 struct be_tcphdr {
-    unsigned short th_sport;
-    unsigned short th_dport;
+    uint16_t th_sport;
+    uint16_t th_dport;
     uint32_t th_seq;
     uint32_t th_ack;
     unsigned int th_x2:4, th_off:4;
-    unsigned char th_flags;
-    unsigned short th_win;
-    unsigned short th_sum;
-    unsigned short th_urp;
+    uint8_t th_flags;
+    uint16_t th_win;
+    uint16_t th_sum;
+    uint16_t th_urp;
 };
 
 struct be_udphdr {
@@ -232,11 +232,11 @@ struct be_udphdr {
 /* Structure of an internet header, naked of options. */
 struct ip {
 #if __BYTE_ORDER == __BIG_ENDIAN
-    unsigned char ip_v:4;		/* version */
-    unsigned char ip_hl:4;		/* header length */
+    uint8_t ip_v:4;		/* version */
+    uint8_t ip_hl:4;		/* header length */
 #else
-    unsigned char ip_hl:4;		/* header length */
-    unsigned char ip_v:4;		/* version */
+    uint8_t ip_hl:4;		/* header length */
+    uint8_t ip_v:4;		/* version */
 #endif
     u_int8_t ip_tos;			/* type of service */
     u_short ip_len;			/* total length */
@@ -269,7 +269,7 @@ struct ip {
  *	- Next Header (1 octet)
  * Total: 40 octets
  */
-static unsigned short IPv6L3Chksum(const sbuf_t &sbuf, u_int chksum_byteoffset)
+static uint16_t IPv6L3Chksum(const sbuf_t &sbuf, u_int chksum_byteoffset)
 {
     const struct ip6_hdr *ip6 = sbuf.get_struct_ptr<struct ip6_hdr>(0);
     if(ip6==0) return 0;		// cannot compute; not enough data
@@ -321,10 +321,10 @@ static unsigned short IPv6L3Chksum(const sbuf_t &sbuf, u_int chksum_byteoffset)
     return ~sum;
 }
 /* compute an Internet-style checksum, from Stevens */
-static unsigned short cksum(const struct ip * const ip, int len) 
+static uint16_t cksum(const struct be13::ip4 * const ip, int len) 
 {
     long sum = 0;  /* assume 32 bit long, 16 bit short */
-    const unsigned short *ipp = (unsigned short *) ip;
+    const uint16_t *ipp = (uint16_t *) ip;
     int octets_processed = 0;
 
     while (len > 1) {
@@ -358,22 +358,24 @@ static bool isPowerOfTwo(const uint8_t val)
     return false;
 }
 
-static bool invalidIP6(const uint16_t addr[8])
+/* test for obviously bogus Ethernet addresses (heuristic) */
+static bool invalidMAC(const be13::ether_addr *const e) 
 {
-    /* IANA Reserved http://www.iana.org/assignments/ipv6-address-space/ipv6-address-space.xml 
-     * We define valid addresses as IPv6 addresses of type Link Local Unicast (FE80::/10), 
-     * Multicast (FF00::/8), or Global Unicast (2000::/3).  Any other address is invalid.
-     */
-
-    /* compare values in network order */
-    if ( (addr[0] & 0x00E0) == 0x0020 ) return false; /* Global Unicast */
-    if ( (addr[0] & 0x00FF) == 0x00FF ) return false; /* Multicast */
-    if ( (addr[0] & 0xC0FF) == 0x80FE ) return false; /* Link Local Unicast */
-    return true;
+    int zero_octets = 0;
+    int ff_octets = 0;
+    for (int i=0;i<ETHER_ADDR_LEN;i++) {
+        if (e->ether_addr_octet[i] == 0x00)
+            zero_octets++;
+        if (e->ether_addr_octet[i] == 0xFF)
+            ff_octets++;
+        if ( (zero_octets > 1) || (ff_octets > 1) )
+            return true;
+    }
+    return false;
 }
 
 /* test for obviously bogus IPv4 addresses (heuristics) */
-static bool invalidIP4(const unsigned char *const cc)
+static bool invalidIP4(const uint8_t *const cc)
 {
     /* Leading zero or 0xff */
     if ( (cc[0] == 0) || (cc[0] == 255) ){
@@ -403,6 +405,21 @@ static bool invalidIP4(const unsigned char *const cc)
     return false;
 }
 
+static bool invalidIP6(const uint16_t addr[8])
+{
+    /* IANA Reserved http://www.iana.org/assignments/ipv6-address-space/ipv6-address-space.xml 
+     * We define valid addresses as IPv6 addresses of type Link Local Unicast (FE80::/10), 
+     * Multicast (FF00::/8), or Global Unicast (2000::/3).  Any other address is invalid.
+     */
+
+    /* compare values in network order */
+    if ( (addr[0] & 0x00E0) == 0x0020 ) return false; /* Global Unicast */
+    if ( (addr[0] & 0x00FF) == 0x00FF ) return false; /* Multicast */
+    if ( (addr[0] & 0xC0FF) == 0x80FE ) return false; /* Link Local Unicast */
+    return true;
+}
+
+
 static bool invalidIP(const uint8_t addr[16], sa_family_t family) {	
     switch (family) {
     case AF_INET:
@@ -416,27 +433,10 @@ static bool invalidIP(const uint8_t addr[16], sa_family_t family) {
     }
 }
 
-/* test for obviously bogus Ethernet addresses (heuristic) */
-static bool invalidMAC(const ether_addr *const e) 
-{
-    int zero_octets = 0;
-    int ff_octets = 0;
-    for (int i=0;i<ETHER_ADDR_LEN;i++) {
-        if (e->ether_addr_octet[i] == 0x00)
-            zero_octets++;
-        if (e->ether_addr_octet[i] == 0xFF)
-            ff_octets++;
-        if ( (zero_octets > 1) || (ff_octets > 1) )
-            return true;
-    }
-    return false;
-}
-
-/* Additional versions under windows to avoid casting */
-//#if defined(_WIN32)  && 0
-//static bool invalidIP(const unsigned int *i)
+/* Additional versions to avoid casting */
+//inline bool invalidIP(const in_addr *a)
 //{
-//    return invalidIP4((const unsigned char *)i);
+//    return invalidIP4((const unsigned char *)a);
 //}
 //static string ip2string(const unsigned int *const i)
 //{
@@ -444,15 +444,20 @@ static bool invalidMAC(const ether_addr *const e)
 //}
 //#endif
 
-static bool invalidIP(const struct in_addr *const a) 
-{
-    return invalidIP4((const unsigned char *) &(a->s_addr));
-}
+//static bool invalidIP(const struct be13::in_addr *const a) 
+//{
+//    return invalidIP4((const uint8_t *) &(a->s_addr));
+//}
 
-static string ip2string(const struct in_addr *const a)
+static string ip2string(const struct be13::in_addr *const a)
 {
-    string res(inet_ntoa(*a));
-    return res;
+    const uint8_t *b = (const uint8_t *)a;
+
+    char buf[1024];
+    snprintf(buf,sizeof(buf),"%d.%d.%d.%d",b[0],b[1],b[2],b[3]);
+    return std::string(buf);
+    //string res(inet_ntoa(*a));
+    //return res;
 }
 
 #ifndef INET6_ADDRSTRLEN
@@ -479,7 +484,7 @@ static string ip2string(const uint8_t *addr, sa_family_t family)
     return string("INVALID family ");
 }
 
-static string mac2string(const struct ether_addr *const e)
+static string mac2string(const struct be13::ether_addr *const e)
 {
     char addr[32];
     snprintf(addr,sizeof(addr),"%02X:%02X:%02X:%02X:%02X:%02X",
@@ -519,7 +524,7 @@ static bool sanePort(const uint16_t port) {
  */
 static bool sanityCheckIPHeader(const sbuf_t &sbuf, bool *checksum_valid, generic_iphdr_t *h)
 {
-    const struct ip *ip = sbuf.get_struct_ptr<struct ip>(0);
+    const struct be13::ip4 *ip = sbuf.get_struct_ptr<struct be13::ip4>(0);
     if (ip && ip->ip_v == 4){
 	if (ip->ip_hl != 5) return false;	// IPv4 header length is 20 bytes (5 quads)
 	if ( (ip->ip_off != 0x0) && (ip->ip_off != ntohs(IP_DF)) ) return false;
@@ -554,7 +559,7 @@ static bool sanityCheckIPHeader(const sbuf_t &sbuf, bool *checksum_valid, generi
 	return true;
     } 
 
-    const struct ip6_hdr *ip6 = sbuf.get_struct_ptr<struct ip6_hdr>(0);
+    const struct be13::ip6_hdr *ip6 = sbuf.get_struct_ptr<struct be13::ip6_hdr>(0);
     if (ip6 && ((ip6->ip6_vfc & 0xF0) == 0x60)){
 		
 	//only do TCP, UDP and ICMPv6
@@ -930,12 +935,12 @@ public:
 	}
 
 	/* Weed out any obviously bad IP addresses */
-	if (invalidIP(&(in->sin_addr))) return 0;
+	if (invalidIP4((const uint8_t *)&(in->sin_addr))) return 0;
 	
 	/* Only use candidate with ports we believe most likely */
 	if (!sanePort(in->sin_port)) return 0;
 	
-	ip_recorder->write(sb2.pos0, ip2string(&(in->sin_addr)), "sockaddr_in");
+	ip_recorder->write(sb2.pos0, ip2string((const be13::in_addr *)&(in->sin_addr)), "sockaddr_in");
 	return sizeof(struct sockaddr_in);
     }
 
@@ -1056,7 +1061,7 @@ void scan_net(const class scanner_params &sp,const recursion_control_block &rcb)
     assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);      
     if(sp.phase==scanner_params::startup){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
-	assert(sizeof(struct ip)==20);	// we've had problems on some systems
+	assert(sizeof(struct be13::ip4)==20);	// we've had problems on some systems
 	sp.info->name  = "net";
         sp.info->author         = "Simson Garfinkel and Rob Beverly";
         sp.info->description    = "Scans for IP packets";

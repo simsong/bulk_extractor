@@ -104,7 +104,7 @@ public:
     pthread_t thread;			// my thread; set when I am created
     uint32_t id;				// my number
     worker(class threadpool &master_,uint32_t id_): master(master_),thread(),id(id_),waiting(){}
-    void *run();
+    void *run() __attribute__((__noreturn__));
     aftimer		waiting;	// time spend waiting
 };
 
