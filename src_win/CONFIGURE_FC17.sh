@@ -25,7 +25,7 @@ press any key to continue...
 EOF
 read
 
-MPKGS="autoconf automake gcc gcc-c++ osslsigncode mingw32-nsis flex wine zlib-devel wget "
+MPKGS="autoconf automake gcc gcc-c++ osslsigncode mingw32-nsis flex wine zlib-devel wget md5deep "
 MPKGS+="mingw32-gcc mingw32-gcc-c++ mingw32-zlib mingw32-zlib-static mingw32-libgnurx-static "
 MPKGS+="mingw64-gcc mingw64-gcc-c++ mingw64-zlib mingw64-zlib-static mingw64-libgnurx-static "
 
