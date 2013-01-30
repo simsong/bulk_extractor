@@ -106,14 +106,12 @@ echo tre mingw32
 mingw32-configure --enable-static >/dev/null
 make               >/dev/null
 sudo make install  >/dev/null
-sudo libtool --finish /usr/i686-w64-mingw32/sys-root/mingw/lib
 make distclean    >/dev/null
 echo
 echo tre mingw64
 mingw64-configure --enable-static >/dev/null
 make               >/dev/null
 sudo make install  >/dev/null
-sudo ./libtool --finish /usr/i686-w64-mingw
 make distclean    >/dev/null
 
 cd ..
@@ -129,14 +127,12 @@ echo libewf mingw32
 mingw32-configure --enable-static >/dev/null
 make		  >/dev/null
 sudo make install >/dev/null
-sudo libtool --finish /usr/i686-w64-mingw32/sys-root/mingw/lib
 make distclean    >/dev/null
 echo
 echo libewf mingw64
 mingw64-configure --enable-static >/dev/null
 make		  >/dev/null
 sudo make install >/dev/null
-sudo ./libtool --finish /usr/i686-w64-mingw
 make distclean    >/dev/null
 cd ..
 
@@ -146,14 +142,15 @@ rm -rf tre-0.8.0
 rm libewf-$EWFVER.tar.gz
 rm -rf libewf-$EWFVER
 echo "LIBEWF mingw installation complete."
-
+echo ...
+echo 'Now running ../bootstrap.sh and configure'
+cd ..
+sh bootstrap.sh
+sh configure > /dev/null
 echo ================================================================
 echo ================================================================
 echo 'You are now ready to cross-compile for win32 and win64.'
-echo 'First you must run bootstrap.sh and configure:'
-echo '  e.g.:'
-echo '  $ cd .. ; sh bootstrap.sh ; sh configure'
-echo 'After that, you can make the 32-bit or 64-bit versions'
-echo 'by typing "make win32" or "make win64".'
-echo 'You can make both and an installer by typing "make windist".'
-echo
+echo 'To make bulk_extractor32.exe: cd ..; make win32'
+echo 'To make bulk_extractor64.exe: cd ..; make win64'
+echo 'To make ZIP file with both:   cd ..; make windist'
+echo 'To make the Nulsoft installer with both and the Java GUI: make'
