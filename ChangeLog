@@ -1,3 +1,7 @@
+2013-01-29  Simson Garfinkel  <simsong@Mucha.local>
+
+	* src/threadpool.h (class worker): removed pesky noreturn problem with threadpool.
+
 2012-12-25  Simson Garfinkel  <simsong@Mucha.local>
 
 	* python/identify_filenames.py (process_featurefile): added #'s to report printed at bottom

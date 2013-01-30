@@ -98,13 +98,18 @@ class threadpool {
 class worker {
 private:
     void do_work(sbuf_t *sbuf);		// do the work; does not delete sbuf
+    class internal_error: public exception {
+        virtual const char *what() const throw() {
+            return "internal error.";
+        }
+    };
 public:
     static void * start_worker(void *arg){return ((worker *)arg)->run();};
     class threadpool &master;		// my master
     pthread_t thread;			// my thread; set when I am created
     uint32_t id;				// my number
     worker(class threadpool &master_,uint32_t id_): master(master_),thread(),id(id_),waiting(){}
-    void *run() __attribute__((__noreturn__));
+    void *run();
     aftimer		waiting;	// time spend waiting
 };
 
