@@ -374,7 +374,7 @@ AC_ARG_WITH([o3], AC_HELP_STRING([--without-o3], [Do not force O3 optimization; 
 # ZLIB is required:
 #  Note you cannot put comments in the AC_MSG_ERROR for some reason
 AC_CHECK_LIB([z],[uncompress],,
-	AC_MSG_ERROR([zlib libraries not installed; try installing zlib-dev zlib-devel zlib1g-dev or libz-dev]))
+	AC_MSG_ERROR([zlib libraries not installed; try installing zlib-devel zlib-dev zlib-devel zlib1g-dev or libz-dev]))
 
 ################################################################
 ## regex support

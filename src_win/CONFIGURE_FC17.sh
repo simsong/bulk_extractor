@@ -25,7 +25,7 @@ press any key to continue...
 EOF
 read
 
-MPKGS="autoconf automake gcc gcc-c++ osslsigncode mingw32-nsis flex wine wget "
+MPKGS="autoconf automake gcc gcc-c++ osslsigncode mingw32-nsis flex wine zlib-devel wget "
 MPKGS+="mingw32-gcc mingw32-gcc-c++ mingw32-zlib mingw32-zlib-static mingw32-libgnurx-static "
 MPKGS+="mingw64-gcc mingw64-gcc-c++ mingw64-zlib mingw64-zlib-static mingw64-libgnurx-static "
 
@@ -101,15 +101,22 @@ echo "Building and installing TRE for mingw"
 wget http://laurikari.net/tre/tre-0.8.0.zip
 unzip tre-0.8.0.zip
 cd tre-0.8.0
+echo
+echo tre mingw32
 mingw32-configure --enable-static >/dev/null
 make               >/dev/null
 sudo make install  >/dev/null
+sudo libtool --finish /usr/i686-w64-mingw32/sys-root/mingw/lib
+make distclean    >/dev/null
+echo
+echo tre mingw64
 mingw64-configure --enable-static >/dev/null
 make               >/dev/null
 sudo make install  >/dev/null
+sudo ./libtool --finish /usr/i686-w64-mingw
+make distclean    >/dev/null
+
 cd ..
-rm tre-0.8.0.zip
-rm -rf tre-0.8.0
 echo "TRE mingw installation complete."
 
 echo "Building and installing LIBEWF for mingw"
@@ -117,20 +124,36 @@ EWFVER=20130128
 wget http://libewf.googlecode.com/files/libewf-$EWFVER.tar.gz
 tar xfz libewf-$EWFVER.tar.gz
 cd libewf-$EWFVER
+echo
+echo libewf mingw32
 mingw32-configure --enable-static >/dev/null
 make		  >/dev/null
 sudo make install >/dev/null
+sudo libtool --finish /usr/i686-w64-mingw32/sys-root/mingw/lib
+make distclean    >/dev/null
+echo
+echo libewf mingw64
 mingw64-configure --enable-static >/dev/null
 make		  >/dev/null
 sudo make install >/dev/null
+sudo ./libtool --finish /usr/i686-w64-mingw
+make distclean    >/dev/null
 cd ..
+
+echo "Cleaning up"
+rm tre-0.8.0.zip
+rm -rf tre-0.8.0
 rm libewf-$EWFVER.tar.gz
 rm -rf libewf-$EWFVER
 echo "LIBEWF mingw installation complete."
 
 echo ================================================================
 echo ================================================================
-echo You are now ready to cross-compile for win32 and win64.
-echo 'You may be able to do this by typing "make win32" or "make win64"'
-echo 'You can also type "mingw64-configure && make"'
+echo 'You are now ready to cross-compile for win32 and win64.'
+echo 'First you must run bootstrap.sh and configure:'
+echo '  e.g.:'
+echo '  $ cd .. ; sh bootstrap.sh ; sh configure'
+echo 'After that, you can make the 32-bit or 64-bit versions'
+echo 'by typing "make win32" or "make win64".'
+echo 'You can make both and an installer by typing "make windist".'
 echo
