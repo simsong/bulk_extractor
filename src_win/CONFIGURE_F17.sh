@@ -18,8 +18,7 @@ mingw32 and 64.  Please perform the following steps:
 2. Plese put this CONFIGURE_F17.sh script in you home directory.
 
 3. Run this script to configure the system to cross-compile bulk_extractor.
-   This script must be run as root.  You can do that by typing:
-          sudo sh CONFIGURE_F17.sh
+   Parts of this script will be run as root using "sudo".
 
 press any key to continue...
 EOF
@@ -31,11 +30,6 @@ MPKGS+="mingw64-gcc mingw64-gcc-c++ mingw64-zlib mingw64-zlib-static mingw64-lib
 
 echo "Command do execute:"
 echo $MPKGS
-
-if [ $USER != "root" ]; then
-  echo This script must be run as root
-  exit 1
-fi
 
 if [ ! -r /etc/redhat-release ]; then
   echo This requires Fedora Linux
@@ -49,14 +43,9 @@ else
   exit 1
 fi
 
-if [ $USER != "root" ]; then
-  echo This script must be run as root
-  exit 1
-fi
-
 echo Will now try to install 
 
-yum install -y $MPKGS
+sudo yum install -y $MPKGS
 if [ $? != 0 ]; then
   echo "Could not install some of the packages. Will not proceed."
   exit 1
@@ -82,12 +71,12 @@ for CROSS in i686-w64-mingw32 x86_64-w64-mingw32 ; do
     fi
     pushd pthreads-w32-2-9-1-release
       make CROSS=$CROSS- CFLAGS="-DHAVE_STRUCT_TIMESPEC -I." clean GC-static
-      install implement.h need_errno.h pthread.h sched.h semaphore.h $DESTDIR
+      sudo install implement.h need_errno.h pthread.h sched.h semaphore.h $DESTDIR
       if [ $? != 0 ]; then
         echo "Unable to install include files for $CROSS"
         exit 1
       fi
-      install *.a /usr/$CROSS/sys-root/mingw/lib/
+      sudo install *.a /usr/$CROSS/sys-root/mingw/lib/
       if [ $? != 0 ]; then
         echo "Unable to install library for $CROSS"
         exit 1
