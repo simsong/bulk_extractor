@@ -1,4 +1,4 @@
-Install the mingw environment using CONFIGURE_FC17.sh.
+Install the mingw environment using CONFIGURE_F17.sh.
 Install additional packages using CONFIGURE_LIBRARIES.sh.
 
 Enable the Windows installer by running configure: "./configure --enable-win_installer".

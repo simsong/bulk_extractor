@@ -15,7 +15,7 @@ mingw32 and 64.  Please perform the following steps:
         http://fedoraproject.org/en/get-fedora-options#formats
    1b - Create a new VM using this ISO as the boot.
        
-2. Plese put this CONFIGURE_FC17.sh script in you home directory.
+2. Plese put this CONFIGURE_F17.sh script in you home directory.
 
 3. Run this script to configure the system to cross-compile bulk_extractor.
    This script must be run as root.  You can do that by typing:
@@ -44,8 +44,8 @@ fi
 
 if grep 'Fedora.release.' /etc/redhat-release ; then
   echo Fedora Release detected
-else
-  echo This script is only tested for Fedora Release 17 and should work on FC17 or newer.
+els
+  echo This script is only tested for Fedora Release 17 and should work on F17 or newer.
   exit 1
 fi
 
