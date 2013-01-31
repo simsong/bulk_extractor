@@ -51,5 +51,6 @@ stamp-h
 stamp-h1
 tests/Makefile
 src/bulk_extractor
+win32
 win64
 __pycache__
