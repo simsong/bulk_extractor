@@ -44,7 +44,7 @@ fi
 
 if grep 'Fedora.release.' /etc/redhat-release ; then
   echo Fedora Release detected
-els
+else
   echo This script is only tested for Fedora Release 17 and should work on F17 or newer.
   exit 1
 fi
