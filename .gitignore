@@ -3,6 +3,7 @@
 *.log
 *.o
 *.so
+*.swp
 *~
 .deps
 Makefile
@@ -19,7 +20,9 @@ depcomp
 doc/Makefile
 doc/user_manual/Makefile
 install-sh
+java_gui/BEViewer.jar
 java_gui/Makefile
+java_gui/classes
 man/Makefile
 missing
 plugins/Makefile
@@ -48,4 +51,5 @@ stamp-h
 stamp-h1
 tests/Makefile
 src/bulk_extractor
+win64
 __pycache__
