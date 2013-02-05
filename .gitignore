@@ -42,6 +42,8 @@ python/Makefile
 specfiles/Makefile
 specfiles/bulk_extractor.spec.m4
 src/Makefile
+src/bulk_extractor
+src/bulk_extractor.exe
 src/scan_accts.cpp
 src/scan_base16.cpp
 src/scan_email.cpp
@@ -50,7 +52,6 @@ src_win/Makefile
 stamp-h
 stamp-h1
 tests/Makefile
-src/bulk_extractor
 win32
 win64
 __pycache__
