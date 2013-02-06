@@ -380,6 +380,11 @@ AC_CHECK_LIB([z],[uncompress],,
 ## regex support
 ## there are several options
 ## tre is better than regex
+AC_CHECK_LIB([stdc++],[main])
+AC_CHECK_LIB([sicudt],[main])
+AC_CHECK_HEADER([unicode/ucnv.h])
+AC_SEARCH_LIBS([uset_close], [sicuuc])
+AC_CHECK_LIB([sicuuc],[main])
 AC_CHECK_HEADER([lightgrep/api.h])
 AC_CHECK_LIB([lightgrep], [lg_create_pattern])
 AC_CHECK_HEADERS([regex.h tre/tre.h])
