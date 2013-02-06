@@ -35,7 +35,10 @@ BE13_API = \
         be13_api/xml.cpp \
         be13_api/xml.h \
 	be13_api/unicode_escape.cpp\
-	be13_api/unicode_escape.h 
+	be13_api/unicode_escape.h \
+	be13_api/utils.h \
+	be13_api/utils.cpp
+
 
 
 TSK3INCS = \
@@ -123,8 +126,6 @@ bulk_extractor_SOURCES = \
 	support.cpp \
 	threadpool.cpp \
 	threadpool.h \
-	utils.cpp \
-	utils.h \
 	word_and_context_list.cpp \
 	word_and_context_list.h \
 	$(bulk_scanners) $(TSK3INCS)  $(BE13_API)

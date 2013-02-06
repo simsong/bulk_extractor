@@ -1,10 +1,35 @@
 Welcome to bulk_extractor!
 
+Compiling
+---------
+
 Release files can be downloaded from:
 
    * current release: http://digitalcorpora.org/downloads/bulk_extractor/bulk_extractor-1.3.1.tar.gz
    * http://digitalcorpora.org/downloads/bulk_extractor/
    
+
+Compiling
+---------
+*To compile for MacOS or Linux*
+
+Download the sources with git, run bootstrap.sh, configure and make:
+
+    git clone --recursive https://github.com/simsong/bulk_extractor.git
+    cd tcpflow
+    sh bootstrap.sh
+    sh configure
+    make
+    sudo make install
+
+*To Compile for Windows with mingw on Fedora:*
+
+Be sure that mingw is installed, then:
+
+    git clone --recursive https://github.com/simsong/bulk_extractor.git
+    cd tcpflow
+    sh bootstrap.sh
+    mingw64-configure
 
 
 ================================================================
@@ -43,7 +68,7 @@ The libgnurx-static package is required.
 
 The LIBEWF library is recommended for access to E01 files.
 
-Packages may be installed by running the CONFIGURE_FC17.sh script in src_win/.
+Packages may be installed by running the CONFIGURE_F17.sh script in src_win/.
 The additional libraries may be installed by running the CONFIGURE_LIBRARIES.sh script in src_win/.
 
 ================================================================

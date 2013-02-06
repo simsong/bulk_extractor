@@ -4,6 +4,16 @@
 # bulk_extractor_reader.py:
 # A module for working with bulk_extractor
 
+"""
+Usage: b=BulkReport(fn)
+b.feature_files() = List of feature files
+b.histograms()    = List of histograms
+b.read_histogram() = Returns a dictionary of the histogram
+b.open(fname)     = Opens a feature file in the report
+
+"""
+
+
 __version__ = "1.3.0"
 
 b'This module needs Python 2.7 or later.'
@@ -37,7 +47,12 @@ def get_property_line(line):
     return None
 
 def is_feature_line(line):
-    return len(line.split(b"\t")) in [2,3]
+    """Determines if LINE is a line from a feature file. It has 2-5 fields, the first field begins with a number."""
+    ary = line.split(b"\t")
+    if(len(ary)<2 or len(ary)>5): return False
+    if(len(ary[0])<1): return False
+    if(ary[0][0]<ord('0') or ary[0][0]>ord('9')): return False
+    return True
 
 def is_histogram_filename(fname):
     """Returns true if this is a histogram file"""
@@ -64,7 +79,7 @@ class BulkReport:
     b.files   - Set of feature file names
 """    
 
-    def __init__(self,fn):
+    def __init__(self,fn,do_validate=True):
         def validate():
             """Validates the XML and finds the histograms and feature files"""
             import xml.dom.minidom
@@ -72,7 +87,7 @@ class BulkReport:
             try:
                 self.xmldoc = xml.dom.minidom.parse(self.open("report.xml"))
             except xml.parsers.expat.ExpatError as e:
-                raise IOError("Invalid report.xml file")
+                raise IOError("Invalid or missing report.xml file. specify validate=False to avoid validation")
             return True
 
         import os.path,glob
@@ -82,7 +97,7 @@ class BulkReport:
             self.dname = fn
             self.all_files = set([os.path.basename(x) for x in glob.glob(os.path.join(fn,"*"))])
             self.files = set([os.path.basename(x) for x in glob.glob(os.path.join(fn,"*.txt"))])
-            validate()
+            if do_validate: validate()
             return
         if fn.endswith(".zip") and os.path.isfile(fn):
             self.zipfile = zipfile.ZipFile(fn)
@@ -92,8 +107,11 @@ class BulkReport:
             for fn in self.zipfile.namelist():
                 self.files.add(os.path.basename(fn))
                 self.map[os.path.basename(fn)] = fn
-            validate()
+            if do_validate: validate()
             return
+        if fn.endswith(".txt"):
+            import sys
+            print("***\n*** {} ends with .txt\n*** BulkReader wants the report directory, not the individual feature file\n***".format(fn),file=sys.stderr)
         raise RuntimeError("Cannot process " + fn)
 
     def imagefile(self):
@@ -125,7 +143,8 @@ class BulkReport:
         return False
 
     def is_feature_file(self,fn):
-        if is_feature_filename(fn)==False: return False
+        if is_feature_filename(fn)==False:
+            return False
         for line in self.open(fn,'rb'):
             if is_comment_line(line): continue
             return is_feature_line(line)

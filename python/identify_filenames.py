@@ -278,13 +278,13 @@ def process_featurefile(args,report,featurefile):
     t1 = time.time()
 
     # Summary report
-    for (title,value) in [["Total features input: {}",feature_count],
-                          ["Total features located to files: {}",located_count],
-                          ["Total features in unallocated space: {}",unallocated_count],
-                          ["Total features in compressed regions: {}",features_compressed],
-                          ["Unicode Encode Errors: {}",unicode_encode_errors],
-                          ["Unicode Decode Errors: {}",unicode_decode_errors],
-                          ["Total processing time: {} seconds",t1-t0]]:
+    for (title,value) in [["# Total features input: {}",feature_count],
+                          ["# Total features located to files: {}",located_count],
+                          ["# Total features in unallocated space: {}",unallocated_count],
+                          ["# Total features in compressed regions: {}",features_compressed],
+                          ["# Unicode Encode Errors: {}",unicode_encode_errors],
+                          ["# Unicode Decode Errors: {}",unicode_decode_errors],
+                          ["# Total processing time: {:.2} seconds",t1-t0]]:
         of.write((title+"\n").format(value).encode('utf-8'))
 
 

@@ -17,7 +17,7 @@ must be installed in the Mingw library directories:
 All of these require various kinds of flags. 
 
 We now have a build environment that does almost all of this for you,
-and a CONFIGURE_FC17.sh script for configuring a Linux system for
+and a CONFIGURE_F17.sh script for configuring a Linux system for
 cross-compiling, located in this directory.
 
 To cross-compile each of the additional libraries, use:

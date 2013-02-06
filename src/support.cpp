@@ -10,18 +10,6 @@
  *** WIN32 SPECIAL AND DEBUG
  ****************************************************************/
 
-#if 0
-std::string ssprintf(const char *fmt,...)
-{
-    char buf[65536];
-    va_list ap;
-    va_start(ap,fmt);
-    vsnprintf(buf,sizeof(buf),fmt,ap);
-    va_end(ap);
-    return string(buf);
-}
-#endif
-
 /* Truncate a string after a character */
 void truncate_at(string &line,char ch)
 {

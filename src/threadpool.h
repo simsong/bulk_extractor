@@ -98,6 +98,11 @@ class threadpool {
 class worker {
 private:
     void do_work(sbuf_t *sbuf);		// do the work; does not delete sbuf
+    class internal_error: public exception {
+        virtual const char *what() const throw() {
+            return "internal error.";
+        }
+    };
 public:
     static void * start_worker(void *arg){return ((worker *)arg)->run();};
     class threadpool &master;		// my master

@@ -34,7 +34,6 @@
 #include <errno.h>
 
 
-
 #ifdef HAVE_STDLIB_H
 # include <stdlib.h>
 #endif
@@ -120,8 +119,6 @@
 #include <stdint.h>
 #endif
 
-#include <unistd.h>
-
 #ifdef HAVE_SYS_RESOURCE_H
 #include <sys/resource.h>
 #endif
@@ -146,15 +143,13 @@
 #include <sys/mman.h>
 #endif
 
-#include "utils.h"
+#include "be13_api/utils.h"
 
 #if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 7)
 # define ATTR_FORMAT(param,arg) __attribute__ ((__printf__,param,arg))
 #else
 # define ATTR_FORMAT(spec) /* empty */
 #endif
-
-
 
 /* bulk_extractor.cpp */
 
@@ -206,9 +201,6 @@ using namespace std;
 
 void	be_mkdir(std::string dir);
 void	validate_fn(std::string &fn);
-
-typedef std::map<std::string,std::string>  be_config_t;
-extern be_config_t be_config; // system configuration
 
 #include "be13_api/bulk_extractor_i.h"
 

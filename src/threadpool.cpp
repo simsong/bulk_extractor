@@ -222,10 +222,7 @@ std::string threadpool::get_thread_status(uint32_t id)
  * attribute, but then when the attribute is given, GCC complains that it has
  * a return statement!
  */
-#ifdef HAVE_DIAGNOSTIC_SUGGEST_ATTRIBUTE
-#pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
-#endif
-void *worker::run()
+void *worker::run() 
 {
     while(true){
 	/* Get the lock, then wait for the queue to be empty.
@@ -233,13 +230,15 @@ void *worker::run()
 	 */
 	if(master.mode==0) waiting.start(); // only if we are not waiting for workers to finish
 	if(pthread_mutex_lock(&master.M)){
-	    errx(1,"worker::run: pthread_mutex_lock failed");
+            std::cerr << "worker::run: pthread_mutex_lock failed";
+            throw new internal_error();
 	}
 	/* At this point the worker has the lock */
 	while(master.work_queue.empty()){
 	    /* I didn't get any work; go back to sleep */
 	    if(pthread_cond_wait(&master.TOWORKER,&master.M)){
-		errx(1,"pthread_cond_wait error=%d\n",errno);
+                std::cerr << "pthread_cond_wait error=%d" << errno << "\n";
+                throw new internal_error();
 	    }
 	}
 	waiting.stop();
@@ -251,7 +250,7 @@ void *worker::run()
 	/* release the lock */
 	pthread_mutex_unlock(&master.M);	   // unlock
 	if(sbuf==0) {
-	    break;			// told to exit
+            return 0;
 	}
 	do_work(sbuf);
 	delete sbuf;
@@ -261,6 +260,5 @@ void *worker::run()
 	pthread_cond_signal(&master.TOMAIN); // tell the master that we are free!
 	pthread_mutex_unlock(&master.M);     // should wake up the master
     }
-    return 0;
 }
 
