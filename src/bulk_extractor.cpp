@@ -1175,10 +1175,12 @@ int main(int argc,char **argv)
 	std::cout.precision(4);
 	std::cout << "Elapsed time: " << timer.elapsed_seconds() << " sec.\n";
 	std::cout << "Overall performance: " << mb_per_sec << " MBytes/sec.\n";
-	feature_recorder *fr = fs.get_name("email");
-	if(fr){
-	    std::cout << "Total " << fr->name << " features found: " << fr->count << "\n";
-	}
+        if (fs.has_name("email")) {
+            feature_recorder *fr = fs.get_name("email");
+            if(fr){
+                std::cout << "Total " << fr->name << " features found: " << fr->count << "\n";
+            }
+        }
     }
 #ifdef HAVE_MCHECK
     muntrace();

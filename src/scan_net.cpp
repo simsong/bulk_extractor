@@ -611,8 +611,8 @@ static bool sanityCheckIPHeader(const sbuf_t &sbuf, bool *checksum_valid, generi
 	}
 	/* create a generic_iphdr_t, similar to tcpip.c from tcpflow code */
 	h->family = AF_INET6;
-	memcpy(h->src, ip6->ip6_src.__u6_addr.__u6_addr8, sizeof(ip6->ip6_src.__u6_addr.__u6_addr8));
-	memcpy(h->dst, ip6->ip6_dst.__u6_addr.__u6_addr8, sizeof(ip6->ip6_dst.__u6_addr.__u6_addr8));
+	memcpy(h->src, ip6->ip6_src.addr.addr8, sizeof(ip6->ip6_src.addr.addr8));
+	memcpy(h->dst, ip6->ip6_dst.addr.addr8, sizeof(ip6->ip6_dst.addr.addr8));
 	h->ttl = ip6->ip6_hlim;
 	h->nxthdr = ip6->ip6_nxt;
 	h->nxthdr_offs = 40; 	/* ipv6 headers are a fixed length of 40 bytes */
