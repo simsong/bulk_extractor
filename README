@@ -22,7 +22,7 @@ Download the sources with git, run bootstrap.sh, configure and make:
     make
     sudo make install
 
-*To Compile for Windows with mingw on Fedora Core:*
+*To Compile for Windows with mingw on Fedora:*
 
 Be sure that mingw is installed, then:
 
@@ -68,7 +68,7 @@ The libgnurx-static package is required.
 
 The LIBEWF library is recommended for access to E01 files.
 
-Packages may be installed by running the CONFIGURE_FC17.sh script in src_win/.
+Packages may be installed by running the CONFIGURE_F17.sh script in src_win/.
 The additional libraries may be installed by running the CONFIGURE_LIBRARIES.sh script in src_win/.
 
 ================================================================
