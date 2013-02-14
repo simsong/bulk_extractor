@@ -21,6 +21,27 @@ import zipfile,os,os.path,glob,codecs,re
 
 property_re = re.compile("# ([a-z0-9\-_]+):(.*)",re.I)
 
+def decode_feature(ffmt):
+    """Decodes a feature in a feature file into Unicode"""
+    tbin = ffmt.decode('unicode_escape')
+    bin = tbin.encode('latin1')
+    if b"\000" in bin:
+        # If it has a \000 in it, must be UTF-16
+        try:
+            return bin.decode('utf-16-le')
+        except UnicodeDecodeError:
+            return tbin
+    try:
+        return bin.decode('utf-8')
+    except UnicodeDecodeError:
+        pass
+    try:
+        return bin.decode('utf-16-le')
+    except UnicodeDecodeError:
+        pass
+    return tbin
+    
+    
 def is_comment_line(line):
     if len(line)==0: return False
     if line[0:4]==b'\xef\xbb\xbf#': return True
