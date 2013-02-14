@@ -840,7 +840,7 @@ static void dfxml_create(xml &xreport,const string &command_line)
 {
     xreport.push("dfxml","xmloutputversion='1.0'");
     xreport.push("metadata",
-		 "\n  xmlns='http://IAMHEREafflib.org/bulk_extractor/' "
+		 "\n  xmlns='http://afflib.org/bulk_extractor/' "
 		 "\n  xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' "
 		 "\n  xmlns:dc='http://purl.org/dc/elements/1.1/'" );
     xreport.xmlout("dc:type","Feature Extraction","",false);
@@ -1015,11 +1015,15 @@ int main(int argc,char **argv)
     }
 
     /* Load all the scanners and enable the ones we care about */
-    load_scanners(scanners_builtin/*,histograms*/);		 
+    load_scanners(scanners_builtin);		 
+
+    scanners_process_commands();
+
+    /* TK: Give an error if a find list was specified but no scanner that uses the find list is enabled */
 /*    if(find_list.size()>0){
 	scanners_enable("find");
     }*/
-    scanners_process_commands();
+
 
     if(opt_path){
 	if(argc!=1) errx(1,"-p requires a single argument.");
