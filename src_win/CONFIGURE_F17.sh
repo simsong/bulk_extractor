@@ -91,6 +91,10 @@ MINGW64_DIR=/usr/$MINGW64/sys-root/mingw
 #  fi
 #done
 
+#
+# TRE
+#
+
 echo "Building and installing TRE for mingw"
 TREVER=0.8.0
 TREFILE=tre-$TREVER.zip
@@ -99,20 +103,21 @@ TREURL=http://laurikari.net/tre/$TREFILE
 
 wget $TREURL
 unzip $TREFILE
-pushd $TREDIR
-echo
-echo libtre mingw32
-mingw32-configure --enable-static
-make
-sudo make install
-make distclean
-echo
-echo libtre mingw64
-mingw64-configure --enable-static
-make
-sudo make install
-popd
+for i in 32 64 ; do
+  echo
+  echo libtre mingw$i
+  mkdir libtre-mingw$i
+  pushd libtre-mingw$i
+  ../$TREDIR/mingw$i-configure --enable-static
+  make
+  sudo make install
+  popd
+done
 echo "TRE mingw installation complete."
+
+#
+# EWF
+#
 
 echo "Building and installing LIBEWF for mingw"
 EWFVER=20130128
@@ -122,20 +127,22 @@ EWFURL=http://libewf.googlecode.com/files/$EWFFILE
 
 wget $EWFURL 
 tar xzf $EWFFILE 
-pushd $EWFDIR
-echo
-echo libewf mingw32
-mingw32-configure --enable-static
-make
-sudo make install
-make distclean
-echo
-echo libewf mingw64
-mingw64-configure --enable-static
-make
-sudo make install
-popd
+for i in 32 64 ; do
+  echo
+  echo libewf mingw$i
+  mkdir libewf-mingw$i
+  pushd libewf-mingw$i
+  ../$EWFDIR/mingw$i-configure --enable-static
+  make
+  sudo make install
+  popd
+done
+
 echo "LIBEWF mingw installation complete."
+
+#
+# ICU
+#
 
 echo "Building and installing ICU for mingw"
 ICUVER=50_1_2
@@ -171,6 +178,10 @@ sudo make install
 popd
 echo "ICU mingw installation complete."
 
+#
+# Lightgrep
+#
+
 echo "Building and installing lightgrep for mingw"
 #LGVER=
 #LGFILE=
@@ -189,15 +200,20 @@ make CROSS=1
 sudo make CROSS=1 install
 popd
 
+#
+#
+#
+
 echo "Cleaning up"
-rm $TREFILE $EWFFILE $ICUFILE 
-rm -rf $TREDIR $EWFDIR icu icu-linux icu-mingw32 icu-mingw64 $LGDIR
+rm -f $TREFILE $EWFFILE $ICUFILE
+rm -rf $TREDIR libtre-mingw32 libtre-mingw64 $EWFDIR libewf-mingw32 libewf-mingw64 icu icu-linux icu-mingw32 icu-mingw64 $LGDIR
 
 echo ...
 echo 'Now running ../bootstrap.sh and configure'
-cd ..
+pushd ..
 sh bootstrap.sh
 sh configure
+popd
 echo ================================================================
 echo ================================================================
 echo 'You are now ready to cross-compile for win32 and win64.'
