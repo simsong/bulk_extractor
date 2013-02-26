@@ -106,7 +106,7 @@ public class WScanProgress extends JDialog {
 
       } catch (IOException e) {
         // alert and abort
-        WError.showError("bulk_ectractor Scanner failed to start.",
+        WError.showError("bulk_extractor Scanner failed to start.",
                          "bulk_extractor failure", e);
         return;
       }
@@ -237,7 +237,7 @@ public class WScanProgress extends JDialog {
         WLog.log("bulk_extractor error exit value: " + exitValue);
         statusArea.append("Error: " + exitValue + "\n");
         progressBar.setString("Error");
-        WError.showError("bulk_ectractor Scanner terminated.",
+        WError.showError("bulk_extractor Scanner terminated.",
                          "bulk_extractor failure", null);
       }
     }
