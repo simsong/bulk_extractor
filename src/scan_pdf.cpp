@@ -25,6 +25,13 @@ using namespace std;
 
 static bool mostly_printable_ascii(const unsigned char *buf,size_t bufsize)
 {
+#if 0
+    printf("MOSTLY_PRINTABLE:\n");
+    for(const unsigned char *cc = buf; cc<buf+bufsize;cc++){
+        putchar(*cc);
+    }
+    printf("\nDONE\n");
+#endif
     size_t count = 0;
     for(const unsigned char *cc = buf; cc<buf+bufsize;cc++){
 	if(isprint(*cc) || isspace(*cc)) count++;

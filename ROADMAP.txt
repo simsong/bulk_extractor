@@ -9,7 +9,7 @@ DOCUMENTATION:
 BUGFIXES:
 - scan_net occasionally throws exceptions. Find out why and stop it.
 - scan_net does not properly report timestamps
-
+- scan_pdf should use multiple strategies for extracting text.
 
 FEATURES:
 - Instrument debug to track number of bytes processed

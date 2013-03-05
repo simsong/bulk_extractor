@@ -38,9 +38,12 @@ For example for E01 support, cross-compile libewf as follows:
 All modules must be linked with -shared-libgcc to allow exceptions to be thrown across DLL boundaries.
 This is an issue with libexiv2
 
-================
+2 - On Ubuntu, pthreads is available as  libpthreads-mingw-w64
+
+
+============================================
 Compiling natively under Windows with MINGW:
-*******************************************
+********************************************
 
   Download the Windows Server 2003 Resource Kit tools from:
   http://www.microsoft.com/downloads/details.aspx?familyid=9d467a69-57ff-4ae7-96ee-b18c4790cffd&displaylang=en
@@ -100,8 +103,9 @@ Compiling natively under Windows with MINGW:
   and /bin/*.dll and elsewhere, which maps typically to
   c:\mingw\msys\1.0\local\bin and c:\mingw\bin\
 
+======================================================
 Compiling natively on Windows using cygwin (untested):
-*****************************************************
+******************************************************
 
 Cygwin:
  * Go to cygwin.org. Download and run Setup.

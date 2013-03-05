@@ -28,7 +28,7 @@ void process_find_file(const char *findfile)
     while(!in.eof()){
 	string line;
 	getline(in,line);
-	truncate_at(line,'\r');
+	truncate_at(line,'\r');         // remove a '\r' if present
 	if(line.size()>0){
 	    if(line[0]=='#') continue;	// ignore lines that begin with a comment character
 	    add_find_pattern(line);
@@ -68,7 +68,7 @@ void scan_find(const class scanner_params &sp,const recursion_control_block &rcb
 	    string found;
 	    size_t offset=0;
 	    size_t len = 0;
-	    if(find_list.check((const char *)tmpbuf+pos,&found,&offset,&len)){
+            if(find_list.check((const char *)tmpbuf+pos,&found,&offset,&len)){
 		if(len==0){
 		    len+=1;
 		    continue;
