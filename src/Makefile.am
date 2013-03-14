@@ -84,6 +84,7 @@ bulk_scanners = \
 	scan_wordlist.cpp \
 	scan_zip.cpp \
 	scan_xor.cpp \
+	scan_rar.cpp \
 	$(flex_scanners) 
 
 SCAN_LIFT = scan_lift.cpp \

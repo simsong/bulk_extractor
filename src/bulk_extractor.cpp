@@ -139,6 +139,7 @@ scanner_t *scanners_builtin[] = {
     scan_elf,
     scan_exif,
     scan_zip,
+    scan_rar,
     scan_gzip,
     scan_pdf,
     scan_winpe,
