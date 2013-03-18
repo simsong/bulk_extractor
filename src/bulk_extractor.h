@@ -265,6 +265,7 @@ extern "C" scanner_t scan_winpe;
 extern "C" scanner_t scan_winprefetch;
 extern "C" scanner_t scan_zip;
 extern "C" scanner_t scan_windirs;
+extern "C" scanner_t scan_xor;
 
 #endif
 #endif
