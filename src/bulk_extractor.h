@@ -156,7 +156,6 @@ extern const char *progname;
 extern size_t opt_scan_bulk_block_size;
 extern bool opt_work_start_work_end;	// note when each scanner starts and ends; needed for restarting
 
-extern int opt_quiet;			// if true, no status updates
 extern int opt_notify_rate;		/* how often through main loop to print a status line */
 extern int opt_dedup_bloom_bits;
 extern int word_min;

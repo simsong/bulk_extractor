@@ -47,16 +47,14 @@ size_t opt_margin = 1024*1024*4;
 int opt_notify_rate = 4;
 int word_min = 6;
 int word_max = 14;
-int num_threads = 1;
 int64_t opt_offset_start = 0;
 int64_t opt_offset_end   = 0;
 int   min_uncompr_size = 6;	// don't bother with objects smaller than this
 int   max_uncompr_size = 256*1024*1024; // don't decompress objects larger than this
 int   debug=0;
-int   opt_quiet = 0;			// print each time through
 int   opt_silent= 0;
 int   max_bad_alloc_errors = 60;
-int64_t opt_page_start = 0;
+uint64_t opt_page_start = 0;
 uint32_t   opt_last_year = 2020;
 const char *image_fname = 0;
 const time_t max_wait_time=3600;
@@ -81,7 +79,6 @@ std::string svn_revision("$Rev: 10886 $");
 std::string svn_author("$Author: jon@lightboxtechnologies.com $");
 std::string svn_headurl("$HeadURL: https://domex.nps.edu/domex/svn/src/bulk_extractor/trunk/src/bulk_extractor.cpp $");
 std::string svn_id("$Id: bulk_extractor.cpp 10886 2012-11-29 22:00:33Z jon@lightboxtechnologies.com $");
-
 std::string svn_revision_clean()
 {
     string svn_r;
@@ -89,19 +86,6 @@ std::string svn_revision_clean()
 	if(*it>='0' && *it<='9') svn_r.push_back(*it);
     }
     return svn_r;
-}
-
-/**
- * upperstr - Turns an ASCII string into upper case (should be UTF-8)
- */
-
-std::string upperstr(const std::string &str)
-{
-    std::string ret;
-    for(std::string::const_iterator i=str.begin();i!=str.end();i++){
-	ret.push_back(toupper(*i));
-    }
-    return ret;
 }
 
 
@@ -121,9 +105,9 @@ std::string upperstr(const std::string &str)
 int _CRT_fmode = _O_BINARY;
 #endif
 
-/****************************************************************
- *** SCANNER PLUG-IN SYSTEM
- ****************************************************************/
+/************************
+ *** SCANNER PLUG-INS ***
+ ************************/
 
 /* scanner_def is the class that is used internally to track all of the plug-in scanners.
  * Some scanners are compiled-in; others can be loaded at run-time.
@@ -166,9 +150,9 @@ scanner_t *scanners_builtin[] = {
     scan_bulk,
     0};
 
-/****************************************************************
- *** PATH PRINTER
- ****************************************************************/
+/***************************************************************************************
+ *** PATH PRINTER - Used by bulk_extractor for printing pages associated with a path ***
+ ***************************************************************************************/
 
 /* Get the next token from the path. Tokens are separated by dashes.*/
 static string get_and_remove_token(string &path)
@@ -187,6 +171,19 @@ static string get_and_remove_token(string &path)
     return prefix;
 }
 
+/**
+ * upperstr - Turns an ASCII string into upper case (should be UTF-8)
+ */
+
+std::string upperstr(const std::string &str)
+{
+    std::string ret;
+    for(std::string::const_iterator i=str.begin();i!=str.end();i++){
+	ret.push_back(toupper(*i));
+    }
+    return ret;
+}
+
 void process_path_printer(const scanner_params &sp)
 {
     /* 1. Get next token 
@@ -195,6 +192,7 @@ void process_path_printer(const scanner_params &sp)
      *    if next part is a string, strip it and run that decoder.
      *    if next part is a |, print
      */
+
     if(debug & DEBUG_PRINT_STEPS) cerr << "process_path_printer " << sp.sbuf.pos0.path << "\n";
     string new_path = sp.sbuf.pos0.path;
     string prefix = get_and_remove_token(new_path);
@@ -438,222 +436,215 @@ static void msleep(int msec)
  * phase1 - For every page of the iterator, schedule work.
  */
 
-class MyException : public std::exception {
-public:;
-    std::string s;
-    MyException(const std::string &ss) : s(ss) {}
-    ~MyException() throw() {};
-    virtual const char* what() const throw() {
-	return s.c_str();
+
+class BulkExtractor_Phase1 {
+    std::string minsec(time_t tsec) {
+        time_t min = tsec / 60;
+        time_t sec = tsec % 60;
+        std::stringstream ss;
+        if(min>0) ss << min << " min ";
+        if(sec>0) ss << sec << " sec";
+        return ss.str();
+	
+    }
+    void print_tp_status() {
+        std::stringstream ss;
+        if(!phase1_tp) return;
+        for(u_int i=0;i<num_threads;i++){
+            std::string status = phase1_tp->get_thread_status(i);
+            if(status.size() && status!="Free"){
+                ss << "Thread " << i << ": " << status << "\n";
+            }
+        }
+        std::cout << ss.str() << "\n";
+    }
+    threadpool *phase1_tp;
+    u_int num_threads;
+    int opt_quiet;
+    uint64_t page_number;
+
+public:
+    BulkExtractor_Phase1(u_int num_threads_,int opt_quiet_):
+        phase1_tp(),num_threads(num_threads_),opt_quiet(opt_quiet_),page_number(){}
+    void run(image_process &p,feature_recorder_set &fs,
+             xml &xreport,
+             int64_t &total_bytes,
+                       xml::tagid_set_t &seen_page_ids,
+                       aftimer &timer) {
+
+        md5_generator *md5g = new md5_generator();		// keep track of MD5
+        uint64_t md5_next = 0;		// next byte to hash
+        threadpool tp(num_threads,fs,xreport);
+    
+        phase1_tp = &tp;
+
+        xreport.push("runtime","xmlns:debug=\"http://www.afflib.org/bulk_extractor/debug\"");
+
+        for(image_process::iterator it = p.begin(); it!= p.end() ; ++it){
+            if(opt_offset_end!=0 && it.raw_offset > opt_offset_end) break; // passed the offset
+            if(page_number>=opt_page_start && it.raw_offset>=opt_offset_start){
+                if(seen_page_ids.find(it.get_pos0().str()) != seen_page_ids.end()){
+                    // We've seen this page; skip it.
+                    continue;
+                }
+
+                // attempt to get an sbuf. If we can't get it, we may be in a low-memory situation.
+                // wait for 30 seconds.
+
+                try {
+                    sbuf_t *sbuf = 0;
+                    for(int retry_count=0;retry_count<max_bad_alloc_errors && sbuf==0;retry_count++){
+                        try {
+                            sbuf = it.sbuf_alloc(); // may throw exception
+                            if(sbuf==0) break;
+                        }
+                        catch (const std::bad_alloc &e) {
+                            // Low memory could come from a bad sbuf alloc or another low memory condition.
+                            // wait for a while and then try again...
+                            cerr << "Low Memory (bad_alloc) exception: " << e.what()
+                                 << " reading " << it.get_pos0()
+                                 << " (retry_count=" << retry_count << ")\n";
+                            std::stringstream ss;
+                            ss << "name='bad_alloc' " << "pos0='" << it.get_pos0() << "' "
+                               << "retry_count='"     << retry_count << "' ";
+                            xreport.xmlout("debug:exception", e.what(), ss.str(), true);
+                            if(retry_count+1>=max_bad_alloc_errors){
+                                cerr << "Too many errors encountered in a row. Diagnose and restart.\n";
+                                exit(1);
+                            }
+                            cerr << "will wait for 60 seconds and try again...\n";
+                            msleep(60000);
+                        }
+                    }
+                    if(sbuf==0) break;	// eof?
+                    sbuf->page_number = page_number;
+                    if(md5g){
+                        if(sbuf->pos0.offset==md5_next){ 
+                            // next byte follows logically
+                            md5g->update(sbuf->buf,sbuf->pagesize);
+                            md5_next += sbuf->pagesize;
+                        } else {
+                            // we had a logical gap; stop hashing
+                            delete md5g;	
+                            md5g = 0;
+                        }
+                    }
+                    total_bytes += sbuf->pagesize;
+                    tp.schedule_work(sbuf);	// schedule the work
+		
+                    /* Notify the user */
+                    if((opt_quiet==0) && (opt_notify_rate>0) && ((sbuf->page_number % opt_notify_rate)==0)){
+                        time_t t = time(0);
+                        struct tm tm;
+                        localtime_r(&t,&tm);
+                        printf("%2d:%02d:%02d %s (%4.2f%%) Done in %s at %s\n",
+                               tm.tm_hour,tm.tm_min,tm.tm_sec,
+                               it.str().c_str(),
+                               it.fraction_done()*100.0,
+                               timer.eta_text(it.fraction_done()).c_str(),
+                               timer.eta_time(it.fraction_done()).c_str());
+                    }
+                }
+                catch (const std::exception &e) {
+                    // 
+                    std::stringstream ss;
+                    ss << "name='" << e.what() << "' " << "pos0='" << it.get_pos0() << "' ";
+                    cerr << "Exception " << e.what() << " skipping " << it.get_pos0() << "\n";
+                    xreport.xmlout("debug:exception", e.what(), ss.str(), true);
+                }
+            }
+            page_number++;
+        }
+	    
+        if(!opt_quiet){
+            std::cout << "All Data is Read; waiting for threads to finish...\n";
+        }
+
+        /* Now wait for all of the threads to be free */
+        tp.mode = 1;			// waiting for workers to finish
+        time_t wait_start = time(0);
+        for(int32_t counter = 0;;counter++){
+            int num_remaining = num_threads - tp.get_free_count();
+            if(num_remaining==0) break;
+
+            msleep(100);
+            time_t time_waiting   = time(0) - wait_start;
+            time_t time_remaining = max_wait_time - time_waiting;
+
+            if(counter%60==0){
+                std::stringstream ss;
+                ss << "Time elapsed waiting for " << num_remaining
+                   << " thread" << (num_remaining>1 ? "s" : "") 
+                   << " to finish:\n    " << minsec(time_waiting) 
+                   << " (timeout in "     << minsec(time_remaining) << ".)\n";
+                if(opt_quiet==0){
+                    std::cout << ss.str();
+                    if(counter>0) print_tp_status();
+                }
+                xreport.comment(ss.str());
+            }
+            if(time_waiting>max_wait_time){
+                std::cout << "\n\n";
+                std::cout << " ... this shouldn't take more than an hour. Exiting ... \n";
+                std::cout << " ... Please report to the bulk_extractor maintainer ... \n";
+                break;
+            }
+        }
+        if(opt_quiet==0) std::cout << "All Threads Finished!\n";
+
+        xreport.pop();			// pop runtime
+        /* We can write out the source info now, since we (might) know the hash */
+        xreport.push("source");
+        xreport.xmlout("image_filename",p.image_fname);
+        xreport.xmlout("image_size",p.image_size());  
+        if(md5g){
+            md5_t md5 = md5g->final();
+            xreport.xmlout("hashdigest",md5.hexdigest(),"type='MD5'",false);
+            delete md5g;
+        }
+        xreport.pop();			// source
+
+        /* Record the feature files and their counts in the output */
+        xreport.push("feature_files");
+        for(feature_recorder_map::const_iterator it = tp.fs.frm.begin();
+            it != tp.fs.frm.end(); it++){
+            xreport.set_oneline(true);
+            xreport.push("feature_file");
+            xreport.xmlout("name",it->second->name);
+            xreport.xmlout("count",it->second->count);
+            xreport.pop();
+            xreport.set_oneline(false);
+        }
+        std::cout << "Producer time spent waiting: " << tp.waiting.elapsed_seconds() << " sec.\n";
+    
+        xreport.xmlout("thread_wait",dtos(tp.waiting.elapsed_seconds()),"thread='0'",false);
+        double worker_wait_average = 0;
+        for(threadpool::worker_vector::const_iterator it=tp.workers.begin();it!=tp.workers.end();it++){
+            worker_wait_average += (*it)->waiting.elapsed_seconds() / num_threads;
+            std::stringstream ss;
+            ss << "thread='" << (*it)->id << "'";
+            xreport.xmlout("thread_wait",dtos((*it)->waiting.elapsed_seconds()),ss.str(),false);
+        }
+        xreport.pop();
+        xreport.flush();
+        std::cout << "Average consumer time spent waiting: " << worker_wait_average << " sec.\n";
+        if(worker_wait_average > tp.waiting.elapsed_seconds()*2 && worker_wait_average>10){
+            std::cout << "*******************************************\n";
+            std::cout << "** bulk_extractor is probably I/O bound. **\n";
+            std::cout << "**        Run with a faster drive        **\n";
+            std::cout << "**      to get better performance.       **\n";
+            std::cout << "*******************************************\n";
+        }
+        if(tp.waiting.elapsed_seconds() > worker_wait_average * 2 && tp.waiting.elapsed_seconds()>10){
+            std::cout << "*******************************************\n";
+            std::cout << "** bulk_extractor is probably CPU bound. **\n";
+            std::cout << "**    Run on a computer with more cores  **\n";
+            std::cout << "**      to get better performance.       **\n";
+            std::cout << "*******************************************\n";
+        }
+        /* end of phase 1 */
     }
 };
-
-
-/* Status for SIGINFO */
-threadpool *phase1_tp = 0;
-static void print_tp_status()
-{
-    std::stringstream ss;
-    if(!phase1_tp) return;
-    for(int i=0;i<num_threads;i++){
-	std::string status = phase1_tp->get_thread_status(i);
-	if(status.size() && status!="Free"){
-	    ss << "Thread " << i << ": " << status << "\n";
-	}
-    }
-    std::cout << ss.str() << "\n";
-}
-
-
-static std::string minsec(time_t tsec)
-{
-    time_t min = tsec / 60;
-    time_t sec = tsec % 60;
-    std::stringstream ss;
-    if(min>0) ss << min << " min ";
-    if(sec>0) ss << sec << " sec";
-    return ss.str();
-	
-}
-
-static void phase1(image_process &p,feature_recorder_set &fs,
-		   xml &xreport,
-		   int64_t &page_number,int64_t &total_bytes,
-		   xml::tagid_set_t &seen_page_ids,
-		   aftimer &timer)
-{
-    md5_generator *md5g = new md5_generator();		// keep track of MD5
-    uint64_t md5_next = 0;		// next byte to hash
-    threadpool tp(num_threads,fs,xreport);
-    
-    phase1_tp = &tp;
-
-    xreport.push("runtime","xmlns:debug=\"http://www.afflib.org/bulk_extractor/debug\"");
-
-    for(image_process::iterator it = p.begin(); it!= p.end() ; ++it){
-	if(opt_offset_end!=0 && it.raw_offset > opt_offset_end) break; // passed the offset
-	if(page_number>=opt_page_start && it.raw_offset>=opt_offset_start){
-	    if(seen_page_ids.find(it.get_pos0().str()) != seen_page_ids.end()){
-		// We've seen this page; skip it.
-		continue;
-	    }
-
-	    // attempt to get an sbuf. If we can't get it, we may be in a low-memory situation.
-	    // wait for 30 seconds.
-
-	    try {
-		sbuf_t *sbuf = 0;
-		for(int retry_count=0;retry_count<max_bad_alloc_errors && sbuf==0;retry_count++){
-		    try {
-			sbuf = it.sbuf_alloc(); // may throw exception
-			if(sbuf==0) break;
-		    }
-		    catch (const std::bad_alloc &e) {
-			// Low memory could come from a bad sbuf alloc or another low memory condition.
-			// wait for a while and then try again...
-			cerr << "Low Memory (bad_alloc) exception: " << e.what()
-			     << " reading " << it.get_pos0()
-			     << " (retry_count=" << retry_count << ")\n";
-			std::stringstream ss;
-			ss << "name='bad_alloc' " << "pos0='" << it.get_pos0() << "' "
-			   << "retry_count='"     << retry_count << "' ";
-			xreport.xmlout("debug:exception", e.what(), ss.str(), true);
-			if(retry_count+1>=max_bad_alloc_errors){
-			    cerr << "Too many errors encountered in a row. Diagnose and restart.\n";
-			    exit(1);
-			}
-			cerr << "will wait for 60 seconds and try again...\n";
-			msleep(60000);
-		    }
-		}
-		if(sbuf==0) break;	// eof?
-		sbuf->page_number = page_number;
-		if(md5g){
-		    if(sbuf->pos0.offset==md5_next){ 
-			// next byte follows logically
-			md5g->update(sbuf->buf,sbuf->pagesize);
-			md5_next += sbuf->pagesize;
-		    } else {
-			// we had a logical gap; stop hashing
-			delete md5g;	
-			md5g = 0;
-		    }
-		}
-		total_bytes += sbuf->pagesize;
-		tp.schedule_work(sbuf);	// schedule the work
-		
-		/* Notify the user */
-		if((opt_quiet==0) && (opt_notify_rate>0) && ((sbuf->page_number % opt_notify_rate)==0)){
-		    time_t t = time(0);
-		    struct tm tm;
-		    localtime_r(&t,&tm);
-		    printf("%2d:%02d:%02d %s (%4.2f%%) Done in %s at %s\n",
-			   tm.tm_hour,tm.tm_min,tm.tm_sec,
-			   it.str().c_str(),
-			   it.fraction_done()*100.0,
-			   timer.eta_text(it.fraction_done()).c_str(),
-			   timer.eta_time(it.fraction_done()).c_str());
-		}
-	    }
-	    catch (const std::exception &e) {
-		// 
-		std::stringstream ss;
-		ss << "name='" << e.what() << "' " << "pos0='" << it.get_pos0() << "' ";
-		cerr << "Exception " << e.what() << " skipping " << it.get_pos0() << "\n";
-		xreport.xmlout("debug:exception", e.what(), ss.str(), true);
-	    }
-	}
-	page_number++;
-    }
-	    
-    if(!opt_quiet){
-	std::cout << "All Data is Read; waiting for threads to finish...\n";
-    }
-
-    /* Now wait for all of the threads to be free */
-    tp.mode = 1;			// waiting for workers to finish
-    time_t wait_start = time(0);
-    for(int32_t counter = 0;;counter++){
-	int num_remaining = num_threads - tp.get_free_count();
-	if(num_remaining==0) break;
-
-	msleep(100);
-	time_t time_waiting   = time(0) - wait_start;
-	time_t time_remaining = max_wait_time - time_waiting;
-
-	if(counter%60==0){
-	    std::stringstream ss;
-	    ss << "Time elapsed waiting for " << num_remaining
-	       << " thread" << (num_remaining>1 ? "s" : "") 
-	       << " to finish:\n    " << minsec(time_waiting) 
-	       << " (timeout in " << minsec(time_remaining) << ".)\n";
-	    if(opt_quiet==0){
-		std::cout << ss.str();
-		if(counter>0) print_tp_status();
-	    }
-	    xreport.comment(ss.str());
-	}
-	if(time_waiting>max_wait_time){
-	    std::cout << "\n\n";
-	    std::cout << " ... this shouldn't take more than an hour. Exiting ... \n";
-	    std::cout << " ... Please report to the bulk_extractor maintainer ... \n";
-	    break;
-	}
-    }
-    if(opt_quiet==0) std::cout << "All Threads Finished!\n";
-
-    xreport.pop();			// pop runtime
-    /* We can write out the source info now, since we (might) know the hash */
-    xreport.push("source");
-    xreport.xmlout("image_filename",p.image_fname);
-    xreport.xmlout("image_size",p.image_size());  
-    if(md5g){
-	md5_t md5 = md5g->final();
-	xreport.xmlout("hashdigest",md5.hexdigest(),"type='MD5'",false);
-	delete md5g;
-    }
-    xreport.pop();			// source
-
-    /* Record the feature files and their counts in the output */
-    xreport.push("feature_files");
-    for(feature_recorder_map::const_iterator it = tp.fs.frm.begin();
-	it != tp.fs.frm.end(); it++){
-	xreport.set_oneline(true);
-	xreport.push("feature_file");
-	xreport.xmlout("name",it->second->name);
-	xreport.xmlout("count",it->second->count);
-	xreport.pop();
-	xreport.set_oneline(false);
-    }
-    std::cout << "Producer time spent waiting: " << tp.waiting.elapsed_seconds() << " sec.\n";
-    
-    xreport.xmlout("thread_wait",dtos(tp.waiting.elapsed_seconds()),"thread='0'",false);
-    double worker_wait_average = 0;
-    for(threadpool::worker_vector::const_iterator it=tp.workers.begin();it!=tp.workers.end();it++){
-	worker_wait_average += (*it)->waiting.elapsed_seconds() / num_threads;
-	std::stringstream ss;
-	ss << "thread='" << (*it)->id << "'";
-	xreport.xmlout("thread_wait",dtos((*it)->waiting.elapsed_seconds()),ss.str(),false);
-    }
-    xreport.pop();
-    xreport.flush();
-    std::cout << "Average consumer time spent waiting: " << worker_wait_average << " sec.\n";
-    if(worker_wait_average > tp.waiting.elapsed_seconds()*2 && worker_wait_average>10){
-	std::cout << "*******************************************\n";
-	std::cout << "** bulk_extractor is probably I/O bound. **\n";
-	std::cout << "**        Run with a faster drive        **\n";
-	std::cout << "**      to get better performance.       **\n";
-	std::cout << "*******************************************\n";
-    }
-    if(tp.waiting.elapsed_seconds() > worker_wait_average * 2 && tp.waiting.elapsed_seconds()>10){
-	std::cout << "*******************************************\n";
-	std::cout << "** bulk_extractor is probably CPU bound. **\n";
-	std::cout << "**    Run on a computer with more cores  **\n";
-	std::cout << "**      to get better performance.       **\n";
-	std::cout << "*******************************************\n";
-    }
-    /* end of phase 1 */
-}
 
 /****************************************************************
  *** Usage
@@ -760,7 +751,7 @@ void validate_fn(const string &fn)
  * Create the dfxml output
  */
 
-static void dfxml_create(xml &xreport,const string &command_line)
+static void dfxml_create(xml &xreport,const string &command_line,int num_threads)
 {
     xreport.push("dfxml","xmloutputversion='1.0'");
     xreport.push("metadata",
@@ -784,12 +775,12 @@ static void dfxml_create(xml &xreport,const string &command_line)
     xreport.pop();			// configuration
 }
 
-bool directory_missing(const std::string &d)
+static bool directory_missing(const std::string &d)
 {
     return access(d.c_str(),F_OK)<0;
 }
 
-bool directory_empty(const std::string &d)
+static bool directory_empty(const std::string &d)
 {
     if(directory_missing(d)==false){
 	std::string reportfn = d + "/report.xml";
@@ -808,7 +799,6 @@ int main(int argc,char **argv)
 	debug = atoi(getenv("BULK_EXTRACTOR_DEBUG"));
     }
     progname = argv[0];
-    int64_t page_number = 0;
     const char *opt_path = 0;
     int opt_recurse = 0;
     int opt_zap = 0;
@@ -816,7 +806,8 @@ int main(int argc,char **argv)
     char *cc;
     setvbuf(stdout,0,_IONBF,0);		// don't buffer stdout
     std::string command_line = xml::make_command_line(argc,argv);
-    num_threads = threadpool::numCPU();
+    u_int num_threads = threadpool::numCPU();
+    int opt_quiet = 0;
 
 #ifdef WIN32
     setmode(1,O_BINARY);		// make stdout binary
@@ -943,11 +934,24 @@ int main(int argc,char **argv)
 
     scanners_process_commands();
 
-    /* TK: Give an error if a find list was specified but no scanner that uses the find list is enabled */
-/*    if(find_list.size()>0){
-	scanners_enable("find");
-    }*/
+    /* Give an error if a find list was specified but no scanner that uses the find list is enabled. */
 
+    if(find_list.size()>0){
+        /* Look through the enabled scanners and make sure that at least one of them is a FIND scanner */
+        bool find_scanner_enabled = false;
+        for(scanner_vector::const_iterator it = current_scanners.begin();
+            it!=current_scanners.end() && find_scanner_enabled==false;
+            it++){
+            if( ((*it)->info.flags & scanner_info::SCANNER_FIND_SCANNER)
+                && ((*it)->enabled)){
+                find_scanner_enabled = true;
+            }
+        }
+        
+        if(find_scanner_enabled==false){
+            errx(1,"find words are specified with -F but no find scanner is enabled.\n");
+        }
+    }
 
     if(opt_path){
 	if(argc!=1) errx(1,"-p requires a single argument.");
@@ -1003,7 +1007,7 @@ int main(int argc,char **argv)
 
 	/* Store the configuration in the XML file */
 	xreport = new xml(reportfilename,false);
-	dfxml_create(*xreport,command_line);
+	dfxml_create(*xreport,command_line,num_threads);
 	
 	xreport->xmlout("provided_filename",image_fname); // save this information
     } else {
@@ -1078,7 +1082,9 @@ int main(int argc,char **argv)
      *** THIS IS IT! 
      ****************************************************************/
 
-    phase1(*p,fs,*xreport,page_number,total_bytes,seen_page_ids,timer);
+    BulkExtractor_Phase1 phase1(num_threads,opt_quiet);
+
+    phase1.run(*p,fs,*xreport,total_bytes,seen_page_ids,timer);
 
     if(opt_quiet==0) std::cout << "Phase 2. Shutting down scanners\n";
     phase_shutdown(fs,*xreport);

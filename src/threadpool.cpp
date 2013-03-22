@@ -19,7 +19,7 @@
  * From http://stackoverflow.com/questions/150355/programmatically-find-the-number-of-cores-on-a-machine
  */
 
-int threadpool::numCPU()
+u_int threadpool::numCPU()
 {
     int numCPU=1;			// default
 #ifdef WIN32
@@ -162,17 +162,16 @@ int threadpool::get_free_count()
 bool opt_work_start_work_end=true;
 void worker::do_work(sbuf_t *sbuf)
 {
-    aftimer t;
 
+    /* If logging starting and ending, save the start */
     if(opt_work_start_work_end){
 	std::stringstream ss;
-	ss << "threadid='" << id << "'"
-	   << " pos0='" << sbuf->pos0.str() << "'"
+	ss << "threadid='"  << id << "'"
+	   << " pos0='"     << sbuf->pos0.str() << "'"
 	   << " pagesize='" << sbuf->pagesize << "'"
-	   << " bufsize='" << sbuf->bufsize << "'";
+	   << " bufsize='"  << sbuf->bufsize << "'";
 	master.xreport.xmlout("debug:work_start","",ss.str(),true);
     }
-    t.start();
 	
     /**
      * HERE IT IS!!!
@@ -180,8 +179,12 @@ void worker::do_work(sbuf_t *sbuf)
      * off the work queue and call process_extract().
      */
 
+    aftimer t;
+    t.start();
     process_sbuf(scanner_params(scanner_params::scan,*sbuf,master.fs)); 
     t.stop();
+
+    /* If we are logging starting and ending, save the end */
     if(opt_work_start_work_end){
 	std::stringstream ss;
 	ss << "threadid='" << id << "'"

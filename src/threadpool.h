@@ -83,7 +83,7 @@ class threadpool {
     aftimer		waiting;	// time spend waiting
     int			mode;		// 0=running; 1 = waiting for workers to finish
 
-    static int		numCPU();
+    static u_int	numCPU();
 
     threadpool(int numthreads,feature_recorder_set &fs_,xml &xreport);
     virtual ~threadpool();

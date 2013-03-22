@@ -44,9 +44,9 @@ void scan_find(const class scanner_params &sp,const recursion_control_block &rcb
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	sp.info->name		= "find";
         sp.info->author         = "Simson Garfinkel";
-        sp.info->description    = "Searches for regular expressions";
+        sp.info->description    = "Simple search for patterns";
         sp.info->scanner_version= "1.1";
-	sp.info->flags		= scanner_info::SCANNER_NO_USAGE;
+	sp.info->flags		= scanner_info::SCANNER_FIND_SCANNER;
         sp.info->feature_names.insert("find");
 	sp.info->histogram_defs.insert(histogram_def("find","","histogram",HistogramMaker::FLAG_LOWERCASE));
 	return;
