@@ -370,14 +370,6 @@ AC_ARG_WITH([opt], AC_HELP_STRING([--without-opt], [Drop all -O C flags]))
 # Or maybe just tone it down a bit?
 AC_ARG_WITH([o3], AC_HELP_STRING([--without-o3], [Do not force O3 optimization; use default level]))
 
-# use vector extensions only if requested
-AC_ARG_WITH([sse], AC_HELP_STRING([--without-sse], [Disable CPU vector extensions]))
-if test "${with_sse}" != "no" ; then
-    AC_CHECK_HEADERS([xmmintrin.h],,AC_MSG_ERROR([SSE requested but xmmintrin.h is not available]))
-    CFLAGS="$CFLAGS -msse"
-    CXXFLAGS="$CXXFLAGS -msse"
-fi
-
 #
 # ZLIB is required:
 #  Note you cannot put comments in the AC_MSG_ERROR for some reason
