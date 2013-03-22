@@ -148,6 +148,7 @@ scanner_t *scanners_builtin[] = {
     scan_windirs,
     scan_vcard,
     scan_bulk,
+    scan_xor,
     0};
 
 /***************************************************************************************
