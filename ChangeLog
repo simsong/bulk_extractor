@@ -1,3 +1,7 @@
+2013-03-22    <simsong@ncr.nps.edu>
+
+	* src/be13_api/feature_recorder_set.cpp (get_name): renamed Mstats to Mlock. Added Mlock to get_name() (apparently this isn't thread safe?)
+
 2013-01-29  Simson Garfinkel  <simsong@Mucha.local>
 
 	* src/threadpool.h (class worker): removed pesky noreturn problem with threadpool.
