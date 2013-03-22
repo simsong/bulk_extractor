@@ -44,7 +44,7 @@ const char *progname=0;
 
 size_t opt_pagesize=1024*1024*16;	// 
 size_t opt_margin = 1024*1024*4;
-int opt_notify_rate = 4;
+u_int opt_notify_rate = 4;		// by default, notify every 4 pages
 int word_min = 6;
 int word_max = 14;
 int64_t opt_offset_start = 0;
@@ -129,9 +129,9 @@ scanner_t *scanners_builtin[] = {
     scan_wordlist,
     scan_aes,
     scan_json,
-    #ifdef HAVE_LIBLIGHTGREP
+#ifdef HAVE_LIBLIGHTGREP
     scan_lightgrep,
-    #endif
+#endif
     //scan_lift,  // not ready for prime time
     //scan_extx,  // not ready for prime time
 #ifdef HAVE_EXIV2
@@ -300,7 +300,7 @@ static void process_path(const image_process &p,string path,scanner_params::Prin
     if(!buf) errx(1,"Cannot allocate buffer");
     int count = p.pread(buf,opt_pagesize,offset);
     if(count<0){
-	cerr << p.image_fname << ": " << strerror(errno) << " (Read Error)\n";
+	cerr << p.image_fname() << ": " << strerror(errno) << " (Read Error)\n";
 	return;
     }
 
@@ -384,7 +384,7 @@ static void process_path(const char *fn,string path)
 	    /* Process some specific URLs */
 	    if(p2=="/info"){
 		std::cout << "X-Image-Size: " << pp->image_size() << HTTP_EOL;
-		std::cout << "X-Image-Filename: " << pp->image_fname << HTTP_EOL;
+		std::cout << "X-Image-Filename: " << pp->image_fname() << HTTP_EOL;
 		std::cout << "Content-Length: 0" << HTTP_EOL;
 		std::cout << HTTP_EOL;
 		continue;
@@ -411,34 +411,25 @@ static void process_path(const char *fn,string path)
 
 /****************************************************************
  *** Phase 1 BUFFER PROCESSING
+ *** For every page of the iterator, schedule work.
  ****************************************************************/
 
-
-/**
- * Sleep for a minimum of msec
- */
-static void msleep(int msec)
-{
+class BulkExtractor_Phase1 {
+    /** Sleep for a minimum of msec */
+    static void msleep(int msec) {
 #if _WIN32
-    Sleep(msec);
-    return;
+	Sleep(msec);
 #else
 #  ifdef HAVE_USLEEP
-    usleep(msec*1000);
+	usleep(msec*1000);
 #  else
-    int sec = msec/1000;
-    if(sec<1) sec=1;
-    sleep(sec);			// posix
+	int sec = msec/1000;
+	if(sec<1) sec=1;
+	sleep(sec);			// posix
 #  endif
 #endif
-}
+    }
 
-/**
- * phase1 - For every page of the iterator, schedule work.
- */
-
-
-class BulkExtractor_Phase1 {
     std::string minsec(time_t tsec) {
         time_t min = tsec / 60;
         time_t sec = tsec % 60;
@@ -448,44 +439,141 @@ class BulkExtractor_Phase1 {
         return ss.str();
 	
     }
-    void print_tp_status() {
+    void print_tp_status(threadpool &tp) {
         std::stringstream ss;
-        if(!phase1_tp) return;
         for(u_int i=0;i<num_threads;i++){
-            std::string status = phase1_tp->get_thread_status(i);
+            std::string status = tp.get_thread_status(i);
             if(status.size() && status!="Free"){
                 ss << "Thread " << i << ": " << status << "\n";
             }
         }
         std::cout << ss.str() << "\n";
     }
-    threadpool *phase1_tp;
+
+    /* Instance variables */
+    xml &xreport;
+    aftimer &timer;
     u_int num_threads;
     int opt_quiet;
-    uint64_t page_number;
+    static const int retry_seconds = 60;
+
+    /* for random sampling */
+    double sampling_fraction;
+    u_int  sampling_passes;
+    u_int   notify_ctr;
+
+    bool sampling(){return sampling_fraction<1.0;}
+
+    /* Get the sbuf from current image iterator location, with retries */
+    sbuf_t *get_sbuf(image_process::iterator &it) {
+	for(int retry_count=0;retry_count<max_bad_alloc_errors;retry_count++){
+	    try {
+		return it.sbuf_alloc(); // may throw exception
+	    }
+	    catch (const std::bad_alloc &e) {
+		// Low memory could come from a bad sbuf alloc or another low memory condition.
+		// wait for a while and then try again...
+		std::cerr << "Low Memory (bad_alloc) exception: " << e.what()
+			  << " reading " << it.get_pos0()
+			  << " (retry_count=" << retry_count
+			  << " of " << max_bad_alloc_errors << ")\n";
+		
+		std::stringstream ss;
+		ss << "name='bad_alloc' " << "pos0='" << it.get_pos0() << "' "
+		   << "retry_count='"     << retry_count << "' ";
+		xreport.xmlout("debug:exception", e.what(), ss.str(), true);
+	    }
+	    if(retry_count<max_bad_alloc_errors+1){
+		std::cerr << "will wait for " << retry_seconds << " seconds and try again...\n";
+		msleep(retry_seconds*1000);
+	    }
+	}
+	std::cerr << "Too many errors encountered in a row. Diagnose and restart.\n";
+	exit(1);
+    }
+
+    /* Notify user about current state of phase1 */
+    void notify_user(image_process::iterator &it){
+	if(notify_ctr++ >= opt_notify_rate){
+	    time_t t = time(0);
+	    struct tm tm;
+	    localtime_r(&t,&tm);
+	    printf("%2d:%02d:%02d %s ",tm.tm_hour,tm.tm_min,tm.tm_sec,it.str().c_str());
+
+	    /* not sure how to do the rest if sampling */
+	    if(!sampling()){
+		printf("(%4.2f%%) Done in %s at %s",
+		       it.fraction_done()*100.0,
+		       timer.eta_text(it.fraction_done()).c_str(),
+		       timer.eta_time(it.fraction_done()).c_str());
+	    }
+	    printf("\n");
+	    fflush(stdout);
+	    notify_ctr = 0;
+	}
+    }
 
 public:
-    BulkExtractor_Phase1(u_int num_threads_,int opt_quiet_):
-        phase1_tp(),num_threads(num_threads_),opt_quiet(opt_quiet_),page_number(){}
+    void set_sampling_parameters(const std::string &p){
+	std::vector<std::string> params = split(p,':');
+	if(params.size()!=1 && params.size()!=2){
+	    errx(1,"error: sampling parameters must be fraction[:passes]");
+	}
+	sampling_fraction = atof(params.at(0).c_str());
+	if(sampling_fraction<=0 || sampling_fraction>=1){
+	    errx(1,"error: sampling fraction f must be 0<f<=1; you provided '%s'",params.at(0).c_str());
+	}
+	if(params.size()==2){
+	    sampling_passes = atoi(params.at(1).c_str());
+	    if(sampling_passes==0){
+		errx(1,"error: sampling passes must be >=1; you provided '%s'",params.at(1).c_str());
+	    }
+	}
+    }
+
+    BulkExtractor_Phase1(xml &xreport_,aftimer &timer_,u_int num_threads_,int opt_quiet_):
+        xreport(xreport_),timer(timer_),
+	num_threads(num_threads_),opt_quiet(opt_quiet_),
+	sampling_fraction(1),sampling_passes(1),notify_ctr(0){ }
+
     void run(image_process &p,feature_recorder_set &fs,
-             xml &xreport,
-             int64_t &total_bytes,
-                       xml::tagid_set_t &seen_page_ids,
-                       aftimer &timer) {
+             int64_t &total_bytes, xml::tagid_set_t &seen_page_ids) {
 
         md5_generator *md5g = new md5_generator();		// keep track of MD5
-        uint64_t md5_next = 0;		// next byte to hash
-        threadpool tp(num_threads,fs,xreport);
-    
-        phase1_tp = &tp;
-
+        uint64_t md5_next = 0;					// next byte to hash
+        threadpool tp(num_threads,fs,xreport);			// 
+	uint64_t page_ctr=0;
         xreport.push("runtime","xmlns:debug=\"http://www.afflib.org/bulk_extractor/debug\"");
 
-        for(image_process::iterator it = p.begin(); it!= p.end() ; ++it){
+	std::set<uint64_t> blocks_to_sample;
+	std::set<uint64_t>::const_iterator si = blocks_to_sample.begin();
+	bool first = true;
+	for(image_process::iterator it = p.begin();it!=p.end();){
+	    if(sampling()){
+		if(first) {
+		    first = false;
+		    printf("** EXPERIMENTAL SAMPLING CODE **\n");
+		    /* get a list of blocks to sample */
+		    uint64_t blocks = it.blocks();
+		    std::cout << "total blocks: " << blocks << "\n";
+		    while(blocks_to_sample.size() < blocks * sampling_fraction){
+			uint64_t blk = ((random()<<32) | (random())) % blocks;
+			blocks_to_sample.insert(blk); // will be added even if already present
+		    }
+		    std::cout << "these blocks will be sampled:\n";
+		    for(si = blocks_to_sample.begin();si!=blocks_to_sample.end();++si){
+			std::cout << *si << " ";
+		    }
+		    std::cout << "\n";
+		    si = blocks_to_sample.begin();
+		    it.seek(*si);
+		}
+	    }
+
             if(opt_offset_end!=0 && it.raw_offset > opt_offset_end) break; // passed the offset
-            if(page_number>=opt_page_start && it.raw_offset>=opt_offset_start){
+            if(page_ctr>=opt_page_start && it.raw_offset>=opt_offset_start){
                 if(seen_page_ids.find(it.get_pos0().str()) != seen_page_ids.end()){
-                    // We've seen this page; skip it.
+                    // this page is in the XML file. We've seen it, so skip it (restart code)
                     continue;
                 }
 
@@ -493,68 +581,44 @@ public:
                 // wait for 30 seconds.
 
                 try {
-                    sbuf_t *sbuf = 0;
-                    for(int retry_count=0;retry_count<max_bad_alloc_errors && sbuf==0;retry_count++){
-                        try {
-                            sbuf = it.sbuf_alloc(); // may throw exception
-                            if(sbuf==0) break;
-                        }
-                        catch (const std::bad_alloc &e) {
-                            // Low memory could come from a bad sbuf alloc or another low memory condition.
-                            // wait for a while and then try again...
-                            cerr << "Low Memory (bad_alloc) exception: " << e.what()
-                                 << " reading " << it.get_pos0()
-                                 << " (retry_count=" << retry_count << ")\n";
-                            std::stringstream ss;
-                            ss << "name='bad_alloc' " << "pos0='" << it.get_pos0() << "' "
-                               << "retry_count='"     << retry_count << "' ";
-                            xreport.xmlout("debug:exception", e.what(), ss.str(), true);
-                            if(retry_count+1>=max_bad_alloc_errors){
-                                cerr << "Too many errors encountered in a row. Diagnose and restart.\n";
-                                exit(1);
-                            }
-                            cerr << "will wait for 60 seconds and try again...\n";
-                            msleep(60000);
-                        }
-                    }
+                    sbuf_t *sbuf = get_sbuf(it);
                     if(sbuf==0) break;	// eof?
-                    sbuf->page_number = page_number;
+                    sbuf->page_number = page_ctr;
+
+		    /* compute the md5 hash */
                     if(md5g){
                         if(sbuf->pos0.offset==md5_next){ 
-                            // next byte follows logically
+                            // next byte follows logically, so continue to compute hash
                             md5g->update(sbuf->buf,sbuf->pagesize);
                             md5_next += sbuf->pagesize;
                         } else {
-                            // we had a logical gap; stop hashing
-                            delete md5g;	
+                            delete md5g; // we had a logical gap; stop hashing
                             md5g = 0;
                         }
                     }
                     total_bytes += sbuf->pagesize;
                     tp.schedule_work(sbuf);	// schedule the work
-		
-                    /* Notify the user */
-                    if((opt_quiet==0) && (opt_notify_rate>0) && ((sbuf->page_number % opt_notify_rate)==0)){
-                        time_t t = time(0);
-                        struct tm tm;
-                        localtime_r(&t,&tm);
-                        printf("%2d:%02d:%02d %s (%4.2f%%) Done in %s at %s\n",
-                               tm.tm_hour,tm.tm_min,tm.tm_sec,
-                               it.str().c_str(),
-                               it.fraction_done()*100.0,
-                               timer.eta_text(it.fraction_done()).c_str(),
-                               timer.eta_time(it.fraction_done()).c_str());
-                    }
+		    if(!opt_quiet) notify_user(it);
                 }
                 catch (const std::exception &e) {
-                    // 
+                    // report uncaught exceptions to both user and XML file
                     std::stringstream ss;
                     ss << "name='" << e.what() << "' " << "pos0='" << it.get_pos0() << "' ";
-                    cerr << "Exception " << e.what() << " skipping " << it.get_pos0() << "\n";
+		    std::cerr << "Exception " << e.what() << " skipping " << it.get_pos0() << "\n";
                     xreport.xmlout("debug:exception", e.what(), ss.str(), true);
                 }
+		/* If we are random sampling, move to the next random sample.
+		 * Otherwise increment the iterator
+		 */
+		if(sampling()){
+		    ++si;
+		    if(si==blocks_to_sample.end()) break;
+		    it.seek(*si);
+		} else {
+		    ++it;
+		}
             }
-            page_number++;
+            page_ctr++;
         }
 	    
         if(!opt_quiet){
@@ -580,7 +644,7 @@ public:
                    << " (timeout in "     << minsec(time_remaining) << ".)\n";
                 if(opt_quiet==0){
                     std::cout << ss.str();
-                    if(counter>0) print_tp_status();
+                    if(counter>0) print_tp_status(tp);
                 }
                 xreport.comment(ss.str());
             }
@@ -592,11 +656,11 @@ public:
             }
         }
         if(opt_quiet==0) std::cout << "All Threads Finished!\n";
-
+	
         xreport.pop();			// pop runtime
         /* We can write out the source info now, since we (might) know the hash */
         xreport.push("source");
-        xreport.xmlout("image_filename",p.image_fname);
+        xreport.xmlout("image_filename",p.image_fname());
         xreport.xmlout("image_size",p.image_size());  
         if(md5g){
             md5_t md5 = md5g->final();
@@ -662,13 +726,13 @@ static void usage()
     std::cout << "   imagefile     - the file to extract\n";
     std::cout << " or  -R filedir  - recurse through a directory of files\n";
 #ifdef HAVE_LIBEWF
-    std::cout << "                  SUPPORT FOR E01 FILES COMPILED IN\n";
+    std::cout << "                  HAS SUPPORT FOR E01 FILES\n";
 #endif
 #ifdef HAVE_LIBAFFLIB
-    std::cout << "                  SUPPORT FOR AFF FILES COMPILED IN\n";
+    std::cout << "                  HAS SUPPORT FOR AFF FILES\n";
 #endif    
 #ifdef HAVE_EXIV2
-    std::cout << "                  EXIV2 COMPILED IN\n";
+    std::cout << "                  EXIV2 ENABLED\n";
 #endif    
     std::cout << "   -o outdir    - specifies output directory. Must not exist.\n";
     std::cout << "                  bulk_extractor creates this directory.\n";
@@ -684,14 +748,15 @@ static void usage()
     std::cout << "   -f <regex>   - find occurrences of <regex>; may be repeated.\n";
     std::cout << "                  results go into find.txt\n";
     std::cout << "   -q nn        - Quiet Rate; only print every nn status reports. Default 0; -1 for no status at all\n";
+    std::cout << "   -S frac[:passes] - Set random sampling parameters\n";
     std::cout << "\nTuning parameters:\n";
-    std::cout << "   -C NN         - specifies the size of the context window (default " << feature_recorder::context_window << ")\n";
-    std::cout << "   -G NN         - specify the page size (default " << opt_pagesize << ")\n";
-    std::cout << "   -g NN         - specify margin (default " <<opt_margin << ")\n";
-    std::cout << "   -W n1:n2      - Specifies minimum and maximum word size\n";
-    std::cout << "                  (default is -w" << word_min << ":" << word_max << ")\n";
-    std::cout << "   -B NN         - Specify the blocksize for bulk data analysis (default " <<opt_scan_bulk_block_size<< ")\n";
-    std::cout << "   -j NN         - Number of analysis threads to run (default " <<threadpool::numCPU() << ")\n";
+    std::cout << "   -C NN        - specifies the size of the context window (default " << feature_recorder::context_window << ")\n";
+    std::cout << "   -G NN        - specify the page size (default " << opt_pagesize << ")\n";
+    std::cout << "   -g NN        - specify margin (default " <<opt_margin << ")\n";
+    std::cout << "   -W n1:n2     - Specifies minimum and maximum word size\n";
+    std::cout << "                 (default is -w" << word_min << ":" << word_max << ")\n";
+    std::cout << "   -B NN        - Specify the blocksize for bulk data analysis (default " <<opt_scan_bulk_block_size<< ")\n";
+    std::cout << "   -j NN        - Number of analysis threads to run (default " <<threadpool::numCPU() << ")\n";
     std::cout << "   -M nn        - sets max recursion depth (default " << scanner_def::max_depth << ")\n";
     std::cout << "\nPath Processing Mode:\n";
     std::cout << "   -p <path>/f  - print the value of <path> with a given format.\n";
@@ -809,6 +874,7 @@ int main(int argc,char **argv)
     std::string command_line = xml::make_command_line(argc,argv);
     u_int num_threads = threadpool::numCPU();
     int opt_quiet = 0;
+    std::string opt_sampling_params;
 
 #ifdef WIN32
     setmode(1,O_BINARY);		// make stdout binary
@@ -820,32 +886,31 @@ int main(int argc,char **argv)
 	exit(1);
     }
 
-
     /* Process options */
     int ch;
-    while ((ch = getopt(argc, argv, "A:B:b:C:d:E:e:F:f:G:g:Hhj:M:m:o:P:p:q:Rr:s:VW:w:x:Y:z:Z")) != -1) {
+    while ((ch = getopt(argc, argv, "A:B:b:C:d:E:e:F:f:G:g:Hhj:M:m:o:P:p:q:Rr:S:s:VW:w:x:Y:z:Z")) != -1) {
 	switch (ch) {
 	case 'A': feature_recorder::offset_add  = stoi64(optarg);break;
 	case 'B': opt_scan_bulk_block_size = atoi(optarg);break;
 	case 'b': feature_recorder::banner_file = optarg; break;
 	case 'C': feature_recorder::context_window = atoi(optarg);break;
 	case 'd':
-	    {
-		int d = atoi(optarg);
-		switch(d){
-		case DEBUG_ALLOCATE_512MiB: 
-		    if(calloc(1024*1024*512,1)){
-		      cerr << "-d1002 -- Allocating 512MB of RAM; may be repeated\n";
-		    } else {
-		      cerr << "-d1002 -- CANNOT ALLOCATE MORE RAM\n";
-		    }
-		    break;
-		default:
-		    debug  = d;
-		    break;
+	{
+	    int d = atoi(optarg);
+	    switch(d){
+	    case DEBUG_ALLOCATE_512MiB: 
+		if(calloc(1024*1024*512,1)){
+		    cerr << "-d1002 -- Allocating 512MB of RAM; may be repeated\n";
+		} else {
+		    cerr << "-d1002 -- CANNOT ALLOCATE MORE RAM\n";
 		}
+		break;
+	    default:
+		debug  = d;
+		break;
 	    }
-	    break;
+	}
+	break;
 	case 'E':
 	    scanners_disable_all();
 	    scanners_enable(optarg);
@@ -864,8 +929,8 @@ int main(int argc,char **argv)
 	case 'P': load_scanner_directory(optarg/*,histograms*/);break;
 	case 'p': opt_path = optarg; break;
         case 'q':
-	    opt_notify_rate = atoi(optarg);
-	    if(opt_notify_rate<0) opt_quiet = 1; // -q -1 turns off notifications
+	    if(atoi(optarg)==-1) opt_quiet = 1;// -q -1 turns off notifications
+	    else opt_notify_rate = atoi(optarg);
 	    break;
 	case 'r':
 	    if(alert_list.readfile(optarg)){
@@ -873,16 +938,17 @@ int main(int argc,char **argv)
 	    }
 	    break;
 	case 'R': opt_recurse = 1; break;
+	case 'S': opt_sampling_params = optarg; break;
 	case 's':
-	    {
-		std::vector<std::string> params = split(optarg,'=');
-		if(params.size()!=2){
-		    std::cerr << "Invalid paramter: " << optarg << "\n";
-		    exit(1);
-		}
-		be_config[params[0]] = params[1];
-		continue;
+	{
+	    std::vector<std::string> params = split(optarg,'=');
+	    if(params.size()!=2){
+		std::cerr << "Invalid paramter: " << optarg << "\n";
+		exit(1);
 	    }
+	    be_config[params[0]] = params[1];
+	    continue;
+	}
 	case 'V': std::cout << "bulk_extractor " << PACKAGE_VERSION << "\n"; exit (1);
 	case 'W':
 	    cc = strchr(optarg,':');
@@ -935,10 +1001,14 @@ int main(int argc,char **argv)
 
     scanners_process_commands();
 
-    /* Give an error if a find list was specified but no scanner that uses the find list is enabled. */
+    /* Give an error if a find list was specified
+     * but no scanner that uses the find list is enabled.
+     */
 
     if(find_list.size()>0){
-        /* Look through the enabled scanners and make sure that at least one of them is a FIND scanner */
+        /* Look through the enabled scanners and make sure that
+	 * at least one of them is a FIND scanner
+	 */
         bool find_scanner_enabled = false;
         for(scanner_vector::const_iterator it = current_scanners.begin();
             it!=current_scanners.end() && find_scanner_enabled==false;
@@ -975,8 +1045,7 @@ int main(int argc,char **argv)
 	    }
 	}
 	if(rmdir(opt_outdir.c_str())){
-	    cerr << "cannot rmdir " << opt_outdir << "\n";
-	    exit(1);
+	    err(1,"rmdir(%s)",opt_outdir.c_str());
 	}
 	std::cout << "rmdir " << opt_outdir << "\n";
     }
@@ -1002,8 +1071,7 @@ int main(int argc,char **argv)
 	if(directory_missing(opt_outdir)) be_mkdir(opt_outdir);
 	p = image_process_open(image_fname,opt_recurse);
 	if(!p){
-	    if(errno) std::cerr << "Cannot open " << image_fname << ": " << strerror(errno) << "\n";
-	    exit(1);
+	    if(errno) err(1,"Cannot open %s: ",image_fname);
 	}
 
 	/* Store the configuration in the XML file */
@@ -1083,9 +1151,11 @@ int main(int argc,char **argv)
      *** THIS IS IT! 
      ****************************************************************/
 
-    BulkExtractor_Phase1 phase1(num_threads,opt_quiet);
+    BulkExtractor_Phase1 phase1(*xreport,timer,num_threads,opt_quiet);
 
-    phase1.run(*p,fs,*xreport,total_bytes,seen_page_ids,timer);
+    if(opt_sampling_params.size()>0) phase1.set_sampling_parameters(opt_sampling_params);
+
+    phase1.run(*p,fs,total_bytes,seen_page_ids);
 
     if(opt_quiet==0) std::cout << "Phase 2. Shutting down scanners\n";
     phase_shutdown(fs,*xreport);

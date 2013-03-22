@@ -109,13 +109,13 @@ int64_t get_filesize(int fd)
 
 
 /****************************************************************
- *** AFF
+ *** AFF START
  ****************************************************************/
 
 #ifdef HAVE_LIBAFFLIB
 int process_aff::open()
 {
-    const char *fn = image_fname.c_str();
+    const char *fn = image_fname().c_str();
     af = af_open(fn,O_RDONLY,0666);
     if(!af){
 	return -1;
@@ -151,18 +151,16 @@ int64_t process_aff::image_size()
 
 image_process::iterator process_aff::begin()
 {
-    image_process::iterator it;
-    it.myimage = this;
+    image_process::iterator it(this);
     it.raw_offset = 0;
     return it;
 }
 
 image_process::iterator process_aff::end()
 {
-    image_process::iterator it;
+    image_process::iterator it(this);
     it.page_counter = pagelist.size();
     it.raw_offset = af_get_imagesize(af);
-    it.myimage = this;
     it.eof = true;
     return it;
 }
@@ -187,7 +185,7 @@ void process_aff::increment_iterator(class image_process::iterator &it)
 {
     if(it.page_counter < pagelist.size()){
 	it.page_counter++;
-    it.raw_offset += it.page_counter * af_get_pagesize(af);
+	it.raw_offset += it.page_counter * af_get_pagesize(af);
     } else {
 	it.eof = true;
     }
@@ -238,6 +236,16 @@ string process_aff::str(class image_process::iterator &it)
     return string(buf);
 }
 
+uint64_t process_aff::blocks(class image_process::iterator &it)
+{
+    errx(1,"random seek is not implemented for process_aff yet");
+}
+
+int process_aff::seek(class image_process::iterator &it,uint64_t block)
+{
+    errx(1,"random seek is not implemented for process_aff yet");
+}
+
 
 process_aff::~process_aff()
 {
@@ -247,7 +255,13 @@ process_aff::~process_aff()
 
 
 /****************************************************************
- *** EWF
+ *** AFF END
+ ****************************************************************/
+
+
+
+/****************************************************************
+ *** EWF START
  ****************************************************************/
 
 /**
@@ -275,7 +289,7 @@ process_ewf::~process_ewf()
 
 int process_ewf::open()
 {
-    const char *fname = image_fname.c_str();
+    const char *fname = image_fname().c_str();
     char **libewf_filenames = NULL;
     int amount_of_filenames = 0;
 
@@ -383,18 +397,16 @@ int64_t process_ewf::image_size()
 
 image_process::iterator process_ewf::begin()
 {
-    image_process::iterator it;
+    image_process::iterator it(this);
     it.raw_offset = 0;
-    it.myimage = this;
     return it;
 }
 
 
 image_process::iterator process_ewf::end()
 {
-    image_process::iterator it;
+    image_process::iterator it(this);
     it.raw_offset = this->ewf_filesize;
-    it.myimage = this;
     it.eof = true;
     return it;
 }
@@ -450,6 +462,19 @@ string process_ewf::str(class image_process::iterator &it)
     snprintf(buf,sizeof(buf),"Offset %"PRId64"MB",it.raw_offset/1000000);
     return string(buf);
 }
+
+uint64_t process_ewf::blocks(class image_process::iterator &it)
+{
+    errx(1,"random seek is not implemented for process_aff yet");
+}
+
+int process_ewf::seek(class image_process::iterator &it,uint64_t block)
+{
+    errx(1,"random seek is not implemented for process_aff yet");
+}
+
+
+
 #endif
 
 /****************************************************************
@@ -490,8 +515,8 @@ static string make_list_template(string fn,int *start)
 }
 
 
-process_raw::process_raw(string image_fname_) :image_process(image_fname_),file_list(),
-					       raw_filesize(0),current_file_name(),current_fd(-1) {
+process_raw::process_raw(string fname) :image_process(fname),file_list(),
+					raw_filesize(0),current_file_name(),current_fd(-1) {
 }
 
 process_raw::~process_raw() {
@@ -529,12 +554,12 @@ const class process_raw::file_info *process_raw::find_offset(int64_t pos) const
  */
 int process_raw::open()
 {
-    add_file(image_fname);
+    add_file(image_fname());
 
     /* Get the list of the files if this is a split-raw file */
-    if(is_multipart_file(image_fname)){
+    if(is_multipart_file(image_fname())){
 	int num=0;
-	string templ = make_list_template(image_fname,&num);
+	string templ = make_list_template(image_fname(),&num);
 	for(;;num++){
 	    char probename[PATH_MAX];
 	    snprintf(probename,sizeof(probename),templ.c_str(),num); 
@@ -613,8 +638,7 @@ int process_raw::pread(unsigned char *buf,size_t bytes,int64_t offset) const
 
 image_process::iterator process_raw::begin()
 {
-    image_process::iterator it;
-    it.myimage = this;
+    image_process::iterator it(this);
     return it;
 }
 
@@ -622,9 +646,8 @@ image_process::iterator process_raw::begin()
 /* Returns an iterator at the end of the image */
 image_process::iterator process_raw::end()
 {
-    image_process::iterator it;
+    image_process::iterator it(this);
     it.raw_offset = this->raw_filesize;
-    it.myimage = this;
     it.eof = true;
     return it;
 }
@@ -656,7 +679,9 @@ pos0_t process_raw::get_pos0(const image_process::iterator &it) const
     return pos0;
 }
 
-/** Read from the iterator into a newly allocated sbuf */
+/** Read from the iterator into a newly allocated sbuf.
+ * uses opt_pagesize.
+ */
 sbuf_t *process_raw::sbuf_alloc(image_process::iterator &it)
 {
     int count = opt_pagesize + opt_margin;
@@ -686,6 +711,18 @@ static std::string filename_extension(std::string fn)
     if(dotpos==std::string::npos) return "";
     return fn.substr(dotpos+1);
 }
+
+uint64_t process_raw::blocks(class image_process::iterator &it)
+{
+    return (this->raw_filesize+opt_pagesize-1) / opt_pagesize;
+}
+
+int process_raw::seek(class image_process::iterator &it,uint64_t block)
+{
+    it.raw_offset = block * opt_pagesize;
+}
+
+
 
 
 /****************************************************************
@@ -728,15 +765,13 @@ int64_t process_dir::image_size()
 
 image_process::iterator process_dir::begin()
 {
-    image_process::iterator it;
-    it.myimage = this;
+    image_process::iterator it(this);
     return it;
 }
 
 image_process::iterator process_dir::end()
 {
-    image_process::iterator it;
-    it.myimage = this;
+    image_process::iterator it(this);
     it.file_number = files.size();
     it.eof = true;
     return it;
@@ -776,6 +811,18 @@ string process_dir::str(class image_process::iterator &it)
 {
     return string("File ")+files[it.file_number];
 }
+
+
+uint64_t process_dir::blocks(class image_process::iterator &it)
+{
+    errx(1,"random seek is not implemented for process_dir yet");
+}
+
+int process_dir::seek(class image_process::iterator &it,uint64_t block)
+{
+    errx(1,"random seek is not implemented for process_dir yet");
+}
+
 
 
 
