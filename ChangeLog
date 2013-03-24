@@ -1,3 +1,7 @@
+2013-03-23  Simson Garfinkel  <simsong@r2.ncr.nps.edu>
+
+	* configure.ac: fixed AX_PTHREAD test to fail if pthreads are not found.
+
 2013-03-22    <simsong@ncr.nps.edu>
 
 	* src/be13_api/feature_recorder_set.cpp (get_name): renamed Mstats to Mlock. Added Mlock to get_name() (apparently this isn't thread safe?)
