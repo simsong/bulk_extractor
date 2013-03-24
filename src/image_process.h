@@ -183,8 +183,8 @@ public:
     virtual int64_t image_size();
     virtual uint64_t blocks(class image_process::iterator &it);
     virtual int seek(class image_process::iterator &it,uint64_t block); // returns -1 if failue
-#endif
 };
+#endif
 
 
 /****************************************************************
