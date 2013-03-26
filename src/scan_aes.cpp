@@ -391,7 +391,7 @@ extern "C"
 void scan_aes(const class scanner_params &sp,const recursion_control_block &rcb)
 {
     assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
-    if(sp.phase==scanner_params::startup){
+    if(sp.phase==scanner_params::PHASE_STARTUP){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	sp.info->name		= "aes";
 	sp.info->author		= "Sam Trenholme, Jesse Kornblum and Simson Garfinkel";
@@ -407,7 +407,7 @@ void scan_aes(const class scanner_params &sp,const recursion_control_block &rcb)
     /* We don't need to check for phase 2 of if sbuf isn't big enough to hold a KEY_SCHEDULE
      */
 
-    if(sp.phase==scanner_params::scan && sp.sbuf.bufsize >= WINDOW_SIZE){
+    if(sp.phase==scanner_params::PHASE_SCAN && sp.sbuf.bufsize >= WINDOW_SIZE){
 	feature_recorder *aes_recorder = sp.fs.get_name("aes_keys");
 
 	/* Simple mod: Keep a rolling window of the entropy and don't

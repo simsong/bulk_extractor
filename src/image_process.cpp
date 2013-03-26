@@ -241,7 +241,7 @@ uint64_t process_aff::blocks(class image_process::iterator &it)
     errx(1,"random seek is not implemented for process_aff yet");
 }
 
-int process_aff::seek(class image_process::iterator &it,uint64_t block)
+uint64_t process_aff::seek_block(class image_process::iterator &it,uint64_t block)
 {
     errx(1,"random seek is not implemented for process_aff yet");
 }
@@ -468,7 +468,7 @@ uint64_t process_ewf::blocks(class image_process::iterator &it)
     errx(1,"random seek is not implemented for process_aff yet");
 }
 
-int process_ewf::seek(class image_process::iterator &it,uint64_t block)
+uint64_t process_ewf::seek_block(class image_process::iterator &it,uint64_t block)
 {
     errx(1,"random seek is not implemented for process_aff yet");
 }
@@ -717,9 +717,14 @@ uint64_t process_raw::blocks(class image_process::iterator &it)
     return (this->raw_filesize+opt_pagesize-1) / opt_pagesize;
 }
 
-int process_raw::seek(class image_process::iterator &it,uint64_t block)
+uint64_t process_raw::seek_block(class image_process::iterator &it,uint64_t block)
 {
+    if(block * opt_pagesize > (uint64_t)raw_filesize){
+        block = raw_filesize / opt_pagesize;
+    }
+
     it.raw_offset = block * opt_pagesize;
+    return block;
 }
 
 
@@ -818,7 +823,7 @@ uint64_t process_dir::blocks(class image_process::iterator &it)
     errx(1,"random seek is not implemented for process_dir yet");
 }
 
-int process_dir::seek(class image_process::iterator &it,uint64_t block)
+uint64_t process_dir::seek_block(class image_process::iterator &it,uint64_t block)
 {
     errx(1,"random seek is not implemented for process_dir yet");
 }

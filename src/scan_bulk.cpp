@@ -473,12 +473,14 @@ static inline void bulk_bitlocker(const sbuf_t &sbuf,feature_recorder *bulk,feat
 #define _TEXT(x) x
 #endif
 
+static int dfrws_challenge = 0;
+
 extern "C"
 void scan_bulk(const class scanner_params &sp,const recursion_control_block &rcb)
 {
     assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);      
     // startup
-    if(sp.phase==scanner_params::startup){
+    if(sp.phase==scanner_params::PHASE_STARTUP){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	sp.info->name		= "bulk";
 	sp.info->author		= "Simson Garfinkel";
@@ -487,14 +489,15 @@ void scan_bulk(const class scanner_params &sp,const recursion_control_block &rcb
 	sp.info->feature_names.insert("bulk");
 	sp.info->feature_names.insert("bulk_tags");
 	histogram::precalc_entropy_array(opt_scan_bulk_block_size);
-	int bbs = stoi(be_config["bulk_block_size"]);
+	int bbs = stoi(sp.info->config["bulk_block_size"]);
 	if(bbs>0){
 	    opt_scan_bulk_block_size = bbs;
 	}
+        dfrws_challenge = (sp.info->config["DFRWS2012"] != "");
         return; 
     }
     // classify a buffer
-    if(sp.phase==scanner_params::scan){
+    if(sp.phase==scanner_params::PHASE_SCAN){
 
 	feature_recorder *bulk = sp.fs.get_name("bulk");
 	feature_recorder *bulk_tags = sp.fs.get_name("bulk_tags");
@@ -516,8 +519,8 @@ void scan_bulk(const class scanner_params &sp,const recursion_control_block &rcb
 	}
     }
     // shutdown --- combine the results if we are in DFRWS mode
-    if(sp.phase==scanner_params::shutdown){
-	if(be_config["DFRWS2012"] != ""){
+    if(sp.phase==scanner_params::PHASE_SHUTDOWN){
+	if(dfrws_challenge){
 	    feature_recorder *bulk = sp.fs.get_name("bulk");
 	    // First process the bulk_tags and lift_tags
 	    bulk_process_feature_file(bulk->outdir + "/bulk_tags.txt"); 

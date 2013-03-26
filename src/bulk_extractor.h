@@ -194,6 +194,7 @@ void	validate_fn(std::string &fn);
  ****************************************************************/
 //extern process_t process_sbuf;				/* process for feature extraction */
 extern process_t process_path_printer;			/* process for path printing  */
+extern int debug;
 
 //#ifdef _WIN32
 //#define __printflike(a,b) 		// ignore this feature in mingw

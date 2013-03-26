@@ -33,7 +33,7 @@
  * str() - returns a string for current position
  * ~()   - Destructor. Closes files and frees resources
  * blocks() - returns the number of blocks with the current block size
- * seek(block_number) - seeks to a block number n where 0<=n<blocks()
+ * seek_block(block_number) - seeks to a block number n where 0<=n<blocks()
  */
 
 #include "sbuf.h"
@@ -109,7 +109,7 @@ public:
 	double fraction_done(){ return myimage.fraction_done(*this); }
 	string str(){ return myimage.str(*this); }
 	uint64_t blocks() { return myimage.blocks(*this);}
-	int seek(uint64_t block) { return myimage.seek(*this,block);}
+	uint64_t seek_block(uint64_t block) { return myimage.seek_block(*this,block);} // returns block number 
     };
 
     image_process(const std::string &i):image_fname_(i){}
@@ -130,7 +130,7 @@ public:
     virtual double fraction_done(class image_process::iterator &it) = 0;
     virtual string str(class image_process::iterator &it) = 0;
     virtual uint64_t blocks(class image_process::iterator &it) = 0;
-    virtual int seek(class image_process::iterator &it,uint64_t block) = 0; // returns -1 if failure
+    virtual uint64_t seek_block(class image_process::iterator &it,uint64_t block) = 0; // returns -1 if failure
 };
 
 inline image_process::iterator & operator++(image_process::iterator &it){
@@ -182,7 +182,7 @@ public:
     virtual string str(class image_process::iterator &it);
     virtual int64_t image_size();
     virtual uint64_t blocks(class image_process::iterator &it);
-    virtual int seek(class image_process::iterator &it,uint64_t block); // returns -1 if failue
+    virtual uint64_t seek_block(class image_process::iterator &it,uint64_t block); // returns -1 if failue
 #endif
 };
 
@@ -237,7 +237,7 @@ class process_ewf : public image_process {
     virtual string str(class image_process::iterator &it);
     virtual int64_t image_size();
     virtual uint64_t blocks(class image_process::iterator &it);
-    virtual int seek(class image_process::iterator &it,uint64_t block); // returns -1 if failue
+    virtual uint64_t seek_block(class image_process::iterator &it,uint64_t block); // returns -1 if failue
 };
 #endif
 
@@ -277,7 +277,7 @@ public:
     virtual string str(class image_process::iterator &it);
     virtual int64_t image_size();
     virtual uint64_t blocks(class image_process::iterator &it);
-    virtual int seek(class image_process::iterator &it,uint64_t block); // returns -1 if failue
+    virtual uint64_t seek_block(class image_process::iterator &it,uint64_t block); // returns -1 if failue
 };
 
 /****************************************************************
@@ -307,7 +307,7 @@ class process_dir : public image_process {
     virtual string str(class image_process::iterator &it);
     virtual int64_t image_size();				    /* total bytes */
     virtual uint64_t blocks(class image_process::iterator &it);
-    virtual int seek(class image_process::iterator &it,uint64_t block); // returns -1 if failu};
+    virtual uint64_t seek_block(class image_process::iterator &it,uint64_t block); // returns -1 if failu};
 };
 
 /****************************************************************

@@ -181,7 +181,7 @@ void worker::do_work(sbuf_t *sbuf)
 
     aftimer t;
     t.start();
-    process_sbuf(scanner_params(scanner_params::scan,*sbuf,master.fs)); 
+    process_sbuf(scanner_params(scanner_params::PHASE_SCAN,*sbuf,master.fs)); 
     t.stop();
 
     /* If we are logging starting and ending, save the end */

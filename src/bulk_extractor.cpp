@@ -32,7 +32,6 @@
 #include <sys/sysctl.h>
 #endif
 
-be_config_t be_config; // system configuration
 
 using namespace std;
 
@@ -260,7 +259,7 @@ void process_path_printer(const scanner_params &sp)
 		   new_path.c_str(),(unsigned int)sp.sbuf.bufsize,(unsigned int)offset);
 	    return;
 	}
-	process_path_printer(scanner_params(scanner_params::scan,
+	process_path_printer(scanner_params(scanner_params::PHASE_SCAN,
 					    sbuf_t(new_path,sp.sbuf+offset),
 					    sp.fs,sp.print_options));
 	return;
@@ -269,7 +268,7 @@ void process_path_printer(const scanner_params &sp)
     for(scanner_vector::const_iterator it = current_scanners.begin();it!=current_scanners.end();it++){
 	const string &name = upperstr((*it)->info.name);
 	if(name==prefix){
-	    ((*it)->scanner)(scanner_params(scanner_params::scan,
+	    ((*it)->scanner)(scanner_params(scanner_params::PHASE_SCAN,
 					    sbuf_t(new_path,sp.sbuf),
 					    sp.fs,sp.print_options),
 			     recursion_control_block(process_path_printer,name,true));
@@ -309,7 +308,7 @@ static void process_path(const image_process &p,string path,scanner_params::Prin
 
     pos0_t pos0(path+"-PRINT"); // insert the PRINT token
     sbuf_t sbuf(pos0,buf,count,count,true); // sbuf system will free
-    scanner_params sp(scanner_params::scan,sbuf,fs,po);
+    scanner_params sp(scanner_params::PHASE_SCAN,sbuf,fs,po);
     process_path_printer(sp);
 }
 
@@ -566,7 +565,7 @@ public:
 		    }
 		    std::cout << "\n";
 		    si = blocks_to_sample.begin();
-		    it.seek(*si);
+		    it.seek_block(*si);
 		}
 	    }
 
@@ -613,7 +612,7 @@ public:
 		if(sampling()){
 		    ++si;
 		    if(si==blocks_to_sample.end()) break;
-		    it.seek(*si);
+		    it.seek_block(*si);
 		} else {
 		    ++it;
 		}
@@ -865,6 +864,7 @@ int main(int argc,char **argv)
 	debug = atoi(getenv("BULK_EXTRACTOR_DEBUG"));
     }
     progname = argv[0];
+    scanner_info::config_t be_config; // system configuration
     const char *opt_path = 0;
     int opt_recurse = 0;
     int opt_zap = 0;
@@ -875,6 +875,7 @@ int main(int argc,char **argv)
     u_int num_threads = threadpool::numCPU();
     int opt_quiet = 0;
     std::string opt_sampling_params;
+    std::vector<std::string> scanner_dirs;
 
 #ifdef WIN32
     setmode(1,O_BINARY);		// make stdout binary
@@ -926,7 +927,7 @@ int main(int argc,char **argv)
 	case 'M': scanner_def::max_depth = atoi(optarg); break;
 	case 'm': max_bad_alloc_errors = atoi(optarg); break;
 	case 'o': opt_outdir = optarg;break;
-	case 'P': load_scanner_directory(optarg/*,histograms*/);break;
+	case 'P': scanner_dirs.push_back(optarg);break;
 	case 'p': opt_path = optarg; break;
         case 'q':
 	    if(atoi(optarg)==-1) opt_quiet = 1;// -q -1 turns off notifications
@@ -997,8 +998,8 @@ int main(int argc,char **argv)
     }
 
     /* Load all the scanners and enable the ones we care about */
-    load_scanners(scanners_builtin);		 
-
+    load_scanner_directories(scanner_dirs,be_config);
+    load_scanners(scanners_builtin,be_config); 
     scanners_process_commands();
 
     /* Give an error if a find list was specified
@@ -1045,9 +1046,8 @@ int main(int argc,char **argv)
 	    }
 	}
 	if(rmdir(opt_outdir.c_str())){
-	    err(1,"rmdir(%s)",opt_outdir.c_str());
-	}
-	std::cout << "rmdir " << opt_outdir << "\n";
+            std::cout << "rmdir " << opt_outdir << "\n";
+        }
     }
 
     /* Start the clock */

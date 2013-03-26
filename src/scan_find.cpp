@@ -40,7 +40,7 @@ extern "C"
 void scan_find(const class scanner_params &sp,const recursion_control_block &rcb)
 {
     assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);      
-    if(sp.phase==scanner_params::startup){
+    if(sp.phase==scanner_params::PHASE_STARTUP){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	sp.info->name		= "find";
         sp.info->author         = "Simson Garfinkel";
@@ -51,8 +51,8 @@ void scan_find(const class scanner_params &sp,const recursion_control_block &rcb
 	sp.info->histogram_defs.insert(histogram_def("find","","histogram",HistogramMaker::FLAG_LOWERCASE));
 	return;
     }
-    if(sp.phase==scanner_params::shutdown) return;
-    if(sp.phase==scanner_params::scan){
+    if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;
+    if(sp.phase==scanner_params::PHASE_SCAN){
 
 	/* The current regex library treats \0 as the end of a string.
 	 * So we make a copy of the current buffer to search that's one bigger, and the copy has a \0 at the end.

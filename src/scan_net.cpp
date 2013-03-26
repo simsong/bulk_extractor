@@ -1059,7 +1059,7 @@ extern "C"
 void scan_net(const class scanner_params &sp,const recursion_control_block &rcb)
 {
     assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);      
-    if(sp.phase==scanner_params::startup){
+    if(sp.phase==scanner_params::PHASE_STARTUP){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	assert(sizeof(struct be13::ip4)==20);	// we've had problems on some systems
 	sp.info->name  = "net";
@@ -1084,11 +1084,11 @@ void scan_net(const class scanner_params &sp,const recursion_control_block &rcb)
 	pthread_mutex_init(&M,NULL);
 	return;
     }
-    if(sp.phase==scanner_params::shutdown){
+    if(sp.phase==scanner_params::PHASE_SHUTDOWN){
 	if(fcap) fclose(fcap);
 	return;
     }
-    if(sp.phase==scanner_params::scan){
+    if(sp.phase==scanner_params::PHASE_SCAN){
 	packet_carver carver(sp);
 	carver.carve(sp.sbuf);
     }

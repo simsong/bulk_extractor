@@ -13,20 +13,20 @@ extern "C"
 void scan_xor(const class scanner_params &sp,const recursion_control_block &rcb)
 {
     assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
-    if(sp.phase==scanner_params::startup) {
+    if(sp.phase==scanner_params::PHASE_STARTUP) {
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	sp.info->name  = "xor";
 	sp.info->author = "Michael Shick";
 	sp.info->description = "optimistic XOR deobfuscator";
 	sp.info->flags = scanner_info::SCANNER_DISABLED;
 
-        string mask_string = be_config["xor_mask"];
+        string mask_string = sp.info->config["xor_mask"];
         if(mask_string != "") {
             XOR_MASK = (uint8_t) strtol(mask_string.c_str(), NULL, 16);
         }
 	return;
     }
-    if(sp.phase==scanner_params::scan) {
+    if(sp.phase==scanner_params::PHASE_SCAN) {
 	const sbuf_t &sbuf = sp.sbuf;
 	const pos0_t &pos0 = sp.sbuf.pos0;
 

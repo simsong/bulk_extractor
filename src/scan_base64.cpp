@@ -26,7 +26,7 @@ extern "C"
 void scan_base64(const class scanner_params &sp,const recursion_control_block &rcb)
 {
     assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);      
-    if(sp.phase==scanner_params::startup){
+    if(sp.phase==scanner_params::PHASE_STARTUP){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	sp.info->name		= "base64";
         sp.info->author         = "Simson L. Garfinkel";
@@ -42,8 +42,8 @@ void scan_base64(const class scanner_params &sp,const recursion_control_block &r
 	for(int ch='0';ch<='9';ch++){ base64array[ch] = true; }
 	return;	/* No feature files created */
     }
-    if(sp.phase==scanner_params::shutdown) return;
-    if(sp.phase==scanner_params::scan){
+    if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;
+    if(sp.phase==scanner_params::PHASE_SCAN){
 	const sbuf_t &sbuf = sp.sbuf;
 
 	/* base64 is a newline followed by at least two lines of constant length,
