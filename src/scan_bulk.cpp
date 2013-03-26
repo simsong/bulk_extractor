@@ -405,7 +405,7 @@ static inline void bulk_ngram_entropy(const sbuf_t &sbuf,feature_recorder *bulk,
 	    stringstream ss;
 	    ss << CONSTANT << "(";
 	    for(size_t i=0;i<ngram_size;i++){
-		char buf[10];
+		char buf[16];
 		snprintf(buf,sizeof(buf),"0x%02x",sbuf[i]);
 		if(i>0) ss << ' ';
 		ss << buf;
@@ -415,6 +415,7 @@ static inline void bulk_ngram_entropy(const sbuf_t &sbuf,feature_recorder *bulk,
 	    return;			// ngram is better than entropy
 	}
     }
+
 
     /* Couldn't find ngram; check entropy and FF00 counts...*/
     size_t ff00_count=0;
@@ -502,6 +503,7 @@ void scan_bulk(const class scanner_params &sp,const recursion_control_block &rcb
 	feature_recorder *bulk = sp.fs.get_name("bulk");
 	feature_recorder *bulk_tags = sp.fs.get_name("bulk_tags");
     
+
 	if(sp.sbuf.pos0.isRecursive()){
 	    /* Record the fact that a recursive call was made, which tells us about the data */
 	    bulk_tags->write_tag(sp.sbuf,""); // tag that we found recursive data, not sure what kind
