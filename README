@@ -1,42 +1,96 @@
 Welcome to bulk_extractor!
 
-Compiling
----------
+Information
+-----------
 
 Release files can be downloaded from:
 
-   * current release: http://digitalcorpora.org/downloads/bulk_extractor/bulk_extractor-1.3.1.tar.gz
-   * http://digitalcorpora.org/downloads/bulk_extractor/
-   
+  * current release: http://digitalcorpora.org/downloads/bulk_extractor/bulk_extractor-1.3.1.tar.gz
+  * http://digitalcorpora.org/downloads/bulk_extractor/
 
-Compiling
----------
-*To compile for MacOS or Linux*
+
+Compiling Notes
+---------------
+
+bulk_extractor builds with the GNU auto tools.  The maintainer has
+previously run automake and autoconf to produce the script
+"configure".  This script *should* be able to compile bulk_extractor
+for your platform. 
+
+We recommend compiling bulk_extractor with -O3 and that is the
+default. You can disable all optimization flags by specifying the
+configure option --with-noopt.
+
+
+Compiling for MacOS or Linux
+----------------------------
 
 Download the sources with git, run bootstrap.sh, configure and make:
 
-    git clone --recursive https://github.com/simsong/bulk_extractor.git
-    cd tcpflow
-    sh bootstrap.sh
-    sh configure
-    make
-    sudo make install
-
-*To Compile for Windows with mingw on Fedora:*
-
-Be sure that mingw is installed, then:
-
-    git clone --recursive https://github.com/simsong/bulk_extractor.git
-    cd tcpflow
-    sh bootstrap.sh
-    mingw64-configure
+  $ git clone --recursive https://github.com/simsong/bulk_extractor.git
+  $ cd bulk_extractor
+  $ sh bootstrap.sh
+  $ sh configure
+  $ make
+  $ sudo make install
 
 
-================================================================
-To install on a Linux/MacOS/Mingw system, use:
-   $ ./configure
-   $ make
-   $ sudo make install
+Compiling for Windows
+---------------------
+
+There are three ways to compile for Windows:
+
+  1. Cross-compiling from a Linux or Mac system with mingw.
+  2. Compiling natively on Windows using mingw.
+  3. Compiling natively on Windows using cygwin (untested)
+
+
+Cross-compiling for Windows using Debian Testing (wheezy) or Ubuntu 12.04 LTS (with mingw):
+------------------------------------------------------------------------------
+
+You will need to install mingw-w64 and zlib-dev:
+
+  $ sudo apt-get update
+  $ sudo apt-get upgrade
+  $ sudo apt-get -y install mingw-w64 
+
+Next, download zlib from zlib.net
+
+  $ ./configure --host=i686-w64-mingw32
+
+This allows the cross-compiling of the 64-bit and the 32-bit
+bulk_extractor.exe, although we do not recommend running the 32-bit
+version.  Now you are ready to compile:
+
+  $ git clone --recursive https://github.com/simsong/bulk_extractor.git
+  $ cd bulk_extractor
+  $ sh bootstrap.sh
+  $ mingw64-configure
+
+
+Cross-compiling for Windows using Fedora
+----------------------------------------
+
+Please see src_win/README for instructions on cross-compiling for Windows from Fedora
+using automated scripts.
+
+Set up mingw and the cross-compilation environment:
+
+  $ sudo yum -y install mingw64-gcc-c++ mingw64-zlib-static mingw64-pthreads flex 
+  $ sudo yum -y install autoconf automake  # not strictly needed, but necessary to build from SVN/GIT
+  $ sudo yum -y install zlib-devel zlib-static
+  * Run script CONFIGURE_F17.sh found in directory src_win/.
+  * Run script CONFIGURE_LIBRARIES.sh found in directory src_win/ to install libewf and TRE.
+  $ make win32
+  $ make win64
+
+
+Installing on a Linux/MacOS/Mingw system
+----------------------------------------
+
+  $ ./configure
+  $ make
+  $ sudo make install
 
 The following directories will NOT be installed with the above commands:
 
@@ -48,21 +102,21 @@ The following directories will NOT be installed with the above commands:
     	      	bulk_extractor plugins which will then be run at run-time
 		if the .so or .dll files are in the same directory as
 		the bulk_extractor executable.
-
 	
 This will install bulk_extractor in /usr/local/bin  (by default)
 
 To get started and send an extract of image.raw to OUTPUT, use this command:
 
-$ /usr/local/bin/bulk_extractor -o OUTPUT image.raw
+  $ /usr/local/bin/bulk_extractor -o OUTPUT image.raw
 
 This will create a directory called OUTPUT that contains lots of files you should examine.
 
-================================================================
-Additional Packages used by bulk_extractor:
 
-The TRE or libgnurx regular expression library is required.
-TRE is preferred because experiments indicate that it is about 10X faster.
+Additional packages used by bulk_extractor
+------------------------------------------
+
+The TRE or libgnurx regular expression library is required.  TRE is
+preferred because experiments indicate that it is about 10X faster.
 
 The libgnurx-static package is required.
 
@@ -71,20 +125,15 @@ The LIBEWF library is recommended for access to E01 files.
 Packages may be installed by running the CONFIGURE_F17.sh script in src_win/.
 The additional libraries may be installed by running the CONFIGURE_LIBRARIES.sh script in src_win/.
 
-================================================================
 
-Compiling bulk_extractor:
-*************************
-bulk_extractor builds with the GNU auto tools. The maintainer has
-prevously run automake and autoconf to produce the script
-"configure". This script *should* be able to compile bulk_extractor
-for your platform. 
+Dependencies
+------------
 
-We recommend compiling bulk_extractor with -O3 and that is the
-default. You can disable all optimizaiton flags by specifying the
-configure option --with-noopt.
+Before compiling bulk_extractor for your platform, you may need to install
+other packages on your system which bulk_extractor requires to compile cleanly.
 
-INSTALLING DEPENDENCIES ON FEDORA
+
+* Installing Dependencies On Fedora:
 
 On Fedora, this command should add the appropriate packages:
 
@@ -92,13 +141,15 @@ On Fedora, this command should add the appropriate packages:
   $ sudo yum groupinstall development-tools
   $ sudo yum install flex
 
-INSTALLING DEPENDENCIES ON UBUNTU:
 
-On Ubuntu 12.04, this was sufficient:
+* Installing Dependencies On Debian and Ubuntu:
+
+On Debian Testing (wheezy) and Ubuntu 12.04, this was sufficient:
 
   $ sudo apt-get -y install gcc g++ flex libewf-dev 
 
-INSTALLING DEPENDENCIES ON MAC:
+
+* Installing Dependencies On Mac:
 
 We recommend installing Mac dependencies using the MacPorts system. Once that is installed, try:
 
@@ -106,54 +157,15 @@ We recommend installing Mac dependencies using the MacPorts system. Once that is
 
 Note that port installs to /opt/local/bin, so file /etc/paths may need to be updated
 to include /opt/local/bin.
+
 Note that libewf-devel may not be available in ports.  If it is not, please download
 libewf source, ./configure && make && sudo make install
 
-TRE is faster than libgnurx, so we recommend to download the source,
-./configure && make && sudo make install
+TRE is faster than libgnurx, so we recommend to download the source then:
 
-If you really need to read AFFLIB, you will also need to install openssldev
+  ./configure
+  make
+  sudo make install
 
-================================================================
-== Compiling for Windows ==
-
-Please see src_win/README for instructions on cross-compiling for Windows from Fedora
-using automated scripts.
-
-There are three ways to compile for Windows:
-1 - Cross-compiling from a Linux or Mac system with mingw.
-2 - Compiling natively on Windows using mingw.
-3 - Compiling natively on Windows using cygwin (untested)
-
-
-Cross-compiling for Windows from Ubuntu 12.04 LTS:
-*************************************************
-You will need to install mingw-w64 and then you will need to install zlib-dev
-
- $ sudo apt-get update
- $ sudo apt-get upgrade
- $ sudo apt-get -y install mingw-w64 
-
-Next, download zlib from zlib.net
-
- $ ./configure --host=i686-w64-mingw32
-
-
-This allows the cross-compiling of the 64-bit and the 32-bit
-bulk_extractor.exe, although we do not recommend running the 32-bit
-version.
-
-Cross-compiling for Windows from Fedora
-*************************************************
-Please see src_win/README for instructions on cross-compiling for Windows from Fedora
-using automated scripts.
-
-Set up mingw and the cross-compilation environment:
-$ sudo yum -y install mingw64-gcc-c++ mingw64-zlib-static mingw64-pthreads flex 
-$ sudo yum -y install autoconf automake  # not strictly needed, but necessary to build from SVN/GIT
-$ sudo yum -y install zlib-devel zlib-static
-
-Run script CONFIGURE_F17.sh found in directory src_win/.
-Run script CONFIGURE_LIBRARIES.sh found in directory src_win/ to install libewf and TRE.
-Type "make win32" or "make win64".
-
+If you really need to read AFFLIB, you will also need to install openssldev.  Please
+note that AFF is in the process of being deprecated.
