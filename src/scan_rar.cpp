@@ -29,6 +29,8 @@
 #define OFFSET_HIGH_PACK_SIZE 32
 #define OFFSET_HIGH_UNP_SIZE 36
 #define OFFSET_FILE_NAME 32
+#define OFFSET_SALT 32
+#define OFFSET_EXT_TIME 40
 
 #define MANDATORY_FLAGS 0x8000
 #define UNUSED_FLAGS 0x6000
@@ -48,6 +50,8 @@
 #define OPTIONAL_BIGFILE_LEN 8
 
 #define SUSPICIOUS_HEADER_LEN 1024
+
+#define STRING_BUF_LEN 1024
 
 using namespace std;
 
@@ -136,7 +140,11 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
                 continue;
             }
 
-            string filename;
+            //
+            // Filename extraction
+            //
+            string filename = "";
+            uint16_t filename_len = 0;
             const char *filename_bytes = (const char *) cc + OFFSET_FILE_NAME;
             if(flags & FLAG_BIGFILE) {
                 // if present, the high 32 bits of 64 bit file sizes offset the
@@ -164,12 +172,13 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
 
                 if(null_byte_index == filename_bytes_len) {
                     // UTF-8 only
-                    filename = string(filename_bytes, (size_t) filename_bytes_len);
+                    filename_len = filename_bytes_len;
+                    filename = string(filename_bytes, (size_t) filename_len);
                 }
                 else {
                     // if both ASCII and UTF-8 are present, disregard ASCII
-                    filename = string(filename_bytes + null_byte_index + 1,
-                            filename_bytes_len - (null_byte_index + 1));
+                    filename_len = filename_bytes_len - (null_byte_index + 1);
+                    filename = string(filename_bytes + null_byte_index + 1, filename_len);
                 }
                 // validate extracted UTF-8
                 if(utf8::find_invalid(filename.begin(),filename.end()) != filename.end()) {
@@ -177,7 +186,8 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
                 }
             }
             else {
-                filename = string(filename_bytes, filename_bytes_len);
+                filename_len = filename_bytes_len;
+                filename = string(filename_bytes, filename_len);
             }
             // disallow ASCII control characters, which may also appear in valid UTF-8
             string::const_iterator first_control_character = filename.begin();
@@ -190,8 +200,35 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
                 continue;
             }
 
+            // RAR version required to extract: do we want to abort if it's too new?
+            uint8_t unpack_version = cc[OFFSET_UNP_VER];
+            uint8_t compression_method = cc[OFFSET_METHOD];
+            // OS that created archive
+            uint8_t host_os = cc[OFFSET_HOST_OS];
+            // date (modification?) In DOS date format
+            uint32_t dos_time = int4(cc + OFFSET_FTIME);
+            uint32_t file_crc = int4(cc + OFFSET_FILE_CRC);
+            uint32_t file_attr = int4(cc + OFFSET_ATTR);
+
+            // build XML output
+            filename = xml::xmlescape(filename);
+            stringstream ss;
+            ss << "<rarinfo>";
+
+            char string_buf[STRING_BUF_LEN];
+            snprintf(string_buf,sizeof(string_buf),
+                     "<name>%s</name><name_len>%d</name_len>"
+                     "<flags>0x%04X</flags><version>%d</version><compression_method>0x%X</compression_method>"
+                     "<uncompr_size>%lu</uncompr_size><compr_size>%lu</compr_size><file_attr>0x%X</file_attr>"
+                     "<lastmoddosdate>%d</lastmoddosdate><host_os>0x%X</host_os><crc32>%u</crc32>",
+                     filename.c_str(),filename_len,flags,unpack_version,
+                     compression_method,unpacked_size,packed_size,file_attr,dos_time,host_os,file_crc);
+            ss << string_buf;
+
+            ss << "</rarinfo>";
+
             ssize_t pos = cc-sbuf.buf; // position of the buffer
-            rar_recorder->write(pos0+pos,xml::xmlescape(filename),"<rarinfo></rarinfo>");
+            rar_recorder->write(pos0+pos,filename,ss.str());
 	}
     }
 }
