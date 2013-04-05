@@ -40,7 +40,7 @@
 #define FLAG_SOLID 0x0010
 #define MASK_DICT 0x00E0
 #define FLAG_BIGFILE 0x0100
-#define FLAG_UNICODED 0x0200
+#define FLAG_UNICODE_FILENAME 0x0200
 #define FLAG_SALTED 0x0400
 #define FLAG_OLD_VER 0x0800
 #define FLAG_EXTIME 0x1000
@@ -120,8 +120,8 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
             }
 
             // ignore huge filename lengths
-            uint16_t filename_len = (uint16_t) int2(cc + OFFSET_NAME_SIZE);
-            if(filename_len > SUSPICIOUS_HEADER_LEN) {
+            uint16_t filename_bytes_len = (uint16_t) int2(cc + OFFSET_NAME_SIZE);
+            if(filename_bytes_len > SUSPICIOUS_HEADER_LEN) {
                 continue;
             }
 
@@ -136,26 +136,62 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
                 continue;
             }
 
-            const uint8_t *filename = cc + OFFSET_FILE_NAME;
+            string filename;
+            const char *filename_bytes = (const char *) cc + OFFSET_FILE_NAME;
             if(flags & FLAG_BIGFILE) {
-                filename += OPTIONAL_BIGFILE_LEN;
+                // if present, the high 32 bits of 64 bit file sizes offset the
+                // location of the filename by 8
+                filename_bytes += OPTIONAL_BIGFILE_LEN;
             }
-            if(flags & FLAG_UNICODED) {
-                //TODO deal with UTF-8 filenames
+            if(flags & FLAG_UNICODE_FILENAME) {
+                // The unicode filename flag can indicate two filename formats,
+                // predicated on the presence of a null byte:
+                //   - If a null byte is present, it separates an ASCII
+                //     representation and a UTF-8 representation of the filename
+                //     in that order
+                //   - If no null byte is present, the filename is UTF-8 encoded
+                size_t null_byte_index = 0;
+                for(; null_byte_index < filename_bytes_len; null_byte_index++) {
+                    if(filename_bytes[null_byte_index] == 0x00) {
+                        break;
+                    }
+                }
+
+                if(null_byte_index == filename_bytes_len - 1u) {
+                    // Zero-length UTF-8 representation is illogical
+                    continue;
+                }
+
+                if(null_byte_index == filename_bytes_len) {
+                    // UTF-8 only
+                    filename = string(filename_bytes, (size_t) filename_bytes_len);
+                }
+                else {
+                    // if both ASCII and UTF-8 are present, disregard ASCII
+                    filename = string(filename_bytes + null_byte_index + 1,
+                            filename_bytes_len - (null_byte_index + 1));
+                }
+                // validate extracted UTF-8
+                if(utf8::find_invalid(filename.begin(),filename.end()) != filename.end()) {
+                    continue;
+                }
             }
-            uint8_t filename_buf[SUSPICIOUS_HEADER_LEN + 1];
-            memset(filename_buf, 0x00, sizeof(filename_buf));
-            for(size_t ii = 0; ii < SUSPICIOUS_HEADER_LEN; ii++) {
-                if(filename[ii] == 0x00) {
+            else {
+                filename = string(filename_bytes, filename_bytes_len);
+            }
+            // disallow ASCII control characters, which may also appear in valid UTF-8
+            string::const_iterator first_control_character = filename.begin();
+            for(; first_control_character != filename.end(); first_control_character++) {
+                if((char) *first_control_character < ' ') {
                     break;
                 }
-                filename_buf[ii] = filename[ii];
+            }
+            if(first_control_character != filename.end()) {
+                continue;
             }
 
-            //cout << "Rar! <" << filename_buf << "> size: " << packed_size << "->" << unpacked_size << std::endl;
-
             ssize_t pos = cc-sbuf.buf; // position of the buffer
-            rar_recorder->write(pos0+pos,string((const char *)filename_buf),"<rarinfo></rarinfo>");
+            rar_recorder->write(pos0+pos,xml::xmlescape(filename),"<rarinfo></rarinfo>");
 	}
     }
 }
