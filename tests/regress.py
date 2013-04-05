@@ -27,7 +27,21 @@ default_infile   = "nps-2009-ubnist1/ubnist1.gen3.raw"
 fast_infile      = "nps-2010-emails/nps-2010-emails.raw"
 full_infile      = "nps-2009-domexusers/nps-2009-domexusers.raw"
 exe = "src/bulk_extractor"
+nps_drives_path = "/nps/drives"
 BOM = codecs.BOM_UTF8.decode('utf-8')
+
+perftest_jobs_start = 2
+perftest_jobs_end   = 16
+perftest_jobs_step  = 1
+
+perftest_pagesize_start  = 1024*1024
+perftest_pagesize_end  = 1024*1024*16
+perftest_pagesize_step  = 1024*1024
+
+perftest_marginsize_start = 1024*1024
+perftest_marginsize_end = 1024*1024*4
+perftest_marginsize_step = 1024*1024
+
 
 def find_file(fn):
     if os.path.exists(fn): return fn
@@ -42,6 +56,16 @@ def find_file(fn):
 
 if sys.version_info < (2,7):
     raise "Requires Python 2.7 or above"
+
+def clear_cache():
+    # Are we on a Mac?
+    if os.path.exists("/usr/bin/purge"):
+        call("/usr/bin/purge")
+        return
+    # We must be on linux
+    f = open("/proc/sys/vm/drop_caches","wb")
+    f.write("3\n")
+    f.close()
 
 def analyze_linebyline(outdir):
     """Quick analysis of an output directory"""
@@ -315,6 +339,10 @@ def validate_report(fn):
         validate_openfile(open(fn,'rb'))
             
             
+def be_version():
+    return Popen([args.exe,'-V'],stdout=PIPE).communicate()[0].decode('utf-8').split(' ')[1].strip()
+
+
 def diff(dname1,dname2):
     args.max = int(args.max)
     def files_in_dir(dname):
@@ -361,25 +389,20 @@ if __name__=="__main__":
 
     parser = argparse.ArgumentParser(description="Perform regression testing on bulk_extractor")
     parser.add_argument("--gdb",help="run under gdb",action="store_true")
-    parser.add_argument("--debug",help="specify debug level",type=int)
-    parser.add_argument("--corp",help="regress entire corpus",action="store_true")
-    parser.add_argument("--outdir",help="specifies output directory",default="regress")
-    parser.add_argument("--exe",help="Executable to run (default {})".format(exe),
-                        default=exe)
-    parser.add_argument("--image",
-                      help=("Specifies image to regress (default %s)" % default_infile),
-                      default=default_infile)
-    parser.add_argument("--jobs",help="Specifies number of jobs",type=int)
+    parser.add_argument("--debug",help="debug level",type=int)
+    parser.add_argument("--outdir",help="output directory base",default="regress")
+    parser.add_argument("--exe",help="Executable to run (default {})".format(exe),default=exe)
+    parser.add_argument("--image",help="image to scan (default {})".format(default_infile),default=default_infile)
     parser.add_argument("--fast",help="Run with "+fast_infile,action="store_true")
     parser.add_argument("--full",help="Run with "+full_infile,action="store_true")
+    parser.add_argument("--jobs",help="Specifies number of worker threads",type=int)
     parser.add_argument("--extra",help="Specify extra arguments")
     parser.add_argument("--gprof",help="Recompile and run with gprof",action="store_true")
     parser.add_argument("--diff",help="diff mode. Compare two outputs",type=str,nargs='*')
     parser.add_argument("--max",help="Maximum number of differences to display",default="5")
     parser.add_argument("--memdebug",help="Look for memory errors",action="store_true")
-    parser.add_argument("--analyze",help="Specifies a bulk_extractor output file to analyze")
+    parser.add_argument("--analyze",help="Analyze a bulk_extractor output directory")
     parser.add_argument("--linebyline",help="Specifies a bulk_extractor output file to analyze line by line")
-    parser.add_argument("--save",help="Saves analysis for this image in regress.db",action="store_true")
     parser.add_argument("--zip",help="Create a zip archive of the report")
     parser.add_argument("--validate",help="Validate the contents of a report (do not run bulk_extractor)",
                         type=str,nargs='*')
@@ -387,6 +410,8 @@ if __name__=="__main__":
     parser.add_argument("--reproduce",help="specifies a bulk_extractor output "
             + "file from a crash and produces bulk_extractor flags to quickly "
             + "reproduce the crash")
+    parser.add_argument("--clearcache",help="clear the disk cache",action="store_true")
+    parser.add_argument("--perftest",help="run performance testing. Args are coded in this file",action="store_true")
 
     args = parser.parse_args()
 
@@ -413,16 +438,15 @@ if __name__=="__main__":
         analyze_linebyline(args.linebyline)
         exit(0)
 
-    if args.zip    : make_zip(args.zip); exit(0)
+    if args.zip:
+        make_zip(args.zip); exit(0)
 
     if not os.path.exists(args.exe):
         raise RuntimeError("{} does not exist".format(args.exe))
 
     # Find the bulk_extractor version and add it to the outdir
-    version = Popen([args.exe,'-V'],stdout=PIPE).communicate()[0].decode('utf-8').split(' ')[1].strip()
-    args.outdir += "-"+version
-
-    drives = os.getenv("DOMEX_CORP") + "/nps/drives/"
+    args.outdir += "-"+be_version()
+    drives = os.getenv("DOMEX_CORP") + nps_drives_path
 
     if args.fast:
         args.image  = find_file(drives + fast_infile)
@@ -470,17 +494,6 @@ if __name__=="__main__":
         outdir = run(args)
         call(['gprof',program,"gmon.out"],stdout=open(outdir+"/GPROF.txt","w"))
 
-    if args.corp:
-        outdir_base = "/Volumes/Drobo1/bulk_extractor_regression"
-        for (dirpath,dirnames,filenames) in os.walk(os.getenv("DOMEX_CORP")):
-            for filename in filenames:
-                (root,ext) = os.path.splitext(filename)
-                if filename in ['aff','E01','.001']:
-                    args.image = os.path.join(dirpath,filename)
-                    args.outdir = outdir_base + "/"+os.path.basename(fn)
-                    run(args)
-        exit(0)
-
     if args.diff:
         if len(args.diff)!=2:
             raise ValueError("--diff requires two arguments")
@@ -490,6 +503,33 @@ if __name__=="__main__":
         for s in args.sort:
             sort_outdir(s)
         exit(0)
+
+    if args.perftest:
+        print("perftest_jobs_start: ",perftest_jobs_start)
+        print("perftest_jobs_end  : ",perftest_jobs_end  )
+        print("perftest_jobs_step : ",perftest_jobs_step )
+
+        print("perftest_pagesize_start : ",perftest_pagesize_start )
+        print("perftest_pagesize_end : ",perftest_pagesize_end )
+        print("perftest_pagesize_step : ",perftest_pagesize_step )
+
+        print("perftest_marginsize_start: ",perftest_marginsize_start)
+        print("perftest_marginsize_end: ",perftest_marginsize_end)
+        print("perftest_marginsize_step: ",perftest_marginsize_step)
+        for j in range(perftest_jobs_start,perftest_jobs_end+1,perftest_jobs_step):
+            for p in range(perftest_pagesize_start,perftest_pagesize_end+1,perftest_pagesize_step):
+                for m in range(perftest_marginsize_start,perftest_marginsize_end+1,perftest_marginsize_step):
+                    clear_cache()
+                    outdir = make_outdir(args.outdir+"-{}-{}-{}".format(j,p,m))
+                    clear_cache()
+                    run_outdir(outdir)
+                    ofn = "report-{}-{}-{}.xml".format(j,p,m)
+                    os.rename(outdir+"/report.xml",ofn)
+        exit(0)
+        
+
+    if args.clearcache:
+        clear_cache()
 
     outdir = make_outdir(args.outdir)
     run_outdir(outdir,args.gdb)
