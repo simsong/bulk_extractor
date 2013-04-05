@@ -32,6 +32,13 @@ static int pdf_dump = 0;
 
 static bool mostly_printable_ascii(const unsigned char *buf,size_t bufsize)
 {
+#if 0
+    printf("MOSTLY_PRINTABLE:\n");
+    for(const unsigned char *cc = buf; cc<buf+bufsize;cc++){
+        putchar(*cc);
+    }
+    printf("\nDONE\n");
+#endif
     size_t count = 0;
     for(const unsigned char *cc = buf; cc<buf+bufsize;cc++){
 	if(isprint(*cc) || isspace(*cc)) count++;
@@ -161,7 +168,7 @@ extern "C"
 void scan_pdf(const class scanner_params &sp,const recursion_control_block &rcb)
 {
     assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
-    if(sp.phase==scanner_params::startup){
+    if(sp.phase==scanner_params::PHASE_STARTUP){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
         sp.info->name  = "pdf";
         sp.info->author         = "Simson Garfinkel";
@@ -170,8 +177,8 @@ void scan_pdf(const class scanner_params &sp,const recursion_control_block &rcb)
         pdf_dump = atoi(be_config["pdf_dump"].c_str());
 	return;	/* No features recorded */
     }
-    if(sp.phase==scanner_params::shutdown) return;
-    if(sp.phase==scanner_params::scan){
+    if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;
+    if(sp.phase==scanner_params::PHASE_SCAN){
 
 	const sbuf_t &sbuf = sp.sbuf;
 

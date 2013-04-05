@@ -280,7 +280,7 @@ extern "C"
 void scan_accts(const class scanner_params &sp,const recursion_control_block &rcb)
 {
     assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);      
-    if(sp.phase==scanner_params::startup){
+    if(sp.phase==scanner_params::PHASE_STARTUP){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	sp.info->name  = "accts";
 	sp.info->author		= "Simson L. Garfinkel";
@@ -295,7 +295,7 @@ void scan_accts(const class scanner_params &sp,const recursion_control_block &rc
 	sp.info->histogram_defs.insert(histogram_def("telephone","","histogram",HistogramMaker::FLAG_NUMERIC));
 	return;
     }
-    if(sp.phase==scanner_params::scan){
+    if(sp.phase==scanner_params::PHASE_SCAN){
         accts_scanner lexer(sp);
 	yyscan_t scanner;
         yyaccts_lex_init(&scanner);

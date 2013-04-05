@@ -318,7 +318,7 @@ extern "C"
 void scan_email(const class scanner_params &sp,const recursion_control_block &rcb)
 {
     assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);      
-    if(sp.phase==scanner_params::startup){
+    if(sp.phase==scanner_params::PHASE_STARTUP){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	sp.info->name		= "email";
         sp.info->author         = "Simson L. Garfinkel";
@@ -343,11 +343,11 @@ void scan_email(const class scanner_params &sp,const recursion_control_block &rc
 	sp.info->histogram_defs.insert(histogram_def("url","search.*[?&/;fF][pq]=([^&/]+)","searches"));
 	return;
     }
-    if(sp.phase==scanner_params::shutdown){
+    if(sp.phase==scanner_params::PHASE_SHUTDOWN){
         //printf("ip_written=%ld  ip_tested=%ld\n",ip_written,ip_tested);
         return; 
     }
-    if(sp.phase==scanner_params::scan){
+    if(sp.phase==scanner_params::PHASE_SCAN){
 	/* Set up the buffer. Scan it. Exit */
 	email_scanner lexer(sp);
 	yyscan_t scanner;

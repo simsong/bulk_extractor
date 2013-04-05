@@ -759,14 +759,14 @@ void scan_elf (const class scanner_params          &sp,
     assert(sp.sp_version == scanner_params::CURRENT_SP_VERSION);
     string xml;
     
-    if (sp.phase==scanner_params::startup){
+    if (sp.phase==scanner_params::PHASE_STARTUP){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
         sp.info->name   = "elf";
 	sp.info->author = "Alex Eubanks";
         sp.info->feature_names.insert("elf");
         return;
     }
-    if (sp.phase==scanner_params::scan){
+    if (sp.phase==scanner_params::PHASE_SCAN){
 
 	feature_recorder *f = sp.fs.get_name("elf");
     

@@ -152,25 +152,10 @@
 #endif
 
 /* bulk_extractor.cpp */
-
-#define DEBUG_PEDANTIC    0x0001	// check values more rigorously
-#define DEBUG_PRINT_STEPS 0x0002
-#define DEBUG_SCANNER     0x0004	// dump all feature writes to stderr
-#define DEBUG_NO_SCANNERS 0x0008        /* do not run the scanners */
-#define DEBUG_DUMP_DATA   0x0010	/* dump data as it is seen */
-#define DEBUG_MALLOC_FAIL 0x0020
-#define DEBUG_INFO        0x0040	// print extra info
-#define DEBUG_MALLOC_FAIL_FREQUENCY 200
-#define DEBUG_EXIT_EARLY  1000		/* just print the size of the volume and exis */
-#define DEBUG_ALLOCATE_512MiB 1002	/* Allocate 512MiB, but don't set any flags */
-
-extern int debug;			// feel free to use
 extern const char *progname;
 extern size_t opt_scan_bulk_block_size;
 extern bool opt_work_start_work_end;	// note when each scanner starts and ends; needed for restarting
 
-extern int opt_quiet;			// if true, no status updates
-extern int opt_notify_rate;		/* how often through main loop to print a status line */
 extern int opt_dedup_bloom_bits;
 extern int word_min;
 extern int word_max;
@@ -209,6 +194,7 @@ void	validate_fn(std::string &fn);
  ****************************************************************/
 //extern process_t process_sbuf;				/* process for feature extraction */
 extern process_t process_path_printer;			/* process for path printing  */
+extern int debug;
 
 //#ifdef _WIN32
 //#define __printflike(a,b) 		// ignore this feature in mingw
@@ -277,7 +263,9 @@ extern "C" scanner_t scan_pdf;
 extern "C" scanner_t scan_winpe;
 extern "C" scanner_t scan_winprefetch;
 extern "C" scanner_t scan_zip;
+extern "C" scanner_t scan_rar;
 extern "C" scanner_t scan_windirs;
+extern "C" scanner_t scan_xor;
 
 #endif
 #endif

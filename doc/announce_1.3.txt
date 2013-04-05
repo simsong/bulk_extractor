@@ -269,17 +269,16 @@ We are also considering the following scanners (and need help!):
 
 * CAB decompression
 
-* NTFS decompression
+* NTFS decompression  (NTLZ - looking for compressed magic numbers)
 
 * Better handling of MIME encoding
 
 * SQLite database identification
+  - Find the schema and then build a carver.
 
 * Processing of physical drives under Windows
 
-
 We have tabled the following ideas, for the following reasons:
-
 
 * Improved restarting, so that each page is retried once but only
   once. (The improved reliability in verson 1.2 made this request less

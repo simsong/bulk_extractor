@@ -132,7 +132,7 @@ void scan_base16(const class scanner_params &sp,const recursion_control_block &r
 {
     static const u_char *ignore_string = (const u_char *)"\r\n \t";
     assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);      
-    if(sp.phase==scanner_params::startup){
+    if(sp.phase==scanner_params::PHASE_STARTUP){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	sp.info->name		= "base16";
 	sp.info->author		= "Simson L. Garfinkel";
@@ -153,7 +153,7 @@ void scan_base16(const class scanner_params &sp,const recursion_control_block &r
 	for(int ch='0';ch<='9';ch++){ base16array[ch] = ch-'0'; }
 	return;	/* No feature files created */
     }
-    if(sp.phase==scanner_params::scan){
+    if(sp.phase==scanner_params::PHASE_SCAN){
         if(sp.sbuf.pagesize<24) return; /* minimum size to scan */
 	yyscan_t scanner;
         yybase16_lex_init(&scanner);

@@ -291,14 +291,14 @@ if test  x"$mingw" = x"yes";  then
   AC_DEFINE(HAVE_PTHREAD,1,[Defined to POSIX threads for mingw])
 else
   m4_include([m4/ax_pthread.m4])
+  AC_MSG_CHECKING([Running pthread test from http://www.gnu.org/software/autoconf-archive/ax_pthread.html..])
   AX_PTHREAD([
-    [echo Using settings from AX_PTHREAD]
-    LIBS="$PTHREAD_LIBS $LIBS"
-    CFLAGS="  $PTHREAD_CFLAGS $CFLAGS"
-    CXXFLAGS="$PTHREAD_CFLAGS $CXXFLAGS "
-    CPPFLAGS="$PTHREAD_CFLAGS $CPPFLAGS "
-    CC="$PTHREAD_CC"
-  ])
+              echo Using settings from AX_PTHREAD
+              LIBS="$PTHREAD_LIBS $LIBS"
+              CFLAGS="  $PTHREAD_CFLAGS $CFLAGS"
+              CXXFLAGS="$PTHREAD_CFLAGS $CXXFLAGS "
+              CC="$PTHREAD_CC"],
+            [AC_MSG_ERROR(bulk_extractor requires pthreads)])
 fi
 
 AC_CHECK_HEADERS([pthread.h])
