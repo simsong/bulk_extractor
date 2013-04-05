@@ -1,0 +1,216 @@
+		    Announcing bulk_extractor 1.4.
+			    July 1, 2013
+                               -DRAFT-
+
+bulk_extractor Version 1.4 has been released for Linux, MacOS and Windows.
+
+New functionality in Version 1.3 include:
+
+Improvements in Version 1.3 include:
+
+* scan_pdf now does a better job extracting emails from text.
+
+
+
+Incompatiable changes:
+
+
+================================================================
+PERFORMANCE STATISTICS
+
+This section tracks how performance of bulk_extractor has changed over
+time. 
+
+NOTE: We recommend compiling Version 1.3 with -O3 under GCC. We have
+found no case in which GCC produces invalid code, and our testing
+indicates that -O3 produces bulk_extractor object code that is
+dramatically faster than -O2. Use these configure flags to compile
+with a different optimization: 
+
+  --without-opt           Drop all -O C flags
+  --without-o3            Do not force O3 optimization; use default level
+
+
+
+Disk image: /corp/nps/drives/nps-2009-ubnist1/ubnist1.gen3.E01
+     	    /corp/nps/drives/nps-2009-ubnist1/ubnist1.gen3.E02
+
+	    Media size:		1.9 GiB (2106589184 bytes)
+	    MD5:  		49a775d8b109a469d9dd01dc92e0db9c
+	    
+Hardware:   MacBook Pro 2 Ghz Intel Core i7, 8GB 1333 Mhz DDR3
+	    512GB SSD (Simson's Laptop "Mucha"), 
+
+Current and Historic Times [1]: 
+
+MacOS 10.8.0; LLVM build 2336.11.00; -O3
+
+version 1.3:    185 seconds (11.34 MBytes/sec)  (-O3; AES enabled)
+version 1.2.0:  141 seconds (14.9 MBytes/sec)   (-O3; AES enabled)
+version 1.1.3:  171 seconds (12.3 MBytes/sec)   (-O3; AES disabled)
+version 1.0.7:  256 seconds (8.22 MBytes/sec)   (-O3; AES disabled; 
+
+MacOS 10.7.8; LLVM build 2336.1.00; No optimization
+
+version 1.2.0:	350 seconds (5.72 MBytes/sec)
+version 1.1.3:	468 seconds (4.28 MBytes/sec)
+
+Windows 7, same hardware ("boot camp"):
+
+version 1.3:    198 seconds (10.6 MBytes/sec)  (-O3; AES enabled; 32bit)
+version 1.3:    186 seconds (11.33 MBytes/sec)  (-O3; AES enabled; 64bit)
+version 1.2.0: 	207.4 seconds (9.69 MBytes/sec, [2])
+
+Notes: 
+1 - Times reported are the fastest of three consecutive runs
+2 - bulk_extractor 1.2.0 scan_exiv was disabled under Windows
+
+
+Current list of bulk_extractor scanners:
+
+scan_accts   - Looks for phone numbers, credit card numbers, etc
+scan_aes     - Detects in-memory AES keys from their key schedules
+scan_base16  - decodes hexadecimal test
+scan_base64  - decodes BASE64 text
+scan_elf     - Detects and decodes ELF headers
+scan_exiv2   - Decodes EXIF headers in JPEGs using libexiv2 (for regression testing)
+scan_exif    - Decodes EXIF headers in JPEGs using built-in decoder.
+scan_find    - keyword searching
+scan_gps     - Detects XML from Garmin GPS devices
+scan_gzip    - Detects and decompresses GZIP files and gzip stream
+scan_hiber   - Detects and decompresses Windows hibernation fragments
+scan_json    - Detects JavaScript Object Notation files
+scan_kml     - Detects KML files
+scan_net     - IP packet scanning and carving
+scan_pdf     - Extracts text from some kinds of PDF files
+scan_vcard   - Carvees VCARD files
+scan_winprefetch - Detects and extracts fields from Windows prefetch files and file fragments.
+scan_wordlist - Builds word list for password cracking
+scan_zip     - Detects and decompresses ZIP files and zlib streams
+
+
+Current list of bulk_extractor feature files:
+
+aes_keys.txt - AES encryption keys
+alerts.txt   - Features found on alert list (redlist)
+ccn.txt      - credit card numbers
+ccn_track2.txt - Track 2 information
+domain.txt   - All extracted domain names and IP addresses
+email.txt    - extracted email addresses
+ether.txt    - extracted ethernet addresses. Currently
+ 	       overcollecting due to a failure to consider
+	       local context.
+exif.txt     - All exif fields from JPEGs; extracted as XML.
+find.txt     - Hits on find command.
+hex.txt      - Notable hexdecimal constants
+gps.txt	     - Extracted GPS coordinates from Garmin XML and
+	       GPS-enabled JPEG files
+ip.txt	     - Extracted IP addresses from scan_net
+	       cksum-bad indicates checksum test failed;
+	       those are less likely to actually be IP
+	       addresses.
+json.txt     - Extracted and validated JavaScript Object
+	       Notation fragments.
+kml.txt	     - Extracted KML files
+report.xml   - The DFXML file that explains what happened.
+rfc822.txt   - All extracted RFC822 headers
+tcp.txt	     - Summaries of all extracted UDP and TCP packets.
+telephone.txt- Extracted phone numbers
+url.txt      - Extracted URLs
+  url_facebook-id - extracted Facebook IDs
+  url_microsoft-live - extracted Microsoft Live IDs
+  url_searches       - extracted search terms
+  url_services       - extracted services from URLs
+winprefetch.txt - Windows prefetch files and fragments,
+                  recoded as XML for easy processing.
+wordlist.txt - All the words 
+zip.txt      - Information about all ZIP files and zip
+               components.
+
+================================================================
+Regular Expression Libraries
+
+bulk_extractor makes extensive use of regular expressions for
+extraction. For Version 1.3 decided to evaluate a variety of regular
+expression libraries.
+
+Regular expression scanning with bulk_extractor is complicated by the
+fact that we are scanning binary data, so regular expression engines
+that attempt to handle Unicode do not do well. We looked for
+comparisions of regular expression libraries and found these:
+
+* http://lh3lh3.users.sourceforge.net/reb.shtml
+* http://sljit.sourceforge.net/regex_perf.html
+
+We evaluated the following regular expression libraries:
+
+- RE2 http://code.google.com/p/re2/ (slow on our text, possibly due to UTF8)
+- TRE http://laurikari.net/tre/     (very fast)
+- regex-0.12                        (very slow; will not cross-compile))
+- onig http://www.geocities.jp/kosako3/oniguruma/ (very fast)
+- PCRE http://www.pcre.org/         (medium speed)
+
+Although onig gave the best performance under Linux, we were not able
+to get onig to compile under mingw. TRE gave performance that was
+quite similar to onig had cross-compiled without problems. Performance
+of RE2 and PCRE was not acceptable.
+
+Thus, bulk_extractor will now use TRE if it is installed, and if not
+it will use the system regular expression library.
+
+
+
+================================================================
+Planned Feature List for 1.4:
+
+* RAR & RAR2 decompression
+
+* BZIP2 decompression
+
+* Automatically detecting and reporting Window shortcut
+  files and IE history.
+
+* Scanning for the start of bitlocker protected volumes.
+
+* Support for checkpointing using BLCR.
+
+We are also considering the following scanners (and need help!):
+
+* LZMA decompression
+
+* MSI decompression
+
+* CAB decompression
+
+* NTFS decompression
+
+* Better handling of MIME encoding
+
+* SQLite database identification
+
+* Processing of physical drives under Windows
+
+
+We have tabled the following ideas, for the following reasons:
+
+
+* Improved restarting, so that each page is retried once but only
+  once. (The improved reliability in verson 1.2 made this request less
+  important.)
+
+* Support on distributed computing arrays. (May be less important
+  given the low cost of 64-core machines)
+
+* Python Bridge. (We cannot have multiple instances of the Python
+  interperter running in the same address space, so we would need to
+  run multiple Pythons in multiple address spaces. Frankly, it's a lot
+  of work, and Python is really slow, so we're just not doing this.)
+
+
+
+
+
+
+
+
+
