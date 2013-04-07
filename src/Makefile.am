@@ -158,5 +158,5 @@ unitest$(EXEEXT): unicode_escape.cpp
 
 FLEX_CXXFLAGS=-Wno-shadow -Wno-effc++ -Wno-redundant-decls -Wno-missing-noreturn
 .flex.o:
-	$(LEX) -R -t $<  | sed 's/YY_FATAL_ERROR.$$/return -1;(void)(/' > `basename $@ .o`.cpp 
+	$(LEX) -R -t $<  | sed 's/YY_FATAL_ERROR.$$/RETURNING_YY_FATAL_ERROR(/' > `basename $@ .o`.cpp 
 	$(CXX) $(CPPFLAGS) $(AM_CPPFLAGS) $(CXXFLAGS) $(FLEX_CXXFLAGS) -I${top_srcdir} -I${srcdir} -I.. -I../../_build -c `basename $@ .o`.cpp 

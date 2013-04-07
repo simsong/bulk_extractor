@@ -44,3 +44,4 @@ public:
 #define YY_INPUT(buf,result,max_size) result = get_extra(yyscanner)->get_input(buf,max_size);
 #define POS  s.pos
 #define SBUF (*s.sbuf)
+#define RETURNING_YY_FATAL_ERROR(msg) {fprintf(stderr,"YY_FATAL_ERROR %s:%u -- %s\n",__FILE__,__LINE__,msg);return -1;}
