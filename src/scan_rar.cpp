@@ -219,7 +219,7 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
             snprintf(string_buf,sizeof(string_buf),
                      "<name>%s</name><name_len>%d</name_len>"
                      "<flags>0x%04X</flags><version>%d</version><compression_method>0x%X</compression_method>"
-                     "<uncompr_size>%lu</uncompr_size><compr_size>%lu</compr_size><file_attr>0x%X</file_attr>"
+                     "<uncompr_size>%"PRIu64"</uncompr_size><compr_size>%"PRIu64"</compr_size><file_attr>0x%X</file_attr>"
                      "<lastmoddosdate>%d</lastmoddosdate><host_os>0x%X</host_os><crc32>%u</crc32>",
                      filename.c_str(),filename_len,flags,unpack_version,
                      compression_method,unpacked_size,packed_size,file_attr,dos_time,host_os,file_crc);

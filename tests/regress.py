@@ -27,7 +27,7 @@ default_infile   = "nps-2009-ubnist1/ubnist1.gen3.raw"
 fast_infile      = "nps-2010-emails/nps-2010-emails.raw"
 full_infile      = "nps-2009-domexusers/nps-2009-domexusers.raw"
 exe = "src/bulk_extractor"
-nps_drives_path = "/nps/drives"
+nps_drives_path = "/nps/drives/"
 BOM = codecs.BOM_UTF8.decode('utf-8')
 
 perftest_jobs_start = 2

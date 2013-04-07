@@ -546,25 +546,23 @@ public:
         xreport.push("runtime","xmlns:debug=\"http://www.afflib.org/bulk_extractor/debug\"");
 
 	std::set<uint64_t> blocks_to_sample;
-	std::set<uint64_t>::const_iterator si = blocks_to_sample.begin();
-	bool first = true;
+	std::set<uint64_t>::const_iterator si = blocks_to_sample.begin(); // sampling iterator
+	bool first = true;              
 	for(image_process::iterator it = p.begin();it!=p.end();){
 	    if(sampling()){
 		if(first) {
 		    first = false;
-		    printf("** EXPERIMENTAL SAMPLING CODE **\n");
-		    /* get a list of blocks to sample */
+		    /* Create a list of blocks to sample */
 		    uint64_t blocks = it.blocks();
-		    std::cout << "total blocks: " << blocks << "\n";
 		    while(blocks_to_sample.size() < blocks * sampling_fraction){
 			uint64_t blk = ((random()<<32) | (random())) % blocks;
 			blocks_to_sample.insert(blk); // will be added even if already present
 		    }
-		    std::cout << "these blocks will be sampled:\n";
-		    for(si = blocks_to_sample.begin();si!=blocks_to_sample.end();++si){
-			std::cout << *si << " ";
-		    }
-		    std::cout << "\n";
+
+		    //for(si = blocks_to_sample.begin();si!=blocks_to_sample.end();++si){
+                    //std::cout << *si << " ";
+                    //}
+		    //std::cout << "\n";
 		    si = blocks_to_sample.begin();
 		    it.seek_block(*si);
 		}
@@ -574,7 +572,7 @@ public:
             if(page_ctr>=opt_page_start && it.raw_offset>=opt_offset_start){
                 if(seen_page_ids.find(it.get_pos0().str()) != seen_page_ids.end()){
                     // this page is in the XML file. We've seen it, so skip it (restart code)
-                    continue;
+                    goto loop;
                 }
 
                 // attempt to get an sbuf. If we can't get it, we may be in a low-memory situation.
@@ -607,18 +605,19 @@ public:
 		    std::cerr << "Exception " << e.what() << " skipping " << it.get_pos0() << "\n";
                     xreport.xmlout("debug:exception", e.what(), ss.str(), true);
                 }
-		/* If we are random sampling, move to the next random sample.
-		 * Otherwise increment the iterator
-		 */
-		if(sampling()){
-		    ++si;
-		    if(si==blocks_to_sample.end()) break;
-		    it.seek_block(*si);
-		} else {
-		    ++it;
-		}
             }
-            page_ctr++;
+        loop:;
+            /* If we are random sampling, move to the next random sample.
+             * Otherwise increment the iterator
+             */
+            if(sampling()){
+                ++si;
+                if(si==blocks_to_sample.end()) break;
+                it.seek_block(*si);
+            } else {
+                ++it;
+            }
+            ++page_ctr;
         }
 	    
         if(!opt_quiet){
