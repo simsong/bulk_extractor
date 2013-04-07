@@ -30,6 +30,28 @@ exe = "src/bulk_extractor"
 nps_drives_path = "/nps/drives/"
 BOM = codecs.BOM_UTF8.decode('utf-8')
 
+answers = {"ubnist1.gen3":{"ALERTS_found.txt":88,
+                           "bulk_tags.txt":7477796,
+                           "ccn.txt":1,
+                           "domain.txt":233055,
+                           "elf.txt":708,
+                           "email.txt":184341,
+                           "ether.txt":51,
+                           "exif.txt":158,
+                           "find.txt":26,
+                           "ip.txt":12,
+                           "json.txt":87,
+                           "rar.txt":4,
+                           "rfc822.txt":24628,
+                           "tcp.txt":68,
+                           "telephone.txt":143,
+                           "url.txt":44275,
+                           "windirs.txt":1667,
+                           "winpe.txt":2,
+                           "wordlist.txt":10121828,
+                           "zip.txt":1962}}
+
+
 perftest_jobs_start = 2
 perftest_jobs_end   = 16
 perftest_jobs_step  = 1
@@ -131,6 +153,16 @@ def reproduce_flags(outdir):
         offset = min(active_offsets)
     return "-Y {offset} {filename}".format(offset=offset, filename=filename)
 
+def analyze_warning(fnpart,fn,lines):
+    if fnpart not in answers:
+        return "(No answers for {})".format(fnpart)
+    if fn not in answers[fnpart]:
+        return "(No answer for {})".format(fn)
+    r = answers[fnpart][fn]
+    if r==lines: return "OK"
+    if r<lines: return "LOW (expected {})".format(r)
+    return "HIGH (expected {})".format(r)
+
 def analyze_outdir(outdir):
     """Print statistics about an output directory"""
     print("Analyze {}".format(outdir))
@@ -139,6 +171,8 @@ def analyze_outdir(outdir):
     print("bulk_extractor version: {}".format(b.version()))
     print("Filename:               {}".format(b.imagefile()))
     
+    fnpart = ".".join(b.imagefile().split('/')[-1].split('.')[:-1])
+
     # Determine if any pages were not analyzed
     proc = dict()
     for work_start in b.xmldoc.getElementsByTagName("debug:work_start"):
@@ -206,7 +240,7 @@ def analyze_outdir(outdir):
         for line in b.open(fn,'rb'):
             if not bulk_extractor_reader.is_comment_line(line):
                 lines += 1
-        print("  {:>25} features: {:>10,}".format(fn,lines))
+        print("  {:>25} features: {:>12,}  {}".format(fn,lines,analyze_warning(fnpart,fn,lines)))
     
 
 def make_zip(dname):
@@ -536,8 +570,4 @@ if __name__=="__main__":
     sort_outdir(outdir)
     validate_report(outdir)
     analyze_outdir(outdir)
-    print("Regression finished. Output in {}".format(outdir))
-
-
-                    
-        
+    print("Regression finished at {}. Output in {}".format(time.asctime(),outdir))
