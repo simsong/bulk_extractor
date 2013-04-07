@@ -189,6 +189,10 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
                 filename_len = filename_bytes_len;
                 filename = string(filename_bytes, filename_len);
             }
+
+            // throw out zero-length filename
+            if(filename.size()==0) continue;
+
             // disallow ASCII control characters, which may also appear in valid UTF-8
             string::const_iterator first_control_character = filename.begin();
             for(; first_control_character != filename.end(); first_control_character++) {
@@ -199,6 +203,7 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
             if(first_control_character != filename.end()) {
                 continue;
             }
+
 
             // RAR version required to extract: do we want to abort if it's too new?
             uint8_t unpack_version = cc[OFFSET_UNP_VER];
