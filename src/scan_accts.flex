@@ -56,7 +56,9 @@ string utf8_line;
 	    utf8_line = "";
 	}
 	return utf8_line;
-    }
+}
+
+#define SCANNER "scan_acct"
 %}
 
 %option noyywrap

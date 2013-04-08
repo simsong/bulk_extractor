@@ -78,6 +78,7 @@ inline size_t find_domain_in_url(const unsigned char *buf,size_t buflen,size_t *
     return 0;				// not found
 }
 
+#define SCANNER "scan_email"
 
 %}
 

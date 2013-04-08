@@ -16,9 +16,16 @@
 #define YY_SKIP_YYWRAP            /* Never wrap */
 #define YY_NO_INPUT
 
-
 class sbuf_scanner {
 public:
+    class sbuf_scanner_exception: public exception {
+    public:
+        const char *msg;
+        sbuf_scanner_exception(const char *m):msg(m){}
+        virtual const char *what() const throw() {
+            return msg;
+        }
+    };
     explicit sbuf_scanner(const sbuf_t *sbuf_): sbuf(sbuf_),pos(0),point(0){}
     virtual ~sbuf_scanner(){}
     const sbuf_t *sbuf;
@@ -44,4 +51,4 @@ public:
 #define YY_INPUT(buf,result,max_size) result = get_extra(yyscanner)->get_input(buf,max_size);
 #define POS  s.pos
 #define SBUF (*s.sbuf)
-#define RETURNING_YY_FATAL_ERROR(msg) {fprintf(stderr,"YY_FATAL_ERROR %s:%u -- %s\n",__FILE__,__LINE__,msg);return -1;}
+#define YY_FATAL_ERROR(msg) {throw new sbuf_scanner::sbuf_scanner_exception(msg);}
