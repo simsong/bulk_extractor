@@ -345,7 +345,7 @@ def validate_openfile(f):
 
     # now read
     linenumber = 0
-    print("Validate ",fn)
+    print("Validate UTF-8 encoding in ",fn)
     for lineb in f:
         linenumber += 1
         lineb = lineb[:-1]

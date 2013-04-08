@@ -29,7 +29,10 @@ public:
     explicit sbuf_scanner(const sbuf_t *sbuf_): sbuf(sbuf_),pos(0),point(0){}
     virtual ~sbuf_scanner(){}
     const sbuf_t *sbuf;
-    size_t pos;
+    // pos & point may be redundent.
+    // pos counts the number of bytes into the buffer and is incremented by the flex rules
+    // point counts the point where we are removing characters
+    size_t pos;            
     size_t point;
 
     size_t get_input(char *buf,size_t max_size){
