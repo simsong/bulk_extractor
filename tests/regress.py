@@ -158,31 +158,22 @@ def analyze_warning(fnpart,fn,lines):
         return "(No answers for {})".format(fnpart)
     if fn not in answers[fnpart]:
         return "(No answer for {})".format(fn)
-    r = answers[fnpart][fn]
-    if r==lines: return "OK"
-    if r<lines: return "LOW (expected {})".format(r)
-    return "HIGH (expected {})".format(r)
+    ref = answers[fnpart][fn]
+    if ref==lines: return "OK"
+    if lines<ref: return "LOW (expected {})".format(ref)
+    return "HIGH (expected {})".format(ref)
 
-def analyze_outdir(outdir):
-    """Print statistics about an output directory"""
-    print("Analyze {}".format(outdir))
-
-    b = bulk_extractor_reader.BulkReport(outdir)
-    print("bulk_extractor version: {}".format(b.version()))
-    print("Filename:               {}".format(b.imagefile()))
-    
-    fnpart = ".".join(b.imagefile().split('/')[-1].split('.')[:-1])
-
+def analyze_reportxml(xmldoc):
     # Determine if any pages were not analyzed
     proc = dict()
-    for work_start in b.xmldoc.getElementsByTagName("debug:work_start"):
+    for work_start in xmldoc.getElementsByTagName("debug:work_start"):
         threadid = work_start.getAttribute('threadid')
         pos0     = work_start.getAttribute('pos0')
         if pos0 in proc:
             print("*** error: pos0={} was started by threadid {} and threadid {}".format(pos0,proc[pos0],threadid))
         else:
             proc[pos0] = threadid
-    for work_end in b.xmldoc.getElementsByTagName("debug:work_end"):
+    for work_end in xmldoc.getElementsByTagName("debug:work_end"):
         threadid = work_end.getAttribute('threadid')
         pos0     = work_end.getAttribute('pos0')
         if pos0 not in proc:
@@ -195,9 +186,8 @@ def analyze_outdir(outdir):
     for (pos0,threadid) in proc.items():
         print("*** error: pos0={} was started by threadid {} but never ended".format(pos0,threadid))
     
-    # Print which scanners were run and how long they took
     scanner_times = []
-    scanners = b.xmldoc.getElementsByTagName("scanner_times")[0]
+    scanners = xmldoc.getElementsByTagName("scanner_times")[0]
     total = 0
     for path in scanners.getElementsByTagName("path"):
         name    = path.getElementsByTagName("name")[0].firstChild.wholeText
@@ -213,6 +203,18 @@ def analyze_outdir(outdir):
         print("  {:>25}  {:8.0f}  {:12.4f}  {:12.4f}  {:5.2f}%".format(
                 name,calls,seconds,seconds/calls,100.0*seconds/total))
     
+    
+
+def analyze_outdir(outdir):
+    """Print statistics about an output directory"""
+    print("Analyze {}".format(outdir))
+
+    b = bulk_extractor_reader.BulkReport(outdir)
+    print("bulk_extractor version: {}".format(b.version()))
+    print("Filename:               {}".format(b.imagefile()))
+    
+    # Print which scanners were run and how long they took
+    analyze_reportxml(b.xmldoc)
     
     hfns = list(b.histograms())
     print("")
@@ -232,6 +234,7 @@ def analyze_outdir(outdir):
             firstline = firstline.decode('utf-8')
         print("  {:>25} entries: {:>10,}  (top: {})".format(fn,len(h),firstline))
 
+    fnpart = ".".join(b.imagefile().split('/')[-1].split('.')[:-1])
     ffns = list(b.feature_files())
     print("")
     print("Feature Files:        {}".format(len(ffns)))
@@ -455,9 +458,13 @@ if __name__=="__main__":
             validate_report(v)
         exit(0)
     if args.analyze:
+        import xml.dom.minidom
         import xml.parsers.expat
         try:
-            analyze_outdir(args.analyze);
+            if args.analyze.endswith(".xml"):
+                analyze_reportxml(xml.dom.minidom.parse(open(args.analyze,"rb")))
+            else:
+                analyze_outdir(args.analyze);
             exit(0)
         except xml.parsers.expat.ExpatError as e:
             print("%s does not contain a valid report.xml file" % (args.analyze))
