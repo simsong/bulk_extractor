@@ -50,6 +50,7 @@
 #define OPTIONAL_BIGFILE_LEN 8
 
 #define SUSPICIOUS_HEADER_LEN 1024
+#define SUSPICIOUS_FILE_LEN 10L * 1024L * 1024L * 1024L * 1024L
 
 #define STRING_BUF_LEN 1024
 
@@ -136,7 +137,10 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
                 packed_size += ((uint64_t) int4(cc + OFFSET_HIGH_PACK_SIZE)) << 32;
                 unpacked_size += ((uint64_t) int4(cc + OFFSET_HIGH_UNP_SIZE)) << 32;
             }
-            if(packed_size == 0 || unpacked_size == 0 || packed_size * 0.95 > unpacked_size) {
+            // zero length, > 10 TiB, packed size significantly larger than
+            // unpacked are all 'strange'
+            if(packed_size == 0 || unpacked_size == 0 || packed_size * 0.95 > unpacked_size ||
+                    packed_size > SUSPICIOUS_FILE_LEN || unpacked_size > SUSPICIOUS_FILE_LEN)  {
                 continue;
             }
 
