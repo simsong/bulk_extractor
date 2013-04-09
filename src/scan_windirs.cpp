@@ -26,12 +26,16 @@
 #include "tsk3/fs/tsk_fatfs.h"
 #include "tsk3/fs/tsk_ntfs.h"
 
-uint opt_weird_file_size  = 1024*1024*150; // max file size
-uint opt_weird_file_size2 = 1024*1024*512; // max file size
+#define CLUSTERS_IN_1MiB 2*1024
+#define CLUSTERS_IN_1GiB 2*1024*1024
+
+/* fat32 tuning parameters for weirdness. Each of these define something weird. If too much is weird, it's probably not a FAT32 directory entry.. */
+uint opt_weird_file_size    = 1024*1024*150; // max file size
+uint opt_weird_file_size2   = 1024*1024*512; // max file size
+uint32_t opt_max_cluster    = 32*CLUSTERS_IN_1GiB; // assume smaller than 32GB with 512 byte clusters
+uint32_t opt_max_cluster2   = 128*CLUSTERS_IN_1GiB; // assume smaller than 512GB with 512 byte clusters
 uint opt_max_bits_in_attrib = 3;
-uint opt_max_weird_count = 2;
-uint32_t opt_max_cluster     = (2*1024*1024*128); // assume smaller than 128GB with 512 byte clusters
-uint32_t opt_max_cluster2    = (8*1024*1024*128); // assume smaller than 512GB with 512 byte clusters
+uint opt_max_weird_count    = 2;
 
 /**
  * code from tsk3
@@ -53,12 +57,12 @@ inline uint32_t fat32int(const uint8_t high[2],const uint8_t low[2]){
 }
 
 
-int fatYear(int x){ return (x & FATFS_YEAR_MASK) >> FATFS_YEAR_SHIFT;}
+int fatYear(int x){  return (x & FATFS_YEAR_MASK) >> FATFS_YEAR_SHIFT;}
 int fatMonth(int x){ return (x & FATFS_MON_MASK) >> FATFS_MON_SHIFT;}
-int fatDay(int x){ return (x & FATFS_DAY_MASK) >> FATFS_DAY_SHIFT;}
-int fatHour(int x){ return (x & FATFS_HOUR_MASK) >> FATFS_HOUR_SHIFT;}
-int fatMin(int x){ return (x & FATFS_MIN_MASK) >> FATFS_MIN_SHIFT;}
-int fatSec(int x){ return (x & FATFS_SEC_MASK) >> FATFS_SEC_SHIFT;}
+int fatDay(int x){   return (x & FATFS_DAY_MASK) >> FATFS_DAY_SHIFT;}
+int fatHour(int x){  return (x & FATFS_HOUR_MASK) >> FATFS_HOUR_SHIFT;}
+int fatMin(int x){   return (x & FATFS_MIN_MASK) >> FATFS_MIN_SHIFT;}
+int fatSec(int x){   return (x & FATFS_SEC_MASK) >> FATFS_SEC_SHIFT;}
 
 std::string fatDateToISODate(const uint16_t d,const uint16_t t)
 {
@@ -171,11 +175,14 @@ fat_validation_t valid_fat_directory_entry(const sbuf_t &sbuf)
 	    return INVALID;			// can't have both DIRECTORY and ARCHIVE set
 	}
 
+#if 0
+        /* This is for debugging specific filename bugs */
         bool dn=false;
         if(strncmp((const char *)dentry.name,"SYSLINUX",8)==0 && strncmp((const char *)dentry.ext,"CFG",3)==0){
             dn=true;
             printf("dn=%d\n",dn);
         }
+#endif
 
         if(dentry.attrib & 0x40) return INVALID; // "Device, never found on disk" (wikipedia)
 
@@ -200,7 +207,9 @@ fat_validation_t valid_fat_directory_entry(const sbuf_t &sbuf)
 	if(adate && adate==ctime) return INVALID; // highly unlikely
 	if(adate && adate==wtime) return INVALID; // highly unlikely
 
-        /* Look for things that are weird */
+        /* Look for things that are weird. This is largely
+           configurable. The parameters should be learned through
+           machine learning, of course... */
         uint16_t weird_count = 0;
         if(fat_year(cdate) > opt_last_year) weird_count++;
         if(fat_year(adate) > opt_last_year) weird_count++;
@@ -210,7 +219,7 @@ fat_validation_t valid_fat_directory_entry(const sbuf_t &sbuf)
         if(fat32int(dentry.highclust,dentry.startclust) > opt_max_cluster) weird_count++;
         if(fat32int(dentry.highclust,dentry.startclust) > opt_max_cluster2) weird_count++;
 
-        if(dn) printf("wc=%d\n",weird_count);
+        //if(dn) printf("wc=%d\n",weird_count);
 
         if(weird_count > opt_max_weird_count) return INVALID;
                                                                            
