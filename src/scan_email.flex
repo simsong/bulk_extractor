@@ -354,6 +354,13 @@ void scan_email(const class scanner_params &sp,const recursion_control_block &rc
 	yyscan_t scanner;
         yyemail_lex_init(&scanner);
 	yyemail_set_extra(&lexer,scanner);
+        try {
+            yyemail_lex(scanner);
+        }
+        catch (sbuf_scanner::sbuf_scanner_exception *e ) {
+            std::cerr << "Scanner " << SCANNER << "Exception " << e->what() << " processing " << sp.sbuf.pos0 << "\n";
+            delete e;
+        }
 	yyemail_lex(scanner);
         yyemail_lex_destroy(scanner);
 	(void)yyunput;			// avoids defined but not used

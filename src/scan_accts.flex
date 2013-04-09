@@ -302,7 +302,14 @@ void scan_accts(const class scanner_params &sp,const recursion_control_block &rc
 	yyscan_t scanner;
         yyaccts_lex_init(&scanner);
 	yyaccts_set_extra(&lexer,scanner);
-	yyaccts_lex(scanner);
+        try {
+            yyaccts_lex(scanner);
+        }
+        catch (sbuf_scanner::sbuf_scanner_exception *e ) {
+            std::cerr << "Scanner " << SCANNER << "Exception " << e->what() << " processing " << sp.sbuf.pos0 << "\n";
+            delete e;
+        }
+                
         yyaccts_lex_destroy(scanner);
 	(void)yyunput;			// avoids defined but not used
     }

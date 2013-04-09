@@ -18,7 +18,7 @@
 
 class sbuf_scanner {
 public:
-    class sbuf_scanner_exception: public exception {
+    class sbuf_scanner_exception: public std::exception {
     public:
         const char *msg;
         sbuf_scanner_exception(const char *m):msg(m){}
@@ -54,4 +54,4 @@ public:
 #define YY_INPUT(buf,result,max_size) result = get_extra(yyscanner)->get_input(buf,max_size);
 #define POS  s.pos
 #define SBUF (*s.sbuf)
-#define YY_FATAL_ERROR(msg) {throw new sbuf_scanner::sbuf_scanner_exception(msg);}
+#define YY_FATAL_ERROR(msg) {throw sbuf_scanner::sbuf_scanner_exception(msg);}
