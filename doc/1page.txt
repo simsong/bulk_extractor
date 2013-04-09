@@ -1,0 +1,9 @@
+One page analysis:
+
+- Activity over time
+- Email addresses
+- Domains
+- Search terms
+- Executables - unique - count
+- Zip files 
+

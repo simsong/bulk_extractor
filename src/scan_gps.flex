@@ -8,6 +8,8 @@
  *  http://flex.sourceforge.net/manual/Cxx.html
  */
 
+#define SCANNER "scan_gps"
+
 /*
  * Here are samples that we crib from:
  *

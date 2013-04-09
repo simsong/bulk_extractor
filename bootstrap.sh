@@ -16,3 +16,4 @@ aclocal -I m4
 autoconf -f
 #libtoolize || glibtoolize
 automake --add-missing --copy
+./configure

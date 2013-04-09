@@ -24,7 +24,6 @@ BE13_API = \
 	be13_api/beregex.h \
         be13_api/sbuf.cpp \
         be13_api/sbuf.h \
-        be13_api/sbuf_flex_scanner.h \
         be13_api/sbuf_private.h \
         be13_api/sbuf_stream.h \
         be13_api/sbuf_stream.cpp \
@@ -38,8 +37,6 @@ BE13_API = \
 	be13_api/unicode_escape.h \
 	be13_api/utils.h \
 	be13_api/utils.cpp
-
-
 
 TSK3INCS = \
 	tsk3/auto/tsk_auto.h\
@@ -68,50 +65,50 @@ bulk_scanners = \
 	scan_elf.cpp \
 	scan_exif.cpp exif_reader.h exif_reader.cpp exif_entry.cpp\
 	scan_exiv2.cpp \
+	scan_extx.cpp \
 	scan_find.cpp \
-	scan_kml.cpp \
 	scan_gzip.cpp \
 	scan_hiberfile.cpp pyxpress.c pyxpress.h \
 	scan_json.cpp \
+	scan_kml.cpp \
 	scan_lightgrep.cpp \
-	scan_windirs.cpp \
-	scan_extx.cpp \
-	scan_winpe.cpp \
 	scan_net.cpp \
 	scan_pdf.cpp \
+	scan_rar.cpp \
 	scan_vcard.cpp \
+	scan_windirs.cpp \
+	scan_winpe.cpp \
 	scan_winprefetch.cpp \
 	scan_wordlist.cpp \
-	scan_zip.cpp \
 	scan_xor.cpp \
-	scan_rar.cpp \
+	scan_zip.cpp \
+        sbuf_flex_scanner.h \
 	$(flex_scanners) 
 
 SCAN_LIFT = scan_lift.cpp \
-		scan_lift/base.cpp \
-		scan_lift/base.h \
-		scan_lift/classifier_config.h \
-		scan_lift/element.h \
-		scan_lift/gflags.h \
-		scan_lift/gflags_completions.h \
-		scan_lift/irbase.cpp \
-		scan_lift/lift_config.cpp \
-		scan_lift/lift_config.h \
-		scan_lift/lift_svm.cpp \
-		scan_lift/lift_svm.h \
-		scan_lift/lift_svm_trained.cpp \
-		scan_lift/lift_utils.h \
-		scan_lift/linear_binary_svm.cpp \
-		scan_lift/linear_binary_svm.h \
-		scan_lift/linear_ova_svm.cpp \
-		scan_lift/linear_ova_svm.h \
-		scan_lift/myheader.h \
-		scan_lift/rawdefines.h \
-		scan_lift/rawheaders.h \
-		scan_lift/term_weighting.cpp \
-		scan_lift/term_weighting.h \
-		scan_lift/tools.cpp 
-
+	scan_lift/base.cpp \
+	scan_lift/base.h \
+	scan_lift/classifier_config.h \
+	scan_lift/element.h \
+	scan_lift/gflags.h \
+	scan_lift/gflags_completions.h \
+	scan_lift/irbase.cpp \
+	scan_lift/lift_config.cpp \
+	scan_lift/lift_config.h \
+	scan_lift/lift_svm.cpp \
+	scan_lift/lift_svm.h \
+	scan_lift/lift_svm_trained.cpp \
+	scan_lift/lift_utils.h \
+	scan_lift/linear_binary_svm.cpp \
+	scan_lift/linear_binary_svm.h \
+	scan_lift/linear_ova_svm.cpp \
+	scan_lift/linear_ova_svm.h \
+	scan_lift/myheader.h \
+	scan_lift/rawdefines.h \
+	scan_lift/rawheaders.h \
+	scan_lift/term_weighting.cpp \
+	scan_lift/term_weighting.h \
+	scan_lift/tools.cpp 
 
 bulk_extractor_SOURCES = \
 	aftimer.h \
@@ -157,6 +154,7 @@ unitest$(EXEEXT): unicode_escape.cpp
 #
 # Rule to compile .flex into a .o
 # FreeBSD NOTE: flex does not support -R and -o does not work properly
+# | sed "s/static int yy_get_next_buffer/static int XXyy_get_next_buffer/" 
 
 FLEX_CXXFLAGS=-Wno-shadow -Wno-effc++ -Wno-redundant-decls -Wno-missing-noreturn
 .flex.o:

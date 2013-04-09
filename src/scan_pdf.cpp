@@ -152,7 +152,7 @@ inline int analyze_stream(const class scanner_params &sp,const recursion_control
                             return -1;          // return after found
                         }
                     }
-                    std::cout << "Extracted Text:\n" << text << "\n";
+                    if(pdf_dump) std::cout << "Extracted Text:\n" << text << "\n";
                 }
                 if(pdf_dump){
                     std::cout << "================\n";
@@ -185,7 +185,7 @@ void scan_pdf(const class scanner_params &sp,const recursion_control_block &rcb)
 	/* Look for signature for the beginning of a PDF stream */
 	for(size_t loc=0;loc+15<sbuf.pagesize;loc++){
 	    ssize_t stream_tag = sbuf.find("stream",loc);
-	    if(stream_tag==-1) break;
+	    if(stream_tag==-1) break;   
 	    /* Now skip past the \r or \r\n or \n */
 	    size_t stream_start = stream_tag+6;
 	    if(sbuf[stream_start]=='\r' && sbuf[stream_start+1]=='\n') stream_start+=2;
@@ -197,15 +197,21 @@ void scan_pdf(const class scanner_params &sp,const recursion_control_block &rcb)
 	     * the next 'stream' we find is, in fact, in the 'endsream'.
 	     */
 	    ssize_t endstream = sbuf.find("endstream",stream_start);
-	    if(endstream==-1) break;
+	    if(endstream==-1) break;    // no endstream tag
 
 	    ssize_t nextstream = sbuf.find("stream",stream_start);
-	    if(endstream+3==nextstream){
-                if(analyze_stream(sp,rcb,stream_tag,stream_start,endstream)==-1){
-                    return;
-                }
-                loc=endstream+9;
+
+	    if(endstream+3!=nextstream){
+                /* The 'stream' after the stream_tag is not the 'endstream',
+                 * so advance loc so that it will find the nextstream
+                 */
+                loc = nextstream - 1;
+                continue;
             }
+            if(analyze_stream(sp,rcb,stream_tag,stream_start,endstream)==-1){
+                return;
+            }
+            loc=endstream+9;
 	}
     }
 }

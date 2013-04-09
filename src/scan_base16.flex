@@ -9,6 +9,8 @@
  * http://en.wikipedia.org/wiki/List_of_Bank_Identification_Numbers
  */
 
+#define SCANNER "scan_base16"
+
 static const int BASE16_IGNORE = -2;
 static const int BASE16_INVALID = -1;
 static int base16array[256];		

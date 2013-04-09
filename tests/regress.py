@@ -30,6 +30,28 @@ exe = "src/bulk_extractor"
 nps_drives_path = "/nps/drives/"
 BOM = codecs.BOM_UTF8.decode('utf-8')
 
+answers = {"ubnist1.gen3":{"ALERTS_found.txt":88,
+                           "bulk_tags.txt":7477796,
+                           "ccn.txt":1,
+                           "domain.txt":233055,
+                           "elf.txt":708,
+                           "email.txt":184341,
+                           "ether.txt":51,
+                           "exif.txt":158,
+                           "find.txt":26,
+                           "ip.txt":12,
+                           "json.txt":87,
+                           "rar.txt":4,
+                           "rfc822.txt":24628,
+                           "tcp.txt":68,
+                           "telephone.txt":143,
+                           "url.txt":44275,
+                           "windirs.txt":1667,
+                           "winpe.txt":2,
+                           "wordlist.txt":10121828,
+                           "zip.txt":1962}}
+
+
 perftest_jobs_start = 2
 perftest_jobs_end   = 16
 perftest_jobs_step  = 1
@@ -131,24 +153,27 @@ def reproduce_flags(outdir):
         offset = min(active_offsets)
     return "-Y {offset} {filename}".format(offset=offset, filename=filename)
 
-def analyze_outdir(outdir):
-    """Print statistics about an output directory"""
-    print("Analyze {}".format(outdir))
+def analyze_warning(fnpart,fn,lines):
+    if fnpart not in answers:
+        return "(No answers for {})".format(fnpart)
+    if fn not in answers[fnpart]:
+        return "(No answer for {})".format(fn)
+    ref = answers[fnpart][fn]
+    if ref==lines: return "OK"
+    if lines<ref: return "LOW (expected {})".format(ref)
+    return "HIGH (expected {})".format(ref)
 
-    b = bulk_extractor_reader.BulkReport(outdir)
-    print("bulk_extractor version: {}".format(b.version()))
-    print("Filename:               {}".format(b.imagefile()))
-    
+def analyze_reportxml(xmldoc):
     # Determine if any pages were not analyzed
     proc = dict()
-    for work_start in b.xmldoc.getElementsByTagName("debug:work_start"):
+    for work_start in xmldoc.getElementsByTagName("debug:work_start"):
         threadid = work_start.getAttribute('threadid')
         pos0     = work_start.getAttribute('pos0')
         if pos0 in proc:
             print("*** error: pos0={} was started by threadid {} and threadid {}".format(pos0,proc[pos0],threadid))
         else:
             proc[pos0] = threadid
-    for work_end in b.xmldoc.getElementsByTagName("debug:work_end"):
+    for work_end in xmldoc.getElementsByTagName("debug:work_end"):
         threadid = work_end.getAttribute('threadid')
         pos0     = work_end.getAttribute('pos0')
         if pos0 not in proc:
@@ -161,9 +186,8 @@ def analyze_outdir(outdir):
     for (pos0,threadid) in proc.items():
         print("*** error: pos0={} was started by threadid {} but never ended".format(pos0,threadid))
     
-    # Print which scanners were run and how long they took
     scanner_times = []
-    scanners = b.xmldoc.getElementsByTagName("scanner_times")[0]
+    scanners = xmldoc.getElementsByTagName("scanner_times")[0]
     total = 0
     for path in scanners.getElementsByTagName("path"):
         name    = path.getElementsByTagName("name")[0].firstChild.wholeText
@@ -179,6 +203,18 @@ def analyze_outdir(outdir):
         print("  {:>25}  {:8.0f}  {:12.4f}  {:12.4f}  {:5.2f}%".format(
                 name,calls,seconds,seconds/calls,100.0*seconds/total))
     
+    
+
+def analyze_outdir(outdir):
+    """Print statistics about an output directory"""
+    print("Analyze {}".format(outdir))
+
+    b = bulk_extractor_reader.BulkReport(outdir)
+    print("bulk_extractor version: {}".format(b.version()))
+    print("Filename:               {}".format(b.imagefile()))
+    
+    # Print which scanners were run and how long they took
+    analyze_reportxml(b.xmldoc)
     
     hfns = list(b.histograms())
     print("")
@@ -198,6 +234,7 @@ def analyze_outdir(outdir):
             firstline = firstline.decode('utf-8')
         print("  {:>25} entries: {:>10,}  (top: {})".format(fn,len(h),firstline))
 
+    fnpart = ".".join(b.imagefile().split('/')[-1].split('.')[:-1])
     ffns = list(b.feature_files())
     print("")
     print("Feature Files:        {}".format(len(ffns)))
@@ -206,7 +243,7 @@ def analyze_outdir(outdir):
         for line in b.open(fn,'rb'):
             if not bulk_extractor_reader.is_comment_line(line):
                 lines += 1
-        print("  {:>25} features: {:>10,}".format(fn,lines))
+        print("  {:>25} features: {:>12,}  {}".format(fn,lines,analyze_warning(fnpart,fn,lines)))
     
 
 def make_zip(dname):
@@ -311,7 +348,7 @@ def validate_openfile(f):
 
     # now read
     linenumber = 0
-    print("Validate ",fn)
+    print("Validate UTF-8 encoding in ",fn)
     for lineb in f:
         linenumber += 1
         lineb = lineb[:-1]
@@ -421,9 +458,13 @@ if __name__=="__main__":
             validate_report(v)
         exit(0)
     if args.analyze:
+        import xml.dom.minidom
         import xml.parsers.expat
         try:
-            analyze_outdir(args.analyze);
+            if args.analyze.endswith(".xml"):
+                analyze_reportxml(xml.dom.minidom.parse(open(args.analyze,"rb")))
+            else:
+                analyze_outdir(args.analyze);
             exit(0)
         except xml.parsers.expat.ExpatError as e:
             print("%s does not contain a valid report.xml file" % (args.analyze))
@@ -536,8 +577,4 @@ if __name__=="__main__":
     sort_outdir(outdir)
     validate_report(outdir)
     analyze_outdir(outdir)
-    print("Regression finished. Output in {}".format(outdir))
-
-
-                    
-        
+    print("Regression finished at {}. Output in {}".format(time.asctime(),outdir))
