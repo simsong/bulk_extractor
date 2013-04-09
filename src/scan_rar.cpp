@@ -66,6 +66,39 @@ inline int int4(const u_char *cc)
     return (cc[3]<<24) + (cc[2]<<16) + (cc[1]<<8) + (cc[0]);
 }
 
+#define DOS_MASK_SECOND 0x0000001F
+#define DOS_SHIFT_SECOND 0
+#define DOS_MASK_MINUTE 0x000007E0
+#define DOS_SHIFT_MINUTE 5
+#define DOS_MASK_HOUR 0x0000F800
+#define DOS_SHIFT_HOUR 11
+#define DOS_MASK_DAY 0x001F0000
+#define DOS_SHIFT_DAY 16
+#define DOS_MASK_MONTH 0x01E00000
+#define DOS_SHIFT_MONTH 21
+#define DOS_MASK_YEAR 0xFE000000
+#define DOS_SHIFT_YEAR 25
+#define DOS_OFFSET_YEAR 1980
+
+string dos_date_to_iso(uint32_t dos_date) {
+    uint8_t seconds = (dos_date & DOS_MASK_SECOND) >> DOS_SHIFT_SECOND;
+    uint8_t minutes = (dos_date & DOS_MASK_MINUTE) >> DOS_SHIFT_MINUTE;
+    uint8_t hours = (dos_date & DOS_MASK_HOUR) >> DOS_SHIFT_HOUR;
+    uint8_t days = (dos_date & DOS_MASK_DAY) >> DOS_SHIFT_DAY;
+    uint8_t months = (dos_date & DOS_MASK_MONTH) >> DOS_SHIFT_MONTH;
+    uint16_t years = (dos_date & DOS_MASK_YEAR) >> DOS_SHIFT_YEAR;
+
+    years += DOS_OFFSET_YEAR;
+    seconds *= 2;
+
+    char buf[STRING_BUF_LEN];
+    snprintf(buf,sizeof(buf),"%04d-%02d-%02dT%02d:%02d:%02dZ",
+            years, months, days, hours, minutes, seconds);
+    stringstream ss;
+    ss << buf;
+    return ss.str();
+}
+
 /* See:
  * http://gcc.gnu.org/onlinedocs/gcc-4.5.0/gcc/Atomic-Builtins.html
  * for information on on __sync_fetch_and_add
@@ -229,9 +262,10 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
                      "<name>%s</name><name_len>%d</name_len>"
                      "<flags>0x%04X</flags><version>%d</version><compression_method>0x%X</compression_method>"
                      "<uncompr_size>%"PRIu64"</uncompr_size><compr_size>%"PRIu64"</compr_size><file_attr>0x%X</file_attr>"
-                     "<lastmoddosdate>%d</lastmoddosdate><host_os>0x%X</host_os><crc32>%u</crc32>",
+                     "<lastmoddate>%s</lastmoddate><host_os>0x%X</host_os><crc32>%u</crc32>",
                      filename.c_str(),filename_len,flags,unpack_version,
-                     compression_method,unpacked_size,packed_size,file_attr,dos_time,host_os,file_crc);
+                     compression_method,unpacked_size,packed_size,file_attr,
+                     dos_date_to_iso(dos_time).c_str(),host_os,file_crc);
             ss << string_buf;
 
             ss << "</rarinfo>";
