@@ -877,6 +877,14 @@ int main(int argc,char **argv)
     std::string opt_sampling_params;
     std::vector<std::string> scanner_dirs;
 
+    /* Figure out the current time */
+    time_t t = time(0);
+    struct tm now;
+    gmtime_r(&t,&now);
+    opt_last_year = now.tm_year + 1900 + 5; // allow up to 5 years in the future
+    
+
+
 #ifdef WIN32
     setmode(1,O_BINARY);		// make stdout binary
     threadpool::win32_init();
