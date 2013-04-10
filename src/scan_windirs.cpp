@@ -94,21 +94,25 @@ bool valid_fat_dentry_name(const uint8_t name[8],const uint8_t ext[3])
 	if(!FATFS_IS_83_EXT(ext[i])) return false; // invalid exension
     }
 
-    /* Look for lowercase or invalid characters */
+    /* make sure all characters are valid*/
     for(int i=0;i<8;i++){
-        if(islower(name[i]) || name[i]=='"' || name[i]=='*' || name[i]=='/' || name[i]==':'
-           || name[i]=='<' || name[i]=='>' || name[i]=='?' || name[i]=='\\' || name[i]=='|'
-           || name[i]=='+' || name[i]==',' || name[i]=='.' || name[i]==';' || name[i]=='='
-           || name[i]=='[' || name[i]==']') return false;
-        if(name[i]==0) break;           // end?
+        const uint8_t ch = name[i];
+        if(ch==0 || ch==' ') break;     // end of name
+        if(!isupper(ch) && !isdigit(ch) && ch!=' ' && ch!='!' && ch!='#' &&
+           ch != '$' && ch!='%' && ch !='&' && ch !='\'' && ch!='(' && ch!=')' &&
+           ch != '-' && ch!='@' && ch != '^' && ch!='_' && ch!='`' && ch!='{' && ch !='}' && ch!='~'){
+            return false;
+        }
     }
 
     for(int i=0;i<3;i++){
-        if(islower(ext[i]) || ext[i]=='"' || ext[i]=='*' || ext[i]=='/' || ext[i]==':'
-           || ext[i]=='<' || ext[i]=='>' || ext[i]=='?' || ext[i]=='\\' || ext[i]=='|'
-           || ext[i]=='+' || ext[i]==',' || ext[i]=='.' || ext[i]==';' || ext[i]=='='
-           || ext[i]=='[' || ext[i]==']') return false;
-        if(ext[i]==0) break;           // end?
+        const uint8_t ch = ext[i];
+        if(ch==0 || ch==' ') break;     // end of name
+        if(!isupper(ch) && !isdigit(ch) && ch!=' ' && ch!='!' && ch!='#' &&
+           ch != '$' && ch!='%' && ch !='&' && ch !='\'' && ch!='(' && ch!=')' &&
+           ch != '-' && ch!='@' && ch != '^' && ch!='_' && ch!='`' && ch!='{' && ch !='}' && ch!='~'){
+            return false;
+        }
     }
 
     return true;
@@ -193,6 +197,7 @@ fat_validation_t valid_fat_directory_entry(const sbuf_t &sbuf)
 	uint16_t adate = fat16int(dentry.adate);
 	uint16_t wtime = fat16int(dentry.wtime);
 	uint16_t wdate = fat16int(dentry.wdate);
+
 	if(ctime && !FATFS_ISTIME(ctime)) return INVALID; // ctime is null for directories
 	if(cdate && !FATFS_ISDATE(cdate)) return INVALID; // cdate is null for directories
 	if(adate && !FATFS_ISDATE(adate)) return INVALID; // adate is null for directories
@@ -207,9 +212,10 @@ fat_validation_t valid_fat_directory_entry(const sbuf_t &sbuf)
 	if(adate && adate==ctime) return INVALID; // highly unlikely
 	if(adate && adate==wtime) return INVALID; // highly unlikely
 
-        /* Look for things that are weird. This is largely
-           configurable. The parameters should be learned through
-           machine learning, of course... */
+        /* Look for things that are weird in a FAT32 entry.
+         * This is configurable and largely based on inspection of false-positives.
+         * The parameters should be learned through machine learning, of course...
+         */
         uint16_t weird_count = 0;
         if(fat_year(cdate) > opt_last_year) weird_count++;
         if(fat_year(adate) > opt_last_year) weird_count++;
@@ -218,8 +224,11 @@ fat_validation_t valid_fat_directory_entry(const sbuf_t &sbuf)
         if(count_bits(dentry.attrib) > opt_max_bits_in_attrib) weird_count++;
         if(fat32int(dentry.highclust,dentry.startclust) > opt_max_cluster) weird_count++;
         if(fat32int(dentry.highclust,dentry.startclust) > opt_max_cluster2) weird_count++;
+        if(dentry.ctimeten != 0 && dentry.ctimeten != 100) weird_count++;
+        if(adate==0 && cdate==0) weird_count++;
+        if(adate==0 && wdate==0) weird_count++;
 
-        //if(dn) printf("wc=%d\n",weird_count);
+        //printf("wc=%d \n",weird_count);
 
         if(weird_count > opt_max_weird_count) return INVALID;
                                                                            
