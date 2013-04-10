@@ -303,6 +303,8 @@ def sort_outdir(outdir):
     print("Now sorting files in "+outdir)
     for fn in glob.glob(outdir + "/*.txt"):
         if "histogram" in fn: continue
+        if "wordlist"  in fn: continue
+        if "tags"      in fn: continue
         fns  = fn+".sorted"
         os.environ['LC_ALL']='C' # make sure we sort in C order
         call(['sort','--buffer-size=4000000000',fn],stdout=open(fns,"w"))
