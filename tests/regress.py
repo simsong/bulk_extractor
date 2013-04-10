@@ -271,7 +271,7 @@ def run_outdir(outdir,gdb=False):
     
     cargs += ['-e','all']    # enable all scanners
     #cargs += ['-e','wordlist']    # enable all scanners
-    if args.extra:     cargs += [args.extra]
+    if args.extra:     cargs += args.extra.split(" ")
 
     if args.debug: cargs += ['-d'+str(args.debug)]
     cargs += ['-r','tests/alert_list.txt']
@@ -299,12 +299,13 @@ def run_outdir(outdir,gdb=False):
 
              
 def sort_outdir(outdir):
+    """Sort the output directory with gnu sort"""
     print("Now sorting files in "+outdir)
     for fn in glob.glob(outdir + "/*.txt"):
         if "histogram" in fn: continue
         fns  = fn+".sorted"
         os.environ['LC_ALL']='C' # make sure we sort in C order
-        call(['sort',fn],stdout=open(fns,"w"))
+        call(['sort','--buffer-size=4000000000',fn],stdout=open(fns,"w"))
         wcout = Popen(['wc','-l',fns],stdout=PIPE).communicate()[0].decode('utf-8')
         lines = int(wcout.strip().split(" ")[0])
         if lines>0:
@@ -418,6 +419,19 @@ def diff(dname1,dname2):
             print("")
 
 
+def ptime(t):
+    r = ""
+    if t>3600:
+        h = t/3600
+        r = "%d hour " % h
+        t = t%3600
+    if t>60:
+        m = t / 60
+        r += "%d min " % m
+        t = t%60
+    r += "%d sec " % t
+    return r
+
 
 if __name__=="__main__":
     import argparse 
@@ -490,17 +504,14 @@ if __name__=="__main__":
     drives = os.getenv("DOMEX_CORP") + nps_drives_path
 
     if args.fast:
-        args.image  = find_file(drives + fast_infile)
-        args.outdir += "-fast"
-    elif args.full:
-        args.image  = find_file(drives+full_infile)
-        args.outdir += "-full"
-    else:
-        args.image  = find_file(drives+default_infile)
-        
+        args.image  = fast_infile
+    if args.full:
+        args.image  = full_infile
 
-    if not args.fast and not args.full:
-        args.outdir += "-norm"
+    args.outdir += "-" + os.path.basename(args.image)
+
+    if not os.path.exists(args.image):
+        args.image = find_file(drives+args.image)
 
     if args.memdebug:
         fn = "/usr/lib/libgmalloc.dylib"
@@ -573,8 +584,9 @@ if __name__=="__main__":
         clear_cache()
 
     outdir = make_outdir(args.outdir)
+    t0 = time.time()
     run_outdir(outdir,args.gdb)
     sort_outdir(outdir)
     validate_report(outdir)
     analyze_outdir(outdir)
-    print("Regression finished at {}. Output in {}".format(time.asctime(),outdir))
+    print("Regression finished at {}. Elapsed time: {} Output in {}".format(time.asctime(),ptime(time.time()-t0),outdir))
