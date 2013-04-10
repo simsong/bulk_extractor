@@ -24,6 +24,7 @@ BUG FIXES
 * Additional validations were added to scan_windirs for fat directory
   entries. As a result fewer false positives will be reported.
 
+* scan_net will now only carve pcap files that are IPv4 or IPv6
 
 ================================================================
 PERFORMANCE STATISTICS
