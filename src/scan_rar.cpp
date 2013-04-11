@@ -163,6 +163,7 @@ const uint32_t rar_max_depth_count_bypass = 5;
 set<md5_t>rar_seen_set;
 pthread_mutex_t rar_seen_set_lock;
 #endif
+static bool strict_crc = false;
 extern "C"
 void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
 {
@@ -170,7 +171,11 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
     if(sp.phase==scanner_params::PHASE_STARTUP){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	sp.info->name  = "rar";
+	sp.info->author = "Michael Shick";
+	sp.info->description = "RAR file decompressor";
 	sp.info->feature_names.insert("rar");
+
+        strict_crc = sp.info->config["rar_strict_crc"] != "NO";
 // leave out depth checks for now
 #if 0
 	pthread_mutex_init(&rar_seen_set_lock,NULL);
@@ -313,7 +318,8 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
             // Data accounted for in the CRC begins with the header type magic byte
             calc_header_crc = crc_update(calc_header_crc, cc + OFFSET_HEAD_TYPE, header_len - OFFSET_HEAD_TYPE);
             calc_header_crc = crc_finalize(calc_header_crc);
-            if(header_crc != (calc_header_crc & 0xFFFF)) {
+            bool head_crc_match = (header_crc == (calc_header_crc & 0xFFFF));
+            if(!head_crc_match && strict_crc) {
                 continue;
             }
 
@@ -327,10 +333,11 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
                      "<name>%s</name><name_len>%d</name_len>"
                      "<flags>0x%04X</flags><version>%d</version><compression_method>0x%X</compression_method>"
                      "<uncompr_size>%"PRIu64"</uncompr_size><compr_size>%"PRIu64"</compr_size><file_attr>0x%X</file_attr>"
-                     "<lastmoddate>%s</lastmoddate><host_os>0x%X</host_os><crc32>0x%08X</crc32>",
-                     filename.c_str(),filename_len,flags,unpack_version,
-                     compression_method,unpacked_size,packed_size,file_attr,
-                     dos_date_to_iso(dos_time).c_str(),host_os,file_crc);
+                     "<lastmoddate>%s</lastmoddate><host_os>0x%X</host_os><crc32>0x%08X</crc32><header_ok>%s</header_ok>",
+                     filename.c_str(), filename_len, flags,unpack_version,
+                     compression_method, unpacked_size, packed_size,file_attr,
+                     dos_date_to_iso(dos_time).c_str(), host_os,file_crc,
+                     head_crc_match ? "true" : "false");
             ss << string_buf;
 
             ss << "</rarinfo>";
