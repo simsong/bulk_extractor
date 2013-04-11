@@ -47,6 +47,20 @@
 #define FLAG_OLD_VER 0x0800
 #define FLAG_EXTIME 0x1000
 
+#define OS_DOS 0x00
+#define OS_OS2 0x01
+#define OS_WINDOWS 0x02
+#define OS_UNIX 0x03
+#define OS_MAC 0x04
+#define OS_BEOS 0x05
+
+#define METHOD_UNCOMPRESSED 0x30
+#define METHOD_FASTEST 0x31
+#define METHOD_FAST 0x32
+#define METHOD_NORMAL 0x33
+#define METHOD_SMALL 0x34
+#define METHOD_SMALLEST 0x35
+
 #define OPTIONAL_BIGFILE_LEN 8
 
 #define SUSPICIOUS_HEADER_LEN 1024
@@ -323,20 +337,69 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
                 continue;
             }
 
+            // convert known hex values to strings for human digestion of XML
+            char string_buf[STRING_BUF_LEN];
+            string compression_method_s, host_os_s;
+            switch(compression_method) {
+                case METHOD_UNCOMPRESSED:
+                    compression_method_s = "uncompressed";
+                    break;
+                case METHOD_FASTEST:
+                    compression_method_s = "fastest";
+                    break;
+                case METHOD_FAST:
+                    compression_method_s = "fast";
+                    break;
+                case METHOD_NORMAL:
+                    compression_method_s = "normal";
+                    break;
+                case METHOD_SMALL:
+                    compression_method_s = "small";
+                    break;
+                case METHOD_SMALLEST:
+                    compression_method_s = "smallest";
+                    break;
+                default:
+                    snprintf(string_buf, sizeof(string_buf), "0x%02X", compression_method);
+                    compression_method_s = string(string_buf);
+            }
+            switch(host_os) {
+                case OS_DOS:
+                    host_os_s = "DOS";
+                    break;
+                case OS_OS2:
+                    host_os_s = "OS/2";
+                    break;
+                case OS_WINDOWS:
+                    host_os_s = "Windows";
+                    break;
+                case OS_UNIX:
+                    host_os_s = "Unix";
+                    break;
+                case OS_MAC:
+                    host_os_s = "Mac OS";
+                    break;
+                case OS_BEOS:
+                    host_os_s = "BeOS";
+                    break;
+                default:
+                    snprintf(string_buf, sizeof(string_buf), "0x%02X", host_os);
+                    host_os_s = string(string_buf);
+            }
+
             // build XML output
             filename = xml::xmlescape(filename);
             stringstream ss;
             ss << "<rarinfo>";
 
-            char string_buf[STRING_BUF_LEN];
             snprintf(string_buf,sizeof(string_buf),
                      "<name>%s</name><name_len>%d</name_len>"
-                     "<flags>0x%04X</flags><version>%d</version><compression_method>0x%X</compression_method>"
+                     "<flags>0x%04X</flags><version>%d</version><compression_method>%s</compression_method>"
                      "<uncompr_size>%"PRIu64"</uncompr_size><compr_size>%"PRIu64"</compr_size><file_attr>0x%X</file_attr>"
-                     "<lastmoddate>%s</lastmoddate><host_os>0x%X</host_os><crc32>0x%08X</crc32><header_ok>%s</header_ok>",
-                     filename.c_str(), filename_len, flags,unpack_version,
-                     compression_method, unpacked_size, packed_size,file_attr,
-                     dos_date_to_iso(dos_time).c_str(), host_os,file_crc,
+                     "<lastmoddate>%s</lastmoddate><host_os>%s</host_os><crc32>0x%08X</crc32><header_ok>%s</header_ok>",
+                     filename.c_str(), filename_len, flags, unpack_version,
+                     compression_method_s.c_str(), unpacked_size, packed_size,file_attr,
+                     dos_date_to_iso(dos_time).c_str(), host_os_s.c_str(), file_crc,
                      head_crc_match ? "true" : "false");
             ss << string_buf;
 
