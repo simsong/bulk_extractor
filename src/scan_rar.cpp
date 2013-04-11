@@ -146,6 +146,8 @@ uint32_t crc_update(uint32_t crc, const unsigned char *data, size_t data_len)
     return crc & 0xffffffff;
 }
 
+// leave out depth checks for now
+#if 0
 /* See:
  * http://gcc.gnu.org/onlinedocs/gcc-4.5.0/gcc/Atomic-Builtins.html
  * for information on on __sync_fetch_and_add
@@ -160,6 +162,7 @@ uint32_t rar_max_depth_count = 0;
 const uint32_t rar_max_depth_count_bypass = 5;
 set<md5_t>rar_seen_set;
 pthread_mutex_t rar_seen_set_lock;
+#endif
 extern "C"
 void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
 {
@@ -168,7 +171,10 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	sp.info->name  = "rar";
 	sp.info->feature_names.insert("rar");
+// leave out depth checks for now
+#if 0
 	pthread_mutex_init(&rar_seen_set_lock,NULL);
+#endif
 	return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
