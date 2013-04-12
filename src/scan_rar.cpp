@@ -12,6 +12,8 @@
 
 #define FILE_MAGIC 0x74
 #define FILE_HEAD_MIN_LEN 32
+#define ARCHIVE_MAGIC 0x73
+#define ARCHIVE_HEAD_MIN_LEN 13
 
 #define OFFSET_HEAD_CRC 0
 #define OFFSET_HEAD_TYPE 2
@@ -32,8 +34,9 @@
 #define OFFSET_SALT 32
 #define OFFSET_EXT_TIME 40
 
-#define MANDATORY_FLAGS 0x8000
-#define UNUSED_FLAGS 0x6000
+#define MANDATORY_FILE_FLAGS 0x8000
+#define UNUSED_FILE_FLAGS 0x6000
+#define UNUSED_ARCHIVE_FLAGS 0xFE00
 
 #define FLAG_CONT_PREV 0x0001
 #define FLAG_CONT_NEXT 0x0002
@@ -46,6 +49,7 @@
 #define FLAG_SALTED 0x0400
 #define FLAG_OLD_VER 0x0800
 #define FLAG_EXTIME 0x1000
+#define FLAG_HEADERS_ENCRYPTED 0x0080
 
 #define OS_DOS 0x00
 #define OS_OS2 0x01
@@ -160,6 +164,282 @@ uint32_t crc_update(uint32_t crc, const unsigned char *data, size_t data_len)
     return crc & 0xffffffff;
 }
 
+//
+// RAR processing
+//
+
+// settings - these configuration vars are set when the scanner is created
+static bool strict_crc = false;
+static bool record_components = true;
+static bool record_volumes = true;
+
+// component processing (compressed file within an archive)
+string process_component(const unsigned char *buf, size_t buf_len, string &found_feature_name)
+{
+    // confirm that the smallest possible component block header could fit in
+    // the buffer
+    if(buf_len < FILE_HEAD_MIN_LEN) {
+        return "";
+    }
+    // Initial RAR file block anchor is 0x74 magic byte
+    if(buf[OFFSET_HEAD_TYPE] != FILE_MAGIC) {
+        return "";
+    }
+    // check for invalid flags
+    uint16_t flags = (uint16_t) int2(buf + OFFSET_HEAD_FLAGS);
+    if(!(flags & MANDATORY_FILE_FLAGS) || (flags & UNUSED_FILE_FLAGS)) {
+        return "";
+    }
+    // ignore split files and encrypted files
+    if(flags & (FLAG_CONT_PREV | FLAG_CONT_NEXT | FLAG_ENCRYPTED)) {
+        return "";
+    }
+
+    // ignore impossible or improbable header lengths
+    uint16_t header_len = (uint16_t) int2(buf + OFFSET_HEAD_SIZE);
+    if(header_len < FILE_HEAD_MIN_LEN || header_len > SUSPICIOUS_HEADER_LEN) {
+        return "";
+    }
+    // abort if header is longer than the remaining buf
+    if(header_len >= buf_len) {
+        return "";
+    }
+
+    // ignore huge filename lengths
+    uint16_t filename_bytes_len = (uint16_t) int2(buf + OFFSET_NAME_SIZE);
+    if(filename_bytes_len > SUSPICIOUS_HEADER_LEN) {
+        return "";
+    }
+
+    // ignore strange file sizes
+    uint64_t packed_size = (uint64_t) int4(buf + OFFSET_PACK_SIZE);
+    uint64_t unpacked_size = (uint64_t) int4(buf + OFFSET_UNP_SIZE);
+    if(flags & FLAG_BIGFILE) {
+        packed_size += ((uint64_t) int4(buf + OFFSET_HIGH_PACK_SIZE)) << 32;
+        unpacked_size += ((uint64_t) int4(buf + OFFSET_HIGH_UNP_SIZE)) << 32;
+    }
+    // zero length, > 10 TiB, packed size significantly larger than
+    // unpacked are all 'strange'
+    if(packed_size == 0 || unpacked_size == 0 || packed_size * 0.95 > unpacked_size ||
+            packed_size > SUSPICIOUS_FILE_LEN || unpacked_size > SUSPICIOUS_FILE_LEN)  {
+        return "";
+    }
+
+    //
+    // Filename extraction
+    //
+    string filename = "";
+    uint16_t filename_len = 0;
+    const char *filename_bytes = (const char *) buf + OFFSET_FILE_NAME;
+    if(flags & FLAG_BIGFILE) {
+        // if present, the high 32 bits of 64 bit file sizes offset the
+        // location of the filename by 8
+        filename_bytes += OPTIONAL_BIGFILE_LEN;
+    }
+    if(flags & FLAG_UNICODE_FILENAME) {
+        // The unicode filename flag can indicate two filename formats,
+        // predicated on the presence of a null byte:
+        //   - If a null byte is present, it separates an ASCII
+        //     representation and a UTF-8 representation of the filename
+        //     in that order
+        //   - If no null byte is present, the filename is UTF-8 encoded
+        size_t null_byte_index = 0;
+        for(; null_byte_index < filename_bytes_len; null_byte_index++) {
+            if(filename_bytes[null_byte_index] == 0x00) {
+                break;
+            }
+        }
+
+        if(null_byte_index == filename_bytes_len - 1u) {
+            // Zero-length UTF-8 representation is illogical
+            return "";
+        }
+
+        if(null_byte_index == filename_bytes_len) {
+            // UTF-8 only
+            filename_len = filename_bytes_len;
+            filename = string(filename_bytes, (size_t) filename_len);
+        }
+        else {
+            // if both ASCII and UTF-8 are present, disregard ASCII
+            filename_len = filename_bytes_len - (null_byte_index + 1);
+            filename = string(filename_bytes + null_byte_index + 1, filename_len);
+        }
+        // validate extracted UTF-8
+        if(utf8::find_invalid(filename.begin(),filename.end()) != filename.end()) {
+            return "";
+        }
+    }
+    else {
+        filename_len = filename_bytes_len;
+        filename = string(filename_bytes, filename_len);
+    }
+
+    // throw out zero-length filename
+    if(filename.size()==0) return "";
+
+    // disallow ASCII control characters, which may also appear in valid UTF-8
+    string::const_iterator first_control_character = filename.begin();
+    for(; first_control_character != filename.end(); first_control_character++) {
+        if((char) *first_control_character < ' ') {
+            break;
+        }
+    }
+    if(first_control_character != filename.end()) {
+        return "";
+    }
+
+
+    // RAR version required to extract: do we want to abort if it's too new?
+    uint8_t unpack_version = buf[OFFSET_UNP_VER];
+    uint8_t compression_method = buf[OFFSET_METHOD];
+    // OS that created archive
+    uint8_t host_os = buf[OFFSET_HOST_OS];
+    // date (modification?) In DOS date format
+    uint32_t dos_time = int4(buf + OFFSET_FTIME);
+    uint32_t file_crc = int4(buf + OFFSET_FILE_CRC);
+    uint32_t file_attr = int4(buf + OFFSET_ATTR);
+
+
+    // header CRC is final validation; RAR stores only the 16 least
+    // significant bytes of a CRC32
+    uint16_t header_crc = int2(buf + OFFSET_HEAD_CRC);
+    uint32_t calc_header_crc = crc_init();
+    // Data accounted for in the CRC begins with the header type magic byte
+    calc_header_crc = crc_update(calc_header_crc, buf + OFFSET_HEAD_TYPE, header_len - OFFSET_HEAD_TYPE);
+    calc_header_crc = crc_finalize(calc_header_crc);
+    bool head_crc_match = (header_crc == (calc_header_crc & 0xFFFF));
+    if(!head_crc_match && strict_crc) {
+        return "";
+    }
+
+    // convert known hex values to strings for human digestion of XML
+    char string_buf[STRING_BUF_LEN];
+    string compression_method_s, host_os_s;
+    switch(compression_method) {
+        case METHOD_UNCOMPRESSED:
+            compression_method_s = "uncompressed";
+            break;
+        case METHOD_FASTEST:
+            compression_method_s = "fastest";
+            break;
+        case METHOD_FAST:
+            compression_method_s = "fast";
+            break;
+        case METHOD_NORMAL:
+            compression_method_s = "normal";
+            break;
+        case METHOD_SMALL:
+            compression_method_s = "small";
+            break;
+        case METHOD_SMALLEST:
+            compression_method_s = "smallest";
+            break;
+        default:
+            snprintf(string_buf, sizeof(string_buf), "0x%02X", compression_method);
+            compression_method_s = string(string_buf);
+    }
+    switch(host_os) {
+        case OS_DOS:
+            host_os_s = "DOS";
+            break;
+        case OS_OS2:
+            host_os_s = "OS/2";
+            break;
+        case OS_WINDOWS:
+            host_os_s = "Windows";
+            break;
+        case OS_UNIX:
+            host_os_s = "Unix";
+            break;
+        case OS_MAC:
+            host_os_s = "Mac OS";
+            break;
+        case OS_BEOS:
+            host_os_s = "BeOS";
+            break;
+        default:
+            snprintf(string_buf, sizeof(string_buf), "0x%02X", host_os);
+            host_os_s = string(string_buf);
+    }
+
+    found_feature_name = filename;
+    // build XML output
+    filename = xml::xmlescape(filename);
+    stringstream ss;
+    ss << "<rar_component>";
+
+    snprintf(string_buf,sizeof(string_buf),
+             "<name>%s</name><name_len>%d</name_len>"
+             "<flags>0x%04X</flags><version>%d</version><compression_method>%s</compression_method>"
+             "<uncompr_size>%"PRIu64"</uncompr_size><compr_size>%"PRIu64"</compr_size><file_attr>0x%X</file_attr>"
+             "<lastmoddate>%s</lastmoddate><host_os>%s</host_os><crc32>0x%08X</crc32><header_ok>%s</header_ok>",
+             filename.c_str(), filename_len, flags, unpack_version,
+             compression_method_s.c_str(), unpacked_size, packed_size,file_attr,
+             dos_date_to_iso(dos_time).c_str(), host_os_s.c_str(), file_crc,
+             head_crc_match ? "true" : "false");
+    ss << string_buf;
+
+    ss << "</rar_component>";
+
+    return ss.str();
+}
+
+// volume processing (RAR file itself)
+string process_volume(const unsigned char *buf, size_t buf_len)
+{
+    // confirm that the smallest possible component block header could fit in
+    // the buffer
+    if(buf_len < ARCHIVE_HEAD_MIN_LEN) {
+        return "";
+    }
+    // Initial RAR file block anchor is 0x74 magic byte
+    if(buf[OFFSET_HEAD_TYPE] != ARCHIVE_MAGIC) {
+        return "";
+    }
+    // check for invalid flags
+    uint16_t flags = (uint16_t) int2(buf + OFFSET_HEAD_FLAGS);
+    if(flags & UNUSED_ARCHIVE_FLAGS) {
+        return "";
+    }
+
+    // ignore impossible or improbable header lengths
+    uint16_t header_len = (uint16_t) int2(buf + OFFSET_HEAD_SIZE);
+    if(header_len < ARCHIVE_HEAD_MIN_LEN || header_len > SUSPICIOUS_HEADER_LEN) {
+        return "";
+    }
+    // abort if header is longer than the remaining buf
+    if(header_len >= buf_len) {
+        return "";
+    }
+
+    // header CRC is final validation; RAR stores only the 16 least
+    // significant bytes of a CRC32
+    uint16_t header_crc = int2(buf + OFFSET_HEAD_CRC);
+    uint32_t calc_header_crc = crc_init();
+    // Data accounted for in the CRC begins with the header type magic byte
+    calc_header_crc = crc_update(calc_header_crc, buf + OFFSET_HEAD_TYPE, header_len - OFFSET_HEAD_TYPE);
+    calc_header_crc = crc_finalize(calc_header_crc);
+    bool head_crc_match = (header_crc == (calc_header_crc & 0xFFFF));
+    if(!head_crc_match /*&& strict_crc*/) {
+        return "";
+    }
+    // build XML output
+    stringstream ss;
+    ss << "<rar_volume>";
+
+    char string_buf[STRING_BUF_LEN];
+    snprintf(string_buf,sizeof(string_buf),
+             "<encrypted>%s</encrypted><header_ok>%s</header_ok>",
+             flags & FLAG_HEADERS_ENCRYPTED ? "true" : "false",
+             head_crc_match ? "true" : "false");
+    ss << string_buf;
+
+    ss << "</rar_volume>";
+
+    return ss.str();
+}
+
 // leave out depth checks for now
 #if 0
 /* See:
@@ -177,7 +457,6 @@ const uint32_t rar_max_depth_count_bypass = 5;
 set<md5_t>rar_seen_set;
 pthread_mutex_t rar_seen_set_lock;
 #endif
-static bool strict_crc = false;
 extern "C"
 void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
 {
@@ -186,10 +465,12 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	sp.info->name  = "rar";
 	sp.info->author = "Michael Shick";
-	sp.info->description = "RAR file decompressor";
+	sp.info->description = "RAR volume locator and component decompresser";
 	sp.info->feature_names.insert("rar");
 
         strict_crc = sp.info->config["rar_strict_crc"] != "NO";
+        record_components = sp.info->config["rar_find_components"] != "NO";
+        record_volumes = sp.info->config["rar_find_volumes"] != "NO";
 // leave out depth checks for now
 #if 0
 	pthread_mutex_init(&rar_seen_set_lock,NULL);
@@ -202,211 +483,33 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
 	feature_recorder_set &fs = sp.fs;
 	feature_recorder *rar_recorder = fs.get_name("rar");
 	rar_recorder->set_flag(feature_recorder::FLAG_XML); // because we are sending through XML
-	for(const unsigned char *cc=sbuf.buf;
-                cc < sbuf.buf+sbuf.pagesize && cc < sbuf.buf + sbuf.bufsize - FILE_HEAD_MIN_LEN;
-                cc++) {
-            // Initial RAR file block anchor is 0x74 magic byte
-            if(cc[OFFSET_HEAD_TYPE] != FILE_MAGIC) {
-                continue;
-            }
-            // check for invalid flags
-            uint16_t flags = (uint16_t) int2(cc + OFFSET_HEAD_FLAGS);
-            if(!(flags & MANDATORY_FLAGS) || (flags & UNUSED_FLAGS)) {
-                continue;
-            }
-            // ignore split files and encrypted files
-            if(flags & (FLAG_CONT_PREV | FLAG_CONT_NEXT | FLAG_ENCRYPTED)) {
-                continue;
-            }
 
-            // ignore impossible or improbable header lengths
-            uint16_t header_len = (uint16_t) int2(cc + OFFSET_HEAD_SIZE);
-            if(header_len < FILE_HEAD_MIN_LEN || header_len > SUSPICIOUS_HEADER_LEN) {
-                continue;
-            }
-            // abort if header is longer than the remaining sbuf
-            if(header_len >= (sbuf.buf + sbuf.bufsize) - cc) {
-                break;
-            }
-
-            // ignore huge filename lengths
-            uint16_t filename_bytes_len = (uint16_t) int2(cc + OFFSET_NAME_SIZE);
-            if(filename_bytes_len > SUSPICIOUS_HEADER_LEN) {
-                continue;
-            }
-
-            // ignore strange file sizes
-            uint64_t packed_size = (uint64_t) int4(cc + OFFSET_PACK_SIZE);
-            uint64_t unpacked_size = (uint64_t) int4(cc + OFFSET_UNP_SIZE);
-            if(flags & FLAG_BIGFILE) {
-                packed_size += ((uint64_t) int4(cc + OFFSET_HIGH_PACK_SIZE)) << 32;
-                unpacked_size += ((uint64_t) int4(cc + OFFSET_HIGH_UNP_SIZE)) << 32;
-            }
-            // zero length, > 10 TiB, packed size significantly larger than
-            // unpacked are all 'strange'
-            if(packed_size == 0 || unpacked_size == 0 || packed_size * 0.95 > unpacked_size ||
-                    packed_size > SUSPICIOUS_FILE_LEN || unpacked_size > SUSPICIOUS_FILE_LEN)  {
-                continue;
-            }
-
-            //
-            // Filename extraction
-            //
-            string filename = "";
-            uint16_t filename_len = 0;
-            const char *filename_bytes = (const char *) cc + OFFSET_FILE_NAME;
-            if(flags & FLAG_BIGFILE) {
-                // if present, the high 32 bits of 64 bit file sizes offset the
-                // location of the filename by 8
-                filename_bytes += OPTIONAL_BIGFILE_LEN;
-            }
-            if(flags & FLAG_UNICODE_FILENAME) {
-                // The unicode filename flag can indicate two filename formats,
-                // predicated on the presence of a null byte:
-                //   - If a null byte is present, it separates an ASCII
-                //     representation and a UTF-8 representation of the filename
-                //     in that order
-                //   - If no null byte is present, the filename is UTF-8 encoded
-                size_t null_byte_index = 0;
-                for(; null_byte_index < filename_bytes_len; null_byte_index++) {
-                    if(filename_bytes[null_byte_index] == 0x00) {
-                        break;
-                    }
-                }
-
-                if(null_byte_index == filename_bytes_len - 1u) {
-                    // Zero-length UTF-8 representation is illogical
-                    continue;
-                }
-
-                if(null_byte_index == filename_bytes_len) {
-                    // UTF-8 only
-                    filename_len = filename_bytes_len;
-                    filename = string(filename_bytes, (size_t) filename_len);
-                }
-                else {
-                    // if both ASCII and UTF-8 are present, disregard ASCII
-                    filename_len = filename_bytes_len - (null_byte_index + 1);
-                    filename = string(filename_bytes + null_byte_index + 1, filename_len);
-                }
-                // validate extracted UTF-8
-                if(utf8::find_invalid(filename.begin(),filename.end()) != filename.end()) {
-                    continue;
-                }
-            }
-            else {
-                filename_len = filename_bytes_len;
-                filename = string(filename_bytes, filename_len);
-            }
-
-            // throw out zero-length filename
-            if(filename.size()==0) continue;
-
-            // disallow ASCII control characters, which may also appear in valid UTF-8
-            string::const_iterator first_control_character = filename.begin();
-            for(; first_control_character != filename.end(); first_control_character++) {
-                if((char) *first_control_character < ' ') {
-                    break;
-                }
-            }
-            if(first_control_character != filename.end()) {
-                continue;
-            }
-
-
-            // RAR version required to extract: do we want to abort if it's too new?
-            uint8_t unpack_version = cc[OFFSET_UNP_VER];
-            uint8_t compression_method = cc[OFFSET_METHOD];
-            // OS that created archive
-            uint8_t host_os = cc[OFFSET_HOST_OS];
-            // date (modification?) In DOS date format
-            uint32_t dos_time = int4(cc + OFFSET_FTIME);
-            uint32_t file_crc = int4(cc + OFFSET_FILE_CRC);
-            uint32_t file_attr = int4(cc + OFFSET_ATTR);
-
-
-            // header CRC is final validation; RAR stores only the 16 least
-            // significant bytes of a CRC32
-            uint16_t header_crc = int2(cc + OFFSET_HEAD_CRC);
-            uint32_t calc_header_crc = crc_init();
-            // Data accounted for in the CRC begins with the header type magic byte
-            calc_header_crc = crc_update(calc_header_crc, cc + OFFSET_HEAD_TYPE, header_len - OFFSET_HEAD_TYPE);
-            calc_header_crc = crc_finalize(calc_header_crc);
-            bool head_crc_match = (header_crc == (calc_header_crc & 0xFFFF));
-            if(!head_crc_match && strict_crc) {
-                continue;
-            }
-
-            // convert known hex values to strings for human digestion of XML
-            char string_buf[STRING_BUF_LEN];
-            string compression_method_s, host_os_s;
-            switch(compression_method) {
-                case METHOD_UNCOMPRESSED:
-                    compression_method_s = "uncompressed";
-                    break;
-                case METHOD_FASTEST:
-                    compression_method_s = "fastest";
-                    break;
-                case METHOD_FAST:
-                    compression_method_s = "fast";
-                    break;
-                case METHOD_NORMAL:
-                    compression_method_s = "normal";
-                    break;
-                case METHOD_SMALL:
-                    compression_method_s = "small";
-                    break;
-                case METHOD_SMALLEST:
-                    compression_method_s = "smallest";
-                    break;
-                default:
-                    snprintf(string_buf, sizeof(string_buf), "0x%02X", compression_method);
-                    compression_method_s = string(string_buf);
-            }
-            switch(host_os) {
-                case OS_DOS:
-                    host_os_s = "DOS";
-                    break;
-                case OS_OS2:
-                    host_os_s = "OS/2";
-                    break;
-                case OS_WINDOWS:
-                    host_os_s = "Windows";
-                    break;
-                case OS_UNIX:
-                    host_os_s = "Unix";
-                    break;
-                case OS_MAC:
-                    host_os_s = "Mac OS";
-                    break;
-                case OS_BEOS:
-                    host_os_s = "BeOS";
-                    break;
-                default:
-                    snprintf(string_buf, sizeof(string_buf), "0x%02X", host_os);
-                    host_os_s = string(string_buf);
-            }
-
-            // build XML output
-            filename = xml::xmlescape(filename);
-            stringstream ss;
-            ss << "<rarinfo>";
-
-            snprintf(string_buf,sizeof(string_buf),
-                     "<name>%s</name><name_len>%d</name_len>"
-                     "<flags>0x%04X</flags><version>%d</version><compression_method>%s</compression_method>"
-                     "<uncompr_size>%"PRIu64"</uncompr_size><compr_size>%"PRIu64"</compr_size><file_attr>0x%X</file_attr>"
-                     "<lastmoddate>%s</lastmoddate><host_os>%s</host_os><crc32>0x%08X</crc32><header_ok>%s</header_ok>",
-                     filename.c_str(), filename_len, flags, unpack_version,
-                     compression_method_s.c_str(), unpacked_size, packed_size,file_attr,
-                     dos_date_to_iso(dos_time).c_str(), host_os_s.c_str(), file_crc,
-                     head_crc_match ? "true" : "false");
-            ss << string_buf;
-
-            ss << "</rarinfo>";
-
+	for(const unsigned char *cc=sbuf.buf; cc < sbuf.buf+sbuf.pagesize && cc < sbuf.buf + sbuf.bufsize; cc++) {
+            size_t cc_len = sbuf.buf + sbuf.bufsize - cc;
+            // feature files have three 'columns': forensic path / offset,
+            // feature name, and feature data.  scan_zip is mimicked by having
+            // the feature name be the compressed file's name (the component's
+            // name) although this information is duplicated in the feature XML
+            // data
+            string feature_name = ".";
+            string feature_data = "<null/>";
             ssize_t pos = cc-sbuf.buf; // position of the buffer
-            rar_recorder->write(pos0+pos,filename,ss.str());
+
+            // try each of the possible RAR blocks we may want to record
+            if(record_components) {
+                // components (files within a RAR archive)
+                feature_data = process_component(cc, cc_len, feature_name);
+                if(feature_data.length() > 0) {
+                    rar_recorder->write(pos0 + pos, feature_name, feature_data);
+                }
+            }
+            if(record_volumes) {
+                // volumes (RAR files themselves)
+                feature_data = process_volume(cc, cc_len);
+                if(feature_data.length() > 0) {
+                    rar_recorder->write(pos0 + pos, "<volume>", feature_data);
+                }
+            }
 	}
     }
 }
