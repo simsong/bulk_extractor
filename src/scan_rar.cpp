@@ -169,7 +169,6 @@ uint32_t crc_update(uint32_t crc, const unsigned char *data, size_t data_len)
 //
 
 // settings - these configuration vars are set when the scanner is created
-static bool strict_crc = false;
 static bool record_components = true;
 static bool record_volumes = true;
 
@@ -309,7 +308,7 @@ string process_component(const unsigned char *buf, size_t buf_len, string &found
     calc_header_crc = crc_update(calc_header_crc, buf + OFFSET_HEAD_TYPE, header_len - OFFSET_HEAD_TYPE);
     calc_header_crc = crc_finalize(calc_header_crc);
     bool head_crc_match = (header_crc == (calc_header_crc & 0xFFFF));
-    if(!head_crc_match && strict_crc) {
+    if(!head_crc_match) {
         return "";
     }
 
@@ -373,11 +372,10 @@ string process_component(const unsigned char *buf, size_t buf_len, string &found
              "<name>%s</name><name_len>%d</name_len>"
              "<flags>0x%04X</flags><version>%d</version><compression_method>%s</compression_method>"
              "<uncompr_size>%"PRIu64"</uncompr_size><compr_size>%"PRIu64"</compr_size><file_attr>0x%X</file_attr>"
-             "<lastmoddate>%s</lastmoddate><host_os>%s</host_os><crc32>0x%08X</crc32><header_ok>%s</header_ok>",
+             "<lastmoddate>%s</lastmoddate><host_os>%s</host_os><crc32>0x%08X</crc32>",
              filename.c_str(), filename_len, flags, unpack_version,
              compression_method_s.c_str(), unpacked_size, packed_size,file_attr,
-             dos_date_to_iso(dos_time).c_str(), host_os_s.c_str(), file_crc,
-             head_crc_match ? "true" : "false");
+             dos_date_to_iso(dos_time).c_str(), host_os_s.c_str(), file_crc);
     ss << string_buf;
 
     ss << "</rar_component>";
@@ -421,7 +419,7 @@ string process_volume(const unsigned char *buf, size_t buf_len)
     calc_header_crc = crc_update(calc_header_crc, buf + OFFSET_HEAD_TYPE, header_len - OFFSET_HEAD_TYPE);
     calc_header_crc = crc_finalize(calc_header_crc);
     bool head_crc_match = (header_crc == (calc_header_crc & 0xFFFF));
-    if(!head_crc_match /*&& strict_crc*/) {
+    if(!head_crc_match) {
         return "";
     }
     // build XML output
@@ -430,9 +428,8 @@ string process_volume(const unsigned char *buf, size_t buf_len)
 
     char string_buf[STRING_BUF_LEN];
     snprintf(string_buf,sizeof(string_buf),
-             "<encrypted>%s</encrypted><header_ok>%s</header_ok>",
-             flags & FLAG_HEADERS_ENCRYPTED ? "true" : "false",
-             head_crc_match ? "true" : "false");
+             "<encrypted>%s</encrypted>",
+             flags & FLAG_HEADERS_ENCRYPTED ? "true" : "false");
     ss << string_buf;
 
     ss << "</rar_volume>";
@@ -468,7 +465,6 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
 	sp.info->description = "RAR volume locator and component decompresser";
 	sp.info->feature_names.insert("rar");
 
-        strict_crc = sp.info->config["rar_strict_crc"] != "NO";
         record_components = sp.info->config["rar_find_components"] != "NO";
         record_volumes = sp.info->config["rar_find_volumes"] != "NO";
 // leave out depth checks for now
