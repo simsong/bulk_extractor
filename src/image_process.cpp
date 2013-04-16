@@ -820,12 +820,13 @@ string process_dir::str(class image_process::iterator &it)
 
 uint64_t process_dir::blocks(class image_process::iterator &it)
 {
-    errx(1,"random seek is not implemented for process_dir yet");
+    return files.size();
 }
 
 uint64_t process_dir::seek_block(class image_process::iterator &it,uint64_t block)
 {
-    errx(1,"random seek is not implemented for process_dir yet");
+    it.file_number = block;
+    return it.file_number;
 }
 
 
