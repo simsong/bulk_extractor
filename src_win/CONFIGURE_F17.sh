@@ -186,7 +186,7 @@ echo "Building and installing lightgrep for mingw"
 #LGVER=
 #LGFILE=
 LGDIR=liblightgrep
-LGURL=git@github.com:uckelman/liblightgrep.git
+LGURL=https://github.com/jonstewart/liblightgrep.git
 
 git clone --recursive $LGURL $LGDIR
 pushd $LGDIR

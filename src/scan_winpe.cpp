@@ -932,7 +932,7 @@ void scan_winpe (const class scanner_params &sp,
     assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
     string xml;
     
-    if (sp.phase == scanner_params::startup){
+    if (sp.phase == scanner_params::PHASE_STARTUP){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
         sp.info->name            = "winpe";
         sp.info->description     = "Scan for Windows PE headers";
@@ -941,7 +941,7 @@ void scan_winpe (const class scanner_params &sp,
         return;
     }
     
-    if(sp.phase == scanner_params::scan){    // phase 1
+    if(sp.phase == scanner_params::PHASE_SCAN){    // phase 1
     feature_recorder *f = sp.fs.get_name("winpe");
     
     /* 

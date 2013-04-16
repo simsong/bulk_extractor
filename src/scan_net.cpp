@@ -46,8 +46,6 @@
 typedef char sa_family_t;
 #endif
 
-
-
 /****************************************************************/
 
 #ifdef HAVE_PCAP_PCAP_H
@@ -84,11 +82,6 @@ static const char *default_filename = "packets.pcap";
  * Previously this was a set, but unordered_sets are faster.
  * It doesn't need to be mutex locked, because we do the tests for each thread.
  */
-// This is now in be13_api/net_ethernet.h
-//typedef struct ether_addr {
-//    u_char octet[ETHER_ADDR_LEN];
-//} ether_addr_t;
-//typedef struct ether_addr ether_addr_t;
 
 /* generic ip header for IPv4 and IPv6 packets */
 typedef struct generic_iphdr {
@@ -130,17 +123,17 @@ struct in6_addr {
 #endif
 
 struct ip6_hdr {
-	union {
-		struct ip6_hdrctl {
-			uint32_t ip6_un1_flow;	/* 20 bits of flow-ID */
-			uint16_t ip6_un1_plen;	/* payload length */
-			uint8_t  ip6_un1_nxt;	/* next header */
-			uint8_t  ip6_un1_hlim;	/* hop limit */
-		} ip6_un1;
-		uint8_t ip6_un2_vfc;	/* 4 bits version, top 4 bits class */
-	} ip6_ctlun;
-	struct in6_addr ip6_src;	/* source address */
-	struct in6_addr ip6_dst;	/* destination address */
+    union {
+        struct ip6_hdrctl {
+            uint32_t ip6_un1_flow;	/* 20 bits of flow-ID */
+            uint16_t ip6_un1_plen;	/* payload length */
+            uint8_t  ip6_un1_nxt;	/* next header */
+            uint8_t  ip6_un1_hlim;	/* hop limit */
+        } ip6_un1;
+        uint8_t ip6_un2_vfc;	/* 4 bits version, top 4 bits class */
+    } ip6_ctlun;
+    struct in6_addr ip6_src;	/* source address */
+    struct in6_addr ip6_dst;	/* destination address */
 } __attribute__((__packed__));
 #define ip6_vfc		ip6_ctlun.ip6_un2_vfc
 #define ip6_flow	ip6_ctlun.ip6_un1.ip6_un1_flow
@@ -150,14 +143,14 @@ struct ip6_hdr {
 #define ip6_hops	ip6_ctlun.ip6_un1.ip6_un1_hlim
 
 struct icmp6_hdr {
-	uint8_t	icmp6_type;	/* type field */
-	uint8_t	icmp6_code;	/* code field */
-	uint16_t	icmp6_cksum;	/* checksum field */
-	union {
-		uint32_t	icmp6_un_data32[1]; /* type-specific field */
-		uint16_t	icmp6_un_data16[2]; /* type-specific field */
-		uint8_t	icmp6_un_data8[4];  /* type-specific field */
-	} icmp6_dataun;
+    uint8_t	icmp6_type;	/* type field */
+    uint8_t	icmp6_code;	/* code field */
+    uint16_t	icmp6_cksum;	/* checksum field */
+    union {
+        uint32_t	icmp6_un_data32[1]; /* type-specific field */
+        uint16_t	icmp6_un_data16[2]; /* type-specific field */
+        uint8_t	icmp6_un_data8[4];  /* type-specific field */
+    } icmp6_dataun;
 } __attribute__((__packed__));
 
 
@@ -199,62 +192,6 @@ struct be_udphdr {
     uint16_t uh_ulen;	
     uint16_t uh_sum;
 };
-
-#if 0
-#ifdef HAVE_NETINET_IP_H
-#include <netinet/ip.h>
-#else
-/* For defaults, assume we are on Intel, which is __LITTLE_ENDIAN */
-#ifndef __LITTLE_ENDIAN
-#define __LITTLE_ENDIAN 1
-#define __BIG_ENDIAN 2
-#define __BYTE_ORDER 1
-#endif
-
-#ifndef AF_INET
-#define AF_INET 2			// default on most systems
-#endif
-
-#ifndef IPPROTO_TCP
-#define IPPROTO_TCP 6
-#endif
-
-#ifndef IPPROTO_UDP
-#define IPPROTO_UDP 17
-#endif
-
-//#ifdef _WIN32
-//#define u_int8_t  unsigned __int8
-//#define u_int16_t unsigned __int16
-//#define u_int32_t unsigned __int32
-//#endif
-
-/* Structure of an internet header, naked of options. */
-struct ip {
-#if __BYTE_ORDER == __BIG_ENDIAN
-    uint8_t ip_v:4;		/* version */
-    uint8_t ip_hl:4;		/* header length */
-#else
-    uint8_t ip_hl:4;		/* header length */
-    uint8_t ip_v:4;		/* version */
-#endif
-    uint8_t ip_tos;			/* type of service */
-    uint16_t ip_len;			/* total length */
-    uint16_t ip_id;			/* identification */
-    uint16_t ip_off;			/* fragment offset field */
-#define	IP_RF 0x8000			/* reserved fragment flag */
-#define	IP_DF 0x4000			/* dont fragment flag */
-#define	IP_MF 0x2000			/* more fragments flag */
-#define	IP_OFFMASK 0x1fff		/* mask for fragmenting bits */
-    uint8_t ip_ttl;			/* time to live */
-    uint8_t ip_p;			/* protocol */
-    uint16_t ip_sum;			/* checksum */
-    uint32_t ip_src;
-    uint32_t ip_dst;	/* source and dest address */
-};
-#endif
-#endif	// if 0
-
 
 /* Computes the checksum for IPv6 TCP, UDP and ICMPv6. 
  * 
@@ -543,13 +480,13 @@ static bool sanityCheckIPHeader(const sbuf_t &sbuf, bool *checksum_valid, generi
 	/* similar to tcpip.c from tcpflow code */
 	uint32_t src[4] = {0, 0, 0, 0};
 	uint32_t dst[4] = {0, 0, 0, 0};
-//#ifdef _WIN32
-//	src[3] = ip->ip_src;
-//	dst[3] = ip->ip_dst;
-//#else
+        //#ifdef _WIN32
+        //	src[3] = ip->ip_src;
+        //	dst[3] = ip->ip_dst;
+        //#else
 	memcpy(&src[3],&ip->ip_src.addr,4);
 	memcpy(&dst[3],&ip->ip_dst.addr,4);
-//#endif
+        //#endif
 	memcpy(h->src, src, sizeof(src));
 	memcpy(h->dst, dst, sizeof(dst)); 
 	h->ttl = ip->ip_ttl;
@@ -583,30 +520,30 @@ static bool sanityCheckIPHeader(const sbuf_t &sbuf, bool *checksum_valid, generi
 	default:
 	case IPPROTO_TCP:
 	    {
-	    const struct be_tcphdr *tcp = sbuf.get_struct_ptr<struct be_tcphdr>(40);
-	    if(!tcp) return false;	// not sufficient room
+                const struct be_tcphdr *tcp = sbuf.get_struct_ptr<struct be_tcphdr>(40);
+                if(!tcp) return false;	// not sufficient room
 
-	    /* tcp chksum is at byte offset 16 from tcp hdr + 40 w/ pseudo hdr */
-	    (*checksum_valid) = (tcp->th_sum == IPv6L3Chksum(sbuf, 56));
-	    break; 
+                /* tcp chksum is at byte offset 16 from tcp hdr + 40 w/ pseudo hdr */
+                (*checksum_valid) = (tcp->th_sum == IPv6L3Chksum(sbuf, 56));
+                break; 
 	    } 
 	case IPPROTO_UDP:
 	    {
-	    const struct be_udphdr *udp = sbuf.get_struct_ptr<struct be_udphdr>(40);
-	    if(!udp) return false;	// not sufficient room
+                const struct be_udphdr *udp = sbuf.get_struct_ptr<struct be_udphdr>(40);
+                if(!udp) return false;	// not sufficient room
 
-	    /* udp chksum is at byte offset 6 from udp hdr + 40 w/ pseudo hdr */
-	    (*checksum_valid) = (udp->uh_sum == IPv6L3Chksum(sbuf, 46));
-	    break; 
+                /* udp chksum is at byte offset 6 from udp hdr + 40 w/ pseudo hdr */
+                (*checksum_valid) = (udp->uh_sum == IPv6L3Chksum(sbuf, 46));
+                break; 
 	    }
 	case IPPROTO_ICMPV6:
 	    {
-	    const struct icmp6_hdr *icmp6 = sbuf.get_struct_ptr<struct icmp6_hdr>(40);
-	    if(!icmp6) return false;	// not sufficient room
+                const struct icmp6_hdr *icmp6 = sbuf.get_struct_ptr<struct icmp6_hdr>(40);
+                if(!icmp6) return false;	// not sufficient room
 
-	    /* icmpv6 chksum is at byte offset 2 from icmpv6 hdr + 40 w/ pseudo hdr */
-	    (*checksum_valid) = (icmp6->icmp6_cksum == IPv6L3Chksum(sbuf, 42));
-	    break;
+                /* icmpv6 chksum is at byte offset 2 from icmpv6 hdr + 40 w/ pseudo hdr */
+                (*checksum_valid) = (icmp6->icmp6_cksum == IPv6L3Chksum(sbuf, 42));
+                break;
 	    }
 	}
 	/* create a generic_iphdr_t, similar to tcpip.c from tcpflow code */
@@ -645,25 +582,36 @@ const uint32_t min_packet_size = 20;		// don't bother with ethernet packets smal
 /*
  * Sanity check the header values
  */
-static bool   likely_valid_pcap_header(const sbuf_t &sbuf)
+struct pcap_hdr {
+    pcap_hdr():seconds(0),useconds(0),cap_len(0),pkt_len(0){}
+    uint32_t seconds;
+    uint32_t useconds;
+    uint32_t cap_len;
+    uint32_t pkt_len;
+};
+    
+/* Decode a header at a location and return true if it looks good */
+static const size_t PCAP_RECORD_HEADER_SIZE = 16;
+static bool   likely_valid_pcap_header(const sbuf_t &sbuf,struct pcap_hdr &h)
 {
-    uint32_t seconds = sbuf.get32u(0);
-    uint32_t useconds = sbuf.get32u(4);
-    uint32_t cap_len = sbuf.get32u(8);
-    uint32_t pkt_len = sbuf.get32u(12);
+    if(sbuf.bufsize < PCAP_RECORD_HEADER_SIZE) return false;
 
-    if(seconds!=0 && (seconds<jan1_1990 || seconds>jan1_2020)) return false;
-    if(useconds>1000000) return false;
-    if(cap_len<min_packet_size || cap_len>max_packet_len) return false;
-    if(pkt_len<min_packet_size || pkt_len>max_packet_len) return false;
-    if(cap_len > pkt_len) return false;
+    h.seconds = sbuf.get32u(0);  if(h.seconds==0) return false;
+    h.useconds = sbuf.get32u(4); if(h.useconds>1000000) return false;
+    h.cap_len = sbuf.get32u(8); if(h.cap_len<min_packet_size) return false;
+    h.pkt_len = sbuf.get32u(12);if(h.pkt_len<min_packet_size) return false;
+
+    if(h.seconds<jan1_1990 || h.seconds>jan1_2020) return false;
+
+    if(h.cap_len<min_packet_size || h.cap_len>max_packet_len) return false;
+    if(h.pkt_len<min_packet_size || h.pkt_len>max_packet_len) return false;
+    if(h.cap_len > h.pkt_len) return false;
     return true;
 }
 
 /*
  * Currently this will not write out a truncated packet.
  */
-static const size_t PCAP_RECORD_HEADER_SIZE = 16;
 class packet_carver {
 private:
     packet_carver(const packet_carver &pc):fs(pc.fs),ps(pc.ps),ip_recorder(pc.ip_recorder),tcp_recorder(pc.tcp_recorder),ether_recorder(pc.ether_recorder){
@@ -717,95 +665,90 @@ private:
     }
 
 public:
-    void pcap_writepkt(const uint32_t seconds,const uint32_t useconds,
-		       const size_t cap_len,
-		       const size_t pkt_len,
+    void pcap_writepkt(const struct pcap_hdr &h,
 		       const sbuf_t &sbuf,const size_t offset,
                        const bool add_frame,
                        const uint16_t frame_type) {
 	// Make sure that neither this packet nor an encapsulated version of this packet has been written
 	//if(ps.find(pkt)==ps.end() && ps.find(pkt-4)==ps.end()){
 	//ps.insert(pkt);
-	    pthread_mutex_lock(&M);		// lock the mutex
-	    if(fcap==0){
-		string ofn = ip_recorder->outdir+"/" + default_filename;
-		fcap = fopen(ofn.c_str(),"wb"); // write the output
-		pcap_write4(0xa1b2c3d4);
-		pcap_write2(2);			// major version number
-		pcap_write2(4);			// minor version number
-		pcap_write4(0);			// time zone offset; always 0
-		pcap_write4(0);			// accuracy of time stamps in the file; always 0
-		pcap_write4(PCAP_MAX_PKT_LEN);	// snapshot length
-		pcap_write4(DLT_EN10MB);	// link layer encapsulation
-	    }
+        pthread_mutex_lock(&M);		// lock the mutex
+        if(fcap==0){
+            string ofn = ip_recorder->outdir+"/" + default_filename;
+            fcap = fopen(ofn.c_str(),"wb"); // write the output
+            pcap_write4(0xa1b2c3d4);
+            pcap_write2(2);			// major version number
+            pcap_write2(4);			// minor version number
+            pcap_write4(0);			// time zone offset; always 0
+            pcap_write4(0);			// accuracy of time stamps in the file; always 0
+            pcap_write4(PCAP_MAX_PKT_LEN);	// snapshot length
+            pcap_write4(DLT_EN10MB);	// link layer encapsulation
+        }
 
-            size_t forged_header_len = 0;
-            // if requested, forge an Ethernet II header and prepend it to the packet so raw packets can
-            // coexist happily in an ethernet pcap file.  Don't do this if the resulting length would make
-            // the pcap file invalid.
-            bool add_frame_and_safe = add_frame && cap_len + ETHER_HEAD_LEN <= PCAP_MAX_PKT_LEN;
-            uint8_t forged_header[ETHER_HEAD_LEN];
-            if(add_frame_and_safe) {
-                forged_header_len = sizeof(forged_header);
-                // forge Ethernet II header
-                //   - source and destination addrs are all zeroes, ethernet type is supplied by function caller
-                memset(forged_header, 0x00, sizeof(forged_header));
-                // final two bytes of header hold the type value
-                forged_header[sizeof(forged_header)-2] = (uint8_t) (frame_type >> 8);
-                forged_header[sizeof(forged_header)-1] = (uint8_t) frame_type;
-            }
+        size_t forged_header_len = 0;
+        // if requested, forge an Ethernet II header and prepend it to the packet so raw packets can
+        // coexist happily in an ethernet pcap file.  Don't do this if the resulting length would make
+        // the pcap file invalid.
+        bool add_frame_and_safe = add_frame && h.cap_len + ETHER_HEAD_LEN <= PCAP_MAX_PKT_LEN;
+        uint8_t forged_header[ETHER_HEAD_LEN];
+        if(add_frame_and_safe) {
+            forged_header_len = sizeof(forged_header);
+            // forge Ethernet II header
+            //   - source and destination addrs are all zeroes, ethernet type is supplied by function caller
+            memset(forged_header, 0x00, sizeof(forged_header));
+            // final two bytes of header hold the type value
+            forged_header[sizeof(forged_header)-2] = (uint8_t) (frame_type >> 8);
+            forged_header[sizeof(forged_header)-1] = (uint8_t) frame_type;
+        }
 
-	    /* Write a packet */
-	    pcap_write4(seconds);		// time stamp, seconds avalue
-	    pcap_write4(useconds);		// time stamp, microseconds
-	    pcap_write4(cap_len + forged_header_len);
-	    pcap_write4(pkt_len + forged_header_len);
-            if(add_frame_and_safe) {
-                pcap_write_bytes(forged_header, sizeof(forged_header));
-            }
-	    sbuf.write(fcap,offset,cap_len);	// the packet
-	    pthread_mutex_unlock(&M);		// lock the mutex
-	    //}
+        /* Write a packet */
+        pcap_write4(h.seconds);		// time stamp, seconds avalue
+        pcap_write4(h.useconds);		// time stamp, microseconds
+        pcap_write4(h.cap_len + forged_header_len);
+        pcap_write4(h.pkt_len + forged_header_len);
+        if(add_frame_and_safe) {
+            pcap_write_bytes(forged_header, sizeof(forged_header));
+        }
+        sbuf.write(fcap,offset,h.cap_len);	// the packet
+        pthread_mutex_unlock(&M);		// lock the mutex
     }
 
     /**
      * Validate and write a pcap packet. Return the number of bytes written.
      */
     size_t carvePCAPPacket(const sbuf_t &sb2) {
-	if(sb2.bufsize < PCAP_RECORD_HEADER_SIZE) return 0;
-	uint32_t seconds  = sb2.get32u(0);  if(seconds==0) return 0;
-	uint32_t useconds = sb2.get32u(4); 
-	uint32_t cap_len  = sb2.get32u(8);  if(cap_len<min_packet_size) return 0;
-	uint32_t pkt_len  = sb2.get32u(12); if(pkt_len<min_packet_size) return 0;
-	
-	if(sb2.bufsize < PCAP_RECORD_HEADER_SIZE+cap_len) return 0; // packet was truncated
-	   
-	if(likely_valid_pcap_header(sb2)){
-	    /* If buffer is the size of the record,
-	     * or if the next header looks good,
-	     * then carve the packet.
-	     */
-	    if((sb2.bufsize==cap_len+PCAP_RECORD_HEADER_SIZE) ||
-	       likely_valid_pcap_header(sb2+PCAP_RECORD_HEADER_SIZE+cap_len)){
+        struct pcap_hdr h;
+	if(likely_valid_pcap_header(sb2,h)==false) return 0;
+        if(sb2.bufsize < PCAP_RECORD_HEADER_SIZE+h.cap_len) return 0; // packet was truncated
 
-                // If it looks like the pcap record begins with an IP header rather than a link-level frame,
-                // tell writepkt what kind of header so it can create a valid pseudo Ethernet II header
+        /* If buffer is the size of the record,
+         * or if the next header looks good,
+         * then carve the packet.
+         */
+        struct pcap_hdr h2;
+        if((sb2.bufsize==h.cap_len+PCAP_RECORD_HEADER_SIZE) ||
+           likely_valid_pcap_header(sb2+PCAP_RECORD_HEADER_SIZE+h.cap_len,h2)){
+            
+            // If it looks like the pcap record begins with an IP header rather than a link-level frame,
+            // tell writepkt what kind of header so it can create a valid pseudo Ethernet II header
+            // assume IPv4, but this field is only relevant if the header looks sane (is_raw_ip is true)
+            bool checksum_valid = false;        // ignored
+            generic_iphdr_t header_info;
+            bool is_raw_ip = sanityCheckIPHeader(sb2+PCAP_RECORD_HEADER_SIZE, &checksum_valid, &header_info);
+            
+            if((header_info.family == AF_INET) || (header_info.family == AF_INET6)){
 
-                // assume IPv4, but this field is only relevant if the header looks sane (is_raw_ip is true)
-                uint16_t pseudo_frame_ethertype = ETHERTYPE_IP;
-                bool checksum_valid = false; // ignored
-                generic_iphdr_t header_info;
-                bool is_raw_ip = sanityCheckIPHeader(sb2+PCAP_RECORD_HEADER_SIZE, &checksum_valid, &header_info);
-                if(header_info.family == AF_INET6) {
-                    pseudo_frame_ethertype = ETHERTYPE_IPV6;
+                uint16_t pseudo_frame_ethertype = 0;
+                if(is_raw_ip){
+                    pseudo_frame_ethertype = (header_info.family == AF_INET6) ? ETHERTYPE_IPV6 : ETHERTYPE_IP;
                 }
-		
-		/* We are at the end of the file, or the next slot is also a packet */
-		pcap_writepkt(seconds,useconds,cap_len,pkt_len,sb2,PCAP_RECORD_HEADER_SIZE,is_raw_ip,pseudo_frame_ethertype);
-		return 16+cap_len;
-	    }
-	}
-	return 0;
+                
+                /* We are at the end of the file, or the next slot is also a packet */
+                pcap_writepkt(h,sb2,PCAP_RECORD_HEADER_SIZE,is_raw_ip,pseudo_frame_ethertype);
+                return 16+h.cap_len;
+            }
+        }
+        return 0;                       // not written
     }
     
     size_t carvePCAPFile(const sbuf_t &sb2) {
@@ -973,7 +916,7 @@ public:
     size_t carveEther(const sbuf_t &sb2,bool write_pcap)    {
 	const struct macip *er = sb2.get_struct_ptr<struct macip>(0);
 	if(er){
-	    if ( (er->ether_type != htons(ETHERTYPE_IP)) &&  // 0x0800 
+	    if ( (er->ether_type != htons(ETHERTYPE_IP)) &&   // 0x0800 
 		 (er->ether_type != htons(ETHERTYPE_IPV6)) ){ // 0x86dd
 		return 0;
 	    }
@@ -1013,7 +956,8 @@ public:
 		    ssize_t packet_len     = ip_header_len + ip_payload_len + 14; 
 		    if(packet_len > (ssize_t)sb2.bufsize) packet_len = sb2.bufsize;
 		    if(packet_len > 0 ){
-			pcap_writepkt(1,0,packet_len,packet_len,sb2,0,false,0x0000);
+                        struct pcap_hdr hz;
+			pcap_writepkt(hz,sb2,0,false,0x0000);
 			return packet_len;
 		    }
 		}
@@ -1032,11 +976,16 @@ public:
 	 */
 	for(u_int i=0 ; i<sbuf.pagesize && i<sbuf.bufsize;){
 	    const sbuf_t sb2 = sbuf+i;
+
+            /* Look for a PCAPFile header */
 	    size_t sfile = carvePCAPFile( sb2 );
 	    if(sfile>0) { i+= sfile;continue;}
+
+            /* Look for a PCAP Packet */
 	    size_t spacket = carvePCAPPacket( sb2 );
 	    if(spacket>0) { i+= spacket; continue;}
 
+            /* Look for another recognizable structure. If we find it, advance as far as a the biggest one */
 	    size_t maxed = 0;
 	    maxed = max(maxed,carveStructIP( sb2));
 	    maxed = max(maxed,carveSockAddrIn( sb2 ));
@@ -1059,7 +1008,7 @@ extern "C"
 void scan_net(const class scanner_params &sp,const recursion_control_block &rcb)
 {
     assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);      
-    if(sp.phase==scanner_params::startup){
+    if(sp.phase==scanner_params::PHASE_STARTUP){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	assert(sizeof(struct be13::ip4)==20);	// we've had problems on some systems
 	sp.info->name  = "net";
@@ -1084,11 +1033,11 @@ void scan_net(const class scanner_params &sp,const recursion_control_block &rcb)
 	pthread_mutex_init(&M,NULL);
 	return;
     }
-    if(sp.phase==scanner_params::shutdown){
+    if(sp.phase==scanner_params::PHASE_SHUTDOWN){
 	if(fcap) fclose(fcap);
 	return;
     }
-    if(sp.phase==scanner_params::scan){
+    if(sp.phase==scanner_params::PHASE_SCAN){
 	packet_carver carver(sp);
 	carver.carve(sp.sbuf);
     }

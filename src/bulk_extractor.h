@@ -156,8 +156,6 @@ extern const char *progname;
 extern size_t opt_scan_bulk_block_size;
 extern bool opt_work_start_work_end;	// note when each scanner starts and ends; needed for restarting
 
-extern int opt_quiet;			// if true, no status updates
-extern int opt_notify_rate;		/* how often through main loop to print a status line */
 extern int opt_dedup_bloom_bits;
 extern int word_min;
 extern int word_max;
@@ -196,6 +194,7 @@ void	validate_fn(std::string &fn);
  ****************************************************************/
 //extern process_t process_sbuf;				/* process for feature extraction */
 extern process_t process_path_printer;			/* process for path printing  */
+extern int debug;
 
 //#ifdef _WIN32
 //#define __printflike(a,b) 		// ignore this feature in mingw
@@ -264,7 +263,9 @@ extern "C" scanner_t scan_pdf;
 extern "C" scanner_t scan_winpe;
 extern "C" scanner_t scan_winprefetch;
 extern "C" scanner_t scan_zip;
+extern "C" scanner_t scan_rar;
 extern "C" scanner_t scan_windirs;
+extern "C" scanner_t scan_xor;
 
 #endif
 #endif

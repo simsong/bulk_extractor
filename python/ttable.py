@@ -165,7 +165,7 @@ class ttable:
 
     def append_head(self,values):
         """ Append a row of VALUES to the table header. The VALUES should be a list of columsn."""
-        assert type(values)==type([])
+        assert type(values)==type([]) or type(values)==type(())
         self.col_headings.append(values)
 
     def append_data(self,values):

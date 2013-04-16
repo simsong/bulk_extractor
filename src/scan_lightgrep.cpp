@@ -60,8 +60,9 @@ namespace { // local namespace hides these from other translation units
   void init(const scanner_params& sp) {
     sp.info->name            = "lightgrep";
     sp.info->author          = "Jon Stewart";
-    sp.info->description     = "Searches for patterns";
+    sp.info->description     = "Advaned search for patterns";
     sp.info->scanner_version = "0.1";
+    sp.info->flags	     = scanner_info::SCANNER_FIND_SCANNER;
     sp.info->feature_names.insert("lightgrep");
     sp.info->histogram_defs.insert(histogram_def("lightgrep", "", "histogram", HistogramMaker::FLAG_LOWERCASE));
 

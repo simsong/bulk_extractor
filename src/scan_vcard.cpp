@@ -39,7 +39,7 @@ void scan_vcard(const class scanner_params &sp,const recursion_control_block &rc
 {
     string myString;
     assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
-    if(sp.phase==scanner_params::startup){
+    if(sp.phase==scanner_params::PHASE_STARTUP){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	sp.info->name  = "vcard";
         sp.info->author         = "Simson Garfinkel and Tony Melaragno";
@@ -48,7 +48,7 @@ void scan_vcard(const class scanner_params &sp,const recursion_control_block &rc
 	sp.info->feature_names.insert("vcard");
 	return;
     }
-    if(sp.phase==scanner_params::scan){
+    if(sp.phase==scanner_params::PHASE_SCAN){
 	const sbuf_t &sbuf = sp.sbuf;
 	feature_recorder_set &fs = sp.fs;
 	feature_recorder *vcard_recorder = fs.get_name("vcard");

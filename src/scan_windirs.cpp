@@ -12,6 +12,7 @@
 #include <strings.h>
 #include <errno.h>
 #include <sstream>
+#include <sys/time.h>
 
 #include "xml.h"
 #include "utf8.h"
@@ -25,26 +26,23 @@
 #include "tsk3/fs/tsk_fatfs.h"
 #include "tsk3/fs/tsk_ntfs.h"
 
+#define CLUSTERS_IN_1MiB 2*1024
+#define CLUSTERS_IN_1GiB 2*1024*1024
+
+/* fat32 tuning parameters for weirdness. Each of these define something weird. If too much is weird, it's probably not a FAT32 directory entry.. */
+uint opt_weird_file_size    = 1024*1024*150; // max file size
+uint opt_weird_file_size2   = 1024*1024*512; // max file size
+uint32_t opt_max_cluster    = 32*CLUSTERS_IN_1GiB; // assume smaller than 32GB with 512 byte clusters
+uint32_t opt_max_cluster2   = 128*CLUSTERS_IN_1GiB; // assume smaller than 512GB with 512 byte clusters
+uint opt_max_bits_in_attrib = 3;
+uint opt_max_weird_count    = 2;
+
 /**
  * code from tsk3
  */
 
 using namespace std;
 
-#if 0
-bool static fat16charvalid[256];
-const u_char *valid_fat16charvalid = (const u_char *)"ABCDEFGHIJKLMNOPQRSTUVWXYZ 0123456789"
-    "! # $ % & ' ( ) - @ ^ _ ` { } ~";
-
-
-fat16chars_init()
-{
-	/* Set up the valid fat16 filename characters, per wikipedia */
-	memset(fat16charvalid,0,sizeof(fat16charvalid));
-	for(const u_char *cc=valid_fat16charvalid;*cc;cc++){fat16charvalid[*cc] = true;}
-	for(int i=128;i<=255;i++){fat16charvalid[i]=true;}
-}
-#endif
 
 inline uint16_t fat16int(const uint8_t buf[2]){
     return buf[0] | (buf[1]<<8);
@@ -55,16 +53,16 @@ inline uint32_t fat32int(const uint8_t buf[4]){
 }
 
 inline uint32_t fat32int(const uint8_t high[2],const uint8_t low[2]){
-    return low[0] | (low[1]<<8) | (high[2]<<16) | (high[3]<<24);
+    return low[0] | (low[1]<<8) | (high[0]<<16) | (high[1]<<24);
 }
 
 
-int fatYear(int x){ return (x & FATFS_YEAR_MASK) >> FATFS_YEAR_SHIFT;}
+int fatYear(int x){  return (x & FATFS_YEAR_MASK) >> FATFS_YEAR_SHIFT;}
 int fatMonth(int x){ return (x & FATFS_MON_MASK) >> FATFS_MON_SHIFT;}
-int fatDay(int x){ return (x & FATFS_DAY_MASK) >> FATFS_DAY_SHIFT;}
-int fatHour(int x){ return (x & FATFS_HOUR_MASK) >> FATFS_HOUR_SHIFT;}
-int fatMin(int x){ return (x & FATFS_MIN_MASK) >> FATFS_MIN_SHIFT;}
-int fatSec(int x){ return (x & FATFS_SEC_MASK) >> FATFS_SEC_SHIFT;}
+int fatDay(int x){   return (x & FATFS_DAY_MASK) >> FATFS_DAY_SHIFT;}
+int fatHour(int x){  return (x & FATFS_HOUR_MASK) >> FATFS_HOUR_SHIFT;}
+int fatMin(int x){   return (x & FATFS_MIN_MASK) >> FATFS_MIN_SHIFT;}
+int fatSec(int x){   return (x & FATFS_SEC_MASK) >> FATFS_SEC_SHIFT;}
 
 std::string fatDateToISODate(const uint16_t d,const uint16_t t)
 {
@@ -77,7 +75,7 @@ std::string fatDateToISODate(const uint16_t d,const uint16_t t)
 
 
 
-/* validate an 8.3 name */
+/* validate an 8.3 name (not a long file name) */
 bool valid_fat_dentry_name(const uint8_t name[8],const uint8_t ext[3])
 {
     if( name[0]=='.' && name[1]==' ' && name[2]==' ' && name[3]==' '
@@ -95,7 +93,53 @@ bool valid_fat_dentry_name(const uint8_t name[8],const uint8_t ext[3])
     for(int i=0;i<3;i++){
 	if(!FATFS_IS_83_EXT(ext[i])) return false; // invalid exension
     }
+
+    /* make sure all characters are valid*/
+    for(int i=0;i<8;i++){
+        const uint8_t ch = name[i];
+        if(ch==0 || ch==' ') break;     // end of name
+        if(!isupper(ch) && !isdigit(ch) && ch!=' ' && ch!='!' && ch!='#' &&
+           ch != '$' && ch!='%' && ch !='&' && ch !='\'' && ch!='(' && ch!=')' &&
+           ch != '-' && ch!='@' && ch != '^' && ch!='_' && ch!='`' && ch!='{' && ch !='}' && ch!='~'){
+            return false;
+        }
+    }
+
+    for(int i=0;i<3;i++){
+        const uint8_t ch = ext[i];
+        if(ch==0 || ch==' ') break;     // end of name
+        if(!isupper(ch) && !isdigit(ch) && ch!=' ' && ch!='!' && ch!='#' &&
+           ch != '$' && ch!='%' && ch !='&' && ch !='\'' && ch!='(' && ch!=')' &&
+           ch != '-' && ch!='@' && ch != '^' && ch!='_' && ch!='`' && ch!='{' && ch !='}' && ch!='~'){
+            return false;
+        }
+    }
+
     return true;
+}
+
+
+enum fat_validation_t {
+    INVALID=0,
+    VALID_DENTRY=1,
+    VALID_LFN=2,
+    VALID_LAST_DENTRY=10,
+    ALL_NULL=20} ;
+
+static uint16_t fat_year(short f)
+{
+    return ((f & FATFS_YEAR_MASK) >> FATFS_YEAR_SHIFT) + 1980;
+}
+
+// http://stackoverflow.com/questions/109023/how-to-count-the-number-of-set-bits-in-a-32-bit-integer
+inline uint32_t count_bits(unsigned x)
+{
+    x = x - ((x >> 1) & 0x55555555);
+    x = (x & 0x33333333) + ((x >> 2) & 0x33333333);
+    x = (x + (x >> 4)) & 0x0F0F0F0F;
+    x = x + (x >> 8);
+    x = x + (x >> 16);
+    return x & 0x0000003F;
 }
 
 
@@ -108,55 +152,88 @@ bool valid_fat_dentry_name(const uint8_t name[8],const uint8_t ext[3])
  *
  * http://en.wikipedia.org/wiki/File_Allocation_Table
  */
-int valid_fat_directory_entry(const sbuf_t &sbuf)
+fat_validation_t valid_fat_directory_entry(const sbuf_t &sbuf)
 {
-    if(sbuf.bufsize != sizeof(fatfs_dentry)) return 0; // not big enough
+    if(sbuf.bufsize != sizeof(fatfs_dentry)) return INVALID; // not big enough
     /* If the entire directory entry is the same character, it's not valid */
-    if(sbuf.is_constant(sbuf[0])) return 20; // clearly not valid
+    if(sbuf.is_constant(sbuf[0])) return ALL_NULL; // clearly not valid
 
     const fatfs_dentry &dentry = *(sbuf.get_struct_ptr<fatfs_dentry>(0));
-    if((dentry.attrib & ~FATFS_ATTR_ALL) != 0) return 0; // invalid attribute bit set
+    if((dentry.attrib & ~FATFS_ATTR_ALL) != 0) return INVALID; // invalid attribute bit set
     if(dentry.attrib == FATFS_ATTR_LFN){
 	/* This may be a VFAT long file name */
 	const fatfs_dentry_lfn &lfn = *(const fatfs_dentry_lfn *)sbuf.buf;
-	if((lfn.seq & ~0x40) > 10) return 0;	// invalid sequence number
-	if(lfn.reserved1 != 0) return 0; // invalid reserved1 (LDIR_Type)
-	if(fat16int(lfn.reserved2)!=0) return 0; // LDIR_FstClusLO "Must be ZERO"
-	return 2;				 // looks okay
+	if((lfn.seq & ~0x40) > 10) return INVALID;	// invalid sequence number
+	if(lfn.reserved1 != 0) return INVALID;          // invalid reserved1 (LDIR_Type)
+	if(fat16int(lfn.reserved2)!=0) return INVALID;  // LDIR_FstClusLO "Must be ZERO"
+	return VALID_LFN;			        // looks okay
     } else {
-	if(dentry.name[0]==0) return 10; // "Entry is available and no subsequent entry is in use. "
+	if(dentry.name[0]==0) return VALID_LAST_DENTRY; // "Entry is available and no subsequent entry is in use. "
 
 	/* Look for combinations of times, dates and attributes that have been invalid */
 	if((dentry.attrib & FATFS_ATTR_LFN)==FATFS_ATTR_LFN &&
 	   (dentry.attrib != FATFS_ATTR_LFN)){
-	    return 0;			// LFN set but DIR or ARCHIVE is also set
+	    return INVALID;			// LFN set but DIR or ARCHIVE is also set
 	}
 	if((dentry.attrib & FATFS_ATTR_DIRECTORY) && (dentry.attrib & FATFS_ATTR_ARCHIVE)){
-	    return 0;			// can't have both DIRECTORY and ARCHIVE set
+	    return INVALID;			// can't have both DIRECTORY and ARCHIVE set
 	}
 
-	if(!valid_fat_dentry_name(dentry.name,dentry.ext)) return 0; // invalid name
-	if(dentry.ctimeten>199) return 0;	// create time fine resolution, 0..199
+#if 0
+        /* This is for debugging specific filename bugs */
+        bool dn=false;
+        if(strncmp((const char *)dentry.name,"SYSLINUX",8)==0 && strncmp((const char *)dentry.ext,"CFG",3)==0){
+            dn=true;
+            printf("dn=%d\n",dn);
+        }
+#endif
+
+        if(dentry.attrib & 0x40) return INVALID; // "Device, never found on disk" (wikipedia)
+
+	if(!valid_fat_dentry_name(dentry.name,dentry.ext)) return INVALID; // invalid name
+	if(dentry.ctimeten>199) return INVALID;	// create time fine resolution, 0..199
 	uint16_t ctime = fat16int(dentry.ctime);
 	uint16_t cdate = fat16int(dentry.cdate);
 	uint16_t adate = fat16int(dentry.adate);
 	uint16_t wtime = fat16int(dentry.wtime);
 	uint16_t wdate = fat16int(dentry.wdate);
-	if(ctime && !FATFS_ISTIME(ctime)) return 0; // ctime is null for directories
-	if(cdate && !FATFS_ISDATE(cdate)) return 0; // cdate is null for directories
-	if(adate && !FATFS_ISDATE(adate)) return 0; // adate is null for directories
+
+	if(ctime && !FATFS_ISTIME(ctime)) return INVALID; // ctime is null for directories
+	if(cdate && !FATFS_ISDATE(cdate)) return INVALID; // cdate is null for directories
+	if(adate && !FATFS_ISDATE(adate)) return INVALID; // adate is null for directories
 	if(adate==0 && ctime==0 && cdate==0){
-	    if(dentry.attrib & FATFS_ATTR_VOLUME) return 1; // volume name
-	    return 0;					    // not a volume name
+	    if(dentry.attrib & FATFS_ATTR_VOLUME) return VALID_DENTRY; // volume name
+	    return INVALID;					    // not a volume name
 	}
-	if(!FATFS_ISTIME(wtime)) return 0; // invalid wtime
-	if(!FATFS_ISDATE(wdate)) return 0; // invalid wdate
-	if(ctime && ctime==cdate) return 0; // highly unlikely
-	if(wtime && wtime==wdate) return 0; // highly unlikely
-	if(adate && adate==ctime) return 0; // highly unlikely
-	if(adate && adate==wtime) return 0; // highly unlikely
+	if(!FATFS_ISTIME(wtime)) return INVALID; // invalid wtime
+	if(!FATFS_ISDATE(wdate)) return INVALID; // invalid wdate
+	if(ctime && ctime==cdate) return INVALID; // highly unlikely
+	if(wtime && wtime==wdate) return INVALID; // highly unlikely
+	if(adate && adate==ctime) return INVALID; // highly unlikely
+	if(adate && adate==wtime) return INVALID; // highly unlikely
+
+        /* Look for things that are weird in a FAT32 entry.
+         * This is configurable and largely based on inspection of false-positives.
+         * The parameters should be learned through machine learning, of course...
+         */
+        uint16_t weird_count = 0;
+        if(fat_year(cdate) > opt_last_year) weird_count++;
+        if(fat_year(adate) > opt_last_year) weird_count++;
+        if(fat32int(dentry.size) > opt_weird_file_size) weird_count++;
+        if(fat32int(dentry.size) > opt_weird_file_size2) weird_count++;
+        if(count_bits(dentry.attrib) > opt_max_bits_in_attrib) weird_count++;
+        if(fat32int(dentry.highclust,dentry.startclust) > opt_max_cluster) weird_count++;
+        if(fat32int(dentry.highclust,dentry.startclust) > opt_max_cluster2) weird_count++;
+        if(dentry.ctimeten != 0 && dentry.ctimeten != 100) weird_count++;
+        if(adate==0 && cdate==0) weird_count++;
+        if(adate==0 && wdate==0) weird_count++;
+
+        //printf("wc=%d \n",weird_count);
+
+        if(weird_count > opt_max_weird_count) return INVALID;
+                                                                           
     }
-    return 1;
+    return VALID_DENTRY;
 }
 
 
@@ -183,9 +260,9 @@ void scan_fatdirs(const sbuf_t &sbuf,feature_recorder *wrecorder)
 	    sbuf_t n(sector,entry_number*32,32);
 	    
 	    int ret = valid_fat_directory_entry(n);
-	    if(ret==20) break;		// no more valid
+	    if(ret==ALL_NULL) break;		// no more valid
 	    slots[entry_number] = ret;
-	    if(ret==1){
+	    if(ret==VALID_DENTRY){
 		/* Attempt to validate the years */
 		const fatfs_dentry &dentry = *n.get_struct_ptr<fatfs_dentry>(0);
 		uint16_t ayear = fatYear(fat16int(dentry.adate));
@@ -199,15 +276,15 @@ void scan_fatdirs(const sbuf_t &sbuf,feature_recorder *wrecorder)
 		}
 		ret1_count++;
 	    }
-	    if(ret==0){			// invalid; they are all bad
+	    if(ret==INVALID){			// invalid; they are all bad
 		//last_valid_entry_number = -1; // found an invalid directory entry
 		break;
 	    }
-	    if(ret==1 || ret==2){	// valid; go to the next
+	    if(ret==VALID_DENTRY || ret==VALID_LFN){	// valid; go to the next
 		last_valid_entry_number = entry_number;
 		continue;
 	    }
-	    if(ret==10){		// valid; no more remain
+	    if(ret==VALID_LAST_DENTRY){		// valid; no more remain
 		last_valid_entry_number = entry_number;
 		break;		
 	    }
@@ -229,13 +306,13 @@ void scan_fatdirs(const sbuf_t &sbuf,feature_recorder *wrecorder)
 		    for(int j=0;j<3;j++){ if(dentry.ext[j]!=' ') ss << dentry.ext[j]; }
 		    std::string filename = ss.str();
 		    fatmap["filename"] = filename;
-		    fatmap["ctimeten"] = itos(dentry.ctimeten);
+		    fatmap["ctimeten"] = utos((uint32_t)dentry.ctimeten);
 		    fatmap["ctime"]    = fatDateToISODate(fat16int(dentry.cdate),fat16int(dentry.ctime));
 		    fatmap["atime"]    = fatDateToISODate(fat16int(dentry.adate),0);
 		    fatmap["mtime"]    = fatDateToISODate(fat16int(dentry.wdate),fat16int(dentry.wtime));
-		    fatmap["startcluster"] = itos(fat32int(dentry.highclust,dentry.startclust));
-		    fatmap["filesize"] = itos(fat32int(dentry.size));
-		    fatmap["attrib"]   = itos(dentry.attrib);
+		    fatmap["startcluster"] = utos(fat32int(dentry.highclust,dentry.startclust));
+		    fatmap["filesize"] = utos(fat32int(dentry.size));
+		    fatmap["attrib"]   = utos((uint32_t)dentry.attrib);
 		    wrecorder->write(n.pos0,filename,xml::xmlmap(fatmap,"fileobject","src='fat'"));
 		}
 	    }
@@ -262,9 +339,9 @@ void scan_ntfsdirs(const sbuf_t &sbuf,feature_recorder *wrecorder)
 		if(nlink<10){ // sanity check - most files have less than 10 links
 
 		    xml::strstrmap_t mftmap;
-		    mftmap["nlink"] = itos(nlink);
-		    mftmap["lsn"]   = itos(n.get64u(8)); // $LogFile Sequence Number
-		    mftmap["seq"]   = itos(n.get16u(18));
+		    mftmap["nlink"] = utos(nlink);
+		    mftmap["lsn"]   = utos(n.get64u(8)); // $LogFile Sequence Number
+		    mftmap["seq"]   = utos(n.get16u(18));
 		    size_t attr_off = n.get16u(20); // don't make 16bit!
 
 		    // Now look at every attribute for the ones that we care about
@@ -395,7 +472,7 @@ void scan_windirs(const class scanner_params &sp,const recursion_control_block &
 {
     string myString;
     assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
-    if(sp.phase==scanner_params::startup){
+    if(sp.phase==scanner_params::PHASE_STARTUP){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	sp.info->name		= "windirs";
         sp.info->author         = "Simson Garfinkel";
@@ -403,10 +480,12 @@ void scan_windirs(const class scanner_params &sp,const recursion_control_block &
         sp.info->scanner_version= "1.0";
 	sp.info->feature_names.insert("windirs");
 	//sp.info->flags = scanner_info::SCANNER_DISABLED; // disabled until it's working
+        
+
 	return;
     }
-    if(sp.phase==scanner_params::shutdown) return;		// no shutdown
-    if(sp.phase==scanner_params::scan){
+    if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;		// no shutdown
+    if(sp.phase==scanner_params::PHASE_SCAN){
 	feature_recorder *wrecorder = sp.fs.get_name("windirs");
 	scan_fatdirs(sp.sbuf,wrecorder);
 	scan_ntfsdirs(sp.sbuf,wrecorder);

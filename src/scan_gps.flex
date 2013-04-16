@@ -8,6 +8,8 @@
  *  http://flex.sourceforge.net/manual/Cxx.html
  */
 
+#define SCANNER "scan_gps"
+
 /*
  * Here are samples that we crib from:
  *
@@ -163,7 +165,7 @@ extern "C"
 void scan_gps(const class scanner_params &sp,const recursion_control_block &rcb)
 {
     assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);      
-    if(sp.phase==scanner_params::startup){
+    if(sp.phase==scanner_params::PHASE_STARTUP){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	sp.info->name  = "gps";
         sp.info->author         = "Simson L. Garfinkel";
@@ -172,7 +174,7 @@ void scan_gps(const class scanner_params &sp,const recursion_control_block &rcb)
         sp.info->feature_names.insert("gps");
 	return;
     }
-    if(sp.phase==scanner_params::scan){
+    if(sp.phase==scanner_params::PHASE_SCAN){
         /* Prescan */
     	if(sp.sbuf.find("trkpt",0)==-1 || sp.sbuf.find("lat=",0)==-1 || sp.sbuf.find("lon=",0)==-1) return;
 

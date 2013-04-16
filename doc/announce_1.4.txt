@@ -1,106 +1,30 @@
-		    Announcing bulk_extractor 1.3.
-			    Sept 28, 2013
+		    Announcing bulk_extractor 1.4.
+			    July 1, 2013
+                               -DRAFT-
 
-bulk_extractor Version 1.3 has been released for Linux, MacOS and Windows.
+bulk_extractor Version 1.4 has been released for Linux, MacOS and Windows.
 
 New functionality in Version 1.3 include:
 
-* scan_winpe  --- A scanner for Windows PE Executables
-* scan_elf    --- A scanner for ELF executables
-* scan_vcard  --- A scanner for VCARD files
-* scan_base16 --- Scans for BASE16 (hex) encoded data and reports data of particular
-                  sizes. This means that MD5 codes embedded in your data will be reported.
-* scan_windir --- scans for Windows FAT32 and NTFS directory entries
-
 Improvements in Version 1.3 include:
 
-* The bulk_extractor user interface (BEViewer), a Java program that
-  runs bulk_extractor and allows you to view the results, is now
-  included in both the Unix and Windows distributions. 
+* scan_pdf now does a better job extracting emails from text.
 
-* A Windows installer that will install precompiled 32-bit and 64-bit
-  versions, as well as the user interface.
-
-* A complete rewrite of the EXIF parser. Previously bulk_extractor
-  used exiv2 library for EXIF parsing. Now bulk_extractor has its own
-  parser, and it's both faster and more accurate.
-
-* A complete rewrite of the Windows Prefetch parser such that it now
-  works on all platforms.
-
-* The plugin interface now supports metadata such as author,
-  description, etc.  The -H option now provides a detailed list of all
-  plug-ins including author and other information.  (A revised set of
-  plugin examples will be separately released in mid-October.)
-
-* Ethernet MAC address scanner now considers local context and, as a
-  result, and will have fewer false positives as a result.
-
-* Feature files produced with the "-R" (recursive) flag now use the
-  Unicode private use character U+10001C (field separator in Plane
-  16) to separate the file name from the forensic path. The theory
-  here is that there is no existing file system that might put
-  U+10001C into a file name.
-
-  The Feature files are in UTF-8, so U+10001C is encoded as the hex sequence F4 80 80 9C:
-
-  >>> "\U0010001C".encode('utf-8')
-  b'\xf4\x80\x80\x9c'
-  >>> 
-
-* The -R flag now works on Windows.
-
-* bulk_extractor now reports at the end of each run:
-  - if it was CPU bound or I/O bound 
-  - MBytes/sec performance
-  - Number of email features found
-
-* On Windows, bulk_extractor's report.xml file now includes
-  information about the maximum about of memory that was used. This is
-  useful for determining if the 32-bit version is sufficient for your
-  application or if you require the 64-bit version to support a larger
-  memory address space.
-
-* Replaced FTS with a new implementation (dig.cpp) for recursively scanning files.
 
 
 Incompatiable changes:
 
-* The meanings of the debug flags have been changed. debug=1 now
-  performs more consistency checks but otherwise doesn't print
-  anything. It should be used in development but not in production
-  systems, as debug=1 will slow execution.
 
-* There is now a BOM at the beginning of all feature files. All lines
-  of the feature file can now be read using UTF-8 encoding. 
+================================================================
+BUG FIXES
 
-* Non-UTF-8 characters in the feature files are now coded as
-  4-character Python-style hex escapes. For example, FFFF is coded as
-  \xff\xff. This change is the result of user feedback and requests.
+* scan_windirs was improperly reporting the cluster for fat directory
+  entries. Fixed.
 
-* The JSON scanner now writes the MD5 of the feature as the context.
+* Additional validations were added to scan_windirs for fat directory
+  entries. As a result fewer false positives will be reported.
 
-* email addresses in the email_histogram.txt are now converted to lower case.
-
-* phone numbers in telephone_histogram.txt now have punctuation removed.
-
-* The Ethernet MAC addresses 00:00:00:00:00:00 and 00:11:22:33:44:55
-  are no longer reported, as they were commonly included in text
-  files and were not case-relevant.
-
-* There is now a maximum feature size and maximum context size. Both
-  are currently set at 1MiB. They can't be changed at the moment
-  except by recompiling. A future version will allow these to be
-  specified as parameters.
-
-* scan_net no longer reports IP addresses if the IP checksum is bad
-  (this is a compiled in default).
-
-* although scan_exiv2 is still included, it cannot be enabled unless
-  --enable-exiv2 is specified at configure time. Please do not use
-  exiv2, as we have found many crashing bugs in the exiv2 package. It is
-  only supposed to be used for regression testing. exiv2 should only be
-  used for regression testing.
+* scan_net will now only carve pcap files that are IPv4 or IPv6
 
 ================================================================
 PERFORMANCE STATISTICS
@@ -269,16 +193,17 @@ We are also considering the following scanners (and need help!):
 
 * CAB decompression
 
-* NTFS decompression  (NTLZ - looking for compressed magic numbers)
+* NTFS decompression
 
 * Better handling of MIME encoding
 
 * SQLite database identification
-  - Find the schema and then build a carver.
 
 * Processing of physical drives under Windows
 
+
 We have tabled the following ideas, for the following reasons:
+
 
 * Improved restarting, so that each page is retried once but only
   once. (The improved reliability in verson 1.2 made this request less
