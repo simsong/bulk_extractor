@@ -75,17 +75,14 @@ static void pdf_extract_text(std::string &tbuf,const unsigned char *buf,size_t b
          * pass = 1 --- creation.
          */
         bool in_paren = false;
-        bool in_brket = false;
         int  wordsize = 0;
         for(const unsigned char *cc = buf;cc<buf+bufsize;cc++){
             if(in_paren==false && *cc=='[') {
-                /* Beginning of bracket group not in paren. */
-                in_brket = true;
+                /* Beginning of bracket group not in paren; ignore */
                 continue;
             }
             if(in_paren==false && *cc==']') {
-                /* End of bracket group not in paren; always add a space */
-                in_brket = false;
+                /* End of bracket group not in paren; ignore */
                 continue;
             }
             if(in_paren==false && *cc=='(') {
