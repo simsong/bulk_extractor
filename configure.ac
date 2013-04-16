@@ -125,7 +125,7 @@ case $host in
      LIBS="-lpsapi -lws2_32 -lgdi32 $LIBS"  
      CPPFLAGS="-DUNICODE -D_UNICODE -D__MSVCRT_VERSION__=0x0601 -DWINVER=0x0500 -D_WIN32_WINNT=0x0500 -g $CPPFLAGS"
      CPPFLAGS="$CPPFLAGS --static "
-     CFLAGS="$CFLAGS --static"
+     CFLAGS="$CFLAGS --static -static-libgcc -static-libstdc++"
      CXXFLAGS="$CXXFLAGS -Wno-format "  # compiler mingw-4.3.0 is broken on I64u formats
      CXXFLAGS="$CXXFLAGS --static -static-libgcc -static-libstdc++"
      LDFLAGS="$LDFLAGS --static"
