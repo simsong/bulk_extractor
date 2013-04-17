@@ -32,7 +32,6 @@
 #include <sys/sysctl.h>
 #endif
 
-
 using namespace std;
 
 /****************************************************************
@@ -567,14 +566,16 @@ public:
 		    it.seek_block(*si);
 		}
 	    }
-
-            if(opt_offset_end!=0 && it.raw_offset > opt_offset_end) break; // passed the offset
-            if(page_ctr>=opt_page_start && it.raw_offset>=opt_offset_start){
+            
+            if(opt_offset_end!=0 && opt_offset_end <= it.raw_offset ){
+                break; // passed the offset
+            }
+            if(opt_page_start<=page_ctr && opt_offset_start<=it.raw_offset){
                 if(seen_page_ids.find(it.get_pos0().str()) != seen_page_ids.end()){
                     // this page is in the XML file. We've seen it, so skip it (restart code)
                     goto loop;
                 }
-
+                
                 // attempt to get an sbuf. If we can't get it, we may be in a low-memory situation.
                 // wait for 30 seconds.
 
@@ -595,6 +596,7 @@ public:
                         }
                     }
                     total_bytes += sbuf->pagesize;
+
                     tp.schedule_work(sbuf);	// schedule the work
 		    if(!opt_quiet) notify_user(it);
                 }
@@ -854,6 +856,23 @@ static bool directory_empty(const std::string &d)
     return false;
 }
 
+/**
+ * scaled_stoi:
+ * Like a normal stoi, except it can handle modifies k, m, and g
+ */
+static uint64_t scaled_stoi(const std::string &str)
+{
+    std::stringstream ss(str);
+    uint64_t val;
+    ss >> val;
+    if(str.find('k')!=string::npos  || str.find('K')!=string::npos) val *= 1024;
+    if(str.find('m')!=string::npos  || str.find('m')!=string::npos) val *= 1024 * 1024;
+    if(str.find('g')!=string::npos  || str.find('g')!=string::npos) val *= 1024 * 1024 * 1024;
+    if(str.find('t')!=string::npos  || str.find('T')!=string::npos) val *= 1024 * 1024 * 1024 * 1024;
+    return val;
+}
+
+
 int main(int argc,char **argv)
 {
 #ifdef HAVE_MCHECK
@@ -900,7 +919,7 @@ int main(int argc,char **argv)
     while ((ch = getopt(argc, argv, "A:B:b:C:d:E:e:F:f:G:g:Hhj:M:m:o:P:p:q:Rr:S:s:VW:w:x:Y:z:Z")) != -1) {
 	switch (ch) {
 	case 'A': feature_recorder::offset_add  = stoi64(optarg);break;
-	case 'B': opt_scan_bulk_block_size = atoi(optarg);break;
+	case 'B': opt_scan_bulk_block_size = scaled_stoi(optarg);break;
 	case 'b': feature_recorder::banner_file = optarg; break;
 	case 'C': feature_recorder::context_window = atoi(optarg);break;
 	case 'd':
@@ -929,8 +948,8 @@ int main(int argc,char **argv)
 	    break;
 	case 'F': process_find_file(optarg); break;
 	case 'f': add_find_pattern(optarg); break;
-	case 'G': opt_pagesize = atoi(optarg); break;
-	case 'g': opt_margin = atoi(optarg); break;
+	case 'G': opt_pagesize = scaled_stoi(optarg); break;
+	case 'g': opt_margin = scaled_stoi(optarg); break;
 	case 'j': num_threads = atoi(optarg); break;
 	case 'M': scanner_def::max_depth = atoi(optarg); break;
 	case 'm': max_bad_alloc_errors = atoi(optarg); break;
@@ -979,11 +998,9 @@ int main(int argc,char **argv)
 	    size_t dash = optargs.find('-');
 	    if(dash==string::npos){
 		opt_offset_start = stoi64(optargs);
-		std::cerr << "Starting scanning at byte offset " << opt_offset_start << "\n";
 	    } else {
-		opt_offset_start = stoi64(optargs.substr(0,dash-1));
-		opt_offset_end   = stoi64(optargs.substr(dash+1));
-		std::cerr << "Scanning from by offset " << opt_offset_start << " to " << opt_offset_end << "\n";
+		opt_offset_start = scaled_stoi(optargs.substr(0,dash));
+		opt_offset_end   = scaled_stoi(optargs.substr(dash+1));
 	    }
 	    break;
 	}
@@ -997,6 +1014,10 @@ int main(int argc,char **argv)
 	    break;
 	}
     }
+
+    if(opt_offset_start % opt_pagesize != 0) errx(1,"ERROR: start offset must be a multiple of the page size\n");
+    if(opt_offset_end % opt_pagesize != 0) errx(1,"ERROR: end offset must be a multiple of the page size\n");
+
     argc -= optind;
     argv += optind;
 
