@@ -465,7 +465,7 @@ string process_ewf::str(class image_process::iterator &it)
 
 uint64_t process_ewf::blocks(class image_process::iterator &it)
 {
-    errx(1,"random seek is not implemented for process_aff yet");
+  return this->ewf_filesize / opt_pagesize;
 }
 
 uint64_t process_ewf::seek_block(class image_process::iterator &it,uint64_t block)

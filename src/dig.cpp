@@ -203,13 +203,14 @@ static std::wstring utf8to16(const std::string &fn8)
     utf8::utf8to16(fn8.begin(),fn8.end(),back_inserter(fn16));
     return fn16;
 }
+#if 0
 static std::string utf16to8(const std::wstring &fn16)
 {
     std::string fn8;
     utf8::utf16to8(fn16.begin(),fn16.end(),back_inserter(fn8));
     return fn8;
 }
-
+#endif
 
 dig::dig(const std::string &start_):start(utf8to16(start_))
 {

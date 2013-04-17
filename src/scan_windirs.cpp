@@ -30,12 +30,12 @@
 #define CLUSTERS_IN_1GiB 2*1024*1024
 
 /* fat32 tuning parameters for weirdness. Each of these define something weird. If too much is weird, it's probably not a FAT32 directory entry.. */
-uint opt_weird_file_size    = 1024*1024*150; // max file size
-uint opt_weird_file_size2   = 1024*1024*512; // max file size
+uint32_t opt_weird_file_size    = 1024*1024*150; // max file size
+uint32_t opt_weird_file_size2   = 1024*1024*512; // max file size
 uint32_t opt_max_cluster    = 32*CLUSTERS_IN_1GiB; // assume smaller than 32GB with 512 byte clusters
 uint32_t opt_max_cluster2   = 128*CLUSTERS_IN_1GiB; // assume smaller than 512GB with 512 byte clusters
-uint opt_max_bits_in_attrib = 3;
-uint opt_max_weird_count    = 2;
+uint32_t opt_max_bits_in_attrib = 3;
+uint32_t opt_max_weird_count    = 2;
 
 /**
  * code from tsk3

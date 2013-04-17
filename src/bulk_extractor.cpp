@@ -530,6 +530,10 @@ public:
 	}
     }
 
+#ifndef HAVE_RANDOM
+#define random(x) rand(x)
+#endif
+
     BulkExtractor_Phase1(xml &xreport_,aftimer &timer_,u_int num_threads_,int opt_quiet_):
         xreport(xreport_),timer(timer_),
 	num_threads(num_threads_),opt_quiet(opt_quiet_),
@@ -554,8 +558,10 @@ public:
 		    /* Create a list of blocks to sample */
 		    uint64_t blocks = it.blocks();
 		    while(blocks_to_sample.size() < blocks * sampling_fraction){
-			uint64_t blk = ((random()<<32) | (random())) % blocks;
-			blocks_to_sample.insert(blk); // will be added even if already present
+		      uint64_t blk_high = ((uint64_t)random()) << 32;
+		      uint64_t blk_low  = random();
+		      uint64_t blk =  (blk_high | blk_low) % blocks;
+		      blocks_to_sample.insert(blk); // will be added even if already present
 		    }
 
 		    //for(si = blocks_to_sample.begin();si!=blocks_to_sample.end();++si){
@@ -868,7 +874,7 @@ static uint64_t scaled_stoi(const std::string &str)
     if(str.find('k')!=string::npos  || str.find('K')!=string::npos) val *= 1024;
     if(str.find('m')!=string::npos  || str.find('m')!=string::npos) val *= 1024 * 1024;
     if(str.find('g')!=string::npos  || str.find('g')!=string::npos) val *= 1024 * 1024 * 1024;
-    if(str.find('t')!=string::npos  || str.find('T')!=string::npos) val *= 1024 * 1024 * 1024 * 1024;
+    if(str.find('t')!=string::npos  || str.find('T')!=string::npos) val *= 1024LL * 1024LL * 1024LL * 1024LL;
     return val;
 }
 
