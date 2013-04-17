@@ -59,58 +59,26 @@ MINGW64=x86_64-w64-mingw32
 MINGW32_DIR=/usr/$MINGW32/sys-root/mingw
 MINGW64_DIR=/usr/$MINGW64/sys-root/mingw
 
-# TODO: probably unnecessary
-#PTHREADS_URL="https://github.com/downloads/simsong/bulk_extractor/pthreads-w32-2-9-1-release.tar.gz"
-#
-#for CROSS in $MINGW32 $MINGW64 ; do
-#  echo Checking pthreads for $CROSS
-#  DESTDIR=/usr/$CROSS/sys-root/mingw/include/
-#  if [ ! -r $DESTDIR/pthread.h ]; then
-#    if [ ! -r pthreads-w32-2-9-1-release.tar.gz ]; then
-#	echo Getting pthreads from $PTHREADS_URL
-#	wget $PTHREADS_URL
-#    fi
-#    if [ ! -r pthreads-w32-2-9-1-release/Makefile ]; then
-#        /bin/rm -rf pthreads-w32-2-9-1-release
-#        tar xfvz pthreads-w32-2-9-1-release.tar.gz
-#    fi
-#    pushd pthreads-w32-2-9-1-release
-#      make CROSS=$CROSS- CFLAGS="-DHAVE_STRUCT_TIMESPEC -I." clean GC-static
-#      sudo install implement.h need_errno.h pthread.h sched.h semaphore.h $DESTDIR
-#      if [ $? != 0 ]; then
-#        echo "Unable to install include files for $CROSS"
-#        exit 1
-#      fi
-#      sudo install *.a /usr/$CROSS/sys-root/mingw/lib/
-#      if [ $? != 0 ]; then
-#        echo "Unable to install library for $CROSS"
-#        exit 1
-#      fi
-#      make clean
-#    popd
-#  fi
-#done
-
 #
 # TRE
 #
 
 echo "Building and installing TRE for mingw"
 TREVER=0.8.0
-TREFILE=tre-$TREVER.zip
+TREFILE=tre-$TREVER.tar.gz
 TREDIR=tre-$TREVER
 TREURL=http://laurikari.net/tre/$TREFILE
 
 wget $TREURL
-unzip $TREFILE
+tar xfvz $TREFILE
 for i in 32 64 ; do
   echo
   echo libtre mingw$i
-  mkdir libtre-mingw$i
-  pushd libtre-mingw$i
-  ../$TREDIR/mingw$i-configure --enable-static
+  pushd tre-$TREVER
+  mingw$i-configure --enable-static
   make
   sudo make install
+  make clean
   popd
 done
 echo "TRE mingw installation complete."
@@ -130,11 +98,11 @@ tar xzf $EWFFILE
 for i in 32 64 ; do
   echo
   echo libewf mingw$i
-  mkdir libewf-mingw$i
-  pushd libewf-mingw$i
-  ../$EWFDIR/mingw$i-configure --enable-static
+  pushd libewf-$EWFVER
+  mingw$i-configure --enable-static
   make
   sudo make install
+  make clean
   popd
 done
 
