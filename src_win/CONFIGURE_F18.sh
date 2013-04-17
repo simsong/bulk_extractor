@@ -24,9 +24,9 @@ press any key to continue...
 EOF
 read
 
-MPKGS="autoconf automake gcc gcc-c++ osslsigncode mingw32-nsis flex wine zlib-devel wget md5deep git "
-MPKGS+="mingw32-gcc mingw32-gcc-c++ mingw32-zlib mingw32-zlib-static mingw32-libgnurx-static mingw32-boost mingw32-boost-static "
-MPKGS+="mingw64-gcc mingw64-gcc-c++ mingw64-zlib mingw64-zlib-static mingw64-libgnurx-static mingw64-boost mingw64-boost-static"
+MPKGS="autoconf automake gcc gcc-c++ osslsigncode flex wine zlib-devel wget md5deep git "
+MPKGS+="mingw32-gcc mingw32-gcc-c++ "
+MPKGS+="mingw64-gcc mingw64-gcc-c++ "
 
 if [ ! -r /etc/redhat-release ]; then
   echo This requires Fedora Linux
@@ -47,6 +47,18 @@ if [ $? != 0 ]; then
   echo "Could not install some of the packages. Will not proceed."
   exit 1
 fi
+
+echo Attempting to install both DLL and static version of all mingw libraries
+echo At this point we will keep going even if there is an error...
+for M in mingw32 mingw64 ;
+do
+  for lib in zlib gettext boost cairo pixman freetype fontconfig bzip2 expat pthreads libgnurx tre wpcap nsis ;
+  do
+    yum -y install ${M}-${lib}
+    yum -y install ${M}-${lib}-static
+  done
+done
+
 
 echo 
 echo "Now performing a yum update to update system packages"
