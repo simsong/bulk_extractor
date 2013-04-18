@@ -83,16 +83,16 @@ TREURL=http://laurikari.net/tre/$TREFILE
 
 wget $TREURL
 tar xfvz $TREFILE
+pushd tre-$TREVER
 for i in 32 64 ; do
   echo
   echo libtre mingw$i
-  pushd tre-$TREVER
   mingw$i-configure --enable-static
   make
   sudo make install
   make clean
-  popd
 done
+popd
 echo "TRE mingw installation complete."
 
 #
@@ -107,17 +107,16 @@ EWFURL=http://libewf.googlecode.com/files/$EWFFILE
 
 wget $EWFURL 
 tar xzf $EWFFILE 
+pushd $EWFDIR
 for i in 32 64 ; do
   echo
   echo libewf mingw$i
-  pushd libewf-$EWFVER
   mingw$i-configure --enable-static
   make
   sudo make install
   make clean
-  popd
 done
-
+popd
 echo "LIBEWF mingw installation complete."
 
 #
@@ -186,7 +185,7 @@ popd
 
 echo "Cleaning up"
 rm -f $TREFILE $EWFFILE $ICUFILE
-rm -rf $TREDIR libtre-mingw32 libtre-mingw64 $EWFDIR libewf-mingw32 libewf-mingw64 icu icu-linux icu-mingw32 icu-mingw64 $LGDIR
+rm -rf $TREDIR $EWFDIR icu icu-linux icu-mingw32 icu-mingw64 $LGDIR
 
 echo ...
 echo 'Now running ../bootstrap.sh and configure'
