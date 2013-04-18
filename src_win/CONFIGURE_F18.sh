@@ -54,15 +54,15 @@ for M in mingw32 mingw64 ;
 do
   for lib in zlib gettext boost cairo pixman freetype fontconfig bzip2 expat pthreads libgnurx tre wpcap nsis ;
   do
-    yum -y install ${M}-${lib}
-    yum -y install ${M}-${lib}-static
+    sudo yum -y install ${M}-${lib}
+    sudo yum -y install ${M}-${lib}-static
   done
 done
 
 
 echo 
 echo "Now performing a yum update to update system packages"
-echo yum -y update
+echo sudo yum -y update
 
 
 MINGW32=i686-w64-mingw32
