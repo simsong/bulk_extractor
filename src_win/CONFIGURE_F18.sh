@@ -87,7 +87,7 @@ pushd tre-$TREVER
 for i in 32 64 ; do
   echo
   echo libtre mingw$i
-  mingw$i-configure --enable-static
+  mingw$i-configure --enable-static --disable-shared
   make
   sudo make install
   make clean
@@ -111,7 +111,7 @@ pushd $EWFDIR
 for i in 32 64 ; do
   echo
   echo libewf mingw$i
-  mingw$i-configure --enable-static
+  mingw$i-configure --enable-static --disable-shared
   make
   sudo make install
   make clean
