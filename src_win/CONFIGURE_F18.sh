@@ -59,7 +59,7 @@ done | xargs sudo yum -y install
 
 echo 
 echo "Now performing a yum update to update system packages"
-echo sudo yum -y update
+sudo yum -y update
 
 
 MINGW32=i686-w64-mingw32
