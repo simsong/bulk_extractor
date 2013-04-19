@@ -165,19 +165,22 @@ echo "Building and installing lightgrep for mingw"
 #LGVER=
 #LGFILE=
 LGDIR=liblightgrep
-LGURL=https://github.com/jonstewart/liblightgrep.git
+LGURL=https://github.com/uckelman/liblightgrep.git
 
 git clone --recursive $LGURL $LGDIR
 pushd $LGDIR
-#echo
-#echo lightgrep mingw32
-#make clean
-#sudo make install
-echo
-echo lightgrep mingw64
-make CROSS=1
-sudo make CROSS=1 install
+autoreconf -i
+#for i in 32 64 ; do
+for i in 64 ; do
+  echo
+  echo liblightgrep mingw$i
+  mingw$i-configure --enable-static --disable-shared
+  make
+  sudo make install
+  make clean
+done
 popd
+echo "liblightgrep mingw installation complete."
 
 #
 #
