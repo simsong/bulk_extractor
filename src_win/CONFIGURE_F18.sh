@@ -68,6 +68,9 @@ MINGW64=x86_64-w64-mingw32
 MINGW32_DIR=/usr/$MINGW32/sys-root/mingw
 MINGW64_DIR=/usr/$MINGW64/sys-root/mingw
 
+# from here on, exit if any command fails
+set -e
+
 #
 # TRE
 #
