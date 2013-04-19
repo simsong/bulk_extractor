@@ -147,7 +147,7 @@ if(__name__=="__main__"):
             fns = glob.glob(fname)
         else:
             fns = [fname]
-        for fn in fnames:
+        for fn in fns:
             try:
                 br_readers.add(bulk_extractor_reader.BulkReport(fn))
             except IOError:
