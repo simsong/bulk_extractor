@@ -238,12 +238,13 @@ string process_aff::str(class image_process::iterator &it)
 
 uint64_t process_aff::blocks(class image_process::iterator &it)
 {
-    errx(1,"random seek is not implemented for process_aff yet");
+    return pagelist.size();
 }
 
 uint64_t process_aff::seek_block(class image_process::iterator &it,uint64_t block)
 {
-    errx(1,"random seek is not implemented for process_aff yet");
+    it.page_counter = block;
+    return block;
 }
 
 
@@ -470,7 +471,8 @@ uint64_t process_ewf::blocks(class image_process::iterator &it)
 
 uint64_t process_ewf::seek_block(class image_process::iterator &it,uint64_t block)
 {
-    errx(1,"random seek is not implemented for process_aff yet");
+    it.raw_offset = opt_pagesize * block;
+    return block;
 }
 
 

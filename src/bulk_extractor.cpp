@@ -303,8 +303,8 @@ static void process_path(const image_process &p,string path,scanner_params::Prin
 	return;
     }
 
-    /* make up a bogus feature recorder set and feature recorder */
-    feature_recorder_set fs(feature_recorder_set::DISABLED);
+    /* make up a bogus feature recorder set and with a disabled feature recorder */
+    feature_recorder_set fs(feature_recorder_set::SET_DISABLED);
 
     pos0_t pos0(path+"-PRINT"); // insert the PRINT token
     sbuf_t sbuf(pos0,buf,count,count,true); // sbuf system will free
@@ -316,6 +316,7 @@ static void process_path(const image_process &p,string path,scanner_params::Prin
  * process a path for a given filename.
  * Opens the image and calls the function above.
  * Also implements HTTP server with "-http" option.
+ * Feature recorders disabled.
  */
 static void process_path(const char *fn,string path)
 {
