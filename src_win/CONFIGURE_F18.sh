@@ -124,35 +124,36 @@ echo "LIBEWF mingw installation complete."
 #
 
 echo "Building and installing ICU for mingw"
-ICUVER=50_1_2
+ICUVER=51_1
 ICUFILE=icu4c-$ICUVER-src.tgz
 ICUDIR=icu
-ICUURL=http://download.icu-project.org/files/icu4c/50.1.2/$ICUFILE
+ICUURL=http://download.icu-project.org/files/icu4c/51.1/$ICUFILE
 
 wget $ICUURL
 tar xzf $ICUFILE
-patch -p1 <icu-mingw-libprefix.patch
+patch -p1 <icu-mingw32-libprefix.patch
+patch -p1 <icu-mingw64-libprefix.patch
 echo
 echo icu linux
 mkdir icu-linux
 pushd icu-linux
-CC=gcc CXX=g++ CFLAGS=-O3 CXXFLAGS=-O3 CPPFLAGS="-DU_USING_ICU_NAMESPACE=0 -DU_CHARSET_IS_UTF8=1 -DUNISTR_FROM_CHAR_EXPLICIT=explicit -DUNSTR_FROM_STRING_EXPLICIT=explicit" ../icu/source/runConfigureICU Linux --enable-shared --disable-extras --disable-icuio --disable-layout --disable-samples
-make
+CC=gcc CXX=g++ CFLAGS=-O3 CXXFLAGS=-O3 CPPFLAGS="-DU_USING_ICU_NAMESPACE=0 -DU_CHARSET_IS_UTF8=1 -DUNISTR_FROM_CHAR_EXPLICIT=explicit -DUNSTR_FROM_STRING_EXPLICIT=explicit" ../icu/source/runConfigureICU Linux --enable-shared --disable-extras --disable-icuio --disable-layout --disable-samples --disable-tests
+make VERBOSE=1
 popd
 echo
 echo icu mingw32
 mkdir icu-mingw32
 pushd icu-mingw32
-../icu/source/configure CC=$MINGW32-gcc CXX=$MINGW32-g++ CFLAGS=-O3 CXXFLAGS=-O3 CPPFLAGS="-DU_USING_ICU_NAMESPACE=0 -DU_CHARSET_IS_UTF8=1 -DUNISTR_FROM_CHAR_EXPLICIT=explicit -DUNSTR_FROM_STRING_EXPLICIT=explicit" --enable-static --disable-shared --prefix=$MINGW32_DIR --host=$MINGW32 --with-cross-build=`realpath ../icu-linux` --disable-extras --disable-icuio --disable-layout --disable-samples --with-data-packaging=static --disable-dyload
-make
+../icu/source/configure CC=$MINGW32-gcc CXX=$MINGW32-g++ CFLAGS=-O3 CXXFLAGS=-O3 CPPFLAGS="-DU_USING_ICU_NAMESPACE=0 -DU_CHARSET_IS_UTF8=1 -DUNISTR_FROM_CHAR_EXPLICIT=explicit -DUNSTR_FROM_STRING_EXPLICIT=explicit" --enable-static --disable-shared --prefix=$MINGW32_DIR --host=$MINGW32 --with-cross-build=`realpath ../icu-linux` --disable-extras --disable-icuio --disable-layout --disable-samples --disable-tests --with-data-packaging=static --disable-dyload
+make VERBOSE=1
 sudo make install
 popd
 echo
 echo icu mingw64
 mkdir icu-mingw64
 pushd icu-mingw64
-../icu/source/configure CC=$MINGW64-gcc CXX=$MINGW64-g++ CFLAGS=-O3 CXXFLAGS=-O3 CPPFLAGS="-DU_USING_ICU_NAMESPACE=0 -DU_CHARSET_IS_UTF8=1 -DUNISTR_FROM_CHAR_EXPLICIT=explicit -DUNSTR_FROM_STRING_EXPLICIT=explicit" --enable-static --disable-shared --prefix=$MINGW64_DIR --host=$MINGW64 --with-cross-build=`realpath ../icu-linux` --disable-extras --disable-icuio --disable-layout --disable-samples --with-data-packaging=static --disable-dyload
-make
+../icu/source/configure CC=$MINGW64-gcc CXX=$MINGW64-g++ CFLAGS=-O3 CXXFLAGS=-O3 CPPFLAGS="-DU_USING_ICU_NAMESPACE=0 -DU_CHARSET_IS_UTF8=1 -DUNISTR_FROM_CHAR_EXPLICIT=explicit -DUNSTR_FROM_STRING_EXPLICIT=explicit" --enable-static --disable-shared --prefix=$MINGW64_DIR --host=$MINGW64 --with-cross-build=`realpath ../icu-linux` --disable-extras --disable-icuio --disable-layout --disable-samples --disable-tests --with-data-packaging=static --disable-dyload
+make VERBOSE=1
 sudo make install
 popd
 echo "ICU mingw installation complete."
