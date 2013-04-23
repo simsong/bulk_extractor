@@ -131,7 +131,7 @@ Section "32-bit configuration"
 	createShortCut "BEViewer.jar" "..\BEViewer.jar"
  
 	# create the shortcut link to the target's start menu
-	createShortCut "$SMPROGRAMS\${APPNAME}\${APPNAME} (32-bit).lnk" "$OUTDIR\BEViewerLauncher.exe"
+	createShortCut "$SMPROGRAMS\${APPNAME}\BEViewer with ${APPNAME} (32-bit).lnk" "$OUTDIR\BEViewerLauncher.exe"
 sectionEnd
 
 Section "64-bit configuration"
@@ -148,7 +148,7 @@ Section "64-bit configuration"
 	createShortCut "BEViewer.jar" "..\BEViewer.jar"
  
 	# create the shortcut link to the target's start menu
-	createShortCut "$SMPROGRAMS\${APPNAME}\${APPNAME} (64-bit).lnk" "$OUTDIR\BEViewerLauncher.exe"
+	createShortCut "$SMPROGRAMS\${APPNAME}\BEViewer with ${APPNAME} (64-bit).lnk" "$OUTDIR\BEViewerLauncher.exe"
 sectionEnd
 
 !ifndef SIGN
@@ -206,8 +206,8 @@ section "uninstall"
 	rmdir "$INSTDIR\64-bit"
 
 	# uninstall Start Menu launcher shortcuts
-	delete "$SMPROGRAMS\${APPNAME}\${APPNAME} (32-bit).lnk"
-	delete "$SMPROGRAMS\${APPNAME}\${APPNAME} (64-bit).lnk"
+	delete "$SMPROGRAMS\${APPNAME}\BEViewer with ${APPNAME} (32-bit).lnk"
+	delete "$SMPROGRAMS\${APPNAME}\BEViewer with ${APPNAME} (64-bit).lnk"
 	delete "$SMPROGRAMS\${APPNAME}\uninstall ${APPNAME}.lnk"
 	rmDir "$SMPROGRAMS\${APPNAME}"
 
