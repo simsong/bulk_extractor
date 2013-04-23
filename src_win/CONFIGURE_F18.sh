@@ -83,7 +83,7 @@ TREURL=http://laurikari.net/tre/$TREFILE
 
 wget $TREURL
 tar xfvz $TREFILE
-pushd tre-$TREVER
+pushd $TREDIR
 for i in 32 64 ; do
   echo
   echo libtre mingw$i
