@@ -163,16 +163,13 @@ echo "ICU mingw installation complete."
 #
 
 echo "Building and installing lightgrep for mingw"
-#LGVER=
-#LGFILE=
 LGDIR=liblightgrep
-LGURL=https://github.com/uckelman/liblightgrep.git
+LGURL=git://github.com/LightboxTech/liblightgrep.git
 
 git clone --recursive $LGURL $LGDIR
 pushd $LGDIR
 autoreconf -i
-#for i in 32 64 ; do
-for i in 64 ; do
+for i in 32 64 ; do
   echo
   echo liblightgrep mingw$i
   mingw$i-configure --enable-static --disable-shared
