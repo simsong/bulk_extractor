@@ -127,15 +127,15 @@ namespace { // local namespace hides these from other translation units
 
 extern "C"
 void scan_lightgrep(const class scanner_params &sp, const recursion_control_block &rcb) {
-  if (sp.phase == scanner_params::startup) {
+  if (sp.phase == scanner_params::PHASE_STARTUP) {
     init(sp);
   }
-  else if (sp.phase == scanner_params::shutdown) {
+  else if (sp.phase == scanner_params::PHASE_SHUTDOWN) {
     // cleanup heap objects in static handles
     lg_destroy_program(lgProgram);
     lg_destroy_pattern_map(lgPatternMap);
   }
-  else if (sp.phase == scanner_params::scan) {
+  else if (sp.phase == scanner_params::PHASE_SCAN) {
     if (!(lgPatternMap && lg_pattern_map_size(lgPatternMap) && lgProgram)) {
       return;
     }

@@ -50,19 +50,16 @@ fi
 
 echo Attempting to install both DLL and static version of all mingw libraries
 echo At this point we will keep going even if there is an error...
-for M in mingw32 mingw64 ;
-do
-  for lib in zlib gettext boost cairo pixman freetype fontconfig bzip2 expat pthreads libgnurx tre wpcap nsis ;
-  do
-    yum -y install ${M}-${lib}
-    yum -y install ${M}-${lib}-static
+for M in mingw32 mingw64 ; do
+  for lib in zlib gettext boost cairo pixman freetype fontconfig bzip2 expat pthreads libgnurx tre wpcap nsis ; do
+    echo ${M}-${lib} ${M}-${lib}-static
   done
-done
+done | xargs sudo yum -y install
 
 
 echo 
 echo "Now performing a yum update to update system packages"
-echo yum -y update
+sudo yum -y update
 
 
 MINGW32=i686-w64-mingw32
@@ -70,6 +67,9 @@ MINGW64=x86_64-w64-mingw32
 
 MINGW32_DIR=/usr/$MINGW32/sys-root/mingw
 MINGW64_DIR=/usr/$MINGW64/sys-root/mingw
+
+# from here on, exit if any command fails
+set -e
 
 #
 # TRE
@@ -83,16 +83,16 @@ TREURL=http://laurikari.net/tre/$TREFILE
 
 wget $TREURL
 tar xfvz $TREFILE
+pushd $TREDIR
 for i in 32 64 ; do
   echo
   echo libtre mingw$i
-  pushd tre-$TREVER
-  mingw$i-configure --enable-static
+  mingw$i-configure --enable-static --disable-shared
   make
   sudo make install
   make clean
-  popd
 done
+popd
 echo "TRE mingw installation complete."
 
 #
@@ -107,17 +107,16 @@ EWFURL=http://libewf.googlecode.com/files/$EWFFILE
 
 wget $EWFURL 
 tar xzf $EWFFILE 
+pushd $EWFDIR
 for i in 32 64 ; do
   echo
   echo libewf mingw$i
-  pushd libewf-$EWFVER
-  mingw$i-configure --enable-static
+  mingw$i-configure --enable-static --disable-shared
   make
   sudo make install
   make clean
-  popd
 done
-
+popd
 echo "LIBEWF mingw installation complete."
 
 #
@@ -125,37 +124,38 @@ echo "LIBEWF mingw installation complete."
 #
 
 echo "Building and installing ICU for mingw"
-ICUVER=50_1_2
+ICUVER=51_1
 ICUFILE=icu4c-$ICUVER-src.tgz
 ICUDIR=icu
-ICUURL=http://download.icu-project.org/files/icu4c/50.1.2/$ICUFILE
+ICUURL=http://download.icu-project.org/files/icu4c/51.1/$ICUFILE
 
 wget $ICUURL
 tar xzf $ICUFILE
-patch -p1 <icu-mingw-libprefix.patch
+patch -p1 <icu-mingw32-libprefix.patch
+patch -p1 <icu-mingw64-libprefix.patch
+
+# build ICU for Linux to get packaging tools used by MinGW builds
 echo
 echo icu linux
 mkdir icu-linux
 pushd icu-linux
-CC=gcc CXX=g++ CFLAGS=-O3 CXXFLAGS=-O3 CPPFLAGS="-DU_USING_ICU_NAMESPACE=0 -DU_CHARSET_IS_UTF8=1 -DUNISTR_FROM_CHAR_EXPLICIT=explicit -DUNSTR_FROM_STRING_EXPLICIT=explicit" ../icu/source/runConfigureICU Linux --enable-shared --disable-extras --disable-icuio --disable-layout --disable-samples
-make
+CC=gcc CXX=g++ CFLAGS=-O3 CXXFLAGS=-O3 CPPFLAGS="-DU_USING_ICU_NAMESPACE=0 -DU_CHARSET_IS_UTF8=1 -DUNISTR_FROM_CHAR_EXPLICIT=explicit -DUNSTR_FROM_STRING_EXPLICIT=explicit" ../icu/source/runConfigureICU Linux --enable-shared --disable-extras --disable-icuio --disable-layout --disable-samples --disable-tests
+make VERBOSE=1
 popd
-echo
-echo icu mingw32
-mkdir icu-mingw32
-pushd icu-mingw32
-../icu/source/configure CC=$MINGW32-gcc CXX=$MINGW32-g++ CFLAGS=-O3 CXXFLAGS=-O3 CPPFLAGS="-DU_USING_ICU_NAMESPACE=0 -DU_CHARSET_IS_UTF8=1 -DUNISTR_FROM_CHAR_EXPLICIT=explicit -DUNSTR_FROM_STRING_EXPLICIT=explicit" --enable-static --disable-shared --prefix=$MINGW32_DIR --host=$MINGW32 --with-cross-build=`realpath ../icu-linux` --disable-extras --disable-icuio --disable-layout --disable-samples --with-data-packaging=static --disable-dyload
-make
-sudo make install
-popd
-echo
-echo icu mingw64
-mkdir icu-mingw64
-pushd icu-mingw64
-../icu/source/configure CC=$MINGW64-gcc CXX=$MINGW64-g++ CFLAGS=-O3 CXXFLAGS=-O3 CPPFLAGS="-DU_USING_ICU_NAMESPACE=0 -DU_CHARSET_IS_UTF8=1 -DUNISTR_FROM_CHAR_EXPLICIT=explicit -DUNSTR_FROM_STRING_EXPLICIT=explicit" --enable-static --disable-shared --prefix=$MINGW64_DIR --host=$MINGW64 --with-cross-build=`realpath ../icu-linux` --disable-extras --disable-icuio --disable-layout --disable-samples --with-data-packaging=static --disable-dyload
-make
-sudo make install
-popd
+
+# build 32- and 64-bit ICU for MinGW
+for i in 32 64 ; do
+  echo
+  echo icu mingw$i
+  mkdir icu-mingw$i
+  pushd icu-mingw$i
+  eval MINGW=\$MINGW$i
+  eval MINGW_DIR=\$MINGW${i}_DIR
+  ../icu/source/configure CC=$MINGW-gcc CXX=$MINGW-g++ CFLAGS=-O3 CXXFLAGS=-O3 CPPFLAGS="-DU_USING_ICU_NAMESPACE=0 -DU_CHARSET_IS_UTF8=1 -DUNISTR_FROM_CHAR_EXPLICIT=explicit -DUNSTR_FROM_STRING_EXPLICIT=explicit" --enable-static --disable-shared --prefix=$MINGW_DIR --host=$MINGW --with-cross-build=`realpath ../icu-linux` --disable-extras --disable-icuio --disable-layout --disable-samples --disable-tests --with-data-packaging=static --disable-dyload
+  make VERBOSE=1
+  sudo make install
+  popd
+done
 echo "ICU mingw installation complete."
 
 #
@@ -163,22 +163,22 @@ echo "ICU mingw installation complete."
 #
 
 echo "Building and installing lightgrep for mingw"
-#LGVER=
-#LGFILE=
 LGDIR=liblightgrep
-LGURL=https://github.com/jonstewart/liblightgrep.git
+LGURL=git://github.com/LightboxTech/liblightgrep.git
 
 git clone --recursive $LGURL $LGDIR
 pushd $LGDIR
-#echo
-#echo lightgrep mingw32
-#make clean
-#sudo make install
-echo
-echo lightgrep mingw64
-make CROSS=1
-sudo make CROSS=1 install
+autoreconf -i
+for i in 32 64 ; do
+  echo
+  echo liblightgrep mingw$i
+  mingw$i-configure --enable-static --disable-shared
+  make
+  sudo make install
+  make clean
+done
 popd
+echo "liblightgrep mingw installation complete."
 
 #
 #
@@ -186,7 +186,7 @@ popd
 
 echo "Cleaning up"
 rm -f $TREFILE $EWFFILE $ICUFILE
-rm -rf $TREDIR libtre-mingw32 libtre-mingw64 $EWFDIR libewf-mingw32 libewf-mingw64 icu icu-linux icu-mingw32 icu-mingw64 $LGDIR
+rm -rf $TREDIR $EWFDIR icu icu-linux icu-mingw32 icu-mingw64 $LGDIR
 
 echo ...
 echo 'Now running ../bootstrap.sh and configure'
