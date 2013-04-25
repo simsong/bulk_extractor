@@ -624,7 +624,7 @@ int process_raw::pread(unsigned char *buf,size_t bytes,int64_t offset) const
 
 	current_file_name = fi->name;
 #ifdef WIN32
-        current_handle = CreateFile(fi->name.c_str(), FILE_READ_DATA,
+        current_handle = CreateFileA(fi->name.c_str(), FILE_READ_DATA,
                                     FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
         if(current_handle==INVALID_HANDLE_VALUE) return -1;
 #else        
@@ -647,6 +647,7 @@ int process_raw::pread(unsigned char *buf,size_t bytes,int64_t offset) const
 
     assert(fi->offset <= offset);
 #ifdef WIN32
+    DWORD bytes_read = 0;
     LARGE_INTEGER li;
     li.QuadPart = offset;
     li.LowPart = SetFilePointer(current_handle, li.LowPart, &li.HighPart, FILE_BEGIN);
