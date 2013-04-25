@@ -518,11 +518,21 @@ static string make_list_template(string fn,int *start)
 
 
 process_raw::process_raw(string fname) :image_process(fname),file_list(),
-					raw_filesize(0),current_file_name(),current_fd(-1) {
+					raw_filesize(0),current_file_name(),
+#ifdef WIN32
+                                        current_handle(INVALID_HANDLE_VALUE)
+#else
+                                        current_fd(-1)
+#endif
+{
 }
 
 process_raw::~process_raw() {
+#ifdef WIN32
+    if(current_handle!=INVALID_HANDLE_VALUE) ::CloseHandle(current_handle);
+#else
     if(current_fd>0) ::close(current_fd);
+#endif
 }
 
 /**
@@ -606,10 +616,21 @@ int process_raw::pread(unsigned char *buf,size_t bytes,int64_t offset) const
      */
 
     if(fi->name != current_file_name){
+#ifdef WIN32
+        if(current_handle!=INVALID_HANDLE_VALUE) ::CloseHandle(current_handle);
+#else
 	if(current_fd>=0) close(current_fd);
+#endif
+
 	current_file_name = fi->name;
+#ifdef WIN32
+        current_handle = CreateFile(fi->name.c_str(), FILE_READ_DATA,
+                                    FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+        if(current_handle==INVALID_HANDLE_VALUE) return -1;
+#else        
 	current_fd = ::open(fi->name.c_str(),O_RDONLY|O_BINARY);
 	if(current_fd<=0) return -1;	// can't read this data
+#endif
     }
 
 #if defined(HAVE_PREAD64)
@@ -625,7 +646,17 @@ int process_raw::pread(unsigned char *buf,size_t bytes,int64_t offset) const
     /* we have neither, so just hack it with lseek64 */
 
     assert(fi->offset <= offset);
+#ifdef WIN32
+    LARGE_INTEGER li;
+    li.QuadPart = offset;
+    li.LowPart = SetFilePointer(current_handle, li.LowPart, &li.HighPart, FILE_BEGIN);
+    if(li.LowPart == INVALID_SET_FILE_POINTER) return -1;
+    if (FALSE == ReadFile(current_handle, buf, (DWORD) bytes, &bytes_read, NULL)){
+        return -1;
+    }
+#else
     ssize_t bytes_read = ::pread64(current_fd,buf,bytes,offset - fi->offset);
+#endif
     if(bytes_read<0) return -1;		// error???
     if((size_t)bytes_read==bytes) return bytes_read; // read precisely the correct amount!
 

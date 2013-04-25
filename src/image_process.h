@@ -260,7 +260,11 @@ class process_raw : public image_process {
     class file_info const *find_offset(int64_t offset) const;
     int64_t raw_filesize;			/* sume of all the lengths */
     mutable string current_file_name;		/* which file is currently open */
+#ifdef WIN32
+    mutable HANDLE current_handle;		/* currently open file */
+#else
     mutable int current_fd;			/* currently open file */
+#endif
 public:
     process_raw(string image_fname);
     virtual ~process_raw();
