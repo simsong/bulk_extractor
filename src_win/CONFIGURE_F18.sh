@@ -23,8 +23,8 @@ mingw32 and 64.  Please perform the following steps:
 press any key to continue...
 EOF
 read
-
 MPKGS="autoconf automake gcc gcc-c++ osslsigncode flex wine zlib-devel wget md5deep git "
+MPKGS+="libewf libewf-devel "
 MPKGS+="mingw32-gcc mingw32-gcc-c++ "
 MPKGS+="mingw64-gcc mingw64-gcc-c++ "
 
