@@ -39,7 +39,7 @@ static const uint16_t EXIF_SLONG = 9;		// signed int32
 static const uint16_t EXIF_SRATIONAL = 10;	// two SLONGs
 
 // constants
-static const long int TWO_TO_24TH = 16777216L;
+static const uint32_t MAX_IMAGE_SIZE = 65535;
 
 // private helpers
 static string get_value(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset);
@@ -240,19 +240,11 @@ void entry_reader::parse_entry(ifd_type_t ifd_type, tiff_handle_t &tiff_handle,
         }
 	case 0x011a: {
             value_string = get_value(tiff_handle, ifd_entry_offset);
-            long int lx = atol(value_string.c_str());
-            if (lx > TWO_TO_24TH) {
-              throw exif_failure_exception_t();
-            }
             add_entry(ifd_type, "XResolution", value_string, entries);
             break;
         }
 	case 0x011b: {
             value_string = get_value(tiff_handle, ifd_entry_offset);
-            long int ly = atol(value_string.c_str());
-            if (ly > TWO_TO_24TH) {
-              throw exif_failure_exception_t();
-            }
             add_entry(ifd_type, "YResolution", value_string, entries);
             break;
         }
@@ -564,11 +556,19 @@ void entry_reader::parse_entry(ifd_type_t ifd_type, tiff_handle_t &tiff_handle,
         }
 	case 0xa002: {
             value_string = get_value(tiff_handle, ifd_entry_offset);
+            uint32_t lx = atol(value_string.c_str());
+            if (lx > MAX_IMAGE_SIZE) {
+              throw exif_failure_exception_t();
+            }
             add_entry(ifd_type, "PixelXDimension", value_string, entries);
             break;
         }
 	case 0xa003: {
             value_string = get_value(tiff_handle, ifd_entry_offset);
+            uint32_t ly = atol(value_string.c_str());
+            if (ly > MAX_IMAGE_SIZE) {
+              throw exif_failure_exception_t();
+            }
             add_entry(ifd_type, "PixelYDimension", value_string, entries);
             break;
         }

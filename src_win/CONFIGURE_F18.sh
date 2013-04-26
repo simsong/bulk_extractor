@@ -23,7 +23,21 @@ mingw32 and 64.  Please perform the following steps:
 press any key to continue...
 EOF
 read
-MPKGS="autoconf automake gcc gcc-c++ osslsigncode flex wine zlib-devel wget md5deep git "
+
+# cd to the directory where the script it
+# http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd $DIR
+
+NEEDED_FILES=" icu-mingw32-libprefix.patch icu-mingw64-libprefix.patch"
+for i in $NEEDED_FILES ; do
+  if [ ! -r $i ]; then
+    echo This script requires the file $i which is distributed with $0
+    exit 1
+  fi
+done
+
+MPKGS="autoconf automake flex gcc gcc-c++ git libtool md5deep osslsigncode patch wine wget zlib-devel "
 MPKGS+="libewf libewf-devel "
 MPKGS+="mingw32-gcc mingw32-gcc-c++ "
 MPKGS+="mingw64-gcc mingw64-gcc-c++ "
@@ -81,7 +95,9 @@ TREFILE=tre-$TREVER.tar.gz
 TREDIR=tre-$TREVER
 TREURL=http://laurikari.net/tre/$TREFILE
 
-wget $TREURL
+if [ ! -r $TREFILE ]; then
+  wget $TREURL
+fi
 tar xfvz $TREFILE
 pushd $TREDIR
 for i in 32 64 ; do
@@ -105,7 +121,9 @@ EWFFILE=libewf-$EWFVER.tar.gz
 EWFDIR=libewf-$EWFVER
 EWFURL=http://libewf.googlecode.com/files/$EWFFILE
 
-wget $EWFURL 
+if [ ! -r $EWFFILE ]; then
+  wget $EWFURL 
+fi
 tar xzf $EWFFILE 
 pushd $EWFDIR
 for i in 32 64 ; do
@@ -129,10 +147,12 @@ ICUFILE=icu4c-$ICUVER-src.tgz
 ICUDIR=icu
 ICUURL=http://download.icu-project.org/files/icu4c/51.1/$ICUFILE
 
-wget $ICUURL
+if [ ! -r $ICUFILE ]; then
+  wget $ICUURL
+fi
 tar xzf $ICUFILE
-patch -p1 <icu-mingw32-libprefix.patch
-patch -p1 <icu-mingw64-libprefix.patch
+patch -p1 < icu-mingw32-libprefix.patch
+patch -p1 < icu-mingw64-libprefix.patch
 
 # build ICU for Linux to get packaging tools used by MinGW builds
 echo
