@@ -37,7 +37,8 @@ for i in $NEEDED_FILES ; do
   fi
 done
 
-MPKGS="autoconf automake flex gcc gcc-c++ git libtool md5deep osslsigncode patch wine wget zlib-devel "
+MPKGS="autoconf automake flex gcc gcc-c++ git libtool "
+MPKGS+="md5deep osslsigncode patch wine wget yacc zlib-devel "
 MPKGS+="libewf libewf-devel "
 MPKGS+="mingw32-gcc mingw32-gcc-c++ "
 MPKGS+="mingw64-gcc mingw64-gcc-c++ "
