@@ -40,6 +40,8 @@ def drive_name(path):
 
 def process_line(line):
     fields = line.split(b'\t')
+    if len(fields)<3:
+        return (None,None,None,None)
     nofilename = len(fields)<5
     # Remove digits from the path
     path = fields[0].decode('utf-8')
@@ -53,21 +55,6 @@ def process_line(line):
 
 def get_line_context(line):
     return line.split(b'\t')[2]
-
-def find(what,fn):
-    ber = bulk_extractor_reader.BulkReport(fn,do_validate=False)
-    for ff in ber.feature_files():
-        if "email" in ff:
-            first = True
-            for line in ber.open(ff,"rb"):
-                if line[0]<ord('0') or line[0]>ord('9'): continue
-                (path,encoding,feature,nofilename) = process_line(line)
-                if nofilename and what==encoding:
-                    if first:
-                        print("\n",fn)
-                        first = False
-                    print("{:10} {:30} {}".format(path,feature,get_line_context(line[0:-1])))
-        
 
 class Drive:
     """Reads a bulk_extractor report for a drive.  Determine the total number of encodings used for each feature file type.:
@@ -93,7 +80,6 @@ class Drive:
                 continue
             try:
                 (path,encoding,feature,nofilename) = process_line(line)
-                if encoding=="": continue
                 self.f_encoding_counts[ff][encoding] += 1
             except UnicodeDecodeError:
                 self.uderror += 1

@@ -1,7 +1,6 @@
 2013-03-23  Simson Garfinkel  <simsong@Mucha.local>
 
 	* src/bulk_extractor.cpp (main): -Z is no longer fatal if directory does not exist.
-=======
 2013-03-23  Simson Garfinkel  <simsong@r2.ncr.nps.edu>
 
 	* configure.ac: fixed AX_PTHREAD test to fail if pthreads are not found.

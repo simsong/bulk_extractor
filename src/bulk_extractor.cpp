@@ -1214,8 +1214,8 @@ int main(int argc,char **argv)
 	float mb_per_sec = (total_bytes / 1000000.0) / timer.elapsed_seconds();
 
 	std::cout.precision(4);
-	std::cout << "Elapsed time: " << timer.elapsed_seconds() << " sec.\n";
-	std::cout << "Overall performance: " << mb_per_sec << " MBytes/sec.\n";
+        printf("Elapsed time: %g sec.\n",timer.elapsed_seconds());
+        printf("Overall performance: %g MBytes/sec\n",mb_per_sec);
         if (fs.has_name("email")) {
             feature_recorder *fr = fs.get_name("email");
             if(fr){
