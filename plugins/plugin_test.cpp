@@ -1,5 +1,13 @@
-#include "beconfig.h"
-#include "bulk_extractor_i.h"
+/**
+ * plugin_test.cpp:
+ * 
+ * This program will load a bulk_extractor .so or .dll plug-in and
+ * perform a rudimentary test.
+ */
+
+
+#include "config.h"                     // from ../config.h
+#include "bulk_extractor_i.h"           // from ../src/be13_api/bulk_extractor_i.h
 
 #include <stdio.h>
 #include <err.h>
@@ -60,7 +68,7 @@ int main(int argc,char **argv)
     pos0_t p0("");
     sbuf_t sbuf(p0,buf,sizeof(buf),sizeof(buf),false);
     feature_recorder_set fs(0);
-    scanner_params sp(scanner_params::startup,sbuf,fs);
+    scanner_params sp(scanner_params::PHASE_STARTUP,sbuf,fs);
     recursion_control_block rcb(0,"STAND",true);
     scanner_info si;
     sp.info = &si;
@@ -70,12 +78,12 @@ int main(int argc,char **argv)
     return 0;
 }
 
-feature_recorder *feature_recorder_set::get_name(string name) const 
+feature_recorder *feature_recorder_set::get_name(const std::string &name) 
 {
     return 0;
 }
 
-feature_recorder *feature_recorder_set::get_alert_recorder() const
+feature_recorder *feature_recorder_set::get_alert_recorder() 
 {
     return 0;
 }

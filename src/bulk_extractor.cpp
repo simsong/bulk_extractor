@@ -908,8 +908,8 @@ int main(int argc,char **argv)
     struct tm now;
     gmtime_r(&t,&now);
     opt_last_year = now.tm_year + 1900 + 5; // allow up to 5 years in the future
-    
-
+    int opt_h = 0;
+    int opt_H = 0;
 
 #ifdef WIN32
     setmode(1,O_BINARY);		// make stdout binary
@@ -1013,12 +1013,8 @@ int main(int argc,char **argv)
 	}
 	case 'z': opt_page_start = stoi64(optarg);break;
 	case 'Z': opt_zap=true;break;
-	case 'H':
-	    info_scanners(true,scanners_builtin,'e','x');
-	    exit(1);
-	case 'h': case '?':default:
-	    usage();
-	    break;
+	case 'H': opt_H++;continue;
+	case 'h': opt_h++;continue;
 	}
     }
 
@@ -1037,6 +1033,18 @@ int main(int argc,char **argv)
     load_scanner_directories(scanner_dirs,be_config);
     load_scanners(scanners_builtin,be_config); 
     scanners_process_commands();
+
+    /* Print usage if necessary */
+    if(opt_H){
+        info_scanners(true,scanners_builtin,'e','x');
+        exit(0);
+    }
+
+    if(opt_h){
+        usage();
+        exit(0);
+    }
+
 
     /* Give an error if a find list was specified
      * but no scanner that uses the find list is enabled.

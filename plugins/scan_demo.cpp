@@ -8,7 +8,7 @@
  * It also generates a feature report for every likely JPEG.
  */
 
-#include "beconfig.h"
+#include "config.h"
 #include "bulk_extractor_i.h"
 
 #include <iostream>
@@ -42,7 +42,7 @@ void  scan_demo(const class scanner_params &sp,const recursion_control_block &rc
     }
 
     /* Check for phase 0 --- startup */
-    if(sp.phase==scanner_params::startup){
+    if(sp.phase==scanner_params::PHASE_STARTUP){
 	sp.info->name     = "demo";
 	sp.info->author  = "Simson L. Garfinkel";
 	sp.info->flags = 0;
@@ -50,7 +50,7 @@ void  scan_demo(const class scanner_params &sp,const recursion_control_block &rc
     }
 
     /* Check for phase 2 --- shutdown */
-    if(sp.phase==scanner_params::shutdown){
+    if(sp.phase==scanner_params::PHASE_SHUTDOWN){
 	feature_recorder *alert = sp.fs.get_alert_recorder();
 	alert->printf("total sectors: %"PRId64,count_total);
 	alert->printf("total jpegs: %"PRId64,count_jpeg);
@@ -58,7 +58,7 @@ void  scan_demo(const class scanner_params &sp,const recursion_control_block &rc
 	return;
     }
     
-    if(sp.phase==scanner_params::scan){
+    if(sp.phase==scanner_params::PHASE_SCAN){
 	for(const u_char *b0 = sp.sbuf.buf ;
 	    b0<sp.sbuf.buf+sp.sbuf.pagesize-blocksize; b0+=blocksize){
 	    

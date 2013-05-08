@@ -6,11 +6,17 @@
 
 AC_PREREQ(2.57)
 
-AC_INIT(BULK_EXTRACTOR, 1.3.1, bugs@digitalcorpora.org)
+AC_INIT(BULK_EXTRACTOR, 1.4.0-dev-001, bugs@digitalcorpora.org)
 AC_CONFIG_MACRO_DIR(m4)
 
+# Notice:
+# plugins/Makefile is referenced so that the plugins Makefile is created.
+# However, plugins is not listed as a SUBDIR for Makefile.am in this directory.
+# That prevents the plugins from automatically being built each time.
+#
 AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile doc/user_manual/Makefile \
 			  man/Makefile python/Makefile \
+                          plugins/Makefile \
 			  specfiles/Makefile specfiles/bulk_extractor.spec.m4 \
 			  java_gui/Makefile src_win/Makefile tests/Makefile ])
 
@@ -271,14 +277,6 @@ done
 unset option
 AC_LANG_POP()    
 
-# Determine UTC date offset
-CPPFLAGS="$CPPFLAGS -DUTC_OFFSET=`date +%z`"
-
-################################################################
-# DFXML support
-AC_CHECK_HEADERS([sys/cdefs.h sys/resource.h pwd.h sys/utsname.h])
-AC_CHECK_FUNCS([localtime_r getuid gethostname getwpuid getrusage mkstemp vasprintf])
-
 ################################################################
 # PTHREAD support
 # With special nods to compiling under mingw
@@ -513,6 +511,13 @@ else
 fi
 AC_LANG_POP()
 ################################################################
+# DFXML support
+AC_CHECK_HEADERS([sys/cdefs.h sys/resource.h pwd.h sys/utsname.h regex.h])
+AC_CHECK_FUNCS([fork localtime_r getuid gethostname getwpuid getrusage mkstemp vasprintf regcomp])
+
+# Determine UTC date offset
+CPPFLAGS="$CPPFLAGS -DUTC_OFFSET=`date +%z`"
+
 #
 # Do we have the CPUID instruction?
 AC_TRY_COMPILE([#define cpuid(id) __asm__( "cpuid" : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx) : "a"(id), "b"(0), "c"(0), "d"(0))],
@@ -522,6 +527,13 @@ AC_TRY_COMPILE([#define cpuid(id) __asm__( "cpuid" : "=a"(eax), "=b"(ebx), "=c"(
 if test "$have_cpuid" = yes; then
  AC_DEFINE(HAVE_ASM_CPUID, 1, [define to 1 if __asm__ CPUID is available])
 fi
+
+# Does GCC have the diagnostic pragma?
+AC_TRY_COMPILE([#pragma GCC diagnostic ignored "-Wredundant-decls"],
+    	       [],
+	       AC_DEFINE([GNUC_HAS_DIAGNOSTIC_PRAGMA],[1],[GCC supports #pragma GCC diagnostic]),
+	       )
+
 
 ################################################################
 ############## drop optimization flags and add -g if requested ################

@@ -2,5 +2,5 @@
 public final class Config {
   private Config() { } // no constructor
   /** BEViewer Version {@value} */
-  public static final String VERSION = "1.3.1";
+  public static final String VERSION = "1.4.0-dev-001";
 }

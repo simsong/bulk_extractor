@@ -171,6 +171,7 @@ void scan_pdf(const class scanner_params &sp,const recursion_control_block &rcb)
         sp.info->author         = "Simson Garfinkel";
         sp.info->description    = "Extracts text from PDF files";
         sp.info->scanner_version= "1.0";
+        sp.info->flags          = scanner_info::SCANNER_RECURSE;
         pdf_dump = atoi(sp.info->config["pdf_dump"].c_str());
 	return;	/* No features recorded */
     }
