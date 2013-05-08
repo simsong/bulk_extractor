@@ -141,7 +141,7 @@ void scan_base16(const class scanner_params &sp,const recursion_control_block &r
 	sp.info->description	= "Base16 (hex) scanner";
 	sp.info->scanner_version= "1.0";
 	sp.info->feature_names.insert("hex"); // notable hex values
-	//sp.info->flags = scanner_info::SCANNER_DISABLED; // disabled until it's working
+        sp.info->flags          = scanner_info::SCANNER_RECURSE;
 
 	/* Create the base16 array */
 	for(int i=0;i<256;i++){

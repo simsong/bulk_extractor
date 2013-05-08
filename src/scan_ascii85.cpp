@@ -146,6 +146,7 @@ void scan_ascii84(const class scanner_params &sp,const recursion_control_block &
         sp.info->author         = "Simson L. Garfinkel";
         sp.info->description    = "scans for ASCII85 encoded data";
         sp.info->scanner_version= "1.0";
+        sp.info->flags          = scanner_info::SCANNER_RECURSE;
 	return;	/* No feature files created */
     }
     if(sp.phase==scanner_params::shutdown) return;		// no cleanup

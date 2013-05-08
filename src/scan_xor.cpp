@@ -18,7 +18,7 @@ void scan_xor(const class scanner_params &sp,const recursion_control_block &rcb)
 	sp.info->name  = "xor";
 	sp.info->author = "Michael Shick";
 	sp.info->description = "optimistic XOR deobfuscator";
-	sp.info->flags = scanner_info::SCANNER_DISABLED;
+	sp.info->flags = scanner_info::SCANNER_DISABLED | scanner_info::SCANNER_RECURSE;
 
         string mask_string = sp.info->config["xor_mask"];
         if(mask_string != "") {

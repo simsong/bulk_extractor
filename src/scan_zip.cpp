@@ -64,10 +64,12 @@ extern "C"
 void scan_zip(const class scanner_params &sp,const recursion_control_block &rcb)
 {
     assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
+
     if(sp.phase==scanner_params::PHASE_STARTUP){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	sp.info->name  = "zip";
 	sp.info->feature_names.insert("zip");
+        sp.info->flags          = scanner_info::SCANNER_RECURSE | scanner_info::SCANNER_RECURSE_EXPAND;
 	pthread_mutex_init(&seen_set_lock,NULL);
 	return;
     }

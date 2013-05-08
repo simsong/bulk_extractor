@@ -37,6 +37,7 @@ void scan_hiberfile(const class scanner_params &sp,const recursion_control_block
         sp.info->author         = "Simson Garfinkel and Matthieu Suiche";
         sp.info->description    = "Scans for Microsoft-XPress compressed data";
         sp.info->scanner_version= "1.0";
+        sp.info->flags          = scanner_info::SCANNER_RECURSE | scanner_info::SCANNER_RECURSE_EXPAND;
 	return; /* no features */
     }
     if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;
