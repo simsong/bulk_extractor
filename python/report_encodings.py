@@ -147,7 +147,7 @@ if __name__=="__main__":
     print("\n"*4)
     for ff in sorted(drive_encoding_counts.keys()):
         for enc in sorted(drive_encoding_counts[ff].keys()):
-            k = ff + " / " + enc
+            k = ff + " / " + str(enc)
             sb = drive_encoding_counts[ff][enc]
             row = (k,sb.count(),sb.sumx(),sb.average(),sb.maxx(),sb.stddev())
             t.append_data(row)
