@@ -8,6 +8,14 @@ Downloads and Websites
   * [Forensics Wiki Entry](http://www.forensicswiki.org/wiki/Bulk_extractor)
 
 
+Downloading the Development Tree
+--------------------------------
+
+Download the sources with git:
+
+  $ git clone --recursive https://github.com/simsong/bulk_extractor.git
+
+
 Compiling Notes
 ---------------
 
@@ -24,9 +32,8 @@ configure option --with-noopt.
 Compiling for MacOS or Linux
 ----------------------------
 
-Download the sources with git, run bootstrap.sh, configure and make:
+From the downloaded source directory run bootstrap.sh, configure and make:
 
-  $ git clone --recursive https://github.com/simsong/bulk_extractor.git
   $ cd bulk_extractor
   $ sh bootstrap.sh
   $ sh configure
