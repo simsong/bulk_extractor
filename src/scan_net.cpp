@@ -437,11 +437,17 @@ static bool sanePort(const uint16_t port) {
  * @param sbuf - the location of the header
  * @param checksum_valid - set TRUE if checksum is valid, FALSE of it is not.
  * @param h - set with the generic header that is extracted.
+ * @return  true if IPv4 checksum is valid, or if IPv6 TCP, UDP, or ICMP checksum is valid.
  *
  * This is called twice for every byte of the header, so we might want to cache
  * the results, but currently we don't.
+ *
+ *
+ * http://answers.yahoo.com/question/index?qid=20080529062909AAAYN3X
+ *
+ * http://en.wikipedia.org/wiki/Transmission_Control_Protocol#TCP_checksum_for_IPv6
  */
-static bool sanityCheckIPHeader(const sbuf_t &sbuf, bool *checksum_valid, generic_iphdr_t *h)
+static bool sanityCheckIP46Header(const sbuf_t &sbuf, bool *checksum_valid, generic_iphdr_t *h)
 {
     const struct be13::ip4 *ip = sbuf.get_struct_ptr<struct be13::ip4>(0);
     if(!ip) return false;		// not enough space
@@ -602,7 +608,6 @@ public:
 	ether_recorder = fs.get_name("ether");
     }
 
-
 private:
     /* 
      * According to 'man pcap-savefile', you need to implement this file format,
@@ -638,8 +643,6 @@ public:
                        const bool add_frame,
                        const uint16_t frame_type) {
 	// Make sure that neither this packet nor an encapsulated version of this packet has been written
-	//if(ps.find(pkt)==ps.end() && ps.find(pkt-4)==ps.end()){
-	//ps.insert(pkt);
 	cppmutex::lock lock(M);		// lock the mutex
         if(fcap==0){
             string ofn = ip_recorder->outdir+"/" + default_filename;
@@ -654,9 +657,11 @@ public:
         }
 
         size_t forged_header_len = 0;
-        // if requested, forge an Ethernet II header and prepend it to the packet so raw packets can
-        // coexist happily in an ethernet pcap file.  Don't do this if the resulting length would make
-        // the pcap file invalid.
+	/*
+	 * if requested, forge an Ethernet II header and prepend it to the packet so raw packets can
+	 * coexist happily in an ethernet pcap file.  Don't do this if the resulting length would make
+         * the pcap file invalid.
+	 */
         bool add_frame_and_safe = add_frame && h.cap_len + ETHER_HEAD_LEN <= PCAP_MAX_PKT_LEN;
         uint8_t forged_header[ETHER_HEAD_LEN];
         if(add_frame_and_safe) {
@@ -701,7 +706,7 @@ public:
             // assume IPv4, but this field is only relevant if the header looks sane (is_raw_ip is true)
             bool checksum_valid = false;        // ignored
             generic_iphdr_t header_info;
-            bool is_raw_ip = sanityCheckIPHeader(sb2+PCAP_RECORD_HEADER_SIZE, &checksum_valid, &header_info);
+            bool is_raw_ip = sanityCheckIP46Header(sb2+PCAP_RECORD_HEADER_SIZE, &checksum_valid, &header_info);
             
             if((header_info.family == AF_INET) || (header_info.family == AF_INET6)){
 
@@ -746,37 +751,15 @@ public:
      */
     static string chksum_ok;
     static string chksum_bad;
-    size_t carveStructIP(const sbuf_t &sb2) {
-	generic_iphdr_t h;
-	bool checksum_valid = false; 
-	
-	/* check if it looks like ipv4 or ipv6 packet 
-	 * if neither, return false.
-	 * Unfortunately the sanity checks are not highly discriminatory.
-	 * The call below sets the 'h' structure as necessary
-	 */
-	if (!sanityCheckIPHeader(sb2, &checksum_valid, &h)) return 0;
 
-	if (invalidIP(h.src,h.family) || invalidIP(h.dst,h.family)) return 0;
-
-	if (h.family!=AF_INET && h.family!=AF_INET6) return 0; // only care about IPv4 and IPv6
-
-	/* Currently we use IPv4 checksum to suppress false positives.
-	 * With IPv6 there is no checksum. THere have been so many false positives that
-	 * we have decided to simply eliminate IPv6 carving until we have a better approach.
-	 *
-	 * http://answers.yahoo.com/question/index?qid=20080529062909AAAYN3X
-	 */
-	if(h.family==AF_INET6) return 0;
-
-	/* IPv4 has a checksum; use it if we can */
-	if(checksum_valid==false && opt_report_checksum_bad==false) return 0; // user does not want invalid checksums
-
+    /** Write the ethernet addresses and the TCP info into the appropriate feature files.
+     */
+     
+    void documentIPFields(const sbuf_t &sb2,const generic_iphdr_t &h,bool checksum_valid) {
 	/* Report the IP address */
 	/* based on the TTL, infer whether remote or local */
 	const string &chksum_status = checksum_valid ? chksum_ok : chksum_bad;
-	string src;
-	string dst;
+	string src,dst;
 		    
 	if(isPowerOfTwo(h.ttl)){
 	    src = "L";	// src is local because the power of two hasn't been decremented
@@ -785,51 +768,143 @@ public:
 	    src = "R";	// src is remote
 	    dst = "L";	// dst is local
 	}
-	const string name = (h.family==AF_INET) ? "ip " : "ip6_hdr ";
 	
+	/* Record the IP addresses */
+	const string name = (h.family==AF_INET) ? "ip " : "ip6_hdr ";
 	ip_recorder->write(sb2.pos0, ip2string(h.src, h.family),
 			   "struct " + name + src + " (src) " + chksum_status);
 	ip_recorder->write(sb2.pos0, ip2string(h.dst, h.family),
 			   "struct " + name + dst + " (dst) " + chksum_status);
 	
 	/* Now report TCP, UDP and/or IPv6 contents if it is one of those */
-	if (h.nxthdr == IPPROTO_TCP) {
+	if(h.nxthdr==IPPROTO_TCP){
 	    const struct be_tcphdr *tcp = sb2.get_struct_ptr<struct be_tcphdr>(h.nxthdr_offs);
-	    if(tcp){
-		tcp_recorder->write(sb2.pos0,
-				    ip2string(h.src, h.family) + ":" + i2str(ntohs(tcp->th_sport)) + " -> " +
-				    ip2string(h.dst, h.family) + ":" + i2str(ntohs(tcp->th_dport)) + " (TCP6)",
-				    " Size: " + i2str(h.payload_len+h.nxthdr_offs)
-				    );
-		return sizeof(*tcp)+20;
-	    }
+	    if(tcp) tcp_recorder->write(sb2.pos0,
+					ip2string(h.src, h.family) + ":" + i2str(ntohs(tcp->th_sport)) + " -> " +
+					ip2string(h.dst, h.family) + ":" + i2str(ntohs(tcp->th_dport)) + " (TCP)",
+					" Size: " + i2str(h.payload_len+h.nxthdr_offs)
+					);
 	}
-	
-	if (h.nxthdr == IPPROTO_UDP) {
+	if(h.nxthdr==IPPROTO_UDP){
 	    const struct be_udphdr *udp = sb2.get_struct_ptr<struct be_udphdr>(h.nxthdr_offs);
-	    if(udp){
-		tcp_recorder->write(sb2.pos0, 
-				    ip2string(h.src, h.family) + ":" + i2str(ntohs(udp->uh_sport)) + " -> " +
-				    ip2string(h.dst, h.family) + ":" + i2str(ntohs(udp->uh_dport)) + " (UDP6)",
-				    " Size: " + i2str(h.payload_len+h.nxthdr_offs)			
-				    );
-		return sizeof(*udp)+20;
-	    }
+	    if(udp) tcp_recorder->write(sb2.pos0, 
+					ip2string(h.src, h.family) + ":" + i2str(ntohs(udp->uh_sport)) + " -> " +
+					ip2string(h.dst, h.family) + ":" + i2str(ntohs(udp->uh_dport)) + " (UDP)",
+					" Size: " + i2str(h.payload_len+h.nxthdr_offs)			
+					);
 	}
-	
-	if (h.nxthdr == IPPROTO_ICMPV6) {
+	if(h.nxthdr==IPPROTO_ICMPV6){
 	    const struct icmp6_hdr *icmp6 = sb2.get_struct_ptr<struct icmp6_hdr>(h.nxthdr_offs);
-	    if(icmp6){
-		tcp_recorder->write(sb2.pos0,
-				    ip2string(h.src, h.family) + " -> " + 
-				    ip2string(h.dst, h.family) + " (ICMPv6)",
-				    " Type: " + i2str(icmp6->icmp6_type) + " Code: " + i2str(icmp6->icmp6_code)
-				    );
-		return sizeof(*icmp6);
+	    if(icmp6) tcp_recorder->write(sb2.pos0,
+					  ip2string(h.src, h.family) + " -> " + 
+					  ip2string(h.dst, h.family) + " (ICMPv6)",
+					  " Type: " + i2str(icmp6->icmp6_type) + " Code: " + i2str(icmp6->icmp6_code)
+					  );
+	}
+    }
+
+    size_t carveIPFrame(const sbuf_t &sb2) {
+	generic_iphdr_t h;
+	bool checksum_valid = false; 
+	
+	/* check if it looks like ipv4 or ipv6 packet 
+	 * if neither, return false.
+	 * Unfortunately the sanity checks are not highly discriminatory.
+	 * The call below sets the 'h' structure as necessary
+	 */
+	if (!sanityCheckIP46Header(sb2, &checksum_valid, &h)) return 0;
+	if (invalidIP(h.src,h.family) || invalidIP(h.dst,h.family)) return 0;
+	if (h.family!=AF_INET && h.family!=AF_INET6) return 0; // only care about IPv4 and IPv6
+
+	/* To decrease false positives, we typically do not carve packets with bad checksums.
+	 * With IPv6 there is no IP checksum, but there are L3 checksums, and
+	 * sanityCheckIP46Header checks them.
+	 */
+
+	/* IPv4 has a checksum; use it if we can */
+	if(checksum_valid==false && opt_report_checksum_bad==false) return 0; // user does not want invalid checksums
+
+	documentIPFields(sb2,h,checksum_valid);
+
+	/* A valid IPframe but not proceeded by an Ethernet or a pcap header */
+	uint8_t buf[PCAP_MAX_PKT_LEN+14];
+	ssize_t ip_len         = h.nxthdr_offs + h.payload_len;
+	if(ip_len > (ssize_t)sb2.bufsize) ip_len = sb2.bufsize;
+	ssize_t packet_len = 14 + ip_len ;
+	if(packet_len > PCAP_MAX_PKT_LEN){
+	    packet_len = PCAP_MAX_PKT_LEN;
+	}
+	if(packet_len < 14) return 0;	// this should never happen
+	for(int i=0;i<12;i++) buf[i] = i;	    /* Create a bogus ethernet address */
+	switch(h.family){
+	case AF_INET:  buf[12] = 0x08; buf[13] = 0x00; break;
+	case AF_INET6: buf[12] = 0xdd; buf[13] = 0x86; break;
+	default:       buf[12] = 0xff; buf[13] = 0xff; break; // shouldn't happen
+	} 
+	memcpy(buf+14,sb2.buf,packet_len-14); // copy the packet data
+	/* make an sbuf to write */
+	sbuf_t sb3(pos0_t(),buf,packet_len,packet_len,false);
+	struct pcap_hdr hz(0,0,packet_len,packet_len); // make a fake header
+	pcap_writepkt(hz,sb3,0,false,0x0000);	   // write the packet
+	return ip_len;				   // return that we processed this much
+    }
+
+    /* Test for Ethernet link-layer MACs
+     * Returns the size of the object carved
+     */
+    size_t carveEther(const sbuf_t &sb2)    {
+	const struct macip *er = sb2.get_struct_ptr<struct macip>(0);
+	if(er){
+	    if ( (er->ether_type != htons(ETHERTYPE_IP)) &&   // 0x0800 
+		 (er->ether_type != htons(ETHERTYPE_IPV6)) ){ // 0x86dd
+		return 0;
+	    }
+	    if ( (er->ipv != 0x45) && ((er->ipv & 0xF0) != 0x60) ){ // ipv4 and ipv6
+		return 0;
 	    }
 	}
-	return 0;			// nothing found
+
+	size_t data_offset = (2*ETHER_ADDR_LEN)+sizeof(uint16_t);
+
+	/**
+	 * We have enough data to document what is in the packet! Hurrah! Let's save it.
+	 */
+	if(data_offset < sb2.bufsize){
+	    bool checksum_valid = false;
+	    generic_iphdr_t h;
+	    sbuf_t ip_sbuf(sb2+data_offset);
+	    if (sanityCheckIP46Header(ip_sbuf, &checksum_valid, &h) && checksum_valid) {
+		if (!invalidMAC(&(er->ether_dhost))){
+		    ether_recorder->write(sb2.pos0, mac2string(&(er->ether_dhost)), " (ether_dhost) ");
+		}
+		if (!invalidMAC(&(er->ether_shost))){
+		    ether_recorder->write(sb2.pos0, mac2string(&(er->ether_shost)), " (ether_shost) ");
+		}
+		documentIPFields(ip_sbuf, h, checksum_valid);
+	    }
+	}
+	/* Possibly a valid ethernet frame but not preceeded by a pcap_record_header
+	 * (otherwise it would have been written and skipped...)
+	 * Write it out with a capture time of 1.
+	 */
+	generic_iphdr_t h;
+	bool checksum_valid = false;
+	/* the IP pkt starts after the Ethernet header, 14 byte offset */
+	if (sanityCheckIP46Header(sb2+14, &checksum_valid, &h)){
+	    if(checksum_valid){
+		ssize_t packet_len     = 14 + h.nxthdr_offs + h.payload_len; // ether size + ip size + ip data 
+		if(packet_len > (ssize_t)sb2.bufsize) packet_len = sb2.bufsize;
+		if(packet_len > 0 ){
+		    struct pcap_hdr hz(0,0,packet_len,packet_len);
+		    pcap_writepkt(hz,sb2,0,false,0x0000);
+		    return packet_len;
+		}
+	    }
+	}
+	return 0;
     }
+
+
 
     /* Test for a possible sockaddr_in <netinet/in.h> 
      * Please remember that this is called for every byte, so it needs to be fast.
@@ -870,9 +945,6 @@ public:
      * Please remember that this is called for every byte, so it needs to be fast.
      */
     size_t carveTCPTOBJ(const sbuf_t &sb2){
-	//const uint8_t *buf = sbuf.buf+i;
-	//size_t buflen = sbuf.bufsize-i;
-	//if(buflen < sizeof(struct tcpt_object)) return false;
 	const struct tcpt_object *to = sb2.get_struct_ptr<struct tcpt_object>(0);
 	if(to==0) return false;
 	
@@ -889,62 +961,6 @@ public:
 	return 0;
     }
     
-    /* Test for Ethernet link-layer MACs
-     * Returns the size of the object carved
-     */
-    size_t carveEther(const sbuf_t &sb2,bool write_pcap)    {
-	const struct macip *er = sb2.get_struct_ptr<struct macip>(0);
-	if(er){
-	    if ( (er->ether_type != htons(ETHERTYPE_IP)) &&   // 0x0800 
-		 (er->ether_type != htons(ETHERTYPE_IPV6)) ){ // 0x86dd
-		return 0;
-	    }
-	    if ( (er->ipv != 0x45) && ((er->ipv & 0xF0) != 0x60) ){ // ipv4 and ipv6
-		return 0;
-	    }
-	}
-
-	//const uint8_t *buf = sbuf.buf+i;
-	//size_t buflen = sbuf.bufsize-i;
-	size_t data_offset = (2*ETHER_ADDR_LEN)+sizeof(uint16_t);
-
-	if(data_offset < sb2.bufsize){
-	    bool checksum_valid = false;
-	    generic_iphdr_t h;
-	    if (sanityCheckIPHeader(sb2+data_offset, &checksum_valid, &h) && checksum_valid) {
-		if (!invalidMAC(&(er->ether_dhost))){
-		    ether_recorder->write(sb2.pos0, mac2string(&(er->ether_dhost)), " (ether_dhost) ");
-		}
-		if (!invalidMAC(&(er->ether_shost))){
-		    ether_recorder->write(sb2.pos0, mac2string(&(er->ether_shost)), " (ether_shost) ");
-		}
-	    }
-	}
-	if(write_pcap){
-	    /* Possibly a valid ethernet frame but not preceeded by a pcap_record_header
-	     * (otherwise it would have been written and skipped...)
-	     * Write it out with a capture time of 1.
-	     */
-	    generic_iphdr_t h;
-	    bool checksum_valid = false;
-	    /* the IP pkt starts after the Ethernet header, 14 byte offset */
-	    if (sanityCheckIPHeader(sb2+14, &checksum_valid, &h)){
-		if(checksum_valid){
-		    ssize_t ip_payload_len = h.payload_len;
-		    ssize_t ip_header_len  = h.nxthdr_offs;
-		    ssize_t packet_len     = ip_header_len + ip_payload_len + 14; 
-		    if(packet_len > (ssize_t)sb2.bufsize) packet_len = sb2.bufsize;
-		    if(packet_len > 0 ){
-                        struct pcap_hdr hz(0,0,packet_len,packet_len);
-			pcap_writepkt(hz,sb2,0,false,0x0000);
-			return packet_len;
-		    }
-		}
-	    }
-	}
-	return 0;
-    }
-
     void carve(const sbuf_t &sbuf){
 	if(sbuf.bufsize<16) return;		// no sense
 	/* Scan through every byte of the buffer for all possible packets
@@ -965,16 +981,16 @@ public:
 	    if(spacket>0) { i+= spacket; continue;}
 
             /* Look for another recognizable structure. If we find it, advance as far as a the biggest one */
-	    size_t maxed = 0;
-	    maxed = max(maxed,carveStructIP( sb2));
-	    maxed = max(maxed,carveSockAddrIn( sb2 ));
-	    maxed = max(maxed,carveTCPTOBJ( sb2 ));
-	    maxed = max(maxed,carveEther( sb2,true ));
-	    if(maxed){
-		i+= maxed;
-	    } else {
-		i+=1;
+	    size_t carved = 0;
+	    carved = carveEther( sb2); // look for an ethernet packet; true causes the packet to be carved if found
+	    if(carved==0){
+		carved = carveIPFrame( sb2); // look for an IP packet
 	    }
+	    if(carved==0){
+		/* If we can't carve a packet, look for these two memory structures */
+		carved = max(carveSockAddrIn( sb2 ), carveTCPTOBJ( sb2 ));
+	    }
+	    i += (carved>0 ? carved : 1);	// advance the pointer
 	}
 	cppmutex::lock lock(M);
 	if(fcap) fflush(fcap);
