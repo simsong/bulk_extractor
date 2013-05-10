@@ -339,10 +339,9 @@ MAX_OFFSET_SIZE  = 100
 MAX_FEATURE_SIZE = 1000000
 MAX_CONTEXT_SIZE = 1000000
 
-def invalid_feature_file_line(line):
+def invalid_feature_file_line(line,fields):
     if len(line)==0: return None    # empty lines are okay
     if line[0]=='#': return None # comments are okay
-    fields = line.split("\t")
     if len(fields)!=3: return "Wrong number of fields"     # wrong number of fields
     if len(fields[0])>MAX_OFFSET_SIZE: return "OFFSET > "+str(MAX_OFFSET_SIZE)
     if len(fields[1])>MAX_FEATURE_SIZE: return "FEATURE > "+str(MAX_FEATURE_SIZE)
@@ -350,6 +349,7 @@ def invalid_feature_file_line(line):
     return None
     
 def validate_file(f,kind):
+    kml = "kml" in f.name
     linenumber = 0
     print("Validate UTF-8 encoding in ",f.name)
     for lineb in f:
@@ -365,9 +365,13 @@ def validate_file(f,kind):
         if bulk_extractor_reader.is_histogram_line(line):
             continue        # don't test
         if kind==FEATURE_FILE:
-            r = invalid_feature_file_line(line)
+            fields = line.split("\t")
+            r = invalid_feature_file_line(line,fields)
             if r:
-                print("{} {}: {:8} Invalid feature file line: {}".format(r,f.name,linenumber,line))
+                print("{}: {:8} {} Invalid feature file line: {}".format(f.name,linenumber,r,line))
+            if kml and fields[1].count("kml")!=2:
+                print("{}: {:8} Invalid KML line: {}".format(f.name,linenumber,line))
+
 
 
 def validate_report(fn):
@@ -380,6 +384,9 @@ def validate_report(fn):
     if os.path.isdir(fn) or fn.endswith(".zip"):
         b = bulk_extractor_reader.BulkReport(fn)
         for fn in b.feature_files():
+            if os.path.basename(fn) in args.ignore:
+                print("** ignore {} **".format(fn))
+                continue
             validate_file(b.open(fn,'rb'),FEATURE_FILE)
     else:
         validate_file(open(fn,'rb'))
@@ -465,6 +472,7 @@ if __name__=="__main__":
     parser.add_argument("--zip",help="Create a zip archive of the report")
     parser.add_argument("--validate",help="Validate the contents of a report (do not run bulk_extractor)",
                         type=str,nargs='*')
+    parser.add_argument("--ignore",help="Specifies a feature file or files (file1,file2) to ignore")
     parser.add_argument("--sort",help="Sort the feature files",type=str,nargs='*')
     parser.add_argument("--reproduce",help="specifies a bulk_extractor output "
             + "file from a crash and produces bulk_extractor flags to quickly "
@@ -477,7 +485,10 @@ if __name__=="__main__":
     # these are mostly for testing
     if args.validate:
         for v in args.validate:
-            validate_report(v)
+            try:
+                validate_report(v)
+            except IOError as e:
+                print(str(e))
         exit(0)
     if args.analyze:
         import xml.dom.minidom
