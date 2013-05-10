@@ -350,49 +350,62 @@ def asbinary(s):
     return ret
         
 
-def valid_feature_file_line(line):
-    if not line: return True    # empty lines are okay
-    if line[0]=='#': return True # comments are okay
-    if line[0:2]=='n=': return True     # currently all histograms are okay
-    if line.count('\t')==2: return True # correct number of tabs
-    return False
-    
-def validate_openfile(f):
-    fn = f.name
-    if fn.endswith('.xml') or fn.endswith('.dmp') or fn.endswith("_tags.txt") or "wordlist" in fn:
-        is_feature_file = False
-        return
-    else:
-        is_feature_file = True
+FEATURE_FILE = 1
+MAX_OFFSET_SIZE  = 100
+MAX_FEATURE_SIZE = 1000000
+MAX_CONTEXT_SIZE = 1000000
 
-    # now read
+def invalid_feature_file_line(line,fields):
+    if len(line)==0: return None    # empty lines are okay
+    if line[0]=='#': return None # comments are okay
+    if len(fields)!=3: return "Wrong number of fields"     # wrong number of fields
+    if len(fields[0])>MAX_OFFSET_SIZE: return "OFFSET > "+str(MAX_OFFSET_SIZE)
+    if len(fields[1])>MAX_FEATURE_SIZE: return "FEATURE > "+str(MAX_FEATURE_SIZE)
+    if len(fields[2])>MAX_CONTEXT_SIZE: return "CONTEXT > "+str(MAX_CONTEXT_SIZE)
+    return None
+    
+def validate_file(f,kind):
+    kml = "kml" in f.name
     linenumber = 0
-    print("Validate UTF-8 encoding in ",fn)
+    print("Validate UTF-8 encoding in ",f.name)
     for lineb in f:
         linenumber += 1
-        lineb = lineb[:-1]
+        lineb = lineb[:-1]      # remove the \n
         try:
             line = lineb.decode('utf-8')
         except UnicodeDecodeError as e:
-            print("{}:{} {} {}".format(fn,linenumber,str(e),asbinary(lineb)))
+            print("{}:{} {} {}".format(f.name,linenumber,str(e),asbinary(lineb)))
+            continue
         if bulk_extractor_reader.is_comment_line(line):
-            continue        # don't test
+            continue        # don't test comments
         if bulk_extractor_reader.is_histogram_line(line):
             continue        # don't test
-        if is_feature_file and not valid_feature_file_line(line):
-            print("{}: {:8} Invalid feature file line: {}".format(fn,linenumber,line))
+        if kind==FEATURE_FILE:
+            fields = line.split("\t")
+            r = invalid_feature_file_line(line,fields)
+            if r:
+                print("{}: {:8} {} Invalid feature file line: {}".format(f.name,linenumber,r,line))
+            if kml and fields[1].count("kml")!=2:
+                print("{}: {:8} Invalid KML line: {}".format(f.name,linenumber,line))
+
 
 
 def validate_report(fn):
-    """Make sure all of the lines in all of the files in the outdir are UTF-8"""
+    """Make sure all of the lines in all of the files in the outdir are UTF-8 and that
+    the feature files have 3 or more fields on each line.
+    """
     import glob,os.path
+    print("\nValidate Report: ",fn)
     res = {}
     if os.path.isdir(fn) or fn.endswith(".zip"):
         b = bulk_extractor_reader.BulkReport(fn)
-        for fn in sorted(b.files):
-            validate_openfile(b.open(fn,'rb'))
+        for fn in b.feature_files():
+            if os.path.basename(fn) in args.ignore:
+                print("** ignore {} **".format(fn))
+                continue
+            validate_file(b.open(fn,'rb'),FEATURE_FILE)
     else:
-        validate_openfile(open(fn,'rb'))
+        validate_file(open(fn,'rb'))
             
             
 def be_version():
@@ -486,6 +499,7 @@ if __name__=="__main__":
     parser.add_argument("--zip",help="Create a zip archive of the report")
     parser.add_argument("--validate",help="Validate the contents of a report (do not run bulk_extractor)",
                         type=str,nargs='*')
+    parser.add_argument("--ignore",help="Specifies a feature file or files (file1,file2) to ignore")
     parser.add_argument("--sort",help="Sort the feature files",type=str,nargs='*')
     parser.add_argument("--reproduce",help="specifies a bulk_extractor output "
             + "file from a crash and produces bulk_extractor flags to quickly "
@@ -498,7 +512,10 @@ if __name__=="__main__":
     # these are mostly for testing
     if args.validate:
         for v in args.validate:
-            validate_report(v)
+            try:
+                validate_report(v)
+            except IOError as e:
+                print(str(e))
         exit(0)
     if args.analyze:
         import xml.dom.minidom

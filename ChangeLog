@@ -1,3 +1,15 @@
+2013-05-09    <simsong@ncr.nps.edu>
+
+	* src/scan_net.cpp (p): carved ethernet packets are now properly recorded in ether.txt and tcp.txt
+
+	* packet carving for disembodied ethernet packets fixed!  In 3ad21780, simsong was creating the hz structure but not setting it, so all carved packets had zero length
+
+2013-05-08    <simsong@ncr.nps.edu>
+
+	* src/be13_api/feature_recorder.cpp (banner_stamp): added \n to # BANNER FILE NOT PROVIDED
+
+	* src/scan_elf.cpp (scan_elf_verify): fixed bug in scan_elf where XML was incorrect and being generated for invalid ELF headers.
+
 2013-03-23  Simson Garfinkel  <simsong@Mucha.local>
 
 	* src/bulk_extractor.cpp (main): -Z is no longer fatal if directory does not exist.

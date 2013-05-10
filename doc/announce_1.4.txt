@@ -24,7 +24,9 @@ Incompatiable changes:
 
 
 ================================================================
-BUG FIXES
+OVERREPORTING FIXES
+
+Much of the emphasis of the 1.4 is to decrease "false positives."
 
 * scan_windirs was improperly reporting the cluster for fat directory
   entries. 
@@ -32,7 +34,15 @@ BUG FIXES
 * Additional validations were added to scan_windirs for fat directory
   entries. As a result fewer false positives will be reported.
 
-* scan_net will now only carve pcap files that are IPv4 or IPv6
+* False positives in scan_net have been dramatically reduced. We have
+  done this by making the scanner more selective. For example, scan_net
+  will now only carve pcap files that are IPv4 or IPv6.
+
+* scan_net now properly reports ethernet addresses and TCP connections
+  into the files ether.txt and tcp.txt.
+
+* scan_elf applies more validation to ELF headers and, as a result,
+  many of the false positives have been eliminated.
 
 ================================================================
 PERFORMANCE STATISTICS
