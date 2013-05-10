@@ -2,8 +2,13 @@
 # coding=UTF-8
 """
 Regression system: 
- - Run bulk_extractor on one of three disk images. 
- - The feature files are sorted (to deal with multi-threading issues).
+
+A basic framework for running bulk_extractor and viewing the results.
+
+Options include:
+
+ --verify  - verify a single BE report
+ --tune    - runs bulk_extractor under a variety of conditions
  - Total number of features are reported and compared with the archives.
 """
 
@@ -23,12 +28,30 @@ from subprocess import Popen,call,PIPE
 import os.path,glob,zipfile,codecs
 import bulk_extractor_reader
 
+
+
 default_infile   = "nps-2009-ubnist1/ubnist1.gen3.raw"
 fast_infile      = "nps-2010-emails/nps-2010-emails.raw"
 full_infile      = "nps-2009-domexusers/nps-2009-domexusers.raw"
 exe = "src/bulk_extractor"
 nps_drives_path = "/nps/drives/"
 BOM = codecs.BOM_UTF8.decode('utf-8')
+
+# Performance tuning
+
+MiB = 1024*1024
+tune_jobs_start = 1
+tune_jobs_end   = 16
+tune_jobs_step  = 1
+
+tune_pagesize_start  = 1 * MiB
+tune_pagesize_end    = 16 * MiB
+tune_pagesize_step   = 1 * MiB
+
+tune_marginsize_start = 1 * MiB
+tune_marginsize_end   = 4 * MiB
+tune_marginsize_step  = 1 * MiB
+
 
 answers = {"ubnist1.gen3":{"ALERTS_found.txt":88,
                            "bulk_tags.txt":7477796,
@@ -51,18 +74,6 @@ answers = {"ubnist1.gen3":{"ALERTS_found.txt":88,
                            "wordlist.txt":10121828,
                            "zip.txt":1962}}
 
-
-perftest_jobs_start = 2
-perftest_jobs_end   = 16
-perftest_jobs_step  = 1
-
-perftest_pagesize_start  = 1024*1024
-perftest_pagesize_end  = 1024*1024*16
-perftest_pagesize_step  = 1024*1024
-
-perftest_marginsize_start = 1024*1024
-perftest_marginsize_end = 1024*1024*4
-perftest_marginsize_step = 1024*1024
 
 
 def find_file(fn):
@@ -264,10 +275,18 @@ def make_outdir(outdir_base):
             return outdir
         counter += 1
 
+def run(cmd):
+    print(" ".join(cmd))
+    r = call(cmd)
+    if r!=0:
+        raise RuntimeError("{} crashed with error code {}".format(args.exe,r))
+
 def run_outdir(outdir,gdb=False):
     print("run_outdir: ",outdir)
     cargs=['-o',outdir]
     if args.jobs: cargs += ['-j'+str(args.jobs)]
+    if args.pagesize: cargs += ['-G'+str(args.pagesize)]
+    if args.marginsize: cargs += ['-g'+str(args.marginsize)]
     
     cargs += ['-e','all']    # enable all scanners
     #cargs += ['-e','wordlist']    # enable all scanners
@@ -292,10 +311,7 @@ def run_outdir(outdir,gdb=False):
         cmd = ['gdb','-e',args.exe,'-x','/tmp/cmds']
     else:
         cmd = [args.exe] + cargs
-    print(" ".join(cmd))
-    r = call(cmd)
-    if r!=0:
-        raise RuntimeError("{} crashed with error code {}".format(args.exe,r))
+    run(cmd)
 
              
 def sort_outdir(outdir):
@@ -434,6 +450,15 @@ def ptime(t):
     r += "%d sec " % t
     return r
 
+def run_and_analyze():
+    global args
+    outdir = make_outdir(args.outdir)
+    t0 = time.time()
+    run_outdir(outdir,args.gdb)
+    sort_outdir(outdir)
+    validate_report(outdir)
+    analyze_outdir(outdir)
+    print("Regression finished at {}. Elapsed time: {} Output in {}".format(time.asctime(),ptime(time.time()-t0),outdir))
 
 if __name__=="__main__":
     import argparse 
@@ -449,6 +474,8 @@ if __name__=="__main__":
     parser.add_argument("--fast",help="Run with "+fast_infile,action="store_true")
     parser.add_argument("--full",help="Run with "+full_infile,action="store_true")
     parser.add_argument("--jobs",help="Specifies number of worker threads",type=int)
+    parser.add_argument("--pagesize",help="Specifies page size",type=int)
+    parser.add_argument("--marginsize",help="Specifies the margin size",type=int)
     parser.add_argument("--extra",help="Specify extra arguments")
     parser.add_argument("--gprof",help="Recompile and run with gprof",action="store_true")
     parser.add_argument("--diff",help="diff mode. Compare two outputs",type=str,nargs='*')
@@ -464,7 +491,7 @@ if __name__=="__main__":
             + "file from a crash and produces bulk_extractor flags to quickly "
             + "reproduce the crash")
     parser.add_argument("--clearcache",help="clear the disk cache",action="store_true")
-    parser.add_argument("--perftest",help="run performance testing. Args are coded in this file",action="store_true")
+    parser.add_argument("--tune",help="run bulk_extractor tuning. Args are coded in this script.",action="store_true")
 
     args = parser.parse_args()
 
@@ -539,13 +566,13 @@ if __name__=="__main__":
         os.putenv("MallocCheckHeapAbort","1")
         os.putenv("MallocErrorAbort","1")
         os.putenv("MallocCorruptionAbort","1")
-        run(args)
+        run_and_analyze()
         exit(0)
 
     if args.gprof:
         call(['make','clean'])
         call(['make','CFLAGS=-pg','CXXFLAGS=-pg','LDFLAGS=-pg'])
-        outdir = run(args)
+        outdir = run_and_analyze()
         call(['gprof',program,"gmon.out"],stdout=open(outdir+"/GPROF.txt","w"))
 
     if args.diff:
@@ -558,37 +585,46 @@ if __name__=="__main__":
             sort_outdir(s)
         exit(0)
 
-    if args.perftest:
-        print("perftest_jobs_start: ",perftest_jobs_start)
-        print("perftest_jobs_end  : ",perftest_jobs_end  )
-        print("perftest_jobs_step : ",perftest_jobs_step )
+    if args.tune:
+        print("tune_jobs_start: ",tune_jobs_start)
+        print("tune_jobs_end  : ",tune_jobs_end  )
+        print("tune_jobs_step : ",tune_jobs_step )
 
-        print("perftest_pagesize_start : ",perftest_pagesize_start )
-        print("perftest_pagesize_end : ",perftest_pagesize_end )
-        print("perftest_pagesize_step : ",perftest_pagesize_step )
+        print("tune_pagesize_start : ",tune_pagesize_start )
+        print("tune_pagesize_end : ",tune_pagesize_end )
+        print("tune_pagesize_step : ",tune_pagesize_step )
 
-        print("perftest_marginsize_start: ",perftest_marginsize_start)
-        print("perftest_marginsize_end: ",perftest_marginsize_end)
-        print("perftest_marginsize_step: ",perftest_marginsize_step)
-        for j in range(perftest_jobs_start,perftest_jobs_end+1,perftest_jobs_step):
-            for p in range(perftest_pagesize_start,perftest_pagesize_end+1,perftest_pagesize_step):
-                for m in range(perftest_marginsize_start,perftest_marginsize_end+1,perftest_marginsize_step):
-                    clear_cache()
-                    outdir = make_outdir(args.outdir+"-{}-{}-{}".format(j,p,m))
-                    clear_cache()
-                    run_outdir(outdir)
-                    ofn = "report-{}-{}-{}.xml".format(j,p,m)
-                    os.rename(outdir+"/report.xml",ofn)
+        print("tune_marginsize_start: ",tune_marginsize_start)
+        print("tune_marginsize_end: ",tune_marginsize_end)
+        print("tune_marginsize_step: ",tune_marginsize_step)
+
+        job_steps = 1+(tune_jobs_end-tune_jobs_start)/tune_jobs_step
+        pagesize_steps = 1+(tune_pagesize_end-tune_pagesize_start)/tune_pagesize_step
+        marginsize_steps = 1+(tune_marginsize_end-tune_marginsize_start)/tune_marginsize_step
+        print("Total anticipated runs: {}".format(job_steps*pagesize_steps*marginsize_steps))
+
+        def run_with_parms(jobs,pagesize,margin):
+            args.jobs = jobs
+            args.pagesize = pagesize
+            args.margin = margin
+            clear_cache()
+            outdir = make_outdir(args.outdir+"-{}-{}-{}".format(jobs,pagesize,margin))
+            clear_cache()
+            run_outdir(outdir)
+            ofn = "report-{}-{}-{}.xml".format(j,p,m)
+            os.rename(outdir+"/report.xml",ofn)
+
+        for p in range(tune_pagesize_start,tune_pagesize_end+1,tune_pagesize_step):
+            for m in range(tune_marginsize_start,tune_marginsize_end+1,tune_marginsize_step):
+                run_with_parms(None,p,m)
+
+        for j in range(tune_jobs_start,tune_jobs_end+1,tune_jobs_step):
+            run_with_parms(j,None,None)
+            
         exit(0)
         
-
     if args.clearcache:
         clear_cache()
 
-    outdir = make_outdir(args.outdir)
-    t0 = time.time()
-    run_outdir(outdir,args.gdb)
-    sort_outdir(outdir)
-    validate_report(outdir)
-    analyze_outdir(outdir)
-    print("Regression finished at {}. Elapsed time: {} Output in {}".format(time.asctime(),ptime(time.time()-t0),outdir))
+    run_and_analyze()
+

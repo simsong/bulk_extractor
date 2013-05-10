@@ -4,12 +4,20 @@
 
 bulk_extractor Version 1.4 has been released for Linux, MacOS and Windows.
 
-New functionality in Version 1.3 include:
+New functionality in Version 1.4 includes:
 
-Improvements in Version 1.3 include:
+Improvements in Version 1.4 include:
 
 * scan_pdf now does a better job extracting emails from text.
 
+New features for testing includes:
+
+* tests/regress.py now performs better validation of reports with the
+  --validate option. Validation includes making sure that every line is
+  UTF-8, that feature sizes are less than 1000 characters in size, and
+  context is less than 1000000 characters in size. We now use --validate
+  to check the results of BE run against the Real Data Corpus as part of
+  our release engineering.
 
 
 Incompatiable changes:
@@ -19,7 +27,7 @@ Incompatiable changes:
 BUG FIXES
 
 * scan_windirs was improperly reporting the cluster for fat directory
-  entries. Fixed.
+  entries. 
 
 * Additional validations were added to scan_windirs for fat directory
   entries. As a result fewer false positives will be reported.
@@ -30,13 +38,12 @@ BUG FIXES
 PERFORMANCE STATISTICS
 
 This section tracks how performance of bulk_extractor has changed over
-time. 
+time.  We update it with each new release
 
-NOTE: We recommend compiling Version 1.3 with -O3 under GCC. We have
-found no case in which GCC produces invalid code, and our testing
-indicates that -O3 produces bulk_extractor object code that is
-dramatically faster than -O2. Use these configure flags to compile
-with a different optimization: 
+NOTE: We recommend compiling Version 1.4 with -O3 under GCC. Please
+use version GCC 4.7 or above. One a Mac you may wish to use clang.
+
+Use these configure flags to compile with a different optimization: 
 
   --without-opt           Drop all -O C flags
   --without-o3            Do not force O3 optimization; use default level
