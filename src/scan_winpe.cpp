@@ -480,24 +480,17 @@ struct flagnames_t pe_optionalwindowsheader_subsystem[] = {
 
 static bool valid_dll_name(const std::string &dllname)
 {
+    if(!validASCIIName(dllname)) return false;
     if(dllname.size()<5) return false; /* DLL names have at least a character, a period and an extension */
     if(dllname.at(dllname.size()-4)!='.') return false; // check for the '.'
-
-    for(size_t i = 0; i< dllname.size(); i++){
-	if(((u_char)dllname[i]) & 0x80) return false; // high bit should not be set
-	if(((u_char)dllname[i]) < ' ') return false;  // control character
-    }
     return true;			// looks valid
 }
 
 static bool valid_section_name(const std::string &sectionName)
 {
-    for(size_t i = 0; i< sectionName.size(); i++){
-	if(((u_char)sectionName[i]) & 0x80) return false; // high bit should not be set
-	if(((u_char)sectionName[i]) < ' ') return false;  // control character
-    }
-    return true;			// looks valid
-    
+    if(!validASCIIName(sectionName)) return false;
+    if(sectionName.size()<1) return false;
+    return true;
 }
 
 static string scan_winpe_verify (const sbuf_t &sbuf)

@@ -42,7 +42,12 @@ Much of the emphasis of the 1.4 is to decrease "false positives."
   into the files ether.txt and tcp.txt.
 
 * scan_elf applies more validation to ELF headers and, as a result,
-  many of the false positives have been eliminated.
+  many of the false positives have been eliminated. This was
+  expecially a problem for truncated headers.
+
+* scan_winpe applies more validation to section and DLL names and, as
+  a result, many of hte false positives have been eliminated. This was
+  especially a problem for truncated PE headers.
 
 ================================================================
 PERFORMANCE STATISTICS

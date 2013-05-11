@@ -37,6 +37,8 @@ AC_DEFINE([USE_HISTOGRAMS],1,[We are using histograms])
 AC_DEFINE([USE_STOP_LIST],1,[We are using the stop lists])
 AC_DEFINE([USE_ALERT_LIST],1,[We are using the alert list])
 
+m4_include([src/be13_api/be13_configure.m4])
+
 ## 
 ## BEViewer
 AC_ARG_ENABLE(BEViewer,
@@ -282,7 +284,6 @@ AC_LANG_POP()
 # With special nods to compiling under mingw
 
 if test  x"$mingw" = x"yes";  then
-  #AC_DEFINE([HAVE_STRUCT_TIMESPEC],1,[Required for mingw])
   CFLAGS="$CFLAGS -mthreads "
   CPPFLAGS="-DPTW32_STATIC_LIB $CPPFLAGS"
   CXXFLAGS="$CXXFLAGS -mthreads "
