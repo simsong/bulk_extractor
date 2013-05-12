@@ -296,8 +296,9 @@ def run_outdir(outdir,gdb=False):
     cargs += ['-r','tests/alert_list.txt']
     cargs += ['-w','tests/stop_list.txt']
     cargs += ['-w','tests/stop_list_context.txt']
-    cargs += ['-f','[a-z\.0-9]*@gsa.gov']
-    cargs += ['-F','tests/find_list.txt']
+    if not args.nofind:
+        cargs += ['-f','[a-z\.0-9]*@gsa.gov']
+        cargs += ['-F','tests/find_list.txt']
     cargs += [args.image]
 
     # Now that we have a command, figure out how to run it...
@@ -400,7 +401,7 @@ def validate_report(fn):
     if os.path.isdir(fn) or fn.endswith(".zip"):
         b = bulk_extractor_reader.BulkReport(fn)
         for fn in b.feature_files():
-            if os.path.basename(fn) in args.ignore:
+            if os.path.basename(fn) in str(args.ignore):
                 print("** ignore {} **".format(fn))
                 continue
             validate_file(b.open(fn,'rb'),FEATURE_FILE)
@@ -488,6 +489,7 @@ if __name__=="__main__":
     parser.add_argument("--full",help="Run with "+full_infile,action="store_true")
     parser.add_argument("--jobs",help="Specifies number of worker threads",type=int)
     parser.add_argument("--pagesize",help="Specifies page size",type=int)
+    parser.add_argument("--nofind",help="Does not do find test (faster)",action="store_true")
     parser.add_argument("--marginsize",help="Specifies the margin size",type=int)
     parser.add_argument("--extra",help="Specify extra arguments")
     parser.add_argument("--gprof",help="Recompile and run with gprof",action="store_true")

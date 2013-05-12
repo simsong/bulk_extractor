@@ -49,6 +49,9 @@ Much of the emphasis of the 1.4 is to decrease "false positives."
   a result, many of hte false positives have been eliminated. This was
   especially a problem for truncated PE headers.
 
+* Strings of hex digits separated by colons are no longer mistaking
+  reported as Ethernet MAC addresses.
+
 ================================================================
 PERFORMANCE STATISTICS
 
