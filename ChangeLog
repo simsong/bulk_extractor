@@ -1,3 +1,7 @@
+2013-05-12  Basic  <simsong@Mucha.local>
+
+	* src/be13_api/plugin.cpp: max_depth changed to 7
+
 2013-05-09    <simsong@ncr.nps.edu>
 
 	* src/scan_net.cpp (p): carved ethernet packets are now properly recorded in ether.txt and tcp.txt

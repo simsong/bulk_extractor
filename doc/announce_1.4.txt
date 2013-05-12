@@ -45,6 +45,11 @@ Much of the emphasis of the 1.4 is to decrease "false positives."
   many of the false positives have been eliminated.
 
 ================================================================
+UNDERREPORTING FIXES
+
+* max_depth changed from 5 to 7
+
+================================================================
 PERFORMANCE STATISTICS
 
 This section tracks how performance of bulk_extractor has changed over
