@@ -53,8 +53,20 @@ public:
     string   volume_path_name;
     uint32_t volume_serial_number;
     int64_t  volume_creation_time;
-    vector<std::string> files;
-    vector<std::string> directories;
+    vector<std::string> files;		// files in prefect record
+    vector<std::string> directories;	// directories in prefect
+
+    std::string to_xml();		// turns the record to an XML
+
+    bool valid_full_path_name(const std::string &str){
+	if(str.size()<2) return false;
+	if(str.at(0)!='\\') return false;
+	for(size_t i=0;i<str.size();i++){
+	    if((uint8_t)str.at(i)=='\000') return false; // no null characters in UTF-8
+	}
+	/* Additional checks? */
+	return true;
+    }
 
     prefetch_record_t(const sbuf_t &sbuf):prefetch_version(), header_size(0), execution_filename(),
                       execution_counter(0), execution_time(0), volume_path_name(),
@@ -80,7 +92,8 @@ public:
                 execution_counter_offset = 0x98;
             } else {
                 // program error: don't create prefetch_record if this byte is invalid.
-                assert(0);
+		// This was an assert(0), but let's just return
+		return ;
             }
 
             // size in bytes of the whole prefetch file
@@ -102,10 +115,7 @@ public:
                 return;
             }
 
-            // get last execution time
             execution_time = sbuf.get64u(execution_time_offset);
-
-            // get number of execution file runs
             execution_counter = sbuf.get32u(execution_counter_offset);
 
             // get the list of files from Section C
@@ -115,35 +125,24 @@ public:
             while (filename_stream.tell() < section_c_length) {
                 wstring utf16_filename;
                 filename_stream.getUTF16(utf16_filename);
-                if (utf16_filename.length() == 0) {
-                    break;
-                }
                 string filename = safe_utf16to8(utf16_filename);
+		if (!valid_full_path_name(filename)) return;
                 files.push_back(filename);
             }
 
-            // get the offset to Section D
+            // Process Section D
             uint32_t section_d_offset = sbuf.get32u(0x6c);
 
-            // get the volume name from Section D
             uint32_t volume_name_offset = sbuf.get32u(section_d_offset + 0x00);
             wstring utf16_volume_name;
             sbuf.getUTF16(section_d_offset+volume_name_offset, utf16_volume_name);
             volume_path_name = safe_utf16to8(utf16_volume_name);
 
-            // get volume creation time from Section D
             volume_creation_time = sbuf.get64i(section_d_offset+0x08);
-
-            // get volume serial number from Section D
             volume_serial_number = sbuf.get32u(section_d_offset+0x10);
 
-            // get the directory offset with respect to Section D from Section D subsection 2
             uint32_t section_d_2_offset = sbuf.get32u(section_d_offset + 0x1c);
-
-            // establish the directory offset
-            size_t directory_offset = section_d_offset + section_d_2_offset;
-
-            // get the number of directory entries in Section D subsection 2
+            size_t   directory_offset = section_d_offset + section_d_2_offset;
             uint32_t num_directory_entries = sbuf.get32u(section_d_offset + 0x20);
 
             // get each of the directory entries from Section D subsection 2
@@ -158,7 +157,7 @@ public:
                 for (uint32_t i=0; i<num_directory_entries; i++) {
                     // break if obviously out of range
                     if (directory_stream.tell() > upper_max) {
-                        break;
+			return;		// rest of data not good
                     }
 
                     // for directories, the first int16 is the directory name length.
@@ -168,10 +167,8 @@ public:
                     // read the directory name
                     wstring utf16_directory_name;
                     directory_stream.getUTF16(utf16_directory_name);
-                    if (utf16_directory_name.length() == 0) {
-                        break;
-                    }
                     string directory_name = safe_utf16to8(utf16_directory_name);
+		    if (!valid_full_path_name(directory_name)) return;
                     directories.push_back(directory_name);
                 }
             }
@@ -187,7 +184,43 @@ public:
 /**
  * Returns an XML string from the prefetch record provided.
  */
-static string get_prefetch_xml_string(const prefetch_record_t &prefetch_record);
+// Private helper functions; turn a prefect record into an XML string */
+std::string prefetch_record_t::to_xml()
+{
+    stringstream ss;
+
+    // generate the prefetch feature in a stringstream
+    ss << "<prefetch>";
+        ss << "<os>"       << xml::xmlescape(prefetch_version) << "</os>";
+        ss << "<filename>" << xml::xmlescape(execution_filename) << "</filename>";
+        ss << "<header_size>" << header_size << "</header_size>";
+        ss << "<atime>"    << microsoftDateToISODate(execution_time) << "</atime>";
+        ss << "<runs>"     << execution_counter << "</runs>";
+        ss << "<filenames>";
+            for(vector<string>::const_iterator it = files.begin();
+                it != files.end(); it++) {
+                ss << "<file>" << xml::xmlescape(*it) << "</file>";
+            }
+        ss << "</filenames>";
+
+        ss << "<volume>";
+            ss << "<path>" << xml::xmlescape(volume_path_name) << "</path>";
+            ss << "<creation>" << microsoftDateToISODate(volume_creation_time) << "</creation>";
+            ss << "<serial_number>" << hex << volume_serial_number << dec << "</serial_number>";
+
+            ss << "<dirnames>";
+                for(vector<string>::const_iterator it = directories.begin();
+                    it != directories.end(); it++) {
+                    ss << "<dir>" << xml::xmlescape(*it) << "</dir>";
+                }
+            ss << "</dirnames>";
+        ss << "</volume>";
+    ss << "</prefetch>";
+
+    // return the xml as a string
+    string prefetch_xml = ss.str();
+    return prefetch_xml;
+}
 
 /**
  * Scanner scan_winprefetch scans and extracts windows prefetch records.
@@ -245,58 +278,22 @@ void scan_winprefetch(const class scanner_params &sp,const recursion_control_blo
 		&& sbuf[start + 6] == 0x43
 		&& sbuf[start + 7] == 0x41) {
 
-		if(debug&DEBUG_INFO) std::cerr << "scan_winprefetch checking match at start " << start << "\n";
+		if(debug & DEBUG_INFO) std::cerr << "scan_winprefetch checking match at start " << start << "\n";
 
 		// create the populated prefetch record
 		prefetch_record_t prefetch_record(sbuf + start);
 
-		// get the prefetch record
-		const string prefetch_xml_string = get_prefetch_xml_string(prefetch_record);
-
 		// record the winprefetch entry
 		winprefetch_recorder->write(sp.sbuf.pos0+start,
 					    prefetch_record.execution_filename,
-					    prefetch_xml_string);
+					    prefetch_record.to_xml());
 
+		/* Should really skip to the end of the record we just
+		 * parsed, but it's not immediately obvious how to get
+		 * that info at this point.
+		 */
 	    }
 	}
     }
-}
-
-// Private helper functions
-static string get_prefetch_xml_string(const prefetch_record_t &prefetch_record) {
-    stringstream ss;
-
-    // generate the prefetch feature in a stringstream
-    ss << "<prefetch>";
-        ss << "<os>" << xml::xmlescape(prefetch_record.prefetch_version) << "</os>";
-        ss << "<filename>" << xml::xmlescape(prefetch_record.execution_filename) << "</filename>";
-        ss << "<header_size>" << prefetch_record.header_size << "</header_size>";
-        ss << "<atime>" << microsoftDateToISODate(prefetch_record.execution_time) << "</atime>";
-        ss << "<runs>" << prefetch_record.execution_counter << "</runs>";
-        ss << "<filenames>";
-            for(vector<string>::const_iterator it = prefetch_record.files.begin();
-                it != prefetch_record.files.end(); it++) {
-                ss << "<file>" << xml::xmlescape(*it) << "</file>";
-            }
-        ss << "</filenames>";
-
-        ss << "<volume>";
-            ss << "<path>" << xml::xmlescape(prefetch_record.volume_path_name) << "</path>";
-            ss << "<creation>" << microsoftDateToISODate(prefetch_record.volume_creation_time) << "</creation>";
-            ss << "<serial_number>" << hex << prefetch_record.volume_serial_number << dec << "</serial_number>";
-
-            ss << "<dirnames>";
-                for(vector<string>::const_iterator it = prefetch_record.directories.begin();
-                    it != prefetch_record.directories.end(); it++) {
-                    ss << "<dir>" << xml::xmlescape(*it) << "</dir>";
-                }
-            ss << "</dirnames>";
-        ss << "</volume>";
-    ss << "</prefetch>";
-
-    // return the xml as a string
-    string prefetch_xml = ss.str();
-    return prefetch_xml;
 }
 
