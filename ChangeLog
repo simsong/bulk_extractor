@@ -1,3 +1,6 @@
+2013-05-12  Basic  <simsong@Mucha.local>
+
+	* src/be13_api/plugin.cpp: max_depth changed to 7
 2013-05-11    <simsong@ncr.nps.edu>
 
 	* src/scan_winpe.cpp (scan_winpe_verify): added verification of section names and DLL names to reject false positives. 

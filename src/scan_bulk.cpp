@@ -486,7 +486,7 @@ void scan_bulk(const class scanner_params &sp,const recursion_control_block &rcb
 	sp.info->name		= "bulk";
 	sp.info->author		= "Simson Garfinkel";
 	sp.info->description	= "perform bulk data scan";
-	sp.info->flags		= scanner_info::SCANNER_DISABLED | scanner_info::SCANNER_NO_ALL;
+	sp.info->flags		= scanner_info::SCANNER_DISABLED | scanner_info::SCANNER_WANTS_NGRAMS | scanner_info::SCANNER_NO_ALL;
 	sp.info->feature_names.insert("bulk");
 	sp.info->feature_names.insert("bulk_tags");
 	histogram::precalc_entropy_array(opt_scan_bulk_block_size);
