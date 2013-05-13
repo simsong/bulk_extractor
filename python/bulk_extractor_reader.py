@@ -86,6 +86,8 @@ def is_feature_filename(fname):
     """Returns true if this is a feature file"""
     if "_histogram" in fname: return False
     if "_stopped" in fname: return False
+    if "_tags" in fname: return False
+    if "wordlist" in fname: return False
     return None                 # don't know
 
 

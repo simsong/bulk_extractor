@@ -293,10 +293,10 @@ def run_outdir(outdir,gdb=False):
     if args.extra:     cargs += args.extra.split(" ")
 
     if args.debug: cargs += ['-d'+str(args.debug)]
-    cargs += ['-r','tests/alert_list.txt']
-    cargs += ['-w','tests/stop_list.txt']
-    cargs += ['-w','tests/stop_list_context.txt']
     if not args.nofind:
+        cargs += ['-r','tests/alert_list.txt']
+        cargs += ['-w','tests/stop_list.txt']
+        cargs += ['-w','tests/stop_list_context.txt']
         cargs += ['-f','[a-z\.0-9]*@gsa.gov']
         cargs += ['-F','tests/find_list.txt']
     cargs += [args.image]
