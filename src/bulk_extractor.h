@@ -202,19 +202,11 @@ std::vector<std::string> split(const std::string &s, char delim);
 
 /****************************************************************/
 
-#include "regex.h"
 #include "word_and_context_list.h"
 
 /* The global lists for alerting and stopping */
 extern word_and_context_list alert_list;		/* should be flagged */
 extern word_and_context_list stop_list;		/* should be ignored */
-
-//void set_scanner_enabled(const string name,bool enable);
-
-
-/* Assume the highest year */
-
-/* built-in scanners */
 
 /* flex-based scanners */
 extern "C" scanner_t scan_email;  

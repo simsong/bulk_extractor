@@ -1126,9 +1126,10 @@ int main(int argc,char **argv)
     argv += optind;
 
 
-    if(be_config["work_start_work_end"]=="NO"){
-	opt_work_start_work_end=false;
-    }
+    scanner_info si;
+    si.config = be_config;
+    si.get_config("work_start_work_end",&opt_work_start_work_end,
+                   "Record work start and end of each scanner in report.xml file");
 
     /* Load all the scanners and enable the ones we care about */
     load_scanner_directories(scanner_dirs,be_config);
