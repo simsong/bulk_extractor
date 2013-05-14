@@ -1,20 +1,26 @@
 ==============================================================================
-Bulk Extractor 1.4.   Feature Freeze: 30 MAR 2013.  Release: 30 JUN 2013
+Bulk Extractor 1.4.   Feature Freeze: 1 JUN 2013.  Release: 1 AUG 2013
 ==============================================================================
 
 DOCUMENTATION:
 - document how to write a new scanner and add it to the mainstream.
 
-
 BUGFIXES:
 - scan_net occasionally throws exceptions. Find out why and stop it.
 - scan_net does not properly report timestamps
-- scan_pdf should use multiple strategies for extracting text.
++ scan_pdf should use multiple strategies for extracting text.
 
 FEATURES:
-- Instrument debug to track number of bytes processed
-- Construction of a stop-list from standard installs of OS and Apps
-- Inverting bytes
++ Inverting bytes
+
++ Work with windows raw-device (e.g.  \\.\physicaldrive0 ) 
+  when run as Administrator.
+   -  http://msdn.microsoft.com/en-us/library/aa363858(v=vs.85).aspx
+
++ Track number of bytes processed
+
++ Construction of a stop-list from standard installs of OS and Apps
+
 
 - slg: scan_net.cpp - replace all buffer arithmetic with sbuf pointer get.
  - Figure out why this is causing a assertion failure:
@@ -33,9 +39,6 @@ FEATURES:
 
 - represent all files examined in report.xml file (.001,.002, etc.)
 
-- scan_windir:
-  - Add support for MBR and GPRT decoding (can we just hijack the SleuthKit code?)
-
 - Windows shortcut files & IE history
 
 - Fix exception throwing in MyFlexLexer.h so that msg is properly passed as *what().
@@ -45,13 +48,7 @@ FEATURES:
   - identify_files.py
   - Benchmark testing for execution against reference disk images
 
-- scanner for emails and usernames.  <simsong@acm.org> "Simson L. Garfinkel"
-
-- improved testing and validation of CMU LIFT software
-
 - Escape processing to search term histogram
-
-- Support for checkpointing using BLCR.
 
 - Replacing hacky XML reading in restart with a proper Expat-based parser.
 
@@ -66,10 +63,6 @@ FEATURES:
 
 - UTF-16 email addresses sometimes have the last character removed; figure out why and fix.
 
-- Work with windows raw-device (e.g.  \\.\physicaldrive0 ) 
-  when run as Administrator.
-   -  http://msdn.microsoft.com/en-us/library/aa363858(v=vs.85).aspx
-
 - Add the classification label of media from .E01 files into the Feature file as a comment.
 EWF files have a Notes field in which a classification label may be placed.
 This field may be filled with classification labels such as UNCLASSIFIED//FOUO.
@@ -82,10 +75,26 @@ BEViewer (Requested but not assigned):
 We may use fiwalk and identify_filenames to additionally display the file
 associated with the Feature that is currently navigated to.
 
-WILL NOT BE DONE:
+- Revise, document and deploy  multi-drive correlator
 
-- "Wall of bulk_extractor" - grid-based multiprocessing
-  - Don't do if its not needed on the 64-core machine
+On Hold:
+
+- scanner for emails and usernames.  <simsong@acm.org> "Simson L. Garfinkel"
+
+- improved testing and validation of CMU LIFT software
+
+- Support for checkpointing using BLCR.
+
+
+
+
+================================================================
+Bulk Extractor 1.5:  Sometime in 2014
+================================================================
+
+
+- scan_windir:
+  - Add support for MBR and GPRT decoding (can we just hijack the SleuthKit code?)
 
 
 
@@ -93,36 +102,6 @@ WILL NOT BE DONE:
 Bulk Extractor 2.0.   Sometime in 2013
 ==============================================================================
 
-
-- Find a UNICODE-aware regular expression package. 
-  Options include:
-  - PRCE
-  - ICU - http://userguide.icu-project.org/strings/regexp
-  - Quex?
-  - http://www.lightboxtechnologies.com/lightgrep/ ?
-
-  Performance/Conformance testing should determine relative speed and tolerance of binary input
-
-  For each:
-
-  -- Conformance with existing implementation — Can all regular
-   expressions current employed continue to be employed? Given the
-   same input data, do scanners created with the new scanner
-   generators match the same results?
-
-  --  Reliability — Scanners built with GNU flex never crash, not even
-   when given random data. Do scanners created with the replacements
-   offer similar robustness?
-
-  --  Speed — How does the speed of the new scanners compare with the
-   speed of the existing ones?
-
-  --  Unicode Support — Can the new scanners find Unicode characters in
-   UTF-8 and/or UTF-16?  How do the scanners determine the coding
-   system in use?
-
-  -   Target language — Can the new scanners be created in C++, C#,
-   and/or Java? 
 
 - Source code scanner
   - Will this be part of scan_lift?
@@ -175,7 +154,7 @@ Bulk Extractor 2.0.   Sometime in 2013
 - Modify DFXML so that absolute path of disk image is reported.
   http://stackoverflow.com/questions/143174/c-c-how-to-obtain-the-full-path-of-current-directory
 
-- make featurerecroder::get_name raise an exception rather than aborting.
+- make feature_recroder::get_name raise an exception rather than aborting?
 
 - Update scan_net to carve PPP packets (alegedly common with 3G and 4G modem cards)
 
@@ -198,8 +177,6 @@ Bulk Extractor 2.0.   Sometime in 2013
 
 - Explore integration of http://itextpdf.com/itext.php for PDF text extraction.
   - rewrite scan_pdf?
-
-- Revise, document and deploy  multi-drive correlator
 
 - Allow bulk_extractor to scan just unallocated area. 
 

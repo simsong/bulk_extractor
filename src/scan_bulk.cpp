@@ -97,7 +97,7 @@ std::ostream & operator<< (std::ostream &os, const sector_typetag &ss) {
 typedef vector<sector_typetag> sector_typetags_vector_t; //
 sector_typetags_vector_t sector_typetags;		      // what gets put where
 
-size_t opt_scan_bulk_block_size = 512;	// 
+static size_t opt_scan_bulk_block_size = 512;	// 
 
 static void bulk_process_feature_file(const std::string &fn)
 {
@@ -489,11 +489,10 @@ void scan_bulk(const class scanner_params &sp,const recursion_control_block &rcb
 	sp.info->flags		= scanner_info::SCANNER_DISABLED | scanner_info::SCANNER_WANTS_NGRAMS | scanner_info::SCANNER_NO_ALL;
 	sp.info->feature_names.insert("bulk");
 	sp.info->feature_names.insert("bulk_tags");
+        sp.info->get_config("bulk_block_size",&opt_scan_bulk_block_size,"Block size (in bytes) for bulk data analysis");
+
 	histogram::precalc_entropy_array(opt_scan_bulk_block_size);
-	int bbs = stoi(sp.info->config["bulk_block_size"]);
-	if(bbs>0){
-	    opt_scan_bulk_block_size = bbs;
-	}
+
         dfrws_challenge = (sp.info->config["DFRWS2012"] != "");
         return; 
     }

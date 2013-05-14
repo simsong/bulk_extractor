@@ -22,6 +22,7 @@ New features for testing includes:
 
 Incompatiable changes:
 
+* The -B option for specifying the blocksize for bulk data analysis has been removed. Instead specify it with -S block_size=NN.
 
 ================================================================
 OVERREPORTING FIXES

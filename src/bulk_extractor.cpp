@@ -20,6 +20,10 @@
 #include <unistd.h>
 #include <ctype.h>
 
+#ifdef HAVE_EXPAT_H
+#include <expat.h>
+#endif
+
 #ifdef HAVE_MCHECK
 #include <mcheck.h>
 #endif
@@ -38,7 +42,7 @@ using namespace std;
  *** COMMAND LINE OPTIONS
  ****************************************************************/
 
-const char *progname=0;
+//const char *progname=0;
 
 size_t opt_pagesize=1024*1024*16;	// 
 size_t opt_margin = 1024*1024*4;
@@ -54,10 +58,11 @@ int   opt_silent= 0;
 int   max_bad_alloc_errors = 60;
 uint64_t opt_page_start = 0;
 uint32_t   opt_last_year = 2020;
-const char *image_fname = 0;
+//const char *image_fname = 0;
 const time_t max_wait_time=3600;
 
 std::string HTTP_EOL = "\r\n";		// stdout is in binary form
+typedef std::set<std::string> seen_page_ids_t;
 
 /* global alert_list and stop_list
  * These should probably become static class variables
@@ -719,12 +724,93 @@ public:
     }
 };
 
+class bulk_extractor_restarter {
+    std::stringstream cdata;
+    std::string thisElement;
+    std::string provided_filename;
+    seen_page_ids_t &seen_page_ids;
+#ifdef HAVE_LIB_EXPAT
+    static void startElement(void *userData, const char *name_, const char **attrs) {
+        class bulk_extractor_restarter &self = *(bulk_extractor_restarter *)userData;
+        self.cdata.str("");
+        self.thisElement = name_;
+        if(thisElement=="debug:work_start"){
+            for(int i=0;attrs[i];i+=2){
+                if(strcmp(attrs[i],"pos0")){
+                    std::cerr << "pos=0" << attrs[i+1] << "\n";
+                    self.seen_page_ids->insert(attrs[i+1]);
+                }
+            }
+        }
+    }
+    static void endElement(void *userData,const char *name_){
+        class bulk_extractor_restarter &self = *(bulk_extractor_restarter *)userData;
+        if(self.thisElement=="provided_filename") self.provided_filename = self.cdata.str();
+        self.cdata.str("");
+    }
+    static void characterDataHandler(void *userData,const XML_Char *s,int len){ 
+        class bulk_extractor_restarter &self = *(bulk_extractor_restarter *)userData;
+        self.cdata.write(s,len);
+    }
+#endif
+
+public:;
+    bulk_extractor_restarter(const std::string &opt_outdir,
+                             const std::string &reportfilename,
+                             const std::string &image_fname,
+                             seen_page_ids_t &seen_page_ids_):cdata(),thisElement(),provided_filename(),seen_page_ids(seen_page_ids_){
+#ifdef HAVE_LIB_EXPAT
+        if(access(reportfilename.c_str(),R_OK)){
+            std::cerr << opt_outdir << ": error\n";
+            std::cerr << "report.xml file is missing or unreadable.\n";
+            std::cerr << "Directory may not have been created by bulk_extractor.\n";
+            std::cerr << "Cannot continue.\n";
+            exit(1);
+        }
+	
+        XML_Parser parser = XML_ParserCreate(NULL);
+        XML_SetUserData(parser, this);
+        XML_SetElementHandler(parser, startElement, endElement);
+        XML_SetCharacterDataHandler(parser,characterDataHandler);
+        std::fstream in(reportfilename.c_str());
+        if(!in.is_open()){
+            std::cout << "Cannot open " << fname << ": " << strerror(errno) << "\n";
+            exit(1);
+        }
+        try {
+            bool error = false;
+            std::string line;
+            while(getline(in,line) && !error){
+                if (!XML_Parse(parser, line.c_str(), line.size(), 0)) {
+                    std::cout << "XML Error: " << XML_ErrorString(XML_GetErrorCode(parser))
+                              << " at line " << XML_GetCurrentLineNumber(parser) << "\n";
+                    error = true;
+                    break;
+                }
+            }
+            if(!error) XML_Parse(parser, "", 0, 1);    // clear the parser
+        }
+        catch (const std::exception &e) {
+            std::cout << "ERROR: " << e.what() << "\n";
+        }
+        XML_ParserFree(parser);
+        if(image_fname != provided_filename){
+            std::cerr << "Error: \n" << image_fname << " != " << provided_filename << "\n";
+            exit(1);
+        }
+#else
+        errx(1,"Compiled without libexpat; cannot restart.");
+#endif
+    }
+};
+
+
 /****************************************************************
  *** Usage
  ****************************************************************/
 
-static void usage() __attribute__ ((__noreturn__));
-static void usage()
+static void usage(const char *progname) __attribute__ ((__noreturn__));
+static void usage(const char *progname)
 {
     std::cout << "bulk_extractor version " PACKAGE_VERSION " " << svn_revision << "\n";
     std::cout << "Usage: " << progname << " [options] imagefile\n";
@@ -763,7 +849,6 @@ static void usage()
     std::cout << "   -g NN        - specify margin (default " <<opt_margin << ")\n";
     std::cout << "   -W n1:n2     - Specifies minimum and maximum word size\n";
     std::cout << "                 (default is -w" << word_min << ":" << word_max << ")\n";
-    std::cout << "   -B NN        - Specify the blocksize for bulk data analysis (default " <<opt_scan_bulk_block_size<< ")\n";
     std::cout << "   -j NN        - Number of analysis threads to run (default " <<threadpool::numCPU() << ")\n";
     std::cout << "   -M nn        - sets max recursion depth (default " << scanner_def::max_depth << ")\n";
     std::cout << "\nPath Processing Mode:\n";
@@ -793,33 +878,6 @@ static void usage()
     exit(0);
 }
 
-
-/*
- * Make sure that the filename provided is sane.
- * That is, do not allow the analysis of a *.E02 file...
- */
-void validate_fn(const string &fn)
-{
-    int r= access(fn.c_str(),R_OK);
-    if(r!=0){
-	cerr << "cannot open: " << fn << ": " << strerror(errno) << " (code " << r << ")\n";
-	exit(1);
-    }
-    if(fn.size()>3){
-	size_t e = fn.rfind('.');
-	if(e!=string::npos){
-	    string ext = fn.substr(e+1);
-	    if(ext=="E02" || ext=="e02"){
-		cerr << "Error: invalid file name\n";
-		cerr << "Do not use bulk_extractor to process individual EnCase files.\n";
-		cerr << "Instead, just run bulk_extractor with FILENAME.E01\n";
-		cerr << "The other files in an EnCase multi-volume archive will be opened\n";
-		cerr << "automatically.\n";
-		exit(1);
-	    }
-	}
-    }
-}
 
 /**
  * Create the dfxml output
@@ -880,6 +938,50 @@ static uint64_t scaled_stoi(const std::string &str)
 }
 
 
+/*
+ * Make sure that the filename provided is sane.
+ * That is, do not allow the analysis of a *.E02 file...
+ */
+void validate_fn(const std::string &fn)
+{
+    int r= access(fn.c_str(),R_OK);
+    if(r!=0){
+	cerr << "cannot open: " << fn << ": " << strerror(errno) << " (code " << r << ")\n";
+	exit(1);
+    }
+    if(fn.size()>3){
+	size_t e = fn.rfind('.');
+	if(e!=string::npos){
+	    string ext = fn.substr(e+1);
+	    if(ext=="E02" || ext=="e02"){
+		cerr << "Error: invalid file name\n";
+		cerr << "Do not use bulk_extractor to process individual EnCase files.\n";
+		cerr << "Instead, just run bulk_extractor with FILENAME.E01\n";
+		cerr << "The other files in an EnCase multi-volume archive will be opened\n";
+		cerr << "automatically.\n";
+		exit(1);
+	    }
+	}
+    }
+}
+
+
+void be_mkdir(string dir)
+{
+#ifdef WIN32
+    if(mkdir(dir.c_str())){
+        cerr << "Could not make directory " << dir << "\n";
+        exit(1);
+    }
+#else
+    if(mkdir(dir.c_str(),0777)){
+        cerr << "Could not make directory " << dir << "\n";
+        exit(1);
+    }
+#endif
+}
+
+
 int main(int argc,char **argv)
 {
 #ifdef HAVE_MCHECK
@@ -889,7 +991,7 @@ int main(int argc,char **argv)
     if(getenv("BULK_EXTRACTOR_DEBUG")){
 	debug = atoi(getenv("BULK_EXTRACTOR_DEBUG"));
     }
-    progname = argv[0];
+    const char *progname = argv[0];
     scanner_info::config_t be_config; // system configuration
     const char *opt_path = 0;
     int opt_recurse = 0;
@@ -917,7 +1019,7 @@ int main(int argc,char **argv)
 #endif
     /* look for usage first */
     if(argc==1 || (strcmp(argv[1],"-h")==0)){
-	usage();
+	usage(progname);
 	exit(1);
     }
 
@@ -926,7 +1028,6 @@ int main(int argc,char **argv)
     while ((ch = getopt(argc, argv, "A:B:b:C:d:E:e:F:f:G:g:Hhj:M:m:o:P:p:q:Rr:S:s:VW:w:x:Y:z:Z")) != -1) {
 	switch (ch) {
 	case 'A': feature_recorder::offset_add  = stoi64(optarg);break;
-	case 'B': opt_scan_bulk_block_size = scaled_stoi(optarg);break;
 	case 'b': feature_recorder::banner_file = optarg; break;
 	case 'C': feature_recorder::context_window = atoi(optarg);break;
 	case 'd':
@@ -1035,16 +1136,8 @@ int main(int argc,char **argv)
     scanners_process_commands();
 
     /* Print usage if necessary */
-    if(opt_H){
-        info_scanners(true,scanners_builtin,'e','x');
-        exit(0);
-    }
-
-    if(opt_h){
-        usage();
-        exit(0);
-    }
-
+    if(opt_H){ info_scanners(true,scanners_builtin,'e','x'); exit(0);}
+    if(opt_h){ usage(progname);}
 
     /* Give an error if a find list was specified
      * but no scanner that uses the find list is enabled.
@@ -1102,69 +1195,43 @@ int main(int argc,char **argv)
     xml  *xreport=0;
     string reportfilename = opt_outdir + "/report.xml";
 
-    xml::tagid_set_t seen_page_ids; // pages that do not need re-processing
+    seen_page_ids_t seen_page_ids; // pages that do not need re-processing
     image_process *p = 0;
-    image_fname = *argv;
+    std::string image_fname = *argv;
 
     if(directory_missing(opt_outdir) || directory_empty(opt_outdir)){
-	/* Create the new directory */
+
+        /* First time running */
+
+	/* Validate the args */
 	if ( argc !=1 ) errx(1,"Disk image option not provided. Run with -h for help.");
-
-	/* If disk image does not exist, we are in restart mode */
 	validate_fn(image_fname);
-	if(directory_missing(opt_outdir)) be_mkdir(opt_outdir);
-	p = image_process_open(image_fname,opt_recurse);
-	if(!p){
-	    if(errno) err(1,"Cannot open %s: ",image_fname);
-	}
-
-	/* Store the configuration in the XML file */
-	xreport = new xml(reportfilename,false);
-	dfxml_create(*xreport,command_line,num_threads);
-	
-	xreport->xmlout("provided_filename",image_fname); // save this information
+	if (directory_missing(opt_outdir)) be_mkdir(opt_outdir);
     } else {
 	/* Restarting */
-	if(access(reportfilename.c_str(),R_OK)){
-	    cerr << opt_outdir << ": error\n";
-	    cerr << "report.xml file is missing or unreadable.\n";
-	    cerr << "Directory may not have been created by bulk_extractor.\n";
-	    cerr << "Cannot continue.\n";
-	    exit(1);
-	}
-	
-	/* Specify the tags for which we are searching for */
-	xml::tagmap_t tagmap;
-	tagmap["provided_filename"] = "";
-	string dws("debug:work_start");
-	string attrib = "pos0";
-
-	class xml::existing e;
-	e.tagmap = &tagmap;
-	e.tagid = &dws;
-	e.attrib = &attrib;
-	e.tagid_set = &seen_page_ids;
-
-	xreport = new xml(reportfilename,e);
-
-	if(tagmap["provided_filename"].size()==0){
-	    cerr << "report.xml in output directory is incomplete.\n";
-	    cerr << "cannot restart.\n";
-	    exit(1);
-	}
-	
-	if(tagmap["provided_filename"] != image_fname){
-	    cerr << "report.xml in output directory is for " << tagmap["provided_filename"] << "\n";
-	    cerr << "cannot restart with " << image_fname << "\n";
-	    exit(1);
-	}
-
-	p = image_process_open(image_fname,opt_recurse);
 	std::cout << "Restarting from " << opt_outdir << "\n";
+        bulk_extractor_restarter r(opt_outdir,reportfilename,image_fname,seen_page_ids);
+
+        /* Rename the old report and create a new one */
+        std::string old_reportfilename = reportfilename + "." + itos(t);
+        if(rename(reportfilename.c_str(),old_reportfilename.c_str())){
+            std::cerr << "Could not rename " << reportfilename << " to " << old_reportfilename << ": " << strerror(errno) << "\n";
+            exit(1);
+        }
     }
 
-    if(p==0) err(1,"Cannot image_process_open(%s)",image_fname);
-	    
+    /* If disk image does not exist, we are in restart mode */
+    p = image_process_open(image_fname,opt_recurse);
+    if(!p) err(1,"Cannot open %s: ",image_fname.c_str());
+    
+    /* Store the configuration in the XML file */
+    xreport = new xml(reportfilename,false);
+    dfxml_create(*xreport,command_line,num_threads);
+    xreport->xmlout("provided_filename",image_fname); // save this information
+
+    /* Save the seen_page_ids */
+    /* TK */
+
     /* Determine the feature files that will be used */
     feature_file_names_t feature_file_names;
     enable_alert_recorder(feature_file_names);

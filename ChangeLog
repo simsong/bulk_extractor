@@ -1,3 +1,9 @@
+2013-05-13  Simson Garfinkel  <simsong@Mucha.local>
+
+	* src/bulk_extractor.cpp (usage): The -B option for specifying the blocksize for bulk data analysis has been removed. Instead specify it with -S block_size=NN.
+
+	* src/be13_api/xml.cpp (xml::xml): Routine for opening an existing DFXML file is removed. Anyone who processes XML with regular expressions is in a state of sin.
+
 2013-05-12  Basic  <simsong@Mucha.local>
 
 	* src/be13_api/plugin.cpp: max_depth changed to 7

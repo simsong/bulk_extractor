@@ -427,6 +427,12 @@ AC_CHECK_HEADER([libewf.h],
 AC_CHECK_FUNCS([libewf_handle_get_utf8_header_value_notes libewf_error_backtrace_fprint])
 AC_CHECK_HEADERS([tsk3/libtsk.h])
 
+## EXPAT is now a main line requirements
+## for restarting
+AC_CHECK_HEADER([expat.h])
+AC_CHECK_LIB([expat],[XML_ParserCreate])
+
+
 ################################################################
 ## exiv2 support
 ## now that exif is in place, exiv2 is an optional scanner.
@@ -447,8 +453,6 @@ if test x"$exiv2" == x"yes" ; then
   fi
 fi
 if test x"$exiv2" == x"yes" ; then
-  AC_CHECK_HEADER([expat.h])
-  AC_CHECK_LIB([expat],[XML_ParserCreate])
   AC_CHECK_HEADER([exiv2/image.hpp])
   AC_CHECK_HEADER([exiv2/exif.hpp])
   AC_CHECK_HEADER([exiv2/error.hpp])

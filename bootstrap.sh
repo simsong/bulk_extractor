@@ -8,7 +8,7 @@ then
   git submodule init
 fi
 
-git submodule update
+# git submodule update
 autoheader -f
 touch NEWS README AUTHORS ChangeLog
 touch stamp-h
