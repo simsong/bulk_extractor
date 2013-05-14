@@ -9,6 +9,7 @@
 using namespace std;
 
 const unsigned int myunpacksize = 99999; //This should be the length of the buffer in bulk_extractor, and the max size that a RAR file can open up
+//const unsigned int myunpacksize = 1000000000; //This should be the length of the buffer in bulk_extractor, and the max size that a RAR file can open up
 
 /**
 @author Benjamin Salazar
@@ -29,7 +30,6 @@ int main(int argc, char *argv[])
 	bool password = false;
 	if(argc < 2)
 	{
-		cout << "Not enough arguments. Exiting. Should be " << argv[0] << " RARFileName [password]" << endl;
 		return 1;
 	}
 
@@ -40,7 +40,6 @@ int main(int argc, char *argv[])
 
 	if(argc > 3)
 	{
-		cout << "Too many arguments. Exiting. Should be " << argv[0] << " RARFileName [password]" << endl;
 		return 1;
 	}
 
@@ -51,7 +50,6 @@ int main(int argc, char *argv[])
 
 	if(myfile.is_open())
 	{
-		//cout << "Successful opening" << endl;
 
 		//Get length of file
 		myfile.seekg(0,ios::end);
@@ -70,6 +68,9 @@ int main(int argc, char *argv[])
 		std::copy(oldbytes, oldbytes + length, std::back_inserter(newbytes));
 		delete[] oldbytes;
 
+                rarfunction.StartWithoutPassword(newbytes, 0, length, myunpacksize);
+
+#if 0
 		for (int i = 2; i < length; i++)
 		{//we start at 3 because the shortest RAR signature is 3 bytes in length
 			if (i > 5)
@@ -87,10 +88,10 @@ int main(int argc, char *argv[])
 				else rarfunction.StartWithoutPassword(newbytes, i - 2, length, myunpacksize);
 			}
 		}
+#endif
 
 	}else
 	{
-		cout << "File could not be opened" << endl;
 		myfile.clear(); //clear any errors
 		myfile.close();
 	}
@@ -164,7 +165,6 @@ The actual data will be located in the <code>data</code> variable.
 
 void ScanRar::StartDecompression(std::vector<char>& filebytes, int location, int length, const unsigned int myunpacksize, char ** parameters, int numparameters)
 {
-
 	string xmloutput = "<rar>\n";
 	CommandData data; //this variable is for assigning the commands to execute
 	data.ParseCommandLine(numparameters, parameters); //input the commands and have them parsed
@@ -185,17 +185,26 @@ void ScanRar::StartDecompression(std::vector<char>& filebytes, int location, int
 
 	extract.SetComprDataIO(mydataio); //Sets the ComprDataIO variable to the custom one that was just built
 
+#if 0
 	Archive myarch;
 	myarch.InitArc(startingaddress, length - location);
 	extract.ExtractArchiveInit(&data, myarch);
+#endif
 
 	//Extraction occurs here
 	extract.DoExtract(&data, startingaddress, length - location, xmloutput);
 	
 	xmloutput.append("\n<\\rar>\n");
-	cout << xmloutput.c_str() << endl;
 	/*IMPORTANT*/
 	//Now, one can access the 'memoryspace' variable and access all the data that has been extracted from the RAR file
+
+        FILE *outfile = fopen("derp.file", "w");
+
+        for(size_t ii = 0; ii < myunpacksize; ii++) {
+            fputc(memoryspace[ii], outfile);
+        }
+
+        fclose(outfile);
 
 	data.Close();
 
@@ -216,7 +225,6 @@ This function just prints the information from the <code>data</code> variable to
 */
 void ScanRar::PrintResults(unsigned int amount, byte *unpackedfiles)
 {
-	cout << "\nThe following is what has been found in memory:\n" ;//<< memoryspace << endl;
 
 	int64 k = 0;
 	while(k < amount)
