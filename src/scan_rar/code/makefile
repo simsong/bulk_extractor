@@ -7,7 +7,8 @@
 
 # Linux using GCC
 CXX=g++
-CXXFLAGS=-g -pthread
+CXXFLAGS=-g -pthread -pg
+LDFLAGS=-pg
 DEFINES=-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE
 STRIP=strip
 DESTDIR=/usr
