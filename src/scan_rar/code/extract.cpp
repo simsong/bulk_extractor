@@ -239,16 +239,7 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,size_t HeaderS
   if (HeaderSize==0)
     if (DataIO.UnpVolume)
     {
-#ifdef NOVOLUME
       return(false);
-#else
-      if (!MergeArchive(Arc,&DataIO,false,Command))
-      {
-        ErrHandler.SetErrorCode(WARNING);
-        return(false);
-      }
-      SignatureFound=false;
-#endif
     }
     else
       return(false);
@@ -275,14 +266,6 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,size_t HeaderS
     if (HeadType==ENDARC_HEAD)
       if (Arc.EndArcHead.Flags & EARC_NEXT_VOLUME)
       {
-#ifndef NOVOLUME
-        if (!MergeArchive(Arc,&DataIO,false,Command))
-        {
-          ErrHandler.SetErrorCode(WARNING);
-          return(false);
-        }
-        SignatureFound=false;
-#endif
         Arc.Seek(Arc.CurBlockPos,SEEK_SET);
         return(true);
       }

@@ -72,9 +72,6 @@ int ComprDataIO::UnpRead(byte *Addr,size_t Count)
     UnpPackedSize-=RetCode;
     if (UnpPackedSize == 0 && UnpVolume)
     {
-#ifndef NOVOLUME
-      if (!MergeArchive(*SrcArc,this,true,CurrentCommand))
-#endif
       {
         NextVolumeMissing=true;
         return(-1);
