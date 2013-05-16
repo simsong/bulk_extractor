@@ -122,8 +122,6 @@ bool MergeArchive(Archive &Arc,ComprDataIO *DataIO,bool ShowFileName,char Comman
 #if !defined(SFX_MODULE) && !defined(_WIN_CE)
       if (!RecoveryDone)
       {
-        RecVolumes RecVol;
-        RecVol.Restore(Cmd,Arc.FileName,Arc.FileNameW,true);
         RecoveryDone=true;
         continue;
       }

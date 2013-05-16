@@ -100,7 +100,7 @@ LINK=$(CXX)
 
 WHAT=UNRAR
 
-UNRAR_OBJ=filestr.o recvol.o rs.o
+UNRAR_OBJ=filestr.o rs.o
 LIB_OBJ=filestr.o dll.o
 
 OBJECTS=scan_rar.o strlist.o strfn.o pathfn.o savepos.o smallfn.o global.o file.o filefn.o filcreat.o \

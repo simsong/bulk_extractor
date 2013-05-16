@@ -405,13 +405,6 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,size_t HeaderS
     if (!ReconstructDone)
     {
       ReconstructDone=true;
-
-      RecVolumes RecVol;
-      if (RecVol.Restore(Cmd,Arc.FileName,Arc.FileNameW,true))
-      {
-        Repeat=true;
-        return(false);
-      }
     }
 #endif
     strcpy(ArcName,CurVolName);
