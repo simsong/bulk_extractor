@@ -663,76 +663,7 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,size_t HeaderS
     if (!IsLink(Arc.NewLhd.FileAttr))
       if (Arc.IsArcDir())
       {
-        if (!ExtrFile || Command=='P' || Command=='E' || Cmd->ExclPath==EXCL_SKIPWHOLEPATH)
           return(true);
-        if (SkipSolid)
-        {
-#ifndef GUI
-          mprintf(St(MExtrSkipFile),ArcFileName);
-#endif
-          return(true);
-        }
-        TotalFileCount++;
-        if (Cmd->Test)
-        {
-#ifndef GUI
-          mprintf(St(MExtrTestFile),ArcFileName);
-          mprintf(" %s",St(MOk));
-#endif
-          return(true);
-        }
-        MKDIR_CODE MDCode=MakeDir(DestFileName,DestNameW,!Cmd->IgnoreGeneralAttr,Arc.NewLhd.FileAttr);
-        bool DirExist=false;
-        if (MDCode!=MKDIR_SUCCESS)
-        {
-          DirExist=FileExist(DestFileName,DestNameW);
-          if (DirExist && !IsDir(GetFileAttr(DestFileName,DestNameW)))
-          {
-            bool UserReject;
-            FileCreate(Cmd,NULL,DestFileName,DestNameW,Cmd->Overwrite,&UserReject,Arc.NewLhd.FullUnpSize,Arc.NewLhd.FileTime);
-            DirExist=false;
-          }
-          CreatePath(DestFileName,DestNameW,true);
-          MDCode=MakeDir(DestFileName,DestNameW,!Cmd->IgnoreGeneralAttr,Arc.NewLhd.FileAttr);
-        }
-        if (MDCode==MKDIR_SUCCESS)
-        {
-#ifndef GUI
-          mprintf(St(MCreatDir),DestFileName);
-          mprintf(" %s",St(MOk));
-#endif
-          PrevExtracted=true;
-        }
-        else
-          if (DirExist)
-          {
-            if (!Cmd->IgnoreGeneralAttr)
-              SetFileAttr(DestFileName,DestNameW,Arc.NewLhd.FileAttr);
-            PrevExtracted=true;
-          }
-          else
-          {
-            Log(Arc.FileName,St(MExtrErrMkDir),DestFileName);
-            ErrHandler.CheckLongPathErrMsg(DestFileName,DestNameW);
-            ErrHandler.SysErrMsg();
-#ifdef RARDLL
-            Cmd->DllError=ERAR_ECREATE;
-#endif
-            ErrHandler.SetErrorCode(CREATE_ERROR);
-          }
-        if (PrevExtracted)
-        {
-#if defined(_WIN_ALL) && !defined(_WIN_CE) && !defined(SFX_MODULE)
-          if (Cmd->SetCompressedAttr &&
-              (Arc.NewLhd.FileAttr & FILE_ATTRIBUTE_COMPRESSED)!=0 && WinNT())
-            SetFileCompression(DestFileName,DestNameW,true);
-#endif
-          SetDirTime(DestFileName,DestNameW,
-            Cmd->xmtime==EXTTIME_NONE ? NULL:&Arc.NewLhd.mtime,
-            Cmd->xctime==EXTTIME_NONE ? NULL:&Arc.NewLhd.ctime,
-            Cmd->xatime==EXTTIME_NONE ? NULL:&Arc.NewLhd.atime);
-        }
-        return(true);
       }
       else
       {
@@ -744,37 +675,6 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,size_t HeaderS
 #endif
         if ((Command=='E' || Command=='X') && ExtrFile && !Cmd->Test)
         {
-          bool UserReject;
-          if (!FileCreate(Cmd,&CurFile,DestFileName,DestNameW,Cmd->Overwrite,&UserReject,Arc.NewLhd.FullUnpSize,Arc.NewLhd.FileTime))
-          {
-            ExtrFile=false;
-            if (!UserReject)
-            {
-              ErrHandler.CreateErrorMsg(Arc.FileName,Arc.FileNameW,DestFileName,DestFileNameW);
-              ErrHandler.SetErrorCode(CREATE_ERROR);
-#ifdef RARDLL
-              Cmd->DllError=ERAR_ECREATE;
-#endif
-              if (!IsNameUsable(DestFileName))
-              {
-                Log(Arc.FileName,St(MCorrectingName));
-                char OrigName[sizeof(DestFileName)];
-                strncpyz(OrigName,DestFileName,ASIZE(OrigName));
-
-                MakeNameUsable(DestFileName,true);
-                CreatePath(DestFileName,NULL,true);
-                if (FileCreate(Cmd,&CurFile,DestFileName,NULL,Cmd->Overwrite,&UserReject,Arc.NewLhd.FullUnpSize,Arc.NewLhd.FileTime))
-                {
-#ifndef SFX_MODULE
-                  Log(Arc.FileName,St(MRenaming),OrigName,DestFileName);
-#endif
-                  ExtrFile=true;
-                }
-                else
-                  ErrHandler.CreateErrorMsg(Arc.FileName,Arc.FileNameW,DestFileName,DestFileNameW);
-              }
-            }
-          }
         }
       }
 

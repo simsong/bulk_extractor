@@ -103,7 +103,7 @@ WHAT=UNRAR
 UNRAR_OBJ=filestr.o rs.o
 LIB_OBJ=filestr.o dll.o
 
-OBJECTS=scan_rar.o strlist.o strfn.o pathfn.o savepos.o smallfn.o global.o file.o filefn.o filcreat.o \
+OBJECTS=scan_rar.o strlist.o strfn.o pathfn.o savepos.o smallfn.o global.o file.o filefn.o \
 	archive.o arcread.o unicode.o system.o isnt.o crc.o rawread.o encname.o \
 	resource.o match.o timefn.o rdwrfn.o consio.o options.o ulinks.o errhnd.o rarvm.o \
 	getbits.o extinfo.o extract.o volume.o unpack.o cmddata.o
