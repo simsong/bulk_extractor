@@ -326,15 +326,7 @@ bool FileExist(const wchar *Name)
 
 bool WildFileExist(const char *Name,const wchar *NameW)
 {
-  if (IsWildcard(Name,NameW))
-  {
-    FindFile Find;
-    Find.SetMask(Name);
-    Find.SetMaskW(NameW);
-    FindData fd;
-    return(Find.Next(&fd));
-  }
-  return(FileExist(Name,NameW));
+    return false;
 }
 
 

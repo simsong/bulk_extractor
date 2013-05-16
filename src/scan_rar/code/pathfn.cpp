@@ -1089,27 +1089,6 @@ char* VolNameToFirstName(const char *VolName,char *FirstName,bool NewNumbering)
     SetExt(FirstName,"rar");
     VolNumStart=GetExt(FirstName);
   }
-  if (!FileExist(FirstName))
-  {
-    // If the first volume, which name we just generated, is not exist,
-    // check if volume with same name and any other extension is available.
-    // It can help in case of *.exe or *.sfx first volume.
-    char Mask[NM];
-    strcpy(Mask,FirstName);
-    SetExt(Mask,"*");
-    FindFile Find;
-    Find.SetMask(Mask);
-    FindData FD;
-    while (Find.Next(&FD))
-    {
-      Archive Arc;
-      if (Arc.Open(FD.Name,FD.NameW) && Arc.IsArchive(true) && !Arc.NotFirstVolume)
-      {
-        strcpy(FirstName,FD.Name);
-        break;
-      }
-    }
-  }
   return(VolNumStart);
 }
 #endif
@@ -1145,27 +1124,6 @@ wchar* VolNameToFirstName(const wchar *VolName,wchar *FirstName,bool NewNumberin
     // Old volume numbering scheme. Just set the extension to ".rar".
     SetExt(FirstName,L"rar");
     VolNumStart=GetExt(FirstName);
-  }
-  if (!FileExist(NULL,FirstName))
-  {
-    // If the first volume, which name we just generated, is not exist,
-    // check if volume with same name and any other extension is available.
-    // It can help in case of *.exe or *.sfx first volume.
-    wchar Mask[NM];
-    wcscpy(Mask,FirstName);
-    SetExt(Mask,L"*");
-    FindFile Find;
-    Find.SetMaskW(Mask);
-    FindData FD;
-    while (Find.Next(&FD))
-    {
-      Archive Arc;
-      if (Arc.Open(FD.Name,FD.NameW) && Arc.IsArchive(true) && !Arc.NotFirstVolume)
-      {
-        wcscpy(FirstName,FD.NameW);
-        break;
-      }
-    }
   }
   return(VolNumStart);
 }

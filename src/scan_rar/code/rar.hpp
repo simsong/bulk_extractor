@@ -34,8 +34,6 @@
 #include "crc.hpp"
 #include "filefn.hpp"
 #include "filestr.hpp"
-#include "find.hpp"
-#include "scantree.hpp"
 #include "savepos.hpp"
 #include "getbits.hpp"
 #include "rdwrfn.hpp"

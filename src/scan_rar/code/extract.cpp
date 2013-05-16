@@ -21,11 +21,6 @@ void CmdExtract::DoExtract(CommandData *Cmd, byte* ptrlocation, int64 ptrlength,
   PasswordCancelled=false;
   DataIO.SetCurrentCommand(*Cmd->Command);
 
-  FindData FD;
-  while (Cmd->GetArcName(ArcName,ArcNameW,ASIZE(ArcName)))
-    if (FindFile::FastFind(ArcName,ArcNameW,&FD))
-      DataIO.TotalArcSize+=FD.Size;
-
   Cmd->ArcNames->Rewind();
   while (Cmd->GetArcName(ArcName,ArcNameW,ASIZE(ArcName)))
   {
@@ -44,8 +39,6 @@ void CmdExtract::DoExtract(CommandData *Cmd, byte* ptrlocation, int64 ptrlength,
       if (Code!=EXTRACT_ARC_REPEAT)
         break;
     }
-    if (FindFile::FastFind(ArcName,ArcNameW,&FD))
-      DataIO.ProcessedArcSize+=FD.Size;
   }
 
   if (TotalFileCount==0 && *Cmd->Command!='I')
@@ -231,15 +224,6 @@ EXTRACT_ARC_CODE CmdExtract::ExtractArchive(CommandData *Cmd, byte *ptrlocation,
      {
       if (Repeat)
       {
-        // If we started extraction from not first volume and need to
-        // restart it from first, we must correct DataIO.TotalArcSize
-        // for correct total progress display. We subtract the size
-        // of current volume and all volumes after it and add the size
-        // of new (first) volume.
-        FindData OldArc,NewArc;
-        if (FindFile::FastFind(Arc.FileName,Arc.FileNameW,&OldArc) &&
-            FindFile::FastFind(ArcName,ArcNameW,&NewArc))
-          DataIO.TotalArcSize-=VolumeSetSize+OldArc.Size-NewArc.Size;
         return(EXTRACT_ARC_REPEAT);
       }
       else
@@ -632,24 +616,6 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,size_t HeaderS
 
     if ((Cmd->FreshFiles || Cmd->UpdateFiles) && (Command=='E' || Command=='X'))
     {
-      struct FindData FD;
-      if (FindFile::FastFind(DestFileName,DestNameW,&FD))
-      {
-        if (FD.mtime >= Arc.NewLhd.mtime)
-        {
-          // If directory already exists and its modification time is newer 
-          // than start of extraction, it is likely it was created 
-          // when creating a path to one of already extracted items. 
-          // In such case we'll better update its time even if archived 
-          // directory is older.
-
-          if (!FD.IsDir || FD.mtime<StartTime)
-            ExtrFile=false;
-        }
-      }
-      else
-        if (Cmd->FreshFiles)
-          ExtrFile=false;
     }
 
     // Skip encrypted file if no password is specified.
