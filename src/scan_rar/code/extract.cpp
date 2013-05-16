@@ -741,7 +741,7 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,size_t HeaderS
       CurFile.SetAllowDelete(!Cmd->KeepBroken);
 
       bool LinkCreateMode=!Cmd->Test && !SkipSolid;
-      if (ExtractLink(DataIO,Arc,DestFileName,DataIO.UnpFileCRC,LinkCreateMode))
+      if (false)
         PrevExtracted=LinkCreateMode;
       else
         if ((Arc.NewLhd.Flags & LHD_SPLIT_BEFORE)==0)
