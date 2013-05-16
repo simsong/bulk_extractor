@@ -56,7 +56,6 @@
 #include "unpack.hpp"
 
 
-#include "extinfo.hpp"
 #include "extract.hpp"
 
 

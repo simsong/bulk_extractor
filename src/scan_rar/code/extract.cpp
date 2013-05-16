@@ -259,7 +259,8 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,size_t HeaderS
       SignatureFound=true;
 #if !defined(SFX_MODULE) && !defined(_WIN_CE)
     if (HeadType==SUB_HEAD && PrevExtracted)
-      SetExtraInfo(Cmd,Arc,DestFileName,*DestFileNameW ? DestFileNameW:NULL);
+    {
+    }
 #endif
     if (HeadType==NEWSUB_HEAD)
     {
@@ -267,7 +268,8 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,size_t HeaderS
         SignatureFound=true;
 #if !defined(NOSUBBLOCKS) && !defined(_WIN_CE)
       if (PrevExtracted)
-        SetExtraInfoNew(Cmd,Arc,DestFileName,*DestFileNameW ? DestFileNameW:NULL);
+      {
+      }
 #endif
     }
     if (HeadType==ENDARC_HEAD)
