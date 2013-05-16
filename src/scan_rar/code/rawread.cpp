@@ -9,9 +9,6 @@ RawRead::RawRead(File *SrcFile)
   RawRead::SrcFile=SrcFile;
   ReadPos=0;
   DataSize=0;
-#ifndef SHELL_EXT
-  Crypt=NULL;
-#endif
 }
 
 /*void RawRead::RawRead (File *SrcFile)
@@ -27,24 +24,6 @@ RawRead::RawRead(File *SrcFile)
 
 void RawRead::Read(size_t Size)
 {
-#if !defined(SHELL_EXT) && !defined(RAR_NOCRYPT)
-  if (Crypt!=NULL)
-  {
-    size_t CurSize=Data.Size();
-    size_t SizeToRead=Size-(CurSize-DataSize);
-    if (SizeToRead>0)
-    {
-      size_t AlignedReadSize=SizeToRead+((~SizeToRead+1)&0xf);
-      Data.Add(AlignedReadSize);
-      size_t ReadSize=SrcFile->Read(&Data[CurSize],AlignedReadSize);
-      Crypt->DecryptBlock(&Data[CurSize],AlignedReadSize);
-      DataSize+=ReadSize==0 ? 0:Size;
-    }
-    else
-      DataSize+=Size;
-  }
-  else
-#endif
     if (Size!=0)
     {
       Data.Add(Size);

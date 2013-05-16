@@ -33,8 +33,6 @@
 #include "scan_rar.hpp"
 #include "sha1.hpp"
 #include "crc.hpp"
-#include "rijndael.hpp"
-#include "crypt.hpp"
 #include "filefn.hpp"
 #include "filestr.hpp"
 #include "find.hpp"

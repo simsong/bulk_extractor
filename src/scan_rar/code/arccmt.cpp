@@ -54,14 +54,7 @@ bool Archive::GetComment(Array<byte> *CmtData,Array<wchar> *CmtDataW)
     uint UnpCmtLength;
     if (OldFormat)
     {
-#ifdef RAR_NOCRYPT
       return(false);
-#else
-      UnpCmtLength=GetByte();
-      UnpCmtLength+=(GetByte()<<8);
-      CmtLength-=2;
-      DataIO.SetCmt13Encryption();
-#endif
     }
     else
       UnpCmtLength=CommHead.UnpSize;

@@ -61,40 +61,11 @@ size_t Archive::ReadHeader()
 
   RawRead Raw(this);
 
-  bool Decrypt=Encrypted && CurBlockPos>=(int64)SFXSize+SIZEOF_MARKHEAD+SIZEOF_NEWMHD;
+  bool Decrypt=Encrypted;
 
   if (Decrypt)
   {
-#if defined(SHELL_EXT) || defined(RAR_NOCRYPT)
     return(0);
-#else
-    if (Read(HeadersSalt,SALT_SIZE)!=SALT_SIZE)
-    {
-      UnexpEndArcMsg();
-      return(0);
-    }
-    if (*Cmd->Password==0)
-    {
-#ifdef RARDLL
-      char PasswordA[MAXPASSWORD];
-      if (Cmd->Callback==NULL ||
-          Cmd->Callback(UCM_NEEDPASSWORD,Cmd->UserData,(LPARAM)PasswordA,ASIZE(PasswordA))==-1)
-      {
-        Close();
-        ErrHandler.Exit(USER_BREAK);
-      }
-      GetWideName(PasswordA,NULL,Cmd->Password,ASIZE(Cmd->Password));
-#else
-      if (!GetPassword(PASSWORD_ARCHIVE,FileName,FileNameW,Cmd->Password,ASIZE(Cmd->Password)))
-      {
-        Close();
-        ErrHandler.Exit(USER_BREAK);
-      }
-#endif
-    }
-    HeadersCrypt.SetCryptKeys(Cmd->Password,HeadersSalt,false,false,NewMhd.EncryptVer>=36);
-    Raw.SetCrypt(&HeadersCrypt);
-#endif
   }
 
   Raw.Read(SIZEOF_SHORTBLOCKHEAD);

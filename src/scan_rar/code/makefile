@@ -104,9 +104,9 @@ UNRAR_OBJ=filestr.o recvol.o rs.o scantree.o
 LIB_OBJ=filestr.o scantree.o dll.o
 
 OBJECTS=scan_rar.o strlist.o strfn.o pathfn.o savepos.o smallfn.o global.o file.o filefn.o filcreat.o \
-	archive.o arcread.o unicode.o system.o isnt.o crypt.o crc.o rawread.o encname.o \
+	archive.o arcread.o unicode.o system.o isnt.o crc.o rawread.o encname.o \
 	resource.o match.o timefn.o rdwrfn.o consio.o options.o ulinks.o errhnd.o rarvm.o \
-	rijndael.o getbits.o sha1.o extinfo.o extract.o volume.o list.o find.o unpack.o cmddata.o
+	getbits.o sha1.o extinfo.o extract.o volume.o list.o find.o unpack.o cmddata.o
 
 .cpp.o:
 	$(COMPILE) -D$(WHAT) -c $<

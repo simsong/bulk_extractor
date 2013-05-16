@@ -8,8 +8,8 @@
 #include <iterator>
 using namespace std;
 
-const unsigned int myunpacksize = 99999; //This should be the length of the buffer in bulk_extractor, and the max size that a RAR file can open up
-//const unsigned int myunpacksize = 1000000000; //This should be the length of the buffer in bulk_extractor, and the max size that a RAR file can open up
+//const unsigned int myunpacksize = 99999; //This should be the length of the buffer in bulk_extractor, and the max size that a RAR file can open up
+const unsigned int myunpacksize = 20000000; //This should be the length of the buffer in bulk_extractor, and the max size that a RAR file can open up
 
 /**
 @author Benjamin Salazar

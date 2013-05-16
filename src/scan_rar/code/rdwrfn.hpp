@@ -37,11 +37,6 @@ class ComprDataIO
     FileHeader *SubHead;
     int64 *SubHeadPos;
 
-#ifndef RAR_NOCRYPT
-    CryptData Crypt;
-    CryptData Decrypt;
-#endif
-
 
     int LastPercent;
 
@@ -61,8 +56,6 @@ class ComprDataIO
     void SetCommand(CmdAdd *Cmd) {Command=Cmd;}
     void SetSubHeader(FileHeader *hd,int64 *Pos) {SubHead=hd;SubHeadPos=Pos;}
     void SetEncryption(int Method,const wchar *Password,const byte *Salt,bool Encrypt,bool HandsOffHash);
-    void SetAV15Encryption();
-    void SetCmt13Encryption();
     void SetUnpackToMemory(byte *Addr,uint Size);
     //void SetUnpackFromMemory(byte *Addr, uint Size);
 	void SetCurrentCommand(char Cmd) {CurrentCommand=Cmd;}
