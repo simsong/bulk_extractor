@@ -106,12 +106,17 @@ LIB_OBJ=filestr.o scantree.o dll.o
 OBJECTS=scan_rar.o strlist.o strfn.o pathfn.o savepos.o smallfn.o global.o file.o filefn.o filcreat.o \
 	archive.o arcread.o unicode.o system.o isnt.o crc.o rawread.o encname.o \
 	resource.o match.o timefn.o rdwrfn.o consio.o options.o ulinks.o errhnd.o rarvm.o \
-	getbits.o sha1.o extinfo.o extract.o volume.o list.o find.o unpack.o cmddata.o
+	getbits.o extinfo.o extract.o volume.o list.o find.o unpack.o cmddata.o
 
 .cpp.o:
 	$(COMPILE) -D$(WHAT) -c $<
 
 all:	unrar
+
+test:   unrar
+	./unrar ~/bulk/rar/frag.rar
+	file derp.file
+	gprof -abq unrar gmon.out > profile.txt
 
 install:	install-unrar
 

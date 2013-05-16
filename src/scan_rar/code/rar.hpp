@@ -31,7 +31,6 @@
 #include "strlist.hpp"
 #include "file.hpp"
 #include "scan_rar.hpp"
-#include "sha1.hpp"
 #include "crc.hpp"
 #include "filefn.hpp"
 #include "filestr.hpp"
