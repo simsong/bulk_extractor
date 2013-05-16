@@ -40,12 +40,10 @@
 #include "archive.hpp"
 #include "match.hpp"
 #include "cmddata.hpp"
-#include "consio.hpp"
 #include "system.hpp"
 #ifdef _WIN_ALL
 #include "isnt.hpp"
 #endif
-#include "log.hpp"
 #include "rawread.hpp"
 #include "encname.hpp"
 #include "resource.hpp"

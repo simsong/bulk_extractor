@@ -43,10 +43,6 @@ void CmdExtract::DoExtract(CommandData *Cmd, byte* ptrlocation, int64 ptrlength,
 
   if (TotalFileCount==0 && *Cmd->Command!='I')
   {
-    if (!PasswordCancelled)
-    {
-      mprintf(St(MExtrNoFiles));
-    }
     ErrHandler.SetErrorCode(NO_FILES_ERROR);
   }
 #ifndef GUI
@@ -54,7 +50,6 @@ void CmdExtract::DoExtract(CommandData *Cmd, byte* ptrlocation, int64 ptrlength,
     if (!Cmd->DisableDone)
       if (*Cmd->Command=='I')
 	  {
-        //mprintf(St(MDone));
 		xml.append("\n<result>");
 		  xml.append(MDone);
 		  xml.append("<\\result>");
@@ -63,14 +58,12 @@ void CmdExtract::DoExtract(CommandData *Cmd, byte* ptrlocation, int64 ptrlength,
 	  {
         if (ErrHandler.GetErrorCount()==0)
 		{
-          //mprintf(St(MExtrAllOk));
 			xml.append("\n<result>");
 		  xml.append(MExtrAllOk);
 		  xml.append("<\\result>\n");
 		}
         else
 		{
-          //mprintf(St(MExtrTotalErr),ErrHandler.GetErrorCount());
 		  xml.append("\n<result>");
 		  xml.append(MExtrTotalErr);
 		  //xml.append(ErrHandler.GetErrorCount());
@@ -424,7 +417,6 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,size_t HeaderS
   {
     if (ExactMatch)
     {
-      Log(Arc.FileName,St(MUnpCannotMerge),ArcFileName);
 #ifdef RARDLL
       Cmd->DllError=ERAR_BAD_DATA;
 #endif
@@ -439,49 +431,11 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,size_t HeaderS
   if (ExactMatch || (SkipSolid=Arc.Solid)!=0)
   {
     if ((Arc.NewLhd.Flags & LHD_PASSWORD)!=0)
-#ifndef RARDLL
-      if (*Password==0)
-#endif
-      {
-#ifdef RARDLL
-        if (*Cmd->Password==0)
-        {
-          char PasswordA[MAXPASSWORD];
-
-          if (Cmd->Callback==NULL ||
-              Cmd->Callback(UCM_NEEDPASSWORD,Cmd->UserData,(LPARAM)PasswordA,ASIZE(PasswordA))==-1)
-            return(false);
-          GetWideName(PasswordA,NULL,Cmd->Password,ASIZE(Cmd->Password));
-        }
-        wcscpy(Password,Cmd->Password);
-
-#else
-        if (!GetPassword(PASSWORD_FILE,ArcFileName,ArcFileNameW,Password,ASIZE(Password)))
-        {
-          PasswordCancelled=true;
-          return(false);
-        }
-#endif
-      }
+        return 0;
 #if !defined(GUI) && !defined(SILENT)
       else
         if (!PasswordAll && (!Arc.Solid || Arc.NewLhd.UnpVer>=20 && (Arc.NewLhd.Flags & LHD_SOLID)==0))
         {
-          eprintf(St(MUseCurPsw),ArcFileName);
-          switch(Cmd->AllYes ? 1:Ask(St(MYesNoAll)))
-          {
-            case -1:
-              ErrHandler.Exit(USER_BREAK);
-            case 2:
-              if (!GetPassword(PASSWORD_FILE,ArcFileName,ArcFileNameW,Password,ASIZE(Password)))
-              {
-                return(false);
-              }
-              break;
-            case 3:
-              PasswordAll=true;
-              break;
-          }
         }
 #endif
 
@@ -645,12 +599,6 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,size_t HeaderS
     if (Arc.NewLhd.UnpVer<13 || Arc.NewLhd.UnpVer>UNP_VER)
 #endif
     {
-#ifndef SILENT
-      Log(Arc.FileName,St(MUnknownMeth),ArcFileName);
-#ifndef SFX_MODULE
-      Log(Arc.FileName,St(MVerRequired),Arc.NewLhd.UnpVer/10,Arc.NewLhd.UnpVer%10);
-#endif
-#endif
       ExtrFile=false;
       ErrHandler.SetErrorCode(WARNING);
 #ifdef RARDLL
@@ -692,7 +640,6 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,size_t HeaderS
       {
         if (!TestMode && Command!='P' && CurFile.IsDevice())
         {
-          Log(Arc.FileName,St(MInvalidName),DestFileName);
           ErrHandler.WriteError(Arc.FileName,Arc.FileNameW,DestFileName,DestFileNameW);
         }
         TotalFileCount++;
@@ -701,14 +648,10 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,size_t HeaderS
 	string theos = "";
 	ostringstream ss;
 #ifndef GUI
-      if (Command!='I')
-        if (SkipSolid)
-          mprintf(St(MExtrSkipFile),ArcFileName);
-        else
+      if (Command=='I')
           switch(Cmd->Test ? 'T':Command)
           {
             case 'T':
-              mprintf(St(MExtrTestFile),ArcFileName);
               break;
 #ifndef SFX_MODULE
             case 'P':
@@ -757,11 +700,8 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,size_t HeaderS
 #endif
             case 'X':
             case 'E':
-              mprintf(St(MExtrFile),DestFileName);
               break;
           }
-      if (!Cmd->DisablePercentage)
-        mprintf("     ");
 #endif
       DataIO.CurUnpRead=0;
       DataIO.CurUnpWrite=0;
@@ -839,27 +779,20 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,size_t HeaderS
       {
         if (ValidCRC)
         {
-#ifndef GUI
-          if (Command!='P' && Command!='I')
-            mprintf("%s%s ",Cmd->DisablePercentage ? " ":"\b\b\b\b\b ",St(MOk));
-#endif
         }
         else
         {
           if ((Arc.NewLhd.Flags & LHD_PASSWORD)!=0 && !AnySolidDataUnpackedWell)
           {
-            Log(Arc.FileName,St(MEncrBadCRC),ArcFileName);
           }
           else
           {
-            Log(Arc.FileName,St(MCRCFailed),ArcFileName);
           }
           BrokenFile=true;
           ErrHandler.SetErrorCode(CRC_ERROR);
 #ifdef RARDLL
           Cmd->DllError=ERAR_BAD_DATA;
 #endif
-          Alarm();
         }
       }
 #ifndef GUI

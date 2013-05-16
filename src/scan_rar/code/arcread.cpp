@@ -34,9 +34,6 @@ void Archive::UnexpEndArcMsg()
   int64 ArcSize=FileLength();
   if (CurBlockPos>ArcSize || NextBlockPos>ArcSize)
   {
-#ifndef SHELL_EXT
-    Log(FileName,St(MLogUnexpEOF));
-#endif
     ErrHandler.SetErrorCode(WARNING);
 	//xml.append("<error>"); xml.append(MLogUnexpEOF); xml.append("</error>\n"); 
 
@@ -83,9 +80,6 @@ size_t Archive::ReadHeader()
   Raw.Get(ShortBlock.HeadSize);
   if (ShortBlock.HeadSize<SIZEOF_SHORTBLOCKHEAD)
   {
-#ifndef SHELL_EXT
-    Log(FileName,St(MLogFileHead),"???");
-#endif
     BrokenFileHeader=true;
     ErrHandler.SetErrorCode(CRC_ERROR);
     return(0);
@@ -281,10 +275,6 @@ size_t Archive::ReadHeader()
           bool EncBroken=Decrypt && ShortBlock.HeadCRC!=(~Raw.GetCRC(false)&0xffff);
           if (!EncBroken)
           {
-#ifndef SHELL_EXT
-            Log(Archive::FileName,St(MLogFileHead),IntNameToExt(hd->FileName));
-            Alarm();
-#endif
           }
         }
       }
@@ -402,9 +392,6 @@ size_t Archive::ReadHeader()
       }
       if (!Recovered)
       {
-#ifndef SILENT
-        Log(FileName,St(MEncrBadCRC),FileName);
-#endif
 //        Close();
         FailedHeaderDecryption=true;
         BrokenFileHeader=true;
@@ -417,9 +404,6 @@ size_t Archive::ReadHeader()
 
   if (NextBlockPos<=CurBlockPos)
   {
-#ifndef SHELL_EXT
-    Log(FileName,St(MLogFileHead),"???");
-#endif
     BrokenFileHeader=true;
     ErrHandler.SetErrorCode(CRC_ERROR);
     return(0);

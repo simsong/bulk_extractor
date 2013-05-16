@@ -78,10 +78,6 @@ bool CreatePath(const char *Path,bool SkipLastName)
 
       if (MakeDir(DirName,NULL,true,DirAttr)==MKDIR_SUCCESS)
       {
-#ifndef GUI
-        mprintf(St(MCreatDir),DirName);
-        mprintf(" %s",St(MOk));
-#endif
       }
       else
         Success=false;
@@ -121,13 +117,6 @@ bool CreatePath(const wchar *Path,bool SkipLastName)
 
       if (MakeDir(NULL,DirName,true,DirAttr)==MKDIR_SUCCESS)
       {
-#ifndef GUI
-        char DirNameA[NM];
-        WideToChar(DirName,DirNameA,ASIZE(DirNameA));
-        DirNameA[ASIZE(DirNameA)-1]=0;
-        mprintf(St(MCreatDir),DirNameA);
-        mprintf(" %s",St(MOk));
-#endif
       }
       else
         Success=false;
@@ -453,15 +442,6 @@ uint CalcFileCRC(File *SrcFile,int64 Size,CALCCRC_SHOWMODE ShowMode)
   int64 BlockCount=0;
   uint DataCRC=0xffffffff;
 
-#if !defined(SILENT) && !defined(_WIN_CE)
-  int64 FileLength=SrcFile->FileLength();
-  if (ShowMode!=CALCCRC_SHOWNONE)
-  {
-    mprintf(St(MCalcCRC));
-    mprintf("     ");
-  }
-
-#endif
 
   SrcFile->Seek(0,SEEK_SET);
   while (true)
@@ -478,20 +458,12 @@ uint CalcFileCRC(File *SrcFile,int64 Size,CALCCRC_SHOWMODE ShowMode)
     ++BlockCount;
     if ((BlockCount & 15)==0)
     {
-#if !defined(SILENT) && !defined(_WIN_CE)
-      if (ShowMode==CALCCRC_SHOWALL)
-        mprintf("\b\b\b\b%3d%%",ToPercent(BlockCount*int64(BufSize),FileLength));
-#endif
       Wait();
     }
     DataCRC=CRC(DataCRC,&Data[0],ReadSize);
     if (Size!=INT64NDF)
       Size-=ReadSize;
   }
-#if !defined(SILENT) && !defined(_WIN_CE)
-  if (ShowMode==CALCCRC_SHOWALL)
-    mprintf("\b\b\b\b    ");
-#endif
   return(DataCRC^0xffffffff);
 }
 #endif

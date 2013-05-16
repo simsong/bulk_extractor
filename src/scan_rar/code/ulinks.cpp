@@ -16,10 +16,10 @@ bool ExtractLink(ComprDataIO &DataIO,Archive &Arc,const char *LinkName,uint &Lin
       CreatePath(LinkName,NULL,true);
       if (symlink(LinkTarget,LinkName)==-1) // Error.
         if (errno==EEXIST)
-          Log(Arc.FileName,St(MSymLinkExists),LinkName);
+        {
+        }
         else
         {
-          Log(Arc.FileName,St(MErrCreateLnk),LinkName);
           ErrHandler.SetErrorCode(WARNING);
         }
       // We do not set time of created symlink, because utime changes

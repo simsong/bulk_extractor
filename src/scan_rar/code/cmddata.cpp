@@ -239,7 +239,6 @@ bool CommandData::PreprocessSwitch(const char *Switch)
       // Ensure that correct log file name is already set
       // if we need to report an error when processing the command line.
       ProcessSwitch(Switch);
-      InitLogOptions(LogName);
     }
 #endif
     if (strnicomp(Switch,"sc",2)==0)
@@ -610,8 +609,6 @@ void CommandData::ProcessSwitch(const char *Switch,const wchar *SwitchW)
     case 'P':
       if (Switch[1]==0)
       {
-        GetPassword(PASSWORD_GLOBAL,NULL,NULL,Password,ASIZE(Password));
-        eprintf("\n");
       }
       else
       {
@@ -631,8 +628,6 @@ void CommandData::ProcessSwitch(const char *Switch,const wchar *SwitchW)
         else
           if (*Password==0)
           {
-            GetPassword(PASSWORD_GLOBAL,NULL,NULL,Password,ASIZE(Password));
-            eprintf("\n");
           }
       }
       break;
@@ -905,7 +900,6 @@ void CommandData::ProcessSwitch(const char *Switch,const wchar *SwitchW)
 #ifndef SFX_MODULE
 void CommandData::BadSwitch(const char *Switch)
 {
-  mprintf(St(MUnknownOption),Switch);
   ErrHandler.Exit(USER_ERROR);
 }
 #endif
@@ -916,26 +910,6 @@ void CommandData::OutTitle()
 {
   if (BareOutput || DisableCopyright)
     return;
-#if defined(__GNUC__) && defined(SFX_MODULE)
-  mprintf(St(MCopyrightS));
-#else
-#ifndef SILENT
-  static __thread bool TitleShown=false;
-  if (TitleShown)
-    return;
-  TitleShown=true;
-  char Version[50];
-  int Beta=RARVER_BETA;
-  if (Beta!=0)
-    sprintf(Version,"%d.%02d %s %d",RARVER_MAJOR,RARVER_MINOR,St(MBeta),RARVER_BETA);
-  else
-    sprintf(Version,"%d.%02d",RARVER_MAJOR,RARVER_MINOR);
-#ifdef UNRAR
-  mprintf(St(MUCopyright),Version,RARVER_YEAR);
-#else
-#endif
-#endif
-#endif
 }
 #endif
 
@@ -1026,9 +1000,7 @@ void CommandData::OutHelp()
     }
 #endif
 #endif
-    mprintf(St(Help[I]));
   }
-  mprintf("\n");
   ErrHandler.Exit(USER_ERROR);
 #endif
 }
@@ -1275,8 +1247,6 @@ void CommandData::ProcessCommand()
       }
       break;
   }
-  if (!BareOutput)
-    mprintf("\n");
 }
 #endif
 

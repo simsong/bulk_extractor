@@ -22,7 +22,6 @@ bool MergeArchive(Archive &Arc,ComprDataIO *DataIO,bool ShowFileName,char Comman
   if (DataIO!=NULL && SplitHeader && hd->UnpVer>=20 &&
       hd->FileCRC!=0xffffffff && DataIO->PackedCRC!=~hd->FileCRC)
   {
-    Log(Arc.FileName,St(MDataBadCRC),hd->FileName,Arc.FileName);
   }
 
   int64 PosBeforeClose=Arc.Tell();
@@ -147,9 +146,6 @@ bool MergeArchive(Archive &Arc,ComprDataIO *DataIO,bool ShowFileName,char Comman
   
   if (FailedOpen)
   {
-#if !defined(SILENT) && !defined(_WIN_CE)
-      Log(Arc.FileName,St(MAbsNextVol),NextName);
-#endif
     Arc.Open(Arc.FileName,Arc.FileNameW);
     Arc.Seek(PosBeforeClose,SEEK_SET);
     return(false);
@@ -172,9 +168,6 @@ bool MergeArchive(Archive &Arc,ComprDataIO *DataIO,bool ShowFileName,char Comman
       return(false);
   }
 #endif
-
-  if (Command=='T' || Command=='X' || Command=='E')
-    mprintf(St(Command=='T' ? MTestVol:MExtrVol),Arc.FileName);
 
 
   if (SplitHeader)
@@ -202,9 +195,6 @@ bool MergeArchive(Archive &Arc,ComprDataIO *DataIO,bool ShowFileName,char Comman
         strcpy(OutName,Name);
     }
 #endif
-    mprintf(St(MExtrPoints),OutName);
-    if (!Cmd->DisablePercentage)
-      mprintf("     ");
   }
 #endif
   if (DataIO!=NULL)
@@ -244,9 +234,6 @@ bool MergeArchive(Archive &Arc,ComprDataIO *DataIO,bool ShowFileName,char Comman
 #ifndef SILENT
 bool AskNextVol(char *ArcName,wchar *ArcNameW)
 {
-  eprintf(St(MAskNextVol),ArcName);
-  if (Ask(St(MContinueQuit))==2)
-    return(false);
   return(true);
 }
 #endif
