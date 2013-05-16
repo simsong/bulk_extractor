@@ -54,8 +54,6 @@ struct UnpackFilter
   // position of parent filter in Filters array used as prototype for filter
   // in PrgStack array. Not defined for filters in Filters array.
   unsigned int ParentFilter;
-
-  VM_PreparedProgram Prg;
 };
 
 
@@ -78,7 +76,6 @@ class Unpack:private BitInput
     void Unpack29(bool Solid);
     bool UnpReadBuf();
     void UnpWriteBuf();
-    void ExecuteCode(VM_PreparedProgram *Prg);
     void UnpWriteArea(unsigned int StartPtr,unsigned int EndPtr);
     void UnpWriteData(byte *Data,size_t Size);
     bool ReadTables();
@@ -101,7 +98,6 @@ class Unpack:private BitInput
     int PPMEscChar;
 
     // Virtual machine to execute filters code.
-    RarVM VM;
   
     // Buffer to read VM filters code. We moved it here from AddVMCode
     // function to reduce time spent in BitInput constructor.
