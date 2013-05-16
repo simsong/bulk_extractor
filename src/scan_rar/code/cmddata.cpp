@@ -1321,14 +1321,6 @@ void CommandData::ProcessCommand()
 		//had to remove this because of compiler errors
       }
       break;
-#ifndef SILENT
-    case 'V':
-    case 'L':
-      ListArchive(this);
-      break;
-    default:
-      OutHelp();
-#endif
   }
   if (!BareOutput)
     mprintf("\n");
