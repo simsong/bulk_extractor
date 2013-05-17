@@ -12,6 +12,7 @@ template <class T> class Array
   public:
     Array();
     Array(size_t Size);
+    Array(const Array<T> &copy);
     ~Array();
     inline void CleanData();
     inline T& operator [](size_t Item);
@@ -19,7 +20,7 @@ template <class T> class Array
     void Add(size_t Items);
     void Alloc(size_t Items);
     void Reset();
-    void operator = (Array<T> &Src);
+    const Array<T>& operator = (Array<T> &Src);
     void Push(T Item);
     T* Addr() {return(Buffer);}
 };
@@ -38,13 +39,18 @@ template <class T> Array<T>::Array()
 }
 
 
-template <class T> Array<T>::Array(size_t Size)
+template <class T> Array<T>::Array(size_t Size_)
 {
-  Buffer=(T *)malloc(sizeof(T)*Size);
-  if (Buffer==NULL && Size!=0)
+  Buffer=(T *)malloc(sizeof(T)*Size_);
+  if (Buffer==NULL && Size_!=0)
     ErrHandler.MemoryError();
 
-  AllocSize=BufSize=Size;
+  AllocSize=BufSize=Size_;
+}
+
+template <class T> Array<T>::Array(const Array<T> &copy)
+{
+    *this = copy;
 }
 
 
@@ -104,12 +110,13 @@ template <class T> void Array<T>::Reset()
 }
 
 
-template <class T> void Array<T>::operator =(Array<T> &Src)
+template <class T> const Array<T>& Array<T>::operator =(Array<T> &Src)
 {
   Reset();
   Alloc(Src.BufSize);
   if (Src.BufSize!=0)
     memcpy((void *)Buffer,(void *)Src.Buffer,Src.BufSize*sizeof(T));
+  return *this;
 }
 
 
