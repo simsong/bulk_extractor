@@ -41,9 +41,6 @@
 #include "match.hpp"
 #include "cmddata.hpp"
 #include "system.hpp"
-#ifdef _WIN_ALL
-#include "isnt.hpp"
-#endif
 #include "rawread.hpp"
 #include "encname.hpp"
 #include "resource.hpp"
