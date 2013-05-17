@@ -35,8 +35,6 @@ bool Archive::GetComment(Array<byte> *CmtData,Array<wchar> *CmtDataW)
     // archive header.
     if (CommHead.HeadCRC!=HeaderCRC)
     {
-      Log(FileName,St(MLogCommHead));
-      Alarm();
       return(false);
     }
     CmtLength=CommHead.HeadSize-SIZEOF_COMMHEAD;
@@ -54,14 +52,7 @@ bool Archive::GetComment(Array<byte> *CmtData,Array<wchar> *CmtDataW)
     uint UnpCmtLength;
     if (OldFormat)
     {
-#ifdef RAR_NOCRYPT
       return(false);
-#else
-      UnpCmtLength=GetByte();
-      UnpCmtLength+=(GetByte()<<8);
-      CmtLength-=2;
-      DataIO.SetCmt13Encryption();
-#endif
     }
     else
       UnpCmtLength=CommHead.UnpSize;
@@ -73,8 +64,6 @@ bool Archive::GetComment(Array<byte> *CmtData,Array<wchar> *CmtDataW)
 
     if (!OldFormat && ((~DataIO.UnpFileCRC)&0xffff)!=CommHead.CommCRC)
     {
-      Log(FileName,St(MLogCommBrk));
-      Alarm();
       return(false);
     }
     else
@@ -93,8 +82,6 @@ bool Archive::GetComment(Array<byte> *CmtData,Array<wchar> *CmtDataW)
     Read(&((*CmtData)[0]),CmtLength);
     if (!OldFormat && CommHead.CommCRC!=(~CRC(0xffffffff,&((*CmtData)[0]),CmtLength)&0xffff))
     {
-      Log(FileName,St(MLogCommBrk));
-      Alarm();
       CmtData->Reset();
       return(false);
     }
@@ -174,8 +161,6 @@ void Archive::ViewComment()
     char *ChPtr=(char *)memchr(&CmtBuf[0],0x1A,CmtSize);
     if (ChPtr!=NULL)
       CmtSize=ChPtr-(char *)&CmtBuf[0];
-    mprintf("\n");
-    OutComment((char *)&CmtBuf[0],CmtSize);
   }
 #endif
 }
@@ -189,9 +174,6 @@ void Archive::ViewFileComment()
 {
   if (!(NewLhd.Flags & LHD_COMMENT) || Cmd->DisableComment || OldFormat)
     return;
-#ifndef GUI
-  mprintf(St(MFileComment));
-#endif
   const int MaxSize=0x8000;
   Array<char> CmtBuf(MaxSize);
   SaveFilePos SavePos(*this);
@@ -208,26 +190,12 @@ void Archive::ViewFileComment()
     return;
   if (CommHead.HeadCRC!=HeaderCRC)
   {
-#ifndef GUI
-    Log(FileName,St(MLogCommHead));
-#endif
     return;
   }
   if (CommHead.UnpVer < 15 || CommHead.UnpVer > UNP_VER ||
       CommHead.Method > 0x30 || CommHead.UnpSize > MaxSize)
     return;
   Read(&CmtBuf[0],CommHead.UnpSize);
-  if (CommHead.CommCRC!=((~CRC(0xffffffff,&CmtBuf[0],CommHead.UnpSize)&0xffff)))
-  {
-    Log(FileName,St(MLogBrokFCmt));
-  }
-  else
-  {
-    OutComment(&CmtBuf[0],CommHead.UnpSize);
-#ifndef GUI
-    mprintf("\n");
-#endif
-  }
 }
 #endif
 

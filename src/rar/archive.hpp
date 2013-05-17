@@ -20,7 +20,6 @@ class Archive:public File
     void UnexpEndArcMsg();
 
 #if !defined(SHELL_EXT) && !defined(RAR_NOCRYPT)
-    CryptData HeadersCrypt;
     byte HeadersSalt[SALT_SIZE];
 #endif
 #ifndef SHELL_EXT

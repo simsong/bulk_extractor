@@ -34,9 +34,6 @@ void Archive::UnexpEndArcMsg()
   int64 ArcSize=FileLength();
   if (CurBlockPos>ArcSize || NextBlockPos>ArcSize)
   {
-#ifndef SHELL_EXT
-    Log(FileName,St(MLogUnexpEOF));
-#endif
     ErrHandler.SetErrorCode(WARNING);
 	//xml.append("<error>"); xml.append(MLogUnexpEOF); xml.append("</error>\n"); 
 
@@ -61,40 +58,11 @@ size_t Archive::ReadHeader()
 
   RawRead Raw(this);
 
-  bool Decrypt=Encrypted && CurBlockPos>=(int64)SFXSize+SIZEOF_MARKHEAD+SIZEOF_NEWMHD;
+  bool Decrypt=Encrypted;
 
   if (Decrypt)
   {
-#if defined(SHELL_EXT) || defined(RAR_NOCRYPT)
     return(0);
-#else
-    if (Read(HeadersSalt,SALT_SIZE)!=SALT_SIZE)
-    {
-      UnexpEndArcMsg();
-      return(0);
-    }
-    if (*Cmd->Password==0)
-    {
-#ifdef RARDLL
-      char PasswordA[MAXPASSWORD];
-      if (Cmd->Callback==NULL ||
-          Cmd->Callback(UCM_NEEDPASSWORD,Cmd->UserData,(LPARAM)PasswordA,ASIZE(PasswordA))==-1)
-      {
-        Close();
-        ErrHandler.Exit(USER_BREAK);
-      }
-      GetWideName(PasswordA,NULL,Cmd->Password,ASIZE(Cmd->Password));
-#else
-      if (!GetPassword(PASSWORD_ARCHIVE,FileName,FileNameW,Cmd->Password,ASIZE(Cmd->Password)))
-      {
-        Close();
-        ErrHandler.Exit(USER_BREAK);
-      }
-#endif
-    }
-    HeadersCrypt.SetCryptKeys(Cmd->Password,HeadersSalt,false,false,NewMhd.EncryptVer>=36);
-    Raw.SetCrypt(&HeadersCrypt);
-#endif
   }
 
   Raw.Read(SIZEOF_SHORTBLOCKHEAD);
@@ -112,9 +80,6 @@ size_t Archive::ReadHeader()
   Raw.Get(ShortBlock.HeadSize);
   if (ShortBlock.HeadSize<SIZEOF_SHORTBLOCKHEAD)
   {
-#ifndef SHELL_EXT
-    Log(FileName,St(MLogFileHead),"???");
-#endif
     BrokenFileHeader=true;
     ErrHandler.SetErrorCode(CRC_ERROR);
     return(0);
@@ -310,10 +275,6 @@ size_t Archive::ReadHeader()
           bool EncBroken=Decrypt && ShortBlock.HeadCRC!=(~Raw.GetCRC(false)&0xffff);
           if (!EncBroken)
           {
-#ifndef SHELL_EXT
-            Log(Archive::FileName,St(MLogFileHead),IntNameToExt(hd->FileName));
-            Alarm();
-#endif
           }
         }
       }
@@ -431,9 +392,6 @@ size_t Archive::ReadHeader()
       }
       if (!Recovered)
       {
-#ifndef SILENT
-        Log(FileName,St(MEncrBadCRC),FileName);
-#endif
 //        Close();
         FailedHeaderDecryption=true;
         BrokenFileHeader=true;
@@ -446,9 +404,6 @@ size_t Archive::ReadHeader()
 
   if (NextBlockPos<=CurBlockPos)
   {
-#ifndef SHELL_EXT
-    Log(FileName,St(MLogFileHead),"???");
-#endif
     BrokenFileHeader=true;
     ErrHandler.SetErrorCode(CRC_ERROR);
     return(0);

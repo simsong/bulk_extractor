@@ -72,9 +72,6 @@ int ComprDataIO::UnpRead(byte *Addr,size_t Count)
     UnpPackedSize-=RetCode;
     if (UnpPackedSize == 0 && UnpVolume)
     {
-#ifndef NOVOLUME
-      if (!MergeArchive(*SrcArc,this,true,CurrentCommand))
-#endif
       {
         NextVolumeMissing=true;
         return(-1);
@@ -89,22 +86,6 @@ int ComprDataIO::UnpRead(byte *Addr,size_t Count)
   if (RetCode!=-1)
   {
     RetCode=TotalRead;
-#ifndef RAR_NOCRYPT
-    if (Decryption)
-#ifndef SFX_MODULE
-      if (Decryption<20)
-        Decrypt.Crypt(Addr,RetCode,(Decryption==15) ? NEW_CRYPT : OLD_DECODE);
-      else
-        if (Decryption==20)
-          for (int I=0;I<RetCode;I+=16)
-            Decrypt.DecryptBlock20(&Addr[I]);
-        else
-#endif
-        {
-          int CryptSize=(RetCode & 0xf)==0 ? RetCode:((RetCode & ~0xf)+16);
-          Decrypt.DecryptBlock(Addr,CryptSize);
-        }
-#endif
   }
   Wait();
   return(RetCode);
@@ -251,36 +232,13 @@ void ComprDataIO::SetEncryption(int Method,const wchar *Password,const byte *Sal
   if (Encrypt)
   {
     Encryption=*Password ? Method:0;
-#ifndef RAR_NOCRYPT
-    Crypt.SetCryptKeys(Password,Salt,Encrypt,false,HandsOffHash);
-#endif
   }
   else
   {
     Decryption=*Password ? Method:0;
-#ifndef RAR_NOCRYPT
-    Decrypt.SetCryptKeys(Password,Salt,Encrypt,Method<29,HandsOffHash);
-#endif
   }
 }
 
-
-#if !defined(SFX_MODULE) && !defined(RAR_NOCRYPT)
-void ComprDataIO::SetAV15Encryption()
-{
-  Decryption=15;
-  Decrypt.SetAV15Encryption();
-}
-#endif
-
-
-#if !defined(SFX_MODULE) && !defined(RAR_NOCRYPT)
-void ComprDataIO::SetCmt13Encryption()
-{
-  Decryption=13;
-  Decrypt.SetCmt13Encryption();
-}
-#endif
 
 
 

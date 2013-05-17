@@ -193,43 +193,6 @@ void CommandData::ParseArg(char *Arg,wchar *ArgW)
         else
           if ((Add || CmdChar=='T') && (*Arg!='@' || ListMode==RCLM_REJECT_LISTS))
             FileArgs->AddString(Arg,ArgW);
-          else
-          {
-            FindData FileData;
-            bool Found=FindFile::FastFind(Arg,ArgW,&FileData);
-            if ((!Found || ListMode==RCLM_ACCEPT_LISTS) && 
-                ListMode!=RCLM_REJECT_LISTS && *Arg=='@' && !IsWildcard(Arg,ArgW))
-            {
-              FileLists=true;
-
-              RAR_CHARSET Charset=FilelistCharset;
-
-#if defined(_WIN_ALL) && !defined(GUI)
-              // for compatibility reasons we use OEM encoding
-              // in Win32 console version by default
-
-              if (Charset==RCH_DEFAULT)
-                Charset=RCH_OEM;
-#endif
-
-              wchar *WideArgName=(ArgW!=NULL && *ArgW!=0 ? ArgW+1:NULL);
-              ReadTextFile(Arg+1,WideArgName,FileArgs,false,true,Charset,true,true,true);
-
-            }
-            else
-              if (Found && FileData.IsDir && Extract && *ExtrPath==0 && *ExtrPathW==0)
-              {
-                strncpyz(ExtrPath,Arg,ASIZE(ExtrPath)-1);
-                AddEndSlash(ExtrPath);
-                if (ArgW!=NULL)
-                {
-                  wcsncpyz(ExtrPathW,ArgW,ASIZE(ExtrPathW)-1);
-                  AddEndSlash(ExtrPathW);
-                }
-              }
-              else
-                FileArgs->AddString(Arg,ArgW);
-          }
       }
 }
 #endif
@@ -276,7 +239,6 @@ bool CommandData::PreprocessSwitch(const char *Switch)
       // Ensure that correct log file name is already set
       // if we need to report an error when processing the command line.
       ProcessSwitch(Switch);
-      InitLogOptions(LogName);
     }
 #endif
     if (strnicomp(Switch,"sc",2)==0)
@@ -647,8 +609,6 @@ void CommandData::ProcessSwitch(const char *Switch,const wchar *SwitchW)
     case 'P':
       if (Switch[1]==0)
       {
-        GetPassword(PASSWORD_GLOBAL,NULL,NULL,Password,ASIZE(Password));
-        eprintf("\n");
       }
       else
       {
@@ -668,8 +628,6 @@ void CommandData::ProcessSwitch(const char *Switch,const wchar *SwitchW)
         else
           if (*Password==0)
           {
-            GetPassword(PASSWORD_GLOBAL,NULL,NULL,Password,ASIZE(Password));
-            eprintf("\n");
           }
       }
       break;
@@ -942,7 +900,6 @@ void CommandData::ProcessSwitch(const char *Switch,const wchar *SwitchW)
 #ifndef SFX_MODULE
 void CommandData::BadSwitch(const char *Switch)
 {
-  mprintf(St(MUnknownOption),Switch);
   ErrHandler.Exit(USER_ERROR);
 }
 #endif
@@ -953,26 +910,6 @@ void CommandData::OutTitle()
 {
   if (BareOutput || DisableCopyright)
     return;
-#if defined(__GNUC__) && defined(SFX_MODULE)
-  mprintf(St(MCopyrightS));
-#else
-#ifndef SILENT
-  static __thread bool TitleShown=false;
-  if (TitleShown)
-    return;
-  TitleShown=true;
-  char Version[50];
-  int Beta=RARVER_BETA;
-  if (Beta!=0)
-    sprintf(Version,"%d.%02d %s %d",RARVER_MAJOR,RARVER_MINOR,St(MBeta),RARVER_BETA);
-  else
-    sprintf(Version,"%d.%02d",RARVER_MAJOR,RARVER_MINOR);
-#ifdef UNRAR
-  mprintf(St(MUCopyright),Version,RARVER_YEAR);
-#else
-#endif
-#endif
-#endif
 }
 #endif
 
@@ -1063,9 +1000,7 @@ void CommandData::OutHelp()
     }
 #endif
 #endif
-    mprintf(St(Help[I]));
   }
-  mprintf("\n");
   ErrHandler.Exit(USER_ERROR);
 #endif
 }
@@ -1294,18 +1229,8 @@ void CommandData::ProcessCommand()
 
   if (strchr("AFUMD",*Command)==NULL)
   {
-    if (GenerateArcName)
-      GenerateArchiveName(ArcName,ArcNameW,ASIZE(ArcName),GenerateMask,false);
-
-    StringList ArcMasks;
-    ArcMasks.AddString(ArcName);
-    ScanTree Scan(&ArcMasks,Recurse,SaveLinks,SCAN_SKIPDIRS);
-    FindData FindData;
-    while (Scan.GetNext(&FindData)==SCAN_SUCCESS)
-      AddArcName(FindData.Name,FindData.NameW);
+      // perhaps throw an error
   }
-  else
-    AddArcName(ArcName,NULL);
 #endif
 
   switch(Command[0])
@@ -1321,17 +1246,7 @@ void CommandData::ProcessCommand()
 		//had to remove this because of compiler errors
       }
       break;
-#ifndef SILENT
-    case 'V':
-    case 'L':
-      ListArchive(this);
-      break;
-    default:
-      OutHelp();
-#endif
   }
-  if (!BareOutput)
-    mprintf("\n");
 }
 #endif
 

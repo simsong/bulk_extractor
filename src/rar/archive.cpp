@@ -59,7 +59,6 @@ void Archive::CheckArc(bool EnableBroken)
 {
   if (!IsArchive(EnableBroken))
   {
-    Log(FileName,St(MBadArc),FileName);
     ErrHandler.Exit(FATAL_ERROR);
   }
 }
@@ -81,9 +80,6 @@ bool Archive::WCheckOpen(const char *Name,const wchar *NameW)
     return(false);
   if (!IsArchive(false))
   {
-#ifndef SHELL_EXT
-    Log(FileName,St(MNotRAR),FileName);
-#endif
     Close();
     return(false);
   }
@@ -145,9 +141,6 @@ bool Archive::IsArchive(bool EnableBroken)
 #ifndef SFX_MODULE
   if (IsDevice())
   {
-#ifndef SHELL_EXT
-    Log(FileName,St(MInvalidName),FileName);
-#endif
     return(false);
   }
 #endif
@@ -195,10 +188,6 @@ bool Archive::IsArchive(bool EnableBroken)
   {
     if (HeaderCRC!=NewMhd.HeadCRC)
     {
-#ifndef SHELL_EXT
-      Log(FileName,St(MLogMainHead));
-#endif
-      Alarm();
       if (!EnableBroken)
         return(false);
     }
@@ -217,10 +206,6 @@ bool Archive::IsArchive(bool EnableBroken)
     Cmd->DllError=ERAR_UNKNOWN_FORMAT;
 #else
     ErrHandler.SetErrorCode(WARNING);
-  #if !defined(SILENT) && !defined(SFX_MODULE)
-      Log(FileName,St(MUnknownMeth),FileName);
-      Log(FileName,St(MVerRequired),NewMhd.EncryptVer/10,NewMhd.EncryptVer%10);
-  #endif
 #endif
     return(false);
   }

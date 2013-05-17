@@ -7,7 +7,8 @@
 
 # Linux using GCC
 CXX=g++
-CXXFLAGS=-g -pthread
+CXXFLAGS=-g -pthread -pg
+LDFLAGS=-pg
 DEFINES=-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE
 STRIP=strip
 DESTDIR=/usr
@@ -99,18 +100,24 @@ LINK=$(CXX)
 
 WHAT=UNRAR
 
-UNRAR_OBJ=filestr.o recvol.o rs.o scantree.o
-LIB_OBJ=filestr.o scantree.o dll.o
+UNRAR_OBJ=filestr.o rs.o
+LIB_OBJ=filestr.o
 
-OBJECTS=scan_rar.o strlist.o strfn.o pathfn.o savepos.o smallfn.o global.o file.o filefn.o filcreat.o \
-	archive.o arcread.o unicode.o system.o isnt.o crypt.o crc.o rawread.o encname.o \
-	resource.o match.o timefn.o rdwrfn.o consio.o options.o ulinks.o errhnd.o rarvm.o \
-	rijndael.o getbits.o sha1.o extinfo.o extract.o volume.o list.o find.o unpack.o cmddata.o
+OBJECTS=scan_rar.o strlist.o strfn.o pathfn.o savepos.o smallfn.o global.o \
+        file.o filefn.o archive.o arcread.o unicode.o system.o crc.o rawread.o \
+        encname.o resource.o match.o timefn.o rdwrfn.o options.o errhnd.o getbits.o \
+        extract.o unpack.o cmddata.o
 
 .cpp.o:
 	$(COMPILE) -D$(WHAT) -c $<
 
 all:	unrar
+
+test:   unrar
+	./unrar ~/bulk/rar/frag.rar
+	file derp.file
+	rm derp.file
+	gprof -abq unrar gmon.out > profile.txt
 
 install:	install-unrar
 
