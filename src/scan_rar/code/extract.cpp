@@ -223,6 +223,7 @@ EXTRACT_ARC_CODE CmdExtract::ExtractArchive(CommandData *Cmd, byte *ptrlocation,
         break;
      }
      else {
+         return(EXTRACT_ARC_NEXT);
      }
   }
 	ss << "\n<TotalArcSize>" << DataIO.TotalArcSize << "</TotalArcSize>\n";
