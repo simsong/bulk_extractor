@@ -101,12 +101,12 @@ LINK=$(CXX)
 WHAT=UNRAR
 
 UNRAR_OBJ=filestr.o rs.o
-LIB_OBJ=filestr.o dll.o
+LIB_OBJ=filestr.o
 
-OBJECTS=scan_rar.o strlist.o strfn.o pathfn.o savepos.o smallfn.o global.o file.o filefn.o \
-	archive.o arcread.o unicode.o system.o crc.o rawread.o encname.o \
-	resource.o match.o timefn.o rdwrfn.o options.o errhnd.o \
-	getbits.o extract.o unpack.o cmddata.o
+OBJECTS=scan_rar.o strlist.o strfn.o pathfn.o savepos.o smallfn.o global.o \
+        file.o filefn.o archive.o arcread.o unicode.o system.o crc.o rawread.o \
+        encname.o resource.o match.o timefn.o rdwrfn.o options.o errhnd.o getbits.o \
+        extract.o unpack.o cmddata.o
 
 .cpp.o:
 	$(COMPILE) -D$(WHAT) -c $<
