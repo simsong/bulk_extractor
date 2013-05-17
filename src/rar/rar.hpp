@@ -30,7 +30,6 @@
 #include "strfn.hpp"
 #include "strlist.hpp"
 #include "file.hpp"
-#include "scan_rar.hpp"
 #include "crc.hpp"
 #include "filefn.hpp"
 #include "filestr.hpp"

@@ -58,120 +58,19 @@ flex_scanners = \
 	scan_gps.flex 
 
 RAR_SUPPORT = \
-        rar/archive.hpp \
-        rar/array.hpp \
-        rar/cmddata.hpp \
-        rar/coder.hpp \
-        rar/compress.hpp \
-        rar/consio.hpp \
-        rar/crc.hpp \
-        rar/crypt.hpp \
-        rar/dll.hpp \
-        rar/encname.hpp \
-        rar/errhnd.hpp \
-        rar/extinfo.hpp \
-        rar/extract.hpp \
-        rar/filcreat.hpp \
-        rar/filefn.hpp \
-        rar/file.hpp \
-        rar/filestr.hpp \
-        rar/find.hpp \
-        rar/getbits.hpp \
-        rar/global.hpp \
-        rar/headers.hpp \
-        rar/isnt.hpp \
-        rar/list.hpp \
-        rar/loclang.hpp \
-        rar/log.hpp \
-        rar/match.hpp \
-        rar/model.hpp \
-        rar/options.hpp \
-        rar/os.hpp \
-        rar/pathfn.hpp \
-        rar/rardefs.hpp \
-        rar/rar.hpp \
-        rar/rarlang.hpp \
-        rar/raros.hpp \
-        rar/rartypes.hpp \
-        rar/rarvm.hpp \
-        rar/rawread.hpp \
-        rar/rdwrfn.hpp \
-        rar/recvol.hpp \
-        rar/resource.hpp \
-        rar/rijndael.hpp \
-        rar/rs.hpp \
-        rar/savepos.hpp \
-        rar/scantree.hpp \
-        rar/sha1.hpp \
-        rar/smallfn.hpp \
-        rar/strfn.hpp \
-        rar/strlist.hpp \
-        rar/suballoc.hpp \
-        rar/system.hpp \
-        rar/timefn.hpp \
-        rar/ulinks.hpp \
-        rar/unicode.hpp \
-        rar/unpack.hpp \
-        rar/version.hpp \
-        rar/volume.hpp \
-        rar/arccmt.cpp \
-        rar/archive.cpp \
-        rar/arcread.cpp \
-        rar/beosea.cpp \
-        rar/cmddata.cpp \
-        rar/coder.cpp \
-        rar/consio.cpp \
-        rar/crc.cpp \
-        rar/crypt.cpp \
-        rar/dll.cpp \
-        rar/encname.cpp \
-        rar/errhnd.cpp \
-        rar/extinfo.cpp \
-        rar/extract.cpp \
-        rar/filcreat.cpp \
-        rar/file.cpp \
-        rar/filefn.cpp \
-        rar/filestr.cpp \
-        rar/find.cpp \
-        rar/getbits.cpp \
-        rar/global.cpp \
-        rar/isnt.cpp \
-        rar/list.cpp \
-        rar/log.cpp \
-        rar/match.cpp \
-        rar/model.cpp \
-        rar/options.cpp \
-        rar/os2ea.cpp \
-        rar/pathfn.cpp \
-        rar/rar.cpp \
-        rar/rarpch.cpp \
-        rar/rarvm.cpp \
-        rar/rarvmtbl.cpp \
-        rar/rawread.cpp \
-        rar/rdwrfn.cpp \
-        rar/recvol.cpp \
-        rar/resource.cpp \
-        rar/rijndael.cpp \
-        rar/rs.cpp \
-        rar/savepos.cpp \
-        rar/scantree.cpp \
-        rar/sha1.cpp \
-        rar/smallfn.cpp \
-        rar/strfn.cpp \
-        rar/strlist.cpp \
-        rar/suballoc.cpp \
-        rar/system.cpp \
-        rar/timefn.cpp \
-        rar/ulinks.cpp \
-        rar/unicode.cpp \
-        rar/unios2.cpp \
-        rar/unpack15.cpp \
-        rar/unpack20.cpp \
-        rar/unpack.cpp \
-        rar/uowners.cpp \
-        rar/volume.cpp \
-        rar/win32acl.cpp \
-        rar/win32stm.cpp
+        rar/arccmt.cpp rar/archive.cpp rar/archive.hpp rar/arcread.cpp rar/array.hpp rar/cmddata.cpp \
+        rar/cmddata.hpp rar/coder.cpp rar/coder.hpp rar/compress.hpp rar/crc.cpp rar/crc.hpp rar/encname.cpp \
+        rar/encname.hpp rar/errhnd.cpp rar/errhnd.hpp rar/extinfo.cpp rar/extinfo.hpp rar/extract.cpp \
+        rar/extract.hpp rar/file.cpp rar/filefn.cpp rar/filefn.hpp rar/file.hpp rar/filestr.cpp rar/filestr.hpp \
+        rar/getbits.cpp rar/getbits.hpp rar/global.cpp rar/global.hpp rar/headers.hpp rar/loclang.hpp rar/match.cpp \
+        rar/match.hpp rar/model.cpp rar/model.hpp rar/options.cpp rar/options.hpp rar/os.hpp rar/pathfn.cpp \
+        rar/pathfn.hpp rar/rar.cpp rar/rardefs.hpp rar/rar.hpp rar/rarlang.hpp rar/raros.hpp rar/rarpch.cpp \
+        rar/rartypes.hpp rar/rarvmtbl.cpp rar/rawread.cpp rar/rawread.hpp rar/rdwrfn.cpp rar/rdwrfn.hpp \
+        rar/resource.cpp rar/resource.hpp rar/rs.cpp rar/rs.hpp rar/savepos.cpp rar/savepos.hpp rar/smallfn.cpp \
+        rar/smallfn.hpp rar/strfn.cpp rar/strfn.hpp rar/strlist.cpp rar/strlist.hpp rar/suballoc.cpp \
+        rar/suballoc.hpp rar/system.cpp rar/system.hpp rar/timefn.cpp rar/timefn.hpp rar/unicode.cpp \
+        rar/unicode.hpp rar/unios2.cpp rar/unpack15.cpp rar/unpack20.cpp rar/unpack.cpp rar/unpack.hpp \
+        rar/version.hpp
 
 bulk_scanners = \
 	scan_aes.cpp \

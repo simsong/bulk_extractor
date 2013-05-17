@@ -2,7 +2,7 @@
 #include "xml.h"
 #include "utf8.h"
 #include "md5.h"
-#include "rar.hpp"
+#include "/rar.hpp"
 
 #include <stdlib.h>
 #include <string.h>
