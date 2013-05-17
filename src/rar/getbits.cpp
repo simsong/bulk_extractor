@@ -14,6 +14,19 @@ BitInput::BitInput()
   memset(InBuf,0,BufSize);
 }
 
+BitInput::BitInput(const BitInput &copy)
+{
+    *this = copy;
+}
+
+const BitInput& BitInput::operator=(const BitInput &src)
+{
+    InAddr = src.InAddr;
+    InBit = src.InBit;
+
+    InBuf = src.InBuf;
+}
+
 
 BitInput::~BitInput()
 {

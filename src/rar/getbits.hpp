@@ -10,6 +10,8 @@ class BitInput
     int InBit;  // Current bit position in the current byte.
   public:
     BitInput();
+    BitInput(const BitInput &copy);
+    const BitInput& operator=(const BitInput &src);
     ~BitInput();
 
     byte *InBuf; // Dynamically allocated input buffer.

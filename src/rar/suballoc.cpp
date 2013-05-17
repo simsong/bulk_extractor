@@ -10,6 +10,29 @@ SubAllocator::SubAllocator()
   Clean();
 }
 
+SubAllocator(const SubAllocator &copy)
+{
+    *this = copy;
+}
+
+const SubAllocator& SubAllocator::operator=(const SubAllocator &src)
+{
+    SubAllocatorSize = src.SubAllocatorSize;
+    Indx2Units = src.Indx2Units;
+    Units2Indx = src.Units2Indx;
+    GlueCount = src.GlueCount;
+    HeapStart = src.HeapStart;
+    LoUnit = src.LoUnit;
+    HiUnit = src.HiUnit;
+    FreeList = src.FreeList;
+    pText = src.pText;
+    UnitsStart = src.UnitsStart;
+    HeapEnd = src.HeapEnd;
+    FakeUnitsStart = src.FakeUnitsStart;
+
+    return *this;
+}
+
 
 void SubAllocator::Clean()
 {

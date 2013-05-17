@@ -43,6 +43,8 @@ class Archive:public File
     bool SilentOpen;
   public:
     Archive(RAROptions *InitCmd=NULL);
+    Archive(const Archive &copy);
+    const Archive& operator=(const Archive &src);
     bool IsArchive(bool EnableBroken);
     size_t SearchBlock(int BlockType);
     size_t SearchSubBlock(const char *Type);

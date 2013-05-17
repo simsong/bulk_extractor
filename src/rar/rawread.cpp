@@ -11,6 +11,19 @@ RawRead::RawRead(File *SrcFile)
   DataSize=0;
 }
 
+RawRead::RawRead(const RawRead &copy)
+{
+    *this = copy;
+}
+
+const RawRead& RawRead::operator=(const RawRead &src)
+{
+    Data = src.Data;
+    SrcFile = src.SrcFile;
+    DataSize = src.DataSize;
+    ReadPos = src.ReadPos;
+}
+
 /*void RawRead::RawRead (File *SrcFile)
 {
   RawRead::SrcFile=SrcFile;

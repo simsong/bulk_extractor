@@ -13,8 +13,10 @@ class RawRead
     size_t DataSize;
     size_t ReadPos;
   public:
-	  RawRead() { };
+    RawRead() : Data(), SrcFile(), DataSize(), ReadPos() { };
     RawRead(File *SrcFile);
+    RawRead(const RawRead &copy);
+    const RawRead& operator=(const RawRead &src);
     void Read(size_t Size);
     void Read(byte *SrcData,size_t Size);
     void Get(byte &Field);

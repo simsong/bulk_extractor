@@ -7,6 +7,30 @@ CommandData::CommandData()
   Init();
 }
 
+CommandData::CommandData(const CommandData &copy)
+{
+    *this = copy;
+}
+
+const CommandData& operator=(const CommandData &src)
+{
+    RAROptions::operator=(src);
+
+    FileLists = src.FileLists;
+    NoMoreSwitches = src.NoMoreSwitches;
+    ListMode = src.ListMode;
+    BareOutput = src.BareOutput;
+    Command = src.Command;
+    CommandW = src.CommandW;
+    ArcName = src.ArcName;
+    ArcNameW = src.ArcNameW;
+    FileArgs = src.FileArgs;
+    ExclArgs = src.ExclArgs;
+    InclArgs = src.InclArgs;
+    ArcNames = src.ArcNames;
+    StoreArgs = src.StoreArgs;
+}
+
 
 CommandData::~CommandData()
 {

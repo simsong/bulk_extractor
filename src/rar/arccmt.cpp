@@ -1,3 +1,5 @@
+#include "rar.hpp"
+
 bool IsAnsiComment(const char *Data,int Size);
 
 bool Archive::GetComment(Array<byte> *CmtData,Array<wchar> *CmtDataW)

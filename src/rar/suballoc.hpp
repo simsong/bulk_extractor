@@ -68,6 +68,8 @@ class SubAllocator
     struct RAR_NODE FreeList[N_INDEXES];
   public:
     SubAllocator();
+    SubAllocator(const SubAllocator &copy);
+    const SubAllocator& operator=(const SubAllocator &src);
     ~SubAllocator() {StopSubAllocator();}
     void Clean();
     bool StartSubAllocator(int SASize);

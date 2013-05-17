@@ -1,4 +1,4 @@
-
+#include "coder.hpp"
 
 inline unsigned int RangeCoder::GetChar()
 {

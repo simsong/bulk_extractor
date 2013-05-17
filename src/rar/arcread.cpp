@@ -649,7 +649,7 @@ bool Archive::ReadSubData(Array<byte> *UnpData, File *DestFile)
 	//return ReadSubData(UnpData,(File *)DestFile);
 	return false;
 }
-/*
+#if 0
 bool Archive::ReadSubData(Array<byte> *UnpData,File *DestFile)
 {
   if (HeaderCRC!=SubHead.HeadCRC)
@@ -660,7 +660,7 @@ bool Archive::ReadSubData(Array<byte> *UnpData,File *DestFile)
     ErrHandler.SetErrorCode(CRC_ERROR);
     return(false);
   }
-  if (SubHead.Method<0x30 || SubHead.Method>0x35 || SubHead.UnpVer>/*PACK_VER*//*36)
+  if (SubHead.Method<0x30 || SubHead.Method>0x35 || SubHead.UnpVer>/*PACK_VER*/36)
   {
 #ifndef SHELL_EXT
     Log(FileName,St(MSubHeadUnknown));
@@ -709,5 +709,6 @@ bool Archive::ReadSubData(Array<byte> *UnpData,File *DestFile)
     return(false);
   }
   return(true);
-}*/
+}
+#endif
 #endif

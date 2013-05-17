@@ -1,6 +1,8 @@
 #ifndef _RAR_FILE_
 #define _RAR_FILE_
 
+#include "rar.hpp"
+
 #ifdef _WIN_ALL
 typedef HANDLE FileHandle;
 #define BAD_HANDLE INVALID_HANDLE_VALUE
@@ -56,6 +58,7 @@ class File
     uint CloseCount;
   public:
     File();
+    File(const File& copy);
     virtual ~File();
 	void InitFile(void* ptr, int64 ptrlength); //sets the ptr location, and the length that can be read
     void operator = (File &SrcFile);

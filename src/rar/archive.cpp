@@ -53,6 +53,81 @@ Archive::Archive(RAROptions *InitCmd)
 
 }
 
+Archive::Archive(const Archive &copy)
+{
+    *this = copy
+}
+
+const Archive& Archive::operator=(const Archive &src)
+{
+    File::operator=(src);
+#if !defined(SHELL_EXT) && !defined(RAR_NOCRYPT)
+    HeadersSalt = src.HeadersSalt;
+#endif
+#ifndef SHELL_EXT
+    SubDataIO = src.SubDataIO;
+    SubDataSalt = src.SubDataSalt;
+#endif
+    Cmd = src.Cmd;
+    DummyCmd = src.DummyCmd;
+
+    MarkHead = src.MarkHead;
+    OldMhd = src.OldMhd;
+
+    RecoverySectors = src.RecoverySectors;
+    RecoveryPos = src.RecoveryPos;
+
+    FailedHeaderDecryption = src.FailedHeaderDecryption;
+
+    LatestTime = src.LatestTime;
+    LastReadBlock = src.LastReadBlock;
+    CurHeaderType = src.CurHeaderType;
+
+    SilentOpen = src.SilentOpen;
+
+    ShortBlock = src.ShortBlock;
+    NewMhd = src.NewMhd;
+    NewLhd = src.NewLhd;
+    EndArcHead = src.EndArcHead;
+    SubBlockHead = src.SubBlockHead;
+    SubHead = src.SubHead;
+    CommHead = src.CommHead;
+    ProtectHead = src.ProtectHead;
+    AVHead = src.AVHead;
+    SignHead = src.SignHead;
+    UOHead = src.UOHead;
+    MACHead = src.MACHead;
+    EAHead = src.EAHead;
+    StreamHead = src.StreamHead;
+
+    CurBlockPos = src.CurBlockPos;
+    NextBlockPos = src.NextBlockPos;
+
+    OldFormat = src.OldFormat;
+    Solid = src.Solid;
+    Volume = src.Volume;
+    MainComment = src.MainComment;
+    Locked = src.Locked;
+    Signed = src.Signed;
+    NotFirstVolume = src.NotFirstVolume;
+    Protected = src.Protected;
+    Encrypted = src.Encrypted;
+    SFXSize = src.SFXSize;
+    BrokenFileHeader = src.BrokenFileHeader;
+
+    Splitting = src.Splitting;
+
+    HeaderCRC = src.HeaderCRC;
+
+    VolWrite = src.VolWrite;
+    AddingFilesSize = src.AddingFilesSize;
+    AddingHeadersSize = src.AddingHeadersSize;
+
+    NewArchive = src.NewArchive;
+
+    FirstVolumeName = src.FirstVolumeName;
+    FirstVolumeNameW = src.FirstVolumeNameW;
+}
 
 #ifndef SHELL_EXT
 void Archive::CheckArc(bool EnableBroken)

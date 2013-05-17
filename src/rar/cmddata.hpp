@@ -21,6 +21,8 @@ class CommandData:public RAROptions
     bool BareOutput;
   public:
     CommandData();
+    CommandData(const CommandData &copy);
+    const CommandData& operator=(const CommandData &src);
     ~CommandData();
     void Init();
     void Close();

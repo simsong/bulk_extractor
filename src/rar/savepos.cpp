@@ -9,8 +9,20 @@ SaveFilePos::SaveFilePos(File &SaveFile)
   return;
 }
 
+SaveFilePos::SaveFilePos(const SaveFilePos &copy)
+{
+    *this = copy;
+}
+
 SaveFilePos::~SaveFilePos()
 {
   if (CloseCount==SaveFile->CloseCount)
     SaveFile->Seek(SavePos,SEEK_SET);
+}
+
+const SaveFilePos& SaveFilePos::operator=(const SaveFilePos &source)
+{
+    SaveFile = source.SaveFile;
+    SavePos = source.SavePos;
+    CloseCount = source.CloseCount;
 }

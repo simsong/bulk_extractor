@@ -10,7 +10,9 @@ class SaveFilePos
   public:
     //SaveFilePos(BenFile &SaveFile);
 	SaveFilePos(File &SaveFile);
+    SaveFilePos(const SaveFilePos &copy);
     ~SaveFilePos();
+    const SaveFilePos& operator=(const SaveFilePos &source);
 };
 
 #endif

@@ -1,4 +1,4 @@
-#include "rar.hpp"
+#include "file.hpp"
 
 static __thread File *CreatedFiles[256];
 static __thread int RemoveCreatedActive=0;
@@ -26,6 +26,11 @@ File::File()
 #ifdef _WIN_ALL
   NoSequentialRead=false;
 #endif
+}
+
+File::File(const File &copy)
+{
+    *this = copy;
 }
 
 

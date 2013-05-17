@@ -67,7 +67,7 @@ class RAROptions
 {
   public:
     RAROptions();
-    ~RAROptions();
+    virtual ~RAROptions();
     void Init();
 
     uint ExclFileAttr;

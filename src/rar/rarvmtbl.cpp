@@ -8,6 +8,8 @@
 #define VMCF_USEFLAGS       32
 #define VMCF_CHFLAGS        64
 
+typedef unsigned char byte;
+
 static __thread byte VM_CmdFlags[]=
 {
   /* VM_MOV   */ VMCF_OP2 | VMCF_BYTEMODE                                ,
