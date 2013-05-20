@@ -1,0 +1,26 @@
+#!/bin/sh
+
+# http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
+#DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+DIR="$( dirname "${BASH_SOURCE[0]}")"
+args="--quiet"
+export PATH=$DIR:$PATH
+#
+# Implemenet the DFRWS 2013 challenge
+if [ $1 == "-d" ]; then
+  args=""
+  shift 1
+fi
+
+if [ $# == 2 ]; then
+  python3.3 $DIR/dfrws_2012_challenge.py $args "$1" "$2" 
+  exit 0
+fi
+if [ $# == 3 ]; then
+  python3.3 $DIR/dfrws_2012_challenge.py $args "$1" "$2" "$3"
+  exit 0
+fi
+  
+echo usage $0 'target blocksize [concurrency factor]'
+echo example: $0 target.dd 512
+exit 1
