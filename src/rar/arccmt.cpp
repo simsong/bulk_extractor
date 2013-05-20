@@ -43,7 +43,7 @@ bool Archive::GetComment(Array<byte> *CmtData,Array<wchar> *CmtDataW)
 #endif
   }
 #ifndef SFX_MODULE
-  if (OldFormat && (OldMhd.Flags & MHD_PACK_COMMENT)!=0 || !OldFormat && CommHead.Method!=0x30)
+  if ((OldFormat && (OldMhd.Flags & MHD_PACK_COMMENT)!=0) || (!OldFormat && CommHead.Method!=0x30))
   {
     if (!OldFormat && (CommHead.UnpVer < 15 || CommHead.UnpVer > UNP_VER || CommHead.Method > 0x35))
       return(false);
