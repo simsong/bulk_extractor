@@ -6,8 +6,9 @@
  * is the interface between bulk_extractor and LIFT.
  */
 
-#include "../bulk_extractor.h"
-#include "../sbuf.h"
+#include "bulk_extractor_i.h"
+//#include "../bulk_extractor.h"
+//#include "../sbuf.h"
 #include "base.h"
 #include "term_weighting.h"
 #include "config.h"
