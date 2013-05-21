@@ -231,57 +231,6 @@ void ErrorHandler::SetErrorCode(int Code)
   ErrCount++;
 }
 
-
-#if !defined(GUI) && !defined(_SFX_RTL_)
-#ifdef _WIN_ALL
-BOOL __stdcall ProcessSignal(DWORD SigType)
-#else
-#if defined(__sun)
-extern "C"
-#endif
-void _stdfunction ProcessSignal(int SigType)
-#endif
-{
-#ifdef _WIN_ALL
-  // When a console application is run as a service, this allows the service
-  // to continue running after the user logs off. 
-  if (SigType==CTRL_LOGOFF_EVENT)
-    return(TRUE);
-#endif
-  UserBreak=true;
-  for (int I=0;!File::RemoveCreated() && I<3;I++)
-  {
-#ifdef _WIN_ALL
-    Sleep(100);
-#endif
-  }
-#if defined(USE_RC) && !defined(SFX_MODULE) && !defined(_WIN_CE) && !defined(RARDLL)
-  ExtRes.UnloadDLL();
-#endif
-  exit(USER_BREAK);
-#if defined(_WIN_ALL) && !defined(_MSC_VER)
-  // never reached, just to avoid a compiler warning
-  return(TRUE);
-#endif
-}
-#endif
-
-
-void ErrorHandler::SetSignalHandlers(bool Enable)
-{
-  EnableBreak=Enable;
-#if !defined(GUI) && !defined(_SFX_RTL_)
-#ifdef _WIN_ALL
-  SetConsoleCtrlHandler(Enable ? ProcessSignal:NULL,TRUE);
-//  signal(SIGBREAK,Enable ? ProcessSignal:SIG_IGN);
-#else
-  signal(SIGINT,Enable ? ProcessSignal:SIG_IGN);
-  signal(SIGTERM,Enable ? ProcessSignal:SIG_IGN);
-#endif
-#endif
-}
-
-
 void ErrorHandler::Throw(int Code)
 {
   if (Code==USER_BREAK && !EnableBreak)
