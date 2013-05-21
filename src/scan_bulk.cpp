@@ -97,7 +97,7 @@ std::ostream & operator<< (std::ostream &os, const sector_typetag &ss) {
 typedef vector<sector_typetag> sector_typetags_vector_t; //
 sector_typetags_vector_t sector_typetags;		      // what gets put where
 
-static size_t opt_scan_bulk_block_size = 512;	// 
+static size_t opt_bulk_block_size = 512;	// 
 
 static void bulk_process_feature_file(const std::string &fn)
 {
@@ -123,7 +123,7 @@ static void bulk_process_feature_file(const std::string &fn)
 	    std::string &taglocation  = fields[0];
 	    std::string &tagtype = fields[1];
 	    uint64_t offset = stoi64(taglocation);
-	    uint64_t sector =  offset / opt_scan_bulk_block_size;
+	    uint64_t sector =  offset / opt_bulk_block_size;
 
 	    /* If the array hasn't been expanded to the point of this element, expand it with blanks */
 	    while(sector > sector_typetags.size()){
@@ -163,7 +163,7 @@ static void bulk_process_feature_file(const std::string &fn)
 	    /* Process a feature, which will add specificity to the tag */
 	    if(sector_typetags.size()==sector){ 
 		/* Hm... No tag (and all tags got processed first), so this is unknown */
-		sector_typetags.push_back(sector_typetag(opt_scan_bulk_block_size,UNKNOWN,SPACE));
+		sector_typetags.push_back(sector_typetag(opt_bulk_block_size,UNKNOWN,SPACE));
 	    } 
 	    /* append what we've learned regarding this feature */
 	    
@@ -215,7 +215,7 @@ static void dfrws2012_bulk_process_dump()
 {
     for(size_t i=0;i<sector_typetags.size();i++){
 	sector_typetag &s = sector_typetags[i];
-	uint64_t    offset = i * opt_scan_bulk_block_size;
+	uint64_t    offset = i * opt_bulk_block_size;
 	std::string ctype = (s.stype.size()>0 ? s.stype : "UNRECOGNIZED CONTENT");
 	bool print_comment = s.scomment.size() > 0;
 
@@ -322,7 +322,7 @@ public:;
     float entropy() {
 	float eval = 0;
 	for(vector<hist_element *>::const_iterator it = counts.begin();it!=counts.end();it++){
-	    float p = (float)(*it)->count / (float)opt_scan_bulk_block_size;
+	    float p = (float)(*it)->count / (float)opt_bulk_block_size;
 	    eval += -p * log2(p);
 	}
 	return eval;
@@ -489,9 +489,9 @@ void scan_bulk(const class scanner_params &sp,const recursion_control_block &rcb
 	sp.info->flags		= scanner_info::SCANNER_DISABLED | scanner_info::SCANNER_WANTS_NGRAMS | scanner_info::SCANNER_NO_ALL;
 	sp.info->feature_names.insert("bulk");
 	sp.info->feature_names.insert("bulk_tags");
-        sp.info->get_config("bulk_block_size",&opt_scan_bulk_block_size,"Block size (in bytes) for bulk data analysis");
+        sp.info->get_config("bulk_block_size",&opt_bulk_block_size,"Block size (in bytes) for bulk data analysis");
 
-	histogram::precalc_entropy_array(opt_scan_bulk_block_size);
+	histogram::precalc_entropy_array(opt_bulk_block_size);
 
         dfrws_challenge = (sp.info->config["DFRWS2012"] != "");
         return; 
@@ -508,13 +508,13 @@ void scan_bulk(const class scanner_params &sp,const recursion_control_block &rcb
 	    bulk_tags->write_tag(sp.sbuf,""); // tag that we found recursive data, not sure what kind
 	}
 
-	if(sp.sbuf.pagesize < opt_scan_bulk_block_size) return; // can't analyze something that small
+	if(sp.sbuf.pagesize < opt_bulk_block_size) return; // can't analyze something that small
 
-	// Loop through the sbuf in opt_scan_bulk_block_size sized chunks
+	// Loop through the sbuf in opt_bulk_block_size sized chunks
 	// for each one, examine the entropy and scan for bitlocker (unfortunately hardcoded)
 	// This needs to have a general plug-in architecture
-	for(size_t base=0;base+opt_scan_bulk_block_size<=sp.sbuf.pagesize;base+=opt_scan_bulk_block_size){
-	    sbuf_t sbuf(sp.sbuf,base,opt_scan_bulk_block_size);
+	for(size_t base=0;base+opt_bulk_block_size<=sp.sbuf.pagesize;base+=opt_bulk_block_size){
+	    sbuf_t sbuf(sp.sbuf,base,opt_bulk_block_size);
 	    bulk_ngram_entropy(sbuf,bulk,bulk_tags);
 	    bulk_bitlocker(sbuf,bulk,bulk_tags);
 	}

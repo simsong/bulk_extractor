@@ -1,3 +1,7 @@
+2013-05-20  Basic  <simsong@npsair.local>
+
+	* src/bulk_extractor.cpp (main): -S now sets options; -s now sets sampling fraction.
+
 2013-05-13  Simson Garfinkel  <simsong@Mucha.local>
 
 	* src/bulk_extractor.cpp (usage): The -B option for specifying the blocksize for bulk data analysis has been removed. Instead specify it with -S block_size=NN.

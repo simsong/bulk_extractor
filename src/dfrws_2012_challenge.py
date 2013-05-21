@@ -44,12 +44,16 @@ def run_bulk_extractor(target,block_size,concurrency_factor,quiet=True,retbuf=Fa
         qflag = '-1'
     cmd = [os.path.join(dn,'./bulk_extractor'),
            '-e','all',                  # all modules
+           '-e','bulk',                 # explicitly turn on bulk
+           '-e','lift',                 # explicitly turn on LIFT
            '-x','accts',                # turn off accts
            '-x','email',                # turn off email
+           '-x','xor',                  # turn off xor
            '-x','wordlist',             # no wordlist
-           '-s','DFRWS2012=YES',
-           '-s','bulk_block_size='+str(block_size),
-           '-s','work_start_work_end=NO',
+           '-S','DFRWS2012=YES',
+           '-S','bulk_block_size='+str(block_size),
+           '-S','work_start_work_end=NO',
+           '-S','enable_histograms=NO',
            '-C','0',                    # no context is reported
            '-G'+str(page_size),     # page size
            '-g'+str(margin),     # margin
@@ -59,6 +63,7 @@ def run_bulk_extractor(target,block_size,concurrency_factor,quiet=True,retbuf=Fa
            target]
     if not quiet: print(" ".join(cmd))
     if not retbuf:
+        print(" ".join(cmd))
         call(cmd)
     else:
         ret=Popen(cmd,stdout=PIPE).communicate()[0].strip()
