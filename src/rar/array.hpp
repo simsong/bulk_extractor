@@ -20,7 +20,7 @@ template <class T> class Array
     void Add(size_t Items);
     void Alloc(size_t Items);
     void Reset();
-    const Array<T>& operator = (Array<T> &Src);
+    const Array<T>& operator=(const Array<T> &Src);
     void Push(T Item);
     T* Addr() {return(Buffer);}
 };
@@ -33,13 +33,15 @@ template <class T> void Array<T>::CleanData()
 }
 
 
-template <class T> Array<T>::Array()
+template <class T> Array<T>::Array() :
+    Buffer(), BufSize(), AllocSize()
 {
   CleanData();
 }
 
 
-template <class T> Array<T>::Array(size_t Size_)
+template <class T> Array<T>::Array(size_t Size_) :
+    Buffer(), BufSize(), AllocSize()
 {
   Buffer=(T *)malloc(sizeof(T)*Size_);
   if (Buffer==NULL && Size_!=0)
@@ -110,7 +112,7 @@ template <class T> void Array<T>::Reset()
 }
 
 
-template <class T> const Array<T>& Array<T>::operator =(Array<T> &Src)
+template <class T> const Array<T>& Array<T>::operator=(const Array<T> &Src)
 {
   Reset();
   Alloc(Src.BufSize);

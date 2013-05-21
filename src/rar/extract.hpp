@@ -36,6 +36,8 @@ class CmdExtract
     bool PasswordCancelled;
   public:
     CmdExtract();
+    CmdExtract(const CmdExtract &copy);
+    const CmdExtract& operator=(const CmdExtract &src);
     ~CmdExtract();
     void DoExtract(CommandData *Cmd, byte * ptrlocation, int64 length, std::string& xml);
     void ExtractArchiveInit(CommandData *Cmd,Archive &Arc);

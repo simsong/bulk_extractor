@@ -8,6 +8,33 @@ CmdExtract::CmdExtract()
   Unp->Init(NULL);
 }
 
+CmdExtract::CmdExtract(const CmdExtract &copy)
+{
+    *this = copy;
+}
+
+const CmdExtract& CmdExtract::operator=(const CmdExtract &src)
+{
+    StartTime = src.StartTime;
+    DataIO = src.DataIO;
+    Unp = src.Unp;
+    TotalFileCount = src.TotalFileCount;
+    FileCount = src.FileCount;
+    MatchedArgs = src.MatchedArgs;
+    FirstFile = src.FirstFile;
+    AllMatchesExact = src.AllMatchesExact;
+    ReconstructDone = src.ReconstructDone;
+    AnySolidDataUnpackedWell = src.AnySolidDataUnpackedWell;
+    ArcName = src.ArcName;
+    ArcNameW = src.ArcNameW;
+    Password = src.Password;
+    PasswordAll = src.PasswordAll;
+    PrevExtracted = src.PrevExtracted;
+    DestFileName = src.DestFileName;
+    DestFileNameW = src.DestFileNameW;
+    PasswordCancelled = src.PasswordCancelled;
+    SignatureFound = src.SignatureFound;
+}
 
 CmdExtract::~CmdExtract()
 {

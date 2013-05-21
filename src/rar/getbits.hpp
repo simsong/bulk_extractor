@@ -12,7 +12,7 @@ class BitInput
     BitInput();
     BitInput(const BitInput &copy);
     const BitInput& operator=(const BitInput &src);
-    ~BitInput();
+    virtual ~BitInput();
 
     byte *InBuf; // Dynamically allocated input buffer.
 

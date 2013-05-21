@@ -125,6 +125,8 @@ class ModelPPM
     inline void ClearMask();
   public:
     ModelPPM();
+    ModelPPM(const ModelPPM &copy);
+    const ModelPPM& operator=(const ModelPPM &src);
     void CleanUp(); // reset PPM variables after data error
     bool DecodeInit(Unpack *UnpackRead,int &EscChar);
     int DecodeChar();

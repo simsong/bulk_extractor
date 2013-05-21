@@ -62,7 +62,7 @@ void File::InitFile(void* ptr, int64 length)
 /**
 This function is not called in bulk_extractor
 */
-void File::operator = (File &SrcFile)
+const File& File::operator=(const File &SrcFile)
 {//This is not called in bulk_extractor
   hFile=SrcFile.hFile;
   strcpy(FileName,SrcFile.FileName);
@@ -72,6 +72,8 @@ void File::operator = (File &SrcFile)
   SrcFile.SkipClose=true;
   initptrlocation = SrcFile.initptrlocation; //save the initial ptr location
   ptrlocation = SrcFile.ptrlocation; //save the ptr location
+
+  return *this;
 }
 
 

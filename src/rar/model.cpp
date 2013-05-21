@@ -28,6 +28,37 @@ ModelPPM::ModelPPM()
   MedContext=NULL;
 }
 
+ModelPPM::ModelPPM(const ModelPPM &copy)
+{
+    *this = copy;
+}
+
+const ModelPPM& ModelPPM::operator=(const ModelPPM &src)
+{
+    SEE2Cont = src.SEE2Cont;
+    DummySEE2Cont = src.DummySEE2Cont;
+    MinContext = src.MinContext;
+    MedContext = src.MedContext;
+    MaxContext = src.MaxContext;
+    FoundState = src.FoundState;
+    NumMasked = src.NumMasked;
+    InitEsc = src.InitEsc;
+    OrderFall = src.OrderFall;
+    MaxOrder = src.MaxOrder;
+    RunLength = src.RunLength;
+    InitRL = src.InitRL;
+    CharMask = src.CharMask;
+    NS2Indx = src.NS2Indx;
+    NS2BSIndx = src.NS2BSIndx;
+    HB2Flag = src.HB2Flag;
+    EscCount = src.EscCount;
+    PrevSuccess = src.PrevSuccess;
+    HiBitsFlag = src.HiBitsFlag;
+    BinSumm = src.BinSumm;
+    Coder = src.Coder;
+    SubAlloc = src.SubAlloc;
+}
+
 
 void ModelPPM::RestartModelRare()
 {

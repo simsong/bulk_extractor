@@ -193,12 +193,14 @@ class Unpack:private BitInput
 
   public:
     Unpack(ComprDataIO *DataIO);
+    Unpack(const Unpack &copy);
+    const Unpack& operator=(const Unpack &src);
     ~Unpack();
     void Init(byte *Window=NULL);
     void DoUnpack(int Method,bool Solid);
     bool IsFileExtracted() {return(FileExtracted);}
     void SetDestSize(int64 DestSize) {DestUnpSize=DestSize;FileExtracted=false;}
-    void SetSuspended(bool Suspended) {Unpack::Suspended=Suspended;}
+    void SetSuspended(bool Suspended_) {Unpack::Suspended=Suspended_;}
 
     unsigned int GetChar()
     {

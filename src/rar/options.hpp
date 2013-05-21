@@ -68,6 +68,7 @@ class RAROptions
   public:
     RAROptions();
     virtual ~RAROptions();
+    const RAROptions& operator=(const RAROptions &src);
     void Init();
 
     uint ExclFileAttr;

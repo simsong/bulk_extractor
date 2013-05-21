@@ -140,6 +140,7 @@ struct MarkHeader
 
 struct BaseBlock
 {
+  BaseBlock() : HeadCRC(), HeadType(), Flags(), HeadSize() {}
   ushort HeadCRC;
   HEADER_TYPE HeadType; // 1 byte.
   ushort Flags;
@@ -168,6 +169,7 @@ struct BlockHeader:BaseBlock
 
 struct MainHeader:BaseBlock
 {
+  MainHeader() : HighPosAV(), PosAV(), EncryptVer() {}
   ushort HighPosAV;
   uint PosAV;
   byte EncryptVer;
@@ -178,6 +180,11 @@ struct MainHeader:BaseBlock
 
 struct FileHeader:BlockHeader
 {
+  FileHeader() :
+      UnpSize(), HostOS(), FileCRC(), FileTime(), UnpVer(), Method(),
+      NameSize(), HighPackSize(), HighUnpSize(), FileName(), FileNameW(),
+      SubData(), Salt(), mtime(), ctime(), atime(), arctime(), FullPackSize(),
+      FullUnpSize() {}
   uint UnpSize;
   byte HostOS;
   uint FileCRC;
@@ -219,7 +226,7 @@ struct FileHeader:BlockHeader
     return(strcmp(FileName,Name)==0);
   }
 
-  FileHeader& operator = (FileHeader &hd)
+  const FileHeader& operator=(const FileHeader &hd)
   {
     SubData.Reset();
     memcpy(this,&hd,sizeof(*this));
@@ -232,6 +239,7 @@ struct FileHeader:BlockHeader
 
 struct EndArcHeader:BaseBlock
 {
+  EndArcHeader() : ArcDataCRC(), VolNumber() {}
   // Optional CRC32 of entire archive up to start of EndArcHeader block.
   // Present if EARC_DATACRC flag is set.
   uint ArcDataCRC;  
@@ -248,6 +256,7 @@ struct EndArcHeader:BaseBlock
 // RAR 3.x uses FileHeader with NEWSUB_HEAD HeadType for subblocks.
 struct SubBlockHeader:BlockHeader
 {
+  SubBlockHeader() : SubType(), Level() {}
   ushort SubType;
   byte Level;
 };
@@ -255,6 +264,7 @@ struct SubBlockHeader:BlockHeader
 
 struct CommentHeader:BaseBlock
 {
+  CommentHeader() : UnpSize(), UnpVer(), Method(), CommCRC() {}
   ushort UnpSize;
   byte UnpVer;
   byte Method;
@@ -264,6 +274,7 @@ struct CommentHeader:BaseBlock
 
 struct ProtectHeader:BlockHeader
 {
+  ProtectHeader() : Version(), RecSectors(), TotalBlocks(), Mark() {}
   byte Version;
   ushort RecSectors;
   uint TotalBlocks;
@@ -273,6 +284,7 @@ struct ProtectHeader:BlockHeader
 
 struct AVHeader:BaseBlock
 {
+  AVHeader() : UnpVer(), Method(), AVVer(), AVInfoCRC() {}
   byte UnpVer;
   byte Method;
   byte AVVer;
@@ -282,6 +294,7 @@ struct AVHeader:BaseBlock
 
 struct SignHeader:BaseBlock
 {
+  SignHeader() : CreationTime(), ArcNameSize(), UserNameSize() {}
   uint CreationTime;
   ushort ArcNameSize;
   ushort UserNameSize;
@@ -290,6 +303,7 @@ struct SignHeader:BaseBlock
 
 struct UnixOwnersHeader:SubBlockHeader
 {
+  UnixOwnersHeader() : OwnerNameSize(), GroupNameSize(), OwnerName(), GroupName() {}
   ushort OwnerNameSize;
   ushort GroupNameSize;
 /* dummy */
@@ -300,6 +314,7 @@ struct UnixOwnersHeader:SubBlockHeader
 
 struct EAHeader:SubBlockHeader
 {
+  EAHeader() : UnpSize(), UnpVer(), Method(), EACRC() {}
   uint UnpSize;
   byte UnpVer;
   byte Method;
@@ -309,6 +324,7 @@ struct EAHeader:SubBlockHeader
 
 struct StreamHeader:SubBlockHeader
 {
+  StreamHeader() : UnpSize(), UnpVer(), Method(), StreamCRC(), StreamNameSize(), StreamName() {}
   uint UnpSize;
   byte UnpVer;
   byte Method;
@@ -321,6 +337,7 @@ struct StreamHeader:SubBlockHeader
 
 struct MacFInfoHeader:SubBlockHeader
 {
+  MacFInfoHeader() : fileType(), fileCreator() {}
   uint fileType;
   uint fileCreator;
 };

@@ -61,7 +61,7 @@ class File
     File(const File& copy);
     virtual ~File();
 	void InitFile(void* ptr, int64 ptrlength); //sets the ptr location, and the length that can be read
-    void operator = (File &SrcFile);
+    const File& operator=(const File &SrcFile);
     bool Open(const char *Name,const wchar *NameW=NULL,bool OpenShared=false,bool Update=false);
     void TOpen(const char *Name,const wchar *NameW=NULL);
     bool WOpen(const char *Name,const wchar *NameW=NULL);

@@ -7,7 +7,17 @@
 /**
 Special Constructor
 */
-Archive::Archive(RAROptions *InitCmd)
+Archive::Archive(RAROptions *InitCmd) :
+    SubDataIO(), Cmd(), DummyCmd(), MarkHead(), OldMhd(), RecoverySectors(),
+    RecoveryPos(), FailedHeaderDecryption(), LatestTime(), LastReadBlock(),
+    CurHeaderType(), SilentOpen(), ShortBlock(), NewMhd(), NewLhd(),
+    EndArcHead(), SubBlockHead(), SubHead(), CommHead(), ProtectHead(),
+    AVHead(), SignHead(), UOHead(), MACHead(), EAHead(), StreamHead(),
+    CurBlockPos(), NextBlockPos(), OldFormat(), Solid(), Volume(),
+    MainComment(), Locked(), Signed(), NotFirstVolume(), Protected(),
+    Encrypted(), SFXSize(), BrokenFileHeader(), Splitting(), HeaderCRC(),
+    VolWrite(), AddingFilesSize(), AddingHeadersSize(), NewArchive(),
+    FirstVolumeName(), FirstVolumeNameW()
 {
   Cmd=InitCmd==NULL ? &DummyCmd:InitCmd;
   OpenShared=Cmd->OpenShared;
@@ -53,20 +63,30 @@ Archive::Archive(RAROptions *InitCmd)
 
 }
 
-Archive::Archive(const Archive &copy)
+Archive::Archive(const Archive &copy) :
+    SubDataIO(), Cmd(), DummyCmd(), MarkHead(), OldMhd(), RecoverySectors(),
+    RecoveryPos(), FailedHeaderDecryption(), LatestTime(), LastReadBlock(),
+    CurHeaderType(), SilentOpen(), ShortBlock(), NewMhd(), NewLhd(),
+    EndArcHead(), SubBlockHead(), SubHead(), CommHead(), ProtectHead(),
+    AVHead(), SignHead(), UOHead(), MACHead(), EAHead(), StreamHead(),
+    CurBlockPos(), NextBlockPos(), OldFormat(), Solid(), Volume(),
+    MainComment(), Locked(), Signed(), NotFirstVolume(), Protected(),
+    Encrypted(), SFXSize(), BrokenFileHeader(), Splitting(), HeaderCRC(),
+    VolWrite(), AddingFilesSize(), AddingHeadersSize(), NewArchive(),
+    FirstVolumeName(), FirstVolumeNameW()
 {
-    *this = copy
+    *this = copy;
 }
 
 const Archive& Archive::operator=(const Archive &src)
 {
     File::operator=(src);
 #if !defined(SHELL_EXT) && !defined(RAR_NOCRYPT)
-    HeadersSalt = src.HeadersSalt;
+    memcpy(HeadersSalt, src.HeadersSalt, sizeof(HeadersSalt));
 #endif
 #ifndef SHELL_EXT
     SubDataIO = src.SubDataIO;
-    SubDataSalt = src.SubDataSalt;
+    memcpy(SubDataSalt, src.SubDataSalt, sizeof(SubDataSalt));
 #endif
     Cmd = src.Cmd;
     DummyCmd = src.DummyCmd;
@@ -125,8 +145,10 @@ const Archive& Archive::operator=(const Archive &src)
 
     NewArchive = src.NewArchive;
 
-    FirstVolumeName = src.FirstVolumeName;
-    FirstVolumeNameW = src.FirstVolumeNameW;
+    memcpy(FirstVolumeName, src.FirstVolumeName, sizeof(FirstVolumeName));
+    memcpy(FirstVolumeNameW, src.FirstVolumeNameW, sizeof(FirstVolumeNameW));
+
+    return *this;
 }
 
 #ifndef SHELL_EXT

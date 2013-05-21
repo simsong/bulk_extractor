@@ -18,6 +18,82 @@ Unpack::Unpack(ComprDataIO *DataIO)
   UnpSomeRead=false;
 }
 
+Unpack::Unpack(const Unpack &copy)
+{
+    *this = copy;
+}
+
+const Unpack& Unpack::operator=(const Unpack &src)
+{
+    BitInput::operator=(src);
+
+    UnpIO = src.UnpIO;
+    PPM = src.PPM;
+    PPMEscChar = src.PPMEscChar;
+    VMCodeInp = src.VMCodeInp;
+    Filters = src.Filters;
+    PrgStack = src.PrgStack;
+    OldFilterLengths = src.OldFilterLengths;
+    LastFilter = src.LastFilter;
+    TablesRead = src.TablesRead;
+    LD = src.LD;
+    DD = src.DD;
+    LDD = src.LDD;
+    RD = src.RD;
+    BD = src.BD;
+    OldDist = src.OldDist;
+    OldDistPtr = src.OldDistPtr;
+    LastDist = src.LastDist;
+    LastLength = src.LastLength;
+    UnpPtr = src.UnpPtr;
+    WrPtr = src.WrPtr;
+    ReadTop = src.ReadTop; 
+    ReadBorder = src.ReadBorder;
+    UnpOldTable = src.UnpOldTable;
+    UnpBlockType = src.UnpBlockType;
+    Window = src.Window;
+    ExternalWindow = src.ExternalWindow;
+    DestUnpSize = src.DestUnpSize;
+    Suspended = src.Suspended;
+    UnpAllBuf = src.UnpAllBuf;
+    UnpSomeRead = src.UnpSomeRead;
+    WrittenFileSize = src.WrittenFileSize;
+    FileExtracted = src.FileExtracted;
+    PrevLowDist = src.PrevLowDist;
+    LowDistRepCount = src.LowDistRepCount;
+    ChSet = src.ChSet;
+    ChSetA = src.ChSetA;
+    ChSetB = src.ChSetB;
+    ChSetC = src.ChSetC;
+    Place = src.Place;
+    PlaceA = src.PlaceA;
+    PlaceB = src.PlaceB;
+    PlaceC = src.PlaceC;
+    NToPl = src.NToPl;
+    NToPlB = src.NToPlB;
+    NToPlC = src.NToPlC;
+    FlagBuf = src.FlagBuf;
+    AvrPlc = src.AvrPlc;
+    AvrPlcB = src.AvrPlcB;
+    AvrLn1 = src.AvrLn1;
+    AvrLn2 = src.AvrLn2;
+    AvrLn3 = src.AvrLn3;
+    Buf60 = src.Buf60;
+    NumHuf = src.NumHuf;
+    StMode = src.StMode;
+    LCount = src.LCount;
+    FlagsCnt = src.FlagsCnt;
+    Nhfb = src.Nhfb;
+    Nlzb = src.Nlzb;
+    MaxDist3 = src.MaxDist3;
+    MD = src.MD;
+    UnpOldTable20 = src.UnpOldTable20;
+    UnpAudioBlock = src.UnpAudioBlock;
+    UnpChannels = src.UnpChannels;
+    UnpCurChannel = src.UnpCurChannel;
+    UnpChannelDelta = src.UnpChannelDelta;
+    AudV = src.AudV;
+}
 
 Unpack::~Unpack()
 {
