@@ -135,7 +135,7 @@ scanner_t *scanners_builtin[] = {
 #ifdef HAVE_LIBLIGHTGREP
     scan_lightgrep,
 #endif
-    //scan_lift,  // not ready for prime time
+    scan_lift,  // not ready for prime time
     //scan_extx,  // not ready for prime time
 #ifdef HAVE_EXIV2
     scan_exiv2,
@@ -693,7 +693,8 @@ public:
             xreport.pop();
             xreport.set_oneline(false);
         }
-        std::cout << "Producer time spent waiting: " << tp.waiting.elapsed_seconds() << " sec.\n";
+
+        if(opt_quiet==0) std::cout << "Producer time spent waiting: " << tp.waiting.elapsed_seconds() << " sec.\n";
     
         xreport.xmlout("thread_wait",dtos(tp.waiting.elapsed_seconds()),"thread='0'",false);
         double worker_wait_average = 0;
@@ -705,15 +706,15 @@ public:
         }
         xreport.pop();
         xreport.flush();
-        std::cout << "Average consumer time spent waiting: " << worker_wait_average << " sec.\n";
-        if(worker_wait_average > tp.waiting.elapsed_seconds()*2 && worker_wait_average>10){
+        if(opt_quiet==0) std::cout << "Average consumer time spent waiting: " << worker_wait_average << " sec.\n";
+        if(worker_wait_average > tp.waiting.elapsed_seconds()*2 && worker_wait_average>10 && opt_quiet==0){
             std::cout << "*******************************************\n";
             std::cout << "** bulk_extractor is probably I/O bound. **\n";
             std::cout << "**        Run with a faster drive        **\n";
             std::cout << "**      to get better performance.       **\n";
             std::cout << "*******************************************\n";
         }
-        if(tp.waiting.elapsed_seconds() > worker_wait_average * 2 && tp.waiting.elapsed_seconds()>10){
+        if(tp.waiting.elapsed_seconds() > worker_wait_average * 2 && tp.waiting.elapsed_seconds()>10 && opt_quiet==0){
             std::cout << "*******************************************\n";
             std::cout << "** bulk_extractor is probably CPU bound. **\n";
             std::cout << "**    Run on a computer with more cores  **\n";
@@ -842,7 +843,7 @@ static void usage(const char *progname)
     std::cout << "   -f <regex>   - find occurrences of <regex>; may be repeated.\n";
     std::cout << "                  results go into find.txt\n";
     std::cout << "   -q nn        - Quiet Rate; only print every nn status reports. Default 0; -1 for no status at all\n";
-    std::cout << "   -S frac[:passes] - Set random sampling parameters\n";
+    std::cout << "   -s frac[:passes] - Set random sampling parameters\n";
     std::cout << "\nTuning parameters:\n";
     std::cout << "   -C NN        - specifies the size of the context window (default " << feature_recorder::context_window << ")\n";
     std::cout << "   -G NN        - specify the page size (default " << opt_pagesize << ")\n";
@@ -851,6 +852,8 @@ static void usage(const char *progname)
     std::cout << "                 (default is -w" << word_min << ":" << word_max << ")\n";
     std::cout << "   -j NN        - Number of analysis threads to run (default " <<threadpool::numCPU() << ")\n";
     std::cout << "   -M nn        - sets max recursion depth (default " << scanner_def::max_depth << ")\n";
+    std::cout << "   -m <max>     - maximum number of minutes to wait for memory starvation\n";
+    std::cout << "                  default is " << max_bad_alloc_errors << "\n";
     std::cout << "\nPath Processing Mode:\n";
     std::cout << "   -p <path>/f  - print the value of <path> with a given format.\n";
     std::cout << "                  formats: r = raw; h = hex.\n";
@@ -870,9 +873,7 @@ static void usage(const char *progname)
     std::cout << "\nControl of Scanners:\n";
     std::cout << "   -P <dir>     - Specifies a plugin directory\n";
     std::cout << "   -E scanner   - turn off all scanners except scanner\n";
-    std::cout << "   -m <max>     - maximum number of minutes to wait for memory starvation\n";
-    std::cout << "                  default is " << max_bad_alloc_errors << "\n";
-    std::cout << "   -s name=value - sets a bulk extractor option name to be value\n";
+    std::cout << "   -S name=value - sets a bulk extractor option name to be value\n";
     info_scanners(false,scanners_builtin,'e','x');
     std::cout << "\n";
     exit(0);
@@ -1074,8 +1075,7 @@ int main(int argc,char **argv)
 	    }
 	    break;
 	case 'R': opt_recurse = 1; break;
-	case 'S': opt_sampling_params = optarg; break;
-	case 's':
+	case 'S':
 	{
 	    std::vector<std::string> params = split(optarg,'=');
 	    if(params.size()!=2){
@@ -1085,6 +1085,7 @@ int main(int argc,char **argv)
 	    be_config[params[0]] = params[1];
 	    continue;
 	}
+	case 's': opt_sampling_params = optarg; break;
 	case 'V': std::cout << "bulk_extractor " << PACKAGE_VERSION << "\n"; exit (1);
 	case 'W':
 	    cc = strchr(optarg,':');
@@ -1130,6 +1131,8 @@ int main(int argc,char **argv)
     si.config = be_config;
     si.get_config("work_start_work_end",&opt_work_start_work_end,
                    "Record work start and end of each scanner in report.xml file");
+    extern bool opt_enable_histograms;
+    si.get_config("enable_histograms",&opt_enable_histograms,"Disable generation of histograms");
 
     /* Load all the scanners and enable the ones we care about */
     load_scanner_directories(scanner_dirs,be_config);
@@ -1231,7 +1234,6 @@ int main(int argc,char **argv)
     xreport->xmlout("provided_filename",image_fname); // save this information
 
     /* Save the seen_page_ids */
-    /* TK */
 
     /* Determine the feature files that will be used */
     feature_file_names_t feature_file_names;
@@ -1286,7 +1288,7 @@ int main(int argc,char **argv)
     xreport->pop();			// bulk_extractor
     xreport->close();
     delete p;				// not strictly needed, but why not?
-    if(!opt_quiet){
+    if(opt_quiet==0){
 	float mb_per_sec = (total_bytes / 1000000.0) / timer.elapsed_seconds();
 
 	std::cout.precision(4);

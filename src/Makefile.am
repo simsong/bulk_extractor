@@ -126,6 +126,8 @@ SCAN_LIFT = scan_lift.cpp \
 	scan_lift/term_weighting.h \
 	scan_lift/tools.cpp 
 
+scan_lift.so: $(SCAN_LIFT)
+
 bulk_extractor_SOURCES = \
 	aftimer.h \
 	base64_forensic.cpp \
@@ -143,7 +145,7 @@ bulk_extractor_SOURCES = \
 	threadpool.h \
 	word_and_context_list.cpp \
 	word_and_context_list.h \
-	$(bulk_scanners) $(TSK3INCS)  $(BE13_API)
+	$(bulk_scanners) $(TSK3INCS)  $(BE13_API) $(SCAN_LIFT)
 
 stand_SOURCES = \
 	dig.cpp \

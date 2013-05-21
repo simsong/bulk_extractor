@@ -77,6 +77,7 @@ static void liftcmd_a2c()
  * 
  * 
  **/
+static size_t opt_bulk_block_size = 512;        //                                                                                                               
 extern "C"
 void scan_lift(const class scanner_params &sp, const recursion_control_block &rcb){
     assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
@@ -95,6 +96,8 @@ void scan_lift(const class scanner_params &sp, const recursion_control_block &rc
         sp.info->get_config("liftcmd",&liftcmd,"LIFT Command");
         sp.info->get_config("liftif",&liftif,"LIFT input file");
         sp.info->get_config("liftof",&liftof,"LIFT output file");
+        sp.info->get_config("bulk_block_size",&opt_bulk_block_size,"Block size (in bytes) for bulk data analysis");
+
         if(liftcmd!=""){
             if(liftcmd=="help"){
                 liftcmd_usage();
@@ -127,11 +130,11 @@ void scan_lift(const class scanner_params &sp, const recursion_control_block &rc
 	feature_recorder *lift_tags = sp.fs.get_name("lift_tags");
 
 
-	// Loop through the sbuf in opt_scan_bulk_block_size sized chunks
+	// Loop through the sbuf in opt_bulk_block_size sized chunks
 	// for each one, examine the entropy and scan for bitlocker (unfortunately hardcoded)
 	// This needs to have a general plug-in architecture
-	for(size_t base=0;base+opt_scan_bulk_block_size<=sp.sbuf.pagesize;base+=opt_scan_bulk_block_size){
-	    sbuf_t sbuf(sp.sbuf,base,opt_scan_bulk_block_size);
+	for(size_t base=0;base+opt_bulk_block_size<=sp.sbuf.pagesize;base+=opt_bulk_block_size){
+	    sbuf_t sbuf(sp.sbuf,base,opt_bulk_block_size);
 
 	    double theScore=0;
 	    string result = classifier.classify(sbuf,&theScore);

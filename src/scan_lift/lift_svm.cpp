@@ -18,7 +18,8 @@ void lift_svm::load_model_dir(const std::string &model_dir)
     std::string fn_modelfile(model_dir + "/model");
     std::ifstream f(fn_cat_map.c_str());
     if(!f.is_open()){
-	err(1,"Cannot open: %s",fn_cat_map.c_str());
+	fprintf(stderr,"Cannot open: %s: %s",fn_cat_map.c_str(),strerror(errno));
+        exit(1);
     }
     string line;
     while(getline(f,line)){
@@ -52,7 +53,8 @@ void lift_svm::save_cpp(const std::string &outfile)
 {
     std::ofstream os(outfile.c_str());
     if(!os.is_open()){
-	err(1,"Cannot open: %s",outfile.c_str());
+	fprintf(stderr,"Cannot open: %s: %s",outfile.c_str(),strerror(errno));
+        exit(1);
     }
     os << "#include \"lift_svm.h\"\n";
     os << "const struct lift_svm::classnames_t ova_classnames[] = {";

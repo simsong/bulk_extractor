@@ -6,12 +6,13 @@
  * is the interface between bulk_extractor and LIFT.
  */
 
+#include "config.h"
 #include "bulk_extractor_i.h"
 //#include "../bulk_extractor.h"
 //#include "../sbuf.h"
+
 #include "base.h"
 #include "term_weighting.h"
-#include "config.h"
 #include "linear_ova_svm.h"
 #include "lift_utils.h"
 #include "classifier_config.h" 
