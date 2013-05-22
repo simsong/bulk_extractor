@@ -1,4 +1,5 @@
-#include "bulk_extractor.h"
+#include "config.h"
+#include "bulk_extractor_i.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -22,6 +23,8 @@ using namespace std;
 #  pragma GCC diagnostic ignored "-Wcast-qual"
 #endif
 
+int   gzip_max_uncompr_size = 256*1024*1024; // don't decompress objects larger than this
+
 extern "C"
 void scan_gzip(const class scanner_params &sp,const recursion_control_block &rcb)
 {
@@ -33,6 +36,7 @@ void scan_gzip(const class scanner_params &sp,const recursion_control_block &rcb
         sp.info->description    = "Searches for GZIP-compressed data";
         sp.info->scanner_version= "1.0";
         sp.info->flags          = scanner_info::SCANNER_RECURSE | scanner_info::SCANNER_RECURSE_EXPAND;
+        sp.info->get_config(&gzip_max_uncompr_size,"gzip_max_uncompr_size","maximum size for decompressing GZIP objects");
 	return ;		/* no features */
     }
     if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;
@@ -61,7 +65,7 @@ void scan_gzip(const class scanner_params &sp,const recursion_control_block &rcb
 		    zs.next_in = (Bytef *)cc;
 		    zs.avail_in = compr_size;
 		    zs.next_out = (Bytef *)decompress_buf;
-		    zs.avail_out = max_uncompr_size;
+		    zs.avail_out = gzip_max_uncompr_size;
 		
 		    gz_header_s gzh;
 		    memset(&gzh,0,sizeof(gzh));

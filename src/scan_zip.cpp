@@ -1,7 +1,8 @@
-#include "bulk_extractor.h"
-#include "xml.h"
+#include "config.h"
+#include "bulk_extractor_i.h"
+#include "dfxml/src/dfxml_generator.h"
 #include "utf8.h"
-#include "md5.h"
+//#include "md5.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -11,6 +12,8 @@
 #include <cassert>
 
 using namespace std;
+
+int   zip_max_uncompr_size = 256*1024*1024; // don't decompress objects larger than this
 
 /** The start of a ZIP section?? */
 inline bool zip_section_start(const u_char *buf){
@@ -58,8 +61,8 @@ int scan_zip_name_len_max = 1024;
 int zip_show_all=1;
 uint32_t max_depth_count = 0;
 const uint32_t max_depth_count_bypass = 5;
-set<md5_t>seen_set;
-pthread_mutex_t seen_set_lock;
+std::set<std::string>seen_set;
+cppmutex  seen_set_lock;
 extern "C"
 void scan_zip(const class scanner_params &sp,const recursion_control_block &rcb)
 {
@@ -70,7 +73,7 @@ void scan_zip(const class scanner_params &sp,const recursion_control_block &rcb)
 	sp.info->name  = "zip";
 	sp.info->feature_names.insert("zip");
         sp.info->flags          = scanner_info::SCANNER_RECURSE | scanner_info::SCANNER_RECURSE_EXPAND;
-	pthread_mutex_init(&seen_set_lock,NULL);
+        sp.info->get_config(&zip_max_uncompr_size,"zip_max_uncompr_size","Maximum size of a ZIP uncompressed object");
 	return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
@@ -104,7 +107,7 @@ void scan_zip(const class scanner_params &sp,const recursion_control_block &rcb)
 		 */
 		if(utf8::find_invalid(name.begin(),name.end()) != name.end()) continue; // invalid utf8 in name; not valid zip header
 		if(has_control_characters(name)) continue; // no control characters allowed.
-		name=xml::xmlescape(name);
+		name=dfxml_generator::xmlescape(name);     // make sure it is escaped
 
 		if(compr_size<0 || uncompr_size<0) continue; // sanity check
 
@@ -154,11 +157,11 @@ void scan_zip(const class scanner_params &sp,const recursion_control_block &rcb)
 
 		    /* See if we should perform a bypass check */
 		    if(__sync_fetch_and_add(&max_depth_count,0)>=max_depth_count_bypass){
-			md5_t hash = md5_generator::hash_buf(data_buf,compr_size);
-			pthread_mutex_lock(&seen_set_lock);
-			bool in_buf = seen_set.find(hash) != seen_set.end();
-			seen_set.insert(hash);
-			pthread_mutex_unlock(&seen_set_lock);
+                        std::string hexhash = be_hash(data_buf,compr_size);
+                        
+                        cppmutex::lock lock(seen_set_lock);
+			bool in_buf = seen_set.find(hexhash) != seen_set.end();
+			seen_set.insert(hexhash);
 			if(in_buf){
 			    ss << "<disposition>compression-bomb</disposition></zipinfo>";
 			    zip_recorder->write(pos0+pos,name,ss.str());

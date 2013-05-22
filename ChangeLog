@@ -1,3 +1,11 @@
+2013-05-22  Man Page  <simsong@mncrnpsedu.local>
+
+	* src/bulk_extractor.h: removed all global options; replaced with the be config system
+
+	* src/pyxpress.c: added OpenSSL exemption per email from Matthieu Suiche
+
+	* src/be13_api/sbuf.h: md5 support removed from sbuf
+
 2013-05-21  Basic  <simsong@public-172-21-213-43.near.uiuc.edu>
 
 	* src/be13_api/plugin.cpp (plugin::get_scanner_feature_file_names): extensive changes to make the global functions part of the be13::plugin class.

@@ -4,4 +4,5 @@
  */
 int  validate_ccn(const char *buf,int buflen);
 int  validate_phone(const sbuf_t &sbuf,size_t pos,size_t len);
+extern int scan_ccns_debug;
 #endif

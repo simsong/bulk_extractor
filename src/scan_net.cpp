@@ -21,7 +21,8 @@
  * not subject to copyright.
  */
 
-#include "bulk_extractor.h"
+#include "config.h"
+#include "bulk_extractor_i.h"
 #include "be13_api/cppmutex.h"
 
 #include <set>

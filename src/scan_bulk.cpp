@@ -1,4 +1,5 @@
-#include "bulk_extractor.h"
+#include "config.h"
+#include "bulk_extractor_i.h"
 #include "dig.h"
 #include <math.h>
 

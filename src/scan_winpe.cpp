@@ -90,7 +90,8 @@
  // <dlls><dll>msvcrt.dll</dll><dll>ntdll.dll</dll></dlls>
  */
 
-#include "bulk_extractor.h"
+#include "config.h"
+#include "bulk_extractor_i.h"
 
 #include <stdio.h>
 
@@ -994,10 +995,8 @@ void scan_winpe (const class scanner_params &sp,
 		xml = scan_winpe_verify(data);
 		if (xml != "") {
 		    // If we have 4096 bytes, generate md5 hash
-		    std::string md5hash = data.bufsize>4096 ?
-			data.md5(0,4096).hexdigest() : std::string("insufficient_bytes_for_hash");
-            
-		    f->write(data.pos0,md5hash,xml);
+		    std::string hash = be_hash(sbuf_t(data,0,4096));
+		    f->write(data.pos0,hash,xml);
 		}
 	    }
 	}

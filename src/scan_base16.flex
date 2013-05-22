@@ -18,8 +18,7 @@ static int base16array[256];
 unsigned int opt_min_hex_buf = 64;           /* Don't re-analyze hex bufs smaller than this */
 
 #include "config.h"
-#include "bulk_extractor.h"
-#include "histogram.h"
+#include "bulk_extractor_i.h"
 #include "sbuf_flex_scanner.h"
 class base16_scanner : public sbuf_scanner {
 public:

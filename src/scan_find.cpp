@@ -2,39 +2,10 @@
  * A simple regex finder.
  */
 
-#include "bulk_extractor.h"
+#include "config.h"
+#include "bulk_extractor_i.h"
 #include "histogram.h"
 
-regex_list find_list;
-
-/****************************************************************
- *** find support. This will be moved to the plug-in some day.
- ***/
-
-void add_find_pattern(const string &pat)
-{
-    find_list.add_regex("(" + pat + ")"); // make a group
-}
-
-
-void process_find_file(const char *findfile)
-{
-    ifstream in;
-
-    in.open(findfile,ifstream::in);
-    if(!in.good()){
-	err(1,"Cannot open %s",findfile);
-    }
-    while(!in.eof()){
-	string line;
-	getline(in,line);
-	truncate_at(line,'\r');         // remove a '\r' if present
-	if(line.size()>0){
-	    if(line[0]=='#') continue;	// ignore lines that begin with a comment character
-	    add_find_pattern(line);
-	}
-    }
-}
 
 extern "C"
 void scan_find(const class scanner_params &sp,const recursion_control_block &rcb)

@@ -8,7 +8,8 @@
 #include "aftimer.h"
 #include "image_process.h"
 #include "threadpool.h"
-#include "xml.h"
+#include "dfxml/src/dfxml_generator.h"
+#include "dfxml/src/hash_t.h"
 
 #include <dirent.h>
 #include <ctype.h>
@@ -52,7 +53,6 @@ int word_max = 14;
 int64_t opt_offset_start = 0;
 int64_t opt_offset_end   = 0;
 int   min_uncompr_size = 6;	// don't bother with objects smaller than this
-int   max_uncompr_size = 256*1024*1024; // don't decompress objects larger than this
 int   debug=0;
 int   opt_silent= 0;
 int   max_bad_alloc_errors = 60;
@@ -423,13 +423,13 @@ class BulkExtractor_Phase1 {
 #if _WIN32
 	Sleep(msec);
 #else
-#  ifdef HAVE_USLEEP
+# ifdef HAVE_USLEEP
 	usleep(msec*1000);
-#  else
+# else
 	int sec = msec/1000;
 	if(sec<1) sec=1;
 	sleep(sec);			// posix
-#  endif
+# endif
 #endif
     }
 
@@ -454,7 +454,7 @@ class BulkExtractor_Phase1 {
     }
 
     /* Instance variables */
-    xml &xreport;
+    dfxml_generator &xreport;
     aftimer &timer;
     u_int num_threads;
     int opt_quiet;
@@ -538,13 +538,13 @@ public:
 #define random(x) rand(x)
 #endif
 
-    BulkExtractor_Phase1(xml &xreport_,aftimer &timer_,u_int num_threads_,int opt_quiet_):
+    BulkExtractor_Phase1(dfxml_generator &xreport_,aftimer &timer_,u_int num_threads_,int opt_quiet_):
         xreport(xreport_),timer(timer_),
 	num_threads(num_threads_),opt_quiet(opt_quiet_),
 	sampling_fraction(1),sampling_passes(1),notify_ctr(0){ }
 
     void run(image_process &p,feature_recorder_set &fs,
-             int64_t &total_bytes, xml::tagid_set_t &seen_page_ids) {
+             int64_t &total_bytes, seen_page_ids_t &seen_page_ids) {
 
         md5_generator *md5g = new md5_generator();		// keep track of MD5
         uint64_t md5_next = 0;					// next byte to hash
@@ -879,7 +879,7 @@ static void usage(const char *progname)
  * Create the dfxml output
  */
 
-static void dfxml_create(xml &xreport,const string &command_line,int num_threads)
+static void dfxml_create(dfxml_generator &xreport,const string &command_line,int num_threads)
 {
     xreport.push("dfxml","xmloutputversion='1.0'");
     xreport.push("metadata",
@@ -977,6 +977,66 @@ void be_mkdir(string dir)
 }
 
 
+/* be_hash. Currently this just returns the MD5 of the sbuf,
+ * but eventually it will allow the use of different hashes.
+ */
+std::string be_hash_name("MD5");
+std::string be_hash(const uint8_t *buf,size_t bufsize)
+{
+    return md5_generator::hash_buf(buf,bufsize).hexdigest();
+}
+std::string be_hash(const sbuf_t &sbuf)
+{
+    return be_hash(sbuf.buf,sbuf.pagesize);
+}
+
+
+
+void stat_callback(void *user,const std::string &name,uint64_t calls,double seconds)
+{
+    dfxml_generator *xreport = reinterpret_cast<dfxml_generator *>(user);
+
+    xreport->set_oneline(true);
+    xreport->push("path");
+    xreport->xmlout("name",name);
+    xreport->xmlout("calls",(int64_t)calls);
+    xreport->xmlout("seconds",seconds);
+    xreport->pop();
+    xreport->set_oneline(false);
+}
+
+/********************
+ *** find support ***
+ ********************/
+
+regex_list find_list;
+void add_find_pattern(const string &pat)
+{
+    find_list.add_regex("(" + pat + ")"); // make a group
+}
+
+
+void process_find_file(const char *findfile)
+{
+    ifstream in;
+
+    in.open(findfile,ifstream::in);
+    if(!in.good()){
+	err(1,"Cannot open %s",findfile);
+    }
+    while(!in.eof()){
+	string line;
+	getline(in,line);
+	truncate_at(line,'\r');         // remove a '\r' if present
+	if(line.size()>0){
+	    if(line[0]=='#') continue;	// ignore lines that begin with a comment character
+	    add_find_pattern(line);
+	}
+    }
+}
+
+
+
 int main(int argc,char **argv)
 {
 #ifdef HAVE_MCHECK
@@ -994,7 +1054,7 @@ int main(int argc,char **argv)
     string opt_outdir;
     char *cc;
     setvbuf(stdout,0,_IONBF,0);		// don't buffer stdout
-    std::string command_line = xml::make_command_line(argc,argv);
+    std::string command_line = dfxml_generator::make_command_line(argc,argv);
     u_int num_threads = threadpool::numCPU();
     int opt_quiet = 0;
     std::string opt_sampling_params;
@@ -1178,7 +1238,7 @@ int main(int argc,char **argv)
     timer.start();
 
     /* If output directory does not exist, we are not restarting! */
-    xml  *xreport=0;
+    dfxml_generator  *xreport=0;
     string reportfilename = opt_outdir + "/report.xml";
 
     seen_page_ids_t seen_page_ids; // pages that do not need re-processing
@@ -1211,7 +1271,7 @@ int main(int argc,char **argv)
     if(!p) err(1,"Cannot open %s: ",image_fname.c_str());
     
     /* Store the configuration in the XML file */
-    xreport = new xml(reportfilename,false);
+    xreport = new dfxml_generator(reportfilename,false);
     dfxml_create(*xreport,command_line,num_threads);
     xreport->xmlout("provided_filename",image_fname); // save this information
 
@@ -1251,13 +1311,20 @@ int main(int argc,char **argv)
 
     if(opt_sampling_params.size()>0) phase1.set_sampling_parameters(opt_sampling_params);
 
+    xreport->add_timestamp("phase1 start");
     phase1.run(*p,fs,total_bytes,seen_page_ids);
+    xreport->add_timestamp("phase1 end");
 
     if(opt_quiet==0) std::cout << "Phase 2. Shutting down scanners\n";
-    be13::plugin::phase_shutdown(fs,*xreport);
+    xreport->add_timestamp("phase2 start");
+    be13::plugin::phase_shutdown(fs);
+    xreport->add_timestamp("phase2 end");
+
 
     if(opt_quiet==0) std::cout << "Phase 3. Creating Histograms\n";
-    be13::plugin::phase_histogram(fs,*xreport);
+    xreport->add_timestamp("phase3 start");
+    be13::plugin::phase_histogram(fs,0); // TK - add an xml error notifier!
+    xreport->add_timestamp("phase3 end");
 
     /* report and then print final usage information */
     xreport->push("report");
@@ -1265,7 +1332,10 @@ int main(int argc,char **argv)
     xreport->xmlout("elapsed_seconds",timer.elapsed_seconds());
     xreport->pop();			// report
     xreport->flush();
-    fs.dump_stats(*xreport);
+
+    xreport->push("scanner_times");
+    fs.get_stats(xreport,stat_callback);
+    xreport->pop();
     xreport->add_rusage();
     xreport->pop();			// bulk_extractor
     xreport->close();

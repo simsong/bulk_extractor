@@ -49,6 +49,7 @@
 #include <queue>
 #include <pthread.h>
 #include "aftimer.h"
+#include "dfxml/src/dfxml_generator.h"
 
 // There is a single threadpool object
 class threadpool {
@@ -78,14 +79,14 @@ class threadpool {
     int			freethreads;
     queue<sbuf_t *>	work_queue;	// work to be done
     feature_recorder_set &fs;		// one for all the threads; fs and fr are threadsafe
-    xml			&xreport;	// where the xml gets written; threadsafe
+    dfxml_generator	&xreport;	// where the xml gets written; threadsafe
     vector<string>	thread_status;	// for each thread, its status
     aftimer		waiting;	// time spend waiting
     int			mode;		// 0=running; 1 = waiting for workers to finish
 
     static u_int	numCPU();
 
-    threadpool(int numthreads,feature_recorder_set &fs_,xml &xreport);
+    threadpool(int numthreads,feature_recorder_set &fs_,dfxml_generator &xreport);
     virtual ~threadpool();
     void		schedule_work(sbuf_t *sbuf);
     bool		all_free();

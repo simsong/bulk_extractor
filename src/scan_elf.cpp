@@ -5,7 +5,8 @@
  * LGPL 2.1 license
  */
 
-#include "bulk_extractor.h"
+#include "config.h"
+#include "bulk_extractor_i.h"
 
 /* tunable constants */
 u_int sht_null_counter_max = 10;
@@ -817,7 +818,8 @@ void scan_elf (const class scanner_params          &sp,
 		const sbuf_t data(sp.sbuf + pos);
 		xml = scan_elf_verify(data);
 		if (xml != "") {
-		    f->write(data.pos0, data.md5(0, 4096).hexdigest().c_str(),xml);
+                    std::string hexhash = be_hash(sbuf_t(data,0,4096));
+		    f->write(data.pos0, hexhash,xml);
 		}
 	    }
 	}    

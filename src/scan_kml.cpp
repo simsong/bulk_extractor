@@ -8,7 +8,8 @@
  * 5. Carve it! Move on
  */
 
-#include "bulk_extractor.h"
+#include "config.h"
+#include "bulk_extractor_i.h"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -57,7 +58,7 @@ void scan_kml(const class scanner_params &sp,const recursion_control_block &rcb)
 	    std::string possible_kml = sbuf.substr(xml_loc,kml_len);
 	    if(utf8::find_invalid(possible_kml.begin(),possible_kml.end()) == possible_kml.end()){
 		/* No invalid UTF-8 */
-		kml_recorder->carve(sbuf,xml_loc,kml_len);
+		kml_recorder->carve(sbuf,xml_loc,kml_len,be_hash_name,be_hash);
 		i = ekml_loc + 6;	// skip past end of </kml>
 	    }
 	    else {

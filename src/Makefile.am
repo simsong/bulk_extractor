@@ -4,39 +4,40 @@ CLEANFILES     = scan_accts.cpp scan_email.cpp scan_gps.cpp scan_base16.cpp *.d
 
 AM_CPPFLAGS = -I${top_srcdir}/src/be13_api
 
-# scan_lift/type_identifier.tex
+DFXML = \
+      dfxml/src/dfxml_generator.cpp \
+      dfxml/src/dfxml_generator.h \
+      dfxml/src/dfxml_reader.cpp \
+      dfxml/src/dfxml_reader.h \
+      dfxml/src/hash_t.h \
+      dfxml/src/dfxml_reader.h 
 
-#extradir = .
-
-BE13_API = \
+BE13_API= \
+        be13_api/beregex.cpp \
+        be13_api/beregex.h \
         be13_api/bulk_extractor_i.h \
         be13_api/cppmutex.h \
         be13_api/feature_recorder.cpp \
         be13_api/feature_recorder.h \
         be13_api/feature_recorder_set.cpp \
         be13_api/feature_recorder_set.h \
-        be13_api/md5.c \
-        be13_api/md5.h \
-        be13_api/pcap_fake.h \
+        be13_api/net_ethernet.h \
         be13_api/pcap_fake.cpp \
-        be13_api/plugin.cpp\
-	be13_api/beregex.cpp \
-	be13_api/beregex.h \
+        be13_api/pcap_fake.h \
+        be13_api/plugin.cpp \
         be13_api/sbuf.cpp \
         be13_api/sbuf.h \
         be13_api/sbuf_private.h \
-        be13_api/sbuf_stream.h \
         be13_api/sbuf_stream.cpp \
+        be13_api/sbuf_stream.h \
+        be13_api/unicode_escape.cpp \
+        be13_api/unicode_escape.h \
         be13_api/utf8.h \
         be13_api/utf8/checked.h \
         be13_api/utf8/core.h \
         be13_api/utf8/unchecked.h \
-        be13_api/xml.cpp \
-        be13_api/xml.h \
-	be13_api/unicode_escape.cpp\
-	be13_api/unicode_escape.h \
-	be13_api/utils.h \
-	be13_api/utils.cpp
+        be13_api/utils.cpp \
+        be13_api/utils.h
 
 TSK3INCS = \
 	tsk3/auto/tsk_auto.h\
@@ -129,7 +130,7 @@ bulk_extractor_SOURCES = \
 	threadpool.h \
 	word_and_context_list.cpp \
 	word_and_context_list.h \
-	$(bulk_scanners) $(TSK3INCS)  $(BE13_API) $(SCAN_LIFT)
+	$(bulk_scanners) $(TSK3INCS)  $(BE13_API) $(DFXML) $(SCAN_LIFT)
 
 stand_SOURCES = \
 	dig.cpp \

@@ -16,7 +16,7 @@ EXTRA_DIST = bootstrap.sh \
 	ROADMAP.txt \
 	m4/ax_pthread.m4
 
-ACLOCAL_AMFLAGS="-I m4"
+ACLOCAL_AMFLAGS = -I m4
 
 RELEASE_USER = simsong@
 RELEASE_HOST = www.digitalcorpora.org

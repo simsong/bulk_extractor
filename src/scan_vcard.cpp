@@ -21,7 +21,8 @@
  * 3 - Throw it in a file (except the invalid stuff, of course)
  * 4 - If we didn't write a END:VCARD, add an END:VCARD  (clean it up)
  */
-#include "bulk_extractor.h"
+#include "config.h"
+#include "bulk_extractor_i.h"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -77,7 +78,7 @@ void scan_vcard(const class scanner_params &sp,const recursion_control_block &rc
 		/* We should probably validate the UTF-8. */
 		if(valid){
 		    /* got a valid card; I can carve it! */
-		    vcard_recorder->carve(sbuf,begin,(end-begin)+end_len);
+		    vcard_recorder->carve(sbuf,begin,(end-begin)+end_len,be_hash_name,be_hash);
 		    i = end+end_len;		// skip to the end of the vcard
 		    continue;			// loop again!
 		}

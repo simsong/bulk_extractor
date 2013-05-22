@@ -1,4 +1,5 @@
-#include "bulk_extractor.h"
+#include "config.h"
+#include "bulk_extractor_i.h"
 #include "base64_forensic.h"
 
 static bool base64array[256];

@@ -7,7 +7,10 @@
  * 2011-dec-12 bda - Ported from file scan_exif.cpp.
  */
 
-#include "bulk_extractor.h"
+#include "config.h"
+#include "bulk_extractor_i.h"
+
+#include "dfxml/src/dfxml_generator.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -17,8 +20,8 @@
 #include <cassert>
 #include <algorithm>
 
-#include "xml.h"
-#include "md5.h"
+//#include "xml.h"
+//#include "md5.h"
 #include "exif_reader.h"
 #include "unicode_escape.h"
 
@@ -202,7 +205,7 @@ static void record_exif_data(feature_recorder *exif_recorder, const pos0_t &pos0
     for (entry_list_t::const_iterator it = entries.begin(); it!=entries.end(); it++) {
 
         // prepare by escaping XML codes.
-        string prepared_value = xml::xmlescape((*it)->value);
+        string prepared_value = dfxml_generator::xmlescape((*it)->value);
 
         // do not report entries that have empty values
         if (prepared_value.length() == 0) {
@@ -443,7 +446,7 @@ void scan_exif(const class scanner_params &sp,const recursion_control_block &rcb
 		    cout << "scan_exif Start processing validated Exif ffd8ff at start " << start << "\n";
 #endif
 		    // get md5 for this exif
-		    string md5_hex = sbuf.md5(start,4096).hexdigest();
+		    string md5_hex = be_hash(sbuf_t(sbuf,start,4096));
 
 		    // get entries for this exif
                     try {
@@ -495,7 +498,7 @@ void scan_exif(const class scanner_params &sp,const recursion_control_block &rcb
 #endif
 
 		    // get md5 for this exif
-		    string md5_hex = sbuf.md5(start,4096).hexdigest();
+		    string md5_hex = be_hash(sbuf_t(sbuf,start,4096));
 
 		    // get entries for this exif
                     try {

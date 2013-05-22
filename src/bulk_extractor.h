@@ -94,7 +94,7 @@
 # include <sys/cdefs.h>
 #endif
 
-#include <pthread.h>
+#include <pthread.h>                    // must have pthread
 
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
@@ -151,22 +151,6 @@
 # define ATTR_FORMAT(spec) /* empty */
 #endif
 
-/* bulk_extractor.cpp */
-extern bool opt_work_start_work_end;	// note when each scanner starts and ends; needed for restarting
-
-extern int opt_dedup_bloom_bits;
-extern int word_min;
-extern int word_max;
-extern int min_uncompr_size;	// don't bother with objects smaller than this
-extern int max_uncompr_size;
-
-extern int64_t opt_offset_start;	// where to start analysis
-extern int64_t opt_offset_end;		// where to end analysis
-extern size_t opt_pagesize;
-extern size_t opt_margin;
-
-extern uint32_t opt_last_year;		// assume year is less than this
-
 #ifdef	__cplusplus
 #include <algorithm>
 #include <cstdlib>
@@ -183,11 +167,11 @@ using namespace std;
 
 #include "be13_api/bulk_extractor_i.h"
 
+/* bulk_extractor.cpp */
+
 /****************************************************************
  *** SCANNER PROCESSORS - operate on the scanners
  ****************************************************************/
-extern process_t process_path_printer;			/* process for path printing  */
-extern int debug;
 
 /* support.cpp */
 

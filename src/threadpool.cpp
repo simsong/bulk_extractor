@@ -1,9 +1,7 @@
 #include "bulk_extractor.h"
-#include "aftimer.h"
+#include "threadpool.h"
 #include "image_process.h"
 #include "aftimer.h"
-#include "xml.h"
-#include "threadpool.h"
 
 #include <dirent.h>
 #include <ctype.h>
@@ -83,7 +81,7 @@ void threadpool::win32_init()
  * Each thread has its own feature_recorder_set.
  *
  */
-threadpool::threadpool(int numthreads,feature_recorder_set &fs_,xml &xreport_):
+threadpool::threadpool(int numthreads,feature_recorder_set &fs_,dfxml_generator &xreport_):
     workers(),M(),TOMAIN(),TOWORKER(),freethreads(numthreads),work_queue(),
     fs(fs_),xreport(xreport_),thread_status(),waiting(),mode()
 {
