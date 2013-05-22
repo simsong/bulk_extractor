@@ -808,7 +808,6 @@ public:;
  *** Usage
  ****************************************************************/
 
-static void usage(const char *progname) __attribute__ ((__noreturn__));
 static void usage(const char *progname)
 {
     std::cout << "bulk_extractor version " PACKAGE_VERSION " " << svn_revision << "\n";
@@ -872,9 +871,7 @@ static void usage(const char *progname)
     std::cout << "   -P <dir>     - Specifies a plugin directory\n";
     std::cout << "   -E scanner   - turn off all scanners except scanner\n";
     std::cout << "   -S name=value - sets a bulk extractor option name to be value\n";
-    be13::plugin::info_scanners(false,scanners_builtin,'e','x');
     std::cout << "\n";
-    exit(0);
 }
 
 
@@ -1016,10 +1013,7 @@ int main(int argc,char **argv)
     threadpool::win32_init();
 #endif
     /* look for usage first */
-    if(argc==1 || (strcmp(argv[1],"-h")==0)){
-	usage(progname);
-	exit(1);
-    }
+    if(argc==1) opt_h=1;
 
     /* Process options */
     int ch;
@@ -1137,8 +1131,9 @@ int main(int argc,char **argv)
     be13::plugin::scanners_process_commands();
 
     /* Print usage if necessary */
-    if(opt_H){ be13::plugin::info_scanners(true,scanners_builtin,'e','x'); exit(0);}
-    if(opt_h){ usage(progname);}
+    puts("BAZ");
+    if(opt_H){ be13::plugin::info_scanners(true,true,scanners_builtin,'e','x'); exit(0);}
+    if(opt_h){ usage(progname);be13::plugin::info_scanners(false,true,scanners_builtin,'e','x'); exit(0);}
 
     /* Give an error if a find list was specified
      * but no scanner that uses the find list is enabled.
