@@ -1,18 +1,24 @@
 #include "rar.hpp"
 
 
-CommandData::CommandData()
+CommandData::CommandData() :
+    FileLists(), NoMoreSwitches(), ListMode(), BareOutput(), Command(),
+    CommandW(), ArcName(), ArcNameW(), FileArgs(), ExclArgs(), InclArgs(),
+    ArcNames(), StoreArgs()
 {
   FileArgs=ExclArgs=InclArgs=StoreArgs=ArcNames=NULL;
   Init();
 }
 
-CommandData::CommandData(const CommandData &copy)
+CommandData::CommandData(const CommandData &copy) :
+    FileLists(), NoMoreSwitches(), ListMode(), BareOutput(), Command(),
+    CommandW(), ArcName(), ArcNameW(), FileArgs(), ExclArgs(), InclArgs(),
+    ArcNames(), StoreArgs()
 {
     *this = copy;
 }
 
-const CommandData& operator=(const CommandData &src)
+const CommandData& CommandData::operator=(const CommandData &src)
 {
     RAROptions::operator=(src);
 
@@ -20,15 +26,17 @@ const CommandData& operator=(const CommandData &src)
     NoMoreSwitches = src.NoMoreSwitches;
     ListMode = src.ListMode;
     BareOutput = src.BareOutput;
-    Command = src.Command;
-    CommandW = src.CommandW;
-    ArcName = src.ArcName;
-    ArcNameW = src.ArcNameW;
+    memcpy(Command, src.Command, sizeof(Command));
+    memcpy(CommandW, src.CommandW, sizeof(CommandW));
+    memcpy(ArcName, src.ArcName, sizeof(ArcName));
+    memcpy(ArcNameW, src.ArcNameW, sizeof(ArcNameW));
     FileArgs = src.FileArgs;
     ExclArgs = src.ExclArgs;
     InclArgs = src.InclArgs;
     ArcNames = src.ArcNames;
     StoreArgs = src.StoreArgs;
+
+    return *this;
 }
 
 
@@ -207,7 +215,7 @@ void CommandData::ParseArg(char *Arg,wchar *ArgW)
 
         char CmdChar=etoupper(*Command);
         bool Add=strchr("AFUM",CmdChar)!=NULL;
-        bool Extract=CmdChar=='X' || CmdChar=='E';
+        //bool Extract=CmdChar=='X' || CmdChar=='E';
         if (EndSeparator && !Add)
         {
           strncpyz(ExtrPath,Arg,ASIZE(ExtrPath));
@@ -677,7 +685,7 @@ void CommandData::ProcessSwitch(const char *Switch,const wchar *SwitchW)
           {
             const char *Str=Switch+2;
             if (*Str=='-')
-              for (int I=0;I<sizeof(FilterModes)/sizeof(FilterModes[0]);I++)
+              for (unsigned I=0;I<sizeof(FilterModes)/sizeof(FilterModes[0]);I++)
                 FilterModes[I].State=FILTER_DISABLE;
             else
               while (*Str)
@@ -860,23 +868,31 @@ void CommandData::ProcessSwitch(const char *Switch,const wchar *SwitchW)
                   break;
               };
               if (!AlreadyBad)
-                if (Switch[3]==0)
-                  CommentCharset=FilelistCharset=rch;
-                else
-                  for (int I=3;Switch[I]!=0 && !AlreadyBad;I++)
-                    switch(etoupper(Switch[I]))
-                    {
-                      case 'C':
-                        CommentCharset=rch;
-                        break;
-                      case 'L':
-                        FilelistCharset=rch;
-                        break;
-                      default:
-                        BadSwitch(Switch);
-                        AlreadyBad=true;
-                        break;
-                    }
+              {
+                  if (Switch[3]==0)
+                  {
+                      CommentCharset=FilelistCharset=rch;
+                  }
+                  else
+                  {
+                      for (int I=3;Switch[I]!=0 && !AlreadyBad;I++)
+                      {
+                          switch(etoupper(Switch[I]))
+                          {
+                              case 'C':
+                                  CommentCharset=rch;
+                                  break;
+                              case 'L':
+                                  FilelistCharset=rch;
+                                  break;
+                              default:
+                                  BadSwitch(Switch);
+                                  AlreadyBad=true;
+                                  break;
+                          }
+                      }
+                  }
+              }
             }
             break;
 
@@ -974,7 +990,7 @@ void CommandData::OutHelp()
 #endif
   };
 
-  for (int I=0;I<sizeof(Help)/sizeof(Help[0]);I++)
+  for (unsigned I=0;I<sizeof(Help)/sizeof(Help[0]);I++)
   {
 #ifndef SFX_MODULE
 #ifdef DISABLEAUTODETECT
@@ -987,7 +1003,7 @@ void CommandData::OutHelp()
       MCHelpSwEP2,MCHelpSwOC,MCHelpSwDR,MCHelpSwRI
     };
     bool Found=false;
-    for (int J=0;J<sizeof(Win32Only)/sizeof(Win32Only[0]);J++)
+    for (unsigned J=0;J<sizeof(Win32Only)/sizeof(Win32Only[0]);J++)
       if (CmpMSGID(Help[I],Win32Only[J]))
       {
         Found=true;
@@ -1185,7 +1201,7 @@ int CommandData::IsProcessFile(FileHeader &NewLhd,bool *ExactMatch,int MatchType
 #ifndef SFX_MODULE
   if (TimeCheck(NewLhd.mtime))
     return(0);
-  if ((NewLhd.FileAttr & ExclFileAttr)!=0 || InclAttrSet && (NewLhd.FileAttr & InclFileAttr)==0)
+  if ((NewLhd.FileAttr & ExclFileAttr)!=0 || (InclAttrSet && (NewLhd.FileAttr & InclFileAttr)==0))
     return(0);
   if (!Dir && SizeCheck(NewLhd.FullUnpSize))
     return(0);
@@ -1196,7 +1212,7 @@ int CommandData::IsProcessFile(FileHeader &NewLhd,bool *ExactMatch,int MatchType
   for (int StringCount=1;FileArgs->GetString(&ArgName,&ArgNameW);StringCount++)
   {
 #ifndef SFX_MODULE
-    bool Unicode=(NewLhd.Flags & LHD_UNICODE) || ArgNameW!=NULL && *ArgNameW!=0;
+    bool Unicode=(NewLhd.Flags & LHD_UNICODE) || (ArgNameW!=NULL && *ArgNameW!=0);
     if (Unicode)
     {
       wchar NameW[NM],ArgW[NM],*NamePtr=NewLhd.FileNameW;
@@ -1240,7 +1256,7 @@ void CommandData::ProcessCommand()
 #ifndef SFX_MODULE
 
   const char *SingleCharCommands="FUADPXETK";
-  if (Command[0]!=0 && Command[1]!=0 && strchr(SingleCharCommands,*Command)!=NULL || *ArcName==0)
+  if ((Command[0]!=0 && Command[1]!=0 && strchr(SingleCharCommands,*Command)!=NULL) || *ArcName==0)
     OutHelp();
 
 #ifdef _UNIX
@@ -1343,16 +1359,14 @@ uint CommandData::GetExclAttr(const char *Str)
 
 
 
-#ifndef SFX_MODULE
 bool CommandData::CheckWinSize()
 {
-  static __thread int ValidSize[]={
+  static __thread unsigned ValidSize[]={
     0x10000,0x20000,0x40000,0x80000,0x100000,0x200000,0x400000
   };
-  for (int I=0;I<sizeof(ValidSize)/sizeof(ValidSize[0]);I++)
+  for (unsigned I=0;I<sizeof(ValidSize)/sizeof(ValidSize[0]);I++)
     if (WinSize==ValidSize[I])
       return(true);
   WinSize=0x400000;
   return(false);
 }
-#endif

@@ -1,6 +1,12 @@
 #include "rar.hpp"
 
-CmdExtract::CmdExtract()
+using namespace std;
+
+CmdExtract::CmdExtract() :
+    StartTime(), DataIO(), Unp(), TotalFileCount(), FileCount(), MatchedArgs(),
+    FirstFile(), AllMatchesExact(), ReconstructDone(),
+    AnySolidDataUnpackedWell(), PasswordAll(), PrevExtracted(),
+    PasswordCancelled(), SignatureFound()
 {
   TotalFileCount=0;
   *Password=0;
@@ -8,7 +14,11 @@ CmdExtract::CmdExtract()
   Unp->Init(NULL);
 }
 
-CmdExtract::CmdExtract(const CmdExtract &copy)
+CmdExtract::CmdExtract(const CmdExtract &copy) :
+    StartTime(), DataIO(), Unp(), TotalFileCount(), FileCount(), MatchedArgs(),
+    FirstFile(), AllMatchesExact(), ReconstructDone(),
+    AnySolidDataUnpackedWell(), PasswordAll(), PrevExtracted(),
+    PasswordCancelled(), SignatureFound()
 {
     *this = copy;
 }
@@ -25,15 +35,18 @@ const CmdExtract& CmdExtract::operator=(const CmdExtract &src)
     AllMatchesExact = src.AllMatchesExact;
     ReconstructDone = src.ReconstructDone;
     AnySolidDataUnpackedWell = src.AnySolidDataUnpackedWell;
-    ArcName = src.ArcName;
-    ArcNameW = src.ArcNameW;
-    Password = src.Password;
+    memcpy(ArcName, src.ArcName, sizeof(ArcName));
+    memcpy(ArcNameW, src.ArcNameW, sizeof(ArcNameW));
+    memcpy(Password, src.Password, sizeof(Password));
     PasswordAll = src.PasswordAll;
     PrevExtracted = src.PrevExtracted;
-    DestFileName = src.DestFileName;
-    DestFileNameW = src.DestFileNameW;
+    PasswordAll = src.PasswordAll;
+    memcpy(DestFileName, src.DestFileName, sizeof(DestFileName));
+    memcpy(DestFileNameW, src.DestFileNameW, sizeof(DestFileNameW));
     PasswordCancelled = src.PasswordCancelled;
     SignatureFound = src.SignatureFound;
+
+    return *this;
 }
 
 CmdExtract::~CmdExtract()
@@ -74,29 +87,31 @@ void CmdExtract::DoExtract(CommandData *Cmd, byte* ptrlocation, int64 ptrlength,
   }
 #ifndef GUI
   else
-    if (!Cmd->DisableDone)
-      if (*Cmd->Command=='I')
-	  {
-		xml.append("\n<result>");
-		  xml.append(MDone);
-		  xml.append("<\\result>");
-	  }
-      else
-	  {
-        if (ErrHandler.GetErrorCount()==0)
-		{
-			xml.append("\n<result>");
-		  xml.append(MExtrAllOk);
-		  xml.append("<\\result>\n");
-		}
-        else
-		{
-		  xml.append("\n<result>");
-		  xml.append(MExtrTotalErr);
-		  //xml.append(ErrHandler.GetErrorCount());
-		  xml.append("<\\result>");
-		}
-	  }
+      if (!Cmd->DisableDone)
+      {
+          if (*Cmd->Command=='I')
+          {
+              xml.append("\n<result>");
+              xml.append(MDone);
+              xml.append("<\\result>");
+          }
+          else
+          {
+              if (ErrHandler.GetErrorCount()==0)
+              {
+                  xml.append("\n<result>");
+                  xml.append(MExtrAllOk);
+                  xml.append("<\\result>\n");
+              }
+              else
+              {
+                  xml.append("\n<result>");
+                  xml.append(MExtrTotalErr);
+                  //xml.append(ErrHandler.GetErrorCount());
+                  xml.append("<\\result>");
+              }
+          }
+      }
 #endif
 }
 
@@ -131,7 +146,7 @@ EXTRACT_ARC_CODE CmdExtract::ExtractArchive(CommandData *Cmd, byte *ptrlocation,
 {
   Archive Arc(Cmd);
   Arc.InitArc(ptrlocation, ptrlength); //initialize the pointer location
-  void *myptr = Arc.GetPtrLocation(); //verify the pointer location when debugging
+  //void *myptr = Arc.GetPtrLocation(); //verify the pointer location when debugging
 
   if (!Arc.WOpen(ArcName,ArcNameW))
   {
@@ -168,9 +183,7 @@ EXTRACT_ARC_CODE CmdExtract::ExtractArchive(CommandData *Cmd, byte *ptrlocation,
   }
 #endif
 
-#endif
   int64 VolumeSetSize=0; // Total size of volumes after the current volume.
-#if 0
 
   if (Arc.Volume)
   {
@@ -265,12 +278,16 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,size_t HeaderS
 {
   char Command=*Cmd->Command;
   if (HeaderSize==0)
-    if (DataIO.UnpVolume)
-    {
-      return(false);
-    }
-    else
-      return(false);
+  {
+      if (DataIO.UnpVolume)
+      {
+          return(false);
+      }
+      else
+      {
+          return(false);
+      }
+  }
   int HeadType=Arc.GetHeaderType();
   if (HeadType!=FILE_HEAD)
   {
@@ -292,20 +309,26 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,size_t HeaderS
 #endif
     }
     if (HeadType==ENDARC_HEAD)
-      if (Arc.EndArcHead.Flags & EARC_NEXT_VOLUME)
-      {
-        Arc.Seek(Arc.CurBlockPos,SEEK_SET);
-        return(true);
-      }
-      else
-        return(false);
+    {
+        if (Arc.EndArcHead.Flags & EARC_NEXT_VOLUME)
+        {
+            Arc.Seek(Arc.CurBlockPos,SEEK_SET);
+            return(true);
+        }
+        else
+        {
+            return(false);
+        }
+    }
     Arc.SeekToNext();
     return(true);
   }
   PrevExtracted=false;
 
-  if (SignatureFound || !Cmd->Recurse && MatchedArgs>=Cmd->FileArgs->ItemsCount() && AllMatchesExact)
-    return(false);
+  if (SignatureFound || (!Cmd->Recurse && MatchedArgs>=Cmd->FileArgs->ItemsCount() && AllMatchesExact))
+  {
+      return(false);
+  }
 
   char ArcFileName[NM];
   IntToExt(Arc.NewLhd.FileName,Arc.NewLhd.FileName);
@@ -377,7 +400,7 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,size_t HeaderS
       if (Cmd->VersionControl==0)
         ExactMatch=false;
       int Version=ParseVersionFileName(ArcFileName,ArcFileNameW,false);
-      if (Cmd->VersionControl-1==Version)
+      if (Cmd->VersionControl-1==(unsigned) Version)
         ParseVersionFileName(ArcFileName,ArcFileNameW,true);
       else
         ExactMatch=false;
@@ -447,7 +470,7 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,size_t HeaderS
         return 0;
 #if !defined(GUI) && !defined(SILENT)
       else
-        if (!PasswordAll && (!Arc.Solid || Arc.NewLhd.UnpVer>=20 && (Arc.NewLhd.Flags & LHD_SOLID)==0))
+        if (!PasswordAll && (!Arc.Solid || (Arc.NewLhd.UnpVer>=20 && (Arc.NewLhd.Flags & LHD_SOLID)==0)))
         {
         }
 #endif
@@ -622,22 +645,28 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,size_t HeaderS
     File CurFile;
 
     if (!IsLink(Arc.NewLhd.FileAttr))
-      if (Arc.IsArcDir())
-      {
-          return(true);
-      }
-      else
-      {
-        if (Cmd->Test && ExtrFile)
-          TestMode=true;
-#if !defined(GUI) && !defined(SFX_MODULE)
-        if (Command=='P' && ExtrFile)
-          CurFile.SetHandleType(FILE_HANDLESTD);
-#endif
-        if ((Command=='E' || Command=='X') && ExtrFile && !Cmd->Test)
+    {
+        if (Arc.IsArcDir())
         {
+            return(true);
         }
-      }
+        else
+        {
+            if (Cmd->Test && ExtrFile)
+            {
+                TestMode=true;
+            }
+#if !defined(GUI) && !defined(SFX_MODULE)
+            if (Command=='P' && ExtrFile)
+            {
+                CurFile.SetHandleType(FILE_HANDLESTD);
+            }
+#endif
+            if ((Command=='E' || Command=='X') && ExtrFile && !Cmd->Test)
+            {
+            }
+        }
+    }
 
     if (!ExtrFile && Arc.Solid)
     {
@@ -755,27 +784,37 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,size_t HeaderS
 
       bool LinkCreateMode=!Cmd->Test && !SkipSolid;
       if (false)
-        PrevExtracted=LinkCreateMode;
+      {
+          PrevExtracted=LinkCreateMode;
+      }
       else
-        if ((Arc.NewLhd.Flags & LHD_SPLIT_BEFORE)==0)
-          if (Arc.NewLhd.Method==0x30)
-            UnstoreFile(DataIO,Arc.NewLhd.FullUnpSize);
-          else
+      {
+          if ((Arc.NewLhd.Flags & LHD_SPLIT_BEFORE)==0)
           {
-            Unp->SetDestSize(Arc.NewLhd.FullUnpSize);
-#ifndef SFX_MODULE
-            if (Arc.NewLhd.UnpVer<=15)
-              Unp->DoUnpack(15,FileCount>1 && Arc.Solid);
-            else
-#endif
-              Unp->DoUnpack(Arc.NewLhd.UnpVer,(Arc.NewLhd.Flags & LHD_SOLID)!=0); //unpacking of the file
+              if (Arc.NewLhd.Method==0x30)
+              {
+                  UnstoreFile(DataIO,Arc.NewLhd.FullUnpSize);
+              }
+              else
+              {
+                  Unp->SetDestSize(Arc.NewLhd.FullUnpSize);
+                  if (Arc.NewLhd.UnpVer<=15)
+                  {
+                      Unp->DoUnpack(15,FileCount>1 && Arc.Solid);
+                  }
+                  else
+                  {
+                      Unp->DoUnpack(Arc.NewLhd.UnpVer,(Arc.NewLhd.Flags & LHD_SOLID)!=0); //unpacking of the file
+                  }
+              }
           }
+      }
 
 //      if (Arc.IsOpened())
         Arc.SeekToNext();
 
-      bool ValidCRC=Arc.OldFormat && UINT32(DataIO.UnpFileCRC)==UINT32(Arc.NewLhd.FileCRC) ||
-                   !Arc.OldFormat && UINT32(DataIO.UnpFileCRC)==UINT32(Arc.NewLhd.FileCRC^0xffffffff);
+      bool ValidCRC=(Arc.OldFormat && UINT32(DataIO.UnpFileCRC)==UINT32(Arc.NewLhd.FileCRC)) ||
+                   (!Arc.OldFormat && UINT32(DataIO.UnpFileCRC)==UINT32(Arc.NewLhd.FileCRC^0xffffffff));
 
       // We set AnySolidDataUnpackedWell to true if we found at least one
       // valid non-zero solid file in preceding solid stream. If it is true
@@ -849,11 +888,16 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,size_t HeaderS
   if (DataIO.NextVolumeMissing/* || !Arc.IsOpened()*/)
     return(false);
   if (!ExtrFile)
-    if (!Arc.Solid)
-      Arc.SeekToNext();
-    else
-      if (!SkipSolid)
-        return(false);
+  {
+      if (!Arc.Solid)
+      {
+          Arc.SeekToNext();
+      }
+      else if (!SkipSolid)
+      {
+          return(false);
+      }
+  }
   return(true);
 }
 

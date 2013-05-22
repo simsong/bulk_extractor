@@ -1,9 +1,9 @@
 #include "rar.hpp"
 
+//static __thread bool UserBreak;
 
-static __thread bool UserBreak;
-
-ErrorHandler::ErrorHandler()
+ErrorHandler::ErrorHandler() :
+    ExitCode(), ErrCount(), EnableBreak(), Silent(), DoShutdown()
 {
   Clean();
 }
@@ -19,45 +19,28 @@ void ErrorHandler::Clean()
 }
 
 
-void ErrorHandler::MemoryError()
+__attribute__ ((noreturn)) void ErrorHandler::MemoryError()
 {
   MemoryErrorMsg();
   Throw(MEMORY_ERROR);
+  // hack to quiet GCC about noreturn.  it was unhappy both with and without
+  // noreturn before
+  exit(1);
 }
 
 
 void ErrorHandler::OpenError(const char *FileName,const wchar *FileNameW)
 {
-#ifndef SILENT
-  OpenErrorMsg(FileName);
-  Throw(OPEN_ERROR);
-#endif
 }
 
 
 void ErrorHandler::CloseError(const char *FileName,const wchar *FileNameW)
 {
-#ifndef SILENT
-  if (!UserBreak)
-  {
-    ErrMsg(NULL,St(MErrFClose),FileName);
-    SysErrMsg();
-  }
-#endif
-#if !defined(SILENT) || defined(RARDLL)
-  Throw(FATAL_ERROR);
-#endif
 }
 
 
 void ErrorHandler::ReadError(const char *FileName,const wchar *FileNameW)
 {
-#ifndef SILENT
-  ReadErrorMsg(NULL,NULL,FileName,FileNameW);
-#endif
-#if !defined(SILENT) || defined(RARDLL)
-  Throw(FATAL_ERROR);
-#endif
 }
 
 
@@ -69,25 +52,12 @@ bool ErrorHandler::AskRepeatRead(const char *FileName,const wchar *FileNameW)
 
 void ErrorHandler::WriteError(const char *ArcName,const wchar *ArcNameW,const char *FileName,const wchar *FileNameW)
 {
-#ifndef SILENT
-  WriteErrorMsg(ArcName,ArcNameW,FileName,FileNameW);
-#endif
-#if !defined(SILENT) || defined(RARDLL)
-  Throw(WRITE_ERROR);
-#endif
 }
 
 
 #ifdef _WIN_ALL
 void ErrorHandler::WriteErrorFAT(const char *FileName,const wchar *FileNameW)
 {
-#if !defined(SILENT) && !defined(SFX_MODULE)
-  SysErrMsg();
-  ErrMsg(NULL,St(MNTFSRequired),FileName);
-#endif
-#if !defined(SILENT) && !defined(SFX_MODULE) || defined(RARDLL)
-  Throw(WRITE_ERROR);
-#endif
 }
 #endif
 
@@ -100,16 +70,6 @@ bool ErrorHandler::AskRepeatWrite(const char *FileName,const wchar *FileNameW,bo
 
 void ErrorHandler::SeekError(const char *FileName,const wchar *FileNameW)
 {
-#ifndef SILENT
-  if (!UserBreak)
-  {
-    ErrMsg(NULL,St(MErrSeek),FileName);
-    SysErrMsg();
-  }
-#endif
-#if !defined(SILENT) || defined(RARDLL)
-  Throw(FATAL_ERROR);
-#endif
 }
 
 
@@ -120,9 +80,6 @@ void ErrorHandler::GeneralErrMsg(const char *Msg)
 
 void ErrorHandler::MemoryErrorMsg()
 {
-#ifndef SILENT
-  ErrMsg(NULL,St(MErrOutMem));
-#endif
 }
 
 
@@ -186,9 +143,9 @@ void ErrorHandler::WriteErrorMsg(const char *ArcName,const wchar *ArcNameW,const
 }
 
 
-void ErrorHandler::Exit(int ExitCode)
+void ErrorHandler::Exit(int ExitCode_)
 {
-  Throw(ExitCode);
+  Throw(ExitCode_);
 }
 
 
@@ -284,13 +241,6 @@ void ErrorHandler::SysErrMsg()
     }
   }
   LocalFree( lpMsgBuf );
-#endif
-
-#if defined(_UNIX) || defined(_EMX)
-  if (errno!=0)
-  {
-    char *err=strerror(errno);
-  }
 #endif
 
 #endif

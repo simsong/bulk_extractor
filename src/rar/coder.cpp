@@ -1,4 +1,4 @@
-#include "coder.hpp"
+#include "rar.hpp"
 
 inline unsigned int RangeCoder::GetChar()
 {
@@ -6,9 +6,9 @@ inline unsigned int RangeCoder::GetChar()
 }
 
 
-void RangeCoder::InitDecoder(Unpack *UnpackRead)
+void RangeCoder::InitDecoder(Unpack *UnpackRead_)
 {
-  RangeCoder::UnpackRead=UnpackRead;
+  RangeCoder::UnpackRead=UnpackRead_;
 
   low=code=0;
   range=uint(-1);

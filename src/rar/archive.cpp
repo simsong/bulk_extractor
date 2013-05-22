@@ -190,19 +190,18 @@ bool Archive::IsSignature(byte *D)
 {
   bool Valid=false;
   if (D[0]==0x52)
-#ifndef SFX_MODULE
-    if (D[1]==0x45 && D[2]==0x7e && D[3]==0x5e)
-    {
-      OldFormat=true;
-      Valid=true;
-    }
-    else
-#endif
-      if (D[1]==0x61 && D[2]==0x72 && D[3]==0x21 && D[4]==0x1a && D[5]==0x07 && D[6]==0x00)
+  {
+      if (D[1]==0x45 && D[2]==0x7e && D[3]==0x5e)
       {
-        OldFormat=false;
-        Valid=true;
+          OldFormat=true;
+          Valid=true;
       }
+      else if (D[1]==0x61 && D[2]==0x72 && D[3]==0x21 && D[4]==0x1a && D[5]==0x07 && D[6]==0x00)
+      {
+          OldFormat=false;
+          Valid=true;
+      }
+  }
   return(Valid);
 }
 
@@ -212,20 +211,20 @@ archive to read from the <code>File</code> class.
 @param ptrlocation - a location in memory where the RAR file begins
 @param length - the length of the memory location that can be read
 */
-void Archive::InitArc (byte *ptrlocation, int64 length)
+void Archive::InitArc (byte *ptrlocation_, int64 length)
 {
 	//Need to set Mark header
-	byte * originalloc = ptrlocation;
+	byte * originalloc = ptrlocation_;
 
 	for( int i = 0; i < 7 && i < length; i++)
 	{
-		MarkHead.Mark[i] = *ptrlocation;
-		ptrlocation++;
+		MarkHead.Mark[i] = *ptrlocation_;
+		ptrlocation_++;
 	}
 
-	ptrlocation = originalloc; //reset the pointer location
+	ptrlocation_ = originalloc; //reset the pointer location
 
-	this->InitFile(ptrlocation, length);
+	this->InitFile(ptrlocation_, length);
 }
 
 /**
@@ -332,13 +331,13 @@ bool Archive::IsArchive(bool EnableBroken)
         if (SubHead.CmpName(SUBHEAD_TYPE_CMT))
           MainComment=true;
         if ((SubHead.Flags & LHD_SPLIT_BEFORE) ||
-            Volume && (NewMhd.Flags & MHD_FIRSTVOLUME)==0)
+            (Volume && (NewMhd.Flags & MHD_FIRSTVOLUME)==0))
           NotFirstVolume=true;
       }
       else
       {
         if (HeaderType==FILE_HEAD && ((NewLhd.Flags & LHD_SPLIT_BEFORE)!=0 ||
-            Volume && NewLhd.UnpVer>=29 && (NewMhd.Flags & MHD_FIRSTVOLUME)==0))
+            (Volume && NewLhd.UnpVer>=29 && (NewMhd.Flags & MHD_FIRSTVOLUME)==0)))
           NotFirstVolume=true;
         break;
       }

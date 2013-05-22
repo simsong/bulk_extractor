@@ -6,7 +6,10 @@ static __thread int RemoveCreatedActive=0;
 /**
 File constructor - After this is called, one <b>must</b> call the <code>InitFile(...)</code> function
 */
-File::File()
+File::File() :
+    ptrlocation(), initptrlocation(), ptrlength(), hFile(), LastWrite(),
+    HandleType(), SkipClose(), IgnoreReadErrors(), NewFile(), AllowDelete(),
+    AllowExceptions(), OpenShared(), ErrorType(), CloseCount()
 { //Constructor
   hFile=BAD_HANDLE;
   *FileName=0;
@@ -28,7 +31,10 @@ File::File()
 #endif
 }
 
-File::File(const File &copy)
+File::File(const File &copy) :
+    ptrlocation(), initptrlocation(), ptrlength(), hFile(), LastWrite(),
+    HandleType(), SkipClose(), IgnoreReadErrors(), NewFile(), AllowDelete(),
+    AllowExceptions(), OpenShared(), ErrorType(), CloseCount()
 {
     *this = copy;
 }
@@ -36,11 +42,17 @@ File::File(const File &copy)
 
 File::~File()
 {//Destructor class
-  if (hFile!=BAD_HANDLE && !SkipClose)
-    if (NewFile)
-      Delete();
-    else
-      Close();
+    if (hFile!=BAD_HANDLE && !SkipClose)
+    {
+        if (NewFile)
+        {
+            Delete();
+        }
+        else
+        {
+            Close();
+        }
+    }
 }
 
 /**
@@ -69,7 +81,7 @@ const File& File::operator=(const File &SrcFile)
   NewFile=SrcFile.NewFile;
   LastWrite=SrcFile.LastWrite;
   HandleType=SrcFile.HandleType;
-  SrcFile.SkipClose=true;
+  //SrcFile.SkipClose=true;
   initptrlocation = SrcFile.initptrlocation; //save the initial ptr location
   ptrlocation = SrcFile.ptrlocation; //save the ptr location
 
@@ -77,21 +89,21 @@ const File& File::operator=(const File &SrcFile)
 }
 
 
-bool File::Open(const char *Name,const wchar *NameW,bool OpenShared,bool Update)
+bool File::Open(const char *Name,const wchar *NameW,bool OpenShared_,bool Update)
 { //This function does nothing. It simply complies with the File class. 
   //This class should utilize the Init(void* ptr) function to open a file.
 	//hFile = hNewFile;
 	return true;
 /*  ErrorType=FILE_SUCCESS;
   FileHandle hNewFile;
-  if (BenFile::OpenShared)
-    OpenShared=true;
+  if (BenFile::OpenShared_)
+    OpenShared_=true;
 #ifdef _WIN_ALL
   uint Access=GENERIC_READ;
   if (Update)
     Access|=GENERIC_WRITE;
   uint ShareMode=FILE_SHARE_READ;
-  if (OpenShared)
+  if (OpenShared_)
     ShareMode|=FILE_SHARE_WRITE;
   uint Flags=NoSequentialRead ? 0:FILE_FLAG_SEQUENTIAL_SCAN;
   if (WinNT() && NameW!=NULL && *NameW!=0)
@@ -110,7 +122,7 @@ bool File::Open(const char *Name,const wchar *NameW,bool OpenShared,bool Update)
 #endif
 #endif
 #if defined(_EMX) && !defined(_DJGPP)
-  int sflags=OpenShared ? SH_DENYNO:SH_DENYWR;
+  int sflags=OpenShared_ ? SH_DENYNO:SH_DENYWR;
   int handle=sopen(Name,flags,sflags);
 #else
   int handle=open(Name,flags);
@@ -120,7 +132,7 @@ bool File::Open(const char *Name,const wchar *NameW,bool OpenShared,bool Update)
   extern "C" int flock(int, int);
 #endif
 
-  if (!OpenShared && Update && handle>=0 && flock(handle,LOCK_EX|LOCK_NB)==-1)
+  if (!OpenShared_ && Update && handle>=0 && flock(handle,LOCK_EX|LOCK_NB)==-1)
   {
     close(handle);
     return(false);
@@ -221,10 +233,10 @@ bool File::Create(const char *Name,const wchar *NameW,bool ShareRead)
 /**
 This is not called in bulk_extractor
 */
-void File::AddFileToList(FileHandle hFile)
+void File::AddFileToList(FileHandle hFile_)
 {
-  if (hFile!=BAD_HANDLE)
-    for (int I=0;I<sizeof(CreatedFiles)/sizeof(CreatedFiles[0]);I++)
+  if (hFile_!=BAD_HANDLE)
+    for (unsigned I=0;I<sizeof(CreatedFiles)/sizeof(CreatedFiles[0]);I++)
       if (CreatedFiles[I]==NULL)
       {
         CreatedFiles[I]=this;

@@ -1,7 +1,18 @@
 #ifndef _RAR_FILE_
 #define _RAR_FILE_
 
-#include "rar.hpp"
+//#include "rar.hpp"
+#include <iostream>
+#include <pthread.h>
+#include <stdlib.h>
+#include <sstream>
+#include "string.h"
+#include "rartypes.hpp"
+#include "timefn.hpp"
+#include "errhnd.hpp"
+#include "global.hpp"
+
+#define NM 1024
 
 #ifdef _WIN_ALL
 typedef HANDLE FileHandle;

@@ -1,7 +1,8 @@
 /****************************************************************************
  *  Contents: 'Carryless rangecoder' by Dmitry Subbotin                     *
  ****************************************************************************/
-#include "rar.hpp"
+#ifndef _CODER_HPP_
+#define _CODER_HPP_
 
 const uint TOP=1 << 24, BOT=1 << 15;
 
@@ -23,3 +24,4 @@ class RangeCoder
 
     Unpack *UnpackRead;
 };
+#endif

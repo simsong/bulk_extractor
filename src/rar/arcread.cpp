@@ -157,12 +157,12 @@ size_t Archive::ReadHeader()
         hd->FullPackSize=INT32TO64(hd->HighPackSize,hd->PackSize);
         hd->FullUnpSize=INT32TO64(hd->HighUnpSize,hd->UnpSize);
 
-        char FileName[NM*4];
-        size_t NameSize=Min(hd->NameSize,sizeof(FileName)-1);
-        Raw.Get((byte *)FileName,NameSize);
-        FileName[NameSize]=0;
+        char FileName_[NM*4];
+        size_t NameSize=Min(hd->NameSize,sizeof(FileName_)-1);
+        Raw.Get((byte *)FileName_,NameSize);
+        FileName_[NameSize]=0;
 
-        strncpyz(hd->FileName,FileName,ASIZE(hd->FileName));
+        strncpyz(hd->FileName,FileName_,ASIZE(hd->FileName));
 
         if (hd->HeadType==NEWSUB_HEAD)
         {
@@ -190,17 +190,17 @@ size_t Archive::ReadHeader()
             if (hd->Flags & LHD_UNICODE)
             {
               EncodeFileName NameCoder;
-              size_t Length=strlen(FileName);
+              size_t Length=strlen(FileName_);
               if (Length==hd->NameSize)
               {
-                UtfToWide(FileName,hd->FileNameW,sizeof(hd->FileNameW)/sizeof(hd->FileNameW[0])-1);
+                UtfToWide(FileName_,hd->FileNameW,sizeof(hd->FileNameW)/sizeof(hd->FileNameW[0])-1);
                 WideToChar(hd->FileNameW,hd->FileName,sizeof(hd->FileName)/sizeof(hd->FileName[0])-1);
                 ExtToInt(hd->FileName,hd->FileName);
               }
               else
               {
                 Length++;
-                NameCoder.Decode(FileName,(byte *)FileName+Length,
+                NameCoder.Decode(FileName_,(byte *)FileName_+Length,
                                  hd->NameSize-Length,hd->FileNameW,
                                  sizeof(hd->FileNameW)/sizeof(hd->FileNameW[0]));
               }
