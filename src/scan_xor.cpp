@@ -3,7 +3,8 @@
  * author:   Michael Shick <mfshick@nps.edu>
  * created:  2013-03-18
  */
-#include "bulk_extractor.h"
+#include "config.h"
+#include "bulk_extractor_i.h"
 
 using namespace std;
 

@@ -1,8 +1,8 @@
-#include "bulk_extractor.h"
-#include "xml.h"
+#include "config.h"
+#include "bulk_extractor_i.h"
+
 #include "utf8.h"
-#include "md5.h"
-#include "rar/rar.hpp"
+#include "dfxml/src/dfxml_generator.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -365,7 +365,7 @@ static string process_component(const unsigned char *buf, size_t buf_len, string
 
     found_feature_name = filename;
     // build XML output
-    filename = xml::xmlescape(filename);
+    filename = dfxml_generator::xmlescape(filename);
     stringstream ss;
     ss << "<rar_component>";
 
@@ -452,8 +452,8 @@ int scan_rar_name_len_max = 1024;
 int rar_show_all=1;
 uint32_t rar_max_depth_count = 0;
 const uint32_t rar_max_depth_count_bypass = 5;
-set<md5_t>rar_seen_set;
-pthread_mutex_t rar_seen_set_lock;
+std::set<std::string>rar_seen_set;
+cpp_mutex rar_seen_set_lock;
 #endif
 extern "C"
 void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
@@ -468,10 +468,6 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
 
         record_components = sp.info->config["rar_find_components"] != "NO";
         record_volumes = sp.info->config["rar_find_volumes"] != "NO";
-// leave out depth checks for now
-#if 0
-	pthread_mutex_init(&rar_seen_set_lock,NULL);
-#endif
 	return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN){

@@ -5,8 +5,8 @@
  *                 - Added support for getting GPS information from photo and adding it to gps.txt
  */
 
-#include "bulk_extractor.h"
-#include "xml.h"
+#include "config.h"
+#include "bulk_extractor_i.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -15,7 +15,7 @@
 #include <cassert>
 #include <algorithm>
 
-#include "md5.h"
+//#include "md5.h"
 
 #ifdef HAVE_EXIV2
 
@@ -151,7 +151,7 @@ void scan_exiv2(const class scanner_params &sp,const recursion_control_block &rc
 			/*
 			 * Create the MD5 of the first 4K to use as a unique identifier.
 			 */
-			string md5_hex = sbuf.md5(pos,4096).hexdigest();
+			string md5_hex = be_hash(sbuf_t(sbuf,pos,4096));
 
 			char xmlbuf[1024];
 			snprintf(xmlbuf,sizeof(xmlbuf),

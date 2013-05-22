@@ -28,7 +28,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "bulk_extractor.h"
+#include "config.h"
+#include "bulk_extractor_i.h"
 #include <stdlib.h>
 #include <stdint.h>
 
@@ -467,7 +468,8 @@ void scan_json(const class scanner_params &sp,const recursion_control_block &rcb
 			// Only write JSON objects with more than 2 commas
 			if(jc.comma_count > 2 ){
 			    sbuf_t json(sbuf,pos,i-pos+1);
-			    fr->write(sbuf.pos0+i,json.asString(),json.md5().hexdigest());
+                            std::string json_hash = be_hash(json);
+			    fr->write(sbuf.pos0+i,json.asString(),json_hash);;
 			}
 			pos = i;		// skip to the end
 			break;

@@ -4,8 +4,11 @@
  * used by the scan_accts.flex system.
  */
 
-#include "bulk_extractor.h"
+#include "config.h"
+#include "bulk_extractor_i.h"
 #include "scan_ccns2.h"
+
+
 
 /* credit2.cpp:
  * A filter to scan stdin to stdout, pass through only the lines
@@ -321,20 +324,6 @@ int  validate_phone(const sbuf_t &sbuf,size_t pos,size_t len)
     } else {
 	invalid_after = 1;
     }
-
-
-/*
- * in progress
-
-	if(sbuf[pos+3] == ' ' && sbuf[pos+7] == '.')
-	{
-		cout << "possible false positive:";
-		for(int j = 0; j < len; j++)
-			cout << sbuf[pos+j];
-		cout << endl;
-	}
-*/
-		
 
     return invalid_before!=0 && invalid_after!=0;
 }

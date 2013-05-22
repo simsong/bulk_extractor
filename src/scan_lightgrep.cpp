@@ -1,4 +1,5 @@
-#include "bulk_extractor.h"
+#include "config.h"
+#include "bulk_extractor_i.h"
 #include "beregex.h"
 #include "histogram.h"
 
@@ -62,7 +63,7 @@ namespace { // local namespace hides these from other translation units
     sp.info->author          = "Jon Stewart";
     sp.info->description     = "Advaned search for patterns";
     sp.info->scanner_version = "0.1";
-    sp.info->flags	     = scanner_info::SCANNER_FIND_SCANNER;
+    sp.info->flags	     = scanner_info::SCANNER_FIND_SCANNER | scanner_info::SCANNER_FAST_FIND;
     sp.info->feature_names.insert("lightgrep");
     sp.info->histogram_defs.insert(histogram_def("lightgrep", "", "histogram", HistogramMaker::FLAG_LOWERCASE));
 
