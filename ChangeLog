@@ -1,3 +1,7 @@
+2013-05-21  Basic  <simsong@public-172-21-213-43.near.uiuc.edu>
+
+	* src/be13_api/plugin.cpp (plugin::get_scanner_feature_file_names): extensive changes to make the global functions part of the be13::plugin class.
+
 2013-05-20  Basic  <simsong@npsair.local>
 
 	* src/bulk_extractor.cpp (main): -S now sets options; -s now sets sampling fraction.

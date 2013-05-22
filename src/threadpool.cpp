@@ -181,7 +181,7 @@ void worker::do_work(sbuf_t *sbuf)
 
     aftimer t;
     t.start();
-    process_sbuf(scanner_params(scanner_params::PHASE_SCAN,*sbuf,master.fs)); 
+    be13::plugin::process_sbuf(scanner_params(scanner_params::PHASE_SCAN,*sbuf,master.fs)); 
     t.stop();
 
     /* If we are logging starting and ending, save the end */
@@ -227,6 +227,7 @@ std::string threadpool::get_thread_status(uint32_t id)
  */
 void *worker::run() 
 {
+    be13::plugin::message_enabled_scanners(scanner_params::PHASE_THREAD_BEFORE_SCAN); // tell all enabled scanners to init
     while(true){
 	/* Get the lock, then wait for the queue to be empty.
 	 * If it is not empty, wait for the lock again.

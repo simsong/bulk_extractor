@@ -180,11 +180,11 @@ static string get_and_remove_token(string &path)
  * upperstr - Turns an ASCII string into upper case (should be UTF-8)
  */
 
-std::string upperstr(const std::string &str)
+static std::string lowerstr(const std::string &str)
 {
     std::string ret;
     for(std::string::const_iterator i=str.begin();i!=str.end();i++){
-	ret.push_back(toupper(*i));
+	ret.push_back(tolower(*i));
     }
     return ret;
 }
@@ -270,15 +270,13 @@ void process_path_printer(const scanner_params &sp)
 	return;
     }
     /* Find the scanner and use it */
-    for(scanner_vector::const_iterator it = current_scanners.begin();it!=current_scanners.end();it++){
-	const string &name = upperstr((*it)->info.name);
-	if(name==prefix){
-	    ((*it)->scanner)(scanner_params(scanner_params::PHASE_SCAN,
-					    sbuf_t(new_path,sp.sbuf),
-					    sp.fs,sp.print_options),
-			     recursion_control_block(process_path_printer,name,true));
-	    return;
-	}
+    scanner_t *s = be13::plugin::find_scanner(lowerstr(prefix));
+    if(s){
+        (*s)(scanner_params(scanner_params::PHASE_SCAN,
+                            sbuf_t(new_path,sp.sbuf),
+                            sp.fs,sp.print_options),
+             recursion_control_block(process_path_printer,prefix,true));
+        return;
     }
     cerr << "Unknown name in path: " << prefix << "\n";
 }
@@ -874,7 +872,7 @@ static void usage(const char *progname)
     std::cout << "   -P <dir>     - Specifies a plugin directory\n";
     std::cout << "   -E scanner   - turn off all scanners except scanner\n";
     std::cout << "   -S name=value - sets a bulk extractor option name to be value\n";
-    info_scanners(false,scanners_builtin,'e','x');
+    be13::plugin::info_scanners(false,scanners_builtin,'e','x');
     std::cout << "\n";
     exit(0);
 }
@@ -899,10 +897,9 @@ static void dfxml_create(xml &xreport,const string &command_line,int num_threads
     xreport.push("scanners");
     /* Generate a list of the scanners in use */
 
-    for(scanner_vector::const_iterator it=current_scanners.begin();it!=current_scanners.end();it++){
-	if((*it)->enabled){
-	    xreport.xmlout("scanner",(*it)->info.name);
-	}
+    std::vector<std::string> ev;
+    for(std::vector<std::string>::const_iterator it=ev.begin();it!=ev.end();it++){
+        xreport.xmlout("scanner",(*it));
     }
     xreport.pop();			// scanners
     xreport.pop();			// configuration
@@ -1049,11 +1046,11 @@ int main(int argc,char **argv)
 	}
 	break;
 	case 'E':
-	    scanners_disable_all();
-	    scanners_enable(optarg);
+            be13::plugin::scanners_disable_all();
+	    be13::plugin::scanners_enable(optarg);
 	    break;
 	case 'e':
-	    scanners_enable(optarg);
+	    be13::plugin::scanners_enable(optarg);
 	    break;
 	case 'F': process_find_file(optarg); break;
 	case 'f': add_find_pattern(optarg); break;
@@ -1100,7 +1097,7 @@ int main(int argc,char **argv)
 	    }
 	    break;
 	case 'x':
-	    scanners_disable(optarg);
+	    be13::plugin::scanners_disable(optarg);
 	    break;
 	case 'Y': {
 	    string optargs = optarg;
@@ -1135,12 +1132,12 @@ int main(int argc,char **argv)
     si.get_config("enable_histograms",&opt_enable_histograms,"Disable generation of histograms");
 
     /* Load all the scanners and enable the ones we care about */
-    load_scanner_directories(scanner_dirs,be_config);
-    load_scanners(scanners_builtin,be_config); 
-    scanners_process_commands();
+    be13::plugin::load_scanner_directories(scanner_dirs,be_config);
+    be13::plugin::load_scanners(scanners_builtin,be_config); 
+    be13::plugin::scanners_process_commands();
 
     /* Print usage if necessary */
-    if(opt_H){ info_scanners(true,scanners_builtin,'e','x'); exit(0);}
+    if(opt_H){ be13::plugin::info_scanners(true,scanners_builtin,'e','x'); exit(0);}
     if(opt_h){ usage(progname);}
 
     /* Give an error if a find list was specified
@@ -1151,17 +1148,7 @@ int main(int argc,char **argv)
         /* Look through the enabled scanners and make sure that
 	 * at least one of them is a FIND scanner
 	 */
-        bool find_scanner_enabled = false;
-        for(scanner_vector::const_iterator it = current_scanners.begin();
-            it!=current_scanners.end() && find_scanner_enabled==false;
-            it++){
-            if( ((*it)->info.flags & scanner_info::SCANNER_FIND_SCANNER)
-                && ((*it)->enabled)){
-                find_scanner_enabled = true;
-            }
-        }
-        
-        if(find_scanner_enabled==false){
+        if(!be13::plugin::find_scanner_enabled()){
             errx(1,"find words are specified with -F but no find scanner is enabled.\n");
         }
     }
@@ -1237,8 +1224,8 @@ int main(int argc,char **argv)
 
     /* Determine the feature files that will be used */
     feature_file_names_t feature_file_names;
-    enable_alert_recorder(feature_file_names);
-    enable_feature_recorders(feature_file_names);
+    feature_recorder_set::get_alert_recorder_name(feature_file_names);
+    be13::plugin::get_scanner_feature_file_names(feature_file_names);
     feature_recorder_set fs(feature_file_names,image_fname,opt_outdir,stop_list.size()>0);
 
     /* Create the alert recorder */
@@ -1272,10 +1259,10 @@ int main(int argc,char **argv)
     phase1.run(*p,fs,total_bytes,seen_page_ids);
 
     if(opt_quiet==0) std::cout << "Phase 2. Shutting down scanners\n";
-    phase_shutdown(fs,*xreport);
+    be13::plugin::phase_shutdown(fs,*xreport);
 
     if(opt_quiet==0) std::cout << "Phase 3. Creating Histograms\n";
-    phase_histogram(fs,*xreport);
+    be13::plugin::phase_histogram(fs,*xreport);
 
     /* report and then print final usage information */
     xreport->push("report");

@@ -59,6 +59,13 @@ UNDERREPORTING FIXES
 * max_depth changed from 5 to 7
 
 ================================================================
+INTERNAL IMPROVEMENTS
+
+* There has been additional refactoring of the plugin system. Many
+  functions and variables that were previously global or static are
+  now in the be13:plugin:: namespace.
+
+================================================================
 PERFORMANCE STATISTICS
 
 This section tracks how performance of bulk_extractor has changed over
