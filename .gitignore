@@ -55,3 +55,6 @@ tests/Makefile
 win32
 win64
 __pycache__
+regress-*-[0-9][0-9]
+.DS_Store
+out-*/
