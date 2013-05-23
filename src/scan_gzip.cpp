@@ -23,7 +23,7 @@ using namespace std;
 #  pragma GCC diagnostic ignored "-Wcast-qual"
 #endif
 
-int   gzip_max_uncompr_size = 256*1024*1024; // don't decompress objects larger than this
+uint32_t   gzip_max_uncompr_size = 256*1024*1024; // don't decompress objects larger than this
 
 extern "C"
 void scan_gzip(const class scanner_params &sp,const recursion_control_block &rcb)
@@ -36,7 +36,7 @@ void scan_gzip(const class scanner_params &sp,const recursion_control_block &rcb
         sp.info->description    = "Searches for GZIP-compressed data";
         sp.info->scanner_version= "1.0";
         sp.info->flags          = scanner_info::SCANNER_RECURSE | scanner_info::SCANNER_RECURSE_EXPAND;
-        sp.info->get_config(&gzip_max_uncompr_size,"gzip_max_uncompr_size","maximum size for decompressing GZIP objects");
+        sp.info->get_config("gzip_max_uncompr_size",&gzip_max_uncompr_size,"maximum size for decompressing GZIP objects");
 	return ;		/* no features */
     }
     if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;
@@ -57,7 +57,7 @@ void scan_gzip(const class scanner_params &sp,const recursion_control_block &rcb
 	     */
 	    if(cc[0]==0x1f && cc[1]==0x8b && cc[2]==0x08){ // gzip HTTP flag
 		u_int compr_size = sbuf.bufsize - (cc-sbuf.buf); // up to the end of the buffer 
-		u_char *decompress_buf = (u_char *)calloc(max_uncompr_size,1);
+		u_char *decompress_buf = (u_char *)calloc(gzip_max_uncompr_size,1);
 		if(decompress_buf){
 		    z_stream zs;
 		    memset(&zs,0,sizeof(zs));

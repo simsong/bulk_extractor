@@ -157,7 +157,7 @@ int threadpool::get_free_count()
 /**
  * do the work. Record that the work was started and stopped in XML file.
  */
-bool opt_work_start_work_end=true;
+bool worker::opt_work_start_work_end=true;
 void worker::do_work(sbuf_t *sbuf)
 {
 

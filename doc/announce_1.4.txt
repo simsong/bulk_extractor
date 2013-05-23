@@ -24,6 +24,8 @@ Incompatiable changes:
 
 * The -B option for specifying the blocksize for bulk data analysis has been removed. Instead specify it with -S block_size=NN.
 
+* The -W option no longer specifies the minimum and maximum word sizes. Instead specify with -S word_min=NN and -S word_max=NN
+
 ================================================================
 OVERREPORTING FIXES
 

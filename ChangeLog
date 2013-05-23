@@ -1,5 +1,7 @@
 2013-05-22  Man Page  <simsong@mncrnpsedu.local>
 
+	* src/be13_api/bulk_extractor_i.h (DEBUG_EXIT_EARLY): removed DEBUG_MALLOC and DEBUG_MALLOC_FAIL_FREQUENCY; now is handled with -S system
+
 	* src/bulk_extractor.h: removed all global options; replaced with the be config system
 
 	* src/pyxpress.c: added OpenSSL exemption per email from Matthieu Suiche

@@ -25,7 +25,7 @@
 #include <zlib.h>
 
 using namespace std;
-static int pdf_dump = 0;
+static bool pdf_dump = false;
 
 /*
  * Return TRUE if most of the characters (90%) are printable ASCII.
@@ -173,7 +173,7 @@ void scan_pdf(const class scanner_params &sp,const recursion_control_block &rcb)
         sp.info->description    = "Extracts text from PDF files";
         sp.info->scanner_version= "1.0";
         sp.info->flags          = scanner_info::SCANNER_RECURSE;
-        pdf_dump = atoi(sp.info->config["pdf_dump"].c_str());
+        sp.info->get_config("pdf_dump",&pdf_dump,"Dump the contents of PDF buffers");
 	return;	/* No features recorded */
     }
     if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;

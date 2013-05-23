@@ -26,6 +26,7 @@ LIFT is run through the scan_lift scanner:
 
 #include "config.h"
 #include "bulk_extractor_i.h"
+#include "utils.h"
 #include <iostream>
 #include <fstream>
 #include <stdlib.h>

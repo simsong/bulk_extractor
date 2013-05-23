@@ -8,6 +8,7 @@
 #include "bulk_extractor_i.h"
 #include "scan_ccns2.h"
 
+int scan_ccns2_debug=0;
 
 
 /* credit2.cpp:
@@ -255,7 +256,7 @@ static int prefix_test(const char *digits)
     return -1;
 }
 
-#define RETURN(code,reason) {if(debug & DEBUG_INFO) std::cerr << reason << "\n";return code;}
+#define RETURN(code,reason) {if(scan_ccns2_debug & DEBUG_INFO) std::cerr << reason << "\n";return code;}
 /**
  * Determine if this is or is not a credit card number.
  * Return 1 if it is, 0 if it is not.

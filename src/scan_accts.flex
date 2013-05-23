@@ -6,8 +6,6 @@
 #include "scan_ccns2.h"
 #include "sbuf_flex_scanner.h"
 
-int scan_ccns_debug=0;
-
 /*
  * http://flex.sourceforge.net/manual/Cxx.html
  *
@@ -297,7 +295,7 @@ void scan_accts(const class scanner_params &sp,const recursion_control_block &rc
 	sp.info->histogram_defs.insert(histogram_def("ccn","","histogram"));
 	sp.info->histogram_defs.insert(histogram_def("ccn_track2","","histogram"));
 	sp.info->histogram_defs.insert(histogram_def("telephone","","histogram",HistogramMaker::FLAG_NUMERIC));
-        scan_ccns_debug = sp.info->debug;           // get debug value
+        scan_ccns2_debug = sp.info->config->debug;           // get debug value
 	return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
