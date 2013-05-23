@@ -4,6 +4,8 @@
 #include "be13_api/utils.h"
 #include <math.h>
 
+#include <algorithm>
+
 /**
  * scan_bulk implements the bulk data analysis system.
  * The data analysis system was largely written to solve the DFRWS 2012 challenge.
