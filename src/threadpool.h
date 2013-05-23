@@ -105,6 +105,7 @@ private:
         }
     };
 public:
+    static bool opt_work_start_work_end; // report when work starts and when work ends
     static void * start_worker(void *arg){return ((worker *)arg)->run();};
     class threadpool &master;		// my master
     pthread_t thread;			// my thread; set when I am created

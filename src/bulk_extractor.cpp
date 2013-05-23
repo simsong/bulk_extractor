@@ -8,6 +8,7 @@
 #include "aftimer.h"
 #include "image_process.h"
 #include "threadpool.h"
+#include "histogram.h"
 #include "dfxml/src/dfxml_generator.h"
 #include "dfxml/src/hash_t.h"
 
@@ -43,22 +44,18 @@ using namespace std;
  *** COMMAND LINE OPTIONS
  ****************************************************************/
 
-//const char *progname=0;
+// Global options that can be set without using the option system
 
 size_t opt_pagesize=1024*1024*16;	// 
 size_t opt_margin = 1024*1024*4;
 u_int opt_notify_rate = 4;		// by default, notify every 4 pages
-int word_min = 6;
-int word_max = 14;
 int64_t opt_offset_start = 0;
 int64_t opt_offset_end   = 0;
-int   min_uncompr_size = 6;	// don't bother with objects smaller than this
 int   debug=0;
 int   opt_silent= 0;
 int   max_bad_alloc_errors = 60;
 uint64_t opt_page_start = 0;
 uint32_t   opt_last_year = 2020;
-//const char *image_fname = 0;
 const time_t max_wait_time=3600;
 
 std::string HTTP_EOL = "\r\n";		// stdout is in binary form
@@ -71,7 +68,14 @@ word_and_context_list alert_list;		/* shold be flagged */
 word_and_context_list stop_list;		/* should be ignored */
 
 
+static void truncate_at(string &line,char ch)
+{
+    size_t pos = line.find(ch);
+    if(pos!=string::npos) line.erase(pos);
+}
 
+
+#if 0
 /* Obtain subversion keywords
  * http://svnbook.red-bean.com/en/1.4/svn.advanced.props.special.keywords.html
  * http://stackoverflow.com/questions/1449935/getting-svn-revision-number-into-a-program-automatically
@@ -90,6 +94,12 @@ std::string svn_revision_clean()
     }
     return svn_r;
 }
+#else
+std::string svn_revision_clean()
+{
+    return std::string("");
+}
+#endif
 
 
 /**
@@ -810,7 +820,7 @@ public:;
 
 static void usage(const char *progname)
 {
-    std::cout << "bulk_extractor version " PACKAGE_VERSION " " << svn_revision << "\n";
+    std::cout << "bulk_extractor version " PACKAGE_VERSION " " << /* svn_revision << */ "\n";
     std::cout << "Usage: " << progname << " [options] imagefile\n";
     std::cout << "  runs bulk extractor and outputs to stdout a summary of what was found where\n";
     std::cout << "\n";
@@ -845,8 +855,6 @@ static void usage(const char *progname)
     std::cout << "   -C NN        - specifies the size of the context window (default " << feature_recorder::context_window << ")\n";
     std::cout << "   -G NN        - specify the page size (default " << opt_pagesize << ")\n";
     std::cout << "   -g NN        - specify margin (default " <<opt_margin << ")\n";
-    std::cout << "   -W n1:n2     - Specifies minimum and maximum word size\n";
-    std::cout << "                 (default is -w" << word_min << ":" << word_max << ")\n";
     std::cout << "   -j NN        - Number of analysis threads to run (default " <<threadpool::numCPU() << ")\n";
     std::cout << "   -M nn        - sets max recursion depth (default " << scanner_def::max_depth << ")\n";
     std::cout << "   -m <max>     - maximum number of minutes to wait for memory starvation\n";
@@ -985,10 +993,6 @@ std::string be_hash(const uint8_t *buf,size_t bufsize)
 {
     return md5_generator::hash_buf(buf,bufsize).hexdigest();
 }
-std::string be_hash(const sbuf_t &sbuf)
-{
-    return be_hash(sbuf.buf,sbuf.pagesize);
-}
 
 
 
@@ -1047,12 +1051,11 @@ int main(int argc,char **argv)
 	debug = atoi(getenv("BULK_EXTRACTOR_DEBUG"));
     }
     const char *progname = argv[0];
-    scanner_info::config_t be_config; // system configuration
+    scanner_info::scanner_config be_config; // the bulk extractor config
     const char *opt_path = 0;
     int opt_recurse = 0;
     int opt_zap = 0;
     string opt_outdir;
-    char *cc;
     setvbuf(stdout,0,_IONBF,0);		// don't buffer stdout
     std::string command_line = dfxml_generator::make_command_line(argc,argv);
     u_int num_threads = threadpool::numCPU();
@@ -1133,18 +1136,14 @@ int main(int argc,char **argv)
 		std::cerr << "Invalid paramter: " << optarg << "\n";
 		exit(1);
 	    }
-	    be_config[params[0]] = params[1];
+	    be_config.namevals[params[0]] = params[1];
 	    continue;
 	}
 	case 's': opt_sampling_params = optarg; break;
 	case 'V': std::cout << "bulk_extractor " << PACKAGE_VERSION << "\n"; exit (1);
 	case 'W':
-	    cc = strchr(optarg,':');
-	    if(!cc) err(1,"-W requires n1:n2");
-	    cc[0] = 0;			// null terminate
-	    word_min = atoi(optarg);
-	    word_max = atoi(cc+1);
-	    if(word_min>word_max) err(1,"word_min=%d word_max=%d\n",word_min,word_max);
+            fprintf(stderr,"-W has been deprecated. Specify with -S word_min=NN and -S word_max=NN\n");
+            exit(1);
 	    break;
 	case 'w': if(stop_list.readfile(optarg)){
 		err(1,"Cannot read stop list %s",optarg);
@@ -1178,14 +1177,21 @@ int main(int argc,char **argv)
     argv += optind;
 
 
-    scanner_info si;
-    si.config = be_config;
-    si.get_config("work_start_work_end",&opt_work_start_work_end,
-                   "Record work start and end of each scanner in report.xml file");
+    /* Create a configuration that will be used to initialize the scanners */
     extern bool opt_enable_histograms;
+    scanner_info si;
+
+    be_config.debug = debug;
+    be_config.hasher.name = be_hash_name;
+    be_config.hasher.func = be_hash;
+
+    si.config = &be_config;
+    si.get_config("work_start_work_end",&worker::opt_work_start_work_end, "Record work start and end of each scanner in report.xml file");
     si.get_config("enable_histograms",&opt_enable_histograms,"Disable generation of histograms");
+    si.get_config("debug_histogram_malloc_fail_frequency",&HistogramMaker::debug_histogram_malloc_fail_frequency,"Set >0 to make histogram maker fail with memory allocations");
 
     /* Load all the scanners and enable the ones we care about */
+
     be13::plugin::load_scanner_directories(scanner_dirs,be_config);
     be13::plugin::load_scanners(scanners_builtin,be_config); 
     be13::plugin::scanners_process_commands();

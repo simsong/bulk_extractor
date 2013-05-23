@@ -40,6 +40,8 @@
 // sbuf_stream.h needs integrated into another include file as is done with sbuf_h?
 #include "sbuf_stream.h"
 
+static int debug=0;
+
 /**
  * Instantiates a populated prefetch record from the buffer provided.
  */
@@ -252,6 +254,7 @@ void scan_winprefetch(const class scanner_params &sp,const recursion_control_blo
         sp.info->author		= "Bruce Allen";
         sp.info->description	= "Search for Windows Prefetch files";
         sp.info->feature_names.insert("winprefetch");
+        debug = sp.info->config->debug;
         return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN){

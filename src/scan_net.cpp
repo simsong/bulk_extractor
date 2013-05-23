@@ -24,6 +24,7 @@
 #include "config.h"
 #include "bulk_extractor_i.h"
 #include "be13_api/cppmutex.h"
+#include "be13_api/utils.h"
 
 #include <set>
 #include <tr1/unordered_set>

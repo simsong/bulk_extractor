@@ -466,8 +466,8 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
 	sp.info->description = "RAR volume locator and component decompresser";
 	sp.info->feature_names.insert("rar");
 
-        record_components = sp.info->config["rar_find_components"] != "NO";
-        record_volumes = sp.info->config["rar_find_volumes"] != "NO";
+        sp.info->get_config("rar_find_components",&record_components,"Search for RAR components");
+        sp.info->get_config("raw_find_volumes",&record_volumes,"Search for RAR volumes");
 	return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN){

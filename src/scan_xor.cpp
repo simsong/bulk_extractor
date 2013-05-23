@@ -8,7 +8,7 @@
 
 using namespace std;
 
-static uint8_t XOR_MASK = 0xFF;
+static uint8_t xor_mask = 0xFF;
 
 extern "C"
 void scan_xor(const class scanner_params &sp,const recursion_control_block &rcb)
@@ -21,10 +21,7 @@ void scan_xor(const class scanner_params &sp,const recursion_control_block &rcb)
 	sp.info->description = "optimistic XOR deobfuscator";
 	sp.info->flags = scanner_info::SCANNER_DISABLED | scanner_info::SCANNER_RECURSE;
 
-        string mask_string = sp.info->config["xor_mask"];
-        if(mask_string != "") {
-            XOR_MASK = (uint8_t) strtol(mask_string.c_str(), NULL, 16);
-        }
+        sp.info->get_config("xor_mask",&xor_mask,"XOR mask string, in decimal");
 	return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN) {
@@ -45,9 +42,9 @@ void scan_xor(const class scanner_params &sp,const recursion_control_block &rcb)
         }
         
         // 0x00 is 8-bit xor identity
-        if(XOR_MASK != 0x00) {
+        if(xor_mask != 0x00) {
             for(size_t ii = 0; ii < sbuf.bufsize; ii++) {
-                dbuf.buf[ii] = sbuf.buf[ii] ^ XOR_MASK;
+                dbuf.buf[ii] = sbuf.buf[ii] ^ xor_mask;
             }
         }
 

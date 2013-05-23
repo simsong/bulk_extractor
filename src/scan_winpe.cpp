@@ -940,6 +940,7 @@ static string scan_winpe_verify (const sbuf_t &sbuf)
     return xml.str();
 }
 
+static be13::hash_def hasher;
 extern "C"
 void scan_winpe (const class scanner_params &sp,
 		 const recursion_control_block &rcb)
@@ -953,6 +954,9 @@ void scan_winpe (const class scanner_params &sp,
         sp.info->description     = "Scan for Windows PE headers";
         sp.info->scanner_version = "1.0.0";
         sp.info->feature_names.insert("winpe");
+
+        hasher    = sp.info->config->hasher;
+
         return;
     }
     
@@ -995,7 +999,8 @@ void scan_winpe (const class scanner_params &sp,
 		xml = scan_winpe_verify(data);
 		if (xml != "") {
 		    // If we have 4096 bytes, generate md5 hash
-		    std::string hash = be_hash(sbuf_t(data,0,4096));
+                    sbuf_t first4k(data,0,4096);
+		    std::string hash = hasher.func(first4k.buf,first4k.bufsize);
 		    f->write(data.pos0,hash,xml);
 		}
 	    }

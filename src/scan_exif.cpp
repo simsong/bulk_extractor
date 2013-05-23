@@ -9,6 +9,7 @@
 
 #include "config.h"
 #include "bulk_extractor_i.h"
+#include "be13_api/utils.h"
 
 #include "dfxml/src/dfxml_generator.h"
 
@@ -185,6 +186,7 @@ inline size_t min(size_t a,size_t b){
     return a<b ? a : b;
 }
 
+static int debug=0;
 /**
  * record exif data in well-formatted XML.
  */
@@ -382,6 +384,7 @@ static void clear_entries(entry_list_t &entries) {
     entries.clear();
 }
 
+static be13::hash_def hasher;
 extern "C"
 void scan_exif(const class scanner_params &sp,const recursion_control_block &rcb)
 {
@@ -396,6 +399,8 @@ void scan_exif(const class scanner_params &sp,const recursion_control_block &rcb
         sp.info->description    = "Search for EXIF sections in JPEG files";
 	sp.info->feature_names.insert("exif");
 	sp.info->feature_names.insert("gps");
+        hasher    = sp.info->config->hasher;
+        debug = sp.info->config->debug;
 	return;
     }
     if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;
@@ -446,7 +451,8 @@ void scan_exif(const class scanner_params &sp,const recursion_control_block &rcb
 		    cout << "scan_exif Start processing validated Exif ffd8ff at start " << start << "\n";
 #endif
 		    // get md5 for this exif
-		    string md5_hex = be_hash(sbuf_t(sbuf,start,4096));
+                    sbuf_t tohash(sbuf,start,4096);
+		    string md5_hex = hasher.func(tohash.buf,tohash.bufsize);
 
 		    // get entries for this exif
                     try {
@@ -498,7 +504,8 @@ void scan_exif(const class scanner_params &sp,const recursion_control_block &rcb
 #endif
 
 		    // get md5 for this exif
-		    string md5_hex = be_hash(sbuf_t(sbuf,start,4096));
+                    sbuf_t tohash(sbuf,start,4096);
+		    string md5_hex = hasher.func(tohash.buf,tohash.bufsize);
 
 		    // get entries for this exif
                     try {

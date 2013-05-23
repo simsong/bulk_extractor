@@ -20,6 +20,8 @@ unsigned int opt_min_hex_buf = 64;           /* Don't re-analyze hex bufs smalle
 #include "config.h"
 #include "bulk_extractor_i.h"
 #include "sbuf_flex_scanner.h"
+#include "histogram.h"
+
 class base16_scanner : public sbuf_scanner {
 public:
     base16_scanner(const scanner_params &sp_,const recursion_control_block &rcb_):

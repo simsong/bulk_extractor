@@ -1,6 +1,7 @@
 #include "config.h"
 #include "bulk_extractor_i.h"
 #include "dig.h"
+#include "be13_api/utils.h"
 #include <math.h>
 
 /**
@@ -28,10 +29,12 @@
  * They all use the standard bulk_extractor plug-in API.
  */
 
-const std::string CONSTANT("constant");
-const std::string JPEG("jpeg");
-const std::string RANDOM("random");
-const std::string HUFFMAN("huffman_compressed");
+static const std::string CONSTANT("constant");
+static const std::string JPEG("jpeg");
+static const std::string RANDOM("random");
+static const std::string HUFFMAN("huffman_compressed");
+
+static int debug=0;
 
 /* Substitution table */
 static struct replace_t {
@@ -475,7 +478,7 @@ static inline void bulk_bitlocker(const sbuf_t &sbuf,feature_recorder *bulk,feat
 #define _TEXT(x) x
 #endif
 
-static int dfrws_challenge = 0;
+static bool dfrws_challenge = false;
 
 extern "C"
 void scan_bulk(const class scanner_params &sp,const recursion_control_block &rcb)
@@ -492,9 +495,11 @@ void scan_bulk(const class scanner_params &sp,const recursion_control_block &rcb
 	sp.info->feature_names.insert("bulk_tags");
         sp.info->get_config("bulk_block_size",&opt_bulk_block_size,"Block size (in bytes) for bulk data analysis");
 
+        debug = sp.info->config->debug;
+
 	histogram::precalc_entropy_array(opt_bulk_block_size);
 
-        dfrws_challenge = (sp.info->config["DFRWS2012"] != "");
+        sp.info->get_config("DFRWS2012",&dfrws_challenge,"True if running DFRWS2012 challenge code");
         return; 
     }
     // classify a buffer

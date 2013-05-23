@@ -1,11 +1,14 @@
 #include "config.h"
 #include "bulk_extractor_i.h"
+#include "utils.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 
-extern int word_min,word_max;
-int64_t max_outfile_size=100*1000*1000;
+static uint32_t word_min = 6;
+static uint32_t word_max = 14;
+static uint64_t max_word_outfile_size=100*1000*1000;
 
 class WordlistSorter {
 public:
@@ -26,7 +29,7 @@ static void wordlist_split_and_dedup(string outdir_)
     if(!f2.is_open()) err(1,"Cannot open %s\n",ifn.c_str());
     ofstream of2;
     int of2_counter = 0;
-    int outfilesize = 0;
+    uint64_t outfilesize = 0;
 
     /* Read all of the words */
 
@@ -54,7 +57,7 @@ static void wordlist_split_and_dedup(string outdir_)
 	/* Dump the words so far */
 
 	for(set<string,WordlistSorter>::const_iterator it = seen.begin();it!=seen.end();it++){
-	    if(!of2.is_open() || outfilesize>max_outfile_size){ 
+	    if(!of2.is_open() || outfilesize>max_word_outfile_size){ 
 		if(of2.is_open()) of2.close();
 		char fname[128];
 		snprintf(fname,sizeof(fname),ofn_template.c_str(),of2_counter++);
@@ -95,6 +98,13 @@ void scan_wordlist(const class scanner_params &sp,const recursion_control_block 
         sp.info->name  = "wordlist";
         sp.info->flags = scanner_info::SCANNER_DISABLED;
         sp.info->feature_names.insert("wordlist");
+        sp.info->get_config("word_min",&word_min,"Minimum word size");
+        sp.info->get_config("word_max",&word_max,"Maximum word size");
+        sp.info->get_config("max_word_outfile_size",&max_word_outfile_size,"Maximum size of the words output file");
+        if(word_min>word_max){
+            fprintf(stderr,"ERROR: word_min=%d word_max=%d\n",word_min,word_max);
+            exit(1);
+        }
 	wordchar_setup();
 	return;
     }
@@ -127,7 +137,7 @@ void scan_wordlist(const class scanner_params &sp,const recursion_control_block 
 		continue;
 	    }
 	    if(wordstart>=0 && (!iswordchar || i==sbuf.pagesize-1)){
-		int len = i-wordstart;
+		uint32_t len = i-wordstart;
 		if((word_min <= len) && (len <=  word_max)){
 		    wordlist_recorder->write_buf(sbuf,wordstart,len);
 		}

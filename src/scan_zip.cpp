@@ -13,7 +13,8 @@
 
 using namespace std;
 
-int   zip_max_uncompr_size = 256*1024*1024; // don't decompress objects larger than this
+uint32_t   zip_max_uncompr_size = 256*1024*1024; // don't decompress objects larger than this
+uint32_t   zip_min_uncompr_size = 6;	// don't bother with objects smaller than this
 
 /** The start of a ZIP section?? */
 inline bool zip_section_start(const u_char *buf){
@@ -63,6 +64,7 @@ uint32_t max_depth_count = 0;
 const uint32_t max_depth_count_bypass = 5;
 std::set<std::string>seen_set;
 cppmutex  seen_set_lock;
+static be13::hash_def hasher;
 extern "C"
 void scan_zip(const class scanner_params &sp,const recursion_control_block &rcb)
 {
@@ -73,7 +75,9 @@ void scan_zip(const class scanner_params &sp,const recursion_control_block &rcb)
 	sp.info->name  = "zip";
 	sp.info->feature_names.insert("zip");
         sp.info->flags          = scanner_info::SCANNER_RECURSE | scanner_info::SCANNER_RECURSE_EXPAND;
-        sp.info->get_config(&zip_max_uncompr_size,"zip_max_uncompr_size","Maximum size of a ZIP uncompressed object");
+        sp.info->get_config("zip_min_uncompr_size",&zip_min_uncompr_size,"Minimum size of a ZIP uncompressed object");
+        sp.info->get_config("zip_max_uncompr_size",&zip_max_uncompr_size,"Maximum size of a ZIP uncompressed object");
+        hasher    = sp.info->config->hasher;
 	return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
@@ -85,18 +89,18 @@ void scan_zip(const class scanner_params &sp,const recursion_control_block &rcb)
 	for(const unsigned char *cc=sbuf.buf ; cc < sbuf.buf+sbuf.pagesize && cc < sbuf.buf+sbuf.bufsize-38; cc++){
 	    /** Look for signature for beginning of a ZIP component. */
 	    if(cc[0]==0x50 && cc[1]==0x4B && cc[2]==0x03 && cc[3]==0x04){
-		int version=int2(cc+4);
-		int compression_method=int2(cc+6);
-		int lastmodtime=int2(cc+8);
-		int lastmoddate=int2(cc+10);
-		int crc32=int4(cc+14);	/* not used needed */
-		int compr_size=int4(cc+18);
-		int uncompr_size=int4(cc+22);
-		int name_len=int2(cc+26);
-		int extra_field_len=int2(cc+28);
+		uint16_t version=int2(cc+4);
+		uint16_t compression_method=int2(cc+6);
+		uint16_t lastmodtime=int2(cc+8);
+		uint16_t lastmoddate=int2(cc+10);
+		uint32_t crc32=int4(cc+14);	/* not used needed */
+		uint32_t compr_size=int4(cc+18);
+		uint32_t uncompr_size=int4(cc+22);
+		uint16_t name_len=int2(cc+26);
+		uint16_t extra_field_len=int2(cc+28);
 
 		if(name_len<=0) continue;				 // no name, must not be valid.
-		if(extra_field_len<0) continue;			 // invalid?
+		//if(extra_field_len<0) continue;			 // invalid?
 
 		if(name_len > scan_zip_name_len_max) continue;	 // unreasonable name length
 		if(cc+30+name_len > sbuf.buf+sbuf.bufsize) continue; // name is bigger than what's left
@@ -140,14 +144,14 @@ void scan_zip(const class scanner_params &sp,const recursion_control_block &rcb)
 		 * If compr_size==uncompr_size==0, then assume it may go to the end of the sbuf.
 		 */
 		if(uncompr_size==0 && compr_size==0){
-		    uncompr_size = max_uncompr_size;
-		    compr_size = max_uncompr_size;
+		    uncompr_size = zip_max_uncompr_size;
+		    compr_size = zip_max_uncompr_size;
 		}
 
 		/* See if we can decompress */
-		if(version==20 && uncompr_size>=min_uncompr_size){ 
-		    if(uncompr_size > max_uncompr_size){
-			uncompr_size = max_uncompr_size; // don't uncompress bigger than 16MB
+		if(version==20 && uncompr_size>=zip_min_uncompr_size){ 
+		    if(uncompr_size > zip_max_uncompr_size){
+			uncompr_size = zip_max_uncompr_size; // don't uncompress bigger than 16MB
 		    }
 
 		    // don't decompress beyond end of buffer
@@ -157,7 +161,7 @@ void scan_zip(const class scanner_params &sp,const recursion_control_block &rcb)
 
 		    /* See if we should perform a bypass check */
 		    if(__sync_fetch_and_add(&max_depth_count,0)>=max_depth_count_bypass){
-                        std::string hexhash = be_hash(data_buf,compr_size);
+                        std::string hexhash = hasher.func(data_buf,compr_size);
                         
                         cppmutex::lock lock(seen_set_lock);
 			bool in_buf = seen_set.find(hexhash) != seen_set.end();

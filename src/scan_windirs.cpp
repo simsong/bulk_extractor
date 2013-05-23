@@ -31,12 +31,14 @@
 #define CLUSTERS_IN_1GiB 2*1024*1024
 
 /* fat32 tuning parameters for weirdness. Each of these define something weird. If too much is weird, it's probably not a FAT32 directory entry.. */
-uint32_t opt_weird_file_size    = 1024*1024*150; // max file size
-uint32_t opt_weird_file_size2   = 1024*1024*512; // max file size
-uint32_t opt_max_cluster    = 32*CLUSTERS_IN_1GiB; // assume smaller than 32GB with 512 byte clusters
-uint32_t opt_max_cluster2   = 128*CLUSTERS_IN_1GiB; // assume smaller than 512GB with 512 byte clusters
-uint32_t opt_max_bits_in_attrib = 3;
-uint32_t opt_max_weird_count    = 2;
+static uint32_t opt_weird_file_size    = 1024*1024*150; // max file size
+static uint32_t opt_weird_file_size2   = 1024*1024*512; // max file size
+static uint32_t opt_max_cluster    = 32*CLUSTERS_IN_1GiB; // assume smaller than 32GB with 512 byte clusters
+static uint32_t opt_max_cluster2   = 128*CLUSTERS_IN_1GiB; // assume smaller than 512GB with 512 byte clusters
+static uint32_t opt_max_bits_in_attrib = 3;
+static uint32_t opt_max_weird_count    = 2;
+static uint32_t opt_last_year = 2020;
+static int  debug=0;
 
 /**
  * code from tsk3
@@ -480,6 +482,17 @@ void scan_windirs(const class scanner_params &sp,const recursion_control_block &
         sp.info->description    = "Scans Microsoft directory structures";
         sp.info->scanner_version= "1.0";
 	sp.info->feature_names.insert("windirs");
+
+        sp.info->get_config("opt_weird_file_size",&opt_weird_file_size,"Weird file size");
+        sp.info->get_config("opt_weird_file_size2",&opt_weird_file_size2,"Weird file size2");
+        sp.info->get_config("opt_max_cluster",&opt_max_cluster,"Ignore clusters larger than this");
+        sp.info->get_config("opt_max_cluster2",&opt_max_cluster2,"Ignore clusters larger than this");
+        sp.info->get_config("opt_max_bits_in_attrib",&opt_max_bits_in_attrib,"Ignore FAT32 entries with more attributes set than this");
+        sp.info->get_config("opt_max_weird_count",&opt_max_weird_count,"Ignore FAT32 entries with more things weird than this");
+        sp.info->get_config("opt_last_year",&opt_last_year,"Ignore FAT32 entries with a later year than this");
+
+        debug = sp.info->config->debug;
+
 	//sp.info->flags = scanner_info::SCANNER_DISABLED; // disabled until it's working
         
 

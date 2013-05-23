@@ -6,6 +6,7 @@
 #include "bulk_extractor_i.h"
 #include "histogram.h"
 
+#include "bulk_extractor.h"             // for find_list
 
 extern "C"
 void scan_find(const class scanner_params &sp,const recursion_control_block &rcb)

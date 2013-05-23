@@ -169,20 +169,15 @@ using namespace std;
 
 /* bulk_extractor.cpp */
 
+#include <be13_api/beregex.h>
+extern regex_list find_list;            // still need to get rid of this one
 /****************************************************************
  *** SCANNER PROCESSORS - operate on the scanners
  ****************************************************************/
 
 /* support.cpp */
 
-void		truncate_at(string &line,char ch);
 std::string	ssprintf(const char *fmt,...);
-bool		ends_with(const std::string &,const std::string &with);
-bool		ends_with(const std::wstring &,const std::wstring &with);
-
-/* C++ string splitting code from http://stackoverflow.com/questions/236129/how-to-split-a-string-in-c */
-std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems);
-std::vector<std::string> split(const std::string &s, char delim); 
 
 /****************************************************************/
 
