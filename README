@@ -175,3 +175,12 @@ TRE is faster than libgnurx, so we recommend to download the source then:
 
 If you really need to read AFFLIB, you will also need to install openssldev.  Please
 note that AFF is in the process of being deprecated.
+
+================================================================
+DEVELOPERS!
+
+If you are developing with github, after a checkout, you may wish to do this:
+
+for i in dfxml be13_api  ; do (cd $i ; git remote delete origin; git add origin git@github.com:simsong/be13_api.git ; git checkout master ) ; done
+
+
