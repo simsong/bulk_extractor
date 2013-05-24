@@ -377,6 +377,8 @@ void File::Write(const void *Data,size_t Size)
         hFile=stderr;
 #endif
         break;
+      default:
+        break;
     }
 #endif
   while (1)
@@ -398,7 +400,7 @@ void File::Write(const void *Data,size_t Size)
     else
       Success=WriteFile(hFile,Data,(DWORD)Size,&Written,NULL)==TRUE;
 #else
-    int Written=fwrite(Data,1,Size,hFile);
+    size_t Written=fwrite(Data,1,Size,hFile);
     Success=Written==Size && !ferror(hFile);
 #endif
     if (!Success && AllowExceptions && HandleType==FILE_HANDLENORMAL)
@@ -610,8 +612,8 @@ bool File::RawSeek(int64 Offset,int Method)
 		{
 			byte newdiff = (byte)Offset - Tell();
 			tempptrlocation += newdiff;
-			int64 telldebugging = Tell();
-			int64 telldebugging2 = Tell(tempptrlocation);
+			//int64 telldebugging = Tell();
+			//int64 telldebugging2 = Tell(tempptrlocation);
 			//ptrlocation += newdiff;
 			if(Tell(tempptrlocation)  > ptrlength )
 			{//the new pointer length is farther than the length of the RAR file
@@ -800,7 +802,7 @@ this is not needed for bulk_extractor
 */
 void File::SetCloseFileTime(RarTime *ftm,RarTime *fta)
 { //We probably don't need to worry about this at all.
-	int i = 1+1;
+	//int i = 1+1;
 #if defined(_UNIX) || defined(_EMX)
   SetCloseFileTimeByName(FileName,ftm,fta);
 #endif
@@ -811,7 +813,7 @@ this is not needed for bulk_extractor
 */
 void File::SetCloseFileTimeByName(const char *Name,RarTime *ftm,RarTime *fta)
 { //We probably don't need to worry about this at all.
-	int i = 1+1;
+	//int i = 1+1;
 
 #if defined(_UNIX) || defined(_EMX)
   bool setm=ftm!=NULL && ftm->IsSet();
@@ -922,7 +924,7 @@ bool File::RemoveCreated()
 { //This file is not called in bulk_extractor
   RemoveCreatedActive++;
   bool RetCode=true;
-  for (int I=0;I<sizeof(CreatedFiles)/sizeof(CreatedFiles[0]);I++)
+  for (unsigned I=0;I<sizeof(CreatedFiles)/sizeof(CreatedFiles[0]);I++)
     if (CreatedFiles[I]!=NULL)
     {
       CreatedFiles[I]->SetExceptions(false);

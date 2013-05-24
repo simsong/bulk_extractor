@@ -5,11 +5,18 @@
 #include <iostream>
 #include <pthread.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <sstream>
+#include <stdarg.h>
 #include "string.h"
 #include "rartypes.hpp"
+#include "rardefs.hpp"
+#include "system.hpp"
 #include "timefn.hpp"
 #include "errhnd.hpp"
+#include "strfn.hpp"
+#include "os.hpp"
+#include "array.hpp"
 #include "global.hpp"
 
 #define NM 1024
@@ -119,5 +126,8 @@ class File
     void RemoveSequentialFlag() {NoSequentialRead=true;}
 #endif
 };
+
+// work around cyclic dependency
+#include "filefn.hpp"
 
 #endif

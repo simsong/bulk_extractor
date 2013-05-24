@@ -1,5 +1,9 @@
 //#include "rar.hpp"
 
+//#include "os.hpp"
+#include "filefn.hpp"
+#include "unicode.hpp"
+
 MKDIR_CODE MakeDir(const char *Name,const wchar *NameW,bool SetAttr,uint Attr)
 {
 #ifdef _WIN_ALL
