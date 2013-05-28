@@ -2,6 +2,9 @@
 Bulk Extractor 1.4.   Feature Freeze: 1 JUN 2013.  Release: 1 AUG 2013
 ==============================================================================
 
+OTHER REFERENCES:
+- https://github.com/simsong/bulk_extractor/issues
+
 DOCUMENTATION:
 - document how to write a new scanner and add it to the mainstream.
 
@@ -21,6 +24,17 @@ FEATURES:
 
 + Construction of a stop-list from standard installs of OS and Apps
 
++ Replaced hacky XML reading in restart with a proper Expat-based parser.
+
++ Fixed exception throwing in MyFlexLexer.h so that msg is properly passed as *what().
+
+On Hold:
+
+- scanner for emails and usernames.  <simsong@acm.org> "Simson L. Garfinkel"
+
+- improved testing and validation of CMU LIFT software
+
+- Support for checkpointing using BLCR.
 
 - slg: scan_net.cpp - replace all buffer arithmetic with sbuf pointer get.
  - Figure out why this is causing a assertion failure:
@@ -28,6 +42,7 @@ FEATURES:
 - simplify beregex_vector, word_and_context_list, and regex_list into a single structure.
 
 - Integrate Digital Assembly video carving
+
 - Filter mode - reads from stdin and writes from stdout.
 - It's not BASE64 unless you have at least X characters from above 16; 
 - It's not BASE16 unless you have at least X characters from above 10
@@ -41,16 +56,12 @@ FEATURES:
 
 - Windows shortcut files & IE history
 
-- Fix exception throwing in MyFlexLexer.h so that msg is properly passed as *what().
-
 - Improved regression testing for release:
   - bulk_diff.py
   - identify_files.py
   - Benchmark testing for execution against reference disk images
 
 - Escape processing to search term histogram
-
-- Replacing hacky XML reading in restart with a proper Expat-based parser.
 
 - Improved restarting, so that each page is retried once.
   (Retry it if we see a single start in the XML file but not two starts.)
@@ -76,17 +87,6 @@ We may use fiwalk and identify_filenames to additionally display the file
 associated with the Feature that is currently navigated to.
 
 - Revise, document and deploy  multi-drive correlator
-
-On Hold:
-
-- scanner for emails and usernames.  <simsong@acm.org> "Simson L. Garfinkel"
-
-- improved testing and validation of CMU LIFT software
-
-- Support for checkpointing using BLCR.
-
-
-
 
 ================================================================
 Bulk Extractor 1.5:  Sometime in 2014

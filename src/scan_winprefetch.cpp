@@ -35,7 +35,7 @@
 #include <vector>
 
 #include "utf8.h"
-#include "dfxml/src/dfxml_generator.h"
+#include "dfxml/src/dfxml_writer.h"
 
 // sbuf_stream.h needs integrated into another include file as is done with sbuf_h?
 #include "sbuf_stream.h"
@@ -194,27 +194,27 @@ std::string prefetch_record_t::to_xml()
 
     // generate the prefetch feature in a stringstream
     ss << "<prefetch>";
-        ss << "<os>"       << dfxml_generator::xmlescape(prefetch_version) << "</os>";
-        ss << "<filename>" << dfxml_generator::xmlescape(execution_filename) << "</filename>";
+        ss << "<os>"       << dfxml_writer::xmlescape(prefetch_version) << "</os>";
+        ss << "<filename>" << dfxml_writer::xmlescape(execution_filename) << "</filename>";
         ss << "<header_size>" << header_size << "</header_size>";
         ss << "<atime>"    << microsoftDateToISODate(execution_time) << "</atime>";
         ss << "<runs>"     << execution_counter << "</runs>";
         ss << "<filenames>";
             for(vector<string>::const_iterator it = files.begin();
                 it != files.end(); it++) {
-                ss << "<file>" << dfxml_generator::xmlescape(*it) << "</file>";
+                ss << "<file>" << dfxml_writer::xmlescape(*it) << "</file>";
             }
         ss << "</filenames>";
 
         ss << "<volume>";
-            ss << "<path>" << dfxml_generator::xmlescape(volume_path_name) << "</path>";
+            ss << "<path>" << dfxml_writer::xmlescape(volume_path_name) << "</path>";
             ss << "<creation>" << microsoftDateToISODate(volume_creation_time) << "</creation>";
             ss << "<serial_number>" << hex << volume_serial_number << dec << "</serial_number>";
 
             ss << "<dirnames>";
                 for(vector<string>::const_iterator it = directories.begin();
                     it != directories.end(); it++) {
-                    ss << "<dir>" << dfxml_generator::xmlescape(*it) << "</dir>";
+                    ss << "<dir>" << dfxml_writer::xmlescape(*it) << "</dir>";
                 }
             ss << "</dirnames>";
         ss << "</volume>";
@@ -242,7 +242,7 @@ std::string prefetch_record_t::to_xml()
  * Value sbuf_t is used to write the feature's path.
  * The first string is the feature found, in this case the windows prefetch filename is used.
  * The second string is the full feature content, in this case, packed in XML.
- * Method dfxml_generator::xml_escape() is used to help format XML output.
+ * Method dfxml_writer::xml_escape() is used to help format XML output.
  */
 extern "C"
 void scan_winprefetch(const class scanner_params &sp,const recursion_control_block &rcb)

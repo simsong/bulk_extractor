@@ -11,7 +11,7 @@
 #include "bulk_extractor_i.h"
 #include "be13_api/utils.h"
 
-#include "dfxml/src/dfxml_generator.h"
+#include "dfxml/src/dfxml_writer.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -207,7 +207,7 @@ static void record_exif_data(feature_recorder *exif_recorder, const pos0_t &pos0
     for (entry_list_t::const_iterator it = entries.begin(); it!=entries.end(); it++) {
 
         // prepare by escaping XML codes.
-        string prepared_value = dfxml_generator::xmlescape((*it)->value);
+        string prepared_value = dfxml_writer::xmlescape((*it)->value);
 
         // do not report entries that have empty values
         if (prepared_value.length() == 0) {
