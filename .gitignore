@@ -61,3 +61,4 @@ out-*/
 src/TAGS
 TAGS
 core.*
+plugins/plugin_test
