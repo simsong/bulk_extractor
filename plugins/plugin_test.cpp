@@ -86,10 +86,8 @@ feature_recorder_set::feature_recorder_set(uint32_t f):flags(f),input_fname(),
     /* not here */
 }
 
-feature_recorder *feature_recorder_set::get_name(const std::string &name) 
-{
-    return 0;
-}
+feature_recorder *feature_recorder_set::get_name(const std::string &name) { return 0;}
+feature_recorder *feature_recorder_set::get_alert_recorder() { return 0;}
 
 /* http://stackoverflow.com/questions/9406580/c-undefined-reference-to-vtable-and-inheritance 
  * Must provide definitions for all virtual functions
