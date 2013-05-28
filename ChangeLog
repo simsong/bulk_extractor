@@ -1,3 +1,9 @@
+2013-05-28  Basic  <simsong@ncr.nps.edu>
+
+	* feature_recorder_set.cpp - debug is now a static variable
+
+	* src/image_process.h (image_process): debug is now a local variable for image_process.h
+
 2013-05-22  Man Page  <simsong@mncrnpsedu.local>
 
 	* src/be13_api/bulk_extractor_i.h (DEBUG_EXIT_EARLY): removed DEBUG_MALLOC and DEBUG_MALLOC_FAIL_FREQUENCY; now is handled with -S system

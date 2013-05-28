@@ -1,5 +1,4 @@
-Install the mingw environment using CONFIGURE_F17.sh.
-Install additional packages using CONFIGURE_LIBRARIES.sh.
+Install Fedora packages including the mingw environment using CONFIGURE_F18.sh.
 
 Enable the Windows installer by running configure: "./configure --enable-win_installer".
 Type "cd win_src && make" to create the unsigned windows installer.
