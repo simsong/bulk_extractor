@@ -8,6 +8,11 @@ bin_PROGRAMS = plugin_test scan_demo.so scan_flexdemo.so
 
 plugin_test_SOURCES = plugin_test.cpp
 
+scan_demo_so_SOURCES = scan_demo.cpp
+scan_demo_dll_SOURCES = scan_demo.cpp
+scan_flexdemo_so_SOURCES = scan_flexdemo.cpp
+scan_flexdemo_dll_SOURCES = scan_flexdemo.cpp
+
 scan_demo.so: scan_demo.cpp
 scan_flexdemo.so: scan_flexdemo.flex
 
