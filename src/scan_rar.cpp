@@ -2,7 +2,7 @@
 #include "bulk_extractor_i.h"
 
 #include "utf8.h"
-#include "dfxml/src/dfxml_generator.h"
+#include "dfxml/src/dfxml_writer.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -365,7 +365,7 @@ static string process_component(const unsigned char *buf, size_t buf_len, string
 
     found_feature_name = filename;
     // build XML output
-    filename = dfxml_generator::xmlescape(filename);
+    filename = dfxml_writer::xmlescape(filename);
     stringstream ss;
     ss << "<rar_component>";
 

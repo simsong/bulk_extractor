@@ -1,8 +1,7 @@
 #include "config.h"
 #include "bulk_extractor_i.h"
-#include "dfxml/src/dfxml_generator.h"
+#include "dfxml/src/dfxml_writer.h"
 #include "utf8.h"
-//#include "md5.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -111,7 +110,7 @@ void scan_zip(const class scanner_params &sp,const recursion_control_block &rcb)
 		 */
 		if(utf8::find_invalid(name.begin(),name.end()) != name.end()) continue; // invalid utf8 in name; not valid zip header
 		if(has_control_characters(name)) continue; // no control characters allowed.
-		name=dfxml_generator::xmlescape(name);     // make sure it is escaped
+		name=dfxml_writer::xmlescape(name);     // make sure it is escaped
 
 		if(compr_size<0 || uncompr_size<0) continue; // sanity check
 

@@ -4,40 +4,8 @@ CLEANFILES     = scan_accts.cpp scan_email.cpp scan_gps.cpp scan_base16.cpp *.d
 
 AM_CPPFLAGS = -I${top_srcdir}/src/be13_api
 
-DFXML = \
-      dfxml/src/dfxml_generator.cpp \
-      dfxml/src/dfxml_generator.h \
-      dfxml/src/dfxml_reader.cpp \
-      dfxml/src/dfxml_reader.h \
-      dfxml/src/hash_t.h \
-      dfxml/src/dfxml_reader.h 
-
-BE13_API= \
-        be13_api/beregex.cpp \
-        be13_api/beregex.h \
-        be13_api/bulk_extractor_i.h \
-        be13_api/cppmutex.h \
-        be13_api/feature_recorder.cpp \
-        be13_api/feature_recorder.h \
-        be13_api/feature_recorder_set.cpp \
-        be13_api/feature_recorder_set.h \
-        be13_api/net_ethernet.h \
-        be13_api/pcap_fake.cpp \
-        be13_api/pcap_fake.h \
-        be13_api/plugin.cpp \
-        be13_api/sbuf.cpp \
-        be13_api/sbuf.h \
-        be13_api/sbuf_private.h \
-        be13_api/sbuf_stream.cpp \
-        be13_api/sbuf_stream.h \
-        be13_api/unicode_escape.cpp \
-        be13_api/unicode_escape.h \
-        be13_api/utf8.h \
-        be13_api/utf8/checked.h \
-        be13_api/utf8/core.h \
-        be13_api/utf8/unchecked.h \
-        be13_api/utils.cpp \
-        be13_api/utils.h
+include dfxml/src/Makefile.defs
+include be13_api/Makefile.defs
 
 TSK3INCS = \
 	tsk3/auto/tsk_auto.h\

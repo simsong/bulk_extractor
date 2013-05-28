@@ -16,7 +16,7 @@
 #include <sys/time.h>
 
 #include "utf8.h"
-#include "dfxml/src/dfxml_generator.h"
+#include "dfxml/src/dfxml_writer.h"
 
 #pragma GCC diagnostic ignored "-Wshadow"
 #pragma GCC diagnostic ignored "-Weffc++"
@@ -299,7 +299,7 @@ void scan_fatdirs(const sbuf_t &sbuf,feature_recorder *wrecorder)
 	    for(ssize_t entry_number = 0;entry_number <= last_valid_entry_number && entry_number<max_entries;
 		entry_number++){
 		sbuf_t n(sector,entry_number*32,32);
-		dfxml_generator::strstrmap_t fatmap;
+		dfxml_writer::strstrmap_t fatmap;
 		
 		if(valid_fat_directory_entry(n)==1){
 		    const fatfs_dentry &dentry = *n.get_struct_ptr<fatfs_dentry>(0);
@@ -316,7 +316,7 @@ void scan_fatdirs(const sbuf_t &sbuf,feature_recorder *wrecorder)
 		    fatmap["startcluster"] = utos(fat32int(dentry.highclust,dentry.startclust));
 		    fatmap["filesize"] = utos(fat32int(dentry.size));
 		    fatmap["attrib"]   = utos((uint32_t)dentry.attrib);
-		    wrecorder->write(n.pos0,filename,dfxml_generator::xmlmap(fatmap,"fileobject","src='fat'"));
+		    wrecorder->write(n.pos0,filename,dfxml_writer::xmlmap(fatmap,"fileobject","src='fat'"));
 		}
 	    }
 	}
@@ -341,7 +341,7 @@ void scan_ntfsdirs(const sbuf_t &sbuf,feature_recorder *wrecorder)
 		uint16_t nlink = n.get16u(16); // get link count
 		if(nlink<10){ // sanity check - most files have less than 10 links
 
-		    dfxml_generator::strstrmap_t mftmap;
+		    dfxml_writer::strstrmap_t mftmap;
 		    mftmap["nlink"] = utos(nlink);
 		    mftmap["lsn"]   = utos(n.get64u(8)); // $LogFile Sequence Number
 		    mftmap["seq"]   = utos(n.get16u(18));
@@ -452,7 +452,7 @@ void scan_ntfsdirs(const sbuf_t &sbuf,feature_recorder *wrecorder)
 		    }		
 		    if(mftmap.size()>3){
 			if(filename.size()==0) filename="$NOFILENAME"; // avoids problems
-			wrecorder->write(n.pos0,filename,dfxml_generator::xmlmap(mftmap,"fileobject","src='mft'"));
+			wrecorder->write(n.pos0,filename,dfxml_writer::xmlmap(mftmap,"fileobject","src='mft'"));
 		    }
 		    if(debug & DEBUG_INFO) std::cerr << "=======================\n";
 		}

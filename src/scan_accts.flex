@@ -106,7 +106,7 @@ DATEFORMAT	({DATEA}|{DATEB}|{DATEC}|{DATED})
     /* #### #### #### #### --- most credit card numbers*/
     /* don't include the non-numeric character in the hand-off */
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
-    if(validate_ccn(yytext+1,yyleng-1)){
+    if(valid_ccn(yytext+1,yyleng-1)){
         s.ccn_recorder->write_buf(SBUF,s.pos+1,yyleng-1);
     }	
     s.pos += yyleng;
@@ -117,7 +117,7 @@ DATEFORMAT	({DATEA}|{DATEB}|{DATEC}|{DATED})
     /* REGEX3 */
     /* Must be american express... */ 
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
-    if(validate_ccn(yytext+1,yyleng-1)){
+    if(valid_ccn(yytext+1,yyleng-1)){
         s.ccn_recorder->write_buf(SBUF,s.pos+1,yyleng-1);
     }	
     s.pos += yyleng;
@@ -128,7 +128,7 @@ DATEFORMAT	({DATEA}|{DATEB}|{DATEC}|{DATED})
     /* REGEX4 */
     /* Must be american express... */ 
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
-    if(validate_ccn(yytext+1,yyleng-1)){
+    if(valid_ccn(yytext+1,yyleng-1)){
         s.ccn_recorder->write_buf(SBUF,s.pos+1,yyleng-1);
     }	
     s.pos += yyleng;
@@ -142,7 +142,7 @@ DATEFORMAT	({DATEA}|{DATEB}|{DATEC}|{DATED})
      * http://www.creditcards.com/credit-card-news/credit-card-appearance-1268.php
      */
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
-    if(validate_ccn(yytext+1,yyleng-1)){
+    if(valid_ccn(yytext+1,yyleng-1)){
         s.ccn_recorder->write_buf(SBUF,s.pos+1,yyleng-1);
     }	
     s.pos += yyleng;
@@ -154,7 +154,7 @@ DATEFORMAT	({DATEA}|{DATEB}|{DATEC}|{DATED})
     /* ;CCN=05061010000000000738? */
     /* REGEX6 */
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
-    if(validate_ccn(yytext+1,16)){  /* validate the first 16 digits */
+    if(valid_ccn(yytext+1,16)){  /* validate the first 16 digits */
     	s.ccn_track2->write_buf(SBUF,s.pos+1,yyleng-1);
     }
     s.pos += yyleng;
@@ -168,7 +168,7 @@ DATEFORMAT	({DATEA}|{DATEB}|{DATEC}|{DATED})
      * PDF files.
      */
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
-    if(validate_phone(SBUF,s.pos+1,yyleng-1)){
+    if(valid_phone(SBUF,s.pos+1,yyleng-1)){
        s.telephone_recorder->write_buf(SBUF,s.pos+1,yyleng-1);
     }
     s.pos += yyleng;
@@ -187,7 +187,7 @@ DATEFORMAT	({DATEA}|{DATEB}|{DATEC}|{DATED})
     /* Generalized international phone numbers */
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
     if(has_min_digits(yytext)){
-        if(validate_phone(SBUF,s.pos+1,yyleng-1)){
+        if(valid_phone(SBUF,s.pos+1,yyleng-1)){
             s.telephone_recorder->write_buf(SBUF,s.pos+1,yyleng-1);
         }
     }
