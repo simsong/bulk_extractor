@@ -35,7 +35,7 @@ ModelPPM::ModelPPM(const ModelPPM &copy)
 
 const ModelPPM& ModelPPM::operator=(const ModelPPM &src)
 {
-    SEE2Cont = src.SEE2Cont;
+    memcpy(SEE2Cont, src.SEE2Cont, sizeof(SEE2Cont));
     DummySEE2Cont = src.DummySEE2Cont;
     MinContext = src.MinContext;
     MedContext = src.MedContext;
@@ -47,14 +47,14 @@ const ModelPPM& ModelPPM::operator=(const ModelPPM &src)
     MaxOrder = src.MaxOrder;
     RunLength = src.RunLength;
     InitRL = src.InitRL;
-    CharMask = src.CharMask;
-    NS2Indx = src.NS2Indx;
-    NS2BSIndx = src.NS2BSIndx;
-    HB2Flag = src.HB2Flag;
+    memcpy(CharMask, src.CharMask, sizeof(CharMask));
+    memcpy(NS2Indx, src.NS2Indx, sizeof(NS2Indx));
+    memcpy(NS2BSIndx, src.NS2BSIndx, sizeof(NS2BSIndx));
+    memcpy(HB2Flag, src.HB2Flag, sizeof(HB2Flag));
     EscCount = src.EscCount;
     PrevSuccess = src.PrevSuccess;
     HiBitsFlag = src.HiBitsFlag;
-    BinSumm = src.BinSumm;
+    memcpy(BinSumm, src.BinSumm, sizeof(BinSumm));
     Coder = src.Coder;
     SubAlloc = src.SubAlloc;
 }

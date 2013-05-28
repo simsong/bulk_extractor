@@ -17,17 +17,6 @@ void RangeCoder::InitDecoder(Unpack *UnpackRead_)
 }
 
 
-// (int) cast before "low" added only to suppress compiler warnings.
-#define ARI_DEC_NORMALIZE(code,low,range,read)                           \
-{                                                                        \
-  while ((low^(low+range))<TOP || range<BOT && ((range=-(int)low&(BOT-1)),1)) \
-  {                                                                      \
-    code=(code << 8) | read->GetChar();                                  \
-    range <<= 8;                                                         \
-    low <<= 8;                                                           \
-  }                                                                      \
-}
-
 
 inline int RangeCoder::GetCurrentCount() 
 {

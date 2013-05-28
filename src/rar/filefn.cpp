@@ -1,8 +1,19 @@
-//#include "rar.hpp"
-
-//#include "os.hpp"
-#include "filefn.hpp"
+#include <stdlib.h>
+#include "raros.hpp"
+#include "os.hpp"
+#include "rartypes.hpp"
+#include "timefn.hpp"
+#include "file.hpp"
 #include "unicode.hpp"
+#include "pathfn.hpp"
+#include "savepos.hpp"
+#include "errhnd.hpp"
+#include "rardefs.hpp"
+#include "array.hpp"
+#include "system.hpp"
+#include "crc.hpp"
+
+#include "filefn.hpp"
 
 MKDIR_CODE MakeDir(const char *Name,const wchar *NameW,bool SetAttr,uint Attr)
 {

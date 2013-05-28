@@ -1,3 +1,20 @@
+#include <iostream>
+#include <pthread.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <sstream>
+#include <stdarg.h>
+#include "string.h"
+#include "rartypes.hpp"
+#include "rardefs.hpp"
+#include "system.hpp"
+#include "timefn.hpp"
+#include "errhnd.hpp"
+#include "strfn.hpp"
+#include "os.hpp"
+#include "array.hpp"
+#include "global.hpp"
+
 #include "file.hpp"
 
 static __thread File *CreatedFiles[256];
