@@ -9,10 +9,13 @@ INTERMEDIATE_INSTALLER = be_installer-$(VERSION)_intermediate.exe
 SIGNED_INSTALLER = be_installer-$(VERSION).exe
 
 EXTRA_DIST = \
-	CONFIGURE_FC17.sh \
-	README_WINDOWS.txt \
 	build_BEViewer_launcher.nsi \
 	build_installer.nsi \
+	CONFIGURE_F18.sh \
+	icu-mingw32-libprefix.patch \
+	icu-mingw64-libprefix.patch \
+	README.txt \
+	README_WINDOWS.txt \
 	sign_be_file
 
 all: $(INSTALLER)

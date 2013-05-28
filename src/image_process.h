@@ -220,6 +220,7 @@ class process_ewf : public image_process {
     int64_t ewf_filesize;
     vector<string> details; 	       
     mutable libewf_handle_t *handle;
+    static int debug;
 
  public:
     process_ewf(string fname) : image_process(fname), ewf_filesize(0), details() ,handle(0) {}
