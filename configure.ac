@@ -342,7 +342,7 @@ AC_CHECK_FUNCS([CreateProcess LoadLibrary IncrementAtomic InterlockedIncrement])
 ## Explicitly check for dlopen library before checking for dlopen
 ##       -ldl (see http://stackoverflow.com/questions/956640/linux-c-error-undefined-reference-to-dlopen)
 AC_CHECK_LIB([dl],[dlopen])		              
-AC_CHECK_FUNCS([dlopen])
+AC_CHECK_FUNCS([dlopen dlopen_preflight])
 
 # Test for sin_len
 AC_CHECK_HEADERS([arpa/inet.h netinet/in.h wsipx.h])
