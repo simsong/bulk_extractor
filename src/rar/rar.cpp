@@ -99,8 +99,8 @@ int aFunctionThatDoesNotWork(int argc, char *argv[])
     ShutdownOnClose=Cmd.Shutdown;
 #endif
 
-    InitConsoleOptions(Cmd.MsgStream,Cmd.Sound);
-    InitLogOptions(Cmd.LogName);
+    //InitConsoleOptions(Cmd.MsgStream,Cmd.Sound);
+    //InitLogOptions(Cmd.LogName);
     ErrHandler.SetSilent(Cmd.AllYes || Cmd.MsgStream==MSG_NULL);
     ErrHandler.SetShutdown(Cmd.Shutdown);
 

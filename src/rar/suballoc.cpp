@@ -4,13 +4,23 @@
  *  1999-2000                                                               *
  *  Contents: memory allocation routines                                    *
  ****************************************************************************/
+#include "suballoc.hpp"
+
+#include <stdlib.h>
+#include <string.h>
+
+#include "raros.hpp"
+#include "os.hpp"
+#include "errhnd.hpp"
+#include "global.hpp"
+#include "model.hpp"
 
 SubAllocator::SubAllocator()
 {
   Clean();
 }
 
-SubAllocator(const SubAllocator &copy)
+SubAllocator::SubAllocator(const SubAllocator &copy)
 {
     *this = copy;
 }
@@ -18,13 +28,13 @@ SubAllocator(const SubAllocator &copy)
 const SubAllocator& SubAllocator::operator=(const SubAllocator &src)
 {
     SubAllocatorSize = src.SubAllocatorSize;
-    Indx2Units = src.Indx2Units;
-    Units2Indx = src.Units2Indx;
+    memcpy(Indx2Units, src.Indx2Units, sizeof(Indx2Units));
+    memcpy(Units2Indx, src.Units2Indx, sizeof(Units2Indx));
     GlueCount = src.GlueCount;
     HeapStart = src.HeapStart;
     LoUnit = src.LoUnit;
     HiUnit = src.HiUnit;
-    FreeList = src.FreeList;
+    memcpy(FreeList, src.FreeList, sizeof(FreeList));
     pText = src.pText;
     UnitsStart = src.UnitsStart;
     HeapEnd = src.HeapEnd;

@@ -2,6 +2,8 @@
 #include "string.h"
 #include <sstream>
 
+using namespace std;
+
 RarTime::RarTime()
 {
   Reset();

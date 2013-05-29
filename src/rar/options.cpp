@@ -19,19 +19,19 @@ const RAROptions& RAROptions::operator=(const RAROptions &src)
     InclFileAttr = src.InclFileAttr;
     InclAttrSet = src.InclAttrSet;
     WinSize = src.WinSize;
-    TempPath = src.TempPath;
+    memcpy(TempPath, src.TempPath, sizeof(TempPath));
     ConfigDisabled = src.ConfigDisabled;
-    ExtrPath = src.ExtrPath;
-    ExtrPathW = src.ExtrPathW;
-    CommentFile = src.CommentFile;
-    CommentFileW = src.CommentFileW;
+    memcpy(ExtrPath, src.ExtrPath, sizeof(ExtrPath));
+    memcpy(ExtrPathW, src.ExtrPathW, sizeof(ExtrPathW));
+    memcpy(CommentFile, src.CommentFile, sizeof(CommentFile));
+    memcpy(CommentFileW, src.CommentFileW, sizeof(CommentFileW));
     CommentCharset = src.CommentCharset;
     FilelistCharset = src.FilelistCharset;
-    ArcPath = src.ArcPath;
-    ArcPathW = src.ArcPathW;
-    Password = src.Password;
+    memcpy(ArcPath, src.ArcPath, sizeof(ArcPath));
+    memcpy(ArcPathW, src.ArcPathW, sizeof(ArcPathW));
+    memcpy(Password, src.Password, sizeof(Password));
     EncryptHeaders = src.EncryptHeaders;
-    LogName = src.LogName;
+    memcpy(LogName, src.LogName, sizeof(LogName));
     MsgStream = src.MsgStream;
     Sound = src.Sound;
     Overwrite = src.Overwrite;
@@ -68,7 +68,7 @@ const RAROptions& RAROptions::operator=(const RAROptions &src)
     DeleteFiles = src.DeleteFiles;
 #ifndef SFX_MODULE
     GenerateArcName = src.GenerateArcName;
-    GenerateMask = src.GenerateMask;
+    memcpy(GenerateMask, src.GenerateMask, sizeof(GenerateMask));
 #endif
     SyncFiles = src.SyncFiles;
     ProcessEA = src.ProcessEA;
@@ -83,8 +83,8 @@ const RAROptions& RAROptions::operator=(const RAROptions &src)
     Lock = src.Lock;
     Test = src.Test;
     VolumePause = src.VolumePause;
-    FilterModes = src.FilterModes;
-    EmailTo = src.EmailTo;
+    memcpy(FilterModes, src.FilterModes, sizeof(FilterModes));
+    memcpy(EmailTo, src.EmailTo, sizeof(EmailTo));
     VersionControl = src.VersionControl;
     NoEndBlock = src.NoEndBlock;
     AppendArcNameToPath = src.AppendArcNameToPath;
@@ -93,7 +93,7 @@ const RAROptions& RAROptions::operator=(const RAROptions &src)
     xctime = src.xctime;
     xatime = src.xatime;
     xarctime = src.xarctime;
-    CompressStdin = src.CompressStdin;
+    memcpy(CompressStdin, src.CompressStdin, sizeof(CompressStdin));
 #ifdef PACK_SMP
     Threads = src.Threads;
 #endif

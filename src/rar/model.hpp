@@ -1,9 +1,12 @@
 #ifndef _RAR_PPMMODEL_
 #define _RAR_PPMMODEL_
 
-#include "rar.hpp"
+#include "rartypes.hpp"
+#include "rardefs.hpp"
 #include "coder.hpp"
 #include "suballoc.hpp"
+
+class Unpack;
 
 const int MAX_O=64;                   /* maximum allowed model order */
 

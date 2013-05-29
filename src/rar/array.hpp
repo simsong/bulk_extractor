@@ -1,6 +1,9 @@
 #ifndef _RAR_ARRAY_
 #define _RAR_ARRAY_
 
+#include "rardefs.hpp"
+#include "errhnd.hpp"
+
 extern ErrorHandler ErrHandler;
 
 template <class T> class Array

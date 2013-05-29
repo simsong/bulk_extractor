@@ -1,8 +1,9 @@
-#include "model.hpp"
-#include "rar.hpp"
+//#include "rar.hpp"
 
+#include "model.hpp"
 #include "coder.cpp"
 #include "suballoc.cpp"
+#include "unpack.hpp"
 #ifndef SFX_MODULE
 #include "unpack15.cpp"
 #include "unpack20.cpp"
@@ -41,7 +42,7 @@ const Unpack& Unpack::operator=(const Unpack &src)
     LDD = src.LDD;
     RD = src.RD;
     BD = src.BD;
-    OldDist = src.OldDist;
+    memcpy(OldDist, src.OldDist, sizeof(OldDist));
     OldDistPtr = src.OldDistPtr;
     LastDist = src.LastDist;
     LastLength = src.LastLength;
@@ -49,7 +50,7 @@ const Unpack& Unpack::operator=(const Unpack &src)
     WrPtr = src.WrPtr;
     ReadTop = src.ReadTop; 
     ReadBorder = src.ReadBorder;
-    UnpOldTable = src.UnpOldTable;
+    memcpy(UnpOldTable, src.UnpOldTable, sizeof(UnpOldTable));
     UnpBlockType = src.UnpBlockType;
     Window = src.Window;
     ExternalWindow = src.ExternalWindow;
@@ -61,17 +62,17 @@ const Unpack& Unpack::operator=(const Unpack &src)
     FileExtracted = src.FileExtracted;
     PrevLowDist = src.PrevLowDist;
     LowDistRepCount = src.LowDistRepCount;
-    ChSet = src.ChSet;
-    ChSetA = src.ChSetA;
-    ChSetB = src.ChSetB;
-    ChSetC = src.ChSetC;
-    Place = src.Place;
-    PlaceA = src.PlaceA;
-    PlaceB = src.PlaceB;
-    PlaceC = src.PlaceC;
-    NToPl = src.NToPl;
-    NToPlB = src.NToPlB;
-    NToPlC = src.NToPlC;
+    memcpy(ChSet, src.ChSet, sizeof(ChSet));
+    memcpy(ChSetA, src.ChSetA, sizeof(ChSetA));
+    memcpy(ChSetB, src.ChSetB, sizeof(ChSetB));
+    memcpy(ChSetC, src.ChSetC, sizeof(ChSetC));
+    memcpy(Place, src.Place, sizeof(Place));
+    memcpy(PlaceA, src.PlaceA, sizeof(PlaceA));
+    memcpy(PlaceB, src.PlaceB, sizeof(PlaceB));
+    memcpy(PlaceC, src.PlaceC, sizeof(PlaceC));
+    memcpy(NToPl, src.NToPl, sizeof(NToPl));
+    memcpy(NToPlB, src.NToPlB, sizeof(NToPlB));
+    memcpy(NToPlC, src.NToPlC, sizeof(NToPlC));
     FlagBuf = src.FlagBuf;
     AvrPlc = src.AvrPlc;
     AvrPlcB = src.AvrPlcB;
@@ -86,13 +87,13 @@ const Unpack& Unpack::operator=(const Unpack &src)
     Nhfb = src.Nhfb;
     Nlzb = src.Nlzb;
     MaxDist3 = src.MaxDist3;
-    MD = src.MD;
-    UnpOldTable20 = src.UnpOldTable20;
+    memcpy(MD, src.MD, sizeof(MD));
+    memcpy(UnpOldTable20, src.UnpOldTable20, sizeof(UnpOldTable20));
     UnpAudioBlock = src.UnpAudioBlock;
     UnpChannels = src.UnpChannels;
     UnpCurChannel = src.UnpCurChannel;
     UnpChannelDelta = src.UnpChannelDelta;
-    AudV = src.AudV;
+    memcpy(AudV, src.AudV, sizeof(AudV));
 }
 
 Unpack::~Unpack()

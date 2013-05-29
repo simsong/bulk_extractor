@@ -3,7 +3,8 @@
 
 class CmdAdd;
 class Unpack;
-
+class File;
+class FileHeader;
 
 class ComprDataIO
 {

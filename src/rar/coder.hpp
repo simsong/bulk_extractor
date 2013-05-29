@@ -4,6 +4,8 @@
 #ifndef _CODER_HPP_
 #define _CODER_HPP_
 
+class Unpack;
+
 // (int) cast before "low" added only to suppress compiler warnings.
 #define ARI_DEC_NORMALIZE(code,low,range,read)                           \
 {                                                                        \

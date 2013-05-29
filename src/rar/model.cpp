@@ -4,7 +4,12 @@
  *  1999-2000                                                               *
  *  Contents: model description and encoding/decoding routines              *
  ****************************************************************************/
+#include <stdlib.h>
+#include <string.h>
+#include "raros.hpp"
+#include "os.hpp"
 #include "model.hpp"
+#include "unpack.hpp"
 
 inline PPM_CONTEXT* PPM_CONTEXT::createChild(ModelPPM *Model,STATE* pStats,
                                              STATE& FirstState)

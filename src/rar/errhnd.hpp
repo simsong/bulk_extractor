@@ -1,6 +1,8 @@
 #ifndef _RAR_ERRHANDLER_
 #define _RAR_ERRHANDLER_
 
+#include <stdlib.h>
+
 #if (defined(GUI) || !defined(_WIN_ALL)) && !defined(SFX_MODULE) && !defined(_WIN_CE) || defined(RARDLL)
 #define ALLOW_EXCEPTIONS
 #endif
