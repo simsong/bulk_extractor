@@ -394,19 +394,17 @@ AC_CHECK_FUNCS([regcomp tre_regcomp tre_version])
 
 
 ################################################################
-## OpenSSL Support
+## OpenSSL Support (required for AFFLIB and hash_t )
 AC_CHECK_HEADERS([openssl/aes.h openssl/bio.h openssl/evp.h openssl/hmac.h openssl/md5.h openssl/pem.h openssl/rand.h openssl/rsa.h openssl/sha.h openssl/pem.h openssl/x509.h])
+AC_CHECK_LIB([crypto],[EVP_get_digestbyname])	# if crypto is available, get it
+AC_CHECK_LIB([ssl],[SSL_library_init])
+AC_CHECK_FUNCS([MD5_Init EVP_get_digestbyname])
 
 ################################################################
 ## AFFLIB support
 ## AFFLIB requires OpenSSL
 ## Link in openssl if it is available, because afflib requires it.
 ## (Note that bulk_extractor itself no longer requires openssl)
-AC_CHECK_LIB([crypto],[EVP_get_digestbyname])	# if crypto is available, get it
-AC_CHECK_LIB([ssl],[SSL_library_init],,
-     AC_MSG_WARN([OpenSSL developer library 'libssl-dev' or 'openssl-devel' not installed; AFFLIB not available]))
-AC_CHECK_FUNCS([MD5_Init EVP_get_digestbyname])
-
 AC_CHECK_HEADER([afflib/afflib.h],
 	    	[AC_DEFINE(HAVE_AFFLIB_AFFLIB_H,1,[Do we have afflib/afflib.h?])]
 		[AC_CHECK_LIB([afflib],af_get_pagesize,,
