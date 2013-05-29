@@ -42,6 +42,7 @@ int main(int argc,char **argv)
 	fprintf(stderr,"%s: cannot strip extension\n",name);
 	exit(1);
     }
+    printf("stripped name: %s\n",name);
 
 #ifdef HAVE_DLOPEN_PREFLIGHT
     if(!dlopen_preflight(fname)){
@@ -51,9 +52,15 @@ int main(int argc,char **argv)
 
     void *lib=dlopen(fname, RTLD_LAZY);
 
-    if(lib==0) errx(1,"dlopen: %s\n",dlerror());
+    if(lib==0){
+        fprintf(stderr,"dlopen: %s\n",dlerror());
+        exit(1);
+    }
     fn=(scanner_t *)dlsym(lib, name);
-    if(fn==0) errx(1,"dlsym: %s\n",dlerror());
+    if(fn==0){
+        fprintf(stderr,"dlsym: %s\n",dlerror());
+        exit(1);
+    }
 #else
 #ifdef HAVE_LOADLIBRARY
     /* Use Win32 LoadLibrary function */
