@@ -28,7 +28,7 @@
 #endif
 
 extern scanner_def scanners[];
-extern int debug;
+
 
 #ifndef MIN
 #define MIN(a,b) ((a)<(b) ? (a) : (b))
@@ -368,6 +368,7 @@ vector<string> process_ewf::getewfdetails(){
 }
 
 
+int process_ewf::debug = 0;
 int process_ewf::pread(unsigned char *buf,size_t bytes,int64_t offset) const
 {
 #ifdef LIBEWFNG

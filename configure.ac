@@ -342,7 +342,7 @@ AC_CHECK_FUNCS([CreateProcess LoadLibrary IncrementAtomic InterlockedIncrement])
 ## Explicitly check for dlopen library before checking for dlopen
 ##       -ldl (see http://stackoverflow.com/questions/956640/linux-c-error-undefined-reference-to-dlopen)
 AC_CHECK_LIB([dl],[dlopen])		              
-AC_CHECK_FUNCS([dlopen])
+AC_CHECK_FUNCS([dlopen dlopen_preflight])
 
 # Test for sin_len
 AC_CHECK_HEADERS([arpa/inet.h netinet/in.h wsipx.h])
@@ -405,7 +405,6 @@ AC_CHECK_FUNCS([MD5_Init EVP_get_digestbyname])
 ## AFFLIB requires OpenSSL
 ## Link in openssl if it is available, because afflib requires it.
 ## (Note that bulk_extractor itself no longer requires openssl)
-
 AC_CHECK_HEADER([afflib/afflib.h],
 	    	[AC_DEFINE(HAVE_AFFLIB_AFFLIB_H,1,[Do we have afflib/afflib.h?])]
 		[AC_CHECK_LIB([afflib],af_get_pagesize,,

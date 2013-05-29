@@ -72,7 +72,15 @@ answers = {"ubnist1.gen3":{"ALERTS_found.txt":88,
                            "windirs.txt":1667,
                            "winpe.txt":2,
                            "wordlist.txt":10121828,
-                           "zip.txt":1962}}
+                           "zip.txt":1962},
+           "nps-2010-emails":{"domain.txt":624,
+                              "email.txt":67,
+                              "exif.txt":2,
+                              "telephone.txt":2,
+                              "url.txt":557,
+                              "windirs.txt":30,
+                              "zip.txt":240}
+           }
 
 
 
@@ -290,8 +298,8 @@ def run_outdir(outdir,gdb=False):
     
     cargs += ['-e','all']    # enable all scanners
     #cargs += ['-e','wordlist']    # enable all scanners
-    if args.extra:     cargs += args.extra.split(" ")
-
+    if args.extra:
+        cargs += args.extra.split(" ")
     if args.debug: cargs += ['-d'+str(args.debug)]
     if not args.nofind:
         cargs += ['-r','tests/alert_list.txt']
@@ -553,6 +561,11 @@ if __name__=="__main__":
 
     if args.fast:
         args.image  = fast_infile
+        if args.extra:
+            args.extra += ' '
+        else:
+            args.extra = ''
+        args.extra  += '-G 65536'
     if args.full:
         args.image  = full_infile
 

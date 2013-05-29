@@ -10,7 +10,7 @@ if WANT_WIN_INSTALLER
 SRC_WIN_DIR = src_win
 endif
 
-SUBDIRS = doc doc/user_manual src man python specfiles tests $(BE_VIEWER_DIR) $(SRC_WIN_DIR)
+SUBDIRS = doc doc/user_manual src man plugins python specfiles tests $(BE_VIEWER_DIR) $(SRC_WIN_DIR)
 
 EXTRA_DIST = bootstrap.sh \
 	ROADMAP.txt \

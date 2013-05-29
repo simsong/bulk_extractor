@@ -60,6 +60,13 @@ UNDERREPORTING FIXES
 
 * max_depth changed from 5 to 7
 
+* scan_pdf has been improved and now does a better job extracting
+  text. For example, the following feature is now found when scanning
+  the ubnist1.gen3 disk:
+
+1114252989-ZIP-2353-PDF-2413 202-395-1181  Karen Evans at 202-395-1181.    
+
+
 ================================================================
 INTERNAL IMPROVEMENTS
 

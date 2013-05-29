@@ -264,7 +264,7 @@ static int prefix_test(const char *digits)
  * buf[-WINDOW_MARGIN] must be accessible.
  * buf[len+WINDOW_MARGIN] must be accessible
  */
-int validate_ccn(const char *buf,int buflen)
+bool valid_ccn(const char *buf,int buflen)
 {
     /* Make the digits array */
     if(buflen>19) RETURN(0,"Too long");
@@ -301,12 +301,12 @@ int validate_ccn(const char *buf,int buflen)
  * numbers and spaces or brackets. These are commonly seen in PDF files
  * when they are decompressed.
  */
-inline int valid_char(char ch)
+inline bool valid_char(char ch)
 {
     return isdigit(ch) || isspace(ch) || ch=='[' || ch==']' || ch=='<' || ch=='Z' || ch=='.' || ch=='l' || ch=='j';
 }
 
-int  validate_phone(const sbuf_t &sbuf,size_t pos,size_t len)
+bool  valid_phone(const sbuf_t &sbuf,size_t pos,size_t len)
 {
     /* We want invalid characters before and after (assuming there is a before and after */
     int invalid_before = 0;
@@ -325,6 +325,22 @@ int  validate_phone(const sbuf_t &sbuf,size_t pos,size_t len)
 	}
     } else {
 	invalid_after = 1;
+    }
+
+    /*
+     * 2013-05-28: if followed by ' #{1,5} ' then it's not a phone either!
+     */
+    if(pos+len+5 < sbuf.bufsize){
+        if(sbuf[pos+len]==' ' && isdigit(sbuf[pos+len+1])){
+            for(size_t i = pos+len+1 ; (i+1<sbuf.bufsize) && (i<pos+len+8);i++){
+                if(isdigit(sbuf[i]) && sbuf[i+1]==' ') return false; // not valid
+            }
+        }
+    }
+
+    /* If it is followed by a dash and a number, it's not a phone number */
+    if(pos+len+2 < sbuf.bufsize){
+        if(sbuf[pos+len]=='-' && isdigit(sbuf[pos+len+1])) return false;
     }
 
     return invalid_before!=0 && invalid_after!=0;

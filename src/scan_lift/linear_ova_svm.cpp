@@ -14,8 +14,6 @@
  */
 
 
-extern int debug;
-
 LinearOvaSVM::LinearOvaSVM( const ClassifierConfig& _config , const struct linear_ova_config_t **ovas):
     BaseClassifier( _config ),classes(),class_id_to_Bcls_mapping(),Bcls(){
     load_precompiled(ovas);
@@ -93,7 +91,6 @@ vector< pair<int,double> > LinearOvaSVM::get_classifier_score(const Document& d 
 
 void LinearOvaSVM::load_textfile( const string& fname )
 {
-    if(debug) std::cerr << " LinearOvaSVM: Loading from file = " << fname << "\n";
     FILE *f = fopen( fname.c_str() , "r" ); assert( f );
     int class_id = 0;
     int fid = 0;
@@ -102,7 +99,6 @@ void LinearOvaSVM::load_textfile( const string& fname )
     while( fscanf(f,"%d:%lf",&fid,&fval) == 2 ) { 
 	if( fid == -1 ) {
 	    /* Create new scanner class fval */
-	    if(debug) std::cerr << fval <<"..";
 	    class_id = int(fval);
 	
 	    B = new LinearBinarySVM( BaseClassifier::config  );
@@ -125,7 +121,6 @@ void LinearOvaSVM::load_textfile( const string& fname )
 	if((unsigned)fid > B->wt_max) B->wt_max = fid;
     }
     fclose( f );
-    if(debug) std::cerr << "Load complete \n";
 }
 
 /**

@@ -9,7 +9,7 @@
 #include "image_process.h"
 #include "threadpool.h"
 #include "histogram.h"
-#include "dfxml/src/dfxml_generator.h"
+#include "dfxml/src/dfxml_writer.h"
 #include "dfxml/src/hash_t.h"
 
 #include <dirent.h>
@@ -51,7 +51,7 @@ size_t opt_margin = 1024*1024*4;
 u_int opt_notify_rate = 4;		// by default, notify every 4 pages
 int64_t opt_offset_start = 0;
 int64_t opt_offset_end   = 0;
-int   debug=0;
+uint32_t   debug=0;
 int   opt_silent= 0;
 int   max_bad_alloc_errors = 60;
 uint64_t opt_page_start = 0;
@@ -464,7 +464,7 @@ class BulkExtractor_Phase1 {
     }
 
     /* Instance variables */
-    dfxml_generator &xreport;
+    dfxml_writer &xreport;
     aftimer &timer;
     u_int num_threads;
     int opt_quiet;
@@ -548,7 +548,7 @@ public:
 #define random(x) rand(x)
 #endif
 
-    BulkExtractor_Phase1(dfxml_generator &xreport_,aftimer &timer_,u_int num_threads_,int opt_quiet_):
+    BulkExtractor_Phase1(dfxml_writer &xreport_,aftimer &timer_,u_int num_threads_,int opt_quiet_):
         xreport(xreport_),timer(timer_),
 	num_threads(num_threads_),opt_quiet(opt_quiet_),
 	sampling_fraction(1),sampling_passes(1),notify_ctr(0){ }
@@ -887,7 +887,7 @@ static void usage(const char *progname)
  * Create the dfxml output
  */
 
-static void dfxml_create(dfxml_generator &xreport,const string &command_line,int num_threads)
+static void dfxml_create(dfxml_writer &xreport,const string &command_line,int num_threads)
 {
     xreport.push("dfxml","xmloutputversion='1.0'");
     xreport.push("metadata",
@@ -998,7 +998,7 @@ std::string be_hash(const uint8_t *buf,size_t bufsize)
 
 void stat_callback(void *user,const std::string &name,uint64_t calls,double seconds)
 {
-    dfxml_generator *xreport = reinterpret_cast<dfxml_generator *>(user);
+    dfxml_writer *xreport = reinterpret_cast<dfxml_writer *>(user);
 
     xreport->set_oneline(true);
     xreport->push("path");
@@ -1057,7 +1057,7 @@ int main(int argc,char **argv)
     int opt_zap = 0;
     string opt_outdir;
     setvbuf(stdout,0,_IONBF,0);		// don't buffer stdout
-    std::string command_line = dfxml_generator::make_command_line(argc,argv);
+    std::string command_line = dfxml_writer::make_command_line(argc,argv);
     u_int num_threads = threadpool::numCPU();
     int opt_quiet = 0;
     std::string opt_sampling_params;
@@ -1244,7 +1244,7 @@ int main(int argc,char **argv)
     timer.start();
 
     /* If output directory does not exist, we are not restarting! */
-    dfxml_generator  *xreport=0;
+    dfxml_writer  *xreport=0;
     string reportfilename = opt_outdir + "/report.xml";
 
     seen_page_ids_t seen_page_ids; // pages that do not need re-processing
@@ -1277,7 +1277,7 @@ int main(int argc,char **argv)
     if(!p) err(1,"Cannot open %s: ",image_fname.c_str());
     
     /* Store the configuration in the XML file */
-    xreport = new dfxml_generator(reportfilename,false);
+    xreport = new dfxml_writer(reportfilename,false);
     dfxml_create(*xreport,command_line,num_threads);
     xreport->xmlout("provided_filename",image_fname); // save this information
 

@@ -10,7 +10,7 @@ AC_INIT(BULK_EXTRACTOR, 1.3, bugs@digitalcorpora.org)
 AC_CONFIG_MACRO_DIR(m4)
 
 AC_CONFIG_FILES([Makefile])
-AC_CONFIG_HEADER([beconfig.h])
+AC_CONFIG_HEADER([config.h])
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
 AC_PREFIX_PROGRAM
@@ -261,7 +261,7 @@ AC_CHECK_FUNCS([CreateProcess LoadLibrary IncrementAtomic InterlockedIncrement])
 ## Explicitly check for dlopen library before checking for dlopen
 ##       -ldl (see http://stackoverflow.com/questions/956640/linux-c-error-undefined-reference-to-dlopen)
 AC_CHECK_LIB([dl],[dlopen])		              
-AC_CHECK_FUNCS([dlopen])
+AC_CHECK_FUNCS([dlopen dlopen_preflight])
 
 ## Look for a regular expression system to use
 ## tre is better than regex
@@ -346,9 +346,9 @@ AC_MSG_NOTICE([  LDFLAGS:          $LDFLAGS])
 AC_OUTPUT
 
 ## Finally, record the values of CFLAGS, CPPFLAGS, and CXXFLAGS for DFXML
-echo "#define CPPFLAGS \"$CPPFLAGS\"" >> beconfig.h
-echo "#define CFLAGS   \"$CFLAGS\""   >> beconfig.h
-echo "#define CXXFLAGS \"$CXXFLAGS\"" >> beconfig.h
-echo "#define LIBS     \"$LIBS\""     >> beconfig.h
-echo "#define LDFLAGS  \"$LDFLAGS\""  >> beconfig.h
+echo "#define CPPFLAGS \"$CPPFLAGS\"" >> config.h
+echo "#define CFLAGS   \"$CFLAGS\""   >> config.h
+echo "#define CXXFLAGS \"$CXXFLAGS\"" >> config.h
+echo "#define LIBS     \"$LIBS\""     >> config.h
+echo "#define LDFLAGS  \"$LDFLAGS\""  >> config.h
 

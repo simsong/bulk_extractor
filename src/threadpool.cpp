@@ -81,7 +81,7 @@ void threadpool::win32_init()
  * Each thread has its own feature_recorder_set.
  *
  */
-threadpool::threadpool(int numthreads,feature_recorder_set &fs_,dfxml_generator &xreport_):
+threadpool::threadpool(int numthreads,feature_recorder_set &fs_,dfxml_writer &xreport_):
     workers(),M(),TOMAIN(),TOWORKER(),freethreads(numthreads),work_queue(),
     fs(fs_),xreport(xreport_),thread_status(),waiting(),mode()
 {
