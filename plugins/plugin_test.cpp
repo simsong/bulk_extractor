@@ -26,9 +26,11 @@ typedef int (__cdecl *MYPROC)(LPWSTR);
 scanner_params::PrintOptions scanner_params::no_options; 
 int main(int argc,char **argv)
 {
+
     scanner_t *fn;
     if(argc!=2){
 	fprintf(stderr,"usage: %s scanner.so\n",argv[0]);
+        fprintf(stderr,"type 'make plugins' to make available plugins\n");
 	exit(1);
     }
 
@@ -42,7 +44,6 @@ int main(int argc,char **argv)
 	fprintf(stderr,"%s: cannot strip extension\n",name);
 	exit(1);
     }
-    printf("stripped name: %s\n",name);
 
 #ifdef HAVE_DLOPEN_PREFLIGHT
     if(!dlopen_preflight(fname)){

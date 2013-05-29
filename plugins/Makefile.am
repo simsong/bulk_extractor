@@ -13,6 +13,11 @@ EXTRA_DIST = scan_demo.cpp scan_flexdemo.cpp
 # lib_LTLIBRARIES = scan_demo.so scan_flexdemo.so
 
 
+plugins:
+	make scan_demo.so scan_flexdemo.so
+	@echo "Available Plugins:"
+	ls -l *.so
+
 # scan_demo_so_SOURCES = scan_demo.cpp
 # scan_demo_dll_SOURCES = scan_demo.cpp
 # scan_flexdemo_so_SOURCES = scan_flexdemo.cpp
