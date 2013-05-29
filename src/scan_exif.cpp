@@ -190,7 +190,7 @@ static int debug=0;
 /**
  * record exif data in well-formatted XML.
  */
-static void record_exif_data(feature_recorder *exif_recorder, const pos0_t &pos0, const string &md5_hex, const entry_list_t &entries)
+static void record_exif_data(feature_recorder *exif_recorder, const pos0_t &pos0, const string &hash_hex, const entry_list_t &entries)
 {
 #ifdef DEBUG
     cout << "scan_exif recording data for entry" << "\n";
@@ -231,7 +231,7 @@ static void record_exif_data(feature_recorder *exif_recorder, const pos0_t &pos0
     ss << "</exif>";
 
     // record the formatted exif entries
-    exif_recorder->write(pos0, md5_hex, ss.str());
+    exif_recorder->write(pos0, hash_hex, ss.str());
 }
 
 /**
@@ -239,7 +239,7 @@ static void record_exif_data(feature_recorder *exif_recorder, const pos0_t &pos0
  * Note that GPS data is considered to be present when a GPS IFD entry is present
  * that is not just a time or date entry.
  */
-static void record_gps_data(feature_recorder *gps_recorder, const pos0_t &pos0, const string &md5_hex, const entry_list_t &entries)
+static void record_gps_data(feature_recorder *gps_recorder, const pos0_t &pos0, const string &hash_hex, const entry_list_t &entries)
 {
     // desired GPS strings
     string gps_time;
@@ -370,7 +370,7 @@ static void record_gps_data(feature_recorder *gps_recorder, const pos0_t &pos0, 
         ss << gps_ele << "," << gps_speed << "," << gps_course;
 
         // record the formatted GPS entries
-        gps_recorder->write(pos0, md5_hex, ss.str());
+        gps_recorder->write(pos0, hash_hex, ss.str());
 
     } else {
         // no GPS to report
@@ -452,7 +452,7 @@ void scan_exif(const class scanner_params &sp,const recursion_control_block &rcb
 #endif
 		    // get md5 for this exif
                     sbuf_t tohash(sbuf,start,4096);
-		    string md5_hex = hasher.func(tohash.buf,tohash.bufsize);
+		    string hash_hex = hasher.func(tohash.buf,tohash.bufsize);
 
 		    // get entries for this exif
                     try {
@@ -466,10 +466,10 @@ void scan_exif(const class scanner_params &sp,const recursion_control_block &rcb
 #endif
 
 		    // record to exif feature recorder
-		    record_exif_data(exif_recorder, sp.sbuf.pos0+start, md5_hex, entries);
+		    record_exif_data(exif_recorder, sp.sbuf.pos0+start, hash_hex, entries);
 
 		    // record to gps feature recorder
-		    record_gps_data(gps_recorder, sp.sbuf.pos0+start, md5_hex, entries);
+		    record_gps_data(gps_recorder, sp.sbuf.pos0+start, hash_hex, entries);
 
 		    // clear entries for next round
 		    clear_entries(entries);
@@ -505,7 +505,7 @@ void scan_exif(const class scanner_params &sp,const recursion_control_block &rcb
 
 		    // get md5 for this exif
                     sbuf_t tohash(sbuf,start,4096);
-		    string md5_hex = hasher.func(tohash.buf,tohash.bufsize);
+		    string hash_hex = hasher.func(tohash.buf,tohash.bufsize);
 
 		    // get entries for this exif
                     try {
@@ -515,10 +515,10 @@ void scan_exif(const class scanner_params &sp,const recursion_control_block &rcb
                     }
 
 		    // record to exif feature recorder
-		    record_exif_data(exif_recorder, sp.sbuf.pos0+start, md5_hex, entries);
+		    record_exif_data(exif_recorder, sp.sbuf.pos0+start, hash_hex, entries);
 
 		    // record to gps feature recorder
-		    record_gps_data(gps_recorder, sp.sbuf.pos0+start, md5_hex, entries);
+		    record_gps_data(gps_recorder, sp.sbuf.pos0+start, hash_hex, entries);
 
 		    // clear entries for next round
 		    clear_entries(entries);
