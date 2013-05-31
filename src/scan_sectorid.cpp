@@ -72,38 +72,43 @@ void scan_sectorid(const class scanner_params &sp,
             }
 
             // import lookup_type
-            sp.info->get_config("lookup_type", &lookup_type_string, "");
-            scanner_info::helpstream << "      <lookup_type> used to perform the lookup, where <lookup_type>\n"
-                                     << "      is one of use_path | use_socket (default "
-                                                                  << lookup_type_to_string(lookup_type) << ")\n"
-                                     << "      use_path   - Lookups are performed from a hashdb in the filesystem\n"
-                                     << "                   at the specified <path>.\n"
-                                     << "      use_socket - Lookups are performed from a server service at the\n"
-                                     << "                   specified <socket>.\n"
-                                     ;
+            std::stringstream help_lookup_type;
+            help_lookup_type << "      <lookup_type> used to perform the lookup, where <lookup_type>\n"
+                             << "      is one of use_path | use_socket (default "
+                                                          << lookup_type_to_string(lookup_type) << ")\n"
+                             << "      use_path   - Lookups are performed from a hashdb in the filesystem\n"
+                             << "                   at the specified <path>.\n"
+                             << "      use_socket - Lookups are performed from a server service at the\n"
+                             << "                   specified <socket>.\n"
+                             ;
+            sp.info->get_config("lookup_type", &lookup_type_string, help_lookup_type.str());
 
             // import path
-            sp.info->get_config("path", &client_hashdb_path, "");
-            scanner_info::helpstream << "      Specifies the <path> to the hash database to be used for performing\n"
-                                     << "      the lookup service.  This option is only used when the lookup type\n"
-                                     << "      is set to \"use_path\".\n"
-                                     ;
+            std::stringstream help_path;
+            help_path        << "      Specifies the <path> to the hash database to be used for performing\n"
+                             << "      the lookup service.  This option is only used when the lookup type\n"
+                             << "      is set to \"use_path\".\n"
+                             ;
+            sp.info->get_config("path", &client_hashdb_path, help_path.str());
 
             // import socket
-            sp.info->get_config("socket", &client_socket_endpoint, "");
-            scanner_info::helpstream << "      Specifies the client <socket> endpoint to use to connect with the\n"
-                                     << "      sector_hash server (default '" << client_socket_endpoint << "').  Valid socket\n"
-                                     << "      transports supported by the zmq messaging kernel are tcp, ipc, and\n"
-                                     << "      inproc.  Currently, only tcp is tested.  This opition is only valid\n"
-                                     << "      when the lookup type is set to \"lookup_socket\".\n"
-                                     ;
+            std::stringstream help_socket;
+            help_socket      << "      Specifies the client <socket> endpoint to use to connect with the\n"
+                             << "      sector_hash server (default '" << client_socket_endpoint << "').  Valid socket\n"
+                             << "      transports supported by the zmq messaging kernel are tcp, ipc, and\n"
+                             << "      inproc.  Currently, only tcp is tested.  This opition is only valid\n"
+                             << "      when the lookup type is set to \"lookup_socket\".\n"
+                             ;
+            sp.info->get_config("socket", &client_socket_endpoint, help_socket.str());
 
             // import chunk_size
             sp.info->get_config("chunk_size", &chunk_size, "Chunk size, in bytes, used to generate hashes");
 
             // import sector_size
-            sp.info->get_config("sector_size", &sector_size, "Sector size, in bytes");
-            scanner_info::helpstream << "      Hashes are generated on each sector_size boundary.\n";
+            std::stringstream help_sector_size;
+            help_sector_size << "Sector size, in bytes\n";
+            help_sector_size << "      Hashes are generated on each sector_size boundary.\n";
+            sp.info->get_config("sector_size", &sector_size, help_sector_size.str());
 
             return;
         }
@@ -114,33 +119,33 @@ void scan_sectorid(const class scanner_params &sp,
             // validate lookup_type
             bool is_valid = string_to_lookup_type(lookup_type_string, lookup_type);
             if (!is_valid) {
-                scanner_info::helpstream << "Error.  Value '" << lookup_type_string
-                                         << "' for parameter 'lookup_type' is invalid.\n"
-                                         << "Cannot continue.\n";
+                std::cerr << "Error.  Value '" << lookup_type_string
+                          << "' for parameter 'lookup_type' is invalid.\n"
+                          << "Cannot continue.\n";
                 exit(1);
             }
 
             // validate chunk_size
             if (chunk_size == 0) {
-                scanner_info::helpstream << "Error.  Value for parameter 'chunk_size' is invalid.\n"
-                                         << "Cannot continue.\n";
+                std:cerr << "Error.  Value for parameter 'chunk_size' is invalid.\n"
+                         << "Cannot continue.\n";
                 exit(1);
             }
 
             // validate sector_size
             if (sector_size == 0) {
-                scanner_info::helpstream << "Error.  Value for parameter 'sector_size' is invalid.\n"
-                                         << "Cannot continue.\n";
+                std::cerr << "Error.  Value for parameter 'sector_size' is invalid.\n"
+                          << "Cannot continue.\n";
                 exit(1);
             }
 
             // also, for valid operation, sectors must align on chunk boundaries
             if (chunk_size % sector_size != 0) {
-                scanner_info::helpstream << "Error: invalid chunk size=" << chunk_size
-                      << " or sector size=" << sector_size << ".\n"
-                      << "Sectors must align on chunk boundaries.\n"
-                      << "Specifically, sectorid_chunk_size \% sectorid_sector_size must be zero.\n"
-                      << "Cannot continue.\n";
+                std::cerr << "Error: invalid chunk size=" << chunk_size
+                          << " or sector size=" << sector_size << ".\n"
+                          << "Sectors must align on chunk boundaries.\n"
+                          << "Specifically, sectorid_chunk_size \% sectorid_sector_size must be zero.\n"
+                          << "Cannot continue.\n";
                 exit(1);
             }
 
@@ -197,15 +202,15 @@ void scan_sectorid(const class scanner_params &sp,
 
             if (!success) {
                 // the lookup failed
-                scanner_info::helpstream << "Error in scan_sectorid hash lookup\n";
+                std::cerr << "Error in scan_sectorid hash lookup\n";
                 return;
             }
 
             // always make sure the server is using the same chunk size
             if (response.chunk_size != chunk_size) {
-                scanner_info::helpstream << "Error: The scanner is hashing using a chunk size of " << chunk_size << "\n"
-                    << " but the hashdb contains hashes for data of chunk size " << response.chunk_size << ".\n"
-                    << "Cannot continue.\n";
+                std::cerr << "Error: The scanner is hashing using a chunk size of " << chunk_size << "\n"
+                          << "but the hashdb contains hashes for data of chunk size " << response.chunk_size << ".\n"
+                          << "Cannot continue.\n";
                 exit(1);
             }
 
