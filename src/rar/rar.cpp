@@ -21,7 +21,7 @@ int aFunctionThatDoesNotWork(int argc, char *argv[])
   EnumConfigPaths(argv[0],-1);
 #endif
 
-  ErrHandler.SetSignalHandlers(true);
+  //ErrHandler.SetSignalHandlers(true);
 
   RARInitData();
 

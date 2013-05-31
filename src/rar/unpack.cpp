@@ -1,8 +1,8 @@
 //#include "rar.hpp"
 
 #include "model.hpp"
-#include "coder.cpp"
-#include "suballoc.cpp"
+#include "coder.hpp"
+#include "suballoc.hpp"
 #include "unpack.hpp"
 #ifndef SFX_MODULE
 #include "unpack15.cpp"

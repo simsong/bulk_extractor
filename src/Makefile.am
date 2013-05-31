@@ -63,13 +63,13 @@ RAR_SUPPORT = \
         rar/encname.hpp rar/errhnd.cpp rar/errhnd.hpp rar/extinfo.cpp rar/extinfo.hpp rar/extract.cpp \
         rar/extract.hpp rar/file.cpp rar/filefn.cpp rar/filefn.hpp rar/file.hpp rar/filestr.cpp rar/filestr.hpp \
         rar/getbits.cpp rar/getbits.hpp rar/global.cpp rar/global.hpp rar/headers.hpp rar/loclang.hpp rar/match.cpp \
-        rar/match.hpp rar/model.cpp rar/model.hpp rar/options.cpp rar/options.hpp rar/os.hpp rar/pathfn.cpp \
-        rar/pathfn.hpp rar/rar.cpp rar/rardefs.hpp rar/rar.hpp rar/rarlang.hpp rar/raros.hpp rar/rarpch.cpp \
-        rar/rartypes.hpp rar/rarvmtbl.cpp rar/rawread.cpp rar/rawread.hpp rar/rdwrfn.cpp rar/rdwrfn.hpp \
+        rar/match.hpp rar/model.cpp rar/model.hpp rar/suballoc.cpp rar/suballoc.hpp rar/options.cpp rar/options.hpp \
+        rar/os.hpp rar/pathfn.cpp rar/pathfn.hpp rar/rar.cpp rar/rardefs.hpp rar/rar.hpp rar/rarlang.hpp rar/raros.hpp \
+        rar/rarpch.cpp rar/rartypes.hpp rar/rarvmtbl.cpp rar/rawread.cpp rar/rawread.hpp rar/rdwrfn.cpp rar/rdwrfn.hpp \
         rar/resource.cpp rar/resource.hpp rar/rs.cpp rar/rs.hpp rar/savepos.cpp rar/savepos.hpp rar/smallfn.cpp \
-        rar/smallfn.hpp rar/strfn.cpp rar/strfn.hpp rar/strlist.cpp rar/strlist.hpp rar/suballoc.cpp \
-        rar/suballoc.hpp rar/system.cpp rar/system.hpp rar/timefn.cpp rar/timefn.hpp rar/unicode.cpp \
-        rar/unicode.hpp rar/unpack15.cpp rar/unpack20.cpp rar/unpack.cpp rar/unpack.hpp \
+        rar/smallfn.hpp rar/strfn.cpp rar/strfn.hpp rar/strlist.cpp rar/strlist.hpp \
+        rar/system.cpp rar/system.hpp rar/timefn.cpp rar/timefn.hpp rar/unicode.cpp \
+        rar/unicode.hpp rar/unpack.cpp rar/unpack.hpp \
         rar/version.hpp
 
 bulk_scanners = \

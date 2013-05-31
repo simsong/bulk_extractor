@@ -155,7 +155,7 @@ struct BaseBlock
     return(false);
   }
 
-  virtual ~BaseBlock();
+  virtual ~BaseBlock() {};
 };
 
 struct BlockHeader:BaseBlock

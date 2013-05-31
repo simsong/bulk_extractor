@@ -1,7 +1,7 @@
 #include "rar.hpp"
 
 #ifndef SHELL_EXT
-#include "arccmt.cpp"
+//#include "arccmt.cpp"
 #endif
 
 /**
