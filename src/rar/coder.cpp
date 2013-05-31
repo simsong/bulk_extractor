@@ -1,6 +1,6 @@
 #include "rar.hpp"
 
-inline unsigned int RangeCoder::GetChar()
+unsigned int RangeCoder::GetChar()
 {
   return(UnpackRead->GetChar());
 }
@@ -18,19 +18,19 @@ void RangeCoder::InitDecoder(Unpack *UnpackRead_)
 
 
 
-inline int RangeCoder::GetCurrentCount() 
+int RangeCoder::GetCurrentCount() 
 {
   return (code-low)/(range /= SubRange.scale);
 }
 
 
-inline uint RangeCoder::GetCurrentShiftCount(uint SHIFT) 
+uint RangeCoder::GetCurrentShiftCount(uint SHIFT) 
 {
   return (code-low)/(range >>= SHIFT);
 }
 
 
-inline void RangeCoder::Decode()
+void RangeCoder::Decode()
 {
   low += range*SubRange.LowCount;
   range *= SubRange.HighCount-SubRange.LowCount;

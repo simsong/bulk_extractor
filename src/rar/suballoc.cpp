@@ -50,14 +50,14 @@ void SubAllocator::Clean()
 }
 
 
-inline void SubAllocator::InsertNode(void* p,int indx) 
+void SubAllocator::InsertNode(void* p,int indx) 
 {
   ((RAR_NODE*) p)->next=FreeList[indx].next;
   FreeList[indx].next=(RAR_NODE*) p;
 }
 
 
-inline void* SubAllocator::RemoveNode(int indx) 
+void* SubAllocator::RemoveNode(int indx) 
 {
   RAR_NODE* RetVal=FreeList[indx].next;
   FreeList[indx].next=RetVal->next;
@@ -65,7 +65,7 @@ inline void* SubAllocator::RemoveNode(int indx)
 }
 
 
-inline uint SubAllocator::U2B(int NU) 
+uint SubAllocator::U2B(int NU) 
 { 
   // We calculate the size of units in bytes based on real UNIT_SIZE.
   // In original implementation it was 8*NU+4*NU.
@@ -76,13 +76,13 @@ inline uint SubAllocator::U2B(int NU)
 
 // Calculate RAR_MEM_BLK+Items address. Real RAR_MEM_BLK size must be
 // equal to UNIT_SIZE, so we cannot just add Items to RAR_MEM_BLK address.
-inline RAR_MEM_BLK* SubAllocator::MBPtr(RAR_MEM_BLK *BasePtr,int Items)
+RAR_MEM_BLK* SubAllocator::MBPtr(RAR_MEM_BLK *BasePtr,int Items)
 {
   return((RAR_MEM_BLK*)( ((byte *)(BasePtr))+U2B(Items) ));
 }
 
 
-inline void SubAllocator::SplitBlock(void* pv,int OldIndx,int NewIndx)
+void SubAllocator::SplitBlock(void* pv,int OldIndx,int NewIndx)
 {
   int i, UDiff=Indx2Units[OldIndx]-Indx2Units[NewIndx];
   byte* p=((byte*) pv)+U2B(Indx2Units[NewIndx]);
@@ -197,7 +197,7 @@ void SubAllocator::InitSubAllocator()
 }
 
 
-inline void SubAllocator::GlueFreeBlocks()
+void SubAllocator::GlueFreeBlocks()
 {
   RAR_MEM_BLK s0, * p, * p1;
   int i, k, sz;
@@ -262,7 +262,7 @@ void* SubAllocator::AllocUnitsRare(int indx)
 }
 
 
-inline void* SubAllocator::AllocUnits(int NU)
+void* SubAllocator::AllocUnits(int NU)
 {
   int indx=Units2Indx[NU-1];
   if ( FreeList[indx].next )

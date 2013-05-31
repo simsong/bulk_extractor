@@ -77,11 +77,11 @@ class SubAllocator
     bool StartSubAllocator(int SASize);
     void StopSubAllocator();
     void  InitSubAllocator();
-    inline void* AllocContext();
-    inline void* AllocUnits(int NU);
-    inline void* ExpandUnits(void* ptr,int OldNU);
-    inline void* ShrinkUnits(void* ptr,int OldNU,int NewNU);
-    inline void  FreeUnits(void* ptr,int OldNU);
+    void* AllocContext();
+    void* AllocUnits(int NU);
+    void* ExpandUnits(void* ptr,int OldNU);
+    void* ShrinkUnits(void* ptr,int OldNU,int NewNU);
+    void  FreeUnits(void* ptr,int OldNU);
     long GetAllocatedMemory() {return(SubAllocatorSize);};
 
     byte *pText, *UnitsStart,*HeapEnd,*FakeUnitsStart;
