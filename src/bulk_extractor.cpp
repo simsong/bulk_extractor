@@ -150,6 +150,9 @@ scanner_t *scanners_builtin[] = {
 #ifdef HAVE_EXIV2
     scan_exiv2,
 #endif
+#ifdef HAVE_SECTORID
+    scan_sectorid,
+#endif
     scan_elf,
     scan_exif,
     scan_zip,
