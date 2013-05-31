@@ -33,7 +33,8 @@ scan_flexdemo.dll: scan_flexdemo.flex
 # Rule to compile .flex into a .o
 # 
 
-CLEANFILES=scan_flexdemo.cpp scan_demo.o scan_demo.so scan_flexdemo.o scan_flexdemo.so
+CLEANFILES=scan_demo.d scan_demo.o scan_demo.so \
+	sscan_flexdemo.d can_flexdemo.cpp scan_flexdemo.o scan_flexdemo.so 
 
 SUFFIXES = .so .flex
 .cpp.so:
