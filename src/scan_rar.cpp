@@ -75,12 +75,12 @@
 
 using namespace std;
 
-inline int int2(const u_char *cc)
+static inline int int2(const u_char *cc)
 {
     return (cc[1]<<8) + cc[0];
 }
 
-inline int int4(const u_char *cc)
+static inline int int4(const u_char *cc)
 {
     return (cc[3]<<24) + (cc[2]<<16) + (cc[1]<<8) + (cc[0]);
 }
@@ -126,7 +126,7 @@ static inline uint32_t crc_init(void)
 {
     return 0xffffffff;
 }
-uint32_t crc_reflect(uint32_t data, size_t data_len)
+static uint32_t crc_reflect(uint32_t data, size_t data_len)
 {
     unsigned int i;
     uint32_t ret;
@@ -142,7 +142,7 @@ static inline uint32_t crc_finalize(uint32_t crc)
 {
     return crc_reflect(crc, 32) ^ 0xffffffff;
 }
-uint32_t crc_update(uint32_t crc, const unsigned char *data, size_t data_len)
+static uint32_t crc_update(uint32_t crc, const unsigned char *data, size_t data_len)
 {
     unsigned int i;
     bool bit;
@@ -174,7 +174,7 @@ static bool record_components = true;
 static bool record_volumes = true;
 
 // component processing (compressed file within an archive)
-string process_component(const unsigned char *buf, size_t buf_len, string &found_feature_name)
+static string process_component(const unsigned char *buf, size_t buf_len, string &found_feature_name)
 {
     // confirm that the smallest possible component block header could fit in
     // the buffer
@@ -385,7 +385,7 @@ string process_component(const unsigned char *buf, size_t buf_len, string &found
 }
 
 // volume processing (RAR file itself)
-string process_volume(const unsigned char *buf, size_t buf_len)
+static string process_volume(const unsigned char *buf, size_t buf_len)
 {
     // confirm that the smallest possible component block header could fit in
     // the buffer
