@@ -442,7 +442,7 @@ if test x"$sectorid" == xyes ; then
   AC_CHECK_LIB([zmq],[zmq_ctx_new],[LIBS="-lzmq $LIBS"],
     [AC_MSG_WARN([Could not find zeromq, zeromq v3 is required to build the sectorid scanner])
     sectorid=no])
-  AC_CHECK_LIB([zxml2], [xmlSAXUserParseFile],[LIBS="-lxml2 $LIBS"],
+  AC_CHECK_LIB([xml2], [xmlSAXUserParseFile],[LIBS="-lxml2 $LIBS"],
     [AC_MSG_WARN([Could not find libxml2 library required to build the sectorid scanner])
     sectorid=no])
   AX_BOOST_BASE([1.44],
