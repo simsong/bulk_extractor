@@ -434,29 +434,38 @@ AC_CHECK_LIB([expat],[XML_ParserCreate])
 ################################################################
 ## sectorid support
 AC_ARG_ENABLE([sectorid],
-    [AS_HELP_STRING([--enable-sectorid], [enable sectorid scanner support])], 
-    [sectorid=yes],
-    [sectorid=no])
+    [AS_HELP_STRING([--disable-sectorid], [disable sectorid scanner support])],
+    [sectorid=no],
+    [sectorid=yes])
 
 if test x"$sectorid" == xyes ; then
-
   AC_CHECK_LIB([zmq],[zmq_ctx_new],[LIBS="-lzmq $LIBS"],
-    [AC_MSG_ERROR([Could not find zeromq, zeromq v3 is required])])
-  AC_CHECK_LIB([xml2], [xmlSAXUserParseFile],[LIBS="-lxml2 $LIBS"],
-    [AC_MSG_ERROR([Could not find libxml2 library])])
-
-  AX_BOOST_BASE([1.44], [], [AC_MSG_ERROR([Boost 1.44 or newer is required])])
-  AX_BOOST_SYSTEM
-  AX_BOOST_FILESYSTEM
-  LIBS="$BOOST_SYSTEM_LIB $BOOST_FILESYSTEM_LIB $LIBS"
-
+    [AC_MSG_WARN([Could not find zeromq, zeromq v3 is required to build the sectorid scanner])
+    sectorid=no])
+  AC_CHECK_LIB([zxml2], [xmlSAXUserParseFile],[LIBS="-lxml2 $LIBS"],
+    [AC_MSG_WARN([Could not find libxml2 library required to build the sectorid scanner])
+    sectorid=no])
+  AX_BOOST_BASE([1.44],
+    [AX_BOOST_SYSTEM
+    AX_BOOST_FILESYSTEM
+    LIBS="$BOOST_SYSTEM_LIB $BOOST_FILESYSTEM_LIB $LIBS"],
+    [AC_MSG_WARN([Boost 1.44 or newer is required to build the sectorid scanner])
+    sectorid=no])
+fi
+if test x"$sectorid" == xyes ; then
   AC_LANG_PUSH(C++)
   AC_CHECK_HEADER([sector_hash_query.hpp], [],
-    [AC_MSG_ERROR([Could not find sector_hash_query header file])])
+    [AC_MSG_WARN([Could not find sector_hash_query header file required to build the sectorid scanner])
+    sectorid=no])
   AC_CHECK_LIB([sector_hash_query], [sector_hash_query_version], [],
-    [AC_MSG_ERROR([Could not find sector_hash_query library])])
-  AC_DEFINE(HAVE_SECTORID,1,[define 1 to build the sectorid scanner])
+    [AC_MSG_WARN([Could not find sector_hash_query library required to build the sectorid scanner])
+    sectorid=no])
   AC_LANG_POP()
+fi
+if test x"$sectorid" == xyes ; then
+  AC_DEFINE(HAVE_SECTORID,1,[define 1 to build the sectorid scanner])
+else
+  AC_MSG_NOTICE([the sectorid scanner will not be built])
 fi
 
 
