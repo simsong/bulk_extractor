@@ -11,6 +11,8 @@
 #include <iomanip>
 #include <cassert>
 
+#include "rar/rar.hpp"
+
 #define FILE_MAGIC 0x74
 #define FILE_HEAD_MIN_LEN 32
 #define ARCHIVE_MAGIC 0x73
@@ -490,6 +492,39 @@ static bool process_volume(const unsigned char *buf, size_t buf_len, RarVolumeIn
     return true;
 }
 
+static void unpack_buf(const uint8_t* input, size_t input_len, uint8_t* output, size_t output_len)
+{
+    //TODO cleanup
+    char* achar[6];
+    achar[0] = "p";
+    achar[1] = "-y"; //say yes to everything
+    achar[2] = "-ai"; //Ignore file attributes
+    achar[3] = "-p-"; //Don't ask for password
+    //achar[5] = "-inul"; //Disable all messages
+    achar[4] = "-kb"; //Keep broken extracted files
+    achar[5] = "aRarFile.rar"; //dummy file name
+
+    string xmloutput = "<rar>\n";
+    CommandData data; //this variable is for assigning the commands to execute
+    data.ParseCommandLine(6, achar); //input the commands and have them parsed
+    const wchar_t* c = L"aRarFile.rar"; //the 'L' prefix tells it to convert an ASCII Literal
+    data.AddArcName("aRarFile.rar",c); //sets the name of the file
+
+    CmdExtract extract; //from the extract.cpp file; allows the extraction to occur
+
+    byte *startingaddress = (byte*) input;
+
+    ComprDataIO mydataio;
+    mydataio.SetSkipUnpCRC(true); //skip checking the CRC to allow more processing to occur
+    mydataio.SetUnpackToMemory(output,output_len); //Sets flag to save output to memory
+
+    extract.SetComprDataIO(mydataio); //Sets the ComprDataIO variable to the custom one that was just built
+
+    extract.DoExtract(&data, startingaddress, input_len, xmloutput);
+
+    data.Close();
+}
+
 // leave out depth checks for now
 #if 0
 /* See:
@@ -548,6 +583,23 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
             }
             if(record_components && process_component(cc, cc_len, component)) {
                 rar_recorder->write(pos0 + pos, component.name, component.to_xml());
+                //TODO decompression checks: size limit, recursion check, ignore uncompressed
+                managed_malloc<uint8_t>dbuf(component.uncompressed_size);
+                unpack_buf(cc, cc_len, dbuf.buf, component.uncompressed_size);
+
+                size_t sz = component.uncompressed_size;
+                printf("%02X %02X %02X %02X %02X\n", dbuf.buf[0], dbuf.buf[1], dbuf.buf[2], dbuf.buf[3], dbuf.buf[4]);
+                printf("%02X %02X %02X %02X %02X\n", dbuf.buf[sz-5], dbuf.buf[sz-4], dbuf.buf[sz-3], dbuf.buf[sz-2], dbuf.buf[sz-1]);
+
+                const pos0_t pos0_rar = pos0 + rcb.partName;
+                const sbuf_t child_sbuf(pos0_rar, dbuf.buf, component.uncompressed_size, sbuf.pagesize, false);
+                scanner_params child_params(sp, child_sbuf);
+            
+                // call scanners on deobfuscated buffer
+                (*rcb.callback)(child_params);
+                if(rcb.returnAfterFound) {
+                    return;
+                }
             }
 	}
     }
