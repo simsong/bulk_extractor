@@ -8,7 +8,7 @@ bin_PROGRAMS = plugin_test
 
 plugin_test_SOURCES = plugin_test.cpp
 
-EXTRA_DIST = scan_demo.cpp scan_flexdemo.cpp
+EXTRA_DIST = scan_demo.cpp scan_flexdemo.flex
 
 # lib_LTLIBRARIES = scan_demo.so scan_flexdemo.so
 
