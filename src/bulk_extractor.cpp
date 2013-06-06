@@ -1200,7 +1200,6 @@ int main(int argc,char **argv)
     be13::plugin::scanners_process_commands();
 
     /* Print usage if necessary */
-    puts("BAZ");
     if(opt_H){ be13::plugin::info_scanners(true,true,scanners_builtin,'e','x'); exit(0);}
     if(opt_h){ usage(progname);be13::plugin::info_scanners(false,true,scanners_builtin,'e','x'); exit(0);}
 
