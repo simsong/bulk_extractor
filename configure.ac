@@ -442,6 +442,13 @@ if test x"$sectorid" == xyes ; then
   AC_CHECK_LIB([zmq],[zmq_ctx_new],[LIBS="-lzmq $LIBS"],
     [AC_MSG_WARN([Could not find zeromq, zeromq v3 is required to build the sectorid scanner])
     sectorid=no])
+
+  if test  x"$mingw" = x"yes";  then
+    # the win32 configuration of libxml2 requires zlib and iconv libraries
+    AC_CHECK_LIB([z], [gzdopen],[LIBS="-lz $LIBS"], [AC_MSG_ERROR([Could not find zlib library])])
+    AC_CHECK_LIB([iconv], [iconv],[LIBS="-liconv $LIBS"], [AC_MSG_ERROR([Could not find win-iconv library])])
+  fi
+
   AC_CHECK_LIB([xml2], [xmlSAXUserParseFile],[LIBS="-lxml2 $LIBS"],
     [AC_MSG_WARN([Could not find libxml2 library required to build the sectorid scanner])
     sectorid=no])
