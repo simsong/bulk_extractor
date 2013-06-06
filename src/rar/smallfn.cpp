@@ -1,19 +1,19 @@
 #include "rar.hpp"
 
-int ToPercent(int64 N1,int64 N2)
+int ToPercent(int64 N1_,int64 N2_)
 {
-  if (N2<N1)
+  if (N2_<N1_)
     return(100);
-  return(ToPercentUnlim(N1,N2));
+  return(ToPercentUnlim(N1_,N2_));
 }
 
 
 // Allows the percent larger than 100.
-int ToPercentUnlim(int64 N1,int64 N2)
+int ToPercentUnlim(int64 N1_,int64 N2_)
 {
-  if (N2==0)
+  if (N2_==0)
     return(0);
-  return((int)(N1*100/N2));
+  return((int)(N1_*100/N2_));
 }
 
 

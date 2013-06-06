@@ -1,6 +1,14 @@
 #include "rar.hpp"
 
-ComprDataIO::ComprDataIO()
+ComprDataIO::ComprDataIO() :
+    UnpackFromMemory(), UnpackFromMemorySize(), UnpackFromMemoryAddr(),
+    UnpackToMemory(), UnpackToMemorySize(), UnpackToMemoryAddr(), UnpWrSize(),
+    UnpWrAddr(), UnpPackedSize(), ShowProgress(), TestMode(), SkipUnpCRC(),
+    SrcFile(), DestFile(), Command(), SubHead(), SubHeadPos(), LastPercent(),
+    CurrentCommand(), PackVolume(), UnpVolume(), NextVolumeMissing(),
+    TotalPackRead(), UnpArcSize(), CurPackRead(), CurPackWrite(), CurUnpRead(),
+    CurUnpWrite(), ProcessedArcSize(), TotalArcSize(), PackFileCRC(),
+    UnpFileCRC(), PackedCRC(), Encryption(), Decryption()
 {
   Init();
 }
@@ -156,8 +164,10 @@ void ComprDataIO::UnpWrite(byte *Addr,size_t Count)
   CurUnpWrite+=Count;
   if (!SkipUnpCRC)
 #ifndef SFX_MODULE
+  {
     if (((Archive *)SrcFile)->OldFormat)
       UnpFileCRC=OldCRC((ushort)UnpFileCRC,Addr,Count);
+  }
     else
 #endif
       UnpFileCRC=CRC(UnpFileCRC,Addr,Count);
@@ -210,12 +220,12 @@ void ComprDataIO::ShowUnpWrite()
 
 
 
-void ComprDataIO::SetFiles(File *SrcFile,File *DestFile)
+void ComprDataIO::SetFiles(File *SrcFile_,File *DestFile_)
 {
-  if (SrcFile!=NULL)
-    ComprDataIO::SrcFile=SrcFile;
-  if (DestFile!=NULL)
-    ComprDataIO::DestFile=DestFile;
+  if (SrcFile_!=NULL)
+    ComprDataIO::SrcFile=SrcFile_;
+  if (DestFile_!=NULL)
+    ComprDataIO::DestFile=DestFile_;
   LastPercent=-1;
 }
 

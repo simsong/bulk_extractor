@@ -458,7 +458,7 @@ bool EnumConfigPaths(char *Path,int Number)
     return(true);
   }
   Number--;
-  if (Number<0 || Number>=sizeof(AltPath)/sizeof(AltPath[0]))
+  if (Number<0 || Number>=(int)(sizeof(AltPath)/sizeof(AltPath[0])))
     return(false);
   strcpy(Path,AltPath[Number]);
   return(true);
@@ -608,7 +608,7 @@ void NextVolumeName(char *ArcName,wchar *ArcNameW,uint MaxLength,bool OldNumberi
       ChPtr=GetExt(ArcName);
     }
     else
-      if (ChPtr[1]==0 && strlen(ArcName)<MaxLength-3 || stricomp(ChPtr+1,"exe")==0 || stricomp(ChPtr+1,"sfx")==0)
+      if ((ChPtr[1]==0 && strlen(ArcName)<MaxLength-3) || stricomp(ChPtr+1,"exe")==0 || stricomp(ChPtr+1,"sfx")==0)
         strcpy(ChPtr+1,"rar");
     if (!OldNumbering)
     {
@@ -656,7 +656,7 @@ void NextVolumeName(char *ArcName,wchar *ArcNameW,uint MaxLength,bool OldNumberi
       ChPtr=GetExt(ArcNameW);
     }
     else
-      if (ChPtr[1]==0 && wcslen(ArcNameW)<MaxLength-3 || wcsicomp(ChPtr+1,L"exe")==0 || wcsicomp(ChPtr+1,L"sfx")==0)
+      if ((ChPtr[1]==0 && wcslen(ArcNameW)<MaxLength-3) || wcsicomp(ChPtr+1,L"exe")==0 || wcsicomp(ChPtr+1,L"sfx")==0)
         wcscpy(ChPtr+1,L"rar");
     if (!OldNumbering)
     {
@@ -754,7 +754,7 @@ void MakeNameUsable(char *Name,bool Extended)
 #endif
   for (char *s=Name;*s!=0;s=charnext(s))
   {
-    if (strchr(Extended ? "?*<>|\"":"?*",*s)!=NULL || Extended && (byte)*s<32)
+    if (strchr(Extended ? "?*<>|\"":"?*",*s)!=NULL || (Extended && (byte)*s<32))
       *s='_';
 #ifdef _EMX
     if (*s=='=')
@@ -774,7 +774,7 @@ void MakeNameUsable(wchar *Name,bool Extended)
 {
   for (wchar *s=Name;*s!=0;s++)
   {
-    if (wcschr(Extended ? L"?*<>|\"":L"?*",*s)!=NULL || Extended && (uint)*s<32)
+    if (wcschr(Extended ? L"?*<>|\"":L"?*",*s)!=NULL || (Extended && (uint)*s<32))
       *s='_';
 #ifndef _UNIX
     if (s-Name>1 && *s==':')
@@ -789,20 +789,30 @@ void MakeNameUsable(wchar *Name,bool Extended)
 char* UnixSlashToDos(char *SrcName,char *DestName,uint MaxLength)
 {
   if (DestName!=NULL && DestName!=SrcName)
+  {
     if (strlen(SrcName)>=MaxLength)
     {
       *DestName=0;
       return(DestName);
     }
     else
+    {
       strcpy(DestName,SrcName);
+    }
+  }
   for (char *s=SrcName;*s!=0;s=charnext(s))
   {
     if (*s=='/')
+    {
       if (DestName==NULL)
+      {
         *s='\\';
+      }
       else
+      {
         DestName[s-SrcName]='\\';
+      }
+    }
   }
   return(DestName==NULL ? SrcName:DestName);
 }
@@ -811,20 +821,30 @@ char* UnixSlashToDos(char *SrcName,char *DestName,uint MaxLength)
 char* DosSlashToUnix(char *SrcName,char *DestName,uint MaxLength)
 {
   if (DestName!=NULL && DestName!=SrcName)
+  {
     if (strlen(SrcName)>=MaxLength)
     {
       *DestName=0;
       return(DestName);
     }
     else
+    {
       strcpy(DestName,SrcName);
+    }
+  }
   for (char *s=SrcName;*s!=0;s=charnext(s))
   {
     if (*s=='\\')
+    {
       if (DestName==NULL)
+      {
         *s='/';
+      }
       else
+      {
         DestName[s-SrcName]='/';
+      }
+    }
   }
   return(DestName==NULL ? SrcName:DestName);
 }
@@ -833,20 +853,30 @@ char* DosSlashToUnix(char *SrcName,char *DestName,uint MaxLength)
 wchar* UnixSlashToDos(wchar *SrcName,wchar *DestName,uint MaxLength)
 {
   if (DestName!=NULL && DestName!=SrcName)
+  {
     if (wcslen(SrcName)>=MaxLength)
     {
       *DestName=0;
       return(DestName);
     }
     else
+    {
       wcscpy(DestName,SrcName);
+    }
+  }
   for (wchar *s=SrcName;*s!=0;s++)
   {
     if (*s=='/')
+    {
       if (DestName==NULL)
+      {
         *s='\\';
+      }
       else
+      {
         DestName[s-SrcName]='\\';
+      }
+    }
   }
   return(DestName==NULL ? SrcName:DestName);
 }
@@ -855,20 +885,30 @@ wchar* UnixSlashToDos(wchar *SrcName,wchar *DestName,uint MaxLength)
 wchar* DosSlashToUnix(wchar *SrcName,wchar *DestName,uint MaxLength)
 {
   if (DestName!=NULL && DestName!=SrcName)
+  {
     if (wcslen(SrcName)>=MaxLength)
     {
       *DestName=0;
       return(DestName);
     }
     else
+    {
       wcscpy(DestName,SrcName);
+    }
+  }
   for (wchar *s=SrcName;*s!=0;s++)
   {
     if (*s=='\\')
+    {
       if (DestName==NULL)
+      {
         *s='/';
+      }
       else
+      {
         DestName[s-SrcName]='/';
+      }
+    }
   }
   return(DestName==NULL ? SrcName:DestName);
 }
@@ -1268,10 +1308,16 @@ void GenArcName(char *ArcName,wchar *ArcNameW,char *GenerateMask,
   int WeekDay=rlt.wDay==0 ? 6:rlt.wDay-1;
   int StartWeekDay=rlt.yDay-WeekDay;
   if (StartWeekDay<0)
+  {
     if (StartWeekDay<=-4)
+    {
       StartWeekDay+=IsLeapYear(rlt.Year-1) ? 366:365;
+    }
     else
+    {
       StartWeekDay=0;
+    }
+  }
   int CurWeek=StartWeekDay/7+1;
   if (StartWeekDay%7>=4)
     CurWeek++;

@@ -1,6 +1,8 @@
 #include "rar.hpp"
 
-StringList::StringList()
+StringList::StringList() :
+    StringData(), CurPos(), StringDataW(), CurPosW(), StringsCount(),
+    SavePosNumber()
 {
   Reset();
 }

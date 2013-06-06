@@ -1,6 +1,35 @@
 #include "rar.hpp"
 
-RAROptions::RAROptions()
+RAROptions::RAROptions() :
+    ExclFileAttr(), InclFileAttr(), InclAttrSet(), WinSize(), TempPath(),
+    ConfigDisabled(), ExtrPath(), ExtrPathW(), CommentFile(), CommentFileW(),
+    CommentCharset(), FilelistCharset(), ArcPath(), ArcPathW(), Password(),
+    EncryptHeaders(), LogName(), MsgStream(), Sound(), Overwrite(), Method(),
+    Recovery(), RecVolNumber(), DisablePercentage(), DisableCopyright(),
+    DisableDone(), Solid(), SolidCount(), ClearArc(), AddArcOnly(), AV(),
+    DisableComment(), FreshFiles(), UpdateFiles(), ExclPath(), Recurse(),
+    VolSize(), NextVolSizes(), CurVolNum(), AllYes(), DisableViewAV(),
+    DisableSortSolid(), ArcTime(), ConvertNames(), ProcessOwners(),
+    SaveLinks(), Priority(), SleepTime(), KeepBroken(), OpenShared(),
+    DeleteFiles(),
+#ifndef SFX_MODULE
+    GenerateArcName(), GenerateMask(),
+#endif
+    SyncFiles(), ProcessEA(), SaveStreams(), SetCompressedAttr(),
+    IgnoreGeneralAttr(), FileTimeBefore(), FileTimeAfter(), FileSizeLess(),
+    FileSizeMore(), OldNumbering(), Lock(), Test(), VolumePause(),
+    FilterModes(), EmailTo(), VersionControl(), NoEndBlock(),
+    AppendArcNameToPath(), Shutdown(), xmtime(), xctime(), xatime(),
+    xarctime(), CompressStdin()
+#ifdef PACK_SMP
+    ,
+    Threads()
+#endif
+#ifdef RARDLL
+    ,
+    DllDestName(), DllDestNameW(), DllOpMode(), DllError(), UserData(),
+    Callback(), ChangeVolProc(), ProcessDataProc()
+#endif
 {
   Init();
 }

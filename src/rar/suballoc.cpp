@@ -15,12 +15,16 @@
 #include "global.hpp"
 #include "model.hpp"
 
-SubAllocator::SubAllocator()
+SubAllocator::SubAllocator() :
+    SubAllocatorSize(), GlueCount(), HeapStart(), LoUnit(), HiUnit(), pText(),
+    UnitsStart(), HeapEnd(), FakeUnitsStart()
 {
   Clean();
 }
 
-SubAllocator::SubAllocator(const SubAllocator &copy)
+SubAllocator::SubAllocator(const SubAllocator &copy) :
+    SubAllocatorSize(), GlueCount(), HeapStart(), LoUnit(), HiUnit(), pText(),
+    UnitsStart(), HeapEnd(), FakeUnitsStart()
 {
     *this = copy;
 }

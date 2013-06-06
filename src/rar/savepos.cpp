@@ -1,15 +1,17 @@
 #include "rar.hpp"
 
 
-SaveFilePos::SaveFilePos(File &SaveFile)
+SaveFilePos::SaveFilePos(File &SaveFile_) :
+    SaveFile(), SavePos(), CloseCount()
 {
-  SaveFilePos::SaveFile=&SaveFile;
-  SavePos=SaveFile.Tell();
-  CloseCount=SaveFile.CloseCount;
+  SaveFilePos::SaveFile=&SaveFile_;
+  SavePos=SaveFile_.Tell();
+  CloseCount=SaveFile_.CloseCount;
   return;
 }
 
-SaveFilePos::SaveFilePos(const SaveFilePos &copy)
+SaveFilePos::SaveFilePos(const SaveFilePos &copy) :
+    SaveFile(), SavePos(), CloseCount()
 {
     *this = copy;
 }
@@ -25,4 +27,6 @@ const SaveFilePos& SaveFilePos::operator=(const SaveFilePos &source)
     SaveFile = source.SaveFile;
     SavePos = source.SavePos;
     CloseCount = source.CloseCount;
+
+    return *this;
 }

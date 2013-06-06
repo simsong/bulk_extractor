@@ -27,14 +27,20 @@ inline PPM_CONTEXT* PPM_CONTEXT::createChild(ModelPPM *Model,STATE* pStats,
 }
 
 
-ModelPPM::ModelPPM()
+ModelPPM::ModelPPM() :
+    DummySEE2Cont(), MinContext(), MedContext(), MaxContext(), FoundState(),
+    NumMasked(), InitEsc(), OrderFall(), MaxOrder(), RunLength(), InitRL(),
+    EscCount(), PrevSuccess(), HiBitsFlag(), Coder(), SubAlloc()
 {
   MinContext=NULL;
   MaxContext=NULL;
   MedContext=NULL;
 }
 
-ModelPPM::ModelPPM(const ModelPPM &copy)
+ModelPPM::ModelPPM(const ModelPPM &copy) :
+    DummySEE2Cont(), MinContext(), MedContext(), MaxContext(), FoundState(),
+    NumMasked(), InitEsc(), OrderFall(), MaxOrder(), RunLength(), InitRL(),
+    EscCount(), PrevSuccess(), HiBitsFlag(), Coder(), SubAlloc()
 {
     *this = copy;
 }
@@ -63,6 +69,8 @@ const ModelPPM& ModelPPM::operator=(const ModelPPM &src)
     memcpy(BinSumm, src.BinSumm, sizeof(BinSumm));
     Coder = src.Coder;
     SubAlloc = src.SubAlloc;
+
+    return *this;
 }
 
 
@@ -98,12 +106,12 @@ void ModelPPM::RestartModelRare()
 }
 
 
-void ModelPPM::StartModelRare(int MaxOrder)
+void ModelPPM::StartModelRare(int MaxOrder_)
 {
   int i, k, m ,Step;
   EscCount=1;
 /*
-  if (MaxOrder < 2) 
+  if (MaxOrder_ < 2) 
   {
     memset(CharMask,0,sizeof(CharMask));
     OrderFall=ModelPPM::MaxOrder;
@@ -119,7 +127,7 @@ void ModelPPM::StartModelRare(int MaxOrder)
   else 
 */
   {
-    ModelPPM::MaxOrder=MaxOrder;
+    ModelPPM::MaxOrder=MaxOrder_;
     RestartModelRare();
     NS2BSIndx[0]=2*0;
     NS2BSIndx[1]=2*1;
@@ -577,8 +585,8 @@ void ModelPPM::CleanUp()
 
 bool ModelPPM::DecodeInit(Unpack *UnpackRead,int &EscChar)
 {
-  int MaxOrder=UnpackRead->GetChar();
-  bool Reset=(MaxOrder & 0x20)!=0;
+  int MaxOrder_=UnpackRead->GetChar();
+  bool Reset=(MaxOrder_ & 0x20)!=0;
 
   int MaxMB;
   if (Reset)
@@ -586,21 +594,21 @@ bool ModelPPM::DecodeInit(Unpack *UnpackRead,int &EscChar)
   else
     if (SubAlloc.GetAllocatedMemory()==0)
       return(false);
-  if (MaxOrder & 0x40)
+  if (MaxOrder_ & 0x40)
     EscChar=UnpackRead->GetChar();
   Coder.InitDecoder(UnpackRead);
   if (Reset)
   {
-    MaxOrder=(MaxOrder & 0x1f)+1;
-    if (MaxOrder>16)
-      MaxOrder=16+(MaxOrder-16)*3;
-    if (MaxOrder==1)
+    MaxOrder_=(MaxOrder_ & 0x1f)+1;
+    if (MaxOrder_>16)
+      MaxOrder_=16+(MaxOrder_-16)*3;
+    if (MaxOrder_==1)
     {
       SubAlloc.StopSubAllocator();
       return(false);
     }
     SubAlloc.StartSubAllocator(MaxMB+1);
-    StartModelRare(MaxOrder);
+    StartModelRare(MaxOrder_);
   }
   return(MinContext!=NULL);
 }

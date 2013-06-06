@@ -254,14 +254,19 @@ bool Unpack::ReadTables20()
 void Unpack::ReadLastTables()
 {
   if (ReadTop>=InAddr+5)
+  {
     if (UnpAudioBlock)
     {
       if (DecodeNumber(&MD[UnpCurChannel])==256)
+      {
+        ReadTables20();
+      }
+    }
+    else if (DecodeNumber(&LD)==269)
+    {
         ReadTables20();
     }
-    else
-      if (DecodeNumber(&LD)==269)
-        ReadTables20();
+  }
 }
 
 
@@ -313,7 +318,7 @@ byte Unpack::DecodeAudio(int Delta)
   {
     unsigned int MinDif=V->Dif[0],NumMinDif=0;
     V->Dif[0]=0;
-    for (int I=1;I<sizeof(V->Dif)/sizeof(V->Dif[0]);I++)
+    for (unsigned I=1;I<sizeof(V->Dif)/sizeof(V->Dif[0]);I++)
     {
       if (V->Dif[I]<MinDif)
       {

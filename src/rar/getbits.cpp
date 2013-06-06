@@ -1,6 +1,7 @@
 #include "rar.hpp"
 
-BitInput::BitInput()
+BitInput::BitInput() :
+    InAddr(), InBit(), InBuf()
 {
   // getbits attempts to read data from InAddr, InAddr+1, InAddr+2 positions.
   // So let's allocate two additional bytes for situation, when we need to
@@ -14,7 +15,8 @@ BitInput::BitInput()
   memset(InBuf,0,BufSize);
 }
 
-BitInput::BitInput(const BitInput &copy)
+BitInput::BitInput(const BitInput &copy) :
+    InAddr(), InBit(), InBuf()
 {
     *this = copy;
 }
@@ -25,6 +27,8 @@ const BitInput& BitInput::operator=(const BitInput &src)
     InBit = src.InBit;
 
     InBuf = src.InBuf;
+
+    return *this;
 }
 
 

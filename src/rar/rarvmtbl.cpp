@@ -10,6 +10,7 @@
 
 typedef unsigned char byte;
 
+#if 0
 static __thread byte VM_CmdFlags[]=
 {
   /* VM_MOV   */ VMCF_OP2 | VMCF_BYTEMODE                                ,
@@ -53,3 +54,4 @@ static __thread byte VM_CmdFlags[]=
   /* VM_SBB   */ VMCF_OP2 | VMCF_BYTEMODE | VMCF_USEFLAGS | VMCF_CHFLAGS ,
   /* VM_PRINT */ VMCF_OP0
 };
+#endif

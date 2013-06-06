@@ -9,7 +9,16 @@
 #include "unpack20.cpp"
 #endif
 
-Unpack::Unpack(ComprDataIO *DataIO)
+Unpack::Unpack(ComprDataIO *DataIO) :
+    UnpIO(), PPM(), PPMEscChar(), VMCodeInp(), Filters(), PrgStack(),
+    OldFilterLengths(), LastFilter(), TablesRead(), LD(), DD(), LDD(), RD(),
+    BD(), OldDistPtr(), LastDist(), LastLength(), UnpPtr(), WrPtr(), ReadTop(),
+    ReadBorder(), UnpBlockType(), Window(), ExternalWindow(), DestUnpSize(),
+    Suspended(), UnpAllBuf(), UnpSomeRead(), WrittenFileSize(),
+    FileExtracted(), PrevLowDist(), LowDistRepCount(), FlagBuf(), AvrPlc(),
+    AvrPlcB(), AvrLn1(), AvrLn2(), AvrLn3(), Buf60(), NumHuf(), StMode(),
+    LCount(), FlagsCnt(), Nhfb(), Nlzb(), MaxDist3(), UnpAudioBlock(),
+    UnpChannels(), UnpCurChannel(), UnpChannelDelta()
 {
   UnpIO=DataIO;
   Window=NULL;
@@ -19,7 +28,16 @@ Unpack::Unpack(ComprDataIO *DataIO)
   UnpSomeRead=false;
 }
 
-Unpack::Unpack(const Unpack &copy)
+Unpack::Unpack(const Unpack &copy) :
+    UnpIO(), PPM(), PPMEscChar(), VMCodeInp(), Filters(), PrgStack(),
+    OldFilterLengths(), LastFilter(), TablesRead(), LD(), DD(), LDD(), RD(),
+    BD(), OldDistPtr(), LastDist(), LastLength(), UnpPtr(), WrPtr(), ReadTop(),
+    ReadBorder(), UnpBlockType(), Window(), ExternalWindow(), DestUnpSize(),
+    Suspended(), UnpAllBuf(), UnpSomeRead(), WrittenFileSize(),
+    FileExtracted(), PrevLowDist(), LowDistRepCount(), FlagBuf(), AvrPlc(),
+    AvrPlcB(), AvrLn1(), AvrLn2(), AvrLn3(), Buf60(), NumHuf(), StMode(),
+    LCount(), FlagsCnt(), Nhfb(), Nlzb(), MaxDist3(), UnpAudioBlock(),
+    UnpChannels(), UnpCurChannel(), UnpChannelDelta()
 {
     *this = copy;
 }
@@ -94,6 +112,8 @@ const Unpack& Unpack::operator=(const Unpack &src)
     UnpCurChannel = src.UnpCurChannel;
     UnpChannelDelta = src.UnpChannelDelta;
     memcpy(AudV, src.AudV, sizeof(AudV));
+
+    return *this;
 }
 
 Unpack::~Unpack()
@@ -104,9 +124,9 @@ Unpack::~Unpack()
 }
 
 
-void Unpack::Init(byte *Window)
+void Unpack::Init(byte *Window_)
 {
-  if (Window==NULL)
+  if (Window_==NULL)
   {
     Unpack::Window=new byte[MAXWINSIZE];
 
@@ -120,7 +140,7 @@ void Unpack::Init(byte *Window)
   }
   else
   {
-    Unpack::Window=Window;
+    Unpack::Window=Window_;
     ExternalWindow=true;
   }
   UnpInitData(false);
@@ -290,7 +310,7 @@ void Unpack::Unpack29(bool Solid)
   if (DDecode[1]==0)
   {
     int Dist=0,BitLength=0,Slot=0;
-    for (int I=0;I<sizeof(DBitLengthCounts)/sizeof(DBitLengthCounts[0]);I++,BitLength++)
+    for (unsigned I=0;I<sizeof(DBitLengthCounts)/sizeof(DBitLengthCounts[0]);I++,BitLength++)
       for (int J=0;J<DBitLengthCounts[I];J++,Slot++,Dist+=(1<<BitLength))
       {
         DDecode[Slot]=Dist;
@@ -366,14 +386,14 @@ void Unpack::Unpack29(bool Solid)
           bool Failed=false;
           for (int I=0;I<4 && !Failed;I++)
           {
-            int Ch=SafePPMDecodeChar();
-            if (Ch==-1)
+            int Ch_=SafePPMDecodeChar();
+            if (Ch_==-1)
               Failed=true;
             else
               if (I==3)
-                Length=(byte)Ch;
+                Length=(byte)Ch_;
               else
-                Distance=(Distance<<8)+(byte)Ch;
+                Distance=(Distance<<8)+(byte)Ch_;
           }
           if (Failed)
             break;
@@ -532,7 +552,7 @@ bool Unpack::ReadEndOfBlock()
     addbits(2);
   }
   TablesRead=!NewTable;
-  return !(NewFile || NewTable && !ReadTables());
+  return !(NewFile || (NewTable && !ReadTables()));
 }
 
 
@@ -669,9 +689,9 @@ void Unpack::UnpWriteBuf()
       {
         for (size_t J=I;J<PrgStack.Size();J++)
         {
-          UnpackFilter *flt=PrgStack[J];
-          if (flt!=NULL && flt->NextWindow)
-            flt->NextWindow=false;
+          UnpackFilter *flt_=PrgStack[J];
+          if (flt_!=NULL && flt_->NextWindow)
+            flt_->NextWindow=false;
         }
         WrPtr=WrittenBorder;
         return;
@@ -749,7 +769,7 @@ bool Unpack::ReadTables()
       else
       {
         ZeroCount+=2;
-        while (ZeroCount-- > 0 && I<sizeof(BitLength)/sizeof(BitLength[0]))
+        while (ZeroCount-- > 0 && I<(int)(sizeof(BitLength)/sizeof(BitLength[0])))
           BitLength[I++]=0;
         I--;
       }

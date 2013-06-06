@@ -65,17 +65,26 @@ bool CmpName(const char *Wildcard,const char *Name,int CmpMode)
         mstricompc(Path1,Path2,ForceCase)!=0)
       return(false);
     if (CmpMode==MATCH_SUBPATH || CmpMode==MATCH_WILDSUBPATH)
-      if (IsWildcard(Path1))
-        return(match(Wildcard,Name,ForceCase));
-      else
-        if (CmpMode==MATCH_SUBPATH || IsWildcard(Wildcard))
+    {
+        if (IsWildcard(Path1))
         {
-          if (*Path1 && mstrnicompc(Path1,Path2,strlen(Path1),ForceCase)!=0)
-            return(false);
+            return(match(Wildcard,Name,ForceCase));
+        }
+        else if (CmpMode==MATCH_SUBPATH || IsWildcard(Wildcard))
+        {
+            if (*Path1 && mstrnicompc(Path1,Path2,strlen(Path1),ForceCase)!=0)
+            {
+                return(false);
+            }
         }
         else
-          if (mstricompc(Path1,Path2,ForceCase)!=0)
-            return(false);
+        {
+            if (mstricompc(Path1,Path2,ForceCase)!=0)
+            {
+                return(false);
+            }
+        }
+    }
   }
   char *Name1=PointToName(Wildcard);
   char *Name2=PointToName(Name);
@@ -121,20 +130,34 @@ bool CmpName(const wchar *Wildcard,const wchar *Name,int CmpMode)
     GetFilePath(Name,Path2,ASIZE(Path2));
 
     if ((CmpMode==MATCH_EXACT || CmpMode==MATCH_EXACTPATH) &&
-        mwcsicompc(Path1,Path2,ForceCase)!=0)
-      return(false);
+            mwcsicompc(Path1,Path2,ForceCase)!=0)
+    {
+        return(false);
+    }
     if (CmpMode==MATCH_SUBPATH || CmpMode==MATCH_WILDSUBPATH)
-      if (IsWildcard(NULL,Path1))
-        return(match(Wildcard,Name,ForceCase));
-      else
-        if (CmpMode==MATCH_SUBPATH || IsWildcard(NULL,Wildcard))
+    {
+        if (IsWildcard(NULL,Path1))
         {
-          if (*Path1 && mwcsnicompc(Path1,Path2,wcslen(Path1),ForceCase)!=0)
-            return(false);
+            return(match(Wildcard,Name,ForceCase));
         }
         else
-          if (mwcsicompc(Path1,Path2,ForceCase)!=0)
-            return(false);
+        {
+            if (CmpMode==MATCH_SUBPATH || IsWildcard(NULL,Wildcard))
+            {
+                if (*Path1 && mwcsnicompc(Path1,Path2,wcslen(Path1),ForceCase)!=0)
+                {
+                    return(false);
+                }
+            }
+            else
+            {
+                if (mwcsicompc(Path1,Path2,ForceCase)!=0)
+                {
+                    return(false);
+                }
+            }
+        }
+    }
   }
   wchar *Name1=PointToName(Wildcard);
   wchar *Name2=PointToName(Name);

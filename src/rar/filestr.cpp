@@ -16,10 +16,16 @@ bool ReadTextFile(
   char FileName[NM];
   *FileName=0;
   if (Name!=NULL)
-    if (Config)
-      GetConfigName(Name,FileName,true);
-    else
-      strcpy(FileName,Name);
+  {
+      if (Config)
+      {
+          GetConfigName(Name,FileName,true);
+      }
+      else
+      {
+          strcpy(FileName,Name);
+      }
+  }
 
   wchar FileNameW[NM];
   *FileNameW=0;
@@ -33,7 +39,7 @@ bool ReadTextFile(
 #endif
 
   File SrcFile;
-  if (FileName!=NULL && *FileName!=0 || FileNameW!=NULL && *FileNameW!=0)
+  if ((FileName!=NULL && *FileName!=0) || (FileNameW!=NULL && *FileNameW!=0))
   {
     bool OpenCode=AbortOnError ? SrcFile.WOpen(FileName,FileNameW):SrcFile.Open(FileName,FileNameW);
 
@@ -59,7 +65,7 @@ bool ReadTextFile(
   memset(&Data[DataSize],0,5);
 
   if (SrcCharset==RCH_UNICODE ||
-      SrcCharset==RCH_DEFAULT && IsUnicode((byte *)&Data[0],DataSize))
+      (SrcCharset==RCH_DEFAULT && IsUnicode((byte *)&Data[0],DataSize)))
   {
     // Unicode in native system format, can be more than 2 bytes per character.
     Array<wchar> DataW(Data.Size()/2+1);

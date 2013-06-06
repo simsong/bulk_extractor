@@ -1,10 +1,11 @@
 #include "rar.hpp"
 
-#define Clean(D,S)  {for (int I=0;I<(S);I++) (D)[I]=0;}
+#define Clean(D,S)  {for (int _I=0;_I<(S);_I++) (D)[_I]=0;}
 
-RSCoder::RSCoder(int ParSize)
+RSCoder::RSCoder(int ParSize_) :
+    ErrCount(), ParSize(), FirstBlockDone()
 {
-  RSCoder::ParSize=ParSize; // Store the number of recovery volumes.
+  RSCoder::ParSize=ParSize_; // Store the number of recovery volumes.
   FirstBlockDone=false;
   gfInit();
   pnInit();

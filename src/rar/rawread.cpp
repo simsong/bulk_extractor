@@ -4,14 +4,16 @@
 Constructor function for the <code>RawRead</code> class
 @param SrcFile - the <code>File</code> object that this class will read from
 */
-RawRead::RawRead(File *SrcFile)
+RawRead::RawRead(File *SrcFile_) :
+    Data(), SrcFile(), DataSize(), ReadPos()
 {
-  RawRead::SrcFile=SrcFile;
+  RawRead::SrcFile=SrcFile_;
   ReadPos=0;
   DataSize=0;
 }
 
-RawRead::RawRead(const RawRead &copy)
+RawRead::RawRead(const RawRead &copy) :
+    Data(), SrcFile(), DataSize(), ReadPos()
 {
     *this = copy;
 }
@@ -22,6 +24,8 @@ const RawRead& RawRead::operator=(const RawRead &src)
     SrcFile = src.SrcFile;
     DataSize = src.DataSize;
     ReadPos = src.ReadPos;
+
+    return *this;
 }
 
 /*void RawRead::RawRead (File *SrcFile)
@@ -35,23 +39,23 @@ const RawRead& RawRead::operator=(const RawRead &src)
 }*/
 
 
-void RawRead::Read(size_t Size)
+void RawRead::Read(size_t Size_)
 {
-    if (Size!=0)
+    if (Size_!=0)
     {
-      Data.Add(Size);
-      DataSize+=SrcFile->Read(&Data[DataSize],Size);
+      Data.Add(Size_);
+      DataSize+=SrcFile->Read(&Data[DataSize],Size_);
     }
 }
 
 
-void RawRead::Read(byte *SrcData,size_t Size)
+void RawRead::Read(byte *SrcData,size_t Size_)
 {
-  if (Size!=0)
+  if (Size_!=0)
   {
-    Data.Add(Size);
-    memcpy(&Data[DataSize],SrcData,Size);
-    DataSize+=Size;
+    Data.Add(Size_);
+    memcpy(&Data[DataSize],SrcData,Size_);
+    DataSize+=Size_;
   }
 }
 
@@ -102,27 +106,27 @@ void RawRead::Get8(int64 &Field)
 }
 
 
-void RawRead::Get(byte *Field,size_t Size)
+void RawRead::Get(byte *Field,size_t Size_)
 {
-  if (ReadPos+Size-1<DataSize)
+  if (ReadPos+Size_-1<DataSize)
   {
-    memcpy(Field,&Data[ReadPos],Size);
-    ReadPos+=Size;
+    memcpy(Field,&Data[ReadPos],Size_);
+    ReadPos+=Size_;
   }
   else
-    memset(Field,0,Size);
+    memset(Field,0,Size_);
 }
 
 
-void RawRead::Get(wchar *Field,size_t Size)
+void RawRead::Get(wchar *Field,size_t Size_)
 {
-  if (ReadPos+2*Size-1<DataSize)
+  if (ReadPos+2*Size_-1<DataSize)
   {
-    RawToWide(&Data[ReadPos],Field,Size);
-    ReadPos+=sizeof(wchar)*Size;
+    RawToWide(&Data[ReadPos],Field,Size_);
+    ReadPos+=sizeof(wchar)*Size_;
   }
   else
-    memset(Field,0,sizeof(wchar)*Size);
+    memset(Field,0,sizeof(wchar)*Size_);
 }
 
 

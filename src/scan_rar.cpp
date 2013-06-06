@@ -494,19 +494,26 @@ static bool process_volume(const unsigned char *buf, size_t buf_len, RarVolumeIn
 
 static void unpack_buf(const uint8_t* input, size_t input_len, uint8_t* output, size_t output_len)
 {
-    //TODO cleanup
-    char* achar[6];
-    achar[0] = "p";
-    achar[1] = "-y"; //say yes to everything
-    achar[2] = "-ai"; //Ignore file attributes
-    achar[3] = "-p-"; //Don't ask for password
-    //achar[5] = "-inul"; //Disable all messages
-    achar[4] = "-kb"; //Keep broken extracted files
-    achar[5] = "aRarFile.rar"; //dummy file name
+    // stupid unrar wants mutable strings for arg inputs
+    char arg_bufs[6][32];
+    strncpy(arg_bufs[0], "p", sizeof(arg_bufs[0]));
+    strncpy(arg_bufs[1], "-y", sizeof(arg_bufs[1])); //say yes to everything
+    strncpy(arg_bufs[2], "-ai", sizeof(arg_bufs[2])); //Ignore file attributes
+    strncpy(arg_bufs[3], "-p-", sizeof(arg_bufs[3])); //Don't ask for password
+    strncpy(arg_bufs[4], "-kb", sizeof(arg_bufs[4])); //Keep broken extracted files
+    strncpy(arg_bufs[5], "aRarFile.rar", sizeof(arg_bufs[5])); //dummy file name
+    char* args[6];
+    args[0] = &arg_bufs[0][0];
+    args[1] = &arg_bufs[1][0];
+    args[2] = &arg_bufs[2][0];
+    args[3] = &arg_bufs[3][0];
+    //args[5] = "-inul"; //Disable all messages
+    args[4] = &arg_bufs[4][0];
+    args[5] = &arg_bufs[5][0];
 
     string xmloutput = "<rar>\n";
     CommandData data; //this variable is for assigning the commands to execute
-    data.ParseCommandLine(6, achar); //input the commands and have them parsed
+    data.ParseCommandLine(6, args); //input the commands and have them parsed
     const wchar_t* c = L"aRarFile.rar"; //the 'L' prefix tells it to convert an ASCII Literal
     data.AddArcName("aRarFile.rar",c); //sets the name of the file
 
@@ -587,9 +594,13 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
                 managed_malloc<uint8_t>dbuf(component.uncompressed_size);
                 unpack_buf(cc, cc_len, dbuf.buf, component.uncompressed_size);
 
+                // TODO remove debug
+                // assume that we are decompressing "15 Feet of Time.pdf" while fixing warnings for rapid testing
+                //25 50 44 46 2D
+                //25 25 45 4F 46
                 size_t sz = component.uncompressed_size;
-                printf("%02X %02X %02X %02X %02X\n", dbuf.buf[0], dbuf.buf[1], dbuf.buf[2], dbuf.buf[3], dbuf.buf[4]);
-                printf("%02X %02X %02X %02X %02X\n", dbuf.buf[sz-5], dbuf.buf[sz-4], dbuf.buf[sz-3], dbuf.buf[sz-2], dbuf.buf[sz-1]);
+                assert(dbuf.buf[0] == 0x25); assert(dbuf.buf[1] == 0x50); assert(dbuf.buf[2] == 0x44); assert(dbuf.buf[3] == 0x46); assert(dbuf.buf[4] == 0x2D); 
+                assert(dbuf.buf[sz-5] == 0x25); assert(dbuf.buf[sz-4] == 0x25); assert(dbuf.buf[sz-3] == 0x45); assert(dbuf.buf[sz-2] == 0x4F); assert(dbuf.buf[sz-1] == 0x46); 
 
                 const pos0_t pos0_rar = pos0 + rcb.partName;
                 const sbuf_t child_sbuf(pos0_rar, dbuf.buf, component.uncompressed_size, sbuf.pagesize, false);

@@ -4,7 +4,8 @@
 
 using namespace std;
 
-RarTime::RarTime()
+RarTime::RarTime() :
+    rlt()
 {
   Reset();
 }
@@ -268,7 +269,7 @@ void RarTime::SetIsoText(const char *TimeText)
     if (IsDigit(*TimeText))
     {
       int FieldPos=DigitCount<4 ? 0:(DigitCount-4)/2+1;
-      if (FieldPos<sizeof(Field)/sizeof(Field[0]))
+      if (FieldPos<(int)(sizeof(Field)/sizeof(Field[0])))
         Field[FieldPos]=Field[FieldPos]*10+*TimeText-'0';
       DigitCount++;
     }
