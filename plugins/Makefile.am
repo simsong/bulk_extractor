@@ -13,6 +13,11 @@ EXTRA_DIST = scan_demo.cpp scan_flexdemo.flex
 # lib_LTLIBRARIES = scan_demo.so scan_flexdemo.so
 
 
+plugins:
+	make scan_demo.so scan_flexdemo.so
+	@echo "Available Plugins:"
+	ls -l *.so
+
 # scan_demo_so_SOURCES = scan_demo.cpp
 # scan_demo_dll_SOURCES = scan_demo.cpp
 # scan_flexdemo_so_SOURCES = scan_flexdemo.cpp
@@ -28,7 +33,8 @@ scan_flexdemo.dll: scan_flexdemo.flex
 # Rule to compile .flex into a .o
 # 
 
-CLEANFILES=scan_flexdemo.cpp scan_demo.o scan_demo.so scan_flexdemo.o scan_flexdemo.so
+CLEANFILES=scan_demo.d scan_demo.o scan_demo.so \
+	sscan_flexdemo.d can_flexdemo.cpp scan_flexdemo.o scan_flexdemo.so 
 
 SUFFIXES = .so .flex
 .cpp.so:

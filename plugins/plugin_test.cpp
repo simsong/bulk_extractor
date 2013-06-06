@@ -26,51 +26,61 @@ typedef int (__cdecl *MYPROC)(LPWSTR);
 scanner_params::PrintOptions scanner_params::no_options; 
 int main(int argc,char **argv)
 {
-    scanner_t *fn;
+    std::string fname = argv[1];
+    scanner_t *fn=0;
     if(argc!=2){
 	fprintf(stderr,"usage: %s scanner.so\n",argv[0]);
+        fprintf(stderr,"type 'make plugins' to make available plugins\n");
 	exit(1);
+    }
+
+    /* Strip extension and path */
+    std::string name = fname;
+    size_t dot = name.rfind('.');
+    if(dot==std::string::npos){
+	fprintf(stderr,"%s: cannot strip extension\n",name.c_str());
+	exit(1);
+    }
+    name = name.substr(0,dot);         
+
+    /* Strip dir */
+    size_t slash = name.rfind('.');
+    if(slash!=std::string::npos){
+        name = name.substr(slash+1);
     }
 
 #ifdef HAVE_DLOPEN
-    const char *fname = argv[1];
-    char *name = strdup(fname);
-    char *cc = strrchr(name,'.');
-    if(cc){
-	cc[0] = 0;
-    } else {
-	fprintf(stderr,"%s: cannot strip extension\n",name);
-	exit(1);
+    if(fname.find('.')==std::string::npos){
+        fname = "./" + fname;               // fedora requires a complete path name
     }
-    printf("stripped name: %s\n",name);
 
 #ifdef HAVE_DLOPEN_PREFLIGHT
-    if(!dlopen_preflight(fname)){
+    if(!dlopen_preflight(fname.c_str())){
 	err(1,"dlopen_preflight - cannot open %s: %s",fname,dlerror());
     }
 #endif
 
-    void *lib=dlopen(fname, RTLD_LAZY);
-
+    void *lib=dlopen(fname.c_str(), RTLD_LAZY);
     if(lib==0){
+        fprintf(stderr,"fname=%s\n",fname.c_str());
         fprintf(stderr,"dlopen: %s\n",dlerror());
         exit(1);
     }
-    fn=(scanner_t *)dlsym(lib, name);
+
+    fn=(scanner_t *)dlsym(lib, name.c_str());
     if(fn==0){
         fprintf(stderr,"dlsym: %s\n",dlerror());
         exit(1);
     }
-#else
+
+#endif
 #ifdef HAVE_LOADLIBRARY
     /* Use Win32 LoadLibrary function */
     /* See http://msdn.microsoft.com/en-us/library/ms686944(v=vs.85).aspx */
-    const char *fname = "hello.DLL";
-    HINSTANCE hinstLib = LoadLibrary(TEXT(fname));
-    if(hinstLib==0) errx(1,"LoadLibrary(%s) failed",fname);
-    MYPROC fn = (MYPROC)GetProcAddress(hinstLib,"hello");
-    if(fn==0) errx(1,"GetProcAddress(%s) failed","hello");
-#endif
+    HINSTANCE hinstLib = LoadLibrary(TEXT(fname.c_str()));
+    if(hinstLib==0) errx(1,"LoadLibrary(%s) failed",fname.c_str());
+    MYPROC fn = (MYPROC)GetProcAddress(hinstLib,name.c_str());
+    if(fn==0) errx(1,"GetProcAddress(%s) failed",name.c_str());
 #endif
 
     feature_recorder_set fs(0);

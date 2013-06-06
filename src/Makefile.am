@@ -44,6 +44,7 @@ bulk_scanners = \
 	scan_net.cpp \
 	scan_pdf.cpp \
 	scan_rar.cpp \
+	scan_sectorid.cpp \
 	scan_vcard.cpp \
 	scan_windirs.cpp \
 	scan_winpe.cpp \
