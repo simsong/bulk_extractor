@@ -592,6 +592,7 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
                 rar_recorder->write(pos0 + pos, component.name, component.to_xml());
                 //TODO decompression checks: size limit, recursion check
                 managed_malloc<uint8_t>dbuf(component.uncompressed_size);
+                memset(dbuf.buf, 0x00, component.uncompressed_size);
                 if(component.compression_method != METHOD_UNCOMPRESSED) {
                     unpack_buf(cc, cc_len, dbuf.buf, component.uncompressed_size);
 
