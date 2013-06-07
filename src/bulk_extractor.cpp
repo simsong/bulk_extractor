@@ -581,10 +581,6 @@ public:
 		      blocks_to_sample.insert(blk); // will be added even if already present
 		    }
 
-		    //for(si = blocks_to_sample.begin();si!=blocks_to_sample.end();++si){
-                    //std::cout << *si << " ";
-                    //}
-		    //std::cout << "\n";
 		    si = blocks_to_sample.begin();
 		    it.seek_block(*si);
 		}
@@ -620,7 +616,11 @@ public:
                     }
                     total_bytes += sbuf->pagesize;
 
-                    tp.schedule_work(sbuf);	// schedule the work
+                    /***************************
+                     **** SCHEDULE THE WORK ****
+                     ***************************/
+
+                    tp.schedule_work(sbuf);	
 		    if(!opt_quiet) notify_user(it);
                 }
                 catch (const std::exception &e) {
@@ -1254,9 +1254,7 @@ int main(int argc,char **argv)
     std::string image_fname = *argv;
 
     if(directory_missing(opt_outdir) || directory_empty(opt_outdir)){
-
         /* First time running */
-
 	/* Validate the args */
 	if ( argc !=1 ) errx(1,"Disk image option not provided. Run with -h for help.");
 	validate_fn(image_fname);
@@ -1312,7 +1310,7 @@ int main(int argc,char **argv)
     }
 
     /****************************************************************
-     *** THIS IS IT! 
+     *** THIS IS IT! PHASE 1!
      ****************************************************************/
 
     BulkExtractor_Phase1 phase1(*xreport,timer,num_threads,opt_quiet);
