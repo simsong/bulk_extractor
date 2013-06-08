@@ -24,9 +24,11 @@
 #include "exif_reader.h"
 #include "unicode_escape.h"
 
-static const uint32_t MAX_ENTRY_SIZE = 1000000;
+static uint32_t MAX_ENTRY_SIZE = 1000000;
+static uint32_t MIN_JPEG_SIZE = 200;    // don't scan something smaller
 
 static int debug=0;
+
 
 /****************************************************************
  *** formatting code
@@ -176,15 +178,6 @@ inline size_t min(size_t a,size_t b){
     return a<b ? a : b;
 }
 
-
-/**
- * Experimental carving support
- */
-
-static void carve_jpeg(const sbuf_t &sbuf)
-{
-
-}
 
 /**
  * record exif data in well-formatted XML.
@@ -370,7 +363,31 @@ static void clear_entries(entry_list_t &entries) {
     entries.clear();
 }
 
+/**
+ * Process the JPEG, including - calculate its hash, carve it, record exif and gps data
+ */
+
+
 static be13::hash_def hasher;
+static void process_jpeg(const sbuf_t &sbuf,entry_list_t &entries,
+                         feature_recorder *exif_recorder,feature_recorder *gps_recorder,
+                         bool dohash)
+{
+    // get md5 for this exif
+    string feature_text = "00000000000000000000000000000000";
+    if(dohash){
+        sbuf_t tohash(sbuf,0,4096);
+        feature_text = hasher.func(tohash.buf,tohash.bufsize);
+    }
+    
+    //carve_jpeg(sbuf);
+    record_exif_data(exif_recorder, sbuf.pos0, feature_text, entries);
+    record_gps_data(gps_recorder, sbuf.pos0, feature_text, entries);
+    clear_entries(entries);		    // clear entries for next round
+}
+
+
+
 extern "C"
 void scan_exif(const class scanner_params &sp,const recursion_control_block &rcb)
 {
@@ -392,6 +409,7 @@ void scan_exif(const class scanner_params &sp,const recursion_control_block &rcb
 
 	// phase 1: set up feature recorders and search sbuf for features
 	const sbuf_t &sbuf = sp.sbuf;
+
 	feature_recorder *exif_recorder = sp.fs.get_name("exif");
 
 	exif_recorder->set_flag(feature_recorder::FLAG_XML); // to escape all but backslashes
@@ -401,22 +419,13 @@ void scan_exif(const class scanner_params &sp,const recursion_control_block &rcb
 	entry_list_t entries;
 
 	// search through sbuf for potential exif content
-
-	// optimization: stop early rather than check for overflow.
-	if (sbuf.pagesize < 6) {
-	    return;
-	}
-	size_t stop = sbuf.pagesize - 6; // optimization: stop early rather than check for overflow.
-
+        // Note: when data is found, we should skip to the end of the data
 	size_t tiff_offset = 0;
-	for (size_t start=0; start < stop; start++) {
+        if(sbuf.bufsize < MIN_JPEG_SIZE) return;
+	for (size_t start=0; start < sbuf.pagesize - MIN_JPEG_SIZE; start++) {
 
-	    // exif
-	    // check for probable TIFF in Exif
-	    if (sbuf[start + 0] == 0xff
-		&& sbuf[start + 1] == 0xd8
-		&& sbuf[start + 2] == 0xff
-		&& (sbuf[start + 3] & 0xf0) == 0xe0) {
+            // check for possible TIFF in Exif
+	    if (sbuf[start + 0] == 0xff && sbuf[start + 1] == 0xd8 && sbuf[start + 2] == 0xff && (sbuf[start + 3] & 0xf0) == 0xe0) {
 		if(debug) std::cerr << "scan_exif checking ffd8ff at start " << start << "\n";
 		// perform thorough check for TIFF in Exif
 		size_t possible_tiff_offset_from_exif = exif_reader::get_tiff_offset_from_exif(sbuf+start);
@@ -428,9 +437,6 @@ void scan_exif(const class scanner_params &sp,const recursion_control_block &rcb
 		    tiff_offset = start + possible_tiff_offset_from_exif;
 
 		    if(debug) std::cerr << "scan_exif Start processing validated Exif ffd8ff at start " << start << "\n";
-		    // get md5 for this exif
-                    sbuf_t tohash(sbuf,start,4096);
-		    string hash_hex = hasher.func(tohash.buf,tohash.bufsize);
 
 		    // get entries for this exif
                     try {
@@ -439,23 +445,14 @@ void scan_exif(const class scanner_params &sp,const recursion_control_block &rcb
                         // accept whatever entries were gleaned before the exif failure
                     }
 
-		    if(debug) std::cerr << "scan_exif.tiff_offset in ffd8 " << tiff_offset;
-                    carve_jpeg(sp.sbuf+start);
-		    record_exif_data(exif_recorder, sp.sbuf.pos0+start, hash_hex, entries);
-		    record_gps_data(gps_recorder, sp.sbuf.pos0+start, hash_hex, entries);
-
-		    // clear entries for next round
-		    clear_entries(entries);
-		    if(debug) std::cerr << "scan_exif Done processing validated Exif ffd8ff at start " << start << "\n";
+                    if(debug) std::cerr << "scan_exif.tiff_offset in ffd8 " << tiff_offset;
+                    process_jpeg(sp.sbuf+start,entries,exif_recorder,gps_recorder,true);
+                    if(debug) std::cerr << "scan_exif Done processing validated Exif ffd8ff at start " << start << "\n";
 		}
 
-		// check for probable TIFF in photoshop PSD header
-	    } else if (sbuf[start + 0] == '8'
-		       && sbuf[start + 1] == 'B'
-		       && sbuf[start + 2] == 'P'
-		       && sbuf[start + 3] == 'S'
-		       && sbuf[start + 4] == 0
-		       && sbuf[start + 5] == 1) {
+		// check for possible TIFF in photoshop PSD header
+	    } else if (sbuf[start + 0] == '8' && sbuf[start + 1] == 'B' && sbuf[start + 2] == 'P' && sbuf[start + 3] == 'S'
+		       && sbuf[start + 4] == 0 && sbuf[start + 5] == 1) {
 
 	        if(debug) std::cerr << "scan_exif checking 8BPS at start " << start << "\n";
 		// perform thorough check for TIFF in photoshop PSD
@@ -465,11 +462,6 @@ void scan_exif(const class scanner_params &sp,const recursion_control_block &rcb
 		    && tiff_reader::is_maybe_valid_tiff(sbuf + start + possible_tiff_offset_from_psd)) {
 		    // TIFF in PSD is valid, so process TIFF
 		    tiff_offset = start + possible_tiff_offset_from_psd;
-		    if(debug) std::cerr << "scan_exif Start processing validated Photoshop 8BPS at start " << start << " tiff_offset " << tiff_offset << "\n";
-
-		    // get md5 for this exif
-                    sbuf_t tohash(sbuf,start,4096);
-		    string hash_hex = hasher.func(tohash.buf,tohash.bufsize);
 
 		    // get entries for this exif
                     try {
@@ -478,36 +470,25 @@ void scan_exif(const class scanner_params &sp,const recursion_control_block &rcb
                         // accept whatever entries were gleaned before the exif failure
                     }
 
-                    carve_jpeg(sp.sbuf+start);
-		    record_exif_data(exif_recorder, sp.sbuf.pos0+start, hash_hex, entries);
-		    record_gps_data(gps_recorder, sp.sbuf.pos0+start, hash_hex, entries);
-
-		    // clear entries for next round
-		    clear_entries(entries);
+		    if(debug) std::cerr << "scan_exif Start processing validated Photoshop 8BPS at start " << start << " tiff_offset " << tiff_offset << "\n";
+                    process_jpeg(sp.sbuf+start,entries,exif_recorder,gps_recorder,true);
 		    if(debug) std::cerr << "scan_exif Done processing validated Photoshop 8BPS at start " << start << "\n";
 		}
 
 		// check for probable TIFF not in embedded header found above
 	    } else if (
-		// don't rescan a TIFF from an embedded format above
-		(start != tiff_offset)
-		// Intel
-		&& ((sbuf[start + 0] == 'I'
-		     && sbuf[start + 1] == 'I'
-		     && sbuf[start + 2] == 42
-		     && sbuf[start + 3] == 0)
-
-		    // Motorola
-		    || (sbuf[start + 0] == 'M'
-			&& sbuf[start + 1] == 'M'
-			&& sbuf[start + 2] == 0
-			&& sbuf[start + 3] == 42))) {
+                       (start != tiff_offset)		// don't rescan a TIFF from an embedded format above
+                       && (
+                           (sbuf[start + 0] == 'I' && sbuf[start + 1] == 'I' && sbuf[start + 2] == 42 && sbuf[start + 3] == 0) // intel
+                           ||
+                           (sbuf[start + 0] == 'M' && sbuf[start + 1] == 'M' && sbuf[start + 2] == 0 && sbuf[start + 3] == 42) // Motorola
+                           )){
 
 		// probably a match so check further
 		if (tiff_reader::is_maybe_valid_tiff(sbuf+start)) {
 		    // treat this as a valid match
 		    if(debug) std::cerr << "scan_exif Start processing validated TIFF II42 or MM42 at start "
-                                   << start << ", last tiff_offset: " << tiff_offset << "\n";
+                                        << start << ", last tiff_offset: " << tiff_offset << "\n";
 
 		    // get entries for this exif
                     try {
@@ -517,14 +498,8 @@ void scan_exif(const class scanner_params &sp,const recursion_control_block &rcb
                     }
 
                     // there is no MD5 because there is no associated file for this TIFF marker
-		    string feature_text = "00000000000000000000000000000000";
 
-                    carve_jpeg(sp.sbuf+start);
-		    record_exif_data(exif_recorder, sp.sbuf.pos0+start, feature_text, entries);
-		    record_gps_data(gps_recorder, sp.sbuf.pos0+start, feature_text, entries);
-
-		    // clear entries for next round
-		    clear_entries(entries);
+                    process_jpeg(sp.sbuf+start,entries,exif_recorder,gps_recorder,false);
 		    if(debug) std::cerr << "scan_exif Done processing validated TIFF II42 or MM42 at start " << start << "\n";
 		}
 	    }
