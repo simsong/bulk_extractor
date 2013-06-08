@@ -363,63 +363,88 @@ static void clear_entries(entry_list_t &entries) {
     entries.clear();
 }
 
-/**
- * Process the JPEG, including - calculate its hash, carve it, record exif and gps data
- */
+class exif_scanner {
+private:
+public:
+    exif_scanner(const class scanner_params &sp):
+        entries(),
+        exif_recorder(*sp.fs.get_name("exif")),
+        gps_recorder(*sp.fs.get_name("gps")),
+        jpeg_recorder(*sp.fs.get_name("jpeg")){
 
+	exif_recorder.set_flag(feature_recorder::FLAG_XML); // to escape all but backslashes
+        jpeg_recorder.set_file_extension(".jpg");
+    }
 
-static be13::hash_def hasher;
-static void process_jpeg(const sbuf_t &sbuf,entry_list_t &entries,
-                         feature_recorder *exif_recorder,feature_recorder *gps_recorder,
-                         bool dohash)
-{
-    // get md5 for this exif
-    string feature_text = "00000000000000000000000000000000";
-    if(dohash){
-        sbuf_t tohash(sbuf,0,4096);
-        feature_text = hasher.func(tohash.buf,tohash.bufsize);
+    static be13::hash_def hasher;
+    entry_list_t entries;
+    feature_recorder &exif_recorder;
+    feature_recorder &gps_recorder;
+    feature_recorder &jpeg_recorder;
+
+    /* Verify a jpeg nternal structure and return the length of the validated portion */
+    size_t validate_jpeg(const sbuf_t &sbuf) {
+        //std::cout << "validate_jpeg " << sbuf << "\n";
+
+        size_t i = 0;
+        while(i+2 < sbuf.bufsize){
+            //printf("i=%d  sbuf[i]=%02x sbuf[i+1]=%02x\n",i,sbuf[i],sbuf[i+1]);
+            if (sbuf[i]!=0xff) return i;      // each section begins with a FF
+            if (sbuf[i+1]==0xd8){ // SOI
+                i+=2;
+                continue;
+            }
+            if (sbuf[i+1]==0x01){ // TEM
+                i+=2;
+                continue;
+            }
+            if ((sbuf[i+1]>=0xd0 && sbuf[i+1]<=0xd8)){ // RST
+                i += 2;
+                continue;
+            }
+            if (sbuf[i+1]==0xd9){ // EOI
+                return i+1;                         // validated!
+            }
+            
+            if (sbuf[i+1]==0xda){ // SOS (Start of Stream)
+                // Scan for EOI or an unespcaed invalid FF
+                i += 2;                 // skip ff da
+                for(;i+2 < sbuf.bufsize;i++){
+                    if(sbuf[i]==0xff && sbuf[i+1]!=0x00){
+                        return i+2;     // return up to the ff and the code after it
+                    }
+                }
+                return sbuf.bufsize;        // SOS not properly terminated, so just give the whole sbuf
+            }
+            i += 2 + sbuf.get16uBE(i+2);    // add variable length size
+        }
+        return sbuf.bufsize;            // ran off the end
     }
     
-    //carve_jpeg(sbuf);
-    record_exif_data(exif_recorder, sbuf.pos0, feature_text, entries);
-    record_gps_data(gps_recorder, sbuf.pos0, feature_text, entries);
-    clear_entries(entries);		    // clear entries for next round
-}
-
-
-
-extern "C"
-void scan_exif(const class scanner_params &sp,const recursion_control_block &rcb)
-{
-    if(debug) std::cerr << "scan_exif start phase " << (uint32_t)sp.phase << "\n";
-    assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
-    if(sp.phase==scanner_params::PHASE_STARTUP){
-        assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
-	sp.info->name		= "exif";
-	sp.info->author         = "Bruce Allen";
-        sp.info->description    = "Search for EXIF sections in JPEG files";
-	sp.info->feature_names.insert("exif");
-	sp.info->feature_names.insert("gps");
-        hasher    = sp.info->config->hasher;
-        sp.info->get_config("exif_debug",&debug,"debug exif decoder");
-	return;
+    /**
+     * Process the JPEG, including - calculate its hash, carve it, record exif and gps data
+     */
+    
+    void process(const sbuf_t &sbuf,bool found_start){
+        // get md5 for this exif
+        string feature_text = "00000000000000000000000000000000";
+        if(found_start){
+            sbuf_t tohash(sbuf,0,4096);
+            feature_text = hasher.func(tohash.buf,tohash.bufsize);
+            
+            size_t jlen = validate_jpeg(sbuf);
+            if(jlen>MIN_JPEG_SIZE){
+                jpeg_recorder.carve(sbuf,0,jlen,hasher);
+            }
+        }
+        record_exif_data(&exif_recorder, sbuf.pos0, feature_text, entries);
+        record_gps_data(&gps_recorder, sbuf.pos0, feature_text, entries);
+        clear_entries(entries);		    // clear entries for next round
     }
-    if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;
-    if(sp.phase==scanner_params::PHASE_SCAN){
 
-	// phase 1: set up feature recorders and search sbuf for features
-	const sbuf_t &sbuf = sp.sbuf;
-
-	feature_recorder *exif_recorder = sp.fs.get_name("exif");
-
-	exif_recorder->set_flag(feature_recorder::FLAG_XML); // to escape all but backslashes
-
-	feature_recorder *gps_recorder = sp.fs.get_name("gps");
-
-	entry_list_t entries;
-
-	// search through sbuf for potential exif content
-        // Note: when data is found, we should skip to the end of the data
+    // search through sbuf for potential exif content
+    // Note: when data is found, we should skip to the end of the data
+    void scan(const sbuf_t &sbuf){
 	size_t tiff_offset = 0;
         if(sbuf.bufsize < MIN_JPEG_SIZE) return;
 	for (size_t start=0; start < sbuf.pagesize - MIN_JPEG_SIZE; start++) {
@@ -446,7 +471,7 @@ void scan_exif(const class scanner_params &sp,const recursion_control_block &rcb
                     }
 
                     if(debug) std::cerr << "scan_exif.tiff_offset in ffd8 " << tiff_offset;
-                    process_jpeg(sp.sbuf+start,entries,exif_recorder,gps_recorder,true);
+                    process(sbuf+start,true);
                     if(debug) std::cerr << "scan_exif Done processing validated Exif ffd8ff at start " << start << "\n";
 		}
 
@@ -471,7 +496,7 @@ void scan_exif(const class scanner_params &sp,const recursion_control_block &rcb
                     }
 
 		    if(debug) std::cerr << "scan_exif Start processing validated Photoshop 8BPS at start " << start << " tiff_offset " << tiff_offset << "\n";
-                    process_jpeg(sp.sbuf+start,entries,exif_recorder,gps_recorder,true);
+                    process(sbuf+start,true);
 		    if(debug) std::cerr << "scan_exif Done processing validated Photoshop 8BPS at start " << start << "\n";
 		}
 
@@ -499,11 +524,37 @@ void scan_exif(const class scanner_params &sp,const recursion_control_block &rcb
 
                     // there is no MD5 because there is no associated file for this TIFF marker
 
-                    process_jpeg(sp.sbuf+start,entries,exif_recorder,gps_recorder,false);
+                    process(sbuf+start,false);
 		    if(debug) std::cerr << "scan_exif Done processing validated TIFF II42 or MM42 at start " << start << "\n";
 		}
 	    }
 	}
+    }
+};
+
+be13::hash_def exif_scanner::hasher;
+
+extern "C"
+void scan_exif(const class scanner_params &sp,const recursion_control_block &rcb)
+{
+    if(debug) std::cerr << "scan_exif start phase " << (uint32_t)sp.phase << "\n";
+    assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
+    if(sp.phase==scanner_params::PHASE_STARTUP){
+        assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
+	sp.info->name		= "exif";
+	sp.info->author         = "Bruce Allen";
+        sp.info->description    = "Search for EXIF sections in JPEG files";
+	sp.info->feature_names.insert("exif");
+	sp.info->feature_names.insert("gps");
+	sp.info->feature_names.insert("jpeg");
+        exif_scanner::hasher    = sp.info->config->hasher;
+        sp.info->get_config("exif_debug",&debug,"debug exif decoder");
+	return;
+    }
+    if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;
+    if(sp.phase==scanner_params::PHASE_SCAN){
+        exif_scanner escan(sp);
+        escan.scan(sp.sbuf);
     }
 }
 

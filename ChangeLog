@@ -1,3 +1,8 @@
+2013-06-08  Basic  <simsong@Mucha.local>
+
+	* src/be13_api/feature_recorder.cpp (feature_recorder::carve): changed carving so that carved files are stored with the filename of their location. Also, fixed check-then-access race error in feature_record.cpp
+	(feature_recorder::carve): fixed race conditon in carving.
+
 2013-05-28  Basic  <simsong@ncr.nps.edu>
 
 	* feature_recorder_set.cpp - debug is now a static variable
