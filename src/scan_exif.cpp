@@ -28,6 +28,7 @@ static uint32_t MAX_ENTRY_SIZE = 1000000;
 static uint32_t MIN_JPEG_SIZE = 200;    // don't scan something smaller
 
 static int debug=0;
+static uint32_t jpeg_carve_mode = feature_recorder::CARVE_ENCODED;
 
 
 /****************************************************************
@@ -374,6 +375,7 @@ public:
 
 	exif_recorder.set_flag(feature_recorder::FLAG_XML); // to escape all but backslashes
         jpeg_recorder.set_file_extension(".jpg");
+        jpeg_recorder.set_carve_mode((feature_recorder::carve_mode_t)(jpeg_carve_mode));
     }
 
     static be13::hash_def hasher;
@@ -451,14 +453,15 @@ public:
         if(sbuf.bufsize < MIN_JPEG_SIZE) return;
 
 	for (size_t start=0; start < sbuf.pagesize - MIN_JPEG_SIZE; start++) {
-            // check for possible TIFF in Exif
+            // check for start of a JPEG
 	    if (sbuf[start + 0] == 0xff && sbuf[start + 1] == 0xd8 && sbuf[start + 2] == 0xff && (sbuf[start + 3] & 0xf0) == 0xe0) {
 		if(debug) std::cerr << "scan_exif checking ffd8ff at start " << start << "\n";
-		// perform thorough check for TIFF in Exif
+
+		// Does this JPEG have an EXIF?
 		size_t possible_tiff_offset_from_exif = exif_reader::get_tiff_offset_from_exif(sbuf+start);
 		if(debug) std::cerr << "scan_exif.possible_tiff_offset_from_exif " << possible_tiff_offset_from_exif << "\n";
 		if ((possible_tiff_offset_from_exif != 0)
-		    && tiff_reader::is_maybe_valid_tiff(sbuf + start + possible_tiff_offset_from_exif)) {
+                    && tiff_reader::is_maybe_valid_tiff(sbuf + start + possible_tiff_offset_from_exif)) {
 
 		    // TIFF in Exif is valid, so process TIFF
 		    size_t tiff_offset = start + possible_tiff_offset_from_exif;
@@ -473,14 +476,15 @@ public:
                     }
 
                     if(debug) std::cerr << "scan_exif.tiff_offset in ffd8 " << tiff_offset;
-                    size_t skip = process(sbuf+start,true);
-                    // std::cerr << "1 skip=" << skip << "\n";
-                    if(skip>1) start += skip-1;
-                    if(debug) std::cerr << "scan_exif Done processing validated Exif ffd8ff at start " << start << "\n";
-		}
-		// check for possible TIFF in photoshop PSD header
-                continue;
+                }
+                // Try to process if it is exif or not
+                size_t skip = process(sbuf+start,true);
+                // std::cerr << "1 skip=" << skip << "\n";
+                if(skip>1) start += skip-1;
+                if(debug) std::cerr << "scan_exif Done processing JPEG/Exif ffd8ff at " << start << " len=" << skip << "\n";
+                continue;                
             }
+		// check for possible TIFF in photoshop PSD header
             if (sbuf[start + 0] == '8' && sbuf[start + 1] == 'B' && sbuf[start + 2] == 'P' &&
                 sbuf[start + 3] == 'S' && sbuf[start + 4] == 0 && sbuf[start + 5] == 1) {
 	        if(debug) std::cerr << "scan_exif checking 8BPS at start " << start << "\n";
@@ -528,7 +532,8 @@ public:
                     
                     // there is no MD5 because there is no associated file for this TIFF marker
                     process(sbuf+start,false);
-		    if(debug) std::cerr << "scan_exif Done processing validated TIFF II42 or MM42 at start " << start << "\n";
+		    if(debug) std::cerr << "scan_exif Done processing validated TIFF II42 or MM42 at start "
+                                        << start << "\n";
                 }
 	    }
 	}
@@ -552,6 +557,7 @@ void scan_exif(const class scanner_params &sp,const recursion_control_block &rcb
 	sp.info->feature_names.insert("jpeg");
         exif_scanner::hasher    = sp.info->config->hasher;
         sp.info->get_config("exif_debug",&debug,"debug exif decoder");
+        sp.info->get_config("jpeg_carve_mode",&jpeg_carve_mode,"0=carve none; 1=carve encoded; 2=carve all");
 	return;
     }
     if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;
