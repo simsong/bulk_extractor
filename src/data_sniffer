@@ -5,6 +5,20 @@
 DIR="$( dirname "${BASH_SOURCE[0]}")"
 args="--quiet"
 export PATH=$DIR:$PATH
+
+PYTHON=python3.3
+if [ x`which $PYTHON` == x ]; then
+  PYTHON=python3.2
+fi
+if [ x`which $PYTHON` == x ]; then
+  PYTHON=python3
+fi
+if [ x`which $PYTHON` == x ]; then
+  echo This program requires python3.3, python3.2 or python3
+  exit 1
+fi
+
+
 #
 # Implemenet the DFRWS 2013 challenge
 if [ $1 == "-d" ]; then
@@ -13,11 +27,11 @@ if [ $1 == "-d" ]; then
 fi
 
 if [ $# == 2 ]; then
-  python3.3 $DIR/dfrws_2012_challenge.py $args "$1" "$2" 
+  $PYTHON $DIR/dfrws_2012_challenge.py $args "$1" "$2" 
   exit 0
 fi
 if [ $# == 3 ]; then
-  python3.3 $DIR/dfrws_2012_challenge.py $args "$1" "$2" "$3"
+  $PYTHON $DIR/dfrws_2012_challenge.py $args "$1" "$2" "$3"
   exit 0
 fi
   

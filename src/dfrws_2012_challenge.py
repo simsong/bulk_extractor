@@ -63,7 +63,6 @@ def run_bulk_extractor(target,block_size,concurrency_factor,quiet=True,retbuf=Fa
            target]
     if not quiet: print(" ".join(cmd))
     if not retbuf:
-        print(" ".join(cmd))
         call(cmd)
     else:
         ret=Popen(cmd,stdout=PIPE).communicate()[0].strip()
