@@ -174,9 +174,11 @@ void scan_sectorid(const class scanner_params &sp,
             // get the sbuf
             const sbuf_t& sbuf = sp.sbuf;
 
-            // allocate space for request and response
-            sector_hash::hashes_request_md5_t request;
-            sector_hash::hashes_response_md5_t response;
+            // allocate big space on heap for request and response
+            sector_hash::hashes_request_md5_t* request =
+                                       new sector_hash::hashes_request_md5_t;
+            sector_hash::hashes_response_md5_t* response =
+                                       new sector_hash::hashes_response_md5_t;
 
             // populate request with chunk hashes calculated from sbuf
             // use i as query id so that later it can be used as the feature
@@ -191,45 +193,50 @@ void scan_sectorid(const class scanner_params &sp,
                 memcpy(digest, md5.digest, 16);
 
                 // add the hash to the lookup hash request
-                request.hash_requests.push_back(
+                request->hash_requests.push_back(
                                   sector_hash::hash_request_md5_t(i, digest));
             }
 
             // perform the lookup
-            bool success = query->lookup_hashes_md5(request, response);
+            bool success = query->lookup_hashes_md5(*request, *response);
 
             if (!success) {
                 // the lookup failed
                 std::cerr << "Error in scan_sectorid hash lookup\n";
-                return;
             }
 
-            // always make sure the server is using the same chunk size
-            if (response.chunk_size != chunk_size) {
+            // make sure the server is using the same chunk size
+            if (success && response->chunk_size != chunk_size) {
+                success = false;
                 std::cerr << "Error: The scanner is hashing using a chunk size of " << chunk_size << "\n"
-                          << "but the hashdb contains hashes for data of chunk size " << response.chunk_size << ".\n"
+                          << "but the hashdb contains hashes for data of chunk size " << response->chunk_size << ".\n"
                           << "Cannot continue.\n";
-                exit(1);
             }
 
             // record each feature in the response
-            for (std::vector<sector_hash::hash_response_md5_t>::const_iterator it = response.hash_responses.begin(); it != response.hash_responses.end(); ++it) {
+            if (success) {
+                for (std::vector<sector_hash::hash_response_md5_t>::const_iterator it = response->hash_responses.begin(); it != response->hash_responses.end(); ++it) {
 
-                // get the variables together for the feature
-                pos0_t pos0 = sbuf.pos0 + it->id;
+                    // get the variables together for the feature
+                    pos0_t pos0 = sbuf.pos0 + it->id;
 
-                // convert uint8_t[] to md5
-                md5_t md5;
-                memcpy(md5.digest,it->digest, 16);
+                    // convert uint8_t[] to md5
+                    md5_t md5;
+                    memcpy(md5.digest,it->digest, 16);
 
-                std::string feature = md5.hexdigest();
-                stringstream ss;
-                ss << it->duplicates_count;
-                std::string context = ss.str();
+                    std::string feature = md5.hexdigest();
+                    stringstream ss;
+                    ss << it->duplicates_count;
+                    std::string context = ss.str();
 
-                // record the feature
-                md5_recorder->write(pos0, feature, context);
+                    // record the feature
+                    md5_recorder->write(pos0, feature, context);
+                }
             }
+
+            // deallocate big space on heap for request and response
+            delete request;
+            delete response;
 
             return;
         }
