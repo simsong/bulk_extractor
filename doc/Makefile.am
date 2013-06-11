@@ -14,6 +14,6 @@ EXTRA_DIST = \
 	crash_diagnosis1.txt \
 	crash_diagnosis2.txt\
 	debugging_performance_problems.html \
-	scan_lift_report.pdf \
+	scan_lift_report.pdf
 
 	$(DOXYGEN_FILES)
