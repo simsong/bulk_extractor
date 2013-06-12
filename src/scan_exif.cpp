@@ -375,7 +375,7 @@ public:
 
 	exif_recorder.set_flag(feature_recorder::FLAG_XML); // to escape all but backslashes
         jpeg_recorder.set_file_extension(".jpg");
-        jpeg_recorder.set_carve_mode((feature_recorder::carve_mode_t)(jpeg_carve_mode));
+        jpeg_recorder.set_carve_mode(static_cast<feature_recorder::carve_mode_t>(jpeg_carve_mode));
     }
 
     static be13::hash_def hasher;
