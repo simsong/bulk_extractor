@@ -56,7 +56,7 @@ int main(int argc,char **argv)
 
 #ifdef HAVE_DLOPEN_PREFLIGHT
     if(!dlopen_preflight(fname.c_str())){
-	err(1,"dlopen_preflight - cannot open %s: %s",fname,dlerror());
+	err(1,"dlopen_preflight - cannot open %s: %s",fname.c_str(),dlerror());
     }
 #endif
 
