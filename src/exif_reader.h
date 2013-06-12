@@ -67,16 +67,16 @@ typedef enum {
 class exif_entry {
 public:
     const uint16_t ifd_type;
-    const string name;
-    const string value;
-    exif_entry(uint16_t ifd_type_, const string &name_, const string &value_);
+    const std::string name;
+    const std::string value;
+    exif_entry(uint16_t ifd_type_, const std::string &name_, const std::string &value_);
 
     // copy
     exif_entry(const exif_entry &that);
     ~exif_entry();
 
     // prefix name with IFD type
-    const string get_full_name() const;
+    const std::string get_full_name() const;
 
 private:
     // do not implement this operator
