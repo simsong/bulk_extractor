@@ -145,7 +145,9 @@ scanner_t *scanners_builtin[] = {
 #ifdef HAVE_LIBLIGHTGREP
     scan_lightgrep,
 #endif
+#ifdef USE_LIFT
     scan_lift,  // not ready for prime time
+#endif
     //scan_extx,  // not ready for prime time
 #ifdef HAVE_EXIV2
     scan_exiv2,
@@ -156,7 +158,9 @@ scanner_t *scanners_builtin[] = {
     scan_elf,
     scan_exif,
     scan_zip,
+#ifdef USE_RAR
     scan_rar,
+#endif
     scan_gzip,
     scan_pdf,
     scan_winpe,
@@ -991,10 +995,21 @@ void be_mkdir(string dir)
 /* be_hash. Currently this just returns the MD5 of the sbuf,
  * but eventually it will allow the use of different hashes.
  */
-std::string be_hash_name("MD5");
+std::string be_hash_name("md5");
 std::string be_hash(const uint8_t *buf,size_t bufsize)
 {
-    return md5_generator::hash_buf(buf,bufsize).hexdigest();
+    if(be_hash_name=="md5" || be_hash_name=="MD5"){
+        return md5_generator::hash_buf(buf,bufsize).hexdigest();
+    }
+    if(be_hash_name=="sha1" || be_hash_name=="SHA1" || be_hash_name=="sha-1" || be_hash_name=="SHA-1"){
+        return sha1_generator::hash_buf(buf,bufsize).hexdigest();
+    }
+    if(be_hash_name=="sha256" || be_hash_name=="SHA256" || be_hash_name=="sha-256" || be_hash_name=="SHA-256"){
+        return sha256_generator::hash_buf(buf,bufsize).hexdigest();
+    }
+    std::cerr << "Invalid hash name: " << be_hash_name << "\n";
+    std::cerr << "This version of bulk_extractor only supports MD5, SHA1, and SHA256\n";
+    exit(1);
 }
 
 
@@ -1179,7 +1194,6 @@ int main(int argc,char **argv)
     argc -= optind;
     argv += optind;
 
-
     /* Create a configuration that will be used to initialize the scanners */
     extern bool opt_enable_histograms;
     scanner_info si;
@@ -1189,9 +1203,19 @@ int main(int argc,char **argv)
     be_config.hasher.func = be_hash;
 
     si.config = &be_config;
-    si.get_config("work_start_work_end",&worker::opt_work_start_work_end, "Record work start and end of each scanner in report.xml file");
-    si.get_config("enable_histograms",&opt_enable_histograms,"Disable generation of histograms");
-    si.get_config("debug_histogram_malloc_fail_frequency",&HistogramMaker::debug_histogram_malloc_fail_frequency,"Set >0 to make histogram maker fail with memory allocations");
+    si.get_config("work_start_work_end",&worker::opt_work_start_work_end,
+                  "Record work start and end of each scanner in report.xml file");
+    si.get_config("enable_histograms",&opt_enable_histograms,
+                  "Disable generation of histograms");
+    si.get_config("debug_histogram_malloc_fail_frequency",&HistogramMaker::debug_histogram_malloc_fail_frequency,
+                  "Set >0 to make histogram maker fail with memory allocations");
+    si.get_config("hash_alg",&be_hash_name,"Specifies hash algorithm to be used for all hash calculations");
+
+    /* Make sure that the user selected a valid hash */
+    {
+        uint8_t buf[1];
+        be_hash(buf,0);
+    }
 
     /* Load all the scanners and enable the ones we care about */
 

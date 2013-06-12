@@ -7,6 +7,8 @@ AM_CPPFLAGS = -I${top_srcdir}/src/be13_api
 include dfxml/src/Makefile.defs
 include be13_api/Makefile.defs
 
+
+
 TSK3INCS = \
 	tsk3/auto/tsk_auto.h\
 	tsk3/base/tsk_base.h\
@@ -68,7 +70,6 @@ bulk_scanners = \
 	scan_xor.cpp \
 	scan_zip.cpp \
         sbuf_flex_scanner.h \
-        $(RAR_SUPPORT) \
 	$(flex_scanners) 
 
 SCAN_LIFT = scan_lift.cpp \
@@ -115,7 +116,8 @@ bulk_extractor_SOURCES = \
 	threadpool.h \
 	word_and_context_list.cpp \
 	word_and_context_list.h \
-	$(bulk_scanners) $(TSK3INCS)  $(BE13_API) $(DFXML) $(SCAN_LIFT)
+	$(bulk_scanners) $(TSK3INCS)  $(BE13_API) $(DFXML) # $(SCAN_LIFT) $(RAR_SUPPORT) 
+
 
 stand_SOURCES = \
 	dig.cpp \

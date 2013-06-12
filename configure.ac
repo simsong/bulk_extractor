@@ -216,6 +216,11 @@ unset option
 AC_ARG_ENABLE([lift], AS_HELP_STRING([--enable-lift], [enable CMU LIFT SVM for type identification]),
 		      AC_DEFINE(USE_LIFT, 1, [Use LIFT SVM]))
 
+## rar support
+AC_ARG_ENABLE([rar], AS_HELP_STRING([--enable-rar], [enable RAR experimental decompression experimental]),
+		      AC_DEFINE(USE_RAR, 1, [Use RAR decompression]))
+
+
 
 ################################################################
 ## mcheck support
