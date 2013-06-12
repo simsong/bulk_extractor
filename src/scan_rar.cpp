@@ -1,6 +1,7 @@
 #include "config.h"
-#include "bulk_extractor_i.h"
 
+
+#include "bulk_extractor_i.h"
 #include "utf8.h"
 #include "dfxml/src/dfxml_writer.h"
 
@@ -11,6 +12,7 @@
 #include <iomanip>
 #include <cassert>
 
+#ifdef USE_RAR
 #include "rar/rar.hpp"
 
 #define FILE_MAGIC 0x74
@@ -549,6 +551,8 @@ const uint32_t rar_max_depth_count_bypass = 5;
 std::set<std::string>rar_seen_set;
 cpp_mutex rar_seen_set_lock;
 #endif
+#endif
+
 extern "C"
 void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
 {
@@ -557,13 +561,19 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	sp.info->name  = "rar";
 	sp.info->author = "Michael Shick";
+#ifdef USE_RAR
 	sp.info->description = "RAR volume locator and component decompresser";
 	sp.info->feature_names.insert("rar");
-
         sp.info->get_config("rar_find_components",&record_components,"Search for RAR components");
         sp.info->get_config("raw_find_volumes",&record_volumes,"Search for RAR volumes");
+#else
+        sp.info->name = "rar";
+        sp.info->description = "(disabled)";
+        sp.info->flags = scanner_info::SCANNER_DISABLED | scanner_info::SCANNER_NO_USAGE | scanner_info::SCANNER_NO_ALL;
+#endif
 	return;
     }
+#ifdef USE_RAR
     if(sp.phase==scanner_params::PHASE_SCAN){
 	const sbuf_t &sbuf = sp.sbuf;
 	const pos0_t &pos0 = sp.sbuf.pos0;
@@ -609,4 +619,5 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
             }
 	}
     }
+#endif
 }
