@@ -210,8 +210,8 @@ void process_find_file(const char *findfile);
 #ifdef HAVE_EXIV2
 extern "C" scanner_t scan_exiv2;
 #endif
-#ifdef HAVE_SECTORID
-extern "C" scanner_t scan_sectorid;
+#ifdef HAVE_HASHID
+extern "C" scanner_t scan_hashid;
 #endif
 extern "C" scanner_t scan_aes;
 extern "C" scanner_t scan_bulk;
