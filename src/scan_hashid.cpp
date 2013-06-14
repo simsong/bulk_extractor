@@ -65,32 +65,32 @@ void scan_hashid(const class scanner_params &sp,
 
             // import lookup_type
             std::stringstream help_lookup_type;
-            help_lookup_type << "      <lookup_type> used to perform the lookup, where <lookup_type>\n"
+            help_lookup_type << "\n"
+                             << "      <lookup_type> used to perform the lookup, where <lookup_type>\n"
                              << "      is one of use_path | use_socket (default "
                                                           << lookup_type_to_string(lookup_type) << ")\n"
                              << "      use_path   - Lookups are performed from a hashdb in the filesystem\n"
                              << "                   at the specified <path>.\n"
                              << "      use_socket - Lookups are performed from a server service at the\n"
-                             << "                   specified <socket>.\n"
-                             ;
+                             << "                   specified <socket>.";
             sp.info->get_config("lookup_type", &lookup_type_string, help_lookup_type.str());
 
             // import path
             std::stringstream help_path;
-            help_path        << "      Specifies the <path> to the hash database to be used for performing\n"
+            help_path        << "\n"
+                             << "      Specifies the <path> to the hash database to be used for performing\n"
                              << "      the lookup service.  This option is only used when the lookup type\n"
-                             << "      is set to \"use_path\".\n"
-                             ;
+                             << "      is set to \"use_path\".";
             sp.info->get_config("path", &client_hashdb_path, help_path.str());
 
             // import socket
             std::stringstream help_socket;
-            help_socket      << "      Specifies the client <socket> endpoint to use to connect with the\n"
+            help_socket      << "\n"
+                             << "      Specifies the client <socket> endpoint to use to connect with the\n"
                              << "      hashdb_manager server (default '" << client_socket_endpoint << "').  Valid socket\n"
                              << "      transports supported by the zmq messaging kernel are tcp, ipc, and\n"
                              << "      inproc.  Currently, only tcp is tested.  This opition is only valid\n"
-                             << "      when the lookup type is set to \"lookup_socket\".\n"
-                             ;
+                             << "      when the lookup type is set to \"lookup_socket\".";
             sp.info->get_config("socket", &client_socket_endpoint, help_socket.str());
 
             // import chunk_size
@@ -99,7 +99,7 @@ void scan_hashid(const class scanner_params &sp,
             // import sector_size
             std::stringstream help_sector_size;
             help_sector_size << "Sector size, in bytes\n";
-            help_sector_size << "      Hashes are generated on each sector_size boundary.\n";
+            help_sector_size << "      Hashes are generated on each sector_size boundary.";
             sp.info->get_config("sector_size", &sector_size, help_sector_size.str());
 
             // configure the feature file if a usable query type is selected
