@@ -570,10 +570,19 @@ public:
         xreport.push("runtime","xmlns:debug=\"http://www.afflib.org/bulk_extractor/debug\"");
 
 	std::set<uint64_t> blocks_to_sample;
+
+        /* A single loop with two iterators.
+         * it -- the regular image_iterator; it knows how to read blocks.
+         * 
+         * si -- the sampling iterator. It is a iterator for an STL set.
+         * If sampling, si is used to ask for a specific page from it.
+         */
 	std::set<uint64_t>::const_iterator si = blocks_to_sample.begin(); // sampling iterator
+        image_process::iterator it = p.begin(); // sequential iterator
 	bool first = true;              
-	for(image_process::iterator it = p.begin();it!=p.end();){
+        while(true){
 	    if(sampling()){
+                if(si==blocks_to_sample.end()) break;
 		if(first) {
 		    first = false;
 		    /* Create a list of blocks to sample */
@@ -588,7 +597,10 @@ public:
 		    si = blocks_to_sample.begin();
 		    it.seek_block(*si);
 		}
-	    }
+	    } else {
+                /* Not sampling */
+                if(it==p.end()) break;
+            }
             
             if(opt_offset_end!=0 && opt_offset_end <= it.raw_offset ){
                 break; // passed the offset
@@ -599,7 +611,8 @@ public:
                     goto loop;
                 }
                 
-                // attempt to get an sbuf. If we can't get it, we may be in a low-memory situation.
+                // attempt to get an sbuf.
+                // If we can't get it, we may be in a low-memory situation.
                 // wait for 30 seconds.
 
                 try {
@@ -631,13 +644,14 @@ public:
                     // report uncaught exceptions to both user and XML file
                     std::stringstream ss;
                     ss << "name='" << e.what() << "' " << "pos0='" << it.get_pos0() << "' ";
-		    std::cerr << "Exception " << e.what() << " skipping " << it.get_pos0() << "\n";
+		    std::cerr << "Exception " << e.what()
+                              << " skipping " << it.get_pos0() << "\n";
                     xreport.xmlout("debug:exception", e.what(), ss.str(), true);
                 }
             }
         loop:;
             /* If we are random sampling, move to the next random sample.
-             * Otherwise increment the iterator
+             * Otherwise increment the it iterator.
              */
             if(sampling()){
                 ++si;
