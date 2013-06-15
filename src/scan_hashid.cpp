@@ -19,7 +19,7 @@
 
 /**
  * \file
- * Generates MD5 hash values from chunk_size data taken along sector hash
+ * Generates MD5 hash values from chunk_size data taken along sector
  * boundaries and scans for matches against a hash database.
  *
  * Note that the hash database may be accessed locally through the
@@ -28,9 +28,9 @@
 
 #include "bulk_extractor.h"
 
-#ifdef HAVE_SECTORID
+#ifdef HAVE_HASHID
 
-#include "sector_hash_query.hpp"
+#include "hashdb.hpp"
 #include <dfxml/src/hash_t.h>
 
 #include <iostream>
@@ -40,57 +40,57 @@
 // static values that can be set from config
 static size_t chunk_size = 4096;
 static size_t sector_size = 512;
-static sector_hash_query::lookup_type_t lookup_type = sector_hash_query::QUERY_NOT_SELECTED;
+static hashdb::lookup_type_t lookup_type = hashdb::QUERY_NOT_SELECTED;
 static std::string lookup_type_string = lookup_type_to_string(lookup_type);
 std::string client_hashdb_path = "a valid hashdb directory path is required";
 std::string client_socket_endpoint = "tcp://localhost:14500";
 
 static bool scanner_is_usable = true;
 
-// the sector hash query service
-static sector_hash_query::query_t* query = 0;
+// the hashdb query service
+static hashdb::query_t* query = 0;
 
 extern "C"
-void scan_sectorid(const class scanner_params &sp,
-                   const recursion_control_block &rcb) {
+void scan_hashid(const class scanner_params &sp,
+                 const recursion_control_block &rcb) {
 
     switch(sp.phase) {
         // startup
         case scanner_params::PHASE_STARTUP: {
 
             // set properties for this scanner
-            sp.info->name        = "sectorid";
+            sp.info->name        = "hashid";
             sp.info->author      = "Bruce Allen";
-            sp.info->description = "Search sector IDs, specifically, search MD5 hashes against hashes in a MD5 hash database";
+            sp.info->description = "Search hash IDs, specifically, search MD5 hashes against hashes in a MD5 hash database";
 
             // import lookup_type
             std::stringstream help_lookup_type;
-            help_lookup_type << "      <lookup_type> used to perform the lookup, where <lookup_type>\n"
+            help_lookup_type << "\n"
+                             << "      <lookup_type> used to perform the lookup, where <lookup_type>\n"
                              << "      is one of use_path | use_socket (default "
                                                           << lookup_type_to_string(lookup_type) << ")\n"
                              << "      use_path   - Lookups are performed from a hashdb in the filesystem\n"
                              << "                   at the specified <path>.\n"
                              << "      use_socket - Lookups are performed from a server service at the\n"
-                             << "                   specified <socket>.\n"
-                             ;
+                             << "                   specified <socket>.";
             sp.info->get_config("lookup_type", &lookup_type_string, help_lookup_type.str());
 
             // import path
             std::stringstream help_path;
-            help_path        << "      Specifies the <path> to the hash database to be used for performing\n"
+            help_path        << "\n"
+                             << "      Specifies the <path> to the hash database to be used for performing\n"
                              << "      the lookup service.  This option is only used when the lookup type\n"
-                             << "      is set to \"use_path\".\n"
-                             ;
+                             << "      is set to \"use_path\".";
             sp.info->get_config("path", &client_hashdb_path, help_path.str());
 
             // import socket
             std::stringstream help_socket;
-            help_socket      << "      Specifies the client <socket> endpoint to use to connect with the\n"
-                             << "      sector_hash server (default '" << client_socket_endpoint << "').  Valid socket\n"
+            help_socket      << "\n"
+                             << "      Specifies the client <socket> endpoint to use to connect with the\n"
+                             << "      hashdb_manager server (default '" << client_socket_endpoint << "').  Valid socket\n"
                              << "      transports supported by the zmq messaging kernel are tcp, ipc, and\n"
                              << "      inproc.  Currently, only tcp is tested.  This opition is only valid\n"
-                             << "      when the lookup type is set to \"lookup_socket\".\n"
-                             ;
+                             << "      when the lookup type is set to \"lookup_socket\".";
             sp.info->get_config("socket", &client_socket_endpoint, help_socket.str());
 
             // import chunk_size
@@ -99,13 +99,13 @@ void scan_sectorid(const class scanner_params &sp,
             // import sector_size
             std::stringstream help_sector_size;
             help_sector_size << "Sector size, in bytes\n";
-            help_sector_size << "      Hashes are generated on each sector_size boundary.\n";
+            help_sector_size << "      Hashes are generated on each sector_size boundary.";
             sp.info->get_config("sector_size", &sector_size, help_sector_size.str());
 
             // configure the feature file if a usable query type is selected
-            sector_hash_query::lookup_type_t temp_lookup_type;
+            hashdb::lookup_type_t temp_lookup_type;
             bool temp_is_valid __attribute__ ((unused)) = string_to_lookup_type(lookup_type_string, temp_lookup_type);
-            if (temp_lookup_type != sector_hash_query::QUERY_NOT_SELECTED) {
+            if (temp_lookup_type != hashdb::QUERY_NOT_SELECTED) {
                 sp.info->feature_names.insert("identified_blocks");
             }
 
@@ -143,18 +143,18 @@ void scan_sectorid(const class scanner_params &sp,
                 std::cerr << "Error: invalid chunk size=" << chunk_size
                           << " or sector size=" << sector_size << ".\n"
                           << "Sectors must align on chunk boundaries.\n"
-                          << "Specifically, sectorid_chunk_size \% sectorid_sector_size must be zero.\n"
+                          << "Specifically, chunk_size \% sector_size must be zero.\n"
                           << "Cannot continue.\n";
                 exit(1);
             }
 
             // perform setup based on selected query type
             switch(lookup_type) {
-                case sector_hash_query::QUERY_USE_PATH:
-                    query = new sector_hash_query::query_t(lookup_type, client_hashdb_path);
+                case hashdb::QUERY_USE_PATH:
+                    query = new hashdb::query_t(lookup_type, client_hashdb_path);
                     break;
-                case sector_hash_query::QUERY_USE_SOCKET:
-                    query = new sector_hash_query::query_t(lookup_type, client_socket_endpoint);
+                case hashdb::QUERY_USE_SOCKET:
+                    query = new hashdb::query_t(lookup_type, client_socket_endpoint);
                     break;
                 default:
                     scanner_is_usable = false;
@@ -175,10 +175,10 @@ void scan_sectorid(const class scanner_params &sp,
             const sbuf_t& sbuf = sp.sbuf;
 
             // allocate big space on heap for request and response
-            sector_hash_query::hashes_request_md5_t* request =
-                                 new sector_hash_query::hashes_request_md5_t;
-            sector_hash_query::hashes_response_md5_t* response =
-                                 new sector_hash_query::hashes_response_md5_t;
+            hashdb::hashes_request_md5_t* request =
+                                 new hashdb::hashes_request_md5_t;
+            hashdb::hashes_response_md5_t* response =
+                                 new hashdb::hashes_response_md5_t;
 
             // populate request with chunk hashes calculated from sbuf
             // use i as query id so that later it can be used as the feature
@@ -194,7 +194,7 @@ void scan_sectorid(const class scanner_params &sp,
 
                 // add the hash to the lookup hash request
                 request->hash_requests.push_back(
-                            sector_hash_query::hash_request_md5_t(i, digest));
+                            hashdb::hash_request_md5_t(i, digest));
             }
 
             // perform the lookup
@@ -202,7 +202,7 @@ void scan_sectorid(const class scanner_params &sp,
 
             if (!success) {
                 // the lookup failed
-                std::cerr << "Error in scan_sectorid hash lookup\n";
+                std::cerr << "Error in hashid hash lookup\n";
             }
 
             // make sure the server is using the same chunk size
@@ -215,7 +215,7 @@ void scan_sectorid(const class scanner_params &sp,
 
             // record each feature in the response
             if (success) {
-                for (std::vector<sector_hash_query::hash_response_md5_t>::const_iterator it = response->hash_responses.begin(); it != response->hash_responses.end(); ++it) {
+                for (std::vector<hashdb::hash_response_md5_t>::const_iterator it = response->hash_responses.begin(); it != response->hash_responses.end(); ++it) {
 
                     // get the variables together for the feature
                     pos0_t pos0 = sbuf.pos0 + it->id;
