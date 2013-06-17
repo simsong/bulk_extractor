@@ -1,3 +1,7 @@
+2013-06-15  Basic  <simsong@Mucha.local>
+
+	* src/scan_email.flex (Host): removed ip_written and ip_tested (always remove dead code)
+
 2013-06-08  Basic  <simsong@Mucha.local>
 
 	* src/be13_api/feature_recorder.cpp (feature_recorder::carve): changed carving so that carved files are stored with the filename of their location. Also, fixed check-then-access race error in feature_record.cpp

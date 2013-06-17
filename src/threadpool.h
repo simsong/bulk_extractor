@@ -1,4 +1,5 @@
-#ifndef THREADPOOL_H
+#ifndef _THREADPOOL_H_
+#define _THREADPOOL_H_
 
 /****************************************************************
  *** THREADING SUPPORT

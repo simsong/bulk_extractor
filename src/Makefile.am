@@ -114,6 +114,8 @@ bulk_extractor_SOURCES = \
 	support.cpp \
 	threadpool.cpp \
 	threadpool.h \
+	phase1.h \
+	phase1.cpp \
 	word_and_context_list.cpp \
 	word_and_context_list.h \
 	$(bulk_scanners) $(TSK3INCS)  $(BE13_API) $(DFXML) # $(SCAN_LIFT) $(RAR_SUPPORT) 
