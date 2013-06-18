@@ -48,8 +48,6 @@ using namespace std;
 
 // Global options that can be set without using the option system
 
-size_t opt_pagesize=1024*1024*16;	// 
-size_t opt_margin = 1024*1024*4;
 uint32_t   debug=0;
 int   opt_silent= 0;
 uint32_t   opt_last_year = 2020;
@@ -299,7 +297,8 @@ void process_path_printer(const scanner_params &sp)
  */
 
 
-static void process_path(const image_process &p,string path,scanner_params::PrintOptions &po)
+static size_t process_path_bufsize = 1024*1024*16; // how much to read
+static void process_open_path(const image_process &p,string path,scanner_params::PrintOptions &po)
 {
     /* Check for "/r" in path which means print raw */
     if(path.size()>2 && path.substr(path.size()-2,2)=="/r"){
@@ -310,9 +309,9 @@ static void process_path(const image_process &p,string path,scanner_params::Prin
     int64_t offset = stoi64(prefix);
 
     /* Get the offset. process */
-    u_char *buf = (u_char *)calloc(opt_pagesize,1);
+    u_char *buf = (u_char *)calloc(process_path_bufsize,1);
     if(!buf) errx(1,"Cannot allocate buffer");
-    int count = p.pread(buf,opt_pagesize,offset);
+    int count = p.pread(buf,process_path_bufsize,offset);
     if(count<0){
 	cerr << p.image_fname() << ": " << strerror(errno) << " (Read Error)\n";
 	return;
@@ -333,9 +332,9 @@ static void process_path(const image_process &p,string path,scanner_params::Prin
  * Also implements HTTP server with "-http" option.
  * Feature recorders disabled.
  */
-static void process_path(const char *fn,string path)
+static void process_path(const char *fn,string path,size_t page_size)
 {
-    image_process *pp = image_process_open(fn,0);
+    image_process *pp = image_process::open(fn,0,page_size,0);
     if(pp==0){
 	if(path=="-http"){
 	    std::cout << "HTTP/1.1 502 Filename " << fn << " is invalid" << HTTP_EOL << HTTP_EOL;
@@ -357,7 +356,7 @@ static void process_path(const char *fn,string path)
 	    if(path==".") break;
 	    scanner_params::PrintOptions po;
 	    scanner_params::setPrintMode(po,scanner_params::MODE_HEX);
-	    process_path(*pp,path,po);
+	    process_open_path(*pp,path,po);
 	} while(true);
 	return;
     }
@@ -406,7 +405,7 @@ static void process_path(const char *fn,string path)
 	    }
 
 	    /* Ready to go with path and options */
-	    process_path(*pp,p2,po);
+	    process_open_path(*pp,p2,po);
 	} while(true);
 	return;
     }
@@ -421,7 +420,7 @@ static void process_path(const char *fn,string path)
 	mode = scanner_params::MODE_HEX;
     }
     scanner_params::setPrintMode(po,mode);
-    process_path(*pp,path,po);
+    process_open_path(*pp,path,po);
 }
 
 class bulk_extractor_restarter {
@@ -547,8 +546,8 @@ static void usage(const char *progname)
     std::cout << "   -s frac[:passes] - Set random sampling parameters\n";
     std::cout << "\nTuning parameters:\n";
     std::cout << "   -C NN        - specifies the size of the context window (default " << feature_recorder::context_window << ")\n";
-    std::cout << "   -G NN        - specify the page size (default " << opt_pagesize << ")\n";
-    std::cout << "   -g NN        - specify margin (default " <<opt_margin << ")\n";
+    std::cout << "   -G NN        - specify the page size (default " << cfg.opt_page_size << ")\n";
+    std::cout << "   -g NN        - specify margin (default " <<cfg.opt_margin << ")\n";
     std::cout << "   -j NN        - Number of analysis threads to run (default " <<threadpool::numCPU() << ")\n";
     std::cout << "   -M nn        - sets max recursion depth (default " << scanner_def::max_depth << ")\n";
     std::cout << "   -m <max>     - maximum number of minutes to wait for memory starvation\n";
@@ -815,8 +814,8 @@ int main(int argc,char **argv)
 	    break;
 	case 'F': process_find_file(optarg); break;
 	case 'f': add_find_pattern(optarg); break;
-	case 'G': opt_pagesize = scaled_stoi(optarg); break;
-	case 'g': opt_margin = scaled_stoi(optarg); break;
+	case 'G': cfg.opt_page_size = scaled_stoi(optarg); break;
+	case 'g': cfg.opt_margin = scaled_stoi(optarg); break;
 	case 'j': num_threads = atoi(optarg); break;
 	case 'M': scanner_def::max_depth = atoi(optarg); break;
 	case 'm': cfg.max_bad_alloc_errors = atoi(optarg); break;
@@ -874,8 +873,7 @@ int main(int argc,char **argv)
 	}
     }
 
-    if(cfg.opt_offset_start % opt_pagesize != 0) errx(1,"ERROR: start offset must be a multiple of the page size\n");
-    if(cfg.opt_offset_end % opt_pagesize != 0) errx(1,"ERROR: end offset must be a multiple of the page size\n");
+    cfg.validate();
 
     argc -= optind;
     argv += optind;
@@ -928,7 +926,7 @@ int main(int argc,char **argv)
 
     if(opt_path){
 	if(argc!=1) errx(1,"-p requires a single argument.");
-	process_path(argv[0],opt_path);
+	process_path(argv[0],opt_path,cfg.opt_page_size);
 	exit(0);
     }
     if(opt_outdir.size()==0) errx(1,"error: -o outdir must be specified");
@@ -983,7 +981,7 @@ int main(int argc,char **argv)
     }
 
     /* If disk image does not exist, we are in restart mode */
-    p = image_process_open(image_fname,opt_recurse);
+    p = image_process::open(image_fname,opt_recurse,cfg.opt_page_size,cfg.opt_margin);
     if(!p) err(1,"Cannot open %s: ",image_fname.c_str());
     
     /* Store the configuration in the XML file */

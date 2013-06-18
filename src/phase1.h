@@ -14,28 +14,26 @@
  ****************************************************************/
 
 class BulkExtractor_Phase1 {
-    /** Sleep for a minimum of msec */
-    static void msleep(uint32_t msec);       // sleep for a specified number of msec
-    bool sampling(){return config.sampling_fraction<1.0;} // are we random sampling?
-    static std::string minsec(time_t tsec);                      // return "5 min 10 sec" string
-    void print_tp_status(class threadpool &tp);
-
-
 public:
-    typedef std::set<std::string> seen_page_ids_t;
+    /* configuration for phase1 */
     struct Config {
-        Config():max_bad_alloc_errors(60),
-                 opt_notify_rate(4),
-                 opt_page_start(0),
-                 opt_offset_start(0),
-                 opt_offset_end(0),
-                 max_wait_time(3600),
-                 opt_quiet(0),
-                 retry_seconds(60),
-                 num_threads(threadpool::numCPU()),
-                 sampling_fraction(1.0),
-                 sampling_passes(1){}
+        Config():
+            opt_page_size(1024*1024*16),
+            opt_margin(1024*1024*4),
+            max_bad_alloc_errors(60),
+            opt_notify_rate(4),
+            opt_page_start(0),
+            opt_offset_start(0),
+            opt_offset_end(0),
+            max_wait_time(3600),
+            opt_quiet(0),
+            retry_seconds(60),
+            num_threads(threadpool::numCPU()),
+            sampling_fraction(1.0),
+            sampling_passes(1){}
                  
+        size_t opt_page_size;
+        size_t opt_margin;
         uint32_t max_bad_alloc_errors;
         uint32_t opt_notify_rate;		// by default, notify every 4 pages
         uint64_t opt_page_start;
@@ -48,8 +46,22 @@ public:
         double sampling_fraction;       // for random sampling
         u_int  sampling_passes;
 
+        void validate(){
+            if(opt_offset_start % opt_page_size != 0) errx(1,"ERROR: start offset must be a multiple of the page size\n");
+            if(opt_offset_end % opt_page_size != 0) errx(1,"ERROR: end offset must be a multiple of the page size\n");
+        };
     };
+private:
 
+    /** Sleep for a minimum of msec */
+    static void msleep(uint32_t msec);       // sleep for a specified number of msec
+    bool sampling(){return config.sampling_fraction<1.0;} // are we random sampling?
+    static std::string minsec(time_t tsec);                      // return "5 min 10 sec" string
+    void print_tp_status(class threadpool &tp);
+
+
+public:
+    typedef std::set<std::string> seen_page_ids_t;
     /**
      * print the status of a threadpool
      */
