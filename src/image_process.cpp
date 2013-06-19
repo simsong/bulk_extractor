@@ -447,6 +447,9 @@ sbuf_t *process_ewf::sbuf_alloc(image_process::iterator &it)
     return sbuf;
 }
 
+/**
+ * just add the page size for process_ewf
+ */
 void process_ewf::increment_iterator(image_process::iterator &it)
 {
     it.raw_offset += page_size;

@@ -1,5 +1,8 @@
 2013-06-19  Basic  <simsong@Mucha.local>
 
+	* src/bulk_extractor.cpp (]): fixed handling of LIB_EXPAT
+	(b): restart logic did not compile. Now it is fixed.
+
 	* configure.ac: fixed bug in which expat.h was not being checked for. use AC_CHECK_HEADERS() instead of AC_CHECK_HEADER(), as AC_CHECK_HEADER() requires that you add additional logic and AC_CHECK_HEADERS() automatically adds HAVE_HEADER_H.
 
 2013-06-18  Basic  <simsong@Mucha.local>

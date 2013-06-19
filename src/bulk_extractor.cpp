@@ -436,7 +436,6 @@ class bulk_extractor_restarter {
         if(self.thisElement=="debug:work_start"){
             for(int i=0;attrs[i];i+=2){
                 if(strcmp(attrs[i],"pos0")){
-                    std::cerr << "pos=0" << attrs[i+1] << "\n";
                     self.seen_page_ids.insert(attrs[i+1]);
                 }
             }
@@ -803,6 +802,7 @@ int main(int argc,char **argv)
 		debug  = d;
 		break;
 	    }
+            be13::plugin::set_scanner_debug(debug);
 	}
 	break;
 	case 'E':
