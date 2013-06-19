@@ -1,3 +1,11 @@
+2013-06-19  Basic  <simsong@Mucha.local>
+
+	* configure.ac: fixed bug in which expat.h was not being checked for. use AC_CHECK_HEADERS() instead of AC_CHECK_HEADER(), as AC_CHECK_HEADER() requires that you add additional logic and AC_CHECK_HEADERS() automatically adds HAVE_HEADER_H.
+
+2013-06-18  Basic  <simsong@Mucha.local>
+
+	* src/scan_zip.cpp (scan_zip): removed name_len (not needed)
+
 2013-06-17  Basic  <simsong@mucha.lan>
 
 	* src/pyxpress.h: removed 'extern' designation

@@ -330,7 +330,6 @@ AC_LINK_IFELSE(
    [AC_MSG_RESULT([no])]
 )
 
-
 # end PTHREAD SUPPORT
 ################################################################
 
@@ -381,16 +380,20 @@ AC_ARG_WITH([o3], AC_HELP_STRING([--without-o3], [Do not force O3 optimization; 
 AC_CHECK_LIB([z],[uncompress],,
 	AC_MSG_ERROR([zlib libraries not installed; try installing zlib-devel zlib-dev zlib-devel zlib1g-dev or libz-dev]))
 
+## EXPAT is now a main line requirements for restarting
+AC_CHECK_HEADERS([expat.h])
+AC_CHECK_LIB([expat],[XML_ParserCreate])
+
 ################################################################
 ## regex support
 ## there are several options
 ## tre is better than regex
 AC_CHECK_LIB([stdc++],[main])
 AC_CHECK_LIB([sicudt],[main])
-AC_CHECK_HEADER([unicode/ucnv.h])
+AC_CHECK_HEADERS([unicode/ucnv.h])
 AC_SEARCH_LIBS([uset_close], [sicuuc])
 AC_CHECK_LIB([sicuuc],[main])
-AC_CHECK_HEADER([lightgrep/api.h])
+AC_CHECK_HEADERS([lightgrep/api.h])
 AC_CHECK_LIB([lightgrep], [lg_create_pattern])
 AC_CHECK_HEADERS([regex.h tre/tre.h])
 AC_CHECK_LIB([regex],[regcomp])
@@ -429,11 +432,6 @@ AC_CHECK_HEADER([libewf.h],
 	[libewf=no])
 AC_CHECK_FUNCS([libewf_handle_get_utf8_header_value_notes libewf_error_backtrace_fprint])
 AC_CHECK_HEADERS([tsk3/libtsk.h])
-
-## EXPAT is now a main line requirements
-## for restarting
-AC_CHECK_HEADER([expat.h])
-AC_CHECK_LIB([expat],[XML_ParserCreate])
 
 
 ################################################################
@@ -501,9 +499,7 @@ if test x"$exiv2" == x"yes" ; then
   fi
 fi
 if test x"$exiv2" == x"yes" ; then
-  AC_CHECK_HEADER([exiv2/image.hpp])
-  AC_CHECK_HEADER([exiv2/exif.hpp])
-  AC_CHECK_HEADER([exiv2/error.hpp])
+  AC_CHECK_HEADERS([exiv2/image.hpp exiv2/exif.hpp exiv2/error.hpp])
   AC_LANG_PUSH(C++)
     AC_TRY_COMPILE([#include <exiv2/image.hpp>
     	    	    #include <exiv2/exif.hpp>
