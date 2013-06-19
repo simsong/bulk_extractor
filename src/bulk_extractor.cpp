@@ -428,16 +428,16 @@ class bulk_extractor_restarter {
     std::string thisElement;
     std::string provided_filename;
     BulkExtractor_Phase1::seen_page_ids_t &seen_page_ids;
-#ifdef HAVE_LIB_EXPAT
+#ifdef HAVE_LIBEXPAT
     static void startElement(void *userData, const char *name_, const char **attrs) {
         class bulk_extractor_restarter &self = *(bulk_extractor_restarter *)userData;
         self.cdata.str("");
         self.thisElement = name_;
-        if(thisElement=="debug:work_start"){
+        if(self.thisElement=="debug:work_start"){
             for(int i=0;attrs[i];i+=2){
                 if(strcmp(attrs[i],"pos0")){
                     std::cerr << "pos=0" << attrs[i+1] << "\n";
-                    self.seen_page_ids->insert(attrs[i+1]);
+                    self.seen_page_ids.insert(attrs[i+1]);
                 }
             }
         }
@@ -459,7 +459,7 @@ public:;
                              const std::string &image_fname,
                              BulkExtractor_Phase1::seen_page_ids_t &seen_page_ids_):
         cdata(),thisElement(),provided_filename(),seen_page_ids(seen_page_ids_){
-#ifdef HAVE_LIB_EXPAT
+#ifdef HAVE_LIBEXPAT
         if(access(reportfilename.c_str(),R_OK)){
             std::cerr << opt_outdir << ": error\n";
             std::cerr << "report.xml file is missing or unreadable.\n";
@@ -474,7 +474,7 @@ public:;
         XML_SetCharacterDataHandler(parser,characterDataHandler);
         std::fstream in(reportfilename.c_str());
         if(!in.is_open()){
-            std::cout << "Cannot open " << fname << ": " << strerror(errno) << "\n";
+            std::cout << "Cannot open " << reportfilename << ": " << strerror(errno) << "\n";
             exit(1);
         }
         try {
@@ -580,7 +580,7 @@ static void usage(const char *progname)
  * Create the dfxml output
  */
 
-static void dfxml_create(dfxml_writer &xreport,const string &command_line,int num_threads)
+static void dfxml_create(dfxml_writer &xreport,const string &command_line,const BulkExtractor_Phase1::Config &cfg)
 {
     xreport.push("dfxml","xmloutputversion='1.0'");
     xreport.push("metadata",
@@ -591,7 +591,7 @@ static void dfxml_create(dfxml_writer &xreport,const string &command_line,int nu
     xreport.pop();
     xreport.add_DFXML_creator(PACKAGE_NAME,PACKAGE_VERSION,svn_revision_clean(),command_line);
     xreport.push("configuration");
-    xreport.xmlout("threads",num_threads);
+    xreport.xmlout("threads",cfg.num_threads);
     xreport.push("scanners");
     /* Generate a list of the scanners in use */
 
@@ -751,6 +751,7 @@ int main(int argc,char **argv)
     mtrace();
 #endif
     BulkExtractor_Phase1::Config cfg;
+    cfg.num_threads = threadpool::numCPU();
     if(getenv("BULK_EXTRACTOR_DEBUG")){
 	debug = atoi(getenv("BULK_EXTRACTOR_DEBUG"));
     }
@@ -762,7 +763,6 @@ int main(int argc,char **argv)
     string opt_outdir;
     setvbuf(stdout,0,_IONBF,0);		// don't buffer stdout
     std::string command_line = dfxml_writer::make_command_line(argc,argv);
-    u_int num_threads = threadpool::numCPU();
     std::string opt_sampling_params;
     std::vector<std::string> scanner_dirs;
 
@@ -816,7 +816,7 @@ int main(int argc,char **argv)
 	case 'f': add_find_pattern(optarg); break;
 	case 'G': cfg.opt_page_size = scaled_stoi(optarg); break;
 	case 'g': cfg.opt_margin = scaled_stoi(optarg); break;
-	case 'j': num_threads = atoi(optarg); break;
+	case 'j': cfg.num_threads = atoi(optarg); break;
 	case 'M': scanner_def::max_depth = atoi(optarg); break;
 	case 'm': cfg.max_bad_alloc_errors = atoi(optarg); break;
 	case 'o': opt_outdir = optarg;break;
@@ -986,7 +986,7 @@ int main(int argc,char **argv)
     
     /* Store the configuration in the XML file */
     xreport = new dfxml_writer(reportfilename,false);
-    dfxml_create(*xreport,command_line,num_threads);
+    dfxml_create(*xreport,command_line,cfg);
     xreport->xmlout("provided_filename",image_fname); // save this information
 
     /* Save the seen_page_ids */
@@ -1001,8 +1001,6 @@ int main(int argc,char **argv)
     fs.create_name(feature_recorder_set::ALERT_RECORDER_NAME,false);
     feature_recorder_set::alert_recorder = fs.get_name(feature_recorder_set::ALERT_RECORDER_NAME);
 
-    int64_t total_bytes = 0;
-
     /* provide documentation to the user; the DFXML information comes from elsewhere */
     if(!cfg.opt_quiet){
 	std::cout << "bulk_extractor version: " << PACKAGE_VERSION << "\n";
@@ -1014,7 +1012,7 @@ int main(int argc,char **argv)
 	std::cout << "Input file: " << image_fname << "\n";
 	std::cout << "Output directory: " << opt_outdir << "\n";
 	std::cout << "Disk Size: " << p->image_size() << "\n";
-	std::cout << "Threads: " << num_threads << "\n";
+	std::cout << "Threads: " << cfg.num_threads << "\n";
     }
 
     /****************************************************************
@@ -1026,7 +1024,8 @@ int main(int argc,char **argv)
     if(opt_sampling_params.size()>0) BulkExtractor_Phase1::set_sampling_parameters(cfg,opt_sampling_params);
 
     xreport->add_timestamp("phase1 start");
-    phase1.run(*p,fs,total_bytes,seen_page_ids);
+    phase1.run(*p,fs,seen_page_ids);
+    phase1.wait_for_workers(*p);
     xreport->add_timestamp("phase1 end");
 
     if(cfg.opt_quiet==0) std::cout << "Phase 2. Shutting down scanners\n";
@@ -1042,7 +1041,7 @@ int main(int argc,char **argv)
 
     /* report and then print final usage information */
     xreport->push("report");
-    xreport->xmlout("total_bytes",total_bytes);
+    xreport->xmlout("total_bytes",phase1.total_bytes);
     xreport->xmlout("elapsed_seconds",timer.elapsed_seconds());
     xreport->pop();			// report
     xreport->flush();
@@ -1055,7 +1054,7 @@ int main(int argc,char **argv)
     xreport->close();
     delete p;				// not strictly needed, but why not?
     if(cfg.opt_quiet==0){
-	float mb_per_sec = (total_bytes / 1000000.0) / timer.elapsed_seconds();
+	float mb_per_sec = (phase1.total_bytes / 1000000.0) / timer.elapsed_seconds();
 
 	std::cout.precision(4);
         printf("Elapsed time: %g sec.\n",timer.elapsed_seconds());
