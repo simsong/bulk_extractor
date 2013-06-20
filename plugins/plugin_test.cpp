@@ -97,14 +97,24 @@ int main(int argc,char **argv)
     return 0;
 }
 
+/*** bogus feature recorder set ***/
+const string feature_recorder_set::ALERT_RECORDER_NAME = "alerts";
+const string feature_recorder_set::DISABLED_RECORDER_NAME = "disabled";
+feature_recorder  *feature_recorder_set::alert_recorder = 0; // no alert recorder to start
+
+feature_recorder *feature_recorder_set::get_name(const std::string &name) { return 0;}
+feature_recorder *feature_recorder_set::get_alert_recorder() { return 0;}
+
+
 feature_recorder_set::feature_recorder_set(uint32_t f):flags(f),input_fname(),
-                                                  outdir(),frm(),Mlock(),scanner_stats()
+                                                       outdir(),frm(),Mlock(),seen_set(),seen_set_lock(),scanner_stats()
 {
     /* not here */
 }
 
-feature_recorder *feature_recorder_set::get_name(const std::string &name) { return 0;}
-feature_recorder *feature_recorder_set::get_alert_recorder() { return 0;}
+bool feature_recorder_set::check_previously_processed(const uint8_t *buf,size_t bufsize){return false;}
+
+
 
 /* http://stackoverflow.com/questions/9406580/c-undefined-reference-to-vtable-and-inheritance 
  * Must provide definitions for all virtual functions

@@ -35,8 +35,6 @@ bool has_control_characters(const string &name)
 }
 
 /* We should have a threadsafe set */
-std::set<std::string>seen_set;
-cppmutex  seen_set_lock;
 static be13::hash_def hasher;
 
 /**
@@ -114,19 +112,11 @@ inline void scan_zip_component(const class scanner_params &sp,const recursion_co
 
         /* If depth is more than 0, don't decompress if we have seen this component before */
         if(sp.depth>0){
-            std::string hexhash = hasher.func(data_buf,compr_size);
-
-            xmlstream << "<hashdigest type='" << hasher.name << "'>" << hexhash << "</hashdigest>";
-                        
-            cppmutex::lock lock(seen_set_lock);
-            bool in_buf = seen_set.find(hexhash) != seen_set.end();
-
-            if(in_buf){
-                xmlstream << "<disposition>compression-bomb</disposition></zipinfo>";
+            if(sp.fs.check_previously_processed(data_buf,compr_size)){
+                xmlstream << "<disposition>previously-processed</disposition></zipinfo>";
                 zip_recorder->write(pos0+pos,name,xmlstream.str());
                 return;
             }
-            seen_set.insert(hexhash);
         }
 
         if(sp.depth==scanner_def::max_depth){
