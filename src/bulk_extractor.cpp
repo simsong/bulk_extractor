@@ -434,8 +434,8 @@ class bulk_extractor_restarter {
         self.cdata.str("");
         self.thisElement = name_;
         if(self.thisElement=="debug:work_start"){
-            for(int i=0;attrs[i];i+=2){
-                if(strcmp(attrs[i],"pos0")){
+            for(int i=0;attrs[i] && attrs[i+1];i+=2){
+                if(strcmp(attrs[i],"pos0") == 0){
                     self.seen_page_ids.insert(attrs[i+1]);
                 }
             }
