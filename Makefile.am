@@ -12,9 +12,12 @@ endif
 
 SUBDIRS = doc doc/user_manual src man plugins python specfiles tests $(BE_VIEWER_DIR) $(SRC_WIN_DIR)
 
+
 EXTRA_DIST = bootstrap.sh \
 	ROADMAP.txt \
-	m4/ax_pthread.m4
+	m4/ax_pthread.m4 \
+	src/data_sniffer src/dfrws_2012_challenge.py
+
 
 ACLOCAL_AMFLAGS = -I m4
 

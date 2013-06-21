@@ -1,0 +1,1966 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+ABOVE_NORMAL_PRIORITY_CLASS	system.hpp	7;"	d
+ALLOW_EXCEPTIONS	errhnd.hpp	5;"	d
+ALLOW_NOT_ALIGNED_INT	os.hpp	268;"	d
+APPENDTEXT	os.hpp	135;"	d
+APPENDTEXT	os.hpp	216;"	d
+ARCTIME_KEEP	options.hpp	/^enum {ARCTIME_NONE=0,ARCTIME_KEEP,ARCTIME_LATEST};$/;"	e	enum:__anon4
+ARCTIME_LATEST	options.hpp	/^enum {ARCTIME_NONE=0,ARCTIME_KEEP,ARCTIME_LATEST};$/;"	e	enum:__anon4
+ARCTIME_NONE	options.hpp	/^enum {ARCTIME_NONE=0,ARCTIME_KEEP,ARCTIME_LATEST};$/;"	e	enum:__anon4
+ARI_DEC_NORMALIZE	coder.cpp	21;"	d	file:
+ASIZE	rardefs.hpp	7;"	d
+AV	options.hpp	/^    bool AV;$/;"	m	class:RAROptions
+AVHead	archive.hpp	/^    AVHeader AVHead;$/;"	m	class:Archive
+AVHeader	headers.hpp	/^struct AVHeader:BaseBlock$/;"	s
+AVInfoCRC	headers.hpp	/^  uint AVInfoCRC;$/;"	m	struct:AVHeader
+AVVer	headers.hpp	/^  byte AVVer;$/;"	m	struct:AVHeader
+AV_HEAD	headers.hpp	/^  MARK_HEAD=0x72,MAIN_HEAD=0x73,FILE_HEAD=0x74,COMM_HEAD=0x75,AV_HEAD=0x76,$/;"	e	enum:HEADER_TYPE
+AV_VER	headers.hpp	26;"	d
+Add	array.hpp	/^template <class T> void Array<T>::Add(size_t Items)$/;"	f	class:Array
+AddArcName	cmddata.cpp	/^void CommandData::AddArcName(const char *Name,const wchar *NameW)$/;"	f	class:CommandData
+AddArcOnly	options.hpp	/^    bool AddArcOnly;$/;"	m	class:RAROptions
+AddEndSlash	pathfn.cpp	/^void AddEndSlash(char *Path)$/;"	f
+AddEndSlash	pathfn.cpp	/^void AddEndSlash(wchar *Path)$/;"	f
+AddFileToList	file.cpp	/^void File::AddFileToList(FileHandle hFile)$/;"	f	class:File
+AddString	strlist.cpp	/^void StringList::AddString(const char *Str)$/;"	f	class:StringList
+AddString	strlist.cpp	/^void StringList::AddString(const char *Str,const wchar *StrW)$/;"	f	class:StringList
+AddString	strlist.cpp	/^void StringList::AddString(const wchar *Str)$/;"	f	class:StringList
+AddVMCode	unpack.cpp	/^bool Unpack::AddVMCode(unsigned int FirstByte,byte *Code,int CodeSize)$/;"	f	class:Unpack
+AddingFilesSize	archive.hpp	/^    int64 AddingFilesSize;$/;"	m	class:Archive
+AddingHeadersSize	archive.hpp	/^    size_t AddingHeadersSize;$/;"	m	class:Archive
+Addr	array.hpp	/^    T* Addr() {return(Buffer);}$/;"	f	class:Array
+AllMatchesExact	extract.hpp	/^    bool AllMatchesExact;$/;"	m	class:CmdExtract
+AllYes	options.hpp	/^    bool AllYes;$/;"	m	class:RAROptions
+Alloc	array.hpp	/^template <class T> void Array<T>::Alloc(size_t Items)$/;"	f	class:Array
+AllocCmdParam	cmddata.cpp	/^static const wchar *AllocCmdParam(const wchar *CmdLine,wchar **ParW,char **ParA)$/;"	f	file:
+AllocContext	suballoc.cpp	/^void* SubAllocator::AllocContext()$/;"	f	class:SubAllocator
+AllocSize	array.hpp	/^    size_t AllocSize;$/;"	m	class:Array
+AllocUnits	suballoc.cpp	/^inline void* SubAllocator::AllocUnits(int NU)$/;"	f	class:SubAllocator
+AllocUnitsRare	suballoc.cpp	/^void* SubAllocator::AllocUnitsRare(int indx)$/;"	f	class:SubAllocator
+AllowDelete	file.hpp	/^    bool AllowDelete;$/;"	m	class:File
+AllowExceptions	file.hpp	/^    bool AllowExceptions;$/;"	m	class:File
+AnySolidDataUnpackedWell	extract.hpp	/^    bool AnySolidDataUnpackedWell;$/;"	m	class:CmdExtract
+AppendArcNameToPath	options.hpp	/^    bool AppendArcNameToPath;$/;"	m	class:RAROptions
+ArcDataCRC	headers.hpp	/^  uint ArcDataCRC;  $/;"	m	struct:EndArcHeader
+ArcName	cmddata.hpp	/^    char ArcName[NM];$/;"	m	class:CommandData
+ArcName	extract.hpp	/^    char ArcName[NM];$/;"	m	class:CmdExtract
+ArcNameSize	headers.hpp	/^  ushort ArcNameSize;$/;"	m	struct:SignHeader
+ArcNameW	cmddata.hpp	/^    wchar ArcNameW[NM];$/;"	m	class:CommandData
+ArcNameW	extract.hpp	/^    wchar ArcNameW[NM];$/;"	m	class:CmdExtract
+ArcNames	cmddata.hpp	/^    StringList *ArcNames;$/;"	m	class:CommandData
+ArcPath	options.hpp	/^    char ArcPath[NM];$/;"	m	class:RAROptions
+ArcPathW	options.hpp	/^    wchar ArcPathW[NM];$/;"	m	class:RAROptions
+ArcTime	options.hpp	/^    int ArcTime;$/;"	m	class:RAROptions
+Archive	archive.cpp	/^Archive::Archive(RAROptions *InitCmd)$/;"	f	class:Archive
+Archive	archive.hpp	/^class Archive:public File$/;"	c
+Array	array.hpp	/^template <class T> Array<T>::Array()$/;"	f	class:Array
+Array	array.hpp	/^template <class T> Array<T>::Array(size_t Size)$/;"	f	class:Array
+Array	array.hpp	/^template <class T> class Array$/;"	c
+AskRepeatRead	errhnd.cpp	/^bool ErrorHandler::AskRepeatRead(const char *FileName,const wchar *FileNameW)$/;"	f	class:ErrorHandler
+AskRepeatWrite	errhnd.cpp	/^bool ErrorHandler::AskRepeatWrite(const char *FileName,const wchar *FileNameW,bool DiskFull)$/;"	f	class:ErrorHandler
+AudV	unpack.hpp	/^    struct AudioVariables AudV[4];$/;"	m	class:Unpack	typeref:struct:Unpack::AudioVariables
+AudioVariables	unpack.hpp	/^struct AudioVariables \/\/ For RAR 2.0 archives only.$/;"	s
+AvrLn1	unpack.hpp	/^    unsigned int FlagBuf,AvrPlc,AvrPlcB,AvrLn1,AvrLn2,AvrLn3;$/;"	m	class:Unpack
+AvrLn2	unpack.hpp	/^    unsigned int FlagBuf,AvrPlc,AvrPlcB,AvrLn1,AvrLn2,AvrLn3;$/;"	m	class:Unpack
+AvrLn3	unpack.hpp	/^    unsigned int FlagBuf,AvrPlc,AvrPlcB,AvrLn1,AvrLn2,AvrLn3;$/;"	m	class:Unpack
+AvrPlc	unpack.hpp	/^    unsigned int FlagBuf,AvrPlc,AvrPlcB,AvrLn1,AvrLn2,AvrLn3;$/;"	m	class:Unpack
+AvrPlcB	unpack.hpp	/^    unsigned int FlagBuf,AvrPlc,AvrPlcB,AvrLn1,AvrLn2,AvrLn3;$/;"	m	class:Unpack
+BAD_HANDLE	file.hpp	6;"	d
+BAD_HANDLE	file.hpp	9;"	d
+BC	compress.hpp	20;"	d
+BC20	compress.hpp	25;"	d
+BD	unpack.hpp	/^    DecodeTable BD;  \/\/ Decod bit lengths in Huffman table.$/;"	m	class:Unpack
+BEEA_HEAD	headers.hpp	/^enum { EA_HEAD=0x100,UO_HEAD=0x101,MAC_HEAD=0x102,BEEA_HEAD=0x103,$/;"	e	enum:__anon7
+BELOW_NORMAL_PRIORITY_CLASS	system.hpp	6;"	d
+BIG_ENDIAN	os.hpp	223;"	d
+BIG_ENDIAN	os.hpp	228;"	d
+BIG_ENDIAN	os.hpp	234;"	d
+BIG_ENDIAN	os.hpp	250;"	d
+BIG_ENDIAN	os.hpp	260;"	d
+BIN_SCALE	model.hpp	/^          INTERVAL=1 << INT_BITS, BIN_SCALE=1 << TOT_BITS, MAX_FREQ=124;$/;"	v
+BLOCK_LZ	unpack.hpp	/^enum BLOCK_TYPES {BLOCK_LZ,BLOCK_PPM};$/;"	e	enum:BLOCK_TYPES
+BLOCK_PPM	unpack.hpp	/^enum BLOCK_TYPES {BLOCK_LZ,BLOCK_PPM};$/;"	e	enum:BLOCK_TYPES
+BLOCK_TYPES	unpack.hpp	/^enum BLOCK_TYPES {BLOCK_LZ,BLOCK_PPM};$/;"	g
+BOT	coder.hpp	/^const uint TOP=1 << 24, BOT=1 << 15;$/;"	v
+BadSwitch	cmddata.cpp	/^void CommandData::BadSwitch(const char *Switch)$/;"	f	class:CommandData
+BareOutput	cmddata.hpp	/^    bool BareOutput;$/;"	m	class:CommandData
+BaseBlock	headers.hpp	/^struct BaseBlock$/;"	s
+BinSumm	model.hpp	/^    ushort BinSumm[128][64];               \/\/ binary SEE-contexts$/;"	m	class:ModelPPM
+BitInput	getbits.cpp	/^BitInput::BitInput()$/;"	f	class:BitInput
+BitInput	getbits.hpp	/^class BitInput$/;"	c
+BlockHeader	headers.hpp	/^struct BlockHeader:BaseBlock$/;"	s
+BlockLength	unpack.hpp	/^  unsigned int BlockLength;$/;"	m	struct:UnpackFilter
+BlockStart	unpack.hpp	/^  unsigned int BlockStart;$/;"	m	struct:UnpackFilter
+BrokenFileHeader	archive.hpp	/^    bool BrokenFileHeader;$/;"	m	class:Archive
+Buf60	unpack.hpp	/^    int Buf60,NumHuf,StMode,LCount,FlagsCnt;$/;"	m	class:Unpack
+BufSize	array.hpp	/^    size_t BufSize;$/;"	m	class:Array
+Buffer	array.hpp	/^    T *Buffer;$/;"	m	class:Array
+BufferSize	getbits.hpp	/^    enum BufferSize {MAX_SIZE=0x8000}; \/\/ Size of input buffer.$/;"	g	class:BitInput
+ByteCount	unpack.hpp	/^  unsigned int ByteCount;$/;"	m	struct:AudioVariables
+CALCCRC_SHOWALL	filefn.hpp	/^enum CALCCRC_SHOWMODE {CALCCRC_SHOWNONE,CALCCRC_SHOWTEXT,CALCCRC_SHOWALL};$/;"	e	enum:CALCCRC_SHOWMODE
+CALCCRC_SHOWMODE	filefn.hpp	/^enum CALCCRC_SHOWMODE {CALCCRC_SHOWNONE,CALCCRC_SHOWTEXT,CALCCRC_SHOWALL};$/;"	g
+CALCCRC_SHOWNONE	filefn.hpp	/^enum CALCCRC_SHOWMODE {CALCCRC_SHOWNONE,CALCCRC_SHOWTEXT,CALCCRC_SHOWALL};$/;"	e	enum:CALCCRC_SHOWMODE
+CALCCRC_SHOWTEXT	filefn.hpp	/^enum CALCCRC_SHOWMODE {CALCCRC_SHOWNONE,CALCCRC_SHOWTEXT,CALCCRC_SHOWALL};$/;"	e	enum:CALCCRC_SHOWMODE
+CODEBUFSIZE	compress.hpp	9;"	d
+CODE_CACHELZ	compress.hpp	/^enum {CODE_HUFFMAN,CODE_LZ,CODE_LZ2,CODE_REPEATLZ,CODE_CACHELZ,$/;"	e	enum:__anon2
+CODE_ENDFILE	compress.hpp	/^      CODE_STARTFILE,CODE_ENDFILE,CODE_VM,CODE_VMDATA};$/;"	e	enum:__anon2
+CODE_HUFFMAN	compress.hpp	/^enum {CODE_HUFFMAN,CODE_LZ,CODE_LZ2,CODE_REPEATLZ,CODE_CACHELZ,$/;"	e	enum:__anon2
+CODE_LZ	compress.hpp	/^enum {CODE_HUFFMAN,CODE_LZ,CODE_LZ2,CODE_REPEATLZ,CODE_CACHELZ,$/;"	e	enum:__anon2
+CODE_LZ2	compress.hpp	/^enum {CODE_HUFFMAN,CODE_LZ,CODE_LZ2,CODE_REPEATLZ,CODE_CACHELZ,$/;"	e	enum:__anon2
+CODE_REPEATLZ	compress.hpp	/^enum {CODE_HUFFMAN,CODE_LZ,CODE_LZ2,CODE_REPEATLZ,CODE_CACHELZ,$/;"	e	enum:__anon2
+CODE_STARTFILE	compress.hpp	/^      CODE_STARTFILE,CODE_ENDFILE,CODE_VM,CODE_VMDATA};$/;"	e	enum:__anon2
+CODE_VM	compress.hpp	/^      CODE_STARTFILE,CODE_ENDFILE,CODE_VM,CODE_VMDATA};$/;"	e	enum:__anon2
+CODE_VMDATA	compress.hpp	/^      CODE_STARTFILE,CODE_ENDFILE,CODE_VM,CODE_VMDATA};$/;"	e	enum:__anon2
+COMM_HEAD	headers.hpp	/^  MARK_HEAD=0x72,MAIN_HEAD=0x73,FILE_HEAD=0x74,COMM_HEAD=0x75,AV_HEAD=0x76,$/;"	e	enum:HEADER_TYPE
+COMPILE	makefile	/^COMPILE=$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(DEFINES)$/;"	m
+CPATHDIVIDER	os.hpp	127;"	d
+CPATHDIVIDER	os.hpp	208;"	d
+CRC	crc.cpp	/^uint CRC(uint StartCRC,const void *Addr,size_t Size)$/;"	f
+CRCTab	crc.cpp	/^uint CRCTab[256];$/;"	v
+CRC_ERROR	errhnd.hpp	/^enum { SUCCESS,WARNING,FATAL_ERROR,CRC_ERROR,LOCK_ERROR,WRITE_ERROR,$/;"	e	enum:__anon1
+CREATEBINARY	os.hpp	134;"	d
+CREATEBINARY	os.hpp	215;"	d
+CREATE_ERROR	errhnd.hpp	/^       OPEN_ERROR,USER_ERROR,MEMORY_ERROR,CREATE_ERROR,NO_FILES_ERROR,$/;"	e	enum:__anon1
+CRYPT_VER	headers.hpp	25;"	d
+CXX	makefile	/^CXX=g++$/;"	m
+CXXFLAGS	makefile	/^CXXFLAGS=-g -pthread -pg$/;"	m
+C_UNICODE_RTL	unicode.hpp	16;"	d
+CalcFileCRC	filefn.cpp	/^uint CalcFileCRC(File *SrcFile,int64 Size,CALCCRC_SHOWMODE ShowMode)$/;"	f
+Callback	options.hpp	/^    UNRARCALLBACK Callback;$/;"	m	class:RAROptions
+ChSet	unpack.hpp	/^    unsigned int ChSet[256],ChSetA[256],ChSetB[256],ChSetC[256];$/;"	m	class:Unpack
+ChSetA	unpack.hpp	/^    unsigned int ChSet[256],ChSetA[256],ChSetB[256],ChSetC[256];$/;"	m	class:Unpack
+ChSetB	unpack.hpp	/^    unsigned int ChSet[256],ChSetA[256],ChSetB[256],ChSetC[256];$/;"	m	class:Unpack
+ChSetC	unpack.hpp	/^    unsigned int ChSet[256],ChSetA[256],ChSetB[256],ChSetC[256];$/;"	m	class:Unpack
+ChangeVolProc	options.hpp	/^    CHANGEVOLPROC ChangeVolProc;$/;"	m	class:RAROptions
+CharMask	model.hpp	/^    byte CharMask[256], NS2Indx[256], NS2BSIndx[256], HB2Flag[256];$/;"	m	class:ModelPPM
+CharToWide	unicode.cpp	/^bool CharToWide(const char *Src,wchar *Dest,size_t DestSize)$/;"	f
+CheckArc	archive.cpp	/^void Archive::CheckArc(bool EnableBroken)$/;"	f	class:Archive
+CheckLongPathErrMsg	errhnd.cpp	/^void ErrorHandler::CheckLongPathErrMsg(const char *FileName,const wchar *FileNameW)$/;"	f	class:ErrorHandler
+CheckOpen	archive.cpp	/^void Archive::CheckOpen(const char *Name,const wchar *NameW)$/;"	f	class:Archive
+CheckWinSize	cmddata.cpp	/^bool CommandData::CheckWinSize()$/;"	f	class:CommandData
+Clean	errhnd.cpp	/^void ErrorHandler::Clean()$/;"	f	class:ErrorHandler
+Clean	rs.cpp	3;"	d	file:
+Clean	suballoc.cpp	/^void SubAllocator::Clean()$/;"	f	class:SubAllocator
+CleanData	array.hpp	/^template <class T> void Array<T>::CleanData()$/;"	f	class:Array
+CleanUp	model.cpp	/^void ModelPPM::CleanUp()$/;"	f	class:ModelPPM
+Clear	headers.hpp	/^  void Clear(size_t SubDataSize)$/;"	f	struct:FileHeader
+ClearArc	options.hpp	/^    bool ClearArc;$/;"	m	class:RAROptions
+ClearMask	model.cpp	/^inline void ModelPPM::ClearMask()$/;"	f	class:ModelPPM
+Close	cmddata.cpp	/^void CommandData::Close()$/;"	f	class:CommandData
+Close	file.cpp	/^bool File::Close()$/;"	f	class:File
+CloseCount	file.hpp	/^    uint CloseCount;$/;"	m	class:File
+CloseCount	savepos.hpp	/^    uint CloseCount;$/;"	m	class:SaveFilePos
+CloseError	errhnd.cpp	/^void ErrorHandler::CloseError(const char *FileName,const wchar *FileNameW)$/;"	f	class:ErrorHandler
+Cmd	archive.hpp	/^    RAROptions *Cmd,DummyCmd;$/;"	m	class:Archive
+CmdExtract	extract.cpp	/^CmdExtract::CmdExtract()$/;"	f	class:CmdExtract
+CmdExtract	extract.hpp	/^class CmdExtract$/;"	c
+CmpExt	pathfn.cpp	/^bool CmpExt(const char *Name,const char *Ext)$/;"	f
+CmpExt	pathfn.cpp	/^bool CmpExt(const wchar *Name,const wchar *Ext)$/;"	f
+CmpMSGID	cmddata.cpp	/^inline bool CmpMSGID(MSGID i1,MSGID i2)$/;"	f
+CmpName	headers.hpp	/^  bool CmpName(const char *Name)$/;"	f	struct:FileHeader
+CmpName	match.cpp	/^bool CmpName(const char *Wildcard,const char *Name,int CmpMode)$/;"	f
+CmpName	match.cpp	/^bool CmpName(const wchar *Wildcard,const wchar *Name,int CmpMode)$/;"	f
+Coder	model.hpp	/^    RangeCoder Coder;$/;"	m	class:ModelPPM
+CommCRC	headers.hpp	/^  ushort CommCRC;$/;"	m	struct:CommentHeader
+CommHead	archive.hpp	/^    CommentHeader CommHead;$/;"	m	class:Archive
+Command	cmddata.hpp	/^    char Command[NM+16];$/;"	m	class:CommandData
+Command	rdwrfn.hpp	/^    CmdAdd *Command;$/;"	m	class:ComprDataIO
+CommandData	cmddata.cpp	/^CommandData::CommandData()$/;"	f	class:CommandData
+CommandData	cmddata.hpp	/^class CommandData:public RAROptions$/;"	c
+CommandW	cmddata.hpp	/^    wchar CommandW[NM+16];$/;"	m	class:CommandData
+CommentCharset	options.hpp	/^    RAR_CHARSET CommentCharset;$/;"	m	class:RAROptions
+CommentFile	options.hpp	/^    char CommentFile[NM];$/;"	m	class:RAROptions
+CommentFileW	options.hpp	/^    wchar CommentFileW[NM];$/;"	m	class:RAROptions
+CommentHeader	headers.hpp	/^struct CommentHeader:BaseBlock$/;"	s
+ComprDataIO	rdwrfn.cpp	/^ComprDataIO::ComprDataIO()$/;"	f	class:ComprDataIO
+ComprDataIO	rdwrfn.hpp	/^class ComprDataIO$/;"	c
+CompressStdin	options.hpp	/^    char CompressStdin[NM];$/;"	m	class:RAROptions
+ConfigDisabled	options.hpp	/^    bool ConfigDisabled; \/\/ Switch -cfg-.$/;"	m	class:RAROptions
+ConvertAttributes	arcread.cpp	/^void Archive::ConvertAttributes()$/;"	f	class:Archive
+ConvertNameCase	arcread.cpp	/^void Archive::ConvertNameCase(char *Name)$/;"	f	class:Archive
+ConvertNameCase	arcread.cpp	/^void Archive::ConvertNameCase(wchar *Name)$/;"	f	class:Archive
+ConvertNameToFull	pathfn.cpp	/^void ConvertNameToFull(const char *Src,char *Dest)$/;"	f
+ConvertNameToFull	pathfn.cpp	/^void ConvertNameToFull(const wchar *Src,wchar *Dest)$/;"	f
+ConvertNames	options.hpp	/^    int ConvertNames;$/;"	m	class:RAROptions
+ConvertPath	pathfn.cpp	/^char* ConvertPath(const char *SrcPath,char *DestPath)$/;"	f
+ConvertPath	pathfn.cpp	/^wchar* ConvertPath(const wchar *SrcPath,wchar *DestPath)$/;"	f
+ConvertUnknownHeader	arcread.cpp	/^void Archive::ConvertUnknownHeader()$/;"	f	class:Archive
+Copy	file.cpp	/^int64 File::Copy(File &Dest,int64 Length)$/;"	f	class:File
+CopyString	unpack.cpp	/^_forceinline void Unpack::CopyString(uint Length,uint Distance)$/;"	f	class:Unpack
+CopyString20	unpack20.cpp	/^void Unpack::CopyString20(unsigned int Length,unsigned int Distance)$/;"	f	class:Unpack
+CorrHuff	unpack15.cpp	/^void Unpack::CorrHuff(unsigned int *CharSet,unsigned int *NumToPlace)$/;"	f	class:Unpack
+Count	model.hpp	/^  byte Shift, Count;$/;"	m	struct:SEE2_CONTEXT
+Create	file.cpp	/^bool File::Create(const char *Name,const wchar *NameW,bool ShareRead)$/;"	f	class:File
+CreateErrorMsg	errhnd.cpp	/^void ErrorHandler::CreateErrorMsg(const char *ArcName,const wchar *ArcNameW,const char *FileName,const wchar *FileNameW)$/;"	f	class:ErrorHandler
+CreateErrorMsg	errhnd.cpp	/^void ErrorHandler::CreateErrorMsg(const char *FileName,const wchar *FileNameW)$/;"	f	class:ErrorHandler
+CreatePath	filefn.cpp	/^bool CreatePath(const char *Path,bool SkipLastName)$/;"	f
+CreatePath	filefn.cpp	/^bool CreatePath(const char *Path,const wchar *PathW,bool SkipLastName)$/;"	f
+CreatePath	filefn.cpp	/^bool CreatePath(const wchar *Path,bool SkipLastName)$/;"	f
+CreateSuccessors	model.cpp	/^inline PPM_CONTEXT* ModelPPM::CreateSuccessors(bool Skip,STATE* p1)$/;"	f	class:ModelPPM
+CreatedFiles	file.cpp	/^static __thread File *CreatedFiles[256];$/;"	v	file:
+CreationTime	headers.hpp	/^  uint CreationTime;$/;"	m	struct:SignHeader
+CurBlockPos	archive.hpp	/^    int64 CurBlockPos;$/;"	m	class:Archive
+CurHeaderType	archive.hpp	/^    int CurHeaderType;$/;"	m	class:Archive
+CurPackRead	rdwrfn.hpp	/^    int64 CurPackRead,CurPackWrite,CurUnpRead,CurUnpWrite;$/;"	m	class:ComprDataIO
+CurPackWrite	rdwrfn.hpp	/^    int64 CurPackRead,CurPackWrite,CurUnpRead,CurUnpWrite;$/;"	m	class:ComprDataIO
+CurPos	strlist.hpp	/^    size_t CurPos;$/;"	m	class:StringList
+CurPosW	strlist.hpp	/^    size_t CurPosW;$/;"	m	class:StringList
+CurUnpRead	rdwrfn.hpp	/^    int64 CurPackRead,CurPackWrite,CurUnpRead,CurUnpWrite;$/;"	m	class:ComprDataIO
+CurUnpWrite	rdwrfn.hpp	/^    int64 CurPackRead,CurPackWrite,CurUnpRead,CurUnpWrite;$/;"	m	class:ComprDataIO
+CurVolNum	options.hpp	/^    uint CurVolNum;$/;"	m	class:RAROptions
+CurrentCommand	rdwrfn.hpp	/^    char CurrentCommand;$/;"	m	class:ComprDataIO
+D1	unpack.hpp	/^  int D1,D2,D3,D4;$/;"	m	struct:AudioVariables
+D2	unpack.hpp	/^  int D1,D2,D3,D4;$/;"	m	struct:AudioVariables
+D3	unpack.hpp	/^  int D1,D2,D3,D4;$/;"	m	struct:AudioVariables
+D4	unpack.hpp	/^  int D1,D2,D3,D4;$/;"	m	struct:AudioVariables
+DBCSMode	unicode.hpp	/^    bool DBCSMode;$/;"	m	class:SupportDBCS
+DBCS_SUPPORTED	unicode.hpp	20;"	d
+DC	compress.hpp	16;"	d
+DC20	compress.hpp	23;"	d
+DD	unpack.hpp	/^    DecodeTable DD;  \/\/ Decode distances.$/;"	m	class:Unpack
+DEFAULT_RECOVERY	options.hpp	4;"	d
+DEFAULT_RECVOLUMES	options.hpp	6;"	d
+DEFINES	makefile	/^DEFINES=-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE$/;"	m
+DESTDIR	makefile	/^DESTDIR=\/usr$/;"	m
+Data	rawread.hpp	/^    Array<byte> Data;$/;"	m	class:RawRead
+DataIO	extract.hpp	/^    ComprDataIO DataIO;$/;"	m	class:CmdExtract
+DataSize	headers.hpp	/^    uint DataSize;$/;"	m	union:BlockHeader::__anon8
+DataSize	rawread.hpp	/^    size_t DataSize;$/;"	m	class:RawRead
+Day	timefn.hpp	/^  uint Day;$/;"	m	struct:RarLocalTime
+DecHf0	unpack15.cpp	/^static __thread unsigned int DecHf0[]={0x8000,0xc000,0xe000,0xf200,0xf200,0xf200,$/;"	v	file:
+DecHf1	unpack15.cpp	/^static __thread unsigned int DecHf1[]={0x2000,0xc000,0xe000,0xf000,0xf200,0xf200,$/;"	v	file:
+DecHf2	unpack15.cpp	/^static __thread unsigned int DecHf2[]={0x1000,0x2400,0x8000,0xc000,0xfa00,0xffff,$/;"	v	file:
+DecHf3	unpack15.cpp	/^static __thread unsigned int DecHf3[]={0x800,0x2400,0xee00,0xfe80,0xffff,0xffff,$/;"	v	file:
+DecHf4	unpack15.cpp	/^static __thread unsigned int DecHf4[]={0xff00,0xffff,0xffff,0xffff,0xffff,0xffff};$/;"	v	file:
+DecL1	unpack15.cpp	/^static __thread unsigned int DecL1[]={0x8000,0xa000,0xc000,0xd000,0xe000,0xea00,$/;"	v	file:
+DecL2	unpack15.cpp	/^static __thread unsigned int DecL2[]={0xa000,0xc000,0xd000,0xe000,0xea00,0xee00,$/;"	v	file:
+Decode	coder.cpp	/^inline void RangeCoder::Decode()$/;"	f	class:RangeCoder
+Decode	encname.cpp	/^void EncodeFileName::Decode(char *Name,byte *EncName,size_t EncSize,wchar *NameW,$/;"	f	class:EncodeFileName
+Decode	rs.cpp	/^bool RSCoder::Decode(byte *Data,int DataSize,int *EraLoc,int EraSize)$/;"	f	class:RSCoder
+DecodeAudio	unpack20.cpp	/^byte Unpack::DecodeAudio(int Delta)$/;"	f	class:Unpack
+DecodeChar	model.cpp	/^int ModelPPM::DecodeChar()$/;"	f	class:ModelPPM
+DecodeInit	model.cpp	/^bool ModelPPM::DecodeInit(Unpack *UnpackRead,int &EscChar)$/;"	f	class:ModelPPM
+DecodeLen	unpack.hpp	/^  uint DecodeLen[16]; $/;"	m	struct:DecodeTable
+DecodeNum	unpack.hpp	/^  uint DecodeNum[LARGEST_TABLE_SIZE];$/;"	m	struct:DecodeTable
+DecodeNum	unpack15.cpp	/^uint Unpack::DecodeNum(uint Num,uint StartPos,uint *DecTab,uint *PosTab)$/;"	f	class:Unpack
+DecodeNumber	unpack.cpp	/^_forceinline uint Unpack::DecodeNumber(DecodeTable *Dec)$/;"	f	class:Unpack
+DecodePos	unpack.hpp	/^  uint DecodePos[16];$/;"	m	struct:DecodeTable
+DecodeTable	unpack.hpp	/^struct DecodeTable$/;"	s
+Decryption	rdwrfn.hpp	/^    int Decryption;$/;"	m	class:ComprDataIO
+DefConfigName	os.hpp	121;"	d
+DefConfigName	os.hpp	202;"	d
+DefLogName	os.hpp	122;"	d
+DefLogName	os.hpp	203;"	d
+DefSFXName	rardefs.hpp	12;"	d
+DefSortListName	rardefs.hpp	13;"	d
+DefaultStoreList	cmddata.hpp	5;"	d
+DelFile	filefn.cpp	/^bool DelFile(const char *Name)$/;"	f
+DelFile	filefn.cpp	/^bool DelFile(const char *Name,const wchar *NameW)$/;"	f
+Delete	file.cpp	/^bool File::Delete()$/;"	f	class:File
+DeleteFiles	options.hpp	/^    bool DeleteFiles;$/;"	m	class:RAROptions
+DestFile	rdwrfn.hpp	/^    File *DestFile;$/;"	m	class:ComprDataIO
+DestFileName	extract.hpp	/^    char DestFileName[NM];$/;"	m	class:CmdExtract
+DestFileNameW	extract.hpp	/^    wchar DestFileNameW[NM];$/;"	m	class:CmdExtract
+DestSize	encname.hpp	/^    size_t DestSize;$/;"	m	class:EncodeFileName
+DestUnpSize	unpack.hpp	/^    int64 DestUnpSize;$/;"	m	class:Unpack
+Dif	unpack.hpp	/^  unsigned int Dif[11];$/;"	m	struct:AudioVariables
+DirectRead	file.cpp	/^int File::DirectRead(byte *Data,size_t Size)$/;"	f	class:File
+DirectRead	file.cpp	/^int File::DirectRead(void *Data,size_t Size)$/;"	f	class:File
+DisableComment	options.hpp	/^    bool DisableComment;$/;"	m	class:RAROptions
+DisableCopyright	options.hpp	/^    bool DisableCopyright;$/;"	m	class:RAROptions
+DisableDone	options.hpp	/^    bool DisableDone;$/;"	m	class:RAROptions
+DisablePercentage	options.hpp	/^    bool DisablePercentage;$/;"	m	class:RAROptions
+DisableSortSolid	options.hpp	/^    bool DisableSortSolid;$/;"	m	class:RAROptions
+DisableViewAV	options.hpp	/^    bool DisableViewAV;$/;"	m	class:RAROptions
+DllDestName	options.hpp	/^    char DllDestName[NM];$/;"	m	class:RAROptions
+DllDestNameW	options.hpp	/^    wchar DllDestNameW[NM];$/;"	m	class:RAROptions
+DllError	options.hpp	/^    int DllError;$/;"	m	class:RAROptions
+DllOpMode	options.hpp	/^    int DllOpMode;$/;"	m	class:RAROptions
+Dnm	rs.hpp	/^    int Dnm[MAXPAR+1];$/;"	m	class:RSCoder
+DoExtract	extract.cpp	/^void CmdExtract::DoExtract(CommandData *Cmd, byte* ptrlocation, int64 ptrlength, std::string& xml)$/;"	f	class:CmdExtract
+DoShutdown	errhnd.hpp	/^    bool DoShutdown;$/;"	m	class:ErrorHandler
+DoUnpack	unpack.cpp	/^void Unpack::DoUnpack(int Method,bool Solid)$/;"	f	class:Unpack
+DosSlashToUnix	pathfn.cpp	/^char* DosSlashToUnix(char *SrcName,char *DestName,uint MaxLength)$/;"	f
+DosSlashToUnix	pathfn.cpp	/^wchar* DosSlashToUnix(wchar *SrcName,wchar *DestName,uint MaxLength)$/;"	f
+DummyCmd	archive.hpp	/^    RAROptions *Cmd,DummyCmd;$/;"	m	class:Archive
+DummySEE2Cont	model.hpp	/^    SEE2_CONTEXT SEE2Cont[25][16], DummySEE2Cont;$/;"	m	class:ModelPPM
+EACRC	headers.hpp	/^  uint EACRC;$/;"	m	struct:EAHeader
+EAHead	archive.hpp	/^    EAHeader EAHead;$/;"	m	class:Archive
+EAHeader	headers.hpp	/^struct EAHeader:SubBlockHeader$/;"	s
+EARC_DATACRC	headers.hpp	80;"	d
+EARC_NEXT_VOLUME	headers.hpp	79;"	d
+EARC_REVSPACE	headers.hpp	81;"	d
+EARC_VOLNUMBER	headers.hpp	82;"	d
+EA_HEAD	headers.hpp	/^enum { EA_HEAD=0x100,UO_HEAD=0x101,MAC_HEAD=0x102,BEEA_HEAD=0x103,$/;"	e	enum:__anon7
+ELPol	rs.hpp	/^    int ELPol[MAXPOL]; \/\/ Error locator polynomial.$/;"	m	class:RSCoder
+ENABLE_ACCESS	os.hpp	119;"	d
+ENABLE_ACCESS	os.hpp	200;"	d
+ENABLE_BAD_ALLOC	os.hpp	16;"	d
+ENDARC_HEAD	headers.hpp	/^  ENDARC_HEAD=0x7b$/;"	e	enum:HEADER_TYPE
+EN_FIRSTVOL	archive.hpp	/^enum {EN_LOCK=1,EN_VOL=2,EN_FIRSTVOL=4};$/;"	e	enum:__anon10
+EN_LOCK	archive.hpp	/^enum {EN_LOCK=1,EN_VOL=2,EN_FIRSTVOL=4};$/;"	e	enum:__anon10
+EN_VOL	archive.hpp	/^enum {EN_LOCK=1,EN_VOL=2,EN_FIRSTVOL=4};$/;"	e	enum:__anon10
+EXCL_ABSPATH	options.hpp	/^  EXCL_ABSPATH,        \/\/ -ep3 (the full path with the disk letter)$/;"	e	enum:PATH_EXCL_MODE
+EXCL_BASEPATH	options.hpp	/^  EXCL_BASEPATH,       \/\/ -ep1 (exclude the base part of path)$/;"	e	enum:PATH_EXCL_MODE
+EXCL_SAVEFULLPATH	options.hpp	/^  EXCL_SAVEFULLPATH,   \/\/ -ep2 (the full path without the disk letter)$/;"	e	enum:PATH_EXCL_MODE
+EXCL_SKIPABSPATH	options.hpp	/^  EXCL_SKIPABSPATH     \/\/ Works as EXCL_BASEPATH for fully qualified paths$/;"	e	enum:PATH_EXCL_MODE
+EXCL_SKIPWHOLEPATH	options.hpp	/^  EXCL_SKIPWHOLEPATH,  \/\/ -ep  (exclude the path completely)$/;"	e	enum:PATH_EXCL_MODE
+EXCL_UNCHANGED	options.hpp	/^  EXCL_UNCHANGED=0,    \/\/ Process paths as is (default).$/;"	e	enum:PATH_EXCL_MODE
+EXTRACT_ARC_CODE	extract.hpp	/^enum EXTRACT_ARC_CODE {EXTRACT_ARC_NEXT,EXTRACT_ARC_REPEAT};$/;"	g
+EXTRACT_ARC_NEXT	extract.hpp	/^enum EXTRACT_ARC_CODE {EXTRACT_ARC_NEXT,EXTRACT_ARC_REPEAT};$/;"	e	enum:EXTRACT_ARC_CODE
+EXTRACT_ARC_REPEAT	extract.hpp	/^enum EXTRACT_ARC_CODE {EXTRACT_ARC_NEXT,EXTRACT_ARC_REPEAT};$/;"	e	enum:EXTRACT_ARC_CODE
+EXTTIME_1S	options.hpp	/^  EXTTIME_NONE=0,EXTTIME_1S,EXTTIME_HIGH1,EXTTIME_HIGH2,EXTTIME_HIGH3$/;"	e	enum:EXTTIME_MODE
+EXTTIME_HIGH1	options.hpp	/^  EXTTIME_NONE=0,EXTTIME_1S,EXTTIME_HIGH1,EXTTIME_HIGH2,EXTTIME_HIGH3$/;"	e	enum:EXTTIME_MODE
+EXTTIME_HIGH2	options.hpp	/^  EXTTIME_NONE=0,EXTTIME_1S,EXTTIME_HIGH1,EXTTIME_HIGH2,EXTTIME_HIGH3$/;"	e	enum:EXTTIME_MODE
+EXTTIME_HIGH3	options.hpp	/^  EXTTIME_NONE=0,EXTTIME_1S,EXTTIME_HIGH1,EXTTIME_HIGH2,EXTTIME_HIGH3$/;"	e	enum:EXTTIME_MODE
+EXTTIME_MODE	options.hpp	/^enum EXTTIME_MODE {$/;"	g
+EXTTIME_NONE	options.hpp	/^  EXTTIME_NONE=0,EXTTIME_1S,EXTTIME_HIGH1,EXTTIME_HIGH2,EXTTIME_HIGH3$/;"	e	enum:EXTTIME_MODE
+EXTVAR	global.hpp	5;"	d
+EXTVAR	global.hpp	7;"	d
+EmailTo	options.hpp	/^    char EmailTo[NM];$/;"	m	class:RAROptions
+EnableBreak	errhnd.hpp	/^    bool EnableBreak;$/;"	m	class:ErrorHandler
+EnableShowProgress	rdwrfn.hpp	/^    void EnableShowProgress(bool Show) {ShowProgress=Show;}$/;"	f	class:ComprDataIO
+EncName	encname.hpp	/^    byte *EncName;$/;"	m	class:EncodeFileName
+Encode	rs.cpp	/^void RSCoder::Encode(byte *Data,int DataSize,byte *DestData)$/;"	f	class:RSCoder
+EncodeFileName	encname.cpp	/^EncodeFileName::EncodeFileName()$/;"	f	class:EncodeFileName
+EncodeFileName	encname.hpp	/^class EncodeFileName$/;"	c
+EncryptHeaders	options.hpp	/^    bool EncryptHeaders;$/;"	m	class:RAROptions
+EncryptVer	headers.hpp	/^  byte EncryptVer;$/;"	m	struct:MainHeader
+Encrypted	archive.hpp	/^    bool Encrypted;$/;"	m	class:Archive
+Encryption	rdwrfn.hpp	/^    int Encryption;$/;"	m	class:ComprDataIO
+EndArcHead	archive.hpp	/^    EndArcHeader EndArcHead;$/;"	m	class:Archive
+EndArcHeader	headers.hpp	/^struct EndArcHeader:BaseBlock$/;"	s
+EnumConfigPaths	pathfn.cpp	/^bool EnumConfigPaths(char *Path,int Number)$/;"	f
+EnumConfigPaths	pathfn.cpp	/^bool EnumConfigPaths(wchar *Path,int Number)$/;"	f
+ErrCount	errhnd.hpp	/^    int ErrCount;$/;"	m	class:ErrorHandler
+ErrCount	rs.hpp	/^    int ErrorLocs[MAXPAR+1],ErrCount;$/;"	m	class:RSCoder
+ErrHandler	global.hpp	/^EXTVAR ErrorHandler ErrHandler;$/;"	v
+ErrMsg	errhnd.cpp	/^void ErrorHandler::ErrMsg(const char *ArcName,const char *fmt,...)$/;"	f	class:ErrorHandler
+ErrorHandler	errhnd.cpp	/^ErrorHandler::ErrorHandler()$/;"	f	class:ErrorHandler
+ErrorHandler	errhnd.hpp	/^class ErrorHandler$/;"	c
+ErrorLocs	rs.hpp	/^    int ErrorLocs[MAXPAR+1],ErrCount;$/;"	m	class:RSCoder
+ErrorType	file.hpp	/^    FILE_ERRORTYPE ErrorType;$/;"	m	class:File
+EscCount	model.hpp	/^    byte EscCount, PrevSuccess, HiBitsFlag;$/;"	m	class:ModelPPM
+ExclArgs	cmddata.hpp	/^    StringList *ExclArgs;$/;"	m	class:CommandData
+ExclCheck	cmddata.cpp	/^bool CommandData::ExclCheck(char *CheckName,bool Dir,bool CheckFullPath,bool CheckInclList)$/;"	f	class:CommandData
+ExclCheckArgs	cmddata.cpp	/^bool CommandData::ExclCheckArgs(StringList *Args,bool Dir,char *CheckName,bool CheckFullPath,int MatchMode)$/;"	f	class:CommandData
+ExclDirByAttr	cmddata.cpp	/^bool CommandData::ExclDirByAttr(uint FileAttr)$/;"	f	class:CommandData
+ExclFileAttr	options.hpp	/^    uint ExclFileAttr;$/;"	m	class:RAROptions
+ExclPath	options.hpp	/^    PATH_EXCL_MODE ExclPath;$/;"	m	class:RAROptions
+ExecCount	unpack.hpp	/^  unsigned int ExecCount;$/;"	m	struct:UnpackFilter
+Exit	errhnd.cpp	/^void ErrorHandler::Exit(int ExitCode)$/;"	f	class:ErrorHandler
+ExitCode	errhnd.hpp	/^    int ExitCode;$/;"	m	class:ErrorHandler
+ExpEscape	model.cpp	/^static __thread const byte ExpEscape[16]={ 25,14, 9, 7, 5, 5, 4, 4, 4, 3, 3, 3, 2, 2, 2, 2 };$/;"	v	file:
+ExpandUnits	suballoc.cpp	/^void* SubAllocator::ExpandUnits(void* OldPtr,int OldNU)$/;"	f	class:SubAllocator
+ExtToInt	strfn.cpp	/^void ExtToInt(const char *Src,char *Dest)$/;"	f
+ExternalWindow	unpack.hpp	/^    bool ExternalWindow;$/;"	m	class:Unpack
+ExtrPath	options.hpp	/^    char ExtrPath[NM];$/;"	m	class:RAROptions
+ExtrPathW	options.hpp	/^    wchar ExtrPathW[NM];$/;"	m	class:RAROptions
+ExtractArchive	extract.cpp	/^EXTRACT_ARC_CODE CmdExtract::ExtractArchive(CommandData *Cmd, byte *ptrlocation, int64 ptrlength, std::string& xml)$/;"	f	class:CmdExtract
+ExtractArchiveInit	extract.cpp	/^void CmdExtract::ExtractArchiveInit(CommandData *Cmd,Archive &Arc)$/;"	f	class:CmdExtract
+ExtractCurrentFile	extract.cpp	/^bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,size_t HeaderSize,bool &Repeat, std::string& xml)$/;"	f	class:CmdExtract
+FALSE	os.hpp	4;"	d
+FATAL_ERROR	errhnd.hpp	/^enum { SUCCESS,WARNING,FATAL_ERROR,CRC_ERROR,LOCK_ERROR,WRITE_ERROR,$/;"	e	enum:__anon1
+FA_ARCH	rardefs.hpp	21;"	d
+FA_DIREC	rardefs.hpp	20;"	d
+FA_HIDDEN	rardefs.hpp	17;"	d
+FA_LABEL	rardefs.hpp	19;"	d
+FA_RDONLY	rardefs.hpp	16;"	d
+FA_SYSTEM	rardefs.hpp	18;"	d
+FILE_ERRORTYPE	file.hpp	/^enum FILE_ERRORTYPE {FILE_SUCCESS,FILE_NOTFOUND,FILE_READERROR};$/;"	g
+FILE_HANDLEERR	file.hpp	/^enum FILE_HANDLETYPE {FILE_HANDLENORMAL,FILE_HANDLESTD,FILE_HANDLEERR};$/;"	e	enum:FILE_HANDLETYPE
+FILE_HANDLENORMAL	file.hpp	/^enum FILE_HANDLETYPE {FILE_HANDLENORMAL,FILE_HANDLESTD,FILE_HANDLEERR};$/;"	e	enum:FILE_HANDLETYPE
+FILE_HANDLESTD	file.hpp	/^enum FILE_HANDLETYPE {FILE_HANDLENORMAL,FILE_HANDLESTD,FILE_HANDLEERR};$/;"	e	enum:FILE_HANDLETYPE
+FILE_HANDLETYPE	file.hpp	/^enum FILE_HANDLETYPE {FILE_HANDLENORMAL,FILE_HANDLESTD,FILE_HANDLEERR};$/;"	g
+FILE_HEAD	headers.hpp	/^  MARK_HEAD=0x72,MAIN_HEAD=0x73,FILE_HEAD=0x74,COMM_HEAD=0x75,AV_HEAD=0x76,$/;"	e	enum:HEADER_TYPE
+FILE_NOTFOUND	file.hpp	/^enum FILE_ERRORTYPE {FILE_SUCCESS,FILE_NOTFOUND,FILE_READERROR};$/;"	e	enum:FILE_ERRORTYPE
+FILE_READERROR	file.hpp	/^enum FILE_ERRORTYPE {FILE_SUCCESS,FILE_NOTFOUND,FILE_READERROR};$/;"	e	enum:FILE_ERRORTYPE
+FILE_SUCCESS	file.hpp	/^enum FILE_ERRORTYPE {FILE_SUCCESS,FILE_NOTFOUND,FILE_READERROR};$/;"	e	enum:FILE_ERRORTYPE
+FILTER_AUDIO	compress.hpp	/^  FILTER_UPCASETOLOW, FILTER_AUDIO, FILTER_RGB, FILTER_DELTA,$/;"	e	enum:FilterType
+FILTER_AUTO	options.hpp	/^enum FilterState {FILTER_DEFAULT=0,FILTER_AUTO,FILTER_FORCE,FILTER_DISABLE};$/;"	e	enum:FilterState
+FILTER_DEFAULT	options.hpp	/^enum FilterState {FILTER_DEFAULT=0,FILTER_AUTO,FILTER_FORCE,FILTER_DISABLE};$/;"	e	enum:FilterState
+FILTER_DELTA	compress.hpp	/^  FILTER_UPCASETOLOW, FILTER_AUDIO, FILTER_RGB, FILTER_DELTA,$/;"	e	enum:FilterType
+FILTER_DISABLE	options.hpp	/^enum FilterState {FILTER_DEFAULT=0,FILTER_AUTO,FILTER_FORCE,FILTER_DISABLE};$/;"	e	enum:FilterState
+FILTER_E8	compress.hpp	/^  FILTER_NONE, FILTER_PPM \/*dummy*\/, FILTER_E8, FILTER_E8E9,$/;"	e	enum:FilterType
+FILTER_E8E9	compress.hpp	/^  FILTER_NONE, FILTER_PPM \/*dummy*\/, FILTER_E8, FILTER_E8E9,$/;"	e	enum:FilterType
+FILTER_E8E9V2	compress.hpp	/^  FILTER_ITANIUM, FILTER_E8E9V2$/;"	e	enum:FilterType
+FILTER_FORCE	options.hpp	/^enum FilterState {FILTER_DEFAULT=0,FILTER_AUTO,FILTER_FORCE,FILTER_DISABLE};$/;"	e	enum:FilterState
+FILTER_ITANIUM	compress.hpp	/^  FILTER_ITANIUM, FILTER_E8E9V2$/;"	e	enum:FilterType
+FILTER_NONE	compress.hpp	/^  FILTER_NONE, FILTER_PPM \/*dummy*\/, FILTER_E8, FILTER_E8E9,$/;"	e	enum:FilterType
+FILTER_PPM	compress.hpp	/^  FILTER_NONE, FILTER_PPM \/*dummy*\/, FILTER_E8, FILTER_E8E9,$/;"	e	enum:FilterType
+FILTER_RGB	compress.hpp	/^  FILTER_UPCASETOLOW, FILTER_AUDIO, FILTER_RGB, FILTER_DELTA,$/;"	e	enum:FilterType
+FILTER_UPCASETOLOW	compress.hpp	/^  FILTER_UPCASETOLOW, FILTER_AUDIO, FILTER_RGB, FILTER_DELTA,$/;"	e	enum:FilterType
+FIXED_UNIT_SIZE	model.hpp	/^const uint FIXED_UNIT_SIZE=12;$/;"	v
+FailedHeaderDecryption	archive.hpp	/^    bool FailedHeaderDecryption;$/;"	m	class:Archive
+FakeUnitsStart	suballoc.hpp	/^    byte *pText, *UnitsStart,*HeapEnd,*FakeUnitsStart;$/;"	m	class:SubAllocator
+File	file.cpp	/^File::File()$/;"	f	class:File
+File	file.hpp	/^class File$/;"	c
+FileArgs	cmddata.hpp	/^    StringList *FileArgs;$/;"	m	class:CommandData
+FileAttr	file.hpp	/^  uint FileAttr;$/;"	m	struct:FileStat
+FileAttr	headers.hpp	/^    uint FileAttr;$/;"	m	union:FileHeader::__anon9
+FileAttr	headers.hpp	/^  byte FileAttr;$/;"	m	struct:OldFileHeader
+FileCRC	headers.hpp	/^  uint FileCRC;$/;"	m	struct:FileHeader
+FileCRC	headers.hpp	/^  ushort FileCRC;$/;"	m	struct:OldFileHeader
+FileCount	extract.hpp	/^    unsigned long FileCount;$/;"	m	class:CmdExtract
+FileExist	filefn.cpp	/^bool FileExist(const char *Name,const wchar *NameW)$/;"	f
+FileExist	filefn.cpp	/^bool FileExist(const wchar *Name)$/;"	f
+FileExtracted	unpack.hpp	/^    bool FileExtracted;$/;"	m	class:Unpack
+FileHandle	file.hpp	/^typedef FILE* FileHandle;$/;"	t
+FileHandle	file.hpp	/^typedef HANDLE FileHandle;$/;"	t
+FileHeader	headers.hpp	/^struct FileHeader:BlockHeader$/;"	s
+FileLength	file.cpp	/^int64 File::FileLength()$/;"	f	class:File
+FileLists	cmddata.hpp	/^    bool FileLists;$/;"	m	class:CommandData
+FileName	file.hpp	/^    char FileName[NM];$/;"	m	class:File
+FileName	headers.hpp	/^  char FileName[NM];$/;"	m	struct:FileHeader
+FileNameW	file.hpp	/^    wchar FileNameW[NM];$/;"	m	class:File
+FileNameW	headers.hpp	/^  wchar FileNameW[NM];$/;"	m	struct:FileHeader
+FileSize	file.hpp	/^  int64 FileSize;$/;"	m	struct:FileStat
+FileSizeLess	options.hpp	/^    int64 FileSizeLess;$/;"	m	class:RAROptions
+FileSizeMore	options.hpp	/^    int64 FileSizeMore;$/;"	m	class:RAROptions
+FileStat	file.hpp	/^struct FileStat$/;"	s
+FileTime	file.hpp	/^  uint FileTime;$/;"	m	struct:FileStat
+FileTime	headers.hpp	/^  uint FileTime;$/;"	m	struct:FileHeader
+FileTime	headers.hpp	/^  uint FileTime;$/;"	m	struct:OldFileHeader
+FileTimeAfter	options.hpp	/^    RarTime FileTimeAfter;$/;"	m	class:RAROptions
+FileTimeBefore	options.hpp	/^    RarTime FileTimeBefore;$/;"	m	class:RAROptions
+FilelistCharset	options.hpp	/^    RAR_CHARSET FilelistCharset;$/;"	m	class:RAROptions
+FilterMode	options.hpp	/^struct FilterMode$/;"	s
+FilterModes	options.hpp	/^    FilterMode FilterModes[MAX_FILTERS];$/;"	m	class:RAROptions
+FilterState	options.hpp	/^enum FilterState {FILTER_DEFAULT=0,FILTER_AUTO,FILTER_FORCE,FILTER_DISABLE};$/;"	g
+FilterType	compress.hpp	/^enum FilterType {$/;"	g
+Filters	unpack.hpp	/^    Array<UnpackFilter*> Filters;$/;"	m	class:Unpack
+FirstBlockDone	rs.hpp	/^    bool FirstBlockDone;$/;"	m	class:RSCoder
+FirstFile	extract.hpp	/^    bool FirstFile;$/;"	m	class:CmdExtract
+FirstVolumeName	archive.hpp	/^    char FirstVolumeName[NM];$/;"	m	class:Archive
+FirstVolumeNameW	archive.hpp	/^    wchar FirstVolumeNameW[NM];$/;"	m	class:Archive
+FlagBits	encname.hpp	/^    uint FlagBits;$/;"	m	class:EncodeFileName
+FlagBuf	unpack.hpp	/^    unsigned int FlagBuf,AvrPlc,AvrPlcB,AvrLn1,AvrLn2,AvrLn3;$/;"	m	class:Unpack
+Flags	encname.hpp	/^    byte Flags;$/;"	m	class:EncodeFileName
+Flags	headers.hpp	/^  byte Flags;$/;"	m	struct:OldFileHeader
+Flags	headers.hpp	/^  byte Flags;$/;"	m	struct:OldMainHeader
+Flags	headers.hpp	/^  ushort Flags;$/;"	m	struct:BaseBlock
+FlagsCnt	unpack.hpp	/^    int Buf60,NumHuf,StMode,LCount,FlagsCnt;$/;"	m	class:Unpack
+FlagsPos	encname.hpp	/^    size_t FlagsPos;$/;"	m	class:EncodeFileName
+Flush	file.cpp	/^void File::Flush()$/;"	f	class:File
+FoundState	model.hpp	/^    STATE* FoundState;      \/\/ found next state transition$/;"	m	class:ModelPPM
+FreeList	suballoc.hpp	/^    struct RAR_NODE FreeList[N_INDEXES];$/;"	m	class:SubAllocator	typeref:struct:SubAllocator::RAR_NODE
+FreeUnits	suballoc.cpp	/^void SubAllocator::FreeUnits(void* ptr,int OldNU)$/;"	f	class:SubAllocator
+Freq	model.hpp	/^  byte Freq;$/;"	m	struct:STATE
+FreqData	model.hpp	/^struct FreqData$/;"	s
+FreshFiles	options.hpp	/^    bool FreshFiles;$/;"	m	class:RAROptions
+FullPackSize	headers.hpp	/^  int64 FullPackSize;$/;"	m	struct:FileHeader
+FullUnpSize	headers.hpp	/^  int64 FullUnpSize;$/;"	m	struct:FileHeader
+GET_MEAN	model.cpp	345;"	d	file:
+GXPol	rs.hpp	/^    int GXPol[MAXPOL*2]; \/\/ Generator polynomial g(x).$/;"	m	class:RSCoder
+GenArcName	pathfn.cpp	/^void GenArcName(char *ArcName,wchar *ArcNameW,char *GenerateMask,$/;"	f
+GeneralErrMsg	errhnd.cpp	/^void ErrorHandler::GeneralErrMsg(const char *Msg)$/;"	f	class:ErrorHandler
+GenerateArcName	options.hpp	/^    bool GenerateArcName;$/;"	m	class:RAROptions
+GenerateArchiveName	pathfn.cpp	/^void GenerateArchiveName(char *ArcName,wchar *ArcNameW,size_t MaxSize,$/;"	f
+GenerateMask	options.hpp	/^    char GenerateMask[MAX_GENERATE_MASK];$/;"	m	class:RAROptions
+Get	rawread.cpp	/^void RawRead::Get(byte &Field)$/;"	f	class:RawRead
+Get	rawread.cpp	/^void RawRead::Get(byte *Field,size_t Size)$/;"	f	class:RawRead
+Get	rawread.cpp	/^void RawRead::Get(uint &Field)$/;"	f	class:RawRead
+Get	rawread.cpp	/^void RawRead::Get(ushort &Field)$/;"	f	class:RawRead
+Get	rawread.cpp	/^void RawRead::Get(wchar *Field,size_t Size)$/;"	f	class:RawRead
+Get8	rawread.cpp	/^void RawRead::Get8(int64 &Field)$/;"	f	class:RawRead
+GetAllocatedMemory	suballoc.hpp	/^    long GetAllocatedMemory() {return(SubAllocatorSize);};$/;"	f	class:SubAllocator
+GetAppDataPath	pathfn.cpp	/^void GetAppDataPath(char *Path)$/;"	f
+GetAppDataPath	pathfn.cpp	/^void GetAppDataPath(wchar *Path)$/;"	f
+GetArcName	cmddata.cpp	/^bool CommandData::GetArcName(char *Name,wchar *NameW,int MaxSize)$/;"	f	class:CommandData
+GetAsciiName	pathfn.cpp	/^char* GetAsciiName(const wchar *NameW,char *Name,size_t DestSize)$/;"	f
+GetByte	file.cpp	/^byte File::GetByte()$/;"	f	class:File
+GetCRC	rawread.cpp	/^uint RawRead::GetCRC(bool ProcessedOnly)$/;"	f	class:RawRead
+GetChar	coder.cpp	/^inline unsigned int RangeCoder::GetChar()$/;"	f	class:RangeCoder
+GetChar	unpack.hpp	/^    unsigned int GetChar()$/;"	f	class:Unpack
+GetCharCount	strlist.cpp	/^size_t StringList::GetCharCount()$/;"	f	class:StringList
+GetCmdParam	strfn.cpp	/^const wchar* GetCmdParam(const wchar *CmdLine,wchar *Param,size_t MaxSize)$/;"	f
+GetComment	arccmt.cpp	/^bool Archive::GetComment(Array<byte> *CmtData,Array<wchar> *CmtDataW)$/;"	f	class:Archive
+GetConfigName	pathfn.cpp	/^void GetConfigName(const char *Name,char *FullName,bool CheckExist)$/;"	f
+GetConfigName	pathfn.cpp	/^void GetConfigName(const wchar *Name,wchar *FullName,bool CheckExist)$/;"	f
+GetCurrentCount	coder.cpp	/^inline int RangeCoder::GetCurrentCount() $/;"	f	class:RangeCoder
+GetCurrentShiftCount	coder.cpp	/^inline uint RangeCoder::GetCurrentShiftCount(uint SHIFT) $/;"	f	class:RangeCoder
+GetDigits	strfn.cpp	/^uint GetDigits(uint Number)$/;"	f
+GetDos	timefn.cpp	/^uint RarTime::GetDos()$/;"	f	class:RarTime
+GetErrorCode	errhnd.hpp	/^    int GetErrorCode() {return(ExitCode);}$/;"	f	class:ErrorHandler
+GetErrorCount	errhnd.hpp	/^    int GetErrorCount() {return(ErrCount);}$/;"	f	class:ErrorHandler
+GetExclAttr	cmddata.cpp	/^uint CommandData::GetExclAttr(const char *Str)$/;"	f	class:CommandData
+GetExt	pathfn.cpp	/^char *GetExt(const char *Name)$/;"	f
+GetExt	pathfn.cpp	/^wchar *GetExt(const wchar *Name)$/;"	f
+GetFileAttr	filefn.cpp	/^uint GetFileAttr(const char *Name,const wchar *NameW)$/;"	f
+GetFilePath	pathfn.cpp	/^void GetFilePath(const char *FullName,char *Path,int MaxLength)$/;"	f
+GetFilePath	pathfn.cpp	/^void GetFilePath(const wchar *FullName,wchar *Path,int MaxLength)$/;"	f
+GetFlagsBuf	unpack15.cpp	/^void Unpack::GetFlagsBuf()$/;"	f	class:Unpack
+GetFreeDisk	filefn.cpp	/^int64 GetFreeDisk(const char *Name)$/;"	f
+GetHandle	file.hpp	/^    FileHandle GetHandle() {return(hFile);};$/;"	f	class:File
+GetHandleType	file.hpp	/^    FILE_HANDLETYPE GetHandleType() {return(HandleType);};$/;"	f	class:File
+GetHeaderType	archive.hpp	/^    int GetHeaderType() {return(CurHeaderType);};$/;"	f	class:Archive
+GetInitPtrLocation	file.cpp	/^void * File::GetInitPtrLocation()$/;"	f	class:File
+GetLocal	timefn.hpp	/^    void GetLocal(RarLocalTime *lt) {*lt=rlt;}$/;"	f	class:RarTime
+GetLocalTimeXML	timefn.cpp	/^std::string RarTime::GetLocalTimeXML()$/;"	f	class:RarTime
+GetMonthName	timefn.cpp	/^const char *GetMonthName(int Month)$/;"	f
+GetName	file.hpp	/^    char *GetName() {return(FileName);}$/;"	f	class:File
+GetOpenFileTime	file.cpp	/^void File::GetOpenFileTime(RarTime *ft)$/;"	f	class:File
+GetPathDisk	pathfn.cpp	/^int GetPathDisk(const char *Path)$/;"	f
+GetPathDisk	pathfn.cpp	/^int GetPathDisk(const wchar *Path)$/;"	f
+GetPathRoot	pathfn.cpp	/^void GetPathRoot(const char *Path,char *Root)$/;"	f
+GetPathRoot	pathfn.cpp	/^void GetPathRoot(const wchar *Path,wchar *Root)$/;"	f
+GetPtrLocation	file.cpp	/^void* File::GetPtrLocation()$/;"	f	class:File
+GetRAROptions	archive.hpp	/^    RAROptions* GetRAROptions() {return(Cmd);}$/;"	f	class:Archive
+GetRarDataPath	pathfn.cpp	/^void GetRarDataPath(char *Path)$/;"	f
+GetRarDataPath	pathfn.cpp	/^void GetRarDataPath(wchar *Path)$/;"	f
+GetRaw	timefn.cpp	/^int64 RarTime::GetRaw()$/;"	f	class:RarTime
+GetRecoverySize	archive.cpp	/^int Archive::GetRecoverySize(bool Required)$/;"	f	class:Archive
+GetShortLen1	unpack15.cpp	142;"	d	file:
+GetShortLen2	unpack15.cpp	143;"	d	file:
+GetString	strlist.cpp	/^bool StringList::GetString(char **Str,wchar **StrW)$/;"	f	class:StringList
+GetString	strlist.cpp	/^bool StringList::GetString(char *Str,size_t MaxLength)$/;"	f	class:StringList
+GetString	strlist.cpp	/^bool StringList::GetString(char *Str,wchar *StrW,size_t MaxLength)$/;"	f	class:StringList
+GetString	strlist.cpp	/^bool StringList::GetString(char *Str,wchar *StrW,size_t MaxLength,int StringNum)$/;"	f	class:StringList
+GetString	strlist.cpp	/^bool StringList::GetString(wchar *Str,size_t MaxLength)$/;"	f	class:StringList
+GetString	strlist.cpp	/^char* StringList::GetString()$/;"	f	class:StringList
+GetStringW	strlist.cpp	/^wchar* StringList::GetStringW()$/;"	f	class:StringList
+GetText	timefn.cpp	/^void RarTime::GetText(char *DateStr,bool FullYear)$/;"	f	class:RarTime
+GetUnix	timefn.cpp	/^time_t RarTime::GetUnix()$/;"	f	class:RarTime
+GetUnpackedData	rdwrfn.cpp	/^void ComprDataIO::GetUnpackedData(byte **Data,size_t *Size)$/;"	f	class:ComprDataIO
+GetVolNumPart	pathfn.cpp	/^char* GetVolNumPart(char *ArcName)$/;"	f
+GetVolNumPart	pathfn.cpp	/^wchar* GetVolNumPart(wchar *ArcName)$/;"	f
+GetWide	strfn.cpp	/^const wchar* GetWide(const char *Src)$/;"	f
+GetWideName	pathfn.cpp	/^wchar* GetWideName(const char *Name,const wchar *NameW,wchar *DestW,size_t DestSize)$/;"	f
+GetWin32	timefn.cpp	/^void RarTime::GetWin32(FILETIME *ft)$/;"	f	class:RarTime
+GlueCount	suballoc.hpp	/^    byte Indx2Units[N_INDEXES], Units2Indx[128], GlueCount;$/;"	m	class:SubAllocator
+GlueFreeBlocks	suballoc.cpp	/^inline void SubAllocator::GlueFreeBlocks()$/;"	f	class:SubAllocator
+GroupName	headers.hpp	/^  char GroupName[NM];$/;"	m	struct:UnixOwnersHeader
+GroupNameSize	headers.hpp	/^  ushort GroupNameSize;$/;"	m	struct:UnixOwnersHeader
+HB2Flag	model.hpp	/^    byte CharMask[256], NS2Indx[256], NS2BSIndx[256], HB2Flag[256];$/;"	m	class:ModelPPM
+HEADER_TYPE	headers.hpp	/^enum HEADER_TYPE {$/;"	g
+HOST_BEOS	headers.hpp	/^  HOST_BEOS=5,HOST_MAX$/;"	e	enum:HOST_SYSTEM
+HOST_MACOS	headers.hpp	/^  HOST_MSDOS=0,HOST_OS2=1,HOST_WIN32=2,HOST_UNIX=3,HOST_MACOS=4,$/;"	e	enum:HOST_SYSTEM
+HOST_MAX	headers.hpp	/^  HOST_BEOS=5,HOST_MAX$/;"	e	enum:HOST_SYSTEM
+HOST_MSDOS	headers.hpp	/^  HOST_MSDOS=0,HOST_OS2=1,HOST_WIN32=2,HOST_UNIX=3,HOST_MACOS=4,$/;"	e	enum:HOST_SYSTEM
+HOST_OS2	headers.hpp	/^  HOST_MSDOS=0,HOST_OS2=1,HOST_WIN32=2,HOST_UNIX=3,HOST_MACOS=4,$/;"	e	enum:HOST_SYSTEM
+HOST_SYSTEM	headers.hpp	/^enum HOST_SYSTEM {$/;"	g
+HOST_UNIX	headers.hpp	/^  HOST_MSDOS=0,HOST_OS2=1,HOST_WIN32=2,HOST_UNIX=3,HOST_MACOS=4,$/;"	e	enum:HOST_SYSTEM
+HOST_WIN32	headers.hpp	/^  HOST_MSDOS=0,HOST_OS2=1,HOST_WIN32=2,HOST_UNIX=3,HOST_MACOS=4,$/;"	e	enum:HOST_SYSTEM
+HUFF_TABLE_SIZE	compress.hpp	19;"	d
+HandleType	file.hpp	/^    FILE_HANDLETYPE HandleType;$/;"	m	class:File
+HeadCRC	headers.hpp	/^  ushort HeadCRC;$/;"	m	struct:BaseBlock
+HeadSize	headers.hpp	/^  ushort HeadSize;$/;"	m	struct:BaseBlock
+HeadSize	headers.hpp	/^  ushort HeadSize;$/;"	m	struct:OldFileHeader
+HeadSize	headers.hpp	/^  ushort HeadSize;$/;"	m	struct:OldMainHeader
+HeadType	headers.hpp	/^  HEADER_TYPE HeadType; \/\/ 1 byte.$/;"	m	struct:BaseBlock
+HeaderCRC	archive.hpp	/^    ushort HeaderCRC;$/;"	m	class:Archive
+HeadersSalt	archive.hpp	/^    byte HeadersSalt[SALT_SIZE];$/;"	m	class:Archive
+HeapEnd	suballoc.hpp	/^    byte *pText, *UnitsStart,*HeapEnd,*FakeUnitsStart;$/;"	m	class:SubAllocator
+HeapStart	suballoc.hpp	/^    byte *HeapStart,*LoUnit, *HiUnit;$/;"	m	class:SubAllocator
+HiBitsFlag	model.hpp	/^    byte EscCount, PrevSuccess, HiBitsFlag;$/;"	m	class:ModelPPM
+HiUnit	suballoc.hpp	/^    byte *HeapStart,*LoUnit, *HiUnit;$/;"	m	class:SubAllocator
+HighCount	coder.hpp	/^      uint LowCount, HighCount, scale;$/;"	m	struct:RangeCoder::SUBRANGE
+HighPackSize	headers.hpp	/^  uint HighPackSize;$/;"	m	struct:FileHeader
+HighPosAV	headers.hpp	/^  ushort HighPosAV;$/;"	m	struct:MainHeader
+HighUnpSize	headers.hpp	/^  uint HighUnpSize;$/;"	m	struct:FileHeader
+HostOS	headers.hpp	/^  byte HostOS;$/;"	m	struct:FileHeader
+Hour	timefn.hpp	/^  uint Hour;$/;"	m	struct:RarLocalTime
+HuffDecode	unpack15.cpp	/^void Unpack::HuffDecode()$/;"	f	class:Unpack
+INCLUDEGLOBAL	global.cpp	1;"	d	file:
+INCL_BASE	os.hpp	8;"	d
+INCL_DOSMODULEMGR	unios2.cpp	6;"	d	file:
+INT32TO64	rartypes.hpp	38;"	d
+INT64NDF	rartypes.hpp	45;"	d
+INTERVAL	model.hpp	/^          INTERVAL=1 << INT_BITS, BIN_SCALE=1 << TOT_BITS, MAX_FREQ=124;$/;"	v
+INT_BITS	model.hpp	/^const int INT_BITS=7, PERIOD_BITS=7, TOT_BITS=INT_BITS+PERIOD_BITS,$/;"	v
+IgnoreGeneralAttr	options.hpp	/^    bool IgnoreGeneralAttr;$/;"	m	class:RAROptions
+IgnoreReadErrors	file.hpp	/^    bool IgnoreReadErrors;$/;"	m	class:File
+InAddr	getbits.hpp	/^    int InAddr; \/\/ Curent byte position in the buffer.$/;"	m	class:BitInput
+InBit	getbits.hpp	/^    int InBit;  \/\/ Current bit position in the current byte.$/;"	m	class:BitInput
+InBuf	getbits.hpp	/^    byte *InBuf; \/\/ Dynamically allocated input buffer.$/;"	m	class:BitInput
+InclArgs	cmddata.hpp	/^    StringList *InclArgs;$/;"	m	class:CommandData
+InclAttrSet	options.hpp	/^    bool InclAttrSet;$/;"	m	class:RAROptions
+InclFileAttr	options.hpp	/^    uint InclFileAttr;$/;"	m	class:RAROptions
+Indx2Units	suballoc.hpp	/^    byte Indx2Units[N_INDEXES], Units2Indx[128], GlueCount;$/;"	m	class:SubAllocator
+Init	cmddata.cpp	/^void CommandData::Init()$/;"	f	class:CommandData
+Init	options.cpp	/^void RAROptions::Init()$/;"	f	class:RAROptions
+Init	rdwrfn.cpp	/^void ComprDataIO::Init()$/;"	f	class:ComprDataIO
+Init	unicode.cpp	/^void SupportDBCS::Init()$/;"	f	class:SupportDBCS
+Init	unpack.cpp	/^void Unpack::Init(byte *Window)$/;"	f	class:Unpack
+InitArc	archive.cpp	/^void Archive::InitArc (byte *ptrlocation, int64 length)$/;"	f	class:Archive
+InitBitInput	getbits.hpp	/^    void InitBitInput()$/;"	f	class:BitInput
+InitCRC	crc.cpp	/^void InitCRC()$/;"	f
+InitDBCS	unicode.hpp	/^inline void InitDBCS() {gdbcs.Init();}$/;"	f
+InitDecoder	coder.cpp	/^void RangeCoder::InitDecoder(Unpack *UnpackRead)$/;"	f	class:RangeCoder
+InitEsc	model.hpp	/^    int NumMasked, InitEsc, OrderFall, MaxOrder, RunLength, InitRL;$/;"	m	class:ModelPPM
+InitFile	file.cpp	/^void File::InitFile(void* ptr, int64 length)$/;"	f	class:File
+InitFilters	unpack.cpp	/^void Unpack::InitFilters()$/;"	f	class:Unpack
+InitHuff	unpack15.cpp	/^void Unpack::InitHuff()$/;"	f	class:Unpack
+InitRL	model.hpp	/^    int NumMasked, InitEsc, OrderFall, MaxOrder, RunLength, InitRL;$/;"	m	class:ModelPPM
+InitSubAllocator	suballoc.cpp	/^void SubAllocator::InitSubAllocator()$/;"	f	class:SubAllocator
+InitSystemOptions	system.cpp	/^void InitSystemOptions(int SleepTime)$/;"	f
+InsertLastMatch	unpack.cpp	/^inline void Unpack::InsertLastMatch(unsigned int Length,unsigned int Distance)$/;"	f	class:Unpack
+InsertNode	suballoc.cpp	/^inline void SubAllocator::InsertNode(void* p,int indx) $/;"	f	class:SubAllocator
+InsertOldDist	unpack.cpp	/^inline void Unpack::InsertOldDist(unsigned int Distance)$/;"	f	class:Unpack
+IntNameToExt	strfn.cpp	/^char *IntNameToExt(const char *Name)$/;"	f
+IntToExt	strfn.cpp	/^void IntToExt(const char *Src,char *Dest)$/;"	f
+IsAlpha	strfn.cpp	/^bool IsAlpha(int ch)$/;"	f
+IsArcDir	arcread.cpp	/^bool Archive::IsArcDir()$/;"	f	class:Archive
+IsArcLabel	arcread.cpp	/^bool Archive::IsArcLabel()$/;"	f	class:Archive
+IsArchive	archive.cpp	/^bool Archive::IsArchive(bool EnableBroken)$/;"	f	class:Archive
+IsDBCSMode	unicode.hpp	/^inline bool IsDBCSMode() {return(gdbcs.DBCSMode);}$/;"	f
+IsDBCSMode	unicode.hpp	86;"	d
+IsDeleteAllowed	filefn.cpp	/^bool IsDeleteAllowed(uint FileAttr)$/;"	f
+IsDevice	file.cpp	/^bool File::IsDevice()$/;"	f	class:File
+IsDigit	strfn.cpp	/^bool IsDigit(int ch)$/;"	f
+IsDir	file.hpp	/^  bool IsDir;$/;"	m	struct:FileStat
+IsDir	filefn.cpp	/^bool IsDir(uint Attr)$/;"	f
+IsDiskLetter	pathfn.cpp	/^bool IsDiskLetter(const char *Path)$/;"	f
+IsDiskLetter	pathfn.cpp	/^bool IsDiskLetter(const wchar *Path)$/;"	f
+IsDriveDiv	pathfn.cpp	/^bool IsDriveDiv(int Ch)$/;"	f
+IsFileExtracted	unpack.hpp	/^    bool IsFileExtracted() {return(FileExtracted);}$/;"	f	class:Unpack
+IsFullPath	pathfn.cpp	/^bool IsFullPath(const char *Path)$/;"	f
+IsFullPath	pathfn.cpp	/^bool IsFullPath(const wchar *Path)$/;"	f
+IsLabel	filefn.cpp	/^bool IsLabel(uint Attr)$/;"	f
+IsLeadByte	unicode.hpp	/^    bool IsLeadByte[256];$/;"	m	class:SupportDBCS
+IsLeapYear	timefn.cpp	/^bool IsLeapYear(int Year)$/;"	f
+IsLink	filefn.cpp	/^bool IsLink(uint Attr)$/;"	f
+IsNameUsable	pathfn.cpp	/^bool IsNameUsable(const char *Name)$/;"	f
+IsNameUsable	pathfn.cpp	/^bool IsNameUsable(const wchar *Name)$/;"	f
+IsOpened	file.hpp	/^    bool IsOpened() {return true;\/*(hFile!=BAD_HANDLE);*\/}; \/\/file will be opened$/;"	f	class:File
+IsPathDiv	pathfn.cpp	/^bool IsPathDiv(int Ch)$/;"	f
+IsProcessFile	cmddata.cpp	/^int CommandData::IsProcessFile(FileHeader &NewLhd,bool *ExactMatch,int MatchType)$/;"	f	class:CommandData
+IsRemovable	filefn.cpp	/^bool IsRemovable(const char *Name)$/;"	f
+IsSet	timefn.hpp	/^    bool IsSet() {return(rlt.Year!=0);}$/;"	f	class:RarTime
+IsSignature	archive.cpp	/^bool Archive::IsSignature(byte *D)$/;"	f	class:Archive
+IsSpace	strfn.cpp	/^bool IsSpace(int ch)$/;"	f
+IsSubBlock	headers.hpp	/^  bool IsSubBlock()$/;"	f	struct:BaseBlock
+IsSwitch	cmddata.cpp	/^bool CommandData::IsSwitch(int Ch)$/;"	f	class:CommandData
+IsUnicode	filestr.cpp	/^bool IsUnicode(byte *Data,int Size)$/;"	f
+IsUnreadable	filefn.cpp	/^bool IsUnreadable(uint Attr)$/;"	f
+IsWildcard	pathfn.cpp	/^bool IsWildcard(const char *Str,const wchar *StrW)$/;"	f
+ItemsCount	strlist.hpp	/^    uint ItemsCount() {return(StringsCount);};$/;"	f	class:StringList
+K1	unpack.hpp	/^  int K1,K2,K3,K4,K5;$/;"	m	struct:AudioVariables
+K2	unpack.hpp	/^  int K1,K2,K3,K4,K5;$/;"	m	struct:AudioVariables
+K3	unpack.hpp	/^  int K1,K2,K3,K4,K5;$/;"	m	struct:AudioVariables
+K4	unpack.hpp	/^  int K1,K2,K3,K4,K5;$/;"	m	struct:AudioVariables
+K5	unpack.hpp	/^  int K1,K2,K3,K4,K5;$/;"	m	struct:AudioVariables
+KeepBroken	options.hpp	/^    bool KeepBroken;$/;"	m	class:RAROptions
+LARGEST_TABLE_SIZE	compress.hpp	29;"	d
+LCount	unpack.hpp	/^    int Buf60,NumHuf,StMode,LCount,FlagsCnt;$/;"	m	class:Unpack
+LD	unpack.hpp	/^    DecodeTable LD;  \/\/ Decode literals.$/;"	m	class:Unpack
+LDC	compress.hpp	17;"	d
+LDD	unpack.hpp	/^    DecodeTable LDD; \/\/ Decode lower bits of distances.$/;"	m	class:Unpack
+LDFLAGS	makefile	/^LDFLAGS=-pg$/;"	m
+LHD_COMMENT	headers.hpp	54;"	d
+LHD_DIRECTORY	headers.hpp	67;"	d
+LHD_EXTAREA	headers.hpp	74;"	d
+LHD_EXTTIME	headers.hpp	73;"	d
+LHD_LARGE	headers.hpp	69;"	d
+LHD_PASSWORD	headers.hpp	50;"	d
+LHD_SALT	headers.hpp	71;"	d
+LHD_SOLID	headers.hpp	56;"	d
+LHD_SPLIT_AFTER	headers.hpp	49;"	d
+LHD_SPLIT_BEFORE	headers.hpp	48;"	d
+LHD_UNICODE	headers.hpp	70;"	d
+LHD_VERSION	headers.hpp	72;"	d
+LHD_WINDOW1024	headers.hpp	64;"	d
+LHD_WINDOW128	headers.hpp	61;"	d
+LHD_WINDOW2048	headers.hpp	65;"	d
+LHD_WINDOW256	headers.hpp	62;"	d
+LHD_WINDOW4096	headers.hpp	66;"	d
+LHD_WINDOW512	headers.hpp	63;"	d
+LHD_WINDOW64	headers.hpp	60;"	d
+LHD_WINDOWMASK	headers.hpp	59;"	d
+LIB_OBJ	makefile	/^LIB_OBJ=filestr.o$/;"	m
+LINK	makefile	/^LINK=$(CXX)$/;"	m
+LITTLE_ENDIAN	os.hpp	224;"	d
+LITTLE_ENDIAN	os.hpp	227;"	d
+LITTLE_ENDIAN	os.hpp	22;"	d
+LITTLE_ENDIAN	os.hpp	246;"	d
+LITTLE_ENDIAN	os.hpp	248;"	d
+LITTLE_ENDIAN	os.hpp	258;"	d
+LOCK_ERROR	errhnd.hpp	/^enum { SUCCESS,WARNING,FATAL_ERROR,CRC_ERROR,LOCK_ERROR,WRITE_ERROR,$/;"	e	enum:__anon1
+LONG_BLOCK	headers.hpp	77;"	d
+LOW_DIST_REP_COUNT	compress.hpp	13;"	d
+LastChar	unpack.hpp	/^  int LastChar;$/;"	m	struct:AudioVariables
+LastDelta	unpack.hpp	/^  int LastDelta;$/;"	m	struct:AudioVariables
+LastDist	unpack.hpp	/^    unsigned int LastDist,LastLength;$/;"	m	class:Unpack
+LastFilter	unpack.hpp	/^    int LastFilter;$/;"	m	class:Unpack
+LastLength	unpack.hpp	/^    unsigned int LastDist,LastLength;$/;"	m	class:Unpack
+LastPercent	rdwrfn.hpp	/^    int LastPercent;$/;"	m	class:ComprDataIO
+LastReadBlock	archive.hpp	/^    int LastReadBlock;$/;"	m	class:Archive
+LastWrite	file.hpp	/^    bool LastWrite;$/;"	m	class:File
+LatestTime	archive.hpp	/^    RarTime LatestTime;$/;"	m	class:Archive
+Level	headers.hpp	/^  byte Level;$/;"	m	struct:SubBlockHeader
+ListMode	cmddata.hpp	/^    RAR_CMD_LIST_MODE ListMode;$/;"	m	class:CommandData
+LoUnit	suballoc.hpp	/^    byte *HeapStart,*LoUnit, *HiUnit;$/;"	m	class:SubAllocator
+Lock	options.hpp	/^    bool Lock;$/;"	m	class:RAROptions
+Locked	archive.hpp	/^    bool Locked;$/;"	m	class:Archive
+LogName	options.hpp	/^    char LogName[NM];$/;"	m	class:RAROptions
+LongLZ	unpack15.cpp	/^void Unpack::LongLZ()$/;"	f	class:Unpack
+LowAscii	strfn.cpp	/^bool LowAscii(const char *Str)$/;"	f
+LowAscii	strfn.cpp	/^bool LowAscii(const wchar *Str)$/;"	f
+LowCount	coder.hpp	/^      uint LowCount, HighCount, scale;$/;"	m	struct:RangeCoder::SUBRANGE
+LowDistRepCount	unpack.hpp	/^    int PrevLowDist,LowDistRepCount;$/;"	m	class:Unpack
+MACHead	archive.hpp	/^    MacFInfoHeader MACHead;$/;"	m	class:Archive
+MACLBroken	loclang.hpp	309;"	d
+MACLGetError	loclang.hpp	307;"	d
+MACLSetError	loclang.hpp	308;"	d
+MACLUnknown	loclang.hpp	310;"	d
+MAC_HEAD	headers.hpp	/^enum { EA_HEAD=0x100,UO_HEAD=0x101,MAC_HEAD=0x102,BEEA_HEAD=0x103,$/;"	e	enum:__anon7
+MAIN_HEAD	headers.hpp	/^  MARK_HEAD=0x72,MAIN_HEAD=0x73,FILE_HEAD=0x74,COMM_HEAD=0x75,AV_HEAD=0x76,$/;"	e	enum:HEADER_TYPE
+MARK_HEAD	headers.hpp	/^  MARK_HEAD=0x72,MAIN_HEAD=0x73,FILE_HEAD=0x74,COMM_HEAD=0x75,AV_HEAD=0x76,$/;"	e	enum:HEADER_TYPE
+MASKALL	os.hpp	128;"	d
+MASKALL	os.hpp	209;"	d
+MASKALLW	os.hpp	129;"	d
+MASKALLW	os.hpp	210;"	d
+MATCH_EXACT	match.hpp	/^   MATCH_EXACT,        \/\/ Paths must match exactly.$/;"	e	enum:__anon11
+MATCH_EXACTPATH	match.hpp	/^   MATCH_EXACTPATH,    \/\/ Paths must match exactly.$/;"	e	enum:__anon11
+MATCH_FORCECASESENSITIVE	match.hpp	30;"	d
+MATCH_MODEMASK	match.hpp	29;"	d
+MATCH_NAMES	match.hpp	/^   MATCH_NAMES,        \/\/ Paths are ignored.$/;"	e	enum:__anon11
+MATCH_SUBPATH	match.hpp	/^   MATCH_SUBPATH,      \/\/ Names must be the same, but path in mask is allowed$/;"	e	enum:__anon11
+MATCH_SUBPATHONLY	match.hpp	/^   MATCH_SUBPATHONLY,  \/\/ Paths must match either exactly or path in wildcard$/;"	e	enum:__anon11
+MATCH_WILDSUBPATH	match.hpp	/^   MATCH_WILDSUBPATH   \/\/ Works as MATCH_SUBPATH if file mask contains$/;"	e	enum:__anon11
+MAVOldStyle	loclang.hpp	189;"	d
+MAXPAR	rs.hpp	4;"	d
+MAXPASSWORD	rardefs.hpp	9;"	d
+MAXPOL	rs.hpp	5;"	d
+MAXSFXSIZE	rardefs.hpp	10;"	d
+MAXWINMASK	compress.hpp	11;"	d
+MAXWINSIZE	compress.hpp	10;"	d
+MAX_FILTERS	options.hpp	52;"	d
+MAX_FREQ	model.hpp	/^          INTERVAL=1 << INT_BITS, BIN_SCALE=1 << TOT_BITS, MAX_FREQ=124;$/;"	v
+MAX_GENERATE_MASK	options.hpp	63;"	d
+MAX_LZ_MATCH	compress.hpp	7;"	d
+MAX_O	model.hpp	/^const int MAX_O=64;                   \/* maximum allowed model order *\/$/;"	v
+MAX_QUICK_DECODE_BITS	unpack.hpp	7;"	d
+MAX_SIZE	getbits.hpp	/^    enum BufferSize {MAX_SIZE=0x8000}; \/\/ Size of input buffer.$/;"	e	enum:BitInput::BufferSize
+MAbsNextVol	loclang.hpp	157;"	d
+MAddAnalyze	loclang.hpp	211;"	d
+MAddComment	loclang.hpp	238;"	d
+MAddFile	loclang.hpp	194;"	d
+MAddNoFiles	loclang.hpp	208;"	d
+MAddPoints	loclang.hpp	196;"	d
+MAddRecRec	loclang.hpp	292;"	d
+MAddSolid	loclang.hpp	193;"	d
+MAddingAV	loclang.hpp	188;"	d
+MAskCreatVol	loclang.hpp	159;"	d
+MAskFComm	loclang.hpp	240;"	d
+MAskNewName	loclang.hpp	230;"	d
+MAskNextDisk	loclang.hpp	160;"	d
+MAskNextVol	loclang.hpp	162;"	d
+MAskOverwrite	loclang.hpp	229;"	d
+MAskPsw	loclang.hpp	144;"	d
+MAskPswEcho	loclang.hpp	145;"	d
+MAskRetryCreate	loclang.hpp	302;"	d
+MBFUNCTIONS	unicode.hpp	5;"	d
+MBPtr	suballoc.cpp	/^inline RAR_MEM_BLK* SubAllocator::MBPtr(RAR_MEM_BLK *BasePtr,int Items)$/;"	f	class:SubAllocator
+MBadArc	loclang.hpp	143;"	d
+MBeta	loclang.hpp	11;"	d
+MBreak	loclang.hpp	158;"	d
+MC20	compress.hpp	26;"	d
+MCHelpCmd	loclang.hpp	27;"	d
+MCHelpCmdA	loclang.hpp	28;"	d
+MCHelpCmdC	loclang.hpp	29;"	d
+MCHelpCmdCF	loclang.hpp	30;"	d
+MCHelpCmdCH	loclang.hpp	31;"	d
+MCHelpCmdCW	loclang.hpp	32;"	d
+MCHelpCmdD	loclang.hpp	33;"	d
+MCHelpCmdE	loclang.hpp	34;"	d
+MCHelpCmdF	loclang.hpp	35;"	d
+MCHelpCmdI	loclang.hpp	36;"	d
+MCHelpCmdK	loclang.hpp	37;"	d
+MCHelpCmdL	loclang.hpp	38;"	d
+MCHelpCmdM	loclang.hpp	39;"	d
+MCHelpCmdP	loclang.hpp	40;"	d
+MCHelpCmdR	loclang.hpp	41;"	d
+MCHelpCmdRC	loclang.hpp	42;"	d
+MCHelpCmdRN	loclang.hpp	43;"	d
+MCHelpCmdRR	loclang.hpp	44;"	d
+MCHelpCmdRV	loclang.hpp	45;"	d
+MCHelpCmdS	loclang.hpp	46;"	d
+MCHelpCmdT	loclang.hpp	47;"	d
+MCHelpCmdU	loclang.hpp	48;"	d
+MCHelpCmdV	loclang.hpp	49;"	d
+MCHelpCmdX	loclang.hpp	50;"	d
+MCHelpSw	loclang.hpp	51;"	d
+MCHelpSwAC	loclang.hpp	54;"	d
+MCHelpSwAD	loclang.hpp	55;"	d
+MCHelpSwAG	loclang.hpp	56;"	d
+MCHelpSwAI	loclang.hpp	57;"	d
+MCHelpSwAO	loclang.hpp	58;"	d
+MCHelpSwAP	loclang.hpp	59;"	d
+MCHelpSwAS	loclang.hpp	60;"	d
+MCHelpSwAT	loclang.hpp	53;"	d
+MCHelpSwAV	loclang.hpp	61;"	d
+MCHelpSwAVm	loclang.hpp	62;"	d
+MCHelpSwCFGm	loclang.hpp	64;"	d
+MCHelpSwCL	loclang.hpp	65;"	d
+MCHelpSwCU	loclang.hpp	66;"	d
+MCHelpSwCm	loclang.hpp	63;"	d
+MCHelpSwDF	loclang.hpp	67;"	d
+MCHelpSwDH	loclang.hpp	68;"	d
+MCHelpSwDR	loclang.hpp	69;"	d
+MCHelpSwDS	loclang.hpp	70;"	d
+MCHelpSwDW	loclang.hpp	71;"	d
+MCHelpSwED	loclang.hpp	73;"	d
+MCHelpSwEE	loclang.hpp	74;"	d
+MCHelpSwEN	loclang.hpp	75;"	d
+MCHelpSwEP	loclang.hpp	76;"	d
+MCHelpSwEP1	loclang.hpp	77;"	d
+MCHelpSwEP2	loclang.hpp	78;"	d
+MCHelpSwEP3	loclang.hpp	79;"	d
+MCHelpSwEa	loclang.hpp	72;"	d
+MCHelpSwF	loclang.hpp	80;"	d
+MCHelpSwHP	loclang.hpp	81;"	d
+MCHelpSwIDP	loclang.hpp	82;"	d
+MCHelpSwIEML	loclang.hpp	83;"	d
+MCHelpSwIERR	loclang.hpp	84;"	d
+MCHelpSwILOG	loclang.hpp	85;"	d
+MCHelpSwINUL	loclang.hpp	86;"	d
+MCHelpSwIOFF	loclang.hpp	87;"	d
+MCHelpSwISND	loclang.hpp	88;"	d
+MCHelpSwK	loclang.hpp	89;"	d
+MCHelpSwKB	loclang.hpp	90;"	d
+MCHelpSwLog	loclang.hpp	91;"	d
+MCHelpSwMC	loclang.hpp	93;"	d
+MCHelpSwMD	loclang.hpp	94;"	d
+MCHelpSwMS	loclang.hpp	95;"	d
+MCHelpSwMT	loclang.hpp	96;"	d
+MCHelpSwMn	loclang.hpp	92;"	d
+MCHelpSwN	loclang.hpp	97;"	d
+MCHelpSwNa	loclang.hpp	98;"	d
+MCHelpSwNal	loclang.hpp	99;"	d
+MCHelpSwO	loclang.hpp	100;"	d
+MCHelpSwOC	loclang.hpp	101;"	d
+MCHelpSwOL	loclang.hpp	102;"	d
+MCHelpSwOR	loclang.hpp	103;"	d
+MCHelpSwOS	loclang.hpp	104;"	d
+MCHelpSwOW	loclang.hpp	105;"	d
+MCHelpSwP	loclang.hpp	106;"	d
+MCHelpSwPm	loclang.hpp	107;"	d
+MCHelpSwR	loclang.hpp	108;"	d
+MCHelpSwR0	loclang.hpp	110;"	d
+MCHelpSwRI	loclang.hpp	111;"	d
+MCHelpSwRR	loclang.hpp	112;"	d
+MCHelpSwRV	loclang.hpp	113;"	d
+MCHelpSwRm	loclang.hpp	109;"	d
+MCHelpSwS	loclang.hpp	114;"	d
+MCHelpSwSC	loclang.hpp	116;"	d
+MCHelpSwSFX	loclang.hpp	117;"	d
+MCHelpSwSI	loclang.hpp	118;"	d
+MCHelpSwSL	loclang.hpp	119;"	d
+MCHelpSwSM	loclang.hpp	120;"	d
+MCHelpSwSm	loclang.hpp	115;"	d
+MCHelpSwT	loclang.hpp	121;"	d
+MCHelpSwTA	loclang.hpp	126;"	d
+MCHelpSwTB	loclang.hpp	127;"	d
+MCHelpSwTK	loclang.hpp	122;"	d
+MCHelpSwTL	loclang.hpp	123;"	d
+MCHelpSwTN	loclang.hpp	124;"	d
+MCHelpSwTO	loclang.hpp	125;"	d
+MCHelpSwTS	loclang.hpp	128;"	d
+MCHelpSwU	loclang.hpp	129;"	d
+MCHelpSwV	loclang.hpp	130;"	d
+MCHelpSwVD	loclang.hpp	133;"	d
+MCHelpSwVER	loclang.hpp	134;"	d
+MCHelpSwVN	loclang.hpp	135;"	d
+MCHelpSwVP	loclang.hpp	136;"	d
+MCHelpSwVUnr	loclang.hpp	131;"	d
+MCHelpSwVn	loclang.hpp	132;"	d
+MCHelpSwW	loclang.hpp	137;"	d
+MCHelpSwX	loclang.hpp	138;"	d
+MCHelpSwXa	loclang.hpp	139;"	d
+MCHelpSwXal	loclang.hpp	140;"	d
+MCHelpSwY	loclang.hpp	141;"	d
+MCHelpSwZ	loclang.hpp	142;"	d
+MCHelpSwm	loclang.hpp	52;"	d
+MCRCFailed	loclang.hpp	213;"	d
+MCalcCRC	loclang.hpp	353;"	d
+MCalcCRCAllVol	loclang.hpp	355;"	d
+MCannotCreate	loclang.hpp	172;"	d
+MCannotDelete	loclang.hpp	352;"	d
+MCannotEmail	loclang.hpp	343;"	d
+MCannotEncName	loclang.hpp	342;"	d
+MCannotGetEA	loclang.hpp	317;"	d
+MCannotMdfEncrSol	loclang.hpp	210;"	d
+MCannotOpen	loclang.hpp	173;"	d
+MCannotSetEA	loclang.hpp	316;"	d
+MCannotUpdPswSolid	loclang.hpp	197;"	d
+MClearAttrib	loclang.hpp	203;"	d
+MCommAskCont	loclang.hpp	242;"	d
+MCommNotPres	loclang.hpp	245;"	d
+MContinueQuit	loclang.hpp	5;"	d
+MConverting	loclang.hpp	165;"	d
+MCopyright	loclang.hpp	7;"	d
+MCopyrightS	loclang.hpp	344;"	d
+MCorrectingName	loclang.hpp	322;"	d
+MCreatDir	loclang.hpp	217;"	d
+MCreatVol	loclang.hpp	161;"	d
+MCreateArchive	loclang.hpp	191;"	d
+MCreating	loclang.hpp	337;"	d
+MCvtFromSFX	loclang.hpp	167;"	d
+MCvtOldFormat	loclang.hpp	171;"	d
+MCvtToSFX	loclang.hpp	166;"	d
+MD	unpack.hpp	/^    DecodeTable MD[4]; \/\/ Decode multimedia data, up to 4 channels.$/;"	m	class:Unpack
+MDataBadCRC	loclang.hpp	305;"	d
+MDelComment	loclang.hpp	237;"	d
+MDelFrom	loclang.hpp	246;"	d
+MDeleting	loclang.hpp	247;"	d
+MDone	loclang.hpp	177;"	d
+MEABroken	loclang.hpp	314;"	d
+MEAUnknHeader	loclang.hpp	315;"	d
+MEMORY_ERROR	errhnd.hpp	/^       OPEN_ERROR,USER_ERROR,MEMORY_ERROR,CREATE_ERROR,NO_FILES_ERROR,$/;"	e	enum:__anon1
+MESSAGE_TYPE	options.hpp	/^enum MESSAGE_TYPE {MSG_STDOUT=0,MSG_STDERR,MSG_ERRONLY,MSG_NULL};$/;"	g
+MEncrBadCRC	loclang.hpp	224;"	d
+MEraseArc	loclang.hpp	248;"	d
+MEraseForVolume	loclang.hpp	293;"	d
+MErrBrokenArc	loclang.hpp	154;"	d
+MErrChangeAttr	loclang.hpp	340;"	d
+MErrCreateLnk	loclang.hpp	300;"	d
+MErrFClose	loclang.hpp	152;"	d
+MErrGetGroupID	loclang.hpp	296;"	d
+MErrGetOwnerID	loclang.hpp	295;"	d
+MErrLnkRead	loclang.hpp	299;"	d
+MErrOpenFile	loclang.hpp	207;"	d
+MErrOpenFiles	loclang.hpp	206;"	d
+MErrOutMem	loclang.hpp	153;"	d
+MErrRead	loclang.hpp	150;"	d
+MErrRename	loclang.hpp	156;"	d
+MErrSeek	loclang.hpp	151;"	d
+MErrWrite	loclang.hpp	149;"	d
+MExtrAllOk	loclang.hpp	226;"	d
+MExtrErrMkDir	loclang.hpp	222;"	d
+MExtrFile	loclang.hpp	220;"	d
+MExtrNoFiles	loclang.hpp	225;"	d
+MExtrPoints	loclang.hpp	221;"	d
+MExtrPrinting	loclang.hpp	223;"	d
+MExtrSkipFile	loclang.hpp	218;"	d
+MExtrTest	loclang.hpp	214;"	d
+MExtrTestFile	loclang.hpp	219;"	d
+MExtrTotalErr	loclang.hpp	227;"	d
+MExtrVol	loclang.hpp	164;"	d
+MExtracting	loclang.hpp	215;"	d
+MFCommAdd	loclang.hpp	239;"	d
+MFailedAV	loclang.hpp	183;"	d
+MFileComment	loclang.hpp	270;"	d
+MFileExists	loclang.hpp	228;"	d
+MFileRO	loclang.hpp	306;"	d
+MFor	loclang.hpp	147;"	d
+MGetOwnersError	loclang.hpp	294;"	d
+MHD_AV	headers.hpp	42;"	d
+MHD_COMMENT	headers.hpp	36;"	d
+MHD_ENCRYPTVER	headers.hpp	46;"	d
+MHD_FIRSTVOLUME	headers.hpp	45;"	d
+MHD_LOCK	headers.hpp	38;"	d
+MHD_NEWNUMBERING	headers.hpp	41;"	d
+MHD_PACK_COMMENT	headers.hpp	40;"	d
+MHD_PASSWORD	headers.hpp	44;"	d
+MHD_PROTECT	headers.hpp	43;"	d
+MHD_SOLID	headers.hpp	39;"	d
+MHD_VOLUME	headers.hpp	30;"	d
+MInvalidName	loclang.hpp	313;"	d
+MKDIR_BADPATH	filefn.hpp	/^enum MKDIR_CODE {MKDIR_SUCCESS,MKDIR_ERROR,MKDIR_BADPATH};$/;"	e	enum:MKDIR_CODE
+MKDIR_CODE	filefn.hpp	/^enum MKDIR_CODE {MKDIR_SUCCESS,MKDIR_ERROR,MKDIR_BADPATH};$/;"	g
+MKDIR_ERROR	filefn.hpp	/^enum MKDIR_CODE {MKDIR_SUCCESS,MKDIR_ERROR,MKDIR_BADPATH};$/;"	e	enum:MKDIR_CODE
+MKDIR_SUCCESS	filefn.hpp	/^enum MKDIR_CODE {MKDIR_SUCCESS,MKDIR_ERROR,MKDIR_BADPATH};$/;"	e	enum:MKDIR_CODE
+MListArc1	loclang.hpp	256;"	d
+MListArc2	loclang.hpp	257;"	d
+MListBeEAHead	loclang.hpp	266;"	d
+MListEAHead	loclang.hpp	264;"	d
+MListLock	loclang.hpp	259;"	d
+MListMACHead1	loclang.hpp	303;"	d
+MListMACHead2	loclang.hpp	304;"	d
+MListNTACLHead	loclang.hpp	267;"	d
+MListName	loclang.hpp	261;"	d
+MListNoFiles	loclang.hpp	273;"	d
+MListPathComm	loclang.hpp	260;"	d
+MListRecRec	loclang.hpp	258;"	d
+MListSFX	loclang.hpp	253;"	d
+MListSolid	loclang.hpp	252;"	d
+MListStrmHead	loclang.hpp	268;"	d
+MListTechTitle	loclang.hpp	263;"	d
+MListTitle	loclang.hpp	262;"	d
+MListUOHead	loclang.hpp	265;"	d
+MListUnkHead	loclang.hpp	269;"	d
+MListVol1	loclang.hpp	254;"	d
+MListVol2	loclang.hpp	255;"	d
+MLockingArc	loclang.hpp	178;"	d
+MLogBrokFCmt	loclang.hpp	243;"	d
+MLogCommBrk	loclang.hpp	241;"	d
+MLogCommHead	loclang.hpp	233;"	d
+MLogFailedAV	loclang.hpp	187;"	d
+MLogFileHead	loclang.hpp	232;"	d
+MLogMainHead	loclang.hpp	231;"	d
+MLogProtectHead	loclang.hpp	234;"	d
+MLogTitle	loclang.hpp	250;"	d
+MLogUnexpEOF	loclang.hpp	284;"	d
+MMaxPathLimit	loclang.hpp	349;"	d
+MMdfEncrSol	loclang.hpp	209;"	d
+MMonthApr	loclang.hpp	15;"	d
+MMonthAug	loclang.hpp	19;"	d
+MMonthDec	loclang.hpp	23;"	d
+MMonthFeb	loclang.hpp	13;"	d
+MMonthJan	loclang.hpp	12;"	d
+MMonthJul	loclang.hpp	18;"	d
+MMonthJun	loclang.hpp	17;"	d
+MMonthMar	loclang.hpp	14;"	d
+MMonthMay	loclang.hpp	16;"	d
+MMonthNov	loclang.hpp	22;"	d
+MMonthOct	loclang.hpp	21;"	d
+MMonthSep	loclang.hpp	20;"	d
+MMoveDelDir	loclang.hpp	204;"	d
+MMoveDelDirs	loclang.hpp	199;"	d
+MMoveDelFile	loclang.hpp	200;"	d
+MMoveDelFiles	loclang.hpp	198;"	d
+MMoveDeleted	loclang.hpp	201;"	d
+MMoveNotDeleted	loclang.hpp	202;"	d
+MNTFSRequired	loclang.hpp	339;"	d
+MNo	loclang.hpp	272;"	d
+MNoDelFiles	loclang.hpp	249;"	d
+MNotEnoughDisk	loclang.hpp	356;"	d
+MNotFirstVol	loclang.hpp	170;"	d
+MNotMatchPsw	loclang.hpp	148;"	d
+MNotMdfLock	loclang.hpp	180;"	d
+MNotMdfOld	loclang.hpp	179;"	d
+MNotMdfVol	loclang.hpp	181;"	d
+MNotRAR	loclang.hpp	169;"	d
+MNotSFX	loclang.hpp	168;"	d
+MNotVolume	loclang.hpp	330;"	d
+MOk	loclang.hpp	176;"	d
+MOwnersBroken	loclang.hpp	297;"	d
+MPackAskReg	loclang.hpp	190;"	d
+MPathTooLong	loclang.hpp	251;"	d
+MProcessArc	loclang.hpp	320;"	d
+MProgAborted	loclang.hpp	155;"	d
+MRARTitle1	loclang.hpp	24;"	d
+MRARTitle2	loclang.hpp	26;"	d
+MReAskPsw	loclang.hpp	146;"	d
+MReadCommFrom	loclang.hpp	236;"	d
+MReadStdinCmt	loclang.hpp	235;"	d
+MRecCorrected	loclang.hpp	290;"	d
+MRecFailed	loclang.hpp	291;"	d
+MRecRFound	loclang.hpp	288;"	d
+MRecRNotFound	loclang.hpp	287;"	d
+MRecScanning	loclang.hpp	286;"	d
+MRecSecDamage	loclang.hpp	289;"	d
+MRecVolAllExist	loclang.hpp	334;"	d
+MRecVolCannotFix	loclang.hpp	335;"	d
+MRecVolDiffSets	loclang.hpp	331;"	d
+MRecVolFound	loclang.hpp	333;"	d
+MRecVolLimit	loclang.hpp	350;"	d
+MRecVolMissing	loclang.hpp	332;"	d
+MReconstructing	loclang.hpp	336;"	d
+MRegTo	loclang.hpp	8;"	d
+MRenaming	loclang.hpp	338;"	d
+MRepAskReconst	loclang.hpp	285;"	d
+MRepacking	loclang.hpp	212;"	d
+MRetryAbort	loclang.hpp	6;"	d
+MRprAskIsSol	loclang.hpp	278;"	d
+MRprBuild	loclang.hpp	275;"	d
+MRprDir	loclang.hpp	281;"	d
+MRprFind	loclang.hpp	277;"	d
+MRprNoFiles	loclang.hpp	279;"	d
+MRprOldFormat	loclang.hpp	276;"	d
+MRprReconstr	loclang.hpp	274;"	d
+MRprSuspAdd	loclang.hpp	283;"	d
+MRprSuspEntry	loclang.hpp	280;"	d
+MRprSuspSize	loclang.hpp	282;"	d
+MSGID	os.hpp	/^  typedef const char* MSGID;$/;"	t
+MSG_ERRONLY	options.hpp	/^enum MESSAGE_TYPE {MSG_STDOUT=0,MSG_STDERR,MSG_ERRONLY,MSG_NULL};$/;"	e	enum:MESSAGE_TYPE
+MSG_NULL	options.hpp	/^enum MESSAGE_TYPE {MSG_STDOUT=0,MSG_STDERR,MSG_ERRONLY,MSG_NULL};$/;"	e	enum:MESSAGE_TYPE
+MSG_STDERR	options.hpp	/^enum MESSAGE_TYPE {MSG_STDOUT=0,MSG_STDERR,MSG_ERRONLY,MSG_NULL};$/;"	e	enum:MESSAGE_TYPE
+MSG_STDOUT	options.hpp	/^enum MESSAGE_TYPE {MSG_STDOUT=0,MSG_STDERR,MSG_ERRONLY,MSG_NULL};$/;"	e	enum:MESSAGE_TYPE
+MSHelpCmd	loclang.hpp	345;"	d
+MSHelpCmdE	loclang.hpp	346;"	d
+MSHelpCmdT	loclang.hpp	347;"	d
+MSHelpCmdV	loclang.hpp	348;"	d
+MScanError	loclang.hpp	329;"	d
+MSetOwnersError	loclang.hpp	298;"	d
+MShare	loclang.hpp	9;"	d
+MShowEA	loclang.hpp	318;"	d
+MSkipEA	loclang.hpp	319;"	d
+MStrAV1	loclang.hpp	184;"	d
+MStrAV2	loclang.hpp	185;"	d
+MStrAV3	loclang.hpp	186;"	d
+MStreamBroken	loclang.hpp	311;"	d
+MStreamUnknown	loclang.hpp	312;"	d
+MSubHeadCorrupt	loclang.hpp	325;"	d
+MSubHeadDataCRC	loclang.hpp	327;"	d
+MSubHeadType	loclang.hpp	328;"	d
+MSubHeadUnknown	loclang.hpp	326;"	d
+MSymLinkExists	loclang.hpp	301;"	d
+MSyncScanError	loclang.hpp	321;"	d
+MTestVol	loclang.hpp	163;"	d
+MTooLargeSFXArc	loclang.hpp	354;"	d
+MUCopyright	loclang.hpp	10;"	d
+MUNRARTitle1	loclang.hpp	25;"	d
+MUnknownMeth	loclang.hpp	174;"	d
+MUnknownOption	loclang.hpp	324;"	d
+MUnpCannotMerge	loclang.hpp	323;"	d
+MUpdFile	loclang.hpp	195;"	d
+MUpdateArchive	loclang.hpp	192;"	d
+MUseCurPsw	loclang.hpp	216;"	d
+MVerRequired	loclang.hpp	175;"	d
+MVerifyAV	loclang.hpp	182;"	d
+MVolumeNumber	loclang.hpp	351;"	d
+MWarErrFOpen	loclang.hpp	205;"	d
+MWriteCommTo	loclang.hpp	244;"	d
+MWrongSFXVer	loclang.hpp	341;"	d
+MYes	loclang.hpp	271;"	d
+MYesNo	loclang.hpp	1;"	d
+MYesNoAll	loclang.hpp	2;"	d
+MYesNoAllQ	loclang.hpp	3;"	d
+MYesNoAllRenQ	loclang.hpp	4;"	d
+MacFInfoHeader	headers.hpp	/^struct MacFInfoHeader:SubBlockHeader$/;"	s
+MainComment	archive.hpp	/^    bool MainComment;$/;"	m	class:Archive
+MainHeader	headers.hpp	/^struct MainHeader:BaseBlock$/;"	s
+MakeDecodeTables	unpack.cpp	/^void Unpack::MakeDecodeTables(byte *LengthTable,DecodeTable *Dec,uint Size)$/;"	f	class:Unpack
+MakeDir	filefn.cpp	/^MKDIR_CODE MakeDir(const char *Name,const wchar *NameW,bool SetAttr,uint Attr)$/;"	f
+MakeNameUsable	pathfn.cpp	/^void MakeNameUsable(char *Name,bool Extended)$/;"	f
+MakeNameUsable	pathfn.cpp	/^void MakeNameUsable(wchar *Name,bool Extended)$/;"	f
+Mark	headers.hpp	/^  byte Mark[4];$/;"	m	struct:OldMainHeader
+Mark	headers.hpp	/^  byte Mark[7];$/;"	m	struct:MarkHeader
+Mark	headers.hpp	/^  byte Mark[8];$/;"	m	struct:ProtectHeader
+MarkHead	archive.hpp	/^    MarkHeader MarkHead;$/;"	m	class:Archive
+MarkHeader	headers.hpp	/^struct MarkHeader$/;"	s
+MatchedArgs	extract.hpp	/^    unsigned long MatchedArgs;$/;"	m	class:CmdExtract
+Max	rardefs.hpp	5;"	d
+MaxContext	model.hpp	/^    struct PPM_CONTEXT *MinContext, *MedContext, *MaxContext;$/;"	m	class:ModelPPM	typeref:struct:ModelPPM::
+MaxDist3	unpack.hpp	/^    unsigned int Nhfb,Nlzb,MaxDist3;$/;"	m	class:Unpack
+MaxNum	unpack.hpp	/^  uint MaxNum;$/;"	m	struct:DecodeTable
+MaxOrder	model.hpp	/^    int NumMasked, InitEsc, OrderFall, MaxOrder, RunLength, InitRL;$/;"	m	class:ModelPPM
+MedContext	model.hpp	/^    struct PPM_CONTEXT *MinContext, *MedContext, *MaxContext;$/;"	m	class:ModelPPM	typeref:struct:ModelPPM::
+MemoryError	errhnd.cpp	/^void ErrorHandler::MemoryError()$/;"	f	class:ErrorHandler
+MemoryErrorMsg	errhnd.cpp	/^void ErrorHandler::MemoryErrorMsg()$/;"	f	class:ErrorHandler
+Method	headers.hpp	/^  byte Method;$/;"	m	struct:AVHeader
+Method	headers.hpp	/^  byte Method;$/;"	m	struct:CommentHeader
+Method	headers.hpp	/^  byte Method;$/;"	m	struct:EAHeader
+Method	headers.hpp	/^  byte Method;$/;"	m	struct:FileHeader
+Method	headers.hpp	/^  byte Method;$/;"	m	struct:OldFileHeader
+Method	headers.hpp	/^  byte Method;$/;"	m	struct:StreamHeader
+Method	options.hpp	/^    int Method;$/;"	m	class:RAROptions
+Min	rardefs.hpp	4;"	d
+MinContext	model.hpp	/^    struct PPM_CONTEXT *MinContext, *MedContext, *MaxContext;$/;"	m	class:ModelPPM	typeref:struct:ModelPPM::PPM_CONTEXT
+Minute	timefn.hpp	/^  uint Minute;$/;"	m	struct:RarLocalTime
+ModelPPM	model.cpp	/^ModelPPM::ModelPPM()$/;"	f	class:ModelPPM
+ModelPPM	model.hpp	/^class ModelPPM$/;"	c
+Month	timefn.hpp	/^  uint Month;$/;"	m	struct:RarLocalTime
+MsgStream	options.hpp	/^    MESSAGE_TYPE MsgStream;$/;"	m	class:RAROptions
+N1	suballoc.hpp	/^const int N1=4, N2=4, N3=4, N4=(128+3-1*N1-2*N2-3*N3)\/4;$/;"	v
+N2	suballoc.hpp	/^const int N1=4, N2=4, N3=4, N4=(128+3-1*N1-2*N2-3*N3)\/4;$/;"	v
+N3	suballoc.hpp	/^const int N1=4, N2=4, N3=4, N4=(128+3-1*N1-2*N2-3*N3)\/4;$/;"	v
+N4	suballoc.hpp	/^const int N1=4, N2=4, N3=4, N4=(128+3-1*N1-2*N2-3*N3)\/4;$/;"	v
+NAMES_LOWERCASE	options.hpp	/^enum {NAMES_ORIGINALCASE=0,NAMES_UPPERCASE,NAMES_LOWERCASE};$/;"	e	enum:__anon5
+NAMES_ORIGINALCASE	options.hpp	/^enum {NAMES_ORIGINALCASE=0,NAMES_UPPERCASE,NAMES_LOWERCASE};$/;"	e	enum:__anon5
+NAMES_UPPERCASE	options.hpp	/^enum {NAMES_ORIGINALCASE=0,NAMES_UPPERCASE,NAMES_LOWERCASE};$/;"	e	enum:__anon5
+NC	compress.hpp	15;"	d
+NC20	compress.hpp	22;"	d
+NEWSUB_HEAD	headers.hpp	/^  SUB_HEAD=0x77,PROTECT_HEAD=0x78,SIGN_HEAD=0x79,NEWSUB_HEAD=0x7a,$/;"	e	enum:HEADER_TYPE
+NM	os.hpp	161;"	d
+NM	os.hpp	23;"	d
+NO_FILES_ERROR	errhnd.hpp	/^       OPEN_ERROR,USER_ERROR,MEMORY_ERROR,CREATE_ERROR,NO_FILES_ERROR,$/;"	e	enum:__anon1
+NS2BSIndx	model.hpp	/^    byte CharMask[256], NS2Indx[256], NS2BSIndx[256], HB2Flag[256];$/;"	m	class:ModelPPM
+NS2Indx	model.hpp	/^    byte CharMask[256], NS2Indx[256], NS2BSIndx[256], HB2Flag[256];$/;"	m	class:ModelPPM
+NTACL_HEAD	headers.hpp	/^       NTACL_HEAD=0x104,STREAM_HEAD=0x105 };$/;"	e	enum:__anon7
+NToPl	unpack.hpp	/^    unsigned int NToPl[256],NToPlB[256],NToPlC[256];$/;"	m	class:Unpack
+NToPlB	unpack.hpp	/^    unsigned int NToPl[256],NToPlB[256],NToPlC[256];$/;"	m	class:Unpack
+NToPlC	unpack.hpp	/^    unsigned int NToPl[256],NToPlB[256],NToPlC[256];$/;"	m	class:Unpack
+NU	suballoc.hpp	/^  ushort Stamp, NU;$/;"	m	struct:RAR_MEM_BLK
+N_INDEXES	suballoc.hpp	/^const int N_INDEXES=N1+N2+N3+N4;$/;"	v
+NameSize	headers.hpp	/^  byte NameSize;$/;"	m	struct:OldFileHeader
+NameSize	headers.hpp	/^  ushort NameSize;$/;"	m	struct:FileHeader
+NewArchive	archive.hpp	/^    bool NewArchive;$/;"	m	class:Archive
+NewFile	file.hpp	/^    bool NewFile;$/;"	m	class:File
+NewLhd	archive.hpp	/^    FileHeader NewLhd;$/;"	m	class:Archive
+NewMhd	archive.hpp	/^    MainHeader NewMhd;$/;"	m	class:Archive
+NextBlockPos	archive.hpp	/^    int64 NextBlockPos;$/;"	m	class:Archive
+NextVolSizes	options.hpp	/^    Array<int64> NextVolSizes;$/;"	m	class:RAROptions
+NextVolumeMissing	rdwrfn.hpp	/^    bool NextVolumeMissing;$/;"	m	class:ComprDataIO
+NextVolumeName	pathfn.cpp	/^void NextVolumeName(char *ArcName,wchar *ArcNameW,uint MaxLength,bool OldNumbering)$/;"	f
+NextWindow	unpack.hpp	/^  bool NextWindow;$/;"	m	struct:UnpackFilter
+Nhfb	unpack.hpp	/^    unsigned int Nhfb,Nlzb,MaxDist3;$/;"	m	class:Unpack
+Nlzb	unpack.hpp	/^    unsigned int Nhfb,Nlzb,MaxDist3;$/;"	m	class:Unpack
+NoEndBlock	options.hpp	/^    bool NoEndBlock;$/;"	m	class:RAROptions
+NoMoreSwitches	cmddata.hpp	/^    bool NoMoreSwitches;$/;"	m	class:CommandData
+NoSequentialRead	file.hpp	/^    bool NoSequentialRead;$/;"	m	class:File
+NotFirstVolume	archive.hpp	/^    bool NotFirstVolume;$/;"	m	class:Archive
+NullToEmpty	strfn.cpp	/^const char *NullToEmpty(const char *Str)$/;"	f
+NullToEmpty	strfn.cpp	/^const wchar *NullToEmpty(const wchar *Str)$/;"	f
+NumHuf	unpack.hpp	/^    int Buf60,NumHuf,StMode,LCount,FlagsCnt;$/;"	m	class:Unpack
+NumMasked	model.hpp	/^    int NumMasked, InitEsc, OrderFall, MaxOrder, RunLength, InitRL;$/;"	m	class:ModelPPM
+NumStats	model.hpp	/^    ushort NumStats;$/;"	m	struct:PPM_CONTEXT
+OBJECTS	makefile	/^OBJECTS=scan_rar.o strlist.o strfn.o pathfn.o savepos.o smallfn.o global.o \\$/;"	m
+OPEN_ERROR	errhnd.hpp	/^       OPEN_ERROR,USER_ERROR,MEMORY_ERROR,CREATE_ERROR,NO_FILES_ERROR,$/;"	e	enum:__anon1
+OVERWRITE_ALL	options.hpp	/^  OVERWRITE_ALL,$/;"	e	enum:OVERWRITE_MODE
+OVERWRITE_AUTORENAME	options.hpp	/^  OVERWRITE_AUTORENAME,$/;"	e	enum:OVERWRITE_MODE
+OVERWRITE_DEFAULT	options.hpp	/^  OVERWRITE_DEFAULT=0, \/\/ ask for extraction, silently overwrite for archiving$/;"	e	enum:OVERWRITE_MODE
+OVERWRITE_FORCE_ASK	options.hpp	/^  OVERWRITE_FORCE_ASK$/;"	e	enum:OVERWRITE_MODE
+OVERWRITE_MODE	options.hpp	/^enum OVERWRITE_MODE $/;"	g
+OVERWRITE_NONE	options.hpp	/^  OVERWRITE_NONE,$/;"	e	enum:OVERWRITE_MODE
+OldCRC	crc.cpp	/^ushort OldCRC(ushort StartCRC,const void *Addr,size_t Size)$/;"	f
+OldCopyString	unpack15.cpp	/^void Unpack::OldCopyString(unsigned int Distance,unsigned int Length)$/;"	f	class:Unpack
+OldDist	unpack.hpp	/^    unsigned int OldDist[4],OldDistPtr;$/;"	m	class:Unpack
+OldDistPtr	unpack.hpp	/^    unsigned int OldDist[4],OldDistPtr;$/;"	m	class:Unpack
+OldFileHeader	headers.hpp	/^struct OldFileHeader$/;"	s
+OldFilterLengths	unpack.hpp	/^    Array<int> OldFilterLengths;$/;"	m	class:Unpack
+OldFormat	archive.hpp	/^    bool OldFormat;$/;"	m	class:Archive
+OldMainHeader	headers.hpp	/^struct OldMainHeader$/;"	s
+OldMhd	archive.hpp	/^    OldMainHeader OldMhd;$/;"	m	class:Archive
+OldNumbering	options.hpp	/^    bool OldNumbering;$/;"	m	class:RAROptions
+OldUnpInitData	unpack15.cpp	/^void Unpack::OldUnpInitData(int Solid)$/;"	f	class:Unpack
+OldUnpWriteBuf	unpack15.cpp	/^void Unpack::OldUnpWriteBuf()$/;"	f	class:Unpack
+OneState	model.hpp	/^      STATE OneState;$/;"	m	union:PPM_CONTEXT::__anon6
+Open	file.cpp	/^bool File::Open(const char *Name,const wchar *NameW,bool OpenShared,bool Update)$/;"	f	class:File
+OpenError	errhnd.cpp	/^void ErrorHandler::OpenError(const char *FileName,const wchar *FileNameW)$/;"	f	class:ErrorHandler
+OpenErrorMsg	errhnd.cpp	/^void ErrorHandler::OpenErrorMsg(const char *ArcName,const wchar *ArcNameW,const char *FileName,const wchar *FileNameW)$/;"	f	class:ErrorHandler
+OpenErrorMsg	errhnd.cpp	/^void ErrorHandler::OpenErrorMsg(const char *FileName,const wchar *FileNameW)$/;"	f	class:ErrorHandler
+OpenShared	file.hpp	/^    bool OpenShared;$/;"	m	class:File
+OpenShared	options.hpp	/^    bool OpenShared;$/;"	m	class:RAROptions
+OrderFall	model.hpp	/^    int NumMasked, InitEsc, OrderFall, MaxOrder, RunLength, InitRL;$/;"	m	class:ModelPPM
+OutHelp	cmddata.cpp	/^void CommandData::OutHelp()$/;"	f	class:CommandData
+OutTitle	cmddata.cpp	/^void CommandData::OutTitle()$/;"	f	class:CommandData
+Overflow	getbits.hpp	/^    bool Overflow(uint IncPtr) $/;"	f	class:BitInput
+Overwrite	options.hpp	/^    OVERWRITE_MODE Overwrite;$/;"	m	class:RAROptions
+OwnerName	headers.hpp	/^  char OwnerName[NM];$/;"	m	struct:UnixOwnersHeader
+OwnerNameSize	headers.hpp	/^  ushort OwnerNameSize;$/;"	m	struct:UnixOwnersHeader
+PACK_CRYPT_VER	headers.hpp	23;"	d
+PACK_VER	headers.hpp	22;"	d
+PATHDIVIDER	os.hpp	125;"	d
+PATHDIVIDER	os.hpp	206;"	d
+PATHDIVIDERW	os.hpp	126;"	d
+PATHDIVIDERW	os.hpp	207;"	d
+PATH_EXCL_MODE	options.hpp	/^enum PATH_EXCL_MODE {$/;"	g
+PC2002	raros.hpp	26;"	d
+PC2002	raros.hpp	28;"	d
+PERIOD_BITS	model.hpp	/^const int INT_BITS=7, PERIOD_BITS=7, TOT_BITS=INT_BITS+PERIOD_BITS,$/;"	v
+PPM	unpack.hpp	/^    ModelPPM PPM;$/;"	m	class:Unpack
+PPMEscChar	unpack.hpp	/^    int PPMEscChar;$/;"	m	class:Unpack
+PPM_CONTEXT	model.hpp	/^struct PPM_CONTEXT $/;"	s
+PRESENT_INT32	rartypes.hpp	8;"	d
+PROCESS_MODE_BACKGROUND_BEGIN	system.hpp	10;"	d
+PROCESS_MODE_BACKGROUND_END	system.hpp	11;"	d
+PROTECT_HEAD	headers.hpp	/^  SUB_HEAD=0x77,PROTECT_HEAD=0x78,SIGN_HEAD=0x79,NEWSUB_HEAD=0x7a,$/;"	e	enum:HEADER_TYPE
+PROTECT_VER	headers.hpp	27;"	d
+PackFileCRC	rdwrfn.hpp	/^    uint PackFileCRC,UnpFileCRC,PackedCRC;$/;"	m	class:ComprDataIO
+PackSize	headers.hpp	/^    uint PackSize;$/;"	m	union:BlockHeader::__anon8
+PackSize	headers.hpp	/^  uint PackSize;$/;"	m	struct:OldFileHeader
+PackVolume	rdwrfn.hpp	/^    bool PackVolume;$/;"	m	class:ComprDataIO
+PackedCRC	rdwrfn.hpp	/^    uint PackFileCRC,UnpFileCRC,PackedCRC;$/;"	m	class:ComprDataIO
+PaddedSize	rawread.hpp	/^    size_t PaddedSize() {return Data.Size()-DataSize;}$/;"	f	class:RawRead
+ParSize	rs.hpp	/^    int ParSize; \/\/ Parity bytes size and so the number of recovery volumes.$/;"	m	class:RSCoder
+Param1	options.hpp	/^  int Param1;$/;"	m	struct:FilterMode
+Param2	options.hpp	/^  int Param2;$/;"	m	struct:FilterMode
+ParentFilter	unpack.hpp	/^  unsigned int ParentFilter;$/;"	m	struct:UnpackFilter
+ParseArg	cmddata.cpp	/^void CommandData::ParseArg(char *Arg,wchar *ArgW)$/;"	f	class:CommandData
+ParseCommandLine	cmddata.cpp	/^void CommandData::ParseCommandLine(int argc, char *argv[])$/;"	f	class:CommandData
+ParseDone	cmddata.cpp	/^void CommandData::ParseDone()$/;"	f	class:CommandData
+ParseEnvVar	cmddata.cpp	/^void CommandData::ParseEnvVar()$/;"	f	class:CommandData
+ParseVersionFileName	pathfn.cpp	/^int ParseVersionFileName(char *Name,wchar *NameW,bool Truncate)$/;"	f
+Password	extract.hpp	/^    wchar Password[MAXPASSWORD];$/;"	m	class:CmdExtract
+Password	options.hpp	/^    wchar Password[MAXPASSWORD];$/;"	m	class:RAROptions
+PasswordAll	extract.hpp	/^    bool PasswordAll;$/;"	m	class:CmdExtract
+PasswordCancelled	extract.hpp	/^    bool PasswordCancelled;$/;"	m	class:CmdExtract
+Place	unpack.hpp	/^    unsigned int Place[256],PlaceA[256],PlaceB[256],PlaceC[256];$/;"	m	class:Unpack
+PlaceA	unpack.hpp	/^    unsigned int Place[256],PlaceA[256],PlaceB[256],PlaceC[256];$/;"	m	class:Unpack
+PlaceB	unpack.hpp	/^    unsigned int Place[256],PlaceA[256],PlaceB[256],PlaceC[256];$/;"	m	class:Unpack
+PlaceC	unpack.hpp	/^    unsigned int Place[256],PlaceA[256],PlaceB[256],PlaceC[256];$/;"	m	class:Unpack
+PointToLastChar	pathfn.cpp	/^char* PointToLastChar(const char *Path)$/;"	f
+PointToLastChar	pathfn.cpp	/^wchar* PointToLastChar(const wchar *Path)$/;"	f
+PointToName	pathfn.cpp	/^char* PointToName(const char *Path)$/;"	f
+PointToName	pathfn.cpp	/^wchar* PointToName(const wchar *Path)$/;"	f
+PosAV	headers.hpp	/^  uint PosAV;$/;"	m	struct:MainHeader
+PosHf0	unpack15.cpp	/^static __thread unsigned int PosHf0[]={0,0,0,0,0,8,16,24,33,33,33,33,33};$/;"	v	file:
+PosHf1	unpack15.cpp	/^static __thread unsigned int PosHf1[]={0,0,0,0,0,0,4,44,60,76,80,80,127};$/;"	v	file:
+PosHf2	unpack15.cpp	/^static __thread unsigned int PosHf2[]={0,0,0,0,0,0,2,7,53,117,233,0,0};$/;"	v	file:
+PosHf3	unpack15.cpp	/^static __thread unsigned int PosHf3[]={0,0,0,0,0,0,0,2,16,218,251,0,0};$/;"	v	file:
+PosHf4	unpack15.cpp	/^static __thread unsigned int PosHf4[]={0,0,0,0,0,0,0,0,0,255,0,0,0};$/;"	v	file:
+PosL1	unpack15.cpp	/^static __thread unsigned int PosL1[]={0,0,0,2,3,5,7,11,16,20,24,32,32};$/;"	v	file:
+PosL2	unpack15.cpp	/^static __thread unsigned int PosL2[]={0,0,0,0,5,7,9,13,18,22,26,34,36};$/;"	v	file:
+Prealloc	file.cpp	/^void File::Prealloc(int64 Size)$/;"	f	class:File
+PrepareToDelete	filefn.cpp	/^void PrepareToDelete(const char *Name,const wchar *NameW)$/;"	f
+PreprocessCommandLine	cmddata.cpp	/^void CommandData::PreprocessCommandLine(int argc, char *argv[])$/;"	f	class:CommandData
+PreprocessSwitch	cmddata.cpp	/^bool CommandData::PreprocessSwitch(const char *Switch)$/;"	f	class:CommandData
+PrevExtracted	extract.hpp	/^    bool PrevExtracted;$/;"	m	class:CmdExtract
+PrevLowDist	unpack.hpp	/^    int PrevLowDist,LowDistRepCount;$/;"	m	class:Unpack
+PrevSuccess	model.hpp	/^    byte EscCount, PrevSuccess, HiBitsFlag;$/;"	m	class:ModelPPM
+PrgStack	unpack.hpp	/^    Array<UnpackFilter*> PrgStack;$/;"	m	class:Unpack
+PrintResults	scan_rar.cpp	/^void ScanRar::PrintResults(unsigned int amount, byte *unpackedfiles)$/;"	f	class:ScanRar
+Priority	options.hpp	/^    int Priority;$/;"	m	class:RAROptions
+ProcessCommand	cmddata.cpp	/^void CommandData::ProcessCommand()$/;"	f	class:CommandData
+ProcessDataProc	options.hpp	/^    PROCESSDATAPROC ProcessDataProc;$/;"	m	class:RAROptions
+ProcessEA	options.hpp	/^    bool ProcessEA;$/;"	m	class:RAROptions
+ProcessOwners	options.hpp	/^    bool ProcessOwners;$/;"	m	class:RAROptions
+ProcessSignal	errhnd.cpp	/^BOOL __stdcall ProcessSignal(DWORD SigType)$/;"	f
+ProcessSwitch	cmddata.cpp	/^void CommandData::ProcessSwitch(const char *Switch,const wchar *SwitchW)$/;"	f	class:CommandData
+ProcessSwitchesString	cmddata.cpp	/^void CommandData::ProcessSwitchesString(char *Str)$/;"	f	class:CommandData
+ProcessedArcSize	rdwrfn.hpp	/^    int64 ProcessedArcSize;$/;"	m	class:ComprDataIO
+ProtectHead	archive.hpp	/^    ProtectHeader ProtectHead;$/;"	m	class:Archive
+ProtectHeader	headers.hpp	/^struct ProtectHeader:BlockHeader$/;"	s
+Protected	archive.hpp	/^    bool Protected;$/;"	m	class:Archive
+Push	array.hpp	/^template <class T> void Array<T>::Push(T Item)$/;"	f	class:Array
+PutByte	file.cpp	/^void File::PutByte(byte Byte)$/;"	f	class:File
+QuickBits	unpack.hpp	/^  uint QuickBits;$/;"	m	struct:DecodeTable
+QuickLen	unpack.hpp	/^  byte QuickLen[1<<MAX_QUICK_DECODE_BITS];$/;"	m	struct:DecodeTable
+QuickNum	unpack.hpp	/^  uint QuickNum[1<<MAX_QUICK_DECODE_BITS];$/;"	m	struct:DecodeTable
+RARInitData	smallfn.cpp	/^void RARInitData()$/;"	f
+RAROptions	options.cpp	/^RAROptions::RAROptions()$/;"	f	class:RAROptions
+RAROptions	options.hpp	/^class RAROptions$/;"	c
+RARVER_BETA	version.hpp	3;"	d
+RARVER_DAY	version.hpp	4;"	d
+RARVER_MAJOR	version.hpp	1;"	d
+RARVER_MINOR	version.hpp	2;"	d
+RARVER_MONTH	version.hpp	5;"	d
+RARVER_YEAR	version.hpp	6;"	d
+RAR_CHARSET	options.hpp	/^enum RAR_CHARSET { RCH_DEFAULT=0,RCH_ANSI,RCH_OEM,RCH_UNICODE };$/;"	g
+RAR_CMD_LIST_MODE	cmddata.hpp	/^enum RAR_CMD_LIST_MODE {RCLM_AUTO,RCLM_REJECT_LISTS,RCLM_ACCEPT_LISTS};$/;"	g
+RAR_MEM_BLK	suballoc.hpp	/^struct RAR_MEM_BLK $/;"	s
+RAR_NODE	suballoc.hpp	/^struct RAR_NODE$/;"	s
+RC	compress.hpp	18;"	d
+RC20	compress.hpp	24;"	d
+RCH_ANSI	options.hpp	/^enum RAR_CHARSET { RCH_DEFAULT=0,RCH_ANSI,RCH_OEM,RCH_UNICODE };$/;"	e	enum:RAR_CHARSET
+RCH_DEFAULT	options.hpp	/^enum RAR_CHARSET { RCH_DEFAULT=0,RCH_ANSI,RCH_OEM,RCH_UNICODE };$/;"	e	enum:RAR_CHARSET
+RCH_OEM	options.hpp	/^enum RAR_CHARSET { RCH_DEFAULT=0,RCH_ANSI,RCH_OEM,RCH_UNICODE };$/;"	e	enum:RAR_CHARSET
+RCH_UNICODE	options.hpp	/^enum RAR_CHARSET { RCH_DEFAULT=0,RCH_ANSI,RCH_OEM,RCH_UNICODE };$/;"	e	enum:RAR_CHARSET
+RCLM_ACCEPT_LISTS	cmddata.hpp	/^enum RAR_CMD_LIST_MODE {RCLM_AUTO,RCLM_REJECT_LISTS,RCLM_ACCEPT_LISTS};$/;"	e	enum:RAR_CMD_LIST_MODE
+RCLM_AUTO	cmddata.hpp	/^enum RAR_CMD_LIST_MODE {RCLM_AUTO,RCLM_REJECT_LISTS,RCLM_ACCEPT_LISTS};$/;"	e	enum:RAR_CMD_LIST_MODE
+RCLM_REJECT_LISTS	cmddata.hpp	/^enum RAR_CMD_LIST_MODE {RCLM_AUTO,RCLM_REJECT_LISTS,RCLM_ACCEPT_LISTS};$/;"	e	enum:RAR_CMD_LIST_MODE
+RD	unpack.hpp	/^    DecodeTable RD;  \/\/ Decode repeating distances.$/;"	m	class:Unpack
+READBINARY	os.hpp	131;"	d
+READBINARY	os.hpp	212;"	d
+READTEXT	os.hpp	132;"	d
+READTEXT	os.hpp	213;"	d
+RECURSE_ALWAYS	options.hpp	/^  RECURSE_ALWAYS,    \/\/ switch -r$/;"	e	enum:RECURSE_MODE
+RECURSE_DISABLE	options.hpp	/^  RECURSE_DISABLE,   \/\/ switch -r-$/;"	e	enum:RECURSE_MODE
+RECURSE_MODE	options.hpp	/^enum RECURSE_MODE $/;"	g
+RECURSE_NONE	options.hpp	/^  RECURSE_NONE=0,    \/\/ no recurse switches$/;"	e	enum:RECURSE_MODE
+RECURSE_WILDCARDS	options.hpp	/^  RECURSE_WILDCARDS, \/\/ switch -r0$/;"	e	enum:RECURSE_MODE
+RSCoder	rs.cpp	/^RSCoder::RSCoder(int ParSize)$/;"	f	class:RSCoder
+RSCoder	rs.hpp	/^class RSCoder$/;"	c
+RangeCoder	coder.hpp	/^class RangeCoder$/;"	c
+RarLocalTime	timefn.hpp	/^struct RarLocalTime$/;"	s
+RarTime	timefn.cpp	/^RarTime::RarTime()$/;"	f	class:RarTime
+RarTime	timefn.hpp	/^class RarTime$/;"	c
+RawRead	rawread.cpp	/^RawRead::RawRead(File *SrcFile)$/;"	f	class:RawRead
+RawRead	rawread.hpp	/^	  RawRead() { };$/;"	f	class:RawRead
+RawRead	rawread.hpp	/^class RawRead$/;"	c
+RawSeek	file.cpp	/^bool File::RawSeek(int64 Offset,int Method)$/;"	f	class:File
+RawToWide	unicode.cpp	/^wchar* RawToWide(const byte *Src,wchar *Dest,size_t DestSize)$/;"	f
+Read	file.cpp	/^int File::Read(void *Data,size_t Size)$/;"	f	class:File
+Read	rawread.cpp	/^void RawRead::Read(byte *SrcData,size_t Size)$/;"	f	class:RawRead
+Read	rawread.cpp	/^void RawRead::Read(size_t Size)$/;"	f	class:RawRead
+ReadBorder	unpack.hpp	/^    int ReadBorder;$/;"	m	class:Unpack
+ReadCommentData	arccmt.cpp	/^size_t Archive::ReadCommentData(Array<byte> *CmtData,Array<wchar> *CmtDataW)$/;"	f	class:Archive
+ReadConfig	cmddata.cpp	/^void CommandData::ReadConfig()$/;"	f	class:CommandData
+ReadEndOfBlock	unpack.cpp	/^bool Unpack::ReadEndOfBlock()$/;"	f	class:Unpack
+ReadError	errhnd.cpp	/^void ErrorHandler::ReadError(const char *FileName,const wchar *FileNameW)$/;"	f	class:ErrorHandler
+ReadErrorMsg	errhnd.cpp	/^void ErrorHandler::ReadErrorMsg(const char *ArcName,const wchar *ArcNameW,const char *FileName,const wchar *FileNameW)$/;"	f	class:ErrorHandler
+ReadHeader	arcread.cpp	/^size_t Archive::ReadHeader()$/;"	f	class:Archive
+ReadLastTables	unpack20.cpp	/^void Unpack::ReadLastTables()$/;"	f	class:Unpack
+ReadOldHeader	arcread.cpp	/^size_t Archive::ReadOldHeader()$/;"	f	class:Archive
+ReadPos	rawread.hpp	/^    size_t ReadPos;$/;"	m	class:RawRead
+ReadSubData	arcread.cpp	/^bool Archive::ReadSubData(Array<byte> *UnpData, File *DestFile)$/;"	f	class:Archive
+ReadTables	unpack.cpp	/^bool Unpack::ReadTables()$/;"	f	class:Unpack
+ReadTables20	unpack20.cpp	/^bool Unpack::ReadTables20()$/;"	f	class:Unpack
+ReadTextFile	filestr.cpp	/^bool ReadTextFile($/;"	f
+ReadTop	unpack.hpp	/^    int ReadTop; $/;"	m	class:Unpack
+ReadVMCode	unpack.cpp	/^bool Unpack::ReadVMCode()$/;"	f	class:Unpack
+ReadVMCodePPM	unpack.cpp	/^bool Unpack::ReadVMCodePPM()$/;"	f	class:Unpack
+RecSectors	headers.hpp	/^  ushort RecSectors;$/;"	m	struct:ProtectHeader
+RecVolNumber	options.hpp	/^    int RecVolNumber;$/;"	m	class:RAROptions
+ReconstructDone	extract.hpp	/^    bool ReconstructDone;$/;"	m	class:CmdExtract
+Recovery	options.hpp	/^    int Recovery;$/;"	m	class:RAROptions
+RecoveryPos	archive.hpp	/^    int64 RecoveryPos;$/;"	m	class:Archive
+RecoverySectors	archive.hpp	/^    int RecoverySectors;$/;"	m	class:Archive
+Recurse	options.hpp	/^    RECURSE_MODE Recurse;$/;"	m	class:RAROptions
+Reminder	timefn.hpp	/^  uint Reminder; \/\/ Part of time smaller than 1 second, represented in 100-nanosecond intervals.$/;"	m	struct:RarLocalTime
+RemoveCreated	file.cpp	/^bool File::RemoveCreated()$/;"	f	class:File
+RemoveCreatedActive	file.cpp	/^static __thread int RemoveCreatedActive=0;$/;"	v	file:
+RemoveEOL	strfn.cpp	/^char* RemoveEOL(char *Str)$/;"	f
+RemoveLF	strfn.cpp	/^char* RemoveLF(char *Str)$/;"	f
+RemoveLF	strfn.cpp	/^wchar* RemoveLF(wchar *Str)$/;"	f
+RemoveNameFromPath	pathfn.cpp	/^void RemoveNameFromPath(char *Path)$/;"	f
+RemoveNameFromPath	pathfn.cpp	/^void RemoveNameFromPath(wchar *Path)$/;"	f
+RemoveNode	suballoc.cpp	/^inline void* SubAllocator::RemoveNode(int indx) $/;"	f	class:SubAllocator
+RemoveSequentialFlag	file.hpp	/^    void RemoveSequentialFlag() {NoSequentialRead=true;}$/;"	f	class:File
+Rename	file.cpp	/^bool File::Rename(const char *NewName,const wchar *NewNameW)$/;"	f	class:File
+RenameFile	filefn.cpp	/^bool RenameFile(const char *SrcName,const wchar *SrcNameW,const char *DestName,const wchar *DestNameW)$/;"	f
+Reset	array.hpp	/^template <class T> void Array<T>::Reset()$/;"	f	class:Array
+Reset	strlist.cpp	/^void StringList::Reset()$/;"	f	class:StringList
+Reset	timefn.hpp	/^    void Reset() {rlt.Year=0;}$/;"	f	class:RarTime
+RestartModelRare	model.cpp	/^void ModelPPM::RestartModelRare()$/;"	f	class:ModelPPM
+RestorePosition	strlist.cpp	/^void StringList::RestorePosition()$/;"	f	class:StringList
+Rewind	strlist.cpp	/^void StringList::Rewind()$/;"	f	class:StringList
+RunLength	model.hpp	/^    int NumMasked, InitEsc, OrderFall, MaxOrder, RunLength, InitRL;$/;"	m	class:ModelPPM
+SALT_SIZE	headers.hpp	175;"	d
+SAVE_LINKS	os.hpp	197;"	d
+SEE2Cont	model.hpp	/^    SEE2_CONTEXT SEE2Cont[25][16], DummySEE2Cont;$/;"	m	class:ModelPPM
+SEE2_CONTEXT	model.hpp	/^struct SEE2_CONTEXT$/;"	s
+SFXSize	archive.hpp	/^    size_t SFXSize;$/;"	m	class:Archive
+SHORT16	rartypes.hpp	32;"	d
+SHTDN_REASON_FLAG_PLANNED	system.hpp	15;"	d
+SHTDN_REASON_MAJOR_APPLICATION	system.hpp	14;"	d
+SHTDN_REASON_MINOR_MAINTENANCE	system.hpp	16;"	d
+SIGN_HEAD	headers.hpp	/^  SUB_HEAD=0x77,PROTECT_HEAD=0x78,SIGN_HEAD=0x79,NEWSUB_HEAD=0x7a,$/;"	e	enum:HEADER_TYPE
+SILENT	os.hpp	12;"	d
+SIZEOF_AVHEAD	headers.hpp	14;"	d
+SIZEOF_BEEAHEAD	headers.hpp	19;"	d
+SIZEOF_COMMHEAD	headers.hpp	12;"	d
+SIZEOF_EAHEAD	headers.hpp	18;"	d
+SIZEOF_LONGBLOCKHEAD	headers.hpp	10;"	d
+SIZEOF_MACHEAD	headers.hpp	17;"	d
+SIZEOF_MARKHEAD	headers.hpp	4;"	d
+SIZEOF_NEWLHD	headers.hpp	8;"	d
+SIZEOF_NEWMHD	headers.hpp	6;"	d
+SIZEOF_OLDLHD	headers.hpp	7;"	d
+SIZEOF_OLDMHD	headers.hpp	5;"	d
+SIZEOF_PROTECTHEAD	headers.hpp	13;"	d
+SIZEOF_SHORTBLOCKHEAD	headers.hpp	9;"	d
+SIZEOF_SIGNHEAD	headers.hpp	15;"	d
+SIZEOF_STREAMHEAD	headers.hpp	20;"	d
+SIZEOF_SUBBLOCKHEAD	headers.hpp	11;"	d
+SIZEOF_UOHEAD	headers.hpp	16;"	d
+SKIP_IF_UNKNOWN	headers.hpp	76;"	d
+SOLID_COUNT	options.hpp	/^enum {SOLID_NONE=0,SOLID_NORMAL=1,SOLID_COUNT=2,SOLID_FILEEXT=4,$/;"	e	enum:__anon3
+SOLID_FILEEXT	options.hpp	/^enum {SOLID_NONE=0,SOLID_NORMAL=1,SOLID_COUNT=2,SOLID_FILEEXT=4,$/;"	e	enum:__anon3
+SOLID_NONE	options.hpp	/^enum {SOLID_NONE=0,SOLID_NORMAL=1,SOLID_COUNT=2,SOLID_FILEEXT=4,$/;"	e	enum:__anon3
+SOLID_NORMAL	options.hpp	/^enum {SOLID_NONE=0,SOLID_NORMAL=1,SOLID_COUNT=2,SOLID_FILEEXT=4,$/;"	e	enum:__anon3
+SOLID_VOLUME_DEPENDENT	options.hpp	/^      SOLID_VOLUME_DEPENDENT=8,SOLID_VOLUME_INDEPENDENT=16};$/;"	e	enum:__anon3
+SOLID_VOLUME_INDEPENDENT	options.hpp	/^      SOLID_VOLUME_DEPENDENT=8,SOLID_VOLUME_INDEPENDENT=16};$/;"	e	enum:__anon3
+STARTHF0	unpack15.cpp	11;"	d	file:
+STARTHF1	unpack15.cpp	17;"	d	file:
+STARTHF2	unpack15.cpp	23;"	d	file:
+STARTHF3	unpack15.cpp	29;"	d	file:
+STARTHF4	unpack15.cpp	35;"	d	file:
+STARTL1	unpack15.cpp	1;"	d	file:
+STARTL2	unpack15.cpp	6;"	d	file:
+STATE	model.hpp	/^struct STATE$/;"	s
+STREAM_HEAD	headers.hpp	/^       NTACL_HEAD=0x104,STREAM_HEAD=0x105 };$/;"	e	enum:__anon7
+STRICT	os.hpp	27;"	d
+STRICT_ALIGNMENT_REQUIRED	os.hpp	274;"	d
+STRIP	makefile	/^STRIP=strip$/;"	m
+SUBHEAD_FLAGS_CMT_UNICODE	headers.hpp	110;"	d
+SUBHEAD_FLAGS_INHERITED	headers.hpp	108;"	d
+SUBHEAD_TYPE_ACL	headers.hpp	99;"	d
+SUBHEAD_TYPE_AV	headers.hpp	102;"	d
+SUBHEAD_TYPE_BEOSEA	headers.hpp	105;"	d
+SUBHEAD_TYPE_CMT	headers.hpp	98;"	d
+SUBHEAD_TYPE_OS2EA	headers.hpp	104;"	d
+SUBHEAD_TYPE_RR	headers.hpp	103;"	d
+SUBHEAD_TYPE_STREAM	headers.hpp	100;"	d
+SUBHEAD_TYPE_UOWNER	headers.hpp	101;"	d
+SUBRANGE	coder.hpp	/^    struct SUBRANGE $/;"	s	class:RangeCoder
+SUB_HEAD	headers.hpp	/^  SUB_HEAD=0x77,PROTECT_HEAD=0x78,SIGN_HEAD=0x79,NEWSUB_HEAD=0x7a,$/;"	e	enum:HEADER_TYPE
+SUCCESS	errhnd.hpp	/^enum { SUCCESS,WARNING,FATAL_ERROR,CRC_ERROR,LOCK_ERROR,WRITE_ERROR,$/;"	e	enum:__anon1
+SafePPMDecodeChar	unpack.cpp	/^inline int Unpack::SafePPMDecodeChar()$/;"	f	class:Unpack
+Salt	headers.hpp	/^  byte Salt[SALT_SIZE];$/;"	m	struct:FileHeader
+SaveCurPos	strlist.hpp	/^    size_t SaveCurPos[16],SaveCurPosW[16],SavePosNumber;$/;"	m	class:StringList
+SaveCurPosW	strlist.hpp	/^    size_t SaveCurPos[16],SaveCurPosW[16],SavePosNumber;$/;"	m	class:StringList
+SaveFile	savepos.hpp	/^    File *SaveFile;$/;"	m	class:SaveFilePos
+SaveFilePos	savepos.cpp	/^SaveFilePos::SaveFilePos(File &SaveFile)$/;"	f	class:SaveFilePos
+SaveFilePos	savepos.hpp	/^class SaveFilePos$/;"	c
+SaveLinks	options.hpp	/^    bool SaveLinks;$/;"	m	class:RAROptions
+SavePos	savepos.hpp	/^    int64 SavePos;$/;"	m	class:SaveFilePos
+SavePosNumber	strlist.hpp	/^    size_t SaveCurPos[16],SaveCurPosW[16],SavePosNumber;$/;"	m	class:StringList
+SavePosition	strlist.cpp	/^void StringList::SavePosition()$/;"	f	class:StringList
+SaveStreams	options.hpp	/^    bool SaveStreams;$/;"	m	class:RAROptions
+ScanRar	scan_rar.hpp	/^	ScanRar(){}; \/\/dummy constructor$/;"	f	class:ScanRar
+ScanRar	scan_rar.hpp	/^class ScanRar$/;"	c
+Search	strlist.cpp	/^bool StringList::Search(char *Str,wchar *StrW,bool CaseSensitive)$/;"	f	class:StringList
+SearchBlock	arcread.cpp	/^size_t Archive::SearchBlock(int BlockType)$/;"	f	class:Archive
+SearchSubBlock	arcread.cpp	/^size_t Archive::SearchSubBlock(const char *Type)$/;"	f	class:Archive
+Second	timefn.hpp	/^  uint Second;$/;"	m	struct:RarLocalTime
+Seek	file.cpp	/^void File::Seek(int64 Offset,int Method)$/;"	f	class:File
+SeekError	errhnd.cpp	/^void ErrorHandler::SeekError(const char *FileName,const wchar *FileNameW)$/;"	f	class:ErrorHandler
+SeekToNext	archive.cpp	/^void Archive::SeekToNext()$/;"	f	class:Archive
+SetAgeText	timefn.cpp	/^void RarTime::SetAgeText(const char *TimeText)$/;"	f	class:RarTime
+SetAllowDelete	file.hpp	/^    void SetAllowDelete(bool Allow) {AllowDelete=Allow;}$/;"	f	class:File
+SetCloseFileTime	file.cpp	/^void File::SetCloseFileTime(RarTime *ftm,RarTime *fta)$/;"	f	class:File
+SetCloseFileTimeByName	file.cpp	/^void File::SetCloseFileTimeByName(const char *Name,RarTime *ftm,RarTime *fta)$/;"	f	class:File
+SetCommand	rdwrfn.hpp	/^    void SetCommand(CmdAdd *Cmd) {Command=Cmd;}$/;"	f	class:ComprDataIO
+SetComprDataIO	extract.cpp	/^void CmdExtract::SetComprDataIO(ComprDataIO dataio)$/;"	f	class:CmdExtract
+SetCompressedAttr	options.hpp	/^    bool SetCompressedAttr;$/;"	m	class:RAROptions
+SetCurrentCommand	rdwrfn.hpp	/^	void SetCurrentCommand(char Cmd) {CurrentCommand=Cmd;}$/;"	f	class:ComprDataIO
+SetCurrentTime	timefn.cpp	/^void RarTime::SetCurrentTime()$/;"	f	class:RarTime
+SetDestSize	unpack.hpp	/^    void SetDestSize(int64 DestSize) {DestUnpSize=DestSize;FileExtracted=false;}$/;"	f	class:Unpack
+SetDirTime	filefn.cpp	/^void SetDirTime(const char *Name,const wchar *NameW,RarTime *ftm,RarTime *ftc,RarTime *fta)$/;"	f
+SetDos	timefn.cpp	/^void RarTime::SetDos(uint DosTime)$/;"	f	class:RarTime
+SetEncryption	rdwrfn.cpp	/^void ComprDataIO::SetEncryption(int Method,const wchar *Password,const byte *Salt,bool Encrypt,bool HandsOffHash)$/;"	f	class:ComprDataIO
+SetErrorCode	errhnd.cpp	/^void ErrorHandler::SetErrorCode(int Code)$/;"	f	class:ErrorHandler
+SetExceptions	file.hpp	/^    void SetExceptions(bool Allow) {AllowExceptions=Allow;}$/;"	f	class:File
+SetExt	pathfn.cpp	/^void SetExt(char *Name,const char *NewExt)$/;"	f
+SetExt	pathfn.cpp	/^void SetExt(wchar *Name,const wchar *NewExt)$/;"	f
+SetExtraInfo	extinfo.cpp	/^void SetExtraInfo(CommandData *Cmd,Archive &Arc,char *Name,wchar *NameW)$/;"	f
+SetExtraInfoNew	extinfo.cpp	/^void SetExtraInfoNew(CommandData *Cmd,Archive &Arc,char *Name,wchar *NameW)$/;"	f
+SetFileAttr	filefn.cpp	/^bool SetFileAttr(const char *Name,const wchar *NameW,uint Attr)$/;"	f
+SetFileCompression	filefn.cpp	/^bool SetFileCompression(char *Name,wchar *NameW,bool State)$/;"	f
+SetFiles	rdwrfn.cpp	/^void ComprDataIO::SetFiles(File *SrcFile,File *DestFile)$/;"	f	class:ComprDataIO
+SetHandleType	file.cpp	/^void File::SetHandleType(FILE_HANDLETYPE Type)$/;"	f	class:File
+SetIgnoreReadErrors	file.hpp	/^    void SetIgnoreReadErrors(bool Mode) {IgnoreReadErrors=Mode;};$/;"	f	class:File
+SetIsoText	timefn.cpp	/^void RarTime::SetIsoText(const char *TimeText)$/;"	f	class:RarTime
+SetLocal	timefn.hpp	/^    void SetLocal(RarLocalTime *lt) {rlt=*lt;}$/;"	f	class:RarTime
+SetOpenFileTime	file.cpp	/^void File::SetOpenFileTime(RarTime *ftm,RarTime *ftc,RarTime *fta)$/;"	f	class:File
+SetPackedSizeToRead	rdwrfn.hpp	/^    void SetPackedSizeToRead(int64 Size) {UnpPackedSize=Size;}$/;"	f	class:ComprDataIO
+SetPriority	system.cpp	/^void SetPriority(int Priority)$/;"	f
+SetRaw	timefn.cpp	/^void RarTime::SetRaw(int64 RawTime)$/;"	f	class:RarTime
+SetSFXExt	pathfn.cpp	/^void SetSFXExt(char *SFXName)$/;"	f
+SetSFXExt	pathfn.cpp	/^void SetSFXExt(wchar *SFXName)$/;"	f
+SetShutdown	errhnd.hpp	/^    void SetShutdown(bool Mode) {DoShutdown=Mode;};$/;"	f	class:ErrorHandler
+SetSignalHandlers	errhnd.cpp	/^void ErrorHandler::SetSignalHandlers(bool Enable)$/;"	f	class:ErrorHandler
+SetSilent	errhnd.hpp	/^    void SetSilent(bool Mode) {Silent=Mode;};$/;"	f	class:ErrorHandler
+SetSilentOpen	archive.hpp	/^    void SetSilentOpen(bool Mode) {SilentOpen=Mode;}$/;"	f	class:Archive
+SetSkipUnpCRC	rdwrfn.hpp	/^    void SetSkipUnpCRC(bool Skip) {SkipUnpCRC=Skip;}$/;"	f	class:ComprDataIO
+SetSubHeader	rdwrfn.hpp	/^    void SetSubHeader(FileHeader *hd,int64 *Pos) {SubHead=hd;SubHeadPos=Pos;}$/;"	f	class:ComprDataIO
+SetSuspended	unpack.hpp	/^    void SetSuspended(bool Suspended) {Unpack::Suspended=Suspended;}$/;"	f	class:Unpack
+SetTestMode	rdwrfn.hpp	/^    void SetTestMode(bool Mode) {TestMode=Mode;}$/;"	f	class:ComprDataIO
+SetUnpackToMemory	rdwrfn.cpp	/^void ComprDataIO::SetUnpackToMemory(byte *Addr,uint Size)$/;"	f	class:ComprDataIO
+Shift	model.hpp	/^  byte Shift, Count;$/;"	m	struct:SEE2_CONTEXT
+ShortBlock	archive.hpp	/^    BaseBlock ShortBlock;$/;"	m	class:Archive
+ShortLZ	unpack15.cpp	/^void Unpack::ShortLZ()$/;"	f	class:Unpack
+ShowProgress	rdwrfn.hpp	/^    bool ShowProgress;$/;"	m	class:ComprDataIO
+ShowUnpRead	rdwrfn.cpp	/^void ComprDataIO::ShowUnpRead(int64 ArcPos,int64 ArcSize)$/;"	f	class:ComprDataIO
+ShowUnpWrite	rdwrfn.cpp	/^void ComprDataIO::ShowUnpWrite()$/;"	f	class:ComprDataIO
+ShrinkUnits	suballoc.cpp	/^void* SubAllocator::ShrinkUnits(void* OldPtr,int OldNU,int NewNU)$/;"	f	class:SubAllocator
+Shutdown	options.hpp	/^    bool Shutdown;$/;"	m	class:RAROptions
+Shutdown	system.cpp	/^void Shutdown()$/;"	f
+SignHead	archive.hpp	/^    SignHeader SignHead;$/;"	m	class:Archive
+SignHeader	headers.hpp	/^struct SignHeader:BaseBlock$/;"	s
+SignatureFound	extract.hpp	/^    bool SignatureFound;$/;"	m	class:CmdExtract
+Signed	archive.hpp	/^    bool Signed;$/;"	m	class:Archive
+Silent	errhnd.hpp	/^    bool Silent;$/;"	m	class:ErrorHandler
+SilentOpen	archive.hpp	/^    bool SilentOpen;$/;"	m	class:Archive
+Size	array.hpp	/^template <class T> inline size_t Array<T>::Size()$/;"	f	class:Array
+Size	rawread.hpp	/^    size_t Size() {return DataSize;}$/;"	f	class:RawRead
+SizeCheck	cmddata.cpp	/^bool CommandData::SizeCheck(int64 Size)$/;"	f	class:CommandData
+SkipClose	file.hpp	/^    bool SkipClose;$/;"	m	class:File
+SkipUnpCRC	rdwrfn.hpp	/^    bool SkipUnpCRC;$/;"	m	class:ComprDataIO
+SleepTime	options.hpp	/^    int SleepTime;$/;"	m	class:RAROptions
+SleepTime	system.cpp	/^static __thread int SleepTime=0;$/;"	v	file:
+Solid	archive.hpp	/^    bool Solid;$/;"	m	class:Archive
+Solid	options.hpp	/^    int Solid;$/;"	m	class:RAROptions
+SolidCount	options.hpp	/^    int SolidCount;$/;"	m	class:RAROptions
+Sound	options.hpp	/^    bool Sound;$/;"	m	class:RAROptions
+SplitBlock	suballoc.cpp	/^inline void SubAllocator::SplitBlock(void* pv,int OldIndx,int NewIndx)$/;"	f	class:SubAllocator
+Splitting	archive.hpp	/^    bool Splitting;$/;"	m	class:Archive
+SrcFile	rawread.hpp	/^    File *SrcFile;$/;"	m	class:RawRead
+SrcFile	rdwrfn.hpp	/^    File *SrcFile;$/;"	m	class:ComprDataIO
+St	resource.cpp	/^const char *St(MSGID StringId)$/;"	f
+St	resource.hpp	5;"	d
+StMode	unpack.hpp	/^    int Buf60,NumHuf,StMode,LCount,FlagsCnt;$/;"	m	class:Unpack
+StW	resource.cpp	/^const wchar *StW(MSGID StringId)$/;"	f
+StW	resource.hpp	6;"	d
+Stamp	suballoc.hpp	/^  ushort Stamp, NU;$/;"	m	struct:RAR_MEM_BLK
+StartDecompression	scan_rar.cpp	/^void ScanRar::StartDecompression(std::vector<char>& filebytes, int location, int length, const unsigned int myunpacksize, char ** parameters, int numparameters)$/;"	f	class:ScanRar
+StartModelRare	model.cpp	/^void ModelPPM::StartModelRare(int MaxOrder)$/;"	f	class:ModelPPM
+StartSubAllocator	suballoc.cpp	/^bool SubAllocator::StartSubAllocator(int SASize)$/;"	f	class:SubAllocator
+StartTime	extract.hpp	/^    RarTime StartTime; \/\/ time when extraction started$/;"	m	class:CmdExtract
+StartWithPassword	scan_rar.cpp	/^void ScanRar::StartWithPassword(std::vector<char>& filebytes, int location, int length, const unsigned int myunpacksize, char* pword)$/;"	f	class:ScanRar
+StartWithoutPassword	scan_rar.cpp	/^void ScanRar::StartWithoutPassword(std::vector<char>& filebytes, int location, int length, const unsigned int myunpacksize)$/;"	f	class:ScanRar
+State	options.hpp	/^  FilterState State;$/;"	m	struct:FilterMode
+Stats	model.hpp	/^  STATE _PACK_ATTR * Stats;$/;"	m	struct:FreqData
+StopSubAllocator	suballoc.cpp	/^void SubAllocator::StopSubAllocator()$/;"	f	class:SubAllocator
+StoreArgs	cmddata.hpp	/^    StringList *StoreArgs;$/;"	m	class:CommandData
+StreamCRC	headers.hpp	/^  uint StreamCRC;$/;"	m	struct:StreamHeader
+StreamHead	archive.hpp	/^    StreamHeader StreamHead;$/;"	m	class:Archive
+StreamHeader	headers.hpp	/^struct StreamHeader:SubBlockHeader$/;"	s
+StreamName	headers.hpp	/^  byte StreamName[NM];$/;"	m	struct:StreamHeader
+StreamNameSize	headers.hpp	/^  ushort StreamNameSize;$/;"	m	struct:StreamHeader
+StringData	strlist.hpp	/^    Array<char> StringData;$/;"	m	class:StringList
+StringDataW	strlist.hpp	/^    Array<wchar> StringDataW;$/;"	m	class:StringList
+StringList	strlist.cpp	/^StringList::StringList()$/;"	f	class:StringList
+StringList	strlist.hpp	/^class StringList$/;"	c
+StringsCount	strlist.hpp	/^    uint StringsCount;$/;"	m	class:StringList
+SubAlloc	model.hpp	/^    SubAllocator SubAlloc;$/;"	m	class:ModelPPM
+SubAllocator	suballoc.cpp	/^SubAllocator::SubAllocator()$/;"	f	class:SubAllocator
+SubAllocator	suballoc.hpp	/^class SubAllocator$/;"	c
+SubAllocatorSize	suballoc.hpp	/^    long SubAllocatorSize;$/;"	m	class:SubAllocator
+SubBlockHead	archive.hpp	/^    SubBlockHeader SubBlockHead;$/;"	m	class:Archive
+SubBlockHeader	headers.hpp	/^struct SubBlockHeader:BlockHeader$/;"	s
+SubData	headers.hpp	/^  Array<byte> SubData;$/;"	m	struct:FileHeader
+SubDataIO	archive.hpp	/^    ComprDataIO SubDataIO;$/;"	m	class:Archive
+SubDataSalt	archive.hpp	/^    byte SubDataSalt[SALT_SIZE];$/;"	m	class:Archive
+SubFlags	headers.hpp	/^    uint SubFlags;$/;"	m	union:FileHeader::__anon9
+SubHead	archive.hpp	/^    FileHeader SubHead;$/;"	m	class:Archive
+SubHead	rdwrfn.hpp	/^    FileHeader *SubHead;$/;"	m	class:ComprDataIO
+SubHeadPos	rdwrfn.hpp	/^    int64 *SubHeadPos;$/;"	m	class:ComprDataIO
+SubRange	coder.hpp	/^    } SubRange;$/;"	m	class:RangeCoder	typeref:struct:RangeCoder::SUBRANGE
+SubType	headers.hpp	/^  ushort SubType;$/;"	m	struct:SubBlockHeader
+Successor	model.hpp	/^  PPM_CONTEXT* Successor;$/;"	m	struct:STATE
+Suffix	model.hpp	/^    PPM_CONTEXT* Suffix;$/;"	m	struct:PPM_CONTEXT
+Summ	model.hpp	/^  ushort Summ;$/;"	m	struct:SEE2_CONTEXT
+SummFreq	model.hpp	/^  ushort SummFreq;$/;"	m	struct:FreqData
+SupportDBCS	unicode.cpp	/^SupportDBCS::SupportDBCS()$/;"	f	class:SupportDBCS
+SupportDBCS	unicode.hpp	/^class SupportDBCS$/;"	c
+Suspended	unpack.hpp	/^    bool Suspended;$/;"	m	class:Unpack
+Symbol	model.hpp	/^  byte Symbol;$/;"	m	struct:STATE
+SyncFiles	options.hpp	/^    bool SyncFiles;$/;"	m	class:RAROptions
+SysErrMsg	errhnd.cpp	/^void ErrorHandler::SysErrMsg()$/;"	f	class:ErrorHandler
+TCreate	file.cpp	/^void File::TCreate(const char *Name,const wchar *NameW,bool ShareRead)$/;"	f	class:File
+TOP	coder.hpp	/^const uint TOP=1 << 24, BOT=1 << 15;$/;"	v
+TOT_BITS	model.hpp	/^const int INT_BITS=7, PERIOD_BITS=7, TOT_BITS=INT_BITS+PERIOD_BITS,$/;"	v
+TOpen	file.cpp	/^void File::TOpen(const char *Name,const wchar *NameW)$/;"	f	class:File
+TRUE	os.hpp	5;"	d
+TablesRead	unpack.hpp	/^    bool TablesRead;$/;"	m	class:Unpack
+Tell	file.cpp	/^int64 File::Tell()$/;"	f	class:File
+Tell	file.cpp	/^int64 File::Tell(byte* theptrlocation)$/;"	f	class:File
+TempPath	options.hpp	/^    char TempPath[NM];$/;"	m	class:RAROptions
+Test	options.hpp	/^    bool Test;$/;"	m	class:RAROptions
+TestMode	rdwrfn.hpp	/^    bool TestMode;$/;"	m	class:ComprDataIO
+Threads	options.hpp	/^    uint Threads;$/;"	m	class:RAROptions
+Throw	errhnd.cpp	/^void ErrorHandler::Throw(int Code)$/;"	f	class:ErrorHandler
+TimeCheck	cmddata.cpp	/^bool CommandData::TimeCheck(RarTime &ft)$/;"	f	class:CommandData
+ToPercent	smallfn.cpp	/^int ToPercent(int64 N1,int64 N2)$/;"	f
+ToPercentUnlim	smallfn.cpp	/^int ToPercentUnlim(int64 N1,int64 N2)$/;"	f
+TotalArcSize	rdwrfn.hpp	/^    int64 TotalArcSize;$/;"	m	class:ComprDataIO
+TotalBlocks	headers.hpp	/^  uint TotalBlocks;$/;"	m	struct:ProtectHeader
+TotalFileCount	extract.hpp	/^    unsigned long TotalFileCount;$/;"	m	class:CmdExtract
+TotalPackRead	rdwrfn.hpp	/^    int64 TotalPackRead;$/;"	m	class:ComprDataIO
+Truncate	file.cpp	/^bool File::Truncate()$/;"	f	class:File
+U	model.hpp	/^      FreqData U;$/;"	m	union:PPM_CONTEXT::__anon6
+U2B	suballoc.cpp	/^inline uint SubAllocator::U2B(int NU) $/;"	f	class:SubAllocator
+UINT32	rartypes.hpp	35;"	d
+UNICODE	os.hpp	28;"	d
+UNICODE_SUPPORTED	unicode.hpp	9;"	d
+UNIT_SIZE	model.hpp	/^const uint UNIT_SIZE=Max(sizeof(PPM_CONTEXT),sizeof(RAR_MEM_BLK));$/;"	v
+UNP_VER	headers.hpp	24;"	d
+UNRAR_OBJ	makefile	/^UNRAR_OBJ=filestr.o rs.o$/;"	m
+UOHead	archive.hpp	/^    UnixOwnersHeader UOHead;$/;"	m	class:Archive
+UO_HEAD	headers.hpp	/^enum { EA_HEAD=0x100,UO_HEAD=0x101,MAC_HEAD=0x102,BEEA_HEAD=0x103,$/;"	e	enum:__anon7
+UPDATEBINARY	os.hpp	133;"	d
+UPDATEBINARY	os.hpp	214;"	d
+USER_BREAK	errhnd.hpp	/^       USER_BREAK=255};$/;"	e	enum:__anon1
+USER_ERROR	errhnd.hpp	/^       OPEN_ERROR,USER_ERROR,MEMORY_ERROR,CREATE_ERROR,NO_FILES_ERROR,$/;"	e	enum:__anon1
+UconvObject	unios2.cpp	/^typedef void* UconvObject;$/;"	t	file:
+UnexpEndArcMsg	arcread.cpp	/^void Archive::UnexpEndArcMsg()$/;"	f	class:Archive
+UniChar	unios2.cpp	/^typedef unsigned short UniChar;$/;"	t	file:
+UnicodeEnabled	unicode.cpp	/^bool UnicodeEnabled()$/;"	f
+Units2Indx	suballoc.hpp	/^    byte Indx2Units[N_INDEXES], Units2Indx[128], GlueCount;$/;"	m	class:SubAllocator
+UnitsStart	suballoc.hpp	/^    byte *pText, *UnitsStart,*HeapEnd,*FakeUnitsStart;$/;"	m	class:SubAllocator
+UnixOwnersHeader	headers.hpp	/^struct UnixOwnersHeader:SubBlockHeader$/;"	s
+UnixSlashToDos	pathfn.cpp	/^char* UnixSlashToDos(char *SrcName,char *DestName,uint MaxLength)$/;"	f
+UnixSlashToDos	pathfn.cpp	/^wchar* UnixSlashToDos(wchar *SrcName,wchar *DestName,uint MaxLength)$/;"	f
+Unp	extract.hpp	/^    Unpack *Unp;$/;"	m	class:CmdExtract
+UnpAllBuf	unpack.hpp	/^    bool UnpAllBuf;$/;"	m	class:Unpack
+UnpArcSize	rdwrfn.hpp	/^    int64 UnpArcSize;$/;"	m	class:ComprDataIO
+UnpAudioBlock	unpack.hpp	/^    int UnpAudioBlock,UnpChannels,UnpCurChannel,UnpChannelDelta;$/;"	m	class:Unpack
+UnpBlockType	unpack.hpp	/^    int UnpBlockType;$/;"	m	class:Unpack
+UnpChannelDelta	unpack.hpp	/^    int UnpAudioBlock,UnpChannels,UnpCurChannel,UnpChannelDelta;$/;"	m	class:Unpack
+UnpChannels	unpack.hpp	/^    int UnpAudioBlock,UnpChannels,UnpCurChannel,UnpChannelDelta;$/;"	m	class:Unpack
+UnpCurChannel	unpack.hpp	/^    int UnpAudioBlock,UnpChannels,UnpCurChannel,UnpChannelDelta;$/;"	m	class:Unpack
+UnpFileCRC	rdwrfn.hpp	/^    uint PackFileCRC,UnpFileCRC,PackedCRC;$/;"	m	class:ComprDataIO
+UnpIO	unpack.hpp	/^    ComprDataIO *UnpIO;$/;"	m	class:Unpack
+UnpInitData	unpack.cpp	/^void Unpack::UnpInitData(int Solid)$/;"	f	class:Unpack
+UnpInitData20	unpack20.cpp	/^void Unpack::UnpInitData20(int Solid)$/;"	f	class:Unpack
+UnpOldTable	unpack.hpp	/^    unsigned char UnpOldTable[HUFF_TABLE_SIZE];$/;"	m	class:Unpack
+UnpOldTable20	unpack.hpp	/^    unsigned char UnpOldTable20[MC20*4];$/;"	m	class:Unpack
+UnpPackedSize	rdwrfn.hpp	/^    int64 UnpPackedSize;$/;"	m	class:ComprDataIO
+UnpPtr	unpack.hpp	/^    unsigned int UnpPtr,WrPtr;$/;"	m	class:Unpack
+UnpRead	rdwrfn.cpp	/^int ComprDataIO::UnpRead(byte *Addr,size_t Count)$/;"	f	class:ComprDataIO
+UnpReadBuf	unpack.cpp	/^bool Unpack::UnpReadBuf()$/;"	f	class:Unpack
+UnpSize	headers.hpp	/^  uint UnpSize;$/;"	m	struct:EAHeader
+UnpSize	headers.hpp	/^  uint UnpSize;$/;"	m	struct:FileHeader
+UnpSize	headers.hpp	/^  uint UnpSize;$/;"	m	struct:OldFileHeader
+UnpSize	headers.hpp	/^  uint UnpSize;$/;"	m	struct:StreamHeader
+UnpSize	headers.hpp	/^  ushort UnpSize;$/;"	m	struct:CommentHeader
+UnpSomeRead	unpack.hpp	/^    bool UnpSomeRead;$/;"	m	class:Unpack
+UnpVer	headers.hpp	/^  byte UnpVer;$/;"	m	struct:AVHeader
+UnpVer	headers.hpp	/^  byte UnpVer;$/;"	m	struct:CommentHeader
+UnpVer	headers.hpp	/^  byte UnpVer;$/;"	m	struct:EAHeader
+UnpVer	headers.hpp	/^  byte UnpVer;$/;"	m	struct:FileHeader
+UnpVer	headers.hpp	/^  byte UnpVer;$/;"	m	struct:OldFileHeader
+UnpVer	headers.hpp	/^  byte UnpVer;$/;"	m	struct:StreamHeader
+UnpVolume	rdwrfn.hpp	/^    bool UnpVolume;$/;"	m	class:ComprDataIO
+UnpWrAddr	rdwrfn.hpp	/^    byte *UnpWrAddr;$/;"	m	class:ComprDataIO
+UnpWrSize	rdwrfn.hpp	/^    size_t UnpWrSize;$/;"	m	class:ComprDataIO
+UnpWrite	rdwrfn.cpp	/^void ComprDataIO::UnpWrite(byte *Addr,size_t Count)$/;"	f	class:ComprDataIO
+UnpWriteArea	unpack.cpp	/^void Unpack::UnpWriteArea(unsigned int StartPtr,unsigned int EndPtr)$/;"	f	class:Unpack
+UnpWriteBuf	unpack.cpp	/^void Unpack::UnpWriteBuf()$/;"	f	class:Unpack
+UnpWriteData	unpack.cpp	/^void Unpack::UnpWriteData(byte *Data,size_t Size)$/;"	f	class:Unpack
+Unpack	unpack.cpp	/^Unpack::Unpack(ComprDataIO *DataIO)$/;"	f	class:Unpack
+Unpack	unpack.hpp	/^class Unpack:private BitInput$/;"	c
+Unpack15	unpack15.cpp	/^void Unpack::Unpack15(bool Solid)$/;"	f	class:Unpack
+Unpack20	unpack20.cpp	/^void Unpack::Unpack20(bool Solid)$/;"	f	class:Unpack
+Unpack29	unpack.cpp	/^void Unpack::Unpack29(bool Solid)$/;"	f	class:Unpack
+UnpackFilter	unpack.hpp	/^struct UnpackFilter$/;"	s
+UnpackFromMemory	rdwrfn.hpp	/^    bool UnpackFromMemory;$/;"	m	class:ComprDataIO
+UnpackFromMemoryAddr	rdwrfn.hpp	/^    byte *UnpackFromMemoryAddr;$/;"	m	class:ComprDataIO
+UnpackFromMemorySize	rdwrfn.hpp	/^    size_t UnpackFromMemorySize;$/;"	m	class:ComprDataIO
+UnpackRead	coder.hpp	/^    Unpack *UnpackRead;$/;"	m	class:RangeCoder
+UnpackToMemory	rdwrfn.hpp	/^    bool UnpackToMemory;$/;"	m	class:ComprDataIO
+UnpackToMemoryAddr	rdwrfn.hpp	/^    byte *UnpackToMemoryAddr;$/;"	m	class:ComprDataIO
+UnpackToMemorySize	rdwrfn.hpp	/^    size_t UnpackToMemorySize;$/;"	m	class:ComprDataIO
+UnstoreFile	extract.cpp	/^void CmdExtract::UnstoreFile(ComprDataIO &DataIO,int64 DestUnpSize)$/;"	f	class:CmdExtract
+UpdateFiles	options.hpp	/^    bool UpdateFiles;$/;"	m	class:RAROptions
+UpdateModel	model.cpp	/^inline void ModelPPM::UpdateModel()$/;"	f	class:ModelPPM
+UserBreak	errhnd.cpp	/^static __thread bool UserBreak;$/;"	v	file:
+UserData	options.hpp	/^    LPARAM UserData;$/;"	m	class:RAROptions
+UserNameSize	headers.hpp	/^  ushort UserNameSize;$/;"	m	struct:SignHeader
+UtfToWide	unicode.cpp	/^bool UtfToWide(const char *Src,wchar *Dest,size_t DestSize)$/;"	f
+VMCF_BYTEMODE	rarvmtbl.cpp	5;"	d	file:
+VMCF_CHFLAGS	rarvmtbl.cpp	9;"	d	file:
+VMCF_JUMP	rarvmtbl.cpp	6;"	d	file:
+VMCF_OP0	rarvmtbl.cpp	1;"	d	file:
+VMCF_OP1	rarvmtbl.cpp	2;"	d	file:
+VMCF_OP2	rarvmtbl.cpp	3;"	d	file:
+VMCF_OPMASK	rarvmtbl.cpp	4;"	d	file:
+VMCF_PROC	rarvmtbl.cpp	7;"	d	file:
+VMCF_USEFLAGS	rarvmtbl.cpp	8;"	d	file:
+VMCodeInp	unpack.hpp	/^    BitInput VMCodeInp;$/;"	m	class:Unpack
+VM_CmdFlags	rarvmtbl.cpp	/^static __thread byte VM_CmdFlags[]=$/;"	v	file:
+Version	headers.hpp	/^  byte Version;$/;"	m	struct:ProtectHeader
+VersionControl	options.hpp	/^    uint VersionControl;$/;"	m	class:RAROptions
+ViewComment	arccmt.cpp	/^void Archive::ViewComment()$/;"	f	class:Archive
+ViewFileComment	arccmt.cpp	/^void Archive::ViewFileComment()$/;"	f	class:Archive
+VolNameToFirstName	pathfn.cpp	/^char* VolNameToFirstName(const char *VolName,char *FirstName,bool NewNumbering)$/;"	f
+VolNameToFirstName	pathfn.cpp	/^wchar* VolNameToFirstName(const wchar *VolName,wchar *FirstName,bool NewNumbering)$/;"	f
+VolNumber	headers.hpp	/^  ushort VolNumber; $/;"	m	struct:EndArcHeader
+VolSize	options.hpp	/^    int64 VolSize;$/;"	m	class:RAROptions
+VolWrite	archive.hpp	/^    int64 VolWrite;$/;"	m	class:Archive
+Volume	archive.hpp	/^    bool Volume;$/;"	m	class:Archive
+VolumePause	options.hpp	/^    bool VolumePause;$/;"	m	class:RAROptions
+WARNING	errhnd.hpp	/^enum { SUCCESS,WARNING,FATAL_ERROR,CRC_ERROR,LOCK_ERROR,WRITE_ERROR,$/;"	e	enum:__anon1
+WCheckOpen	archive.cpp	/^bool Archive::WCheckOpen(const char *Name,const wchar *NameW)$/;"	f	class:Archive
+WCreate	file.cpp	/^bool File::WCreate(const char *Name,const wchar *NameW,bool ShareRead)$/;"	f	class:File
+WHAT	makefile	/^WHAT=UNRAR$/;"	m
+WHAT	makefile	/^lib:	WHAT=RARDLL$/;"	m
+WHAT	makefile	/^sfx:	WHAT=SFX_MODULE$/;"	m
+WIN32_LEAN_AND_MEAN	os.hpp	35;"	d
+WINVER	os.hpp	29;"	d
+WINVER	os.hpp	31;"	d
+WOpen	file.cpp	/^bool File::WOpen(const char *Name,const wchar *NameW)$/;"	f	class:File
+WRITE_ERROR	errhnd.hpp	/^enum { SUCCESS,WARNING,FATAL_ERROR,CRC_ERROR,LOCK_ERROR,WRITE_ERROR,$/;"	e	enum:__anon1
+Wait	system.cpp	/^void Wait()$/;"	f
+WideToChar	unicode.cpp	/^bool WideToChar(const wchar *Src,char *Dest,size_t DestSize)$/;"	f
+WideToRaw	unicode.cpp	/^byte* WideToRaw(const wchar *Src,byte *Dest,size_t SrcSize)$/;"	f
+WideToUtf	unicode.cpp	/^void WideToUtf(const wchar *Src,char *Dest,size_t DestSize)$/;"	f
+WildFileExist	filefn.cpp	/^bool WildFileExist(const char *Name,const wchar *NameW)$/;"	f
+WinSize	options.hpp	/^    uint WinSize;$/;"	m	class:RAROptions
+Window	unpack.hpp	/^    byte *Window;$/;"	m	class:Unpack
+WrPtr	unpack.hpp	/^    unsigned int UnpPtr,WrPtr;$/;"	m	class:Unpack
+Write	file.cpp	/^void File::Write(const void *Data,size_t Size)$/;"	f	class:File
+WriteError	errhnd.cpp	/^void ErrorHandler::WriteError(const char *ArcName,const wchar *ArcNameW,const char *FileName,const wchar *FileNameW)$/;"	f	class:ErrorHandler
+WriteErrorFAT	errhnd.cpp	/^void ErrorHandler::WriteErrorFAT(const char *FileName,const wchar *FileNameW)$/;"	f	class:ErrorHandler
+WriteErrorMsg	errhnd.cpp	/^void ErrorHandler::WriteErrorMsg(const char *ArcName,const wchar *ArcNameW,const char *FileName,const wchar *FileNameW)$/;"	f	class:ErrorHandler
+WrittenFileSize	unpack.hpp	/^    int64 WrittenFileSize;$/;"	m	class:Unpack
+Year	timefn.hpp	/^  uint Year;$/;"	m	struct:RarLocalTime
+_APPLE	raros.hpp	39;"	d
+_BEOS	raros.hpp	34;"	d
+_DJGPP	raros.hpp	9;"	d
+_EMX	raros.hpp	10;"	d
+_EMX	raros.hpp	5;"	d
+_PACK_ATTR	suballoc.hpp	/^} _PACK_ATTR;$/;"	v	typeref:struct:RAR_MEM_BLK
+_PACK_ATTR	suballoc.hpp	14;"	d
+_PACK_ATTR	suballoc.hpp	16;"	d
+_PPMD_SWAP	model.hpp	/^inline void _PPMD_SWAP(T& t1,T& t2) { T tmp=t1; t1=t2; t2=tmp; }$/;"	f
+_RAR_ARCHIVE_	archive.hpp	2;"	d
+_RAR_ARRAY_	array.hpp	2;"	d
+_RAR_CMDDATA_	cmddata.hpp	2;"	d
+_RAR_COMPRESS_	compress.hpp	2;"	d
+_RAR_CRC_	crc.hpp	2;"	d
+_RAR_DATAIO_	rdwrfn.hpp	2;"	d
+_RAR_DEFS_	rardefs.hpp	2;"	d
+_RAR_ENCNAME_	encname.hpp	2;"	d
+_RAR_ERRHANDLER_	errhnd.hpp	2;"	d
+_RAR_EXTINFO_	extinfo.hpp	2;"	d
+_RAR_EXTRACT_	extract.hpp	2;"	d
+_RAR_FILEFN_	filefn.hpp	2;"	d
+_RAR_FILESTR_	filestr.hpp	2;"	d
+_RAR_FILE_	file.hpp	2;"	d
+_RAR_GETBITS_	getbits.hpp	2;"	d
+_RAR_GLOBAL_	global.hpp	2;"	d
+_RAR_HEADERS_	headers.hpp	2;"	d
+_RAR_LANG_	rarlang.hpp	2;"	d
+_RAR_MATCH_	match.hpp	2;"	d
+_RAR_OPTIONS_	options.hpp	2;"	d
+_RAR_OS_	os.hpp	2;"	d
+_RAR_PATHFN_	pathfn.hpp	2;"	d
+_RAR_PPMMODEL_	model.hpp	2;"	d
+_RAR_RARCOMMON_	rar.hpp	2;"	d
+_RAR_RAROS_	raros.hpp	2;"	d
+_RAR_RAWREAD_	rawread.hpp	2;"	d
+_RAR_RESOURCE_	resource.hpp	2;"	d
+_RAR_RS_	rs.hpp	2;"	d
+_RAR_SAVEPOS_	savepos.hpp	2;"	d
+_RAR_SMALLFN_	smallfn.hpp	2;"	d
+_RAR_STRFN_	strfn.hpp	2;"	d
+_RAR_STRLIST_	strlist.hpp	2;"	d
+_RAR_SYSTEM_	system.hpp	2;"	d
+_RAR_TIMEFN_	timefn.hpp	2;"	d
+_RAR_TYPES_	rartypes.hpp	2;"	d
+_RAR_UNICODE_	unicode.hpp	2;"	d
+_RAR_UNPACK_	unpack.hpp	2;"	d
+_SCANRAR_	scan_rar.hpp	2;"	d
+_SUBALLOC_H_	suballoc.hpp	8;"	d
+_UNIX	raros.hpp	33;"	d
+_UNIX	raros.hpp	38;"	d
+_UNIX	raros.hpp	43;"	d
+_WIN32_WINNT	os.hpp	30;"	d
+_WIN32_WINNT	os.hpp	32;"	d
+_WIN_32	raros.hpp	18;"	d
+_WIN_64	raros.hpp	16;"	d
+_WIN_ALL	raros.hpp	14;"	d
+_WIN_ALL	raros.hpp	23;"	d
+_WIN_CE	raros.hpp	24;"	d
+__crt0_glob_function	smallfn.cpp	/^extern "C" char **__crt0_glob_function (char *arg) $/;"	f
+__crt0_load_environment_file	smallfn.cpp	/^extern "C" void __crt0_load_environment_file (char *progname) $/;"	f
+_forceinline	os.hpp	143;"	d
+_forceinline	os.hpp	145;"	d
+_forceinline	os.hpp	150;"	d
+_forceinline	os.hpp	154;"	d
+_forceinline	os.hpp	219;"	d
+_stdfunction	os.hpp	139;"	d
+_stdfunction	os.hpp	149;"	d
+_stdfunction	os.hpp	153;"	d
+_stdfunction	os.hpp	218;"	d
+aFunctionThatDoesNotWork	rar.cpp	/^int aFunctionThatDoesNotWork(int argc, char *argv[])$/;"	f
+addbits	getbits.hpp	/^    void addbits(uint Bits)$/;"	f	class:BitInput
+arctime	headers.hpp	/^  RarTime arctime;$/;"	m	struct:FileHeader
+atime	headers.hpp	/^  RarTime atime;$/;"	m	struct:FileHeader
+atoil	strfn.cpp	/^int64 atoil(const char *Str)$/;"	f
+atoil	strfn.cpp	/^int64 atoil(const wchar *Str)$/;"	f
+atoiw	unicode.cpp	/^int atoiw(const wchar *s)$/;"	f
+byte	rartypes.hpp	/^typedef unsigned char    byte;   \/\/ unsigned 8 bits$/;"	t
+charnext	unicode.cpp	/^char* SupportDBCS::charnext(const char *s)$/;"	f	class:SupportDBCS
+charnext	unicode.hpp	/^inline char* charnext(const char *s) {return (char *)(gdbcs.DBCSMode ? gdbcs.charnext(s):s+1);}$/;"	f
+charnext	unicode.hpp	82;"	d
+code	coder.hpp	/^    uint low, code, range;$/;"	m	class:RangeCoder
+copychrd	unicode.cpp	/^void SupportDBCS::copychrd(char *dest,const char *src)$/;"	f	class:SupportDBCS
+copychrd	unicode.hpp	/^inline void copychrd(char *dest,const char *src) {*dest=*src;}$/;"	f
+copychrd	unicode.hpp	/^inline void copychrd(char *dest,const char *src) {if (gdbcs.DBCSMode) gdbcs.copychrd(dest,src); else *dest=*src;}$/;"	f
+createChild	model.cpp	/^inline PPM_CONTEXT* PPM_CONTEXT::createChild(ModelPPM *Model,STATE* pStats,$/;"	f	class:PPM_CONTEXT
+ctime	headers.hpp	/^  RarTime ctime;$/;"	m	struct:FileHeader
+decodeBinSymbol	model.cpp	/^inline void PPM_CONTEXT::decodeBinSymbol(ModelPPM *Model)$/;"	f	class:PPM_CONTEXT
+decodeSymbol1	model.cpp	/^inline bool PPM_CONTEXT::decodeSymbol1(ModelPPM *Model)$/;"	f	class:PPM_CONTEXT
+decodeSymbol2	model.cpp	/^inline bool PPM_CONTEXT::decodeSymbol2(ModelPPM *Model)$/;"	f	class:PPM_CONTEXT
+etoupper	strfn.cpp	/^unsigned char etoupper(unsigned char ch)$/;"	f
+etoupperw	strfn.cpp	/^wchar etoupperw(wchar ch)$/;"	f
+faddbits	getbits.cpp	/^void BitInput::faddbits(uint Bits)$/;"	f	class:BitInput
+fgetbits	getbits.cpp	/^uint BitInput::fgetbits()$/;"	f	class:BitInput
+fileCreator	headers.hpp	/^  uint fileCreator;$/;"	m	struct:MacFInfoHeader
+fileType	headers.hpp	/^  uint fileType;$/;"	m	struct:MacFInfoHeader
+for	os.hpp	63;"	d
+fprintf	file.cpp	/^void File::fprintf(const char *fmt,...)$/;"	f	class:File
+gdbcs	unicode.cpp	/^SupportDBCS gdbcs;$/;"	v
+getMean	model.hpp	/^  uint getMean()$/;"	f	struct:SEE2_CONTEXT
+getbits	getbits.hpp	/^    uint getbits()$/;"	f	class:BitInput
+gfExp	rs.hpp	/^    int gfExp[MAXPOL];   \/\/ Galois field exponents.$/;"	m	class:RSCoder
+gfInit	rs.cpp	/^void RSCoder::gfInit()$/;"	f	class:RSCoder
+gfLog	rs.hpp	/^    int gfLog[MAXPAR+1]; \/\/ Galois field logarithms.$/;"	m	class:RSCoder
+gfMult	rs.cpp	/^inline int RSCoder::gfMult(int a,int b)$/;"	f	class:RSCoder
+hFile	file.hpp	/^    FileHandle hFile;$/;"	m	class:File
+init	model.hpp	/^  void init(int InitVal)$/;"	f	struct:SEE2_CONTEXT
+initptrlocation	file.hpp	/^	byte * initptrlocation;$/;"	m	class:File
+insertAt	suballoc.hpp	/^  void insertAt(RAR_MEM_BLK* p) $/;"	f	struct:RAR_MEM_BLK
+int32	rartypes.hpp	/^typedef   signed int     int32;  \/\/ signed 32 bits exactly$/;"	t
+int64	rartypes.hpp	/^typedef     signed __int64  int64; \/\/ signed 64 bits$/;"	t
+int64	rartypes.hpp	/^typedef   signed long long  int64; \/\/ signed 64 bits$/;"	t
+itoa	strfn.cpp	/^void itoa(int64 n,char *Str)$/;"	f
+itoa	strfn.cpp	/^void itoa(int64 n,wchar *Str)$/;"	f
+loctolower	strfn.cpp	/^unsigned char loctolower(unsigned char ch)$/;"	f
+loctoupper	strfn.cpp	/^unsigned char loctoupper(unsigned char ch)$/;"	f
+low	coder.hpp	/^    uint low, code, range;$/;"	m	class:RangeCoder
+main	scan_rar.cpp	/^int main(int argc, char *argv[])$/;"	f
+makeEscFreq2	model.cpp	/^inline SEE2_CONTEXT* PPM_CONTEXT::makeEscFreq2(ModelPPM *Model,int Diff)$/;"	f	class:PPM_CONTEXT
+match	match.cpp	/^bool match(const char *pattern,const char *string,bool ForceCase)$/;"	f
+match	match.cpp	/^bool match(const wchar *pattern,const wchar *string,bool ForceCase)$/;"	f
+mstricompc	match.cpp	/^int mstricompc(const char *Str1,const char *Str2,bool ForceCase)$/;"	f
+mstrnicompc	match.cpp	/^int mstrnicompc(const char *Str1,const char *Str2,size_t N,bool ForceCase)$/;"	f
+mtime	headers.hpp	/^  RarTime mtime;$/;"	m	struct:FileHeader
+mwcsicompc	match.cpp	/^int mwcsicompc(const wchar *Str1,const wchar *Str2,bool ForceCase)$/;"	f
+mwcsnicompc	match.cpp	/^int mwcsnicompc(const wchar *Str1,const wchar *Str2,size_t N,bool ForceCase)$/;"	f
+myunpacksize	scan_rar.cpp	/^const unsigned int myunpacksize = 20000000; \/\/This should be the length of the buffer in bulk_extractor, and the max size that a RAR file can open up$/;"	v
+next	suballoc.hpp	/^  RAR_MEM_BLK* next, * prev;$/;"	m	struct:RAR_MEM_BLK
+next	suballoc.hpp	/^  RAR_NODE* next;$/;"	m	struct:RAR_NODE
+operator <	timefn.cpp	/^bool RarTime::operator < (RarTime &rt)$/;"	f	class:RarTime
+operator <=	timefn.cpp	/^bool RarTime::operator <= (RarTime &rt)$/;"	f	class:RarTime
+operator =	array.hpp	/^template <class T> void Array<T>::operator =(Array<T> &Src)$/;"	f	class:Array
+operator =	file.cpp	/^void File::operator = (File &SrcFile)$/;"	f	class:File
+operator =	headers.hpp	/^  FileHeader& operator = (FileHeader &hd)$/;"	f	struct:FileHeader
+operator =	timefn.cpp	/^RarTime& RarTime::operator =(FILETIME &ft)$/;"	f	class:RarTime
+operator =	timefn.cpp	/^RarTime& RarTime::operator =(time_t ut)$/;"	f	class:RarTime
+operator ==	timefn.cpp	/^bool RarTime::operator == (RarTime &rt)$/;"	f	class:RarTime
+operator >	timefn.cpp	/^bool RarTime::operator > (RarTime &rt)$/;"	f	class:RarTime
+operator >=	timefn.cpp	/^bool RarTime::operator >= (RarTime &rt)$/;"	f	class:RarTime
+operator []	array.hpp	/^template <class T> inline T& Array<T>::operator [](size_t Item)$/;"	f	class:Array
+pText	suballoc.hpp	/^    byte *pText, *UnitsStart,*HeapEnd,*FakeUnitsStart;$/;"	m	class:SubAllocator
+pnInit	rs.cpp	/^void RSCoder::pnInit()$/;"	f	class:RSCoder
+pnMult	rs.cpp	/^void RSCoder::pnMult(int *p1,int *p2,int *r)$/;"	f	class:RSCoder
+prev	suballoc.hpp	/^  RAR_MEM_BLK* next, * prev;$/;"	m	struct:RAR_MEM_BLK
+ptrlength	file.hpp	/^	int64 ptrlength;$/;"	m	class:File
+ptrlocation	file.hpp	/^	byte * ptrlocation;$/;"	m	class:File
+range	coder.hpp	/^    uint low, code, range;$/;"	m	class:RangeCoder
+remove	suballoc.hpp	/^  void remove() $/;"	f	struct:RAR_MEM_BLK
+rescale	model.cpp	/^void PPM_CONTEXT::rescale(ModelPPM *Model)$/;"	f	class:PPM_CONTEXT
+rlt	timefn.hpp	/^    RarLocalTime rlt;$/;"	m	class:RarTime
+safebuf	os.hpp	242;"	d
+scale	coder.hpp	/^      uint LowCount, HighCount, scale;$/;"	m	struct:RangeCoder::SUBRANGE
+sprintfw	unicode.hpp	31;"	d
+sprintfw	unicode.hpp	33;"	d
+sprintfw	unicode.hpp	35;"	d
+strchrd	unicode.cpp	/^char* SupportDBCS::strchrd(const char *s, int c)$/;"	f	class:SupportDBCS
+strchrd	unicode.hpp	/^inline char* strchrd(const char *s, int c) {return (char *)(gdbcs.DBCSMode ? gdbcs.strchrd(s,c):strchr(s,c));}$/;"	f
+strchrd	unicode.hpp	84;"	d
+stricomp	strfn.cpp	/^int stricomp(const char *Str1,const char *Str2)$/;"	f
+stricompc	strfn.cpp	/^int stricompc(const char *Str1,const char *Str2)$/;"	f
+strlend	unicode.cpp	/^size_t SupportDBCS::strlend(const char *s)$/;"	f	class:SupportDBCS
+strlend	unicode.hpp	/^inline size_t strlend(const char *s) {return (uint)(gdbcs.DBCSMode ? gdbcs.strlend(s):strlen(s));}$/;"	f
+strlend	unicode.hpp	83;"	d
+strlower	strfn.cpp	/^char* strlower(char *Str)$/;"	f
+strncatz	strfn.cpp	/^char* strncatz(char* dest, const char* src, size_t maxlen)$/;"	f
+strncpyz	strfn.cpp	/^char* strncpyz(char *dest, const char *src, size_t maxlen)$/;"	f
+strnicomp	strfn.cpp	/^int strnicomp(const char *Str1,const char *Str2,size_t N)$/;"	f
+strrchrd	unicode.cpp	/^char* SupportDBCS::strrchrd(const char *s, int c)$/;"	f	class:SupportDBCS
+strrchrd	unicode.hpp	/^inline char* strrchrd(const char *s, int c) {return (char *)(gdbcs.DBCSMode ? gdbcs.strrchrd(s,c):strrchr(s,c));}$/;"	f
+strrchrd	unicode.hpp	85;"	d
+strupper	strfn.cpp	/^char* strupper(char *Str)$/;"	f
+tolowerw	unicode.cpp	/^int tolowerw(int ch)$/;"	f
+toupperc	match.cpp	/^inline uint toupperc(byte ch,bool ForceCase)$/;"	f
+touppercw	match.cpp	/^inline uint touppercw(uint ch,bool ForceCase)$/;"	f
+toupperw	unicode.cpp	/^int toupperw(int ch)$/;"	f
+uint	rartypes.hpp	/^typedef unsigned int     uint;   \/\/ 32 bits or more$/;"	t
+uint32	rartypes.hpp	/^typedef unsigned int     uint32; \/\/ 32 bits exactly$/;"	t
+uint64	rartypes.hpp	/^typedef   unsigned __int64 uint64; \/\/ unsigned 64 bits$/;"	t
+uint64	rartypes.hpp	/^typedef unsigned long long uint64; \/\/ unsigned 64 bits$/;"	t
+uniCreateUconvObject	unios2.cpp	/^static __thread int (*uniCreateUconvObject) ($/;"	v	file:
+uniFreeUconvObject	unios2.cpp	/^static __thread int (*uniFreeUconvObject) ($/;"	v	file:
+uniMapCpToUcsCp	unios2.cpp	/^static __thread int (*uniMapCpToUcsCp) ($/;"	v	file:
+uniUconvFromUcs	unios2.cpp	/^static __thread int (*uniUconvFromUcs) ($/;"	v	file:
+uniUconvToUcs	unios2.cpp	/^static __thread int (*uniUconvToUcs) ($/;"	v	file:
+uni_UCONV	unios2.cpp	/^static __thread HMODULE uni_UCONV;$/;"	v	file:
+uni_done	unios2.cpp	/^int uni_done() {$/;"	f
+uni_fromucs	unios2.cpp	/^int uni_fromucs(UniChar* src, size_t srclen, char* dst, size_t* dstlen) {$/;"	f
+uni_init	unios2.cpp	/^int uni_init(int codepage) {$/;"	f
+uni_obj	unios2.cpp	/^static __thread UconvObject uni_obj;$/;"	v	file:
+uni_ready	unios2.cpp	/^static __thread int uni_ready = 0;$/;"	v	file:
+uni_toucs	unios2.cpp	/^int uni_toucs(char* src, size_t srclen, UniChar* dst, size_t* dstlen) {$/;"	f
+update	model.hpp	/^  void update()$/;"	f	struct:SEE2_CONTEXT
+update1	model.cpp	/^inline void PPM_CONTEXT::update1(ModelPPM *Model,STATE* p)$/;"	f	class:PPM_CONTEXT
+update2	model.cpp	/^inline void PPM_CONTEXT::update2(ModelPPM *Model,STATE* p)$/;"	f	class:PPM_CONTEXT
+ushort	rartypes.hpp	/^typedef unsigned short   ushort; \/\/ preferably 16 bits, but can be more$/;"	t
+wDay	timefn.hpp	/^  uint wDay;$/;"	m	struct:RarLocalTime
+wchar	rartypes.hpp	/^typedef ushort wchar;$/;"	t
+wchar	rartypes.hpp	/^typedef wchar_t wchar;$/;"	t
+wcsicomp	unicode.cpp	/^int wcsicomp(const wchar *s1,const wchar *s2)$/;"	f
+wcsicompc	strfn.cpp	/^int wcsicompc(const wchar *Str1,const wchar *Str2)$/;"	f
+wcslower	unicode.cpp	/^wchar* wcslower(wchar *Str)$/;"	f
+wcsncatz	strfn.cpp	/^wchar* wcsncatz(wchar* dest, const wchar* src, size_t maxlen)$/;"	f
+wcsncpyz	strfn.cpp	/^wchar* wcsncpyz(wchar *dest, const wchar *src, size_t maxlen)$/;"	f
+wcsnicomp	unicode.cpp	/^int wcsnicomp(const wchar *s1,const wchar *s2,size_t n)$/;"	f
+wcsnicomp_w2c	unicode.cpp	/^static int wcsnicomp_w2c(const wchar *s1,const wchar *s2,size_t n)$/;"	f	file:
+wcsupper	unicode.cpp	/^wchar* wcsupper(wchar *Str)$/;"	f
+xarctime	options.hpp	/^    EXTTIME_MODE xarctime;$/;"	m	class:RAROptions
+xatime	options.hpp	/^    EXTTIME_MODE xatime;$/;"	m	class:RAROptions
+xctime	options.hpp	/^    EXTTIME_MODE xctime;$/;"	m	class:RAROptions
+xmtime	options.hpp	/^    EXTTIME_MODE xmtime;$/;"	m	class:RAROptions
+yDay	timefn.hpp	/^  uint yDay;$/;"	m	struct:RarLocalTime
+~Array	array.hpp	/^template <class T> Array<T>::~Array()$/;"	f	class:Array
+~BitInput	getbits.cpp	/^BitInput::~BitInput()$/;"	f	class:BitInput
+~CmdExtract	extract.cpp	/^CmdExtract::~CmdExtract()$/;"	f	class:CmdExtract
+~CommandData	cmddata.cpp	/^CommandData::~CommandData()$/;"	f	class:CommandData
+~File	file.cpp	/^File::~File()$/;"	f	class:File
+~RAROptions	options.cpp	/^RAROptions::~RAROptions()$/;"	f	class:RAROptions
+~SaveFilePos	savepos.cpp	/^SaveFilePos::~SaveFilePos()$/;"	f	class:SaveFilePos
+~SubAllocator	suballoc.hpp	/^    ~SubAllocator() {StopSubAllocator();}$/;"	f	class:SubAllocator
+~Unpack	unpack.cpp	/^Unpack::~Unpack()$/;"	f	class:Unpack

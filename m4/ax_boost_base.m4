@@ -1,3 +1,9 @@
+# Note that this file is different from how it is attributed.
+# This file was taken from git://anongit.freedesktop.org/libreoffice/coremaster
+# from http://code.ohloh.net/file?fid=b5GBy-OC8yZ5_j5q-TRsZb7vDkI&cid=fu_u3DInrXQ&s=&browser=Default#L0
+# because it supports cross-compiling with mingw
+# and the current copy at gnu.org does not.
+#
 # ===========================================================================
 #       http://www.gnu.org/software/autoconf-archive/ax_boost_base.html
 # ===========================================================================
@@ -91,7 +97,7 @@ if test "x$want_boost" = "xyes"; then
     dnl are found, e.g. when only header-only libraries are installed!
     libsubdirs="lib"
     ax_arch=`uname -m`
-    if test $ax_arch = x86_64 -o $ax_arch = ppc64 -o $ax_arch = s390x -o $ax_arch = sparc64; then
+    if test $ax_arch = x86_64 -o $ax_arch = ppc64 -o $ax_arch = s390x -o $ax_arch = sparc64 -o $ax_arch = aarch64; then
         libsubdirs="lib64 lib lib64"
     fi
 
@@ -106,8 +112,13 @@ if test "x$want_boost" = "xyes"; then
                         break
                 fi
         done
-    elif test "$cross_compiling" != yes; then
-        for ac_boost_path_tmp in /usr /usr/local /opt /opt/local ; do
+    else
+        if test "$cross_compiling" != yes; then
+            ac_boost_paths='/usr /usr/local /opt /opt/local'
+        else
+            ac_boost_paths="/usr/$host/sys-root/mingw"
+        fi
+        for ac_boost_path_tmp in $ac_boost_paths ; do
             if test -d "$ac_boost_path_tmp/include/boost" && test -r "$ac_boost_path_tmp/include/boost"; then
                 for libsubdir in $libsubdirs ; do
                     if ls "$ac_boost_path_tmp/$libsubdir/libboost_"* >/dev/null 2>&1 ; then break; fi
@@ -171,27 +182,30 @@ if test "x$want_boost" = "xyes"; then
             fi
         else
             if test "$cross_compiling" != yes; then
-                for ac_boost_path in /usr /usr/local /opt /opt/local ; do
-                    if test -d "$ac_boost_path" && test -r "$ac_boost_path"; then
-                        for i in `ls -d $ac_boost_path/include/boost-* 2>/dev/null`; do
-                            _version_tmp=`echo $i | sed "s#$ac_boost_path##" | sed 's/\/include\/boost-//' | sed 's/_/./'`
-                            V_CHECK=`expr $_version_tmp \> $_version`
-                            if test "$V_CHECK" = "1" ; then
-                                _version=$_version_tmp
-                                best_path=$ac_boost_path
-                            fi
-                        done
-                    fi
-                done
-
-                VERSION_UNDERSCORE=`echo $_version | sed 's/\./_/'`
-                BOOST_CPPFLAGS="-I$best_path/include/boost-$VERSION_UNDERSCORE"
-                if test "$ac_boost_lib_path" = ""; then
-                    for libsubdir in $libsubdirs ; do
-                        if ls "$best_path/$libsubdir/libboost_"* >/dev/null 2>&1 ; then break; fi
+                ac_boost_paths='/usr /usr/local /opt /opt/local'
+            else
+                ac_boost_paths="/usr/$host/sys-root/mingw"
+            fi
+            for ac_boost_path in $ac_boost_paths ; do
+                if test -d "$ac_boost_path" && test -r "$ac_boost_path"; then
+                    for i in `ls -d $ac_boost_path/include/boost-* 2>/dev/null`; do
+                        _version_tmp=`echo $i | sed "s#$ac_boost_path##" | sed 's/\/include\/boost-//' | sed 's/_/./'`
+                        V_CHECK=`expr $_version_tmp \> $_version`
+                        if test "$V_CHECK" = "1" ; then
+                            _version=$_version_tmp
+                            best_path=$ac_boost_path
+                        fi
                     done
-                    BOOST_LDFLAGS="-L$best_path/$libsubdir"
                 fi
+            done
+
+            VERSION_UNDERSCORE=`echo $_version | sed 's/\./_/'`
+            BOOST_CPPFLAGS="-I$best_path/include/boost-$VERSION_UNDERSCORE"
+            if test "$ac_boost_lib_path" = ""; then
+                for libsubdir in $libsubdirs ; do
+                    if ls "$best_path/$libsubdir/libboost_"* >/dev/null 2>&1 ; then break; fi
+                done
+                BOOST_LDFLAGS="-L$best_path/$libsubdir"
             fi
 
             if test "x$BOOST_ROOT" != "x"; then
@@ -256,4 +270,3 @@ if test "x$want_boost" = "xyes"; then
 fi
 
 ])
-

@@ -1,4 +1,5 @@
-#ifndef THREADPOOL_H
+#ifndef _THREADPOOL_H_
+#define _THREADPOOL_H_
 
 /****************************************************************
  *** THREADING SUPPORT
@@ -73,7 +74,7 @@ class threadpool {
 #endif
     typedef vector<class worker *> worker_vector;
     worker_vector	workers;
-    pthread_mutex_t	M;			// protects the following variables
+    pthread_mutex_t	M;		// protects the following variables
     pthread_cond_t	TOMAIN;
     pthread_cond_t	TOWORKER;
     int			freethreads;
