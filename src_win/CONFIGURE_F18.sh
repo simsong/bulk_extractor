@@ -8,7 +8,7 @@ cat <<EOF
 This script will configure a fresh Fedora system to compile with
 mingw32 and 64.  Please perform the following steps:
 
-1. Install F17 or newer, running with you as an administrator.
+1. Install F18 or newer, running with you as an administrator.
    For a VM:
 
    1a - download the ISO for the 64-bit DVD (not the live media) from:
