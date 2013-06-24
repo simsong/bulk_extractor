@@ -428,7 +428,7 @@ void GetRarDataPath(wchar *Path)
 bool EnumConfigPaths(char *Path,int Number)
 {
 #ifdef _EMX
-  static __thread char RARFileName[NM];
+  static const char RARFileName[NM];
   if (Number==-1)
     strcpy(RARFileName,Path);
   if (Number!=0)
@@ -447,7 +447,7 @@ bool EnumConfigPaths(char *Path,int Number)
   RemoveNameFromPath(Path);
   return(true);
 #elif defined(_UNIX)
-  static __thread const char *AltPath[]={
+  static const char *AltPath[]={
     "/etc","/etc/rar","/usr/lib","/usr/local/lib","/usr/local/etc"
   };
   if (Number==0)

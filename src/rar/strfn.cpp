@@ -16,9 +16,7 @@ const wchar *NullToEmpty(const wchar *Str)
 
 char *IntNameToExt(const char *Name)
 {
-  static __thread char OutName[NM];
-  IntToExt(Name,OutName);
-  return(OutName);
+  return NULL;
 }
 
 
@@ -355,8 +353,8 @@ int64 atoil(const wchar *Str)
 const wchar* GetWide(const char *Src)
 {
   const size_t MaxLength=NM;
-  static __thread wchar StrTable[4][MaxLength];
-  static __thread uint StrNum=0;
+  wchar StrTable[4][MaxLength];
+  uint StrNum=0;
   if (++StrNum >= ASIZE(StrTable))
     StrNum=0;
   wchar *Str=StrTable[StrNum];

@@ -119,12 +119,12 @@ struct OldMainHeader
 
 struct OldFileHeader
 {
-  uint PackSize;
+  uint DataSize;
   uint UnpSize;
   ushort FileCRC;
   ushort HeadSize;
   uint FileTime;
-  byte FileAttr;
+  byte SubFlags;
   byte Flags;
   byte UnpVer;
   byte NameSize;
@@ -160,10 +160,8 @@ struct BaseBlock
 
 struct BlockHeader:BaseBlock
 {
-  union {
-    uint DataSize;
-    uint PackSize;
-  };
+  BlockHeader() : DataSize(0) {}
+  uint DataSize;
 };
 
 
@@ -182,9 +180,9 @@ struct FileHeader:BlockHeader
 {
   FileHeader() :
       UnpSize(), HostOS(), FileCRC(), FileTime(), UnpVer(), Method(),
-      NameSize(), HighPackSize(), HighUnpSize(), FileName(), FileNameW(),
-      SubData(), Salt(), mtime(), ctime(), atime(), arctime(), FullPackSize(),
-      FullUnpSize() {}
+      NameSize(), SubFlags(), HighPackSize(), HighUnpSize(), FileName(),
+      FileNameW(), SubData(), Salt(), mtime(), ctime(), atime(), arctime(),
+      FullPackSize(), FullUnpSize() {}
   uint UnpSize;
   byte HostOS;
   uint FileCRC;
@@ -192,10 +190,7 @@ struct FileHeader:BlockHeader
   byte UnpVer;
   byte Method;
   ushort NameSize;
-  union {
-    uint FileAttr;
-    uint SubFlags;
-  };
+  uint SubFlags;
 /* optional */
   uint HighPackSize;
   uint HighUnpSize;
@@ -229,7 +224,11 @@ struct FileHeader:BlockHeader
   const FileHeader& operator=(const FileHeader &hd)
   {
     SubData.Reset();
-    memcpy(this,&hd,sizeof(*this));
+    // clang points out that the vtable is copied by this memcpy which could
+    // make things really hairy if different classes in this hierarchy are
+    // involved in this operator.  Evidently it doesn't break anything in unrar
+    // as it stands since it's in the well-tested vanilla unrar codebase.
+    memcpy((void*)this,(void*)&hd,sizeof(*this));
     SubData.CleanData();
     SubData=hd.SubData;
     return(*this);

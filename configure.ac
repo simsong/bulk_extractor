@@ -218,8 +218,9 @@ AC_ARG_ENABLE([lift], AS_HELP_STRING([--enable-lift], [enable CMU LIFT SVM for t
 
 ## rar support
 AC_ARG_ENABLE([rar], AS_HELP_STRING([--enable-rar], [enable RAR experimental decompression experimental]),
-		      AC_DEFINE(USE_RAR, 1, [Use RAR decompression]))
-
+		      [AC_DEFINE(USE_RAR, 1, [Use RAR decompression]) rar="true"])
+AM_CONDITIONAL([RAR_ENABLED], [test "true" = "$rar"])
+#AM_CONDITIONAL([RAR_ENABLED], [true])
 
 
 ################################################################

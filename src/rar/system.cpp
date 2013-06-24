@@ -1,11 +1,10 @@
 #include "rar.hpp"
 
 #ifndef _WIN_CE
-static __thread int SleepTime=0;
+static const int SleepTime=0;
 
 void InitSystemOptions(int SleepTime_)
 {
-  ::SleepTime=SleepTime_;
 }
 #endif
 

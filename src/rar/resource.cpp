@@ -13,8 +13,8 @@ const char *St(MSGID StringId)
 #ifndef RARDLL
 const wchar *StW(MSGID StringId)
 {
-  static __thread wchar StrTable[8][512];
-  static __thread unsigned StrNum=0;
+  wchar StrTable[8][512];
+  unsigned StrNum=0;
   if (++StrNum >= sizeof(StrTable)/sizeof(StrTable[0]))
     StrNum=0;
   wchar *Str=StrTable[StrNum];
