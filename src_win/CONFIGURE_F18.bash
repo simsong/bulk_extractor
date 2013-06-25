@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 cat <<EOF
 *******************************************************************
   Configuring Fedora for cross-compiling multi-threaded 32-bit and
