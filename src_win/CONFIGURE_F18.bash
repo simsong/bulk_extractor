@@ -117,10 +117,11 @@ echo "TRE mingw installation complete."
 #
 
 echo "Building and installing LIBEWF for mingw"
-EWFVER=20130128
+EWFVER=20130416
 EWFFILE=libewf-$EWFVER.tar.gz
 EWFDIR=libewf-$EWFVER
-EWFURL=http://libewf.googlecode.com/files/$EWFFILE
+EWFURL=https://googledrive.com/host/0B3fBvzttpiiSMTdoaVExWWNsRjg/$EWFFILE
+#EWFURL=http://libewf.googlecode.com/files/$EWFFILE
 
 if [ ! -r $EWFFILE ]; then
   wget $EWFURL 
