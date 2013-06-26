@@ -11,7 +11,7 @@
 typedef unsigned char byte;
 
 #if 0
-static __thread byte VM_CmdFlags[]=
+static const byte VM_CmdFlags[]=
 {
   /* VM_MOV   */ VMCF_OP2 | VMCF_BYTEMODE                                ,
   /* VM_CMP   */ VMCF_OP2 | VMCF_BYTEMODE | VMCF_CHFLAGS                 ,

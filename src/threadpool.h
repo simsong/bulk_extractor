@@ -62,7 +62,7 @@ class threadpool {
 	    return "copying feature_recorder objects is not implemented.";
 	}
     };
- threadpool(const threadpool &t):workers(),M(),TOMAIN(),TOWORKER(),freethreads(),
+ threadpool(const threadpool &t) __attribute__((__noreturn__)) :workers(),M(),TOMAIN(),TOWORKER(),freethreads(),
     work_queue(),fs(t.fs),xreport(t.xreport),thread_status(),waiting(),mode(){
     throw new not_impl();
   }

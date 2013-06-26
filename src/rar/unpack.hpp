@@ -172,7 +172,7 @@ class Unpack:private BitInput
     void InitHuff();
     void CorrHuff(unsigned int *CharSet,unsigned int *NumToPlace);
     void OldCopyString(unsigned int Distance,unsigned int Length);
-    uint DecodeNum(uint Num,uint StartPos,uint *DecTab,uint *PosTab);
+    uint DecodeNum(uint Num,uint StartPos,const unsigned int *DecTab,const unsigned int *PosTab);
     void OldUnpWriteBuf();
 
     unsigned int ChSet[256],ChSetA[256],ChSetB[256],ChSetC[256];

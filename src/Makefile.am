@@ -118,7 +118,11 @@ bulk_extractor_SOURCES = \
 	phase1.cpp \
 	word_and_context_list.cpp \
 	word_and_context_list.h \
-	$(bulk_scanners) $(TSK3INCS)  $(BE13_API) $(DFXML) # $(SCAN_LIFT) $(RAR_SUPPORT) 
+	$(bulk_scanners) $(TSK3INCS)  $(BE13_API) $(DFXML) # $(SCAN_LIFT)
+
+if RAR_ENABLED
+bulk_extractor_SOURCES += $(RAR_SUPPORT)
+endif
 
 
 stand_SOURCES = \

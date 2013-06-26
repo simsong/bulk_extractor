@@ -1,6 +1,6 @@
 #include "rar.hpp"
 
-//static __thread bool UserBreak;
+//static const bool UserBreak;
 
 ErrorHandler::ErrorHandler() :
     ExitCode(), ErrCount(), EnableBreak(), Silent(), DoShutdown()

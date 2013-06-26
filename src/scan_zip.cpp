@@ -59,7 +59,7 @@ inline void scan_zip_component(const class scanner_params &sp,const recursion_co
 
     if((name_len<=0) || (name_len > zip_name_len_max)) return;	 // unreasonable name length
     if(pos+30+name_len > sbuf.bufsize) return; // name is bigger than what's left
-    if(compr_size<0 || uncompr_size<0) return; // sanity check
+    //if(compr_size<0 || uncompr_size<0) return; // sanity check
 
     string name = sbuf.substr(pos+30,name_len);
     /* scan for unprintable characters.

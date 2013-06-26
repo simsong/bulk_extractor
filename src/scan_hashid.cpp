@@ -148,6 +148,20 @@ void scan_hashid(const class scanner_params &sp,
                 exit(1);
             }
 
+            // make sure the query service expects the same chunk size
+
+            // TBD: call get_hashdb_info to get query service chunk size
+
+            // it is bad if the expected chunk size is wrong
+/* TBD
+            if (success && response->chunk_size != chunk_size) {
+                success = false;
+                std::cerr << "Error: The scanner is hashing using a chunk size of " << chunk_size << "\n"
+                          << "but the hashdb contains hashes for data of chunk size " << response->chunk_size << ".\n"
+                          << "Cannot continue.\n";
+            }
+*/
+
             // perform setup based on selected query type
             switch(lookup_type) {
                 case hashdb::QUERY_USE_PATH:
@@ -193,8 +207,7 @@ void scan_hashid(const class scanner_params &sp,
                 memcpy(digest, md5.digest, 16);
 
                 // add the hash to the lookup hash request
-                request->hash_requests.push_back(
-                            hashdb::hash_request_md5_t(i, digest));
+                request->push_back(hashdb::hash_request_md5_t(i, digest));
             }
 
             // perform the lookup
@@ -205,17 +218,9 @@ void scan_hashid(const class scanner_params &sp,
                 std::cerr << "Error in hashid hash lookup\n";
             }
 
-            // make sure the server is using the same chunk size
-            if (success && response->chunk_size != chunk_size) {
-                success = false;
-                std::cerr << "Error: The scanner is hashing using a chunk size of " << chunk_size << "\n"
-                          << "but the hashdb contains hashes for data of chunk size " << response->chunk_size << ".\n"
-                          << "Cannot continue.\n";
-            }
-
             // record each feature in the response
             if (success) {
-                for (std::vector<hashdb::hash_response_md5_t>::const_iterator it = response->hash_responses.begin(); it != response->hash_responses.end(); ++it) {
+                for (std::vector<hashdb::hash_response_md5_t>::const_iterator it = response->begin(); it != response->end(); ++it) {
 
                     // get the variables together for the feature
                     pos0_t pos0 = sbuf.pos0 + it->id;

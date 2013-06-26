@@ -606,6 +606,15 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
                 if(component.compression_method != METHOD_UNCOMPRESSED) {
                     unpack_buf(cc, cc_len, dbuf.buf, component.uncompressed_size);
 
+#if 0
+                    // assume that we are decompressing "15 Feet of Time.pdf" while fixing warnings for rapid testing
+                    //25 50 44 46 2D
+                    //25 25 45 4F 46
+                    size_t sz = component.uncompressed_size;
+                    assert(dbuf.buf[0] == 0x25); assert(dbuf.buf[1] == 0x50); assert(dbuf.buf[2] == 0x44); assert(dbuf.buf[3] == 0x46); assert(dbuf.buf[4] == 0x2D); 
+                    assert(dbuf.buf[sz-5] == 0x25); assert(dbuf.buf[sz-4] == 0x25); assert(dbuf.buf[sz-3] == 0x45); assert(dbuf.buf[sz-2] == 0x4F); assert(dbuf.buf[sz-1] == 0x46); 
+#endif
+
                     const pos0_t pos0_rar = pos0 + rcb.partName;
                     const sbuf_t child_sbuf(pos0_rar, dbuf.buf, component.uncompressed_size, sbuf.pagesize, false);
                     scanner_params child_params(sp, child_sbuf);

@@ -128,7 +128,7 @@ size_t Archive::ReadHeader()
       {
         FileHeader *hd=ShortBlock.HeadType==FILE_HEAD ? &NewLhd:&SubHead;
         *(BaseBlock *)hd=ShortBlock;
-        Raw.Get(hd->PackSize);
+        Raw.Get(hd->DataSize);
         Raw.Get(hd->UnpSize);
         Raw.Get(hd->HostOS);
         Raw.Get(hd->FileCRC);
@@ -136,7 +136,7 @@ size_t Archive::ReadHeader()
         Raw.Get(hd->UnpVer);
         Raw.Get(hd->Method);
         Raw.Get(hd->NameSize);
-        Raw.Get(hd->FileAttr);
+        Raw.Get(hd->SubFlags);
         if (hd->Flags & LHD_LARGE)
         {
           Raw.Get(hd->HighPackSize);
@@ -154,7 +154,7 @@ size_t Archive::ReadHeader()
             hd->HighUnpSize=(uint)(INT64NDF>>32);
           }
         }
-        hd->FullPackSize=INT32TO64(hd->HighPackSize,hd->PackSize);
+        hd->FullPackSize=INT32TO64(hd->HighPackSize,hd->DataSize);
         hd->FullUnpSize=INT32TO64(hd->HighUnpSize,hd->UnpSize);
 
         char FileName_[NM*4];
@@ -430,12 +430,12 @@ size_t Archive::ReadOldHeader()
     OldFileHeader OldLhd;
     Raw.Read(SIZEOF_OLDLHD);
     NewLhd.HeadType=FILE_HEAD;
-    Raw.Get(NewLhd.PackSize);
+    Raw.Get(NewLhd.DataSize);
     Raw.Get(NewLhd.UnpSize);
     Raw.Get(OldLhd.FileCRC);
     Raw.Get(NewLhd.HeadSize);
     Raw.Get(NewLhd.FileTime);
-    Raw.Get(OldLhd.FileAttr);
+    Raw.Get(OldLhd.SubFlags);
     Raw.Get(OldLhd.Flags);
     Raw.Get(OldLhd.UnpVer);
     Raw.Get(OldLhd.NameSize);
@@ -445,9 +445,9 @@ size_t Archive::ReadOldHeader()
     NewLhd.UnpVer=(OldLhd.UnpVer==2) ? 13 : 10;
     NewLhd.Method=OldLhd.Method+0x30;
     NewLhd.NameSize=OldLhd.NameSize;
-    NewLhd.FileAttr=OldLhd.FileAttr;
+    NewLhd.SubFlags=OldLhd.SubFlags;
     NewLhd.FileCRC=OldLhd.FileCRC;
-    NewLhd.FullPackSize=NewLhd.PackSize;
+    NewLhd.FullPackSize=NewLhd.DataSize;
     NewLhd.FullUnpSize=NewLhd.UnpSize;
 
     NewLhd.mtime.SetDos(NewLhd.FileTime);
@@ -462,7 +462,7 @@ size_t Archive::ReadOldHeader()
     *NewLhd.FileNameW=0;
 
     if (Raw.Size()!=0)
-      NextBlockPos=CurBlockPos+NewLhd.HeadSize+NewLhd.PackSize;
+      NextBlockPos=CurBlockPos+NewLhd.HeadSize+NewLhd.DataSize;
     CurHeaderType=FILE_HEAD;
   }
   return(NextBlockPos>CurBlockPos ? Raw.Size():0);
@@ -506,7 +506,7 @@ bool Archive::IsArcDir()
 
 bool Archive::IsArcLabel()
 {
-  return(NewLhd.HostOS<=HOST_WIN32 && (NewLhd.FileAttr & 8));
+  return(NewLhd.HostOS<=HOST_WIN32 && (NewLhd.SubFlags & 8));
 }
 
 
@@ -522,15 +522,15 @@ void Archive::ConvertAttributes()
     case HOST_UNIX:
     case HOST_BEOS:
       if ((NewLhd.Flags & LHD_WINDOWMASK)==LHD_DIRECTORY)
-        NewLhd.FileAttr=0x10;
+        NewLhd.SubFlags=0x10;
       else
-        NewLhd.FileAttr=0x20;
+        NewLhd.SubFlags=0x20;
       break;
     default:
       if ((NewLhd.Flags & LHD_WINDOWMASK)==LHD_DIRECTORY)
-        NewLhd.FileAttr=0x10;
+        NewLhd.SubFlags=0x10;
       else
-        NewLhd.FileAttr=0x20;
+        NewLhd.SubFlags=0x20;
       break;
   }
 #endif
@@ -539,16 +539,10 @@ void Archive::ConvertAttributes()
   // when creating a file or directory. The typical default value
   // for the process umask is S_IWGRP | S_IWOTH (octal 022),
   // resulting in 0644 mode for new files.
-   static __thread mode_t mask = (mode_t) -1;
+   static const mode_t mask = (mode_t) -1;
 
   if (mask == (mode_t) -1)
   {
-    // umask call returns the current umask value. Argument (022) is not 
-    // really important here.
-    mask = umask(022);
-
-    // Restore the original umask value, which was changed to 022 above.
-    umask(mask);
   }
 
   switch(NewLhd.HostOS)
@@ -559,22 +553,22 @@ void Archive::ConvertAttributes()
       {
         // Mapping MSDOS, OS/2 and Windows file attributes to Unix.
 
-        if (NewLhd.FileAttr & 0x10) // FILE_ATTRIBUTE_DIRECTORY
+        if (NewLhd.SubFlags & 0x10) // FILE_ATTRIBUTE_DIRECTORY
         {
           // For directories we use 0777 mask.
-          NewLhd.FileAttr=0777 & ~mask;
+          NewLhd.SubFlags=0777 & ~mask;
         }
         else
-          if (NewLhd.FileAttr & 1)  // FILE_ATTRIBUTE_READONLY
+          if (NewLhd.SubFlags & 1)  // FILE_ATTRIBUTE_READONLY
           {
             // For read only files we use 0444 mask with 'w' bits turned off.
-            NewLhd.FileAttr=0444 & ~mask;
+            NewLhd.SubFlags=0444 & ~mask;
           }
           else
           {
             // umask does not set +x for regular files, so we use 0666
             // instead of 0777 as for directories.
-            NewLhd.FileAttr=0666 & ~mask;
+            NewLhd.SubFlags=0666 & ~mask;
           }
       }
       break;
@@ -583,9 +577,9 @@ void Archive::ConvertAttributes()
       break;
     default:
       if ((NewLhd.Flags & LHD_WINDOWMASK)==LHD_DIRECTORY)
-        NewLhd.FileAttr=0x41ff & ~mask;
+        NewLhd.SubFlags=0x41ff & ~mask;
       else
-        NewLhd.FileAttr=0x81b6 & ~mask;
+        NewLhd.SubFlags=0x81b6 & ~mask;
       break;
   }
 #endif
@@ -594,14 +588,14 @@ void Archive::ConvertAttributes()
 
 void Archive::ConvertUnknownHeader()
 {
-  if (NewLhd.UnpVer<20 && (NewLhd.FileAttr & 0x10))
+  if (NewLhd.UnpVer<20 && (NewLhd.SubFlags & 0x10))
     NewLhd.Flags|=LHD_DIRECTORY;
   if (NewLhd.HostOS>=HOST_MAX)
   {
     if ((NewLhd.Flags & LHD_WINDOWMASK)==LHD_DIRECTORY)
-      NewLhd.FileAttr=0x10;
+      NewLhd.SubFlags=0x10;
     else
-      NewLhd.FileAttr=0x20;
+      NewLhd.SubFlags=0x20;
   }
   for (char *s=NewLhd.FileName;*s!=0;s=charnext(s))
   {
@@ -668,7 +662,7 @@ bool Archive::ReadSubData(Array<byte> *UnpData,File *DestFile)
     return(false);
   }
 
-  if (SubHead.PackSize==0 && (SubHead.Flags & LHD_SPLIT_AFTER)==0)
+  if (SubHead.DataSize==0 && (SubHead.Flags & LHD_SPLIT_AFTER)==0)
     return(true);
 
   SubDataIO.Init();
@@ -687,7 +681,7 @@ bool Archive::ReadSubData(Array<byte> *UnpData,File *DestFile)
              SubHead.UnpVer>=36);
     else
       return(false);
-  SubDataIO.SetPackedSizeToRead(SubHead.PackSize);
+  SubDataIO.SetPackedSizeToRead(SubHead.DataSize);
   SubDataIO.EnableShowProgress(false);
   SubDataIO.SetFiles(this,DestFile);
   SubDataIO.UnpVolume=(SubHead.Flags & LHD_SPLIT_AFTER)!=0;

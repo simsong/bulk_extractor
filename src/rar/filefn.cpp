@@ -226,7 +226,7 @@ int64 GetFreeDisk(const char *Name)
   typedef BOOL (WINAPI *GETDISKFREESPACEEX)(
     LPCSTR,PULARGE_INTEGER,PULARGE_INTEGER,PULARGE_INTEGER
    );
-  static __thread GETDISKFREESPACEEX pGetDiskFreeSpaceEx=NULL;
+  static const GETDISKFREESPACEEX pGetDiskFreeSpaceEx=NULL;
 
   if (pGetDiskFreeSpaceEx==NULL)
   {

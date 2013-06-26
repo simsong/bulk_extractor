@@ -27,7 +27,7 @@ RarTime& RarTime::operator =(FILETIME &ft)
   rlt.yDay=rlt.Day-1;
   for (uint I=1;I<rlt.Month;I++)
   {
-    static __thread int mdays[12]={31,28,31,30,31,30,31,31,30,31,30,31};
+    static const int mdays[12]={31,28,31,30,31,30,31,31,30,31,30,31};
     rlt.yDay+=mdays[I-1];
   }
   if (rlt.Month>2 && IsLeapYear(rlt.Year))
@@ -124,7 +124,7 @@ int64 RarTime::GetRaw()
   int64 r=(rlt.Year-1970)*365; // Days since 1970.
 
   // Cumulative day value for beginning of every month.
-  static __thread int MonthToDay[12]={0,31,60,91,121,152,182,213,244,274,305,335};
+  static const int MonthToDay[12]={0,31,60,91,121,152,182,213,244,274,305,335};
 
   r+=MonthToDay[rlt.Month-1]+(rlt.Day-1); // Add days since beginning of year.
   r=r*24+rlt.Hour;   // Hours.
@@ -163,7 +163,7 @@ void RarTime::SetRaw(int64 RawTime)
   RawTime%=365;      // Days since beginning of year.
 
   // Cumulative day value for beginning of every month.
-  static __thread int MonthToDay[12]={0,31,60,91,121,152,182,213,244,274,305,335};
+  static const int MonthToDay[12]={0,31,60,91,121,152,182,213,244,274,305,335};
 
   for (int I=0;I<12;I++)
     if (RawTime>=MonthToDay[I])
@@ -342,7 +342,7 @@ const char *GetMonthName(int Month)
 #ifdef SILENT
   return("");
 #else
-  static __thread MSGID MonthID[]={
+  static const MSGID MonthID[]={
          MMonthJan,MMonthFeb,MMonthMar,MMonthApr,MMonthMay,MMonthJun,
          MMonthJul,MMonthAug,MMonthSep,MMonthOct,MMonthNov,MMonthDec
   };
