@@ -199,6 +199,13 @@ static std::string lowerstr(const std::string &str)
     return ret;
 }
 
+class path_printer_finished: public std::exception {
+public:
+    virtual const char *what() const throw() {
+        return "path printer finished.";
+    }
+} printing_done;
+
 void process_path_printer(const scanner_params &sp)
 {
     /* 1. Get next token 
@@ -206,6 +213,7 @@ void process_path_printer(const scanner_params &sp)
      *    if the prefix is PRINT, print the buffer
      *    if next part is a string, strip it and run that decoder.
      *    if next part is a |, print
+     * 3. If we are print, throw an exception to prevent continued analysis of buffer.
      */
 
     if(debug & DEBUG_PRINT_STEPS) cerr << "process_path_printer " << sp.sbuf.pos0.path << "\n";
@@ -264,7 +272,8 @@ void process_path_printer(const scanner_params &sp)
 	case scanner_params::MODE_NONE:
 	    break;
 	}
-	return;			// our job is done
+        throw printing_done;
+	//return;			// our job is done
     }
     /* If we are in an offset block, process recursively with the offset */
     if(isdigit(prefix[0])){
@@ -285,7 +294,7 @@ void process_path_printer(const scanner_params &sp)
         (*s)(scanner_params(scanner_params::PHASE_SCAN,
                             sbuf_t(new_path,sp.sbuf),
                             sp.fs,sp.print_options),
-             recursion_control_block(process_path_printer,prefix,true));
+             recursion_control_block(process_path_printer,prefix));
         return;
     }
     cerr << "Unknown name in path: " << prefix << "\n";
@@ -317,13 +326,20 @@ static void process_open_path(const image_process &p,string path,scanner_params:
 	return;
     }
 
-    /* make up a bogus feature recorder set and with a disabled feature recorder */
+    /* make up a bogus feature recorder set and with a disabled feature recorder.
+     * Then we call the path printer, which throws an exception after the printing
+     * to prevent further printing.
+     */
     feature_recorder_set fs(feature_recorder_set::SET_DISABLED);
 
     pos0_t pos0(path+"-PRINT"); // insert the PRINT token
     sbuf_t sbuf(pos0,buf,count,count,true); // sbuf system will free
     scanner_params sp(scanner_params::PHASE_SCAN,sbuf,fs,po);
-    process_path_printer(sp);
+    try {
+        process_path_printer(sp);
+    }
+    catch (path_printer_finished &e) {
+    }
 }
 
 /**

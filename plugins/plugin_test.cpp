@@ -88,7 +88,7 @@ int main(int argc,char **argv)
     pos0_t p0("");
     sbuf_t sbuf(p0,buf,sizeof(buf),sizeof(buf),false);
     scanner_params sp(scanner_params::PHASE_STARTUP,sbuf,fs);
-    recursion_control_block rcb(0,"STAND",true);
+    recursion_control_block rcb(0,"STAND");
     scanner_info si;
     sp.info = &si;
     (*fn)(sp,rcb);

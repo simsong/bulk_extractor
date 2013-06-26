@@ -84,9 +84,6 @@ void scan_hiberfile(const class scanner_params &sp,const recursion_control_block
 		    const pos0_t pos0_hiber = (pos0 + pos) + rcb.partName;
 		    const sbuf_t sbuf_new(pos0_hiber,decomp.buf,decompress_size,decompress_size,false);
 		    (*rcb.callback)(scanner_params(sp,sbuf_new)); // recurse
-		    if(rcb.returnAfterFound){
-			return;
-		    }
 		}
 	    }
 	}

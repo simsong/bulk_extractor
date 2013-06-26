@@ -1,3 +1,8 @@
+2013-06-21  Man Page  <simsong@mncrnpsedu.local>
+
+	* src/be13_api/bulk_extractor_i.h (class scanner_params): made more variables const.
+	(class recursion_control_block): removed returnAfterFound(raf); now implemented with exceptions
+
 2013-06-19  Basic  <simsong@Mucha.local>
 
 	* src/bulk_extractor.cpp (]): fixed handling of LIB_EXPAT

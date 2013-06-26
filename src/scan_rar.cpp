@@ -612,9 +612,6 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
 
                     // call scanners on deobfuscated buffer
                     (*rcb.callback)(child_params);
-                    if(rcb.returnAfterFound) {
-                        return;
-                    }
                 }
             }
 	}

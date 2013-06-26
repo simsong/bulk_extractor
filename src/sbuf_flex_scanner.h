@@ -45,10 +45,6 @@ public:
         }
         return count;
     };
-    void make_eof(){                    // advance to EOF
-        pos   = sbuf->bufsize;
-        point = sbuf->bufsize;
-    };
 };
 
 #define YY_INPUT(buf,result,max_size) result = get_extra(yyscanner)->get_input(buf,max_size);

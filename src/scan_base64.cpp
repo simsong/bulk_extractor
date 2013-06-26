@@ -118,23 +118,18 @@ void scan_base64(const class scanner_params &sp,const recursion_control_block &r
 
 			/* Found the end of the base64 string; process. */
 
-			unsigned char *base64_target = (unsigned char *)malloc(base64_len);
+                        managed_malloc<unsigned char>base64_target(base64_len);
 			const char *src = (const char *)(sbuf.buf+i);
 			if(base64_len + i > sbuf.bufsize){ // make sure it doesn't go beyond buffer
 			    base64_len = sbuf.bufsize-i;
 			}
 			int conv_len = b64_pton_forensic(src, base64_len, // src,srclen
-							 base64_target, base64_len); // target, targetlen
+							 base64_target.buf, base64_len); // target, targetlen
 			if(conv_len>0){
 			    const pos0_t pos0_base64 = (sbuf.pos0 + i) + rcb.partName;
-			    const sbuf_t sbuf_base64(pos0_base64, base64_target,conv_len,conv_len,false); // we will free
+			    const sbuf_t sbuf_base64(pos0_base64, base64_target.buf,conv_len,conv_len,false); // we will free
 			    (*rcb.callback)(scanner_params(sp,sbuf_base64));
-			    if(rcb.returnAfterFound){
-				free(base64_target);
-				return;
-			    }
 			}
-			free(base64_target);
 			i = j;			// advance past this section
 			break;			// break out of the j loop
 		    }
