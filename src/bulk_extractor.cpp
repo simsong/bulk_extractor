@@ -544,7 +544,11 @@ static void usage(const char *progname)
     std::cout << "   -q nn        - Quiet Rate; only print every nn status reports. Default 0; -1 for no status at all\n";
     std::cout << "   -s frac[:passes] - Set random sampling parameters\n";
     std::cout << "\nTuning parameters:\n";
-    std::cout << "   -C NN        - specifies the size of the context window (default " << feature_recorder::context_window << ")\n";
+    std::cout << "   -C NN        - specifies the size of the context window (default "
+              << feature_recorder::context_window_default << ")\n";
+    std::cout << "   -S fr:<name>:window=NN   specifies context window for recorder to NN\n";
+    std::cout << "   -S fr:<name>:window_before=NN  specifies context window before to NN for recorder\n";
+    std::cout << "   -S fr:<name>:window_after=NN   specifies context window after to NN for recorder\n";
     std::cout << "   -G NN        - specify the page size (default " << cfg.opt_page_size << ")\n";
     std::cout << "   -g NN        - specify margin (default " <<cfg.opt_margin << ")\n";
     std::cout << "   -j NN        - Number of analysis threads to run (default " <<threadpool::numCPU() << ")\n";
@@ -571,6 +575,7 @@ static void usage(const char *progname)
     std::cout << "   -P <dir>     - Specifies a plugin directory\n";
     std::cout << "   -E scanner   - turn off all scanners except scanner\n";
     std::cout << "   -S name=value - sets a bulk extractor option name to be value\n";
+    std::cout << "\n";
     std::cout << "\n";
 }
 
@@ -786,7 +791,7 @@ int main(int argc,char **argv)
 	switch (ch) {
 	case 'A': feature_recorder::offset_add  = stoi64(optarg);break;
 	case 'b': feature_recorder::banner_file = optarg; break;
-	case 'C': feature_recorder::context_window = atoi(optarg);break;
+	case 'C': feature_recorder::context_window_default = atoi(optarg);break;
 	case 'd':
 	{
 	    int d = atoi(optarg);
@@ -996,6 +1001,24 @@ int main(int argc,char **argv)
     feature_recorder_set::get_alert_recorder_name(feature_file_names);
     be13::plugin::get_scanner_feature_file_names(feature_file_names);
     feature_recorder_set fs(feature_file_names,image_fname,opt_outdir,stop_list.size()>0);
+
+    /* Look for commands that impact per-recorders */
+    for(scanner_info::config_t::const_iterator it=be_config.namevals.begin();it!=be_config.namevals.end();it++){
+        /* see if there is a <recorder>: */
+        std::vector<std::string> params = split(it->first,':');
+        if(params.size()>=3 && params.at(0)=="fr"){
+            feature_recorder *fr = fs.get_name(params.at(1));
+            const std::string &cmd = params.at(2);
+            if(fr){
+                if(cmd=="window") fr->set_context_window(stoi(it->second));
+                if(cmd=="window_before") fr->set_context_window_before(stoi(it->second));
+                if(cmd=="window_after") fr->set_context_window_after(stoi(it->second));
+            }
+        }
+        /* See if there is a scanner? */
+    }
+
+
 
     /* Create the alert recorder */
     fs.create_name(feature_recorder_set::ALERT_RECORDER_NAME,false);

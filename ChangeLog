@@ -1,3 +1,15 @@
+2013-06-27  Basic  <simsong@Mucha.local>
+
+	* src/be13_api/feature_recorder.h (class feature_recorder): as a result of popular demand, the UTF8 BOM and BOM EXPLAINATION have been removed from the feature files
+
+2013-06-26  Basic  <simsong@Mucha.local>
+
+	* src/be13_api/feature_recorder_set.cpp (feature_recorder_set::get_name): get_name() now returns NULL if feature recorder does not exist.
+
+	* src/be13_api/feature_recorder.h (class feature_recorder): added context_window_before() and context_window_after().
+
+	* src/bulk_extractor.cpp (main): replaced context_window with context_window_default.
+
 2013-06-19  Basic  <simsong@Mucha.local>
 
 	* src/bulk_extractor.cpp (]): fixed handling of LIB_EXPAT
