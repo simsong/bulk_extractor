@@ -282,12 +282,14 @@ string RarComponentInfo::host_os_label() const
 
 class RarVolumeInfo {
 public:
-    explicit RarVolumeInfo() : flags() {}
-    explicit RarVolumeInfo(uint16_t flags_) : flags(flags_) {}
+    explicit RarVolumeInfo() : flags(), len() {}
+    explicit RarVolumeInfo(uint16_t flags_, uint16_t len_) :
+        flags(flags_), len(len_) {}
 
     std::string to_xml() const;
 
     uint16_t flags;
+    uint16_t len;
 };
 
 string RarVolumeInfo::to_xml() const
@@ -306,6 +308,7 @@ string RarVolumeInfo::to_xml() const
 // settings - these configuration vars are set when the scanner is created
 static bool record_components = true;
 static bool record_volumes = true;
+static be13::hash_def hasher;
 
 // component processing (compressed file within an archive)
 static bool process_component(const unsigned char *buf, size_t buf_len, RarComponentInfo &output)
@@ -464,18 +467,18 @@ static bool process_volume(const unsigned char *buf, size_t buf_len, RarVolumeIn
         return false;
     }
     // check for invalid flags
-    uint16_t flags = (uint16_t) int2(buf + OFFSET_HEAD_FLAGS);
-    if(flags & UNUSED_ARCHIVE_FLAGS) {
+    output.flags = (uint16_t) int2(buf + OFFSET_HEAD_FLAGS);
+    if(output.flags & UNUSED_ARCHIVE_FLAGS) {
         return false;
     }
 
     // ignore impossible or improbable header lengths
-    uint16_t header_len = (uint16_t) int2(buf + OFFSET_HEAD_SIZE);
-    if(header_len < ARCHIVE_HEAD_MIN_LEN || header_len > SUSPICIOUS_HEADER_LEN) {
+    output.len = (uint16_t) int2(buf + OFFSET_HEAD_SIZE);
+    if(output.len < ARCHIVE_HEAD_MIN_LEN || output.len > SUSPICIOUS_HEADER_LEN) {
         return false;
     }
     // abort if header is longer than the remaining buf
-    if(header_len >= buf_len) {
+    if(output.len >= buf_len) {
         return false;
     }
 
@@ -484,7 +487,7 @@ static bool process_volume(const unsigned char *buf, size_t buf_len, RarVolumeIn
     uint16_t header_crc = int2(buf + OFFSET_HEAD_CRC);
     uint32_t calc_header_crc = crc_init();
     // Data accounted for in the CRC begins with the header type magic byte
-    calc_header_crc = crc_update(calc_header_crc, buf + OFFSET_HEAD_TYPE, header_len - OFFSET_HEAD_TYPE);
+    calc_header_crc = crc_update(calc_header_crc, buf + OFFSET_HEAD_TYPE, output.len - OFFSET_HEAD_TYPE);
     calc_header_crc = crc_finalize(calc_header_crc);
     bool head_crc_match = (header_crc == (calc_header_crc & 0xFFFF));
     if(!head_crc_match) {
@@ -534,6 +537,26 @@ static void unpack_buf(const uint8_t* input, size_t input_len, uint8_t* output, 
     data.Close();
 }
 
+static size_t guess_encrypted_len(const uint8_t* input, size_t input_len, size_t offset)
+{
+    // how many bytes in a row must be the same to indicate and end to
+    // encrypted data?
+    const unsigned threshold = 4;
+
+    for(size_t ii = offset; ii < input_len - threshold; ii++) {
+        size_t mismatch_index = 0;
+        for(mismatch_index = ii + 1; mismatch_index < ii + threshold; mismatch_index++) {
+            if(input[ii] != input[mismatch_index]) {
+                break;
+            }
+        }
+        if(mismatch_index == ii + threshold) {
+            return ii;
+        }
+    }
+    return input_len - offset;
+}
+
 // leave out depth checks for now
 #if 0
 /* See:
@@ -571,6 +594,7 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
         sp.info->description = "(disabled)";
         sp.info->flags = scanner_info::SCANNER_DISABLED | scanner_info::SCANNER_NO_USAGE | scanner_info::SCANNER_NO_ALL;
 #endif
+        hasher = sp.info->config->hasher;
 	return;
     }
 #ifdef USE_RAR
@@ -597,6 +621,14 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
             // try each of the possible RAR blocks we may want to record
             if(record_volumes && process_volume(cc, cc_len, volume)) {
                 rar_recorder->write(pos0 + pos, "<volume>", volume.to_xml());
+                // carve encrypted RAR files
+                if(volume.flags & FLAG_HEADERS_ENCRYPTED) {
+                    size_t encrypted_len = guess_encrypted_len(cc, cc_len, volume.len);
+#if 0
+                    cout << "looks like " << encrypted_len + volume.len << " after " << pos << " are encrypted of " << sbuf.bufsize << endl;
+#endif
+                    rar_recorder->carve(sbuf, pos, volume.len + encrypted_len, hasher);
+                }
             }
             if(record_components && process_component(cc, cc_len, component)) {
                 rar_recorder->write(pos0 + pos, component.name, component.to_xml());
