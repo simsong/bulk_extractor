@@ -15,8 +15,16 @@
 #ifdef USE_RAR
 #include "rar/rar.hpp"
 
+// The mark block is a specially-crafted constant block that acts as a magic
+// number for rar files as a whole
+#define MARK_MAGIC 0x72
+#define MARK_LEN 7
+// File blocks are individual compressed files within a rar file.  We call
+// these 'rar components'
 #define FILE_MAGIC 0x74
 #define FILE_HEAD_MIN_LEN 32
+// Archive headers are non-constant headers that provide information about a
+// rar file itself.  We call these 'rar volumes'
 #define ARCHIVE_MAGIC 0x73
 #define ARCHIVE_HEAD_MIN_LEN 13
 
@@ -556,6 +564,14 @@ static size_t guess_encrypted_len(const uint8_t* input, size_t input_len, size_t
     }
     return input_len - offset;
 }
+
+static bool is_mark_block(const uint8_t* buf, size_t buf_len, size_t offset)
+{
+    return (buf_len - offset >= MARK_LEN) && buf[offset+0] == 0x52 &&
+        buf[offset+1] == 0x61 && buf[offset+2] == 0x72 &&
+        buf[offset+3] == 0x21 && buf[offset+4] == 0x1A &&
+        buf[offset+5] == 0x07 && buf[offset+6] == 0x00;
+}
 #endif
 
 extern "C"
@@ -592,11 +608,11 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
         RarVolumeInfo volume;
 	for(const unsigned char *cc=sbuf.buf; cc < sbuf.buf+sbuf.pagesize && cc < sbuf.buf + sbuf.bufsize; cc++) {
             size_t cc_len = sbuf.buf + sbuf.bufsize - cc;
-            // feature files have three 'columns': forensic path / offset,
-            // feature name, and feature data.  scan_zip is mimicked by having
-            // the feature name be the compressed file's name (the component's
-            // name) although this information is duplicated in the feature XML
-            // data
+            // feature files have three columns: forensic path / offset,
+            // feature name, and feature context.  scan_zip is mimicked by
+            // having the feature name be the compressed file's name (the
+            // component's name) although this information is duplicated in the
+            // context XML data
             string feature_name = ".";
             string feature_data = "<null/>";
             ssize_t pos = cc-sbuf.buf; // position of the buffer
@@ -607,10 +623,19 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
                 // carve encrypted RAR files
                 if(volume.flags & FLAG_HEADERS_ENCRYPTED) {
                     size_t encrypted_len = guess_encrypted_len(cc, cc_len, volume.len);
+                    size_t enc_rar_pos = pos;
+                    size_t enc_rar_len = volume.len + encrypted_len;
+                    // can we find a marker block before the archive block?  If
+                    // so, standard rar tools will likely process the carved
+                    // files without complaint.
+                    if(pos >= MARK_LEN && is_mark_block(sbuf.buf, enc_rar_pos + MARK_LEN, enc_rar_pos - MARK_LEN)) {
+                        enc_rar_len += MARK_LEN;
+                        enc_rar_pos -= MARK_LEN;
+                    }
 #if 0
                     cout << "looks like " << encrypted_len + volume.len << " after " << pos << " are encrypted of " << sbuf.bufsize << endl;
 #endif
-                    rar_recorder->carve(sbuf, pos, volume.len + encrypted_len, hasher);
+                    rar_recorder->carve(sbuf, enc_rar_pos, enc_rar_len, hasher);
                 }
             }
             if(record_components && process_component(cc, cc_len, component)) {
