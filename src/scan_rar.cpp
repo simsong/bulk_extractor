@@ -585,6 +585,7 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
 	const pos0_t &pos0 = sp.sbuf.pos0;
 	feature_recorder_set &fs = sp.fs;
 	feature_recorder *rar_recorder = fs.get_name("rar");
+        rar_recorder->set_carve_mode(feature_recorder::CARVE_ALL);
 	rar_recorder->set_flag(feature_recorder::FLAG_XML); // because we are sending through XML
 
         RarComponentInfo component;
