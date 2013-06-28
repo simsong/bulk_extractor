@@ -556,24 +556,6 @@ static size_t guess_encrypted_len(const uint8_t* input, size_t input_len, size_t
     }
     return input_len - offset;
 }
-
-// leave out depth checks for now
-#if 0
-/* See:
- * http://gcc.gnu.org/onlinedocs/gcc-4.5.0/gcc/Atomic-Builtins.html
- * for information on on __sync_fetch_and_add
- *
- * When rar_max_depth_count>=rar_max_depth_count_bypass,
- * hash the buffer before decompressing and do not decompress if it has already been decompressed.
- */
-
-int scan_rar_name_len_max = 1024;
-int rar_show_all=1;
-uint32_t rar_max_depth_count = 0;
-const uint32_t rar_max_depth_count_bypass = 5;
-std::set<std::string>rar_seen_set;
-cpp_mutex rar_seen_set_lock;
-#endif
 #endif
 
 extern "C"
@@ -589,12 +571,12 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
 	sp.info->feature_names.insert("rar");
         sp.info->get_config("rar_find_components",&record_components,"Search for RAR components");
         sp.info->get_config("raw_find_volumes",&record_volumes,"Search for RAR volumes");
+        hasher = sp.info->config->hasher;
 #else
         sp.info->name = "rar";
-        sp.info->description = "(disabled)";
+        sp.info->description = "(disabled in configure)";
         sp.info->flags = scanner_info::SCANNER_DISABLED | scanner_info::SCANNER_NO_USAGE | scanner_info::SCANNER_NO_ALL;
 #endif
-        hasher = sp.info->config->hasher;
 	return;
     }
 #ifdef USE_RAR
