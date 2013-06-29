@@ -65,17 +65,18 @@ fi
 
 echo Attempting to install both DLL and static version of all mingw libraries
 echo At this point we will keep going even if there is an error...
+INST=""
 for M in mingw32 mingw64 ; do
-  for lib in zlib gettext boost cairo pixman freetype fontconfig bzip2 expat pthreads libgnurx tre wpcap nsis ; do
-    echo ${M}-${lib} ${M}-${lib}-static
+  # For these install both DLL and static
+  for lib in zlib gettext boost cairo pixman freetype fontconfig bzip2 expat pthreads libgnurx ; do
+    INST+=" ${M}-${lib} ${M}-${lib}-static"
   done
-done | xargs sudo yum -y install
-
+done 
+sudo yum -y install $INST
 
 echo 
 echo "Now performing a yum update to update system packages"
 sudo yum -y update
-
 
 MINGW32=i686-w64-mingw32
 MINGW64=x86_64-w64-mingw32
@@ -86,61 +87,51 @@ MINGW64_DIR=/usr/$MINGW64/sys-root/mingw
 # from here on, exit if any command fails
 set -e
 
-#
-# TRE
-#
+function is_installed {
+  LIB=$1
+  if [ -r /usr/x86_64-w64-mingw32/sys-root/mingw/lib/$LIB.a ] && \
+     [ -r /usr/i686-w64-mingw32/sys-root/mingw/lib/$LIB.a ];
+  then
+    return 0
+  else 
+    return 1
+  fi
+}
+    
+function build_mingw {
+  LIB=$1
+  URL=$2
+  FILE=$3
+  if is_installed $LIB
+  then
+    echo $LIB already installed. Skipping
+  else
+    echo Building $1 from $URL/$FILE
+    if [ ! -r $FILE ]; then
+       wget $URL/$FILE
+    fi
+    tar xfvz $FILE
+    # Now get the directory that it unpacked into
+    DIR=`tar tfz $FILE |head -1`
+    pushd $DIR
+    for i in 32 64 ; do
+      echo
+      echo %%% $LIB mingw$i
+      mingw$i-configure --enable-static --disable-shared
+      make
+      sudo make install
+      make clean
+    done
+    popd
+    rm -rf $DIR
+  fi
+}
 
-echo "Building and installing TRE for mingw"
-TREVER=0.8.0
-TREFILE=tre-$TREVER.tar.gz
-TREDIR=tre-$TREVER
-TREURL=http://laurikari.net/tre/$TREFILE
-
-if [ ! -r $TREFILE ]; then
-  wget $TREURL
-fi
-tar xfvz $TREFILE
-pushd $TREDIR
-for i in 32 64 ; do
-  echo
-  echo libtre mingw$i
-  mingw$i-configure --enable-static --disable-shared
-  make
-  sudo make install
-  make clean
-done
-popd
-echo "TRE mingw installation complete."
-
-#
-# EWF
-#
-
-echo "Building and installing LIBEWF for mingw"
-EWFVER=20130416
-EWFFILE=libewf-$EWFVER.tar.gz
-EWFDIR=libewf-$EWFVER
-EWFURL=https://googledrive.com/host/0B3fBvzttpiiSMTdoaVExWWNsRjg/$EWFFILE
-#EWFURL=http://libewf.googlecode.com/files/$EWFFILE
-
-if [ ! -r $EWFFILE ]; then
-  wget $EWFURL 
-fi
-tar xzf $EWFFILE 
-pushd $EWFDIR
-for i in 32 64 ; do
-  echo
-  echo libewf mingw$i
-  mingw$i-configure --enable-static --disable-shared
-  make
-  sudo make install
-  make clean
-done
-popd
-echo "LIBEWF mingw installation complete."
+build_mingw libtre   http://laurikari.net/tre/   tre-0.8.0.tar.gz
+build_mingw libewf   https://googledrive.com/host/0B3fBvzttpiiSMTdoaVExWWNsRjg   libewf-20130416.tar.gz
 
 #
-# ICU
+# ICU requires patching and a special build sequence
 #
 
 echo "Building and installing ICU for mingw"
@@ -149,66 +140,79 @@ ICUFILE=icu4c-$ICUVER-src.tgz
 ICUDIR=icu
 ICUURL=http://download.icu-project.org/files/icu4c/51.1/$ICUFILE
 
-if [ ! -r $ICUFILE ]; then
-  wget $ICUURL
-fi
-tar xzf $ICUFILE
-patch -p1 < icu-mingw32-libprefix.patch
-patch -p1 < icu-mingw64-libprefix.patch
-
-# build ICU for Linux to get packaging tools used by MinGW builds
-echo
-echo icu linux
-mkdir icu-linux
-pushd icu-linux
-CC=gcc CXX=g++ CFLAGS=-O3 CXXFLAGS=-O3 CPPFLAGS="-DU_USING_ICU_NAMESPACE=0 -DU_CHARSET_IS_UTF8=1 -DUNISTR_FROM_CHAR_EXPLICIT=explicit -DUNSTR_FROM_STRING_EXPLICIT=explicit" ../icu/source/runConfigureICU Linux --enable-shared --disable-extras --disable-icuio --disable-layout --disable-samples --disable-tests
-make VERBOSE=1
-popd
-
-# build 32- and 64-bit ICU for MinGW
-for i in 32 64 ; do
+if is_installed libsicuuc
+then
+  echo ICU is already installed
+else
+  if [ ! -r $ICUFILE ]; then
+    wget $ICUURL
+  fi
+  tar xzf $ICUFILE
+  patch -p1 < icu-mingw32-libprefix.patch
+  patch -p1 < icu-mingw64-libprefix.patch
+  
+  ICUDIR=`tar tfz $ICUFILE|head -1`
+  # build ICU for Linux to get packaging tools used by MinGW builds
   echo
-  echo icu mingw$i
-  mkdir icu-mingw$i
-  pushd icu-mingw$i
-  eval MINGW=\$MINGW$i
-  eval MINGW_DIR=\$MINGW${i}_DIR
-  ../icu/source/configure CC=$MINGW-gcc CXX=$MINGW-g++ CFLAGS=-O3 CXXFLAGS=-O3 CPPFLAGS="-DU_USING_ICU_NAMESPACE=0 -DU_CHARSET_IS_UTF8=1 -DUNISTR_FROM_CHAR_EXPLICIT=explicit -DUNSTR_FROM_STRING_EXPLICIT=explicit" --enable-static --disable-shared --prefix=$MINGW_DIR --host=$MINGW --with-cross-build=`realpath ../icu-linux` --disable-extras --disable-icuio --disable-layout --disable-samples --disable-tests --with-data-packaging=static --disable-dyload
+  echo icu linux
+  mkdir icu-linux
+  pushd icu-linux
+  CC=gcc CXX=g++ CFLAGS=-O3 CXXFLAGS=-O3 CPPFLAGS="-DU_USING_ICU_NAMESPACE=0 -DU_CHARSET_IS_UTF8=1 -DUNISTR_                                        FROM_CHAR_EXPLICIT=explicit -DUNSTR_FROM_STRING_EXPLICIT=explicit" ../icu/source/runConfigureICU Linux --enable-shared --disable-extras --disable-icuio --disable-layout --disable-samples --disable-tests
   make VERBOSE=1
-  sudo make install
   popd
-done
-echo "ICU mingw installation complete."
+  rm -rf icu-linux
+  
+  # build 32- and 64-bit ICU for MinGW
+  for i in 32 64 ; do
+    echo
+    echo icu mingw$i
+    mkdir icu-mingw$i
+    pushd icu-mingw$i
+    eval MINGW=\$MINGW$i
+    eval MINGW_DIR=\$MINGW${i}_DIR
+    ../icu/source/configure CC=$MINGW-gcc CXX=$MINGW-g++ CFLAGS=-O3 CXXFLAGS=-O3 CPPFLAGS="-DU_USING_ICU_NAMESPACE=0 -DU_CHARSET_IS_UTF8=1 -DUNISTR_FROM_CHAR_EXPLICIT=explicit -DUNSTR_FROM_STRING_EXPLICIT=explicit" --enable-static --disable-shared --prefix=$MINGW_DIR --host=$MINGW --with-cross-build=`realpath ../icu-linux` --disable-extras --disable-icuio --disable-layout --disable-samples --disable-tests --with-data-packaging=static --disable-dyload
+    make VERBOSE=1
+    sudo make install
+    make clean
+    popd
+    rm -rf icu-mingw$i
+  done
+  rm -rf $ICUDIR
+  echo "ICU mingw installation complete."
+fi
 
 #
-# Lightgrep
+# Lightgrep is currently built from github, which I don't like
 #
 
-echo "Building and installing lightgrep for mingw"
-LGDIR=liblightgrep
-LGURL=git://github.com/LightboxTech/liblightgrep.git
-
-git clone --recursive $LGURL $LGDIR
-pushd $LGDIR
-autoreconf -i
-for i in 32 64 ; do
-  echo
-  echo liblightgrep mingw$i
-  mingw$i-configure --enable-static --disable-shared
-  make
-  sudo make install
-  make clean
-done
-popd
-echo "liblightgrep mingw installation complete."
+if is_installed liblightgrep
+then
+  echo liblightgrep is already installed
+else
+  echo "Building and installing lightgrep for mingw"
+  LGDIR=liblightgrep
+  LGURL=git://github.com/LightboxTech/liblightgrep.git
+  
+  git clone --recursive $LGURL $LGDIR
+  pushd $LGDIR
+  autoreconf -i
+  for i in 32 64 ; do
+    echo
+    echo liblightgrep mingw$i
+    mingw$i-configure --enable-static --disable-shared
+    make
+    sudo make install
+    make clean
+  done
+  popd
+  echo "liblightgrep mingw installation complete."
+  rm -rf $LGDIR
+fi
 
 #
 #
 #
 
-echo "Cleaning up"
-rm -f $TREFILE $EWFFILE $ICUFILE
-rm -rf $TREDIR $EWFDIR icu icu-linux icu-mingw32 icu-mingw64 $LGDIR
 
 echo ...
 echo 'Now running ../bootstrap.sh and configure'
