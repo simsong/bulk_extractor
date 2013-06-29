@@ -155,6 +155,7 @@ else
   # build ICU for Linux to get packaging tools used by MinGW builds
   echo
   echo icu linux
+  rm -rf icu-linux
   mkdir icu-linux
   pushd icu-linux
   CC=gcc CXX=g++ CFLAGS=-O3 CXXFLAGS=-O3 CPPFLAGS="-DU_USING_ICU_NAMESPACE=0 -DU_CHARSET_IS_UTF8=1 -DUNISTR_FROM_CHAR_EXPLICIT=explicit -DUNSTR_FROM_STRING_EXPLICIT=explicit" ../icu/source/runConfigureICU Linux --enable-shared --disable-extras --disable-icuio --disable-layout --disable-samples --disable-tests
@@ -165,6 +166,7 @@ else
   for i in 32 64 ; do
     echo
     echo icu mingw$i
+    rm -rf icu-mingw$i
     mkdir icu-mingw$i
     pushd icu-mingw$i
     eval MINGW=\$MINGW$i
