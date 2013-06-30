@@ -40,7 +40,8 @@ done
 MPKGS="autoconf automake flex gcc gcc-c++ git libtool "
 MPKGS+="md5deep osslsigncode patch wine wget bison zlib-devel "
 MPKGS+="libewf libewf-devel java-1.7.0-openjdk-devel "
-MPKGS+="libxml2-static czmq-devel "
+MPKGS+="libxml2-devel libxml2-static czmq-devel openssl-devel "
+MPKGS+="boost-devel boost-static expat-devel "
 MPKGS+="mingw32-gcc mingw32-gcc-c++ "
 MPKGS+="mingw64-gcc mingw64-gcc-c++ "
 

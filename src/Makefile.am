@@ -7,8 +7,6 @@ AM_CPPFLAGS = -I${top_srcdir}/src/be13_api
 include dfxml/src/Makefile.defs
 include be13_api/Makefile.defs
 
-
-
 TSK3INCS = \
 	tsk3/auto/tsk_auto.h\
 	tsk3/base/tsk_base.h\
@@ -118,7 +116,7 @@ bulk_extractor_SOURCES = \
 	phase1.cpp \
 	word_and_context_list.cpp \
 	word_and_context_list.h \
-	$(bulk_scanners) $(TSK3INCS)  $(BE13_API) $(DFXML) # $(SCAN_LIFT)
+	$(bulk_scanners) $(TSK3INCS)  $(BE13_API) $(DFXML_WRITER) # $(SCAN_LIFT)
 
 if RAR_ENABLED
 bulk_extractor_SOURCES += $(RAR_SUPPORT)
