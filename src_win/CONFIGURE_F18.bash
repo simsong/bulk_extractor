@@ -39,7 +39,8 @@ done
 
 MPKGS="autoconf automake flex gcc gcc-c++ git libtool "
 MPKGS+="md5deep osslsigncode patch wine wget bison zlib-devel "
-MPKGS+="libewf libewf-devel "
+MPKGS+="libewf libewf-devel java-1.7.0-openjdk-devel "
+MPKGS+="libxml2-static czmq-devel "
 MPKGS+="mingw32-gcc mingw32-gcc-c++ "
 MPKGS+="mingw64-gcc mingw64-gcc-c++ "
 
@@ -68,7 +69,8 @@ echo At this point we will keep going even if there is an error...
 INST=""
 for M in mingw32 mingw64 ; do
   # For these install both DLL and static
-  for lib in zlib gettext boost cairo pixman freetype fontconfig bzip2 expat pthreads libgnurx ; do
+  for lib in zlib gettext boost cairo pixman freetype fontconfig \
+      bzip2 expat pthreads libgnurx libxml2 ; do
     INST+=" ${M}-${lib} ${M}-${lib}-static"
   done
 done 
