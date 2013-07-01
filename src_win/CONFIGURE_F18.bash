@@ -71,7 +71,7 @@ INST=""
 for M in mingw32 mingw64 ; do
   # For these install both DLL and static
   for lib in zlib gettext boost cairo pixman freetype fontconfig \
-      bzip2 expat pthreads libgnurx libxml2 ; do
+      bzip2 expat pthreads libgnurx libxml2 iconv ; do
     INST+=" ${M}-${lib} ${M}-${lib}-static"
   done
 done 
