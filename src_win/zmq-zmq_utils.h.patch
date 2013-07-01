@@ -1,0 +1,19 @@
+--- a/zeromq-3.2.2/include/zmq_utils.h	2012-10-25 01:30:40.000000000 -0700
++++ b/zeromq-3.2.2/include/zmq_utils.h	2013-05-02 14:09:28.275389859 -0700
+@@ -26,6 +26,8 @@
+ #endif
+ 
+ /*  Handle DSO symbol visibility                                             */
++#define ZMQ_EXPORT
++/* bda zzzzzzzzzzzzzz
+ #if defined _WIN32
+ #   if defined DLL_EXPORT
+ #       define ZMQ_EXPORT __declspec(dllexport)
+@@ -41,6 +43,7 @@
+ #       define ZMQ_EXPORT
+ #   endif
+ #endif
++*/
+ 
+ /*  Helper functions are used by perf tests so that they don't have to care   */
+ /*  about minutiae of time-related functions on different OS platforms.       */

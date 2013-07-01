@@ -32,8 +32,7 @@ EXTRA_DIST = bootstrap.sh \
 	m4/ax_boost_base.m4 \
 	m4/ax_boost_filesystem.m4 \
 	m4/ax_boost_system.m4 \
-	m4/ax_pthread.m4 \
-	m4/boost.m4 
+	m4/ax_pthread.m4
 
 # these are for the DFRWS2013 challenge:
 #	src/data_sniffer src/dfrws_2012_challenge.py
