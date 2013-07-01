@@ -1,7 +1,21 @@
+<<<<<<< HEAD
 2013-06-21  Man Page  <simsong@mncrnpsedu.local>
 
 	* src/be13_api/bulk_extractor_i.h (class scanner_params): made more variables const.
 	(class recursion_control_block): removed returnAfterFound(raf); now implemented with exceptions
+=======
+2013-06-27  Basic  <simsong@Mucha.local>
+
+	* src/be13_api/feature_recorder.h (class feature_recorder): as a result of popular demand, the UTF8 BOM and BOM EXPLAINATION have been removed from the feature files
+
+2013-06-26  Basic  <simsong@Mucha.local>
+
+	* src/be13_api/feature_recorder_set.cpp (feature_recorder_set::get_name): get_name() now returns NULL if feature recorder does not exist.
+
+	* src/be13_api/feature_recorder.h (class feature_recorder): added context_window_before() and context_window_after().
+
+	* src/bulk_extractor.cpp (main): replaced context_window with context_window_default.
+>>>>>>> 27cb70b3b5135c69cc93d8cf463e5efcfc6c01fb
 
 2013-06-19  Basic  <simsong@Mucha.local>
 
