@@ -97,8 +97,12 @@ AC_TYPE_INT64_T
 AC_SYS_LARGEFILE
 AC_SYS_POSIX_TERMIOS
 
-if test "$LEX" != flex; then
-  AC_MSG_ERROR([flex not installed; required for compiling regular expressions. Try 'apt-get install flex' or 'yum install flex' or 'port install flex' or whatever package manager you happen to be using....])
+if test x"$LEX" == x ; then
+  AC_MSG_ERROR([flex not required.])
+fi  
+
+if test `basename "$LEX"` != flex; then
+  AC_MSG_ERROR([gnu flex is required.])
 fi
 
 ## Determine if we can use flex -R
