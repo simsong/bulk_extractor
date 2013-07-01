@@ -372,10 +372,6 @@ public:
         exif_recorder(*sp.fs.get_name("exif")),
         gps_recorder(*sp.fs.get_name("gps")),
         jpeg_recorder(*sp.fs.get_name("jpeg")){
-
-	exif_recorder.set_flag(feature_recorder::FLAG_XML); // to escape all but backslashes
-        jpeg_recorder.set_file_extension(".jpg");
-        jpeg_recorder.set_carve_mode(static_cast<feature_recorder::carve_mode_t>(jpeg_carve_mode));
     }
 
     static be13::hash_def hasher;
@@ -559,6 +555,12 @@ void scan_exif(const class scanner_params &sp,const recursion_control_block &rcb
         sp.info->get_config("exif_debug",&debug,"debug exif decoder");
         sp.info->get_config("jpeg_carve_mode",&jpeg_carve_mode,"0=carve none; 1=carve encoded; 2=carve all");
 	return;
+    }
+    if(sp.phase==scanner_params::PHASE_INIT){
+        exif_scanner escan(sp);
+        escan.exif_recorder.set_flag(feature_recorder::FLAG_XML); // to escape all but backslashes
+        escan.jpeg_recorder.set_file_extension(".jpg");
+        escan.jpeg_recorder.set_carve_mode(static_cast<feature_recorder::carve_mode_t>(jpeg_carve_mode));
     }
     if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;
     if(sp.phase==scanner_params::PHASE_SCAN){
