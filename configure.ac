@@ -6,7 +6,7 @@
 
 AC_PREREQ(2.57)
 
-AC_INIT(BULK_EXTRACTOR, 1.4.0-dev-001, bugs@digitalcorpora.org)
+AC_INIT(BULK_EXTRACTOR, 1.4.0-beta1, bugs@digitalcorpora.org)
 AC_CONFIG_MACRO_DIR(m4)
 
 # Notice:
@@ -217,10 +217,11 @@ AC_ARG_ENABLE([lift], AS_HELP_STRING([--enable-lift], [enable CMU LIFT SVM for t
 		      AC_DEFINE(USE_LIFT, 1, [Use LIFT SVM]))
 
 ## rar support
+## Enabled for 1.4 release!
 AC_ARG_ENABLE([rar], AS_HELP_STRING([--enable-rar], [enable RAR experimental decompression experimental]),
 		      [AC_DEFINE(USE_RAR, 1, [Use RAR decompression]) rar="true"])
-AM_CONDITIONAL([RAR_ENABLED], [test "true" = "$rar"])
-#AM_CONDITIONAL([RAR_ENABLED], [true])
+#AM_CONDITIONAL([RAR_ENABLED], [test "true" = "$rar"])
+AM_CONDITIONAL([RAR_ENABLED], [true])
 
 
 ################################################################
