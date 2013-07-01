@@ -5,8 +5,8 @@
 #include "suballoc.hpp"
 #include "unpack.hpp"
 #ifndef SFX_MODULE
-#include "unpack15.cpp"
-#include "unpack20.cpp"
+#include "unpack15.hpp"
+#include "unpack20.hpp"
 #endif
 
 Unpack::Unpack(ComprDataIO *DataIO) :

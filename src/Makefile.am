@@ -38,7 +38,7 @@ RAR_SUPPORT = \
         rar/resource.cpp rar/resource.hpp rar/rs.cpp rar/rs.hpp rar/savepos.cpp rar/savepos.hpp rar/smallfn.cpp \
         rar/smallfn.hpp rar/strfn.cpp rar/strfn.hpp rar/strlist.cpp rar/strlist.hpp \
         rar/system.cpp rar/system.hpp rar/timefn.cpp rar/timefn.hpp rar/unicode.cpp \
-        rar/unicode.hpp rar/unpack.cpp rar/unpack.hpp \
+        rar/unicode.hpp rar/unpack.cpp rar/unpack.hpp rar/unpack15.hpp rar/unpack20.hpp \
         rar/version.hpp
 
 bulk_scanners = \

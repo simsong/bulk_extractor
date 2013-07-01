@@ -448,7 +448,7 @@ if test x"$hashid" == xyes ; then
     [AC_MSG_WARN([Could not find zeromq, zeromq v3 is required to build the hashid scanner])
     hashid=no])
 
-  if test  x"$mingw" = x"yes";  then
+  if test x"$mingw" = x"yes";  then
     # the win32 configuration of libxml2 requires zlib and iconv libraries
     AC_CHECK_LIB([z], [gzdopen],[LIBS="-lz $LIBS"], [AC_MSG_ERROR([Could not find zlib library])])
     AC_CHECK_LIB([iconv], [iconv],[LIBS="-liconv $LIBS"], [AC_MSG_ERROR([Could not find win-iconv library])])
@@ -457,22 +457,25 @@ if test x"$hashid" == xyes ; then
   AC_CHECK_LIB([xml2], [xmlSAXUserParseFile],[LIBS="-lxml2 $LIBS"],
     [AC_MSG_WARN([Could not find libxml2 library required to build the hashid scanner])
     hashid=no])
-  AX_BOOST_BASE([1.44],
-    [AX_BOOST_SYSTEM
-    AX_BOOST_FILESYSTEM
-    LIBS="$BOOST_SYSTEM_LIB $BOOST_FILESYSTEM_LIB $LIBS"],
-    [AC_MSG_WARN([Boost 1.44 or newer is required to build the hashid scanner])
-    hashid=no])
-fi
-if test x"$hashid" == xyes ; then
-  AC_LANG_PUSH(C++)
-  AC_CHECK_HEADER([hashdb.hpp], [],
-    [AC_MSG_WARN([Could not find hashdb header file required to build the hashid scanner])
-    hashid=no])
-  AC_CHECK_LIB([hashdb], [hashdb_version], [],
-    [AC_MSG_WARN([Could not find hashdb library required to build the hashid scanner])
-    hashid=no])
-  AC_LANG_POP()
+
+  if test x"$hashid" == xyes ; then
+    AC_LANG_PUSH(C++)
+    AC_CHECK_HEADER([hashdb.hpp], [],
+      [AC_MSG_WARN([Could not find hashdb header file required to build the hashid scanner])
+      hashid=no])
+    AC_CHECK_LIB([hashdb], [hashdb_version], [],
+      [AC_MSG_WARN([Could not find hashdb library required to build the hashid scanner])
+      hashid=no])
+    AC_LANG_POP()
+  fi
+  if test x"$hashid" == xyes ; then
+    AX_BOOST_BASE([1.44],
+      [AX_BOOST_SYSTEM
+      AX_BOOST_FILESYSTEM
+      LIBS="$BOOST_SYSTEM_LIB $BOOST_FILESYSTEM_LIB $LIBS"],
+      [AC_MSG_WARN([Boost 1.44 or newer is required to build the hashid scanner])
+      hashid=no])
+  fi
 fi
 if test x"$hashid" == xyes ; then
   AC_DEFINE(HAVE_HASHID,1,[define 1 to build the hashid scanner])
