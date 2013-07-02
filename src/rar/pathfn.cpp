@@ -945,71 +945,19 @@ void ConvertNameToFull(const char *Src,char *Dest)
 
 void ConvertNameToFull(const wchar *Src,wchar *Dest)
 {
-  if (Src==NULL || *Src==0)
-  {
-    *Dest=0;
-    return;
-  }
-#ifdef _WIN_ALL
-#ifndef _WIN_CE
-  if (WinNT())
-#endif
-  {
-#ifndef _WIN_CE
-    wchar FullName[NM],*NamePtr;
-    DWORD Code=GetFullPathNameW(Src,ASIZE(FullName),FullName,&NamePtr);
-    if (Code!=0 && Code<ASIZE(FullName))
-      wcscpy(Dest,FullName);
-    else
-#endif
-      if (Src!=Dest)
-        wcscpy(Dest,Src);
-  }
-#ifndef _WIN_CE
-  else
-  {
-    char AnsiName[NM];
-    WideToChar(Src,AnsiName);
-    ConvertNameToFull(AnsiName,AnsiName);
-    CharToWide(AnsiName,Dest);
-  }
-#endif
-#else
-  char AnsiName[NM];
-  WideToChar(Src,AnsiName);
-  ConvertNameToFull(AnsiName,AnsiName);
-  CharToWide(AnsiName,Dest);
-#endif
+    Dest[0] = 0;
 }
 
 
 bool IsFullPath(const char *Path)
 {
-  char PathOnly[NM];
-  GetFilePath(Path,PathOnly,ASIZE(PathOnly));
-  if (IsWildcard(PathOnly,NULL))
-    return(true);
-#if defined(_WIN_ALL) || defined(_EMX)
-  return(Path[0]=='\\' && Path[1]=='\\' ||
-         IsDiskLetter(Path) && IsPathDiv(Path[2]));
-#else
-  return(IsPathDiv(Path[0]));
-#endif
+    return false;
 }
 
 
 bool IsFullPath(const wchar *Path)
 {
-  wchar PathOnly[NM];
-  GetFilePath(Path,PathOnly,ASIZE(PathOnly));
-  if (IsWildcard(NULL,PathOnly))
-    return(true);
-#if defined(_WIN_ALL) || defined(_EMX)
-  return(Path[0]=='\\' && Path[1]=='\\' ||
-         IsDiskLetter(Path) && IsPathDiv(Path[2]));
-#else
-  return(IsPathDiv(Path[0]));
-#endif
+    return false;
 }
 
 
@@ -1053,23 +1001,6 @@ void GetPathRoot(const char *Path,char *Root)
 void GetPathRoot(const wchar *Path,wchar *Root)
 {
   *Root=0;
-  if (IsDiskLetter(Path))
-    sprintfw(Root,4,L"%c:\\",*Path);
-  else
-    if (Path[0]=='\\' && Path[1]=='\\')
-    {
-      const wchar *Slash=wcschr(Path+2,'\\');
-      if (Slash!=NULL)
-      {
-        size_t Length;
-        if ((Slash=wcschr(Slash+1,'\\'))!=NULL)
-          Length=Slash-Path+1;
-        else
-          Length=wcslen(Path);
-        wcsncpy(Root,Path,Length);
-        Root[Length]=0;
-      }
-    }
 }
 
 
