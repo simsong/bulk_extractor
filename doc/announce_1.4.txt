@@ -6,6 +6,14 @@ bulk_extractor Version 1.4 has been released for Linux, MacOS and Windows.
 
 New functionality in Version 1.4 includes:
 
+* scan_rar will decompress RAR files and carve encrypted RARs
+
+* scan_xor will search for data hidden with (XOR 255)
+
+* Variable context window
+
+* Better performance
+
 Improvements in Version 1.4 include:
 
 * scan_pdf now does a better job extracting emails from text.
@@ -219,9 +227,7 @@ it will use the system regular expression library.
 
 
 ================================================================
-Planned Feature List for 1.4:
-
-* RAR & RAR2 decompression
+Planned Feature List for 1.5:
 
 * BZIP2 decompression
 
@@ -229,8 +235,6 @@ Planned Feature List for 1.4:
   files and IE history.
 
 * Scanning for the start of bitlocker protected volumes.
-
-* Support for checkpointing using BLCR.
 
 We are also considering the following scanners (and need help!):
 
@@ -248,6 +252,8 @@ We are also considering the following scanners (and need help!):
 
 * Processing of physical drives under Windows
 
+* Python Bridge. 
+
 
 We have tabled the following ideas, for the following reasons:
 
@@ -259,11 +265,8 @@ We have tabled the following ideas, for the following reasons:
 * Support on distributed computing arrays. (May be less important
   given the low cost of 64-core machines)
 
-* Python Bridge. (We cannot have multiple instances of the Python
-  interperter running in the same address space, so we would need to
-  run multiple Pythons in multiple address spaces. Frankly, it's a lot
-  of work, and Python is really slow, so we're just not doing this.)
 
+* Support for checkpointing using BLCR.  The project was abandoned.
 
 
 

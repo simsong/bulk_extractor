@@ -13,7 +13,10 @@ endif
 SUBDIRS = doc doc/user_manual src man plugins python specfiles tests $(BE_VIEWER_DIR) $(SRC_WIN_DIR)
 
 
-EXTRA_DIST = bootstrap.sh \
+# don't include bootstrap. People run it, and they shoudln't
+# It's only for people who check out the git repo
+
+EXTRA_DIST = \
 	ROADMAP.txt \
 	m4/ac_check_classpath.m4 \
 	m4/ac_check_junit.m4 \
