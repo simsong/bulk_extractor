@@ -157,10 +157,6 @@ void ErrorHandler::ErrMsg(const char *ArcName,const char *fmt,...)
   va_start(argptr,fmt);
   vsprintf(Msg,fmt,argptr);
   va_end(argptr);
-#ifdef _WIN_ALL
-  if (UserBreak)
-    Sleep(5000);
-#endif
   if (*Msg)
   {
   }

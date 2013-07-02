@@ -869,11 +869,6 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,size_t HeaderS
             Cmd->xctime==EXTTIME_NONE ? NULL:&Arc.NewLhd.ctime,
             Cmd->xatime==EXTTIME_NONE ? NULL:&Arc.NewLhd.atime);
           CurFile.Close();
-#if defined(_WIN_ALL) && !defined(_WIN_CE) && !defined(SFX_MODULE)
-          if (Cmd->SetCompressedAttr &&
-              (Arc.NewLhd.SubFlags & FILE_ATTRIBUTE_COMPRESSED)!=0 && WinNT())
-            SetFileCompression(CurFile.FileName,CurFile.FileNameW,true);
-#endif
           CurFile.SetCloseFileTime(
             Cmd->xmtime==EXTTIME_NONE ? NULL:&Arc.NewLhd.mtime,
             Cmd->xatime==EXTTIME_NONE ? NULL:&Arc.NewLhd.atime);

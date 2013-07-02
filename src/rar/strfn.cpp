@@ -110,23 +110,13 @@ wchar* RemoveLF(wchar *Str)
 
 unsigned char loctolower(unsigned char ch)
 {
-#ifdef _WIN_ALL
-  // Convert to LPARAM first to avoid a warning in 64 bit mode.
-  return((int)(LPARAM)CharLowerA((LPSTR)ch));
-#else
   return(tolower(ch));
-#endif
 }
 
 
 unsigned char loctoupper(unsigned char ch)
 {
-#ifdef _WIN_ALL
-  // Convert to LPARAM first to avoid a warning in 64 bit mode.
-  return((int)(LPARAM)CharUpperA((LPSTR)ch));
-#else
   return(toupper(ch));
-#endif
 }
 
 

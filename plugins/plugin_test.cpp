@@ -10,7 +10,10 @@
 #include "be13_api/bulk_extractor_i.h"           // from ../src/be13_api/bulk_extractor_i.h
 
 #include <stdio.h>
+#ifdef HAVE_ERR_H
 #include <err.h>
+#endif
+#include <utils.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -93,7 +96,9 @@ int main(int argc,char **argv)
     sp.info = &si;
     (*fn)(sp,rcb);
     std::cout << "Loaded scanner '" << si.name << "' by " << si.author << "\n";
+#ifdef HAVE_DLOPEN
     dlclose(lib);
+#endif
     return 0;
 }
 
