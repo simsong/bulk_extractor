@@ -463,6 +463,15 @@ if test x"$hashid" == xyes ; then
     hashid=no])
 
   if test x"$hashid" == xyes ; then
+    AX_BOOST_BASE([1.44],
+      [AX_BOOST_SYSTEM
+      AX_BOOST_FILESYSTEM
+      LIBS="$BOOST_SYSTEM_LIB $BOOST_FILESYSTEM_LIB $LIBS"],
+      [AC_MSG_WARN([Boost 1.44 or newer is required to build the hashid scanner])
+      hashid=no])
+  fi
+
+  if test x"$hashid" == xyes ; then
     AC_LANG_PUSH(C++)
     AC_CHECK_HEADER([hashdb.hpp], [],
       [AC_MSG_WARN([Could not find hashdb header file required to build the hashid scanner])
@@ -472,14 +481,7 @@ if test x"$hashid" == xyes ; then
       hashid=no])
     AC_LANG_POP()
   fi
-  if test x"$hashid" == xyes ; then
-    AX_BOOST_BASE([1.44],
-      [AX_BOOST_SYSTEM
-      AX_BOOST_FILESYSTEM
-      LIBS="$BOOST_SYSTEM_LIB $BOOST_FILESYSTEM_LIB $LIBS"],
-      [AC_MSG_WARN([Boost 1.44 or newer is required to build the hashid scanner])
-      hashid=no])
-  fi
+
 fi
 if test x"$hashid" == xyes ; then
   AC_DEFINE(HAVE_HASHID,1,[define 1 to build the hashid scanner])

@@ -24,12 +24,14 @@ press any key to continue...
 EOF
 read
 
-# cd to the directory where the script it
+# cd to the directory where the script is
 # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $DIR
 
 NEEDED_FILES=" icu-mingw32-libprefix.patch icu-mingw64-libprefix.patch"
+NEEDED_FILES+=" zmq-configure.patch zmq-configure.in.patch"
+NEEDED_FILES+=" zmq-zmq.h.patch zmq-zmq_utils.h.patch"
 for i in $NEEDED_FILES ; do
   if [ ! -r $i ]; then
     echo This script requires the file $i which is distributed with $0
@@ -183,6 +185,43 @@ else
   done
   rm -rf $ICUDIR icu-linux
   echo "ICU mingw installation complete."
+fi
+
+#
+# ZMQ requires patching
+#
+
+echo "Building and installing ZMQ for mingw"
+ZMQVER=3.2.2
+ZMQFILE=zeromq-$ZMQVER.tar.gz
+ZMQURL=download.zeromq.org/$ZMQFILE
+if is_installed libzmq
+then
+  echo ZMQ is already installed
+else
+  if [ ! -r $ZMQFILE ]; then
+    wget $ZMQURL
+  fi
+  tar xzf $ZMQFILE
+  patch -p1 <zmq-configure.patch
+  patch -p1 <zmq-configure.in.patch
+  patch -p1 <zmq-zmq.h.patch
+  patch -p1 <zmq-zmq_utils.h.patch
+  
+  ZMQDIR=`tar tfz $ZMQFILE|head -1`
+  
+  # build 32- and 64-bit ZMQ for MinGW
+  pushd $ZMQDIR
+  for i in 32 64 ; do
+    echo
+    echo zmq mingw$i
+    mingw$i-configure --enable-static --disable-shared
+    make
+    sudo make install
+    make clean
+  done
+  popd
+  rm -rf $ZMQDIR
 fi
 
 #
