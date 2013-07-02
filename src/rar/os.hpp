@@ -241,16 +241,20 @@
 
 #define safebuf static
 
+#if defined(__MINGW64__) || defined(__MINGW32__)
+#define LITTLE_ENDIAN
+#else
 #if !defined(LITTLE_ENDIAN) && !defined(BIG_ENDIAN)
   #if defined(__i386) || defined(i386) || defined(__i386__)
     #define LITTLE_ENDIAN
-  //#elif defined(BYTE_ORDER) && BYTE_ORDER == LITTLE_ENDIAN
-    //#define LITTLE_ENDIAN
-  //#elif defined(BYTE_ORDER) && BYTE_ORDER == BIG_ENDIAN
-    //#define BIG_ENDIAN
+  #elif defined(BYTE_ORDER) && defined(LITTLE_ENDIAN) && BYTE_ORDER == LITTLE_ENDIAN
+    #define LITTLE_ENDIAN
+  #elif defined(BYTE_ORDER) && defined(BIG_ENDIAN) &&  BYTE_ORDER == BIG_ENDIAN
+    #define BIG_ENDIAN
   #else
     #error "Neither LITTLE_ENDIAN nor BIG_ENDIAN are defined. Define one of them."
   #endif
+#endif
 #endif
 
 #if defined(LITTLE_ENDIAN) && defined(BIG_ENDIAN)
