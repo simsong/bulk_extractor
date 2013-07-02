@@ -1,6 +1,9 @@
 %{
 /*
  *  http://flex.sourceforge.net/manual/Cxx.html
+ *
+ * Don't use this one. It was developed for Alex Nelson's research project.
+ * It is supposed to find all RFC 822 headers, but it over-reports.
  */
 
 #include "config.h"
@@ -109,22 +112,22 @@ U_TLD4		(Q\0A\0|R\0E\0|R\0O\0|R\0S\0|R\0U\0|R\0W\0|S\0A\0|S\0B\0|S\0C\0|S\0D\0|S
 %%
 
 "{XPC}{1,80}"[ ]+[<]{MAILBOX}[>] {
-    printf(">>> OH BABY 1: %s\n",yytext);
+    printf(">>> SCAN_HEADERS 1: %s\n",yytext);
     pos += yyleng;
 }
 
 [ ]{XPC}{1,80}[ ]+[<]{MAILBOX}[>] {
-    printf(">>> OH BABY 2: %s\n",yytext);
+    printf(">>> SCAN_HEADERS 2: %s\n",yytext);
     pos += yyleng;
 }
 
 [ ]{MAILBOX}[ ]+\((ATOMCHAR|[ ]){1,80}\) {
-    printf(">>> OH BABY 4: %s\n",yytext);
+    printf(">>> SCAN_HEADERS 4: %s\n",yytext);
     pos += yyleng;
 }
 
 [ ]{XPC}{1,80}[ ]+\[mailto:{MAILBOX}\] {
-    printf(">>> OH BABY 3: %s\n",yytext);
+    printf(">>> SCAN_HEADERS 3: %s\n",yytext);
     pos += yyleng;
 }
 
