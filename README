@@ -181,6 +181,6 @@ DEVELOPERS!
 
 If you are developing with github, after a checkout, you may wish to do this:
 
-for i in dfxml be13_api  ; do (cd $i ; git remote delete origin; git add origin git@github.com:simsong/be13_api.git ; git checkout master ) ; done
+for i in dfxml be13_api  ; do echo $i ; (cd $i && git remote rm origin && git add origin git@github.com:simsong/$i.git && git checkout master ) ; done
 
 
