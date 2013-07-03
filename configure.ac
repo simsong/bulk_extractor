@@ -32,6 +32,8 @@ AC_PROG_INSTALL
 AC_PROG_LEX
 # Endian check is required for MD5 implementation
 AC_C_BIGENDIAN
+
+# These are needed for bulk_extractor. They are not needed for tcpflow
 AC_DEFINE([BULK_EXTRACTOR],1,[We are compiling bulk_extractor])
 AC_DEFINE([USE_HISTOGRAMS],1,[We are using histograms])
 AC_DEFINE([USE_STOP_LIST],1,[We are using the stop lists])
