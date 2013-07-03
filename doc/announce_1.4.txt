@@ -6,6 +6,16 @@ bulk_extractor Version 1.4 has been released for Linux, MacOS and Windows.
 
 New functionality in Version 1.4 includes:
 
+* scan_rar detects RAR archives (both encrypted and unencrypted) and
+  individual RAR archive components (only unencrypted). Unencrypted
+  RAR archive components are decompressed and recursively
+  re-processed.
+
+* scan_exif now implements JPEG carving. By default, only encoded
+  JPEGs are carved. Files are created in a directory called
+  "jpeg/". The filename is the forensic path. Confusingly, JPEGs
+  without EXIFs will also be carved.
+
 Improvements in Version 1.4 include:
 
 * scan_pdf now does a better job extracting emails from text.
@@ -19,12 +29,19 @@ New features for testing includes:
   to check the results of BE run against the Real Data Corpus as part of
   our release engineering.
 
+* The UTF-8 BOM was removed from the feature files.  For a discussion
+  as to the relative merits and problems with a UTF-8 byte order mark,
+  see [1].
+
+  [1] https://en.wikipedia.org/wiki/Byte_order_mark#UTF-8
 
 Incompatiable changes:
 
-* The -B option for specifying the blocksize for bulk data analysis has been removed. Instead specify it with -S block_size=NN.
+* The -B option for specifying the blocksize for bulk data analysis
+  has been removed. Instead specify it with -S block_size=NN.
 
-* The -W option no longer specifies the minimum and maximum word sizes. Instead specify with -S word_min=NN and -S word_max=NN
+* The -W option no longer specifies the minimum and maximum word
+  sizes. Instead specify with -S word_min=NN and -S word_max=NN
 
 ================================================================
 OVERREPORTING FIXES
@@ -186,42 +203,21 @@ zip.txt      - Information about all ZIP files and zip
                components.
 
 ================================================================
-Regular Expression Libraries
+Lightgrep Integration
 
-bulk_extractor makes extensive use of regular expressions for
-extraction. For Version 1.3 decided to evaluate a variety of regular
-expression libraries.
-
-Regular expression scanning with bulk_extractor is complicated by the
-fact that we are scanning binary data, so regular expression engines
-that attempt to handle Unicode do not do well. We looked for
-comparisions of regular expression libraries and found these:
-
-* http://lh3lh3.users.sourceforge.net/reb.shtml
-* http://sljit.sourceforge.net/regex_perf.html
-
-We evaluated the following regular expression libraries:
-
-- RE2 http://code.google.com/p/re2/ (slow on our text, possibly due to UTF8)
-- TRE http://laurikari.net/tre/     (very fast)
-- regex-0.12                        (very slow; will not cross-compile))
-- onig http://www.geocities.jp/kosako3/oniguruma/ (very fast)
-- PCRE http://www.pcre.org/         (medium speed)
-
-Although onig gave the best performance under Linux, we were not able
-to get onig to compile under mingw. TRE gave performance that was
-quite similar to onig had cross-compiled without problems. Performance
-of RE2 and PCRE was not acceptable.
-
-Thus, bulk_extractor will now use TRE if it is installed, and if not
-it will use the system regular expression library.
-
-
+** SOMEBODY WRITE THIS **
 
 ================================================================
 Planned Feature List for 1.4:
 
-* RAR & RAR2 decompression
+================================================================
+Planned Feature List for 1.5:
+
+* LZMA/LZMA2 decompression
+
+* 7zip component recognition 
+
+* xz decompression
 
 * BZIP2 decompression
 
@@ -230,27 +226,22 @@ Planned Feature List for 1.4:
 
 * Scanning for the start of bitlocker protected volumes.
 
-* Support for checkpointing using BLCR.
-
 We are also considering the following scanners (and need help!):
-
-* LZMA decompression
-
-* MSI decompression
-
-* CAB decompression
 
 * NTFS decompression
 
 * Better handling of MIME encoding
 
-* SQLite database identification
+* SQLite database identification (first survey - how fragmented are they?)
 
 * Processing of physical drives under Windows
 
 
 We have tabled the following ideas, for the following reasons:
 
+* MSI decompression
+
+* CAB decompression
 
 * Improved restarting, so that each page is retried once but only
   once. (The improved reliability in verson 1.2 made this request less
@@ -263,6 +254,8 @@ We have tabled the following ideas, for the following reasons:
   interperter running in the same address space, so we would need to
   run multiple Pythons in multiple address spaces. Frankly, it's a lot
   of work, and Python is really slow, so we're just not doing this.)
+
+* Support for checkpointing using BLCR.
 
 
 
