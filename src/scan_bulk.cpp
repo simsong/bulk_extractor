@@ -352,16 +352,16 @@ double sd_autocorrelation_cosine_variance(const sbuf_t &sbuf,const histogram &sb
     if(sbuf.bufsize==0) return 0;
 
     /* Create the autocorolation buffer */
-    uint8_t *autobuf = (uint8_t *)malloc(sbuf.bufsize);
-    if(autobuf){
+    managed_malloc<uint8_t>autobuf(sbuf.bufsize);
+    if(autobuf.buf){
 	for(size_t i=0;i<sbuf.bufsize-1;i++){
-	    autobuf[i] = sbuf[i] + sbuf[i+1];
+	    autobuf.buf[i] = sbuf[i] + sbuf[i+1];
 	}
-	autobuf[sbuf.bufsize-1] = sbuf[sbuf.bufsize-1] + sbuf[0];
+	autobuf.buf[sbuf.bufsize-1] = sbuf[sbuf.bufsize-1] + sbuf[0];
 
 	/* Get a histogram for autobuf */
 	histogram autohist;
-	autohist.add(autobuf,sbuf.bufsize);
+	autohist.add(autobuf.buf,sbuf.bufsize);
 	autohist.calc_distribution();
 
 	/* Now compute the cosine similarity */
@@ -384,7 +384,6 @@ double sd_autocorrelation_cosine_variance(const sbuf_t &sbuf,const histogram &sb
 	double mag1 = sqrt(mag_squared1);
 	double mag2 = sqrt(mag_squared2);
 	double cosinesim = dotproduct / (mag1 * mag2);
-	free(autobuf);
 	return cosinesim;
     }
     else return 0;

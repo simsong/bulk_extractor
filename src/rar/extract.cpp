@@ -374,6 +374,7 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,size_t HeaderS
 #endif
 
   wchar *DestNameW=WideName ? DestFileNameW:NULL;
+  (void) DestNameW;
 
 #ifdef UNICODE_SUPPORTED
   if (WideName)
@@ -644,7 +645,7 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,size_t HeaderS
 
     File CurFile;
 
-    if (!IsLink(Arc.NewLhd.FileAttr))
+    if (!IsLink(Arc.NewLhd.SubFlags))
     {
         if (Arc.IsArcDir())
         {
@@ -719,7 +720,7 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,size_t HeaderS
 		<< Arc.NewLhd.NameSize << "</Name_Size>\n<Unpack_Size>" 
 		<< Arc.NewLhd.UnpSize << "</Unpack_Size>\n<Data_Size>"
 		<< Arc.NewLhd.DataSize << "</Data_Size\n<Pack_Size>"
-		<< Arc.NewLhd.PackSize << "</Pack_Size>\n<High_Pack_Size>"
+		<< Arc.NewLhd.DataSize << "</Pack_Size>\n<High_Pack_Size>"
 		<< Arc.NewLhd.HighPackSize << "</High_Pack_Size>\n<High_Unp_Size>"
 		<< Arc.NewLhd.HighUnpSize << "</High_Unp_Size>\n<Host_OS>" 
 		<< theos << "</Host_OS>\n<Method>" 
@@ -853,11 +854,11 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,size_t HeaderS
 #endif
 
       if (!TestMode && (Command=='X' || Command=='E') &&
-          !IsLink(Arc.NewLhd.FileAttr))
+          !IsLink(Arc.NewLhd.SubFlags))
       {
 #if defined(_WIN_ALL) || defined(_EMX)
         if (Cmd->ClearArc)
-          Arc.NewLhd.FileAttr&=~FA_ARCH;
+          Arc.NewLhd.SubFlags&=~FA_ARCH;
 #endif
         if (!BrokenFile || Cmd->KeepBroken)
         {
@@ -868,16 +869,11 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,size_t HeaderS
             Cmd->xctime==EXTTIME_NONE ? NULL:&Arc.NewLhd.ctime,
             Cmd->xatime==EXTTIME_NONE ? NULL:&Arc.NewLhd.atime);
           CurFile.Close();
-#if defined(_WIN_ALL) && !defined(_WIN_CE) && !defined(SFX_MODULE)
-          if (Cmd->SetCompressedAttr &&
-              (Arc.NewLhd.FileAttr & FILE_ATTRIBUTE_COMPRESSED)!=0 && WinNT())
-            SetFileCompression(CurFile.FileName,CurFile.FileNameW,true);
-#endif
           CurFile.SetCloseFileTime(
             Cmd->xmtime==EXTTIME_NONE ? NULL:&Arc.NewLhd.mtime,
             Cmd->xatime==EXTTIME_NONE ? NULL:&Arc.NewLhd.atime);
           if (!Cmd->IgnoreGeneralAttr)
-            SetFileAttr(CurFile.FileName,CurFile.FileNameW,Arc.NewLhd.FileAttr);
+            SetFileAttr(CurFile.FileName,CurFile.FileNameW,Arc.NewLhd.SubFlags);
           PrevExtracted=true;
         }
       }

@@ -28,6 +28,7 @@ from subprocess import Popen,call,PIPE
 import os.path,glob,zipfile,codecs
 import bulk_extractor_reader
 
+corp_default = "/corp"
 
 
 default_infile   = "nps-2009-ubnist1/ubnist1.gen3.raw"
@@ -557,7 +558,10 @@ if __name__=="__main__":
 
     # Find the bulk_extractor version and add it to the outdir
     args.outdir += "-"+be_version()
-    drives = os.getenv("DOMEX_CORP") + nps_drives_path
+    corp = os.getenv("DOMEX_CORP")
+    if not corp:
+        corp = corp_default
+    drives =  corp + nps_drives_path
 
     if args.fast:
         args.image  = fast_infile

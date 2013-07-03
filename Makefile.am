@@ -13,10 +13,32 @@ endif
 SUBDIRS = doc doc/user_manual src man plugins python specfiles tests $(BE_VIEWER_DIR) $(SRC_WIN_DIR)
 
 
-EXTRA_DIST = bootstrap.sh \
+# don't include bootstrap. People run it, and they shoudln't
+# It's only for people who check out the git repo
+
+EXTRA_DIST = \
 	ROADMAP.txt \
-	m4/ax_pthread.m4 \
-	src/data_sniffer src/dfrws_2012_challenge.py
+	m4/ac_check_classpath.m4 \
+	m4/ac_check_junit.m4 \
+	m4/ac_check_rqrd_class.m4 \
+	m4/ac_java_options.m4 \
+	m4/ac_prog_jar.m4 \
+	m4/ac_prog_java.m4 \
+	m4/ac_prog_java_cc.m4 \
+	m4/ac_prog_java_works.m4 \
+	m4/ac_prog_javac.m4 \
+	m4/ac_prog_javac_works.m4 \
+	m4/ac_prog_javadoc.m4 \
+	m4/ac_prog_javah.m4 \
+	m4/ac_try_compile_java.m4 \
+	m4/ac_try_run_javac.m4 \
+	m4/ax_boost_base.m4 \
+	m4/ax_boost_filesystem.m4 \
+	m4/ax_boost_system.m4 \
+	m4/ax_pthread.m4
+
+# these are for the DFRWS2013 challenge:
+#	src/data_sniffer src/dfrws_2012_challenge.py
 
 
 ACLOCAL_AMFLAGS = -I m4

@@ -52,19 +52,17 @@ void scan_gzip(const class scanner_params &sp,const recursion_control_block &rcb
 	     * See zlib.h and RFC1952
 	     * http://www.15seconds.com/Issue/020314.htm
 	     *
-	     * I'd like to use managed_malloc<> here, but I do a realloc to ease
-	     * memory pressure...
 	     */
 	    if(cc[0]==0x1f && cc[1]==0x8b && cc[2]==0x08){ // gzip HTTP flag
 		u_int compr_size = sbuf.bufsize - (cc-sbuf.buf); // up to the end of the buffer 
-		u_char *decompress_buf = (u_char *)calloc(gzip_max_uncompr_size,1);
-		if(decompress_buf){
+                managed_malloc<u_char>decompress(gzip_max_uncompr_size);
+		if(decompress.buf){
 		    z_stream zs;
 		    memset(&zs,0,sizeof(zs));
 		
 		    zs.next_in = (Bytef *)cc;
 		    zs.avail_in = compr_size;
-		    zs.next_out = (Bytef *)decompress_buf;
+		    zs.next_out = (Bytef *)decompress.buf;
 		    zs.avail_out = gzip_max_uncompr_size;
 		
 		    gz_header_s gzh;
@@ -75,22 +73,15 @@ void scan_gzip(const class scanner_params &sp,const recursion_control_block &rcb
 			r = inflate(&zs,Z_SYNC_FLUSH);
 			/* Ignore the error code; process data if we got any */
 			if(zs.total_out>0){	
-			    /* run decompress_buf through the recognizer.
-			     * First, free what we didn't use (relieve memory pressure)
+			    /* run decompress.buf through the recognizer.
 			     */
-			    decompress_buf = (u_char *)realloc(decompress_buf,zs.total_out);
 			    const ssize_t pos = cc-sbuf.buf;
 			    const pos0_t pos0_gzip = (pos0 + pos) + rcb.partName;
-			    const sbuf_t sbuf_new(pos0_gzip,decompress_buf,zs.total_out,zs.total_out,false);
+			    const sbuf_t sbuf_new(pos0_gzip,decompress.buf,zs.total_out,zs.total_out,false);
 			    (*rcb.callback)(scanner_params(sp,sbuf_new)); // recurse
-			    if(rcb.returnAfterFound){
-				free(decompress_buf);
-				return;
-			    }
 			}
 			r = inflateEnd(&zs);
 		    }
-		    free(decompress_buf);
 		}
 	    }
 	}

@@ -201,7 +201,7 @@ pos0_t process_aff::get_pos0(const image_process::iterator &it) const
 
 sbuf_t *process_aff::sbuf_alloc(image_process::iterator &it)
 {
-    size_t bufsize  = af_get_pagesize(af)+opt_margin;
+    size_t bufsize  = af_get_pagesize(af)+margin;
     unsigned char *buf = (unsigned char *)malloc(bufsize);
     if(!buf) throw bad_alloc();
 
@@ -423,7 +423,7 @@ pos0_t process_ewf::get_pos0(const image_process::iterator &it) const
 /** Read from the iterator into a newly allocated sbuf */
 sbuf_t *process_ewf::sbuf_alloc(image_process::iterator &it)
 {
-    int count = opt_pagesize + opt_margin;
+    int count = page_size + margin;
 
     if(this->ewf_filesize < it.raw_offset + count){    /* See if that's more than I need */
 	count = this->ewf_filesize - it.raw_offset;
@@ -443,13 +443,16 @@ sbuf_t *process_ewf::sbuf_alloc(image_process::iterator &it)
 	return 0;
     }
 
-    sbuf_t *sbuf = new sbuf_t(get_pos0(it),buf,count,opt_pagesize,true);
+    sbuf_t *sbuf = new sbuf_t(get_pos0(it),buf,count,page_size,true);
     return sbuf;
 }
 
+/**
+ * just add the page size for process_ewf
+ */
 void process_ewf::increment_iterator(image_process::iterator &it)
 {
-    it.raw_offset += opt_pagesize;
+    it.raw_offset += page_size;
     if(it.raw_offset > this->ewf_filesize) it.raw_offset = this->ewf_filesize;
 }
 
@@ -467,12 +470,12 @@ string process_ewf::str(class image_process::iterator &it)
 
 uint64_t process_ewf::blocks(class image_process::iterator &it)
 {
-  return this->ewf_filesize / opt_pagesize;
+  return this->ewf_filesize / page_size;
 }
 
 uint64_t process_ewf::seek_block(class image_process::iterator &it,uint64_t block)
 {
-    it.raw_offset = opt_pagesize * block;
+    it.raw_offset = page_size * block;
     return block;
 }
 
@@ -518,8 +521,9 @@ static string make_list_template(string fn,int *start)
 }
 
 
-process_raw::process_raw(string fname) :image_process(fname),file_list(),
-					raw_filesize(0),current_file_name(),
+process_raw::process_raw(string fname,size_t page_size_,size_t margin_)
+    :image_process(fname,page_size_,margin_),
+     file_list(),raw_filesize(0),current_file_name(),
 #ifdef WIN32
                                         current_handle(INVALID_HANDLE_VALUE)
 #else
@@ -690,7 +694,7 @@ image_process::iterator process_raw::end()
 
 void process_raw::increment_iterator(image_process::iterator &it)
 {
-    it.raw_offset += opt_pagesize;
+    it.raw_offset += page_size;
     if(it.raw_offset > this->raw_filesize) it.raw_offset = this->raw_filesize;
 }
 
@@ -715,11 +719,11 @@ pos0_t process_raw::get_pos0(const image_process::iterator &it) const
 }
 
 /** Read from the iterator into a newly allocated sbuf.
- * uses opt_pagesize.
+ * uses page_size.
  */
 sbuf_t *process_raw::sbuf_alloc(image_process::iterator &it)
 {
-    int count = opt_pagesize + opt_margin;
+    int count = page_size + margin;
 
     if(this->raw_filesize < it.raw_offset + count){    /* See if that's more than I need */
 	count = this->raw_filesize - it.raw_offset;
@@ -736,7 +740,7 @@ sbuf_t *process_raw::sbuf_alloc(image_process::iterator &it)
 	free(buf);
 	throw read_error();
     }
-    sbuf_t *sbuf = new sbuf_t(get_pos0(it),buf,count,opt_pagesize,true);
+    sbuf_t *sbuf = new sbuf_t(get_pos0(it),buf,count,page_size,true);
     return sbuf;
 }
 
@@ -749,16 +753,16 @@ static std::string filename_extension(std::string fn)
 
 uint64_t process_raw::blocks(class image_process::iterator &it)
 {
-    return (this->raw_filesize+opt_pagesize-1) / opt_pagesize;
+    return (this->raw_filesize+page_size-1) / page_size;
 }
 
 uint64_t process_raw::seek_block(class image_process::iterator &it,uint64_t block)
 {
-    if(block * opt_pagesize > (uint64_t)raw_filesize){
-        block = raw_filesize / opt_pagesize;
+    if(block * page_size > (uint64_t)raw_filesize){
+        block = raw_filesize / page_size;
     }
 
-    it.raw_offset = block * opt_pagesize;
+    it.raw_offset = block * page_size;
     return block;
 }
 
@@ -769,7 +773,12 @@ uint64_t process_raw::seek_block(class image_process::iterator &it,uint64_t bloc
  *** Directory Recursion
  ****************************************************************/
 
-process_dir::process_dir(const std::string &image_dir):image_process(image_dir),files()
+/**
+ * directories don't get page sizes or margins; the page size is the entire
+ * file and the margin is 0.
+ */
+process_dir::process_dir(const std::string &image_dir):
+    image_process(image_dir,0,0),files()
 {
     /* Use dig to get a list of all the files */
     dig d(image_dir);
@@ -873,7 +882,8 @@ uint64_t process_dir::seek_block(class image_process::iterator &it,uint64_t bloc
 
 #include <functional>
 #include <locale>
-image_process *image_process_open(string fn,int opt_recurse)
+image_process *image_process::open(string fn,bool opt_recurse,
+                                   size_t page_size_,size_t margin_)
 {
     image_process *ip = 0;
     string ext = filename_extension(fn);
@@ -903,7 +913,7 @@ image_process *image_process_open(string fn,int opt_recurse)
 	
 	if(ext=="aff"){
 #ifdef HAVE_LIBAFFLIB
-	    ip = new process_aff(fn);
+	    ip = new process_aff(fn,page_size_,margin_);
 #else
 	    cerr << "This program was compiled without AFF support\n";
 	    exit(0);
@@ -911,13 +921,13 @@ image_process *image_process_open(string fn,int opt_recurse)
 	}
 	if(ext=="e01"){
 #ifdef HAVE_LIBEWF
-	    ip = new process_ewf(fn);
+	    ip = new process_ewf(fn,page_size_,margin_);
 #else
 	    cerr << "This program was compiled without E01 support\n";
 	    exit(1);
 #endif
 	}
-	if(!ip) ip = new process_raw(fn);
+	if(!ip) ip = new process_raw(fn,page_size_,margin_);
     }
     /* Try to open it */
     if(ip->open()){

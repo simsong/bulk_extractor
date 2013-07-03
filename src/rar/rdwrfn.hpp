@@ -4,7 +4,7 @@
 class CmdAdd;
 class Unpack;
 class File;
-class FileHeader;
+struct FileHeader;
 
 class ComprDataIO
 {

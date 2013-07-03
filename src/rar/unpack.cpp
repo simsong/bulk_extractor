@@ -5,8 +5,8 @@
 #include "suballoc.hpp"
 #include "unpack.hpp"
 #ifndef SFX_MODULE
-#include "unpack15.cpp"
-#include "unpack20.cpp"
+#include "unpack15.hpp"
+#include "unpack20.hpp"
 #endif
 
 Unpack::Unpack(ComprDataIO *DataIO) :
@@ -295,28 +295,49 @@ inline int Unpack::SafePPMDecodeChar()
   return(Ch);
 }
 
+static const int DBitLengthCounts[]= {4,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,14,0,12};
+
+static const int* buildDDecode()
+{
+    int* DDecodeInit = (int*) malloc(sizeof(int) * DC);
+    memset(DDecodeInit, 0x00, sizeof(int) * DC);
+
+    int Dist=0,BitLength=0,Slot=0;
+    for (unsigned I=0;I<sizeof(DBitLengthCounts)/sizeof(DBitLengthCounts[0]);I++,BitLength++)
+    {
+        for (int J=0;J<DBitLengthCounts[I];J++,Slot++,Dist+=(1<<BitLength))
+        {
+            DDecodeInit[Slot]=Dist;
+        }
+    }
+    return DDecodeInit;
+}
+
+static const byte* buildDBits()
+{
+    byte* DBitsInit = (byte*) malloc(sizeof(byte) * DC);
+    memset(DBitsInit, 0x00, sizeof(byte) * DC);
+
+    int Dist=0,BitLength=0,Slot=0;
+    for (unsigned I=0;I<sizeof(DBitLengthCounts)/sizeof(DBitLengthCounts[0]);I++,BitLength++)
+    {
+        for (int J=0;J<DBitLengthCounts[I];J++,Slot++,Dist+=(1<<BitLength))
+        {
+            DBitsInit[Slot]=BitLength;
+        }
+    }
+    return DBitsInit;
+}
 
 void Unpack::Unpack29(bool Solid)
 {
-  static __thread unsigned char LDecode[]={0,1,2,3,4,5,6,7,8,10,12,14,16,20,24,28,32,40,48,56,64,80,96,112,128,160,192,224};
-  static __thread unsigned char LBits[]=  {0,0,0,0,0,0,0,0,1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4,  4,  5,  5,  5,  5};
-  static __thread int DDecode[DC];
-  static __thread byte DBits[DC];
-  static __thread int DBitLengthCounts[]= {4,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,14,0,12};
-  static __thread unsigned char SDDecode[]={0,4,8,16,32,64,128,192};
-  static __thread unsigned char SDBits[]=  {2,2,3, 4, 5, 6,  6,  6};
+  static const unsigned char LDecode[]={0,1,2,3,4,5,6,7,8,10,12,14,16,20,24,28,32,40,48,56,64,80,96,112,128,160,192,224};
+  static const unsigned char LBits[]=  {0,0,0,0,0,0,0,0,1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4,  4,  5,  5,  5,  5};
+  static const int* DDecode = buildDDecode();
+  static const byte* DBits = buildDBits();
+  static const unsigned char SDDecode[]={0,4,8,16,32,64,128,192};
+  static const unsigned char SDBits[]=  {2,2,3, 4, 5, 6,  6,  6};
   unsigned int Bits;
-
-  if (DDecode[1]==0)
-  {
-    int Dist=0,BitLength=0,Slot=0;
-    for (unsigned I=0;I<sizeof(DBitLengthCounts)/sizeof(DBitLengthCounts[0]);I++,BitLength++)
-      for (int J=0;J<DBitLengthCounts[I];J++,Slot++,Dist+=(1<<BitLength))
-      {
-        DDecode[Slot]=Dist;
-        DBits[Slot]=BitLength;
-      }
-  }
 
   FileExtracted=true;
 

@@ -274,6 +274,9 @@ static uint16_t IPv6L3Chksum(const sbuf_t &sbuf, u_int chksum_byteoffset)
 }
 
 /* compute an Internet-style checksum, from Stevens */
+#  ifdef HAVE_DIAGNOSTIC_CAST_ALIGN
+#    pragma GCC diagnostic ignored "-Wcast-align"
+#  endif
 static uint16_t cksum(const struct be13::ip4 * const ip, int len) 
 {
     long  sum = 0;  /* assume 32 bit long, 16 bit short */
@@ -299,6 +302,9 @@ static uint16_t cksum(const struct be13::ip4 * const ip, int len)
     }
     return ~sum;
 }
+#  ifdef HAVE_DIAGNOSTIC_CAST_ALIGN
+#    pragma GCC diagnostic warning "-Wcast-align"
+#  endif
 
 /* determine if an integer is a power of two; used for the TTL */
 static bool isPowerOfTwo(const uint8_t val) 

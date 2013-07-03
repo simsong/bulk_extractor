@@ -19,8 +19,7 @@ class email_scanner : public sbuf_scanner {
 public:
       email_scanner(const scanner_params &sp):
         sbuf_scanner(&sp.sbuf),
-	email_recorder(),rfc822_recorder(),domain_recorder(),url_recorder(),ether_recorder(),
-	ip_written(0),ip_tested(0){
+	email_recorder(),rfc822_recorder(),domain_recorder(),url_recorder(),ether_recorder(){
           email_recorder  = sp.fs.get_name("email");
 	  domain_recorder = sp.fs.get_name("domain");
 	  url_recorder    = sp.fs.get_name("url");
@@ -32,8 +31,6 @@ public:
       class feature_recorder *domain_recorder;
       class feature_recorder *url_recorder;
       class feature_recorder *ether_recorder;
-      volatile long ip_written;
-      volatile long ip_tested;
 };
 #define YY_EXTRA_TYPE email_scanner *             /* holds our class pointer */
 YY_EXTRA_TYPE yyemail_get_extra (yyscan_t yyscanner );    /* redundent declaration */
@@ -241,9 +238,7 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
     /* Ignore 0. */
     if(SBUF[s.pos]=='0' && SBUF[s.pos+1]=='.') ignore=1;
 
-    //__sync_fetch_and_add(&ip_texted,1);
     if(!ignore) {
-        //__sync_fetch_and_add(&ip_written,1);
         s.domain_recorder->write_buf(SBUF,s.pos,yyleng);
     }
     s.pos += yyleng;
@@ -345,7 +340,6 @@ void scan_email(const class scanner_params &sp,const recursion_control_block &rc
 	return;
     }
     if(sp.phase==scanner_params::PHASE_SHUTDOWN){
-        //printf("ip_written=%ld  ip_tested=%ld\n",ip_written,ip_tested);
         return; 
     }
     if(sp.phase==scanner_params::PHASE_SCAN){

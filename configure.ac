@@ -6,7 +6,7 @@
 
 AC_PREREQ(2.57)
 
-AC_INIT(BULK_EXTRACTOR, 1.4.0-dev-001, bugs@digitalcorpora.org)
+AC_INIT(BULK_EXTRACTOR, 1.4.0-beta2, bugs@digitalcorpora.org)
 AC_CONFIG_MACRO_DIR(m4)
 
 # Notice:
@@ -97,8 +97,12 @@ AC_TYPE_INT64_T
 AC_SYS_LARGEFILE
 AC_SYS_POSIX_TERMIOS
 
-if test "$LEX" != flex; then
-  AC_MSG_ERROR([flex not installed; required for compiling regular expressions. Try 'apt-get install flex' or 'yum install flex' or 'port install flex' or whatever package manager you happen to be using....])
+if test x"$LEX" == x ; then
+  AC_MSG_ERROR([flex not required.])
+fi  
+
+if test `basename "$LEX"` != flex; then
+  AC_MSG_ERROR([gnu flex is required.])
 fi
 
 ## Determine if we can use flex -R
@@ -217,8 +221,13 @@ AC_ARG_ENABLE([lift], AS_HELP_STRING([--enable-lift], [enable CMU LIFT SVM for t
 		      AC_DEFINE(USE_LIFT, 1, [Use LIFT SVM]))
 
 ## rar support
-AC_ARG_ENABLE([rar], AS_HELP_STRING([--enable-rar], [enable RAR experimental decompression experimental]),
-		      AC_DEFINE(USE_RAR, 1, [Use RAR decompression]))
+## Enabled for 1.4 release!
+AC_ARG_ENABLE([rar],
+              AS_HELP_STRING([--disable-rar], [Disable RAR decompression]),
+              [],
+	      [AC_DEFINE(USE_RAR, 1, [Use RAR decompression]) rar="yes"])
+AM_CONDITIONAL([RAR_ENABLED], [test "yes" = "$rar"])
+
 
 
 
@@ -330,7 +339,6 @@ AC_LINK_IFELSE(
    [AC_MSG_RESULT([no])]
 )
 
-
 # end PTHREAD SUPPORT
 ################################################################
 
@@ -381,16 +389,20 @@ AC_ARG_WITH([o3], AC_HELP_STRING([--without-o3], [Do not force O3 optimization; 
 AC_CHECK_LIB([z],[uncompress],,
 	AC_MSG_ERROR([zlib libraries not installed; try installing zlib-devel zlib-dev zlib-devel zlib1g-dev or libz-dev]))
 
+## EXPAT is now a main line requirements for restarting
+AC_CHECK_HEADERS([expat.h])
+AC_CHECK_LIB([expat],[XML_ParserCreate])
+
 ################################################################
 ## regex support
 ## there are several options
 ## tre is better than regex
 AC_CHECK_LIB([stdc++],[main])
 AC_CHECK_LIB([sicudt],[main])
-AC_CHECK_HEADER([unicode/ucnv.h])
+AC_CHECK_HEADERS([unicode/ucnv.h])
 AC_SEARCH_LIBS([uset_close], [sicuuc])
 AC_CHECK_LIB([sicuuc],[main])
-AC_CHECK_HEADER([lightgrep/api.h])
+AC_CHECK_HEADERS([lightgrep/api.h])
 AC_CHECK_LIB([lightgrep], [lg_create_pattern])
 AC_CHECK_HEADERS([regex.h tre/tre.h])
 AC_CHECK_LIB([regex],[regcomp])
@@ -430,54 +442,54 @@ AC_CHECK_HEADER([libewf.h],
 AC_CHECK_FUNCS([libewf_handle_get_utf8_header_value_notes libewf_error_backtrace_fprint])
 AC_CHECK_HEADERS([tsk3/libtsk.h])
 
-## EXPAT is now a main line requirements
-## for restarting
-AC_CHECK_HEADER([expat.h])
-AC_CHECK_LIB([expat],[XML_ParserCreate])
-
 
 ################################################################
-## sectorid support
-AC_ARG_ENABLE([sectorid],
-    [AS_HELP_STRING([--disable-sectorid], [disable sectorid scanner support])],
-    [sectorid=no],
-    [sectorid=yes])
+## hashid support
+AC_ARG_ENABLE([hashid],
+    [AS_HELP_STRING([--disable-hashid], [disable hashid scanner support])],
+    [hashid=no],
+    [hashid=yes])
 
-if test x"$sectorid" == xyes ; then
+if test x"$hashid" == xyes ; then
   AC_CHECK_LIB([zmq],[zmq_ctx_new],[LIBS="-lzmq $LIBS"],
-    [AC_MSG_WARN([Could not find zeromq, zeromq v3 is required to build the sectorid scanner])
-    sectorid=no])
+    [AC_MSG_WARN([Could not find zeromq, zeromq v3 is required to build the hashid scanner])
+    hashid=no])
 
-  if test  x"$mingw" = x"yes";  then
+  if test x"$mingw" = x"yes";  then
     # the win32 configuration of libxml2 requires zlib and iconv libraries
     AC_CHECK_LIB([z], [gzdopen],[LIBS="-lz $LIBS"], [AC_MSG_ERROR([Could not find zlib library])])
     AC_CHECK_LIB([iconv], [iconv],[LIBS="-liconv $LIBS"], [AC_MSG_ERROR([Could not find win-iconv library])])
   fi
 
   AC_CHECK_LIB([xml2], [xmlSAXUserParseFile],[LIBS="-lxml2 $LIBS"],
-    [AC_MSG_WARN([Could not find libxml2 library required to build the sectorid scanner])
-    sectorid=no])
-  AX_BOOST_BASE([1.44],
-    [AX_BOOST_SYSTEM
-    AX_BOOST_FILESYSTEM
-    LIBS="$BOOST_SYSTEM_LIB $BOOST_FILESYSTEM_LIB $LIBS"],
-    [AC_MSG_WARN([Boost 1.44 or newer is required to build the sectorid scanner])
-    sectorid=no])
+    [AC_MSG_WARN([Could not find libxml2 library required to build the hashid scanner])
+    hashid=no])
+
+  if test x"$hashid" == xyes ; then
+    AX_BOOST_BASE([1.44],
+      [AX_BOOST_SYSTEM
+      AX_BOOST_FILESYSTEM
+      LIBS="$BOOST_SYSTEM_LIB $BOOST_FILESYSTEM_LIB $LIBS"],
+      [AC_MSG_WARN([Boost 1.44 or newer is required to build the hashid scanner])
+      hashid=no])
+  fi
+
+  if test x"$hashid" == xyes ; then
+    AC_LANG_PUSH(C++)
+    AC_CHECK_HEADER([hashdb.hpp], [],
+      [AC_MSG_WARN([Could not find hashdb header file required to build the hashid scanner])
+      hashid=no])
+    AC_CHECK_LIB([hashdb], [hashdb_version], [],
+      [AC_MSG_WARN([Could not find hashdb library required to build the hashid scanner])
+      hashid=no])
+    AC_LANG_POP()
+  fi
+
 fi
-if test x"$sectorid" == xyes ; then
-  AC_LANG_PUSH(C++)
-  AC_CHECK_HEADER([sector_hash_query.hpp], [],
-    [AC_MSG_WARN([Could not find sector_hash_query header file required to build the sectorid scanner])
-    sectorid=no])
-  AC_CHECK_LIB([sector_hash_query], [sector_hash_query_version], [],
-    [AC_MSG_WARN([Could not find sector_hash_query library required to build the sectorid scanner])
-    sectorid=no])
-  AC_LANG_POP()
-fi
-if test x"$sectorid" == xyes ; then
-  AC_DEFINE(HAVE_SECTORID,1,[define 1 to build the sectorid scanner])
+if test x"$hashid" == xyes ; then
+  AC_DEFINE(HAVE_HASHID,1,[define 1 to build the hashid scanner])
 else
-  AC_MSG_NOTICE([the sectorid scanner will not be built])
+  AC_MSG_NOTICE([the hashid scanner will not be built])
 fi
 
 
@@ -501,9 +513,7 @@ if test x"$exiv2" == x"yes" ; then
   fi
 fi
 if test x"$exiv2" == x"yes" ; then
-  AC_CHECK_HEADER([exiv2/image.hpp])
-  AC_CHECK_HEADER([exiv2/exif.hpp])
-  AC_CHECK_HEADER([exiv2/error.hpp])
+  AC_CHECK_HEADERS([exiv2/image.hpp exiv2/exif.hpp exiv2/error.hpp])
   AC_LANG_PUSH(C++)
     AC_TRY_COMPILE([#include <exiv2/image.hpp>
     	    	    #include <exiv2/exif.hpp>
@@ -543,9 +553,6 @@ AC_TRY_COMPILE([#pragma GCC diagnostic ignored "-Weffcpp"],[int a=3;],
 )
 AC_TRY_COMPILE([#pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"],[int a=3;],
   [AC_DEFINE(HAVE_DIAGNOSTIC_SUGGEST_ATTRIBUTE,1,[define 1 if GCC supports -Wsuggest-attribute=noreturn])]
-)
-AC_TRY_COMPILE([#pragma GCC diagnostic ignored "-Wredundant-decls"],[int a=3;],
-  [AC_DEFINE(HAVE_DIAGNOSTIC_REDUNDANT_DECLS,1,[define 1 if GCC supports -Wredundant-decls])]
 )
   
 ################################################################

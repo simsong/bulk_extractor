@@ -146,9 +146,6 @@ inline int analyze_stream(const class scanner_params &sp,const recursion_control
                         const  sbuf_t sbuf_new(pos0_pdf, reinterpret_cast<const uint8_t *>(&text[0]),
                                                text.size(),text.size(),false);
                         (*rcb.callback)(scanner_params(sp,sbuf_new));
-                        if(rcb.returnAfterFound){
-                            return -1;          // return after found
-                        }
                     }
                     if(pdf_dump) std::cout << "Extracted Text:\n" << text << "\n";
                 }

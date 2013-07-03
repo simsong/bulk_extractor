@@ -82,9 +82,6 @@ void base16_scanner::decode(const sbuf_t &osbuf,size_t pos,size_t len)
     if(p>opt_min_hex_buf){
         sbuf_t nsbuf(sbuf.pos0,b.buf,p,p,false);
         (*rcb.callback)(scanner_params(sp,nsbuf)); // recurse
-        if(rcb.returnAfterFound){
-	    make_eof();       // force a return
-	}
     }
 }
 

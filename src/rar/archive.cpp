@@ -42,7 +42,8 @@ Archive::Archive(RAROptions *InitCmd) :
   RecoveryPos=SIZEOF_MARKHEAD;
   RecoverySectors=-1;
 
-  memset(&NewMhd,0,sizeof(NewMhd));
+  // FIXME obliterates vtable pointer
+  memset((void*)&NewMhd,0,sizeof(NewMhd));
   NewMhd.HeadType=MAIN_HEAD;
   NewMhd.HeadSize=SIZEOF_NEWMHD;
   HeaderCRC=0;

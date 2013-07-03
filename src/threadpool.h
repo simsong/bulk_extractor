@@ -1,4 +1,5 @@
-#ifndef THREADPOOL_H
+#ifndef _THREADPOOL_H_
+#define _THREADPOOL_H_
 
 /****************************************************************
  *** THREADING SUPPORT
@@ -61,7 +62,7 @@ class threadpool {
 	    return "copying feature_recorder objects is not implemented.";
 	}
     };
- threadpool(const threadpool &t):workers(),M(),TOMAIN(),TOWORKER(),freethreads(),
+ threadpool(const threadpool &t) __attribute__((__noreturn__)) :workers(),M(),TOMAIN(),TOWORKER(),freethreads(),
     work_queue(),fs(t.fs),xreport(t.xreport),thread_status(),waiting(),mode(){
     throw new not_impl();
   }
@@ -73,7 +74,7 @@ class threadpool {
 #endif
     typedef vector<class worker *> worker_vector;
     worker_vector	workers;
-    pthread_mutex_t	M;			// protects the following variables
+    pthread_mutex_t	M;		// protects the following variables
     pthread_cond_t	TOMAIN;
     pthread_cond_t	TOWORKER;
     int			freethreads;

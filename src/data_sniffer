@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# For DFRWS2013 challenge
+
 # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
 #DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 DIR="$( dirname "${BASH_SOURCE[0]}")"

@@ -17,8 +17,7 @@
 
 #include "file.hpp"
 
-static __thread File *CreatedFiles[256];
-static __thread int RemoveCreatedActive=0;
+static const File *CreatedFiles[256];
 //char *_i64toa( int64 value, char *string, int radix );
 /**
 File constructor - After this is called, one <b>must</b> call the <code>InitFile(...)</code> function
@@ -939,24 +938,7 @@ this is not needed for bulk_extractor
 */
 bool File::RemoveCreated()
 { //This file is not called in bulk_extractor
-  RemoveCreatedActive++;
-  bool RetCode=true;
-  for (unsigned I=0;I<sizeof(CreatedFiles)/sizeof(CreatedFiles[0]);I++)
-    if (CreatedFiles[I]!=NULL)
-    {
-      CreatedFiles[I]->SetExceptions(false);
-      bool Success;
-      if (CreatedFiles[I]->NewFile)
-        Success=CreatedFiles[I]->Delete();
-      else
-        Success=CreatedFiles[I]->Close();
-      if (Success)
-        CreatedFiles[I]=NULL;
-      else
-        RetCode=false;
-    }
-  RemoveCreatedActive--;
-  return(RetCode);
+    return false;
 }
 
 

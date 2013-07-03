@@ -12,6 +12,8 @@
 #include "dfxml/src/dfxml_writer.h"
 #include "dfxml/src/hash_t.h"
 
+#include "phase1.h"
+
 #include <dirent.h>
 #include <ctype.h>
 #include <fcntl.h>
@@ -46,20 +48,11 @@ using namespace std;
 
 // Global options that can be set without using the option system
 
-size_t opt_pagesize=1024*1024*16;	// 
-size_t opt_margin = 1024*1024*4;
-u_int opt_notify_rate = 4;		// by default, notify every 4 pages
-int64_t opt_offset_start = 0;
-int64_t opt_offset_end   = 0;
 uint32_t   debug=0;
 int   opt_silent= 0;
-int   max_bad_alloc_errors = 60;
-uint64_t opt_page_start = 0;
 uint32_t   opt_last_year = 2020;
-const time_t max_wait_time=3600;
 
 std::string HTTP_EOL = "\r\n";		// stdout is in binary form
-typedef std::set<std::string> seen_page_ids_t;
 
 /* global alert_list and stop_list
  * These should probably become static class variables
@@ -152,8 +145,8 @@ scanner_t *scanners_builtin[] = {
 #ifdef HAVE_EXIV2
     scan_exiv2,
 #endif
-#ifdef HAVE_SECTORID
-    scan_sectorid,
+#ifdef HAVE_HASHID
+    scan_hashid,
 #endif
     scan_elf,
     scan_exif,
@@ -206,6 +199,13 @@ static std::string lowerstr(const std::string &str)
     return ret;
 }
 
+class path_printer_finished: public std::exception {
+public:
+    virtual const char *what() const throw() {
+        return "path printer finished.";
+    }
+} printing_done;
+
 void process_path_printer(const scanner_params &sp)
 {
     /* 1. Get next token 
@@ -213,6 +213,7 @@ void process_path_printer(const scanner_params &sp)
      *    if the prefix is PRINT, print the buffer
      *    if next part is a string, strip it and run that decoder.
      *    if next part is a |, print
+     * 3. If we are print, throw an exception to prevent continued analysis of buffer.
      */
 
     if(debug & DEBUG_PRINT_STEPS) cerr << "process_path_printer " << sp.sbuf.pos0.path << "\n";
@@ -271,7 +272,8 @@ void process_path_printer(const scanner_params &sp)
 	case scanner_params::MODE_NONE:
 	    break;
 	}
-	return;			// our job is done
+        throw printing_done;
+	//return;			// our job is done
     }
     /* If we are in an offset block, process recursively with the offset */
     if(isdigit(prefix[0])){
@@ -292,7 +294,7 @@ void process_path_printer(const scanner_params &sp)
         (*s)(scanner_params(scanner_params::PHASE_SCAN,
                             sbuf_t(new_path,sp.sbuf),
                             sp.fs,sp.print_options),
-             recursion_control_block(process_path_printer,prefix,true));
+             recursion_control_block(process_path_printer,prefix));
         return;
     }
     cerr << "Unknown name in path: " << prefix << "\n";
@@ -304,7 +306,8 @@ void process_path_printer(const scanner_params &sp)
  */
 
 
-static void process_path(const image_process &p,string path,scanner_params::PrintOptions &po)
+static size_t process_path_bufsize = 1024*1024*16; // how much to read
+static void process_open_path(const image_process &p,string path,scanner_params::PrintOptions &po)
 {
     /* Check for "/r" in path which means print raw */
     if(path.size()>2 && path.substr(path.size()-2,2)=="/r"){
@@ -315,21 +318,28 @@ static void process_path(const image_process &p,string path,scanner_params::Prin
     int64_t offset = stoi64(prefix);
 
     /* Get the offset. process */
-    u_char *buf = (u_char *)calloc(opt_pagesize,1);
+    u_char *buf = (u_char *)calloc(process_path_bufsize,1);
     if(!buf) errx(1,"Cannot allocate buffer");
-    int count = p.pread(buf,opt_pagesize,offset);
+    int count = p.pread(buf,process_path_bufsize,offset);
     if(count<0){
 	cerr << p.image_fname() << ": " << strerror(errno) << " (Read Error)\n";
 	return;
     }
 
-    /* make up a bogus feature recorder set and with a disabled feature recorder */
+    /* make up a bogus feature recorder set and with a disabled feature recorder.
+     * Then we call the path printer, which throws an exception after the printing
+     * to prevent further printing.
+     */
     feature_recorder_set fs(feature_recorder_set::SET_DISABLED);
 
     pos0_t pos0(path+"-PRINT"); // insert the PRINT token
     sbuf_t sbuf(pos0,buf,count,count,true); // sbuf system will free
     scanner_params sp(scanner_params::PHASE_SCAN,sbuf,fs,po);
-    process_path_printer(sp);
+    try {
+        process_path_printer(sp);
+    }
+    catch (path_printer_finished &e) {
+    }
 }
 
 /**
@@ -338,9 +348,9 @@ static void process_path(const image_process &p,string path,scanner_params::Prin
  * Also implements HTTP server with "-http" option.
  * Feature recorders disabled.
  */
-static void process_path(const char *fn,string path)
+static void process_path(const char *fn,string path,size_t page_size)
 {
-    image_process *pp = image_process_open(fn,0);
+    image_process *pp = image_process::open(fn,0,page_size,0);
     if(pp==0){
 	if(path=="-http"){
 	    std::cout << "HTTP/1.1 502 Filename " << fn << " is invalid" << HTTP_EOL << HTTP_EOL;
@@ -362,7 +372,7 @@ static void process_path(const char *fn,string path)
 	    if(path==".") break;
 	    scanner_params::PrintOptions po;
 	    scanner_params::setPrintMode(po,scanner_params::MODE_HEX);
-	    process_path(*pp,path,po);
+	    process_open_path(*pp,path,po);
 	} while(true);
 	return;
     }
@@ -411,7 +421,7 @@ static void process_path(const char *fn,string path)
 	    }
 
 	    /* Ready to go with path and options */
-	    process_path(*pp,p2,po);
+	    process_open_path(*pp,p2,po);
 	} while(true);
 	return;
     }
@@ -426,335 +436,23 @@ static void process_path(const char *fn,string path)
 	mode = scanner_params::MODE_HEX;
     }
     scanner_params::setPrintMode(po,mode);
-    process_path(*pp,path,po);
+    process_open_path(*pp,path,po);
 }
-
-/****************************************************************
- *** Phase 1 BUFFER PROCESSING
- *** For every page of the iterator, schedule work.
- ****************************************************************/
-
-class BulkExtractor_Phase1 {
-    /** Sleep for a minimum of msec */
-    static void msleep(int msec) {
-#if _WIN32
-	Sleep(msec);
-#else
-# ifdef HAVE_USLEEP
-	usleep(msec*1000);
-# else
-	int sec = msec/1000;
-	if(sec<1) sec=1;
-	sleep(sec);			// posix
-# endif
-#endif
-    }
-
-    std::string minsec(time_t tsec) {
-        time_t min = tsec / 60;
-        time_t sec = tsec % 60;
-        std::stringstream ss;
-        if(min>0) ss << min << " min ";
-        if(sec>0) ss << sec << " sec";
-        return ss.str();
-	
-    }
-    void print_tp_status(threadpool &tp) {
-        std::stringstream ss;
-        for(u_int i=0;i<num_threads;i++){
-            std::string status = tp.get_thread_status(i);
-            if(status.size() && status!="Free"){
-                ss << "Thread " << i << ": " << status << "\n";
-            }
-        }
-        std::cout << ss.str() << "\n";
-    }
-
-    /* Instance variables */
-    dfxml_writer &xreport;
-    aftimer &timer;
-    u_int num_threads;
-    int opt_quiet;
-    static const int retry_seconds = 60;
-
-    /* for random sampling */
-    double sampling_fraction;
-    u_int  sampling_passes;
-    u_int   notify_ctr;
-
-    bool sampling(){return sampling_fraction<1.0;}
-
-    /* Get the sbuf from current image iterator location, with retries */
-    sbuf_t *get_sbuf(image_process::iterator &it) {
-	for(int retry_count=0;retry_count<max_bad_alloc_errors;retry_count++){
-	    try {
-		return it.sbuf_alloc(); // may throw exception
-	    }
-	    catch (const std::bad_alloc &e) {
-		// Low memory could come from a bad sbuf alloc or another low memory condition.
-		// wait for a while and then try again...
-		std::cerr << "Low Memory (bad_alloc) exception: " << e.what()
-			  << " reading " << it.get_pos0()
-			  << " (retry_count=" << retry_count
-			  << " of " << max_bad_alloc_errors << ")\n";
-		
-		std::stringstream ss;
-		ss << "name='bad_alloc' " << "pos0='" << it.get_pos0() << "' "
-		   << "retry_count='"     << retry_count << "' ";
-		xreport.xmlout("debug:exception", e.what(), ss.str(), true);
-	    }
-	    if(retry_count<max_bad_alloc_errors+1){
-		std::cerr << "will wait for " << retry_seconds << " seconds and try again...\n";
-		msleep(retry_seconds*1000);
-	    }
-	}
-	std::cerr << "Too many errors encountered in a row. Diagnose and restart.\n";
-	exit(1);
-    }
-
-    /* Notify user about current state of phase1 */
-    void notify_user(image_process::iterator &it){
-	if(notify_ctr++ >= opt_notify_rate){
-	    time_t t = time(0);
-	    struct tm tm;
-	    localtime_r(&t,&tm);
-	    printf("%2d:%02d:%02d %s ",tm.tm_hour,tm.tm_min,tm.tm_sec,it.str().c_str());
-
-	    /* not sure how to do the rest if sampling */
-	    if(!sampling()){
-		printf("(%4.2f%%) Done in %s at %s",
-		       it.fraction_done()*100.0,
-		       timer.eta_text(it.fraction_done()).c_str(),
-		       timer.eta_time(it.fraction_done()).c_str());
-	    }
-	    printf("\n");
-	    fflush(stdout);
-	    notify_ctr = 0;
-	}
-    }
-
-public:
-    void set_sampling_parameters(const std::string &p){
-	std::vector<std::string> params = split(p,':');
-	if(params.size()!=1 && params.size()!=2){
-	    errx(1,"error: sampling parameters must be fraction[:passes]");
-	}
-	sampling_fraction = atof(params.at(0).c_str());
-	if(sampling_fraction<=0 || sampling_fraction>=1){
-	    errx(1,"error: sampling fraction f must be 0<f<=1; you provided '%s'",params.at(0).c_str());
-	}
-	if(params.size()==2){
-	    sampling_passes = atoi(params.at(1).c_str());
-	    if(sampling_passes==0){
-		errx(1,"error: sampling passes must be >=1; you provided '%s'",params.at(1).c_str());
-	    }
-	}
-    }
-
-#ifndef HAVE_RANDOM
-#define random(x) rand(x)
-#endif
-
-    BulkExtractor_Phase1(dfxml_writer &xreport_,aftimer &timer_,u_int num_threads_,int opt_quiet_):
-        xreport(xreport_),timer(timer_),
-	num_threads(num_threads_),opt_quiet(opt_quiet_),
-	sampling_fraction(1),sampling_passes(1),notify_ctr(0){ }
-
-    void run(image_process &p,feature_recorder_set &fs,
-             int64_t &total_bytes, seen_page_ids_t &seen_page_ids) {
-
-        md5_generator *md5g = new md5_generator();		// keep track of MD5
-        uint64_t md5_next = 0;					// next byte to hash
-        threadpool tp(num_threads,fs,xreport);			// 
-	uint64_t page_ctr=0;
-        xreport.push("runtime","xmlns:debug=\"http://www.afflib.org/bulk_extractor/debug\"");
-
-	std::set<uint64_t> blocks_to_sample;
-	std::set<uint64_t>::const_iterator si = blocks_to_sample.begin(); // sampling iterator
-	bool first = true;              
-	for(image_process::iterator it = p.begin();it!=p.end();){
-	    if(sampling()){
-		if(first) {
-		    first = false;
-		    /* Create a list of blocks to sample */
-		    uint64_t blocks = it.blocks();
-		    while(blocks_to_sample.size() < blocks * sampling_fraction){
-		      uint64_t blk_high = ((uint64_t)random()) << 32;
-		      uint64_t blk_low  = random();
-		      uint64_t blk =  (blk_high | blk_low) % blocks;
-		      blocks_to_sample.insert(blk); // will be added even if already present
-		    }
-
-		    si = blocks_to_sample.begin();
-		    it.seek_block(*si);
-		}
-	    }
-            
-            if(opt_offset_end!=0 && opt_offset_end <= it.raw_offset ){
-                break; // passed the offset
-            }
-            if(opt_page_start<=page_ctr && opt_offset_start<=it.raw_offset){
-                if(seen_page_ids.find(it.get_pos0().str()) != seen_page_ids.end()){
-                    // this page is in the XML file. We've seen it, so skip it (restart code)
-                    goto loop;
-                }
-                
-                // attempt to get an sbuf. If we can't get it, we may be in a low-memory situation.
-                // wait for 30 seconds.
-
-                try {
-                    sbuf_t *sbuf = get_sbuf(it);
-                    if(sbuf==0) break;	// eof?
-                    sbuf->page_number = page_ctr;
-
-		    /* compute the md5 hash */
-                    if(md5g){
-                        if(sbuf->pos0.offset==md5_next){ 
-                            // next byte follows logically, so continue to compute hash
-                            md5g->update(sbuf->buf,sbuf->pagesize);
-                            md5_next += sbuf->pagesize;
-                        } else {
-                            delete md5g; // we had a logical gap; stop hashing
-                            md5g = 0;
-                        }
-                    }
-                    total_bytes += sbuf->pagesize;
-
-                    /***************************
-                     **** SCHEDULE THE WORK ****
-                     ***************************/
-
-                    tp.schedule_work(sbuf);	
-		    if(!opt_quiet) notify_user(it);
-                }
-                catch (const std::exception &e) {
-                    // report uncaught exceptions to both user and XML file
-                    std::stringstream ss;
-                    ss << "name='" << e.what() << "' " << "pos0='" << it.get_pos0() << "' ";
-		    std::cerr << "Exception " << e.what() << " skipping " << it.get_pos0() << "\n";
-                    xreport.xmlout("debug:exception", e.what(), ss.str(), true);
-                }
-            }
-        loop:;
-            /* If we are random sampling, move to the next random sample.
-             * Otherwise increment the iterator
-             */
-            if(sampling()){
-                ++si;
-                if(si==blocks_to_sample.end()) break;
-                it.seek_block(*si);
-            } else {
-                ++it;
-            }
-            ++page_ctr;
-        }
-	    
-        if(!opt_quiet){
-            std::cout << "All Data is Read; waiting for threads to finish...\n";
-        }
-
-        /* Now wait for all of the threads to be free */
-        tp.mode = 1;			// waiting for workers to finish
-        time_t wait_start = time(0);
-        for(int32_t counter = 0;;counter++){
-            int num_remaining = num_threads - tp.get_free_count();
-            if(num_remaining==0) break;
-
-            msleep(100);
-            time_t time_waiting   = time(0) - wait_start;
-            time_t time_remaining = max_wait_time - time_waiting;
-
-            if(counter%60==0){
-                std::stringstream ss;
-                ss << "Time elapsed waiting for " << num_remaining
-                   << " thread" << (num_remaining>1 ? "s" : "") 
-                   << " to finish:\n    " << minsec(time_waiting) 
-                   << " (timeout in "     << minsec(time_remaining) << ".)\n";
-                if(opt_quiet==0){
-                    std::cout << ss.str();
-                    if(counter>0) print_tp_status(tp);
-                }
-                xreport.comment(ss.str());
-            }
-            if(time_waiting>max_wait_time){
-                std::cout << "\n\n";
-                std::cout << " ... this shouldn't take more than an hour. Exiting ... \n";
-                std::cout << " ... Please report to the bulk_extractor maintainer ... \n";
-                break;
-            }
-        }
-        if(opt_quiet==0) std::cout << "All Threads Finished!\n";
-	
-        xreport.pop();			// pop runtime
-        /* We can write out the source info now, since we (might) know the hash */
-        xreport.push("source");
-        xreport.xmlout("image_filename",p.image_fname());
-        xreport.xmlout("image_size",p.image_size());  
-        if(md5g){
-            md5_t md5 = md5g->final();
-            xreport.xmlout("hashdigest",md5.hexdigest(),"type='MD5'",false);
-            delete md5g;
-        }
-        xreport.pop();			// source
-
-        /* Record the feature files and their counts in the output */
-        xreport.push("feature_files");
-        for(feature_recorder_map::const_iterator it = tp.fs.frm.begin();
-            it != tp.fs.frm.end(); it++){
-            xreport.set_oneline(true);
-            xreport.push("feature_file");
-            xreport.xmlout("name",it->second->name);
-            xreport.xmlout("count",it->second->count);
-            xreport.pop();
-            xreport.set_oneline(false);
-        }
-
-        if(opt_quiet==0) std::cout << "Producer time spent waiting: " << tp.waiting.elapsed_seconds() << " sec.\n";
-    
-        xreport.xmlout("thread_wait",dtos(tp.waiting.elapsed_seconds()),"thread='0'",false);
-        double worker_wait_average = 0;
-        for(threadpool::worker_vector::const_iterator it=tp.workers.begin();it!=tp.workers.end();it++){
-            worker_wait_average += (*it)->waiting.elapsed_seconds() / num_threads;
-            std::stringstream ss;
-            ss << "thread='" << (*it)->id << "'";
-            xreport.xmlout("thread_wait",dtos((*it)->waiting.elapsed_seconds()),ss.str(),false);
-        }
-        xreport.pop();
-        xreport.flush();
-        if(opt_quiet==0) std::cout << "Average consumer time spent waiting: " << worker_wait_average << " sec.\n";
-        if(worker_wait_average > tp.waiting.elapsed_seconds()*2 && worker_wait_average>10 && opt_quiet==0){
-            std::cout << "*******************************************\n";
-            std::cout << "** bulk_extractor is probably I/O bound. **\n";
-            std::cout << "**        Run with a faster drive        **\n";
-            std::cout << "**      to get better performance.       **\n";
-            std::cout << "*******************************************\n";
-        }
-        if(tp.waiting.elapsed_seconds() > worker_wait_average * 2 && tp.waiting.elapsed_seconds()>10 && opt_quiet==0){
-            std::cout << "*******************************************\n";
-            std::cout << "** bulk_extractor is probably CPU bound. **\n";
-            std::cout << "**    Run on a computer with more cores  **\n";
-            std::cout << "**      to get better performance.       **\n";
-            std::cout << "*******************************************\n";
-        }
-        /* end of phase 1 */
-    }
-};
 
 class bulk_extractor_restarter {
     std::stringstream cdata;
     std::string thisElement;
     std::string provided_filename;
-    seen_page_ids_t &seen_page_ids;
-#ifdef HAVE_LIB_EXPAT
+    BulkExtractor_Phase1::seen_page_ids_t &seen_page_ids;
+#ifdef HAVE_LIBEXPAT
     static void startElement(void *userData, const char *name_, const char **attrs) {
         class bulk_extractor_restarter &self = *(bulk_extractor_restarter *)userData;
         self.cdata.str("");
         self.thisElement = name_;
-        if(thisElement=="debug:work_start"){
-            for(int i=0;attrs[i];i+=2){
-                if(strcmp(attrs[i],"pos0")){
-                    std::cerr << "pos=0" << attrs[i+1] << "\n";
-                    self.seen_page_ids->insert(attrs[i+1]);
+        if(self.thisElement=="debug:work_start"){
+            for(int i=0;attrs[i] && attrs[i+1];i+=2){
+                if(strcmp(attrs[i],"pos0") == 0){
+                    self.seen_page_ids.insert(attrs[i+1]);
                 }
             }
         }
@@ -774,8 +472,9 @@ public:;
     bulk_extractor_restarter(const std::string &opt_outdir,
                              const std::string &reportfilename,
                              const std::string &image_fname,
-                             seen_page_ids_t &seen_page_ids_):cdata(),thisElement(),provided_filename(),seen_page_ids(seen_page_ids_){
-#ifdef HAVE_LIB_EXPAT
+                             BulkExtractor_Phase1::seen_page_ids_t &seen_page_ids_):
+        cdata(),thisElement(),provided_filename(),seen_page_ids(seen_page_ids_){
+#ifdef HAVE_LIBEXPAT
         if(access(reportfilename.c_str(),R_OK)){
             std::cerr << opt_outdir << ": error\n";
             std::cerr << "report.xml file is missing or unreadable.\n";
@@ -790,7 +489,7 @@ public:;
         XML_SetCharacterDataHandler(parser,characterDataHandler);
         std::fstream in(reportfilename.c_str());
         if(!in.is_open()){
-            std::cout << "Cannot open " << fname << ": " << strerror(errno) << "\n";
+            std::cout << "Cannot open " << reportfilename << ": " << strerror(errno) << "\n";
             exit(1);
         }
         try {
@@ -827,6 +526,8 @@ public:;
 
 static void usage(const char *progname)
 {
+    BulkExtractor_Phase1::Config cfg;   // get a default config
+
     std::cout << "bulk_extractor version " PACKAGE_VERSION " " << /* svn_revision << */ "\n";
     std::cout << "Usage: " << progname << " [options] imagefile\n";
     std::cout << "  runs bulk extractor and outputs to stdout a summary of what was found where\n";
@@ -859,13 +560,17 @@ static void usage(const char *progname)
     std::cout << "   -q nn        - Quiet Rate; only print every nn status reports. Default 0; -1 for no status at all\n";
     std::cout << "   -s frac[:passes] - Set random sampling parameters\n";
     std::cout << "\nTuning parameters:\n";
-    std::cout << "   -C NN        - specifies the size of the context window (default " << feature_recorder::context_window << ")\n";
-    std::cout << "   -G NN        - specify the page size (default " << opt_pagesize << ")\n";
-    std::cout << "   -g NN        - specify margin (default " <<opt_margin << ")\n";
+    std::cout << "   -C NN        - specifies the size of the context window (default "
+              << feature_recorder::context_window_default << ")\n";
+    std::cout << "   -S fr:<name>:window=NN   specifies context window for recorder to NN\n";
+    std::cout << "   -S fr:<name>:window_before=NN  specifies context window before to NN for recorder\n";
+    std::cout << "   -S fr:<name>:window_after=NN   specifies context window after to NN for recorder\n";
+    std::cout << "   -G NN        - specify the page size (default " << cfg.opt_page_size << ")\n";
+    std::cout << "   -g NN        - specify margin (default " <<cfg.opt_margin << ")\n";
     std::cout << "   -j NN        - Number of analysis threads to run (default " <<threadpool::numCPU() << ")\n";
     std::cout << "   -M nn        - sets max recursion depth (default " << scanner_def::max_depth << ")\n";
     std::cout << "   -m <max>     - maximum number of minutes to wait for memory starvation\n";
-    std::cout << "                  default is " << max_bad_alloc_errors << "\n";
+    std::cout << "                  default is " << cfg.max_bad_alloc_errors << "\n";
     std::cout << "\nPath Processing Mode:\n";
     std::cout << "   -p <path>/f  - print the value of <path> with a given format.\n";
     std::cout << "                  formats: r = raw; h = hex.\n";
@@ -887,6 +592,7 @@ static void usage(const char *progname)
     std::cout << "   -E scanner   - turn off all scanners except scanner\n";
     std::cout << "   -S name=value - sets a bulk extractor option name to be value\n";
     std::cout << "\n";
+    std::cout << "\n";
 }
 
 
@@ -894,7 +600,7 @@ static void usage(const char *progname)
  * Create the dfxml output
  */
 
-static void dfxml_create(dfxml_writer &xreport,const string &command_line,int num_threads)
+static void dfxml_create(dfxml_writer &xreport,const string &command_line,const BulkExtractor_Phase1::Config &cfg)
 {
     xreport.push("dfxml","xmloutputversion='1.0'");
     xreport.push("metadata",
@@ -905,7 +611,7 @@ static void dfxml_create(dfxml_writer &xreport,const string &command_line,int nu
     xreport.pop();
     xreport.add_DFXML_creator(PACKAGE_NAME,PACKAGE_VERSION,svn_revision_clean(),command_line);
     xreport.push("configuration");
-    xreport.xmlout("threads",num_threads);
+    xreport.xmlout("threads",cfg.num_threads);
     xreport.push("scanners");
     /* Generate a list of the scanners in use */
 
@@ -1064,7 +770,8 @@ int main(int argc,char **argv)
 #ifdef HAVE_MCHECK
     mtrace();
 #endif
-    
+    BulkExtractor_Phase1::Config cfg;
+    cfg.num_threads = threadpool::numCPU();
     if(getenv("BULK_EXTRACTOR_DEBUG")){
 	debug = atoi(getenv("BULK_EXTRACTOR_DEBUG"));
     }
@@ -1076,8 +783,6 @@ int main(int argc,char **argv)
     string opt_outdir;
     setvbuf(stdout,0,_IONBF,0);		// don't buffer stdout
     std::string command_line = dfxml_writer::make_command_line(argc,argv);
-    u_int num_threads = threadpool::numCPU();
-    int opt_quiet = 0;
     std::string opt_sampling_params;
     std::vector<std::string> scanner_dirs;
 
@@ -1102,7 +807,7 @@ int main(int argc,char **argv)
 	switch (ch) {
 	case 'A': feature_recorder::offset_add  = stoi64(optarg);break;
 	case 'b': feature_recorder::banner_file = optarg; break;
-	case 'C': feature_recorder::context_window = atoi(optarg);break;
+	case 'C': feature_recorder::context_window_default = atoi(optarg);break;
 	case 'd':
 	{
 	    int d = atoi(optarg);
@@ -1118,6 +823,7 @@ int main(int argc,char **argv)
 		debug  = d;
 		break;
 	    }
+            be13::plugin::set_scanner_debug(debug);
 	}
 	break;
 	case 'E':
@@ -1129,17 +835,17 @@ int main(int argc,char **argv)
 	    break;
 	case 'F': process_find_file(optarg); break;
 	case 'f': add_find_pattern(optarg); break;
-	case 'G': opt_pagesize = scaled_stoi(optarg); break;
-	case 'g': opt_margin = scaled_stoi(optarg); break;
-	case 'j': num_threads = atoi(optarg); break;
+	case 'G': cfg.opt_page_size = scaled_stoi(optarg); break;
+	case 'g': cfg.opt_margin = scaled_stoi(optarg); break;
+	case 'j': cfg.num_threads = atoi(optarg); break;
 	case 'M': scanner_def::max_depth = atoi(optarg); break;
-	case 'm': max_bad_alloc_errors = atoi(optarg); break;
+	case 'm': cfg.max_bad_alloc_errors = atoi(optarg); break;
 	case 'o': opt_outdir = optarg;break;
 	case 'P': scanner_dirs.push_back(optarg);break;
 	case 'p': opt_path = optarg; break;
         case 'q':
-	    if(atoi(optarg)==-1) opt_quiet = 1;// -q -1 turns off notifications
-	    else opt_notify_rate = atoi(optarg);
+	    if(atoi(optarg)==-1) cfg.opt_quiet = 1;// -q -1 turns off notifications
+	    else cfg.opt_notify_rate = atoi(optarg);
 	    break;
 	case 'r':
 	    if(alert_list.readfile(optarg)){
@@ -1174,22 +880,21 @@ int main(int argc,char **argv)
 	    string optargs = optarg;
 	    size_t dash = optargs.find('-');
 	    if(dash==string::npos){
-		opt_offset_start = stoi64(optargs);
+		cfg.opt_offset_start = stoi64(optargs);
 	    } else {
-		opt_offset_start = scaled_stoi(optargs.substr(0,dash));
-		opt_offset_end   = scaled_stoi(optargs.substr(dash+1));
+		cfg.opt_offset_start = scaled_stoi(optargs.substr(0,dash));
+		cfg.opt_offset_end   = scaled_stoi(optargs.substr(dash+1));
 	    }
 	    break;
 	}
-	case 'z': opt_page_start = stoi64(optarg);break;
+	case 'z': cfg.opt_page_start = stoi64(optarg);break;
 	case 'Z': opt_zap=true;break;
 	case 'H': opt_H++;continue;
 	case 'h': opt_h++;continue;
 	}
     }
 
-    if(opt_offset_start % opt_pagesize != 0) errx(1,"ERROR: start offset must be a multiple of the page size\n");
-    if(opt_offset_end % opt_pagesize != 0) errx(1,"ERROR: end offset must be a multiple of the page size\n");
+    cfg.validate();
 
     argc -= optind;
     argv += optind;
@@ -1242,7 +947,7 @@ int main(int argc,char **argv)
 
     if(opt_path){
 	if(argc!=1) errx(1,"-p requires a single argument.");
-	process_path(argv[0],opt_path);
+	process_path(argv[0],opt_path,cfg.opt_page_size);
 	exit(0);
     }
     if(opt_outdir.size()==0) errx(1,"error: -o outdir must be specified");
@@ -1273,7 +978,7 @@ int main(int argc,char **argv)
     dfxml_writer  *xreport=0;
     string reportfilename = opt_outdir + "/report.xml";
 
-    seen_page_ids_t seen_page_ids; // pages that do not need re-processing
+    BulkExtractor_Phase1::seen_page_ids_t seen_page_ids; // pages that do not need re-processing
     image_process *p = 0;
     std::string image_fname = *argv;
 
@@ -1297,12 +1002,12 @@ int main(int argc,char **argv)
     }
 
     /* If disk image does not exist, we are in restart mode */
-    p = image_process_open(image_fname,opt_recurse);
+    p = image_process::open(image_fname,opt_recurse,cfg.opt_page_size,cfg.opt_margin);
     if(!p) err(1,"Cannot open %s: ",image_fname.c_str());
     
     /* Store the configuration in the XML file */
     xreport = new dfxml_writer(reportfilename,false);
-    dfxml_create(*xreport,command_line,num_threads);
+    dfxml_create(*xreport,command_line,cfg);
     xreport->xmlout("provided_filename",image_fname); // save this information
 
     /* Save the seen_page_ids */
@@ -1313,14 +1018,30 @@ int main(int argc,char **argv)
     be13::plugin::get_scanner_feature_file_names(feature_file_names);
     feature_recorder_set fs(feature_file_names,image_fname,opt_outdir,stop_list.size()>0);
 
+    /* Look for commands that impact per-recorders */
+    for(scanner_info::config_t::const_iterator it=be_config.namevals.begin();it!=be_config.namevals.end();it++){
+        /* see if there is a <recorder>: */
+        std::vector<std::string> params = split(it->first,':');
+        if(params.size()>=3 && params.at(0)=="fr"){
+            feature_recorder *fr = fs.get_name(params.at(1));
+            const std::string &cmd = params.at(2);
+            if(fr){
+                if(cmd=="window") fr->set_context_window(stoi(it->second));
+                if(cmd=="window_before") fr->set_context_window_before(stoi(it->second));
+                if(cmd=="window_after") fr->set_context_window_after(stoi(it->second));
+            }
+        }
+        /* See if there is a scanner? */
+    }
+
+
+
     /* Create the alert recorder */
     fs.create_name(feature_recorder_set::ALERT_RECORDER_NAME,false);
     feature_recorder_set::alert_recorder = fs.get_name(feature_recorder_set::ALERT_RECORDER_NAME);
 
-    int64_t total_bytes = 0;
-
     /* provide documentation to the user; the DFXML information comes from elsewhere */
-    if(!opt_quiet){
+    if(!cfg.opt_quiet){
 	std::cout << "bulk_extractor version: " << PACKAGE_VERSION << "\n";
 #ifdef HAVE_GETHOSTNAME
 	char hostname[1024];
@@ -1330,35 +1051,36 @@ int main(int argc,char **argv)
 	std::cout << "Input file: " << image_fname << "\n";
 	std::cout << "Output directory: " << opt_outdir << "\n";
 	std::cout << "Disk Size: " << p->image_size() << "\n";
-	std::cout << "Threads: " << num_threads << "\n";
+	std::cout << "Threads: " << cfg.num_threads << "\n";
     }
 
     /****************************************************************
      *** THIS IS IT! PHASE 1!
      ****************************************************************/
 
-    BulkExtractor_Phase1 phase1(*xreport,timer,num_threads,opt_quiet);
+    BulkExtractor_Phase1 phase1(*xreport,timer,cfg);
 
-    if(opt_sampling_params.size()>0) phase1.set_sampling_parameters(opt_sampling_params);
+    if(opt_sampling_params.size()>0) BulkExtractor_Phase1::set_sampling_parameters(cfg,opt_sampling_params);
 
     xreport->add_timestamp("phase1 start");
-    phase1.run(*p,fs,total_bytes,seen_page_ids);
+    phase1.run(*p,fs,seen_page_ids);
+    phase1.wait_for_workers(*p);
     xreport->add_timestamp("phase1 end");
 
-    if(opt_quiet==0) std::cout << "Phase 2. Shutting down scanners\n";
+    if(cfg.opt_quiet==0) std::cout << "Phase 2. Shutting down scanners\n";
     xreport->add_timestamp("phase2 start");
     be13::plugin::phase_shutdown(fs);
     xreport->add_timestamp("phase2 end");
 
 
-    if(opt_quiet==0) std::cout << "Phase 3. Creating Histograms\n";
+    if(cfg.opt_quiet==0) std::cout << "Phase 3. Creating Histograms\n";
     xreport->add_timestamp("phase3 start");
     be13::plugin::phase_histogram(fs,0); // TK - add an xml error notifier!
     xreport->add_timestamp("phase3 end");
 
     /* report and then print final usage information */
     xreport->push("report");
-    xreport->xmlout("total_bytes",total_bytes);
+    xreport->xmlout("total_bytes",phase1.total_bytes);
     xreport->xmlout("elapsed_seconds",timer.elapsed_seconds());
     xreport->pop();			// report
     xreport->flush();
@@ -1370,8 +1092,8 @@ int main(int argc,char **argv)
     xreport->pop();			// bulk_extractor
     xreport->close();
     delete p;				// not strictly needed, but why not?
-    if(opt_quiet==0){
-	float mb_per_sec = (total_bytes / 1000000.0) / timer.elapsed_seconds();
+    if(cfg.opt_quiet==0){
+	float mb_per_sec = (phase1.total_bytes / 1000000.0) / timer.elapsed_seconds();
 
 	std::cout.precision(4);
         printf("Elapsed time: %g sec.\n",timer.elapsed_seconds());

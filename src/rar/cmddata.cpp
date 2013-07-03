@@ -968,81 +968,6 @@ inline bool CmpMSGID(MSGID i1,MSGID i2)
 
 void CommandData::OutHelp()
 {
-#if !defined(GUI) && !defined(SILENT)
-  OutTitle();
-  static __thread MSGID Help[]={
-#ifdef SFX_MODULE
-    // Console SFX switches definition.
-    MCHelpCmd,MSHelpCmdE,MSHelpCmdT,MSHelpCmdV
-#elif defined(UNRAR)
-    // UnRAR switches definition.
-    MUNRARTitle1,MRARTitle2,MCHelpCmd,MCHelpCmdE,MCHelpCmdL,
-    MCHelpCmdP,MCHelpCmdT,MCHelpCmdV,MCHelpCmdX,MCHelpSw,MCHelpSwm,
-    MCHelpSwAT,MCHelpSwAC,MCHelpSwAD,MCHelpSwAG,MCHelpSwAI,MCHelpSwAP,
-    MCHelpSwCm,MCHelpSwCFGm,MCHelpSwCL,MCHelpSwCU,
-    MCHelpSwDH,MCHelpSwEP,MCHelpSwEP3,MCHelpSwF,MCHelpSwIDP,MCHelpSwIERR,
-    MCHelpSwINUL,MCHelpSwIOFF,MCHelpSwKB,MCHelpSwN,MCHelpSwNa,MCHelpSwNal,
-    MCHelpSwO,MCHelpSwOC,MCHelpSwOR,MCHelpSwOW,MCHelpSwP,
-    MCHelpSwPm,MCHelpSwR,MCHelpSwRI,MCHelpSwSL,MCHelpSwSM,MCHelpSwTA,
-    MCHelpSwTB,MCHelpSwTN,MCHelpSwTO,MCHelpSwTS,MCHelpSwU,MCHelpSwVUnr,
-    MCHelpSwVER,MCHelpSwVP,MCHelpSwX,MCHelpSwXa,MCHelpSwXal,MCHelpSwY
-#else
-#endif
-  };
-
-  for (unsigned I=0;I<sizeof(Help)/sizeof(Help[0]);I++)
-  {
-#ifndef SFX_MODULE
-#ifdef DISABLEAUTODETECT
-    if (Help[I]==MCHelpSwV)
-      continue;
-#endif
-#ifndef _WIN_ALL
-    static __thread MSGID Win32Only[]={
-      MCHelpSwIEML,MCHelpSwVD,MCHelpSwAO,MCHelpSwOS,MCHelpSwIOFF,
-      MCHelpSwEP2,MCHelpSwOC,MCHelpSwDR,MCHelpSwRI
-    };
-    bool Found=false;
-    for (unsigned J=0;J<sizeof(Win32Only)/sizeof(Win32Only[0]);J++)
-      if (CmpMSGID(Help[I],Win32Only[J]))
-      {
-        Found=true;
-        break;
-      }
-    if (Found)
-      continue;
-#endif
-#if !defined(_UNIX) && !defined(_WIN_ALL)
-    if (CmpMSGID(Help[I],MCHelpSwOW))
-      continue;
-#endif
-#if !defined(_WIN_ALL) && !defined(_EMX)
-    if (CmpMSGID(Help[I],MCHelpSwAC))
-      continue;
-#endif
-#ifndef SAVE_LINKS
-    if (CmpMSGID(Help[I],MCHelpSwOL))
-      continue;
-#endif
-#ifndef PACK_SMP
-    if (CmpMSGID(Help[I],MCHelpSwMT))
-      continue;
-#endif
-#ifndef _BEOS
-    if (CmpMSGID(Help[I],MCHelpSwEE))
-    {
-#if defined(_EMX) && !defined(_DJGPP)
-      if (_osmode != OS2_MODE)
-        continue;
-#else
-      continue;
-#endif
-    }
-#endif
-#endif
-  }
-  ErrHandler.Exit(USER_ERROR);
-#endif
 }
 
 
@@ -1201,7 +1126,7 @@ int CommandData::IsProcessFile(FileHeader &NewLhd,bool *ExactMatch,int MatchType
 #ifndef SFX_MODULE
   if (TimeCheck(NewLhd.mtime))
     return(0);
-  if ((NewLhd.FileAttr & ExclFileAttr)!=0 || (InclAttrSet && (NewLhd.FileAttr & InclFileAttr)==0))
+  if ((NewLhd.SubFlags & ExclFileAttr)!=0 || (InclAttrSet && (NewLhd.SubFlags & InclFileAttr)==0))
     return(0);
   if (!Dir && SizeCheck(NewLhd.FullUnpSize))
     return(0);
@@ -1361,7 +1286,7 @@ uint CommandData::GetExclAttr(const char *Str)
 
 bool CommandData::CheckWinSize()
 {
-  static __thread unsigned ValidSize[]={
+  static const unsigned ValidSize[]={
     0x10000,0x20000,0x40000,0x80000,0x100000,0x200000,0x400000
   };
   for (unsigned I=0;I<sizeof(ValidSize)/sizeof(ValidSize[0]);I++)

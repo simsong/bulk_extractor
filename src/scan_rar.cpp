@@ -15,8 +15,16 @@
 #ifdef USE_RAR
 #include "rar/rar.hpp"
 
+// The mark block is a specially-crafted constant block that acts as a magic
+// number for rar files as a whole
+#define MARK_MAGIC 0x72
+#define MARK_LEN 7
+// File blocks are individual compressed files within a rar file.  We call
+// these 'rar components'
 #define FILE_MAGIC 0x74
 #define FILE_HEAD_MIN_LEN 32
+// Archive headers are non-constant headers that provide information about a
+// rar file itself.  We call these 'rar volumes'
 #define ARCHIVE_MAGIC 0x73
 #define ARCHIVE_HEAD_MIN_LEN 13
 
@@ -282,12 +290,14 @@ string RarComponentInfo::host_os_label() const
 
 class RarVolumeInfo {
 public:
-    explicit RarVolumeInfo() : flags() {}
-    explicit RarVolumeInfo(uint16_t flags_) : flags(flags_) {}
+    explicit RarVolumeInfo() : flags(), len() {}
+    explicit RarVolumeInfo(uint16_t flags_, uint16_t len_) :
+        flags(flags_), len(len_) {}
 
     std::string to_xml() const;
 
     uint16_t flags;
+    uint16_t len;
 };
 
 string RarVolumeInfo::to_xml() const
@@ -306,6 +316,7 @@ string RarVolumeInfo::to_xml() const
 // settings - these configuration vars are set when the scanner is created
 static bool record_components = true;
 static bool record_volumes = true;
+static be13::hash_def hasher;
 
 // component processing (compressed file within an archive)
 static bool process_component(const unsigned char *buf, size_t buf_len, RarComponentInfo &output)
@@ -464,18 +475,18 @@ static bool process_volume(const unsigned char *buf, size_t buf_len, RarVolumeIn
         return false;
     }
     // check for invalid flags
-    uint16_t flags = (uint16_t) int2(buf + OFFSET_HEAD_FLAGS);
-    if(flags & UNUSED_ARCHIVE_FLAGS) {
+    output.flags = (uint16_t) int2(buf + OFFSET_HEAD_FLAGS);
+    if(output.flags & UNUSED_ARCHIVE_FLAGS) {
         return false;
     }
 
     // ignore impossible or improbable header lengths
-    uint16_t header_len = (uint16_t) int2(buf + OFFSET_HEAD_SIZE);
-    if(header_len < ARCHIVE_HEAD_MIN_LEN || header_len > SUSPICIOUS_HEADER_LEN) {
+    output.len = (uint16_t) int2(buf + OFFSET_HEAD_SIZE);
+    if(output.len < ARCHIVE_HEAD_MIN_LEN || output.len > SUSPICIOUS_HEADER_LEN) {
         return false;
     }
     // abort if header is longer than the remaining buf
-    if(header_len >= buf_len) {
+    if(output.len >= buf_len) {
         return false;
     }
 
@@ -484,7 +495,7 @@ static bool process_volume(const unsigned char *buf, size_t buf_len, RarVolumeIn
     uint16_t header_crc = int2(buf + OFFSET_HEAD_CRC);
     uint32_t calc_header_crc = crc_init();
     // Data accounted for in the CRC begins with the header type magic byte
-    calc_header_crc = crc_update(calc_header_crc, buf + OFFSET_HEAD_TYPE, header_len - OFFSET_HEAD_TYPE);
+    calc_header_crc = crc_update(calc_header_crc, buf + OFFSET_HEAD_TYPE, output.len - OFFSET_HEAD_TYPE);
     calc_header_crc = crc_finalize(calc_header_crc);
     bool head_crc_match = (header_crc == (calc_header_crc & 0xFFFF));
     if(!head_crc_match) {
@@ -534,23 +545,33 @@ static void unpack_buf(const uint8_t* input, size_t input_len, uint8_t* output, 
     data.Close();
 }
 
-// leave out depth checks for now
-#if 0
-/* See:
- * http://gcc.gnu.org/onlinedocs/gcc-4.5.0/gcc/Atomic-Builtins.html
- * for information on on __sync_fetch_and_add
- *
- * When rar_max_depth_count>=rar_max_depth_count_bypass,
- * hash the buffer before decompressing and do not decompress if it has already been decompressed.
- */
+static size_t guess_encrypted_len(const uint8_t* input, size_t input_len, size_t offset)
+{
+    // how many bytes in a row must be the same to indicate and end to
+    // encrypted data?
+    const unsigned threshold = 4;
 
-int scan_rar_name_len_max = 1024;
-int rar_show_all=1;
-uint32_t rar_max_depth_count = 0;
-const uint32_t rar_max_depth_count_bypass = 5;
-std::set<std::string>rar_seen_set;
-cpp_mutex rar_seen_set_lock;
-#endif
+    for(size_t ii = offset; ii < input_len - threshold; ii++) {
+        size_t mismatch_index = 0;
+        for(mismatch_index = ii + 1; mismatch_index < ii + threshold; mismatch_index++) {
+            if(input[ii] != input[mismatch_index]) {
+                break;
+            }
+        }
+        if(mismatch_index == ii + threshold) {
+            return ii;
+        }
+    }
+    return input_len - offset;
+}
+
+static bool is_mark_block(const uint8_t* buf, size_t buf_len, size_t offset)
+{
+    return (buf_len - offset >= MARK_LEN) && buf[offset+0] == 0x52 &&
+        buf[offset+1] == 0x61 && buf[offset+2] == 0x72 &&
+        buf[offset+3] == 0x21 && buf[offset+4] == 0x1A &&
+        buf[offset+5] == 0x07 && buf[offset+6] == 0x00;
+}
 #endif
 
 extern "C"
@@ -566,9 +587,10 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
 	sp.info->feature_names.insert("rar");
         sp.info->get_config("rar_find_components",&record_components,"Search for RAR components");
         sp.info->get_config("raw_find_volumes",&record_volumes,"Search for RAR volumes");
+        hasher = sp.info->config->hasher;
 #else
         sp.info->name = "rar";
-        sp.info->description = "(disabled)";
+        sp.info->description = "(disabled in configure)";
         sp.info->flags = scanner_info::SCANNER_DISABLED | scanner_info::SCANNER_NO_USAGE | scanner_info::SCANNER_NO_ALL;
 #endif
 	return;
@@ -579,17 +601,18 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
 	const pos0_t &pos0 = sp.sbuf.pos0;
 	feature_recorder_set &fs = sp.fs;
 	feature_recorder *rar_recorder = fs.get_name("rar");
+        rar_recorder->set_carve_mode(feature_recorder::CARVE_ALL);
 	rar_recorder->set_flag(feature_recorder::FLAG_XML); // because we are sending through XML
 
         RarComponentInfo component;
         RarVolumeInfo volume;
 	for(const unsigned char *cc=sbuf.buf; cc < sbuf.buf+sbuf.pagesize && cc < sbuf.buf + sbuf.bufsize; cc++) {
             size_t cc_len = sbuf.buf + sbuf.bufsize - cc;
-            // feature files have three 'columns': forensic path / offset,
-            // feature name, and feature data.  scan_zip is mimicked by having
-            // the feature name be the compressed file's name (the component's
-            // name) although this information is duplicated in the feature XML
-            // data
+            // feature files have three columns: forensic path / offset,
+            // feature name, and feature context.  scan_zip is mimicked by
+            // having the feature name be the compressed file's name (the
+            // component's name) although this information is duplicated in the
+            // context XML data
             string feature_name = ".";
             string feature_data = "<null/>";
             ssize_t pos = cc-sbuf.buf; // position of the buffer
@@ -597,6 +620,23 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
             // try each of the possible RAR blocks we may want to record
             if(record_volumes && process_volume(cc, cc_len, volume)) {
                 rar_recorder->write(pos0 + pos, "<volume>", volume.to_xml());
+                // carve encrypted RAR files
+                if(volume.flags & FLAG_HEADERS_ENCRYPTED) {
+                    size_t encrypted_len = guess_encrypted_len(cc, cc_len, volume.len);
+                    size_t enc_rar_pos = pos;
+                    size_t enc_rar_len = volume.len + encrypted_len;
+                    // can we find a marker block before the archive block?  If
+                    // so, standard rar tools will likely process the carved
+                    // files without complaint.
+                    if(pos >= MARK_LEN && is_mark_block(sbuf.buf, enc_rar_pos + MARK_LEN, enc_rar_pos - MARK_LEN)) {
+                        enc_rar_len += MARK_LEN;
+                        enc_rar_pos -= MARK_LEN;
+                    }
+#if 0
+                    cout << "looks like " << encrypted_len + volume.len << " after " << pos << " are encrypted of " << sbuf.bufsize << endl;
+#endif
+                    rar_recorder->carve(sbuf, enc_rar_pos, enc_rar_len, hasher);
+                }
             }
             if(record_components && process_component(cc, cc_len, component)) {
                 rar_recorder->write(pos0 + pos, component.name, component.to_xml());
@@ -606,15 +646,21 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
                 if(component.compression_method != METHOD_UNCOMPRESSED) {
                     unpack_buf(cc, cc_len, dbuf.buf, component.uncompressed_size);
 
+#if 0
+                    // assume that we are decompressing "15 Feet of Time.pdf" while fixing warnings for rapid testing
+                    //25 50 44 46 2D
+                    //25 25 45 4F 46
+                    size_t sz = component.uncompressed_size;
+                    assert(dbuf.buf[0] == 0x25); assert(dbuf.buf[1] == 0x50); assert(dbuf.buf[2] == 0x44); assert(dbuf.buf[3] == 0x46); assert(dbuf.buf[4] == 0x2D); 
+                    assert(dbuf.buf[sz-5] == 0x25); assert(dbuf.buf[sz-4] == 0x25); assert(dbuf.buf[sz-3] == 0x45); assert(dbuf.buf[sz-2] == 0x4F); assert(dbuf.buf[sz-1] == 0x46); 
+#endif
+
                     const pos0_t pos0_rar = pos0 + rcb.partName;
                     const sbuf_t child_sbuf(pos0_rar, dbuf.buf, component.uncompressed_size, sbuf.pagesize, false);
                     scanner_params child_params(sp, child_sbuf);
 
                     // call scanners on deobfuscated buffer
                     (*rcb.callback)(child_params);
-                    if(rcb.returnAfterFound) {
-                        return;
-                    }
                 }
             }
 	}

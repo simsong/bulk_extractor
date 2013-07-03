@@ -16,6 +16,16 @@ New functionality in Version 1.4 includes:
   "jpeg/". The filename is the forensic path. Confusingly, JPEGs
   without EXIFs will also be carved.
 
+* scan_xor will search for data hidden with (XOR 255)
+
+* scan_lightgrep will do searches with Lightbox Technology's lightgrep
+
+* scan_hashid will perform hash-based scanning with block hashes.
+
+* Variable context window
+
+* Better performance
+
 Improvements in Version 1.4 include:
 
 * scan_pdf now does a better job extracting emails from text.
@@ -42,6 +52,8 @@ Incompatiable changes:
 
 * The -W option no longer specifies the minimum and maximum word
   sizes. Instead specify with -S word_min=NN and -S word_max=NN
+  has been removed. Instead specify it with -S block_size=NN.  
+
 
 ================================================================
 OVERREPORTING FIXES
@@ -72,10 +84,16 @@ Much of the emphasis of the 1.4 is to decrease "false positives."
 * Strings of hex digits separated by colons are no longer mistaking
   reported as Ethernet MAC addresses.
 
+* compression bomb logic improved. bulk_extractor will no longer
+  decompress the same compressed block twice. As a result, histograms
+  are now based on distinct occurances, rather than multiple
+  occurances within the same compressed object.
+
 ================================================================
 UNDERREPORTING FIXES
 
-* max_depth changed from 5 to 7
+* Default max_depth for recursion changed from 5 to 7.  (We found some
+  deep issues).
 
 * scan_pdf has been improved and now does a better job extracting
   text. For example, the following feature is now found when scanning
@@ -120,6 +138,7 @@ Current and Historic Times [1]:
 
 MacOS 10.8.0; LLVM build 2336.11.00; -O3
 
+version 1.4: TBD
 version 1.3:    185 seconds (11.34 MBytes/sec)  (-O3; AES enabled)
 version 1.2.0:  141 seconds (14.9 MBytes/sec)   (-O3; AES enabled)
 version 1.1.3:  171 seconds (12.3 MBytes/sec)   (-O3; AES disabled)
@@ -132,6 +151,7 @@ version 1.1.3:	468 seconds (4.28 MBytes/sec)
 
 Windows 7, same hardware ("boot camp"):
 
+version 1.4: TBD
 version 1.3:    198 seconds (10.6 MBytes/sec)  (-O3; AES enabled; 32bit)
 version 1.3:    186 seconds (11.33 MBytes/sec)  (-O3; AES enabled; 64bit)
 version 1.2.0: 	207.4 seconds (9.69 MBytes/sec, [2])
@@ -145,22 +165,32 @@ Current list of bulk_extractor scanners:
 
 scan_accts   - Looks for phone numbers, credit card numbers, etc
 scan_aes     - Detects in-memory AES keys from their key schedules
+scan_ascii85 - TBD
 scan_base16  - decodes hexadecimal test
 scan_base64  - decodes BASE64 text
+scan_bulk    - TBD     
 scan_elf     - Detects and decodes ELF headers
+scan_exif    - 
 scan_exiv2   - Decodes EXIF headers in JPEGs using libexiv2 (for regression testing)
+scan_email   - 
 scan_exif    - Decodes EXIF headers in JPEGs using built-in decoder.
 scan_find    - keyword searching
 scan_gps     - Detects XML from Garmin GPS devices
 scan_gzip    - Detects and decompresses GZIP files and gzip stream
+scan_hashid
 scan_hiber   - Detects and decompresses Windows hibernation fragments
 scan_json    - Detects JavaScript Object Notation files
 scan_kml     - Detects KML files
+scan_lightgrep
 scan_net     - IP packet scanning and carving
 scan_pdf     - Extracts text from some kinds of PDF files
+scan_rar
 scan_vcard   - Carvees VCARD files
-scan_winprefetch - Detects and extracts fields from Windows prefetch files and file fragments.
+scan_windirs - TBD
+scan_winpe   -
+scan_winprefetch - Extracts fields from Windows prefetch files and file fragments.
 scan_wordlist - Builds word list for password cracking
+scan_xor
 scan_zip     - Detects and decompresses ZIP files and zlib streams
 
 
@@ -236,6 +266,8 @@ We are also considering the following scanners (and need help!):
 
 * Processing of physical drives under Windows
 
+* Python Bridge. 
+
 
 We have tabled the following ideas, for the following reasons:
 
@@ -250,12 +282,8 @@ We have tabled the following ideas, for the following reasons:
 * Support on distributed computing arrays. (May be less important
   given the low cost of 64-core machines)
 
-* Python Bridge. (We cannot have multiple instances of the Python
-  interperter running in the same address space, so we would need to
-  run multiple Pythons in multiple address spaces. Frankly, it's a lot
-  of work, and Python is really slow, so we're just not doing this.)
 
-* Support for checkpointing using BLCR.
+* Support for checkpointing using BLCR.  The project was abandoned.
 
 
 

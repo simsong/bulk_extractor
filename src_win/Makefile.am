@@ -11,7 +11,7 @@ SIGNED_INSTALLER = be_installer-$(VERSION).exe
 EXTRA_DIST = \
 	build_BEViewer_launcher.nsi \
 	build_installer.nsi \
-	CONFIGURE_F18.sh \
+	CONFIGURE_F18.bash \
 	icu-mingw32-libprefix.patch \
 	icu-mingw64-libprefix.patch \
 	README.txt \

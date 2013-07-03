@@ -225,7 +225,6 @@ std::string threadpool::get_thread_status(uint32_t id)
  */
 void *worker::run() 
 {
-    be13::plugin::message_enabled_scanners(scanner_params::PHASE_THREAD_BEFORE_SCAN); // tell all enabled scanners to init
     while(true){
 	/* Get the lock, then wait for the queue to be empty.
 	 * If it is not empty, wait for the lock again.
@@ -247,7 +246,7 @@ void *worker::run()
 	/* Worker still has the lock */
 	sbuf_t *sbuf = master.work_queue.front(); // get the sbuf
 	master.work_queue.pop();		   // pop from the list
-	master.thread_status.at(id) = std::string("Processing ") + sbuf->pos0.str();
+	master.thread_status.at(id) = std::string("Processing ") + sbuf->pos0.str(); // I have the M lock
 
 	/* release the lock */
 	pthread_mutex_unlock(&master.M);	   // unlock
