@@ -413,11 +413,14 @@ AC_CHECK_FUNCS([regcomp tre_regcomp tre_version])
 
 
 ################################################################
-## OpenSSL Support (required for AFFLIB and hash_t )
+## OpenSSL Support is now required (for hash_t)
 AC_CHECK_HEADERS([openssl/aes.h openssl/bio.h openssl/evp.h openssl/hmac.h openssl/md5.h openssl/pem.h openssl/rand.h openssl/rsa.h openssl/sha.h openssl/pem.h openssl/x509.h])
-AC_CHECK_LIB([crypto],[EVP_get_digestbyname])	# if crypto is available, get it
+# OpenSSL has been installed under at least two different names...
+AC_CHECK_LIB([crypto],[EVP_get_digestbyname])	
 AC_CHECK_LIB([ssl],[SSL_library_init])
-AC_CHECK_FUNCS([MD5_Init EVP_get_digestbyname])
+AC_CHECK_FUNCS([EVP_get_digestbyname],,
+	AC_MSG_ERROR([SSL/OpenSSL support required]))
+
 
 ################################################################
 ## AFFLIB support
