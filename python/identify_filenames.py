@@ -120,12 +120,23 @@ class byterundb2:
         self.unallocated.dump()
             
 
+xor_re = re.compile(r"^(\d+)\-XOR\-(\d+)")
+
+def decode_path_offset(offset):
+    """If the path has an XOR transformation, add the offset within
+    the XOR to the initial offset. Otherwise don't. Return the integer
+    value of the offset."""
+    m = xor_re.search(offset)
+    if m:
+        return int(m.group(1)+m.group(2))
+    return int(offset[0:offset.find("-")])
+    
 def process_featurefile2(rundb,infile,outfile):
     """Returns features from infile, determines the file for each, writes results to outfile"""
     # Stats
     unallocated_count = 0
     feature_count = 0
-    features_compressed = 0
+    features_encoded = 0
     located_count = 0
 
     if args.terse:
@@ -139,10 +150,9 @@ def process_featurefile2(rundb,infile,outfile):
             continue
         (offset,feature,context) = line[:-1].split(b'\t')
         feature_count += 1
-        dash_pos = offset.find(b'-')
-        if dash_pos>=0:
-            ioffset = int(offset[0:dash_pos])
-            features_compressed += 1
+        if b"-" in offset:
+            ioffset = decode_path_offset(offset)
+            features_encoded += 1
         else:
             ioffset = int(offset)
         tpl = rundb.search(ioffset)
@@ -173,7 +183,7 @@ def process_featurefile2(rundb,infile,outfile):
     for (title,value) in [["# Total features input: {}",feature_count],
                           ["# Total features located to files: {}",located_count],
                           ["# Total features in unallocated space: {}",unallocated_count],
-                          ["# Total features in compressed regions: {}",features_compressed],
+                          ["# Total features in encoded regions: {}",features_encoded],
                           ["# Total processing time: {:.2} seconds",t1-t0]]:
         outfile.write((title+"\n").format(value).encode('utf-8'))
 
