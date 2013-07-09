@@ -99,10 +99,10 @@ public class BulkExtractorScanListReader {
     // set scanners based on which thread obtained them
     if (stderrThread.scanners.size() > 0) {
       scanners = stderrThread.scanners;
-WLog.log("BulkExtractorScanListReader.readScanList Number of scanners (stderr for v1.2): " + stderrThread.scanners.size());
+//WLog.log("BulkExtractorScanListReader.readScanList Number of scanners (stderr for v1.2): " + stderrThread.scanners.size());
     } else if (stdoutThread.scanners.size() > 0) {
       scanners = stdoutThread.scanners;
-WLog.log("BulkExtractorScanListReader.readScanList Number of scanners (stdout for v1.3): " + stdoutThread.scanners.size());
+//WLog.log("BulkExtractorScanListReader.readScanList Number of scanners: " + stdoutThread.scanners.size());
     } else
       scanners = new Vector<Scanner>();
 
