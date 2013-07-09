@@ -306,11 +306,7 @@ int toupperw(int ch)
 
 int tolowerw(int ch)
 {
-#ifdef _WIN_ALL
-  return((int)(LPARAM)CharLowerW((wchar *)(uint)ch));
-#else
   return((ch<128) ? loctolower(ch):ch);
-#endif
 }
 
 

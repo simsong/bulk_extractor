@@ -115,7 +115,7 @@ void SubAllocator::StopSubAllocator()
 bool SubAllocator::StartSubAllocator(int SASize)
 {
   uint t=SASize << 20;
-  if (SubAllocatorSize == t)
+  if (SubAllocatorSize == (long) t)
     return TRUE;
   StopSubAllocator();
 

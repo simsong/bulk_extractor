@@ -24,12 +24,14 @@
 #include "exif_reader.h"
 #include "unicode_escape.h"
 
-static uint32_t MAX_ENTRY_SIZE = 1000000;
-static uint32_t MIN_JPEG_SIZE = 200;    // don't scan something smaller
+// these are not tunable
+static const uint32_t MAX_ENTRY_SIZE = 1000000;
+static const uint32_t MIN_JPEG_SIZE = 200;    // don't consider something smaller than this
 
-static int debug=0;
+// these are
+static int exif_debug=0;
 static uint32_t jpeg_carve_mode = feature_recorder::CARVE_ENCODED;
-
+static size_t min_jpeg_stream_size = 1000; // don't carve smaller than this
 
 /****************************************************************
  *** formatting code
@@ -94,14 +96,14 @@ namespace psd_reader {
          || exif_sbuf[3]!='S'
          || exif_sbuf[4]!= 0
          || exif_sbuf[5]!= 1) {
-            if(debug) std::cerr << "scan_exif.get_tiff_offset_from_psd header rejected\n";
+            if(exif_debug) std::cerr << "scan_exif.get_tiff_offset_from_psd header rejected\n";
             return 0;
         }
 
         // validate that the 6 reserved bytes are 0
         if (exif_sbuf[6]!=0 || exif_sbuf[7]!=0 || exif_sbuf[8]!=0 || exif_sbuf[9]!=0
          || exif_sbuf[10]!=0 || exif_sbuf[11]!=0) {
-            if(debug) std::cerr << "scan_exif.get_tiff_offset_from_psd reserved bytes rejected\n";
+            if(exif_debug) std::cerr << "scan_exif.get_tiff_offset_from_psd reserved bytes rejected\n";
             return 0;
         }
 
@@ -131,12 +133,12 @@ namespace psd_reader {
             // check to see if this resource is ExifInfo
             if (resource_id == 0x0422) {
                 size_t tiff_start = resource_offset + 8 + resource_name_length + 4;
-                if(debug) std::cerr << "scan_exif.get_tiff_offset_from_psd accepted at tiff_start " << tiff_start << "\n";
+                if(exif_debug) std::cerr << "scan_exif.get_tiff_offset_from_psd accepted at tiff_start " << tiff_start << "\n";
                 return tiff_start;
             }
             resource_offset += 8 + resource_name_length + 4 + resource_size;
         }
-        if(debug) std::cerr << "scan_exif.get_tiff_offset_from_psd ExifInfo resource was not found\n";
+        if(exif_debug) std::cerr << "scan_exif.get_tiff_offset_from_psd ExifInfo resource was not found\n";
         return 0;
     }
 
@@ -185,7 +187,7 @@ inline size_t min(size_t a,size_t b){
  */
 static void record_exif_data(feature_recorder *exif_recorder, const pos0_t &pos0, const string &hash_hex, const entry_list_t &entries)
 {
-    if(debug) std::cerr << "scan_exif recording data for entry" << "\n";
+    if(exif_debug) std::cerr << "scan_exif recording data for entry" << "\n";
 
     // do not record the exif feature if there are no entries
     if (entries.size() == 0) {
@@ -206,14 +208,14 @@ static void record_exif_data(feature_recorder *exif_recorder, const pos0_t &pos0
         }
 
         // validate against maximum entry size
-        if (debug & DEBUG_PEDANTIC) {
+        if (exif_debug & DEBUG_PEDANTIC) {
             if (prepared_value.size() > MAX_ENTRY_SIZE) {
                 std::cerr << "ERROR exif_entry: prepared_value.size()==" << prepared_value.size() << "\n" ;
                 assert(0);
             }
         }
 
-        if(debug){
+        if(exif_debug){
             cout << "scan_exif fed before xmlescape: " << (*it)->value << "\n";
             cout << "scan_exif fed after xmlescape: " << prepared_value << "\n";
         }
@@ -249,7 +251,7 @@ static void record_gps_data(feature_recorder *gps_recorder, const pos0_t &pos0, 
         if ((*it)->name.compare("DateTimeOriginal") == 0) {
             exif_time = (*it)->value;
 
-            if(debug) std::cerr << "scan_exif.format_gps_data exif_time: " << exif_time << "\n";
+            if(exif_debug) std::cerr << "scan_exif.format_gps_data exif_time: " << exif_time << "\n";
 
             if (exif_time.length() == 19) {
                 // reformat timestamp to standard ISO8601
@@ -405,17 +407,26 @@ public:
             
             if (sbuf[i+1]==0xda){ // SOS (Start of Stream)
                 // Scan for EOI or an unespcaed invalid FF
+                size_t sos_loc = i;                 // where we found the SOS
                 i += 2;                 // skip ff da
                 for(;i+2 < sbuf.bufsize;i++){
                     if(sbuf[i]==0xff && sbuf[i+1]!=0x00){
                         return i+2;     // return up to the ff and the code after it
                     }
                 }
-                return sbuf.bufsize;        // SOS not properly terminated, so just give the whole sbuf
+                // SOS not properly terminated. Don't validate unless we found at least min_jpeg_stream_size
+                // bytes.
+                if(sbuf.bufsize > sos_loc + min_jpeg_stream_size){
+                    return sbuf.bufsize;
+                }
+                return 0;               // can't validate
             }
             i += 2 + sbuf.get16uBE(i+2);    // add variable length size
         }
-        return sbuf.bufsize;            // ran off the end
+        // The JPEG is incomplete.
+        // We ran off the end *before* we entered the SOS. We may be in the Exif, but we have
+        // nothing displayable.
+        return 0;
     }
     
     /**
@@ -432,7 +443,7 @@ public:
             feature_text = hasher.func(tohash.buf,tohash.bufsize);
             
             size_t jlen = validate_jpeg(sbuf);
-            if(jlen>MIN_JPEG_SIZE){
+            if(jlen>min_jpeg_stream_size){
                 jpeg_recorder.carve(sbuf,0,jlen,hasher);
                 ret = jlen;
             }
@@ -450,19 +461,22 @@ public:
 
 	for (size_t start=0; start < sbuf.pagesize - MIN_JPEG_SIZE; start++) {
             // check for start of a JPEG
-	    if (sbuf[start + 0] == 0xff && sbuf[start + 1] == 0xd8 && sbuf[start + 2] == 0xff && (sbuf[start + 3] & 0xf0) == 0xe0) {
-		if(debug) std::cerr << "scan_exif checking ffd8ff at start " << start << "\n";
+	    if (sbuf[start + 0] == 0xff &&
+                sbuf[start + 1] == 0xd8 &&
+                sbuf[start + 2] == 0xff &&
+                (sbuf[start + 3] & 0xf0) == 0xe0) {
+		if(exif_debug) std::cerr << "scan_exif checking ffd8ff at start " << start << "\n";
 
 		// Does this JPEG have an EXIF?
 		size_t possible_tiff_offset_from_exif = exif_reader::get_tiff_offset_from_exif(sbuf+start);
-		if(debug) std::cerr << "scan_exif.possible_tiff_offset_from_exif " << possible_tiff_offset_from_exif << "\n";
+		if(exif_debug) std::cerr << "scan_exif.possible_tiff_offset_from_exif " << possible_tiff_offset_from_exif << "\n";
 		if ((possible_tiff_offset_from_exif != 0)
                     && tiff_reader::is_maybe_valid_tiff(sbuf + start + possible_tiff_offset_from_exif)) {
 
 		    // TIFF in Exif is valid, so process TIFF
 		    size_t tiff_offset = start + possible_tiff_offset_from_exif;
 
-		    if(debug) std::cerr << "scan_exif Start processing validated Exif ffd8ff at start " << start << "\n";
+		    if(exif_debug) std::cerr << "scan_exif Start processing validated Exif ffd8ff at start " << start << "\n";
 
 		    // get entries for this exif
                     try {
@@ -471,22 +485,22 @@ public:
                         // accept whatever entries were gleaned before the exif failure
                     }
 
-                    if(debug) std::cerr << "scan_exif.tiff_offset in ffd8 " << tiff_offset;
+                    if(exif_debug) std::cerr << "scan_exif.tiff_offset in ffd8 " << tiff_offset;
                 }
                 // Try to process if it is exif or not
                 size_t skip = process(sbuf+start,true);
                 // std::cerr << "1 skip=" << skip << "\n";
                 if(skip>1) start += skip-1;
-                if(debug) std::cerr << "scan_exif Done processing JPEG/Exif ffd8ff at " << start << " len=" << skip << "\n";
+                if(exif_debug) std::cerr << "scan_exif Done processing JPEG/Exif ffd8ff at " << start << " len=" << skip << "\n";
                 continue;                
             }
 		// check for possible TIFF in photoshop PSD header
             if (sbuf[start + 0] == '8' && sbuf[start + 1] == 'B' && sbuf[start + 2] == 'P' &&
                 sbuf[start + 3] == 'S' && sbuf[start + 4] == 0 && sbuf[start + 5] == 1) {
-	        if(debug) std::cerr << "scan_exif checking 8BPS at start " << start << "\n";
+	        if(exif_debug) std::cerr << "scan_exif checking 8BPS at start " << start << "\n";
 		// perform thorough check for TIFF in photoshop PSD
 		size_t possible_tiff_offset_from_psd = psd_reader::get_tiff_offset_from_psd(sbuf+start);
-		if(debug) std::cerr << "scan_exif.psd possible_tiff_offset_from_psd " << possible_tiff_offset_from_psd << "\n";
+		if(exif_debug) std::cerr << "scan_exif.psd possible_tiff_offset_from_psd " << possible_tiff_offset_from_psd << "\n";
 		if ((possible_tiff_offset_from_psd != 0)
 		    && tiff_reader::is_maybe_valid_tiff(sbuf + start + possible_tiff_offset_from_psd)) {
 		    // TIFF in PSD is valid, so process TIFF
@@ -499,11 +513,11 @@ public:
                         // accept whatever entries were gleaned before the exif failure
                     }
 
-		    if(debug) std::cerr << "scan_exif Start processing validated Photoshop 8BPS at start " << start << " tiff_offset " << tiff_offset << "\n";
+		    if(exif_debug) std::cerr << "scan_exif Start processing validated Photoshop 8BPS at start " << start << " tiff_offset " << tiff_offset << "\n";
                     size_t skip = process(sbuf+start,true);
                     // std::cerr << "2 skip=" << skip << "\n";
                     if(skip>1) start += skip-1;
-		    if(debug) std::cerr << "scan_exif Done processing validated Photoshop 8BPS at start " << start << "\n";
+		    if(exif_debug) std::cerr << "scan_exif Done processing validated Photoshop 8BPS at start " << start << "\n";
 		}
                 continue;
             }
@@ -528,7 +542,7 @@ public:
                     
                     // there is no MD5 because there is no associated file for this TIFF marker
                     process(sbuf+start,false);
-		    if(debug) std::cerr << "scan_exif Done processing validated TIFF II42 or MM42 at start "
+		    if(exif_debug) std::cerr << "scan_exif Done processing validated TIFF II42 or MM42 at start "
                                         << start << "\n";
                 }
 	    }
@@ -541,7 +555,7 @@ be13::hash_def exif_scanner::hasher;
 extern "C"
 void scan_exif(const class scanner_params &sp,const recursion_control_block &rcb)
 {
-    if(debug) std::cerr << "scan_exif start phase " << (uint32_t)sp.phase << "\n";
+    if(exif_debug) std::cerr << "scan_exif start phase " << (uint32_t)sp.phase << "\n";
     assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
     if(sp.phase==scanner_params::PHASE_STARTUP){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
@@ -552,8 +566,9 @@ void scan_exif(const class scanner_params &sp,const recursion_control_block &rcb
 	sp.info->feature_names.insert("gps");
 	sp.info->feature_names.insert("jpeg");
         exif_scanner::hasher    = sp.info->config->hasher;
-        sp.info->get_config("exif_debug",&debug,"debug exif decoder");
+        sp.info->get_config("exif_debug",&exif_debug,"debug exif decoder");
         sp.info->get_config("jpeg_carve_mode",&jpeg_carve_mode,"0=carve none; 1=carve encoded; 2=carve all");
+        sp.info->get_config("min_jpeg_stream_size",&min_jpeg_stream_size,"Smallest JPEG stream that will be carved");
 	return;
     }
     if(sp.phase==scanner_params::PHASE_INIT){
