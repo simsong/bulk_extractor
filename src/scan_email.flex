@@ -3,6 +3,7 @@
  * 
  * Note below:
  * U_TLD1 is a regular expression that catches top level domains in UTF-16.
+ * Also scans for ethernet addresses; addresses are validated by algorithm below.
  */
 
 #include "config.h"
@@ -31,6 +32,29 @@ public:
       class feature_recorder *domain_recorder;
       class feature_recorder *url_recorder;
       class feature_recorder *ether_recorder;
+
+      bool valid_ether_addr(size_t pos){
+	if(sbuf->memcmp((const uint8_t *)"00:00:00:00:00:00",pos,17)==0) return false;
+	if(sbuf->memcmp((const uint8_t *)"00:11:22:33:44:55",pos,17)==0) return false;
+	/* Perform a quick histogram analysis.
+	 * For each group of characters, create a value based on the two digits.
+	 * There is no need to convert them to their 'actual' value.
+	 * Don't accept a histogram that has 3 values. That could be 11:11:11:11:22:33
+	 * Require 4, 5 or 6.
+	 * If we have 3 or more distinct values, then treat it good.
+	 * Otherwise its is some pattern we don't want.
+	 */
+	std::set<uint16_t> ctr;
+	for(uint i=0;i<6;i++){	/* loop for each group of numbers */
+            u_char ch1 = (*sbuf)[pos+i*3];
+            u_char ch2 = (*sbuf)[pos+i*3+1];
+            uint16_t val = (ch1<<8) + (ch2); /* create a value of the two characters (it's not */
+            ctr.insert(val);
+	}
+	if(ctr.size()<4) return false;
+        return true;		/* all tests pass */
+      }
+
 };
 #define YY_EXTRA_TYPE email_scanner *             /* holds our class pointer */
 YY_EXTRA_TYPE yyemail_get_extra (yyscan_t yyscanner );    /* redundent declaration */
@@ -245,10 +269,9 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
 }
 
 [^0-9A-Z:]{HEX}{HEX}:{HEX}{HEX}:{HEX}{HEX}:{HEX}{HEX}:{HEX}{HEX}:{HEX}{HEX}/[^0-9A-Z:] {
-    /* found an ethernet! */
+    /* found a possible ethernet address! */
     email_scanner &s = * yyemail_get_extra(yyscanner);	      
-    if(   SBUF.memcmp((const uint8_t *)"00:00:00:00:00:00",s.pos+1,17)!=0 
-       && SBUF.memcmp((const uint8_t *)"00:11:22:33:44:55",s.pos+1,17)!=0){
+    if(s.valid_ether_addr(s.pos+1)){
        s.ether_recorder->write_buf(SBUF,s.pos+1,yyleng-1);
     }
     s.pos += yyleng;						      
