@@ -19,8 +19,6 @@ AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile doc/user_manual/Makefile \
                           plugins/Makefile \
 			  specfiles/Makefile specfiles/bulk_extractor.spec.m4 \
 			  java_gui/Makefile src_win/Makefile tests/Makefile ])
-
-
 AC_CONFIG_HEADER([config.h])
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
@@ -30,6 +28,11 @@ AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_INSTALL
 AC_PROG_LEX
+
+m4_include([src/dfxml/src/dfxml_configure.m4])
+m4_include([src/be13_api/be13_configure.m4])
+
+
 # Endian check is required for MD5 implementation
 AC_C_BIGENDIAN
 
@@ -38,9 +41,6 @@ AC_DEFINE([BULK_EXTRACTOR],1,[We are compiling bulk_extractor])
 AC_DEFINE([USE_HISTOGRAMS],1,[We are using histograms])
 AC_DEFINE([USE_STOP_LIST],1,[We are using the stop lists])
 AC_DEFINE([USE_ALERT_LIST],1,[We are using the alert list])
-
-m4_include([src/dfxml/src/dfxml_configure.m4])
-m4_include([src/be13_api/be13_configure.m4])
 
 ## 
 ## BEViewer
