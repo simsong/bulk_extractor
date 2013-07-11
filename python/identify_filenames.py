@@ -81,7 +81,10 @@ class byterundb:
     def process_fi(self,fi):
         """Read an XML file and add each byte run to this database"""
         for run in fi.byte_runs():
-            self.add_extent(run.img_offset,run.len,fi.filename(),fi.md5())
+            try:
+                self.add_extent(run.img_offset,run.len,fi.filename(),fi.md5())
+            except TypeError as e:
+                pass
             
            
 class byterundb2:
