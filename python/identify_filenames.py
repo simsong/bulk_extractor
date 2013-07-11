@@ -27,7 +27,7 @@ except ImportError:
 
 __version__='1.4.0'
 
-import bisect,os
+import bisect, os, re
 
 class byterundb:
     """The byte run database holds a set of byte runs, sorted by the
@@ -193,7 +193,7 @@ def process_featurefile2(rundb,infile,outfile):
 
 
 if __name__=="__main__":
-    import sys, time, re
+    import sys, time
 
     try:
         if dfxml.__version__ < "1.0.0":
