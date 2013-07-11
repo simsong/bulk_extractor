@@ -1,3 +1,9 @@
+2013-07-09  Simson Garfinkel  <simsong@sg1.ncr.nps.edu>
+
+	* src/be13_api/plugin.cpp (GET_CONFIG): fixed bug in handling of uint8_t config values. They weren't getting set properly.. Ugh.
+
+	* src/scan_xor.cpp (scan_xor): fixed error when XOR mask was specified as 0. Previously it recused; now it does not.
+
 2013-07-02  Simson Garfinkel  <simsong@Mucha.local>
 
 	* configure.ac: removed defines we aren't using anymore

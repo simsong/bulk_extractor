@@ -12,9 +12,7 @@ inline uint toupperc(byte ch,bool ForceCase)
 {
   if (ForceCase)
     return(ch);
-#ifdef _WIN_ALL
-  return((uint)(LPARAM)CharUpper((LPTSTR)(ch)));
-#elif defined(_UNIX)
+#if defined(_UNIX)
   return(ch);
 #else
   return(toupper(ch));

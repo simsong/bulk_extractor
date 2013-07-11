@@ -6,6 +6,7 @@
 #include "scan_ccns2.h"
 #include "sbuf_flex_scanner.h"
 
+
 /*
  * http://flex.sourceforge.net/manual/Cxx.html
  *

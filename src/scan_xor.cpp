@@ -8,7 +8,7 @@
 
 using namespace std;
 
-static uint8_t xor_mask = 0xFF;
+static uint8_t xor_mask = 255;
 
 extern "C"
 void scan_xor(const class scanner_params &sp,const recursion_control_block &rcb)
@@ -20,7 +20,6 @@ void scan_xor(const class scanner_params &sp,const recursion_control_block &rcb)
 	sp.info->author = "Michael Shick";
 	sp.info->description = "optimistic XOR deobfuscator";
 	sp.info->flags = scanner_info::SCANNER_DISABLED | scanner_info::SCANNER_RECURSE;
-
         sp.info->get_config("xor_mask",&xor_mask,"XOR mask string, in decimal");
 	return;
     }
@@ -46,13 +45,10 @@ void scan_xor(const class scanner_params &sp,const recursion_control_block &rcb)
             for(size_t ii = 0; ii < sbuf.bufsize; ii++) {
                 dbuf.buf[ii] = sbuf.buf[ii] ^ xor_mask;
             }
+            const pos0_t pos0_xor = pos0 + rcb.partName;
+            const sbuf_t child_sbuf(pos0_xor, dbuf.buf, sbuf.bufsize, sbuf.pagesize, false);
+            scanner_params child_params(sp, child_sbuf);
+            (*rcb.callback)(child_params);// call scanners on deobfuscated buffer
         }
-
-        const pos0_t pos0_xor = pos0 + rcb.partName;
-        const sbuf_t child_sbuf(pos0_xor, dbuf.buf, sbuf.bufsize, sbuf.pagesize, false);
-        scanner_params child_params(sp, child_sbuf);
-    
-        // call scanners on deobfuscated buffer
-        (*rcb.callback)(child_params);
     }
 }
