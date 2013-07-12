@@ -123,7 +123,7 @@ class byterundb2:
         self.unallocated.dump()
             
 
-xor_re = re.compile(r"^(\d+)\-XOR\-(\d+)")
+xor_re = re.compile(b"^(\\d+)\\-XOR\\-(\\d+)")
 
 def decode_path_offset(offset):
     """If the path has an XOR transformation, add the offset within
@@ -131,8 +131,8 @@ def decode_path_offset(offset):
     value of the offset."""
     m = xor_re.search(offset)
     if m:
-        return int(m.group(1)+m.group(2))
-    return int(offset[0:offset.find("-")])
+        return int(m.group(1))+int(m.group(2))
+    return int(offset[0:offset.find(b"-")])
     
 def process_featurefile2(rundb,infile,outfile):
     """Returns features from infile, determines the file for each, writes results to outfile"""
