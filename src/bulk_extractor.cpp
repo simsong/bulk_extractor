@@ -926,7 +926,7 @@ int main(int argc,char **argv)
 
     be13::plugin::load_scanner_directories(scanner_dirs,be_config);
     be13::plugin::load_scanners(scanners_builtin,be_config); 
-    be13::plugin::scanners_process_commands();
+    be13::plugin::scanners_process_enable_disable_commands();
 
     /* Print usage if necessary */
     if(opt_H){ be13::plugin::info_scanners(true,true,scanners_builtin,'e','x'); exit(0);}
@@ -1017,6 +1017,7 @@ int main(int argc,char **argv)
     feature_recorder_set::get_alert_recorder_name(feature_file_names);
     be13::plugin::get_scanner_feature_file_names(feature_file_names);
     feature_recorder_set fs(feature_file_names,image_fname,opt_outdir,stop_list.size()>0);
+    be13::plugin::scanners_init(&fs);
 
     /* Look for commands that impact per-recorders */
     for(scanner_info::config_t::const_iterator it=be_config.namevals.begin();it!=be_config.namevals.end();it++){
