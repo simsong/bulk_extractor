@@ -21,6 +21,8 @@
 #include <iomanip>
 #include <cassert>
 
+static const int min_uncompr_size = 4096; // allow at least this much when uncompressing
+
 using namespace std;
 
 /**
@@ -62,6 +64,7 @@ void scan_hiberfile(const class scanner_params &sp,const recursion_control_block
 
 	    /**
 	     * http://www.pyflag.net/pyflag/src/lib/pyxpress.c
+             * Decompress each block separetly 
 	     */
 	    if(cc[0]==0x81 && cc[1]==0x81 && cc[2]==0x78 && cc[3]==0x70 &&
 	       cc[4]==0x72 && cc[5]==0x65 && cc[6]==0x73 && cc[7]==0x73){
@@ -71,7 +74,9 @@ void scan_hiberfile(const class scanner_params &sp,const recursion_control_block
 		u_int  remaining_size = sbuf.bufsize - (compressed_buf-sbuf.buf); // up to the end of the buffer
 		size_t compr_size = compressed_length < remaining_size ? compressed_length : remaining_size;
 		size_t max_uncompr_size_ = compr_size * 10; // hope that's good enough
-		if(max_uncompr_size_<4096) max_uncompr_size_=4096; // it should at least be this large!
+		if(max_uncompr_size_<min_uncompr_size){
+                    max_uncompr_size_=min_uncompr_size; // it should at least be this large!
+                }
 
 		managed_malloc<u_char>decomp(max_uncompr_size_);
 
