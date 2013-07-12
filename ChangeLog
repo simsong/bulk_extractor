@@ -1,3 +1,9 @@
+2013-07-11  Basic  <simsong@Mucha.local>
+
+	* configure.ac: updated to beta3
+
+	* src/scan_exif.cpp: fixed jpeg validation. carving now works.
+
 2013-07-09  Simson Garfinkel  <simsong@sg1.ncr.nps.edu>
 
 	* src/be13_api/plugin.cpp (GET_CONFIG): fixed bug in handling of uint8_t config values. They weren't getting set properly.. Ugh.
