@@ -31,7 +31,7 @@ static const uint32_t MIN_JPEG_SIZE = 200;    // don't consider something smalle
 // these are
 static int exif_debug=0;
 static uint32_t jpeg_carve_mode = feature_recorder::CARVE_ENCODED;
-static size_t min_jpeg_stream_size = 1000; // don't carve smaller than this
+static size_t min_jpeg_size = 1000; // don't carve smaller than this
 
 /****************************************************************
  *** formatting code
@@ -383,50 +383,76 @@ public:
     feature_recorder &jpeg_recorder;
 
     /* Verify a jpeg nternal structure and return the length of the validated portion */
-    size_t validate_jpeg(const sbuf_t &sbuf) {
-        // std::cout << "validate_jpeg " << sbuf << "\n";
+    // http://www.w3.org/Graphics/JPEG/itu-t81.pdf
+    // http://stackoverflow.com/questions/1557071/the-size-of-a-jpegjfif-image
+    typedef enum { UNKNOWN=0,COMPLETE=1,TRUNCATED=2,CORRUPT=-1 } how_t;
+    size_t validate_jpeg(const sbuf_t &sbuf,how_t *how) {
+        //std::cout << "validate_jpeg " << sbuf << "\n";
+        *how = TRUNCATED;
         size_t i = 0;
-        while(i+2 < sbuf.bufsize){
-            // printf("i=%d  sbuf[i]=%02x sbuf[i+1]=%02x\n",(int)i,sbuf[i],sbuf[i+1]);
-            if (sbuf[i]!=0xff) return i;      // each section begins with a FF
-            if (sbuf[i+1]==0xd8){ // SOI
-                i+=2;
-                continue;
+        while(i+1 < sbuf.bufsize){
+            //printf("  i=%d  sbuf[i]=%02x sbuf[i+1]=%02x len=%d\n",(int)i,sbuf[i],sbuf[i+1],sbuf.get16uBE(i+2));
+            if (sbuf[i]!=0xff){
+                *how = CORRUPT;
+                return i;      // each section begins with a FF, so give up
             }
-            if (sbuf[i+1]==0x01){ // TEM
+            switch(sbuf[i+1]){                // switch on the marker
+            case 0xd8: // SOI
+                *how = COMPLETE;
                 i+=2;
-                continue;
-            }
-            if ((sbuf[i+1]>=0xd0 && sbuf[i+1]<=0xd8)){ // RST
+                break;
+            case 0x01: // TEM 
+                *how = COMPLETE;
+                i+=2;
+                break;
+            case 0xd0: case 0xd1: case 0xd2: case 0xd3:
+            case 0xd4: case 0xd5: case 0xd6: case 0xd7:
+                // RST markers are standalone; they don't have lengths
                 i += 2;
-                continue;
-            }
-            if (sbuf[i+1]==0xd9){ // EOI
-                return i+1;                         // validated!
-            }
-            
-            if (sbuf[i+1]==0xda){ // SOS (Start of Stream)
-                // Scan for EOI or an unespcaed invalid FF
-                size_t sos_loc = i;                 // where we found the SOS
-                i += 2;                 // skip ff da
-                for(;i+2 < sbuf.bufsize;i++){
-                    if(sbuf[i]==0xff && sbuf[i+1]!=0x00){
-                        return i+2;     // return up to the ff and the code after it
+                break;
+            case 0xd9: // EOI- end of image
+                return i+1;             // image is validated!
+            default: // assume that it has a length. Then keep going
+                i += 2 + sbuf.get16uBE(i+2);    // add variable length size
+                break;
+            case 0xda: // Start of scan
+                // http://webtweakers.com/swag/GRAPHICS/0143.PAS.html
+                //printf("start of scan. i=%zd header=%d\n",i,sbuf.get16uBE(i+2));
+                i += 2 + sbuf.get16uBE(i+2);   // skip ff da and minor header info
+
+                // Image data follows
+                // Scan for EOI or an unescaped invalid FF
+                for(;i+1 < sbuf.bufsize;i++){
+                    if(sbuf[i]!=0xff){  // Non-FF can be skipped
+                        continue;
                     }
+                    if(sbuf[i+1]==0x00){ // escaped FF
+                        continue;
+                    }
+                    if(sbuf[i+1]==0xde){ // terminated by an EOI marker
+                        //printf("i=%zd FF DE EOI found\n",i);
+                        *how = COMPLETE;
+                        return i+2;
+                    }
+                    if(sbuf[i+1]==0xd9){ // terminated by an EOI marker
+                        //printf("i=%zd FF D9 EOI found\n",i);
+                        *how = COMPLETE;
+                        return i+2;
+                    }
+                    if(sbuf[i+1]>=0xc0 && sbuf[i+1]<=0xdf){
+                        continue;   // This range seems to continue valid control characters
+                    }
+                    //printf(" ** WTF? sbuf[%d+1]=%2x\n",i,sbuf[i+1]);
+                    *how = CORRUPT;
+                    return i;           // buffer no longer validates; return
                 }
-                // SOS not properly terminated. Don't validate unless we found at least min_jpeg_stream_size
-                // bytes.
-                if(sbuf.bufsize > sos_loc + min_jpeg_stream_size){
-                    return sbuf.bufsize;
-                }
-                return 0;               // can't validate
+                // ran off the end in the stream. Fall through below.
             }
-            i += 2 + sbuf.get16uBE(i+2);    // add variable length size
-        }
+        } /* while */
         // The JPEG is incomplete.
         // We ran off the end *before* we entered the SOS. We may be in the Exif, but we have
         // nothing displayable.
-        return 0;
+        return sbuf.bufsize;
     }
     
     /**
@@ -442,8 +468,10 @@ public:
             sbuf_t tohash(sbuf,0,4096);
             feature_text = hasher.func(tohash.buf,tohash.bufsize);
             
-            size_t jlen = validate_jpeg(sbuf);
-            if(jlen>min_jpeg_stream_size){
+            how_t how;
+            size_t jlen = validate_jpeg(sbuf,&how);
+            //printf("jlen=%d  how=%d\n\n",jlen,how);
+            if(how==COMPLETE || jlen>min_jpeg_size){
                 jpeg_recorder.carve(sbuf,0,jlen,hasher);
                 ret = jlen;
             }
@@ -513,7 +541,10 @@ public:
                         // accept whatever entries were gleaned before the exif failure
                     }
 
-		    if(exif_debug) std::cerr << "scan_exif Start processing validated Photoshop 8BPS at start " << start << " tiff_offset " << tiff_offset << "\n";
+		    if(exif_debug) {
+                        std::cerr << "scan_exif Start processing validated Photoshop 8BPS at start "
+                                  << start << " tiff_offset " << tiff_offset << "\n";
+                    }
                     size_t skip = process(sbuf+start,true);
                     // std::cerr << "2 skip=" << skip << "\n";
                     if(skip>1) start += skip-1;
@@ -568,7 +599,7 @@ void scan_exif(const class scanner_params &sp,const recursion_control_block &rcb
         exif_scanner::hasher    = sp.info->config->hasher;
         sp.info->get_config("exif_debug",&exif_debug,"debug exif decoder");
         sp.info->get_config("jpeg_carve_mode",&jpeg_carve_mode,"0=carve none; 1=carve encoded; 2=carve all");
-        sp.info->get_config("min_jpeg_stream_size",&min_jpeg_stream_size,"Smallest JPEG stream that will be carved");
+        sp.info->get_config("min_jpeg_size",&min_jpeg_size,"Smallest JPEG stream that will be carved");
 	return;
     }
     if(sp.phase==scanner_params::PHASE_INIT){
