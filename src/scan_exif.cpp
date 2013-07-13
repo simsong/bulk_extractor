@@ -37,6 +37,98 @@ static size_t min_jpeg_size = 1000; // don't carve smaller than this
  *** formatting code
  ****************************************************************/
 
+#ifdef DUMPTEST
+#undef BULK_EXTRACTOR
+#endif
+
+#define DEBUG(x) if(exif_debug) std::cout << x << "\n";
+
+typedef enum { UNKNOWN=0,COMPLETE=1,TRUNCATED=2,CORRUPT=-1 } how_t;
+static size_t validate_jpeg(const sbuf_t &sbuf,how_t *how) {
+    //std::cout << "validate_jpeg " << sbuf << "\n";
+    *how = TRUNCATED;
+    size_t i = 0;
+    while(i+1 < sbuf.bufsize){
+        //printf("  i=%d  sbuf[i]=%02x sbuf[i+1]=%02x len=%d\n",(int)i,sbuf[i],sbuf[i+1],sbuf.get16uBE(i+2));
+        if (sbuf[i]!=0xff){
+            DEBUG("CORRUPT 1");
+            *how = CORRUPT;
+            return i;      // each section begins with a FF, so give up
+        }
+        switch(sbuf[i+1]){                // switch on the marker
+        case 0xff: // FF FF is very bad...
+            DEBUG("CORRUPT 2");
+            *how = CORRUPT;
+            return i;
+        case 0xd8: // SOI
+            DEBUG("SOI");
+            *how = COMPLETE;
+            i+=2;
+            break;
+        case 0x01: // TEM 
+            DEBUG("TEM");
+            *how = COMPLETE;
+            i+=2;
+            break;
+        case 0xd0: case 0xd1: case 0xd2: case 0xd3:
+        case 0xd4: case 0xd5: case 0xd6: case 0xd7:
+            // RST markers are standalone; they don't have lengths
+            DEBUG("RST");
+            i += 2;
+            break;
+        case 0xd9: // EOI- end of image
+            DEBUG("EOI");
+            return i+1;             // image is validated!
+        default: // assume that it has a length. Then keep going
+            char buf[1090];
+            snprintf(buf,sizeof(buf),"DEFAULT %02x",sbuf[i+1]);
+            DEBUG(buf);
+            if(i+2 >= sbuf.bufsize){i+=2;break;}
+            i += 2 + sbuf.get16uBE(i+2);    // add variable length size
+            break;
+        case 0xda: // Start of scan
+            DEBUG("SOS");
+            // http://webtweakers.com/swag/GRAPHICS/0143.PAS.html
+            //printf("start of scan. i=%zd header=%d\n",i,sbuf.get16uBE(i+2));
+            if(i+2 >= sbuf.bufsize){i+=2;break;}
+            i += 2 + sbuf.get16uBE(i+2);   // skip ff da and minor header info
+
+            // Image data follows
+            // Scan for EOI or an unescaped invalid FF
+            for(;i+1 < sbuf.bufsize;i++){
+                if(sbuf[i]!=0xff){  // Non-FF can be skipped
+                    continue;
+                }
+                if(sbuf[i+1]==0x00){ // escaped FF
+                    continue;
+                }
+                if(sbuf[i+1]==0xde){ // terminated by an EOI marker
+                    //printf("i=%zd FF DE EOI found\n",i);
+                    *how = COMPLETE;
+                    return i+2;
+                }
+                if(sbuf[i+1]==0xd9){ // terminated by an EOI marker
+                    //printf("i=%zd FF D9 EOI found\n",i);
+                    *how = COMPLETE;
+                    return i+2;
+                }
+                if(sbuf[i+1]>=0xc0 && sbuf[i+1]<=0xdf){
+                    continue;   // This range seems to continue valid control characters
+                }
+                //printf(" ** WTF? sbuf[%d+1]=%2x\n",i,sbuf[i+1]);
+                *how = CORRUPT;
+                return i;           // buffer no longer validates; return
+            }
+            // ran off the end in the stream. Fall through below.
+        }
+    } /* while */
+    // The JPEG is incomplete.
+    // We ran off the end *before* we entered the SOS. We may be in the Exif, but we have
+    // nothing displayable.
+    return sbuf.bufsize;
+}
+
+#ifdef BULK_EXTRACTOR
 /**
  * Used for helping to convert TIFF's GPS format to decimal lat/long
  */
@@ -175,7 +267,7 @@ namespace psd_reader {
 /****************************************************************/
 /* C++ string splitting code from http://stackoverflow.com/questions/236129/how-to-split-a-string-in-c */
 
-using namespace std;
+//using namespace std;
 
 inline size_t min(size_t a,size_t b){
     return a<b ? a : b;
@@ -387,75 +479,6 @@ public:
     /* Verify a jpeg internal structure and return the length of the validated portion */
     // http://www.w3.org/Graphics/JPEG/itu-t81.pdf
     // http://stackoverflow.com/questions/1557071/the-size-of-a-jpegjfif-image
-    typedef enum { UNKNOWN=0,COMPLETE=1,TRUNCATED=2,CORRUPT=-1 } how_t;
-    size_t validate_jpeg(const sbuf_t &sbuf,how_t *how) {
-        //std::cout << "validate_jpeg " << sbuf << "\n";
-        *how = TRUNCATED;
-        size_t i = 0;
-        while(i+1 < sbuf.bufsize){
-            //printf("  i=%d  sbuf[i]=%02x sbuf[i+1]=%02x len=%d\n",(int)i,sbuf[i],sbuf[i+1],sbuf.get16uBE(i+2));
-            if (sbuf[i]!=0xff){
-                *how = CORRUPT;
-                return i;      // each section begins with a FF, so give up
-            }
-            switch(sbuf[i+1]){                // switch on the marker
-            case 0xd8: // SOI
-                *how = COMPLETE;
-                i+=2;
-                break;
-            case 0x01: // TEM 
-                *how = COMPLETE;
-                i+=2;
-                break;
-            case 0xd0: case 0xd1: case 0xd2: case 0xd3:
-            case 0xd4: case 0xd5: case 0xd6: case 0xd7:
-                // RST markers are standalone; they don't have lengths
-                i += 2;
-                break;
-            case 0xd9: // EOI- end of image
-                return i+1;             // image is validated!
-            default: // assume that it has a length. Then keep going
-                i += 2 + sbuf.get16uBE(i+2);    // add variable length size
-                break;
-            case 0xda: // Start of scan
-                // http://webtweakers.com/swag/GRAPHICS/0143.PAS.html
-                //printf("start of scan. i=%zd header=%d\n",i,sbuf.get16uBE(i+2));
-                i += 2 + sbuf.get16uBE(i+2);   // skip ff da and minor header info
-
-                // Image data follows
-                // Scan for EOI or an unescaped invalid FF
-                for(;i+1 < sbuf.bufsize;i++){
-                    if(sbuf[i]!=0xff){  // Non-FF can be skipped
-                        continue;
-                    }
-                    if(sbuf[i+1]==0x00){ // escaped FF
-                        continue;
-                    }
-                    if(sbuf[i+1]==0xde){ // terminated by an EOI marker
-                        //printf("i=%zd FF DE EOI found\n",i);
-                        *how = COMPLETE;
-                        return i+2;
-                    }
-                    if(sbuf[i+1]==0xd9){ // terminated by an EOI marker
-                        //printf("i=%zd FF D9 EOI found\n",i);
-                        *how = COMPLETE;
-                        return i+2;
-                    }
-                    if(sbuf[i+1]>=0xc0 && sbuf[i+1]<=0xdf){
-                        continue;   // This range seems to continue valid control characters
-                    }
-                    //printf(" ** WTF? sbuf[%d+1]=%2x\n",i,sbuf[i+1]);
-                    *how = CORRUPT;
-                    return i;           // buffer no longer validates; return
-                }
-                // ran off the end in the stream. Fall through below.
-            }
-        } /* while */
-        // The JPEG is incomplete.
-        // We ran off the end *before* we entered the SOS. We may be in the Exif, but we have
-        // nothing displayable.
-        return sbuf.bufsize;
-    }
     
     /**
      * Process the JPEG, including - calculate its hash, carve it, record exif and gps data
@@ -637,4 +660,25 @@ void scan_exif(const class scanner_params &sp,const recursion_control_block &rcb
         escan.scan(sp.sbuf);
     }
 }
+#endif
 
+#ifdef DUMPTEST
+int debug=1;
+int main(int argc,char **argv)
+{
+    exif_debug = debug;
+    (void)jpeg_carve_mode;
+    (void)min_jpeg_size;
+    argc--;argv++;
+    while(*argv){
+        how_t how;
+        sbuf_t *sbuf = sbuf_t::map_file(*argv,pos0_t(*argv));
+        size_t s = validate_jpeg(*sbuf,&how);
+        printf("%s: filesize: %zd  s=%zd  how=%d\n",*argv,sbuf->bufsize,s,how);
+        delete sbuf;
+        argc--;argv++;
+        printf("\n");
+    }
+    return(0);
+}
+#endif

@@ -7,9 +7,11 @@ AM_CPPFLAGS = -I${top_srcdir}/src/be13_api
 # http://stackoverflow.com/questions/11438613/conditional-subdir-objects
 AUTOMAKE_OPTIONS = subdir-objects
 
-
 include dfxml/src/Makefile.defs
 include be13_api/Makefile.defs
+
+jpegdump: scan_exif.cpp be13_api/sbuf.o be13_api/unicode_escape.o 
+	g++ -o jpegdump $(CPPFLAGS) $(CXXFLAGS) $(AM_CPPFLAGS) -I.. -DDUMPTEST scan_exif.cpp be13_api/sbuf.o be13_api/unicode_escape.o
 
 TSK3INCS = \
 	tsk3/auto/tsk_auto.h\
