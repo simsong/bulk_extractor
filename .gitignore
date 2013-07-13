@@ -66,3 +66,4 @@ specfiles/bulk_extractor.fedora.spec
 specfiles/bulk_extractor.opensuse.spec
 .dirstamp
 java_gui/src/Config.java
+src/jpegdump
