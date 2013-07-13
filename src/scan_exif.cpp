@@ -44,7 +44,7 @@ static size_t min_jpeg_size = 1000; // don't carve smaller than this
 #define DEBUG(x) if(exif_debug) std::cout << x << "\n";
 
 typedef enum { UNKNOWN=0,COMPLETE=1,TRUNCATED=2,CORRUPT=-1 } how_t;
-static size_t validate_jpeg(const sbuf_t &sbuf,how_t *how) {
+static ssize_t validate_jpeg(const sbuf_t &sbuf,how_t *how) {
     //std::cout << "validate_jpeg " << sbuf << "\n";
     *how = TRUNCATED;
     size_t i = 0;
@@ -553,16 +553,23 @@ public:
         size_t ret = 0;
         string feature_text = "00000000000000000000000000000000";
         if(found_start){
-            sbuf_t tohash(sbuf,0,4096);
-            feature_text = hasher.func(tohash.buf,tohash.bufsize);
+            how_t how(UNKNOWN);
+            ssize_t jlen = validate_jpeg(sbuf,&how);
             
-            how_t how;
-            size_t jlen = validate_jpeg(sbuf,&how);
-            if(how==COMPLETE || jlen>min_jpeg_size){
+            // Is it valid?
+            if(jlen<=0) return 0; 
+
+            // Should we carve?
+            if(how==COMPLETE || jlen>(ssize_t)min_jpeg_size){
                 jpeg_recorder.carve(sbuf,0,jlen,hasher);
                 ret = jlen;
             }
+
+            // Record the hash of the first 4K
+            sbuf_t tohash(sbuf,0,4096);
+            feature_text = hasher.func(tohash.buf,tohash.bufsize);
         }
+        /* Record entries (if present) in the feature files */
         record_exif_data(&exif_recorder, sbuf.pos0, feature_text, entries);
         record_gps_data(&gps_recorder, sbuf.pos0, feature_text, entries);
         clear_entries(entries);		    // clear entries for next round
