@@ -277,8 +277,11 @@ def run_outdir(outdir,gdb=False):
     cargs += ['-r','tests/alert_list.txt']
     cargs += ['-w','tests/stop_list.txt']
     cargs += ['-w','tests/stop_list_context.txt']
-    cargs += ['-f','[a-z\.0-9]*@gsa.gov']
-    cargs += ['-F','tests/find_list.txt']
+
+    if not args.nofind:
+        cargs += ['-f','[a-z\.0-9]*@gsa.gov']
+        cargs += ['-F','tests/find_list.txt']
+
     cargs += [args.image]
 
     # Now that we have a command, figure out how to run it...
@@ -459,6 +462,7 @@ if __name__=="__main__":
     parser.add_argument("--zip",help="Create a zip archive of the report")
     parser.add_argument("--validate",help="Validate the contents of a report (do not run bulk_extractor)",
                         type=str,nargs='*')
+    parser.add_argument("--nofind",help="do not run the find tests",action="store_true")
     parser.add_argument("--sort",help="Sort the feature files",type=str,nargs='*')
     parser.add_argument("--reproduce",help="specifies a bulk_extractor output "
             + "file from a crash and produces bulk_extractor flags to quickly "
