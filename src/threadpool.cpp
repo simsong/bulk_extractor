@@ -223,6 +223,7 @@ std::string threadpool::get_thread_status(uint32_t id)
  * attribute, but then when the attribute is given, GCC complains that it has
  * a return statement!
  */
+#pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
 void *worker::run() 
 {
     while(true){
@@ -251,7 +252,7 @@ void *worker::run()
 	/* release the lock */
 	pthread_mutex_unlock(&master.M);	   // unlock
 	if(sbuf==0) {
-            return 0;
+	  break;
 	}
 	do_work(sbuf);
 	delete sbuf;
@@ -261,5 +262,6 @@ void *worker::run()
 	pthread_cond_signal(&master.TOMAIN); // tell the master that we are free!
 	pthread_mutex_unlock(&master.M);     // should wake up the master
     }
+    return 0;
 }
 

@@ -43,153 +43,170 @@ static size_t min_jpeg_size = 1000; // don't carve smaller than this
 
 #define DEBUG(x) if(exif_debug) std::cout << x << "\n";
 
-typedef enum { UNKNOWN=0,COMPLETE=1,TRUNCATED=2,CORRUPT=-1 } how_t;
-static ssize_t validate_jpeg(const sbuf_t &sbuf,how_t *how) {
-    //std::cout << "validate_jpeg " << sbuf << "\n";
-    *how = TRUNCATED;
-    size_t i = 0;
-    bool seen_ff_c4 = false;            // Seen a DHT (Definition of Huffman Tables)
-    bool seen_ff_cc = false;            // Seen a DAC (Definition of arithmetic coding)
-    bool seen_ff_db = false;            // Seen a DQT (Definition of quantization)
-    bool seen_ff_e1 = false;            // seen an E1 (exif)
-    bool seen_JFIF  = false;
-    bool seen_EOI   = false;
-    bool seen_SOI   = false;
-    bool seen_SOS   = false;
-    uint16_t height=0,width=0;
-    while(i+1 < sbuf.bufsize && seen_EOI==false){
-        //printf("  i=%d  sbuf[i]=%02x sbuf[i+1]=%02x len=%d\n",(int)i,sbuf[i],sbuf[i+1],sbuf.get16uBE(i+2));
-        if (sbuf[i]!=0xff){
-            DEBUG("CORRUPT 1");
-            *how = CORRUPT;
-            return i;      // each section begins with a FF, so give up
-        }
-        switch(sbuf[i+1]){                // switch on the marker
-        case 0xff: // FF FF is very bad...
-            DEBUG("CORRUPT FF FF");
-            *how = CORRUPT;
-            return i;
-        case 0xd8: // SOI
-            DEBUG("SOI");
-            seen_SOI = true;
-            i+=2;
-            break;
-        case 0x01: // TEM 
-            DEBUG("TEM");
-            *how = COMPLETE;
-            i+=2;
-            break;
-        case 0xd0: case 0xd1: case 0xd2: case 0xd3:
-        case 0xd4: case 0xd5: case 0xd6: case 0xd7:
-            // RST markers are standalone; they don't have lengths
-            DEBUG("RST");
-            i += 2;
-            break;
-        case 0xd9: // EOI- end of image
-            DEBUG("EOI");
-            seen_EOI = true;
-            *how = COMPLETE;
-            i += 2;
-            break;
-        default: // decode variable-length blocks
-            {
-                if(i+2 >= sbuf.bufsize){i+=2;break;} // whoops - not enough
-                uint16_t block_length = sbuf.get16uBE(i+2);
-                if(sbuf[i+1]==0xc4) seen_ff_c4 = true;
-                if(sbuf[i+1]==0xcc) seen_ff_cc = true;
-                if(sbuf[i+1]==0xdb) seen_ff_db = true;
-                if(sbuf[i+1]==0xe1) seen_ff_e1 = true;
-                
-                if(sbuf[i+1]==0xe0 && block_length>8){        // see if this is a JFIF
-                    DEBUG("JFIF");
-                    if(sbuf[i+4]=='J' && sbuf[i+5]=='F' && sbuf[i+6]=='I' && sbuf[i+7]=='F'){
-                        seen_JFIF = true;
-                    }
-                }
-                
-                if(sbuf[i+1]==0xc0 && block_length>8){        // FFC0 is start of frame
-                    height = sbuf.get16uBE(i+5);
-                    width  = sbuf.get16uBE(i+7);
-                }
-                
-                i += 2 + sbuf.get16uBE(i+2);    // add variable length size
+struct jpeg_validator {
+    typedef enum { UNKNOWN=0,COMPLETE=1,TRUNCATED=2,CORRUPT=-1 } how_t;
+    struct results_t {
+        results_t():len(),how(),seen_ff_c4(),seen_ff_cc(),seen_ff_db(),
+                  seen_ff_e1(),seen_JFIF(),seen_EOI(),seen_SOI(),seen_SOS(),height(),width(){}
+        ssize_t len;
+        how_t how;	       // how do we validate?
+        bool seen_ff_c4;            // Seen a DHT (Definition of Huffman Tables)
+        bool seen_ff_cc;            // Seen a DAC (Definition of arithmetic coding)
+        bool seen_ff_db;            // Seen a DQT (Definition of quantization)
+        bool seen_ff_e1;            // seen an E1 (exif)
+        bool seen_JFIF;
+        bool seen_EOI;
+        bool seen_SOI;
+        bool seen_SOS;
+        uint16_t height;
+        uint16_t width;
+    };
+    static struct results_t validate_jpeg(const sbuf_t &sbuf) {
+        //std::cout << "validate_jpeg " << sbuf << "\n";
+        results_t res;
+        res.how = UNKNOWN;
+        size_t i = 0;
+        while(i+1 < sbuf.bufsize && res.seen_EOI==false && res.how!=CORRUPT){
+            if (sbuf[i]!=0xff){
+                DEBUG("CORRUPT 1");
+                res.how = CORRUPT;
                 break;
             }
+            switch(sbuf[i+1]){                // switch on the marker
+            case 0xff: // FF FF is very bad...
+                DEBUG("CORRUPT FF FF");
+                res.how = CORRUPT;
+                break;
+            case 0xd8: // SOI -- start of image
+                DEBUG("SOI");
+                res.seen_SOI = true;
+                i+=2;
+                break;
+            case 0x01: // TEM 
+                DEBUG("TEM");
+                res.how = COMPLETE;
+                i+=2;
+                break;
+            case 0xd0: case 0xd1: case 0xd2: case 0xd3:
+            case 0xd4: case 0xd5: case 0xd6: case 0xd7:
+                // RST markers are standalone; they don't have lengths
+                DEBUG("RST");
+                i += 2;
+                break;
+            case 0xd9: // EOI- end of image
+                DEBUG("EOI");
+                res.seen_EOI = true;
+                res.how = COMPLETE;
+                i += 2;
+                break;
+            default: // decode variable-length blocks
+                {
+                    if(i+2 >= sbuf.bufsize){i+=2;break;} // whoops - not enough
+                    uint16_t block_length = sbuf.get16uBE(i+2);
+                    if(sbuf[i+1]==0xc4) res.seen_ff_c4 = true;
+                    if(sbuf[i+1]==0xcc) res.seen_ff_cc = true;
+                    if(sbuf[i+1]==0xdb) res.seen_ff_db = true;
+                    if(sbuf[i+1]==0xe1) res.seen_ff_e1 = true;
+                
+                    if(sbuf[i+1]==0xe0 && block_length>8){        // see if this is a JFIF
+                        DEBUG("JFIF");
+                        if(sbuf[i+4]=='J' && sbuf[i+5]=='F' && sbuf[i+6]=='I' && sbuf[i+7]=='F'){
+                            res.seen_JFIF = true;
+                        }
+                    }
+                
+                    if(sbuf[i+1]==0xc0 && block_length>8){        // FFC0 is start of frame
+                        res.height = sbuf.get16uBE(i+5);
+                        res.width  = sbuf.get16uBE(i+7);
+                    }
+                
+                    i += 2 + sbuf.get16uBE(i+2);    // add variable length size
+                    break;
+                }
 
-        case 0xda: // Start of scan
-            DEBUG("SOS");
-            /* Certain fields MUST be set before the SOS, or the JPEG is corrupt */
-            seen_SOS = true;
-            if(seen_ff_c4==false && seen_ff_cc==false && seen_ff_db==false){
-                *how = CORRUPT;         // can't have a SOS before we have seen one of these
-                return 0;               // does not validate
-            }
-            if(seen_JFIF==false || width==0 || height==0){
-                *how = CORRUPT;
-                return 0;
-            }
+            case 0xda: // Start of scan
+                DEBUG("SOS");
+                /* Certain fields MUST be set before the SOS, or the JPEG is corrupt */
+                res.seen_SOS = true;
+                if(res.seen_ff_c4==false && res.seen_ff_cc==false && res.seen_ff_db==false){
+                    res.how = CORRUPT;         // can't have a SOS before we have seen one of these
+                    res.len = 0;               // it's not a jpeg
+                    return res;
+                }
+                if(res.seen_JFIF==false || res.width==0 || res.height==0){
+                    res.how = CORRUPT;
+                    res.len = 0;
+                    return res;
+                }
 
-            // http://webtweakers.com/swag/GRAPHICS/0143.PAS.html
-            //printf("start of scan. i=%zd header=%d\n",i,sbuf.get16uBE(i+2));
-            if(i+2 >= sbuf.bufsize){i+=2;break;}
-            i += 2 + sbuf.get16uBE(i+2);   // skip ff da and minor header info
+                // http://webtweakers.com/swag/GRAPHICS/0143.PAS.html
+                //printf("start of scan. i=%zd header=%d\n",i,sbuf.get16uBE(i+2));
+                if(i+2 >= sbuf.bufsize){i+=2;break;}
+                i += 2 + sbuf.get16uBE(i+2);   // skip ff da and minor header info
 
-            // Image data follows
-            // Scan for EOI or an unescaped invalid FF
-            for(;i+1 < sbuf.bufsize;i++){
-                if(sbuf[i]!=0xff){  // Non-FF can be skipped
-                    continue;
+                // Image data follows
+                // Scan for EOI or an unescaped invalid FF
+                for(;i+1 < sbuf.bufsize;i++){
+                    if(sbuf[i]!=0xff){  // Non-FF can be skipped
+                        continue;
+                    }
+                    if(sbuf[i+1]==0x00){ // escaped FF
+                        continue;
+                    }
+                    if(sbuf[i+1]==0xde){ // terminated by an EOI marker
+                        //printf("i=%zd FF DE EOI found\n",i);
+                        res.how = COMPLETE;
+                        i+=2;
+                        break;
+                    }
+                    if(sbuf[i+1]==0xd9){ // terminated by an EOI marker
+                        //printf("i=%zd FF D9 EOI found\n",i);
+                        i+=2;
+                        res.how = COMPLETE;
+                        break;
+                    }
+                    if(sbuf[i+1]>=0xc0 && sbuf[i+1]<=0xdf){
+                        continue;   // This range seems to continue valid control characters
+                    }
+                    //printf(" ** WTF? sbuf[%d+1]=%2x\n",i,sbuf[i+1]);
+                    res.how = CORRUPT;
+                    break;
                 }
-                if(sbuf[i+1]==0x00){ // escaped FF
-                    continue;
-                }
-                if(sbuf[i+1]==0xde){ // terminated by an EOI marker
-                    //printf("i=%zd FF DE EOI found\n",i);
-                    *how = COMPLETE;
-                    return i+2;
-                }
-                if(sbuf[i+1]==0xd9){ // terminated by an EOI marker
-                    //printf("i=%zd FF D9 EOI found\n",i);
-                    *how = COMPLETE;
-                    return i+2;
-                }
-                if(sbuf[i+1]>=0xc0 && sbuf[i+1]<=0xdf){
-                    continue;   // This range seems to continue valid control characters
-                }
-                //printf(" ** WTF? sbuf[%d+1]=%2x\n",i,sbuf[i+1]);
-                *how = CORRUPT;
-                return i;           // buffer no longer validates; return
+                // ran off the end in the stream. Fall through below.
             }
-            // ran off the end in the stream. Fall through below.
+        } /* while */
+        // The JPEG is incomplete.
+        // We ran off the end *before* we entered the SOS. We may be in the Exif, but we have
+        // nothing displayable.
+        res.len = i;            // that's how far we got
+        if(res.seen_JFIF==false || res.seen_SOI==false){
+            res.how = CORRUPT;
+            res.len = 0;        // nothing here, I guess
+            return res;
         }
-    } /* while */
-    // The JPEG is incomplete.
-    // We ran off the end *before* we entered the SOS. We may be in the Exif, but we have
-    // nothing displayable.
-    if(seen_JFIF==false){
-        *how = CORRUPT;
-        return 0;
-    }
 
-    // If we got an EXIF, at least return that...
-    if(seen_ff_e1){
-        * how = TRUNCATED;
-        return sbuf.bufsize; // at least we saw an EXIF, so return true
-    }
+        // If we got an EXIF, at least return that...
+        if(res.seen_ff_e1){
+            res.how = TRUNCATED;
+            return res; // at least we saw an EXIF, so return true
+        }
     
-    // If we didn't get a color table, it's corrupt
-    if(seen_ff_c4==false && seen_ff_cc==false && seen_ff_db==false){
-        *how = CORRUPT;
-        return 0;                       // doesn't appear to be a jpeg
-    }
+        // If we didn't get a color table, it's corrupt
+        if(res.seen_ff_c4==false && res.seen_ff_cc==false && res.seen_ff_db==false){
+            res.how = CORRUPT;
+            res.len = 0;                    // doesn't appear to be a jpeg
+            return res;
+        }
 
-    // If we didn't get a SOS or the size is wrong, it's corrupt
-    if(seen_SOS==false || width==0 || height==0){
-        *how = CORRUPT;
-        return 0;
+        // If we didn't get a SOS or the size is wrong, it's corrupt
+        if(res.seen_SOS==false || res.width==0 || res.height==0){
+            res.how = CORRUPT;
+            res.len = 0;
+            return res;
+        }
+        return res;
     }
-    return sbuf.bufsize;
-}
+};
 
 #ifdef BULK_EXTRACTOR
 /**
@@ -553,16 +570,15 @@ public:
         size_t ret = 0;
         string feature_text = "00000000000000000000000000000000";
         if(found_start){
-            how_t how(UNKNOWN);
-            ssize_t jlen = validate_jpeg(sbuf,&how);
+            jpeg_validator::results_t res = jpeg_validator::validate_jpeg(sbuf);
             
             // Is it valid?
-            if(jlen<=0) return 0; 
+            if(res.len<=0) return 0; 
 
             // Should we carve?
-            if(how==COMPLETE || jlen>(ssize_t)min_jpeg_size){
-                jpeg_recorder.carve(sbuf,0,jlen,hasher);
-                ret = jlen;
+            if(res.how==jpeg_validator::COMPLETE || res.len>(ssize_t)min_jpeg_size){
+                jpeg_recorder.carve(sbuf,0,res.len,hasher);
+                ret = res.len;
             }
 
             // Record the hash of the first 4K
@@ -741,11 +757,14 @@ int main(int argc,char **argv)
     (void)min_jpeg_size;
     argc--;argv++;
     while(*argv){
-        how_t how;
         sbuf_t *sbuf = sbuf_t::map_file(*argv,pos0_t(*argv));
-        size_t s = validate_jpeg(*sbuf,&how);
-        printf("%s: filesize: %zd  s=%zd  how=%d\n",*argv,sbuf->bufsize,s,how);
-        delete sbuf;
+        if(sbuf==0){
+            perror(*argv);
+        } else {
+            jpeg_validator::results_t res = jpeg_validator::validate_jpeg(*sbuf);
+            printf("%s: filesize: %zd  s=%zd  how=%d\n",*argv,sbuf->bufsize,res.len,res.how);
+            delete sbuf;
+        }
         argc--;argv++;
         printf("\n");
     }
