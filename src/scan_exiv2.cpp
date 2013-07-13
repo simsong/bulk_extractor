@@ -7,6 +7,9 @@
 
 #include "config.h"
 #include "bulk_extractor_i.h"
+#include "be13_api/utils.h"
+
+#include "dfxml/src/dfxml_writer.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -100,8 +103,9 @@ int exif_show_all=1;
 extern "C"
 void scan_exiv2(const class scanner_params &sp,const recursion_control_block &rcb)
 {
+    static be13::hash_def hasher;
     assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
-    if(sp.phase==scanner_params::startup){
+    if(sp.phase==scanner_params::PHASE_STARTUP){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	sp.info->name  = "exiv2";
         sp.info->author         = "Simson L. Garfinkel";
@@ -110,10 +114,11 @@ void scan_exiv2(const class scanner_params &sp,const recursion_control_block &rc
 	sp.info->feature_names.insert("exif");
 	sp.info->feature_names.insert("gps");
 	sp.info->flags = scanner_info::SCANNER_DISABLED; // disabled because we have be_exif
+	hasher = sp.info->config->hasher;
 	return;
     }
-    if(sp.phase==scanner_params::shutdown) return;
-    if(sp.phase==scanner_params::scan){
+    if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;
+    if(sp.phase==scanner_params::PHASE_SCAN){
 
 	const sbuf_t &sbuf = sp.sbuf;
 	feature_recorder *exif_recorder = sp.fs.get_name("exif");
@@ -151,7 +156,8 @@ void scan_exiv2(const class scanner_params &sp,const recursion_control_block &rc
 			/*
 			 * Create the MD5 of the first 4K to use as a unique identifier.
 			 */
-			string md5_hex = be_hash(sbuf_t(sbuf,pos,4096));
+			sbuf_t tohash(sbuf,0,4096);
+			string md5_hex = hasher.func(tohash.buf,tohash.bufsize);
 
 			char xmlbuf[1024];
 			snprintf(xmlbuf,sizeof(xmlbuf),
@@ -182,7 +188,7 @@ void scan_exiv2(const class scanner_params &sp,const recursion_control_block &rc
 			    if(i->count()>1000) continue;	// ignore long ones
 
 			    string key = string(i->key());
-			    xml.append("<"+key+">"+xml::xmlescape(i->value().toString())+"</"+key+">");
+			    xml.append("<"+key+">"+dfxml_writer::xmlescape(i->value().toString())+"</"+key+">");
 
                             // use Date from Photo unless date from GPS is available
 			    if(key=="Exif.Photo.DateTimeOriginal"){
