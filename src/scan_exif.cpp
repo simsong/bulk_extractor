@@ -48,7 +48,16 @@ static size_t validate_jpeg(const sbuf_t &sbuf,how_t *how) {
     //std::cout << "validate_jpeg " << sbuf << "\n";
     *how = TRUNCATED;
     size_t i = 0;
-    while(i+1 < sbuf.bufsize){
+    bool seen_ff_c4 = false;            // Seen a DHT (Definition of Huffman Tables)
+    bool seen_ff_cc = false;            // Seen a DAC (Definition of arithmetic coding)
+    bool seen_ff_db = false;            // Seen a DQT (Definition of quantization)
+    bool seen_ff_e1 = false;            // seen an E1 (exif)
+    bool seen_JFIF  = false;
+    bool seen_EOI   = false;
+    bool seen_SOI   = false;
+    bool seen_SOS   = false;
+    uint16_t height=0,width=0;
+    while(i+1 < sbuf.bufsize && seen_EOI==false){
         //printf("  i=%d  sbuf[i]=%02x sbuf[i+1]=%02x len=%d\n",(int)i,sbuf[i],sbuf[i+1],sbuf.get16uBE(i+2));
         if (sbuf[i]!=0xff){
             DEBUG("CORRUPT 1");
@@ -57,12 +66,12 @@ static size_t validate_jpeg(const sbuf_t &sbuf,how_t *how) {
         }
         switch(sbuf[i+1]){                // switch on the marker
         case 0xff: // FF FF is very bad...
-            DEBUG("CORRUPT 2");
+            DEBUG("CORRUPT FF FF");
             *how = CORRUPT;
             return i;
         case 0xd8: // SOI
             DEBUG("SOI");
-            *how = COMPLETE;
+            seen_SOI = true;
             i+=2;
             break;
         case 0x01: // TEM 
@@ -78,16 +87,48 @@ static size_t validate_jpeg(const sbuf_t &sbuf,how_t *how) {
             break;
         case 0xd9: // EOI- end of image
             DEBUG("EOI");
-            return i+1;             // image is validated!
-        default: // assume that it has a length. Then keep going
-            char buf[1090];
-            snprintf(buf,sizeof(buf),"DEFAULT %02x",sbuf[i+1]);
-            DEBUG(buf);
-            if(i+2 >= sbuf.bufsize){i+=2;break;}
-            i += 2 + sbuf.get16uBE(i+2);    // add variable length size
+            seen_EOI = true;
+            *how = COMPLETE;
+            i += 2;
             break;
+        default: // decode variable-length blocks
+            {
+                if(i+2 >= sbuf.bufsize){i+=2;break;} // whoops - not enough
+                uint16_t block_length = sbuf.get16uBE(i+2);
+                if(sbuf[i+1]==0xc4) seen_ff_c4 = true;
+                if(sbuf[i+1]==0xcc) seen_ff_cc = true;
+                if(sbuf[i+1]==0xdb) seen_ff_db = true;
+                if(sbuf[i+1]==0xe1) seen_ff_e1 = true;
+                
+                if(sbuf[i+1]==0xe0 && block_length>8){        // see if this is a JFIF
+                    DEBUG("JFIF");
+                    if(sbuf[i+4]=='J' && sbuf[i+5]=='F' && sbuf[i+6]=='I' && sbuf[i+7]=='F'){
+                        seen_JFIF = true;
+                    }
+                }
+                
+                if(sbuf[i+1]==0xc0 && block_length>8){        // FFC0 is start of frame
+                    height = sbuf.get16uBE(i+5);
+                    width  = sbuf.get16uBE(i+7);
+                }
+                
+                i += 2 + sbuf.get16uBE(i+2);    // add variable length size
+                break;
+            }
+
         case 0xda: // Start of scan
             DEBUG("SOS");
+            /* Certain fields MUST be set before the SOS, or the JPEG is corrupt */
+            seen_SOS = true;
+            if(seen_ff_c4==false && seen_ff_cc==false && seen_ff_db==false){
+                *how = CORRUPT;         // can't have a SOS before we have seen one of these
+                return 0;               // does not validate
+            }
+            if(seen_JFIF==false || width==0 || height==0){
+                *how = CORRUPT;
+                return 0;
+            }
+
             // http://webtweakers.com/swag/GRAPHICS/0143.PAS.html
             //printf("start of scan. i=%zd header=%d\n",i,sbuf.get16uBE(i+2));
             if(i+2 >= sbuf.bufsize){i+=2;break;}
@@ -125,6 +166,28 @@ static size_t validate_jpeg(const sbuf_t &sbuf,how_t *how) {
     // The JPEG is incomplete.
     // We ran off the end *before* we entered the SOS. We may be in the Exif, but we have
     // nothing displayable.
+    if(seen_JFIF==false){
+        *how = CORRUPT;
+        return 0;
+    }
+
+    // If we got an EXIF, at least return that...
+    if(seen_ff_e1){
+        * how = TRUNCATED;
+        return sbuf.bufsize; // at least we saw an EXIF, so return true
+    }
+    
+    // If we didn't get a color table, it's corrupt
+    if(seen_ff_c4==false && seen_ff_cc==false && seen_ff_db==false){
+        *how = CORRUPT;
+        return 0;                       // doesn't appear to be a jpeg
+    }
+
+    // If we didn't get a SOS or the size is wrong, it's corrupt
+    if(seen_SOS==false || width==0 || height==0){
+        *how = CORRUPT;
+        return 0;
+    }
     return sbuf.bufsize;
 }
 
