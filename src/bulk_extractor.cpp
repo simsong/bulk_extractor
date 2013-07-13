@@ -982,6 +982,11 @@ int main(int argc,char **argv)
     image_process *p = 0;
     std::string image_fname = *argv;
 
+    if(opt_outdir.size()==0){
+        fprintf(stderr,"output directory not provided\n");
+        exit(1);
+    }
+
     if(directory_missing(opt_outdir) || directory_empty(opt_outdir)){
         /* First time running */
 	/* Validate the args */
