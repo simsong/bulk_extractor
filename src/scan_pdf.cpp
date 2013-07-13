@@ -4,7 +4,8 @@
  *  
  */
 
-#include "bulk_extractor.h"
+#include "config.h"
+#include "bulk_extractor_i.h"
 #include "image_process.h"
 
 #include <stdlib.h>
@@ -24,7 +25,7 @@
 #include <zlib.h>
 
 using namespace std;
-static int pdf_dump = 0;
+static bool pdf_dump = false;
 
 /*
  * Return TRUE if most of the characters (90%) are printable ASCII.
@@ -32,13 +33,6 @@ static int pdf_dump = 0;
 
 static bool mostly_printable_ascii(const unsigned char *buf,size_t bufsize)
 {
-#if 0
-    printf("MOSTLY_PRINTABLE:\n");
-    for(const unsigned char *cc = buf; cc<buf+bufsize;cc++){
-        putchar(*cc);
-    }
-    printf("\nDONE\n");
-#endif
     size_t count = 0;
     for(const unsigned char *cc = buf; cc<buf+bufsize;cc++){
 	if(isprint(*cc) || isspace(*cc)) count++;
@@ -145,9 +139,6 @@ inline int analyze_stream(const class scanner_params &sp,const recursion_control
                         const  sbuf_t sbuf_new(pos0_pdf, reinterpret_cast<const uint8_t *>(&text[0]),
                                                text.size(),text.size(),false);
                         (*rcb.callback)(scanner_params(sp,sbuf_new));
-                        if(rcb.returnAfterFound){
-                            return -1;          // return after found
-                        }
                     }
                     if(pdf_dump) std::cout << "Extracted Text:\n" << text << "\n";
                 }
@@ -171,7 +162,8 @@ void scan_pdf(const class scanner_params &sp,const recursion_control_block &rcb)
         sp.info->author         = "Simson Garfinkel";
         sp.info->description    = "Extracts text from PDF files";
         sp.info->scanner_version= "1.0";
-        pdf_dump = atoi(sp.info->config["pdf_dump"].c_str());
+        sp.info->flags          = scanner_info::SCANNER_RECURSE;
+        sp.info->get_config("pdf_dump",&pdf_dump,"Dump the contents of PDF buffers");
 	return;	/* No features recorded */
     }
     if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;

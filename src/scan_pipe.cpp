@@ -1,9 +1,10 @@
+#include "config.h"
+#include "bulk_extractor_i.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include "bulk_extractor.h"
 #include <string.h>
 #include <inttypes.h>
 

@@ -21,7 +21,8 @@
  * 3 - Throw it in a file (except the invalid stuff, of course)
  * 4 - If we didn't write a END:VCARD, add an END:VCARD  (clean it up)
  */
-#include "bulk_extractor.h"
+#include "config.h"
+#include "bulk_extractor_i.h"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -34,6 +35,9 @@
 
 using namespace std;
 
+
+
+static be13::hash_def hasher;
 extern "C"
 void scan_vcard(const class scanner_params &sp,const recursion_control_block &rcb)
 {
@@ -46,6 +50,7 @@ void scan_vcard(const class scanner_params &sp,const recursion_control_block &rc
         sp.info->description    = "Scans for VCARD data";
         sp.info->scanner_version= "1.0";
 	sp.info->feature_names.insert("vcard");
+        hasher    = sp.info->config->hasher;
 	return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
@@ -77,7 +82,7 @@ void scan_vcard(const class scanner_params &sp,const recursion_control_block &rc
 		/* We should probably validate the UTF-8. */
 		if(valid){
 		    /* got a valid card; I can carve it! */
-		    vcard_recorder->carve(sbuf,begin,(end-begin)+end_len);
+		    vcard_recorder->carve(sbuf,begin,(end-begin)+end_len,hasher);
 		    i = end+end_len;		// skip to the end of the vcard
 		    continue;			// loop again!
 		}

@@ -24,7 +24,9 @@ LIFT is run through the scan_lift scanner:
 
  **/
 
-#include "bulk_extractor.h"
+#include "config.h"
+#include "bulk_extractor_i.h"
+#include "utils.h"
 #include <iostream>
 #include <fstream>
 #include <stdlib.h>
@@ -60,15 +62,15 @@ void liftcmd_info()
     exit(1);
 }
 
+static std::string liftif;
+static std::string liftof;
 static void liftcmd_a2c() __attribute__((__noreturn__));
 static void liftcmd_a2c()
 {
-    std::string infile = be_config["liftif"];
-    std::string outfile = be_config["liftof"];
-    if(infile.size()==0) err(1,"please specify -s liftif=<filename>");
-    if(outfile.size()==0) err(1,"please specify -s liftof=<filename>");
-    classifier.load_model_dir(infile);
-    classifier.save_cpp(outfile);
+    if(liftif.size()==0) err(1,"please specify -s liftif=<filename>");
+    if(liftof.size()==0) err(1,"please specify -s liftof=<filename>");
+    classifier.load_model_dir(liftif);
+    classifier.save_cpp(liftof);
     exit(1);
 }
 
@@ -77,10 +79,11 @@ static void liftcmd_a2c()
  * 
  * 
  **/
+static size_t opt_bulk_block_size = 512;        //                                                                                                               
 extern "C"
 void scan_lift(const class scanner_params &sp, const recursion_control_block &rcb){
     assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
-    if(sp.phase==scanner_params::startup){
+    if(sp.phase==scanner_params::PHASE_STARTUP){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	sp.info->name 		= "lift";
 	sp.info->author		= "Tony Melaragno and Simson Garfinkel";
@@ -91,18 +94,23 @@ void scan_lift(const class scanner_params &sp, const recursion_control_block &rc
 				   |scanner_info::SCANNER_NO_USAGE
 				   |scanner_info::SCANNER_NO_ALL);
    
-	if(be_config.find("liftcmd")!=be_config.end()){
-	    std::string liftcmd = be_config["liftcmd"];
-	    if(liftcmd=="help"){
-		liftcmd_usage();
-	    }
-	    if(liftcmd=="info"){
-		liftcmd_info();
-	    }
-	    if(liftcmd=="a2c"){
-		liftcmd_a2c();
-	    }
-	    liftcmd_usage();
+        std::string liftcmd;
+        sp.info->get_config("liftcmd",&liftcmd,"LIFT Command");
+        sp.info->get_config("liftif",&liftif,"LIFT input file");
+        sp.info->get_config("liftof",&liftof,"LIFT output file");
+        sp.info->get_config("bulk_block_size",&opt_bulk_block_size,"Block size (in bytes) for bulk data analysis");
+
+        if(liftcmd!=""){
+            if(liftcmd=="help"){
+                liftcmd_usage();
+            }
+            if(liftcmd=="info"){
+                liftcmd_info();
+            }
+            if(liftcmd=="a2c"){
+                liftcmd_a2c();
+            }
+            liftcmd_usage();
 	    exit(1);
 	}
 
@@ -110,8 +118,8 @@ void scan_lift(const class scanner_params &sp, const recursion_control_block &rc
 	 * Load a model if a file was provided.
 	 * Otherwise use the built-in model.
 	 */
-	if(be_config.find("liftif")!=be_config.end()){
-	    classifier.load_model_dir(be_config["liftif"]);
+	if(liftif!=""){
+	    classifier.load_model_dir(liftif);
 	} else {
 	    classifier.load_pretrained();
 	}
@@ -119,16 +127,16 @@ void scan_lift(const class scanner_params &sp, const recursion_control_block &rc
     }
 
     // classify 
-    if(sp.phase==scanner_params::scan){
+    if(sp.phase==scanner_params::PHASE_SCAN){
 
 	feature_recorder *lift_tags = sp.fs.get_name("lift_tags");
 
 
-	// Loop through the sbuf in opt_scan_bulk_block_size sized chunks
+	// Loop through the sbuf in opt_bulk_block_size sized chunks
 	// for each one, examine the entropy and scan for bitlocker (unfortunately hardcoded)
 	// This needs to have a general plug-in architecture
-	for(size_t base=0;base+opt_scan_bulk_block_size<=sp.sbuf.pagesize;base+=opt_scan_bulk_block_size){
-	    sbuf_t sbuf(sp.sbuf,base,opt_scan_bulk_block_size);
+	for(size_t base=0;base+opt_bulk_block_size<=sp.sbuf.pagesize;base+=opt_bulk_block_size){
+	    sbuf_t sbuf(sp.sbuf,base,opt_bulk_block_size);
 
 	    double theScore=0;
 	    string result = classifier.classify(sbuf,&theScore);

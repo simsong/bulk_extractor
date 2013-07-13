@@ -1,4 +1,5 @@
-#ifndef THREADPOOL_H
+#ifndef _THREADPOOL_H_
+#define _THREADPOOL_H_
 
 /****************************************************************
  *** THREADING SUPPORT
@@ -49,6 +50,7 @@
 #include <queue>
 #include <pthread.h>
 #include "aftimer.h"
+#include "dfxml/src/dfxml_writer.h"
 
 // There is a single threadpool object
 class threadpool {
@@ -60,7 +62,7 @@ class threadpool {
 	    return "copying feature_recorder objects is not implemented.";
 	}
     };
- threadpool(const threadpool &t):workers(),M(),TOMAIN(),TOWORKER(),freethreads(),
+ threadpool(const threadpool &t) __attribute__((__noreturn__)) :workers(),M(),TOMAIN(),TOWORKER(),freethreads(),
     work_queue(),fs(t.fs),xreport(t.xreport),thread_status(),waiting(),mode(){
     throw new not_impl();
   }
@@ -72,20 +74,20 @@ class threadpool {
 #endif
     typedef vector<class worker *> worker_vector;
     worker_vector	workers;
-    pthread_mutex_t	M;			// protects the following variables
+    pthread_mutex_t	M;		// protects the following variables
     pthread_cond_t	TOMAIN;
     pthread_cond_t	TOWORKER;
     int			freethreads;
     queue<sbuf_t *>	work_queue;	// work to be done
     feature_recorder_set &fs;		// one for all the threads; fs and fr are threadsafe
-    xml			&xreport;	// where the xml gets written; threadsafe
+    dfxml_writer	&xreport;	// where the xml gets written; threadsafe
     vector<string>	thread_status;	// for each thread, its status
     aftimer		waiting;	// time spend waiting
     int			mode;		// 0=running; 1 = waiting for workers to finish
 
     static u_int	numCPU();
 
-    threadpool(int numthreads,feature_recorder_set &fs_,xml &xreport);
+    threadpool(int numthreads,feature_recorder_set &fs_,dfxml_writer &xreport);
     virtual ~threadpool();
     void		schedule_work(sbuf_t *sbuf);
     bool		all_free();
@@ -104,6 +106,7 @@ private:
         }
     };
 public:
+    static bool opt_work_start_work_end; // report when work starts and when work ends
     static void * start_worker(void *arg){return ((worker *)arg)->run();};
     class threadpool &master;		// my master
     pthread_t thread;			// my thread; set when I am created

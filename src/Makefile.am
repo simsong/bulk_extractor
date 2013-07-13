@@ -4,39 +4,14 @@ CLEANFILES     = scan_accts.cpp scan_email.cpp scan_gps.cpp scan_base16.cpp *.d
 
 AM_CPPFLAGS = -I${top_srcdir}/src/be13_api
 
-# scan_lift/type_identifier.tex
+# http://stackoverflow.com/questions/11438613/conditional-subdir-objects
+AUTOMAKE_OPTIONS = subdir-objects
 
-#extradir = .
+include dfxml/src/Makefile.defs
+include be13_api/Makefile.defs
 
-BE13_API = \
-        be13_api/bulk_extractor_i.h \
-        be13_api/cppmutex.h \
-        be13_api/feature_recorder.cpp \
-        be13_api/feature_recorder.h \
-        be13_api/feature_recorder_set.cpp \
-        be13_api/feature_recorder_set.h \
-        be13_api/md5.c \
-        be13_api/md5.h \
-        be13_api/pcap_fake.h \
-        be13_api/pcap_fake.cpp \
-        be13_api/plugin.cpp\
-	be13_api/beregex.cpp \
-	be13_api/beregex.h \
-        be13_api/sbuf.cpp \
-        be13_api/sbuf.h \
-        be13_api/sbuf_private.h \
-        be13_api/sbuf_stream.h \
-        be13_api/sbuf_stream.cpp \
-        be13_api/utf8.h \
-        be13_api/utf8/checked.h \
-        be13_api/utf8/core.h \
-        be13_api/utf8/unchecked.h \
-        be13_api/xml.cpp \
-        be13_api/xml.h \
-	be13_api/unicode_escape.cpp\
-	be13_api/unicode_escape.h \
-	be13_api/utils.h \
-	be13_api/utils.cpp
+jpegdump: scan_exif.cpp be13_api/sbuf.o be13_api/unicode_escape.o 
+	g++ -o jpegdump $(CPPFLAGS) $(CXXFLAGS) $(AM_CPPFLAGS) -I.. -DDUMPTEST scan_exif.cpp be13_api/sbuf.o be13_api/unicode_escape.o
 
 TSK3INCS = \
 	tsk3/auto/tsk_auto.h\
@@ -57,6 +32,21 @@ flex_scanners = \
 	scan_email.flex \
 	scan_gps.flex 
 
+RAR_SUPPORT = \
+        rar/arccmt.cpp rar/archive.cpp rar/archive.hpp rar/arcread.cpp rar/array.hpp rar/cmddata.cpp \
+        rar/cmddata.hpp rar/coder.cpp rar/coder.hpp rar/compress.hpp rar/crc.cpp rar/crc.hpp rar/encname.cpp \
+        rar/encname.hpp rar/errhnd.cpp rar/errhnd.hpp rar/extinfo.cpp rar/extinfo.hpp rar/extract.cpp \
+        rar/extract.hpp rar/file.cpp rar/filefn.cpp rar/filefn.hpp rar/file.hpp rar/filestr.cpp rar/filestr.hpp \
+        rar/getbits.cpp rar/getbits.hpp rar/global.cpp rar/global.hpp rar/headers.hpp rar/loclang.hpp rar/match.cpp \
+        rar/match.hpp rar/model.cpp rar/model.hpp rar/suballoc.cpp rar/suballoc.hpp rar/options.cpp rar/options.hpp \
+        rar/os.hpp rar/pathfn.cpp rar/pathfn.hpp rar/rar.cpp rar/rardefs.hpp rar/rar.hpp rar/rarlang.hpp rar/raros.hpp \
+        rar/rarpch.cpp rar/rartypes.hpp rar/rarvmtbl.cpp rar/rawread.cpp rar/rawread.hpp rar/rdwrfn.cpp rar/rdwrfn.hpp \
+        rar/resource.cpp rar/resource.hpp rar/rs.cpp rar/rs.hpp rar/savepos.cpp rar/savepos.hpp rar/smallfn.cpp \
+        rar/smallfn.hpp rar/strfn.cpp rar/strfn.hpp rar/strlist.cpp rar/strlist.hpp \
+        rar/system.cpp rar/system.hpp rar/timefn.cpp rar/timefn.hpp rar/unicode.cpp \
+        rar/unicode.hpp rar/unpack.cpp rar/unpack.hpp rar/unpack15.hpp rar/unpack20.hpp \
+        rar/version.hpp
+
 bulk_scanners = \
 	scan_aes.cpp \
 	scan_base64.cpp \
@@ -75,6 +65,7 @@ bulk_scanners = \
 	scan_net.cpp \
 	scan_pdf.cpp \
 	scan_rar.cpp \
+	scan_hashid.cpp \
 	scan_vcard.cpp \
 	scan_windirs.cpp \
 	scan_winpe.cpp \
@@ -84,31 +75,6 @@ bulk_scanners = \
 	scan_zip.cpp \
         sbuf_flex_scanner.h \
 	$(flex_scanners) 
-
-SCAN_LIFT = scan_lift.cpp \
-	scan_lift/base.cpp \
-	scan_lift/base.h \
-	scan_lift/classifier_config.h \
-	scan_lift/element.h \
-	scan_lift/gflags.h \
-	scan_lift/gflags_completions.h \
-	scan_lift/irbase.cpp \
-	scan_lift/lift_config.cpp \
-	scan_lift/lift_config.h \
-	scan_lift/lift_svm.cpp \
-	scan_lift/lift_svm.h \
-	scan_lift/lift_svm_trained.cpp \
-	scan_lift/lift_utils.h \
-	scan_lift/linear_binary_svm.cpp \
-	scan_lift/linear_binary_svm.h \
-	scan_lift/linear_ova_svm.cpp \
-	scan_lift/linear_ova_svm.h \
-	scan_lift/myheader.h \
-	scan_lift/rawdefines.h \
-	scan_lift/rawheaders.h \
-	scan_lift/term_weighting.cpp \
-	scan_lift/term_weighting.h \
-	scan_lift/tools.cpp 
 
 bulk_extractor_SOURCES = \
 	aftimer.h \
@@ -125,9 +91,16 @@ bulk_extractor_SOURCES = \
 	support.cpp \
 	threadpool.cpp \
 	threadpool.h \
+	phase1.h \
+	phase1.cpp \
 	word_and_context_list.cpp \
 	word_and_context_list.h \
-	$(bulk_scanners) $(TSK3INCS)  $(BE13_API)
+	$(bulk_scanners) $(TSK3INCS)  $(BE13_API) $(DFXML_WRITER) 
+
+if RAR_ENABLED
+bulk_extractor_SOURCES += $(RAR_SUPPORT)
+endif
+
 
 stand_SOURCES = \
 	dig.cpp \
@@ -141,9 +114,6 @@ stand_SOURCES = \
 	$(BE13_API)
 
 SUFFIXES = .flex
-
-src/scan_lift_trained.cpp:
-	./bulk_extractor -E lift -s liftcmd=a2c -s liftif=scan_lift/model -s liftof=scan_lift/lift_svm_trained.cpp
 
 digtest$(EXEEXT): dig.cpp
 	$(CXX) -DSTANDALONE -o digtest$(EXEEXT) -g dig.cpp $(CPPFLAGS) $(CXXFLAGS) -I..

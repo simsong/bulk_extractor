@@ -8,6 +8,14 @@ Downloads and Websites
   * [Forensics Wiki Entry](http://www.forensicswiki.org/wiki/Bulk_extractor)
 
 
+Downloading the Development Tree
+--------------------------------
+
+Download the sources with git:
+
+  $ git clone --recursive https://github.com/simsong/bulk_extractor.git
+
+
 Compiling Notes
 ---------------
 
@@ -24,9 +32,8 @@ configure option --with-noopt.
 Compiling for MacOS or Linux
 ----------------------------
 
-Download the sources with git, run bootstrap.sh, configure and make:
+From the downloaded source directory run bootstrap.sh, configure and make:
 
-  $ git clone --recursive https://github.com/simsong/bulk_extractor.git
   $ cd bulk_extractor
   $ sh bootstrap.sh
   $ sh configure
@@ -168,3 +175,12 @@ TRE is faster than libgnurx, so we recommend to download the source then:
 
 If you really need to read AFFLIB, you will also need to install openssldev.  Please
 note that AFF is in the process of being deprecated.
+
+================================================================
+DEVELOPERS!
+
+If you are developing with github, after a checkout, you may wish to do this:
+
+for i in dfxml be13_api  ; do echo $i ; (cd $i && git remote rm origin && git add origin git@github.com:simsong/$i.git && git checkout master ) ; done
+
+

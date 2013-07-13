@@ -4,8 +4,13 @@
  * used by the scan_accts.flex system.
  */
 
-#include "bulk_extractor.h"
+#include "config.h"
+#include "bulk_extractor_i.h"
 #include "scan_ccns2.h"
+#include "utils.h"
+
+int scan_ccns2_debug=0;
+
 
 /* credit2.cpp:
  * A filter to scan stdin to stdout, pass through only the lines
@@ -252,14 +257,14 @@ static int prefix_test(const char *digits)
     return -1;
 }
 
-#define RETURN(code,reason) {if(debug & DEBUG_INFO) std::cerr << reason << "\n";return code;}
+#define RETURN(code,reason) {if(scan_ccns2_debug & DEBUG_INFO) std::cerr << reason << "\n";return code;}
 /**
  * Determine if this is or is not a credit card number.
  * Return 1 if it is, 0 if it is not.
  * buf[-WINDOW_MARGIN] must be accessible.
  * buf[len+WINDOW_MARGIN] must be accessible
  */
-int validate_ccn(const char *buf,int buflen)
+bool valid_ccn(const char *buf,int buflen)
 {
     /* Make the digits array */
     if(buflen>19) RETURN(0,"Too long");
@@ -296,12 +301,12 @@ int validate_ccn(const char *buf,int buflen)
  * numbers and spaces or brackets. These are commonly seen in PDF files
  * when they are decompressed.
  */
-inline int valid_char(char ch)
+inline bool valid_char(char ch)
 {
     return isdigit(ch) || isspace(ch) || ch=='[' || ch==']' || ch=='<' || ch=='Z' || ch=='.' || ch=='l' || ch=='j';
 }
 
-int  validate_phone(const sbuf_t &sbuf,size_t pos,size_t len)
+bool  valid_phone(const sbuf_t &sbuf,size_t pos,size_t len)
 {
     /* We want invalid characters before and after (assuming there is a before and after */
     int invalid_before = 0;
@@ -322,19 +327,21 @@ int  validate_phone(const sbuf_t &sbuf,size_t pos,size_t len)
 	invalid_after = 1;
     }
 
+    /*
+     * 2013-05-28: if followed by ' #{1,5} ' then it's not a phone either!
+     */
+    if(pos+len+5 < sbuf.bufsize){
+        if(sbuf[pos+len]==' ' && isdigit(sbuf[pos+len+1])){
+            for(size_t i = pos+len+1 ; (i+1<sbuf.bufsize) && (i<pos+len+8);i++){
+                if(isdigit(sbuf[i]) && sbuf[i+1]==' ') return false; // not valid
+            }
+        }
+    }
 
-/*
- * in progress
-
-	if(sbuf[pos+3] == ' ' && sbuf[pos+7] == '.')
-	{
-		cout << "possible false positive:";
-		for(int j = 0; j < len; j++)
-			cout << sbuf[pos+j];
-		cout << endl;
-	}
-*/
-		
+    /* If it is followed by a dash and a number, it's not a phone number */
+    if(pos+len+2 < sbuf.bufsize){
+        if(sbuf[pos+len]=='-' && isdigit(sbuf[pos+len+1])) return false;
+    }
 
     return invalid_before!=0 && invalid_after!=0;
 }

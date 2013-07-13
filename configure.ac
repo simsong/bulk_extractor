@@ -6,15 +6,19 @@
 
 AC_PREREQ(2.57)
 
-AC_INIT(BULK_EXTRACTOR, 1.3.1, bugs@digitalcorpora.org)
+AC_INIT(BULK_EXTRACTOR, 1.4.0-beta3, bugs@digitalcorpora.org)
 AC_CONFIG_MACRO_DIR(m4)
 
+# Notice:
+# plugins/Makefile is referenced so that the plugins Makefile is created.
+# However, plugins is not listed as a SUBDIR for Makefile.am in this directory.
+# That prevents the plugins from automatically being built each time.
+#
 AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile doc/user_manual/Makefile \
 			  man/Makefile python/Makefile \
+                          plugins/Makefile \
 			  specfiles/Makefile specfiles/bulk_extractor.spec.m4 \
 			  java_gui/Makefile src_win/Makefile tests/Makefile ])
-
-
 AC_CONFIG_HEADER([config.h])
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
@@ -24,8 +28,15 @@ AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_INSTALL
 AC_PROG_LEX
+
+m4_include([src/dfxml/src/dfxml_configure.m4])
+m4_include([src/be13_api/be13_configure.m4])
+
+
 # Endian check is required for MD5 implementation
 AC_C_BIGENDIAN
+
+# These are needed for bulk_extractor. They are not needed for tcpflow
 AC_DEFINE([BULK_EXTRACTOR],1,[We are compiling bulk_extractor])
 AC_DEFINE([USE_HISTOGRAMS],1,[We are using histograms])
 AC_DEFINE([USE_STOP_LIST],1,[We are using the stop lists])
@@ -88,8 +99,12 @@ AC_TYPE_INT64_T
 AC_SYS_LARGEFILE
 AC_SYS_POSIX_TERMIOS
 
-if test "$LEX" != flex; then
-  AC_MSG_ERROR([flex not installed; required for compiling regular expressions. Try 'apt-get install flex' or 'yum install flex' or 'port install flex' or whatever package manager you happen to be using....])
+if test x"$LEX" == x ; then
+  AC_MSG_ERROR([flex not required.])
+fi  
+
+if test `basename "$LEX"` != flex; then
+  AC_MSG_ERROR([gnu flex is required.])
 fi
 
 ## Determine if we can use flex -R
@@ -207,6 +222,16 @@ unset option
 AC_ARG_ENABLE([lift], AS_HELP_STRING([--enable-lift], [enable CMU LIFT SVM for type identification]),
 		      AC_DEFINE(USE_LIFT, 1, [Use LIFT SVM]))
 
+## rar support
+## Enabled for 1.4 release!
+AC_ARG_ENABLE([rar],
+              AS_HELP_STRING([--disable-rar], [Disable RAR decompression]),
+              [],
+	      [AC_DEFINE(USE_RAR, 1, [Use RAR decompression]) rar="yes"])
+AM_CONDITIONAL([RAR_ENABLED], [test "yes" = "$rar"])
+
+
+
 
 ################################################################
 ## mcheck support
@@ -271,20 +296,11 @@ done
 unset option
 AC_LANG_POP()    
 
-# Determine UTC date offset
-CPPFLAGS="$CPPFLAGS -DUTC_OFFSET=`date +%z`"
-
-################################################################
-# DFXML support
-AC_CHECK_HEADERS([sys/cdefs.h sys/resource.h pwd.h sys/utsname.h])
-AC_CHECK_FUNCS([localtime_r getuid gethostname getwpuid getrusage mkstemp vasprintf])
-
 ################################################################
 # PTHREAD support
 # With special nods to compiling under mingw
 
 if test  x"$mingw" = x"yes";  then
-  #AC_DEFINE([HAVE_STRUCT_TIMESPEC],1,[Required for mingw])
   CFLAGS="$CFLAGS -mthreads "
   CPPFLAGS="-DPTW32_STATIC_LIB $CPPFLAGS"
   CXXFLAGS="$CXXFLAGS -mthreads "
@@ -325,7 +341,6 @@ AC_LINK_IFELSE(
    [AC_MSG_RESULT([no])]
 )
 
-
 # end PTHREAD SUPPORT
 ################################################################
 
@@ -342,7 +357,7 @@ AC_CHECK_FUNCS([CreateProcess LoadLibrary IncrementAtomic InterlockedIncrement])
 ## Explicitly check for dlopen library before checking for dlopen
 ##       -ldl (see http://stackoverflow.com/questions/956640/linux-c-error-undefined-reference-to-dlopen)
 AC_CHECK_LIB([dl],[dlopen])		              
-AC_CHECK_FUNCS([dlopen])
+AC_CHECK_FUNCS([dlopen dlopen_preflight])
 
 # Test for sin_len
 AC_CHECK_HEADERS([arpa/inet.h netinet/in.h wsipx.h])
@@ -376,16 +391,20 @@ AC_ARG_WITH([o3], AC_HELP_STRING([--without-o3], [Do not force O3 optimization; 
 AC_CHECK_LIB([z],[uncompress],,
 	AC_MSG_ERROR([zlib libraries not installed; try installing zlib-devel zlib-dev zlib-devel zlib1g-dev or libz-dev]))
 
+## EXPAT is now a main line requirements for restarting
+AC_CHECK_HEADERS([expat.h])
+AC_CHECK_LIB([expat],[XML_ParserCreate])
+
 ################################################################
 ## regex support
 ## there are several options
 ## tre is better than regex
 AC_CHECK_LIB([stdc++],[main])
 AC_CHECK_LIB([sicudt],[main])
-AC_CHECK_HEADER([unicode/ucnv.h])
+AC_CHECK_HEADERS([unicode/ucnv.h])
 AC_SEARCH_LIBS([uset_close], [sicuuc])
 AC_CHECK_LIB([sicuuc],[main])
-AC_CHECK_HEADER([lightgrep/api.h])
+AC_CHECK_HEADERS([lightgrep/api.h])
 AC_CHECK_LIB([lightgrep], [lg_create_pattern])
 AC_CHECK_HEADERS([regex.h tre/tre.h])
 AC_CHECK_LIB([regex],[regcomp])
@@ -394,20 +413,20 @@ AC_CHECK_FUNCS([regcomp tre_regcomp tre_version])
 
 
 ################################################################
-## OpenSSL Support
+## OpenSSL Support is now required (for hash_t)
 AC_CHECK_HEADERS([openssl/aes.h openssl/bio.h openssl/evp.h openssl/hmac.h openssl/md5.h openssl/pem.h openssl/rand.h openssl/rsa.h openssl/sha.h openssl/pem.h openssl/x509.h])
+# OpenSSL has been installed under at least two different names...
+AC_CHECK_LIB([crypto],[EVP_get_digestbyname])	
+AC_CHECK_LIB([ssl],[SSL_library_init])
+AC_CHECK_FUNCS([EVP_get_digestbyname],,
+	AC_MSG_ERROR([SSL/OpenSSL support required]))
+
 
 ################################################################
 ## AFFLIB support
 ## AFFLIB requires OpenSSL
 ## Link in openssl if it is available, because afflib requires it.
 ## (Note that bulk_extractor itself no longer requires openssl)
-AC_CHECK_LIB([crypto],[EVP_get_digestbyname])	# if crypto is available, get it
-AC_CHECK_LIB([md],[MD5])                        # if libmd is available, get it 
-AC_CHECK_LIB([ssl],[SSL_library_init],,
-     AC_MSG_WARN([OpenSSL developer library 'libssl-dev' or 'openssl-devel' not installed; AFFLIB not available]))
-AC_CHECK_FUNCS([MD5_Init EVP_get_digestbyname])
-
 AC_CHECK_HEADER([afflib/afflib.h],
 	    	[AC_DEFINE(HAVE_AFFLIB_AFFLIB_H,1,[Do we have afflib/afflib.h?])]
 		[AC_CHECK_LIB([afflib],af_get_pagesize,,
@@ -427,6 +446,57 @@ AC_CHECK_HEADER([libewf.h],
 	[libewf=no])
 AC_CHECK_FUNCS([libewf_handle_get_utf8_header_value_notes libewf_error_backtrace_fprint])
 AC_CHECK_HEADERS([tsk3/libtsk.h])
+
+
+################################################################
+## hashid support
+AC_ARG_ENABLE([hashid],
+    [AS_HELP_STRING([--disable-hashid], [disable hashid scanner support])],
+    [hashid=no],
+    [hashid=yes])
+
+if test x"$hashid" == xyes ; then
+  AC_CHECK_LIB([zmq],[zmq_ctx_new],[LIBS="-lzmq $LIBS"],
+    [AC_MSG_WARN([Could not find zeromq, zeromq v3 is required to build the hashid scanner])
+    hashid=no])
+
+  if test x"$mingw" = x"yes";  then
+    # the win32 configuration of libxml2 requires zlib and iconv libraries
+    AC_CHECK_LIB([z], [gzdopen],[LIBS="-lz $LIBS"], [AC_MSG_ERROR([Could not find zlib library])])
+    AC_CHECK_LIB([iconv], [iconv],[LIBS="-liconv $LIBS"], [AC_MSG_ERROR([Could not find win-iconv library])])
+  fi
+
+  AC_CHECK_LIB([xml2], [xmlSAXUserParseFile],[LIBS="-lxml2 $LIBS"],
+    [AC_MSG_WARN([Could not find libxml2 library required to build the hashid scanner])
+    hashid=no])
+
+  if test x"$hashid" == xyes ; then
+    AX_BOOST_BASE([1.44],
+      [AX_BOOST_SYSTEM
+      AX_BOOST_FILESYSTEM
+      LIBS="$BOOST_SYSTEM_LIB $BOOST_FILESYSTEM_LIB $LIBS"],
+      [AC_MSG_WARN([Boost 1.44 or newer is required to build the hashid scanner])
+      hashid=no])
+  fi
+
+  if test x"$hashid" == xyes ; then
+    AC_LANG_PUSH(C++)
+    AC_CHECK_HEADER([hashdb.hpp], [],
+      [AC_MSG_WARN([Could not find hashdb header file required to build the hashid scanner])
+      hashid=no])
+    AC_CHECK_LIB([hashdb], [hashdb_version], [],
+      [AC_MSG_WARN([Could not find hashdb library required to build the hashid scanner])
+      hashid=no])
+    AC_LANG_POP()
+  fi
+
+fi
+if test x"$hashid" == xyes ; then
+  AC_DEFINE(HAVE_HASHID,1,[define 1 to build the hashid scanner])
+else
+  AC_MSG_NOTICE([the hashid scanner will not be built])
+fi
+
 
 ################################################################
 ## exiv2 support
@@ -448,12 +518,8 @@ if test x"$exiv2" == x"yes" ; then
   fi
 fi
 if test x"$exiv2" == x"yes" ; then
-  AC_CHECK_HEADER([expat.h])
-  AC_CHECK_LIB([expat],[XML_ParserCreate])
-  AC_CHECK_HEADER([exiv2/image.hpp])
-  AC_CHECK_HEADER([exiv2/exif.hpp])
-  AC_CHECK_HEADER([exiv2/error.hpp])
   AC_LANG_PUSH(C++)
+  AC_CHECK_HEADERS([exiv2/image.hpp exiv2/exif.hpp exiv2/error.hpp])
     AC_TRY_COMPILE([#include <exiv2/image.hpp>
     	    	    #include <exiv2/exif.hpp>
                     #include <exiv2/error.hpp>],
@@ -493,9 +559,6 @@ AC_TRY_COMPILE([#pragma GCC diagnostic ignored "-Weffcpp"],[int a=3;],
 AC_TRY_COMPILE([#pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"],[int a=3;],
   [AC_DEFINE(HAVE_DIAGNOSTIC_SUGGEST_ATTRIBUTE,1,[define 1 if GCC supports -Wsuggest-attribute=noreturn])]
 )
-AC_TRY_COMPILE([#pragma GCC diagnostic ignored "-Wredundant-decls"],[int a=3;],
-  [AC_DEFINE(HAVE_DIAGNOSTIC_REDUNDANT_DECLS,1,[define 1 if GCC supports -Wredundant-decls])]
-)
   
 ################################################################
 # do we have a broken strchr?
@@ -512,16 +575,6 @@ else
   AC_MSG_NOTICE([strchr is not conforming])
 fi
 AC_LANG_POP()
-################################################################
-#
-# Do we have the CPUID instruction?
-AC_TRY_COMPILE([#define cpuid(id) __asm__( "cpuid" : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx) : "a"(id), "b"(0), "c"(0), "d"(0))],
-			[unsigned long eax, ebx, ecx, edx;cpuid(0);],
-			have_cpuid=yes,
-			have_cpuid=no)
-if test "$have_cpuid" = yes; then
- AC_DEFINE(HAVE_ASM_CPUID, 1, [define to 1 if __asm__ CPUID is available])
-fi
 
 ################################################################
 ############## drop optimization flags and add -g if requested ################

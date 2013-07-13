@@ -18,9 +18,10 @@ static int base16array[256];
 unsigned int opt_min_hex_buf = 64;           /* Don't re-analyze hex bufs smaller than this */
 
 #include "config.h"
-#include "bulk_extractor.h"
-#include "histogram.h"
+#include "bulk_extractor_i.h"
 #include "sbuf_flex_scanner.h"
+#include "histogram.h"
+
 class base16_scanner : public sbuf_scanner {
 public:
     base16_scanner(const scanner_params &sp_,const recursion_control_block &rcb_):
@@ -81,9 +82,6 @@ void base16_scanner::decode(const sbuf_t &osbuf,size_t pos,size_t len)
     if(p>opt_min_hex_buf){
         sbuf_t nsbuf(sbuf.pos0,b.buf,p,p,false);
         (*rcb.callback)(scanner_params(sp,nsbuf)); // recurse
-        if(rcb.returnAfterFound){
-	    make_eof();       // force a return
-	}
     }
 }
 
@@ -141,7 +139,7 @@ void scan_base16(const class scanner_params &sp,const recursion_control_block &r
 	sp.info->description	= "Base16 (hex) scanner";
 	sp.info->scanner_version= "1.0";
 	sp.info->feature_names.insert("hex"); // notable hex values
-	//sp.info->flags = scanner_info::SCANNER_DISABLED; // disabled until it's working
+        sp.info->flags          = scanner_info::SCANNER_RECURSE;
 
 	/* Create the base16 array */
 	for(int i=0;i<256;i++){

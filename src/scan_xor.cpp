@@ -3,11 +3,12 @@
  * author:   Michael Shick <mfshick@nps.edu>
  * created:  2013-03-18
  */
-#include "bulk_extractor.h"
+#include "config.h"
+#include "bulk_extractor_i.h"
 
 using namespace std;
 
-static uint8_t XOR_MASK = 0xFF;
+static uint8_t xor_mask = 255;
 
 extern "C"
 void scan_xor(const class scanner_params &sp,const recursion_control_block &rcb)
@@ -18,12 +19,8 @@ void scan_xor(const class scanner_params &sp,const recursion_control_block &rcb)
 	sp.info->name  = "xor";
 	sp.info->author = "Michael Shick";
 	sp.info->description = "optimistic XOR deobfuscator";
-	sp.info->flags = scanner_info::SCANNER_DISABLED;
-
-        string mask_string = sp.info->config["xor_mask"];
-        if(mask_string != "") {
-            XOR_MASK = (uint8_t) strtol(mask_string.c_str(), NULL, 16);
-        }
+	sp.info->flags = scanner_info::SCANNER_DISABLED | scanner_info::SCANNER_RECURSE;
+        sp.info->get_config("xor_mask",&xor_mask,"XOR mask string, in decimal");
 	return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN) {
@@ -44,20 +41,14 @@ void scan_xor(const class scanner_params &sp,const recursion_control_block &rcb)
         }
         
         // 0x00 is 8-bit xor identity
-        if(XOR_MASK != 0x00) {
+        if(xor_mask != 0x00) {
             for(size_t ii = 0; ii < sbuf.bufsize; ii++) {
-                dbuf.buf[ii] = sbuf.buf[ii] ^ XOR_MASK;
+                dbuf.buf[ii] = sbuf.buf[ii] ^ xor_mask;
             }
-        }
-
-        const pos0_t pos0_xor = pos0 + rcb.partName;
-        const sbuf_t child_sbuf(pos0_xor, dbuf.buf, sbuf.bufsize, sbuf.pagesize, false);
-        scanner_params child_params(sp, child_sbuf);
-    
-        // call scanners on deobfuscated buffer
-        (*rcb.callback)(child_params);
-        if(rcb.returnAfterFound) {
-            return;
+            const pos0_t pos0_xor = pos0 + rcb.partName;
+            const sbuf_t child_sbuf(pos0_xor, dbuf.buf, sbuf.bufsize, sbuf.pagesize, false);
+            scanner_params child_params(sp, child_sbuf);
+            (*rcb.callback)(child_params);// call scanners on deobfuscated buffer
         }
     }
 }

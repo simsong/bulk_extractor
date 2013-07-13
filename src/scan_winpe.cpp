@@ -16,81 +16,82 @@
  
 /**
  * XML_SPEC
-    PE
-        FileHeader
-            @Machine =>   "IMAGE_FILE_MACHINE_AMD64"
-                        | "IMAGE_FILE_MACHINE_ARM"
-                        | "IMAGE_FILE_MACHINE_ARMV7"
-                        | "IMAGE_FILE_MACHINE_I386"
-                        | "IMAGE_FILE_MACHINE_IA64"
-            @NumberOfSections     => %d
-            @TimeDateStamp        => %d
-            @PointToSymbolTable   => %d
-            @NumberOfSymbols      => %d
-            @SizeOfOptionalHeader => %d
-            Characteristics
-                IMAGE_FILE_RELOCS_STRIPPED  // these tags are present if
-                ...                         // bits were set in
-                IMAGE_FILE_BYTES_REVERSE_HI // Characteristics
-        OptionalHeaderStandard // Same name and attributes for both PE
-        *                      // and PE+ to simplify parser writing
-            @Magic => "PE32" | "PE32+"
-            @MajorLinkerVersion    => %d
-            @MinorLinkerVersion    => %d
-            @SizeOfCode            => %d
-            @SizeOfInitializedData => %d
-            @AddressOfEntryPoint   => 0x%x
-            @BaseOfCode            => 0x%x
-        OptionalHeaderWindows // Same name and attributes for both PE
-        *                     // and PE+ to simplify parser writing
-            @ImageBase        => 0x%x
-            @SectionAlignment => %d
-            @FileAlignment    => %d
-            @MajorOperatingSystemVersion => %d
-            @MinorOperatingSystemVersion => %d
-            @MajorImageVersion     => %d
-            @MinorImageVersion     => %d
-            @MajorSubsystemVersion => %d
-            @MinorSubsystemVersion => %d
-            @Win32VersionValue     => %d
-            @SizeOfImage           => %d
-            @SizeOfHeaders         => %d
-            @CheckSum              => 0x%x
-            @Subsystem =>    IMAGE_SUBSYSTEM_UNKNOWN
-                             ..
-                             IMAGE_SUBSYSTEM_XBOX
-            @SizeOfStackReserve  => %d
-            @SizeOfStackCommit   => %d
-            @SizeOfHeapReserve   => %d
-            @SizeOfHeadCommit    => %d
-            @LoaderFlags         => %d // reserved, should always be
-            *                          // zero
-            @NumberOfRvaAndSizes => %d
-            DllCharacteristics
-                IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE // tags present
-                ..                                     // if bits set
-                IMAGE_DLL_CHARACTERISTICS_TERMINAL_SERVER_AWARE
-        sections
-            SectionHeader
-                @Name                 => %s
-                @VirtualSize          => %d
-                @VirtualAddress       => %d
-                @SizeOfRawData        => %d
-                @PointerToRawData     => %d
-                @PointerToRelocations => %d
-                @PointerToLinenumbers => %d
-                @NumberOfRelocations  => %d
-                @NumberOfLinenumbers  => %d
-                Characteristics
-                    IMAGE_SCN_TYPE_REG  // tags present if bits set
-                    ..
-                    IMAGE_SCN_MEM_WRITE
-        dlls
-            dll => %s
-        // <dlls><dll>msvcrt.dll</dll><dll>ntdll.dll</dll></dlls>
+ PE
+ FileHeader
+ @Machine =>   "IMAGE_FILE_MACHINE_AMD64"
+ | "IMAGE_FILE_MACHINE_ARM"
+ | "IMAGE_FILE_MACHINE_ARMV7"
+ | "IMAGE_FILE_MACHINE_I386"
+ | "IMAGE_FILE_MACHINE_IA64"
+ @NumberOfSections     => %d
+ @TimeDateStamp        => %d
+ @PointToSymbolTable   => %d
+ @NumberOfSymbols      => %d
+ @SizeOfOptionalHeader => %d
+ Characteristics
+ IMAGE_FILE_RELOCS_STRIPPED  // these tags are present if
+ ...                         // bits were set in
+ IMAGE_FILE_BYTES_REVERSE_HI // Characteristics
+ OptionalHeaderStandard // Same name and attributes for both PE
+ *                      // and PE+ to simplify parser writing
+ @Magic => "PE32" | "PE32+"
+ @MajorLinkerVersion    => %d
+ @MinorLinkerVersion    => %d
+ @SizeOfCode            => %d
+ @SizeOfInitializedData => %d
+ @AddressOfEntryPoint   => 0x%x
+ @BaseOfCode            => 0x%x
+ OptionalHeaderWindows // Same name and attributes for both PE
+ *                     // and PE+ to simplify parser writing
+ @ImageBase        => 0x%x
+ @SectionAlignment => %d
+ @FileAlignment    => %d
+ @MajorOperatingSystemVersion => %d
+ @MinorOperatingSystemVersion => %d
+ @MajorImageVersion     => %d
+ @MinorImageVersion     => %d
+ @MajorSubsystemVersion => %d
+ @MinorSubsystemVersion => %d
+ @Win32VersionValue     => %d
+ @SizeOfImage           => %d
+ @SizeOfHeaders         => %d
+ @CheckSum              => 0x%x
+ @Subsystem =>    IMAGE_SUBSYSTEM_UNKNOWN
+ ..
+ IMAGE_SUBSYSTEM_XBOX
+ @SizeOfStackReserve  => %d
+ @SizeOfStackCommit   => %d
+ @SizeOfHeapReserve   => %d
+ @SizeOfHeadCommit    => %d
+ @LoaderFlags         => %d // reserved, should always be
+ *                          // zero
+ @NumberOfRvaAndSizes => %d
+ DllCharacteristics
+ IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE // tags present
+ ..                                     // if bits set
+ IMAGE_DLL_CHARACTERISTICS_TERMINAL_SERVER_AWARE
+ sections
+ SectionHeader
+ @Name                 => %s
+ @VirtualSize          => %d
+ @VirtualAddress       => %d
+ @SizeOfRawData        => %d
+ @PointerToRawData     => %d
+ @PointerToRelocations => %d
+ @PointerToLinenumbers => %d
+ @NumberOfRelocations  => %d
+ @NumberOfLinenumbers  => %d
+ Characteristics
+ IMAGE_SCN_TYPE_REG  // tags present if bits set
+ ..
+ IMAGE_SCN_MEM_WRITE
+ dlls
+ dll => %s
+ // <dlls><dll>msvcrt.dll</dll><dll>ntdll.dll</dll></dlls>
  */
 
-#include "bulk_extractor.h"
+#include "config.h"
+#include "bulk_extractor_i.h"
 
 #include <stdio.h>
 
@@ -478,6 +479,21 @@ struct flagnames_t pe_optionalwindowsheader_subsystem[] = {
 //    return NULL;
 //}
 
+static bool valid_dll_name(const std::string &dllname)
+{
+    if(!validASCIIName(dllname)) return false;
+    if(dllname.size()<5) return false; /* DLL names have at least a character, a period and an extension */
+    if(dllname.at(dllname.size()-4)!='.') return false; // check for the '.'
+    return true;			// looks valid
+}
+
+static bool valid_section_name(const std::string &sectionName)
+{
+    if(!validASCIIName(sectionName)) return false;
+    if(sectionName.size()<1) return false;
+    return true;
+}
+
 static string scan_winpe_verify (const sbuf_t &sbuf)
 {
     //const uint8_t * data = sbuf.buf;
@@ -499,8 +515,8 @@ static string scan_winpe_verify (const sbuf_t &sbuf)
     header_offset += PE_SIGNATURE_SIZE;
    
     /******************************************
-    * BEGIN HEADER                            *
-    ******************************************/
+     * BEGIN HEADER                            *
+     ******************************************/
     if (header_offset + sizeof(Pe_FileHeader) > size)
         return "";
     
@@ -522,7 +538,7 @@ static string scan_winpe_verify (const sbuf_t &sbuf)
     if ((pe_NumberOfSections == 0) || (pe_NumberOfSections > 256)) return "";
     
     if (    ((pe_NumberOfSymbols == 0) && (pe_PointerToSymbolTable != 0))
-         || (pe_NumberOfSymbols > 1000000)) return "";
+	    || (pe_NumberOfSymbols > 1000000)) return "";
 
     if (pe_SizeOfOptionalHeader & 0x1) return "";
 
@@ -543,8 +559,8 @@ static string scan_winpe_verify (const sbuf_t &sbuf)
 
     
     /******************************************
-    * BEGIN OPTIONAL HEADER STANDARD          *
-    ******************************************/
+     * BEGIN OPTIONAL HEADER STANDARD          *
+     ******************************************/
 
     // we assume an optional header exists
     uint16_t pe_Magic;
@@ -626,8 +642,8 @@ static string scan_winpe_verify (const sbuf_t &sbuf)
     
 
     /******************************************
-    * BEGIN OPTIONAL HEADER WINDOWS           *
-    ******************************************/
+     * BEGIN OPTIONAL HEADER WINDOWS           *
+     ******************************************/
     // If the SizeOfOptionalHeader is large enough to support the
     // optional windows header,then we will pull out windows header
     // information.
@@ -660,13 +676,13 @@ static string scan_winpe_verify (const sbuf_t &sbuf)
     bool ohw_xml = true;
     
     if (    (pe_Magic == IMAGE_FILE_TYPE_PE32)
-         && (pe_SizeOfOptionalHeader > sizeof(Pe_OptionalHeaderStandard) +
-                                       sizeof(Pe_OptionalHeaderWindows))
-        // do we have enough buffer space for this?
-         && (header_offset 
-             + sizeof(Pe_FileHeader)
-             + sizeof(Pe_OptionalHeaderStandard)
-             + sizeof(Pe_OptionalHeaderWindows) <= size)) {
+	    && (pe_SizeOfOptionalHeader > sizeof(Pe_OptionalHeaderStandard) +
+		sizeof(Pe_OptionalHeaderWindows))
+	    // do we have enough buffer space for this?
+	    && (header_offset 
+		+ sizeof(Pe_FileHeader)
+		+ sizeof(Pe_OptionalHeaderStandard)
+		+ sizeof(Pe_OptionalHeaderWindows) <= size)) {
         
         ohw_offset = ohs_offset + sizeof(Pe_OptionalHeaderStandard);
         
@@ -695,13 +711,13 @@ static string scan_winpe_verify (const sbuf_t &sbuf)
         Subsystem = match_switch_case(pe_optionalwindowsheader_subsystem, pe_Subsystem);
     }   
     else if (    (pe_Magic == IMAGE_FILE_TYPE_PE32PLUS)
-              && (pe_SizeOfOptionalHeader > sizeof(Pe_OptionalHeaderStandardPlus) +
-                                             sizeof(Pe_OptionalHeaderWindowsPlus))
-              // do we have enough buffer space for this?
-              && (header_offset
-                  + sizeof(Pe_FileHeader)
-                  + sizeof(Pe_OptionalHeaderStandardPlus)
-                  + sizeof(Pe_OptionalHeaderWindowsPlus) <= size)) {
+		 && (pe_SizeOfOptionalHeader > sizeof(Pe_OptionalHeaderStandardPlus) +
+		     sizeof(Pe_OptionalHeaderWindowsPlus))
+		 // do we have enough buffer space for this?
+		 && (header_offset
+		     + sizeof(Pe_FileHeader)
+		     + sizeof(Pe_OptionalHeaderStandardPlus)
+		     + sizeof(Pe_OptionalHeaderWindowsPlus) <= size)) {
         
         ohw_offset = ohs_offset + sizeof(Pe_OptionalHeaderStandardPlus);
 
@@ -774,18 +790,18 @@ static string scan_winpe_verify (const sbuf_t &sbuf)
     // find the .idata DataDirectory
     const Pe_DataDirectory  * idd  = NULL; // idata Data Directory
     if ((pe_Magic == IMAGE_FILE_TYPE_PE32) && (ohw_offset) && (2 <= pe_NumberOfRvaAndSizes)){
-    idd = sbuf.get_struct_ptr<Pe_DataDirectory>(header_offset
-                        + sizeof(Pe_FileHeader)
-                        + sizeof(Pe_OptionalHeaderStandard)
-                        + sizeof(Pe_OptionalHeaderWindows)
-                        + sizeof(Pe_DataDirectory));
+	idd = sbuf.get_struct_ptr<Pe_DataDirectory>(header_offset
+						    + sizeof(Pe_FileHeader)
+						    + sizeof(Pe_OptionalHeaderStandard)
+						    + sizeof(Pe_OptionalHeaderWindows)
+						    + sizeof(Pe_DataDirectory));
     }
     if ((pe_Magic == IMAGE_FILE_TYPE_PE32PLUS) && (ohw_offset) && (2 <= pe_NumberOfRvaAndSizes)) {
-    idd = sbuf.get_struct_ptr<Pe_DataDirectory>(header_offset
-                        + sizeof(Pe_FileHeader)
-                        + sizeof(Pe_OptionalHeaderStandardPlus)
-                        + sizeof(Pe_OptionalHeaderWindowsPlus)
-                        + sizeof(Pe_DataDirectory));
+	idd = sbuf.get_struct_ptr<Pe_DataDirectory>(header_offset
+						    + sizeof(Pe_FileHeader)
+						    + sizeof(Pe_OptionalHeaderStandardPlus)
+						    + sizeof(Pe_OptionalHeaderWindowsPlus)
+						    + sizeof(Pe_DataDirectory));
     }
     
     // Section Header for Imports (shi):
@@ -796,12 +812,12 @@ static string scan_winpe_verify (const sbuf_t &sbuf)
     xml << "<Sections>";
     for (section_i = 0; section_i < pe_NumberOfSections; section_i++) {
         
-    const Pe_SectionHeader * sh =
-        sbuf.get_struct_ptr<Pe_SectionHeader>(header_offset
-                          + sizeof(Pe_FileHeader)
-                          + pe_SizeOfOptionalHeader
-                          + sizeof(Pe_SectionHeader) * section_i);
-    if(sh==0) break; // no more!
+	const Pe_SectionHeader * sh =
+	    sbuf.get_struct_ptr<Pe_SectionHeader>(header_offset
+						  + sizeof(Pe_FileHeader)
+						  + pe_SizeOfOptionalHeader
+						  + sizeof(Pe_SectionHeader) * section_i);
+	if(sh==0) break; // no more!
         
         // the following flags are reserved for future use and should
         // not be set. If we get something invalid, we've probably gone
@@ -821,6 +837,11 @@ static string scan_winpe_verify (const sbuf_t &sbuf)
         strncpy(section_name, sh->Name, sizeof(section_name));
         section_name[8] = '\0';
         
+	if(!valid_section_name(section_name)){
+	    shi = 0;			// don't get the shi
+	    goto end_of_sections;
+	}
+
         xml << "<SectionHeader";
         xml << " Name=\""                 << section_name << "\"";
         xml << " VirtualSize=\""          << sh->VirtualSize << "\"";
@@ -838,26 +859,27 @@ static string scan_winpe_verify (const sbuf_t &sbuf)
         // check if import data resides in this section
         if (idd) {
             if (    (idd->VirtualAddress >= sh->VirtualAddress)
-                 && (idd->VirtualAddress < sh->VirtualAddress
-                                           + sh->SizeOfRawData)) {
+		    && (idd->VirtualAddress < sh->VirtualAddress
+			+ sh->SizeOfRawData)) {
                 shi = sh;
             }
         }
     }
+ end_of_sections:;
     xml << "</Sections>";
     
     // get DLL names
-    xml << "<dlls>";
     if (shi) {
         // find offset into PE where the Import Data Table resides
+	xml << "<dlls>";
         for (int idt_i = 0;  ; idt_i++) {
-        const Pe_ImportDirectoryTable * idt  = sbuf.get_struct_ptr<Pe_ImportDirectoryTable>(shi->PointerToRawData + (  idd->VirtualAddress - shi->VirtualAddress) + sizeof(Pe_ImportDirectoryTable)*idt_i);
-        if(idt==0) break;
+	    const Pe_ImportDirectoryTable * idt  = sbuf.get_struct_ptr<Pe_ImportDirectoryTable>(shi->PointerToRawData + (  idd->VirtualAddress - shi->VirtualAddress) + sizeof(Pe_ImportDirectoryTable)*idt_i);
+	    if(idt==0) break;
             
             // The Import Data Table is terminated by a null entry
             if (idt->ImportLookupTableRVA == 0 && idt->TimeDateStamp==0 && idt->ForwarderChain==0 && idt->NameRVA==0 && idt->ImportAddressTableRVA==0){
-        break;
-        }
+		break;
+	    }
                 
             // We are given the RVA of a string which contains the
             // name of the DLL. We're going to loop through sections,
@@ -871,63 +893,57 @@ static string scan_winpe_verify (const sbuf_t &sbuf)
                     break;
                     
                 const Pe_SectionHeader *sht =
-            sbuf.get_struct_ptr<Pe_SectionHeader>(header_offset
-                              + sizeof(Pe_FileHeader)
-                              + pe_SizeOfOptionalHeader
-                              + sizeof(Pe_SectionHeader) * si);
+		    sbuf.get_struct_ptr<Pe_SectionHeader>(header_offset
+							  + sizeof(Pe_FileHeader)
+							  + pe_SizeOfOptionalHeader
+							  + sizeof(Pe_SectionHeader) * si);
                     
                 // find target section
                 if (    (sht->VirtualAddress < idt->NameRVA)
-                     && (sht->VirtualAddress + sht->SizeOfRawData > idt->NameRVA)) {
+			&& (sht->VirtualAddress + sht->SizeOfRawData > idt->NameRVA)) {
 
                     // can we actually get the string out of this section
                     // max allowable string size is 32 chars
-            if (sht->PointerToRawData
-            + (idt->NameRVA - sht->VirtualAddress)
-            + 32 >= size)
-            break;
+		    if (sht->PointerToRawData
+			+ (idt->NameRVA - sht->VirtualAddress)
+			+ 32 >= size)
+			break;
             
-            // place dll name in a buffer string and add the xml
-            // Note --- currently this copies then verifies; it would be better
-            // to verify while copying...
+		    // place dll name in a buffer string and add the xml
+		    // Note --- currently this copies then verifies; it would be better
+		    // to verify while copying...
 
-            // find length of dllname, <= 32 characters
-	    // p. 90 of the pecoff specification (v8) assures that
-	    // names contain ASCII strings and are null-terminated.
-            int dllname_length = 32;
-            for (int dlli = 0; dlli < 32; dlli++) {
-                if (sbuf[sht->PointerToRawData + (idt->NameRVA - sht->VirtualAddress) + dlli] == 0) {
-                    dllname_length = dlli;
-                    break;
-                }
-            }
-            std::string dllname = sbuf.substr(sht->PointerToRawData + (idt->NameRVA - sht->VirtualAddress), dllname_length);
-	    // according to spec, these names are ASCII. perform
-	    // a sanity check, as this data is deep in the file
-	    // and may not be part of a contiguous PE
-            bool valid_dll = true;
-            for(size_t i=0;i<dllname.size() && valid_dll;i++){
-                if((u_char)dllname.at(i) >=0x80) valid_dll=false;
-            }
-	    
-	    if (valid_dll){
-		xml << "<dll>" << dllname << "</dll>";
-            }
-	    
-	    break;
+		    // find length of dllname, <= 32 characters
+		    // p. 90 of the pecoff specification (v8) assures that
+		    // names contain ASCII strings and are null-terminated.
+		    int dllname_length = 32;
+		    for (int dlli = 0; dlli < 32; dlli++) {
+			if (sbuf[sht->PointerToRawData + (idt->NameRVA - sht->VirtualAddress) + dlli] == 0) {
+			    dllname_length = dlli;
+			    break;
+			}
+		    }
+		    std::string dllname = sbuf.substr(sht->PointerToRawData + (idt->NameRVA - sht->VirtualAddress), dllname_length);
+
+		    // according to spec, these names are ASCII. perform
+		    // a sanity check, as this data is deep in the file
+		    // and may not be part of a contiguous PE
+		    if(!valid_dll_name(dllname)) goto end_of_dlls;
+		    xml << "<dll>" << dllname << "</dll>";
                 }
             }
         }
+    end_of_dlls:;
+	xml << "</dlls>";
     }
-    xml << "</dlls>";
     xml << "</PE>";
-    
     return xml.str();
 }
 
+static be13::hash_def hasher;
 extern "C"
 void scan_winpe (const class scanner_params &sp,
-         const recursion_control_block &rcb)
+		 const recursion_control_block &rcb)
 {
     assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
     string xml;
@@ -938,54 +954,56 @@ void scan_winpe (const class scanner_params &sp,
         sp.info->description     = "Scan for Windows PE headers";
         sp.info->scanner_version = "1.0.0";
         sp.info->feature_names.insert("winpe");
+
+        hasher    = sp.info->config->hasher;
+
         return;
     }
     
     if(sp.phase == scanner_params::PHASE_SCAN){    // phase 1
-    feature_recorder *f = sp.fs.get_name("winpe");
+	feature_recorder *f = sp.fs.get_name("winpe");
     
-    /* 
-     * Portable Executables start with a MS-DOS stub. The actual PE
-     * begins at an offset of 0x3c (PE_FILE_OFFSET) bytes. The signature
-     * is "PE\0\0"
-     */
-    // we are going to make sure we have at least enough room for a
-    // complete MS-Dos Stub, Signature and PE header, and an optional
-    // header and/or at least one section
+	/* 
+	 * Portable Executables start with a MS-DOS stub. The actual PE
+	 * begins at an offset of 0x3c (PE_FILE_OFFSET) bytes. The signature
+	 * is "PE\0\0"
+	 */
+	// we are going to make sure we have at least enough room for a
+	// complete MS-Dos Stub, Signature and PE header, and an optional
+	// header and/or at least one section
 
     
-    /* Return if the buffer is impossibly small to contain a PE header */
-    if ((sp.sbuf.bufsize < PE_SIGNATURE_SIZE + sizeof(Pe_FileHeader) + 40) ||
-        (sp.sbuf.bufsize < PE_FILE_OFFSET+4)){
-        return;
-    }
+	/* Return if the buffer is impossibly small to contain a PE header */
+	if ((sp.sbuf.bufsize < PE_SIGNATURE_SIZE + sizeof(Pe_FileHeader) + 40) ||
+	    (sp.sbuf.bufsize < PE_FILE_OFFSET+4)){
+	    return;
+	}
     
-    /* Loop through the sbuf, go to the offset, and see if there is a PE signature */
-    for (size_t pos = 0; pos < sp.sbuf.pagesize; pos++) {
-        size_t bytes_left = sp.sbuf.bufsize - pos;
-        if(bytes_left < PE_FILE_OFFSET+4) break; // ran out of space
+	/* Loop through the sbuf, go to the offset, and see if there is a PE signature */
+	for (size_t pos = 0; pos < sp.sbuf.pagesize; pos++) {
+	    size_t bytes_left = sp.sbuf.bufsize - pos;
+	    if(bytes_left < PE_FILE_OFFSET+4) break; // ran out of space
 
-        // offset to the header is at 0x3c
-        const uint32_t pe_header_offset = sp.sbuf.get32u(pos+PE_FILE_OFFSET);
-        if (pe_header_offset + 4 > bytes_left) continue; // points to region outside the sbuf
+	    // offset to the header is at 0x3c
+	    const uint32_t pe_header_offset = sp.sbuf.get32u(pos+PE_FILE_OFFSET);
+	    if (pe_header_offset + 4 > bytes_left) continue; // points to region outside the sbuf
 
-        // check for magic number. If found, analyze
-        if (    (sp.sbuf[pos+pe_header_offset    ] == PE_SIGNATURE[0])
-             && (sp.sbuf[pos+pe_header_offset + 1] == PE_SIGNATURE[1])
-             && (sp.sbuf[pos+pe_header_offset + 2] == PE_SIGNATURE[2])
-             && (sp.sbuf[pos+pe_header_offset + 3] == PE_SIGNATURE[3])) {
+	    // check for magic number. If found, analyze
+	    if (    (sp.sbuf[pos+pe_header_offset    ] == PE_SIGNATURE[0])
+		    && (sp.sbuf[pos+pe_header_offset + 1] == PE_SIGNATURE[1])
+		    && (sp.sbuf[pos+pe_header_offset + 2] == PE_SIGNATURE[2])
+		    && (sp.sbuf[pos+pe_header_offset + 3] == PE_SIGNATURE[3])) {
 
-        const sbuf_t data(sp.sbuf + pos);
+		const sbuf_t data(sp.sbuf + pos);
 
-        xml = scan_winpe_verify(data);
-        if (xml != "") {
-            // If we have 4096 bytes, generate md5 hash
-            std::string md5hash = data.bufsize>4096 ?
-            data.md5(0,4096).hexdigest() : std::string("insufficient_bytes_for_hash");
-            
-            f->write(data.pos0,md5hash,xml);
-        }
-        }
-    }
+		xml = scan_winpe_verify(data);
+		if (xml != "") {
+		    // If we have 4096 bytes, generate md5 hash
+                    sbuf_t first4k(data,0,4096);
+		    std::string hash = hasher.func(first4k.buf,first4k.bufsize);
+		    f->write(data.pos0,hash,xml);
+		}
+	    }
+	}
     }
 }

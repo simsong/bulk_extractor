@@ -55,9 +55,6 @@
 #  define HAVE_STL			/* needed for AFFLIB */
 #endif
 
-extern size_t opt_pagesize;
-extern size_t opt_margin;
-
 class image_process {
 private:
     /******************************************************
@@ -70,12 +67,21 @@ private:
 	    return "copying feature_recorder objects is not implemented.";
 	}
     };
-    image_process(const image_process &ip) __attribute__((__noreturn__)) :image_fname_(){throw new not_impl();}
+    image_process(const image_process &ip) __attribute__((__noreturn__))
+    :image_fname_(),page_size(),margin(){throw new not_impl();}
     const image_process &operator=(const image_process &ip){throw new not_impl();}
     /****************************************************************/
-    string image_fname_;			/* image filename */
-
+    const string image_fname_;			/* image filename */
 public:    
+    /**
+     * open() figures out which child class to call, calls its open, then
+     * returns an object.
+     */
+    static image_process *open(string fn,bool recurse,
+                               size_t opt_page_size,size_t opt_margin);
+    const size_t page_size;                    // page size we are using
+    const size_t margin;                      // margin size we are using
+
     class read_error: public exception {
 	virtual const char *what() const throw() {
 	    return "read error";
@@ -96,7 +102,7 @@ public:
 	bool     eof;
 	iterator(class image_process *myimage_): raw_offset(0),page_counter(0),file_number(0),myimage(*myimage_),eof(false){
 	}
-	bool operator !=(class iterator it){
+	bool operator !=(class iterator it) const{
 	    if(this->eof && it.eof) return false; /* both in EOF states, so they are equal */
 	    if(this->raw_offset!=it.raw_offset
 	       || this->page_counter!=it.page_counter
@@ -104,6 +110,9 @@ public:
 	       ) return true;
 	    return false;
 	}
+        bool operator ==(class iterator it) const{
+            return !((*this) != it);
+        }
 	pos0_t get_pos0() const { return myimage.get_pos0(*this); }			   // returns the current pos0
 	sbuf_t *sbuf_alloc(){ return myimage.sbuf_alloc(*this); }   // allocates an sbuf at pos0
 	double fraction_done(){ return myimage.fraction_done(*this); }
@@ -112,7 +121,7 @@ public:
 	uint64_t seek_block(uint64_t block) { return myimage.seek_block(*this,block);} // returns block number 
     };
 
-    image_process(const std::string &i):image_fname_(i){}
+    image_process(const std::string &fn,size_t page_size_,size_t margin_):image_fname_(fn),page_size(page_size_),margin(margin_){}
     virtual ~image_process(){};
 
     /* image support */
@@ -157,7 +166,7 @@ class process_aff : public image_process {
 	    return "copying feature_recorder objects is not implemented.";
 	}
     };
-    process_aff(const process_aff &pa) __attribute__((__noreturn__)): image_process(""),af(0),pagelist(){
+    process_aff(const process_aff &pa) __attribute__((__noreturn__)): image_process("",0,0),af(0),pagelist(){
 	throw new not_impl();
     }
     const process_aff &operator=(const process_aff &pa) __attribute__((__noreturn__)){throw new not_impl();}
@@ -166,7 +175,7 @@ class process_aff : public image_process {
     mutable AFFILE *af;
     vector<int64_t> pagelist;
 public:
-    process_aff(string fname) : image_process(fname),af(0),pagelist(){}
+    process_aff(string fname,size_t page_size_,size_t margin_) : image_process(fname,page_size_,margin_),af(0),pagelist(){}
     virtual ~process_aff();
 
     virtual image_process::iterator begin();
@@ -213,16 +222,17 @@ class process_ewf : public image_process {
 	}
     };
     process_ewf(const process_ewf &pa) __attribute__((__noreturn__)):
-    image_process(""),ewf_filesize(0),details(), handle(0){ throw new not_impl(); }
+    image_process("",0,0),ewf_filesize(0),details(), handle(0){ throw new not_impl(); }
     const process_ewf &operator=(const process_ewf &pa){throw new not_impl();}
     /****************************************************************/
 
     int64_t ewf_filesize;
     vector<string> details; 	       
     mutable libewf_handle_t *handle;
+    static int debug;
 
  public:
-    process_ewf(string fname) : image_process(fname), ewf_filesize(0), details() ,handle(0) {}
+    process_ewf(string fname,size_t page_size_,size_t margin_) : image_process(fname,page_size_,margin_), ewf_filesize(0), details() ,handle(0) {}
     virtual ~process_ewf();
     vector<string> getewfdetails();
     int open();
@@ -260,9 +270,13 @@ class process_raw : public image_process {
     class file_info const *find_offset(int64_t offset) const;
     int64_t raw_filesize;			/* sume of all the lengths */
     mutable string current_file_name;		/* which file is currently open */
+#ifdef WIN32
+    mutable HANDLE current_handle;		/* currently open file */
+#else
     mutable int current_fd;			/* currently open file */
+#endif
 public:
-    process_raw(string image_fname);
+    process_raw(string image_fname,size_t page_size,size_t margin);
     virtual ~process_raw();
     virtual int open();
     virtual int pread(uint8_t *,size_t bytes,int64_t offset) const;	    /* read */
@@ -319,6 +333,5 @@ class process_dir : public image_process {
  * Open the type as specified by extension.
  */
 
-extern image_process *image_process_open(string fn,int flags);
 
 #endif

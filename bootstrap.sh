@@ -6,9 +6,10 @@ then
   echo bringing in submodules
   echo next time check out with git clone --recursive
   git submodule init
+  git submodule update
 fi
 
-git submodule update
+# git submodule update
 autoheader -f
 touch NEWS README AUTHORS ChangeLog
 touch stamp-h
@@ -16,4 +17,4 @@ aclocal -I m4
 autoconf -f
 #libtoolize || glibtoolize
 automake --add-missing --copy
-./configure
+echo be sure to run ./configure

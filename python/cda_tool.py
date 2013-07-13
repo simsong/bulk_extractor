@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.2
+#!/usr/bin/env python3
 # coding=UTF-8
 #
 # Cross Drive Analysis tool for bulk extractor.

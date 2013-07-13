@@ -10,13 +10,38 @@ if WANT_WIN_INSTALLER
 SRC_WIN_DIR = src_win
 endif
 
-SUBDIRS = doc doc/user_manual src man python specfiles tests $(BE_VIEWER_DIR) $(SRC_WIN_DIR)
+SUBDIRS = doc doc/user_manual src man plugins python specfiles tests $(BE_VIEWER_DIR) $(SRC_WIN_DIR)
 
-EXTRA_DIST = bootstrap.sh \
+
+# don't include bootstrap. People run it, and they shoudln't
+# It's only for people who check out the git repo
+
+EXTRA_DIST = \
 	ROADMAP.txt \
+	m4/ac_check_classpath.m4 \
+	m4/ac_check_junit.m4 \
+	m4/ac_check_rqrd_class.m4 \
+	m4/ac_java_options.m4 \
+	m4/ac_prog_jar.m4 \
+	m4/ac_prog_java.m4 \
+	m4/ac_prog_java_cc.m4 \
+	m4/ac_prog_java_works.m4 \
+	m4/ac_prog_javac.m4 \
+	m4/ac_prog_javac_works.m4 \
+	m4/ac_prog_javadoc.m4 \
+	m4/ac_prog_javah.m4 \
+	m4/ac_try_compile_java.m4 \
+	m4/ac_try_run_javac.m4 \
+	m4/ax_boost_base.m4 \
+	m4/ax_boost_filesystem.m4 \
+	m4/ax_boost_system.m4 \
 	m4/ax_pthread.m4
 
-ACLOCAL_AMFLAGS="-I m4"
+# these are for the DFRWS2013 challenge:
+#	src/data_sniffer src/dfrws_2012_challenge.py
+
+
+ACLOCAL_AMFLAGS = -I m4
 
 RELEASE_USER = simsong@
 RELEASE_HOST = www.digitalcorpora.org
@@ -103,8 +128,8 @@ windist: win32 win64
 	cp ChangeLog		$(distdir)/ChangeLog.txt
 	cp NEWS			$(distdir)/NEWS.txt
 	cp COPYING		$(distdir)/COPYING.txt
-	md5deep -r  $distdir > md5list.txt
-	md5deep -rd $distdir > md5list.xml
+	md5deep -r  $(distdir) > md5list.txt
+	md5deep -rd $(distdir) > md5list.xml
 	mv md5list.txt md5list.xml $(distdir)
 	zip --to-crlf $(distdir).zip $(distdir)/*.txt $(distdir)/*.xml $(distdir)/python/*
 	rm -rf $(distdir) $(WINDOWSDOCS) 
@@ -141,5 +166,5 @@ SUFFIXES = .txt .1
 .1.txt:
 	/usr/bin/tbl $< | /usr/bin/groff -S -Wall -mtty-char -mandoc -Tascii | /usr/bin/col -bx > $@
 
-.PHONY: windist win32 win64 doxygen
+.PHONY: windist win32 win64
 

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 #
 # postprocess the EXIF output file into a CSV
 #

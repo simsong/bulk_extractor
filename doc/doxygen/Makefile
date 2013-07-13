@@ -1,7 +1,6 @@
 all:
-	doxygen Doxyfile
-	cd latex; make
+        doxygen Doxyfile
+        cd latex; make
 
 clean:
-	rm -rf latex html
-
+        rm -rf latex html

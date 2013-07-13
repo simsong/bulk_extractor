@@ -39,18 +39,18 @@ static const uint16_t EXIF_SLONG = 9;		// signed int32
 static const uint16_t EXIF_SRATIONAL = 10;	// two SLONGs
 
 // constants
-static const long int TWO_TO_24TH = 16777216L;
+static const uint32_t MAX_IMAGE_SIZE = 65535;
 
 // private helpers
-static string get_value(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset);
-static string get_generic_name(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset);
-static void add_entry(ifd_type_t ifd_type, const string &name, const string &value,
+static std::string get_value(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset);
+static std::string get_generic_name(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset);
+static void add_entry(ifd_type_t ifd_type, const std::string &name, const std::string &value,
                       entry_list_t &entries);
 static bool chars_match(const sbuf_t &sbuf, size_t count);
 static bool char_pairs_match(const sbuf_t &sbuf, size_t count);
-static string get_possible_utf8(const sbuf_t &sbuf, size_t count);
-static string get_possible_utf16(const sbuf_t sbuf, size_t count, sbuf_t::byte_order_t byte_order);
-static string get_possible_utf32(const sbuf_t &sbuf, size_t count, sbuf_t::byte_order_t byte_order);
+static std::string get_possible_utf8(const sbuf_t &sbuf, size_t count);
+static std::string get_possible_utf16(const sbuf_t sbuf, size_t count, sbuf_t::byte_order_t byte_order);
+static std::string get_possible_utf32(const sbuf_t &sbuf, size_t count, sbuf_t::byte_order_t byte_order);
 
 // IFD field readers for reading the 4 fields of a 12-byte IFD record
 inline static uint16_t get_entry_tag(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset);
@@ -60,16 +60,16 @@ inline static uint16_t get_data_offset(tiff_handle_t &tiff_handle, uint32_t ifd_
 inline static uint32_t get_ifd_offset(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset);
 
 // EXIF type readers to return strings customized for bulk_extractor
-static string get_exif_byte(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset);
-static string get_exif_ascii(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset);
-static string get_exif_short(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset);
-static string get_exif_long(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset);
-static string get_exif_rational(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset);
-static string get_exif_undefined(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset);
-static string get_exif_slong(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset);
-static string get_exif_srational(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset);
+static std::string get_exif_byte(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset);
+static std::string get_exif_ascii(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset);
+static std::string get_exif_short(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset);
+static std::string get_exif_long(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset);
+static std::string get_exif_rational(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset);
+static std::string get_exif_undefined(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset);
+static std::string get_exif_slong(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset);
+static std::string get_exif_srational(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset);
 
-exif_entry::exif_entry(uint16_t ifd_type_, const string &name_, const string &value_)
+exif_entry::exif_entry(uint16_t ifd_type_, const std::string &name_, const std::string &value_)
     :ifd_type(ifd_type_), name(name_), value(value_) {
 }
 
@@ -82,7 +82,7 @@ exif_entry::~exif_entry() {
 #endif
 }
 
-const string exif_entry::get_full_name() const {
+const std::string exif_entry::get_full_name() const {
     switch(ifd_type) {
     case IFD0_TIFF:
         return "ifd0.tiff." + name;	// as labeled by Exif doc JEITA CP-3451B
@@ -101,7 +101,7 @@ const string exif_entry::get_full_name() const {
     case IFD1_INTEROPERABILITY:
         return "ifd1.interoperability." + name;
     default:
-        cerr << "Program state errror: Invalid ifd type " << ifd_type << "\n";
+        std::cerr << "Program state errror: Invalid ifd type " << ifd_type << "\n";
         assert(0);
     }
     return "ERROR";			// required to avoid compiler warning
@@ -240,19 +240,11 @@ void entry_reader::parse_entry(ifd_type_t ifd_type, tiff_handle_t &tiff_handle,
         }
 	case 0x011a: {
             value_string = get_value(tiff_handle, ifd_entry_offset);
-            long int lx = atol(value_string.c_str());
-            if (lx > TWO_TO_24TH) {
-              throw exif_failure_exception_t();
-            }
             add_entry(ifd_type, "XResolution", value_string, entries);
             break;
         }
 	case 0x011b: {
             value_string = get_value(tiff_handle, ifd_entry_offset);
-            long int ly = atol(value_string.c_str());
-            if (ly > TWO_TO_24TH) {
-              throw exif_failure_exception_t();
-            }
             add_entry(ifd_type, "YResolution", value_string, entries);
             break;
         }
@@ -564,11 +556,19 @@ void entry_reader::parse_entry(ifd_type_t ifd_type, tiff_handle_t &tiff_handle,
         }
 	case 0xa002: {
             value_string = get_value(tiff_handle, ifd_entry_offset);
+            uint32_t lx = atol(value_string.c_str());
+            if (lx > MAX_IMAGE_SIZE) {
+              throw exif_failure_exception_t();
+            }
             add_entry(ifd_type, "PixelXDimension", value_string, entries);
             break;
         }
 	case 0xa003: {
             value_string = get_value(tiff_handle, ifd_entry_offset);
+            uint32_t ly = atol(value_string.c_str());
+            if (ly > MAX_IMAGE_SIZE) {
+              throw exif_failure_exception_t();
+            }
             add_entry(ifd_type, "PixelYDimension", value_string, entries);
             break;
         }
@@ -962,13 +962,13 @@ void entry_reader::parse_entry(ifd_type_t ifd_type, tiff_handle_t &tiff_handle,
 
     default:
         // not a valid type
-        cout << "exif_entry.parse_entry invalid entry tag: " << entry_tag << "\n";
+        std::cerr << "exif_entry.parse_entry invalid entry tag: " << entry_tag << "\n";
         assert(0);
     } // end switch ifd_type
 }
 
 // entry value
-static string get_value(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset) {
+static std::string get_value(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset) {
     // entry type and entry count
     const uint16_t entry_type = get_entry_type(tiff_handle, ifd_entry_offset);
 
@@ -1000,7 +1000,7 @@ static string get_value(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset) {
 }
 
 // generic entry value
-static string get_generic_name(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset) {
+static std::string get_generic_name(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset) {
     // create a generic name as "entry(N)"
     uint16_t entry_tag;
     try {
@@ -1008,17 +1008,17 @@ static string get_generic_name(tiff_handle_t &tiff_handle, uint32_t ifd_entry_of
     } catch (sbuf_t::range_exception_t &e) {
         entry_tag = 0;
     }
-    stringstream ss;
+    std::stringstream ss;
     ss << "entry_0x";
     ss.width(4);
     ss.fill('0');
-    ss << hex << entry_tag;
-    string name = ss.str();
+    ss << std::hex << entry_tag;
+    std::string name = ss.str();
 
     return name;
 }
 
-static void add_entry(ifd_type_t ifd_type, const string &name, const string &value,
+static void add_entry(ifd_type_t ifd_type, const std::string &name, const std::string &value,
                       entry_list_t &entries) {
 
     // push the name and value onto entries
@@ -1176,7 +1176,7 @@ static bool char_pairs_match(const sbuf_t &sbuf, size_t count) {
     return true;
 }
 
-static string get_possible_utf8(const sbuf_t &sbuf, size_t count) {
+static std::string get_possible_utf8(const sbuf_t &sbuf, size_t count) {
     if (chars_match(sbuf, count) || char_pairs_match(sbuf, count)) {
         // this is an uninteresting sequence, so return ""
         return "";
@@ -1189,10 +1189,10 @@ static string get_possible_utf8(const sbuf_t &sbuf, size_t count) {
 
 template <typename u16bit_iterator, typename octet_iterator>
 octet_iterator all_utf16to8 (u16bit_iterator start, u16bit_iterator end, octet_iterator result);
-string all_utf16to8 (wstring utf16_string);
+std::string all_utf16to8 (std::wstring utf16_string);
 
 // read utf16 and return unvalidated utf8
-string get_possible_utf16(const sbuf_t sbuf, size_t count, sbuf_t::byte_order_t byte_order) {
+std::string get_possible_utf16(const sbuf_t sbuf, size_t count, sbuf_t::byte_order_t byte_order) {
 
     // check for sequence
     if (chars_match(sbuf, count) || char_pairs_match(sbuf, count)) {
@@ -1201,11 +1201,11 @@ string get_possible_utf16(const sbuf_t sbuf, size_t count, sbuf_t::byte_order_t 
     }
 
     // get wstring accounting for byte order
-    wstring wstr;
+    std::wstring wstr;
     sbuf.getUTF16(0, count, byte_order, wstr);
 
     // convert wstring to string
-    string utf8_string = all_utf16to8(wstr);
+    std::string utf8_string = all_utf16to8(wstr);
 
 #ifdef DEBUG
     cout << "exif_entry.get_possible_utf16 utf8_string (escaped): '" << validateOrEscapeUTF8(utf8_string, true, true) << "'\n";
@@ -1214,7 +1214,7 @@ string get_possible_utf16(const sbuf_t sbuf, size_t count, sbuf_t::byte_order_t 
 }
 
 // read utf32 and return unvalidated utf8
-string get_possible_utf32(const sbuf_t &sbuf, size_t count, sbuf_t::byte_order_t byte_order) {
+std::string get_possible_utf32(const sbuf_t &sbuf, size_t count, sbuf_t::byte_order_t byte_order) {
 
     // check for sequence
     if (chars_match(sbuf, count) || char_pairs_match(sbuf, count)) {
@@ -1248,12 +1248,12 @@ string get_possible_utf32(const sbuf_t &sbuf, size_t count, sbuf_t::byte_order_t
 }
 
 // convert all possible utf16, along with any illegal values
-string all_utf16to8 (wstring utf16_string) {
+std::string all_utf16to8 (std::wstring utf16_string) {
     std::string utf8_string;
     std::back_insert_iterator<std::basic_string<char> > result = back_inserter(utf8_string);
 
-    wstring::const_iterator start = utf16_string.begin();
-    wstring::const_iterator end = utf16_string.end();
+    std::wstring::const_iterator start = utf16_string.begin();
+    std::wstring::const_iterator end = utf16_string.end();
 
 //template <typename u16bit_iterator, typename octet_iterator>
 //octet_iterator all_utf16to8 (u16bit_iterator start, u16bit_iterator end, octet_iterator result)
@@ -1302,7 +1302,7 @@ string all_utf16to8 (wstring utf16_string) {
  * such that further entry parsing would be invalid.
  * @Throws exif_failure_exception_t
  */
-static string get_exif_byte(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset) {
+static std::string get_exif_byte(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset) {
  
     uint32_t count = get_entry_count(tiff_handle, ifd_entry_offset);
     uint32_t offset = get_data_offset(tiff_handle, ifd_entry_offset);
@@ -1313,7 +1313,7 @@ static string get_exif_byte(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offse
 
     if (count == 1) {
         // count is 1 so print the byte as an integer
-        stringstream ss;
+        std::stringstream ss;
         try {
 	    ss << (int)tiff_handle.sbuf->get8u(offset);
         } catch (sbuf_t::range_exception_t &e) {
@@ -1333,7 +1333,7 @@ static string get_exif_byte(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offse
  * such that further entry parsing would be invalid.
  * @Throws exif_failure_exception_t
  */
-static string get_exif_ascii(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset) {
+static std::string get_exif_ascii(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset) {
     // print each byte as a character in a string
     uint32_t count = get_entry_count(tiff_handle, ifd_entry_offset);
     uint32_t offset = get_data_offset(tiff_handle, ifd_entry_offset);
@@ -1364,7 +1364,7 @@ static string get_exif_ascii(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offs
  * such that further entry parsing would be invalid.
  * @Throws exif_failure_exception_t
  */
-static string get_exif_short(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset) {
+static std::string get_exif_short(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset) {
     // print each short separated by a space
     uint32_t count = get_entry_count(tiff_handle, ifd_entry_offset);
     uint32_t offset = get_data_offset(tiff_handle, ifd_entry_offset);
@@ -1375,7 +1375,7 @@ static string get_exif_short(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offs
 
     if (count == 1) {
         // count is 1 so print the uint16 as an integer
-        stringstream ss;
+        std::stringstream ss;
         try {
 	    ss << (int)tiff_handle.sbuf->get16u(offset, tiff_handle.byte_order);
         } catch (sbuf_t::range_exception_t &e) {
@@ -1399,7 +1399,7 @@ static string get_exif_short(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offs
  * such that further entry parsing would be invalid.
  * @Throws exif_failure_exception_t
  */
-static string get_exif_long(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset) {
+static std::string get_exif_long(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset) {
 
     // print each long separated by a space
     uint32_t count = get_entry_count(tiff_handle, ifd_entry_offset);
@@ -1411,7 +1411,7 @@ static string get_exif_long(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offse
 
     if (count == 1) {
         // count is 1 so print the long directly
-        stringstream ss;
+        std::stringstream ss;
         try {
 	    ss << (uint32_t)tiff_handle.sbuf->get32u(offset);
         } catch (sbuf_t::range_exception_t &e) {
@@ -1435,7 +1435,7 @@ static string get_exif_long(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offse
  * such that further entry parsing would be invalid.
  * @Throws exif_failure_exception_t
  */
-static string get_exif_rational(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset) {
+static std::string get_exif_rational(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset) {
     // print each rational as 1'st uint32, "/", 2'nd uint32, separated by a space
     uint32_t count = get_entry_count(tiff_handle, ifd_entry_offset);
     uint32_t offset = get_data_offset(tiff_handle, ifd_entry_offset);
@@ -1444,7 +1444,7 @@ static string get_exif_rational(tiff_handle_t &tiff_handle, uint32_t ifd_entry_o
     tiff_handle.bytes_read += count * 8; // exif standard: 1 exif rational is 8 bytes long
     if (count >= 0x2000 || tiff_handle.bytes_read >= 0x10000) throw exif_failure_exception_t();
 
-    stringstream ss;
+    std::stringstream ss;
     for (uint32_t i=0; i<count; i++) {
         try {
 	    // return 1'st uint32, "/", 2'nd uint32
@@ -1461,7 +1461,7 @@ static string get_exif_rational(tiff_handle_t &tiff_handle, uint32_t ifd_entry_o
 }
 
 // EXIF_UNDEFINED byte whose value depends on the field definition
-static string get_exif_undefined(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset) {
+static std::string get_exif_undefined(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset) {
     // print UNDEFINED as byte
     return get_exif_byte(tiff_handle, ifd_entry_offset);
 }
@@ -1472,7 +1472,7 @@ static string get_exif_undefined(tiff_handle_t &tiff_handle, uint32_t ifd_entry_
  * such that further entry parsing would be invalid.
  * @Throws exif_failure_exception_t
  */
-static  string get_exif_slong(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset) {
+static  std::string get_exif_slong(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset) {
     // print each signed long
     uint32_t count = get_entry_count(tiff_handle, ifd_entry_offset);
     uint32_t offset = get_data_offset(tiff_handle, ifd_entry_offset);
@@ -1481,7 +1481,7 @@ static  string get_exif_slong(tiff_handle_t &tiff_handle, uint32_t ifd_entry_off
     tiff_handle.bytes_read += count * 4; // exif standard: 1 exif slong is 4 bytes long
     if (count >= 0x4000 || tiff_handle.bytes_read >= 0x10000) throw exif_failure_exception_t();
 
-    stringstream ss;
+    std::stringstream ss;
     for (uint32_t i=0; i<count; i++) {
         try {
 	    ss << tiff_handle.sbuf->get32i(offset + i * 4, tiff_handle.byte_order);
@@ -1503,7 +1503,7 @@ static  string get_exif_slong(tiff_handle_t &tiff_handle, uint32_t ifd_entry_off
  * such that further entry parsing would be invalid.
  * @Throws exif_failure_exception_t
  */
-static string get_exif_srational(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset) {
+static std::string get_exif_srational(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset) {
     // print each rational as 1'st uint32, "/", 2'nd uint32, separated by a space
     uint32_t count = get_entry_count(tiff_handle, ifd_entry_offset);
     uint32_t offset = get_data_offset(tiff_handle, ifd_entry_offset);
@@ -1512,7 +1512,7 @@ static string get_exif_srational(tiff_handle_t &tiff_handle, uint32_t ifd_entry_
     tiff_handle.bytes_read += count * 8; // exif standard: 1 exif srational is 8 bytes long
     if (count >= 0x2000 || tiff_handle.bytes_read >= 0x10000) throw exif_failure_exception_t();
 
-    stringstream ss;
+    std::stringstream ss;
     for (uint32_t i=0; i<count; i++) {
         try {
 	    // return 1'st int32, "/", 2'nd int32

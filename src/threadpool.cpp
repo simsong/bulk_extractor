@@ -1,9 +1,7 @@
 #include "bulk_extractor.h"
-#include "aftimer.h"
+#include "threadpool.h"
 #include "image_process.h"
 #include "aftimer.h"
-#include "xml.h"
-#include "threadpool.h"
 
 #include <dirent.h>
 #include <ctype.h>
@@ -83,7 +81,7 @@ void threadpool::win32_init()
  * Each thread has its own feature_recorder_set.
  *
  */
-threadpool::threadpool(int numthreads,feature_recorder_set &fs_,xml &xreport_):
+threadpool::threadpool(int numthreads,feature_recorder_set &fs_,dfxml_writer &xreport_):
     workers(),M(),TOMAIN(),TOWORKER(),freethreads(numthreads),work_queue(),
     fs(fs_),xreport(xreport_),thread_status(),waiting(),mode()
 {
@@ -159,7 +157,7 @@ int threadpool::get_free_count()
 /**
  * do the work. Record that the work was started and stopped in XML file.
  */
-bool opt_work_start_work_end=true;
+bool worker::opt_work_start_work_end=true;
 void worker::do_work(sbuf_t *sbuf)
 {
 
@@ -181,7 +179,7 @@ void worker::do_work(sbuf_t *sbuf)
 
     aftimer t;
     t.start();
-    process_sbuf(scanner_params(scanner_params::PHASE_SCAN,*sbuf,master.fs)); 
+    be13::plugin::process_sbuf(scanner_params(scanner_params::PHASE_SCAN,*sbuf,master.fs)); 
     t.stop();
 
     /* If we are logging starting and ending, save the end */
@@ -248,7 +246,7 @@ void *worker::run()
 	/* Worker still has the lock */
 	sbuf_t *sbuf = master.work_queue.front(); // get the sbuf
 	master.work_queue.pop();		   // pop from the list
-	master.thread_status.at(id) = std::string("Processing ") + sbuf->pos0.str();
+	master.thread_status.at(id) = std::string("Processing ") + sbuf->pos0.str(); // I have the M lock
 
 	/* release the lock */
 	pthread_mutex_unlock(&master.M);	   // unlock

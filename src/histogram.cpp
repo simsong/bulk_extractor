@@ -77,6 +77,7 @@ bool HistogramMaker::looks_like_utf16(const std::string &str,bool &little_endian
  * it to UTF8 if so.
  */
 
+uint32_t HistogramMaker::debug_histogram_malloc_fail_frequency = 0;
 void HistogramMaker::add(const std::string &key)
 {
     if(key.size()==0) return;		// don't deal with zero-length keys
@@ -183,8 +184,8 @@ void HistogramMaker::add(const std::string &key)
     /* For debugging low-memory handling logic,
      * specify DEBUG_MALLOC_FAIL to make malloc occasionally fail
      */
-    if(debug & DEBUG_MALLOC_FAIL){
-	if((h.size() % DEBUG_MALLOC_FAIL_FREQUENCY)==(DEBUG_MALLOC_FAIL_FREQUENCY-1)){
+    if(debug_histogram_malloc_fail_frequency){
+	if((h.size() % debug_histogram_malloc_fail_frequency)==(debug_histogram_malloc_fail_frequency-1)){
 	    throw bad_alloc();
 	}
     }

@@ -4,7 +4,8 @@
  * FAT32 directories always start on sector boundaries. 
  */
 
-#include "bulk_extractor.h"
+#include "config.h"
+#include "bulk_extractor_i.h"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -14,8 +15,8 @@
 #include <sstream>
 #include <sys/time.h>
 
-#include "xml.h"
 #include "utf8.h"
+#include "dfxml/src/dfxml_writer.h"
 
 #pragma GCC diagnostic ignored "-Wshadow"
 #pragma GCC diagnostic ignored "-Weffc++"
@@ -30,12 +31,14 @@
 #define CLUSTERS_IN_1GiB 2*1024*1024
 
 /* fat32 tuning parameters for weirdness. Each of these define something weird. If too much is weird, it's probably not a FAT32 directory entry.. */
-uint32_t opt_weird_file_size    = 1024*1024*150; // max file size
-uint32_t opt_weird_file_size2   = 1024*1024*512; // max file size
-uint32_t opt_max_cluster    = 32*CLUSTERS_IN_1GiB; // assume smaller than 32GB with 512 byte clusters
-uint32_t opt_max_cluster2   = 128*CLUSTERS_IN_1GiB; // assume smaller than 512GB with 512 byte clusters
-uint32_t opt_max_bits_in_attrib = 3;
-uint32_t opt_max_weird_count    = 2;
+static uint32_t opt_weird_file_size    = 1024*1024*150; // max file size
+static uint32_t opt_weird_file_size2   = 1024*1024*512; // max file size
+static uint32_t opt_max_cluster    = 32*CLUSTERS_IN_1GiB; // assume smaller than 32GB with 512 byte clusters
+static uint32_t opt_max_cluster2   = 128*CLUSTERS_IN_1GiB; // assume smaller than 512GB with 512 byte clusters
+static uint32_t opt_max_bits_in_attrib = 3;
+static uint32_t opt_max_weird_count    = 2;
+static uint32_t opt_last_year = 2020;
+static int  debug=0;
 
 /**
  * code from tsk3
@@ -296,7 +299,7 @@ void scan_fatdirs(const sbuf_t &sbuf,feature_recorder *wrecorder)
 	    for(ssize_t entry_number = 0;entry_number <= last_valid_entry_number && entry_number<max_entries;
 		entry_number++){
 		sbuf_t n(sector,entry_number*32,32);
-		xml::strstrmap_t fatmap;
+		dfxml_writer::strstrmap_t fatmap;
 		
 		if(valid_fat_directory_entry(n)==1){
 		    const fatfs_dentry &dentry = *n.get_struct_ptr<fatfs_dentry>(0);
@@ -313,7 +316,7 @@ void scan_fatdirs(const sbuf_t &sbuf,feature_recorder *wrecorder)
 		    fatmap["startcluster"] = utos(fat32int(dentry.highclust,dentry.startclust));
 		    fatmap["filesize"] = utos(fat32int(dentry.size));
 		    fatmap["attrib"]   = utos((uint32_t)dentry.attrib);
-		    wrecorder->write(n.pos0,filename,xml::xmlmap(fatmap,"fileobject","src='fat'"));
+		    wrecorder->write(n.pos0,filename,dfxml_writer::xmlmap(fatmap,"fileobject","src='fat'"));
 		}
 	    }
 	}
@@ -338,7 +341,7 @@ void scan_ntfsdirs(const sbuf_t &sbuf,feature_recorder *wrecorder)
 		uint16_t nlink = n.get16u(16); // get link count
 		if(nlink<10){ // sanity check - most files have less than 10 links
 
-		    xml::strstrmap_t mftmap;
+		    dfxml_writer::strstrmap_t mftmap;
 		    mftmap["nlink"] = utos(nlink);
 		    mftmap["lsn"]   = utos(n.get64u(8)); // $LogFile Sequence Number
 		    mftmap["seq"]   = utos(n.get16u(18));
@@ -449,7 +452,7 @@ void scan_ntfsdirs(const sbuf_t &sbuf,feature_recorder *wrecorder)
 		    }		
 		    if(mftmap.size()>3){
 			if(filename.size()==0) filename="$NOFILENAME"; // avoids problems
-			wrecorder->write(n.pos0,filename,xml::xmlmap(mftmap,"fileobject","src='mft'"));
+			wrecorder->write(n.pos0,filename,dfxml_writer::xmlmap(mftmap,"fileobject","src='mft'"));
 		    }
 		    if(debug & DEBUG_INFO) std::cerr << "=======================\n";
 		}
@@ -479,6 +482,17 @@ void scan_windirs(const class scanner_params &sp,const recursion_control_block &
         sp.info->description    = "Scans Microsoft directory structures";
         sp.info->scanner_version= "1.0";
 	sp.info->feature_names.insert("windirs");
+
+        sp.info->get_config("opt_weird_file_size",&opt_weird_file_size,"Weird file size");
+        sp.info->get_config("opt_weird_file_size2",&opt_weird_file_size2,"Weird file size2");
+        sp.info->get_config("opt_max_cluster",&opt_max_cluster,"Ignore clusters larger than this");
+        sp.info->get_config("opt_max_cluster2",&opt_max_cluster2,"Ignore clusters larger than this");
+        sp.info->get_config("opt_max_bits_in_attrib",&opt_max_bits_in_attrib,"Ignore FAT32 entries with more attributes set than this");
+        sp.info->get_config("opt_max_weird_count",&opt_max_weird_count,"Ignore FAT32 entries with more things weird than this");
+        sp.info->get_config("opt_last_year",&opt_last_year,"Ignore FAT32 entries with a later year than this");
+
+        debug = sp.info->config->debug;
+
 	//sp.info->flags = scanner_info::SCANNER_DISABLED; // disabled until it's working
         
 

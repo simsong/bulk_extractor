@@ -94,7 +94,7 @@
 # include <sys/cdefs.h>
 #endif
 
-#include <pthread.h>
+#include <pthread.h>                    // must have pthread
 
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
@@ -151,25 +151,6 @@
 # define ATTR_FORMAT(spec) /* empty */
 #endif
 
-/* bulk_extractor.cpp */
-extern const char *progname;
-extern size_t opt_scan_bulk_block_size;
-extern bool opt_work_start_work_end;	// note when each scanner starts and ends; needed for restarting
-
-extern int opt_dedup_bloom_bits;
-extern int word_min;
-extern int word_max;
-extern int min_uncompr_size;	// don't bother with objects smaller than this
-extern int max_uncompr_size;
-
-extern int64_t opt_offset_start;	// where to start analysis
-extern int64_t opt_offset_end;		// where to end analysis
-extern size_t opt_pagesize;
-extern size_t opt_margin;
-
-extern uint32_t opt_last_year;		// assume year is less than this
-extern const char *image_fname;		// the image filename
-
 #ifdef	__cplusplus
 #include <algorithm>
 #include <cstdlib>
@@ -184,52 +165,33 @@ extern const char *image_fname;		// the image filename
 
 using namespace std;
 
-void	be_mkdir(std::string dir);
-void	validate_fn(std::string &fn);
-
 #include "be13_api/bulk_extractor_i.h"
+
+/* bulk_extractor.cpp */
+
+#include <be13_api/beregex.h>
+#include "word_and_context_list.h"
+
+/* The global lists for finding, alertting and stopping.
+ * Is there a way to get these out of the global extern space?
+ */
+extern regex_list find_list;      // what scan_find should find
+extern word_and_context_list alert_list; /* should be flagged */
+extern word_and_context_list stop_list;  /* should be ignored */
 
 /****************************************************************
  *** SCANNER PROCESSORS - operate on the scanners
  ****************************************************************/
-//extern process_t process_sbuf;				/* process for feature extraction */
-extern process_t process_path_printer;			/* process for path printing  */
-extern int debug;
-
-//#ifdef _WIN32
-//#define __printflike(a,b) 		// ignore this feature in mingw
-//#endif
 
 /* support.cpp */
 
-void		truncate_at(string &line,char ch);
 std::string	ssprintf(const char *fmt,...);
-bool		ends_with(const std::string &,const std::string &with);
-bool		ends_with(const std::wstring &,const std::wstring &with);
-
-/* C++ string splitting code from http://stackoverflow.com/questions/236129/how-to-split-a-string-in-c */
-std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems);
-std::vector<std::string> split(const std::string &s, char delim); 
 
 /****************************************************************/
 
-#include "regex.h"
-#include "word_and_context_list.h"
-
-/* The global lists for alerting and stopping */
-extern word_and_context_list alert_list;		/* should be flagged */
-extern word_and_context_list stop_list;		/* should be ignored */
-
-void set_scanner_enabled(const string name,bool enable);
-
-
-/* Assume the highest year */
-
-/* built-in scanners */
 
 /* flex-based scanners */
 extern "C" scanner_t scan_email;  
-//extern "C" scanner_t scan_httpheader;
 extern "C" scanner_t scan_accts;  
 extern "C" scanner_t scan_kml;
 extern "C" scanner_t scan_gps;
@@ -244,12 +206,15 @@ extern "C" scanner_t scan_lift;
 extern "C" scanner_t scan_extx;
 /* Special support for find */
 extern "C" scanner_t scan_find;
-extern regex_list find_list;
+
 void add_find_pattern(const string &pat);
 void process_find_file(const char *findfile);
 
 #ifdef HAVE_EXIV2
 extern "C" scanner_t scan_exiv2;
+#endif
+#ifdef HAVE_HASHID
+extern "C" scanner_t scan_hashid;
 #endif
 extern "C" scanner_t scan_aes;
 extern "C" scanner_t scan_bulk;

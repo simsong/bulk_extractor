@@ -1,6 +1,10 @@
-#include "bulk_extractor.h"
+#include "config.h"
+#include "bulk_extractor_i.h"
 #include "dig.h"
+#include "be13_api/utils.h"
 #include <math.h>
+
+#include <algorithm>
 
 /**
  * scan_bulk implements the bulk data analysis system.
@@ -27,10 +31,12 @@
  * They all use the standard bulk_extractor plug-in API.
  */
 
-const std::string CONSTANT("constant");
-const std::string JPEG("jpeg");
-const std::string RANDOM("random");
-const std::string HUFFMAN("huffman_compressed");
+static const std::string CONSTANT("constant");
+static const std::string JPEG("jpeg");
+static const std::string RANDOM("random");
+static const std::string HUFFMAN("huffman_compressed");
+
+static int debug=0;
 
 /* Substitution table */
 static struct replace_t {
@@ -97,7 +103,7 @@ std::ostream & operator<< (std::ostream &os, const sector_typetag &ss) {
 typedef vector<sector_typetag> sector_typetags_vector_t; //
 sector_typetags_vector_t sector_typetags;		      // what gets put where
 
-size_t opt_scan_bulk_block_size = 512;	// 
+static size_t opt_bulk_block_size = 512;	// 
 
 static void bulk_process_feature_file(const std::string &fn)
 {
@@ -123,7 +129,7 @@ static void bulk_process_feature_file(const std::string &fn)
 	    std::string &taglocation  = fields[0];
 	    std::string &tagtype = fields[1];
 	    uint64_t offset = stoi64(taglocation);
-	    uint64_t sector =  offset / opt_scan_bulk_block_size;
+	    uint64_t sector =  offset / opt_bulk_block_size;
 
 	    /* If the array hasn't been expanded to the point of this element, expand it with blanks */
 	    while(sector > sector_typetags.size()){
@@ -163,7 +169,7 @@ static void bulk_process_feature_file(const std::string &fn)
 	    /* Process a feature, which will add specificity to the tag */
 	    if(sector_typetags.size()==sector){ 
 		/* Hm... No tag (and all tags got processed first), so this is unknown */
-		sector_typetags.push_back(sector_typetag(opt_scan_bulk_block_size,UNKNOWN,SPACE));
+		sector_typetags.push_back(sector_typetag(opt_bulk_block_size,UNKNOWN,SPACE));
 	    } 
 	    /* append what we've learned regarding this feature */
 	    
@@ -215,7 +221,7 @@ static void dfrws2012_bulk_process_dump()
 {
     for(size_t i=0;i<sector_typetags.size();i++){
 	sector_typetag &s = sector_typetags[i];
-	uint64_t    offset = i * opt_scan_bulk_block_size;
+	uint64_t    offset = i * opt_bulk_block_size;
 	std::string ctype = (s.stype.size()>0 ? s.stype : "UNRECOGNIZED CONTENT");
 	bool print_comment = s.scomment.size() > 0;
 
@@ -322,7 +328,7 @@ public:;
     float entropy() {
 	float eval = 0;
 	for(vector<hist_element *>::const_iterator it = counts.begin();it!=counts.end();it++){
-	    float p = (float)(*it)->count / (float)opt_scan_bulk_block_size;
+	    float p = (float)(*it)->count / (float)opt_bulk_block_size;
 	    eval += -p * log2(p);
 	}
 	return eval;
@@ -346,16 +352,16 @@ double sd_autocorrelation_cosine_variance(const sbuf_t &sbuf,const histogram &sb
     if(sbuf.bufsize==0) return 0;
 
     /* Create the autocorolation buffer */
-    uint8_t *autobuf = (uint8_t *)malloc(sbuf.bufsize);
-    if(autobuf){
+    managed_malloc<uint8_t>autobuf(sbuf.bufsize);
+    if(autobuf.buf){
 	for(size_t i=0;i<sbuf.bufsize-1;i++){
-	    autobuf[i] = sbuf[i] + sbuf[i+1];
+	    autobuf.buf[i] = sbuf[i] + sbuf[i+1];
 	}
-	autobuf[sbuf.bufsize-1] = sbuf[sbuf.bufsize-1] + sbuf[0];
+	autobuf.buf[sbuf.bufsize-1] = sbuf[sbuf.bufsize-1] + sbuf[0];
 
 	/* Get a histogram for autobuf */
 	histogram autohist;
-	autohist.add(autobuf,sbuf.bufsize);
+	autohist.add(autobuf.buf,sbuf.bufsize);
 	autohist.calc_distribution();
 
 	/* Now compute the cosine similarity */
@@ -378,7 +384,6 @@ double sd_autocorrelation_cosine_variance(const sbuf_t &sbuf,const histogram &sb
 	double mag1 = sqrt(mag_squared1);
 	double mag2 = sqrt(mag_squared2);
 	double cosinesim = dotproduct / (mag1 * mag2);
-	free(autobuf);
 	return cosinesim;
     }
     else return 0;
@@ -474,7 +479,7 @@ static inline void bulk_bitlocker(const sbuf_t &sbuf,feature_recorder *bulk,feat
 #define _TEXT(x) x
 #endif
 
-static int dfrws_challenge = 0;
+static bool dfrws_challenge = false;
 
 extern "C"
 void scan_bulk(const class scanner_params &sp,const recursion_control_block &rcb)
@@ -486,15 +491,16 @@ void scan_bulk(const class scanner_params &sp,const recursion_control_block &rcb
 	sp.info->name		= "bulk";
 	sp.info->author		= "Simson Garfinkel";
 	sp.info->description	= "perform bulk data scan";
-	sp.info->flags		= scanner_info::SCANNER_DISABLED;
+	sp.info->flags		= scanner_info::SCANNER_DISABLED | scanner_info::SCANNER_WANTS_NGRAMS | scanner_info::SCANNER_NO_ALL;
 	sp.info->feature_names.insert("bulk");
 	sp.info->feature_names.insert("bulk_tags");
-	histogram::precalc_entropy_array(opt_scan_bulk_block_size);
-	int bbs = stoi(sp.info->config["bulk_block_size"]);
-	if(bbs>0){
-	    opt_scan_bulk_block_size = bbs;
-	}
-        dfrws_challenge = (sp.info->config["DFRWS2012"] != "");
+        sp.info->get_config("bulk_block_size",&opt_bulk_block_size,"Block size (in bytes) for bulk data analysis");
+
+        debug = sp.info->config->debug;
+
+	histogram::precalc_entropy_array(opt_bulk_block_size);
+
+        sp.info->get_config("DFRWS2012",&dfrws_challenge,"True if running DFRWS2012 challenge code");
         return; 
     }
     // classify a buffer
@@ -509,13 +515,13 @@ void scan_bulk(const class scanner_params &sp,const recursion_control_block &rcb
 	    bulk_tags->write_tag(sp.sbuf,""); // tag that we found recursive data, not sure what kind
 	}
 
-	if(sp.sbuf.pagesize < opt_scan_bulk_block_size) return; // can't analyze something that small
+	if(sp.sbuf.pagesize < opt_bulk_block_size) return; // can't analyze something that small
 
-	// Loop through the sbuf in opt_scan_bulk_block_size sized chunks
+	// Loop through the sbuf in opt_bulk_block_size sized chunks
 	// for each one, examine the entropy and scan for bitlocker (unfortunately hardcoded)
 	// This needs to have a general plug-in architecture
-	for(size_t base=0;base+opt_scan_bulk_block_size<=sp.sbuf.pagesize;base+=opt_scan_bulk_block_size){
-	    sbuf_t sbuf(sp.sbuf,base,opt_scan_bulk_block_size);
+	for(size_t base=0;base+opt_bulk_block_size<=sp.sbuf.pagesize;base+=opt_bulk_block_size){
+	    sbuf_t sbuf(sp.sbuf,base,opt_bulk_block_size);
 	    bulk_ngram_entropy(sbuf,bulk,bulk_tags);
 	    bulk_bitlocker(sbuf,bulk,bulk_tags);
 	}

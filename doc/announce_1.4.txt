@@ -4,39 +4,121 @@
 
 bulk_extractor Version 1.4 has been released for Linux, MacOS and Windows.
 
-New functionality in Version 1.3 include:
+New functionality in Version 1.4 includes:
 
-Improvements in Version 1.3 include:
+* scan_rar detects RAR archives (both encrypted and unencrypted) and
+  individual RAR archive components (only unencrypted). Unencrypted
+  RAR archive components are decompressed and recursively
+  re-processed.
+
+* scan_exif now implements JPEG carving. By default, only encoded
+  JPEGs are carved. Files are created in a directory called
+  "jpeg/". The filename is the forensic path. Confusingly, JPEGs
+  without EXIFs will also be carved.
+
+* scan_xor will search for data hidden with (XOR 255)
+
+* scan_lightgrep will do searches with Lightbox Technology's lightgrep
+
+* scan_hashid will perform hash-based scanning with block hashes.
+
+* Variable context window
+
+* Better performance
+
+Improvements in Version 1.4 include:
 
 * scan_pdf now does a better job extracting emails from text.
 
+New features for testing includes:
 
+* tests/regress.py now performs better validation of reports with the
+  --validate option. Validation includes making sure that every line is
+  UTF-8, that feature sizes are less than 1000 characters in size, and
+  context is less than 1000000 characters in size. We now use --validate
+  to check the results of BE run against the Real Data Corpus as part of
+  our release engineering.
+
+* The UTF-8 BOM was removed from the feature files.  For a discussion
+  as to the relative merits and problems with a UTF-8 byte order mark,
+  see [1].
+
+  [1] https://en.wikipedia.org/wiki/Byte_order_mark#UTF-8
 
 Incompatiable changes:
 
+* The -B option for specifying the blocksize for bulk data analysis
+  has been removed. Instead specify it with -S block_size=NN.
+
+* The -W option no longer specifies the minimum and maximum word
+  sizes. Instead specify with -S word_min=NN and -S word_max=NN
+  has been removed. Instead specify it with -S block_size=NN.  
+
 
 ================================================================
-BUG FIXES
+OVERREPORTING FIXES
+
+Much of the emphasis of the 1.4 is to decrease "false positives."
 
 * scan_windirs was improperly reporting the cluster for fat directory
-  entries. Fixed.
+  entries. 
 
 * Additional validations were added to scan_windirs for fat directory
   entries. As a result fewer false positives will be reported.
 
-* scan_net will now only carve pcap files that are IPv4 or IPv6
+* False positives in scan_net have been dramatically reduced. We have
+  done this by making the scanner more selective. For example, scan_net
+  will now only carve pcap files that are IPv4 or IPv6.
+
+* scan_net now properly reports ethernet addresses and TCP connections
+  into the files ether.txt and tcp.txt.
+
+* scan_elf applies more validation to ELF headers and, as a result,
+  many of the false positives have been eliminated. This was
+  expecially a problem for truncated headers.
+
+* scan_winpe applies more validation to section and DLL names and, as
+  a result, many of hte false positives have been eliminated. This was
+  especially a problem for truncated PE headers.
+
+* Strings of hex digits separated by colons are no longer mistaking
+  reported as Ethernet MAC addresses.
+
+* compression bomb logic improved. bulk_extractor will no longer
+  decompress the same compressed block twice. As a result, histograms
+  are now based on distinct occurances, rather than multiple
+  occurances within the same compressed object.
+
+================================================================
+UNDERREPORTING FIXES
+
+* Default max_depth for recursion changed from 5 to 7.  (We found some
+  deep issues).
+
+* scan_pdf has been improved and now does a better job extracting
+  text. For example, the following feature is now found when scanning
+  the ubnist1.gen3 disk:
+
+1114252989-ZIP-2353-PDF-2413 202-395-1181  Karen Evans at 202-395-1181.    
+
+
+================================================================
+INTERNAL IMPROVEMENTS
+
+* There has been additional refactoring of the plugin system. Many
+  functions and variables that were previously global or static are
+  now in the be13:plugin:: namespace.
 
 ================================================================
 PERFORMANCE STATISTICS
 
 This section tracks how performance of bulk_extractor has changed over
-time. 
+time.  We update it with each new release
 
-NOTE: We recommend compiling Version 1.3 with -O3 under GCC. We have
-found no case in which GCC produces invalid code, and our testing
-indicates that -O3 produces bulk_extractor object code that is
-dramatically faster than -O2. Use these configure flags to compile
-with a different optimization: 
+NOTE: We recommend compiling Version 1.4 with -O3 under GCC. Please
+use version GCC 4.7 or above. One a Mac you may wish to use clang.
+
+Use these configure flags to compile with a different optimization: 
 
   --without-opt           Drop all -O C flags
   --without-o3            Do not force O3 optimization; use default level
@@ -56,6 +138,7 @@ Current and Historic Times [1]:
 
 MacOS 10.8.0; LLVM build 2336.11.00; -O3
 
+version 1.4: TBD
 version 1.3:    185 seconds (11.34 MBytes/sec)  (-O3; AES enabled)
 version 1.2.0:  141 seconds (14.9 MBytes/sec)   (-O3; AES enabled)
 version 1.1.3:  171 seconds (12.3 MBytes/sec)   (-O3; AES disabled)
@@ -68,6 +151,7 @@ version 1.1.3:	468 seconds (4.28 MBytes/sec)
 
 Windows 7, same hardware ("boot camp"):
 
+version 1.4: TBD
 version 1.3:    198 seconds (10.6 MBytes/sec)  (-O3; AES enabled; 32bit)
 version 1.3:    186 seconds (11.33 MBytes/sec)  (-O3; AES enabled; 64bit)
 version 1.2.0: 	207.4 seconds (9.69 MBytes/sec, [2])
@@ -81,22 +165,32 @@ Current list of bulk_extractor scanners:
 
 scan_accts   - Looks for phone numbers, credit card numbers, etc
 scan_aes     - Detects in-memory AES keys from their key schedules
+scan_ascii85 - TBD
 scan_base16  - decodes hexadecimal test
 scan_base64  - decodes BASE64 text
+scan_bulk    - TBD     
 scan_elf     - Detects and decodes ELF headers
+scan_exif    - 
 scan_exiv2   - Decodes EXIF headers in JPEGs using libexiv2 (for regression testing)
+scan_email   - 
 scan_exif    - Decodes EXIF headers in JPEGs using built-in decoder.
 scan_find    - keyword searching
 scan_gps     - Detects XML from Garmin GPS devices
 scan_gzip    - Detects and decompresses GZIP files and gzip stream
+scan_hashid
 scan_hiber   - Detects and decompresses Windows hibernation fragments
 scan_json    - Detects JavaScript Object Notation files
 scan_kml     - Detects KML files
+scan_lightgrep
 scan_net     - IP packet scanning and carving
 scan_pdf     - Extracts text from some kinds of PDF files
+scan_rar
 scan_vcard   - Carvees VCARD files
-scan_winprefetch - Detects and extracts fields from Windows prefetch files and file fragments.
+scan_windirs - TBD
+scan_winpe   -
+scan_winprefetch - Extracts fields from Windows prefetch files and file fragments.
 scan_wordlist - Builds word list for password cracking
+scan_xor
 scan_zip     - Detects and decompresses ZIP files and zlib streams
 
 
@@ -139,42 +233,21 @@ zip.txt      - Information about all ZIP files and zip
                components.
 
 ================================================================
-Regular Expression Libraries
+Lightgrep Integration
 
-bulk_extractor makes extensive use of regular expressions for
-extraction. For Version 1.3 decided to evaluate a variety of regular
-expression libraries.
-
-Regular expression scanning with bulk_extractor is complicated by the
-fact that we are scanning binary data, so regular expression engines
-that attempt to handle Unicode do not do well. We looked for
-comparisions of regular expression libraries and found these:
-
-* http://lh3lh3.users.sourceforge.net/reb.shtml
-* http://sljit.sourceforge.net/regex_perf.html
-
-We evaluated the following regular expression libraries:
-
-- RE2 http://code.google.com/p/re2/ (slow on our text, possibly due to UTF8)
-- TRE http://laurikari.net/tre/     (very fast)
-- regex-0.12                        (very slow; will not cross-compile))
-- onig http://www.geocities.jp/kosako3/oniguruma/ (very fast)
-- PCRE http://www.pcre.org/         (medium speed)
-
-Although onig gave the best performance under Linux, we were not able
-to get onig to compile under mingw. TRE gave performance that was
-quite similar to onig had cross-compiled without problems. Performance
-of RE2 and PCRE was not acceptable.
-
-Thus, bulk_extractor will now use TRE if it is installed, and if not
-it will use the system regular expression library.
-
-
+** SOMEBODY WRITE THIS **
 
 ================================================================
 Planned Feature List for 1.4:
 
-* RAR & RAR2 decompression
+================================================================
+Planned Feature List for 1.5:
+
+* LZMA/LZMA2 decompression
+
+* 7zip component recognition 
+
+* xz decompression
 
 * BZIP2 decompression
 
@@ -183,27 +256,24 @@ Planned Feature List for 1.4:
 
 * Scanning for the start of bitlocker protected volumes.
 
-* Support for checkpointing using BLCR.
-
 We are also considering the following scanners (and need help!):
-
-* LZMA decompression
-
-* MSI decompression
-
-* CAB decompression
 
 * NTFS decompression
 
 * Better handling of MIME encoding
 
-* SQLite database identification
+* SQLite database identification (first survey - how fragmented are they?)
 
 * Processing of physical drives under Windows
+
+* Python Bridge. 
 
 
 We have tabled the following ideas, for the following reasons:
 
+* MSI decompression
+
+* CAB decompression
 
 * Improved restarting, so that each page is retried once but only
   once. (The improved reliability in verson 1.2 made this request less
@@ -212,10 +282,8 @@ We have tabled the following ideas, for the following reasons:
 * Support on distributed computing arrays. (May be less important
   given the low cost of 64-core machines)
 
-* Python Bridge. (We cannot have multiple instances of the Python
-  interperter running in the same address space, so we would need to
-  run multiple Pythons in multiple address spaces. Frankly, it's a lot
-  of work, and Python is really slow, so we're just not doing this.)
+
+* Support for checkpointing using BLCR.  The project was abandoned.
 
 
 

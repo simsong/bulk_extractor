@@ -20,10 +20,10 @@
 
 
 __BEGIN_DECLS
-extern unsigned long Xpress_Decompress(const unsigned char *InputBuffer,
-				       unsigned long InputSize,
-				       unsigned char *OutputBuffer,
-				       unsigned long OutputSize);
+unsigned long Xpress_Decompress(const unsigned char *InputBuffer,
+                                unsigned long InputSize,
+                                unsigned char *OutputBuffer,
+                                unsigned long OutputSize);
 __END_DECLS
 
 #endif

@@ -39,12 +39,14 @@ int word_and_context_list::readfile(const string &filename)
     while(getline(i,line)){
 	line_counter++;
 	if(line.size()==0) continue;
+#if 0
 	if(line_counter==1 && line.size()>3
 	   && line[0]==feature_recorder::UTF8_BOM[0]
 	   && line[1]==feature_recorder::UTF8_BOM[1]
 	   && line[2]==feature_recorder::UTF8_BOM[2]){
 	    line = line.substr(3);	// remove the UTF8 BOM
 	}
+#endif
 	if(line[0]=='#') continue; // it's a comment
 	if((*line.end())=='\r'){
 	    line.erase(line.end());	/* remove the last character if it is a \r */
