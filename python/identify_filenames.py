@@ -134,6 +134,11 @@ def decode_path_offset(offset):
         return int(m.group(1))+int(m.group(2))
     return int(offset[0:offset.find(b"-")])
     
+def cmd_line():
+    "Return the binary value of the command that envoked this program "
+    import sys
+    return b''.join([s.encode('latin1') for s in sys.argv])
+
 def process_featurefile2(rundb,infile,outfile):
     """Returns features from infile, determines the file for each, writes results to outfile"""
     # Stats
@@ -144,14 +149,23 @@ def process_featurefile2(rundb,infile,outfile):
 
     if args.terse:
         outfile.write(b"# Position\tFeature\tFilename\n")
+        outfile.write(b"# " + cmd_line() + b"\n")
     else:
         outfile.write(b"# Position\tFeature\tContext\tFilename\tFile MD5\n")
+        outfile.write(b"# " + cmd_line() + b"\n")
     t0 = time.time()
+    linenumber = 0
     for line in infile:
+        linenumber += 1
         if bulk_extractor_reader.is_comment_line(line):
             outfile.write(line)
             continue
-        (offset,feature,context) = line[:-1].split(b'\t')
+        try:
+            (offset,feature,context) = line[:-1].split(b'\t')
+        except ValueError as e:
+            print(e)
+            print("Offending line {}:".format(linenumber),line[:-1])
+            continue
         feature_count += 1
         if b"-" in offset:
             ioffset = decode_path_offset(offset)
@@ -220,6 +234,8 @@ if __name__=="__main__":
                         help='Overwrite location of image file from bulk_extractor output')
     parser.add_argument('--xmlfile', action='store',
                         help="Don't run fiwalk; use the provided XML file instead")
+    parser.add_argument('--noxmlfile', action='store_true', 
+                        help="Don't run fiwalk; don't use XML file. Just read the feature files (for testing)")
     parser.add_argument('--list', action='store_true',
                         help='List feature files in bulk_extractor_output and exit')
     parser.add_argument('-t', dest='terse', action='store_true',
@@ -254,7 +270,14 @@ if __name__=="__main__":
         raise RuntimeError("Please request a specific feature file or --all feature files")
 
     rundb = byterundb2()
-    rundb.read_xmlfile(args.xmlfile)
+
+    if args.noxmlfile:
+        print("TESTING --- will not read XML File");
+    else:
+        if not args.xmlfile and not args.imagefile:
+            raise RuntimeError("Must specify XMLFILE or IMAGEFILE or provide --noxmlfile argument")
+        if args.xmlfile:
+            rundb.read_xmlfile(args.xmlfile)
 
     feature_file_list = None
     if args.featurefiles:
