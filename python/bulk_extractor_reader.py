@@ -88,6 +88,7 @@ def is_feature_filename(fname):
     if "_stopped" in fname: return False
     if "_tags" in fname: return False
     if "wordlist" in fname: return False
+    if "alerts.txt" in fname: return False
     return None                 # don't know
 
 
