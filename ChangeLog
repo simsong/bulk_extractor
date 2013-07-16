@@ -1,3 +1,9 @@
+2013-07-16  Man Page  <simsong@mncrnpsedu.local>
+
+	* src/scan_xor.cpp (scan_xor): will not XOR on either side of a ZIP. improved error handling
+
+	* tests/regress.py: updated numbers for 1.4 release
+
 2013-07-14  Basic  <simsong@Mucha.local>
 
 	* configure.ac: updated to beta4

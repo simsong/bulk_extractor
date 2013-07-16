@@ -5,6 +5,7 @@
  */
 #include "config.h"
 #include "bulk_extractor_i.h"
+#include "utils.h"
 
 using namespace std;
 
@@ -27,28 +28,39 @@ void scan_xor(const class scanner_params &sp,const recursion_control_block &rcb)
 	const sbuf_t &sbuf = sp.sbuf;
 	const pos0_t &pos0 = sp.sbuf.pos0;
 
+        if(xor_mask == 0x00){           // this would do nothing
+            return;
+        }
+
         // dodge infinite recursion by refusing to operate on an XOR'd buffer
         if(rcb.partName == pos0.lastAddedPart()) {
             return;
         }
 
+        // dodge running after unzip after self
+        std::vector<std::string> parts = split(pos0.str(),'-');
+        if(parts.size()>4){
+            std::string parent = parts.at(parts.size()-2);
+            std::string grandp = parts.at(parts.size()-4);
+            if(parent.find("ZIP") != std::string::npos &&
+               grandp == rcb.partName){
+                return;
+            }
+        }
+
         managed_malloc<uint8_t>dbuf(sbuf.bufsize);
 
         if(!dbuf.buf){
-            //ss << "<disposition>calloc-failed</disposition></zipinfo>";
-            //zip_recorder->write(pos0+pos,name,ss.str());
+            sp.fs.alert_recorder->write(pos0,"scan_xor","calloc-failed");
             return;
         }
         
-        // 0x00 is 8-bit xor identity
-        if(xor_mask != 0x00) {
-            for(size_t ii = 0; ii < sbuf.bufsize; ii++) {
-                dbuf.buf[ii] = sbuf.buf[ii] ^ xor_mask;
-            }
-            const pos0_t pos0_xor = pos0 + rcb.partName;
-            const sbuf_t child_sbuf(pos0_xor, dbuf.buf, sbuf.bufsize, sbuf.pagesize, false);
-            scanner_params child_params(sp, child_sbuf);
-            (*rcb.callback)(child_params);// call scanners on deobfuscated buffer
+        for(size_t ii = 0; ii < sbuf.bufsize; ii++) {
+            dbuf.buf[ii] = sbuf.buf[ii] ^ xor_mask;
         }
+        const pos0_t pos0_xor = pos0 + rcb.partName;
+        const sbuf_t child_sbuf(pos0_xor, dbuf.buf, sbuf.bufsize, sbuf.pagesize, false);
+        scanner_params child_params(sp, child_sbuf);
+        (*rcb.callback)(child_params);// call scanners on deobfuscated buffer
     }
 }
