@@ -21,6 +21,11 @@ import zipfile,os,os.path,glob,codecs,re
 
 property_re = re.compile("# ([a-z0-9\-_]+):(.*)",re.I)
 
+def be_version(exe):
+    """Returns the version number for a bulk_extractor executable"""
+    from subprocess import Popen,PIPE
+    return Popen([exe,'-V'],stdout=PIPE).communicate()[0].decode('utf-8').split(' ')[1].strip()
+
 def decode_feature(ffmt):
     """Decodes a feature in a feature file into Unicode"""
     tbin = ffmt.decode('unicode_escape')
@@ -97,7 +102,7 @@ class BulkReport:
     Methods that you may find useful:
     f = b.open(fname,mode) - opens the file f and returns a file handle. mode defaults to 'rb'
     b.is_histogram_file(fname) - returns if fname is a histogram file or not
-    b.image_file() - Returns the name of the image file
+    b.imagefile() - Returns the name of the image file
     b.read_histogram(fn) - Reads a histogram and returns the histogram
     b.histograms      - Set of histogram names
     b.files   - Set of feature file names

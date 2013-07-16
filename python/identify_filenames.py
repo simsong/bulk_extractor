@@ -48,7 +48,7 @@ class byterundb:
         self.rary.append((offset,offset+length,fname,md5val))
         self.sorted = False
 
-    def search(self,pos):
+    def search_offset(self,pos):
         """Return the touple associated with a offset"""
         if self.sorted==False:
             self.rary.sort()
@@ -104,17 +104,34 @@ class byterundb2:
             print("Processed %d fileobjects in DFXML file" % self.filecount)
 
     def read_xmlfile(self,fname):
-        if fname.endswith(".xml"):
-            fiwalk.fiwalk_using_sax(xmlfile=open(fname,'rb'),callback=self.process)
-        else:
-            fiwalk.fiwalk_using_sax(imagefile=open(fname,'rb'),callback=self.process)
+        print("Reading file map from XML file {}".format(fname))
+        fiwalk.fiwalk_using_sax(xmlfile=open(fname,'rb'),callback=self.process)
+
+    def read_imagefile(self,fname):
+        print("Reading file map by running fiwalk on {}".format(fname))
+        fiwalk.fiwalk_using_sax(imagefile=open(fname,'rb'),callback=self.process)
     
-    def search(self,offset):
+    def search_offset(self,offset):
         """First search the allocated. If there is nothing, search unallocated"""
-        r = self.allocated.search(offset)
+        r = self.allocated.search_offset(offset)
         if not r:
-            r = self.unallocated.search(offset)
+            r = self.unallocated.search_offset(offset)
         return r
+
+    def path_to_offset(self,offset):
+        """If the path has an XOR transformation, add the offset within
+        the XOR to the initial offset. Otherwise don't. Return the integer
+        value of the offset."""
+        m = xor_re.search(offset)
+        if m:
+            return int(m.group(1))+int(m.group(2))
+        negloc = offset.find(b"-")
+        if negloc==-1:
+            return int(offset)
+        return int(offset[0:negloc])
+    
+    def search_path(self,path):
+        return self.search_offset(self.path_to_offset(path))
 
     def dump(self):
         print("Allocated:")
@@ -125,15 +142,6 @@ class byterundb2:
 
 xor_re = re.compile(b"^(\\d+)\\-XOR\\-(\\d+)")
 
-def decode_path_offset(offset):
-    """If the path has an XOR transformation, add the offset within
-    the XOR to the initial offset. Otherwise don't. Return the integer
-    value of the offset."""
-    m = xor_re.search(offset)
-    if m:
-        return int(m.group(1))+int(m.group(2))
-    return int(offset[0:offset.find(b"-")])
-    
 def cmd_line():
     "Return the binary value of the command that envoked this program "
     import sys
@@ -161,18 +169,15 @@ def process_featurefile2(rundb,infile,outfile):
             outfile.write(line)
             continue
         try:
-            (offset,feature,context) = line[:-1].split(b'\t')
+            (path,feature,context) = line[:-1].split(b'\t')
         except ValueError as e:
             print(e)
             print("Offending line {}:".format(linenumber),line[:-1])
             continue
         feature_count += 1
-        if b"-" in offset:
-            ioffset = decode_path_offset(offset)
+        if b"-" in path:
             features_encoded += 1
-        else:
-            ioffset = int(offset)
-        tpl = rundb.search(ioffset)
+        tpl = rundb.search_path(path)
         if tpl:
             located_count += 1
             fname = tpl[2].encode('utf-8') # THIS MIGHT GENERATE A UNICODE ERROR
@@ -184,7 +189,7 @@ def process_featurefile2(rundb,infile,outfile):
             unallocated_count += 1
             fname = b""
             md5val = b""
-        outfile.write(offset)
+        outfile.write(path)
         outfile.write(b'\t')
         outfile.write(feature)
         if not args.terse:
@@ -231,25 +236,41 @@ if __name__=="__main__":
     parser.add_argument('--featurefiles', action='store',
                         help='Specific feature file to process; separate with commas')
     parser.add_argument('--imagefile', action='store',
-                        help='Overwrite location of image file from bulk_extractor output')
+                        help='Overwrite location of image file from bulk_extractor_output report.xml file')
     parser.add_argument('--xmlfile', action='store',
                         help="Don't run fiwalk; use the provided XML file instead")
     parser.add_argument('--noxmlfile', action='store_true', 
                         help="Don't run fiwalk; don't use XML file. Just read the feature files (for testing)")
-    parser.add_argument('--list', action='store_true',
-                        help='List feature files in bulk_extractor_output and exit')
-    parser.add_argument('-t', dest='terse', action='store_true',
-                        help='Terse output')
-    parser.add_argument('-v', action='version', version='%(prog)s version '+__version__,
-                        help='Print Version and exit')
-    parser.add_argument("--verbose",action="store_true",
-                        help='Verbose mode')
-    parser.add_argument('--debug', action='store_true',
-                        help='Debug mode')
+    parser.add_argument('--path', action='store', help="Just locate path and exit. Only needs XML file, disk image, or bulk_extractor output")
+    parser.add_argument('--list', action='store_true', help='List feature files in bulk_extractor_output and exit')
+    parser.add_argument("--verbose",action="store_true", help='Verbose mode')
+    parser.add_argument('-t', '--terse', dest='terse', action='store_true', help='Terse output')
+    parser.add_argument('-v', action='version', version='%(prog)s version '+__version__, help='Print Version and exit')
+    parser.add_argument('-d','--debug', action='store_true', help='Debug mode')
     args = parser.parse_args()
 
     # Start the timer used to calculate the total run time
     t0 = time.time()
+
+    rundb = byterundb2()
+    def read_filemap():
+        if args.xmlfile:
+            rundb.read_xmlfile(args.xmlfile)
+        elif args.imagefile:
+            rundb.read_imagefile(args.imagefile)
+        else:
+            rundb.read_imagefile(bulk_extractor_reader.BulkReport(args.bulk_extractor_output).imagefile())
+
+    if args.path:
+        read_filemap()
+        print("Locating {}: ".format(args.path))
+        res = rundb.search_path(args.path.encode('utf-8'))
+        if res:
+            print("Start:     {}\nLength:    {}\nFile Name: {}\nFile MD5:  {}".format(res[0],res[1],res[2],res[3]))
+        else:
+            print("NOT FOUND")
+        exit(0)
+        
 
     # Open the report
     report = bulk_extractor_reader.BulkReport(args.bulk_extractor_output)
@@ -260,6 +281,14 @@ if __name__=="__main__":
             print(fn)
         exit(1)
 
+
+    # Read the file map
+    if args.noxmlfile:
+        print("TESTING --- will not read XML File");
+    else:
+        read_filemap()
+
+    # Make the output directory if needed
     if not os.path.exists(args.outdir):
         os.mkdir(args.outdir)
 
@@ -269,16 +298,7 @@ if __name__=="__main__":
     if not args.featurefiles and not args.all:
         raise RuntimeError("Please request a specific feature file or --all feature files")
 
-    rundb = byterundb2()
-
-    if args.noxmlfile:
-        print("TESTING --- will not read XML File");
-    else:
-        if not args.xmlfile and not args.imagefile:
-            raise RuntimeError("Must specify XMLFILE or IMAGEFILE or provide --noxmlfile argument")
-        if args.xmlfile:
-            rundb.read_xmlfile(args.xmlfile)
-
+    # Process each feature file
     feature_file_list = None
     if args.featurefiles:
         feature_file_list = args.featurefiles.split(",")
