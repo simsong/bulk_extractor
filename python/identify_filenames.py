@@ -208,6 +208,7 @@ def process_featurefile2(rundb,infile,outfile):
                           ["# Total features in encoded regions: {}",features_encoded],
                           ["# Total processing time: {:.2} seconds",t1-t0]]:
         outfile.write((title+"\n").format(value).encode('utf-8'))
+    return (feature_count,located_count)
 
 
 
@@ -305,11 +306,19 @@ if __name__=="__main__":
     if args.all:
         feature_file_list = report.feature_files()
 
+    total_features = 0
+    total_located  = 0
     for feature_file in feature_file_list:
         output_fn = os.path.join(args.outdir,("annotated_" + feature_file ))
         if os.path.exists(output_fn):
             raise RuntimeError(output_fn+" exists")
         print("feature_file:",feature_file)
-        process_featurefile2(rundb,report.open(feature_file,mode='rb'),open(output_fn,"wb"))
+        (feature_count,located_count) = process_featurefile2(rundb,report.open(feature_file,mode='rb'),open(output_fn,"wb"))
+        total_features += feature_count
+        total_located  += located_count
+    print("******************************")
+    print("** Total Features: {:8} **".format(total_features))
+    print("** Total Located:  {:8} **".format(total_features))
+    print("******************************")
 
 

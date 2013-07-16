@@ -74,11 +74,12 @@ answers = {"ubnist1.gen3":{"ALERTS_found.txt":88,
                            "winpe.txt":2,
                            "wordlist.txt":10121828,
                            "zip.txt":1962},
-           "nps-2010-emails":{"domain.txt":624,
+           "nps-2010-emails":{"domain.txt":602,
                               "email.txt":67,
                               "exif.txt":2,
+                              "jpeg.txt":21,
                               "telephone.txt":2,
-                              "url.txt":557,
+                              "url.txt":535,
                               "windirs.txt":30,
                               "zip.txt":240}
            }
@@ -419,8 +420,12 @@ def validate_report(fn):
         validate_file(open(fn,'rb'))
             
             
-def be_version():
-    return Popen([args.exe,'-V'],stdout=PIPE).communicate()[0].decode('utf-8').split(' ')[1].strip()
+def identify_filenames(outdir):
+    """Run identify_filenames on output using the installed fiwalk"""
+    if_outdir = outdir + "-annotated"
+    ifname    = os.path.dirname(os.path.realpath(__file__)) + "/../python/identify_filenames.py"
+    res = call([sys.executable,ifname,outdir,if_outdir,'--all'])
+
 
 
 def diff(dname1,dname2):
@@ -461,26 +466,26 @@ def diff(dname1,dname2):
             print("")
 
 
-def ptime(t):
-    r = ""
-    if t>3600:
-        h = t/3600
-        r = "%d hour " % h
-        t = t%3600
-    if t>60:
-        m = t / 60
-        r += "%d min " % m
-        t = t%60
-    r += "%d sec " % t
-    return r
-
 def run_and_analyze():
     global args
+    def ptime(t):
+        r = ""
+        if t>3600:
+            h = t/3600
+            r = "%d hour " % h
+            t = t%3600
+        if t>60:
+            m = t / 60
+            r += "%d min " % m
+            t = t%60
+        r += "%d sec " % t
+        return r
     outdir = make_outdir(args.outdir)
     t0 = time.time()
     run_outdir(outdir,args.gdb)
     sort_outdir(outdir)
     validate_report(outdir)
+    if_outdir = identify_filenames(outdir)
     analyze_outdir(outdir)
     print("Regression finished at {}. Elapsed time: {} Output in {}".format(time.asctime(),ptime(time.time()-t0),outdir))
 
@@ -511,7 +516,6 @@ if __name__=="__main__":
     parser.add_argument("--zip",help="Create a zip archive of the report")
     parser.add_argument("--validate",help="Validate the contents of a report (do not run bulk_extractor)",
                         type=str,nargs='*')
-    parser.add_argument("--nofind",help="do not run the find tests",action="store_true")
     parser.add_argument("--ignore",help="Specifies a feature file or files (file1,file2) to ignore")
     parser.add_argument("--sort",help="Sort the feature files",type=str,nargs='*')
     parser.add_argument("--reproduce",help="specifies a bulk_extractor output "
@@ -559,7 +563,7 @@ if __name__=="__main__":
         raise RuntimeError("{} does not exist".format(args.exe))
 
     # Find the bulk_extractor version and add it to the outdir
-    args.outdir += "-"+be_version()
+    args.outdir += "-"+bulk_extractor_reader.be_version(args.exe)
     corp = os.getenv("DOMEX_CORP")
     if not corp:
         corp = corp_default
