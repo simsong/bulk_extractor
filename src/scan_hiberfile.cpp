@@ -21,8 +21,8 @@
 #include <iomanip>
 #include <cassert>
 
-static const int windows_page_size = 4096;
-static const int min_uncompr_size = 4096; // allow at least this much when uncompressing
+static const uint32_t windows_page_size = 4096;
+static const uint32_t min_uncompr_size = 4096; // allow at least this much when uncompressing
 
 using namespace std;
 
