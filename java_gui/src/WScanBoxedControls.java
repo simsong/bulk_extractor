@@ -30,7 +30,8 @@ public class WScanBoxedControls {
 
   private final JCheckBox usePluginDirectoryCB = new JCheckBox("Use Plugin Directory");
   private final JTextField pluginDirectoryTF = new JTextField();
-  private final JButton pluginDirectoryChooserB = new JButton("\u2026"); // ...
+//  private final JButton pluginDirectoryChooserB = new JButton("\u2026"); // ...
+  private final JButton pluginDirectoryChooserB = new FileChooserButton(WScan.getWScanWindow(), "Select Plugin Directory", FileChooserButton.READ_DIRECTORY, pluginDirectoryTF);
 
   private final JCheckBox useOptionNameCB = new JCheckBox("Use Scan Option Name");
   private final JTextField optionNameTF = new JTextField();
