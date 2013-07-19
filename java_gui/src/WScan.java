@@ -34,10 +34,10 @@ public class WScan {
   private final WScanBoxedRequired wScanBoxedRequired;
   private final WScanBoxedGeneral wScanBoxedGeneral;
   private final WScanBoxedTuning wScanBoxedTuning;
-  private final WScanBoxedScanners wScanBoxedScanners;
   private final WScanBoxedControls wScanBoxedControls;
   private final WScanBoxedParallelizing wScanBoxedParallelizing;
   private final WScanBoxedDebugging wScanBoxedDebugging;
+  private final WScanBoxedScanners wScanBoxedScanners;
 
   /**
    * Returns the window WScan runs from.
@@ -65,10 +65,10 @@ public class WScan {
     wScanBoxedRequired = new WScanBoxedRequired();
     wScanBoxedGeneral = new WScanBoxedGeneral();
     wScanBoxedTuning = new WScanBoxedTuning();
-    wScanBoxedScanners = new WScanBoxedScanners();
     wScanBoxedControls = new WScanBoxedControls();
-    wScanBoxedDebugging = new WScanBoxedDebugging();
     wScanBoxedParallelizing = new WScanBoxedParallelizing();
+    wScanBoxedDebugging = new WScanBoxedDebugging();
+    wScanBoxedScanners = new WScanBoxedScanners();
     buildScanInterface();
     setDefaultValues();
     setUIValues();
@@ -176,7 +176,7 @@ public class WScan {
     c.insets = new Insets(10, 5, 5, 5);
     c.gridx = 1;
     c.gridy = 0;
-    c.gridheight = 4;
+    c.gridheight = 6;
     c.anchor = GridBagConstraints.FIRST_LINE_START;
     container.add(wScanBoxedScanners.component, c);
 

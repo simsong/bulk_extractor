@@ -3,6 +3,8 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.FocusEvent;
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;  // not java.io.FileFilter
 import java.util.Vector;
@@ -28,10 +30,10 @@ public class WScanBoxedControls {
   public String optionName;
   public String maxWait;
 
-  private final JCheckBox usePluginDirectoryCB = new JCheckBox("Use Plugin Directory");
-  private final JTextField pluginDirectoryTF = new JTextField();
+  public static final JCheckBox usePluginDirectoryCB = new JCheckBox("Use Plugin Directory");
+  public static final JTextField pluginDirectoryTF = new JTextField();
 //  private final JButton pluginDirectoryChooserB = new JButton("\u2026"); // ...
-  private final JButton pluginDirectoryChooserB = new FileChooserButton(WScan.getWScanWindow(), "Select Plugin Directory", FileChooserButton.READ_DIRECTORY, pluginDirectoryTF);
+  private final FileChooserButton pluginDirectoryChooserB = new FileChooserButton(WScan.getWScanWindow(), "Select Plugin Directory", FileChooserButton.READ_DIRECTORY, pluginDirectoryTF);
 
   private final JCheckBox useOptionNameCB = new JCheckBox("Use Scan Option Name");
   private final JTextField optionNameTF = new JTextField();
@@ -111,12 +113,48 @@ public class WScanBoxedControls {
     }
   }
 
+  // these listeners keep the scanners list up to date
+  private class SetScannerListActionListener implements ActionListener {
+    public void actionPerformed(ActionEvent e) {
+      WScanBoxedScanners.setScannerList();
+    }
+  }
+  private class SetScannerListFocusListener implements FocusListener {
+    public void focusGained(FocusEvent e) {
+      // disable the scanners
+      Component[] components = WScanBoxedScanners.container.getComponents();
+      for (Component component : components) {
+        component.setEnabled(false);
+      }
+    }
+    public void focusLost(FocusEvent e) {
+      // enable the scanners
+      WScanBoxedScanners.setScannerList();
+      Component[] components = WScanBoxedScanners.container.getComponents();
+      for (Component component : components) {
+        component.setEnabled(true);
+      }
+    }
+  }
+
   private void wireActions() {
     // controls
-    GetUIValuesActionListener getUIValuesActionListener = new GetUIValuesActionListener();
+    GetUIValuesActionListener getUIValuesActionListener
+                  = new GetUIValuesActionListener();
     usePluginDirectoryCB.addActionListener(getUIValuesActionListener);
     useOptionNameCB.addActionListener(getUIValuesActionListener);
     useMaxWaitCB.addActionListener(getUIValuesActionListener);
+
+    // controls to keep the scanners list up to date
+    SetScannerListActionListener setScannerListActionListener
+                  = new SetScannerListActionListener();
+    usePluginDirectoryCB.addActionListener(setScannerListActionListener);
+
+    SetScannerListFocusListener setScannerListFocusListener
+                  = new SetScannerListFocusListener();
+    pluginDirectoryTF.addFocusListener(setScannerListFocusListener);
+
+    pluginDirectoryChooserB.chooser.addActionListener(setScannerListActionListener);
   }
 }
 

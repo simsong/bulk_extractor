@@ -15,8 +15,8 @@ import java.io.IOException;
 public class WScanBoxedScanners {
 
   /**
-   * this class contains a scanner: its command name, CheckBox, default value,
-   * and user's selected value.
+   * FeatureScanner contains UI and state for one scanner: its command name,
+   * CheckBox, default value, and user's selected value.
    */
   public static class FeatureScanner {
     final JCheckBox scannerCB;
@@ -27,27 +27,17 @@ public class WScanBoxedScanners {
       scannerCB = new JCheckBox(command);
       this.command = command;
       this.defaultUseScanner = defaultUseScanner;
-    }
-  }
-  public final static Vector<FeatureScanner> featureScanners = new Vector<FeatureScanner>();
-  static {
-    Vector<BulkExtractorScanListReader.Scanner> scanners;
-    try {
-      scanners = BulkExtractorScanListReader.readScanList();
-    } catch (IOException e) {
-      WError.showError("Error in obtaining list of scanners from bulk_extractor."
-                       + "\nBulk_extractor is not available during this session.",
-                         "bulk_extractor failure", e);
-      scanners = new Vector<BulkExtractorScanListReader.Scanner>();
-    }
-    for (Enumeration e = scanners.elements(); e.hasMoreElements();) {
-      BulkExtractorScanListReader.Scanner scanner =
-            (BulkExtractorScanListReader.Scanner)e.nextElement();
-      featureScanners.add(new FeatureScanner(scanner.command, scanner.defaultUseScanner));
+      this.useScanner = defaultUseScanner;
+      scannerCB.setSelected(useScanner);
     }
   }
 
-  public final Component component;
+  public static JPanel container = new JPanel();
+  public static Vector<BulkExtractorScanListReader.Scanner> scanners
+                       = new Vector<BulkExtractorScanListReader.Scanner>();
+  public static Vector<FeatureScanner> featureScanners
+                       = new Vector<FeatureScanner>();
+  public static Component component;
 
   public WScanBoxedScanners() {
     component = buildContainer();
@@ -56,17 +46,41 @@ public class WScanBoxedScanners {
 
   private Component buildContainer() {
     // container using GridBagLayout with GridBagConstraints
-    JPanel container = new JPanel();
     container.setBorder(BorderFactory.createTitledBorder("Scanners"));
     container.setLayout(new GridBagLayout());
-    int y = 0;
-//    for (Enumeration<FeatureScanner> e = (Enumeration<FeatureScanner>)(featureScanners.elements()); e.hasMoreElements();); {
-    for (Enumeration e = featureScanners.elements(); e.hasMoreElements();) {
-      FeatureScanner featureScanner = (FeatureScanner)e.nextElement();
-      WScan.addOptionLine(container, y++, featureScanner.scannerCB);
+    setScannerList();
+    return container;
+  }
+
+  // Rebuild the scanner list during runtime
+  public static void setScannerList() {
+
+    scanners.clear();
+    container.removeAll();
+
+    // get the scanners list from bulk_extractor
+    try {
+      BulkExtractorScanListReader.readScanList(
+              WScanBoxedControls.usePluginDirectoryCB.isSelected(),
+              WScanBoxedControls.pluginDirectoryTF.getText(),
+              scanners);
+    } catch (IOException e) {
+      WError.showError("Error in obtaining list of scanners from bulk_extractor."
+                       + "\nBulk_extractor is not available during this session.",
+                         "bulk_extractor failure", e);
     }
 
-    return container;
+    // add scanner items
+    int y=0;
+    for (Enumeration e = scanners.elements(); e.hasMoreElements();) {
+      // add the FeatureScanner objects to the Vector
+      BulkExtractorScanListReader.Scanner scanner =
+            (BulkExtractorScanListReader.Scanner)e.nextElement();
+      FeatureScanner featureScanner = new FeatureScanner(scanner.command, scanner.defaultUseScanner);
+      featureScanners.add(featureScanner);
+      WScan.addOptionLine(container, y++, featureScanner.scannerCB);
+    }
+    container.revalidate();
   }
 
   public void setDefaultValues() {
