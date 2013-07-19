@@ -19,9 +19,9 @@ public class WScan {
 //  private static final long serialVersionUID = 1;
 
   // formatting
-  public static final int FILE_FIELD_WIDTH = 250;
   public static final int NARROW_FIELD_WIDTH = 50;
   public static final int WIDE_FIELD_WIDTH = 100;
+  public static final int EXTRA_WIDE_FIELD_WIDTH = 250;
 
   // Control
   private static WScan wScan;
@@ -248,8 +248,8 @@ public class WScan {
 
     // file textField (1,y)
     c = new GridBagConstraints();
-    textField.setMinimumSize(new Dimension(FILE_FIELD_WIDTH, textField.getPreferredSize().height));
-    textField.setPreferredSize(new Dimension(FILE_FIELD_WIDTH, textField.getPreferredSize().height));
+    textField.setMinimumSize(new Dimension(EXTRA_WIDE_FIELD_WIDTH, textField.getPreferredSize().height));
+    textField.setPreferredSize(new Dimension(EXTRA_WIDE_FIELD_WIDTH, textField.getPreferredSize().height));
     c.insets = new Insets(0, 5, 0, 5);
     c.gridx = 1;
     c.gridy = y;
@@ -536,9 +536,12 @@ public class WScan {
       cmd.add("-P");
       cmd.add(wScanBoxedControls.pluginDirectory);
     }
-    if (wScanBoxedControls.useOptionName) {
-      cmd.add("-s");
-      cmd.add(wScanBoxedControls.optionName);
+    if (wScanBoxedControls.useSettableOptions) {
+      String[] settableOptions = wScanBoxedControls.settableOptions.split("\\s");
+      for (String optionName : settableOptions) {
+        cmd.add("-S");
+        cmd.add(optionName);
+      }
     }
     if (wScanBoxedControls.useMaxWait) {
       cmd.add("-m");
