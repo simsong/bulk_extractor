@@ -18,17 +18,12 @@ public class WScanBoxedControls {
 
   public final Component component;
 
-  // defaults
-  private static final String DEFAULT_MAX_WAIT = "60";
-
   // Controls
   public boolean usePluginDirectory;
   public boolean useSettableOptions;
-  public boolean useMaxWait;
 
   public String pluginDirectory;
   public String settableOptions;
-  public String maxWait;
 
   public static final JCheckBox usePluginDirectoryCB = new JCheckBox("Use Plugin Directory");
   public static final JTextField pluginDirectoryTF = new JTextField();
@@ -37,9 +32,6 @@ public class WScanBoxedControls {
 
   private final JCheckBox useSettableOptionsCB = new JCheckBox("Use Settable Options");
   private final JTextField settableOptionsTF = new JTextField();
-
-  private final JCheckBox useMaxWaitCB= new JCheckBox("Use Wait Time");
-  private final JTextField maxWaitTF = new JTextField();
 
   public WScanBoxedControls() {
     component = buildContainer();
@@ -55,12 +47,10 @@ public class WScanBoxedControls {
     WScan.addOptionalFileLine(container, y++, usePluginDirectoryCB, pluginDirectoryTF,
                                         pluginDirectoryChooserB);
     WScan.addOptionalTextLine(container, y++, useSettableOptionsCB, settableOptionsTF, WScan.EXTRA_WIDE_FIELD_WIDTH);
-    WScan.addOptionalTextLine(container, y++, useMaxWaitCB, maxWaitTF, WScan.NARROW_FIELD_WIDTH);
 
     // tool tip text
     usePluginDirectoryCB.setToolTipText("Path to plugin directory");
     useSettableOptionsCB.setToolTipText("Provide settable options in form <key>=<value> separated by space");
-    useMaxWaitCB.setToolTipText("Time, in minutes, to wait for memory starvation");
 
     return container;
   }
@@ -69,8 +59,6 @@ public class WScanBoxedControls {
     // Scanner Controls
     usePluginDirectory = false;
     useSettableOptions = false;
-    maxWait = DEFAULT_MAX_WAIT;
-    useMaxWait = false;
   }
 
   public void setUIValues() {
@@ -83,10 +71,6 @@ public class WScanBoxedControls {
     useSettableOptionsCB.setSelected(useSettableOptions);
     settableOptionsTF.setEnabled(useSettableOptions);
     settableOptionsTF.setText(settableOptions);
-
-    useMaxWaitCB.setSelected(useMaxWait);
-    maxWaitTF.setEnabled(useMaxWait);
-    maxWaitTF.setText(maxWait);
   }
 
   public void getUIValues() {
@@ -96,9 +80,6 @@ public class WScanBoxedControls {
 
     useSettableOptions = useSettableOptionsCB.isSelected();
     settableOptions = settableOptionsTF.getText();
-
-    useMaxWait = useMaxWaitCB.isSelected();
-    maxWait = maxWaitTF.getText();
   }
 
   public boolean validateValues() {
@@ -143,7 +124,6 @@ public class WScanBoxedControls {
                   = new GetUIValuesActionListener();
     usePluginDirectoryCB.addActionListener(getUIValuesActionListener);
     useSettableOptionsCB.addActionListener(getUIValuesActionListener);
-    useMaxWaitCB.addActionListener(getUIValuesActionListener);
 
     // controls to keep the scanners list up to date
     SetScannerListActionListener setScannerListActionListener

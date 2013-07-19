@@ -65,9 +65,9 @@ public class WScan {
     wScanBoxedRequired = new WScanBoxedRequired();
     wScanBoxedGeneral = new WScanBoxedGeneral();
     wScanBoxedTuning = new WScanBoxedTuning();
-    wScanBoxedControls = new WScanBoxedControls();
     wScanBoxedParallelizing = new WScanBoxedParallelizing();
     wScanBoxedDebugging = new WScanBoxedDebugging();
+    wScanBoxedControls = new WScanBoxedControls();
     wScanBoxedScanners = new WScanBoxedScanners();
     buildScanInterface();
     setDefaultValues();
@@ -146,15 +146,6 @@ public class WScan {
     c.anchor = GridBagConstraints.FIRST_LINE_START;
     container.add(wScanBoxedTuning.component, c);
 
-    // controls
-    c = new GridBagConstraints();
-    c.insets = new Insets(5, 5, 5, 5);
-    c.gridx = 0;
-    c.gridy = y++;
-    c.gridwidth = 2;
-    c.anchor = GridBagConstraints.FIRST_LINE_START;
-    container.add(wScanBoxedControls.component, c);
-
     // Parallelizing
     c = new GridBagConstraints();
     c.insets = new Insets(5, 5, 5, 5);
@@ -165,11 +156,20 @@ public class WScan {
 
     // Debugging
     c = new GridBagConstraints();
-    c.insets = new Insets(5, 5, 10, 5);
+    c.insets = new Insets(5, 5, 5, 5);
     c.gridx = 0;
     c.gridy = y++;
     c.anchor = GridBagConstraints.FIRST_LINE_START;
     container.add(wScanBoxedDebugging.component, c);
+
+    // controls
+    c = new GridBagConstraints();
+    c.insets = new Insets(5, 5, 10, 5);
+    c.gridx = 0;
+    c.gridy = y++;
+    c.gridwidth = 2;
+    c.anchor = GridBagConstraints.FIRST_LINE_START;
+    container.add(wScanBoxedControls.component, c);
 
     // Scanners in second column
     c = new GridBagConstraints();
@@ -335,9 +335,9 @@ public class WScan {
     wScanBoxedGeneral.setDefaultValues();
     wScanBoxedTuning.setDefaultValues();
     wScanBoxedScanners.setDefaultValues();
-    wScanBoxedControls.setDefaultValues();
     wScanBoxedParallelizing.setDefaultValues();
     wScanBoxedDebugging.setDefaultValues();
+    wScanBoxedControls.setDefaultValues();
   }
 
   private void setUIValues() {
@@ -345,9 +345,9 @@ public class WScan {
     wScanBoxedGeneral.setUIValues();
     wScanBoxedTuning.setUIValues();
     wScanBoxedScanners.setUIValues();
-    wScanBoxedControls.setUIValues();
     wScanBoxedParallelizing.setUIValues();
     wScanBoxedDebugging.setUIValues();
+    wScanBoxedControls.setUIValues();
   }
 
   private void getUIValues() {
@@ -355,9 +355,9 @@ public class WScan {
     wScanBoxedGeneral.getUIValues();
     wScanBoxedTuning.getUIValues();
     wScanBoxedScanners.getUIValues();
-    wScanBoxedControls.getUIValues();
     wScanBoxedParallelizing.getUIValues();
     wScanBoxedDebugging.getUIValues();
+    wScanBoxedControls.getUIValues();
   }
 
   private boolean validateRequiredParameters() {
@@ -515,17 +515,6 @@ public class WScan {
       cmd.add("-g");
       cmd.add(Integer.toString(wScanBoxedTuning.marginSize));
     }
-    if ((wScanBoxedTuning.useMinWordSize && !wScanBoxedTuning.useMaxWordSize)
-    || (!wScanBoxedTuning.useMinWordSize && wScanBoxedTuning.useMaxWordSize)) {
-      // this is a program error so fail
-      throw new RuntimeException("Invalid state");
-    }
-    if (wScanBoxedTuning.useMinWordSize || wScanBoxedTuning.useMaxWordSize) {
-      // currently, bulk_extractor binds min and max together
-      cmd.add("-W");
-      cmd.add(Integer.toString(wScanBoxedTuning.minWordSize)
-            + ":" + Integer.toString(wScanBoxedTuning.maxWordSize));
-    }
     if (wScanBoxedTuning.useBlockSize) {
       cmd.add("-B");
       cmd.add(Integer.toString(wScanBoxedTuning.blockSize));
@@ -534,22 +523,13 @@ public class WScan {
       cmd.add("-j");
       cmd.add(Integer.toString(wScanBoxedTuning.numThreads));
     }
-
-    // controls
-    if (wScanBoxedControls.usePluginDirectory) {
-      cmd.add("-P");
-      cmd.add(wScanBoxedControls.pluginDirectory);
+    if (wScanBoxedTuning.useMaxRecursionDepth) {
+      cmd.add("-M");
+      cmd.add(Integer.toString(wScanBoxedTuning.maxRecursionDepth));
     }
-    if (wScanBoxedControls.useSettableOptions) {
-      String[] settableOptions = wScanBoxedControls.settableOptions.split("\\s");
-      for (String optionName : settableOptions) {
-        cmd.add("-S");
-        cmd.add(optionName);
-      }
-    }
-    if (wScanBoxedControls.useMaxWait) {
+    if (wScanBoxedTuning.useMaxWait) {
       cmd.add("-m");
-      cmd.add(wScanBoxedControls.maxWait);
+      cmd.add(wScanBoxedTuning.maxWait);
     }
 
     // parallelizing
@@ -567,10 +547,6 @@ public class WScan {
     }
 
     // Debugging
-    if (wScanBoxedDebugging.useMaxRecursionDepth) {
-      cmd.add("-M");
-      cmd.add(Integer.toString(wScanBoxedDebugging.maxRecursionDepth));
-    }
     if (wScanBoxedDebugging.useStartOnPageNumber) {
       cmd.add("-z");
       cmd.add(Integer.toString(wScanBoxedDebugging.startOnPageNumber));
@@ -582,6 +558,19 @@ public class WScan {
       cmd.add("-Z");
     }
   
+    // controls
+    if (wScanBoxedControls.usePluginDirectory) {
+      cmd.add("-P");
+      cmd.add(wScanBoxedControls.pluginDirectory);
+    }
+    if (wScanBoxedControls.useSettableOptions) {
+      String[] settableOptions = wScanBoxedControls.settableOptions.split("\\s");
+      for (String optionName : settableOptions) {
+        cmd.add("-S");
+        cmd.add(optionName);
+      }
+    }
+
     // Scanners (feature recorders)
 //    for (Enumeration<WScanBoxedScanners.FeatureScanner> e = (Enumeration<WScanBoxedScanners.FeatureScanner>)(featureScanners.elements()); e.hasMoreElements();); {
     for (Enumeration e = wScanBoxedScanners.featureScanners.elements(); e.hasMoreElements();) {
