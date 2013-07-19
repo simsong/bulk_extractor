@@ -497,6 +497,10 @@ public class WScan {
       cmd.add("-f");
       cmd.add(wScanBoxedGeneral.findRegexText);
     }
+    if (wScanBoxedGeneral.useRandomSampling) {
+      cmd.add("-s");
+      cmd.add(wScanBoxedGeneral.randomSampling);
+    }
 
     // tuning parameters
     if (wScanBoxedTuning.useContextWindowSize) {
