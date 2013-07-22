@@ -17,7 +17,8 @@ public class WScanBoxedTuning {
   private static final int DEFAULT_CONTEXT_WINDOW_SIZE = 16;
   private static final int DEFAULT_PAGE_SIZE = 16777216;
   private static final int DEFAULT_MARGIN_SIZE = 4194304;
-  private static final int DEFAULT_NUM_THREADS = 1;
+  private static final int DEFAULT_NUM_THREADS
+                         = Runtime.getRuntime().availableProcessors();
   private static final int DEFAULT_BLOCK_SIZE = 512;
   private static final int DEFAULT_MAX_RECURSION_DEPTH = 7;
   private static final String DEFAULT_MAX_WAIT = "60";
