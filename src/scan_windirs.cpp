@@ -18,14 +18,17 @@
 #include "utf8.h"
 #include "dfxml/src/dfxml_writer.h"
 
+
+/* We have a private version of these #include files in case the system one is not present */
 #pragma GCC diagnostic ignored "-Wshadow"
 #pragma GCC diagnostic ignored "-Weffc++"
 #pragma GCC diagnostic ignored "-Wredundant-decls"
-
-/* We have a private version of these #include files in case the system one is not present */
 #include "tsk3/libtsk.h"
 #include "tsk3/fs/tsk_fatfs.h"
 #include "tsk3/fs/tsk_ntfs.h"
+#pragma GCC diagnostic warning "-Wshadow"
+#pragma GCC diagnostic warning "-Weffc++"
+#pragma GCC diagnostic warning "-Wredundant-decls"
 
 #define CLUSTERS_IN_1MiB 2*1024
 #define CLUSTERS_IN_1GiB 2*1024*1024
@@ -44,7 +47,7 @@ static int  debug=0;
  * code from tsk3
  */
 
-using namespace std;
+//using namespace std;
 
 
 inline uint16_t fat16int(const uint8_t buf[2]){
@@ -60,14 +63,14 @@ inline uint32_t fat32int(const uint8_t high[2],const uint8_t low[2]){
 }
 
 
-int fatYear(int x){  return (x & FATFS_YEAR_MASK) >> FATFS_YEAR_SHIFT;}
-int fatMonth(int x){ return (x & FATFS_MON_MASK) >> FATFS_MON_SHIFT;}
-int fatDay(int x){   return (x & FATFS_DAY_MASK) >> FATFS_DAY_SHIFT;}
-int fatHour(int x){  return (x & FATFS_HOUR_MASK) >> FATFS_HOUR_SHIFT;}
-int fatMin(int x){   return (x & FATFS_MIN_MASK) >> FATFS_MIN_SHIFT;}
-int fatSec(int x){   return (x & FATFS_SEC_MASK) >> FATFS_SEC_SHIFT;}
+inline int fatYear(int x){  return (x & FATFS_YEAR_MASK) >> FATFS_YEAR_SHIFT;}
+inline int fatMonth(int x){ return (x & FATFS_MON_MASK) >> FATFS_MON_SHIFT;}
+inline int fatDay(int x){   return (x & FATFS_DAY_MASK) >> FATFS_DAY_SHIFT;}
+inline int fatHour(int x){  return (x & FATFS_HOUR_MASK) >> FATFS_HOUR_SHIFT;}
+inline int fatMin(int x){   return (x & FATFS_MIN_MASK) >> FATFS_MIN_SHIFT;}
+inline int fatSec(int x){   return (x & FATFS_SEC_MASK) >> FATFS_SEC_SHIFT;}
 
-std::string fatDateToISODate(const uint16_t d,const uint16_t t)
+inline std::string fatDateToISODate(const uint16_t d,const uint16_t t)
 {
     char buf[256];
     snprintf(buf, sizeof(buf), "%04d-%02d-%02dT%02d:%02d:%02d",
@@ -480,6 +483,7 @@ void scan_windirs(const class scanner_params &sp,const recursion_control_block &
 	sp.info->name		= "windirs";
         sp.info->author         = "Simson Garfinkel";
         sp.info->description    = "Scans Microsoft directory structures";
+	sp.info->flags =  scanner_info::SCANNER_DEPTH_0; // only run at top level by default
         sp.info->scanner_version= "1.0";
 	sp.info->feature_names.insert("windirs");
 
@@ -487,13 +491,13 @@ void scan_windirs(const class scanner_params &sp,const recursion_control_block &
         sp.info->get_config("opt_weird_file_size2",&opt_weird_file_size2,"Weird file size2");
         sp.info->get_config("opt_max_cluster",&opt_max_cluster,"Ignore clusters larger than this");
         sp.info->get_config("opt_max_cluster2",&opt_max_cluster2,"Ignore clusters larger than this");
-        sp.info->get_config("opt_max_bits_in_attrib",&opt_max_bits_in_attrib,"Ignore FAT32 entries with more attributes set than this");
+        sp.info->get_config("opt_max_bits_in_attrib",&opt_max_bits_in_attrib,
+                            "Ignore FAT32 entries with more attributes set than this");
         sp.info->get_config("opt_max_weird_count",&opt_max_weird_count,"Ignore FAT32 entries with more things weird than this");
         sp.info->get_config("opt_last_year",&opt_last_year,"Ignore FAT32 entries with a later year than this");
 
         debug = sp.info->config->debug;
 
-	//sp.info->flags = scanner_info::SCANNER_DISABLED; // disabled until it's working
         
 
 	return;
