@@ -19,4 +19,5 @@ Please include the following information in your report:
 
 6. Can you provide the `report.xml` file associated with the crash? If so, please attach it.
 
-
+This document can be found on the Internet at 
+https://github.com/simsong/bulk_extractor/blob/master/doc/reporting_errors.md
