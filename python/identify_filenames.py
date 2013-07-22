@@ -283,6 +283,10 @@ if __name__=="__main__":
         exit(1)
 
 
+    # Make sure that the user has specified feature files
+    if not args.featurefiles and not args.all:
+        raise RuntimeError("Please request a specific feature file or --all feature files")
+
     # Read the file map
     if args.noxmlfile:
         print("TESTING --- will not read XML File");
@@ -295,9 +299,6 @@ if __name__=="__main__":
 
     if not os.path.isdir(args.outdir):
         raise RuntimeError(args.outdir+" must be a directory")
-
-    if not args.featurefiles and not args.all:
-        raise RuntimeError("Please request a specific feature file or --all feature files")
 
     # Process each feature file
     feature_file_list = None

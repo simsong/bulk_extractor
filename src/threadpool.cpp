@@ -224,7 +224,7 @@ std::string threadpool::get_thread_status(uint32_t id)
  * a return statement!
  */
 #ifdef HAVE_DIAGNOSTIC_SUGGEST_ATTRIBUTE
-#pragma GCC diagnostic ignored "-Wsuggest-attribute"
+#pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
 #endif
 void *worker::run() 
 {
