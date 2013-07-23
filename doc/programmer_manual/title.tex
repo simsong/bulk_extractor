@@ -1,0 +1,70 @@
+\begin{titlepage}
+
+% LaTeX Template: Titlepage
+% This is a title page template which be used for both articles and reports.
+%
+% Copyright: http://www.howtotex.com/
+% Date: April 2011
+% ------------------------------------------------------------------------------
+
+% -------------------------------------------------------------------------------
+% Preamble
+% -------------------------------------------------------------------------------
+%\documentclass[paper=a4, fontsize=11pt,twoside]{scrartcl}		% KOMA article
+
+
+% ------------------------------------------------------------------------------
+% Definitions (do not change this)
+% ------------------------------------------------------------------------------
+\newcommand{\TRule}[1]{\rule{\linewidth}{#1}} 	% Horizontal rule
+
+\makeatletter							% Title
+\def\printtitle{%						
+    {\centering \@title\par}}
+\makeatother									
+
+\makeatletter							% Author
+\def\printauthor{%					
+    {\centering \large \@author}}				
+\makeatother							
+
+% ------------------------------------------------------------------------------
+% Metadata (Change this)
+% ------------------------------------------------------------------------------
+\title{	\LARGE \textsc{\mytitle} 	% Subtitle of the document
+ \\[1.0cm]													% 2cm spacing
+ \TRule{0.5pt} \\										% Upper rule
+ \LARGE \textbf{\uppercase{Programmers Manual for Developing Scanner Plug-ins}}	% Title
+ \TRule{2pt} \\ [0.5cm]								% Lower rule + 0.5cm spacing
+ \normalsize \today									% Todays date
+}
+
+\author{
+		Authors: \\
+		Jessica R. Bradley\\
+		Simson L. Garfinkel\\		
+}
+
+% ------------------------------------------------------------------------------
+% Maketitle
+% ------------------------------------------------------------------------------
+\thispagestyle{empty}				% Remove page numbering on this page
+
+\printtitle									% Print the title data as defined above
+  	\vfill
+\printauthor								% Print the author data as defined above
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\end{titlepage}

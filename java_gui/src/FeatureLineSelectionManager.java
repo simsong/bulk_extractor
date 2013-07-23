@@ -15,7 +15,7 @@ public class FeatureLineSelectionManager {
   }
 
   /**
-   * Sets the selected <class>FeatureLine</class>.
+   * Sets the selected FeatureLine.
    */
   public void setFeatureLineSelection(FeatureLine featureLine) {
     // do nothing if the feature line is already selected
@@ -34,7 +34,7 @@ public class FeatureLineSelectionManager {
   }
 
   /**
-   * Returns the selected <class>FeatureLine</class>.
+   * Returns the selected FeatureLine.
    */
   public FeatureLine getFeatureLineSelection() {
     return featureLine;

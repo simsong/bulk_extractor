@@ -16,7 +16,8 @@ New functionality in Version 1.4 includes:
   "jpeg/". The filename is the forensic path. Confusingly, JPEGs
   without EXIFs will also be carved.
 
-* scan_xor will search for data hidden with (XOR 255)
+* scan_xor will search for data hidden with (XOR 255). It is disabled
+  by default, but it is enabled with -e xor or with -e all.
 
 * scan_lightgrep will do searches with Lightbox Technology's lightgrep
 
@@ -63,6 +64,10 @@ Much of the emphasis of the 1.4 is to decrease "false positives."
 * scan_windirs was improperly reporting the cluster for fat directory
   entries. 
 
+* scan_windirs now only runs at top-level. This means that we will
+  miss Windows  disk images that are GZIP compressed. The advantange
+  is that it dramatically reduces false positives.
+
 * Additional validations were added to scan_windirs for fat directory
   entries. As a result fewer false positives will be reported.
 
@@ -103,7 +108,13 @@ UNDERREPORTING FIXES
 
 
 ================================================================
-INTERNAL IMPROVEMENTS
+BUG FIXES
+
+* scan_zip now properly reports the date and time of zip
+  components. It also reports in ISO8601 format, which makes parsing easier.
+
+================================================================
+INTERNAL IMPROVEMENTS 
 
 * There has been additional refactoring of the plugin system. Many
   functions and variables that were previously global or static are

@@ -302,8 +302,8 @@ public class WScanBoxedRequired {
     container.add(fileComponent, c);
 
     // file textField (1,y)
-    textField.setMinimumSize(new Dimension(WScan.FILE_FIELD_WIDTH, textField.getPreferredSize().height));
-    textField.setPreferredSize(new Dimension(WScan.FILE_FIELD_WIDTH, textField.getPreferredSize().height));
+    textField.setMinimumSize(new Dimension(WScan.EXTRA_WIDE_FIELD_WIDTH, textField.getPreferredSize().height));
+    textField.setPreferredSize(new Dimension(WScan.EXTRA_WIDE_FIELD_WIDTH, textField.getPreferredSize().height));
     c = new GridBagConstraints();
     c.insets = new Insets(0, 5, 0, 5);
     c.gridx = 1;
