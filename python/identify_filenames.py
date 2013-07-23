@@ -45,6 +45,10 @@ class byterundb:
             print(e)
 
     def add_extent(self,offset,length,fname,md5val):
+        """Add the extent the array, but fix any invalid arguments"""
+        if type(offset)!=int or type(length)!=int: return
+        if not fname: fname=b""
+        if not md5val: md5val=b""
         self.rary.append((offset,offset+length,fname,md5val))
         self.sorted = False
 
