@@ -1,3 +1,10 @@
+2013-07-17  Basic  <simsong@sg1.ncr.nps.edu>
+
+	* src/scan_windirs.cpp (scan_windirs): windirs now only runs at top level
+
+	* src/scan_zip.cpp (scan_zip_component): now prints mtime in ISO8601 format
+	(scan_zip_component): (previously mtime and ctime were wrong parts)
+
 2013-07-16  Man Page  <simsong@mncrnpsedu.local>
 
 	* src/scan_xor.cpp (scan_xor): will not XOR on either side of a ZIP. improved error handling

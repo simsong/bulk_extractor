@@ -68,3 +68,5 @@ specfiles/bulk_extractor.opensuse.spec
 java_gui/src/Config.java
 src/jpegdump
 regress-*
+doc/doxygen/html
+java_gui/doc/doxygen/html
