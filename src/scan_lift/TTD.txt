@@ -1,3 +1,0 @@
-Things that need to be done:
-
-- Feature labels should be size_t (unsigned int), not int, since they are never negative.

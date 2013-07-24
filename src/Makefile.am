@@ -4,8 +4,14 @@ CLEANFILES     = scan_accts.cpp scan_email.cpp scan_gps.cpp scan_base16.cpp *.d
 
 AM_CPPFLAGS = -I${top_srcdir}/src/be13_api
 
+# http://stackoverflow.com/questions/11438613/conditional-subdir-objects
+AUTOMAKE_OPTIONS = subdir-objects
+
 include dfxml/src/Makefile.defs
 include be13_api/Makefile.defs
+
+jpegdump: scan_exif.cpp be13_api/sbuf.o be13_api/unicode_escape.o 
+	g++ -o jpegdump $(CPPFLAGS) $(CXXFLAGS) $(AM_CPPFLAGS) -I.. -DDUMPTEST scan_exif.cpp be13_api/sbuf.o be13_api/unicode_escape.o
 
 TSK3INCS = \
 	tsk3/auto/tsk_auto.h\
@@ -70,33 +76,6 @@ bulk_scanners = \
         sbuf_flex_scanner.h \
 	$(flex_scanners) 
 
-SCAN_LIFT = scan_lift.cpp \
-	scan_lift/base.cpp \
-	scan_lift/base.h \
-	scan_lift/classifier_config.h \
-	scan_lift/element.h \
-	scan_lift/gflags.h \
-	scan_lift/gflags_completions.h \
-	scan_lift/irbase.cpp \
-	scan_lift/lift_config.cpp \
-	scan_lift/lift_config.h \
-	scan_lift/lift_svm.cpp \
-	scan_lift/lift_svm.h \
-	scan_lift/lift_svm_trained.cpp \
-	scan_lift/lift_utils.h \
-	scan_lift/linear_binary_svm.cpp \
-	scan_lift/linear_binary_svm.h \
-	scan_lift/linear_ova_svm.cpp \
-	scan_lift/linear_ova_svm.h \
-	scan_lift/myheader.h \
-	scan_lift/rawdefines.h \
-	scan_lift/rawheaders.h \
-	scan_lift/term_weighting.cpp \
-	scan_lift/term_weighting.h \
-	scan_lift/tools.cpp 
-
-scan_lift.so: $(SCAN_LIFT)
-
 bulk_extractor_SOURCES = \
 	aftimer.h \
 	base64_forensic.cpp \
@@ -116,7 +95,7 @@ bulk_extractor_SOURCES = \
 	phase1.cpp \
 	word_and_context_list.cpp \
 	word_and_context_list.h \
-	$(bulk_scanners) $(TSK3INCS)  $(BE13_API) $(DFXML_WRITER) # $(SCAN_LIFT)
+	$(bulk_scanners) $(TSK3INCS)  $(BE13_API) $(DFXML_WRITER) 
 
 if RAR_ENABLED
 bulk_extractor_SOURCES += $(RAR_SUPPORT)
@@ -135,9 +114,6 @@ stand_SOURCES = \
 	$(BE13_API)
 
 SUFFIXES = .flex
-
-src/scan_lift_trained.cpp:
-	./bulk_extractor -E lift -s liftcmd=a2c -s liftif=scan_lift/model -s liftof=scan_lift/lift_svm_trained.cpp
 
 digtest$(EXEEXT): dig.cpp
 	$(CXX) -DSTANDALONE -o digtest$(EXEEXT) -g dig.cpp $(CPPFLAGS) $(CXXFLAGS) -I..

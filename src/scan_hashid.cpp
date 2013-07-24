@@ -251,8 +251,9 @@ std::cout << "scan_hashid query " << query->query_status() << " query_hashes_md5
                     md5_recorder->write(pos0, feature, context);
                 }
             } else {
-                // the query failed
+                // the query failed, likely a timeout from no server
                 std::cerr << "Error in hashid hash query\n";
+                exit(1);
             }
 
             // deallocate big space on heap for request and response

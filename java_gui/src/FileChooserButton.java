@@ -20,6 +20,9 @@ public class FileChooserButton extends JButton implements ActionListener {
   private final int fileSelectionMode;
   private final FileFilter preferredFileFilter;
 
+  // provide visibility so listeners can register
+  public JFileChooser chooser = new JFileChooser();
+
   // read/write file/directory/image
   public static final int READ_FILE = 0;
   public static final int READ_DIRECTORY = 1;
@@ -68,7 +71,6 @@ public class FileChooserButton extends JButton implements ActionListener {
   }
 
   public void actionPerformed(ActionEvent e) {
-    JFileChooser chooser = new JFileChooser();
     chooser.setDialogTitle(toolTip);
     chooser.setDialogType(dialogType);
     chooser.setFileSelectionMode(fileSelectionMode);

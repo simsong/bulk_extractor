@@ -51,3 +51,6 @@ public:
 #define POS  s.pos
 #define SBUF (*s.sbuf)
 #define YY_FATAL_ERROR(msg) {throw sbuf_scanner::sbuf_scanner_exception(msg);}
+
+#pragma GCC diagnostic ignored "-Wunused-function"
+#pragma GCC diagnostic ignored "-Wsign-compare"

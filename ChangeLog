@@ -1,9 +1,36 @@
-<<<<<<< HEAD
-2013-06-21  Man Page  <simsong@mncrnpsedu.local>
+2013-07-17  Basic  <simsong@sg1.ncr.nps.edu>
 
-	* src/be13_api/bulk_extractor_i.h (class scanner_params): made more variables const.
-	(class recursion_control_block): removed returnAfterFound(raf); now implemented with exceptions
-=======
+	* src/scan_windirs.cpp (scan_windirs): windirs now only runs at top level
+
+	* src/scan_zip.cpp (scan_zip_component): now prints mtime in ISO8601 format
+	(scan_zip_component): (previously mtime and ctime were wrong parts)
+
+2013-07-16  Man Page  <simsong@mncrnpsedu.local>
+
+	* src/scan_xor.cpp (scan_xor): will not XOR on either side of a ZIP. improved error handling
+
+	* tests/regress.py: updated numbers for 1.4 release
+
+2013-07-14  Basic  <simsong@Mucha.local>
+
+	* configure.ac: updated to beta4
+
+2013-07-11  Basic  <simsong@Mucha.local>
+
+	* configure.ac: updated to beta3
+
+	* src/scan_exif.cpp: fixed jpeg validation. carving now works.
+
+2013-07-09  Simson Garfinkel  <simsong@sg1.ncr.nps.edu>
+
+	* src/be13_api/plugin.cpp (GET_CONFIG): fixed bug in handling of uint8_t config values. They weren't getting set properly.. Ugh.
+
+	* src/scan_xor.cpp (scan_xor): fixed error when XOR mask was specified as 0. Previously it recused; now it does not.
+
+2013-07-02  Simson Garfinkel  <simsong@Mucha.local>
+
+	* configure.ac: removed defines we aren't using anymore
+
 2013-06-27  Basic  <simsong@Mucha.local>
 
 	* src/be13_api/feature_recorder.h (class feature_recorder): as a result of popular demand, the UTF8 BOM and BOM EXPLAINATION have been removed from the feature files
@@ -15,7 +42,11 @@
 	* src/be13_api/feature_recorder.h (class feature_recorder): added context_window_before() and context_window_after().
 
 	* src/bulk_extractor.cpp (main): replaced context_window with context_window_default.
->>>>>>> 27cb70b3b5135c69cc93d8cf463e5efcfc6c01fb
+
+2013-06-21  Man Page  <simsong@mncrnpsedu.local>
+
+	* src/be13_api/bulk_extractor_i.h (class scanner_params): made more variables const.
+	(class recursion_control_block): removed returnAfterFound(raf); now implemented with exceptions
 
 2013-06-19  Basic  <simsong@Mucha.local>
 
@@ -342,7 +373,6 @@
 	* src/utils.c (gmtime_r): moved to utils.c
 	(localtime_r): moved to utils.c
 
->>>>>>> .r10097
 2012-07-07  Simson Garfinkel  <simsong@mncrnpsedu.local>
 
 	* src/scan_windirs.cpp (scan_ntfsdirs): scan_windirs now prints $NOFILENAME for no file name
@@ -1659,7 +1689,7 @@
 	* src/scan_accts.flex: fixed regular expression scan_accts.flex:REGEX7 to allow:
 	  - no space between (800)555-1212
 	  - periods to terminate (800)555-1212.
-	
+
 
 2010-06-03  Simson Garfinkel  <simsong@m.ern.nps.edu>
 

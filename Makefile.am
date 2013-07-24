@@ -128,8 +128,8 @@ windist: win32 win64
 	cp ChangeLog		$(distdir)/ChangeLog.txt
 	cp NEWS			$(distdir)/NEWS.txt
 	cp COPYING		$(distdir)/COPYING.txt
-	md5deep -r  $distdir > md5list.txt
-	md5deep -rd $distdir > md5list.xml
+	md5deep -r  $(distdir) > md5list.txt
+	md5deep -rd $(distdir) > md5list.xml
 	mv md5list.txt md5list.xml $(distdir)
 	zip --to-crlf $(distdir).zip $(distdir)/*.txt $(distdir)/*.xml $(distdir)/python/*
 	rm -rf $(distdir) $(WINDOWSDOCS) 
@@ -166,5 +166,5 @@ SUFFIXES = .txt .1
 .1.txt:
 	/usr/bin/tbl $< | /usr/bin/groff -S -Wall -mtty-char -mandoc -Tascii | /usr/bin/col -bx > $@
 
-.PHONY: windist win32 win64 doxygen
+.PHONY: windist win32 win64
 

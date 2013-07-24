@@ -69,7 +69,7 @@ def fiwalk_xml_version(filename=None):
 ################################################################
 def E01_glob(fn):
     import os.path
-    "If the filename ends .E01, then glob it. Currently only handles E01 through EZZ"""
+    """If the filename ends .E01, then glob it. Currently only handles E01 through EZZ"""
     ret = [fn]
     if fn.endswith(".E01") and os.path.exists(fn):
         fmt = fn.replace(".E01",".E%02d")
@@ -94,7 +94,6 @@ def E01_glob(fn):
 
 def fiwalk_xml_stream(imagefile=None,flags=0,fiwalk="fiwalk",fiwalk_args=""):
     """ Returns an fiwalk XML stream given a disk image by running fiwalk."""
-    fiwalk_args += "-x"
     if flags & ALLOC_ONLY: fiwalk_args += "O"
     from subprocess import call,Popen,PIPE
     # Make sure we have a valid fiwalk
@@ -102,7 +101,8 @@ def fiwalk_xml_stream(imagefile=None,flags=0,fiwalk="fiwalk",fiwalk_args=""):
         res = Popen([fiwalk,'-V'],stdout=PIPE).communicate()[0]
     except OSError:
         raise RuntimeError("Cannot execute fiwalk executable: "+fiwalk)
-    cmd = [fiwalk,fiwalk_args] + fiwalk_options
+    cmd = [fiwalk,'-x']
+    if fiwalk_args: cmd += [fiwalk_args]
     p = Popen(cmd + E01_glob(imagefile.name),stdout=PIPE)
     return p.stdout
 

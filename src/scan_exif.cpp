@@ -1,9 +1,9 @@
 /**
  * scan_exif: - custom exif scanner for identifying specific features for bulk_extractor.
- *
- * We do not require EXIF data to begin on a 512-byte offset boundary.
+ * Also includes JPEG carver
  *
  * Revision history:
+ * 2013-jul    slg - added JPEG carving.
  * 2011-dec-12 bda - Ported from file scan_exif.cpp.
  */
 
@@ -24,17 +24,191 @@
 #include "exif_reader.h"
 #include "unicode_escape.h"
 
-static uint32_t MAX_ENTRY_SIZE = 1000000;
-static uint32_t MIN_JPEG_SIZE = 200;    // don't scan something smaller
+// these are not tunable
+static const uint32_t MAX_ENTRY_SIZE = 1000000;
+static const uint32_t MIN_JPEG_SIZE = 200;    // don't consider something smaller than this
 
-static int debug=0;
+// these are
+static int exif_debug=0;
 static uint32_t jpeg_carve_mode = feature_recorder::CARVE_ENCODED;
-
+static size_t min_jpeg_size = 1000; // don't carve smaller than this
 
 /****************************************************************
  *** formatting code
  ****************************************************************/
 
+#ifdef DUMPTEST
+#undef BULK_EXTRACTOR
+#endif
+
+#define DEBUG(x) if(exif_debug) std::cout << x << "\n";
+
+struct jpeg_validator {
+    typedef enum { UNKNOWN=0,COMPLETE=1,TRUNCATED=2,CORRUPT=-1 } how_t;
+    struct results_t {
+        results_t():len(),how(),seen_ff_c4(),seen_ff_cc(),seen_ff_db(),
+                  seen_ff_e1(),seen_JFIF(),seen_EOI(),seen_SOI(),seen_SOS(),height(),width(){}
+        ssize_t len;
+        how_t how;	       // how do we validate?
+        bool seen_ff_c4;            // Seen a DHT (Definition of Huffman Tables)
+        bool seen_ff_cc;            // Seen a DAC (Definition of arithmetic coding)
+        bool seen_ff_db;            // Seen a DQT (Definition of quantization)
+        bool seen_ff_e1;            // seen an E1 (exif)
+        bool seen_JFIF;
+        bool seen_EOI;
+        bool seen_SOI;
+        bool seen_SOS;
+        uint16_t height;
+        uint16_t width;
+    };
+    static struct results_t validate_jpeg(const sbuf_t &sbuf) {
+        //std::cout << "validate_jpeg " << sbuf << "\n";
+        results_t res;
+        res.how = UNKNOWN;
+        size_t i = 0;
+        while(i+1 < sbuf.bufsize && res.seen_EOI==false && res.how!=CORRUPT){
+            if (sbuf[i]!=0xff){
+                DEBUG("CORRUPT 1");
+                res.how = CORRUPT;
+                break;
+            }
+            switch(sbuf[i+1]){                // switch on the marker
+            case 0xff: // FF FF is very bad...
+                DEBUG("CORRUPT FF FF");
+                res.how = CORRUPT;
+                break;
+            case 0xd8: // SOI -- start of image
+                DEBUG("SOI");
+                res.seen_SOI = true;
+                i+=2;
+                break;
+            case 0x01: // TEM 
+                DEBUG("TEM");
+                res.how = COMPLETE;
+                i+=2;
+                break;
+            case 0xd0: case 0xd1: case 0xd2: case 0xd3:
+            case 0xd4: case 0xd5: case 0xd6: case 0xd7:
+                // RST markers are standalone; they don't have lengths
+                DEBUG("RST");
+                i += 2;
+                break;
+            case 0xd9: // EOI- end of image
+                DEBUG("EOI");
+                res.seen_EOI = true;
+                res.how = COMPLETE;
+                i += 2;
+                break;
+            default: // decode variable-length blocks
+                {
+                    if(i+2 >= sbuf.bufsize){i+=2;break;} // whoops - not enough
+                    uint16_t block_length = sbuf.get16uBE(i+2);
+                    if(sbuf[i+1]==0xc4) res.seen_ff_c4 = true;
+                    if(sbuf[i+1]==0xcc) res.seen_ff_cc = true;
+                    if(sbuf[i+1]==0xdb) res.seen_ff_db = true;
+                    if(sbuf[i+1]==0xe1) res.seen_ff_e1 = true;
+                
+                    if(sbuf[i+1]==0xe0 && block_length>8){        // see if this is a JFIF
+                        DEBUG("JFIF");
+                        if(sbuf[i+4]=='J' && sbuf[i+5]=='F' && sbuf[i+6]=='I' && sbuf[i+7]=='F'){
+                            res.seen_JFIF = true;
+                        }
+                    }
+                
+                    if(sbuf[i+1]==0xc0 && block_length>8){        // FFC0 is start of frame
+                        res.height = sbuf.get16uBE(i+5);
+                        res.width  = sbuf.get16uBE(i+7);
+                    }
+                
+                    i += 2 + sbuf.get16uBE(i+2);    // add variable length size
+                    break;
+                }
+
+            case 0xda: // Start of scan
+                DEBUG("SOS");
+                /* Certain fields MUST be set before the SOS, or the JPEG is corrupt */
+                res.seen_SOS = true;
+                if(res.seen_ff_c4==false && res.seen_ff_cc==false && res.seen_ff_db==false){
+                    res.how = CORRUPT;         // can't have a SOS before we have seen one of these
+                    res.len = 0;               // it's not a jpeg
+                    return res;
+                }
+                if(res.seen_JFIF==false || res.width==0 || res.height==0){
+                    res.how = CORRUPT;
+                    res.len = 0;
+                    return res;
+                }
+
+                // http://webtweakers.com/swag/GRAPHICS/0143.PAS.html
+                //printf("start of scan. i=%zd header=%d\n",i,sbuf.get16uBE(i+2));
+                if(i+2 >= sbuf.bufsize){i+=2;break;}
+                i += 2 + sbuf.get16uBE(i+2);   // skip ff da and minor header info
+
+                // Image data follows
+                // Scan for EOI or an unescaped invalid FF
+                for(;i+1 < sbuf.bufsize;i++){
+                    if(sbuf[i]!=0xff){  // Non-FF can be skipped
+                        continue;
+                    }
+                    if(sbuf[i+1]==0x00){ // escaped FF
+                        continue;
+                    }
+                    if(sbuf[i+1]==0xde){ // terminated by an EOI marker
+                        //printf("i=%zd FF DE EOI found\n",i);
+                        res.how = COMPLETE;
+                        i+=2;
+                        break;
+                    }
+                    if(sbuf[i+1]==0xd9){ // terminated by an EOI marker
+                        //printf("i=%zd FF D9 EOI found\n",i);
+                        i+=2;
+                        res.how = COMPLETE;
+                        break;
+                    }
+                    if(sbuf[i+1]>=0xc0 && sbuf[i+1]<=0xdf){
+                        continue;   // This range seems to continue valid control characters
+                    }
+                    //printf(" ** WTF? sbuf[%d+1]=%2x\n",i,sbuf[i+1]);
+                    res.how = CORRUPT;
+                    break;
+                }
+                // ran off the end in the stream. Fall through below.
+            }
+        } /* while */
+        // The JPEG is incomplete.
+        // We ran off the end *before* we entered the SOS. We may be in the Exif, but we have
+        // nothing displayable.
+        res.len = i;            // that's how far we got
+        if(res.seen_JFIF==false || res.seen_SOI==false){
+            res.how = CORRUPT;
+            res.len = 0;        // nothing here, I guess
+            return res;
+        }
+
+        // If we got an EXIF, at least return that...
+        if(res.seen_ff_e1){
+            res.how = TRUNCATED;
+            return res; // at least we saw an EXIF, so return true
+        }
+    
+        // If we didn't get a color table, it's corrupt
+        if(res.seen_ff_c4==false && res.seen_ff_cc==false && res.seen_ff_db==false){
+            res.how = CORRUPT;
+            res.len = 0;                    // doesn't appear to be a jpeg
+            return res;
+        }
+
+        // If we didn't get a SOS or the size is wrong, it's corrupt
+        if(res.seen_SOS==false || res.width==0 || res.height==0){
+            res.how = CORRUPT;
+            res.len = 0;
+            return res;
+        }
+        return res;
+    }
+};
+
+#ifdef BULK_EXTRACTOR
 /**
  * Used for helping to convert TIFF's GPS format to decimal lat/long
  */
@@ -94,14 +268,14 @@ namespace psd_reader {
          || exif_sbuf[3]!='S'
          || exif_sbuf[4]!= 0
          || exif_sbuf[5]!= 1) {
-            if(debug) std::cerr << "scan_exif.get_tiff_offset_from_psd header rejected\n";
+            if(exif_debug) std::cerr << "scan_exif.get_tiff_offset_from_psd header rejected\n";
             return 0;
         }
 
         // validate that the 6 reserved bytes are 0
         if (exif_sbuf[6]!=0 || exif_sbuf[7]!=0 || exif_sbuf[8]!=0 || exif_sbuf[9]!=0
          || exif_sbuf[10]!=0 || exif_sbuf[11]!=0) {
-            if(debug) std::cerr << "scan_exif.get_tiff_offset_from_psd reserved bytes rejected\n";
+            if(exif_debug) std::cerr << "scan_exif.get_tiff_offset_from_psd reserved bytes rejected\n";
             return 0;
         }
 
@@ -131,12 +305,12 @@ namespace psd_reader {
             // check to see if this resource is ExifInfo
             if (resource_id == 0x0422) {
                 size_t tiff_start = resource_offset + 8 + resource_name_length + 4;
-                if(debug) std::cerr << "scan_exif.get_tiff_offset_from_psd accepted at tiff_start " << tiff_start << "\n";
+                if(exif_debug) std::cerr << "scan_exif.get_tiff_offset_from_psd accepted at tiff_start " << tiff_start << "\n";
                 return tiff_start;
             }
             resource_offset += 8 + resource_name_length + 4 + resource_size;
         }
-        if(debug) std::cerr << "scan_exif.get_tiff_offset_from_psd ExifInfo resource was not found\n";
+        if(exif_debug) std::cerr << "scan_exif.get_tiff_offset_from_psd ExifInfo resource was not found\n";
         return 0;
     }
 
@@ -173,7 +347,7 @@ namespace psd_reader {
 /****************************************************************/
 /* C++ string splitting code from http://stackoverflow.com/questions/236129/how-to-split-a-string-in-c */
 
-using namespace std;
+//using namespace std;
 
 inline size_t min(size_t a,size_t b){
     return a<b ? a : b;
@@ -183,9 +357,10 @@ inline size_t min(size_t a,size_t b){
 /**
  * record exif data in well-formatted XML.
  */
-static void record_exif_data(feature_recorder *exif_recorder, const pos0_t &pos0, const string &hash_hex, const entry_list_t &entries)
+static void record_exif_data(feature_recorder *exif_recorder, const pos0_t &pos0,
+                             const string &hash_hex, const entry_list_t &entries)
 {
-    if(debug) std::cerr << "scan_exif recording data for entry" << "\n";
+    if(exif_debug) std::cerr << "scan_exif recording data for entry" << "\n";
 
     // do not record the exif feature if there are no entries
     if (entries.size() == 0) {
@@ -206,14 +381,14 @@ static void record_exif_data(feature_recorder *exif_recorder, const pos0_t &pos0
         }
 
         // validate against maximum entry size
-        if (debug & DEBUG_PEDANTIC) {
+        if (exif_debug & DEBUG_PEDANTIC) {
             if (prepared_value.size() > MAX_ENTRY_SIZE) {
                 std::cerr << "ERROR exif_entry: prepared_value.size()==" << prepared_value.size() << "\n" ;
                 assert(0);
             }
         }
 
-        if(debug){
+        if(exif_debug){
             cout << "scan_exif fed before xmlescape: " << (*it)->value << "\n";
             cout << "scan_exif fed after xmlescape: " << prepared_value << "\n";
         }
@@ -230,7 +405,8 @@ static void record_exif_data(feature_recorder *exif_recorder, const pos0_t &pos0
  * Note that GPS data is considered to be present when a GPS IFD entry is present
  * that is not just a time or date entry.
  */
-static void record_gps_data(feature_recorder *gps_recorder, const pos0_t &pos0, const string &hash_hex, const entry_list_t &entries)
+static void record_gps_data(feature_recorder *gps_recorder, const pos0_t &pos0,
+                            const string &hash_hex, const entry_list_t &entries)
 {
     // desired GPS strings
     std::string gps_time, gps_date, gps_lon_ref, gps_lon, gps_lat_ref;
@@ -249,7 +425,7 @@ static void record_gps_data(feature_recorder *gps_recorder, const pos0_t &pos0, 
         if ((*it)->name.compare("DateTimeOriginal") == 0) {
             exif_time = (*it)->value;
 
-            if(debug) std::cerr << "scan_exif.format_gps_data exif_time: " << exif_time << "\n";
+            if(exif_debug) std::cerr << "scan_exif.format_gps_data exif_time: " << exif_time << "\n";
 
             if (exif_time.length() == 19) {
                 // reformat timestamp to standard ISO8601
@@ -380,43 +556,9 @@ public:
     feature_recorder &gps_recorder;
     feature_recorder &jpeg_recorder;
 
-    /* Verify a jpeg nternal structure and return the length of the validated portion */
-    size_t validate_jpeg(const sbuf_t &sbuf) {
-        // std::cout << "validate_jpeg " << sbuf << "\n";
-        size_t i = 0;
-        while(i+2 < sbuf.bufsize){
-            // printf("i=%d  sbuf[i]=%02x sbuf[i+1]=%02x\n",(int)i,sbuf[i],sbuf[i+1]);
-            if (sbuf[i]!=0xff) return i;      // each section begins with a FF
-            if (sbuf[i+1]==0xd8){ // SOI
-                i+=2;
-                continue;
-            }
-            if (sbuf[i+1]==0x01){ // TEM
-                i+=2;
-                continue;
-            }
-            if ((sbuf[i+1]>=0xd0 && sbuf[i+1]<=0xd8)){ // RST
-                i += 2;
-                continue;
-            }
-            if (sbuf[i+1]==0xd9){ // EOI
-                return i+1;                         // validated!
-            }
-            
-            if (sbuf[i+1]==0xda){ // SOS (Start of Stream)
-                // Scan for EOI or an unespcaed invalid FF
-                i += 2;                 // skip ff da
-                for(;i+2 < sbuf.bufsize;i++){
-                    if(sbuf[i]==0xff && sbuf[i+1]!=0x00){
-                        return i+2;     // return up to the ff and the code after it
-                    }
-                }
-                return sbuf.bufsize;        // SOS not properly terminated, so just give the whole sbuf
-            }
-            i += 2 + sbuf.get16uBE(i+2);    // add variable length size
-        }
-        return sbuf.bufsize;            // ran off the end
-    }
+    /* Verify a jpeg internal structure and return the length of the validated portion */
+    // http://www.w3.org/Graphics/JPEG/itu-t81.pdf
+    // http://stackoverflow.com/questions/1557071/the-size-of-a-jpegjfif-image
     
     /**
      * Process the JPEG, including - calculate its hash, carve it, record exif and gps data
@@ -428,15 +570,22 @@ public:
         size_t ret = 0;
         string feature_text = "00000000000000000000000000000000";
         if(found_start){
+            jpeg_validator::results_t res = jpeg_validator::validate_jpeg(sbuf);
+            
+            // Is it valid?
+            if(res.len<=0) return 0; 
+
+            // Should we carve?
+            if(res.how==jpeg_validator::COMPLETE || res.len>(ssize_t)min_jpeg_size){
+                jpeg_recorder.carve(sbuf,0,res.len,hasher);
+                ret = res.len;
+            }
+
+            // Record the hash of the first 4K
             sbuf_t tohash(sbuf,0,4096);
             feature_text = hasher.func(tohash.buf,tohash.bufsize);
-            
-            size_t jlen = validate_jpeg(sbuf);
-            if(jlen>MIN_JPEG_SIZE){
-                jpeg_recorder.carve(sbuf,0,jlen,hasher);
-                ret = jlen;
-            }
         }
+        /* Record entries (if present) in the feature files */
         record_exif_data(&exif_recorder, sbuf.pos0, feature_text, entries);
         record_gps_data(&gps_recorder, sbuf.pos0, feature_text, entries);
         clear_entries(entries);		    // clear entries for next round
@@ -450,19 +599,28 @@ public:
 
 	for (size_t start=0; start < sbuf.pagesize - MIN_JPEG_SIZE; start++) {
             // check for start of a JPEG
-	    if (sbuf[start + 0] == 0xff && sbuf[start + 1] == 0xd8 && sbuf[start + 2] == 0xff && (sbuf[start + 3] & 0xf0) == 0xe0) {
-		if(debug) std::cerr << "scan_exif checking ffd8ff at start " << start << "\n";
+	    if (sbuf[start + 0] == 0xff &&
+                sbuf[start + 1] == 0xd8 &&
+                sbuf[start + 2] == 0xff &&
+                (sbuf[start + 3] & 0xf0) == 0xe0) {
+		if(exif_debug) std::cerr << "scan_exif checking ffd8ff at start " << start << "\n";
 
 		// Does this JPEG have an EXIF?
 		size_t possible_tiff_offset_from_exif = exif_reader::get_tiff_offset_from_exif(sbuf+start);
-		if(debug) std::cerr << "scan_exif.possible_tiff_offset_from_exif " << possible_tiff_offset_from_exif << "\n";
+		if(exif_debug){
+                    std::cerr << "scan_exif.possible_tiff_offset_from_exif "
+                              << possible_tiff_offset_from_exif << "\n";
+                }
 		if ((possible_tiff_offset_from_exif != 0)
                     && tiff_reader::is_maybe_valid_tiff(sbuf + start + possible_tiff_offset_from_exif)) {
 
 		    // TIFF in Exif is valid, so process TIFF
 		    size_t tiff_offset = start + possible_tiff_offset_from_exif;
 
-		    if(debug) std::cerr << "scan_exif Start processing validated Exif ffd8ff at start " << start << "\n";
+		    if(exif_debug){
+                        std::cerr << "scan_exif Start processing validated Exif ffd8ff at start "
+                                  << start << "\n";
+                    }
 
 		    // get entries for this exif
                     try {
@@ -471,22 +629,28 @@ public:
                         // accept whatever entries were gleaned before the exif failure
                     }
 
-                    if(debug) std::cerr << "scan_exif.tiff_offset in ffd8 " << tiff_offset;
+                    if(exif_debug) std::cerr << "scan_exif.tiff_offset in ffd8 " << tiff_offset;
                 }
                 // Try to process if it is exif or not
                 size_t skip = process(sbuf+start,true);
                 // std::cerr << "1 skip=" << skip << "\n";
                 if(skip>1) start += skip-1;
-                if(debug) std::cerr << "scan_exif Done processing JPEG/Exif ffd8ff at " << start << " len=" << skip << "\n";
+                if(exif_debug){
+                    std::cerr << "scan_exif Done processing JPEG/Exif ffd8ff at "
+                              << start << " len=" << skip << "\n";
+                }
                 continue;                
             }
 		// check for possible TIFF in photoshop PSD header
             if (sbuf[start + 0] == '8' && sbuf[start + 1] == 'B' && sbuf[start + 2] == 'P' &&
                 sbuf[start + 3] == 'S' && sbuf[start + 4] == 0 && sbuf[start + 5] == 1) {
-	        if(debug) std::cerr << "scan_exif checking 8BPS at start " << start << "\n";
+	        if(exif_debug) std::cerr << "scan_exif checking 8BPS at start " << start << "\n";
 		// perform thorough check for TIFF in photoshop PSD
 		size_t possible_tiff_offset_from_psd = psd_reader::get_tiff_offset_from_psd(sbuf+start);
-		if(debug) std::cerr << "scan_exif.psd possible_tiff_offset_from_psd " << possible_tiff_offset_from_psd << "\n";
+		if(exif_debug){
+                    std::cerr << "scan_exif.psd possible_tiff_offset_from_psd "
+                              << possible_tiff_offset_from_psd << "\n";
+                }
 		if ((possible_tiff_offset_from_psd != 0)
 		    && tiff_reader::is_maybe_valid_tiff(sbuf + start + possible_tiff_offset_from_psd)) {
 		    // TIFF in PSD is valid, so process TIFF
@@ -499,18 +663,30 @@ public:
                         // accept whatever entries were gleaned before the exif failure
                     }
 
-		    if(debug) std::cerr << "scan_exif Start processing validated Photoshop 8BPS at start " << start << " tiff_offset " << tiff_offset << "\n";
+		    if(exif_debug) {
+                        std::cerr << "scan_exif Start processing validated Photoshop 8BPS at start "
+                                  << start << " tiff_offset " << tiff_offset << "\n";
+                    }
                     size_t skip = process(sbuf+start,true);
                     // std::cerr << "2 skip=" << skip << "\n";
                     if(skip>1) start += skip-1;
-		    if(debug) std::cerr << "scan_exif Done processing validated Photoshop 8BPS at start " << start << "\n";
+		    if(exif_debug){
+                        std::cerr << "scan_exif Done processing validated Photoshop 8BPS at start "
+                                  << start << "\n";
+                    }
 		}
                 continue;
             }
             // check for probable TIFF not in embedded header found above
-	    if ((sbuf[start + 0] == 'I' && sbuf[start + 1] == 'I' && sbuf[start + 2] == 42 && sbuf[start + 3] == 0) // intel
+	    if ((sbuf[start + 0] == 'I' &&
+                 sbuf[start + 1] == 'I' &&
+                 sbuf[start + 2] == 42 &&
+                 sbuf[start + 3] == 0) // intel
                 ||
-                (sbuf[start + 0] == 'M' && sbuf[start + 1] == 'M' && sbuf[start + 2] == 0 && sbuf[start + 3] == 42) // Motorola
+                (sbuf[start + 0] == 'M' &&
+                 sbuf[start + 1] == 'M' &&
+                 sbuf[start + 2] == 0 &&
+                 sbuf[start + 3] == 42) // Motorola
                 ){
 
 		// probably a match so check further
@@ -518,7 +694,6 @@ public:
 		    // treat this as a valid match
 		    //if(debug) std::cerr << "scan_exif Start processing validated TIFF II42 or MM42 at start "
                     //<< start << ", last tiff_offset: " << tiff_offset << "\n";
-                    
 		    // get entries for this exif
                     try {
 		        tiff_reader::read_tiff_data(sbuf + start, entries);
@@ -528,8 +703,10 @@ public:
                     
                     // there is no MD5 because there is no associated file for this TIFF marker
                     process(sbuf+start,false);
-		    if(debug) std::cerr << "scan_exif Done processing validated TIFF II42 or MM42 at start "
-                                        << start << "\n";
+		    if(exif_debug){
+                        std::cerr << "scan_exif Done processing validated TIFF II42 or MM42 at start "
+                                  << start << "\n";
+                    }
                 }
 	    }
 	}
@@ -541,7 +718,7 @@ be13::hash_def exif_scanner::hasher;
 extern "C"
 void scan_exif(const class scanner_params &sp,const recursion_control_block &rcb)
 {
-    if(debug) std::cerr << "scan_exif start phase " << (uint32_t)sp.phase << "\n";
+    if(exif_debug) std::cerr << "scan_exif start phase " << (uint32_t)sp.phase << "\n";
     assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
     if(sp.phase==scanner_params::PHASE_STARTUP){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
@@ -552,8 +729,9 @@ void scan_exif(const class scanner_params &sp,const recursion_control_block &rcb
 	sp.info->feature_names.insert("gps");
 	sp.info->feature_names.insert("jpeg");
         exif_scanner::hasher    = sp.info->config->hasher;
-        sp.info->get_config("exif_debug",&debug,"debug exif decoder");
+        sp.info->get_config("exif_debug",&exif_debug,"debug exif decoder");
         sp.info->get_config("jpeg_carve_mode",&jpeg_carve_mode,"0=carve none; 1=carve encoded; 2=carve all");
+        sp.info->get_config("min_jpeg_size",&min_jpeg_size,"Smallest JPEG stream that will be carved");
 	return;
     }
     if(sp.phase==scanner_params::PHASE_INIT){
@@ -568,4 +746,28 @@ void scan_exif(const class scanner_params &sp,const recursion_control_block &rcb
         escan.scan(sp.sbuf);
     }
 }
+#endif
 
+#ifdef DUMPTEST
+int debug=1;
+int main(int argc,char **argv)
+{
+    exif_debug = debug;
+    (void)jpeg_carve_mode;
+    (void)min_jpeg_size;
+    argc--;argv++;
+    while(*argv){
+        sbuf_t *sbuf = sbuf_t::map_file(*argv,pos0_t(*argv));
+        if(sbuf==0){
+            perror(*argv);
+        } else {
+            jpeg_validator::results_t res = jpeg_validator::validate_jpeg(*sbuf);
+            printf("%s: filesize: %zd  s=%zd  how=%d\n",*argv,sbuf->bufsize,res.len,res.how);
+            delete sbuf;
+        }
+        argc--;argv++;
+        printf("\n");
+    }
+    return(0);
+}
+#endif

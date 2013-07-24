@@ -1,12 +1,16 @@
 #!/bin/sh
 # Hopefully you checked out with git clone --recursive git@github.com:simsong/bulk_extractor.git
 
-if [ ! -r src/be13_api/.git ] ;
-then
-  echo bringing in submodules
-  echo next time check out with git clone --recursive
-  git submodule init
-fi
+for sub in be13_api dfxml 
+do
+  if [ ! -r src/$sub/.git ] ;
+  then
+    echo bringing in submodules
+    echo next time check out with git clone --recursive
+    git submodule init
+    git submodule update
+  fi
+done
 
 # git submodule update
 autoheader -f

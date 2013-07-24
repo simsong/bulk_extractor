@@ -6,7 +6,7 @@
 
 AC_PREREQ(2.57)
 
-AC_INIT(BULK_EXTRACTOR, 1.4.0-beta2, bugs@digitalcorpora.org)
+AC_INIT(BULK_EXTRACTOR, 1.4.0-beta4, bugs@digitalcorpora.org)
 AC_CONFIG_MACRO_DIR(m4)
 
 # Notice:
@@ -19,8 +19,6 @@ AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile doc/user_manual/Makefile \
                           plugins/Makefile \
 			  specfiles/Makefile specfiles/bulk_extractor.spec.m4 \
 			  java_gui/Makefile src_win/Makefile tests/Makefile ])
-
-
 AC_CONFIG_HEADER([config.h])
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
@@ -30,15 +28,19 @@ AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_INSTALL
 AC_PROG_LEX
+
+m4_include([src/dfxml/src/dfxml_configure.m4])
+m4_include([src/be13_api/be13_configure.m4])
+
+
 # Endian check is required for MD5 implementation
 AC_C_BIGENDIAN
+
+# These are needed for bulk_extractor. They are not needed for tcpflow
 AC_DEFINE([BULK_EXTRACTOR],1,[We are compiling bulk_extractor])
 AC_DEFINE([USE_HISTOGRAMS],1,[We are using histograms])
 AC_DEFINE([USE_STOP_LIST],1,[We are using the stop lists])
 AC_DEFINE([USE_ALERT_LIST],1,[We are using the alert list])
-
-m4_include([src/dfxml/src/dfxml_configure.m4])
-m4_include([src/be13_api/be13_configure.m4])
 
 ## 
 ## BEViewer
@@ -411,11 +413,14 @@ AC_CHECK_FUNCS([regcomp tre_regcomp tre_version])
 
 
 ################################################################
-## OpenSSL Support (required for AFFLIB and hash_t )
+## OpenSSL Support is now required (for hash_t)
 AC_CHECK_HEADERS([openssl/aes.h openssl/bio.h openssl/evp.h openssl/hmac.h openssl/md5.h openssl/pem.h openssl/rand.h openssl/rsa.h openssl/sha.h openssl/pem.h openssl/x509.h])
-AC_CHECK_LIB([crypto],[EVP_get_digestbyname])	# if crypto is available, get it
+# OpenSSL has been installed under at least two different names...
+AC_CHECK_LIB([crypto],[EVP_get_digestbyname])	
 AC_CHECK_LIB([ssl],[SSL_library_init])
-AC_CHECK_FUNCS([MD5_Init EVP_get_digestbyname])
+AC_CHECK_FUNCS([EVP_get_digestbyname],,
+	AC_MSG_ERROR([SSL/OpenSSL support required]))
+
 
 ################################################################
 ## AFFLIB support
@@ -513,8 +518,8 @@ if test x"$exiv2" == x"yes" ; then
   fi
 fi
 if test x"$exiv2" == x"yes" ; then
-  AC_CHECK_HEADERS([exiv2/image.hpp exiv2/exif.hpp exiv2/error.hpp])
   AC_LANG_PUSH(C++)
+  AC_CHECK_HEADERS([exiv2/image.hpp exiv2/exif.hpp exiv2/error.hpp])
     AC_TRY_COMPILE([#include <exiv2/image.hpp>
     	    	    #include <exiv2/exif.hpp>
                     #include <exiv2/error.hpp>],

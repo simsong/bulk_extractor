@@ -1,6 +1,6 @@
 #include "bulk_extractor.h"
-#include "threadpool.h"
 #include "image_process.h"
+#include "threadpool.h"
 #include "aftimer.h"
 
 #include <dirent.h>
@@ -128,6 +128,7 @@ threadpool::~threadpool()
 /** 
  * work is delivered in sbufs.
  * This blocks the caller if there are no free workers.
+ * Called from the threadpool master thread
  */
 void threadpool::schedule_work(sbuf_t *sbuf)
 {
@@ -156,6 +157,7 @@ int threadpool::get_free_count()
 
 /**
  * do the work. Record that the work was started and stopped in XML file.
+ * Called in the worker threads
  */
 bool worker::opt_work_start_work_end=true;
 void worker::do_work(sbuf_t *sbuf)
@@ -223,8 +225,14 @@ std::string threadpool::get_thread_status(uint32_t id)
  * attribute, but then when the attribute is given, GCC complains that it has
  * a return statement!
  */
+#ifdef HAVE_DIAGNOSTIC_SUGGEST_ATTRIBUTE
+#pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
+#endif
 void *worker::run() 
 {
+    /* Initialize any per-thread variables in the scanners */
+    be13::plugin::message_enabled_scanners(scanner_params::PHASE_THREAD_BEFORE_SCAN,0);
+
     while(true){
 	/* Get the lock, then wait for the queue to be empty.
 	 * If it is not empty, wait for the lock again.
@@ -251,7 +259,7 @@ void *worker::run()
 	/* release the lock */
 	pthread_mutex_unlock(&master.M);	   // unlock
 	if(sbuf==0) {
-            return 0;
+	  break;
 	}
 	do_work(sbuf);
 	delete sbuf;
@@ -261,5 +269,6 @@ void *worker::run()
 	pthread_cond_signal(&master.TOMAIN); // tell the master that we are free!
 	pthread_mutex_unlock(&master.M);     // should wake up the master
     }
+    return 0;
 }
 

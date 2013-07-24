@@ -13,7 +13,6 @@
 #ifdef HAVE_ERR_H
 #include <err.h>
 #endif
-#include <utils.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -59,7 +58,8 @@ int main(int argc,char **argv)
 
 #ifdef HAVE_DLOPEN_PREFLIGHT
     if(!dlopen_preflight(fname.c_str())){
-	err(1,"dlopen_preflight - cannot open %s: %s",fname.c_str(),dlerror());
+	fprintf(stderr,"dlopen_preflight - cannot open %s: %s",fname.c_str(),dlerror());
+        exit(1);
     }
 #endif
 
@@ -81,9 +81,15 @@ int main(int argc,char **argv)
     /* Use Win32 LoadLibrary function */
     /* See http://msdn.microsoft.com/en-us/library/ms686944(v=vs.85).aspx */
     HINSTANCE hinstLib = LoadLibrary(TEXT(fname.c_str()));
-    if(hinstLib==0) errx(1,"LoadLibrary(%s) failed",fname.c_str());
+    if(hinstLib==0){
+        fprintf(stderr,"LoadLibrary(%s) failed",fname.c_str());
+        exit(1);
+    }
     MYPROC fn = (MYPROC)GetProcAddress(hinstLib,name.c_str());
-    if(fn==0) errx(1,"GetProcAddress(%s) failed",name.c_str());
+    if(fn==0){
+        fprintf(stderr,"GetProcAddress(%s) failed",name.c_str());
+        exit(1);
+    }
 #endif
 
     feature_recorder_set fs(0);

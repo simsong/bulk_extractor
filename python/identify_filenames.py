@@ -27,14 +27,14 @@ except ImportError:
 
 __version__='1.4.0'
 
-import bisect,os
+import bisect, os, re
 
 class byterundb:
     """The byte run database holds a set of byte runs, sorted by the
     start byte. It can be searched to find the name of a file that
     corresponds to a byte run."""
     def __init__(self):
-        self.rary = []          # each element is (runstart,runend,fname,md5)
+        self.rary = []          # each element is (runstart,runend,(fileinfo))
         self.sorted = True      # whether or not sorted
     
     def __iter__(self):
@@ -44,11 +44,13 @@ class byterundb:
         for e in self.rary:
             print(e)
 
-    def add_extent(self,offset,length,fname,md5val):
-        self.rary.append((offset,offset+length,fname,md5val))
+    def add_extent(self,offset,length,fileinfo):
+        """Add the extent the array, but fix any invalid arguments"""
+        if type(offset)!=int or type(length)!=int: return
+        self.rary.append((offset,offset+length,fileinfo))
         self.sorted = False
 
-    def search(self,pos):
+    def search_offset(self,pos):
         """Return the touple associated with a offset"""
         if self.sorted==False:
             self.rary.sort()
@@ -78,11 +80,26 @@ class byterundb:
 
         return None
 
+
     def process_fi(self,fi):
         """Read an XML file and add each byte run to this database"""
+        def gval(x):
+            """Always return X as bytes"""
+            if x==None: return b''
+            if type(x)==bytes: return x
+            if type(x)!=str: x = str(x)
+            return x.encode('utf-8')
         for run in fi.byte_runs():
-            self.add_extent(run.img_offset,run.len,fi.filename(),fi.md5())
-            
+            try:
+                fname  = gval(fi.filename())
+                md5val = gval(fi.md5())
+                if args.mactimes:
+                    fileinfo = (fname, md5val, gval(fi.crtime()), gval(fi.ctime()), gval(fi.mtime()), gval(fi.atime()))
+                else:
+                    fileinfo = (fname, md5val)
+                self.add_extent(run.img_offset,run.len,fileinfo)
+            except TypeError as e:
+                pass
            
 class byterundb2:
     """Maintain two byte run databases, one for allocated files, one for unallocated files."""
@@ -101,21 +118,39 @@ class byterundb2:
             print("Processed %d fileobjects in DFXML file" % self.filecount)
 
     def read_xmlfile(self,fname):
+        print("Reading file map from XML file {}".format(fname))
+        fiwalk.fiwalk_using_sax(xmlfile=open(fname,'rb'),callback=self.process)
+
+    def read_imagefile(self,fname):
         if args.nohash:
-            fiwalk_args = "z"
+            fiwalk_args = "-z"
         else:
-            fiwalk_args = "zM"
-        if fname.endswith(".xml"):
-            fiwalk.fiwalk_using_sax(xmlfile=open(fname,'rb'),callback=self.process,fiwalk_args=fiwalk_args)
-        else:
-            fiwalk.fiwalk_using_sax(imagefile=open(fname,'rb'),callback=self.process,fiwalk_args=fiwalk_args)
+            fiwalk_args = "-zM"
+        print("Reading file map by running fiwalk on {}".format(fname))
+        fiwalk.fiwalk_using_sax(imagefile=open(fname,'rb'),callback=self.process,fiwalk_args=fiwalk_args)
+
     
-    def search(self,offset):
+    def search_offset(self,offset):
         """First search the allocated. If there is nothing, search unallocated"""
-        r = self.allocated.search(offset)
+        r = self.allocated.search_offset(offset)
         if not r:
-            r = self.unallocated.search(offset)
+            r = self.unallocated.search_offset(offset)
         return r
+
+    def path_to_offset(self,offset):
+        """If the path has an XOR transformation, add the offset within
+        the XOR to the initial offset. Otherwise don't. Return the integer
+        value of the offset."""
+        m = xor_re.search(offset)
+        if m:
+            return int(m.group(1))+int(m.group(2))
+        negloc = offset.find(b"-")
+        if negloc==-1:
+            return int(offset)
+        return int(offset[0:negloc])
+    
+    def search_path(self,path):
+        return self.search_offset(self.path_to_offset(path))
 
     def dump(self):
         print("Allocated:")
@@ -124,67 +159,82 @@ class byterundb2:
         self.unallocated.dump()
             
 
+xor_re = re.compile(b"^(\\d+)\\-XOR\\-(\\d+)")
+
+def cmd_line():
+    "Return the binary value of the command that envoked this program "
+    import sys
+    return b''.join([s.encode('latin1') for s in sys.argv])
+
 def process_featurefile2(rundb,infile,outfile):
     """Returns features from infile, determines the file for each, writes results to outfile"""
     # Stats
     unallocated_count = 0
     feature_count = 0
-    features_compressed = 0
+    features_encoded = 0
     located_count = 0
 
-    if args.terse:
-        outfile.write(b"# Position\tFeature\tFilename\n")
-    else:
-        outfile.write(b"# Position\tFeature\tContext\tFilename\tFile MD5\n")
+    
+    outfile.write(b"# Position\tFeature")
+    if not args.terse:
+        outfile.write(b"\tContext")
+    if not args.nohash:
+        outfile.write(b"\tMD5")
+    if args.mactimes:
+        outfile.write(b"\tcrtime\tctime\tmtime\tatime")
+    outfile.write(b"\n")
+    outfile.write(b"# " + cmd_line() + b"\n")
     t0 = time.time()
+    linenumber = 0
     for line in infile:
+        linenumber += 1
         if bulk_extractor_reader.is_comment_line(line):
             outfile.write(line)
             continue
-        (offset,feature,context) = line[:-1].split(b'\t')
+        try:
+            (path,feature,context) = line[:-1].split(b'\t')
+        except ValueError as e:
+            print(e)
+            print("Offending line {}:".format(linenumber),line[:-1])
+            continue
         feature_count += 1
-        dash_pos = offset.find(b'-')
-        if dash_pos>=0:
-            ioffset = int(offset[0:dash_pos])
-            features_compressed += 1
-        else:
-            ioffset = int(offset)
-        tpl = rundb.search(ioffset)
-        if tpl:
-            located_count += 1
-            fname = tpl[2].encode('utf-8') # THIS MIGHT GENERATE A UNICODE ERROR
-            if tpl[3]:
-                md5val = tpl[3].encode('utf-8')
-            else:
-                md5val = b""
-        else:
-            unallocated_count += 1
-            fname = b""
-            md5val = b""
-        outfile.write(offset)
+
+        # Increment counter if this feature was encoded
+        if b"-" in path:
+            features_encoded += 1
+        
+        # Search for feature in database
+        tpl = rundb.search_path(path)
+
+        # Output to annotated feature file
+        outfile.write(path)
         outfile.write(b'\t')
         outfile.write(feature)
         if not args.terse:
             outfile.write(b'\t')
             outfile.write(context)
-        outfile.write(b'\t')
-        outfile.write(fname)
-        if not args.terse:
+
+        # If we found the data, output that
+        if tpl:
+            located_count += 1
             outfile.write(b'\t')
-            outfile.write(md5val)
+            outfile.write(b'\t'.join(tpl[2])) # just the file info
+        else:
+            unallocated_count += 1
         outfile.write(b'\n')
     t1 = time.time()
     for (title,value) in [["# Total features input: {}",feature_count],
                           ["# Total features located to files: {}",located_count],
                           ["# Total features in unallocated space: {}",unallocated_count],
-                          ["# Total features in compressed regions: {}",features_compressed],
+                          ["# Total features in encoded regions: {}",features_encoded],
                           ["# Total processing time: {:.2} seconds",t1-t0]]:
         outfile.write((title+"\n").format(value).encode('utf-8'))
+    return (feature_count,located_count)
 
 
 
 if __name__=="__main__":
-    import sys, time, re
+    import sys, time
 
     try:
         if dfxml.__version__ < "1.0.0":
@@ -208,7 +258,7 @@ if __name__=="__main__":
     parser.add_argument('--featurefiles', action='store',
                         help='Specific feature file to process; separate with commas')
     parser.add_argument('--imagefile', action='store',
-                        help='Overwrite location of image file from bulk_extractor output')
+                        help='Overwrite location of image file from bulk_extractor_output report.xml file')
     parser.add_argument('--xmlfile', action='store',
                         help="Don't run fiwalk; use the provided XML file instead")
     parser.add_argument('--list', action='store_true',
@@ -223,10 +273,36 @@ if __name__=="__main__":
                         help='Verbose mode')
     parser.add_argument('--debug', action='store_true',
                         help='Debug mode')
+    parser.add_argument('--noxmlfile', action='store_true', 
+                        help="Don't run fiwalk; don't use XML file. Just read the feature files (for testing)")
+    parser.add_argument('--mactimes',action='store_true',
+                        help="Include mactimes in annotated feature file")
+    parser.add_argument('--path', action='store', help="Just locate path and exit. Only needs XML file, disk image, or bulk_extractor output")
+
     args = parser.parse_args()
 
     # Start the timer used to calculate the total run time
     t0 = time.time()
+
+    rundb = byterundb2()
+    def read_filemap():
+        if args.xmlfile:
+            rundb.read_xmlfile(args.xmlfile)
+        elif args.imagefile:
+            rundb.read_imagefile(args.imagefile)
+        else:
+            rundb.read_imagefile(bulk_extractor_reader.BulkReport(args.bulk_extractor_output).imagefile())
+
+    if args.path:
+        read_filemap()
+        print("Locating {}: ".format(args.path))
+        res = rundb.search_path(args.path.encode('utf-8'))
+        if res:
+            print("Start:     {}\nLength:    {}\nFile Name: {}\nFile MD5:  {}".format(res[0],res[1],res[2],res[3]))
+        else:
+            print("NOT FOUND")
+        exit(0)
+        
 
     # Open the report
     report = bulk_extractor_reader.BulkReport(args.bulk_extractor_output)
@@ -237,29 +313,44 @@ if __name__=="__main__":
             print(fn)
         exit(1)
 
+
+    # Make sure that the user has specified feature files
+    if not args.featurefiles and not args.all:
+        raise RuntimeError("Please request a specific feature file or --all feature files")
+
+    # Read the file map
+    if args.noxmlfile:
+        print("TESTING --- will not read XML File");
+    else:
+        read_filemap()
+
+    # Make the output directory if needed
     if not os.path.exists(args.outdir):
         os.mkdir(args.outdir)
 
     if not os.path.isdir(args.outdir):
         raise RuntimeError(args.outdir+" must be a directory")
 
-    if not args.featurefiles and not args.all:
-        raise RuntimeError("Please request a specific feature file or --all feature files")
-
-    rundb = byterundb2()
-    rundb.read_xmlfile(args.xmlfile)
-
+    # Process each feature file
     feature_file_list = None
     if args.featurefiles:
         feature_file_list = args.featurefiles.split(",")
     if args.all:
         feature_file_list = report.feature_files()
 
+    total_features = 0
+    total_located  = 0
     for feature_file in feature_file_list:
         output_fn = os.path.join(args.outdir,("annotated_" + feature_file ))
         if os.path.exists(output_fn):
             raise RuntimeError(output_fn+" exists")
         print("feature_file:",feature_file)
-        process_featurefile2(rundb,report.open(feature_file,mode='rb'),open(output_fn,"wb"))
+        (feature_count,located_count) = process_featurefile2(rundb,report.open(feature_file,mode='rb'),open(output_fn,"wb"))
+        total_features += feature_count
+        total_located  += located_count
+    print("******************************")
+    print("** Total Features: {:8} **".format(total_features))
+    print("** Total Located:  {:8} **".format(total_features))
+    print("******************************")
 
 

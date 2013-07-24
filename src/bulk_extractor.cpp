@@ -5,9 +5,9 @@
  */
 
 #include "bulk_extractor.h"
-#include "aftimer.h"
 #include "image_process.h"
 #include "threadpool.h"
+#include "aftimer.h"
 #include "histogram.h"
 #include "dfxml/src/dfxml_writer.h"
 #include "dfxml/src/hash_t.h"
@@ -926,7 +926,7 @@ int main(int argc,char **argv)
 
     be13::plugin::load_scanner_directories(scanner_dirs,be_config);
     be13::plugin::load_scanners(scanners_builtin,be_config); 
-    be13::plugin::scanners_process_commands();
+    be13::plugin::scanners_process_enable_disable_commands();
 
     /* Print usage if necessary */
     if(opt_H){ be13::plugin::info_scanners(true,true,scanners_builtin,'e','x'); exit(0);}
@@ -982,6 +982,11 @@ int main(int argc,char **argv)
     image_process *p = 0;
     std::string image_fname = *argv;
 
+    if(opt_outdir.size()==0){
+        fprintf(stderr,"output directory not provided\n");
+        exit(1);
+    }
+
     if(directory_missing(opt_outdir) || directory_empty(opt_outdir)){
         /* First time running */
 	/* Validate the args */
@@ -1017,6 +1022,7 @@ int main(int argc,char **argv)
     feature_recorder_set::get_alert_recorder_name(feature_file_names);
     be13::plugin::get_scanner_feature_file_names(feature_file_names);
     feature_recorder_set fs(feature_file_names,image_fname,opt_outdir,stop_list.size()>0);
+    be13::plugin::scanners_init(&fs);
 
     /* Look for commands that impact per-recorders */
     for(scanner_info::config_t::const_iterator it=be_config.namevals.begin();it!=be_config.namevals.end();it++){

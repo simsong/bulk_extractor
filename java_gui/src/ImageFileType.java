@@ -43,7 +43,7 @@ public class ImageFileType {
     String filename = file.getName();
     int length = suffixArray.length;
     for (int i=0; i< length; i++) {
-      if (filename.endsWith(suffixArray[i])) {
+      if (filename.toLowerCase().endsWith(suffixArray[i].toLowerCase())) {
         return true;
       }
     }
