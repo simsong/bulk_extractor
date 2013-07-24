@@ -15,7 +15,7 @@ mingw32 and 64.  Please perform the following steps:
         http://fedoraproject.org/en/get-fedora-options#formats
    1b - Create a new VM using this ISO as the boot.
        
-2. Plese put this CONFIGURE_F18.sh script in you home directory.
+2. Plese put this CONFIGURE_F18.bash script in you home directory.
 
 3. Run this script to configure the system to cross-compile bulk_extractor.
    Parts of this script will be run as root using "sudo".
