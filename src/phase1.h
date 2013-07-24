@@ -18,8 +18,8 @@ public:
     /* configuration for phase1 */
     struct Config {
         Config():
-            opt_page_size(1024*1024*16),
-            opt_margin(1024*1024*4),
+            opt_pagesize(1024*1024*16),
+            opt_marginsize(1024*1024*4),
             max_bad_alloc_errors(60),
             opt_notify_rate(4),
             opt_page_start(0),
@@ -32,8 +32,8 @@ public:
             sampling_fraction(1.0),
             sampling_passes(1){}
                  
-        size_t opt_page_size;
-        size_t opt_margin;
+        size_t opt_pagesize;
+        size_t opt_marginsize;
         uint32_t max_bad_alloc_errors;
         uint32_t opt_notify_rate;		// by default, notify every 4 pages
         uint64_t opt_page_start;
@@ -47,8 +47,8 @@ public:
         u_int  sampling_passes;
 
         void validate(){
-            if(opt_offset_start % opt_page_size != 0) errx(1,"ERROR: start offset must be a multiple of the page size\n");
-            if(opt_offset_end % opt_page_size != 0) errx(1,"ERROR: end offset must be a multiple of the page size\n");
+            if(opt_offset_start % opt_pagesize != 0) errx(1,"ERROR: start offset must be a multiple of the page size\n");
+            if(opt_offset_end % opt_pagesize != 0) errx(1,"ERROR: end offset must be a multiple of the page size\n");
         };
     };
 private:
