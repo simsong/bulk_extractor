@@ -1,5 +1,18 @@
+----------------------------------------
+New in Version 1.4:
+Updated the Run bulk_extractor interface:
+  * Changed interface to reflect current bulk_extractor commands.
+  * Changed scanner list to include scanners from plugin directory.
+  * Changed default number of threads to indicate threads available to JVM.
 
-COMPLETED:
+The selected Feature now is adjustable using the up/down scroll arrows.
+
+The file type filter for Image files is no longer case-sensitive.
+
+Doxygen documentation is now buildable under directory src/doxygen.
+
+----------------------------------------
+COMPLETED for Version 1.3:
 
 Check for timing issue when scanners list fails to show.
 Fixed: Poll aborted in 200ms.  Changed poll to abort in 5s.

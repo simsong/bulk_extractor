@@ -73,12 +73,26 @@ public class BasicFeaturesUI extends FeaturesUI implements MouseListener, MouseM
     featuresComponent.addKeyListener(new KeyListener() {
       public void keyPressed(KeyEvent e) {
         // no action
+        // ignore request if not active
+        if (selectedLine <0) {
+          // no action
+        }
+
+        if (e.getKeyText(e.getKeyCode()) == "Up") {
+          selectLine(selectedLine - 1);
+        } else if (e.getKeyText(e.getKeyCode()) == "Down") {
+          selectLine(selectedLine + 1);
+        }
       }
+
+      // arror keys are action keys and thus do not generate keyTyped events
       public void keyReleased(KeyEvent e) {
         // no action
       }
+
+      // actions for keystrokes
       public void keyTyped(KeyEvent e) {
-        // actions are defined for keystrokes, currently juste ESCAPE
+        // escape
         if (e.getKeyChar() == KeyEvent.VK_ESCAPE) {
           // for ESCAPE deselect range if range is selected
           if (rangeSelectionManager.getProvider() == featuresModel) {
@@ -377,6 +391,38 @@ public class BasicFeaturesUI extends FeaturesUI implements MouseListener, MouseM
     }
   }
 
+  // select the specified line
+  private void selectLine(int line) {
+
+    // ignore request if out of range
+    if (line < 0 || line >= featuresModel.getTotalLines()) {
+      return;
+    }
+
+    // select the requested line
+    selectedLine = line;
+
+    // action depends on feature model type: FEATURES or HISTOGRAM
+    FeaturesModel.ModelRole modelRole = featuresModel.getModelRole();
+    if (modelRole == FeaturesModel.ModelRole.FEATURES_ROLE) {
+
+      // set the feature selection
+      BEViewer.featureLineSelectionManager.setFeatureLineSelection(
+                                         featuresModel.getFeatureLine(selectedLine));
+
+    } else if (modelRole == FeaturesModel.ModelRole.HISTOGRAM_ROLE) {
+
+      // filter the histogram features model by the feature field
+      byte[] matchableFeature = featuresModel.getFeatureLine(selectedLine).getFeatureField();
+      BEViewer.referencedFeaturesModel.setFilterBytes(matchableFeature);
+    } else {
+      throw new RuntimeException("Invalid type");
+    }
+
+    // repaint to show view of changed model
+    featuresComponent.repaint();
+  }
+    
   /**
    * Selects the address line if the cursor is hovering over a valid address.
    * @param e the mouse event
@@ -384,27 +430,7 @@ public class BasicFeaturesUI extends FeaturesUI implements MouseListener, MouseM
   public void mouseClicked(MouseEvent e) {
     // perform a feature line selection operation if hovering over a selectable feature line
     if (mouseDownLine >= 0) {
-      selectedLine = mouseDownLine;
-
-      // action depends on feature model type: FEATURES or HISTOGRAM
-      FeaturesModel.ModelRole modelRole = featuresModel.getModelRole();
-      if (modelRole == FeaturesModel.ModelRole.FEATURES_ROLE) {
-
-        // set the feature selection
-        BEViewer.featureLineSelectionManager.setFeatureLineSelection(
-                                           featuresModel.getFeatureLine(selectedLine));
-
-      } else if (modelRole == FeaturesModel.ModelRole.HISTOGRAM_ROLE) {
-
-        // filter the histogram features model by the feature field
-        byte[] matchableFeature = featuresModel.getFeatureLine(selectedLine).getFeatureField();
-        BEViewer.referencedFeaturesModel.setFilterBytes(matchableFeature);
-      } else {
-        throw new RuntimeException("Invalid type");
-      }
-
-      // repaint to show view of changed model
-      featuresComponent.repaint();
+      selectLine(mouseDownLine);
     }
   }
 

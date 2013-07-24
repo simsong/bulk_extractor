@@ -45,7 +45,7 @@ public:
 	 * Otherwise its is some pattern we don't want.
 	 */
 	std::set<uint16_t> ctr;
-	for(uint i=0;i<6;i++){	/* loop for each group of numbers */
+	for(uint32_t i=0;i<6;i++){	/* loop for each group of numbers */
             u_char ch1 = (*sbuf)[pos+i*3];
             u_char ch2 = (*sbuf)[pos+i*3+1];
             uint16_t val = (ch1<<8) + (ch2); /* create a value of the two characters (it's not */

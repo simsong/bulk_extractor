@@ -5,9 +5,9 @@
  */
 
 #include "bulk_extractor.h"
-#include "aftimer.h"
 #include "image_process.h"
 #include "threadpool.h"
+#include "aftimer.h"
 #include "histogram.h"
 #include "dfxml/src/dfxml_writer.h"
 #include "dfxml/src/hash_t.h"
