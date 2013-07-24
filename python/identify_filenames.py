@@ -101,10 +101,14 @@ class byterundb2:
             print("Processed %d fileobjects in DFXML file" % self.filecount)
 
     def read_xmlfile(self,fname):
-        if fname.endswith(".xml"):
-            fiwalk.fiwalk_using_sax(xmlfile=open(fname,'rb'),callback=self.process)
+        if args.nohash:
+            fiwalk_args = "z"
         else:
-            fiwalk.fiwalk_using_sax(imagefile=open(fname,'rb'),callback=self.process)
+            fiwalk_args = "zM"
+        if fname.endswith(".xml"):
+            fiwalk.fiwalk_using_sax(xmlfile=open(fname,'rb'),callback=self.process,fiwalk_args=fiwalk_args)
+        else:
+            fiwalk.fiwalk_using_sax(imagefile=open(fname,'rb'),callback=self.process,fiwalk_args=fiwalk_args)
     
     def search(self,offset):
         """First search the allocated. If there is nothing, search unallocated"""
@@ -209,6 +213,8 @@ if __name__=="__main__":
                         help="Don't run fiwalk; use the provided XML file instead")
     parser.add_argument('--list', action='store_true',
                         help='List feature files in bulk_extractor_output and exit')
+    parser.add_argument('--nohash',action='store_true',
+                        help='Do not calculate MD5 or SHA1 when running fiwalk')
     parser.add_argument('-t', dest='terse', action='store_true',
                         help='Terse output')
     parser.add_argument('-v', action='version', version='%(prog)s version '+__version__,

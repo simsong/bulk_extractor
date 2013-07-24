@@ -92,9 +92,9 @@ def E01_glob(fn):
     return ret
 
 
-def fiwalk_xml_stream(imagefile=None,flags=0,fiwalk="fiwalk"):
+def fiwalk_xml_stream(imagefile=None,flags=0,fiwalk="fiwalk",fiwalk_args=""):
     """ Returns an fiwalk XML stream given a disk image by running fiwalk."""
-    fiwalk_args = "-x"
+    fiwalk_args += "-x"
     if flags & ALLOC_ONLY: fiwalk_args += "O"
     from subprocess import call,Popen,PIPE
     # Make sure we have a valid fiwalk
@@ -102,15 +102,16 @@ def fiwalk_xml_stream(imagefile=None,flags=0,fiwalk="fiwalk"):
         res = Popen([fiwalk,'-V'],stdout=PIPE).communicate()[0]
     except OSError:
         raise RuntimeError("Cannot execute fiwalk executable: "+fiwalk)
-    p = Popen([fiwalk,fiwalk_args] + E01_glob(imagefile.name),stdout=PIPE)
+    cmd = [fiwalk,fiwalk_args] + fiwalk_options
+    p = Popen(cmd + E01_glob(imagefile.name),stdout=PIPE)
     return p.stdout
 
-def fiwalk_using_sax(imagefile=None,xmlfile=None,fiwalk="fiwalk",flags=0,callback=None):
+def fiwalk_using_sax(imagefile=None,xmlfile=None,fiwalk="fiwalk",flags=0,callback=None,fiwalk_args=""):
     """Processes an image using expat, calling a callback for every file object encountered.
     If xmlfile is provided, use that as the xmlfile, otherwise runs fiwalk."""
     import dfxml
     if xmlfile==None:
-        xmlfile = fiwalk_xml_stream(imagefile=imagefile,flags=flags,fiwalk=fiwalk)
+        xmlfile = fiwalk_xml_stream(imagefile=imagefile,flags=flags,fiwalk=fiwalk,fiwalk_args=fiwalk_args)
     r = dfxml.fileobject_reader(flags=flags)
     r.imagefile = imagefile
     r.process_xml_stream(xmlfile,callback)
