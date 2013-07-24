@@ -115,9 +115,9 @@ function build_mingw {
     if [ ! -r $FILE ]; then
        wget $URL/$FILE
     fi
-    tar xfvz $FILE
+    tar xvf $FILE
     # Now get the directory that it unpacked into
-    DIR=`tar tfz $FILE |head -1`
+    DIR=`tar tf $FILE |head -1`
     pushd $DIR
     for i in 32 64 ; do
       echo
@@ -152,11 +152,11 @@ else
   if [ ! -r $ICUFILE ]; then
     wget $ICUURL
   fi
-  tar xzf $ICUFILE
+  tar xf $ICUFILE
   patch -p1 < icu-mingw32-libprefix.patch
   patch -p1 < icu-mingw64-libprefix.patch
   
-  ICUDIR=`tar tfz $ICUFILE|head -1`
+  ICUDIR=`tar tf $ICUFILE|head -1`
   # build ICU for Linux to get packaging tools used by MinGW builds
   echo
   echo icu linux
@@ -202,13 +202,13 @@ else
   if [ ! -r $ZMQFILE ]; then
     wget $ZMQURL
   fi
-  tar xzf $ZMQFILE
+  tar xf $ZMQFILE
   patch -p1 <zmq-configure.patch
   patch -p1 <zmq-configure.in.patch
   patch -p1 <zmq-zmq.h.patch
   patch -p1 <zmq-zmq_utils.h.patch
   
-  ZMQDIR=`tar tfz $ZMQFILE|head -1`
+  ZMQDIR=`tar tf $ZMQFILE|head -1`
   
   # build 32- and 64-bit ZMQ for MinGW
   pushd $ZMQDIR
