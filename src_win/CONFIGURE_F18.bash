@@ -111,9 +111,9 @@ function build_mingw {
   then
     echo $LIB already installed. Skipping
   else
-    echo Building $1 from $URL/$FILE
+    echo Building $1 from $URL
     if [ ! -r $FILE ]; then
-       wget $URL/$FILE
+       wget --content-disposition $URL
     fi
     tar xvf $FILE
     # Now get the directory that it unpacked into
@@ -122,6 +122,9 @@ function build_mingw {
     for i in 32 64 ; do
       echo
       echo %%% $LIB mingw$i
+      if [ ! -r configure -a -r bootstrap.sh ]; then
+        . bootstrap.sh
+      fi
       mingw$i-configure --enable-static --disable-shared
       make
       sudo make install
@@ -132,8 +135,8 @@ function build_mingw {
   fi
 }
 
-build_mingw libtre   http://laurikari.net/tre/   tre-0.8.0.tar.gz
-build_mingw libewf   https://googledrive.com/host/0B3fBvzttpiiSMTdoaVExWWNsRjg   libewf-20130416.tar.gz
+build_mingw libtre   http://laurikari.net/tre/tre-0.8.0.tar.gz   tre-0.8.0.tar.gz
+build_mingw libewf   https://googledrive.com/host/0B3fBvzttpiiSMTdoaVExWWNsRjg/libewf-20130416.tar.gz   libewf-20130416.tar.gz
 
 #
 # ICU requires patching and a special build sequence
@@ -188,6 +191,12 @@ else
 fi
 
 #
+# build liblightgrep
+#
+
+build_mingw liblightgrep   https://github.com/LightboxTech/liblightgrep/archive/v1.2.0.tar.gz   liblightgrep-1.2.0.tar.gz
+
+#
 # ZMQ requires patching
 #
 
@@ -225,37 +234,8 @@ else
 fi
 
 #
-# Lightgrep is currently built from github, which I don't like
-#
-
-if is_installed liblightgrep
-then
-  echo liblightgrep is already installed
-else
-  echo "Building and installing lightgrep for mingw"
-  LGDIR=liblightgrep
-  LGURL=git://github.com/LightboxTech/liblightgrep.git
-  
-  git clone --recursive $LGURL $LGDIR
-  pushd $LGDIR
-  autoreconf -i
-  for i in 32 64 ; do
-    echo
-    echo liblightgrep mingw$i
-    mingw$i-configure --enable-static --disable-shared
-    make
-    sudo make install
-    make clean
-  done
-  popd
-  echo "liblightgrep mingw installation complete."
-  rm -rf $LGDIR
-fi
-
 #
 #
-#
-
 
 echo ...
 echo 'Now running ../bootstrap.sh and configure'
