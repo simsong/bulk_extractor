@@ -15,7 +15,7 @@ mingw32 and 64.  Please perform the following steps:
         http://fedoraproject.org/en/get-fedora-options#formats
    1b - Create a new VM using this ISO as the boot.
        
-2. Plese put this CONFIGURE_F17.sh script in you home directory.
+2. Plese put this CONFIGURE_F18.bash script in you home directory.
 
 3. Run this script to configure the system to cross-compile bulk_extractor.
    Parts of this script will be run as root using "sudo".
@@ -111,17 +111,20 @@ function build_mingw {
   then
     echo $LIB already installed. Skipping
   else
-    echo Building $1 from $URL/$FILE
+    echo Building $1 from $URL
     if [ ! -r $FILE ]; then
-       wget $URL/$FILE
+       wget --content-disposition $URL
     fi
-    tar xfvz $FILE
+    tar xvf $FILE
     # Now get the directory that it unpacked into
-    DIR=`tar tfz $FILE |head -1`
+    DIR=`tar tf $FILE |head -1`
     pushd $DIR
     for i in 32 64 ; do
       echo
       echo %%% $LIB mingw$i
+      if [ ! -r configure -a -r bootstrap.sh ]; then
+        . bootstrap.sh
+      fi
       mingw$i-configure --enable-static --disable-shared
       make
       sudo make install
@@ -132,8 +135,8 @@ function build_mingw {
   fi
 }
 
-build_mingw libtre   http://laurikari.net/tre/   tre-0.8.0.tar.gz
-build_mingw libewf   https://googledrive.com/host/0B3fBvzttpiiSMTdoaVExWWNsRjg   libewf-20130416.tar.gz
+build_mingw libtre   http://laurikari.net/tre/tre-0.8.0.tar.gz   tre-0.8.0.tar.gz
+build_mingw libewf   https://googledrive.com/host/0B3fBvzttpiiSMTdoaVExWWNsRjg/libewf-20130416.tar.gz   libewf-20130416.tar.gz
 
 #
 # ICU requires patching and a special build sequence
@@ -152,11 +155,11 @@ else
   if [ ! -r $ICUFILE ]; then
     wget $ICUURL
   fi
-  tar xzf $ICUFILE
+  tar xf $ICUFILE
   patch -p1 < icu-mingw32-libprefix.patch
   patch -p1 < icu-mingw64-libprefix.patch
   
-  ICUDIR=`tar tfz $ICUFILE|head -1`
+  ICUDIR=`tar tf $ICUFILE|head -1`
   # build ICU for Linux to get packaging tools used by MinGW builds
   echo
   echo icu linux
@@ -188,6 +191,12 @@ else
 fi
 
 #
+# build liblightgrep
+#
+
+build_mingw liblightgrep   https://github.com/LightboxTech/liblightgrep/archive/v1.2.0.tar.gz   liblightgrep-1.2.0.tar.gz
+
+#
 # ZMQ requires patching
 #
 
@@ -202,13 +211,13 @@ else
   if [ ! -r $ZMQFILE ]; then
     wget $ZMQURL
   fi
-  tar xzf $ZMQFILE
+  tar xf $ZMQFILE
   patch -p1 <zmq-configure.patch
   patch -p1 <zmq-configure.in.patch
   patch -p1 <zmq-zmq.h.patch
   patch -p1 <zmq-zmq_utils.h.patch
   
-  ZMQDIR=`tar tfz $ZMQFILE|head -1`
+  ZMQDIR=`tar tf $ZMQFILE|head -1`
   
   # build 32- and 64-bit ZMQ for MinGW
   pushd $ZMQDIR
@@ -225,37 +234,8 @@ else
 fi
 
 #
-# Lightgrep is currently built from github, which I don't like
-#
-
-if is_installed liblightgrep
-then
-  echo liblightgrep is already installed
-else
-  echo "Building and installing lightgrep for mingw"
-  LGDIR=liblightgrep
-  LGURL=git://github.com/LightboxTech/liblightgrep.git
-  
-  git clone --recursive $LGURL $LGDIR
-  pushd $LGDIR
-  autoreconf -i
-  for i in 32 64 ; do
-    echo
-    echo liblightgrep mingw$i
-    mingw$i-configure --enable-static --disable-shared
-    make
-    sudo make install
-    make clean
-  done
-  popd
-  echo "liblightgrep mingw installation complete."
-  rm -rf $LGDIR
-fi
-
 #
 #
-#
-
 
 echo ...
 echo 'Now running ../bootstrap.sh and configure'
