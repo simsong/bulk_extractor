@@ -92,7 +92,6 @@ $(srcdir)/src/WScanBoxedScanners.java \
 $(srcdir)/src/WScanBoxedTuning.java \
 $(srcdir)/src/WScan.java \
 $(srcdir)/src/WScanProgress.java \
-$(srcdir)/src/WSelectOutputDirectory.java \
 $(srcdir)/src/WTest.java \
 $(srcdir)/src/WURL.java \
 $(srcdir)/src/image/BulkExtractorFileReader.java \

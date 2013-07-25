@@ -106,6 +106,7 @@ public class WScanProgress extends JDialog {
 
       } catch (IOException e) {
         // alert and abort
+        statusArea.append("Error: The bulk_extractor process failed to start.\n");
         WError.showError("bulk_extractor Scanner failed to start.",
                          "bulk_extractor failure", e);
         return;

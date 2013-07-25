@@ -78,3 +78,4 @@ java_gui/doc/doxygen/html
 BEProgrammersManual.pdf
 *.toc
 *.aux
+src_win/*.exe
