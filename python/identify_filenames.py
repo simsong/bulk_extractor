@@ -306,6 +306,10 @@ if __name__=="__main__":
         feature_file_list = args.featurefiles.split(",")
     if args.all:
         feature_file_list = report.feature_files()
+        try:
+            feature_file_list.remove("tcp.txt") # not needed
+        except ValueError:
+            pass
 
     total_features = 0
     total_located  = 0
