@@ -68,7 +68,7 @@ private:
 	}
     };
     image_process(const image_process &ip) __attribute__((__noreturn__))
-    :image_fname_(),page_size(),margin(){throw new not_impl();}
+    :image_fname_(),pagesize(),margin(){throw new not_impl();}
     const image_process &operator=(const image_process &ip){throw new not_impl();}
     /****************************************************************/
     const string image_fname_;			/* image filename */
@@ -78,8 +78,8 @@ public:
      * returns an object.
      */
     static image_process *open(string fn,bool recurse,
-                               size_t opt_page_size,size_t opt_margin);
-    const size_t page_size;                    // page size we are using
+                               size_t opt_pagesize,size_t opt_margin);
+    const size_t pagesize;                    // page size we are using
     const size_t margin;                      // margin size we are using
 
     class read_error: public exception {
@@ -121,7 +121,7 @@ public:
 	uint64_t seek_block(uint64_t block) { return myimage.seek_block(*this,block);} // returns block number 
     };
 
-    image_process(const std::string &fn,size_t page_size_,size_t margin_):image_fname_(fn),page_size(page_size_),margin(margin_){}
+    image_process(const std::string &fn,size_t pagesize_,size_t margin_):image_fname_(fn),pagesize(pagesize_),margin(margin_){}
     virtual ~image_process(){};
 
     /* image support */
@@ -175,7 +175,7 @@ class process_aff : public image_process {
     mutable AFFILE *af;
     vector<int64_t> pagelist;
 public:
-    process_aff(string fname,size_t page_size_,size_t margin_) : image_process(fname,page_size_,margin_),af(0),pagelist(){}
+    process_aff(string fname,size_t pagesize_,size_t margin_) : image_process(fname,pagesize_,margin_),af(0),pagelist(){}
     virtual ~process_aff();
 
     virtual image_process::iterator begin();
@@ -232,7 +232,7 @@ class process_ewf : public image_process {
     static int debug;
 
  public:
-    process_ewf(string fname,size_t page_size_,size_t margin_) : image_process(fname,page_size_,margin_), ewf_filesize(0), details() ,handle(0) {}
+    process_ewf(string fname,size_t pagesize_,size_t margin_) : image_process(fname,pagesize_,margin_), ewf_filesize(0), details() ,handle(0) {}
     virtual ~process_ewf();
     vector<string> getewfdetails();
     int open();
@@ -276,7 +276,7 @@ class process_raw : public image_process {
     mutable int current_fd;			/* currently open file */
 #endif
 public:
-    process_raw(string image_fname,size_t page_size,size_t margin);
+    process_raw(string image_fname,size_t pagesize,size_t margin);
     virtual ~process_raw();
     virtual int open();
     virtual int pread(uint8_t *,size_t bytes,int64_t offset) const;	    /* read */

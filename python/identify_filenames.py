@@ -34,7 +34,7 @@ class byterundb:
     start byte. It can be searched to find the name of a file that
     corresponds to a byte run."""
     def __init__(self):
-        self.rary = []          # each element is (runstart,runend,fname,md5)
+        self.rary = []          # each element is (runstart,runend,(fileinfo))
         self.sorted = True      # whether or not sorted
     
     def __iter__(self):
@@ -44,8 +44,10 @@ class byterundb:
         for e in self.rary:
             print(e)
 
-    def add_extent(self,offset,length,fname,md5val):
-        self.rary.append((offset,offset+length,fname,md5val))
+    def add_extent(self,offset,length,fileinfo):
+        """Add the extent the array, but fix any invalid arguments"""
+        if type(offset)!=int or type(length)!=int: return
+        self.rary.append((offset,offset+length,fileinfo))
         self.sorted = False
 
     def search_offset(self,pos):
@@ -78,14 +80,26 @@ class byterundb:
 
         return None
 
+
     def process_fi(self,fi):
         """Read an XML file and add each byte run to this database"""
+        def gval(x):
+            """Always return X as bytes"""
+            if x==None: return b''
+            if type(x)==bytes: return x
+            if type(x)!=str: x = str(x)
+            return x.encode('utf-8')
         for run in fi.byte_runs():
             try:
-                self.add_extent(run.img_offset,run.len,fi.filename(),fi.md5())
+                fname  = gval(fi.filename())
+                md5val = gval(fi.md5())
+                if args.mactimes:
+                    fileinfo = (fname, md5val, gval(fi.crtime()), gval(fi.ctime()), gval(fi.mtime()), gval(fi.atime()))
+                else:
+                    fileinfo = (fname, md5val)
+                self.add_extent(run.img_offset,run.len,fileinfo)
             except TypeError as e:
                 pass
-            
            
 class byterundb2:
     """Maintain two byte run databases, one for allocated files, one for unallocated files."""
@@ -108,8 +122,13 @@ class byterundb2:
         fiwalk.fiwalk_using_sax(xmlfile=open(fname,'rb'),callback=self.process)
 
     def read_imagefile(self,fname):
+        if args.nohash:
+            fiwalk_args = "-z"
+        else:
+            fiwalk_args = "-zM"
         print("Reading file map by running fiwalk on {}".format(fname))
-        fiwalk.fiwalk_using_sax(imagefile=open(fname,'rb'),callback=self.process)
+        fiwalk.fiwalk_using_sax(imagefile=open(fname,'rb'),callback=self.process,fiwalk_args=fiwalk_args)
+
     
     def search_offset(self,offset):
         """First search the allocated. If there is nothing, search unallocated"""
@@ -155,12 +174,16 @@ def process_featurefile2(rundb,infile,outfile):
     features_encoded = 0
     located_count = 0
 
-    if args.terse:
-        outfile.write(b"# Position\tFeature\tFilename\n")
-        outfile.write(b"# " + cmd_line() + b"\n")
-    else:
-        outfile.write(b"# Position\tFeature\tContext\tFilename\tFile MD5\n")
-        outfile.write(b"# " + cmd_line() + b"\n")
+    
+    outfile.write(b"# Position\tFeature")
+    if not args.terse:
+        outfile.write(b"\tContext")
+    if not args.nohash:
+        outfile.write(b"\tMD5")
+    if args.mactimes:
+        outfile.write(b"\tcrtime\tctime\tmtime\tatime")
+    outfile.write(b"\n")
+    outfile.write(b"# " + cmd_line() + b"\n")
     t0 = time.time()
     linenumber = 0
     for line in infile:
@@ -175,31 +198,29 @@ def process_featurefile2(rundb,infile,outfile):
             print("Offending line {}:".format(linenumber),line[:-1])
             continue
         feature_count += 1
+
+        # Increment counter if this feature was encoded
         if b"-" in path:
             features_encoded += 1
+        
+        # Search for feature in database
         tpl = rundb.search_path(path)
-        if tpl:
-            located_count += 1
-            fname = tpl[2].encode('utf-8') # THIS MIGHT GENERATE A UNICODE ERROR
-            if tpl[3]:
-                md5val = tpl[3].encode('utf-8')
-            else:
-                md5val = b""
-        else:
-            unallocated_count += 1
-            fname = b""
-            md5val = b""
+
+        # Output to annotated feature file
         outfile.write(path)
         outfile.write(b'\t')
         outfile.write(feature)
         if not args.terse:
             outfile.write(b'\t')
             outfile.write(context)
-        outfile.write(b'\t')
-        outfile.write(fname)
-        if not args.terse:
+
+        # If we found the data, output that
+        if tpl:
+            located_count += 1
             outfile.write(b'\t')
-            outfile.write(md5val)
+            outfile.write(b'\t'.join(tpl[2])) # just the file info
+        else:
+            unallocated_count += 1
         outfile.write(b'\n')
     t1 = time.time()
     for (title,value) in [["# Total features input: {}",feature_count],
@@ -240,14 +261,24 @@ if __name__=="__main__":
                         help='Overwrite location of image file from bulk_extractor_output report.xml file')
     parser.add_argument('--xmlfile', action='store',
                         help="Don't run fiwalk; use the provided XML file instead")
+    parser.add_argument('--list', action='store_true',
+                        help='List feature files in bulk_extractor_output and exit')
+    parser.add_argument('--nohash',action='store_true',
+                        help='Do not calculate MD5 or SHA1 when running fiwalk')
+    parser.add_argument('-t', dest='terse', action='store_true',
+                        help='Terse output')
+    parser.add_argument('-v', action='version', version='%(prog)s version '+__version__,
+                        help='Print Version and exit')
+    parser.add_argument("--verbose",action="store_true",
+                        help='Verbose mode')
+    parser.add_argument('--debug', action='store_true',
+                        help='Debug mode')
     parser.add_argument('--noxmlfile', action='store_true', 
                         help="Don't run fiwalk; don't use XML file. Just read the feature files (for testing)")
+    parser.add_argument('--mactimes',action='store_true',
+                        help="Include mactimes in annotated feature file")
     parser.add_argument('--path', action='store', help="Just locate path and exit. Only needs XML file, disk image, or bulk_extractor output")
-    parser.add_argument('--list', action='store_true', help='List feature files in bulk_extractor_output and exit')
-    parser.add_argument("--verbose",action="store_true", help='Verbose mode')
-    parser.add_argument('-t', '--terse', dest='terse', action='store_true', help='Terse output')
-    parser.add_argument('-v', action='version', version='%(prog)s version '+__version__, help='Print Version and exit')
-    parser.add_argument('-d','--debug', action='store_true', help='Debug mode')
+
     args = parser.parse_args()
 
     # Start the timer used to calculate the total run time

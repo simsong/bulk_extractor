@@ -348,9 +348,9 @@ static void process_open_path(const image_process &p,string path,scanner_params:
  * Also implements HTTP server with "-http" option.
  * Feature recorders disabled.
  */
-static void process_path(const char *fn,string path,size_t page_size)
+static void process_path(const char *fn,string path,size_t pagesize)
 {
-    image_process *pp = image_process::open(fn,0,page_size,0);
+    image_process *pp = image_process::open(fn,0,pagesize,0);
     if(pp==0){
 	if(path=="-http"){
 	    std::cout << "HTTP/1.1 502 Filename " << fn << " is invalid" << HTTP_EOL << HTTP_EOL;
@@ -565,8 +565,8 @@ static void usage(const char *progname)
     std::cout << "   -S fr:<name>:window=NN   specifies context window for recorder to NN\n";
     std::cout << "   -S fr:<name>:window_before=NN  specifies context window before to NN for recorder\n";
     std::cout << "   -S fr:<name>:window_after=NN   specifies context window after to NN for recorder\n";
-    std::cout << "   -G NN        - specify the page size (default " << cfg.opt_page_size << ")\n";
-    std::cout << "   -g NN        - specify margin (default " <<cfg.opt_margin << ")\n";
+    std::cout << "   -G NN        - specify the page size (default " << cfg.opt_pagesize << ")\n";
+    std::cout << "   -g NN        - specify margin (default " <<cfg.opt_marginsize << ")\n";
     std::cout << "   -j NN        - Number of analysis threads to run (default " <<threadpool::numCPU() << ")\n";
     std::cout << "   -M nn        - sets max recursion depth (default " << scanner_def::max_depth << ")\n";
     std::cout << "   -m <max>     - maximum number of minutes to wait for memory starvation\n";
@@ -612,10 +612,13 @@ static void dfxml_create(dfxml_writer &xreport,const string &command_line,const 
     xreport.add_DFXML_creator(PACKAGE_NAME,PACKAGE_VERSION,svn_revision_clean(),command_line);
     xreport.push("configuration");
     xreport.xmlout("threads",cfg.num_threads);
+    xreport.xmlout("pagesize",cfg.opt_pagesize);
+    xreport.xmlout("marginsize",cfg.opt_marginsize);
     xreport.push("scanners");
     /* Generate a list of the scanners in use */
 
     std::vector<std::string> ev;
+    be13::plugin::get_enabled_scanners(ev);
     for(std::vector<std::string>::const_iterator it=ev.begin();it!=ev.end();it++){
         xreport.xmlout("scanner",(*it));
     }
@@ -835,8 +838,8 @@ int main(int argc,char **argv)
 	    break;
 	case 'F': process_find_file(optarg); break;
 	case 'f': add_find_pattern(optarg); break;
-	case 'G': cfg.opt_page_size = scaled_stoi(optarg); break;
-	case 'g': cfg.opt_margin = scaled_stoi(optarg); break;
+	case 'G': cfg.opt_pagesize = scaled_stoi(optarg); break;
+	case 'g': cfg.opt_marginsize = scaled_stoi(optarg); break;
 	case 'j': cfg.num_threads = atoi(optarg); break;
 	case 'M': scanner_def::max_depth = atoi(optarg); break;
 	case 'm': cfg.max_bad_alloc_errors = atoi(optarg); break;
@@ -947,7 +950,7 @@ int main(int argc,char **argv)
 
     if(opt_path){
 	if(argc!=1) errx(1,"-p requires a single argument.");
-	process_path(argv[0],opt_path,cfg.opt_page_size);
+	process_path(argv[0],opt_path,cfg.opt_pagesize);
 	exit(0);
     }
     if(opt_outdir.size()==0) errx(1,"error: -o outdir must be specified");
@@ -975,7 +978,6 @@ int main(int argc,char **argv)
     timer.start();
 
     /* If output directory does not exist, we are not restarting! */
-    dfxml_writer  *xreport=0;
     string reportfilename = opt_outdir + "/report.xml";
 
     BulkExtractor_Phase1::seen_page_ids_t seen_page_ids; // pages that do not need re-processing
@@ -1007,16 +1009,9 @@ int main(int argc,char **argv)
     }
 
     /* If disk image does not exist, we are in restart mode */
-    p = image_process::open(image_fname,opt_recurse,cfg.opt_page_size,cfg.opt_margin);
+    p = image_process::open(image_fname,opt_recurse,cfg.opt_pagesize,cfg.opt_marginsize);
     if(!p) err(1,"Cannot open %s: ",image_fname.c_str());
     
-    /* Store the configuration in the XML file */
-    xreport = new dfxml_writer(reportfilename,false);
-    dfxml_create(*xreport,command_line,cfg);
-    xreport->xmlout("provided_filename",image_fname); // save this information
-
-    /* Save the seen_page_ids */
-
     /* Determine the feature files that will be used */
     feature_file_names_t feature_file_names;
     feature_recorder_set::get_alert_recorder_name(feature_file_names);
@@ -1040,6 +1035,11 @@ int main(int argc,char **argv)
         /* See if there is a scanner? */
     }
 
+
+    /* Store the configuration in the XML file */
+    dfxml_writer  *xreport = new dfxml_writer(reportfilename,false);
+    dfxml_create(*xreport,command_line,cfg);
+    xreport->xmlout("provided_filename",image_fname); // save this information
 
 
     /* Create the alert recorder */

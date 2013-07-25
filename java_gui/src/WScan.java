@@ -563,7 +563,8 @@ public class WScan {
       cmd.add("-P");
       cmd.add(wScanBoxedControls.pluginDirectory);
     }
-    if (wScanBoxedControls.useSettableOptions) {
+    if (wScanBoxedControls.useSettableOptions
+     && wScanBoxedControls.settableOptions.length() > 0) {
       String[] settableOptions = wScanBoxedControls.settableOptions.split("\\s");
       for (String optionName : settableOptions) {
         cmd.add("-S");

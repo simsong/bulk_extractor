@@ -106,7 +106,7 @@ public class FeatureLine {
     }
 
     // identify the line type
-    if (isFile(lineBytes)) {
+    if (hasFileMark(lineBytes)) {
       featureLineType = FeatureLineType.FILE_LINE;
     } else if (isAddress(lineBytes)) {
       featureLineType = FeatureLineType.ADDRESS_LINE;
@@ -273,7 +273,7 @@ public class FeatureLine {
     return false;
   }
 
-  private boolean isFile(byte[] bytes) {
+  private boolean hasFileMark(byte[] bytes) {
     int i;
     // the feature has a filename in it, as indicated by a U+10001C mark.
     for (i = 0; i<bytes.length-5; i++) {
