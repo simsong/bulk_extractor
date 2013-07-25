@@ -70,3 +70,10 @@ src/jpegdump
 regress-*
 doc/doxygen/html
 java_gui/doc/doxygen/html
+*.aux
+*.bbl
+*.blg
+*.out
+BEProgrammersManual.pdf
+*.toc
+*.aux
