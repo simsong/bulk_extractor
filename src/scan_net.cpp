@@ -62,7 +62,7 @@ const uint32_t min_packet_size = 20;		// don't bother with ethernet packets smal
 /* mutex for writing packets.
  * This is not in the class because it will be accessed by multiple threads.
  */
-static cppmutex M;
+static cppmutex Mfcap;              // mutex for fcap
 static FILE *fcap = 0;		// capture file, protected by M
 
 /****************************************************************/
@@ -651,7 +651,7 @@ public:
                        const bool add_frame,
                        const uint16_t frame_type) {
 	// Make sure that neither this packet nor an encapsulated version of this packet has been written
-	cppmutex::lock lock(M);		// lock the mutex
+	cppmutex::lock lock(Mfcap);		// lock the mutex
         if(fcap==0){
             string ofn = ip_recorder->outdir+"/" + default_filename;
             fcap = fopen(ofn.c_str(),"wb"); // write the output
@@ -1000,7 +1000,7 @@ public:
 	    }
 	    i += (carved>0 ? carved : 1);	// advance the pointer
 	}
-	cppmutex::lock lock(M);
+	cppmutex::lock lock(Mfcap);
 	if(fcap) fflush(fcap);
     };
 };
@@ -1008,7 +1008,7 @@ public:
 string packet_carver::chksum_ok("cksum-ok");
 string packet_carver::chksum_bad("cksum-bad");
 
-
+static bool carve_tcp = false;
 extern "C"
 void scan_net(const class scanner_params &sp,const recursion_control_block &rcb)
 {
@@ -1016,23 +1016,26 @@ void scan_net(const class scanner_params &sp,const recursion_control_block &rcb)
     if(sp.phase==scanner_params::PHASE_STARTUP){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	assert(sizeof(struct be13::ip4)==20);	// we've had problems on some systems
-	sp.info->name  = "net";
+	sp.info->name           = "net";
         sp.info->author         = "Simson Garfinkel and Rob Beverly";
         sp.info->description    = "Scans for IP packets";
         sp.info->scanner_version= "1.0";
 
-	// no longer disabled by default!
-	//sp.info->flags = scanner_info::SCANNER_DISABLED; // really slow!
+        sp.info->get_config("carve_tcp",&carve_tcp,"Carve TCP memory structures");
+
 	sp.info->feature_names.insert("ip");
-	sp.info->feature_names.insert("tcp");
 	sp.info->feature_names.insert("ether");
 
 	/* changed the pattern to be the entire feature,
 	 * since histogram was not being created with previous pattern
 	 */
 	sp.info->histogram_defs.insert(histogram_def("ip",   "","cksum-ok","histogram"));
-	sp.info->histogram_defs.insert(histogram_def("tcp",  "","histogram"));
 	sp.info->histogram_defs.insert(histogram_def("ether","([^\(]+)","histogram"));
+
+        if(carve_tcp){
+            sp.info->feature_names.insert("tcp");
+            sp.info->histogram_defs.insert(histogram_def("tcp",  "","histogram"));
+        }
 
 	/* scan_net has its own output as well */
 	return;
@@ -1042,7 +1045,7 @@ void scan_net(const class scanner_params &sp,const recursion_control_block &rcb)
 	carver.carve(sp.sbuf);
     }
     if(sp.phase==scanner_params::PHASE_SHUTDOWN){
-	cppmutex::lock lock(M);
+	cppmutex::lock lock(Mfcap);
 	if(fcap) fclose(fcap);
 	return;
     }
