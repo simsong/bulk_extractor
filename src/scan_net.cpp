@@ -64,6 +64,7 @@ const uint32_t min_packet_size = 20;		// don't bother with ethernet packets smal
  */
 static cppmutex Mfcap;              // mutex for fcap
 static FILE *fcap = 0;		// capture file, protected by M
+static bool carve_tcp = false;
 
 /****************************************************************/
 
@@ -612,8 +613,10 @@ public:
     packet_carver(const class scanner_params &sp):
 	fs(sp.fs),ps(),ip_recorder(0),tcp_recorder(0),ether_recorder(0){
 	ip_recorder = fs.get_name("ip");
-	tcp_recorder = fs.get_name("tcp");
 	ether_recorder = fs.get_name("ether");
+	if(carve_tcp){
+            tcp_recorder = fs.get_name("tcp");
+        }
     }
 
 private:
@@ -787,7 +790,7 @@ public:
 	/* Now report TCP, UDP and/or IPv6 contents if it is one of those */
 	if(h.nxthdr==IPPROTO_TCP){
 	    const struct be_tcphdr *tcp = sb2.get_struct_ptr<struct be_tcphdr>(h.nxthdr_offs);
-	    if(tcp) tcp_recorder->write(sb2.pos0,
+	    if(tcp && tcp_recorder) tcp_recorder->write(sb2.pos0,
 					ip2string(h.src, h.family) + ":" + i2str(ntohs(tcp->th_sport)) + " -> " +
 					ip2string(h.dst, h.family) + ":" + i2str(ntohs(tcp->th_dport)) + " (TCP)",
 					" Size: " + i2str(h.payload_len+h.nxthdr_offs)
@@ -795,7 +798,7 @@ public:
 	}
 	if(h.nxthdr==IPPROTO_UDP){
 	    const struct be_udphdr *udp = sb2.get_struct_ptr<struct be_udphdr>(h.nxthdr_offs);
-	    if(udp) tcp_recorder->write(sb2.pos0, 
+	    if(udp && tcp_recorder) tcp_recorder->write(sb2.pos0, 
 					ip2string(h.src, h.family) + ":" + i2str(ntohs(udp->uh_sport)) + " -> " +
 					ip2string(h.dst, h.family) + ":" + i2str(ntohs(udp->uh_dport)) + " (UDP)",
 					" Size: " + i2str(h.payload_len+h.nxthdr_offs)			
@@ -803,7 +806,7 @@ public:
 	}
 	if(h.nxthdr==IPPROTO_ICMPV6){
 	    const struct icmp6_hdr *icmp6 = sb2.get_struct_ptr<struct icmp6_hdr>(h.nxthdr_offs);
-	    if(icmp6) tcp_recorder->write(sb2.pos0,
+	    if(icmp6 && tcp_recorder) tcp_recorder->write(sb2.pos0,
 					  ip2string(h.src, h.family) + " -> " + 
 					  ip2string(h.dst, h.family) + " (ICMPv6)",
 					  " Type: " + i2str(icmp6->icmp6_type) + " Code: " + i2str(icmp6->icmp6_code)
@@ -960,10 +963,12 @@ public:
 	if ( (to->sig == htonl(0x54435054)) && (to->pool_size == htons(0x330A)) ) {
 	    ip_recorder->write( sb2.pos0, ip2string(&(to->src)), "tcpt");
 	    ip_recorder->write( sb2.pos0, ip2string(&(to->dst)), "tcpt");
-	    tcp_recorder->write(sb2.pos0, ip2string(&(to->src)) + ":" + i2str(ntohs(to->src_port)) + " -> " +
-				ip2string(&(to->dst)) + ":" + i2str(ntohs(to->dst_port)) + " (TCPT)",
-				""
-				);
+            if(tcp_recorder){
+                tcp_recorder->write(sb2.pos0, ip2string(&(to->src)) + ":" + i2str(ntohs(to->src_port)) + " -> " +
+                                    ip2string(&(to->dst)) + ":" + i2str(ntohs(to->dst_port)) + " (TCPT)",
+                                    ""
+                                    );
+            }
 	    return sizeof(struct tcpt_object);
 	}
 	return 0;
@@ -1008,7 +1013,6 @@ public:
 string packet_carver::chksum_ok("cksum-ok");
 string packet_carver::chksum_bad("cksum-bad");
 
-static bool carve_tcp = false;
 extern "C"
 void scan_net(const class scanner_params &sp,const recursion_control_block &rcb)
 {
