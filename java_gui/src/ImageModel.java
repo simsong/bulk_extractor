@@ -16,23 +16,22 @@ import javax.swing.SwingUtilities;
 public class ImageModel {
 
   // feature attributes that define this model
-  private FeatureLine featureLine = null;
-  private long pageStartAddress = 0;
+  private File imageFile;
+  private String forensicPath;
 
   // derived attributes that define this model
   private byte[] pageBytes = new byte[0];
-  private long paddedPageStartAddress = 0;
+  private long paddedPageOffset = 0;
   private int paddingPrefixSize = 0;
   private byte[] paddedPageBytes = new byte[0];
   private boolean[] pageHighlightFlags = new boolean[0];
 
   // values returned by image reader thread
   private long imageSize = 0;
-  private String imageMetadata = "Please select a Feature to view the metadata associated with it.";
 
   // model state
   private boolean busy = false;
-  private boolean featureAttributeChanged = false;
+  private boolean imageSelectionChanged = false;
 
   // resources
   public final ImageReaderManager imageReaderManager = new ImageReaderManager();
@@ -45,37 +44,6 @@ public class ImageModel {
    * The default size of the page to be read, {@value}.
    */
   public static final int PAGE_SIZE = 4096;
-
-  /**
-   * Returns the aligned page start address for the given FeatureLine.
-   * @param featureLine the feature line to obtain the aligned page start address for
-   * @return the aligned page start address for the given FeatureLine
-   */
-  public static long getAlignedAddress(final FeatureLine featureLine) {
-    if (featureLine == null
-        || (featureLine.getType() != FeatureLine.FeatureLineType.ADDRESS_LINE
-         && featureLine.getType() != FeatureLine.FeatureLineType.PATH_LINE)) {
-      return 0;
-    } else {
-      // back up to modulo PAGE_SIZE in front of the feature line's address
-      long address = featureLine.getAddress();
-      return address - (address % ImageModel.PAGE_SIZE);
-    }
-  }
-
-  /**
-   * Returns the aligned page start address for the given address.
-   * @param address the address to obtain the aligned page start address for
-   * @return the aligned page start address for the given address
-   */
-  public static long getAlignedAddress(final long address) {
-    // bad if negative input
-    if (address < 0) {
-      throw new IllegalArgumentException("Invalid address: " + address);
-    }
-    // back up to modulo PAGE_SIZE in front of the feature line's address
-    return address - (address % ImageModel.PAGE_SIZE);
-  }
 
   private final Runnable fireChanged = new Runnable() {
     public void run() {
@@ -94,7 +62,15 @@ public class ImageModel {
     // feature line selection manager changed listener
     featureLineSelectionManager.addFeatureLineSelectionManagerChangedListener(new Observer() {
       public void update(Observable o, Object arg) {
-        setFeatureLine(featureLineSelectionManager.getFeatureLineSelection());
+        FeatureLine featureLine = featureLineSelectionManager.getFeatureLineSelection();
+
+        // disregard request if this is a histogram line
+        if (ForensicPath.isHistogram(featureLine.pathField)) {
+          return;
+        }
+
+        setImageSelection(featureLine.actualImageFile,
+                          ForensicPath.getAlignedPath(featureLine.pathField));
       }
     });
   }
@@ -110,26 +86,20 @@ public class ImageModel {
   // synchronized reader state control
   // ************************************************************
   /**
-   * Sets the feature line and its default page start address and starts reading.
+   * Sets the image selection image file and forensic path
    */
-  public synchronized void setFeatureLine(FeatureLine featureLine) {
-    featureAttributeChanged = true;  // synchronized
-    this.featureLine = featureLine;
-    pageStartAddress = getAlignedAddress(featureLine);
+  public synchronized void setImageSelection(File imageFile, String forensicPath) {
+    imageSelectionChanged = true;  // synchronized
+    this.imageFile = imageFile;
+    this.forensicPath = forensicPath;
     manageModelChanges();
   }
 
   /**
-   * Sets the page start address and starts reading.
+   * Changes the forensic path
    */
-  public synchronized void setPageStartAddress(long pageStartAddress) {
-    featureAttributeChanged = true;  // synchronized
-    // validate state
-    if (featureLine == null || pageStartAddress < 0 || pageStartAddress > imageSize) {
-      throw new RuntimeException("ImageModel.setPageStartAddress error");
-//      WLog.log("ImageModel.setPageStartAddress error");
-    }
-    this.pageStartAddress = pageStartAddress;
+  public synchronized void setImageSelection(String forensicPath) {
+    this.forensicPath = forensicPath;
     manageModelChanges();
   }
 
@@ -140,7 +110,7 @@ public class ImageModel {
    */
   public synchronized void refresh() {
     // force an image reload, useful when the image reader changes
-    featureAttributeChanged = true;  // synchronized
+    imageSelectionChanged = true;  // synchronized
     manageModelChanges();
   }
 
@@ -158,28 +128,21 @@ public class ImageModel {
     imageReaderManager.closeAllReaders();
   }
 
-//  /**
-//   * Set the reader type allowed in ImageModel's ImageReaderManager
-//   */
-//  public void setReaderTypeAllowed(ImageReaderType readerType) {
-//    imageReaderManager.setReaderTypeAllowed(readerType);
-//  }
-
   // ************************************************************
   // reader state polling
   // ************************************************************
   /**
-   * Returns the feature line associated with the currently requested image.
+   * Returns the active image file.
    */
-  public FeatureLine getFeatureLine() {
-    return featureLine;
+  public File getImageFile() {
+    return imageFile;
   }
 
   /**
-   * Returns the page start address associated with the currently requested image.
+   * Returns the active forensic path.
    */
-  public long getPageStartAddress() {
-    return pageStartAddress;
+  public String getForensicPath() {
+    return forensicPath;
   }
 
   // ************************************************************
@@ -194,20 +157,21 @@ public class ImageModel {
   }
 
   public static class ImagePage {
-    public final FeatureLine featureLine;
-    public final long pageStartAddress;
+    public final File imageFile;
+    public final String forensicPath;
     public final byte[] pageBytes;
     public final byte[] paddedPageBytes;
     public final int paddingPrefixSize;
     public final int defaultPageSize;
     public final long imageSize;
 
-    private ImagePage(FeatureLine featureLine,
-                      long pageStartAddress, byte[] pageBytes, byte[] paddedPageBytes,
-                      int paddingPrefixSize, int defaultPageSize, long imageSize) {
-      this.featureLine = featureLine;
-      this.pageStartAddress = pageStartAddress;
-      this.pageBytes = pageBytes;;
+    private ImagePage(File imageFile, String forensicPath,
+                      byte[] pageBytes, byte[] paddedPageBytes,
+                      int paddingPrefixSize, int defaultPageSize,
+                      long imageSize) {
+      this.imageFile = imageFile;
+      this.forensicPath = forensicPath;
+      this.pageBytes = pageBytes;
       this.paddedPageBytes = paddedPageBytes;
       this.paddingPrefixSize = paddingPrefixSize;
       this.defaultPageSize = defaultPageSize;
@@ -223,7 +187,7 @@ public class ImageModel {
       WLog.log("ImageModel.getImagePage: note: blank image page provided while busy.");
       return null;
     }
-    return new ImagePage(featureLine, pageStartAddress, pageBytes, paddedPageBytes,
+    return new ImagePage(imageFile, forensicPath, pageBytes, paddedPageBytes,
                          paddingPrefixSize, PAGE_SIZE, imageSize);
   }
 
@@ -236,15 +200,6 @@ public class ImageModel {
     }
     return imageSize;
   }
-  /**
-   * Returns the metadata associated with the currently active image.
-   */
-  public synchronized String getImageMetadata() {
-    if (busy) {
-      throw new RuntimeException("sync error");
-    }
-    return imageMetadata;
-  }
 
   // ************************************************************
   // set model inputs and start the image reader thread
@@ -255,41 +210,40 @@ public class ImageModel {
   public synchronized void manageModelChanges() {
     // set busy and busy indicator
     busy = true;
-    if (featureLine == null) {
-      busyIndicator.startProgress("No Feature");
-    } else {
-      busyIndicator.startProgress(featureLine.getSummaryString());
-    }
+    busyIndicator.startProgress(imageFile.toString() + forensicPath);
  
 //WLog.log("ImageModel.manageModelChanges.a");
     if (imageReaderThread == null || imageReaderThread.isDone) {
 //WLog.log("ImageModel.manageModelChanges.b");
       // no active thread
-      if (featureAttributeChanged) {
+      if (imageSelectionChanged) {
 //WLog.log("ImageModel.manageModelChanges.c");
         // thread processing is required to read feature attributes
 
         // signal model changed on the Swing thread in order to clear the image view until done
         SwingUtilities.invokeLater(fireChanged);
 
-        // establish the padded page start address and the padding prefix size,
+        // establish the padded page offset and the padding prefix size,
         // expecting up to PAGE_SIZE of padding
-        paddedPageStartAddress = pageStartAddress - PAGE_SIZE;
-        if (paddedPageStartAddress < 0) {
+        long pageOffset = ForensicPath.getOffset(forensicPath);
+        long paddedPageOffset = pageOffset - PAGE_SIZE;
+        if (paddedPageOffset < 0) {
           // don't read before byte zero
-          paddedPageStartAddress = 0;
+          paddedPageOffset = 0;
         }
-        if (paddedPageStartAddress > imageSize) {
+        if (paddedPageOffset > imageSize) {
           // even the padding is out of range
-          paddedPageStartAddress = pageStartAddress;
+          paddedPageOffset = pageOffset;
         }
-        paddingPrefixSize = (int)(pageStartAddress - paddedPageStartAddress);
+        paddingPrefixSize = (int)(pageOffset - paddedPageOffset);
+        String paddedForensicPath = ForensicPath.getAdjustedPath(forensicPath, paddedPageOffset);
           
         // begin thread processing
         imageReaderThread = new ImageReaderThread( this, imageReaderManager,
-               featureLine, paddedPageStartAddress, paddingPrefixSize + PAGE_SIZE + PAGE_SIZE);
+               imageFile, paddedForensicPath,
+               paddingPrefixSize + PAGE_SIZE + PAGE_SIZE);
         imageReaderThread.start();
-        featureAttributeChanged = false;
+        imageSelectionChanged = false;
       } else {
 //WLog.log("ImageModel.manageModelChanges.d");
         // thread processingintegrate the changes into the model

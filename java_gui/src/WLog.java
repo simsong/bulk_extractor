@@ -1,9 +1,5 @@
 import java.awt.*;
 import javax.swing.*;
-import org.apache.log4j.Logger;
-import org.apache.log4j.AppenderSkeleton;
-import org.apache.log4j.spi.LoggingEvent;
-import org.apache.log4j.Level;
 
 /**
  * A pop-up window for displaying diagnostics log information.
@@ -15,13 +11,6 @@ public class WLog implements Thread.UncaughtExceptionHandler {
   private static JDialog window;
   private static JTextArea textArea;
 
-  // load logger
-  private static final Logger logger = Logger.getLogger("edu.nps.jlibewf");
-  static {
-    // enable all logging
-    logger.setLevel(Level.ALL);
-  }
-
   private WLog() {
   }
 
@@ -30,38 +19,6 @@ public class WLog implements Thread.UncaughtExceptionHandler {
    */
   public static void setExceptionHandling() {
     Thread.setDefaultUncaughtExceptionHandler(wLog);
-  }
-
-  /**
-   * Sets this object to intercept uncaught exceptions so that they may be reported.
-   */
-  public static void setLoggerAppender() {
-    logger.addAppender(new WLog.WLogAppender());
-  }
-
-  /**
-   * This class accepts log events from org.apache.log4j.Logger and logs them using WLog.
-   */
-  private static class WLogAppender extends AppenderSkeleton {
-    /**
-     * Forwards the log from Logger to WLog.
-     * @param e the log event to log
-     */
-    public void append(LoggingEvent e) {
-      log(e.getRenderedMessage());
-    }
-    /**
-     * Returns false indicating that no layout format is used.
-     */
-    public boolean requiresLayout() {
-      return false;
-    }
-    /**
-     * This <code>close</code> function is not supported.
-     */
-    public void close() {
-      WLog.log("WLog.WLogAppender.close not supported.");
-    }
   }
 
   /**

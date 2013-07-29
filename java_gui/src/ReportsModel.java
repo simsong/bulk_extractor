@@ -41,18 +41,23 @@ public class ReportsModel {
   private static final FileFilter featuresFileFilter = new FileFilter() {
     // accept filenames for valid feature files
     public boolean accept(File pathname) {
+
       // reject unreadable files or paths that are directories
       if (!pathname.canRead() || pathname.isDirectory()) {
         return false;
       }
+
       // reject specific filenames
       String name = pathname.getName();
-      if (name.equals("config.cfg")
-       || name.equals("report.xml")
-       || name.equals("report.txt")
-       || (name.startsWith("wordlist_") && name.endsWith(".txt"))) {
+      if (!name.endsWith(".txt")) {
+         // must end with .txt
          return false;
       }
+      if (name.startsWith("wordlist_")) {
+         // exclude wordlist
+         return false;
+      }
+
       // accept the file
       return true;
     }

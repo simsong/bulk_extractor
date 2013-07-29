@@ -587,7 +587,8 @@ public final class NavigationPane extends Container {
       public void actionPerformed (ActionEvent e) {
         // return to the home page
         FeatureLine featureLine = BEViewer.imageView.getImagePage().featureLine;
-        BEViewer.imageModel.setPageStartAddress(ImageModel.getAlignedAddress(featureLine));
+        BEViewer.imageModel.setPageStartAddress(ImageModel.getAlignedOffset(
+                    ForensicPath.getOffset(featureLine)));
       }
     });
 

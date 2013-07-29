@@ -5,14 +5,6 @@
 # To compensate, source files are prefixed with $(srcdir)
 # and are included manually into EXTRA_DIST and install and uninstall hooks are hardcoded.
 
-# NOTE: sorurce for jlibewf was copied from the jlibewf source at 
-# http://sourceforge.net/projects/libewf/files/jlibewf/jlibewf-20111213.zip.
-# It is packaged with this distribution to simplify the build process.
-
-# NOTE: File log4j.jar was taken from the root directory of log4j at
-# http://www.alliedquotes.com/mirrors/apache//logging/log4j/1.2.16/apache-log4j-1.2.16.tar.gz .
-# It is packaged with this distribution to simplify the build process.
-
 BE_VIEWER_JAR = BEViewer.jar
 
 # srcdir is specified because Makefile.am does not follow the _PROGRAMS primary convention,
@@ -111,10 +103,6 @@ $(srcdir)/src/image/MultipartFileReader.java \
 $(srcdir)/src/image/NoReader.java \
 $(srcdir)/src/image/RawFileReader.java \
 $(srcdir)/src/image/ThreadAborterTimer.java \
-$(srcdir)/jlibewf/edu/nps/jlibewf/EWFFileReader.java \
-$(srcdir)/jlibewf/edu/nps/jlibewf/EWFSection.java \
-$(srcdir)/jlibewf/edu/nps/jlibewf/EWFSegmentFileReader.java \
-$(srcdir)/jlibewf/edu/nps/jlibewf/EWFIOException.java
 
 ICON_FILES = \
 $(srcdir)/icons/16/bookmark-new-2.png $(srcdir)/icons/24/bookmark-new-2.png \
@@ -136,10 +124,7 @@ MANIFEST_FILE = $(srcdir)/BEViewer_manifest.txt
 
 LAUNCHER_FILE = $(srcdir)/BEViewer
 
-# log4J
-LOG4J_JAR = $(srcdir)/log4j-1.2.16.jar
-
-EXTRA_DIST = $(SOURCE_FILES) $(ICON_FILES) $(LOG4J_JAR) $(MANIFEST_FILE) $(LAUNCHER_FILE) doc/doxygen
+EXTRA_DIST = $(SOURCE_FILES) $(ICON_FILES) $(MANIFEST_FILE) $(LAUNCHER_FILE) doc/doxygen
 
 DOXYGEN_PDF = doc/doxygen/latex/refman.pdf
 
@@ -148,14 +133,12 @@ all: $(BE_VIEWER_JAR)
 # compile BEViewer to classes, extract jars to classes,
 # then jar together all classes and other requisite files
 # NOTE: for now, compile to Java6 until win, mac, and Linux people are all ready for Java7
-$(BE_VIEWER_JAR): $(LOG4J_JAR) $(SOURCE_FILES)
+$(BE_VIEWER_JAR): $(SOURCE_FILES)
 	rm -rf classes
 	mkdir -p classes
 	echo $(SOURCE_FILES) > temp_generated_source_list
-	javac -source 1.6 -target 1.6 -Xlint:unchecked -d classes -classpath $(LOG4J_JAR) @temp_generated_source_list
+	javac -source 1.6 -target 1.6 -Xlint:unchecked -d classes -classpath @temp_generated_source_list
 	rm temp_generated_source_list
-	cp $(LOG4J_JAR) classes/log4j-1.2.16.jar
-	cd classes; jar xf log4j-1.2.16.jar
 	echo $(ICON_FILES) > temp_generated_icon_list
 	jar cfm $(BE_VIEWER_JAR) $(MANIFEST_FILE) @temp_generated_icon_list -C classes .
 	rm temp_generated_icon_list
@@ -168,14 +151,15 @@ $(DOXYGEN_PDF): $(SOURCE_FILES)
 
 javadocs: $(SOURCE_FILES)
 	rm -rf javadocs
-	javadoc -classpath $(LOG4J_JAR) -d javadocs $(SOURCE_FILES)
+	javadoc -d javadocs $(SOURCE_FILES)
+
+//old	javadoc -classpath $(LOG4J_JAR) -d javadocs $(SOURCE_FILES)
 
 clean-local:
 	rm -rf classes
 	rm -f $(BE_VIEWER_JAR)
 	rm -rf javadocs
 	rm -rf doc/doxygen/html
-	rm -rf doc/doxygen/latex
 
 install-exec-hook:
 	echo " ( cp '$(BE_VIEWER_JAR)' '$(DESTDIR)$(bindir)' )"; \
@@ -192,8 +176,6 @@ uninstall-hook:
 # convenience rule useful during development
 run: $(BE_VIEWER_JAR) 
 	java -Xmx1g -jar $(BE_VIEWER_JAR)
-
-#	java -Xmx1g -classpath $(LOG4J_JAR) -jar $(BE_VIEWER_JAR)
 
 .PHONY: doxygen run
 

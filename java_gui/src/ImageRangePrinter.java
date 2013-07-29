@@ -51,9 +51,9 @@ public class ImageRangePrinter implements Printable {
 
     // validate that the image page is printable
     imagePage = imageView.getImagePage();
-    if (imagePage == null || imagePage.featureLine == null
-    || imagePage.featureLine.getImageFile() == null
-    || imagePage.featureLine.getFeaturesFile() == null) {
+    if (imagePage == null
+    || imagePage.featureLine.actualIimageFile == null
+    || imagePage.featureLine.featuresFile == null) {
       WError.showError("Invalid Image content", "Print Error", null);
       return NO_SUCH_PAGE;
     }
@@ -147,10 +147,10 @@ public class ImageRangePrinter implements Printable {
 
     // get header information
     FeatureLine featureLine = imagePage.featureLine;
-    String imageFile = FileTools.getAbsolutePath(featureLine.getImageFile());
-    String featureFile = featureLine.getFeaturesFile().getAbsolutePath();
+    String actualImageFile = FileTools.getAbsolutePath(featureLine.actualimageFile);
+    String featureFile = featureLine.featuresFile.getAbsolutePath();
     String feature = featureLine.getFormattedFeatureText();
-    String featurePath = featureLine.getFormattedFirstField(imageView.getAddressFormat());
+    String featurePath = ForensicPath.getPrintablePath(featureLine.pathField, imageView.getUseHexPath());
   
     // paint header information
     paintPair("Image File", imageFile);
