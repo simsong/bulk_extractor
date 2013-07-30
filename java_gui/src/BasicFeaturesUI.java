@@ -239,12 +239,12 @@ public class BasicFeaturesUI extends FeaturesUI implements MouseListener, MouseM
       FeatureLine featureLine = featuresModel.getFeatureLine(line);
 
       // calculate text and geometry of the feature line's prefix
-      String prefixString = featureLine.getFormattedFirstField(featuresModel.getAddressFormat());
+      String prefixString = ForensicPath.getPrintablePath(featureLine.pathField, useHexPath);
       int prefixWidth = prefixMetrics.stringWidth(prefixString);
       int tabbedPrefixWidth = prefixWidth + (tabWidth - (prefixWidth % tabWidth));
 
       // get the feature text into usable local variables
-      final String featureString = featureLine.getFormattedFeatureText();
+      final String featureString = FeatureFieldFormatter.getFormattedFeatureText(featureLine);
       final char[] featureCharArray = featureString.toCharArray();
 
       // get text width handy if needed
@@ -436,7 +436,7 @@ public class BasicFeaturesUI extends FeaturesUI implements MouseListener, MouseM
 
   private int getLineWidth(FeatureLine featureLine) {
     // calculate width of the feature line's prefix
-    String prefixString = featureLine.getFormattedFirstField(BEViewer.featuresModel.getAddressFormat());
+      String prefixString = ForensicPath.getPrintablePath(featureLine.pathField, useHexPath);
     int prefixWidth = prefixMetrics.stringWidth(prefixString);
 
     // calculate width of the tab
@@ -444,7 +444,7 @@ public class BasicFeaturesUI extends FeaturesUI implements MouseListener, MouseM
     int tabbedWidth = tabWidth - (prefixWidth % tabWidth);
 
     // calculate width of the displayed feature text
-    String featureString = featureLine.getFormattedFeatureText();
+    String featureString = FeatureFieldFormatter.getFormattedFeatureText(featureLine);
     int featureWidth = textMetrics.stringWidth(featureString);
 
     // return the width of the line

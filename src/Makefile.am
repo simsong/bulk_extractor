@@ -88,7 +88,6 @@ bulk_extractor_SOURCES = \
 	histogram.h \
 	image_process.cpp \
 	image_process.h \
-	support.cpp \
 	threadpool.cpp \
 	threadpool.h \
 	phase1.h \
@@ -108,7 +107,6 @@ stand_SOURCES = \
 	histogram.h \
 	scan_bulk.cpp \
 	stand.cpp \
-	support.cpp \
 	word_and_context_list.cpp \
 	word_and_context_list.h \
 	$(BE13_API)

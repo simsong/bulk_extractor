@@ -587,7 +587,7 @@ public class BEMenus extends JMenuBar {
                            "BEViewer Properties error", null);
         } else {
           try {
-            File featureFile = BEViewer.imageModel.getFeatureLine().getFeaturesFile();
+            File featureFile = BEViewer.imageModel.getFeatureLine().featuresFile;
             File reportFile = new File(featureFile.getParentFile(), "report.xml");
             URL url = reportFile.toURI().toURL();
             new WURL("Bulk Extractor Viewer Report file " + reportFile.toString(), url);
@@ -778,10 +778,10 @@ public class BEMenus extends JMenuBar {
         // move to end of feature currently in the image model
         long imageSize = BEViewer.imageModel.getImageSize();
         // identify the end page address
-        long imageEndAddress = (imageSize > 0) ? imageSize - 1 : 0;
-        long endPageAddress = ImageModel.getAlignedAddress(imageEndAddress);
+        long imageEndOffset = (imageSize > 0) ? imageSize - 1 : 0;
+        long endPageOffset = ImageModel.getAlignedOffset(imageEndOffset);
 
-        BEViewer.imageModel.setPageStartAddress(endPageAddress);
+        BEViewer.imageModel.setPageStartOffset(endPageOffset);
       }
     });
 

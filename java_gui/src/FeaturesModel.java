@@ -13,7 +13,7 @@ import javax.swing.SwingUtilities;
 /**
  * The <code>FeaturesModel</code> class provides a configured listing of features.
  * The features listing content depends on the feature file selected,
- * the filter used, case sensitivity, and the address format.
+ * the filter used, case sensitivity, and whether hex is used in the path format.
  * The image file is recorded because the features file is associated with it.
  * <p>For optimization, the features listing is generated on a separate dispatch thread.
  * A change signal is thrown when the listing is ready.
@@ -36,7 +36,7 @@ public class FeaturesModel implements CopyableLineInterface {
   private File featuresFile = null;
   private byte[] filterBytes = new byte[0];
   private boolean filterMatchCase = false;	// only false is allowed for Referenced Features
-  private String addressFormat = "%1$d";	// simple decimal
+  private boolean useHexPath = false;
   private int fontSize = 12;
 
   // the feature line table is cleared during computation and set upon completion
@@ -44,7 +44,6 @@ public class FeaturesModel implements CopyableLineInterface {
 
   // resources
   public WProgress progressBar = new WProgress("Reading");
-  private final HashMap<Integer, FeatureLine> cachedLines = new HashMap<Integer, FeatureLine>();
   private final ModelChangedNotifier<Object> featuresModelChangedNotifier = new ModelChangedNotifier<Object>();
 
   // this output state allows listeners to know the type of the last change
@@ -55,7 +54,7 @@ public class FeaturesModel implements CopyableLineInterface {
    */
   public static final class ChangeType {
     public static final ChangeType FEATURES_CHANGED = new ChangeType("Feature list changed");
-    public static final ChangeType FORMAT_CHANGED = new ChangeType("Address format or font changed");
+    public static final ChangeType FORMAT_CHANGED = new ChangeType("Path format or font changed");
     private final String name;
     private ChangeType(String name) {
       this.name = name;
@@ -239,31 +238,30 @@ WLog.log("FeaturesModel.setReport image file: " + imageFile + ", featuresFile: "
   }
 
   /**
-   * Sets the address format associated with the view
-   * @param addressFormat the address format associated with the view
+   * Sets the path format associated with the view
+   * @param useHexPath whether path is formatted in hex
    */
-  public void setAddressFormat(String addressFormat) {
+  public void setHexPath(boolean useHexPath) {
 //no; featureline takes this as an input parameter   if (modelRole == ModelRole.HISTOGRAM_ROLE) throw new RuntimeException("Invalid Usage");
 
     // ignore if object equality
-    if (addressFormat == this.addressFormat) {
+    if (useHexPath == this.useHexPath) {
       return;
     }
 
-    this.addressFormat = addressFormat;
-//WLog.log("FeaturesModel.setAddressFormat");
+    this.useHexPath = useHexPath;
     changeType = ChangeType.FORMAT_CHANGED;
     featuresModelChangedNotifier.fireModelChanged(null);
   }
 
   /**
-   * Returns the address format associated with the features model.
-   * @return the address format associated with the features model
+   * Returns the path format associated with the features model.
+   * @return the path format associated with the features model
    */
-  public String getAddressFormat() {
+  public String getUseHexPath() {
 //no; featureline takes this as an input parameter    if (modelRole == ModelRole.HISTOGRAM_ROLE) throw new RuntimeException("Invalid Usage");
 
-    return addressFormat;
+    return useHexPath;
   }
 
   /**
@@ -334,24 +332,11 @@ WLog.log("FeaturesModel.setReport image file: " + imageFile + ", featuresFile: "
 
   /**
    * Returns the feature line corresponding to the given line number.
-   * A performance optimization is used: feature lines, which must be read from disk,
-   * are cached so that they need not be read again on future requests.
    * @param lineNumber the line number of the feature line to be returned
    * @return the feature line
    */
   public FeatureLine getFeatureLine(int lineNumber) {
-    FeatureLine featureLine;
-    Integer lineKey;
-    lineKey = new Integer(lineNumber);
-    if (cachedLines.containsKey(lineKey)) {
-      // the feature line has already been prepared and has been cached
-      featureLine = cachedLines.get(lineKey);
-    } else {
-      // Prepare and cache the new feature line.
-      featureLine = featureLineTable.get(lineNumber);
-      cachedLines.put(lineKey, featureLine);
-    }
-    // return the feature line
+    featureLine = featureLineTable.get(lineNumber);
     return featureLine;
   }
 
@@ -394,7 +379,7 @@ WLog.log("FeaturesModel.setReport image file: " + imageFile + ", featuresFile: "
               + ", filterMatchCase: " + filterMatchCase);
 
     // validate input
-    if (filterBytes == null || addressFormat == null) {
+    if (filterBytes == null) {
       throw new NullPointerException();
     }
 
@@ -415,13 +400,12 @@ WLog.log("FeaturesModel.setReport image file: " + imageFile + ", featuresFile: "
 
     // clear old lines immediately so the view is clean while the new lines are being prepared
     featureLineTable = new FeatureLineTable(null, null);
-    cachedLines.clear();
     changeType = ChangeType.FEATURES_CHANGED;
     featuresModelChangedNotifier.fireModelChanged(null);
 
     // start the parser thread
     featuresParserThread = new FeaturesParserThread(this, imageFile, featuresFile,
-                               filterBytes, filterMatchCase, addressFormat);
+                               filterBytes, filterMatchCase, useHexPath);
     featuresParserThread.start();
   }
 
@@ -430,8 +414,6 @@ WLog.log("FeaturesModel.setReport image file: " + imageFile + ", featuresFile: "
    * after the FeatureLineTable has been prepared.
    */
   public void setFeatureLineTable(FeatureLineTable newFeatureLineTable) {
-    // clear the cached lines
-    cachedLines.clear();
 
     // set the new feature line attributes
     featureLineTable = newFeatureLineTable;
@@ -446,9 +428,9 @@ WLog.log("FeaturesModel.setReport image file: " + imageFile + ", featuresFile: "
    */
   public String getCopyableLine(int line) {
     FeatureLine featureLine = getFeatureLine(line);
-    return featureLine.getFormattedFirstField(addressFormat)
+    return ForensicPath.getPrintablePath(featureLine.pathField, useHexPath)
          + "\t"
-         + featureLine.getFormattedFeatureText();
+         + FeatureFieldFormatter.getFormattedFeatureText(featureLine);
   }
 }
 
