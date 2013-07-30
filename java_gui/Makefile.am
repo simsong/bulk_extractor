@@ -86,23 +86,11 @@ $(srcdir)/src/WScan.java \
 $(srcdir)/src/WScanProgress.java \
 $(srcdir)/src/WTest.java \
 $(srcdir)/src/WURL.java \
-$(srcdir)/src/image/BulkExtractorFileReader.java \
-$(srcdir)/src/image/BulkExtractorReader.java \
 $(srcdir)/src/image/BulkExtractorScanListReader.java \
 $(srcdir)/src/image/BulkExtractorVersionReader.java \
-$(srcdir)/src/image/E01FileReader.java \
-$(srcdir)/src/image/FailReader.java \
-$(srcdir)/src/image/ImageFileReaderInterface.java \
-$(srcdir)/src/image/ImageReaderInterface.java \
+$(srcdir)/src/image/ImageReader.java \
 $(srcdir)/src/image/ImageReaderManager.java \
-$(srcdir)/src/image/ImageReaderType.java \
-$(srcdir)/src/image/JavaReader.java \
-$(srcdir)/src/image/LibewfcsTesterFileReader.java \
-$(srcdir)/src/image/LibewfcsTesterReader.java \
-$(srcdir)/src/image/MultipartFileReader.java \
-$(srcdir)/src/image/NoReader.java \
-$(srcdir)/src/image/RawFileReader.java \
-$(srcdir)/src/image/ThreadAborterTimer.java \
+$(srcdir)/src/image/ThreadAborterTimer.java
 
 ICON_FILES = \
 $(srcdir)/icons/16/bookmark-new-2.png $(srcdir)/icons/24/bookmark-new-2.png \
@@ -153,7 +141,7 @@ javadocs: $(SOURCE_FILES)
 	rm -rf javadocs
 	javadoc -d javadocs $(SOURCE_FILES)
 
-//old	javadoc -classpath $(LOG4J_JAR) -d javadocs $(SOURCE_FILES)
+#old	javadoc -classpath $(LOG4J_JAR) -d javadocs $(SOURCE_FILES)
 
 clean-local:
 	rm -rf classes

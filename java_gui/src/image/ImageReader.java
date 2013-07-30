@@ -20,8 +20,9 @@ public class ImageReader {
     public final byte[] bytes;
     public final long totalSizeAtPath;
     ImageReaderResponse(final byte[] bytes, long totalSizeAtPath) {
-    this.bytes = bytes;
-    this.totalSizeAtPath = totalSizeAtPath;
+      this.bytes = bytes;
+      this.totalSizeAtPath = totalSizeAtPath;
+    }
   }
 
   // process management
@@ -36,7 +37,7 @@ public class ImageReader {
   // input request
   private File file;
   private String forensicPath;
-  private long numBytes
+  private long numBytes;
 
   // cached output
   private byte[] bytes = new byte[0];
@@ -111,7 +112,7 @@ public class ImageReader {
     long rangeStopValue = ((numBytes > 0) ? numBytes - 1 : 0);
 
     // issue the read request
-    String getString = "GET " + forensicPath + " HTTP/1.1"
+    String getString = "GET " + forensicPath + " HTTP/1.1";
     String rangeString = "Range: bytes=0-" + rangeStopValue;
     WLog.log("ImageReader request 1: " + out1);
     WLog.log("ImageReader request 2: " + out2);
@@ -210,7 +211,7 @@ public class ImageReader {
     if (readerIsValid) {
       long totalSizeAtPath = ForensicPath.getOffset(forensicPath) + pathEndByte + 1;
       ImageReaderResponse imageReaderResponse = new ImageReaderResponse(bytes, totalSizeAtPath);
-      return imageReaderResponse
+      return imageReaderResponse;
     } else {
       return ImageReaderResponse("", 0);
     }

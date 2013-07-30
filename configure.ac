@@ -76,7 +76,8 @@ if test "x$use_BEViewer" == "xyes"; then
         AC_MSG_NOTICE([jar is not available for compiling BEViewer.  Try 'apt-get install java-1.7.0-openjdk-devel' or 'yum install java-1.7.0-openjdk-devel' or 'port install java-1.7.0-openjdk-devel' or whatever package manager you happen to be using....])
     fi
 fi
-AM_CONDITIONAL([WANT_BE_VIEWER], [test x$has_javac == xtrue -a x$has_jar == xtrue])
+## (bda 7/29/13) BEViewer is temporarily disabled because it is being worked on
+#AM_CONDITIONAL([WANT_BE_VIEWER], [test x$has_javac == xtrue -a x$has_jar == xtrue])
 
 ##
 ## NSIS Windows Installer

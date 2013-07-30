@@ -24,7 +24,7 @@ public class FeaturesParserThread extends Thread {
   private final File featuresFile;
   private final byte[] requestedFilterBytes;
   private final boolean filterMatchCase;
-  private final bool useHexPath;
+  private final boolean useHexPath;
 
   // permit abort
   private boolean abortRequest = false;

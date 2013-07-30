@@ -49,6 +49,7 @@ public class ImageReaderManager {
     return reader;
   }
 
+/*
 // zzzzzzzzz text for reader that would not initialize properly
   private void showReaderInitializationError(File file, IOException e) {
     WError.showError("Unable to open image reader for file '" + file + "'", "BEViewer Image File Open error", e);
@@ -57,6 +58,7 @@ public class ImageReaderManager {
     } catch (IOException e) {
       WError.showError("Unable to close image reader.", "BEViewer Image File Close error", e);
     }
+*/
 
 
   /**

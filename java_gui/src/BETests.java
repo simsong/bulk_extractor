@@ -217,19 +217,10 @@ public class BETests {
     Thread thread1;
     Thread thread2;
 
-    // run tests using Java readers
-    WLog.log("BETests.makeBookmarks: Java readers");
-    thread1 = WBookmarks.testStartThread(WBookmarks.TEXT, textOutfile, ImageReaderType.JAVA_ONLY);
-    thread2 = WBookmarks.testStartThread(WBookmarks.DFXML, dfxmlOutfile, ImageReaderType.JAVA_ONLY);
+    // run tests using the image reader
+    WLog.log("BETests.makeBookmarks");
+    thread1 = WBookmarks.testStartThread(WBookmarks.TEXT, textOutfile);
     waitForThread(thread1);
-    waitForThread(thread2);
-
-    // run tests using bulk_extractor readers
-    WLog.log("BETests.makeBookmarks: bulk_extractor readers");
-    thread1 = WBookmarks.testStartThread(WBookmarks.TEXT, textBEOnlyOutfile, ImageReaderType.BULK_EXTRACTOR);
-    thread2 = WBookmarks.testStartThread(WBookmarks.DFXML, dfxmlBEOnlyOutfile, ImageReaderType.BULK_EXTRACTOR);
-    waitForThread(thread1);
-    waitForThread(thread2);
 
     // restore preferences
     BEViewer.closeAllReports();

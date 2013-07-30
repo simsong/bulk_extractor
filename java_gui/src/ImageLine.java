@@ -6,13 +6,13 @@ import java.util.HashMap;
 public class ImageLine {
 
   /**
-   * The start address of the image line
+   * The forensic path of the image line
    */
-  public final long lineStartAddress;			// the line's start address
+  public final String lineForensicPath;
   /**
    * The text of the image line
    */
-  public final String text;					// the line's text
+  public final String text;
   /**
    * The array of text index characters to be highlighted
    */
@@ -24,13 +24,13 @@ public class ImageLine {
 
   /**
    * Creates an <code>ImageLine</code> object.
-   * @param lineStartAddress The start address of the image line
+   * @param lineForensicPath The start address of the image line
    * @param text The text of the image line
    * @param highlightIndexes The array of text index characters to be highlighted
    * @param numHighlights The number of text index characters to be highlighted in the image line
    */
-  public ImageLine(long lineStartAddress, String text, int[] highlightIndexes, int numHighlights) {
-    this.lineStartAddress = lineStartAddress;
+  public ImageLine(String lineForensicPath, String text, int[] highlightIndexes, int numHighlights) {
+    this.lineForensicPath = lineForensicPath;
     this.text = text;
     this.highlightIndexes = highlightIndexes;
     this.numHighlights = numHighlights;
