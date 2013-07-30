@@ -183,10 +183,6 @@ extern word_and_context_list stop_list;  /* should be ignored */
  *** SCANNER PROCESSORS - operate on the scanners
  ****************************************************************/
 
-/* support.cpp */
-
-std::string	ssprintf(const char *fmt,...);
-
 /****************************************************************/
 
 

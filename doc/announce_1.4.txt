@@ -27,10 +27,14 @@ New functionality in Version 1.4 includes:
 
 * Better performance
 
+
 Improvements in Version 1.4 include:
+
 
 * scan_pdf now does a better job extracting emails from text.
 
+* Files that are carved are now binned in directories of 1000, to
+  prevent tens of thousands of files from being dumped in a directory.
 
 New features for testing includes:
 

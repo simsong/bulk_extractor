@@ -77,7 +77,9 @@ if test "x$use_BEViewer" == "xyes"; then
     fi
 fi
 ## (bda 7/29/13) BEViewer is temporarily disabled because it is being worked on
-#AM_CONDITIONAL([WANT_BE_VIEWER], [test x$has_javac == xtrue -a x$has_jar == xtrue])
+# slg - the proper way to disable a conditional is not to comment it out, but to make it false
+# AM_CONDITIONAL([WANT_BE_VIEWER], [test x$has_javac == xtrue -a x$has_jar == xtrue])
+AM_CONDITIONAL([WANT_BE_VIEWER], false)         
 
 ##
 ## NSIS Windows Installer
