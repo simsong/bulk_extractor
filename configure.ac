@@ -445,7 +445,7 @@ AC_CHECK_HEADER([libewf.h],
 	[AC_MSG_WARN([libewf.h not found; no E01 support])]
 	[libewf=no])
 AC_CHECK_FUNCS([libewf_handle_get_utf8_header_value_notes libewf_error_backtrace_fprint])
-AC_CHECK_HEADERS([tsk3/libtsk.h])
+# AC_CHECK_HEADERS([tsk3/libtsk.h])
 
 
 ################################################################
