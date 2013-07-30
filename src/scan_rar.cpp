@@ -635,7 +635,7 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
 #if 0
                     cout << "looks like " << encrypted_len + volume.len << " after " << pos << " are encrypted of " << sbuf.bufsize << endl;
 #endif
-                    rar_recorder->carve(sbuf, enc_rar_pos, enc_rar_len, hasher);
+                    rar_recorder->carve(sbuf, enc_rar_pos, enc_rar_len, ".rar", hasher);
                 }
             }
             if(record_components && process_component(cc, cc_len, component)) {

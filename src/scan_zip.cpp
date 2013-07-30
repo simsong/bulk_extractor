@@ -10,10 +10,14 @@
 #include <iomanip>
 #include <cassert>
 
+// these are not tunable
 static uint32_t  zip_max_uncompr_size = 256*1024*1024; // don't decompress objects larger than this
 static uint32_t  zip_min_uncompr_size = 6;	// don't bother with objects smaller than this
 static uint32_t  zip_name_len_max = 1024;
 const uint32_t   MIN_ZIP_SIZE = 38;     // minimum size of a zip header and file name
+
+// these are tunable
+static uint32_t unzip_carve_mode = feature_recorder::CARVE_ENCODED;
 
 /* These are to eliminate compiler warnings */
 #define ZLIB_CONST
@@ -88,7 +92,7 @@ inline std::string fatDateToISODate(const uint16_t d,const uint16_t t)
  * If it does and if it passes validity tests, unzip and recurse.
  */
 inline void scan_zip_component(const class scanner_params &sp,const recursion_control_block &rcb,
-                               feature_recorder *zip_recorder,size_t pos)
+                               feature_recorder *zip_recorder,feature_recorder *unzip_recorder,size_t pos)
 {
     const sbuf_t &sbuf = sp.sbuf;
     const pos0_t &pos0 = sp.sbuf.pos0;
@@ -200,9 +204,22 @@ inline void scan_zip_component(const class scanner_params &sp,const recursion_co
             if(zs.total_out>0){
                 const pos0_t pos0_zip = (pos0 + pos) + rcb.partName;
                 const sbuf_t sbuf_new(pos0_zip, dbuf.buf,zs.total_out,zs.total_out,false); // sbuf w/ decompressed data
-                scanner_params spnew(sp,sbuf_new); // scanner_params that points to the sbuf
+                scanner_params spnew(sp,sbuf_new);      // scanner_params that points to the sbuf
                 
                 (*rcb.callback)(spnew);                // process the sbuf
+            }
+            /* If we are carving, then carve.  Use the original sbuf
+             * name (so we don't have ZIP on everything) and change
+             * slashes to spaces in the filename
+             */
+            if(zs.total_out > 0 && unzip_recorder){
+                std::string carve_name("_"); // begin with a _
+                for(std::string::const_iterator it = name.begin(); it!=name.end();it++){
+                    carve_name.push_back(*it=='/' ? '_' : *it);
+                }
+
+                const sbuf_t sbuf_unzip(pos0+pos, dbuf.buf,zs.total_out,zs.total_out,false); // sbuf w/ decompressed data
+                unzip_recorder->carve(sbuf_unzip,0,zs.total_out,carve_name,hasher);
             }
             r = inflateEnd(&zs);
         } else {
@@ -220,13 +237,21 @@ void scan_zip(const class scanner_params &sp,const recursion_control_block &rcb)
     if(sp.phase==scanner_params::PHASE_STARTUP){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	sp.info->name  = "zip";
-	sp.info->feature_names.insert("zip");
         sp.info->flags          = scanner_info::SCANNER_RECURSE | scanner_info::SCANNER_RECURSE_EXPAND;
         sp.info->get_config("zip_min_uncompr_size",&zip_min_uncompr_size,"Minimum size of a ZIP uncompressed object");
         sp.info->get_config("zip_max_uncompr_size",&zip_max_uncompr_size,"Maximum size of a ZIP uncompressed object");
         sp.info->get_config("zip_name_len_max",&zip_name_len_max,"Maximum name of a ZIP component filename");
+        sp.info->get_config("unzip_carve_mode",&unzip_carve_mode,"0=carve none; 1=carve encoded; 2=carve all");
+	sp.info->feature_names.insert("zip");
+        if(unzip_carve_mode){
+            sp.info->feature_names.insert("unzip");
+        }
         hasher    = sp.info->config->hasher;
 	return;
+    }
+    if(sp.phase==scanner_params::PHASE_INIT && unzip_carve_mode!=feature_recorder::CARVE_NONE){
+	feature_recorder *unzip_recorder = sp.fs.get_name("unzip");
+        unzip_recorder->set_carve_mode(static_cast<feature_recorder::carve_mode_t>(unzip_carve_mode));
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
 	const sbuf_t &sbuf = sp.sbuf;
@@ -234,11 +259,12 @@ void scan_zip(const class scanner_params &sp,const recursion_control_block &rcb)
         if(sbuf.bufsize < MIN_ZIP_SIZE) return;
 
 	feature_recorder *zip_recorder = sp.fs.get_name("zip");
+        feature_recorder *unzip_recorder = unzip_carve_mode ? sp.fs.get_name("unzip") : 0;
 	zip_recorder->set_flag(feature_recorder::FLAG_XML); // because we are sending through XML
 	for(size_t i=0 ; i < sbuf.pagesize && i < sbuf.bufsize-MIN_ZIP_SIZE; i++){
 	    /** Look for signature for beginning of a ZIP component. */
 	    if(sbuf[i]==0x50 && sbuf[i+1]==0x4B && sbuf[i+2]==0x03 && sbuf[i+3]==0x04){
-                scan_zip_component(sp,rcb,zip_recorder,i);
+                scan_zip_component(sp,rcb,zip_recorder,unzip_recorder,i);
 	    }
 	}
     }
