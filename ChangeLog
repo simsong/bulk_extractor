@@ -1,3 +1,7 @@
+2013-07-30  Basic  <simsong@ncr.nps.edu>
+
+	* src/be13_api/plugin.cpp (info_scanners): now only prints -H info if it is provided by the scanner.
+
 2013-07-26  Simson Garfinkel  <simsong@Mucha.local>
 
 	* src/scan_net.cpp (scan_net): the -S variable carve_tcp is now implemented by the scan_net scanner to enable or disable TCP/IP memory structure carving. It is disabled by default.
