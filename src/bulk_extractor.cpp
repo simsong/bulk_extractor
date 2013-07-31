@@ -1088,6 +1088,7 @@ int main(int argc,char **argv)
     xreport->push("report");
     xreport->xmlout("total_bytes",phase1.total_bytes);
     xreport->xmlout("elapsed_seconds",timer.elapsed_seconds());
+    xreport->xmlout("max_depth_seen",be13::plugin::get_max_depth_seen());
     xreport->pop();			// report
     xreport->flush();
 

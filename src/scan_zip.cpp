@@ -94,7 +94,8 @@ inline void scan_zip_component(const class scanner_params &sp,const recursion_co
     const pos0_t &pos0 = sp.sbuf.pos0;
                 
     /* Local file header */
-    uint16_t version=sbuf.get16u(pos+4);
+    uint16_t version_needed_to_extract= sbuf.get16u(pos+4);
+    uint16_t general_purpose_bit_flag = sbuf.get16u(pos+6);
     uint16_t compression_method=sbuf.get16u(pos+8);
     uint16_t lastmodtime=sbuf.get16u(pos+10);
     uint16_t lastmoddate=sbuf.get16u(pos+12);
@@ -122,11 +123,11 @@ inline void scan_zip_component(const class scanner_params &sp,const recursion_co
     char b2[1024];
     snprintf(b2,sizeof(b2),
              "<zipinfo><name>%s</name>"
-             "<version>%d</version><compression_method>%d</compression_method>"
+             "<version>%d</version><general>%d</general><compression_method>%d</compression_method>"
              "<uncompr_size>%d</uncompr_size><compr_size>%d</compr_size>"
              "<mtime>%s</mtime><crc32>%u</crc32>"
              "<extra_field_len>%d</extra_field_len>",
-             name.c_str(),version,compression_method,uncompr_size,compr_size,
+             name.c_str(),version_needed_to_extract,general_purpose_bit_flag,compression_method,uncompr_size,compr_size,
              fatDateToISODate(lastmoddate,lastmodtime).c_str(),
              crc32,extra_field_len);
     stringstream xmlstream;
@@ -148,7 +149,7 @@ inline void scan_zip_component(const class scanner_params &sp,const recursion_co
     }
 
     /* See if we can decompress */
-    if(version==20 && uncompr_size>=zip_min_uncompr_size){ 
+    if(version_needed_to_extract==20 && uncompr_size>=zip_min_uncompr_size){ 
         if(uncompr_size > zip_max_uncompr_size){
             uncompr_size = zip_max_uncompr_size; // don't uncompress bigger than 16MB
         }
@@ -165,13 +166,6 @@ inline void scan_zip_component(const class scanner_params &sp,const recursion_co
                 zip_recorder->write(pos0+pos,name,xmlstream.str());
                 return;
             }
-        }
-
-        if(sp.depth==scanner_def::max_depth){
-            xmlstream << "<disposition>max-depth</disposition></zipinfo>";
-            zip_recorder->write(pos0+pos,name,xmlstream.str());
-            feature_recorder_set::alert_recorder->write(pos0,"scan_zip: MAX DEPTH DETECTED","");
-            return;
         }
 
         managed_malloc<Bytef>dbuf(uncompr_size);
