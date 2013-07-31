@@ -16,13 +16,15 @@ import javax.swing.SwingUtilities;
 public class ImageModel {
 
   // feature attributes that define this model
-  private File imageFile;
-  private String forensicPath;
+  private FeatureLine featureLine;
+  private String pageForensicPath;
 
   // derived attributes that define this model
   private byte[] pageBytes = new byte[0];
   private long paddedPageOffset = 0;
   private int paddingPrefixSize = 0;
+  private ImageReader.ImageReaderResponse response
+                     = new ImageReader.ImageReaderResponse(new byte[0], 0);
   private byte[] paddedPageBytes = new byte[0];
   private boolean[] pageHighlightFlags = new boolean[0];
 
@@ -65,12 +67,11 @@ public class ImageModel {
         FeatureLine featureLine = featureLineSelectionManager.getFeatureLineSelection();
 
         // disregard request if this is a histogram line
-        if (ForensicPath.isHistogram(featureLine.pathField)) {
+        if (ForensicPath.isHistogram(featureLine.forensicPath)) {
           return;
         }
 
-        setImageSelection(featureLine.actualImageFile,
-                          ForensicPath.getAlignedPath(featureLine.pathField));
+        setImageSelection(featureLine);
       }
     });
   }
@@ -86,20 +87,20 @@ public class ImageModel {
   // synchronized reader state control
   // ************************************************************
   /**
-   * Sets the image selection image file and forensic path
+   * Sets the image selection image file and forensic path.
    */
-  public synchronized void setImageSelection(File imageFile, String forensicPath) {
+  public synchronized void setImageSelection(FeatureLine featureLine) {
     imageSelectionChanged = true;  // synchronized
-    this.imageFile = imageFile;
-    this.forensicPath = forensicPath;
+    this.featureLine = featureLine;
+    this.pageForensicPath = ForensicPath.getAlignedPath(featureLine.forensicPath);
     manageModelChanges();
   }
 
   /**
-   * Changes the forensic path
+   * Changes the forensic path to an inclusive aligned value.
    */
   public synchronized void setImageSelection(String forensicPath) {
-    this.forensicPath = forensicPath;
+    this.pageForensicPath = ForensicPath.getAlignedPath(forensicPath);
     manageModelChanges();
   }
 
@@ -118,32 +119,33 @@ public class ImageModel {
    * Close the image reader associated with the image file.
    */
   public void closeImageReader(File imageFile) {
-    imageReaderManager.closeReader(imageFile);
+    imageReaderManager.close(imageFile);
   }
 
   /**
    * Close all image readers.
    */
   public void closeAllImageReaders() {
-    imageReaderManager.closeAllReaders();
+    imageReaderManager.closeAll();
   }
 
   // ************************************************************
   // reader state polling
   // ************************************************************
-  /**
-   * Returns the active image file.
-   */
-  public File getImageFile() {
-    return imageFile;
-  }
-
-  /**
-   * Returns the active forensic path.
-   */
-  public String getForensicPath() {
-    return forensicPath;
-  }
+//zz may poll for ImagePage
+//  /**
+//   * Returns the active image file.
+//   */
+//  public File getImageFile() {
+//    return imageFile;
+//  }
+//
+//  /**
+//   * Returns the active forensic path.
+//   */
+//  public String getForensicPath() {
+//    return forensicPath;
+//  }
 
   // ************************************************************
   // polling and returned data
@@ -159,23 +161,31 @@ public class ImageModel {
   public static class ImagePage {
     public final File imageFile;
     public final String forensicPath;
+    public final String pageForensicPath;
     public final byte[] pageBytes;
     public final byte[] paddedPageBytes;
     public final int paddingPrefixSize;
     public final int defaultPageSize;
     public final long imageSize;
+    public final byte[] featureField; // for highlighting
+    public final byte[] contextField; // for highlighting
 
-    private ImagePage(File imageFile, String forensicPath,
+    private ImagePage(File imageFile,
+                      String forensicPath, String pageForensicPath,
                       byte[] pageBytes, byte[] paddedPageBytes,
                       int paddingPrefixSize, int defaultPageSize,
-                      long imageSize) {
+                      long imageSize,
+                      byte[] featureField, byte[] contextField) {
       this.imageFile = imageFile;
       this.forensicPath = forensicPath;
+      this.pageForensicPath = pageForensicPath;
       this.pageBytes = pageBytes;
       this.paddedPageBytes = paddedPageBytes;
       this.paddingPrefixSize = paddingPrefixSize;
       this.defaultPageSize = defaultPageSize;
       this.imageSize = imageSize;
+      this.featureField = featureField;
+      this.contextField = contextField;
     }
   }
 
@@ -187,8 +197,10 @@ public class ImageModel {
       WLog.log("ImageModel.getImagePage: note: blank image page provided while busy.");
       return null;
     }
-    return new ImagePage(imageFile, forensicPath, pageBytes, paddedPageBytes,
-                         paddingPrefixSize, PAGE_SIZE, imageSize);
+    return new ImagePage(featureLine.actualImageFile, featureLine.forensicPath,
+                         pageForensicPath, pageBytes, paddedPageBytes,
+                         paddingPrefixSize, PAGE_SIZE, imageSize,
+                         featureLine.featureField, featureLine.contextField);
   }
 
   /**
@@ -210,7 +222,7 @@ public class ImageModel {
   public synchronized void manageModelChanges() {
     // set busy and busy indicator
     busy = true;
-    busyIndicator.startProgress(imageFile.toString() + forensicPath);
+    busyIndicator.startProgress(featureLine.actualImageFile.toString() + " " + pageForensicPath);
  
 //WLog.log("ImageModel.manageModelChanges.a");
     if (imageReaderThread == null || imageReaderThread.isDone) {
@@ -225,7 +237,7 @@ public class ImageModel {
 
         // establish the padded page offset and the padding prefix size,
         // expecting up to PAGE_SIZE of padding
-        long pageOffset = ForensicPath.getOffset(forensicPath);
+        long pageOffset = ForensicPath.getOffset(pageForensicPath);
         long paddedPageOffset = pageOffset - PAGE_SIZE;
         if (paddedPageOffset < 0) {
           // don't read before byte zero
@@ -236,26 +248,29 @@ public class ImageModel {
           paddedPageOffset = pageOffset;
         }
         paddingPrefixSize = (int)(pageOffset - paddedPageOffset);
-        String paddedForensicPath = ForensicPath.getAdjustedPath(forensicPath, paddedPageOffset);
+        String paddedForensicPath = ForensicPath.getAdjustedPath(pageForensicPath, paddedPageOffset);
           
         // begin thread processing
         imageReaderThread = new ImageReaderThread( this, imageReaderManager,
-               imageFile, paddedForensicPath,
+               featureLine.actualImageFile, paddedForensicPath,
                paddingPrefixSize + PAGE_SIZE + PAGE_SIZE);
         imageReaderThread.start();
         imageSelectionChanged = false;
       } else {
-//WLog.log("ImageModel.manageModelChanges.d");
-        // thread processingintegrate the changes into the model
+        // integrate the changes into the model
         if (imageReaderThread != null) {
           // bring in values from thread
-          paddedPageBytes = imageReaderThread.bytes;
-//WLog.log("ImageModel.manageModelChanges.e: " + imageReaderThread.bytes.length);
-          imageSize = imageReaderThread.imageSize;
-          imageMetadata = imageReaderThread.imageMetadata;
+          ImageReader.ImageReaderResponse response = imageReaderThread.response;
+          paddedPageBytes = response.bytes;
+          setPageBytes();
+          imageSize = response.totalSizeAtPath;
           imageReaderThread = null;
+        } else {
+          // got here without reader thread
+          paddedPageBytes = new byte[0];
+          pageBytes = new byte[0];
+          imageSize = 0;
         }
-        setPageBytes();
         busyIndicator.stopProgress();
         busy = false;
 
@@ -282,8 +297,9 @@ public class ImageModel {
     return utf16Bytes;
   }
 
+  // this acts on class-local variables
   private void setPageBytes() {
-    // not all bytes may have been read, so determine what is available based on paddedPageBytes
+    // return page bytes from within padded page bytes
     int availablePrefixSize = paddingPrefixSize;
     if (availablePrefixSize > paddedPageBytes.length) {
       // the prefix could not fully be read

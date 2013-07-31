@@ -5,7 +5,7 @@ import java.util.Observable;
 
 /**
  * The <code>ImageView</code> class provides image view from page bytes
- * formatted according to <code>ImageLine.LineFormat</code>  and from user highlights.
+ * formatted with user highlights.
  */
 
 public class ImageView implements CopyableLineInterface {
@@ -21,7 +21,6 @@ public class ImageView implements CopyableLineInterface {
 
   // cached state
   private ImageModel.ImagePage imagePage;
-//  private Vector<byte[]> featureHighlights = new Vector<byte[]>();
   private Vector<byte[]> userHighlights = new Vector<byte[]>(); // managed by this model
   private boolean highlightMatchCase;
 
@@ -29,14 +28,14 @@ public class ImageView implements CopyableLineInterface {
   private final Vector<ImageLine> lines = new Vector<ImageLine>();
 
   // input used to generate image view
-  private File pageFile = new File();
+  private File pageFile = new File("");
   private String pageForensicPath = "";
   private byte[] pageBytes = new byte[0];
   private boolean[] pageHighlightFlags = new boolean[0];
   private boolean useHexPath = false;
   private ImageLine.LineFormat lineFormat = ImageLine.LineFormat.HEX_FORMAT;
   private int fontSize = 12;
-  
+
   // this output state allows listeners to know the type of the last change
   private ChangeType changeType = ChangeType.IMAGE_PAGE_CHANGED; // indicates fullest change
 
@@ -257,7 +256,6 @@ public class ImageView implements CopyableLineInterface {
       // prepare this image line
       StringBuffer textBuffer = new StringBuffer(MAX_CHARS);
 
-      // determine the line's absolute byte offset from the start of the image
       // determine the line's forensic path based on the page offset
       lineForensicPath = ForensicPath.getAdjustedPath(pageForensicPath, pageOffset);
 
@@ -344,9 +342,6 @@ public class ImageView implements CopyableLineInterface {
    * Returns the image line number containing the feature line given the line format.
    */
   public int getForensicPathLineIndex(String forensicPath) {
-    if (featureLine == null) {
-      return -1;
-    }
 
     // get bytes per line
     int bytesPerLine;
@@ -360,7 +355,7 @@ public class ImageView implements CopyableLineInterface {
     // get index based on line format
     long pathOffset = ForensicPath.getOffset(forensicPath);
     long pageOffset = ForensicPath.getOffset(pageForensicPath);
-    long imageLine = (pathOffset - pageOffset) / bytesPerLine;
+    int imageLine = (int)((pathOffset - pageOffset) / bytesPerLine);
 
     // normalize
     if (imageLine < 0 || imageLine > lines.size()) {
@@ -386,8 +381,9 @@ public class ImageView implements CopyableLineInterface {
       // prepare this image line
       StringBuffer textBuffer = new StringBuffer(TEXT_BYTES_PER_LINE);
 
-      // determine the line's absolute byte offset from the start of the image
-      lineStartAddress = pageStartAddress + pageOffset;
+      // determine the line's forensic path based on the page offset
+      lineForensicPath = ForensicPath.getAdjustedPath(pageForensicPath, pageOffset);
+
 
       // format: long address, binary values where legal
       // format: [00000000]00000000  ..fslfejl.............................

@@ -239,7 +239,7 @@ public class BasicFeaturesUI extends FeaturesUI implements MouseListener, MouseM
       FeatureLine featureLine = featuresModel.getFeatureLine(line);
 
       // calculate text and geometry of the feature line's prefix
-      String prefixString = ForensicPath.getPrintablePath(featureLine.pathField, useHexPath);
+      String prefixString = ForensicPath.getPrintablePath(featureLine.forensicPath, useHexPath);
       int prefixWidth = prefixMetrics.stringWidth(prefixString);
       int tabbedPrefixWidth = prefixWidth + (tabWidth - (prefixWidth % tabWidth));
 
@@ -436,7 +436,7 @@ public class BasicFeaturesUI extends FeaturesUI implements MouseListener, MouseM
 
   private int getLineWidth(FeatureLine featureLine) {
     // calculate width of the feature line's prefix
-      String prefixString = ForensicPath.getPrintablePath(featureLine.pathField, useHexPath);
+      String prefixString = ForensicPath.getPrintablePath(featureLine.forensicPath, useHexPath);
     int prefixWidth = prefixMetrics.stringWidth(prefixString);
 
     // calculate width of the tab

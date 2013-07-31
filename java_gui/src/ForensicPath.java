@@ -25,13 +25,13 @@ public final class ForensicPath {
   /**
    * Obtain aligned path
    */
-  public static String getAlignedPath(String forensicPath, long offset) {
+  public static String getAlignedPath(String forensicPath) {
     long offset = getOffset(forensicPath);
     if (offset < 0) {
       throw new IllegalArgumentException("Invalid offset: " + offset);
     }
     // back up to modulo PAGE_SIZE in front of the feature line's offset
-    long alignedOffset - (offset % ImageModel.PAGE_SIZE);
+    long alignedOffset = alignedOffset - (offset % ImageModel.PAGE_SIZE);
     return getAdjustedPath(forensicPath, alignedOffset);
   }
 
@@ -107,7 +107,7 @@ public final class ForensicPath {
   public static String getPathWithoutFilename(String forensicPath) {
     int marker = getPostFileMarker(forensicPath);
     if (marker == 0) {
-      return forensicPath
+      return forensicPath;
     } else {
       String pathWithoutFfilename = forensicPath.substring(marker, forensicPath.length());
       return pathWithoutFilename;
@@ -125,7 +125,7 @@ public final class ForensicPath {
     if (hasFilename(forensicPath)) {
       sb.append(getFilename(forensicPath));
       sb.append(" ");
-      offset = forensicPath.substring(getPostFileMarker(forensicPath), forensicPath.length();
+      offset = forensicPath.substring(getPostFileMarker(forensicPath), forensicPath.length());
     } else {
       offset = forensicPath;
     }
@@ -163,7 +163,7 @@ public final class ForensicPath {
      && forensicPath.charAt(1) == '=') {
       int i;
       for (i=2; i<forensicPath.length(); i++) {
-        if (forensicPath.charAt(i) < '0' || forensicPath.charAt(i > '9') {
+        if (forensicPath.charAt(i) < '0' || forensicPath.charAt(i > '9')) {
           break;
         }
       }
