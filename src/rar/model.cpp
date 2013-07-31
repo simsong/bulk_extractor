@@ -588,7 +588,7 @@ bool ModelPPM::DecodeInit(Unpack *UnpackRead,int &EscChar)
   int MaxOrder_=UnpackRead->GetChar();
   bool Reset=(MaxOrder_ & 0x20)!=0;
 
-  int MaxMB;
+  int MaxMB=0; 
   if (Reset)
     MaxMB=UnpackRead->GetChar();
   else

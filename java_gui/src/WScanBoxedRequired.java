@@ -13,7 +13,6 @@ import javax.swing.*;
 public class WScanBoxedRequired {
 
   public final Component component;
-  private WSelectOutputDirectory wSelectOutputFeatureDirectory;
 
   // defaults
   private static final boolean DEFAULT_USE_IMAGE_SOURCE = true;
@@ -38,8 +37,6 @@ public class WScanBoxedRequired {
   public WScanBoxedRequired() {
     component = buildContainer();
     wireActions();
-    wSelectOutputFeatureDirectory = new WSelectOutputDirectory(
-                     WScan.getWScanWindow(), "Output Feature Directory");
   }
 
   private Component buildContainer() {
@@ -124,7 +121,6 @@ public class WScanBoxedRequired {
     inputImage = "";
     setImageSourceType(ImageSourceType.IMAGE_FILE);
     outdir = "";
-    wSelectOutputFeatureDirectory.setDefaultValues();
   }
 
   public void setUIValues() {
@@ -278,11 +274,38 @@ public class WScanBoxedRequired {
 
     // output feature directory
     outdirChooserB.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        boolean isSelected = wSelectOutputFeatureDirectory.showSelectionDialog();
-        if (isSelected) {
-          outdir = wSelectOutputFeatureDirectory.getOutputDirectory();
-          outdirTF.setText(outdir);
+      public void actionPerformed (ActionEvent e) {
+
+/* via awt.FileDialog fails too
+        FileDialog fileDialog = new FileDialog((Dialog)WScan.getWScanWindow(), "Output Feature Directory", FileDialog.SAVE);
+        fileDialog.setDirectory(outdirTF.getText());
+        fileDialog.setVisible(true);
+        outdirTF.setText(fileDialog.getFile());
+*/
+
+        // open directory chooser for selecting the output feature directory
+        // The output feature is typically new and is to be created using
+        // the file chooser's "create new directory" button.
+
+        // set up image chooser
+        JFileChooser outputFeatureDirectoryChooser = new JFileChooser();
+        outputFeatureDirectoryChooser.setDialogTitle("Output Feature Directory");
+
+        // we need OPEN_DIALOG but we want the "create new directory" button,
+        // so we use SAVE_DIALOG and hack it to say "open".
+        outputFeatureDirectoryChooser.setDialogType(JFileChooser.SAVE_DIALOG);
+//        outputFeatureDirectoryChooser.setApproveButtonText("Select");
+
+        outputFeatureDirectoryChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        outputFeatureDirectoryChooser.setSelectedFile(new File(outdirTF.getText()));
+System.setProperty("apple.awt.fileDialogForDirectories", "true");
+
+        // choose the image
+        // if the user selects it then take the text
+        if (outputFeatureDirectoryChooser.showDialog(WScan.getWScanWindow(), "Select") == JFileChooser.APPROVE_OPTION) {
+          // put the text in the text field
+          String pathString = outputFeatureDirectoryChooser.getSelectedFile().getAbsolutePath();
+          outdirTF.setText(pathString);
         }
       }
     });

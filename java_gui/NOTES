@@ -93,5 +93,21 @@ On 06/26/2012 02:55 PM, Garfinkel, Simson (CIV) wrote:
 >> -Bruce
 >>
 
+------------------------------------------------------------
+Fully support Forensic Path (v1.4):
+There are two primary deficiencies:
+1) Forensic path is displayed in a non-standard manner.
+2) Features from recursive directory scans cannot be browsed to.
 
+The fix is to remove path type modality (absolute path, embedded path,
+histogram entry, recursive file type) and track the Forensic Path
+as a string and to track the Report image file and the Actual image file.
+This impacts the Readers (EWF, Serialized, Raw), so all Java readers are
+removed and only the bulk_extractor reader remains.  The bulk_extractor
+reader is the only reader that manages recursive forensic paths anyway.
+
+Since jlibewf goes away, its requisite logger, log4j, goes away, too.
+
+Since bulk_extractor does not export E01 information fields, the "get info"
+capability, available only in jlibewf, goes away, too.
 

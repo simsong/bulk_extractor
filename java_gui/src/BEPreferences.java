@@ -355,10 +355,10 @@ public class BEPreferences {
     for (int i=0; i<size; i++) {
       // generate the preferences variable names
       FeatureLine featureLine = BEViewer.featureBookmarksModel.get(i);
-      String imageFileString = FileTools.getAbsolutePath(featureLine.getImageFile());
-      String featuresFileString = FileTools.getAbsolutePath(featureLine.getFeaturesFile());
-      long startByte = featureLine.getStartByte();
-      int numBytes = featureLine.getNumBytes();
+      String reportImageFileString = FileTools.getAbsolutePath(featureLine.reportImageFile);
+      String featuresFileString = FileTools.getAbsolutePath(featureLine.featuresFile);
+      long startByte = featureLine.startByte;
+      int numBytes = featureLine.numBytes;
 
       // save the indexed feature line bookmark preferences
       String reportIndex = Integer.toString(i);
@@ -418,10 +418,10 @@ public class BEPreferences {
 
         // get the requisite bookmark attributes
         FeatureLine featureLine = BEViewer.featureBookmarksModel.get(i);
-        String imageFileString = FileTools.getAbsolutePath(featureLine.getImageFile());
-        String featuresFileString = FileTools.getAbsolutePath(featureLine.getFeaturesFile());
-        String startByteString = Long.toString(featureLine.getStartByte());
-        String numBytesString = Integer.toString(featureLine.getNumBytes());
+        String reportImageFileString = FileTools.getAbsolutePath(featureLine.reportImageFile);
+        String featuresFileString = FileTools.getAbsolutePath(featureLine.featuresFile);
+        String startByteString = Long.toString(featureLine.startByte);
+        String numBytesString = Integer.toString(featureLine.numBytes);
 
         // create the Bookmark element
         Element bookmark = doc.createElement("bookmark");
@@ -509,7 +509,7 @@ public class BEPreferences {
 
         // get the bookmark attributes
         Element bookmark = (Element)bookmarkList.item(i);
-        File imageFile = new File(bookmark.getAttribute("image_file"));
+        File reportImageFile = new File(bookmark.getAttribute("image_file"));
         File featuresFile = new File(bookmark.getAttribute("feature_file"));
         long startByte = Long.parseLong(bookmark.getAttribute("start_byte"));
         int numBytes = Integer.parseInt(bookmark.getAttribute("num_bytes"));
@@ -517,13 +517,13 @@ public class BEPreferences {
         // load the bookmark into the model
         // create the feature from the saved values
         try {
-          FeatureLine featureLine = new FeatureLine(imageFile, featuresFile, startByte, numBytes);
+          FeatureLine featureLine = new FeatureLine(reportImageFile, featuresFile, startByte, numBytes);
 
           // load the saved feature line bookmark into the Feature bookmarks model
           BEViewer.featureBookmarksModel.addBookmark(featureLine);
         } catch (Exception e) {
           WError.showError("Unable to restore work settings feature:"
-                           + "\nImage file: " + imageFile
+                           + "\nReport Image file: " + imageFile
                            + "\nFeature file: " + featuresFile
                            + "\nFeature index: " + startByte,
                            "BEViewer Preferences Error", e);

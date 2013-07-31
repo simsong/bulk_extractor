@@ -62,8 +62,9 @@ const uint32_t min_packet_size = 20;		// don't bother with ethernet packets smal
 /* mutex for writing packets.
  * This is not in the class because it will be accessed by multiple threads.
  */
-static cppmutex M;
+static cppmutex Mfcap;              // mutex for fcap
 static FILE *fcap = 0;		// capture file, protected by M
+static bool carve_net_memory = false;
 
 /****************************************************************/
 
@@ -612,8 +613,10 @@ public:
     packet_carver(const class scanner_params &sp):
 	fs(sp.fs),ps(),ip_recorder(0),tcp_recorder(0),ether_recorder(0){
 	ip_recorder = fs.get_name("ip");
-	tcp_recorder = fs.get_name("tcp");
 	ether_recorder = fs.get_name("ether");
+	if(carve_net_memory){
+            tcp_recorder = fs.get_name("tcp");
+        }
     }
 
 private:
@@ -651,7 +654,7 @@ public:
                        const bool add_frame,
                        const uint16_t frame_type) {
 	// Make sure that neither this packet nor an encapsulated version of this packet has been written
-	cppmutex::lock lock(M);		// lock the mutex
+	cppmutex::lock lock(Mfcap);		// lock the mutex
         if(fcap==0){
             string ofn = ip_recorder->outdir+"/" + default_filename;
             fcap = fopen(ofn.c_str(),"wb"); // write the output
@@ -787,7 +790,7 @@ public:
 	/* Now report TCP, UDP and/or IPv6 contents if it is one of those */
 	if(h.nxthdr==IPPROTO_TCP){
 	    const struct be_tcphdr *tcp = sb2.get_struct_ptr<struct be_tcphdr>(h.nxthdr_offs);
-	    if(tcp) tcp_recorder->write(sb2.pos0,
+	    if(tcp && tcp_recorder) tcp_recorder->write(sb2.pos0,
 					ip2string(h.src, h.family) + ":" + i2str(ntohs(tcp->th_sport)) + " -> " +
 					ip2string(h.dst, h.family) + ":" + i2str(ntohs(tcp->th_dport)) + " (TCP)",
 					" Size: " + i2str(h.payload_len+h.nxthdr_offs)
@@ -795,7 +798,7 @@ public:
 	}
 	if(h.nxthdr==IPPROTO_UDP){
 	    const struct be_udphdr *udp = sb2.get_struct_ptr<struct be_udphdr>(h.nxthdr_offs);
-	    if(udp) tcp_recorder->write(sb2.pos0, 
+	    if(udp && tcp_recorder) tcp_recorder->write(sb2.pos0, 
 					ip2string(h.src, h.family) + ":" + i2str(ntohs(udp->uh_sport)) + " -> " +
 					ip2string(h.dst, h.family) + ":" + i2str(ntohs(udp->uh_dport)) + " (UDP)",
 					" Size: " + i2str(h.payload_len+h.nxthdr_offs)			
@@ -803,7 +806,7 @@ public:
 	}
 	if(h.nxthdr==IPPROTO_ICMPV6){
 	    const struct icmp6_hdr *icmp6 = sb2.get_struct_ptr<struct icmp6_hdr>(h.nxthdr_offs);
-	    if(icmp6) tcp_recorder->write(sb2.pos0,
+	    if(icmp6 && tcp_recorder) tcp_recorder->write(sb2.pos0,
 					  ip2string(h.src, h.family) + " -> " + 
 					  ip2string(h.dst, h.family) + " (ICMPv6)",
 					  " Type: " + i2str(icmp6->icmp6_type) + " Code: " + i2str(icmp6->icmp6_code)
@@ -960,10 +963,12 @@ public:
 	if ( (to->sig == htonl(0x54435054)) && (to->pool_size == htons(0x330A)) ) {
 	    ip_recorder->write( sb2.pos0, ip2string(&(to->src)), "tcpt");
 	    ip_recorder->write( sb2.pos0, ip2string(&(to->dst)), "tcpt");
-	    tcp_recorder->write(sb2.pos0, ip2string(&(to->src)) + ":" + i2str(ntohs(to->src_port)) + " -> " +
-				ip2string(&(to->dst)) + ":" + i2str(ntohs(to->dst_port)) + " (TCPT)",
-				""
-				);
+            if(tcp_recorder){
+                tcp_recorder->write(sb2.pos0, ip2string(&(to->src)) + ":" + i2str(ntohs(to->src_port)) + " -> " +
+                                    ip2string(&(to->dst)) + ":" + i2str(ntohs(to->dst_port)) + " (TCPT)",
+                                    ""
+                                    );
+            }
 	    return sizeof(struct tcpt_object);
 	}
 	return 0;
@@ -994,20 +999,19 @@ public:
 	    if(carved==0){
 		carved = carveIPFrame( sb2); // look for an IP packet
 	    }
-	    if(carved==0){
+	    if(carved==0 && carve_net_memory){
 		/* If we can't carve a packet, look for these two memory structures */
 		carved = max(carveSockAddrIn( sb2 ), carveTCPTOBJ( sb2 ));
 	    }
 	    i += (carved>0 ? carved : 1);	// advance the pointer
 	}
-	cppmutex::lock lock(M);
+	cppmutex::lock lock(Mfcap);
 	if(fcap) fflush(fcap);
     };
 };
 
 string packet_carver::chksum_ok("cksum-ok");
 string packet_carver::chksum_bad("cksum-bad");
-
 
 extern "C"
 void scan_net(const class scanner_params &sp,const recursion_control_block &rcb)
@@ -1016,23 +1020,26 @@ void scan_net(const class scanner_params &sp,const recursion_control_block &rcb)
     if(sp.phase==scanner_params::PHASE_STARTUP){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	assert(sizeof(struct be13::ip4)==20);	// we've had problems on some systems
-	sp.info->name  = "net";
+	sp.info->name           = "net";
         sp.info->author         = "Simson Garfinkel and Rob Beverly";
         sp.info->description    = "Scans for IP packets";
         sp.info->scanner_version= "1.0";
 
-	// no longer disabled by default!
-	//sp.info->flags = scanner_info::SCANNER_DISABLED; // really slow!
+        sp.info->get_config("carve_net_memory",&carve_net_memory,"Carve network  memory structures");
+
 	sp.info->feature_names.insert("ip");
-	sp.info->feature_names.insert("tcp");
 	sp.info->feature_names.insert("ether");
 
 	/* changed the pattern to be the entire feature,
 	 * since histogram was not being created with previous pattern
 	 */
 	sp.info->histogram_defs.insert(histogram_def("ip",   "","cksum-ok","histogram"));
-	sp.info->histogram_defs.insert(histogram_def("tcp",  "","histogram"));
 	sp.info->histogram_defs.insert(histogram_def("ether","([^\(]+)","histogram"));
+
+        if(carve_net_memory){
+            sp.info->feature_names.insert("tcp");
+            sp.info->histogram_defs.insert(histogram_def("tcp",  "","histogram"));
+        }
 
 	/* scan_net has its own output as well */
 	return;
@@ -1042,7 +1049,7 @@ void scan_net(const class scanner_params &sp,const recursion_control_block &rcb)
 	carver.carve(sp.sbuf);
     }
     if(sp.phase==scanner_params::PHASE_SHUTDOWN){
-	cppmutex::lock lock(M);
+	cppmutex::lock lock(Mfcap);
 	if(fcap) fclose(fcap);
 	return;
     }

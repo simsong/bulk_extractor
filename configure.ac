@@ -76,7 +76,10 @@ if test "x$use_BEViewer" == "xyes"; then
         AC_MSG_NOTICE([jar is not available for compiling BEViewer.  Try 'apt-get install java-1.7.0-openjdk-devel' or 'yum install java-1.7.0-openjdk-devel' or 'port install java-1.7.0-openjdk-devel' or whatever package manager you happen to be using....])
     fi
 fi
-AM_CONDITIONAL([WANT_BE_VIEWER], [test x$has_javac == xtrue -a x$has_jar == xtrue])
+## (bda 7/29/13) BEViewer is temporarily disabled because it is being worked on
+# slg - the proper way to disable a conditional is not to comment it out, but to make it false
+# AM_CONDITIONAL([WANT_BE_VIEWER], [test x$has_javac == xtrue -a x$has_jar == xtrue])
+AM_CONDITIONAL([WANT_BE_VIEWER], false)         
 
 ##
 ## NSIS Windows Installer
@@ -445,7 +448,7 @@ AC_CHECK_HEADER([libewf.h],
 	[AC_MSG_WARN([libewf.h not found; no E01 support])]
 	[libewf=no])
 AC_CHECK_FUNCS([libewf_handle_get_utf8_header_value_notes libewf_error_backtrace_fprint])
-AC_CHECK_HEADERS([tsk3/libtsk.h])
+# AC_CHECK_HEADERS([tsk3/libtsk.h])
 
 
 ################################################################

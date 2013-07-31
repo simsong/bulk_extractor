@@ -24,7 +24,7 @@ public class FeaturesParserThread extends Thread {
   private final File featuresFile;
   private final byte[] requestedFilterBytes;
   private final boolean filterMatchCase;
-  private final String addressFormat;
+  private final boolean useHexPath;
 
   // permit abort
   private boolean abortRequest = false;
@@ -56,7 +56,7 @@ public class FeaturesParserThread extends Thread {
   private FeatureLineTable featureLineTable;
 
   public FeaturesParserThread(FeaturesModel callback, File imageFile, File featuresFile,
-                    byte[] requestedFilterBytes, boolean filterMatchCase, String addressFormat) {
+                    byte[] requestedFilterBytes, boolean filterMatchCase, boolean useHexPath) {
 
     // set model attributes
     featureLineTable = new FeatureLineTable(imageFile, featuresFile);
@@ -66,7 +66,7 @@ public class FeaturesParserThread extends Thread {
     this.featuresFile = featuresFile;
     this.requestedFilterBytes = requestedFilterBytes;
     this.filterMatchCase = filterMatchCase;
-    this.addressFormat = addressFormat;
+    this.useHexPath = useHexPath;
   }
 
   // run the parser

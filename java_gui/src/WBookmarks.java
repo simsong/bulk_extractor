@@ -368,7 +368,7 @@ public class WBookmarks extends JDialog {
     }
   }
 
-  public static Thread testStartThread(String fileFormat, File file, ImageReaderType imageReaderType) {
+  public static Thread testStartThread(String fileFormat, File file) {
 
     // verify that the export path is valid
     if (!verifyTargetPath(file)) {

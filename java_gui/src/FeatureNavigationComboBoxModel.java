@@ -28,11 +28,10 @@ public class FeatureNavigationComboBoxModel extends DefaultComboBoxModel {
     public void update(Observable o, Object arg) {
 
       FeatureLine featureLine = featureLineSelectionManager.getFeatureLineSelection();
+      // feature lines are navigable if they have a valid path
+      // but not if they have a histogram field
       if (featureLine != null
-          && (featureLine.getType() == FeatureLine.FeatureLineType.ADDRESS_LINE
-           || featureLine.getType() == FeatureLine.FeatureLineType.PATH_LINE)) {
-
-        // the feature line can be navigated to, unlike histogram lines or File lines
+       && !ForensicPath.isHistogram(featureLine.forensicPath)) {
         selectFeature(featureLine);
       }
     }

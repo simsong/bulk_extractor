@@ -41,18 +41,23 @@ public class ReportsModel {
   private static final FileFilter featuresFileFilter = new FileFilter() {
     // accept filenames for valid feature files
     public boolean accept(File pathname) {
+
       // reject unreadable files or paths that are directories
       if (!pathname.canRead() || pathname.isDirectory()) {
         return false;
       }
+
       // reject specific filenames
       String name = pathname.getName();
-      if (name.equals("config.cfg")
-       || name.equals("report.xml")
-       || name.equals("report.txt")
-       || (name.startsWith("wordlist_") && name.endsWith(".txt"))) {
+      if (!name.endsWith(".txt")) {
+         // must end with .txt
          return false;
       }
+      if (name.startsWith("wordlist_")) {
+         // exclude wordlist
+         return false;
+      }
+
       // accept the file
       return true;
     }
@@ -86,13 +91,12 @@ public class ReportsModel {
     public RootTreeNode() {
     }
 
-    public int getIndex(File featuresDirectory, File imageFile) {
-      // validate that the parameters are not backwards
-      if (featuresDirectory != null && !featuresDirectory.isDirectory()) {
-        WLog.log("ReportsModel.getIndex: directory required on featuresDirectory " + featuresDirectory);
-      }
-      if (imageFile!= null && imageFile.isDirectory()) {
-        WLog.log("ReportsModel.getIndex: directory instead of file on imageFile " + imageFile);
+    public int getIndex(File featuresDirectory, File reportImageFile) {
+
+      // log if features directory does not contain report.xml
+      File reportFile = new File(featuresDirectory, "report.xml");
+      if (!reportFile.isFile()) {
+        WLog.log("ReportsModel.getIndex: unexpected missing file " + reportFile);
       }
 
       // return the index of the equivalent ReportTreeNode
@@ -100,7 +104,7 @@ public class ReportsModel {
       while (e.hasMoreElements()) {
         ReportTreeNode reportTreeNode = e.nextElement();
         if (filesEqual(reportTreeNode.featuresDirectory, featuresDirectory)
-         && filesEqual(reportTreeNode.imageFile, imageFile)) {
+         && filesEqual(reportTreeNode.reportImageFile, reportImageFile)) {
           return reportTreeNodes.indexOf(reportTreeNode);
         }
       }
@@ -164,15 +168,15 @@ public class ReportsModel {
     public final RootTreeNode parent;
     // these files define a Report
     public final File featuresDirectory;
-    public final File imageFile;
+    public final File reportImageFile;
 
     // a Report provides a vector of feature file nodes
     private final Vector<FeaturesFileTreeNode> featuresFileNodes = new Vector<FeaturesFileTreeNode>();
 
-    public ReportTreeNode(RootTreeNode parent, File featuresDirectory, File imageFile) {
+    public ReportTreeNode(RootTreeNode parent, File featuresDirectory, File reportImageFile) {
       this.parent = parent;
       this.featuresDirectory = featuresDirectory;
-      this.imageFile = imageFile;
+      this.reportImageFile = reportImageFile;
     }
 
     private void setFiles(boolean includeStoplistFiles, boolean includeEmptyFiles) {
@@ -207,10 +211,10 @@ public class ReportsModel {
     }
 
     public String toString() {
-      if (imageFile == null) {
+      if (reportImageFile == null) {
         return "features directory: " + featuresDirectory + ", no image file, features files size: " + featuresFileNodes.size();
       } else {
-        return "features directory: " + featuresDirectory + ", image file: " + imageFile + ", features files size: " + featuresFileNodes.size();
+        return "features directory: " + featuresDirectory + ", report image file: " + reportImageFile + ", features files size: " + featuresFileNodes.size();
       }
     }
 
@@ -355,13 +359,13 @@ public class ReportsModel {
   /**
    * Adds the report if it is new and updates the tree model.
    */
-  public void addReport(File featuresDirectory, File imageFile) {
+  public void addReport(File featuresDirectory, File reportImageFile) {
     // check to see if an equivalent report is already opened
-    int index = rootTreeNode.getIndex(featuresDirectory, imageFile);
+    int index = rootTreeNode.getIndex(featuresDirectory, reportImageFile);
 
     if (index == -1) {
       // the report is new, so add it
-      ReportTreeNode reportTreeNode = new ReportTreeNode(rootTreeNode, featuresDirectory, imageFile);
+      ReportTreeNode reportTreeNode = new ReportTreeNode(rootTreeNode, featuresDirectory, reportImageFile);
       rootTreeNode.add(reportTreeNode);
 
       // update the features file list
@@ -374,7 +378,7 @@ public class ReportsModel {
     } else {
       // already there, so no action
       WError.showError("Report already opened for directory '"
-                       + featuresDirectory + "'\nImage file '" + imageFile + "'.",
+                       + featuresDirectory + "'\nReport Image file '" + reportImageFile + "'.",
                        "Already Open", null);
     }
   }
@@ -434,9 +438,9 @@ public class ReportsModel {
   /**
    * Obtain the TreePath to a report else null.
    */
-  public TreePath getTreePath(File featuresDirectory, File imageFile) {
+  public TreePath getTreePath(File featuresDirectory, File reportImageFile) {
     // find the index to a matching report
-    int index = rootTreeNode.getIndex(featuresDirectory, imageFile);
+    int index = rootTreeNode.getIndex(featuresDirectory, reportImageFile);
     if (index != -1) {
       ReportTreeNode node = rootTreeNode.getChildAt(index);
       return new TreePath(new Object[] {node.parent, node});

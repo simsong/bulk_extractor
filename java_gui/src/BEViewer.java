@@ -128,7 +128,6 @@ public class BEViewer {
     // set the logger
     WLog.log("Bulk Extractor Viewer Version " + Config.VERSION);
     WLog.setExceptionHandling();
-    WLog.setLoggerAppender();
 
     // set native Look and Feel
     // set for Mac OS X, see http://www.devdaily.com/apple/mac/java-mac-native-look/
