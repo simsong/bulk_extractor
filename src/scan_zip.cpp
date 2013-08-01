@@ -181,7 +181,6 @@ inline void scan_zip_component(const class scanner_params &sp,const recursion_co
             zip_recorder->write(pos0+pos,name,xmlstream.str());
             return;
         }
-
         z_stream zs;
         memset(&zs,0,sizeof(zs));
 		
@@ -201,8 +200,7 @@ inline void scan_zip_component(const class scanner_params &sp,const recursion_co
                 const pos0_t pos0_zip = (pos0 + pos) + rcb.partName;
                 const sbuf_t sbuf_new(pos0_zip, dbuf.buf,zs.total_out,zs.total_out,false); // sbuf w/ decompressed data
                 scanner_params spnew(sp,sbuf_new); // scanner_params that points to the sbuf
-                
-                (*rcb.callback)(spnew);                // process the sbuf
+                (*rcb.callback)(spnew);            // process the sbuf
             }
             r = inflateEnd(&zs);
         } else {
