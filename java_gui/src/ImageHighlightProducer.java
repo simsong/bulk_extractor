@@ -15,7 +15,7 @@ public class ImageHighlightProducer {
 
   // resources
 
-  // resources from models used during calculation
+  // resources from models used temporarily during calculation
   private byte[] paddedPageBytes;
   private int paddingPrefixSize;
   private int availablePageSize;
@@ -53,10 +53,8 @@ public class ImageHighlightProducer {
     // set highlightMatchCase
     this.highlightMatchCase = highlightMatchCase;
 
-    // set highlight flags for the selected Feature Line
-    if (imagePage.featureLine != null) {
-      setFlags(imagePage.featureLine.getImageHighlightVector());
-    }
+    // set highlight flags for the image page
+    setFlags(FeatureFieldFormatter.getImageHighlightVector(imagePage));
 
     // set highlight flags for each user highlight
     if (userHighlights != null) {

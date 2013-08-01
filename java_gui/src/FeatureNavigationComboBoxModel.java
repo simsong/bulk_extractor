@@ -31,7 +31,7 @@ public class FeatureNavigationComboBoxModel extends DefaultComboBoxModel {
       // feature lines are navigable if they have a valid path
       // but not if they have a histogram field
       if (featureLine != null
-       && !ForensicPath.isHistogram(featureLine.pathField)) {
+       && !ForensicPath.isHistogram(featureLine.forensicPath)) {
         selectFeature(featureLine);
       }
     }

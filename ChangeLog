@@ -1,6 +1,10 @@
 2013-07-30  Basic  <simsong@ncr.nps.edu>
 
 	* src/be13_api/plugin.cpp (info_scanners): now only prints -H info if it is provided by the scanner.
+2013-07-29  Man Page  <simsong@mncrnpsedu.local>
+
+	* src/scan_zip.cpp (scan_zip_component): now records general_purpose_bit_flags in XML. Bit 1 indicates that a component is encrypted
+	(scan_zip_component): removed max_depth check; it's in plugin system
 
 2013-07-26  Simson Garfinkel  <simsong@Mucha.local>
 

@@ -22,19 +22,9 @@ public class FeatureLine {
 
   // derived fields
   public final String firstField;
-  public final String pathField; // firstField without filename, if present
+  public final String forensicPath; // firstField without filename, if present
   public final byte[] featureField;
   public final byte[] contextField;
-
-
-//  // derived fields
-//  private final FeatureLineType featureLineType;
-//  private final String firstField;
-//  private final byte[] featureField;
-//  private final byte[] contextField;
-//  private long address = -1;		// only address line types use this field
-//  private String path = "";		// only path line types use this field
-//  private int pathOffset = -1;		// only path line types use this field
 
   /**
    * Constructs a blank FeatureLine because FeatureListCellRenderer requires
@@ -46,6 +36,10 @@ public class FeatureLine {
     featuresFile = null;
     startByte = 0;
     numBytes = 0;
+    firstField = "";
+    forensicPath = "";
+    featureField = new byte[0];
+    contextField = new byte[0];
   }
 
   /**
@@ -80,6 +74,8 @@ public class FeatureLine {
       fileChannel.close();	// JVM garbage collector does not close these, so force closure
       fileInputStream.close();	// JVM garbage collector does not close these, so force closure
     } catch (Exception e) {
+
+      // indicate error
       if (!featuresFile.exists()) {
         // the file doesn't exist
         WError.showError( "Features file " + featuresFile + " does not exist.", "BEViewer file error", null);
@@ -88,13 +84,12 @@ public class FeatureLine {
         WError.showError( "Unable to open features file " + featuresFile + ".", "BEViewer file error", e);
       }
 
-      // abort instantiation gracefully
-      // use zero bytes
-      featureLineType = FeatureLineType.INDETERMINATE_LINE;
-      firstField = null;
-      pathField = null;
-      featureField = null;
-      contextField = null;
+      // set remaining values for failed read
+      actualImageFile = null;
+      firstField = "";
+      forensicPath = "";
+      featureField = new byte[0];
+      contextField = new byte[0];
       return;
     }
 
@@ -124,8 +119,8 @@ public class FeatureLine {
     // firstField is text before first tab
     firstField = new String(lineBytes, 0, i);
 
-    // pathField is firstField but without any file prefix
-    pathField = ForensicPath.getPathWithoutFilename(firstField);
+    // forensicPath is firstField but without any file prefix
+    forensicPath = ForensicPath.getPathWithoutFilename(firstField);
 
     // featureField is text after first tab and before second tab
     // else remaining text
@@ -173,14 +168,6 @@ public class FeatureLine {
   }
 
   /**
-   * Returns text expected in the image that may be highlighted, formatted according to its type
-   * as indicated by the filename of the Feature File associated with this feature.
-   */
-  public Vector<byte[]> getImageHighlightVector() {
-    return FeatureFieldFormatter.getImageHighlightVector(this);
-  }
-
-  /**
    * Returns a printable summary string of this feature line.
    */
   public String getSummaryString() {
@@ -222,21 +209,19 @@ public class FeatureLine {
    */
   public String toString() {
     StringBuffer stringBuffer = new StringBuffer();
-    stringBuffer.append("type: " + featureLineType.name);
-    stringBuffer.append(", typedfield: " + firstField);
-    stringBuffer.append(", feature: '" + FeatureFieldFormatter.getFormattedFeatureText(this));
-//    stringBuffer.append(", feature: '" + getFeatureField());
-//    stringBuffer.append("', context: '" + getContextField());
-    if (featureLineType.equals(FeatureLineType.ADDRESS_LINE)) {
-      stringBuffer.append("', Offset: " + getAddress());
-    }
-    if (featureLineType.equals(FeatureLineType.PATH_LINE)) {
-      stringBuffer.append("', Offset: " + getAddress());
-      stringBuffer.append("', Path: " + path);
-    }
-    stringBuffer.append(" actualImageFile: " + actualImageFile);
-    stringBuffer.append(" reportImageFile: " + reportImageFile);
-    stringBuffer.append(" featuresFile: " + featuresFile);
+
+    // input fields
+    stringBuffer.append("reportImageFile: " + reportImageFile);
+    stringBuffer.append(", actualImageFile: " + actualImageFile);
+    stringBuffer.append(", featuresFile: " + featuresFile);
+    stringBuffer.append(", startByte: " + startByte);
+    stringBuffer.append(", numBytes: " + numBytes);
+
+    // derived fields
+    stringBuffer.append(", firstField: " + firstField);
+    stringBuffer.append(", forensicPath: " + forensicPath);
+    stringBuffer.append(", featureField: " + featureField);
+    stringBuffer.append(", contextField: " + contextField);
     return stringBuffer.toString();
   }
 

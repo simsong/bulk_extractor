@@ -41,6 +41,7 @@ $(srcdir)/src/FeaturesUI.java \
 $(srcdir)/src/FileChooserButton.java \
 $(srcdir)/src/FileComponent.java \
 $(srcdir)/src/FileTools.java \
+$(srcdir)/src/ForensicPath.java \
 $(srcdir)/src/ImageComponent.java \
 $(srcdir)/src/ImageFileType.java \
 $(srcdir)/src/ImageHighlightProducer.java \

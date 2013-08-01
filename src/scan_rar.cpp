@@ -618,23 +618,17 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
             ssize_t pos = cc-sbuf.buf; // position of the buffer
 
             // try each of the possible RAR blocks we may want to record
-            if(record_volumes && process_volume(cc, cc_len, volume)) {
+
+            // volumes are considered false positives if they are not preceeded by the magic number marker block
+            if(record_volumes && cc_len > MARK_LEN && is_mark_block(cc, cc_len, 0) &&
+                    process_volume(cc + MARK_LEN, cc_len - MARK_LEN, volume)) {
                 rar_recorder->write(pos0 + pos, "<volume>", volume.to_xml());
                 // carve encrypted RAR files
                 if(volume.flags & FLAG_HEADERS_ENCRYPTED) {
-                    size_t encrypted_len = guess_encrypted_len(cc, cc_len, volume.len);
+                    size_t encrypted_len = guess_encrypted_len(cc, cc_len, MARK_LEN + volume.len);
                     size_t enc_rar_pos = pos;
-                    size_t enc_rar_len = volume.len + encrypted_len;
-                    // can we find a marker block before the archive block?  If
-                    // so, standard rar tools will likely process the carved
-                    // files without complaint.
-                    if(pos >= MARK_LEN && is_mark_block(sbuf.buf, enc_rar_pos + MARK_LEN, enc_rar_pos - MARK_LEN)) {
-                        enc_rar_len += MARK_LEN;
-                        enc_rar_pos -= MARK_LEN;
-                    }
-#if 0
-                    cout << "looks like " << encrypted_len + volume.len << " after " << pos << " are encrypted of " << sbuf.bufsize << endl;
-#endif
+                    size_t enc_rar_len = MARK_LEN + volume.len + encrypted_len;
+
                     rar_recorder->carve(sbuf, enc_rar_pos, enc_rar_len, ".rar", hasher);
                 }
             }
