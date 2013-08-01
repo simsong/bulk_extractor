@@ -64,6 +64,9 @@ public class ImageView implements CopyableLineInterface {
         setUserHighlights(userHighlights, highlightMatchCase);
       }
     });
+
+    // initialize the ImageView model
+    setImagePage(imageModel.getImagePage());
   }
 
   /**
@@ -81,7 +84,7 @@ public class ImageView implements CopyableLineInterface {
   public static final class ChangeType {
     public static final ChangeType IMAGE_PAGE_CHANGED = new ChangeType("Image page changed");
     public static final ChangeType USER_HIGHLIGHT_CHANGED = new ChangeType("User highlight changed");
-    public static final ChangeType ADDRESS_FORMAT_CHANGED = new ChangeType("Address format changed");
+    public static final ChangeType FORENSIC_PATH_NUMERIC_BASE_CHANGED = new ChangeType("Forensic path numeric base changed");
     public static final ChangeType LINE_FORMAT_CHANGED = new ChangeType("Line format changed");
     public static final ChangeType FONT_SIZE_CHANGED = new ChangeType("Font size changed");
     private final String name;
@@ -100,18 +103,11 @@ public class ImageView implements CopyableLineInterface {
     this.imagePage = imagePage; // save for use with imageHighlightProducer.getPageHighlightFlags
 
     // set state that changes for this call
-    if (imagePage == null) {
-      // clear page values
-      pageForensicPath = "";
-      pageBytes = new byte[0];
-      pageHighlightFlags = new boolean[0];
-    } else {
-      // set page values
-      pageForensicPath = imagePage.pageForensicPath;
-      pageBytes = imagePage.pageBytes;
-      pageHighlightFlags = imageHighlightProducer.getPageHighlightFlags(
+    // set page values
+    pageForensicPath = imagePage.pageForensicPath;
+    pageBytes = imagePage.pageBytes;
+    pageHighlightFlags = imageHighlightProducer.getPageHighlightFlags(
                               imagePage, userHighlights, highlightMatchCase);
-    }
 
     // make change
     setLines(ChangeType.IMAGE_PAGE_CHANGED);
@@ -131,28 +127,23 @@ public class ImageView implements CopyableLineInterface {
     // set state changes for this call
     this.userHighlights = userHighlights;
     this.highlightMatchCase = highlightMatchCase;
-    if (imagePage == null) {
-      // clear highlights
-      pageHighlightFlags = new boolean[0];
-    } else {
-      pageHighlightFlags = imageHighlightProducer.getPageHighlightFlags(
+    pageHighlightFlags = imageHighlightProducer.getPageHighlightFlags(
                               imagePage, userHighlights, highlightMatchCase);
-    }
 
     // make the changes
     setLines(ChangeType.USER_HIGHLIGHT_CHANGED);
   }
 
   /**
-   * Sets the address format associated with the currently active image.
+   * Sets the forensic path numeric base associated with the currently active image.
    */
   public void setUseHexPath(boolean useHexPath) {
     this.useHexPath = useHexPath;
-    setLines(ChangeType.ADDRESS_FORMAT_CHANGED);
+    setLines(ChangeType.FORENSIC_PATH_NUMERIC_BASE_CHANGED);
   }
 
   /**
-   * Returns the address format associated with the currently active image.
+   * Returns the forensic path numeric base associated with the currently active image.
    */
   public boolean getUseHexPath() {
     return useHexPath;
@@ -214,12 +205,8 @@ public class ImageView implements CopyableLineInterface {
   }
 
   /**
-   * Sets the image line
-   * @param pageStartAddress the start address for generated feature lines
-   * @param pageBytes the bytes of the page
-   * @param pageHighlightFlags the highlight flags associated with the page bytes
-   * @param useHexPath print address in decimal or hex
-   * @param lineFormat the line format to use for creating the line text
+   * Recalculates the lines in the view.
+   * @param changeType the change type associated with this action
    */
   private void setLines(ChangeType changeType) {
 
@@ -259,10 +246,10 @@ public class ImageView implements CopyableLineInterface {
       // determine the line's forensic path based on the page offset
       lineForensicPath = ForensicPath.getAdjustedPath(pageForensicPath, pageOffset);
 
-      // format: long address, binary values where legal, hex values
+      // format: forensic path, binary values where legal, hex values
       // format: [00000000]00000000  ..fslfejl.......  00000000 00000000 00000000 00000000
 
-      // add the long address
+      // add the forensic path
       String printablePath = ForensicPath.getPrintablePath(lineForensicPath, useHexPath);
       textBuffer.append(printablePath);
 
@@ -385,10 +372,10 @@ public class ImageView implements CopyableLineInterface {
       lineForensicPath = ForensicPath.getAdjustedPath(pageForensicPath, pageOffset);
 
 
-      // format: long address, binary values where legal
+      // format: forensic path, binary values where legal
       // format: [00000000]00000000  ..fslfejl.............................
 
-      // add the long address
+      // add the forensic path
       String printablePath = ForensicPath.getPrintablePath(lineForensicPath, useHexPath);
       textBuffer.append(printablePath);
 

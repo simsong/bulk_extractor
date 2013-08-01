@@ -104,16 +104,17 @@ public class BasicImageUI extends ImageUI implements MouseListener, MouseMotionL
     Rectangle rectangle;
 
     // get the forensic path line index
-    final int forensicPathLineIndex = imageView.getForensicPathLineIndex(imageView.getImagePage().forensicPath);
+    final int forensicPathLineIndex = imageView.getForensicPathLineIndex(imageView.getImagePage().featureLine.forensicPath);
 
     // scroll based on index
     if (forensicPathLineIndex == -1) {
 
-      // the highlight address is not in this page, so scroll to top
+      // the forensic path to be scrolled to is not in this page,
+      // so scroll to top
       rectangle = new Rectangle(0, 0, 0, 0);
 
     } else {
-      // the feature line address is in this page, so scroll to it
+      // the forensic path is in this page, so scroll to it
       // calculate the line's pixel address based on font height
       int y = forensicPathLineIndex * fontHeight;
 
@@ -355,7 +356,7 @@ public class BasicImageUI extends ImageUI implements MouseListener, MouseMotionL
       } else if (changeType == ImageView.ChangeType.USER_HIGHLIGHT_CHANGED) {
         // although highlighting changed, geometry did not change.
         imageComponent.repaint();
-      } else if (changeType == ImageView.ChangeType.ADDRESS_FORMAT_CHANGED
+      } else if (changeType == ImageView.ChangeType.FORENSIC_PATH_NUMERIC_BASE_CHANGED
               || changeType == ImageView.ChangeType.FONT_SIZE_CHANGED) {
         // line text changed but the addressing to the lines remains the same
         imageComponent.setComponentSize(getViewDimension());

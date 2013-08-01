@@ -45,10 +45,6 @@ public class BEMenus extends JMenuBar {
   private JRadioButtonMenuItem rbReferencedFeaturesCollapsible;
   private JCheckBoxMenuItem cbShowStoplistFiles;
   private JCheckBoxMenuItem cbShowEmptyFiles;
-  private JRadioButtonMenuItem rbImageReaderOptimal;
-  private JRadioButtonMenuItem rbImageReaderJavaOnly;
-  private JRadioButtonMenuItem rbImageReaderBulkExtractor;
-  private JRadioButtonMenuItem rbImageReaderLibewfcsTester;
   private JMenuItem miPrintFeature;
   private JMenuItem miBookmark;
   private JMenuItem miCopy;
@@ -259,9 +255,8 @@ public class BEMenus extends JMenuBar {
     JMenu view = new JMenu("View");
     add(view);
     ButtonGroup imageGroup = new ButtonGroup();
-    ButtonGroup addressBaseGroup = new ButtonGroup();
+    ButtonGroup forensicPathNumericBaseGroup = new ButtonGroup();
     ButtonGroup referencedFeaturesGroup = new ButtonGroup();
-    ButtonGroup imageReaderGroup = new ButtonGroup();
 
     // view|Toolbars
     JMenu toolbarMenu = new JMenu("Toolbars");
@@ -326,7 +321,7 @@ public class BEMenus extends JMenuBar {
     // wire listener to manage which image view type button is selected
     BEViewer.imageView.addImageViewChangedListener(new Observer() {
       public void update(Observable o, Object arg) {
-        // this could be changed to act only on ImageView.ChangeType.ADDRESS_FORMAT_CHANGED
+        // this could be changed to act only on ImageView.ChangeType.FORENSIC_PATH_NUMERIC_BASE_CHANGED
         ImageLine.LineFormat lineFormat = BEViewer.imageView.getLineFormat();
         if (lineFormat == ImageLine.LineFormat.TEXT_FORMAT) {
           rbTextView.setSelected(true);
@@ -338,46 +333,43 @@ public class BEMenus extends JMenuBar {
       }
     });
     
-    // view|Address Base
-    JMenu addressBaseMenu = new JMenu("Address Base");
-    view.add(addressBaseMenu);
+    // view|Forensic Path Numeric Base
+    JMenu forensicPathNumericBaseMenu = new JMenu("Forensic Path Numeric Base");
+    view.add(forensicPathNumericBaseMenu);
 
-    // view|Address Base|Decimal
+    // view|Forensic Path Numeric Base|Decimal
     rbDecimal = new JRadioButtonMenuItem("Decimal");
-    addressBaseGroup.add(rbDecimal);
-    addressBaseMenu.add(rbDecimal);
+    forensicPathNumericBaseGroup.add(rbDecimal);
+    forensicPathNumericBaseMenu.add(rbDecimal);
     rbDecimal.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
-        BEViewer.featuresModel.setAddressFormat(BEPreferences.FEATURE_ADDRESS_FORMAT_DECIMAL);
-        BEViewer.referencedFeaturesModel.setAddressFormat(BEPreferences.FEATURE_ADDRESS_FORMAT_DECIMAL);
-        BEViewer.imageView.setAddressFormat(BEPreferences.IMAGE_ADDRESS_FORMAT_DECIMAL);
+        BEViewer.featuresModel.setUseHexPath(false);
+        BEViewer.referencedFeaturesModel.setUseHexPath(false);
+        BEViewer.imageView.setUseHexPath(false);
       }
     });
 
-    // view|Address Base|Hex
+    // view|Forensic Path Numeric Base|Hex
     rbHex = new JRadioButtonMenuItem("Hexadecimal");
-    addressBaseGroup.add(rbHex);
-    addressBaseMenu.add(rbHex);
+    forensicPathNumericBaseGroup.add(rbHex);
+    forensicPathNumericBaseMenu.add(rbHex);
     rbHex.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
-        BEViewer.featuresModel.setAddressFormat(BEPreferences.FEATURE_ADDRESS_FORMAT_HEX);
-        BEViewer.referencedFeaturesModel.setAddressFormat(BEPreferences.FEATURE_ADDRESS_FORMAT_HEX);
-        BEViewer.imageView.setAddressFormat(BEPreferences.IMAGE_ADDRESS_FORMAT_HEX);
+        BEViewer.featuresModel.setUseHexPath(true);
+        BEViewer.referencedFeaturesModel.setUseHexPath(true);
+        BEViewer.imageView.setUseHexPath(true);
       }
     });
     
-    // wire listener to manage which address base is shown in the menu
+    // wire listener to manage which forensic path numeric base is shown in the menu
     BEViewer.imageView.addImageViewChangedListener(new Observer() {
       public void update(Observable o, Object arg) {
-        if (BEViewer.imageView.getChangeType() == ImageView.ChangeType.ADDRESS_FORMAT_CHANGED) {
-          String addressFormat = BEViewer.imageView.getAddressFormat();
-          if (addressFormat.equals(BEPreferences.FEATURE_ADDRESS_FORMAT_DECIMAL)) {
+        if (BEViewer.imageView.getChangeType() == ImageView.ChangeType.FORENSIC_PATH_NUMERIC_BASE_CHANGED) {
+          boolean isHex = BEViewer.imageView.getUseHexPath();
+          if (!isHex) {
             rbDecimal.setSelected(true);
-          } else if (addressFormat.equals(BEPreferences.FEATURE_ADDRESS_FORMAT_HEX)) {
-            rbHex.setSelected(true);
           } else {
-            // preference value got corrupted, just warn.
-            WLog.log("BEMenus.addImageViewChangedListener: corrupted value: " + addressFormat);
+            rbHex.setSelected(true);
           }
         }
       }
@@ -567,32 +559,24 @@ public class BEMenus extends JMenuBar {
     JMenu properties = new JMenu("Properties");
     view.add(properties);
 
-    // view|Properties|Image Metadata
-    mi = new JMenuItem("Image Metadata");
+    // view|Properties|report.xml File
+    mi = new JMenuItem("report.xml File");
     properties.add(mi);
     mi.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
-        WInfo.showInfo("Image Metadata", BEViewer.imageModel.getImageMetadata());
-      }
-    });
-
-    // view|Properties|Report File
-    mi = new JMenuItem("Report File");
-    properties.add(mi);
-    mi.addActionListener(new ActionListener() {
-      public void actionPerformed (ActionEvent e) {
-        FeatureLine featureLine = BEViewer.imageModel.getFeatureLine();
-        if (featureLine == null) {
+        // get the currently selected feature line
+        FeatureLine featureLine = BEViewer.featureLineSelectionManager.getFeatureLineSelection();
+        File featureFile = featureLine.featuresFile;
+        if (featureFile == null || featureLine.featuresFile == null) {
           WError.showError("A Feature must be selected before viewing the Report file.", 
                            "BEViewer Properties error", null);
         } else {
           try {
-            File featureFile = BEViewer.imageModel.getFeatureLine().featuresFile;
-            File reportFile = new File(featureFile.getParentFile(), "report.xml");
+            File reportFile = new File(featureLine.featuresFile.getParentFile(), "report.xml");
             URL url = reportFile.toURI().toURL();
             new WURL("Bulk Extractor Viewer Report file " + reportFile.toString(), url);
           } catch (Exception exc) {
-            WError.showError("Unable to read report properties.", 
+            WError.showError("Unable to read report.xml file.", 
                              "BEViewer Read error", exc);
           }
         }
@@ -653,31 +637,27 @@ public class BEMenus extends JMenuBar {
     // help|<separator>
     help.addSeparator();
 
-    // help|Log
-    JMenu log = new JMenu("Log");
-    help.add(log);
-
-    // help|log|Show Log
+    // help|Show Log
     mi = new JMenuItem("Show Log");
-    log.add(mi);
+    help.add(mi);
     mi.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
         WLog.setVisible();
       }
     });
 
-    // help|log|Clear Log
+    // help|Clear Log
     mi = new JMenuItem("Clear Log");
-    log.add(mi);
+    help.add(mi);
     mi.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
         WLog.clearLog();
       }
     });
 
-    // help|log|Copy Log to System Clipboard
+    // help|Copy Log to System Clipboard
     mi = new JMenuItem("Copy Log to System Clipboard");
-    log.add(mi);
+    help.add(mi);
     mi.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
         // clear the selection manager
@@ -692,75 +672,13 @@ public class BEMenus extends JMenuBar {
       }
     });
 
+    // help|<separator>
+    help.addSeparator();
+
     // help|diagnostics
     JMenu diagnostics = new JMenu("Diagnostics");
     help.add(diagnostics);
 
-    // help|diagnostics|Image Reader
-    JMenu imageReaderMenu = new JMenu("Image Reader");
-    diagnostics.add(imageReaderMenu);
-
-    // help|diagnostics|Image Reader|OPTIMAL
-    rbImageReaderOptimal = new JRadioButtonMenuItem(ImageReaderType.OPTIMAL.toString());
-    imageReaderGroup.add(rbImageReaderOptimal);
-    imageReaderMenu.add(rbImageReaderOptimal);
-    rbImageReaderOptimal.setSelected(true);
-    rbImageReaderOptimal.addActionListener(new ActionListener() {
-      public void actionPerformed (ActionEvent e) {
-        BEViewer.imageModel.imageReaderManager.setReaderTypeAllowed(ImageReaderType.OPTIMAL);
-      }
-    });
-
-    // help|diagnostics|Image Reader|JAVA_ONLY
-    rbImageReaderJavaOnly = new JRadioButtonMenuItem(ImageReaderType.JAVA_ONLY.toString());
-    imageReaderGroup.add(rbImageReaderJavaOnly);
-    imageReaderMenu.add(rbImageReaderJavaOnly);
-    rbImageReaderJavaOnly.addActionListener(new ActionListener() {
-      public void actionPerformed (ActionEvent e) {
-        BEViewer.imageModel.imageReaderManager.setReaderTypeAllowed(ImageReaderType.JAVA_ONLY);
-      }
-    });
-
-    // help|diagnostics|Image Reader|BULK_EXTRACTOR
-    rbImageReaderBulkExtractor = new JRadioButtonMenuItem(ImageReaderType.BULK_EXTRACTOR.toString());
-    imageReaderGroup.add(rbImageReaderBulkExtractor);
-    imageReaderMenu.add(rbImageReaderBulkExtractor);
-    rbImageReaderBulkExtractor.addActionListener(new ActionListener() {
-      public void actionPerformed (ActionEvent e) {
-        BEViewer.imageModel.imageReaderManager.setReaderTypeAllowed(ImageReaderType.BULK_EXTRACTOR);
-      }
-    });
-
-    // help|diagnostics|Image Reader|LIBEWFCS_TESTER
-    rbImageReaderLibewfcsTester = new JRadioButtonMenuItem(ImageReaderType.LIBEWFCS_TESTER.toString());
-    imageReaderGroup.add(rbImageReaderLibewfcsTester);
-    imageReaderMenu.add(rbImageReaderLibewfcsTester);
-    rbImageReaderLibewfcsTester.addActionListener(new ActionListener() {
-      public void actionPerformed (ActionEvent e) {
-        BEViewer.imageModel.imageReaderManager.setReaderTypeAllowed(ImageReaderType.LIBEWFCS_TESTER);
-      }
-    });
-
-    // wire listener to manage which visibility mode is shown in the menu
-    BEViewer.imageModel.imageReaderManager.addImageReaderManagerChangedListener(new Observer() {
-      public void update(Observable o, Object arg) {
-
-        ImageReaderType imageReaderType = BEViewer.imageModel.imageReaderManager.getReaderTypeAllowed();
-//        BEViewer.imageModel.refresh();
-        if (imageReaderType == ImageReaderType.OPTIMAL) {
-          rbImageReaderOptimal.setSelected(true);
-        } else if (imageReaderType == ImageReaderType.JAVA_ONLY) {
-          rbImageReaderJavaOnly.setSelected(true);
-        } else if (imageReaderType == ImageReaderType.BULK_EXTRACTOR) {
-          rbImageReaderBulkExtractor.setSelected(true);
-        } else if (imageReaderType == ImageReaderType.LIBEWFCS_TESTER) {
-          rbImageReaderLibewfcsTester.setSelected(true);
-        } else {
-          throw new RuntimeException("Invalid state");
-        }
-      }
-    });
-    
     // help|diagnostics|Close all Image Readers
     mi = new JMenuItem("Close All Image Readers");
     diagnostics.add(mi);
@@ -776,12 +694,10 @@ public class BEMenus extends JMenuBar {
     mi.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
         // move to end of feature currently in the image model
-        long imageSize = BEViewer.imageModel.getImageSize();
-        // identify the end page address
-        long imageEndOffset = (imageSize > 0) ? imageSize - 1 : 0;
-        long endPageOffset = ImageModel.getAlignedOffset(imageEndOffset);
-
-        BEViewer.imageModel.setPageStartOffset(endPageOffset);
+        ImageModel.ImagePage imagePage = BEViewer.imageView.getImagePage();
+        long offset = ForensicPath.getOffset(imagePage.pageForensicPath);
+        long imageEndOffset = (offset > 0) ? offset - 1 : 0;
+        BEViewer.imageModel.setImageSelection(ForensicPath.getAdjustedPath(imagePage.pageForensicPath, imageEndOffset));
       }
     });
 

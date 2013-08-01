@@ -16,8 +16,8 @@ import javax.swing.SwingUtilities;
 public class ImageModel {
 
   // feature attributes that define this model
-  private FeatureLine featureLine;
-  private String pageForensicPath;
+  private FeatureLine featureLine = new FeatureLine();
+  private String pageForensicPath = "";
 
   // derived attributes that define this model
   private byte[] pageBytes = new byte[0];
@@ -97,7 +97,7 @@ public class ImageModel {
   }
 
   /**
-   * Changes the forensic path to an inclusive aligned value.
+   * Changes the forensic path to an inclusive aligned page value.
    */
   public synchronized void setImageSelection(String forensicPath) {
     this.pageForensicPath = ForensicPath.getAlignedPath(forensicPath);
@@ -130,24 +130,6 @@ public class ImageModel {
   }
 
   // ************************************************************
-  // reader state polling
-  // ************************************************************
-//zz may poll for ImagePage
-//  /**
-//   * Returns the active image file.
-//   */
-//  public File getImageFile() {
-//    return imageFile;
-//  }
-//
-//  /**
-//   * Returns the active forensic path.
-//   */
-//  public String getForensicPath() {
-//    return forensicPath;
-//  }
-
-  // ************************************************************
   // polling and returned data
   // ************************************************************
   /**
@@ -159,33 +141,26 @@ public class ImageModel {
   }
 
   public static class ImagePage {
-    public final File imageFile;
-    public final String forensicPath;
-    public final String pageForensicPath;
+    public final FeatureLine featureLine;
+    public final String pageForensicPath; // path used by model
     public final byte[] pageBytes;
     public final byte[] paddedPageBytes;
     public final int paddingPrefixSize;
     public final int defaultPageSize;
     public final long imageSize;
-    public final byte[] featureField; // for highlighting
-    public final byte[] contextField; // for highlighting
 
-    private ImagePage(File imageFile,
-                      String forensicPath, String pageForensicPath,
+    private ImagePage(FeatureLine featureLine,
+                      String pageForensicPath,
                       byte[] pageBytes, byte[] paddedPageBytes,
                       int paddingPrefixSize, int defaultPageSize,
-                      long imageSize,
-                      byte[] featureField, byte[] contextField) {
-      this.imageFile = imageFile;
-      this.forensicPath = forensicPath;
+                      long imageSize) {
+      this.featureLine = featureLine;
       this.pageForensicPath = pageForensicPath;
       this.pageBytes = pageBytes;
       this.paddedPageBytes = paddedPageBytes;
       this.paddingPrefixSize = paddingPrefixSize;
       this.defaultPageSize = defaultPageSize;
       this.imageSize = imageSize;
-      this.featureField = featureField;
-      this.contextField = contextField;
     }
   }
 
@@ -195,22 +170,12 @@ public class ImageModel {
   public synchronized ImagePage getImagePage() {
     if (busy) {
       WLog.log("ImageModel.getImagePage: note: blank image page provided while busy.");
-      return null;
+      return new ImagePage(new FeatureLine(), "", new byte[0], new byte[0], 0, PAGE_SIZE, 0);
     }
-    return new ImagePage(featureLine.actualImageFile, featureLine.forensicPath,
-                         pageForensicPath, pageBytes, paddedPageBytes,
-                         paddingPrefixSize, PAGE_SIZE, imageSize,
-                         featureLine.featureField, featureLine.contextField);
-  }
-
-  /**
-   * Returns the image size associated with the currently active image.
-   */
-  public synchronized long getImageSize() {
-    if (busy) {
-      throw new RuntimeException("sync error");
-    }
-    return imageSize;
+WLog.log("IM.fl " + featureLine);
+    return new ImagePage(featureLine, pageForensicPath,
+                         pageBytes, paddedPageBytes,
+                         paddingPrefixSize, PAGE_SIZE, imageSize);
   }
 
   // ************************************************************

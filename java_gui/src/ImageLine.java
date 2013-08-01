@@ -24,7 +24,7 @@ public class ImageLine {
 
   /**
    * Creates an <code>ImageLine</code> object.
-   * @param lineForensicPath The start address of the image line
+   * @param lineForensicPath The forensic path of the image line
    * @param text The text of the image line
    * @param highlightIndexes The array of text index characters to be highlighted
    * @param numHighlights The number of text index characters to be highlighted in the image line

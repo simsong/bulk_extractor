@@ -349,9 +349,7 @@ public class ImageReader {
     } catch (InterruptedException e) {
       // NOTE: gjc doesn't support IOException(Throwable) so use this:
       Throwable cause = e.getCause();
-      IOException ioe = new IOException(cause == null ? null : cause.toString());
-      ioe.initCause(cause);
-      throw ioe;
+      WLog.logThrowable(e);
     }
     if (status != 0) {
       WLog.log("BulkExtractorFileReader.close: failure closing file " + file + ": " + status);

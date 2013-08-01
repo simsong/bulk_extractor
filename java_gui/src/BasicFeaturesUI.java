@@ -141,19 +141,22 @@ public class BasicFeaturesUI extends FeaturesUI implements MouseListener, MouseM
    * required to render the view provided by <code>ImageView</code>.
    */
   private Dimension getViewDimension() {
-    int lineHeight = featuresModel.getTotalLines();
-    int lineWidth = (lineHeight == 0) ? 0 : featuresModel.getWidestLineLength();
+    final int width;
+    final int height;
 
-    // clip line width to ammount clipped by FeatureFieldFormatter
-    if (lineWidth > FeatureFieldFormatter.MAX_CHAR_WIDTH) {
-      lineWidth = FeatureFieldFormatter.MAX_CHAR_WIDTH;
+    if (featuresModel.getTotalLines() == 0) {
+      width = 0;
+      height = 0;
+    } else {
+      int lineHeight = featuresModel.getTotalLines();
+      FeatureLine featureLine = featuresModel.getFeatureLine(0);
+      String printableForensicPath = ForensicPath.getPrintablePath(featureLine.forensicPath, featuresModel.getUseHexPath());
+      FontMetrics tempFontMetrics = featuresComponent.getFontMetrics(getTextFont());
+      width = tempFontMetrics.stringWidth("W")
+              * ((printableForensicPath.length() + 4) // 4 is plenty to account for extra decimal places
+              + featuresModel.getWidestLineLength());
+      height = tempFontMetrics.getHeight() * lineHeight;
     }
-
-    // return the dimension of the page using font metrics
-    FontMetrics tempFontMetrics = featuresComponent.getFontMetrics(getTextFont());
-    final int POTENTIAL_ADDRESS_WIDTH = 8 * 2; // account for potential width of offset field
-    int width = tempFontMetrics.stringWidth("W") * (lineWidth + POTENTIAL_ADDRESS_WIDTH);
-    int height = tempFontMetrics.getHeight() * lineHeight;
     return new Dimension(width, height);
   }
 
@@ -186,7 +189,7 @@ public class BasicFeaturesUI extends FeaturesUI implements MouseListener, MouseM
     // NOTE: for highlighting, we use setColor(Color.YELLOW) rather than take an L&F color
     // from UIManager because UIManager has no equivalent.
     // NOTE: this model does not support tabs.  Specifically, it manages the one expected
-    // tab after the address or historam but does not manage any other tabs.
+    // tab after the forensic path or historam but does not manage any other tabs.
     // If tab management is required in the future, either replace tab with space (simple)
     // or call g.drawString multiple times, once per tab, setting y for each tabstop width.
     // NOTE: Swing hangs if array is to large, so strings are truncated in FeatureFieldFormatter.
@@ -239,12 +242,12 @@ public class BasicFeaturesUI extends FeaturesUI implements MouseListener, MouseM
       FeatureLine featureLine = featuresModel.getFeatureLine(line);
 
       // calculate text and geometry of the feature line's prefix
-      String prefixString = ForensicPath.getPrintablePath(featureLine.forensicPath, useHexPath);
+      String prefixString = ForensicPath.getPrintablePath(featureLine.forensicPath, featuresModel.getUseHexPath());
       int prefixWidth = prefixMetrics.stringWidth(prefixString);
       int tabbedPrefixWidth = prefixWidth + (tabWidth - (prefixWidth % tabWidth));
 
       // get the feature text into usable local variables
-      final String featureString = FeatureFieldFormatter.getFormattedFeatureText(featureLine);
+      final String featureString = featureLine.formattedFeature;
       final char[] featureCharArray = featureString.toCharArray();
 
       // get text width handy if needed
@@ -309,7 +312,7 @@ public class BasicFeaturesUI extends FeaturesUI implements MouseListener, MouseM
   }
 
   /**
-   * Repaints the component if the mouse movement has changed the selectable address line.
+   * Repaints the component if the mouse movement has changed the selectable feature line.
    * Not used.
    * @param e the mouse event
    */
@@ -413,7 +416,7 @@ public class BasicFeaturesUI extends FeaturesUI implements MouseListener, MouseM
     } else if (modelRole == FeaturesModel.ModelRole.HISTOGRAM_ROLE) {
 
       // filter the histogram features model by the feature field
-      byte[] matchableFeature = featuresModel.getFeatureLine(selectedLine).getFeatureField();
+      byte[] matchableFeature = featuresModel.getFeatureLine(selectedLine).featureField;
       BEViewer.referencedFeaturesModel.setFilterBytes(matchableFeature);
     } else {
       throw new RuntimeException("Invalid type");
@@ -424,7 +427,7 @@ public class BasicFeaturesUI extends FeaturesUI implements MouseListener, MouseM
   }
     
   /**
-   * Selects the address line if the cursor is hovering over a valid address.
+   * Selects the feature line if the cursor is hovering over a valid forensic path.
    * @param e the mouse event
    */
   public void mouseClicked(MouseEvent e) {
@@ -436,7 +439,7 @@ public class BasicFeaturesUI extends FeaturesUI implements MouseListener, MouseM
 
   private int getLineWidth(FeatureLine featureLine) {
     // calculate width of the feature line's prefix
-      String prefixString = ForensicPath.getPrintablePath(featureLine.forensicPath, useHexPath);
+      String prefixString = ForensicPath.getPrintablePath(featureLine.forensicPath, featuresModel.getUseHexPath());
     int prefixWidth = prefixMetrics.stringWidth(prefixString);
 
     // calculate width of the tab
@@ -444,7 +447,7 @@ public class BasicFeaturesUI extends FeaturesUI implements MouseListener, MouseM
     int tabbedWidth = tabWidth - (prefixWidth % tabWidth);
 
     // calculate width of the displayed feature text
-    String featureString = FeatureFieldFormatter.getFormattedFeatureText(featureLine);
+    String featureString = featureLine.formattedFeature;
     int featureWidth = textMetrics.stringWidth(featureString);
 
     // return the width of the line

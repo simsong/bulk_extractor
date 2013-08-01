@@ -58,26 +58,23 @@ public final class NavigationPane extends Container {
     BEViewer.featureLineSelectionManager.addFeatureLineSelectionManagerChangedListener(new Observer() {
       public void update(Observable o, Object arg) {
 
-        // set fields based on the selected feature line
+        // get the selected feature line
         final FeatureLine featureLine = BEViewer.featureLineSelectionManager.getFeatureLineSelection();
 
-        // set navigation view based on the FeatureLine
-        if (featureLine != null
-            && (featureLine.getType() == FeatureLine.FeatureLineType.ADDRESS_LINE
-             || featureLine.getType() == FeatureLine.FeatureLineType.PATH_LINE)) {
+        // set navigation text and button state based on the FeatureLine
+        if (featureLine != null && !ForensicPath.isHistogram(featureLine.firstField)) {
  
-          // set fields based on feature
-          imageFileLabel.setFile(featureLine.getImageFile());
-          featuresFileLabel.setFile(featureLine.getFeaturesFile());
-          featurePathLabel.setComponentText(featureLine.getFormattedFirstField(
-                                            BEViewer.imageView.getAddressFormat()));
-          featureLabel.setComponentText(featureLine.getFormattedFeatureText());
+          // set navigation fields
+          imageFileLabel.setFile(featureLine.actualImageFile);
+          featuresFileLabel.setFile(featureLine.featuresFile);
+          featurePathLabel.setComponentText(ForensicPath.getPrintablePath(featureLine.forensicPath, BEViewer.imageView.getUseHexPath()));
+          featureLabel.setComponentText(featureLine.formattedFeature);
           deleteB.setEnabled(true);
           bookmarkB.setEnabled(true);
 
         } else {
 
-          // clear fields
+          // clear navigation fields
           imageFileLabel.setFile(null);
           featuresFileLabel.setFile(null);
           featurePathLabel.setComponentText(null);
@@ -108,11 +105,10 @@ public final class NavigationPane extends Container {
             throw new RuntimeException("Invalid state");
           }
 
-        } else if (changeType == ImageView.ChangeType.ADDRESS_FORMAT_CHANGED) {
-          if (BEViewer.imageView.getImagePage() != null && BEViewer.imageView.getImagePage().featureLine != null) {
-            FeatureLine featureLine = BEViewer.imageView.getImagePage().featureLine;
-            featurePathLabel.setComponentText(
-                   featureLine.getFormattedFirstField(BEViewer.imageView.getAddressFormat()));
+        } else if (changeType == ImageView.ChangeType.FORENSIC_PATH_NUMERIC_BASE_CHANGED) {
+          if (BEViewer.imageView.getImagePage() != null) {
+            ImageModel.ImagePage imagePage = BEViewer.imageView.getImagePage();
+            featurePathLabel.setComponentText(ForensicPath.getPrintablePath(imagePage.featureLine.forensicPath, BEViewer.imageView.getUseHexPath()));
           }
         } else {
           // no action for other change types
@@ -122,23 +118,23 @@ public final class NavigationPane extends Container {
   }
 
   private void setPanState(ImageModel.ImagePage imagePage) {
-    // set forward, reverse, and home button state based on values from imageView's imagePage
-    if (imagePage == null || imagePage.pageBytes.length == 0) {
+    // set forward, reverse, and home button state based on the forensic path of the active page
+    if (imagePage.pageBytes.length == 0) {
       // there is no image to pan
       homeB.setEnabled(false);
       reverseB.setEnabled(false);
       forwardB.setEnabled(false);
     } else {
-      long pageStartAddress = BEViewer.imageView.getImagePage().pageStartAddress;
+      long offset = ForensicPath.getOffset(imagePage.pageForensicPath);
 
       // set home button state
       homeB.setEnabled(true);
 
       // set reverse button state
-      reverseB.setEnabled(imagePage.pageStartAddress > 0);
+      reverseB.setEnabled(offset > 0);
 
       // set forward button state
-      forwardB.setEnabled(pageStartAddress + ImageModel.PAGE_SIZE < imagePage.imageSize);
+      forwardB.setEnabled(offset + ImageModel.PAGE_SIZE < imagePage.imageSize);
     }
   }
 
@@ -548,17 +544,18 @@ public final class NavigationPane extends Container {
     // clicking the reverse button scrolls back one page
     reverseB.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
-        // get the exising page start address
-        long pageStartAddress = BEViewer.imageView.getImagePage().pageStartAddress;
+        // get the exising page offset
+        ImageModel.ImagePage imagePage = BEViewer.imageView.getImagePage();
+        long offset = ForensicPath.getOffset(imagePage.pageForensicPath);
 
-        // page back one page unless the new address is out of range
-        if (pageStartAddress >= ImageModel.PAGE_SIZE) {
-          pageStartAddress -= ImageModel.PAGE_SIZE;
-          BEViewer.imageModel.setPageStartAddress(pageStartAddress);
+        // page back one page unless the new forensic path is out of range
+        if (offset >= ImageModel.PAGE_SIZE) {
+          offset -= ImageModel.PAGE_SIZE;
+          BEViewer.imageModel.setImageSelection(ForensicPath.getAdjustedPath(imagePage.pageForensicPath, offset));
         } else {
           WError.showError(
                       "Already at beginning of file.",
-                      "BEViewer Image File address error", null);
+                      "BEViewer Image File pan error", null);
         }
       }
     });
@@ -570,7 +567,7 @@ public final class NavigationPane extends Container {
     c.gridx = 3;
     c.gridy = 0;
 
-    // create the home button for paging back to the page containing the selected address
+    // create the home button for paging back to the page containing the selected forensic path
     homeB = new JButton(BEIcons.HOME_16);
     homeB.setFocusable(false);
     homeB.setRequestFocusEnabled(false);
@@ -582,13 +579,12 @@ public final class NavigationPane extends Container {
     // add the Home button
     container.add(homeB, c);
 
-    // clicking the Home button pages back to the page containing the selected address
+    // clicking the Home button pages back to the page containing the selected forensic path
     homeB.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
         // return to the home page
-        FeatureLine featureLine = BEViewer.imageView.getImagePage().featureLine;
-        BEViewer.imageModel.setPageStartAddress(ImageModel.getAlignedOffset(
-                    ForensicPath.getOffset(featureLine)));
+        ImageModel.ImagePage imagePage = BEViewer.imageView.getImagePage();
+        BEViewer.imageModel.setImageSelection(ForensicPath.getAlignedPath(imagePage.featureLine.forensicPath));
       }
     });
 
@@ -614,21 +610,21 @@ public final class NavigationPane extends Container {
     forwardB.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
 
-        // get the exising page start address
-        long pageStartAddress = BEViewer.imageView.getImagePage().pageStartAddress;
+        // get the exising page offset
+        ImageModel.ImagePage imagePage = BEViewer.imageView.getImagePage();
+        long offset = ForensicPath.getOffset(imagePage.pageForensicPath);
 
-        // get the file size
-        long imageSize = BEViewer.imageView.getImagePage().imageSize;
+        // get the image size
+        long imageSize = imagePage.imageSize;
 
-        // page forward one page unless the new address is out of range
-        if (pageStartAddress + ImageModel.PAGE_SIZE < imageSize) {
-          pageStartAddress += ImageModel.PAGE_SIZE;
-          BEViewer.imageModel.setPageStartAddress(pageStartAddress);
+        // page forward one page unless the new offset is out of range
+        if (offset + ImageModel.PAGE_SIZE < imagePage.imageSize) {
+          offset += ImageModel.PAGE_SIZE;
+          BEViewer.imageModel.setImageSelection(ForensicPath.getAdjustedPath(imagePage.pageForensicPath, offset));
         } else {
-          String sizeString = String.format(BEViewer.LONG_FORMAT, imageSize);
           WError.showError(
-                      "Already at end of path of size " + sizeString + ".",
-                      "BEViewer Image File address error", null);
+                      "Already at end of path, " + imageSize + ".",
+                      "BEViewer Image File pan error", null);
         }
       }
     });

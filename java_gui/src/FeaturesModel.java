@@ -241,7 +241,7 @@ WLog.log("FeaturesModel.setReport image file: " + imageFile + ", featuresFile: "
    * Sets the path format associated with the view
    * @param useHexPath whether path is formatted in hex
    */
-  public void setHexPath(boolean useHexPath) {
+  public void setUseHexPath(boolean useHexPath) {
 //no; featureline takes this as an input parameter   if (modelRole == ModelRole.HISTOGRAM_ROLE) throw new RuntimeException("Invalid Usage");
 
     // ignore if object equality
@@ -258,7 +258,7 @@ WLog.log("FeaturesModel.setReport image file: " + imageFile + ", featuresFile: "
    * Returns the path format associated with the features model.
    * @return the path format associated with the features model
    */
-  public String getUseHexPath() {
+  public boolean getUseHexPath() {
 //no; featureline takes this as an input parameter    if (modelRole == ModelRole.HISTOGRAM_ROLE) throw new RuntimeException("Invalid Usage");
 
     return useHexPath;
@@ -336,7 +336,7 @@ WLog.log("FeaturesModel.setReport image file: " + imageFile + ", featuresFile: "
    * @return the feature line
    */
   public FeatureLine getFeatureLine(int lineNumber) {
-    featureLine = featureLineTable.get(lineNumber);
+    FeatureLine featureLine = featureLineTable.get(lineNumber);
     return featureLine;
   }
 
@@ -430,7 +430,7 @@ WLog.log("FeaturesModel.setReport image file: " + imageFile + ", featuresFile: "
     FeatureLine featureLine = getFeatureLine(line);
     return ForensicPath.getPrintablePath(featureLine.forensicPath, useHexPath)
          + "\t"
-         + FeatureFieldFormatter.getFormattedFeatureText(featureLine);
+         + featureLine.formattedFeature;
   }
 }
 

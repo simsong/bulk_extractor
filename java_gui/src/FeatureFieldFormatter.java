@@ -1,4 +1,5 @@
 import java.util.Vector;
+import java.io.File;
 import java.io.StringReader;
 import java.io.ByteArrayInputStream;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -27,28 +28,28 @@ public class FeatureFieldFormatter {
   /**
    * Provides feature text in a format suitable for reading.
    */
-  public static String getFormattedFeatureText(FeatureLine featureLine) {
-    String filename = featureLine.featuresFile.getName();
+  public static String getFormattedFeatureText(File featuresFile, byte[] featureField, byte[] contextField) {
+    String filename = featuresFile.getName();
     String formattedText;
 
     if (filename.equals("gps.txt")) {
-      formattedText = getGPSFormat(featureLine);
+      formattedText = getGPSFormat(contextField);
 
     } else if (filename.equals("exif.txt")) {
-      formattedText = getEXIFFormat(featureLine);
+      formattedText = getEXIFFormat(contextField);
 
 //      case "ip.txt":
 //      case "tcp.txt":
 //      case "json.txt":
 
     } else if (filename.equals("elf.txt")) {
-      formattedText = getELFFormat(featureLine);
+      formattedText = getELFFormat(contextField);
 
     } else if (filename.equals("winpe.txt")) {
-      formattedText = getWINPEFormat(featureLine);
+      formattedText = getWINPEFormat(contextField);
 
     } else {
-      formattedText = getGenericFormat(featureLine);
+      formattedText = getGenericFormat(featureField);
     }
 
     // NOTE: Swing bug: Swing fails when attemtping to render long strings,
@@ -61,12 +62,12 @@ public class FeatureFieldFormatter {
     return formattedText;
   }
 
-  private static String getGPSFormat(FeatureLine featureLine) {
+  private static String getGPSFormat(byte[] contextField) {
     // show GPS data as-is, encoded in the context field
-    return new String(featureLine.contextField);
+    return new String(contextField);
   }
   
-  private static String getEXIFFormat(FeatureLine featureLine) {
+  private static String getEXIFFormat(byte[] contextField) {
     StringBuffer stringBuffer = new StringBuffer();
 
     // provide values as "<key>=<value>"
@@ -74,8 +75,8 @@ public class FeatureFieldFormatter {
       final DocumentBuilder builder = builderFactory.newDocumentBuilder();
 
       // get string into document
-      byte[] contextField = UTF8Tools.unescapeEscape(featureLine.contextField);
-      Document document = builder.parse(new ByteArrayInputStream(contextField));
+      byte[] exifContextField = UTF8Tools.unescapeEscape(contextField);
+      Document document = builder.parse(new ByteArrayInputStream(exifContextField));
 
       Element rootElement = document.getDocumentElement();
       NodeList nodeList = rootElement.getChildNodes();
@@ -109,28 +110,28 @@ public class FeatureFieldFormatter {
       stringBuffer.append("<EXIF parser failed, please see log>");
       WLog.log("FeatureFieldFormatter.getEXIFFormat parser failure:");
       WLog.logThrowable(e);
-      WLog.logBytes("on unescaped byte sequence", UTF8Tools.unescapeBytes(featureLine.contextField));
-      WLog.logBytes("From escaped byte sequence", featureLine.contextField);
+      WLog.logBytes("on unescaped byte sequence", UTF8Tools.unescapeBytes(contextField));
+      WLog.logBytes("From escaped byte sequence", contextField);
     }
 
     return stringBuffer.toString();
   }
 
   // note: XML parsed output would look better.
-  private static String getELFFormat(FeatureLine featureLine) {
-    byte[] contextField = UTF8Tools.unescapeEscape(featureLine.contextField);
-    return new String(contextField);
+  private static String getELFFormat(byte[] contextField) {
+    byte[] elfContextField = UTF8Tools.unescapeEscape(contextField);
+    return new String(elfContextField);
   }
   
   // note: XML parsed output would look better.
-  private static String getWINPEFormat(FeatureLine featureLine) {
-    byte[] contextField = UTF8Tools.unescapeEscape(featureLine.contextField);
-    return new String(contextField);
+  private static String getWINPEFormat(byte[] contextField) {
+    byte[] winPEContextField = UTF8Tools.unescapeEscape(contextField);
+    return new String(winPEContextField);
   }
   
-  private static String getGenericFormat(FeatureLine featureLine) {
+  private static String getGenericFormat(byte[] featureField) {
     // keep string pretty much as is
-    byte[] escapedBytes = featureLine.featureField;
+    byte[] escapedBytes = featureField;
 
     // if probable utf16, strip all NULLs, right or not.
     if (UTF8Tools.escapedLooksLikeUTF16(escapedBytes)) {
@@ -201,7 +202,11 @@ public class FeatureFieldFormatter {
    * Provides a vector of possible matching features as they would appear in the Image.
    */
   public static Vector<byte[]> getImageHighlightVector(ImageModel.ImagePage imagePage) {
-    String filename = imagePage.featuresFile.getName();
+    if (imagePage.featureLine.featuresFile == null) {
+      return new Vector<byte[]>();
+    }
+
+    String filename = imagePage.featureLine.featuresFile.getName();
 
     if (filename.equals("gps.txt")) {
       return EXIF;
@@ -227,14 +232,14 @@ public class FeatureFieldFormatter {
       byte[] utf8Feature;
       byte[] utf16Feature;
       // for all else, add UTF8 and UTF16 encodings based on the feature field
-      if (UTF8Tools.escapedLooksLikeUTF16(imagePage.featureField)) {
+      if (UTF8Tools.escapedLooksLikeUTF16(imagePage.featureLine.featureField)) {
         // calculate UTF8 and set UTF16
-        utf8Feature = UTF8Tools.utf16To8Basic(imagePage.featureField);
-        utf16Feature = imagePage.featureField;
+        utf8Feature = UTF8Tools.utf16To8Basic(imagePage.featureLine.featureField);
+        utf16Feature = imagePage.featureLine.featureField;
       } else {
         // set UTF8 and calculate UTF16
-        utf8Feature = imagePage.featureField;
-        utf16Feature = UTF8Tools.utf8To16Basic(imagePage.featureField);
+        utf8Feature = imagePage.featureLine.featureField;
+        utf16Feature = UTF8Tools.utf8To16Basic(imagePage.featureLine.featureField);
       }
 
       // now add the two filters
@@ -287,7 +292,7 @@ public class FeatureFieldFormatter {
     Vector<byte[]> textVector = new Vector<byte[]>();
 
     // get the feature text which should contain IP as "D.D.D.D" where D is a decimal
-    String featureString = new String(imagePage.featureField);
+    String featureString = new String(imagePage.featureLine.featureField);
 
     // get the IP bytes directly from the feature string
     byte[] ipBytes = getIPBytes(featureString);
@@ -303,12 +308,12 @@ public class FeatureFieldFormatter {
     return textVector;
   }
 
-  private static Vector<byte[]> getTCPImageFormat(FeatureLine featureLine) {
+  private static Vector<byte[]> getTCPImageFormat(ImageModel.ImagePage imagePage) {
     // create the text vector to be returned
     Vector<byte[]> textVector = new Vector<byte[]>();
 
     // get the feature text which should contain source and destination IPs
-    String featureString = new String(imagePage.featureField);
+    String featureString = new String(imagePage.featureLine.featureField);
 
     // split the feature string into parts, source D.D.D.D and destination D.D.D.D
     String[] featureFieldArray = featureString.split("\\ ");

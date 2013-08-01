@@ -10,6 +10,7 @@ BE_VIEWER_JAR = BEViewer.jar
 # srcdir is specified because Makefile.am does not follow the _PROGRAMS primary convention,
 # see NOTE above.
 SOURCE_FILES = \
+$(srcdir)/src/BEViewer.java \
 $(srcdir)/src/BasicFeaturesUI.java \
 $(srcdir)/src/BasicImageUI.java \
 $(srcdir)/src/BEArgsParser.java \
@@ -19,7 +20,6 @@ $(srcdir)/src/BEMenus.java \
 $(srcdir)/src/BEPreferences.java \
 $(srcdir)/src/BEShortcutsToolbar.java \
 $(srcdir)/src/BETests.java \
-$(srcdir)/src/BEViewer.java \
 $(srcdir)/src/ClassificationLabel.java \
 $(srcdir)/src/ClassificationManager.java \
 $(srcdir)/src/Config.java \

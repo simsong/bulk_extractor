@@ -88,10 +88,40 @@ public class ImageFileType {
         return true;
       }
 
-      // multipart files are more complicated, so use the multipart file reader to check
-      if (MultipartFileReader.isValidFirstFile(file)) {
+      // valid multipart file suffix
+      if (isValidFirstMultipartFile(file)) {
         return true;
       }
+      return false;
+    }
+
+    /**
+     * Indicates whether the specified file is a valid first multipart file.
+     * Note that .001 is not valid if .000 exists in the same directory.
+     * @param firstFile the first file in the multipart file sequence
+     */
+    private static boolean isValidFirstMultipartFile(File firstFile) {
+      String firstFileString = firstFile.getAbsolutePath();
+      // .000
+      if (firstFileString.endsWith(".000")) {
+        return true;
+      }
+      // .001
+      if (firstFileString.endsWith(".001")) {
+        String possible000FileString = firstFileString.substring(0, firstFileString.length() - 1) + "0";
+        File possible000File = new File(possible000FileString);
+        if (possible000File.isFile()) {
+          // a .000 file exists, so the .001 file is not the first
+          return false;
+        } else {
+          return true;
+        }
+      }
+      // 001.vmdk
+      if (firstFileString.endsWith("001.vmdk")) {
+        return true;
+      }
+
       return false;
     }
 

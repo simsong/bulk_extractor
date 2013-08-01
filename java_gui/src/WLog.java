@@ -46,34 +46,6 @@ public class WLog implements Thread.UncaughtExceptionHandler {
   }
 
   /**
-   * Appends the text and long, typically an address, to the log record.
-   * If the log window is open, the view is updated to include the appended text.
-   * @param text the text to be appended to the log record
-   * @param l the <code>long</code> value, typically an address, associated with the text
-   */
-  public static void logLong(String text, long l) {
-    StringBuffer buffer = new StringBuffer();
-    buffer.append(text);
-    buffer.append(": ");
-    buffer.append(String.format(BEViewer.LONG_FORMAT, l));
-
-    // generate log string
-    String logString = buffer.toString();
-
-    // send to textBuffer
-    textBuffer.append(logString);
-    textBuffer.append("\n");
-
-    // send to stdout
-    System.out.println(logString);
-
-    // if the window is showing then update the view
-    if (window != null && window.isVisible()) {
-      setLogText();
-    }
-  }
-
-  /**
    * Appends the array as diagnostics to the log record.
    * @param text the text to be appended to the log record
    * @param bytes the bytes to be logged

@@ -224,7 +224,7 @@ public class WOpen extends JDialog {
       setReportFile(reportFile);
       File defaultImageFile = readDefaultImageFile(reportFile);
       setDefaultImageFile(defaultImageFile);
-      setCustomImageFile(reportTreeNode.imageFile);
+      setCustomImageFile(reportTreeNode.reportImageFile);
     } else {
       // leave blank default
       setReportFile(null);

@@ -81,11 +81,9 @@ public class FeatureNavigationComboBoxModel extends DefaultComboBoxModel {
    * Clear the navigation history of features associated with the given Report.
    */
   public void removeAssociatedFeatures(ReportsModel.ReportTreeNode reportTreeNode) {
-    File imageFile = reportTreeNode.imageFile;
-    File featuresDirectory = reportTreeNode.featuresDirectory;
 
-    // if the selected item is going to be removed, clear it or else the model will
-    // assign another one
+    // if the selected item is going to be removed, clear it or else the
+    // model will assign another one
     FeatureLine selectedFeatureLine = (FeatureLine)getSelectedItem();
     if (selectedFeatureLine != null && selectedFeatureLine.isFromReport(reportTreeNode)) {
       setSelectedItem(null);

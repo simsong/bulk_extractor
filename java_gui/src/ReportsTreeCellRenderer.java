@@ -55,8 +55,8 @@ public class ReportsTreeCellRenderer extends DefaultTreeCellRenderer {
       } else {
         toolTipText = "No features directory";
       }
-      if (reportTreeNode.imageFile != null) {
-        toolTipText += ", " + reportTreeNode.imageFile.toString();
+      if (reportTreeNode.reportImageFile != null) {
+        toolTipText += ", " + reportTreeNode.reportImageFile.toString();
       } else {
         toolTipText += ", no image file";
       }

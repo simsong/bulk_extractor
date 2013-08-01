@@ -24,7 +24,7 @@ public class FeatureHighlightIndex {
     // if the feature line matches the selected feature line, highlight the match
     final FeatureLine highlightFeatureLine = BEViewer.featureLineSelectionManager.getFeatureLineSelection();
     if (highlightFeatureLine != null) {
-      String highlightText = highlightFeatureLine.getFormattedFeatureText();
+      String highlightText = highlightFeatureLine.formattedFeature;
       char[] highlightChars = highlightText.toCharArray();
       addHighlights(highlightIndexes, featureChars, highlightChars);
     }

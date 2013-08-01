@@ -25,6 +25,7 @@ public class TextComponent extends JLabel {
   public void setComponentText(String text) {
     Font font = getFont();
     if (text == null) {
+//    if (text == null || text == "")
       setEnabled(false);
       setFont(font.deriveFont(Font.ITALIC));
       setText(NULL_TEXT);

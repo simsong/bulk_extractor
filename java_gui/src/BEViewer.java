@@ -22,7 +22,6 @@ import java.io.File;
  * for the Bulk Extractor Viewer application.
  */
 public class BEViewer {
-  public static final String LONG_FORMAT = "%1$d (0x%1$08x)";
   public static final int GUI_EDGE_PADDING = 4;
   public static final int GUI_X_PADDING = 3;
   public static final int GUI_Y_PADDING = 8;
@@ -177,7 +176,7 @@ public class BEViewer {
     featureBookmarksModel.removeAssociatedBookmarks(reportTreeNode);
 
     // close the associated opened image readers
-    imageModel.closeImageReader(reportTreeNode.imageFile);
+    imageModel.closeImageReader(reportTreeNode.reportImageFile);
   }
 
   /**

@@ -379,13 +379,11 @@ public class WBookmarks extends JDialog {
     if (fileFormat.equals(TEXT)) {
       ExportTextThread exportTextThread = new ExportTextThread();
       exportTextThread.setBookmarkFile(file);
-      exportTextThread.bookmarkImageModel.imageReaderManager.setReaderTypeAllowed(imageReaderType);
       exportTextThread.start();
       return exportTextThread;
     } else if (fileFormat.equals(DFXML)) {
       ExportDFXMLThread exportDFXMLThread = new ExportDFXMLThread();
       exportDFXMLThread.setBookmarkFile(file);
-      exportDFXMLThread.bookmarkImageModel.imageReaderManager.setReaderTypeAllowed(imageReaderType);
       exportDFXMLThread.start();
       return exportDFXMLThread;
     } else {
@@ -442,7 +440,7 @@ public class WBookmarks extends JDialog {
       }
 
       // configure the image view
-      bookmarkImageView.setAddressFormat(BEViewer.imageView.getAddressFormat());
+      bookmarkImageView.setUseHexPath(BEViewer.imageView.getUseHexPath());
       bookmarkImageView.setLineFormat(BEViewer.imageView.getLineFormat());
 
       // go through each bookmark, writing the content of its associated FeatureLine
@@ -470,14 +468,14 @@ public class WBookmarks extends JDialog {
       // print the summary using featureLine's getSummaryString
       writer.println(featureLine.getSummaryString());
 
-      // abort if there is no image associated with this feature line
-      if (featureLine.getImageFile() == null) {
-        writer.println("An image file is not available for this Feature.");
-        return;
-      }
+//zz      // abort if there is no image associated with this feature line
+//      if (featureLine.actualImageFile() == null) {
+//        writer.println("An image file is not available for this Feature.");
+//        return;
+//      }
 
       // read image bytes from the image model
-      bookmarkImageModel.setFeatureLine(featureLine);
+      bookmarkImageModel.setImageSelection(featureLine);
 
       // wait until generation is done
       while (bookmarkImageModel.isBusy()) {
@@ -532,7 +530,7 @@ public class WBookmarks extends JDialog {
         doc.appendChild(root);
 
         // configure the image view
-        bookmarkImageView.setAddressFormat(BEViewer.imageView.getAddressFormat());
+        bookmarkImageView.setUseHexPath(BEViewer.imageView.getUseHexPath());
         bookmarkImageView.setLineFormat(BEViewer.imageView.getLineFormat());
 
         // fill the bookmark elements from the array of bookmarks
@@ -578,25 +576,25 @@ public class WBookmarks extends JDialog {
     private void exportDFXML(Document doc, Element parent, FeatureLine featureLine) {
 
       // get the requisite bookmark attributes
-      String imageFileString = FileTools.getAbsolutePath(featureLine.getImageFile());
-      String featuresFileString = featureLine.getFeaturesFile().getAbsolutePath();
+      String actualImageFileString = FileTools.getAbsolutePath(featureLine.actualImageFile);
+      String featuresFileString = featureLine.featuresFile.getAbsolutePath();
 
       // create the Bookmark element
       Element bookmark = doc.createElement("bookmark");
 
       // set the bookmark attributes
-      bookmark.setAttribute("feature", featureLine.getFormattedFeatureText());
-      String contextField = new String(featureLine.getContextField());
+      bookmark.setAttribute("feature", featureLine.formattedFeature);
+      String contextField = new String(featureLine.contextField);
       bookmark.setAttribute("context", contextField);
-      bookmark.setAttribute("path", featureLine.getFormattedFirstField(bookmarkImageView.getAddressFormat()));
-      bookmark.setAttribute("image_file", imageFileString);
+      bookmark.setAttribute("forensic_path", ForensicPath.getPrintablePath(featureLine.forensicPath, bookmarkImageView.getUseHexPath()));
+      bookmark.setAttribute("image_file", actualImageFileString);
       bookmark.setAttribute("feature_file", featuresFileString);
 
       // add the Bookmark element to the case settings element
       parent.appendChild(bookmark);
 
       // abort if there is no image associated with this feature line
-      if (featureLine.getImageFile() == null) {
+      if (featureLine.actualImageFile == null) {
         // write line node stating that the image file is not available
         Element line = doc.createElement("line");
         bookmark.appendChild(line);
@@ -606,7 +604,7 @@ public class WBookmarks extends JDialog {
       }
 
       // start generating printable image lines
-      bookmarkImageModel.setFeatureLine(featureLine);
+      bookmarkImageModel.setImageSelection(featureLine);
 
       // wait until generation is done
       while (bookmarkImageModel.isBusy()) {

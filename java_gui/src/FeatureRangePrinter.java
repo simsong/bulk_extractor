@@ -131,11 +131,11 @@ public class FeatureRangePrinter implements Printable {
 
       // get feature line values for the feature line at this index
       FeatureLine featureLine = featuresModel.getFeatureLine(startLine + i);
-      final String featureString = featureLine.getFormattedFeatureText();
+      final String featureString = featureLine.formattedFeature;
       final char[] featureCharArray = featureString.toCharArray();
 
       // calculate the text and geometry of the feature line's prefix
-      String prefixString = featureLine.getFormattedFirstField(featuresModel.getAddressFormat());
+      String prefixString = ForensicPath.getPrintablePath(featureLine.forensicPath, featuresModel.getUseHexPath());
       int prefixWidth = monoFontMetrics.stringWidth(prefixString);
       int tabbedPrefixWidth = prefixWidth + (monoTabWidth - (prefixWidth % monoTabWidth));
 

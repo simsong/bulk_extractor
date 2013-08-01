@@ -44,7 +44,7 @@ public class ImageReaderThread extends Thread {
 
       // note if no bytes were returned
       if (response.bytes.length == 0) {
-        WError.showMessageLater("No bytes were read from the image path, likely because the image file is not aviailable.");
+        WError.showMessageLater("No bytes were read from the image path, likely because the image file is not aviailable.", "No Data");
       }
 
     } catch (Exception e) {
@@ -53,7 +53,7 @@ public class ImageReaderThread extends Thread {
                             + "file: " + imageFile + " forensic path: " + forensicPath,
                             "Error reading Image", e);
 
-      response = new ImageReader.ImageReaderResponse("", 0);
+      response = new ImageReader.ImageReaderResponse(new byte[0], 0);
     }
     isDone = true;
 

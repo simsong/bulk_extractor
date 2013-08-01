@@ -15,16 +15,29 @@ import java.nio.channels.FileChannel.MapMode;
 public class FeatureLine {
   // input fields
   public final File reportImageFile;
-  public final File actualImageFile;
   public final File featuresFile;
   public final long startByte;
   public final int numBytes;
 
-  // derived fields
+  // extracted fields
   public final String firstField;
-  public final String forensicPath; // firstField without filename, if present
   public final byte[] featureField;
   public final byte[] contextField;
+
+  // derived fields
+  /**
+   * The actual image file used if the report image file is a directory
+   * and the actual image is in the first field.
+   */
+  public final File actualImageFile;
+  /**
+   * firstField, without filename, if present.
+   */
+  public final String forensicPath;
+  /**
+   * firstField without filename, if present
+   */
+  public final String formattedFeature; // format is based on feature file type
 
   /**
    * Constructs a blank FeatureLine because FeatureListCellRenderer requires
@@ -32,14 +45,17 @@ public class FeatureLine {
    */
   public FeatureLine() {
     reportImageFile = null;
-    actualImageFile = null;
     featuresFile = null;
     startByte = 0;
     numBytes = 0;
+
     firstField = "";
-    forensicPath = "";
     featureField = new byte[0];
     contextField = new byte[0];
+
+    actualImageFile = null;
+    forensicPath = "";
+    formattedFeature = "";
   }
 
   /**
@@ -48,6 +64,7 @@ public class FeatureLine {
    * @param featuresFile the features file file associated with the feature line
    * @param startByte the start byte in the features file where the feature line text resides
    * @param numBytes the length of text in the features file defining this feature line
+   * @param isUseHexPath whether to format the printable forensic path in hex
    */
   public FeatureLine(File reportImageFile, File featuresFile, long startByte, int numBytes) {
 
@@ -85,11 +102,12 @@ public class FeatureLine {
       }
 
       // set remaining values for failed read
-      actualImageFile = null;
       firstField = "";
-      forensicPath = "";
       featureField = new byte[0];
       contextField = new byte[0];
+      actualImageFile = null;
+      forensicPath = "";
+      formattedFeature = "";
       return;
     }
 
@@ -118,9 +136,6 @@ public class FeatureLine {
 
     // firstField is text before first tab
     firstField = new String(lineBytes, 0, i);
-
-    // forensicPath is firstField but without any file prefix
-    forensicPath = ForensicPath.getPathWithoutFilename(firstField);
 
     // featureField is text after first tab and before second tab
     // else remaining text
@@ -165,6 +180,10 @@ public class FeatureLine {
     } else {
       actualImageFile = reportImageFile;
     }
+
+    // set derived fields
+    forensicPath = ForensicPath.getPathWithoutFilename(firstField);
+    formattedFeature = FeatureFieldFormatter.getFormattedFeatureText(featuresFile, featureField, contextField);
   }
 
   /**
@@ -179,10 +198,10 @@ public class FeatureLine {
         return "no features file";
       } else {
         // indicate what is available
-        summary = "No image file selected, " + firstField + ", " + FeatureFieldFormatter.getFormattedFeatureText(this);
+        summary = "No image file selected, " + firstField + ", " + formattedFeature;
       }
     } else {
-      summary = reportImageFile.getName() + ", " + actualImageFile.getName() + ", " + firstField + ", " + FeatureFieldFormatter.getFormattedFeatureText(this);
+      summary = reportImageFile.getName() + ", " + actualImageFile.getName() + ", " + firstField + ", " + formattedFeature;
     }
 
     // truncate the sumamry

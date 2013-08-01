@@ -106,9 +106,6 @@ public class FeatureBookmarksModel {
    * Clear the bookmarks of features associated with the given Report.
    */
   public void removeAssociatedBookmarks(ReportsModel.ReportTreeNode reportTreeNode) {
-    File imageFile = reportTreeNode.imageFile;
-    File featuresDirectory = reportTreeNode.featuresDirectory;
-    
     // DefaultComboBoxModel doesn't provide an iterator so copy to an array and use the array
     FeatureLine[] featureLines = new FeatureLine[size()];
     for (int i=0; i<featureLines.length; i++) {

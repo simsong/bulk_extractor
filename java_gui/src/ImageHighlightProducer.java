@@ -37,11 +37,6 @@ public class ImageHighlightProducer {
                                          Vector<byte[]> userHighlights,
                                          boolean highlightMatchCase) {
 
-    if (imagePage == null) {
-      // there will be no highlight flags
-      return new boolean[0];
-    }
-
     // cache some page parameters
     paddedPageBytes = imagePage.paddedPageBytes;
     paddingPrefixSize = imagePage.paddingPrefixSize;

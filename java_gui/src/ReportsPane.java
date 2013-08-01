@@ -53,11 +53,11 @@ public final class ReportsPane extends Container {
         }
    
         // get the image file and features file
-        File imageFile = (reportTreeNode == null) ? null : reportTreeNode.imageFile;
+        File reportImageFile = (reportTreeNode == null) ? null : reportTreeNode.reportImageFile;
         File featuresFile = (featuresFileTreeNode == null) ? null : featuresFileTreeNode.featuresFile;
 
         // forward the selection to the reportSelectionManager
-        BEViewer.reportSelectionManager.setReportSelection(imageFile, featuresFile);
+        BEViewer.reportSelectionManager.setReportSelection(reportImageFile, featuresFile);
       }
     });
   }
