@@ -80,3 +80,4 @@ BEProgrammersManual.pdf
 *.aux
 src_win/*.exe
 java_gui/temp_generated_source_list
+*.tar.gz
