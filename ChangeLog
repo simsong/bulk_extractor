@@ -1,3 +1,7 @@
+2013-08-01  Basic  <simsong@ncr.nps.edu>
+
+	* src/scan_exif.cpp (scan_exif): jpeg carver feature recorder renamed to jpeg_carved.
+
 2013-07-30  Basic  <simsong@ncr.nps.edu>
 
 	* src/be13_api/plugin.cpp (info_scanners): now only prints -H info if it is provided by the scanner.

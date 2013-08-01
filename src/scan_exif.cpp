@@ -547,7 +547,7 @@ public:
         entries(),
         exif_recorder(*sp.fs.get_name("exif")),
         gps_recorder(*sp.fs.get_name("gps")),
-        jpeg_recorder(*sp.fs.get_name("jpeg")){
+        jpeg_recorder(*sp.fs.get_name("jpeg_carved")){
     }
 
     static be13::hash_def hasher;
@@ -727,7 +727,7 @@ void scan_exif(const class scanner_params &sp,const recursion_control_block &rcb
         sp.info->description    = "Search for EXIF sections in JPEG files";
 	sp.info->feature_names.insert("exif");
 	sp.info->feature_names.insert("gps");
-	sp.info->feature_names.insert("jpeg");
+	sp.info->feature_names.insert("jpeg_carved");
         exif_scanner::hasher    = sp.info->config->hasher;
         sp.info->get_config("exif_debug",&exif_debug,"debug exif decoder");
         sp.info->get_config("jpeg_carve_mode",&jpeg_carve_mode,"0=carve none; 1=carve encoded; 2=carve all");

@@ -15,6 +15,10 @@
 #ifdef USE_RAR
 #include "rar/rar.hpp"
 
+#define RAR_RECORDER_NAME "rar"
+#define UNRAR_RECORDER_NAME "unrar_carved"
+
+
 // The mark block is a specially-crafted constant block that acts as a magic
 // number for rar files as a whole
 #define MARK_MAGIC 0x72
@@ -198,27 +202,29 @@ public:
         compressed_size(compressed_size_), file_attributes(file_attributes_),
         dos_time(dos_time_), host_os(host_os_), crc(crc_) {}
 
-    inline const uint8_t unpack_version_major() const
-    {
+    const uint8_t unpack_version_major() const {
         return unpack_version / 10;
     }
-    inline const uint8_t unpack_version_minor() const
-    {
+    const uint8_t unpack_version_minor() const {
         return unpack_version % 10;
     }
     std::string to_xml() const;
     std::string compression_method_label() const;
     std::string host_os_label() const;
 
+    std::string iso_timestamp() const {
+        return dos_date_to_iso(dos_time);
+    }
+
     std::string name;
     uint16_t flags;
-    uint8_t unpack_version;
-    uint8_t compression_method;
+    uint8_t  unpack_version;
+    uint8_t  compression_method;
     uint64_t uncompressed_size;
     uint64_t compressed_size;
     uint32_t file_attributes;
     uint32_t dos_time;
-    uint8_t host_os;
+    uint8_t  host_os;
     uint32_t crc;
 };
 
@@ -239,7 +245,7 @@ string RarComponentInfo::to_xml() const
              name.c_str(), flags, unpack_version,
              compression_method_label().c_str(), uncompressed_size,
              compressed_size, file_attributes,
-             dos_date_to_iso(dos_time).c_str(), host_os_label().c_str(), crc);
+             iso_timestamp().c_str(), host_os_label().c_str(), crc);
 
     return string(string_buf);
 }
@@ -574,6 +580,18 @@ static bool is_mark_block(const uint8_t* buf, size_t buf_len, size_t offset)
 }
 #endif
 
+#if 0
+// Old code vor validating a specific RAR that we were searching for
+// assume that we are decompressing "15 Feet of Time.pdf" while fixing warnings for rapid testing
+//25 50 44 46 2D
+//25 25 45 4F 46
+size_t sz = component.uncompressed_size;
+assert(dbuf.buf[0] == 0x25); assert(dbuf.buf[1] == 0x50); assert(dbuf.buf[2] == 0x44); assert(dbuf.buf[3] == 0x46); assert(dbuf.buf[4] == 0x2D); 
+assert(dbuf.buf[sz-5] == 0x25); assert(dbuf.buf[sz-4] == 0x25); assert(dbuf.buf[sz-3] == 0x45); assert(dbuf.buf[sz-2] == 0x4F); assert(dbuf.buf[sz-1] == 0x46); 
+#endif
+
+
+static uint32_t unrar_carve_mode = feature_recorder::CARVE_ENCODED;
 extern "C"
 void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
 {
@@ -584,12 +602,13 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
 	sp.info->author = "Michael Shick";
 #ifdef USE_RAR
 	sp.info->description = "RAR volume locator and component decompresser";
-	sp.info->feature_names.insert("rar");
+	sp.info->feature_names.insert(RAR_RECORDER_NAME);
+	sp.info->feature_names.insert(UNRAR_RECORDER_NAME);
         sp.info->get_config("rar_find_components",&record_components,"Search for RAR components");
         sp.info->get_config("raw_find_volumes",&record_volumes,"Search for RAR volumes");
+        sp.info->get_config("unrar_carve_mode",&unrar_carve_mode,CARVE_MODE_DESCRIPTION);
         hasher = sp.info->config->hasher;
 #else
-        sp.info->name = "rar";
         sp.info->description = "(disabled in configure)";
         sp.info->flags = scanner_info::SCANNER_DISABLED | scanner_info::SCANNER_NO_USAGE | scanner_info::SCANNER_NO_ALL;
 #endif
@@ -600,9 +619,12 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
 	const sbuf_t &sbuf = sp.sbuf;
 	const pos0_t &pos0 = sp.sbuf.pos0;
 	feature_recorder_set &fs = sp.fs;
-	feature_recorder *rar_recorder = fs.get_name("rar");
+	feature_recorder *rar_recorder = fs.get_name(RAR_RECORDER_NAME);
+	feature_recorder *unrar_recorder = fs.get_name(UNRAR_RECORDER_NAME);
         rar_recorder->set_carve_mode(feature_recorder::CARVE_ALL);
 	rar_recorder->set_flag(feature_recorder::FLAG_XML); // because we are sending through XML
+        unrar_recorder->set_carve_mode(static_cast<feature_recorder::carve_mode_t>(unrar_carve_mode));
+        unrar_recorder->set_carve_ignore_encoding("RAR");
 
         RarComponentInfo component;
         RarVolumeInfo volume;
@@ -634,27 +656,27 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
             }
             if(record_components && process_component(cc, cc_len, component)) {
                 rar_recorder->write(pos0 + pos, component.name, component.to_xml());
-                //TODO decompression checks: size limit, recursion check
-                managed_malloc<uint8_t>dbuf(component.uncompressed_size);
+
+                managed_malloc<uint8_t>dbuf(component.uncompressed_size);  // 
                 memset(dbuf.buf, 0x00, component.uncompressed_size);
                 if(component.compression_method != METHOD_UNCOMPRESSED) {
                     unpack_buf(cc, cc_len, dbuf.buf, component.uncompressed_size);
 
-#if 0
-                    // assume that we are decompressing "15 Feet of Time.pdf" while fixing warnings for rapid testing
-                    //25 50 44 46 2D
-                    //25 25 45 4F 46
-                    size_t sz = component.uncompressed_size;
-                    assert(dbuf.buf[0] == 0x25); assert(dbuf.buf[1] == 0x50); assert(dbuf.buf[2] == 0x44); assert(dbuf.buf[3] == 0x46); assert(dbuf.buf[4] == 0x2D); 
-                    assert(dbuf.buf[sz-5] == 0x25); assert(dbuf.buf[sz-4] == 0x25); assert(dbuf.buf[sz-3] == 0x45); assert(dbuf.buf[sz-2] == 0x4F); assert(dbuf.buf[sz-1] == 0x46); 
-#endif
-
+                    /* Create a child sbuf with the updated pos0 for recursive processing */
                     const pos0_t pos0_rar = pos0 + rcb.partName;
-                    const sbuf_t child_sbuf(pos0_rar, dbuf.buf, component.uncompressed_size, sbuf.pagesize, false);
-                    scanner_params child_params(sp, child_sbuf);
+                    {
+                        const sbuf_t child_sbuf(pos0_rar, dbuf.buf, component.uncompressed_size, component.uncompressed_size, false);
+                        scanner_params child_params(sp, child_sbuf);
+                        (*rcb.callback)(child_params);
 
-                    // call scanners on deobfuscated buffer
-                    (*rcb.callback)(child_params);
+                        std::string carve_name("_");
+                        carve_name += component.name;
+                        for(std::string::iterator it = carve_name.begin(); it!=carve_name.end();it++){
+                            if(*it=='/') *it = '_';
+                        }
+                        std::string fn = unrar_recorder->carve(child_sbuf,0,child_sbuf.bufsize,carve_name,hasher);
+                        unrar_recorder->set_carve_mtime(fn,component.iso_timestamp());
+                    }
                 }
             }
 	}
