@@ -57,7 +57,6 @@ void scan_vcard(const class scanner_params &sp,const recursion_control_block &rc
 	const sbuf_t &sbuf = sp.sbuf;
 	feature_recorder_set &fs = sp.fs;
 	feature_recorder *vcard_recorder = fs.get_name("vcard");
-	vcard_recorder->file_extension = ".vcf";
 	size_t end_len = strlen("END:VCARD\r\n");
 
 	// Search for BEGIN:VCARD\r in the sbuf
@@ -82,7 +81,7 @@ void scan_vcard(const class scanner_params &sp,const recursion_control_block &rc
 		/* We should probably validate the UTF-8. */
 		if(valid){
 		    /* got a valid card; I can carve it! */
-		    vcard_recorder->carve(sbuf,begin,(end-begin)+end_len,hasher);
+		    vcard_recorder->carve(sbuf,begin,(end-begin)+end_len,".vcf",hasher);
 		    i = end+end_len;		// skip to the end of the vcard
 		    continue;			// loop again!
 		}

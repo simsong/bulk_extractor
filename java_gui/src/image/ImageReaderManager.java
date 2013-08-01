@@ -28,13 +28,13 @@ public class ImageReaderManager {
 
     // if there is no image file then use the null reader
     if (file == null) {
-      return ImageReader(null);
+      return new ImageReader(null);
     }
 
     // find or create a reader for this file
     if (readers.containsKey(file)) {
-      ImageReader reader = Readers.get(file);
-      if (reader.isAlive()) {
+      ImageReader reader = readers.get(file);
+      if (reader.isValid()) {
         // return the reader
         return reader;
       } else {
@@ -69,16 +69,16 @@ public class ImageReaderManager {
 
   /**
    * Returns the image reader response, specifically, the bytes[]
-   * and the total size at the forensic path
+   * and the total size at the forensic path.
+   * As an optimization, the file read is left open.
    * @param featureLine the feature line defining the image to read from
    * @param startAddress the address to start reading from
    * @param numBytes the number of bytes to read
-   * @return the bytes read
-   * @throws IOException if the read fails
+   * @return ImageReaderResponse
    */
-  public ImageReader.ImageReaderResponse openAndRead(final File file,
-                                                     String forensicPath,
-                                                     long numBytes) {
+  public ImageReader.ImageReaderResponse read(final File file,
+                                              String forensicPath,
+                                              long numBytes) {
     ImageReader reader = getImageReader(file);
     return reader.read(forensicPath, numBytes);
   }
@@ -101,7 +101,7 @@ public class ImageReaderManager {
     Iterator<File> iterator = keys.iterator();
     while(iterator.hasNext()) {
       File file = iterator.next();
-      ImageReader reader = readers.get(imageFile);
+      ImageReader reader = readers.get(file);
       reader.close();
     }
     readers.clear();

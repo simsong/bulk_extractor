@@ -16,7 +16,7 @@ import java.util.Observable;
  */
 public class ImageReader {
 
-  public class ImageReaderResponse {
+  public static class ImageReaderResponse {
     public final byte[] bytes;
     public final long totalSizeAtPath;
     ImageReaderResponse(final byte[] bytes, long totalSizeAtPath) {
@@ -42,7 +42,7 @@ public class ImageReader {
   // cached output
   private byte[] bytes = new byte[0];
   private long imageSize = 0;
-  private long pathSize = 0;
+  private long totalSizeAtPath = 0;
 
   /**
    * Open an image reader and attach it to a bulk_extractor process
@@ -65,22 +65,26 @@ public class ImageReader {
     WLog.log("BulkExtractorFileReader starting bulk_extractor process");
     WLog.log("BulkExtractorFileReader cmd: " + cmd[0] + " " + cmd[1] + " " + cmd[2] + " " + cmd[3]);
 
-    process = Runtime.getRuntime().exec(cmd, envp);
-    writeToProcess = new PrintWriter(process.getOutputStream());
-    readFromProcess = process.getInputStream();
-    BufferedReader errorFromProcess = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+    try {
+      process = Runtime.getRuntime().exec(cmd, envp);
 
-    // thread for consuming stderr
-    stderrThread = new ThreadReaderModel(errorFromProcess);
-    stderrThread.addReaderModelChangedListener(new Observer() {
-      public void update(Observable o, Object arg) {
-        String line = (String)arg;
-        WLog.log("BulkExtractorFileReader error from bulk_extractor process " + process + ": " + line);
-      }
-    });
+      writeToProcess = new PrintWriter(process.getOutputStream());
+      readFromProcess = process.getInputStream();
+      BufferedReader errorFromProcess = new BufferedReader(new InputStreamReader(process.getErrorStream()));
 
-    // read the image size
-    imageSize = readImageSize();
+      // thread for consuming stderr
+      stderrThread = new ThreadReaderModel(errorFromProcess);
+      stderrThread.addReaderModelChangedListener(new Observer() {
+        public void update(Observable o, Object arg) {
+          String line = (String)arg;
+          WLog.log("BulkExtractorFileReader error from bulk_extractor process " + process + ": " + line);
+        }
+      });
+    } catch (IOException e) {
+      readerIsValid = false;
+      WError.showErrorLater("Unable to read start the bulk_extractor reader.",
+                            "Error reading Image", e);
+    }
   }
 
   /**
@@ -107,15 +111,27 @@ public class ImageReader {
   }
 
   public ImageReaderResponse read(String forensicPath, long numBytes) {
+    // wrap openAndRead because it throws exceptions
+    try {
+      return openAndRead(forensicPath, numBytes);
+    } catch (Exception e) {
+      readerIsValid = false;
+      WError.showErrorLater("Unable to read image data.",
+                            "Error reading Image", e);
+      return new ImageReaderResponse(new byte[0], 0);
+    }
+  }
 
+  private ImageReaderResponse openAndRead(String forensicPath, long numBytes)
+              throws Exception {
     // define the range stop value
     long rangeStopValue = ((numBytes > 0) ? numBytes - 1 : 0);
 
     // issue the read request
     String getString = "GET " + forensicPath + " HTTP/1.1";
     String rangeString = "Range: bytes=0-" + rangeStopValue;
-    WLog.log("ImageReader request 1: " + out1);
-    WLog.log("ImageReader request 2: " + out2);
+    WLog.log("ImageReader get request 1: " + getString);
+    WLog.log("ImageReader range request 2: " + rangeString);
     writeToProcess.println(getString);
     writeToProcess.println(rangeString);
     writeToProcess.println();
@@ -145,8 +161,7 @@ public class ImageReader {
       numBytesReturned = Integer.valueOf(contentLengthString).intValue();
     } catch (NumberFormatException e) {
       WLog.log("Invalid numeric format in content length line: '" + contentLengthLine + "'");
-      numBytesReturned = 0;
-      readerIsValid = false;
+      throw e;
     }
     // note if numBytesReturned is not numBytes requested, which is expected near EOF
     if (numBytesReturned != numBytes) {
@@ -168,17 +183,18 @@ public class ImageReader {
       WLog.log("Invalid X-Range-Available line: '" + xRangeAvailableLine + "'");
       readerIsValid = false;
     }
-    // get the end byte string
-    String pathEndByteString = xRangeAvailableLine.substring(X_RANGE_AVAILABLE.length());
+    // get the range end byte
+    String rangeEndString = xRangeAvailableLine.substring(X_RANGE_AVAILABLE.length());
     int pathEndByte;
     try {
-      pathEndByte = Integer.valueOf(pathEndByteString).intValue();
-      // the total path size is the range end value plus one
-      pathSize = startAddress + pathEndByte + 1;
+      pathEndByte = Integer.valueOf(rangeEndString).intValue();
+      // the total path size is path offset plus the range end value plus one
+      totalSizeAtPath = ForensicPath.getOffset(forensicPath) + pathEndByte + 1;
     } catch (NumberFormatException e) {
-      pathSize = 0;
+      totalSizeAtPath = 0;
       WLog.log("Invalid numeric format in path range line: '" + contentLengthLine + "'");
       readerIsValid = false;
+      throw e;
     }
 
     // blank line
@@ -209,16 +225,16 @@ public class ImageReader {
 
     // compose the image reader response
     if (readerIsValid) {
-      long totalSizeAtPath = ForensicPath.getOffset(forensicPath) + pathEndByte + 1;
-      ImageReaderResponse imageReaderResponse = new ImageReaderResponse(bytes, totalSizeAtPath);
+      ImageReaderResponse imageReaderResponse = new ImageReaderResponse(
+                                                bytes, totalSizeAtPath);
       return imageReaderResponse;
     } else {
-      return ImageReaderResponse("", 0);
+      return new ImageReaderResponse(new byte[0], 0);
     }
   }
 
   // read line terminated by \r\n
-  private String readLine() {
+  private String readLine() throws IOException {
     int b;
     ByteArrayOutputStream outStream = new ByteArrayOutputStream();
 
@@ -255,7 +271,7 @@ public class ImageReader {
   }
 
   // read the requested number of bytes
-  private byte[] readBytes(int numBytes) {
+  private byte[] readBytes(int numBytes) throws IOException {
     byte[] bytes = new byte[numBytes];
 
     // start watchdog for this read
@@ -287,7 +303,7 @@ public class ImageReader {
   // fail if more bytes are available
   // this is not a guaranteed indicator of readiness of the bulk_extractor thread
   // because the bulk_extractor thread can issue multiple writes and flushes
-  private void failIfMoreBytesAvailable() {
+  private void failIfMoreBytesAvailable() throws IOException {
     int leftoverBytes = readFromProcess.available();
     if (leftoverBytes != 0) {
 

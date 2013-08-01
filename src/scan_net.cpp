@@ -64,7 +64,7 @@ const uint32_t min_packet_size = 20;		// don't bother with ethernet packets smal
  */
 static cppmutex Mfcap;              // mutex for fcap
 static FILE *fcap = 0;		// capture file, protected by M
-static bool carve_tcp = false;
+static bool carve_net_memory = false;
 
 /****************************************************************/
 
@@ -614,7 +614,7 @@ public:
 	fs(sp.fs),ps(),ip_recorder(0),tcp_recorder(0),ether_recorder(0){
 	ip_recorder = fs.get_name("ip");
 	ether_recorder = fs.get_name("ether");
-	if(carve_tcp){
+	if(carve_net_memory){
             tcp_recorder = fs.get_name("tcp");
         }
     }
@@ -999,7 +999,7 @@ public:
 	    if(carved==0){
 		carved = carveIPFrame( sb2); // look for an IP packet
 	    }
-	    if(carved==0){
+	    if(carved==0 && carve_net_memory){
 		/* If we can't carve a packet, look for these two memory structures */
 		carved = max(carveSockAddrIn( sb2 ), carveTCPTOBJ( sb2 ));
 	    }
@@ -1025,7 +1025,7 @@ void scan_net(const class scanner_params &sp,const recursion_control_block &rcb)
         sp.info->description    = "Scans for IP packets";
         sp.info->scanner_version= "1.0";
 
-        sp.info->get_config("carve_tcp",&carve_tcp,"Carve TCP memory structures");
+        sp.info->get_config("carve_net_memory",&carve_net_memory,"Carve network  memory structures");
 
 	sp.info->feature_names.insert("ip");
 	sp.info->feature_names.insert("ether");
@@ -1036,7 +1036,7 @@ void scan_net(const class scanner_params &sp,const recursion_control_block &rcb)
 	sp.info->histogram_defs.insert(histogram_def("ip",   "","cksum-ok","histogram"));
 	sp.info->histogram_defs.insert(histogram_def("ether","([^\(]+)","histogram"));
 
-        if(carve_tcp){
+        if(carve_net_memory){
             sp.info->feature_names.insert("tcp");
             sp.info->histogram_defs.insert(histogram_def("tcp",  "","histogram"));
         }

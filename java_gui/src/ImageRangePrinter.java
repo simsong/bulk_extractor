@@ -150,7 +150,7 @@ public class ImageRangePrinter implements Printable {
     String actualImageFile = FileTools.getAbsolutePath(featureLine.actualimageFile);
     String featureFile = featureLine.featuresFile.getAbsolutePath();
     String feature = featureLine.getFormattedFeatureText();
-    String featurePath = ForensicPath.getPrintablePath(featureLine.pathField, imageView.getUseHexPath());
+    String featurePath = ForensicPath.getPrintablePath(featureLine.forensicPath, imageView.getUseHexPath());
   
     // paint header information
     paintPair("Image File", imageFile);

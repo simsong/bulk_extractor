@@ -9,8 +9,7 @@ public class ImageReaderThread extends Thread {
   private int numBytes;
 
   // output values
-  public byte[] bytes;
-  public long imageSize;
+  public ImageReader.ImageReaderResponse response;
   public boolean isDone = false;
  
   // resources
@@ -18,10 +17,9 @@ public class ImageReaderThread extends Thread {
   private final ImageReaderManager imageReaderManager;
 
   /**
-   * The <code>ImageReaderThread</code> class performs reading from an image.
-   * During the read, the bytes, image size, and image metadata are obtained.
-   * Output values are produced.  Up to numBytes bytes are read, see bytes.length.
-   * imageModel.manageModelChanges is called when done, which consumes output values.
+   * The <code>ImageReaderThread</code> class performs reading from an image
+   * into <code>ImageReaderResponse</code>.
+   * imageModel.manageModelChanges is called when done, which consumes the response.
    */
   public ImageReaderThread(ImageModel imageModel,
                            ImageReaderManager imageReaderManager,
@@ -41,27 +39,12 @@ public class ImageReaderThread extends Thread {
 
     // handle the read request
     try {
-      // read the requested bytes
-      bytes = imageReaderManager.readImageBytes(
-                           imageFile, forensicPath, numBytes);
+      // issue the read
+      response = imageReaderManager.read(imageFile, forensicPath, numBytes);
 
-      // read the image size
-      imageSize = imageReaderManager.getImageSize(imageFile, forensicPath);
-
-      long offset = ForensicPath.getOffset(forensicPath);
-
-      // warn if an image file is not used
-      if (imageFile == null) {
-        WError.showMessageLater("An Image file is not available for this Feature.\n"
-                  + "Please open a Report with an associated Image File to view Image content.",
-                  "Image File not available");
-      // warn if an image file is used but the start address is beyond the image
-      } else if (offset > imageSize) {
-        WError.showErrorLater("An attempt was made to read past the end of the Image.\n"
-                  + "Please verify that the Image is correct for the selected Report File.\n"
-                  + "Image offset: " + offset + ", Image size: " + imageSize + "\n"
-                  + "Feature: " + FeatureLine.getSummaryString(featureLine),
-                  "Error reading Image", null);
+      // note if no bytes were returned
+      if (response.bytes.length == 0) {
+        WError.showMessageLater("No bytes were read from the image path, likely because the image file is not aviailable.");
       }
 
     } catch (Exception e) {
@@ -70,8 +53,7 @@ public class ImageReaderThread extends Thread {
                             + "file: " + imageFile + " forensic path: " + forensicPath,
                             "Error reading Image", e);
 
-      bytes = new byte[0];
-      imageSize = 0;
+      response = new ImageReader.ImageReaderResponse("", 0);
     }
     isDone = true;
 

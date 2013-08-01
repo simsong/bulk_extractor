@@ -28,7 +28,7 @@
 static const uint32_t MAX_ENTRY_SIZE = 1000000;
 static const uint32_t MIN_JPEG_SIZE = 200;    // don't consider something smaller than this
 
-// these are
+// these are tunable
 static int exif_debug=0;
 static uint32_t jpeg_carve_mode = feature_recorder::CARVE_ENCODED;
 static size_t min_jpeg_size = 1000; // don't carve smaller than this
@@ -577,7 +577,7 @@ public:
 
             // Should we carve?
             if(res.how==jpeg_validator::COMPLETE || res.len>(ssize_t)min_jpeg_size){
-                jpeg_recorder.carve(sbuf,0,res.len,hasher);
+                jpeg_recorder.carve(sbuf,0,res.len,".jpg",hasher);
                 ret = res.len;
             }
 
@@ -737,7 +737,6 @@ void scan_exif(const class scanner_params &sp,const recursion_control_block &rcb
     if(sp.phase==scanner_params::PHASE_INIT){
         exif_scanner escan(sp);
         escan.exif_recorder.set_flag(feature_recorder::FLAG_XML); // to escape all but backslashes
-        escan.jpeg_recorder.set_file_extension(".jpg");
         escan.jpeg_recorder.set_carve_mode(static_cast<feature_recorder::carve_mode_t>(jpeg_carve_mode));
     }
     if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;

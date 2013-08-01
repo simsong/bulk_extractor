@@ -428,7 +428,7 @@ WLog.log("FeaturesModel.setReport image file: " + imageFile + ", featuresFile: "
    */
   public String getCopyableLine(int line) {
     FeatureLine featureLine = getFeatureLine(line);
-    return ForensicPath.getPrintablePath(featureLine.pathField, useHexPath)
+    return ForensicPath.getPrintablePath(featureLine.forensicPath, useHexPath)
          + "\t"
          + FeatureFieldFormatter.getFormattedFeatureText(featureLine);
   }
