@@ -657,9 +657,12 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
             if(record_components && process_component(cc, cc_len, component)) {
                 rar_recorder->write(pos0 + pos, component.name, component.to_xml());
 
-                managed_malloc<uint8_t>dbuf(component.uncompressed_size);  // 
-                memset(dbuf.buf, 0x00, component.uncompressed_size);
+                // only decompress and recur if the component compression isn't
+                // no-op to avoid duplicate features
                 if(component.compression_method != METHOD_UNCOMPRESSED) {
+                    managed_malloc<uint8_t>dbuf(component.uncompressed_size);
+                    memset(dbuf.buf, 0x00, component.uncompressed_size);
+
                     unpack_buf(cc, cc_len, dbuf.buf, component.uncompressed_size);
 
                     /* Create a child sbuf with the updated pos0 for recursive processing */
