@@ -414,12 +414,13 @@ AC_CHECK_LIB([regex],[regcomp])
 AC_CHECK_LIB([tre],[tre_regcomp])
 AC_CHECK_FUNCS([regcomp tre_regcomp tre_version])
 
-
 ################################################################
 ## AFFLIB support
 ## AFFLIB requires OpenSSL
 ## Link in openssl if it is available, because afflib requires it.
 ## (Note that bulk_extractor itself no longer requires openssl)
+AC_DEFINE([HAVE_STL],1,[We have the Standard Template Library])
+AC_CHECK_HEADERS([openssl/x509.h openssl/pem.h])
 AC_CHECK_HEADER([afflib/afflib.h],
 	    	[AC_DEFINE(HAVE_AFFLIB_AFFLIB_H,1,[Do we have afflib/afflib.h?])]
 		[AC_CHECK_LIB([afflib],af_get_pagesize,,

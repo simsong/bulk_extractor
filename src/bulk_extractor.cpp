@@ -918,6 +918,7 @@ int main(int argc,char **argv)
     si.get_config("debug_histogram_malloc_fail_frequency",&HistogramMaker::debug_histogram_malloc_fail_frequency,
                   "Set >0 to make histogram maker fail with memory allocations");
     si.get_config("hash_alg",&be_hash_name,"Specifies hash algorithm to be used for all hash calculations");
+    si.get_config("dup_data_alerts",&be13::plugin::dup_data_alerts,"Notify when duplicate data is not processed");
 
     /* Make sure that the user selected a valid hash */
     {
@@ -1089,6 +1090,7 @@ int main(int argc,char **argv)
     xreport->xmlout("total_bytes",phase1.total_bytes);
     xreport->xmlout("elapsed_seconds",timer.elapsed_seconds());
     xreport->xmlout("max_depth_seen",be13::plugin::get_max_depth_seen());
+    xreport->xmlout("dup_data_encountered",be13::plugin::dup_data_encountered);
     xreport->pop();			// report
     xreport->flush();
 
