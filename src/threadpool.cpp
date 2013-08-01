@@ -221,13 +221,9 @@ std::string threadpool::get_thread_status(uint32_t id)
 }
 
 /* Run the worker.
- * Note that some versions of GCC thinks that this should have a noreturn
- * attribute, but then when the attribute is given, GCC complains that it has
- * a return statement!
+ * Note that we used to throw internal errors, but this caused problems with some versions of GCC.
+ * Now we simply return when there is an error.
  */
-#ifdef HAVE_DIAGNOSTIC_SUGGEST_ATTRIBUTE
-#pragma GCC diagnostic ignored "-Wsuggest-attribute"
-#endif
 void *worker::run() 
 {
     /* Initialize any per-thread variables in the scanners */
@@ -240,14 +236,14 @@ void *worker::run()
 	if(master.mode==0) waiting.start(); // only if we are not waiting for workers to finish
 	if(pthread_mutex_lock(&master.M)){
             std::cerr << "worker::run: pthread_mutex_lock failed";
-            throw new internal_error();
+            return 0;
 	}
 	/* At this point the worker has the lock */
 	while(master.work_queue.empty()){
 	    /* I didn't get any work; go back to sleep */
 	    if(pthread_cond_wait(&master.TOWORKER,&master.M)){
                 std::cerr << "pthread_cond_wait error=%d" << errno << "\n";
-                throw new internal_error();
+                return 0;
 	    }
 	}
 	waiting.stop();
