@@ -16,12 +16,15 @@ New functionality in Version 1.4 includes:
   "jpeg/". The filename is the forensic path. Confusingly, JPEGs
   without EXIFs will also be carved.
 
-* scan_xor will search for data hidden with (XOR 255). It is disabled
-  by default, but it is enabled with -e xor or with -e all.
+* scan_zip now implements ZIP component carving. By default, only ZIP
+  components that were encoded are carved.
 
 * scan_lightgrep will do searches with Lightbox Technology's lightgrep
 
 * scan_hashid will perform hash-based scanning with block hashes.
+
+* scan_xor will search for data hidden with (XOR 255). It is disabled
+  by default, but it is enabled with -e xor or with -e all.
 
 * Variable context window
 

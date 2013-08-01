@@ -160,6 +160,11 @@ svnclean:
 	read
 	/bin/rm -rf `svn status | grep '^[?]' | awk '{print $2;}'`
 
+pull:
+	git pull
+	(cd src/dfxml;git pull)
+	(cd src/be13_api;git pull)
+
 CLEANFILES = man/bulk_extractor.txt
 
 SUFFIXES = .txt .1

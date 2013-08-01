@@ -233,7 +233,7 @@ void BulkExtractor_Phase1::wait_for_workers(image_process &p)
         xreport.set_oneline(true);
         xreport.push("feature_file");
         xreport.xmlout("name",ij->second->name);
-        xreport.xmlout("count",ij->second->count);
+        xreport.xmlout("count",ij->second->count());
         xreport.pop();
         xreport.set_oneline(false);
     }

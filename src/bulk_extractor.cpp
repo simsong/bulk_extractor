@@ -1108,7 +1108,7 @@ int main(int argc,char **argv)
         if (fs.has_name("email")) {
             feature_recorder *fr = fs.get_name("email");
             if(fr){
-                std::cout << "Total " << fr->name << " features found: " << fr->count << "\n";
+                std::cout << "Total " << fr->name << " features found: " << fr->count() << "\n";
             }
         }
     }
