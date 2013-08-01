@@ -225,9 +225,9 @@ std::string threadpool::get_thread_status(uint32_t id)
  * attribute, but then when the attribute is given, GCC complains that it has
  * a return statement!
  */
-#ifdef HAVE_DIAGNOSTIC_SUGGEST_ATTRIBUTE
-#pragma GCC diagnostic ignored "-Wsuggest-attribute"
-#endif
+//#ifdef HAVE_DIAGNOSTIC_SUGGEST_ATTRIBUTE
+//#pragma GCC diagnostic ignored "-Wsuggest-attribute"
+//#endif
 void *worker::run() 
 {
     /* Initialize any per-thread variables in the scanners */

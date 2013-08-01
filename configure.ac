@@ -416,16 +416,6 @@ AC_CHECK_FUNCS([regcomp tre_regcomp tre_version])
 
 
 ################################################################
-## OpenSSL Support is now required (for hash_t)
-AC_CHECK_HEADERS([openssl/aes.h openssl/bio.h openssl/evp.h openssl/hmac.h openssl/md5.h openssl/pem.h openssl/rand.h openssl/rsa.h openssl/sha.h openssl/pem.h openssl/x509.h])
-# OpenSSL has been installed under at least two different names...
-AC_CHECK_LIB([crypto],[EVP_get_digestbyname])	
-AC_CHECK_LIB([ssl],[SSL_library_init])
-AC_CHECK_FUNCS([EVP_get_digestbyname],,
-	AC_MSG_ERROR([SSL/OpenSSL support required]))
-
-
-################################################################
 ## AFFLIB support
 ## AFFLIB requires OpenSSL
 ## Link in openssl if it is available, because afflib requires it.
@@ -448,7 +438,6 @@ AC_CHECK_HEADER([libewf.h],
 	[AC_MSG_WARN([libewf.h not found; no E01 support])]
 	[libewf=no])
 AC_CHECK_FUNCS([libewf_handle_get_utf8_header_value_notes libewf_error_backtrace_fprint])
-# AC_CHECK_HEADERS([tsk3/libtsk.h])
 
 
 ################################################################
