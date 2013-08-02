@@ -87,7 +87,7 @@
 #define SUSPICIOUS_HEADER_LEN 1024
 #define SUSPICIOUS_FILE_LEN 10LL * 1024LL * 1024LL * 1024LL * 1024LL
 
-#define STRING_BUF_LEN 1024
+#define STRING_BUF_LEN 2048
 
 using namespace std;
 
@@ -114,25 +114,6 @@ static inline int int4(const u_char *cc)
 #define DOS_MASK_YEAR 0xFE000000
 #define DOS_SHIFT_YEAR 25
 #define DOS_OFFSET_YEAR 1980
-
-static string dos_date_to_iso(uint32_t dos_date) {
-    uint8_t seconds = (dos_date & DOS_MASK_SECOND) >> DOS_SHIFT_SECOND;
-    uint8_t minutes = (dos_date & DOS_MASK_MINUTE) >> DOS_SHIFT_MINUTE;
-    uint8_t hours = (dos_date & DOS_MASK_HOUR) >> DOS_SHIFT_HOUR;
-    uint8_t days = (dos_date & DOS_MASK_DAY) >> DOS_SHIFT_DAY;
-    uint8_t months = (dos_date & DOS_MASK_MONTH) >> DOS_SHIFT_MONTH;
-    uint16_t years = (dos_date & DOS_MASK_YEAR) >> DOS_SHIFT_YEAR;
-
-    years += DOS_OFFSET_YEAR;
-    seconds *= 2;
-
-    char buf[STRING_BUF_LEN];
-    snprintf(buf,sizeof(buf),"%04d-%02d-%02dT%02d:%02d:%02dZ",
-            years, months, days, hours, minutes, seconds);
-    stringstream ss;
-    ss << buf;
-    return ss.str();
-}
 
 //
 // CRC32
@@ -212,6 +193,25 @@ public:
     std::string compression_method_label() const;
     std::string host_os_label() const;
 
+    static std::string dos_date_to_iso(uint32_t dos_date) {
+        uint8_t seconds = (dos_date & DOS_MASK_SECOND) >> DOS_SHIFT_SECOND;
+        uint8_t minutes = (dos_date & DOS_MASK_MINUTE) >> DOS_SHIFT_MINUTE;
+        uint8_t hours = (dos_date & DOS_MASK_HOUR) >> DOS_SHIFT_HOUR;
+        uint8_t days = (dos_date & DOS_MASK_DAY) >> DOS_SHIFT_DAY;
+        uint8_t months = (dos_date & DOS_MASK_MONTH) >> DOS_SHIFT_MONTH;
+        uint16_t years = (dos_date & DOS_MASK_YEAR) >> DOS_SHIFT_YEAR;
+        
+        years += DOS_OFFSET_YEAR;
+        seconds *= 2;
+        
+        char buf[STRING_BUF_LEN];
+        snprintf(buf,sizeof(buf),"%04d-%02d-%02dT%02d:%02d:%02dZ",
+                 years, months, days, hours, minutes, seconds);
+        stringstream ss;
+        ss << buf;
+        return ss.str();
+    }
+
     std::string iso_timestamp() const {
         return dos_date_to_iso(dos_time);
     }
@@ -228,7 +228,7 @@ public:
     uint32_t crc;
 };
 
-string RarComponentInfo::to_xml() const
+std::string RarComponentInfo::to_xml() const
 {
     char string_buf[STRING_BUF_LEN];
 
@@ -247,7 +247,7 @@ string RarComponentInfo::to_xml() const
              compressed_size, file_attributes,
              iso_timestamp().c_str(), host_os_label().c_str(), crc);
 
-    return string(string_buf);
+    return std::string(string_buf);
 }
 
 string RarComponentInfo::compression_method_label() const
@@ -615,16 +615,20 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
 	return;
     }
 #ifdef USE_RAR
+    if(sp.phase==scanner_params::PHASE_INIT){
+	feature_recorder *rar_recorder = sp.fs.get_name(RAR_RECORDER_NAME);
+	feature_recorder *unrar_recorder = sp.fs.get_name(UNRAR_RECORDER_NAME);
+        rar_recorder->set_carve_mode(feature_recorder::CARVE_ALL);
+	rar_recorder->set_flag(feature_recorder::FLAG_XML); // because we are sending through XML
+        unrar_recorder->set_carve_mode(static_cast<feature_recorder::carve_mode_t>(unrar_carve_mode));
+        unrar_recorder->set_carve_ignore_encoding("RAR");
+    }
     if(sp.phase==scanner_params::PHASE_SCAN){
 	const sbuf_t &sbuf = sp.sbuf;
 	const pos0_t &pos0 = sp.sbuf.pos0;
 	feature_recorder_set &fs = sp.fs;
 	feature_recorder *rar_recorder = fs.get_name(RAR_RECORDER_NAME);
 	feature_recorder *unrar_recorder = fs.get_name(UNRAR_RECORDER_NAME);
-        rar_recorder->set_carve_mode(feature_recorder::CARVE_ALL);
-	rar_recorder->set_flag(feature_recorder::FLAG_XML); // because we are sending through XML
-        unrar_recorder->set_carve_mode(static_cast<feature_recorder::carve_mode_t>(unrar_carve_mode));
-        unrar_recorder->set_carve_ignore_encoding("RAR");
 
         RarComponentInfo component;
         RarVolumeInfo volume;
