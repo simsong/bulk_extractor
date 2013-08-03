@@ -28,7 +28,6 @@ public class ImageView implements CopyableLineInterface {
   private final Vector<ImageLine> lines = new Vector<ImageLine>();
 
   // input used to generate image view
-  private File pageFile = new File("");
   private String pageForensicPath = "";
   private byte[] pageBytes = new byte[0];
   private boolean[] pageHighlightFlags = new boolean[0];
@@ -230,8 +229,14 @@ public class ImageView implements CopyableLineInterface {
   private void setHexLines() {
     final int MAX_CHARS = 80;
 
+    // establish forensic path offset
+    long forensicPathOffset = ForensicPath.getOffset(pageForensicPath);
+
+    // establish width of widest forensic path field
+    String widestForensicPath = ForensicPath.getAdjustedPath(pageForensicPath, forensicPathOffset + ImageModel.PAGE_SIZE);
+
     // work through bytes, preparing image lines
-    int pageOffset;
+    int pageOffset; // start of page is 0
     for (pageOffset = 0; pageOffset < pageBytes.length; pageOffset += HEX_BYTES_PER_LINE) {
 
       // image line attributes to be prepared
@@ -244,7 +249,8 @@ public class ImageView implements CopyableLineInterface {
       StringBuffer textBuffer = new StringBuffer(MAX_CHARS);
 
       // determine the line's forensic path based on the page offset
-      lineForensicPath = ForensicPath.getAdjustedPath(pageForensicPath, pageOffset);
+      lineForensicPath = ForensicPath.getAdjustedPath(
+                           pageForensicPath, forensicPathOffset + pageOffset);
 
       // format: forensic path, binary values where legal, hex values
       // format: [00000000]00000000  ..fslfejl.......  00000000 00000000 00000000 00000000
@@ -253,7 +259,12 @@ public class ImageView implements CopyableLineInterface {
       String printablePath = ForensicPath.getPrintablePath(lineForensicPath, useHexPath);
       textBuffer.append(printablePath);
 
-      // add space
+      // tab out varying width
+      for (int tabCount = lineForensicPath.length(); tabCount < widestForensicPath.length(); tabCount++) {
+        textBuffer.append(" ");
+      }
+
+      // add spacing between path and data
       textBuffer.append("  ");
 
       // add the ascii values
@@ -355,6 +366,12 @@ public class ImageView implements CopyableLineInterface {
   // generate lines in text view format
   private void setTextLines() {
 
+    // establish forensic path offset
+    long forensicPathOffset = ForensicPath.getOffset(pageForensicPath);
+
+    // establish width of widest forensic path field
+    String widestForensicPath = ForensicPath.getAdjustedPath(pageForensicPath, forensicPathOffset + ImageModel.PAGE_SIZE);
+
     // work through bytes, preparing image lines
     int pageOffset;
     for (pageOffset = 0; pageOffset < pageBytes.length; pageOffset += TEXT_BYTES_PER_LINE) {
@@ -369,7 +386,7 @@ public class ImageView implements CopyableLineInterface {
       StringBuffer textBuffer = new StringBuffer(TEXT_BYTES_PER_LINE);
 
       // determine the line's forensic path based on the page offset
-      lineForensicPath = ForensicPath.getAdjustedPath(pageForensicPath, pageOffset);
+      lineForensicPath = ForensicPath.getAdjustedPath(pageForensicPath, forensicPathOffset + pageOffset);
 
 
       // format: forensic path, binary values where legal
@@ -379,7 +396,12 @@ public class ImageView implements CopyableLineInterface {
       String printablePath = ForensicPath.getPrintablePath(lineForensicPath, useHexPath);
       textBuffer.append(printablePath);
 
-      // add space
+      // tab out varying width
+      for (int tabCount = lineForensicPath.length(); tabCount < widestForensicPath.length(); tabCount++) {
+        textBuffer.append(" ");
+      }
+
+      // add spacing between path and data
       textBuffer.append("  ");
 
       // add the ascii values
