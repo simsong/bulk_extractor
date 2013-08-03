@@ -9,10 +9,12 @@ BE_VIEWER_JAR = BEViewer.jar
 
 # srcdir is specified because Makefile.am does not follow the _PROGRAMS primary convention,
 # see NOTE above.
+# Note: BEViewer intentionally surrounds Basic*UI.java for javac.
 SOURCE_FILES = \
 $(srcdir)/src/BEViewer.java \
 $(srcdir)/src/BasicFeaturesUI.java \
 $(srcdir)/src/BasicImageUI.java \
+$(srcdir)/src/BEViewer.java \
 $(srcdir)/src/BEArgsParser.java \
 $(srcdir)/src/BEHighlightToolbar.java \
 $(srcdir)/src/BEIcons.java \

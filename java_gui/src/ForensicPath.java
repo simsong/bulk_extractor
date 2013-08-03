@@ -39,6 +39,11 @@ public final class ForensicPath {
    * Obtain the offset from the last part of the forensic path.
    */
   public static long getOffset(String forensicPath) {
+    // allow ""
+    if (forensicPath == "") {
+      return 0;
+    }
+
     int offsetIndex = getOffsetIndex(forensicPath);
     String offsetString = forensicPath.substring(offsetIndex);
     long offset;
