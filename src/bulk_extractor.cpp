@@ -773,6 +773,7 @@ int main(int argc,char **argv)
 #ifdef HAVE_MCHECK
     mtrace();
 #endif
+    feature_recorder::set_main_threadid();
     BulkExtractor_Phase1::Config cfg;
     cfg.num_threads = threadpool::numCPU();
     if(getenv("BULK_EXTRACTOR_DEBUG")){

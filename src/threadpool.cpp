@@ -85,8 +85,8 @@ threadpool::threadpool(int numthreads,feature_recorder_set &fs_,dfxml_writer &xr
     workers(),M(),TOMAIN(),TOWORKER(),freethreads(numthreads),work_queue(),
     fs(fs_),xreport(xreport_),thread_status(),waiting(),mode()
 {
-    if(pthread_mutex_init(&M,NULL)) errx(1,"pthread_mutex_init failed");
-    if(pthread_cond_init(&TOMAIN,NULL)) errx(1,"pthread_cond_init #1 failed");
+    if(pthread_mutex_init(&M,NULL))       errx(1,"pthread_mutex_init failed");
+    if(pthread_cond_init(&TOMAIN,NULL))   errx(1,"pthread_cond_init #1 failed");
     if(pthread_cond_init(&TOWORKER,NULL)) errx(1,"pthread_cond_init #2 failed");
 
     // lock while I create the threads

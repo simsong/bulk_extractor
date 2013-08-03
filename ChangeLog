@@ -1,3 +1,7 @@
+2013-08-02  Basic  <simsong@Mucha.local>
+
+	* src/be13_api/feature_recorder.cpp (feature_recorder::feature_recorder): removed carved_set that was keeping track of what was carved, as it is no longer necessary.
+
 2013-08-01  Basic  <simsong@ncr.nps.edu>
 
 	* src/scan_exif.cpp (scan_exif): jpeg carver feature recorder renamed to jpeg_carved.
