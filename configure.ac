@@ -566,6 +566,15 @@ else
 fi
 AC_LANG_POP()
 
+## If we re compiling on mingw, add another -lgdi32 to be safe
+## This is required becuase some libraries reference functions in gdi32 and, for whatever reason,
+## the linker is not smart enough to re-check the library
+AC_MSG_NOTICE([MINGW is $mingw])
+if test x"$mingw" = x"yes" ; then
+  LIBS="$LIBS -lgdi32"
+fi
+
+
 ################################################################
 ############## drop optimization flags and add -g if requested ################
 if test x"${AFF_NOOPT}" != "x" ; then
@@ -618,7 +627,6 @@ if test "x$use_BEViewer" == "xyes"; then
 else
   AC_MSG_NOTICE([NOTE: BEViewer is disabled.])
 fi
-
 
 AC_OUTPUT
 
