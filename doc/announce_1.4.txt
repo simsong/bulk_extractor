@@ -7,9 +7,12 @@ bulk_extractor Version 1.4 has been released for Linux, MacOS and Windows.
 New functionality in Version 1.4 includes:
 
 * scan_rar detects RAR archives (both encrypted and unencrypted) and
-  individual RAR archive components (only unencrypted). Unencrypted
-  RAR archive components are decompressed and recursively
-  re-processed.
+  individual RAR archive components (unencrypted). Unencrypted RAR
+  archive components are decompressed and recursively
+  re-processed. Components from encoded (e.g. BASE64, GZIP, etc) RAR
+  files are carved into a special "unrar/" directory. Encrypted RAR
+  files are carved and placed in a special "rar/" directory for
+  additional processing with other tools
 
 * scan_exif now implements JPEG carving. By default, only encoded
   JPEGs are carved. Files are created in a directory called
@@ -30,6 +33,7 @@ New functionality in Version 1.4 includes:
 
 * Better performance
 
+* Support for random sampling
 
 Improvements in Version 1.4 include:
 
