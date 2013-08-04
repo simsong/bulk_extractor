@@ -162,12 +162,11 @@ int threadpool::get_free_count()
 bool worker::opt_work_start_work_end=true;
 void worker::do_work(sbuf_t *sbuf)
 {
-
     /* If logging starting and ending, save the start */
     if(opt_work_start_work_end){
 	std::stringstream ss;
 	ss << "threadid='"  << id << "'"
-	   << " pos0='"     << sbuf->pos0.str() << "'"
+	   << " pos0='"     << dfxml_writer::xmlescape(sbuf->pos0.str()) << "'"
 	   << " pagesize='" << sbuf->pagesize << "'"
 	   << " bufsize='"  << sbuf->bufsize << "'";
 	master.xreport.xmlout("debug:work_start","",ss.str(),true);
@@ -188,7 +187,7 @@ void worker::do_work(sbuf_t *sbuf)
     if(opt_work_start_work_end){
 	std::stringstream ss;
 	ss << "threadid='" << id << "'"
-	   << " pos0='" << sbuf->pos0.str() << "'"
+	   << " pos0='" << dfxml_writer::xmlescape(sbuf->pos0.str()) << "'"
 	   << " time='" << t.elapsed_seconds() << "'";
 	master.xreport.xmlout("debug:work_end","",ss.str(),true);
     }
