@@ -877,7 +877,7 @@ uint64_t process_dir::seek_block(class image_process::iterator &it,uint64_t bloc
 
 
 /****************************************************************
- *** COMMON
+ *** COMMON - Implement 'open' for the iterator
  ****************************************************************/
 
 #include <functional>
@@ -899,6 +899,29 @@ image_process *image_process::open(string fn,bool opt_recurse,
 	    errno = 0;
 	    return 0;	// directory and cannot recurse
 	}
+        /* Quickly scan the directory and see if it has a .E01, .000 or .001 file.
+         * If so, give the user an error.
+         */
+        DIR *dirp = opendir(fn.c_str());
+        struct dirent *dp=0;
+        if(!dirp){
+            std::cerr <<"error: cannot open directory " << fn << ": " << strerror(errno) << "\n";
+            errno=0;
+            return 0;
+        }
+        while ((dp = readdir(dirp)) != NULL){
+            if (strstr(dp->d_name,".E01") || strstr(dp->d_name,".000") || strstr(dp->d_name,".001")){
+                std::cerr << "error: file " << dp->d_name << " is in directory " << fn << "\n";
+                std::cerr << "       The -R option is not for reading a directory of EnCase files\n";
+                std::cerr << "       or a directory of disk image parts. Please process these\n";
+                std::cerr << "       as a single disk image. If you need to process these files\n";
+                std::cerr << "       then place them in a sub directory of " << fn << "\n";
+                errno=0;
+                closedir(dirp);
+                return 0;
+            }
+        }
+        closedir(dirp);
 	ip = new process_dir(fn);
     }
     else {

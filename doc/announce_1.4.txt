@@ -12,15 +12,18 @@ New functionality in Version 1.4 includes:
   re-processed. Components from encoded (e.g. BASE64, GZIP, etc) RAR
   files are carved into a special "unrar/" directory. Encrypted RAR
   files are carved and placed in a special "rar/" directory for
-  additional processing with other tools
+  additional processing with other tools. Timestamps are preserved
+  when files are carved on Linux or Windows systems.
 
 * scan_exif now implements JPEG carving. By default, only encoded
-  JPEGs are carved. Files are created in a directory called
-  "jpeg/". The filename is the forensic path. Confusingly, JPEGs
-  without EXIFs will also be carved.
+  JPEGs are carved (e.g. JPEGs that are gzip'ed or BASE64 encoded,
+  etc). Carved files are created in a directory called "jpeg/". The filename
+  is the forensic path. Confusingly, JPEGs without EXIFs will also be
+  carved. 
 
 * scan_zip now implements ZIP component carving. By default, only ZIP
-  components that were encoded are carved.
+  components that were encoded are carved. Timestamps are preserved
+  when files are carved on Linux or Windows systems.
 
 * scan_lightgrep will do searches with Lightbox Technology's lightgrep
 
@@ -31,19 +34,23 @@ New functionality in Version 1.4 includes:
 
 * Variable context window
 
-* Better performance
+* Better performance. (Scanners can now declare that they only run at
+  top level; scan_windirs does this. Scanners can also declare that
+  they don't want to receive buffers filled with repeating n-grams or
+  data that they have previously seen; most scanners do this by
+  default.)
 
-* Support for random sampling
+* Support for random sampling. (You don't need to scan the entire drive.)
 
-Improvements in Version 1.4 include:
 
+Improvements in existing scanners:
 
 * scan_pdf now does a better job extracting emails from text.
 
 * Files that are carved are now binned in directories of 1000, to
   prevent tens of thousands of files from being dumped in a directory.
 
-New features for testing includes:
+New features for testing:
 
 * tests/regress.py now performs better validation of reports with the
   --validate option. Validation includes making sure that every line is
@@ -66,7 +73,6 @@ Incompatiable changes:
 * The -W option no longer specifies the minimum and maximum word
   sizes. Instead specify with -S word_min=NN and -S word_max=NN
   has been removed. Instead specify it with -S block_size=NN.  
-
 
 ================================================================
 OVERREPORTING FIXES
@@ -113,7 +119,7 @@ Much of the emphasis of the 1.4 is to decrease "false positives."
 UNDERREPORTING FIXES
 
 * Default max_depth for recursion changed from 5 to 7.  (We found some
-  deep issues).
+  deep content on our test drives).
 
 * scan_pdf has been improved and now does a better job extracting
   text. For example, the following feature is now found when scanning
@@ -126,7 +132,17 @@ UNDERREPORTING FIXES
 BUG FIXES
 
 * scan_zip now properly reports the date and time of zip
-  components. It also reports in ISO8601 format, which makes parsing easier.
+  components. It also reports in ISO8601 format, which makes parsing
+  easier.
+
+================================================================
+USABILITY IMPROVEMENT
+
+* The -R option will no longer process a directory that contains a
+  file with a .E01, .000 or a .001 extension. Unfortunately, some
+  users were using -R to process a directory filled with image
+  files. The program will still process such files if they are in a
+  subdirectory.
 
 ================================================================
 INTERNAL IMPROVEMENTS 
@@ -243,6 +259,7 @@ ip.txt	     - Extracted IP addresses from scan_net
 json.txt     - Extracted and validated JavaScript Object
 	       Notation fragments.
 kml.txt	     - Extracted KML files
+rar.txt      - 
 report.xml   - The DFXML file that explains what happened.
 rfc822.txt   - All extracted RFC822 headers
 tcp.txt	     - Summaries of all extracted UDP and TCP packets.
@@ -258,16 +275,15 @@ wordlist.txt - All the words
 zip.txt      - Information about all ZIP files and zip
                components.
 
-================================================================
-Lightgrep Integration
-
-** SOMEBODY WRITE THIS **
-
-================================================================
-Planned Feature List for 1.4:
+Current list of carving directories:
+unrar/
+jpeg/
+unzip/
 
 ================================================================
 Planned Feature List for 1.5:
+
+* Lnk File decoder (http://msdn.microsoft.com/en-us/library/dd871305.aspx)
 
 * LZMA/LZMA2 decompression
 
