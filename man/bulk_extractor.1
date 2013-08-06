@@ -1,7 +1,7 @@
 .\" Process this file with
 .\" groff -man -Tascii foo.1
 .\"
-.TH BULK_EXTRACTOR 1 "MAY 2010" "User Manuals"
+.TH BULK_EXTRACTOR 1 "OCT 2013" "User Manuals"
 .SH NAME
 bulk_extractor \- Scans a disk image for regular expressions and other content.
 .SH SYNOPSIS
@@ -47,7 +47,13 @@ a dictionary for cracking encryption.
 The options are as follows:
 .IP "-o outdir"
 Specifies the output directory, which will be created by 
-.B bulk_extractor.
+.B bulk_extractor
+if necessary.
+If the output directory contains data from a partial
+.B bulk_extractor
+run,
+.B bulk_extractor
+will attempt to resume where the previous run left off.
 
 .IP "-b bannerfile.txt"
 Read the contents of 
@@ -77,11 +83,10 @@ which is a list of terms that, if found, will be placed in a special
 file (rather than in the main file). The whitelist may also contain
 globbed terms.
 
-.IP "-s context_stoplist.txt"
-Specifies a 
-.I context-dependent stoplist,
-which is a list of tokens to be stopped (but only when they have a
-particular context).
+.IP "-s frac[:passes]"
+Specify 
+.I random sampling
+parameters.
 
 .IP "-p path/format"
 Open a disk image and print the information found at 
@@ -93,6 +98,14 @@ specification may be
 for raw output and 
 .I h 
 for hex output.
+.br
+Specify
+.I -p -
+for interactive mode.
+.br
+Specify
+.I -p -http
+for HTTP mode.
 
 .IP "-F <rfile>"
 Specifies a file of regular expressions to be used as search terms.
@@ -104,14 +117,10 @@ Specifies a regular expression to be used as a search term.
 Quiet mode. Only prints every 
 .I nn
 status reports.
-
-These commands are useful for tuning operation:
-
-.IP "-C n"
-Specifies the size of the context window.
-
-.IP "-g n"
-Specifies the size of the margin in bytes.
+.br
+Specify
+.I -1
+for no status.
 
 .IP "-Wn1:n2"
 The 
@@ -122,12 +131,39 @@ and
 .I n2
 characters in length. 
 
-.IP "-j n"
+.SH TUNING
+These commands are useful for tuning operation:
+
+.IP "-C NN"
+Specifies the size of the context window.
+
+.IP "-S fr:<name>:window=NN"
+specifies context window for recorder <name> to NN.
+
+.IP "-S fr:<name>:window_before=NN"
+specifies context window after to NN for recorder <name>
+
+.IP "-S fr:<name>:window_after=NN"
+specifies context window before to NN for recorder <name>
+
+.IP "-G NN"
+specify the page size
+
+.IP "-g NN"
+Specifies the size of the margin in bytes.
+
+.IP "-j NN"
 Use 
 .I n
 threads for analysis. Normally you do not need specify this, as the
 default is the number of processors on the current computer.
 
+.IP "-m NN"
+Have
+.B bulk_extractor
+wait at most NN minutes for scanners to finish after all data have been read.
+
+.SH DEBUGGING
 The following commands are useful for debugging:
 
 .IP "-V"
@@ -151,14 +187,17 @@ Specifies a maximum recursion depth of
 Start on page number
 .I pagenum.
 
-.IP "-Y offset"
-Start at offset 
-.IP offset.
+.IP "-Y <o1>[-<o2>]"
+Start at input offset 
+.I o1
+optionally ending at offset
+.I o2
 
 .IP "-dN"
 Enable debugging level 
 .I N.
 
+.SH SCANNER CONTROL
 Finally, you can control scanners with these options:
 
 .IP "-P <dir>"
