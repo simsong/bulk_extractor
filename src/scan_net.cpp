@@ -22,7 +22,7 @@
  */
 
 #include "config.h"
-#include "bulk_extractor_i.h"
+#include "be13_api/bulk_extractor_i.h"
 #include "be13_api/cppmutex.h"
 #include "be13_api/utils.h"
 

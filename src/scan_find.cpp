@@ -3,7 +3,7 @@
  */
 
 #include "config.h"
-#include "bulk_extractor_i.h"
+#include "be13_api/bulk_extractor_i.h"
 #include "histogram.h"
 
 #include "bulk_extractor.h"             // for find_list

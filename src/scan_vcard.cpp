@@ -22,7 +22,7 @@
  * 4 - If we didn't write a END:VCARD, add an END:VCARD  (clean it up)
  */
 #include "config.h"
-#include "bulk_extractor_i.h"
+#include "be13_api/bulk_extractor_i.h"
 #include <iostream>
 #include <fstream>
 #include <string>

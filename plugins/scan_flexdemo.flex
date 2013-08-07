@@ -13,6 +13,8 @@
 #include <string.h>
 #include <ctype.h>
 
+#define FEATURE_NAME "demo"
+
 class flex_scanner : public sbuf_scanner {
 private:
       flex_scanner(const flex_scanner &that):sbuf_scanner(that.sbuf),demo_recorder(){}
@@ -20,7 +22,7 @@ private:
 public:
       flex_scanner(const scanner_params &sp):
         sbuf_scanner(&sp.sbuf),demo_recorder(){
-          demo_recorder  = sp.fs.get_name("email");
+          demo_recorder  = sp.fs.get_name(FEATURE_NAME);
       }
       virtual ~flex_scanner(){}
       class feature_recorder *demo_recorder;
@@ -62,7 +64,6 @@ inline class flex_scanner *get_extra(yyscan_t yyscanner) {
 .|\n { 
      /**
       * The no-match rule. VERY IMPORTANT!
-      * If we are beyond the end of the margin, call it quits.
       */
      flex_scanner &s = *yyflexdemo_get_extra(yyscanner);	      
      s.pos++; 
@@ -81,10 +82,10 @@ void scan_flexdemo(const class scanner_params &sp,const recursion_control_block 
         sp.info->scanner_version= "1.0";
 
 	/* define the feature files this scanner created */
-        sp.info->feature_names.insert("demo");
+        sp.info->feature_names.insert(FEATURE_NAME);
 
 	/* define the histograms to make */
-	sp.info->histogram_defs.insert(histogram_def("demo","","histogram"));
+	sp.info->histogram_defs.insert(histogram_def(FEATURE_NAME,"","histogram"));
 	return;
     }
     if(sp.phase==scanner_params::PHASE_SHUTDOWN){

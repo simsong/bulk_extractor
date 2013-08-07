@@ -6,7 +6,7 @@
 
 AC_PREREQ(2.57)
 
-AC_INIT(BULK_EXTRACTOR, 1.3, bugs@digitalcorpora.org)
+AC_INIT(BE_PLUGIN_TESTER, 1.4, bugs@digitalcorpora.org)
 AC_CONFIG_MACRO_DIR(m4)
 
 AC_CONFIG_FILES([Makefile])
@@ -18,6 +18,8 @@ AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_INSTALL
 AC_PROG_LEX
+
+m4_include([be13_api/be13_configure.m4])
 
 ##
 ## Standard macros
@@ -298,13 +300,6 @@ AC_CHECK_LIB([z],[uncompress],,
 	AC_MSG_ERROR([zlib libraries not installed; try installing zlib-dev zlib-devel zlib1g-dev or libz-dev]))
 
 ################################################################
-## regex support
-## there are several options
-AC_CHECK_HEADERS([regex.h tre/tre.h])
-AC_CHECK_LIB([tre],[tre_regcomp])
-AC_CHECK_FUNCS([regcomp tre_regcomp tre_version])
-
-
 AC_TRY_COMPILE([#pragma GCC diagnostic ignored "-Wshadow"],[int a=3;],
   [AC_DEFINE(GNUC_HAS_DIAGNOSTIC_PRAGMA,1,[define 1 if GCC supports #pragma GCC diagnostic])]
 )

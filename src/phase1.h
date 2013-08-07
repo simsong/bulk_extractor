@@ -1,7 +1,7 @@
 #ifndef PHASE1_H
 #define PHASE1_H
 
-#include "aftimer.h"
+#include "be13_api/aftimer.h"
 #include "threadpool.h"
 #include "image_process.h"
 #include "dfxml/src/dfxml_writer.h"

@@ -4,7 +4,7 @@
  * created:  2013-03-18
  */
 #include "config.h"
-#include "bulk_extractor_i.h"
+#include "be13_api/bulk_extractor_i.h"
 #include "utils.h"
 
 using namespace std;
@@ -58,7 +58,11 @@ void scan_xor(const class scanner_params &sp,const recursion_control_block &rcb)
         for(size_t ii = 0; ii < sbuf.bufsize; ii++) {
             dbuf.buf[ii] = sbuf.buf[ii] ^ xor_mask;
         }
-        const pos0_t pos0_xor = pos0 + rcb.partName;
+        
+        std::stringstream ss;
+        ss << "XOR(" << xor_mask << ")";
+
+        const pos0_t pos0_xor = pos0 + ss.str();
         const sbuf_t child_sbuf(pos0_xor, dbuf.buf, sbuf.bufsize, sbuf.pagesize, false);
         scanner_params child_params(sp, child_sbuf);
         (*rcb.callback)(child_params);// call scanners on deobfuscated buffer

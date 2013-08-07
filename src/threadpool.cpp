@@ -1,7 +1,7 @@
 #include "bulk_extractor.h"
 #include "image_process.h"
 #include "threadpool.h"
-#include "aftimer.h"
+#include "be13_api/aftimer.h"
 
 #include <dirent.h>
 #include <ctype.h>

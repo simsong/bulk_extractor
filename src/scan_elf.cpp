@@ -6,7 +6,7 @@
  */
 
 #include "config.h"
-#include "bulk_extractor_i.h"
+#include "be13_api/bulk_extractor_i.h"
 
 /* tunable constants */
 u_int sht_null_counter_max = 10;

@@ -1,5 +1,5 @@
 #include "config.h"
-#include "bulk_extractor_i.h"
+#include "be13_api/bulk_extractor_i.h"
 #include "dfxml/src/dfxml_writer.h"
 #include "utf8.h"
 
@@ -234,7 +234,7 @@ void scan_zip(const class scanner_params &sp,const recursion_control_block &rcb)
     if(sp.phase==scanner_params::PHASE_STARTUP){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	sp.info->name  = "zip";
-        sp.info->flags          = scanner_info::SCANNER_RECURSE | scanner_info::SCANNER_RECURSE_EXPAND;
+        sp.info->flags = scanner_info::SCANNER_RECURSE | scanner_info::SCANNER_RECURSE_EXPAND;
         sp.info->get_config("zip_min_uncompr_size",&zip_min_uncompr_size,"Minimum size of a ZIP uncompressed object");
         sp.info->get_config("zip_max_uncompr_size",&zip_max_uncompr_size,"Maximum size of a ZIP uncompressed object");
         sp.info->get_config("zip_name_len_max",&zip_name_len_max,"Maximum name of a ZIP component filename");

@@ -1,7 +1,7 @@
 #include "config.h"
 
 
-#include "bulk_extractor_i.h"
+#include "be13_api/bulk_extractor_i.h"
 #include "utf8.h"
 #include "dfxml/src/dfxml_writer.h"
 
@@ -602,6 +602,7 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
 	sp.info->author = "Michael Shick";
 #ifdef USE_RAR
 	sp.info->description = "RAR volume locator and component decompresser";
+        sp.info->flags = scanner_info::SCANNER_RECURSE | scanner_info::SCANNER_RECURSE_EXPAND;
 	sp.info->feature_names.insert(RAR_RECORDER_NAME);
 	sp.info->feature_names.insert(UNRAR_RECORDER_NAME);
         sp.info->get_config("rar_find_components",&record_components,"Search for RAR components");

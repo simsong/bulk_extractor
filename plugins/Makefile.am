@@ -32,15 +32,16 @@ scan_flexdemo.dll: scan_flexdemo.flex
 #
 # Rule to compile .flex into a .o
 # 
+# Note: Not clear if we should be using $(CXX) or $(CXXCOMPILE) below
 
 CLEANFILES=scan_demo.d scan_demo.o scan_demo.so \
 	sscan_flexdemo.d can_flexdemo.cpp scan_flexdemo.o scan_flexdemo.so 
 
 SUFFIXES = .so .flex
 .cpp.so:
-	$(CXXCOMPILE) -shared -fPIC -o $@ $(CXXFLAGS) $<
+	$(CXX) -shared -fPIC -o $@ $(CXXFLAGS) $<
 
 FLEX_CXXFLAGS=-Wno-shadow -Wno-effc++ -Wno-redundant-decls -Wno-missing-noreturn
 .flex.so:
 	flex -o `basename $@ .so`.cpp $<  
-	$(CXXCOMPILE) $(FLEX_CXXFLAGS) -shared -fPIC $(CXXFLAGS) -o $@ `basename $@ .so`.cpp 
+	$(CXX) $(FLEX_CXXFLAGS) -shared -fPIC $(CXXFLAGS) -o $@ `basename $@ .so`.cpp 
