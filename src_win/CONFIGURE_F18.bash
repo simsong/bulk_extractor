@@ -200,7 +200,7 @@ fi
 # build liblightgrep
 #
 
-build_mingw liblightgrep   https://github.com/LightboxTech/liblightgrep/archive/v1.2.0.tar.gz   liblightgrep-1.2.0.tar.gz
+build_mingw liblightgrep   https://github.com/LightboxTech/liblightgrep/archive/v1.2.1.tar.gz   liblightgrep-1.2.1.tar.gz
 
 #
 # ZMQ requires patching
