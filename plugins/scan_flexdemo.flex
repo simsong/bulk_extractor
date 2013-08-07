@@ -6,7 +6,7 @@
  */
 
 #include "config.h"
-#include "bulk_extractor_i.h"
+#include "be13_api/bulk_extractor_i.h"
 #include "sbuf_flex_scanner.h"
 
 #include <stdlib.h>

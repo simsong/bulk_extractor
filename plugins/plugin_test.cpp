@@ -28,8 +28,6 @@ typedef int (__cdecl *MYPROC)(LPWSTR);
 scanner_params::PrintOptions scanner_params::no_options; 
 int main(int argc,char **argv)
 {
-    std::string fname = argv[1];
-    scanner_t *fn=0;
     if(argc!=2){
 	fprintf(stderr,"usage: %s scanner.so\n",argv[0]);
         fprintf(stderr,"type 'make plugins' to make available plugins\n");
@@ -37,6 +35,8 @@ int main(int argc,char **argv)
     }
 
     /* Strip extension and path */
+    std::string fname = argv[1];
+    scanner_t *fn=0;
     std::string name = fname;
     size_t dot = name.rfind('.');
     if(dot==std::string::npos){
