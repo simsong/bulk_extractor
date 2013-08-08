@@ -63,23 +63,19 @@ public final class ForensicPath {
   // should be U+10001C
   private static int getForensicPathIndex(String firstField) {
     final int length = firstField.length();
-    if (length < 2) {
+    if (length < 3) {
       return 0;
     }
     int i;
     for (i=0; i < length - 3; i++) {
       if (firstField.charAt(i) == 56256
-       && firstField.charAt(i+1) == 56348) {
-        break;
+       && firstField.charAt(i+1) == 56348
+       && firstField.charAt(i+2) == '-') {
+        return i+3;
       }
     }
-    if (i == length-3) {
-      // not found
-      return 0;
-    } else {
-      // return position after marker
-      return i+2;
-    }
+    // not found
+    return 0;
   }
 
   // the offset is after the last '-', if any, in the forensic path

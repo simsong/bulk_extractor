@@ -7,7 +7,7 @@ import java.util.Observer;
 public class FeatureLineSelectionManager {
 
   // model state
-  private FeatureLine featureLine = null;
+  private FeatureLine featureLine = new FeatureLine();
 
   private final ModelChangedNotifier<Object> featureLineSelectionManagerChangedNotifier = new ModelChangedNotifier<Object>();
 
@@ -18,6 +18,10 @@ public class FeatureLineSelectionManager {
    * Sets the selected FeatureLine.
    */
   public void setFeatureLineSelection(FeatureLine featureLine) {
+if (featureLine == null) {
+  throw new RuntimeException("bad");
+}
+// zz clean up check because new way is never null featureLine
     // do nothing if the feature line is already selected
     // determine equivalency, allowing null
     if (featureLine == null || this.featureLine == null) {

@@ -555,21 +555,51 @@ public class BEMenus extends JMenuBar {
     // view|<separator>
     view.addSeparator();
 
-    // view|propertes
-    JMenu properties = new JMenu("Properties");
-    view.add(properties);
+    // view|Selected Feature
+    JMenu selectedFeature = new JMenu("Selected Feature");
+    view.add(selectedFeature);
 
-    // view|Properties|report.xml File
-    mi = new JMenuItem("report.xml File");
-    properties.add(mi);
+    // view|SelectedFeature|Pan to Start of Path
+    mi = new JMenuItem("Pan to Start of Path");
+    selectedFeature.add(mi);
+    mi.addActionListener(new ActionListener() {
+      public void actionPerformed (ActionEvent e) {
+        // move to start of feature currently in the image model
+        BEViewer.imageModel.setImageSelection(ForensicPath.getAdjustedPath(
+                     BEViewer.imageView.getImagePage().pageForensicPath, 0));
+      }
+    });
+
+    // view|SelectedFeature|Pan to  End of Path
+    mi = new JMenuItem("Pan to End of Path");
+    selectedFeature.add(mi);
+    mi.addActionListener(new ActionListener() {
+      public void actionPerformed (ActionEvent e) {
+        // move to end of feature currently in the image model
+        ImageModel.ImagePage imagePage = BEViewer.imageView.getImagePage();
+        String pageForensicPath = imagePage.pageForensicPath;
+        long imageSize = imagePage.imageSize;
+        long imageEndOffset = (imageSize > 0) ? imageSize - 1 : 0;
+        BEViewer.imageModel.setImageSelection(ForensicPath.getAdjustedPath(
+                     pageForensicPath, imageEndOffset));
+      }
+    });
+
+    // view|<separator>
+    selectedFeature.addSeparator();
+
+    // view|Selected Feature|report.xml File
+    mi = new JMenuItem("Show report.xml File");
+    selectedFeature.add(mi);
     mi.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
         // get the currently selected feature line
         FeatureLine featureLine = BEViewer.featureLineSelectionManager.getFeatureLineSelection();
+WLog.log("BEM.fl: " + featureLine);
         File featureFile = featureLine.featuresFile;
         if (featureFile == null || featureLine.featuresFile == null) {
           WError.showError("A Feature must be selected before viewing the Report file.", 
-                           "BEViewer Properties error", null);
+                           "BEViewer Selected Feature error", null);
         } else {
           try {
             File reportFile = new File(featureLine.featuresFile.getParentFile(), "report.xml");
@@ -600,20 +630,6 @@ public class BEMenus extends JMenuBar {
     // help
     JMenu help = new JMenu("Help");
     add(help);
-
-//    // help|BEViewer Help
-//    mi = new JMenuItem("BEViewer Help", BEIcons.HELP_16);
-//    help.add(mi);
-//    mi.setAccelerator(KEYSTROKE_H);
-//    mi.addActionListener(new ActionListener() {
-//      public void actionPerformed (ActionEvent e) {
-//        if (Desktop.isDesktopSupported()) {
-//          try {
-//////        WHelp.openWindow();
-////        URL helpURL = this.getClass().getClassLoader().getResource("doc/help.html");
-////        new WURL("Bulk Extractor Viewer Help", helpURL);
-//      }
-//    });
 
     // help|About
     mi = new JMenuItem("About BEViewer " + Config.VERSION, BEIcons.HELP_ABOUT_16);
@@ -685,19 +701,6 @@ public class BEMenus extends JMenuBar {
     mi.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
         BEViewer.imageModel.closeAllImageReaders();
-      }
-    });
-
-    // help|diagnostics|Image End Page
-    mi = new JMenuItem("Show Image End Page");
-    diagnostics.add(mi);
-    mi.addActionListener(new ActionListener() {
-      public void actionPerformed (ActionEvent e) {
-        // move to end of feature currently in the image model
-        ImageModel.ImagePage imagePage = BEViewer.imageView.getImagePage();
-        long offset = ForensicPath.getOffset(imagePage.pageForensicPath);
-        long imageEndOffset = (offset > 0) ? offset - 1 : 0;
-        BEViewer.imageModel.setImageSelection(ForensicPath.getAdjustedPath(imagePage.pageForensicPath, imageEndOffset));
       }
     });
 

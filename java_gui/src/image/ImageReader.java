@@ -235,7 +235,7 @@ public class ImageReader {
 
   // read line terminated by \r\n
   private String readLine() throws IOException {
-    int b;
+    int bInt;
     ByteArrayOutputStream outStream = new ByteArrayOutputStream();
 
     // start watchdog for this read
@@ -243,18 +243,23 @@ public class ImageReader {
 
     // read bytes through required http \r\n line terminator
     while (true) {
-      b = readFromProcess.read();
-      if (b != '\r') {
+      bInt = readFromProcess.read();
+      if (bInt == -1) {
+        WLog.log("bulk_extractor stream terminated in readLine: " + bInt);
+        readerIsValid = false;
+        break;
+      }
+      if (bInt != '\r') {
         // add byte to line
-        outStream.write(b);
+        outStream.write(bInt);
 
       } else {
         // remove the \n following the \r
-        b = readFromProcess.read();
+        bInt = readFromProcess.read();
 
         // verify \n
-        if (b != '\n') {
-          WLog.log("Invalid line terminator returned from bulk_extractor: " + b);
+        if (bInt != '\n') {
+          WLog.log("Invalid line terminator returned from bulk_extractor: " + bInt);
           readerIsValid = false;
         }
         break;
@@ -326,9 +331,9 @@ public class ImageReader {
 
     // attempt not-so-graceful closure
     // this results in Method not implemented error and termination
+    try {
     writeToProcess.println();
     writeToProcess.flush();
-    try {
       // start watchdog for this process wait
       ThreadAborterTimer aborter = new ThreadAborterTimer(process, DELAY);
 

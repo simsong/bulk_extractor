@@ -100,6 +100,7 @@ public class ImageModel {
    * Changes the forensic path to an inclusive aligned page value.
    */
   public synchronized void setImageSelection(String forensicPath) {
+    imageSelectionChanged = true;  // synchronized
     this.pageForensicPath = ForensicPath.getAlignedPath(forensicPath);
     manageModelChanges();
   }
@@ -187,7 +188,7 @@ WLog.log("IM.fl " + featureLine);
   public synchronized void manageModelChanges() {
     // set busy and busy indicator
     busy = true;
-    busyIndicator.startProgress(featureLine.actualImageFile.toString() + " " + pageForensicPath);
+    busyIndicator.startProgress(FileTools.getAbsolutePath(featureLine.actualImageFile) + " " + pageForensicPath);
  
 //WLog.log("ImageModel.manageModelChanges.a");
     if (imageReaderThread == null || imageReaderThread.isDone) {

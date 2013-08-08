@@ -621,14 +621,18 @@ public final class NavigationPane extends Container {
 
         // get the exising page offset
         ImageModel.ImagePage imagePage = BEViewer.imageView.getImagePage();
+WLog.log("NP.pfp: " + imagePage.pageForensicPath);
         long offset = ForensicPath.getOffset(imagePage.pageForensicPath);
+WLog.log("NP.offset: " + offset);
 
         // get the image size
         long imageSize = imagePage.imageSize;
+WLog.log("NP.imageSize: " + imageSize);
 
         // page forward one page unless the new offset is out of range
         if (offset + ImageModel.PAGE_SIZE < imagePage.imageSize) {
           offset += ImageModel.PAGE_SIZE;
+WLog.log("NP.offset2: " + offset);
           BEViewer.imageModel.setImageSelection(ForensicPath.getAdjustedPath(imagePage.pageForensicPath, offset));
         } else {
           WError.showError(
