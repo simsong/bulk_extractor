@@ -241,6 +241,12 @@ public final class NavigationPane extends Container {
     container.setLayout(new GridBagLayout());
     GridBagConstraints c;
 
+    // code moved here because of suppress warnings unchecked failure,
+    // see NOTE, below.
+    navigationComboBox = new JComboBox(BEViewer.featureNavigationComboBoxModel);
+    navigationComboBox.setRenderer(new FeatureListCellRenderer());
+    navigationComboBox.setPrototypeDisplayValue(new FeatureLine());
+
     // (0,0) JButton <bookmark>
     c = new GridBagConstraints();
     c.insets = new Insets(0, 0, 0, BEViewer.GUI_X_PADDING);
@@ -290,6 +296,9 @@ public final class NavigationPane extends Container {
     c.anchor = GridBagConstraints.LINE_START;
 
     // Delete Feature button
+    //NOTE: this line causes the javac 1.7.0_25 compiler to disregard
+    // the suppress warnings unchecked directive, so code requiring this
+    // directive has been moved above this line.
     deleteB = new JButton(BEIcons.DELETE_16);
     deleteB.setFocusable(false);
     deleteB.setRequestFocusEnabled(false);
@@ -332,13 +341,13 @@ public final class NavigationPane extends Container {
     c.fill = GridBagConstraints.HORIZONTAL;
 
 //    navigationComboBox = new JComboBox<FeatureLine>(BEViewer.featureNavigationComboBoxModel);
-    navigationComboBox = new JComboBox(BEViewer.featureNavigationComboBoxModel);
+// moved, see NOTE    navigationComboBox = new JComboBox(BEViewer.featureNavigationComboBoxModel);
     navigationComboBox.setFocusable(false);
 //    navigationComboBox.requestFocusInWindow();  // as a user convenience, focus this item first.
-    navigationComboBox.setRenderer(new FeatureListCellRenderer());
+// moved, see NOTE    navigationComboBox.setRenderer(new FeatureListCellRenderer());
 
     // set the prototype value so Swing knows the height of JComboBox when it is empty
-    navigationComboBox.setPrototypeDisplayValue(new FeatureLine());
+// moved, see NOTE    navigationComboBox.setPrototypeDisplayValue(new FeatureLine());
 
     navigationComboBox.setMaximumRowCount(16);
     navigationComboBox.addActionListener(new ActionListener() {
