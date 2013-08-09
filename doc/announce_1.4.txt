@@ -284,6 +284,7 @@ unzip/
 Planned Feature List for 1.5:
 
 * Lnk File decoder (http://msdn.microsoft.com/en-us/library/dd871305.aspx)
+  for automatically detecting and reporting Window shortcut files and IE history.
 
 * LZMA/LZMA2 decompression
 
@@ -293,10 +294,10 @@ Planned Feature List for 1.5:
 
 * BZIP2 decompression
 
-* Automatically detecting and reporting Window shortcut
-  files and IE history.
-
 * Scanning for the start of bitlocker protected volumes.
+
+* CAB decompression
+
 
 We are also considering the following scanners (and need help!):
 
@@ -314,8 +315,6 @@ We are also considering the following scanners (and need help!):
 We have tabled the following ideas, for the following reasons:
 
 * MSI decompression
-
-* CAB decompression
 
 * Improved restarting, so that each page is retried once but only
   once. (The improved reliability in verson 1.2 made this request less
