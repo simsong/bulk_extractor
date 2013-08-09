@@ -229,7 +229,6 @@ void scan_hashid(const class scanner_params &sp,
 
             // perform the query
             int status2 = query->query_hashes_md5(*request, *response);
-std::cout << "scan_hashid query " << query->query_status() << " query_hashes_md5: " << status2 << "\n";
 
             if (status2 == 0) {
                 // record each feature in the response
