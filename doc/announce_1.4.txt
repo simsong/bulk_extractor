@@ -283,20 +283,22 @@ unzip/
 ================================================================
 Planned Feature List for 1.5:
 
+* Find more false positives with CCN validator by scanning through XOR data
+
+* identify_filenames should present the % of disk that has allocated files.
+
 * Lnk File decoder (http://msdn.microsoft.com/en-us/library/dd871305.aspx)
-  for automatically detecting and reporting Window shortcut files and IE history.
+  for automatically detecting and reporting Window shortcut files.
 
-* LZMA/LZMA2 decompression
-
-* 7zip component recognition 
-
-* xz decompression
+* xz, 7zip, and LZMA/LZMA2 decompression
 
 * BZIP2 decompression
 
-* Scanning for the start of bitlocker protected volumes.
-
 * CAB decompression
+
+* Outlook Compressible Encryption (OCE) decryption
+
+* Scanning for the start of bitlocker protected volumes.
 
 
 We are also considering the following scanners (and need help!):
@@ -314,15 +316,8 @@ We are also considering the following scanners (and need help!):
 
 We have tabled the following ideas, for the following reasons:
 
-* MSI decompression
-
-* Improved restarting, so that each page is retried once but only
-  once. (The improved reliability in verson 1.2 made this request less
-  important.)
-
 * Support on distributed computing arrays. (May be less important
   given the low cost of 64-core machines)
-
 
 * Support for checkpointing using BLCR.  The project was abandoned.
 
