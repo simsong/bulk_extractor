@@ -18,18 +18,11 @@ public class FeatureLineSelectionManager {
    * Sets the selected FeatureLine.
    */
   public void setFeatureLineSelection(FeatureLine featureLine) {
-if (featureLine == null) {
-  throw new RuntimeException("bad");
-}
-// zz clean up check because new way is never null featureLine
+    if (featureLine == null) {
+      throw new RuntimeException("unexpected null featureLine");
+    }
     // do nothing if the feature line is already selected
-    // determine equivalency, allowing null
-    if (featureLine == null || this.featureLine == null) {
-      if (featureLine != this.featureLine) {
-        this.featureLine = featureLine;
-        featureLineSelectionManagerChangedNotifier.fireModelChanged(null);
-      }
-    } else if (!featureLine.equals(this.featureLine)) {
+    if (!featureLine.equals(this.featureLine)) {
       this.featureLine = featureLine;
       featureLineSelectionManagerChangedNotifier.fireModelChanged(null);
     } else {

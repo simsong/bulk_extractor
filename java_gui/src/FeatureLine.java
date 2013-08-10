@@ -213,6 +213,13 @@ public class FeatureLine {
   }
 
   /**
+   * Identifies whether this is really a blank feature line.
+   */
+  public boolean isBlank() {
+    return (reportImageFile == null && featuresFile == null);
+  }
+
+  /**
    * Returns a printable summary string of the given feature line.
    */
   public static String getSummaryString(FeatureLine featureLine) {

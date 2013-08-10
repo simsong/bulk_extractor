@@ -62,6 +62,13 @@ public final class ReportsPane extends Container {
     });
   }
 
+  /**
+   * Used to establish tree as default selected component when BEViewer starts.
+   */
+  public void grabTreeFocus() {
+    tree.grabFocus();
+  }
+
   // ************************************************************
   // Constructs the ReportsPane interface
   // ************************************************************

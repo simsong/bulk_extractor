@@ -190,12 +190,20 @@ WLog.log("IM.fl " + featureLine);
     busy = true;
     busyIndicator.startProgress(FileTools.getAbsolutePath(featureLine.actualImageFile) + " " + pageForensicPath);
  
-//WLog.log("ImageModel.manageModelChanges.a");
+WLog.log("ImageModel.manageModelChanges.a");
     if (imageReaderThread == null || imageReaderThread.isDone) {
-//WLog.log("ImageModel.manageModelChanges.b");
+WLog.log("ImageModel.manageModelChanges.b");
       // no active thread
+
+      // for blank feature line, simply clear image reader thread and use now
+      if (featureLine.isBlank()) {
+        imageReaderThread = null;
+        imageSelectionChanged = false;
+      }
+
+      // for change, schedule on thread
       if (imageSelectionChanged) {
-//WLog.log("ImageModel.manageModelChanges.c");
+WLog.log("ImageModel.manageModelChanges.c");
         // thread processing is required to read feature attributes
 
         // signal model changed on the Swing thread in order to clear the image view until done
@@ -225,6 +233,7 @@ WLog.log("IM.fl " + featureLine);
       } else {
         // integrate the changes into the model
         if (imageReaderThread != null) {
+WLog.log("ImageModel.manageModelChanges.d");
           // bring in values from thread
           ImageReader.ImageReaderResponse response = imageReaderThread.response;
           paddedPageBytes = response.bytes;
@@ -232,6 +241,7 @@ WLog.log("IM.fl " + featureLine);
           imageSize = response.totalSizeAtPath;
           imageReaderThread = null;
         } else {
+WLog.log("ImageModel.manageModelChanges.e");
           // got here without reader thread
           paddedPageBytes = new byte[0];
           pageBytes = new byte[0];
@@ -245,6 +255,7 @@ WLog.log("IM.fl " + featureLine);
       }
 
     } else {
+WLog.log("ImageModel.manageModelChanges.f");
       // A previously requested thread read is already active, so do nothing here.
       // imageReaderThread will call manageModelChanges to continue the flow.
       // No action.

@@ -66,6 +66,11 @@ Postponed: A proper implementation will require a window similar to JDialog, but
 
 1.4: Add regex filter in Feature parser to improve search.  Inspired by "boiled down" phone numbers.
 
+----------------------------------------
+Nice to have, maybe not in 1.4:
+Nice to have a "copy to clipboard" button in the bulk_extractor scan window
+for bulk_extractor scan status.
+Nice to have "Carve Forensic Path to File" button in the Navigation Pane.
 
 
 

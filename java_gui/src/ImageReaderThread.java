@@ -50,7 +50,7 @@ public class ImageReaderThread extends Thread {
     } catch (Exception e) {
       // on any failure: warn and clear values
       WError.showErrorLater("Unable to read the Image.\n"
-                            + "file: " + imageFile + " forensic path: " + forensicPath,
+                            + "file: '" + imageFile + "' forensic path: '" + forensicPath + "'",
                             "Error reading Image", e);
 
       response = new ImageReader.ImageReaderResponse(new byte[0], 0);

@@ -20,6 +20,7 @@ public class WScanProgress extends JDialog {
 
   private final FileComponent imageFileLabel = new FileComponent();
   private final FileComponent featureDirectoryLabel = new FileComponent();
+  private final JTextField commandField = new JTextField();
 
   private final JProgressBar progressBar = new JProgressBar();
   private final JLabel progressL = new JLabel();
@@ -49,8 +50,11 @@ public class WScanProgress extends JDialog {
   public WScanProgress(Window parentWindow, String[] command) {
     cmd = command;
     buildInterface();
-    setClosure();
     pack();
+    commandField.setText(getCommandString(cmd)); // set after pack
+    commandField.setToolTipText(getCommandString(cmd)); // set after pack
+    commandField.setCaretPosition(0);
+    setClosure();
     setLocationRelativeTo(parentWindow);
     getRootPane().setDefaultButton(cancelB);
     wireActions();
@@ -267,7 +271,9 @@ public class WScanProgress extends JDialog {
     c.insets = new Insets(15, 5, 0, 5);
     c.gridx = 0;
     c.gridy = 1;
-    c.anchor = GridBagConstraints.LINE_START;
+//    c.weightx= 1;
+    c.fill = GridBagConstraints.HORIZONTAL;
+//    c.anchor = GridBagConstraints.LINE_START;
     pane.add(getCommandContainer(), c);
 
     // (0,2) Progress container
@@ -394,19 +400,15 @@ public class WScanProgress extends JDialog {
     container.add(new JLabel("Command"), c);
 
     // (0,1) command text field
-    JTextField commandField = new JTextField(getCommandString(cmd));
     commandField.setEditable(false);
-    commandField.setCaretPosition(0);
-    commandField.setMinimumSize(new Dimension(500, commandField.getPreferredSize().height));
-    commandField.setPreferredSize(new Dimension(500, commandField.getPreferredSize().height));
- 
+    commandField.setMinimumSize(new Dimension(0, commandField.getPreferredSize().height));
+
     c = new GridBagConstraints();
     c.insets = new Insets(0, 0, 0, 0);
     c.gridx = 0;
     c.gridy = 1;
     c.weightx = 1;
-    c.weighty = 1;
-    c.anchor = GridBagConstraints.LINE_START;
+    c.fill = GridBagConstraints.HORIZONTAL;
 
     // add the command field
     container.add(commandField, c);

@@ -234,6 +234,7 @@ public class ImageView implements CopyableLineInterface {
 
     // establish width of widest forensic path field
     String widestForensicPath = ForensicPath.getAdjustedPath(pageForensicPath, forensicPathOffset + ImageModel.PAGE_SIZE);
+    String printableWidestForensicPath = ForensicPath.getPrintablePath(widestForensicPath, useHexPath);
 
     // work through bytes, preparing image lines
     int pageOffset; // start of page is 0
@@ -260,7 +261,7 @@ public class ImageView implements CopyableLineInterface {
       textBuffer.append(printablePath);
 
       // tab out varying width
-      for (int tabCount = lineForensicPath.length(); tabCount < widestForensicPath.length(); tabCount++) {
+      for (int tabCount = printablePath.length(); tabCount < printableWidestForensicPath.length(); tabCount++) {
         textBuffer.append(" ");
       }
 
@@ -371,6 +372,7 @@ public class ImageView implements CopyableLineInterface {
 
     // establish width of widest forensic path field
     String widestForensicPath = ForensicPath.getAdjustedPath(pageForensicPath, forensicPathOffset + ImageModel.PAGE_SIZE);
+    String printableWidestForensicPath = ForensicPath.getPrintablePath(widestForensicPath, useHexPath);
 
     // work through bytes, preparing image lines
     int pageOffset;
@@ -397,7 +399,7 @@ public class ImageView implements CopyableLineInterface {
       textBuffer.append(printablePath);
 
       // tab out varying width
-      for (int tabCount = lineForensicPath.length(); tabCount < widestForensicPath.length(); tabCount++) {
+      for (int tabCount = printablePath.length(); tabCount < printableWidestForensicPath.length(); tabCount++) {
         textBuffer.append(" ");
       }
 
