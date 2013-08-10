@@ -24,9 +24,9 @@ namespace accts {
   const char SMONTH[] = "([0-1][0-2])";
  
   const char DATEA[] = "({YEAR}-{MONTH}-{DAY})";
-  const char DATEB[] = "({YEAR}[/]{MONTH}[/]{DAY})";
-  const char DATEC[] = "{DAY}[ ]{MONTH}[ ]{YEAR})";
-  const char DATED[] = "({MONTH}[ ]{DAY}[, ]+{YEAR})";
+  const char DATEB[] = "({YEAR}/{MONTH}/{DAY})";
+  const char DATEC[] = "{DAY} {MONTH} {YEAR})";
+  const char DATED[] = "({MONTH} {DAY}[, ]+{YEAR})";
 
   const char DATEFORMAT[] = "({DATEA}|{DATEB}|{DATEC}|{DATED})";
 
@@ -42,11 +42,11 @@ namespace accts {
 
   /* 3### ###### ######### --- 15 digits beginning with 3 and funny space. */
   /* Must be american express... */ 
-  const char REGEX3[] = "[^0-9a-z.][3][0-9][0-9][0-9]{DELIM}[0-9]{6}{DELIM}[0-9]{5}/{END}";
+  const char REGEX3[] = "[^0-9a-z.]3[0-9][0-9][0-9]{DELIM}[0-9]{6}{DELIM}[0-9]{5}/{END}";
 
   /* 3### ###### ######### --- 15 digits beginning with 3 and funny space. */
   /* Must be american express... */ 
-  const char REGEX4[] = "[^0-9a-z.][3]([0-9]{14})/{END}";
+  const char REGEX4[] = "[^0-9a-z.]3([0-9]{14})/{END}";
 
   /* ###############  13-19 numbers as a block beginning with a 4 or 5
    * followed by something that is not a digit.
@@ -77,7 +77,7 @@ namespace accts {
   const char REGEX10[] = "{PHONETEXT}[0-9/ .+]{7,18}";
 
   /* Generalized number with city code and prefix */
-  const char REGEX11[] = "{PHONETEXT}[0-9 +]+[ ]?[(][0-9]{2,4}[)][ ]?[\\-0-9]{4,8}";
+  const char REGEX11[] = "{PHONETEXT}[0-9 +]+ ?\\([0-9]{2,4}\\) ?[\\-0-9]{4,8}";
 
   /* Possible BitLocker Recovery Key (ASCII). */
   const char BITLOCKER_ASCII[] = "[^0-9]([0-9]{6}-){7}([0-9]{6})/[\\r\\n]";
@@ -96,13 +96,13 @@ namespace accts {
    * Common box arrays found in PDF files
    * With more testing this can and will still be tweaked
    */
-  const char PDF_BOX[] = "box[ ]?[\\[][0-9 -]{0,40}[\\]]";
+  const char PDF_BOX[] = "box ?[\\[][0-9 -]{0,40}[\\]]";
 
   /*
    * Common rectangles found in PDF files
    *  With more testing this can and will still be tweaked
    */
-  const char PDF_RECT[] = "[\\[][ ]?[0-9.-]{1,12}[ ][0-9.-]{1,12}[ ][0-9.-]{1,12}[ ][0-9.-]{1,12}[ ]?[\\]]";
+  const char PDF_RECT[] = "[\\[] ?[0-9.-]{1,12} [0-9.-]{1,12} [0-9.-]{1,12} [0-9.-]{1,12} ?[\\]]";
 }
 
 namespace base16 {
@@ -190,8 +190,8 @@ namespace gps {
   // subpatterns
   //
 
-  const char LATLON[] = "(-?[0-9]{1,3}[.][0-9]{6,8})";
-  const char ELEV[] =	"(-?[0-9]{1,6}[.][0-9]{0,3})";
+  const char LATLON[] = "(-?[0-9]{1,3}\\.[0-9]{6,8})";
+  const char ELEV[] =	"(-?[0-9]{1,6}\\.[0-9]{0,3})";
 
   //
   // patterns
