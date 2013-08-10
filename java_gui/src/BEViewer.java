@@ -156,6 +156,7 @@ public class BEViewer {
     frame.setJMenuBar(new BEMenus()); // add the menubar to the frame
     KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwner();
     frame.pack();
+    reportsPane.grabTreeFocus(); // it is nice to start focus here
     frame.setVisible(true);
   }
 

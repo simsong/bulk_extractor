@@ -53,6 +53,15 @@ public class ImageReader {
   public ImageReader(File newFile) {
     file = newFile;
 
+    if (file == null) {
+throw new RuntimeException("imageReader");
+/*
+      // an empty image reader is created when a report is closed
+      readerIsValid = false;
+      return;
+*/
+    }
+
     // open interactive http channel with bulk_extractor
     // use "bulk_extractor -p -http <image_file>"
     String[] cmd = new String[4];
@@ -82,7 +91,7 @@ public class ImageReader {
       });
     } catch (IOException e) {
       readerIsValid = false;
-      WError.showErrorLater("Unable to read start the bulk_extractor reader.",
+      WError.showErrorLater("Unable to start the bulk_extractor reader.",
                             "Error reading Image", e);
     }
   }
@@ -111,9 +120,14 @@ public class ImageReader {
   }
 
   public ImageReaderResponse read(String forensicPath, long numBytes) {
-    // wrap openAndRead because it throws exceptions
+    if (!readerIsValid) {
+//      return new ImageReaderResponse(new byte[0], 0);
+      throw new RuntimeException("bad state");
+    }
+
+    // wrap doRead because it throws exceptions
     try {
-      return openAndRead(forensicPath, numBytes);
+      return doRead(forensicPath, numBytes);
     } catch (Exception e) {
       readerIsValid = false;
       WError.showErrorLater("Unable to read image data.",
@@ -122,7 +136,7 @@ public class ImageReader {
     }
   }
 
-  private ImageReaderResponse openAndRead(String forensicPath, long numBytes)
+  private ImageReaderResponse doRead(String forensicPath, long numBytes)
               throws Exception {
     // define the range stop value
     long rangeStopValue = ((numBytes > 0) ? numBytes - 1 : 0);
@@ -130,8 +144,8 @@ public class ImageReader {
     // issue the read request
     String getString = "GET " + forensicPath + " HTTP/1.1";
     String rangeString = "Range: bytes=0-" + rangeStopValue;
-    WLog.log("ImageReader get request 1: " + getString);
-    WLog.log("ImageReader range request 2: " + rangeString);
+    WLog.log("ImageReader GET request 1: " + getString);
+    WLog.log("ImageReader Range request 2: " + rangeString);
     writeToProcess.println(getString);
     writeToProcess.println(rangeString);
     writeToProcess.println();
@@ -145,7 +159,7 @@ public class ImageReader {
     String xRangeAvailableLine = readLine();
     WLog.log("ImageReader available response 3: '" + xRangeAvailableLine + "'");
     String blankLine = readLine();
-    WLog.log("ImageReader blank response 4: '" + xRangeAvailableLine + "'");
+    WLog.log("ImageReader blank line response 4: '" + blankLine + "'");
 
     // Content-Length: provides the number of bytes returned
     int numBytesReturned;
@@ -330,7 +344,8 @@ public class ImageReader {
     int status = 0;
 
     // attempt not-so-graceful closure
-    // this results in Method not implemented error and termination
+    // this results in bulk_extractor http Method not implemented error
+    // and termination
     try {
     writeToProcess.println();
     writeToProcess.flush();
@@ -338,8 +353,9 @@ public class ImageReader {
       ThreadAborterTimer aborter = new ThreadAborterTimer(process, DELAY);
 
       // wait for process to terminate
-      // note: this is deemed unexpected enough to pause the Swing thread
+      // note: we don't expect trouble here so we do this on the Swing thread
       status = process.waitFor();
+      WLog.log("ImageReader closed for file " + file.getAbsolutePath());
 
       // wait for stderr thread to close
       try {
@@ -350,6 +366,21 @@ public class ImageReader {
 
       // stop watchdog for this process wait
       aborter.cancel();
+
+/*
+      // close resources, this may already be happening
+      if (writeToProcess != null) {
+        writeToProcess.close();
+      }
+      if (readFromProcess != null) {
+        try {
+        readFromProcess.close();
+        } catch (IOException e) {
+          WError.showErrorLater("Unable to close read stream.",
+                            "Error Closing Image", e);
+        }
+      }
+*/
 
     } catch (InterruptedException e) {
       // NOTE: gjc doesn't support IOException(Throwable) so use this:

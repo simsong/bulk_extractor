@@ -19,6 +19,7 @@ public class ThreadReaderModel extends Thread {
 
   // entry point
   public void run() {
+WLog.log("ThreadReaderModel.start");
     // notify lines of input until buffered reader closes
     while(true) {
 
@@ -35,6 +36,7 @@ public class ThreadReaderModel extends Thread {
         break;
       }
     }
+WLog.log("ThreadReaderModel.end");
   }
 
   /**

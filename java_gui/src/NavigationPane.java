@@ -304,7 +304,7 @@ public final class NavigationPane extends Container {
     deleteB.setRequestFocusEnabled(false);
     deleteB.setMinimumSize(BEViewer.BUTTON_SIZE);
     deleteB.setPreferredSize(BEViewer.BUTTON_SIZE);
-    deleteB.setToolTipText("Remove this Feature");
+    deleteB.setToolTipText("Remove this Feature from Navigation List");
     deleteB.setEnabled(false);
 
     // add the delete button
@@ -359,6 +359,12 @@ public final class NavigationPane extends Container {
 
         // determine equivalency, allowing null
         FeatureLine featureLine = (FeatureLine)navigationComboBox.getSelectedItem();
+
+        // JComboBox can return null so compensate
+        if (featureLine == null) {
+          featureLine = new FeatureLine();
+        }
+
         BEViewer.featureLineSelectionManager.setFeatureLineSelection(featureLine);
       }
     });

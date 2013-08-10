@@ -100,8 +100,10 @@ public class BasicImageUI extends ImageUI implements MouseListener, MouseMotionL
     return new Font("monospaced", Font.PLAIN, imageView.getFontSize());
   }
 
+  // scroll to path else scroll to top
   private void scrollToForensicPath() {
     Rectangle rectangle;
+WLog.log("BasicImageUI.stfp");
 
     // get the forensic path line index
     final int forensicPathLineIndex = imageView.getForensicPathLineIndex(imageView.getImagePage().featureLine.forensicPath);

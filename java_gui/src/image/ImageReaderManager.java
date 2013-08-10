@@ -31,12 +31,15 @@ public class ImageReaderManager {
       return new ImageReader(null);
     }
 
+/*
     // too many open readers crashes the JVM, so for an allocation algorithm,
     // simply close all readers when the number of readers reaches some
     // arbitrary value
-    if (readers.size() == 5) {
+    if (readers.size() == 2) {
       closeAll();
     }
+*/
+//closeAll();
 
     // find or create a reader for this file
     if (readers.containsKey(file)) {
