@@ -284,6 +284,10 @@ public class WBookmarks extends JDialog {
     setExportBEnabledState();
   }
 
+  public static void redrawList() {
+    bookmarkL.updateUI();
+  }
+
   private void wireActions() {
     // bookmarkL selection change changes deleteB and navigateB enabled state
     bookmarkL.addListSelectionListener(new ListSelectionListener() {

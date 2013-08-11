@@ -25,13 +25,9 @@ public class BEPreferences {
 
   // Defaults
   /**
-   * Default show shortcuts toolbar, {@value}.
+   * Default show toolbar, {@value}.
    */
-  public static final boolean DEFAULT_SHOW_SHORTCUTS_TOOLBAR = true;
-  /**
-   * Default show highlight toolbar, {@value}.
-   */
-  public static final boolean DEFAULT_SHOW_HIGHLIGHT_TOOLBAR = true;
+  public static final boolean DEFAULT_SHOW_TOOLBAR = true;
   /**
    * Default font size for Feature listing, {@value}.
    */
@@ -90,13 +86,9 @@ public class BEPreferences {
   // load user preferences saved locally from last run, if available, else load defaults
   public static void loadPreferences() {
 
-    // load preference to show the shortcuts toolbar
-    boolean showShortcutsToolbar = preferences.getBoolean("show_shortcuts_toolbar", DEFAULT_SHOW_SHORTCUTS_TOOLBAR);
-    BEViewer.shortcutsToolbar.setVisible(showShortcutsToolbar);
-
-    // load preference to show the highlight toolbar
-    boolean showHighlightToolbar = preferences.getBoolean("show_highlight_toolbar", DEFAULT_SHOW_HIGHLIGHT_TOOLBAR);
-    BEViewer.highlightToolbar.setVisible(showHighlightToolbar);
+    // load preference to show the toolbar
+    boolean showToolbar = preferences.getBoolean("show_toolbar", DEFAULT_SHOW_TOOLBAR);
+    BEViewer.toolbar.setVisible(showToolbar);
 
     // load feature font size
     int featureFontSize = preferences.getInt("feature_font_size", DEFAULT_FEATURE_FONT_SIZE);
@@ -234,11 +226,8 @@ public class BEPreferences {
   public static void savePreferences() {
     try {
 
-      // preference to show the shortcuts toolbar
-      preferences.putBoolean("show_shortcuts_toolbar", BEViewer.shortcutsToolbar.isVisible());
-
-      // preference to show the highlight toolbar
-      preferences.putBoolean("show_highlight_toolbar", BEViewer.highlightToolbar.isVisible());
+      // preference to show the toolbar
+      preferences.putBoolean("show_toolbar", BEViewer.toolbar.isVisible());
 
       // feature font size
       preferences.putInt("feature_font_size", BEViewer.featuresModel.getFontSize());

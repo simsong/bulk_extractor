@@ -17,6 +17,8 @@ import java.awt.Dimension;
 import java.awt.KeyboardFocusManager;
 import java.io.File;
 
+import javax.swing.JLabel;
+
 /**
  * The <code>BEViewer</code> class provides the main entry
  * for the Bulk Extractor Viewer application.
@@ -47,9 +49,8 @@ public class BEViewer {
                     = new FeatureNavigationComboBoxModel(featureLineSelectionManager);
   public static final ClassificationManager classificationManager = new ClassificationManager();
 
-  // toolbars
-  public static final BEShortcutsToolbar shortcutsToolbar = new BEShortcutsToolbar();
-  public static final BEHighlightToolbar highlightToolbar = new BEHighlightToolbar();
+  // toolbar
+  public static final BEToolbar toolbar = new BEToolbar();
 
   // panes
   public static ReportsPane reportsPane;
@@ -241,7 +242,7 @@ public class BEViewer {
   private void addComponents(Container pane) {
     pane.setLayout(new BorderLayout());
     // add the Tool bar to the top
-    pane.add(getToolbars(), BorderLayout.NORTH);
+    pane.add(getToolbar(), BorderLayout.NORTH);
 
     // add the splitpanes in the center
     JSplitPane innerSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, true,
@@ -256,11 +257,11 @@ public class BEViewer {
     pane.add(outerSplitPane, BorderLayout.CENTER);
   }
 
-  private Container getToolbars() {
+  private Container getToolbar() {
     Container c = new Container();
     c.setLayout(new BorderLayout());
-    c.add(shortcutsToolbar, BorderLayout.NORTH);
-    c.add(highlightToolbar, BorderLayout.SOUTH);
+    c.add(new Container(), BorderLayout.NORTH); // force restart of shading
+    c.add(toolbar, BorderLayout.CENTER);
     return c;
   }
 }

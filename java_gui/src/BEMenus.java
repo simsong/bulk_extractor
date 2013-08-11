@@ -33,8 +33,7 @@ import java.net.URL;
 public class BEMenus extends JMenuBar {
 
   private final long serialVersionUID = 1;
-  private JCheckBoxMenuItem cbShowShortcutsToolbar;
-  private JCheckBoxMenuItem cbShowHighlightToolbar;
+  private JCheckBoxMenuItem cbShowToolbar;
   private JRadioButtonMenuItem rbFeatureText;
   private JRadioButtonMenuItem rbTypedText;
   private JRadioButtonMenuItem rbTextView;
@@ -258,39 +257,19 @@ public class BEMenus extends JMenuBar {
     ButtonGroup forensicPathNumericBaseGroup = new ButtonGroup();
     ButtonGroup referencedFeaturesGroup = new ButtonGroup();
 
-    // view|Toolbars
-    JMenu toolbarMenu = new JMenu("Toolbars");
-    view.add(toolbarMenu);
-
-    // view|Toolbars|Shortcuts Toolbar
-    cbShowShortcutsToolbar = new JCheckBoxMenuItem("Shortcuts Toolbar");
-    cbShowShortcutsToolbar.setSelected(true);
-    toolbarMenu.add(cbShowShortcutsToolbar);
-    cbShowShortcutsToolbar.addActionListener(new ActionListener() {
+    // view|Toolbar
+    cbShowToolbar = new JCheckBoxMenuItem("Toolbar");
+    cbShowToolbar.setSelected(true);
+    view.add(cbShowToolbar);
+    cbShowToolbar.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
-        BEViewer.shortcutsToolbar.setVisible(cbShowShortcutsToolbar.isSelected());
+        BEViewer.toolbar.setVisible(cbShowToolbar.isSelected());
       }
     });
-    // wire listener to know when the shortcuts toolbar is visible
-    BEViewer.shortcutsToolbar.addShortcutsToolbarChangedListener(new Observer() {
+    // wire listener to know when the toolbar is visible
+    BEViewer.toolbar.addToolbarChangedListener(new Observer() {
       public void update(Observable o, Object arg) {
-        cbShowShortcutsToolbar.setSelected(BEViewer.shortcutsToolbar.isVisible());
-      }
-    });
-
-    // view|Toolbars|Highlight Toolbar
-    cbShowHighlightToolbar = new JCheckBoxMenuItem("Highlight Toolbar");
-    cbShowHighlightToolbar.setSelected(true);
-    toolbarMenu.add(cbShowHighlightToolbar);
-    cbShowHighlightToolbar.addActionListener(new ActionListener() {
-      public void actionPerformed (ActionEvent e) {
-        BEViewer.highlightToolbar.setVisible(cbShowHighlightToolbar.isSelected());
-      }
-    });
-    // wire listener to know when the highlight toolbar is visible
-    BEViewer.highlightToolbar.addHighlightToolbarChangedListener(new Observer() {
-      public void update(Observable o, Object arg) {
-        cbShowHighlightToolbar.setSelected(BEViewer.highlightToolbar.isVisible());
+        cbShowToolbar.setSelected(BEViewer.toolbar.isVisible());
       }
     });
 
@@ -346,6 +325,7 @@ public class BEMenus extends JMenuBar {
         BEViewer.featuresModel.setUseHexPath(false);
         BEViewer.referencedFeaturesModel.setUseHexPath(false);
         BEViewer.imageView.setUseHexPath(false);
+        WBookmarks.redrawList();
       }
     });
 
@@ -358,6 +338,7 @@ public class BEMenus extends JMenuBar {
         BEViewer.featuresModel.setUseHexPath(true);
         BEViewer.referencedFeaturesModel.setUseHexPath(true);
         BEViewer.imageView.setUseHexPath(true);
+        WBookmarks.redrawList();
       }
     });
     

@@ -190,18 +190,19 @@ public class FeatureLine {
    * Returns a printable summary string of this feature line.
    */
   public String getSummaryString() {
-    // compose the summary
+    // compose a printable summary that fits on one line
     String summary;
     if (actualImageFile == null) {
       if (featuresFile == null) {
         // this string is returned by the FeatureListCellRenderer as the prototype display value
-        return "no features file";
+        return "no image file and no features file";
       } else {
         // indicate what is available
         summary = "No image file selected, " + firstField + ", " + formattedFeature;
       }
     } else {
-      summary = reportImageFile.getName() + ", " + actualImageFile.getName() + ", " + firstField + ", " + formattedFeature;
+//      summary = reportImageFile.getName() + ", " + actualImageFile.getName() + ", " + firstField + ", " + formattedFeature;
+      summary = ForensicPath.getPrintablePath(forensicPath, BEViewer.imageView.getUseHexPath()) + ", " + featuresFile.getName() +", " + actualImageFile.getName() + ", " + formattedFeature;
     }
 
     // truncate the sumamry

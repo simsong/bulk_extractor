@@ -110,6 +110,11 @@ public final class NavigationPane extends Container {
             ImageModel.ImagePage imagePage = BEViewer.imageView.getImagePage();
             featurePathLabel.setComponentText(ForensicPath.getPrintablePath(imagePage.featureLine.forensicPath, BEViewer.imageView.getUseHexPath()));
           }
+
+          // also redraw the navigationComboBox 
+          // NOTE: this is a raw harsh approach
+          navigationComboBox.updateUI();
+
         } else {
           // no action for other change types
         }
@@ -314,16 +319,22 @@ public final class NavigationPane extends Container {
     deleteB.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
         FeatureLine featureLine = (FeatureLine)BEViewer.featureNavigationComboBoxModel.getSelectedItem();
+WLog.log("NP.fl: " + featureLine);
 
         // the button should be disabled when there is no selected feature line
+        // but it is not
         if (featureLine == null) {
-          throw new NullPointerException();
+          WLog.log("NavigationPane null selection on delete button");
+          return;
         }
 
         // the selection should match the selection manager
         if (!featureLine.equals(BEViewer.featureLineSelectionManager.getFeatureLineSelection())) {
           throw new RuntimeException("invalid state");
         }
+
+// clear the feature line selection
+BEViewer.featureLineSelectionManager.setFeatureLineSelection(new FeatureLine());
 
         // remove the current selection
         // NOTE: setSelectedItem fires clearing the selection in featureLineSelectionManager

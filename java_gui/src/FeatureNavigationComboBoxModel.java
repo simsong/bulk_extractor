@@ -43,7 +43,7 @@ public class FeatureNavigationComboBoxModel extends DefaultComboBoxModel {
 @SuppressWarnings("unchecked") // hacked until we don't require javac6
   public void selectFeature(FeatureLine featureLine) {
     // if null, select null
-    if (featureLine == null) {
+    if (featureLine == null || featureLine.isBlank()) {
       doSelect(null);
       return;
     }
