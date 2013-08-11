@@ -16,12 +16,11 @@ $(srcdir)/src/BasicFeaturesUI.java \
 $(srcdir)/src/BasicImageUI.java \
 $(srcdir)/src/BEViewer.java \
 $(srcdir)/src/BEArgsParser.java \
-$(srcdir)/src/BEHighlightToolbar.java \
 $(srcdir)/src/BEIcons.java \
 $(srcdir)/src/BEMenus.java \
 $(srcdir)/src/BEPreferences.java \
-$(srcdir)/src/BEShortcutsToolbar.java \
 $(srcdir)/src/BETests.java \
+$(srcdir)/src/BEToolbar.java \
 $(srcdir)/src/ClassificationLabel.java \
 $(srcdir)/src/ClassificationManager.java \
 $(srcdir)/src/Config.java \
