@@ -164,12 +164,15 @@ public class BEToolbar extends JToolBar {
       }
     });
 
+/*
+zzzzzzzzz fix
     // wire listener to manage when bookmarks are available for export
     BEViewer.featureBookmarksModel.addBookmarksModelChangedListener(new Observer() {
       public void update(Observable o, Object arg) {
         exportB.setEnabled(BEViewer.featureBookmarksModel.size() > 0);
       }
     });
+*/
     add(exportB);
 
     // print selected Feature

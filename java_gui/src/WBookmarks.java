@@ -36,7 +36,8 @@ public class WBookmarks extends JDialog {
 
   private static WBookmarks wBookmarks;
 //  private static JList<FeatureLine> bookmarkL = new JList<FeatureLine>();
-  private static JList bookmarkL = new JList();
+  // this works because bookmarksComboBoxModel superclasses ListModel
+  private static JList bookmarkL = new JList(BEViewer.bookmarksModel.bookmarksComboBoxModel);
   private static JTextField filenameTF = new JTextField();
   private static JButton fileChooserB = new FileChooserButton(BEViewer.getBEWindow(), "Export Bookmarks File As", FileChooserButton.WRITE_FILE, filenameTF);
 //  private static JComboBox<String> fileFormatComboBox = new JComboBox<String>();
@@ -267,29 +268,25 @@ public class WBookmarks extends JDialog {
   }
 
   private void setExportBEnabledState() {
-    exportB.setEnabled(BEViewer.featureBookmarksModel.size() > 0 && !filenameTF.getText().equals(""));
+    exportB.setEnabled(!BEViewer.bookmarksModel.isEmpty() && !filenameTF.getText().equals(""));
   }
 
-@SuppressWarnings("unchecked") // hacked until we don't require javac6
+//zz@SuppressWarnings("unchecked") // hacked until we don't require javac6
   private void setUIValues() {
     // bookmarkL selection mode and list model
     bookmarkL.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    bookmarkL.setModel(BEViewer.featureBookmarksModel.getListModel());
     bookmarkL.setCellRenderer(new FeatureListCellRenderer());
 
     // enabled states for buttons
-    clearB.setEnabled(BEViewer.featureBookmarksModel.size() > 0);
+    clearB.setEnabled(!BEViewer.bookmarksModel.isEmpty());
     deleteB.setEnabled(false);
     navigateB.setEnabled(false);
     setExportBEnabledState();
   }
 
-  public static void redrawList() {
-    bookmarkL.updateUI();
-  }
-
   private void wireActions() {
-    // bookmarkL selection change changes deleteB and navigateB enabled state
+    // listen to bookmarks JList selection because selection state
+    // changes deleteB and navigateB enabled state
     bookmarkL.addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
         if (e.getValueIsAdjusting() == false) {
@@ -299,10 +296,19 @@ public class WBookmarks extends JDialog {
       }
     });
 
-    // bookmark model being empty disables clearB and exportB
-    BEViewer.featureBookmarksModel.addBookmarksModelChangedListener(new Observer() {
-      public void update(Observable o, Object arg) {
-        clearB.setEnabled(BEViewer.featureBookmarksModel.size() > 0);
+    // listen to bookmarks list because being empty disables clearB and exportB
+    BEViewer.bookmarksModel.bookmarksComboBoxModel.addListDataListener(new ListDataListener() {
+      public void contentsChanged(ListDataEvent e) {
+        doAction();
+      }
+      public void intervalAdded(ListDataEvent e) {
+        doAction();
+      }
+      public void intervalRemoved(ListDataEvent e) {
+        doAction();
+      }
+      private void doAction() {
+        clearB.setEnabled(!BEViewer.bookmarksModel.isEmpty());
         setExportBEnabledState();
       }
     });
@@ -310,14 +316,14 @@ public class WBookmarks extends JDialog {
     // clicking clearB deletes all bookmark entries
     clearB.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        BEViewer.featureBookmarksModel.removeAllBookmarks();
+        BEViewer.bookmarksModel.clear();
       }
     });
 
     // clicking deleteB deletes the bookmark entry selected in bookmarkL
     deleteB.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        BEViewer.featureBookmarksModel.removeBookmark((FeatureLine)bookmarkL.getSelectedValue());
+        BEViewer.bookmarksModel.removeElement((FeatureLine)bookmarkL.getSelectedValue());
       }
     });
 
@@ -447,13 +453,10 @@ public class WBookmarks extends JDialog {
       bookmarkImageView.setUseHexPath(BEViewer.imageView.getUseHexPath());
       bookmarkImageView.setLineFormat(BEViewer.imageView.getLineFormat());
 
-      // go through each bookmark, writing the content of its associated FeatureLine
-// NOTE: this recommended syntax is not permitted because DefaultListModel does not allow anything but Object
-//    Enumeration<FeatureLine> bookmarks = BEViewer.featureBookmarksModel.getListModel().elements();
-      Enumeration<?> bookmarks = BEViewer.featureBookmarksModel.getListModel().elements();
-      while (bookmarks.hasMoreElements()) {
-        FeatureLine featureLine = (FeatureLine)bookmarks.nextElement();
-        exportText(bookmarkTextWriter, featureLine);
+      // fill the bookmark elements from the array of bookmarks
+      FeatureLine[] featureLines = BEViewer.bookmarksModel.getBookmarks();
+        for (int i=0; i<featureLines.length; i++) {
+        exportText(bookmarkTextWriter, featureLines[i]);
       }
 
       // close the output writer
@@ -538,10 +541,9 @@ public class WBookmarks extends JDialog {
         bookmarkImageView.setLineFormat(BEViewer.imageView.getLineFormat());
 
         // fill the bookmark elements from the array of bookmarks
-        Enumeration<?> bookmarks = BEViewer.featureBookmarksModel.getListModel().elements();
-        while (bookmarks.hasMoreElements()) {
-          FeatureLine featureLine = (FeatureLine)bookmarks.nextElement();
-          exportDFXML(doc, root, featureLine);
+        FeatureLine[] featureLines = BEViewer.bookmarksModel.getBookmarks();
+        for (int i=0; i<featureLines.length; i++) {
+          exportDFXML(doc, root, featureLines[i]);
         }
 
         // create transformer for converting DOM doc source to XML-formatted StreamResult object

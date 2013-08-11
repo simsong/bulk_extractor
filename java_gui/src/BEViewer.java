@@ -37,16 +37,17 @@ public class BEViewer {
                            reportSelectionManager, FeaturesModel.ModelType.FEATURES_OR_HISTOGRAM);
   public static final FeaturesModel referencedFeaturesModel = new FeaturesModel(
                            reportSelectionManager, FeaturesModel.ModelType.REFERENCED_FEATURES);
-  public static final FeatureBookmarksModel featureBookmarksModel
-                    = new FeatureBookmarksModel();
+//zz  public static final FeatureBookmarksModel featureBookmarksModel
+//                    = new FeatureBookmarksModel();
+  public static final BookmarksModel bookmarksModel = new BookmarksModel();
   public static final FeatureLineSelectionManager featureLineSelectionManager
                     = new FeatureLineSelectionManager();
   public static final ImageModel imageModel = new ImageModel(featureLineSelectionManager);
   public static final UserHighlightModel userHighlightModel = new UserHighlightModel();
   public static final ImageView imageView = new ImageView(imageModel, userHighlightModel);
   public static final RangeSelectionManager rangeSelectionManager = new RangeSelectionManager();
-  public static final FeatureNavigationComboBoxModel featureNavigationComboBoxModel
-                    = new FeatureNavigationComboBoxModel(featureLineSelectionManager);
+//zz  public static final FeatureComboBoxModel featureComboBoxModel
+//zz                    = new FeatureComboBoxModel(featureLineSelectionManager);
   public static final ClassificationManager classificationManager = new ClassificationManager();
 
   // toolbar
@@ -171,11 +172,11 @@ public class BEViewer {
     // which will set the features models and views to null
     reportsModel.remove(reportTreeNode);
 
-    // clear features in this report from the navigation history
-    featureNavigationComboBoxModel.removeAssociatedFeatures(reportTreeNode);
+//zz    // clear features in this report from the bookmark list
+//zz    featureComboBoxModel.removeAssociatedFeatures(reportTreeNode);
 
-    // clear features in Bookmarks that are associated with this report
-    featureBookmarksModel.removeAssociatedBookmarks(reportTreeNode);
+    // clear features in vector that are associated with this report
+    bookmarksModel.removeAssociatedFeatureLines(reportTreeNode);
 
     // close the associated opened image readers
     imageModel.closeImageReader(reportTreeNode.reportImageFile);
@@ -185,11 +186,9 @@ public class BEViewer {
    * Close all Reports.
    */
   public static void closeAllReports() {
-    // clear the navigation history
-    featureNavigationComboBoxModel.removeAllFeatures();
 
-    // clear the Bookmark list
-    featureBookmarksModel.removeAllBookmarks();
+    // clear all bookmarks
+    bookmarksModel.clear();
 
     // close all Reports in the reports model
     reportsModel.clear();

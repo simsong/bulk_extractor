@@ -155,11 +155,11 @@ public class BEMenus extends JMenuBar {
     });
 
     // wire listener to manage when bookmarks are available for export
-    BEViewer.featureBookmarksModel.addBookmarksModelChangedListener(new Observer() {
-      public void update(Observable o, Object arg) {
-        miBookmark.setEnabled(BEViewer.featureBookmarksModel.size() > 0);
-      }
-    });
+//zz figure this out    BEViewer.featureBookmarksModel.addBookmarksModelChangedListener(new Observer() {
+//zz      public void update(Observable o, Object arg) {
+//zz        miBookmark.setEnabled(BEViewer.featureBookmarksModel.size() > 0);
+//zz      }
+//    });
 
     // file|<separator>
     file.addSeparator();
@@ -241,12 +241,14 @@ public class BEMenus extends JMenuBar {
     // edit|<separator>
     edit.addSeparator();
 
-    // edit|clear navigation history
-    mi = new JMenuItem("Clear Navigation History");
+    // edit|clear all bookmarks
+    mi = new JMenuItem("Clear Bookmarks");
     edit.add(mi);
     mi.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
-        BEViewer.featureNavigationComboBoxModel.removeAllFeatures();
+        BEViewer.bookmarksModel.clear();
+//zz yes?
+        BEViewer.bookmarksModel.setSelectedItem(new FeatureLine());
       }
     });
 
@@ -325,7 +327,7 @@ public class BEMenus extends JMenuBar {
         BEViewer.featuresModel.setUseHexPath(false);
         BEViewer.referencedFeaturesModel.setUseHexPath(false);
         BEViewer.imageView.setUseHexPath(false);
-        WBookmarks.redrawList();
+        BEViewer.bookmarksModel.fireViewChanged();
       }
     });
 
@@ -338,7 +340,7 @@ public class BEMenus extends JMenuBar {
         BEViewer.featuresModel.setUseHexPath(true);
         BEViewer.referencedFeaturesModel.setUseHexPath(true);
         BEViewer.imageView.setUseHexPath(true);
-        WBookmarks.redrawList();
+        BEViewer.bookmarksModel.fireViewChanged();
       }
     });
     
@@ -577,8 +579,7 @@ public class BEMenus extends JMenuBar {
         // get the currently selected feature line
         FeatureLine featureLine = BEViewer.featureLineSelectionManager.getFeatureLineSelection();
 WLog.log("BEM.fl: " + featureLine);
-        File featureFile = featureLine.featuresFile;
-        if (featureFile == null || featureLine.featuresFile == null) {
+        if (featureLine.featuresFile == null) {
           WError.showError("A Feature must be selected before viewing the Report file.", 
                            "BEViewer Selected Feature error", null);
         } else {

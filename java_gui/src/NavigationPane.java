@@ -25,8 +25,8 @@ public final class NavigationPane extends Container {
   private static final long serialVersionUID = 1;
   private JButton bookmarkB;
   private JButton deleteB;
-//  private JComboBox<FeatureLine> navigationComboBox;
-  private JComboBox navigationComboBox;
+//  private JComboBox<FeatureLine> bookmarksComboBox;
+  private JComboBox bookmarksComboBox;
   private FileComponent imageFileLabel;
   private FileComponent featuresFileLabel;
   private TextComponent featurePathLabel;
@@ -62,7 +62,7 @@ public final class NavigationPane extends Container {
         final FeatureLine featureLine = BEViewer.featureLineSelectionManager.getFeatureLineSelection();
 
         // set navigation text and button state based on the FeatureLine
-        if (featureLine != null && !ForensicPath.isHistogram(featureLine.firstField)) {
+        if (!featureLine.isBlank() && !ForensicPath.isHistogram(featureLine.firstField)) {
  
           // set navigation fields
           imageFileLabel.setFile(featureLine.actualImageFile);
@@ -111,9 +111,9 @@ public final class NavigationPane extends Container {
             featurePathLabel.setComponentText(ForensicPath.getPrintablePath(imagePage.featureLine.forensicPath, BEViewer.imageView.getUseHexPath()));
           }
 
-          // also redraw the navigationComboBox 
-          // NOTE: this is a raw harsh approach
-          navigationComboBox.updateUI();
+//zzfixed          // also redraw the bookmarksComboBox 
+//zzfixed          // NOTE: this is a raw harsh approach
+//zzfixed          bookmarksComboBox.updateUI();
 
         } else {
           // no action for other change types
@@ -248,9 +248,9 @@ public final class NavigationPane extends Container {
 
     // code moved here because of suppress warnings unchecked failure,
     // see NOTE, below.
-    navigationComboBox = new JComboBox(BEViewer.featureNavigationComboBoxModel);
-    navigationComboBox.setRenderer(new FeatureListCellRenderer());
-    navigationComboBox.setPrototypeDisplayValue(new FeatureLine());
+    bookmarksComboBox = new JComboBox(BEViewer.bookmarksModel.bookmarksComboBoxModel);
+    bookmarksComboBox.setRenderer(new FeatureListCellRenderer());
+    bookmarksComboBox.setPrototypeDisplayValue(new FeatureLine());
 
     // (0,0) JButton <bookmark>
     c = new GridBagConstraints();
@@ -275,8 +275,8 @@ public final class NavigationPane extends Container {
     // clicking the bookmark button adds this feature entry to the bookmark list
     bookmarkB.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
-        BEViewer.featureBookmarksModel.addBookmark(
-                   BEViewer.featureLineSelectionManager.getFeatureLineSelection());
+        BEViewer.bookmarksModel.addElement(
+               BEViewer.featureLineSelectionManager.getFeatureLineSelection());
       }
     });
 
@@ -315,17 +315,18 @@ public final class NavigationPane extends Container {
     // add the delete button
     container.add(deleteB, c);
 
-    // clicking the delete button removes the feature from the feature list
+    // clicking the delete button removes the feature from the bookmarks list
     deleteB.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
-        FeatureLine featureLine = (FeatureLine)BEViewer.featureNavigationComboBoxModel.getSelectedItem();
+//zz
+        FeatureLine featureLine = (FeatureLine)BEViewer.bookmarksModel.getSelectedItem();
 WLog.log("NP.fl: " + featureLine);
 
         // the button should be disabled when there is no selected feature line
         // but it is not
         if (featureLine == null) {
           WLog.log("NavigationPane null selection on delete button");
-          return;
+          throw new RuntimeException("invalid button");
         }
 
         // the selection should match the selection manager
@@ -333,13 +334,14 @@ WLog.log("NP.fl: " + featureLine);
           throw new RuntimeException("invalid state");
         }
 
-// clear the feature line selection
-BEViewer.featureLineSelectionManager.setFeatureLineSelection(new FeatureLine());
+//zz null, below, should do
+//// clear the feature line selection
+//BEViewer.featureLineSelectionManager.setFeatureLineSelection(new FeatureLine());
 
         // remove the current selection
         // NOTE: setSelectedItem fires clearing the selection in featureLineSelectionManager
-        BEViewer.featureNavigationComboBoxModel.setSelectedItem(null);
-        BEViewer.featureNavigationComboBoxModel.removeElement(featureLine);
+        BEViewer.bookmarksModel.setSelectedItem(new FeatureLine());
+        BEViewer.bookmarksModel.removeElement(featureLine);
       }
     });
 
@@ -351,17 +353,17 @@ BEViewer.featureLineSelectionManager.setFeatureLineSelection(new FeatureLine());
     c.weightx = 1;
     c.fill = GridBagConstraints.HORIZONTAL;
 
-//    navigationComboBox = new JComboBox<FeatureLine>(BEViewer.featureNavigationComboBoxModel);
-// moved, see NOTE    navigationComboBox = new JComboBox(BEViewer.featureNavigationComboBoxModel);
-    navigationComboBox.setFocusable(false);
-//    navigationComboBox.requestFocusInWindow();  // as a user convenience, focus this item first.
-// moved, see NOTE    navigationComboBox.setRenderer(new FeatureListCellRenderer());
+//    bookmarksComboBox = new JComboBox<FeatureLine>(BEViewer.featureLineVector);
+// moved, see NOTE    bookmarksComboBox = new JComboBox(BEViewer.featureLineVector);
+    bookmarksComboBox.setFocusable(false);
+//    bookmarksComboBox.requestFocusInWindow();  // as a user convenience, focus this item first.
+// moved, see NOTE    bookmarksComboBox.setRenderer(new FeatureListCellRenderer());
 
     // set the prototype value so Swing knows the height of JComboBox when it is empty
-// moved, see NOTE    navigationComboBox.setPrototypeDisplayValue(new FeatureLine());
+// moved, see NOTE    bookmarksComboBox.setPrototypeDisplayValue(new FeatureLine());
 
-    navigationComboBox.setMaximumRowCount(16);
-    navigationComboBox.addActionListener(new ActionListener() {
+    bookmarksComboBox.setMaximumRowCount(16);
+    bookmarksComboBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         // The feature line selection manager changes the combo box selection.
         // The combo box selection changes the feature line selection manager
@@ -369,19 +371,20 @@ BEViewer.featureLineSelectionManager.setFeatureLineSelection(new FeatureLine());
         // So: no event loop.
 
         // determine equivalency, allowing null
-        FeatureLine featureLine = (FeatureLine)navigationComboBox.getSelectedItem();
+        FeatureLine featureLine = (FeatureLine)bookmarksComboBox.getSelectedItem();
 
         // JComboBox can return null so compensate
         if (featureLine == null) {
-          featureLine = new FeatureLine();
+throw new RuntimeException("okay");
+//zz          featureLine = new FeatureLine();
         }
 
         BEViewer.featureLineSelectionManager.setFeatureLineSelection(featureLine);
       }
     });
-    navigationComboBox.setToolTipText("Navigate to this Feature");
+    bookmarksComboBox.setToolTipText("Navigate to this Feature");
 
-    container.add(navigationComboBox, c);
+    container.add(bookmarksComboBox, c);
 
     return container;
   }

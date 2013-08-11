@@ -4,12 +4,12 @@ import java.util.Observer;
 import java.io.File;
 
 /**
- * The <code>FeatureNavigationComboBoxModel</code> class extends <code>DefaultComboBoxModel</code>
+ * The <code>FeatureComboBoxModel</code> class extends <code>DefaultComboBoxModel</code>
  * to provide a list of selectable features for a ComboBox.
  * It is supplied with features as feature selections are made.
  */
-//public class FeatureNavigationComboBoxModel extends DefaultComboBoxModel<FeatureLine> {
-public class FeatureNavigationComboBoxModel extends DefaultComboBoxModel {
+//public class FeatureComboBoxModel extends DefaultComboBoxModel<FeatureLine> {
+public class FeatureComboBoxModel extends DefaultComboBoxModel {
   private final FeatureLineSelectionManager featureLineSelectionManager;
   private static final long serialVersionUID = 0;
 
@@ -18,7 +18,7 @@ public class FeatureNavigationComboBoxModel extends DefaultComboBoxModel {
    * from the image model as selections are made.
    * The feature list may be removed via <code>super.removeAllElements()</code>.
    */
-  public FeatureNavigationComboBoxModel(FeatureLineSelectionManager featureLineSelectionManager) {
+  public FeatureComboBoxModel(FeatureLineSelectionManager featureLineSelectionManager) {
     this.featureLineSelectionManager = featureLineSelectionManager;
     featureLineSelectionManager.addFeatureLineSelectionManagerChangedListener(new FeatureLineSelectionManagerChangedListener());
   }
@@ -30,7 +30,7 @@ public class FeatureNavigationComboBoxModel extends DefaultComboBoxModel {
       FeatureLine featureLine = featureLineSelectionManager.getFeatureLineSelection();
       // feature lines are navigable if they have a valid path
       // but not if they have a histogram field
-      if (featureLine != null
+      if (!featureLine.isBlank()
        && !ForensicPath.isHistogram(featureLine.forensicPath)) {
         selectFeature(featureLine);
       }
@@ -42,8 +42,8 @@ public class FeatureNavigationComboBoxModel extends DefaultComboBoxModel {
    */
 @SuppressWarnings("unchecked") // hacked until we don't require javac6
   public void selectFeature(FeatureLine featureLine) {
-    // if null, select null
-    if (featureLine == null || featureLine.isBlank()) {
+    // if blank then select null
+    if (featureLine.isBlank()) {
       doSelect(null);
       return;
     }
@@ -71,14 +71,14 @@ public class FeatureNavigationComboBoxModel extends DefaultComboBoxModel {
   }
 
   /**
-   * Clear the navigation history.
+   * Clear the feature history.
    */
   public void removeAllFeatures() {
     removeAllElements();
   }
 
   /**
-   * Clear the navigation history of features associated with the given Report.
+   * Clear the feature history of features associated with the given Report.
    */
   public void removeAssociatedFeatures(ReportsModel.ReportTreeNode reportTreeNode) {
 

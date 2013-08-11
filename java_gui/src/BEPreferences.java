@@ -209,7 +209,7 @@ public class BEPreferences {
         FeatureLine featureLine = new FeatureLine(reportImageFile, featuresFile, startByte, numBytes);
 
         // load the saved feature line bookmark into the Feature bookmarks model
-        BEViewer.featureBookmarksModel.addBookmark(featureLine);
+        BEViewer.bookmarksModel.addElement(featureLine);
       } catch (Exception e) {
         WError.showError("Unable to restore feature from saved preferences:"
                          + "\nImage file: " + reportImageFileString
@@ -302,12 +302,12 @@ public class BEPreferences {
     bookmarksPreferences.clear();
 
     // get number of bookmarks to save
-    int size = BEViewer.featureBookmarksModel.size();
+    int size = BEViewer.bookmarksModel.size();
 
     // save the bookmarks
     for (int i=0; i<size; i++) {
       // generate the preferences variable names
-      FeatureLine featureLine = BEViewer.featureBookmarksModel.get(i);
+      FeatureLine featureLine = BEViewer.bookmarksModel.get(i);
       String reportImageFileString = FileTools.getAbsolutePath(featureLine.reportImageFile);
       String featuresFileString = FileTools.getAbsolutePath(featureLine.featuresFile);
       long startByte = featureLine.startByte;
@@ -365,12 +365,11 @@ public class BEPreferences {
       }
 
       // fill the bookmark elements
-      // get the array of bookmarks to create
-      int numBookmarks = BEViewer.featureBookmarksModel.size();
+      int numBookmarks = BEViewer.bookmarksModel.size();
       for (int i=0; i<numBookmarks; i++) {
 
         // get the requisite bookmark attributes
-        FeatureLine featureLine = BEViewer.featureBookmarksModel.get(i);
+        FeatureLine featureLine = BEViewer.bookmarksModel.get(i);
         String reportImageFileString = FileTools.getAbsolutePath(featureLine.reportImageFile);
         String featuresFileString = FileTools.getAbsolutePath(featureLine.featuresFile);
         String startByteString = Long.toString(featureLine.startByte);
@@ -473,7 +472,7 @@ public class BEPreferences {
           FeatureLine featureLine = new FeatureLine(reportImageFile, featuresFile, startByte, numBytes);
 
           // load the saved feature line bookmark into the Feature bookmarks model
-          BEViewer.featureBookmarksModel.addBookmark(featureLine);
+          BEViewer.bookmarksModel.addElement(featureLine);
         } catch (Exception e) {
           WError.showError("Unable to restore work settings feature:"
                            + "\nReport Image file: " + reportImageFile

@@ -18,9 +18,6 @@ public class FeatureLineSelectionManager {
    * Sets the selected FeatureLine.
    */
   public void setFeatureLineSelection(FeatureLine featureLine) {
-    if (featureLine == null) {
-      throw new RuntimeException("unexpected null featureLine");
-    }
     // do nothing if the feature line is already selected
     if (!featureLine.equals(this.featureLine)) {
       this.featureLine = featureLine;

@@ -55,10 +55,7 @@ public class FeatureBookmarksModel {
    * Removes a FeatureLine from the bookmarks list.
    */
   public void removeBookmark(FeatureLine featureLine) {
-    // remove the feature line if it is not already there
-    if (featureLine != null && !defaultListModel.contains(featureLine)) {
-      throw new IllegalArgumentException("Invalid request");
-    }
+    // remove the feature line
     defaultListModel.removeElement(featureLine);
     bookmarksModelChangedNotifier.fireModelChanged(null);
   }

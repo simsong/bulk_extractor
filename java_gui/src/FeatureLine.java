@@ -224,11 +224,7 @@ public class FeatureLine {
    * Returns a printable summary string of the given feature line.
    */
   public static String getSummaryString(FeatureLine featureLine) {
-    if (featureLine == null) {
-      return "No Image file and no Feature selected.";
-    } else {
-      return featureLine.getSummaryString();
-    }
+    return featureLine.getSummaryString();
   }
 
   /**
@@ -269,8 +265,7 @@ public class FeatureLine {
    * @return true when equivalent
    */
   public boolean equals(FeatureLine featureLine) {
-    return (featureLine != null
-            && FileTools.filesAreEqual(reportImageFile, featureLine.reportImageFile)
+    return (FileTools.filesAreEqual(reportImageFile, featureLine.reportImageFile)
             && FileTools.filesAreEqual(featuresFile, featureLine.featuresFile)
             && startByte == featureLine.startByte
             && numBytes == featureLine.numBytes);
