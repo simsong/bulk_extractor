@@ -17,12 +17,10 @@ public class BookmarksModel {
     }
   }
 
-//  public DefaultListModel defaultListModel = new DefaultListModel();
-  public BookmarksComboBoxModel bookmarksComboBoxModel = new BookmarksComboBoxModel();
+  public final BookmarksComboBoxModel bookmarksComboBoxModel = new BookmarksComboBoxModel();
 
 @SuppressWarnings("unchecked") // hacked until we don't require javac6
   public void addElement(FeatureLine featureLine) {
-//    defaultListModel.addElement((Object)featureLine);
     bookmarksComboBoxModel.addElement((Object)featureLine);
   }
   public FeatureLine get(int i) {
@@ -35,15 +33,24 @@ public class BookmarksModel {
     return (bookmarksComboBoxModel.getSize() == 0);
   }
   public boolean contains(FeatureLine featureLine) {
+    boolean hasFeatureLine = false;
+    int size = bookmarksComboBoxModel.getSize();
+WLog.log("BM.contains: " + bookmarksComboBoxModel.getIndexOf((Object)featureLine));
+    for (int i=0; i<size; i++) {
+      if (featureLine.equals((FeatureLine)bookmarksComboBoxModel.getElementAt(i))) {
+        hasFeatureLine = true;
+        break;
+      }
+    }
+
+
+    // this fails because it checks sameness, not object equality
     return (bookmarksComboBoxModel.getIndexOf((Object)featureLine) >= 0);
-//    return bookmarksComboBoxModel.contains((Object)featureLine);
   }
   public void removeElement(FeatureLine featureLine) {
-//    defaultListModel.removeElement((Object)featureLine);
     bookmarksComboBoxModel.removeElement((Object)featureLine);
   }
   public void clear() {
-//    defaultListModel.clear();
     bookmarksComboBoxModel.removeAllElements();
   }
   public FeatureLine[] getBookmarks() {

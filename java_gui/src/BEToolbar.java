@@ -14,6 +14,8 @@ import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.DocumentEvent;
+import javax.swing.event.ListDataListener;
+import javax.swing.event.ListDataEvent;
 
 public class BEToolbar extends JToolBar {
 
@@ -21,12 +23,13 @@ public class BEToolbar extends JToolBar {
 //  private final JButton closeToolbarB = new JButton(BEIcons.CLOSE_24);
   private final JButton closeToolbarB = new JButton(BEIcons.CLOSE_16);
 
-  // shortcuts
+  // shortcut button controls
   private final JButton openReportB = new JButton(BEIcons.OPEN_REPORT_24);
   private final JButton runB = new JButton(BEIcons.RUN_BULK_EXTRACTOR_24);
   private final JButton copyB = new JButton(BEIcons.COPY_24);
-  private final JButton exportB = new JButton(BEIcons.EXPORT_BOOKMARKS_24);
   private final JButton printB = new JButton(BEIcons.PRINT_FEATURE_24);
+  private final JButton addBookmarkB = new JButton(BEIcons.ADD_BOOKMARK_24);
+  private final JButton manageBookmarksB = new JButton(BEIcons.MANAGE_BOOKMARKS_24);
 
   // highlight
   private final JTextField highlightTF = new JTextField();
@@ -57,7 +60,7 @@ public class BEToolbar extends JToolBar {
     closeToolbarB.setFocusable(false);
     closeToolbarB.setOpaque(false);
     closeToolbarB.setBorderPainted(false);
-    closeToolbarB.setToolTipText("Close toolbar");
+    closeToolbarB.setToolTipText("Close this toolbar");
     closeToolbarB.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
         setVisible(false);
@@ -65,23 +68,17 @@ public class BEToolbar extends JToolBar {
     });
     add(closeToolbarB);
 
-    // separator
-    addSeparator(new Dimension(30, 0));
+//    // separator
+    addSeparator(new Dimension(20, 0));
 
     // shortcuts
     addShortcutsControl();
 
     // separator
-    addSeparator(new Dimension(30, 0));
+    addSeparator(new Dimension(20, 0));
 
     // highlight control
     addHighlightControl();
-
-    // separator
-    addSeparator(new Dimension(30, 0));
-
-    // bookmark control
-//    addBookmarkControl();
   }
 
   /**
@@ -109,7 +106,7 @@ public class BEToolbar extends JToolBar {
     openReportB.setFocusable(false);
     openReportB.setOpaque(false);
     openReportB.setBorderPainted(false);
-    openReportB.setToolTipText("Open a Report for browsing");
+    openReportB.setToolTipText("Open a report for browsing");
     openReportB.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
         WOpen.openWindow();
@@ -121,7 +118,7 @@ public class BEToolbar extends JToolBar {
     runB.setFocusable(false);
     runB.setOpaque(false);
     runB.setBorderPainted(false);
-    runB.setToolTipText("Generate a Report using bulk_extractor");
+    runB.setToolTipText("Generate a report using bulk_extractor");
     runB.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
         WScan.openWindow();
@@ -129,14 +126,11 @@ public class BEToolbar extends JToolBar {
     });
     add(runB);
 
-    // separator
-    add(Box.createRigidArea(new Dimension(BEViewer.GUI_X_PADDING, 0)));
-
     // Copy
     copyB.setFocusable(false);
     copyB.setOpaque(false);
     copyB.setBorderPainted(false);
-    copyB.setToolTipText("Copy Feature or Image selection to the System Clipboard");
+    copyB.setToolTipText("Copy feature or image selection to the System Clipboard");
     copyB.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
         RangeSelectionManager.setSystemClipboard(BEViewer.rangeSelectionManager.getSelection());
@@ -151,29 +145,6 @@ public class BEToolbar extends JToolBar {
       }
     });
     add(copyB);
-
-    // export bookmarks
-    exportB.setFocusable(false);
-    exportB.setOpaque(false);
-    exportB.setBorderPainted(false);
-    exportB.setEnabled(false);
-    exportB.setToolTipText("Export bookmarks");
-    exportB.addActionListener(new ActionListener() {
-      public void actionPerformed (ActionEvent e) {
-        WBookmarks.openWindow();
-      }
-    });
-
-/*
-zzzzzzzzz fix
-    // wire listener to manage when bookmarks are available for export
-    BEViewer.featureBookmarksModel.addBookmarksModelChangedListener(new Observer() {
-      public void update(Observable o, Object arg) {
-        exportB.setEnabled(BEViewer.featureBookmarksModel.size() > 0);
-      }
-    });
-*/
-    add(exportB);
 
     // print selected Feature
     printB.setFocusable(false);
@@ -193,6 +164,68 @@ zzzzzzzzz fix
       }
     });
     add(printB);
+
+    // add bookmark
+    addBookmarkB.setFocusable(false);
+    addBookmarkB.setOpaque(false);
+    addBookmarkB.setBorderPainted(false);
+    addBookmarkB.setEnabled(false);
+    addBookmarkB.setToolTipText("Bookmark the selected feature");
+    addBookmarkB.addActionListener(new ActionListener() {
+      public void actionPerformed (ActionEvent e) {
+        FeatureLine selectedFeatureLine = BEViewer.featureLineSelectionManager.getFeatureLineSelection();
+        BEViewer.bookmarksModel.addElement(selectedFeatureLine);
+      }
+    });
+    // wire listener to manage when a feature line is selected
+    // and is available to be added
+    BEViewer.featureLineSelectionManager.addFeatureLineSelectionManagerChangedListener(new Observer() {
+      public void update(Observable o, Object arg) {
+        // not blank and not already present
+        FeatureLine selectedFeatureLine = BEViewer.featureLineSelectionManager.getFeatureLineSelection();
+WLog.log("BEToolbar selected: " + selectedFeatureLine + ", " + !BEViewer.bookmarksModel.contains(selectedFeatureLine));
+        boolean isSelectable = (!selectedFeatureLine.isBlank()
+                   && !BEViewer.bookmarksModel.contains(selectedFeatureLine));
+        addBookmarkB.setEnabled(isSelectable);
+      }
+    });
+    add(addBookmarkB);
+
+    // manage bookmarks
+    manageBookmarksB.setFocusable(false);
+    manageBookmarksB.setOpaque(false);
+    manageBookmarksB.setBorderPainted(false);
+    manageBookmarksB.setEnabled(false);
+    manageBookmarksB.setToolTipText("Manage bookmarks");
+    manageBookmarksB.addActionListener(new ActionListener() {
+      public void actionPerformed (ActionEvent e) {
+        WManageBookmarks.openWindow();
+      }
+    });
+    // wire listener to manage when bookmarks are available for managing
+    // listen to bookmarks list changes
+    BEViewer.bookmarksModel.bookmarksComboBoxModel.addListDataListener(new ListDataListener() {
+      public void contentsChanged(ListDataEvent e) {
+        manageBookmarksB.setEnabled(BEViewer.bookmarksModel.isEmpty());
+      }
+      public void intervalAdded(ListDataEvent e) {
+        manageBookmarksB.setEnabled(BEViewer.bookmarksModel.isEmpty());
+      }
+      public void intervalRemoved(ListDataEvent e) {
+        manageBookmarksB.setEnabled(BEViewer.bookmarksModel.isEmpty());
+      }
+    });
+    add(manageBookmarksB);
+
+/*
+zzzzzzzzz fix
+    // wire listener to manage when bookmarks are available for export
+    BEViewer.featureBookmarksModel.addBookmarksModelChangedListener(new Observer() {
+      public void update(Observable o, Object arg) {
+        exportB.setEnabled(BEViewer.featureBookmarksModel.size() > 0);
+      }
+    });
+*/
   }
 
   // ************************************************************
@@ -208,7 +241,7 @@ zzzzzzzzz fix
     add(new JLabel("Highlight:"));
 
     // separator
-    add(Box.createRigidArea(new Dimension(BEViewer.GUI_X_PADDING, 0)));
+    addSeparator(new Dimension(BEViewer.GUI_X_PADDING, 0));
 
     // ************************************************************
     // highlight input text field
@@ -222,7 +255,7 @@ zzzzzzzzz fix
     highlightTF.setMaximumSize(highlightDimension);
 
     // create the JTextField highlightTF for containing the highlight text
-    highlightTF.setToolTipText("Type Text to Highlight, type \"|\" between words to enter multiple Highlights");
+    highlightTF.setToolTipText("Type text to highlight, type \"|\" between words to enter multiple Highlights");
 
     // change the user highlight model when highlightTF changes
     highlightTF.getDocument().addDocumentListener(new DocumentListener() {
@@ -254,7 +287,8 @@ zzzzzzzzz fix
     add(highlightTF);
 
     // separator
-    add(Box.createRigidArea(new Dimension(10, 0)));
+//    addSeparator(new Dimension(10, 0));
+    addSeparator(new Dimension(BEViewer.GUI_X_PADDING, 0));
 
     // ************************************************************
     // Match Case checkbox

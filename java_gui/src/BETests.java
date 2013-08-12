@@ -86,11 +86,7 @@ Supported media types follow:
 \li .raw
 
 \par output Output
-BEViewer provides Bookmark output in two formats:
-\li DFXML output.
-\li Printable output.
-
-In addition, syntax of output is impacted
+Syntax of output is impacted
 by 1) whether the Image is displayed in text or hex format,
 and 2) whether image Offsets are displayed in Decimal or Hexidecimal.
 \n
@@ -100,14 +96,6 @@ with each Bookmark tested.
 All outputs should include the same information.
 It is important to verify that each output format is displayed properly.
 \n
-Currently, this test generates four output files for testing the 2X2 grid of
-using Java readers vs. bulk_extractor readers
-and producing DFXML output vs. printable output.
-These files are:
-\li test_bookmarks_text
-\li test_bookmarks_dfxml
-\li test_bookmarks_text_be_only
-\li test_bookmarks_dfxml_be_only
 
 \par Verification of Results
 This test only verifies that bookmarks can be exported.
@@ -148,9 +136,6 @@ delegate to the Swing thread.
 public class BETests {
 
   private static final String BOOKMARKS_TEXT = "test_bookmarks_text";
-  private static final String BOOKMARKS_DFXML = "test_bookmarks_dfxml";
-  private static final String BOOKMARKS_TEXT_BE_ONLY = "test_bookmarks_text_be_only";
-  private static final String BOOKMARKS_DFXML_BE_ONLY = "test_bookmarks_dfxml_be_only";
 
   private BETests() {
   }
@@ -203,23 +188,17 @@ public class BETests {
     }
 
     // generate output bookmark filenames
-    File textOutfile = new File(outputDirectory, BOOKMARKS_TEXT);
-    File dfxmlOutfile = new File(outputDirectory, BOOKMARKS_DFXML);
-    File textBEOnlyOutfile = new File(outputDirectory, BOOKMARKS_TEXT_BE_ONLY);
-    File dfxmlBEOnlyOutfile = new File(outputDirectory, BOOKMARKS_DFXML_BE_ONLY);
+    File bookmarkOutfile = new File(outputDirectory, BOOKMARKS_TEXT);
 
     // delete output bookmark filenames
-    boolean dummy1 = textOutfile.delete();
-    boolean dummy2 = dfxmlOutfile.delete();
-    boolean dummy3 = textBEOnlyOutfile.delete();
-    boolean dummy4 = dfxmlBEOnlyOutfile.delete();
+    boolean dummy1 = bookmarkOutfile.delete();
 
     Thread thread1;
     Thread thread2;
 
     // run tests using the image reader
     WLog.log("BETests.makeBookmarks");
-    thread1 = WBookmarks.testStartThread(WBookmarks.TEXT, textOutfile);
+    thread1 = WManageBookmarks.startThread(bookmarkOutfile);
     waitForThread(thread1);
 
     // restore preferences

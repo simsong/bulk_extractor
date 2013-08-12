@@ -66,13 +66,13 @@ $(srcdir)/src/ThreadsafeTreeModelManager.java \
 $(srcdir)/src/UserHighlightModel.java \
 $(srcdir)/src/UTF8Tools.java \
 $(srcdir)/src/WAbout.java \
-$(srcdir)/src/WBookmarks.java \
 $(srcdir)/src/WError.java \
 $(srcdir)/src/WExportWorkSettings.java \
 $(srcdir)/src/WImportWorkSettings.java \
 $(srcdir)/src/WIndeterminateProgress.java \
 $(srcdir)/src/WInfo.java \
 $(srcdir)/src/WLog.java \
+$(srcdir)/src/WManageBookmarks.java \
 $(srcdir)/src/WOpen.java \
 $(srcdir)/src/WProgress.java \
 $(srcdir)/src/WRawDeviceChooser.java \
@@ -95,6 +95,7 @@ $(srcdir)/src/image/ThreadAborterTimer.java
 
 ICON_FILES = \
 $(srcdir)/icons/16/bookmark-new-2.png $(srcdir)/icons/24/bookmark-new-2.png \
+$(srcdir)/icons/16/bookmark-2.png $(srcdir)/icons/24/bookmark-2.png \
 $(srcdir)/icons/16/edit-delete-6.png $(srcdir)/icons/24/edit-delete-6.png \
 $(srcdir)/icons/16/go-previous-4.png $(srcdir)/icons/24/go-previous-4.png \
 $(srcdir)/icons/16/go-next-4.png $(srcdir)/icons/24/go-next-4.png \

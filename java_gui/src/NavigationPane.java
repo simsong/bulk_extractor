@@ -23,10 +23,6 @@ public final class NavigationPane extends Container {
   private static final int EDGE_PADDING = BEViewer.GUI_EDGE_PADDING;
   private static final int Y_PADDING = BEViewer.GUI_Y_PADDING;
   private static final long serialVersionUID = 1;
-  private JButton bookmarkB;
-  private JButton deleteB;
-//  private JComboBox<FeatureLine> bookmarksComboBox;
-  private JComboBox bookmarksComboBox;
   private FileComponent imageFileLabel;
   private FileComponent featuresFileLabel;
   private TextComponent featurePathLabel;
@@ -38,8 +34,6 @@ public final class NavigationPane extends Container {
   private JButton reverseB;
   private JButton homeB;
   private JButton forwardB;
-
-  private static final String NULL_LABEL = "<Not selected>";
 
   /**
    * Constructs navigation interfaces and wires actions.
@@ -69,8 +63,6 @@ public final class NavigationPane extends Container {
           featuresFileLabel.setFile(featureLine.featuresFile);
           featurePathLabel.setComponentText(ForensicPath.getPrintablePath(featureLine.forensicPath, BEViewer.imageView.getUseHexPath()));
           featureLabel.setComponentText(featureLine.formattedFeature);
-          deleteB.setEnabled(true);
-          bookmarkB.setEnabled(true);
 
         } else {
 
@@ -79,8 +71,6 @@ public final class NavigationPane extends Container {
           featuresFileLabel.setFile(null);
           featurePathLabel.setComponentText(null);
           featureLabel.setComponentText(null);
-          deleteB.setEnabled(false);
-          bookmarkB.setEnabled(false);
         }
       }
     });
@@ -110,10 +100,6 @@ public final class NavigationPane extends Container {
             ImageModel.ImagePage imagePage = BEViewer.imageView.getImagePage();
             featurePathLabel.setComponentText(ForensicPath.getPrintablePath(imagePage.featureLine.forensicPath, BEViewer.imageView.getUseHexPath()));
           }
-
-//zzfixed          // also redraw the bookmarksComboBox 
-//zzfixed          // NOTE: this is a raw harsh approach
-//zzfixed          bookmarksComboBox.updateUI();
 
         } else {
           // no action for other change types
@@ -153,39 +139,11 @@ public final class NavigationPane extends Container {
     int y = 0;
 
     // ************************************************************
-    // (0,0) title "Navigation"
+    // (0,y++) Feature line statistics
     // ************************************************************
     c = new GridBagConstraints();
 //    c.insets = new Insets(0, 5, 0, 5);
-    c.insets = new Insets(EDGE_PADDING, EDGE_PADDING, 0, EDGE_PADDING);
-    c.gridx = 0;
-    c.gridy = y++;
-    c.fill = GridBagConstraints.HORIZONTAL;
-
-    // add the navigation title
-    add(new JLabel("Navigation"), c);
-
-    // ************************************************************
-    // (0,1) Navigation control
-    // ************************************************************
-    c = new GridBagConstraints();
-//    c.insets = new Insets(0, 5, 0, 5);
-    c.insets = new Insets(0, EDGE_PADDING, 0, EDGE_PADDING);
-    c.gridx = 0;
-    c.gridy = y++;
-    c.weightx = 1;
-    c.weighty = 0;
-    c.fill = GridBagConstraints.HORIZONTAL;
-
-    // add the navigation control container
-    add(getNavigationControl(), c);
-
-    // ************************************************************
-    // (0,2) Feature line statistics
-    // ************************************************************
-    c = new GridBagConstraints();
-//    c.insets = new Insets(0, 5, 0, 5);
-    c.insets = new Insets(0, EDGE_PADDING, Y_PADDING, EDGE_PADDING);
+    c.insets = new Insets(EDGE_PADDING, EDGE_PADDING, Y_PADDING, EDGE_PADDING);
     c.gridx = 0;
     c.gridy = y++;
     c.weightx = 1;
@@ -196,7 +154,7 @@ public final class NavigationPane extends Container {
     add(getFeatureStats(), c);
 
     // ************************************************************
-    // (0,3) title "Image"
+    // (0,y++) title "Image"
     // ************************************************************
     c = new GridBagConstraints();
     c.insets = new Insets(0, EDGE_PADDING, 0, EDGE_PADDING);
@@ -208,7 +166,7 @@ public final class NavigationPane extends Container {
     add(new JLabel("Image"), c);
 
     // ************************************************************
-    // (0,4) Image table
+    // (0,y++) Image table
     // ************************************************************
     c = new GridBagConstraints();
     c.insets = new Insets(0, EDGE_PADDING, 0, EDGE_PADDING);
@@ -222,7 +180,7 @@ public final class NavigationPane extends Container {
     add(getImageTable(), c);
 
     // ************************************************************
-    // (0,5) Image table controls
+    // (0,y++) Image table controls
     // ************************************************************
     c = new GridBagConstraints();
 //    c.insets = new Insets(0, 5, 0, 5);
@@ -235,158 +193,6 @@ public final class NavigationPane extends Container {
 
     // add the image table
     add(getImageTableControls(), c);
-  }
-
-  // ************************************************************
-  // navigation control
-  // ************************************************************
-@SuppressWarnings("unchecked") // hacked until we don't require javac6
-  private Container getNavigationControl() {
-    Container container = new Container();
-    container.setLayout(new GridBagLayout());
-    GridBagConstraints c;
-
-    // code moved here because of suppress warnings unchecked failure,
-    // see NOTE, below.
-    bookmarksComboBox = new JComboBox(BEViewer.bookmarksModel.bookmarksComboBoxModel);
-    bookmarksComboBox.setRenderer(new FeatureListCellRenderer());
-    bookmarksComboBox.setPrototypeDisplayValue(new FeatureLine());
-
-    // (0,0) JButton <bookmark>
-    c = new GridBagConstraints();
-    c.insets = new Insets(0, 0, 0, BEViewer.GUI_X_PADDING);
-    c.gridx = 0;
-    c.gridy = 0;
-    c.weightx = 0;
-    c.anchor = GridBagConstraints.LINE_START;
-
-    // create bookmark button
-    bookmarkB = new JButton(BEIcons.BOOKMARK_16);
-    bookmarkB.setFocusable(false);
-    bookmarkB.setRequestFocusEnabled(false);
-    bookmarkB.setMinimumSize(BEViewer.BUTTON_SIZE);
-    bookmarkB.setPreferredSize(BEViewer.BUTTON_SIZE);
-    bookmarkB.setToolTipText("Bookmark this Feature");
-    bookmarkB.setEnabled(false);
-
-    // add the bookmark button
-    container.add(bookmarkB, c);
-
-    // clicking the bookmark button adds this feature entry to the bookmark list
-    bookmarkB.addActionListener(new ActionListener() {
-      public void actionPerformed (ActionEvent e) {
-        BEViewer.bookmarksModel.addElement(
-               BEViewer.featureLineSelectionManager.getFeatureLineSelection());
-      }
-    });
-
-/*
-    // (1,0) vertical separator
-    c = new GridBagConstraints();
-    c.insets = new Insets(0, 0, 0, 0);
-    c.gridx = 1;
-    c.gridy = 0;
-    c.weightx = 0;
-    c.anchor = GridBagConstraints.LINE_START;
-    c.fill = GridBagConstraints.VERTICAL;
-    container.add(new JSeparator(SwingConstants.VERTICAL), c);
-*/
-
-    // (2,0) JButton <delete>
-    c = new GridBagConstraints();
-    c.insets = new Insets(0, 0, 0, BEViewer.GUI_X_PADDING);
-    c.gridx = 2;
-    c.gridy = 0;
-    c.weightx = 0;
-    c.anchor = GridBagConstraints.LINE_START;
-
-    // Delete Feature button
-    //NOTE: this line causes the javac 1.7.0_25 compiler to disregard
-    // the suppress warnings unchecked directive, so code requiring this
-    // directive has been moved above this line.
-    deleteB = new JButton(BEIcons.DELETE_16);
-    deleteB.setFocusable(false);
-    deleteB.setRequestFocusEnabled(false);
-    deleteB.setMinimumSize(BEViewer.BUTTON_SIZE);
-    deleteB.setPreferredSize(BEViewer.BUTTON_SIZE);
-    deleteB.setToolTipText("Remove this Feature from Navigation List");
-    deleteB.setEnabled(false);
-
-    // add the delete button
-    container.add(deleteB, c);
-
-    // clicking the delete button removes the feature from the bookmarks list
-    deleteB.addActionListener(new ActionListener() {
-      public void actionPerformed (ActionEvent e) {
-//zz
-        FeatureLine featureLine = (FeatureLine)BEViewer.bookmarksModel.getSelectedItem();
-WLog.log("NP.fl: " + featureLine);
-
-        // the button should be disabled when there is no selected feature line
-        // but it is not
-        if (featureLine == null) {
-          WLog.log("NavigationPane null selection on delete button");
-          throw new RuntimeException("invalid button");
-        }
-
-        // the selection should match the selection manager
-        if (!featureLine.equals(BEViewer.featureLineSelectionManager.getFeatureLineSelection())) {
-          throw new RuntimeException("invalid state");
-        }
-
-//zz null, below, should do
-//// clear the feature line selection
-//BEViewer.featureLineSelectionManager.setFeatureLineSelection(new FeatureLine());
-
-        // remove the current selection
-        // NOTE: setSelectedItem fires clearing the selection in featureLineSelectionManager
-        BEViewer.bookmarksModel.setSelectedItem(new FeatureLine());
-        BEViewer.bookmarksModel.removeElement(featureLine);
-      }
-    });
-
-    // (3,0) navigation comboBox
-    c = new GridBagConstraints();
-    c.insets = new Insets(0, 0, 0, 0);
-    c.gridx = 3;
-    c.gridy = 0;
-    c.weightx = 1;
-    c.fill = GridBagConstraints.HORIZONTAL;
-
-//    bookmarksComboBox = new JComboBox<FeatureLine>(BEViewer.featureLineVector);
-// moved, see NOTE    bookmarksComboBox = new JComboBox(BEViewer.featureLineVector);
-    bookmarksComboBox.setFocusable(false);
-//    bookmarksComboBox.requestFocusInWindow();  // as a user convenience, focus this item first.
-// moved, see NOTE    bookmarksComboBox.setRenderer(new FeatureListCellRenderer());
-
-    // set the prototype value so Swing knows the height of JComboBox when it is empty
-// moved, see NOTE    bookmarksComboBox.setPrototypeDisplayValue(new FeatureLine());
-
-    bookmarksComboBox.setMaximumRowCount(16);
-    bookmarksComboBox.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        // The feature line selection manager changes the combo box selection.
-        // The combo box selection changes the feature line selection manager
-        // but only if the feature line selection manager had a different feature line.
-        // So: no event loop.
-
-        // determine equivalency, allowing null
-        FeatureLine featureLine = (FeatureLine)bookmarksComboBox.getSelectedItem();
-
-        // JComboBox can return null so compensate
-        if (featureLine == null) {
-throw new RuntimeException("okay");
-//zz          featureLine = new FeatureLine();
-        }
-
-        BEViewer.featureLineSelectionManager.setFeatureLineSelection(featureLine);
-      }
-    });
-    bookmarksComboBox.setToolTipText("Navigate to this Feature");
-
-    container.add(bookmarksComboBox, c);
-
-    return container;
   }
 
   // ************************************************************

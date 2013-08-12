@@ -8,7 +8,9 @@ public final class BEIcons {
 
   private static HashMap<String, String> map = new HashMap<String, String>();
   static {
-    map.put("bookmark", "bookmark-new-2.png");
+    map.put("add_bookmark", "bookmark-new-2.png");
+    map.put("manage_bookmarks", "bookmark-2.png");
+    map.put("export_bookmarks", "archive-extract-3.png");
     map.put("delete", "edit-delete-6.png");
     map.put("reverse", "go-previous-4.png");
     map.put("forward", "go-next-4.png");
@@ -16,7 +18,6 @@ public final class BEIcons {
     map.put("open_report", "document-open-7.png");
     map.put("copy", "edit-copy-3.png");
     map.put("run_bulk_extractor", "run-build-install.png");
-    map.put("export_bookmarks", "archive-extract-3.png");
     map.put("print", "document-print.png");
     map.put("close", "window-close.png");
     map.put("help", "help-contents.png");
@@ -52,8 +53,12 @@ public final class BEIcons {
 
   public static final Icon CLOSE_16 = getIcon16("close");
   public static final Icon CLOSE_24 = getIcon24("close");
-  public static final Icon BOOKMARK_16 = getIcon16("bookmark");
-  public static final Icon BOOKMARK_24 = getIcon24("bookmark");
+  public static final Icon MANAGE_BOOKMARKS_16 = getIcon16("manage_bookmarks");
+  public static final Icon MANAGE_BOOKMARKS_24 = getIcon24("manage_bookmarks");
+  public static final Icon ADD_BOOKMARK_16 = getIcon16("add_bookmark");
+  public static final Icon ADD_BOOKMARK_24 = getIcon24("add_bookmark");
+  public static final Icon EXPORT_BOOKMARKS_16 = getIcon16("export_bookmarks");
+  public static final Icon EXPORT_BOOKMARKS_24 = getIcon24("export_bookmarks");
   public static final Icon DELETE_16 = getIcon16("delete");
   public static final Icon DELETE_24 = getIcon24("delete");
   public static final Icon REVERSE_16 = getIcon16("reverse");
@@ -68,8 +73,6 @@ public final class BEIcons {
   public static final Icon COPY_24 = getIcon24("copy");
   public static final Icon RUN_BULK_EXTRACTOR_16 = getIcon16("run_bulk_extractor");
   public static final Icon RUN_BULK_EXTRACTOR_24 = getIcon24("run_bulk_extractor");
-  public static final Icon EXPORT_BOOKMARKS_16 = getIcon16("export_bookmarks");
-  public static final Icon EXPORT_BOOKMARKS_24 = getIcon24("export_bookmarks");
   public static final Icon PRINT_FEATURE_16 = getIcon16("print");
   public static final Icon PRINT_FEATURE_24 = getIcon24("print");
   public static final Icon HELP_16 = getIcon16("help");

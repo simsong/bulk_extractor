@@ -45,10 +45,12 @@ public class BEMenus extends JMenuBar {
   private JCheckBoxMenuItem cbShowStoplistFiles;
   private JCheckBoxMenuItem cbShowEmptyFiles;
   private JMenuItem miPrintFeature;
-  private JMenuItem miBookmark;
+  private JMenuItem miExportBookmarks;
   private JMenuItem miCopy;
   private JMenuItem miClose;
   private JMenuItem miCloseAll;
+  private JMenuItem miAddBookmark;
+  private JMenuItem miManageBookmarks;
 
   private final int KEY_MASK = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
   private final KeyStroke KEYSTROKE_O = KeyStroke.getKeyStroke(KeyEvent.VK_O, KEY_MASK);
@@ -56,6 +58,8 @@ public class BEMenus extends JMenuBar {
   private final KeyStroke KEYSTROKE_C = KeyStroke.getKeyStroke(KeyEvent.VK_C, KEY_MASK);
   private final KeyStroke KEYSTROKE_R = KeyStroke.getKeyStroke(KeyEvent.VK_R, KEY_MASK);
   private final KeyStroke KEYSTROKE_A = KeyStroke.getKeyStroke(KeyEvent.VK_A, KEY_MASK);
+  private final KeyStroke KEYSTROKE_M = KeyStroke.getKeyStroke(KeyEvent.VK_M, KEY_MASK);
+  private final KeyStroke KEYSTROKE_B = KeyStroke.getKeyStroke(KeyEvent.VK_B, KEY_MASK);
 
   // ********************************************************************************
   // Create the menus
@@ -146,18 +150,18 @@ public class BEMenus extends JMenuBar {
     file.addSeparator();
 
     // file|export bookmarks
-    miBookmark = new JMenuItem("Export Bookmarks\u2026", BEIcons.EXPORT_BOOKMARKS_16);	// ...
-    file.add(miBookmark);
-    miBookmark.addActionListener(new ActionListener() {
+    miExportBookmarks = new JMenuItem("Export Bookmarks\u2026", BEIcons.EXPORT_BOOKMARKS_16);	// ...
+    file.add(miExportBookmarks);
+    miExportBookmarks.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
-        WBookmarks.openWindow();
+        WManageBookmarks.saveBookmarks();
       }
     });
 
     // wire listener to manage when bookmarks are available for export
 //zz figure this out    BEViewer.featureBookmarksModel.addBookmarksModelChangedListener(new Observer() {
 //zz      public void update(Observable o, Object arg) {
-//zz        miBookmark.setEnabled(BEViewer.featureBookmarksModel.size() > 0);
+//zz        miExportBookmarks.setEnabled(BEViewer.featureBookmarksModel.size() > 0);
 //zz      }
 //    });
 
@@ -592,6 +596,31 @@ WLog.log("BEM.fl: " + featureLine);
                              "BEViewer Read error", exc);
           }
         }
+      }
+    });
+
+    // bookmarks
+    JMenu bookmarks = new JMenu("Bookmarks");
+    add(bookmarks);
+
+    // bookmarks|Manage Bookmarks
+    miExportBookmarks = new JMenuItem("Manage Bookmarks\u2026", BEIcons.MANAGE_BOOKMARKS_16);	// ...
+    bookmarks.add(miExportBookmarks);
+    miExportBookmarks.setAccelerator(KEYSTROKE_M);
+    miExportBookmarks.addActionListener(new ActionListener() {
+      public void actionPerformed (ActionEvent e) {
+        WManageBookmarks.openWindow();
+      }
+    });
+
+    // bookmarks|Bookmark selected Feature
+    miAddBookmark = new JMenuItem("Bookmark selected Feature", BEIcons.ADD_BOOKMARK_16);	// ...
+    bookmarks.add(miAddBookmark);
+    miAddBookmark.setAccelerator(KEYSTROKE_B);
+    miAddBookmark.addActionListener(new ActionListener() {
+      public void actionPerformed (ActionEvent e) {
+        FeatureLine selectedFeatureLine = BEViewer.featureLineSelectionManager.getFeatureLineSelection();
+        BEViewer.bookmarksModel.addElement(selectedFeatureLine);
       }
     });
 
