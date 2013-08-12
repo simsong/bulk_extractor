@@ -1,4 +1,6 @@
+#include <algorithm>
 #include <iostream>
+#include <iterator>
 #include <string>
 
 namespace accts {
@@ -318,7 +320,7 @@ namespace httpheader {
 
 int main(int argc, char** argv) {
 
-  const char* allpats[] = {
+  const char* all[] = {
     accts::REGEX1.c_str(),
     accts::REGEX2.c_str(),
     accts::REGEX3.c_str(),
@@ -364,6 +366,11 @@ int main(int argc, char** argv) {
     httpheader::VIA.c_str(),
     httpheader::HEADERS_3.c_str()
   };
+
+  std::copy(
+    all, all + sizeof(all)/sizeof(all[0]),
+    std::ostream_iterator<const char*>(std::cout, "\n")
+  );
 
   return 0;
 }
