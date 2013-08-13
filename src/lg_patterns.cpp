@@ -10,15 +10,15 @@ namespace accts {
 
   const std::string END("([^0-9e.]|(\\.[^0-9]))");
   const std::string BLOCK("[0-9]{4}");
-  const std::string DELIM("([- ])");
+  const std::string DELIM("[- ]");
   const std::string DB("(" + BLOCK + DELIM + ")");
   const std::string SDB("([45][0-9]{3}" + DELIM + ")");
-  const std::string TDEL("([ /.-])");
+  const std::string TDEL("[ /.-]");
 
-  const std::string PHONETEXT("([^a-z](tel[.ephon]*|(fax)|(facsimile)|DSN|telex|TTD|mobile|cell)):?");
+  const std::string PHONETEXT("([^a-z](tel[.ephon]*|fax|facsimile|DSN|telex|TTD|mobile|cell)):?");
 
   // FIXME: post-2009?! 
-  const std::string YEAR("((19[0-9][0-9])|(20[01][0-9]))");
+  const std::string YEAR("(19[0-9][0-9]|20[01][0-9])");
   const std::string MONTH("(Jan(uary)?|Feb(ruary)?|Mar(ch)?|Apr(il)?|May|Jun(e)?|Jul(y)?|Aug(ust)?|Sep(tember)?|Oct(ober)?|Nov(ember)?|Dec(ember)?|0?1|0?2|0?3|0?4|0?5|0?6|0?7|0?8|0?9|10|11|12)");
   const std::string DAY("([0-9]|[0-2][0-9]|30|31)");
 
@@ -51,7 +51,7 @@ namespace accts {
   // FIXME: trailing context
   /* 3### ###### ######### --- 15 digits beginning with 3 and funny space. */
   /* Must be american express... */ 
-  const std::string REGEX4("[^0-9a-z.]3([0-9]{14})" + END);
+  const std::string REGEX4("[^0-9a-z.]3[0-9]{14}" + END);
 
   // FIXME: trailing context
   /* ###############  13-19 numbers as a block beginning with a 4 or 5
@@ -59,12 +59,12 @@ namespace accts {
    * Yes, CCNs can now be up to 19 digits long. 
    * http://www.creditcards.com/credit-card-news/credit-card-appearance-1268.php
    */  
-  const std::string REGEX5("[^0-9a-z.][4-6]([0-9]{15,18})" + END);
+  const std::string REGEX5("[^0-9a-z.][4-6][0-9]{15,18}" + END);
 
   /* ;###############=YYMM101#+? --- track2 credit card data */
   /* {SYEAR}{SMONTH} */
   /* ;CCN=05061010000000000738? */
-  const std::string REGEX6("[^0-9a-z][4-6]([0-9]{15,18})=" + SYEAR + SMONTH + "101[0-9]{13}");
+  const std::string REGEX6("[^0-9a-z][4-6][0-9]{15,18}=" + SYEAR + SMONTH + "101[0-9]{13}");
 
   // FIXME: trailing context
   /* US phone numbers without area code in parens */
@@ -80,7 +80,7 @@ namespace accts {
 
   // FIXME: trailing context
   /* Generalized international phone numbers */
-  const std::string REGEX9("[^0-9a-z]\\+[0-9]{1,3}((" + TDEL + "[0-9]{2,3}){2,6})[0-9]{2,4}" + END);
+  const std::string REGEX9("[^0-9a-z]\\+[0-9]{1,3}(" + TDEL + "[0-9]{2,3}){2,6}[0-9]{2,4}" + END);
 
   /* Generalized number with prefix */
   const std::string REGEX10(PHONETEXT + "[0-9/ .+]{7,18}");
@@ -90,7 +90,7 @@ namespace accts {
 
   // FIXME: trailing context
   /* Possible BitLocker Recovery Key (ASCII). */
-  const std::string BITLOCKER_ASCII("[^0-9]([0-9]{6}-){7}([0-9]{6})[\\r\\n]");
+  const std::string BITLOCKER_ASCII("[^0-9]([0-9]{6}-){7}[0-9]{6}[\\r\\n]");
 
   // FIXME: trailing context
   /* Possible BitLocker Recovery Key (UTF-16). */
@@ -129,12 +129,12 @@ namespace base16 {
    * {0,4} means we have 0-4 space characters
    * {6,}  means minimum of 6 hex bytes
    */
-  const std::string HEX1("[^0-9A-F](([0-9A-F][0-9A-F][ \\t\\n\\r]{0,4}){6,})[^0-9A-F]");
+  const std::string HEX1("[^0-9A-F]([0-9A-F][0-9A-F][ \\t\\n\\r]{0,4}){6,}[^0-9A-F]");
 
   // FIXME: trailing context
   // FIXME: had leading ^
   /* hex at the beginning of the file */
-  const std::string HEX2("(([0-9A-F][0-9A-F][ \\t\\n\\r]{0,4}){6,})[^0-9A-F]");
+  const std::string HEX2("([0-9A-F][0-9A-F][ \\t\\n\\r]{0,4}){6,}[^0-9A-F]");
 }
 
 namespace email {
@@ -143,7 +143,7 @@ namespace email {
   //
 
   const std::string INUM("([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])");
-  const std::string HEX("([0-9a-f])");
+  const std::string HEX("[0-9a-f]");
   const std::string ALNUM("[a-zA-Z0-9]");
   const std::string PC("[ !#$%&'()*+,\\-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ\\[\\\\\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\"]");
 
@@ -152,7 +152,7 @@ namespace email {
   const std::string EMAIL(ALNUM + "[a-zA-Z0-9._%\\-+]{1,128}" + ALNUM + "@" + ALNUM + "[a-zA-Z0-9._%\\-]{1,128}\\." + TLD);
 
   // FIXME: post-2009?! 
-  const std::string YEAR("((19[6-9][0-9])|(20[0-1][0-9]))");
+  const std::string YEAR("(19[6-9][0-9]|20[0-1][0-9])");
   const std::string DAYOFWEEK("(Mon|Tue|Wed|Thu|Fri|Sat|Sun)");
   const std::string MONTH("(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)");
   const std::string ABBREV("(UT|GMT|EST|EDT|CST|CDT|MST|MDT|PST|PDT|Z|A|M|N|Y)");
@@ -170,11 +170,11 @@ namespace email {
 
   const std::string MESSAGE_ID("Message-ID:[ \\t\\n]?<" + PC + "{1,80}>");
   
-  const std::string SUBJECT("Subject:[ \\t]?(" + PC + "{1,80})");
+  const std::string SUBJECT("Subject:[ \\t]?" + PC + "{1,80}");
 
-  const std::string COOKIE("Cookie:[ \\t]?(" + PC + "{1,80})");
+  const std::string COOKIE("Cookie:[ \\t]?" + PC + "{1,80}");
 
-  const std::string HOST("Host:[ \\t]?([a-zA-Z0-9._]{1,64})");
+  const std::string HOST("Host:[ \\t]?[a-zA-Z0-9._]{1,64}");
 
   const std::string ADDR(EMAIL + "[^a-zA-Z]");
 
@@ -268,12 +268,12 @@ namespace httpheader {
    * causes the NFA rule set to explode to >32000 rules, making flex refuse
    * to compile.
    */
-  const std::string SERVER_OR_UA("(Server|User-Agent):[ \\t]?(" + PC + "{1,80})");
+  const std::string SERVER_OR_UA("(Server|User-Agent):[ \\t]?" + PC + "{1,80}");
   
   /*
    * RFC 2616, Section 14.23
    */
-  const std::string HOST("Host:[ \\t]?([a-zA-Z0-9._:]{1,256})");
+  const std::string HOST("Host:[ \\t]?[a-zA-Z0-9._:]{1,256}");
 
   /*
    * These headers have a general set of characters allowed in their field
@@ -291,7 +291,7 @@ namespace httpheader {
    * and 14.36) have a URI as the field value.
    * SLG: Limited to 80 characters
    */
-  const std::string HEADERS_1("(Accept|Accept-Ranges|Authorization|Cache-Control|Content-Location|Etag|Expect|Keep-Alive|If-Match|If-None-Match|If-Range|Pragma|Proxy-Authenticate|Proxy-Authorization|Referer|TE|Transfer-Encoding|Warning|WWW-Authenticate):[ \\t]?(" + PC + "){1,80}");
+  const std::string HEADERS_1("(Accept|Accept-Ranges|Authorization|Cache-Control|Content-Location|Etag|Expect|Keep-Alive|If-Match|If-None-Match|If-Range|Pragma|Proxy-Authenticate|Proxy-Authorization|Referer|TE|Transfer-Encoding|Warning|WWW-Authenticate):[ \\t]?" + PC + "{1,80}");
 
   /*
    * These headers have a general set of characters allowed in their field
@@ -311,7 +311,7 @@ namespace httpheader {
    *
    * From: should contain an email address.
    */
-  const std::string HEADERS_2("(Accept-Charset|Accept-Encoding|Accept-Language|Age|Allow|Connection|Content-Encoding|Content-Language|Content-MD5|Content-Range|Content-Type|Cookie|Date|From|If-Modified-Since|If-Unmodified-Since|Last-Modified|Range|Retry-After|Set-Cookie|Trailer|Upgrade|Vary):[ \\t]?(" + XPC + "){1,80}");
+  const std::string HEADERS_2("(Accept-Charset|Accept-Encoding|Accept-Language|Age|Allow|Connection|Content-Encoding|Content-Language|Content-MD5|Content-Range|Content-Type|Cookie|Date|From|If-Modified-Since|If-Unmodified-Since|Last-Modified|Range|Retry-After|Set-Cookie|Trailer|Upgrade|Vary):[ \\t]?" + XPC + "{1,80}");
 
   const std::string VIA("Via:[ \\t]?" + HTTP_COMMENT + "{1,256}");
 
