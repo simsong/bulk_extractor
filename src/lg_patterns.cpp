@@ -189,8 +189,9 @@ namespace email {
   const std::string IP(INUM + "\\." + INUM + "\\." + INUM + "\\." + INUM + "[^0-9\\-.+A-Z_]");
 
   // FIXME: trailing context
+  // FIXME: should we be searching for all uppercase MAC addresses as well?
   /* found a possible MAC address! */
-  const std::string MAC("[^0-9A-Z:]" + HEX + HEX + ":" + HEX + HEX + ":" + HEX + HEX + ":" + HEX + HEX + ":" + HEX + HEX + ":" + HEX + HEX + "[^0-9A-Z:]");
+  const std::string MAC("[^0-9A-Z:]" + HEX + "{2}:" + HEX + "{2}:" + HEX + "{2}:" + HEX + "{2}:" + HEX + "{2}:" + HEX + "{2}[^0-9A-Z:]");
 
   // for reasons that aren't clear, there are a lot of net protocols that have
   // an http://domain in them followed by numbers. So this counts the number of
