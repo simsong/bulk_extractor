@@ -2,6 +2,8 @@
  * Provides bookmark services, specifically, management and selection of
  * a bookmark list, by wrapping DefaultListModel and DefaultComboBoxModel
  * services.
+ *
+ * Note that equality is redefined to use equals rather than sameness.
  */
 //import javax.swing.DefaultListModel;
 import javax.swing.DefaultComboBoxModel;
@@ -21,7 +23,15 @@ public class BookmarksModel {
 
 @SuppressWarnings("unchecked") // hacked until we don't require javac6
   public void addElement(FeatureLine featureLine) {
-    bookmarksComboBoxModel.addElement((Object)featureLine);
+    if (featureLine.isBlank()) {
+      // this can happen on keystroke bookmark request
+      WLog.log("BookmarksModel.addElement blank element not added");
+    } else if (contains(featureLine)) {
+      // this can happen on keystroke bookmark request
+      WLog.log("BookmarksModel.addElement already has element");
+    } else {
+      bookmarksComboBoxModel.addElement((Object)featureLine);
+    }
   }
   public FeatureLine get(int i) {
     return (FeatureLine)bookmarksComboBoxModel.getElementAt(i);
@@ -33,22 +43,28 @@ public class BookmarksModel {
     return (bookmarksComboBoxModel.getSize() == 0);
   }
   public boolean contains(FeatureLine featureLine) {
-    boolean hasFeatureLine = false;
     int size = bookmarksComboBoxModel.getSize();
-WLog.log("BM.contains: " + bookmarksComboBoxModel.getIndexOf((Object)featureLine));
+    // can't just use getIndexOf because we check sameness, not same object
     for (int i=0; i<size; i++) {
-      if (featureLine.equals((FeatureLine)bookmarksComboBoxModel.getElementAt(i))) {
-        hasFeatureLine = true;
-        break;
+      if (featureLine.equals(
+                   (FeatureLine)bookmarksComboBoxModel.getElementAt(i))) {
+        return true;
       }
     }
-
-
+    return false;
     // this fails because it checks sameness, not object equality
-    return (bookmarksComboBoxModel.getIndexOf((Object)featureLine) >= 0);
+    //return (bookmarksComboBoxModel.getIndexOf((Object)featureLine) >= 0);
   }
+
   public void removeElement(FeatureLine featureLine) {
-    bookmarksComboBoxModel.removeElement((Object)featureLine);
+    int size = bookmarksComboBoxModel.getSize();
+    for (int i=0; i<size; i++) {
+      if (featureLine.equals(
+                   (FeatureLine)bookmarksComboBoxModel.getElementAt(i))) {
+        bookmarksComboBoxModel.removeElementAt(i);
+      }
+    }
+    // bookmarksComboBoxModel.removeElement((Object)featureLine);
   }
   public void clear() {
     bookmarksComboBoxModel.removeAllElements();

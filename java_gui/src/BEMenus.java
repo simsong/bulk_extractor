@@ -8,6 +8,8 @@ import javax.swing.event.TreeModelListener;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.event.ListDataListener;
+import javax.swing.event.ListDataEvent;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.KeyStroke;
@@ -45,12 +47,16 @@ public class BEMenus extends JMenuBar {
   private JCheckBoxMenuItem cbShowStoplistFiles;
   private JCheckBoxMenuItem cbShowEmptyFiles;
   private JMenuItem miPrintFeature;
+  private JMenuItem miClearBookmarks;
   private JMenuItem miExportBookmarks;
   private JMenuItem miCopy;
   private JMenuItem miClose;
   private JMenuItem miCloseAll;
   private JMenuItem miAddBookmark;
   private JMenuItem miManageBookmarks;
+  private JMenuItem miPanToStart;
+  private JMenuItem miPanToEnd;
+  private JMenuItem miShowReportFile;
 
   private final int KEY_MASK = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
   private final KeyStroke KEYSTROKE_O = KeyStroke.getKeyStroke(KeyEvent.VK_O, KEY_MASK);
@@ -159,11 +165,18 @@ public class BEMenus extends JMenuBar {
     });
 
     // wire listener to manage when bookmarks are available for export
-//zz figure this out    BEViewer.featureBookmarksModel.addBookmarksModelChangedListener(new Observer() {
-//zz      public void update(Observable o, Object arg) {
-//zz        miExportBookmarks.setEnabled(BEViewer.featureBookmarksModel.size() > 0);
-//zz      }
-//    });
+    BEViewer.bookmarksModel.bookmarksComboBoxModel.addListDataListener(new ListDataListener() {
+      public void contentsChanged(ListDataEvent e) {
+        miExportBookmarks.setEnabled(!BEViewer.bookmarksModel.isEmpty());
+      }
+      public void intervalAdded(ListDataEvent e) {
+        miExportBookmarks.setEnabled(!BEViewer.bookmarksModel.isEmpty());
+      }
+      public void intervalRemoved(ListDataEvent e) {
+        miExportBookmarks.setEnabled(!BEViewer.bookmarksModel.isEmpty());
+      }
+    });
+    miExportBookmarks.setEnabled(false);
 
     // file|<separator>
     file.addSeparator();
@@ -189,7 +202,7 @@ public class BEMenus extends JMenuBar {
     // file|<separator>
     file.addSeparator();
 
-    // file|Print Feature
+    // file|Print Range
     miPrintFeature = new JMenuItem("Print Range\u2026", BEIcons.PRINT_FEATURE_16);	// ...
     miPrintFeature.setEnabled(false);
     file.add(miPrintFeature);
@@ -246,13 +259,27 @@ public class BEMenus extends JMenuBar {
     edit.addSeparator();
 
     // edit|clear all bookmarks
-    mi = new JMenuItem("Clear Bookmarks");
-    edit.add(mi);
+    miClearBookmarks = new JMenuItem("Clear Bookmarks");
+    edit.add(miClearBookmarks);
     mi.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
         BEViewer.bookmarksModel.clear();
 //zz yes?
         BEViewer.bookmarksModel.setSelectedItem(new FeatureLine());
+      }
+    });
+    miClearBookmarks.setEnabled(false);
+
+    // wire listener to know when bookmarks are empty
+    BEViewer.bookmarksModel.bookmarksComboBoxModel.addListDataListener(new ListDataListener() {
+      public void contentsChanged(ListDataEvent e) {
+        miClearBookmarks.setEnabled(!BEViewer.bookmarksModel.isEmpty());
+      }
+      public void intervalAdded(ListDataEvent e) {
+        miClearBookmarks.setEnabled(!BEViewer.bookmarksModel.isEmpty());
+      }
+      public void intervalRemoved(ListDataEvent e) {
+        miClearBookmarks.setEnabled(!BEViewer.bookmarksModel.isEmpty());
       }
     });
 
@@ -547,20 +574,21 @@ public class BEMenus extends JMenuBar {
     view.add(selectedFeature);
 
     // view|SelectedFeature|Pan to Start of Path
-    mi = new JMenuItem("Pan to Start of Path");
-    selectedFeature.add(mi);
-    mi.addActionListener(new ActionListener() {
+    miPanToStart = new JMenuItem("Pan to Start of Path");
+    selectedFeature.add(miPanToStart);
+    miPanToStart.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
         // move to start of feature currently in the image model
         BEViewer.imageModel.setImageSelection(ForensicPath.getAdjustedPath(
                      BEViewer.imageView.getImagePage().pageForensicPath, 0));
       }
     });
+    miPanToStart.setEnabled(false);
 
     // view|SelectedFeature|Pan to  End of Path
-    mi = new JMenuItem("Pan to End of Path");
-    selectedFeature.add(mi);
-    mi.addActionListener(new ActionListener() {
+    miPanToEnd = new JMenuItem("Pan to End of Path");
+    selectedFeature.add(miPanToEnd);
+    miPanToEnd.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
         // move to end of feature currently in the image model
         ImageModel.ImagePage imagePage = BEViewer.imageView.getImagePage();
@@ -571,14 +599,15 @@ public class BEMenus extends JMenuBar {
                      pageForensicPath, imageEndOffset));
       }
     });
+    miPanToEnd.setEnabled(false);
 
-    // view|<separator>
+    // view|Selected Feature|<separator>
     selectedFeature.addSeparator();
 
     // view|Selected Feature|report.xml File
-    mi = new JMenuItem("Show report.xml File");
-    selectedFeature.add(mi);
-    mi.addActionListener(new ActionListener() {
+    miShowReportFile = new JMenuItem("Show report.xml File");
+    selectedFeature.add(miShowReportFile);
+    miShowReportFile.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
         // get the currently selected feature line
         FeatureLine featureLine = BEViewer.featureLineSelectionManager.getFeatureLineSelection();
@@ -598,20 +627,22 @@ WLog.log("BEM.fl: " + featureLine);
         }
       }
     });
+    miShowReportFile.setEnabled(false);
+
+    // wire action for all view|selected feature items
+    BEViewer.featureLineSelectionManager.addFeatureLineSelectionManagerChangedListener(new Observer() {
+      public void update(Observable o, Object arg) {
+        FeatureLine selectedFeatureLine = BEViewer.featureLineSelectionManager.getFeatureLineSelection();
+        boolean hasSelection = !selectedFeatureLine.isBlank();
+        miPanToStart.setEnabled(hasSelection);
+        miPanToEnd.setEnabled(hasSelection);
+        miShowReportFile.setEnabled(hasSelection);
+      }
+    });
 
     // bookmarks
     JMenu bookmarks = new JMenu("Bookmarks");
     add(bookmarks);
-
-    // bookmarks|Manage Bookmarks
-    miExportBookmarks = new JMenuItem("Manage Bookmarks\u2026", BEIcons.MANAGE_BOOKMARKS_16);	// ...
-    bookmarks.add(miExportBookmarks);
-    miExportBookmarks.setAccelerator(KEYSTROKE_M);
-    miExportBookmarks.addActionListener(new ActionListener() {
-      public void actionPerformed (ActionEvent e) {
-        WManageBookmarks.openWindow();
-      }
-    });
 
     // bookmarks|Bookmark selected Feature
     miAddBookmark = new JMenuItem("Bookmark selected Feature", BEIcons.ADD_BOOKMARK_16);	// ...
@@ -623,6 +654,45 @@ WLog.log("BEM.fl: " + featureLine);
         BEViewer.bookmarksModel.addElement(selectedFeatureLine);
       }
     });
+
+    // a feature line has been selected and may be added as a bookmark
+    BEViewer.featureLineSelectionManager.addFeatureLineSelectionManagerChangedListener(new Observer() {
+      public void update(Observable o, Object arg) {
+
+      // same as in BEToolbar
+
+      // enabled if feature line is not blank and is not already bookmarked
+      FeatureLine selectedFeatureLine = BEViewer.featureLineSelectionManager.getFeatureLineSelection();
+      miAddBookmark.setEnabled(!selectedFeatureLine.isBlank()
+                   && !BEViewer.bookmarksModel.contains(selectedFeatureLine));
+      }
+    });
+    FeatureLine selectedFeatureLine = BEViewer.featureLineSelectionManager.getFeatureLineSelection();
+    miAddBookmark.setEnabled(!selectedFeatureLine.isBlank()
+                   && !BEViewer.bookmarksModel.contains(selectedFeatureLine));
+
+    // bookmarks|Manage Bookmarks
+    miManageBookmarks = new JMenuItem("Manage Bookmarks\u2026", BEIcons.MANAGE_BOOKMARKS_16);	// ...
+    bookmarks.add(miManageBookmarks);
+    miManageBookmarks.setAccelerator(KEYSTROKE_M);
+    miManageBookmarks.addActionListener(new ActionListener() {
+      public void actionPerformed (ActionEvent e) {
+        WManageBookmarks.openWindow();
+      }
+    });
+    // wire listener to manage when bookmarks are available for management
+    BEViewer.bookmarksModel.bookmarksComboBoxModel.addListDataListener(new ListDataListener() {
+      public void contentsChanged(ListDataEvent e) {
+        miManageBookmarks.setEnabled(!BEViewer.bookmarksModel.isEmpty());
+      }
+      public void intervalAdded(ListDataEvent e) {
+        miManageBookmarks.setEnabled(!BEViewer.bookmarksModel.isEmpty());
+      }
+      public void intervalRemoved(ListDataEvent e) {
+        miManageBookmarks.setEnabled(!BEViewer.bookmarksModel.isEmpty());
+      }
+    });
+    miManageBookmarks.setEnabled(!BEViewer.bookmarksModel.isEmpty());
 
     // tools
     JMenu tools = new JMenu("Tools");

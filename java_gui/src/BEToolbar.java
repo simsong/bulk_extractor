@@ -68,7 +68,7 @@ public class BEToolbar extends JToolBar {
     });
     add(closeToolbarB);
 
-//    // separator
+    // separator
     addSeparator(new Dimension(20, 0));
 
     // shortcuts
@@ -79,6 +79,12 @@ public class BEToolbar extends JToolBar {
 
     // highlight control
     addHighlightControl();
+
+    // set enabled states
+    setEnabledStates();
+
+    // wire listeners
+    wireListeners();
   }
 
   /**
@@ -126,6 +132,31 @@ public class BEToolbar extends JToolBar {
     });
     add(runB);
 
+    // add bookmark
+    addBookmarkB.setFocusable(false);
+    addBookmarkB.setOpaque(false);
+    addBookmarkB.setBorderPainted(false);
+    addBookmarkB.setToolTipText("Bookmark the selected feature");
+    addBookmarkB.addActionListener(new ActionListener() {
+      public void actionPerformed (ActionEvent e) {
+        FeatureLine selectedFeatureLine = BEViewer.featureLineSelectionManager.getFeatureLineSelection();
+        BEViewer.bookmarksModel.addElement(selectedFeatureLine);
+      }
+    });
+    add(addBookmarkB);
+
+    // manage bookmarks
+    manageBookmarksB.setFocusable(false);
+    manageBookmarksB.setOpaque(false);
+    manageBookmarksB.setBorderPainted(false);
+    manageBookmarksB.setToolTipText("Manage bookmarks");
+    manageBookmarksB.addActionListener(new ActionListener() {
+      public void actionPerformed (ActionEvent e) {
+        WManageBookmarks.openWindow();
+      }
+    });
+    add(manageBookmarksB);
+
     // Copy
     copyB.setFocusable(false);
     copyB.setOpaque(false);
@@ -136,104 +167,26 @@ public class BEToolbar extends JToolBar {
         RangeSelectionManager.setSystemClipboard(BEViewer.rangeSelectionManager.getSelection());
       }
     });
-    copyB.setEnabled(false);
-
-    // wire listener to manage when a buffer is available to copy
-    BEViewer.rangeSelectionManager.addRangeSelectionManagerChangedListener(new Observer() {
-      public void update(Observable o, Object arg) {
-        copyB.setEnabled(BEViewer.rangeSelectionManager.hasSelection());
-      }
-    });
     add(copyB);
 
     // print selected Feature
     printB.setFocusable(false);
     printB.setOpaque(false);
     printB.setBorderPainted(false);
-    printB.setEnabled(false);
     printB.setToolTipText("Print the selected range");
     printB.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
         BEViewer.printRange();
       }
     });
-    // wire listener to know when a feature is available for printing
-    BEViewer.rangeSelectionManager.addRangeSelectionManagerChangedListener(new Observer() {
-      public void update(Observable o, Object arg) {
-        printB.setEnabled(BEViewer.rangeSelectionManager.hasSelection());
-      }
-    });
     add(printB);
 
-    // add bookmark
-    addBookmarkB.setFocusable(false);
-    addBookmarkB.setOpaque(false);
-    addBookmarkB.setBorderPainted(false);
-    addBookmarkB.setEnabled(false);
-    addBookmarkB.setToolTipText("Bookmark the selected feature");
-    addBookmarkB.addActionListener(new ActionListener() {
-      public void actionPerformed (ActionEvent e) {
-        FeatureLine selectedFeatureLine = BEViewer.featureLineSelectionManager.getFeatureLineSelection();
-        BEViewer.bookmarksModel.addElement(selectedFeatureLine);
-      }
-    });
-    // wire listener to manage when a feature line is selected
-    // and is available to be added
-    BEViewer.featureLineSelectionManager.addFeatureLineSelectionManagerChangedListener(new Observer() {
-      public void update(Observable o, Object arg) {
-        // not blank and not already present
-        FeatureLine selectedFeatureLine = BEViewer.featureLineSelectionManager.getFeatureLineSelection();
-WLog.log("BEToolbar selected: " + selectedFeatureLine + ", " + !BEViewer.bookmarksModel.contains(selectedFeatureLine));
-        boolean isSelectable = (!selectedFeatureLine.isBlank()
-                   && !BEViewer.bookmarksModel.contains(selectedFeatureLine));
-        addBookmarkB.setEnabled(isSelectable);
-      }
-    });
-    add(addBookmarkB);
-
-    // manage bookmarks
-    manageBookmarksB.setFocusable(false);
-    manageBookmarksB.setOpaque(false);
-    manageBookmarksB.setBorderPainted(false);
-    manageBookmarksB.setEnabled(false);
-    manageBookmarksB.setToolTipText("Manage bookmarks");
-    manageBookmarksB.addActionListener(new ActionListener() {
-      public void actionPerformed (ActionEvent e) {
-        WManageBookmarks.openWindow();
-      }
-    });
-    // wire listener to manage when bookmarks are available for managing
-    // listen to bookmarks list changes
-    BEViewer.bookmarksModel.bookmarksComboBoxModel.addListDataListener(new ListDataListener() {
-      public void contentsChanged(ListDataEvent e) {
-        manageBookmarksB.setEnabled(BEViewer.bookmarksModel.isEmpty());
-      }
-      public void intervalAdded(ListDataEvent e) {
-        manageBookmarksB.setEnabled(BEViewer.bookmarksModel.isEmpty());
-      }
-      public void intervalRemoved(ListDataEvent e) {
-        manageBookmarksB.setEnabled(BEViewer.bookmarksModel.isEmpty());
-      }
-    });
-    add(manageBookmarksB);
-
-/*
-zzzzzzzzz fix
-    // wire listener to manage when bookmarks are available for export
-    BEViewer.featureBookmarksModel.addBookmarksModelChangedListener(new Observer() {
-      public void update(Observable o, Object arg) {
-        exportB.setEnabled(BEViewer.featureBookmarksModel.size() > 0);
-      }
-    });
-*/
   }
 
   // ************************************************************
   // highlight
   // ************************************************************
   private void addHighlightControl() {
-//    Container container = new Container();
-//    container.setLayout(new BoxLayout(container, BoxLayout.X_AXIS));
 
     // ************************************************************
     // "Highlight:" label
@@ -287,7 +240,6 @@ zzzzzzzzz fix
     add(highlightTF);
 
     // separator
-//    addSeparator(new Dimension(10, 0));
     addSeparator(new Dimension(BEViewer.GUI_X_PADDING, 0));
 
     // ************************************************************
@@ -331,4 +283,54 @@ zzzzzzzzz fix
     // add the match case button
     add(matchCaseCB);
   }
+
+  // wire listeners to set enabled states
+  private void wireListeners() {
+
+    // a feature line has been selected and may be added as a bookmark
+    BEViewer.featureLineSelectionManager.addFeatureLineSelectionManagerChangedListener(new Observer() {
+      public void update(Observable o, Object arg) {
+        setEnabledStates();
+      }
+    });
+
+    // the bookmarks list has changed
+    BEViewer.bookmarksModel.bookmarksComboBoxModel.addListDataListener(new ListDataListener() {
+      public void contentsChanged(ListDataEvent e) {
+        setEnabledStates();
+      }
+      public void intervalAdded(ListDataEvent e) {
+        setEnabledStates();
+      }
+      public void intervalRemoved(ListDataEvent e) {
+        setEnabledStates();
+      }
+    });
+
+    // the user's feature or image range selection has changed,
+    // impacting copy and print buttons
+    BEViewer.rangeSelectionManager.addRangeSelectionManagerChangedListener(new Observer() {
+      public void update(Observable o, Object arg) {
+        setEnabledStates();
+      }
+    });
+  }
+
+  private void setEnabledStates() {
+    // add bookmark
+    // enabled if feature line is not blank and is not already bookmarked
+    FeatureLine selectedFeatureLine = BEViewer.featureLineSelectionManager.getFeatureLineSelection();
+    addBookmarkB.setEnabled(!selectedFeatureLine.isBlank()
+                   && !BEViewer.bookmarksModel.contains(selectedFeatureLine));
+
+    // manage bookmarks
+    manageBookmarksB.setEnabled(!BEViewer.bookmarksModel.isEmpty());
+
+    // copy
+    copyB.setEnabled(BEViewer.rangeSelectionManager.hasSelection());
+
+    // print
+    printB.setEnabled(BEViewer.rangeSelectionManager.hasSelection());
+  }
 }
+
