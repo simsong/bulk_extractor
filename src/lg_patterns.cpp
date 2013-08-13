@@ -109,13 +109,13 @@ namespace accts {
    * Common box arrays found in PDF files
    * With more testing this can and will still be tweaked
    */
-  const std::string PDF_BOX("box ?[\\[][0-9 -]{0,40}[\\]]");
+  const std::string PDF_BOX("box ?\\[[0-9 -]{0,40}\\]");
 
   /*
    * Common rectangles found in PDF files
    *  With more testing this can and will still be tweaked
    */
-  const std::string PDF_RECT("[\\[] ?[0-9.-]{1,12} [0-9.-]{1,12} [0-9.-]{1,12} [0-9.-]{1,12} ?[\\]]");
+  const std::string PDF_RECT("\\[ ?[0-9.-]{1,12} [0-9.-]{1,12} [0-9.-]{1,12} [0-9.-]{1,12} ?\\]");
 }
 
 namespace base16 {
