@@ -12,7 +12,7 @@ namespace accts {
   const std::string BLOCK("[0-9]{4}");
   const std::string DELIM("([- ])");
   const std::string DB("(" + BLOCK + DELIM + ")");
-  const std::string SDB("([45][0-9][0-9][0-9]" + DELIM + ")");
+  const std::string SDB("([45][0-9]{3}" + DELIM + ")");
   const std::string TDEL("([ /.-])");
 
   const std::string PHONETEXT("([^a-z](tel[.ephon]*|(fax)|(facsimile)|DSN|telex|TTD|mobile|cell)):?");
@@ -37,7 +37,7 @@ namespace accts {
   //
 
   /* #### #### #### #### #### #### is definately not a CCN. */
-  const std::string REGEX1("[^0-9a-z]" + DB + DB + DB + DB + DB);
+  const std::string REGEX1("[^0-9a-z]" + DB + "{5}");
 
   // FIXME: trailing context
   /* #### #### #### #### --- most credit card numbers*/
@@ -46,7 +46,7 @@ namespace accts {
   // FIXME: trailing context
   /* 3### ###### ######### --- 15 digits beginning with 3 and funny space. */
   /* Must be american express... */ 
-  const std::string REGEX3("[^0-9a-z.]3[0-9][0-9][0-9]" + DELIM + "[0-9]{6}" + DELIM + "[0-9]{5}" + END);
+  const std::string REGEX3("[^0-9a-z.]3[0-9]{3}" + DELIM + "[0-9]{6}" + DELIM + "[0-9]{5}" + END);
 
   // FIXME: trailing context
   /* 3### ###### ######### --- 15 digits beginning with 3 and funny space. */
@@ -72,15 +72,15 @@ namespace accts {
    * then do not consider this a phone number. We see a lot of that stuff in
    * PDF files.
    */
-  const std::string REGEX7("[^0-9a-z][0-9][0-9][0-9]" + TDEL + "[0-9][0-9][0-9]" + TDEL + "[0-9][0-9][0-9][0-9]" + END);
+  const std::string REGEX7("[^0-9a-z][0-9]{3}" + TDEL + "[0-9]{3}" + TDEL + "[0-9]{4}" + END);
 
   // FIXME: trailing context
   /* US phone number with parens, like (215) 555-1212 */
-  const std::string REGEX8("[^0-9a-z]\\([0-9][0-9][0-9]\\)" + TDEL + "?[0-9][0-9][0-9]" + TDEL + "[0-9][0-9][0-9][0-9]" + END);
+  const std::string REGEX8("[^0-9a-z]\\([0-9]{3}\\)" + TDEL + "?[0-9]{3}" + TDEL + "[0-9]{4}" + END);
 
   // FIXME: trailing context
   /* Generalized international phone numbers */
-  const std::string REGEX9("[^0-9a-z]\\+[0-9]{1,3}((" + TDEL + "[0-9][0-9][0-9]?){2,6})[0-9]{2,4}" + END);
+  const std::string REGEX9("[^0-9a-z]\\+[0-9]{1,3}((" + TDEL + "[0-9]{2,3}){2,6})[0-9]{2,4}" + END);
 
   /* Generalized number with prefix */
   const std::string REGEX10(PHONETEXT + "[0-9/ .+]{7,18}");
@@ -98,10 +98,10 @@ namespace accts {
 
   // FIXME: trailing context
   /* Generalized international phone numbers */
-  const std::string REGEX12("fedex[^a-z]+[0-9][0-9][0-9][0-9][- ]?[0-9][0-9][0-9][0-9][- ]?[0-9]" + END);
+  const std::string REGEX12("fedex[^a-z]+[0-9]{4}[- ]?[0-9]{4}[- ]?[0-9]" + END);
 
   // FIXME: trailing context
-  const std::string REGEX13("ssn:?[ \\t]+[0-9][0-9][0-9]-?[0-9][0-9]-?[0-9][0-9][0-9][0-9]" + END);
+  const std::string REGEX13("ssn:?[ \\t]+[0-9]{3}-?[0-9]{2}-?[0-9]{4}" + END);
 
   const std::string REGEX14("dob:?[ \\t]+" + DATEFORMAT);
 
@@ -142,7 +142,7 @@ namespace email {
   // subpatterns
   //
 
-  const std::string INUM("(([0-9])|([0-9][0-9])|(1[0-9][0-9])|(2[0-4][0-9])|(25[0-5]))");
+  const std::string INUM("([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])");
   const std::string HEX("([0-9a-f])");
   const std::string ALNUM("[a-zA-Z0-9]");
   const std::string PC("[ !#$%&'()*+,\\-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ\\[\\\\\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\"]");
@@ -182,7 +182,7 @@ namespace email {
   const std::string NON_IP_1(INUM + "?\\." + INUM + "\\." + INUM + "\\." + INUM + "\\." + INUM);
 
   /* Also not an IP address, but could generate a false positive */
-  const std::string NON_IP_2("[0-9][0-9][0-9][0-9]\\." + INUM + "\\." + INUM + "\\." + INUM);
+  const std::string NON_IP_2("[0-9]{4}\\." + INUM + "\\." + INUM + "\\." + INUM);
 
   // FIXME: trailing context
   /* Numeric IP addresses. Get the context before and throw away some things */
@@ -221,7 +221,7 @@ namespace gps {
   
   const std::string ELE("<ele>" + ELEV + "</ele>");
 
-  const std::string TIME("<time>[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9][ T][0-9][0-9]:[0-9][0-9]:[0-9][0-9](Z|([-+][0-9.]))</time>");
+  const std::string TIME("<time>[0-9]{4}-[0-9]{2}-[0-9]{2}[ T][0-9]{2}:[0-9]{2}:[0-9]{2}(Z|([-+][0-9.]))</time>");
 
   const std::string GPXTPX_SPEED("<gpxtpx:speed>" + ELEV + "</gpxtpx:speed>");
 
