@@ -17,7 +17,7 @@ namespace accts {
 
   const std::string PHONETEXT("([^a-z](tel[.ephon]*|fax|facsimile|DSN|telex|TTD|mobile|cell)):?");
 
-  // FIXME: post-2009?! 
+  // FIXME: post-2009?!
   const std::string YEAR("(19[0-9][0-9]|20[01][0-9])");
   const std::string MONTH("(Jan(uary)?|Feb(ruary)?|Mar(ch)?|Apr(il)?|May|Jun(e)?|Jul(y)?|Aug(ust)?|Sep(tember)?|Oct(ober)?|Nov(ember)?|Dec(ember)?|0?1|0?2|0?3|0?4|0?5|0?6|0?7|0?8|0?9|10|11|12)");
   const std::string DAY("([0-9]|[0-2][0-9]|30|31)");
@@ -129,12 +129,12 @@ namespace base16 {
    * {0,4} means we have 0-4 space characters
    * {6,}  means minimum of 6 hex bytes
    */
-  const std::string HEX1("[^0-9A-F]([0-9A-F][0-9A-F][ \\t\\n\\r]{0,4}){6,}[^0-9A-F]");
+  const std::string HEX1("[^0-9A-F]([0-9A-F]{2}[ \\t\\n\\r]{0,4}){6,}[^0-9A-F]");
 
   // FIXME: trailing context
   // FIXME: had leading ^
   /* hex at the beginning of the file */
-  const std::string HEX2("([0-9A-F][0-9A-F][ \\t\\n\\r]{0,4}){6,}[^0-9A-F]");
+  const std::string HEX2("([0-9A-F]{2}[ \\t\\n\\r]{0,4}){6,}[^0-9A-F]");
 }
 
 namespace email {
@@ -145,7 +145,7 @@ namespace email {
   const std::string INUM("([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])");
   const std::string HEX("[0-9a-f]");
   const std::string ALNUM("[a-zA-Z0-9]");
-  const std::string PC("[ !#$%&'()*+,\\-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ\\[\\\\\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\"]");
+  const std::string PC("[ !#$%&'()*+,\\-./0-9:;<=>?@A-Z\\[\\\\\\]^_`a-z{|}~\"]");
 
   const std::string TLD("(AC|AD|AE|AERO|AF|AG|AI|AL|AM|AN|AO|AQ|AR|ARPA|AS|ASIA|AT|AU|AW|AX|AZ|BA|BB|BD|BE|BF|BG|BH|BI|BIZ|BJ|BL|BM|BN|BO|BR|BS|BT|BV|BW|BY|BZ|CA|CAT|CC|CD|CF|CG|CH|CI|CK|CL|CM|CN|CO|COM|COOP|CR|CU|CV|CX|CY|CZ|DE|DJ|DK|DM|DO|DZ|EC|EDU|EE|EG|EH|ER|ES|ET|EU|FI|FJ|FK|FM|FO|FR|GA|GB|GD|GE|GF|GG|GH|GI|GL|GM|GN|GOV|GP|GQ|GR|GS|GT|GU|GW|GY|HK|HM|HN|HR|HT|HU|ID|IE|IL|IM|IN|INFO|INT|IO|IQ|IR|IS|IT|JE|JM|JO|JOBS|JP|KE|KG|KH|KI|KM|KN|KP|KR|KW|KY|KZ|LA|LB|LC|LI|LK|LR|LS|LT|LU|LV|LY|MA|MC|MD|ME|MF|MG|MH|MIL|MK|ML|MM|MN|MO|MOBI|MP|MQ|MR|MS|MT|MU|MUSEUM|MV|MW|MX|MY|MZ|NA|NAME|NC|NE|NET|NF|NG|NI|NL|NO|NP|NR|NU|NZ|OM|ORG|PA|PE|PF|PG|PH|PK|PL|PM|PN|PR|PRO|PS|PT|PW|PY|QA|RE|RO|RS|RU|RW|SA|SB|SC|SD|SE|SG|SH|SI|SJ|SK|SL|SM|SN|SO|SR|ST|SU|SV|SY|SZ|TC|TD|TEL|TF|TG|TH|TJ|TK|TL|TM|TN|TO|TP|TR|TRAVEL|TT|TV|TW|TZ|UA|UG|UK|UM|US|UY|UZ|VA|VC|VE|VG|VI|VN|VU|WF|WS|YE|YT|YU|ZA|ZM|ZW)");
 
@@ -234,9 +234,9 @@ namespace httpheader {
   // subpatterns
   //
 
-  const std::string PC("[ !#$%&'()*+,\\-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ\\[\\\\\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\"]");
+  const std::string PC("[ !#$%&'()*+,\\-./0-9:;<=>?@A-Z\\[\\\\\\]^_`a-z{|}~\"]");
 
-  const std::string XPC("[ !#$%&'()*+,\\-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ\\[\\\\\\]^_`abcdefghijklmnopqrstuvwxyz{|}~]");
+  const std::string XPC("[ !#$%&'()*+,\\-./0-9:;<=>?@A-Z\\[\\\\\\]^_`a-z{|}~]");
   
   /*
    * RFC 2616, Page 12
@@ -253,7 +253,7 @@ namespace httpheader {
    *
    * TODO Might still need to account for RFC 2407.
    */
-  const std::string HTTP_COMMENT("(" + PC + "|" + HTTP_LWS + "|[\\t])");
+  const std::string HTTP_COMMENT("(" + PC + "|" + HTTP_LWS + "|\\t)");
 
   //
   // patterns
