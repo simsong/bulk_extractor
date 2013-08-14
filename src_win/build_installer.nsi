@@ -55,6 +55,7 @@ Name "${APPNAME}"
 !endif
  
 !include LogicLib.nsh
+!include EnvVarUpdate.nsh
  
 page components
 Page instfiles
@@ -109,6 +110,20 @@ function InstallOnce
 	# link the uninstaller to the start menu
 	createShortCut "$SMPROGRAMS\${APPNAME}\Uninstall ${APPNAME}.lnk" "$INSTDIR\uninstall.exe"
 
+        # install Python scripts
+        setOutPath "$INSTDIR\python"
+        file "../python/bulk_diff.py"
+        file "../python/bulk_extractor_reader.py"
+        file "../python/cda_tool.py"
+        file "../python/dfxml.py"
+        file "../python/fiwalk.py"
+        file "../python/histogram.py"
+        file "../python/identify_filenames.py"
+        file "../python/post_process_exif.py"
+        file "../python/report_encodings.py"
+        file "../python/statbag.py"
+        file "../python/ttable.py"
+
 	AlreadyThere:
 functionEnd
 
@@ -147,6 +162,18 @@ Section "64-bit configuration"
 	file "/oname=BEViewerLauncher.exe" ${BE_VIEWER_LAUNCHER}
 	createShortCut "BEViewer.jar" "..\BEViewer.jar"
  
+	# create the shortcut link to the target's start menu
+	createShortCut "$SMPROGRAMS\${APPNAME}\BEViewer with ${APPNAME} (64-bit).lnk" "$OUTDIR\BEViewerLauncher.exe"
+sectionEnd
+
+Section "Add to path"
+	setOutPath "$INSTDIR"
+        # note that path includes 32-bit and 64-bit, whether or not they
+        # were both installed
+        ${EnvVarUpdate} $0 "PATH" "A" "HKLM" "$INSTDIR\python"
+        ${EnvVarUpdate} $0 "PATH" "A" "HKLM" "$INSTDIR\32-bit"
+        ${EnvVarUpdate} $0 "PATH" "A" "HKLM" "$INSTDIR\64-bit"
+
 	# create the shortcut link to the target's start menu
 	createShortCut "$SMPROGRAMS\${APPNAME}\BEViewer with ${APPNAME} (64-bit).lnk" "$OUTDIR\BEViewerLauncher.exe"
 sectionEnd
@@ -197,13 +224,19 @@ section "uninstall"
 	StrCpy $0 "$INSTDIR\64-bit\bulk_extractor.exe"
 	Call un.FailableDelete
 
-	# uninstall DLLs and links
+
+	StrCpy $0 "$INSTDIR\64-bit\bulk_extractor.exe"
+	Call un.FailableDelete
+
+	# uninstall files and links
 	delete "$INSTDIR\32-bit\*"
 	delete "$INSTDIR\64-bit\*"
+	delete "$INSTDIR\python\*"
 
 	# uninstall dir
 	rmdir "$INSTDIR\32-bit"
 	rmdir "$INSTDIR\64-bit"
+	rmdir "$INSTDIR\python"
 
 	# uninstall Start Menu launcher shortcuts
 	delete "$SMPROGRAMS\${APPNAME}\BEViewer with ${APPNAME} (32-bit).lnk"
@@ -219,6 +252,12 @@ section "uninstall"
  
 	# Remove uninstaller information from the registry
 	DeleteRegKey HKLM "${REG_SUB_KEY}"
+
+        # remove associated search paths from the PATH environment variable
+        # were both installed
+        ${un.EnvVarUpdate} $0 "PATH" "R" "HKLM" "$INSTDIR\python"
+        ${un.EnvVarUpdate} $0 "PATH" "R" "HKLM" "$INSTDIR\32-bit"
+        ${un.EnvVarUpdate} $0 "PATH" "R" "HKLM" "$INSTDIR\64-bit"
 sectionEnd
 !endif
 
