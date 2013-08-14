@@ -19,10 +19,10 @@ namespace accts {
 
   const std::string YEAR("(19[0-9][0-9]|20[01][0-9])");
   const std::string MONTH("(Jan(uary)?|Feb(ruary)?|Mar(ch)?|Apr(il)?|May|Jun(e)?|Jul(y)?|Aug(ust)?|Sep(tember)?|Oct(ober)?|Nov(ember)?|Dec(ember)?|0?[1-9]|1[0-2])");
-  const std::string DAY("([0-9]|[0-2][0-9]|30|31)");
+  const std::string DAY("([0-2]?[0-9]|3[01])");
 
   const std::string SYEAR("([0-9][0-9])");
-  const std::string SMONTH("([0-1][0-2])");
+  const std::string SMONTH("([01][0-2])");
  
   const std::string DATEA("(" + YEAR + "-" + MONTH + "-" + DAY + ")");
   const std::string DATEB("(" + YEAR + "/" + MONTH + "/" + DAY + ")");
@@ -71,7 +71,7 @@ namespace accts {
    * then do not consider this a phone number. We see a lot of that stuff in
    * PDF files.
    */
-  const std::string REGEX7("[^0-9a-z][0-9]{3}" + TDEL + "[0-9]{3}" + TDEL + "[0-9]{4}" + END);
+  const std::string REGEX7("[^0-9a-z]([0-9]{3}" + TDEL + "){2}[0-9]{4}" + END);
 
   // FIXME: trailing context
   /* US phone number with parens, like (215) 555-1212 */
@@ -97,7 +97,7 @@ namespace accts {
 
   // FIXME: trailing context
   /* Generalized international phone numbers */
-  const std::string REGEX12("fedex[^a-z]+[0-9]{4}[- ]?[0-9]{4}[- ]?[0-9]" + END);
+  const std::string REGEX12("fedex[^a-z]+([0-9]{4}[- ]?){2}[0-9]" + END);
 
   // FIXME: trailing context
   const std::string REGEX13("ssn:?[ \\t]+[0-9]{3}-?[0-9]{2}-?[0-9]{4}" + END);
@@ -114,7 +114,7 @@ namespace accts {
    * Common rectangles found in PDF files
    *  With more testing this can and will still be tweaked
    */
-  const std::string PDF_RECT("\\[ ?[0-9.-]{1,12} [0-9.-]{1,12} [0-9.-]{1,12} [0-9.-]{1,12} ?\\]");
+  const std::string PDF_RECT("\\[ ?([0-9.-]{1,12} ){3}[0-9.-]{1,12} ?\\]");
 }
 
 namespace base16 {
@@ -144,7 +144,8 @@ namespace email {
   const std::string INUM("([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])");
   const std::string HEX("[0-9a-f]");
   const std::string ALNUM("[a-zA-Z0-9]");
-  const std::string PC("[ !#$%&'()*+,\\-./0-9:;<=>?@A-Z\\[\\\\\\]^_`a-z{|}~\"]");
+
+  const std::string PC("[\\x20-\\x7E]");
 
   const std::string TLD("(AC|AD|AE|AERO|AF|AG|AI|AL|AM|AN|AO|AQ|AR|ARPA|AS|ASIA|AT|AU|AW|AX|AZ|BA|BB|BD|BE|BF|BG|BH|BI|BIZ|BJ|BL|BM|BN|BO|BR|BS|BT|BV|BW|BY|BZ|CA|CAT|CC|CD|CF|CG|CH|CI|CK|CL|CM|CN|CO|COM|COOP|CR|CU|CV|CX|CY|CZ|DE|DJ|DK|DM|DO|DZ|EC|EDU|EE|EG|EH|ER|ES|ET|EU|FI|FJ|FK|FM|FO|FR|GA|GB|GD|GE|GF|GG|GH|GI|GL|GM|GN|GOV|GP|GQ|GR|GS|GT|GU|GW|GY|HK|HM|HN|HR|HT|HU|ID|IE|IL|IM|IN|INFO|INT|IO|IQ|IR|IS|IT|JE|JM|JO|JOBS|JP|KE|KG|KH|KI|KM|KN|KP|KR|KW|KY|KZ|LA|LB|LC|LI|LK|LR|LS|LT|LU|LV|LY|MA|MC|MD|ME|MF|MG|MH|MIL|MK|ML|MM|MN|MO|MOBI|MP|MQ|MR|MS|MT|MU|MUSEUM|MV|MW|MX|MY|MZ|NA|NAME|NC|NE|NET|NF|NG|NI|NL|NO|NP|NR|NU|NZ|OM|ORG|PA|PE|PF|PG|PH|PK|PL|PM|PN|PR|PRO|PS|PT|PW|PY|QA|RE|RO|RS|RU|RW|SA|SB|SC|SD|SE|SG|SH|SI|SJ|SK|SL|SM|SN|SO|SR|ST|SU|SV|SY|SZ|TC|TD|TEL|TF|TG|TH|TJ|TK|TL|TM|TN|TO|TP|TR|TRAVEL|TT|TV|TW|TZ|UA|UG|UK|UM|US|UY|UZ|VA|VC|VE|VG|VI|VN|VU|WF|WS|YE|YT|YU|ZA|ZM|ZW)");
 
@@ -153,7 +154,7 @@ namespace email {
   const std::string YEAR("(19[6-9][0-9]|20[0-1][0-9])");
   const std::string DAYOFWEEK("(Mon|Tue|Wed|Thu|Fri|Sat|Sun)");
   const std::string MONTH("(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)");
-  const std::string ABBREV("(UT|GMT|EST|EDT|CST|CDT|MST|MDT|PST|PDT|Z|A|M|N|Y)");
+  const std::string ABBREV("(UT|GMT|EST|EDT|CST|CDT|MST|MDT|PST|PDT|[ZAMNY])");
 
   const std::string U_TLD1("(A\\0C\\0|A\\0D\\0|A\\0E\\0|A\\0E\\0R\\0O\\0|A\\0F\\0|A\\0G\\0|A\\0I\\0|A\\0L\\0|A\\0M\\0|A\\0N\\0|A\\0O\\0|A\\0Q\\0|A\\0R\\0|A\\0R\\0P\\0A\\0|A\\0S\\0|A\\0S\\0I\\0A\\0|A\\0T\\0|A\\0U\\0|A\\0W\\0|A\\0X\\0|A\\0Z\\0|B\\0A\\0|B\\0B\\0|B\\0D\\0|B\\0E\\0|B\\0F\\0|B\\0G\\0|B\\0H\\0|B\\0I\\0|B\\0I\\0Z\\0|B\\0J\\0|B\\0L\\0|B\\0M\\0|B\\0N\\0|B\\0O\\0|B\\0R\\0|B\\0S\\0|B\\0T\\0|B\\0V\\0|B\\0W\\0|B\\0Y\\0|B\\0Z\\0|C\\0A\\0|C\\0A\\0T\\0|C\\0C\\0|C\\0D\\0|C\\0F\\0|C\\0G\\0|C\\0H\\0|C\\0I\\0|C\\0K\\0|C\\0L\\0|C\\0M\\0|C\\0N\\0|C\\0O\\0|C\\0O\\0M\\0|C\\0O\\0O\\0P\\0|C\\0R\\0|C\\0U\\0|C\\0V\\0|C\\0X\\0|C\\0Y\\0|C\\0Z\\0)");
   const std::string U_TLD2("(D\\0E\\0|D\\0J\\0|D\\0K\\0|D\\0M\\0|D\\0O\\0|D\\0Z\\0|E\\0C\\0|E\\0D\\0U\\0|E\\0E\\0|E\\0G\\0|E\\0H\\0|E\\0R\\0|E\\0S\\0|E\\0T\\0|E\\0U\\0|F\\0I\\0|F\\0J\\0|F\\0K\\0|F\\0M\\0|F\\0O\\0|F\\0R\\0|G\\0A\\0|G\\0B\\0|G\\0D\\0|G\\0E\\0|G\\0F\\0|G\\0G\\0|G\\0H\\0|G\\0I\\0|G\\0L\\0|G\\0M\\0|G\\0N\\0|G\\0O\\0V\\0|G\\0P\\0|G\\0Q\\0|G\\0R\\0|G\\0S\\0|G\\0T\\0|G\\0U\\0|G\\0W\\0|G\\0Y\\0|H\\0K\\0|H\\0M\\0|H\\0N\\0|H\\0R\\0|H\\0T\\0|H\\0U\\0|I\\0D\\0|I\\0E\\0|I\\0L\\0|I\\0M\\0|I\\0N\\0|I\\0N\\0F\\0O\\0|I\\0N\\0T\\0|I\\0O\\0|I\\0Q\\0|I\\0R\\0|I\\0S\\0|I\\0T\\0|J\\0E\\0|J\\0M\\0|J\\0O\\0|J\\0O\\0B\\0S\\0|J\\0P\\0|K\\0E\\0|K\\0G\\0|K\\0H\\0|K\\0I\\0|K\\0M\\0|K\\0N\\0|K\\0P\\0|K\\0R\\0|K\\0W\\0|K\\0Y\\0|K\\0Z\\0)");
@@ -177,31 +178,35 @@ namespace email {
   const std::string ADDR(EMAIL + "[^a-zA-Z]");
 
   /* Not an IP address, but could generate a false positive */
-  const std::string NON_IP_1(INUM + "?\\." + INUM + "\\." + INUM + "\\." + INUM + "\\." + INUM);
+  const std::string NON_IP_1(INUM + "?(\\." + INUM + "){4}");
 
   /* Also not an IP address, but could generate a false positive */
-  const std::string NON_IP_2("[0-9]{4}\\." + INUM + "\\." + INUM + "\\." + INUM);
+  const std::string NON_IP_2("[0-9]{4}(\\." + INUM + "){3}");
 
   // FIXME: trailing context
   /* Numeric IP addresses. Get the context before and throw away some things */
-  const std::string IP(INUM + "\\." + INUM + "\\." + INUM + "\\." + INUM + "[^0-9\\-.+A-Z_]");
+  const std::string IP(INUM + "(\\." + INUM + "){3}[^0-9\\-.+A-Z_]");
 
   // FIXME: trailing context
   // FIXME: should we be searching for all uppercase MAC addresses as well?
   /* found a possible MAC address! */
-  const std::string MAC("[^0-9A-Z:]" + HEX + "{2}:" + HEX + "{2}:" + HEX + "{2}:" + HEX + "{2}:" + HEX + "{2}:" + HEX + "{2}[^0-9A-Z:]");
+  const std::string MAC("[^0-9A-Z:]" + HEX + "{2}(:" + HEX + "{2}){5}[^0-9A-Z:]");
 
   // for reasons that aren't clear, there are a lot of net protocols that have
   // an http://domain in them followed by numbers. So this counts the number of
   // slashes and if it is only 2 the size is pruned until the last character
   // is a letter
-  const std::string PROTO("((https?)|afp|smb)://[a-zA-Z0-9_%/\\-+@:=&?#~.;]{1,384}");
+  const std::string PROTO("(https?|afp|smb)://[a-zA-Z0-9_%/\\-+@:=&?#~.;]{1,384}");
  
   // FIXME: trailing context
-  const std::string EMAIL_UTF16LE("[a-zA-Z0-9]\\0([a-zA-Z0-9._%\\-+]\\0){1,128}@\\0([a-zA-Z0-9._%\\-]\\0){1,128}\\.\\0(" + U_TLD1 + "|" + U_TLD2 + "|" + U_TLD3 + "|" + U_TLD4 + ")([^a-zA-Z]|([^][^\\0]))");
+//  const std::string EMAIL_UTF16LE("[a-zA-Z0-9]\\0([a-zA-Z0-9._%\\-+]\\0){1,128}@\\0([a-zA-Z0-9._%\\-]\\0){1,128}\\.\\0(" + U_TLD1 + "|" + U_TLD2 + "|" + U_TLD3 + "|" + U_TLD4 + ")([^a-zA-Z]|([^][^\\0]))");
+
+  const std::string EMAIL_UTF16LE("[a-zA-Z0-9][a-zA-Z0-9._%\\-+]{1,128}@[a-zA-Z0-9._%\\-]{1,128}\\." + TLD + "([^a-zA-Z]|[\\z00-\\zFF][^\\z00])");
 
   // FIXME: trailing context
-  const std::string HTTP_UTF16LE("h\\0t\\0t\\0p\\0(s\\0)?:\\0([a-zA-Z0-9_%/\\-+@:=&?#~.;]\\0){1,128}([^a-zA-Z0-9_%/\\-+@:=&?#~.;]|([^][^\\0]))");
+//  const std::string HTTP_UTF16LE("h\\0t\\0t\\0p\\0(s\\0)?:\\0([a-zA-Z0-9_%/\\-+@:=&?#~.;]\\0){1,128}([^a-zA-Z0-9_%/\\-+@:=&?#~.;]|([^][^\\0]))");
+
+  const std::string HTTP_UTF16LE("https?:([a-zA-Z0-9_%/\\-+@:=&?#~.;]){1,128}([^a-zA-Z0-9_%/\\-+@:=&?#~.;]|[\\z00-\\zFF][^\\z00]))");
 }
 
 namespace gps {
@@ -220,7 +225,7 @@ namespace gps {
   
   const std::string ELE("<ele>" + ELEV + "</ele>");
 
-  const std::string TIME("<time>[0-9]{4}-[0-9]{2}-[0-9]{2}[ T][0-9]{2}:[0-9]{2}:[0-9]{2}(Z|([-+][0-9.]))</time>");
+  const std::string TIME("<time>[0-9]{4}(-[0-9]{2}){2}[ T]([0-9]{2}:){2}[0-9]{2}(Z|([-+][0-9.]))</time>");
 
   const std::string GPXTPX_SPEED("<gpxtpx:speed>" + ELEV + "</gpxtpx:speed>");
 
@@ -232,16 +237,16 @@ namespace httpheader {
   // subpatterns
   //
 
-  const std::string PC("[ !#$%&'()*+,\\-./0-9:;<=>?@A-Z\\[\\\\\\]^_`a-z{|}~\"]");
+  const std::string PC("[\\x20-\\x7E]");
 
-  const std::string XPC("[ !#$%&'()*+,\\-./0-9:;<=>?@A-Z\\[\\\\\\]^_`a-z{|}~]");
+  const std::string XPC("[\\x20-\\x7E--\"]");
   
   /*
    * RFC 2616, Page 12
    */
   /* Account for over-zealously translated line breaks */
   /* HTTP_LWS - Linear White Space (new line and a whitespace character) */
-  const std::string HTTP_CRLF("(\\x0D\\x0A|\\x0A)");
+  const std::string HTTP_CRLF("(\\x0D?\\x0A)");
   const std::string HTTP_LWS(HTTP_CRLF + "[ \\t]");
 
   /*
