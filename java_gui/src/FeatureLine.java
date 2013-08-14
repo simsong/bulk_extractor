@@ -209,9 +209,10 @@ public class FeatureLine {
         summary = "No image file selected, " + firstField + ", " + formattedFeature;
       }
     } else {
-//      summary = reportImageFile.getName() + ", " + actualImageFile.getName() + ", " + firstField + ", " + formattedFeature;
-// zz contextField is too verbose      summary = ForensicPath.getPrintablePath(forensicPath, BEViewer.imageView.getUseHexPath()) + ", " + featuresFile.getName() +", " + actualImageFile.getName() + ", " + formattedFeature + ", " + new String(contextField);
-      summary = ForensicPath.getPrintablePath(forensicPath, BEViewer.imageView.getUseHexPath()) + ", " + featuresFile.getName() +", " + actualImageFile.getName() + ", " + formattedFeature + ", " + new String(contextField);
+      summary = ForensicPath.getPrintablePath(forensicPath, BEViewer.imageView.getUseHexPath())
+               + ", " + featuresFile.getName()
+               + ", " + actualImageFile.getName()
+               + ", " + formattedFeature;
     }
 
     // truncate the sumamry

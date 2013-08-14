@@ -171,6 +171,12 @@ public class BEViewer {
     // clear features from bookmarks model that are associated with this report
     bookmarksModel.removeAssociatedFeatureLines(reportTreeNode);
 
+    // clear the image selection if it is from this report
+    FeatureLine featureLine = featureLineSelectionManager.getFeatureLineSelection();
+    if (featureLine.isFromReport(reportTreeNode)) {
+      featureLineSelectionManager.setFeatureLineSelection(new FeatureLine());
+    }
+
     // close the associated opened image readers
     imageModel.closeImageReader(reportTreeNode.reportImageFile);
   }
@@ -185,6 +191,9 @@ public class BEViewer {
 
     // close all Reports in the reports model
     reportsModel.clear();
+
+    // clear any image selection
+    featureLineSelectionManager.setFeatureLineSelection(new FeatureLine());
 
     // close any opened image readers
     imageModel.closeAllImageReaders();
