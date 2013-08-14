@@ -25,7 +25,7 @@ public final class NavigationPane extends Container {
   private static final long serialVersionUID = 1;
   private FileComponent imageFileLabel;
   private FileComponent featuresFileLabel;
-  private TextComponent featurePathLabel;
+  private TextComponent forensicPathLabel;
   private TextComponent featureLabel;
   private ImageComponent imageComponent;
   private JRadioButton textViewRB;
@@ -61,7 +61,7 @@ public final class NavigationPane extends Container {
           // set navigation fields
           imageFileLabel.setFile(featureLine.actualImageFile);
           featuresFileLabel.setFile(featureLine.featuresFile);
-          featurePathLabel.setComponentText(ForensicPath.getPrintablePath(featureLine.forensicPath, BEViewer.imageView.getUseHexPath()));
+          forensicPathLabel.setComponentText(ForensicPath.getPrintablePath(featureLine.forensicPath, BEViewer.imageView.getUseHexPath()));
           featureLabel.setComponentText(featureLine.formattedFeature);
 
         } else {
@@ -69,7 +69,7 @@ public final class NavigationPane extends Container {
           // clear navigation fields
           imageFileLabel.setFile(null);
           featuresFileLabel.setFile(null);
-          featurePathLabel.setComponentText(null);
+          forensicPathLabel.setComponentText(null);
           featureLabel.setComponentText(null);
         }
       }
@@ -98,7 +98,7 @@ public final class NavigationPane extends Container {
         } else if (changeType == ImageView.ChangeType.FORENSIC_PATH_NUMERIC_BASE_CHANGED) {
           if (BEViewer.imageView.getImagePage() != null) {
             ImageModel.ImagePage imagePage = BEViewer.imageView.getImagePage();
-            featurePathLabel.setComponentText(ForensicPath.getPrintablePath(imagePage.featureLine.forensicPath, BEViewer.imageView.getUseHexPath()));
+            forensicPathLabel.setComponentText(ForensicPath.getPrintablePath(imagePage.featureLine.forensicPath, BEViewer.imageView.getUseHexPath()));
           }
 
         } else {
@@ -247,23 +247,23 @@ public final class NavigationPane extends Container {
     // add the features file label
     container.add(featuresFileLabel, c);
 
-    // (0,2) Feature Path
+    // (0,2) Forensic Path
     c = new GridBagConstraints();
     c.insets = new Insets(0, 0, 0, 10);
     c.gridx = 0;
     c.gridy = 2;
     c.fill = GridBagConstraints.HORIZONTAL;
-    container.add(new JLabel("Feature Path"), c);
+    container.add(new JLabel("Forensic Path"), c);
 
-    // (1,2) <feature path>
+    // (1,2) <forensic path>
     c = new GridBagConstraints();
     c.insets = new Insets(0, 0, 0, 0);
     c.gridx = 1;
     c.gridy = 2;
     c.weightx = 1;
     c.fill = GridBagConstraints.HORIZONTAL;
-    featurePathLabel = new TextComponent();
-    container.add(featurePathLabel, c);
+    forensicPathLabel = new TextComponent();
+    container.add(forensicPathLabel, c);
 
     // (0,3) Feature text
     c = new GridBagConstraints();

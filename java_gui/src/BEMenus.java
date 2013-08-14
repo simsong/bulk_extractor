@@ -57,6 +57,7 @@ public class BEMenus extends JMenuBar {
   private JMenuItem miPanToStart;
   private JMenuItem miPanToEnd;
   private JMenuItem miShowReportFile;
+  private JMenuItem miShowLog;
 
   private final int KEY_MASK = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
   private final KeyStroke KEYSTROKE_O = KeyStroke.getKeyStroke(KeyEvent.VK_O, KEY_MASK);
@@ -66,6 +67,7 @@ public class BEMenus extends JMenuBar {
   private final KeyStroke KEYSTROKE_A = KeyStroke.getKeyStroke(KeyEvent.VK_A, KEY_MASK);
   private final KeyStroke KEYSTROKE_M = KeyStroke.getKeyStroke(KeyEvent.VK_M, KEY_MASK);
   private final KeyStroke KEYSTROKE_B = KeyStroke.getKeyStroke(KeyEvent.VK_B, KEY_MASK);
+  private final KeyStroke KEYSTROKE_L = KeyStroke.getKeyStroke(KeyEvent.VK_L, KEY_MASK);
 
   // ********************************************************************************
   // Create the menus
@@ -732,9 +734,10 @@ public class BEMenus extends JMenuBar {
     help.addSeparator();
 
     // help|Show Log
-    mi = new JMenuItem("Show Log");
-    help.add(mi);
-    mi.addActionListener(new ActionListener() {
+    miShowLog = new JMenuItem("Show Log");
+    help.add(miShowLog);
+    miShowLog.setAccelerator(KEYSTROKE_L);
+    miShowLog.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
         WLog.setVisible();
       }
