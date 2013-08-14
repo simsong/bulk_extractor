@@ -62,9 +62,10 @@ public class BookmarksModel {
       if (featureLine.equals(
                    (FeatureLine)bookmarksComboBoxModel.getElementAt(i))) {
         bookmarksComboBoxModel.removeElementAt(i);
+        return;
       }
     }
-    // bookmarksComboBoxModel.removeElement((Object)featureLine);
+    WLog.log("requested element failed to remove: " + featureLine);
   }
   public void clear() {
     bookmarksComboBoxModel.removeAllElements();

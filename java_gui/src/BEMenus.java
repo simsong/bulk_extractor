@@ -261,11 +261,9 @@ public class BEMenus extends JMenuBar {
     // edit|clear all bookmarks
     miClearBookmarks = new JMenuItem("Clear Bookmarks");
     edit.add(miClearBookmarks);
-    mi.addActionListener(new ActionListener() {
+    miClearBookmarks.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
         BEViewer.bookmarksModel.clear();
-//zz yes?
-        BEViewer.bookmarksModel.setSelectedItem(new FeatureLine());
       }
     });
     miClearBookmarks.setEnabled(false);
@@ -611,7 +609,6 @@ public class BEMenus extends JMenuBar {
       public void actionPerformed (ActionEvent e) {
         // get the currently selected feature line
         FeatureLine featureLine = BEViewer.featureLineSelectionManager.getFeatureLineSelection();
-WLog.log("BEM.fl: " + featureLine);
         if (featureLine.featuresFile == null) {
           WError.showError("A Feature must be selected before viewing the Report file.", 
                            "BEViewer Selected Feature error", null);

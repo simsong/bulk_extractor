@@ -32,18 +32,23 @@ public class FeatureFieldFormatter {
     String filename = featuresFile.getName();
     String formattedText;
 
-    if (filename.equals("gps.txt")) {
-      formattedText = getGPSFormat(contextField);
+    if (filename.equals("elf.txt")) {
+      formattedText = getELFFormat(contextField);
+
+    } else if (filename.equals("ether.txt")) {
+      formattedText = getEtherFormat(featureField, contextField);
 
     } else if (filename.equals("exif.txt")) {
       formattedText = getEXIFFormat(contextField);
 
-//      case "ip.txt":
-//      case "tcp.txt":
-//      case "json.txt":
+    } else if (filename.equals("gps.txt")) {
+      formattedText = getGPSFormat(contextField);
 
-    } else if (filename.equals("elf.txt")) {
-      formattedText = getELFFormat(contextField);
+    } else if (filename.equals("ip.txt")) {
+      formattedText = getIPFormat(featureField, contextField);
+
+//      case "json.txt":
+//      case "tcp.txt":
 
     } else if (filename.equals("winpe.txt")) {
       formattedText = getWINPEFormat(contextField);
@@ -62,9 +67,16 @@ public class FeatureFieldFormatter {
     return formattedText;
   }
 
-  private static String getGPSFormat(byte[] contextField) {
-    // show GPS data as-is, encoded in the context field
-    return new String(contextField);
+  // note: XML parsed output would look better.
+  private static String getELFFormat(byte[] contextField) {
+    byte[] elfContextField = UTF8Tools.unescapeEscape(contextField);
+    return new String(elfContextField);
+  }
+  
+  private static String getEtherFormat(byte[] featureField, byte[] contextField) {
+    // feature field, which contains MAC, plus context, which indicates
+    // the ethernet traffic direction
+    return new String(featureField) + " " + new String(contextField);
   }
   
   private static String getEXIFFormat(byte[] contextField) {
@@ -117,10 +129,15 @@ public class FeatureFieldFormatter {
     return stringBuffer.toString();
   }
 
-  // note: XML parsed output would look better.
-  private static String getELFFormat(byte[] contextField) {
-    byte[] elfContextField = UTF8Tools.unescapeEscape(contextField);
-    return new String(elfContextField);
+  private static String getGPSFormat(byte[] contextField) {
+    // show GPS data as-is, encoded in the context field
+    return new String(contextField);
+  }
+  
+  private static String getIPFormat(byte[] featureField, byte[] contextField) {
+    // feature field, which contains IP, plus context, which contains
+    // IP metadata
+    return new String(featureField) + " " + new String(contextField);
   }
   
   // note: XML parsed output would look better.
@@ -220,10 +237,6 @@ public class FeatureFieldFormatter {
       return ELF;
     } else if (filename.equals("winpe.txt")) {
       return WINPE;
-
-//     || filename.equals("tcp.txt")
-//     || filename.equals("json.txt"))
-//      return EMPTY_VECTOR;
 
     } else {
       // for all else, add various UTF encodings of the feature field

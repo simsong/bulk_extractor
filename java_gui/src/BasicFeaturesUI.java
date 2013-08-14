@@ -241,6 +241,14 @@ public class BasicFeaturesUI extends FeaturesUI implements MouseListener, MouseM
       // get FeatureLine
       FeatureLine featureLine = featuresModel.getFeatureLine(line);
 
+      // a bad feature line can generate a warning, which interferes
+      // with the UI in a cyclic way, which is fatal, so to cope, clear
+      // the report selection.  This solution is jarring but is not fatal.
+      if (featureLine.isBad()) {
+        BEViewer.reportSelectionManager.setReportSelection(null, null);
+        return;
+      }
+
       // calculate text and geometry of the feature line's prefix
       String prefixString = ForensicPath.getPrintablePath(featureLine.forensicPath, featuresModel.getUseHexPath());
       int prefixWidth = prefixMetrics.stringWidth(prefixString);

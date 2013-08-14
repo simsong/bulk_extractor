@@ -39,6 +39,9 @@ public class FeatureLine {
    */
   public final String formattedFeature; // format is based on feature file type
 
+  // note if initialization failed
+  private boolean isFailedInitialization;
+
   /**
    * Constructs a blank FeatureLine because FeatureListCellRenderer requires
    * a prototype display value in order to get the height right.
@@ -56,6 +59,8 @@ public class FeatureLine {
     actualImageFile = null;
     forensicPath = "";
     formattedFeature = "";
+
+    isFailedInitialization = true;
   }
 
   /**
@@ -90,15 +95,17 @@ public class FeatureLine {
       mappedByteBuffer.get(lineBytes, 0, numBytes);
       fileChannel.close();	// JVM garbage collector does not close these, so force closure
       fileInputStream.close();	// JVM garbage collector does not close these, so force closure
+
+      isFailedInitialization = false;
     } catch (Exception e) {
 
       // indicate error
       if (!featuresFile.exists()) {
         // the file doesn't exist
-        WError.showError( "Features file " + featuresFile + " does not exist.", "BEViewer file error", null);
+        WError.showErrorLater( "Features file " + featuresFile + " does not exist.", "BEViewer file error", null);
       } else {
         // something more went wrong so show the exception
-        WError.showError( "Unable to open features file " + featuresFile + ".", "BEViewer file error", e);
+        WError.showErrorLater( "Unable to open features file " + featuresFile + ".", "BEViewer file error", e);
       }
 
       // set remaining values for failed read
@@ -108,6 +115,7 @@ public class FeatureLine {
       actualImageFile = null;
       forensicPath = "";
       formattedFeature = "";
+      isFailedInitialization = true;
       return;
     }
 
@@ -202,12 +210,14 @@ public class FeatureLine {
       }
     } else {
 //      summary = reportImageFile.getName() + ", " + actualImageFile.getName() + ", " + firstField + ", " + formattedFeature;
-      summary = ForensicPath.getPrintablePath(forensicPath, BEViewer.imageView.getUseHexPath()) + ", " + featuresFile.getName() +", " + actualImageFile.getName() + ", " + formattedFeature;
+// zz contextField is too verbose      summary = ForensicPath.getPrintablePath(forensicPath, BEViewer.imageView.getUseHexPath()) + ", " + featuresFile.getName() +", " + actualImageFile.getName() + ", " + formattedFeature + ", " + new String(contextField);
+      summary = ForensicPath.getPrintablePath(forensicPath, BEViewer.imageView.getUseHexPath()) + ", " + featuresFile.getName() +", " + actualImageFile.getName() + ", " + formattedFeature + ", " + new String(contextField);
     }
 
     // truncate the sumamry
-    if (summary.length() > 100) {
-      summary = summary.substring(0, 100) + "\u2026";
+    final int MAX_LENGTH = 200;
+    if (summary.length() > MAX_LENGTH) {
+      summary = summary.substring(0, MAX_LENGTH) + "\u2026";
     }
 
     return summary;
@@ -218,6 +228,13 @@ public class FeatureLine {
    */
   public boolean isBlank() {
     return (reportImageFile == null && featuresFile == null);
+  }
+
+  /**
+   * Identifies if this FeatureLine was unable to initialize.
+   */
+  public boolean isBad() {
+    return isFailedInitialization;
   }
 
   /**

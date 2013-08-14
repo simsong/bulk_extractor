@@ -49,8 +49,7 @@ public class WAbout extends JDialog {
     // set the text area's text
     textArea.setText("Bulk Extractor Viewer Version " + Config.VERSION
                  + "\n\n"
-
-                 + "Wiki: https://github.com/simsong/bulk_extractor/wiki."
+                 + "Please visit https://github.com/simsong/bulk_extractor/wiki/BEViewer."
                  + "\n\n"
     );
 

@@ -173,7 +173,6 @@ public class ImageModel {
       WLog.log("ImageModel.getImagePage: note: blank image page provided while busy.");
       return new ImagePage(new FeatureLine(), "", new byte[0], new byte[0], 0, PAGE_SIZE, 0);
     }
-WLog.log("IM.fl " + featureLine);
     return new ImagePage(featureLine, pageForensicPath,
                          pageBytes, paddedPageBytes,
                          paddingPrefixSize, PAGE_SIZE, imageSize);
@@ -190,9 +189,7 @@ WLog.log("IM.fl " + featureLine);
     busy = true;
     busyIndicator.startProgress(FileTools.getAbsolutePath(featureLine.actualImageFile) + " " + pageForensicPath);
  
-WLog.log("ImageModel.manageModelChanges.a");
     if (imageReaderThread == null || imageReaderThread.isDone) {
-WLog.log("ImageModel.manageModelChanges.b");
       // no active thread
 
       // for blank feature line, simply clear image reader thread and use now
@@ -203,7 +200,6 @@ WLog.log("ImageModel.manageModelChanges.b");
 
       // for change, schedule on thread
       if (imageSelectionChanged) {
-WLog.log("ImageModel.manageModelChanges.c");
         // thread processing is required to read feature attributes
 
         // signal model changed on the Swing thread in order to clear the image view until done
@@ -233,7 +229,6 @@ WLog.log("ImageModel.manageModelChanges.c");
       } else {
         // integrate the changes into the model
         if (imageReaderThread != null) {
-WLog.log("ImageModel.manageModelChanges.d");
           // bring in values from thread
           ImageReader.ImageReaderResponse response = imageReaderThread.response;
           paddedPageBytes = response.bytes;
@@ -241,7 +236,6 @@ WLog.log("ImageModel.manageModelChanges.d");
           imageSize = response.totalSizeAtPath;
           imageReaderThread = null;
         } else {
-WLog.log("ImageModel.manageModelChanges.e");
           // got here without reader thread
           paddedPageBytes = new byte[0];
           pageBytes = new byte[0];
@@ -255,7 +249,6 @@ WLog.log("ImageModel.manageModelChanges.e");
       }
 
     } else {
-WLog.log("ImageModel.manageModelChanges.f");
       // A previously requested thread read is already active, so do nothing here.
       // imageReaderThread will call manageModelChanges to continue the flow.
       // No action.
