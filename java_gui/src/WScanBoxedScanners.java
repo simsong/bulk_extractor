@@ -66,7 +66,8 @@ public class WScanBoxedScanners {
               scanners);
     } catch (IOException e) {
       WError.showError("Error in obtaining list of scanners from bulk_extractor."
-                       + "\nBulk_extractor is not available during this session.",
+                     + "\nBulk_extractor is not available during this session."
+                     + "\nIs bulk_extractor installed?",
                          "bulk_extractor failure", e);
     }
 

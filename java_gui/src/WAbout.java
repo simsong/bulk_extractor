@@ -57,7 +57,7 @@ public class WAbout extends JDialog {
     JScrollPane scrollPane= new JScrollPane(textArea,
                  ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                  ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    scrollPane.setPreferredSize(new Dimension(400,200));
+    scrollPane.setPreferredSize(new Dimension(500,200));
 
     // add the scroll pane containing the text area that holds the About information
     pane.add(scrollPane, c);
