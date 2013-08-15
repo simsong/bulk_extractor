@@ -55,7 +55,7 @@ Name "${APPNAME}"
 !endif
  
 !include LogicLib.nsh
-!include EnvVarUpdate.nsh
+!include EnvVarUpdate.nsi
  
 page components
 Page instfiles
