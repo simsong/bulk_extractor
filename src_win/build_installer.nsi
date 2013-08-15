@@ -173,9 +173,6 @@ Section "Add to path"
         ${EnvVarUpdate} $0 "PATH" "A" "HKLM" "$INSTDIR\python"
         ${EnvVarUpdate} $0 "PATH" "A" "HKLM" "$INSTDIR\32-bit"
         ${EnvVarUpdate} $0 "PATH" "A" "HKLM" "$INSTDIR\64-bit"
-
-	# create the shortcut link to the target's start menu
-	createShortCut "$SMPROGRAMS\${APPNAME}\BEViewer with ${APPNAME} (64-bit).lnk" "$OUTDIR\BEViewerLauncher.exe"
 sectionEnd
 
 !ifndef SIGN
