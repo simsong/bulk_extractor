@@ -62,7 +62,7 @@ public class WError {
         SwingUtilities.invokeAndWait(new RunnableMessage(message, title, JOptionPane.ERROR_MESSAGE));
       } catch (Exception ie) {
         WLog.log("Error: Unable to provide error message: '" + message
-               + "' Title: '" + title + "'")
+               + "' Title: '" + title + "'");
         WLog.logThrowable(ie);
       }
     }
@@ -105,7 +105,7 @@ public class WError {
         SwingUtilities.invokeAndWait(new RunnableMessage(message, title, JOptionPane.INFORMATION_MESSAGE));
       } catch (Exception ie) {
         WLog.log("Error: Unable to provide message: '" + message
-               + "' Title: '" + title + "'")
+               + "' Title: '" + title + "'");
         WLog.logThrowable(ie);
       }
     }
