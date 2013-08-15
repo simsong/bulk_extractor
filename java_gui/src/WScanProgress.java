@@ -23,11 +23,11 @@ public class WScanProgress extends JDialog {
   private final JTextField commandField = new JTextField();
 
   private final JProgressBar progressBar = new JProgressBar();
-  private final JLabel progressL = new JLabel();
-  private final JTextArea statusArea = new JTextArea();
+  private final JLabel statusL = new JLabel();
+  private final JTextArea outputArea = new JTextArea();
   private final JButton cancelB = new JButton("Cancel");
-  private final String[] cmd;
-  private static final String[] envp = new String[0];
+  private final String[] commandArray;
+  private final String commandString;
 
   private Process process;
   private Thread scannerThread;
@@ -36,10 +36,6 @@ public class WScanProgress extends JDialog {
   File imageFile = null;
   File featuresDirectory = null;
 
-  static {
-//    envp[0] = "LD_LIBRARY_PATH=/usr/local/lib";
-  }
-
   /**
    * Returns the thread controlling the scan, allowing monitoring for completion.
    */
@@ -47,12 +43,13 @@ public class WScanProgress extends JDialog {
     return scannerThread;
   }
 
-  public WScanProgress(Window parentWindow, String[] command) {
-    cmd = command;
+  public WScanProgress(Window parentWindow, String[] commandArray) {
+    this.commandArray = commandArray;
+    this.commandString = getCommandString(commandArray);
     buildInterface();
     pack();
-    commandField.setText(getCommandString(cmd)); // set after pack
-    commandField.setToolTipText(getCommandString(cmd)); // set after pack
+    commandField.setText(commandString); // set after pack
+    commandField.setToolTipText(commandString); // set after pack
     commandField.setCaretPosition(0);
     setClosure();
     setLocationRelativeTo(parentWindow);
@@ -83,12 +80,12 @@ public class WScanProgress extends JDialog {
     public void run() {
 
       // set state
-      // image file is last cmd
-      imageFile = new File(cmd[cmd.length - 1]);
-      // feature directory is cmd after "-o"
-      for (int i=0; i<cmd.length; i++) {
-        if (cmd[i].equals("-o")) {
-          featuresDirectory = new File(cmd[i + 1]);
+      // image file is last item in command array
+      imageFile = new File(commandArray[commandArray.length - 1]);
+      // feature directory is element after "-o"
+      for (int i=0; i<commandArray.length; i++) {
+        if (commandArray[i].equals("-o")) {
+          featuresDirectory = new File(commandArray[i + 1]);
           break;
         }
       }
@@ -98,19 +95,18 @@ public class WScanProgress extends JDialog {
       featureDirectoryLabel.setFile(featuresDirectory);
 
       // log the scan command
-      for (int i=0; i<cmd.length; i++) {
-        WLog.log("WScanProgress.cmd[" + i + "]: '" + cmd[i] + "'");
-      }
+      WLog.log("WScanProgress.command: '" + commandString + "'");
 
       // start the bulk_extractor scan or fail
       process = null;
       try {
         // start bulk_extractor
-        process = Runtime.getRuntime().exec(cmd, envp);
+        process = Runtime.getRuntime().exec(commandString);
+        statusL.setText("Starting bulk_extractor...");
 
       } catch (IOException e) {
         // alert and abort
-        statusArea.append("Error: The bulk_extractor process failed to start.\n");
+        statusL.setText("bulk_extractor failed to start.  Please check that it is installed.");
         WError.showError("bulk_extractor Scanner failed to start.",
                          "bulk_extractor failure", e);
         return;
@@ -175,8 +171,8 @@ public class WScanProgress extends JDialog {
       if (leftParenIndex > 0 && rightParenIndex > leftParenIndex) {
         // this qualifies as a progress line
 
-        // set input in progress label
-        progressL.setText(input);
+        // put progress line in the status label
+        statusL.setText(input);
 
         // set % in progress bar
         String progress = input.substring(leftParenIndex + 1, rightParenIndex);
@@ -188,13 +184,10 @@ public class WScanProgress extends JDialog {
           WLog.log("WScanProgress.run: unexpected progress value '" + progress + "' in stdout: " + input);
         }
 
-      } else if (input.startsWith("Time elapsed waiting")) {
-        progressL.setText(input);
-      } else if (input.equals("")) {
-        // no action, note that this is emitted during "Time elapsed waiting"
       } else {
-        WLog.log("WScanProgress stdout from bulk_extractor: '" + input + "'");
-        statusArea.append(input + "\n");
+        // forward everything else to outputArea
+        outputArea.append(input);
+        outputArea.append("\n");
       }
     }
   }
@@ -207,8 +200,10 @@ public class WScanProgress extends JDialog {
     }
 
     public void run() {
+      // forward all stderr to outputArea and to log
       WLog.log("bulk_extractor scan error: '" + input + "'");
-      statusArea.append(input + "\n");
+      outputArea.append(input);
+      outputArea.append("\n");
     }
   }
 
@@ -223,10 +218,9 @@ public class WScanProgress extends JDialog {
       int exitValue = process.exitValue();
       if (exitValue == 0) {
         // successful run
-        progressL.setText("bulk_extractor scan completed.  See Status for details.");
+        statusL.setText("bulk_extractor scan completed.");
         progressBar.setValue(100);
         progressBar.setString("Done");
-        statusArea.append("Done.\n");
 
         // alert completion
         WError.showMessage("bulk_extractor has completed.\nReport " + featuresDirectory.getName()
@@ -240,8 +234,9 @@ public class WScanProgress extends JDialog {
 
       } else {
         // failed run
+        statusL.setText("Error: bulk_extractor terminated with exit value "
+                        + exitValue);
         WLog.log("bulk_extractor error exit value: " + exitValue);
-        statusArea.append("Error: " + exitValue + "\n");
         progressBar.setString("Error");
         WError.showError("bulk_extractor Scanner terminated.",
                          "bulk_extractor failure", null);
@@ -284,7 +279,7 @@ public class WScanProgress extends JDialog {
     c.anchor = GridBagConstraints.LINE_START;
     pane.add(getProgressContainer(), c);
 
-    // (0,3) status area container
+    // (0,3) bulk_extractor output area container
     c = new GridBagConstraints();
     c.insets = new Insets(15, 5, 0, 5);
     c.gridx = 0;
@@ -292,7 +287,7 @@ public class WScanProgress extends JDialog {
     c.weightx= 1;
     c.weighty= 1;
     c.fill = GridBagConstraints.BOTH;
-    pane.add(getStatusContainer(), c);
+    pane.add(getOutputContainer(), c);
 
     // (0,4) Cancel
     c = new GridBagConstraints();
@@ -364,6 +359,10 @@ public class WScanProgress extends JDialog {
     return container;
   }
 
+  // it is better for exec to use string[] but is imperative that the
+  // exact command text is reflected to the user, so we use string instead.
+  // We build the string by concatenating tokens separated by space
+  // and quoting any tokens containing space.
   private String getCommandString(String[] command) {
     StringBuffer buffer = new StringBuffer();
     for (int i=0; i<command.length; i++) {
@@ -445,7 +444,7 @@ public class WScanProgress extends JDialog {
     progressBar.setString("0%");
     container.add(progressBar, c);
 
-    // (0,1) reported progress text
+    // (0,1) status text
     c = new GridBagConstraints();
     c.insets = new Insets(0, 0, 0, 0);
     c.gridx = 0;
@@ -455,31 +454,31 @@ public class WScanProgress extends JDialog {
     c.gridwidth = 2;
     c.fill = GridBagConstraints.HORIZONTAL;
     c.anchor = GridBagConstraints.LINE_START;
-    container.add(progressL, c);
+    container.add(statusL, c);
 
     return container;
   }
 
-  // Status container
-  private Container getStatusContainer() {
+  // bulk_extractor output container
+  private Container getOutputContainer() {
     GridBagConstraints c;
     Container container = new Container();
     container.setLayout(new GridBagLayout());
 
-    // (0,0) "Status"
+    // (0,0) "bulk_extractor output"
     c = new GridBagConstraints();
     c.insets = new Insets(0, 0, 0, 0);
     c.gridx = 0;
     c.gridy = 0;
     c.anchor = GridBagConstraints.LINE_START;
-    container.add(new JLabel("Status"), c);
+    container.add(new JLabel("bulk_extractor output"), c);
 
-    // (0,1) status scrollpane for containing output from bulk_extractor
-    statusArea.setEditable(false);
-    JScrollPane statusScrollPane = new JScrollPane(statusArea,
+    // (0,1) output scrollpane for containing output from bulk_extractor
+    outputArea.setEditable(false);
+    JScrollPane outputScrollPane = new JScrollPane(outputArea,
                        ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                        ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    statusScrollPane.setPreferredSize(new Dimension(500, 200));
+    outputScrollPane.setPreferredSize(new Dimension(500, 200));
     c = new GridBagConstraints();
     c.insets = new Insets(0, 0, 0, 0);
     c.gridx = 0;
@@ -488,8 +487,8 @@ public class WScanProgress extends JDialog {
     c.weighty = 1;
     c.fill = GridBagConstraints.BOTH;
 
-    // add the status scrollpane
-    container.add(statusScrollPane, c);
+    // add the output scrollpane
+    container.add(outputScrollPane, c);
 
     return container;
   }
