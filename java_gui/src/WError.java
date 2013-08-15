@@ -60,12 +60,10 @@ public class WError {
       // schedule this immediately on the Swing dispatch thread
       try {
         SwingUtilities.invokeAndWait(new RunnableMessage(message, title, JOptionPane.ERROR_MESSAGE));
-      } catch (InterruptedException ie) {
-        SwingUtilities.invokeLater(new RunnableMessage(message, title, JOptionPane.ERROR_MESSAGE));
-        throw new RuntimeException("WError.showError failure: " + ie + ", " + message + ", " + title);
-      } catch (InvocationTargetException ite) {
-        SwingUtilities.invokeLater(new RunnableMessage(message, title, JOptionPane.ERROR_MESSAGE));
-        throw new RuntimeException("WError.showError failure: " + ite + ", " + message + ", " + title);
+      } catch (Exception ie) {
+        WLog.log("Error: Unable to provide error message: '" + message
+               + "' Title: '" + title + "'")
+        WLog.logThrowable(ie);
       }
     }
   }
@@ -105,12 +103,10 @@ public class WError {
       // schedule this immediately on the Swing dispatch thread
       try {
         SwingUtilities.invokeAndWait(new RunnableMessage(message, title, JOptionPane.INFORMATION_MESSAGE));
-      } catch (InterruptedException ie) {
-        SwingUtilities.invokeLater(new RunnableMessage(message, title, JOptionPane.INFORMATION_MESSAGE));
-        throw new RuntimeException("WError.showError failure: " + ie + ", " + message + ", " + title);
-      } catch (InvocationTargetException ite) {
-        SwingUtilities.invokeLater(new RunnableMessage(message, title, JOptionPane.INFORMATION_MESSAGE));
-        throw new RuntimeException("WError.showError failure: " + ite + ", " + message + ", " + title);
+      } catch (Exception ie) {
+        WLog.log("Error: Unable to provide message: '" + message
+               + "' Title: '" + title + "'")
+        WLog.logThrowable(ie);
       }
     }
   }
