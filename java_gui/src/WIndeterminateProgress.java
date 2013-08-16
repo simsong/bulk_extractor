@@ -4,18 +4,19 @@ import javax.swing.*;
 /**
  * A pop-up window for showing indeterminate progress.
  * This window has no user controls.
- * Visibility is enabled after a delay.
- * Interfaces are thread-safe.
+ * To start, call startProgress once, or more if overridable starts are issued.
+ * To stop, call stopProgress.
+ * The progress window will become visible after a delay.
+ * The two Interfaces are thread-safe and visibility actions are scheduled
+ * on the event dispatch queue.
  */
 public class WIndeterminateProgress {
 
-  private static final int DELAY = 300; // ms
   private DelayerThread delayerThread;
-  private boolean active = false;	// synchronized
 
   private final JDialog window;
   private final JProgressBar bar;
-  private final JLabel label = new JLabel();
+  private final JTextArea textArea = new JTextArea();
 
   /**
    * Creates a pop-up window for showing image reader progress.
@@ -36,20 +37,23 @@ public class WIndeterminateProgress {
     // use GridBagLayout with GridBagConstraints
     pane.setLayout(new GridBagLayout());
 
-    // (0,0) feature line label
+    // (0,0) feature line text area
     c = new GridBagConstraints();
     c.gridx = 0;
     c.gridy = 0;
     c.weightx = 1;
-    label.setMinimumSize(new Dimension(400, 16));
-    label.setPreferredSize(new Dimension(400, 16));
-    pane.add(label, c);
+    c.weighty = 1;
+    c.fill = GridBagConstraints.BOTH;
+    textArea.setMinimumSize(new Dimension(400, 100));
+    textArea.setPreferredSize(new Dimension(400, 100));
+    textArea.setEditable(false);
+    pane.add(textArea, c);
 
     // (0,1) JProgressBar
     c = new GridBagConstraints();
     c.gridx = 0;
     c.gridy = 1;
-    c.anchor = GridBagConstraints.FIRST_LINE_START;
+//    c.anchor = GridBagConstraints.FIRST_LINE_START;
 
     // create the progress bar component
     bar = new JProgressBar();
@@ -67,81 +71,70 @@ public class WIndeterminateProgress {
   }
 
   /**
-   * Starts the progress window.
-   * The window appears after delay
+   * Initiate the process of opening a progress window after a delay.
    * @param text text to show in the progress window
    */
   public synchronized void startProgress(String text) {
-    // set label text to indicate current progress action
-    label.setText(text);
-
-    // either update existing progress or start new progress
-    if (active) {
-      window.toFront();
-//      throw new RuntimeException("invalid state");
-    } else {
-
-      // set active and set thread to show progress after delay
-      active = true;
-      delayerThread = new DelayerThread();
-      delayerThread.start();
+    if (delayerThread != null) {
+      // terminate old delayer thread
+      delayerThread.interrupt();
+      delayerThread = null;
     }
+
+    // start new delayer thread
+    delayerThread = new DelayerThread(text);
+    delayerThread.start();
   }
 
   /**
-   * Closes the progress window.
+   * Closes the progress window whether it is open or not.
    */
   public synchronized void stopProgress() {
-    // validate state
-    if (!active) {
-      throw new RuntimeException("invalid state");
+    if (delayerThread == null) {
+      // program error: stop issued without start
+      WLog.log("WIndeterminateProgress stopProgress error: stop without start.");
+    } else {
+      delayerThread.interrupt();
+      delayerThread = null;
     }
 
-    // signal this thread to leave this window alone
-    delayerThread.cancel();
-
-    // hide the window
+    // visible or not, set to not visible
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         window.setVisible(false);
       }
     });
-
-    // release the lock
-    active = false;
   }
 
-  // set visibility after DELAY
-  private class DelayerThread extends Thread {
-    private boolean isCancelled = false;
-
-    public synchronized void cancel() {
-      isCancelled = true;
+  // run this on the Swing thread to set text and make visible
+  private class SwingWindowOpener extends Thread {
+    String text;
+    SwingWindowOpener(String text) {
+      this.text = text;
     }
-
-    public synchronized void maybeShowWindow() {
-      if (!isCancelled) {
-        // show the window
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            window.setLocationRelativeTo(BEViewer.getBEWindow());
-            window.setVisible(true);
-          }
-        });
-      }
-    }
-
-    // run the delayer thread
     public void run() {
-      // perform the delay
+      textArea.setText(text);
+      window.toFront();
+      window.setLocationRelativeTo(BEViewer.getBEWindow());
+      window.setVisible(true);
+    }
+  }
+
+  // delay and then schedule to open the window
+  // unless the thread is interrupted by interrupt()
+  private class DelayerThread extends Thread {
+    private static final int DELAY = 300; // ms
+    String text;
+    public DelayerThread(String text) {
+      this.text = text;
+    }
+    public void run() {
       try {
         sleep(DELAY);
+        SwingUtilities.invokeLater(new SwingWindowOpener(text));
       } catch (InterruptedException e) {
-        WLog.log("WIndeterminateProgress DelayerThread interrupt");
+        // great, we didn't open the progress window
       }
-
-      // show the window
-      maybeShowWindow();
     }
   }
 }

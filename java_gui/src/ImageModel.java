@@ -187,7 +187,16 @@ public class ImageModel {
   public synchronized void manageModelChanges() {
     // set busy and busy indicator
     busy = true;
-    busyIndicator.startProgress(FileTools.getAbsolutePath(featureLine.actualImageFile) + " " + pageForensicPath);
+
+    // generate path
+    // NOTE: should use ForensicPath.getPrintablePath() but isHex
+    // is not visible to ImageModel.  Also, this is what is sent to the reader.
+    // Either way, isHex should be moved into a class of its own to have
+    // uniform visibility everywhere.
+    String text = "Image file: " + FileTools.getAbsolutePath(featureLine.actualImageFile)
+                + "\nFeature path: " + featureLine.forensicPath
+                + "\nRequested read path: " + pageForensicPath;
+    busyIndicator.startProgress(text);
  
     if (imageReaderThread == null || imageReaderThread.isDone) {
       // no active thread

@@ -389,13 +389,13 @@ public class BEMenus extends JMenuBar {
       }
     });
     
-    // view|Feature File Font
-    JMenu featureFileFontMenu = new JMenu("Feature File Font");
-    view.add(featureFileFontMenu);
+    // view|Feature Font Size
+    JMenu featureFontSizeMenu = new JMenu("Feature Font Size");
+    view.add(featureFontSizeMenu);
 
-    // view|Feature File Font|Zoom In
+    // view|Feature Font Size|Zoom In
     mi = new JMenuItem("Zoom In");
-    featureFileFontMenu.add(mi);
+    featureFontSizeMenu.add(mi);
     mi.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
         BEViewer.featuresModel.setFontSize(BEViewer.featuresModel.getFontSize() + 1);
@@ -403,9 +403,9 @@ public class BEMenus extends JMenuBar {
       }
     });
 
-    // view|Feature File Font|Zoom Out
+    // view|Feature Font Size|Zoom Out
     mi = new JMenuItem("Zoom Out");
-    featureFileFontMenu.add(mi);
+    featureFontSizeMenu.add(mi);
     mi.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
         int oldFontSize = BEViewer.featuresModel.getFontSize();
@@ -421,7 +421,7 @@ public class BEMenus extends JMenuBar {
 
     // view|Feature File View|Normal Size
     mi = new JMenuItem("Normal Size");
-    featureFileFontMenu.add(mi);
+    featureFontSizeMenu.add(mi);
     mi.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
         BEViewer.featuresModel.setFontSize(BEPreferences.DEFAULT_FEATURE_FONT_SIZE);
@@ -429,22 +429,22 @@ public class BEMenus extends JMenuBar {
       }
     });
 
-    // view|Image File Font
-    JMenu imageFileFontMenu = new JMenu("Image File Font");
-    view.add(imageFileFontMenu);
+    // view|Image Font Size
+    JMenu imageFontSizeMenu = new JMenu("Image Font Size");
+    view.add(imageFontSizeMenu);
 
-    // view|Image File Font|Zoom In
+    // view|Image Font Size|Zoom In
     mi = new JMenuItem("Zoom In");
-    imageFileFontMenu.add(mi);
+    imageFontSizeMenu.add(mi);
     mi.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
         BEViewer.imageView.setFontSize(BEViewer.imageView.getFontSize() + 1);
       }
     });
 
-    // view|Image File Font|Zoom Out
+    // view|Image Font Size|Zoom Out
     mi = new JMenuItem("Zoom Out");
-    imageFileFontMenu.add(mi);
+    imageFontSizeMenu.add(mi);
     mi.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
         int oldFontSize = BEViewer.imageView.getFontSize();
@@ -452,14 +452,14 @@ public class BEMenus extends JMenuBar {
           BEViewer.imageView.setFontSize(oldFontSize - 1);
         } else {
           WError.showError("Already at minimum font size of " + oldFontSize + ".",
-                           "BEViewer Image File Font Size error", null);
+                           "BEViewer Image Font Size Size error", null);
         }
       }
     });
 
-    // view|Image File Font|Normal Size
+    // view|Image Font Size|Normal Size
     mi = new JMenuItem("Normal Size");
-    imageFileFontMenu.add(mi);
+    imageFontSizeMenu.add(mi);
     mi.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
         BEViewer.imageView.setFontSize(BEPreferences.DEFAULT_IMAGE_FONT_SIZE);
