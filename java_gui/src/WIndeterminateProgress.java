@@ -75,6 +75,9 @@ public class WIndeterminateProgress {
    * @param text text to show in the progress window
    */
   public synchronized void startProgress(String text) {
+    // set the new text
+    SwingUtilities.invokeLater(new SwingSetText(text));
+
     if (delayerThread != null) {
       // terminate old delayer thread
       delayerThread.interrupt();
@@ -82,7 +85,7 @@ public class WIndeterminateProgress {
     }
 
     // start new delayer thread
-    delayerThread = new DelayerThread(text);
+    delayerThread = new DelayerThread();
     delayerThread.start();
   }
 
@@ -106,17 +109,14 @@ public class WIndeterminateProgress {
     });
   }
 
-  // run this on the Swing thread to set text and make visible
-  private class SwingWindowOpener extends Thread {
+  // run this on the Swing thread to set text
+  private class SwingSetText extends Thread {
     String text;
-    SwingWindowOpener(String text) {
+    SwingSetText(String text) {
       this.text = text;
     }
     public void run() {
       textArea.setText(text);
-      window.toFront();
-      window.setLocationRelativeTo(BEViewer.getBEWindow());
-      window.setVisible(true);
     }
   }
 
@@ -124,14 +124,19 @@ public class WIndeterminateProgress {
   // unless the thread is interrupted by interrupt()
   private class DelayerThread extends Thread {
     private static final int DELAY = 300; // ms
-    String text;
-    public DelayerThread(String text) {
-      this.text = text;
-    }
     public void run() {
       try {
+        // to avoid potential flicker, delay a bit
         sleep(DELAY);
-        SwingUtilities.invokeLater(new SwingWindowOpener(text));
+
+        // if still active, open the progress window
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            window.toFront();
+            window.setLocationRelativeTo(BEViewer.getBEWindow());
+            window.setVisible(true);
+          }
+        });
       } catch (InterruptedException e) {
         // great, we didn't open the progress window
       }
