@@ -145,6 +145,7 @@ inline int analyze_stream(const class scanner_params &sp,const recursion_control
                     std::cout << "================\n";
                 }
             }
+            inflateEnd(&zs);
         }
     }
     return 0;
