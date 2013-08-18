@@ -95,28 +95,22 @@ void base16_scanner::decode(const sbuf_t &osbuf,size_t pos,size_t len)
 %option pointer
 %option noyymore
 %option prefix="yybase16_"
+%option fast
 
 UNICODE		([[:print:][:space:]]+)	
 
 %%
 
-[^0-9A-F](([0-9A-F][0-9A-F][ \t\n\r]{0,4}){6,})/[^0-9A-F]	{
+([0-9A-F][0-9A-F]([ \n]{0,2})){6,1024}	{
     /* hex with junk before it.
      * {0,4} means we have 0-4 space characters
-     * {6,}  means minimum of 6 hex bytes
+     * {6,65536}  means 6-65536 characters
      */
     base16_scanner &s = *yybase16_get_extra(yyscanner);
-    s.decode(s.sp.sbuf,s.pos+1,yyleng-1);
+    s.decode(s.sp.sbuf,s.pos+1,yyleng);
     s.pos += yyleng;
 }
-
-^(([0-9A-F][0-9A-F][ \t\n\r]{0,4}){6,})/[^0-9A-F]	{
-    /* hex at the beginning of the file */
-    base16_scanner &s = *yybase16_get_extra(yyscanner);
-    s.decode(s.sp.sbuf,s.pos,yyleng);
-    s.pos += yyleng;
-}
-
+ 
 .|\n { 
      /**
       * The no-match rule.
@@ -165,6 +159,10 @@ void scan_base16(const class scanner_params &sp,const recursion_control_block &r
 	}
 
         yybase16_lex_destroy(scanner);
-	(void)yyunput;			// avoids defined but not used
     }
+}
+
+void scan_base16_ignore_me()
+{
+	(void)yyunput;			// avoids defined but not used
 }
