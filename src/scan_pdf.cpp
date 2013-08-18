@@ -145,7 +145,7 @@ inline int analyze_stream(const class scanner_params &sp,const recursion_control
                     std::cout << "================\n";
                 }
             }
-            inflateEnd(&zs);
+            inflateEnd(&zs);            // prevent leak; still not exception safe.
         }
     }
     return 0;
