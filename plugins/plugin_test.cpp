@@ -111,7 +111,6 @@ int main(int argc,char **argv)
 /*** bogus feature recorder set ***/
 const std::string feature_recorder_set::ALERT_RECORDER_NAME = "alerts";
 const std::string feature_recorder_set::DISABLED_RECORDER_NAME = "disabled";
-feature_recorder  *feature_recorder_set::alert_recorder = 0; // no alert recorder to start
 
 feature_recorder *feature_recorder_set::get_name(const std::string &name) { return 0;}
 feature_recorder *feature_recorder_set::get_alert_recorder() { return 0;}

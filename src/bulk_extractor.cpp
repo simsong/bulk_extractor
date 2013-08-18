@@ -1016,7 +1016,6 @@ int main(int argc,char **argv)
     
     /* Determine the feature files that will be used */
     feature_file_names_t feature_file_names;
-    feature_recorder_set::get_alert_recorder_name(feature_file_names);
     be13::plugin::get_scanner_feature_file_names(feature_file_names);
     feature_recorder_set fs(feature_file_names,image_fname,opt_outdir,stop_list.size()>0);
     be13::plugin::scanners_init(&fs);
@@ -1043,10 +1042,6 @@ int main(int argc,char **argv)
     dfxml_create(*xreport,command_line,cfg);
     xreport->xmlout("provided_filename",image_fname); // save this information
 
-
-    /* Create the alert recorder */
-    fs.create_name(feature_recorder_set::ALERT_RECORDER_NAME,false);
-    feature_recorder_set::alert_recorder = fs.get_name(feature_recorder_set::ALERT_RECORDER_NAME);
 
     /* provide documentation to the user; the DFXML information comes from elsewhere */
     if(!cfg.opt_quiet){

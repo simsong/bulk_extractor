@@ -27,7 +27,7 @@ public:
   	    ccn_recorder       = sp.fs.get_name("ccn");
             telephone_recorder = sp.fs.get_name("telephone");
     	    ccn_track2         = sp.fs.get_name("ccn_track2");
-    	    alert_recorder     = sp.fs.get_name(feature_recorder_set::ALERT_RECORDER_NAME);
+    	    alert_recorder     = sp.fs.get_alert_recorder();
 	}
 
 	class feature_recorder *ccn_recorder;
@@ -292,7 +292,6 @@ void scan_accts(const class scanner_params &sp,const recursion_control_block &rc
         sp.info->feature_names.insert("ccn");
         sp.info->feature_names.insert("ccn_track2");
         sp.info->feature_names.insert("telephone");
-        sp.info->feature_names.insert(feature_recorder_set::ALERT_RECORDER_NAME);
 	sp.info->histogram_defs.insert(histogram_def("ccn","","histogram"));
 	sp.info->histogram_defs.insert(histogram_def("ccn_track2","","histogram"));
 	sp.info->histogram_defs.insert(histogram_def("telephone","","histogram",HistogramMaker::FLAG_NUMERIC));

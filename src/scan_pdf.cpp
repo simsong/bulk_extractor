@@ -61,7 +61,6 @@ static bool mostly_printable_ascii(const unsigned char *buf,size_t bufsize)
  
 static void pdf_extract_text(std::string &tbuf,const unsigned char *buf,size_t bufsize)
 {
-    //const int CHUNKSIZE = 10;
     int maxwordsize = 0;
     bool words_have_spaces = false;
     for(int pass=0;pass<2;pass++){

@@ -48,23 +48,21 @@ void scan_xor(const class scanner_params &sp,const recursion_control_block &rcb)
             }
         }
 
+        // It's not clear that we need to check dbuf.buf below, since the failure
+        // should throw an exception...
         managed_malloc<uint8_t>dbuf(sbuf.bufsize);
-
-        if(!dbuf.buf){
-            sp.fs.alert_recorder->write(pos0,"scan_xor","calloc-failed");
-            return;
+        if(dbuf.buf){                   
+            for(size_t ii = 0; ii < sbuf.bufsize; ii++) {
+                dbuf.buf[ii] = sbuf.buf[ii] ^ xor_mask;
+            }
+            
+            std::stringstream ss;
+            ss << "XOR(" << xor_mask << ")";
+            
+            const pos0_t pos0_xor = pos0 + ss.str();
+            const sbuf_t child_sbuf(pos0_xor, dbuf.buf, sbuf.bufsize, sbuf.pagesize, false);
+            scanner_params child_params(sp, child_sbuf);
+            (*rcb.callback)(child_params);// call scanners on deobfuscated buffer
         }
-        
-        for(size_t ii = 0; ii < sbuf.bufsize; ii++) {
-            dbuf.buf[ii] = sbuf.buf[ii] ^ xor_mask;
-        }
-        
-        std::stringstream ss;
-        ss << "XOR(" << xor_mask << ")";
-
-        const pos0_t pos0_xor = pos0 + ss.str();
-        const sbuf_t child_sbuf(pos0_xor, dbuf.buf, sbuf.bufsize, sbuf.pagesize, false);
-        scanner_params child_params(sp, child_sbuf);
-        (*rcb.callback)(child_params);// call scanners on deobfuscated buffer
     }
 }

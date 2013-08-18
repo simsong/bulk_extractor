@@ -1,3 +1,11 @@
+2013-08-18  Man Page  <simsong@mncrnpsedu.local>
+
+	* src/be13_api/feature_recorder_set.cpp (feature_recorder_set::create_name): added warning if feature recorder already exists.
+
+	* src/bulk_extractor.cpp (main): removed explicit creation of alert recorder; no longer needed.
+
+	* src/be13_api/feature_recorder_set.h (class feature_recorder_set): alert_recorder should not be a global static; it is now per feature_recorder_set.
+
 2013-08-02  Basic  <simsong@Mucha.local>
 
 	* src/be13_api/feature_recorder.cpp (feature_recorder::feature_recorder): removed carved_set that was keeping track of what was carved, as it is no longer necessary.
