@@ -57,7 +57,7 @@ void scan_xor(const class scanner_params &sp,const recursion_control_block &rcb)
             }
             
             std::stringstream ss;
-            ss << "XOR(" << xor_mask << ")";
+            ss << "XOR(" << uint32_t(xor_mask) << ")";
             
             const pos0_t pos0_xor = pos0 + ss.str();
             const sbuf_t child_sbuf(pos0_xor, dbuf.buf, sbuf.bufsize, sbuf.pagesize, false);
