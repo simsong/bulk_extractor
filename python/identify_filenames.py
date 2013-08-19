@@ -93,6 +93,8 @@ class byterundb:
             try:
                 fname  = gval(fi.filename())
                 md5val = gval(fi.md5())
+                if not fi.allocated():
+                    fname = b'*' + fname;
                 if args.mactimes:
                     fileinfo = (fname, md5val, gval(fi.crtime()), gval(fi.ctime()), gval(fi.mtime()), gval(fi.atime()))
                 else:
