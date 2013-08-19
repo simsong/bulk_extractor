@@ -55,18 +55,9 @@
 // There is a single threadpool object
 class threadpool {
  private:
-    /*** neither copying nor assignment is implemented ***
-     *** We do this by making them private constructors that throw exceptions. ***/
-    class not_impl: public exception {
-	virtual const char *what() const throw() {
-	    return "copying feature_recorder objects is not implemented.";
-	}
-    };
- threadpool(const threadpool &t) __attribute__((__noreturn__)) :workers(),M(),TOMAIN(),TOWORKER(),freethreads(),
-    work_queue(),fs(t.fs),xreport(t.xreport),thread_status(),waiting(),mode(){
-    throw new not_impl();
-  }
-  const threadpool &operator=(const threadpool &t){throw new not_impl(); }
+    /*** neither copying nor assignment is implemented ***/
+    threadpool(const threadpool &);
+    threadpool &operator=(const threadpool &);
     
  public:
 #ifdef WIN32

@@ -59,17 +59,10 @@ class image_process {
 private:
     /******************************************************
      *** neither copying nor assignment is implemented. ***
-     *** We do this by making them private constructors ***
-     *** that throw exceptions.                         ***
      ******************************************************/
-    class not_impl: public exception {
-	virtual const char *what() const throw() {
-	    return "copying feature_recorder objects is not implemented.";
-	}
-    };
-    image_process(const image_process &ip) __attribute__((__noreturn__))
-    :image_fname_(),pagesize(),margin(){throw new not_impl();}
-    const image_process &operator=(const image_process &ip){throw new not_impl();}
+    image_process(const image_process &);
+    image_process &operator=(const image_process &);
+
     /****************************************************************/
     const string image_fname_;			/* image filename */
 public:    
@@ -158,18 +151,9 @@ inline image_process::iterator & operator++(image_process::iterator &it){
 class process_aff : public image_process {
     /******************************************************
      *** neither copying nor assignment is implemented. ***
-     *** We do this by making them private constructors ***
-     *** that throw exceptions.                         ***
      ******************************************************/
-    class not_impl: public exception {
-	virtual const char *what() const throw() {
-	    return "copying feature_recorder objects is not implemented.";
-	}
-    };
-    process_aff(const process_aff &pa) __attribute__((__noreturn__)): image_process("",0,0),af(0),pagelist(){
-	throw new not_impl();
-    }
-    const process_aff &operator=(const process_aff &pa) __attribute__((__noreturn__)){throw new not_impl();}
+    process_aff(const process_aff &);
+    process_aff &operator=(const process_aff &);
     /****************************************************************/
 
     mutable AFFILE *af;
@@ -213,17 +197,9 @@ class process_ewf : public image_process {
  private:
     /******************************************************
      *** neither copying nor assignment is implemented. ***
-     *** We do this by making them private constructors ***
-     *** that throw exceptions.                         ***
      ******************************************************/
-    class not_impl: public exception {
-	virtual const char *what() const throw() {
-	    return "copying feature_recorder objects is not implemented.";
-	}
-    };
-    process_ewf(const process_ewf &pa) __attribute__((__noreturn__)):
-    image_process("",0,0),ewf_filesize(0),details(), handle(0){ throw new not_impl(); }
-    const process_ewf &operator=(const process_ewf &pa){throw new not_impl();}
+    process_ewf(const process_ewf &);
+    process_ewf &operator=(const process_ewf &);
     /****************************************************************/
 
     int64_t ewf_filesize;
