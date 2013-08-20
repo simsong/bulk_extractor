@@ -141,7 +141,7 @@ namespace email {
   // subpatterns
   //
 
-  const std::string INUM("([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])");
+  const std::string INUM("(1?[0-9]{1,2}|2([0-4][0-9]|5[0-5]))");
   const std::string HEX("[0-9a-f]");
   const std::string ALNUM("[a-zA-Z0-9]");
 
