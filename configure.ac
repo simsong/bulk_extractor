@@ -6,7 +6,7 @@
 
 AC_PREREQ(2.57)
 
-AC_INIT(BULK_EXTRACTOR, 1.4.0-beta5, bugs@digitalcorpora.org)
+AC_INIT(BULK_EXTRACTOR, 1.4.0-beta6, bugs@digitalcorpora.org)
 AC_CONFIG_MACRO_DIR(m4)
 
 # Notice:
