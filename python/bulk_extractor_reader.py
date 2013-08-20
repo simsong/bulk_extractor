@@ -151,6 +151,31 @@ class BulkReport:
         """Returns the version of bulk_extractor that made the file."""
         return self.xmldoc.getElementsByTagName("version")[0].firstChild.wholeText
 
+    def threads(self):
+        """Returns the number of threads used for scanning."""
+        return int((self.xmldoc.getElementsByTagName("configuration")[0]
+                .getElementsByTagName("threads")[0].firstChild.wholeText))
+
+    def page_size(self):
+        """Returns the size of each page processed."""
+        return int((self.xmldoc.getElementsByTagName("configuration")[0]
+                .getElementsByTagName("pagesize")[0].firstChild.wholeText))
+
+    def margin_size(self):
+        """Returns the size of the overlapping margins around each page."""
+        return int((self.xmldoc.getElementsByTagName("configuration")[0]
+                .getElementsByTagName("marginsize")[0].firstChild.wholeText))
+
+    def clocktime(self):
+        """Returns the total real time elapsed for this run.  Values are truncated to the second."""
+        return int(float((self.xmldoc.getElementsByTagName("rusage")[0]
+                .getElementsByTagName("clocktime")[0].firstChild.wholeText)))
+
+    def peak_memory(self):
+        """Returns the maximum memory allocated for this run."""
+        return int((self.xmldoc.getElementsByTagName("rusage")[0]
+                .getElementsByTagName("maxrss")[0].firstChild.wholeText))
+
     def open(self,fname,mode='r'):
         """Opens a named file in the bulk report. Default is text mode.
         Returns .bulk_extractor_reader as a pointer to self.
