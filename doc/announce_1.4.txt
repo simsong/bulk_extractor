@@ -301,6 +301,12 @@ Planned Feature List for 1.5:
 * Scanning for the start of bitlocker protected volumes.
 
 
+Architecture improvements:
+
+* introduce a concept of an atomic set and map to avoid the use of
+  cppmutexes in the callers. This could be used for the feature_recorder_map and the seen_set in the feature_recorder_set.h 
+
+
 We are also considering the following scanners (and need help!):
 
 * NTFS decompression
@@ -320,12 +326,3 @@ We have tabled the following ideas, for the following reasons:
   given the low cost of 64-core machines)
 
 * Support for checkpointing using BLCR.  The project was abandoned.
-
-
-
-
-
-
-
-
-
