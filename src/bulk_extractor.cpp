@@ -306,20 +306,31 @@ void process_path_printer(const scanner_params &sp)
  */
 
 
-static size_t process_path_bufsize = 1024*1024*16; // how much to read
-static void process_open_path(const image_process &p,string path,scanner_params::PrintOptions &po)
+static void process_open_path(const image_process &p,string path,scanner_params::PrintOptions &po,
+                              const size_t process_path_bufsize)
 {
     /* Check for "/r" in path which means print raw */
     if(path.size()>2 && path.substr(path.size()-2,2)=="/r"){
 	path = path.substr(0,path.size()-2);
     }
 
-    string prefix = get_and_remove_token(path);
+    if(debug & DEBUG_PRINT_STEPS){
+        cerr << "process_path_open. path="<<path;
+    }
+
+    string  prefix = get_and_remove_token(path);
     int64_t offset = stoi64(prefix);
 
-    /* Get the offset. process */
+    if(debug & DEBUG_PRINT_STEPS){
+        cerr << "  prefix="<<prefix<<" offset="<<offset<<"   new path="<<path<<"\n";
+    }
+
+    /* Get the offset into the buffer process */
     u_char *buf = (u_char *)calloc(process_path_bufsize,1);
-    if(!buf) errx(1,"Cannot allocate buffer");
+    if(!buf){
+        std::cerr << "Cannot allocate " << process_path_bufsize << " buffer\n";
+        return;
+    }
     int count = p.pread(buf,process_path_bufsize,offset);
     if(count<0){
 	cerr << p.image_fname() << ": " << strerror(errno) << " (Read Error)\n";
@@ -329,6 +340,9 @@ static void process_open_path(const image_process &p,string path,scanner_params:
     /* make up a bogus feature recorder set and with a disabled feature recorder.
      * Then we call the path printer, which throws an exception after the printing
      * to prevent further printing.
+     *
+     * The printer is called when a PRINT token is found in the
+     * forensic path, so that has to be added.
      */
     feature_recorder_set fs(feature_recorder_set::SET_DISABLED);
 
@@ -348,7 +362,7 @@ static void process_open_path(const image_process &p,string path,scanner_params:
  * Also implements HTTP server with "-http" option.
  * Feature recorders disabled.
  */
-static void process_path(const char *fn,string path,size_t pagesize)
+static void process_path(const char *fn,string path,size_t pagesize,size_t marginsize)
 {
     image_process *pp = image_process::open(fn,0,pagesize,0);
     if(pp==0){
@@ -372,7 +386,7 @@ static void process_path(const char *fn,string path,size_t pagesize)
 	    if(path==".") break;
 	    scanner_params::PrintOptions po;
 	    scanner_params::setPrintMode(po,scanner_params::MODE_HEX);
-	    process_open_path(*pp,path,po);
+	    process_open_path(*pp,path,po,pagesize+marginsize);
 	} while(true);
 	return;
     }
@@ -421,7 +435,7 @@ static void process_path(const char *fn,string path,size_t pagesize)
 	    }
 
 	    /* Ready to go with path and options */
-	    process_open_path(*pp,p2,po);
+	    process_open_path(*pp,p2,po,pagesize+marginsize);
 	} while(true);
 	return;
     }
@@ -436,7 +450,7 @@ static void process_path(const char *fn,string path,size_t pagesize)
 	mode = scanner_params::MODE_HEX;
     }
     scanner_params::setPrintMode(po,mode);
-    process_open_path(*pp,path,po);
+    process_open_path(*pp,path,po,pagesize+marginsize);
 }
 
 class bulk_extractor_restarter {
@@ -952,7 +966,7 @@ int main(int argc,char **argv)
 
     if(opt_path){
 	if(argc!=1) errx(1,"-p requires a single argument.");
-	process_path(argv[0],opt_path,cfg.opt_pagesize);
+	process_path(argv[0],opt_path,cfg.opt_pagesize,cfg.opt_marginsize);
 	exit(0);
     }
     if(opt_outdir.size()==0) errx(1,"error: -o outdir must be specified");
