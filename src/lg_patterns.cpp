@@ -149,7 +149,8 @@ namespace email {
 
   const std::string TLD("(AC|AD|AE|AERO|AF|AG|AI|AL|AM|AN|AO|AQ|AR|ARPA|AS|ASIA|AT|AU|AW|AX|AZ|BA|BB|BD|BE|BF|BG|BH|BI|BIZ|BJ|BL|BM|BN|BO|BR|BS|BT|BV|BW|BY|BZ|CA|CAT|CC|CD|CF|CG|CH|CI|CK|CL|CM|CN|CO|COM|COOP|CR|CU|CV|CX|CY|CZ|DE|DJ|DK|DM|DO|DZ|EC|EDU|EE|EG|EH|ER|ES|ET|EU|FI|FJ|FK|FM|FO|FR|GA|GB|GD|GE|GF|GG|GH|GI|GL|GM|GN|GOV|GP|GQ|GR|GS|GT|GU|GW|GY|HK|HM|HN|HR|HT|HU|ID|IE|IL|IM|IN|INFO|INT|IO|IQ|IR|IS|IT|JE|JM|JO|JOBS|JP|KE|KG|KH|KI|KM|KN|KP|KR|KW|KY|KZ|LA|LB|LC|LI|LK|LR|LS|LT|LU|LV|LY|MA|MC|MD|ME|MF|MG|MH|MIL|MK|ML|MM|MN|MO|MOBI|MP|MQ|MR|MS|MT|MU|MUSEUM|MV|MW|MX|MY|MZ|NA|NAME|NC|NE|NET|NF|NG|NI|NL|NO|NP|NR|NU|NZ|OM|ORG|PA|PE|PF|PG|PH|PK|PL|PM|PN|PR|PRO|PS|PT|PW|PY|QA|RE|RO|RS|RU|RW|SA|SB|SC|SD|SE|SG|SH|SI|SJ|SK|SL|SM|SN|SO|SR|ST|SU|SV|SY|SZ|TC|TD|TEL|TF|TG|TH|TJ|TK|TL|TM|TN|TO|TP|TR|TRAVEL|TT|TV|TW|TZ|UA|UG|UK|UM|US|UY|UZ|VA|VC|VE|VG|VI|VN|VU|WF|WS|YE|YT|YU|ZA|ZM|ZW)");
 
-  const std::string EMAIL(ALNUM + "[a-zA-Z0-9._%\\-+]{1,128}" + ALNUM + "@" + ALNUM + "[a-zA-Z0-9._%\\-]{1,128}\\." + TLD);
+  // FIXME: trailing context
+  const std::string EMAIL(ALNUM + "([a-zA-Z0-9._%\\-+]*?" + ALNUM + ")?@(" + ALNUM + "([a-zA-Z0-9\\-]*?" + ALNUM + ")?\\.)+" + TLD + "([^a-zA-Z]|[\\z00-\\zFF][^\\z00])");
 
   const std::string YEAR("(19[6-9][0-9]|20[0-1][0-9])");
   const std::string DAYOFWEEK("(Mon|Tue|Wed|Thu|Fri|Sat|Sun)");
@@ -193,9 +194,6 @@ namespace email {
   // is a letter
   const std::string PROTO("(https?|afp|smb)://[a-zA-Z0-9_%/\\-+@:=&?#~.;]{1,384}");
  
-  // FIXME: trailing context
-  const std::string EMAIL_UTF16LE("[a-zA-Z0-9][a-zA-Z0-9._%\\-+]{1,128}@[a-zA-Z0-9._%\\-]{1,128}\\." + TLD + "([^a-zA-Z]|[\\z00-\\zFF][^\\z00])");
-
   // FIXME: trailing context
   const std::string HTTP_UTF16LE("https?:[a-zA-Z0-9_%/\\-+@:=&?#~.;]{1,128}([^a-zA-Z0-9_%/\\-+@:=&?#~.;]|[\\z00-\\zFF][^\\z00])");
 }
@@ -357,7 +355,6 @@ int main(int argc, char** argv) {
     { email::IP,                "ASCII" },
     { email::MAC,               "ASCII" },
     { email::PROTO,             "ASCII" },
-    { email::EMAIL_UTF16LE,     "UTF-16LE" },
     { email::HTTP_UTF16LE,      "UTF-16LE" },
     { gps::TRKPT,               "ASCII" },
     { gps::ELE,                 "ASCII" },
