@@ -1,10 +1,11 @@
 #include "config.h"
-#include "be13_api/bulk_extractor_i.h"
-#include "beregex.h"
-#include "histogram.h"
 
 // if liblightgrep isn't present, compiles to nothing
 #ifdef HAVE_LIBLIGHTGREP
+
+#include "be13_api/bulk_extractor_i.h"
+#include "beregex.h"
+#include "histogram.h"
 
 #include <lightgrep/api.h>
 
