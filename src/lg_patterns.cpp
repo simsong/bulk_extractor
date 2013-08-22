@@ -35,23 +35,28 @@ namespace accts {
   // patterns
   //
 
+  // FIXME: kill this one?
   /* #### #### #### #### #### #### is definately not a CCN. */
   const std::string REGEX1("[^0-9a-z]" + DB + "{5}");
 
+  // FIXME: leading context
   // FIXME: trailing context
   /* #### #### #### #### --- most credit card numbers*/
   const std::string REGEX2("[^0-9a-z]" + SDB + DB + DB + BLOCK + END);
 
+  // FIXME: leading context
   // FIXME: trailing context
   /* 3### ###### ######### --- 15 digits beginning with 3 and funny space. */
   /* Must be american express... */ 
   const std::string REGEX3("[^0-9a-z.]3[0-9]{3}" + DELIM + "[0-9]{6}" + DELIM + "[0-9]{5}" + END);
 
+  // FIXME: leading context
   // FIXME: trailing context
   /* 3### ###### ######### --- 15 digits beginning with 3 and funny space. */
   /* Must be american express... */ 
   const std::string REGEX4("[^0-9a-z.]3[0-9]{14}" + END);
 
+  // FIXME: leading context
   // FIXME: trailing context
   /* ###############  13-19 numbers as a block beginning with a 4 or 5
    * followed by something that is not a digit.
@@ -60,12 +65,14 @@ namespace accts {
    */  
   const std::string REGEX5("[^0-9a-z.][4-6][0-9]{15,18}" + END);
 
+  // FIXME: leading context
   /* ;###############=YYMM101#+? --- track2 credit card data */
   /* {SYEAR}{SMONTH} */
   /* ;CCN=05061010000000000738? */
   const std::string REGEX6("[^0-9a-z][4-6][0-9]{15,18}=" + SYEAR + SMONTH + "101[0-9]{13}");
 
   // FIXME: trailing context
+  // FIXME: leading context
   /* US phone numbers without area code in parens */
   /* New addition: If proceeded by " ####? ####? " 
    * then do not consider this a phone number. We see a lot of that stuff in
@@ -74,10 +81,12 @@ namespace accts {
   const std::string REGEX7("[^0-9a-z]([0-9]{3}" + TDEL + "){2}[0-9]{4}" + END);
 
   // FIXME: trailing context
+  // FIXME: leading context
   /* US phone number with parens, like (215) 555-1212 */
   const std::string REGEX8("[^0-9a-z]\\([0-9]{3}\\)" + TDEL + "?[0-9]{3}" + TDEL + "[0-9]{4}" + END);
 
   // FIXME: trailing context
+  // FIXME: leading context
   /* Generalized international phone numbers */
   const std::string REGEX9("[^0-9a-z]\\+[0-9]{1,3}(" + TDEL + "[0-9]{2,3}){2,6}[0-9]{2,4}" + END);
 
@@ -88,14 +97,6 @@ namespace accts {
   const std::string REGEX11(PHONETEXT + "[0-9 +]+ ?\\([0-9]{2,4}\\) ?[\\-0-9]{4,8}");
 
   // FIXME: trailing context
-  /* Possible BitLocker Recovery Key (ASCII). */
-  const std::string BITLOCKER_ASCII("[^0-9]([0-9]{6}-){7}[0-9]{6}[\\r\\n]");
-
-  // FIXME: trailing context
-  /* Possible BitLocker Recovery Key (UTF-16). */
-  const std::string BITLOCKER_UTF16("\\z00([0-9]{6}-){7}[0-9]{6}[^0-9]");
-
-  // FIXME: trailing context
   /* Generalized international phone numbers */
   const std::string REGEX12("fedex[^a-z]+([0-9]{4}[- ]?){2}[0-9]" + END);
 
@@ -104,7 +105,11 @@ namespace accts {
 
   const std::string REGEX14("dob:?[ \\t]+" + DATEFORMAT);
 
-  /* 
+  // FIXME: trailing context
+  /* Possible BitLocker Recovery Key. */
+  const std::string BITLOCKER("[^\\z30-\\z39]([0-9]{6}-){7}[0-9]{6}[^\\z30-\\z39]");
+
+  /*
    * Common box arrays found in PDF files
    * With more testing this can and will still be tweaked
    */
@@ -123,17 +128,13 @@ namespace base16 {
   //
 
   // FIXME: trailing context
+  // FIXME: leading context
   /* 
    * hex with junk before it.
    * {0,4} means we have 0-4 space characters
    * {6,}  means minimum of 6 hex bytes
    */
-  const std::string HEX1("[^0-9A-F]([0-9A-F]{2}[ \\t\\n\\r]{0,4}){6,}[^0-9A-F]");
-
-  // FIXME: trailing context
-  // FIXME: had leading ^
-  /* hex at the beginning of the file */
-  const std::string HEX2("([0-9A-F]{2}[ \\t\\n\\r]{0,4}){6,}[^0-9A-F]");
+  const std::string HEX("[^0-9A-F]([0-9A-F]{2}[ \\t\\n\\r]{0,4}){6,}[^0-9A-F]");
 }
 
 namespace email {
@@ -148,9 +149,6 @@ namespace email {
   const std::string PC("[\\x20-\\x7E]");
 
   const std::string TLD("(AC|AD|AE|AERO|AF|AG|AI|AL|AM|AN|AO|AQ|AR|ARPA|AS|ASIA|AT|AU|AW|AX|AZ|BA|BB|BD|BE|BF|BG|BH|BI|BIZ|BJ|BL|BM|BN|BO|BR|BS|BT|BV|BW|BY|BZ|CA|CAT|CC|CD|CF|CG|CH|CI|CK|CL|CM|CN|CO|COM|COOP|CR|CU|CV|CX|CY|CZ|DE|DJ|DK|DM|DO|DZ|EC|EDU|EE|EG|EH|ER|ES|ET|EU|FI|FJ|FK|FM|FO|FR|GA|GB|GD|GE|GF|GG|GH|GI|GL|GM|GN|GOV|GP|GQ|GR|GS|GT|GU|GW|GY|HK|HM|HN|HR|HT|HU|ID|IE|IL|IM|IN|INFO|INT|IO|IQ|IR|IS|IT|JE|JM|JO|JOBS|JP|KE|KG|KH|KI|KM|KN|KP|KR|KW|KY|KZ|LA|LB|LC|LI|LK|LR|LS|LT|LU|LV|LY|MA|MC|MD|ME|MF|MG|MH|MIL|MK|ML|MM|MN|MO|MOBI|MP|MQ|MR|MS|MT|MU|MUSEUM|MV|MW|MX|MY|MZ|NA|NAME|NC|NE|NET|NF|NG|NI|NL|NO|NP|NR|NU|NZ|OM|ORG|PA|PE|PF|PG|PH|PK|PL|PM|PN|PR|PRO|PS|PT|PW|PY|QA|RE|RO|RS|RU|RW|SA|SB|SC|SD|SE|SG|SH|SI|SJ|SK|SL|SM|SN|SO|SR|ST|SU|SV|SY|SZ|TC|TD|TEL|TF|TG|TH|TJ|TK|TL|TM|TN|TO|TP|TR|TRAVEL|TT|TV|TW|TZ|UA|UG|UK|UM|US|UY|UZ|VA|VC|VE|VG|VI|VN|VU|WF|WS|YE|YT|YU|ZA|ZM|ZW)");
-
-  // FIXME: trailing context
-  const std::string EMAIL(ALNUM + "([a-zA-Z0-9._%\\-+]*?" + ALNUM + ")?@(" + ALNUM + "([a-zA-Z0-9\\-]*?" + ALNUM + ")?\\.)+" + TLD + "([^a-zA-Z]|[\\z00-\\zFF][^\\z00])");
 
   const std::string YEAR("(19[6-9][0-9]|20[0-1][0-9])");
   const std::string DAYOFWEEK("(Mon|Tue|Wed|Thu|Fri|Sat|Sun)");
@@ -171,17 +169,13 @@ namespace email {
 
   const std::string HOST("Host:[ \\t]?[a-zA-Z0-9._]{1,64}");
 
-  const std::string ADDR(EMAIL + "[^a-zA-Z]");
+  // FIXME: trailing context
+  const std::string EMAIL(ALNUM + "([a-zA-Z0-9._%\\-+]*?" + ALNUM + ")?@(" + ALNUM + "([a-zA-Z0-9\\-]*?" + ALNUM + ")?\\.)+" + TLD + "([^a-zA-Z]|[\\z00-\\zFF][^\\z00])");
 
-  /* Not an IP address, but could generate a false positive */
-  const std::string NON_IP_1(INUM + "?(\\." + INUM + "){4}");
-
-  /* Also not an IP address, but could generate a false positive */
-  const std::string NON_IP_2("[0-9]{4}(\\." + INUM + "){3}");
-
+  // FIXME: leading context
   // FIXME: trailing context
   /* Numeric IP addresses. Get the context before and throw away some things */
-  const std::string IP(INUM + "(\\." + INUM + "){3}[^0-9\\-.+A-Z_]");
+  const std::string IP("[^0-9.]" + INUM + "(\\." + INUM + "){3}[^0-9\\-.+A-Z_]");
 
   // FIXME: trailing context
   // FIXME: should we be searching for all uppercase MAC addresses as well?
@@ -192,10 +186,8 @@ namespace email {
   // an http://domain in them followed by numbers. So this counts the number of
   // slashes and if it is only 2 the size is pruned until the last character
   // is a letter
-  const std::string PROTO("(https?|afp|smb)://[a-zA-Z0-9_%/\\-+@:=&?#~.;]{1,384}");
- 
   // FIXME: trailing context
-  const std::string HTTP_UTF16LE("https?:[a-zA-Z0-9_%/\\-+@:=&?#~.;]{1,128}([^a-zA-Z0-9_%/\\-+@:=&?#~.;]|[\\z00-\\zFF][^\\z00])");
+  const std::string PROTO("(https?|afp|smb)://[a-zA-Z0-9_%/\\-+@:=&?#~.;]+([^a-zA-Z0-9_%/\\-+@:=&?#~.;]|[\\z00-\\zFF][^\\z00])");
 }
 
 namespace gps {
@@ -338,35 +330,32 @@ int main(int argc, char** argv) {
     { accts::REGEX12,           "ASCII" },
     { accts::REGEX13,           "ASCII" },
     { accts::REGEX14,           "ASCII" },
-    { accts::BITLOCKER_ASCII,   "ASCII" },
-    { accts::BITLOCKER_UTF16,   "UTF-16LE" },
+    { accts::BITLOCKER,         "ASCII" },
     { accts::PDF_BOX,           "ASCII" },
     { accts::PDF_RECT,          "ASCII" },
-    { base16::HEX1,             "ASCII" },
-    { base16::HEX2,             "ASCII" },
+    { base16::HEX,              "ASCII" },
     { email::DATE,              "ASCII" },
     { email::MESSAGE_ID,        "ASCII" },
     { email::SUBJECT,           "ASCII" },
     { email::COOKIE,            "ASCII" },
     { email::HOST,              "ASCII" },
-    { email::ADDR,              "ASCII" },
-    { email::NON_IP_1,          "ASCII" },
-    { email::NON_IP_2,          "ASCII" },
+    { email::EMAIL,             "ASCII" },
     { email::IP,                "ASCII" },
     { email::MAC,               "ASCII" },
     { email::PROTO,             "ASCII" },
-    { email::HTTP_UTF16LE,      "UTF-16LE" },
     { gps::TRKPT,               "ASCII" },
     { gps::ELE,                 "ASCII" },
     { gps::TIME,                "ASCII" },
     { gps::GPXTPX_SPEED,        "ASCII" },
     { gps::GPXTPX_COURSE,       "ASCII" },
+/*
     { httpheader::SERVER_OR_UA, "ASCII" },
     { httpheader::HOST,         "ASCII" },
     { httpheader::HEADERS_1,    "ASCII" },
     { httpheader::HEADERS_2,    "ASCII" },
     { httpheader::VIA,          "ASCII" },
     { httpheader::HEADERS_3,    "ASCII" }
+*/
   };
 
   std::copy(
