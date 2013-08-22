@@ -7,6 +7,7 @@
 """
 Usage: b=BulkReport(fn)
 b.feature_files() = List of feature files
+b.carved_files()  = List of carved files
 b.histograms()    = List of histograms
 b.read_histogram() = Returns a dictionary of the histogram
 b.open(fname)     = Opens a feature file in the report
@@ -72,13 +73,20 @@ def get_property_line(line):
             return (m.group(1),m.group(2))
     return None
 
-def is_feature_line(line):
-    """Determines if LINE is a line from a feature file. It has 2-5 fields, the first field begins with a number."""
+def parse_feature_line(line):
+    """Determines if LINE is a line from a feature file. If it is not, return None.
+    If it is, return the fields. """
     ary = line.split(b"\t")
-    if(len(ary)<2 or len(ary)>5): return False
-    if(len(ary[0])<1): return False
-    if(ary[0][0]<ord('0') or ary[0][0]>ord('9')): return False
-    return True
+    if(len(ary)<2 or len(ary)>5): return None
+    if(len(ary[0])<1): return None
+    if(ary[0][0]<ord('0') or ary[0][0]>ord('9')): return None
+    return ary
+
+def is_feature_line(line):
+    if parse_feature(line):
+        return True
+    else:
+        return False
 
 def is_histogram_filename(fname):
     """Returns true if this is a histogram file"""
@@ -128,14 +136,25 @@ class BulkReport:
             self.files = set([os.path.basename(x) for x in glob.glob(os.path.join(fn,"*.txt"))])
             if do_validate: validate()
             return
+
         if fn.endswith(".zip") and os.path.isfile(fn):
             self.zipfile = zipfile.ZipFile(fn)
-            # extract the filenames and make a map
+            # first find the report.xml file. If we find it, then we want to remove what comes before from
+            # each name in the map.
+            report_name_list = list(filter(lambda f:f.endswith("report.xml"), self.zipfile.namelist()))
+            report_name_prefix = None
+            if report_name_list:
+                report_name_prefix = report_name_list[0].replace("report.xml","")
+
+            # extract the filenames and make a map from short name to long name.
             self.files = set()
             self.map   = dict()
             for fn in self.zipfile.namelist():
-                self.files.add(os.path.basename(fn))
-                self.map[os.path.basename(fn)] = fn
+                short_fn = fn
+                if report_name_prefix:
+                    short_fn = fn.replace(report_name_prefix,"")
+                self.files.add(short_fn)
+                self.map[short_fn] = fn
             if do_validate: validate()
             return
         if fn.endswith(".txt"):
@@ -172,11 +191,15 @@ class BulkReport:
         return False
 
     def is_feature_file(self,fn):
+        """Return true if fn is a feature file"""
         if is_feature_filename(fn)==False:
             return False
         for line in self.open(fn,'rb'):
             if is_comment_line(line): continue
-            return is_feature_line(line)
+            if parse_feature_line(line):
+                return True
+            else:
+                return False
         return False
         
     def histograms(self):
@@ -186,6 +209,9 @@ class BulkReport:
     def feature_files(self):
         """Returns a list of the feature_files, by name"""
         return sorted(filter(lambda fn:self.is_feature_file(fn),self.files))
+
+    def carved_files(self):
+        return sorted(filter(lambda fn:"/" in fn,self.files))
 
     def read_histogram(self,fn):
         """Read a histogram file and return a dictonary of the histogram """
