@@ -81,3 +81,12 @@ BEProgrammersManual.pdf
 src_win/*.exe
 java_gui/temp_generated_source_list
 *.tar.gz
+src_win/icu-linux
+src_win/icu-mingw32
+src_win/icu-mingw64
+src_win/icu
+src_win/*tgz
+src_win/liblightgrep
+src_win/tre-0.8.0
+plugins/plugin_test.exe
+src_win/libewf-*

@@ -3,6 +3,7 @@
 
 WIN32_EXE = ../win32/bulk_extractor32.exe
 WIN64_EXE = ../win64/bulk_extractor64.exe
+JAVA_GUI  = ../java_gui/BEViewer.jar
 
 INSTALLER = be_installer-$(VERSION)_unsigned.exe
 INTERMEDIATE_INSTALLER = be_installer-$(VERSION)_intermediate.exe
@@ -22,8 +23,7 @@ all: $(INSTALLER)
 
 signed: $(SIGNED_INSTALLER)
 
-$(INSTALLER): $(WIN32_EXE) $(WIN64_EXE) BEViewerLauncher.exe build_installer.nsi
-	cd ../java_gui && make
+$(INSTALLER): $(WIN32_EXE) $(WIN64_EXE) $(JAVA_GUI) BEViewerLauncher.exe build_installer.nsi
 	makensis -DVERSION=$(VERSION) build_installer.nsi
 
 $(WIN32_EXE):
@@ -31,6 +31,9 @@ $(WIN32_EXE):
 
 $(WIN64_EXE):
 	cd .. && make win64
+
+$(JAVA_GUI):
+	cd ../java_gui && make
 
 BEViewerLauncher.exe: build_BEViewer_launcher.nsi
 	makensis build_BEViewer_launcher.nsi
