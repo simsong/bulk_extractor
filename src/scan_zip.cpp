@@ -206,13 +206,13 @@ inline void scan_zip_component(const class scanner_params &sp,const recursion_co
                 scanner_params spnew(sp,sbuf_new); // scanner_params that points to the sbuf
                 (*rcb.callback)(spnew);            // process the sbuf
 
-                /* If we are carving, then carve; and change to
-                 * underbars in the filename.
+                /* If we are carving, then carve;
+                 * Change any problematic characters to underbars in filename.
                  */
                 if(unzip_recorder){
                     std::string carve_name("_"); // begin with a _
                     for(std::string::const_iterator it = name.begin(); it!=name.end();it++){
-                        carve_name.push_back(*it=='/' ? '_' : *it);
+                        carve_name.push_back((*it=='/' || *it=='\\') ? '_' : *it);
                     }
                     std::string fn = unzip_recorder->carve(sbuf_new,0,sbuf_new.bufsize,carve_name,hasher);
                     unzip_recorder->set_carve_mtime(fn,mtime);

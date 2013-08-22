@@ -77,7 +77,6 @@ bulk_scanners = \
 	$(flex_scanners) 
 
 bulk_extractor_SOURCES = \
-	aftimer.h \
 	base64_forensic.cpp \
 	base64_forensic.h \
 	bulk_extractor.cpp \
