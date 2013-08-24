@@ -12,6 +12,11 @@ b.histograms()    = List of histograms
 b.read_histogram() = Returns a dictionary of the histogram
 b.open(fname)     = Opens a feature file in the report
 
+Note: files are always opened in binary mode and converted line-by-line
+to text mode. The confusion is that ZIP files are always opened as binary
+and the "b" cannot be applied, but disk files are default opened in text mode,
+so the "b" must be added.
+
 """
 
 
@@ -21,6 +26,9 @@ b'This module needs Python 2.7 or later.'
 import zipfile,os,os.path,glob,codecs,re
 
 property_re = re.compile("# ([a-z0-9\-_]+):(.*)",re.I)
+
+MIN_FIELDS_PER_FEATURE_FILE_LINE = 3
+MAX_FIELDS_PER_FEATURE_FILE_LINE = 11
 
 def be_version(exe):
     """Returns the version number for a bulk_extractor executable"""
@@ -75,15 +83,27 @@ def get_property_line(line):
 
 def parse_feature_line(line):
     """Determines if LINE is a line from a feature file. If it is not, return None.
-    If it is, return the fields. """
+    LINE must be binary.
+    If it is, return the fields.
+    Previously this assumed that line was in binary; now it assumes that line is in text.
+    """
+    if len(line)<2: return None
+    if line[0]!=b'#': return None
+
     ary = line.split(b"\t")
-    if(len(ary)<2 or len(ary)>5): return None
-    if(len(ary[0])<1): return None
-    if(ary[0][0]<ord('0') or ary[0][0]>ord('9')): return None
+    
+    # Should have betwen 3 fields (standard feature file)
+    # and no more than 
+
+    if len(ary)<MIN_FIELDS_PER_FEATURE_FILE_LINE or len(ary)>MAX_FIELDS_PER_FEATURE_FILE_LINE:
+        # Don't know
+        return None
+    if len(ary[0])<1: return None
+    if ary[0][0]<ord('0') or ary[0][0]>ord('9'): return None
     return ary
 
 def is_feature_line(line):
-    if parse_feature(line):
+    if parse_feature_line(line):
         return True
     else:
         return False
@@ -108,7 +128,7 @@ def is_feature_filename(fname):
 class BulkReport:
     """Creates an object from a bulk_extractor report. The report can be a directory or a ZIP of a directory.
     Methods that you may find useful:
-    f = b.open(fname,mode) - opens the file f and returns a file handle. mode defaults to 'rb'
+    f = b.open(fname,mode) - opens the file f and returns a file handle. mode defaults to 'r'
     b.is_histogram_file(fname) - returns if fname is a histogram file or not
     b.imagefile() - Returns the name of the image file
     b.read_histogram(fn) - Reads a histogram and returns the histogram
@@ -199,10 +219,13 @@ class BulkReport:
         """Opens a named file in the bulk report. Default is text mode.
         Returns .bulk_extractor_reader as a pointer to self.
         """
+        # zipfile always opens in Binary mode, but generates an error
+        # if the 'b' is present, so remove it if present.
         if self.zipfile:
-            mode=mode.replace('b','') # remove the b if present; zipfile doesn't support
+            mode = mode.replace("b","")
             f = self.zipfile.open(self.map[fname],mode=mode)
         else:
+            mode = mode.replace("b","")+"b"
             fn = os.path.join(self.dname,fname)
             f = open(fn,mode=mode)
         f.bulk_extractor_reader = self
@@ -210,7 +233,7 @@ class BulkReport:
 
     def is_histogram_file(self,fn):
         if is_histogram_filename(fn)==True: return True
-        for line in self.open(fn,'rb'):
+        for line in self.open(fn,'r'):
             if is_comment_line(line): continue
             return is_histogram_line(line)
         return False
@@ -219,12 +242,9 @@ class BulkReport:
         """Return true if fn is a feature file"""
         if is_feature_filename(fn)==False:
             return False
-        for line in self.open(fn,'rb'):
+        for line in self.open(fn,'r'):
             if is_comment_line(line): continue
-            if parse_feature_line(line):
-                return True
-            else:
-                return False
+            return is_feature_line(line)
         return False
         
     def histograms(self):
@@ -243,8 +263,8 @@ class BulkReport:
         import re
         ret = {}
         r = re.compile("^n=(\d+)\t(.*)$")
-        for line in self.open(fn,'rb'):
-            line = line.decode('utf-8')
+        for line in self.open(fn,'r'):
+            # line = line.decode('utf-8')
             m = r.search(line)
             if m:
                 ret[m.group(2)] = int(m.group(1))

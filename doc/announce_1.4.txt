@@ -50,6 +50,14 @@ Improvements in existing scanners:
 * Files that are carved are now binned in directories of 1000, to
   prevent tens of thousands of files from being dumped in a directory.
 
+Improvements in Python programs:
+
+* Many new features in bulk_extractor_reader.py module for writing programs that parse and process feature files.
+
+* identify_filenames.py now properly reports positions when scan_xor is used.
+
+
+
 New features for testing:
 
 * tests/regress.py now performs better validation of reports with the
