@@ -88,7 +88,7 @@ def parse_feature_line(line):
     Previously this assumed that line was in binary; now it assumes that line is in text.
     """
     if len(line)<2: return None
-    if line[0]!=b'#': return None
+    if line[0]==b'#': return None # can't parse a comment
 
     ary = line.split(b"\t")
     
@@ -117,6 +117,8 @@ def is_histogram_filename(fname):
 
 def is_feature_filename(fname):
     """Returns true if this is a feature file"""
+    if not fname.endswith(".txt"): return False
+    if "/" in fname: return False # must be in root directory
     if "_histogram" in fname: return False
     if "_stopped" in fname: return False
     if "_tags" in fname: return False
@@ -242,7 +244,7 @@ class BulkReport:
         """Return true if fn is a feature file"""
         if is_feature_filename(fn)==False:
             return False
-        for line in self.open(fn,'r'):
+        for line in self.open(fn):
             if is_comment_line(line): continue
             return is_feature_line(line)
         return False

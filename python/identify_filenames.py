@@ -339,7 +339,6 @@ if __name__=="__main__":
             print(fn)
         exit(1)
 
-
     # Make sure that the user has specified feature files
     if not args.featurefiles and not args.all:
         raise RuntimeError("Please request a specific feature file or --all feature files")
