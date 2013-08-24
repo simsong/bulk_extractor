@@ -23,7 +23,7 @@ def main():
 
     try:
         reports = tuple(sorted((BulkReport(x) for x in args.reports),
-                key=lambda x: group_var.of(x)))
+                key=group_var.of))
     except RuntimeError as e:
         print("failed to open reports: ", str(e), file=sys.stderr)
         return 1
@@ -36,11 +36,11 @@ def main():
             dataset += (report,)
             continue
         if group_var.of(report) != group_var.of(dataset[0]):
-            datasets += (sorted(dataset, key=lambda x: x_var.of(x)),)
+            datasets += (sorted(dataset, key=x_var.of),)
             dataset = (report,)
             continue
         dataset += (report,)
-    datasets += (sorted(dataset, key=lambda x: x_var.of(x)),)
+    datasets += (sorted(dataset, key=x_var.of),)
     del(dataset)
 
     # check x uniqueness
@@ -145,7 +145,7 @@ def proc_args():
             default="be_graph.pdf", help="(default \"be_graph.pdf\")")
     arg_parser.add_argument("--memory", dest="show_memory",
             action="store_true", help=("plot bulk_extractor runs agains " +
-                "their peak memory usage instead of clock time"))
+                "their peak memory usage"))
     args = arg_parser.parse_args()
     return args
 
