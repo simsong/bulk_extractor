@@ -379,7 +379,7 @@ if __name__=="__main__":
         total_located  += located_count
     print("******************************")
     print("** Total Features: {:8} **".format(total_features))
-    print("** Total Located:  {:8} **".format(total_features))
+    print("** Total Located:  {:8} **".format(total_located))
     print("******************************")
 
 
