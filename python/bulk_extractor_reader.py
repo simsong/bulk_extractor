@@ -159,8 +159,15 @@ class BulkReport:
             if do_validate: validate()
             return
 
+        self.commonprefix=''
         if fn.endswith(".zip") and os.path.isfile(fn):
             self.zipfile = zipfile.ZipFile(fn)
+            
+            # If there is a common prefix, we'll ignore it in is_feature_file()
+            self.commonprefix = os.path.commonprefix(self.zipfile.namelist())
+            while len(self.commonprefix)>0 and self.commonprefix[-1]!='/':
+                self.commonprefix=self.commonprefix[0:-1]
+
             # first find the report.xml file. If we find it, then we want to remove what comes before from
             # each name in the map.
             report_name_list = list(filter(lambda f:f.endswith("report.xml"), self.zipfile.namelist()))
@@ -240,9 +247,15 @@ class BulkReport:
             return is_histogram_line(line)
         return False
 
+    def feature_file_name(self,fn):
+        """Returns the name of the feature file name (fn may be the full path)"""
+        if fn.startswith(self.commonprefix):
+            return fn[len(self.commonprefix):]
+        return fn
+
     def is_feature_file(self,fn):
         """Return true if fn is a feature file"""
-        if is_feature_filename(fn)==False:
+        if is_feature_filename(self.feature_file_name(fn))==False:
             return False
         for line in self.open(fn):
             if is_comment_line(line): continue
