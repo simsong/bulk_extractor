@@ -32,7 +32,7 @@ New functionality in Version 1.4 includes:
 * scan_xor will search for data hidden with (XOR 255). It is disabled
   by default, but it is enabled with -e xor or with -e all.
 
-* Variable context window
+* Variable context window for left and right side.
 
 * Better performance. (Scanners can now declare that they only run at
   top level; scan_windirs does this. Scanners can also declare that
@@ -49,6 +49,9 @@ Improvements in existing scanners:
 
 * Files that are carved are now binned in directories of 1000, to
   prevent tens of thousands of files from being dumped in a directory.
+
+* scan_accts now writes PII such as SSNs, Fedex#s, and DOBs to the
+  feature file pii.txt.
 
 New features for testing:
 
