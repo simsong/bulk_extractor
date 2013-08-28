@@ -22,16 +22,15 @@ class accts_scanner : public sbuf_scanner {
 public:
 	accts_scanner(const scanner_params &sp):
 	  sbuf_scanner(&sp.sbuf),
-	  ccn_recorder(),ccn_track2(),telephone_recorder(),alert_recorder(){
-
-  	    ccn_recorder       = sp.fs.get_name("ccn");
-            pii_recorder       = sp.fs.get_name("pii");
-            telephone_recorder = sp.fs.get_name("telephone");
-    	    ccn_track2         = sp.fs.get_name("ccn_track2");
-    	    alert_recorder     = sp.fs.get_alert_recorder();
+	  ccn_recorder(sp.fs.get_name("ccn")),
+          pii_recorder(sp.fs.get_name("pii")),
+          ccn_track2(sp.fs.get_name("ccn_track2")),
+          telephone_recorder(sp.fs.get_name("telephone")),
+          alert_recorder(sp.fs.get_alert_recorder()){
 	}
 
 	class feature_recorder *ccn_recorder;
+        class feature_recorder *pii_recorder;
 	class feature_recorder *ccn_track2;
 	class feature_recorder *telephone_recorder;
 	class feature_recorder *alert_recorder;
@@ -314,6 +313,9 @@ void scan_accts(const class scanner_params &sp,const recursion_control_block &rc
         }
                 
         yyaccts_lex_destroy(scanner);
-	(void)yyunput;			// avoids defined but not used
+    }
+    if(sp.phase==9999){                 // avoids defined but not used
+	(void)yyunput;			
+        (void)yy_fatal_error;
     }
 }
