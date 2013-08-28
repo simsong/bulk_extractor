@@ -183,8 +183,7 @@ def process_featurefile2(rundb,infile,outfile):
     outfile.write(b"# Position\tFeature")
     if not args.terse:
         outfile.write(b"\tContext")
-    if not args.nohash:
-        outfile.write(b"\tMD5")
+    outfile.write(b"\tMD5\tFilename")
     if args.mactimes:
         outfile.write(b"\tcrtime\tctime\tmtime\tatime")
     outfile.write(b"\n")
@@ -258,7 +257,7 @@ if __name__=="__main__":
         raise RuntimeError("Requires bulk_extractor_reader.py Version 1.0.0 or above")
 
     parser = ArgumentParser(prog='identify_filenames.py', description='Identify filenames from "bulk_extractor" output')
-    parser.add_argument('bulk_extractor_output', action='store',
+    parser.add_argument('bulk_extractor_report', action='store',
                         help='Directory or ZIP file of bulk_extractor output')
     parser.add_argument('outdir',action='store',
                         help='Output directory; must not exist')
@@ -267,11 +266,11 @@ if __name__=="__main__":
     parser.add_argument('--featurefiles', action='store',
                         help='Specific feature file to process; separate with commas')
     parser.add_argument('--imagefile', action='store',
-                        help='Overwrite location of image file from bulk_extractor_output report.xml file')
+                        help='Overwrite location of image file from bulk_extractor_report report.xml file')
     parser.add_argument('--xmlfile', action='store',
                         help="Don't run fiwalk; use the provided XML file instead")
     parser.add_argument('--list', action='store_true',
-                        help='List feature files in bulk_extractor_output and exit')
+                        help='List feature files in bulk_extractor_report and exit')
     parser.add_argument('--nohash',action='store_true',
                         help='Do not calculate MD5 or SHA1 when running fiwalk')
     parser.add_argument('-t', dest='terse', action='store_true',
@@ -310,7 +309,7 @@ if __name__=="__main__":
         if args.imagefile:
             imagefile = args.imagefile
         else:
-            imagefile = bulk_extractor_reader.BulkReport(args.bulk_extractor_output).imagefile()
+            imagefile = bulk_extractor_reader.BulkReport(args.bulk_extractor_report).imagefile()
         rundb.read_imagefile(imagefile)
         if len(rundb)==0:
             raise RuntimeError("\nERROR: No files detected in image file {}\n".format(imagefile))
@@ -328,17 +327,16 @@ if __name__=="__main__":
 
     # Open the report
     try:
-        report = bulk_extractor_reader.BulkReport(args.bulk_extractor_output)
+        report = bulk_extractor_reader.BulkReport(args.bulk_extractor_report)
     except UnicodeDecodeError:
-        print("{}/report.xml file contains invalid XML. Cannot continue\n".format(args.bulk_extractor_output))
+        print("{}/report.xml file contains invalid XML. Cannot continue\n".format(args.bulk_extractor_report))
         exit(1)
     
     if args.list:
-        print("Feature files in {}:".format(args.bulk_extractor_output))
+        print("Feature files in {}:".format(args.bulk_extractor_report))
         for fn in report.feature_files():
             print(fn)
         exit(1)
-
 
     # Make sure that the user has specified feature files
     if not args.featurefiles and not args.all:
@@ -380,7 +378,7 @@ if __name__=="__main__":
         total_located  += located_count
     print("******************************")
     print("** Total Features: {:8} **".format(total_features))
-    print("** Total Located:  {:8} **".format(total_features))
+    print("** Total Located:  {:8} **".format(total_located))
     print("******************************")
 
 

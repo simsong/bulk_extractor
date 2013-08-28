@@ -53,6 +53,13 @@ Improvements in existing scanners:
 * scan_accts now writes PII such as SSNs, Fedex#s, and DOBs to the
   feature file pii.txt.
 
+=======
+Improvements in Python programs:
+
+* Many new features in bulk_extractor_reader.py module for writing programs that parse and process feature files.
+
+* identify_filenames.py now properly reports positions when scan_xor is used.
+
 New features for testing:
 
 * tests/regress.py now performs better validation of reports with the
