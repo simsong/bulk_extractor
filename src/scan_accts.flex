@@ -25,6 +25,7 @@ public:
 	  ccn_recorder(),ccn_track2(),telephone_recorder(),alert_recorder(){
 
   	    ccn_recorder       = sp.fs.get_name("ccn");
+            pii_recorder       = sp.fs.get_name("pii");
             telephone_recorder = sp.fs.get_name("telephone");
     	    ccn_track2         = sp.fs.get_name("ccn_track2");
     	    alert_recorder     = sp.fs.get_alert_recorder();
@@ -233,21 +234,21 @@ fedex[^a-z]+[0-9][0-9][0-9][0-9][- ]?[0-9][0-9][0-9][0-9][- ]?[0-9]/{END}	{
     /* REGEX12 */
     /* Generalized international phone numbers */
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
-    s.ccn_recorder->write_buf(SBUF,s.pos,yyleng);
+    s.pii_recorder->write_buf(SBUF,s.pos,yyleng);
     s.pos += yyleng;
 }
 
 ssn:?[ \t]+[0-9][0-9][0-9]-?[0-9][0-9]-?[0-9][0-9][0-9][0-9]/{END}	{
     /* REGEX13 */
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
-    s.ccn_recorder->write_buf(SBUF,s.pos,yyleng);
+    s.pii_recorder->write_buf(SBUF,s.pos,yyleng);
     s.pos += yyleng;
 }
 
 dob:?[ \t]+{DATEFORMAT}	{
     /* REGEX14 */
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
-    s.ccn_recorder->write_buf(SBUF,s.pos,yyleng);
+    s.pii_recorder->write_buf(SBUF,s.pos,yyleng);
     s.pos += yyleng;
 }
 
@@ -290,6 +291,7 @@ void scan_accts(const class scanner_params &sp,const recursion_control_block &rc
 	sp.info->description	= "scans for CCNs, track 2, and phone #s";
 	sp.info->scanner_version= "1.0";
         sp.info->feature_names.insert("ccn");
+        sp.info->feature_names.insert("pii");  // personally identifiable information
         sp.info->feature_names.insert("ccn_track2");
         sp.info->feature_names.insert("telephone");
 	sp.info->histogram_defs.insert(histogram_def("ccn","","histogram"));
