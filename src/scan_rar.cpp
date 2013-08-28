@@ -640,8 +640,6 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
             // having the feature name be the compressed file's name (the
             // component's name) although this information is duplicated in the
             // context XML data
-            string feature_name = ".";
-            string feature_data = "<null/>";
             ssize_t pos = cc-sbuf.buf; // position of the buffer
 
             // try each of the possible RAR blocks we may want to record
