@@ -139,6 +139,7 @@ class BulkReport:
 """    
 
     def __init__(self,fn,do_validate=True):
+        self.commonprefix=''
         def validate():
             """Validates the XML and finds the histograms and feature files"""
             import xml.dom.minidom
@@ -159,7 +160,6 @@ class BulkReport:
             if do_validate: validate()
             return
 
-        self.commonprefix=''
         if fn.endswith(".zip") and os.path.isfile(fn):
             self.zipfile = zipfile.ZipFile(fn)
             
@@ -277,7 +277,7 @@ class BulkReport:
         """Read a histogram file and return a dictonary of the histogram """
         import re
         ret = {}
-        r = re.compile("^n=(\d+)\t(.*)$")
+        r = re.compile(b"^n=(\d+)\t(.*)$")
         for line in self.open(fn,'r'):
             # line = line.decode('utf-8')
             m = r.search(line)

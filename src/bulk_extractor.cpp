@@ -1075,6 +1075,7 @@ int main(int argc,char **argv)
      *** THIS IS IT! PHASE 1!
      ****************************************************************/
 
+    md5_generator *md5g = new md5_generator();		// keep track of MD5
     BulkExtractor_Phase1 phase1(*xreport,timer,cfg);
 
     if(opt_sampling_params.size()>0) BulkExtractor_Phase1::set_sampling_parameters(cfg,opt_sampling_params);
@@ -1116,6 +1117,8 @@ int main(int argc,char **argv)
 
 	std::cout.precision(4);
         printf("Elapsed time: %g sec.\n",timer.elapsed_seconds());
+        printf("Total MB processed: %d\n",int(phase1.total_bytes / 100000));
+        
         printf("Overall performance: %g MBytes/sec\n",mb_per_sec);
         if (fs.has_name("email")) {
             feature_recorder *fr = fs.get_name("email");

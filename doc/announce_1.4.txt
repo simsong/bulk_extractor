@@ -186,13 +186,13 @@ Disk image: /corp/nps/drives/nps-2009-ubnist1/ubnist1.gen3.E01
 Hardware:   MacBook Pro 2 Ghz Intel Core i7, 8GB 1333 Mhz DDR3
 	    512GB SSD (Simson's Laptop "Mucha"), 
 
-Current and Historic Times [1]: 
+Current and Historic Times with no tuning [1]: 
 
 MacOS 10.8.0; LLVM build 2336.11.00; -O3
 
-version 1.4: TBD
-version 1.3:    185 seconds (11.34 MBytes/sec)  (-O3; AES enabled)
-version 1.2.0:  141 seconds (14.9 MBytes/sec)   (-O3; AES enabled)
+version 1.4:    144 seconds (14.59 MBytes/sec)  (-O3; )
+version 1.3:    185 seconds (11.34 MBytes/sec)  (-O3; )
+version 1.2.0:  141 seconds (14.9 MBytes/sec)   (-O3; )
 version 1.1.3:  171 seconds (12.3 MBytes/sec)   (-O3; AES disabled)
 version 1.0.7:  256 seconds (8.22 MBytes/sec)   (-O3; AES disabled; 
 
@@ -314,7 +314,8 @@ Planned Feature List for 1.5:
 Architecture improvements:
 
 * introduce a concept of an atomic set and map to avoid the use of
-  cppmutexes in the callers. This could be used for the feature_recorder_map and the seen_set in the feature_recorder_set.h 
+  cppmutexes in the callers. This could be used for the
+  feature_recorder_map and the seen_set in the feature_recorder_set.h
 
 
 We are also considering the following scanners (and need help!):
@@ -324,8 +325,6 @@ We are also considering the following scanners (and need help!):
 * Better handling of MIME encoding
 
 * SQLite database identification (first survey - how fragmented are they?)
-
-* Processing of physical drives under Windows
 
 * Python Bridge. 
 
