@@ -293,6 +293,14 @@ unzip/
 ================================================================
 Planned Feature List for 1.5:
 
+* scanner to remove all XML tags (extracts text from .docx files)
+
+* improvements to identify_filename so it can run on a report in place.
+
+* atomic map object
+
+* replace as many and sets maps as possible with unordered equivallent.
+
 * Find more false positives with CCN validator by scanning through XOR data
 
 * identify_filenames should present the % of disk that has allocated files.
@@ -327,6 +335,11 @@ We are also considering the following scanners (and need help!):
 * SQLite database identification (first survey - how fragmented are they?)
 
 * Python Bridge. 
+
+
+Validation Improvements:
+
+* Process more data with -e xor and look for CCN hits. Most will be false positives
 
 
 We have tabled the following ideas, for the following reasons:
