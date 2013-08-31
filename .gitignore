@@ -90,3 +90,4 @@ src_win/liblightgrep
 src_win/tre-0.8.0
 plugins/plugin_test.exe
 src_win/libewf-*
+_deps
