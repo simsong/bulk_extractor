@@ -23,14 +23,20 @@ all: $(INSTALLER)
 
 signed: $(SIGNED_INSTALLER)
 
-$(INSTALLER): $(WIN32_EXE) $(WIN64_EXE) $(JAVA_GUI) BEViewerLauncher.exe build_installer.nsi
+# The prerequisites for the installer can't be listed after the colon, 
+# becuase then the system will try to generate them simultaneously,
+# and make win32 can't be run at the same time as make win64
+# also, win32 and win64 do a makedistclean, so no targets can be made after they are made
+$(INSTALLER): $(JAVA_GUI) BEViewerLauncher.exe build_installer.nsi
+	mv $(JAVA_GUI) /tmp/java_gui$$  # make a copy of it 
+	if [ ! -r $(WIN32_EXE) ]; then \
+	   (cd ..;make distclean;rm -rf win32;mkdir win32;cd win32;mingw32-configure;make;cp src/bulk_extractor.exe bulk_extractor32.exe);\
+           fi
+	if [ ! -r $(WIN64_EXE) ]; then \
+	    (cd ..;make distclean;rm -rf win64;mkdir win64;cd win64;mingw64-configure;make;cp src/bulk_extractor.exe bulk_extractor64.exe);\
+	   fi
+	mv /tmp/java_gui$$ $(JAVA_GUI) # move it back
 	makensis -DVERSION=$(VERSION) build_installer.nsi
-
-$(WIN32_EXE):
-	cd .. && make win32
-
-$(WIN64_EXE):
-	cd .. && make win64
 
 $(JAVA_GUI):
 	cd ../java_gui && make

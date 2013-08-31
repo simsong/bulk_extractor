@@ -37,70 +37,44 @@ EXTRA_DIST = \
 	m4/ax_boost_system.m4 \
 	m4/ax_pthread.m4
 
-# these are for the DFRWS2013 challenge:
-#	src/data_sniffer src/dfrws_2012_challenge.py
-
-
 ACLOCAL_AMFLAGS = -I m4
 
-RELEASE_USER = simsong@
-RELEASE_HOST = www.digitalcorpora.org
-RELEASE_DIR  = digitalcorpora.org/
+.PHONY: exels
+exels:
+	/bin/ls -l */*exe
 
-RELEASE_LOC  = $(RELEASE_DIR)/downloads/
-VERSION_FN   = $(PACKAGE)_version.txt
-RELEASE_PATH = $(RELEASE_LOC)/$(VERSION_FN)
-RELEASE_SSH  = $(RELEASE_USER)$(RELEASE_HOST):$(RELEASE_LOC)
-RELEASE	     = $(PACKAGE)-$(VERSION)
+.PHONY: execlean
+execlean:
+	/bin/rm -f */*exe
 
-release:
-	make check_release_version
-	make dist
-	make distcheck
-	make the_release
+.PHONY: win32
+win32: win32/bulk_extractor32.exe
 
-check_release_version:
-	@echo Checking version on server for $(VERSION_FN)
-	@echo
-	echo
-	/bin/rm -f $(VERSION_FN)
-	wget -q http://$(RELEASE_HOST)/downloads/$(VERSION_FN)
-	@echo Version `cat $(VERSION_FN)` is on the server.
-	@sh -c "if [ `cat $(VERSION_FN)` = $(RELEASE).tar.gz ]; then echo ; echo ; echo $(RELEASE) is already on the server; exit 1; fi"
-	/bin/rm -f $(VERSION_FN)
-
-the_release: 
-	gpg --detach-sign $(RELEASE).tar.gz
-	scp $(RELEASE).tar.gz{,.sig} $(RELEASE_SSH)
-	ssh $(RELEASE_HOST) 'cd $(RELEASE_LOC);/bin/rm $(PACKAGE).tar.gz;ln -s $(RELEASE).tar.gz $(PACKAGE).tar.gz'
-	ssh $(RELEASE_HOST) 'echo $(RELEASE).tar.gz > $(RELEASE_PATH)'
-	@echo Release $(RELEASE) uploaded to server
-
-win32:
+win32/bulk_extractor32.exe:
+	@echo '****************************************************************'
+	@echo '*** make win32 with a distclean, mingw32-configure, and make ***'
+	@echo '****************************************************************'
 	rm -rf win32
-	mkdir win32
 	make distclean
-	mingw32-configure
-	make
-	cp src/bulk_extractor.exe win32/bulk_extractor32.exe
+	(mkdir win32;cd win32;mingw32-configure;make;cp src/bulk_extractor.exe bulk_extractor32.exe)
+	ls -l win32/bulk_extractor32.exe
 
-win64:
+.PHONY: win64
+win64: win64/bulk_extractor64.exe
+
+win64/bulk_extractor64.exe:
+	@echo '****************************************************************'
+	@echo '*** make win64 with a distclean, mingw32-configure, and make ***'
+	@echo '****************************************************************'
 	rm -rf win64
-	mkdir win64
 	make distclean
-	mingw64-configure
-	make
-	cp src/bulk_extractor.exe win64/bulk_extractor64.exe
-
-BEREL=bulk_extractor-windows_version.txt
-BEZIP=bulk_extractor-windows-$(VERSION).zip
-
-$(distdir).zip: 
-	make windist
+	(mkdir win64;cd win64;mingw64-configure;make;cp src/bulk_extractor.exe bulk_extractor64.exe)
+	ls -l win64/bulk_extractor64.exe
 
 # windist makes bulk_extractor32.exe and bulk_extractor64.exe
 # and puts them in a zip file
-windist: win32 win64
+.PHONY: windist
+windist: win32/bulk_extractor32.exe win64/bulk_extractor64.exe
 	@echo checking to see if there are uncommitted sources
 	(if (svn status | grep '^Q') ; then exit 1 ; fi)
 	@echo nope
@@ -132,7 +106,7 @@ windist: win32 win64
 	md5deep -rd $(distdir) > md5list.xml
 	mv md5list.txt md5list.xml $(distdir)
 	zip --to-crlf $(distdir).zip $(distdir)/*.txt $(distdir)/*.xml $(distdir)/python/*
-	rm -rf $(distdir) $(WINDOWSDOCS) 
+	rm -rf $(distdir) 
 	@echo "***********************"
 	@echo "*** WINDIST IS MADE ***"
 	@echo "***********************"
@@ -141,9 +115,7 @@ windist: win32 win64
 	@echo ""
 	@unzip -l $(distdir).zip
 
-$(BEZIP): $(distdir).zip
-	mv $(distdir).zip $(BEZIP)
-
+.PHONY: winrelease
 winrelease: $(BEZIP)
 	@echo checking to see if there are uncommitted sources
 	(if (svn status | grep '^M') ; then exit 1 ; fi)
@@ -152,6 +124,7 @@ winrelease: $(BEZIP)
 	scp $(BEZIP) $(RELEASE_SSH)
 	ssh $(RELEASE_USER)$(RELEASE_HOST) 'echo $(BEZIP) > $(RELEASE_LOC)/$(BEREL)'
 
+.PHONY: svnclean
 svnclean:
 	echo these files will be deleted: 
 	svn status | grep '^[?]' | awk '{print $2;}'
@@ -160,6 +133,7 @@ svnclean:
 	read
 	/bin/rm -rf `svn status | grep '^[?]' | awk '{print $2;}'`
 
+.PHONY: pull
 pull:
 	git pull
 	(cd src/dfxml;git pull)
@@ -171,5 +145,4 @@ SUFFIXES = .txt .1
 .1.txt:
 	/usr/bin/tbl $< | /usr/bin/groff -S -Wall -mtty-char -mandoc -Tascii | /usr/bin/col -bx > $@
 
-.PHONY: windist win32 win64
 
