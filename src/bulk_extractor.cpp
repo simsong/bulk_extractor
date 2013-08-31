@@ -1075,7 +1075,7 @@ int main(int argc,char **argv)
      *** THIS IS IT! PHASE 1!
      ****************************************************************/
 
-    md5_generator *md5g = new md5_generator();		// keep track of MD5
+    //md5_generator *md5g = new md5_generator();		// keep track of MD5
     BulkExtractor_Phase1 phase1(*xreport,timer,cfg);
 
     if(opt_sampling_params.size()>0) BulkExtractor_Phase1::set_sampling_parameters(cfg,opt_sampling_params);
