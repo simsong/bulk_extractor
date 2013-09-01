@@ -6,6 +6,7 @@
 if WANT_BE_VIEWER
 BE_VIEWER_DIR = java_gui
 endif
+
 if WANT_WIN_INSTALLER
 SRC_WIN_DIR = src_win
 endif
