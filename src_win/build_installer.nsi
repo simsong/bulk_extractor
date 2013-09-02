@@ -35,11 +35,11 @@
 	!define BE_VIEWER_LAUNCHER "signed_BEViewerLauncher.exe"
 	!define UNINSTALLER_EXE "signed_uninstall.exe"
 !else
-	!define BULK_EXTRACTOR_32 "win32/bulk_extractor32.exe"
-	!define BULK_EXTRACTOR_64 "win64/bulk_extractor64.exe"
+	!define BULK_EXTRACTOR_32 "bulk_extractor32.exe"
+	!define BULK_EXTRACTOR_64 "bulk_extractor64.exe"
 	!define BE_VIEWER_LAUNCHER "BEViewerLauncher.exe"
 !endif
-!define BE_VIEWER_JAR "win64/java_gui/BEViewer.jar"
+!define BE_VIEWER_JAR "BEViewer.jar"
 
 SetCompressor lzma
  
@@ -49,9 +49,9 @@ InstallDir "$PROGRAMFILES\${APPNAME}"
  
 Name "${APPNAME}"
 !ifdef SIGN
-	outFile "be_installer-${VERSION}_intermediate.exe"
+	outFile "bulk_extractor-${VERSION}-intermediate.exe"
 !else
-	outFile "be_installer-${VERSION}_unsigned.exe"
+	outFile "bulk_extractor-${VERSION}-windowsinstaller.exe"
 !endif
  
 !include LogicLib.nsh

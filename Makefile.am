@@ -8,11 +8,11 @@ BE_VIEWER_DIR = java_gui
 endif
 
 if WANT_WIN_INSTALLER
-SRC_WIN_DIR = src_win
+SRC_WIN=src_win
+include src_win/Makefile
 endif
 
 SUBDIRS = doc doc/user_manual src man plugins python specfiles tests $(BE_VIEWER_DIR) $(SRC_WIN_DIR)
-
 
 # don't include bootstrap. People run it, and they shoudln't
 # It's only for people who check out the git repo
@@ -36,7 +36,8 @@ EXTRA_DIST = \
 	m4/ax_boost_base.m4 \
 	m4/ax_boost_filesystem.m4 \
 	m4/ax_boost_system.m4 \
-	m4/ax_pthread.m4
+	m4/ax_pthread.m4 \
+	$(SRC_WIN_DIST)
 
 ACLOCAL_AMFLAGS = -I m4
 
@@ -51,99 +52,34 @@ execlean:
 .PHONY: win32
 win32: win32/bulk_extractor32.exe
 
-win32/bulk_extractor32.exe:
-	@echo '****************************************************************'
-	@echo '*** make win32 with a distclean, mingw32-configure, and make ***'
-	@echo '****************************************************************'
-	rm -rf win32
-	make distclean
-	(mkdir win32;cd win32;mingw32-configure;make;cp src/bulk_extractor.exe bulk_extractor32.exe)
-	ls -l win32/bulk_extractor32.exe
-
 .PHONY: win64
 win64: win64/bulk_extractor64.exe
 
+win32/bulk_extractor32.exe:
+	@echo '****************************************************'
+	@echo '*** making win32 with mingw32-configure and make ***'
+	@echo '****************************************************'
+	if [ -r Makefile ]; then $(MAKE) distclean ; fi
+	if [ ! -d win32  ]; then mkdir win32 ; fi
+	if [ ! -r win32/Makefile ]; then (cd win32;mingw32-configure) ; fi
+	(cd win32;$(MAKE))
+	(cp win32/src/bulk_extractor.exe win32/bulk_extractor32.exe)
+	ls -l win32/bulk_extractor32.exe
+
 win64/bulk_extractor64.exe:
-	@echo '****************************************************************'
-	@echo '*** make win64 with a distclean, mingw32-configure, and make ***'
-	@echo '****************************************************************'
-	rm -rf win64
-	make distclean
-	(mkdir win64;cd win64;mingw64-configure;make;cp src/bulk_extractor.exe bulk_extractor64.exe)
+	@echo '****************************************************'
+	@echo '*** making win64 with mingw32-configure and make ***'
+	@echo '****************************************************'
+	if [ -r Makefile ]; then $(MAKE) distclean ; fi
+	if [ ! -d win64  ]; then mkdir win64 ; fi
+	if [ ! -r win64/Makefile ]; then (cd win64;mingw64-configure) ; fi
+	(cd win64;$(MAKE))
+	(cp win64/src/bulk_extractor.exe win64/bulk_extractor64.exe)
 	ls -l win64/bulk_extractor64.exe
-
-# windist makes bulk_extractor32.exe and bulk_extractor64.exe
-# and puts them in a zip file
-.PHONY: windist
-windist: win32/bulk_extractor32.exe win64/bulk_extractor64.exe
-	@echo checking to see if there are uncommitted sources
-	(if (svn status | grep '^Q') ; then exit 1 ; fi)
-	@echo nope
-	rm -rf $(distdir).zip $(distdir) src/*.exe
-	mkdir $(distdir)
-	mkdir $(distdir)/python
-	@echo
-	cp win32/bulk_extractor32.exe $(distdir)
-	cp win64/bulk_extractor64.exe $(distdir)
-	@echo ====================================
-	@echo 
-	@echo making documentation
-	make man/bulk_extractor.txt
-	mv man/bulk_extractor.txt $(distdir)
-	@echo ====================================
-	@echo 
-	@echo Creating ZIP archive
-	@echo 
-	zip -r9 $(distdir).zip $(distdir)
-	@echo ====================================
-	@echo 
-	@echo Adding text files to $(distdir).zip 
-	@echo 
-	cp python/*.{py,txt}    $(distdir)/python
-	cp ChangeLog		$(distdir)/ChangeLog.txt
-	cp NEWS			$(distdir)/NEWS.txt
-	cp COPYING		$(distdir)/COPYING.txt
-	md5deep -r  $(distdir) > md5list.txt
-	md5deep -rd $(distdir) > md5list.xml
-	mv md5list.txt md5list.xml $(distdir)
-	zip --to-crlf $(distdir).zip $(distdir)/*.txt $(distdir)/*.xml $(distdir)/python/*
-	rm -rf $(distdir) 
-	@echo "***********************"
-	@echo "*** WINDIST IS MADE ***"
-	@echo "***********************"
-	@echo ""
-	ls -l $(distdir).*
-	@echo ""
-	@unzip -l $(distdir).zip
-
-.PHONY: winrelease
-winrelease: $(BEZIP)
-	@echo checking to see if there are uncommitted sources
-	(if (svn status | grep '^M') ; then exit 1 ; fi)
-	@echo nope
-	echo make $(distdir).zip
-	scp $(BEZIP) $(RELEASE_SSH)
-	ssh $(RELEASE_USER)$(RELEASE_HOST) 'echo $(BEZIP) > $(RELEASE_LOC)/$(BEREL)'
-
-.PHONY: svnclean
-svnclean:
-	echo these files will be deleted: 
-	svn status | grep '^[?]' | awk '{print $2;}'
-	echo 
-	echo hit return to continue
-	read
-	/bin/rm -rf `svn status | grep '^[?]' | awk '{print $2;}'`
 
 .PHONY: pull
 pull:
 	git pull
 	(cd src/dfxml;git pull)
 	(cd src/be13_api;git pull)
-
-CLEANFILES = man/bulk_extractor.txt
-
-SUFFIXES = .txt .1
-.1.txt:
-	/usr/bin/tbl $< | /usr/bin/groff -S -Wall -mtty-char -mandoc -Tascii | /usr/bin/col -bx > $@
-
 

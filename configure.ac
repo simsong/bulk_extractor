@@ -9,16 +9,18 @@ AC_PREREQ(2.57)
 AC_INIT(BULK_EXTRACTOR, 1.4.0-beta8, bugs@digitalcorpora.org)
 AC_CONFIG_MACRO_DIR(m4)
 
-# Notice:
-# plugins/Makefile is referenced so that the plugins Makefile is created.
+# 
+# NOTE 1 - plugins/Makefile is referenced so that the plugins Makefile is created.
 # However, plugins is not listed as a SUBDIR for Makefile.am in this directory.
 # That prevents the plugins from automatically being built each time.
 #
+# NOTE 2 - src_win/Makefile is not automatically generated. This is necessary
+# so that it can be run even after a 'make distclean' is done
 AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile doc/user_manual/Makefile \
 			  man/Makefile python/Makefile \
                           plugins/Makefile \
 			  specfiles/Makefile specfiles/bulk_extractor.spec.m4 \
-			  java_gui/Makefile src_win/Makefile tests/Makefile ])
+			  java_gui/Makefile tests/Makefile ])
 AC_CONFIG_HEADER([config.h])
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
