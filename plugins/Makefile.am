@@ -14,7 +14,7 @@ EXTRA_DIST = scan_demo.cpp scan_flexdemo.flex be13_api
 
 
 plugins:
-	make scan_demo.so scan_flexdemo.so
+	$(MAKE) scan_demo.so scan_flexdemo.so
 	@echo "Available Plugins:"
 	ls -l *.so
 
