@@ -128,9 +128,9 @@ $(BE_VIEWER_JAR): $(SOURCE_FILES)
 	mkdir -p classes
 	echo $(SOURCE_FILES) > temp_generated_source_list
 	javac -source 1.6 -target 1.6 -Xlint:unchecked -d classes -classpath @temp_generated_source_list
-	rm temp_generated_source_list
-	echo $(ICON_FILES) > temp_generated_icon_list
-	jar cfm $(BE_VIEWER_JAR) $(MANIFEST_FILE) @temp_generated_icon_list -C classes .
+	rm -f temp_generated_source_list
+	echo $(ICON_FILES) | sed s:$(srcdir)/:\ : > temp_generated_icon_list
+	jar cfm $(BE_VIEWER_JAR) $(MANIFEST_FILE) -C $(srcdir) @temp_generated_icon_list -C classes .
 	rm temp_generated_icon_list
 
 doxygen: $(DOXYGEN_PDF)
