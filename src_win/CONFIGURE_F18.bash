@@ -27,6 +27,11 @@ read
 # cd to the directory where the script is
 # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+if [ "$PWD" != "$DIR" ]; then
+    changed_dir="true"
+else
+    changed_dir="false"
+fi
 cd $DIR
 
 NEEDED_FILES=" icu-mingw32-libprefix.patch icu-mingw64-libprefix.patch"
@@ -46,6 +51,7 @@ MPKGS+="libxml2-devel libxml2-static czmq-devel openssl-devel "
 MPKGS+="boost-devel boost-static expat-devel "
 MPKGS+="mingw32-gcc mingw32-gcc-c++ "
 MPKGS+="mingw64-gcc mingw64-gcc-c++ "
+MPKGS+="mingw32-nsis "
 
 if [ ! -r /etc/redhat-release ]; then
   echo This requires Fedora Linux
@@ -250,3 +256,6 @@ echo 'To make bulk_extractor32.exe: cd ..; make win32'
 echo 'To make bulk_extractor64.exe: cd ..; make win64'
 echo 'To make ZIP file with both:   cd ..; make windist'
 echo 'To make the Nulsoft installer with both and the Java GUI: make'
+if [ "$changed_dir" == "true" ]; then
+    echo "NOTE: paths are relative to the directory $0 is in"
+fi
