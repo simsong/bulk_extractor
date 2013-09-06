@@ -144,6 +144,27 @@ Function ${UN}EnvVarUpdate
     DetailPrint "ERROR: PathString is blank"
     Goto EnvVarUpdate_Restore_Vars
   ${EndIf}
+
+  ; abort if NSIS is unable to update the path because the path is too long
+  Push $6
+  Push $7
+  Push $8
+  StrLen $7 $4
+  StrLen $6 $5
+  IntOp $8 $6 + $7
+  ${If} $5 == ""
+  ${OrIf} $8 >= ${NSIS_MAX_STRLEN}
+    SetErrors
+    DetailPrint "ERROR: NSIS limitation: Unable to update PATH because existing PATH length is too long."
+    DetailPrint "       Please shorten existing PATH and retry or else set PATH manually"
+    pop $8
+    pop $7
+    pop $6
+    Goto EnvVarUpdate_Restore_Vars
+  ${EndIf}
+  pop $8
+  pop $7
+  pop $6
  
   ; Make sure we've got some work to do
   ${If} $5 == ""
