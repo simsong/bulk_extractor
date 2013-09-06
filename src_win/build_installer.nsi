@@ -124,6 +124,17 @@ function InstallOnce
         file "../python/statbag.py"
         file "../python/ttable.py"
 
+        # install PDF docs
+        setOutPath "$INSTDIR\pdf"
+        file "BEProgrammersManual.pdf"
+        file "BEUsersManual.pdf"
+        file "BEWorkedExamplesStandalone.pdf"
+
+        # 
+	createShortCut "$SMPROGRAMS\${APPNAME}\Users Manual.lnk" "$INSTDIR\pdf\BEUsersManual.pdf"
+	createShortCut "$SMPROGRAMS\${APPNAME}\Programmers Manual.lnk" "$INSTDIR\pdf\BEProgrammersManual.pdf"
+	createShortCut "$SMPROGRAMS\${APPNAME}\Worked Examples.lnk" "$INSTDIR\pdf\BEWorkedExamplesStandalone.pdf"
+
 	AlreadyThere:
 functionEnd
 
@@ -133,7 +144,7 @@ function .onInit
 functionEnd
 
 Section "32-bit configuration"
- 
+
 	# install content common to both
 	call InstallOnce
 

@@ -92,3 +92,5 @@ plugins/plugin_test.exe
 src_win/libewf-*
 _deps
 BEViewer.jar
+BEWorkedExamplesStandalone.pdf
+BEUsersManual.pdf

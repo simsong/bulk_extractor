@@ -27,6 +27,8 @@ WIN32_EXE = bulk_extractor32.exe
 WIN64_EXE = bulk_extractor64.exe
 JAVA_GUI  = BEViewer.jar
 
+PDFDOCS	  = BEProgrammersManual.pdf BEUsersManual.pdf BEWorkedExamplesStandalone.pdf
+
 SRC_WIN_DIST = \
 	$(SRC_WIN)Makefile \
 	$(SRC_WIN)build_BEViewer_launcher.nsi \
@@ -43,7 +45,7 @@ SRC_WIN_DIST = \
 # which causes problems if both try to do a distclean at the same time.
 # So this just manually checks to see if the prerequists are present and, if not, it makes them
 #
-$(UNVERSIONED_INSTALLER): BEViewerLauncher.exe build_installer.nsi
+$(UNVERSIONED_INSTALLER): BEViewerLauncher.exe build_installer.nsi $(PDFDOCS)
 	@echo Making bulk_extractor version $(BEVERSION) Windows Installer
 	if [ ! -r ../win32/Makefile ]; then \
 	   if [ -r ../Makefile ]; then (cd ..;make distclean); fi ; \
@@ -85,6 +87,20 @@ $(SRC_WIN)clean:
 $(SRC_WIN)distclean:
 	if [ -r ../Makefile ]; then (cd ..;$(MAKE) distclean); fi
 	$(MAKE) clean
+
+################################################################
+## 
+## Get the PDF documentation from the download site
+##
+DOWNLOAD = http://digitalcorpora.org/downloads/bulk_extractor
+BEProgrammersManual.pdf:	
+	wget $(DOWNLOAD)/BEProgrammersManual.pdf
+
+BEUsersManual.pdf:	
+	wget $(DOWNLOAD)/BEUsersManual.pdf
+
+BEWorkedExamplesStandalone.pdf:	
+	wget $(DOWNLOAD)/BEWorkedExamplesStandalone.pdf
 
 ################################################################
 ##

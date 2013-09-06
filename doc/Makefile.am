@@ -3,7 +3,6 @@ DOXYGEN_FILES = doxygen/Doxyfile doxygen/Makefile doxygen/programmer_manual.doxy
 
 EXTRA_DIST = \
 	2013.COSE.bulk_extractor.pdf \
-	2013.DFRWS_Challenge.txt \
 	announce_1.2.txt \
 	announce_1.3.1.txt \
 	announce_1.3.txt \
@@ -14,6 +13,5 @@ EXTRA_DIST = \
 	crash_diagnosis1.txt \
 	crash_diagnosis2.txt\
 	debugging_performance_problems.html \
-	scan_lift_report.pdf
-
+	scan_lift_report.pdf \
 	$(DOXYGEN_FILES)
