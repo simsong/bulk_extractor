@@ -240,11 +240,13 @@ section "uninstall"
 	delete "$INSTDIR\32-bit\*"
 	delete "$INSTDIR\64-bit\*"
 	delete "$INSTDIR\python\*"
+	delete "$INSTDIR\pdf\*"
 
 	# uninstall dir
 	rmdir "$INSTDIR\32-bit"
 	rmdir "$INSTDIR\64-bit"
 	rmdir "$INSTDIR\python"
+	rmdir "$INSTDIR\pdf"
 
 	# uninstall Start Menu launcher shortcuts
 	delete "$SMPROGRAMS\${APPNAME}\BEViewer with ${APPNAME} (32-bit).lnk"
