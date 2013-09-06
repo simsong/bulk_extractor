@@ -77,12 +77,12 @@ public class BulkExtractorVersionReader {
         String bulk_extractorVersion = input.substring(VERSION_PREFIX.length());
         bulk_extractorVersion = bulk_extractorVersion.trim(); // bulk_extractor appends an unnecessary space
 
-        WLog.log("BulkExtractorVersionReader.readVersion: bulk_extractor version " + bulk_extractorVersion + ", BEViewer version " + Config.VERSION);
+        WLog.log("BulkExtractorVersionReader.readVersion: bulk_extractor version " + bulk_extractorVersion + ", Bulk Extractor Viewer version " + Config.VERSION);
         // show both versions
-        WError.showMessageLater("Versions:\nBEViewer: " + Config.VERSION
+        WError.showMessageLater("Versions:\nBulk Extractor Viewer: " + Config.VERSION
                       + "\nbulk_extractor: " + bulk_extractorVersion,
                       "Version Information");
-//        WError.showMessageLater("\u2022 BEViewer Version " + Config.VERSION
+//        WError.showMessageLater("\u2022 Bulk Extractor Viewer Version " + Config.VERSION
 //                      + "\n\u2022 bulk_extractor Version " + bulk_extractorVersion,
 //                      "Version Information");
       }

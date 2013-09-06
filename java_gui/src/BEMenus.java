@@ -712,7 +712,7 @@ public class BEMenus extends JMenuBar {
     add(help);
 
     // help|About
-    mi = new JMenuItem("About BEViewer " + Config.VERSION, BEIcons.HELP_ABOUT_16);
+    mi = new JMenuItem("About Bulk Extractor Viewer " + Config.VERSION, BEIcons.HELP_ABOUT_16);
     help.add(mi);
     mi.setAccelerator(KEYSTROKE_A);
     mi.addActionListener(new ActionListener() {
