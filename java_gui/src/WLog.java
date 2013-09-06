@@ -169,7 +169,7 @@ public class WLog implements Thread.UncaughtExceptionHandler {
         // create the JDialog window if it does not exist yet
         if (window == null) {
           // create the window component
-          window = new JDialog((Frame)null, "Bulk Extractor Viewer Runtime Log Report", false);
+          window = new JDialog((Frame)null, "Bulk Extractor Viewer Log", false);
           Container pane = window.getContentPane();
 
           // use GridBagLayout with GridBagConstraints

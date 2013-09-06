@@ -733,9 +733,13 @@ public class BEMenus extends JMenuBar {
     // help|<separator>
     help.addSeparator();
 
-    // help|Show Log
+    // help|diagnostics
+    JMenu diagnostics = new JMenu("Diagnostics");
+    help.add(diagnostics);
+
+    // help|diagnostics|Show Log
     miShowLog = new JMenuItem("Show Log");
-    help.add(miShowLog);
+    diagnostics.add(miShowLog);
     miShowLog.setAccelerator(KEYSTROKE_L);
     miShowLog.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
@@ -743,18 +747,18 @@ public class BEMenus extends JMenuBar {
       }
     });
 
-    // help|Clear Log
+    // help|diagnostics|Clear Log
     mi = new JMenuItem("Clear Log");
-    help.add(mi);
+    diagnostics.add(mi);
     mi.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
         WLog.clearLog();
       }
     });
 
-    // help|Copy Log to System Clipboard
+    // help|diagnostics|Copy Log to System Clipboard
     mi = new JMenuItem("Copy Log to System Clipboard");
-    help.add(mi);
+    diagnostics.add(mi);
     mi.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
         // clear the selection manager
@@ -769,12 +773,8 @@ public class BEMenus extends JMenuBar {
       }
     });
 
-    // help|<separator>
-    help.addSeparator();
-
-    // help|diagnostics
-    JMenu diagnostics = new JMenu("Diagnostics");
-    help.add(diagnostics);
+    // help|diagnostics|<separator>
+    diagnostics.addSeparator();
 
     // help|diagnostics|Close all Image Readers
     mi = new JMenuItem("Close All Image Readers");
