@@ -439,7 +439,12 @@ public class BasicFeaturesUI extends FeaturesUI implements MouseListener, MouseM
    * @param e the mouse event
    */
   public void mouseClicked(MouseEvent e) {
-    // perform a feature line selection operation if hovering over a selectable feature line
+    // for mouse clicked deselect range if range is selected
+    if (rangeSelectionManager.getProvider() == featuresModel) {
+      rangeSelectionManager.clear();
+    }
+
+    // also perform a feature line selection operation if hovering over a selectable feature line
     if (mouseDownLine >= 0) {
       selectLine(mouseDownLine);
     }
