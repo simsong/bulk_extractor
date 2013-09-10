@@ -177,6 +177,7 @@ namespace email {
   /* Numeric IP addresses. Get the context before and throw away some things */
   const std::string IP("[^0-9.]" + INUM + "(\\." + INUM + "){3}[^0-9\\-.+A-Z_]");
 
+  // FIXME: leading context
   // FIXME: trailing context
   // FIXME: should we be searching for all uppercase MAC addresses as well?
   /* found a possible MAC address! */
