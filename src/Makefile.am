@@ -75,10 +75,12 @@ bulk_extractor_SOURCES = \
 	histogram.h \
 	image_process.cpp \
 	image_process.h \
-	threadpool.cpp \
-	threadpool.h \
+	pattern_scanner.cpp \
+	pattern_scanner.h \
 	phase1.h \
 	phase1.cpp \
+	threadpool.cpp \
+	threadpool.h \
 	word_and_context_list.cpp \
 	word_and_context_list.h \
 	$(bulk_scanners) $(TSK3INCS)  $(BE13_API) $(DFXML_WRITER) 
