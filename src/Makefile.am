@@ -61,7 +61,7 @@ bulk_scanners = \
 	scan_wordlist.cpp \
 	scan_xor.cpp \
 	scan_zip.cpp \
-        sbuf_flex_scanner.h \
+	sbuf_flex_scanner.h \
 	$(flex_scanners) 
 
 bulk_extractor_SOURCES = \
