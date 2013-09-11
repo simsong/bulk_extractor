@@ -220,7 +220,10 @@ extern "C" scanner_t scan_gzip;
 extern "C" scanner_t scan_hiberfile;
 extern "C" scanner_t scan_json;
 #ifdef HAVE_LIBLIGHTGREP
+extern "C" scanner_t scan_accts_lg;
 extern "C" scanner_t scan_base16_lg;
+extern "C" scanner_t scan_email_lg;
+extern "C" scanner_t scan_gps_lg;
 extern "C" scanner_t scan_lightgrep;
 #endif
 extern "C" scanner_t scan_pdf;

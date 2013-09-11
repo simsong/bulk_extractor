@@ -11,7 +11,7 @@ using namespace std;
 using namespace std::tr1;
 using namespace std::tr1::placeholders;
 
-typedef function< void(const LG_SearchHit&, const scanner_params& sp) > CallbackFnType;
+typedef function< void(const LG_SearchHit&, const scanner_params& sp, const recursion_control_block& rcb) > CallbackFnType;
 
 /*********************************************************/
 
@@ -62,8 +62,8 @@ public:
   void addScanner(const PatternScanner& scanner);
 
   void regcomp();
-  void scan(const scanner_params& sp);
-  void processHit(const LG_SearchHit& hit, const scanner_params& sp);
+  void scan(const scanner_params& sp, const recursion_control_block& rcb);
+  void processHit(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
 
 private:
   LightgrepController();

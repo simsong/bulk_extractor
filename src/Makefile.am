@@ -36,15 +36,19 @@ flex_scanners = \
 	scan_gps.flex 
 
 bulk_scanners = \
+	scan_accts_lg.cpp \
 	scan_aes.cpp \
+	scan_base16_lg.cpp \
 	scan_base64.cpp \
 	scan_bulk.cpp\
 	scan_ccns2.cpp scan_ccns2.h \
 	scan_elf.cpp \
+	scan_email_lg.cpp \
 	scan_exif.cpp exif_reader.h exif_reader.cpp exif_entry.cpp\
 	scan_exiv2.cpp \
 	scan_extx.cpp \
 	scan_find.cpp \
+	scan_gps_lg.cpp \
 	scan_gzip.cpp \
 	scan_hiberfile.cpp pyxpress.c pyxpress.h \
 	scan_json.cpp \

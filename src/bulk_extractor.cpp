@@ -136,6 +136,10 @@ scanner_t *scanners_builtin[] = {
     scan_aes,
     scan_json,
 #ifdef HAVE_LIBLIGHTGREP
+    scan_accts_lg,
+    scan_base16_lg,
+    scan_email_lg,
+    scan_gps_lg,
     scan_lightgrep,
 #endif
 #ifdef USE_LIFT

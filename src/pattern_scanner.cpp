@@ -81,14 +81,18 @@ void LightgrepController::regcomp() {
   lg_destroy_fsm(Fsm);
 }
 
-typedef pair<LightgrepController*, const scanner_params*> HitData;
+struct HitData {
+  LightgrepController* lgc;
+  const scanner_params* sp;
+  const recursion_control_block* rcb;
+};
 
 void gotHit(void* userData, const LG_SearchHit* hit) {
   HitData* hd(static_cast<HitData*>(userData));
-  hd->first->processHit(*hit, *hd->second);
+  hd->lgc->processHit(*hit, *hd->sp, *hd->rcb);
 }
 
-void LightgrepController::scan(const scanner_params& sp) {
+void LightgrepController::scan(const scanner_params& sp, const recursion_control_block &rcb) {
   LG_ContextOptions ctxOpts;
 
   ctxOpts.TraceBegin = 0xffffffffffffffff;
@@ -96,9 +100,9 @@ void LightgrepController::scan(const scanner_params& sp) {
 
   LG_HCONTEXT ctx = lg_create_context(Prog, &ctxOpts);
 
-  const sbuf_t &sbuf   = sp.sbuf;
+  const sbuf_t &sbuf = sp.sbuf;
 
-  pair<LightgrepController*, const scanner_params*> data(make_pair(this, &sp));
+  HitData data = { this, &sp, &rcb };
 
   lg_search(ctx, (const char*)sbuf.buf, (const char*)sbuf.buf + sbuf.bufsize, 0, &data, gotHit);
   lg_closeout_search(ctx, &data, gotHit);
@@ -106,10 +110,10 @@ void LightgrepController::scan(const scanner_params& sp) {
   lg_destroy_context(ctx);
 }
 
-void LightgrepController::processHit(const LG_SearchHit& hit, const scanner_params& sp) {
+void LightgrepController::processHit(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
   // lookup the handler's callback functor, then invoke it
   CallbackFnType* cbPtr(static_cast<CallbackFnType*>(lg_pattern_info(PatternInfo, hit.KeywordIndex)->UserData));
-  (*cbPtr)(hit, sp);
+  (*cbPtr)(hit, sp, rcb);
 }
 /*********************************************************/
 
