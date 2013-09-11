@@ -7,6 +7,7 @@
 
 #include "be13_api/bulk_extractor_i.h"
 #include "histogram.h"
+#include "scan_ccns2.h"
 #include "pattern_scanner.h"
 
 namespace accts {
@@ -55,9 +56,7 @@ namespace accts {
     feature_recorder* Alert_Recorder;
     feature_recorder* PII_Recorder;
 
-    void ccnHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
-
-    void ccnTrack2HitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+    void ccnHitHandler(feature_recorder* fr, const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
 
     void telephoneHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
 
@@ -97,22 +96,34 @@ namespace accts {
     PII_Recorder = sp.fs.get_name("pii");
   }
 
-  void Scanner::ccnHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
-  }
-
-  void Scanner::ccnTrack2HitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+  void Scanner::ccnHitHandler(feature_recorder* fr, const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+    const size_t pos = hit.Start + 1;
+    const size_t len = hit.End - pos;
+// FIXME: is this cast ok?
+    if (valid_ccn(reinterpret_cast<const char*>(sp.sbuf.buf)+pos, len)) {
+      fr->write_buf(sp.sbuf, pos, len);
+    }
   }
 
   void Scanner::telephoneHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+    Telephone_Recorder->write_buf(sp.sbuf, hit.Start+1, hit.End-hit.Start-1);
   }
 
   void Scanner::validatedTelephoneHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+    const size_t pos = hit.Start + 1;
+    const size_t len = hit.End - pos;
+    if (valid_phone(sp.sbuf, pos, len)){
+      Telephone_Recorder->write_buf(sp.sbuf, pos, len);
+    }
   }
 
   void Scanner::bitlockerHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+// FIXME: Are these bounds right?
+    Alert_Recorder->write(sp.sbuf.pos0 + hit.Start, reinterpret_cast<const char*>(sp.sbuf.buf) + 1, "Possible BitLocker Recovery Key (ASCII).");
   }
 
   void Scanner::piiHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+    PII_Recorder->write_buf(sp.sbuf, hit.Start, hit.End-hit.Start);
   }
 
   Scanner TheScanner;
@@ -167,7 +178,7 @@ namespace accts {
     TheScanner,
     REGEX2, 
     DefaultEncodings,
-    bind(&Scanner::ccnHitHandler, &TheScanner, _1, _2, _3)
+    bind(&Scanner::ccnHitHandler, &TheScanner, TheScanner.CCN_Recorder, _1, _2, _3)
   );
 
   // FIXME: leading context
@@ -180,7 +191,7 @@ namespace accts {
     TheScanner,
     REGEX3, 
     DefaultEncodings,
-    bind(&Scanner::ccnHitHandler, &TheScanner, _1, _2, _3)
+    bind(&Scanner::ccnHitHandler, &TheScanner, TheScanner.CCN_Recorder, _1, _2, _3)
   );
 
   // FIXME: leading context
@@ -193,7 +204,7 @@ namespace accts {
     TheScanner,
     REGEX4,
     DefaultEncodings,
-    bind(&Scanner::ccnHitHandler, &TheScanner, _1, _2, _3)
+    bind(&Scanner::ccnHitHandler, &TheScanner, TheScanner.CCN_Recorder, _1, _2, _3)
   );
 
   // FIXME: leading context
@@ -209,7 +220,7 @@ namespace accts {
     TheScanner,
     REGEX5,
     DefaultEncodings,
-    bind(&Scanner::ccnHitHandler, &TheScanner, _1, _2, _3)
+    bind(&Scanner::ccnHitHandler, &TheScanner, TheScanner.CCN_Recorder, _1, _2, _3)
   );
 
   // FIXME: leading context
@@ -222,7 +233,7 @@ namespace accts {
     TheScanner,
     REGEX6,
     DefaultEncodings,
-    bind(&Scanner::ccnTrack2HitHandler, &TheScanner, _1, _2, _3)
+    bind(&Scanner::ccnHitHandler, &TheScanner, TheScanner.CCN_Track2_Recorder, _1, _2, _3)
   );
 
   // FIXME: trailing context
@@ -258,6 +269,7 @@ namespace accts {
   /* Generalized international phone numbers */
   const std::string REGEX9("[^0-9a-z]\\+[0-9]{1,3}(" + TDEL + "[0-9]{2,3}){2,6}[0-9]{2,4}" + END);
 
+  // FIXME: check whether has_min_digigts always returns true for matches
   Handler REGEX9_Handler(
     TheScanner,
     REGEX9,
