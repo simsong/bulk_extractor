@@ -76,10 +76,11 @@ namespace accts {
     assert(sp.sp_version == scanner_params::CURRENT_SP_VERSION);
     assert(sp.info->si_version == scanner_info::CURRENT_SI_VERSION);
 
-    sp.info->name  = "accts";
-    sp.info->author    = "Simson L. Garfinkel";
-    sp.info->description  = "scans for CCNs, track 2, and phone #s";
-    sp.info->scanner_version= "1.0";
+    sp.info->name            = "accts";
+    sp.info->author          = "Simson L. Garfinkel";
+    sp.info->description     = "scans for CCNs, track 2, and phone #s";
+    sp.info->scanner_version = "1.0";
+
     sp.info->feature_names.insert("ccn");
     sp.info->feature_names.insert("pii");  // personally identifiable information
     sp.info->feature_names.insert("ccn_track2");
