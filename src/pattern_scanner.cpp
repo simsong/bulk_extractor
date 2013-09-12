@@ -88,6 +88,7 @@ void LightgrepController::addScanner(PatternScanner& scanner) {
   }
   patEnd = lg_pattern_map_size(PatternInfo);
   scanner.patternRange() = make_pair(patBegin, patEnd);
+  Scanners.push_back(&scanner);
 }
 
 void LightgrepController::regcomp() {

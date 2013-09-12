@@ -53,6 +53,9 @@ public:
   const pair<unsigned int, unsigned int>& patternRange() const { return PatternRange; }
 
 protected:
+  PatternScanner(const PatternScanner& s):
+    Name(s.Name), Handlers(s.Handlers), PatternRange(s.PatternRange) {}
+
   string                 Name;
   vector<const Handler*> Handlers;
 
