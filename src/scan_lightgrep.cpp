@@ -6,6 +6,7 @@
 #include "be13_api/bulk_extractor_i.h"
 #include "beregex.h"
 #include "histogram.h"
+#include "pattern_scanner.h"
 
 #include <lightgrep/api.h>
 
@@ -20,9 +21,6 @@ using namespace std;
 extern regex_list find_list;
 
 namespace { // local namespace hides these from other translation units
-
-  static LG_HPROGRAM    lgProgram;
-  static LG_HPATTERNMAP lgPatternMap;
 
   string beregex_pat(const beregex* ber) { return ber->pat; }
 
@@ -74,56 +72,6 @@ namespace { // local namespace hides these from other translation units
     sp.info->feature_names.insert("lightgrep");
     sp.info->histogram_defs.insert(histogram_def(
       "lightgrep", "", "histogram", HistogramMaker::FLAG_LOWERCASE));
-
-    vector<string> patterns(makePatterns()),
-                   encodings(makeEncodings());
-
-    if (patterns.empty()) {
-      return;
-    }
-
-    // par for bytes per char in patterns, all encodings
-    const unsigned bytesPerCharEstimate = 4;
-
-    LG_HPATTERN pattern = lg_create_pattern();
-    LG_HFSM fsm = lg_create_fsm(bytesPerCharEstimate*totalChars(patterns));
-
-    lgPatternMap = lg_create_pattern_map(patterns.size() * encodings.size());
-
-    LG_Error* lgErr = 0;
-
-    LG_KeyOptions opts;
-    opts.FixedString = 0;
-    opts.CaseInsensitive = 0;
-
-    // parse cross-product of patterns & encodings
-    vector<string>::const_iterator pat(patterns.begin());
-    const vector<string>::const_iterator pend(patterns.end());
-
-    vector<string>::const_iterator enc;
-    const vector<string>::const_iterator eend(encodings.end());
-
-    for ( ; pat != pend; ++pat) {
-      if (lg_parse_pattern(pattern, pat->c_str(), &opts, &lgErr)) {
-        for (enc = encodings.begin(); enc != eend; ++enc) {
-          if (0 > lg_add_pattern(fsm, lgPatternMap, pattern, enc->c_str(), &lgErr)) {
-            handleError(pattern, fsm, lgErr);
-            return;
-          }
-        }
-      }
-      else {
-        handleError(pattern, fsm, lgErr);
-        return;      
-      }
-    }
-
-    // turn the parsed patterns into efficient bytecode representation
-    LG_ProgramOptions progOpts;
-    progOpts.Determinize = 1;
-
-    lgProgram = lg_create_program(fsm, &progOpts);
-    cleanup(pattern, fsm);
   }
 
   struct HitData {
@@ -146,42 +94,20 @@ namespace { // local namespace hides these from other translation units
 extern "C"
 void scan_lightgrep(const class scanner_params &sp, const recursion_control_block &rcb) {
   if (sp.phase == scanner_params::PHASE_STARTUP) {
+    // check to see whether there's a keywords file
+    // if so, load into FSM
     init(sp);
+
+    LightgrepController& lg(LightgrepController::Get());
+    lg.regcomp();
+    std::cout << "Lightgrep will look for a total of " << lg.numPatterns() << " patterns" << std::endl;
   }
   else if (sp.phase == scanner_params::PHASE_SHUTDOWN) {
-    // cleanup heap objects in static handles
-    lg_destroy_program(lgProgram);
-    lg_destroy_pattern_map(lgPatternMap);
+    // meh
   }
   else if (sp.phase == scanner_params::PHASE_SCAN) {
-    if (!(lgPatternMap && lg_pattern_map_size(lgPatternMap) && lgProgram)) {
-      return;
-    }
-    // cout << "lightgrep scanning..." << endl;
-    LG_ContextOptions ctxOpts;
-    // these are debugging options that we'll remove
-    ctxOpts.TraceBegin = 0xffffffffffffffff;
-    ctxOpts.TraceEnd   = 0;
-
-    // A context maintains state related to searching a particular stream,
-    // built from the program. If BE maintained scanner state for different
-    // threads, then contexts could be reused, which would be a slight win.
-    LG_HCONTEXT ctx = lg_create_context(lgProgram, &ctxOpts);
-
-    const sbuf_t &sbuf = sp.sbuf;
-
-    HitData data(sp.fs.get_name("lightgrep"), &sbuf);
-
-    // search the buffer all in one go
-    lg_search(ctx, (const char*)sbuf.buf, (const char*)sbuf.buf + sbuf.bufsize, 0, &data, gotHit);
-    // if there are any hits at the end of the buffer that could extend with
-    // more data, lg_closeout_search will flush them out
-    lg_closeout_search(ctx, &data, gotHit);
-
-    // cleanup
-    lg_destroy_context(ctx);
-
-    // cout << data.Count << " hits on block " << sbuf.pos0 << endl;
+    LightgrepController& lg(LightgrepController::Get());
+    lg.scan(sp, rcb);
   }
 }
 

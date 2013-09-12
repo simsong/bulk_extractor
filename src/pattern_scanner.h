@@ -3,19 +3,17 @@
 
 #include <vector>
 #include <string>
-#include <tr1/functional>
+#include <utility>
 
 #include <lightgrep/api.h>
 
 using namespace std;
-using namespace std::tr1;
-using namespace std::tr1::placeholders;
-
-typedef function< void(const LG_SearchHit&, const scanner_params& sp, const recursion_control_block& rcb) > CallbackFnType;
-
-/*********************************************************/
 
 class PatternScanner;
+
+typedef void (PatternScanner::*CallbackFnType)(const LG_SearchHit&, const scanner_params& sp, const recursion_control_block& rcb);
+
+/*********************************************************/
 
 struct Handler {
   Handler(PatternScanner& scanner, const string& re, const vector<string>& encs, const CallbackFnType& fn);
@@ -26,18 +24,20 @@ struct Handler {
 
   CallbackFnType Callback;
 };
-
 /*********************************************************/
 
 class PatternScanner {
 public:
-  PatternScanner(const string& name): Name(name), Handlers() {}
+  PatternScanner(const string& name): Name(name), Handlers(), PatternRange(0, 0) {}
   virtual ~PatternScanner() {}
 
-  virtual const vector<const Handler*>& handlers() const { return Handlers; }
+  virtual PatternScanner* clone() const = 0;
 
-  virtual void init(const scanner_params& sp) = 0;
-  virtual void cleanup(const scanner_params& sp) = 0;
+  virtual void startup(const scanner_params& sp) = 0; // register handlers
+
+  virtual void initScan() = 0; // get feature_recorders
+
+  virtual void shutdown(const scanner_params& sp); // perform any shutdown, if necessary
 
   // return bool indicates whether scanner addition should be continued
   // default is to print message to stderr and quit parsing scanner patterns
@@ -47,9 +47,16 @@ public:
     Handlers.push_back(h);
   }
 
+  virtual const vector<const Handler*>& handlers() const { return Handlers; }
+
+  pair<unsigned int, unsigned int>& patternRange() { return PatternRange; }
+  const pair<unsigned int, unsigned int>& patternRange() const { return PatternRange; }
+
 protected:
   string                    Name;
   vector< const Handler* >  Handlers;
+
+  pair<unsigned int, unsigned int> PatternRange; // knows the label range of its associated patterns
 };
 
 /*********************************************************/
@@ -59,11 +66,13 @@ public:
 
   static LightgrepController& Get();
 
-  void addScanner(const PatternScanner& scanner);
+  void addScanner(PatternScanner& scanner);
 
   void regcomp();
   void scan(const scanner_params& sp, const recursion_control_block& rcb);
-  void processHit(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+  void processHit(const vector<PatternScanner*>& sTbl, const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+
+  unsigned int numPatterns() const;
 
 private:
   LightgrepController();
@@ -76,6 +85,8 @@ private:
   LG_HFSM         Fsm;
   LG_HPATTERNMAP  PatternInfo;
   LG_HPROGRAM     Prog;
+
+  vector<PatternScanner*> Scanners;
 };
 
 #endif
