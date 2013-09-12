@@ -35,7 +35,7 @@ public:
 
   virtual void startup(const scanner_params& sp) = 0; // register handlers
 
-  virtual void initScan() = 0; // get feature_recorders
+  virtual void initScan(const scanner_params& sp) = 0; // get feature_recorders
 
   virtual void shutdown(const scanner_params& sp); // perform any shutdown, if necessary
 
@@ -53,8 +53,8 @@ public:
   const pair<unsigned int, unsigned int>& patternRange() const { return PatternRange; }
 
 protected:
-  string                    Name;
-  vector< const Handler* >  Handlers;
+  string                 Name;
+  vector<const Handler*> Handlers;
 
   pair<unsigned int, unsigned int> PatternRange; // knows the label range of its associated patterns
 };
@@ -89,4 +89,4 @@ private:
   vector<PatternScanner*> Scanners;
 };
 
-#endif
+#endif /* PATTERN_SCANNER_H */

@@ -111,14 +111,14 @@ void gotHit(void* userData, const LG_SearchHit* hit) {
 
 void LightgrepController::scan(const scanner_params& sp, const recursion_control_block &rcb) {
   vector<PatternScanner*> scannerTable(lg_pattern_map_size(PatternInfo)); // [Keyword Index -> scanner], no ownership
-  vector<PatternScanner*>       scannerList(Scanners.size());                   // ownership
+  vector<PatternScanner*> scannerList(Scanners.size());                   // ownership
   for (vector<PatternScanner*>::const_iterator itr(Scanners.begin()); itr != Scanners.end(); ++itr) {
     PatternScanner *s = (*itr)->clone();
     scannerList.push_back(s);
     for (unsigned int i = s->patternRange().first; i < s->patternRange().second; ++i) {
       scannerTable[i] = s;
     }
-    s->initScan();
+    s->initScan(sp);
   }
 
   LG_ContextOptions ctxOpts;
