@@ -75,7 +75,7 @@ namespace accts {
     assert(sp.sp_version == scanner_params::CURRENT_SP_VERSION);
     assert(sp.info->si_version == scanner_info::CURRENT_SI_VERSION);
 
-    sp.info->name            = "accts";
+    sp.info->name            = "accts_lg";
     sp.info->author          = "Simson L. Garfinkel";
     sp.info->description     = "scans for CCNs, track 2, and phone #s";
     sp.info->scanner_version = "1.0";

@@ -44,7 +44,7 @@ namespace base16 {
     assert(sp.sp_version == scanner_params::CURRENT_SP_VERSION);
     assert(sp.info->si_version == scanner_info::CURRENT_SI_VERSION);
 
-    sp.info->name             = "base16";
+    sp.info->name             = "base16_lg";
     sp.info->author           = "Simson L. Garfinkel";
     sp.info->description      = "Base16 (hex) scanner";
     sp.info->scanner_version  = "1.0";
