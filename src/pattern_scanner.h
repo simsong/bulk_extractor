@@ -16,14 +16,17 @@ typedef void (PatternScanner::*CallbackFnType)(const LG_SearchHit&, const scanne
 /*********************************************************/
 
 struct Handler {
-  Handler(PatternScanner& scanner, const string& re, const vector<string>& encs, const CallbackFnType& fn);
+  Handler(PatternScanner& scanner, const string& re, const vector<string>& encs, const LG_KeyOptions& opts, const CallbackFnType& fn);
 
   string RE;
 
   vector<string> Encodings;
 
+  LG_KeyOptions Options;
+
   CallbackFnType Callback;
 };
+
 /*********************************************************/
 
 class PatternScanner {

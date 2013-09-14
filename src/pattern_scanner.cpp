@@ -6,7 +6,6 @@
 #include "be13_api/bulk_extractor_i.h"
 #include "beregex.h"
 #include "histogram.h"
-//#include "unicode.h"
 #include "pattern_scanner.h"
 
 #include <lightgrep/api.h>
@@ -15,8 +14,8 @@
 #include <algorithm>
 #include <limits>
 
-Handler::Handler(PatternScanner& scanner, const string& re, const vector<string>& encs, const CallbackFnType& fn):
-  RE(re), Encodings(encs), Callback(fn)
+Handler::Handler(PatternScanner& scanner, const string& re, const vector<string>& encs, const LG_KeyOptions& opts, const CallbackFnType& fn):
+  RE(re), Encodings(encs), Options(opts), Callback(fn)
 {
   scanner.addHandler(this);
 }
@@ -55,10 +54,6 @@ LightgrepController& LightgrepController::Get() {
 void LightgrepController::addScanner(PatternScanner& scanner) {
   LG_Error* lgErr = 0;
 
-  LG_KeyOptions opts;
-  opts.FixedString = 0;
-  opts.CaseInsensitive = 0;
-
   unsigned int patBegin = numeric_limits<unsigned int>::max(),
                patEnd = 0;
 
@@ -66,7 +61,7 @@ void LightgrepController::addScanner(PatternScanner& scanner) {
 
   for (vector<const Handler*>::const_iterator h(scanner.handlers().begin()); h != scanner.handlers().end(); ++h) {
     bool good = false;
-    if (lg_parse_pattern(ParsedPattern, (*h)->RE.c_str(), &opts, &lgErr)) {
+    if (lg_parse_pattern(ParsedPattern, (*h)->RE.c_str(), &(*h)->Options, &lgErr)) {
       for (vector<string>::const_iterator enc((*h)->Encodings.begin()); enc != (*h)->Encodings.end(); ++enc) {
         idx = lg_add_pattern(Fsm, PatternInfo, ParsedPattern, enc->c_str(), &lgErr);
         if (idx >= 0) {
