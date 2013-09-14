@@ -8,7 +8,7 @@ namespace httpheader {
   const std::string PC("[\\x20-\\x7E]");
 
   const std::string XPC("[\\x20-\\x7E--\"]");
-  
+
   /*
    * RFC 2616, Page 12
    */
@@ -40,7 +40,7 @@ namespace httpheader {
    * to compile.
    */
   const std::string SERVER_OR_UA("(Server|User-Agent):[ \\t]?" + PC + "{1,80}");
-  
+
   /*
    * RFC 2616, Section 14.23
    */
@@ -69,7 +69,7 @@ namespace httpheader {
    * value, excluding double-quote.
    *
    * Date and If-Modified-Since reference RFCs 1123 and 850 (RFC 2616
-   * Section 3.3.1), not yet reviewed. 
+   * Section 3.3.1), not yet reviewed.
    * Double-quotes are assumed excluded.
    *
    * Set-Cookie: RFC 6265, Section 4.1.1, Page 9
