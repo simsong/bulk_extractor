@@ -4,6 +4,7 @@
 #ifdef HAVE_LIBLIGHTGREP
 
 #include <algorithm>
+#include <functional>
 #include <string>
 
 #include "be13_api/bulk_extractor_i.h"
@@ -11,35 +12,39 @@
 #include "pattern_scanner.h"
 #include "utils.h"
 
+using namespace std;
+
 namespace email {
   const char* const DefaultEncodingsCStrings[] = {"UTF-8", "UTF-16LE"};
 
   const vector<string> DefaultEncodings(
-    &DefaultEncodingsCStrings[0], &DefaultEncodingsCStrings[1] // FIXME: change to 2
+    &DefaultEncodingsCStrings[0], &DefaultEncodingsCStrings[2]
   );
+
+  const LG_KeyOptions DefaultOptions = { 0, 1 }; // patterns, case-insensitive
 
   //
   // subpatterns
   //
 
-  const std::string INUM("(1?[0-9]{1,2}|2([0-4][0-9]|5[0-5]))");
-  const std::string HEX("[0-9a-f]");
-  const std::string ALNUM("[a-zA-Z0-9]");
+  const string INUM("(1?[0-9]{1,2}|2([0-4][0-9]|5[0-5]))");
+  const string HEX("[0-9a-f]");
+  const string ALNUM("[a-zA-Z0-9]");
 
-  const std::string PC("[\\x20-\\x7E]");
+  const string PC("[\\x20-\\x7E]");
 
-  const std::string TLD("(AC|AD|AE|AERO|AF|AG|AI|AL|AM|AN|AO|AQ|AR|ARPA|AS|ASIA|AT|AU|AW|AX|AZ|BA|BB|BD|BE|BF|BG|BH|BI|BIZ|BJ|BL|BM|BN|BO|BR|BS|BT|BV|BW|BY|BZ|CA|CAT|CC|CD|CF|CG|CH|CI|CK|CL|CM|CN|CO|COM|COOP|CR|CU|CV|CX|CY|CZ|DE|DJ|DK|DM|DO|DZ|EC|EDU|EE|EG|EH|ER|ES|ET|EU|FI|FJ|FK|FM|FO|FR|GA|GB|GD|GE|GF|GG|GH|GI|GL|GM|GN|GOV|GP|GQ|GR|GS|GT|GU|GW|GY|HK|HM|HN|HR|HT|HU|ID|IE|IL|IM|IN|INFO|INT|IO|IQ|IR|IS|IT|JE|JM|JO|JOBS|JP|KE|KG|KH|KI|KM|KN|KP|KR|KW|KY|KZ|LA|LB|LC|LI|LK|LR|LS|LT|LU|LV|LY|MA|MC|MD|ME|MF|MG|MH|MIL|MK|ML|MM|MN|MO|MOBI|MP|MQ|MR|MS|MT|MU|MUSEUM|MV|MW|MX|MY|MZ|NA|NAME|NC|NE|NET|NF|NG|NI|NL|NO|NP|NR|NU|NZ|OM|ORG|PA|PE|PF|PG|PH|PK|PL|PM|PN|PR|PRO|PS|PT|PW|PY|QA|RE|RO|RS|RU|RW|SA|SB|SC|SD|SE|SG|SH|SI|SJ|SK|SL|SM|SN|SO|SR|ST|SU|SV|SY|SZ|TC|TD|TEL|TF|TG|TH|TJ|TK|TL|TM|TN|TO|TP|TR|TRAVEL|TT|TV|TW|TZ|UA|UG|UK|UM|US|UY|UZ|VA|VC|VE|VG|VI|VN|VU|WF|WS|YE|YT|YU|ZA|ZM|ZW)");
+  const string TLD("(AC|AD|AE|AERO|AF|AG|AI|AL|AM|AN|AO|AQ|AR|ARPA|AS|ASIA|AT|AU|AW|AX|AZ|BA|BB|BD|BE|BF|BG|BH|BI|BIZ|BJ|BL|BM|BN|BO|BR|BS|BT|BV|BW|BY|BZ|CA|CAT|CC|CD|CF|CG|CH|CI|CK|CL|CM|CN|CO|COM|COOP|CR|CU|CV|CX|CY|CZ|DE|DJ|DK|DM|DO|DZ|EC|EDU|EE|EG|EH|ER|ES|ET|EU|FI|FJ|FK|FM|FO|FR|GA|GB|GD|GE|GF|GG|GH|GI|GL|GM|GN|GOV|GP|GQ|GR|GS|GT|GU|GW|GY|HK|HM|HN|HR|HT|HU|ID|IE|IL|IM|IN|INFO|INT|IO|IQ|IR|IS|IT|JE|JM|JO|JOBS|JP|KE|KG|KH|KI|KM|KN|KP|KR|KW|KY|KZ|LA|LB|LC|LI|LK|LR|LS|LT|LU|LV|LY|MA|MC|MD|ME|MF|MG|MH|MIL|MK|ML|MM|MN|MO|MOBI|MP|MQ|MR|MS|MT|MU|MUSEUM|MV|MW|MX|MY|MZ|NA|NAME|NC|NE|NET|NF|NG|NI|NL|NO|NP|NR|NU|NZ|OM|ORG|PA|PE|PF|PG|PH|PK|PL|PM|PN|PR|PRO|PS|PT|PW|PY|QA|RE|RO|RS|RU|RW|SA|SB|SC|SD|SE|SG|SH|SI|SJ|SK|SL|SM|SN|SO|SR|ST|SU|SV|SY|SZ|TC|TD|TEL|TF|TG|TH|TJ|TK|TL|TM|TN|TO|TP|TR|TRAVEL|TT|TV|TW|TZ|UA|UG|UK|UM|US|UY|UZ|VA|VC|VE|VG|VI|VN|VU|WF|WS|YE|YT|YU|ZA|ZM|ZW)");
 
-  const std::string YEAR("(19[6-9][0-9]|20[0-1][0-9])");
-  const std::string DAYOFWEEK("(Mon|Tue|Wed|Thu|Fri|Sat|Sun)");
-  const std::string MONTH("(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)");
-  const std::string ABBREV("(UT|GMT|EST|EDT|CST|CDT|MST|MDT|PST|PDT|[ZAMNY])");
+  const string YEAR("(19[6-9][0-9]|20[0-1][0-9])");
+  const string DAYOFWEEK("(Mon|Tue|Wed|Thu|Fri|Sat|Sun)");
+  const string MONTH("(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)");
+  const string ABBREV("(UT|GMT|EST|EDT|CST|CDT|MST|MDT|PST|PDT|[ZAMNY])");
 
   //
   // helper functions
   //
 
-  // Address some common false positives in email scanner 
+  // Address some common false positives in email scanner
   inline bool validate_email(const char *email) {
     if (strstr(email, "..")) return false;
     return true;
@@ -106,13 +111,17 @@ namespace email {
   //
   // the scanner
   //
-  
+
   class Scanner: public PatternScanner {
   public:
     Scanner(): PatternScanner("email_lg"), RFC822_Recorder(0), Email_Recorder(0), Domain_Recorder(0), Ether_Recorder(0), URL_Recorder(0) {}
     virtual ~Scanner() {}
 
-    virtual void init(const scanner_params& sp);
+    virtual Scanner* clone() const { return new Scanner(*this); }
+
+    virtual void startup(const scanner_params& sp);
+
+    virtual void initScan(const scanner_params& sp);
 
     feature_recorder* RFC822_Recorder;
     feature_recorder* Email_Recorder;
@@ -120,7 +129,7 @@ namespace email {
     feature_recorder* Ether_Recorder;
     feature_recorder* URL_Recorder;
 
-    void defaultHitHandler(feature_recorder* fr, const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+    void rfc822HitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
 
     void emailHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
 
@@ -131,11 +140,19 @@ namespace email {
     void protoHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
 
   private:
-    Scanner(const Scanner&);
+    Scanner(const Scanner& s):
+      PatternScanner(s),
+      RFC822_Recorder(s.RFC822_Recorder),
+      Email_Recorder(s.Email_Recorder),
+      Domain_Recorder(s.Domain_Recorder),
+      Ether_Recorder(s.Ether_Recorder),
+      URL_Recorder(s.URL_Recorder)
+    {}
+
     Scanner& operator=(const Scanner&);
   };
 
-  void Scanner::init(const scanner_params& sp) {
+  void Scanner::startup(const scanner_params& sp) {
     assert(sp.sp_version == scanner_params::CURRENT_SP_VERSION);
     assert(sp.info->si_version == scanner_info::CURRENT_SI_VERSION);
 
@@ -144,7 +161,7 @@ namespace email {
     sp.info->description     = "Scans for email addresses, domains, URLs, RFC822 headers, etc.";
     sp.info->scanner_version = "1.0";
 
-    // define the feature files this scanner created
+    // define the feature files this scanner creates
     sp.info->feature_names.insert("email");
     sp.info->feature_names.insert("domain");
     sp.info->feature_names.insert("url");
@@ -161,90 +178,97 @@ namespace email {
     sp.info->histogram_defs.insert(histogram_def("url", "://[-_a-z0-9.]+facebook.com/([a-zA-Z0-9.]*[^/?&]$)", "facebook-address",  HistogramMaker::FLAG_LOWERCASE));
     sp.info->histogram_defs.insert(histogram_def("url", "search.*[?&/;fF][pq]=([^&/]+)", "searches"));
 
-    RFC822_Recorder = sp.fs.get_name("rfc822");
-    Email_Recorder = sp.fs.get_name("email");
-    Domain_Recorder = sp.fs.get_name("domain");
-    Ether_Recorder = sp.fs.get_name("ether");
-    URL_Recorder = sp.fs.get_name("url");
+    //
+    // patterns
+    //
 
-    const std::string DATE(DAYOFWEEK + ",[ \\t\\n]+[0-9]{1,2}[ \\t\\n]+" + MONTH + "[ \\t\\n]+" + YEAR + "[ \\t\\n]+[0-2][0-9]:[0-5][0-9]:[0-5][0-9][ \\t\\n]+([+-][0-2][0-9][0314][05]|" + ABBREV + ")");
+    const string DATE(DAYOFWEEK + ",[ \\t\\n]+[0-9]{1,2}[ \\t\\n]+" + MONTH + "[ \\t\\n]+" + YEAR + "[ \\t\\n]+[0-2][0-9]:[0-5][0-9]:[0-5][0-9][ \\t\\n]+([+-][0-2][0-9][0314][05]|" + ABBREV + ")");
 
     new Handler(
       *this,
-      DATE, 
+      DATE,
       DefaultEncodings,
-      bind(&Scanner::defaultHitHandler, this, RFC822_Recorder, _1, _2, _3)
+      DefaultOptions,
+      static_cast<CallbackFnType>(&Scanner::rfc822HitHandler)
     );
 
-    const std::string MESSAGE_ID("Message-ID:[ \\t\\n]?<" + PC + "{1,80}>");
+    const string MESSAGE_ID("Message-ID:[ \\t\\n]?<" + PC + "{1,80}>");
 
     new Handler(
       *this,
-      MESSAGE_ID, 
+      MESSAGE_ID,
       DefaultEncodings,
-      bind(&Scanner::defaultHitHandler, this, RFC822_Recorder, _1, _2, _3)
+      DefaultOptions,
+      static_cast<CallbackFnType>(&Scanner::rfc822HitHandler)
     );
 
-    const std::string SUBJECT("Subject:[ \\t]?" + PC + "{1,80}");
+    const string SUBJECT("Subject:[ \\t]?" + PC + "{1,80}");
 
     new Handler(
       *this,
-      SUBJECT, 
+      SUBJECT,
       DefaultEncodings,
-      bind(&Scanner::defaultHitHandler, this, RFC822_Recorder, _1, _2, _3)
+      DefaultOptions,
+      static_cast<CallbackFnType>(&Scanner::rfc822HitHandler)
     );
 
-    const std::string COOKIE("Cookie:[ \\t]?" + PC + "{1,80}");
+    const string COOKIE("Cookie:[ \\t]?" + PC + "{1,80}");
 
     new Handler(
       *this,
-      COOKIE, 
+      COOKIE,
       DefaultEncodings,
-      bind(&Scanner::defaultHitHandler, this, RFC822_Recorder, _1, _2, _3)
+      DefaultOptions,
+      static_cast<CallbackFnType>(&Scanner::rfc822HitHandler)
     );
 
-    const std::string HOST("Host:[ \\t]?[a-zA-Z0-9._]{1,64}");
+    const string HOST("Host:[ \\t]?[a-zA-Z0-9._]{1,64}");
 
     new Handler(
       *this,
-      HOST, 
+      HOST,
       DefaultEncodings,
-      bind(&Scanner::defaultHitHandler, this, RFC822_Recorder, _1, _2, _3)
+      DefaultOptions,
+      static_cast<CallbackFnType>(&Scanner::rfc822HitHandler)
     );
 
     // FIXME: trailing context
-    const std::string EMAIL(ALNUM + "([a-zA-Z0-9._%\\-+]*?" + ALNUM + ")?@(" + ALNUM + "([a-zA-Z0-9\\-]*?" + ALNUM + ")?\\.)+" + TLD + "([^a-zA-Z]|[\\z00-\\zFF][^\\z00])");
+    const string EMAIL(ALNUM + "([a-zA-Z0-9._%\\-+]*?" + ALNUM + ")?@(" + ALNUM + "([a-zA-Z0-9\\-]*?" + ALNUM + ")?\\.)+" + TLD + "([^a-zA-Z]|[\\z00-\\zFF][^\\z00])");
+//    const string EMAIL(ALNUM + "([a-zA-Z0-9._%\\-+]*?" + ALNUM + ")?@(" + ALNUM + "([a-zA-Z0-9\\-]*?" + ALNUM + ")?\\.)+" + TLD + "[^a-zA-Z]");
 
     new Handler(
       *this,
-      EMAIL, 
+      EMAIL,
       DefaultEncodings,
-      bind(&Scanner::emailHitHandler, this, _1, _2, _3)
+      DefaultOptions,
+      static_cast<CallbackFnType>(&Scanner::emailHitHandler)
     );
 
     // FIXME: leading context
     // FIXME: trailing context
-    /* Numeric IP addresses. Get the context before and throw away some things */
-    const std::string IP("[^0-9.]" + INUM + "(\\." + INUM + "){3}[^0-9\\-.+A-Z_]");
+    // Numeric IP addresses. Get the context before and throw away some things
+    const string IP("[^0-9.]" + INUM + "(\\." + INUM + "){3}[^0-9\\-.+A-Z_]");
 
     new Handler(
       *this,
-      IP, 
+      IP,
       DefaultEncodings,
-      bind(&Scanner::ipaddrHitHandler, this, _1, _2, _3)
+      DefaultOptions,
+      static_cast<CallbackFnType>(&Scanner::ipaddrHitHandler)
     );
 
     // FIXME: leading context
     // FIXME: trailing context
     // FIXME: should we be searching for all uppercase MAC addresses as well?
-    /* found a possible MAC address! */
-    const std::string MAC("[^0-9A-Z:]" + HEX + "{2}(:" + HEX + "{2}){5}[^0-9A-Z:]");
+    // found a possible MAC address!
+    const string MAC("[^0-9A-Z:]" + HEX + "{2}(:" + HEX + "{2}){5}[^0-9A-Z:]");
 
     new Handler(
       *this,
-      MAC, 
+      MAC,
       DefaultEncodings,
-      bind(&Scanner::etherHitHandler, this, _1, _2, _3)
+      DefaultOptions,
+      static_cast<CallbackFnType>(&Scanner::etherHitHandler)
     );
 
     // for reasons that aren't clear, there are a lot of net protocols that have
@@ -252,22 +276,31 @@ namespace email {
     // slashes and if it is only 2 the size is pruned until the last character
     // is a letter
     // FIXME: trailing context
-    const std::string PROTO("(https?|afp|smb)://[a-zA-Z0-9_%/\\-+@:=&?#~.;]+([^a-zA-Z0-9_%/\\-+@:=&?#~.;]|[\\z00-\\zFF][^\\z00])");
+    const string PROTO("(https?|afp|smb)://[a-zA-Z0-9_%/\\-+@:=&?#~.;]+([^a-zA-Z0-9_%/\\-+@:=&?#~.;]|[\\z00-\\zFF][^\\z00])");
 
     new Handler(
       *this,
-      PROTO, 
+      PROTO,
       DefaultEncodings,
-      bind(&Scanner::protoHitHandler, this, _1, _2, _3)
+      DefaultOptions,
+      static_cast<CallbackFnType>(&Scanner::protoHitHandler)
     );
   }
 
-  void Scanner::defaultHitHandler(feature_recorder* fr, const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
-    fr->write_buf(sp.sbuf, hit.Start, hit.End - hit.Start);
+  void Scanner::initScan(const scanner_params& sp) {
+    RFC822_Recorder = sp.fs.get_name("rfc822");
+    Email_Recorder = sp.fs.get_name("email");
+    Domain_Recorder = sp.fs.get_name("domain");
+    Ether_Recorder = sp.fs.get_name("ether");
+    URL_Recorder = sp.fs.get_name("url");
+  }
+
+  void Scanner::rfc822HitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+    RFC822_Recorder->write_buf(sp.sbuf, hit.Start, hit.End - hit.Start);
   }
 
   void Scanner::emailHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
-    const size_t len = hit.End - hit.Start;
+    const size_t len = hit.End - hit.Start - 1;
 
     const char* matchStart = reinterpret_cast<const char*>(sp.sbuf.buf) + hit.Start;
 
@@ -291,14 +324,14 @@ namespace email {
     }
 
     string context = sp.sbuf.substr(c0, context_len);
-    while (context.size() < 8) {    
+    while (context.size() < 8) {
       context = string(" ") + context;
     }
 */
 
     const int c0 = max((int) hit.Start - 8, 0);
     const string context = string(" ", 8 - (hit.Start - c0)) +
-      sp.sbuf.substr(c0, hit.Start); 
+      sp.sbuf.substr(c0, hit.Start);
 
 /*
     const int c0 = max((int) hit.Start - 8, 0);
@@ -327,7 +360,7 @@ namespace email {
       (context.find("PSW/")   != string::npos) ||  /* PWS/1.5.19.3 ... */
       (context.find("flash=") != string::npos) || /* flash= */
       (context.find("stone=") != string::npos) || /* Milestone= */
-      (context.find("NSS", 4) != string::npos) || 
+      (context.find("NSS", 4) != string::npos) ||
       (context.find("/2001,") != string::npos) || /* /2001,3.60.50.8 */
       (context.find("TI_SZ")  != string::npos) ||  /* %REG_MULTI_SZ%, */
       (sp.sbuf[hit.Start] == '0' && sp.sbuf[hit.Start+1] == '.')
@@ -374,23 +407,12 @@ namespace email {
     }
   }
 
-  Scanner TheScanner; 
-
+  Scanner TheScanner;
 }
 
 extern "C"
 void scan_email_lg(const class scanner_params &sp, const recursion_control_block &rcb) {
-  using namespace email;
-
-  if (sp.phase == scanner_params::PHASE_STARTUP) {
-    cerr << "scan_email_lg - init" << endl;
-    TheScanner.init(sp);
-    LightgrepController::Get().addScanner(TheScanner);
-  }
-  else if (sp.phase == scanner_params::PHASE_SHUTDOWN) {
-    cerr << "scan_email_lg - cleanup" << endl;
-    TheScanner.cleanup(sp);
-  }
+  scan_lg(email::TheScanner, sp, rcb);
 }
 
 #endif // HAVE_LIBLIGHTGREP
