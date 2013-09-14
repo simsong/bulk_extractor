@@ -158,13 +158,13 @@ void scan_lg(PatternScanner& scanner, const class scanner_params &sp, const recu
     scanner.startup(sp);
     break;
   case scanner_params::PHASE_INIT:
-//    cerr << "scan_" << scanner.name() << " - startup" << endl;
     scanner.init(sp);
     LightgrepController::Get().addScanner(scanner);
     break;
   case scanner_params::PHASE_SHUTDOWN:
-//    cerr << "scan_ " << scanner.name() << " - shutdown" << endl;
     scanner.shutdown(sp);
+    break;
+  default:
     break;
   }
 }
