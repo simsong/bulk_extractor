@@ -30,15 +30,21 @@ JAVA_GUI  = BEViewer.jar
 PDFDOCS	  = BEProgrammersManual.pdf BEUsersManual.pdf BEWorkedExamplesStandalone.pdf
 
 SRC_WIN_DIST = \
+	$(SRC_WIN)CONFIGURE_F18.bash \
+	$(SRC_WIN)EnvVarUpdate.nsi \
 	$(SRC_WIN)Makefile \
+	$(SRC_WIN)README_WINDOWS.txt \
 	$(SRC_WIN)build_BEViewer_launcher.nsi \
 	$(SRC_WIN)build_installer.nsi \
-	$(SRC_WIN)CONFIGURE_F18.bash \
 	$(SRC_WIN)icu-mingw32-libprefix.patch \
 	$(SRC_WIN)icu-mingw64-libprefix.patch \
-	$(SRC_WIN)README.txt \
-	$(SRC_WIN)README_WINDOWS.txt \
-	$(SRC_WIN)sign_be_file
+	$(SRC_WIN)sign_be_file \
+	$(SRC_WIN)zmq-configure.in.patch \
+	$(SRC_WIN)zmq-configure.patch \
+	$(SRC_WIN)zmq-zmq.h.patch \
+	$(SRC_WIN)zmq-zmq_utils.h.patch 
+
+
 
 # The prerequisites for the installer can't be listed after the colon, 
 # becuase then the system will try to generate them simultaneously,
@@ -94,6 +100,10 @@ $(SRC_WIN)distclean:
 
 $(SRC_WIN)release:
 	scp $(INSTALLER) ncr.nps.edu:/var/www/digitalcorpora/downloads/bulk_extractor/
+
+$(SRC_WIN)distdir:
+	if [ ! -d src_win ]; then mkdir src_win ; fi
+
 
 ################################################################
 ## 

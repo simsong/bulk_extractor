@@ -1119,7 +1119,8 @@ int main(int argc,char **argv)
         printf("Elapsed time: %g sec.\n",timer.elapsed_seconds());
         printf("Total MB processed: %d\n",int(phase1.total_bytes / 100000));
         
-        printf("Overall performance: %g MBytes/sec\n",mb_per_sec);
+        printf("Overall performance: %g MBytes/sec (%g MBytes/sec/thread)\n",
+               mb_per_sec,mb_per_sec/cfg.num_threads);
         if (fs.has_name("email")) {
             feature_recorder *fr = fs.get_name("email");
             if(fr){

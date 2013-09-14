@@ -1,164 +1,49 @@
-		    Announcing bulk_extractor 1.4.
-			    July 1, 2013
+		    Announcing bulk_extractor 1.4.1.
+                             *** TBD ***
 
-bulk_extractor Version 1.4 has been released for Linux, MacOS and Windows.
+bulk_extractor Version 1.4.1 has been released for Linux, MacOS and Windows.
 
-New functionality in Version 1.4 includes:
+Version 1.4.1 is an incremental release design to support new kinds of
+applications that make use of bulk_extractor's analytical capabilities.
 
-* scan_rar detects RAR archives (both encrypted and unencrypted) and
-  individual RAR archive components (unencrypted). Unencrypted RAR
-  archive components are decompressed and recursively
-  re-processed. Components from encoded (e.g. BASE64, GZIP, etc) RAR
-  files are carved into a special "unrar/" directory. Encrypted RAR
-  files are carved and placed in a special "rar/" directory for
-  additional processing with other tools. Timestamps are preserved
-  when files are carved on Linux or Windows systems.
+New functionality in Version 1.4.1 includes:
 
-* scan_exif now implements JPEG carving. By default, only encoded
-  JPEGs are carved (e.g. JPEGs that are gzip'ed or BASE64 encoded,
-  etc). Carved files are created in a directory called "jpeg/". The filename
-  is the forensic path. Confusingly, JPEGs without EXIFs will also be
-  carved. 
+* libbulk_extractor - a linkable and shared library that implements the bulk_extractor API on a buffer.
+  - Single threaded, but thread-safe
+  - Feature reporting in call-back function.
+  
+* pybulk_extractor - a Python module for calling bulk_extractor and returning the results to a Python program. 
 
-* scan_zip now implements ZIP component carving. By default, only ZIP
-  components that were encoded are carved. Timestamps are preserved
-  when files are carved on Linux or Windows systems.
-
-* scan_lightgrep will do searches with Lightbox Technology's lightgrep
-
-* scan_hashid will perform hash-based scanning with block hashes.
-
-* scan_xor will search for data hidden with (XOR 255). It is disabled
-  by default, but it is enabled with -e xor or with -e all.
-
-* Variable context window for left and right side.
-
-* Better performance. (Scanners can now declare that they only run at
-  top level; scan_windirs does this. Scanners can also declare that
-  they don't want to receive buffers filled with repeating n-grams or
-  data that they have previously seen; most scanners do this by
-  default.)
-
-* Support for random sampling. (You don't need to scan the entire drive.)
+* support for one-pass histograms that do not require the creation or re-reading of feature files.  
 
 
 Improvements in existing scanners:
 
-* scan_pdf now does a better job extracting emails from text.
+* scan_bulk uses the one-pass histogram.
 
-* Files that are carved are now binned in directories of 1000, to
-  prevent tens of thousands of files from being dumped in a directory.
 
-* scan_accts now writes PII such as SSNs, Fedex#s, and DOBs to the
-  feature file pii.txt.
-
-=======
 Improvements in Python programs:
-
-* Many new features in bulk_extractor_reader.py module for writing programs that parse and process feature files.
-
-* identify_filenames.py now properly reports positions when scan_xor is used.
 
 New features for testing:
 
-* tests/regress.py now performs better validation of reports with the
-  --validate option. Validation includes making sure that every line is
-  UTF-8, that feature sizes are less than 1000 characters in size, and
-  context is less than 1000000 characters in size. We now use --validate
-  to check the results of BE run against the Real Data Corpus as part of
-  our release engineering.
-
-* The UTF-8 BOM was removed from the feature files.  For a discussion
-  as to the relative merits and problems with a UTF-8 byte order mark,
-  see [1].
-
-  [1] https://en.wikipedia.org/wiki/Byte_order_mark#UTF-8
-
 Incompatiable changes:
 
-* The -B option for specifying the blocksize for bulk data analysis
-  has been removed. Instead specify it with -S block_size=NN.
-
-* The -W option no longer specifies the minimum and maximum word
-  sizes. Instead specify with -S word_min=NN and -S word_max=NN
-  has been removed. Instead specify it with -S block_size=NN.  
 
 ================================================================
 OVERREPORTING FIXES
 
-Much of the emphasis of the 1.4 is to decrease "false positives."
-
-* scan_windirs was improperly reporting the cluster for fat directory
-  entries. 
-
-* scan_windirs now only runs at top-level. This means that we will
-  miss Windows  disk images that are GZIP compressed. The advantange
-  is that it dramatically reduces false positives.
-
-* Additional validations were added to scan_windirs for fat directory
-  entries. As a result fewer false positives will be reported.
-
-* False positives in scan_net have been dramatically reduced. We have
-  done this by making the scanner more selective. For example, scan_net
-  will now only carve pcap files that are IPv4 or IPv6.
-
-* scan_net now properly reports ethernet addresses and TCP connections
-  into the files ether.txt and tcp.txt.
-
-  TCP memory structure scanning is now disabled by default; it can be
-  explicitly enabled with -Scarve_tcp=true.
-
-* scan_elf applies more validation to ELF headers and, as a result,
-  many of the false positives have been eliminated. This was
-  expecially a problem for truncated headers.
-
-* scan_winpe applies more validation to section and DLL names and, as
-  a result, many of hte false positives have been eliminated. This was
-  especially a problem for truncated PE headers.
-
-* Strings of hex digits separated by colons are no longer mistaking
-  reported as Ethernet MAC addresses.
-
-* compression bomb logic improved. bulk_extractor will no longer
-  decompress the same compressed block twice. As a result, histograms
-  are now based on distinct occurances, rather than multiple
-  occurances within the same compressed object.
 
 ================================================================
 UNDERREPORTING FIXES
 
-* Default max_depth for recursion changed from 5 to 7.  (We found some
-  deep content on our test drives).
-
-* scan_pdf has been improved and now does a better job extracting
-  text. For example, the following feature is now found when scanning
-  the ubnist1.gen3 disk:
-
-1114252989-ZIP-2353-PDF-2413 202-395-1181  Karen Evans at 202-395-1181.    
-
-
 ================================================================
 BUG FIXES
-
-* scan_zip now properly reports the date and time of zip
-  components. It also reports in ISO8601 format, which makes parsing
-  easier.
 
 ================================================================
 USABILITY IMPROVEMENT
 
-* The -R option will no longer process a directory that contains a
-  file with a .E01, .000 or a .001 extension. Unfortunately, some
-  users were using -R to process a directory filled with image
-  files. The program will still process such files if they are in a
-  subdirectory.
-
 ================================================================
 INTERNAL IMPROVEMENTS 
-
-* There has been additional refactoring of the plugin system. Many
-  functions and variables that were previously global or static are
-  now in the be13:plugin:: namespace.
 
 ================================================================
 PERFORMANCE STATISTICS
@@ -166,7 +51,7 @@ PERFORMANCE STATISTICS
 This section tracks how performance of bulk_extractor has changed over
 time.  We update it with each new release
 
-NOTE: We recommend compiling Version 1.4 with -O3 under GCC. Please
+NOTE: We recommend compiling Version 1.4.1 with -O3 under GCC. Please
 use version GCC 4.7 or above. One a Mac you may wish to use clang.
 
 Use these configure flags to compile with a different optimization: 
