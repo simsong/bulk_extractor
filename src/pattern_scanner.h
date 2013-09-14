@@ -15,19 +15,7 @@ typedef void (PatternScanner::*CallbackFnType)(const LG_SearchHit&, const scanne
 
 /*********************************************************/
 
-struct Handler {
-  Handler(PatternScanner& scanner, const string& re, const vector<string>& encs, const LG_KeyOptions& opts, const CallbackFnType& fn);
-
-  string RE;
-
-  vector<string> Encodings;
-
-  LG_KeyOptions Options;
-
-  CallbackFnType Callback;
-};
-
-/*********************************************************/
+class Handler;
 
 class PatternScanner {
 public:
@@ -67,6 +55,34 @@ protected:
   vector<const Handler*> Handlers;
 
   pair<unsigned int, unsigned int> PatternRange; // knows the label range of its associated patterns
+};
+
+/*********************************************************/
+
+struct Handler {
+  template <typename Fn>
+  Handler(
+    PatternScanner& scanner,
+    const string& re,
+    const vector<string>& encs,
+    const LG_KeyOptions& opts,
+    Fn fn
+  ):
+    RE(re),
+    Encodings(encs),
+    Options(opts),
+    Callback(static_cast<CallbackFnType>(fn))
+  {
+    scanner.addHandler(this);
+  }
+
+  string RE;
+
+  vector<string> Encodings;
+
+  LG_KeyOptions Options;
+
+  CallbackFnType Callback;
 };
 
 /*********************************************************/

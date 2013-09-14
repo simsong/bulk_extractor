@@ -193,7 +193,7 @@ namespace email {
       DATE,
       DefaultEncodings,
       DefaultOptions,
-      static_cast<CallbackFnType>(&Scanner::rfc822HitHandler)
+      &Scanner::rfc822HitHandler
     );
 
     const string MESSAGE_ID("Message-ID:[ \\t\\n]?<" + PC + "{1,80}>");
@@ -203,7 +203,7 @@ namespace email {
       MESSAGE_ID,
       DefaultEncodings,
       DefaultOptions,
-      static_cast<CallbackFnType>(&Scanner::rfc822HitHandler)
+      &Scanner::rfc822HitHandler
     );
 
     const string SUBJECT("Subject:[ \\t]?" + PC + "{1,80}");
@@ -213,7 +213,7 @@ namespace email {
       SUBJECT,
       DefaultEncodings,
       DefaultOptions,
-      static_cast<CallbackFnType>(&Scanner::rfc822HitHandler)
+      &Scanner::rfc822HitHandler
     );
 
     const string COOKIE("Cookie:[ \\t]?" + PC + "{1,80}");
@@ -223,7 +223,7 @@ namespace email {
       COOKIE,
       DefaultEncodings,
       DefaultOptions,
-      static_cast<CallbackFnType>(&Scanner::rfc822HitHandler)
+      &Scanner::rfc822HitHandler
     );
 
     const string HOST("Host:[ \\t]?[a-zA-Z0-9._]{1,64}");
@@ -233,7 +233,7 @@ namespace email {
       HOST,
       DefaultEncodings,
       DefaultOptions,
-      static_cast<CallbackFnType>(&Scanner::rfc822HitHandler)
+      &Scanner::rfc822HitHandler
     );
 
     // FIXME: trailing context
@@ -245,7 +245,7 @@ namespace email {
       EMAIL,
       DefaultEncodings,
       DefaultOptions,
-      static_cast<CallbackFnType>(&Scanner::emailHitHandler)
+      &Scanner::emailHitHandler
     );
 
     // FIXME: leading context
@@ -258,7 +258,7 @@ namespace email {
       IP,
       DefaultEncodings,
       DefaultOptions,
-      static_cast<CallbackFnType>(&Scanner::ipaddrHitHandler)
+      &Scanner::ipaddrHitHandler
     );
 
     // FIXME: leading context
@@ -272,7 +272,7 @@ namespace email {
       MAC,
       DefaultEncodings,
       DefaultOptions,
-      static_cast<CallbackFnType>(&Scanner::etherHitHandler)
+      &Scanner::etherHitHandler
     );
 
     // for reasons that aren't clear, there are a lot of net protocols that have
@@ -287,7 +287,7 @@ namespace email {
       PROTO,
       DefaultEncodings,
       DefaultOptions,
-      static_cast<CallbackFnType>(&Scanner::protoHitHandler)
+      &Scanner::protoHitHandler
     );
   }
 

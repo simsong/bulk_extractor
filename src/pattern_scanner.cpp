@@ -14,14 +14,6 @@
 #include <algorithm>
 #include <limits>
 
-Handler::Handler(PatternScanner& scanner, const string& re, const vector<string>& encs, const LG_KeyOptions& opts, const CallbackFnType& fn):
-  RE(re), Encodings(encs), Options(opts), Callback(fn)
-{
-  scanner.addHandler(this);
-}
-
-/*********************************************************/
-
 bool PatternScanner::handleParseError(const Handler& h, LG_Error* err) const {
   cerr << "Parse error on '" << h.RE << "' in " << Name
        << ": " << err->Message << endl;

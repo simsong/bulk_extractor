@@ -173,11 +173,7 @@ namespace base16 {
      const std::string HEX("[^0-9A-F]([0-9A-F]{2}[ \\t\\n\\r]{0,4}){6,}[^0-9A-F]");
 
     new Handler(
-      *this,
-      HEX,
-      DefaultEncodings,
-      DefaultOptions,
-      static_cast<CallbackFnType>(&Scanner::hitHandler)
+      *this, HEX, DefaultEncodings, DefaultOptions, &Scanner::hitHandler
     );
   }
 

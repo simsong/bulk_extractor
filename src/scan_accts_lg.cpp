@@ -163,7 +163,7 @@ namespace accts {
       REGEX2,
       DefaultEncodings,
       DefaultOptions,
-      static_cast<CallbackFnType>(&Scanner::ccnHitHandler)
+      &Scanner::ccnHitHandler
     );
 
     // FIXME: leading context
@@ -177,7 +177,7 @@ namespace accts {
       REGEX3,
       DefaultEncodings,
       DefaultOptions,
-      static_cast<CallbackFnType>(&Scanner::ccnHitHandler)
+      &Scanner::ccnHitHandler
     );
 
     // FIXME: leading context
@@ -191,7 +191,7 @@ namespace accts {
       REGEX4,
       DefaultEncodings,
       DefaultOptions,
-      static_cast<CallbackFnType>(&Scanner::ccnHitHandler)
+      &Scanner::ccnHitHandler
     );
 
     // FIXME: leading context
@@ -208,7 +208,7 @@ namespace accts {
       REGEX5,
       DefaultEncodings,
       DefaultOptions,
-      static_cast<CallbackFnType>(&Scanner::ccnHitHandler)
+      &Scanner::ccnHitHandler
     );
 
     // FIXME: leading context
@@ -222,7 +222,7 @@ namespace accts {
       REGEX6,
       DefaultEncodings,
       DefaultOptions,
-      static_cast<CallbackFnType>(&Scanner::ccnTrack2HitHandler)
+      &Scanner::ccnTrack2HitHandler
     );
 
     // FIXME: trailing context
@@ -239,7 +239,7 @@ namespace accts {
       REGEX7,
       DefaultEncodings,
       DefaultOptions,
-      static_cast<CallbackFnType>(&Scanner::validatedTelephoneHitHandler)
+      &Scanner::validatedTelephoneHitHandler
     );
 
     // FIXME: trailing context
@@ -252,7 +252,7 @@ namespace accts {
       REGEX8,
       DefaultEncodings,
       DefaultOptions,
-      static_cast<CallbackFnType>(&Scanner::telephoneHitHandler)
+      &Scanner::telephoneHitHandler
     );
 
     // FIXME: trailing context
@@ -266,7 +266,7 @@ namespace accts {
       REGEX9,
       DefaultEncodings,
       DefaultOptions,
-      static_cast<CallbackFnType>(&Scanner::validatedTelephoneHitHandler)
+      &Scanner::validatedTelephoneHitHandler
     );
 
     /* Generalized number with prefix */
@@ -277,7 +277,7 @@ namespace accts {
       REGEX10,
       DefaultEncodings,
       DefaultOptions,
-      static_cast<CallbackFnType>(&Scanner::telephoneHitHandler)
+      &Scanner::telephoneHitHandler
     );
 
     /* Generalized number with city code and prefix */
@@ -288,7 +288,7 @@ namespace accts {
       REGEX11,
       DefaultEncodings,
       DefaultOptions,
-      static_cast<CallbackFnType>(&Scanner::telephoneHitHandler)
+      &Scanner::telephoneHitHandler
     );
 
     // FIXME: trailing context
@@ -300,7 +300,7 @@ namespace accts {
       REGEX12,
       DefaultEncodings,
       DefaultOptions,
-      static_cast<CallbackFnType>(&Scanner::piiHitHandler)
+      &Scanner::piiHitHandler
     );
 
     // FIXME: trailing context
@@ -311,7 +311,7 @@ namespace accts {
       REGEX13,
       DefaultEncodings,
       DefaultOptions,
-      static_cast<CallbackFnType>(&Scanner::piiHitHandler)
+      &Scanner::piiHitHandler
     );
 
     const std::string REGEX14("dob:?[ \\t]+" + DATEFORMAT);
@@ -321,7 +321,7 @@ namespace accts {
       REGEX14,
       DefaultEncodings,
       DefaultOptions,
-      static_cast<CallbackFnType>(&Scanner::piiHitHandler)
+      &Scanner::piiHitHandler
     );
 
     // FIXME: trailing context
@@ -333,7 +333,7 @@ namespace accts {
       BITLOCKER,
       DefaultEncodings,
       DefaultOptions,
-      static_cast<CallbackFnType>(&Scanner::bitlockerHitHandler)
+      &Scanner::bitlockerHitHandler
     );
 
     /*
