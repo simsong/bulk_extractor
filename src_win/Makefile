@@ -83,10 +83,17 @@ $(SRC_WIN)clean:
 	/bin/rm -f $(WIN32_EXE) $(WIN64_EXE) $(JAVA_GUI)
 	/bin/rm -f $(INSTALLER) $(INTERMEDIATE_INSTALLER) $(SIGNED_INSTALLER) 
 	/bin/rm -f $(UNVERSIONED_INSTALLER) $(UNVERSIONED_INTERMEDIATE_INSTALLER) $(UNVERSIONED_SIGNED_INSTALLER)
+	/bin/rm -f $(PDFDOCS)
+
+$(SRC_WIN)cleanpdf:
+	/bin/rm -f $(PDFDOCS)
 
 $(SRC_WIN)distclean:
 	if [ -r ../Makefile ]; then (cd ..;$(MAKE) distclean); fi
 	$(MAKE) clean
+
+$(SRC_WIN)release:
+	scp $(INSTALLER) ncr.nps.edu:/var/www/digitalcorpora/downloads/bulk_extractor/
 
 ################################################################
 ## 
