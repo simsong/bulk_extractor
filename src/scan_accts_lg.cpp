@@ -86,6 +86,7 @@ namespace accts {
     virtual Scanner* clone() const { return new Scanner(*this); }
 
     virtual void startup(const scanner_params& sp);
+    virtual void init(const scanner_params& sp);
     virtual void initScan(const scanner_params&);
 
     feature_recorder* CCN_Recorder;
@@ -141,7 +142,9 @@ namespace accts {
       histogram_def("telephone", "", "histogram", HistogramMaker::FLAG_NUMERIC)
     );
 //    scan_ccns2_debug = sp.info->config->debug;           // get debug value
+  }
 
+  void Scanner::init(const scanner_params& sp) {
     //
     // patterns
     //

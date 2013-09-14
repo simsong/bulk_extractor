@@ -153,14 +153,19 @@ unsigned int LightgrepController::numPatterns() const {
 /*********************************************************/
 
 void scan_lg(PatternScanner& scanner, const class scanner_params &sp, const recursion_control_block &rcb) {
-   if (sp.phase == scanner_params::PHASE_STARTUP) {
-    cerr << "scan_" << scanner.name() << " - startup" << endl;
+  switch (sp.phase) {
+  case scanner_params::PHASE_STARTUP:
     scanner.startup(sp);
+    break;
+  case scanner_params::PHASE_INIT:
+//    cerr << "scan_" << scanner.name() << " - startup" << endl;
+    scanner.init(sp);
     LightgrepController::Get().addScanner(scanner);
-  }
-  else if (sp.phase == scanner_params::PHASE_SHUTDOWN) {
-    cerr << "scan_ " << scanner.name() << " - shutdown" << endl;
+    break;
+  case scanner_params::PHASE_SHUTDOWN:
+//    cerr << "scan_ " << scanner.name() << " - shutdown" << endl;
     scanner.shutdown(sp);
+    break;
   }
 }
 

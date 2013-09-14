@@ -38,7 +38,9 @@ public:
 
   const string& name() const { return Name; }
 
-  virtual void startup(const scanner_params& sp) = 0; // register handlers
+  virtual void startup(const scanner_params& sp) = 0;
+
+  virtual void init(const scanner_params& sp) = 0; // register handlers
 
   virtual void initScan(const scanner_params& sp) = 0; // get feature_recorders
 

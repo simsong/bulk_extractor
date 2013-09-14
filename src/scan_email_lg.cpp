@@ -121,6 +121,8 @@ namespace email {
 
     virtual void startup(const scanner_params& sp);
 
+    virtual void init(const scanner_params& sp);
+
     virtual void initScan(const scanner_params& sp);
 
     feature_recorder* RFC822_Recorder;
@@ -177,7 +179,9 @@ namespace email {
     sp.info->histogram_defs.insert(histogram_def("url", "://[-_a-z0-9.]+facebook.com/.*[&?]{1}id=([0-9]+)", "facebook-id"));
     sp.info->histogram_defs.insert(histogram_def("url", "://[-_a-z0-9.]+facebook.com/([a-zA-Z0-9.]*[^/?&]$)", "facebook-address",  HistogramMaker::FLAG_LOWERCASE));
     sp.info->histogram_defs.insert(histogram_def("url", "search.*[?&/;fF][pq]=([^&/]+)", "searches"));
+  }
 
+  void Scanner::init(const scanner_params& sp) {
     //
     // patterns
     //

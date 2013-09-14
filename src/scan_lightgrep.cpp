@@ -62,7 +62,7 @@ namespace { // local namespace hides these from other translation units
     lg_free_error(lgErr);
   }
 
-  void init(const scanner_params& sp) {
+  void startup(const scanner_params& sp) {
     sp.info->name            = "lightgrep";
     sp.info->author          = "Jon Stewart";
     sp.info->description     = "Advaned search for patterns";
@@ -93,21 +93,28 @@ namespace { // local namespace hides these from other translation units
 
 extern "C"
 void scan_lightgrep(const class scanner_params &sp, const recursion_control_block &rcb) {
-  if (sp.phase == scanner_params::PHASE_STARTUP) {
-    // check to see whether there's a keywords file
-    // if so, load into FSM
-    init(sp);
-
-    LightgrepController& lg(LightgrepController::Get());
-    lg.regcomp();
-    std::cout << "Lightgrep will look for a total of " << lg.numPatterns() << " patterns" << std::endl;
-  }
-  else if (sp.phase == scanner_params::PHASE_SHUTDOWN) {
-    // meh
-  }
-  else if (sp.phase == scanner_params::PHASE_SCAN) {
-    LightgrepController& lg(LightgrepController::Get());
-    lg.scan(sp, rcb);
+  switch (sp.phase) {
+  case scanner_params::PHASE_STARTUP:
+    startup(sp);
+    break;
+  case scanner_params::PHASE_INIT:
+    {
+      // check whether there's a keywords file; if so, load into FSM
+      LightgrepController& lg(LightgrepController::Get());
+      lg.regcomp();
+      std::cerr << "Lightgrep will look for a total of "
+                << lg.numPatterns() << " patterns" << std::endl;
+      break;
+    }
+  case scanner_params::PHASE_SCAN:
+    {
+      LightgrepController& lg(LightgrepController::Get());
+      lg.scan(sp, rcb);
+      break;
+    }
+  case scanner_params::PHASE_SHUTDOWN:
+  default:
+    break;
   }
 }
 
