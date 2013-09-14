@@ -31,10 +31,12 @@ struct Handler {
 
 class PatternScanner {
 public:
-  PatternScanner(const string& name): Name(name), Handlers(), PatternRange(0, 0) {}
+  PatternScanner(const string& n): Name(n), Handlers(), PatternRange(0, 0) {}
   virtual ~PatternScanner() {}
 
   virtual PatternScanner* clone() const = 0;
+
+  const string& name() const { return Name; }
 
   virtual void startup(const scanner_params& sp) = 0; // register handlers
 
@@ -94,5 +96,9 @@ private:
 
   vector<PatternScanner*> Scanners;
 };
+
+/*********************************************************/
+
+void scan_lg(PatternScanner& scanner, const class scanner_params &sp, const recursion_control_block &rcb);
 
 #endif /* PATTERN_SCANNER_H */

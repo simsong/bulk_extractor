@@ -149,6 +149,21 @@ void LightgrepController::processHit(const vector<PatternScanner*>& sTbl, const 
 unsigned int LightgrepController::numPatterns() const {
   return lg_pattern_map_size(PatternInfo);
 }
+
+/*********************************************************/
+
+void scan_lg(PatternScanner& scanner, const class scanner_params &sp, const recursion_control_block &rcb) {
+   if (sp.phase == scanner_params::PHASE_STARTUP) {
+    cerr << "scan_" << scanner.name() << " - startup" << endl;
+    scanner.startup(sp);
+    LightgrepController::Get().addScanner(scanner);
+  }
+  else if (sp.phase == scanner_params::PHASE_SHUTDOWN) {
+    cerr << "scan_ " << scanner.name() << " - shutdown" << endl;
+    scanner.shutdown(sp);
+  }
+}
+
 /*********************************************************/
 
 // class ExamplePatternScanner : public PatternScanner {
