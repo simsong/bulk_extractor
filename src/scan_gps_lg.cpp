@@ -12,7 +12,9 @@ namespace gps {
   const char* const DefaultEncodingsCStrings[] = {"UTF-8", "UTF-16LE"};
 
   const vector<string> DefaultEncodings(
-    &DefaultEncodingsCStrings[0], &DefaultEncodingsCStrings[2]
+    DefaultEncodingsCStrings,
+    DefaultEncodingsCStrings +
+      sizeof(DefaultEncodingsCStrings)/sizeof(DefaultEncodingsCStrings[0])
   );
 
   const LG_KeyOptions DefaultOptions = { 0, 0 }; // patterns, case-sensitive

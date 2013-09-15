@@ -14,8 +14,8 @@ namespace base16 {
   const char* const DefaultEncodingsCStrings[] = {"UTF-8"};
 
   const vector<string> DefaultEncodings(
-    &DefaultEncodingsCStrings[0],
-    &DefaultEncodingsCStrings[0] +
+    DefaultEncodingsCStrings,
+    DefaultEncodingsCStrings +
       sizeof(DefaultEncodingsCStrings)/sizeof(DefaultEncodingsCStrings[0])
   );
 
