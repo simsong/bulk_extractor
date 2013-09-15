@@ -319,23 +319,9 @@ namespace email {
 
   void Scanner::ipaddrHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
     // Get 8 characters of left context, right-justified
-/*
-    int context_len = 8;
-    int c0 = hit.Start - context_len;
-    while (c0 < 0) {
-      ++c0;
-      --context_len;
-    }
-
-    string context = sp.sbuf.substr(c0, context_len);
-    while (context.size() < 8) {
-      context = string(" ") + context;
-    }
-*/
-
-    const int c0 = max((int) hit.Start - 8, 0);
-    const string context = string(" ", 8 - (hit.Start - c0)) +
-      sp.sbuf.substr(c0, hit.Start);
+    const int c0 = max((int) hit.Start + 1 - 8, 0);
+    const string context = string(" ", 8 - (hit.Start + 1 - c0)) +
+      sp.sbuf.substr(c0, hit.Start + 1);
 
 /*
     const int c0 = max((int) hit.Start - 8, 0);
@@ -367,12 +353,12 @@ namespace email {
       (context.find("NSS", 4) != string::npos) ||
       (context.find("/2001,") != string::npos) || /* /2001,3.60.50.8 */
       (context.find("TI_SZ")  != string::npos) ||  /* %REG_MULTI_SZ%, */
-      (sp.sbuf[hit.Start] == '0' && sp.sbuf[hit.Start+1] == '.')
+      (sp.sbuf[hit.Start+1] == '0' && sp.sbuf[hit.Start+2] == '.')
     ) {
       // ignore
     }
     else {
-      Domain_Recorder->write_buf(sp.sbuf, hit.Start, hit.End-hit.Start);
+      Domain_Recorder->write_buf(sp.sbuf, hit.Start+1, hit.End-hit.Start-2);
     }
   }
 
