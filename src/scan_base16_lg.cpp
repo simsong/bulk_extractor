@@ -187,9 +187,12 @@ namespace base16 {
   size_t base16_decode_skipping_whitespace(uint8_t* dst_start, const uint8_t* src, const uint8_t* src_end) {
     uint8_t* dst = dst_start;
     uint32_t byte;
+    uint8_t msn, lsn;
 
     while (src < src_end) {
-      byte = BASE16_MSN[*src++] | BASE16_LSN[*src++];
+      msn = *src++;
+      lsn = *src++;
+      byte = BASE16_MSN[msn] | BASE16_LSN[lsn];
       // Precondition: input is only pairs of hex digits and whitespace.
       // So a "byte" value over FF means we've hit whitespace.
       if (byte < 0x100) {
