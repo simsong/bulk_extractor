@@ -304,15 +304,15 @@ namespace email {
   }
 
   void Scanner::emailHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
-    const size_t len = hit.End - hit.Start - 1;
+    const size_t len = (hit.End - 1) - hit.Start;
 
     const char* matchStart = reinterpret_cast<const char*>(sp.sbuf.buf) + hit.Start;
 
     if (validate_email(matchStart)) {
       Email_Recorder->write_buf(sp.sbuf, hit.Start, len);
-      const size_t domain_start = find_domain_in_email(matchStart, len);
-      if (domain_start > 0) {
-        Domain_Recorder->write_buf(sp.sbuf, hit.Start + domain_start, len - domain_start);
+      const size_t domain_off = find_domain_in_email(matchStart, len);
+      if (domain_off > 0) {
+        Domain_Recorder->write_buf(sp.sbuf, hit.Start + domain_off, len - domain_off);
       }
     }
   }
