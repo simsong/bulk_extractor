@@ -45,24 +45,6 @@ namespace gps {
     return text.substr(gt+1, lt-(gt+1));
   }
 
-  /**
-   * dump the current and go to the next
-   */
-/*
-  void clear() {
-    if (time.size() || lat.size() || lon.size() || ele.size() || speed.size() || course.size()) {
-      string what = time+","+lat+","+lon+","+ele+","+speed+","+course;
-      gps_recorder->write(sbuf->pos0+pos,what,"");
-    }
-    time = "";
-    lat = "";
-    lon = "";
-    ele = "";
-    speed = "";
-    course = "";
-  }
-*/
-
   //
   // subpatterns
   //
@@ -76,7 +58,7 @@ namespace gps {
 
   class Scanner: public PatternScanner {
   public:
-    Scanner(): PatternScanner("gps_lg"), Recorder(0) {}
+    Scanner(): PatternScanner("gps_lg"), Recorder(0), Lat(), Lon(), Ele(), Time(), Speed(), Course() {}
     virtual ~Scanner() {}
 
     virtual Scanner* clone() const { return new Scanner(*this); }
@@ -98,11 +80,15 @@ namespace gps {
     void courseHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
 
   private:
-    Scanner(const Scanner& s): PatternScanner(s), Recorder(s.Recorder) {}
+    Scanner(const Scanner& s): PatternScanner(s), Recorder(s.Recorder), Lat(s.Lat), Lon(s.Lon), Ele(s.Ele), Time(s.Time), Speed(s.Speed), Course(s.Course) {}
     Scanner& operator=(const Scanner&);
+
+    void clear(const scanner_params& sp, size_t pos);
+
+    string Lat, Lon, Ele, Time, Speed, Course;
   };
 
-  void Scanner::startpup(const scanner_params& sp) {
+  void Scanner::startup(const scanner_params& sp) {
     assert(sp.sp_version == scanner_params::CURRENT_SP_VERSION);      
     assert(sp.info->si_version == scanner_info::CURRENT_SI_VERSION);
 
@@ -173,19 +159,45 @@ namespace gps {
     Recorder = sp.fs.get_name("gps"); 
   }
 
+// FIXME: flex has extremal pattern for calling clear, how to replicate that?
+  void Scanner::clear(const scanner_params& sp, size_t pos) {
+    // dump the current and go to the next
+    if (!Time.empty() || !Lat.empty() || !Lon.empty() ||
+        !Ele.empty() || !Speed.empty() || !Course.empty()) {
+      const string what = Time + "," + Lat + "," + Lon + "," +
+                          Ele + "," + Speed + "," + Course;
+      // NB: the pos is the *end* of the "hit"
+      Recorder->write(sp.sbuf.pos0 + pos, what, "");
+
+      Time.clear();
+      Lat.clear();
+      Lon.clear();
+      Ele.clear();
+      Speed.clear();
+      Course.clear();
+    }
+  }
+
   void Scanner::trkptHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+    clear(sp, hit.Start);
+    Lat = get_quoted_attrib(reinterpret_cast<const char*>(sp.sbuf.buf), "lat");
+    Lon = get_quoted_attrib(reinterpret_cast<const char*>(sp.sbuf.buf), "lon");
   }
 
   void Scanner::eleHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+    Ele = get_cdata(reinterpret_cast<const char*>(sp.sbuf.buf));
   }
 
   void Scanner::timeHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+    Time = get_cdata(reinterpret_cast<const char*>(sp.sbuf.buf));
   }
 
   void Scanner::speedHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+    Speed = get_cdata(reinterpret_cast<const char*>(sp.sbuf.buf));
   }
  
   void Scanner::courseHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+    Course = get_cdata(reinterpret_cast<const char*>(sp.sbuf.buf));
   }
 
   Scanner TheScanner;
