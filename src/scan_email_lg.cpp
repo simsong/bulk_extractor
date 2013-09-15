@@ -120,9 +120,7 @@ namespace email {
     virtual Scanner* clone() const { return new Scanner(*this); }
 
     virtual void startup(const scanner_params& sp);
-
     virtual void init(const scanner_params& sp);
-
     virtual void initScan(const scanner_params& sp);
 
     feature_recorder* RFC822_Recorder;
