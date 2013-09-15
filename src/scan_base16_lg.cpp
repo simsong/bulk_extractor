@@ -184,70 +184,32 @@ namespace base16 {
   // Don't re-analyze hex bufs smaller than this
   const unsigned int opt_min_hex_buf = 64;
 
-/*
-  size_t base16_decode_skipping_whitespace(const uint8_t* dst_start, const char* src, const char* src_end) {
+  size_t base16_decode_skipping_whitespace(uint8_t* dst_start, const uint8_t* src, const uint8_t* src_end) {
     uint8_t* dst = dst_start;
     uint32_t byte;
 
     while (src < src_end) {
       byte = BASE16_MSN[*src++] | BASE16_LSN[*src++];
-      if (byte > 0xFF) {
-        return dst - dst_start;
+      // Precondition: input is only pairs of hex digits and whitespace.
+      // So a "byte" value over FF means we've hit whitespace.
+      if (byte < 0x100) {
+        *dst++ = static_cast<uint8_t>(byte);
       }
-      *dst++ = static_cast<uint8_t>(byte);
     }
 
-    return dst - dst_startsrc_end - src;
+    return dst - dst_start;
   }
-*/
 
   void Scanner::decode(const sbuf_t& osbuf, size_t pos, size_t len, const scanner_params& sp, const recursion_control_block& rcb) {
     sbuf_t sbuf(osbuf, pos, len);  // the substring we are working with
 
-/*
-    const size_t outbytes = sbuf.pagesize/2;
-    managed_malloc<uint8_t> b(outbytes);
-
-    size_t p = 0;
-    for (size_t i = 0; i < sbuf.pagesize; ) {
-      size_t dlen = base16_decode(&b + p, sbuf.buf + i, sbuf.pagesize);
-      if (!dlen) {
-        ++i;
-        continue;
-      }
-
-      p += dlen;
-      i += (dlen << 1);
-    }
-*/
-
     managed_malloc<uint8_t> b(sbuf.pagesize/2);
     if (b.buf == 0) return;
 
-    size_t p = 0;
-    // First get the characters
-    for (size_t i = 0; i+1 < sbuf.pagesize; ) {
-      // stats on the new characters
-
-      // decode the two characters
-      const int msb = BASE16[sbuf[i]];
-      if (msb == BASE16_IGNORE || msb == BASE16_INVALID) {
-        i++;          // This character not valid
-        continue;
-      }
-
-      assert(msb >= 0 && msb < 16);
-      const int lsb = BASE16[sbuf[i+1]];
-      if (lsb == BASE16_IGNORE || lsb == BASE16_INVALID) {
-        // If first char is valid hex and second isn't, this isn't hex
-        return;
-      }
-
-      assert(lsb >= 0 && lsb < 16);
-      b.buf[p++] = (msb<<4) | lsb;
-      i+=2;
-    }
-
+    const size_t p = base16_decode_skipping_whitespace(
+      b.buf, sbuf.buf, sbuf.buf+sbuf.pagesize
+    );
+  
     // Alert on byte sequences of 48, 128 or 256 bits
     if (p == 48/8 || p == 128/8 || p == 256/8) {
       // it validates; write original with context
