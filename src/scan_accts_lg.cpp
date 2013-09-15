@@ -338,6 +338,7 @@ namespace accts {
       &Scanner::bitlockerHitHandler
     );
 
+// FIXME: these are supposed to be blockers for phone numbers
     /*
      * Common box arrays found in PDF files
      * With more testing this can and will still be tweaked
