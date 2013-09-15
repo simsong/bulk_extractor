@@ -102,8 +102,8 @@ void scan_lightgrep(const class scanner_params &sp, const recursion_control_bloc
       // check whether there's a keywords file; if so, load into FSM
       LightgrepController& lg(LightgrepController::Get());
       lg.regcomp();
-      std::cerr << "Lightgrep will look for a total of "
-                << lg.numPatterns() << " patterns" << std::endl;
+      cerr << "Lightgrep will look for a total of "
+           << lg.numPatterns() << " patterns" << endl;
       break;
     }
   case scanner_params::PHASE_SCAN:
