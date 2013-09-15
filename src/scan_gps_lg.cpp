@@ -27,9 +27,9 @@ namespace gps {
   string get_quoted_attrib(string text, string attrib) {
     size_t pos = text.find(attrib);
     if (pos == string::npos) return "";  /* no attrib */
-    ssize_t quote1 = text.find('\"',pos);
+    ssize_t quote1 = text.find('"', pos);
     if (quote1 < 0) return "";           /* no opening quote */
-    ssize_t quote2 = text.find('\"',quote1+1);
+    ssize_t quote2 = text.find('"', quote1+1);
     if (quote2 < 0) return "";           /* no closing quote */
     return text.substr(quote1+1, quote2-(quote1+1));
   }
