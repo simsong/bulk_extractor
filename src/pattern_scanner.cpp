@@ -130,7 +130,7 @@ void LightgrepController::scan(const scanner_params& sp, const recursion_control
 
   lg_destroy_context(ctx);
 
-  // don't call PatternTable::shutdown() on these!
+  // don't call PatternScanner::shutdown() on these!
   scannerTable.clear();
   for (vector<PatternScanner*>::const_iterator itr(scannerList.begin()); itr != scannerList.end(); ++itr) {
     delete *itr;
