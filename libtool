@@ -1,7 +1,7 @@
 #! /bin/sh
 
 # libtool - Provide generalized library-building support services.
-# Generated automatically by config.status (bulk_extractor) 1.4.0
+# Generated automatically by config.status (bulk_extractor) 1.4.1-dev
 # Libtool was configured on host npsair.local:
 # NOTE: Changes made to this file will be lost: look at ltmain.sh.
 #

@@ -31,7 +31,6 @@ AC_PROG_INSTALL
 AC_PROG_LEX
 LT_INIT
 
-
 m4_include([src/dfxml/src/dfxml_configure.m4])
 m4_include([src/be13_api/be13_configure.m4])
 
