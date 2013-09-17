@@ -138,7 +138,7 @@ case $host in
      AC_DEFINE([__LINUX__],1,[Linux operating system functions])
      ;;
 
-  *-*-mingw32*)   
+  *mingw*)   
      LIBS="$LIBS -lpsapi -lws2_32 -lgdi32"  
      CPPFLAGS="-DUNICODE -D_UNICODE -D__MSVCRT_VERSION__=0x0601 -DWINVER=0x0500 -D_WIN32_WINNT=0x0500 -g $CPPFLAGS"
      CPPFLAGS="$CPPFLAGS --static "
