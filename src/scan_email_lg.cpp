@@ -238,8 +238,9 @@ namespace email {
     );
 
     // FIXME: trailing context
-    const string EMAIL(ALNUM + "([a-zA-Z0-9._%\\-+]*?" + ALNUM + ")?@(" + ALNUM + "([a-zA-Z0-9\\-]*?" + ALNUM + ")?\\.)+" + TLD + "([^a-zA-Z]|[\\z00-\\zFF][^\\z00])");
+//    const string EMAIL(ALNUM + "([a-zA-Z0-9._%\\-+]*?" + ALNUM + ")?@(" + ALNUM + "([a-zA-Z0-9\\-]*?" + ALNUM + ")?\\.)+" + TLD + "([^a-zA-Z]|[\\z00-\\zFF][^\\z00])");
 //    const string EMAIL(ALNUM + "([a-zA-Z0-9._%\\-+]*?" + ALNUM + ")?@(" + ALNUM + "([a-zA-Z0-9\\-]*?" + ALNUM + ")?\\.)+" + TLD + "[^a-zA-Z]");
+    const string EMAIL(ALNUM + "[a-zA-Z0-9._%\\-+]+" + ALNUM + "@" + ALNUM + "[a-zA-Z0-9._%\\-]+\\." + TLD + "[^a-zA-Z]");
 
     new Handler(
       *this,
@@ -281,7 +282,9 @@ namespace email {
     // slashes and if it is only 2 the size is pruned until the last character
     // is a letter
     // FIXME: trailing context
-    const string PROTO("(https?|afp|smb)://[a-zA-Z0-9_%/\\-+@:=&?#~.;]+([^a-zA-Z0-9_%/\\-+@:=&?#~.;]|[\\z00-\\zFF][^\\z00])");
+//    const string PROTO("(https?|afp|smb)://[a-zA-Z0-9_%/\\-+@:=&?#~.;]+([^a-zA-Z0-9_%/\\-+@:=&?#~.;]|[\\z00-\\zFF][^\\z00])");
+//    const string PROTO("(https?|afp|smb)://[a-zA-Z0-9_%/\\-+@:=&?#~.;]+[^a-zA-Z0-9_%/\\-+@:=&?#~.;]");
+    const string PROTO("(https?|afp|smb)://[a-zA-Z0-9_%/\\-+@:=&?#~.;]+");
 
     new Handler(
       *this,
@@ -381,20 +384,21 @@ namespace email {
       sp.sbuf.buf + hit.End, '/'
     );
 
-    int feature_len = (hit.End - 1) - hit.Start;
+//    int len = (hit.End - 1) - hit.Start;
+    int len = hit.End - hit.Start;
 
     if (slash_count == 2) {
-      while (feature_len > 0 && !isalpha(sp.sbuf[hit.Start+feature_len-1])) {
-        --feature_len;
+      while (len > 0 && !isalpha(sp.sbuf[hit.Start+len-1])) {
+        --len;
       }
     }
 
-    URL_Recorder->write_buf(sp.sbuf, hit.Start, feature_len); // record the URL
+    URL_Recorder->write_buf(sp.sbuf, hit.Start, len); // record the URL
 
     size_t domain_len = 0;
-    size_t domain_start = find_domain_in_url(sp.sbuf.buf + hit.Start, feature_len, &domain_len);  // find the start of domain?
-    if (domain_start > 0 && domain_len > 0) {
-      Domain_Recorder->write_buf(sp.sbuf, hit.Start + domain_start, domain_len);
+    size_t domain_off = find_domain_in_url(sp.sbuf.buf + hit.Start, len, &domain_len);  // find the start of domain?
+    if (domain_off > 0 && domain_len > 0) {
+      Domain_Recorder->write_buf(sp.sbuf, hit.Start + domain_off, domain_len);
     }
   }
 
