@@ -99,6 +99,7 @@ namespace email {
      * If we have 3 or more distinct values, then treat it good.
      * Otherwise its is some pattern we don't want.
      */
+// FIXME: This is likely to be embarassingly slow
     set<uint16_t> ctr;
     for (uint32_t i = 0; i < 6; ++i) {  // loop for each group of numbers
       u_char ch1 = sbuf[pos+i*3];
