@@ -103,11 +103,15 @@ namespace accts {
 
     void telephoneHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
 
+    void telephoneTrailingCtxHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+
     void validatedTelephoneHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
 
     void bitlockerHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
 
     void piiHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+
+    void dateHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
 
   private:
     Scanner(const Scanner& s):
@@ -254,7 +258,7 @@ namespace accts {
       REGEX8,
       DefaultEncodings,
       DefaultOptions,
-      &Scanner::telephoneHitHandler
+      &Scanner::telephoneTrailingCtxHitHandler
     );
 
     // FIXME: trailing context
@@ -271,6 +275,7 @@ namespace accts {
       &Scanner::validatedTelephoneHitHandler
     );
 
+    // FIXME: leading context
     /* Generalized number with prefix */
     const std::string REGEX10(PHONETEXT + "[0-9/ .+]{7,18}");
 
@@ -282,6 +287,7 @@ namespace accts {
       &Scanner::telephoneHitHandler
     );
 
+    // FIXME: leading context
     /* Generalized number with city code and prefix */
     const std::string REGEX11(PHONETEXT + "[0-9 +]+ ?\\([0-9]{2,4}\\) ?[\\-0-9]{4,8}");
 
@@ -323,7 +329,7 @@ namespace accts {
       REGEX14,
       DefaultEncodings,
       DefaultOptions,
-      &Scanner::piiHitHandler
+      &Scanner::dateHitHandler
     );
 
     // FIXME: trailing context
@@ -372,7 +378,7 @@ namespace accts {
 
   void Scanner::ccnTrack2HitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
     const size_t pos = hit.Start + 1;
-    const size_t len = hit.End - pos;
+    const size_t len = hit.End - (*(sp.sbuf.buf+hit.End-2) == '.' ? 2 : 1) - pos;
 // FIXME: is this cast ok?
     if (valid_ccn(reinterpret_cast<const char*>(sp.sbuf.buf)+pos, len)) {
       CCN_Recorder->write_buf(sp.sbuf, pos, len);
@@ -383,9 +389,17 @@ namespace accts {
     Telephone_Recorder->write_buf(sp.sbuf, hit.Start+1, hit.End-hit.Start-1);
   }
 
+  void Scanner::telephoneTrailingCtxHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+    Telephone_Recorder->write_buf(
+      sp.sbuf,
+      hit.Start+1,
+      hit.End - (*(sp.sbuf.buf+hit.End-2) == '.' ? 2 : 1) -(hit.Start+1)
+    );
+  }
+
   void Scanner::validatedTelephoneHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
     const size_t pos = hit.Start + 1;
-    const size_t len = hit.End - pos;
+    const size_t len = hit.End - (*(sp.sbuf.buf+hit.End-2) == '.' ? 2 : 1) - pos;
     if (valid_phone(sp.sbuf, pos, len)){
       Telephone_Recorder->write_buf(sp.sbuf, pos, len);
     }
@@ -397,7 +411,14 @@ namespace accts {
   }
 
   void Scanner::piiHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
-    PII_Recorder->write_buf(sp.sbuf, hit.Start, hit.End-hit.Start);
+    PII_Recorder->write_buf(
+      sp.sbuf, hit.Start,
+      hit.End - (*(sp.sbuf.buf+hit.End-2) == '.' ? 2 : 1) - hit.Start
+    );
+  }
+
+  void Scanner::dateHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+    PII_Recorder->write_buf(sp.sbuf, hit.Start, hit.End - hit.Start);
   }
 
   Scanner TheScanner;

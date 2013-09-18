@@ -380,7 +380,7 @@ namespace email {
       sp.sbuf.buf + hit.End, '/'
     );
 
-    int feature_len = hit.End - hit.Start;
+    int feature_len = (hit.End - 1) - hit.Start;
 
     if (slash_count == 2) {
       while (feature_len > 0 && !isalpha(sp.sbuf[hit.Start+feature_len-1])) {
