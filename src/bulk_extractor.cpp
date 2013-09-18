@@ -913,6 +913,7 @@ int main(int argc,char **argv)
     }
 
     cfg.validate();
+std::cerr << "optind is " << optind << "\n";
 
     argc -= optind;
     argv += optind;
