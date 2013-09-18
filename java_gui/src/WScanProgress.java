@@ -101,7 +101,10 @@ public class WScanProgress extends JDialog {
       process = null;
       try {
         // start bulk_extractor
-        process = Runtime.getRuntime().exec(commandString);
+        // NOTE: It would be nice to use commandString instead, but Runtime
+        // internally uses array and its string tokenizer doesn't manage
+        // quotes or spaces properly.
+        process = Runtime.getRuntime().exec(commandArray);
         statusL.setText("Starting bulk_extractor...");
 
       } catch (IOException e) {
@@ -359,8 +362,6 @@ public class WScanProgress extends JDialog {
     return container;
   }
 
-  // it is better for exec to use string[] but is imperative that the
-  // exact command text is reflected to the user, so we use string instead.
   // We build the string by concatenating tokens separated by space
   // and quoting any tokens containing space.
   private String getCommandString(String[] command) {
