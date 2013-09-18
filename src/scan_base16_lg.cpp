@@ -39,7 +39,7 @@ namespace base16 {
     feature_recorder* Recorder;
 
     void hitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
-      decode(sp.sbuf, hit.Start + 1, hit.End - hit.Start - 2, sp, rcb);
+      decode(sp.sbuf, hit.Start, hit.End - hit.Start, sp, rcb);
     }
 
   private:
