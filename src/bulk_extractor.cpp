@@ -998,6 +998,16 @@ int main(int argc,char **argv)
 
     BulkExtractor_Phase1::seen_page_ids_t seen_page_ids; // pages that do not need re-processing
     image_process *p = 0;
+
+    /* Get image or directory */
+    if (*argv == NULL) {
+        if (opt_recurse) {
+            fprintf(stderr,"filedir not provided\n");
+        } else {
+            fprintf(stderr,"imagefile not provided\n");
+        }
+        exit(1);
+    }
     std::string image_fname = *argv;
 
     if(opt_outdir.size()==0){
