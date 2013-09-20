@@ -998,6 +998,16 @@ int main(int argc,char **argv)
 
     BulkExtractor_Phase1::seen_page_ids_t seen_page_ids; // pages that do not need re-processing
     image_process *p = 0;
+
+    /* Get image or directory */
+    if (*argv == NULL) {
+        if (opt_recurse) {
+            fprintf(stderr,"filedir not provided\n");
+        } else {
+            fprintf(stderr,"imagefile not provided\n");
+        }
+        exit(1);
+    }
     std::string image_fname = *argv;
 
     if(opt_outdir.size()==0){
@@ -1119,7 +1129,8 @@ int main(int argc,char **argv)
         printf("Elapsed time: %g sec.\n",timer.elapsed_seconds());
         printf("Total MB processed: %d\n",int(phase1.total_bytes / 100000));
         
-        printf("Overall performance: %g MBytes/sec\n",mb_per_sec);
+        printf("Overall performance: %g MBytes/sec (%g MBytes/sec/thread)\n",
+               mb_per_sec,mb_per_sec/cfg.num_threads);
         if (fs.has_name("email")) {
             feature_recorder *fr = fs.get_name("email");
             if(fr){

@@ -7,9 +7,12 @@ AM_CPPFLAGS = -I${top_srcdir}/src/be13_api
 # http://stackoverflow.com/questions/11438613/conditional-subdir-objects
 AUTOMAKE_OPTIONS = subdir-objects
 
+# bring in defs from two included projects
 include dfxml/src/Makefile.defs
 include be13_api/Makefile.defs
+include rar/Makefile.defs
 
+# This was for building a test program
 jpegdump: scan_exif.cpp be13_api/sbuf.o be13_api/unicode_escape.o 
 	g++ -o jpegdump $(CPPFLAGS) $(CXXFLAGS) $(AM_CPPFLAGS) -I.. -DDUMPTEST scan_exif.cpp be13_api/sbuf.o be13_api/unicode_escape.o
 
@@ -31,21 +34,6 @@ flex_scanners = \
 	scan_base16.flex \
 	scan_email.flex \
 	scan_gps.flex 
-
-RAR_SUPPORT = \
-        rar/arccmt.cpp rar/archive.cpp rar/archive.hpp rar/arcread.cpp rar/array.hpp rar/cmddata.cpp \
-        rar/cmddata.hpp rar/coder.cpp rar/coder.hpp rar/compress.hpp rar/crc.cpp rar/crc.hpp rar/encname.cpp \
-        rar/encname.hpp rar/errhnd.cpp rar/errhnd.hpp rar/extinfo.cpp rar/extinfo.hpp rar/extract.cpp \
-        rar/extract.hpp rar/file.cpp rar/filefn.cpp rar/filefn.hpp rar/file.hpp rar/filestr.cpp rar/filestr.hpp \
-        rar/getbits.cpp rar/getbits.hpp rar/global.cpp rar/global.hpp rar/headers.hpp rar/loclang.hpp rar/match.cpp \
-        rar/match.hpp rar/model.cpp rar/model.hpp rar/suballoc.cpp rar/suballoc.hpp rar/options.cpp rar/options.hpp \
-        rar/os.hpp rar/pathfn.cpp rar/pathfn.hpp rar/rar.cpp rar/rardefs.hpp rar/rar.hpp rar/rarlang.hpp rar/raros.hpp \
-        rar/rarpch.cpp rar/rartypes.hpp rar/rarvmtbl.cpp rar/rawread.cpp rar/rawread.hpp rar/rdwrfn.cpp rar/rdwrfn.hpp \
-        rar/resource.cpp rar/resource.hpp rar/rs.cpp rar/rs.hpp rar/savepos.cpp rar/savepos.hpp rar/smallfn.cpp \
-        rar/smallfn.hpp rar/strfn.cpp rar/strfn.hpp rar/strlist.cpp rar/strlist.hpp \
-        rar/system.cpp rar/system.hpp rar/timefn.cpp rar/timefn.hpp rar/unicode.cpp \
-        rar/unicode.hpp rar/unpack.cpp rar/unpack.hpp rar/unpack15.hpp rar/unpack20.hpp \
-        rar/version.hpp
 
 bulk_scanners = \
 	scan_aes.cpp \

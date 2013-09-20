@@ -19,7 +19,7 @@
 
 /**
  * \file
- * Generates MD5 hash values from chunk_size data taken along sector
+ * Generates MD5 hash values from hash_block_size data taken along sector
  * boundaries and scans for matches against a hash database.
  *
  * Note that the hash database may be accessed locally through the
@@ -38,7 +38,7 @@
 #include <sys/types.h>	// for getpid
 
 // static values that can be set from config
-static size_t chunk_size = 4096;
+static size_t hash_block_size = 4096;
 static size_t sector_size = 512;
 static hashdb::query_type_t query_type = hashdb::QUERY_NOT_SELECTED;
 static std::string query_type_string = query_type_to_string(query_type);
@@ -93,8 +93,8 @@ void scan_hashid(const class scanner_params &sp,
                              << "      when the query type is set to \"query_socket\".";
             sp.info->get_config("socket", &client_socket_endpoint, help_socket.str());
 
-            // import chunk_size
-            sp.info->get_config("chunk_size", &chunk_size, "Chunk size, in bytes, used to generate hashes");
+            // import hash_block_size
+            sp.info->get_config("hash_block_size", &hash_block_size, "Hash block size, in bytes, used to generate hashes");
 
             // import sector_size
             std::stringstream help_sector_size;
@@ -124,9 +124,9 @@ void scan_hashid(const class scanner_params &sp,
                 exit(1);
             }
 
-            // validate chunk_size
-            if (chunk_size == 0) {
-                std::cerr << "Error.  Value for parameter 'chunk_size' is invalid.\n"
+            // validate hash_block_size
+            if (hash_block_size == 0) {
+                std::cerr << "Error.  Value for parameter 'hash_block_size' is invalid.\n"
                          << "Cannot continue.\n";
                 exit(1);
             }
@@ -138,26 +138,26 @@ void scan_hashid(const class scanner_params &sp,
                 exit(1);
             }
 
-            // also, for valid operation, sectors must align on chunk boundaries
-            if (chunk_size % sector_size != 0) {
-                std::cerr << "Error: invalid chunk size=" << chunk_size
+            // also, for valid operation, sectors must align on hash block boundaries
+            if (hash_block_size % sector_size != 0) {
+                std::cerr << "Error: invalid hash block size=" << hash_block_size
                           << " or sector size=" << sector_size << ".\n"
-                          << "Sectors must align on chunk boundaries.\n"
-                          << "Specifically, chunk_size \% sector_size must be zero.\n"
+                          << "Sectors must align on hash block boundaries.\n"
+                          << "Specifically, hash_block_size \% sector_size must be zero.\n"
                           << "Cannot continue.\n";
                 exit(1);
             }
 
-            // make sure the query service expects the same chunk size
+            // make sure the query service expects the same hash block size
 
-            // TBD: call get_hashdb_info to get query service chunk size
+            // TBD: call get_hashdb_info to get query service hash block size
 
-            // it is bad if the expected chunk size is wrong
+            // it is bad if the expected hash block size is wrong
 /* TBD
-            if (success && response->chunk_size != chunk_size) {
+            if (success && response->hash_block_size != hash_block_size) {
                 success = false;
-                std::cerr << "Error: The scanner is hashing using a chunk size of " << chunk_size << "\n"
-                          << "but the hashdb contains hashes for data of chunk size " << response->chunk_size << ".\n"
+                std::cerr << "Error: The scanner is hashing using a hash block size of " << hash_block_size << "\n"
+                          << "but the hashdb contains hashes for data of hash block size " << response->hash_block_size << ".\n"
                           << "Cannot continue.\n";
             }
 */
@@ -211,12 +211,13 @@ void scan_hashid(const class scanner_params &sp,
             hashdb::hashes_response_md5_t* response =
                                  new hashdb::hashes_response_md5_t;
 
-            // populate request with chunk hashes calculated from sbuf
+            // populate request with hashes calculated from hash blocks aligned on
+            // sector boundaries from sbuf, which is the transaction block
             // use i as query id so that later it can be used as the feature
             // offset
-            for (size_t i=0; i + chunk_size <= sbuf.pagesize; i += chunk_size) {
-                // calculate the hash
-                md5_t md5 = md5_generator::hash_buf(sbuf.buf + i, chunk_size);
+            for (size_t i=0; i + hash_block_size <= sbuf.pagesize; i += sector_size) {
+                // calculate the hash for this sector-aligned hash block
+                md5_t md5 = md5_generator::hash_buf(sbuf.buf + i, hash_block_size);
 
                 // convert md5 to uint8_t[]
                 // note: could optimize and typecast instead.

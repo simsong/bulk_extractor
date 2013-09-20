@@ -1,12 +1,21 @@
-The bulk_extractor plugin developer's manual.
+This directory contains:
 
-1. PLUGINS
+1 - plugin_test.cpp --- a stand-alone tester for bulk_extractor plugins.
+
+2 - scan_demo.cpp --- a demonstration plugin
+
+3 - scan_flexdemo.flex --- a demonstration plugin written in GNU Flex
+
+
+This directory should not be built as part of the standard
+bulk_extractor release.
+
 
 bulk_extractor scanner plugins are implemented as shared libraries
-that begin with the name "scan_". For example, the demo plug-in that counts
-the number of blank sectors and prints a report of the percentage of
-the disk that is blank is called scan_blank.so on Linux/Mac and
-scan_blank.DLL on Windows.
+that begin with the name "scan_". For example, the demo plug-in that
+counts the number of blank sectors and prints a report of the
+percentage of the disk that is blank is called scan_blank.so on
+Linux/Mac and scan_blank.DLL on Windows.
 
 When bulk_extractor starts up it examines the plugins directory for
 all of the shared libraries whose name begins "scan_". Each one is
@@ -34,8 +43,9 @@ interface. It is the only file that needs to be included for
 plugins. By design this file contains the minimum necessary for a
 functional plug-in. This approach minimizes possible interactions
 between the bulk_extractor system and the plugin system.
-================
 
-For implementing the Windows plugins, see:
+For complete information, please refer to The bulk_extractor plugin
+developer's manual, which you can download from:
 
-http://en.wikipedia.org/wiki/Dynamic_loading#Windows
+       http://digitalcorpora.org/downloads/bulk_extractor/BEProgrammersManual.pdf
+

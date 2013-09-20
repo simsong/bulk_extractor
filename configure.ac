@@ -1,4 +1,4 @@
-                                               -*- Autoconf -*-
+#                                 -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 # Order is largely irrevellant, although it must start with AC_INIT and end with AC_OUTPUT
 # See http://autotoolset.sourceforge.net/tutorial.html
@@ -6,7 +6,7 @@
 
 AC_PREREQ(2.57)
 
-AC_INIT(BULK_EXTRACTOR, 1.4.0, bugs@digitalcorpora.org)
+AC_INIT(BULK_EXTRACTOR, 1.4.1-dev, bugs@digitalcorpora.org)
 AC_CONFIG_MACRO_DIR(m4)
 
 # 
@@ -24,12 +24,12 @@ AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile doc/user_manual/Makefile \
 AC_CONFIG_HEADER([config.h])
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
-AC_PROG_RANLIB
 AC_PREFIX_PROGRAM
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_INSTALL
 AC_PROG_LEX
+LT_INIT([disable-shared])
 
 m4_include([src/dfxml/src/dfxml_configure.m4])
 m4_include([src/be13_api/be13_configure.m4])
@@ -138,8 +138,8 @@ case $host in
      AC_DEFINE([__LINUX__],1,[Linux operating system functions])
      ;;
 
-  *-*-mingw32*)   
-     LIBS="-lpsapi -lws2_32 -lgdi32 $LIBS"  
+  *mingw*)   
+     LIBS="$LIBS -lpsapi -lws2_32 -lgdi32"  
      CPPFLAGS="-DUNICODE -D_UNICODE -D__MSVCRT_VERSION__=0x0601 -DWINVER=0x0500 -D_WIN32_WINNT=0x0500 -g $CPPFLAGS"
      CPPFLAGS="$CPPFLAGS --static "
      CFLAGS="$CFLAGS --static -static-libgcc -static-libstdc++"

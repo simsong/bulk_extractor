@@ -85,7 +85,7 @@ Set up mingw and the cross-compilation environment:
   $ sudo yum -y install mingw64-gcc-c++ mingw64-zlib-static mingw64-pthreads flex 
   $ sudo yum -y install autoconf automake  # not strictly needed, but necessary to build from SVN/GIT
   $ sudo yum -y install zlib-devel zlib-static
-  * Run script CONFIGURE_F17.sh found in directory src_win/.
+  * Run script CONFIGURE_F18.bash found in directory src_win/.
   * Run script CONFIGURE_LIBRARIES.sh found in directory src_win/ to install libewf and TRE.
   $ make win32
   $ make win64
@@ -146,7 +146,20 @@ On Fedora, this command should add the appropriate packages:
   $ sudo yum update
   $ sudo yum groupinstall development-tools
   $ sudo yum install flex
+  $ sudo yum install zlib-devel
 
+Note: the following specific packages may be loaded instead of
+installing development-tools:
+  git
+  gcc
+  gcc-c++
+  autoconf
+  automake
+  libtool
+  openssl-devel
+
+If the Bulk Extractor Viewer is required, also install a Java JDK Version 6
+or newer.
 
 * Installing Dependencies On Debian and Ubuntu:
 
