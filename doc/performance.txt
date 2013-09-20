@@ -57,12 +57,14 @@ Windows 7       43.5 MBytes/sec; 5.43 MBytes/s/c (CPU Bound)  2013-09-10 [A]
 Windows 7       48.4 MBytes/sec; 6.05 MBytes/s/c (CPU Bound)  2013-09-13 [B]
 MacOS gcc 4.2.1 43.7 MBytes/sec; 5.46 MBytes/s/c (CPU Bound)  2013-09-10 [A]
 MacOS clang 4.0 46.5 MBytes/sec; 5.81 MBytes/s/c (CPU Bound)  2013-09-10 [A]
-
+MacOS clang 4.0 48.0 MBytes/sec; 6.01 MBytes/s/c (CPU Bound)  2013-09-13 [B]
+MacOS gcc 4.2.1 51.2 MBytes/sec; 6.40 MBytes/s/c (CPU Bound)  2013-09-14 [B]
+MacOS gcc 48    53.1 MBytes/sec; 6.64 MBytes/s/c (CPU Bound)  2013-09-14 [B]
 
 Testing hardware and image:
 
-[A] Macbook Pro 'DF8Y 2.0Ghz i7 16GiB RAM SSD (Mucha); domexusers
-[B] Macbook Pro 'DV7P 2.4Ghz i7  8GiB RAM  7200RPM HD        ; domexusers
+[A] Macbook Pro 'DF8Y 2.0Ghz i7 16GiB RAM SSD (Mucha);          domexusers
+[B] Macbook Pro 'DV7P 2.4Ghz i7  8GiB RAM 7200RPM HD (NPS 15"); domexusers
 
 
 Notes: 

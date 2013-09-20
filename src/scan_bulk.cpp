@@ -2,8 +2,8 @@
 #include "be13_api/bulk_extractor_i.h"
 #include "dig.h"
 #include "be13_api/utils.h"
+#include "be13_api/atomic_histogram.h"
 #include <math.h>
-
 #include <algorithm>
 
 /**
@@ -38,6 +38,8 @@ static const std::string HUFFMAN("huffman_compressed");
 
 static int debug=0;
 
+atomicmap mymap;
+
 /* Substitution table */
 static struct replace_t {
     const char *from;
@@ -54,7 +56,7 @@ static struct feature_indicators_t {
     const char *feature_file_name;
     const char *feature_content;
     const char *dfrws_type;
-}  feature_indicators[] = {
+} feature_indicators[] = {
     {"aes_keys",0,"aeskey"},
     {"elf","","elf_executable"},
     {"exif","<exif>","jpg"},
@@ -452,6 +454,7 @@ static inline void bulk_ngram_entropy(const sbuf_t &sbuf,feature_recorder *bulk,
 	}
 	bulk_tags->write_tag(sbuf,ss.str());
     } 
+
     // don't bother recording 'low entropy' unless debuggin
     if(entropy<=opt_high_entropy && opt_low_entropy) {
 	ss << "low entropy ( S=" << entropy << ")";
@@ -474,12 +477,9 @@ static inline void bulk_bitlocker(const sbuf_t &sbuf,feature_recorder *bulk,feat
     }
 }
 
-
 #ifndef _TEXT 
 #define _TEXT(x) x
 #endif
-
-static bool dfrws_challenge = false;
 
 extern "C"
 void scan_bulk(const class scanner_params &sp,const recursion_control_block &rcb)
@@ -499,8 +499,6 @@ void scan_bulk(const class scanner_params &sp,const recursion_control_block &rcb
         debug = sp.info->config->debug;
 
 	histogram::precalc_entropy_array(opt_bulk_block_size);
-
-        sp.info->get_config("DFRWS2012",&dfrws_challenge,"True if running DFRWS2012 challenge code");
         return; 
     }
     // classify a buffer
