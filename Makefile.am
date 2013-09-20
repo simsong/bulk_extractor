@@ -91,3 +91,8 @@ pull:
 	(cd src/dfxml;git pull)
 	(cd src/be13_api;git pull)
 
+.PHONY: publish
+publish:
+	make dist
+	scp $(DIST_ARCHIVES) ncr.nps.edu:/var/www/digitalcorpora/downloads/bulk_extractor
+
