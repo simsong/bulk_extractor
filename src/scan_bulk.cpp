@@ -36,42 +36,6 @@ static const std::string HUFFMAN("huffman_compressed");
 
 static int debug=0;
 
-<<<<<<< HEAD
-atomicmap mymap;
-
-/* Substitution table */
-static struct replace_t {
-    const char *from;
-    const char *to;
-} dfrws2012_replacements[] =  {
-    {"constant(0x00)","null"},
-    {"huffman_compressed","zlib"},
-    {"gzip","zlib"},
-    {0,0}
-};
-
-/* Feature indicator table */
-static struct feature_indicators_t {
-    const char *feature_file_name;
-    const char *feature_content;
-    const char *dfrws_type;
-} feature_indicators[] = {
-    {"aes_keys",0,"aeskey"},
-    {"elf","","elf_executable"},
-    {"exif","<exif>","jpg"},
-    {"json",0,"json"},
-    {"kml",0,"xml-kml"},
-    {"url",0,"html"},
-    {"vcard",0,"txt-vcard"},
-    {"windirs","fileobject src='mft'","fs-ntfs"},
-    {"windirs","fileobject src='fat'","fs-fat"},
-    {"winpe",0,"ms-win-prefetch"},
-    {0,0,0},
-};
-
-=======
->>>>>>> 4134147b5a1a24c4e05d6e02e6d25908f698f506
-
 /* Voting on the contents of each sector */
 class sector_typetag {
 public:
@@ -342,12 +306,6 @@ bool sector_classifier::check_bitlocker()
     return false;
 }
 
-<<<<<<< HEAD
-#ifndef _TEXT 
-#define _TEXT(x) x
-#endif
-=======
->>>>>>> 4134147b5a1a24c4e05d6e02e6d25908f698f506
 
 extern "C"
 void scan_bulk(const class scanner_params &sp,const recursion_control_block &rcb)
