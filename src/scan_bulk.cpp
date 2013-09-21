@@ -36,6 +36,7 @@ static const std::string HUFFMAN("huffman_compressed");
 
 static int debug=0;
 
+#if 0
 /* Voting on the contents of each sector */
 class sector_typetag {
 public:
@@ -69,6 +70,8 @@ std::ostream & operator<< (std::ostream &os, const sector_typetag &ss) {
 };
 typedef vector<sector_typetag> sector_typetags_vector_t; //
 sector_typetags_vector_t sector_typetags;		      // what gets put where
+#endif
+
 
 static size_t opt_bulk_block_size = 512;	// 
 
@@ -327,6 +330,11 @@ void scan_bulk(const class scanner_params &sp,const recursion_control_block &rcb
 	histogram::precalc_entropy_array(opt_bulk_block_size);
         return; 
     }
+
+    if(sp.phase==scanner_params::PHASE_INIT){
+        sp.fs.get_name("bulk_tags")->set_in_memory_histogram();
+    }
+
     // classify a buffer
     if(sp.phase==scanner_params::PHASE_SCAN){
 
