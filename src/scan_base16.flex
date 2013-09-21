@@ -20,7 +20,6 @@ unsigned int opt_min_hex_buf = 64;           /* Don't re-analyze hex bufs smalle
 #include "config.h"
 #include "be13_api/bulk_extractor_i.h"
 #include "sbuf_flex_scanner.h"
-#include "histogram.h"
 
 class base16_scanner : public sbuf_scanner {
 public:
@@ -45,7 +44,6 @@ void base16_scanner::decode(const sbuf_t &osbuf,size_t pos,size_t len)
 {
     sbuf_t sbuf(osbuf,pos,len);       // the substring we are working with
 
-    CharClass cct;
     managed_malloc<uint8_t>b(sbuf.pagesize/2);
     if(b.buf==0) return;
 
@@ -68,10 +66,6 @@ void base16_scanner::decode(const sbuf_t &osbuf,size_t pos,size_t len)
 	assert(lsb>=0 && lsb<16);
 	b.buf[p++] = (msb<<4) | lsb;
 	i+=2;
-    }
-
-    if(cct.range_0_9==0 || cct.range_A_Fi==0){
-        return;   // we need 0-9 and A-F
     }
 
     /* Alert on byte sequences of 48, 128 or 256 bits*/
@@ -107,7 +101,7 @@ UNICODE		([[:print:][:space:]]+)
      * {6,65536}  means 6-65536 characters
      */
     base16_scanner &s = *yybase16_get_extra(yyscanner);
-    s.decode(s.sp.sbuf,s.pos+1,yyleng);
+    s.decode(s.sp.sbuf, s.pos, yyleng);
     s.pos += yyleng;
 }
  
