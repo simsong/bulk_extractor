@@ -2,7 +2,7 @@
 #include "be13_api/bulk_extractor_i.h"
 #include "dig.h"
 #include "be13_api/utils.h"
-#include "be13_api/atomic_histogram.h"
+//#include "be13_api/atomic_histogram.h"
 #include <math.h>
 #include <algorithm>
 
