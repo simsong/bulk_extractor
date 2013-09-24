@@ -305,7 +305,7 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
     email_scanner &s = * yyemail_get_extra(yyscanner);	      
     if(validate_email(yytext)){
         s.email_recorder->write_buf(SBUF,s.pos,yyleng);
-        size_t domain_start = find_domain_in_email(SBUF.buf+s.pos,yyleng);
+        size_t domain_start = find_domain_in_email(SBUF.buf+s.pos,yyleng) + 1;
         if(domain_start>0){
             s.domain_recorder->write_buf(SBUF,s.pos+domain_start,yyleng-domain_start);
         }
