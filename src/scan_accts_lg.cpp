@@ -113,6 +113,8 @@ namespace accts {
 
     void validatedTelephoneHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
 
+    void validatedTelephoneUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+
     void bitlockerHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
 
     void bitlockerUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
@@ -300,10 +302,19 @@ namespace accts {
     new Handler(
       *this,
       REGEX7,
-//      DefaultEncodings,
       OnlyUTF8Encoding,
       DefaultOptions,
       &Scanner::validatedTelephoneHitHandler
+    );
+
+    const string REGEX7_UTF16LE("([^\\z30-\\z39\\z41-\\z5A\\z61-\\z7A]\\z00|[^\\z00])([0-9]{3}" + TDEL + "){2}[0-9]{4}" + END);
+
+    new Handler(
+      *this,
+      REGEX7,
+      OnlyUTF16LEEncoding,
+      DefaultOptions,
+      &Scanner::validatedTelephoneUTF16LEHitHandler
     );
 
     // FIXME: trailing context
@@ -337,8 +348,17 @@ namespace accts {
     new Handler(
       *this,
       REGEX9,
-//      DefaultEncodings,
       OnlyUTF8Encoding,
+      DefaultOptions,
+      &Scanner::validatedTelephoneHitHandler
+    );
+
+    const string REGEX9_UTF16LE("([^\\z30-\\z39\\z41-\\z5A\\z61-\\z7A]\\z00|[^\\z00])\\+[0-9]{1,3}(" + TDEL + "[0-9]{2,3}){2,6}[0-9]{2,4}" + END);
+
+    new Handler(
+      *this,
+      REGEX9,
+      OnlyUTF16LEEncoding,
       DefaultOptions,
       &Scanner::validatedTelephoneHitHandler
     );
@@ -551,6 +571,18 @@ namespace accts {
     if (valid_phone(sp.sbuf, pos, len)){
       Telephone_Recorder->write_buf(sp.sbuf, pos, len);
     }
+  }
+
+  void Scanner::validatedTelephoneUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+    const size_t pos = hit.Start + 1;
+    const size_t len = hit.End - (*(sp.sbuf.buf+hit.End-2) == '.' ? 2 : 1) - pos;
+// FIXME: valid_phone wants an sbuf, argh
+/*
+    const string ascii(low_utf16le_to_ascii(sp.sbuf.buf+pos, len));
+    if (valid_phone(ascii.c_str(), pos, len)){
+      Telephone_Recorder->write_buf(sp.sbuf, pos, len);
+    }
+*/
   }
 
   void Scanner::bitlockerHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
