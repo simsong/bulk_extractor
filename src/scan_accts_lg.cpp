@@ -53,16 +53,6 @@ namespace accts {
   //
 
 /*
-  const size_t min_phone_digits = 6;
-
-  bool has_min_digits(const char *buf) {
-    unsigned int digit_count = 0;
-    for (const char *cc = buf; *cc; ++cc) {
-      if (isdigit(*cc)) digit_count += 1;
-    }
-    return digit_count >= min_phone_digits;
-  }
-
   string utf16to8(const wstring &s) {
     string utf8_line;
     try {
@@ -332,6 +322,7 @@ namespace accts {
       &Scanner::dateHitHandler
     );
 
+    // FIXME: leading context
     // FIXME: trailing context
     /* Possible BitLocker Recovery Key. */
     const std::string BITLOCKER("[^\\z30-\\z39]([0-9]{6}-){7}[0-9]{6}[^\\z30-\\z39]");
@@ -370,7 +361,7 @@ namespace accts {
   void Scanner::ccnHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
     const size_t pos = hit.Start + 1;
     const size_t len = hit.End - pos;
-// FIXME: is this cast ok?
+
     if (valid_ccn(reinterpret_cast<const char*>(sp.sbuf.buf)+pos, len)) {
       CCN_Recorder->write_buf(sp.sbuf, pos, len);
     }
@@ -379,7 +370,6 @@ namespace accts {
   void Scanner::ccnTrack2HitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
     const size_t pos = hit.Start + 1;
     const size_t len = hit.End - (*(sp.sbuf.buf+hit.End-2) == '.' ? 2 : 1) - pos;
-// FIXME: is this cast ok?
     if (valid_ccn(reinterpret_cast<const char*>(sp.sbuf.buf)+pos, len)) {
       CCN_Recorder->write_buf(sp.sbuf, pos, len);
     }
@@ -393,7 +383,7 @@ namespace accts {
     Telephone_Recorder->write_buf(
       sp.sbuf,
       hit.Start+1,
-      hit.End - (*(sp.sbuf.buf+hit.End-2) == '.' ? 2 : 1) -(hit.Start+1)
+      hit.End - (*(sp.sbuf.buf+hit.End-2) == '.' ? 2 : 1) - (hit.Start+1)
     );
   }
 

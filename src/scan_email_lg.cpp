@@ -96,7 +96,7 @@ namespace email {
      * Don't accept a histogram that has 3 values. That could be
      * 11:11:11:11:22:33
      * Require 4, 5 or 6.
-     * If we have 3 or more distinct values, then treat it good.
+     * If we have 4 or more distinct values, then treat it good.
      * Otherwise its is some pattern we don't want.
      */
 // FIXME: This is likely to be embarassingly slow
