@@ -267,7 +267,6 @@ namespace accts {
     new Handler(
       *this,
       REGEX8,
-//      DefaultEncodings,
       OnlyUTF8Encoding,
       DefaultOptions,
       &Scanner::telephoneTrailingCtxHitHandler
@@ -278,7 +277,6 @@ namespace accts {
     new Handler(
       *this,
       REGEX8_UTF16LE,
-//      DefaultEncodings,
       OnlyUTF16LEEncoding,
       DefaultOptions,
       &Scanner::telephoneTrailingCtxUTF16LEHitHandler
