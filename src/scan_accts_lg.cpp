@@ -4,7 +4,6 @@
 #ifdef HAVE_LIBLIGHTGREP
 
 #include <string>
-#include <sstream>
 
 #include "be13_api/bulk_extractor_i.h"
 #include "histogram.h"
@@ -25,6 +24,23 @@ namespace accts {
   const vector<string> OnlyUTF16LEEncoding(1, "UTF-16LE");
 
   const LG_KeyOptions DefaultOptions = { 0, 1 }; // patterns, case-insensitive
+
+  //
+  // helper functions
+  //
+
+  string low_utf16le_to_ascii(const uint8_t* buf, size_t len) {
+    // When UTF-16LE is restricted to code points <= U+7F,
+    // removing every odd byte converts it to ASCII encoding.
+    const size_t olen = len/2;
+    string out('\0', olen);
+
+    for (size_t i = 0; i < olen; ++i) {
+      out[i] = buf[2*i];
+    }
+
+    return out;
+  }
 
   //
   // subpatterns
@@ -80,6 +96,8 @@ namespace accts {
     feature_recorder* PII_Recorder;
 
     void ccnHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+
+    void ccnUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
 
     void ccnTrack2HitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
 
@@ -148,10 +166,6 @@ namespace accts {
     // patterns
     //
 
-    // FIXME: kill this one?
-    /* #### #### #### #### #### #### is definately not a CCN. */
-    const string REGEX1("[^0-9a-z]" + DB + "{5}");
-
     // FIXME: leading context
     // FIXME: trailing context
     /* #### #### #### #### --- most credit card numbers*/
@@ -160,8 +174,17 @@ namespace accts {
     new Handler(
       *this,
       REGEX2,
-//      DefaultEncodings,
       OnlyUTF8Encoding,
+      DefaultOptions,
+      &Scanner::ccnHitHandler
+    );
+
+    const string REGEX2_UTF16LE("([^\\z30-\\z39\\z41-\\z5A\\z61-\\z7A]\\z00|[^\\z00])" + SDB + DB + DB + BLOCK + END);
+
+    new Handler(
+      *this,
+      REGEX2_UTF16LE,
+      OnlyUTF16LEEncoding,
       DefaultOptions,
       &Scanner::ccnHitHandler
     );
@@ -175,8 +198,17 @@ namespace accts {
     new Handler(
       *this,
       REGEX3,
-//      DefaultEncodings,
       OnlyUTF8Encoding,
+      DefaultOptions,
+      &Scanner::ccnHitHandler
+    );
+
+    const string REGEX3_UTF16LE("([^\\z30-\\z39\\z41-\\z5A\\z61-\\z7A\\z2E]\\z00|[^\\z00])3[0-9]{3}" + DELIM + "[0-9]{6}" + DELIM + "[0-9]{5}" + END);
+
+    new Handler(
+      *this,
+      REGEX3_UTF16LE,
+      OnlyUTF16LEEncoding,
       DefaultOptions,
       &Scanner::ccnHitHandler
     );
@@ -190,8 +222,17 @@ namespace accts {
     new Handler(
       *this,
       REGEX4,
-//      DefaultEncodings,
       OnlyUTF8Encoding,
+      DefaultOptions,
+      &Scanner::ccnHitHandler
+    );
+
+    const string REGEX4_UTF16LE("([^\\z30-\\z39\\z41-\\z5A\\z61-\\z7A\\z2E]\\z00|[^\\z00])3[0-9]{14}" + END);
+
+    new Handler(
+      *this,
+      REGEX4_UTF16LE,
+      OnlyUTF16LEEncoding,
       DefaultOptions,
       &Scanner::ccnHitHandler
     );
@@ -208,8 +249,17 @@ namespace accts {
     new Handler(
       *this,
       REGEX5,
-//      DefaultEncodings,
       OnlyUTF8Encoding,
+      DefaultOptions,
+      &Scanner::ccnHitHandler
+    );
+
+    const string REGEX5_UTF16LE("([^\\z30-\\z39\\z41-\\z5A\\z61-\\z7A\\z2E]\\z00|[^\\z00])[4-6][0-9]{15,18}" + END);
+
+    new Handler(
+      *this,
+      REGEX5_UTF16LE,
+      OnlyUTF16LEEncoding,
       DefaultOptions,
       &Scanner::ccnHitHandler
     );
@@ -223,23 +273,20 @@ namespace accts {
     new Handler(
       *this,
       REGEX6,
-//      DefaultEncodings,
       OnlyUTF8Encoding,
       DefaultOptions,
       &Scanner::ccnTrack2HitHandler
     );
 
-/*
-    const string REGEX6_UTF16LE("[^\\z30-\\z39\\z41-\\z5A\\z61-\\z7A]\\z00[4-6][0-9]{15,18}=" + SYEAR + SMONTH + "101[0-9]{13}");
+    const string REGEX6_UTF16LE("([^\\z30-\\z39\\z41-\\z5A\\z61-\\z7A]\\z00|[^\\z00])[4-6][0-9]{15,18}=" + SYEAR + SMONTH + "101[0-9]{13}");
 
     new Handler(
       *this,
-      REGEX6,
+      REGEX6_UTF16LE,
       OnlyUTF16LEEncoding,
       DefaultOptions,
       &Scanner::ccnTrack2UTF16LEHitHandler
     );
-*/
 
     // FIXME: trailing context
     // FIXME: leading context
@@ -443,22 +490,32 @@ namespace accts {
     }
   }
 
+  void Scanner::ccnUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+    const size_t pos = hit.Start + (*(sp.sbuf.buf+hit.Start+1) == '\0' ? 2 : 1);    const size_t len = hit.End - pos;
+
+    const string ascii(low_utf16le_to_ascii(sp.sbuf.buf+pos, len));
+    if (valid_ccn(ascii.c_str(), ascii.size())) {
+      CCN_Recorder->write_buf(sp.sbuf, pos, len);
+    }
+  }
+
   void Scanner::ccnTrack2HitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
     const size_t pos = hit.Start + 1;
-    const size_t len = hit.End - (*(sp.sbuf.buf+hit.End-2) == '.' ? 2 : 1) - pos;
+    const size_t len = hit.End - pos;
+
     if (valid_ccn(reinterpret_cast<const char*>(sp.sbuf.buf)+pos, len)) {
       CCN_Recorder->write_buf(sp.sbuf, pos, len);
     }
   }
 
   void Scanner::ccnTrack2UTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
-/*
-    const size_t pos = hit.Start + 2;
-    const size_t len = hit.End - (*(sp.sbuf.buf+hit.End-2) == '.' ? 2 : 1) - pos;
-    if (valid_ccn(reinterpret_cast<const char*>(sp.sbuf.buf)+pos, len)) {
+    const size_t pos = hit.Start + (*(sp.sbuf.buf+hit.Start+1) == '\0' ? 2 : 1);
+    const size_t len = hit.End - pos;
+
+    const string ascii(low_utf16le_to_ascii(sp.sbuf.buf+pos, len));
+    if (valid_ccn(ascii.c_str(), ascii.size())) {
       CCN_Recorder->write_buf(sp.sbuf, pos, len);
     }
-*/
   }
 
   void Scanner::telephoneHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
@@ -504,14 +561,7 @@ namespace accts {
     const size_t pos = hit.Start + (*(sp.sbuf.buf + hit.Start + 1) == '\0' ? 2 : 1);
     const size_t len = (hit.End - 1) - pos;
 
-    // When UTF-16LE is restricted to ASCII code points, as with this pattern,
-    // removing  every odd byte converts it to ASCII encoding.
-    ostringstream ss;
-    for (size_t i = 0; i < len; i += 2) {
-      ss << sp.sbuf.buf[pos + i];
-    }
-
-    Alert_Recorder->write(sp.sbuf.pos0 + pos, ss.str(), "Possible BitLocker Recovery Key (UTF-16).");
+    Alert_Recorder->write(sp.sbuf.pos0 + pos, low_utf16le_to_ascii(sp.sbuf.buf + pos, len), "Possible BitLocker Recovery Key (UTF-16).");
   }
 
   void Scanner::piiHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
