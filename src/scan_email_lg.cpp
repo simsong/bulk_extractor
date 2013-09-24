@@ -55,13 +55,6 @@ namespace email {
   // or std::strings on hit data, as hit data could contain internal null
   // bytes.
 
-  // Address some common false positives in email scanner
-  inline bool validate_email(const uint8_t* buf, size_t buflen) {
-    // not an email address if it contains '..'
-// FIXME: this line does not work for UTF-16LE
-    return search_n(buf, buf + buflen, 2, '.') == buf + buflen;
-  }
-
   /** return the offset of the domain in an email address.
    * returns buflen + 1 if the domain is not found.
    * the domain extends to the end of the email address
@@ -135,6 +128,8 @@ namespace email {
     void rfc822HitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
 
     void emailHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+
+    void emailUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
 
     void ipaddrHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
 
@@ -242,14 +237,23 @@ namespace email {
     );
 
     // FIXME: trailing context
-    const string EMAIL(ALNUM + "[a-zA-Z0-9._%\\-+]+" + ALNUM + "@" + ALNUM + "[a-zA-Z0-9._%\\-]+\\." + TLD + "[^\\z41-\\z5A\\z61-\\z7A]");
+//    const string EMAIL(ALNUM + "[a-zA-Z0-9._%\\-+]+" + ALNUM + "@" + ALNUM + "[a-zA-Z0-9._%\\-]+\\." + TLD + "[^\\z41-\\z5A\\z61-\\z7A]");
+    const string EMAIL(ALNUM + "(\\.?[a-zA-Z0-9_%\\-+])+\\.?" + ALNUM + "@" + ALNUM + "(\\.?[a-zA-Z0-9_%\\-])+\\." + TLD + "[^\\z41-\\z5A\\z61-\\z7A]");
 
     new Handler(
       *this,
       EMAIL,
-      DefaultEncodings,
+      OnlyUTF8Encoding,
       DefaultOptions,
       &Scanner::emailHitHandler
+    );
+
+    new Handler(
+      *this,
+      EMAIL,
+      OnlyUTF16LEEncoding,
+      DefaultOptions,
+      &Scanner::emailUTF16LEHitHandler
     );
 
     // FIXME: leading context
@@ -329,12 +333,21 @@ namespace email {
     const size_t len = (hit.End - 1) - hit.Start;
     const uint8_t* matchStart = sp.sbuf.buf + hit.Start;
 
-    if (validate_email(matchStart, len)) {
-      Email_Recorder->write_buf(sp.sbuf, hit.Start, len);
-      const size_t domain_off = find_domain_in_email(matchStart, len);
-      if (domain_off < len) {
-        Domain_Recorder->write_buf(sp.sbuf, hit.Start + domain_off, len - domain_off);
-      }
+    Email_Recorder->write_buf(sp.sbuf, hit.Start, len);
+    const size_t domain_off = find_domain_in_email(matchStart, len);
+    if (domain_off < len) {
+      Domain_Recorder->write_buf(sp.sbuf, hit.Start + domain_off, len - domain_off);
+    }
+  }
+
+  void Scanner::emailUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+    const size_t len = (hit.End - 1) - hit.Start;
+    const uint8_t* matchStart = sp.sbuf.buf + hit.Start;
+
+    Email_Recorder->write_buf(sp.sbuf, hit.Start, len);
+    const size_t domain_off = find_domain_in_email(matchStart, len) + 1;
+    if (domain_off < len) {
+      Domain_Recorder->write_buf(sp.sbuf, hit.Start + domain_off, len - domain_off);
     }
   }
 
