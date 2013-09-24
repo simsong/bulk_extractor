@@ -10,6 +10,7 @@
 #include "be13_api/bulk_extractor_i.h"
 #include "histogram.h"
 #include "pattern_scanner.h"
+#include "pattern_scanner_utils.h"
 #include "utils.h"
 
 using namespace std;
@@ -81,13 +82,12 @@ namespace email {
     return buflen;
   }
 
-// FIXME: does not work for UTF-16LE
-  bool valid_ether_addr(const sbuf_t& sbuf, size_t pos) {
-    if (sbuf.memcmp((const uint8_t *)"00:00:00:00:00:00", pos, 17) == 0) {
+  bool valid_ether_addr(const uint8_t* buf) {
+    if (memcmp((const uint8_t *)"00:00:00:00:00:00", buf, 17) == 0) {
       return false;
     }
 
-    if (sbuf.memcmp((const uint8_t *)"00:11:22:33:44:55", pos, 17) == 0) {
+    if (memcmp((const uint8_t *)"00:11:22:33:44:55", buf, 17) == 0) {
       return false;
     }
 
@@ -100,13 +100,10 @@ namespace email {
      * If we have 4 or more distinct values, then treat it good.
      * Otherwise its is some pattern we don't want.
      */
-// FIXME: This is likely to be embarassingly slow
     set<uint16_t> ctr;
-    for (uint32_t i = 0; i < 6; ++i) {  // loop for each group of numbers
-      u_char ch1 = sbuf[pos+i*3];
-      u_char ch2 = sbuf[pos+i*3+1];
-      uint16_t val = (ch1 << 8) + (ch2); // create a value of the two characters (it's not
-      ctr.insert(val);
+    for (uint32_t i = 0; i < 6; ++i) {  // loop over each group
+      // create a unique value of the two characters
+      ctr.insert((buf[i*3] << 8) + buf[i*3+1]);
     }
 
     return ctr.size() >= 4;
@@ -243,9 +240,6 @@ namespace email {
     );
 
     // FIXME: trailing context
-//    const string EMAIL(ALNUM + "([a-zA-Z0-9._%\\-+]*?" + ALNUM + ")?@(" + ALNUM + "([a-zA-Z0-9\\-]*?" + ALNUM + ")?\\.)+" + TLD + "([^a-zA-Z]|[\\z00-\\zFF][^\\z00])");
-//    const string EMAIL(ALNUM + "([a-zA-Z0-9._%\\-+]*?" + ALNUM + ")?@(" + ALNUM + "([a-zA-Z0-9\\-]*?" + ALNUM + ")?\\.)+" + TLD + "[^a-zA-Z]");
-//    const string EMAIL(ALNUM + "[a-zA-Z0-9._%\\-+]+" + ALNUM + "@" + ALNUM + "[a-zA-Z0-9._%\\-]+\\." + TLD + "[^a-zA-Z]");
     const string EMAIL(ALNUM + "[a-zA-Z0-9._%\\-+]+" + ALNUM + "@" + ALNUM + "[a-zA-Z0-9._%\\-]+\\." + TLD + "[^\\z41-\\z5A\\z61-\\z7A]");
 
     new Handler(
@@ -289,19 +283,25 @@ namespace email {
     new Handler(
       *this,
       MAC,
-//      DefaultEncodings,
       OnlyUTF8Encoding, 
       DefaultOptions,
       &Scanner::etherHitHandler
     );
 
-    // for reasons that aren't clear, there are a lot of net protocols that have
-    // an http://domain in them followed by numbers. So this counts the number of
-    // slashes and if it is only 2 the size is pruned until the last character
-    // is a letter
-    // FIXME: trailing context
-//    const string PROTO("(https?|afp|smb)://[a-zA-Z0-9_%/\\-+@:=&?#~.;]+([^a-zA-Z0-9_%/\\-+@:=&?#~.;]|[\\z00-\\zFF][^\\z00])");
-//    const string PROTO("(https?|afp|smb)://[a-zA-Z0-9_%/\\-+@:=&?#~.;]+[^a-zA-Z0-9_%/\\-+@:=&?#~.;]");
+    const string MAC_UTF16LE("([^\\z30-\\z39\\z3A\\z41-\\z5A\\z61-\\z7A]\\z00|[^\\z00])" + HEX + "{2}(:" + HEX + "{2}){5}[^\\z30-\\z39\\z3A\\z41-\\z5A\\z61-\\z7A]");
+
+    new Handler(
+      *this,
+      MAC,
+      OnlyUTF16LEEncoding,
+      DefaultOptions,
+      &Scanner::etherUTF16LEHitHandler
+    );
+
+    // for reasons that aren't clear, there are a lot of net protocols that
+    // have an http://domain in them followed by numbers. So this counts the
+    // number of slashes and if it is only 2 the size is pruned until the
+    // last character is a letter
     const string PROTO("(https?|afp|smb)://[a-zA-Z0-9_%/\\-+@:=&?#~.;]+");
 
     new Handler(
@@ -327,7 +327,6 @@ namespace email {
 
   void Scanner::emailHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
     const size_t len = (hit.End - 1) - hit.Start;
-
     const uint8_t* matchStart = sp.sbuf.buf + hit.Start;
 
     if (validate_email(matchStart, len)) {
@@ -339,92 +338,7 @@ namespace email {
     }
   }
 
-//  void Scanner::ipaddrHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
-//    uint8_t ctx[8] = { ' ' };
-//    
-//    const int c0 = max((int) hit.Start + 1 - 8, 0);
-//    memcpy(ctx + c0, sp.sbuf.buf + c0, hit.Start + 1);
-//
-// FIXME: this is horrid
-//    // Now have some rules for ignoring
-//    if (
-//      isalnum(ctx[7]) ||
-//      ctx[7] == '.' ||
-//      ctx[7] == '-' ||
-//      ctx[7] == '+' ||
-//      (ishexnumber(ctx[4]) && ishexnumber(ctx[5]) &&
-//       ishexnumber(ctx[6]) && ctx[7] == '}') ||
-//      (ctx.find("v.", 5)  != string::npos) ||
-//      (ctx.find("v ", 5)  != string::npos) ||
-//      (ctx.find("rv:", 5) != string::npos) || /* rv:1.9.2.8 as in Mozilla */
-//      (ctx.find(">=", 4)  != string::npos) || /* >= 1.8.0.10 */
-//      (ctx.find("<=", 4)  != string::npos) || /* <= 1.8.0.10 */
-//      (ctx.find("<<", 4)  != string::npos) || /* <= 1.8.0.10 */
-//      (ctx.find("ver", 4) != string::npos) ||
-//      (ctx.find("Ver", 4) != string::npos) ||
-//      (ctx.find("VER", 4) != string::npos) ||
-//      (ctx.find("rsion")  != string::npos) ||
-//      (ctx.find("ion=")   != string::npos) ||
-//      (ctx.find("PSW/")   != string::npos) || /* PWS/1.5.19.3 ... */
-//      (ctx.find("flash=") != string::npos) || /* flash= */
-//      (ctx.find("stone=") != string::npos) || /* Milestone= */
-//      (ctx.find("NSS", 4) != string::npos) ||
-//      (ctx.find("/2001,") != string::npos) || /* /2001,3.60.50.8 */
-//    (ctx.find("TI_SZ")  != string::npos) || /* %REG_MULTI_SZ%, */
-//      (sp.sbuf[hit.Start+1] == '0' && sp.sbuf[hit.Start+2] == '.')
-//    ) {
-//      // ignore
-//    }
-//    else {
-//      Domain_Recorder->write_buf(sp.sbuf, hit.Start+1, hit.End-hit.Start-2);
-//    }
-//  }
-
   void Scanner::ipaddrHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
-    // Get 8 characters of left context, right-justified
-/*
-    const int c0 = max((int) hit.Start + 1 - 8, 0);
-    const string context = string(" ", 8 - (hit.Start + 1 - c0)) +
-      sp.sbuf.substr(c0, hit.Start + 1);
-*/
-
-/*
-    cerr << '\'';
-    cerr.write(reinterpret_cast<const char*>(sp.sbuf.buf)+hit.Start+1, (hit.End-1)-(hit.Start+1));
-    cerr << "'\n";
-*/
-
-// FIXME: this is horrid
-    // Now have some rules for ignoring
-//    if (
-//      isalnum(context[7]) ||
-//      (context[7] == '.' || context[7] == '-' || context[7] == '+') ||
-//      (ishexnumber(context[4]) && ishexnumber(context[5]) && ishexnumber(context[6]) && context[7] == '}') ||
-//      (context.find("v.", 5)  != string::npos) ||
-//      (context.find("v ", 5)  != string::npos) ||
-//      (context.find("rv:", 5) != string::npos) || /* rv:1.9.2.8 as in Mozilla */
-//      (context.find(">=", 4)  != string::npos) || /* >= 1.8.0.10 */
-//      (context.find("<=", 4)  != string::npos) || /* <= 1.8.0.10 */
-//      (context.find("<<", 4)  != string::npos) || /* <= 1.8.0.10 */
-//      (context.find("ver", 4) != string::npos) ||
-//      (context.find("Ver", 4) != string::npos) ||
-//      (context.find("VER", 4) != string::npos) ||
-//      (context.find("rsion")  != string::npos) ||
-//      (context.find("ion=")   != string::npos) ||
-//      (context.find("PSW/")   != string::npos) ||  /* PWS/1.5.19.3 ... */
-//      (context.find("flash=") != string::npos) || /* flash= */
-//      (context.find("stone=") != string::npos) || /* Milestone= */
-//      (context.find("NSS", 4) != string::npos) ||
-//      (context.find("/2001,") != string::npos) || /* /2001,3.60.50.8 */
-//      (context.find("TI_SZ")  != string::npos) ||  /* %REG_MULTI_SZ%, */
-//      (sp.sbuf[hit.Start+1] == '0' && sp.sbuf[hit.Start+2] == '.')
-//    ) {
-//      // ignore
-//    }
-//    else {
-//      Domain_Recorder->write_buf(sp.sbuf, hit.Start+1, hit.End-hit.Start-2);
-//    }
-
     // Get 8 characters of left context, right-justified
     char context[] = "        ";
     const int c0 = max((int) hit.Start + 1 - 8, 0);
@@ -443,27 +357,27 @@ namespace email {
       return;
     }
 
-    struct C {
+    struct {
       size_t pos;
       const char* str;
     } checks[] = {
       { 5, "v."     },
       { 5, "v "     },
-      { 5, "rv:"    },
-      { 4, ">="     },
-      { 4, "<="     },
-      { 4, "<<"     },
+      { 5, "rv:"    },  // rv:1.9.2.8 as in Mozilla
+      { 4, ">="     },  // >= 1.8.0.10
+      { 4, "<="     },  // <= 1.8.0.10
+      { 4, "<<"     },  // << 1.8.0.10
       { 4, "ver"    },
       { 4, "Ver"    },
       { 4, "VER"    },
       { 0, "rsion"  },
       { 0, "ion="   },
-      { 0, "PSW/"   },
-      { 0, "flash=" },
-      { 0, "stone=" },
+      { 0, "PSW/"   },  // PWS/1.5.19.3 ...
+      { 0, "flash=" },  // flash=
+      { 0, "stone=" },  // Milestone=
       { 4, "NSS"    },
-      { 0, "/2001," },
-      { 0, "TI_SZ"  }
+      { 0, "/2001," },  // /2001,3.60.50.8
+      { 0, "TI_SZ"  }   // %REG_MULTI_SZ%,
     };
 
     for (size_t i = 0; i < sizeof(checks)/sizeof(checks[0]); ++i) {
@@ -476,18 +390,25 @@ namespace email {
   }
 
   void Scanner::ipaddrUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
-
+    // FIXME
   }
 
   void Scanner::etherHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
     const size_t pos = hit.Start + 1;
-    const size_t len = hit.End - pos;
-    if (valid_ether_addr(sp.sbuf, pos)){
+    const size_t len = (hit.End - 1) - pos;
+    if (valid_ether_addr(sp.sbuf.buf+pos)){
       Ether_Recorder->write_buf(sp.sbuf, pos, len);
     }
   }
 
-  void etherUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+  void Scanner::etherUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+    const size_t pos = hit.Start + (*(sp.sbuf.buf + 1) == '\0' ? 2 : 1);
+    const size_t len = (hit.End -1) - pos;
+
+    const string ascii(low_utf16le_to_ascii(sp.sbuf.buf+pos, len));
+    if (valid_ether_addr(reinterpret_cast<const uint8_t*>(ascii.c_str()))){
+      Ether_Recorder->write_buf(sp.sbuf, pos, len);
+    }
   }
 
   void Scanner::protoHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
@@ -500,7 +421,6 @@ namespace email {
       sp.sbuf.buf + hit.End, '/'
     );
 
-//    int len = (hit.End - 1) - hit.Start;
     size_t len = hit.End - hit.Start;
 
     if (slash_count == 2) {

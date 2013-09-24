@@ -81,6 +81,8 @@ bulk_extractor_SOURCES = \
 	image_process.h \
 	pattern_scanner.cpp \
 	pattern_scanner.h \
+	pattern_scanner_utils.cpp \
+	pattern_scanner_utils.h \
 	phase1.h \
 	phase1.cpp \
 	threadpool.cpp \
