@@ -263,17 +263,15 @@ namespace email {
       &Scanner::ipaddrHitHandler
     );
 
-/*
-    const string IP_UTF16LE("(.[^\\z00]|[^\\z30-\\z39\\z2E]\\z00)" + INUM + "(\\." + INUM + "){3}[^\\z30-\\z39\\z2B\\z2D\\z2E\\z41-\\z5A\\z5F\\z61-\\z7A]");
+    const string IP_UTF16LE("([^\\z30-\\z39\\z2E]\\z00|[^\\z00])" + INUM + "(\\." + INUM + "){3}[^\\z30-\\z39\\z2B\\z2D\\z2E\\z41-\\z5A\\z5F\\z61-\\z7A]");
 
     new Handler(
       *this,
-      IP,
-      { "UTF-16LE" },
+      IP_UTF16LE,
+      OnlyUTF16LEEncoding,
       DefaultOptions,
       &Scanner::ipaddrUTF16LEHitHandler
     );
-*/
 
     // FIXME: leading context
     // FIXME: trailing context
