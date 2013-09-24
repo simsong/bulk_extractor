@@ -527,4 +527,3 @@ void scan_email_lg(const class scanner_params &sp, const recursion_control_block
 }
 
 #endif // HAVE_LIBLIGHTGREP
-
