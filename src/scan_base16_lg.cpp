@@ -53,7 +53,7 @@ namespace base16 {
     void decode(const sbuf_t& osbuf, size_t pos, size_t len, const scanner_params& sp, const recursion_control_block& rcb);
   };
 
-  const uint32_t BASE16_LSN[256] = {
+  const uint16_t BASE16_LSN[256] = {
     256, 256, 256, 256, 256, 256, 256, 256,
     256, 256, 256, 256, 256, 256, 256, 256,
     256, 256, 256, 256, 256, 256, 256, 256,
@@ -88,7 +88,7 @@ namespace base16 {
     256, 256, 256, 256, 256, 256, 256, 256
   };
 
-  const uint32_t BASE16_MSN[256] = {
+  const uint16_t BASE16_MSN[256] = {
     256, 256, 256, 256, 256, 256, 256, 256,
     256, 256, 256, 256, 256, 256, 256, 256,
     256, 256, 256, 256, 256, 256, 256, 256,
@@ -162,7 +162,7 @@ namespace base16 {
 
   size_t base16_decode_skipping_whitespace(uint8_t* dst_start, const uint8_t* src, const uint8_t* src_end) {
     uint8_t* dst = dst_start;
-    uint32_t byte;
+    uint16_t byte;
     uint8_t msn, lsn;
 
     while (src < src_end) {
