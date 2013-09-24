@@ -170,12 +170,13 @@ using namespace std;
 /* bulk_extractor.cpp */
 
 #include <be13_api/beregex.h>
+#include "findopts.h"
 #include "word_and_context_list.h"
 
 /* The global lists for finding, alertting and stopping.
  * Is there a way to get these out of the global extern space?
  */
-extern regex_list find_list;      // what scan_find should find
+// extern regex_list find_list;      // what scan_find should find
 extern word_and_context_list alert_list; /* should be flagged */
 extern word_and_context_list stop_list;  /* should be ignored */
 
@@ -200,11 +201,7 @@ extern "C" scanner_t scan_base64;
 extern "C" scanner_t scan_vcard;
 extern "C" scanner_t scan_lift;
 extern "C" scanner_t scan_extx;
-/* Special support for find */
 extern "C" scanner_t scan_find;
-
-void add_find_pattern(const string &pat);
-void process_find_file(const char *findfile);
 
 #ifdef HAVE_EXIV2
 extern "C" scanner_t scan_exiv2;

@@ -13,6 +13,12 @@
 #include <iostream>
 #include <algorithm>
 #include <limits>
+#include <fstream>
+
+namespace {
+  const char* DefaultEncodingsCStrings[] = {"UTF-8", "UTF-16LE"};
+  const unsigned int NumDefaultEncodings = 2;
+}
 
 bool PatternScanner::handleParseError(const Handler& h, LG_Error* err) const {
   cerr << "Parse error on '" << h.RE << "' in " << Name
@@ -43,7 +49,7 @@ LightgrepController& LightgrepController::Get() {
   return controller;
 }
 
-void LightgrepController::addScanner(PatternScanner& scanner) {
+bool LightgrepController::addScanner(PatternScanner& scanner) {
   LG_Error* lgErr = 0;
 
   unsigned int patBegin = numeric_limits<unsigned int>::max(),
@@ -69,13 +75,76 @@ void LightgrepController::addScanner(PatternScanner& scanner) {
         lgErr = 0;
       }
       else {
-        return;
+        return false;
       }      
     }
   }
   patEnd = lg_pattern_map_size(PatternInfo);
   scanner.patternRange() = make_pair(patBegin, patEnd);
   Scanners.push_back(&scanner);
+  return true;
+}
+
+bool LightgrepController::addUserPatterns(PatternScanner& scanner, CallbackFnType* callbackPtr, const FindOptsStruct& user) {
+  unsigned int patBegin = lg_pattern_map_size(PatternInfo),
+               patEnd = 0;
+
+  LG_KeyOptions opts;
+  opts.FixedString = 0;
+  opts.CaseInsensitive = 0;
+
+  LG_Error *err = 0;
+
+  for (vector<string>::const_iterator itr(user.Files.begin()); itr != user.Files.end(); ++itr) {
+    ifstream file(itr->c_str(), ios::in);
+    if (!file.is_open()) {
+      cerr << "Could not open pattern file '" << *itr << "'." << endl;
+      return false;
+    }
+    string contents = string(istreambuf_iterator<char>(file), istreambuf_iterator<char>());
+
+    const char* contentsCStr = contents.c_str();
+    if (lg_add_pattern_list(Fsm, PatternInfo, contentsCStr, DefaultEncodingsCStrings, 2, &opts, &err) < 0) {
+
+      vector<string> lines;
+      istringstream input(contents);
+      string line;
+      while (input) {
+        getline(input, line);
+        lines.push_back(line);
+      }
+      LG_Error* cur(err);
+      while (cur) {
+        cerr << "Error in " << *itr << ", line " << cur->Index+1 << ", pattern '" << lines[cur->Index]
+          << "': " << cur->Message << endl;
+        cur = cur->Next;
+      }
+      lg_free_error(err);
+      return false;
+    }
+  }
+  for (vector<string>::const_iterator itr(user.Patterns.begin()); itr != user.Patterns.end(); ++itr) {
+    bool good = false;
+    if (lg_parse_pattern(ParsedPattern, itr->c_str(), &opts, &err)) {
+      for (unsigned int i = 0; i < NumDefaultEncodings; ++i) {
+        if (lg_add_pattern(Fsm, PatternInfo, ParsedPattern, DefaultEncodingsCStrings[i], &err) >= 0) {
+          good = true;
+        }
+      }
+    }
+    if (!good) {
+      cerr << "Error on '" << *itr << "': " << err->Message << endl;
+      lg_free_error(err);
+      return false;
+    }
+  }
+  patEnd = lg_pattern_map_size(PatternInfo);
+  for (unsigned int i = patBegin; i < patEnd; ++i) {
+    lg_pattern_info(PatternInfo, i)->UserData = const_cast<void*>(static_cast<const void*>(callbackPtr));
+  }
+  scanner.patternRange() = make_pair(patBegin, patEnd);
+  Scanners.push_back(&scanner);
+  return true;
 }
 
 void LightgrepController::regcomp() {
@@ -83,6 +152,9 @@ void LightgrepController::regcomp() {
   progOpts.Determinize = 1;
   Prog = lg_create_program(Fsm, &progOpts);
   lg_destroy_fsm(Fsm);
+
+  cerr << "Lightgrep will search for " << lg_pattern_map_size(PatternInfo) 
+    << " patterns, search logic size is " << lg_program_size(Prog) << " bytes" << std::endl;
 }
 
 struct HitData {
@@ -156,7 +228,10 @@ void scan_lg(PatternScanner& scanner, const class scanner_params &sp, const recu
     break;
   case scanner_params::PHASE_INIT:
     scanner.init(sp);
-    LightgrepController::Get().addScanner(scanner);
+    if (!LightgrepController::Get().addScanner(scanner)) {
+      cerr << "Aborting. Fix pattern or disable scanner to continue." << endl;
+      exit(EXIT_FAILURE);
+    }
     break;
   case scanner_params::PHASE_SHUTDOWN:
     scanner.shutdown(sp);
@@ -228,7 +303,6 @@ void scan_lg(PatternScanner& scanner, const class scanner_params &sp, const recu
 //   }
 // }
 
-// const char* const DefaultEncodingsCStrings[] = {"UTF-8", "UTF-16LE"};
 
 // const vector<string> DefaultEncodings(&DefaultEncodingsCStrings[0], &DefaultEncodingsCStrings[2]);
 
