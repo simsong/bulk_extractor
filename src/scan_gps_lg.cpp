@@ -27,11 +27,11 @@ namespace gps {
    * Return NNN in <tag attrib="NNN">
    */
   string get_quoted_attrib(string text, string attrib) {
-    size_t pos = text.find(attrib);
+    const size_t pos = text.find(attrib);
     if (pos == string::npos) return "";  /* no attrib */
-    ssize_t quote1 = text.find('"', pos);
+    const ssize_t quote1 = text.find('"', pos);
     if (quote1 < 0) return "";           /* no opening quote */
-    ssize_t quote2 = text.find('"', quote1+1);
+    const ssize_t quote2 = text.find('"', quote1+1);
     if (quote2 < 0) return "";           /* no closing quote */
     return text.substr(quote1+1, quote2-(quote1+1));
   }
@@ -40,9 +40,9 @@ namespace gps {
    * Return NNN in <tag>NNN</tag>
    */
   string get_cdata(string text) {
-    ssize_t gt = text.find('>');
+    const ssize_t gt = text.find('>');
     if (gt < 0) return "";           /* no > */
-    ssize_t lt = text.find('<', gt+1);
+    const ssize_t lt = text.find('<', gt+1);
     if (lt < 0) return "";           /* no < */
     return text.substr(gt+1, lt-(gt+1));
   }
@@ -51,8 +51,8 @@ namespace gps {
   // subpatterns
   //
 
-  const std::string LATLON("(-?[0-9]{1,3}\\.[0-9]{6,8})");
-  const std::string ELEV("(-?[0-9]{1,6}\\.[0-9]{0,3})");
+  const string LATLON("(-?[0-9]{1,3}\\.[0-9]{6,8})");
+  const string ELEV("(-?[0-9]{1,6}\\.[0-9]{0,3})");
 
   //
   // the scanner
@@ -106,7 +106,7 @@ namespace gps {
     // patterns
     //
 
-    const std::string TRKPT("<trkpt lat=\"" + LATLON + "\" lon=\"" + LATLON + '"');
+    const string TRKPT("<trkpt lat=\"" + LATLON + "\" lon=\"" + LATLON + '"');
 
     new Handler(
       *this,
@@ -116,7 +116,7 @@ namespace gps {
       &Scanner::trkptHandler
     );
 
-    const std::string ELE("<ele>" + ELEV + "</ele>");
+    const string ELE("<ele>" + ELEV + "</ele>");
 
     new Handler(
       *this,
@@ -126,7 +126,7 @@ namespace gps {
       &Scanner::eleHandler
     );
 
-    const std::string TIME("<time>[0-9]{4}(-[0-9]{2}){2}[ T]([0-9]{2}:){2}[0-9]{2}(Z|([-+][0-9.]))</time>");
+    const string TIME("<time>[0-9]{4}(-[0-9]{2}){2}[ T]([0-9]{2}:){2}[0-9]{2}(Z|([-+][0-9.]))</time>");
 
     new Handler(
       *this,
@@ -136,7 +136,7 @@ namespace gps {
       &Scanner::timeHandler
     );
 
-    const std::string GPXTPX_SPEED("<gpxtpx:speed>" + ELEV + "</gpxtpx:speed>");
+    const string GPXTPX_SPEED("<gpxtpx:speed>" + ELEV + "</gpxtpx:speed>");
 
     new Handler(
       *this,
@@ -146,7 +146,7 @@ namespace gps {
       &Scanner::speedHandler
     );
 
-    const std::string GPXTPX_COURSE("<gpxtpx:course>" + ELEV + "</gpxtpx:course>");
+    const string GPXTPX_COURSE("<gpxtpx:course>" + ELEV + "</gpxtpx:course>");
     
     new Handler(
       *this,
@@ -161,7 +161,6 @@ namespace gps {
     Recorder = sp.fs.get_name("gps"); 
   }
 
-// FIXME: flex has extremal pattern for calling clear, how to replicate that?
   void Scanner::clear(const scanner_params& sp, size_t pos) {
     // dump the current and go to the next
     if (!Time.empty() || !Lat.empty() || !Lon.empty() ||
