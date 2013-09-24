@@ -154,7 +154,8 @@ namespace accts {
     sp.info->histogram_defs.insert(
       histogram_def("telephone", "", "histogram", HistogramMaker::FLAG_NUMERIC)
     );
-//    scan_ccns2_debug = sp.info->config->debug;           // get debug value
+
+    scan_ccns2_debug = sp.info->config->debug;           // get debug value
   }
 
   void Scanner::init(const scanner_params& sp) {
