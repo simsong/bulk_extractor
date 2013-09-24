@@ -4,6 +4,7 @@
 #ifdef HAVE_LIBLIGHTGREP
 
 #include <string>
+#include <sstream>
 
 #include "be13_api/bulk_extractor_i.h"
 #include "histogram.h"
@@ -58,24 +59,6 @@ namespace accts {
   const string DATEFORMAT("(" + DATEA + "|" + DATEB + "|" + DATEC + "|" + DATED + ")");
 
   //
-  // helper functions
-  //
-
-/*
-  string utf16to8(const wstring &s) {
-    string utf8_line;
-    try {
-      utf8::utf16to8(s.begin(), s.end(), back_inserter(utf8_line));
-    }
-    catch(utf8::invalid_utf16) {
-      // Exception thrown: bad UTF16 encoding
-      utf8_line = "";
-    }
-    return utf8_line;
-  }
-*/
-
-  //
   // the scaner
   //
 
@@ -113,6 +96,8 @@ namespace accts {
     void validatedTelephoneHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
 
     void bitlockerHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+
+    void bitlockerUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
 
     void piiHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
 
@@ -414,10 +399,19 @@ namespace accts {
     new Handler(
       *this,
       BITLOCKER,
-//      DefaultEncodings,
       OnlyUTF8Encoding,
       DefaultOptions,
       &Scanner::bitlockerHitHandler
+    );
+
+    const string BITLOCKER_UTF16LE("([^\\z30-\\z39]\\z00|[^\\z00])([0-9]{6}-){7}[0-9]{6}[^\\z30-\\z39]");
+
+    new Handler(
+      *this,
+      BITLOCKER,
+      OnlyUTF8Encoding,
+      DefaultOptions,
+      &Scanner::bitlockerUTF16LEHitHandler
     );
 
 // FIXME: these are supposed to be blockers for phone numbers
@@ -432,7 +426,6 @@ namespace accts {
      *  With more testing this can and will still be tweaked
      */
     const string PDF_RECT("\\[ ?([0-9.-]{1,12} ){3}[0-9.-]{1,12} ?\\]");
-
   }
 
   void Scanner::initScan(const scanner_params& sp) {
@@ -506,8 +499,21 @@ namespace accts {
   }
 
   void Scanner::bitlockerHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
-// FIXME: Are these bounds right?
-    Alert_Recorder->write(sp.sbuf.pos0 + hit.Start, reinterpret_cast<const char*>(sp.sbuf.buf) + 1, "Possible BitLocker Recovery Key (ASCII).");
+    Alert_Recorder->write(sp.sbuf.pos0 + hit.Start + 1, reinterpret_cast<const char*>(sp.sbuf.buf) + 1, "Possible BitLocker Recovery Key (ASCII).");
+  }
+
+  void Scanner::bitlockerUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+    const size_t pos = hit.Start + (*(sp.sbuf.buf + hit.Start + 1) == '\0' ? 2 : 1);
+    const size_t len = (hit.End - 1) - pos;
+
+    // When UTF-16LE is restricted to ASCII code points, as with this pattern,
+    // removing  every odd byte converts it to ASCII encoding.
+    ostringstream ss;
+    for (size_t i = 0; i < len; i += 2) {
+      ss << sp.sbuf.buf[pos + i];
+    }
+
+    Alert_Recorder->write(sp.sbuf.pos0 + pos, ss.str(), "Possible BitLocker Recovery Key (UTF-16).");
   }
 
   void Scanner::piiHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
