@@ -407,7 +407,7 @@ namespace accts {
     new Handler(
       *this,
       BITLOCKER,
-      OnlyUTF8Encoding,
+      OnlyUTF16LEEncoding,
       DefaultOptions,
       &Scanner::bitlockerUTF16LEHitHandler
     );
