@@ -26,6 +26,8 @@ namespace email {
 
   const vector<string> OnlyUTF8Encoding(1, "UTF-8");
 
+  const vector<string> OnlyUTF16LEEncoding(1, "UTF-16LE");
+
   const LG_KeyOptions DefaultOptions = { 0, 1 }; // patterns, case-insensitive
 
   //
