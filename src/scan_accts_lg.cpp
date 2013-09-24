@@ -19,34 +19,43 @@ namespace accts {
       sizeof(DefaultEncodingsCStrings)/sizeof(DefaultEncodingsCStrings[0])
   );
 
+  const vector<string> OnlyUTF8Encoding(1, "UTF-8");
+
+  const vector<string> OnlyUTF16LEEncoding(1, "UTF-16LE");
+
   const LG_KeyOptions DefaultOptions = { 0, 1 }; // patterns, case-insensitive
 
   //
   // subpatterns
   //
 
-  const std::string END("([^0-9e.]|(\\.[^0-9]))");
-  const std::string BLOCK("[0-9]{4}");
-  const std::string DELIM("[- ]");
-  const std::string DB("(" + BLOCK + DELIM + ")");
-  const std::string SDB("([45][0-9]{3}" + DELIM + ")");
-  const std::string TDEL("[ /.-]");
+//  const string END("([^0-9e.]|(\\.[^0-9]))");
+  const string END("([^\\z2E\\z30-\\z39\\z45\\z65]|(\\.[^\\z30-\\z39]))");
+  const string BLOCK("[0-9]{4}");
+  const string DELIM("[- ]");
+  const string DB("(" + BLOCK + DELIM + ")");
+  const string SDB("([45][0-9]{3}" + DELIM + ")");
+  const string TDEL("[ /.-]");
 
-  const std::string PHONETEXT("([^a-z](tel[.ephon]*|fax|facsimile|DSN|telex|TTD|mobile|cell)):?");
+  const string PHONETEXT_UTF8_CTX("[^\\z41-\\z5A\\z61-\\z7A]");
+  const string PHONETEXT_UTF16LE_CTX("([^\\z41-\\z5A\\z61-\\z7A]\\z00|[^\\z00])");
+  const string PHONETEXT_COMMON("(tel[.ephon]*|fax|facsimile|DSN|telex|TTD|mobile|cell):?");
+  const string PHONETEXT_UTF8("(" + PHONETEXT_UTF8_CTX + PHONETEXT_COMMON + ")");
+  const string PHONETEXT_UTF16LE("(" + PHONETEXT_UTF16LE_CTX + PHONETEXT_COMMON + ")");
 
-  const std::string YEAR("(19[0-9][0-9]|20[01][0-9])");
-  const std::string MONTH("(Jan(uary)?|Feb(ruary)?|Mar(ch)?|Apr(il)?|May|Jun(e)?|Jul(y)?|Aug(ust)?|Sep(tember)?|Oct(ober)?|Nov(ember)?|Dec(ember)?|0?[1-9]|1[0-2])");
-  const std::string DAY("([0-2]?[0-9]|3[01])");
+  const string YEAR("(19[0-9][0-9]|20[01][0-9])");
+  const string MONTH("(Jan(uary)?|Feb(ruary)?|Mar(ch)?|Apr(il)?|May|Jun(e)?|Jul(y)?|Aug(ust)?|Sep(tember)?|Oct(ober)?|Nov(ember)?|Dec(ember)?|0?[1-9]|1[0-2])");
+  const string DAY("([0-2]?[0-9]|3[01])");
 
-  const std::string SYEAR("([0-9][0-9])");
-  const std::string SMONTH("([01][0-2])");
+  const string SYEAR("([0-9][0-9])");
+  const string SMONTH("([01][0-2])");
 
-  const std::string DATEA("(" + YEAR + "-" + MONTH + "-" + DAY + ")");
-  const std::string DATEB("(" + YEAR + "/" + MONTH + "/" + DAY + ")");
-  const std::string DATEC("(" + DAY + " " + MONTH + " " + YEAR + ")");
-  const std::string DATED("(" + MONTH + " " + DAY + "[, ]+" + YEAR + ")");
+  const string DATEA("(" + YEAR + "-" + MONTH + "-" + DAY + ")");
+  const string DATEB("(" + YEAR + "/" + MONTH + "/" + DAY + ")");
+  const string DATEC("(" + DAY + " " + MONTH + " " + YEAR + ")");
+  const string DATED("(" + MONTH + " " + DAY + "[, ]+" + YEAR + ")");
 
-  const std::string DATEFORMAT("(" + DATEA + "|" + DATEB + "|" + DATEC + "|" + DATED + ")");
+  const string DATEFORMAT("(" + DATEA + "|" + DATEB + "|" + DATEC + "|" + DATED + ")");
 
   //
   // helper functions
@@ -91,15 +100,23 @@ namespace accts {
 
     void ccnTrack2HitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
 
+    void ccnTrack2UTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+
     void telephoneHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
 
+    void telephoneUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+
     void telephoneTrailingCtxHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+
+    void telephoneTrailingCtxUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
 
     void validatedTelephoneHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
 
     void bitlockerHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
 
     void piiHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+
+    void piiUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
 
     void dateHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
 
@@ -147,17 +164,18 @@ namespace accts {
 
     // FIXME: kill this one?
     /* #### #### #### #### #### #### is definately not a CCN. */
-    const std::string REGEX1("[^0-9a-z]" + DB + "{5}");
+    const string REGEX1("[^0-9a-z]" + DB + "{5}");
 
     // FIXME: leading context
     // FIXME: trailing context
     /* #### #### #### #### --- most credit card numbers*/
-    const std::string REGEX2("[^0-9a-z]" + SDB + DB + DB + BLOCK + END);
+    const string REGEX2("[^\\z30-\\z39\\z41-\\z5A\\z61-\\z7A]" + SDB + DB + DB + BLOCK + END);
 
     new Handler(
       *this,
       REGEX2,
-      DefaultEncodings,
+//      DefaultEncodings,
+      OnlyUTF8Encoding,
       DefaultOptions,
       &Scanner::ccnHitHandler
     );
@@ -166,12 +184,13 @@ namespace accts {
     // FIXME: trailing context
     /* 3### ###### ######### --- 15 digits beginning with 3 and funny space. */
     /* Must be american express... */
-    const std::string REGEX3("[^0-9a-z.]3[0-9]{3}" + DELIM + "[0-9]{6}" + DELIM + "[0-9]{5}" + END);
+    const string REGEX3("[^\\z30-\\z39\\z41-\\z5A\\z61-\\z7A\\z2E]3[0-9]{3}" + DELIM + "[0-9]{6}" + DELIM + "[0-9]{5}" + END);
 
     new Handler(
       *this,
       REGEX3,
-      DefaultEncodings,
+//      DefaultEncodings,
+      OnlyUTF8Encoding,
       DefaultOptions,
       &Scanner::ccnHitHandler
     );
@@ -180,12 +199,13 @@ namespace accts {
     // FIXME: trailing context
     /* 3### ###### ######### --- 15 digits beginning with 3 and funny space. */
     /* Must be american express... */
-    const std::string REGEX4("[^0-9a-z.]3[0-9]{14}" + END);
+    const string REGEX4("[^\\z30-\\z39\\z41-\\z5A\\z61-\\z7A\\z2E]3[0-9]{14}" + END);
 
     new Handler(
       *this,
       REGEX4,
-      DefaultEncodings,
+//      DefaultEncodings,
+      OnlyUTF8Encoding,
       DefaultOptions,
       &Scanner::ccnHitHandler
     );
@@ -197,12 +217,13 @@ namespace accts {
      * Yes, CCNs can now be up to 19 digits long.
      * http://www.creditcards.com/credit-card-news/credit-card-appearance-1268.php
      */
-    const std::string REGEX5("[^0-9a-z.][4-6][0-9]{15,18}" + END);
+    const string REGEX5("[^\\z30-\\z39\\z41-\\z5A\\z61-\\z7A\\z2E][4-6][0-9]{15,18}" + END);
 
     new Handler(
       *this,
       REGEX5,
-      DefaultEncodings,
+//      DefaultEncodings,
+      OnlyUTF8Encoding,
       DefaultOptions,
       &Scanner::ccnHitHandler
     );
@@ -211,15 +232,28 @@ namespace accts {
     /* ;###############=YYMM101#+? --- track2 credit card data */
     /* {SYEAR}{SMONTH} */
     /* ;CCN=05061010000000000738? */
-    const std::string REGEX6("[^0-9a-z][4-6][0-9]{15,18}=" + SYEAR + SMONTH + "101[0-9]{13}");
+    const string REGEX6("[^\\z30-\\z39\\z41-\\z5A\\z61-\\z7A][4-6][0-9]{15,18}=" + SYEAR + SMONTH + "101[0-9]{13}");
 
     new Handler(
       *this,
       REGEX6,
-      DefaultEncodings,
+//      DefaultEncodings,
+      OnlyUTF8Encoding,
       DefaultOptions,
       &Scanner::ccnTrack2HitHandler
     );
+
+/*
+    const string REGEX6_UTF16LE("[^\\z30-\\z39\\z41-\\z5A\\z61-\\z7A]\\z00[4-6][0-9]{15,18}=" + SYEAR + SMONTH + "101[0-9]{13}");
+
+    new Handler(
+      *this,
+      REGEX6,
+      OnlyUTF16LEEncoding,
+      DefaultOptions,
+      &Scanner::ccnTrack2UTF16LEHitHandler
+    );
+*/
 
     // FIXME: trailing context
     // FIXME: leading context
@@ -228,12 +262,13 @@ namespace accts {
      * then do not consider this a phone number. We see a lot of that stuff in
      * PDF files.
      */
-    const std::string REGEX7("[^0-9a-z]([0-9]{3}" + TDEL + "){2}[0-9]{4}" + END);
+    const string REGEX7("[^\\z30-\\z39\\z41-\\z5A\\z61-\\z7A]([0-9]{3}" + TDEL + "){2}[0-9]{4}" + END);
 
     new Handler(
       *this,
       REGEX7,
-      DefaultEncodings,
+//      DefaultEncodings,
+      OnlyUTF8Encoding,
       DefaultOptions,
       &Scanner::validatedTelephoneHitHandler
     );
@@ -241,78 +276,126 @@ namespace accts {
     // FIXME: trailing context
     // FIXME: leading context
     /* US phone number with parens, like (215) 555-1212 */
-    const std::string REGEX8("[^0-9a-z]\\([0-9]{3}\\)" + TDEL + "?[0-9]{3}" + TDEL + "[0-9]{4}" + END);
+    const string REGEX8("[^\\z30-\\z39\\z41-\\z5A\\z61-\\z7A]\\([0-9]{3}\\)" + TDEL + "?[0-9]{3}" + TDEL + "[0-9]{4}" + END);
 
     new Handler(
       *this,
       REGEX8,
-      DefaultEncodings,
+//      DefaultEncodings,
+      OnlyUTF8Encoding,
       DefaultOptions,
       &Scanner::telephoneTrailingCtxHitHandler
+    );
+
+    const string REGEX8_UTF16LE("([^\\z30-\\z39\\z41-\\z5A\\z61-\\z7A]\\z00|[^\\z00])\\([0-9]{3}\\)" + TDEL + "?[0-9]{3}" + TDEL + "[0-9]{4}" + END);
+
+    new Handler(
+      *this,
+      REGEX8_UTF16LE,
+//      DefaultEncodings,
+      OnlyUTF16LEEncoding,
+      DefaultOptions,
+      &Scanner::telephoneTrailingCtxUTF16LEHitHandler
     );
 
     // FIXME: trailing context
     // FIXME: leading context
     /* Generalized international phone numbers */
-    const std::string REGEX9("[^0-9a-z]\\+[0-9]{1,3}(" + TDEL + "[0-9]{2,3}){2,6}[0-9]{2,4}" + END);
+    const string REGEX9("[^\\z30-\\z39\\z41-\\z5A\\z61-\\z7A]\\+[0-9]{1,3}(" + TDEL + "[0-9]{2,3}){2,6}[0-9]{2,4}" + END);
 
-    // FIXME: check whether has_min_digigts always returns true for matches
     new Handler(
       *this,
       REGEX9,
-      DefaultEncodings,
+//      DefaultEncodings,
+      OnlyUTF8Encoding,
       DefaultOptions,
       &Scanner::validatedTelephoneHitHandler
     );
 
     // FIXME: leading context
     /* Generalized number with prefix */
-    const std::string REGEX10(PHONETEXT + "[0-9/ .+]{7,18}");
+    const string REGEX10(PHONETEXT_UTF8 + "[0-9/ .+]{7,18}");
 
     new Handler(
       *this,
       REGEX10,
-      DefaultEncodings,
+      OnlyUTF8Encoding,
       DefaultOptions,
       &Scanner::telephoneHitHandler
+    );
+
+    const string REGEX10_UTF16LE(PHONETEXT_UTF16LE + "[0-9/ .+]{7,18}");
+
+    new Handler(
+      *this,
+      REGEX10_UTF16LE,
+      OnlyUTF16LEEncoding,
+      DefaultOptions,
+      &Scanner::telephoneUTF16LEHitHandler
     );
 
     // FIXME: leading context
     /* Generalized number with city code and prefix */
-    const std::string REGEX11(PHONETEXT + "[0-9 +]+ ?\\([0-9]{2,4}\\) ?[\\-0-9]{4,8}");
+    const string REGEX11(PHONETEXT_UTF8 + "[0-9 +]+ ?\\([0-9]{2,4}\\) ?[\\-0-9]{4,8}");
 
     new Handler(
       *this,
       REGEX11,
-      DefaultEncodings,
+      OnlyUTF8Encoding,
       DefaultOptions,
       &Scanner::telephoneHitHandler
     );
 
+   const string REGEX11_UTF16LE(PHONETEXT_UTF16LE + "[0-9 +]+ ?\\([0-9]{2,4}\\) ?[\\-0-9]{4,8}");
+
+    new Handler(
+      *this,
+      REGEX11_UTF16LE,
+      OnlyUTF16LEEncoding,
+      DefaultOptions,
+      &Scanner::telephoneUTF16LEHitHandler
+    );
+
     // FIXME: trailing context
     /* Generalized international phone numbers */
-    const std::string REGEX12("fedex[^a-z]+([0-9]{4}[- ]?){2}[0-9]" + END);
+    const string REGEX12("fedex[^a-z]+([0-9]{4}[- ]?){2}[0-9]" + END);
 
     new Handler(
       *this,
       REGEX12,
-      DefaultEncodings,
+      OnlyUTF8Encoding,
       DefaultOptions,
       &Scanner::piiHitHandler
     );
 
+    new Handler(
+      *this,
+      REGEX12,
+      OnlyUTF16LEEncoding,
+      DefaultOptions,
+      &Scanner::piiUTF16LEHitHandler
+    );
+
     // FIXME: trailing context
-    const std::string REGEX13("ssn:?[ \\t]+[0-9]{3}-?[0-9]{2}-?[0-9]{4}" + END);
+    const string REGEX13("ssn:?[ \\t]+[0-9]{3}-?[0-9]{2}-?[0-9]{4}" + END);
 
     new Handler(
       *this,
       REGEX13,
-      DefaultEncodings,
+      OnlyUTF8Encoding,
       DefaultOptions,
       &Scanner::piiHitHandler
     );
 
-    const std::string REGEX14("dob:?[ \\t]+" + DATEFORMAT);
+    new Handler(
+      *this,
+      REGEX13,
+      OnlyUTF16LEEncoding,
+      DefaultOptions,
+      &Scanner::piiUTF16LEHitHandler
+    );
+
+    const string REGEX14("dob:?[ \\t]+" + DATEFORMAT);
 
     new Handler(
       *this,
@@ -325,12 +408,13 @@ namespace accts {
     // FIXME: leading context
     // FIXME: trailing context
     /* Possible BitLocker Recovery Key. */
-    const std::string BITLOCKER("[^\\z30-\\z39]([0-9]{6}-){7}[0-9]{6}[^\\z30-\\z39]");
+    const string BITLOCKER("[^\\z30-\\z39]([0-9]{6}-){7}[0-9]{6}[^\\z30-\\z39]");
 
     new Handler(
       *this,
       BITLOCKER,
-      DefaultEncodings,
+//      DefaultEncodings,
+      OnlyUTF8Encoding,
       DefaultOptions,
       &Scanner::bitlockerHitHandler
     );
@@ -340,13 +424,13 @@ namespace accts {
      * Common box arrays found in PDF files
      * With more testing this can and will still be tweaked
      */
-    const std::string PDF_BOX("box ?\\[[0-9 -]{0,40}\\]");
+    const string PDF_BOX("box ?\\[[0-9 -]{0,40}\\]");
 
     /*
      * Common rectangles found in PDF files
      *  With more testing this can and will still be tweaked
      */
-    const std::string PDF_RECT("\\[ ?([0-9.-]{1,12} ){3}[0-9.-]{1,12} ?\\]");
+    const string PDF_RECT("\\[ ?([0-9.-]{1,12} ){3}[0-9.-]{1,12} ?\\]");
 
   }
 
@@ -375,8 +459,25 @@ namespace accts {
     }
   }
 
+  void Scanner::ccnTrack2UTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+/*
+    const size_t pos = hit.Start + 2;
+    const size_t len = hit.End - (*(sp.sbuf.buf+hit.End-2) == '.' ? 2 : 1) - pos;
+    if (valid_ccn(reinterpret_cast<const char*>(sp.sbuf.buf)+pos, len)) {
+      CCN_Recorder->write_buf(sp.sbuf, pos, len);
+    }
+*/
+  }
+
   void Scanner::telephoneHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
     Telephone_Recorder->write_buf(sp.sbuf, hit.Start+1, hit.End-hit.Start-1);
+  }
+
+  void Scanner::telephoneUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+    const size_t start = hit.Start + (*(sp.sbuf.buf + hit.Start + 1) == '\0' ? 2 : 1);
+    const size_t len = hit.End - start;
+
+    Telephone_Recorder->write_buf(sp.sbuf, start, len);
   }
 
   void Scanner::telephoneTrailingCtxHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
@@ -384,6 +485,14 @@ namespace accts {
       sp.sbuf,
       hit.Start+1,
       hit.End - (*(sp.sbuf.buf+hit.End-2) == '.' ? 2 : 1) - (hit.Start+1)
+    );
+  }
+
+  void Scanner::telephoneTrailingCtxUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+    Telephone_Recorder->write_buf(
+      sp.sbuf,
+      hit.Start+1,
+      hit.End - (*(sp.sbuf.buf+hit.End-3) == '.' ? 3 : 1) -(hit.Start+1)
     );
   }
 
@@ -404,6 +513,13 @@ namespace accts {
     PII_Recorder->write_buf(
       sp.sbuf, hit.Start,
       hit.End - (*(sp.sbuf.buf+hit.End-2) == '.' ? 2 : 1) - hit.Start
+    );
+  }
+
+  void Scanner::piiUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+    PII_Recorder->write_buf(
+      sp.sbuf, hit.Start,
+      hit.End - (*(sp.sbuf.buf+hit.End-3) == '.' ? 3 : 1) - hit.Start
     );
   }
 
