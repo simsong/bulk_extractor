@@ -153,8 +153,7 @@ void LightgrepController::regcomp() {
   Prog = lg_create_program(Fsm, &progOpts);
   lg_destroy_fsm(Fsm);
 
-  cerr << "Lightgrep will search for " << lg_pattern_map_size(PatternInfo) 
-    << " patterns, search logic size is " << lg_program_size(Prog) << " bytes" << std::endl;
+  cerr << lg_pattern_map_size(PatternInfo) << " lightgrep patterns, logic size is " << lg_program_size(Prog) << " bytes, " << Scanners.size() << " active scanners" << std::endl;
 }
 
 struct HitData {
@@ -176,7 +175,7 @@ void LightgrepController::scan(const scanner_params& sp, const recursion_control
   }
 
   vector<PatternScanner*> scannerTable(lg_pattern_map_size(PatternInfo)); // [Keyword Index -> scanner], no ownership
-  vector<PatternScanner*> scannerList(Scanners.size());                   // ownership
+  vector<PatternScanner*> scannerList;                                    // ownership list
   for (vector<PatternScanner*>::const_iterator itr(Scanners.begin()); itr != Scanners.end(); ++itr) {
     PatternScanner *s = (*itr)->clone();
     scannerList.push_back(s);
@@ -185,9 +184,7 @@ void LightgrepController::scan(const scanner_params& sp, const recursion_control
     }
     s->initScan(sp);
   }
-
   LG_ContextOptions ctxOpts;
-
   ctxOpts.TraceBegin = 0xffffffffffffffff;
   ctxOpts.TraceEnd   = 0;
 
@@ -205,9 +202,9 @@ void LightgrepController::scan(const scanner_params& sp, const recursion_control
 
   lg_destroy_context(ctx);
 
-  // don't call PatternScanner::shutdown() on these!
-  scannerTable.clear();
+  // don't call PatternScanner::shutdown() on these! that only happens on prototypes
   for (vector<PatternScanner*>::const_iterator itr(scannerList.begin()); itr != scannerList.end(); ++itr) {
+    (*itr)->finishScan(sp);
     delete *itr;
   }
 }

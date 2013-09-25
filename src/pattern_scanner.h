@@ -33,6 +33,7 @@ public:
   virtual void init(const scanner_params& sp) = 0; // register handlers
 
   virtual void initScan(const scanner_params& sp) = 0; // get feature_recorders
+  virtual void finishScan(const scanner_params& sp) {} // done searching a region
 
   virtual void shutdown(const scanner_params& sp); // perform any shutdown, if necessary
 
