@@ -141,6 +141,8 @@ namespace email {
 
     void protoHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
 
+    void protoUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+
   private:
     Scanner(const Scanner& s):
       PatternScanner(s),
@@ -196,7 +198,7 @@ namespace email {
       &Scanner::rfc822HitHandler
     );
 
-    const string MESSAGE_ID("Message-ID:[ \\t\\n]?<" + PC + "{1,80}>");
+    const string MESSAGE_ID("Message-ID:[ \\t\\n]?<" + PC + "+>");
 
     new Handler(
       *this,
@@ -206,7 +208,7 @@ namespace email {
       &Scanner::rfc822HitHandler
     );
 
-    const string SUBJECT("Subject:[ \\t]?" + PC + "{1,80}");
+    const string SUBJECT("Subject:[ \\t]?" + PC + "+");
 
     new Handler(
       *this,
@@ -216,7 +218,7 @@ namespace email {
       &Scanner::rfc822HitHandler
     );
 
-    const string COOKIE("Cookie:[ \\t]?" + PC + "{1,80}");
+    const string COOKIE("Cookie:[ \\t]?" + PC + "+");
 
     new Handler(
       *this,
@@ -226,7 +228,7 @@ namespace email {
       &Scanner::rfc822HitHandler
     );
 
-    const string HOST("Host:[ \\t]?[a-zA-Z0-9._]{1,64}");
+    const string HOST("Host:[ \\t]?[a-zA-Z0-9._]+");
 
     new Handler(
       *this,
@@ -302,18 +304,22 @@ namespace email {
       &Scanner::etherUTF16LEHitHandler
     );
 
-    // for reasons that aren't clear, there are a lot of net protocols that
-    // have an http://domain in them followed by numbers. So this counts the
-    // number of slashes and if it is only 2 the size is pruned until the
-    // last character is a letter
     const string PROTO("(https?|afp|smb)://[a-zA-Z0-9_%/\\-+@:=&?#~.;]+");
 
     new Handler(
       *this,
       PROTO,
-      DefaultEncodings,
+      OnlyUTF8Encoding,
       DefaultOptions,
       &Scanner::protoHitHandler
+    );
+
+    new Handler(
+      *this,
+      PROTO,
+      OnlyUTF16LEEncoding,
+      DefaultOptions,
+      &Scanner::protoUTF16LEHitHandler
     );
   }
 
@@ -449,6 +455,9 @@ namespace email {
     if (domain_off < len && domain_len > 0) {
       Domain_Recorder->write_buf(sp.sbuf, hit.Start + domain_off, domain_len);
     }
+  }
+
+  void Scanner::protoUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
   }
 
   Scanner TheScanner;
