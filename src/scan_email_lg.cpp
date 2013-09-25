@@ -64,7 +64,6 @@ namespace email {
   }
 
   inline size_t find_domain_in_url(const uint8_t* buf, size_t buflen, size_t& domain_len) {
-
 // FIXME: this line does not work for UTF-16LE
     const uint8_t* dbeg = search_n(buf, buf + buflen, 2, '/') + 2;
     if (dbeg < buf + buflen) {
@@ -448,7 +447,7 @@ namespace email {
       }
     }
 
-    URL_Recorder->write_buf(sp.sbuf, hit.Start, len); // record the URL
+    URL_Recorder->write_buf(sp.sbuf, hit.Start, len);
 
     size_t domain_len = 0;
     size_t domain_off = find_domain_in_url(sp.sbuf.buf + hit.Start, len, domain_len);  // find the start of domain?
@@ -458,6 +457,22 @@ namespace email {
   }
 
   void Scanner::protoUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+    const int slash_count = count(
+      sp.sbuf.buf + hit.Start,
+      sp.sbuf.buf + hit.End, '/'
+    );
+
+    size_t len = hit.End - hit.Start;
+
+    if (slash_count == 2) {
+      while (len > 1 && !isalpha(sp.sbuf[hit.Start+len-2])) {
+        len -= 2;
+      }
+    }
+
+    URL_Recorder->write_buf(sp.sbuf, hit.Start, len);
+
+
   }
 
   Scanner TheScanner;
