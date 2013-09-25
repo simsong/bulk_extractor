@@ -339,7 +339,7 @@ namespace email {
     new Handler(
       *this,
       MAC,
-      OnlyUTF8Encoding, 
+      OnlyUTF8Encoding,
       DefaultOptions,
       &Scanner::etherHitHandler
     );
