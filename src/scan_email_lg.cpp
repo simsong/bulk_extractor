@@ -107,7 +107,7 @@ namespace email {
   bool valid_ipaddr(const T* buf, uint64_t hbeg) {
     // NB: hbeg is in bytes, regardless of sizeof(T)
     // Get 8 characters of left context, right-justified
-    T context[8] = { ' ' };
+    T context[8] = { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' };
     const size_t c0 = hbeg >= 8*sizeof(T) ? hbeg-8*sizeof(T) : 8*sizeof(T)-hbeg-1;
     memcpy(context + 8*sizeof(T) - (hbeg - c0), buf+c0, hbeg-c0);
 
