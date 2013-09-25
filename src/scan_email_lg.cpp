@@ -106,8 +106,8 @@ namespace email {
   bool valid_ipaddr(const uint8_t* buf, uint64_t hbeg) {
     // Get 8 characters of left context, right-justified
     char context[] = "        ";
-    const int c0 = max((int) hbeg + 1 - 8, 0);
-    memcpy(context + 8 - (hbeg + 1 - c0), buf+c0, hbeg+1-c0);
+    const int c0 = max((int) hbeg - 8, 0);
+    memcpy(context + 8 - (hbeg - c0), buf+c0, hbeg-c0);
 
     if (
       isalnum(context[7]) ||
@@ -116,7 +116,7 @@ namespace email {
       context[7] == '+' ||
       (ishexnumber(context[4]) && ishexnumber(context[5]) &&
        ishexnumber(context[6]) && context[7] == '}') ||
-      (buf[hbeg+1] == '0' && buf[hbeg+2] == '.'))
+      (buf[hbeg] == '0' && buf[hbeg+1] == '.'))
     {
       // ignore
       return false;
@@ -408,7 +408,7 @@ namespace email {
   }
 
   void Scanner::ipaddrHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
-    if (valid_ipaddr(sp.sbuf.buf, hit.Start)) {
+    if (valid_ipaddr(sp.sbuf.buf, hit.Start+1)) {
       Domain_Recorder->write_buf(sp.sbuf, hit.Start+1, hit.End-hit.Start-2);
     }
   }
