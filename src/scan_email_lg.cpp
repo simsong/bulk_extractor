@@ -109,7 +109,7 @@ namespace email {
     // Get 8 characters of left context, right-justified
     T context[8] = { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' };
     const size_t c0 = hbeg >= 8*sizeof(T) ? hbeg-8*sizeof(T) : 8*sizeof(T)-hbeg;
-    memcpy(context + 8*sizeof(T) - (hbeg - c0), buf+c0, hbeg-c0);
+    memcpy(context + 8*sizeof(T) - (hbeg - c0), ((void*)buf)+c0, hbeg-c0);
 
     if (
       isalnum(context[7]) ||
