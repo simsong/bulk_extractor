@@ -35,7 +35,7 @@ namespace accts {
            ch=='<' || ch=='Z' || ch=='.' || ch=='l' || ch=='j';
   }
 
-  bool valid_phone_utf16le(const sbuf_t &sbuf, size_t pos, size_t len) {
+  bool valid_phone_utf16le(const sbuf_t& sbuf, size_t pos, size_t len) {
     // We want invalid characters before and after (assuming there is a
     // before and after)
     bool invalid_before = false;
