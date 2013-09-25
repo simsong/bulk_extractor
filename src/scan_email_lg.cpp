@@ -103,11 +103,13 @@ namespace email {
     return ctr.size() >= 4;
   }
 
-  bool valid_ipaddr(const uint8_t* buf, uint64_t hbeg) {
+  template <typename T>
+  bool valid_ipaddr(const T* buf, uint64_t hbeg) {
+    // NB: hbeg is in bytes, regardless of sizeof(T)
     // Get 8 characters of left context, right-justified
-    char context[] = "        ";
-    const int c0 = max((int) hbeg - 8, 0);
-    memcpy(context + 8 - (hbeg - c0), buf+c0, hbeg-c0);
+    T context[8] = { ' ' };
+    const size_t c0 = max(hbeg - 8*sizeof(T), (size_t) 0);
+    memcpy(context + 8*sizeof(T) - (hbeg - c0), buf+c0, hbeg-c0);
 
     if (
       isalnum(context[7]) ||
@@ -414,12 +416,12 @@ namespace email {
   }
 
   void Scanner::ipaddrUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+    const size_t pos = hit.Start + (*(sp.sbuf.buf+hit.Start+1) == '\0' ? 2 : 1);
+    const size_t len = (hit.End - 1) - pos;
 
-
-
-
-
-
+    if (valid_ipaddr(reinterpret_cast<const uint16_t*>(sp.sbuf.buf), pos)) {
+      Domain_Recorder->write_buf(sp.sbuf, pos, len);
+    }
   }
 
   void Scanner::etherHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
