@@ -108,7 +108,7 @@ namespace email {
     // NB: hbeg is in bytes, regardless of sizeof(T)
     // Get 8 characters of left context, right-justified
     T context[8] = { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' };
-    const size_t c0 = hbeg >= 8*sizeof(T) ? hbeg-8*sizeof(T) : 8*sizeof(T)-hbeg-1;
+    const size_t c0 = hbeg >= 8*sizeof(T) ? hbeg-8*sizeof(T) : 8*sizeof(T)-hbeg;
     memcpy(context + 8*sizeof(T) - (hbeg - c0), buf+c0, hbeg-c0);
 
     if (
@@ -418,7 +418,6 @@ namespace email {
   void Scanner::ipaddrUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
     const size_t pos = hit.Start + (*(sp.sbuf.buf+hit.Start+1) == '\0' ? 2 : 1);
     const size_t len = (hit.End - 1) - pos;
-
     if (valid_ipaddr(reinterpret_cast<const uint16_t*>(sp.sbuf.buf), pos)) {
       Domain_Recorder->write_buf(sp.sbuf, pos, len);
     }
