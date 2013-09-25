@@ -3,6 +3,7 @@
 // if liblightgrep isn't present, compiles to nothing
 #ifdef HAVE_LIBLIGHTGREP
 
+#include <algorithm>
 #include <string>
 
 #include "be13_api/bulk_extractor_i.h"
@@ -29,6 +30,19 @@ namespace accts {
   //
   // helper functions
   //
+
+  bool is_pdf_box(const sbuf_t& sbuf, size_t pos) {
+    const char box[] = "Box";
+    const size_t c0 = pos >= 10 ? pos - 10 : 10 - pos - 1;
+    const uint8_t* i = search(sbuf.buf + c0, sbuf.buf + pos, box, box + strlen(box));
+    return i != sbuf.buf + pos;
+/*
+    return i != sbuf.buf + pos && (
+      (i + 2 < sbuf.buf + pos && *(i+1) == ' ' && *(i+2) == '[')
+      || *(i+1) == '['
+    );
+*/
+  }
 
   inline bool valid_char(char ch) {
     return isdigit(ch) || isspace(ch) || ch=='[' || ch==']' ||
@@ -527,19 +541,6 @@ namespace accts {
       DefaultOptions,
       &Scanner::bitlockerUTF16LEHitHandler
     );
-
-// FIXME: these are supposed to be blockers for phone numbers
-    /*
-     * Common box arrays found in PDF files
-     * With more testing this can and will still be tweaked
-     */
-    const string PDF_BOX("box ?\\[[0-9 -]{0,40}\\]");
-
-    /*
-     * Common rectangles found in PDF files
-     *  With more testing this can and will still be tweaked
-     */
-    const string PDF_RECT("\\[ ?([0-9.-]{1,12} ){3}[0-9.-]{1,12} ?\\]");
   }
 
   void Scanner::initScan(const scanner_params& sp) {
@@ -618,7 +619,9 @@ namespace accts {
     const size_t pos = hit.Start + 1;
     const size_t len = hit.End - (*(sp.sbuf.buf+hit.End-2) == '.' ? 2 : 1) - pos;
     if (valid_phone(sp.sbuf, pos, len)){
-      Telephone_Recorder->write_buf(sp.sbuf, pos, len);
+      if (!is_pdf_box(sp.sbuf, pos)) {
+        Telephone_Recorder->write_buf(sp.sbuf, pos, len);
+      }
     }
   }
 
