@@ -17,7 +17,7 @@ mv $ODIR $TDIR/${GITHASH}_lg
 CMPDIR=$TDIR/${GITHASH}_cmp
 mkdir $CMPDIR 
 
-for i in `find $TDIR/$GITHASH -name '*.txt' ! -name '*_histogram.txt' ! -name 'url_services.txt' | xargs basename -a`; do
+for i in `find $TDIR/$GITHASH -name '*.txt' ! -name '*_histogram.txt' ! -name 'url_services.txt' -exec basename \{\} \;`; do
   A=`mktemp`
   B=`mktemp` 
   sort $TDIR/$GITHASH/$i >$A
