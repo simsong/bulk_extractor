@@ -27,6 +27,71 @@ namespace accts {
   const LG_KeyOptions DefaultOptions = { 0, 1 }; // patterns, case-insensitive
 
   //
+  // helper functions
+  //
+
+  inline bool valid_char(char ch) {
+    return isdigit(ch) || isspace(ch) || ch=='[' || ch==']' ||
+           ch=='<' || ch=='Z' || ch=='.' || ch=='l' || ch=='j';
+  }
+
+  bool valid_phone_utf16le(const sbuf_t &sbuf, size_t pos, size_t len) {
+    // We want invalid characters before and after (assuming there is a
+    // before and after)
+    bool invalid_before = false;
+    bool invalid_after = false;
+
+    if (pos > 16) {
+      for (size_t i = pos-16; i < pos; ++i) {
+        if (sbuf[i] != '\0' && !valid_char(sbuf[i])) {
+          invalid_before = true;
+          break;
+        }
+      }
+    }
+    else {
+      invalid_before = true;
+    }
+
+    if (sbuf.bufsize < pos+len+16) {
+      for (size_t i = pos+len; i < pos+len+16; ++i) {
+        if (sbuf[i] != '\0' && !valid_char(sbuf[i])) {
+          invalid_after = true;
+          break;
+        }
+      }
+    }
+    else {
+      invalid_after = true;
+    }
+
+    /*
+     * 2013-05-28: if followed by ' #{1,5} ' then it's not a phone either!
+     */
+    if (pos+len+10 < sbuf.bufsize) {
+      if (sbuf[pos+len] == ' ' && sbuf[pos+len+1] == '\0' &&
+          isdigit(sbuf[pos+len+2]) && sbuf[pos+len+3] == '\0') {
+        for (size_t i = pos+len+2; i+3 < sbuf.bufsize && i < pos+len+16; i += 2) {
+          if (isdigit(sbuf[i]) && sbuf[i+1] == '\0' &&
+              sbuf[i+2] == ' ' && sbuf[i+3] == '\0') {
+            return false; // not valid
+          }
+        }
+      }
+    }
+
+    /* If it is followed by a dash and a number, it's not a phone number */
+    if (pos+len+4 < sbuf.bufsize) {
+      if (sbuf[pos+len] == '-' && sbuf[pos+len+1] == '\0' &&
+          isdigit(sbuf[pos+len+2] && sbuf[pos+len+3] == '\0')) {
+        return false;
+      }
+    }
+
+    return invalid_before && invalid_after;
+  }
+
+  //
   // subpatterns
   //
 
@@ -560,13 +625,9 @@ namespace accts {
   void Scanner::validatedTelephoneUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
     const size_t pos = hit.Start + 1;
     const size_t len = hit.End - (*(sp.sbuf.buf+hit.End-2) == '.' ? 2 : 1) - pos;
-// FIXME: valid_phone wants an sbuf, argh
-/*
-    const string ascii(low_utf16le_to_ascii(sp.sbuf.buf+pos, len));
-    if (valid_phone(ascii.c_str(), pos, len)){
+    if (valid_phone_utf16le(sp.sbuf, pos, len)){
       Telephone_Recorder->write_buf(sp.sbuf, pos, len);
     }
-*/
   }
 
   void Scanner::bitlockerHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
