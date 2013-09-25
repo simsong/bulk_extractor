@@ -197,7 +197,10 @@ void LightgrepController::scan(const scanner_params& sp, const recursion_control
 
   HitData data = { this, &scannerTable, &sp, &rcb };
 
-  lg_search(ctx, (const char*)sbuf.buf, (const char*)sbuf.buf + sbuf.bufsize, 0, &data, gotHit);
+  // lg_search(ctx, (const char*)sbuf.buf, (const char*)sbuf.buf + sbuf.bufsize, 0, &data, gotHit);
+  if (lg_search(ctx, (const char*)sbuf.buf, (const char*)sbuf.buf + sbuf.pagesize, 0, &data, gotHit) < numeric_limits<uint64_t>::max()) {
+    lg_search_resolve(ctx, (const char*)sbuf.buf + sbuf.pagesize, (const char*)sbuf.buf + sbuf.bufsize, sbuf.pagesize, &data, gotHit);
+  }
   lg_closeout_search(ctx, &data, gotHit);
 
   lg_destroy_context(ctx);
@@ -212,7 +215,7 @@ void LightgrepController::scan(const scanner_params& sp, const recursion_control
 void LightgrepController::processHit(const vector<PatternScanner*>& sTbl, const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
   // lookup the handler's callback functor, then invoke it
   CallbackFnType* cbPtr(static_cast<CallbackFnType*>(lg_pattern_info(PatternInfo, hit.KeywordIndex)->UserData));
-  ((*sTbl[hit.KeywordIndex]).*(*cbPtr))(hit, sp, rcb);
+  ((*sTbl[hit.KeywordIndex]).*(*cbPtr))(hit, sp, rcb); // ...yep...
 }
 
 unsigned int LightgrepController::numPatterns() const {
