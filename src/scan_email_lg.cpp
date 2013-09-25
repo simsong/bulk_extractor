@@ -63,12 +63,12 @@ namespace email {
     return find(buf, buf + buflen, '@') - buf + 1;
   }
 
-  inline size_t find_domain_in_url(const uint8_t* buf, size_t buflen, size_t& domain_len) {
-// FIXME: this line does not work for UTF-16LE
-    const uint8_t* dbeg = search_n(buf, buf + buflen, 2, '/') + 2;
+  template <typename T>
+  inline size_t find_domain_in_url(const T* buf, size_t buflen, size_t& domain_len) {
+    const T* dbeg = search_n(buf, buf + buflen, 2, '/') + 2;
     if (dbeg < buf + buflen) {
-      const uint8_t stop[] = "/:";
-      const uint8_t* dend = find_first_of(dbeg, buf + buflen, stop, stop + 2);
+      const T stop[] = { '/', ':' };
+      const T* dend = find_first_of(dbeg, buf + buflen, stop, stop + 2);
       domain_len = dend - dbeg;
       return dbeg - buf;
     }
@@ -472,7 +472,13 @@ namespace email {
 
     URL_Recorder->write_buf(sp.sbuf, hit.Start, len);
 
-
+    size_t domain_len = 0;
+    size_t domain_off = find_domain_in_url(reinterpret_cast<const uint16_t*>(sp.sbuf.buf + hit.Start), len/2, domain_len);  // find the start of domain?
+    domain_off *= 2;
+    domain_len *= 2;
+    if (domain_off < len && domain_len > 0) {
+      Domain_Recorder->write_buf(sp.sbuf, hit.Start + domain_off, domain_len);
+    }
   }
 
   Scanner TheScanner;
