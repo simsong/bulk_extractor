@@ -103,6 +103,57 @@ namespace email {
     return ctr.size() >= 4;
   }
 
+  bool valid_ipaddr(const uint8_t* buf, uint64_t hbeg) {
+    // Get 8 characters of left context, right-justified
+    char context[] = "        ";
+    const int c0 = max((int) hbeg + 1 - 8, 0);
+    memcpy(context + 8 - (hbeg + 1 - c0), buf+c0, hbeg+1-c0);
+
+    if (
+      isalnum(context[7]) ||
+      context[7] == '.' ||
+      context[7] == '-' ||
+      context[7] == '+' ||
+      (ishexnumber(context[4]) && ishexnumber(context[5]) &&
+       ishexnumber(context[6]) && context[7] == '}') ||
+      (buf[hbeg+1] == '0' && buf[hbeg+2] == '.'))
+    {
+      // ignore
+      return false;
+    }
+
+    const struct {
+      size_t pos;
+      const char* str;
+    } checks[] = {
+      { 5, "v."     },
+      { 5, "v "     },
+      { 5, "rv:"    },  // rv:1.9.2.8 as in Mozilla
+      { 4, ">="     },  // >= 1.8.0.10
+      { 4, "<="     },  // <= 1.8.0.10
+      { 4, "<<"     },  // << 1.8.0.10
+      { 4, "ver"    },
+      { 4, "Ver"    },
+      { 4, "VER"    },
+      { 0, "rsion"  },
+      { 0, "ion="   },
+      { 0, "PSW/"   },  // PWS/1.5.19.3 ...
+      { 0, "flash=" },  // flash=
+      { 0, "stone=" },  // Milestone=
+      { 4, "NSS"    },
+      { 0, "/2001," },  // /2001,3.60.50.8
+      { 0, "TI_SZ"  }   // %REG_MULTI_SZ%,
+    };
+
+    for (size_t i = 0; i < sizeof(checks)/sizeof(checks[0]); ++i) {
+      if (search(context + checks[i].pos, context + 8, checks[i].str, checks[i].str + strlen(checks[i].str)) != context + 8) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   //
   // the scanner
   //
@@ -357,58 +408,18 @@ namespace email {
   }
 
   void Scanner::ipaddrHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
-    // Get 8 characters of left context, right-justified
-    char context[] = "        ";
-    const int c0 = max((int) hit.Start + 1 - 8, 0);
-    memcpy(context + 8 - (hit.Start + 1 - c0), sp.sbuf.buf+c0, hit.Start+1-c0);
-
-    if (
-      isalnum(context[7]) ||
-      context[7] == '.' ||
-      context[7] == '-' ||
-      context[7] == '+' ||
-      (ishexnumber(context[4]) && ishexnumber(context[5]) &&
-       ishexnumber(context[6]) && context[7] == '}') ||
-      (sp.sbuf[hit.Start+1] == '0' && sp.sbuf[hit.Start+2] == '.'))
-    {
-      // ignore
-      return;
+    if (valid_ipaddr(sp.sbuf.buf, hit.Start)) {
+      Domain_Recorder->write_buf(sp.sbuf, hit.Start+1, hit.End-hit.Start-2);
     }
-
-    const struct {
-      size_t pos;
-      const char* str;
-    } checks[] = {
-      { 5, "v."     },
-      { 5, "v "     },
-      { 5, "rv:"    },  // rv:1.9.2.8 as in Mozilla
-      { 4, ">="     },  // >= 1.8.0.10
-      { 4, "<="     },  // <= 1.8.0.10
-      { 4, "<<"     },  // << 1.8.0.10
-      { 4, "ver"    },
-      { 4, "Ver"    },
-      { 4, "VER"    },
-      { 0, "rsion"  },
-      { 0, "ion="   },
-      { 0, "PSW/"   },  // PWS/1.5.19.3 ...
-      { 0, "flash=" },  // flash=
-      { 0, "stone=" },  // Milestone=
-      { 4, "NSS"    },
-      { 0, "/2001," },  // /2001,3.60.50.8
-      { 0, "TI_SZ"  }   // %REG_MULTI_SZ%,
-    };
-
-    for (size_t i = 0; i < sizeof(checks)/sizeof(checks[0]); ++i) {
-      if (search(context + checks[i].pos, context + 8, checks[i].str, checks[i].str + strlen(checks[i].str)) != context + 8) {
-        return;
-      }
-    }
-
-    Domain_Recorder->write_buf(sp.sbuf, hit.Start+1, hit.End-hit.Start-2);
   }
 
   void Scanner::ipaddrUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
-    // FIXME
+
+
+
+
+
+
   }
 
   void Scanner::etherHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
