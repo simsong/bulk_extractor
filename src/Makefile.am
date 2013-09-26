@@ -36,15 +36,19 @@ flex_scanners = \
 	scan_gps.flex 
 
 bulk_scanners = \
+	scan_accts_lg.cpp \
 	scan_aes.cpp \
+	scan_base16_lg.cpp \
 	scan_base64.cpp \
 	scan_bulk.cpp\
 	scan_ccns2.cpp scan_ccns2.h \
 	scan_elf.cpp \
+	scan_email_lg.cpp \
 	scan_exif.cpp exif_reader.h exif_reader.cpp exif_entry.cpp\
 	scan_exiv2.cpp \
 	scan_extx.cpp \
 	scan_find.cpp \
+	scan_gps_lg.cpp \
 	scan_gzip.cpp \
 	scan_hiberfile.cpp pyxpress.c pyxpress.h \
 	scan_json.cpp \
@@ -61,7 +65,7 @@ bulk_scanners = \
 	scan_wordlist.cpp \
 	scan_xor.cpp \
 	scan_zip.cpp \
-        sbuf_flex_scanner.h \
+	sbuf_flex_scanner.h \
 	$(flex_scanners) 
 
 bulk_extractor_SOURCES = \
@@ -75,10 +79,14 @@ bulk_extractor_SOURCES = \
 	histogram.h \
 	image_process.cpp \
 	image_process.h \
-	threadpool.cpp \
-	threadpool.h \
+	pattern_scanner.cpp \
+	pattern_scanner.h \
+	pattern_scanner_utils.cpp \
+	pattern_scanner_utils.h \
 	phase1.h \
 	phase1.cpp \
+	threadpool.cpp \
+	threadpool.h \
 	word_and_context_list.cpp \
 	word_and_context_list.h \
 	$(bulk_scanners) $(TSK3INCS)  $(BE13_API) $(DFXML_WRITER) 
