@@ -15,14 +15,18 @@ src/bulk_extractor -x accts -x base16 -x email -x gps -o $ODIR $1
 mv $ODIR $TDIR/${GITHASH}_lg
 
 CMPDIR=$TDIR/${GITHASH}_cmp
-mkdir $CMPDIR 
+mkdir $CMPDIR
+mkdir $CMPDIR/plus
+mkdir $CMPDIR/minus
 
 for i in `find $TDIR/$GITHASH -name '*.txt' ! -name '*_histogram.txt' ! -name 'url_services.txt' -exec basename \{\} \;`; do
   A=`mktemp`
   B=`mktemp` 
   sort $TDIR/$GITHASH/$i >$A
   sort $TDIR/${GITHASH}_lg/$i >$B
-  comm -3 $A $B >$CMPDIR/$i
+  comm -1 -3 $A $B >$CMPDIR/plus/$i
+  comm -2 -3 $A $B >$CMPDIR/minus/$i
   rm $A $B
-  [ -s $CMPDIR/$i ] || rm $CMPDIR/$i
+  [ -s $CMPDIR/plus/$i ] || rm $CMPDIR/plus/$i
+  [ -s $CMPDIR/minus/$i ] || rm $CMPDIR/minus/$i
 done
