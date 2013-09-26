@@ -104,12 +104,12 @@ namespace email {
   }
 
   template <typename T>
-  bool valid_ipaddr(const T* buf, uint64_t hbeg) {
-    // NB: hbeg is in bytes, regardless of sizeof(T)
-    // Get 8 characters of left context, right-justified
-    T context[8] = { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' };
-    const size_t c0 = hbeg >= 8*sizeof(T) ? hbeg-8*sizeof(T) : 8*sizeof(T)-hbeg;
-    memcpy(context + 8*sizeof(T) - (hbeg - c0), ((void*)buf)+c0, hbeg-c0);
+  bool valid_ipaddr(const T* leftguard, const T* hit) {
+    // copy up to 'window' preceding Ts into context array
+    static const ssize_t window = 8;
+    T context[window] = { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' };
+    const ssize_t diff = min(hit - leftguard, window);
+    copy(hit - diff, hit, context + window - diff);
 
     if (
       isalnum(context[7]) ||
@@ -118,7 +118,7 @@ namespace email {
       context[7] == '+' ||
       (ishexnumber(context[4]) && ishexnumber(context[5]) &&
        ishexnumber(context[6]) && context[7] == '}') ||
-      (buf[hbeg] == '0' && buf[hbeg+1] == '.'))
+      (*hit == '0' && *(hit + 1) == '.'))
     {
       // ignore
       return false;
@@ -410,15 +410,18 @@ namespace email {
   }
 
   void Scanner::ipaddrHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
-    if (valid_ipaddr(sp.sbuf.buf, hit.Start+1)) {
-      Domain_Recorder->write_buf(sp.sbuf, hit.Start+1, hit.End-hit.Start-2);
+    if (valid_ipaddr(sp.sbuf.buf, sp.sbuf.buf + hit.Start + 1)) {
+      Domain_Recorder->write_buf(sp.sbuf, hit.Start+1, hit.End - hit.Start - 2);
     }
   }
 
   void Scanner::ipaddrUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
     const size_t pos = hit.Start + (*(sp.sbuf.buf+hit.Start+1) == '\0' ? 2 : 1);
     const size_t len = (hit.End - 1) - pos;
-    if (valid_ipaddr(reinterpret_cast<const uint16_t*>(sp.sbuf.buf), pos)) {
+    // this assumes sp.sbuf.pos will never be an odd memory address...
+    // if pos is odd, add 1 to sbuf.buf and use it as a leftmost guard
+    const uint16_t* leftguard(reinterpret_cast<const uint16_t*>(sp.sbuf.buf + ((pos & 0x01) == 1 ? 1: 0)));
+    if (valid_ipaddr(leftguard, reinterpret_cast<const uint16_t*>(sp.sbuf.buf + pos))) {
       Domain_Recorder->write_buf(sp.sbuf, pos, len);
     }
   }
