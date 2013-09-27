@@ -199,7 +199,7 @@ DATEFORMAT	({DATEA}|{DATEB}|{DATEC}|{DATED})
     /* REGEX10 */
     /* Generalized number with prefix */
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
-    s.telephone_recorder->write_buf(SBUF,s.pos+1,yyleng);
+    s.telephone_recorder->write_buf(SBUF,s.pos+1,yyleng-1);
     s.pos += yyleng;
 }
 

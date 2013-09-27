@@ -41,7 +41,7 @@ public:
 	 * There is no need to convert them to their 'actual' value.
 	 * Don't accept a histogram that has 3 values. That could be 11:11:11:11:22:33
 	 * Require 4, 5 or 6.
-	 * If we have 3 or more distinct values, then treat it good.
+	 * If we have 4 or more distinct values, then treat it good.
 	 * Otherwise its is some pattern we don't want.
 	 */
 	std::set<uint16_t> ctr;
@@ -305,7 +305,7 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
     email_scanner &s = * yyemail_get_extra(yyscanner);	      
     if(validate_email(yytext)){
         s.email_recorder->write_buf(SBUF,s.pos,yyleng);
-        size_t domain_start = find_domain_in_email(SBUF.buf+s.pos,yyleng);
+        size_t domain_start = find_domain_in_email(SBUF.buf+s.pos,yyleng) + 1;
         if(domain_start>0){
             s.domain_recorder->write_buf(SBUF,s.pos+domain_start,yyleng-domain_start);
         }
