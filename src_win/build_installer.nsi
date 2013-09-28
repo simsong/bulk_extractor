@@ -117,7 +117,6 @@ function InstallOnce
         file "../python/cda_tool.py"
         file "../python/dfxml.py"
         file "../python/fiwalk.py"
-        file "../python/histogram.py"
         file "../python/identify_filenames.py"
         file "../python/post_process_exif.py"
         file "../python/report_encodings.py"

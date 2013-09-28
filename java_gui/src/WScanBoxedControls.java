@@ -50,7 +50,7 @@ public class WScanBoxedControls {
 
     // tool tip text
     usePluginDirectoryCB.setToolTipText("Path to plugin directory");
-    useSettableOptionsCB.setToolTipText("Provide settable options in form <key>=<value> separated by space");
+    useSettableOptionsCB.setToolTipText("Provide settable options in form <key>=<value> separated by vertical bar character \"|\"");
 
     return container;
   }
