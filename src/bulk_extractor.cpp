@@ -54,18 +54,17 @@ uint32_t   opt_last_year = 2020;
 
 std::string HTTP_EOL = "\r\n";		// stdout is in binary form
 
+/* Global find options and the find_list */
+
+FindOptsStruct FindOpts;         // singleton
+regex_list find_list;
+
+
 /* global alert_list and stop_list
  * These should probably become static class variables
  */
 word_and_context_list alert_list;		/* shold be flagged */
 word_and_context_list stop_list;		/* should be ignored */
-
-
-// void truncate_at(string &line, char ch)
-// {
-//     size_t pos = line.find(ch);
-//     if(pos!=string::npos) line.erase(pos);
-// }
 
 
 #if 0
@@ -758,7 +757,7 @@ void stat_callback(void *user,const std::string &name,uint64_t calls,double seco
  *** find support ***
  ********************/
 
-FindOptsStruct FindOpts;
+
 
 
 int main(int argc,char **argv)

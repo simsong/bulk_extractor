@@ -7,8 +7,6 @@
 
 #include <lightgrep/api.h>
 
-#include "findopts.h"
-
 using namespace std;
 
 class PatternScanner;

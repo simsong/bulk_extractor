@@ -4,10 +4,9 @@
 #ifdef HAVE_LIBLIGHTGREP
 
 #include "be13_api/bulk_extractor_i.h"
-#include "beregex.h"
+#include "be13_api/beregex.h"
 #include "histogram.h"
 #include "pattern_scanner.h"
-#include "findopts.h"
 
 #include <lightgrep/api.h>
 
@@ -18,8 +17,6 @@
 
 using namespace std;
 
-extern regex_list find_list;
-extern FindOptsStruct FindOpts;
 
 namespace { // local namespace hides these from other translation units
 
