@@ -180,7 +180,7 @@ void BulkExtractor_Phase1::run(image_process &p,feature_recorder_set &fs,
     }
 }
 
-void BulkExtractor_Phase1::wait_for_workers(image_process &p)
+void BulkExtractor_Phase1::wait_for_workers(image_process &p,std::string *md5_string)
 {
     /* Now wait for all of the threads to be free */
     tp->mode = 1;			// waiting for workers to finish
@@ -221,6 +221,7 @@ void BulkExtractor_Phase1::wait_for_workers(image_process &p)
     xreport.xmlout("image_size",p.image_size());  
     if(md5g){
         md5_t md5 = md5g->final();
+        if(md5_string) *md5_string = md5.hexdigest();
         xreport.xmlout("hashdigest",md5.hexdigest(),"type='MD5'",false);
         delete md5g;
     }

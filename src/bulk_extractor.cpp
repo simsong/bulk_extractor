@@ -1092,8 +1092,12 @@ int main(int argc,char **argv)
 
     xreport->add_timestamp("phase1 start");
     phase1.run(*p,fs,seen_page_ids);
-    phase1.wait_for_workers(*p);
+    std::string md5_string;
+    phase1.wait_for_workers(*p,&md5_string);
     xreport->add_timestamp("phase1 end");
+    if(md5_string.size()>0){
+        std::cout << "MD5 of Disk Image: " << md5_string << "\n";
+    }
 
     if(cfg.opt_quiet==0) std::cout << "Phase 2. Shutting down scanners\n";
     xreport->add_timestamp("phase2 start");

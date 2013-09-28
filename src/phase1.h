@@ -125,7 +125,7 @@ public:
         tp(),xreport(xreport_),timer(timer_),config(config_),notify_ctr(0),total_bytes(0),md5g(){}
 
     void run(image_process &p,feature_recorder_set &fs, seen_page_ids_t &seen_page_ids);
-    void wait_for_workers(image_process &p);
+    void wait_for_workers(image_process &p,std::string *md5_string);
 };
 
 #endif

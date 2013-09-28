@@ -1,3 +1,7 @@
+2013-09-25  Basic  <simsong@Mucha.local>
+
+	* src/bulk_extractor.cpp (main): added reporting of MD5 of disk image
+
 2013-09-18  Simson Garfinkel  <simsong@npsair.local>
 
 	* src/be13_api/feature_recorder.cpp (carve): valid_dosname has to be applied to ext, since ext may come with slashes in it.
