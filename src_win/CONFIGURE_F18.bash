@@ -206,6 +206,20 @@ build_mingw liblightgrep   https://github.com/LightboxTech/liblightgrep/archive/
 # ZMQ requires patching
 #
 
+# libzmq.a created with the FC18 cross-compiler is not compatible with
+# the FC19 cross-compiler, so if it can't compile, rebuild it.
+if [ -r /usr/x86_64-w64-mingw32/sys-root/mingw/lib/libzmq.a ]; then
+  cat > conftest.c <<EOF
+int main() { zmq_bind(0,0); return 0; }
+EOF
+  RESULT=`x86_64-w64-mingw32-gcc -o conftest.exe conftest.c -lzmq -lstdc++ -lws2_32 2>&1` || echo unable to compile existing libzmq.a
+  rm -f conftest.c conftest.exe
+  if [ -n "$RESULT" ]; then
+    echo Removing existing libzmq;
+    sudo rm -f /usr/x86_64-w64-mingw32/sys-root/mingw/lib/libzmq*
+  fi
+fi
+
 echo "Building and installing ZMQ for mingw"
 ZMQVER=3.2.2
 ZMQFILE=zeromq-$ZMQVER.tar.gz
@@ -236,7 +250,7 @@ else
     make clean
   done
   popd
-  rm -rf $ZMQDIR
+  rm -rf $ZMQDIR $ZMQFILE
 fi
 
 #
