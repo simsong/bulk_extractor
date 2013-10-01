@@ -146,7 +146,7 @@ namespace base16 {
      * {0,2} means we have 0-2 space characters
      * {6,}  means minimum of 6 hex bytes
      */
-    const std::string HEX("([0-9A-F]{2}[ \\n\\r]{0,2}){6,}");
+    const std::string HEX("[0-9A-F]{2}([ \\n\\r]{0,2}[0-9A-F]{2}){5,}");
 
     new Handler(
       *this, HEX, DefaultEncodings, DefaultOptions, &Scanner::hitHandler
