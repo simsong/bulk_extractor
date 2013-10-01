@@ -2,11 +2,6 @@
 
 /*
  * http://flex.sourceforge.net/manual/Cxx.html
- *
- * Credit card scanner (and then some).
- * For references, see:
- * http://en.wikipedia.org/wiki/Bank_card_number
- * http://en.wikipedia.org/wiki/List_of_Bank_Identification_Numbers
  */
 
 #define SCANNER "scan_base16"
