@@ -240,7 +240,7 @@ namespace email {
     // patterns
     //
 
-    const string DATE(DAYOFWEEK + ",[ \\t\\n]+[0-9]{1,2}[ \\t\\n]+" + MONTH + "[ \\t\\n]+" + YEAR + "[ \\t\\n]+[0-2][0-9]:[0-5][0-9]:[0-5][0-9][ \\t\\n]+([+-][0-2][0-9][0314][05]|" + ABBREV + ")");
+    const string DATE(DAYOFWEEK + ",[ \\t\\n\\r]+[0-9]{1,2}[ \\t\\n\\r]+" + MONTH + "[ \\t\\n\\r]+" + YEAR + "[ \\t\\n\\r]+[0-2][0-9]:[0-5][0-9]:[0-5][0-9][ \\t\\n\\r]+([+-][0-2][0-9][0314][05]|" + ABBREV + ")");
 
     new Handler(
       *this,
@@ -250,7 +250,7 @@ namespace email {
       &Scanner::rfc822HitHandler
     );
 
-    const string MESSAGE_ID("Message-ID:[ \\t\\n]?<" + PC + "+>");
+    const string MESSAGE_ID("Message-ID:([ \\t\\n]|\\r\\n)?<" + PC + "+>");
 
     new Handler(
       *this,

@@ -148,7 +148,7 @@ U_TLD4		(Q\0A\0|R\0E\0|R\0O\0|R\0S\0|R\0U\0|R\0W\0|S\0A\0|S\0B\0|S\0C\0|S\0D\0|S
 
 
 
-{DAYOFWEEK},[ \t\n]+[0-9]{1,2}[ \t\n]+{MONTH}[ \t\n]+{YEAR}[ \t\n]+[0-2][0-9]:[0-5][0-9]:[0-5][0-9][ \t\n]+([+-][0-2][0-9][0314][05]|{ABBREV}) {
+{DAYOFWEEK},[ \t\x0A\x0D]+[0-9]{1,2}[ \t\x0A\x0D]+{MONTH}[ \t\x0A\x0D]+{YEAR}[ \t\x0A\x0D]+[0-2][0-9]:[0-5][0-9]:[0-5][0-9][ \t\x0A\x0D]+([+-][0-2][0-9][0314][05]|{ABBREV}) {
     email_scanner &s = * yyemail_get_extra(yyscanner);
     s.rfc822_recorder->write_buf(SBUF,s.pos,yyleng);
     s.pos += yyleng; 
@@ -162,7 +162,7 @@ U_TLD4		(Q\0A\0|R\0E\0|R\0O\0|R\0S\0|R\0U\0|R\0W\0|S\0A\0|S\0B\0|S\0C\0|S\0D\0|S
 
 }
 
-Message-ID:[ \t\n]?<{PC}{1,80}> {
+Message-ID:([ \t\x0A]|\x0D\x0A)?<{PC}{1,80}> {
     email_scanner &s = * yyemail_get_extra(yyscanner);
     s.rfc822_recorder->write_buf(SBUF,s.pos,yyleng);
     s.pos += yyleng; 
