@@ -160,7 +160,7 @@ namespace base16 {
   // Don't re-analyze hex bufs smaller than this
   const unsigned int opt_min_hex_buf = 64;
 
-  size_t base16_decode_skipping_whitespace(uint8_t* dst_start, const uint8_t* src, const uint8_t* src_end) {
+  size_t base16_decode_skipping_invalid(uint8_t* dst_start, const uint8_t* src, const uint8_t* src_end) {
     uint8_t* dst = dst_start;
     uint16_t byte;
     uint8_t msn, lsn;
@@ -169,8 +169,7 @@ namespace base16 {
       msn = *src++;
       lsn = *src++;
       byte = BASE16_MSN[msn] | BASE16_LSN[lsn];
-      // Precondition: input is only pairs of hex digits and whitespace.
-      // So a "byte" value over FF means we've hit whitespace.
+      // A "byte" value over FF means we've hit something invalid, just ignore.
       if (byte < 0x100) {
         *dst++ = static_cast<uint8_t>(byte);
       }
@@ -185,7 +184,7 @@ namespace base16 {
     managed_malloc<uint8_t> b(sbuf.pagesize/2);
     if (b.buf == 0) return;
 
-    const size_t p = base16_decode_skipping_whitespace(
+    const size_t p = base16_decode_skipping_invalid(
       b.buf, sbuf.buf, sbuf.buf+sbuf.pagesize
     );
   
