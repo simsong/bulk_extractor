@@ -169,9 +169,15 @@ namespace base16 {
       msn = *src++;
       lsn = *src++;
       byte = BASE16_MSN[msn] | BASE16_LSN[lsn];
-      // A "byte" value over FF means we've hit something invalid, just ignore.
       if (byte < 0x100) {
         *dst++ = static_cast<uint8_t>(byte);
+      }
+      else {
+        // A "byte" value over FF means we've hit something invalid. The
+        // pattern requires that hex digits come in pairs, so the first
+        // character is invalid. Just advance one byte (== backing up one
+        // byte now, since we've already gone ahead two bytes).
+        --src;
       }
     }
 
