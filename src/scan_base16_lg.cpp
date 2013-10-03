@@ -202,7 +202,9 @@ namespace base16 {
     }
 
     if (p > opt_min_hex_buf){
-      sbuf_t nsbuf(sbuf.pos0, b.buf, p, p, false);
+      // NB: we manually add BASE16 here when recursing, because
+      // rcb.partName is LIGHTGREP here, which is not useful.
+      sbuf_t nsbuf(sbuf.pos0 + pos + "BASE16", b.buf, p, p, false);
       (*rcb.callback)(scanner_params(sp, nsbuf)); // recurse
     }
   }
