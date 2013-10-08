@@ -201,7 +201,7 @@ namespace base16 {
       return; // Small keys don't get recursively analyzed
     }
 
-    if (p > opt_min_hex_buf){
+    if (p > opt_min_hex_buf) {
       // NB: we manually add BASE16 here when recursing, because
       // rcb.partName is LIGHTGREP here, which is not useful.
       sbuf_t nsbuf(osbuf.pos0 + pos + "BASE16", b.buf, p, p, false);
