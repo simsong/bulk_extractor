@@ -193,7 +193,7 @@ namespace base16 {
     const size_t p = base16_decode_skipping_invalid(
       b.buf, sbuf.buf, sbuf.buf+sbuf.pagesize
     );
-  
+
     // Alert on byte sequences of 48, 128 or 256 bits
     if (p == 48/8 || p == 128/8 || p == 256/8) {
       // it validates; write original with context
