@@ -68,7 +68,7 @@ void base16_scanner::decode(const sbuf_t &osbuf,size_t pos,size_t len)
 	return;       /* Small keys don't get recursively analyzed */
     }
     if(p>opt_min_hex_buf){
-        sbuf_t nsbuf(sbuf.pos0 + pos + rcb.partName,b.buf,p,p,false);
+        sbuf_t nsbuf(osbuf.pos0 + pos + rcb.partName,b.buf,p,p,false);
         (*rcb.callback)(scanner_params(sp,nsbuf)); // recurse
     }
 }
