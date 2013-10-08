@@ -435,7 +435,7 @@ namespace email {
   }
 
   void Scanner::etherUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
-    const size_t pos = hit.Start + (*(sp.sbuf.buf + 1) == '\0' ? 2 : 1);
+    const size_t pos = hit.Start + (*(sp.sbuf.buf+hit.Start+1) == '\0' ? 2 : 1);
     const size_t len = (hit.End -1) - pos;
 
     const string ascii(low_utf16le_to_ascii(sp.sbuf.buf+pos, len));
