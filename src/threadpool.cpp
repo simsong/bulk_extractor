@@ -155,6 +155,30 @@ int threadpool::get_free_count()
     return ret;
 }
 
+void threadpool::set_thread_status(uint32_t id,const std::string &status)
+{
+    if(pthread_mutex_lock(&M)){
+	errx(1,"threadpool::set_thread_status pthread_mutex_lock failed");
+    }
+    if(id < thread_status.size()){
+	thread_status.at(id) = status;
+    }
+    pthread_mutex_unlock(&M);
+}
+
+std::string threadpool::get_thread_status(uint32_t id)
+{
+    if(pthread_mutex_lock(&M)){
+	errx(1,"threadpool::set_thread_status pthread_mutex_lock failed");
+    }
+    std::string status;
+    if(id < thread_status.size()){
+	status = thread_status.at(id);
+    }
+    pthread_mutex_unlock(&M);
+    return status;
+}
+
 /**
  * do the work. Record that the work was started and stopped in XML file.
  * Called in the worker threads
@@ -195,30 +219,6 @@ void worker::do_work(sbuf_t *sbuf)
 }
 
 
-void threadpool::set_thread_status(uint32_t id,const std::string &status)
-{
-    if(pthread_mutex_lock(&M)){
-	errx(1,"threadpool::set_thread_status pthread_mutex_lock failed");
-    }
-    if(id < thread_status.size()){
-	thread_status.at(id) = status;
-    }
-    pthread_mutex_unlock(&M);
-}
-
-std::string threadpool::get_thread_status(uint32_t id)
-{
-    if(pthread_mutex_lock(&M)){
-	errx(1,"threadpool::set_thread_status pthread_mutex_lock failed");
-    }
-    std::string status;
-    if(id < thread_status.size()){
-	status = thread_status.at(id);
-    }
-    pthread_mutex_unlock(&M);
-    return status;
-}
-
 /* Run the worker.
  * Note that we used to throw internal errors, but this caused problems with some versions of GCC.
  * Now we simply return when there is an error.
@@ -226,7 +226,7 @@ std::string threadpool::get_thread_status(uint32_t id)
 void *worker::run() 
 {
     /* Initialize any per-thread variables in the scanners */
-    be13::plugin::message_enabled_scanners(scanner_params::PHASE_THREAD_BEFORE_SCAN,0);
+    be13::plugin::message_enabled_scanners(scanner_params::PHASE_THREAD_BEFORE_SCAN,master.fs);
 
     while(true){
 	/* Get the lock, then wait for the queue to be empty.

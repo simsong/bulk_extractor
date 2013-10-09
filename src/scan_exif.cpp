@@ -213,7 +213,7 @@ struct jpeg_validator {
  * Used for helping to convert TIFF's GPS format to decimal lat/long
  */
 
-static double stod(string s)
+static double be_stod(string s)
 {
     double d=0;
     sscanf(s.c_str(),"%lf",&d);
@@ -223,9 +223,9 @@ static double stod(string s)
 static double rational(string s)
 {
     std::vector<std::string> parts = split(s,'/');
-    if(parts.size()!=2) return stod(s);	// no slash, so return without
-    double top = stod(parts[0]);
-    double bot = stod(parts[1]);
+    if(parts.size()!=2) return be_stod(s);	// no slash, so return without
+    double top = be_stod(parts[0]);
+    double bot = be_stod(parts[1]);
     return bot>0 ? top / bot : top;
 }
 

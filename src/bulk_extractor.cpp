@@ -48,7 +48,7 @@ using namespace std;
 
 // Global options that can be set without using the option system
 
-uint32_t   debug=0;
+uint64_t   debug=0;
 int   opt_silent= 0;
 uint32_t   opt_last_year = 2020;
 
@@ -66,32 +66,26 @@ regex_list find_list;
 word_and_context_list alert_list;		/* shold be flagged */
 word_and_context_list stop_list;		/* should be ignored */
 
-
-#if 0
-/* Obtain subversion keywords
- * http://svnbook.red-bean.com/en/1.4/svn.advanced.props.special.keywords.html
- * http://stackoverflow.com/questions/1449935/getting-svn-revision-number-into-a-program-automatically
- * remember to set the property 'keywords=Revision' on bulk_extractor.cpp
- */
-std::string svn_date("$Date: 2012-11-29 17:00:33 -0500 (Thu, 29 Nov 2012) $");
-std::string svn_revision("$Rev: 10886 $");
-std::string svn_author("$Author: jon@lightboxtechnologies.com $");
-std::string svn_headurl("$HeadURL: https://domex.nps.edu/domex/svn/src/bulk_extractor/trunk/src/bulk_extractor.cpp $");
-std::string svn_id("$Id: bulk_extractor.cpp 10886 2012-11-29 22:00:33Z jon@lightboxtechnologies.com $");
-std::string svn_revision_clean()
+/* Debug help */
+__attribute__((noreturn)) 
+void debug_help()
 {
-    string svn_r;
-    for(string::const_iterator it = svn_revision.begin();it!=svn_revision.end();it++){
-	if(*it>='0' && *it<='9') svn_r.push_back(*it);
-    }
-    return svn_r;
+    puts("#define DEBUG_PEDANTIC    0x0001	// check values more rigorously");
+    puts("#define DEBUG_PRINT_STEPS 0x0002      // prints as each scanner is started");
+    puts("#define DEBUG_SCANNER     0x0004	// dump all feature writes to stderr");
+    puts("#define DEBUG_NO_SCANNERS 0x0008      // do not run the scanners ");
+    puts("#define DEBUG_DUMP_DATA   0x0010	// dump data as it is seen ");
+    puts("#define DEBUG_INFO        0x0040	// print extra info");
+    puts("#define DEBUG_EXIT_EARLY  1000	// just print the size of the volume and exis ");
+    puts("#define DEBUG_ALLOCATE_512MiB 1002	// Allocate 512MiB, but don't set any flags ");
+    exit(1);
 }
-#else
+
 std::string svn_revision_clean()
 {
     return std::string("");
 }
-#endif
+
 
 
 /**
@@ -658,10 +652,10 @@ static bool directory_empty(const std::string &d)
 }
 
 /**
- * scaled_stoi:
+ * scaled_stoi64:
  * Like a normal stoi, except it can handle modifies k, m, and g
  */
-static uint64_t scaled_stoi(const std::string &str)
+static uint64_t scaled_stoi64(const std::string &str)
 {
     std::stringstream ss(str);
     uint64_t val;
@@ -806,6 +800,7 @@ int main(int argc,char **argv)
 	case 'C': feature_recorder::context_window_default = atoi(optarg);break;
 	case 'd':
 	{
+            if(strcmp(optarg,"h")==0) debug_help();
 	    int d = atoi(optarg);
 	    switch(d){
 	    case DEBUG_ALLOCATE_512MiB: 
@@ -831,8 +826,8 @@ int main(int argc,char **argv)
 	    break;
 	case 'F': FindOpts.Files.push_back(optarg); break;
 	case 'f': FindOpts.Patterns.push_back(optarg); break;
-	case 'G': cfg.opt_pagesize = scaled_stoi(optarg); break;
-	case 'g': cfg.opt_marginsize = scaled_stoi(optarg); break;
+	case 'G': cfg.opt_pagesize = scaled_stoi64(optarg); break;
+	case 'g': cfg.opt_marginsize = scaled_stoi64(optarg); break;
 	case 'j': cfg.num_threads = atoi(optarg); break;
 	case 'M': scanner_def::max_depth = atoi(optarg); break;
 	case 'm': cfg.max_bad_alloc_errors = atoi(optarg); break;
@@ -878,8 +873,8 @@ int main(int argc,char **argv)
 	    if(dash==string::npos){
 		cfg.opt_offset_start = stoi64(optargs);
 	    } else {
-		cfg.opt_offset_start = scaled_stoi(optargs.substr(0,dash));
-		cfg.opt_offset_end   = scaled_stoi(optargs.substr(dash+1));
+		cfg.opt_offset_start = scaled_stoi64(optargs.substr(0,dash));
+		cfg.opt_offset_end   = scaled_stoi64(optargs.substr(dash+1));
 	    }
 	    break;
 	}
@@ -894,6 +889,9 @@ int main(int argc,char **argv)
 
     argc -= optind;
     argv += optind;
+
+    if(debug & DEBUG_PRINT_STEPS) std::cerr << "DEBUG: DEBUG_PRINT_STEPS\n";
+
 
     /* Create a configuration that will be used to initialize the scanners */
     extern bool opt_enable_histograms;
@@ -1020,7 +1018,7 @@ int main(int argc,char **argv)
     feature_file_names_t feature_file_names;
     be13::plugin::get_scanner_feature_file_names(feature_file_names);
     feature_recorder_set fs(feature_file_names,image_fname,opt_outdir,stop_list.size()>0);
-    be13::plugin::scanners_init(&fs);
+    be13::plugin::scanners_init(fs);
 
     /* Look for commands that impact per-recorders */
     for(scanner_info::config_t::const_iterator it=be_config.namevals.begin();it!=be_config.namevals.end();it++){
@@ -1030,9 +1028,9 @@ int main(int argc,char **argv)
             feature_recorder *fr = fs.get_name(params.at(1));
             const std::string &cmd = params.at(2);
             if(fr){
-                if(cmd=="window") fr->set_context_window(stoi(it->second));
-                if(cmd=="window_before") fr->set_context_window_before(stoi(it->second));
-                if(cmd=="window_after") fr->set_context_window_after(stoi(it->second));
+                if(cmd=="window")        fr->set_context_window(stoi64(it->second));
+                if(cmd=="window_before") fr->set_context_window_before(stoi64(it->second));
+                if(cmd=="window_after")  fr->set_context_window_after(stoi64(it->second));
             }
         }
         /* See if there is a scanner? */
@@ -1063,13 +1061,14 @@ int main(int argc,char **argv)
      *** THIS IS IT! PHASE 1!
      ****************************************************************/
 
-    //md5_generator *md5g = new md5_generator();		// keep track of MD5
+    if(debug & DEBUG_PRINT_STEPS) std::cerr << "DEBUG: STARTING PHASE 1\n";
+
     BulkExtractor_Phase1 phase1(*xreport,timer,cfg);
-
     if(opt_sampling_params.size()>0) BulkExtractor_Phase1::set_sampling_parameters(cfg,opt_sampling_params);
-
     xreport->add_timestamp("phase1 start");
     phase1.run(*p,fs,seen_page_ids);
+
+    if(debug & DEBUG_PRINT_STEPS) std::cerr << "DEBUG: WAITING FOR WORKERS\n";
     std::string md5_string;
     phase1.wait_for_workers(*p,&md5_string);
     xreport->add_timestamp("phase1 end");
@@ -1085,7 +1084,7 @@ int main(int argc,char **argv)
 
     if(cfg.opt_quiet==0) std::cout << "Phase 3. Creating Histograms\n";
     xreport->add_timestamp("phase3 start");
-    be13::plugin::phase_histogram(fs,0); // TK - add an xml error notifier!
+    be13::plugin::phase_histogram(fs,0);        // TK - add an xml error notifier!
     xreport->add_timestamp("phase3 end");
 
     /* report and then print final usage information */

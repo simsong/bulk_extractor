@@ -27,7 +27,7 @@
 #include "be13_api/utils.h"
 
 #include <set>
-#include <tr1/unordered_set>
+//#include <tr1/unordered_set>
 
 #include <sys/types.h>
 #include <stdlib.h>
@@ -597,21 +597,21 @@ static bool   likely_valid_pcap_header(const sbuf_t &sbuf,struct pcap_hdr &h)
  */
 class packet_carver {
 private:
-    packet_carver(const packet_carver &pc):fs(pc.fs),ps(pc.ps),ip_recorder(pc.ip_recorder),tcp_recorder(pc.tcp_recorder),ether_recorder(pc.ether_recorder){
+    packet_carver(const packet_carver &pc):fs(pc.fs),/*ps(pc.ps),*/ip_recorder(pc.ip_recorder),tcp_recorder(pc.tcp_recorder),ether_recorder(pc.ether_recorder){
     }
     packet_carver &operator=(const packet_carver &that){
 	return *this;			// no-op
     }
 public:
-    typedef std::tr1::unordered_set<const void *> packetset;
+    //typedef std::tr1::unordered_set<const void *> packetset;
     feature_recorder_set &fs;
-    packetset ps;
+    //packetset ps;
     feature_recorder *ip_recorder;
     feature_recorder *tcp_recorder;
     feature_recorder *ether_recorder;
 
     packet_carver(const class scanner_params &sp):
-	fs(sp.fs),ps(),ip_recorder(0),tcp_recorder(0),ether_recorder(0){
+	fs(sp.fs),/*ps(),*/ip_recorder(0),tcp_recorder(0),ether_recorder(0){
 	ip_recorder = fs.get_name("ip");
 	ether_recorder = fs.get_name("ether");
 	if(carve_net_memory){

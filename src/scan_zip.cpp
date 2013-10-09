@@ -246,19 +246,18 @@ void scan_zip(const class scanner_params &sp,const recursion_control_block &rcb)
         hasher    = sp.info->config->hasher;
 	return;
     }
+    feature_recorder *zip_recorder = sp.fs.get_name(ZIP_RECORDER_NAME);
+    feature_recorder *unzip_recorder = unzip_carve_mode ? sp.fs.get_name(UNZIP_RECORDER_NAME) : 0;
     if(sp.phase==scanner_params::PHASE_INIT && unzip_carve_mode!=feature_recorder::CARVE_NONE){
-	feature_recorder *unzip_recorder = sp.fs.get_name(UNZIP_RECORDER_NAME);
         unzip_recorder->set_carve_mode(static_cast<feature_recorder::carve_mode_t>(unzip_carve_mode));
         unzip_recorder->set_carve_ignore_encoding("ZIP");
+	zip_recorder->set_flag(feature_recorder::FLAG_XML); // because we are sending through XML
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
 	const sbuf_t &sbuf = sp.sbuf;
 
         if(sbuf.bufsize < MIN_ZIP_SIZE) return;
 
-	feature_recorder *zip_recorder = sp.fs.get_name(ZIP_RECORDER_NAME);
-        feature_recorder *unzip_recorder = unzip_carve_mode ? sp.fs.get_name(UNZIP_RECORDER_NAME) : 0;
-	zip_recorder->set_flag(feature_recorder::FLAG_XML); // because we are sending through XML
 	for(size_t i=0 ; i < sbuf.pagesize && i < sbuf.bufsize-MIN_ZIP_SIZE; i++){
 	    /** Look for signature for beginning of a ZIP component. */
 	    if(sbuf[i]==0x50 && sbuf[i+1]==0x4B && sbuf[i+2]==0x03 && sbuf[i+3]==0x04){
