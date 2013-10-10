@@ -561,6 +561,9 @@ static void usage(const char *progname)
 #ifdef HAVE_EXIV2
     std::cout << "                  EXIV2 ENABLED\n";
 #endif    
+#ifdef HAVE_LIBLIGHTGREP
+    std::cout << "                  LIGHTGREP ENABLED\n";
+#endif
     std::cout << "   -o outdir    - specifies output directory. Must not exist.\n";
     std::cout << "                  bulk_extractor creates this directory.\n";
     std::cout << "Options:\n";
@@ -586,7 +589,7 @@ static void usage(const char *progname)
     std::cout << "   -g NN        - specify margin (default " <<cfg.opt_marginsize << ")\n";
     std::cout << "   -j NN        - Number of analysis threads to run (default " <<threadpool::numCPU() << ")\n";
     std::cout << "   -M nn        - sets max recursion depth (default " << scanner_def::max_depth << ")\n";
-    std::cout << "   -m <max>     - maximum number of minutes to wait for memory starvation\n";
+    std::cout << "   -m <max>     - maximum number of minutes to wait after all data read\n";
     std::cout << "                  default is " << cfg.max_bad_alloc_errors << "\n";
     std::cout << "\nPath Processing Mode:\n";
     std::cout << "   -p <path>/f  - print the value of <path> with a given format.\n";
@@ -756,8 +759,6 @@ void stat_callback(void *user,const std::string &name,uint64_t calls,double seco
 /********************
  *** find support ***
  ********************/
-
-
 
 
 int main(int argc,char **argv)
@@ -1063,7 +1064,6 @@ int main(int argc,char **argv)
      *** THIS IS IT! PHASE 1!
      ****************************************************************/
 
-    //md5_generator *md5g = new md5_generator();		// keep track of MD5
     BulkExtractor_Phase1 phase1(*xreport,timer,cfg);
 
     if(opt_sampling_params.size()>0) BulkExtractor_Phase1::set_sampling_parameters(cfg,opt_sampling_params);
