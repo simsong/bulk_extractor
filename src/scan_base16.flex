@@ -89,7 +89,7 @@ UNICODE		([[:print:][:space:]]+)
 
 %%
 
-[0-9A-F]{2}(([ \x0A]|\x0D\x0A){0,2}[0-9A-F]{2}){5,1024}	{
+[0-9A-F]{2}(([ \x0A]|\x0D\x0A){0,2}[0-9A-F]{2}){5,}	{
     /*** WARNING:
      *** DO NOT USE "%option fast" ABOVE.
      *** IT GENERATES ADDRESS SANITIZER ERRORS IN THE LEXER.
