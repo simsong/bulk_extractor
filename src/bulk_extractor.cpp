@@ -1062,13 +1062,9 @@ int main(int argc,char **argv)
      *** THIS IS IT! PHASE 1!
      ****************************************************************/
 
-<<<<<<< HEAD
     BulkExtractor_Phase1 phase1(*xreport,timer,cfg);
-=======
     if(debug & DEBUG_PRINT_STEPS) std::cerr << "DEBUG: STARTING PHASE 1\n";
->>>>>>> 4e3636a0d8a3bc6a69f98d9247c863bbb31bf5af
 
-    BulkExtractor_Phase1 phase1(*xreport,timer,cfg);
     if(opt_sampling_params.size()>0) BulkExtractor_Phase1::set_sampling_parameters(cfg,opt_sampling_params);
     xreport->add_timestamp("phase1 start");
     phase1.run(*p,fs,seen_page_ids);
