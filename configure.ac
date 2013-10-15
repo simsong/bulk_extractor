@@ -1,4 +1,6 @@
 #                                 -*- Autoconf -*-
+# bulk_extractor configure.ac
+#
 # Process this file with autoconf to produce a configure script.
 # Order is largely irrevellant, although it must start with AC_INIT and end with AC_OUTPUT
 # See http://autotoolset.sourceforge.net/tutorial.html
