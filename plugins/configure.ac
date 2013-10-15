@@ -20,6 +20,7 @@ AC_PROG_INSTALL
 AC_PROG_LEX
 
 m4_include([be13_api/be13_configure.m4])
+m4_include([dfxml/src/dfxml_configure.m4])
 
 ##
 ## Standard macros
@@ -168,18 +169,23 @@ AC_ARG_ENABLE([mcheck], AS_HELP_STRING([--enable-mcheck],
 # -Wcast-qual 
 # -Wmissing-format-attribute  --- Just too annoying
 AC_LANG_PUSH(C++)
-WARNINGS_TO_TEST="-Wall -MD -Wpointer-arith \
+CXX_WARNINGS_TO_TEST="-Wall -MD -Wpointer-arith \
     -Wshadow -Wwrite-strings -Wcast-align  \
     -Wredundant-decls -Wdisabled-optimization \
     -Wfloat-equal -Wmultichar -Wmissing-noreturn \
-    -Wstrict-null-sentinel -Woverloaded-virtual -Wsign-promo -funit-at-a-time"
+    -Woverloaded-virtual -Wsign-promo -funit-at-a-time"
+
+if test x$CXX != "xclang++" && x`uname` != `Darwin` ; then
+  # -Wstrict-null-sentinel is not supported under clang or Darwin g++
+  CXX_WARNINGS_TO_TEST="$CXX_WARNINGS_TO_TEST -Wstrict-null-sentinel"
+fi
 
 if test x"${mingw}" == "xno" ; then
   # add the warnings we don't want to do on mingw
-  WARNINGS_TO_TEST="$WARNINGS_TO_TEST  -Weffc++"
+  CXX_WARNINGS_TO_TEST="$CXX_WARNINGS_TO_TEST  -Weffc++"
 fi
 
-for option in $WARNINGS_TO_TEST
+for option in $CXX_WARNINGS_TO_TEST
 do
   SAVE_CXXFLAGS="$CXXFLAGS"
   CXXFLAGS="$CXXFLAGS $option"
