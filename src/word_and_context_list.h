@@ -29,8 +29,17 @@
  * Typically this is used for stop lists and alert lists. 
  */
 
+#ifdef HAVE_UNORDERED_MAP
+#define UNORDERED_MAP std::unordered_map
+#define UNORDERED_MULTIMAP std::unordered_multimap
+#define UNORDERED_SET std::unordered_set
+#else
 #include <tr1/unordered_map>
 #include <tr1/unordered_set>
+#define UNORDERED_MAP std::tr1::unordered_map
+#define UNORDERED_MULTIMAP std::tr1::unordered_multimap
+#define UNORDERED_SET std::tr1::unordered_set
+#endif
 
 class context {
 public:
@@ -72,13 +81,14 @@ inline bool operator ==(const class context &a,const class context &b)
 
 /**
  * the object that holds the word and context list
+ * They aren't atomic, but they are read-only.
  */
 class word_and_context_list {
 private:
-    typedef tr1::unordered_multimap<string,context> stopmap_t;
+    typedef UNORDERED_MULTIMAP<string,context> stopmap_t;
     stopmap_t fcmap;			// maps features to contexts; for finding them
 
-    typedef tr1::unordered_set< string > stopset_t;
+    typedef UNORDERED_SET< string > stopset_t;
     stopset_t context_set;			// presence of a pair in fcmap
 
     beregex_vector patterns;

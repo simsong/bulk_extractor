@@ -2,7 +2,7 @@
 #include "be13_api/bulk_extractor_i.h"
 #include "dig.h"
 #include "be13_api/utils.h"
-//#include "be13_api/atomic_histogram.h"
+#include "histogram.h"
 #include <math.h>
 #include <algorithm>
 
@@ -163,11 +163,10 @@ class sector_classifier {
 
     static const uint8_t BitLockerStart[];
     feature_recorder *bulk;
-    feature_recorder *bulk_tags;
     histogram h;
     const sbuf_t &sbuf;
 public:;
-    sector_classifier(feature_recorder *b1,feature_recorder *b2,const sbuf_t &sbuf_):bulk(b1),bulk_tags(b2),h(),sbuf(sbuf_){}
+    sector_classifier(feature_recorder *b1,feature_recorder *b2,const sbuf_t &sbuf_):bulk(b1),h(),sbuf(sbuf_){}
     double sd_autocorrelation_cosine_variance() const;
     void check_ngram_entropy();
     bool check_bitlocker();
@@ -249,7 +248,7 @@ void sector_classifier::check_ngram_entropy()
 		ss << buf;
 	    }
 	    ss << ")";
-	    bulk_tags->write_tag(sbuf,ss.str());
+	    bulk->write(sbuf.pos0,ss.str(),"");
 	    return;			// ngram is better than entropy
 	}
     }
@@ -266,7 +265,7 @@ void sector_classifier::check_ngram_entropy()
 
     if(sbuf.pagesize<=4096){		// we only tuned for 4096
 	if(ff00_count>2 && h.unique_counts()>=220){
-	    bulk_tags->write_tag(sbuf,JPEG);
+	    bulk->write(sbuf.pos0,JPEG,"");
 	    return;
 	}
     }
@@ -282,7 +281,7 @@ void sector_classifier::check_ngram_entropy()
 	} else {
 	    ss << HUFFMAN;
 	}
-	bulk_tags->write_tag(sbuf,ss.str());
+	bulk->write(sbuf.pos0,ss.str(),"");
     } 
 
     // don't bother recording 'low entropy' unless debuggin
@@ -303,7 +302,7 @@ bool sector_classifier::check_bitlocker()
     /* Look for a bitlocker start */
     if(sbuf.bufsize >= sizeof(BitLockerStart)
        && memcmp(sbuf.buf,BitLockerStart,sizeof(BitLockerStart))==0){
-	bulk->write_tag(sbuf,"BITLOCKER HEADER");
+	bulk->write(sbuf.pos0,"BITLOCKER HEADER","");
         return true;
     }
     return false;
@@ -323,6 +322,8 @@ void scan_bulk(const class scanner_params &sp,const recursion_control_block &rcb
 	sp.info->description	= "perform bulk data scan";
 	sp.info->flags		= scanner_info::SCANNER_DISABLED | scanner_info::SCANNER_WANTS_NGRAMS | scanner_info::SCANNER_NO_ALL;
 	sp.info->feature_names.insert("bulk");
+	sp.info->feature_names.insert("bulk");
+	sp.info->histogram_defs.insert(histogram_def("bulk","","histogram",HistogramMaker::FLAG_MEMORY));
         sp.info->get_config("bulk_block_size",&opt_bulk_block_size,"Block size (in bytes) for bulk data analysis");
 
         debug = sp.info->config->debug;
@@ -332,19 +333,22 @@ void scan_bulk(const class scanner_params &sp,const recursion_control_block &rcb
     }
 
     if(sp.phase==scanner_params::PHASE_INIT){
-        sp.fs.get_name("bulk_tags")->set_in_memory_histogram();
+        sp.fs.get_name("bulk")->set_flag(feature_recorder::FLAG_MEM_HISTOGRAM |
+                                              feature_recorder::FLAG_NO_CONTEXT |
+                                              feature_recorder::FLAG_NO_STOPLIST |
+                                              feature_recorder::FLAG_NO_ALERTLIST |
+                                              feature_recorder::FLAG_NO_FEATURES );
     }
 
     // classify a buffer
     if(sp.phase==scanner_params::PHASE_SCAN){
 
-	feature_recorder *bulk = sp.fs.get_name("bulk");
-	feature_recorder *bulk_tags = sp.fs.get_name("bulk_tags");
+	feature_recorder *bulk      = sp.fs.get_name("bulk");
     
-	if(sp.sbuf.pos0.isRecursive()){
+	//if(sp.sbuf.pos0.isRecursive()){
 	    /* Record the fact that a recursive call was made, which tells us about the data */
-	    bulk_tags->write_tag(sp.sbuf,""); // tag that we found recursive data, not sure what kind
-	}
+	//    bulk->write(sp.sbuf.pos0,"",""); // tag that we found recursive data, not sure what kind
+	//}
 
 	if(sp.sbuf.pagesize < opt_bulk_block_size) return; // can't analyze something that small
 
@@ -354,7 +358,7 @@ void scan_bulk(const class scanner_params &sp,const recursion_control_block &rcb
 
 	for(size_t base=0;base+opt_bulk_block_size<=sp.sbuf.pagesize;base+=opt_bulk_block_size){
 	    sbuf_t sbuf(sp.sbuf,base,opt_bulk_block_size);
-            sector_classifier sc(bulk,bulk_tags,sbuf);
+            sector_classifier sc(bulk,bulk,sbuf);
 	    sc.check_ngram_entropy();
 	    sc.check_bitlocker();
 	}

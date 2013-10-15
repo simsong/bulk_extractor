@@ -189,11 +189,12 @@ fi
 # causes warnings with unistd.h:  -Wnested-externs 
 # Just causes too much annoyance: -Wmissing-format-attribute 
 
-# Check GCC
+# Check GCC and clang
 WARNINGS_TO_TEST="-MD -Wpointer-arith -Wmissing-declarations -Wmissing-prototypes \
     -Wshadow -Wwrite-strings -Wcast-align -Waggregate-return \
     -Wbad-function-cast -Wcast-qual -Wundef -Wredundant-decls -Wdisabled-optimization \
-    -Wfloat-equal -Wmultichar -Wc++-compat -Wmissing-noreturn -funit-at-a-time "
+    -Wfloat-equal -Wmultichar -Wc++-compat -Wmissing-noreturn -funit-at-a-time -Wno-unknown-warning-option \
+    -Qunused-arguments "
 
 if test x"${mingw}" == "xno" ; then
   # add the warnings we do not want to do on mingw
@@ -269,23 +270,25 @@ AC_ARG_ENABLE([mcheck], AS_HELP_STRING([--enable-mcheck], \
 # -Wcast-qual 
 # -Wmissing-format-attribute  --- Just too annoying
 AC_LANG_PUSH(C++)
-WARNINGS_TO_TEST="-Wall -MD -Wpointer-arith \
+AC_CHECK_HEADERS([string])
+
+CXX_WARNINGS_TO_TEST="-Wall -MD -Wpointer-arith \
     -Wshadow -Wwrite-strings -Wcast-align  \
     -Wredundant-decls -Wdisabled-optimization \
     -Wfloat-equal -Wmultichar -Wmissing-noreturn \
-    -Woverloaded-virtual -Wsign-promo -funit-at-a-time"
+    -Woverloaded-virtual -Wsign-promo -funit-at-a-time -Wno-unknown-warning-option -Qunused-arguments"
 
 if test x$CXX != "xclang++" ; then
   # -Wstrict-null-sentinel is not supported under clang
-  WARNINGS_TO_TEST="$WARNINGS_TO_TEST -Wstrict-null-sentinel"
+  CXX_WARNINGS_TO_TEST="$CXX_WARNINGS_TO_TEST -Wstrict-null-sentinel"
 fi
 
 if test x"${mingw}" == "xno" ; then
   # add the warnings we don't want to do on mingw
-  WARNINGS_TO_TEST="$WARNINGS_TO_TEST  -Weffc++"
+  CXX_WARNINGS_TO_TEST="$CXX_WARNINGS_TO_TEST  -Weffc++"
 fi
 
-for option in $WARNINGS_TO_TEST
+for option in $CXX_WARNINGS_TO_TEST
 do
   SAVE_CXXFLAGS="$CXXFLAGS"
   CXXFLAGS="$CXXFLAGS $option"

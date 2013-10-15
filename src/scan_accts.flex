@@ -314,7 +314,7 @@ void scan_accts(const class scanner_params &sp,const recursion_control_block &rc
                 
         yyaccts_lex_destroy(scanner);
     }
-    if(sp.phase==9999){                 // avoids defined but not used
+    if(sp.phase==scanner_params::PHASE_NONE){                 // avoids defined but not used
 	(void)yyunput;			
         (void)yy_fatal_error;
     }

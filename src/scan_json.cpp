@@ -452,11 +452,16 @@ void scan_json(const class scanner_params &sp,const recursion_control_block &rcb
 	}
 	return; 
     }
+    const sbuf_t &sbuf = sp.sbuf;
+    feature_recorder *fr = sp.fs.get_name("json");
+
+    if(sp.phase==scanner_params::PHASE_INIT){
+        fr->set_flag(feature_recorder::FLAG_XML);
+        return;
+    }
+
     if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;
     if(sp.phase==scanner_params::PHASE_SCAN){
-	const sbuf_t &sbuf = sp.sbuf;
-	feature_recorder *fr = sp.fs.get_name("json");
-        fr->set_flag(feature_recorder::FLAG_XML);
 
 	for(size_t pos = 0;pos+1<sbuf.pagesize;pos++){
 	    /* Find the beginning of a json object. This will improve later... */

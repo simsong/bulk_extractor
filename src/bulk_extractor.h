@@ -180,6 +180,7 @@ struct FindOptsStruct {
 };
 extern FindOptsStruct FindOpts;         // singleton
 extern regex_list find_list;
+extern uint64_t debug;
 
 
 /* The global lists for finding, alertting and stopping.

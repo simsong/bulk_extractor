@@ -1,3 +1,23 @@
+2013-10-08  Basic  <simsong@npsair.local>
+
+	* src/scan_net.cpp (p): removed packetset (no longer used)
+
+	* src/be13_api/sbuf.h (stoi64): stoi() removed because it is part of stdc11
+
+2013-10-08  Simson Garfinkel  <simsong@npsair.local>
+
+	* src/be13_api/feature_recorder.h (f): removed tags
+
+2013-10-07  Basic  <simsong@arlington-38-68-232-163.ncr.vt.edu>
+
+	* src/be13_api/plugin.cpp (plugin::phase_histogram): cleaned up printing of newlines during histogram output printing.
+
+	* src/be13_api/feature_recorder.cpp (feature_recorder::write): replace substr with in-place resize
+
+2013-10-07  Basic  <simsong@npsair.local>
+
+	* src/be13_api/feature_recorder.h (class feature_recorder): added MAINTHREAD() to set_flag(), becuase flags should only be set in the main thread. Also moved definition into feature_recorder.cpp, so that the in-memory histogram can be created if that flag is set.
+
 2013-09-25  Basic  <simsong@Mucha.local>
 
 	* src/bulk_extractor.cpp (main): added reporting of MD5 of disk image

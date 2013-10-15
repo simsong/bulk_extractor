@@ -91,7 +91,7 @@ int main(int argc,char **argv)
 
     if(argc!=1) usage();
 
-    opt_scan_bulk_block_size = stoi(be_config["bulk_block_size"]);
+    opt_scan_bulk_block_size = stoi64(be_config["bulk_block_size"]);
 
     feature_file_names_t feature_file_names;
     enable_feature_recorders(feature_file_names);
