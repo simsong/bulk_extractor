@@ -77,6 +77,7 @@ bulk_extractor_SOURCES = \
 	dig.h \
 	histogram.cpp \
 	histogram.h \
+	main.cpp \
 	image_process.cpp \
 	image_process.h \
 	pattern_scanner.cpp \

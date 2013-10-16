@@ -189,6 +189,9 @@ extern uint64_t debug;
 extern word_and_context_list alert_list; /* should be flagged */
 extern word_and_context_list stop_list;  /* should be ignored */
 
+extern scanner_t *scanners_builtin[];
+
+
 /****************************************************************
  *** SCANNER PROCESSORS - operate on the scanners
  ****************************************************************/

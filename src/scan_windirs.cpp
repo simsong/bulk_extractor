@@ -479,6 +479,13 @@ void scan_windirs(const class scanner_params &sp,const recursion_control_block &
     string myString;
     assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
     if(sp.phase==scanner_params::PHASE_STARTUP){
+
+        /* Figure out the current time */
+        time_t t = time(0);
+        struct tm now;
+        gmtime_r(&t,&now);
+        opt_last_year = now.tm_year + 1900 + 5; // allow up to 5 years in the future
+
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	sp.info->name		= "windirs";
         sp.info->author         = "Simson Garfinkel";
