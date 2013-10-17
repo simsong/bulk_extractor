@@ -68,7 +68,6 @@ class BulkExtractor():
             elif flag & FLAG_CARVE:
                 return carve_cb(recorder_name, context, feature)
             return -1
-        print("returning", repr(_wrapped_cb))
         return _wrapped_cb
     def close(self):
         if self.handle is not None:
@@ -91,7 +90,6 @@ class BulkExtractor():
         else:
             callback = self._wrap_cb(self.feature_cb, self.histogram_cb, self.carve_cb)
 
-        print("about to call", repr(callback))
         func(self.handle, callback, source)
 
     # user analysis methods: use of optional cb_ arguments allow for a one-run
