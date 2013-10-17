@@ -124,7 +124,7 @@ namespace email {
       return false;
     }
 
-    const struct {
+    static const struct {
       size_t pos;
       const char* str;
     } checks[] = {
