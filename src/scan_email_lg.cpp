@@ -148,7 +148,11 @@ namespace email {
     };
 
     for (size_t i = 0; i < sizeof(checks)/sizeof(checks[0]); ++i) {
-      if (search(context + checks[i].pos, context + 8, checks[i].str, checks[i].str + strlen(checks[i].str)) != context + 8) {
+      if (search(
+        context + checks[i].pos,
+        context + 8, checks[i].str,
+        checks[i].str + strlen(checks[i].str)
+      ) != context + 8) {
         return false;
       }
     }
