@@ -129,8 +129,11 @@ scanner_t *scanners_builtin[] = {
     0};
 
 
-/* Here is the bulk_extractor API */
+/* Here is the bulk_extractor API
+ * It is under development.
+ */
 struct BEFILE_t {
+    int fd;
 };
 
 typedef struct BEFILE_t BEFILE;
@@ -141,18 +144,24 @@ typedef int be_callback(int32_t flag,
                         const char *context,size_t context_len);
 
 
-BEFILE *bulk_extractor_open()
-{
-    return 0;
+extern "C" {
+    BEFILE *bulk_extractor_open()
+    {
+        BEFILE *bef = (BEFILE *)calloc(1,sizeof(*bef));
+        return bef;
+    }
+    
+    int bulk_extractor_analyze_buf(BEFILE *bef,be_callback cb,uint8_t *buf,size_t buflen)
+    {
+        cb(0,1,"name","feature",7,"context",7);
+        return 0;
+    }
+    
+    int bulk_extractor_close(BEFILE *bef)
+    {
+        free(bef);
+        return 0;
+    }
 }
 
-int bulk_extractor_analyze_buf(BEFILE *bef,be_callback cb,uint8_t *buf,size_t buflen)
-{
-    return 0;
-}
-
-int bulk_extractor_close(BEFILE *bef)
-{
-    return 0;
-}
-
+    

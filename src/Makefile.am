@@ -1,5 +1,5 @@
 bin_PROGRAMS   = bulk_extractor 
-EXTRA_PROGRAMS = stand
+EXTRA_PROGRAMS = stand bulk_extractorlib beapi_demo
 CLEANFILES     = scan_accts.cpp scan_email.cpp scan_gps.cpp scan_base16.cpp *.d
 
 AM_CPPFLAGS = -I${top_srcdir}/src/be13_api
@@ -68,7 +68,11 @@ bulk_scanners = \
 	sbuf_flex_scanner.h \
 	$(flex_scanners) 
 
-bulk_extractor_SOURCES = \
+if RAR_ENABLED
+bulk_scanners += $(RAR_SUPPORT)
+endif
+
+bulk_extractor_nomain = \
 	base64_forensic.cpp \
 	base64_forensic.h \
 	bulk_extractor.cpp \
@@ -77,7 +81,6 @@ bulk_extractor_SOURCES = \
 	dig.h \
 	histogram.cpp \
 	histogram.h \
-	main.cpp \
 	image_process.cpp \
 	image_process.h \
 	pattern_scanner.cpp \
@@ -92,10 +95,12 @@ bulk_extractor_SOURCES = \
 	word_and_context_list.h \
 	$(bulk_scanners) $(TSK3INCS)  $(BE13_API) $(DFXML_WRITER) 
 
-if RAR_ENABLED
-bulk_extractor_SOURCES += $(RAR_SUPPORT)
-endif
+bulk_extractor_SOURCES = $(bulk_extractor_nomain))
 
+bulk_extractorlib_SOURCES = $(bulk_extractor_nomain)
+
+bulk_extractor.so: $(bulk_extractorlib_OBJECTS)
+	$(CXX) -shared -fPIC -o $@ $(LDFLAGS) $(LIBS) $(bulk_extractorlib_OBJECTS)
 
 stand_SOURCES = \
 	dig.cpp \
@@ -106,6 +111,8 @@ stand_SOURCES = \
 	word_and_context_list.cpp \
 	word_and_context_list.h \
 	$(BE13_API)
+
+beapi_demo_SOURCES = beapi_demo.cpp
 
 SUFFIXES = .flex
 

@@ -98,3 +98,4 @@ build_win32
 build_win64
 build_java
 libtool
+src/beapi_demo
