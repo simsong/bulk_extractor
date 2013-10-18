@@ -251,7 +251,7 @@ namespace accts {
       REGEX2_UTF16LE,
       OnlyUTF16LEEncoding,
       DefaultOptions,
-      &Scanner::ccnHitHandler
+      &Scanner::ccnUTF16LEHitHandler
     );
 
     // FIXME: leading context
@@ -275,7 +275,7 @@ namespace accts {
       REGEX3_UTF16LE,
       OnlyUTF16LEEncoding,
       DefaultOptions,
-      &Scanner::ccnHitHandler
+      &Scanner::ccnUTF16LEHitHandler
     );
 
     // FIXME: leading context
@@ -299,7 +299,7 @@ namespace accts {
       REGEX4_UTF16LE,
       OnlyUTF16LEEncoding,
       DefaultOptions,
-      &Scanner::ccnHitHandler
+      &Scanner::ccnUTF16LEHitHandler
     );
 
     // FIXME: leading context
@@ -326,7 +326,7 @@ namespace accts {
       REGEX5_UTF16LE,
       OnlyUTF16LEEncoding,
       DefaultOptions,
-      &Scanner::ccnHitHandler
+      &Scanner::ccnUTF16LEHitHandler
     );
 
     // FIXME: leading context
