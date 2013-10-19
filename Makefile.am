@@ -45,6 +45,7 @@ EXTRA_DIST = \
 	m4/ax_boost_filesystem.m4 \
 	m4/ax_boost_system.m4 \
 	m4/ax_pthread.m4 \
+	bootstrap.sh \
 	$(SRC_WIN_DIST)
 
 ACLOCAL_AMFLAGS = -I m4
