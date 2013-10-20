@@ -95,7 +95,7 @@ bulk_extractor_nomain = \
 	word_and_context_list.h \
 	$(bulk_scanners) $(TSK3INCS)  $(BE13_API) $(DFXML_WRITER) 
 
-bulk_extractor_SOURCES = $(bulk_extractor_nomain))
+bulk_extractor_SOURCES = $(bulk_extractor_nomain) main.cpp
 
 bulk_extractorlib_SOURCES = $(bulk_extractor_nomain)
 

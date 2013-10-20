@@ -33,10 +33,6 @@ AC_PROG_INSTALL
 AC_PROG_LEX
 # LT_INIT([disable-shared])
 
-m4_include([src/dfxml/src/dfxml_configure.m4])
-m4_include([src/be13_api/be13_configure.m4])
-
-
 # Endian check is required for MD5 implementation
 AC_C_BIGENDIAN
 
@@ -95,13 +91,6 @@ if test x"$request_win_installer" == "xyes" ; then
     fi
 fi
 AM_CONDITIONAL([WANT_WIN_INSTALLER], [test x"$has_nsis" == xtrue -a x"$has_javac" == xtrue -a x"$has_jar" == xtrue])
-
-##
-## Standard macros
-##
-AC_TYPE_INT64_T
-AC_SYS_LARGEFILE
-AC_SYS_POSIX_TERMIOS
 
 if test x"$LEX" == x ; then
   AC_MSG_ERROR([flex not required.])
@@ -222,6 +211,15 @@ done
 unset option
 
 ################################################################
+## Includes
+
+m4_include([src/dfxml/src/dfxml_configure.m4])
+m4_include([src/be13_api/be13_configure.m4])
+
+
+
+
+################################################################
 ## lift support
 ## Disabled for 1.3 release
 AC_ARG_ENABLE([lift], AS_HELP_STRING([--enable-lift], [enable CMU LIFT SVM for type identification]),
@@ -234,7 +232,6 @@ AC_ARG_ENABLE([rar],
               [],
 	      [AC_DEFINE(USE_RAR, 1, [Use RAR decompression]) rar="yes"])
 AM_CONDITIONAL([RAR_ENABLED], [test "yes" = "$rar"])
-
 
 
 
@@ -353,6 +350,9 @@ AC_LINK_IFELSE(
 
 # Specific include files and functions for bulk-extractor
 AC_HEADER_STDC
+AC_TYPE_INT64_T
+AC_SYS_LARGEFILE
+AC_SYS_POSIX_TERMIOS
 
 ## Check for headers used by bulk Extractor
 ## do not put pthread here
