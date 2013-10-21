@@ -33,6 +33,12 @@ AC_PROG_INSTALL
 AC_PROG_LEX
 # LT_INIT([disable-shared])
 
+AC_LANG_PUSH(C++)
+# use C++11 mode if available; HAVE_CXX11 is defined in config.h if so.  Don't
+# use the GNU C++11 extensions for portability's sake (noext).
+AX_CXX_COMPILE_STDCXX_11(noext, optional)
+AC_LANG_POP()
+
 # Endian check is required for MD5 implementation
 AC_C_BIGENDIAN
 
