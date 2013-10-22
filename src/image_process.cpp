@@ -14,14 +14,15 @@
 #include "dig.h"
 
 #ifdef HAVE_LIBAFFLIB
-#ifndef HAVE_STL
-#define HAVE_STL			/* needed */
-#endif
-#include <afflib/afflib.h>
-#include <afflib/utils.h>
 #endif
 
 #include "image_process.h"
+#ifdef HAVE_LIBAFFLIB
+#ifndef HAVE_STL
+#define HAVE_STL			/* needed */
+#endif
+#include <afflib/utils.h>
+#endif
 
 #ifndef PATH_MAX
 #define PATH_MAX 65536

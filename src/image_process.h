@@ -146,6 +146,7 @@ inline image_process::iterator & operator++(image_process::iterator &it){
  ****************************************************************/
 
 #ifdef HAVE_LIBAFFLIB
+#pragma GCC diagnostic ignored "-Wreserved-user-defined-literal"               // required for C11
 #include <afflib/afflib.h>
 #include <vector>			
 class process_aff : public image_process {

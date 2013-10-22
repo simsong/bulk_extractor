@@ -239,7 +239,7 @@ std::string RarComponentInfo::to_xml() const
              "<rar_component>"
              "<name>%s</name>"
              "<flags>0x%04X</flags><version>%d</version><compression_method>%s</compression_method>"
-             "<uncompr_size>%"PRIu64"</uncompr_size><compr_size>%"PRIu64"</compr_size><file_attr>0x%X</file_attr>"
+             "<uncompr_size>%" PRIu64 "</uncompr_size><compr_size>%" PRIu64 "</compr_size><file_attr>0x%X</file_attr>"
              "<lastmoddate>%s</lastmoddate><host_os>%s</host_os><crc32>0x%08X</crc32>"
              "</rar_component>",
              name.c_str(), flags, unpack_version,
