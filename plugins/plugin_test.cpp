@@ -7,7 +7,7 @@
 
 
 #include "config.h"                     // from ../config.h
-#include "be13_api/bulk_extractor_i.h"           // from ../src/be13_api/bulk_extractor_i.h
+#include "be13_api/bulk_extractor_i.h"  // from ../src/be13_api/bulk_extractor_i.h
 
 #include <stdio.h>
 #ifdef HAVE_ERR_H

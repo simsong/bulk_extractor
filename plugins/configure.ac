@@ -19,9 +19,6 @@ AC_PROG_CXX
 AC_PROG_INSTALL
 AC_PROG_LEX
 
-m4_include([be13_api/be13_configure.m4])
-m4_include([dfxml/src/dfxml_configure.m4])
-
 ##
 ## Standard macros
 ##
@@ -203,10 +200,14 @@ AC_LANG_POP()
 # Determine UTC date offset
 CPPFLAGS="$CPPFLAGS -DUTC_OFFSET=`date +%z`"
 
+
 ################################################################
 # DFXML support
-AC_CHECK_HEADERS([sys/cdefs.h sys/resource.h pwd.h sys/utsname.h])
-AC_CHECK_FUNCS([localtime_r getuid gethostname getwpuid getrusage mkstemp vasprintf])
+m4_include([dfxml/src/dfxml_configure.m4])
+
+################################################################
+# BE13_API
+m4_include([be13_api/be13_configure.m4])
 
 ################################################################
 # PTHREAD support

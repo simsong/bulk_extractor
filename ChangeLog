@@ -1,3 +1,7 @@
+2013-10-22  Basic  <simsong@Mucha.local>
+
+	* configure.ac: updated for C++ and MacOS Mavericks. Changed version to 1.4.2
+
 2013-10-15  Basic  <simsong@Mucha.local>
 
 	* src/main.cpp (main): removed BULK_EXTRACTOR_DEBUG.
