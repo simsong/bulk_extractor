@@ -68,6 +68,8 @@ bool LightgrepController::addScanner(PatternScanner& scanner) {
           good = true;
         }
       }
+
+//      std::cerr << '\t' << (int)((*h)->Options.FixedString) << '\t' << (int)((*h)->Options.CaseInsensitive) << std::endl;
     }
     if (!good) {
       if (scanner.handleParseError(**h, lgErr)) {
@@ -104,8 +106,7 @@ bool LightgrepController::addUserPatterns(PatternScanner& scanner, CallbackFnTyp
     string contents = string(istreambuf_iterator<char>(file), istreambuf_iterator<char>());
 
     const char* contentsCStr = contents.c_str();
-    if (lg_add_pattern_list(Fsm, PatternInfo, contentsCStr, DefaultEncodingsCStrings, 2, &opts, &err) < 0) {
-
+    if (lg_add_pattern_list(Fsm, PatternInfo, contentsCStr, itr->c_str(), DefaultEncodingsCStrings, 2, &opts, &err) < 0) {
       vector<string> lines;
       istringstream input(contents);
       string line;
