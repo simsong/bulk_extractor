@@ -265,7 +265,7 @@ if __name__=="__main__":
                         help='Process all feature files')
     parser.add_argument('--featurefiles', action='store',
                         help='Specific feature file to process; separate with commas')
-    parser.add_argument('--imagefile', action='store',
+    parser.add_argument('--image_filename', action='store',
                         help='Overwrite location of image file from bulk_extractor_report report.xml file')
     parser.add_argument('--xmlfile', action='store',
                         help="Don't run fiwalk; use the provided XML file instead")
@@ -306,10 +306,10 @@ if __name__=="__main__":
             if len(rundb)==0:
                 raise RuntimeError("\nERROR: No files detected in XML file {}\n".format(args.xmlfile))
             return
-        if args.imagefile:
-            imagefile = args.imagefile
+        if args.image_filename:
+            imagefile = args.image_filename
         else:
-            imagefile = bulk_extractor_reader.BulkReport(args.bulk_extractor_report).imagefile()
+            imagefile = bulk_extractor_reader.BulkReport(args.bulk_extractor_report).image_filename()
         rundb.read_imagefile(imagefile)
         if len(rundb)==0:
             raise RuntimeError("\nERROR: No files detected in image file {}\n".format(imagefile))

@@ -237,7 +237,7 @@ def analyze_outdir(outdir):
     # Print which scanners were run and how long they took
     analyze_reportxml(b.xmldoc)
     
-    hfns = list(b.histograms())
+    hfns = list(b.histogram_files())
     print("")
     print("Histogram Files:        {}".format(len(hfns)))
 

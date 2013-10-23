@@ -29,8 +29,8 @@ def process(out,dname1,dname2):
 
     t = ttable.ttable()
     t.append_data(['bulk_diff.py Version:',bulk_diff_version])
-    t.append_data(['PRE Image:',b1.imagefile()])
-    t.append_data(['POST Image:',b2.imagefile()])
+    t.append_data(['PRE Image:',b1.image_filename()])
+    t.append_data(['POST Image:',b2.image_filename()])
     out.write(t.typeset(mode=mode))
 
     if b1.files.difference(b2.files):
