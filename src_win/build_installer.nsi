@@ -117,7 +117,6 @@ function InstallOnce
         file "../python/cda_tool.py"
         file "../python/dfxml.py"
         file "../python/fiwalk.py"
-        file "../python/histogram.py"
         file "../python/identify_filenames.py"
         file "../python/post_process_exif.py"
         file "../python/report_encodings.py"
@@ -203,11 +202,11 @@ Function un.FailableDelete
 	IfFileExists "$0" FileStillPresent Continue
 
 	FileStillPresent:
-	DetailPrint "Unable to delete file $0, likely because it is in use.  Please close ${APPNAME} and try again."
+	DetailPrint "Unable to delete file $0, likely because it is in use.  Please close all Bulk Extractor files and try again."
 	MessageBox MB_ICONQUESTION|MB_RETRYCANCEL \
 		"Unable to delete file $0, \
-		likely because ${APPNAME} is in use.  \
-		Please close ${APPNAME} and try again." \
+		likely because it is in use.  \
+		Please close all Bulk Extractor files and try again." \
  		/SD IDABORT IDRETRY Start IDABORT InstDirAbort
 
 	# abort
@@ -231,9 +230,11 @@ section "uninstall"
 	Call un.FailableDelete
 	StrCpy $0 "$INSTDIR\64-bit\bulk_extractor.exe"
 	Call un.FailableDelete
-
-
-	StrCpy $0 "$INSTDIR\64-bit\bulk_extractor.exe"
+	StrCpy $0 "$INSTDIR\pdf\BEProgrammersManual.pdf"
+	Call un.FailableDelete
+	StrCpy $0 "$INSTDIR\pdf\BEUsersManual.pdf"
+	Call un.FailableDelete
+	StrCpy $0 "$INSTDIR\pdf\BEWorkedExamplesStandalone.pdf"
 	Call un.FailableDelete
 
 	# uninstall files and links
@@ -252,6 +253,9 @@ section "uninstall"
 	delete "$SMPROGRAMS\${APPNAME}\BEViewer with ${APPNAME} (32-bit).lnk"
 	delete "$SMPROGRAMS\${APPNAME}\BEViewer with ${APPNAME} (64-bit).lnk"
 	delete "$SMPROGRAMS\${APPNAME}\uninstall ${APPNAME}.lnk"
+	delete "$SMPROGRAMS\${APPNAME}\Users Manual.lnk"
+	delete "$SMPROGRAMS\${APPNAME}\Programmers Manual.lnk"
+	delete "$SMPROGRAMS\${APPNAME}\Worked Examples.lnk"
 	rmDir "$SMPROGRAMS\${APPNAME}"
 
 	# delete the uninstaller

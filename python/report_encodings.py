@@ -14,7 +14,6 @@ from collections import Counter,defaultdict
 from statbag import statbag
 import bulk_extractor_reader
 import ttable
-import histogram
 from ttable import tvar
 import glob
 
@@ -23,7 +22,6 @@ ignored_features = ['bulk_tags.txt','wordlist.txt']
 
 # configuration
 MINRECOVERABLEFILES = 100
-emails_per_drive_histogram = histogram.histogram()
 import re
 
 PF  = "1) Plain in File"

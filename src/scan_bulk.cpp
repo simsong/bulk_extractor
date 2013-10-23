@@ -2,14 +2,12 @@
 #include "be13_api/bulk_extractor_i.h"
 #include "dig.h"
 #include "be13_api/utils.h"
+#include "histogram.h"
 #include <math.h>
-
 #include <algorithm>
 
 /**
  * scan_bulk implements the bulk data analysis system.
- * The data analysis system was largely written to solve the DFRWS 2012 challenge.
- * http://www.dfrws.org/2012/challenge/
  * 
  * Method of operation:
  *
@@ -38,37 +36,7 @@ static const std::string HUFFMAN("huffman_compressed");
 
 static int debug=0;
 
-/* Substitution table */
-static struct replace_t {
-    const char *from;
-    const char *to;
-} dfrws2012_replacements[] =  {
-    {"constant(0x00)","null"},
-    {"huffman_compressed","zlib"},
-    {"gzip","zlib"},
-    {0,0}
-};
-
-/* Feature indicator table */
-static struct feature_indicators_t {
-    const char *feature_file_name;
-    const char *feature_content;
-    const char *dfrws_type;
-}  feature_indicators[] = {
-    {"aes_keys",0,"aeskey"},
-    {"elf","","elf_executable"},
-    {"exif","<exif>","jpg"},
-    {"json",0,"json"},
-    {"kml",0,"xml-kml"},
-    {"url",0,"html"},
-    {"vcard",0,"txt-vcard"},
-    {"windirs","fileobject src='mft'","fs-ntfs"},
-    {"windirs","fileobject src='fat'","fs-fat"},
-    {"winpe",0,"ms-win-prefetch"},
-    {0,0,0},
-};
-
-
+#if 0
 /* Voting on the contents of each sector */
 class sector_typetag {
 public:
@@ -102,169 +70,13 @@ std::ostream & operator<< (std::ostream &os, const sector_typetag &ss) {
 };
 typedef vector<sector_typetag> sector_typetags_vector_t; //
 sector_typetags_vector_t sector_typetags;		      // what gets put where
+#endif
+
 
 static size_t opt_bulk_block_size = 512;	// 
 
-static void bulk_process_feature_file(const std::string &fn)
-{
-    if(ends_with(fn,".txt")==false) return; // don't process binary files
-    if(ends_with(fn,"_histogram.txt")==true) return; // ignore histogram files
-
-    const string features(fn.substr(fn.rfind('/')+1,fn.size()-fn.rfind('/')-5));
-    const string name(features+": ");
-    const string SPACE(" ");
-    const string UNKNOWN("UNKNOWN");
-    bool tagfile = ends_with(fn,"_tags.txt");
-    ifstream f(fn.c_str());
-    if(!f.is_open()){
-	cerr << "Cannot open tag input file: " << fn << "\n";
-	return;
-    }
-    try {
-	string line;
-	while(getline(f,line)){
-	    if(line.size()==0 || line[0]=='#' || line.substr(0,4)=="\357\273\277#") continue;
-	    vector<string> fields = split(line,'\t'); // fields of the feature file
-	    if(fields.size()<2) continue;	      // improper formatting
-	    std::string &taglocation  = fields[0];
-	    std::string &tagtype = fields[1];
-	    uint64_t offset = stoi64(taglocation);
-	    uint64_t sector =  offset / opt_bulk_block_size;
-
-	    /* If the array hasn't been expanded to the point of this element, expand it with blanks */
-	    while(sector > sector_typetags.size()){
-		sector_typetags.push_back(sector_typetag()); // expand to fill gap
-	    }
-
-	    if(tagfile){		// first pass
-		/* Process a tag */
-		vector<string> vals  = split(taglocation,':');
-		
-		if(vals.size()!=2){
-		    std::cerr << "Invalid tag file line: " << line << " (size=" << vals.size() << ")\n";
-		    exit(1);
-		}
-
-		uint32_t len = stoi(vals[1]);
-
-		// If no data for this sector, simply append this type
-		// and then continue
-		if(sector_typetags.size()==sector){ 
-		    sector_typetags.push_back(sector_typetag(len,tagtype,string("")));
-		    continue;
-		} 
-
-		// We have new data for the same element. Which is better?
-		if(sector_typetags[sector].specificity() < sector_typetag::specificity(tagtype)){
-		    // New is more specific than the old.
-		    // Preserve the old one 
-		    sector_typetags[sector].scomment = sector_typetags[sector].stype + string("; ") + sector_typetags[sector].scomment;
-		    sector_typetags[sector].stype = tagtype; // specify new tag type
-		} else {
-		    // New is less specific than the old, so just make new type a comment.
-		    sector_typetags[sector].scomment = tagtype + string("; ") + sector_typetags[sector].scomment;
-		}
-		continue;
-	    }
-	    /* Process a feature, which will add specificity to the tag */
-	    if(sector_typetags.size()==sector){ 
-		/* Hm... No tag (and all tags got processed first), so this is unknown */
-		sector_typetags.push_back(sector_typetag(opt_bulk_block_size,UNKNOWN,SPACE));
-	    } 
-	    /* append what we've learned regarding this feature */
-	    
-	    // If we got an MD5 as field1 and there is a second field, go with that
-	    
-	    sector_typetag &s = sector_typetags[sector];
-	    int field = 1;
-	    if(fields.size()>2 && fields[1].size()==32 && fields[2].size()>0 && fields[2][0]=='<'){
-		field = 2;		// go with the second field
-	    }
-	    s.scomment += " " + name + fields[field];
-	    
-	    // append any XML if it is present
-	    if(field==1 && fields.size()>2 && fields[2].size()>0 && fields[2][0]=='<'){
-		s.scomment += " " + name + " " + fields[2];
-	    }
-
-	    // Scan through the feature indicator table and if we find a match note the type
-	    for(int i=0;feature_indicators[i].feature_file_name;i++){
-		if(features!=feature_indicators[i].feature_file_name) continue;
-		if(feature_indicators[i].feature_content==0
-		   || fields[1].find(feature_indicators[i].feature_content)!=string::npos
-		   || fields[2].find(feature_indicators[i].feature_content)!=string::npos){
-		    s.stype = pos0_t(fields[0]).alphaPart();
-		    if(s.stype.size()>1){
-			char lastchar = s.stype.at(s.stype.size()-1);
-			if(lastchar!='-' && lastchar!='/') s.stype += string("-");
-		    }
-		    s.stype += feature_indicators[i].dfrws_type;
-		}
-	    }
-	}
-    }
-    catch (const std::exception &e) {
-	cerr << "ERROR: " << e.what() << " processing tagfile " << fn << "\n";
-    }
-}
-
-#ifdef WIN32
-static void bulk_process_feature_file(const dig::filename_t &fn16)
-{
-    std::string fn8;
-    utf8::utf16to8(fn16.begin(),fn16.end(),back_inserter(fn8));
-    bulk_process_feature_file(fn8);
-}
-#endif
-
-static void dfrws2012_bulk_process_dump()
-{
-    for(size_t i=0;i<sector_typetags.size();i++){
-	sector_typetag &s = sector_typetags[i];
-	uint64_t    offset = i * opt_bulk_block_size;
-	std::string ctype = (s.stype.size()>0 ? s.stype : "UNRECOGNIZED CONTENT");
-	bool print_comment = s.scomment.size() > 0;
-
-	if(ctype.substr(0,CONSTANT.size())==CONSTANT) { // rule 1 - Constant has no comment
-	    print_comment = false;
-	}
-
-	/* Leading slash gets removed */
-	if(ctype.at(0)=='/') ctype.erase(0,1);
-
-	/* Identifiers get moved to lower case and slashes get changed to dashes */
-	for(size_t j=0;j<ctype.size();j++){
-	    if(isupper(ctype[j])) ctype[j] = tolower(ctype[j]);
-	    if(ctype[j]=='/') ctype[j]='-';
-	}
-	
-	/* Remove anything inside braces */
-	while(true){
-	    size_t open_br = ctype.find('{');
-	    if(open_br==std::string::npos) break;
-	    if(open_br>0 && ctype[open_br-1]==' ') open_br--; // gobble the space too
-	    size_t close_br = ctype.find('}',open_br);
-	    if(close_br != std::string::npos){
-		ctype.replace(open_br,close_br,"");
-	    }
-	}
-
-	/* Process the replacement array */
-	for(const replace_t *rep = dfrws2012_replacements;rep->from;rep++){
-	    size_t loc = ctype.find(rep->from);
-	    if(loc!=std::string::npos){
-		ctype.replace(loc,strlen(rep->from),rep->to);
-	    }
-	}
-
-	std::cout << offset << " " << ctype ;
-	if(print_comment) std::cout << " # " << s.scomment;
-	std::cout << "\n";
-    }
-}
 
 /* Start of bitlocker protected volume */
-static uint8_t BitLockerStart[] = {0xEB,0x52,0x90,0x2D,0x46,0x56,0x45,0x2D,0x46,0x53,0x2D};
 float  opt_high_entropy         = 7.0;	// the level at which we alert
 bool   opt_low_entropy		= false;  // true if we report low entropy
 float  opt_MinimumCosineVariance = 0.999; // above this is random; below is huffman
@@ -340,13 +152,37 @@ public:;
 vector<float> histogram::entropy_array;	// where things get store
 
 
+/**
+ * classify an sbuf and report the results.
+ */
+class sector_classifier {
+    // default copy construction and assignment are meaningless
+    // and not implemented
+    sector_classifier(const sector_classifier &);
+    sector_classifier &operator=(const sector_classifier &);
+
+    static const uint8_t BitLockerStart[];
+    feature_recorder *bulk_fr;
+    histogram h;
+    const sbuf_t &sbuf;
+    void check_ngram_entropy();
+    bool check_bitlocker();
+public:;
+    sector_classifier(feature_recorder *b,const sbuf_t &sbuf_):bulk_fr(b),h(),sbuf(sbuf_){}
+    double sd_autocorrelation_cosine_variance() const;
+    void run() {
+        check_ngram_entropy();
+        check_bitlocker();
+    }
+};
+const uint8_t sector_classifier::BitLockerStart[] = {0xEB,0x52,0x90,0x2D,0x46,0x56,0x45,0x2D,0x46,0x53,0x2D};
+
 /* 
  * This is currently a quick-and-dirty tester for the random vs. huffman characterizer.
  * The goal is to turn it into the general purpose production framework.
- * Returns true if 
  */
 
-double sd_autocorrelation_cosine_variance(const sbuf_t &sbuf,const histogram &sbufhist)
+double sector_classifier::sd_autocorrelation_cosine_variance() const
 {
     if(sbuf.bufsize<sd_acv_min_buf) return 0;
     if(sbuf.bufsize==0) return 0;
@@ -366,16 +202,16 @@ double sd_autocorrelation_cosine_variance(const sbuf_t &sbuf,const histogram &sb
 
 	/* Now compute the cosine similarity */
 	double dotproduct = 0.0;
-	for(size_t i=0; i < sbufhist.counts.size()  && i < autohist.counts.size() && i<256;
+	for(size_t i=0; i < h.counts.size()  && i < autohist.counts.size() && i<256;
 	    i++){
-	    dotproduct += sbufhist.counts[i]->count * autohist.counts[i]->count;
+	    dotproduct += h.counts[i]->count * autohist.counts[i]->count;
 	}
 
 	double mag_squared1 = 0.0;
 	double mag_squared2 = 0.0;
 	for(size_t i=0;i<256;i++){
-	    if(i < sbufhist.counts.size()){
-		mag_squared1 += sbufhist.counts[i]->count * sbufhist.counts[i]->count;
+	    if(i < h.counts.size()){
+		mag_squared1 += h.counts[i]->count * h.counts[i]->count;
 	    }
 	    if(i < autohist.counts.size()){
 		mag_squared2 += autohist.counts[i]->count * autohist.counts[i]->count;
@@ -396,7 +232,7 @@ double sd_autocorrelation_cosine_variance(const sbuf_t &sbuf,const histogram &sb
  * http://simson.net/clips/academic/2010.DFRWS.SmallBlockForensics.pdf
  */
 
-static inline void bulk_ngram_entropy(const sbuf_t &sbuf,feature_recorder *bulk,feature_recorder *bulk_tags)
+void sector_classifier::check_ngram_entropy()
 {
     /* Quickly compute the histogram */ 
 
@@ -416,7 +252,7 @@ static inline void bulk_ngram_entropy(const sbuf_t &sbuf,feature_recorder *bulk,
 		ss << buf;
 	    }
 	    ss << ")";
-	    bulk_tags->write_tag(sbuf,ss.str());
+	    bulk_fr->write(sbuf.pos0,ss.str(),"");
 	    return;			// ngram is better than entropy
 	}
     }
@@ -424,7 +260,6 @@ static inline void bulk_ngram_entropy(const sbuf_t &sbuf,feature_recorder *bulk,
 
     /* Couldn't find ngram; check entropy and FF00 counts...*/
     size_t ff00_count=0;
-    histogram h;
     h.add(sbuf.buf,sbuf.pagesize);
     h.calc_distribution();		
 
@@ -434,7 +269,7 @@ static inline void bulk_ngram_entropy(const sbuf_t &sbuf,feature_recorder *bulk,
 
     if(sbuf.pagesize<=4096){		// we only tuned for 4096
 	if(ff00_count>2 && h.unique_counts()>=220){
-	    bulk_tags->write_tag(sbuf,JPEG);
+	    bulk_fr->write(sbuf.pos0,JPEG,"");
 	    return;
 	}
     }
@@ -443,15 +278,16 @@ static inline void bulk_ngram_entropy(const sbuf_t &sbuf,feature_recorder *bulk,
 
     stringstream ss;
     if(entropy>opt_high_entropy){
-	float cosineVariance = sd_autocorrelation_cosine_variance(sbuf,h);
+	float cosineVariance = sd_autocorrelation_cosine_variance();
 	if(debug & DEBUG_INFO) ss << "high entropy ( S=" << entropy << ")" << " ACV= " << cosineVariance << " ";
 	if(cosineVariance > opt_MinimumCosineVariance){
 	    ss << RANDOM;
 	} else {
 	    ss << HUFFMAN;
 	}
-	bulk_tags->write_tag(sbuf,ss.str());
+	bulk_fr->write(sbuf.pos0,ss.str(),"");
     } 
+
     // don't bother recording 'low entropy' unless debuggin
     if(entropy<=opt_high_entropy && opt_low_entropy) {
 	ss << "low entropy ( S=" << entropy << ")";
@@ -465,85 +301,72 @@ static inline void bulk_ngram_entropy(const sbuf_t &sbuf,feature_recorder *bulk,
 }
     
 
-static inline void bulk_bitlocker(const sbuf_t &sbuf,feature_recorder *bulk,feature_recorder *bulk_tags)
+bool sector_classifier::check_bitlocker()
 {
     /* Look for a bitlocker start */
     if(sbuf.bufsize >= sizeof(BitLockerStart)
        && memcmp(sbuf.buf,BitLockerStart,sizeof(BitLockerStart))==0){
-	bulk->write_tag(sbuf,"BITLOCKER HEADER");
+	bulk_fr->write(sbuf.pos0,"BITLOCKER HEADER","");
+        return true;
     }
+    return false;
 }
 
-
-#ifndef _TEXT 
-#define _TEXT(x) x
-#endif
-
-static bool dfrws_challenge = false;
 
 extern "C"
 void scan_bulk(const class scanner_params &sp,const recursion_control_block &rcb)
 {
     assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);      
-    // startup
+
     if(sp.phase==scanner_params::PHASE_STARTUP){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	sp.info->name		= "bulk";
 	sp.info->author		= "Simson Garfinkel";
 	sp.info->description	= "perform bulk data scan";
-	sp.info->flags		= scanner_info::SCANNER_DISABLED | scanner_info::SCANNER_WANTS_NGRAMS | scanner_info::SCANNER_NO_ALL;
+	sp.info->flags		= (scanner_info::SCANNER_DISABLED
+                                   | scanner_info::SCANNER_WANTS_NGRAMS | scanner_info::SCANNER_NO_ALL);
 	sp.info->feature_names.insert("bulk");
-	sp.info->feature_names.insert("bulk_tags");
+	sp.info->feature_names.insert("bulk");
+	sp.info->histogram_defs.insert(histogram_def("bulk","","histogram",HistogramMaker::FLAG_MEMORY));
         sp.info->get_config("bulk_block_size",&opt_bulk_block_size,"Block size (in bytes) for bulk data analysis");
 
         debug = sp.info->config->debug;
-
 	histogram::precalc_entropy_array(opt_bulk_block_size);
-
-        sp.info->get_config("DFRWS2012",&dfrws_challenge,"True if running DFRWS2012 challenge code");
         return; 
     }
+
+    if(sp.phase==scanner_params::PHASE_INIT){
+        sp.fs.get_name("bulk")->set_flag(feature_recorder::FLAG_MEM_HISTOGRAM |
+                                              feature_recorder::FLAG_NO_CONTEXT |
+                                              feature_recorder::FLAG_NO_STOPLIST |
+                                              feature_recorder::FLAG_NO_ALERTLIST |
+                                              feature_recorder::FLAG_NO_FEATURES );
+    }
+
     // classify a buffer
     if(sp.phase==scanner_params::PHASE_SCAN){
 
-	feature_recorder *bulk = sp.fs.get_name("bulk");
-	feature_recorder *bulk_tags = sp.fs.get_name("bulk_tags");
+	feature_recorder *bulk_fr      = sp.fs.get_name("bulk");
     
-
-	if(sp.sbuf.pos0.isRecursive()){
+	//if(sp.sbuf.pos0.isRecursive()){
 	    /* Record the fact that a recursive call was made, which tells us about the data */
-	    bulk_tags->write_tag(sp.sbuf,""); // tag that we found recursive data, not sure what kind
-	}
+	//    bulk_fr->write(sp.sbuf.pos0,"",""); // tag that we found recursive data, not sure what kind
+	//}
 
 	if(sp.sbuf.pagesize < opt_bulk_block_size) return; // can't analyze something that small
 
 	// Loop through the sbuf in opt_bulk_block_size sized chunks
 	// for each one, examine the entropy and scan for bitlocker (unfortunately hardcoded)
 	// This needs to have a general plug-in architecture
+
 	for(size_t base=0;base+opt_bulk_block_size<=sp.sbuf.pagesize;base+=opt_bulk_block_size){
 	    sbuf_t sbuf(sp.sbuf,base,opt_bulk_block_size);
-	    bulk_ngram_entropy(sbuf,bulk,bulk_tags);
-	    bulk_bitlocker(sbuf,bulk,bulk_tags);
+            sector_classifier sc(bulk_fr,sbuf);
+            sc.run();
 	}
     }
-    // shutdown --- combine the results if we are in DFRWS mode
-    if(sp.phase==scanner_params::PHASE_SHUTDOWN){
-	if(dfrws_challenge){
-	    feature_recorder *bulk = sp.fs.get_name("bulk");
-	    // First process the bulk_tags and lift_tags
-	    bulk_process_feature_file(bulk->outdir + "/bulk_tags.txt"); 
-	    bulk_process_feature_file(bulk->outdir + "/lift_tags.txt"); 
 
-	    // Process the remaining feature files
-	    dig d(bulk->outdir);
-	    for(dig::const_iterator it = d.begin(); it!=d.end(); ++it){
-		if(ends_with(*it,_TEXT("_tags.txt"))==false){
-		    bulk_process_feature_file(*it);
-		}
-	    }
-	    dfrws2012_bulk_process_dump();
-	}
-	return;		// no cleanup
+    if(sp.phase==scanner_params::PHASE_SHUTDOWN){
     }
 }
 

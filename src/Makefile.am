@@ -1,5 +1,5 @@
 bin_PROGRAMS   = bulk_extractor 
-EXTRA_PROGRAMS = stand
+EXTRA_PROGRAMS = stand bulk_extractorlib beapi_demo
 CLEANFILES     = scan_accts.cpp scan_email.cpp scan_gps.cpp scan_base16.cpp *.d
 
 AM_CPPFLAGS = -I${top_srcdir}/src/be13_api
@@ -7,9 +7,12 @@ AM_CPPFLAGS = -I${top_srcdir}/src/be13_api
 # http://stackoverflow.com/questions/11438613/conditional-subdir-objects
 AUTOMAKE_OPTIONS = subdir-objects
 
+# bring in defs from two included projects
 include dfxml/src/Makefile.defs
 include be13_api/Makefile.defs
+include rar/Makefile.defs
 
+# This was for building a test program
 jpegdump: scan_exif.cpp be13_api/sbuf.o be13_api/unicode_escape.o 
 	g++ -o jpegdump $(CPPFLAGS) $(CXXFLAGS) $(AM_CPPFLAGS) -I.. -DDUMPTEST scan_exif.cpp be13_api/sbuf.o be13_api/unicode_escape.o
 
@@ -32,31 +35,20 @@ flex_scanners = \
 	scan_email.flex \
 	scan_gps.flex 
 
-RAR_SUPPORT = \
-        rar/arccmt.cpp rar/archive.cpp rar/archive.hpp rar/arcread.cpp rar/array.hpp rar/cmddata.cpp \
-        rar/cmddata.hpp rar/coder.cpp rar/coder.hpp rar/compress.hpp rar/crc.cpp rar/crc.hpp rar/encname.cpp \
-        rar/encname.hpp rar/errhnd.cpp rar/errhnd.hpp rar/extinfo.cpp rar/extinfo.hpp rar/extract.cpp \
-        rar/extract.hpp rar/file.cpp rar/filefn.cpp rar/filefn.hpp rar/file.hpp rar/filestr.cpp rar/filestr.hpp \
-        rar/getbits.cpp rar/getbits.hpp rar/global.cpp rar/global.hpp rar/headers.hpp rar/loclang.hpp rar/match.cpp \
-        rar/match.hpp rar/model.cpp rar/model.hpp rar/suballoc.cpp rar/suballoc.hpp rar/options.cpp rar/options.hpp \
-        rar/os.hpp rar/pathfn.cpp rar/pathfn.hpp rar/rar.cpp rar/rardefs.hpp rar/rar.hpp rar/rarlang.hpp rar/raros.hpp \
-        rar/rarpch.cpp rar/rartypes.hpp rar/rarvmtbl.cpp rar/rawread.cpp rar/rawread.hpp rar/rdwrfn.cpp rar/rdwrfn.hpp \
-        rar/resource.cpp rar/resource.hpp rar/rs.cpp rar/rs.hpp rar/savepos.cpp rar/savepos.hpp rar/smallfn.cpp \
-        rar/smallfn.hpp rar/strfn.cpp rar/strfn.hpp rar/strlist.cpp rar/strlist.hpp \
-        rar/system.cpp rar/system.hpp rar/timefn.cpp rar/timefn.hpp rar/unicode.cpp \
-        rar/unicode.hpp rar/unpack.cpp rar/unpack.hpp rar/unpack15.hpp rar/unpack20.hpp \
-        rar/version.hpp
-
 bulk_scanners = \
+	scan_accts_lg.cpp \
 	scan_aes.cpp \
+	scan_base16_lg.cpp \
 	scan_base64.cpp \
 	scan_bulk.cpp\
 	scan_ccns2.cpp scan_ccns2.h \
 	scan_elf.cpp \
+	scan_email_lg.cpp \
 	scan_exif.cpp exif_reader.h exif_reader.cpp exif_entry.cpp\
 	scan_exiv2.cpp \
 	scan_extx.cpp \
 	scan_find.cpp \
+	scan_gps_lg.cpp \
 	scan_gzip.cpp \
 	scan_hiberfile.cpp pyxpress.c pyxpress.h \
 	scan_json.cpp \
@@ -73,10 +65,14 @@ bulk_scanners = \
 	scan_wordlist.cpp \
 	scan_xor.cpp \
 	scan_zip.cpp \
-        sbuf_flex_scanner.h \
+	sbuf_flex_scanner.h \
 	$(flex_scanners) 
 
-bulk_extractor_SOURCES = \
+if RAR_ENABLED
+bulk_scanners += $(RAR_SUPPORT)
+endif
+
+bulk_extractor_nomain = \
 	base64_forensic.cpp \
 	base64_forensic.h \
 	bulk_extractor.cpp \
@@ -87,18 +83,24 @@ bulk_extractor_SOURCES = \
 	histogram.h \
 	image_process.cpp \
 	image_process.h \
-	threadpool.cpp \
-	threadpool.h \
+	pattern_scanner.cpp \
+	pattern_scanner.h \
+	pattern_scanner_utils.cpp \
+	pattern_scanner_utils.h \
 	phase1.h \
 	phase1.cpp \
+	threadpool.cpp \
+	threadpool.h \
 	word_and_context_list.cpp \
 	word_and_context_list.h \
 	$(bulk_scanners) $(TSK3INCS)  $(BE13_API) $(DFXML_WRITER) 
 
-if RAR_ENABLED
-bulk_extractor_SOURCES += $(RAR_SUPPORT)
-endif
+bulk_extractor_SOURCES = $(bulk_extractor_nomain) main.cpp
 
+bulk_extractorlib_SOURCES = $(bulk_extractor_nomain)
+
+bulk_extractor.so: $(bulk_extractorlib_OBJECTS)
+	$(CXX) -shared -fPIC -o $@ $(LDFLAGS) $(LIBS) $(bulk_extractorlib_OBJECTS)
 
 stand_SOURCES = \
 	dig.cpp \
@@ -109,6 +111,8 @@ stand_SOURCES = \
 	word_and_context_list.cpp \
 	word_and_context_list.h \
 	$(BE13_API)
+
+beapi_demo_SOURCES = beapi_demo.cpp
 
 SUFFIXES = .flex
 

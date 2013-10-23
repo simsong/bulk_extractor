@@ -1,0 +1,76 @@
+HISTORIC PERFORMANCE STATISTICS
+
+This section tracks how performance of bulk_extractor has changed over
+time.  We update it with each new release
+
+NOTE: We recommend compiling Version 1.4 with -O3 under GCC. Please
+use version GCC 4.7 or above. One a Mac you may wish to use clang.
+
+Use these configure flags to compile with a different optimization: 
+
+  --without-opt           Drop all -O C flags
+  --without-o3            Do not force O3 optimization; use default level
+
+
+
+Disk image: /corp/nps/drives/nps-2009-ubnist1/ubnist1.gen3.E01
+     	    /corp/nps/drives/nps-2009-ubnist1/ubnist1.gen3.E02
+
+	    Media size:		1.9 GiB (2106589184 bytes)
+	    MD5:  		49a775d8b109a469d9dd01dc92e0db9c
+	    
+Hardware:   MacBook Pro 2 Ghz Intel Core i7, 8GB 1333 Mhz DDR3
+	    512GB SSD (Simson's Laptop "Mucha"), 
+
+Current and Historic Times with no tuning [1]: 
+
+MacOS 10.8.0; LLVM build 2336.11.00; -O3
+
+version 1.4:    144 seconds (14.59 MBytes/sec)  (-O3; )
+version 1.3:    185 seconds (11.34 MBytes/sec)  (-O3; )
+version 1.2.0:  141 seconds (14.9 MBytes/sec)   (-O3; )
+version 1.1.3:  171 seconds (12.3 MBytes/sec)   (-O3; AES disabled)
+version 1.0.7:  256 seconds (8.22 MBytes/sec)   (-O3; AES disabled; 
+
+MacOS 10.7.8; LLVM build 2336.1.00; No optimization
+
+version 1.2.0:	350 seconds (5.72 MBytes/sec)
+version 1.1.3:	468 seconds (4.28 MBytes/sec)
+
+Windows 7, same hardware ("boot camp"):
+
+version 1.4: TBD
+version 1.3:    198 seconds (10.6 MBytes/sec)  (-O3; AES enabled; 32bit)
+version 1.3:    186 seconds (11.33 MBytes/sec)  (-O3; AES enabled; 64bit)
+version 1.2.0: 	207.4 seconds (9.69 MBytes/sec, [2])
+
+
+
+%% BEGIN NO FILL
+
+Normalized Testing Results:
+
+
+v1.4.0:
+
+Windows 7       43.5 MBytes/sec; 5.43 MBytes/s/c (CPU Bound)  2013-09-10 [A]
+Windows 7       48.4 MBytes/sec; 6.05 MBytes/s/c (CPU Bound)  2013-09-13 [B]
+MacOS gcc 4.2.1 43.7 MBytes/sec; 5.46 MBytes/s/c (CPU Bound)  2013-09-10 [A]
+MacOS clang 4.0 46.5 MBytes/sec; 5.81 MBytes/s/c (CPU Bound)  2013-09-10 [A]
+MacOS clang 4.0 48.0 MBytes/sec; 6.01 MBytes/s/c (CPU Bound)  2013-09-13 [B]
+MacOS gcc 4.2.1 51.2 MBytes/sec; 6.40 MBytes/s/c (CPU Bound)  2013-09-14 [B]
+MacOS gcc 48    53.1 MBytes/sec; 6.64 MBytes/s/c (CPU Bound)  2013-09-14 [B]
+
+Testing hardware and image:
+
+[A] Macbook Pro 'DF8Y 2.0Ghz i7 16GiB RAM SSD (Mucha);          domexusers
+[B] Macbook Pro 'DV7P 2.4Ghz i7  8GiB RAM 7200RPM HD (NPS 15"); domexusers
+
+
+Notes: 
+1 - Times are for running bulk_extractor with default tuning, no options.
+
+1 - Times reported are the fastest of three consecutive runs. [We care
+about maximum possible performance, not typical performance.]  
+
+2 - bulk_extractor 1.2.0 scan_exiv was disabled under Windows

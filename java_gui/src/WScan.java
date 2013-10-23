@@ -565,7 +565,7 @@ public class WScan {
     }
     if (wScanBoxedControls.useSettableOptions
      && wScanBoxedControls.settableOptions.length() > 0) {
-      String[] settableOptions = wScanBoxedControls.settableOptions.split("\\s");
+      String[] settableOptions = wScanBoxedControls.settableOptions.split("\\|");
       for (String optionName : settableOptions) {
         cmd.add("-S");
         cmd.add(optionName);

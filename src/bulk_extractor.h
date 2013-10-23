@@ -172,12 +172,25 @@ using namespace std;
 #include <be13_api/beregex.h>
 #include "word_and_context_list.h"
 
+/* Find options */
+struct FindOptsStruct {
+    FindOptsStruct():Files(),Patterns(){};
+    std::vector<std::string> Files;     // accumulates pattern files
+    std::vector<std::string> Patterns;  // accumulates cmdline patterns
+};
+extern FindOptsStruct FindOpts;         // singleton
+extern regex_list find_list;
+extern uint64_t debug;
+
+
 /* The global lists for finding, alertting and stopping.
  * Is there a way to get these out of the global extern space?
  */
-extern regex_list find_list;      // what scan_find should find
 extern word_and_context_list alert_list; /* should be flagged */
 extern word_and_context_list stop_list;  /* should be ignored */
+
+extern scanner_t *scanners_builtin[];
+
 
 /****************************************************************
  *** SCANNER PROCESSORS - operate on the scanners
@@ -200,11 +213,7 @@ extern "C" scanner_t scan_base64;
 extern "C" scanner_t scan_vcard;
 extern "C" scanner_t scan_lift;
 extern "C" scanner_t scan_extx;
-/* Special support for find */
 extern "C" scanner_t scan_find;
-
-void add_find_pattern(const string &pat);
-void process_find_file(const char *findfile);
 
 #ifdef HAVE_EXIV2
 extern "C" scanner_t scan_exiv2;
@@ -219,7 +228,13 @@ extern "C" scanner_t scan_exif;
 extern "C" scanner_t scan_gzip;
 extern "C" scanner_t scan_hiberfile;
 extern "C" scanner_t scan_json;
+#ifdef HAVE_LIBLIGHTGREP
+extern "C" scanner_t scan_accts_lg;
+extern "C" scanner_t scan_base16_lg;
+extern "C" scanner_t scan_email_lg;
+extern "C" scanner_t scan_gps_lg;
 extern "C" scanner_t scan_lightgrep;
+#endif
 extern "C" scanner_t scan_pdf;
 extern "C" scanner_t scan_winpe;
 extern "C" scanner_t scan_winprefetch;

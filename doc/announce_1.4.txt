@@ -1,6 +1,5 @@
 		    Announcing bulk_extractor 1.4.
 			    July 1, 2013
-                               -DRAFT-
 
 bulk_extractor Version 1.4 has been released for Linux, MacOS and Windows.
 

@@ -61,8 +61,9 @@ public:
 
 class HistogramMaker  {
 public:
-    static const int FLAG_LOWERCASE=0x01;
-    static const int FLAG_NUMERIC=0x02;	// digits only
+    static const int FLAG_LOWERCASE= 0x01;
+    static const int FLAG_NUMERIC  = 0x02;                     // digits only
+    static const int FLAG_MEMORY   = 0x1000;                  // use in-memory histogram
     static uint32_t debug_histogram_malloc_fail_frequency;    // for debugging, make malloc fail sometimes
 
     /** The ReportElement is used for creating the report of histogram frequencies.

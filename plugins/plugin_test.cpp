@@ -7,7 +7,7 @@
 
 
 #include "config.h"                     // from ../config.h
-#include "be13_api/bulk_extractor_i.h"           // from ../src/be13_api/bulk_extractor_i.h
+#include "be13_api/bulk_extractor_i.h"  // from ../src/be13_api/bulk_extractor_i.h
 
 #include <stdio.h>
 #ifdef HAVE_ERR_H
@@ -116,8 +116,8 @@ feature_recorder *feature_recorder_set::get_name(const std::string &name) { retu
 feature_recorder *feature_recorder_set::get_alert_recorder() { return 0;}
 
 
-feature_recorder_set::feature_recorder_set(uint32_t f):flags(f),input_fname(),
-                                                       outdir(),frm(),Mlock(),seen_set(),seen_set_lock(),scanner_stats()
+feature_recorder_set::feature_recorder_set(uint32_t f):flags(f),seen_set(),input_fname(),
+                                                       outdir(),frm(),scanner_stats()
 {
     /* not here */
 }

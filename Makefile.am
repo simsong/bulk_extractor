@@ -3,16 +3,24 @@
 # Makefile.in is transformed by "configure" to create Makefile
 #
 
+# Bring in the defines from src_win (mostly SRC_WIN_DIST)
+SRC_WIN=src_win/
+include src_win/Makefile
+
+
+# These two conditionals are set by configure. If they, 
+# they cause a "make" in the top-level to automatically run make in the subdirs
 if WANT_BE_VIEWER
 BE_VIEWER_DIR = java_gui
 endif
 
-if WANT_WIN_INSTALLER
-SRC_WIN=src_win
-include src_win/Makefile
-endif
+## Note: to build the windows installer you must go into the directory,
+## since it is not using automake
+## if WANT_WIN_INSTALLER
+## SRC_WIN_DIR=src_win
+## endif
 
-SUBDIRS = doc doc/user_manual src man plugins python specfiles tests $(BE_VIEWER_DIR) $(SRC_WIN_DIR)
+SUBDIRS = doc doc/user_manual src man plugins python specfiles tests $(BE_VIEWER_DIR) 
 
 # don't include bootstrap. People run it, and they shoudln't
 # It's only for people who check out the git repo
@@ -37,6 +45,7 @@ EXTRA_DIST = \
 	m4/ax_boost_filesystem.m4 \
 	m4/ax_boost_system.m4 \
 	m4/ax_pthread.m4 \
+	bootstrap.sh \
 	$(SRC_WIN_DIST)
 
 ACLOCAL_AMFLAGS = -I m4
@@ -82,4 +91,9 @@ pull:
 	git pull
 	(cd src/dfxml;git pull)
 	(cd src/be13_api;git pull)
+
+.PHONY: publish
+publish:
+	make dist
+	scp $(DIST_ARCHIVES) ncr.nps.edu:/var/www/digitalcorpora/downloads/bulk_extractor
 

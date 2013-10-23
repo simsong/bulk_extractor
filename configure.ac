@@ -1,4 +1,6 @@
-                                               -*- Autoconf -*-
+#                                 -*- Autoconf -*-
+# bulk_extractor configure.ac
+#
 # Process this file with autoconf to produce a configure script.
 # Order is largely irrevellant, although it must start with AC_INIT and end with AC_OUTPUT
 # See http://autotoolset.sourceforge.net/tutorial.html
@@ -6,7 +8,7 @@
 
 AC_PREREQ(2.57)
 
-AC_INIT(BULK_EXTRACTOR, 1.4.0, bugs@digitalcorpora.org)
+AC_INIT(BULK_EXTRACTOR, 1.4.2, bugs@digitalcorpora.org)
 AC_CONFIG_MACRO_DIR(m4)
 
 # 
@@ -24,16 +26,18 @@ AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile doc/user_manual/Makefile \
 AC_CONFIG_HEADER([config.h])
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
-AC_PROG_RANLIB
 AC_PREFIX_PROGRAM
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_INSTALL
 AC_PROG_LEX
+# LT_INIT([disable-shared])
 
-m4_include([src/dfxml/src/dfxml_configure.m4])
-m4_include([src/be13_api/be13_configure.m4])
-
+AC_LANG_PUSH(C++)
+# use C++11 mode if available; HAVE_CXX11 is defined in config.h if so.  Don't
+# use the GNU C++11 extensions for portability's sake (noext).
+AX_CXX_COMPILE_STDCXX_11(noext, optional)
+AC_LANG_POP()
 
 # Endian check is required for MD5 implementation
 AC_C_BIGENDIAN
@@ -94,13 +98,6 @@ if test x"$request_win_installer" == "xyes" ; then
 fi
 AM_CONDITIONAL([WANT_WIN_INSTALLER], [test x"$has_nsis" == xtrue -a x"$has_javac" == xtrue -a x"$has_jar" == xtrue])
 
-##
-## Standard macros
-##
-AC_TYPE_INT64_T
-AC_SYS_LARGEFILE
-AC_SYS_POSIX_TERMIOS
-
 if test x"$LEX" == x ; then
   AC_MSG_ERROR([flex not required.])
 fi  
@@ -138,8 +135,8 @@ case $host in
      AC_DEFINE([__LINUX__],1,[Linux operating system functions])
      ;;
 
-  *-*-mingw32*)   
-     LIBS="-lpsapi -lws2_32 -lgdi32 $LIBS"  
+  *mingw*)   
+     LIBS="$LIBS -lpsapi -lws2_32 -lgdi32"  
      CPPFLAGS="-DUNICODE -D_UNICODE -D__MSVCRT_VERSION__=0x0601 -DWINVER=0x0500 -D_WIN32_WINNT=0x0500 -g $CPPFLAGS"
      CPPFLAGS="$CPPFLAGS --static "
      CFLAGS="$CFLAGS --static -static-libgcc -static-libstdc++"
@@ -187,11 +184,12 @@ fi
 # causes warnings with unistd.h:  -Wnested-externs 
 # Just causes too much annoyance: -Wmissing-format-attribute 
 
-# Check GCC
+# Check GCC and clang
 WARNINGS_TO_TEST="-MD -Wpointer-arith -Wmissing-declarations -Wmissing-prototypes \
     -Wshadow -Wwrite-strings -Wcast-align -Waggregate-return \
     -Wbad-function-cast -Wcast-qual -Wundef -Wredundant-decls -Wdisabled-optimization \
-    -Wfloat-equal -Wmultichar -Wc++-compat -Wmissing-noreturn -funit-at-a-time "
+    -Wfloat-equal -Wmultichar -Wc++-compat -Wmissing-noreturn -funit-at-a-time -Wno-unknown-warning-option \
+    -Qunused-arguments "
 
 if test x"${mingw}" == "xno" ; then
   # add the warnings we do not want to do on mingw
@@ -219,6 +217,15 @@ done
 unset option
 
 ################################################################
+## Includes
+
+m4_include([src/dfxml/src/dfxml_configure.m4])
+m4_include([src/be13_api/be13_configure.m4])
+
+
+
+
+################################################################
 ## lift support
 ## Disabled for 1.3 release
 AC_ARG_ENABLE([lift], AS_HELP_STRING([--enable-lift], [enable CMU LIFT SVM for type identification]),
@@ -231,7 +238,6 @@ AC_ARG_ENABLE([rar],
               [],
 	      [AC_DEFINE(USE_RAR, 1, [Use RAR decompression]) rar="yes"])
 AM_CONDITIONAL([RAR_ENABLED], [test "yes" = "$rar"])
-
 
 
 
@@ -267,23 +273,25 @@ AC_ARG_ENABLE([mcheck], AS_HELP_STRING([--enable-mcheck], \
 # -Wcast-qual 
 # -Wmissing-format-attribute  --- Just too annoying
 AC_LANG_PUSH(C++)
-WARNINGS_TO_TEST="-Wall -MD -Wpointer-arith \
+AC_CHECK_HEADERS([string])
+
+CXX_WARNINGS_TO_TEST="-Wall -MD -Wpointer-arith \
     -Wshadow -Wwrite-strings -Wcast-align  \
     -Wredundant-decls -Wdisabled-optimization \
     -Wfloat-equal -Wmultichar -Wmissing-noreturn \
-    -Woverloaded-virtual -Wsign-promo -funit-at-a-time"
+    -Woverloaded-virtual -Wsign-promo -funit-at-a-time -Wno-unknown-warning-option -Qunused-arguments"
 
 if test x$CXX != "xclang++" ; then
   # -Wstrict-null-sentinel is not supported under clang
-  WARNINGS_TO_TEST="$WARNINGS_TO_TEST -Wstrict-null-sentinel"
+  CXX_WARNINGS_TO_TEST="$CXX_WARNINGS_TO_TEST -Wstrict-null-sentinel"
 fi
 
 if test x"${mingw}" == "xno" ; then
   # add the warnings we don't want to do on mingw
-  WARNINGS_TO_TEST="$WARNINGS_TO_TEST  -Weffc++"
+  CXX_WARNINGS_TO_TEST="$CXX_WARNINGS_TO_TEST  -Weffc++"
 fi
 
-for option in $WARNINGS_TO_TEST
+for option in $CXX_WARNINGS_TO_TEST
 do
   SAVE_CXXFLAGS="$CXXFLAGS"
   CXXFLAGS="$CXXFLAGS $option"
@@ -348,6 +356,9 @@ AC_LINK_IFELSE(
 
 # Specific include files and functions for bulk-extractor
 AC_HEADER_STDC
+AC_TYPE_INT64_T
+AC_SYS_LARGEFILE
+AC_SYS_POSIX_TERMIOS
 
 ## Check for headers used by bulk Extractor
 ## do not put pthread here

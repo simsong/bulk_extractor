@@ -30,48 +30,71 @@ JAVA_GUI  = BEViewer.jar
 PDFDOCS	  = BEProgrammersManual.pdf BEUsersManual.pdf BEWorkedExamplesStandalone.pdf
 
 SRC_WIN_DIST = \
+	$(SRC_WIN)CONFIGURE_F18.bash \
+	$(SRC_WIN)EnvVarUpdate.nsi \
 	$(SRC_WIN)Makefile \
+	$(SRC_WIN)README_WINDOWS.txt \
 	$(SRC_WIN)build_BEViewer_launcher.nsi \
 	$(SRC_WIN)build_installer.nsi \
-	$(SRC_WIN)CONFIGURE_F18.bash \
 	$(SRC_WIN)icu-mingw32-libprefix.patch \
 	$(SRC_WIN)icu-mingw64-libprefix.patch \
-	$(SRC_WIN)README.txt \
-	$(SRC_WIN)README_WINDOWS.txt \
-	$(SRC_WIN)sign_be_file
+	$(SRC_WIN)sign_be_file \
+	$(SRC_WIN)zmq-configure.in.patch \
+	$(SRC_WIN)zmq-configure.patch \
+	$(SRC_WIN)zmq-zmq.h.patch \
+	$(SRC_WIN)zmq-zmq_utils.h.patch 
+
+
 
 # The prerequisites for the installer can't be listed after the colon, 
 # becuase then the system will try to generate them simultaneously,
 # which causes problems if both try to do a distclean at the same time.
 # So this just manually checks to see if the prerequists are present and, if not, it makes them
 #
-$(UNVERSIONED_INSTALLER): BEViewerLauncher.exe build_installer.nsi $(PDFDOCS)
+$(UNVERSIONED_INSTALLER): BEViewerLauncher.exe build_installer.nsi $(PDFDOCS) bulk_extractor64.exe bulk_extractor32.exe BEViewer.jar
 	@echo Making bulk_extractor version $(BEVERSION) Windows Installer
-	if [ ! -r ../win32/Makefile ]; then \
-	   if [ -r ../Makefile ]; then (cd ..;make distclean); fi ; \
-	   if [ ! -d ../win32 ]; then mkdir ../win32 ; fi; \
-	   if [ ! -r ../win32/Makefile ]; then (cd ../win32;mingw32-configure); fi; \
-	fi
-	echo '**** running make in win32/ to create bulk_extractor32.exe ****'; \
-	(cd ../win32;$(MAKE))
-	cp ../win32/src/bulk_extractor.exe bulk_extractor32.exe
 	@echo 
-	@echo
-	if [ ! -r ../win64/Makefile ]; then \
-	   if [ -r ../Makefile ]; then (cd ..;make distclean); fi ; \
-	   if [ ! -d ../win64 ]; then mkdir ../win64 ; fi; \
-	   if [ ! -r ../win64/Makefile ]; then (cd ../win64;mingw64-configure); fi; \
-	fi
-	echo '**** running make in win64/ to create bulk_extractor64.exe ****'; \
-	(cd ../win64;$(MAKE))
-	cp ../win64/src/bulk_extractor.exe bulk_extractor64.exe
-	@echo
-	@echo
-	cp ../win64/java_gui/BEViewer.jar BEViewer.jar
 	makensis -DVERSION=$(BEVERSION) build_installer.nsi
+	@echo 
 	echo '**************** INSTALLER IS MADE ****************'
 	cp $(INSTALLER) $(UNVERSIONED_INSTALLER)
 	ls -lt *exe
+
+$(SRC_WIN)bulk_extractor64.exe:
+	if [ ! -r ../build_win64/Makefile ]; then \
+	   if [ -r ../Makefile ]; then (cd ..;make distclean); fi ; \
+	   if [ ! -d ../build_win64 ]; then mkdir ../build_win64 ; fi; \
+	   if [ ! -r ../build_win64/Makefile ]; then (cd ../build_win64;mingw64-configure); fi; \
+	fi
+	@echo
+	echo '**** running make in build_win64/ to create bulk_extractor64.exe ****'; \
+	(cd ../build_win64;$(MAKE))
+	cp ../build_win64/src/bulk_extractor.exe bulk_extractor64.exe
+	cp ../build_win64/java_gui/BEViewer.jar BEViewer.jar
+
+
+$(SRC_WIN)BEViewer.jar:
+	if [ ! -r ../build_java/Makefile ]; then \
+	   if [ -r ../Makefile ]; then (cd ..;make distclean); fi ; \
+	   if [ ! -d ../build_java ]; then mkdir ../build_java ; fi; \
+	   if [ ! -r ../build_java/Makefile ]; then (cd ../build_java;mingw64-configure); fi; \
+	fi
+	@echo
+	echo '**** running make in build_java/ to create bulk_extractor64.exe ****'; \
+	(cd ../build_java/java_gui;$(MAKE))
+	cp ../build_java/java_gui/BEViewer.jar BEViewer.jar
+
+
+$(SRC_WIN)bulk_extractor32.exe:
+	if [ ! -r ../build_win32/Makefile ]; then \
+	   if [ -r ../Makefile ]; then (cd ..;make distclean); fi ; \
+	   if [ ! -d ../build_win32 ]; then mkdir ../build_win32 ; fi; \
+	   if [ ! -r ../build_win32/Makefile ]; then (cd ../build_win32;mingw32-configure); fi; \
+	fi
+	@echo
+	echo '**** running make in build_win32/ to create bulk_extractor32.exe ****'; \
+	(cd ../build_win32;$(MAKE))
+	cp ../build_win32/src/bulk_extractor.exe bulk_extractor32.exe
 
 BEViewerLauncher.exe: build_BEViewer_launcher.nsi
 	makensis build_BEViewer_launcher.nsi
@@ -79,14 +102,26 @@ BEViewerLauncher.exe: build_BEViewer_launcher.nsi
 signed: $(SIGNED_INSTALLER)
 
 $(SRC_WIN)clean:
-	/bin/rm -rf win32 win64 ../win32 ../win64  BEViewerLauncher.exe
-	/bin/rm -f $(WIN32_EXE) $(WIN64_EXE) $(JAVA_GUI)
+	@echo '**** MAKE CLEAN ****'
+	/bin/rm -rf ../build_win32 ../build_win64  ../build_java 
+	/bin/rm -f $(WIN32_EXE) $(WIN64_EXE) $(JAVA_GUI) BEViewerLauncher.exe
 	/bin/rm -f $(INSTALLER) $(INTERMEDIATE_INSTALLER) $(SIGNED_INSTALLER) 
 	/bin/rm -f $(UNVERSIONED_INSTALLER) $(UNVERSIONED_INTERMEDIATE_INSTALLER) $(UNVERSIONED_SIGNED_INSTALLER)
+	/bin/rm -f $(PDFDOCS)
+
+$(SRC_WIN)cleanpdf:
+	/bin/rm -f $(PDFDOCS)
 
 $(SRC_WIN)distclean:
 	if [ -r ../Makefile ]; then (cd ..;$(MAKE) distclean); fi
 	$(MAKE) clean
+
+$(SRC_WIN)release:
+	scp $(INSTALLER) ncr.nps.edu:/var/www/digitalcorpora/downloads/bulk_extractor/
+
+$(SRC_WIN)distdir:
+	if [ ! -d src_win ]; then mkdir src_win ; fi
+
 
 ################################################################
 ## 

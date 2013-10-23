@@ -110,6 +110,13 @@ void scan_wordlist(const class scanner_params &sp,const recursion_control_block 
     }
     feature_recorder_set &fs = sp.fs;
     feature_recorder *wordlist_recorder = fs.get_name("wordlist");
+    if(sp.phase==scanner_params::PHASE_INIT){
+	wordlist_recorder->set_flag(feature_recorder::FLAG_NO_CONTEXT);  // not useful for wordlist
+	wordlist_recorder->set_flag(feature_recorder::FLAG_NO_STOPLIST); // not necessary for wordlist
+	wordlist_recorder->set_flag(feature_recorder::FLAG_NO_ALERTLIST); // not necessary for wordlist
+        return;
+    }
+        
     if(sp.phase==scanner_params::PHASE_SHUTDOWN){
 	wordlist_split_and_dedup(sp.fs.outdir);
 	return;
@@ -124,10 +131,6 @@ void scan_wordlist(const class scanner_params &sp,const recursion_control_block 
 	 * case 2 - we are in a word & this character ends a word.
 	 */
     
-	wordlist_recorder->set_flag(feature_recorder::FLAG_NO_CONTEXT);  // not useful for wordlist
-	wordlist_recorder->set_flag(feature_recorder::FLAG_NO_STOPLIST); // not necessary for wordlist
-	wordlist_recorder->set_flag(feature_recorder::FLAG_NO_ALERTLIST); // not necessary for wordlist
-
 	int wordstart = -1;			// >=0 means we are in a word
 	for(u_int i=0;i<sbuf.pagesize;i++){
 	    /* case 1 */

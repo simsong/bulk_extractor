@@ -227,6 +227,10 @@ public class BasicImageUI extends ImageUI implements MouseListener, MouseMotionL
    */
   public void mouseClicked(MouseEvent e) {
 //WLog.log("BasicImageUI.MouseClicked");
+    // for mouse click deselect range if range is selected
+    if (rangeSelectionManager.getProvider() == imageView) {
+      rangeSelectionManager.clear();
+    }
   }
   /**
    * Not used.

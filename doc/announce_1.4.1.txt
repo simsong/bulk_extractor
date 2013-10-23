@@ -1,0 +1,183 @@
+		    Announcing bulk_extractor 1.4.5.
+                             *** TBD ***
+
+bulk_extractor Version 1.4.1 has been released for Linux, MacOS and Windows.
+
+Version 1.4.1 is an incremental release design to support new kinds of
+applications that make use of bulk_extractor's analytical capabilities.
+
+New functionality in Version 1.4.1 includes:
+
+* libbulk_extractor - a linkable and shared library that implements the bulk_extractor API on a buffer.
+  - Single threaded, but thread-safe
+  - Feature reporting in call-back function.
+  
+* pybulk_extractor - a Python module for calling bulk_extractor and returning the results to a Python program. 
+
+* support for one-pass histograms that do not require the creation or re-reading of feature files.  
+
+* XML file should include the # of lines in the histogram file in the report.xml file
+
+Improvements in existing scanners:
+
+* scan_bulk uses the one-pass histogram.
+
+
+Improvements in Python programs:
+
+New features for testing:
+
+Incompatiable changes:
+
+
+================================================================
+OVERREPORTING FIXES
+
+
+================================================================
+UNDERREPORTING FIXES
+
+================================================================
+BUG FIXES
+
+================================================================
+USABILITY IMPROVEMENT
+
+================================================================
+INTERNAL IMPROVEMENTS 
+
+Current list of bulk_extractor scanners:
+
+scan_accts   - Looks for phone numbers, credit card numbers, etc
+scan_aes     - Detects in-memory AES keys from their key schedules
+scan_ascii85 - TBD
+scan_base16  - decodes hexadecimal test
+scan_base64  - decodes BASE64 text
+scan_bulk    - TBD     
+scan_elf     - Detects and decodes ELF headers
+scan_exif    - 
+scan_exiv2   - Decodes EXIF headers in JPEGs using libexiv2 (for regression testing)
+scan_email   - 
+scan_exif    - Decodes EXIF headers in JPEGs using built-in decoder.
+scan_find    - keyword searching
+scan_gps     - Detects XML from Garmin GPS devices
+scan_gzip    - Detects and decompresses GZIP files and gzip stream
+scan_hashid
+scan_hiber   - Detects and decompresses Windows hibernation fragments
+scan_json    - Detects JavaScript Object Notation files
+scan_kml     - Detects KML files
+scan_lightgrep
+scan_net     - IP packet scanning and carving
+scan_pdf     - Extracts text from some kinds of PDF files
+scan_rar
+scan_vcard   - Carvees VCARD files
+scan_windirs - TBD
+scan_winpe   -
+scan_winprefetch - Extracts fields from Windows prefetch files and file fragments.
+scan_wordlist - Builds word list for password cracking
+scan_xor
+scan_zip     - Detects and decompresses ZIP files and zlib streams
+
+
+Current list of bulk_extractor feature files:
+
+aes_keys.txt - AES encryption keys
+alerts.txt   - Features found on alert list (redlist)
+ccn.txt      - credit card numbers
+ccn_track2.txt - Track 2 information
+domain.txt   - All extracted domain names and IP addresses
+email.txt    - extracted email addresses
+ether.txt    - extracted ethernet addresses. Currently
+ 	       overcollecting due to a failure to consider
+	       local context.
+exif.txt     - All exif fields from JPEGs; extracted as XML.
+find.txt     - Hits on find command.
+hex.txt      - Notable hexdecimal constants
+gps.txt	     - Extracted GPS coordinates from Garmin XML and
+	       GPS-enabled JPEG files
+ip.txt	     - Extracted IP addresses from scan_net
+	       cksum-bad indicates checksum test failed;
+	       those are less likely to actually be IP
+	       addresses.
+json.txt     - Extracted and validated JavaScript Object
+	       Notation fragments.
+kml.txt	     - Extracted KML files
+rar.txt      - 
+report.xml   - The DFXML file that explains what happened.
+rfc822.txt   - All extracted RFC822 headers
+tcp.txt	     - Summaries of all extracted UDP and TCP packets.
+telephone.txt- Extracted phone numbers
+url.txt      - Extracted URLs
+  url_facebook-id - extracted Facebook IDs
+  url_microsoft-live - extracted Microsoft Live IDs
+  url_searches       - extracted search terms
+  url_services       - extracted services from URLs
+winprefetch.txt - Windows prefetch files and fragments,
+                  recoded as XML for easy processing.
+wordlist.txt - All the words 
+zip.txt      - Information about all ZIP files and zip
+               components.
+
+Current list of carving directories:
+unrar/
+jpeg/
+unzip/
+
+================================================================
+Planned Feature List for 1.5:
+
+* scanner to remove all XML tags (extracts text from .docx files)
+
+* improvements to identify_filename so it can run on a report in place.
+
+* atomic map object
+
+* replace as many and sets maps as possible with unordered equivallent.
+
+* Find more false positives with CCN validator by scanning through XOR data
+
+* identify_filenames should present the % of disk that has allocated files.
+
+* Lnk File decoder (http://msdn.microsoft.com/en-us/library/dd871305.aspx)
+  for automatically detecting and reporting Window shortcut files.
+
+* xz, 7zip, and LZMA/LZMA2 decompression
+
+* BZIP2 decompression
+
+* CAB decompression
+
+* Outlook Compressible Encryption (OCE) decryption
+
+* Scanning for the start of bitlocker protected volumes.
+
+
+Architecture improvements:
+
+* introduce a concept of an atomic set and map to avoid the use of
+  cppmutexes in the callers. This could be used for the
+  feature_recorder_map and the seen_set in the feature_recorder_set.h
+
+
+We are also considering the following scanners (and need help!):
+
+* NTFS decompression
+
+* Better handling of MIME encoding
+
+* SQLite database identification (first survey - how fragmented are they?)
+
+* Python Bridge. 
+
+
+Validation Improvements:
+
+* Process more data with -e xor and look for CCN hits. Most will be false positives
+
+
+We have tabled the following ideas, for the following reasons:
+
+* Support on distributed computing arrays. (May be less important
+  given the low cost of 64-core machines)
+
+* Support for checkpointing using BLCR.  The project was abandoned.
