@@ -80,8 +80,7 @@ public:
     /** The ReportElement is used for creating the report of histogram frequencies.
      * It can be thought of as the histogram bin.
      */
-    class ReportElement {
-    public:
+    struct ReportElement {
 	ReportElement(std::string aValue,histogramTally aTally):value(aValue),tally(aTally){ }
 	std::string	value;		// UTF-8
 	histogramTally  tally;
