@@ -25,8 +25,8 @@
 
 # These will be displayed by the "Click here for support information" link in "Add/Remove Programs"
 # It is possible to use "mailto:" links here to open the email client
-!define HELPURL "//https://github.com/simsong/bulk_extractor" # "Support Information" link
-!define UPDATEURL "//https://github.com/simsong/bulk_extractor" # "Product Updates" link
+!define HELPURL "https://github.com/simsong/bulk_extractor" # "Support Information" link
+!define UPDATEURL "https://github.com/simsong/bulk_extractor" # "Product Updates" link
 !define ABOUTURL "https://github.com/simsong/bulk_extractor" # "Publisher" link
 
 !ifdef SIGN
@@ -80,15 +80,15 @@ function InstallOnce
 	file ${BE_VIEWER_JAR}
 
 	# install Registry information
-	WriteRegStr HKLM "${REG_SUB_KEY}" "DisplayName" "${APPNAME} - ${DESCRIPTION}"
-	WriteRegStr HKLM "${REG_SUB_KEY}" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
-	WriteRegStr HKLM "${REG_SUB_KEY}" "QuietUninstallString" "$\"$INSTDIR\uninstall.exe$\" /S"
-	WriteRegStr HKLM "${REG_SUB_KEY}" "InstallLocation" "$\"$INSTDIR$\""
-	WriteRegStr HKLM "${REG_SUB_KEY}" "Publisher" "$\"${COMPANYNAME}$\""
-	WriteRegStr HKLM "${REG_SUB_KEY}" "HelpLink" "$\"${HELPURL}$\""
-	WriteRegStr HKLM "${REG_SUB_KEY}" "URLUpdateInfo" "$\"${UPDATEURL}$\""
-	WriteRegStr HKLM "${REG_SUB_KEY}" "URLInfoAbout" "$\"${ABOUTURL}$\""
-	WriteRegStr HKLM "${REG_SUB_KEY}" "DisplayVersion" "$\"${VERSION}$\""
+	WriteRegStr HKLM "${REG_SUB_KEY}" "DisplayName" "${APPNAME}"
+	WriteRegStr HKLM "${REG_SUB_KEY}" "UninstallString" "$INSTDIR\uninstall.exe"
+	WriteRegStr HKLM "${REG_SUB_KEY}" "QuietUninstallString" "$INSTDIR\uninstall.exe /S"
+	WriteRegStr HKLM "${REG_SUB_KEY}" "InstallLocation" "$INSTDIR"
+	WriteRegStr HKLM "${REG_SUB_KEY}" "Publisher" "${COMPANYNAME}"
+	WriteRegStr HKLM "${REG_SUB_KEY}" "HelpLink" "${HELPURL}"
+	WriteRegStr HKLM "${REG_SUB_KEY}" "URLUpdateInfo" "${UPDATEURL}"
+	WriteRegStr HKLM "${REG_SUB_KEY}" "URLInfoAbout" "${ABOUTURL}"
+	WriteRegStr HKLM "${REG_SUB_KEY}" "DisplayVersion" "${VERSION}"
 	# There is no option for modifying or repairing the install
 	WriteRegDWORD HKLM "${REG_SUB_KEY}" "NoModify" 1
 	WriteRegDWORD HKLM "${REG_SUB_KEY}" "NoRepair" 1

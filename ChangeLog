@@ -1,3 +1,12 @@
+2013-09-27  Basic  <simsong@ncr.nps.edu>
+
+	* python/bulk_extractor_reader.py (BulkReport): changed .imagefile() to .image_filename
+
+	* python/identify_filenames.py: changed .imagefile to .image_filename
+2013-10-22  Basic  <simsong@Mucha.local>
+
+	* configure.ac: updated for C++ and MacOS Mavericks. Changed version to 1.4.2
+
 2013-10-15  Basic  <simsong@Mucha.local>
 
 	* src/main.cpp (main): removed BULK_EXTRACTOR_DEBUG.
@@ -37,6 +46,7 @@
 2013-09-16  Simson Garfinkel  <simsong@npsair.local>
 
 	* configure.ac: incremented version to 1.4.1-dev. Enabled LT_INIT support; removed RANLIB support.
+>>>>>>> 5eeb58abd167767344dcecea249f1fd0480e1df2
 
 2013-08-20  Basic  <simsong@Mucha.local>
 

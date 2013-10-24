@@ -8,7 +8,7 @@
 Usage: b=BulkReport(fn)
 b.feature_files() = List of feature files
 b.carved_files()  = List of carved files
-b.histograms()    = List of histograms
+b.histogram_files()    = List of histograms
 b.read_histogram() = Returns a dictionary of the histogram
 b.open(fname)     = Opens a feature file in the report
 
@@ -132,10 +132,11 @@ class BulkReport:
     Methods that you may find useful:
     f = b.open(fname,mode) - opens the file f and returns a file handle. mode defaults to 'r'
     b.is_histogram_file(fname) - returns if fname is a histogram file or not
-    b.imagefile() - Returns the name of the image file
+    b.image_filename() - Returns the name of the image file
     b.read_histogram(fn) - Reads a histogram and returns the histogram
-    b.histograms      - Set of histogram names
-    b.files   - Set of feature file names
+    b.histogram_files()     - Set of histogram names
+    b.feature_files()   
+    b.files   - Set of all files
 """    
 
     def __init__(self,fn,do_validate=True):
@@ -191,7 +192,7 @@ class BulkReport:
             print("***\n*** {} ends with .txt\n*** BulkReader wants the report directory, not the individual feature file\n***".format(fn),file=sys.stderr)
         raise RuntimeError("Cannot process " + fn)
 
-    def imagefile(self):
+    def image_filename(self):
         """Returns the file name of the disk image that was used."""
         return self.xmldoc.getElementsByTagName("image_filename")[0].firstChild.wholeText
 
@@ -262,7 +263,7 @@ class BulkReport:
             return is_feature_line(line)
         return False
         
-    def histograms(self):
+    def histogram_files(self):
         """Returns a list of the histograms, by name"""
         return filter(lambda fn:self.is_histogram_file(fn),self.files)
 

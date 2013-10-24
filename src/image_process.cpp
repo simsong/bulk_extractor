@@ -233,7 +233,7 @@ double process_aff::fraction_done(class image_process::iterator &it)
 string process_aff::str(class image_process::iterator &it)
 {
     char buf[64];
-    snprintf(buf,sizeof(buf),"Page %"PRId64"",it.page_counter);
+    snprintf(buf,sizeof(buf),"Page %" PRId64 "",it.page_counter);
     return string(buf);
 }
 
@@ -465,7 +465,7 @@ double process_ewf::fraction_done(class image_process::iterator &it)
 string process_ewf::str(class image_process::iterator &it)
 {
     char buf[64];
-    snprintf(buf,sizeof(buf),"Offset %"PRId64"MB",it.raw_offset/1000000);
+    snprintf(buf,sizeof(buf),"Offset %" PRId64 "MB",it.raw_offset/1000000);
     return string(buf);
 }
 
@@ -707,7 +707,7 @@ double process_raw::fraction_done(class image_process::iterator &it)
 string process_raw::str(class image_process::iterator &it)
 {
     char buf[64];
-    snprintf(buf,sizeof(buf),"Offset %"PRId64"MB",it.raw_offset/1000000);
+    snprintf(buf,sizeof(buf),"Offset %" PRId64 "MB",it.raw_offset/1000000);
     return string(buf);
 }
 

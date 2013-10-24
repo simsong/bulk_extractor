@@ -2,13 +2,13 @@
 # make bulk_extractor plugins
 # stand
 
-AM_CPPFLAGS =  -I../src/be13_api  -I../src/
+AM_CPPFLAGS =  -I../src/be13_api  -I../src/ 
 
 bin_PROGRAMS = plugin_test 
 
 plugin_test_SOURCES = plugin_test.cpp
 
-EXTRA_DIST = scan_demo.cpp scan_flexdemo.flex be13_api
+EXTRA_DIST = scan_demo.cpp scan_flexdemo.flex be13_api dfxml
 
 # lib_LTLIBRARIES = scan_demo.so scan_flexdemo.so
 

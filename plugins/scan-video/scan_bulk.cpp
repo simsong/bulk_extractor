@@ -47,9 +47,9 @@ void  scan_bulk(const class scanner_params &sp,const recursion_control_block &rc
     /* Check for phase 2 --- shutdown */
     if(sp.phase==2){
 	feature_recorder *alert = sp.fs.get_alert_recorder();
-	alert->printf("total sectors: %"PRId64,count_total);
-	alert->printf("total jpegs: %"PRId64,count_jpeg);
-	alert->printf("total nulls: %"PRId64,count_null512);
+	alert->printf("total sectors: %" PRId64,count_total);
+	alert->printf("total jpegs: %" PRId64,count_jpeg);
+	alert->printf("total nulls: %" PRId64,count_null512);
 	return;
     }
     
