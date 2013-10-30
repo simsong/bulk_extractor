@@ -474,11 +474,12 @@ if test x"$hashid" == xyes ; then
     hashid=no])
 
   if test x"$hashid" == xyes ; then
-    AX_BOOST_BASE([1.44],
+    AX_BOOST_BASE([1.53],
       [AX_BOOST_SYSTEM
       AX_BOOST_FILESYSTEM
-      LIBS="$BOOST_SYSTEM_LIB $BOOST_FILESYSTEM_LIB $LIBS"],
-      [AC_MSG_WARN([Boost 1.44 or newer is required to build the hashid scanner])
+      AX_BOOST_IOSTREAMS
+      LIBS="$BOOST_SYSTEM_LIB $BOOST_FILESYSTEM_LIB $BOOST_IOSTREAMS_LIB $LIBS"],
+      [AC_MSG_WARN([Boost 1.53 or newer is required to build the hashid scanner])
       hashid=no])
   fi
 
