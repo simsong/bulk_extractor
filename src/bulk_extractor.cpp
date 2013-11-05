@@ -70,7 +70,7 @@ scanner_t *scanners_builtin[] = {
     scan_base64,
     scan_kml,
     scan_email,
-    //    scan_httpheader,
+    // scan_httpheader,
     scan_gps,
     scan_net,
     scan_find,
@@ -87,7 +87,7 @@ scanner_t *scanners_builtin[] = {
 #ifdef USE_LIFT
     scan_lift,  // not ready for prime time
 #endif
-    //scan_extx,  // not ready for prime time
+    // scan_extx,  // not ready for prime time
 #ifdef HAVE_EXIV2
     scan_exiv2,
 #endif

@@ -786,7 +786,7 @@ int main(int argc,char **argv)
     if(cfg.debug & DEBUG_PEDANTIC) validateOrEscapeUTF8_validate = true;
 
     /* Create a configuration that will be used to initialize the scanners */
-    extern bool opt_enable_histograms;
+    bool  opt_enable_histograms=true;
     scanner_info si;
 
     s_config.debug = cfg.debug;
@@ -928,12 +928,10 @@ int main(int argc,char **argv)
         /* See if there is a scanner? */
     }
 
-
     /* Store the configuration in the XML file */
     dfxml_writer  *xreport = new dfxml_writer(reportfilename,false);
     dfxml_create(*xreport,command_line,cfg);
     xreport->xmlout("provided_filename",image_fname); // save this information
-
 
     /* provide documentation to the user; the DFXML information comes from elsewhere */
     if(!cfg.opt_quiet){
@@ -976,7 +974,7 @@ int main(int argc,char **argv)
 
     if(cfg.opt_quiet==0) std::cout << "Phase 3. Creating Histograms\n";
     xreport->add_timestamp("phase3 start");
-    be13::plugin::phase_histogram(fs,0);        // TK - add an xml error notifier!
+    if(opt_enable_histogram) be13::plugin::phase_histogram(fs,0);        // TK - add an xml error notifier!
     xreport->add_timestamp("phase3 end");
 
     /* report and then print final usage information */
@@ -1016,5 +1014,3 @@ int main(int argc,char **argv)
 #endif
     exit(0);
 }
-
-
