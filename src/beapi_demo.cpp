@@ -36,8 +36,6 @@ int be_cb(int32_t flag,
     return 0;
 }
 
-
-
 int main(int argc,char **argv)
 {
     be_open_t be_open=0;

@@ -78,16 +78,15 @@ sbuf_t *BulkExtractor_Phase1::get_sbuf(image_process::iterator &it)
 void BulkExtractor_Phase1::run(image_process &p,feature_recorder_set &fs,
                                seen_page_ids_t &seen_page_ids)
 {
-
     md5g = new md5_generator();		// keep track of MD5
     uint64_t md5_next = 0;              // next byte to hash
 
-    if(debug & DEBUG_PRINT_STEPS) std::cout << "DEBUG: CREATING THREAD POOL\n";
+    if(config.debug & DEBUG_PRINT_STEPS) std::cout << "DEBUG: CREATING THREAD POOL\n";
     
 
     tp = new threadpool(config.num_threads,fs,xreport);	
 
-    if(debug & DEBUG_PRINT_STEPS){
+    if(config.debug & DEBUG_PRINT_STEPS){
         std::cout << "DEBUG: HIT RETURN TO START...\n";
         getchar();
     }

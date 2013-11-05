@@ -12,6 +12,7 @@
 #include "histogram.h"
 #include "dfxml/src/dfxml_writer.h"
 #include "dfxml/src/hash_t.h"
+#include "be13_api/unicode_escape.h"
 
 #include "phase1.h"
 
@@ -309,7 +310,6 @@ void process_path_printer(const scanner_params &sp)
      * 3. If we are print, throw an exception to prevent continued analysis of buffer.
      */
 
-    if(debug & DEBUG_PRINT_STEPS) cerr << "process_path_printer " << sp.sbuf.pos0.path << "\n";
     string new_path = sp.sbuf.pos0.path;
     string prefix = get_and_remove_token(new_path);
 
@@ -409,16 +409,8 @@ static void process_open_path(const image_process &p,string path,scanner_params:
 	path = path.substr(0,path.size()-2);
     }
 
-    if(debug & DEBUG_PRINT_STEPS){
-        cerr << "process_path_open. path="<<path;
-    }
-
     string  prefix = get_and_remove_token(path);
     int64_t offset = stoi64(prefix);
-
-    if(debug & DEBUG_PRINT_STEPS){
-        cerr << "  prefix="<<prefix<<" offset="<<offset<<"   new path="<<path<<"\n";
-    }
 
     /* Get the offset into the buffer process */
     u_char *buf = (u_char *)calloc(process_path_bufsize,1);
@@ -672,7 +664,7 @@ int main(int argc,char **argv)
     BulkExtractor_Phase1::Config  cfg;
     cfg.num_threads = threadpool::numCPU();
     const char *progname = argv[0];
-    scanner_info::scanner_config be_config; // the bulk extractor config
+    scanner_info::scanner_config s_config; // the bulk extractor config
     const char *opt_path = 0;
     int opt_recurse = 0;
     int opt_zap = 0;
@@ -712,10 +704,10 @@ int main(int argc,char **argv)
 		}
 		break;
 	    default:
-		debug  = d;
+		cfg.debug  = d;
 		break;
 	    }
-            be13::plugin::set_scanner_debug(debug);
+            be13::plugin::set_scanner_debug(cfg.debug);
 	}
 	break;
 	case 'E':
@@ -752,7 +744,7 @@ int main(int argc,char **argv)
 		std::cerr << "Invalid paramter: " << optarg << "\n";
 		exit(1);
 	    }
-	    be_config.namevals[params[0]] = params[1];
+	    s_config.namevals[params[0]] = params[1];
 	    continue;
 	}
 	case 's': opt_sampling_params = optarg; break;
@@ -790,17 +782,18 @@ int main(int argc,char **argv)
     argc -= optind;
     argv += optind;
 
-    if(debug & DEBUG_PRINT_STEPS) std::cerr << "DEBUG: DEBUG_PRINT_STEPS\n";
+    if(cfg.debug & DEBUG_PRINT_STEPS) std::cerr << "DEBUG: DEBUG_PRINT_STEPS\n";
+    if(cfg.debug & DEBUG_PEDANTIC) validateOrEscapeUTF8_validate = true;
 
     /* Create a configuration that will be used to initialize the scanners */
     extern bool opt_enable_histograms;
     scanner_info si;
 
-    be_config.debug = debug;
-    be_config.hasher.name = be_hash_name;
-    be_config.hasher.func = be_hash;
+    s_config.debug = cfg.debug;
+    s_config.hasher.name = be_hash_name;
+    s_config.hasher.func = be_hash;
 
-    si.config = &be_config;
+    si.config = &s_config;
     si.get_config("work_start_work_end",&worker::opt_work_start_work_end,
                   "Record work start and end of each scanner in report.xml file");
     si.get_config("enable_histograms",&opt_enable_histograms,
@@ -818,8 +811,8 @@ int main(int argc,char **argv)
 
     /* Load all the scanners and enable the ones we care about */
 
-    be13::plugin::load_scanner_directories(scanner_dirs,be_config);
-    be13::plugin::load_scanners(scanners_builtin,be_config); 
+    be13::plugin::load_scanner_directories(scanner_dirs,s_config);
+    be13::plugin::load_scanners(scanners_builtin,s_config); 
     be13::plugin::scanners_process_enable_disable_commands();
 
     /* Print usage if necessary */
@@ -920,7 +913,7 @@ int main(int argc,char **argv)
     be13::plugin::scanners_init(fs);
 
     /* Look for commands that impact per-recorders */
-    for(scanner_info::config_t::const_iterator it=be_config.namevals.begin();it!=be_config.namevals.end();it++){
+    for(scanner_info::config_t::const_iterator it=s_config.namevals.begin();it!=s_config.namevals.end();it++){
         /* see if there is a <recorder>: */
         std::vector<std::string> params = split(it->first,':');
         if(params.size()>=3 && params.at(0)=="fr"){
@@ -961,13 +954,13 @@ int main(int argc,char **argv)
      ****************************************************************/
 
     BulkExtractor_Phase1 phase1(*xreport,timer,cfg);
-    if(debug & DEBUG_PRINT_STEPS) std::cerr << "DEBUG: STARTING PHASE 1\n";
+    if(cfg.debug & DEBUG_PRINT_STEPS) std::cerr << "DEBUG: STARTING PHASE 1\n";
 
     if(opt_sampling_params.size()>0) BulkExtractor_Phase1::set_sampling_parameters(cfg,opt_sampling_params);
     xreport->add_timestamp("phase1 start");
     phase1.run(*p,fs,seen_page_ids);
 
-    if(debug & DEBUG_PRINT_STEPS) std::cerr << "DEBUG: WAITING FOR WORKERS\n";
+    if(cfg.debug & DEBUG_PRINT_STEPS) std::cerr << "DEBUG: WAITING FOR WORKERS\n";
     std::string md5_string;
     phase1.wait_for_workers(*p,&md5_string);
     xreport->add_timestamp("phase1 end");

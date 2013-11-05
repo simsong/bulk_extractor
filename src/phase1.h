@@ -18,6 +18,7 @@ public:
     /* configuration for phase1 */
     struct Config {
         Config():
+            debug(0),
             opt_pagesize(1024*1024*16),
             opt_marginsize(1024*1024*4),
             max_bad_alloc_errors(60),
@@ -32,6 +33,7 @@ public:
             sampling_fraction(1.0),
             sampling_passes(1){}
                  
+        uint64_t debug;                 // debug 
         size_t opt_pagesize;
         size_t opt_marginsize;
         uint32_t max_bad_alloc_errors;

@@ -1,14 +1,11 @@
 %{
 /* scan_gps.flex:
  * A flex-based scanner to pick up GPS coordinates.
- * Currently supports Garmin Trackpt format.
+ * Currently supports Garmin Trackpt GPX format.
  * Note that we could do this with an XML parser, but that wouldn't pick up fragments
  * within memory
  *
- *  http://flex.sourceforge.net/manual/Cxx.html
  */
-
-#define SCANNER "scan_gps"
 
 /*
  * Here are samples that we crib from:
@@ -32,8 +29,8 @@ class gps_scanner : public sbuf_scanner {
       public:
       gps_scanner(const scanner_params &sp): sbuf_scanner(&sp.sbuf),
         gps_recorder(),lat(),lon(),ele(),time(),speed(),course(){
-	   gps_recorder = sp.fs.get_name("gps");
-	}
+           gps_recorder = sp.fs.get_name("gps");
+        }
 
       static string get_quoted_attrib(string text,string attrib);
       static string get_cdata(string text);
@@ -58,13 +55,13 @@ inline class gps_scanner *get_extra(yyscan_t yyscanner) {return yygps_get_extra(
 
 string gps_scanner::get_quoted_attrib(string text,string attrib)
 {
-	size_t pos = text.find(attrib);
-	if(pos==string::npos) return "";  /* no attrib */
-	ssize_t quote1 = text.find('\"',pos);
-	if(quote1<0) return "";           /* no opening quote */
-	ssize_t quote2 = text.find('\"',quote1+1);
-	if(quote2<0) return "";           /* no closing quote */
-	return text.substr(quote1+1,quote2-(quote1+1));
+        size_t pos = text.find(attrib);
+        if(pos==string::npos) return "";  /* no attrib */
+        ssize_t quote1 = text.find('\"',pos);
+        if(quote1<0) return "";           /* no opening quote */
+        ssize_t quote2 = text.find('\"',quote1+1);
+        if(quote2<0) return "";           /* no closing quote */
+        return text.substr(quote1+1,quote2-(quote1+1));
 }
 
 /**
@@ -73,11 +70,11 @@ string gps_scanner::get_quoted_attrib(string text,string attrib)
 
 string gps_scanner::get_cdata(string text)
 {
-	ssize_t gt = text.find('>');
-	if(gt<0) return "";           /* no > */
-	ssize_t lt = text.find('<',gt+1);
-	if(lt<0) return "";           /* no < */
-	return text.substr(gt+1,lt-(gt+1));
+        ssize_t gt = text.find('>');
+        if(gt<0) return "";           /* no > */
+        ssize_t lt = text.find('<',gt+1);
+        if(lt<0) return "";           /* no < */
+        return text.substr(gt+1,lt-(gt+1));
 }
 
 /**
@@ -85,16 +82,16 @@ string gps_scanner::get_cdata(string text)
  */
 void gps_scanner::clear()
 {
-	if(time.size() || lat.size() || lon.size() || ele.size() || speed.size() || course.size()){
-		string what = time+","+lat+","+lon+","+ele+","+speed+","+course;
-		gps_recorder->write(sbuf->pos0+pos,what,"");
-	}
-	time = "";
-	lat = "";
-	lon = "";
-	ele = "";
-	speed = "";
-	course = "";
+        if(time.size() || lat.size() || lon.size() || ele.size() || speed.size() || course.size()){
+                string what = time+","+lat+","+lon+","+ele+","+speed+","+course;
+                gps_recorder->write(sbuf->pos0+pos,what,"");
+        }
+        time = "";
+        lat = "";
+        lon = "";
+        ele = "";
+        speed = "";
+        course = "";
 }
 
 %}
@@ -107,40 +104,40 @@ void gps_scanner::clear()
 %option noyymore
 %option prefix="yygps_"
 
-LATLON	(-?[0-9]{1,3}[.][0-9]{6,8})
-ELEV	(-?[0-9]{1,6}[.][0-9]{0,3})
+LATLON  (-?[0-9]{1,3}[.][0-9]{6,8})
+ELEV    (-?[0-9]{1,6}[.][0-9]{0,3})
 
 %%
 
 [<]trkpt\ lat=\"{LATLON}\"\ lon=\"{LATLON}\"  {
-	gps_scanner &s = *yygps_get_extra(yyscanner);
-	s.clear();
-	s.lat = gps_scanner::get_quoted_attrib(yytext,"lat");
-	s.lon = gps_scanner::get_quoted_attrib(yytext,"lon");
+        gps_scanner &s = *yygps_get_extra(yyscanner);
+        s.clear();
+        s.lat = gps_scanner::get_quoted_attrib(yytext,"lat");
+        s.lon = gps_scanner::get_quoted_attrib(yytext,"lon");
         s.pos += yyleng; 
 }
 
 
 [<]ele[>]{ELEV}[<][/]ele[>] {
-	gps_scanner &s = *yygps_get_extra(yyscanner);
+        gps_scanner &s = *yygps_get_extra(yyscanner);
         s.ele = gps_scanner::get_cdata(yytext);
         s.pos += yyleng; 
 }
 
 [<]time[>][0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9][ T][0-9][0-9]:[0-9][0-9]:[0-9][0-9](Z|([-+][0-9.]))[<][/]time[>] {
-	gps_scanner &s = *yygps_get_extra(yyscanner);
+        gps_scanner &s = *yygps_get_extra(yyscanner);
         s.time = gps_scanner::get_cdata(yytext);
         s.pos += yyleng; 
 }
 
 [<]gpxtpx:speed[>]{ELEV}[<][/]gpxtpx:speed[>] {
-	gps_scanner &s = *yygps_get_extra(yyscanner);
+        gps_scanner &s = *yygps_get_extra(yyscanner);
         s.speed = gps_scanner::get_cdata(yytext);
         s.pos += yyleng;
 }
 
 [<]gpxtpx:course[>]{ELEV}[<][/]gpxtpx:course[>] {
-	gps_scanner &s = *yygps_get_extra(yyscanner);
+        gps_scanner &s = *yygps_get_extra(yyscanner);
         s.course = gps_scanner::get_cdata(yytext);
         s.pos += yyleng;
 }
@@ -167,24 +164,25 @@ void scan_gps(const class scanner_params &sp,const recursion_control_block &rcb)
     assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);      
     if(sp.phase==scanner_params::PHASE_STARTUP){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
-	sp.info->name  = "gps";
+        sp.info->name           = "gps";
         sp.info->author         = "Simson L. Garfinkel";
         sp.info->description    = "Garmin Trackpt XML info";
         sp.info->scanner_version= "1.0";
         sp.info->feature_names.insert("gps");
-	return;
+        return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
         /* Prescan */
-    	if(sp.sbuf.find("trkpt",0)==-1 || sp.sbuf.find("lat=",0)==-1 || sp.sbuf.find("lon=",0)==-1) return;
+        if(sp.sbuf.find("trkpt",0)==-1 || sp.sbuf.find("lat=",0)==-1 || sp.sbuf.find("lon=",0)==-1) return;
 
-	gps_scanner lexer(sp);
-	yyscan_t scanner;
+        /* Scan */
+        gps_scanner lexer(sp);
+        yyscan_t scanner;
         yygps_lex_init(&scanner);
-	yygps_set_extra(&lexer,scanner);
-	yygps_lex(scanner);
+        yygps_set_extra(&lexer,scanner);
+        yygps_lex(scanner);
         yygps_lex_destroy(scanner);
-	(void)yyunput;			// avoids defined but not used
+        (void)yyunput;                  // avoids defined but not used
     }
 }
 

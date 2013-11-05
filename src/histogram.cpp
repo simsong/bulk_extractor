@@ -169,7 +169,7 @@ void HistogramMaker::add(const std::string &key)
 	    tempKey->clear();		// erase the characters
 	    utf8::utf16to8(utf16digits.begin(),utf16digits.end(),std::back_inserter(*tempKey));
 	} catch(utf8::exception){
-	    /*Exception during utf8 or 16 conversions*.
+	    /* Exception during utf8 or 16 conversions*.
 	     * So the string wasn't utf8.  Fall back to just extracting the digits
 	     */
 	    tempKey->clear();
@@ -191,8 +191,8 @@ void HistogramMaker::add(const std::string &key)
     }
 
     h[*keyToAdd].count++;
-    if(found_utf16) h[*keyToAdd].count16++; // track how many UTF16s were converted
-    if(tempKey){				// if we allocated tempKey, free it
+    if(found_utf16) h[*keyToAdd].count16++;  // track how many UTF16s were converted
+    if(tempKey){			     // if we allocated tempKey, free it
 	delete tempKey;
     }
 }

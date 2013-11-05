@@ -130,4 +130,5 @@ unitest$(EXEEXT): unicode_escape.cpp
 FLEX_CXXFLAGS=-Wno-shadow -Wno-effc++ -Wno-redundant-decls -Wno-missing-noreturn
 .flex.o:
 	$(LEX) -R -t $<  > `basename $@ .o`.cpp 
-	$(CXX) $(CPPFLAGS) $(AM_CPPFLAGS) $(CXXFLAGS) $(FLEX_CXXFLAGS) -I${top_srcdir} -I${srcdir} -I.. -I../../_build -c `basename $@ .o`.cpp 
+	$(CXX) $(CPPFLAGS) $(AM_CPPFLAGS) $(CXXFLAGS) $(FLEX_CXXFLAGS) \
+		-I${top_srcdir} -I${srcdir} -I.. -I../../_build -c `basename $@ .o`.cpp 

@@ -846,8 +846,8 @@ pos0_t process_dir::get_pos0(const image_process::iterator &it) const
  */
 sbuf_t *process_dir::sbuf_alloc(image_process::iterator &it)
 {
-    std::string fn = files[it.file_number];
-    sbuf_t *sbuf = sbuf_t::map_file(fn,pos0_t(fn+sbuf_t::U10001C));
+    std::string fname = files[it.file_number];
+    sbuf_t *sbuf = sbuf_t::map_file(fname);
     if(sbuf==0) throw read_error();	// can't read
     return sbuf;
 }

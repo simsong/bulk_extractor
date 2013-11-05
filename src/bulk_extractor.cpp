@@ -24,29 +24,12 @@
 #include <unistd.h>
 #include <ctype.h>
 
-#ifdef HAVE_EXPAT_H
-#include <expat.h>
-#endif
-
-#ifdef HAVE_MCHECK
-#include <mcheck.h>
-#endif
-
-#ifdef HAVE_SYS_RESOURCE_H
-#include <sys/resource.h>
-#endif
-
-#ifdef HAVE_SYS_SYSCTL_H
-#include <sys/sysctl.h>
-#endif
-
 /****************************************************************
  *** COMMAND LINE OPTIONS
  ****************************************************************/
 
 // Global options that can be set without using the option system
 
-uint64_t debug=0;
 int      opt_silent= 0;
 
 /* Global find options and the find_list */
