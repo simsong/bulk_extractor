@@ -961,23 +961,27 @@ int main(int argc,char **argv)
     if(cfg.debug & DEBUG_PRINT_STEPS) std::cerr << "DEBUG: WAITING FOR WORKERS\n";
     std::string md5_string;
     phase1.wait_for_workers(*p,&md5_string);
+    delete p;				// not strictly needed, but why not?
+    p = 0;
+
     xreport->add_timestamp("phase1 end");
     if(md5_string.size()>0){
         std::cout << "MD5 of Disk Image: " << md5_string << "\n";
     }
 
+    /*** PHASE 2 --- Shutdown ***/
     if(cfg.opt_quiet==0) std::cout << "Phase 2. Shutting down scanners\n";
     xreport->add_timestamp("phase2 start");
     be13::plugin::phase_shutdown(fs);
     xreport->add_timestamp("phase2 end");
 
-
+    /*** PHASE 3 --- Create Histograms ***/
     if(cfg.opt_quiet==0) std::cout << "Phase 3. Creating Histograms\n";
     xreport->add_timestamp("phase3 start");
-    if(opt_enable_histogram) be13::plugin::phase_histogram(fs,0);        // TK - add an xml error notifier!
+    if(opt_enable_histograms) be13::plugin::phase_histogram(fs,0);        // TK - add an xml error notifier!
     xreport->add_timestamp("phase3 end");
 
-    /* report and then print final usage information */
+    /*** PHASE 4 ---  report and then print final usage information ***/
     xreport->push("report");
     xreport->xmlout("total_bytes",phase1.total_bytes);
     xreport->xmlout("elapsed_seconds",timer.elapsed_seconds());
@@ -992,7 +996,6 @@ int main(int argc,char **argv)
     xreport->add_rusage();
     xreport->pop();			// bulk_extractor
     xreport->close();
-    delete p;				// not strictly needed, but why not?
     if(cfg.opt_quiet==0){
 	float mb_per_sec = (phase1.total_bytes / 1000000.0) / timer.elapsed_seconds();
 
