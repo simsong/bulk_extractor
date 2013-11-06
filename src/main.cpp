@@ -660,22 +660,27 @@ int main(int argc,char **argv)
 #ifdef HAVE_MCHECK
     mtrace();
 #endif
+    /* setup */
     feature_recorder::set_main_threadid();
-    BulkExtractor_Phase1::Config  cfg;
-    cfg.num_threads = threadpool::numCPU();
     const char *progname = argv[0];
-    scanner_info::scanner_config s_config; // the bulk extractor config
+
+    scanner_info::scanner_config   s_config; // the bulk extractor config
+    BulkExtractor_Phase1::Config   cfg;
+    cfg.num_threads = threadpool::numCPU();
+
+    /* Options */
     const char *opt_path = 0;
-    int opt_recurse = 0;
-    int opt_zap = 0;
-    string opt_outdir;
+    int         opt_recurse = 0;
+    int         opt_zap = 0;
+    int         opt_h = 0;
+    int         opt_H = 0;
+    std::string opt_sampling_params;
+    string      opt_outdir;
+
+    /* Startup */
     setvbuf(stdout,0,_IONBF,0);		// don't buffer stdout
     std::string command_line = dfxml_writer::make_command_line(argc,argv);
-    std::string opt_sampling_params;
-    std::vector<std::string> scanner_dirs;
-
-    int opt_h = 0;
-    int opt_H = 0;
+    std::vector<std::string> scanner_dirs; // where to look for scanners
 
 #ifdef WIN32
     setmode(1,O_BINARY);		// make stdout binary
@@ -789,7 +794,7 @@ int main(int argc,char **argv)
     bool  opt_enable_histograms=true;
     scanner_info si;
 
-    s_config.debug = cfg.debug;
+    s_config.debug       = cfg.debug;
     s_config.hasher.name = be_hash_name;
     s_config.hasher.func = be_hash;
 
@@ -909,7 +914,10 @@ int main(int argc,char **argv)
     /* Determine the feature files that will be used */
     feature_file_names_t feature_file_names;
     be13::plugin::get_scanner_feature_file_names(feature_file_names);
-    feature_recorder_set fs(feature_file_names,image_fname,opt_outdir,stop_list.size()>0);
+    uint32_t flags = 0;
+    if (stop_list.size()>0) flags |= feature_recorder_set::CREATE_STOP_LIST_RECORDERS;
+    feature_recorder_set fs(flags);
+    fs.init(feature_file_names,image_fname,opt_outdir);
     be13::plugin::scanners_init(fs);
 
     /* Look for commands that impact per-recorders */

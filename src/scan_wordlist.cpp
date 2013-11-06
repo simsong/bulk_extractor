@@ -118,7 +118,7 @@ void scan_wordlist(const class scanner_params &sp,const recursion_control_block 
     }
         
     if(sp.phase==scanner_params::PHASE_SHUTDOWN){
-	wordlist_split_and_dedup(sp.fs.outdir);
+	wordlist_split_and_dedup(sp.fs.get_outdir());
 	return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN){

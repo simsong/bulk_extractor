@@ -1,3 +1,7 @@
+2013-11-05  Basic  <simsong@mucha.local.tld>
+
+	* src/be13_api/feature_recorder_set.h (class feature_recorder_set): more functions were made virtual and more instance values were made private
+
 2013-10-26  Basic  <simsong@Mucha.local>
 
 	* src/be13_api/bulk_extractor_i.h: process_packet_info renamed to process_packet.

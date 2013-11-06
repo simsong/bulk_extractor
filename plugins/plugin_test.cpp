@@ -111,9 +111,15 @@ int main(int argc,char **argv)
 /*** bogus feature recorder set ***/
 const std::string feature_recorder_set::ALERT_RECORDER_NAME = "alerts";
 const std::string feature_recorder_set::DISABLED_RECORDER_NAME = "disabled";
+const std::string outdir("outdir");
 
 feature_recorder *feature_recorder_set::get_name(const std::string &name) { return 0;}
 feature_recorder *feature_recorder_set::get_alert_recorder() { return 0;}
+void feature_recorder_set::create_name(const std::string &name,bool create_stop_also){}
+feature_recorder *feature_recorder_set::create_name_factory(const std::string &outdir_,const std::string &input_fname_,const std::string &name_)
+{
+    return 0;
+}
 
 
 feature_recorder_set::feature_recorder_set(uint32_t f):flags(f),seen_set(),input_fname(),

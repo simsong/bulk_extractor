@@ -232,7 +232,7 @@ def analyze_outdir(outdir):
 
     b = bulk_extractor_reader.BulkReport(outdir)
     print("bulk_extractor version: {}".format(b.version()))
-    print("Filename:               {}".format(b.imagefile()))
+    print("Image filename:         {}".format(b.image_filename()))
     
     # Print which scanners were run and how long they took
     analyze_reportxml(b.xmldoc)
