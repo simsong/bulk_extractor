@@ -61,7 +61,10 @@ public:
     virtual void write(const std::string &str){
         cppmutex::lock lock(Mf);
         (*cb)(0,1,name.c_str(),str.c_str(),str.size(),"",0);
-        //std::cerr << "callback_feature_recorder::write: " << name << ": " << str << "\n";
+    }
+    virtual void write0(const pos0_t &pos0,const std::string &feature,const std::string &context){
+        cppmutex::lock lock(Mf);
+        (*cb)(0,1,name.c_str(),feature.c_str(),feature.size(),context.c_str(),context.size());
     }
 };
 
