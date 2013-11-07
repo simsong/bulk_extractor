@@ -13,11 +13,11 @@ New in v1.4.1:
     bulk_extractor_handle han;
 
 
-behan =  bulk_extractor_open();
+behan =  bulk_extractor_open(be_callback cb);
 - returns valid pointer if success, 0 if failure.
-int bulk_extractor_analyze_dev(behan,be_callback cb,char *dev);
-int bulk_extractor_analyze_dir(behan,be_callback cb,char *dir);
-int bulk_extractor_analyze_buf(behan,be_callback cb,uint8_t *buf,size_t buflen);
+int bulk_extractor_analyze_dev(behan,char *dev);
+int bulk_extractor_analyze_dir(behan,char *dir);
+int bulk_extractor_analyze_buf(behan,uint8_t *buf,size_t buflen);
 int bulk_extractor_close(behan);
 
   The only histograms you get are the one-pass histograms.

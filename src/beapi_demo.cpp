@@ -23,16 +23,16 @@
 typedef int (__cdecl *MYPROC)(LPWSTR); 
 #endif
 
-int be_cb(int32_t flag,
+int be_cb_demo(int32_t flag,
                         uint32_t arg,
                         const char *feature_recorder_name,
                         const char *feature,size_t feature_len,
                         const char *context,size_t context_len)
 {
-    printf("be_callback(%d,%d,%s,",flag,arg,feature_recorder_name);
-    fwrite(feature,1,feature_len,stdout);
-    fwrite(context,1,context_len,stdout);
-    puts(")");
+    printf("be_cb_demo(flag=0x%x,arg=0x%x,name=%s)\n",flag,arg,feature_recorder_name);
+    printf("  feature [len=%zu]: ",feature_len);fwrite(feature,1,feature_len,stdout);fputc('\n',stdout);
+    printf("  context [len=%zu]: ",context_len);fwrite(context,1,context_len,stdout);fputc('\n',stdout);
+    puts("");
     return 0;
 }
 
@@ -104,8 +104,9 @@ int main(int argc,char **argv)
     }
 #endif
 
-    BEFILE *bef = (*be_open)();
-    (*be_analyze_buf)(bef,be_cb,(uint8_t *)"ABCDEFG",6);
+    BEFILE *bef = (*be_open)(be_cb_demo);
+    const char *demo_buf = "ABCDEFG  demo@api.com Just a demo 617-555-1212 ok!";
+    (*be_analyze_buf)(bef,(uint8_t *)demo_buf,strlen(demo_buf));
     (*be_close)(bef);
 
 #ifdef HAVE_DLOPEN
