@@ -183,7 +183,7 @@ def process_featurefile2(rundb,infile,outfile):
     outfile.write(b"# Position\tFeature")
     if not args.terse:
         outfile.write(b"\tContext")
-    outfile.write(b"\tMD5\tFilename")
+    outfile.write(b"\tFilename\tMD5")
     if args.mactimes:
         outfile.write(b"\tcrtime\tctime\tmtime\tatime")
     outfile.write(b"\n")
