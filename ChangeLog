@@ -1,3 +1,9 @@
+2013-11-11  Basic  <simsong@Mucha.local>
+
+	* src/be13_api/feature_recorder.cpp (feature_recorder::feature_recorder): now has reference to feature_recorder_set
+
+	* src/stand.cpp (main): replaced manual histogram generator in stand with call to phase_histogram in be13::plugin
+
 2013-11-08  Basic  <simsong@Mucha.local>
 
 	* src/be13_api/bulk_extractor_i.h (be13): added proper #ifdefs for each type

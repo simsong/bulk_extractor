@@ -46,7 +46,9 @@ class callback_feature_recorder: public feature_recorder {
     callback_feature_recorder &operator=(const callback_feature_recorder&cfr);
     be_callback *cb;
 public:
-    callback_feature_recorder(be_callback *cb_,string name_):feature_recorder("","",name_),cb(cb_){
+    callback_feature_recorder(be_callback *cb_,
+                              class feature_recorder_set &fs,string name_):
+        feature_recorder(fs,"<no-outdir>","<no-fname>",name_),cb(cb_){
     }
     virtual std::string carve(const sbuf_t &sbuf,size_t pos,size_t len, 
                               const std::string &ext, // appended to forensic path
@@ -78,7 +80,7 @@ public:
     virtual feature_recorder *create_name_factory(const std::string &outdir_,
                                                   const std::string &input_fname_,
                                                   const std::string &name_){
-        return new callback_feature_recorder(cb,name_);
+        return new callback_feature_recorder(cb,*this,name_);
     }
     callback_feature_recorder_set(be_callback *cb_):feature_recorder_set(0),cb(cb_){
         feature_file_names_t feature_file_names;
@@ -104,6 +106,7 @@ extern "C" {
         be13::plugin::load_scanners(scanners_builtin,s_config);
         be13::plugin::scanners_process_enable_disable_commands();
         BEFILE *bef = new BEFILE_t(cb);
+
         /* How do we enable or disable individual scanners? */
         /* How do we set or not set a find pattern? */
         /* We want to disable carving, right? */
@@ -116,6 +119,7 @@ extern "C" {
         pos0_t pos0("");
         const sbuf_t sbuf(pos0,buf,buflen,buflen,false);
         be13::plugin::process_sbuf(scanner_params(scanner_params::PHASE_SCAN,sbuf,bef->cfs));
+        
         return 0;
     }
     
