@@ -1,5 +1,7 @@
 2013-11-11  Basic  <simsong@Mucha.local>
 
+	* src/be13_api/Makefile.defs: moved word_and_context_list.* from bulk_extractor to be13_api
+
 	* src/be13_api/feature_recorder.cpp (feature_recorder::feature_recorder): now has reference to feature_recorder_set
 
 	* src/stand.cpp (main): replaced manual histogram generator in stand with call to phase_histogram in be13::plugin

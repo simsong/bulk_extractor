@@ -91,8 +91,6 @@ bulk_extractor_nomain = \
 	phase1.cpp \
 	threadpool.cpp \
 	threadpool.h \
-	word_and_context_list.cpp \
-	word_and_context_list.h \
 	$(bulk_scanners) $(TSK3INCS)  $(BE13_API) $(DFXML_WRITER) 
 
 bulk_extractor_SOURCES = $(bulk_extractor_nomain) main.cpp bulk_extractor_api.cpp

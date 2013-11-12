@@ -255,7 +255,7 @@ def analyze_outdir(outdir):
             firstline = firstline.decode('utf-8')
         print("  {:>25} entries: {:>10,}  (top: {})".format(fn,len(h),firstline))
 
-    fnpart = ".".join(b.imagefile().split('/')[-1].split('.')[:-1])
+    fnpart = ".".join(b.image_filename().split('/')[-1].split('.')[:-1])
     ffns = list(b.feature_files())
     print("")
     print("Feature Files:        {}".format(len(ffns)))
