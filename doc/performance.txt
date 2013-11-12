@@ -60,6 +60,7 @@ MacOS clang 4.0 46.5 MBytes/sec; 5.81 MBytes/s/c (CPU Bound)  2013-09-10 [A]
 MacOS clang 4.0 48.0 MBytes/sec; 6.01 MBytes/s/c (CPU Bound)  2013-09-13 [B]
 MacOS gcc 4.2.1 51.2 MBytes/sec; 6.40 MBytes/s/c (CPU Bound)  2013-09-14 [B]
 MacOS gcc 48    53.1 MBytes/sec; 6.64 MBytes/s/c (CPU Bound)  2013-09-14 [B]
+F19 gcc 4.8.1   52.2 MBytes/sec; 6.53 MBytes/s/c (CPU Bound)  2013-09-27 [B]
 
 Testing hardware and image:
 
