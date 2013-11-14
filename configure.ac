@@ -44,9 +44,9 @@ AC_C_BIGENDIAN
 
 # These are needed for bulk_extractor. They are not needed for tcpflow
 AC_DEFINE([BULK_EXTRACTOR],1,[We are compiling bulk_extractor])
-AC_DEFINE([USE_HISTOGRAMS],1,[We are using histograms])
-AC_DEFINE([USE_STOP_LIST],1,[We are using the stop lists])
-AC_DEFINE([USE_ALERT_LIST],1,[We are using the alert list])
+# AC_DEFINE([USE_HISTOGRAMS],1,[We are using histograms])
+# AC_DEFINE([USE_STOP_LIST],1,[We are using the stop lists])
+# AC_DEFINE([USE_ALERT_LIST],1,[We are using the alert list])
 
 ## 
 ## BEViewer

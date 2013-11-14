@@ -104,7 +104,7 @@ int main(int argc,char **argv)
 
     be13::plugin::process_sbuf(scanner_params(scanner_params::PHASE_SCAN,*sbuf,fs));
     be13::plugin::phase_shutdown(fs);
-    be13::plugin::phase_histogram(fs,0);
+    fs.process_histograms(0);
     return(0);
 }
 

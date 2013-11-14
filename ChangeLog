@@ -1,3 +1,11 @@
+2013-11-13  Basic  <simsong@Mucha.local>
+
+	* src/be13_api: USE_HISTOGRAMS is gone; everybody uses them now.
+
+	* src/main.cpp (main): alert_list and stop_list are no longer global variables; they are now local to main() and added to the feature_recorder_set
+
+	* src/be13_api/feature_recorder_set.cpp (feature_recorder_set::init): stop_list and alert_list are now part of the feature_recorder_set.
+
 2013-11-11  Basic  <simsong@Mucha.local>
 
 	* src/be13_api/Makefile.defs: moved word_and_context_list.* from bulk_extractor to be13_api

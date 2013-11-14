@@ -58,8 +58,6 @@ public:
     virtual void open(){}               // we don't open
     virtual void close(){}               // we don't open
     virtual void flush(){}               // we don't open
-    virtual void make_histogram(const class histogram_def &def){} 
-
     virtual void write(const std::string &str){
         cppmutex::lock lock(Mf);
         (*cb)(0,1,name.c_str(),str.c_str(),str.size(),"",0);
@@ -85,7 +83,7 @@ public:
     callback_feature_recorder_set(be_callback *cb_):feature_recorder_set(0),cb(cb_){
         feature_file_names_t feature_file_names;
         be13::plugin::get_scanner_feature_file_names(feature_file_names);
-        init(feature_file_names,"cfrs_input","cfrs_outdir");
+        init(feature_file_names,"cfrs_input","cfrs_outdir",0); // no histograms
     }
 };
 
@@ -101,6 +99,7 @@ typedef struct BEFILE_t BEFILE;
 extern "C" {
     BEFILE *bulk_extractor_open(be_callback cb)
     {
+        histograms_t histograms;
         feature_recorder::set_main_threadid();
         scanner_info::scanner_config   s_config; // the bulk extractor config
         be13::plugin::load_scanners(scanners_builtin,s_config);
@@ -119,12 +118,12 @@ extern "C" {
         pos0_t pos0("");
         const sbuf_t sbuf(pos0,buf,buflen,buflen,false);
         be13::plugin::process_sbuf(scanner_params(scanner_params::PHASE_SCAN,sbuf,bef->cfs));
-        
         return 0;
     }
     
     int bulk_extractor_close(BEFILE *bef)
     {
+        bef->cfs.process_histograms(0);
         delete bef;
         return 0;
     }

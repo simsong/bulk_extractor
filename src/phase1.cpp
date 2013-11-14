@@ -238,16 +238,7 @@ void BulkExtractor_Phase1::wait_for_workers(image_process &p,std::string *md5_st
     xreport.pop();			// source
 
     /* Record the feature files and their counts in the output */
-    xreport.push("feature_files");
-    for(feature_recorder_map::const_iterator ij = tp->fs.frm.begin();
-        ij != tp->fs.frm.end(); ij++){
-        xreport.set_oneline(true);
-        xreport.push("feature_file");
-        xreport.xmlout("name",ij->second->name);
-        xreport.xmlout("count",ij->second->count());
-        xreport.pop();
-        xreport.set_oneline(false);
-    }
+    tp->fs.dump_name_count_stats(xreport);
 
     if(config.opt_quiet==0) std::cout << "Producer time spent waiting: " << tp->waiting.elapsed_seconds() << " sec.\n";
     

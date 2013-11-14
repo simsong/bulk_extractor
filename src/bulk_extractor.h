@@ -180,17 +180,7 @@ struct FindOptsStruct {
 };
 extern FindOptsStruct FindOpts;         // singleton
 extern regex_list find_list;
-//extern uint64_t debug;
-
-
-/* The global lists for finding, alertting and stopping.
- * Is there a way to get these out of the global extern space?
- */
-extern word_and_context_list alert_list; /* should be flagged */
-extern word_and_context_list stop_list;  /* should be ignored */
-
 extern scanner_t *scanners_builtin[];
-
 
 /****************************************************************
  *** SCANNER PROCESSORS - operate on the scanners

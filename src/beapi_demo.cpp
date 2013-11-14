@@ -38,9 +38,9 @@ int be_cb_demo(int32_t flag,
 
 int main(int argc,char **argv)
 {
-    be_open_t be_open=0;
-    be_analyze_buf_t be_analyze_buf=0;
-    be_close_t be_close=0;
+    bulk_extractor_open_t be_open=0;
+    bulk_extractor_analyze_buf_t be_analyze_buf=0;
+    bulk_extractor_close_t be_close=0;
 
 #ifdef HAVE_DLOPEN
     std::string fname = "bulk_extractor.so";
@@ -62,17 +62,17 @@ int main(int argc,char **argv)
         exit(1);
     }
 
-    be_open = (be_open_t)dlsym(lib, "bulk_extractor_open");
+    be_open = (bulk_extractor_open_t)dlsym(lib, "bulk_extractor_open");
     if(be_open==0){
         fprintf(stderr,"dlsym: %s\n",dlerror());
         exit(1);
     }
-    be_analyze_buf = (be_analyze_buf_t)dlsym(lib, "bulk_extractor_analyze_buf");
+    be_analyze_buf = (bulk_extractor_analyze_buf_t)dlsym(lib, "bulk_extractor_analyze_buf");
     if(be_analyze_buf==0){
         fprintf(stderr,"dlsym: %s\n",dlerror());
         exit(1);
     }
-    be_close = (be_close_t)dlsym(lib, "bulk_extractor_close");
+    be_close = (bulk_extractor_close_t)dlsym(lib, "bulk_extractor_close");
     if(be_close==0){
         fprintf(stderr,"dlsym: %s\n",dlerror());
         exit(1);
@@ -87,17 +87,17 @@ int main(int argc,char **argv)
         fprintf(stderr,"LoadLibrary(%s) failed",fname.c_str());
         exit(1);
     }
-    be_open = (be_open_t)GetProcAddress(hinstLib,"bulk_extractor_open");
+    be_open = (bulk_extractor_open_t)GetProcAddress(hinstLib,"bulk_extractor_open");
     if(be_open==0){
         fprintf(stderr,"GetProcAddress(bulk_extractor_open) failed");
         exit(1);
     }
-    be_analyze_buf = (be_analyze_buf_t)GetProcAddress(hinstLib,"bulk_extractor_analyze");
+    be_analyze_buf = (bulk_extractor_analyze_buf_t)GetProcAddress(hinstLib,"bulk_extractor_analyze");
     if(be_analyze_buf==0){
         fprintf(stderr,"GetProcAddress(bulk_extractor_analyze) failed");
         exit(1);
     }
-    be_close = (be_close_t)GetProcAddress(hinstLib,"bulk_extractor_close");
+    be_close = (bulk_extractor_close_t)GetProcAddress(hinstLib,"bulk_extractor_close");
     if(be_close==0){
         fprintf(stderr,"GetProcAddress(bulk_extractor_close) failed");
         exit(1);
