@@ -103,7 +103,7 @@ public class WManageBookmarks extends JDialog {
   }
 
   private void buildInterface() {
-    setTitle("Manage Bookmarks");
+    setTitle("Bookmarks");
     Container pane = getContentPane();
 
     // use GridBagLayout with GridBagConstraints
