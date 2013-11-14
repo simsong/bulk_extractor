@@ -165,7 +165,7 @@ public class WScanProgress extends JDialog {
     public RunnableStdout(String input) {
       this.input = input;
     }
-
+ 
     public void run() {
       // set progress % in progress bar
       // check input for progress identifier: "(.*%)"

@@ -18,13 +18,6 @@ public class WScanBoxedControls {
 
   public final Component component;
 
-  // Controls
-  public boolean usePluginDirectory;
-  public boolean useSettableOptions;
-
-  public String pluginDirectory;
-  public String settableOptions;
-
   public static final JCheckBox usePluginDirectoryCB = new JCheckBox("Use Plugin Directory");
   public static final JTextField pluginDirectoryTF = new JTextField();
 //  private final JButton pluginDirectoryChooserB = new JButton("\u2026"); // ...
@@ -55,45 +48,38 @@ public class WScanBoxedControls {
     return container;
   }
 
-  public void setDefaultValues() {
-    // Scanner Controls
-    usePluginDirectory = false;
-    useSettableOptions = false;
-  }
-
-  public void setUIValues() {
+  public void setScanSettings(ScanSettings scanSettings) {
     // controls
-    usePluginDirectoryCB.setSelected(usePluginDirectory);
-    pluginDirectoryTF.setEnabled(usePluginDirectory);
-    pluginDirectoryTF.setText(pluginDirectory);
-    pluginDirectoryChooserB.setEnabled(usePluginDirectory);
+    usePluginDirectoryCB.setSelected(scanSettings.usePluginDirectory);
+    pluginDirectoryTF.setEnabled(scanSettings.usePluginDirectory);
+    pluginDirectoryTF.setText(scanSettings.pluginDirectory);
+    pluginDirectoryChooserB.setEnabled(scanSettings.usePluginDirectory);
 
-    useSettableOptionsCB.setSelected(useSettableOptions);
-    settableOptionsTF.setEnabled(useSettableOptions);
-    settableOptionsTF.setText(settableOptions);
+    useSettableOptionsCB.setSelected(scanSettings.useSettableOptions);
+    settableOptionsTF.setEnabled(scanSettings.useSettableOptions);
+    settableOptionsTF.setText(scanSettings.settableOptions);
   }
 
-  public void getUIValues() {
+  public void getScanSettings(ScanSettings scanSettings) {
     // controls
-    usePluginDirectory = usePluginDirectoryCB.isSelected();
-    pluginDirectory = pluginDirectoryTF.getText();
+    scanSettings.usePluginDirectory = usePluginDirectoryCB.isSelected();
+    scanSettings.pluginDirectory = pluginDirectoryTF.getText();
 
-    useSettableOptions = useSettableOptionsCB.isSelected();
-    settableOptions = settableOptionsTF.getText();
-  }
-
-  public boolean validateValues() {
-    return true;
+    scanSettings.useSettableOptions = useSettableOptionsCB.isSelected();
+    scanSettings.settableOptions = settableOptionsTF.getText();
   }
 
   // the sole purpose of this listener is to keep UI widget visibility up to date
   private class GetUIValuesActionListener implements ActionListener {
     public void actionPerformed(ActionEvent e) {
-      getUIValues();
-      setUIValues();
+      ScanSettings scanSettings = new ScanSettings();
+      getScanSettings(scanSettings);
+      setScanSettings(scanSettings);
     }
   }
 
+/* zzzzzzzzzzzzzzzzzzzzz
+why is this necessary?
   // these listeners keep the scanners list up to date
   private class SetScannerListActionListener implements ActionListener {
     public void actionPerformed(ActionEvent e) {
@@ -117,6 +103,7 @@ public class WScanBoxedControls {
       }
     }
   }
+*/
 
   private void wireActions() {
     // controls
@@ -125,16 +112,16 @@ public class WScanBoxedControls {
     usePluginDirectoryCB.addActionListener(getUIValuesActionListener);
     useSettableOptionsCB.addActionListener(getUIValuesActionListener);
 
-    // controls to keep the scanners list up to date
-    SetScannerListActionListener setScannerListActionListener
-                  = new SetScannerListActionListener();
-    usePluginDirectoryCB.addActionListener(setScannerListActionListener);
-
-    SetScannerListFocusListener setScannerListFocusListener
-                  = new SetScannerListFocusListener();
-    pluginDirectoryTF.addFocusListener(setScannerListFocusListener);
-
-    pluginDirectoryChooserB.chooser.addActionListener(setScannerListActionListener);
+//    // controls to keep the scanners list up to date
+//    SetScannerListActionListener setScannerListActionListener
+//                  = new SetScannerListActionListener();
+//    usePluginDirectoryCB.addActionListener(setScannerListActionListener);
+//
+//    SetScannerListFocusListener setScannerListFocusListener
+//                  = new SetScannerListFocusListener();
+//    pluginDirectoryTF.addFocusListener(setScannerListFocusListener);
+//
+//    pluginDirectoryChooserB.chooser.addActionListener(setScannerListActionListener);
   }
 }
 

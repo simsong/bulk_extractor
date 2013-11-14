@@ -703,7 +703,7 @@ public class BEMenus extends JMenuBar {
     mi.setAccelerator(KEYSTROKE_R);
     mi.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
-        WScan.openWindow();
+        WScan.openWindow(new ScanSettings());
       }
     });
 

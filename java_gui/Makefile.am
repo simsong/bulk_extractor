@@ -60,6 +60,8 @@ $(srcdir)/src/ReportSelectionManager.java \
 $(srcdir)/src/ReportsModel.java \
 $(srcdir)/src/ReportsPane.java \
 $(srcdir)/src/ReportsTreeCellRenderer.java \
+$(srcdir)/src/ScanSettings.java \
+$(srcdir)/src/ScanSettingsListCellRenderer.java \
 $(srcdir)/src/TextComponent.java \
 $(srcdir)/src/ThreadReaderModel.java \
 $(srcdir)/src/ThreadsafeTreeModelManager.java \

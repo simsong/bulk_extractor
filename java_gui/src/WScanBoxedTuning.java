@@ -13,33 +13,6 @@ public class WScanBoxedTuning {
 
   public final Component component;
 
-  // defaults
-  private static final int DEFAULT_CONTEXT_WINDOW_SIZE = 16;
-  private static final int DEFAULT_PAGE_SIZE = 16777216;
-  private static final int DEFAULT_MARGIN_SIZE = 4194304;
-  private static final int DEFAULT_NUM_THREADS
-                         = Runtime.getRuntime().availableProcessors();
-  private static final int DEFAULT_BLOCK_SIZE = 512;
-  private static final int DEFAULT_MAX_RECURSION_DEPTH = 7;
-  private static final String DEFAULT_MAX_WAIT = "60";
-
-  // tuning parameters
-  public boolean useContextWindowSize;
-  public boolean usePageSize;
-  public boolean useMarginSize;
-  public boolean useBlockSize;
-  public boolean useNumThreads;
-  public boolean useMaxRecursionDepth;
-  public boolean useMaxWait;
-
-  public int contextWindowSize;
-  public int pageSize;
-  public int marginSize;
-  public int blockSize;
-  public int numThreads;
-  public int maxRecursionDepth;
-  public String maxWait;
-
   private final JCheckBox useContextWindowSizeCB = new JCheckBox("Use Context Window Size");
   private final JCheckBox usePageSizeCB = new JCheckBox("Use Page Size");
   private final JCheckBox useMarginSizeCB = new JCheckBox("Use Margin Size");
@@ -58,8 +31,6 @@ public class WScanBoxedTuning {
 
   public WScanBoxedTuning() {
     component = buildContainer();
-    setDefaultValues();
-    setUIValues();
     wireActions();
   }
 
@@ -84,80 +55,58 @@ public class WScanBoxedTuning {
     return container;
   }
  
-  public void setDefaultValues() {
+  public void setScanSettings(ScanSettings scanSettings) {
     // tuning parameters
-    useContextWindowSize = false;
-    usePageSize = false;
-    useMarginSize = false;
-    useBlockSize = false;
-    useNumThreads = false;
-    useMaxRecursionDepth = false;
-    useMaxWait = false;
- 
-    contextWindowSize = DEFAULT_CONTEXT_WINDOW_SIZE;
-    pageSize = DEFAULT_PAGE_SIZE;
-    marginSize = DEFAULT_MARGIN_SIZE;
-    blockSize = DEFAULT_BLOCK_SIZE;
-    numThreads = DEFAULT_NUM_THREADS;
-    maxRecursionDepth = DEFAULT_MAX_RECURSION_DEPTH;
-    maxWait = DEFAULT_MAX_WAIT;
+    useContextWindowSizeCB.setSelected(scanSettings.useContextWindowSize);
+    usePageSizeCB.setSelected(scanSettings.usePageSize);
+    useMarginSizeCB.setSelected(scanSettings.useMarginSize);
+    useBlockSizeCB.setSelected(scanSettings.useBlockSize);
+    useNumThreadsCB.setSelected(scanSettings.useNumThreads);
+    useMaxRecursionDepthCB.setSelected(scanSettings.useMaxRecursionDepth);
+    useMaxWaitCB.setSelected(scanSettings.useMaxWait);
+
+    contextWindowSizeTF.setEnabled(scanSettings.useContextWindowSize);
+    pageSizeTF.setEnabled(scanSettings.usePageSize);
+    marginSizeTF.setEnabled(scanSettings.useMarginSize);
+    blockSizeTF.setEnabled(scanSettings.useBlockSize);
+    numThreadsTF.setEnabled(scanSettings.useNumThreads);
+    maxRecursionDepthTF.setEnabled(scanSettings.useMaxRecursionDepth);
+    maxWaitTF.setEnabled(scanSettings.useMaxWait);
+
+    contextWindowSizeTF.setText(scanSettings.contextWindowSize);
+    pageSizeTF.setText(scanSettings.pageSize);
+    marginSizeTF.setText(scanSettings.marginSize);
+    blockSizeTF.setText(scanSettings.blockSize);
+    numThreadsTF.setText(scanSettings.numThreads);
+    maxRecursionDepthTF.setText(scanSettings.maxRecursionDepth);
+    maxWaitTF.setText(scanSettings.maxWait);
   }
 
-  public void setUIValues() {
+  public void getScanSettings(ScanSettings scanSettings) {
     // tuning parameters
-    useContextWindowSizeCB.setSelected(useContextWindowSize);
-    usePageSizeCB.setSelected(usePageSize);
-    useMarginSizeCB.setSelected(useMarginSize);
-    useBlockSizeCB.setSelected(useBlockSize);
-    useNumThreadsCB.setSelected(useNumThreads);
-    useMaxRecursionDepthCB.setSelected(useMaxRecursionDepth);
-    useMaxWaitCB.setSelected(useMaxWait);
+    scanSettings.useContextWindowSize = useContextWindowSizeCB.isSelected();
+    scanSettings.usePageSize = usePageSizeCB.isSelected();
+    scanSettings.useMarginSize = useMarginSizeCB.isSelected();
+    scanSettings.useBlockSize = useBlockSizeCB.isSelected();
+    scanSettings.useNumThreads = useNumThreadsCB.isSelected();
+    scanSettings.useMaxRecursionDepth = useMaxRecursionDepthCB.isSelected();
+    scanSettings.useMaxWait = useMaxWaitCB.isSelected();
 
-    contextWindowSizeTF.setEnabled(useContextWindowSize);
-    pageSizeTF.setEnabled(usePageSize);
-    marginSizeTF.setEnabled(useMarginSize);
-    blockSizeTF.setEnabled(useBlockSize);
-    numThreadsTF.setEnabled(useNumThreads);
-    maxRecursionDepthTF.setEnabled(useMaxRecursionDepth);
-    maxWaitTF.setEnabled(useMaxWait);
-
-    contextWindowSizeTF.setText(Integer.toString(contextWindowSize));
-    pageSizeTF.setText(Integer.toString(pageSize));
-    marginSizeTF.setText(Integer.toString(marginSize));
-    blockSizeTF.setText(Integer.toString(blockSize));
-    numThreadsTF.setText(Integer.toString(numThreads));
-    maxRecursionDepthTF.setText(Integer.toString(maxRecursionDepth));
-    maxWaitTF.setText(maxWait);
-  }
-
-  public void getUIValues() {
-    // tuning parameters
-    useContextWindowSize = useContextWindowSizeCB.isSelected();
-    usePageSize = usePageSizeCB.isSelected();
-    useMarginSize = useMarginSizeCB.isSelected();
-    useBlockSize = useBlockSizeCB.isSelected();
-    useNumThreads = useNumThreadsCB.isSelected();
-    useMaxRecursionDepth = useMaxRecursionDepthCB.isSelected();
-    useMaxWait = useMaxWaitCB.isSelected();
-
-    contextWindowSize = WScan.getInt(contextWindowSizeTF, "context window size", DEFAULT_CONTEXT_WINDOW_SIZE);
-    pageSize = WScan.getInt(pageSizeTF, "page size", DEFAULT_PAGE_SIZE);
-    marginSize = WScan.getInt(marginSizeTF, "margin size", DEFAULT_MARGIN_SIZE);
-    blockSize = WScan.getInt(blockSizeTF, "block size", DEFAULT_BLOCK_SIZE);
-    numThreads = WScan.getInt(numThreadsTF, "number of threads", DEFAULT_NUM_THREADS);
-    maxRecursionDepth = WScan.getInt(maxRecursionDepthTF, "maximum recursion depth", DEFAULT_MAX_RECURSION_DEPTH);
-    maxWait = maxWaitTF.getText();
+    scanSettings.contextWindowSize = contextWindowSizeTF.getText();
+    scanSettings.pageSize = pageSizeTF.getText();
+    scanSettings.marginSize = marginSizeTF.getText();
+    scanSettings.blockSize = blockSizeTF.getText();
+    scanSettings.numThreads = numThreadsTF.getText();
+    scanSettings.maxRecursionDepth = maxRecursionDepthTF.getText();
+    scanSettings.maxWait = maxWaitTF.getText();
 }
-
-  public boolean validateValues() {
-    return true;
-  }
 
   // the sole purpose of this listener is to keep UI widget visibility up to date
   private class GetUIValuesActionListener implements ActionListener {
     public void actionPerformed(ActionEvent e) {
-      getUIValues();
-      setUIValues();
+      ScanSettings scanSettings = new ScanSettings();
+      getScanSettings(scanSettings);
+      setScanSettings(scanSettings);
     }
   }
 
