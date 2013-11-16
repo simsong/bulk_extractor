@@ -14,9 +14,9 @@ public class FeatureBookmarksModel {
 //  private DefaultListModel<FeatureLine> defaultListModel = new DefaultListModel<FeatureLine>();
   private DefaultListModel defaultListModel = new DefaultListModel();
 
-  /*
+  /**
    * Returns the <code>DefaultListModel</code> associated with this model
-   * @return the bookmark list
+   * @return the bookmark list model
    */
 //  public DefaultListModel<FeatureLine> getListModel() {
   public DefaultListModel getListModel() {
