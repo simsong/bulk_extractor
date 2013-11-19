@@ -212,13 +212,10 @@ public class BETests {
   // Test: perform scan
   // ************************************************************
   public static void performScan(String[] scanCommand) {
+    // an implementation of this test would consist of enqueueing multiple
+    // scans and then waiting for the queue to become empty again.
     WLog.log("test: performScan");
-
-    WScanProgress wScanProgress = new WScanProgress(BEViewer.getBEWindow(), scanCommand);
-    Thread thread = wScanProgress.getScannerThread();
-    waitForThread(thread);
-
-    WLog.log("test: performScan completed");
+    WLog.log("Test currently not implemented, se BETests.performScan.");
   }
 
   // ************************************************************

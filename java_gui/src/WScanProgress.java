@@ -26,146 +26,41 @@ public class WScanProgress extends JDialog {
   private final JLabel statusL = new JLabel();
   private final JTextArea outputArea = new JTextArea();
   private final JButton cancelB = new JButton("Cancel");
-  private final String[] commandArray;
-  private final String commandString;
 
-  private Process process;
-  private Thread scannerThread;
-
-  // state
-  File imageFile = null;
-  File featuresDirectory = null;
-
-  /**
-   * Returns the thread controlling the scan, allowing monitoring for completion.
-   */
-  public Thread getScannerThread() {
-    return scannerThread;
-  }
-
-  public WScanProgress(Window parentWindow, String[] commandArray) {
-    this.commandArray = commandArray;
-    this.commandString = getCommandString(commandArray);
-    buildInterface();
-    pack();
-    commandField.setText(commandString); // set after pack
-    commandField.setToolTipText(commandString); // set after pack
-    commandField.setCaretPosition(0);
-    setClosure();
-    setLocationRelativeTo(parentWindow);
-    getRootPane().setDefaultButton(cancelB);
-    wireActions();
-    setVisible(true);
-    startProcess();
-  }
-
-  // closure
-  private void setClosure() {
-    setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);	// close via handler
-    addWindowListener(new WindowAdapter() {
-      public void windowClosing(WindowEvent e) {
-        doClose();
-      }
-    });
-  }
- 
-  private void startProcess() {
-    scannerThread = new ScannerThread();
-    scannerThread.start();
-  }
-
-  private class ScannerThread extends Thread {
-    private BufferedReader readFromProcess;
-    private BufferedReader errorFromProcess;
+  // runnable factory class for obtaining WScanProgress
+  private static class RunnableGetWScanProgress implements Runnable {
+    private WScanProgress wScanProgress;
     public void run() {
-
-      // set state
-      // image file is last item in command array
-      imageFile = new File(commandArray[commandArray.length - 1]);
-      // feature directory is element after "-o"
-      for (int i=0; i<commandArray.length; i++) {
-        if (commandArray[i].equals("-o")) {
-          featuresDirectory = new File(commandArray[i + 1]);
-          break;
-        }
-      }
-
-      // set file labels
-      imageFileLabel.setFile(imageFile);
-      featureDirectoryLabel.setFile(featuresDirectory);
-
-      // log the scan command
-      WLog.log("WScanProgress.command: '" + commandString + "'");
-
-      // start the bulk_extractor scan or fail
-      process = null;
-      try {
-        // start bulk_extractor
-        // NOTE: It would be nice to use commandString instead, but Runtime
-        // internally uses array and its string tokenizer doesn't manage
-        // quotes or spaces properly.
-        process = Runtime.getRuntime().exec(commandArray);
-        statusL.setText("Starting bulk_extractor...");
-
-      } catch (IOException e) {
-        // alert and abort
-        statusL.setText("bulk_extractor failed to start.  Please check that it is installed.");
-        WError.showError("bulk_extractor Scanner failed to start.",
-                         "bulk_extractor failure", e);
-        return;
-      }
-
-      // start the thread for reading stdout
-      readFromProcess = new BufferedReader(new InputStreamReader(process.getInputStream()));
-      ThreadReaderModel stdoutThread = new ThreadReaderModel(readFromProcess);
-      stdoutThread.addReaderModelChangedListener(new Observer() {
-        public void update(Observable o, Object arg) {
-          String input = (String)arg;
-          SwingUtilities.invokeLater(new RunnableStdout(input));
-        }
-      });
-     
-      // start the thread for reading stderr
-      errorFromProcess = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-      ThreadReaderModel stderrThread = new ThreadReaderModel(errorFromProcess);
-      stderrThread.addReaderModelChangedListener(new Observer() {
-        public void update(Observable o, Object arg) {
-          String input = (String)arg;
-          SwingUtilities.invokeLater(new RunnableStderr(input));
-        }
-      });
-
-      // wait for the bulk_extractor scan process to finish
-      try {
-        process.waitFor();
-      } catch (InterruptedException ie) {
-        WLog.log("WScanProgress ScannerThread interrupted");
-      }
-
-      // wait for the thread readers to finish
-      try {
-        stdoutThread.join();
-      } catch (InterruptedException ie1) {
-        throw new RuntimeException("unexpected event");
-      }
-      try {
-        stderrThread.join();
-      } catch (InterruptedException ie2) {
-        throw new RuntimeException("unexpected event");
-      }
-
-      // set the final "done" state
-      SwingUtilities.invokeLater(new RunnableDone());
+      wScanProgress = new WScanProgress();
     }
   }
 
-  // This class integrates stdout into the UI
-  private class RunnableStdout implements Runnable {
+  // runnable class for showStart
+  private class RunnableShowStart implements Runnable {
+    private final ScanSettings scanSettings;
+    private RunnableShowStart(ScanSettings scanSettings) {
+      this.scanSettings = scanSettings;
+    }
+    public void run() {
+      // put scanSettings values into UI components
+      imageFileLabel.setFile(new File(scanSettings.inputImage));
+      featureDirectoryLabel.setFile(new File(scanSettings.outdir));
+
+      // show the command string in the command field
+      String commandString = scanSettings.getCommandString();
+WLog.log("WScanProgress commandString to start with: " + commandString);
+      commandField.setText(commandString);
+      commandField.setToolTipText(commandString);
+      commandField.setCaretPosition(0);
+    }
+  }
+
+  // runnable class for showStdout
+  private class RunnableShowStdout implements Runnable {
     private final String input;
-    public RunnableStdout(String input) {
+    private RunnableShowStdout(String input) {
       this.input = input;
     }
- 
     public void run() {
       // set progress % in progress bar
       // check input for progress identifier: "(.*%)"
@@ -195,10 +90,10 @@ public class WScanProgress extends JDialog {
     }
   }
 
-  // This class integrates stderr into the UI
-  private class RunnableStderr implements Runnable {
+  // runnable class for showStderr
+  private class RunnableShowStderr implements Runnable {
     private final String input;
-    public RunnableStderr(String input) {
+    public RunnableShowStderr(String input) {
       this.input = input;
     }
 
@@ -211,29 +106,35 @@ public class WScanProgress extends JDialog {
   }
 
   // This class integrates "done" information into the UI
-  private class RunnableDone implements Runnable {
+  private class RunnableShowDone implements Runnable {
+    private final ScanSettings scanSettings;
+    private final int exitValue;
+    public RunnableShowDone(ScanSettings scanSettings, int exitValue) {
+      this.scanSettings = scanSettings;
+      this.exitValue = exitValue;
+    }
+
     public void run() {
 
       // change "cancel" button to say "close"
       cancelB.setText("Close");
 
       // respond to termination based on the process' exit value
-      int exitValue = process.exitValue();
       if (exitValue == 0) {
         // successful run
         statusL.setText("bulk_extractor scan completed.");
         progressBar.setValue(100);
         progressBar.setString("Done");
 
-        // alert completion
-        WError.showMessage("bulk_extractor has completed.\nReport " + featuresDirectory.getName()
-                  + " has been opened and is ready for viewing.", "Report is Ready");
-
-        // As a user convenience, Open the report that has been generated
+        // As a user convenience, add the report that has been generated
         // by this run
-        BEViewer.reportsModel.addReport(featuresDirectory, imageFile);
+        BEViewer.reportsModel.addReport(new File(scanSettings.outdir),
+                                        new File(scanSettings.inputImage));
 
-//        doClose();
+        // alert completion
+        WError.showMessage("bulk_extractor has completed.\nReport "
+                  + scanSettings.outdir
+                  + " is ready for viewing.", "Report is Ready");
 
       } else {
         // failed run
@@ -245,6 +146,73 @@ public class WScanProgress extends JDialog {
                          "bulk_extractor failure", null);
       }
     }
+  }
+
+  /**
+   * Threadsafe factory method for obtaining a new WScanProgress.
+   */
+  public static WScanProgress getWScanProgress() {
+    RunnableGetWScanProgress getWScanProgress = new RunnableGetWScanProgress();
+    try {
+      SwingUtilities.invokeAndWait(getWScanProgress);
+    } catch (Exception e) {
+      throw new RuntimeException("WScanProgress getWScanProgress thread failure");
+    }
+    WScanProgress wScanProgress = getWScanProgress.wScanProgress;
+    return wScanProgress;
+  }
+
+  /**
+   * Threadsafe method for showing startup information.
+   */
+  public void showStart(ScanSettings scanSettings) {
+    SwingUtilities.invokeLater(new RunnableShowStart(scanSettings));
+  }
+ 
+  /**
+   * Threadsafe method for showing stdout
+   */
+  public void showStdout(String stdoutString) {
+    SwingUtilities.invokeLater(new RunnableShowStdout(stdoutString));
+  }
+
+  /**
+   * Threadsafe method for showing stderr
+   */
+  public void showStderr(String stderrString) {
+    SwingUtilities.invokeLater(new RunnableShowStderr(stderrString));
+  }
+
+  /**
+   * Threadsafe method for showing closure information
+   */
+  public void showDone(ScanSettings scanSettings, int exitValue) {
+    SwingUtilities.invokeLater(new RunnableShowDone(scanSettings, exitValue));
+  }
+
+  // note that this is run privately by factory on the Swing thread
+  private WScanProgress() {
+    
+    buildInterface();
+    pack();
+//    commandField.setText(commandString); // set after pack
+//    commandField.setToolTipText(commandString); // set after pack
+//    commandField.setCaretPosition(0);
+    setClosure();
+    setLocationRelativeTo(BEViewer.getBEWindow());
+    getRootPane().setDefaultButton(cancelB);
+    wireActions();
+    setVisible(true);
+  }
+
+  // closure
+  private void setClosure() {
+    setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);	// close via handler
+    addWindowListener(new WindowAdapter() {
+      public void windowClosing(WindowEvent e) {
+        doClose();
+      }
+    });
   }
 
   private void buildInterface() {
@@ -313,9 +281,7 @@ public class WScanProgress extends JDialog {
 
   private void doClose() {
     // cancel
-    if (process != null) {
-      process.destroy();
-    }
+    ScanSettingsConsumer.killBulkExtractorProcess();
     dispose();
   }
 
@@ -360,29 +326,6 @@ public class WScanProgress extends JDialog {
     container.add(featureDirectoryLabel, c);
 
     return container;
-  }
-
-  // We build the string by concatenating tokens separated by space
-  // and quoting any tokens containing space.
-  private String getCommandString(String[] command) {
-    StringBuffer buffer = new StringBuffer();
-    for (int i=0; i<command.length; i++) {
-      // append space separator between command parts
-      if (i > 0) {
-        buffer.append(" ");
-      }
-
-      // append command part
-      if (command[i].indexOf(" ") >= 0) {
-        // append with quotes
-        buffer.append("\"" + command[i] + "\"");
-      } else {
-        // append without quotes
-        buffer.append(command[i]);
-      }
-    }
-    buffer.append("\n");
-    return buffer.toString();
   }
 
   // Command container

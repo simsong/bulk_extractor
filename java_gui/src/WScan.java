@@ -218,24 +218,6 @@ public class WScan {
     return container;
   }
 
-//  // ************************************************************
-//  // integer helper
-//  // ************************************************************
-//  /**
-//   * read int from textField or else give error and use default value.
-//   */
-//  public static int getInt(JTextField textField, String name, int def) {
-//    try {
-//      int value = Integer.valueOf(textField.getText()).intValue();
-//      return value;
-//    } catch (NumberFormatException e) {
-//      WError.showError("Invalid input for " + name + ": " + textField.getText()
-//                       + ".\nUsing default value " + def + ".",
-//                       "bulk_extractor input error", null);
-//      return def;
-//    }
-//  }
-
   // ************************************************************
   // low-level line components
   // ************************************************************
@@ -447,10 +429,10 @@ public class WScan {
           return;
         }
 
-// zzzzzzzzzzzzzzz enqueue job onto list
-        // start the scan and close this window
-        String[] command = scanSettings.getCommandArray();
-        new WScanProgress(wScanWindow, command);
+        // enqueue job onto the run queue
+        ScanSettingsRunQueue.add(scanSettings);
+
+        // close this window
         wScanWindow.setVisible(false);
       }
     });

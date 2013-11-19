@@ -216,6 +216,171 @@ public class ScanSettings {
     }
   }
 
+  /**
+   * instantiate from a String
+   */
+  public ScanSettings(String scanSettingsString) {
+    // start from default and then modify with input string
+    this();
+    String[] command = scanSettingsString.split("\\s");
+
+    // parse input string, modifying default
+    int index = 0;
+    int parameterCount = 0;
+    while (index < command.length) {
+      String a = command[index];
+      String b = (index+1 < command.length) ? command[index+1] : "";
+
+      // required parameters
+      if (a.equals("-o")) {
+        outdir = b;
+        index+=2; continue;
+
+      // general options
+      } else if (a.equals("-b")) {
+        useBannerFile = true;
+        bannerFile = b;
+        index+=2; continue;
+      } else if (a.equals("-r")) {
+        useAlertlistFile= true;
+        alertlistFile = b;
+        index+=2; continue;
+      } else if (a.equals("-w")) {
+        useStoplistFile = true;
+        stoplistFile = b;
+        index+=2; continue;
+      } else if (a.equals("-F")) {
+        useFindRegexTextFile = true;
+        findRegexTextFile = b;
+        index+=2; continue;
+      } else if (a.equals("-s")) {
+        useRandomSampling = true;
+        randomSampling = b;
+        index+=2; continue;
+
+      // tuning parameters
+      } else if (a.equals("-C")) {
+        useContextWindowSize = true;
+        contextWindowSize = b;
+        index+=2; continue;
+      } else if (a.equals("-G")) {
+        usePageSize = true;
+        pageSize = b;
+        index+=2; continue;
+      } else if (a.equals("-g")) {
+        useMarginSize = true;
+        marginSize = b;
+        index+=2; continue;
+      } else if (a.equals("-B")) {
+        useBlockSize = true;
+        blockSize = b;
+        index+=2; continue;
+      } else if (a.equals("-j")) {
+        useNumThreads = true;
+        numThreads = b;
+        index+=2; continue;
+      } else if (a.equals("-M")) {
+        useMaxRecursionDepth = true;
+        maxRecursionDepth = b;
+        index+=2; continue;
+      } else if (a.equals("-m")) {
+        useMaxWait = true;
+        maxWait = b;
+        index+=2; continue;
+
+      // parallelizing
+      } else if (a.equals("-Y")) {
+        if (b.indexOf('-') == -1) {
+          // use <o1> form
+          useStartProcessingAt = true;
+          startProcessingAt = b;
+          index+=2; continue;
+        } else {
+          // use <o1>-<o2> form
+          useProcessRange = true;
+          processRange = b;
+          index+=2; continue;
+        }
+      } else if (a.equals("-A")) {
+        useAddOffset = true;
+        addOffset = b;
+        index+=2; continue;
+
+      // debugging
+      } else if (a.equals("-z")) {
+        useStartOnPageNumber = true;
+        startOnPageNumber = b;
+        index+=2; continue;
+      } else if (a.equals("-d")) {
+        useDebugNumber = true;
+        debugNumber = b;
+        index+=2; continue;
+      } else if (a.equals("-Z")) {
+        useEraseOutputDirectory = true;
+        index+=1; continue;
+
+      // controls
+      } else if (a.equals("-P")) {
+        usePluginDirectory = true;
+        pluginDirectory = b;
+        index+=2; continue;
+      } else if (a.equals("-S")) {
+        useSettableOptions = true;
+        if (settableOptions.length() > 0) {
+          // add "|" to separate this from the last
+          settableOptions += "|";
+        }
+        settableOptions += b;
+        index+=2; continue;
+
+      // scanners
+      } else if (a.equals("-x")) {
+        boolean foundX = false;
+        for (Iterator<BulkExtractorScanListReader.Scanner> xIt = scanners.iterator(); xIt.hasNext();) {
+          BulkExtractorScanListReader.Scanner xScanner = xIt.next();
+          if (b.equals(xScanner.name)) {
+            xScanner.useScanner = false;
+            foundX = true;
+            break;
+          }
+        }
+        if (foundX == false) {
+          WLog.log("ScanSettings -x parse error: no scanner named '" + b + "'");
+        }
+        index+=2; continue;
+      } else if (a.equals("-e")) {
+        boolean foundE = false;
+        for (Iterator<BulkExtractorScanListReader.Scanner> eIt = scanners.iterator(); eIt.hasNext();) {
+          BulkExtractorScanListReader.Scanner eScanner = eIt.next();
+          if (b.equals(eScanner.name)) {
+            eScanner.useScanner = true;
+            foundE = true;
+            break;
+          }
+        }
+        if (foundE == false) {
+          WLog.log("ScanSettings -e parse error: no scanner named '" + b + "'");
+        }
+        index+=2; continue;
+      } else if (a.equals("-R")) {
+        imageSourceType = ImageSourceType.DIRECTORY_OF_FILES;
+        index+=1; continue;
+      } else {
+        // parse this as a parameter rather than as an option
+        inputImage = a;
+        parameterCount++;
+        index+=1; continue;
+      }
+    }
+
+    // validate that the parsing went to completion
+    if (index != command.length || parameterCount != 1) {
+      WLog.log("ScanSettings input error: '" + scanSettingsString + "'");
+      WError.showError("Invalid scan settings text: '" + scanSettingsString + "'",
+                       "Scan Settings Text error", null);
+    }
+  }
+
   public String[] getCommandArray() {
     Vector<String> cmd = new Vector<String>();
 
