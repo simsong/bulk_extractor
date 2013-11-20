@@ -99,11 +99,21 @@ class ScanSettingsConsumer extends Thread {
         continue;
       }
 
+WLog.log("ScanSettingsConsumer loop ignored zzz");
+/*
       // dequeue the job from the run queue
       ScanSettings scanSettings = ScanSettingsRunQueue.remove();
 
       // log the scan command
-      WLog.log("WScanProgress.command: '" + scanSettings.getCommandString() + "'");
+      WLog.log("ScanSettingsConsumer.command: '" + scanSettings.getCommandString() + "'");
+
+//WLog.log("ScanSettingsConsumer start big delay for testing");
+//try {
+//sleep(600 * 1000); // 10 minutes
+//WLog.log("ScanSettingsConsumer end big delay for testing");
+//} catch (IOException e) {
+//WLog.log("ScanSettingsConsumer sleep error");
+//}
 
       // start bulk_extractor process
       try {
@@ -168,6 +178,7 @@ class ScanSettingsConsumer extends Thread {
 
       // set the final "done" state
       wScanProgress.showDone(scanSettings, exitValue);
+*/
     }
   }
 }

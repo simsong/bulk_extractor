@@ -707,6 +707,15 @@ public class BEMenus extends JMenuBar {
       }
     });
 
+    // tools|bulk_extractor Run Queue...
+    mi = new JMenuItem("bulk_extractor Run Queue\u2026");
+    tools.add(mi);
+    mi.addActionListener(new ActionListener() {
+      public void actionPerformed (ActionEvent e) {
+        WScanSettingsRunQueue.openWindow();
+      }
+    });
+
     // help
     JMenu help = new JMenu("Help");
     add(help);

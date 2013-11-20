@@ -47,7 +47,7 @@ WLog.log("ScanSettingsRunQueue.add " + scanSettings.getCommandString());
    */
   public synchronized static ScanSettings remove() {
     if (jobs.size() < 1) {
-      throw new RuntimeException("invalid usage");
+      WLog.log("ScanSettingsRunQueue.remove: no first element");
     }
 //    ScanSettings scanSettings = jobs.remove(0);
     ScanSettings scanSettings = (ScanSettings)jobs.remove(0);
@@ -61,24 +61,42 @@ WLog.log("ScanSettingsRunQueue.add " + scanSettings.getCommandString());
 //@SuppressWarnings("unchecked") // hacked until we don't require javac6
     boolean success = jobs.removeElement(scanSettings);
     if (success == false) {
-      throw new RuntimeException("invalid usage");
+      WLog.log("ScanSettingsRunQueue.remove: no element");
     }
   }
 
   /**
-   * Swap the order of two elements
+   * Move ScanSettings up toward the top of the queue.
    */
 @SuppressWarnings("unchecked") // hacked until we don't require javac6
-  public synchronized static void swap(ScanSettings s1, ScanSettings s2) {
-    // java.util.Vector does not have a swap command, so use this
-    int n1 = jobs.indexOf(s1);
-    int n2 = jobs.indexOf(s2);
-    ScanSettings j1 = (ScanSettings)jobs.get(n1);
-    ScanSettings j2 = (ScanSettings)jobs.get(n2);
-    jobs.setElementAt(j2, n1);
-    jobs.setElementAt(j1, n2);
+  public synchronized static boolean moveUp(ScanSettings scanSettings) {
+    int n = jobs.indexOf(scanSettings);
+    if (n < 1) {
+      WLog.log("ScanSettingsRunQueue.moveUp: failure at index " + n);
+      return false;
+    } else {
+      ScanSettings scanSettings2 = (ScanSettings)jobs.get(n-1);
+      jobs.setElementAt(scanSettings, n-1);
+      jobs.setElementAt(scanSettings2, n);
+      return true;
+    }
+  }
 
-    // note: it is not necessary to fire run queue change for this.
+  /**
+   * Move ScanSettings down toward the bottom of the queue.
+   */
+@SuppressWarnings("unchecked") // hacked until we don't require javac6
+  public synchronized static boolean moveDown(ScanSettings scanSettings) {
+    int n = jobs.indexOf(scanSettings);
+    if (n < 0 || n > jobs.size()-1) {
+      WLog.log("ScanSettingsRunQueue.moveDown: failure at index " + n);
+      return false;
+    } else {
+      ScanSettings scanSettings2 = (ScanSettings)jobs.get(n+1);
+      jobs.setElementAt(scanSettings, n-1);
+      jobs.setElementAt(scanSettings2, n);
+      return true;
+    }
   }
 
   /**
@@ -89,8 +107,6 @@ WLog.log("ScanSettingsRunQueue.add " + scanSettings.getCommandString());
                                           ScanSettings newScanSettings) {
     int n = jobs.indexOf(oldScanSettings);
     jobs.setElementAt(newScanSettings, n);
-
-    // note: it is not necessary to fire run queue change for this.
   }
 
   /**
@@ -104,8 +120,8 @@ WLog.log("ScanSettingsRunQueue.add " + scanSettings.getCommandString());
    * Returns the <code>DefaultListModel</code> associated with this model
    * @return the run queue list model
    */
-//  public DefaultListModel<FeatureLine> getListModel() {
-  public DefaultListModel getListModel() {
+//  public DefaultListModel<FeatureLine> getListModel() 
+  public static DefaultListModel getListModel() {
     return jobs;
   }
 }

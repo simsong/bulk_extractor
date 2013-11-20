@@ -11,15 +11,16 @@ import java.util.Observer;
  * The dialog window for managing the bulk_extractor run queue scheduler
  */
 
-//@SuppressWarnings("unchecked") // hacked until we don't require javac6
+@SuppressWarnings("unchecked") // hacked until we don't require javac6
 public class WScanSettingsRunQueue extends JDialog {
   private static final long serialVersionUID = 1;
 
-  private static WScanSettingsRunQueue wScanSettingsRunQueue
+  private static WScanSettingsRunQueue wScanSettingsRunQueue;
   private static JList runQueueL = new JList(ScanSettingsRunQueue.getListModel());
   private static JButton upB = new JButton("Up");
   private static JButton downB = new JButton("Down");
   private static JButton editB = new JButton("Edit");
+  private static JButton deleteB = new JButton("Delete");
   private static JButton closeB = new JButton("Close");
 
   static {
@@ -43,10 +44,7 @@ public class WScanSettingsRunQueue extends JDialog {
   }
 
   private static void closeWindow() {
-    // the window is not instantiated in test mode
-    if (wScanSettingsRunQueue != null) {
-      WScanSettingsRunQueue.wScanSettingsRunQueue.setVisible(false);
-    }
+    WScanSettingsRunQueue.wScanSettingsRunQueue.setVisible(false);
   }
 
   private WScanSettingsRunQueue() {
@@ -85,8 +83,8 @@ public class WScanSettingsRunQueue extends JDialog {
     c.weighty = 1;
     c.fill = GridBagConstraints.BOTH;
 
-    // put the Scan Settings job list in a scroll pane
-    JScrollPane scrollPane = new JScrollPane(bookmarkL);
+    // put the Scan Settings job list in the scroll pane
+    JScrollPane scrollPane = new JScrollPane(runQueueL);
     scrollPane.setPreferredSize(new Dimension(600, 400));
 
      // add the scroll pane containing the Scan Settings job list
@@ -164,17 +162,18 @@ public class WScanSettingsRunQueue extends JDialog {
   private void setButtonStates() {
 
     // set states for buttons
-    upB.setEnabled(bookmarkL.getSelectedIndex() > 1
+    upB.setEnabled(runQueueL.getSelectedIndex() > 1
                    && ScanSettingsRunQueue.size() >= 2);
-    downB.setEnabled(bookmarkL.getSelectedIndex()
-                     < (ScanSettingsRunQueue.size() - 1);
-    editB.setEnabled(bookmarkL.getSelectedIndex() >= 0);
+    downB.setEnabled(runQueueL.getSelectedIndex()
+                     < ScanSettingsRunQueue.size() - 1);
+    editB.setEnabled(runQueueL.getSelectedIndex() >= 0);
+    deleteB.setEnabled(runQueueL.getSelectedIndex() >= 0);
   }
 
   private void wireActions() {
     // listen to bookmarks JList selection because selection state
     // changes button states
-    bookmarkL.addListSelectionListener(new ListSelectionListener() {
+    runQueueL.addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
         if (e.getValueIsAdjusting() == false) {
           setButtonStates();
@@ -182,8 +181,8 @@ public class WScanSettingsRunQueue extends JDialog {
       }
     });
 
-    // listen to bookmarks list changes
-    BEViewer.bookmarksModel.bookmarksComboBoxModel.addListDataListener(new ListDataListener() {
+/*
+    // listen to list changes
       public void contentsChanged(ListDataEvent e) {
         setButtonStates();
       }
@@ -193,37 +192,37 @@ public class WScanSettingsRunQueue extends JDialog {
       public void intervalRemoved(ListDataEvent e) {
         setButtonStates();
       }
-    });
+*/
 
-    // clicking clearB deletes all bookmark entries
-    clearB.addActionListener(new ActionListener() {
+    // clicking upB moves job up
+    upB.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        BEViewer.bookmarksModel.clear();
+        ScanSettings scanSettings = (ScanSettings)runQueueL.getSelectedValue();
+        ScanSettingsRunQueue.moveUp(scanSettings);
       }
     });
 
-    // clicking deleteB deletes the bookmark entry selected in bookmarkL
+    // clicking downB moves job down
+    upB.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        ScanSettings scanSettings = (ScanSettings)runQueueL.getSelectedValue();
+        ScanSettingsRunQueue.moveUp(scanSettings);
+      }
+    });
+
+    // clicking editB 
+    // zzzzzzzzz curently not implemented
+    editB.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        WError.showError("Edit capability is not implemented.", "BEViewer selection error", null);
+      }
+    });
+
+    // clicking deleteB deletes the scan settings job
     deleteB.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        BEViewer.bookmarksModel.removeElement((FeatureLine)bookmarkL.getSelectedValue());
-      }
-    });
-
-    // clicking navigateB navigates to the bookmark entry selected in bookmarkL
-    navigateB.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        FeatureLine featureLine = (FeatureLine)bookmarkL.getSelectedValue();
-        if (featureLine == null) {
-          throw new NullPointerException();
-        }
-        BEViewer.featureLineSelectionManager.setFeatureLineSelection(featureLine);
-      }
-    });
-
-    // clicking exportB exports the bookmarked features
-    exportB.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        saveBookmarks();
+        ScanSettings scanSettings = (ScanSettings)runQueueL.getSelectedValue();
+        ScanSettingsRunQueue.remove(scanSettings);
       }
     });
 
@@ -233,113 +232,6 @@ public class WScanSettingsRunQueue extends JDialog {
         setVisible(false);
       }
     });
-  }
-
-  public static Thread startThread(File file) {
-
-    // spawn the thread that performs the export
-    ExportBookmarksThread exportBookmarksThread = new ExportBookmarksThread(file);
-    exportBookmarksThread.start();
-    return exportBookmarksThread;
-  }
-
-  private static boolean validateTargetPath(File bookmarkFile) {
-    // make sure the requested filename does not exist
-    if (bookmarkFile.exists()) {
-      WError.showError("File '" + bookmarkFile + "' already exists.", "BEViewer file error", null);
-      return false;
-    }
-
-    // create the output file
-    try {
-      if (!bookmarkFile.createNewFile()) {
-        WError.showError("File '" + bookmarkFile + "' cannot be created.", "BEViewer file error", null);
-        return false;
-      }
-    } catch (IOException e) {
-      WError.showError("File '" + bookmarkFile + "' cannot be created.", "BEViewer file error", e);
-      return false;
-    }
-
-    // verified
-    return true;
-  }
-
-  // ************************************************************
-  // export bookmarks
-  // ************************************************************
-  private static class ExportBookmarksThread extends Thread {
-    public ExportBookmarksThread(File bookmarkFile) {
-      this.bookmarkFile = bookmarkFile;
-    }
-
-    // image model resource
-    private final ImageModel bookmarkImageModel = new ImageModel();
-    private final ImageView bookmarkImageView = new ImageView();
-
-    private final File bookmarkFile;
-
-    // run the export thread
-    public void run() {
-
-      // open the output writer
-      PrintWriter bookmarkTextWriter;
-      try {
-        bookmarkTextWriter = new PrintWriter(new BufferedWriter(new FileWriter(bookmarkFile)));
-      } catch (IOException e) {
-        WError.showError("Unable to write to new file " + bookmarkFile + ".", "BEViewer file error", e);
-        return;
-      }
-
-      // configure the image view
-      bookmarkImageView.setUseHexPath(BEViewer.imageView.getUseHexPath());
-      bookmarkImageView.setLineFormat(BEViewer.imageView.getLineFormat());
-
-      // fill the bookmark elements from the array of bookmarks
-      FeatureLine[] featureLines = BEViewer.bookmarksModel.getBookmarks();
-        for (int i=0; i<featureLines.length; i++) {
-        exportText(bookmarkTextWriter, featureLines[i]);
-      }
-
-      // close the output writer
-      bookmarkTextWriter.close();
-
-      // close all image readers
-      bookmarkImageModel.closeAllImageReaders();
-
-      // close the Export Bookmarks window
-      closeWindow();
-
-      WLog.log("WScanSettingsRunQueue: export bookmarks done.");
-    }
-
-    private void exportText(PrintWriter writer, FeatureLine featureLine) {
-      // print the summary using featureLine's getSummaryString
-      writer.println(featureLine.getSummaryString());
-
-      // read image bytes from the image model
-      bookmarkImageModel.setImageSelection(featureLine);
-
-      // wait until generation is done
-      while (bookmarkImageModel.isBusy()) {
-        Thread.yield();
-      }
-
-      // get image page from image model
-      ImageModel.ImagePage imagePage = bookmarkImageModel.getImagePage();
-
-      // generate the image view from the image page
-      bookmarkImageView.setImagePage(imagePage);
-
-      // get number of available image lines
-      int size = bookmarkImageView.getNumLines();
-      // print each line
-      for (int i=0; i<size; i++) {
-        ImageLine imageLine = bookmarkImageView.getLine(i);
-        writer.println(imageLine.text);
-      }
-      writer.println();
-    }
   }
 }
 

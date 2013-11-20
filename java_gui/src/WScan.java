@@ -28,6 +28,7 @@ public class WScan {
   private final JDialog wScanWindow = new JDialog();
   private final JButton loadDefaultsB = new JButton("Restore Defaults");
   private final JButton startB = new JButton("Start bulk_extractor");
+  private final JButton queueB = new JButton("Queue\u2026");
   private final JButton cancelB = new JButton("Cancel");
 
   // boxed components
@@ -55,7 +56,7 @@ public class WScan {
     }
 
     if (wScan.wScanWindow.isVisible()) {
-      throw new RuntimeException("program error");
+      WLog.log("WScan already visible.  Restoring defaults.");
     }
 
     // set all the scan settings
@@ -208,10 +209,18 @@ public class WScan {
     c.gridy = 0;
     container.add(startB, c);
 
-    // (2,0) Cancel
+    // (2,0) Queue...
     c = new GridBagConstraints();
     c.insets = new Insets(0, 5, 0, 5);
     c.gridx = 2;
+    c.gridy = 0;
+    container.add(queueB, c);
+    queueB.setToolTipText("Manage the bulk_extractor Run Queue");
+
+    // (3,0) Cancel
+    c = new GridBagConstraints();
+    c.insets = new Insets(0, 5, 0, 5);
+    c.gridx = 3;
     c.gridy = 0;
     container.add(cancelB, c);
 
@@ -434,6 +443,13 @@ public class WScan {
 
         // close this window
         wScanWindow.setVisible(false);
+      }
+    });
+
+    queueB.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        // put selection values into variables and close this window
+        WScanSettingsRunQueue.openWindow();
       }
     });
 
