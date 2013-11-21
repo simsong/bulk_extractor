@@ -30,7 +30,7 @@ public class BEArgsParser {
       if (length == 2) {
         // good, create bulk_extractor arg array
         ScanSettings scanSettings = new ScanSettings(args[1]);
-        ScanSettingsRunQueue.add(scanSettings);
+        BEViewer.scanSettingsListModel.add(scanSettings);
       } else {
         showUsage();
       }

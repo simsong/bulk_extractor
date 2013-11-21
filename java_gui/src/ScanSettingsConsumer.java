@@ -90,30 +90,14 @@ class ScanSettingsConsumer extends Thread {
   // this runs forever, once through per semaphore acquire
   public void run() {
     while (true) {
-      try {
-        // wait for the producer to have a run job
-        ScanSettingsRunQueue.scanSettingsSemaphore.acquire();
-      } catch (InterruptedException e) {
-        WLog.log("ScanSettingsConsumer.run acquire failure");
-        // something went wrong acquiring the semaphore
-        continue;
-      }
+      // wait for the producer to have a run job
+      BEViewer.scanSettingsListModel.acquire();
 
-WLog.log("ScanSettingsConsumer loop ignored zzz");
-/*
-      // dequeue the job from the run queue
-      ScanSettings scanSettings = ScanSettingsRunQueue.remove();
+      // consume the job from the run queue
+      ScanSettings scanSettings = BEViewer.scanSettingsListModel.remove();
 
       // log the scan command
       WLog.log("ScanSettingsConsumer.command: '" + scanSettings.getCommandString() + "'");
-
-//WLog.log("ScanSettingsConsumer start big delay for testing");
-//try {
-//sleep(600 * 1000); // 10 minutes
-//WLog.log("ScanSettingsConsumer end big delay for testing");
-//} catch (IOException e) {
-//WLog.log("ScanSettingsConsumer sleep error");
-//}
 
       // start bulk_extractor process
       try {
@@ -178,7 +162,6 @@ WLog.log("ScanSettingsConsumer loop ignored zzz");
 
       // set the final "done" state
       wScanProgress.showDone(scanSettings, exitValue);
-*/
     }
   }
 }

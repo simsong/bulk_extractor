@@ -1,3 +1,5 @@
+zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
+zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
 import java.util.Vector;
 import java.util.Iterator;
 import java.util.concurrent.Semaphore;
@@ -15,13 +17,13 @@ import javax.swing.DefaultListModel;
 
 public class ScanSettingsRunQueue {
 
-  // start the scan settings semaphore with nothing to consume
-  public static final Semaphore scanSettingsSemaphore = new Semaphore(0);
-
+/*
+zz disable consumer while testing
   // start the scan settings consumer so that it can consume directly
   // from this queue
   private static final ScanSettingsConsumer scanSettingsConsumer
                                                 = new ScanSettingsConsumer();
+*/
 
   // the jobs queue is kept in the DefaultListModel
 //  private static DefaultListModel<ScanSettings> jobs // sorry, needs Java7
@@ -33,7 +35,8 @@ public class ScanSettingsRunQueue {
   }
 
   /**
-   * Add ScanSettings to tail (bottom) of LIFO job queue.
+   * Add ScanSettings to tail (bottom) of LIFO job queue
+   * and increment the sempahore.
    */
 @SuppressWarnings("unchecked") // hacked until we don't require javac6
   public static synchronized void add(ScanSettings scanSettings) {
@@ -43,25 +46,48 @@ WLog.log("ScanSettingsRunQueue.add " + scanSettings.getCommandString());
   }
 
   /**
-   * Remove and return ScanSettings from head (top) of LIFO job queue.
+   * Remove and return ScanSettings from head (top) of LIFO job queue
+   * and decrement the sempahore.
    */
-  public synchronized static ScanSettings remove() {
-    if (jobs.size() < 1) {
-      WLog.log("ScanSettingsRunQueue.remove: no first element");
+  public synchronized static boolean remove() {
+    if (jobs.size() >= 1) {
+      return remove((ScanSettings)jobs.getElementAt(0));
+    } else {
+      return remove(new ScanSettings());
     }
-//    ScanSettings scanSettings = jobs.remove(0);
-    ScanSettings scanSettings = (ScanSettings)jobs.remove(0);
-    return scanSettings;
   }
 
   /**
-   * Remove specified ScanSettings object from within the job queue.
+   * Remove specified ScanSettings object from within the job queue
+   * and decrement the sempahore.
    */
-  public synchronized static void remove(ScanSettings scanSettings) {
-//@SuppressWarnings("unchecked") // hacked until we don't require javac6
-    boolean success = jobs.removeElement(scanSettings);
-    if (success == false) {
+  public synchronized static boolean remove(ScanSettings scanSettings) {
+    if (jobs.contains(scanSettings)) {
+      // good, it is available to be removed
+
+      // dequeue it
+// NOTE: InterruptedException not thrown until Java 7
+//      try {
+        boolean isAcquired = scanSettingsSemaphore.tryAcquire();
+        if (!isAcquired) {
+          WLog.log("ScanSettingsRunQueue.remove: failure to reacquire semaphore.");
+        }
+//      } catch (InterruptedException e) {
+//        throw new RuntimeException("interrupted thread");
+//      }
+
+      // remove it from jobs
+      // NOTE: Dequeue before removal because removal fires a changed event.
+      boolean success = jobs.removeElement(scanSettings);
+      if (success != true) {
+        throw new RuntimeException("internal error");
+      }
+      return true;
+
+    } else {
+      // the requested scanSettings object was not present in the job queue
       WLog.log("ScanSettingsRunQueue.remove: no element");
+      return false;
     }
   }
 
@@ -99,20 +125,33 @@ WLog.log("ScanSettingsRunQueue.add " + scanSettings.getCommandString());
     }
   }
 
-  /**
-   * replace settings with another
-   */
-@SuppressWarnings("unchecked") // hacked until we don't require javac6
-  public synchronized static void replace(ScanSettings oldScanSettings,
-                                          ScanSettings newScanSettings) {
-    int n = jobs.indexOf(oldScanSettings);
-    jobs.setElementAt(newScanSettings, n);
-  }
+// zzz No, to edit, dequeue and requeue when done.
+// zzz This approach is simple and threadsafe.
+//  /**
+//   * replace settings with another
+//   */
+//@SuppressWarnings("unchecked") // hacked until we don't require javac6
+//  public synchronized static void replace(ScanSettings oldScanSettings,
+//                                          ScanSettings newScanSettings) {
+//    int n = jobs.indexOf(oldScanSettings);
+//    jobs.setElementAt(newScanSettings, n);
+//  }
 
   /**
    * Number of scan settings enqueued.
    */
   public synchronized static int size() {
+
+    // this is a good place to check internal run state consistency
+    if (jobs.size() != scanSettingsSemaphore.availablePermits()) {
+      WLog.log("ScanSettingsRunQueue.size internal error, jobs: "
+           + jobs.size() + ", semaphore: "
+           + scanSettingsSemaphore.availablePermits());
+      // fatal if list and semaphore don't match.
+      throw new RuntimeException("internal error");
+    }
+
+    // return size
     return jobs.size();
   }
 

@@ -16,16 +16,34 @@ public class WScanSettingsRunQueue extends JDialog {
   private static final long serialVersionUID = 1;
 
   private static WScanSettingsRunQueue wScanSettingsRunQueue;
-  private static JList runQueueL = new JList(ScanSettingsRunQueue.getListModel());
+  private static JList runQueueL = new JList(BEViewer.scanSettingsListModel);
+/*
   private static JButton upB = new JButton("Up");
   private static JButton downB = new JButton("Down");
-  private static JButton editB = new JButton("Edit");
+  private static JButton editRedoB = new JButton("Edit");
   private static JButton deleteB = new JButton("Delete");
+*/
+  private static JButton upB = new JButton(BEIcons.UP_16);
+  private static JButton downB = new JButton(BEIcons.DOWN_16);
+  private static JButton editRedoB = new JButton(BEIcons.EDIT_REDO_16);
+  private static JButton deleteB = new JButton(BEIcons.DELETE_16);
   private static JButton closeB = new JButton("Close");
 
   static {
     runQueueL.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     runQueueL.setCellRenderer(new ScanSettingsListCellRenderer());
+    upB.setToolTipText("Move selection up queue to be run sooner");
+    upB.setMinimumSize(BEViewer.BUTTON_SIZE);
+    upB.setPreferredSize(BEViewer.BUTTON_SIZE);
+    downB.setToolTipText("Move selection down queue to be run later");
+    downB.setMinimumSize(BEViewer.BUTTON_SIZE);
+    downB.setPreferredSize(BEViewer.BUTTON_SIZE);
+    editRedoB.setToolTipText("Edit selection");
+    editRedoB.setMinimumSize(BEViewer.BUTTON_SIZE);
+    editRedoB.setPreferredSize(BEViewer.BUTTON_SIZE);
+    deleteB.setToolTipText("Delete selection from queue");
+    deleteB.setMinimumSize(BEViewer.BUTTON_SIZE);
+    deleteB.setPreferredSize(BEViewer.BUTTON_SIZE);
   }
 
   /**
@@ -120,37 +138,23 @@ public class WScanSettingsRunQueue extends JDialog {
     c.gridy = y;
     container.add(downB, c);
 
-    // editB
+    // editRedoB
     c = new GridBagConstraints();
     c.insets = new Insets(5, 5, 5, 5);
     c.gridx = x++;
     c.gridy = y;
-    container.add(editB, c);
-
-    // vertical separator
-    c = new GridBagConstraints();
-    c.insets = new Insets(5, 5, 5, 5);
-    c.gridx = x++;
-    c.gridy = y;
-    container.add(new JSeparator(SwingConstants.VERTICAL), c);
+    container.add(editRedoB, c);
 
     // deleteB
     c = new GridBagConstraints();
-    c.insets = new Insets(5, 5, 5, 5);
+    c.insets = new Insets(5, 25, 5, 25);
     c.gridx = x++;
     c.gridy = y;
     container.add(deleteB, c);
 
-    // vertical separator
-    c = new GridBagConstraints();
-    c.insets = new Insets(5, 5, 5, 5);
-    c.gridx = x++;
-    c.gridy = y;
-    container.add(new JSeparator(SwingConstants.VERTICAL), c);
-
     // closeB
     c = new GridBagConstraints();
-    c.insets = new Insets(5, 5, 5, 5);
+    c.insets = new Insets(5, 25, 5, 5);
     c.gridx = x++;
     c.gridy = y;
     c.anchor = GridBagConstraints.FIRST_LINE_START;
@@ -163,10 +167,11 @@ public class WScanSettingsRunQueue extends JDialog {
 
     // set states for buttons
     upB.setEnabled(runQueueL.getSelectedIndex() > 1
-                   && ScanSettingsRunQueue.size() >= 2);
-    downB.setEnabled(runQueueL.getSelectedIndex()
-                     < ScanSettingsRunQueue.size() - 1);
-    editB.setEnabled(runQueueL.getSelectedIndex() >= 0);
+                   && BEViewer.scanSettingsListModel.getSize() >= 2);
+    downB.setEnabled(runQueueL.getSelectedIndex() != -1
+                && runQueueL.getSelectedIndex()
+                     < BEViewer.scanSettingsListModel.getSize() - 1);
+    editRedoB.setEnabled(runQueueL.getSelectedIndex() >= 0);
     deleteB.setEnabled(runQueueL.getSelectedIndex() >= 0);
   }
 
@@ -198,7 +203,7 @@ public class WScanSettingsRunQueue extends JDialog {
     upB.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         ScanSettings scanSettings = (ScanSettings)runQueueL.getSelectedValue();
-        ScanSettingsRunQueue.moveUp(scanSettings);
+        BEViewer.scanSettingsListModel.moveUp(scanSettings);
       }
     });
 
@@ -206,15 +211,16 @@ public class WScanSettingsRunQueue extends JDialog {
     upB.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         ScanSettings scanSettings = (ScanSettings)runQueueL.getSelectedValue();
-        ScanSettingsRunQueue.moveUp(scanSettings);
+        BEViewer.scanSettingsListModel.moveDown(scanSettings);
       }
     });
 
-    // clicking editB 
-    // zzzzzzzzz curently not implemented
-    editB.addActionListener(new ActionListener() {
+    // clicking editRedoB 
+    editRedoB.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        WError.showError("Edit capability is not implemented.", "BEViewer selection error", null);
+        ScanSettings scanSettings = (ScanSettings)runQueueL.getSelectedValue();
+        BEViewer.scanSettingsListModel.remove(scanSettings);
+        WScan.openWindow(scanSettings);
       }
     });
 
@@ -222,7 +228,7 @@ public class WScanSettingsRunQueue extends JDialog {
     deleteB.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         ScanSettings scanSettings = (ScanSettings)runQueueL.getSelectedValue();
-        ScanSettingsRunQueue.remove(scanSettings);
+        BEViewer.scanSettingsListModel.remove(scanSettings);
       }
     });
 

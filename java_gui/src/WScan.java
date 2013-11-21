@@ -439,7 +439,7 @@ public class WScan {
         }
 
         // enqueue job onto the run queue
-        ScanSettingsRunQueue.add(scanSettings);
+        BEViewer.scanSettingsListModel.add(scanSettings);
 
         // close this window
         wScanWindow.setVisible(false);

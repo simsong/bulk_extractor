@@ -45,6 +45,7 @@ public class BEViewer {
   public static final ImageView imageView = new ImageView(imageModel, userHighlightModel);
   public static final RangeSelectionManager rangeSelectionManager = new RangeSelectionManager();
   public static final ClassificationManager classificationManager = new ClassificationManager();
+  public static final ScanSettingsListModel scanSettingsListModel = new ScanSettingsListModel();
 
   // toolbar
   public static final BEToolbar toolbar = new BEToolbar();

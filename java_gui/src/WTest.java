@@ -49,7 +49,7 @@ public class WTest extends JDialog {
       if (scanCB.isSelected()) {
         // Run a bulk_extractor scan using provided input
         ScanSettings scanSettings = new ScanSettings(testScanDirective);
-        ScanSettingsRunQueue.add(scanSettings);
+        BEViewer.scanSettingsListModel.add(scanSettings);
       }
     }
   }
