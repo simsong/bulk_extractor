@@ -3,7 +3,8 @@ import java.util.concurrent.locks.ReentrantLock;
 import javax.swing.AbstractListModel;
 
 /**
- * Provides list capability and also manages the producer semaphore.
+ * Manages the jobs list and also provides list capability for a JList
+ * in a threadsafe way.
  *
  * This should be a static singleton class, but abstract class
  * AbstractListModel requires that it not be static.
@@ -18,10 +19,10 @@ public class ScanSettingsListModel extends AbstractListModel {
   // the jobs being managed by this list model
   private final Vector<ScanSettings> jobs = new Vector<ScanSettings>();
 
-  // lock changes to jobs size to prevent corruption
+  // a lock is used to prevent corruption of the jobs queue
   private final ReentrantLock lock = new ReentrantLock();
 
-  // use this list model as a singleton resource, not as a class
+  // AbstractModel requires that this singleton resource be non-static
   public ScanSettingsListModel() {
   }
 
@@ -31,11 +32,9 @@ public class ScanSettingsListModel extends AbstractListModel {
    */
   public void add(ScanSettings scanSettings) {
     lock.lock();
-WLog.log("ScanSettingsRunQueue.add " + scanSettings.getCommandString());
     jobs.add(scanSettings);
     lock.unlock();
     fireIntervalAdded(this, jobs.size()-1, jobs.size()-1);
-//zz    fireIntervalAdded(this, 0, 100);
   }
 
   /**
@@ -56,7 +55,6 @@ WLog.log("ScanSettingsRunQueue.add " + scanSettings.getCommandString());
     lock.unlock();
     if (removed) {
       fireIntervalRemoved(this, 0, 0);
-//zz    fireIntervalRemoved(this, 0, 100);
     }
     return scanSettings;
   }
@@ -82,7 +80,6 @@ WLog.log("ScanSettingsRunQueue.add " + scanSettings.getCommandString());
     lock.unlock();
     if (removed) {
       fireIntervalRemoved(this, index, index);
-//zz    fireIntervalRemoved(this, 0, 100);
     }
     return scanSettings;
   }
@@ -115,7 +112,6 @@ WLog.log("ScanSettingsRunQueue.add " + scanSettings.getCommandString());
   /**
    * Move ScanSettings down toward the bottom of the queue.
    */
-//@SuppressWarnings("unchecked") // hacked until we don't require javac6
   public void moveDown(ScanSettings scanSettings) {
     lock.lock();
     boolean moved = false;
@@ -145,7 +141,6 @@ WLog.log("ScanSettingsRunQueue.add " + scanSettings.getCommandString());
   public int getSize() {
     lock.lock();
     int size = jobs.size();
-WLog.log("SSLM.getSize: " + size);
     lock.unlock();
     return size;
   }
@@ -156,7 +151,6 @@ WLog.log("SSLM.getSize: " + size);
    */
   public ScanSettings getElementAt(int index) {
     lock.lock();
-WLog.log("SSLM.getElementAt index " + index);
     ScanSettings scanSettings = jobs.get(index);
     lock.unlock();
     return scanSettings;

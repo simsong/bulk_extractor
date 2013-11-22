@@ -64,6 +64,7 @@ $(srcdir)/src/ScanSettings.java \
 $(srcdir)/src/ScanSettingsConsumer.java \
 $(srcdir)/src/ScanSettingsListCellRenderer.java \
 $(srcdir)/src/ScanSettingsListModel.java \
+$(srcdir)/src/ScanSettingsToolBar.java \
 $(srcdir)/src/TextComponent.java \
 $(srcdir)/src/ThreadReaderModel.java \
 $(srcdir)/src/ThreadsafeTreeModelManager.java \

@@ -69,7 +69,7 @@ public class WScanBoxedControls {
     scanSettings.settableOptions = settableOptionsTF.getText();
   }
 
-  // the sole purpose of this listener is to keep UI widget visibility up to date
+  // this listener keeps UI widget visibility up to date
   private class GetUIValuesActionListener implements ActionListener {
     public void actionPerformed(ActionEvent e) {
       ScanSettings scanSettings = new ScanSettings();
@@ -78,50 +78,12 @@ public class WScanBoxedControls {
     }
   }
 
-/* zzzzzzzzzzzzzzzzzzzzz
-why is this necessary?
-  // these listeners keep the scanners list up to date
-  private class SetScannerListActionListener implements ActionListener {
-    public void actionPerformed(ActionEvent e) {
-      WScanBoxedScanners.setScannerList();
-    }
-  }
-  private class SetScannerListFocusListener implements FocusListener {
-    public void focusGained(FocusEvent e) {
-      // disable the scanners
-      Component[] components = WScanBoxedScanners.container.getComponents();
-      for (Component component : components) {
-        component.setEnabled(false);
-      }
-    }
-    public void focusLost(FocusEvent e) {
-      // enable the scanners
-      WScanBoxedScanners.setScannerList();
-      Component[] components = WScanBoxedScanners.container.getComponents();
-      for (Component component : components) {
-        component.setEnabled(true);
-      }
-    }
-  }
-*/
-
   private void wireActions() {
     // controls
     GetUIValuesActionListener getUIValuesActionListener
                   = new GetUIValuesActionListener();
     usePluginDirectoryCB.addActionListener(getUIValuesActionListener);
     useSettableOptionsCB.addActionListener(getUIValuesActionListener);
-
-//    // controls to keep the scanners list up to date
-//    SetScannerListActionListener setScannerListActionListener
-//                  = new SetScannerListActionListener();
-//    usePluginDirectoryCB.addActionListener(setScannerListActionListener);
-//
-//    SetScannerListFocusListener setScannerListFocusListener
-//                  = new SetScannerListFocusListener();
-//    pluginDirectoryTF.addFocusListener(setScannerListFocusListener);
-//
-//    pluginDirectoryChooserB.chooser.addActionListener(setScannerListActionListener);
   }
 }
 

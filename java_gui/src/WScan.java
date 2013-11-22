@@ -26,8 +26,8 @@ public class WScan {
   // Control
   private static WScan wScan;
   private final JDialog wScanWindow = new JDialog();
-  private final JButton submitB = new JButton("Submit Run");
   private final JButton queueB = new JButton("Manage Queue\u2026");
+  private final JButton submitB = new JButton("Submit Run");
   private final JButton cancelB = new JButton("Cancel");
 
   // boxed components
@@ -195,14 +195,6 @@ public class WScan {
     GridBagConstraints c;
 
     int x=0;
-    // Submit run
-    c = new GridBagConstraints();
-    c.insets = new Insets(0, 5, 0, 5);
-    c.gridx = x++;
-    c.gridy = 0;
-    container.add(submitB, c);
-    submitB.setToolTipText("Submit run to the bulk_extractor Run Queue");
-
     // Queue...
     c = new GridBagConstraints();
     c.insets = new Insets(0, 5, 0, 5);
@@ -210,6 +202,14 @@ public class WScan {
     c.gridy = 0;
     container.add(queueB, c);
     queueB.setToolTipText("Manage the bulk_extractor Run Queue");
+
+    // Submit run
+    c = new GridBagConstraints();
+    c.insets = new Insets(0, 5, 0, 5);
+    c.gridx = x++;
+    c.gridy = 0;
+    container.add(submitB, c);
+    submitB.setToolTipText("Submit run to the bulk_extractor Run Queue");
 
     // Cancel
     c = new GridBagConstraints();
@@ -417,6 +417,13 @@ public class WScan {
     });
 */
 
+    queueB.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        // put selection values into variables and close this window
+        WScanSettingsRunQueue.openWindow();
+      }
+    });
+
     submitB.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
 
@@ -439,13 +446,6 @@ public class WScan {
 
         // close this window
         wScanWindow.setVisible(false);
-      }
-    });
-
-    queueB.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        // put selection values into variables and close this window
-        WScanSettingsRunQueue.openWindow();
       }
     });
 

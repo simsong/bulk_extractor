@@ -11,15 +11,24 @@ import javax.swing.event.ListDataEvent;
  * The <code>ScanSettingsConsumer</code> consumes Scan Settings jobs
  * one at a time as they become available in the scan settings run queue.
  *
- * The consumer waits for the producer's semaphore for jobs.
+ * The consumer loops, consuming jobs, until it parks.
+ * The provider provides unpark permits after enqueueing jobs.
+ * This policy keeps the consumer going.
+ *
+ * This object must be initialized after ScanSettingsListModel.
  */
 class ScanSettingsConsumer extends Thread {
+  private static ScanSettingsConsumer scanSettingsConsumer;
+  private static boolean isPaused = false;
   private static Process process;
 
   /**
    * Just loading the constructor starts the conumer.
    */
   public ScanSettingsConsumer() {
+    scanSettingsConsumer = this;
+isPaused = true;
+WLog.log("SSC.pauseConsumer.before, " + this);
     start();
   }
 
@@ -29,6 +38,30 @@ class ScanSettingsConsumer extends Thread {
   public static void killBulkExtractorProcess() {
     if (process != null) {
       process.destroy();
+    }
+  }
+
+/*
+  // issue a permit to unpark, waking this thread up or keeping it awake
+  private void unpark() {
+    LockSupport.unpark(this);
+  }
+*/
+ 
+  /**
+   * Pause the consumer so that it does not start another buk_extractor run
+   * or restart the consumer.
+   */
+  public synchronized static void pauseConsumer(boolean doPause) {
+WLog.log("SSC.pauseConsumer.a");
+    if (doPause) {
+WLog.log("SSC.pauseConsumer.b");
+      isPaused = true;
+    } else {
+WLog.log("SSC.pauseConsumer.c, " + ScanSettingsConsumer.scanSettingsConsumer);
+      isPaused = false;
+      LockSupport.unpark(ScanSettingsConsumer.scanSettingsConsumer);
+WLog.log("SSC.pauseConsumer.d");
     }
   }
 
@@ -90,37 +123,17 @@ class ScanSettingsConsumer extends Thread {
     }
   }
 
-  // this is where the waiting happens
-  private ScanSettings getJob() {
-    ScanSettings scanSettings;
-    while (true) {
-      scanSettings = BEViewer.scanSettingsListModel.remove();
-      if (scanSettings != null) {
-        break;
-      } else {
-        // wait for signal that a job may be available
-        LockSupport.park();
-      }
-    }
-    return scanSettings;
-  }
-
-  // this responds to wakeup events
-  private void unpark() {
-    LockSupport.unpark(this);
-  }
- 
   // this runs forever, once through per semaphore permit acquired
   public void run() {
 
-    // register self to listen to job added events
+    // register self to listen for added jobs
     BEViewer.scanSettingsListModel.addListDataListener(new ListDataListener() {
       public void contentsChanged(ListDataEvent e) {
         // not used;
       }
       public void intervalAdded(ListDataEvent e) {
         // consume the item by waking up self
-        unpark();
+        LockSupport.unpark(ScanSettingsConsumer.scanSettingsConsumer);
       }
       public void intervalRemoved(ListDataEvent e) {
         // not used;
@@ -128,10 +141,26 @@ class ScanSettingsConsumer extends Thread {
     });
 
     while (true) {
-      // get a run job
-      ScanSettings scanSettings = getJob();
+WLog.log("SSC.run.a");
+      // wait for signal that a job may be available
+      LockSupport.park();
 
-      // log the scan command
+      if (isPaused) {
+        // to pause, simply restart at top of loop.
+        // Use pauseConsumer() to restart.
+        continue;
+      }
+
+WLog.log("SSC.run.b");
+      // get a ScanSettings run job
+      ScanSettings scanSettings = BEViewer.scanSettingsListModel.remove();
+      if (scanSettings == null) {
+        // the producer is not ready, so restart at top of loop.
+        continue;
+      }
+
+WLog.log("SSC.run.c");
+      // log the scan command that is about to be run
       WLog.log("ScanSettingsConsumer.command: '" + scanSettings.getCommandString() + "'");
 
       // start bulk_extractor process
@@ -149,6 +178,7 @@ class ScanSettingsConsumer extends Thread {
         // something went wrong starting bulk_extractor
         continue;
       }
+WLog.log("SSC.run.d");
 
       // get a new instance of WScanProgress for tracking the bulk_extractor
       // process
@@ -197,6 +227,9 @@ class ScanSettingsConsumer extends Thread {
 
       // set the final "done" state
       wScanProgress.showDone(scanSettings, exitValue);
+
+      // tell thread try another run if one is available
+      LockSupport.unpark(ScanSettingsConsumer.scanSettingsConsumer);
     }
   }
 }

@@ -46,22 +46,23 @@ public class BEViewer {
   public static final RangeSelectionManager rangeSelectionManager = new RangeSelectionManager();
   public static final ClassificationManager classificationManager = new ClassificationManager();
   public static final ScanSettingsListModel scanSettingsListModel = new ScanSettingsListModel();
+  private static final ScanSettingsConsumer scanSettingsConsumer = new ScanSettingsConsumer();
 static {
 //zz test
 ScanSettings test;
-test = new ScanSettings("-o /home/bdallen/bimap_test2 /home/bdallen/Images/ntfs1-gen2.e01");
+test = new ScanSettings("-o /home/bdallen/queuetest1 /home/bdallen/Images/ntfs1-gen2.e01");
 scanSettingsListModel.add(test);
-test = new ScanSettings("-o /home/bdallen/bimap_test2 -e bulk /home/bdallen/Images/ntfs1-gen2.E01");
+test = new ScanSettings("-o /home/bdallen/queuetest2 -e bulk /home/bdallen/Images/ntfs1-gen2.E01");
 scanSettingsListModel.add(test);
-test = new ScanSettings("-o /home/bdallen/bimap_test2 -e aaaa /home/bdallen/Images/ntfs1-gen2.E01");
+test = new ScanSettings("-o /home/bdallen/queuetesta -e aaaa /home/bdallen/Images/ntfs1-gen2.E01");
 scanSettingsListModel.add(test);
-test = new ScanSettings("-o /home/bdallen/bimap_test2 -S bbbb /home/bdallen/Images/ntfs1-gen2.E01");
+test = new ScanSettings("-o /home/bdallen/queuetestb -S bbbb /home/bdallen/Images/ntfs1-gen2.E01");
 scanSettingsListModel.add(test);
-test = new ScanSettings("-o /home/bdallen/bimap_test2 -S cccc /home/bdallen/Images/ntfs1-gen2.E01");
+test = new ScanSettings("-o /home/bdallen/queuetestc -S cccc /home/bdallen/Images/ntfs1-gen2.E01");
 scanSettingsListModel.add(test);
-test = new ScanSettings("-o /home/bdallen/bimap_test2 -S dddd /home/bdallen/Images/ntfs1-gen2.E01");
+test = new ScanSettings("-o /home/bdallen/queuetestd -S dddd /home/bdallen/Images/ntfs1-gen2.E01");
 scanSettingsListModel.add(test);
-test = new ScanSettings("-o /home/bdallen/bimap_test2 -S eeee /home/bdallen/Images/ntfs1-gen2.E01");
+test = new ScanSettings("-o /home/bdallen/queueteste -S eeee /home/bdallen/Images/ntfs1-gen2.E01");
 scanSettingsListModel.add(test);
 }
 
