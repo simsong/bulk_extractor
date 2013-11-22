@@ -1,5 +1,5 @@
 import java.util.Vector;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.locks.ReentrantLock;
 import javax.swing.AbstractListModel;
 
 /**
@@ -7,6 +7,10 @@ import javax.swing.AbstractListModel;
  *
  * This should be a static singleton class, but abstract class
  * AbstractListModel requires that it not be static.
+ *
+ * Consumer: use ListDataListener to listen for intervalAdded event,
+ * then try to consume a ScanSettings job object, if available.
+ * Consumer must loop to consume queued jobs.
  */
 
 public class ScanSettingsListModel extends AbstractListModel {
@@ -14,115 +18,123 @@ public class ScanSettingsListModel extends AbstractListModel {
   // the jobs being managed by this list model
   private final Vector<ScanSettings> jobs = new Vector<ScanSettings>();
 
-  // start the scan settings semaphore with nothing to consume
-  private final Semaphore scanSettingsSemaphore = new Semaphore(0);
+  // lock changes to jobs size to prevent corruption
+  private final ReentrantLock lock = new ReentrantLock();
 
   // use this list model as a singleton resource, not as a class
   public ScanSettingsListModel() {
   }
 
   /**
-   * Acquire a permit from the semaphore.
-   */
-  public void acquire() {
-    try {
-      scanSettingsSemaphore.acquire();
-    } catch (InterruptedException e) {
-      // something went wrong acquiring the semaphore
-      WLog.log("ScanSettingsListModel.acquire failure");
-    }
-  }
-
-  /**
    * Add ScanSettings to tail (bottom) of LIFO job queue
    * and increment the sempahore.
    */
-  public synchronized void add(ScanSettings scanSettings) {
+  public void add(ScanSettings scanSettings) {
+    lock.lock();
 WLog.log("ScanSettingsRunQueue.add " + scanSettings.getCommandString());
     jobs.add(scanSettings);
-    scanSettingsSemaphore.release();
+    lock.unlock();
     fireIntervalAdded(this, jobs.size()-1, jobs.size()-1);
+//zz    fireIntervalAdded(this, 0, 100);
   }
 
   /**
-   * Remove and return ScanSettings from head (top) of LIFO job queue
+   * Remove and return ScanSettings from head (top) of LIFO job queue.
    * and decrement the sempahore else return null.
    */
-  public synchronized ScanSettings remove() {
+  public ScanSettings remove() {
+    lock.lock();
+    boolean removed = false;
+    ScanSettings scanSettings = null;
     if (jobs.size() >= 1) {
-      return remove(jobs.get(0));
+      scanSettings = jobs.remove(0);
+      removed = true;
     } else {
-      return null;
+      // there are no jobs to remove
+      WLog.log("Comment: ScanSettingsRunQueue.remove top: no element");
     }
+    lock.unlock();
+    if (removed) {
+      fireIntervalRemoved(this, 0, 0);
+//zz    fireIntervalRemoved(this, 0, 100);
+    }
+    return scanSettings;
   }
 
   /**
    * Remove specified ScanSettings object from within the job queue
    * and decrement the sempahore else return null.
    */
-  public synchronized ScanSettings remove(ScanSettings scanSettings) {
+  public ScanSettings remove(ScanSettings scanSettings) {
+    lock.lock();
+    boolean removed = false;
     int index = jobs.indexOf(scanSettings);
     if (index >= 0) {
       // good, it is available to be removed
 
       // remove it from jobs
       jobs.remove(index);
-
-      // also dequeue it
-// NOTE: InterruptedException not thrown until Java 7
-//      try {
-        boolean isAcquired = scanSettingsSemaphore.tryAcquire();
-        if (!isAcquired) {
-          WLog.log("ScanSettingsRunQueue.remove: failure to reacquire semaphore.");
-        }
-//      } catch (InterruptedException e) {
-//        throw new RuntimeException("interrupted thread");
-//      }
-
-      // if removed, fire
-      fireIntervalRemoved(this, index, index);
-      return scanSettings;
-
+      removed = true;
     } else {
-      // the requested scanSettings object was not present in the job queue
-      WLog.log("ScanSettingsRunQueue.remove: no element");
-      return null;
+      // the requested job was not there
+      WLog.log("ScanSettingsRunQueue.remove scanSettings: no element");
     }
+    lock.unlock();
+    if (removed) {
+      fireIntervalRemoved(this, index, index);
+//zz    fireIntervalRemoved(this, 0, 100);
+    }
+    return scanSettings;
   }
 
   /**
    * Move ScanSettings up toward the top of the queue.
    */
-//@SuppressWarnings("unchecked") // hacked until we don't require javac6
-  public synchronized boolean moveUp(ScanSettings scanSettings) {
+  public void moveUp(ScanSettings scanSettings) {
+    lock.lock();
+    boolean moved = false;
     int n = jobs.indexOf(scanSettings);
-    if (n < 1) {
-      WLog.log("ScanSettingsRunQueue.moveUp: failure at index " + n);
-      return false;
+    if (n > 0) {
+      ScanSettings oldUpper = jobs.set(n-1, scanSettings);
+      ScanSettings newLower = jobs.set(n, oldUpper);
+      moved = true;
+
+      // validate
+      if (scanSettings != newLower) {
+        throw new RuntimeException("program error");
+      }
     } else {
-      ScanSettings scanSettings2 = jobs.get(n-1);
-      jobs.setElementAt(scanSettings, n-1);
-      jobs.setElementAt(scanSettings2, n);
+      WLog.log("ScanSettingsRunQueue.moveUp: failure at index " + n);
+    }
+    lock.unlock();
+    if (moved) {
       fireContentsChanged(this, n-1, n);
-      return true;
     }
   }
 
   /**
    * Move ScanSettings down toward the bottom of the queue.
    */
-@SuppressWarnings("unchecked") // hacked until we don't require javac6
-  public synchronized boolean moveDown(ScanSettings scanSettings) {
+//@SuppressWarnings("unchecked") // hacked until we don't require javac6
+  public void moveDown(ScanSettings scanSettings) {
+    lock.lock();
+    boolean moved = false;
     int n = jobs.indexOf(scanSettings);
-    if (n < 0 || n > jobs.size()-1) {
-      WLog.log("ScanSettingsRunQueue.moveDown: failure at index " + n);
-      return false;
+    if (n != -1 && n < jobs.size() - 1) {
+      ScanSettings oldLower = jobs.set(n+1, scanSettings);
+      ScanSettings newUpper = jobs.set(n, oldLower);
+      moved = true;
+
+      // validate
+      if (scanSettings != newUpper) {
+        throw new RuntimeException("program error");
+      }
     } else {
-      ScanSettings scanSettings2 = jobs.get(n+1);
-      jobs.setElementAt(scanSettings, n+1);
-      jobs.setElementAt(scanSettings2, n);
+      WLog.log("ScanSettingsRunQueue.moveDown: failure at index " + n);
+    }
+    lock.unlock();
+    if (moved) {
       fireContentsChanged(this, n, n+1);
-      return true;
     }
   }
 
@@ -130,27 +142,24 @@ WLog.log("ScanSettingsRunQueue.add " + scanSettings.getCommandString());
    * Number of scan settings enqueued.
    * Required by interface ListModel.
    */
-  public synchronized int getSize() {
-
-    // validate consistency of the job count and the semaphore count
-    if (jobs.size() != scanSettingsSemaphore.availablePermits()) {
-      WLog.log("ScanSettingsRunQueue.size internal error, jobs: "
-           + jobs.size() + ", semaphore: "
-           + scanSettingsSemaphore.availablePermits());
-      // fatal if list and semaphore don't match.
-      throw new RuntimeException("internal error");
-    }
-
-    // return size
-    return jobs.size();
+  public int getSize() {
+    lock.lock();
+    int size = jobs.size();
+WLog.log("SSLM.getSize: " + size);
+    lock.unlock();
+    return size;
   }
 
   /**
    * Element at index.
    * Required by interface ListModel.
    */
-  public synchronized ScanSettings getElementAt(int index) {
-    return jobs.get(index);
+  public ScanSettings getElementAt(int index) {
+    lock.lock();
+WLog.log("SSLM.getElementAt index " + index);
+    ScanSettings scanSettings = jobs.get(index);
+    lock.unlock();
+    return scanSettings;
   }
 }
 

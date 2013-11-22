@@ -150,67 +150,67 @@ public class ScanSettings {
   /**
    * instantiate by copying
    */
-  public ScanSettings(ScanSettings sc) {
+  public ScanSettings(ScanSettings scanSettings) {
 
     // required parameters
-    imageSourceType = sc.imageSourceType;
-    inputImage = sc.inputImage;
-    outdir = sc.outdir;
+    imageSourceType = scanSettings.imageSourceType;
+    inputImage = scanSettings.inputImage;
+    outdir = scanSettings.outdir;
 
     // general options
-    useBannerFile = sc.useBannerFile;
-    bannerFile = sc.bannerFile;
-    useAlertlistFile = sc.useAlertlistFile;
-    alertlistFile = sc.alertlistFile;
-    useStoplistFile = sc.useStoplistFile;
-    stoplistFile = sc.stoplistFile;
-    useFindRegexTextFile = sc.useFindRegexTextFile;
-    findRegexTextFile = sc.findRegexTextFile;
-    useFindRegexText = sc.useFindRegexText;
-    findRegexText = sc.findRegexText;
-    useRandomSampling = sc.useRandomSampling;
-    randomSampling = sc.randomSampling;
+    useBannerFile = scanSettings.useBannerFile;
+    bannerFile = scanSettings.bannerFile;
+    useAlertlistFile = scanSettings.useAlertlistFile;
+    alertlistFile = scanSettings.alertlistFile;
+    useStoplistFile = scanSettings.useStoplistFile;
+    stoplistFile = scanSettings.stoplistFile;
+    useFindRegexTextFile = scanSettings.useFindRegexTextFile;
+    findRegexTextFile = scanSettings.findRegexTextFile;
+    useFindRegexText = scanSettings.useFindRegexText;
+    findRegexText = scanSettings.findRegexText;
+    useRandomSampling = scanSettings.useRandomSampling;
+    randomSampling = scanSettings.randomSampling;
 
     // tuning parameters
-    useContextWindowSize = sc.useContextWindowSize;
-    contextWindowSize = sc.contextWindowSize;
-    usePageSize = sc.usePageSize;
-    pageSize = sc.pageSize;
-    useMarginSize = sc.useMarginSize;
-    marginSize = sc.marginSize;
-    useBlockSize = sc.useBlockSize;
-    blockSize = sc.blockSize;
-    useNumThreads = sc.useNumThreads;
-    numThreads = sc.numThreads;
-    useMaxRecursionDepth = sc.useMaxRecursionDepth;
-    maxRecursionDepth = sc.maxRecursionDepth;
-    useMaxWait = sc.useMaxWait;
-    maxWait = sc.maxWait;
+    useContextWindowSize = scanSettings.useContextWindowSize;
+    contextWindowSize = scanSettings.contextWindowSize;
+    usePageSize = scanSettings.usePageSize;
+    pageSize = scanSettings.pageSize;
+    useMarginSize = scanSettings.useMarginSize;
+    marginSize = scanSettings.marginSize;
+    useBlockSize = scanSettings.useBlockSize;
+    blockSize = scanSettings.blockSize;
+    useNumThreads = scanSettings.useNumThreads;
+    numThreads = scanSettings.numThreads;
+    useMaxRecursionDepth = scanSettings.useMaxRecursionDepth;
+    maxRecursionDepth = scanSettings.maxRecursionDepth;
+    useMaxWait = scanSettings.useMaxWait;
+    maxWait = scanSettings.maxWait;
 
     // parallelizing
-    useStartProcessingAt = sc.useStartProcessingAt;
-    startProcessingAt = sc.startProcessingAt;
-    useProcessRange = sc.useProcessRange;
-    processRange = sc.processRange;
-    useAddOffset = sc.useAddOffset;
-    addOffset = sc.addOffset;
+    useStartProcessingAt = scanSettings.useStartProcessingAt;
+    startProcessingAt = scanSettings.startProcessingAt;
+    useProcessRange = scanSettings.useProcessRange;
+    processRange = scanSettings.processRange;
+    useAddOffset = scanSettings.useAddOffset;
+    addOffset = scanSettings.addOffset;
 
     // Debugging options
-    useStartOnPageNumber = sc.useStartOnPageNumber;
-    startOnPageNumber = sc.startOnPageNumber;
-    useDebugNumber = sc.useDebugNumber;
-    debugNumber = sc.debugNumber;
-    useEraseOutputDirectory = sc.useEraseOutputDirectory;
+    useStartOnPageNumber = scanSettings.useStartOnPageNumber;
+    startOnPageNumber = scanSettings.startOnPageNumber;
+    useDebugNumber = scanSettings.useDebugNumber;
+    debugNumber = scanSettings.debugNumber;
+    useEraseOutputDirectory = scanSettings.useEraseOutputDirectory;
 
     // Scanner controls
-    usePluginDirectory = sc.usePluginDirectory;
-    pluginDirectory = sc.pluginDirectory;
-    useSettableOptions = sc.useSettableOptions;
-    settableOptions = sc.settableOptions;
+    usePluginDirectory = scanSettings.usePluginDirectory;
+    pluginDirectory = scanSettings.pluginDirectory;
+    useSettableOptions = scanSettings.useSettableOptions;
+    settableOptions = scanSettings.settableOptions;
 
     // scanners
     scanners = new Vector<BulkExtractorScanListReader.Scanner>();
-    for (Iterator<BulkExtractorScanListReader.Scanner> it = sc.scanners.iterator(); it.hasNext();) {
+    for (Iterator<BulkExtractorScanListReader.Scanner> it = scanSettings.scanners.iterator(); it.hasNext();) {
       BulkExtractorScanListReader.Scanner scanner = it.next();
       scanners.add(new BulkExtractorScanListReader.Scanner(scanner.name, scanner.defaultUseScanner, scanner.useScanner));
     }

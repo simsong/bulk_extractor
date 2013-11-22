@@ -26,9 +26,8 @@ public class WScan {
   // Control
   private static WScan wScan;
   private final JDialog wScanWindow = new JDialog();
-  private final JButton loadDefaultsB = new JButton("Restore Defaults");
-  private final JButton startB = new JButton("Start bulk_extractor");
-  private final JButton queueB = new JButton("Queue\u2026");
+  private final JButton submitB = new JButton("Submit Run");
+  private final JButton queueB = new JButton("Manage Queue\u2026");
   private final JButton cancelB = new JButton("Cancel");
 
   // boxed components
@@ -64,7 +63,7 @@ public class WScan {
 
     // show the window
     wScan.wScanWindow.setLocationRelativeTo(BEViewer.getBEWindow());
-    wScan.wScanWindow.getRootPane().setDefaultButton(wScan.startB);
+    wScan.wScanWindow.getRootPane().setDefaultButton(wScan.submitB);
     wScan.wScanWindow.setVisible(true);
   }
 
@@ -195,32 +194,27 @@ public class WScan {
     container.setLayout(new GridBagLayout());
     GridBagConstraints c;
 
-    // (0,0) load defaults
+    int x=0;
+    // Submit run
     c = new GridBagConstraints();
     c.insets = new Insets(0, 5, 0, 5);
-    c.gridx = 0;
+    c.gridx = x++;
     c.gridy = 0;
-    container.add(loadDefaultsB, c);
+    container.add(submitB, c);
+    submitB.setToolTipText("Submit run to the bulk_extractor Run Queue");
 
-    // (1,0) Start
+    // Queue...
     c = new GridBagConstraints();
     c.insets = new Insets(0, 5, 0, 5);
-    c.gridx = 1;
-    c.gridy = 0;
-    container.add(startB, c);
-
-    // (2,0) Queue...
-    c = new GridBagConstraints();
-    c.insets = new Insets(0, 5, 0, 5);
-    c.gridx = 2;
+    c.gridx = x++;
     c.gridy = 0;
     container.add(queueB, c);
     queueB.setToolTipText("Manage the bulk_extractor Run Queue");
 
-    // (3,0) Cancel
+    // Cancel
     c = new GridBagConstraints();
     c.insets = new Insets(0, 5, 0, 5);
-    c.gridx = 3;
+    c.gridx = x++;
     c.gridy = 0;
     container.add(cancelB, c);
 
@@ -414,14 +408,16 @@ public class WScan {
 
   private void wireActions() {
 
-    // Control: defaults, start, cancel
+    // Control: defaults, submit, cancel
+/*
     loadDefaultsB.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         setScanSettings(new ScanSettings());
       }
     });
+*/
 
-    startB.addActionListener(new ActionListener() {
+    submitB.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
 
         // get the command settings from the UI

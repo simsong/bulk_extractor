@@ -3,6 +3,9 @@
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.concurrent.locks.LockSupport;
+import javax.swing.event.ListDataListener;
+import javax.swing.event.ListDataEvent;
 
 /**
  * The <code>ScanSettingsConsumer</code> consumes Scan Settings jobs
@@ -86,15 +89,47 @@ class ScanSettingsConsumer extends Thread {
       }
     }
   }
- 
-  // this runs forever, once through per semaphore acquire
-  public void run() {
-    while (true) {
-      // wait for the producer to have a run job
-      BEViewer.scanSettingsListModel.acquire();
 
-      // consume the job from the run queue
-      ScanSettings scanSettings = BEViewer.scanSettingsListModel.remove();
+  // this is where the waiting happens
+  private ScanSettings getJob() {
+    ScanSettings scanSettings;
+    while (true) {
+      scanSettings = BEViewer.scanSettingsListModel.remove();
+      if (scanSettings != null) {
+        break;
+      } else {
+        // wait for signal that a job may be available
+        LockSupport.park();
+      }
+    }
+    return scanSettings;
+  }
+
+  // this responds to wakeup events
+  private void unpark() {
+    LockSupport.unpark(this);
+  }
+ 
+  // this runs forever, once through per semaphore permit acquired
+  public void run() {
+
+    // register self to listen to job added events
+    BEViewer.scanSettingsListModel.addListDataListener(new ListDataListener() {
+      public void contentsChanged(ListDataEvent e) {
+        // not used;
+      }
+      public void intervalAdded(ListDataEvent e) {
+        // consume the item by waking up self
+        unpark();
+      }
+      public void intervalRemoved(ListDataEvent e) {
+        // not used;
+      }
+    });
+
+    while (true) {
+      // get a run job
+      ScanSettings scanSettings = getJob();
 
       // log the scan command
       WLog.log("ScanSettingsConsumer.command: '" + scanSettings.getCommandString() + "'");
