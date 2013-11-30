@@ -336,13 +336,10 @@ def sort_outdir(outdir):
         fns  = fn+".sorted"
         os.environ['LC_ALL']='C' # make sure we sort in C order
         call(['sort','--buffer-size=4000000000',fn],stdout=open(fns,"w"))
+        # count how many lines
         wcout = Popen(['wc','-l',fns],stdout=PIPE).communicate()[0].decode('utf-8')
         lines = int(wcout.strip().split(" ")[0])
-        if lines>0:
-            call(['tail','-1',fns],stdout=open(fn,"w")) # copy over the UTF-8 header
-            cmd = ['head','-'+str(lines-1),fns]
-            call(cmd,stdout=open(fn,"a"))
-        os.unlink(fns)
+        os.rename(fns,fn)
 
 def check(fn,lines):
     found_lines = len(file(fn).read().split("\n"))-1
@@ -487,7 +484,7 @@ def run_and_analyze():
     validate_report(outdir)
     if_outdir = identify_filenames(outdir)
     analyze_outdir(outdir)
-    print("Regression finished at {}. Elapsed time: {} Output in {}".format(time.asctime(),ptime(time.time()-t0),outdir))
+    print("Regression finished at {}. Elapsed time: {}\nOutput in {}".format(time.asctime(),ptime(time.time()-t0),outdir))
 
 if __name__=="__main__":
     import argparse 
