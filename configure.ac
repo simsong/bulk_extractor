@@ -658,4 +658,7 @@ echo "#define CFLAGS   \"$CFLAGS\""   >> config.h
 echo "#define CXXFLAGS \"$CXXFLAGS\"" >> config.h
 echo "#define LIBS     \"$LIBS\""     >> config.h
 echo "#define LDFLAGS  \"$LDFLAGS\""  >> config.h
+if test x"$GIT_COMMIT" != "x" ; then
+  echo "#define GIT_COMMIT  \"$GIT_COMMIT\""  >> config.h
+fi
 
