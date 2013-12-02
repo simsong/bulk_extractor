@@ -23,6 +23,8 @@ typedef int be_callback(int32_t flag,
                         const char *feature,size_t feature_len,
                         const char *context,size_t context_len);
 
+typedef void (*bulk_extractor_enable_t)(const char *scanner_name);
+extern "C" bulk_extractor_enable_t bulk_extractor_enable;
 
 typedef BEFILE * (*bulk_extractor_open_t)(be_callback cb);
 extern "C" bulk_extractor_open_t bulk_extractor_open;

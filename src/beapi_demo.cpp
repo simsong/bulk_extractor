@@ -38,9 +38,9 @@ int be_cb_demo(int32_t flag,
 
 int main(int argc,char **argv)
 {
-    bulk_extractor_open_t be_open=0;
+    bulk_extractor_open_t        be_open=0;
     bulk_extractor_analyze_buf_t be_analyze_buf=0;
-    bulk_extractor_close_t be_close=0;
+    bulk_extractor_close_t       be_close=0;
 
 #ifdef HAVE_DLOPEN
     std::string fname = "bulk_extractor.so";
@@ -62,17 +62,25 @@ int main(int argc,char **argv)
         exit(1);
     }
 
-    be_open = (bulk_extractor_open_t)dlsym(lib, "bulk_extractor_open");
+    bulk_extractor_enable_t be_enable = (bulk_extractor_enable_t)dlsym(lib, "bulk_extractor_enable");
+    if(be_enable==0){
+        fprintf(stderr,"dlsym: %s\n",dlerror());
+        exit(1);
+    }
+    (*be_enable)("bulk");               // enable the bulk scanner
+
+    bulk_extractor_open_t be_open = (bulk_extractor_open_t)dlsym(lib, "bulk_extractor_open");
     if(be_open==0){
         fprintf(stderr,"dlsym: %s\n",dlerror());
         exit(1);
     }
-    be_analyze_buf = (bulk_extractor_analyze_buf_t)dlsym(lib, "bulk_extractor_analyze_buf");
+    bulk_extractor_analyze_buf_t be_analyze_buf = (bulk_extractor_analyze_buf_t)dlsym(lib, "bulk_extractor_analyze_buf");
     if(be_analyze_buf==0){
         fprintf(stderr,"dlsym: %s\n",dlerror());
         exit(1);
     }
-    be_close = (bulk_extractor_close_t)dlsym(lib, "bulk_extractor_close");
+
+    bulk_extractor_close_t be_close = (bulk_extractor_close_t)dlsym(lib, "bulk_extractor_close");
     if(be_close==0){
         fprintf(stderr,"dlsym: %s\n",dlerror());
         exit(1);

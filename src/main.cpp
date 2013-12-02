@@ -74,7 +74,7 @@ void debug_help()
 }
 
 /****************************************************************
- *** Usage
+ *** Usage for the stand-alone program
  ****************************************************************/
 
 static void usage(const char *progname)
@@ -103,6 +103,7 @@ static void usage(const char *progname)
     std::cout << "   -o outdir    - specifies output directory. Must not exist.\n";
     std::cout << "                  bulk_extractor creates this directory.\n";
     std::cout << "Options:\n";
+    std::cout << "   -i           - INFO mode. Do a quick random sample and print a report.\n";
     std::cout << "   -b banner.txt- Add banner.txt contents to the top of every output file.\n";
     std::cout << "   -r alert_list.txt  - a file containing the alert list of features to alert\n";
     std::cout << "                       (can be a feature file or a list of globs)\n";
@@ -147,7 +148,6 @@ static void usage(const char *progname)
     std::cout << "   -P <dir>     - Specifies a plugin directory\n";
     std::cout << "   -E scanner   - turn off all scanners except scanner\n";
     std::cout << "   -S name=value - sets a bulk extractor option name to be value\n";
-    std::cout << "\n";
     std::cout << "\n";
 }
 
@@ -701,7 +701,7 @@ int main(int argc,char **argv)
 
     /* Process options */
     int ch;
-    while ((ch = getopt(argc, argv, "A:B:b:C:d:E:e:F:f:G:g:Hhj:M:m:o:P:p:q:Rr:S:s:VW:w:x:Y:z:Z")) != -1) {
+    while ((ch = getopt(argc, argv, "A:B:b:C:d:E:e:F:f:G:g:Hhij:M:m:o:P:p:q:Rr:S:s:VW:w:x:Y:z:Z")) != -1) {
 	switch (ch) {
 	case 'A': feature_recorder::offset_add  = stoi64(optarg);break;
 	case 'b': feature_recorder::banner_file = optarg; break;
@@ -736,6 +736,10 @@ int main(int argc,char **argv)
 	case 'f': FindOpts.Patterns.push_back(optarg); break;
 	case 'G': cfg.opt_pagesize = scaled_stoi64(optarg); break;
 	case 'g': cfg.opt_marginsize = scaled_stoi64(optarg); break;
+        case 'i':
+            std::cout << "info mode:\n";
+            cfg.opt_info = true;
+            break;
 	case 'j': cfg.num_threads = atoi(optarg); break;
 	case 'M': scanner_def::max_depth = atoi(optarg); break;
 	case 'm': cfg.max_bad_alloc_errors = atoi(optarg); break;

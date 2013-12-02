@@ -16,12 +16,16 @@
 class BulkExtractor_Phase1 {
 public:
     /* configuration for phase1 */
-    struct Config {
+    class Config {
+    Config &operator=(const Config &);  // not implemented
+    Config(const Config &);             // not implemented
+    public:
         Config():
             debug(0),
             opt_pagesize(1024*1024*16),
             opt_marginsize(1024*1024*4),
             max_bad_alloc_errors(60),
+            opt_info(false),
             opt_notify_rate(4),
             opt_page_start(0),
             opt_offset_start(0),
@@ -34,19 +38,20 @@ public:
             sampling_passes(1){}
                  
         uint64_t debug;                 // debug 
-        size_t opt_pagesize;
-        size_t opt_marginsize;
+        size_t   opt_pagesize;
+        size_t   opt_marginsize;
         uint32_t max_bad_alloc_errors;
+        bool     opt_info;
         uint32_t opt_notify_rate;		// by default, notify every 4 pages
         uint64_t opt_page_start;
-        int64_t opt_offset_start;
-        int64_t opt_offset_end;
-        time_t max_wait_time;
-        int opt_quiet;                  // must be signed
-        int retry_seconds;
-        u_int num_threads;
-        double sampling_fraction;       // for random sampling
-        u_int  sampling_passes;
+        int64_t  opt_offset_start;
+        int64_t  opt_offset_end;
+        time_t   max_wait_time;
+        int      opt_quiet;                  // -1 = no output
+        int      retry_seconds;
+        u_int    num_threads;
+        double   sampling_fraction;       // for random sampling
+        u_int    sampling_passes;
 
         void validate(){
             if(opt_offset_start % opt_pagesize != 0) errx(1,"ERROR: start offset must be a multiple of the page size\n");

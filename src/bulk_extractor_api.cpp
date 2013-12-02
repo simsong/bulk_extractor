@@ -97,6 +97,11 @@ struct BEFILE_t {
 
 typedef struct BEFILE_t BEFILE;
 extern "C" {
+    void bulk_extractor_enable(const char *scanner_name)
+    {
+        be13::plugin::scanners_enable(scanner_name);
+    }
+
     BEFILE *bulk_extractor_open(be_callback cb)
     {
         histograms_t histograms;
