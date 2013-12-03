@@ -66,8 +66,8 @@ public class WScanSettingsRunQueue extends JDialog {
     c = new GridBagConstraints();
     c.gridx = 0;
     c.gridy = y;
-    c.weightx = 1;
-    c.weighty = 1;
+//    c.weightx = 1;
+//    c.weighty = 1;
     c.anchor = GridBagConstraints.LINE_START;
     c.fill = GridBagConstraints.BOTH;
     pane.add(toolbar, c);

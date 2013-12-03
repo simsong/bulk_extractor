@@ -27,8 +27,6 @@ class ScanSettingsConsumer extends Thread {
    */
   public ScanSettingsConsumer() {
     scanSettingsConsumer = this;
-isPaused = true;
-WLog.log("SSC.pauseConsumer.before, " + this);
     start();
   }
 
@@ -53,15 +51,11 @@ WLog.log("SSC.pauseConsumer.before, " + this);
    * or restart the consumer.
    */
   public synchronized static void pauseConsumer(boolean doPause) {
-WLog.log("SSC.pauseConsumer.a");
     if (doPause) {
-WLog.log("SSC.pauseConsumer.b");
       isPaused = true;
     } else {
-WLog.log("SSC.pauseConsumer.c, " + ScanSettingsConsumer.scanSettingsConsumer);
       isPaused = false;
       LockSupport.unpark(ScanSettingsConsumer.scanSettingsConsumer);
-WLog.log("SSC.pauseConsumer.d");
     }
   }
 
@@ -141,7 +135,6 @@ WLog.log("SSC.pauseConsumer.d");
     });
 
     while (true) {
-WLog.log("SSC.run.a");
       // wait for signal that a job may be available
       LockSupport.park();
 
@@ -151,7 +144,6 @@ WLog.log("SSC.run.a");
         continue;
       }
 
-WLog.log("SSC.run.b");
       // get a ScanSettings run job
       ScanSettings scanSettings = BEViewer.scanSettingsListModel.remove();
       if (scanSettings == null) {
@@ -159,7 +151,6 @@ WLog.log("SSC.run.b");
         continue;
       }
 
-WLog.log("SSC.run.c");
       // log the scan command that is about to be run
       WLog.log("ScanSettingsConsumer.command: '" + scanSettings.getCommandString() + "'");
 
@@ -178,7 +169,6 @@ WLog.log("SSC.run.c");
         // something went wrong starting bulk_extractor
         continue;
       }
-WLog.log("SSC.run.d");
 
       // get a new instance of WScanProgress for tracking the bulk_extractor
       // process
@@ -195,7 +185,7 @@ WLog.log("SSC.run.d");
 
       // start stderr reader
       BufferedReader readFromStderr = new BufferedReader(
-                             new InputStreamReader(process.getInputStream()));
+                             new InputStreamReader(process.getErrorStream()));
 
       ThreadStderr threadStderr = new ThreadStderr(wScanProgress, readFromStderr);
 

@@ -151,7 +151,7 @@ WLog.log("WScanProgress commandString to start with: " + commandString);
   /**
    * Threadsafe factory method for obtaining a new WScanProgress.
    */
-  public static WScanProgress getWScanProgress() {
+  public synchronized static WScanProgress getWScanProgress() {
     RunnableGetWScanProgress getWScanProgress = new RunnableGetWScanProgress();
     try {
       SwingUtilities.invokeAndWait(getWScanProgress);

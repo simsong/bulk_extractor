@@ -50,7 +50,7 @@ public class ScanSettingsListModel extends AbstractListModel {
       removed = true;
     } else {
       // there are no jobs to remove
-      WLog.log("Comment: ScanSettingsRunQueue.remove top: no element");
+      WLog.log("ScanSettingsRunQueue.remove top: no top element to remove");
     }
     lock.unlock();
     if (removed) {
@@ -75,7 +75,7 @@ public class ScanSettingsListModel extends AbstractListModel {
       removed = true;
     } else {
       // the requested job was not there
-      WLog.log("ScanSettingsRunQueue.remove scanSettings: no element");
+      WLog.log("ScanSettingsRunQueue.remove scanSettings: no element to remove");
     }
     lock.unlock();
     if (removed) {
