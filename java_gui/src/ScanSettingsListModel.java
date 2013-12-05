@@ -31,6 +31,8 @@ public class ScanSettingsListModel extends AbstractListModel {
    * and increment the sempahore.
    */
   public void add(ScanSettings scanSettings) {
+    WLog.log("ScanSettingsListModel.add job '"
+             + scanSettings.getCommandString() + "'");
     lock.lock();
     jobs.add(scanSettings);
     lock.unlock();
@@ -46,6 +48,8 @@ public class ScanSettingsListModel extends AbstractListModel {
     boolean removed = false;
     ScanSettings scanSettings = null;
     if (jobs.size() >= 1) {
+      WLog.log("ScanSettingsListModel.remove top job '"
+               + jobs.get(0).getCommandString() + "'");
       scanSettings = jobs.remove(0);
       removed = true;
     } else {
@@ -69,6 +73,8 @@ public class ScanSettingsListModel extends AbstractListModel {
     int index = jobs.indexOf(scanSettings);
     if (index >= 0) {
       // good, it is available to be removed
+      WLog.log("ScanSettingsListModel.remove job '"
+               + scanSettings.getCommandString() + "'");
 
       // remove it from jobs
       jobs.remove(index);

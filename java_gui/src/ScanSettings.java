@@ -390,7 +390,7 @@ public class ScanSettings {
 
     // basic usage: bulk_extractor [options] imagefile
     // program name
-    cmd.add("bulk_extractor");
+    cmd.add("zzbulk_extractor");
 
     // options
     // required parameters

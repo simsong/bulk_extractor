@@ -108,16 +108,10 @@ public class ScanSettingsToolBar extends JToolBar {
         setEnabledStates();
       }
       public void intervalAdded(ListDataEvent e) {
-        // do this later on the swing queue because we already are on the
-        // swing queue and the ListModel isn't stable until later.
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            runQueueL.setSelectedValue(
-                     BEViewer.scanSettingsListModel.getElementAt(
-                     BEViewer.scanSettingsListModel.getSize() - 1)
-                     , true);
-          }
-        });
+        runQueueL.setSelectedValue(
+                 BEViewer.scanSettingsListModel.getElementAt(
+                 BEViewer.scanSettingsListModel.getSize() - 1)
+                 , true);
       }
       public void intervalRemoved(ListDataEvent e) {
         setEnabledStates();

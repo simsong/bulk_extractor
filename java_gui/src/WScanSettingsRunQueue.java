@@ -121,7 +121,6 @@ public class WScanSettingsRunQueue extends JDialog {
     c.insets = new Insets(5, 5, 5, 5);
     c.gridx = x++;
     c.gridy = y;
-//    c.anchor = GridBagConstraints.FIRST_LINE_START;
     container.add(closeB, c);
 
     return container;
@@ -136,40 +135,5 @@ public class WScanSettingsRunQueue extends JDialog {
       }
     });
   }
-
-/*
-  private void wireActions() {
-    // JList selection state changes toolbar states
-    runQueueL.addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(ListSelectionEvent e) {
-        if (e.getValueIsAdjusting() == false) {
-          toolbar.setEnabledStates();
-        }
-      }
-    });
-
-    // changes to list data can change the list selection model
-    BEViewer.scanSettingsListModel.addListDataListener(new ListDataListener() {
-      public void contentsChanged(ListDataEvent e) {
-        toolbar.setEnabledStates();
-      }
-      public void intervalAdded(ListDataEvent e) {
-        // do this later on the swing queue because we already are on the
-        // swing queue and the ListModel isn't stable until later.
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            runQueueL.setSelectedValue(
-                     BEViewer.scanSettingsListModel.getElementAt(
-                     BEViewer.scanSettingsListModel.getSize() - 1)
-                     , true);
-          }
-        });
-      }
-      public void intervalRemoved(ListDataEvent e) {
-        toolbar.setEnabledStates();
-      }
-    });
-  }
-*/
 }
 

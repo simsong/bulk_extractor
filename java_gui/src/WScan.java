@@ -416,16 +416,7 @@ public class WScan {
   }
 
   private void wireActions() {
-
-    // Control: defaults, submit, cancel
-/*
-    loadDefaultsB.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        setScanSettings(new ScanSettings());
-      }
-    });
-*/
-
+    // queue
     queueB.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         // put selection values into variables and close this window
@@ -433,6 +424,7 @@ public class WScan {
       }
     });
 
+    // submit
     submitB.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
 
@@ -440,7 +432,7 @@ public class WScan {
         ScanSettings scanSettings = new ScanSettings();
         getScanSettings(scanSettings);
 
-        WLog.log("WScan start scan settings: '" + scanSettings.getCommandString() + "'\n");
+        WLog.log("WScan submit scan settings: '" + scanSettings.getCommandString() + "'\n");
 
         // validate some of the settings
         boolean success = scanSettings.validateSomeSettings();
@@ -458,6 +450,7 @@ public class WScan {
       }
     });
 
+    // import
     importB.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         // put selection values into variables and close this window
@@ -465,6 +458,7 @@ public class WScan {
       }
     });
 
+    // cancel
     cancelB.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         // put selection values into variables and close this window
