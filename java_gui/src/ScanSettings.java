@@ -231,8 +231,12 @@ public class ScanSettings {
       String a = command[index];
       String b = (index+1 < command.length) ? command[index+1] : "";
 
+      // allow the first token to be the bulk_extractor program name
+      if (index == 0 && a.equals("bulk_extractor")) {
+        index++; continue;
+
       // required parameters
-      if (a.equals("-o")) {
+      } else if (a.equals("-o")) {
         outdir = b;
         index+=2; continue;
 
@@ -386,7 +390,7 @@ public class ScanSettings {
 
     // basic usage: bulk_extractor [options] imagefile
     // program name
-    cmd.add("bulk_extractor");
+    cmd.add("zzbulk_extractor");
 
     // options
     // required parameters

@@ -20,106 +20,25 @@ import javax.swing.event.ListDataEvent;
 class ScanSettingsConsumer extends Thread {
   private static ScanSettingsConsumer scanSettingsConsumer;
   private static boolean isPaused = false;
-  private static Process process;
 
   /**
    * Just loading the constructor starts the conumer.
    */
   public ScanSettingsConsumer() {
     scanSettingsConsumer = this;
-isPaused = true;
-WLog.log("SSC.pauseConsumer.before, " + this);
     start();
   }
 
-  /**
-   * Kill the bulk_extractor process.
-   */
-  public static void killBulkExtractorProcess() {
-    if (process != null) {
-      process.destroy();
-    }
-  }
-
-/*
-  // issue a permit to unpark, waking this thread up or keeping it awake
-  private void unpark() {
-    LockSupport.unpark(this);
-  }
-*/
- 
   /**
    * Pause the consumer so that it does not start another buk_extractor run
    * or restart the consumer.
    */
   public synchronized static void pauseConsumer(boolean doPause) {
-WLog.log("SSC.pauseConsumer.a");
     if (doPause) {
-WLog.log("SSC.pauseConsumer.b");
       isPaused = true;
     } else {
-WLog.log("SSC.pauseConsumer.c, " + ScanSettingsConsumer.scanSettingsConsumer);
       isPaused = false;
       LockSupport.unpark(ScanSettingsConsumer.scanSettingsConsumer);
-WLog.log("SSC.pauseConsumer.d");
-    }
-  }
-
-  // thread to forward stdout to WScanProgress
-  private static class ThreadStdout extends Thread {
-    private final WScanProgress wScanProgress;
-    private final BufferedReader bufferedReader;
-
-    ThreadStdout(WScanProgress wScanProgress, BufferedReader bufferedReader) {
-      this.wScanProgress = wScanProgress;
-      this.bufferedReader = bufferedReader;
-      start();
-    }
-
-    public void run() {
-      while (true) {
-        try {
-          // block wait until EOF
-          String input = bufferedReader.readLine();
-          if (input == null) {
-            break;
-          } else {
-            wScanProgress.showStdout(input);
-          }
-        } catch (IOException e) {
-          WLog.log("ScanSettingsConsumer.ThreadStdout.run aborting.");
-          break;
-        }
-      }
-    }
-  }
-
-  // thread to forward stderr to WScanProgress
-  private static class ThreadStderr extends Thread {
-    private final WScanProgress wScanProgress;
-    private final BufferedReader bufferedReader;
-
-    ThreadStderr(WScanProgress wScanProgress, BufferedReader bufferedReader) {
-      this.wScanProgress = wScanProgress;
-      this.bufferedReader = bufferedReader;
-      start();
-    }
-
-    public void run() {
-      while (true) {
-        try {
-          // block wait until EOF
-          String input = bufferedReader.readLine();
-          if (input == null) {
-            break;
-          } else {
-            wScanProgress.showStderr(input);
-          }
-        } catch (IOException e) {
-          WLog.log("ScanSettingsConsumer.ThreadStderr.run aborting.");
-          break;
-        }
-      }
     }
   }
 
@@ -141,7 +60,6 @@ WLog.log("SSC.pauseConsumer.d");
     });
 
     while (true) {
-WLog.log("SSC.run.a");
       // wait for signal that a job may be available
       LockSupport.park();
 
@@ -151,84 +69,48 @@ WLog.log("SSC.run.a");
         continue;
       }
 
-WLog.log("SSC.run.b");
-      // get a ScanSettings run job
+      // get a ScanSettings run job from the producer
       ScanSettings scanSettings = BEViewer.scanSettingsListModel.remove();
       if (scanSettings == null) {
         // the producer is not ready, so restart at top of loop.
         continue;
       }
 
-WLog.log("SSC.run.c");
-      // log the scan command that is about to be run
-      WLog.log("ScanSettingsConsumer.command: '" + scanSettings.getCommandString() + "'");
+      // log the scan command of the job that is about to be run
+      WLog.log("ScanSettingsConsumer starting bulk_extractor run: '" + scanSettings.getCommandString() + "'");
 
-      // start bulk_extractor process
+      // start the bulk_extractor process
+      Process process;
       try {
         // NOTE: It would be nice to use commandString instead, but Runtime
         // internally uses array and its string tokenizer doesn't manage
-        // quotes or spaces properly.
+        // quotes or spaces properly, so we use array.
         process = Runtime.getRuntime().exec(scanSettings.getCommandArray());
 
       } catch (IOException e) {
-        // alert and abort
-        WError.showError("bulk_extractor Scanner failed to start command\n'"
+        // something went wrong starting bulk_extractor so alert and abort
+        WError.showErrorLater("bulk_extractor Scanner failed to start command\n'"
                          + scanSettings.getCommandString() + "'",
                          "bulk_extractor failure", e);
-        // something went wrong starting bulk_extractor
+
+        // despite the failure to start, continue to consume the queue
+        LockSupport.unpark(ScanSettingsConsumer.scanSettingsConsumer);
         continue;
       }
-WLog.log("SSC.run.d");
 
-      // get a new instance of WScanProgress for tracking the bulk_extractor
-      // process
-      WScanProgress wScanProgress = WScanProgress.getWScanProgress();
-
-      // show startup information
-      wScanProgress.showStart(scanSettings);
-
-      // start stdout reader
-      BufferedReader readFromStdout = new BufferedReader(
-                             new InputStreamReader(process.getInputStream()));
-
-      ThreadStdout threadStdout = new ThreadStdout(wScanProgress, readFromStdout);
-
-      // start stderr reader
-      BufferedReader readFromStderr = new BufferedReader(
-                             new InputStreamReader(process.getInputStream()));
-
-      ThreadStderr threadStderr = new ThreadStderr(wScanProgress, readFromStderr);
-
-      // wait for the thread readers to finish
-      try {
-        threadStdout.join();
-      } catch (InterruptedException ie1) {
-        throw new RuntimeException("unexpected event");
-      }
-      try {
-        threadStderr.join();
-      } catch (InterruptedException ie2) {
-        throw new RuntimeException("unexpected event");
-      }
+      // open a dedicated instance of WScanProgress for showing progress and
+      // status of the bulk_extractor process
+      WScanProgress.openWindow(scanSettings, process);
 
       // wait for the bulk_extractor scan process to finish
-      // Note: this isn't really necessary since being finished is implied
-      // when the Thread readers finish.
-      // Note: the process terminates by itself or by process.destroy().
+      // The process terminates by itself or by calling process.destroy().
       try {
         process.waitFor();
       } catch (InterruptedException ie) {
         throw new RuntimeException("unexpected event");
-//        WLog.log("WScanProgress ScannerThread interrupted");
       }
 
-      // get the process' exit value
-      int exitValue = process.exitValue();
-
-      // set the final "done" state
-      wScanProgress.showDone(scanSettings, exitValue);
-
-      // tell thread try another run if one is available
+      // unpark to try another run if the producer has one available
       LockSupport.unpark(ScanSettingsConsumer.scanSettingsConsumer);
     }
   }

@@ -31,6 +31,8 @@ public class ScanSettingsListModel extends AbstractListModel {
    * and increment the sempahore.
    */
   public void add(ScanSettings scanSettings) {
+    WLog.log("ScanSettingsListModel.add job '"
+             + scanSettings.getCommandString() + "'");
     lock.lock();
     jobs.add(scanSettings);
     lock.unlock();
@@ -46,11 +48,13 @@ public class ScanSettingsListModel extends AbstractListModel {
     boolean removed = false;
     ScanSettings scanSettings = null;
     if (jobs.size() >= 1) {
+      WLog.log("ScanSettingsListModel.remove top job '"
+               + jobs.get(0).getCommandString() + "'");
       scanSettings = jobs.remove(0);
       removed = true;
     } else {
       // there are no jobs to remove
-      WLog.log("Comment: ScanSettingsRunQueue.remove top: no element");
+      WLog.log("ScanSettingsRunQueue.remove top: no top element to remove");
     }
     lock.unlock();
     if (removed) {
@@ -69,13 +73,15 @@ public class ScanSettingsListModel extends AbstractListModel {
     int index = jobs.indexOf(scanSettings);
     if (index >= 0) {
       // good, it is available to be removed
+      WLog.log("ScanSettingsListModel.remove job '"
+               + scanSettings.getCommandString() + "'");
 
       // remove it from jobs
       jobs.remove(index);
       removed = true;
     } else {
       // the requested job was not there
-      WLog.log("ScanSettingsRunQueue.remove scanSettings: no element");
+      WLog.log("ScanSettingsRunQueue.remove scanSettings: no element to remove");
     }
     lock.unlock();
     if (removed) {

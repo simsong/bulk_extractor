@@ -73,6 +73,7 @@ $(srcdir)/src/UTF8Tools.java \
 $(srcdir)/src/WAbout.java \
 $(srcdir)/src/WError.java \
 $(srcdir)/src/WExportWorkSettings.java \
+$(srcdir)/src/WImportScanSettings.java \
 $(srcdir)/src/WImportWorkSettings.java \
 $(srcdir)/src/WIndeterminateProgress.java \
 $(srcdir)/src/WInfo.java \
