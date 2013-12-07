@@ -58,7 +58,8 @@ public class WScanProgress extends JDialog {
           progressBar.setValue((int)progressFloat);
           progressBar.setString(Float.toString(progressFloat) + "%");
         } catch (NumberFormatException e) {
-          WLog.log("WScanProgress.run: unexpected progress value '" + progress + "' in stdout: " + input);
+          WLog.log("WScanProgress.run: unexpected progress value '"
+                   + progress + "' in stdout: " + input);
         }
 
       } else {
@@ -309,7 +310,6 @@ public class WScanProgress extends JDialog {
     c.insets = new Insets(15, 5, 0, 5);
     c.gridx = 0;
     c.gridy = 1;
-//    c.weightx= 1;
     c.fill = GridBagConstraints.HORIZONTAL;
 //    c.anchor = GridBagConstraints.LINE_START;
     pane.add(getCommandContainer(), c);

@@ -17,7 +17,7 @@ public class WImportScanSettings extends JDialog {
 /**
  * Opens this window.
  */
-  public static void openWindow() {
+  public static void openWindow(String commandString) {
     if (wImportScanSettings == null) {
       // this is the first invocation
       // create the window
@@ -26,6 +26,7 @@ public class WImportScanSettings extends JDialog {
 
     // show the dialog window
     wImportScanSettings.setLocationRelativeTo(BEViewer.getBEWindow());
+    wImportScanSettings.settingsTF.setText(commandString);
     wImportScanSettings.setVisible(true);
   }
 
@@ -78,9 +79,9 @@ public class WImportScanSettings extends JDialog {
     container.add(new JLabel("Settings Text"), c);
 
     // settingsTF (1,0)
-    settingsTF.setMinimumSize(new Dimension(250, settingsTF.getPreferredSize().height));
-    settingsTF.setPreferredSize(new Dimension(250, settingsTF.getPreferredSize().height));
-    settingsTF.setToolTipText("Import settings from text");
+    settingsTF.setMinimumSize(new Dimension(400, settingsTF.getPreferredSize().height));
+    settingsTF.setPreferredSize(new Dimension(400, settingsTF.getPreferredSize().height));
+    settingsTF.setToolTipText("Import settings from command line text");
     c = new GridBagConstraints();
     c.insets = new Insets(0, 5, 0, 5);
     c.gridx = 1;
@@ -122,9 +123,11 @@ public class WImportScanSettings extends JDialog {
     importB.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         ScanSettings scanSettings = new ScanSettings(settingsTF.getText());
-        scanSettings.validateSomeSettings();
-        WScan.openWindow(scanSettings);
-        setVisible(false);
+        boolean success = scanSettings.validateSomeSettings();
+        if (success) {
+          WScan.openWindow(scanSettings);
+          setVisible(false);
+        }
       }
     });
 

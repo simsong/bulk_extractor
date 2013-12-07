@@ -77,7 +77,8 @@ class ScanSettingsConsumer extends Thread {
       }
 
       // log the scan command of the job that is about to be run
-      WLog.log("ScanSettingsConsumer starting bulk_extractor run: '" + scanSettings.getCommandString() + "'");
+      WLog.log("ScanSettingsConsumer starting bulk_extractor run: '"
+               + scanSettings.getCommandString() + "'");
 
       // start the bulk_extractor process
       Process process;

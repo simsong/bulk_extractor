@@ -390,7 +390,7 @@ public class ScanSettings {
 
     // basic usage: bulk_extractor [options] imagefile
     // program name
-    cmd.add("zzbulk_extractor");
+    cmd.add("bulk_extractor");
 
     // options
     // required parameters
@@ -562,7 +562,8 @@ public class ScanSettings {
   }
 
   /**
-   * This is a courtesy function for providing some validation of the settings.
+   * This is a courtesy function for providing some validation of the settings,
+   * returns true if existing checks pass.
    */
   public boolean validateSomeSettings() {
 

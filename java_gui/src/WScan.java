@@ -453,8 +453,13 @@ public class WScan {
     // import
     importB.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        // put selection values into variables and close this window
-        WImportScanSettings.openWindow();
+        // get the command settings from the UI
+        ScanSettings scanSettings = new ScanSettings();
+        wScan.getScanSettings(scanSettings);
+        String settingsString = scanSettings.getCommandString();
+
+        // open the import settings window starting from existing settings
+        WImportScanSettings.openWindow(settingsString);
       }
     });
 
