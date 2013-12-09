@@ -62,7 +62,7 @@ def calc_stats(fn):
         elif line[0] in '+=y' :
             right += 1
         else:
-            print("No classification:",line,end='');
+            if not args.quiet: print("No classification:",line,end='');
     return {"fn":os.path.basename(fn),
             "total":total,
             "sampled":sampled,
@@ -96,6 +96,7 @@ if __name__ == "__main__":
     arg_parser.add_argument("--xpattern", type=str, help="Do not sample lines that include this pattern")
     arg_parser.add_argument("--calc", help="Compute the statistics",type=str)
     arg_parser.add_argument("--trials", type=int, default="5", help="Number of trials to divide into")
+    arg_parser.add_argument("--quiet",action='store_true',help='do not alert on lines with no classification')
     args = arg_parser.parse_args()
     
     res = []
