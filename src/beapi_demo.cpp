@@ -38,10 +38,6 @@ int be_cb_demo(int32_t flag,
 
 int main(int argc,char **argv)
 {
-    bulk_extractor_open_t        be_open=0;
-    bulk_extractor_analyze_buf_t be_analyze_buf=0;
-    bulk_extractor_close_t       be_close=0;
-
 #ifdef HAVE_DLOPEN
     std::string fname = "bulk_extractor.so";
     if(fname.find('/')==std::string::npos){
