@@ -36,17 +36,25 @@ int be_cb_demo(int32_t flag,
     return 0;
 }
 
+#ifdef HAVE_DLOPEN
+void *getsym(void *lib,const char *name)
+{
+    void *ptr = dlsym(lib,name);
+    if(ptr == 0){
+        fprintf(stderr,"dlsym('%s'): %s\n",name,dlerror());
+        exit(1);
+    }
+    return ptr;
+}
+#endif
+
 int main(int argc,char **argv)
 {
-    bulk_extractor_open_t        be_open=0;
-    bulk_extractor_analyze_buf_t be_analyze_buf=0;
-    bulk_extractor_close_t       be_close=0;
-
-#ifdef HAVE_DLOPEN
     std::string fname = "bulk_extractor.so";
     if(fname.find('/')==std::string::npos){
         fname = "./" + fname;               // fedora requires a complete path name
     }
+
 
 #ifdef HAVE_DLOPEN_PREFLIGHT
     if(!dlopen_preflight(fname.c_str())){
@@ -62,30 +70,6 @@ int main(int argc,char **argv)
         exit(1);
     }
 
-    bulk_extractor_enable_t be_enable = (bulk_extractor_enable_t)dlsym(lib, "bulk_extractor_enable");
-    if(be_enable==0){
-        fprintf(stderr,"dlsym: %s\n",dlerror());
-        exit(1);
-    }
-    (*be_enable)("bulk");               // enable the bulk scanner
-
-    bulk_extractor_open_t be_open = (bulk_extractor_open_t)dlsym(lib, "bulk_extractor_open");
-    if(be_open==0){
-        fprintf(stderr,"dlsym: %s\n",dlerror());
-        exit(1);
-    }
-    bulk_extractor_analyze_buf_t be_analyze_buf = (bulk_extractor_analyze_buf_t)dlsym(lib, "bulk_extractor_analyze_buf");
-    if(be_analyze_buf==0){
-        fprintf(stderr,"dlsym: %s\n",dlerror());
-        exit(1);
-    }
-
-    bulk_extractor_close_t be_close = (bulk_extractor_close_t)dlsym(lib, "bulk_extractor_close");
-    if(be_close==0){
-        fprintf(stderr,"dlsym: %s\n",dlerror());
-        exit(1);
-    }
-#endif
 #ifdef HAVE_LOADLIBRARY
     std::string fname = "bulk_extractor.dll";
     /* Use Win32 LoadLibrary function */
@@ -111,6 +95,12 @@ int main(int argc,char **argv)
         exit(1);
     }
 #endif
+
+    bulk_extractor_set_enabled_t be_set_enabled = (bulk_extractor_set_enabled_t)getsym(lib, BULK_EXTRACTOR_SET_ENABLED);
+    bulk_extractor_open_t be_open = (bulk_extractor_open_t)getsym(lib, BULK_EXTRACTOR_OPEN);
+    bulk_extractor_analyze_buf_t be_analyze_buf = (bulk_extractor_analyze_buf_t)getsym(lib,BULK_EXTRACTOR_ANALYZE_BUF);
+    bulk_extractor_close_t be_close = (bulk_extractor_close_t)getsym(lib, BULK_EXTRACTOR_CLOSE);
+    (*be_set_enabled)("bulk",1);               // enable the bulk scanner
 
     BEFILE *bef = (*be_open)(be_cb_demo);
     const char *demo_buf = "ABCDEFG  demo@api.com Just a demo 617-555-1212 ok!";

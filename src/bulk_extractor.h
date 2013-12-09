@@ -163,7 +163,7 @@
 #include <sstream>
 #include <vector>
 
-using namespace std;
+//using namespace std;
 
 #include "be13_api/bulk_extractor_i.h"
 

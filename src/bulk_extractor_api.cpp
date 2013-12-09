@@ -97,9 +97,13 @@ struct BEFILE_t {
 
 typedef struct BEFILE_t BEFILE;
 extern "C" {
-    void bulk_extractor_enable(const char *scanner_name)
+    void bulk_extractor_set_enabled(const char *scanner_name,bool mode)
     {
-        be13::plugin::scanners_enable(scanner_name);
+        if(mode) {
+            be13::plugin::scanners_enable(scanner_name);
+        } else {
+            be13::plugin::scanners_disable(scanner_name);
+        }
     }
 
     BEFILE *bulk_extractor_open(be_callback cb)

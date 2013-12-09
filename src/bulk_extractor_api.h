@@ -23,17 +23,23 @@ typedef int be_callback(int32_t flag,
                         const char *feature,size_t feature_len,
                         const char *context,size_t context_len);
 
-typedef void (*bulk_extractor_enable_t)(const char *scanner_name);
-extern "C" bulk_extractor_enable_t bulk_extractor_enable;
+/* Enable is called before open() to enable or disable */
+
+typedef void (*bulk_extractor_set_enabled_t)(const char *scanner_name,bool enable);
+extern "C" bulk_extractor_set_enabled_t bulk_extractor_set_enabled;
+#define BULK_EXTRACTOR_SET_ENABLED "bulk_extractor_set_enabled"
 
 typedef BEFILE * (*bulk_extractor_open_t)(be_callback cb);
 extern "C" bulk_extractor_open_t bulk_extractor_open;
+#define BULK_EXTRACTOR_OPEN "bulk_extractor_open"
 
 typedef int (*bulk_extractor_analyze_buf_t)(BEFILE *bef,uint8_t *buf,size_t buflen);
 extern "C" bulk_extractor_analyze_buf_t bulk_extractor_analyze_buf;
+#define BULK_EXTRACTOR_ANALYZE_BUF "bulk_extractor_analyze_buf"
 
 typedef int (*bulk_extractor_close_t)(BEFILE *bef);
 extern "C" bulk_extractor_close_t  bulk_extractor_close;
+#define BULK_EXTRACTOR_CLOSE "bulk_extractor_close"
 
 
 #endif
