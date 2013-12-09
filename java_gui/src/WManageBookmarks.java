@@ -33,7 +33,7 @@ public class WManageBookmarks extends JDialog {
 
   private static WManageBookmarks wBookmarks;
 //  private static JList<FeatureLine> bookmarkL = new JList<FeatureLine>();
-  // this works because bookmarksComboBoxModel superclasses ListModel
+  // this works because bookmarksComboBoxModel superclasses DefaultComboBoxModel
   private static JList bookmarkL = new JList(BEViewer.bookmarksModel.bookmarksComboBoxModel);
   private static JButton clearB = new JButton("Clear");
   private static JButton deleteB = new JButton("Delete");
@@ -103,7 +103,7 @@ public class WManageBookmarks extends JDialog {
   }
 
   private void buildInterface() {
-    setTitle("Manage Bookmarks");
+    setTitle("Bookmarks");
     Container pane = getContentPane();
 
     // use GridBagLayout with GridBagConstraints

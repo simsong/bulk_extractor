@@ -5,11 +5,21 @@
  * This has all of the code and global variables that aren't needed when BE is running as a library.
  */
 
+/**
+ * Singletons:
+ * feature_recorder_set fs - the collection of feature recorders.
+ * xml xreport             - the DFXML output.
+ * image_process p         - the image being processed.
+ * 
+ * Note that all of the singletons are passed to the phase1() function.
+ */
+
+
 #include "bulk_extractor.h"
 #include "image_process.h"
 #include "threadpool.h"
 #include "be13_api/aftimer.h"
-#include "histogram.h"
+#include "be13_api/histogram.h"
 #include "dfxml/src/dfxml_writer.h"
 #include "dfxml/src/hash_t.h"
 #include "be13_api/unicode_escape.h"
@@ -64,7 +74,7 @@ void debug_help()
 }
 
 /****************************************************************
- *** Usage
+ *** Usage for the stand-alone program
  ****************************************************************/
 
 static void usage(const char *progname)
@@ -93,6 +103,7 @@ static void usage(const char *progname)
     std::cout << "   -o outdir    - specifies output directory. Must not exist.\n";
     std::cout << "                  bulk_extractor creates this directory.\n";
     std::cout << "Options:\n";
+    std::cout << "   -i           - INFO mode. Do a quick random sample and print a report.\n";
     std::cout << "   -b banner.txt- Add banner.txt contents to the top of every output file.\n";
     std::cout << "   -r alert_list.txt  - a file containing the alert list of features to alert\n";
     std::cout << "                       (can be a feature file or a list of globs)\n";
@@ -137,7 +148,6 @@ static void usage(const char *progname)
     std::cout << "   -P <dir>     - Specifies a plugin directory\n";
     std::cout << "   -E scanner   - turn off all scanners except scanner\n";
     std::cout << "   -S name=value - sets a bulk extractor option name to be value\n";
-    std::cout << "\n";
     std::cout << "\n";
 }
 
@@ -540,9 +550,6 @@ static void process_path(const char *fn,string path,size_t pagesize,size_t margi
     process_open_path(*pp,path,po,pagesize+marginsize);
 }
 
-
-
-
 class bulk_extractor_restarter {
     std::stringstream cdata;
     std::string thisElement;
@@ -664,6 +671,9 @@ int main(int argc,char **argv)
     feature_recorder::set_main_threadid();
     const char *progname = argv[0];
 
+    word_and_context_list alert_list;		/* shold be flagged */
+    word_and_context_list stop_list;		/* should be ignored */
+
     scanner_info::scanner_config   s_config; // the bulk extractor config
     BulkExtractor_Phase1::Config   cfg;
     cfg.num_threads = threadpool::numCPU();
@@ -691,7 +701,7 @@ int main(int argc,char **argv)
 
     /* Process options */
     int ch;
-    while ((ch = getopt(argc, argv, "A:B:b:C:d:E:e:F:f:G:g:Hhj:M:m:o:P:p:q:Rr:S:s:VW:w:x:Y:z:Z")) != -1) {
+    while ((ch = getopt(argc, argv, "A:B:b:C:d:E:e:F:f:G:g:Hhij:M:m:o:P:p:q:Rr:S:s:VW:w:x:Y:z:Z")) != -1) {
 	switch (ch) {
 	case 'A': feature_recorder::offset_add  = stoi64(optarg);break;
 	case 'b': feature_recorder::banner_file = optarg; break;
@@ -726,6 +736,10 @@ int main(int argc,char **argv)
 	case 'f': FindOpts.Patterns.push_back(optarg); break;
 	case 'G': cfg.opt_pagesize = scaled_stoi64(optarg); break;
 	case 'g': cfg.opt_marginsize = scaled_stoi64(optarg); break;
+        case 'i':
+            std::cout << "info mode:\n";
+            cfg.opt_info = true;
+            break;
 	case 'j': cfg.num_threads = atoi(optarg); break;
 	case 'M': scanner_def::max_depth = atoi(optarg); break;
 	case 'm': cfg.max_bad_alloc_errors = atoi(optarg); break;
@@ -911,14 +925,21 @@ int main(int argc,char **argv)
     p = image_process::open(image_fname,opt_recurse,cfg.opt_pagesize,cfg.opt_marginsize);
     if(!p) err(1,"Cannot open %s: ",image_fname.c_str());
     
+    /***
+     *** Finally create the feature recording set!
+     ****/
+
     /* Determine the feature files that will be used */
     feature_file_names_t feature_file_names;
     be13::plugin::get_scanner_feature_file_names(feature_file_names);
     uint32_t flags = 0;
     if (stop_list.size()>0) flags |= feature_recorder_set::CREATE_STOP_LIST_RECORDERS;
     feature_recorder_set fs(flags);
-    fs.init(feature_file_names,image_fname,opt_outdir);
+    fs.init(feature_file_names,image_fname,opt_outdir,&s_config.histograms);
     be13::plugin::scanners_init(fs);
+
+    fs.set_stop_list(&stop_list);
+    fs.set_alert_list(&alert_list);
 
     /* Look for commands that impact per-recorders */
     for(scanner_info::config_t::const_iterator it=s_config.namevals.begin();it!=s_config.namevals.end();it++){
@@ -986,7 +1007,7 @@ int main(int argc,char **argv)
     /*** PHASE 3 --- Create Histograms ***/
     if(cfg.opt_quiet==0) std::cout << "Phase 3. Creating Histograms\n";
     xreport->add_timestamp("phase3 start");
-    if(opt_enable_histograms) be13::plugin::phase_histogram(fs,0);        // TK - add an xml error notifier!
+    if(opt_enable_histograms) fs.process_histograms(0);        // TK - add an xml error notifier!
     xreport->add_timestamp("phase3 end");
 
     /*** PHASE 4 ---  report and then print final usage information ***/

@@ -29,9 +29,8 @@ public class BEArgsParser {
     if (args[0].equals("-s")) {
       if (length == 2) {
         // good, create bulk_extractor arg array
-        String bulkExtractorArgs = "bulk_extractor " + args[1];
-        String[] command = bulkExtractorArgs .split("\\s");
-        new WScanProgress(BEViewer.getBEWindow(), command);
+        ScanSettings scanSettings = new ScanSettings(args[1]);
+        BEViewer.scanSettingsListModel.add(scanSettings);
       } else {
         showUsage();
       }

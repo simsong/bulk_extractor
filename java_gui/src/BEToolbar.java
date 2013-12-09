@@ -127,7 +127,7 @@ public class BEToolbar extends JToolBar {
     runB.setToolTipText("Generate a report using bulk_extractor");
     runB.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
-        WScan.openWindow();
+        WScan.openWindow(new ScanSettings());
       }
     });
     add(runB);

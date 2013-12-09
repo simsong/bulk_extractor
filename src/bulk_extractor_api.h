@@ -3,6 +3,11 @@
 
 #include <sys/types.h>
 #include <stdint.h>
+
+#define BULK_EXTRACTOR_API_FLAG_FEATURE   0x0001
+#define BULK_EXTRACTOR_API_FLAG_HISTOGRAM 0x0002
+#define BULK_EXTRACTOR_API_FLAG_CARVED    0x0004
+
 typedef struct BEFILE_t BEFILE;
 typedef int be_callback(int32_t flag,
                         uint32_t arg,
@@ -11,18 +16,21 @@ typedef int be_callback(int32_t flag,
                         const char *feature,size_t feature_len,
                         const char *context,size_t context_len);
 
+typedef void (*bulk_extractor_enable_t)(const char *scanner_name);
+extern "C" bulk_extractor_enable_t bulk_extractor_enable;
 
-extern "C" {BEFILE *bulk_extractor_open(be_callback cb);}
-typedef BEFILE * (*be_open_t)(be_callback cb);           
+typedef BEFILE * (*bulk_extractor_open_t)(be_callback cb);
+extern "C" bulk_extractor_open_t bulk_extractor_open;
 
-extern "C" {int bulk_extractor_analyze_buf(BEFILE *bef,uint8_t *buf,size_t buflen);}
-typedef int (*be_analyze_buf_t)(BEFILE *bef,uint8_t *buf,size_t buflen);
+typedef int (*bulk_extractor_analyze_buf_t)(BEFILE *bef,uint8_t *buf,size_t buflen);
+extern "C" bulk_extractor_analyze_buf_t bulk_extractor_analyze_buf;
 
-extern "C" {int bulk_extractor_analyze_dir(BEFILE *bef,const char *path);}
-typedef int (*be_analyze_dev_t)(BEFILE *bef,const char *path);
+typedef int (*be_analyze_dir_t)(BEFILE *bef,const char *path);
+extern "C" be_analyze_dir_t t bulk_extractor_analyze_dir(BEFILE *bef,const char *path);
 
-extern "C" {int bulk_extractor_close(BEFILE *bef);}
-typedef int (*be_close_t)(BEFILE *bef);
+typedef int (*bulk_extractor_close_t)(BEFILE *bef);
+extern "C" bulk_extractor_close_t  bulk_extractor_close;
+
 
 
 #endif

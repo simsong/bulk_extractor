@@ -33,9 +33,9 @@ AC_PROG_INSTALL
 AC_PROG_LEX
 # LT_INIT([disable-shared])
 
-AC_LANG_PUSH(C++)
 # use C++11 mode if available; HAVE_CXX11 is defined in config.h if so.  Don't
 # use the GNU C++11 extensions for portability's sake (noext).
+AC_LANG_PUSH(C++)
 AX_CXX_COMPILE_STDCXX_11(noext, optional)
 AC_LANG_POP()
 
@@ -44,9 +44,9 @@ AC_C_BIGENDIAN
 
 # These are needed for bulk_extractor. They are not needed for tcpflow
 AC_DEFINE([BULK_EXTRACTOR],1,[We are compiling bulk_extractor])
-AC_DEFINE([USE_HISTOGRAMS],1,[We are using histograms])
-AC_DEFINE([USE_STOP_LIST],1,[We are using the stop lists])
-AC_DEFINE([USE_ALERT_LIST],1,[We are using the alert list])
+# AC_DEFINE([USE_HISTOGRAMS],1,[We are using histograms])
+# AC_DEFINE([USE_STOP_LIST],1,[We are using the stop lists])
+# AC_DEFINE([USE_ALERT_LIST],1,[We are using the alert list])
 
 ## 
 ## BEViewer
@@ -658,4 +658,7 @@ echo "#define CFLAGS   \"$CFLAGS\""   >> config.h
 echo "#define CXXFLAGS \"$CXXFLAGS\"" >> config.h
 echo "#define LIBS     \"$LIBS\""     >> config.h
 echo "#define LDFLAGS  \"$LDFLAGS\""  >> config.h
+if test x"$GIT_COMMIT" != "x" ; then
+  echo "#define GIT_COMMIT  \"$GIT_COMMIT\""  >> config.h
+fi
 

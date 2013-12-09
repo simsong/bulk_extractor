@@ -7,6 +7,8 @@
  */
 
 #include "bulk_extractor.h"
+#include "bulk_extractor_i.h"
+#include "dfxml/src/dfxml_writer.h"
 
 #include <iostream>
 #include <fstream>
@@ -28,7 +30,7 @@
  */
 int debug=0;
 const char *image_fname = 0;
-be_config_t be_config; // system configuration
+//be_config_t be_config; // system configuration
 
 scanner_t *scanners_builtin[] = {
     scan_bulk,
@@ -37,40 +39,33 @@ scanner_t *scanners_builtin[] = {
 
 void usage()
 {
-    load_scanners(scanners_builtin,histograms);
     cerr << "usage: stand [options] filename\n";
-    cerr << "Scanner(s):\n";
-    for(scanner_vector::const_iterator it = current_scanners.begin();it!=current_scanners.end();it++){
-	cerr << "   " << (*it)->info.name;
-	if((*it)->info.flags & scanner_info::SCANNER_NO_USAGE){ cerr << " SCANNER_NO_USAGE "; }
-	if((*it)->info.flags & scanner_info::SCANNER_DISABLED){ cerr << " SCANNER_DISABLED "; }
-	cerr << "\n";
-    }
-    
     cerr << "Options:\n";
     cerr << "   -h           - print this message\n";
     cerr << "  -e scanner    - enable scanner\n";
     cerr << "  -o outdir     - specify output directory\n";
-    exit(1);
+    be13::plugin::info_scanners(false,true,scanners_builtin,'e','x');
 }
 
 int main(int argc,char **argv)
 {
+
+    scanner_info::scanner_config   s_config; 
+    be13::plugin::load_scanners(scanners_builtin,s_config); 
+
     /* look for usage first */
     if(argc==1 || (strcmp(argv[1],"-h")==0)){
 	usage();
-	exit(1);
+	return(1);
     }
-    load_scanners(scanners_builtin,histograms);
-    be_config["bulk_block_size"] = itos(opt_scan_bulk_block_size);
     
     int ch;
     std::string opt_outdir;
     while ((ch = getopt(argc, argv, "e:o:s:x:h?")) != -1) {
 	switch (ch) {
 	case 'o': opt_outdir = optarg;break;
-	case 'e': set_scanner_enabled(optarg,1);break;
-	case 'x': set_scanner_enabled(optarg,0);break;
+	case 'e': be13::plugin::scanners_enable(optarg);break;
+	case 'x': be13::plugin::scanners_disable(optarg);break;
 	case 's':
 	    {
 		std::vector<std::string> params = split(optarg,'=');
@@ -78,7 +73,7 @@ int main(int argc,char **argv)
 		    std::cerr << "Invalid paramter: " << optarg << "\n";
 		    exit(1);
 		}
-		be_config[params[0]] = params[1];
+		//be_config[params[0]] = params[1];
 		continue;
 	    }
 	case 'h': case '?':default:
@@ -91,12 +86,15 @@ int main(int argc,char **argv)
 
     if(argc!=1) usage();
 
-    opt_scan_bulk_block_size = stoi64(be_config["bulk_block_size"]);
+    //opt_scan_bulk_block_size = stoi64(be_config["bulk_block_size"]);
+
+    be13::plugin::scanners_process_enable_disable_commands();
 
     feature_file_names_t feature_file_names;
-    enable_feature_recorders(feature_file_names);
-
-    xml *xreport = new xml("stand.xml",false);
+    be13::plugin::get_scanner_feature_file_names(feature_file_names);
+    feature_recorder_set fs(0);	// where the features will be put
+    fs.init(feature_file_names,argv[0],opt_outdir);
+    be13::plugin::scanners_init(fs);
 
     /* Make the sbuf */
     sbuf_t *sbuf = sbuf_t::map_file(argv[0]);
@@ -104,30 +102,9 @@ int main(int argc,char **argv)
 	err(1,"Cannot map file %s:%s\n",argv[0],strerror(errno));
     }
 
-    feature_recorder_set fs(feature_file_names,opt_outdir);	// where the features will be put
-    scanner_params sp(*sbuf,fs);		// the parameters that we will pass the scanner
-    recursion_control_block rcb(0,"STAND",true);
-    
-    for(scanner_vector::iterator it = current_scanners.begin();it!=current_scanners.end();it++){
-	((*it)->scanner)(sp,rcb);
-    }
-
-    phase2(fs,*xreport);
-
-    cout << "Phase 3. Creating Histograms\n";
-    for(histograms_t::const_iterator it = histograms.begin();it!=histograms.end();it++){
-	if(fs.has_name((*it).feature)){
-	    feature_recorder *fr = fs.get_name((*it).feature);
-	    try {
-		fr->make_histogram((*it).pattern,(*it).suffix);
-	    }
-	    catch (const std::exception &e) {
-		cerr << "ERROR: " << e.what() << " computing histogram " << (*it).feature << "\n";
-		xreport->xmlout("error",(*it).feature, "function='phase3'",true);
-	    }
-	}
-    }
-
+    be13::plugin::process_sbuf(scanner_params(scanner_params::PHASE_SCAN,*sbuf,fs));
+    be13::plugin::phase_shutdown(fs);
+    fs.process_histograms(0);
     return(0);
 }
 

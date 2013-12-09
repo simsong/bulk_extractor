@@ -60,6 +60,11 @@ $(srcdir)/src/ReportSelectionManager.java \
 $(srcdir)/src/ReportsModel.java \
 $(srcdir)/src/ReportsPane.java \
 $(srcdir)/src/ReportsTreeCellRenderer.java \
+$(srcdir)/src/ScanSettings.java \
+$(srcdir)/src/ScanSettingsConsumer.java \
+$(srcdir)/src/ScanSettingsListCellRenderer.java \
+$(srcdir)/src/ScanSettingsListModel.java \
+$(srcdir)/src/ScanSettingsToolBar.java \
 $(srcdir)/src/TextComponent.java \
 $(srcdir)/src/ThreadReaderModel.java \
 $(srcdir)/src/ThreadsafeTreeModelManager.java \
@@ -68,6 +73,7 @@ $(srcdir)/src/UTF8Tools.java \
 $(srcdir)/src/WAbout.java \
 $(srcdir)/src/WError.java \
 $(srcdir)/src/WExportWorkSettings.java \
+$(srcdir)/src/WImportScanSettings.java \
 $(srcdir)/src/WImportWorkSettings.java \
 $(srcdir)/src/WIndeterminateProgress.java \
 $(srcdir)/src/WInfo.java \
@@ -85,6 +91,7 @@ $(srcdir)/src/WScanBoxedScanners.java \
 $(srcdir)/src/WScanBoxedTuning.java \
 $(srcdir)/src/WScan.java \
 $(srcdir)/src/WScanProgress.java \
+$(srcdir)/src/WScanSettingsRunQueue.java \
 $(srcdir)/src/WTest.java \
 $(srcdir)/src/WURL.java \
 $(srcdir)/src/image/BulkExtractorScanListReader.java \
@@ -96,14 +103,17 @@ $(srcdir)/src/image/ThreadAborterTimer.java
 ICON_FILES = \
 $(srcdir)/icons/16/bookmark-new-2.png $(srcdir)/icons/24/bookmark-new-2.png \
 $(srcdir)/icons/16/bookmark-2.png $(srcdir)/icons/24/bookmark-2.png \
+$(srcdir)/icons/16/archive-extract-3.png $(srcdir)/icons/24/archive-extract-3.png \
 $(srcdir)/icons/16/edit-delete-6.png $(srcdir)/icons/24/edit-delete-6.png \
+$(srcdir)/icons/16/edit-redo-8.png $(srcdir)/icons/24/edit-redo-8.png \
+$(srcdir)/icons/16/go-up-4.png $(srcdir)/icons/24/go-up-4.png \
+$(srcdir)/icons/16/go-down-4.png $(srcdir)/icons/24/go-down-4.png \
 $(srcdir)/icons/16/go-previous-4.png $(srcdir)/icons/24/go-previous-4.png \
 $(srcdir)/icons/16/go-next-4.png $(srcdir)/icons/24/go-next-4.png \
 $(srcdir)/icons/16/go-home-4.png $(srcdir)/icons/24/go-home-4.png \
 $(srcdir)/icons/16/document-open-7.png $(srcdir)/icons/24/document-open-7.png \
 $(srcdir)/icons/16/edit-copy-3.png $(srcdir)/icons/24/edit-copy-3.png \
 $(srcdir)/icons/16/run-build-install.png $(srcdir)/icons/24/run-build-install.png \
-$(srcdir)/icons/16/archive-extract-3.png $(srcdir)/icons/24/archive-extract-3.png \
 $(srcdir)/icons/16/document-print.png $(srcdir)/icons/24/document-print.png \
 $(srcdir)/icons/16/window-close.png $(srcdir)/icons/24/window-close.png \
 $(srcdir)/icons/16/help-contents.png $(srcdir)/icons/24/help-contents.png \

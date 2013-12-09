@@ -3,15 +3,67 @@ Bulk Extractor 1.4.1.   Feature Freeze: 1 DEC.  Beta: 1 JAN. Release: 1 FEB
 
 New in v1.4.1:
 
-+ kill the threads when phase1 is over. (Save memory)
-+ thread-safe map
-+ evaluate use of unordered_map
-+ evaluate how much RAM is used by histogram generation; can we move to one-pass histogram for other feature recorders?
-+ libbulk_extractor callback API:
++ Implemented libbulk_extractor as a loadable or linkably library with
+  a callback API for feature reporting.
+
++ Currently the API is single-threaded. In the future, it will be able
+  to spawn multiple threads and then kill them at the conclusion. (The
+  callback will be serialized so that the caller does not need to
+  worry about concurrency.)
+
+- Implement random sampling in the API
+
++ Implemented modbulk_extractor.py, a python module that can run
+  bulk_extractor on a buffer, file, or direct access to the drive
+
 
     typedef bulk_extractor_handle int;
     bulk_extractor_handle han;
 
+- kill the threads when phase1 is over. (Save memory)
+
+- We implemented a thread-safe map (atomic_map) which
+  will slowly replace the maps with explict locks in the feature
+  recording system.
+
+- Replace all instances of <map> with <unordered_map>, as it is faster.
+
+- evaluate how much RAM is used by histogram generation; can we move to one-pass histogram for other feature recorders?
+
+
+Timeline for Insider Threat Project:
+
+Jan 1 - Decision Date
+
+Fallback option:
+
+  If we do not have bulk_extractor working with GRR, we will implement a
+  year 1 work-around that will:
+
+  - C++ program that will run bulk_extractor API in sampling mode and send histogram to a website as a JSON post.
+  - Host website on Google App Engine with the back-end in Python.
+  - Implementation Jan-March
+
+GRR Implementation:
+
+  If we can run bulk_extractor from Python and GRR:
+
+  - Create a GRR installer with bulk_extarctor bundled.
+
+  - Have the lightweight object run every hour, with a 10% probability of initiating a hunt
+
+  - Hunt does random sampling on 1% of the drive and reports results
+    to GRR Server and store in an AFF hiearchy (which is a mongo DB).
+
+Interfacing to UTSA:
+   UTSA needs to be able to get a set of VECTORS (histograms?) specifying:
+    - (date range)   (e.g. "2013-01-01 through 2013-05-01")
+    - (Machine list) (e.g. "1,2,3" or "all")
+    - Produce a list of vectors as a CSV file that UTSA can perform datamining with.
+    - This can query Google App Engine or GRR interface
+
+
+==Bulk Extractor API==
 
 behan =  bulk_extractor_open(be_callback cb);
 - returns valid pointer if success, 0 if failure.

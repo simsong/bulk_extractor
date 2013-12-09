@@ -11,6 +11,7 @@ b.carved_files()  = List of carved files
 b.histogram_files()    = List of histograms
 b.read_histogram() = Returns a dictionary of the histogram
 b.open(fname)     = Opens a feature file in the report
+BulkReport.is_comment_line(line) - returns true if line is a commont line
 
 Note: files are always opened in binary mode and converted line-by-line
 to text mode. The confusion is that ZIP files are always opened as binary

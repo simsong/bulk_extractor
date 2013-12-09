@@ -703,7 +703,16 @@ public class BEMenus extends JMenuBar {
     mi.setAccelerator(KEYSTROKE_R);
     mi.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
-        WScan.openWindow();
+        WScan.openWindow(new ScanSettings());
+      }
+    });
+
+    // tools|bulk_extractor Run Queue...
+    mi = new JMenuItem("bulk_extractor Run Queue\u2026");
+    tools.add(mi);
+    mi.addActionListener(new ActionListener() {
+      public void actionPerformed (ActionEvent e) {
+        WScanSettingsRunQueue.openWindow();
       }
     });
 

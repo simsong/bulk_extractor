@@ -45,6 +45,28 @@ public class BEViewer {
   public static final ImageView imageView = new ImageView(imageModel, userHighlightModel);
   public static final RangeSelectionManager rangeSelectionManager = new RangeSelectionManager();
   public static final ClassificationManager classificationManager = new ClassificationManager();
+  public static final ScanSettingsListModel scanSettingsListModel = new ScanSettingsListModel();
+  private static final ScanSettingsConsumer scanSettingsConsumer = new ScanSettingsConsumer();
+static {
+//zz scan settings queue test
+ScanSettings test;
+test = new ScanSettings("-o /home/bdallen/queuetest8 /home/bdallen/Images/ntfs1-gen2.E01");
+scanSettingsListModel.add(test);
+test = new ScanSettings("-o /home/bdallen/queuetest1 /home/bdallen/Images/ntfs1-gen2.e01");
+scanSettingsListModel.add(test);
+test = new ScanSettings("-o /home/bdallen/queuetest2 -e bulk /home/bdallen/Images/ntfs1-gen2.E01");
+scanSettingsListModel.add(test);
+test = new ScanSettings("-o /home/bdallen/queuetest3 /home/bdallen/Images/ntfs1-gen2.E01");
+scanSettingsListModel.add(test);
+test = new ScanSettings("-o /home/bdallen/queuetest4 /home/bdallen/Images/ntfs1-gen2.E01");
+scanSettingsListModel.add(test);
+test = new ScanSettings("-o /home/bdallen/queuetest5 /home/bdallen/Images/ntfs1-gen2.E01");
+scanSettingsListModel.add(test);
+test = new ScanSettings("-o /home/bdallen/queuetest6 /home/bdallen/Images/ntfs1-gen2.E01");
+scanSettingsListModel.add(test);
+test = new ScanSettings("-o /home/bdallen/queuetest7 /home/bdallen/Images/ntfs1-gen2.E01");
+scanSettingsListModel.add(test);
+}
 
   // toolbar
   public static final BEToolbar toolbar = new BEToolbar();

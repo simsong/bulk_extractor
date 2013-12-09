@@ -26,8 +26,9 @@ public class WScan {
   // Control
   private static WScan wScan;
   private final JDialog wScanWindow = new JDialog();
-  private final JButton loadDefaultsB = new JButton("Restore Defaults");
-  private final JButton startB = new JButton("Start bulk_extractor");
+  private final JButton queueB = new JButton("Manage Queue\u2026");
+  private final JButton importB = new JButton("Import\u2026");
+  private final JButton submitB = new JButton("Submit Run");
   private final JButton cancelB = new JButton("Cancel");
 
   // boxed components
@@ -47,16 +48,23 @@ public class WScan {
     return wScan.wScanWindow;
   }
 
-  public static void openWindow() {
+  public static void openWindow(ScanSettings scanSettings) {
     if (wScan == null) {
       // this is the first invocation
       // create WScan
       new WScan();
     }
 
+    if (wScan.wScanWindow.isVisible()) {
+      WLog.log("WScan already visible.  Restoring defaults.");
+    }
+
+    // set all the scan settings
+    wScan.setScanSettings(scanSettings);
+
     // show the window
     wScan.wScanWindow.setLocationRelativeTo(BEViewer.getBEWindow());
-    wScan.wScanWindow.getRootPane().setDefaultButton(wScan.startB);
+    wScan.wScanWindow.getRootPane().setDefaultButton(wScan.submitB);
     wScan.wScanWindow.setVisible(true);
   }
 
@@ -70,8 +78,6 @@ public class WScan {
     wScanBoxedControls = new WScanBoxedControls();
     wScanBoxedScanners = new WScanBoxedScanners();
     buildScanInterface();
-    setDefaultValues();
-    setUIValues();
     wireActions();
     wScanWindow.pack();
   }
@@ -189,46 +195,39 @@ public class WScan {
     container.setLayout(new GridBagLayout());
     GridBagConstraints c;
 
-    // (0,0) load defaults
+    int x=0;
+    // Queue...
     c = new GridBagConstraints();
     c.insets = new Insets(0, 5, 0, 5);
-    c.gridx = 0;
+    c.gridx = x++;
     c.gridy = 0;
-    container.add(loadDefaultsB, c);
+    container.add(queueB, c);
+    queueB.setToolTipText("Manage the bulk_extractor Run Queue");
 
-    // (1,0) Start
+    // Import Settings...
     c = new GridBagConstraints();
     c.insets = new Insets(0, 5, 0, 5);
-    c.gridx = 1;
+    c.gridx = x++;
     c.gridy = 0;
-    container.add(startB, c);
+    container.add(importB, c);
+    importB.setToolTipText("Import settings for a new bulk_extractor run");
 
-    // (2,0) Cancel
+    // Submit run
     c = new GridBagConstraints();
     c.insets = new Insets(0, 5, 0, 5);
-    c.gridx = 2;
+    c.gridx = x++;
+    c.gridy = 0;
+    container.add(submitB, c);
+    submitB.setToolTipText("Submit run to the bulk_extractor Run Queue");
+
+    // Cancel
+    c = new GridBagConstraints();
+    c.insets = new Insets(0, 5, 0, 5);
+    c.gridx = x++;
     c.gridy = 0;
     container.add(cancelB, c);
 
     return container;
-  }
-
-  // ************************************************************
-  // integer helper
-  // ************************************************************
-  /**
-   * read int from textField or else give error and use default value.
-   */
-  public static int getInt(JTextField textField, String name, int def) {
-    try {
-      int value = Integer.valueOf(textField.getText()).intValue();
-      return value;
-    } catch (NumberFormatException e) {
-      WError.showError("Invalid input for " + name + ": " + textField.getText()
-                       + ".\nUsing default value " + def + ".",
-                       "bulk_extractor input error", null);
-      return def;
-    }
   }
 
   // ************************************************************
@@ -330,38 +329,26 @@ public class WScan {
     container.add(checkBox, c);
   }
 
-  private void setDefaultValues() {
-    wScanBoxedRequired.setDefaultValues();
-    wScanBoxedGeneral.setDefaultValues();
-    wScanBoxedTuning.setDefaultValues();
-    wScanBoxedScanners.setDefaultValues();
-    wScanBoxedParallelizing.setDefaultValues();
-    wScanBoxedDebugging.setDefaultValues();
-    wScanBoxedControls.setDefaultValues();
+  // copy values from scanSettings into UI
+  private void setScanSettings(ScanSettings scanSettings) {
+    wScanBoxedRequired.setScanSettings(scanSettings);
+    wScanBoxedGeneral.setScanSettings(scanSettings);
+    wScanBoxedTuning.setScanSettings(scanSettings);
+    wScanBoxedParallelizing.setScanSettings(scanSettings);
+    wScanBoxedDebugging.setScanSettings(scanSettings);
+    wScanBoxedControls.setScanSettings(scanSettings);
+    wScanBoxedScanners.setScanSettings(scanSettings);
   }
 
-  private void setUIValues() {
-    wScanBoxedRequired.setUIValues();
-    wScanBoxedGeneral.setUIValues();
-    wScanBoxedTuning.setUIValues();
-    wScanBoxedScanners.setUIValues();
-    wScanBoxedParallelizing.setUIValues();
-    wScanBoxedDebugging.setUIValues();
-    wScanBoxedControls.setUIValues();
-  }
-
-  private void getUIValues() {
-    wScanBoxedRequired.getUIValues();
-    wScanBoxedGeneral.getUIValues();
-    wScanBoxedTuning.getUIValues();
-    wScanBoxedScanners.getUIValues();
-    wScanBoxedParallelizing.getUIValues();
-    wScanBoxedDebugging.getUIValues();
-    wScanBoxedControls.getUIValues();
-  }
-
-  private boolean validateRequiredParameters() {
-    return wScanBoxedRequired.validateValues();
+  // copy values from UI into scanSettings
+  private void getScanSettings(ScanSettings scanSettings) {
+    wScanBoxedRequired.getScanSettings(scanSettings);
+    wScanBoxedGeneral.getScanSettings(scanSettings);
+    wScanBoxedTuning.getScanSettings(scanSettings);
+    wScanBoxedParallelizing.getScanSettings(scanSettings);
+    wScanBoxedDebugging.getScanSettings(scanSettings);
+    wScanBoxedControls.getScanSettings(scanSettings);
+    wScanBoxedScanners.getScanSettings(scanSettings);
   }
 
   public static class FileChooserActionListener implements ActionListener {
@@ -429,185 +416,60 @@ public class WScan {
   }
 
   private void wireActions() {
-
-    // Control: defaults, start, cancel
-    loadDefaultsB.addActionListener(new ActionListener() {
+    // queue
+    queueB.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        setDefaultValues();
-        setUIValues();
+        // put selection values into variables and close this window
+        WScanSettingsRunQueue.openWindow();
       }
     });
 
-    startB.addActionListener(new ActionListener() {
+    // submit
+    submitB.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        getUIValues();
 
-        // validate required parameters
-        boolean success = validateRequiredParameters();
+        // get the command settings from the UI
+        ScanSettings scanSettings = new ScanSettings();
+        getScanSettings(scanSettings);
+
+        WLog.log("WScan submit scan settings: '" + scanSettings.getCommandString() + "'\n");
+
+        // validate some of the settings
+        boolean success = scanSettings.validateSomeSettings();
         if (!success) {
+
           // abort request
           return;
         }
 
-        // start the scan and close this window
-        String[] command = getCommand();
-        new WScanProgress(wScanWindow, command);
+        // enqueue job onto the run queue
+        BEViewer.scanSettingsListModel.add(scanSettings);
+
+        // close this window
         wScanWindow.setVisible(false);
       }
     });
 
+    // import
+    importB.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        // get the command settings from the UI
+        ScanSettings scanSettings = new ScanSettings();
+        wScan.getScanSettings(scanSettings);
+        String settingsString = scanSettings.getCommandString();
+
+        // open the import settings window starting from existing settings
+        WImportScanSettings.openWindow(settingsString);
+      }
+    });
+
+    // cancel
     cancelB.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         // put selection values into variables and close this window
         wScanWindow.setVisible(false);
       }
     });
-  }
-
-  private String[] getCommand() {
-    Vector<String> cmd = new Vector<String>();
-
-    // basic usage: bulk_extractor [options] imagefile
-    // program name
-    cmd.add("bulk_extractor");
-
-    // options
-    // required parameters
-    cmd.add("-o");
-    cmd.add(wScanBoxedRequired.outdir);
-    
-    // general options
-    if (wScanBoxedGeneral.useBannerFile) {
-      cmd.add("-b");
-      cmd.add(wScanBoxedGeneral.bannerFile);
-    }
-    if (wScanBoxedGeneral.useAlertlistFile) {
-      cmd.add("-r");
-      cmd.add(wScanBoxedGeneral.alertlistFile);
-    }
-    if (wScanBoxedGeneral.useStoplistFile) {
-      cmd.add("-w");
-      cmd.add(wScanBoxedGeneral.stoplistFile);
-    }
-    if (wScanBoxedGeneral.useFindRegexTextFile) {
-      cmd.add("-F");
-      cmd.add(wScanBoxedGeneral.findRegexTextFile);
-    }
-    if (wScanBoxedGeneral.useFindRegexText) {
-      cmd.add("-f");
-      cmd.add(wScanBoxedGeneral.findRegexText);
-    }
-    if (wScanBoxedGeneral.useRandomSampling) {
-      cmd.add("-s");
-      cmd.add(wScanBoxedGeneral.randomSampling);
-    }
-
-    // tuning parameters
-    if (wScanBoxedTuning.useContextWindowSize) {
-      cmd.add("-C");
-      cmd.add(Integer.toString(wScanBoxedTuning.contextWindowSize));
-    }
-    if (wScanBoxedTuning.usePageSize) {
-      cmd.add("-G");
-      cmd.add(Integer.toString(wScanBoxedTuning.pageSize));
-    }
-    if (wScanBoxedTuning.useMarginSize) {
-      cmd.add("-g");
-      cmd.add(Integer.toString(wScanBoxedTuning.marginSize));
-    }
-    if (wScanBoxedTuning.useBlockSize) {
-      cmd.add("-B");
-      cmd.add(Integer.toString(wScanBoxedTuning.blockSize));
-    }
-    if (wScanBoxedTuning.useNumThreads) {
-      cmd.add("-j");
-      cmd.add(Integer.toString(wScanBoxedTuning.numThreads));
-    }
-    if (wScanBoxedTuning.useMaxRecursionDepth) {
-      cmd.add("-M");
-      cmd.add(Integer.toString(wScanBoxedTuning.maxRecursionDepth));
-    }
-    if (wScanBoxedTuning.useMaxWait) {
-      cmd.add("-m");
-      cmd.add(wScanBoxedTuning.maxWait);
-    }
-
-    // parallelizing
-    if (wScanBoxedParallelizing.useStartProcessingAt) {
-      cmd.add("-Y");
-      cmd.add(wScanBoxedParallelizing.startProcessingAt);
-    }
-    if (wScanBoxedParallelizing.useProcessRange) {
-      cmd.add("-Y");
-      cmd.add(wScanBoxedParallelizing.processRange);
-    }
-    if (wScanBoxedParallelizing.useAddOffset) {
-      cmd.add("-A");
-      cmd.add(wScanBoxedParallelizing.addOffset);
-    }
-
-    // Debugging
-    if (wScanBoxedDebugging.useStartOnPageNumber) {
-      cmd.add("-z");
-      cmd.add(Integer.toString(wScanBoxedDebugging.startOnPageNumber));
-    }
-    if (wScanBoxedDebugging.useDebugNumber) {
-      cmd.add("-d" + Integer.toString(wScanBoxedDebugging.debugNumber));
-    }
-    if (wScanBoxedDebugging.useEraseOutputDirectory) {
-      cmd.add("-Z");
-    }
-  
-    // controls
-    if (wScanBoxedControls.usePluginDirectory) {
-      cmd.add("-P");
-      cmd.add(wScanBoxedControls.pluginDirectory);
-    }
-    if (wScanBoxedControls.useSettableOptions
-     && wScanBoxedControls.settableOptions.length() > 0) {
-      String[] settableOptions = wScanBoxedControls.settableOptions.split("\\|");
-      for (String optionName : settableOptions) {
-        cmd.add("-S");
-        cmd.add(optionName);
-      }
-    }
-
-    // Scanners (feature recorders)
-//    for (Enumeration<WScanBoxedScanners.FeatureScanner> e = (Enumeration<WScanBoxedScanners.FeatureScanner>)(featureScanners.elements()); e.hasMoreElements();); {
-    for (Enumeration e = wScanBoxedScanners.featureScanners.elements(); e.hasMoreElements();) {
-      WScanBoxedScanners.FeatureScanner featureScanner = (WScanBoxedScanners.FeatureScanner)e.nextElement();
-      if (featureScanner.defaultUseScanner) {
-        if (!featureScanner.useScanner) {
-          // disable this scanner that is enabled by default
-          cmd.add("-x");
-          cmd.add(featureScanner.command);
-        }
-      } else {
-        if (featureScanner.useScanner) {
-          // enable this scanner that is disabled by default
-          cmd.add("-e");
-          cmd.add(featureScanner.command);
-        }
-      }
-    }
-
-    // required imagefile
-    if (wScanBoxedRequired.imageSourceType == ImageSourceType.DIRECTORY_OF_FILES) {
-      // recurse through a directory of files
-      cmd.add("-R");
-    }
-    cmd.add(wScanBoxedRequired.inputImage);
-
-    // compose the command string
-    String[] command = cmd.toArray(new String[0]);
-
-    // log the command string
-    for (int i=0; i<command.length; i++) {
-      WLog.log("cmd " + i + ": '" + command[i] + "'");
-    }
-
-    // return the command string
-    return command;
   }
 }
 

@@ -17,24 +17,31 @@ public class BulkExtractorScanListReader {
   }
 
   /**
-   * This class contains a scanner name and whether it is enabled by default.
+   * This class contains a scanner name and whether it is enabled.
+   * defaultUseScanner tracks what bulk_extractor wants.
+   * useScanner tracks what the user wants.
    */
   public static class Scanner {
-    final String command;
+    final String name;
     final boolean defaultUseScanner;
-    private Scanner(String command, boolean defaultUseScanner) {
-      this.command = command;
+    boolean useScanner;
+    private Scanner(String name, boolean defaultUseScanner) {
+      this.name = name;
       this.defaultUseScanner = defaultUseScanner;
+      this.useScanner = defaultUseScanner;
+    }
+    public Scanner(String name, boolean defaultUseScanner, boolean useScanner) {
+      this.name = name;
+      this.defaultUseScanner = defaultUseScanner;
+      this.useScanner = useScanner;
     }
   }
 
   /**
    * Read and set the scan list.
    */
-  public static void readScanList(boolean usePluginDirectory,
-                                  String pluginDirectory,
-                                  Vector<Scanner> scanners) throws IOException {
-    scanners.clear();
+  public static Vector<Scanner> readScanList(boolean usePluginDirectory,
+                                   String pluginDirectory) throws IOException {
 
     // start the scan list reader process
     // cmd
@@ -108,20 +115,26 @@ public class BulkExtractorScanListReader {
     }
 
     // scanners to be returned
+    Vector<Scanner> scanners;
 
     // set scanners based on which thread obtained them
     if (stderrThread.scanners.size() > 0) {
-      scanners.addAll(stderrThread.scanners);
+//      scanners.addAll(stderrThread.scanners);
+      scanners = stderrThread.scanners;
 //WLog.log("BulkExtractorScanListReader.readScanList Number of scanners (stderr for v1.2): " + stderrThread.scanners.size());
     } else if (stdoutThread.scanners.size() > 0) {
-      scanners.addAll(stdoutThread.scanners);
+//      scanners.addAll(stdoutThread.scanners);
+      scanners = stdoutThread.scanners;
 //WLog.log("BulkExtractorScanListReader.readScanList Number of scanners: " + stdoutThread.scanners.size());
     } else {
       // read effort failed
+      scanners = new Vector<Scanner>();
     }
 
     // cancel the aborter timer
     aborter.cancel();
+
+    return scanners;
   }
 
   private static final class ScanListReaderThread extends Thread {

@@ -72,7 +72,6 @@ typedef vector<sector_typetag> sector_typetags_vector_t; //
 sector_typetags_vector_t sector_typetags;		      // what gets put where
 #endif
 
-
 static size_t opt_bulk_block_size = 512;	// 
 
 

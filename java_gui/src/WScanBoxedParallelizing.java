@@ -13,20 +13,6 @@ public class WScanBoxedParallelizing {
 
   public final Component component;
 
-  // defaults
-  private static final String DEFAULT_START_PROCESSING_AT = "";
-  private static final String DEFAULT_PROCESS_RANGE = "";
-  private static final String DEFAULT_ADD_OFFSET = "";
-
-  // tuning parameters
-  public boolean useStartProcessingAt;
-  public boolean useProcessRange;
-  public boolean useAddOffset;
-
-  public String startProcessingAt;
-  public String processRange;
-  public String addOffset;
-
   private final JCheckBox useStartProcessingAtCB = new JCheckBox("Use start processing at offset");
   private final JCheckBox useProcessRangeCB = new JCheckBox("Use process range offset o1-o2");
   private final JCheckBox useAddOffsetCB = new JCheckBox("Use add offset to reported feature offsets");
@@ -37,8 +23,6 @@ public class WScanBoxedParallelizing {
 
   public WScanBoxedParallelizing() {
     component = buildContainer();
-    setDefaultValues();
-    setUIValues();
     wireActions();
   }
 
@@ -60,52 +44,38 @@ public class WScanBoxedParallelizing {
     return container;
   }
  
-  public void setDefaultValues() {
+  public void setScanSettings(ScanSettings scanSettings) {
     // tuning parameters
-    useStartProcessingAt = false;
-    useProcessRange = false;
-    useAddOffset = false;
+    useStartProcessingAtCB.setSelected(scanSettings.useStartProcessingAt);
+    useProcessRangeCB.setSelected(scanSettings.useProcessRange);
+    useAddOffsetCB.setSelected(scanSettings.useAddOffset);
 
-    startProcessingAt = DEFAULT_START_PROCESSING_AT;
-    processRange = DEFAULT_PROCESS_RANGE;
-    addOffset = DEFAULT_ADD_OFFSET;
+    startProcessingAtTF.setEnabled(scanSettings.useStartProcessingAt);
+    processRangeTF.setEnabled(scanSettings.useProcessRange);
+    addOffsetTF.setEnabled(scanSettings.useAddOffset);
+
+    startProcessingAtTF.setText(scanSettings.startProcessingAt);
+    processRangeTF.setText(scanSettings.processRange);
+    addOffsetTF.setText(scanSettings.addOffset);
   }
 
-  public void setUIValues() {
+  public void getScanSettings(ScanSettings scanSettings) {
     // tuning parameters
-    useStartProcessingAtCB.setSelected(useStartProcessingAt);
-    useProcessRangeCB.setSelected(useProcessRange);
-    useAddOffsetCB.setSelected(useAddOffset);
+    scanSettings.useStartProcessingAt = useStartProcessingAtCB.isSelected();
+    scanSettings.useProcessRange = useProcessRangeCB.isSelected();
+    scanSettings.useAddOffset = useAddOffsetCB.isSelected();
 
-    startProcessingAtTF.setEnabled(useStartProcessingAt);
-    processRangeTF.setEnabled(useProcessRange);
-    addOffsetTF.setEnabled(useAddOffset);
-
-    startProcessingAtTF.setText(startProcessingAt);
-    processRangeTF.setText(processRange);
-    addOffsetTF.setText(addOffset);
-  }
-
-  public void getUIValues() {
-    // tuning parameters
-    useStartProcessingAt = useStartProcessingAtCB.isSelected();
-    useProcessRange = useProcessRangeCB.isSelected();
-    useAddOffset = useAddOffsetCB.isSelected();
-
-    startProcessingAt = startProcessingAtTF.getText();
-    processRange = processRangeTF.getText();
-    addOffset = addOffsetTF.getText();
-  }
-
-  public boolean validateValues() {
-    return true;
+    scanSettings.startProcessingAt = startProcessingAtTF.getText();
+    scanSettings.processRange = processRangeTF.getText();
+    scanSettings.addOffset = addOffsetTF.getText();
   }
 
   // the sole purpose of this listener is to keep UI widget visibility up to date
   private class GetUIValuesActionListener implements ActionListener {
     public void actionPerformed(ActionEvent e) {
-      getUIValues();
-      setUIValues();
+      ScanSettings scanSettings = new ScanSettings();
+      getScanSettings(scanSettings);
+      setScanSettings(scanSettings);
     }
   }
 

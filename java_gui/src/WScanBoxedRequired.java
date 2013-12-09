@@ -14,14 +14,6 @@ public class WScanBoxedRequired {
 
   public final Component component;
 
-  // defaults
-  private static final boolean DEFAULT_USE_IMAGE_SOURCE = true;
- 
-  // required parameters
-  public String inputImage;
-  public static ImageSourceType imageSourceType = ImageSourceType.IMAGE_FILE;
-  public String outdir;
-
   private final JRadioButton imageFileChooserRB = new JRadioButton("Image File");
   private final JRadioButton rawDeviceChooserRB = new JRadioButton("Raw Device");
   private final JRadioButton directoryOfFilesChooserRB = new JRadioButton("Directory of Files");
@@ -116,72 +108,28 @@ public class WScanBoxedRequired {
     return container;
   }
 
-  public void setDefaultValues() {
-    // required parameters
-    inputImage = "";
-    setImageSourceType(ImageSourceType.IMAGE_FILE);
-    outdir = "";
+  public void setScanSettings(ScanSettings scanSettings) {
+    setImageSourceType(scanSettings.imageSourceType);
+    inputImageTF.setText(scanSettings.inputImage);
+    outdirTF.setText(scanSettings.outdir);
   }
 
-  public void setUIValues() {
-    // required parameters
-    inputImageTF.setText(inputImage);
-    outdirTF.setText(outdir);
-  }
-
-  public void getUIValues() {
-    // required parameters
-    inputImage = inputImageTF.getText();
-    outdir = outdirTF.getText();
-  }
-
-  public boolean validateValues() {
-
-    // validate the input image
-    File image = new File(inputImage);
-    if (imageSourceType == ImageSourceType.IMAGE_FILE) {
-      // validate the image file as readable and not a directory
-      if (image.isDirectory() || !image.canRead()) {
-        WError.showError("The image file provided,\n'" + image + "', is not valid."
-                         + "\nPlease verify that this path exists and is accessible.",
-                         "bulk_extractor input error", null);
-        return false;
-      }
-    } else if (imageSourceType == ImageSourceType.RAW_DEVICE) {
-      // validate the device as readable and not a directory
-      if (image.isDirectory() || !image.canRead()) {
-        WError.showError("The image device provided,\n'" + image + "', is not valid."
-                         + "\nPlease verify that this path exists and is accessible.",
-                         "bulk_extractor input error", null);
-        return false;
-      }
-    } else if (imageSourceType == ImageSourceType.DIRECTORY_OF_FILES) {
-      // validate the input directory
-      if (!image.isDirectory() || !image.canRead()) {
-        WError.showError("The input image directory provided,\n'" + image + "', is not valid."
-                         + "\nPlease verify that this path exists and is accessible.",
-                         "bulk_extractor input error", null);
-        return false;
-      }
+  public void getScanSettings(ScanSettings scanSettings) {
+    if (imageFileChooserRB.isSelected()) {
+      scanSettings.imageSourceType = ImageSourceType.IMAGE_FILE;
+    } else if (rawDeviceChooserRB.isSelected()) {
+      scanSettings.imageSourceType = ImageSourceType.RAW_DEVICE;
+    } else if (directoryOfFilesChooserRB.isSelected()) {
+      scanSettings.imageSourceType = ImageSourceType.DIRECTORY_OF_FILES;
+    } else {
+      throw new RuntimeException("bad setting");
     }
-
-    // validate the directory above the output feature directory
-    File directory = new File(outdir);
-    File parent = directory.getParentFile();
-    if (parent == null || !parent.isDirectory()) {
-      WError.showError("The folder to contain Output Feature directory\n'" + directory
-                     + "' is not valid."
-                     + "\nPlease verify that this folder exists and is accessible.",
-                     "bulk_extractor input error", null);
-      return false;
-    }
-
-    return true;
+    scanSettings.inputImage = inputImageTF.getText();
+    scanSettings.outdir = outdirTF.getText();
   }
 
   private void setImageSourceType(ImageSourceType imageSourceType) {
     // set usage variable and UI text
-    this.imageSourceType = imageSourceType;
     inputImageL.setText(imageSourceType.toString());
     inputImageTF.setText("");
     if (imageSourceType == ImageSourceType.IMAGE_FILE) {
@@ -224,11 +172,11 @@ public class WScanBoxedRequired {
       }
     });
  
-    // input image
+    // input image source, one of IMAGE_FILE, DIRECTORY_OF_FILES, or RAW_DEVICE
     inputImageChooserB.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
         // open a chooser based on the selected type
-        if (imageSourceType == ImageSourceType.IMAGE_FILE) {
+        if (imageFileChooserRB.isSelected()) { // IMAGE_FILE
           // set up image chooser
           JFileChooser imageFileChooser = new JFileChooser();
           imageFileChooser.setDialogTitle("Image File to Extract Features From");
@@ -245,7 +193,7 @@ public class WScanBoxedRequired {
             inputImageTF.setText(pathString);
           }
 
-        } else if (imageSourceType == ImageSourceType.DIRECTORY_OF_FILES) {
+        } else if (directoryOfFilesChooserRB.isSelected()) { // DIRECTORY_OF_FILES
           // set up input directory chooser
           JFileChooser imageFileChooser = new JFileChooser();
           imageFileChooser.setDialogTitle("Directory of Files to Recursively Extract Features From");
@@ -260,7 +208,7 @@ public class WScanBoxedRequired {
             String pathString = imageFileChooser.getSelectedFile().getAbsolutePath();
             inputImageTF.setText(pathString);
           }
-        } else if (imageSourceType == ImageSourceType.RAW_DEVICE) {
+        } else if (rawDeviceChooserRB.isSelected()) { // RAW_DEVICE
           WRawDeviceChooser.openWindow();
           // continue here on closure
           String selection = WRawDeviceChooser.getSelection();
@@ -312,7 +260,7 @@ System.setProperty("apple.awt.fileDialogForDirectories", "true");
   }
 
   // add file line
-  public void addFileLine(Container container, int y,
+  private void addFileLine(Container container, int y,
              JComponent fileComponent, JTextField textField, JButton button) {
     GridBagConstraints c;
 

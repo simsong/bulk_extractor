@@ -171,7 +171,7 @@ public class FeaturesModel implements CopyableLineInterface {
    * @param featuresFile the file to be used as the feature source
    */
   public void setReport(File imageFile, File featuresFile, ModelRole modelRole) {
-WLog.log("FeaturesModel.setReport image file: " + imageFile + ", featuresFile: " + featuresFile);
+  WLog.log("FeaturesModel.setReport image file: " + imageFile + ", featuresFile: " + featuresFile);
     // ignore if object equality
     if (imageFile == this.imageFile && featuresFile == this.featuresFile) {
       return;

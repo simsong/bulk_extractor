@@ -46,7 +46,9 @@ class callback_feature_recorder: public feature_recorder {
     callback_feature_recorder &operator=(const callback_feature_recorder&cfr);
     be_callback *cb;
 public:
-    callback_feature_recorder(be_callback *cb_,string name_):feature_recorder("","",name_),cb(cb_){
+    callback_feature_recorder(be_callback *cb_,
+                              class feature_recorder_set &fs,string name_):
+        feature_recorder(fs,"<no-outdir>","<no-fname>",name_),cb(cb_){
     }
     virtual std::string carve(const sbuf_t &sbuf,size_t pos,size_t len, 
                               const std::string &ext, // appended to forensic path
@@ -56,8 +58,6 @@ public:
     virtual void open(){}               // we don't open
     virtual void close(){}               // we don't open
     virtual void flush(){}               // we don't open
-    virtual void make_histogram(const class histogram_def &def){} 
-
     virtual void write(const std::string &str){
         cppmutex::lock lock(Mf);
         (*cb)(0,1,name.c_str(),str.c_str(),str.size(),"",0);
@@ -78,12 +78,12 @@ public:
     virtual feature_recorder *create_name_factory(const std::string &outdir_,
                                                   const std::string &input_fname_,
                                                   const std::string &name_){
-        return new callback_feature_recorder(cb,name_);
+        return new callback_feature_recorder(cb,*this,name_);
     }
     callback_feature_recorder_set(be_callback *cb_):feature_recorder_set(0),cb(cb_){
         feature_file_names_t feature_file_names;
         be13::plugin::get_scanner_feature_file_names(feature_file_names);
-        init(feature_file_names,"cfrs_input","cfrs_outdir");
+        init(feature_file_names,"cfrs_input","cfrs_outdir",0); // no histograms
     }
 };
 
@@ -97,13 +97,20 @@ struct BEFILE_t {
 
 typedef struct BEFILE_t BEFILE;
 extern "C" {
+    void bulk_extractor_enable(const char *scanner_name)
+    {
+        be13::plugin::scanners_enable(scanner_name);
+    }
+
     BEFILE *bulk_extractor_open(be_callback cb)
     {
+        histograms_t histograms;
         feature_recorder::set_main_threadid();
         scanner_info::scanner_config   s_config; // the bulk extractor config
         be13::plugin::load_scanners(scanners_builtin,s_config);
         be13::plugin::scanners_process_enable_disable_commands();
         BEFILE *bef = new BEFILE_t(cb);
+
         /* How do we enable or disable individual scanners? */
         /* How do we set or not set a find pattern? */
         /* We want to disable carving, right? */
@@ -121,6 +128,7 @@ extern "C" {
     
     int bulk_extractor_close(BEFILE *bef)
     {
+        bef->cfs.process_histograms(0);
         delete bef;
         return 0;
     }

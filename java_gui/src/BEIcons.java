@@ -12,6 +12,9 @@ public final class BEIcons {
     map.put("manage_bookmarks", "bookmark-2.png");
     map.put("export_bookmarks", "archive-extract-3.png");
     map.put("delete", "edit-delete-6.png");
+    map.put("edit_redo", "edit-redo-8.png");
+    map.put("up", "go-up-4.png");
+    map.put("down", "go-down-4.png");
     map.put("reverse", "go-previous-4.png");
     map.put("forward", "go-next-4.png");
     map.put("home", "go-home-4.png");
@@ -61,6 +64,12 @@ public final class BEIcons {
   public static final Icon EXPORT_BOOKMARKS_24 = getIcon24("export_bookmarks");
   public static final Icon DELETE_16 = getIcon16("delete");
   public static final Icon DELETE_24 = getIcon24("delete");
+  public static final Icon EDIT_REDO_16 = getIcon16("edit_redo");
+  public static final Icon EDIT_REDO_24 = getIcon24("edit_redo");
+  public static final Icon UP_16 = getIcon16("up");
+  public static final Icon UP_24 = getIcon24("up");
+  public static final Icon DOWN_16 = getIcon16("down");
+  public static final Icon DOWN_24 = getIcon24("down");
   public static final Icon REVERSE_16 = getIcon16("reverse");
   public static final Icon REVERSE_24 = getIcon24("reverse");
   public static final Icon FORWARD_16 = getIcon16("forward");

@@ -36,18 +36,6 @@ regex_list     find_list;
 /* global alert_list and stop_list
  * These should probably become static class variables
  */
-word_and_context_list alert_list;		/* shold be flagged */
-word_and_context_list stop_list;		/* should be ignored */
-
-/**
- * Singletons:
- * histograms_t histograms - the set of histograms to make
- * feature_recorder_set fs - the collection of feature recorders.
- * xml xreport             - the DFXML output.
- * image_process p         - the image being processed.
- * 
- * Note that all of the singletons are passed to the phase1() function.
- */
 
 /************************
  *** SCANNER PLUG-INS ***

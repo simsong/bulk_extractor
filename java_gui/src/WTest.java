@@ -45,12 +45,12 @@ public class WTest extends JDialog {
         File testOutputDirectory = new File(testOutputDirectoryString);
         BETests.makeBookmarks(testWorkSettingsFile, testOutputDirectory);
       }
+      WLog.log("Tests will be done when scan competes.");
       if (scanCB.isSelected()) {
         // Run a bulk_extractor scan using provided input
-        String[] scanCommand = testScanDirective.split(",");
-        BETests.performScan(scanCommand);
+        ScanSettings scanSettings = new ScanSettings(testScanDirective);
+        BEViewer.scanSettingsListModel.add(scanSettings);
       }
-      WLog.log("Done running tests");
     }
   }
 

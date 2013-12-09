@@ -79,8 +79,6 @@ bulk_extractor_nomain = \
 	bulk_extractor.h \
 	dig.cpp \
 	dig.h \
-	histogram.cpp \
-	histogram.h \
 	image_process.cpp \
 	image_process.h \
 	pattern_scanner.cpp \
@@ -91,8 +89,6 @@ bulk_extractor_nomain = \
 	phase1.cpp \
 	threadpool.cpp \
 	threadpool.h \
-	word_and_context_list.cpp \
-	word_and_context_list.h \
 	$(bulk_scanners) $(TSK3INCS)  $(BE13_API) $(DFXML_WRITER) 
 
 bulk_extractor_SOURCES = $(bulk_extractor_nomain) main.cpp bulk_extractor_api.cpp
@@ -108,9 +104,7 @@ stand_SOURCES = \
 	histogram.h \
 	scan_bulk.cpp \
 	stand.cpp \
-	word_and_context_list.cpp \
-	word_and_context_list.h \
-	$(BE13_API)
+	$(BE13_API) $(DFXML_WRITER) 
 
 beapi_demo_SOURCES = beapi_demo.cpp
 
