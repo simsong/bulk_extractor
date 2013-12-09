@@ -80,8 +80,8 @@ def process(out,dname1,dname2):
             v1 = b1.hist.get(feature,0)
             v2 = b2.hist.get(feature,0)
             if v1!=v2: diffcount += 1
-            if v2<=v1 and not options.smaller: continue
-            data.append((v1, v2, v2-v1, feature))
+            if v2>v1 or (v2==v1 and options.same) or (v2<v1 and options.smaller):
+                data.append((v1, v2, v2-v1, feature))
 
         # Sort according the diff first, then v2 amount, then v1 amount, then alphabetically on value
         def mysortkey(a):
@@ -109,6 +109,7 @@ if __name__=="__main__":
 """
     parser.add_option("--smaller",help="Also show values that didn't change or got smaller",
                       action="store_true")
+    parser.add_option("--same",help="Also show values that didn't change",action="store_true")
     parser.add_option("--tabdel",help="Specify a tab-delimited output file for easy import into Excel")
     parser.add_option("--html",help="HTML output. Argument is file name base")
 

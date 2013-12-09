@@ -2,7 +2,7 @@
  * This program demonstrates the bulk_extractor API.
  */
 
-#include "config.h"                              // from ../config.h
+#include "../config.h"                              // from ../config.h
 #include "bulk_extractor_api.h"
 
 #include <string>
@@ -39,6 +39,7 @@ int be_cb_demo(int32_t flag,
 #ifdef HAVE_DLOPEN
 void *getsym(void *lib,const char *name)
 {
+<<<<<<< HEAD
     void *ptr = dlsym(lib,name);
     if(ptr == 0){
         fprintf(stderr,"dlsym('%s'): %s\n",name,dlerror());
@@ -50,6 +51,9 @@ void *getsym(void *lib,const char *name)
 
 int main(int argc,char **argv)
 {
+=======
+#ifdef HAVE_DLOPEN
+>>>>>>> 8be0caf97a153aafd16dbe07e3b3b7e2d2f796d5
     std::string fname = "bulk_extractor.so";
     if(fname.find('/')==std::string::npos){
         fname = "./" + fname;               // fedora requires a complete path name
