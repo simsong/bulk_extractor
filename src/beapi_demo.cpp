@@ -2,7 +2,7 @@
  * This program demonstrates the bulk_extractor API.
  */
 
-#include "config.h"                              // from ../config.h
+#include "../config.h"                              // from ../config.h
 #include "bulk_extractor_api.h"
 
 #include <string>
