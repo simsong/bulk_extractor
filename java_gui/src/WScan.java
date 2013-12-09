@@ -27,6 +27,7 @@ public class WScan {
   private static WScan wScan;
   private final JDialog wScanWindow = new JDialog();
   private final JButton queueB = new JButton("Manage Queue\u2026");
+  private final JButton importB = new JButton("Import\u2026");
   private final JButton submitB = new JButton("Submit Run");
   private final JButton cancelB = new JButton("Cancel");
 
@@ -202,6 +203,14 @@ public class WScan {
     c.gridy = 0;
     container.add(queueB, c);
     queueB.setToolTipText("Manage the bulk_extractor Run Queue");
+
+    // Import Settings...
+    c = new GridBagConstraints();
+    c.insets = new Insets(0, 5, 0, 5);
+    c.gridx = x++;
+    c.gridy = 0;
+    container.add(importB, c);
+    importB.setToolTipText("Import settings for a new bulk_extractor run");
 
     // Submit run
     c = new GridBagConstraints();
@@ -407,16 +416,7 @@ public class WScan {
   }
 
   private void wireActions() {
-
-    // Control: defaults, submit, cancel
-/*
-    loadDefaultsB.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        setScanSettings(new ScanSettings());
-      }
-    });
-*/
-
+    // queue
     queueB.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         // put selection values into variables and close this window
@@ -424,6 +424,7 @@ public class WScan {
       }
     });
 
+    // submit
     submitB.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
 
@@ -431,7 +432,7 @@ public class WScan {
         ScanSettings scanSettings = new ScanSettings();
         getScanSettings(scanSettings);
 
-        WLog.log("WScan start scan settings: '" + scanSettings.getCommandString() + "'\n");
+        WLog.log("WScan submit scan settings: '" + scanSettings.getCommandString() + "'\n");
 
         // validate some of the settings
         boolean success = scanSettings.validateSomeSettings();
@@ -449,6 +450,20 @@ public class WScan {
       }
     });
 
+    // import
+    importB.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        // get the command settings from the UI
+        ScanSettings scanSettings = new ScanSettings();
+        wScan.getScanSettings(scanSettings);
+        String settingsString = scanSettings.getCommandString();
+
+        // open the import settings window starting from existing settings
+        WImportScanSettings.openWindow(settingsString);
+      }
+    });
+
+    // cancel
     cancelB.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         // put selection values into variables and close this window

@@ -82,6 +82,7 @@ public class ScanSettingsToolBar extends JToolBar {
   }
 
   private void setEnabledStates() {
+//WLog.log("ScanSettingsToolBar.setEnabledStates set states for buttons, selected index "+ runQueueL.getSelectedIndex());
 
     // set states for buttons
     deleteB.setEnabled(runQueueL.getSelectedIndex() >= 0);
@@ -93,7 +94,7 @@ public class ScanSettingsToolBar extends JToolBar {
   }
 
   private void wireListeners() {
-    // JList selection state changes button states
+    // on JList selection change, set button states
     runQueueL.addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
         if (e.getValueIsAdjusting() == false) {
@@ -102,23 +103,20 @@ public class ScanSettingsToolBar extends JToolBar {
       }
     });
 
-    // changes to list data can change the list selection model
+    // on JList data change, change button states and, for add, change the list selection
     BEViewer.scanSettingsListModel.addListDataListener(new ListDataListener() {
+
+      // contentsChanged
       public void contentsChanged(ListDataEvent e) {
         setEnabledStates();
       }
+
+      // intervalAdded
       public void intervalAdded(ListDataEvent e) {
-        // do this later on the swing queue because we already are on the
-        // swing queue and the ListModel isn't stable until later.
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            runQueueL.setSelectedValue(
-                     BEViewer.scanSettingsListModel.getElementAt(
-                     BEViewer.scanSettingsListModel.getSize() - 1)
-                     , true);
-          }
-        });
+        setEnabledStates();
       }
+
+      // intervalRemoved
       public void intervalRemoved(ListDataEvent e) {
         setEnabledStates();
       }
@@ -160,7 +158,6 @@ public class ScanSettingsToolBar extends JToolBar {
       public void actionPerformed(ActionEvent e) {
         ScanSettings scanSettings = (ScanSettings)runQueueL.getSelectedValue();
         BEViewer.scanSettingsListModel.moveUp(scanSettings);
-        runQueueL.setSelectedIndex(runQueueL.getSelectedIndex() - 1);
       }
     });
 
@@ -169,18 +166,8 @@ public class ScanSettingsToolBar extends JToolBar {
       public void actionPerformed(ActionEvent e) {
         ScanSettings scanSettings = (ScanSettings)runQueueL.getSelectedValue();
         BEViewer.scanSettingsListModel.moveDown(scanSettings);
-        runQueueL.setSelectedIndex(runQueueL.getSelectedIndex() + 1);
       }
     });
-
-/*
-    // clicking closeB closes this window
-    closeB.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        setVisible(false);
-      }
-    });
-*/
   }
 }
 

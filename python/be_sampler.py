@@ -49,7 +49,6 @@ def sample(outdir,fn):
                     out.write(line.decode('utf-8'))
 
 def calc_stats(fn):
-    print(fn)
     wrong = 0
     right = 0
     for line in open(fn,"r"):
@@ -58,22 +57,34 @@ def calc_stats(fn):
             if m:
                 sampled = int(m.group(1))
                 total = int(m.group(2))
-        elif line[0] in '-_xz' :
-            print(line)
+        elif line[0] in '-_xzn' :
             wrong += 1
         elif line[0] in '+=y' :
             right += 1
         else:
-            print("No classification:",line,end='');
+            if not args.quiet: print("No classification:",line,end='');
     return {"fn":os.path.basename(fn),
             "total":total,
             "sampled":sampled,
-            "accuracy":right/sampled,
-            "error_rate":wrong/sampled,
-            "uncertainity":(sampled-(right+wrong))/sampled}
+            "sampling_rate":sampled/total if total>0 else 0,
+            "accuracy":(right/sampled if sampled>0 else 1),
+            "error_rate":(wrong/sampled if sampled>0 else 0),
+            "uncertainity":(sampled-(right+wrong))/sampled if sampled>0 else 0}
             
 
-
+def calc_report(dirname):
+    for (dirpath,dirnames,filenames) in os.walk(dirname):
+        for filename in filenames:
+            if filename.endswith("~"): continue
+            fn = os.path.join(dirpath,filename)
+            r = calc_stats(fn)
+            if r: res.append(r)
+    print("Report: {}".format(args.calc))
+    print("{:20} {:8}     {:8}     {:8} {:8}".format("Feature","Total","Sampled","Accuracy","Err Rate"))
+    for r in res:
+        print("{:20} {:8} {:8} ({:4.0f}%)    {:4.0f}%   {:4.0f}%".format(
+                r['fn'],r['total'],r['sampled'],r['sampling_rate']*100.0,r['accuracy']*100.0,r['error_rate']*100.0))
+    
     
 if __name__ == "__main__":
     import argparse,sys,os
@@ -88,6 +99,7 @@ if __name__ == "__main__":
     arg_parser.add_argument("--xpattern", type=str, help="Do not sample lines that include this pattern in the forensic path")
     arg_parser.add_argument("--calc", help="Compute the statistics",action="store_true")
     arg_parser.add_argument("--trials", type=int, default="5", help="Number of trials to divide into")
+    arg_parser.add_argument("--quiet",action='store_true',help='do not alert on lines with no classification')
     args = arg_parser.parse_args()
     
     res = []
@@ -105,10 +117,12 @@ if __name__ == "__main__":
                     r['fn'],r['total'],r['sampled'],r['sampled']*100.0/r['total'],r['accuracy'],r['error_rate']))
         exit(0)
 
-    if os.path.exists(args.output):
-        raise RuntimeError(args.output+" exists")
+    if args.sample:
+        (input,output) = args.sample
+        if os.path.exists(output):
+            raise RuntimeError(output+" exists")
     
-    os.mkdir(args.output)
-    report = BulkReport(args.report)
-    for fn in report.feature_files():
-        sample(args.output,fn)
+        os.mkdir(output)
+        report = BulkReport(input)
+        for fn in report.feature_files():
+            sample(output,fn)
