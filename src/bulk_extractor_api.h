@@ -7,14 +7,7 @@ typedef struct BEFILE_t BEFILE;
 typedef int be_callback(int32_t flag,
                         uint32_t arg,
                         const char *feature_recorder_name,
-                        const char *feature,size_t feature_len,
-                        const char *context,size_t context_len);
-
-
-typedef struct BEFILE_t BEFILE;
-typedef int be_callback(int32_t flag,
-                        uint32_t arg,
-                        const char *feature_recorder_name,
+                        const char *pos, // forensic path of the feature
                         const char *feature,size_t feature_len,
                         const char *context,size_t context_len);
 
@@ -24,6 +17,9 @@ typedef BEFILE * (*be_open_t)(be_callback cb);
 
 extern "C" {int bulk_extractor_analyze_buf(BEFILE *bef,uint8_t *buf,size_t buflen);}
 typedef int (*be_analyze_buf_t)(BEFILE *bef,uint8_t *buf,size_t buflen);
+
+extern "C" {int bulk_extractor_analyze_dir(BEFILE *bef,const char *path);}
+typedef int (*be_analyze_dev_t)(BEFILE *bef,const char *path);
 
 extern "C" {int bulk_extractor_close(BEFILE *bef);}
 typedef int (*be_close_t)(BEFILE *bef);

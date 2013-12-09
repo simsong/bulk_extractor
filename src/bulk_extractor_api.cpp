@@ -64,7 +64,7 @@ public:
     }
     virtual void write0(const pos0_t &pos0,const std::string &feature,const std::string &context){
         cppmutex::lock lock(Mf);
-        (*cb)(0,1,name.c_str(),feature.c_str(),feature.size(),context.c_str(),context.size());
+        (*cb)(0,1,name.c_str(),pos0.str(),feature.c_str(),feature.size(),context.c_str(),context.size());
     }
 };
 
