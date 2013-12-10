@@ -145,8 +145,8 @@ The fix:
 1) I add an item to the data model.
 2) The data model fires its intervalAdded event, which causes JList
    to corrupt the state of the list selection model.
-2) I select the last item in the list in the selection model, which is the
-   requiredd functionality for my use case.
+3) I select the last item in the list in the selection model, which is the
+   required functionality for my use case.
 
 ------------------------------------------------------------
 
