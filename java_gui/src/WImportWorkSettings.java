@@ -44,6 +44,7 @@ public class WImportWorkSettings extends JDialog {
   private void buildInterface() {
     setTitle("Import Work Settings");
     setModal(true);
+    setAlwaysOnTop(true);
     Container pane = getContentPane();
 
     // use GridBagLayout with GridBagConstraints

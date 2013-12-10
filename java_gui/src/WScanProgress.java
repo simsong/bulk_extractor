@@ -120,11 +120,11 @@ public class WScanProgress extends JDialog {
       } else {
         // failed run
         statusL.setText("Error: bulk_extractor terminated with exit value "
-                        + exitValue + ".  Please check syntax.");
+                        + exitValue + ".  Please check command syntax.");
         WLog.log("bulk_extractor error exit value: " + exitValue);
         progressBar.setString("Error");
         WError.showError("bulk_extractor Scanner terminated with exit value "
-                         + exitValue + ".  Please check syntax:"
+                         + exitValue + ".  Please check command syntax:"
                          + "\n" + scanSettings.getCommandString(),
                          "bulk_extractor scan terminated", null);
       }
@@ -551,7 +551,7 @@ public class WScanProgress extends JDialog {
     JScrollPane outputScrollPane = new JScrollPane(outputArea,
                        ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                        ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    outputScrollPane.setPreferredSize(new Dimension(500, 200));
+    outputScrollPane.setPreferredSize(new Dimension(600, 200));
     c = new GridBagConstraints();
     c.insets = new Insets(0, 0, 0, 0);
     c.gridx = 0;

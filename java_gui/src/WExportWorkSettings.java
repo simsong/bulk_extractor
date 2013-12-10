@@ -45,6 +45,7 @@ public class WExportWorkSettings extends JDialog {
   private void buildInterface() {
     setTitle("Export Work Settings");
     setModal(true);
+    setAlwaysOnTop(true);
     Container pane = getContentPane();
 
     // use GridBagLayout with GridBagConstraints
