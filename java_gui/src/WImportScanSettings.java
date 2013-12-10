@@ -41,6 +41,9 @@ public class WImportScanSettings extends JDialog {
     c.insets = new Insets(15, 5, 5, 5);
     c.gridx = 0;
     c.gridy = 0;
+    c.weightx = 1;
+    c.weighty = 1;
+    c.fill=GridBagConstraints.HORIZONTAL;
     c.anchor = GridBagConstraints.LINE_START;
     pane.add(buildSettingsInput(), c);
 
@@ -49,7 +52,7 @@ public class WImportScanSettings extends JDialog {
     c.insets = new Insets(5, 5, 5, 5);
     c.gridx = 0;
     c.gridy = 1;
-    c.anchor = GridBagConstraints.LINE_START;
+//    c.anchor = GridBagConstraints.LINE_START;
     pane.add(buildControls(), c);
   }
 
@@ -67,8 +70,8 @@ public class WImportScanSettings extends JDialog {
     container.add(new JLabel("Settings Text"), c);
 
     // settingsTF (1,0)
-    settingsTF.setMinimumSize(new Dimension(400, settingsTF.getPreferredSize().height));
-    settingsTF.setPreferredSize(new Dimension(400, settingsTF.getPreferredSize().height));
+//    settingsTF.setMinimumSize(new Dimension(600, settingsTF.getPreferredSize().height));
+    settingsTF.setPreferredSize(new Dimension(600, settingsTF.getPreferredSize().height));
     settingsTF.setToolTipText("Import settings from command line text");
     c = new GridBagConstraints();
     c.insets = new Insets(0, 5, 0, 5);
@@ -76,6 +79,7 @@ public class WImportScanSettings extends JDialog {
     c.gridy = 0;
     c.weightx = 1;
     c.weighty = 1;
+    c.fill=GridBagConstraints.HORIZONTAL;
     c.anchor = GridBagConstraints.LINE_START;
     container.add(settingsTF, c);
 

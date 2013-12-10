@@ -47,6 +47,7 @@ public class BEViewer {
   public static final ClassificationManager classificationManager = new ClassificationManager();
   public static final ScanSettingsListModel scanSettingsListModel = new ScanSettingsListModel();
   private static final ScanSettingsConsumer scanSettingsConsumer = new ScanSettingsConsumer();
+/*
 static {
 //zz scan settings queue test
 ScanSettings test;
@@ -67,6 +68,7 @@ scanSettingsListModel.add(test);
 test = new ScanSettings("-o /home/bdallen/queuetest7 /home/bdallen/Images/ntfs1-gen2.E01");
 scanSettingsListModel.add(test);
 }
+*/
 
   // toolbar
   public static final BEToolbar toolbar = new BEToolbar();
