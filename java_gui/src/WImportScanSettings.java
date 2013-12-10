@@ -9,39 +9,27 @@ import java.awt.event.*;
 public class WImportScanSettings extends JDialog {
   private static final long serialVersionUID = 1;
 
-  private static WImportScanSettings wImportScanSettings;
   private JTextField settingsTF = new JTextField();
   private JButton importB = new JButton("Import");
   private JButton cancelB = new JButton("Cancel");
 
 /**
- * Opens this window.
+ * Dialog window for importing bulk_extractor run scan settings
  */
-  public static void openWindow(String commandString) {
-    if (wImportScanSettings == null) {
-      // this is the first invocation
-      // create the window
-      wImportScanSettings = new WImportScanSettings();
-    }
-
-    // show the dialog window
-    wImportScanSettings.setLocationRelativeTo(BEViewer.getBEWindow());
-    wImportScanSettings.settingsTF.setText(commandString);
-    wImportScanSettings.setVisible(true);
-  }
-
-  private WImportScanSettings() {
-    // set parent window, title, and modality
-
+  public WImportScanSettings(String commandString) {
+    setLocationRelativeTo(BEViewer.getBEWindow());
     buildInterface();
     wireActions();
     getRootPane().setDefaultButton(importB);
+    settingsTF.setText(commandString);
     pack();
+    setModal(true);
+    setAlwaysOnTop(true);
+    setVisible(true);
   }
 
   private void buildInterface() {
     setTitle("Import Scan Settings");
-    setModal(true);
     Container pane = getContentPane();
 
     // use GridBagLayout with GridBagConstraints
@@ -50,7 +38,7 @@ public class WImportScanSettings extends JDialog {
 
     // (0,0) add the scan settings text input
     c = new GridBagConstraints();
-    c.insets = new Insets(5, 5, 5, 5);
+    c.insets = new Insets(15, 5, 5, 5);
     c.gridx = 0;
     c.gridy = 0;
     c.anchor = GridBagConstraints.LINE_START;
@@ -123,10 +111,15 @@ public class WImportScanSettings extends JDialog {
     importB.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         ScanSettings scanSettings = new ScanSettings(settingsTF.getText());
-        boolean success = scanSettings.validateSomeSettings();
-        if (success) {
+
+        if (scanSettings.validTokens
+            && scanSettings.validateSomeSettings()) {
+
+          // good, use it
           WScan.openWindow(scanSettings);
           setVisible(false);
+        } else {
+          // bad input, ignore import request
         }
       }
     });

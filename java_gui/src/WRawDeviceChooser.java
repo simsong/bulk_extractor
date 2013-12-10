@@ -109,6 +109,7 @@ public class WRawDeviceChooser extends JDialog {
   private void buildInterface() {
     setTitle("Select Raw Device");
     setModal(true);
+    setAlwaysOnTop(true);
     Container pane = getContentPane();
 
     // use GridBagLayout with GridBagConstraints

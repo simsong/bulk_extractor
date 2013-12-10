@@ -71,6 +71,9 @@ public class ScanSettings {
   // scanners
   public Vector<BulkExtractorScanListReader.Scanner> scanners;
 
+  // parse state
+  public boolean validTokens = true;
+
   /**
    * instantiate with default values
    */
@@ -222,7 +225,7 @@ public class ScanSettings {
   public ScanSettings(String scanSettingsString) {
     // start from default and then modify with input string
     this();
-    String[] command = scanSettingsString.split("\\s");
+    String[] command = scanSettingsString.split("\\s+");
 
     // parse input string, modifying default
     int index = 0;
@@ -349,7 +352,10 @@ public class ScanSettings {
           }
         }
         if (foundX == false) {
+          validTokens = false;
           WLog.log("ScanSettings -x parse error: no scanner named '" + b + "'");
+          WError.showError("Invalid scanner name '" + b + "'",
+                       "Scanner deselection error", null);
         }
         index+=2; continue;
       } else if (a.equals("-e")) {
@@ -363,7 +369,10 @@ public class ScanSettings {
           }
         }
         if (foundE == false) {
+          validTokens = false;
           WLog.log("ScanSettings -e parse error: no scanner named '" + b + "'");
+          WError.showError("Invalid scanner name '" + b + "'",
+                       "Scanner selection error", null);
         }
         index+=2; continue;
       } else if (a.equals("-R")) {
@@ -379,7 +388,13 @@ public class ScanSettings {
 
     // validate that the parsing went to completion
     if (index != command.length || parameterCount != 1) {
+      // mark that the input tokens were invalid
+      validTokens = false;
+
+      // indicate that the input tokens were invalid
       WLog.log("ScanSettings input error: '" + scanSettingsString + "'");
+      WLog.log("ScanSettings command length: " + command.length
+               + ", parameter count: " + parameterCount);
       WError.showError("Invalid scan settings text: '" + scanSettingsString + "'",
                        "Scan Settings Text error", null);
     }
@@ -394,9 +409,11 @@ public class ScanSettings {
 
     // options
     // required parameters
-    cmd.add("-o");
-    cmd.add(outdir);
-    
+    if (!outdir.equals("")) {
+      // don't emit "-o" unless outdir exists
+      cmd.add("-o");
+      cmd.add(outdir);
+    }
     // general options
     if (useBannerFile) {
       cmd.add("-b");
