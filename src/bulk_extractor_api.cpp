@@ -24,6 +24,7 @@
 #include <queue>
 #include <unistd.h>
 #include <ctype.h>
+#include <sys/stat.h>
 
 /****************************************************************
  *** 
@@ -122,6 +123,26 @@ extern "C" {
         pos0_t pos0("");
         const sbuf_t sbuf(pos0,buf,buflen,buflen,false);
         be13::plugin::process_sbuf(scanner_params(scanner_params::PHASE_SCAN,sbuf,bef->cfs));
+        return 0;
+    }
+    
+    int bulk_extractor_analyze_dev(BEFILE *bef,const char *fname)
+    {
+        struct stat st;
+        if(stat(fname,&st)){
+            return -1;                  // cannot stat file
+        }
+        if(S_ISREG(st.st_mode)){
+            const sbuf_t *sbuf = sbuf_t::map_file(fname);
+            if(!sbuf) return -1;
+            be13::plugin::process_sbuf(scanner_params(scanner_params::PHASE_SCAN,*sbuf,bef->cfs));
+            delete sbuf;
+            return 0;
+        }
+            
+        //pos0_t pos0("");
+        //const sbuf_t sbuf(pos0,buf,buflen,buflen,false);
+        //be13::plugin::process_sbuf(scanner_params(scanner_params::PHASE_SCAN,sbuf,bef->cfs));
         return 0;
     }
     

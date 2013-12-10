@@ -51,34 +51,44 @@ void *getsym(void *lib,const char *name)
 
 int main(int argc,char **argv)
 {
-    std::string fname = "bulk_extractor.so";
-    if(fname.find('/')==std::string::npos){
-        fname = "./" + fname;               // fedora requires a complete path name
+    if(argc!=2){
+        fprintf(stderr,"usage: %s <filename>\n",argv[0]);
+        exit(1);
+    }
+    const char *fname = argv[1];
+
+    std::string libname = "bulk_extractor.so";
+    if(libname.find('/')==std::string::npos){
+        libname = "./" + libname;               // fedora requires a complete path name
     }
 
 #ifdef HAVE_DLOPEN_PREFLIGHT
-    if(!dlopen_preflight(fname.c_str())){
-	fprintf(stderr,"dlopen_preflight - cannot open %s: %s",fname.c_str(),dlerror());
+    if(!dlopen_preflight(libname.c_str())){
+	fprintf(stderr,"dlopen_preflight - cannot open %s: %s",libname.c_str(),dlerror());
         exit(1);
     }
 #endif
 
-    void *lib=dlopen(fname.c_str(), RTLD_LAZY);
+    void *lib=dlopen(libname.c_str(), RTLD_LAZY);
     if(lib==0){
-        fprintf(stderr,"fname=%s\n",fname.c_str());
+        fprintf(stderr,"libname=%s\n",libname.c_str());
         fprintf(stderr,"dlopen: %s\n",dlerror());
         exit(1);
     }
 
     bulk_extractor_set_enabled_t be_set_enabled = (bulk_extractor_set_enabled_t)getsym(lib, BULK_EXTRACTOR_SET_ENABLED);
     bulk_extractor_open_t be_open = (bulk_extractor_open_t)getsym(lib, BULK_EXTRACTOR_OPEN);
-    bulk_extractor_analyze_buf_t be_analyze_buf = (bulk_extractor_analyze_buf_t)getsym(lib,BULK_EXTRACTOR_ANALYZE_BUF);
+    bulk_extractor_analyze_dev_t be_analyze_dev = (bulk_extractor_analyze_dev_t)getsym(lib,BULK_EXTRACTOR_ANALYZE_DEV);
+    //bulk_extractor_analyze_buf_t be_analyze_buf = (bulk_extractor_analyze_buf_t)getsym(lib,BULK_EXTRACTOR_ANALYZE_BUF);
     bulk_extractor_close_t be_close = (bulk_extractor_close_t)getsym(lib, BULK_EXTRACTOR_CLOSE);
     (*be_set_enabled)("bulk",1);               // enable the bulk scanner
 
+    /* analyze the file */
     BEFILE *bef = (*be_open)(be_cb_demo);
-    const char *demo_buf = "ABCDEFG  demo@api.com Just a demo 617-555-1212 ok!";
-    (*be_analyze_buf)(bef,(uint8_t *)demo_buf,strlen(demo_buf));
+    //const char *demo_buf = "ABCDEFG  demo@api.com Just a demo 617-555-1212 ok!";
+    //(*be_analyze_buf)(bef,(uint8_t *)demo_buf,strlen(demo_buf));
+
+    (*be_analyze_dev)(bef,fname);
     (*be_close)(bef);
 
 #ifdef HAVE_DLOPEN

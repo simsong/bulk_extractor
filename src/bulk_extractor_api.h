@@ -30,9 +30,9 @@ typedef int (*bulk_extractor_analyze_buf_t)(BEFILE *bef,uint8_t *buf,size_t bufl
 //extern "C" bulk_extractor_analyze_buf_t bulk_extractor_analyze_buf;
 #define BULK_EXTRACTOR_ANALYZE_BUF "bulk_extractor_analyze_buf"
 
-typedef int (*be_analyze_dir_t)(BEFILE *bef,const char *path);
-//extern "C" be_analyze_dir_t bulk_extractor_analyze_dir(BEFILE *bef,const char *path);
-#define BULK_EXTRACTOR_ANALYZE_DIR "bulk_extractor_analyze_dir"
+typedef int (*bulk_extractor_analyze_dev_t)(BEFILE *bef,const char *path);
+//extern "C" be_analyze_dev_t bulk_extractor_analyze_dev(BEFILE *bef,const char *path);
+#define BULK_EXTRACTOR_ANALYZE_DEV "bulk_extractor_analyze_dev"
 
 typedef int (*bulk_extractor_close_t)(BEFILE *bef);
 //extern "C" bulk_extractor_close_t  bulk_extractor_close;
