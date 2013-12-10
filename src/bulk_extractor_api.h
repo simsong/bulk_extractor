@@ -9,7 +9,7 @@
 #define BULK_EXTRACTOR_API_FLAG_CARVED    0x0004
 
 typedef struct BEFILE_t BEFILE;
-typedef int be_callback(int32_t flag,
+typedef int be_callback_t(int32_t flag,
                         uint32_t arg,
                         const char *feature_recorder_name,
                         const char *pos, // forensic path of the feature
@@ -19,24 +19,23 @@ typedef int be_callback(int32_t flag,
 /* Enable is called before open() to enable or disable */
 
 typedef void (*bulk_extractor_set_enabled_t)(const char *scanner_name,bool enable);
-extern "C" bulk_extractor_set_enabled_t bulk_extractor_set_enabled;
+//extern "C" bulk_extractor_set_enabled_t bulk_extractor_set_enabled;
 #define BULK_EXTRACTOR_SET_ENABLED "bulk_extractor_set_enabled"
 
-typedef BEFILE * (*bulk_extractor_open_t)(be_callback cb);
-extern "C" bulk_extractor_open_t bulk_extractor_open;
+typedef BEFILE * (*bulk_extractor_open_t)(be_callback_t cb);
+//extern "C" bulk_extractor_open_t bulk_extractor_open;
 #define BULK_EXTRACTOR_OPEN "bulk_extractor_open"
 
 typedef int (*bulk_extractor_analyze_buf_t)(BEFILE *bef,uint8_t *buf,size_t buflen);
-extern "C" bulk_extractor_analyze_buf_t bulk_extractor_analyze_buf;
+//extern "C" bulk_extractor_analyze_buf_t bulk_extractor_analyze_buf;
 #define BULK_EXTRACTOR_ANALYZE_BUF "bulk_extractor_analyze_buf"
 
 typedef int (*be_analyze_dir_t)(BEFILE *bef,const char *path);
-extern "C" be_analyze_dir_t t bulk_extractor_analyze_dir(BEFILE *bef,const char *path);
+//extern "C" be_analyze_dir_t bulk_extractor_analyze_dir(BEFILE *bef,const char *path);
+#define BULK_EXTRACTOR_ANALYZE_DIR "bulk_extractor_analyze_dir"
 
 typedef int (*bulk_extractor_close_t)(BEFILE *bef);
-extern "C" bulk_extractor_close_t  bulk_extractor_close;
+//extern "C" bulk_extractor_close_t  bulk_extractor_close;
 #define BULK_EXTRACTOR_CLOSE "bulk_extractor_close"
-
-
 
 #endif

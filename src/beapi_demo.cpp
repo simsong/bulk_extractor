@@ -26,6 +26,7 @@ typedef int (__cdecl *MYPROC)(LPWSTR);
 int be_cb_demo(int32_t flag,
                         uint32_t arg,
                         const char *feature_recorder_name,
+                        const char *pos, // forensic path of the feature
                         const char *feature,size_t feature_len,
                         const char *context,size_t context_len)
 {
@@ -39,7 +40,6 @@ int be_cb_demo(int32_t flag,
 #ifdef HAVE_DLOPEN
 void *getsym(void *lib,const char *name)
 {
-<<<<<<< HEAD
     void *ptr = dlsym(lib,name);
     if(ptr == 0){
         fprintf(stderr,"dlsym('%s'): %s\n",name,dlerror());
@@ -51,14 +51,10 @@ void *getsym(void *lib,const char *name)
 
 int main(int argc,char **argv)
 {
-=======
-#ifdef HAVE_DLOPEN
->>>>>>> 8be0caf97a153aafd16dbe07e3b3b7e2d2f796d5
     std::string fname = "bulk_extractor.so";
     if(fname.find('/')==std::string::npos){
         fname = "./" + fname;               // fedora requires a complete path name
     }
-
 
 #ifdef HAVE_DLOPEN_PREFLIGHT
     if(!dlopen_preflight(fname.c_str())){
@@ -73,32 +69,6 @@ int main(int argc,char **argv)
         fprintf(stderr,"dlopen: %s\n",dlerror());
         exit(1);
     }
-
-#ifdef HAVE_LOADLIBRARY
-    std::string fname = "bulk_extractor.dll";
-    /* Use Win32 LoadLibrary function */
-    /* See http://msdn.microsoft.com/en-us/library/ms686944(v=vs.85).aspx */
-    HINSTANCE hinstLib = LoadLibrary(TEXT(fname.c_str()));
-    if(hinstLib==0){
-        fprintf(stderr,"LoadLibrary(%s) failed",fname.c_str());
-        exit(1);
-    }
-    be_open = (bulk_extractor_open_t)GetProcAddress(hinstLib,"bulk_extractor_open");
-    if(be_open==0){
-        fprintf(stderr,"GetProcAddress(bulk_extractor_open) failed");
-        exit(1);
-    }
-    be_analyze_buf = (bulk_extractor_analyze_buf_t)GetProcAddress(hinstLib,"bulk_extractor_analyze");
-    if(be_analyze_buf==0){
-        fprintf(stderr,"GetProcAddress(bulk_extractor_analyze) failed");
-        exit(1);
-    }
-    be_close = (bulk_extractor_close_t)GetProcAddress(hinstLib,"bulk_extractor_close");
-    if(be_close==0){
-        fprintf(stderr,"GetProcAddress(bulk_extractor_close) failed");
-        exit(1);
-    }
-#endif
 
     bulk_extractor_set_enabled_t be_set_enabled = (bulk_extractor_set_enabled_t)getsym(lib, BULK_EXTRACTOR_SET_ENABLED);
     bulk_extractor_open_t be_open = (bulk_extractor_open_t)getsym(lib, BULK_EXTRACTOR_OPEN);
