@@ -326,7 +326,8 @@ void scan_bulk(const class scanner_params &sp,const recursion_control_block &rcb
                                    | scanner_info::SCANNER_WANTS_NGRAMS | scanner_info::SCANNER_NO_ALL);
 	sp.info->feature_names.insert("bulk");
 	sp.info->feature_names.insert("bulk");
-	sp.info->histogram_defs.insert(histogram_def("bulk","","histogram",HistogramMaker::FLAG_MEMORY));
+        // this is the way we are going to do memory histograms in the future
+	// sp.info->histogram_defs.insert(histogram_def("bulk","","histogram",HistogramMaker::FLAG_MEMORY));
         sp.info->get_config("bulk_block_size",&opt_bulk_block_size,"Block size (in bytes) for bulk data analysis");
 
         debug = sp.info->config->debug;
@@ -335,6 +336,7 @@ void scan_bulk(const class scanner_params &sp,const recursion_control_block &rcb
     }
 
     if(sp.phase==scanner_params::PHASE_INIT){
+        //std::cerr << "PHASE_INIT in scan_bulk\n";
         sp.fs.get_name("bulk")->set_flag(feature_recorder::FLAG_MEM_HISTOGRAM |
                                               feature_recorder::FLAG_NO_CONTEXT |
                                               feature_recorder::FLAG_NO_STOPLIST |

@@ -674,7 +674,7 @@ int main(int argc,char **argv)
     word_and_context_list alert_list;		/* shold be flagged */
     word_and_context_list stop_list;		/* should be ignored */
 
-    scanner_info::scanner_config   s_config; // the bulk extractor config
+    scanner_info::scanner_config   s_config; // the bulk extractor config created from the command line
     BulkExtractor_Phase1::Config   cfg;
     cfg.num_threads = threadpool::numCPU();
 
@@ -926,7 +926,8 @@ int main(int argc,char **argv)
     if(!p) err(1,"Cannot open %s: ",image_fname.c_str());
     
     /***
-     *** Finally create the feature recording set!
+     *** Create the feature recording set.
+     *** Initialize the scanners.
      ****/
 
     /* Determine the feature files that will be used */
@@ -934,8 +935,12 @@ int main(int argc,char **argv)
     be13::plugin::get_scanner_feature_file_names(feature_file_names);
     uint32_t flags = 0;
     if (stop_list.size()>0) flags |= feature_recorder_set::CREATE_STOP_LIST_RECORDERS;
+
+    histograms_t histogram_defs;        
+    be13::plugin::get_enabled_scanner_histograms(histogram_defs); 
+
     feature_recorder_set fs(flags);
-    fs.init(feature_file_names,image_fname,opt_outdir,&s_config.histograms);
+    fs.init(feature_file_names,image_fname,opt_outdir,&histogram_defs);
     be13::plugin::scanners_init(fs);
 
     fs.set_stop_list(&stop_list);

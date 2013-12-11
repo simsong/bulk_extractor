@@ -69,17 +69,21 @@ class callback_feature_recorder_set: public feature_recorder_set {
     callback_feature_recorder_set(const callback_feature_recorder_set &cfs);
     callback_feature_recorder_set &operator=(const callback_feature_recorder_set&cfs);
     be_callback_t *cb;
+    histograms_t histogram_defs;        
 
 public:
     virtual feature_recorder *create_name_factory(const std::string &outdir_,
                                                   const std::string &input_fname_,
                                                   const std::string &name_){
+        //std::cerr << "creating " << name_ << "\n";
         return new callback_feature_recorder(cb,*this,name_);
     }
     callback_feature_recorder_set(be_callback_t *cb_):feature_recorder_set(0),cb(cb_){
         feature_file_names_t feature_file_names;
         be13::plugin::get_scanner_feature_file_names(feature_file_names);
-        init(feature_file_names,"cfrs_input","cfrs_outdir",0); // no histograms
+        be13::plugin::get_enabled_scanner_histograms(histogram_defs); 
+        init(feature_file_names,"cfrs_input","cfrs_outdir",&histogram_defs);
+        be13::plugin::scanners_init(*this); // must be done after feature files are created
     }
 };
 
@@ -109,6 +113,11 @@ extern "C" {
         scanner_info::scanner_config   s_config; // the bulk extractor config
         be13::plugin::load_scanners(scanners_builtin,s_config);
         be13::plugin::scanners_process_enable_disable_commands();
+
+        feature_file_names_t feature_file_names;
+        be13::plugin::get_scanner_feature_file_names(feature_file_names);
+
+
         BEFILE *bef = new BEFILE_t(cb);
 
         /* How do we enable or disable individual scanners? */
@@ -139,16 +148,12 @@ extern "C" {
             delete sbuf;
             return 0;
         }
-            
-        //pos0_t pos0("");
-        //const sbuf_t sbuf(pos0,buf,buflen,buflen,false);
-        //be13::plugin::process_sbuf(scanner_params(scanner_params::PHASE_SCAN,sbuf,bef->cfs));
         return 0;
     }
     
     int bulk_extractor_close(BEFILE *bef)
     {
-        bef->cfs.process_histograms(0);
+        bef->cfs.process_histograms(0); NEED TO SPECIFY THE CALLBACK HERE
         delete bef;
         return 0;
     }
