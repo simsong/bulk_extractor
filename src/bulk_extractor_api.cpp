@@ -96,67 +96,77 @@ struct BEFILE_t {
 };
 
 typedef struct BEFILE_t BEFILE;
-extern "C" {
-    void bulk_extractor_set_enabled(const char *scanner_name,bool mode)
-    {
-        if(mode) {
-            be13::plugin::scanners_enable(scanner_name);
-        } else {
-            be13::plugin::scanners_disable(scanner_name);
-        }
-    }
-
-    BEFILE *bulk_extractor_open(be_callback_t cb)
-    {
-        histograms_t histograms;
-        feature_recorder::set_main_threadid();
-        scanner_info::scanner_config   s_config; // the bulk extractor config
-        be13::plugin::load_scanners(scanners_builtin,s_config);
-        be13::plugin::scanners_process_enable_disable_commands();
-
-        feature_file_names_t feature_file_names;
-        be13::plugin::get_scanner_feature_file_names(feature_file_names);
-
-
-        BEFILE *bef = new BEFILE_t(cb);
-
-        /* How do we enable or disable individual scanners? */
-        /* How do we set or not set a find pattern? */
-        /* We want to disable carving, right? */
-        /* How do we create the feature recorder with a callback? */
-        return bef;
-    }
-    
-    int bulk_extractor_analyze_buf(BEFILE *bef,uint8_t *buf,size_t buflen)
-    {
-        pos0_t pos0("");
-        const sbuf_t sbuf(pos0,buf,buflen,buflen,false);
-        be13::plugin::process_sbuf(scanner_params(scanner_params::PHASE_SCAN,sbuf,bef->cfs));
-        return 0;
-    }
-    
-    int bulk_extractor_analyze_dev(BEFILE *bef,const char *fname)
-    {
-        struct stat st;
-        if(stat(fname,&st)){
-            return -1;                  // cannot stat file
-        }
-        if(S_ISREG(st.st_mode)){
-            const sbuf_t *sbuf = sbuf_t::map_file(fname);
-            if(!sbuf) return -1;
-            be13::plugin::process_sbuf(scanner_params(scanner_params::PHASE_SCAN,*sbuf,bef->cfs));
-            delete sbuf;
-            return 0;
-        }
-        return 0;
-    }
-    
-    int bulk_extractor_close(BEFILE *bef)
-    {
-        bef->cfs.process_histograms(0); NEED TO SPECIFY THE CALLBACK HERE
-        delete bef;
-        return 0;
+extern "C" 
+void bulk_extractor_set_enabled(const char *scanner_name,bool mode)
+{
+    if(mode) {
+        be13::plugin::scanners_enable(scanner_name);
+    } else {
+        be13::plugin::scanners_disable(scanner_name);
     }
 }
+
+extern "C" 
+BEFILE *bulk_extractor_open(be_callback_t cb)
+{
+    histograms_t histograms;
+    feature_recorder::set_main_threadid();
+    scanner_info::scanner_config   s_config; // the bulk extractor config
+    be13::plugin::load_scanners(scanners_builtin,s_config);
+    be13::plugin::scanners_process_enable_disable_commands();
+    
+    feature_file_names_t feature_file_names;
+    be13::plugin::get_scanner_feature_file_names(feature_file_names);
+    
+    
+    BEFILE *bef = new BEFILE_t(cb);
+    
+    /* How do we enable or disable individual scanners? */
+    /* How do we set or not set a find pattern? */
+    /* We want to disable carving, right? */
+    /* How do we create the feature recorder with a callback? */
+    return bef;
+}
+    
+extern "C" 
+int bulk_extractor_analyze_buf(BEFILE *bef,uint8_t *buf,size_t buflen)
+{
+    pos0_t pos0("");
+    const sbuf_t sbuf(pos0,buf,buflen,buflen,false);
+    be13::plugin::process_sbuf(scanner_params(scanner_params::PHASE_SCAN,sbuf,bef->cfs));
+    return 0;
+}
+
+extern "C" 
+int bulk_extractor_analyze_dev(BEFILE *bef,const char *fname)
+{
+    struct stat st;
+    if(stat(fname,&st)){
+        return -1;                  // cannot stat file
+    }
+    if(S_ISREG(st.st_mode)){
+        const sbuf_t *sbuf = sbuf_t::map_file(fname);
+        if(!sbuf) return -1;
+        be13::plugin::process_sbuf(scanner_params(scanner_params::PHASE_SCAN,*sbuf,bef->cfs));
+        delete sbuf;
+        return 0;
+    }
+    return 0;
+}
+
+static void bulk_extractor_api_callback(void *user,const feature_recorder &fr,
+                                        const std::string &str,const uint64_t &count) // test callback for you to use!
+{
+    std::cerr << "str=" << str << " count=" << count << "\n";
+}
+
+extern "C" 
+int bulk_extractor_close(BEFILE *bef)
+{
+    bef->cfs.dump_histograms(0,bulk_extractor_api_callback,0); //NEED TO SPECIFY THE CALLBACK HERE
+    delete bef;
+    return 0;
+}
+
 
     

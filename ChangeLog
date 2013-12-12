@@ -1,3 +1,9 @@
+2013-12-11  Basic  <simsong@npsair.local>
+
+	* src/be13_api/feature_recorder_set.h (class feature_recorder_set): process_histograms changed to make_histograms, because that's what it is doing
+
+	* src/be13_api/feature_recorder.h (class feature_recorder): make_histogram renamed to dump_histogram (because that's what it's doing; callback function added)
+
 2013-11-13  Basic  <simsong@Mucha.local>
 
 	* src/be13_api: USE_HISTOGRAMS is gone; everybody uses them now.

@@ -1012,7 +1012,7 @@ int main(int argc,char **argv)
     /*** PHASE 3 --- Create Histograms ***/
     if(cfg.opt_quiet==0) std::cout << "Phase 3. Creating Histograms\n";
     xreport->add_timestamp("phase3 start");
-    if(opt_enable_histograms) fs.process_histograms(0);        // TK - add an xml error notifier!
+    if(opt_enable_histograms) fs.dump_histograms(0,0,0);        // TK - add an xml error notifier!
     xreport->add_timestamp("phase3 end");
 
     /*** PHASE 4 ---  report and then print final usage information ***/
