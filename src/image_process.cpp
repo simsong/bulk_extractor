@@ -940,7 +940,7 @@ image_process *image_process::open(string fn,bool opt_recurse,
 	    ip = new process_aff(fn,pagesize_,margin_);
 #else
 	    cerr << "This program was compiled without AFF support\n";
-	    exit(0);
+	    exit(1);
 #endif
 	}
 	if(ext=="e01"){
