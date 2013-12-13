@@ -4,7 +4,7 @@ class BeHandle(Structure):
     _fields_ = [("descriptor", c_int)]
 
 #                      return type, flag,  arg,    feature_recorder_name, feature,  feature_len, context,  context_len
-BeCallback = CFUNCTYPE(c_int,       c_int, c_uint, c_char_p,              c_char_p, c_size_t,    c_char_p, c_size_t   )
+BeCallback = CFUNCTYPE(c_int,       c_int, c_uint64, c_char_p,              c_char_p, c_size_t,    c_char_p, c_size_t   )
 
 lib_be = cdll.LoadLibrary("libfakelib.so")
 lib_be.bulk_extractor_open.restype = POINTER(BeHandle)

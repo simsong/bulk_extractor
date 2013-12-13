@@ -36,6 +36,61 @@
  * that writes to a callback function instead of a
  */
 
+class callback_feature_recorder;
+class callback_feature_recorder_set;
+
+/* a special feature_recorder_set that calls a callback rather than writing to a file.
+ * Typically we will instantiate a single object called the 'cfs' for each BEFILE.
+ * It creates multiple named callback_feature_recorders, but they all callback through the same
+ * callback function using the same set of locks
+ */ 
+class callback_feature_recorder_set: public feature_recorder_set {
+    // neither copying nor assignment are implemented
+    callback_feature_recorder_set(const callback_feature_recorder_set &cfs);
+    callback_feature_recorder_set &operator=(const callback_feature_recorder_set&cfs);
+    histograms_t histogram_defs;        
+public:
+    be_callback_t *cb;
+    mutable cppmutex Mcb;               // mutex for the callback
+
+public:
+    virtual feature_recorder *create_name_factory(const std::string &outdir_,
+                                                  const std::string &input_fname_,
+                                                  const std::string &name_);
+    callback_feature_recorder_set(be_callback_t *cb_):feature_recorder_set(0),histogram_defs(),cb(cb_),Mcb(){
+        feature_file_names_t feature_file_names;
+        be13::plugin::get_scanner_feature_file_names(feature_file_names);
+        be13::plugin::get_enabled_scanner_histograms(histogram_defs); 
+        init(feature_file_names,"cfrs_input","cfrs_outdir",&histogram_defs);
+        be13::plugin::scanners_init(*this); // must be done after feature files are created
+    }
+
+    virtual void write(const std::string &feature_recorder_name,const std::string &str){
+        cppmutex::lock lock(Mcb);
+        (*cb)(BULK_EXTRACTOR_API_FLAG_FEATURE,0,
+              feature_recorder_name.c_str(),"",str.c_str(),str.size(),"",0);
+    }
+    virtual void write0(const std::string &feature_recorder_name,
+                        const pos0_t &pos0,const std::string &feature,const std::string &context){
+        cppmutex::lock lock(Mcb);
+        (*cb)(BULK_EXTRACTOR_API_FLAG_FEATURE,0,
+              feature_recorder_name.c_str(),pos0.str().c_str(),feature.c_str(),feature.size(),context.c_str(),context.size());
+    }
+
+    /* The callback function that will be used to dump a histogram line.
+     * it will in turn call the callback function
+     */
+    static void histogram_dump_callback(void *user,const feature_recorder &fr,
+                                        const std::string &str,const uint64_t &count) {
+        callback_feature_recorder_set *cfs = (callback_feature_recorder_set *)(user);
+        assert(cfs!=0);
+        assert(cfs->cb!=0);
+        (*cfs->cb)(BULK_EXTRACTOR_API_FLAG_HISTOGRAM,count, fr.name.c_str(),"",str.c_str(),str.size(),"",0);
+    }
+};
+
+
+
 class callback_feature_recorder: public feature_recorder {
     // neither copying nor assignment are implemented
     callback_feature_recorder(const callback_feature_recorder &cfr);
@@ -48,44 +103,31 @@ public:
     }
     virtual std::string carve(const sbuf_t &sbuf,size_t pos,size_t len, 
                               const std::string &ext, // appended to forensic path
-                        const struct be13::hash_def &hasher){
+                              const struct be13::hash_def &hasher){
         return("");                     // no file created
     }
     virtual void open(){}               // we don't open
     virtual void close(){}               // we don't open
     virtual void flush(){}               // we don't open
+
+    /** write 'feature file' data to the callback */
     virtual void write(const std::string &str){
-        cppmutex::lock lock(Mf);
-        (*cb)(0,1,name.c_str(),"",str.c_str(),str.size(),"",0);
+        dynamic_cast<callback_feature_recorder_set *>(&fs)->write(name,str);
     }
     virtual void write0(const pos0_t &pos0,const std::string &feature,const std::string &context){
-        cppmutex::lock lock(Mf);
-        (*cb)(0,1,name.c_str(),pos0.str().c_str(),feature.c_str(),feature.size(),context.c_str(),context.size());
+        dynamic_cast<callback_feature_recorder_set *>(&fs)->write0(name,pos0,feature,context);
     }
 };
 
-class callback_feature_recorder_set: public feature_recorder_set {
-    // neither copying nor assignment are implemented
-    callback_feature_recorder_set(const callback_feature_recorder_set &cfs);
-    callback_feature_recorder_set &operator=(const callback_feature_recorder_set&cfs);
-    be_callback_t *cb;
-    histograms_t histogram_defs;        
 
-public:
-    virtual feature_recorder *create_name_factory(const std::string &outdir_,
-                                                  const std::string &input_fname_,
-                                                  const std::string &name_){
-        //std::cerr << "creating " << name_ << "\n";
-        return new callback_feature_recorder(cb,*this,name_);
-    }
-    callback_feature_recorder_set(be_callback_t *cb_):feature_recorder_set(0),cb(cb_){
-        feature_file_names_t feature_file_names;
-        be13::plugin::get_scanner_feature_file_names(feature_file_names);
-        be13::plugin::get_enabled_scanner_histograms(histogram_defs); 
-        init(feature_file_names,"cfrs_input","cfrs_outdir",&histogram_defs);
-        be13::plugin::scanners_init(*this); // must be done after feature files are created
-    }
-};
+/* create_name_factory must be here, after the feature_recorder class is defined. */
+feature_recorder *callback_feature_recorder_set::create_name_factory(const std::string &outdir_,
+                                                                     const std::string &input_fname_,
+                                                                     const std::string &name_){
+    //std::cerr << "creating " << name_ << "\n";
+    return new callback_feature_recorder(cb,*this,name_);
+}
+
 
 
 struct BEFILE_t {
@@ -154,16 +196,12 @@ int bulk_extractor_analyze_dev(BEFILE *bef,const char *fname)
     return 0;
 }
 
-static void bulk_extractor_api_callback(void *user,const feature_recorder &fr,
-                                        const std::string &str,const uint64_t &count) // test callback for you to use!
-{
-    std::cerr << "str=" << str << " count=" << count << "\n";
-}
-
 extern "C" 
 int bulk_extractor_close(BEFILE *bef)
 {
-    bef->cfs.dump_histograms(0,bulk_extractor_api_callback,0); //NEED TO SPECIFY THE CALLBACK HERE
+    printf("p1 cfs=%p\n",&bef->cfs);
+    bef->cfs.dump_histograms((void *)&bef->cfs,
+                             callback_feature_recorder_set::histogram_dump_callback,0); //NEED TO SPECIFY THE CALLBACK HERE
     delete bef;
     return 0;
 }
