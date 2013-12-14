@@ -166,7 +166,7 @@ class process_aff : public image_process {
     /****************************************************************/
 
     mutable AFFILE *af;
-    vector<int64_t> pagelist;
+    std::vector<int64_t> pagelist;
 public:
     process_aff(string fname,size_t pagesize_,size_t margin_) : image_process(fname,pagesize_,margin_),af(0),pagelist(){}
     virtual ~process_aff();

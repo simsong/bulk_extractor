@@ -48,8 +48,8 @@ static bool has_min_digits(const char *buf)
    return digit_count>=min_phone_digits;
 }
 
-static string utf16to8(const wstring &s){
-string utf8_line;
+static std::string utf16to8(const std::wstring &s){
+std::string utf8_line;
 	try {
 	    utf8::utf16to8(s.begin(),s.end(),back_inserter(utf8_line));
 	} catch(utf8::invalid_utf16){
@@ -220,7 +220,7 @@ DATEFORMAT	({DATEA}|{DATEB}|{DATEC}|{DATED})
 \0((([0-9]\0){6}-\0){7}(([0-9]\0){6}))/[^0-9] {
     /* Make a wstring from yytext+1 to yyleng */
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
-    wstring stmp;
+    std::wstring stmp;
     for(size_t i=1;i+1<(size_t)yyleng;i+=2){
        stmp.push_back(yytext[i] | (yytext[i+1]<<8));
     }

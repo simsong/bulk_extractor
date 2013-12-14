@@ -226,9 +226,9 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
        c0++;
        context_len--;
     }
-    string context = SBUF.substr(c0,context_len);
+    std::string context = SBUF.substr(c0,context_len);
     while(context.size()<8){    
-        context = string(" ")+context;
+        context = std::string(" ")+context;
     }
 
     /* Now have some rules for ignoring */
@@ -236,28 +236,28 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
     if(context[7]=='.' || context[7]=='-' || context[7]=='+') ignore=1;
     if(ishexnumber(context[4]) && ishexnumber(context[5]) && ishexnumber(context[6]) && context[7]=='}') ignore=1;
 
-    if(context.find("v.",5) != string::npos) ignore=1;
-    if(context.find("v ",5) != string::npos) ignore=1;
-    if(context.find("rv:",5) != string::npos) ignore=1;       /* rv:1.9.2.8 as in Mozilla */
+    if(context.find("v.",5) != std::string::npos) ignore=1;
+    if(context.find("v ",5) != std::string::npos) ignore=1;
+    if(context.find("rv:",5) != std::string::npos) ignore=1;       /* rv:1.9.2.8 as in Mozilla */
 
-    if(context.find(">=",4) != string::npos) ignore=1;   /* >= 1.8.0.10 */
-    if(context.find("<=",4) != string::npos) ignore=1;   /* <= 1.8.0.10 */
-    if(context.find("<<",4) != string::npos) ignore=1;   /* <= 1.8.0.10 */
+    if(context.find(">=",4) != std::string::npos) ignore=1;   /* >= 1.8.0.10 */
+    if(context.find("<=",4) != std::string::npos) ignore=1;   /* <= 1.8.0.10 */
+    if(context.find("<<",4) != std::string::npos) ignore=1;   /* <= 1.8.0.10 */
 
-    if(context.find("ver",4) != string::npos) ignore=1;
-    if(context.find("Ver",4) != string::npos) ignore=1;
-    if(context.find("VER",4) != string::npos) ignore=1;
+    if(context.find("ver",4) != std::string::npos) ignore=1;
+    if(context.find("Ver",4) != std::string::npos) ignore=1;
+    if(context.find("VER",4) != std::string::npos) ignore=1;
     
-    if(context.find("rsion") != string::npos) ignore=1;
-    if(context.find("ion=")  != string::npos) ignore=1;
-    if(context.find("PSW/")  != string::npos) ignore=1;  /* PWS/1.5.19.3 ... */
+    if(context.find("rsion") != std::string::npos) ignore=1;
+    if(context.find("ion=")  != std::string::npos) ignore=1;
+    if(context.find("PSW/")  != std::string::npos) ignore=1;  /* PWS/1.5.19.3 ... */
 
-    if(context.find("flash=") != string::npos) ignore=1;   /* flash= */
-    if(context.find("stone=") != string::npos) ignore=1;   /* Milestone= */
-    if(context.find("NSS",4)  != string::npos) ignore=1;
+    if(context.find("flash=") != std::string::npos) ignore=1;   /* flash= */
+    if(context.find("stone=") != std::string::npos) ignore=1;   /* Milestone= */
+    if(context.find("NSS",4)  != std::string::npos) ignore=1;
 
-    if(context.find("/2001,") != string::npos) ignore=1;     /* /2001,3.60.50.8 */
-    if(context.find("TI_SZ") != string::npos) ignore=1;     /* %REG_MULTI_SZ%, */
+    if(context.find("/2001,") != std::string::npos) ignore=1;     /* /2001,3.60.50.8 */
+    if(context.find("TI_SZ") != std::string::npos) ignore=1;     /* %REG_MULTI_SZ%, */
 
     /* Ignore 0. */
     if(SBUF[s.pos]=='0' && SBUF[s.pos+1]=='.') ignore=1;
