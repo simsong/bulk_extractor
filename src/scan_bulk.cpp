@@ -101,7 +101,7 @@ public:;
     
     histogram():counts(){}
     virtual ~histogram(){
-	for(vector<hist_element *>::const_iterator it = counts.begin();it!=counts.end();it++){
+	for(std::vector<hist_element *>::const_iterator it = counts.begin();it!=counts.end();it++){
 	    delete *it;
 	}
 	counts.clear();
@@ -110,8 +110,8 @@ public:;
     /* Entropy array is a precomputed array of p*log(p) where p=counts/blocksize
      * index is number of counts.
      */
-    static vector<float> entropy_array;
-    vector<hist_element *> counts;	// histogram counts, sorted by most popular
+    static std::vector<float> entropy_array;
+    std::vector<hist_element *> counts;	// histogram counts, sorted by most popular
     static void precalc_entropy_array(int blocksize) {
 	entropy_array.clear();
 	for(int i=0;i<blocksize+1;i++){
@@ -138,7 +138,7 @@ public:;
     }
     float entropy() {
 	float eval = 0;
-	for(vector<hist_element *>::const_iterator it = counts.begin();it!=counts.end();it++){
+	for(std::vector<hist_element *>::const_iterator it = counts.begin();it!=counts.end();it++){
 	    float p = (float)(*it)->count / (float)opt_bulk_block_size;
 	    eval += -p * log2(p);
 	}
@@ -148,7 +148,7 @@ public:;
 	return counts.size();
     };
 };
-vector<float> histogram::entropy_array;	// where things get store
+std::vector<float> histogram::entropy_array;	// where things get store
 
 
 /**
@@ -242,7 +242,7 @@ void sector_classifier::check_ngram_entropy()
 	    if(sbuf[i%ngram_size]!=sbuf[i]) ngram_match = false;
 	}
 	if(ngram_match){
-	    stringstream ss;
+            std::stringstream ss;
 	    ss << CONSTANT << "(";
 	    for(size_t i=0;i<ngram_size;i++){
 		char buf[16];
@@ -275,7 +275,7 @@ void sector_classifier::check_ngram_entropy()
 
     float entropy = h.entropy();
 
-    stringstream ss;
+    std::stringstream ss;
     if(entropy>opt_high_entropy){
 	float cosineVariance = sd_autocorrelation_cosine_variance();
 	if(debug & DEBUG_INFO) ss << "high entropy ( S=" << entropy << ")" << " ACV= " << cosineVariance << " ";
@@ -292,7 +292,7 @@ void sector_classifier::check_ngram_entropy()
 	ss << "low entropy ( S=" << entropy << ")";
 	if(h.unique_counts() < 5){
 	    ss << " Unique Counts: " << h.unique_counts() << " ";
-	    for(vector<histogram::hist_element *>::const_iterator it = h.counts.begin();it!=h.counts.end();it++){
+	    for(std::vector<histogram::hist_element *>::const_iterator it = h.counts.begin();it!=h.counts.end();it++){
 		ss << (int)((*it)->val) << ":" << (*it)->count << " ";
 	    }
 	}

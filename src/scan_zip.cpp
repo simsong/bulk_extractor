@@ -32,9 +32,9 @@ static uint32_t unzip_carve_mode = feature_recorder::CARVE_ENCODED;
 #endif
 #include <zlib.h>
 
-bool has_control_characters(const string &name)
+bool has_control_characters(const std::string &name)
 {
-    for(string::const_iterator it = name.begin();it!=name.end();it++){
+    for(std::string::const_iterator it = name.begin();it!=name.end();it++){
 	unsigned char ch = *it;
 	if(ch<' ') return true;
     }
@@ -116,7 +116,7 @@ inline void scan_zip_component(const class scanner_params &sp,const recursion_co
     if(pos+30+name_len > sbuf.bufsize) return; // name is bigger than what's left
     //if(compr_size<0 || uncompr_size<0) return; // sanity check
 
-    string name = sbuf.substr(pos+30,name_len);
+    std::string name = sbuf.substr(pos+30,name_len);
     /* scan for unprintable characters.
      * Name may contain UTF-8
      */
@@ -139,7 +139,7 @@ inline void scan_zip_component(const class scanner_params &sp,const recursion_co
              general_purpose_bit_flag,compression_method,uncompr_size,compr_size,
              mtime.c_str(),
              crc32,extra_field_len);
-    stringstream xmlstream;
+    std::stringstream xmlstream;
     xmlstream << b2;
 
     const unsigned char *data_buf = sbuf.buf+pos+30+name_len+extra_field_len; // where the data starts

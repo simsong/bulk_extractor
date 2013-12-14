@@ -24,14 +24,20 @@
  * subclass needs to implement these methods that operator on the
  * iterator:
  *
+ * iterator allocating methods:
  * begin() - returns an image_process::iterator with initialized variables (for example, raw_offset)
  * end()   - returns an iterator that pionts to end
+ *
+ * ~()   - Destructor. Closes files and frees resources
+ *
+ * iterator modifying methods:
  * increment_iterator() - advances to the iterator to the next thing
+ * sbuf_alloc() - reads the data and increments the pointer
+ *
+ * const methods:
  * get_pos0 - returns the forensic path of byte[0] that the sbuf would return
- * sbuf_alloc() - reads the data
  * fraction_done() - the amount done
  * str() - returns a string for current position
- * ~()   - Destructor. Closes files and frees resources
  * blocks() - returns the number of blocks with the current block size
  * seek_block(block_number) - seeks to a block number n where 0<=n<blocks()
  */
@@ -64,18 +70,18 @@ private:
     image_process &operator=(const image_process &);
 
     /****************************************************************/
-    const string image_fname_;			/* image filename */
+    const std::string image_fname_;			/* image filename */
 public:    
     /**
      * open() figures out which child class to call, calls its open, then
      * returns an object.
      */
-    static image_process *open(string fn,bool recurse,
+    static image_process *open(std::string fn,bool recurse,
                                size_t opt_pagesize,size_t opt_margin);
     const size_t pagesize;                    // page size we are using
     const size_t margin;                      // margin size we are using
 
-    class read_error: public exception {
+    class read_error: public std::exception {
 	virtual const char *what() const throw() {
 	    return "read error";
 	}
@@ -91,11 +97,12 @@ public:
 	int64_t  raw_offset;		
 	uint64_t page_counter;
 	size_t   file_number;
-	class image_process &myimage;
+	const class image_process &myimage;
 	bool     eof;
-	iterator(class image_process *myimage_): raw_offset(0),page_counter(0),file_number(0),myimage(*myimage_),eof(false){
+	iterator(const class image_process *myimage_):
+            raw_offset(0),page_counter(0),file_number(0),myimage(*myimage_),eof(false){
 	}
-	bool operator !=(class iterator it) const{
+	bool operator !=(const iterator &it) const{
 	    if(this->eof && it.eof) return false; /* both in EOF states, so they are equal */
 	    if(this->raw_offset!=it.raw_offset
 	       || this->page_counter!=it.page_counter
@@ -103,14 +110,14 @@ public:
 	       ) return true;
 	    return false;
 	}
-        bool operator ==(class iterator it) const{
+        bool operator ==(const iterator &it) const{
             return !((*this) != it);
         }
 	pos0_t get_pos0() const { return myimage.get_pos0(*this); }			   // returns the current pos0
-	sbuf_t *sbuf_alloc(){ return myimage.sbuf_alloc(*this); }   // allocates an sbuf at pos0
-	double fraction_done(){ return myimage.fraction_done(*this); }
-	string str(){ return myimage.str(*this); }
-	uint64_t blocks() { return myimage.blocks(*this);}
+	sbuf_t *sbuf_alloc() { return myimage.sbuf_alloc(*this); }   // allocates an sbuf at pos0
+	double fraction_done() const { return myimage.fraction_done(*this); }
+        std::string str() const { return myimage.str(*this); }
+	uint64_t blocks() const { return myimage.blocks(*this);}
 	uint64_t seek_block(uint64_t block) { return myimage.seek_block(*this,block);} // returns block number 
     };
 
@@ -120,19 +127,20 @@ public:
     /* image support */
     virtual int open()=0;				    /* open; return 0 if successful */
     virtual int pread(uint8_t *,size_t bytes,int64_t offset) const =0;	    /* read */
-    virtual int64_t image_size()=0;
-    virtual std::string image_fname() const{return image_fname_;}
+    virtual int64_t image_size() const=0;
+    virtual std::string image_fname() const { return image_fname_;}
 
     /* iterator support; these virtual functions are called by iterator through (*myimage) */
-    virtual image_process::iterator begin()=0;
-    virtual image_process::iterator end()=0;
-    virtual void increment_iterator(class image_process::iterator &it) = 0;
+    virtual image_process::iterator begin() const =0;
+    virtual image_process::iterator end() const=0;
+    virtual void increment_iterator(class image_process::iterator &it) const = 0;
     virtual pos0_t get_pos0(const class image_process::iterator &it) const =0;
-    virtual sbuf_t *sbuf_alloc(class image_process::iterator &it) = 0;
-    virtual double fraction_done(class image_process::iterator &it) = 0;
-    virtual string str(class image_process::iterator &it) = 0;
-    virtual uint64_t blocks(class image_process::iterator &it) = 0;
-    virtual uint64_t seek_block(class image_process::iterator &it,uint64_t block) = 0; // returns -1 if failure
+    virtual sbuf_t *sbuf_alloc(class image_process::iterator &it) const = 0;
+    virtual double fraction_done(const class image_process::iterator &it) const = 0;
+    virtual std::string str(const class image_process::iterator &it) const = 0; // returns a string representation of where we are
+    virtual uint64_t blocks(const class image_process::iterator &it) const = 0;
+    // seek_block modifies the iterator, but not the image!
+    virtual uint64_t seek_block(class image_process::iterator &it,uint64_t block) const = 0; // returns -1 if failure
 };
 
 inline image_process::iterator & operator++(image_process::iterator &it){
@@ -163,20 +171,20 @@ public:
     process_aff(string fname,size_t pagesize_,size_t margin_) : image_process(fname,pagesize_,margin_),af(0),pagelist(){}
     virtual ~process_aff();
 
-    virtual image_process::iterator begin();
-    virtual image_process::iterator end();
+    virtual image_process::iterator begin() const;
+    virtual image_process::iterator end() const;
     virtual void increment_iterator(class image_process::iterator &it);
 
     /* Iterator Support */
     virtual int open();
     virtual int pread(uint8_t *,size_t bytes,int64_t offset) const;	    /* read */
     virtual pos0_t get_pos0(const class image_process::iterator &it) const;    
-    virtual sbuf_t *sbuf_alloc(class image_process::iterator &it);
-    virtual double fraction_done(class image_process::iterator &it);
-    virtual string str(class image_process::iterator &it);
-    virtual int64_t image_size();
-    virtual uint64_t blocks(class image_process::iterator &it);
-    virtual uint64_t seek_block(class image_process::iterator &it,uint64_t block); // returns -1 if failue
+    virtual sbuf_t *sbuf_alloc(class image_process::iterator &it) const;
+    virtual double fraction_done(const class image_process::iterator &it) const;
+    virtual string str(const class image_process::iterator &it) const;
+    virtual int64_t image_size() const;
+    virtual uint64_t blocks(const class image_process::iterator &it) const;
+    virtual uint64_t seek_block(class image_process::iterator &it,uint64_t block) const; // returns -1 if failue
 };
 #endif
 
@@ -204,28 +212,29 @@ class process_ewf : public image_process {
     /****************************************************************/
 
     int64_t ewf_filesize;
-    vector<string> details; 	       
+    std::vector<std::string> details; 	       
     mutable libewf_handle_t *handle;
-    static int debug;
+    //static int debug;
 
  public:
-    process_ewf(string fname,size_t pagesize_,size_t margin_) : image_process(fname,pagesize_,margin_), ewf_filesize(0), details() ,handle(0) {}
+    process_ewf(const std::string &fname,size_t pagesize_,size_t margin_) :
+        image_process(fname,pagesize_,margin_), ewf_filesize(0), details() ,handle(0) {}
     virtual ~process_ewf();
-    vector<string> getewfdetails();
+    std::vector<std::string> getewfdetails() const;
     int open();
     int pread(uint8_t *,size_t bytes,int64_t offset) const;	    /* read */
 
     /* iterator support */
-    virtual image_process::iterator begin();
-    virtual image_process::iterator end();
-    virtual void increment_iterator(class image_process::iterator &it);
-    virtual pos0_t get_pos0(const class image_process::iterator &it) const;    
-    virtual sbuf_t *sbuf_alloc(class image_process::iterator &it);
-    virtual double fraction_done(class image_process::iterator &it);
-    virtual string str(class image_process::iterator &it);
-    virtual int64_t image_size();
-    virtual uint64_t blocks(class image_process::iterator &it);
-    virtual uint64_t seek_block(class image_process::iterator &it,uint64_t block); // returns -1 if failue
+    virtual image_process::iterator begin() const;
+    virtual image_process::iterator end() const;
+    virtual void    increment_iterator(class image_process::iterator &it) const;
+    virtual pos0_t  get_pos0(const class image_process::iterator &it) const;    
+    virtual sbuf_t *sbuf_alloc(class image_process::iterator &it) const;
+    virtual double  fraction_done(const class image_process::iterator &it) const;
+    virtual std::string str(const class image_process::iterator &it) const;
+    virtual int64_t  image_size() const;
+    virtual uint64_t blocks(const class image_process::iterator &it) const;
+    virtual uint64_t seek_block(class image_process::iterator &it,uint64_t block) const; // returns -1 if failue
 };
 #endif
 
@@ -236,40 +245,40 @@ class process_ewf : public image_process {
 class process_raw : public image_process {
     class file_info {
     public:;
-        file_info(string name_,int64_t offset_,int64_t length_):name(name_),offset(offset_),length(length_){};
-        string name;
+        file_info(const std::string &name_,int64_t offset_,int64_t length_):name(name_),offset(offset_),length(length_){};
+        std::string name;
 	int64_t offset;
 	int64_t length;
     };
-    typedef vector<file_info> file_list_t;
+    typedef std::vector<file_info> file_list_t;
     file_list_t file_list;
-    void add_file(string fname);
-    class file_info const *find_offset(int64_t offset) const;
-    int64_t raw_filesize;			/* sume of all the lengths */
-    mutable string current_file_name;		/* which file is currently open */
+    void        add_file(const std::string &fname);
+    class       file_info const *find_offset(int64_t offset) const;
+    int64_t     raw_filesize;			/* sume of all the lengths */
+    mutable std::string current_file_name;		/* which file is currently open */
 #ifdef WIN32
     mutable HANDLE current_handle;		/* currently open file */
 #else
     mutable int current_fd;			/* currently open file */
 #endif
 public:
-    process_raw(string image_fname,size_t pagesize,size_t margin);
+    process_raw(const std::string &image_fname,size_t pagesize,size_t margin);
     virtual ~process_raw();
     virtual int open();
     virtual int pread(uint8_t *,size_t bytes,int64_t offset) const;	    /* read */
 
     /* iterator support */
-    virtual image_process::iterator begin();
-    virtual image_process::iterator end();
-    virtual void increment_iterator(class image_process::iterator &it);
+    virtual image_process::iterator begin() const;
+    virtual image_process::iterator end() const;
+    virtual void     increment_iterator(class image_process::iterator &it) const;
 
-    virtual pos0_t get_pos0(const class image_process::iterator &it) const;    
-    virtual sbuf_t *sbuf_alloc(class image_process::iterator &it);
-    virtual double fraction_done(class image_process::iterator &it);
-    virtual string str(class image_process::iterator &it);
-    virtual int64_t image_size();
-    virtual uint64_t blocks(class image_process::iterator &it);
-    virtual uint64_t seek_block(class image_process::iterator &it,uint64_t block); // returns -1 if failue
+    virtual pos0_t   get_pos0(const class image_process::iterator &it) const;    
+    virtual sbuf_t  *sbuf_alloc(class image_process::iterator &it) const;
+    virtual double   fraction_done(const class image_process::iterator &it) const;
+    virtual std::string str(const class image_process::iterator &it) const;
+    virtual int64_t  image_size() const;
+    virtual uint64_t blocks(const class image_process::iterator &it) const;
+    virtual uint64_t seek_block(class image_process::iterator &it,uint64_t block) const; // returns -1 if failue
 };
 
 /****************************************************************
@@ -279,7 +288,7 @@ public:
 
 class process_dir : public image_process {
  private:
-    vector<string> files;		/* all of the files */
+    std::vector<std::string> files;		/* all of the files */
 
  public:
     process_dir(const std::string &image_dir);
@@ -289,17 +298,17 @@ class process_dir : public image_process {
     virtual int pread(uint8_t *,size_t bytes,int64_t offset) const __attribute__((__noreturn__));	 /* read */
     
     /* iterator support */
-    virtual image_process::iterator begin();
-    virtual image_process::iterator end();
-    virtual void increment_iterator(class image_process::iterator &it);
+    virtual image_process::iterator begin() const;
+    virtual image_process::iterator end() const;
+    virtual void increment_iterator(class image_process::iterator &it) const;
     
-    virtual pos0_t get_pos0(const class image_process::iterator &it) const;    
-    virtual sbuf_t *sbuf_alloc(class image_process::iterator &it);   /* maps the next dir */
-    virtual double fraction_done(class image_process::iterator &it); /* number of dirs processed */
-    virtual string str(class image_process::iterator &it);
-    virtual int64_t image_size();				    /* total bytes */
-    virtual uint64_t blocks(class image_process::iterator &it);
-    virtual uint64_t seek_block(class image_process::iterator &it,uint64_t block); // returns -1 if failu};
+    virtual pos0_t get_pos0(const class image_process::iterator &it)   const;    
+    virtual sbuf_t *sbuf_alloc(class image_process::iterator &it) const;   /* maps the next dir */
+    virtual double fraction_done(const class image_process::iterator &it) const; /* number of dirs processed */
+    virtual std::string str(const class image_process::iterator &it) const;
+    virtual int64_t image_size() const;				    /* total bytes */
+    virtual uint64_t blocks(const class image_process::iterator &it) const;
+    virtual uint64_t seek_block(class image_process::iterator &it,uint64_t block) const; // returns -1 if failu};
 };
 
 /****************************************************************

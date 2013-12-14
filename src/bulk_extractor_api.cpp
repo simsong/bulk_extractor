@@ -98,7 +98,7 @@ class callback_feature_recorder: public feature_recorder {
     be_callback_t *cb;
 public:
     callback_feature_recorder(be_callback_t *cb_,
-                              class feature_recorder_set &fs,string name_):
+                              class feature_recorder_set &fs,const std::string &name_):
         feature_recorder(fs,"<no-outdir>","<no-fname>",name_),cb(cb_){
     }
     virtual std::string carve(const sbuf_t &sbuf,size_t pos,size_t len, 

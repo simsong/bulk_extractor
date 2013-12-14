@@ -1,3 +1,9 @@
+2013-12-13  Basic  <simsong@npsair.local>
+
+	* src/image_process.h (class process_dir): implemented const correctness for a whole bunch of methods
+
+	* src/be13_api/feature_recorder.h: removed using namespace std
+
 2013-12-11  Basic  <simsong@npsair.local>
 
 	* src/be13_api/feature_recorder_set.h (class feature_recorder_set): process_histograms changed to make_histograms, because that's what it is doing

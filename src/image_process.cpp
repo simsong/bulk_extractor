@@ -107,8 +107,6 @@ int64_t get_filesize(int fd)
 }
 
 
-
-
 /****************************************************************
  *** AFF START
  ****************************************************************/
@@ -140,7 +138,7 @@ int process_aff::pread(unsigned char *buf,size_t bytes,int64_t offset) const
     return af_read(af,buf,bytes);
 }
 
-int64_t process_aff::image_size()
+int64_t process_aff::image_size() const
 {
     return af_get_imagesize(af);
 }
@@ -150,14 +148,14 @@ int64_t process_aff::image_size()
  * Iterator support
  */
 
-image_process::iterator process_aff::begin()
+image_process::iterator process_aff::begin() const
 {
     image_process::iterator it(this);
     it.raw_offset = 0;
     return it;
 }
 
-image_process::iterator process_aff::end()
+image_process::iterator process_aff::end() const
 {
     image_process::iterator it(this);
     it.page_counter = pagelist.size();
@@ -182,7 +180,7 @@ __END_DECLS
 /* Increment the AFF iterator by going to the next page.
  * If we hit the end of the pagelist, note that we are at the end of file.
  */
-void process_aff::increment_iterator(class image_process::iterator &it)
+void process_aff::increment_iterator(class image_process::iterator &it) const
 {
     if(it.page_counter < pagelist.size()){
 	it.page_counter++;
@@ -200,7 +198,7 @@ pos0_t process_aff::get_pos0(const image_process::iterator &it) const
     return pos0;
 }
 
-sbuf_t *process_aff::sbuf_alloc(image_process::iterator &it)
+sbuf_t *process_aff::sbuf_alloc(image_process::iterator &it) const
 {
     size_t bufsize  = af_get_pagesize(af)+margin;
     unsigned char *buf = (unsigned char *)malloc(bufsize);
@@ -225,24 +223,24 @@ sbuf_t *process_aff::sbuf_alloc(image_process::iterator &it)
     return 0;				// no buffer to return
 }
 
-double process_aff::fraction_done(class image_process::iterator &it)
+double process_aff::fraction_done(const image_process::iterator &it) const
 {
     return (double)it.page_counter / (double)pagelist.size();
 }
 
-string process_aff::str(class image_process::iterator &it)
+string process_aff::str(const image_process::iterator &it) const
 {
     char buf[64];
     snprintf(buf,sizeof(buf),"Page %" PRId64 "",it.page_counter);
     return string(buf);
 }
 
-uint64_t process_aff::blocks(class image_process::iterator &it)
+uint64_t process_aff::blocks(const image_process::iterator &it) const
 {
     return pagelist.size();
 }
 
-uint64_t process_aff::seek_block(class image_process::iterator &it,uint64_t block)
+uint64_t process_aff::seek_block(const image_process::iterator &it,uint64_t block) const
 {
     it.page_counter = block;
     return block;
@@ -364,21 +362,21 @@ int process_ewf::open()
     return 0;
 }
 
-vector<string> process_ewf::getewfdetails(){
-	return(details);
+std::vector<std::string> process_ewf::getewfdetails() const{
+    return(details);
 }
 
 
-int process_ewf::debug = 0;
+//int process_ewf::debug = 0;
 int process_ewf::pread(unsigned char *buf,size_t bytes,int64_t offset) const
 {
 #ifdef LIBEWFNG
     libewf_error_t *error=0;
     int ret = libewf_handle_read_random(handle,buf,bytes,offset,&error);
     if(ret<0){
-#ifdef HAVE_LIBEWF_ERROR_BACKTRACE_FPRINT
-	if(debug & DEBUG_PEDANTIC) libewf_error_backtrace_fprint(error,stderr);
-#endif
+//#ifdef HAVE_LIBEWF_ERROR_BACKTRACE_FPRINT
+	//if(debug & DEBUG_PEDANTIC) libewf_error_backtrace_fprint(error,stderr);
+//#endif
 	libewf_error_fprint(error,stderr);
 	libewf_error_free(&error);
     }
@@ -392,13 +390,13 @@ int process_ewf::pread(unsigned char *buf,size_t bytes,int64_t offset) const
 }
 
 
-int64_t process_ewf::image_size()
+int64_t process_ewf::image_size() const
 {
     return ewf_filesize;
 }
 
 
-image_process::iterator process_ewf::begin()
+image_process::iterator process_ewf::begin() const
 {
     image_process::iterator it(this);
     it.raw_offset = 0;
@@ -406,7 +404,7 @@ image_process::iterator process_ewf::begin()
 }
 
 
-image_process::iterator process_ewf::end()
+image_process::iterator process_ewf::end() const
 {
     image_process::iterator it(this);
     it.raw_offset = this->ewf_filesize;
@@ -422,7 +420,7 @@ pos0_t process_ewf::get_pos0(const image_process::iterator &it) const
 }
 
 /** Read from the iterator into a newly allocated sbuf */
-sbuf_t *process_ewf::sbuf_alloc(image_process::iterator &it)
+sbuf_t *process_ewf::sbuf_alloc(image_process::iterator &it) const
 {
     int count = pagesize + margin;
 
@@ -431,7 +429,7 @@ sbuf_t *process_ewf::sbuf_alloc(image_process::iterator &it)
     }
 
     unsigned char *buf = (unsigned char *)malloc(count);
-    if(!buf) throw bad_alloc();			// no memory
+    if(!buf) throw std::bad_alloc();			// no memory
 
     count = this->pread(buf,count,it.raw_offset); // do the read
     if(count<0){
@@ -451,30 +449,30 @@ sbuf_t *process_ewf::sbuf_alloc(image_process::iterator &it)
 /**
  * just add the page size for process_ewf
  */
-void process_ewf::increment_iterator(image_process::iterator &it)
+void process_ewf::increment_iterator(image_process::iterator &it) const
 {
     it.raw_offset += pagesize;
     if(it.raw_offset > this->ewf_filesize) it.raw_offset = this->ewf_filesize;
 }
 
-double process_ewf::fraction_done(class image_process::iterator &it)
+double process_ewf::fraction_done(const image_process::iterator &it) const
 {
     return (double)it.raw_offset / (double)this->ewf_filesize;
 }
 
-string process_ewf::str(class image_process::iterator &it)
+std::string process_ewf::str(const image_process::iterator &it) const
 {
     char buf[64];
     snprintf(buf,sizeof(buf),"Offset %" PRId64 "MB",it.raw_offset/1000000);
-    return string(buf);
+    return std::string(buf);
 }
 
-uint64_t process_ewf::blocks(class image_process::iterator &it)
+uint64_t process_ewf::blocks(const image_process::iterator &it) const
 {
   return this->ewf_filesize / pagesize;
 }
 
-uint64_t process_ewf::seek_block(class image_process::iterator &it,uint64_t block)
+uint64_t process_ewf::seek_block(image_process::iterator &it,uint64_t block) const
 {
     it.raw_offset = pagesize * block;
     return block;
@@ -502,19 +500,20 @@ static bool fn_ends_with(const std::string &str,const std::string &suffix)
     return str.substr(str.size()-suffix.size())==suffix;
 }
 
-static bool is_multipart_file(string fn)
+static bool is_multipart_file(const std::string &fn)
 {
     return fn_ends_with(fn,".000")
 	|| fn_ends_with(fn,".001")
 	|| fn_ends_with(fn,"001.vmdk");
 }
 
-static string make_list_template(string fn,int *start)
+/* fn can't be & because it will get modified */
+static std::string make_list_template(std::string fn,int *start)
 {
     /* First find where the digits are */
     size_t p = fn.rfind("000");
-    if(p==string::npos) p = fn.rfind("001");
-    assert(p!=string::npos);
+    if(p==std::string::npos) p = fn.rfind("001");
+    assert(p!=std::string::npos);
     
     *start = atoi(fn.substr(p,3).c_str()) + 1;
     fn.replace(p,3,"%03d");	// make it a format
@@ -522,7 +521,7 @@ static string make_list_template(string fn,int *start)
 }
 
 
-process_raw::process_raw(string fname,size_t pagesize_,size_t margin_)
+process_raw::process_raw(const std::string &fname,size_t pagesize_,size_t margin_)
     :image_process(fname,pagesize_,margin_),
      file_list(),raw_filesize(0),current_file_name(),
 #ifdef WIN32
@@ -544,11 +543,11 @@ process_raw::~process_raw() {
 /**
  * Add the file to the list, keeping track of the total size
  */
-void process_raw::add_file(string fname)
+void process_raw::add_file(const std::string &fname)
 {
     int fd = ::open(fname.c_str(),O_RDONLY|O_BINARY);
     if(fd<0){
-	cerr << "*** Cannot open " << fname << ": " << strerror(errno) << "\n";
+        std::cerr << "*** Cannot open " << fname << ": " << strerror(errno) << "\n";
 	exit(1);
     }
     int64_t fname_length = get_filesize(fd);
@@ -557,7 +556,7 @@ void process_raw::add_file(string fname)
     raw_filesize += fname_length;
 }
 
-const class process_raw::file_info *process_raw::find_offset(int64_t pos) const
+const process_raw::file_info *process_raw::find_offset(int64_t pos) const
 {
     for(process_raw::file_list_t::const_iterator it = file_list.begin();it != file_list.end();it++){
 	if((*it).offset<=pos && pos< ((*it).offset+(*it).length)){
@@ -577,18 +576,18 @@ int process_raw::open()
     /* Get the list of the files if this is a split-raw file */
     if(is_multipart_file(image_fname())){
 	int num=0;
-	string templ = make_list_template(image_fname(),&num);
+        std::string templ = make_list_template(image_fname(),&num);
 	for(;;num++){
 	    char probename[PATH_MAX];
 	    snprintf(probename,sizeof(probename),templ.c_str(),num); 
 	    if(access(probename,R_OK)!=0) break;	    // no more files
-	    add_file(string(probename)); // found another name
+	    add_file(std::string(probename)); // found another name
 	}
     }
     return 0;
 }
 
-int64_t process_raw::image_size()
+int64_t process_raw::image_size() const
 {
     return raw_filesize;
 }
@@ -601,20 +600,9 @@ int64_t process_raw::image_size()
  * 3. If there are additional files to read in the next file, recurse.
  */
 
-#if 0
-/* Create a pread64 if we are on Windows */
-#if !defined(HAVE_PREAD64) && !defined(HAVE_PREAD) && defined(HAVE__LSEEKI64)
-static size_t pread64(int d,void *buf,size_t nbyte,int64_t offset)
-{
-    if(_lseeki64(d,offset,0)!=offset) return -1;
-    return read(d,buf,nbyte);
-}
-#endif
-#endif
-
 int process_raw::pread(unsigned char *buf,size_t bytes,int64_t offset) const
 {
-    const class file_info *fi = find_offset(offset);
+    const file_info *fi = find_offset(offset);
     if(fi==0) return 0;			// nothing to read.
 
     /* See if the file is the one that's currently opened.
@@ -676,7 +664,7 @@ int process_raw::pread(unsigned char *buf,size_t bytes,int64_t offset) const
 }
 
 
-image_process::iterator process_raw::begin()
+image_process::iterator process_raw::begin() const
 {
     image_process::iterator it(this);
     return it;
@@ -684,7 +672,7 @@ image_process::iterator process_raw::begin()
 
 
 /* Returns an iterator at the end of the image */
-image_process::iterator process_raw::end()
+image_process::iterator process_raw::end() const
 {
     image_process::iterator it(this);
     it.raw_offset = this->raw_filesize;
@@ -692,23 +680,22 @@ image_process::iterator process_raw::end()
     return it;
 }
 
-
-void process_raw::increment_iterator(image_process::iterator &it)
+void process_raw::increment_iterator(image_process::iterator &it) const
 {
     it.raw_offset += pagesize;
     if(it.raw_offset > this->raw_filesize) it.raw_offset = this->raw_filesize;
 }
 
-double process_raw::fraction_done(class image_process::iterator &it)
+double process_raw::fraction_done(const image_process::iterator &it) const
 {
     return (double)it.raw_offset / (double)this->raw_filesize;
 }
 
-string process_raw::str(class image_process::iterator &it)
+std::string process_raw::str(const image_process::iterator &it) const
 {
     char buf[64];
     snprintf(buf,sizeof(buf),"Offset %" PRId64 "MB",it.raw_offset/1000000);
-    return string(buf);
+    return std::string(buf);
 }
 
 
@@ -722,7 +709,7 @@ pos0_t process_raw::get_pos0(const image_process::iterator &it) const
 /** Read from the iterator into a newly allocated sbuf.
  * uses pagesize.
  */
-sbuf_t *process_raw::sbuf_alloc(image_process::iterator &it)
+sbuf_t *process_raw::sbuf_alloc(image_process::iterator &it) const
 {
     int count = pagesize + margin;
 
@@ -730,8 +717,8 @@ sbuf_t *process_raw::sbuf_alloc(image_process::iterator &it)
 	count = this->raw_filesize - it.raw_offset;
     }
     unsigned char *buf = (unsigned char *)malloc(count);
-    if(!buf) throw bad_alloc();			// no memory
-    count = this->pread(buf,count,it.raw_offset); // do the read
+    if(!buf) throw std::bad_alloc();			// no memory
+    count = this->pread(buf,count,it.raw_offset);       // do the read
     if(count==0){
 	free(buf);
 	it.eof = true;
@@ -752,12 +739,12 @@ static std::string filename_extension(std::string fn)
     return fn.substr(dotpos+1);
 }
 
-uint64_t process_raw::blocks(class image_process::iterator &it)
+uint64_t process_raw::blocks(const image_process::iterator &it) const
 {
     return (this->raw_filesize+pagesize-1) / pagesize;
 }
 
-uint64_t process_raw::seek_block(class image_process::iterator &it,uint64_t block)
+uint64_t process_raw::seek_block(image_process::iterator &it,uint64_t block) const
 {
     if(block * pagesize > (uint64_t)raw_filesize){
         block = raw_filesize / pagesize;
@@ -766,8 +753,6 @@ uint64_t process_raw::seek_block(class image_process::iterator &it,uint64_t bloc
     it.raw_offset = block * pagesize;
     return block;
 }
-
-
 
 
 /****************************************************************
@@ -808,18 +793,18 @@ int process_dir::pread(unsigned char *buf,size_t bytes,int64_t offset) const
     err(1,"process_dir does not support pread");
 }
 
-int64_t process_dir::image_size()
+int64_t process_dir::image_size() const
 {
     return files.size();		// the 'size' is in files
 }
 
-image_process::iterator process_dir::begin()
+image_process::iterator process_dir::begin() const
 {
     image_process::iterator it(this);
     return it;
 }
 
-image_process::iterator process_dir::end()
+image_process::iterator process_dir::end() const
 {
     image_process::iterator it(this);
     it.file_number = files.size();
@@ -827,7 +812,7 @@ image_process::iterator process_dir::end()
     return it;
 }
 
-void process_dir::increment_iterator(image_process::iterator &it)
+void process_dir::increment_iterator(image_process::iterator &it) const
 {
     it.file_number++;
     if(it.file_number>files.size()) it.file_number=files.size();
@@ -844,7 +829,7 @@ pos0_t process_dir::get_pos0(const image_process::iterator &it) const
 /** Read from the iterator into a newly allocated sbuf
  * with mapped memory.
  */
-sbuf_t *process_dir::sbuf_alloc(image_process::iterator &it)
+sbuf_t *process_dir::sbuf_alloc(image_process::iterator &it) const
 {
     std::string fname = files[it.file_number];
     sbuf_t *sbuf = sbuf_t::map_file(fname);
@@ -852,23 +837,23 @@ sbuf_t *process_dir::sbuf_alloc(image_process::iterator &it)
     return sbuf;
 }
 
-double process_dir::fraction_done(class image_process::iterator &it)
+double process_dir::fraction_done(const image_process::iterator &it) const
 {
     return (double)it.file_number / (double)files.size();
 }
 
-string process_dir::str(class image_process::iterator &it)
+std::string process_dir::str(const image_process::iterator &it) const
 {
-    return string("File ")+files[it.file_number];
+    return std::string("File ")+files[it.file_number];
 }
 
 
-uint64_t process_dir::blocks(class image_process::iterator &it)
+uint64_t process_dir::blocks(const image_process::iterator &it) const
 {
     return files.size();
 }
 
-uint64_t process_dir::seek_block(class image_process::iterator &it,uint64_t block)
+uint64_t process_dir::seek_block(class image_process::iterator &it,uint64_t block) const
 {
     it.file_number = block;
     return it.file_number;
@@ -883,11 +868,11 @@ uint64_t process_dir::seek_block(class image_process::iterator &it,uint64_t bloc
 
 #include <functional>
 #include <locale>
-image_process *image_process::open(string fn,bool opt_recurse,
+image_process *image_process::open(std::string fn,bool opt_recurse,
                                    size_t pagesize_,size_t margin_)
 {
     image_process *ip = 0;
-    string ext = filename_extension(fn);
+    std::string ext = filename_extension(fn);
     struct stat st;
 
     if(stat(fn.c_str(),&st)){
@@ -939,7 +924,7 @@ image_process *image_process::open(string fn,bool opt_recurse,
 #ifdef HAVE_LIBAFFLIB
 	    ip = new process_aff(fn,pagesize_,margin_);
 #else
-	    cerr << "This program was compiled without AFF support\n";
+            std::cerr << "This program was compiled without AFF support\n";
 	    exit(1);
 #endif
 	}
@@ -947,7 +932,7 @@ image_process *image_process::open(string fn,bool opt_recurse,
 #ifdef HAVE_LIBEWF
 	    ip = new process_ewf(fn,pagesize_,margin_);
 #else
-	    cerr << "This program was compiled without E01 support\n";
+            std::cerr << "This program was compiled without E01 support\n";
 	    exit(1);
 #endif
 	}

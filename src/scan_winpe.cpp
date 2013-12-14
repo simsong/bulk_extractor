@@ -337,8 +337,8 @@ struct  flagnames_t {
     const char *name;
 };
 
-static void decode_flags (stringstream &xml,
-                          const string &sectionName,
+static void decode_flags (std::stringstream &xml,
+                          const std::string &sectionName,
                           const struct flagnames_t flagnames[],
                           const uint32_t flags)
 {
@@ -351,7 +351,7 @@ static void decode_flags (stringstream &xml,
 
 // this is going to return a string because it returns empty string if
 // the value was not found
-static string match_switch_case (const struct flagnames_t flagnames[],
+static std::string match_switch_case (const struct flagnames_t flagnames[],
                                  const uint32_t needle)
 {
     int i;
@@ -494,7 +494,7 @@ static bool valid_section_name(const std::string &sectionName)
     return true;
 }
 
-static string scan_winpe_verify (const sbuf_t &sbuf)
+static std::string scan_winpe_verify (const sbuf_t &sbuf)
 {
     //const uint8_t * data = sbuf.buf;
     size_t size          = sbuf.bufsize;
@@ -503,7 +503,7 @@ static string scan_winpe_verify (const sbuf_t &sbuf)
     size_t ohw_offset                          = 0;    // OptionalHeaderWindows
     //uint32_t     header_offset;
     int          section_i;
-    stringstream xml;
+    std::stringstream xml;
     //int dlli;
     
     // set Pe_FileHeader to correct address
@@ -531,7 +531,7 @@ static string scan_winpe_verify (const sbuf_t &sbuf)
     uint16_t pe_Characteristics      = sbuf.get16u(header_offset + 18);
 
     // 2^11.75 confidence, 2^20.25 to go
-    string Machine = match_switch_case(pe_fileheader_machine, pe_Machine);
+    std::string Machine = match_switch_case(pe_fileheader_machine, pe_Machine);
     if (Machine == "") return "";
         
     // A PE with (0|>256) sections? Doubtful
@@ -606,8 +606,8 @@ static string scan_winpe_verify (const sbuf_t &sbuf)
         xml << " SizeOfCode=\""              << pe_SizeOfCode                 << "\"";
         xml << " SizeOfInitializedData=\""   << pe_SizeOfInitializedData      << "\"";
         xml << " SizeOfUninitializedData=\"" << pe_SizeOfUninitializedData    << "\"";
-        xml << " AddressOfEntryPoint=\"0x"   << hex << pe_AddressOfEntryPoint << "\"";
-        xml << " BaseOfCode=\"0x"            << hex << pe_BaseOfCode          << "\"";
+        xml << " AddressOfEntryPoint=\"0x"   << std::hex << pe_AddressOfEntryPoint << "\"";
+        xml << " BaseOfCode=\"0x"            << std::hex << pe_BaseOfCode          << "\"";
         
         break;
 
@@ -629,8 +629,8 @@ static string scan_winpe_verify (const sbuf_t &sbuf)
         xml << " SizeOfCode=\""              << pe_SizeOfCode                 << "\"";
         xml << " SizeOfInitializedData=\""   << pe_SizeOfInitializedData      << "\"";
         xml << " SizeOfUninitializedData=\"" << pe_SizeOfUninitializedData    << "\"";
-        xml << " AddressOfEntryPoint=\"0x"   << hex << pe_AddressOfEntryPoint << "\"";
-        xml << " BaseOfCode=\"0x"            << hex << pe_BaseOfCode          << "\"";
+        xml << " AddressOfEntryPoint=\"0x"   << std::hex << pe_AddressOfEntryPoint << "\"";
+        xml << " BaseOfCode=\"0x"            << std::hex << pe_BaseOfCode          << "\"";
         
         break;
         
@@ -672,7 +672,7 @@ static string scan_winpe_verify (const sbuf_t &sbuf)
     uint64_t pe_SizeOfHeapReserve = 0;
     uint64_t pe_SizeOfHeapCommit = 0;
     
-    string Subsystem = "";
+    std::string Subsystem = "";
     bool ohw_xml = true;
     
     if (    (pe_Magic == IMAGE_FILE_TYPE_PE32)
@@ -749,7 +749,7 @@ static string scan_winpe_verify (const sbuf_t &sbuf)
     
     if (ohw_xml) {
         xml << "<OptionalHeaderWindows";
-        xml << " ImageBase=\"0x"                 << hex << pe_ImageBase            << "\"";
+        xml << " ImageBase=\"0x"                 << std::hex << pe_ImageBase       << "\"";
         xml << " SectionAlignment=\""            << pe_SectionAlignment            << "\"";
         xml << " FileAlignment=\""               << pe_FileAlignment               << "\"";
         xml << " MajorOperatingSystemVersion=\"" << pe_MajorOperatingSystemVersion << "\"";
@@ -761,8 +761,8 @@ static string scan_winpe_verify (const sbuf_t &sbuf)
         xml << " Win32VersionValue=\""           << pe_Win32VersionValue           << "\"";
         xml << " SizeOfImage=\""                 << pe_SizeOfImage                 << "\"";
         xml << " SizeOfHeaders=\""               << pe_SizeOfHeaders               << "\"";
-        xml << " CheckSum=\"0x"                  << hex << pe_CheckSum             << "\"";
-        xml << " SubSystem=\""                   << Subsystem                         << "\"";
+        xml << " CheckSum=\"0x"                  << std::hex << pe_CheckSum        << "\"";
+        xml << " SubSystem=\""                   << Subsystem                      << "\"";
         xml << " SizeOfStackReserve=\""          << pe_SizeOfStackReserve          << "\"";
         xml << " SizeOfStackCommit=\""           << pe_SizeOfStackCommit           << "\"";
         xml << " SizeOfHeapReserve=\""           << pe_SizeOfHeapReserve           << "\"";
@@ -946,7 +946,7 @@ void scan_winpe (const class scanner_params &sp,
 		 const recursion_control_block &rcb)
 {
     assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
-    string xml;
+    std::string xml;
     
     if (sp.phase == scanner_params::PHASE_STARTUP){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);

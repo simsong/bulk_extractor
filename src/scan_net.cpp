@@ -382,7 +382,7 @@ static bool invalidIP(const uint8_t addr[16], sa_family_t family) {
     }
 }
 
-static string ip2string(const struct be13::ip4_addr *const a)
+static std::string ip2string(const struct be13::ip4_addr *const a)
 {
     const uint8_t *b = (const uint8_t *)a;
 
@@ -403,29 +403,28 @@ const char *inet_ntop(int af, const void *src, char *dst, size_t size)
 #endif
 
 
-static string ip2string(const uint8_t *addr, sa_family_t family)
+static std::string ip2string(const uint8_t *addr, sa_family_t family)
 {
     char printstr[INET6_ADDRSTRLEN+1];
     switch (family) {
     case AF_INET: 
-	return string(inet_ntop(family,reinterpret_cast<const struct in_addr *>(addr+12), printstr, sizeof(printstr)));
+	return std::string(inet_ntop(family,reinterpret_cast<const struct in_addr *>(addr+12), printstr, sizeof(printstr)));
     case AF_INET6: 
-	return string(inet_ntop(family, addr, printstr, sizeof(printstr)));
+	return std::string(inet_ntop(family, addr, printstr, sizeof(printstr)));
     }
-    return string("INVALID family ");
+    return std::string("INVALID family ");
 }
 
-static string mac2string(const struct be13::ether_addr *const e)
+static std::string mac2string(const struct be13::ether_addr *const e)
 {
     char addr[32];
     snprintf(addr,sizeof(addr),"%02X:%02X:%02X:%02X:%02X:%02X",
 	     e->ether_addr_octet[0], e->ether_addr_octet[1], e->ether_addr_octet[2],
 	     e->ether_addr_octet[3], e->ether_addr_octet[4], e->ether_addr_octet[5]);
-    string res(addr);
-    return res;
+    return std::string(addr);
 }
 
-static string i2str(const int i)
+static std::string i2str(const int i)
 {
     std::stringstream  ss;
     ss << i;
@@ -656,7 +655,7 @@ public:
 	// Make sure that neither this packet nor an encapsulated version of this packet has been written
 	cppmutex::lock lock(Mfcap);		// lock the mutex
         if(fcap==0){
-            string ofn = ip_recorder->outdir+"/" + default_filename;
+            std::string ofn = ip_recorder->outdir+"/" + default_filename;
             fcap = fopen(ofn.c_str(),"wb"); // write the output
             pcap_write4(0xa1b2c3d4);
             pcap_write2(2);			// major version number
@@ -760,8 +759,8 @@ public:
      * Please remember this is called for every byte of the disk image,
      * so it needs to be as fast as possible.
      */
-    static string chksum_ok;
-    static string chksum_bad;
+    static std::string chksum_ok;
+    static std::string chksum_bad;
 
     /** Write the ethernet addresses and the TCP info into the appropriate feature files.
      */
@@ -769,8 +768,8 @@ public:
     void documentIPFields(const sbuf_t &sb2,const generic_iphdr_t &h,bool checksum_valid) {
 	/* Report the IP address */
 	/* based on the TTL, infer whether remote or local */
-	const string &chksum_status = checksum_valid ? chksum_ok : chksum_bad;
-	string src,dst;
+	const std::string &chksum_status = checksum_valid ? chksum_ok : chksum_bad;
+        std::string src,dst;
 		    
 	if(isPowerOfTwo(h.ttl)){
 	    src = "L";	// src is local because the power of two hasn't been decremented
@@ -781,7 +780,7 @@ public:
 	}
 	
 	/* Record the IP addresses */
-	const string name = (h.family==AF_INET) ? "ip " : "ip6_hdr ";
+	const std::string name = (h.family==AF_INET) ? "ip " : "ip6_hdr ";
 	ip_recorder->write(sb2.pos0, ip2string(h.src, h.family),
 			   "struct " + name + src + " (src) " + chksum_status);
 	ip_recorder->write(sb2.pos0, ip2string(h.dst, h.family),
@@ -1001,7 +1000,7 @@ public:
 	    }
 	    if(carved==0 && carve_net_memory){
 		/* If we can't carve a packet, look for these two memory structures */
-		carved = max(carveSockAddrIn( sb2 ), carveTCPTOBJ( sb2 ));
+		carved = std::max(carveSockAddrIn( sb2 ), carveTCPTOBJ( sb2 ));
 	    }
 	    i += (carved>0 ? carved : 1);	// advance the pointer
 	}
@@ -1010,8 +1009,8 @@ public:
     };
 };
 
-string packet_carver::chksum_ok("cksum-ok");
-string packet_carver::chksum_bad("cksum-bad");
+std::string packet_carver::chksum_ok("cksum-ok");
+std::string packet_carver::chksum_bad("cksum-bad");
 
 extern "C"
 void scan_net(const class scanner_params &sp,const recursion_control_block &rcb)
