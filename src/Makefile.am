@@ -107,7 +107,7 @@ stand_SOURCES = \
 	$(BE13_API) $(DFXML_WRITER) 
 
 beapi_demo_SOURCES = beapi_demo.cpp
-beapi_demo: bulk_extractor.so		# needs an up-to-date .so
+beapi_demo$(EXEEXT): bulk_extractor.so		# needs an up-to-date .so
 
 SUFFIXES = .flex
 

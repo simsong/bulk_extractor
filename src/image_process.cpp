@@ -202,7 +202,7 @@ sbuf_t *process_aff::sbuf_alloc(image_process::iterator &it) const
 {
     size_t bufsize  = af_get_pagesize(af)+margin;
     unsigned char *buf = (unsigned char *)malloc(bufsize);
-    if(!buf) throw bad_alloc();
+    if(!buf) throw std::bad_alloc();
 
     pos0_t pos0 = get_pos0(it);
     
@@ -240,7 +240,7 @@ uint64_t process_aff::blocks(const image_process::iterator &it) const
     return pagelist.size();
 }
 
-uint64_t process_aff::seek_block(const image_process::iterator &it,uint64_t block) const
+uint64_t process_aff::seek_block(image_process::iterator &it,uint64_t block) const
 {
     it.page_counter = block;
     return block;

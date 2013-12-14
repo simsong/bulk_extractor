@@ -173,7 +173,7 @@ public:
 
     virtual image_process::iterator begin() const;
     virtual image_process::iterator end() const;
-    virtual void increment_iterator(class image_process::iterator &it);
+    virtual void increment_iterator(class image_process::iterator &it) const;
 
     /* Iterator Support */
     virtual int open();
