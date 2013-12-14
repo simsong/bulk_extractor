@@ -168,7 +168,7 @@ class process_aff : public image_process {
     mutable AFFILE *af;
     std::vector<int64_t> pagelist;
 public:
-    process_aff(string fname,size_t pagesize_,size_t margin_) : image_process(fname,pagesize_,margin_),af(0),pagelist(){}
+    process_aff(std::string fname,size_t pagesize_,size_t margin_) : image_process(fname,pagesize_,margin_),af(0),pagelist(){}
     virtual ~process_aff();
 
     virtual image_process::iterator begin() const;
@@ -181,7 +181,7 @@ public:
     virtual pos0_t get_pos0(const class image_process::iterator &it) const;    
     virtual sbuf_t *sbuf_alloc(class image_process::iterator &it) const;
     virtual double fraction_done(const class image_process::iterator &it) const;
-    virtual string str(const class image_process::iterator &it) const;
+    virtual std::string str(const class image_process::iterator &it) const;
     virtual int64_t image_size() const;
     virtual uint64_t blocks(const class image_process::iterator &it) const;
     virtual uint64_t seek_block(class image_process::iterator &it,uint64_t block) const; // returns -1 if failue

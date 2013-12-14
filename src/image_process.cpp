@@ -228,11 +228,11 @@ double process_aff::fraction_done(const image_process::iterator &it) const
     return (double)it.page_counter / (double)pagelist.size();
 }
 
-string process_aff::str(const image_process::iterator &it) const
+std::string process_aff::str(const image_process::iterator &it) const
 {
     char buf[64];
     snprintf(buf,sizeof(buf),"Page %" PRId64 "",it.page_counter);
-    return string(buf);
+    return std::string(buf);
 }
 
 uint64_t process_aff::blocks(const image_process::iterator &it) const
