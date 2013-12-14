@@ -48,7 +48,7 @@ class callback_feature_recorder_set: public feature_recorder_set {
     // neither copying nor assignment are implemented
     callback_feature_recorder_set(const callback_feature_recorder_set &cfs);
     callback_feature_recorder_set &operator=(const callback_feature_recorder_set&cfs);
-    histograms_t histogram_defs;        
+    histogram_defs_t histogram_defs;        
 public:
     be_callback_t *cb;
     mutable cppmutex Mcb;               // mutex for the callback
@@ -60,9 +60,9 @@ public:
     callback_feature_recorder_set(be_callback_t *cb_):feature_recorder_set(0),histogram_defs(),cb(cb_),Mcb(){
         feature_file_names_t feature_file_names;
         be13::plugin::get_scanner_feature_file_names(feature_file_names);
-        be13::plugin::get_enabled_scanner_histograms(histogram_defs); 
-        init(feature_file_names,"cfrs_input","cfrs_outdir",&histogram_defs);
-        be13::plugin::scanners_init(*this); // must be done after feature files are created
+        init(feature_file_names,"<NO-INPUT>","<NO-OUTDIR>"); // creates the feature recorders
+        // This is where you would init the histograms
+        be13::plugin::scanners_init(*this); // must be done after feature recorders are created
     }
 
     virtual void write(const std::string &feature_recorder_name,const std::string &str){
@@ -151,7 +151,7 @@ void bulk_extractor_set_enabled(const char *scanner_name,bool mode)
 extern "C" 
 BEFILE *bulk_extractor_open(be_callback_t cb)
 {
-    histograms_t histograms;
+    histogram_defs_t histograms;
     feature_recorder::set_main_threadid();
     scanner_info::scanner_config   s_config; // the bulk extractor config
     be13::plugin::load_scanners(scanners_builtin,s_config);

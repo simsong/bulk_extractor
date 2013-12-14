@@ -166,10 +166,10 @@ static uint64_t scaled_stoi64(const std::string &str)
     std::stringstream ss(str);
     uint64_t val;
     ss >> val;
-    if(str.find('k')!=string::npos  || str.find('K')!=string::npos) val *= 1024;
-    if(str.find('m')!=string::npos  || str.find('m')!=string::npos) val *= 1024 * 1024;
-    if(str.find('g')!=string::npos  || str.find('g')!=string::npos) val *= 1024 * 1024 * 1024;
-    if(str.find('t')!=string::npos  || str.find('T')!=string::npos) val *= 1024LL * 1024LL * 1024LL * 1024LL;
+    if(str.find('k')!=std::string::npos  || str.find('K')!=std::string::npos) val *= 1024;
+    if(str.find('m')!=std::string::npos  || str.find('m')!=std::string::npos) val *= 1024 * 1024;
+    if(str.find('g')!=std::string::npos  || str.find('g')!=std::string::npos) val *= 1024 * 1024 * 1024;
+    if(str.find('t')!=std::string::npos  || str.find('T')!=std::string::npos) val *= 1024LL * 1024LL * 1024LL * 1024LL;
     return val;
 }
 
@@ -209,7 +209,7 @@ void stat_callback(void *user,const std::string &name,uint64_t calls,double seco
     xreport->set_oneline(false);
 }
 
-void be_mkdir(string dir)
+void be_mkdir(const std::string &dir)
 {
 #ifdef WIN32
     if(mkdir(dir.c_str())){
@@ -218,7 +218,7 @@ void be_mkdir(string dir)
     }
 #else
     if(mkdir(dir.c_str(),0777)){
-        cerr << "Could not make directory " << dir << "\n";
+        std::cerr << "Could not make directory " << dir << "\n";
         exit(1);
     }
 #endif
@@ -232,19 +232,19 @@ void validate_fn(const std::string &fn)
 {
     int r= access(fn.c_str(),R_OK);
     if(r!=0){
-	cerr << "cannot open: " << fn << ": " << strerror(errno) << " (code " << r << ")\n";
+        std::cerr << "cannot open: " << fn << ": " << strerror(errno) << " (code " << r << ")\n";
 	exit(1);
     }
     if(fn.size()>3){
 	size_t e = fn.rfind('.');
-	if(e!=string::npos){
-	    string ext = fn.substr(e+1);
+	if(e!=std::string::npos){
+            std::string ext = fn.substr(e+1);
 	    if(ext=="E02" || ext=="e02"){
-		cerr << "Error: invalid file name\n";
-		cerr << "Do not use bulk_extractor to process individual EnCase files.\n";
-		cerr << "Instead, just run bulk_extractor with FILENAME.E01\n";
-		cerr << "The other files in an EnCase multi-volume archive will be opened\n";
-		cerr << "automatically.\n";
+                std::cerr << "Error: invalid file name\n";
+                std::cerr << "Do not use bulk_extractor to process individual EnCase files.\n";
+                std::cerr << "Instead, just run bulk_extractor with FILENAME.E01\n";
+                std::cerr << "The other files in an EnCase multi-volume archive will be opened\n";
+                std::cerr << "automatically.\n";
 		exit(1);
 	    }
 	}
@@ -272,19 +272,21 @@ static bool directory_empty(const std::string &d)
  *** PATH PRINTER - Used by bulk_extractor for printing pages associated with a path ***
  ***************************************************************************************/
 
-/* Get the next token from the path. Tokens are separated by dashes.*/
-static string get_and_remove_token(string &path)
+/* Get the next token from the path. Tokens are separated by dashes.
+ * NOTE: modifies argument
+ */
+static std::string get_and_remove_token(std::string &path)
 {
     while(path[0]=='-'){
 	path = path.substr(1); // remove any leading dashes.
     }
     size_t dash = path.find('-');	// find next dash
-    if(dash==string::npos){		// no string; return the rest
-	string prefix = path;
+    if(dash==std::string::npos){		// no string; return the rest
+        std::string prefix = path;
 	path = "";
 	return prefix;
     }
-    string prefix = path.substr(0,dash);
+    std::string prefix = path.substr(0,dash);
     path = path.substr(dash+1);
     return prefix;
 }
@@ -320,8 +322,8 @@ void process_path_printer(const scanner_params &sp)
      * 3. If we are print, throw an exception to prevent continued analysis of buffer.
      */
 
-    string new_path = sp.sbuf.pos0.path;
-    string prefix = get_and_remove_token(new_path);
+    std::string new_path = sp.sbuf.pos0.path;
+    std::string prefix = get_and_remove_token(new_path);
 
     /* Time to print ?*/
     if(prefix.size()==0 || prefix=="PRINT"){
@@ -341,8 +343,8 @@ void process_path_printer(const scanner_params &sp)
 	if(it!=sp.print_options.end()){
 	    if(it->second[5]=='='){
 		size_t dash = it->second.find('-');
-		string v1 = it->second.substr(6,dash-6);
-		string v2 = it->second.substr(dash+1);
+                std::string v1 = it->second.substr(6,dash-6);
+                std::string v2 = it->second.substr(dash+1);
 		print_start = stoi64(v1);
 		print_len = stoi64(v2)-print_start+1;
 	    }
@@ -400,7 +402,7 @@ void process_path_printer(const scanner_params &sp)
              recursion_control_block(process_path_printer,prefix));
         return;
     }
-    cerr << "Unknown name in path: " << prefix << "\n";
+    std::cerr << "Unknown name in path: " << prefix << "\n";
 }
 
 
@@ -411,7 +413,7 @@ void process_path_printer(const scanner_params &sp)
  */
 
 
-static void process_open_path(const image_process &p,string path,scanner_params::PrintOptions &po,
+static void process_open_path(const image_process &p,std::string path,scanner_params::PrintOptions &po,
                               const size_t process_path_bufsize)
 {
     /* Check for "/r" in path which means print raw */
@@ -419,7 +421,7 @@ static void process_open_path(const image_process &p,string path,scanner_params:
 	path = path.substr(0,path.size()-2);
     }
 
-    string  prefix = get_and_remove_token(path);
+    std::string  prefix = get_and_remove_token(path);
     int64_t offset = stoi64(prefix);
 
     /* Get the offset into the buffer process */
@@ -430,7 +432,7 @@ static void process_open_path(const image_process &p,string path,scanner_params:
     }
     int count = p.pread(buf,process_path_bufsize,offset);
     if(count<0){
-	cerr << p.image_fname() << ": " << strerror(errno) << " (Read Error)\n";
+        std::cerr << p.image_fname() << ": " << strerror(errno) << " (Read Error)\n";
 	return;
     }
 
@@ -459,14 +461,14 @@ static void process_open_path(const image_process &p,string path,scanner_params:
  * Also implements HTTP server with "-http" option.
  * Feature recorders disabled.
  */
-static void process_path(const char *fn,string path,size_t pagesize,size_t marginsize)
+static void process_path(const char *fn,std::string path,size_t pagesize,size_t marginsize)
 {
     image_process *pp = image_process::open(fn,0,pagesize,0);
     if(pp==0){
 	if(path=="-http"){
 	    std::cout << "HTTP/1.1 502 Filename " << fn << " is invalid" << HTTP_EOL << HTTP_EOL;
 	} else {
-	    cerr << "Filename " << fn << " is invalid\n";
+            std::cerr << "Filename " << fn << " is invalid\n";
 	}
 	exit(1);
     }
@@ -475,11 +477,11 @@ static void process_path(const char *fn,string path,size_t pagesize,size_t margi
 	/* process path interactively */
 	printf("Path Interactive Mode:\n");
 	if(pp==0){
-	    cerr << "Invalid file name: " << fn << "\n";
+            std::cerr << "Invalid file name: " << fn << "\n";
 	    exit(1);
 	}
 	do {
-	    getline(cin,path);
+	    getline(std::cin,path);
 	    if(path==".") break;
 	    scanner_params::PrintOptions po;
 	    scanner_params::setPrintMode(po,scanner_params::MODE_HEX);
@@ -490,35 +492,35 @@ static void process_path(const char *fn,string path,size_t pagesize,size_t margi
     if(path=="-http"){
 	do {
 	    /* get the HTTP query */
-	    string line;		// the specific query
+            std::string line;		// the specific query
 	    scanner_params::PrintOptions po;
 	    scanner_params::setPrintMode(po,scanner_params::MODE_HTTP);	// options for this query
 	    
-	    getline(cin,line);
+	    getline(std::cin,line);
 	    truncate_at(line,'\r');
 	    if(line.substr(0,4)!="GET "){
 		std::cout << "HTTP/1.1 501 Method not implemented" << HTTP_EOL << HTTP_EOL;
 		return;
 	    }
 	    size_t space = line.find(" HTTP/1.1");
-	    if(space==string::npos){
+	    if(space==std::string::npos){
 		std::cout << "HTTP/1.1 501 Only HTTP/1.1 is implemented" << HTTP_EOL << HTTP_EOL;
 		return;
 	    }
-	    string p2 = line.substr(4,space-4);
+            std::string p2 = line.substr(4,space-4);
 
 	    /* Get the additional header options */
 	    do {
-		getline(cin,line);
+		getline(std::cin,line);
 		truncate_at(line,'\r');
 		if(line.size()==0) break; // double new-line
 		size_t colon = line.find(":");
-		if(colon==string::npos){
+		if(colon==std::string::npos){
 		    std::cout << "HTTP/1.1 502 Malformed HTTP request" << HTTP_EOL;
 		    return;
 		}
-		string name = line.substr(0,colon);
-		string val  = line.substr(colon+1);
+                std::string name = line.substr(0,colon);
+                std::string val  = line.substr(colon+1);
 		while(val.size()>0 && (val[0]==' '||val[0]=='\t')) val = val.substr(1);
 		po[name]=val;
 	    } while(true);
@@ -634,7 +636,7 @@ public:;
  * Create the dfxml output
  */
 
-static void dfxml_create(dfxml_writer &xreport,const string &command_line,const BulkExtractor_Phase1::Config &cfg)
+static void dfxml_create(dfxml_writer &xreport,const std::string &command_line,const BulkExtractor_Phase1::Config &cfg)
 {
     xreport.push("dfxml","xmloutputversion='1.0'");
     xreport.push("metadata",
@@ -685,7 +687,7 @@ int main(int argc,char **argv)
     int         opt_h = 0;
     int         opt_H = 0;
     std::string opt_sampling_params;
-    string      opt_outdir;
+    std::string      opt_outdir;
 
     /* Startup */
     setvbuf(stdout,0,_IONBF,0);		// don't buffer stdout
@@ -713,9 +715,9 @@ int main(int argc,char **argv)
 	    switch(d){
 	    case DEBUG_ALLOCATE_512MiB: 
 		if(calloc(1024*1024*512,1)){
-		    cerr << "-d1002 -- Allocating 512MB of RAM; may be repeated\n";
+                    std::cerr << "-d1002 -- Allocating 512MB of RAM; may be repeated\n";
 		} else {
-		    cerr << "-d1002 -- CANNOT ALLOCATE MORE RAM\n";
+                    std::cerr << "-d1002 -- CANNOT ALLOCATE MORE RAM\n";
 		}
 		break;
 	    default:
@@ -780,9 +782,9 @@ int main(int argc,char **argv)
 	    be13::plugin::scanners_disable(optarg);
 	    break;
 	case 'Y': {
-	    string optargs = optarg;
+	    std::string optargs = optarg;
 	    size_t dash = optargs.find('-');
-	    if(dash==string::npos){
+	    if(dash==std::string::npos){
 		cfg.opt_offset_start = stoi64(optargs);
 	    } else {
 		cfg.opt_offset_start = scaled_stoi64(optargs.substr(0,dash));
@@ -864,9 +866,9 @@ int main(int argc,char **argv)
 	if(dirp){
 	    struct dirent *dp;
 	    while ((dp = readdir(dirp)) != NULL){
-		string name = dp->d_name;
+                std::string name = dp->d_name;
 		if(name=="." || name=="..") continue;
-		string fname = opt_outdir + string("/") + name;
+                std::string fname = opt_outdir + std::string("/") + name;
 		unlink(fname.c_str());
 		std::cout << "erasing " << fname << "\n";
 	    }
@@ -881,7 +883,7 @@ int main(int argc,char **argv)
     timer.start();
 
     /* If output directory does not exist, we are not restarting! */
-    string reportfilename = opt_outdir + "/report.xml";
+    std::string reportfilename = opt_outdir + "/report.xml";
 
     BulkExtractor_Phase1::seen_page_ids_t seen_page_ids; // pages that do not need re-processing
     image_process *p = 0;
@@ -936,11 +938,10 @@ int main(int argc,char **argv)
     uint32_t flags = 0;
     if (stop_list.size()>0) flags |= feature_recorder_set::CREATE_STOP_LIST_RECORDERS;
 
-    histograms_t histogram_defs;        
-    be13::plugin::get_enabled_scanner_histograms(histogram_defs); 
 
     feature_recorder_set fs(flags);
-    fs.init(feature_file_names,image_fname,opt_outdir,&histogram_defs);
+    fs.init(feature_file_names,image_fname,opt_outdir);
+    if(opt_enable_histograms) be13::plugin::add_enabled_scanner_histograms_to_feature_recorder_set(fs);
     be13::plugin::scanners_init(fs);
 
     fs.set_stop_list(&stop_list);
