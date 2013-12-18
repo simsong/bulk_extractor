@@ -139,16 +139,6 @@ struct BEFILE_t {
 
 typedef struct BEFILE_t BEFILE;
 extern "C" 
-void bulk_extractor_set_enabled(const char *scanner_name,bool mode)
-{
-    if(mode) {
-        be13::plugin::scanners_enable(scanner_name);
-    } else {
-        be13::plugin::scanners_disable(scanner_name);
-    }
-}
-
-extern "C" 
 BEFILE *bulk_extractor_open(be_callback_t cb)
 {
     histogram_defs_t histograms;
@@ -160,7 +150,6 @@ BEFILE *bulk_extractor_open(be_callback_t cb)
     feature_file_names_t feature_file_names;
     be13::plugin::get_scanner_feature_file_names(feature_file_names);
     
-    
     BEFILE *bef = new BEFILE_t(cb);
     
     /* How do we enable or disable individual scanners? */
@@ -170,6 +159,40 @@ BEFILE *bulk_extractor_open(be_callback_t cb)
     return bef;
 }
     
+extern "C" void bulk_extractor_set_enabled(BEFILE *bef,const char *name,int  mode)
+{
+    feature_recorder *fr = 0;
+    switch(mode){
+    case BE_SET_ENABLED_SCANNER_DISABLE:
+        be13::plugin::scanners_disable(name);
+        break;
+
+    case BE_SET_ENABLED_SCANNER_ENABLE:
+        be13::plugin::scanners_enable(name);
+        break;
+
+    case BE_SET_ENABLED_FEATURE_DISABLE:
+        fr = bef->cfs.get_name(name);
+        if(fr) fr->set_flag(feature_recorder::FLAG_NO_FEATURES);
+        break;
+
+    case BE_SET_ENABLED_FEATURE_ENABLE:
+        fr = bef->cfs.get_name(name);
+        if(fr) fr->unset_flag(feature_recorder::FLAG_NO_FEATURES);
+        break;
+
+    case BE_SET_ENABLED_MEMHIST_ENABLE:
+        fr = bef->cfs.get_name(name);
+        if(fr) fr->unset_flag(feature_recorder::FLAG_MEM_HISTOGRAM);
+        break;
+
+    default:
+        assert(0);
+    }
+}
+
+
+
 extern "C" 
 int bulk_extractor_analyze_buf(BEFILE *bef,uint8_t *buf,size_t buflen)
 {
@@ -199,7 +222,6 @@ int bulk_extractor_analyze_dev(BEFILE *bef,const char *fname)
 extern "C" 
 int bulk_extractor_close(BEFILE *bef)
 {
-    printf("p1 cfs=%p\n",&bef->cfs);
     bef->cfs.dump_histograms((void *)&bef->cfs,
                              callback_feature_recorder_set::histogram_dump_callback,0); //NEED TO SPECIFY THE CALLBACK HERE
     delete bef;

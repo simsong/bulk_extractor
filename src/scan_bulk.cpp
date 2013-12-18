@@ -326,8 +326,6 @@ void scan_bulk(const class scanner_params &sp,const recursion_control_block &rcb
                                    | scanner_info::SCANNER_WANTS_NGRAMS | scanner_info::SCANNER_NO_ALL);
 	sp.info->feature_names.insert("bulk");
 	sp.info->feature_names.insert("bulk");
-        // this is the way we are going to do memory histograms in the future
-	// sp.info->histogram_defs.insert(histogram_def("bulk","","histogram",HistogramMaker::FLAG_MEMORY));
         sp.info->get_config("bulk_block_size",&opt_bulk_block_size,"Block size (in bytes) for bulk data analysis");
 
         debug = sp.info->config->debug;
@@ -335,20 +333,18 @@ void scan_bulk(const class scanner_params &sp,const recursion_control_block &rcb
         return; 
     }
 
+    feature_recorder *bulk_fr = sp.fs.get_name("bulk");
+    if(!bulk_fr) return;                // all of the remianing steps need bulk_fr
     if(sp.phase==scanner_params::PHASE_INIT){
-        //std::cerr << "PHASE_INIT in scan_bulk\n";
-        sp.fs.get_name("bulk")->set_flag(feature_recorder::FLAG_MEM_HISTOGRAM |
-                                              feature_recorder::FLAG_NO_CONTEXT |
-                                              feature_recorder::FLAG_NO_STOPLIST |
-                                              feature_recorder::FLAG_NO_ALERTLIST |
-                                              feature_recorder::FLAG_NO_FEATURES );
+        bulk_fr->set_flag(feature_recorder::FLAG_NO_CONTEXT |
+                          feature_recorder::FLAG_NO_STOPLIST |
+                          feature_recorder::FLAG_NO_ALERTLIST |
+                          feature_recorder::FLAG_NO_FEATURES );
     }
 
     // classify a buffer
     if(sp.phase==scanner_params::PHASE_SCAN){
 
-	feature_recorder *bulk_fr      = sp.fs.get_name("bulk");
-    
 	//if(sp.sbuf.pos0.isRecursive()){
 	    /* Record the fact that a recursive call was made, which tells us about the data */
 	//    bulk_fr->write(sp.sbuf.pos0,"",""); // tag that we found recursive data, not sure what kind

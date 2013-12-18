@@ -77,16 +77,22 @@ int main(int argc,char **argv)
     }
 
     bulk_extractor_set_enabled_t be_set_enabled = (bulk_extractor_set_enabled_t)getsym(lib, BULK_EXTRACTOR_SET_ENABLED);
-    bulk_extractor_open_t be_open = (bulk_extractor_open_t)getsym(lib, BULK_EXTRACTOR_OPEN);
+    bulk_extractor_open_t        be_open = (bulk_extractor_open_t)getsym(lib, BULK_EXTRACTOR_OPEN);
     bulk_extractor_analyze_dev_t be_analyze_dev = (bulk_extractor_analyze_dev_t)getsym(lib,BULK_EXTRACTOR_ANALYZE_DEV);
-    //bulk_extractor_analyze_buf_t be_analyze_buf = (bulk_extractor_analyze_buf_t)getsym(lib,BULK_EXTRACTOR_ANALYZE_BUF);
+    bulk_extractor_analyze_buf_t be_analyze_buf = (bulk_extractor_analyze_buf_t)getsym(lib,BULK_EXTRACTOR_ANALYZE_BUF);
     bulk_extractor_close_t be_close = (bulk_extractor_close_t)getsym(lib, BULK_EXTRACTOR_CLOSE);
-    (*be_set_enabled)("bulk",1);               // enable the bulk scanner
+
+    /* Now configure the scanners */
+    (*be_set_enabled)(bef,"bulk",BE_SET_ENABLED_SCANNER_ENABLE);               // enable the bulk scanner
+    (*be_set_enabled)(bef,"bulk",BE_SET_ENABLED_FEATURE_DISABLE);               // enable the bulk scanner
+    (*be_set_enabled)(bef,"bulk",BE_SET_ENABLED_MEMHIS_ENABLE);               // enable the bulk scanner
+
+    const char *demo_buf = "ABCDEFG  demo@api.com Just a demo 617-555-1212 ok!";
+    (*be_analyze_buf)(bef,(uint8_t *)demo_buf,strlen(demo_buf));
 
     /* analyze the file */
     BEFILE *bef = (*be_open)(be_cb_demo);
-    //const char *demo_buf = "ABCDEFG  demo@api.com Just a demo 617-555-1212 ok!";
-    //(*be_analyze_buf)(bef,(uint8_t *)demo_buf,strlen(demo_buf));
+
 
     (*be_analyze_dev)(bef,fname);
     (*be_close)(bef);
