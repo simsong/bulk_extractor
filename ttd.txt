@@ -1,0 +1,11 @@
+approach for histogram transformation:
+
+- Each feature recorder keeps track of the histogram defs.
+  - needs local vector of the defs?
+  - or a pointer to the def?
+- feature recorder asked to produce its histograms
+- histograms can be produced in memory or at close.
+
+Then:
+- in-memory histogram needs to create a different in-memory for each def.
+
