@@ -1,0 +1,43 @@
+\documentclass[11pt,fleqn]{article} % Default font size and left-justified equations
+
+\usepackage{todonotes}
+% use \todo{note} OR \missingfigure{Add my picture here}
+\include{structure} 
+%\usepackage{arabtex}
+\raggedbottom
+
+\begin{document}
+
+%define macros for commonly used terms that require special formatting
+\newcommand \bulk {\textit{bulk\_extractor}\xspace}
+\newcommand \beapi {\textit{be13\_api}\xspace}
+\newcommand \viewer {\textbf{Bulk Extractor Viewer}\xspace}
+
+
+
+\hypersetup{%
+    pdfborder = {0 0 0}
+}
+
+\lstdefinestyle{customfile}{
+basicstyle=\footnotesize\ttfamily, frame=single, float=htpb}
+
+\input{./titleWorkedExamples.tex}
+
+\pagenumbering{roman}
+\setlength{\parindent}{0pt} %remove indenting from whole document
+
+
+\tableofcontents
+\newpage
+\pagenumbering{arabic}
+
+\section{Introduction}
+
+\input{./BEWorkedExamples.tex}
+
+
+\bibliographystyle{acm} 
+\bibliography{references}
+
+\end{document}
