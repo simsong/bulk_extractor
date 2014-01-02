@@ -789,7 +789,6 @@ std::string scan_elf_verify (const sbuf_t & data)
     return xml.str();
 }
 
-static be13::hash_def hasher;
 extern "C"
 void scan_elf (const class scanner_params          &sp,
                const       recursion_control_block &rcb)
@@ -802,7 +801,6 @@ void scan_elf (const class scanner_params          &sp,
         sp.info->name   = "elf";
 	sp.info->author = "Alex Eubanks";
         sp.info->feature_names.insert("elf");
-        hasher    = sp.info->config->hasher;
         return;
     }
     if (sp.phase==scanner_params::PHASE_SCAN){
@@ -821,7 +819,7 @@ void scan_elf (const class scanner_params          &sp,
 		xml = scan_elf_verify(data);
 		if (xml != "") {
                     sbuf_t hdata(data,0,4096);
-                    std::string hexhash = hasher.func(hdata.buf,hdata.bufsize);
+                    std::string hexhash = f->hasher().func(hdata.buf,hdata.bufsize);
 		    f->write(data.pos0, hexhash,xml);
 		}
 	    }

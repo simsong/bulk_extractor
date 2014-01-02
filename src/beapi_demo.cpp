@@ -80,21 +80,24 @@ int main(int argc,char **argv)
     bulk_extractor_open_t        be_open = (bulk_extractor_open_t)getsym(lib, BULK_EXTRACTOR_OPEN);
     bulk_extractor_analyze_dev_t be_analyze_dev = (bulk_extractor_analyze_dev_t)getsym(lib,BULK_EXTRACTOR_ANALYZE_DEV);
     bulk_extractor_analyze_buf_t be_analyze_buf = (bulk_extractor_analyze_buf_t)getsym(lib,BULK_EXTRACTOR_ANALYZE_BUF);
-    bulk_extractor_close_t be_close = (bulk_extractor_close_t)getsym(lib, BULK_EXTRACTOR_CLOSE);
+    bulk_extractor_close_t       be_close = (bulk_extractor_close_t)getsym(lib, BULK_EXTRACTOR_CLOSE);
 
-    /* Now configure the scanners */
-    (*be_set_enabled)(bef,"bulk",BE_SET_ENABLED_SCANNER_ENABLE);               // enable the bulk scanner
-    (*be_set_enabled)(bef,"bulk",BE_SET_ENABLED_FEATURE_DISABLE);               // enable the bulk scanner
-    (*be_set_enabled)(bef,"bulk",BE_SET_ENABLED_MEMHIS_ENABLE);               // enable the bulk scanner
-
-    const char *demo_buf = "ABCDEFG  demo@api.com Just a demo 617-555-1212 ok!";
-    (*be_analyze_buf)(bef,(uint8_t *)demo_buf,strlen(demo_buf));
-
-    /* analyze the file */
+    /* Get a handle */
     BEFILE *bef = (*be_open)(be_cb_demo);
 
+    /* Now configure the scanners */
+    (*be_set_enabled)(bef,"bulk",BE_SET_ENABLED_DISABLE_ALL); // turn off all scanners
+    (*be_set_enabled)(bef,"exif",BE_SET_ENABLED_SCANNER_ENABLE);        // enable the bulk scanner
+    (*be_set_enabled)(bef,"bulk",BE_SET_ENABLED_SCANNER_ENABLE);        // enable the bulk scanner
+    (*be_set_enabled)(bef,"bulk",BE_SET_ENABLED_FEATURE_DISABLE);       // disable bulk feature detector
+    (*be_set_enabled)(bef,"bulk",BE_SET_ENABLED_MEMHIST_ENABLE);        // enable the bulk memory histogram
+    (*be_set_enabled)(bef,"",    BE_SET_ENABLED_PROCESS_COMMANDS);          // process the enable/disable commands
 
-    (*be_analyze_dev)(bef,fname);
+    const char *demo_buf = "ABCDEFG  demo@api.com Just a demo 617-555-1212 ok!";
+    (*be_analyze_buf)(bef,(uint8_t *)demo_buf,strlen(demo_buf));  // analyze the buffer
+
+    /* analyze the file */
+    (*be_analyze_dev)(bef,fname);                                 // analyze the file
     (*be_close)(bef);
 
 #ifdef HAVE_DLOPEN

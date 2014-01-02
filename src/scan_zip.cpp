@@ -42,7 +42,7 @@ bool has_control_characters(const std::string &name)
 }
 
 /* We should have a threadsafe set */
-static be13::hash_def hasher;
+//static be13::hash_def hasher;
 
 /**
  * code from tsk3
@@ -214,7 +214,7 @@ inline void scan_zip_component(const class scanner_params &sp,const recursion_co
                     for(std::string::const_iterator it = name.begin(); it!=name.end();it++){
                         carve_name.push_back((*it=='/' || *it=='\\') ? '_' : *it);
                     }
-                    std::string fn = unzip_recorder->carve(sbuf_new,0,sbuf_new.bufsize,carve_name,hasher);
+                    std::string fn = unzip_recorder->carve(sbuf_new,0,sbuf_new.bufsize,carve_name);
                     unzip_recorder->set_carve_mtime(fn,mtime);
                 }
             }
@@ -243,7 +243,7 @@ void scan_zip(const class scanner_params &sp,const recursion_control_block &rcb)
         if(unzip_carve_mode){
             sp.info->feature_names.insert(UNZIP_RECORDER_NAME);
         }
-        hasher    = sp.info->config->hasher;
+        //hasher    = sp.info->config->hasher;
 	return;
     }
     feature_recorder *zip_recorder = sp.fs.get_name(ZIP_RECORDER_NAME);

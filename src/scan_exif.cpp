@@ -547,10 +547,9 @@ public:
         entries(),
         exif_recorder(*sp.fs.get_name("exif")),
         gps_recorder(*sp.fs.get_name("gps")),
-        jpeg_recorder(*sp.fs.get_name("jpeg_carved")){
+        jpeg_recorder(*sp.fs.get_name("jpeg_carved")) {
     }
 
-    static be13::hash_def hasher;
     entry_list_t entries;
     feature_recorder &exif_recorder;
     feature_recorder &gps_recorder;
@@ -577,13 +576,13 @@ public:
 
             // Should we carve?
             if(res.how==jpeg_validator::COMPLETE || res.len>(ssize_t)min_jpeg_size){
-                jpeg_recorder.carve(sbuf,0,res.len,".jpg",hasher);
+                jpeg_recorder.carve(sbuf,0,res.len,".jpg");
                 ret = res.len;
             }
 
             // Record the hash of the first 4K
             sbuf_t tohash(sbuf,0,4096);
-            feature_text = hasher.func(tohash.buf,tohash.bufsize);
+            feature_text = jpeg_recorder.hasher().func(tohash.buf,tohash.bufsize);
         }
         /* Record entries (if present) in the feature files */
         record_exif_data(&exif_recorder, sbuf.pos0, feature_text, entries);
@@ -632,8 +631,8 @@ public:
                     if(exif_debug) std::cerr << "scan_exif.tiff_offset in ffd8 " << tiff_offset;
                 }
                 // Try to process if it is exif or not
+                  
                 size_t skip = process(sbuf+start,true);
-                // std::cerr << "1 skip=" << skip << "\n";
                 if(skip>1) start += skip-1;
                 if(exif_debug){
                     std::cerr << "scan_exif Done processing JPEG/Exif ffd8ff at "
@@ -713,8 +712,6 @@ public:
     }
 };
 
-be13::hash_def exif_scanner::hasher;
-
 extern "C"
 void scan_exif(const class scanner_params &sp,const recursion_control_block &rcb)
 {
@@ -728,16 +725,14 @@ void scan_exif(const class scanner_params &sp,const recursion_control_block &rcb
 	sp.info->feature_names.insert("exif");
 	sp.info->feature_names.insert("gps");
 	sp.info->feature_names.insert("jpeg_carved");
-        exif_scanner::hasher    = sp.info->config->hasher;
         sp.info->get_config("exif_debug",&exif_debug,"debug exif decoder");
         sp.info->get_config("jpeg_carve_mode",&jpeg_carve_mode,"0=carve none; 1=carve encoded; 2=carve all");
         sp.info->get_config("min_jpeg_size",&min_jpeg_size,"Smallest JPEG stream that will be carved");
 	return;
     }
     if(sp.phase==scanner_params::PHASE_INIT){
-        exif_scanner escan(sp);
-        escan.exif_recorder.set_flag(feature_recorder::FLAG_XML); // to escape all but backslashes
-        escan.jpeg_recorder.set_carve_mode(static_cast<feature_recorder::carve_mode_t>(jpeg_carve_mode));
+        sp.fs.get_name("exif")->set_flag(feature_recorder::FLAG_XML); // to escape all but backslashes
+        sp.fs.get_name("jpeg_carved")->set_carve_mode(static_cast<feature_recorder::carve_mode_t>(jpeg_carve_mode));
     }
     if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;
     if(sp.phase==scanner_params::PHASE_SCAN){

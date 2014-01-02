@@ -177,8 +177,8 @@ static uint64_t scaled_stoi64(const std::string &str)
 /* be_hash. Currently this just returns the MD5 of the sbuf,
  * but eventually it will allow the use of different hashes.
  */
-std::string be_hash_name("md5");
-std::string be_hash(const uint8_t *buf,size_t bufsize)
+static std::string be_hash_name("md5");
+static std::string be_hash_func(const uint8_t *buf,size_t bufsize)
 {
     if(be_hash_name=="md5" || be_hash_name=="MD5"){
         return md5_generator::hash_buf(buf,bufsize).hexdigest();
@@ -193,10 +193,9 @@ std::string be_hash(const uint8_t *buf,size_t bufsize)
     std::cerr << "This version of bulk_extractor only supports MD5, SHA1, and SHA256\n";
     exit(1);
 }
+static feature_recorder::hash_def be_hash(be_hash_name,be_hash_func);
 
-
-
-void stat_callback(void *user,const std::string &name,uint64_t calls,double seconds)
+static void stat_callback(void *user,const std::string &name,uint64_t calls,double seconds)
 {
     dfxml_writer *xreport = reinterpret_cast<dfxml_writer *>(user);
 
@@ -443,7 +442,7 @@ static void process_open_path(const image_process &p,std::string path,scanner_pa
      * The printer is called when a PRINT token is found in the
      * forensic path, so that has to be added.
      */
-    feature_recorder_set fs(feature_recorder_set::SET_DISABLED);
+    feature_recorder_set fs(feature_recorder_set::SET_DISABLED,feature_recorder::null_hasher);
 
     pos0_t pos0(path+"-PRINT"); // insert the PRINT token
     sbuf_t sbuf(pos0,buf,count,count,true); // sbuf system will free
@@ -811,8 +810,6 @@ int main(int argc,char **argv)
     scanner_info si;
 
     s_config.debug       = cfg.debug;
-    s_config.hasher.name = be_hash_name;
-    s_config.hasher.func = be_hash;
 
     si.config = &s_config;
     si.get_config("work_start_work_end",&worker::opt_work_start_work_end,
@@ -827,7 +824,7 @@ int main(int argc,char **argv)
     /* Make sure that the user selected a valid hash */
     {
         uint8_t buf[1];
-        be_hash(buf,0);
+        be_hash_func(buf,0);
     }
 
     /* Load all the scanners and enable the ones we care about */
@@ -939,7 +936,7 @@ int main(int argc,char **argv)
     if (stop_list.size()>0) flags |= feature_recorder_set::CREATE_STOP_LIST_RECORDERS;
 
 
-    feature_recorder_set fs(flags);
+    feature_recorder_set fs(flags,be_hash);
     fs.init(feature_file_names,image_fname,opt_outdir);
     if(opt_enable_histograms) be13::plugin::add_enabled_scanner_histograms_to_feature_recorder_set(fs);
     be13::plugin::scanners_init(fs);

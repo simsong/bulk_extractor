@@ -25,11 +25,13 @@ typedef int be_callback_t(int32_t flag,
 
 /* Enable is called before open() to enable or disable */
 
+#define BE_SET_ENABLED_PROCESS_COMMANDS -1     // process the enable/disable commands
 #define BE_SET_ENABLED_SCANNER_DISABLE  0              // disable the scanner
 #define BE_SET_ENABLED_SCANNER_ENABLE   1              // enable the scanner
 #define BE_SET_ENABLED_FEATURE_DISABLE  2              // disable the feature file
 #define BE_SET_ENABLED_FEATURE_ENABLE   3              // enable the feature file
 #define BE_SET_ENABLED_MEMHIST_ENABLE   5      // no feature file, memory histograms
+#define BE_SET_ENABLED_DISABLE_ALL      6
 
 typedef BEFILE * (*bulk_extractor_open_t)(be_callback_t cb);
 extern "C" BEFILE *bulk_extractor_open(be_callback_t cb);

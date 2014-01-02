@@ -1,3 +1,9 @@
+2014-01-02  Man Page  <simsong@mncrnpsedu.local>
+
+	* src/be13_api/feature_recorder.h (class feature_recorder): carve no longer needs hasher passed in, becuase it is in the feature_recorder_set
+
+	* src/be13_api/bulk_extractor_i.h (be13): hash_def moved from be13 namespace to feature_recorder_set
+
 2013-12-13  Basic  <simsong@npsair.local>
 
 	* src/image_process.h (class process_dir): implemented const correctness for a whole bunch of methods

@@ -44,6 +44,26 @@ class callback_feature_recorder_set;
  * It creates multiple named callback_feature_recorders, but they all callback through the same
  * callback function using the same set of locks
  */ 
+
+
+static std::string hash_name("md5");
+static std::string hash_func(const uint8_t *buf,size_t bufsize)
+{
+    if(hash_name=="md5" || hash_name=="MD5"){
+        return md5_generator::hash_buf(buf,bufsize).hexdigest();
+    }
+    if(hash_name=="sha1" || hash_name=="SHA1" || hash_name=="sha-1" || hash_name=="SHA-1"){
+        return sha1_generator::hash_buf(buf,bufsize).hexdigest();
+    }
+    if(hash_name=="sha256" || hash_name=="SHA256" || hash_name=="sha-256" || hash_name=="SHA-256"){
+        return sha256_generator::hash_buf(buf,bufsize).hexdigest();
+    }
+    std::cerr << "Invalid hash name: " << hash_name << "\n";
+    std::cerr << "This version of bulk_extractor only supports MD5, SHA1, and SHA256\n";
+    exit(1);
+}
+static feature_recorder::hash_def my_hasher(hash_name,hash_func);
+
 class callback_feature_recorder_set: public feature_recorder_set {
     // neither copying nor assignment are implemented
     callback_feature_recorder_set(const callback_feature_recorder_set &cfs);
@@ -57,11 +77,14 @@ public:
     virtual feature_recorder *create_name_factory(const std::string &outdir_,
                                                   const std::string &input_fname_,
                                                   const std::string &name_);
-    callback_feature_recorder_set(be_callback_t *cb_):feature_recorder_set(0),histogram_defs(),cb(cb_),Mcb(){
+    callback_feature_recorder_set(be_callback_t *cb_):feature_recorder_set(0,my_hasher),histogram_defs(),cb(cb_),Mcb(){
+    }
+
+    virtual void init_cfs(){
         feature_file_names_t feature_file_names;
+        be13::plugin::scanners_process_enable_disable_commands();
         be13::plugin::get_scanner_feature_file_names(feature_file_names);
         init(feature_file_names,"<NO-INPUT>","<NO-OUTDIR>"); // creates the feature recorders
-        // This is where you would init the histograms
         be13::plugin::scanners_init(*this); // must be done after feature recorders are created
     }
 
@@ -102,8 +125,7 @@ public:
         feature_recorder(fs,"<no-outdir>","<no-fname>",name_),cb(cb_){
     }
     virtual std::string carve(const sbuf_t &sbuf,size_t pos,size_t len, 
-                              const std::string &ext, // appended to forensic path
-                              const struct be13::hash_def &hasher){
+                              const std::string &ext){ // appended to forensic path
         return("");                     // no file created
     }
     virtual void open(){}               // we don't open
@@ -144,11 +166,14 @@ BEFILE *bulk_extractor_open(be_callback_t cb)
     histogram_defs_t histograms;
     feature_recorder::set_main_threadid();
     scanner_info::scanner_config   s_config; // the bulk extractor config
+
+    s_config.debug       = 0;           // default debug
+
     be13::plugin::load_scanners(scanners_builtin,s_config);
-    be13::plugin::scanners_process_enable_disable_commands();
+    //be13::plugin::scanners_process_enable_disable_commands();
     
-    feature_file_names_t feature_file_names;
-    be13::plugin::get_scanner_feature_file_names(feature_file_names);
+    //feature_file_names_t feature_file_names;
+    //be13::plugin::get_scanner_feature_file_names(feature_file_names);
     
     BEFILE *bef = new BEFILE_t(cb);
     
@@ -163,6 +188,10 @@ extern "C" void bulk_extractor_set_enabled(BEFILE *bef,const char *name,int  mod
 {
     feature_recorder *fr = 0;
     switch(mode){
+    case BE_SET_ENABLED_PROCESS_COMMANDS:
+        bef->cfs.init_cfs();
+        break;
+
     case BE_SET_ENABLED_SCANNER_DISABLE:
         be13::plugin::scanners_disable(name);
         break;
@@ -184,6 +213,10 @@ extern "C" void bulk_extractor_set_enabled(BEFILE *bef,const char *name,int  mod
     case BE_SET_ENABLED_MEMHIST_ENABLE:
         fr = bef->cfs.get_name(name);
         if(fr) fr->unset_flag(feature_recorder::FLAG_MEM_HISTOGRAM);
+        break;
+
+    case BE_SET_ENABLED_DISABLE_ALL:
+        be13::plugin::scanners_disable_all();
         break;
 
     default:

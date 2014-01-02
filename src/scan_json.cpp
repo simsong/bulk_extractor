@@ -428,7 +428,7 @@ int json_checker::check_char(int next_char)
  */
 
 static bool is_json_second_char[256];		// shared between all threads
-static be13::hash_def hasher;
+//static be13::hash_def hasher;
 
 static const char *json_second_chars = "0123456789.-{[ \t\n\r\"";
 extern "C"
@@ -443,7 +443,7 @@ void scan_json(const class scanner_params &sp,const recursion_control_block &rcb
         sp.info->scanner_version= "1.1";
         sp.info->feature_names.insert("json");
 
-        hasher    = sp.info->config->hasher;
+        //hasher    = sp.info->config->hasher;
 
 	/* Create a fast map of the valid json characters.*/
 	memset(is_json_second_char,0,sizeof(is_json_second_char));
@@ -476,7 +476,7 @@ void scan_json(const class scanner_params &sp,const recursion_control_block &rcb
 			// Only write JSON objects with more than 2 commas
 			if(jc.comma_count > 2 ){
 			    sbuf_t json(sbuf,pos,i-pos+1);
-                            std::string json_hash = (*hasher.func)(json.buf,json.bufsize);
+                            std::string json_hash = (*fr->hasher().func)(json.buf,json.bufsize);
 			    fr->write(sbuf.pos0+i,json.asString(),json_hash);;
 			}
 			pos = i;		// skip to the end
