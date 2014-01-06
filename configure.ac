@@ -18,7 +18,7 @@ AC_CONFIG_MACRO_DIR(m4)
 #
 # NOTE 2 - src_win/Makefile is not automatically generated. This is necessary
 # so that it can be run even after a 'make distclean' is done
-AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile doc/user_manual/Makefile \
+AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile doc/latex_manuals/Makefile \
 			  man/Makefile python/Makefile \
                           plugins/Makefile \
 			  specfiles/Makefile specfiles/bulk_extractor.spec.m4 \

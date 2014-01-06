@@ -20,7 +20,7 @@ endif
 ## SRC_WIN_DIR=src_win
 ## endif
 
-SUBDIRS = doc doc/user_manual src man plugins python specfiles tests $(BE_VIEWER_DIR) 
+SUBDIRS = doc doc/latex_manuals src man plugins python specfiles tests $(BE_VIEWER_DIR) 
 
 # don't include bootstrap. People run it, and they shoudln't
 # It's only for people who check out the git repo
