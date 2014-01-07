@@ -16,12 +16,12 @@
 #define BULK_EXTRACTOR_API_FLAG_CARVED    0x0004
 
 typedef struct BEFILE_t BEFILE;
-typedef int be_callback_t(int32_t flag,
-                        uint32_t arg,
-                        const char *feature_recorder_name,
-                        const char *pos, // forensic path of the feature
-                        const char *feature,size_t feature_len,
-                        const char *context,size_t context_len);
+typedef int be_callback_t(uint32_t flag,
+                          uint64_t arg,
+                          const char *feature_recorder_name,
+                          const char *pos, // forensic path of the feature
+                          const char *feature,size_t feature_len,
+                          const char *context,size_t context_len);
 
 /* Enable is called before open() to enable or disable */
 #define BEAPI_PROCESS_COMMANDS 0     // process the enable/disable commands

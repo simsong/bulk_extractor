@@ -24,17 +24,23 @@
 typedef int (__cdecl *MYPROC)(LPWSTR); 
 #endif
 
-int be_cb_demo(int32_t flag,
-                        uint32_t arg,
+int be_cb_demo(uint32_t flag,
+                        uint64_t arg,
                         const char *feature_recorder_name,
                         const char *pos, // forensic path of the feature
                         const char *feature,size_t feature_len,
                         const char *context,size_t context_len)
 {
-    printf("be_cb_demo(flag=0x%x,arg=0x%x,name=%s)\n",flag,arg,feature_recorder_name);
-    printf("  feature [len=%zu]: ",feature_len);fwrite(feature,1,feature_len,stdout);fputc('\n',stdout);
-    printf("  context [len=%zu]: ",context_len);fwrite(context,1,context_len,stdout);fputc('\n',stdout);
-    puts("");
+    if(flag & BULK_EXTRACTOR_API_FLAG_FEATURE){
+        std::cout << "   feature: " << feature << " len=" << feature_len
+                  << " context:" << context << " len=" << context_len << "\n";
+        return 0;
+    }
+    if(flag & BULK_EXTRACTOR_API_FLAG_HISTOGRAM){
+        std::cout << "  name: " << feature_recorder_name << " feature: " << feature << " count=" << arg << "\n";
+        return 0;
+    }
+    std::cout << "UNKNOWN be_cb_demo(flag=" << flag << ",arg=" << arg << ",name=" << feature_recorder_name << ")\n";
     return 0;
 }
 
@@ -91,16 +97,21 @@ int main(int argc,char **argv)
 
 
     (*be_config)(bef,BEAPI_SCANNER_ENABLE,  "email",0);        // 
-
     (*be_config)(bef,BEAPI_SCANNER_ENABLE,  "accts",0);        // 
-
     (*be_config)(bef,BEAPI_SCANNER_ENABLE,  "exif",0);        // 
+    (*be_config)(bef,BEAPI_SCANNER_ENABLE,  "zip",0);        // 
+    (*be_config)(bef,BEAPI_SCANNER_ENABLE,  "gzip",0);        // 
+    (*be_config)(bef,BEAPI_SCANNER_ENABLE,  "rar",0);        // 
 
     (*be_config)(bef,BEAPI_SCANNER_ENABLE,  "bulk",0);        // enable the bulk scanner
     (*be_config)(bef,BEAPI_FEATURE_DISABLE, "bulk",0);       // disable bulk feature detector
-    (*be_config)(bef,BEAPI_MEMHIST_ENABLE,  "bulk", 10);   // enable the bulk memory histogram
 
     (*be_config)(bef,BEAPI_PROCESS_COMMANDS,"",0);          // process the enable/disable commands
+
+    (*be_config)(bef,BEAPI_MEMHIST_ENABLE,  "bulk", 10);   // enable the bulk memory histogram
+    (*be_config)(bef,BEAPI_MEMHIST_ENABLE,  "email", 10);   // enable the bulk memory histogram
+    (*be_config)(bef,BEAPI_MEMHIST_ENABLE,  "telephone", 10);   // enable the bulk memory histogram
+    (*be_config)(bef,BEAPI_MEMHIST_ENABLE,  "ccn", 10);   // enable the bulk memory histogram
 
     const char *demo_buf = "ABCDEFG  demo@api.com Just a demo 617-555-1212 ok!";
     (*be_analyze_buf)(bef,(uint8_t *)demo_buf,strlen(demo_buf));  // analyze the buffer

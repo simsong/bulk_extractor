@@ -101,13 +101,12 @@ public:
     /* The callback function that will be used to dump a histogram line.
      * it will in turn call the callback function
      */
-    static void histogram_dump_callback(void *user,const feature_recorder &fr,
+    static int histogram_dump_callback(void *user,const feature_recorder &fr,
                                         const std::string &str,const uint64_t &count) {
-        std::cerr << "histogram_dump_callback\n";
         callback_feature_recorder_set *cfs = (callback_feature_recorder_set *)(user);
         assert(cfs!=0);
         assert(cfs->cb!=0);
-        (*cfs->cb)(BULK_EXTRACTOR_API_FLAG_HISTOGRAM,count, fr.name.c_str(),"",str.c_str(),str.size(),"",0);
+        return (*cfs->cb)(BULK_EXTRACTOR_API_FLAG_HISTOGRAM,count, fr.name.c_str(),"",str.c_str(),str.size(),"",0);
     }
 };
 
@@ -209,10 +208,9 @@ extern "C" void bulk_extractor_config(BEFILE *bef,uint32_t cmd,const char *name,
 
     case BEAPI_MEMHIST_ENABLE:
         fr = bef->cfs.get_name(name);
-        if(fr){
-            fr->set_flag(feature_recorder::FLAG_MEM_HISTOGRAM);
-            fr->set_memhist_limit(arg);
-        }
+        assert(fr);
+        fr->set_flag(feature_recorder::FLAG_MEM_HISTOGRAM);
+        fr->set_memhist_limit(arg);
         break;
 
     case BEAPI_DISABLE_ALL:
@@ -256,7 +254,7 @@ extern "C"
 int bulk_extractor_close(BEFILE *bef)
 {
     bef->cfs.dump_histograms((void *)&bef->cfs,
-                             callback_feature_recorder_set::histogram_dump_callback,0); //NEED TO SPECIFY THE CALLBACK HERE
+                             callback_feature_recorder_set::histogram_dump_callback,0); 
     delete bef;
     return 0;
 }
