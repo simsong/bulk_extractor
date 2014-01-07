@@ -74,9 +74,7 @@ public:
     mutable cppmutex Mcb;               // mutex for the callback
 
 public:
-    virtual feature_recorder *create_name_factory(const std::string &outdir_,
-                                                  const std::string &input_fname_,
-                                                  const std::string &name_);
+    virtual feature_recorder *create_name_factory(const std::string &name_);
     callback_feature_recorder_set(be_callback_t *cb_):feature_recorder_set(0,my_hasher),histogram_defs(),cb(cb_),Mcb(){
     }
 
@@ -105,6 +103,7 @@ public:
      */
     static void histogram_dump_callback(void *user,const feature_recorder &fr,
                                         const std::string &str,const uint64_t &count) {
+        std::cerr << "histogram_dump_callback\n";
         callback_feature_recorder_set *cfs = (callback_feature_recorder_set *)(user);
         assert(cfs!=0);
         assert(cfs->cb!=0);
@@ -122,7 +121,7 @@ class callback_feature_recorder: public feature_recorder {
 public:
     callback_feature_recorder(be_callback_t *cb_,
                               class feature_recorder_set &fs,const std::string &name_):
-        feature_recorder(fs,"<no-outdir>","<no-fname>",name_),cb(cb_){
+        feature_recorder(fs,name_),cb(cb_){
     }
     virtual std::string carve(const sbuf_t &sbuf,size_t pos,size_t len, 
                               const std::string &ext){ // appended to forensic path
@@ -143,9 +142,7 @@ public:
 
 
 /* create_name_factory must be here, after the feature_recorder class is defined. */
-feature_recorder *callback_feature_recorder_set::create_name_factory(const std::string &outdir_,
-                                                                     const std::string &input_fname_,
-                                                                     const std::string &name_){
+feature_recorder *callback_feature_recorder_set::create_name_factory(const std::string &name_){
     //std::cerr << "creating " << name_ << "\n";
     return new callback_feature_recorder(cb,*this,name_);
 }
@@ -184,38 +181,41 @@ BEFILE *bulk_extractor_open(be_callback_t cb)
     return bef;
 }
     
-extern "C" void bulk_extractor_set_enabled(BEFILE *bef,const char *name,int  mode)
+extern "C" void bulk_extractor_config(BEFILE *bef,uint32_t cmd,const char *name,int64_t arg)
 {
     feature_recorder *fr = 0;
-    switch(mode){
-    case BE_SET_ENABLED_PROCESS_COMMANDS:
+    switch(cmd){
+    case BEAPI_PROCESS_COMMANDS:
         bef->cfs.init_cfs();
         break;
 
-    case BE_SET_ENABLED_SCANNER_DISABLE:
+    case BEAPI_SCANNER_DISABLE:
         be13::plugin::scanners_disable(name);
         break;
 
-    case BE_SET_ENABLED_SCANNER_ENABLE:
+    case BEAPI_SCANNER_ENABLE:
         be13::plugin::scanners_enable(name);
         break;
 
-    case BE_SET_ENABLED_FEATURE_DISABLE:
+    case BEAPI_FEATURE_DISABLE:
         fr = bef->cfs.get_name(name);
         if(fr) fr->set_flag(feature_recorder::FLAG_NO_FEATURES);
         break;
 
-    case BE_SET_ENABLED_FEATURE_ENABLE:
+    case BEAPI_FEATURE_ENABLE:
         fr = bef->cfs.get_name(name);
         if(fr) fr->unset_flag(feature_recorder::FLAG_NO_FEATURES);
         break;
 
-    case BE_SET_ENABLED_MEMHIST_ENABLE:
+    case BEAPI_MEMHIST_ENABLE:
         fr = bef->cfs.get_name(name);
-        if(fr) fr->unset_flag(feature_recorder::FLAG_MEM_HISTOGRAM);
+        if(fr){
+            fr->set_flag(feature_recorder::FLAG_MEM_HISTOGRAM);
+            fr->set_memhist_limit(arg);
+        }
         break;
 
-    case BE_SET_ENABLED_DISABLE_ALL:
+    case BEAPI_DISABLE_ALL:
         be13::plugin::scanners_disable_all();
         break;
 

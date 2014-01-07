@@ -8,7 +8,7 @@
  * It also generates a feature report for every likely JPEG.
  */
 
-#include "config.h"
+#include "../config.h"
 #include "be13_api/bulk_extractor_i.h"
 
 #include <iostream>

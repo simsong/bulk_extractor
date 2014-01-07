@@ -25,6 +25,24 @@
 typedef int (__cdecl *MYPROC)(LPWSTR); 
 #endif
 
+static std::string hash_name("md5");
+static std::string hash_func(const uint8_t *buf,size_t bufsize)
+{
+    if(hash_name=="md5" || hash_name=="MD5"){
+        return md5_generator::hash_buf(buf,bufsize).hexdigest();
+    }
+    if(hash_name=="sha1" || hash_name=="SHA1" || hash_name=="sha-1" || hash_name=="SHA-1"){
+        return sha1_generator::hash_buf(buf,bufsize).hexdigest();
+    }
+    if(hash_name=="sha256" || hash_name=="SHA256" || hash_name=="sha-256" || hash_name=="SHA-256"){
+        return sha256_generator::hash_buf(buf,bufsize).hexdigest();
+    }
+    std::cerr << "Invalid hash name: " << hash_name << "\n";
+    std::cerr << "This version of bulk_extractor only supports MD5, SHA1, and SHA256\n";
+    exit(1);
+}
+static feature_recorder::hash_def my_hasher(hash_name,hash_func);
+
 scanner_params::PrintOptions scanner_params::no_options; 
 int main(int argc,char **argv)
 {
@@ -92,7 +110,7 @@ int main(int argc,char **argv)
     }
 #endif
 
-    feature_recorder_set fs(0);
+    feature_recorder_set fs(0,my_hasher);
     uint8_t buf[100];
     pos0_t p0("");
     sbuf_t sbuf(p0,buf,sizeof(buf),sizeof(buf),false);
@@ -122,8 +140,8 @@ feature_recorder *feature_recorder_set::create_name_factory(const std::string &o
 }
 
 
-feature_recorder_set::feature_recorder_set(uint32_t f):flags(f),seen_set(),input_fname(),
-                                                       outdir(),frm(),map_lock(),scanner_stats()
+feature_recorder_set::feature_recorder_set(uint32_t f,const feature_recorder::hash_def &hasher_):
+    flags(f),seen_set(),input_fname(),outdir(),frm(),map_lock(),scanner_stats(),hasher(hasher_)
 {
     /* not here */
 }

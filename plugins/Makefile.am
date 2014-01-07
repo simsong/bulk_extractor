@@ -39,9 +39,9 @@ CLEANFILES=scan_demo.d scan_demo.o scan_demo.so \
 
 SUFFIXES = .so .flex
 .cpp.so:
-	$(CXX) -shared -fPIC -o $@ $(CXXFLAGS) $<
+	$(CXX) -shared -fPIC -o $@ $(CXXFLAGS) $(AM_CPPFLAGS) $<
 
 FLEX_CXXFLAGS=-Wno-shadow -Wno-effc++ -Wno-redundant-decls -Wno-missing-noreturn
 .flex.so:
 	flex -o `basename $@ .so`.cpp $<  
-	$(CXX) $(FLEX_CXXFLAGS) -shared -fPIC $(CXXFLAGS) -o $@ `basename $@ .so`.cpp 
+	$(CXX) $(FLEX_CXXFLAGS) -shared -fPIC $(CXXFLAGS) $(AM_CPPFLAGS) -o $@ `basename $@ .so`.cpp 

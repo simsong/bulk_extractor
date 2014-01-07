@@ -1,3 +1,7 @@
+2014-01-07  Basic  <simsong@Dance.local>
+
+	* src/be13_api/feature_recorder.h (class feature_recorder): removed outdir and input_fname from feature_recorder, since they are in the feature_recorder_set
+
 2014-01-02  Man Page  <simsong@mncrnpsedu.local>
 
 	* src/be13_api/feature_recorder.h (class feature_recorder): carve no longer needs hasher passed in, becuase it is in the feature_recorder_set

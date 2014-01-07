@@ -5,6 +5,7 @@
 #include "../config.h"                              // from ../config.h
 #include "bulk_extractor_api.h"
 
+#include <iostream>
 #include <string>
 
 #include <stdio.h>
@@ -76,8 +77,8 @@ int main(int argc,char **argv)
         exit(1);
     }
 
-    bulk_extractor_set_enabled_t be_set_enabled = (bulk_extractor_set_enabled_t)getsym(lib, BULK_EXTRACTOR_SET_ENABLED);
     bulk_extractor_open_t        be_open = (bulk_extractor_open_t)getsym(lib, BULK_EXTRACTOR_OPEN);
+    bulk_extractor_config_t      be_config = (bulk_extractor_config_t)getsym(lib, BULK_EXTRACTOR_CONFIG);
     bulk_extractor_analyze_dev_t be_analyze_dev = (bulk_extractor_analyze_dev_t)getsym(lib,BULK_EXTRACTOR_ANALYZE_DEV);
     bulk_extractor_analyze_buf_t be_analyze_buf = (bulk_extractor_analyze_buf_t)getsym(lib,BULK_EXTRACTOR_ANALYZE_BUF);
     bulk_extractor_close_t       be_close = (bulk_extractor_close_t)getsym(lib, BULK_EXTRACTOR_CLOSE);
@@ -86,19 +87,30 @@ int main(int argc,char **argv)
     BEFILE *bef = (*be_open)(be_cb_demo);
 
     /* Now configure the scanners */
-    (*be_set_enabled)(bef,"bulk",BE_SET_ENABLED_DISABLE_ALL); // turn off all scanners
-    (*be_set_enabled)(bef,"exif",BE_SET_ENABLED_SCANNER_ENABLE);        // enable the bulk scanner
-    (*be_set_enabled)(bef,"bulk",BE_SET_ENABLED_SCANNER_ENABLE);        // enable the bulk scanner
-    (*be_set_enabled)(bef,"bulk",BE_SET_ENABLED_FEATURE_DISABLE);       // disable bulk feature detector
-    (*be_set_enabled)(bef,"bulk",BE_SET_ENABLED_MEMHIST_ENABLE);        // enable the bulk memory histogram
-    (*be_set_enabled)(bef,"",    BE_SET_ENABLED_PROCESS_COMMANDS);          // process the enable/disable commands
+    (*be_config)(bef,BEAPI_DISABLE_ALL,     "bulk",0); // turn off all scanners
+
+
+    (*be_config)(bef,BEAPI_SCANNER_ENABLE,  "email",0);        // 
+
+    (*be_config)(bef,BEAPI_SCANNER_ENABLE,  "accts",0);        // 
+
+    (*be_config)(bef,BEAPI_SCANNER_ENABLE,  "exif",0);        // 
+
+    (*be_config)(bef,BEAPI_SCANNER_ENABLE,  "bulk",0);        // enable the bulk scanner
+    (*be_config)(bef,BEAPI_FEATURE_DISABLE, "bulk",0);       // disable bulk feature detector
+    (*be_config)(bef,BEAPI_MEMHIST_ENABLE,  "bulk", 10);   // enable the bulk memory histogram
+
+    (*be_config)(bef,BEAPI_PROCESS_COMMANDS,"",0);          // process the enable/disable commands
 
     const char *demo_buf = "ABCDEFG  demo@api.com Just a demo 617-555-1212 ok!";
     (*be_analyze_buf)(bef,(uint8_t *)demo_buf,strlen(demo_buf));  // analyze the buffer
 
     /* analyze the file */
+    std::cerr << "calling ANALYZE_DEV " << fname << "\n";
     (*be_analyze_dev)(bef,fname);                                 // analyze the file
+    std::cerr << "calling CLOSE\n";
     (*be_close)(bef);
+    std::cerr << "CLOSED\n";
 
 #ifdef HAVE_DLOPEN
     dlclose(lib);

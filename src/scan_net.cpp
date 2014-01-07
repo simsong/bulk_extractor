@@ -655,7 +655,7 @@ public:
 	// Make sure that neither this packet nor an encapsulated version of this packet has been written
 	cppmutex::lock lock(Mfcap);		// lock the mutex
         if(fcap==0){
-            std::string ofn = ip_recorder->outdir+"/" + default_filename;
+            std::string ofn = ip_recorder->get_outdir() + "/" + default_filename;
             fcap = fopen(ofn.c_str(),"wb"); // write the output
             pcap_write4(0xa1b2c3d4);
             pcap_write2(2);			// major version number

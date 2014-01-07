@@ -24,22 +24,22 @@ typedef int be_callback_t(int32_t flag,
                         const char *context,size_t context_len);
 
 /* Enable is called before open() to enable or disable */
-
-#define BE_SET_ENABLED_PROCESS_COMMANDS -1     // process the enable/disable commands
-#define BE_SET_ENABLED_SCANNER_DISABLE  0              // disable the scanner
-#define BE_SET_ENABLED_SCANNER_ENABLE   1              // enable the scanner
-#define BE_SET_ENABLED_FEATURE_DISABLE  2              // disable the feature file
-#define BE_SET_ENABLED_FEATURE_ENABLE   3              // enable the feature file
-#define BE_SET_ENABLED_MEMHIST_ENABLE   5      // no feature file, memory histograms
-#define BE_SET_ENABLED_DISABLE_ALL      6
+#define BEAPI_PROCESS_COMMANDS 0     // process the enable/disable commands
+#define BEAPI_SCANNER_DISABLE  1              // disable the scanner
+#define BEAPI_SCANNER_ENABLE   2              // enable the scanner
+#define BEAPI_FEATURE_DISABLE  3              // disable the feature file
+#define BEAPI_FEATURE_ENABLE   4              // enable the feature file
+#define BEAPI_MEMHIST_ENABLE   5      // no feature file, memory histograms
+#define BEAPI_DISABLE_ALL      6
 
 typedef BEFILE * (*bulk_extractor_open_t)(be_callback_t cb);
 extern "C" BEFILE *bulk_extractor_open(be_callback_t cb);
 #define BULK_EXTRACTOR_OPEN "bulk_extractor_open"
 
-typedef void (*bulk_extractor_set_enabled_t)(BEFILE *bef,const char *scanner_name,int code);
-extern "C" void bulk_extractor_set_enabled(BEFILE *bef,const char *scanner_name,int code);
-#define BULK_EXTRACTOR_SET_ENABLED "bulk_extractor_set_enabled"
+/* Config the scanner or whatever */
+typedef void (*bulk_extractor_config_t)(BEFILE *bef,uint32_t cmd,const char *scanner_name,int64_t arg);
+extern "C" void bulk_extractor_config(BEFILE *bef,uint32_t cmd,const char *scanner_name,int64_t arg);
+#define BULK_EXTRACTOR_CONFIG "bulk_extractor_config"
 
 typedef int (*bulk_extractor_analyze_buf_t)(BEFILE *bef,uint8_t *buf,size_t buflen);
 extern "C" int bulk_extractor_analyze_buf(BEFILE *bef,uint8_t *buf,size_t buflen);
