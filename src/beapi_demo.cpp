@@ -93,11 +93,11 @@ int main(int argc,char **argv)
         exit(1);
     }
 
-    bulk_extractor_open_t        be_open = (bulk_extractor_open_t)getsym(lib, BULK_EXTRACTOR_OPEN);
-    bulk_extractor_config_t      be_config = (bulk_extractor_config_t)getsym(lib, BULK_EXTRACTOR_CONFIG);
+    bulk_extractor_open_t        be_open        = (bulk_extractor_open_t)getsym(lib, BULK_EXTRACTOR_OPEN);
+    bulk_extractor_config_t      be_config      = (bulk_extractor_config_t)getsym(lib, BULK_EXTRACTOR_CONFIG);
     bulk_extractor_analyze_dev_t be_analyze_dev = (bulk_extractor_analyze_dev_t)getsym(lib,BULK_EXTRACTOR_ANALYZE_DEV);
     bulk_extractor_analyze_buf_t be_analyze_buf = (bulk_extractor_analyze_buf_t)getsym(lib,BULK_EXTRACTOR_ANALYZE_BUF);
-    bulk_extractor_close_t       be_close = (bulk_extractor_close_t)getsym(lib, BULK_EXTRACTOR_CLOSE);
+    bulk_extractor_close_t       be_close       = (bulk_extractor_close_t)getsym(lib, BULK_EXTRACTOR_CLOSE);
 
     /* Get a handle */
     BEFILE *bef = (*be_open)(0,be_cb_demo);
@@ -105,16 +105,14 @@ int main(int argc,char **argv)
     /* Now configure the scanners */
     (*be_config)(bef,BEAPI_DISABLE_ALL,     "bulk",0); // turn off all scanners
 
-
     (*be_config)(bef,BEAPI_SCANNER_ENABLE,  "email",0);        // 
     (*be_config)(bef,BEAPI_SCANNER_ENABLE,  "accts",0);        // 
-    (*be_config)(bef,BEAPI_SCANNER_ENABLE,  "exif",0);        // 
-    (*be_config)(bef,BEAPI_SCANNER_ENABLE,  "zip",0);        // 
-    (*be_config)(bef,BEAPI_SCANNER_ENABLE,  "gzip",0);        // 
-    (*be_config)(bef,BEAPI_SCANNER_ENABLE,  "rar",0);        // 
+    (*be_config)(bef,BEAPI_SCANNER_ENABLE,  "exif",0);         // 
+    (*be_config)(bef,BEAPI_SCANNER_ENABLE,  "zip",0);          // 
+    (*be_config)(bef,BEAPI_SCANNER_ENABLE,  "gzip",0);         // 
+    (*be_config)(bef,BEAPI_SCANNER_ENABLE,  "rar",0);          // 
 
     (*be_config)(bef,BEAPI_SCANNER_ENABLE,  "bulk",0);        // enable the bulk scanner
-    (*be_config)(bef,BEAPI_FEATURE_DISABLE, "bulk",0);       // disable bulk feature detector
 
     (*be_config)(bef,BEAPI_PROCESS_COMMANDS,"",0);          // process the enable/disable commands
 
@@ -124,8 +122,8 @@ int main(int argc,char **argv)
     /* Now enable memory histograms for each */
     for(std::vector<std::string>::const_iterator it=feature_files.begin();it!=feature_files.end();++it){
         const char *name = (*it).c_str();
-        std::cout << "name=" << (*it) << " " << name << "\n";
         (*be_config)(bef,BEAPI_MEMHIST_ENABLE,  name, 10);   // enable the bulk memory histogram
+        (*be_config)(bef,BEAPI_FEATURE_DISABLE, name,  0);   // don't give me features
     }
 
     const char *demo_buf = "ABCDEFG  demo@api.com Just a demo 617-555-1212 ok!";
