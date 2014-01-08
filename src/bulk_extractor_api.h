@@ -11,15 +11,18 @@
  * Histograms are stored in memory.
  */
 
-#define BULK_EXTRACTOR_API_FLAG_FEATURE   0x0001
-#define BULK_EXTRACTOR_API_FLAG_HISTOGRAM 0x0002
-#define BULK_EXTRACTOR_API_FLAG_CARVED    0x0004
+#define BULK_EXTRACTOR_API_CODE_FEATURE         1
+#define BULK_EXTRACTOR_API_CODE_HISTOGRAM       2
+#define BULK_EXTRACTOR_API_CODE_CARVED          3
+#define BULK_EXTRACTOR_API_CODE_FEATURELIST    10
+
 
 typedef struct BEFILE_t BEFILE;
-typedef int be_callback_t(uint32_t flag,
+typedef int be_callback_t(void *user,
+                          uint32_t code,
                           uint64_t arg,
-                          const char *feature_recorder_name,
-                          const char *pos, // forensic path of the feature
+                          const char *name, // typically the feature file name
+                          const char *pos,  // forensic path of the feature
                           const char *feature,size_t feature_len,
                           const char *context,size_t context_len);
 
@@ -31,9 +34,11 @@ typedef int be_callback_t(uint32_t flag,
 #define BEAPI_FEATURE_ENABLE   4              // enable the feature file
 #define BEAPI_MEMHIST_ENABLE   5      // no feature file, memory histograms
 #define BEAPI_DISABLE_ALL      6
+#define BEAPI_FEATURE_LIST     7        // list all of the feature files to callback function please
+#define BEAPI_SCANNER_LIST     8        // list all of the enabled scanners
 
-typedef BEFILE * (*bulk_extractor_open_t)(be_callback_t cb);
-extern "C" BEFILE *bulk_extractor_open(be_callback_t cb);
+typedef BEFILE * (*bulk_extractor_open_t)(void *user,be_callback_t cb);
+extern "C" BEFILE *bulk_extractor_open(void *user,be_callback_t cb);
 #define BULK_EXTRACTOR_OPEN "bulk_extractor_open"
 
 /* Config the scanner or whatever */

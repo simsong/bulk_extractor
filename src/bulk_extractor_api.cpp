@@ -27,7 +27,6 @@
 #include <sys/stat.h>
 
 /****************************************************************
- *** 
  *** Here is the bulk_extractor API
  *** It is under development.
  ****************************************************************/
@@ -62,20 +61,24 @@ static std::string hash_func(const uint8_t *buf,size_t bufsize)
     std::cerr << "This version of bulk_extractor only supports MD5, SHA1, and SHA256\n";
     exit(1);
 }
+
 static feature_recorder::hash_def my_hasher(hash_name,hash_func);
 
 class callback_feature_recorder_set: public feature_recorder_set {
     // neither copying nor assignment are implemented
     callback_feature_recorder_set(const callback_feature_recorder_set &cfs);
-    callback_feature_recorder_set &operator=(const callback_feature_recorder_set&cfs);
+    callback_feature_recorder_set &operator=(const callback_feature_recorder_set &cfs);
     histogram_defs_t histogram_defs;        
+
 public:
+    void *user;
     be_callback_t *cb;
     mutable cppmutex Mcb;               // mutex for the callback
 
 public:
     virtual feature_recorder *create_name_factory(const std::string &name_);
-    callback_feature_recorder_set(be_callback_t *cb_):feature_recorder_set(0,my_hasher),histogram_defs(),cb(cb_),Mcb(){
+    callback_feature_recorder_set(void *user_,be_callback_t *cb_):
+        feature_recorder_set(0,my_hasher),histogram_defs(),user(user_),cb(cb_),Mcb(){
     }
 
     virtual void init_cfs(){
@@ -88,14 +91,15 @@ public:
 
     virtual void write(const std::string &feature_recorder_name,const std::string &str){
         cppmutex::lock lock(Mcb);
-        (*cb)(BULK_EXTRACTOR_API_FLAG_FEATURE,0,
+        (*cb)(user,BULK_EXTRACTOR_API_CODE_FEATURE,0,
               feature_recorder_name.c_str(),"",str.c_str(),str.size(),"",0);
     }
     virtual void write0(const std::string &feature_recorder_name,
                         const pos0_t &pos0,const std::string &feature,const std::string &context){
         cppmutex::lock lock(Mcb);
-        (*cb)(BULK_EXTRACTOR_API_FLAG_FEATURE,0,
-              feature_recorder_name.c_str(),pos0.str().c_str(),feature.c_str(),feature.size(),context.c_str(),context.size());
+        (*cb)(user,BULK_EXTRACTOR_API_CODE_FEATURE,0,
+              feature_recorder_name.c_str(),pos0.str().c_str(),
+              feature.c_str(),feature.size(),context.c_str(),context.size());
     }
 
     /* The callback function that will be used to dump a histogram line.
@@ -106,10 +110,10 @@ public:
         callback_feature_recorder_set *cfs = (callback_feature_recorder_set *)(user);
         assert(cfs!=0);
         assert(cfs->cb!=0);
-        return (*cfs->cb)(BULK_EXTRACTOR_API_FLAG_HISTOGRAM,count, fr.name.c_str(),"",str.c_str(),str.size(),"",0);
+        return (*cfs->cb)(user,BULK_EXTRACTOR_API_CODE_HISTOGRAM,
+                          count,fr.name.c_str(),"",str.c_str(),str.size(),"",0);
     }
 };
-
 
 
 class callback_feature_recorder: public feature_recorder {
@@ -124,9 +128,9 @@ public:
     }
     virtual std::string carve(const sbuf_t &sbuf,size_t pos,size_t len, 
                               const std::string &ext){ // appended to forensic path
-        return("");                     // no file created
+        return("");                      // no file created
     }
-    virtual void open(){}               // we don't open
+    virtual void open(){}                // we don't open
     virtual void close(){}               // we don't open
     virtual void flush(){}               // we don't open
 
@@ -142,22 +146,19 @@ public:
 
 /* create_name_factory must be here, after the feature_recorder class is defined. */
 feature_recorder *callback_feature_recorder_set::create_name_factory(const std::string &name_){
-    //std::cerr << "creating " << name_ << "\n";
     return new callback_feature_recorder(cb,*this,name_);
 }
 
-
-
 struct BEFILE_t {
-    BEFILE_t(be_callback_t cb):fd(),cfs(cb),cfg(){};
-    int         fd;
+    BEFILE_t(void *user,be_callback_t cb):fd(),cfs(user,cb),cfg(){};
+    int                            fd;
     callback_feature_recorder_set  cfs;
     BulkExtractor_Phase1::Config   cfg;
 };
 
 typedef struct BEFILE_t BEFILE;
 extern "C" 
-BEFILE *bulk_extractor_open(be_callback_t cb)
+BEFILE *bulk_extractor_open(void *user,be_callback_t cb)
 {
     histogram_defs_t histograms;
     feature_recorder::set_main_threadid();
@@ -166,13 +167,8 @@ BEFILE *bulk_extractor_open(be_callback_t cb)
     s_config.debug       = 0;           // default debug
 
     be13::plugin::load_scanners(scanners_builtin,s_config);
-    //be13::plugin::scanners_process_enable_disable_commands();
-    
-    //feature_file_names_t feature_file_names;
-    //be13::plugin::get_scanner_feature_file_names(feature_file_names);
-    
-    BEFILE *bef = new BEFILE_t(cb);
-    
+
+    BEFILE *bef = new BEFILE_t(user,cb);
     /* How do we enable or disable individual scanners? */
     /* How do we set or not set a find pattern? */
     /* We want to disable carving, right? */
@@ -217,11 +213,20 @@ extern "C" void bulk_extractor_config(BEFILE *bef,uint32_t cmd,const char *name,
         be13::plugin::scanners_disable_all();
         break;
 
+    case BEAPI_FEATURE_LIST: 
+        /* Get a list of the feature files and send them to the callback */
+    {
+        std::vector<std::string> ret;
+        bef->cfs.get_feature_file_list(ret);
+        for(std::vector<std::string>::const_iterator it = ret.begin();it!=ret.end();it++){
+            (*bef->cfs.cb)(bef->cfs.user,BULK_EXTRACTOR_API_CODE_FEATURELIST,0,(*it).c_str(),"","",0,"",0);
+        }
+        break;
+    }
     default:
         assert(0);
     }
 }
-
 
 
 extern "C" 

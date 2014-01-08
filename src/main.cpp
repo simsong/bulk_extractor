@@ -195,7 +195,7 @@ static std::string be_hash_func(const uint8_t *buf,size_t bufsize)
 }
 static feature_recorder::hash_def be_hash(be_hash_name,be_hash_func);
 
-static void stat_callback(void *user,const std::string &name,uint64_t calls,double seconds)
+static int stat_callback(void *user,const std::string &name,uint64_t calls,double seconds)
 {
     dfxml_writer *xreport = reinterpret_cast<dfxml_writer *>(user);
 
@@ -206,6 +206,7 @@ static void stat_callback(void *user,const std::string &name,uint64_t calls,doub
     xreport->xmlout("seconds",seconds);
     xreport->pop();
     xreport->set_oneline(false);
+    return 0;
 }
 
 void be_mkdir(const std::string &dir)

@@ -14,6 +14,7 @@
 #endif
 #include <stdlib.h>
 #include <string.h>
+#include <vector>
 
 #ifdef HAVE_DLFCN_H
 #include <dlfcn.h>
@@ -24,24 +25,33 @@
 typedef int (__cdecl *MYPROC)(LPWSTR); 
 #endif
 
-int be_cb_demo(uint32_t flag,
-                        uint64_t arg,
-                        const char *feature_recorder_name,
-                        const char *pos, // forensic path of the feature
-                        const char *feature,size_t feature_len,
-                        const char *context,size_t context_len)
+std::vector<std::string> feature_files;
+int be_cb_demo(void *user,
+               uint32_t flag,
+               uint64_t arg,
+               const char *name,        // typically the feature recorder name
+               const char *pos, // forensic path of the feature
+               const char *feature,size_t feature_len,
+               const char *context,size_t context_len)
 {
-    if(flag & BULK_EXTRACTOR_API_FLAG_FEATURE){
+    switch(flag){
+    case BULK_EXTRACTOR_API_CODE_FEATURE:
         std::cout << "   feature: " << feature << " len=" << feature_len
                   << " context:" << context << " len=" << context_len << "\n";
         return 0;
-    }
-    if(flag & BULK_EXTRACTOR_API_FLAG_HISTOGRAM){
-        std::cout << "  name: " << feature_recorder_name << " feature: " << feature << " count=" << arg << "\n";
+        
+    case BULK_EXTRACTOR_API_CODE_HISTOGRAM:
+        std::cout << "  name: " << name << " feature: " << feature << " count=" << arg << "\n";
+        return 0;
+
+    case BULK_EXTRACTOR_API_CODE_FEATURELIST:
+        feature_files.push_back(name);
+        return 0;
+
+    default:
+        std::cout << "UNKNOWN be_cb_demo(flag=" << flag << ",arg=" << arg << ",name=" << name << ")\n";
         return 0;
     }
-    std::cout << "UNKNOWN be_cb_demo(flag=" << flag << ",arg=" << arg << ",name=" << feature_recorder_name << ")\n";
-    return 0;
 }
 
 #ifdef HAVE_DLOPEN
@@ -90,7 +100,7 @@ int main(int argc,char **argv)
     bulk_extractor_close_t       be_close = (bulk_extractor_close_t)getsym(lib, BULK_EXTRACTOR_CLOSE);
 
     /* Get a handle */
-    BEFILE *bef = (*be_open)(be_cb_demo);
+    BEFILE *bef = (*be_open)(0,be_cb_demo);
 
     /* Now configure the scanners */
     (*be_config)(bef,BEAPI_DISABLE_ALL,     "bulk",0); // turn off all scanners
@@ -108,10 +118,15 @@ int main(int argc,char **argv)
 
     (*be_config)(bef,BEAPI_PROCESS_COMMANDS,"",0);          // process the enable/disable commands
 
-    (*be_config)(bef,BEAPI_MEMHIST_ENABLE,  "bulk", 10);   // enable the bulk memory histogram
-    (*be_config)(bef,BEAPI_MEMHIST_ENABLE,  "email", 10);   // enable the bulk memory histogram
-    (*be_config)(bef,BEAPI_MEMHIST_ENABLE,  "telephone", 10);   // enable the bulk memory histogram
-    (*be_config)(bef,BEAPI_MEMHIST_ENABLE,  "ccn", 10);   // enable the bulk memory histogram
+    /* Let's get a list of all the feature files in use and tell them that they are all using memory histograms */
+    (*be_config)(bef,BEAPI_FEATURE_LIST,    "", 0);   
+    
+    /* Now enable memory histograms for each */
+    for(std::vector<std::string>::const_iterator it=feature_files.begin();it!=feature_files.end();++it){
+        const char *name = (*it).c_str();
+        std::cout << "name=" << (*it) << " " << name << "\n";
+        (*be_config)(bef,BEAPI_MEMHIST_ENABLE,  name, 10);   // enable the bulk memory histogram
+    }
 
     const char *demo_buf = "ABCDEFG  demo@api.com Just a demo 617-555-1212 ok!";
     (*be_analyze_buf)(bef,(uint8_t *)demo_buf,strlen(demo_buf));  // analyze the buffer
