@@ -122,7 +122,7 @@ int main(int argc,char **argv)
     /* Now enable memory histograms for each */
     for(std::vector<std::string>::const_iterator it=feature_files.begin();it!=feature_files.end();++it){
         const char *name = (*it).c_str();
-        (*be_config)(bef,BEAPI_MEMHIST_ENABLE,  name, 10);   // enable the bulk memory histogram
+        (*be_config)(bef,BEAPI_MEMHIST_ENABLE,  name,  0);   // enable the bulk memory histogram
         (*be_config)(bef,BEAPI_FEATURE_DISABLE, name,  0);   // don't give me features
     }
 

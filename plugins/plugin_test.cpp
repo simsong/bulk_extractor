@@ -131,10 +131,12 @@ const std::string feature_recorder_set::ALERT_RECORDER_NAME = "alerts";
 const std::string feature_recorder_set::DISABLED_RECORDER_NAME = "disabled";
 const std::string outdir("outdir");
 
-feature_recorder *feature_recorder_set::get_name(const std::string &name) { return 0;}
-feature_recorder *feature_recorder_set::get_alert_recorder() { return 0;}
-void feature_recorder_set::create_name(const std::string &name,bool create_stop_also){}
-feature_recorder *feature_recorder_set::create_name_factory(const std::string &outdir_,const std::string &input_fname_,const std::string &name_)
+bool               feature_recorder_set::check_previously_processed(const uint8_t *buf,size_t bufsize){return false;}
+feature_recorder  *feature_recorder_set::get_name(const std::string &name) const { return 0;}
+feature_recorder  *feature_recorder_set::get_alert_recorder() const { return 0;}
+void               feature_recorder_set::create_name(const std::string &name,bool create_stop_also){}
+void               feature_recorder_set::get_feature_file_list(std::vector<std::string> &ret){}
+feature_recorder  *feature_recorder_set::create_name_factory(const std::string &name_)
 {
     return 0;
 }
@@ -146,7 +148,6 @@ feature_recorder_set::feature_recorder_set(uint32_t f,const feature_recorder::ha
     /* not here */
 }
 
-bool feature_recorder_set::check_previously_processed(const uint8_t *buf,size_t bufsize){return false;}
 
 /* http://stackoverflow.com/questions/9406580/c-undefined-reference-to-vtable-and-inheritance 
  * Must provide definitions for all virtual functions
