@@ -1,3 +1,7 @@
+2014-01-10  Basic  <simsong@t193-251.demo.tuwien.ac.at>
+
+	* src/be13_api/feature_recorder.cpp (feature_recorder::dump_histogram): moved regex into histogram_def so that it could be run in write(), rather than in post-processing. 
+
 2014-01-07  Basic  <simsong@Dance.local>
 
 	* src/be13_api/feature_recorder.h (class feature_recorder): removed outdir and input_fname from feature_recorder, since they are in the feature_recorder_set

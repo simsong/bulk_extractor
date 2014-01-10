@@ -940,7 +940,6 @@ static std::string scan_winpe_verify (const sbuf_t &sbuf)
     return xml.str();
 }
 
-//static be13::hash_def hasher;
 extern "C"
 void scan_winpe (const class scanner_params &sp,
 		 const recursion_control_block &rcb)
@@ -954,8 +953,6 @@ void scan_winpe (const class scanner_params &sp,
         sp.info->description     = "Scan for Windows PE headers";
         sp.info->scanner_version = "1.0.0";
         sp.info->feature_names.insert("winpe");
-
-        //hasher    = sp.info->config->hasher;
 
         return;
     }

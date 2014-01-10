@@ -353,6 +353,7 @@ void scan_email(const class scanner_params &sp,const recursion_control_block &rc
 
 	/* define the histograms to make */
 	sp.info->histogram_defs.insert(histogram_def("email","","histogram",HistogramMaker::FLAG_LOWERCASE));
+	sp.info->histogram_defs.insert(histogram_def("email","(@.*)","domain_histogram",HistogramMaker::FLAG_LOWERCASE));
 	sp.info->histogram_defs.insert(histogram_def("domain","","histogram"));
 	sp.info->histogram_defs.insert(histogram_def("url","","histogram"));
 	sp.info->histogram_defs.insert(histogram_def("url","://([^/]+)","services"));

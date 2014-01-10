@@ -322,7 +322,6 @@ string RarVolumeInfo::to_xml() const
 // settings - these configuration vars are set when the scanner is created
 static bool record_components = true;
 static bool record_volumes = true;
-//static be13::hash_def hasher;
 
 // component processing (compressed file within an archive)
 static bool process_component(const unsigned char *buf, size_t buf_len, RarComponentInfo &output)
@@ -608,7 +607,6 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
         sp.info->get_config("rar_find_components",&record_components,"Search for RAR components");
         sp.info->get_config("raw_find_volumes",&record_volumes,"Search for RAR volumes");
         sp.info->get_config("unrar_carve_mode",&unrar_carve_mode,CARVE_MODE_DESCRIPTION);
-        //hasher = sp.info->config->hasher;
 #else
         sp.info->description = "(disabled in configure)";
         sp.info->flags = scanner_info::SCANNER_DISABLED | scanner_info::SCANNER_NO_USAGE | scanner_info::SCANNER_NO_ALL;

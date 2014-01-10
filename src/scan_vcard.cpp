@@ -35,9 +35,6 @@
 
 using namespace std;
 
-
-
-//static be13::hash_def hasher;
 extern "C"
 void scan_vcard(const class scanner_params &sp,const recursion_control_block &rcb)
 {
@@ -50,7 +47,6 @@ void scan_vcard(const class scanner_params &sp,const recursion_control_block &rc
         sp.info->description    = "Scans for VCARD data";
         sp.info->scanner_version= "1.0";
 	sp.info->feature_names.insert("vcard");
-        //hasher    = sp.info->config->hasher;
 	return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN){

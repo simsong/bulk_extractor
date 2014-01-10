@@ -103,7 +103,6 @@ int exif_show_all=1;
 extern "C"
 void scan_exiv2(const class scanner_params &sp,const recursion_control_block &rcb)
 {
-    //static be13::hash_def hasher;
     assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
     if(sp.phase==scanner_params::PHASE_STARTUP){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
@@ -114,7 +113,6 @@ void scan_exiv2(const class scanner_params &sp,const recursion_control_block &rc
 	sp.info->feature_names.insert("exif");
 	sp.info->feature_names.insert("gps");
 	sp.info->flags = scanner_info::SCANNER_DISABLED; // disabled because we have be_exif
-	//hasher = sp.info->config->hasher;
 	return;
     }
     if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;

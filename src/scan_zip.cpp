@@ -42,7 +42,6 @@ bool has_control_characters(const std::string &name)
 }
 
 /* We should have a threadsafe set */
-//static be13::hash_def hasher;
 
 /**
  * code from tsk3
@@ -243,7 +242,6 @@ void scan_zip(const class scanner_params &sp,const recursion_control_block &rcb)
         if(unzip_carve_mode){
             sp.info->feature_names.insert(UNZIP_RECORDER_NAME);
         }
-        //hasher    = sp.info->config->hasher;
 	return;
     }
     feature_recorder *zip_recorder = sp.fs.get_name(ZIP_RECORDER_NAME);
