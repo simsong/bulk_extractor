@@ -107,12 +107,15 @@ public:
      * it will in turn call the callback function
      */
     static int histogram_dump_callback(void *user,const feature_recorder &fr,
-                                        const std::string &str,const uint64_t &count) {
+                                       const histogram_def &def,
+                                       const std::string &str,const uint64_t &count) {
         callback_feature_recorder_set *cfs = (callback_feature_recorder_set *)(user);
         assert(cfs!=0);
         assert(cfs->cb!=0);
+        std::string name = fr.name;
+        if(def.suffix.size()) name+= "_" + def.suffix;
         return (*cfs->cb)(user,BULK_EXTRACTOR_API_CODE_HISTOGRAM,
-                          count,fr.name.c_str(),"",str.c_str(),str.size(),"",0);
+                          count,name.c_str(),"",str.c_str(),str.size(),"",0);
     }
 };
 
