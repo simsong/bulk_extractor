@@ -86,6 +86,7 @@ public:
         be13::plugin::scanners_process_enable_disable_commands();
         be13::plugin::get_scanner_feature_file_names(feature_file_names);
         init(feature_file_names,"<NO-INPUT>","<NO-OUTDIR>"); // creates the feature recorders
+        be13::plugin::add_enabled_scanner_histograms_to_feature_recorder_set(*this);
         be13::plugin::scanners_init(*this); // must be done after feature recorders are created
     }
 
@@ -178,7 +179,6 @@ BEFILE *bulk_extractor_open(void *user,be_callback_t cb)
     
 extern "C" void bulk_extractor_config(BEFILE *bef,uint32_t cmd,const char *name,int64_t arg)
 {
-    feature_recorder *fr = 0;
     switch(cmd){
     case BEAPI_PROCESS_COMMANDS:
         bef->cfs.init_cfs();
@@ -192,34 +192,36 @@ extern "C" void bulk_extractor_config(BEFILE *bef,uint32_t cmd,const char *name,
         be13::plugin::scanners_enable(name);
         break;
 
-    case BEAPI_FEATURE_DISABLE:
-        fr = bef->cfs.get_name(name);
+    case BEAPI_FEATURE_DISABLE: {
+        feature_recorder *fr = bef->cfs.get_name(name);
         if(fr) fr->set_flag(feature_recorder::FLAG_NO_FEATURES);
         break;
+    }
 
-    case BEAPI_FEATURE_ENABLE:
-        fr = bef->cfs.get_name(name);
+    case BEAPI_FEATURE_ENABLE:{
+        feature_recorder *fr = bef->cfs.get_name(name);
+        assert(fr);
         if(fr) fr->unset_flag(feature_recorder::FLAG_NO_FEATURES);
         break;
+    }
 
     case BEAPI_MEMHIST_ENABLE:          // enable memory histograms
         bef->cfs.set_flag(feature_recorder_set::MEM_HISTOGRAM);
-        fr->set_memhist_limit(arg);
         break;
 
-    case BEAPI_MEMHIST_LIMIT:          // enable memory histograms
-        fr = bef->cfs.get_name(name);
+    case BEAPI_MEMHIST_LIMIT:{ 
+        feature_recorder *fr = bef->cfs.get_name(name);
         assert(fr);
         fr->set_memhist_limit(arg);
         break;
+    }
 
     case BEAPI_DISABLE_ALL:
         be13::plugin::scanners_disable_all();
         break;
 
-    case BEAPI_FEATURE_LIST: 
+    case BEAPI_FEATURE_LIST: {
         /* Get a list of the feature files and send them to the callback */
-    {
         std::vector<std::string> ret;
         bef->cfs.get_feature_file_list(ret);
         for(std::vector<std::string>::const_iterator it = ret.begin();it!=ret.end();it++){
