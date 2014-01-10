@@ -997,7 +997,7 @@ void scan_winpe (const class scanner_params &sp,
 		if (xml != "") {
 		    // If we have 4096 bytes, generate md5 hash
                     sbuf_t first4k(data,0,4096);
-		    std::string hash = f->hasher().func(first4k.buf,first4k.bufsize);
+		    std::string hash = f->fs.hasher.func(first4k.buf,first4k.bufsize);
 		    f->write(data.pos0,hash,xml);
 		}
 	    }

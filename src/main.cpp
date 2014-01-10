@@ -193,7 +193,7 @@ static std::string be_hash_func(const uint8_t *buf,size_t bufsize)
     std::cerr << "This version of bulk_extractor only supports MD5, SHA1, and SHA256\n";
     exit(1);
 }
-static feature_recorder::hash_def be_hash(be_hash_name,be_hash_func);
+static feature_recorder_set::hash_def be_hash(be_hash_name,be_hash_func);
 
 static int stat_callback(void *user,const std::string &name,uint64_t calls,double seconds)
 {
@@ -443,7 +443,7 @@ static void process_open_path(const image_process &p,std::string path,scanner_pa
      * The printer is called when a PRINT token is found in the
      * forensic path, so that has to be added.
      */
-    feature_recorder_set fs(feature_recorder_set::SET_DISABLED,feature_recorder::null_hasher);
+    feature_recorder_set fs(feature_recorder_set::SET_DISABLED,feature_recorder_set::null_hasher);
 
     pos0_t pos0(path+"-PRINT"); // insert the PRINT token
     sbuf_t sbuf(pos0,buf,count,count,true); // sbuf system will free

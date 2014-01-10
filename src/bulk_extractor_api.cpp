@@ -62,7 +62,7 @@ static std::string hash_func(const uint8_t *buf,size_t bufsize)
     exit(1);
 }
 
-static feature_recorder::hash_def my_hasher(hash_name,hash_func);
+static feature_recorder_set::hash_def my_hasher(hash_name,hash_func);
 
 class callback_feature_recorder_set: public feature_recorder_set {
     // neither copying nor assignment are implemented
@@ -71,8 +71,8 @@ class callback_feature_recorder_set: public feature_recorder_set {
     histogram_defs_t histogram_defs;        
 
 public:
-    void *user;
-    be_callback_t *cb;
+    void            *user;
+    be_callback_t   *cb;
     mutable cppmutex Mcb;               // mutex for the callback
 
 public:
@@ -202,10 +202,14 @@ extern "C" void bulk_extractor_config(BEFILE *bef,uint32_t cmd,const char *name,
         if(fr) fr->unset_flag(feature_recorder::FLAG_NO_FEATURES);
         break;
 
-    case BEAPI_MEMHIST_ENABLE:
+    case BEAPI_MEMHIST_ENABLE:          // enable memory histograms
+        bef->cfs.set_flag(feature_recorder_set::MEM_HISTOGRAM);
+        fr->set_memhist_limit(arg);
+        break;
+
+    case BEAPI_MEMHIST_LIMIT:          // enable memory histograms
         fr = bef->cfs.get_name(name);
         assert(fr);
-        fr->set_flag(feature_recorder::FLAG_MEM_HISTOGRAM);
         fr->set_memhist_limit(arg);
         break;
 

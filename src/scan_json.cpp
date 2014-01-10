@@ -473,7 +473,7 @@ void scan_json(const class scanner_params &sp,const recursion_control_block &rcb
 			// Only write JSON objects with more than 2 commas
 			if(jc.comma_count > 2 ){
 			    sbuf_t json(sbuf,pos,i-pos+1);
-                            std::string json_hash = (*fr->hasher().func)(json.buf,json.bufsize);
+                            std::string json_hash = (*fr->fs.hasher.func)(json.buf,json.bufsize);
 			    fr->write(sbuf.pos0+i,json.asString(),json_hash);;
 			}
 			pos = i;		// skip to the end

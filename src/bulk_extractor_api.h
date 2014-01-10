@@ -33,9 +33,10 @@ typedef int be_callback_t(void *user,
 #define BEAPI_FEATURE_DISABLE  3              // disable the feature file
 #define BEAPI_FEATURE_ENABLE   4              // enable the feature file
 #define BEAPI_MEMHIST_ENABLE   5      // no feature file, memory histograms
-#define BEAPI_DISABLE_ALL      6
-#define BEAPI_FEATURE_LIST     7        // list all of the feature files to callback function please
-#define BEAPI_SCANNER_LIST     8        // list all of the enabled scanners
+#define BEAPI_MEMHIST_LIMIT    6      // no feature file, memory histograms
+#define BEAPI_DISABLE_ALL      7
+#define BEAPI_FEATURE_LIST     8        // list all of the feature files to callback function please
+#define BEAPI_SCANNER_LIST     9        // list all of the enabled scanners
 
 typedef BEFILE * (*bulk_extractor_open_t)(void *user,be_callback_t cb);
 extern "C" BEFILE *bulk_extractor_open(void *user,be_callback_t cb);

@@ -117,13 +117,15 @@ int main(int argc,char **argv)
     (*be_config)(bef,BEAPI_PROCESS_COMMANDS,"",0);          // process the enable/disable commands
 
     /* Let's get a list of all the feature files in use and tell them that they are all using memory histograms */
-    (*be_config)(bef,BEAPI_FEATURE_LIST,    "", 0);   
+    (*be_config)(bef,BEAPI_FEATURE_LIST,   "", 0);   
+    (*be_config)(bef,BEAPI_MEMHIST_ENABLE, "", 0);   // enable in-memory histograms
     
     /* Now enable memory histograms for each */
-    for(std::vector<std::string>::const_iterator it=feature_files.begin();it!=feature_files.end();++it){
+    for(std::vector<std::string>::const_iterator it=feature_files.begin();
+        it!=feature_files.end();++it){
         const char *name = (*it).c_str();
-        (*be_config)(bef,BEAPI_MEMHIST_ENABLE,  name,  0);   // enable the bulk memory histogram
-        (*be_config)(bef,BEAPI_FEATURE_DISABLE, name,  0);   // don't give me features
+        (*be_config)(bef,BEAPI_FEATURE_DISABLE,  name, 0);   // don't give me features
+        (*be_config)(bef,BEAPI_MEMHIST_LIMIT,    name, 10);   // don't give me features
     }
 
     const char *demo_buf = "ABCDEFG  demo@api.com Just a demo 617-555-1212 ok!";
