@@ -476,7 +476,7 @@ void scan_ntfsdirs(const sbuf_t &sbuf,feature_recorder *wrecorder)
 extern "C"
 void scan_windirs(const class scanner_params &sp,const recursion_control_block &rcb)
 {
-    string myString;
+    std::string myString;
     assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
     if(sp.phase==scanner_params::PHASE_STARTUP){
 

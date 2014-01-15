@@ -101,7 +101,7 @@ public:;
     
     histogram():counts(){}
     virtual ~histogram(){
-	for(vector<hist_element *>::const_iterator it = counts.begin();it!=counts.end();it++){
+	for(std::vector<hist_element *>::const_iterator it = counts.begin();it!=counts.end();it++){
 	    delete *it;
 	}
 	counts.clear();
@@ -110,8 +110,8 @@ public:;
     /* Entropy array is a precomputed array of p*log(p) where p=counts/blocksize
      * index is number of counts.
      */
-    static vector<float> entropy_array;
-    vector<hist_element *> counts;	// histogram counts, sorted by most popular
+    static std::vector<float> entropy_array;
+    std::vector<hist_element *> counts;	// histogram counts, sorted by most popular
     static void precalc_entropy_array(int blocksize) {
 	entropy_array.clear();
 	for(int i=0;i<blocksize+1;i++){
@@ -138,7 +138,7 @@ public:;
     }
     float entropy() {
 	float eval = 0;
-	for(vector<hist_element *>::const_iterator it = counts.begin();it!=counts.end();it++){
+	for(std::vector<hist_element *>::const_iterator it = counts.begin();it!=counts.end();it++){
 	    float p = (float)(*it)->count / (float)opt_bulk_block_size;
 	    eval += -p * log2(p);
 	}
@@ -148,7 +148,7 @@ public:;
 	return counts.size();
     };
 };
-vector<float> histogram::entropy_array;	// where things get store
+std::vector<float> histogram::entropy_array;	// where things get store
 
 
 /**
@@ -242,7 +242,7 @@ void sector_classifier::check_ngram_entropy()
 	    if(sbuf[i%ngram_size]!=sbuf[i]) ngram_match = false;
 	}
 	if(ngram_match){
-	    stringstream ss;
+            std::stringstream ss;
 	    ss << CONSTANT << "(";
 	    for(size_t i=0;i<ngram_size;i++){
 		char buf[16];
@@ -275,7 +275,7 @@ void sector_classifier::check_ngram_entropy()
 
     float entropy = h.entropy();
 
-    stringstream ss;
+    std::stringstream ss;
     if(entropy>opt_high_entropy){
 	float cosineVariance = sd_autocorrelation_cosine_variance();
 	if(debug & DEBUG_INFO) ss << "high entropy ( S=" << entropy << ")" << " ACV= " << cosineVariance << " ";
@@ -292,7 +292,7 @@ void sector_classifier::check_ngram_entropy()
 	ss << "low entropy ( S=" << entropy << ")";
 	if(h.unique_counts() < 5){
 	    ss << " Unique Counts: " << h.unique_counts() << " ";
-	    for(vector<histogram::hist_element *>::const_iterator it = h.counts.begin();it!=h.counts.end();it++){
+	    for(std::vector<histogram::hist_element *>::const_iterator it = h.counts.begin();it!=h.counts.end();it++){
 		ss << (int)((*it)->val) << ":" << (*it)->count << " ";
 	    }
 	}
@@ -326,7 +326,6 @@ void scan_bulk(const class scanner_params &sp,const recursion_control_block &rcb
                                    | scanner_info::SCANNER_WANTS_NGRAMS | scanner_info::SCANNER_NO_ALL);
 	sp.info->feature_names.insert("bulk");
 	sp.info->feature_names.insert("bulk");
-	sp.info->histogram_defs.insert(histogram_def("bulk","","histogram",HistogramMaker::FLAG_MEMORY));
         sp.info->get_config("bulk_block_size",&opt_bulk_block_size,"Block size (in bytes) for bulk data analysis");
 
         debug = sp.info->config->debug;
@@ -334,19 +333,18 @@ void scan_bulk(const class scanner_params &sp,const recursion_control_block &rcb
         return; 
     }
 
+    feature_recorder *bulk_fr = sp.fs.get_name("bulk");
+    if(!bulk_fr) return;                // all of the remianing steps need bulk_fr
     if(sp.phase==scanner_params::PHASE_INIT){
-        sp.fs.get_name("bulk")->set_flag(feature_recorder::FLAG_MEM_HISTOGRAM |
-                                              feature_recorder::FLAG_NO_CONTEXT |
-                                              feature_recorder::FLAG_NO_STOPLIST |
-                                              feature_recorder::FLAG_NO_ALERTLIST |
-                                              feature_recorder::FLAG_NO_FEATURES );
+        bulk_fr->set_flag(feature_recorder::FLAG_NO_CONTEXT |
+                          feature_recorder::FLAG_NO_STOPLIST |
+                          feature_recorder::FLAG_NO_ALERTLIST |
+                          feature_recorder::FLAG_NO_FEATURES );
     }
 
     // classify a buffer
     if(sp.phase==scanner_params::PHASE_SCAN){
 
-	feature_recorder *bulk_fr      = sp.fs.get_name("bulk");
-    
 	//if(sp.sbuf.pos0.isRecursive()){
 	    /* Record the fact that a recursive call was made, which tells us about the data */
 	//    bulk_fr->write(sp.sbuf.pos0,"",""); // tag that we found recursive data, not sure what kind

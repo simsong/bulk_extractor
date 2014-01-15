@@ -32,17 +32,17 @@ class gps_scanner : public sbuf_scanner {
            gps_recorder = sp.fs.get_name("gps");
         }
 
-      static string get_quoted_attrib(string text,string attrib);
-      static string get_cdata(string text);
+      static std::string get_quoted_attrib(std::string text,std::string attrib);
+      static std::string get_cdata(std::string text);
       void clear();
 
       class feature_recorder *gps_recorder;
-      string lat;
-      string lon;
-      string ele;
-      string time;
-      string speed;
-      string course;
+      std::string lat;
+      std::string lon;
+      std::string ele;
+      std::string time;
+      std::string speed;
+      std::string course;
 };
 
 #define YY_EXTRA_TYPE gps_scanner *         /* holds our class pointer */
@@ -53,10 +53,10 @@ inline class gps_scanner *get_extra(yyscan_t yyscanner) {return yygps_get_extra(
  * Return NNN in <tag attrib="NNN">
  */
 
-string gps_scanner::get_quoted_attrib(string text,string attrib)
+std::string gps_scanner::get_quoted_attrib(std::string text,std::string attrib)
 {
         size_t pos = text.find(attrib);
-        if(pos==string::npos) return "";  /* no attrib */
+        if(pos==std::string::npos) return "";  /* no attrib */
         ssize_t quote1 = text.find('\"',pos);
         if(quote1<0) return "";           /* no opening quote */
         ssize_t quote2 = text.find('\"',quote1+1);
@@ -68,7 +68,7 @@ string gps_scanner::get_quoted_attrib(string text,string attrib)
  * Return NNN in <tag>NNN</tag>
  */
 
-string gps_scanner::get_cdata(string text)
+std::string gps_scanner::get_cdata(std::string text)
 {
         ssize_t gt = text.find('>');
         if(gt<0) return "";           /* no > */
@@ -83,7 +83,7 @@ string gps_scanner::get_cdata(string text)
 void gps_scanner::clear()
 {
         if(time.size() || lat.size() || lon.size() || ele.size() || speed.size() || course.size()){
-                string what = time+","+lat+","+lon+","+ele+","+speed+","+course;
+                std::string what = time+","+lat+","+lon+","+ele+","+speed+","+course;
                 gps_recorder->write(sbuf->pos0+pos,what,"");
         }
         time = "";

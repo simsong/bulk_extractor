@@ -7,7 +7,8 @@
 # and http://www.openismus.com/documents/linux/automake/automake.shtml
 
 AC_PREREQ(2.57)
-AC_INIT(BULK_EXTRACTOR, 1.4.2, bugs@digitalcorpora.org)
+AC_INIT(BULK_EXTRACTOR, 1.4.3, bugs@digitalcorpora.org)
+
 AC_CONFIG_MACRO_DIR(m4)
 
 # 
@@ -17,7 +18,7 @@ AC_CONFIG_MACRO_DIR(m4)
 #
 # NOTE 2 - src_win/Makefile is not automatically generated. This is necessary
 # so that it can be run even after a 'make distclean' is done
-AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile doc/user_manual/Makefile \
+AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile doc/latex_manuals/Makefile \
 			  man/Makefile python/Makefile \
                           plugins/Makefile \
 			  specfiles/Makefile specfiles/bulk_extractor.spec.m4 \
@@ -183,12 +184,13 @@ fi
 # causes configure to crash on gcc-4.2.1: -Wsign-compare-Winline 
 # causes warnings with unistd.h:  -Wnested-externs 
 # Just causes too much annoyance: -Wmissing-format-attribute 
+# Don't use: -Wno-unknown-warning-option
 
 # Check GCC and clang
 WARNINGS_TO_TEST="-MD -Wpointer-arith -Wmissing-declarations -Wmissing-prototypes \
     -Wshadow -Wwrite-strings -Wcast-align -Waggregate-return \
     -Wbad-function-cast -Wcast-qual -Wundef -Wredundant-decls -Wdisabled-optimization \
-    -Wfloat-equal -Wmultichar -Wc++-compat -Wmissing-noreturn -funit-at-a-time -Wno-unknown-warning-option \
+    -Wfloat-equal -Wmultichar -Wc++-compat -Wmissing-noreturn -funit-at-a-time \
     -Qunused-arguments "
 
 if test x"${mingw}" == "xno" ; then
@@ -269,6 +271,7 @@ AC_ARG_ENABLE([mcheck], AS_HELP_STRING([--enable-mcheck], \
 # -Wundef  --- causes problems with zlib
 # -Wcast-qual 
 # -Wmissing-format-attribute  --- Just too annoying
+# don't use: -Wno-unknown-warning-option
 AC_LANG_PUSH(C++)
 AC_CHECK_HEADERS([string])
 
@@ -276,9 +279,18 @@ CXX_WARNINGS_TO_TEST="-Wall -MD -Wpointer-arith \
     -Wshadow -Wwrite-strings -Wcast-align  \
     -Wredundant-decls -Wdisabled-optimization \
     -Wfloat-equal -Wmultichar -Wmissing-noreturn \
-    -Woverloaded-virtual -Wsign-promo -funit-at-a-time -Wno-unknown-warning-option -Qunused-arguments"
+    -Woverloaded-virtual -Wsign-promo -funit-at-a-time -Qunused-arguments"
 
-if test x$CXX != "xclang++" ; then
+clang=no
+if (g++ --version 2>&1 | grep clang > /dev/null) ; 
+then 
+   clang=yes
+fi
+if test x$CXX == "xclang++" ; then
+  clang=yes
+fi
+
+if test $clang == "no" ; then
   # -Wstrict-null-sentinel is not supported under clang
   CXX_WARNINGS_TO_TEST="$CXX_WARNINGS_TO_TEST -Wstrict-null-sentinel"
 fi

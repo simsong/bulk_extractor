@@ -56,7 +56,7 @@ public class WScan {
     }
 
     if (wScan.wScanWindow.isVisible()) {
-      WLog.log("WScan already visible.  Restoring defaults.");
+      WLog.log("WScan already visible.  Replacing scan settings.");
     }
 
     // set all the scan settings
@@ -453,8 +453,13 @@ public class WScan {
     // import
     importB.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        // put selection values into variables and close this window
-        WImportScanSettings.openWindow();
+        // get the command settings from the UI
+        ScanSettings scanSettings = new ScanSettings();
+        wScan.getScanSettings(scanSettings);
+        String commandString = scanSettings.getCommandString();
+
+        // open the import settings window with existing settings
+        new WImportScanSettings(commandString);
       }
     });
 

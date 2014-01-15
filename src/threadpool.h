@@ -63,16 +63,16 @@ class threadpool {
 #ifdef WIN32
     static void win32_init();		// must be called on win32
 #endif
-    typedef vector<class worker *> worker_vector;
+    typedef std::vector<class worker *> worker_vector;
     worker_vector	workers;
     pthread_mutex_t	M;		// protects the following variables
     pthread_cond_t	TOMAIN;
     pthread_cond_t	TOWORKER;
     int			freethreads;
-    queue<sbuf_t *>	work_queue;	// work to be done
+    std::queue<sbuf_t *> work_queue;	// work to be done
     feature_recorder_set &fs;		// one for all the threads; fs and fr are threadsafe
     dfxml_writer	&xreport;	// where the xml gets written; threadsafe
-    vector<string>	thread_status;	// for each thread, its status
+    std::vector<std::string> thread_status;	// for each thread, its status
     aftimer		waiting;	// time spend waiting
     int			mode;		// 0=running; 1 = waiting for workers to finish
 
@@ -91,7 +91,7 @@ class threadpool {
 class worker {
 private:
     void do_work(sbuf_t *sbuf);		// do the work; does not delete sbuf
-    class internal_error: public exception {
+    class internal_error: public std::exception {
         virtual const char *what() const throw() {
             return "internal error.";
         }

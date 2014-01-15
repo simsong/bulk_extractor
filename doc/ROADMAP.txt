@@ -67,7 +67,7 @@ Interfacing to UTSA:
 
 behan =  bulk_extractor_open(be_callback cb);
 - returns valid pointer if success, 0 if failure.
-int bulk_extractor_analyze_dev(behan,char *dev);
+int bulk_extractor_analyze_dev(behan,char *dev,uint64_t start,uint64_t end,uint64_t readsize,float percent);
 int bulk_extractor_analyze_dir(behan,char *dir);
 int bulk_extractor_analyze_buf(behan,uint8_t *buf,size_t buflen);
 int bulk_extractor_close(behan);

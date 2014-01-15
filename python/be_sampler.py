@@ -20,9 +20,9 @@ def get_lines_array(f):
         xpattern = None
     for line in f:
         line_number += 1
-        if pattern and not pattern in line:
+        if pattern and not pattern in line.split(b"\t")[0]:
             continue
-        if xpattern and xpattern in line:
+        if xpattern and xpattern in line.split(b"\t")[0]:
             continue
         if is_comment_line(line):
             continue
@@ -43,10 +43,10 @@ def sample(outdir,fn):
             for line in f:
                 line_number += 1
                 if is_comment_line(line):
-                    out.write(line)
+                    out.write(line.decode('utf-8'))
                 if line_number in lines_to_sample:
                     out.write("{}:\t".format(line_number))
-                    out.write(line)
+                    out.write(line.decode('utf-8'))
 
 def calc_stats(fn):
     wrong = 0
@@ -62,7 +62,7 @@ def calc_stats(fn):
         elif line[0] in '+=y' :
             right += 1
         else:
-            print("No classification:",line,end='');
+            if not args.quiet: print("No classification:",line,end='');
     return {"fn":os.path.basename(fn),
             "total":total,
             "sampled":sampled,
@@ -90,17 +90,31 @@ if __name__ == "__main__":
     import argparse,sys,os
     arg_parser = argparse.ArgumentParser(description=(
         "Create a bulk_extractor report that is sampled from an existing report. Number each feature file line; do not copy over the histograms. Currently does not handle carved objects"))
-    arg_parser.add_argument("--count", type=int, default="100", help="Number of items to sample")
-    arg_parser.add_argument("--sample", type=str, help="Specify report and output to sample",nargs=2,metavar='DIR')
-    arg_parser.add_argument("--pattern", type=str, help="Only sample lines that include this pattern")
-    arg_parser.add_argument("--xpattern", type=str, help="Do not sample lines that include this pattern")
-    arg_parser.add_argument("--calc", help="Compute the statistics",type=str)
+    arg_parser.add_argument("report", metavar="report", 
+            help="bulk_extractor report directory or zip file to graph")
+    arg_parser.add_argument("output", type=str, help="Output directory")
+    arg_parser.add_argument("--count", type=int, default="100",
+            help="Number of items to sample")
+    arg_parser.add_argument("--pattern", type=str, help="Only sample lines that include this pattern in the forensic path")
+    arg_parser.add_argument("--xpattern", type=str, help="Do not sample lines that include this pattern in the forensic path")
+    arg_parser.add_argument("--calc", help="Compute the statistics",action="store_true")
     arg_parser.add_argument("--trials", type=int, default="5", help="Number of trials to divide into")
+    arg_parser.add_argument("--quiet",action='store_true',help='do not alert on lines with no classification')
     args = arg_parser.parse_args()
     
     res = []
     if args.calc:
-        calc_report(args.calc)
+        for (dirpath,dirnames,filenames) in os.walk(args.output):
+            for filename in filenames:
+                if filename.endswith("~"): continue
+                fn = os.path.join(dirpath,filename)
+                r = calc_stats(fn)
+                print(r)
+                res.append(r)
+        print("{:20} {:8} {:8} {:4} {:8} {:8}".format("Feature","Total","Sampled","%","Accuracy","Err Rate"))
+        for r in res:
+            print("{:20} {:8} {:8} {:4}% {:8} {:8}".format(
+                    r['fn'],r['total'],r['sampled'],r['sampled']*100.0/r['total'],r['accuracy'],r['error_rate']))
         exit(0)
 
     if args.sample:

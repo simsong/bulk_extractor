@@ -12,22 +12,22 @@ static uint64_t max_word_outfile_size=100*1000*1000;
 
 class WordlistSorter {
 public:
-    bool operator()(const string &a,const string &b) {
+    bool operator()(const std::string &a,const std::string &b) {
 	if(a.size() < b.size()) return true;
 	if(a.size() > b.size()) return false;
 	return a<b;
     }
 };
 
-static void wordlist_split_and_dedup(string outdir_)
+static void wordlist_split_and_dedup(std::string outdir_)
 {
-    cout << "Phase 3. Uniquifying and recombining wordlist\n";
+    std::cout << "Phase 3. Uniquifying and recombining wordlist\n";
 
-    string ifn = outdir_+"/wordlist.txt";
-    string ofn_template = outdir_+"/wordlist_split_%03d.txt";
-    ifstream f2(ifn.c_str());
+    std::string ifn = outdir_+"/wordlist.txt";
+    std::string ofn_template = outdir_+"/wordlist_split_%03d.txt";
+    std::ifstream f2(ifn.c_str());
     if(!f2.is_open()) err(1,"Cannot open %s\n",ifn.c_str());
-    ofstream of2;
+    std::ofstream of2;
     int of2_counter = 0;
     uint64_t outfilesize = 0;
 
@@ -35,16 +35,16 @@ static void wordlist_split_and_dedup(string outdir_)
 
     while(!f2.eof()){
 	// set is the sorted list of words we have seen
-	set<string,WordlistSorter> seen;	
+	std::set<std::string,WordlistSorter> seen;	
 	while(!f2.eof()){
 	    /* Create the first file (of2==0) or roll-over if outfilesize>100M */
-	    string line;
+	    std::string line;
 	    getline(f2,line);
 	    if(line[0]=='#') continue;	// ignore comments
 	    size_t t1 = line.find('\t');		// find the beginning of the feature
-	    if(t1!=string::npos) line = line.substr(t1+1);
+	    if(t1!=std::string::npos) line = line.substr(t1+1);
 	    size_t t2 = line.find('\t');		// find the end of the feature
-	    if(t2!=string::npos) line = line.substr(0,t2);
+	    if(t2!=std::string::npos) line = line.substr(0,t2);
 	    try {
 		if(line.size()>0) seen.insert(line);
 	    }
@@ -56,7 +56,7 @@ static void wordlist_split_and_dedup(string outdir_)
 	}
 	/* Dump the words so far */
 
-	for(set<string,WordlistSorter>::const_iterator it = seen.begin();it!=seen.end();it++){
+	for(std::set<std::string,WordlistSorter>::const_iterator it = seen.begin();it!=seen.end();it++){
 	    if(!of2.is_open() || outfilesize>max_word_outfile_size){ 
 		if(of2.is_open()) of2.close();
 		char fname[128];

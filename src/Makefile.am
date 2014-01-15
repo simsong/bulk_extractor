@@ -107,8 +107,12 @@ stand_SOURCES = \
 	$(BE13_API) $(DFXML_WRITER) 
 
 beapi_demo_SOURCES = beapi_demo.cpp
+beapi_demo$(EXEEXT): bulk_extractor.so		# needs an up-to-date .so
 
-SUFFIXES = .flex
+rd: beapi_demo bulk_extractor.so
+	echo run the demo
+	./beapi_demo /corp/nps/drives/nps-2010-emails/nps-2010-emails.raw
+
 
 digtest$(EXEEXT): dig.cpp
 	$(CXX) -DSTANDALONE -o digtest$(EXEEXT) -g dig.cpp $(CPPFLAGS) $(CXXFLAGS) -I..
@@ -121,8 +125,10 @@ unitest$(EXEEXT): unicode_escape.cpp
 # FreeBSD NOTE: flex does not support -R and -o does not work properly
 # | sed "s/static int yy_get_next_buffer/static int XXyy_get_next_buffer/" 
 
+SUFFIXES = .flex
 FLEX_CXXFLAGS=-Wno-shadow -Wno-effc++ -Wno-redundant-decls -Wno-missing-noreturn
 .flex.o:
 	$(LEX) -R -t $<  > `basename $@ .o`.cpp 
 	$(CXX) $(CPPFLAGS) $(AM_CPPFLAGS) $(CXXFLAGS) $(FLEX_CXXFLAGS) \
 		-I${top_srcdir} -I${srcdir} -I.. -I../../_build -c `basename $@ .o`.cpp 
+

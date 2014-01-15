@@ -32,9 +32,9 @@ static uint32_t unzip_carve_mode = feature_recorder::CARVE_ENCODED;
 #endif
 #include <zlib.h>
 
-bool has_control_characters(const string &name)
+bool has_control_characters(const std::string &name)
 {
-    for(string::const_iterator it = name.begin();it!=name.end();it++){
+    for(std::string::const_iterator it = name.begin();it!=name.end();it++){
 	unsigned char ch = *it;
 	if(ch<' ') return true;
     }
@@ -42,7 +42,6 @@ bool has_control_characters(const string &name)
 }
 
 /* We should have a threadsafe set */
-static be13::hash_def hasher;
 
 /**
  * code from tsk3
@@ -116,7 +115,7 @@ inline void scan_zip_component(const class scanner_params &sp,const recursion_co
     if(pos+30+name_len > sbuf.bufsize) return; // name is bigger than what's left
     //if(compr_size<0 || uncompr_size<0) return; // sanity check
 
-    string name = sbuf.substr(pos+30,name_len);
+    std::string name = sbuf.substr(pos+30,name_len);
     /* scan for unprintable characters.
      * Name may contain UTF-8
      */
@@ -139,7 +138,7 @@ inline void scan_zip_component(const class scanner_params &sp,const recursion_co
              general_purpose_bit_flag,compression_method,uncompr_size,compr_size,
              mtime.c_str(),
              crc32,extra_field_len);
-    stringstream xmlstream;
+    std::stringstream xmlstream;
     xmlstream << b2;
 
     const unsigned char *data_buf = sbuf.buf+pos+30+name_len+extra_field_len; // where the data starts
@@ -214,7 +213,7 @@ inline void scan_zip_component(const class scanner_params &sp,const recursion_co
                     for(std::string::const_iterator it = name.begin(); it!=name.end();it++){
                         carve_name.push_back((*it=='/' || *it=='\\') ? '_' : *it);
                     }
-                    std::string fn = unzip_recorder->carve(sbuf_new,0,sbuf_new.bufsize,carve_name,hasher);
+                    std::string fn = unzip_recorder->carve(sbuf_new,0,sbuf_new.bufsize,carve_name);
                     unzip_recorder->set_carve_mtime(fn,mtime);
                 }
             }
@@ -243,7 +242,6 @@ void scan_zip(const class scanner_params &sp,const recursion_control_block &rcb)
         if(unzip_carve_mode){
             sp.info->feature_names.insert(UNZIP_RECORDER_NAME);
         }
-        hasher    = sp.info->config->hasher;
 	return;
     }
     feature_recorder *zip_recorder = sp.fs.get_name(ZIP_RECORDER_NAME);

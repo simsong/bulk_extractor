@@ -58,7 +58,8 @@ public class WScanProgress extends JDialog {
           progressBar.setValue((int)progressFloat);
           progressBar.setString(Float.toString(progressFloat) + "%");
         } catch (NumberFormatException e) {
-          WLog.log("WScanProgress.run: unexpected progress value '" + progress + "' in stdout: " + input);
+          WLog.log("WScanProgress.run: unexpected progress value '"
+                   + progress + "' in stdout: " + input);
         }
 
       } else {
@@ -119,11 +120,11 @@ public class WScanProgress extends JDialog {
       } else {
         // failed run
         statusL.setText("Error: bulk_extractor terminated with exit value "
-                        + exitValue + ".  Please check syntax.");
+                        + exitValue + ".  Please check command syntax.");
         WLog.log("bulk_extractor error exit value: " + exitValue);
         progressBar.setString("Error");
         WError.showError("bulk_extractor Scanner terminated with exit value "
-                         + exitValue + ".  Please check syntax:"
+                         + exitValue + ".  Please check command syntax:"
                          + "\n" + scanSettings.getCommandString(),
                          "bulk_extractor scan terminated", null);
       }
@@ -309,7 +310,6 @@ public class WScanProgress extends JDialog {
     c.insets = new Insets(15, 5, 0, 5);
     c.gridx = 0;
     c.gridy = 1;
-//    c.weightx= 1;
     c.fill = GridBagConstraints.HORIZONTAL;
 //    c.anchor = GridBagConstraints.LINE_START;
     pane.add(getCommandContainer(), c);
@@ -551,7 +551,7 @@ public class WScanProgress extends JDialog {
     JScrollPane outputScrollPane = new JScrollPane(outputArea,
                        ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                        ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    outputScrollPane.setPreferredSize(new Dimension(500, 200));
+    outputScrollPane.setPreferredSize(new Dimension(600, 200));
     c = new GridBagConstraints();
     c.insets = new Insets(0, 0, 0, 0);
     c.gridx = 0;

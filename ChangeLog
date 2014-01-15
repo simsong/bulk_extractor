@@ -1,3 +1,29 @@
+2014-01-10  Basic  <simsong@t193-251.demo.tuwien.ac.at>
+
+	* src/be13_api/feature_recorder.cpp (feature_recorder::dump_histogram): moved regex into histogram_def so that it could be run in write(), rather than in post-processing. 
+
+2014-01-07  Basic  <simsong@Dance.local>
+
+	* src/be13_api/feature_recorder.h (class feature_recorder): removed outdir and input_fname from feature_recorder, since they are in the feature_recorder_set
+
+2014-01-02  Man Page  <simsong@mncrnpsedu.local>
+
+	* src/be13_api/feature_recorder.h (class feature_recorder): carve no longer needs hasher passed in, becuase it is in the feature_recorder_set
+
+	* src/be13_api/bulk_extractor_i.h (be13): hash_def moved from be13 namespace to feature_recorder_set
+
+2013-12-13  Basic  <simsong@npsair.local>
+
+	* src/image_process.h (class process_dir): implemented const correctness for a whole bunch of methods
+
+	* src/be13_api/feature_recorder.h: removed using namespace std
+
+2013-12-11  Basic  <simsong@npsair.local>
+
+	* src/be13_api/feature_recorder_set.h (class feature_recorder_set): process_histograms changed to make_histograms, because that's what it is doing
+
+	* src/be13_api/feature_recorder.h (class feature_recorder): make_histogram renamed to dump_histogram (because that's what it's doing; callback function added)
+
 2013-11-13  Basic  <simsong@Mucha.local>
 
 	* src/be13_api: USE_HISTOGRAMS is gone; everybody uses them now.

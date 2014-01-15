@@ -9,38 +9,27 @@ import java.awt.event.*;
 public class WImportScanSettings extends JDialog {
   private static final long serialVersionUID = 1;
 
-  private static WImportScanSettings wImportScanSettings;
   private JTextField settingsTF = new JTextField();
   private JButton importB = new JButton("Import");
   private JButton cancelB = new JButton("Cancel");
 
 /**
- * Opens this window.
+ * Dialog window for importing bulk_extractor run scan settings
  */
-  public static void openWindow() {
-    if (wImportScanSettings == null) {
-      // this is the first invocation
-      // create the window
-      wImportScanSettings = new WImportScanSettings();
-    }
-
-    // show the dialog window
-    wImportScanSettings.setLocationRelativeTo(BEViewer.getBEWindow());
-    wImportScanSettings.setVisible(true);
-  }
-
-  private WImportScanSettings() {
-    // set parent window, title, and modality
-
+  public WImportScanSettings(String commandString) {
+    setLocationRelativeTo(BEViewer.getBEWindow());
     buildInterface();
     wireActions();
     getRootPane().setDefaultButton(importB);
+    settingsTF.setText(commandString);
     pack();
+    setModal(true);
+    setAlwaysOnTop(true);
+    setVisible(true);
   }
 
   private void buildInterface() {
     setTitle("Import Scan Settings");
-    setModal(true);
     Container pane = getContentPane();
 
     // use GridBagLayout with GridBagConstraints
@@ -49,9 +38,12 @@ public class WImportScanSettings extends JDialog {
 
     // (0,0) add the scan settings text input
     c = new GridBagConstraints();
-    c.insets = new Insets(5, 5, 5, 5);
+    c.insets = new Insets(15, 5, 5, 5);
     c.gridx = 0;
     c.gridy = 0;
+    c.weightx = 1;
+    c.weighty = 1;
+    c.fill=GridBagConstraints.HORIZONTAL;
     c.anchor = GridBagConstraints.LINE_START;
     pane.add(buildSettingsInput(), c);
 
@@ -60,7 +52,7 @@ public class WImportScanSettings extends JDialog {
     c.insets = new Insets(5, 5, 5, 5);
     c.gridx = 0;
     c.gridy = 1;
-    c.anchor = GridBagConstraints.LINE_START;
+//    c.anchor = GridBagConstraints.LINE_START;
     pane.add(buildControls(), c);
   }
 
@@ -78,15 +70,16 @@ public class WImportScanSettings extends JDialog {
     container.add(new JLabel("Settings Text"), c);
 
     // settingsTF (1,0)
-    settingsTF.setMinimumSize(new Dimension(250, settingsTF.getPreferredSize().height));
-    settingsTF.setPreferredSize(new Dimension(250, settingsTF.getPreferredSize().height));
-    settingsTF.setToolTipText("Import settings from text");
+//    settingsTF.setMinimumSize(new Dimension(600, settingsTF.getPreferredSize().height));
+    settingsTF.setPreferredSize(new Dimension(600, settingsTF.getPreferredSize().height));
+    settingsTF.setToolTipText("Import settings from command line text");
     c = new GridBagConstraints();
     c.insets = new Insets(0, 5, 0, 5);
     c.gridx = 1;
     c.gridy = 0;
     c.weightx = 1;
     c.weighty = 1;
+    c.fill=GridBagConstraints.HORIZONTAL;
     c.anchor = GridBagConstraints.LINE_START;
     container.add(settingsTF, c);
 
@@ -122,9 +115,16 @@ public class WImportScanSettings extends JDialog {
     importB.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         ScanSettings scanSettings = new ScanSettings(settingsTF.getText());
-        scanSettings.validateSomeSettings();
-        WScan.openWindow(scanSettings);
-        setVisible(false);
+
+        if (scanSettings.validTokens
+            && scanSettings.validateSomeSettings()) {
+
+          // good, use it
+          WScan.openWindow(scanSettings);
+          setVisible(false);
+        } else {
+          // bad input, ignore import request
+        }
       }
     });
 

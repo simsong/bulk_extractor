@@ -21,7 +21,7 @@ public class WScanSettingsRunQueue extends JDialog {
   private static JButton closeB = new JButton("Close");
 
   static {
-    runQueueL.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    runQueueL.setSelectionModel(BEViewer.scanSettingsListModel.selectionModel);
     runQueueL.setCellRenderer(new ScanSettingsListCellRenderer());
   }
 
@@ -66,8 +66,6 @@ public class WScanSettingsRunQueue extends JDialog {
     c = new GridBagConstraints();
     c.gridx = 0;
     c.gridy = y;
-//    c.weightx = 1;
-//    c.weighty = 1;
     c.anchor = GridBagConstraints.LINE_START;
     c.fill = GridBagConstraints.BOTH;
     pane.add(toolbar, c);

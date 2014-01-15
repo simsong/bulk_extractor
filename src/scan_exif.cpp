@@ -213,14 +213,14 @@ struct jpeg_validator {
  * Used for helping to convert TIFF's GPS format to decimal lat/long
  */
 
-static double be_stod(string s)
+static double be_stod(std::string s)
 {
     double d=0;
     sscanf(s.c_str(),"%lf",&d);
     return d;
 }
 
-static double rational(string s)
+static double rational(std::string s)
 {
     std::vector<std::string> parts = split(s,'/');
     if(parts.size()!=2) return be_stod(s);	// no slash, so return without
@@ -229,7 +229,7 @@ static double rational(string s)
     return bot>0 ? top / bot : top;
 }
 
-static string fix_gps(string s)
+static std::string fix_gps(std::string s)
 {
     std::vector<std::string> parts = split(s,' ');
     if(parts.size()!=3) return s;	// return the original
@@ -238,7 +238,7 @@ static string fix_gps(string s)
     return s;
 }
 
-static string fix_gps_ref(string s)
+static std::string fix_gps_ref(std::string s)
 {
     if(s=="W" || s=="S") return "-";
     return "";
@@ -358,7 +358,7 @@ inline size_t min(size_t a,size_t b){
  * record exif data in well-formatted XML.
  */
 static void record_exif_data(feature_recorder *exif_recorder, const pos0_t &pos0,
-                             const string &hash_hex, const entry_list_t &entries)
+                             const std::string &hash_hex, const entry_list_t &entries)
 {
     if(exif_debug) std::cerr << "scan_exif recording data for entry" << "\n";
 
@@ -373,7 +373,7 @@ static void record_exif_data(feature_recorder *exif_recorder, const pos0_t &pos0
     for (entry_list_t::const_iterator it = entries.begin(); it!=entries.end(); it++) {
 
         // prepare by escaping XML codes.
-        string prepared_value = dfxml_writer::xmlescape((*it)->value);
+        std::string prepared_value = dfxml_writer::xmlescape((*it)->value);
 
         // do not report entries that have empty values
         if (prepared_value.length() == 0) {
@@ -389,8 +389,8 @@ static void record_exif_data(feature_recorder *exif_recorder, const pos0_t &pos0
         }
 
         if(exif_debug){
-            cout << "scan_exif fed before xmlescape: " << (*it)->value << "\n";
-            cout << "scan_exif fed after xmlescape: " << prepared_value << "\n";
+            std::cout << "scan_exif fed before xmlescape: " << (*it)->value << "\n";
+            std::cout << "scan_exif fed after xmlescape: " << prepared_value << "\n";
         }
         ss << "<" << (*it)->get_full_name() << ">" << prepared_value << "</" << (*it)->get_full_name() << ">";
     }
@@ -406,7 +406,7 @@ static void record_exif_data(feature_recorder *exif_recorder, const pos0_t &pos0
  * that is not just a time or date entry.
  */
 static void record_gps_data(feature_recorder *gps_recorder, const pos0_t &pos0,
-                            const string &hash_hex, const entry_list_t &entries)
+                            const std::string &hash_hex, const entry_list_t &entries)
 {
     // desired GPS strings
     std::string gps_time, gps_date, gps_lon_ref, gps_lon, gps_lat_ref;
@@ -514,7 +514,7 @@ static void record_gps_data(feature_recorder *gps_recorder, const pos0_t &pos0,
     // NOTE: desired date format is "2011-06-25T12:20:11" made from "2011:06:25" and "12 20 11"
     if (has_gps) {
         // report GPS
-        stringstream ss;
+        std::stringstream ss;
         if (has_gps_date) {
             // use GPS data with GPS date
             ss << gps_date << "T" << gps_time << ",";
@@ -547,10 +547,9 @@ public:
         entries(),
         exif_recorder(*sp.fs.get_name("exif")),
         gps_recorder(*sp.fs.get_name("gps")),
-        jpeg_recorder(*sp.fs.get_name("jpeg_carved")){
+        jpeg_recorder(*sp.fs.get_name("jpeg_carved")) {
     }
 
-    static be13::hash_def hasher;
     entry_list_t entries;
     feature_recorder &exif_recorder;
     feature_recorder &gps_recorder;
@@ -568,7 +567,7 @@ public:
     size_t process(const sbuf_t &sbuf,bool found_start){
         // get md5 for this exif
         size_t ret = 0;
-        string feature_text = "00000000000000000000000000000000";
+        std::string feature_text = "00000000000000000000000000000000";
         if(found_start){
             jpeg_validator::results_t res = jpeg_validator::validate_jpeg(sbuf);
             
@@ -577,13 +576,13 @@ public:
 
             // Should we carve?
             if(res.how==jpeg_validator::COMPLETE || res.len>(ssize_t)min_jpeg_size){
-                jpeg_recorder.carve(sbuf,0,res.len,".jpg",hasher);
+                jpeg_recorder.carve(sbuf,0,res.len,".jpg");
                 ret = res.len;
             }
 
             // Record the hash of the first 4K
             sbuf_t tohash(sbuf,0,4096);
-            feature_text = hasher.func(tohash.buf,tohash.bufsize);
+            feature_text = jpeg_recorder.fs.hasher.func(tohash.buf,tohash.bufsize);
         }
         /* Record entries (if present) in the feature files */
         record_exif_data(&exif_recorder, sbuf.pos0, feature_text, entries);
@@ -632,8 +631,8 @@ public:
                     if(exif_debug) std::cerr << "scan_exif.tiff_offset in ffd8 " << tiff_offset;
                 }
                 // Try to process if it is exif or not
+                  
                 size_t skip = process(sbuf+start,true);
-                // std::cerr << "1 skip=" << skip << "\n";
                 if(skip>1) start += skip-1;
                 if(exif_debug){
                     std::cerr << "scan_exif Done processing JPEG/Exif ffd8ff at "
@@ -713,8 +712,6 @@ public:
     }
 };
 
-be13::hash_def exif_scanner::hasher;
-
 extern "C"
 void scan_exif(const class scanner_params &sp,const recursion_control_block &rcb)
 {
@@ -728,16 +725,14 @@ void scan_exif(const class scanner_params &sp,const recursion_control_block &rcb
 	sp.info->feature_names.insert("exif");
 	sp.info->feature_names.insert("gps");
 	sp.info->feature_names.insert("jpeg_carved");
-        exif_scanner::hasher    = sp.info->config->hasher;
         sp.info->get_config("exif_debug",&exif_debug,"debug exif decoder");
         sp.info->get_config("jpeg_carve_mode",&jpeg_carve_mode,"0=carve none; 1=carve encoded; 2=carve all");
         sp.info->get_config("min_jpeg_size",&min_jpeg_size,"Smallest JPEG stream that will be carved");
 	return;
     }
     if(sp.phase==scanner_params::PHASE_INIT){
-        exif_scanner escan(sp);
-        escan.exif_recorder.set_flag(feature_recorder::FLAG_XML); // to escape all but backslashes
-        escan.jpeg_recorder.set_carve_mode(static_cast<feature_recorder::carve_mode_t>(jpeg_carve_mode));
+        sp.fs.get_name("exif")->set_flag(feature_recorder::FLAG_XML); // to escape all but backslashes
+        sp.fs.get_name("jpeg_carved")->set_carve_mode(static_cast<feature_recorder::carve_mode_t>(jpeg_carve_mode));
     }
     if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;
     if(sp.phase==scanner_params::PHASE_SCAN){

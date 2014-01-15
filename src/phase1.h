@@ -15,6 +15,9 @@
 
 class BulkExtractor_Phase1 {
 public:
+    typedef std::set<uint64_t> blocklist_t; // a list of blocks
+    static void make_sorted_random_blocklist(blocklist_t *blocklist,uint64_t max_blocks,float frac);
+
     /* configuration for phase1 */
     class Config {
     Config &operator=(const Config &);  // not implemented

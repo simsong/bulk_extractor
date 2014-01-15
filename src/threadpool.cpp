@@ -94,7 +94,7 @@ threadpool::threadpool(int numthreads,feature_recorder_set &fs_,dfxml_writer &xr
     for(int i=0;i<numthreads;i++){
 	class worker *w = new worker(*this,i);
 	workers.push_back(w);
-	thread_status.push_back(string());
+	thread_status.push_back(std::string());
 	pthread_create(&w->thread,NULL,worker::start_worker,(void *)w);
     }
     pthread_mutex_unlock(&M);		// lock while I create the threads
@@ -260,7 +260,7 @@ void *worker::run()
 	delete sbuf;
 	pthread_mutex_lock(&master.M);
 	master.freethreads++;
-	master.thread_status.at(id) = string("Free");
+	master.thread_status.at(id) = std::string("Free");
 	pthread_cond_signal(&master.TOMAIN); // tell the master that we are free!
 	pthread_mutex_unlock(&master.M);     // should wake up the master
     }

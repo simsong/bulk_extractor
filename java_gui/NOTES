@@ -63,8 +63,6 @@ Type "java -version" to see which Java is in use.
 Type: "alternatives --config java" to select which Java environment to use.
 
 ------------------------------------------------------------
-Sysadmin support at NCR: Michael Shick
-
 EXIV in bulk_extractor: from 7/2/12 10:59:
 
 On 06/26/2012 02:55 PM, Garfinkel, Simson (CIV) wrote:
@@ -110,4 +108,45 @@ Since jlibewf was removed, its requisite logger, log4j, was removed.
 
 Since bulk_extractor does not export E01 information fields, the "get info"
 capability, available only in jlibewf, was removed.
+
+------------------------------------------------------------
+Trouble with modal windows requiring focus but being hidden:
+Solution: Use setAlwaysOnTop for modal dialog boxes.
+When running processes ask Swing to open a modal dialog box, an open modal
+window can get covered, even though it has modal focus, resulting in the
+appearance of a GUI hang.  To mitigate this, all modal windows must call
+setAlwaysOnTop.  Although they unfortunately paint above other applications,
+they do remain visible, which is a requirement.
+
+------------------------------------------------------------
+Working with ListSelectionListener:
+When Java's JList data listener sees a data model change, it changes state
+of the data listener.  The JList component should not change state of the
+selection model when the data model changes, this is a violation of
+responsibility.  Here is how it is disruptive for my use case:
+
+When the list model changes, it fires events to its listeners.
+
+My listener runs first, and sets the selection in the selection model to the
+last item in the list because in my use case, items should be selected when
+they are added.
+
+The JList listener runs second, and changes the selection in the
+selection model on my behalf in file javax/swing/plaf/basic/BasicListUI.java
+function intervalAdded(), causing it to roll past the end.
+
+JList should not modify the selection model when the data model changes.
+If the selection model is to track the data model, it should listen to the
+data model directly.  If the selection model is not to track the data model,
+as in my use case, the JLabel, which listens to the data model, should leave
+the selection model alone.  But it does not.
+
+The fix:
+1) I add an item to the data model.
+2) The data model fires its intervalAdded event, which causes JList
+   to corrupt the state of the list selection model.
+3) I select the last item in the list in the selection model, which is the
+   required functionality for my use case.
+
+------------------------------------------------------------
 

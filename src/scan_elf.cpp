@@ -450,8 +450,8 @@ struct flagnames_t elf_sh_type[] = {
     {0,0}
 };
 
-static void decode_flags (stringstream &xml,
-                          const string &sectionName,
+static void decode_flags (std::stringstream &xml,
+                          const std::string &sectionName,
                           const struct flagnames_t flagnames[],
                           const uint32_t flags)
 {
@@ -462,18 +462,18 @@ static void decode_flags (stringstream &xml,
     xml << "</" << sectionName << ">";
 }
 
-static string match_switch_case (const struct flagnames_t flagnames[],
-                                 const uint32_t needle)
+static std::string match_switch_case (const struct flagnames_t flagnames[],
+                                      const uint32_t needle)
 {
     for (int i = 0; flagnames[i].name; i++) {
         if (needle == flagnames[i].flag) return flagnames[i].name;
     }
-    return "";
+    return std::string("");
 }
 
-string getAsciiString (const sbuf_t & sbuf, size_t offset)
+std::string getAsciiString (const sbuf_t & sbuf, size_t offset)
 {
-    string str;
+    std::string str;
     
     while (sbuf[offset] != '\0') {
         if (sbuf[offset] & 0x80) return "";
@@ -524,7 +524,7 @@ std::string scan_elf32_dynamic_needed (const sbuf_t & data, const Elf32_Shdr * s
     
     // we can now loop through the dynamic entries, pull out the entires corresponding to
     // required shared objects, and add their string table entries
-    string shared_objects;
+    std::string shared_objects;
     for (uint32_t i = 0; i < shdr->sh_size / shdr->sh_entsize; i++) {
         size_t dyn_offset = shdr->sh_offset + (shdr->sh_entsize * i);
         const Elf32_Dyn * dyn = data.get_struct_ptr<Elf32_Dyn>(dyn_offset);
@@ -582,7 +582,7 @@ std::string scan_elf64_dynamic_needed (const sbuf_t & data, const Elf64_Shdr * s
     
     // we can now loop through the dynamic entries, pull out the entires corresponding to
     // required shared objects, and add their string table entries
-    string shared_objects;
+    std::string shared_objects;
     for (uint32_t i = 0; i < shdr->sh_size / shdr->sh_entsize; i++) {
         size_t dyn_offset = shdr->sh_offset + (shdr->sh_entsize * i);
         const Elf64_Dyn * dyn = data.get_struct_ptr<Elf64_Dyn>(dyn_offset);
@@ -602,10 +602,10 @@ std::string scan_elf64_dynamic_needed (const sbuf_t & data, const Elf64_Shdr * s
 
 // function begins with 32 bits of confidence
 // So look for excuses to throw out the ELF
-string scan_elf_verify (const sbuf_t & data)
+std::string scan_elf_verify (const sbuf_t & data)
 {
-    stringstream xml;        
-    stringstream so_xml;		// collect shared object names
+    std::stringstream xml;        
+    std::stringstream so_xml;		// collect shared object names
     u_int sht_null_count=0;
     
     
@@ -789,20 +789,18 @@ string scan_elf_verify (const sbuf_t & data)
     return xml.str();
 }
 
-static be13::hash_def hasher;
 extern "C"
 void scan_elf (const class scanner_params          &sp,
                const       recursion_control_block &rcb)
 {
     assert(sp.sp_version == scanner_params::CURRENT_SP_VERSION);
-    string xml;
+    std::string xml;
     
     if (sp.phase==scanner_params::PHASE_STARTUP){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
         sp.info->name   = "elf";
 	sp.info->author = "Alex Eubanks";
         sp.info->feature_names.insert("elf");
-        hasher    = sp.info->config->hasher;
         return;
     }
     if (sp.phase==scanner_params::PHASE_SCAN){
@@ -821,7 +819,7 @@ void scan_elf (const class scanner_params          &sp,
 		xml = scan_elf_verify(data);
 		if (xml != "") {
                     sbuf_t hdata(data,0,4096);
-                    std::string hexhash = hasher.func(hdata.buf,hdata.bufsize);
+                    std::string hexhash = f->fs.hasher.func(hdata.buf,hdata.bufsize);
 		    f->write(data.pos0, hexhash,xml);
 		}
 	    }

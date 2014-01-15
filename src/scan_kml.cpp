@@ -23,7 +23,6 @@
 
 using namespace std;
 
-static be13::hash_def hasher;
 extern "C"
 void scan_kml(const class scanner_params &sp,const recursion_control_block &rcb)
 {
@@ -36,7 +35,6 @@ void scan_kml(const class scanner_params &sp,const recursion_control_block &rcb)
         sp.info->description    = "Scans for KML files";
         sp.info->scanner_version= "1.0";
 	sp.info->feature_names.insert("kml");
-        hasher    = sp.info->config->hasher;
 	return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
@@ -59,7 +57,7 @@ void scan_kml(const class scanner_params &sp,const recursion_control_block &rcb)
 	    std::string possible_kml = sbuf.substr(xml_loc,kml_len);
 	    if(utf8::find_invalid(possible_kml.begin(),possible_kml.end()) == possible_kml.end()){
 		/* No invalid UTF-8 */
-		kml_recorder->carve(sbuf,xml_loc,kml_len,".kml",hasher);
+		kml_recorder->carve(sbuf,xml_loc,kml_len,".kml");
 		i = ekml_loc + 6;	// skip past end of </kml>
 	    }
 	    else {

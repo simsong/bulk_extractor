@@ -322,7 +322,6 @@ string RarVolumeInfo::to_xml() const
 // settings - these configuration vars are set when the scanner is created
 static bool record_components = true;
 static bool record_volumes = true;
-static be13::hash_def hasher;
 
 // component processing (compressed file within an archive)
 static bool process_component(const unsigned char *buf, size_t buf_len, RarComponentInfo &output)
@@ -608,7 +607,6 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
         sp.info->get_config("rar_find_components",&record_components,"Search for RAR components");
         sp.info->get_config("raw_find_volumes",&record_volumes,"Search for RAR volumes");
         sp.info->get_config("unrar_carve_mode",&unrar_carve_mode,CARVE_MODE_DESCRIPTION);
-        hasher = sp.info->config->hasher;
 #else
         sp.info->description = "(disabled in configure)";
         sp.info->flags = scanner_info::SCANNER_DISABLED | scanner_info::SCANNER_NO_USAGE | scanner_info::SCANNER_NO_ALL;
@@ -654,7 +652,7 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
                     size_t enc_rar_pos = pos;
                     size_t enc_rar_len = MARK_LEN + volume.len + encrypted_len;
 
-                    rar_recorder->carve(sbuf, enc_rar_pos, enc_rar_len, ".rar", hasher);
+                    rar_recorder->carve(sbuf, enc_rar_pos, enc_rar_len, ".rar");
                 }
             }
             if(record_components && process_component(cc, cc_len, component)) {
@@ -680,7 +678,7 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
                         for(std::string::iterator it = carve_name.begin(); it!=carve_name.end();it++){
                             if(*it=='/') *it = '_';
                         }
-                        std::string fn = unrar_recorder->carve(child_sbuf,0,child_sbuf.bufsize,carve_name,hasher);
+                        std::string fn = unrar_recorder->carve(child_sbuf,0,child_sbuf.bufsize,carve_name);
                         unrar_recorder->set_carve_mtime(fn,component.iso_timestamp());
                     }
                 }

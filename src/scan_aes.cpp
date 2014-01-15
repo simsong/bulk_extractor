@@ -374,9 +374,9 @@ int valid_aes256_schedule(const unsigned char * in)
 
 
 
-static string key_to_string(const unsigned char * key, uint64_t sz)
+static std::string key_to_string(const unsigned char * key, uint64_t sz)
 {
-    string ret;
+    std::string ret;
     for(size_t pos=0;pos<sz;pos++){
 	char buf[4];
 	snprintf(buf,sizeof(buf),"%02x ", key[pos]);
@@ -445,16 +445,16 @@ void scan_aes(const class scanner_params &sp,const recursion_control_block &rcb)
 	    if(distinct_counts>10){
 		const u_char *p2 = sp.sbuf.buf + pos;
 		if (valid_aes128_schedule(p2)) {
-		    string key = key_to_string(p2, AES128_KEY_SIZE);
-		    aes_recorder->write(sp.sbuf.pos0+pos,key,string("AES128"));
+                    std::string key = key_to_string(p2, AES128_KEY_SIZE);
+		    aes_recorder->write(sp.sbuf.pos0+pos,key,std::string("AES128"));
 		}
 		if (valid_aes192_schedule(p2)) {
-		    string key = key_to_string(p2, AES192_KEY_SIZE);
-		    aes_recorder->write(sp.sbuf.pos0+pos,key,string("AES192"));
+                    std::string key = key_to_string(p2, AES192_KEY_SIZE);
+		    aes_recorder->write(sp.sbuf.pos0+pos,key,std::string("AES192"));
 		}
 		if (valid_aes256_schedule(p2)) {
-		    string key = key_to_string(p2, AES256_KEY_SIZE);
-		    aes_recorder->write(sp.sbuf.pos0+pos,key,string("AES256"));
+                    std::string key = key_to_string(p2, AES256_KEY_SIZE);
+		    aes_recorder->write(sp.sbuf.pos0+pos,key,std::string("AES256"));
 		}
 	    }
 	    /* remove current byte being analyzed */
