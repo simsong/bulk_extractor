@@ -283,7 +283,16 @@ CXX_WARNINGS_TO_TEST="-Wall -MD -Wpointer-arith \
     -Wfloat-equal -Wmultichar -Wmissing-noreturn \
     -Woverloaded-virtual -Wsign-promo -funit-at-a-time -Qunused-arguments"
 
-if test x$CXX != "xclang++" ; then
+clang=no
+if (g++ --version 2>&1 | grep clang > /dev/null) ; 
+then 
+   clang=yes
+fi
+if test x$CXX == "xclang++" ; then
+  clang=yes
+fi
+
+if test $clang == "no" ; then
   # -Wstrict-null-sentinel is not supported under clang
   CXX_WARNINGS_TO_TEST="$CXX_WARNINGS_TO_TEST -Wstrict-null-sentinel"
 fi
