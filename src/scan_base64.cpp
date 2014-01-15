@@ -2,8 +2,8 @@
 #include "be13_api/bulk_extractor_i.h"
 #include "base64_forensic.h"
 
-static bool  base64array[256];           // array of valid base64 characters
-static int   minlinewidth = 60;
+static bool   base64array[256];           // array of valid base64 characters
+static size_t minlinewidth = 60;
 
 
 inline bool isbase64(unsigned char ch)
