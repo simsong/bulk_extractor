@@ -884,7 +884,7 @@ int main(int argc,char **argv)
     std::string reportfilename = opt_outdir + "/report.xml";
 
     BulkExtractor_Phase1::seen_page_ids_t seen_page_ids; // pages that do not need re-processing
-    image_process *p = 0;
+    image_process *p = 0;                                // the image process iterator
 
     /* Get image or directory */
     if (*argv == NULL) {
@@ -921,7 +921,7 @@ int main(int argc,char **argv)
         }
     }
 
-    /* If disk image does not exist, we are in restart mode */
+    /* Open the image file (or the device) now */
     p = image_process::open(image_fname,opt_recurse,cfg.opt_pagesize,cfg.opt_marginsize);
     if(!p) err(1,"Cannot open %s: ",image_fname.c_str());
     

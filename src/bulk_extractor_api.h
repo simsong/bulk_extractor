@@ -15,7 +15,7 @@
 #define BULK_EXTRACTOR_API_CODE_HISTOGRAM       2
 #define BULK_EXTRACTOR_API_CODE_CARVED          3
 #define BULK_EXTRACTOR_API_CODE_FEATURELIST    10
-
+#define BULK_EXTRACTOR_API_EXCEPTION         1000 // exception in name
 
 typedef struct BEFILE_t BEFILE;
 typedef int be_callback_t(void *user,
@@ -51,8 +51,8 @@ typedef int (*bulk_extractor_analyze_buf_t)(BEFILE *bef,uint8_t *buf,size_t bufl
 extern "C" int bulk_extractor_analyze_buf(BEFILE *bef,uint8_t *buf,size_t buflen);
 #define BULK_EXTRACTOR_ANALYZE_BUF "bulk_extractor_analyze_buf"
 
-typedef int (*bulk_extractor_analyze_dev_t)(BEFILE *bef,const char *path);
-extern "C" int bulk_extractor_analyze_dev(BEFILE *bef,const char *path);
+typedef int (*bulk_extractor_analyze_dev_t)(BEFILE *bef,const char *path,float frac,int samplesize);
+extern "C" int bulk_extractor_analyze_dev(BEFILE *bef,const char *path,float frac,int samplesize);
 #define BULK_EXTRACTOR_ANALYZE_DEV "bulk_extractor_analyze_dev"
 
 typedef int (*bulk_extractor_close_t)(BEFILE *bef);

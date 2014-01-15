@@ -248,18 +248,38 @@ int bulk_extractor_analyze_buf(BEFILE *bef,uint8_t *buf,size_t buflen)
 }
 
 extern "C" 
-int bulk_extractor_analyze_dev(BEFILE *bef,const char *fname)
+int bulk_extractor_analyze_dev(BEFILE *bef,const char *fname,float frac,int pagesize)
 {
     struct stat st;
     if(stat(fname,&st)){
-        return -1;                  // cannot stat file
+        return -1;                      // cannot stat file
     }
-    if(S_ISREG(st.st_mode)){
+    if(S_ISREG(st.st_mode)){            // files we handle with a mapped sbuf
         const sbuf_t *sbuf = sbuf_t::map_file(fname);
         if(!sbuf) return -1;
         be13::plugin::process_sbuf(scanner_params(scanner_params::PHASE_SCAN,*sbuf,bef->cfs));
         delete sbuf;
         return 0;
+    }
+    if(S_ISBLK(st.st_mode) || S_ISCHR(st.st_mode)){
+        /* A single-threaded sampling bulk_extractor.
+         * It may be better to do this with two threads---one that does the reading (and seeking),
+         * the other that doe the analysis.
+         */
+        image_process *p = image_process::open(fname,false,pagesize,pagesize);
+        image_process::iterator it = p->begin(); // get an iterator
+        while(it != p->end()){
+            try {
+                sbuf_t *sbuf = it.sbuf_alloc();
+                if(sbuf==0) break;      // eof
+                be13::plugin::process_sbuf(scanner_params(scanner_params::PHASE_SCAN,*sbuf,bef->cfs));
+                delete sbuf;
+            }
+            catch (const std::exception &e) {
+                (*bef->cfs.cb)(bef->cfs.user,BULK_EXTRACTOR_API_EXCEPTION,0,
+                               e.what(),it.get_pos0().str().c_str(),"",0,"",0);
+            }
+        }
     }
     return 0;
 }

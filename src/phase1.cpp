@@ -22,7 +22,7 @@ std::string BulkExtractor_Phase1::minsec(time_t tsec)
     time_t min = tsec / 60;
     time_t sec = tsec % 60;
     std::stringstream ss;
-    if(min>0) ss << min << " min ";
+    if(min>0) ss << min << " min";
     if(sec>0) ss << sec << " sec";
     return ss.str();
 }
@@ -39,8 +39,6 @@ void BulkExtractor_Phase1::print_tp_status()
     std::cout << ss.str() << "\n";
 }
 
-
-    
 /**
  * attempt to get an sbuf. If we can't get it, we may be in a
  * low-memory situation.  wait for 30 seconds.
@@ -75,6 +73,17 @@ sbuf_t *BulkExtractor_Phase1::get_sbuf(image_process::iterator &it)
 }
 
 
+void BulkExtractor_Phase1::make_sorted_random_blocklist(blocklist_t *blocklist,uint64_t num_blocks,float frac)
+{
+    while(blocklist->size() < num_blocks * frac){
+        uint64_t blk_high = ((uint64_t)random()) << 32;
+        uint64_t blk_low  = random();
+        uint64_t blk      = (blk_high | blk_low) % num_blocks;
+        blocklist->insert(blk); // will be added even if already present
+    }
+}
+
+
 void BulkExtractor_Phase1::run(image_process &p,feature_recorder_set &fs,
                                seen_page_ids_t &seen_page_ids)
 {
@@ -83,7 +92,6 @@ void BulkExtractor_Phase1::run(image_process &p,feature_recorder_set &fs,
 
     if(config.debug & DEBUG_PRINT_STEPS) std::cout << "DEBUG: CREATING THREAD POOL\n";
     
-
     tp = new threadpool(config.num_threads,fs,xreport);	
 
     if(config.debug & DEBUG_PRINT_STEPS){
@@ -91,33 +99,26 @@ void BulkExtractor_Phase1::run(image_process &p,feature_recorder_set &fs,
         getchar();
     }
 
-
     uint64_t page_ctr=0;
     xreport.push("runtime","xmlns:debug=\"http://www.afflib.org/bulk_extractor/debug\"");
 
-    std::set<uint64_t> blocks_to_sample;
-
     /* A single loop with two iterators.
+     *
      * it -- the regular image_iterator; it knows how to read blocks.
      * 
      * si -- the sampling iterator. It is a iterator for an STL set.
+     *
      * If sampling, si is used to ask for a specific page from it.
      */
-    std::set<uint64_t>::const_iterator si = blocks_to_sample.begin(); // sampling iterator
-    image_process::iterator it = p.begin(); // sequential iterator
+    blocklist_t blocks_to_sample;
+    blocklist_t::const_iterator si = blocks_to_sample.begin(); // sampling iterator
+    image_process::iterator     it = p.begin(); // sequential iterator
     if(sampling()){
         /* Create a list of blocks to sample */
-        uint64_t blocks = it.blocks();
-        while(blocks_to_sample.size() < blocks * config.sampling_fraction){
-            uint64_t blk_high = ((uint64_t)random()) << 32;
-            uint64_t blk_low  = random();
-            uint64_t blk =  (blk_high | blk_low) % blocks;
-            blocks_to_sample.insert(blk); // will be added even if already present
-        }
-            
-        si = blocks_to_sample.begin(); // get the new beginning
+        make_sorted_random_blocklist(&blocks_to_sample,it.blocks(),config.sampling_fraction);
+        si = blocks_to_sample.begin();    // get the new beginning
     }
-    /* Loop over the blocks to samlpe */
+    /* Loop over the blocks to sample */
     while(true){
         if(sampling()){
             if(si==blocks_to_sample.end()) break;
@@ -130,12 +131,11 @@ void BulkExtractor_Phase1::run(image_process &p,feature_recorder_set &fs,
         }
                 
         if(config.opt_offset_end!=0 && config.opt_offset_end <= it.raw_offset ){
-            break; // passed the offset
+            break;                      // passed the offset
         }
         if(config.opt_page_start<=page_ctr && config.opt_offset_start<=it.raw_offset){
             // Make sure we haven't done this page yet
             if(seen_page_ids.find(it.get_pos0().str()) == seen_page_ids.end()){
-                    
                 try {
                     sbuf_t *sbuf = get_sbuf(it);
                     if(sbuf==0) break;	// eof?
@@ -253,14 +253,16 @@ void BulkExtractor_Phase1::wait_for_workers(image_process &p,std::string *md5_st
     xreport.pop();
     xreport.flush();
     if(config.opt_quiet==0) std::cout << "Average consumer time spent waiting: " << worker_wait_average << " sec.\n";
-    if(worker_wait_average > tp->waiting.elapsed_seconds()*2 && worker_wait_average>10 && config.opt_quiet==0){
+    if(worker_wait_average > tp->waiting.elapsed_seconds()*2
+       && worker_wait_average>10 && config.opt_quiet==0){
         std::cout << "*******************************************\n";
         std::cout << "** bulk_extractor is probably I/O bound. **\n";
         std::cout << "**        Run with a faster drive        **\n";
         std::cout << "**      to get better performance.       **\n";
         std::cout << "*******************************************\n";
     }
-    if(tp->waiting.elapsed_seconds() > worker_wait_average * 2 && tp->waiting.elapsed_seconds()>10 && config.opt_quiet==0){
+    if(tp->waiting.elapsed_seconds() > worker_wait_average * 2
+       && tp->waiting.elapsed_seconds()>10 && config.opt_quiet==0){
         std::cout << "*******************************************\n";
         std::cout << "** bulk_extractor is probably CPU bound. **\n";
         std::cout << "**    Run on a computer with more cores  **\n";
