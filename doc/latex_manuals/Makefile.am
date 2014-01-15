@@ -1,6 +1,9 @@
 PDFS=BEUsersManual.pdf BEWorkedExamplesStandalone.pdf BETheoryOfOperation.pdf
 
-all:	$(PDFS)
+all:	
+	echo type \"make doc\" to create documentation
+
+doc: $(PDFS)
 
 clean:
 	/bin/rm -f BEUsersManual.pdf BEWorkedExamplesStandalone.pdf *.log *.aux *.bbl *.bst *.blg *~ *.toc

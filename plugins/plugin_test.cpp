@@ -42,7 +42,7 @@ static std::string hash_func(const uint8_t *buf,size_t bufsize)
     std::cerr << "This version of bulk_extractor only supports MD5, SHA1, and SHA256\n";
     exit(1);
 }
-static feature_recorder::hash_def my_hasher(hash_name,hash_func);
+static feature_recorder_set::hash_def my_hasher(hash_name,hash_func);
 
 scanner_params::PrintOptions scanner_params::no_options; 
 int main(int argc,char **argv)
@@ -143,7 +143,7 @@ feature_recorder  *feature_recorder_set::create_name_factory(const std::string &
 }
 
 
-feature_recorder_set::feature_recorder_set(uint32_t f,const feature_recorder::hash_def &hasher_):
+feature_recorder_set::feature_recorder_set(uint32_t f,const feature_recorder_set::hash_def &hasher_):
     flags(f),seen_set(),input_fname(),outdir(),frm(),map_lock(),scanner_stats(),hasher(hasher_)
 {
     /* not here */

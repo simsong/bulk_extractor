@@ -3,7 +3,6 @@
 #include "base64_forensic.h"
 
 static bool  base64array[256];           // array of valid base64 characters
-static u_int base64_min   = 128;			// don't bother with smaller than this
 static int   minlinewidth = 60;
 
 
@@ -142,10 +141,12 @@ void scan_base64(const class scanner_params &sp,const recursion_control_block &r
             if(sbuf_line_is_base64(sbuf,start,len,found_equal)){
                 if(inblock==false){
                     /* First line of a block! */
-                    inblock = true;
-                    linecount = 1;
-                    blockstart = start;
-                    prevlen = len;
+                    if(len >= minlinewidth){
+                        inblock = true;
+                        linecount = 1;
+                        blockstart = start;
+                        prevlen = len;
+                    }
                     continue;
                 }
                 if(len!=prevlen){   // whoops! Lines are different lengths
@@ -169,101 +170,3 @@ void scan_base64(const class scanner_params &sp,const recursion_control_block &r
         //fprintf(stderr,"done\n");
     }
 }
-#if 0
-        if(inblock==false){     // first line in a block
-                        inblock = true;
-                        linecount = 1;
-                        blockstart = start;
-                        prevlen = len;
-                    } else {
-                        linecount++;
-                        if(found_equal==false){
-                            if(len!=prevlen){ // not the end and different line lengths; abort
-                                inblock = false;
-                            }
-                                
-                    }
-                    if(found_equal){
-                        process();
-                        inblock = false;
-                    }
-                }
-                else {
-                    /* No longer in a base64 block. If we had more than two lines the same length, process */
-                }
-                    continue;
-                }
-                    
-            } 
-            else {
-            }
-
-
-	    if(i==0 || sbuf[i]=='\n' ){
-		/* Try to figure out the line width; we only decode base64
-		 * if we see two lines of the same width.
-		 */
-		ssize_t w1 = find64(sbuf,'\n',i+1);
-                fprintf(stderr,"i=%d  w1=%d\n",i,w1);
-		if(w1<0){
-		    return;		// no second delim
-		}
-
-		ssize_t linewidth1 = w1-i;	// including \n
-		if(i==0) linewidth1 += 1;	// if we were not on a newline, add one
-	    
-		if(linewidth1 < minlinewidth){
-		    i=w1;		// skip past this block
-		    continue;
-		} 
-
-		ssize_t w2 = find64(sbuf,'\n',w1+1);
-		if(w2<0){
-		    return;		// no third delim
-		}
-		ssize_t linewidth2 = w2-w1;
-	
-                fprintf(stderr,"   w1=%d  w2=%d  linewidth1=%d  linewidth2=%d\n",w1,w2,linewidth1,linewidth2);
-
-		if(linewidth1 != linewidth2){
-		    i=w2;	// lines are different sized; skip past both
-		    continue;
-		}
-	
-		/* Now scan from w2 until we find a terminator:
-		 * - the '='.
-		 * - characters not in base64
-		 * - the end of the sbuf.
-		 */
-		for(size_t j=w2+1;j<sbuf.size();j++){
-		    /* Each line should be the same size. if this is an even module of
-		     * the start of the line and we don't have a line end, then the lines
-		     * are not properly formed.
-		     */
-		    if(((j-w2) % linewidth1==0) && sbuf[j]!='\n'){
-			i = j;		// advance to the end of this section
-			break;		// break out of the j loop
-		    }
-
-		    /* If we found a character that indicates the end of a BASE64 block
-		     * (a '=' or a '-' or a space), or we found an invalid base64
-		     * charcter, or if we are on the last character of the sbuf,
-		     * then attempt to decode.
-		     */
-		    char ch = sbuf[j];
-		    bool eof = (j+1==sbuf.size());
-		    if(eof || ch=='=' || ch=='-' || ch==' ' || (!isbase64(ch) && ch!='\n' && ch!='\r')){
-			size_t base64_len = j-i;
-			if(eof || ch=='-') base64_len += 1;	// we can include the termination character
-
-			if(!eof && base64_len<base64_min){	// a short line?
-			    i = j;			// skip this junk
-			    continue; 
-			}
-
-		}
-	    }
-	}
-    }
-}
-#endif
