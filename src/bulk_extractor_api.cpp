@@ -127,8 +127,8 @@ class callback_feature_recorder: public feature_recorder {
     be_callback_t *cb;
 public:
     callback_feature_recorder(be_callback_t *cb_,
-                              class feature_recorder_set &fs,const std::string &name_):
-        feature_recorder(fs,name_),cb(cb_){
+                              class feature_recorder_set &fs_,const std::string &name_):
+        feature_recorder(fs_,name_),cb(cb_){
     }
     virtual std::string carve(const sbuf_t &sbuf,size_t pos,size_t len, 
                               const std::string &ext){ // appended to forensic path
@@ -145,6 +145,10 @@ public:
     virtual void write0(const pos0_t &pos0,const std::string &feature,const std::string &context){
         dynamic_cast<callback_feature_recorder_set *>(&fs)->write0(name,pos0,feature,context);
     }
+    virtual void write(const pos0_t &pos0,const std::string &feature,const std::string &context){
+        feature_recorder::write(pos0,feature,context); // pass up
+    }
+
 };
 
 

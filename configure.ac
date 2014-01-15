@@ -8,7 +8,7 @@
 
 AC_PREREQ(2.57)
 
-AC_INIT(BULK_EXTRACTOR, 1.4.2, bugs@digitalcorpora.org)
+AC_INIT(BULK_EXTRACTOR, 1.4.3, bugs@digitalcorpora.org)
 AC_CONFIG_MACRO_DIR(m4)
 
 # 
@@ -183,12 +183,13 @@ fi
 # causes configure to crash on gcc-4.2.1: -Wsign-compare-Winline 
 # causes warnings with unistd.h:  -Wnested-externs 
 # Just causes too much annoyance: -Wmissing-format-attribute 
+# Don't use: -Wno-unknown-warning-option
 
 # Check GCC and clang
 WARNINGS_TO_TEST="-MD -Wpointer-arith -Wmissing-declarations -Wmissing-prototypes \
     -Wshadow -Wwrite-strings -Wcast-align -Waggregate-return \
     -Wbad-function-cast -Wcast-qual -Wundef -Wredundant-decls -Wdisabled-optimization \
-    -Wfloat-equal -Wmultichar -Wc++-compat -Wmissing-noreturn -funit-at-a-time -Wno-unknown-warning-option \
+    -Wfloat-equal -Wmultichar -Wc++-compat -Wmissing-noreturn -funit-at-a-time \
     -Qunused-arguments "
 
 if test x"${mingw}" == "xno" ; then
@@ -272,6 +273,7 @@ AC_ARG_ENABLE([mcheck], AS_HELP_STRING([--enable-mcheck], \
 # -Wundef  --- causes problems with zlib
 # -Wcast-qual 
 # -Wmissing-format-attribute  --- Just too annoying
+# don't use: -Wno-unknown-warning-option
 AC_LANG_PUSH(C++)
 AC_CHECK_HEADERS([string])
 
@@ -279,7 +281,7 @@ CXX_WARNINGS_TO_TEST="-Wall -MD -Wpointer-arith \
     -Wshadow -Wwrite-strings -Wcast-align  \
     -Wredundant-decls -Wdisabled-optimization \
     -Wfloat-equal -Wmultichar -Wmissing-noreturn \
-    -Woverloaded-virtual -Wsign-promo -funit-at-a-time -Wno-unknown-warning-option -Qunused-arguments"
+    -Woverloaded-virtual -Wsign-promo -funit-at-a-time -Qunused-arguments"
 
 if test x$CXX != "xclang++" ; then
   # -Wstrict-null-sentinel is not supported under clang
