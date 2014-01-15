@@ -7,7 +7,6 @@
 # and http://www.openismus.com/documents/linux/automake/automake.shtml
 
 AC_PREREQ(2.57)
-
 AC_INIT(BULK_EXTRACTOR, 1.4.2, bugs@digitalcorpora.org)
 AC_CONFIG_MACRO_DIR(m4)
 
@@ -26,9 +25,10 @@ AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile doc/user_manual/Makefile \
 AC_CONFIG_HEADER([config.h])
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
-AC_PREFIX_PROGRAM
+AC_PREFIX_PROGRAM(bulk_extractor) dnl build for same location
 AC_PROG_CC
 AC_PROG_CXX
+AM_PROG_CC_C_O                    dnl allow per-produce flags
 AC_PROG_INSTALL
 AC_PROG_LEX
 # LT_INIT([disable-shared])
@@ -221,9 +221,6 @@ unset option
 
 m4_include([src/dfxml/src/dfxml_configure.m4])
 m4_include([src/be13_api/be13_configure.m4])
-
-
-
 
 ################################################################
 ## lift support
