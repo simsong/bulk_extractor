@@ -213,7 +213,7 @@ void be_mkdir(const std::string &dir)
 {
 #ifdef WIN32
     if(mkdir(dir.c_str())){
-        cerr << "Could not make directory " << dir << "\n";
+        std::cerr << "Could not make directory " << dir << "\n";
         exit(1);
     }
 #else
