@@ -768,7 +768,10 @@ int main(int argc,char **argv)
 	    s_config.namevals[params[0]] = params[1];
 	    continue;
 	}
-	case 's': opt_sampling_params = optarg; break;
+	case 's':
+            srandomdev();               // if we are sampling initialize
+            opt_sampling_params = optarg;
+            break;
 	case 'V': std::cout << "bulk_extractor " << PACKAGE_VERSION << "\n"; exit (1);
 	case 'W':
             fprintf(stderr,"-W has been deprecated. Specify with -S word_min=NN and -S word_max=NN\n");

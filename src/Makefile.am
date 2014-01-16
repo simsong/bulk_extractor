@@ -100,8 +100,6 @@ bulk_extractor.so: $(bulk_extractorlib_OBJECTS)
 
 stand_SOURCES = \
 	dig.cpp \
-	histogram.cpp \
-	histogram.h \
 	scan_bulk.cpp \
 	stand.cpp \
 	$(BE13_API) $(DFXML_WRITER) 
