@@ -91,7 +91,7 @@ bulk_extractor_nomain = \
 	threadpool.h \
 	$(bulk_scanners) $(TSK3INCS)  $(BE13_API) $(DFXML_WRITER) 
 
-bulk_extractor_SOURCES = $(bulk_extractor_nomain) main.cpp bulk_extractor_api.cpp
+bulk_extractor_SOURCES = $(bulk_extractor_nomain) main.cpp bulk_extractor_api.cpp bulk_extractor_api.h
 
 bulk_extractorlib_SOURCES = $(bulk_extractor_nomain) bulk_extractor_api.cpp
 
