@@ -769,7 +769,12 @@ int main(int argc,char **argv)
 	    continue;
 	}
 	case 's':
+#if defined(HAVE_SRANDOM) && !defined(HAVE_SRANDOMDEV)
+            srandom(time(0));
+#endif
+#if defined(HAVE_SRANDOMDEV)
             srandomdev();               // if we are sampling initialize
+#endif
             opt_sampling_params = optarg;
             break;
 	case 'V': std::cout << "bulk_extractor " << PACKAGE_VERSION << "\n"; exit (1);
