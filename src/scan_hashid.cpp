@@ -243,7 +243,7 @@ void scan_hashid(const class scanner_params &sp,
                     memcpy(md5.digest,it->digest, 16);
 
                     std::string feature = md5.hexdigest();
-                    stringstream ss;
+                    std::stringstream ss;
                     ss << it->duplicates_count;
                     std::string context = ss.str();
 
