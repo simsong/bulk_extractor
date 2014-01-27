@@ -42,7 +42,11 @@ int be_cb_demo(void *user,
         return 0;
         
     case BULK_EXTRACTOR_API_CODE_HISTOGRAM:
-        std::cout << "  name: " << name << " feature: " << feature << " count=" << arg << "\n";
+        if(feature_len==0 && arg==0){
+            std::cout << "Feature recorder: " << name << "\n";
+        } else {
+            std::cout << "\t" << feature << "\tn=" << arg << "\n";
+        }
         return 0;
 
     case BULK_EXTRACTOR_API_CODE_FEATURELIST:
@@ -147,11 +151,8 @@ int main(int argc,char **argv)
     (*be_analyze_buf)(bef,(uint8_t *)demo_buf,strlen(demo_buf));  // analyze the buffer
 
     /* analyze the file */
-    std::cerr << "calling ANALYZE_DEV " << fname << "\n";
     (*be_analyze_dev)(bef,fname,.01,65536);                                 // analyze the file
-    std::cerr << "calling CLOSE\n";
     (*be_close)(bef);
-    std::cerr << "CLOSED\n";
 
 #ifdef HAVE_DLOPEN
     dlclose(lib);

@@ -123,7 +123,6 @@ void BulkExtractor_Phase1::run(image_process &p,feature_recorder_set &fs,
         if(sampling()){
             if(si==blocks_to_sample.end()) break;
             it.seek_block(*si);
-            fprintf(stderr,"%qd ",*si);
         } else {
             /* Not sampling; no need to seek, it's the next one */
             if (it == p.end()){
@@ -178,8 +177,6 @@ void BulkExtractor_Phase1::run(image_process &p,feature_recorder_set &fs,
          */
         if(sampling()){
             ++si;
-            if(si==blocks_to_sample.end()) break;
-            it.seek_block(*si);
         } else {
             ++it;
         }

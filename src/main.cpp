@@ -664,6 +664,17 @@ static void dfxml_create(dfxml_writer &xreport,const std::string &command_line,c
 
 
 
+static int histogram_dump_callback(void *user,const feature_recorder &fr,
+                                   const histogram_def &def,
+                                   const std::string &str,const uint64_t &count)
+{
+    if(str.size()==0 && count==0){
+        std::cout << std::string(" ") << fr.name << " " << def.suffix + "...\n";
+        std::cout.flush();
+    }
+    return 0;
+}
+
 int main(int argc,char **argv)
 {
 #ifdef HAVE_MCHECK
@@ -1019,7 +1030,7 @@ int main(int argc,char **argv)
     /*** PHASE 3 --- Create Histograms ***/
     if(cfg.opt_quiet==0) std::cout << "Phase 3. Creating Histograms\n";
     xreport->add_timestamp("phase3 start");
-    if(opt_enable_histograms) fs.dump_histograms(0,0,0);        // TK - add an xml error notifier!
+    if(opt_enable_histograms) fs.dump_histograms(0,histogram_dump_callback,0);        // TK - add an xml error notifier!
     xreport->add_timestamp("phase3 end");
 
     /*** PHASE 4 ---  report and then print final usage information ***/

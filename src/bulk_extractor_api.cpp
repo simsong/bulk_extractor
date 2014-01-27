@@ -4,6 +4,7 @@
  *
  */
 
+#include "config.h"
 #include "bulk_extractor.h"
 #include "bulk_extractor_api.h"
 #include "image_process.h"
@@ -172,15 +173,18 @@ BEFILE *bulk_extractor_open(void *user,be_callback_t cb)
     feature_recorder::set_main_threadid();
     scanner_info::scanner_config   s_config; // the bulk extractor config
 
+#if defined(HAVE_SRANDOM) && !defined(HAVE_SRANDOMDEV)
+    srandom(time(0));
+#endif
+#if defined(HAVE_SRANDOMDEV)
+    srandomdev();               // if we are sampling initialize
+#endif
+
     s_config.debug       = 0;           // default debug
 
     be13::plugin::load_scanners(scanners_builtin,s_config);
 
     BEFILE *bef = new BEFILE_t(user,cb);
-    /* How do we enable or disable individual scanners? */
-    /* How do we set or not set a find pattern? */
-    /* We want to disable carving, right? */
-    /* How do we create the feature recorder with a callback? */
     return bef;
 }
     
@@ -258,6 +262,7 @@ int bulk_extractor_analyze_dev(BEFILE *bef,const char *fname,float frac,int page
     if(stat(fname,&st)){
         return -1;                      // cannot stat file
     }
+#if 0
     if(S_ISREG(st.st_mode)){            // files we handle with a mapped sbuf
         const sbuf_t *sbuf = sbuf_t::map_file(fname);
         if(!sbuf) return -1;
@@ -265,14 +270,35 @@ int bulk_extractor_analyze_dev(BEFILE *bef,const char *fname,float frac,int page
         delete sbuf;
         return 0;
     }
-    if(S_ISBLK(st.st_mode) || S_ISCHR(st.st_mode)){
+#endif
+    if(S_ISBLK(st.st_mode) || S_ISCHR(st.st_mode) || S_ISREG(st.st_mode)){
         /* A single-threaded sampling bulk_extractor.
          * It may be better to do this with two threads---one that does the reading (and seeking),
          * the other that doe the analysis.
+         * 
+         * This looks like the code in phase1.cpp.
          */
+        BulkExtractor_Phase1::blocklist_t blocks_to_sample;
+        BulkExtractor_Phase1::blocklist_t::const_iterator si = blocks_to_sample.begin(); // sampling iterator
+
         image_process *p = image_process::open(fname,false,pagesize,pagesize);
         image_process::iterator it = p->begin(); // get an iterator
-        while(it != p->end()){
+
+        if(frac!=1.0){
+            BulkExtractor_Phase1::make_sorted_random_blocklist(&blocks_to_sample, it.max_blocks(),frac);
+            si = blocks_to_sample.begin();    // get the new beginning
+        }
+
+        while(true){
+            if(frac < 1.0){             // sampling; position at the next block
+                if(si==blocks_to_sample.end()) break;
+                it.seek_block(*si);
+            } else {
+                if (it == p->end()){    // end of regular image
+                    break;
+                }
+            }
+
             try {
                 sbuf_t *sbuf = it.sbuf_alloc();
                 if(sbuf==0) break;      // eof
@@ -282,6 +308,11 @@ int bulk_extractor_analyze_dev(BEFILE *bef,const char *fname,float frac,int page
             catch (const std::exception &e) {
                 (*bef->cfs.cb)(bef->cfs.user,BULK_EXTRACTOR_API_EXCEPTION,0,
                                e.what(),it.get_pos0().str().c_str(),"",0,"",0);
+            }
+            if(frac<1.0){
+                ++si;
+            } else {
+                ++it;
             }
         }
     }
