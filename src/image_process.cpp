@@ -235,7 +235,7 @@ std::string process_aff::str(const image_process::iterator &it) const
     return std::string(buf);
 }
 
-uint64_t process_aff::blocks(const image_process::iterator &it) const
+uint64_t process_aff::max_blocks(const image_process::iterator &it) const
 {
     return pagelist.size();
 }
@@ -467,7 +467,7 @@ std::string process_ewf::str(const image_process::iterator &it) const
     return std::string(buf);
 }
 
-uint64_t process_ewf::blocks(const image_process::iterator &it) const
+uint64_t process_ewf::max_blocks(const image_process::iterator &it) const
 {
   return this->ewf_filesize / pagesize;
 }
@@ -739,7 +739,7 @@ static std::string filename_extension(std::string fn)
     return fn.substr(dotpos+1);
 }
 
-uint64_t process_raw::blocks(const image_process::iterator &it) const
+uint64_t process_raw::max_blocks(const image_process::iterator &it) const
 {
     return (this->raw_filesize+pagesize-1) / pagesize;
 }
@@ -848,7 +848,7 @@ std::string process_dir::str(const image_process::iterator &it) const
 }
 
 
-uint64_t process_dir::blocks(const image_process::iterator &it) const
+uint64_t process_dir::max_blocks(const image_process::iterator &it) const
 {
     return files.size();
 }

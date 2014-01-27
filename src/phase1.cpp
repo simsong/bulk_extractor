@@ -73,12 +73,12 @@ sbuf_t *BulkExtractor_Phase1::get_sbuf(image_process::iterator &it)
 }
 
 
-void BulkExtractor_Phase1::make_sorted_random_blocklist(blocklist_t *blocklist,uint64_t num_blocks,float frac)
+void BulkExtractor_Phase1::make_sorted_random_blocklist(blocklist_t *blocklist,uint64_t max_blocks,float frac)
 {
-    while(blocklist->size() < num_blocks * frac){
+    while(blocklist->size() < max_blocks * frac){
         uint64_t blk_high = ((uint64_t)random()) << 32;
         uint64_t blk_low  = random();
-        uint64_t blk      = (blk_high | blk_low) % num_blocks;
+        uint64_t blk      = (blk_high | blk_low) % max_blocks;
         blocklist->insert(blk); // will be added even if already present
     }
 }
@@ -115,7 +115,7 @@ void BulkExtractor_Phase1::run(image_process &p,feature_recorder_set &fs,
     image_process::iterator     it = p.begin(); // sequential iterator
     if(sampling()){
         /* Create a list of blocks to sample */
-        make_sorted_random_blocklist(&blocks_to_sample,it.blocks(),config.sampling_fraction);
+        make_sorted_random_blocklist(&blocks_to_sample,it.max_blocks(),config.sampling_fraction);
         si = blocks_to_sample.begin();    // get the new beginning
     }
     /* Loop over the blocks to sample */

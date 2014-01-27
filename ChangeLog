@@ -1,3 +1,7 @@
+2014-01-26  Basic  <simsong@Dance.local>
+
+	* src/image_process.h (class process_dir): changed blocks() to max_blocks().
+
 2014-01-10  Basic  <simsong@t193-251.demo.tuwien.ac.at>
 
 	* src/be13_api/feature_recorder.cpp (feature_recorder::dump_histogram): moved regex into histogram_def so that it could be run in write(), rather than in post-processing. 

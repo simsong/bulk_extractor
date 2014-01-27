@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <string>
+#include <getopt.h>
 
 #include <stdio.h>
 #ifdef HAVE_ERR_H
@@ -66,12 +67,26 @@ void *getsym(void *lib,const char *name)
 }
 #endif
 
+__attribute__((noreturn))  void usage(const char *progname)
+{
+    std::cerr << "usage: " << progname << " <filename or device>\n";
+    std::cerr << "This program runs the bulk_extractor_api in the manner\n";
+    std::cerr << "that it should be run for the insider threat project.\n";
+    exit(1);
+}
+
 int main(int argc,char **argv)
 {
-    if(argc!=2){
-        fprintf(stderr,"usage: %s <filename>\n",argv[0]);
-        exit(1);
+    const char *progname = argv[0];
+    int ch;
+    while ((ch = getopt(argc,argv,"h")) != -1) {
+        switch(ch){
+        case 'h': 
+        default: usage(progname);
+        }
     }
+    if(argc!=2) usage(progname);
+
     const char *fname = argv[1];
 
     std::string libname = "bulk_extractor.so";
@@ -128,12 +143,12 @@ int main(int argc,char **argv)
         (*be_config)(bef,BEAPI_MEMHIST_LIMIT,    name, 10);   // don't give me features
     }
 
-    const char *demo_buf = "ABCDEFG  demo@api.com Just a demo 617-555-1212 ok!";
+    const char *demo_buf = "Test Dataa  demo@bulk_extractor.org Just a demo 617-555-1212 ok!";
     (*be_analyze_buf)(bef,(uint8_t *)demo_buf,strlen(demo_buf));  // analyze the buffer
 
     /* analyze the file */
     std::cerr << "calling ANALYZE_DEV " << fname << "\n";
-    (*be_analyze_dev)(bef,fname);                                 // analyze the file
+    (*be_analyze_dev)(bef,fname,.01,65536);                                 // analyze the file
     std::cerr << "calling CLOSE\n";
     (*be_close)(bef);
     std::cerr << "CLOSED\n";

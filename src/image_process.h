@@ -38,8 +38,8 @@
  * get_pos0 - returns the forensic path of byte[0] that the sbuf would return
  * fraction_done() - the amount done
  * str() - returns a string for current position
- * blocks() - returns the number of blocks with the current block size
- * seek_block(block_number) - seeks to a block number n where 0<=n<blocks()
+ * max_blocks() - returns the number of blocks with the current block size
+ * seek_block(block_number) - seeks to a block number n where 0 <= n < max_blocks()
  */
 
 #include "sbuf.h"
@@ -117,7 +117,7 @@ public:
 	sbuf_t *sbuf_alloc() { return myimage.sbuf_alloc(*this); }   // allocates an sbuf at pos0
 	double fraction_done() const { return myimage.fraction_done(*this); }
         std::string str() const { return myimage.str(*this); }
-	uint64_t blocks() const { return myimage.blocks(*this);}
+	uint64_t max_blocks() const { return myimage.max_blocks(*this);}
 	uint64_t seek_block(uint64_t block) { return myimage.seek_block(*this,block);} // returns block number 
     };
 
@@ -138,7 +138,7 @@ public:
     virtual sbuf_t *sbuf_alloc(class image_process::iterator &it) const = 0;
     virtual double fraction_done(const class image_process::iterator &it) const = 0;
     virtual std::string str(const class image_process::iterator &it) const = 0; // returns a string representation of where we are
-    virtual uint64_t blocks(const class image_process::iterator &it) const = 0;
+    virtual uint64_t max_blocks(const class image_process::iterator &it) const = 0;
     // seek_block modifies the iterator, but not the image!
     virtual uint64_t seek_block(class image_process::iterator &it,uint64_t block) const = 0; // returns -1 if failure
 };
@@ -183,7 +183,7 @@ public:
     virtual double fraction_done(const class image_process::iterator &it) const;
     virtual std::string str(const class image_process::iterator &it) const;
     virtual int64_t image_size() const;
-    virtual uint64_t blocks(const class image_process::iterator &it) const;
+    virtual uint64_t max_blocks(const class image_process::iterator &it) const;
     virtual uint64_t seek_block(class image_process::iterator &it,uint64_t block) const; // returns -1 if failue
 };
 #endif
@@ -233,7 +233,7 @@ class process_ewf : public image_process {
     virtual double  fraction_done(const class image_process::iterator &it) const;
     virtual std::string str(const class image_process::iterator &it) const;
     virtual int64_t  image_size() const;
-    virtual uint64_t blocks(const class image_process::iterator &it) const;
+    virtual uint64_t max_blocks(const class image_process::iterator &it) const;
     virtual uint64_t seek_block(class image_process::iterator &it,uint64_t block) const; // returns -1 if failue
 };
 #endif
@@ -277,7 +277,7 @@ public:
     virtual double   fraction_done(const class image_process::iterator &it) const;
     virtual std::string str(const class image_process::iterator &it) const;
     virtual int64_t  image_size() const;
-    virtual uint64_t blocks(const class image_process::iterator &it) const;
+    virtual uint64_t max_blocks(const class image_process::iterator &it) const;
     virtual uint64_t seek_block(class image_process::iterator &it,uint64_t block) const; // returns -1 if failue
 };
 
@@ -302,12 +302,12 @@ class process_dir : public image_process {
     virtual image_process::iterator end() const;
     virtual void increment_iterator(class image_process::iterator &it) const;
     
-    virtual pos0_t get_pos0(const class image_process::iterator &it)   const;    
-    virtual sbuf_t *sbuf_alloc(class image_process::iterator &it) const;   /* maps the next dir */
-    virtual double fraction_done(const class image_process::iterator &it) const; /* number of dirs processed */
+    virtual pos0_t   get_pos0(const class image_process::iterator &it)   const;    
+    virtual sbuf_t   *sbuf_alloc(class image_process::iterator &it) const;   /* maps the next dir */
+    virtual double   fraction_done(const class image_process::iterator &it) const; /* number of dirs processed */
     virtual std::string str(const class image_process::iterator &it) const;
-    virtual int64_t image_size() const;				    /* total bytes */
-    virtual uint64_t blocks(const class image_process::iterator &it) const;
+    virtual int64_t  image_size() const;				    /* total bytes */
+    virtual uint64_t max_blocks(const class image_process::iterator &it) const;
     virtual uint64_t seek_block(class image_process::iterator &it,uint64_t block) const; // returns -1 if failu};
 };
 
