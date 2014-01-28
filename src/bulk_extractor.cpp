@@ -85,6 +85,7 @@ scanner_t *scanners_builtin[] = {
     scan_rar,
 #endif
     scan_gzip,
+    scan_outlook,
     scan_pdf,
     scan_winpe,
     scan_hiberfile,

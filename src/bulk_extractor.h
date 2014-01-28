@@ -230,6 +230,7 @@ extern "C" scanner_t scan_zip;
 extern "C" scanner_t scan_rar;
 extern "C" scanner_t scan_windirs;
 extern "C" scanner_t scan_xor;
+extern "C" scanner_t scan_outlook;
 
 #endif
 #endif

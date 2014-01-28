@@ -55,6 +55,7 @@ bulk_scanners = \
 	scan_kml.cpp \
 	scan_lightgrep.cpp \
 	scan_net.cpp \
+	scan_outlook.cpp \
 	scan_pdf.cpp \
 	scan_rar.cpp \
 	scan_hashid.cpp \
