@@ -39,7 +39,6 @@ inline class base16_scanner *get_extra(yyscan_t yyscanner) {return yybase16_get_
 
 
 
-
 void base16_scanner::decode(const sbuf_t &osbuf,size_t pos,size_t len)
 {
     sbuf_t sbuf(osbuf,pos,len);       // the substring we are working with
@@ -127,7 +126,7 @@ void scan_base16(const class scanner_params &sp,const recursion_control_block &r
 	sp.info->description	= "Base16 (hex) scanner";
 	sp.info->scanner_version= "1.0";
 	sp.info->feature_names.insert("hex"); // notable hex values
-        sp.info->flags          = scanner_info::SCANNER_RECURSE;
+        sp.info->flags          = scanner_info::SCANNER_DISABLED | scanner_info::SCANNER_RECURSE;
 
 	/* Create the base16 array */
 	for(int i=0;i<256;i++){
