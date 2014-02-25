@@ -231,6 +231,7 @@ extern "C" scanner_t scan_rar;
 extern "C" scanner_t scan_windirs;
 extern "C" scanner_t scan_xor;
 extern "C" scanner_t scan_outlook;
+extern "C" scanner_t scan_sqlite;
 
 #endif
 #endif

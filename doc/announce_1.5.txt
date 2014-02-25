@@ -7,6 +7,8 @@ New functionality in Version 1.4 includes:
 
 * scan_outlook will decrypt "Outlook Compressible Encryption" used on some PST files. 
 
+* SQLite database carving (Note: only works for unfragmented databases)
+
 
 Improvements in existing scanners:
 
@@ -204,8 +206,6 @@ We are also considering the following scanners (and need help!):
 * NTFS decompression
 
 * Better handling of MIME encoding
-
-* SQLite database identification (first survey - how fragmented are they?)
 
 * Python Bridge. 
 

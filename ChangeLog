@@ -1,3 +1,8 @@
+2014-02-25  Man Page  <simsong@mncrnpsedu.local>
+
+	* src/scan_vcard.cpp (scan_vcard): removed     string myString;
+
+
 2014-01-26  Basic  <simsong@Dance.local>
 
 	* src/image_process.h (class process_dir): changed blocks() to max_blocks().

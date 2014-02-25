@@ -94,6 +94,7 @@ scanner_t *scanners_builtin[] = {
     scan_vcard,
     scan_bulk,
     scan_xor,
+    scan_sqlite,
     0};
 
 
