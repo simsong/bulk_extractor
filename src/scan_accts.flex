@@ -17,6 +17,7 @@
  */
 
 size_t min_phone_digits=6;
+static int ssn_mode=0;
 
 class accts_scanner : public sbuf_scanner {
 public:
@@ -46,6 +47,27 @@ static bool has_min_digits(const char *buf)
       if(isdigit(*cc)) digit_count+=1;
    }
    return digit_count>=min_phone_digits;
+}
+
+/*
+ * http://www.reddnet.net/regular-expression-for-validating-a-social-security-number-ssn-issued-after-june-25-2011/
+ * http://www.ssa.gov/employer/randomization.html
+ */
+static bool valid_ssn(const std::string &ssn)
+{
+   std::string nums;
+   /* Extract the digits */
+   for(int i=0;i<ssn.size();i++){
+      nums.push_back(ssn.at(i));
+   }
+   /* Apply the new validation rules */
+   if(nums.size()!=9) return false;
+   if(nums.substr(0,3)=="000") return false;
+   if(nums.substr(3,2)=="00") return false;
+   if(nums.substr(5,4)=="0000") return false;
+   if(nums.substr(0,3)=="666") return false;
+   if(nums[0]=='9') return false;
+   return true;
 }
 
 static std::string utf16to8(const std::wstring &s){
@@ -237,10 +259,30 @@ fedex[^a-z]+[0-9][0-9][0-9][0-9][- ]?[0-9][0-9][0-9][0-9][- ]?[0-9]/{END}	{
     s.pos += yyleng;
 }
 
-ssn:?[ \t]+[0-9][0-9][0-9]-?[0-9][0-9]-?[0-9][0-9][0-9][0-9]/{END}	{
+ssn:?[ \t]*[0-9][0-9][0-9]-?[0-9][0-9]-?[0-9][0-9][0-9][0-9]/{END}	{
     /* REGEX13 */
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
     s.pii_recorder->write_buf(SBUF,s.pos,yyleng);
+    s.pos += yyleng;
+}
+
+[^0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]/{END}	{
+    /* REGEX13 --- SSNs without the SSN prefix, ssn_mode > 0*/
+    accts_scanner &s = *yyaccts_get_extra(yyscanner);
+    if(ssn_mode>0){
+        s.pii_recorder->write_buf(SBUF,s.pos+1,yyleng-1);
+    }
+    s.pos += yyleng;
+}
+
+[^0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]/{END} {
+    /* REGEX13 --- SSNs without the SSN prefix, with no dashes, ssn_mode > 0
+     * basically, these are just 10 digit numbers...
+     */
+    accts_scanner &s = *yyaccts_get_extra(yyscanner);
+    if(ssn_mode>1){
+        s.pii_recorder->write_buf(SBUF,s.pos+1,yyleng-1);
+    }
     s.pos += yyleng;
 }
 
@@ -296,6 +338,8 @@ void scan_accts(const class scanner_params &sp,const recursion_control_block &rc
 	sp.info->histogram_defs.insert(histogram_def("ccn","","histogram"));
 	sp.info->histogram_defs.insert(histogram_def("ccn_track2","","histogram"));
 	sp.info->histogram_defs.insert(histogram_def("telephone","","histogram",HistogramMaker::FLAG_NUMERIC));
+        sp.info->get_config("ssn_mode",&ssn_mode,"0=Normal; 1=No `SSN' required; 2=No dashes required");
+        sp.info->get_config("min_phone_digits",&min_phone_digits,"Min. digits required in a phone");
         scan_ccns2_debug = sp.info->config->debug;           // get debug value
 	return;
     }

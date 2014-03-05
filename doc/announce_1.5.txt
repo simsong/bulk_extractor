@@ -35,6 +35,9 @@ USABILITY IMPROVEMENT
 ================================================================
 INTERNAL IMPROVEMENTS 
 
+* introduced an atomic set and histogram to minimize the use of
+  cppmutexes in the callers. 
+
 ================================================================
 PERFORMANCE STATISTICS
 
@@ -172,8 +175,6 @@ Planned Feature List for 1.6:
 
 * improvements to identify_filename so it can run on a report in place.
 
-* atomic map object
-
 * replace as many and sets maps as possible with unordered equivallent.
 
 * Find more false positives with CCN validator by scanning through XOR data
@@ -194,10 +195,6 @@ Planned Feature List for 1.6:
 
 Architecture improvements:
 
-* introduce a concept of an atomic set and map to avoid the use of
-  cppmutexes in the callers. This could be used for the
-  feature_recorder_map and the seen_set in the feature_recorder_set.h
-
 
 We are also considering the following scanners (and need help!):
 
@@ -209,6 +206,7 @@ We are also considering the following scanners (and need help!):
 
 * Python Bridge. 
 
+* Reimplement top-n with a priority queue, rather than a sort and subset
 
 Validation Improvements:
 

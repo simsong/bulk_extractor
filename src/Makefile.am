@@ -73,6 +73,11 @@ if RAR_ENABLED
 bulk_scanners += $(RAR_SUPPORT)
 endif
 
+if SCEADAN_ENABLED
+bulk_scanners += sceadan/src/sceadan.c sceadan/src/sceadan.h sceadan/src/sceadan_model_precompiled.c
+endif
+
+
 bulk_extractor_nomain = \
 	base64_forensic.cpp \
 	base64_forensic.h \

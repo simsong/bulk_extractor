@@ -225,10 +225,20 @@ m4_include([src/dfxml/src/dfxml_configure.m4])
 m4_include([src/be13_api/be13_configure.m4])
 
 ################################################################
-## lift support
-## Disabled for 1.3 release
-AC_ARG_ENABLE([lift], AS_HELP_STRING([--enable-lift], [enable CMU LIFT SVM for type identification]),
-		      AC_DEFINE(USE_LIFT, 1, [Use LIFT SVM]))
+## sceadan support
+## Enabled for 1.5 release
+AC_ARG_ENABLE([sceadan],
+              AS_HELP_STRING([--disable-sceadan], [disable UTSA SCEADAN SVM for type identification]),
+              [],
+	      [AC_DEFINE(USE_SCEADAN, 1, [Use LIFT SVM]) sceadan="yes"])
+
+AC_CHECK_HEADERS([linear.h liblinear/linear.h])
+AC_CHECK_LIB([linear],[load_model])		              
+AM_CONDITIONAL([SCEADAN_ENABLED], [test "yes" = "$sceadan"])
+
+
+################################################################
+
 
 ## rar support
 ## Enabled for 1.4 release!
