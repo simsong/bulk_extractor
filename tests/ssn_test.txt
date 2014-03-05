@@ -1,0 +1,14 @@
+
+This file tests for social security numbers:
+
+
+SSN: 100-20-4011
+
+Another one is 100-20-4111
+
+And here is a third:
+
+SSN: 100204211
+
+That's all!
+
