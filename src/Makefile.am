@@ -59,6 +59,7 @@ bulk_scanners = \
 	scan_pdf.cpp \
 	scan_rar.cpp \
 	scan_hashid.cpp \
+	scan_sqlite.cpp \
 	scan_vcard.cpp \
 	scan_windirs.cpp \
 	scan_winpe.cpp \
