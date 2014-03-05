@@ -4,3 +4,6 @@
 [submodule "src/dfxml"]
 	path = src/dfxml
 	url = https://github.com/simsong/dfxml.git
+[submodule "src/sceadan"]
+	path = src/sceadan
+	url = /Users/simsong/gits/sceadan

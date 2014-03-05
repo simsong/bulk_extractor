@@ -3,8 +3,11 @@
 #include "dig.h"
 #include "be13_api/utils.h"
 #include "histogram.h"
+#include "sceadan/src/sceadan.h"
 #include <math.h>
 #include <algorithm>
+
+
 
 /**
  * scan_bulk implements the bulk data analysis system.
