@@ -43,7 +43,7 @@ void scan_sqlite(const class scanner_params &sp,const recursion_control_block &r
 
 	    /* We found the header */
             uint32_t pagesize = sbuf.get16uBE(begin+16);
-            if(pagesize==1) pagesize==65536;
+            if(pagesize==1) pagesize=65536;
             
             /* Pagesize must be a power of two between 512 and 32768 */
             if(pagesize != 512 && pagesize != 1024 && pagesize != 2048 && pagesize != 4096 &&

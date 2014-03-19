@@ -28,6 +28,7 @@ AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
 AC_PREFIX_PROGRAM(bulk_extractor) dnl build for same location
 AC_PROG_CC
+AC_PROG_CC_C99 
 AC_PROG_CXX
 AM_PROG_CC_C_O                    dnl allow per-produce flags
 AC_PROG_INSTALL
