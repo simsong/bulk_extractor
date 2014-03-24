@@ -8,6 +8,7 @@ bulk_extractor documentation for general operating guidelines.
 
 from collections import namedtuple
 from ctypes import *
+import os
 
 # see also bulk_extractor_api.h
 
@@ -212,7 +213,10 @@ def _bytes(value, encoding='utf-8'):
     return value
 
 
-lib_be = cdll.LoadLibrary("bulk_extractor.so")
+lib_be_path = "bulk_extractor.so"
+if "BULK_EXTRACTOR_LIB_PATH" in os.environ:
+    lib_be_path = os.environ["BULK_EXTRACTOR_LIB_PATH"]
+lib_be = cdll.LoadLibrary(lib_be_path)
 
 # handle is opaque to python module for simplicity and loose coupling
 BeHandle = c_void_p
