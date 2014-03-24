@@ -632,6 +632,10 @@ else
   fi
 fi
 
+# generate position-independent code for creating the shared library
+CFLAGS="$CFLAGS -fPIC"
+CXXFLAGS="$CXXFLAGS -fPIC"
+
 
 AC_MSG_NOTICE([*************************************])
 AC_MSG_NOTICE([*************************************])
