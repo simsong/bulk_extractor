@@ -6,6 +6,7 @@ function; it is up to the recipient to organze and store the data.  See
 bulk_extractor documentation for general operating guidelines.
 """
 
+from collections import namedtuple
 from ctypes import *
 
 # see also bulk_extractor_api.h
@@ -27,6 +28,153 @@ MEMHIST_LIMIT    = 6
 DISABLE_ALL      = 7
 FEATURE_LIST     = 8
 SCANNER_LIST     = 9
+
+class BulkExtractor(object):
+    """
+    Convenience object abstracting away some cruft inherent in the C API.
+    """
+    def __init__(self, scanners,
+            feature_callback=lambda a,b,c,d,e: 0,
+            carving_callback=lambda: 0,
+            user_arg=None):
+        """
+        Prepare for bulk_extractor use.  The supplied scanners are enabled, and
+        all other scanners are disabled.  It is not possible to enable or
+        disable scanners after init.  Plain python callbacks may be supplied
+        for feature acquisition and file carving with the following signatures:
+
+        feature_callback(user_arg, recorder_name, forensic_path, feature,
+                context)
+        carving_callback() (not yet implemented by bulk_extractor)
+        """
+        # wrap supplied callback to handle some callbacks transparently where
+        # appropriate and to allow implicit access to self by scope since C
+        # won't supply self as an explicit first argument.
+        def _callback_wrapper(user, code, arg, name, fpath, feature,
+                feature_len, context, context_len):
+            # features and carved files have no sensible default handling, so
+            # punt to the supplied callbacks.
+            if code == API_CODE_FEATURE:
+                result = feature_callback(user, name, fpath, feature, context)
+                if result is None:
+                    return 0
+                return result
+            if code == API_CODE_CARVED:
+                result = carving_callback()
+                if result is None:
+                    return 0
+                return result
+            # histogram data is organized into a dictionary by feature recorder
+            if code == API_CODE_HISTOGRAM:
+                if name not in self._histograms:
+                    self._histograms[name] = list()
+                # ignore histogram entries with zero counts because they can't
+                # occur in real data
+                if arg == 0:
+                    return 0
+                self._histograms[name].append(HistElem(
+                    feature=feature, count=arg))
+                return 0
+            # when enumerating active feature files, place them in the feature
+            # file set
+            if code == API_CODE_FEATURELIST:
+                self._featurefiles.add(name)
+                return 0
+            # pythonify exceptions raised by bulk_extractor
+            if code == API_EXCEPTION:
+                # Exceptional callbacks place the reason in name and supply the
+                # forensic path that caused the issue.
+                raise BulkExtractorException("{} @ {}".format(name, fpath))
+            # unknown callbacks are exceptional rather than being ignored or
+            # passed to a user callback
+            raise BulkExtractorException(
+                    "unknown callback code {}".format(code))
+        # keep reference to BeCallback to avoid garbage collection and
+        # heisenbuggy segfaults
+        self._callback = BeCallback(_callback_wrapper)
+        self._handle = open_handle(self._callback)
+
+        # configure scanners
+        self._scanners = set(scanners)
+        self._featurefiles = set()
+        self._histograms = dict()
+        configure(self._handle, DISABLE_ALL, "", 0)
+        for scanner in self._scanners:
+            configure(self._handle, SCANNER_ENABLE, scanner, 0)
+        configure(self._handle, PROCESS_COMMANDS, "", 0)
+        # self._featurefiles will be populated by callbacks during this call
+        configure(self._handle, FEATURE_LIST, "", 0)
+
+    def analyze_buffer(self, buf):
+        """Run bulk_extractor over the supplied buffer."""
+        handle = self._get_handle()
+        analyze_buffer(handle, buf)
+
+    def analyze_device(self, path, sample_rate, sample_size):
+        """
+        Run bulk_extractor in sampling mode over the device at the given path.
+        sample_rate is a value between 0 and 1 that dictates the percentage of
+        the device to sample.  sample_size is the size in bytes of individual
+        samples to capture.
+        """
+        handle = self._get_handle()
+        analyze_device(handle, path, sample_rate, sample_size)
+
+    def memory_mode(self, histogram_limit=10):
+        """
+        Place bulk_extractor in memory-only mode: do not create feature files,
+        and produce histograms in memory.  In memory histogram data will be
+        available after finalize() is called by calling histograms().
+        """
+        handle = self._get_handle()
+
+        configure(handle, MEMHIST_ENABLE, "", 0);
+
+        for featurefile in self._featurefiles:
+            configure(handle, FEATURE_DISABLE, featurefile, 0);
+            configure(handle, MEMHIST_LIMIT, featurefile, histogram_limit);
+
+    def scanners(self, scanners=None):
+        """Return the list of active scanners."""
+        return list(self._scanners)
+
+    def featurefiles(self):
+        """Return the list of active feature files."""
+        return list(self._featurefiles)
+
+    def histograms(self):
+        """
+        Return the dictionary of histograms.  This will be empty before
+        calling finalize().
+        """
+        return dict(self._histograms)
+
+    def finalize(self):
+        """
+        End the bulk_extractor session.  It is exceptional to interface with
+        bulk_extractor through this object after calling this method.
+        """
+        handle = self._get_handle()
+        close_handle(handle)
+        self._handle = None
+
+    def _get_handle(self):
+        """Private handle access with handling of use-after-close."""
+        if self._handle is None:
+            raise BulkExtractorException("use after close")
+        return self._handle
+
+HistElem = namedtuple("HistElem", "count feature")
+
+class BulkExtractorException(Exception):
+    """
+    Exception encompasing incorrect bulk_extractor use and errors reported
+    by bulk_extractor.
+    """
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
 
 def open_handle(callback, user_arg=None):
     """Start a new bulk_extractor session with the supplied callback."""
@@ -57,6 +205,7 @@ def close_handle(handle):
     """End the given bulk_extractor session."""
     return lib_be.bulk_extractor_close(handle)
 
+#TODO remove
 def _bytes(value, encoding='utf-8'):
     #if type(value) == str:
         #return bytearray(value, encoding)
@@ -111,16 +260,3 @@ lib_be.bulk_extractor_close.restype = c_int
 lib_be.bulk_extractor_close.argtypes = [
         BeHandle, # session obtained from bulk_extractor_open
         ]
-
-def main():
-    def callback(user, flag, arg, recorder, fpath, feature, feature_len,
-            context, context_len):
-        print("hello, world!")
-        return 0
-    handle = open_handle(callback)
-    analyze_buffer(handle, "")
-    configure(handle, FEATURE_LIST, "", 0)
-    close_handle(handle)
-
-if __name__ == "__main__":
-    main()
