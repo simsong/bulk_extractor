@@ -30,7 +30,6 @@ SCANNER_LIST     = 9
 
 def open_handle(callback, user_arg=None):
     """Start a new bulk_extractor session with the supplied callback."""
-    callback = BeCallback(callback)
     return lib_be.bulk_extractor_open(user_arg, callback);
 def configure(handle, cmd, scanner, arg):
     """
