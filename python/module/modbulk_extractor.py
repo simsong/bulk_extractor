@@ -10,7 +10,7 @@ from ctypes import *
 
 # see also bulk_extractor_api.h
 
-# callback type flags
+# callback type codes
 API_CODE_FEATURE      =    1
 API_CODE_HISTOGRAM    =    2
 API_CODE_CARVED       =    3
@@ -72,7 +72,7 @@ BeCallback = CFUNCTYPE(
         c_int,    # return type
 
         c_void_p, # arbitrary user data
-        c_uint32, # callback type flags
+        c_uint32, # callback type code
         c_uint64, # multi-use callback argument
         c_char_p, # feature recorder name or other
         c_char_p, # feature forensic path
