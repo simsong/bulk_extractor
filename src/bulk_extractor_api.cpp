@@ -284,7 +284,7 @@ int bulk_extractor_analyze_dev(BEFILE *bef,const char *fname,float frac,int page
         image_process *p = image_process::open(fname,false,pagesize,pagesize);
         image_process::iterator it = p->begin(); // get an iterator
 
-        if(frac!=1.0){
+        if(frac>=1.0){
             BulkExtractor_Phase1::make_sorted_random_blocklist(&blocks_to_sample, it.max_blocks(),frac);
             si = blocks_to_sample.begin();    // get the new beginning
         }
