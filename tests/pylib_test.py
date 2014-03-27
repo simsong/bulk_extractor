@@ -3,7 +3,7 @@
 import os
 import sys
 sys.path.append("../python/module")
-os.environ['BULK_EXTRACTOR_LIB_PATH'] = "../src/bulk_extractor.so"
+os.environ['BULK_EXTRACTOR_LIB_PATH'] = "../src/libbulkextractor.so"
 import bulkextractor as b_e
 
 scanners = [ "email", "accts", "exif", "zip", "gzip", "rar", "bulk", ]

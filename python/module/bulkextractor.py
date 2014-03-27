@@ -265,10 +265,12 @@ def close_handle(handle):
     """
     return lib_be.bulk_extractor_close(handle)
 
-lib_be_path = "bulk_extractor.so"
+lib_be = None
 if "BULK_EXTRACTOR_LIB_PATH" in os.environ:
-    lib_be_path = os.environ["BULK_EXTRACTOR_LIB_PATH"]
-lib_be = cdll.LoadLibrary(lib_be_path)
+    lib_be = cdll.LoadLibrary(os.environ["BULK_EXTRACTOR_LIB_PATH"])
+else:
+    lib_be = cdll.LoadLibrary("libbulkextractor.so")
+
 
 # see also bulk_extractor_api.h
 
