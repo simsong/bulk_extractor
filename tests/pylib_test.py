@@ -7,8 +7,9 @@ os.environ['BULK_EXTRACTOR_LIB_PATH'] = "../src/bulk_extractor.so"
 import bulkextractor as b_e
 
 scanners = [ "email", "accts", "exif", "zip", "gzip", "rar", "bulk", ]
-be = b_e.BulkExtractor(scanners)
-be.memory_mode()
+b_e.init(scanners)
+
+be = b_e.Session()
 be.analyze_buffer("Test Dataa  demo@bulk_extractor.org Just a demo 617-555-1212 ok!")
 be.finalize()
 for featurefile, histogram in be.histograms().items():
