@@ -56,11 +56,14 @@ tests/Makefile
 win32
 win64
 __pycache__
+*.pyc
 regress-*-[0-9][0-9]
 .DS_Store
 out-*/
 src/TAGS
+src/tags
 TAGS
+tags
 core.*
 plugins/plugin_test
 specfiles/bulk_extractor.fedora.spec
