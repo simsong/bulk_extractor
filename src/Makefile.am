@@ -102,8 +102,8 @@ bulk_extractor_SOURCES = $(bulk_extractor_nomain) main.cpp bulk_extractor_api.cp
 
 bulk_extractorlib_SOURCES = $(bulk_extractor_nomain) bulk_extractor_api.cpp
 
-bulk_extractor.so: $(bulk_extractorlib_OBJECTS)
-	$(CXX) -shared -fPIC -o $@ $(LDFLAGS) $(LIBS) $(bulk_extractorlib_OBJECTS)
+libbulkextractor.so: $(bulk_extractorlib_OBJECTS)
+	$(CXX) -shared -fPIC -o $@ $(LDFLAGS) $(bulk_extractorlib_OBJECTS) $(LIBS)
 
 stand_SOURCES = \
 	dig.cpp \
@@ -112,9 +112,9 @@ stand_SOURCES = \
 	$(BE13_API) $(DFXML_WRITER) 
 
 beapi_demo_SOURCES = beapi_demo.cpp
-beapi_demo$(EXEEXT): bulk_extractor.so		# needs an up-to-date .so
+beapi_demo$(EXEEXT): libbulkextractor.so		# needs an up-to-date .so
 
-rd: beapi_demo bulk_extractor.so
+rd: beapi_demo libbulkextractor.so
 	echo run the demo
 	./beapi_demo /corp/nps/drives/nps-2010-emails/nps-2010-emails.raw
 

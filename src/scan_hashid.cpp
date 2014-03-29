@@ -42,6 +42,7 @@ static std::string hashdb_mode="none";
 static std::string hashdb_hashdigest_type="MD5";
 static uint32_t hashdb_block_size=4096;
 static uint32_t hashdb_max_duplicates=20;
+//static uint32_t hashdb_import_delta=0;
 static std::string hashdb_path_or_socket="your_hashdb_directory";
 static size_t hashdb_sector_size = 512;
 
@@ -82,6 +83,7 @@ void scan_hashid(const class scanner_params &sp,
             sp.info->name        = "hashid";
             sp.info->author      = "Bruce Allen";
             sp.info->description = "Search cryptographic hash IDs against hashes in a hashdb block hash database";
+            sp.info->flags       = scanner_info::SCANNER_DISABLED;
 
             // hashdb_mode
             std::stringstream ss_hashdb_mode;
@@ -110,6 +112,17 @@ void scan_hashid(const class scanner_params &sp,
                 << "      for a given hash value.  Valid only in import mode.";
             sp.info->get_config("hashdb_max_duplicates", &hashdb_max_duplicates,
                                 ss_hashdb_max_duplicates.str());
+
+/*
+            // hashdb_import_delta
+            std::stringstream ss_hashdb_import_delta;
+            ss_hashdb_import_delta
+                << "Selects the import delta size.  Calculates hash blocks along\n"
+                << "      intervals of this size.  Uses hashdb_block_size if 0.\n"
+                << "      Valid only in import mode.";
+            sp.info->get_config("hashdb_import_delta", &hashdb_import_delta,
+                                ss_hashdb_import_delta.str());
+*/
 
             // hashdb_path_or_socket
             std::stringstream ss_hashdb_path_or_socket;
@@ -185,6 +198,14 @@ void scan_hashid(const class scanner_params &sp,
                 exit(1);
             }
 
+/*
+            // hashdb_import_delta
+            if (hashdb_import_delta == 0) {
+              // use hashdb_block_size unless specified
+              hashdb_import_delta = hashdb_block_size;
+            }
+*/
+
             // hashdb_path_or_socket
             // checks not performed
 
@@ -209,7 +230,7 @@ void scan_hashid(const class scanner_params &sp,
             switch(mode) {
                 case MODE_IMPORT: {
                     // set the path to the hashdb
-                    hashdb_dir = sp.fs.get_outdir() + "/" + "hashdb";
+                    hashdb_dir = sp.fs.get_outdir() + "/" + "hashdb.hdb";
 
                     // create the new hashdb manager for importing
                     // currently, hashdb_dir is required to not exist

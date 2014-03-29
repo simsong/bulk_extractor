@@ -93,7 +93,7 @@ int main(int argc,char **argv)
 
     const char *fname = argv[1];
 
-    std::string libname = "bulk_extractor.so";
+    std::string libname = "libbulkextractor.so";
     if(libname.find('/')==std::string::npos){
         libname = "./" + libname;               // fedora requires a complete path name
     }

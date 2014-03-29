@@ -236,7 +236,9 @@ AC_ARG_ENABLE([sceadan],
 	      [AC_DEFINE(USE_SCEADAN, 1, [Use LIFT SVM]) sceadan="yes"])
 
 AC_CHECK_HEADERS([linear.h liblinear/linear.h])
-AC_CHECK_LIB([linear],[load_model])		              
+AC_CHECK_LIB([linear],[load_model])
+AC_CHECK_MEMBER([struct parameter.p], [], [AC_MSG_ERROR([liblinear 1.9+ is required])],
+        [[#include <linear.h>]])
 AM_CONDITIONAL([SCEADAN_ENABLED], [test "yes" = "$sceadan"])
 
 
@@ -631,6 +633,10 @@ else
       CXXFLAGS=`echo -g "$CXXFLAGS" | sed s/-O2/-O3/`
   fi
 fi
+
+# generate position-independent code for creating the shared library
+CFLAGS="$CFLAGS -fPIC"
+CXXFLAGS="$CXXFLAGS -fPIC"
 
 
 AC_MSG_NOTICE([*************************************])
