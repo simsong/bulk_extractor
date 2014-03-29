@@ -103,3 +103,4 @@ build_java
 libtool
 src/beapi_demo
 BETheoryOfOperation.pdf
+bulk_extractor-*.*.*/
