@@ -27,6 +27,8 @@ AC_CONFIG_HEADER([config.h])
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
 AC_PREFIX_PROGRAM(bulk_extractor) dnl build for same location
+
+# Programs we will be using
 AC_PROG_CC
 AC_PROG_CC_C99 
 AC_PROG_CXX

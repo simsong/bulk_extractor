@@ -9,8 +9,13 @@ New functionality in Version 1.4 includes:
 
 * SQLite database carving (Note: only works for unfragmented databases)
 
-
 Improvements in existing scanners:
+
+Version 1.5 allows you to specify one of three SSN recognition modes:
+
+    -S ssn_mode=0  SSN’s must be labeled “SSN:”. Dashes or no dashes okay.
+    -S ssn_mode=1  No “SSN” required, but dashes are required.
+    -S ssn_mode=2  No dashes required. Allow any 9-digit number that matches SSN allocation range.
 
 =======
 Improvements in Python programs:
