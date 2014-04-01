@@ -23,10 +23,10 @@ void scan_sqlite(const class scanner_params &sp,const recursion_control_block &r
     assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
     if(sp.phase==scanner_params::PHASE_STARTUP){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
-	sp.info->name  = "sqlite";
-        sp.info->author         = "Simson Garfinkel";
-        sp.info->description    = "Scans for SQLITE3 data";
-        sp.info->scanner_version= "1.0";
+	sp.info->name            = "sqlite";
+        sp.info->author          = "Simson Garfinkel";
+        sp.info->description     = "Scans for SQLITE3 data";
+        sp.info->scanner_version = "1.0";
 	sp.info->feature_names.insert("sqlite");
 	return;
     }
@@ -56,7 +56,7 @@ void scan_sqlite(const class scanner_params &sp,const recursion_control_block &r
                 if (dbsize_in_pages>=1){
 
                     /* Write it out! */
-                    std::cerr << "calling carve " << sbuf << " " << begin << " dbsize=" << dbsize << " pagesize=" << pagesize << "\n";
+                    //std::cerr << "calling carve " << sbuf << " " << begin << " dbsize=" << dbsize << " pagesize=" << pagesize << "\n";
                     sqlite_recorder->carve(sbuf,begin,begin+dbsize,".sqlite3");
             
                     /* Worry about overflow */
