@@ -37,28 +37,35 @@ void scan_sqlite(const class scanner_params &sp,const recursion_control_block &r
 
 	// Search for BEGIN:SQLITE\r in the sbuf
 	// we could do this with a loop, or with 
-	for(size_t i = 0;  i < sbuf.bufsize;i++)	{
+	for (size_t i = 0;  i < sbuf.bufsize;)	{
 	    ssize_t begin = sbuf.find("SQLite format 3\000",i);
-	    if(begin==-1) return;		// no more
+	    if (begin==-1) return;		// no more
 
 	    /* We found the header */
             uint32_t pagesize = sbuf.get16uBE(begin+16);
-            if(pagesize==1) pagesize=65536;
+            if (pagesize==1) pagesize=65536;
             
             /* Pagesize must be a power of two between 512 and 32768 */
-            if(pagesize != 512 && pagesize != 1024 && pagesize != 2048 && pagesize != 4096 &&
-               pagesize != 8192 && pagesize != 16384 && pagesize != 32768 && pagesize != 65536) return;
+            if ((pagesize == 512) || (pagesize == 1024) || (pagesize == 2048) ||
+                (pagesize == 4096) || (pagesize == 8192) || (pagesize == 16384) ||
+                (pagesize == 32768) || (pagesize == 65536)) {
                
-            uint32_t dbsize_in_pages = sbuf.get32uBE(begin+28);
-            
-            size_t dbsize = pagesize * dbsize_in_pages;
+                uint32_t dbsize_in_pages = sbuf.get32uBE(begin+28);
+                size_t   dbsize = pagesize * dbsize_in_pages;
 
-            /* Write it out! */
-            sqlite_recorder->carve(sbuf,begin,begin+dbsize,".sqlite3");
+                if (dbsize_in_pages>=1){
+
+                    /* Write it out! */
+                    std::cerr << "calling carve " << sbuf << " " << begin << " dbsize=" << dbsize << " pagesize=" << pagesize << "\n";
+                    sqlite_recorder->carve(sbuf,begin,begin+dbsize,".sqlite3");
             
-            /* Worry about overflow */
-            if ((i+begin+dbsize) <= i) break; // would send us backwards or avoid movement
-            i = begin+dbsize-1;
+                    /* Worry about overflow */
+                    if (( i+begin+dbsize-1) <= i) return; // would send us backwards or avoid movement
+                    i = begin + dbsize;
+                    continue;
+                }
+            }
+            i = begin + 512;            // skip forward past this block
         }
     }
 }
