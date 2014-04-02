@@ -15,6 +15,8 @@
 
 #include "utf8.h"
 
+static uint32_t sqlite_carve_mode = feature_recorder::CARVE_ALL;
+
 using namespace std;
 
 extern "C"
@@ -28,7 +30,11 @@ void scan_sqlite(const class scanner_params &sp,const recursion_control_block &r
         sp.info->description     = "Scans for SQLITE3 data";
         sp.info->scanner_version = "1.0";
 	sp.info->feature_names.insert("sqlite");
+        sp.info->get_config("sqlite_carve_mode",&sqlite_carve_mode,"0=carve none; 1=carve encoded; 2=carve all");
 	return;
+    }
+    if(sp.phase==scanner_params::PHASE_INIT){
+        sp.fs.get_name("sqlite")->set_carve_mode(static_cast<feature_recorder::carve_mode_t>(sqlite_carve_mode));
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
 	const sbuf_t &sbuf = sp.sbuf;
@@ -56,7 +62,7 @@ void scan_sqlite(const class scanner_params &sp,const recursion_control_block &r
                 if (dbsize_in_pages>=1){
 
                     /* Write it out! */
-                    //std::cerr << "calling carve " << sbuf << " " << begin << " dbsize=" << dbsize << " pagesize=" << pagesize << "\n";
+                    std::cerr << "calling carve " << sbuf << " " << begin << " dbsize=" << dbsize << " pagesize=" << pagesize << "\n";
                     sqlite_recorder->carve(sbuf,begin,begin+dbsize,".sqlite3");
             
                     /* Worry about overflow */
