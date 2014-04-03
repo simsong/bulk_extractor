@@ -231,7 +231,7 @@ static uint16_t IPv6L3Chksum(const sbuf_t &sbuf, u_int chksum_byteoffset)
     const struct ip6_hdr *ip6 = sbuf.get_struct_ptr<struct ip6_hdr>(0);
     if(ip6==0) return 0;		// cannot compute; not enough data
 	
-    int len = ntohs(ip6->ip6_plen) + 40;/* payload len + size of pseudo hdr */
+    int len      = ntohs(ip6->ip6_plen) + 40;/* payload len + size of pseudo hdr */
     uint32_t sum = 0;			// 
     u_int octets_processed = 0;
 
@@ -342,15 +342,18 @@ static bool invalidIP4(const uint8_t *const cc)
     if ( (cc[0] == 0) || (cc[0] == 255) ){
         return true;
     }
+
     /* IANA Reserved http://www.iana.org/assignments/ipv4-address-space/ipv4-address-space.txt */
     if (cc[0] == 127) return true;
     if (cc[0] >= 224) return true;
+
     /* Sequences of middle 0x0000 or 0xffff */
     if ( (cc[1] == 0)   && (cc[2] == 0) ) return true;
     if ( (cc[1] == 255) && (cc[2] == 255) ) return true;
+
     /* Trailing zero or 0xff */
     if ( (cc[3] == 0) || (cc[3] == 255) ) return true;
-    if( (cc[0]==cc[1]) && (cc[1]==cc[2]) ) return true;    /* Palendromes; needed? */
+    if ( (cc[0]==cc[1]) && (cc[1]==cc[2]) ) return true;    /* Palendromes; needed? */
     return false;
 }
 
@@ -458,7 +461,7 @@ static bool sanePort(const uint16_t port) {
 static bool sanityCheckIP46Header(const sbuf_t &sbuf, bool *checksum_valid, generic_iphdr_t *h)
 {
     const struct be13::ip4 *ip = sbuf.get_struct_ptr<struct be13::ip4>(0);
-    if(!ip) return false;		// not enough space
+    if (!ip) return false;		// not enough space
     if (ip->ip_v == 4){
 	if (ip->ip_hl != 5) return false;	// IPv4 header length is 20 bytes (5 quads) (ignores options)
 	if ( (ip->ip_off != 0x0) && (ip->ip_off != ntohs(IP_DF)) ) return false;
@@ -489,7 +492,7 @@ static bool sanityCheckIP46Header(const sbuf_t &sbuf, bool *checksum_valid, gene
     } 
 
     const struct be13::ip6_hdr *ip6 = sbuf.get_struct_ptr<struct be13::ip6_hdr>(0);
-    if(!ip6) return false;
+    if (!ip6) return false;
     if ((ip6->ip6_vfc & 0xF0) == 0x60){
 		
 	//only do TCP, UDP and ICMPv6

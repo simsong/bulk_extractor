@@ -428,7 +428,7 @@ def identify_filenames(outdir):
 def diff(dname1,dname2):
     args.max = int(args.max)
     def files_in_dir(dname):
-        return [fn.replace(dname+"/","") for fn in glob.glob(dname+"/*")]
+        return [fn.replace(dname+"/","") for fn in glob.glob(dname+"/*") if os.path.isfile(fn)]
     def lines_to_set(fn):
         return set(open(fn).read().split("\n"))
     
@@ -439,28 +439,33 @@ def diff(dname1,dname2):
     if files2.difference(files1):
         print("Files only in {}:\n   {}".format(dname2," ".join(files2.difference(files1))))
 
-    # Look at the common files
+    # Look at the common files. For each report the files only in one or the other
     common = files1.intersection(files2)
-    for fn in common:
+    for fn in sorted(common):
+        if fn=="wordlist.txt" and not args.diffwordlist:
+            continue
         def print_diff(dname,prefix,diffset):
             if not diffset:
                 return
-            print("Only in {}: {} lines".format(dname,len(diffset)))
+            print("\nOnly in {}: {} lines".format(os.path.join(dname,fn),len(diffset)))
             count = 0
             for line in sorted(diffset):
-                print("{}{}".format(prefix,line))
+                extra = ""
+                if len(line) > args.diffwidth: extra="..."
+                print("{}{}{}".format(prefix,line[0:args.diffwidth],extra))
                 count += 1
                 if count>args.max:
                     print(" ... +{} more lines".format(len(diffset)-int(args.max)))
-                    return
+                    break
+            return len(diffset)
 
-        print("regressdiff {} {}:".format(os.path.join(dname1,fn),os.path.join(dname2,fn)))
+        print("regressdiff {}:".format(fn))
         lines1 = lines_to_set(os.path.join(dname1,fn))
         lines2 = lines_to_set(os.path.join(dname2,fn))
-        print_diff(dname1,"<",lines1.difference(lines2))
-        print_diff(dname2,">",lines2.difference(lines1))
-        if lines1 != lines2:
-            print("")
+        count1 = print_diff(dname1,"<",lines1.difference(lines2))
+        count2 = print_diff(dname2,">",lines2.difference(lines1))
+        if count1 or count2:
+            print("\n-------------\n")
 
 
 def run_and_analyze():
@@ -506,6 +511,8 @@ if __name__=="__main__":
     parser.add_argument("--extra",help="Specify extra arguments")
     parser.add_argument("--gprof",help="Recompile and run with gprof",action="store_true")
     parser.add_argument("--diff",help="diff mode. Compare two outputs",type=str,nargs='*')
+    parser.add_argument("--diffwidth",type=int,help="Number of characters to display on diff lines",default=170)
+    parser.add_argument("--diffwordlist",type=bool,help="compare wordlist.txt",default=False)
     parser.add_argument("--max",help="Maximum number of differences to display",default="5")
     parser.add_argument("--memdebug",help="Look for memory errors",action="store_true")
     parser.add_argument("--analyze",help="Analyze a bulk_extractor output directory")

@@ -67,8 +67,9 @@ void scan_outlook(const class scanner_params &sp,const recursion_control_block &
 	sp.info->name  = "outlook";
 	sp.info->author = "Simson L. Garfinkel";
 	sp.info->description = "Outlook Compressible Encryption";
-	sp.info->flags = scanner_info::SCANNER_DISABLED | scanner_info::SCANNER_RECURSE
-            | scanner_info::SCANNER_DEPTH_0;
+	sp.info->flags = scanner_info::SCANNER_DISABLED \
+            | scanner_info::SCANNER_RECURSE | scanner_info::SCANNER_DEPTH_0 \
+            | scanner_info::SCANNER_NO_ALL;
 	return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN) {
@@ -87,8 +88,8 @@ void scan_outlook(const class scanner_params &sp,const recursion_control_block &
             dbuf.buf[ii] = libpff_encryption_compressible[ ch ];
         }
         
-        const pos0_t pos0_xor = pos0 + "OUTLOOK";
-        const sbuf_t child_sbuf(pos0_xor, dbuf.buf, sbuf.bufsize, sbuf.pagesize, false);
+        const pos0_t pos0_oce = pos0 + "OUTLOOK";
+        const sbuf_t child_sbuf(pos0_oce, dbuf.buf, sbuf.bufsize, sbuf.pagesize, false);
         scanner_params child_params(sp, child_sbuf);
         (*rcb.callback)(child_params);    // recurse on deobfuscated buffer
     }

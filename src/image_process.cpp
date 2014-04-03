@@ -414,9 +414,7 @@ image_process::iterator process_ewf::end() const
 
 pos0_t process_ewf::get_pos0(const image_process::iterator &it) const
 {
-    pos0_t pos0;
-    pos0.offset = it.raw_offset;
-    return pos0;
+    return pos0_t("",it.raw_offset);
 }
 
 /** Read from the iterator into a newly allocated sbuf */
@@ -701,9 +699,7 @@ std::string process_raw::str(const image_process::iterator &it) const
 
 pos0_t process_raw::get_pos0(const image_process::iterator &it) const
 {
-    pos0_t pos0;
-    pos0.offset = it.raw_offset;
-    return pos0;
+    return pos0_t("",it.raw_offset);
 }
 
 /** Read from the iterator into a newly allocated sbuf.
@@ -820,10 +816,7 @@ void process_dir::increment_iterator(image_process::iterator &it) const
 
 pos0_t process_dir::get_pos0(const image_process::iterator &it) const
 {
-    pos0_t pos0;
-    pos0.path = files[it.file_number];
-    pos0.offset = 0;
-    return pos0;
+    return pos0_t(files[it.file_number],0);
 }
 
 /** Read from the iterator into a newly allocated sbuf

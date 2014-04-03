@@ -687,7 +687,7 @@ int main(int argc,char **argv)
     word_and_context_list alert_list;		/* shold be flagged */
     word_and_context_list stop_list;		/* should be ignored */
 
-    scanner_info::scanner_config   s_config; // the bulk extractor config created from the command line
+    scanner_info::scanner_config   s_config;    // the bulk extractor phase 1 config created from the command line
     BulkExtractor_Phase1::Config   cfg;
     cfg.num_threads = threadpool::numCPU();
 
@@ -698,7 +698,10 @@ int main(int argc,char **argv)
     int         opt_h = 0;
     int         opt_H = 0;
     std::string opt_sampling_params;
-    std::string      opt_outdir;
+    std::string opt_outdir;
+    bool        opt_write_flat_files = true;
+    bool        opt_write_sqlite3     = false;
+    bool        opt_enable_histograms=true;
 
     /* Startup */
     setvbuf(stdout,0,_IONBF,0);		// don't buffer stdout
@@ -826,12 +829,12 @@ int main(int argc,char **argv)
     if(cfg.debug & DEBUG_PEDANTIC) validateOrEscapeUTF8_validate = true;
 
     /* Create a configuration that will be used to initialize the scanners */
-    bool  opt_enable_histograms=true;
     scanner_info si;
 
     s_config.debug       = cfg.debug;
-
     si.config = &s_config;
+
+    /* Make individual configuration options appear on the command line interface. */
     si.get_config("work_start_work_end",&worker::opt_work_start_work_end,
                   "Record work start and end of each scanner in report.xml file");
     si.get_config("enable_histograms",&opt_enable_histograms,
@@ -840,6 +843,8 @@ int main(int argc,char **argv)
                   "Set >0 to make histogram maker fail with memory allocations");
     si.get_config("hash_alg",&be_hash_name,"Specifies hash algorithm to be used for all hash calculations");
     si.get_config("dup_data_alerts",&be13::plugin::dup_data_alerts,"Notify when duplicate data is not processed");
+    si.get_config("write_feature_files",&opt_write_flat_files,"Write features to flat files");
+    si.get_config("write_feature_sqlite3",&opt_write_sqlite3,"Write feature files to report.sqlite3");
 
     /* Make sure that the user selected a valid hash */
     {

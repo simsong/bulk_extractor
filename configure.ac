@@ -226,25 +226,17 @@ unset option
 
 m4_include([src/dfxml/src/dfxml_configure.m4])
 m4_include([src/be13_api/be13_configure.m4])
+m4_include([src/sceadan/sceadan_configure.m4])
 
 ################################################################
+
 ## sceadan support
 ## Enabled for 1.5 release
 AC_ARG_ENABLE([sceadan],
               AS_HELP_STRING([--disable-sceadan], [disable UTSA SCEADAN SVM for type identification]),
               [],
 	      [AC_DEFINE(USE_SCEADAN, 1, [Use SCEADAN FILE TYPE CLASSIFIER]) sceadan="yes"])
-
-AC_CHECK_HEADERS([linear.h liblinear/linear.h])
-AC_CHECK_LIB([linear],[load_model])
-AC_CHECK_MEMBER([struct parameter.p], [], [AC_MSG_WARN([liblinear 1.9+ is required])
-                                           sceadan="no"
-                                          ],
-        [[#include <linear.h>]])
 AM_CONDITIONAL([SCEADAN_ENABLED], [test "yes" = "$sceadan"])
-
-
-################################################################
 
 
 ## rar support

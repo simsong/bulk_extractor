@@ -1,7 +1,7 @@
 #include "rar.hpp"
 
 #ifndef _WIN_CE
-static const int SleepTime=0;
+//static const int SleepTime=0;
 
 void InitSystemOptions(int SleepTime_)
 {
@@ -68,8 +68,8 @@ void SetPriority(int Priority)
 void Wait()
 {
 #if defined(_WIN_ALL) && !defined(_WIN_CE) && !defined(SFX_MODULE)
-  if (SleepTime!=0)
-    Sleep(SleepTime);
+//  if (SleepTime!=0)
+//    Sleep(SleepTime);
 #endif
 }
 #endif
