@@ -962,8 +962,6 @@ int main(int argc,char **argv)
     if (opt_write_sqlite3)      flags |= feature_recorder_set::ENABLE_SQLITE3_RECORDERS;
     if (!opt_write_flat_files)  flags |= feature_recorder_set::DISABLE_FILE_RECORDERS;
     
-
-
     feature_recorder_set fs(flags,be_hash);
 
 

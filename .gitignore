@@ -104,3 +104,4 @@ libtool
 src/beapi_demo
 BETheoryOfOperation.pdf
 bulk_extractor-*.*.*/
+test-driver
