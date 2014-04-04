@@ -34,7 +34,11 @@ void PatternScanner::shutdown(const scanner_params&) {
 /*********************************************************/
 
 LightgrepController::LightgrepController()
-: ParsedPattern(lg_create_pattern()), Fsm(lg_create_fsm(1 << 20)), PatternInfo(lg_create_pattern_map(1000)), Prog(0), Scanners()
+: ParsedPattern(lg_create_pattern()),       // Reuse the parsed pattern data structure for efficiency
+  Fsm(lg_create_fsm(1 << 20)),              // Reserve space for 1M states in the automaton--will grow if needed
+  PatternInfo(lg_create_pattern_map(1000)), // Reserve space for 1000 patterns in the pattern map
+  Prog(0),
+  Scanners()
 {
 }
 
@@ -45,11 +49,13 @@ LightgrepController::~LightgrepController() {
 }
 
 LightgrepController& LightgrepController::Get() {
+  // Meyers Singleton. c.f. Effective C++ by Scott Meyers
   static LightgrepController controller;
   return controller;
 }
 
 bool LightgrepController::addScanner(PatternScanner& scanner) {
+  // Add patterns and handlers from a Scanner to the centralized automaton
   LG_Error* lgErr = 0;
 
   unsigned int patBegin = numeric_limits<unsigned int>::max(),
@@ -57,12 +63,14 @@ bool LightgrepController::addScanner(PatternScanner& scanner) {
 
   int idx = -1;
 
+  // iterate all the scanner's handlers
   for (vector<const Handler*>::const_iterator h(scanner.handlers().begin()); h != scanner.handlers().end(); ++h) {
     bool good = false;
-    if (lg_parse_pattern(ParsedPattern, (*h)->RE.c_str(), &(*h)->Options, &lgErr)) {
+    if (lg_parse_pattern(ParsedPattern, (*h)->RE.c_str(), &(*h)->Options, &lgErr)) { // parse the pattern
       for (vector<string>::const_iterator enc((*h)->Encodings.begin()); enc != (*h)->Encodings.end(); ++enc) {
-        idx = lg_add_pattern(Fsm, PatternInfo, ParsedPattern, enc->c_str(), &lgErr);
+        idx = lg_add_pattern(Fsm, PatternInfo, ParsedPattern, enc->c_str(), &lgErr); // add the pattern for each given encoding
         if (idx >= 0) {
+          // add the handler callback to the pattern map, associated with the pattern index
           lg_pattern_info(PatternInfo, idx)->UserData = const_cast<void*>(static_cast<const void*>(&((*h)->Callback)));
           patBegin = std::min(patBegin, static_cast<unsigned int>(idx));
           good = true;
@@ -82,12 +90,15 @@ bool LightgrepController::addScanner(PatternScanner& scanner) {
     }
   }
   patEnd = lg_pattern_map_size(PatternInfo);
+  // record the range of this scanner's patterns in the central pattern map
   scanner.patternRange() = make_pair(patBegin, patEnd);
   Scanners.push_back(&scanner);
   return true;
 }
 
 bool LightgrepController::addUserPatterns(PatternScanner& scanner, CallbackFnType* callbackPtr, const FindOpts& user) {
+  // Add patterns specified as keywords by the user
+  // Similar to above, but does not have a handler per pattern
   unsigned int patBegin = lg_pattern_map_size(PatternInfo),
                patEnd = 0;
 
@@ -97,6 +108,7 @@ bool LightgrepController::addUserPatterns(PatternScanner& scanner, CallbackFnTyp
 
   LG_Error *err = 0;
 
+  // Add patterns from files
   for (vector<string>::const_iterator itr(user.Files.begin()); itr != user.Files.end(); ++itr) {
     ifstream file(itr->c_str(), ios::in);
     if (!file.is_open()) {
@@ -106,6 +118,7 @@ bool LightgrepController::addUserPatterns(PatternScanner& scanner, CallbackFnTyp
     string contents = string(istreambuf_iterator<char>(file), istreambuf_iterator<char>());
 
     const char* contentsCStr = contents.c_str();
+    // Add all the patterns from the files in one fell swoop
     if (lg_add_pattern_list(Fsm, PatternInfo, contentsCStr, itr->c_str(), DefaultEncodingsCStrings, 2, &opts, &err) < 0) {
       vector<string> lines;
       istringstream input(contents);
@@ -124,6 +137,7 @@ bool LightgrepController::addUserPatterns(PatternScanner& scanner, CallbackFnTyp
       return false;
     }
   }
+  // add patterns from single command-line arguments
   for (vector<string>::const_iterator itr(user.Patterns.begin()); itr != user.Patterns.end(); ++itr) {
     bool good = false;
     if (lg_parse_pattern(ParsedPattern, itr->c_str(), &opts, &err)) {
@@ -151,6 +165,7 @@ bool LightgrepController::addUserPatterns(PatternScanner& scanner, CallbackFnTyp
 void LightgrepController::regcomp() {
   LG_ProgramOptions progOpts;
   progOpts.Determinize = 1;
+  // Create an optimized, immutable form of the accumulated automaton
   Prog = lg_create_program(Fsm, &progOpts);
   lg_destroy_fsm(Fsm);
 
@@ -158,6 +173,7 @@ void LightgrepController::regcomp() {
 }
 
 struct HitData {
+  // Everything we need for processing a hit
   LightgrepController* lgc;
   const vector<PatternScanner*>* scannerTable;
   const scanner_params* sp;
@@ -165,16 +181,18 @@ struct HitData {
 };
 
 void gotHit(void* userData, const LG_SearchHit* hit) {
+  // trampoline back into LightgrepController::processHit() from the void* userData
   HitData* hd(static_cast<HitData*>(userData));
   hd->lgc->processHit(*hd->scannerTable, *hit, *hd->sp, *hd->rcb);
 }
 
 void LightgrepController::scan(const scanner_params& sp, const recursion_control_block &rcb) {
+  // Scan the sbuf for pattern hits, invoking various scanners' handlers as hits are encountered
   if (!Prog) {
     // we had no valid patterns, do nothing
     return;
   }
-
+  // First, clone all the scanners so that there's no shared data between threads
   vector<PatternScanner*> scannerTable(lg_pattern_map_size(PatternInfo)); // [Keyword Index -> scanner], no ownership
   vector<PatternScanner*> scannerList;                                    // ownership list
   for (vector<PatternScanner*>::const_iterator itr(Scanners.begin()); itr != Scanners.end(); ++itr) {
@@ -183,35 +201,38 @@ void LightgrepController::scan(const scanner_params& sp, const recursion_control
     for (unsigned int i = s->patternRange().first; i < s->patternRange().second; ++i) {
       scannerTable[i] = s;
     }
-    s->initScan(sp);
+    s->initScan(sp); // let the scanner know we're about to scan an sbuf
   }
   LG_ContextOptions ctxOpts;
   ctxOpts.TraceBegin = 0xffffffffffffffff;
   ctxOpts.TraceEnd   = 0;
 
-  LG_HCONTEXT ctx = lg_create_context(Prog, &ctxOpts);
+  LG_HCONTEXT ctx = lg_create_context(Prog, &ctxOpts); // create a search context; cannot be shared, so local to scan
 
   const sbuf_t &sbuf = sp.sbuf;
 
   HitData data = { this, &scannerTable, &sp, &rcb };
 
-  // lg_search(ctx, (const char*)sbuf.buf, (const char*)sbuf.buf + sbuf.bufsize, 0, &data, gotHit);
+  // search the sbuf in one go
+  // the gotHit() function will be invoked for each pattern hit
   if (lg_search(ctx, (const char*)sbuf.buf, (const char*)sbuf.buf + sbuf.pagesize, 0, &data, gotHit) < numeric_limits<uint64_t>::max()) {
+    // resolve potential hits that want data into the sbuf margin, without beginning any new hits
     lg_search_resolve(ctx, (const char*)sbuf.buf + sbuf.pagesize, (const char*)sbuf.buf + sbuf.bufsize, sbuf.pagesize, &data, gotHit);
   }
+  // flush any remaining hits; there's no more data
   lg_closeout_search(ctx, &data, gotHit);
 
   lg_destroy_context(ctx);
 
   // don't call PatternScanner::shutdown() on these! that only happens on prototypes
   for (vector<PatternScanner*>::const_iterator itr(scannerList.begin()); itr != scannerList.end(); ++itr) {
-    (*itr)->finishScan(sp);
+    (*itr)->finishScan(sp); // let the scanner know we're done with the sbuf
     delete *itr;
   }
 }
 
 void LightgrepController::processHit(const vector<PatternScanner*>& sTbl, const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
-  // lookup the handler's callback functor, then invoke it
+  // lookup the handler's callback functor in the pattern map, then invoke it
   CallbackFnType* cbPtr(static_cast<CallbackFnType*>(lg_pattern_info(PatternInfo, hit.KeywordIndex)->UserData));
   ((*sTbl[hit.KeywordIndex]).*(*cbPtr))(hit, sp, rcb); // ...yep...
 }
@@ -223,6 +244,7 @@ unsigned int LightgrepController::numPatterns() const {
 /*********************************************************/
 
 void scan_lg(PatternScanner& scanner, const class scanner_params &sp, const recursion_control_block &rcb) {
+  // utility implementation of the normal scan function for a PatternScanner instance
   switch (sp.phase) {
   case scanner_params::PHASE_STARTUP:
     scanner.startup(sp);
@@ -230,6 +252,7 @@ void scan_lg(PatternScanner& scanner, const class scanner_params &sp, const recu
   case scanner_params::PHASE_INIT:
     scanner.init(sp);
     if (!LightgrepController::Get().addScanner(scanner)) {
+      // It's fine for user patterns not to parse, but there's no excuse for a scanner so exit.
       cerr << "Aborting. Fix pattern or disable scanner to continue." << endl;
       exit(EXIT_FAILURE);
     }
@@ -243,70 +266,5 @@ void scan_lg(PatternScanner& scanner, const class scanner_params &sp, const recu
 }
 
 /*********************************************************/
-
-// class ExamplePatternScanner : public PatternScanner {
-// public:
-//   ExamplePatternScanner(): PatternScanner("lg_email"), EmailRecorder(0) {}
-//   virtual ~ExamplePatternScanner() {}
-
-//   virtual void init(const scanner_params& sp);
-//   virtual void shutdown(const scanner_params&) {}
-
-//   feature_recorder* EmailRecorder;
-
-//   void defaultHitHandler(feature_recorder* fr, const LG_SearchHit& hit, const scanner_params& sp) {  
-//     fr->write_buf(sp.sbuf, hit.Start, hit.End - hit.Start);
-//   }
-
-// private:
-//   ExamplePatternScanner(const ExamplePatternScanner&);
-//   ExamplePatternScanner& operator=(const ExamplePatternScanner&);
-// };
-
-// void ExamplePatternScanner::init(const scanner_params& sp) {
-//   sp.info->name           = "ExamplePatternScanner";
-//   sp.info->author         = "Simson L. Garfinkel";
-//   sp.info->description    = "Scans for email addresses, domains, URLs, RFC822 headers, etc.";
-//   sp.info->scanner_version= "1.0";
-
-//   /* define the feature files this scanner created */
-//   sp.info->feature_names.insert("email");
-//   // sp.info->feature_names.insert("domain");
-//   // sp.info->feature_names.insert("url");
-//   // sp.info->feature_names.insert("rfc822");
-//   // sp.info->feature_names.insert("ether");
-
-//   /* define the histograms to make */
-//   sp.info->histogram_defs.insert(histogram_def("email","","histogram",HistogramMaker::FLAG_LOWERCASE));
-//   // sp.info->histogram_defs.insert(histogram_def("domain","","histogram"));
-//   // sp.info->histogram_defs.insert(histogram_def("url","","histogram"));
-//   // sp.info->histogram_defs.insert(histogram_def("url","://([^/]+)","services"));
-//   // sp.info->histogram_defs.insert(histogram_def("url","://((cid-[0-9a-f])+[a-z.].live.com/)","microsoft-live"));
-//   // sp.info->histogram_defs.insert(histogram_def("url","://[-_a-z0-9.]+facebook.com/.*[&?]{1}id=([0-9]+)","facebook-id"));
-//   // sp.info->histogram_defs.insert(histogram_def("url","://[-_a-z0-9.]+facebook.com/([a-zA-Z0-9.]*[^/?&]$)","facebook-address",HistogramMaker::FLAG_LOWERCASE));
-//   // sp.info->histogram_defs.insert(histogram_def("url","search.*[?&/;fF][pq]=([^&/]+)","searches"));
-
-//   EmailRecorder = sp.fs.get_name("email");
-// }
-
-// ExamplePatternScanner EmailScanner;
-
-// extern "C"
-// void scan_lg_example(const class scanner_params &sp, const recursion_control_block &rcb) {
-//   if (sp.phase == scanner_params::PHASE_STARTUP) {
-//     cerr << "scan_lg_email - init" << endl;
-//     EmailScanner.init(sp);
-//     LightgrepController::Get().addScanner(EmailScanner);
-//   }
-//   else if (sp.phase == scanner_params::PHASE_SHUTDOWN) {
-//     cerr << "scan_lg_email - cleanup" << endl;
-//     EmailScanner.cleanup(sp);
-//   }
-// }
-
-
-// const vector<string> DefaultEncodings(&DefaultEncodingsCStrings[0], &DefaultEncodingsCStrings[2]);
-
-// Handler EmailAddr(EmailScanner, "jon@lightbox", DefaultEncodings, bind(&ExamplePatternScanner::defaultHitHandler, &EmailScanner, EmailScanner.EmailRecorder, _1, _2));
 
 #endif // HAVE_LIBLIGHTGREP
