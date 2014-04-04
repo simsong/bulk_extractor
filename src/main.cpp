@@ -958,10 +958,15 @@ int main(int argc,char **argv)
     feature_file_names_t feature_file_names;
     be13::plugin::get_scanner_feature_file_names(feature_file_names);
     uint32_t flags = 0;
-    if (stop_list.size()>0) flags |= feature_recorder_set::CREATE_STOP_LIST_RECORDERS;
+    if (stop_list.size()>0)     flags |= feature_recorder_set::CREATE_STOP_LIST_RECORDERS;
+    if (opt_write_sqlite3)      flags |= feature_recorder_set::ENABLE_SQLITE3_RECORDERS;
+    if (!opt_write_flat_files)  flags |= feature_recorder_set::DISABLE_FILE_RECORDERS;
+    
 
 
     feature_recorder_set fs(flags,be_hash);
+
+
     fs.init(feature_file_names,image_fname,opt_outdir);
     if(opt_enable_histograms) be13::plugin::add_enabled_scanner_histograms_to_feature_recorder_set(fs);
     be13::plugin::scanners_init(fs);

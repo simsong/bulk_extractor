@@ -1,3 +1,7 @@
+2014-04-03  Basic  <simsong@Dance.local>
+
+	* src/be13_api/feature_recorder_set.cpp (feature_recorder_set::unset_flag): changed clear_flag to unset_flag for consistency.
+
 2014-04-02  Basic  <simsong@Dance.local>
 
 	* bugfix: featurefiles for carved elements no longer include the name of the -o directory.
