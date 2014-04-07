@@ -102,6 +102,9 @@ bulk_extractor_SOURCES = $(bulk_extractor_nomain) main.cpp bulk_extractor_api.cp
 
 bulk_extractorlib_SOURCES = $(bulk_extractor_nomain) bulk_extractor_api.cpp
 
+.PHONY lib
+lib: libbulkextractor.so
+
 libbulkextractor.so: $(bulk_extractorlib_OBJECTS)
 	$(CXX) -shared -fPIC -o $@ $(LDFLAGS) $(bulk_extractorlib_OBJECTS) $(LIBS)
 

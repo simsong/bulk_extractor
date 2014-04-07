@@ -86,6 +86,10 @@ win64/bulk_extractor64.exe:
 	(cp win64/src/bulk_extractor.exe win64/bulk_extractor64.exe)
 	ls -l win64/bulk_extractor64.exe
 
+.PHONY: lib
+lib:
+	(cd src; make lib)
+
 .PHONY: pull
 pull:
 	git pull
