@@ -261,6 +261,8 @@ int bulk_extractor_analyze_buf(BEFILE *bef,uint8_t *buf,size_t buflen)
 extern "C" 
 int bulk_extractor_analyze_dev(BEFILE *bef,const char *fname,float frac,int pagesize)
 {
+    bool sampling_mode = frac < 1.0; // are we in sampling mode or full-disk mode?
+
     struct stat st;
     if(stat(fname,&st)){
         return -1;                      // cannot stat file
@@ -287,13 +289,13 @@ int bulk_extractor_analyze_dev(BEFILE *bef,const char *fname,float frac,int page
         image_process *p = image_process::open(fname,false,pagesize,pagesize);
         image_process::iterator it = p->begin(); // get an iterator
 
-        if(frac>=1.0){
+        if(sampling_mode){
             BulkExtractor_Phase1::make_sorted_random_blocklist(&blocks_to_sample, it.max_blocks(),frac);
             si = blocks_to_sample.begin();    // get the new beginning
         }
 
         while(true){
-            if(frac < 1.0){             // sampling; position at the next block
+            if(sampling_mode){             // sampling; position at the next block
                 if(si==blocks_to_sample.end()) break;
                 it.seek_block(*si);
             } else {
@@ -312,7 +314,7 @@ int bulk_extractor_analyze_dev(BEFILE *bef,const char *fname,float frac,int page
                 (*bef->cfs.cb)(bef->cfs.user,BULK_EXTRACTOR_API_EXCEPTION,0,
                                e.what(),it.get_pos0().str().c_str(),"",0,"",0);
             }
-            if(frac<1.0){
+            if(sampling_mode){
                 ++si;
             } else {
                 ++it;
