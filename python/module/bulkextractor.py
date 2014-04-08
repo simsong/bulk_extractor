@@ -24,12 +24,15 @@ class Session(object):
     opening a session.  Any number of drives and buffers may be processed to
     contribute to a common set of histograms.  Feature data is returned by an
     optional feature_callback, and histograms are made available in a dict
-    after finalizing the session.
+    after finalizing the session.  Because bulk_extractor is long-running, a
+    heartbeat callback may be provided for periodic reassurance that progress
+    is being made.
     """
     def __init__(self,
             histogram_limit=50,
             feature_callback=lambda a,b,c,d,e: 0,
             carving_callback=lambda: 0,
+            heartbeat_callback=lambda: 0,
             user_arg=None):
         """
         Prepare for bulk_extractor use.  Max histogram size and feature/carving
@@ -41,6 +44,7 @@ class Session(object):
         feature_callback(user_arg, recorder_name, forensic_path, feature,
                 context)
         carving_callback() (not yet implemented by bulk_extractor)
+        heartbeat_callback()
         """
         if not initialized():
             raise BulkExtractorException("Session opened before init")
@@ -55,12 +59,12 @@ class Session(object):
             if code == API_CODE_FEATURE:
                 result = feature_callback(user, name, fpath, feature, context)
                 if result is None:
-                    return 0
+                    result = 0
                 return result
             if code == API_CODE_CARVED:
                 result = carving_callback()
                 if result is None:
-                    return 0
+                    result = 0
                 return result
             # histogram data is organized into a dictionary by feature recorder
             if code == API_CODE_HISTOGRAM:
@@ -73,6 +77,11 @@ class Session(object):
                 self._histograms[name].append(HistElem(
                     feature=feature, count=arg))
                 return 0
+            if code == API_CODE_HEARTBEAT:
+                result = heartbeat_callback()
+                if result is None:
+                    result = 0
+                return result
             # pythonify exceptions raised by bulk_extractor
             if code == API_EXCEPTION:
                 # Exceptional callbacks place the reason in name and supply the
@@ -278,6 +287,7 @@ else:
 API_CODE_FEATURE      =    1
 API_CODE_HISTOGRAM    =    2
 API_CODE_CARVED       =    3
+API_CODE_HEARTBEAT    =    4
 API_CODE_FEATURELIST  =   10
 API_EXCEPTION         = 1000
 # scanner configuration commands
