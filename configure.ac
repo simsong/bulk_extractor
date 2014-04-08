@@ -233,9 +233,9 @@ m4_include([src/sceadan/sceadan_configure.m4])
 ## sceadan support
 ## Enabled for 1.5 release
 AC_ARG_ENABLE([sceadan],
-              AS_HELP_STRING([--disable-sceadan], [disable UTSA SCEADAN SVM for type identification]),
-              [],
-	      [AC_DEFINE(USE_SCEADAN, 1, [Use SCEADAN FILE TYPE CLASSIFIER]) sceadan="yes"])
+              AS_HELP_STRING([--enable-sceadan], [enable UTSA SCEADAN SVM for type identification]),
+	      [AC_DEFINE(USE_SCEADAN, 1, [Use SCEADAN FILE TYPE CLASSIFIER]) sceadan="yes"],
+              [])
 AM_CONDITIONAL([SCEADAN_ENABLED], [test "yes" = "$sceadan"])
 
 
