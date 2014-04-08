@@ -11,6 +11,7 @@
  * Histograms are stored in memory.
  */
 
+#define BULK_EXTRACTOR_API_CODE_HEARTBEAT       0
 #define BULK_EXTRACTOR_API_CODE_FEATURE         1
 #define BULK_EXTRACTOR_API_CODE_HISTOGRAM       2
 #define BULK_EXTRACTOR_API_CODE_CARVED          3

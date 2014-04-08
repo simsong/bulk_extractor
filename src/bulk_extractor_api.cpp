@@ -76,7 +76,10 @@ public:
     be_callback_t   *cb;
     mutable cppmutex Mcb;               // mutex for the callback
 
-public:
+    virtual void heartbeat() {
+        (*cb)(user, BULK_EXTRACTOR_API_CODE_HEARTBEAT,0,0,0,0,0,0,0);
+    }
+
     virtual feature_recorder *create_name_factory(const std::string &name_);
     callback_feature_recorder_set(void *user_,be_callback_t *cb_):
         feature_recorder_set(0,my_hasher),histogram_defs(),user(user_),cb(cb_),Mcb(){
