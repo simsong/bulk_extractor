@@ -193,9 +193,7 @@ void process_aff::increment_iterator(class image_process::iterator &it) const
 pos0_t process_aff::get_pos0(const image_process::iterator &it) const
 {
     int64_t pagenum = pagelist[it.page_counter];
-    pos0_t pos0;
-    pos0.offset = pagenum * af_get_pagesize(af);
-    return pos0;
+    return pos0_t("",pagenum * af_get_pagesize(af));
 }
 
 sbuf_t *process_aff::sbuf_alloc(image_process::iterator &it) const
