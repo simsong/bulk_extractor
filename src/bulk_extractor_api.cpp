@@ -89,7 +89,8 @@ public:
         feature_file_names_t feature_file_names;
         be13::plugin::scanners_process_enable_disable_commands();
         be13::plugin::get_scanner_feature_file_names(feature_file_names);
-        init(feature_file_names,"<NO-INPUT>","<NO-OUTDIR>"); // creates the feature recorders
+        init(feature_file_names,feature_recorder_set::NO_INPUT,
+                feature_recorder_set::NO_OUTDIR); // creates the feature recorders
         be13::plugin::add_enabled_scanner_histograms_to_feature_recorder_set(*this);
         be13::plugin::scanners_init(*this); // must be done after feature recorders are created
     }
