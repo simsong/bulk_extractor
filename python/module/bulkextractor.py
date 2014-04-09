@@ -284,10 +284,10 @@ else:
 # see also bulk_extractor_api.h
 
 # callback type codes
+API_CODE_HEARTBEAT    =    0
 API_CODE_FEATURE      =    1
 API_CODE_HISTOGRAM    =    2
 API_CODE_CARVED       =    3
-API_CODE_HEARTBEAT    =    4
 API_CODE_FEATURELIST  =   10
 API_EXCEPTION         = 1000
 # scanner configuration commands
