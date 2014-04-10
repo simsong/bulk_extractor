@@ -39,11 +39,11 @@ scanner_t *scanners_builtin[] = {
 
 void usage()
 {
-    cerr << "usage: stand [options] filename\n";
-    cerr << "Options:\n";
-    cerr << "   -h           - print this message\n";
-    cerr << "  -e scanner    - enable scanner\n";
-    cerr << "  -o outdir     - specify output directory\n";
+    std::cerr << "usage: stand [options] filename\n";
+    std::cerr << "Options:\n";
+    std::cerr << "   -h           - print this message\n";
+    std::cerr << "  -e scanner    - enable scanner\n";
+    std::cerr << "  -o outdir     - specify output directory\n";
     be13::plugin::info_scanners(false,true,scanners_builtin,'e','x');
 }
 
