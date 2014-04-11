@@ -397,8 +397,9 @@ static void do_scan(const class scanner_params &sp,
     int status = hashdb->scan(*scan_input, *scan_output);
 
     if (status != 0) {
-        std::cerr << "scan_hashid scan failure\n";
-    }
+        std::cerr << "Error: scan_hashid scan failure.  Aborting.\n";
+        exit(1);
+     }
 
     // get the feature recorder
     feature_recorder* identified_blocks_recorder = sp.fs.get_name("identified_blocks");
