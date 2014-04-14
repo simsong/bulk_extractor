@@ -309,6 +309,12 @@ box[ ]?[\[][0-9 -]{0,40}[\]] {
     s.pos += yyleng;
 }
 
+CT[.](Send|Receive)[.]CMD_[A-Z0-9_]{4,25}[ ]From=([0-9]{1,12}+)([ ]To=([0-9]{1,12}+))? {
+    /* TeamViewer */
+    accts_scanner &s = *yyaccts_get_extra(yyscanner);
+    s.pii_recorder->write_buf(SBUF,s.pos,yyleng);
+}    
+
 .|\n { 
      /**
       * The no-match rule.

@@ -144,7 +144,7 @@ feature_recorder  *feature_recorder_set::create_name_factory(const std::string &
 
 
 feature_recorder_set::feature_recorder_set(uint32_t f,const feature_recorder_set::hash_def &hasher_):
-    flags(f),seen_set(),input_fname(),outdir(),frm(),map_lock(),histogram_defs(),db3(),alert_list(),stop_list(),scanner_stats(),hasher(hasher_)
+    flags(f),seen_set(),input_fname(),outdir(),frm(),histogram_defs(),db3(),alert_list(),stop_list(),scanner_stats(),hasher(hasher_)
 {
     /* not here */
 }
