@@ -101,3 +101,7 @@ publish:
 	make dist
 	scp $(DIST_ARCHIVES) ncr.nps.edu:/var/www/digitalcorpora/downloads/bulk_extractor
 
+.PHONY: libinstall
+libinstall:
+	install -D src/libbulkextractor.so $(prefix)/lib/libbulkextractor.so
+	install -D python/module/bulkextractor.py $(prefix)/lib/python2.7/dist-packages/bulkextractor.py
