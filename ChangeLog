@@ -1,3 +1,7 @@
+2014-04-15  Basic  <simsong@r3.ncr.nps.edu>
+
+	* src/be13_api/feature_recorder.h (f): several of the flags were the same, resulting in behavior that was incorrect.
+
 2014-04-03  Basic  <simsong@Dance.local>
 
 	* src/be13_api/feature_recorder_set.cpp (feature_recorder_set::unset_flag): changed clear_flag to unset_flag for consistency.

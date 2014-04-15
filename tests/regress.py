@@ -86,6 +86,19 @@ answers = {"ubnist1.gen3":{"ALERTS_found.txt":88,
 
 
 
+def ptime(t):
+    r = ""
+    if t>3600:
+        h = t/3600
+        r = "%d hour " % h
+        t = t%3600
+    if t>60:
+        m = t / 60
+        r += "%d min " % m
+        t = t%60
+    r += "%d sec " % t
+    return r
+
 def find_file(fn):
     if os.path.exists(fn): return fn
     chk = []
@@ -292,8 +305,9 @@ def run(cmd):
         raise RuntimeError("{} crashed with error code {}".format(args.exe,r))
 
 def run_outdir(outdir,gdb=False):
+    """Run bulk_extarctor to a given output directory """
     print("run_outdir: ",outdir)
-    cargs=['-o',outdir]
+    cargs=['-o',outdir,'-S','write_feature_sqlite3=YES']
     if args.jobs: cargs += ['-j'+str(args.jobs)]
     if args.pagesize: cargs += ['-G'+str(args.pagesize)]
     if args.marginsize: cargs += ['-g'+str(args.marginsize)]
@@ -470,18 +484,6 @@ def diff(dname1,dname2):
 
 def run_and_analyze():
     global args
-    def ptime(t):
-        r = ""
-        if t>3600:
-            h = t/3600
-            r = "%d hour " % h
-            t = t%3600
-        if t>60:
-            m = t / 60
-            r += "%d min " % m
-            t = t%60
-        r += "%d sec " % t
-        return r
     outdir = make_outdir(args.outdir)
     t0 = time.time()
     run_outdir(outdir,args.gdb)
@@ -626,6 +628,7 @@ if __name__=="__main__":
             raise ValueError("--diff requires two arguments")
         diff(args.diff[0],args.diff[1])
         exit(0)
+
     if args.sort:
         for s in args.sort:
             sort_outdir(s)
