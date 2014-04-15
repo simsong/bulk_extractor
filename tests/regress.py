@@ -307,7 +307,9 @@ def run(cmd):
 def run_outdir(outdir,gdb=False):
     """Run bulk_extarctor to a given output directory """
     print("run_outdir: ",outdir)
-    cargs=['-o',outdir,'-S','write_feature_sqlite3=YES']
+    cargs=['-o',outdir]
+    if args.featuresql: cargs += ['-S','write_feature_sqlite3=YES']
+    if not args.featurefile: cargs += ['-S','write_feature_files=NO']
     if args.jobs: cargs += ['-j'+str(args.jobs)]
     if args.pagesize: cargs += ['-G'+str(args.pagesize)]
     if args.marginsize: cargs += ['-g'+str(args.marginsize)]
@@ -498,7 +500,8 @@ if __name__=="__main__":
     global args
     import sys,time
 
-    parser = argparse.ArgumentParser(description="Perform regression testing on bulk_extractor")
+    parser = argparse.ArgumentParser(description="Perform regression testing on bulk_extractor",
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--gdb",help="run under gdb",action="store_true")
     parser.add_argument("--debug",help="debug level",type=int)
     parser.add_argument("--outdir",help="output directory base",default="regress")
@@ -509,6 +512,17 @@ if __name__=="__main__":
     parser.add_argument("--jobs",help="Specifies number of worker threads",type=int)
     parser.add_argument("--pagesize",help="Specifies page size",type=int)
     parser.add_argument("--nofind",help="Does not do find test (faster)",action="store_true")
+
+    g = parser.add_mutually_exclusive_group()
+    g.add_argument("--featuresql",dest='featuresql',action='store_true',help="Enable SQL feature files")
+    g.add_argument("--no-featuresql",dest='featuresql',action='store_false',help="Enable SQL feature files")
+    parser.set_defaults(featuresql=True)
+
+    g = parser.add_mutually_exclusive_group()
+    g.add_argument("--featurefile",dest='featurefile',action='store_true',help="Enable FILE feature files")
+    g.add_argument("--no-featurefile",dest='featurefile',action='store_false',help="Enable FILE feature files")
+    parser.set_defaults(featurefile=True)
+
     parser.add_argument("--marginsize",help="Specifies the margin size",type=int)
     parser.add_argument("--extra",help="Specify extra arguments")
     parser.add_argument("--gprof",help="Recompile and run with gprof",action="store_true")
