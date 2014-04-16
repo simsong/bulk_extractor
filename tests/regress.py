@@ -238,7 +238,6 @@ def analyze_reportxml(xmldoc):
                 name,calls,seconds,seconds/calls,100.0*seconds/total))
     
     
-
 def analyze_outdir(outdir):
     """Print statistics about an output directory"""
     print("Analyze {}".format(outdir))
@@ -250,7 +249,7 @@ def analyze_outdir(outdir):
     # Print which scanners were run and how long they took
     analyze_reportxml(b.xmldoc)
     
-    hfns = list(b.histogram_files())
+    hfns = list(b.histogram_files()) # histogram files
     print("")
     print("Histogram Files:        {}".format(len(hfns)))
 
@@ -269,16 +268,55 @@ def analyze_outdir(outdir):
         print("  {:>25} entries: {:>10,}  (top: {})".format(fn,len(h),firstline))
 
     fnpart = ".".join(b.image_filename().split('/')[-1].split('.')[:-1])
-    ffns = list(b.feature_files())
+    ffns = sorted(list(b.feature_files()))
+    features = {}
     print("")
     print("Feature Files:        {}".format(len(ffns)))
-    for fn in sorted(ffns):
+    for fn in ffns:     # feature files
         lines = 0
-        for line in b.open(fn,'rb'):
+        for line in b.open(fn,'r'):
             if not bulk_extractor_reader.is_comment_line(line):
                 lines += 1
+        features[fn] = lines
         print("  {:>25} features: {:>12,}  {}".format(fn,lines,analyze_warning(fnpart,fn,lines)))
     
+    # If there is a SQLite database, analyze that too!
+    import sqlite3
+    conn = sqlite3.connect(os.path.join(outdir,"report.sqlite3"))
+    if conn:
+        c = conn.cursor()
+        c.execute("PRAGMA cache_size = 200000")
+        print("Comparing SQLite3 database to feature files:")
+        for fn in ffns:
+            try:
+                table = "f_"+fn.lower().replace(".txt","")
+                cmd = "select count(*) from "+table
+                print(cmd)
+                c.execute(cmd);
+                ct = c.fetchone()[0]
+                print("{}:   {}  {}".format(fn,features[fn],ct))
+                # Now check them all to make sure that the all match
+                count = 0
+                for line in b.open(fn,'r'):
+                    ary = bulk_extractor_reader.parse_feature_line(line)
+                    if ary:
+                        (path,feature) = ary[0:2]
+                        path = path.decode('utf-8')
+                        feature = feature.decode('utf-8')
+                        c.execute("select count(*) from "+table+" where path=? and feature_eutf8=?",(path,feature))
+                        ct = c.fetchone()[0]
+                        if ct==1:
+                            #print("feature {} {} in table {} ({})".format(path,feature,table,ct))
+                            pass
+                        if ct==0:
+                            #pass
+                            print("feature {} {} not in table {} ({})".format(path,feature,table,ct))
+                        count += 1
+                        if count>args.featuretest: break
+                        
+            except sqlite3.OperationalError as e:
+                print(e)
+
 
 def make_zip(dname):
     archive_name = dname+".zip"
@@ -543,6 +581,7 @@ if __name__=="__main__":
             + "reproduce the crash")
     parser.add_argument("--clearcache",help="clear the disk cache",action="store_true")
     parser.add_argument("--tune",help="run bulk_extractor tuning. Args are coded in this script.",action="store_true")
+    parser.add_argument("--featuretest",help="Specifies number of features to test to make sure they are in the SQL database",default=50,type=int)
 
     args = parser.parse_args()
 
