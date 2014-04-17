@@ -282,7 +282,7 @@ def analyze_outdir(outdir):
     
     # If there is a SQLite database, analyze that too!
     import sqlite3
-    conn = sqlite3.connect(os.path.join(outdir,"report.sqlite3"))
+    conn = sqlite3.connect(os.path.join(outdir,"report.sqlite"))
     if conn:
         c = conn.cursor()
         c.execute("PRAGMA cache_size = 200000")

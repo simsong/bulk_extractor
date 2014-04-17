@@ -962,113 +962,114 @@ int main(int argc,char **argv)
     if (opt_write_sqlite3)      flags |= feature_recorder_set::ENABLE_SQLITE3_RECORDERS;
     if (!opt_write_flat_files)  flags |= feature_recorder_set::DISABLE_FILE_RECORDERS;
     
-    feature_recorder_set fs(flags,be_hash);
+    {
+        feature_recorder_set fs(flags,be_hash);
 
+        fs.init(feature_file_names,image_fname,opt_outdir);
+        if(opt_enable_histograms) be13::plugin::add_enabled_scanner_histograms_to_feature_recorder_set(fs);
+        be13::plugin::scanners_init(fs);
 
-    fs.init(feature_file_names,image_fname,opt_outdir);
-    if(opt_enable_histograms) be13::plugin::add_enabled_scanner_histograms_to_feature_recorder_set(fs);
-    be13::plugin::scanners_init(fs);
+        fs.set_stop_list(&stop_list);
+        fs.set_alert_list(&alert_list);
 
-    fs.set_stop_list(&stop_list);
-    fs.set_alert_list(&alert_list);
-
-    /* Look for commands that impact per-recorders */
-    for(scanner_info::config_t::const_iterator it=s_config.namevals.begin();it!=s_config.namevals.end();it++){
-        /* see if there is a <recorder>: */
-        std::vector<std::string> params = split(it->first,':');
-        if(params.size()>=3 && params.at(0)=="fr"){
-            feature_recorder *fr = fs.get_name(params.at(1));
-            const std::string &cmd = params.at(2);
-            if(fr){
-                if(cmd=="window")        fr->set_context_window(stoi64(it->second));
-                if(cmd=="window_before") fr->set_context_window_before(stoi64(it->second));
-                if(cmd=="window_after")  fr->set_context_window_after(stoi64(it->second));
+        /* Look for commands that impact per-recorders */
+        for(scanner_info::config_t::const_iterator it=s_config.namevals.begin();it!=s_config.namevals.end();it++){
+            /* see if there is a <recorder>: */
+            std::vector<std::string> params = split(it->first,':');
+            if(params.size()>=3 && params.at(0)=="fr"){
+                feature_recorder *fr = fs.get_name(params.at(1));
+                const std::string &cmd = params.at(2);
+                if(fr){
+                    if(cmd=="window")        fr->set_context_window(stoi64(it->second));
+                    if(cmd=="window_before") fr->set_context_window_before(stoi64(it->second));
+                    if(cmd=="window_after")  fr->set_context_window_after(stoi64(it->second));
+                }
             }
+            /* See if there is a scanner? */
         }
-        /* See if there is a scanner? */
-    }
 
-    /* Store the configuration in the XML file */
-    dfxml_writer  *xreport = new dfxml_writer(reportfilename,false);
-    dfxml_create(*xreport,command_line,cfg);
-    xreport->xmlout("provided_filename",image_fname); // save this information
+        /* Store the configuration in the XML file */
+        dfxml_writer  *xreport = new dfxml_writer(reportfilename,false);
+        dfxml_create(*xreport,command_line,cfg);
+        xreport->xmlout("provided_filename",image_fname); // save this information
 
-    /* provide documentation to the user; the DFXML information comes from elsewhere */
-    if(!cfg.opt_quiet){
-	std::cout << "bulk_extractor version: " << PACKAGE_VERSION << "\n";
+        /* provide documentation to the user; the DFXML information comes from elsewhere */
+        if(!cfg.opt_quiet){
+            std::cout << "bulk_extractor version: " << PACKAGE_VERSION << "\n";
 #ifdef HAVE_GETHOSTNAME
-	char hostname[1024];
-	gethostname(hostname,sizeof(hostname));
-	std::cout << "Hostname: " << hostname << "\n";
+            char hostname[1024];
+            gethostname(hostname,sizeof(hostname));
+            std::cout << "Hostname: " << hostname << "\n";
 #endif
-	std::cout << "Input file: " << image_fname << "\n";
-	std::cout << "Output directory: " << opt_outdir << "\n";
-	std::cout << "Disk Size: " << p->image_size() << "\n";
-	std::cout << "Threads: " << cfg.num_threads << "\n";
-    }
+            std::cout << "Input file: " << image_fname << "\n";
+            std::cout << "Output directory: " << opt_outdir << "\n";
+            std::cout << "Disk Size: " << p->image_size() << "\n";
+            std::cout << "Threads: " << cfg.num_threads << "\n";
+        }
 
-    /****************************************************************
-     *** THIS IS IT! PHASE 1!
-     ****************************************************************/
+        /****************************************************************
+         *** THIS IS IT! PHASE 1!
+         ****************************************************************/
 
-    BulkExtractor_Phase1 phase1(*xreport,timer,cfg);
-    if(cfg.debug & DEBUG_PRINT_STEPS) std::cerr << "DEBUG: STARTING PHASE 1\n";
+        BulkExtractor_Phase1 phase1(*xreport,timer,cfg);
+        if(cfg.debug & DEBUG_PRINT_STEPS) std::cerr << "DEBUG: STARTING PHASE 1\n";
 
-    if(opt_sampling_params.size()>0) BulkExtractor_Phase1::set_sampling_parameters(cfg,opt_sampling_params);
-    xreport->add_timestamp("phase1 start");
-    phase1.run(*p,fs,seen_page_ids);
+        if(opt_sampling_params.size()>0) BulkExtractor_Phase1::set_sampling_parameters(cfg,opt_sampling_params);
+        xreport->add_timestamp("phase1 start");
+        phase1.run(*p,fs,seen_page_ids);
 
-    if(cfg.debug & DEBUG_PRINT_STEPS) std::cerr << "DEBUG: WAITING FOR WORKERS\n";
-    std::string md5_string;
-    phase1.wait_for_workers(*p,&md5_string);
-    delete p;				// not strictly needed, but why not?
-    p = 0;
+        if(cfg.debug & DEBUG_PRINT_STEPS) std::cerr << "DEBUG: WAITING FOR WORKERS\n";
+        std::string md5_string;
+        phase1.wait_for_workers(*p,&md5_string);
+        delete p;				// not strictly needed, but why not?
+        p = 0;
 
-    xreport->add_timestamp("phase1 end");
-    if(md5_string.size()>0){
-        std::cout << "MD5 of Disk Image: " << md5_string << "\n";
-    }
+        xreport->add_timestamp("phase1 end");
+        if(md5_string.size()>0){
+            std::cout << "MD5 of Disk Image: " << md5_string << "\n";
+        }
 
-    /*** PHASE 2 --- Shutdown ***/
-    if(cfg.opt_quiet==0) std::cout << "Phase 2. Shutting down scanners\n";
-    xreport->add_timestamp("phase2 start");
-    be13::plugin::phase_shutdown(fs);
-    xreport->add_timestamp("phase2 end");
+        /*** PHASE 2 --- Shutdown ***/
+        if(cfg.opt_quiet==0) std::cout << "Phase 2. Shutting down scanners\n";
+        xreport->add_timestamp("phase2 start");
+        be13::plugin::phase_shutdown(fs);
+        xreport->add_timestamp("phase2 end");
 
-    /*** PHASE 3 --- Create Histograms ***/
-    if(cfg.opt_quiet==0) std::cout << "Phase 3. Creating Histograms\n";
-    xreport->add_timestamp("phase3 start");
-    if(opt_enable_histograms) fs.dump_histograms(0,histogram_dump_callback,0);        // TK - add an xml error notifier!
-    xreport->add_timestamp("phase3 end");
+        /*** PHASE 3 --- Create Histograms ***/
+        if(cfg.opt_quiet==0) std::cout << "Phase 3. Creating Histograms\n";
+        xreport->add_timestamp("phase3 start");
+        if(opt_enable_histograms) fs.dump_histograms(0,histogram_dump_callback,0);        // TK - add an xml error notifier!
+        xreport->add_timestamp("phase3 end");
 
-    /*** PHASE 4 ---  report and then print final usage information ***/
-    xreport->push("report");
-    xreport->xmlout("total_bytes",phase1.total_bytes);
-    xreport->xmlout("elapsed_seconds",timer.elapsed_seconds());
-    xreport->xmlout("max_depth_seen",be13::plugin::get_max_depth_seen());
-    xreport->xmlout("dup_data_encountered",be13::plugin::dup_data_encountered);
-    xreport->pop();			// report
-    xreport->flush();
+        /*** PHASE 4 ---  report and then print final usage information ***/
+        xreport->push("report");
+        xreport->xmlout("total_bytes",phase1.total_bytes);
+        xreport->xmlout("elapsed_seconds",timer.elapsed_seconds());
+        xreport->xmlout("max_depth_seen",be13::plugin::get_max_depth_seen());
+        xreport->xmlout("dup_data_encountered",be13::plugin::dup_data_encountered);
+        xreport->pop();			// report
+        xreport->flush();
 
-    xreport->push("scanner_times");
-    fs.get_stats(xreport,stat_callback);
-    xreport->pop();
-    xreport->add_rusage();
-    xreport->pop();			// bulk_extractor
-    xreport->close();
-    if(cfg.opt_quiet==0){
-	float mb_per_sec = (phase1.total_bytes / 1000000.0) / timer.elapsed_seconds();
+        xreport->push("scanner_times");
+        fs.get_stats(xreport,stat_callback);
+        xreport->pop();
+        xreport->add_rusage();
+        xreport->pop();			// bulk_extractor
+        xreport->close();
+        if(cfg.opt_quiet==0){
+            float mb_per_sec = (phase1.total_bytes / 1000000.0) / timer.elapsed_seconds();
 
-	std::cout.precision(4);
-        printf("Elapsed time: %g sec.\n",timer.elapsed_seconds());
-        printf("Total MB processed: %d\n",int(phase1.total_bytes / 100000));
+            std::cout.precision(4);
+            printf("Elapsed time: %g sec.\n",timer.elapsed_seconds());
+            printf("Total MB processed: %d\n",int(phase1.total_bytes / 100000));
         
-        printf("Overall performance: %g MBytes/sec (%g MBytes/sec/thread)\n",
-               mb_per_sec,mb_per_sec/cfg.num_threads);
-        if (fs.has_name("email")) {
-            feature_recorder *fr = fs.get_name("email");
-            if(fr){
-                std::cout << "Total " << fr->name << " features found: " << fr->count() << "\n";
+            printf("Overall performance: %g MBytes/sec (%g MBytes/sec/thread)\n",
+                   mb_per_sec,mb_per_sec/cfg.num_threads);
+            if (fs.has_name("email")) {
+                feature_recorder *fr = fs.get_name("email");
+                if(fr){
+                    std::cout << "Total " << fr->name << " features found: " << fr->count() << "\n";
+                }
             }
         }
     }

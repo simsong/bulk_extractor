@@ -194,7 +194,7 @@ WARNINGS_TO_TEST="-MD -Wpointer-arith -Wmissing-declarations -Wmissing-prototype
     -Wshadow -Wwrite-strings -Wcast-align -Waggregate-return \
     -Wbad-function-cast -Wcast-qual -Wundef -Wredundant-decls -Wdisabled-optimization \
     -Wfloat-equal -Wmultichar -Wc++-compat -Wmissing-noreturn -funit-at-a-time \
-    -Qunused-arguments -Wno-deprecated-register"
+    -Qunused-arguments "
 
 if test x"${mingw}" == "xno" ; then
   # add the warnings we do not want to do on mingw
@@ -288,7 +288,7 @@ CXX_WARNINGS_TO_TEST="-Wall -MD -Wpointer-arith \
     -Wshadow -Wwrite-strings -Wcast-align  \
     -Wredundant-decls -Wdisabled-optimization \
     -Wfloat-equal -Wmultichar -Wmissing-noreturn \
-    -Woverloaded-virtual -Wsign-promo -funit-at-a-time -Qunused-arguments -Wno-deprecated-register"
+    -Woverloaded-virtual -Wsign-promo -funit-at-a-time -Qunused-arguments"
 
 clang=no
 if (g++ --version 2>&1 | grep clang > /dev/null) ; 

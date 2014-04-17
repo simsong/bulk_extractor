@@ -48,6 +48,7 @@ Bug Fixes
 
 * FLAG_NO_STOPLIST and FLAG_NO_ALERTLIST in feature_recorder.h were the same. They are now different.
 * FLAG_NO_QUOTE and FLAG_XML in feature_recorder.h were the same . They are different now.
+* The split wordlists contained utf8 escaped words, rather than raw data.
 
 Usability Improvement
 ----------------------
