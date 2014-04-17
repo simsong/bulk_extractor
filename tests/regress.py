@@ -86,6 +86,19 @@ answers = {"ubnist1.gen3":{"ALERTS_found.txt":88,
 
 
 
+def ptime(t):
+    r = ""
+    if t>3600:
+        h = t/3600
+        r = "%d hour " % h
+        t = t%3600
+    if t>60:
+        m = t / 60
+        r += "%d min " % m
+        t = t%60
+    r += "%d sec " % t
+    return r
+
 def find_file(fn):
     if os.path.exists(fn): return fn
     chk = []
@@ -225,7 +238,6 @@ def analyze_reportxml(xmldoc):
                 name,calls,seconds,seconds/calls,100.0*seconds/total))
     
     
-
 def analyze_outdir(outdir):
     """Print statistics about an output directory"""
     print("Analyze {}".format(outdir))
@@ -237,7 +249,7 @@ def analyze_outdir(outdir):
     # Print which scanners were run and how long they took
     analyze_reportxml(b.xmldoc)
     
-    hfns = list(b.histogram_files())
+    hfns = list(b.histogram_files()) # histogram files
     print("")
     print("Histogram Files:        {}".format(len(hfns)))
 
@@ -256,16 +268,55 @@ def analyze_outdir(outdir):
         print("  {:>25} entries: {:>10,}  (top: {})".format(fn,len(h),firstline))
 
     fnpart = ".".join(b.image_filename().split('/')[-1].split('.')[:-1])
-    ffns = list(b.feature_files())
+    ffns = sorted(list(b.feature_files()))
+    features = {}
     print("")
     print("Feature Files:        {}".format(len(ffns)))
-    for fn in sorted(ffns):
+    for fn in ffns:     # feature files
         lines = 0
-        for line in b.open(fn,'rb'):
+        for line in b.open(fn,'r'):
             if not bulk_extractor_reader.is_comment_line(line):
                 lines += 1
+        features[fn] = lines
         print("  {:>25} features: {:>12,}  {}".format(fn,lines,analyze_warning(fnpart,fn,lines)))
     
+    # If there is a SQLite database, analyze that too!
+    import sqlite3
+    conn = sqlite3.connect(os.path.join(outdir,"report.sqlite"))
+    if conn:
+        c = conn.cursor()
+        c.execute("PRAGMA cache_size = 200000")
+        print("Comparing SQLite3 database to feature files:")
+        for fn in ffns:
+            try:
+                table = "f_"+fn.lower().replace(".txt","")
+                cmd = "select count(*) from "+table
+                print(cmd)
+                c.execute(cmd);
+                ct = c.fetchone()[0]
+                print("{}:   {}  {}".format(fn,features[fn],ct))
+                # Now check them all to make sure that the all match
+                count = 0
+                for line in b.open(fn,'r'):
+                    ary = bulk_extractor_reader.parse_feature_line(line)
+                    if ary:
+                        (path,feature) = ary[0:2]
+                        path = path.decode('utf-8')
+                        feature = feature.decode('utf-8')
+                        c.execute("select count(*) from "+table+" where path=? and feature_eutf8=?",(path,feature))
+                        ct = c.fetchone()[0]
+                        if ct==1:
+                            #print("feature {} {} in table {} ({})".format(path,feature,table,ct))
+                            pass
+                        if ct==0:
+                            #pass
+                            print("feature {} {} not in table {} ({})".format(path,feature,table,ct))
+                        count += 1
+                        if count>args.featuretest: break
+                        
+            except sqlite3.OperationalError as e:
+                print(e)
+
 
 def make_zip(dname):
     archive_name = dname+".zip"
@@ -292,8 +343,11 @@ def run(cmd):
         raise RuntimeError("{} crashed with error code {}".format(args.exe,r))
 
 def run_outdir(outdir,gdb=False):
+    """Run bulk_extarctor to a given output directory """
     print("run_outdir: ",outdir)
     cargs=['-o',outdir]
+    if args.featuresql: cargs += ['-S','write_feature_sqlite3=YES']
+    if not args.featurefile: cargs += ['-S','write_feature_files=NO']
     if args.jobs: cargs += ['-j'+str(args.jobs)]
     if args.pagesize: cargs += ['-G'+str(args.pagesize)]
     if args.marginsize: cargs += ['-g'+str(args.marginsize)]
@@ -470,18 +524,6 @@ def diff(dname1,dname2):
 
 def run_and_analyze():
     global args
-    def ptime(t):
-        r = ""
-        if t>3600:
-            h = t/3600
-            r = "%d hour " % h
-            t = t%3600
-        if t>60:
-            m = t / 60
-            r += "%d min " % m
-            t = t%60
-        r += "%d sec " % t
-        return r
     outdir = make_outdir(args.outdir)
     t0 = time.time()
     run_outdir(outdir,args.gdb)
@@ -496,7 +538,8 @@ if __name__=="__main__":
     global args
     import sys,time
 
-    parser = argparse.ArgumentParser(description="Perform regression testing on bulk_extractor")
+    parser = argparse.ArgumentParser(description="Perform regression testing on bulk_extractor",
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--gdb",help="run under gdb",action="store_true")
     parser.add_argument("--debug",help="debug level",type=int)
     parser.add_argument("--outdir",help="output directory base",default="regress")
@@ -507,6 +550,17 @@ if __name__=="__main__":
     parser.add_argument("--jobs",help="Specifies number of worker threads",type=int)
     parser.add_argument("--pagesize",help="Specifies page size",type=int)
     parser.add_argument("--nofind",help="Does not do find test (faster)",action="store_true")
+
+    g = parser.add_mutually_exclusive_group()
+    g.add_argument("--featuresql",dest='featuresql',action='store_true',help="Enable SQL feature files")
+    g.add_argument("--no-featuresql",dest='featuresql',action='store_false',help="Enable SQL feature files")
+    parser.set_defaults(featuresql=True)
+
+    g = parser.add_mutually_exclusive_group()
+    g.add_argument("--featurefile",dest='featurefile',action='store_true',help="Enable FILE feature files")
+    g.add_argument("--no-featurefile",dest='featurefile',action='store_false',help="Enable FILE feature files")
+    parser.set_defaults(featurefile=True)
+
     parser.add_argument("--marginsize",help="Specifies the margin size",type=int)
     parser.add_argument("--extra",help="Specify extra arguments")
     parser.add_argument("--gprof",help="Recompile and run with gprof",action="store_true")
@@ -527,6 +581,7 @@ if __name__=="__main__":
             + "reproduce the crash")
     parser.add_argument("--clearcache",help="clear the disk cache",action="store_true")
     parser.add_argument("--tune",help="run bulk_extractor tuning. Args are coded in this script.",action="store_true")
+    parser.add_argument("--featuretest",help="Specifies number of features to test to make sure they are in the SQL database",default=50,type=int)
 
     args = parser.parse_args()
 
@@ -626,6 +681,7 @@ if __name__=="__main__":
             raise ValueError("--diff requires two arguments")
         diff(args.diff[0],args.diff[1])
         exit(0)
+
     if args.sort:
         for s in args.sort:
             sort_outdir(s)

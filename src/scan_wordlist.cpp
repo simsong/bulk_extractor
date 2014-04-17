@@ -19,17 +19,31 @@ public:
     }
 };
 
-static void wordlist_split_and_dedup(std::string outdir_)
-{
-    std::cout << "Phase 3. Uniquifying and recombining wordlist\n";
+/* Global variables for writing out wordlist */
+static std::ofstream of2;
+static std::string ofn_template;
+static int of2_counter = 0;
+static uint64_t outfilesize = 0;
 
-    std::string ifn = outdir_+"/wordlist.txt";
-    std::string ofn_template = outdir_+"/wordlist_split_%03d.txt";
+static void wordlist_write_word(const std::string &word)
+{
+    if(!of2.is_open() || outfilesize>max_word_outfile_size){ 
+        if(of2.is_open()) of2.close();
+        char fname[128];
+        snprintf(fname,sizeof(fname),ofn_template.c_str(),of2_counter++);
+        of2.open(fname);
+        if(!of2.is_open()) err(1,"Cannot open %s",fname);
+        outfilesize = 0;
+    }
+    of2 << word << '\n';
+    outfilesize += word.size() + 1;
+}
+	    
+
+static void wordlist_split_and_dedup(const std::string &ifn)
+{
     std::ifstream f2(ifn.c_str());
     if(!f2.is_open()) err(1,"Cannot open %s\n",ifn.c_str());
-    std::ofstream of2;
-    int of2_counter = 0;
-    uint64_t outfilesize = 0;
 
     /* Read all of the words */
 
@@ -45,8 +59,9 @@ static void wordlist_split_and_dedup(std::string outdir_)
 	    if(t1!=std::string::npos) line = line.substr(t1+1);
 	    size_t t2 = line.find('\t');		// find the end of the feature
 	    if(t2!=std::string::npos) line = line.substr(0,t2);
+            std::string word = feature_recorder::unquote_string(line);
 	    try {
-		if(line.size()>0) seen.insert(line);
+		if(word.size()>0) seen.insert(word);
 	    }
 	    catch (std::bad_alloc &er) {
 		std::cerr << er.what() << std::endl;
@@ -57,23 +72,29 @@ static void wordlist_split_and_dedup(std::string outdir_)
 	/* Dump the words so far */
 
 	for(std::set<std::string,WordlistSorter>::const_iterator it = seen.begin();it!=seen.end();it++){
-	    if(!of2.is_open() || outfilesize>max_word_outfile_size){ 
-		if(of2.is_open()) of2.close();
-		char fname[128];
-		snprintf(fname,sizeof(fname),ofn_template.c_str(),of2_counter++);
-		of2.open(fname);
-		if(!of2.is_open()) err(1,"Cannot open %s",fname);
-		outfilesize = 0;
-	    }
-	    
-	    if ((*it).size()>0) {
-		of2 << (*it) << '\n';
-		outfilesize += (*it).size() + 1;
-	    }
-	}
+	    if ((*it).size()>0) wordlist_write_word(*it);
+        }
     }
     if(of2.is_open()) of2.close();
     f2.close();
+}
+
+static int callback_printer(void *param, int argc, char **argv, char **azColName)
+{
+    wordlist_write_word(argv[0]);
+    return 0;
+}
+
+
+/* Similar to above; write out the wordlist using SQL */
+static void wordlist_sql_write(BEAPI_SQLITE3 *db3)
+{
+    std::cerr << "*** WORDLIST_SQL_WRITE ***\n";
+    char *errmsg = 0;
+    if (sqlite3_exec(db3,"SELECT word FROM wordlist ORDER BY length,word",callback_printer,0,&errmsg)){
+        std::cerr << "sqlite3: " << errmsg << "\n";
+    }
+    if(of2.is_open()) of2.close();
 }
 
 static bool wordchar[256];
@@ -89,6 +110,14 @@ static void wordchar_setup()
     }
 }
 
+static const char *schema_wordlist[] = {
+    "CREATE TABLE wordlist (length INTEGER,word BLOB)",
+    "CREATE UNIQUE INDEX wordlist_i on wordlist(word)",
+    0};
+
+
+static feature_recorder::besql_stmt *stmt=0;
+
 extern "C" 
 void scan_wordlist(const class scanner_params &sp,const recursion_control_block &rcb)
 {
@@ -100,7 +129,8 @@ void scan_wordlist(const class scanner_params &sp,const recursion_control_block 
         sp.info->feature_names.insert("wordlist");
         sp.info->get_config("word_min",&word_min,"Minimum word size");
         sp.info->get_config("word_max",&word_max,"Maximum word size");
-        sp.info->get_config("max_word_outfile_size",&max_word_outfile_size,"Maximum size of the words output file");
+        sp.info->get_config("max_word_outfile_size",&max_word_outfile_size,
+                            "Maximum size of the words output file");
         if(word_min>word_max){
             fprintf(stderr,"ERROR: word_min=%d word_max=%d\n",word_min,word_max);
             exit(1);
@@ -114,11 +144,23 @@ void scan_wordlist(const class scanner_params &sp,const recursion_control_block 
 	wordlist_recorder->set_flag(feature_recorder::FLAG_NO_CONTEXT);  // not useful for wordlist
 	wordlist_recorder->set_flag(feature_recorder::FLAG_NO_STOPLIST); // not necessary for wordlist
 	wordlist_recorder->set_flag(feature_recorder::FLAG_NO_ALERTLIST); // not necessary for wordlist
+	wordlist_recorder->set_flag(feature_recorder::FLAG_NO_FEATURES_SQL); // SQL wordlist handled separately.
+
+        if (fs.db3){
+            fs.db_send_sql(fs.db3,schema_wordlist);
+            stmt = new feature_recorder::besql_stmt(fs.db3,"insert or ignore into wordlist values (?,?);");
+        }
         return;
     }
         
     if(sp.phase==scanner_params::PHASE_SHUTDOWN){
-	wordlist_split_and_dedup(sp.fs.get_outdir());
+        std::cout << "Phase 3. Uniquifying and recombining wordlist\n";
+        ofn_template = sp.fs.get_outdir()+"/wordlist_split_%03d.txt";
+        if (fs.db3){
+            wordlist_sql_write(fs.db3);
+        } else {
+            wordlist_split_and_dedup(sp.fs.get_outdir()+"/wordlist.txt");
+        }
 	return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
@@ -132,7 +174,8 @@ void scan_wordlist(const class scanner_params &sp,const recursion_control_block 
 	 */
     
 	int wordstart = -1;			// >=0 means we are in a word
-	for(u_int i=0;i<sbuf.pagesize;i++){
+	for(u_int i=0; i<sbuf.pagesize; i++){
+
 	    /* case 1 */
 	    bool iswordchar = wordchar[sbuf.buf[i]];
 	    if(wordstart<0 && iswordchar && i!=sbuf.pagesize-1){
@@ -142,7 +185,16 @@ void scan_wordlist(const class scanner_params &sp,const recursion_control_block 
 	    if(wordstart>=0 && (!iswordchar || i==sbuf.pagesize-1)){
 		uint32_t len = i-wordstart;
 		if((word_min <= len) && (len <=  word_max)){
-		    wordlist_recorder->write_buf(sbuf,wordstart,len);
+                    if(fs.db3){
+                        sqlite3_bind_int(stmt->stmt, 1, len);
+                        sqlite3_bind_text(stmt->stmt, 2, (const char *)sbuf.buf+wordstart, len, SQLITE_STATIC);
+                        if (sqlite3_step(stmt->stmt) != SQLITE_DONE) {
+                            fprintf(stderr,"sqlite3_step failed on scan_wordlist\n");
+                        }
+                        sqlite3_reset(stmt->stmt);
+                    } else {
+                        wordlist_recorder->write_buf(sbuf,wordstart,len);
+                    }
 		}
 		wordstart = -1;
 	    }
