@@ -42,7 +42,6 @@ static std::string hashdb_mode="none";
 static std::string hashdb_hashdigest_type="MD5";
 static uint32_t hashdb_block_size=4096;
 static uint32_t hashdb_max_duplicates=20;
-//static uint32_t hashdb_import_delta=0;
 static std::string hashdb_path_or_socket="your_hashdb_directory";
 static size_t hashdb_sector_size = 512;
 
@@ -113,17 +112,6 @@ void scan_hashid(const class scanner_params &sp,
             sp.info->get_config("hashdb_max_duplicates", &hashdb_max_duplicates,
                                 ss_hashdb_max_duplicates.str());
 
-/*
-            // hashdb_import_delta
-            std::stringstream ss_hashdb_import_delta;
-            ss_hashdb_import_delta
-                << "Selects the import delta size.  Calculates hash blocks along\n"
-                << "      intervals of this size.  Uses hashdb_block_size if 0.\n"
-                << "      Valid only in import mode.";
-            sp.info->get_config("hashdb_import_delta", &hashdb_import_delta,
-                                ss_hashdb_import_delta.str());
-*/
-
             // hashdb_path_or_socket
             std::stringstream ss_hashdb_path_or_socket;
             ss_hashdb_path_or_socket
@@ -191,21 +179,6 @@ void scan_hashid(const class scanner_params &sp,
                 exit(1);
             }
 
-            // hashdb_max_duplicates
-            if (hashdb_max_duplicates == 0) {
-                std::cerr << "Error.  Value for parameter 'hashdb_max_duplicates' is invalid.\n"
-                         << "Cannot continue.\n";
-                exit(1);
-            }
-
-/*
-            // hashdb_import_delta
-            if (hashdb_import_delta == 0) {
-              // use hashdb_block_size unless specified
-              hashdb_import_delta = hashdb_block_size;
-            }
-*/
-
             // hashdb_path_or_socket
             // checks not performed
 
@@ -238,16 +211,36 @@ void scan_hashid(const class scanner_params &sp,
                                                   hashdb_hashdigest_type,
                                                   hashdb_block_size,
                                                   hashdb_max_duplicates);
+
+                    // show relavent settable options
+                    std::cout << "hashid: hashdb_mode=" << hashdb_mode << "\n"
+                              << "hashid: hashdigest_type=" << hashdb_hashdigest_type << "\n"
+                              << "hashid: hashdb_block_size=" << hashdb_block_size << "\n"
+                              << "hashid: hashdb_max_duplicates=" << hashdb_block_size << "\n";
+                    std::cout << "hashid: Creating hashdb directory " << hashdb_dir << "\n";
                     return;
                 }
 
                 case MODE_SCAN: {
+                    // show relavent settable options
+                    std::cout << "hashid: hashdb_mode=" << hashdb_mode << "\n"
+                              << "hashid: hashdigest_type=" << hashdb_hashdigest_type << "\n"
+                              << "hashid: hashdb_block_size=" << hashdb_block_size << "\n"
+                              << "hashid: hashdb_path_or_socket=" << hashdb_path_or_socket << "\n"
+                              << "hashid: hashdb_sector_size=" << hashdb_sector_size << "\n";
+
                     // open the hashdb manager for scanning
                     hashdb = new hashdb_t(hashdb_path_or_socket);
                     return;
                 }
 
                 case MODE_NONE: {
+                    // show relavent settable options
+                    std::cout << "hashid: hashdb_mode=" << hashdb_mode << "\n"
+                              << "WARNING: the hashid scanner is enabled but it will not perform any action\n"
+                              << "because no mode has been selected.  Please either select a hashdb mode or\n"
+                              << "leave the hashid scanner disabled to avoid this warning.\n";
+
                     // no action
                     return;
                 }
@@ -369,25 +362,26 @@ static void do_scan(const class scanner_params &sp,
     // get the sbuf
     const sbuf_t& sbuf = sp.sbuf;
 
-    // allocate space on heap for scan_input
-    std::vector<std::pair<uint64_t, T> >* scan_input = new 
-                               std::vector<std::pair<uint64_t, T> >;
+    // make sure there is enough data to calculate at least one cryptographic hash
+    if (sbuf.pagesize < hashdb_block_size) {
+      // not enough data
+      return;
+    }
 
-    // allocate space on heap for index, hash lookup map
-    std::map<uint64_t, T>* hash_lookup = new std::map<uint64_t, T>;
+    // number of hashes is highest index + 1
+    size_t num_hashes = ((sbuf.pagesize - hashdb_block_size) / hashdb_sector_size) + 1;
+
+    // allocate space on heap for scan_input
+    std::vector<T>* scan_input = new std::vector<T>(num_hashes);
 
     // get all the cryptograph hash values of all the blocks along
     // sector boundaries from sbuf
-    for (size_t i=0; i + hashdb_block_size <= sbuf.pagesize; i += hashdb_sector_size) {
+    for (size_t i=0; i< num_hashes; ++i) {
         // calculate the hash for this sector-aligned hash block
-        T hash = T_GEN::hash_buf(sbuf.buf + i, hashdb_block_size);
+        T hash = T_GEN::hash_buf(sbuf.buf + i*hashdb_sector_size, hashdb_block_size);
 
-        // add the indexed hash to the scan input
-        scan_input->push_back(std::pair<uint64_t, T>(i, hash));
-
-        // add the entry to the hash lookup for later reference
-        // zz merge these.
-        hash_lookup->insert(std::pair<uint64_t, T>(i, hash));
+        // add the hash to scan input
+        (*scan_input)[i] = hash;
     }
 
     // allocate space on heap for scan_output
@@ -399,7 +393,7 @@ static void do_scan(const class scanner_params &sp,
     if (status != 0) {
         std::cerr << "Error: scan_hashid scan failure.  Aborting.\n";
         exit(1);
-     }
+    }
 
     // get the feature recorder
     feature_recorder* identified_blocks_recorder = sp.fs.get_name("identified_blocks");
@@ -407,26 +401,25 @@ static void do_scan(const class scanner_params &sp,
     // record each feature returned in the response
     for (hashdb_t::scan_output_t::const_iterator it=scan_output->begin(); it!= scan_output->end(); ++it) {
 
-        // prepare the forensic path
-        pos0_t pos0 = sbuf.pos0 + it->first;
+        // prepare forensic path (pos0, feature, context) as (pos0, hash_string, count_string)
 
-        // get hash as string
-        uint64_t id = it->first;
-        T hash = (*hash_lookup)[id];
-        std::string hash_string = hash.hexdigest();
+        // pos0
+        pos0_t pos0 = sbuf.pos0 + it->first * hashdb_block_size;
 
-        // get count as string
+        // hash_string
+        std::string hash_string = (*(scan_input))[it->first].hexdigest();
+
+        // count
         std::stringstream ss;
         ss << it->second;
-        std::string context = ss.str();
+        std::string count_string = ss.str();
 
         // record the feature
-        identified_blocks_recorder->write(pos0, hash_string, context);
+        identified_blocks_recorder->write(pos0, hash_string, count_string);
     }
 
     // clean up
     delete scan_input;
-    delete hash_lookup;
     delete scan_output;
 }
 
