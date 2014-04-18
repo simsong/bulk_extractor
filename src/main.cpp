@@ -1011,6 +1011,9 @@ int main(int argc,char **argv)
          *** THIS IS IT! PHASE 1!
          ****************************************************************/
 
+        if ( fs.flag_set(feature_recorder_set::ENABLE_SQLITE3_RECORDERS )) {
+            fs.db_transaction_begin();
+        }
         BulkExtractor_Phase1 phase1(*xreport,timer,cfg);
         if(cfg.debug & DEBUG_PRINT_STEPS) std::cerr << "DEBUG: STARTING PHASE 1\n";
 
@@ -1024,6 +1027,9 @@ int main(int argc,char **argv)
         delete p;				// not strictly needed, but why not?
         p = 0;
 
+        if ( fs.flag_set(feature_recorder_set::ENABLE_SQLITE3_RECORDERS )) {
+            fs.db_transaction_commit();
+        }
         xreport->add_timestamp("phase1 end");
         if(md5_string.size()>0){
             std::cout << "MD5 of Disk Image: " << md5_string << "\n";

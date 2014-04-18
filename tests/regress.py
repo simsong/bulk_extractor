@@ -358,7 +358,7 @@ def run_outdir(outdir,gdb=False):
         cargs += args.extra.split(" ")
     if args.debug: cargs += ['-d'+str(args.debug)]
 
-    if not args.nofind:
+    if args.find:
         cargs += ['-r','tests/alert_list.txt']
         cargs += ['-w','tests/stop_list.txt']
         cargs += ['-w','tests/stop_list_context.txt']
@@ -529,7 +529,8 @@ def run_and_analyze():
     run_outdir(outdir,args.gdb)
     sort_outdir(outdir)
     validate_report(outdir)
-    if_outdir = identify_filenames(outdir)
+    if args.identify_files:
+        if_outdir = identify_filenames(outdir)
     analyze_outdir(outdir)
     print("Regression finished at {}. Elapsed time: {}\nOutput in {}".format(time.asctime(),ptime(time.time()-t0),outdir))
 
@@ -549,7 +550,7 @@ if __name__=="__main__":
     parser.add_argument("--full",help="Run with "+full_infile,action="store_true")
     parser.add_argument("--jobs",help="Specifies number of worker threads",type=int)
     parser.add_argument("--pagesize",help="Specifies page size",type=int)
-    parser.add_argument("--nofind",help="Does not do find test (faster)",action="store_true")
+    parser.add_argument("--no-find",dest='find',help="Does not do find test (faster)",action="store_false")
 
     g = parser.add_mutually_exclusive_group()
     g.add_argument("--featuresql",dest='featuresql',action='store_true',help="Enable SQL feature files")
@@ -582,6 +583,7 @@ if __name__=="__main__":
     parser.add_argument("--clearcache",help="clear the disk cache",action="store_true")
     parser.add_argument("--tune",help="run bulk_extractor tuning. Args are coded in this script.",action="store_true")
     parser.add_argument("--featuretest",help="Specifies number of features to test to make sure they are in the SQL database",default=50,type=int)
+    parser.add_argument("--no-identify_files",dest='identify_files',help="Do not run identify_files",action="store_false")
 
     args = parser.parse_args()
 
