@@ -97,7 +97,9 @@ static void wordlist_split_and_dedup(const std::string &ifn)
     f2.close();
 }
 
-/* Similar to above; write out the wordlist using SQL */
+/* Similar to above; write out the wordlist using SQL.
+ * Not-multi-threaded
+ */
 static void wordlist_sql_write(BEAPI_SQLITE3 *db3)
 {
     feature_recorder::besql_stmt s(db3,select_statement);
@@ -149,6 +151,7 @@ void scan_wordlist(const class scanner_params &sp,const recursion_control_block 
 
     feature_recorder *wordlist_recorder = (fs.db3 && wordlist_use_sql) ? 0 : fs.get_name(WORDLIST);
 
+    /* not multi-threaded */
     if(sp.phase==scanner_params::PHASE_INIT){
         if (fs.db3 && wordlist_use_sql){
             fs.db_send_sql(fs.db3,schema_wordlist);
@@ -162,6 +165,7 @@ void scan_wordlist(const class scanner_params &sp,const recursion_control_block 
         return;
     }
         
+    /* not multi-threaded */
     if(sp.phase==scanner_params::PHASE_SHUTDOWN){
         std::cout << "Phase 3. Uniquifying and recombining wordlist\n";
         ofn_template = sp.fs.get_outdir()+"/wordlist_split_%03d.txt";
@@ -172,8 +176,10 @@ void scan_wordlist(const class scanner_params &sp,const recursion_control_block 
         }
 	return;
     }
-    if(sp.phase==scanner_params::PHASE_SCAN){
 
+
+    /* multi-threaded! */
+    if(sp.phase==scanner_params::PHASE_SCAN){
 	const sbuf_t &sbuf = sp.sbuf;
 
 	/* Look for words in the buffer. Runs a finite state machine.
@@ -201,8 +207,8 @@ void scan_wordlist(const class scanner_params &sp,const recursion_control_block 
 
                     /* Save the word that starts at sbuf.buf+wordstart that has a length of len. */
                     std::string word = sbuf.substr(wordstart,len);
-                    
                     if(fs.db3 && wordlist_use_sql){
+                        cppmutex::lock lock(stmt->Mstmt);
                         sqlite3_bind_blob(stmt->stmt, 1, (const char *)word.data(), word.size(), SQLITE_STATIC);
                         if (sqlite3_step(stmt->stmt) != SQLITE_DONE) {
                             fprintf(stderr,"sqlite3_step failed on scan_wordlist\n");
