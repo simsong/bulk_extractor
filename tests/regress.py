@@ -355,6 +355,8 @@ def run_outdir(outdir,gdb=False):
     cargs += ['-e','all']    # enable all scanners
     #cargs += ['-e','wordlist']    # enable all scanners
     if args.extra:
+        while "  " in args.extra:
+            args.extra = args.extra.replace("  "," ")
         cargs += args.extra.split(" ")
     if args.debug: cargs += ['-d'+str(args.debug)]
 
@@ -529,7 +531,7 @@ def run_and_analyze():
     run_outdir(outdir,args.gdb)
     sort_outdir(outdir)
     validate_report(outdir)
-    if args.identify_files:
+    if args.identify_filenames:
         if_outdir = identify_filenames(outdir)
     analyze_outdir(outdir)
     print("Regression finished at {}. Elapsed time: {}\nOutput in {}".format(time.asctime(),ptime(time.time()-t0),outdir))
@@ -583,7 +585,7 @@ if __name__=="__main__":
     parser.add_argument("--clearcache",help="clear the disk cache",action="store_true")
     parser.add_argument("--tune",help="run bulk_extractor tuning. Args are coded in this script.",action="store_true")
     parser.add_argument("--featuretest",help="Specifies number of features to test to make sure they are in the SQL database",default=50,type=int)
-    parser.add_argument("--no-identify_files",dest='identify_files',help="Do not run identify_files",action="store_false")
+    parser.add_argument("--no-identify_filenames",dest='identify_filenames',help="Do not run identify_filenames",action="store_false")
 
     args = parser.parse_args()
 
