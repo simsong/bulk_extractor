@@ -27,14 +27,16 @@ public:
  */
 
 static bool wordlist_use_flatfiles = false;
+
+#ifdef HAVE_SQLITE3_H
 static const char *schema_wordlist[] = {
     "CREATE TABLE wordlist (word BLOB)",
     "CREATE UNIQUE INDEX wordlist_i on wordlist(word)",
     0};
-
 static const char *insert_statement = "INSERT OR IGNORE INTO wordlist VALUES (?);";
 static feature_recorder::besql_stmt *wordlist_stmt=0;
 static const char *select_statement = "SELECT DISTINCT word FROM wordlist ORDER BY length(word),word";
+#endif
 
 
 /* Global variables for writing out wordlist */
@@ -102,6 +104,7 @@ static void wordlist_split_and_dedup(const std::string &ifn)
  */
 static void wordlist_sql_write(BEAPI_SQLITE3 *db3)
 {
+#ifdef HAVE_SQLITE3_H
     feature_recorder::besql_stmt s(db3,select_statement);
     while (sqlite3_step(s.stmt) != SQLITE_DONE) {
         const char *base = (const char *)sqlite3_column_blob(s.stmt,0);
@@ -109,7 +112,9 @@ static void wordlist_sql_write(BEAPI_SQLITE3 *db3)
         wordlist_write_word(std::string(base,len));
     }
     if(of2.is_open()) of2.close();
+#endif
 }
+
 
 static bool wordchar[256];
 inline bool wordchar_func(unsigned char ch)
@@ -162,11 +167,13 @@ void scan_wordlist(const class scanner_params &sp,const recursion_control_block 
             return;
         }
         
+#ifdef HAVE_SQLITE3_H
         if (fs.db3) {
             fs.db_send_sql(fs.db3,schema_wordlist);
             wordlist_stmt = new feature_recorder::besql_stmt(fs.db3,insert_statement);
             return;
         }
+#endif
         assert(0);                      // shouldn't end up here
     }
         
@@ -222,12 +229,14 @@ void scan_wordlist(const class scanner_params &sp,const recursion_control_block 
                     if (wordlist_recorder) {
                         wordlist_recorder->write(sbuf.pos0+wordstart,word,"");
                     } else if (fs.db3) {
+#ifdef HAVE_SQLITE3_H
                         cppmutex::lock lock(wordlist_stmt->Mstmt);
                         sqlite3_bind_blob(wordlist_stmt->stmt, 1, (const char *)word.data(), word.size(), SQLITE_STATIC);
                         if (sqlite3_step(wordlist_stmt->stmt) != SQLITE_DONE) {
                             fprintf(stderr,"sqlite3_step failed on scan_wordlist\n");
                         }
                         sqlite3_reset(wordlist_stmt->stmt);
+#endif
                     } 
 		}
 		wordstart = -1;
