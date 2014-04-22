@@ -39,9 +39,11 @@ AC_PROG_LEX
 
 # use C++11 mode if available; HAVE_CXX11 is defined in config.h if so.  Don't
 # use the GNU C++11 extensions for portability's sake (noext).
-AC_LANG_PUSH(C++)
+# https://www.gnu.org/software/autoconf-archive/ax_cxx_compile_stdcxx_11.html
+
+m4_include([m4/ax_cxx_compile_stdcxx_11.m4])
 AX_CXX_COMPILE_STDCXX_11(noext, optional)
-AC_LANG_POP()
+
 
 # Endian check is required for MD5 implementation
 AC_C_BIGENDIAN
@@ -147,6 +149,15 @@ AC_ARG_ENABLE([rar],
 AM_CONDITIONAL([RAR_ENABLED], [test "yes" = "$rar"])
 
 
+## lightgrep enabled
+AC_ARG_ENABLE([lightgrep],
+              AS_HELP_STRING([--enable-lightgrep], [enable LIGHTGREP]),
+	      [AC_DEFINE(USE_LIGHTGREP, 1, [Use LIGHTGREP]) lightgrep="yes"],
+              [])
+AM_CONDITIONAL([LIGHTGREP_ENABLED], [test "yes" = "$lightgrep"])
+
+
+
 ################################################################
 ## mcheck support
 ## enable memory analysis support for detecting memory leaks
@@ -178,6 +189,7 @@ if test  x"$mingw" = x"yes";  then
   CFLAGS="$CFLAGS -mthreads "
   CPPFLAGS="-DPTW32_STATIC_LIB $CPPFLAGS"
   CXXFLAGS="$CXXFLAGS -mthreads "
+  LDFLAGS="$LDFLAGS -pthreads "
   AC_DEFINE(HAVE_PTHREAD,1,[Defined to POSIX threads for mingw])
 else
   m4_include([m4/ax_pthread.m4])
@@ -450,6 +462,9 @@ AC_LANG_POP()
 AC_MSG_NOTICE([MINGW is $mingw])
 if test x"$mingw" = x"yes" ; then
   LIBS="$LIBS -lgdi32"
+else
+  CFLAGS="$CFLAGS -fPIC"
+  CXXFLAGS="$CXXFLAGS -fPIC"
 fi
 
 
@@ -473,11 +488,6 @@ else
       CXXFLAGS=`echo -g "$CXXFLAGS" | sed s/-O2/-O3/`
   fi
 fi
-
-# generate position-independent code for creating the shared library
-CFLAGS="$CFLAGS -fPIC"
-CXXFLAGS="$CXXFLAGS -fPIC"
-
 
 AC_MSG_NOTICE([*************************************])
 AC_MSG_NOTICE([*************************************])
