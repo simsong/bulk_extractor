@@ -115,6 +115,8 @@ lib: libbulkextractor.so
 libbulkextractor.so: $(bulk_extractorlib_OBJECTS)
 	$(CXX) -shared -fPIC -o $@ $(LDFLAGS) $(bulk_extractorlib_OBJECTS) $(LIBS)
 
+
+
 stand_SOURCES = \
 	dig.cpp \
 	scan_bulk.cpp \

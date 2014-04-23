@@ -186,10 +186,10 @@ AC_ARG_ENABLE([mcheck], AS_HELP_STRING([--enable-mcheck], \
 # With special nods to compiling under mingw
 
 if test  x"$mingw" = x"yes";  then
-  CFLAGS="$CFLAGS -mthreads "
+  CFLAGS="$CFLAGS -mthreads -pthread "
   CPPFLAGS="-DPTW32_STATIC_LIB $CPPFLAGS"
-  CXXFLAGS="$CXXFLAGS -mthreads "
-  LDFLAGS="$LDFLAGS -pthreads "
+  CXXFLAGS="$CXXFLAGS -mthreads -pthread "
+  LDFLAGS="$LDFLAGS -mthreads -pthread "
   AC_DEFINE(HAVE_PTHREAD,1,[Defined to POSIX threads for mingw])
 else
   m4_include([m4/ax_pthread.m4])
@@ -203,6 +203,10 @@ else
             [AC_MSG_ERROR(bulk_extractor requires pthreads)])
 fi
 
+AC_MSG_NOTICE([After pthread test, CFLAGS: $CFLAGS])
+AC_MSG_NOTICE([After pthread test, CXXFLAGS: $CXXFLAGS])
+AC_MSG_NOTICE([After pthread test, LDFLAGS: $LDFLAGS])
+
 AC_CHECK_HEADERS([pthread.h])
 AC_CHECK_LIB([pthreadGC2],[pthread_create])
 
@@ -214,18 +218,6 @@ AC_CHECK_LIB([pthreadGC2],[pthread_create])
 # (which should be a no-op on later version of G++ anyway)
 
 AC_CHECK_FUNCS([pthread_win32_process_attach_np pthread_win32_process_detach_np pthread_win32_thread_attach_np pthread_win32_thread_detach_np ])
-
-AC_MSG_CHECKING([for __sync_fetch_and_add])
-AC_LINK_IFELSE(
-   [AC_LANG_SOURCE([
-    int main(void) { int i; return __sync_fetch_and_add(&i, 0); }
-   ])],
-   [
-     AC_MSG_RESULT([yes])
-     AC_DEFINE(HAVE___SYNC_FETCH_AND_ADD,1,[Defined if __sync_fetch_and_add was detected])
-    ],
-   [AC_MSG_RESULT([no])]
-)
 
 # end PTHREAD SUPPORT
 ################################################################
@@ -277,6 +269,7 @@ AC_ARG_WITH([o3], AC_HELP_STRING([--without-o3], [Do not force O3 optimization; 
 #
 # ZLIB is required:
 #  Note you cannot put comments in the AC_MSG_ERROR for some reason
+# Must be before ewf
 AC_CHECK_LIB([z],[uncompress],,
 	AC_MSG_ERROR([zlib libraries not installed; try installing zlib-devel zlib-dev zlib-devel zlib1g-dev or libz-dev]))
 
@@ -316,15 +309,23 @@ AC_CHECK_HEADER([afflib/afflib.h],
 
 ################################################################
 ## LIBEWF support
-libewf=yes
-AC_CHECK_HEADER([libewf.h],
+
+AC_ARG_ENABLE([libewf],
+    [AS_HELP_STRING([--disable-libewf], [disable libewf support])],
+    [libewf=no],
+    [libewf=yes])
+AC_MSG_NOTICE([libewf is $libewf])
+if test x"$libewf" == x"yes" ; then
+  AC_CHECK_HEADER([libewf.h],
 	[AC_DEFINE(HAVE_LIBEWF_H,1,[Do we have libewf.h?])]
 	[AC_CHECK_LIB([ewf],[libewf_get_version],,
 		[AC_MSG_WARN([libewf not found; no E01 support])]
 		[libewf=no])],
 	[AC_MSG_WARN([libewf.h not found; no E01 support])]
 	[libewf=no])
-AC_CHECK_FUNCS([libewf_handle_get_utf8_header_value_notes libewf_error_backtrace_fprint])
+  AC_CHECK_FUNCS([libewf_handle_get_utf8_header_value_notes libewf_error_backtrace_fprint])
+fi
+AC_MSG_NOTICE([libewf is now $libewf])
 
 
 ################################################################
@@ -334,7 +335,7 @@ AC_ARG_ENABLE([hashid],
     [hashid=no],
     [hashid=yes])
 
-if test x"$hashid" == xyes ; then
+if test x"$hashid" == x"yes" ; then
   AC_CHECK_LIB([zmq],[zmq_ctx_new],[LIBS="-lzmq $LIBS"],
     [AC_MSG_WARN([Could not find zeromq, zeromq v3 is required to build the hashid scanner])
     hashid=no])
@@ -500,6 +501,10 @@ AC_MSG_NOTICE([  CFLAGS:           $CFLAGS])
 AC_MSG_NOTICE([  CXXFLAGS:         $CXXFLAGS])
 AC_MSG_NOTICE([  LIBS:             $LIBS])
 AC_MSG_NOTICE([  LDFLAGS:          $LDFLAGS])
+
+#
+# Generate special warnings
+#
 
 if test x"${libewf}" != "xyes" ; then
   AC_MSG_WARN([libewf-devel must be installed for E01 support.])
