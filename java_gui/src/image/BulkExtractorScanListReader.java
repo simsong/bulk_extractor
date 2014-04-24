@@ -40,19 +40,25 @@ public class BulkExtractorScanListReader {
   /**
    * Read and set the scan list.
    */
-  public static Vector<Scanner> readScanList(boolean usePluginDirectory,
-                                   String pluginDirectory) throws IOException {
+  public static Vector<Scanner> readScanList(boolean usePluginDirectories,
+                                 String pluginDirectories) throws IOException {
 
     // start the scan list reader process
     // cmd
     String[] cmd;
-    if (usePluginDirectory) {
+    if (usePluginDirectories) {
       // plugin directory, may not be supported by bulk_extractor yet
-      cmd = new String[4];
+      String pluginDirectoriesArray[]=pluginDirectories.split("\\|");
+      cmd = new String[2 + pluginDirectoriesArray.length * 2];
       cmd[0] = "bulk_extractor";
-      cmd[1] = "-W";
-      cmd[2] = pluginDirectory;
-      cmd[3] = "-h";
+      cmd[1] = "-h";
+
+      // put in plugin directory request for each plugin directory specified
+      for (int i=0; i<pluginDirectoriesArray.length; i++) {
+        cmd[2 + i*2] = "-P";
+        cmd[3 + i*2] = pluginDirectoriesArray[i];
+      }
+
     } else {
       // without plugin directory
       cmd = new String[2];

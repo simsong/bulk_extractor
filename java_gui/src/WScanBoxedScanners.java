@@ -60,8 +60,8 @@ public class WScanBoxedScanners {
     Vector<BulkExtractorScanListReader.Scanner> scanners;
     try {
       scanners = BulkExtractorScanListReader.readScanList(
-              WScanBoxedControls.usePluginDirectoryCB.isSelected(),
-              WScanBoxedControls.pluginDirectoryTF.getText());
+              WScanBoxedControls.usePluginDirectoriesCB.isSelected(),
+              WScanBoxedControls.pluginDirectoriesTF.getText());
     } catch (IOException e) {
       WError.showError("Error in obtaining list of scanners from bulk_extractor."
                      + "\nBulk_extractor is not available during this session."
