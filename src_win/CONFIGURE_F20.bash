@@ -132,7 +132,8 @@ function build_mingw {
       if [ ! -r configure -a -r bootstrap.sh ]; then
         . bootstrap.sh
       fi
-      mingw$i-configure --enable-static --disable-shared
+      CPPFLAGS=-DHAVE_LOCAL_LIBEWF mingw$i-configure --enable-static --disable-shared
+      make clean
       make
       sudo make install
       make clean
