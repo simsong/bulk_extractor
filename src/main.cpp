@@ -146,6 +146,8 @@ static void usage(const char *progname)
     std::cout << "   -Z           - zap (erase) output directory\n";
     std::cout << "\nControl of Scanners:\n";
     std::cout << "   -P <dir>     - Specifies a plugin directory\n";
+    std::cout << "             Default dirs include /usr/local/lib/bulk_extractor /usr/lib/bulk_extractor and\n";
+    std::cout << "             BE_PATH environment variable\n";
     std::cout << "   -E scanner   - turn off all scanners except scanner\n";
     std::cout << "   -S name=value - sets a bulk extractor option name to be value\n";
     std::cout << "\n";
@@ -675,6 +677,13 @@ static int histogram_dump_callback(void *user,const feature_recorder &fr,
     return 0;
 }
 
+static void add_if_present(std::vector<std::string> &scanner_dirs,const std::string &dir)
+{
+    if (access(dir.c_str(),O_RDONLY) == 0){
+        scanner_dirs.push_back(dir);
+    }
+}
+
 int main(int argc,char **argv)
 {
 #ifdef HAVE_MCHECK
@@ -707,6 +716,18 @@ int main(int argc,char **argv)
     setvbuf(stdout,0,_IONBF,0);		// don't buffer stdout
     std::string command_line = dfxml_writer::make_command_line(argc,argv);
     std::vector<std::string> scanner_dirs; // where to look for scanners
+
+    /* Add the default plugin_path */
+    add_if_present(scanner_dirs,"/usr/local/lib/bulk_extractor");
+    add_if_present(scanner_dirs,"/usr/lib/bulk_extractor");
+    add_if_present(scanner_dirs,".");
+
+    if (getenv("BE_PATH")) {
+        std::vector<std::string> dirs = split(getenv("BE_PATH"),':');
+        for(std::vector<std::string>::const_iterator it = dirs.begin(); it!=dirs.end(); it++){
+            add_if_present(scanner_dirs,*it);
+        }
+    }
 
 #ifdef WIN32
     setmode(1,O_BINARY);		// make stdout binary
