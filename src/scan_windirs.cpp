@@ -483,6 +483,7 @@ void scan_windirs(const class scanner_params &sp,const recursion_control_block &
         /* Figure out the current time */
         time_t t = time(0);
         struct tm now;
+	memset(&now,0,sizeof(now));
         gmtime_r(&t,&now);
         opt_last_year = now.tm_year + 1900 + 5; // allow up to 5 years in the future
 

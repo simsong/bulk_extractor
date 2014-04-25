@@ -18,10 +18,10 @@ public class WScanBoxedControls {
 
   public final Component component;
 
-  public static final JCheckBox usePluginDirectoryCB = new JCheckBox("Use Plugin Directory");
-  public static final JTextField pluginDirectoryTF = new JTextField();
-//  private final JButton pluginDirectoryChooserB = new JButton("\u2026"); // ...
-  private final FileChooserButton pluginDirectoryChooserB = new FileChooserButton(WScan.getWScanWindow(), "Select Plugin Directory", FileChooserButton.READ_DIRECTORY, pluginDirectoryTF);
+  public static final JCheckBox usePluginDirectoriesCB = new JCheckBox("Use Plugin Directories");
+  public static final JTextField pluginDirectoriesTF = new JTextField();
+//  private final JButton pluginDirectoriesChooserB = new JButton("\u2026"); // ...
+  private final FileChooserButton pluginDirectoriesChooserB = new FileChooserButton(WScan.getWScanWindow(), "Select Plugin Directories", FileChooserButton.READ_DIRECTORY, pluginDirectoriesTF);
 
   private final JCheckBox useSettableOptionsCB = new JCheckBox("Use Settable Options");
   private final JTextField settableOptionsTF = new JTextField();
@@ -37,12 +37,12 @@ public class WScanBoxedControls {
     container.setBorder(BorderFactory.createTitledBorder("Scanner Controls"));
     container.setLayout(new GridBagLayout());
     int y = 0;
-    WScan.addOptionalFileLine(container, y++, usePluginDirectoryCB, pluginDirectoryTF,
-                                        pluginDirectoryChooserB);
+    WScan.addOptionalFileLine(container, y++, usePluginDirectoriesCB, pluginDirectoriesTF,
+                                        pluginDirectoriesChooserB);
     WScan.addOptionalTextLine(container, y++, useSettableOptionsCB, settableOptionsTF, WScan.EXTRA_WIDE_FIELD_WIDTH);
 
     // tool tip text
-    usePluginDirectoryCB.setToolTipText("Path to plugin directory");
+    usePluginDirectoriesCB.setToolTipText("Path to plugin directories, separated by vertical bar character \"|\"");
     useSettableOptionsCB.setToolTipText("Provide settable options in form <key>=<value> separated by vertical bar character \"|\"");
 
     return container;
@@ -50,10 +50,10 @@ public class WScanBoxedControls {
 
   public void setScanSettings(ScanSettings scanSettings) {
     // controls
-    usePluginDirectoryCB.setSelected(scanSettings.usePluginDirectory);
-    pluginDirectoryTF.setEnabled(scanSettings.usePluginDirectory);
-    pluginDirectoryTF.setText(scanSettings.pluginDirectory);
-    pluginDirectoryChooserB.setEnabled(scanSettings.usePluginDirectory);
+    usePluginDirectoriesCB.setSelected(scanSettings.usePluginDirectories);
+    pluginDirectoriesTF.setEnabled(scanSettings.usePluginDirectories);
+    pluginDirectoriesTF.setText(scanSettings.pluginDirectories);
+    pluginDirectoriesChooserB.setEnabled(scanSettings.usePluginDirectories);
 
     useSettableOptionsCB.setSelected(scanSettings.useSettableOptions);
     settableOptionsTF.setEnabled(scanSettings.useSettableOptions);
@@ -62,8 +62,8 @@ public class WScanBoxedControls {
 
   public void getScanSettings(ScanSettings scanSettings) {
     // controls
-    scanSettings.usePluginDirectory = usePluginDirectoryCB.isSelected();
-    scanSettings.pluginDirectory = pluginDirectoryTF.getText();
+    scanSettings.usePluginDirectories = usePluginDirectoriesCB.isSelected();
+    scanSettings.pluginDirectories = pluginDirectoriesTF.getText();
 
     scanSettings.useSettableOptions = useSettableOptionsCB.isSelected();
     scanSettings.settableOptions = settableOptionsTF.getText();
@@ -82,7 +82,7 @@ public class WScanBoxedControls {
     // controls
     GetUIValuesActionListener getUIValuesActionListener
                   = new GetUIValuesActionListener();
-    usePluginDirectoryCB.addActionListener(getUIValuesActionListener);
+    usePluginDirectoriesCB.addActionListener(getUIValuesActionListener);
     useSettableOptionsCB.addActionListener(getUIValuesActionListener);
   }
 }
