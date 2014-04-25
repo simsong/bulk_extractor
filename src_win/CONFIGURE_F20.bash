@@ -74,12 +74,13 @@ if [ $? != 0 ]; then
 fi
 
 echo Attempting to install both DLL and static version of all mingw libraries
+echo needed for bulk_extractor.
 echo At this point we will keep going even if there is an error...
 INST=""
 for M in mingw32 mingw64 ; do
   # For these install both DLL and static
   for lib in zlib gettext boost cairo pixman freetype fontconfig \
-      bzip2 expat winpthreads libgnurx libxml2 iconv openssl ; do
+      bzip2 expat winpthreads libgnurx libxml2 iconv openssl sqlite ; do
     INST+=" ${M}-${lib} ${M}-${lib}-static"
   done
 done 
