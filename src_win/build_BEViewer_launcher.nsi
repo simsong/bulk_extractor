@@ -38,7 +38,20 @@ Function GetJRE
   Push $0
   Push $1
 
-  ;TryJRE:
+  ;TryJRE6432:
+  ReadRegStr $JAVA_VER HKLM "SOFTWARE\Wow6432Node\JavaSoft\Java Runtime Environment" "CurrentVersion"
+  StrCmp "" "$JAVA_VER" TryJDK 0
+  ReadRegStr $JAVA_HOME HKLM "SOFTWARE\Wow6432Node\JavaSoft\Java Runtime Environment\$JAVA_VER" "JavaHome"
+  goto CheckJavaVer
+
+  TryJDK:
+  ClearErrors
+  ReadRegStr $JAVA_VER HKLM "SOFTWARE\Wow6432Node\JavaSoft\Java Development Kit" "CurrentVersion"
+  StrCmp "" "$JAVA_VER" TryJRE 0
+  ReadRegStr $JAVA_HOME HKLM "SOFTWARE\Wow6432Node\JavaSoft\Java Development Kit\$JAVA_VER" "JavaHome"
+  goto CheckJavaVer
+
+  TryJRE:
   ReadRegStr $JAVA_VER HKLM "SOFTWARE\JavaSoft\Java Runtime Environment" "CurrentVersion"
   StrCmp "" "$JAVA_VER" TryJDK 0
   ReadRegStr $JAVA_HOME HKLM "SOFTWARE\JavaSoft\Java Runtime Environment\$JAVA_VER" "JavaHome"
