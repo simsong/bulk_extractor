@@ -39,7 +39,6 @@
 
 // user settings
 static std::string hashdb_mode="none";
-static std::string hashdb_hashdigest_type="MD5";
 static uint32_t hashdb_block_size=4096;
 static uint32_t hashdb_max_duplicates=20;
 static std::string hashdb_path_or_socket="your_hashdb_directory";
@@ -50,15 +49,9 @@ static size_t hashdb_sector_size = 512;
 enum mode_type_t {MODE_NONE, MODE_SCAN, MODE_IMPORT};
 static mode_type_t mode = MODE_NONE;
 
-// hashdigest type
-enum hashdigest_type_t {HASHDIGEST_MD5, HASHDIGEST_SHA1, HASHDIGEST_SHA256};
-static hashdigest_type_t hashdigest_type = HASHDIGEST_MD5;
-
 // internal helper functions
-template<typename T, typename T_GEN>
 static void do_import(const class scanner_params &sp,
                       const recursion_control_block &rcb);
-template<typename T, typename T_GEN>
 static void do_scan(const class scanner_params &sp,
                     const recursion_control_block &rcb);
 
@@ -68,7 +61,7 @@ static void do_scan(const class scanner_params &sp,
 static std::string hashdb_dir;
 
 // hashdb manager
-hashdb_t* hashdb;
+hashdb_md5_t* hashdb;
 
 extern "C"
 void scan_hashid(const class scanner_params &sp,
@@ -91,18 +84,6 @@ void scan_hashid(const class scanner_params &sp,
                 << "        import  - Import block hashes.\n"
                 << "        scan    - Scan for matching block hashes.";
             sp.info->get_config("hashdb_mode", &hashdb_mode, ss_hashdb_mode.str());
-
-            // hashdb_hashdigest_type
-            std::stringstream ss_hashdb_hashdigest_type;
-            ss_hashdb_hashdigest_type << "Cryptographic hash algorithm to use,\n"
-                << "      one of [MD5|SHA1|SHA256].";
-            sp.info->get_config("hashdb_hashdigest_type",
-                                &hashdb_hashdigest_type,
-                                ss_hashdb_hashdigest_type.str());
-
-            // hashdb_block_size
-            sp.info->get_config("hashdb_block_size", &hashdb_block_size,
-                                "Block size, in bytes, used to generate hashes");
 
             // hashdb_max_duplicates
             std::stringstream ss_hashdb_max_duplicates;
@@ -157,21 +138,6 @@ void scan_hashid(const class scanner_params &sp,
                 exit(1);
             }
 
-            // hashdb_hashdigest_type
-            if (hashdb_hashdigest_type == "MD5") {
-                hashdigest_type = HASHDIGEST_MD5;
-            } else if (hashdb_hashdigest_type == "SHA1") {
-                hashdigest_type = HASHDIGEST_SHA1;
-            } else if (hashdb_hashdigest_type == "SHA256") {
-                hashdigest_type = HASHDIGEST_SHA256;
-            } else {
-                // bad mode
-                std::cerr << "Error.  Parameter 'hashdb_hashdigest_type' value '"
-                          << hashdb_hashdigest_type << "' is invalid.\n"
-                          << "Cannot continue.\n";
-                exit(1);
-            }
-
             // hashdb_block_size
             if (hashdb_block_size == 0) {
                 std::cerr << "Error.  Value for parameter 'hashdb_block_size' is invalid.\n"
@@ -207,14 +173,12 @@ void scan_hashid(const class scanner_params &sp,
 
                     // create the new hashdb manager for importing
                     // currently, hashdb_dir is required to not exist
-                    hashdb = new hashdb_t(hashdb_dir,
-                                                  hashdb_hashdigest_type,
+                    hashdb = new hashdb_md5_t(hashdb_dir,
                                                   hashdb_block_size,
                                                   hashdb_max_duplicates);
 
                     // show relavent settable options
                     std::cout << "hashid: hashdb_mode=" << hashdb_mode << "\n"
-                              << "hashid: hashdigest_type=" << hashdb_hashdigest_type << "\n"
                               << "hashid: hashdb_block_size=" << hashdb_block_size << "\n"
                               << "hashid: hashdb_max_duplicates=" << hashdb_block_size << "\n";
                     std::cout << "hashid: Creating hashdb directory " << hashdb_dir << "\n";
@@ -224,13 +188,12 @@ void scan_hashid(const class scanner_params &sp,
                 case MODE_SCAN: {
                     // show relavent settable options
                     std::cout << "hashid: hashdb_mode=" << hashdb_mode << "\n"
-                              << "hashid: hashdigest_type=" << hashdb_hashdigest_type << "\n"
                               << "hashid: hashdb_block_size=" << hashdb_block_size << "\n"
                               << "hashid: hashdb_path_or_socket=" << hashdb_path_or_socket << "\n"
                               << "hashid: hashdb_sector_size=" << hashdb_sector_size << "\n";
 
                     // open the hashdb manager for scanning
-                    hashdb = new hashdb_t(hashdb_path_or_socket);
+                    hashdb = new hashdb_md5_t(hashdb_path_or_socket);
                     return;
                 }
 
@@ -256,38 +219,12 @@ void scan_hashid(const class scanner_params &sp,
         case scanner_params::PHASE_SCAN: {
             switch(mode) {
                 case MODE_IMPORT:
-                     switch(hashdigest_type) {
-                         case HASHDIGEST_MD5:
-                             do_import<md5_t, md5_generator>(sp, rcb);
-                             return;
-                         case HASHDIGEST_SHA1:
-                             do_import<sha1_t, sha1_generator>(sp, rcb);
-                             return;
-                         case HASHDIGEST_SHA256:
-                             do_import<sha256_t, sha256_generator>(sp, rcb);
-                             return;
-                         default: {
-                             // program error
-                             assert(0);
-                         }
-                     }
+                     do_import(sp, rcb);
+                     return;
 
                 case MODE_SCAN:
-                     switch(hashdigest_type) {
-                         case HASHDIGEST_MD5:
-                             do_scan<md5_t, md5_generator>(sp, rcb);
-                             return;
-                         case HASHDIGEST_SHA1:
-                             do_scan<sha1_t, sha1_generator>(sp, rcb);
-                             return;
-                         case HASHDIGEST_SHA256:
-                             do_scan<sha256_t, sha256_generator>(sp, rcb);
-                             return;
-                         default: {
-                             // program error
-                             assert(0);
-                         }
-                     }
+                     do_scan(sp, rcb);
+                     return;
                 default:
                      // the user should have just left the scanner disabled.
                      // no action.
@@ -318,13 +255,12 @@ void scan_hashid(const class scanner_params &sp,
 }
 
 // perform import
-template<typename T, typename T_GEN>
 static void do_import(const class scanner_params &sp,
                       const recursion_control_block &rcb) {
 
     // allocate space on heap for import_input
-    std::vector<hashdb_t::import_element_t<T> >* import_input =
-                           new std::vector<hashdb_t::import_element_t<T> >;
+    std::vector<hashdb_md5_t::import_element_t>* import_input =
+                           new std::vector<hashdb_md5_t::import_element_t>;
 
     // get the sbuf
     const sbuf_t& sbuf = sp.sbuf;
@@ -332,10 +268,10 @@ static void do_import(const class scanner_params &sp,
     // get all the cryptograph hash values of all the blocks from sbuf
     for (size_t i=0; i + hashdb_block_size <= sbuf.pagesize; i += hashdb_block_size) {
         // calculate the hash for this sector-aligned hash block
-        T hash = T_GEN::hash_buf(sbuf.buf + i, hashdb_block_size);
+        md5_t hash = md5_generator::hash_buf(sbuf.buf + i, hashdb_block_size);
 
         // create the import element
-        hashdb_t::import_element_t<T> import_element(hash,
+        hashdb_md5_t::import_element_t import_element(hash,
                                            "no repository name",
                                            sbuf.pos0.str(), // use as filename
                                            i);              // file offset
@@ -355,7 +291,6 @@ static void do_import(const class scanner_params &sp,
 }
 
 // perform scan
-template<typename T, typename T_GEN>
 static void do_scan(const class scanner_params &sp,
                     const recursion_control_block &rcb) {
 
@@ -372,20 +307,20 @@ static void do_scan(const class scanner_params &sp,
     size_t num_hashes = ((sbuf.pagesize - hashdb_block_size) / hashdb_sector_size) + 1;
 
     // allocate space on heap for scan_input
-    std::vector<T>* scan_input = new std::vector<T>(num_hashes);
+    std::vector<md5_t>* scan_input = new std::vector<md5_t>(num_hashes);
 
     // get all the cryptograph hash values of all the blocks along
     // sector boundaries from sbuf
     for (size_t i=0; i< num_hashes; ++i) {
         // calculate the hash for this sector-aligned hash block
-        T hash = T_GEN::hash_buf(sbuf.buf + i*hashdb_sector_size, hashdb_block_size);
+        md5_t hash = md5_generator::hash_buf(sbuf.buf + i*hashdb_sector_size, hashdb_block_size);
 
         // add the hash to scan input
         (*scan_input)[i] = hash;
     }
 
     // allocate space on heap for scan_output
-    hashdb_t::scan_output_t* scan_output = new hashdb_t::scan_output_t;
+    hashdb_md5_t::scan_output_t* scan_output = new hashdb_md5_t::scan_output_t;
 
     // perform the scan
     int status = hashdb->scan(*scan_input, *scan_output);
@@ -399,7 +334,7 @@ static void do_scan(const class scanner_params &sp,
     feature_recorder* identified_blocks_recorder = sp.fs.get_name("identified_blocks");
 
     // record each feature returned in the response
-    for (hashdb_t::scan_output_t::const_iterator it=scan_output->begin(); it!= scan_output->end(); ++it) {
+    for (hashdb_md5_t::scan_output_t::const_iterator it=scan_output->begin(); it!= scan_output->end(); ++it) {
 
         // prepare forensic path (pos0, feature, context) as (pos0, hash_string, count_string)
 
