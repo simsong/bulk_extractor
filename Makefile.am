@@ -115,9 +115,13 @@ publish:
 	$(MAKE) dist
 	scp $(DIST_ARCHIVES) ncr.nps.edu:/var/www/digitalcorpora/downloads/bulk_extractor
 
+gitfixup:
+	(cd src/be13_api/;git remote set-url origin git@github.com:/simsong/be13_api.git;git checkout master)
+	(cd src/dfxml/;git remote set-url origin git@github.com:/simsong/dfxml.git; git checkout master)
+	(cd src/sceadan/;git remote set-url origin git@github.com:/nbeebe/sceadan.git; git checkout master)
+
 .PHONY: libinstall
 libinstall:
 	install -D src/libbulkextractor.so $(prefix)/lib/libbulkextractor.so
 	install -D python/module/bulkextractor.py $(prefix)/lib/python2.7/dist-packages/bulkextractor.py
 	if [ -r /sbin/ldconfig ]; /sbin/ldconfig -v ; fi
-
