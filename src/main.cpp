@@ -985,7 +985,6 @@ int main(int argc,char **argv)
     
     {
         feature_recorder_set fs(flags,be_hash);
-
         fs.init(feature_file_names,image_fname,opt_outdir);
         if(opt_enable_histograms) be13::plugin::add_enabled_scanner_histograms_to_feature_recorder_set(fs);
         be13::plugin::scanners_init(fs);
