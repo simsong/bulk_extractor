@@ -309,10 +309,11 @@ box[ ]?[\[][0-9 -]{0,40}[\]] {
     s.pos += yyleng;
 }
 
-CT[.](Send|Receive)[.]CMD_[A-Z0-9_]{4,25}[ ]From=([0-9]{1,12}+)([ ]To=([0-9]{1,12}+))? {
+CT[.](Send|Receive)[.]CMD_([A-Z0-9_]{4,25})[ ]From=([0-9]{2,12}+)(([ ]To=([0-9]{2,12}+))?) {
     /* TeamViewer */
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
     s.pii_recorder->write_buf(SBUF,s.pos,yyleng);
+    s.pos += yyleng;
 }    
 
 .|\n { 
@@ -344,6 +345,7 @@ void scan_accts(const class scanner_params &sp,const recursion_control_block &rc
 	sp.info->histogram_defs.insert(histogram_def("ccn","","histogram"));
 	sp.info->histogram_defs.insert(histogram_def("ccn_track2","","histogram"));
 	sp.info->histogram_defs.insert(histogram_def("telephone","","histogram",HistogramMaker::FLAG_NUMERIC));
+        sp.info->histogram_defs.insert(histogram_def("pii","CT.*CMD_.*((From|To)=[0-9]+)","teamviewer",HistogramMaker::FLAG_NUMERIC));
         sp.info->get_config("ssn_mode",&ssn_mode,"0=Normal; 1=No `SSN' required; 2=No dashes required");
         sp.info->get_config("min_phone_digits",&min_phone_digits,"Min. digits required in a phone");
         scan_ccns2_debug = sp.info->config->debug;           // get debug value
