@@ -86,6 +86,20 @@ win64/bulk_extractor64.exe:
 	(cp win64/src/bulk_extractor.exe win64/bulk_extractor64.exe)
 	ls -l win64/bulk_extractor64.exe
 
+winlibs:
+	@echo '*****************************************'
+	@echo '*** making win32 and win64 libraries  ***'
+	@echo '*****************************************'
+	if [ -r Makefile ]; then $(MAKE) distclean ; fi
+	if [ ! -d win32  ]; then mkdir win32 ; fi
+	if [ ! -r win32/Makefile ]; then (cd win32;mingw32-configure --disable-libewf) ; fi
+	(cd win32/src;make -j8 lib;mv libbulkextractor.so ../../libbulkextractor32.so)	
+	if [ ! -d win64  ]; then mkdir win64 ; fi
+	if [ ! -r win64/Makefile ]; then (cd win64;mingw64-configure --disable-libewf) ; fi
+	(cd win64/src;make -j8 lib;mv libbulkextractor.so ../../libbulkextractor64.so)	
+	ls -l libbulk*.so
+
+
 .PHONY: lib
 lib:
 	(cd src; make lib)
