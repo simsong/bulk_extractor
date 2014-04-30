@@ -88,35 +88,51 @@ void scan_winlnk(const class scanner_params &sp,const recursion_control_block &r
                  sbuf.get32u(p+0x08) == 0x00000000 &&
                  sbuf.get32u(p+0x0c) == 0x000000c0 &&
                  sbuf.get32u(p+0x10) == 0x46000000 ){
+
+		dfxml_writer::strstrmap_t lnkmap;
+                
                 uint32_t LinkFlags      = sbuf.get32u(p+0x0014);
                 bool     HasLinkTargetIDList = LinkFlags & (1 << 0);
                 bool     HasLinkInfo        = LinkFlags  & (1 << 1);
-                bool     HasName            = LinkFlags  & (1 << 2);
-                bool     HasRelativePath    = LinkFlags  & (1 << 3);
-                bool     HasWorkingDir      = LinkFlags  & (1 << 4);
-                uint32_t FileAttributes = sbuf.get32u(p+0x0018);
+                //bool     HasName            = LinkFlags  & (1 << 2);
+                //bool     HasRelativePath    = LinkFlags  & (1 << 3);
+                //bool     HasWorkingDir      = LinkFlags  & (1 << 4);
+                //uint32_t FileAttributes = sbuf.get32u(p+0x0018);
                 uint64_t CreationTime   = sbuf.get64u(p+0x001c);
                 uint64_t AccessTime     = sbuf.get64u(p+0x0024);
                 uint64_t WriteTime      = sbuf.get64u(p+0x002c);
 
                 size_t loc = 0x004c;    // location of next section
                 
-                std::cerr << "LNK found at " << p << "created " << microsoftDateToISODate(CreationTime) << "\n";
+                lnkmap["ctime"] = microsoftDateToISODate(CreationTime);
+                lnkmap["atime"] = microsoftDateToISODate(AccessTime);
+                lnkmap["wtime"] = microsoftDateToISODate(WriteTime);
 
                 if (HasLinkTargetIDList ){
                     uint16_t IDListSize = sbuf.get16u(p+loc);
-                    std::cerr << "IDListSize=" << IDListSize << "\n";
-                    loc += IDListSize;
+                    loc += IDListSize + 2;
                 }
 
+                std::string path;
                 if (HasLinkInfo ){
-                    uint32_t LinkInfoSize = sbuf.get16u(p+loc);
-                    std::cerr << "LinkInfoSize= " << LinkInfoSize << "\n";
+                    uint32_t LinkInfoSize       = sbuf.get32u(p+loc);
+                    //uint32_t LinkInfoHeaderSize = sbuf.get32u(p+loc+4);
+                    //uint32_t LinkInfoFlags      = sbuf.get32u(p+loc+8);
+                    //uint32_t VolumeIDOffset      = sbuf.get32u(p+loc+12);
+                    uint32_t LocalBasePathOffset = sbuf.get32u(p+loc+16);
+                    //uint32_t CommonNetworkRelativeLinkOffset = sbuf.get32u(p+loc+20);
+                    //uint32_t CommonPathSuffixOffset = sbuf.get32u(p+loc+20);
+
+                    /* copy out the pathname */
+                    for(size_t i = p+loc+LocalBasePathOffset; i<sbuf.bufsize && sbuf[i]; i++){
+                        path += sbuf[i];
+                    }
+                    lnkmap["path"] = path;
+                    loc += LinkInfoSize + 2;
                 }
-                p += 512;               // safe
-                /* Found a lnk! */
+                winlnk_recorder->write(sbuf.pos0+p,path,dfxml_writer::xmlmap(lnkmap,"lnk",""));
+                p += loc;
             }
         }
     }
 }
-

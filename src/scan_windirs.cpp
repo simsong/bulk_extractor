@@ -185,15 +185,6 @@ fat_validation_t valid_fat_directory_entry(const sbuf_t &sbuf)
 	    return INVALID;			// can't have both DIRECTORY and ARCHIVE set
 	}
 
-#if 0
-        /* This is for debugging specific filename bugs */
-        bool dn=false;
-        if(strncmp((const char *)dentry.name,"SYSLINUX",8)==0 && strncmp((const char *)dentry.ext,"CFG",3)==0){
-            dn=true;
-            printf("dn=%d\n",dn);
-        }
-#endif
-
         if(dentry.attrib & 0x40) return INVALID; // "Device, never found on disk" (wikipedia)
 
 	if(!valid_fat_dentry_name(dentry.name,dentry.ext)) return INVALID; // invalid name
@@ -233,8 +224,6 @@ fat_validation_t valid_fat_directory_entry(const sbuf_t &sbuf)
         if(dentry.ctimeten != 0 && dentry.ctimeten != 100) weird_count++;
         if(adate==0 && cdate==0) weird_count++;
         if(adate==0 && wdate==0) weird_count++;
-
-        //printf("wc=%d \n",weird_count);
 
         if(weird_count > opt_max_weird_count) return INVALID;
                                                                            
