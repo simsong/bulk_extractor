@@ -1,3 +1,7 @@
+2014-04-17  Basic  <simsong@r4.ncr.nps.edu>
+
+	* src/be13_api/feature_recorder.cpp (hexval): fixed hexval(); it was not working properly for letters A through F. (I wrote this myself becuase it isn't present on mingw.)
+
 2014-04-15  Basic  <simsong@r3.ncr.nps.edu>
 
 	* src/be13_api/feature_recorder.h (f): several of the flags were the same, resulting in behavior that was incorrect.

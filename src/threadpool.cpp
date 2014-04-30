@@ -71,8 +71,12 @@ u_int threadpool::numCPU()
  */
 void threadpool::win32_init()
 {
+#ifdef HAVE_PTHREAD_WIN32_PROCESS_ATTACH_NP
     pthread_win32_process_attach_np();
+#endif
+#ifdef HAVE_PTHREAD_WIN32_THREAD_ATTACH_NP
     pthread_win32_thread_attach_np();
+#endif
 }
 #endif
 
@@ -120,8 +124,12 @@ threadpool::~threadpool()
     pthread_cond_destroy(&TOWORKER);
 
 #ifdef WIN32
+#ifdef HAVE_PTHREAD_WIN32_PROCESS_DETACH_NP
     pthread_win32_process_detach_np();
+#endif
+#ifdef HAVE_PTHREAD_WIN32_THREAD_DETACH_NP
     pthread_win32_thread_detach_np();
+#endif
 #endif
 }
 

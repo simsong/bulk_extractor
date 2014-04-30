@@ -63,8 +63,8 @@ public class ScanSettings {
   public boolean useEraseOutputDirectory;
 
   // Scanner controls
-  public boolean usePluginDirectory;
-  public String pluginDirectory;
+  public boolean usePluginDirectories;
+  public String pluginDirectories;
   public boolean useSettableOptions;
   public String settableOptions;
 
@@ -130,8 +130,8 @@ public class ScanSettings {
     useEraseOutputDirectory = false;
 
     // Scanner controls
-    usePluginDirectory = false;
-    pluginDirectory = "";
+    usePluginDirectories = false;
+    pluginDirectories = "";
     useSettableOptions = false;
     settableOptions = "";
 
@@ -139,8 +139,8 @@ public class ScanSettings {
     try {
       // get the default scanner list from bulk_extractor
       scanners = BulkExtractorScanListReader.readScanList(
-                       WScanBoxedControls.usePluginDirectoryCB.isSelected(),
-                       WScanBoxedControls.pluginDirectoryTF.getText());
+                       WScanBoxedControls.usePluginDirectoriesCB.isSelected(),
+                       WScanBoxedControls.pluginDirectoriesTF.getText());
     } catch (IOException e) {
       WError.showError("Error in obtaining list of scanners from bulk_extractor."
                      + "\nBulk_extractor is not available during this session."
@@ -206,8 +206,8 @@ public class ScanSettings {
     useEraseOutputDirectory = scanSettings.useEraseOutputDirectory;
 
     // Scanner controls
-    usePluginDirectory = scanSettings.usePluginDirectory;
-    pluginDirectory = scanSettings.pluginDirectory;
+    usePluginDirectories = scanSettings.usePluginDirectories;
+    pluginDirectories = scanSettings.pluginDirectories;
     useSettableOptions = scanSettings.useSettableOptions;
     settableOptions = scanSettings.settableOptions;
 
@@ -328,8 +328,8 @@ public class ScanSettings {
 
       // controls
       } else if (a.equals("-P")) {
-        usePluginDirectory = true;
-        pluginDirectory = b;
+        usePluginDirectories = true;
+        pluginDirectories = b;
         index+=2; continue;
       } else if (a.equals("-S")) {
         useSettableOptions = true;
@@ -497,9 +497,13 @@ public class ScanSettings {
     }
   
     // controls
-    if (usePluginDirectory) {
-      cmd.add("-P");
-      cmd.add(pluginDirectory);
+    if (usePluginDirectories
+     && pluginDirectories.length() > 0) {
+      String[] pluginDirectoriesArray = pluginDirectories.split("\\|");
+      for (String directoryName : pluginDirectoriesArray) {
+        cmd.add("-P");
+        cmd.add(directoryName);
+      }
     }
     if (useSettableOptions
      && settableOptions.length() > 0) {

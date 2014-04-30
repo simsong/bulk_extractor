@@ -7,7 +7,7 @@
 # and http://www.openismus.com/documents/linux/automake/automake.shtml
 
 AC_PREREQ(2.57)
-AC_INIT(BULK_EXTRACTOR, 1.5.0-dev0, bugs@digitalcorpora.org)
+AC_INIT(BULK_EXTRACTOR, 1.5.0-alpha1, bugs@digitalcorpora.org)
 
 AC_CONFIG_MACRO_DIR(m4)
 
@@ -30,8 +30,8 @@ AC_PREFIX_PROGRAM(bulk_extractor) dnl build for same location
 
 # Programs we will be using
 AC_PROG_CC
-AC_PROG_CC_C99 
 AC_PROG_CXX
+AC_PROG_CC_C99 
 AM_PROG_CC_C_O                    dnl allow per-produce flags
 AC_PROG_INSTALL
 AC_PROG_LEX
@@ -39,18 +39,17 @@ AC_PROG_LEX
 
 # use C++11 mode if available; HAVE_CXX11 is defined in config.h if so.  Don't
 # use the GNU C++11 extensions for portability's sake (noext).
-AC_LANG_PUSH(C++)
+# https://www.gnu.org/software/autoconf-archive/ax_cxx_compile_stdcxx_11.html
+
+m4_include([m4/ax_cxx_compile_stdcxx_11.m4])
 AX_CXX_COMPILE_STDCXX_11(noext, optional)
-AC_LANG_POP()
+
 
 # Endian check is required for MD5 implementation
 AC_C_BIGENDIAN
 
 # These are needed for bulk_extractor. They are not needed for tcpflow
 AC_DEFINE([BULK_EXTRACTOR],1,[We are compiling bulk_extractor])
-# AC_DEFINE([USE_HISTOGRAMS],1,[We are using histograms])
-# AC_DEFINE([USE_STOP_LIST],1,[We are using the stop lists])
-# AC_DEFINE([USE_ALERT_LIST],1,[We are using the alert list])
 
 ## 
 ## BEViewer
@@ -119,107 +118,9 @@ else
 fi
 
 
-################################################################
-## See if we are running on mingw
-# http://osdir.com/ml/gnu.mingw.devel/2003-09/msg00040.html
-# Note: Windows 95 WINVER=0x400
-# Windows 98 WINVER=0x400  _WIN32_WINDOWS=0x0410
-# Windows Me WINVER=0x400  _WIN32_WINDOWS=0x0490
-# Windows NT 4.0 WINVER=0x0400  _WIN32_WINNT=0x0400
-# Windows NT 4.0 SP3 WINVER=0x0400 _WIN32_WINNT=0x0403
-# Windows 2000 WINVER=0x500 _WIN32_WINNT=0x0500
-# Windows XP WINVER=0x501 _WIN32_WINNT=0x0501
-# Windows Server 2003 WINVER=0x502 _WIN32_WINNT=0x0502
-#
-# mingw32 includes  i686-w64-mingw32 and  x86_64-w64-mingw32
-
-mingw="no"
-case $host in
-  *-*-*linux*-*) 
-     AC_DEFINE([__LINUX__],1,[Linux operating system functions])
-     ;;
-
-  *mingw*)   
-     LIBS="$LIBS -lpsapi -lws2_32 -lgdi32"  
-     CPPFLAGS="-DUNICODE -D_UNICODE -D__MSVCRT_VERSION__=0x0601 -DWINVER=0x0500 -D_WIN32_WINNT=0x0500 -g $CPPFLAGS"
-     CPPFLAGS="$CPPFLAGS --static "
-     CFLAGS="$CFLAGS --static -static-libgcc -static-libstdc++"
-     CXXFLAGS="$CXXFLAGS -Wno-format "  # compiler mingw-4.3.0 is broken on I64u formats
-     CXXFLAGS="$CXXFLAGS --static -static-libgcc -static-libstdc++"
-     LDFLAGS="$LDFLAGS --static"
-     mingw="yes"
-     ;;		 		     
-esac
-
-if test x"${mingw}" == "xno" ; then
-  # Bring additional directories where things might be found into our
-  # search path. I don't know why autoconf doesn't do this by default
-  for spfx in /usr/local /opt/local /sw /usr/local/ssl; do
-    AC_MSG_NOTICE([checking ${spfx}/include])
-    if test -d ${spfx}/include; then
-        CPPFLAGS="-I${spfx}/include $CPPFLAGS"
-        LDFLAGS="-L${spfx}/lib $LDFLAGS"
-        AC_MSG_NOTICE([ *** ADDING ${spfx}/include to CPPFLAGS *** ])
-        AC_MSG_NOTICE([ *** ADDING ${spfx}/lib to LDFLAGS *** ])
-    fi
-  done
-  AC_MSG_NOTICE([ CPPFLAGS = ${CPPFLAGS} ])        
-  AC_MSG_NOTICE([ LDFLAGS = ${LDFLAGS} ])        
-fi
-
-if test -r /bin/uname.exe ; then
-  if test `uname -o` == "Msys" ; then
-    AC_MSG_NOTICE([Compiling with Msys. Setting flags appropriately.])
-    LIBS="$LIBS -lws2_32 -lgdi32"
-    LDFLAGS="$LDFLAGS -Wl,--enable-auto-import"
-  fi
-fi
-################################################################
-#
-# Enable all the compiler debugging we can find
-#
-# This is originally from PhotoRec, but modified substantially by Simson
-# Figure out which flags we can use with the compiler. 
-#
-# These I don't like:
-# -Wdeclaration-after-statement -Wconversion
-# doesn't work: -Wunreachable-code 
-# causes configure to crash on gcc-4.2.1: -Wsign-compare-Winline 
-# causes warnings with unistd.h:  -Wnested-externs 
-# Just causes too much annoyance: -Wmissing-format-attribute 
-# Don't use: -Wno-unknown-warning-option
-
-# Check GCC and clang
-WARNINGS_TO_TEST="-MD -Wpointer-arith -Wmissing-declarations -Wmissing-prototypes \
-    -Wshadow -Wwrite-strings -Wcast-align -Waggregate-return \
-    -Wbad-function-cast -Wcast-qual -Wundef -Wredundant-decls -Wdisabled-optimization \
-    -Wfloat-equal -Wmultichar -Wc++-compat -Wmissing-noreturn -funit-at-a-time \
-    -Qunused-arguments -Wno-deprecated-register"
-
-if test x"${mingw}" == "xno" ; then
-  # add the warnings we do not want to do on mingw
-  WARNINGS_TO_TEST="$WARNINGS_TO_TEST -Wall -Wstrict-prototypes"
-fi
-
-echo "Warnings to test: $WARNINGS_TO_TEST"
-
-for option in $WARNINGS_TO_TEST
-do
-  SAVE_CFLAGS="$CFLAGS"
-  CFLAGS="$CFLAGS $option"
-  AC_MSG_CHECKING([whether gcc understands $option])
-  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
-      [has_option=yes],
-      [has_option=no; CFLAGS="$SAVE_CFLAGS"])
-  AC_MSG_RESULT($has_option)
-  unset has_option
-  unset SAVE_CFLAGS
-  if test $option = "-Wmissing-format-attribute" ; then
-    AC_DEFINE(HAVE_MISSING_FORMAT_ATTRIBUTE_WARNING,1,
-		[Indicates that we have the -Wmissing-format-attribute G++ warning])
-  fi
-done
-unset option
+m4_include([m4/slg_mingw_support.m4])
+m4_include([m4/slg_searchdirs.m4])
+m4_include([m4/slg_gcc_all_warnings.m4])
 
 ################################################################
 ## Includes
@@ -248,6 +149,14 @@ AC_ARG_ENABLE([rar],
 AM_CONDITIONAL([RAR_ENABLED], [test "yes" = "$rar"])
 
 
+## lightgrep enabled
+AC_ARG_ENABLE([lightgrep],
+              AS_HELP_STRING([--enable-lightgrep], [enable LIGHTGREP]),
+	      [AC_DEFINE(USE_LIGHTGREP, 1, [Use LIGHTGREP]) lightgrep="yes"],
+              [])
+AM_CONDITIONAL([LIGHTGREP_ENABLED], [test "yes" = "$lightgrep"])
+
+
 
 ################################################################
 ## mcheck support
@@ -273,65 +182,14 @@ AC_ARG_ENABLE([mcheck], AS_HELP_STRING([--enable-mcheck], \
 
 
 ################################################################
-# Check G++
-# We don't use these warnings:
-# -Waggregate-return -- aggregate returns are GOOD; they simplify code design
-# We can use these warnings after ZLIB gets upgraded:
-# -Wundef  --- causes problems with zlib
-# -Wcast-qual 
-# -Wmissing-format-attribute  --- Just too annoying
-# don't use: -Wno-unknown-warning-option
-AC_LANG_PUSH(C++)
-AC_CHECK_HEADERS([string])
-
-CXX_WARNINGS_TO_TEST="-Wall -MD -Wpointer-arith \
-    -Wshadow -Wwrite-strings -Wcast-align  \
-    -Wredundant-decls -Wdisabled-optimization \
-    -Wfloat-equal -Wmultichar -Wmissing-noreturn \
-    -Woverloaded-virtual -Wsign-promo -funit-at-a-time -Qunused-arguments -Wno-deprecated-register"
-
-clang=no
-if (g++ --version 2>&1 | grep clang > /dev/null) ; 
-then 
-   clang=yes
-fi
-if test x$CXX == "xclang++" ; then
-  clang=yes
-fi
-
-if test $clang == "no" ; then
-  # -Wstrict-null-sentinel is not supported under clang
-  CXX_WARNINGS_TO_TEST="$CXX_WARNINGS_TO_TEST -Wstrict-null-sentinel"
-fi
-
-if test x"${mingw}" == "xno" ; then
-  # add the warnings we don't want to do on mingw
-  CXX_WARNINGS_TO_TEST="$CXX_WARNINGS_TO_TEST  -Weffc++"
-fi
-
-for option in $CXX_WARNINGS_TO_TEST
-do
-  SAVE_CXXFLAGS="$CXXFLAGS"
-  CXXFLAGS="$CXXFLAGS $option"
-  AC_MSG_CHECKING([whether g++ understands $option])
-  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
-      [has_option=yes],
-      [has_option=no; CXXFLAGS="$SAVE_CXXFLAGS"])
-  AC_MSG_RESULT($has_option)
-  unset has_option
-  unset SAVE_CXXFLAGS
-done
-unset option
-AC_LANG_POP()    
-
-################################################################
 # PTHREAD support
 # With special nods to compiling under mingw
 
 if test  x"$mingw" = x"yes";  then
-  CFLAGS="$CFLAGS -mthreads "
+  CFLAGS="$CFLAGS -mthreads -pthread "
   CPPFLAGS="-DPTW32_STATIC_LIB $CPPFLAGS"
-  CXXFLAGS="$CXXFLAGS -mthreads "
+  CXXFLAGS="$CXXFLAGS -mthreads -pthread "
+  LDFLAGS="$LDFLAGS -mthreads -pthread "
   AC_DEFINE(HAVE_PTHREAD,1,[Defined to POSIX threads for mingw])
 else
   m4_include([m4/ax_pthread.m4])
@@ -345,6 +203,10 @@ else
             [AC_MSG_ERROR(bulk_extractor requires pthreads)])
 fi
 
+AC_MSG_NOTICE([After pthread test, CFLAGS: $CFLAGS])
+AC_MSG_NOTICE([After pthread test, CXXFLAGS: $CXXFLAGS])
+AC_MSG_NOTICE([After pthread test, LDFLAGS: $LDFLAGS])
+
 AC_CHECK_HEADERS([pthread.h])
 AC_CHECK_LIB([pthreadGC2],[pthread_create])
 
@@ -356,18 +218,6 @@ AC_CHECK_LIB([pthreadGC2],[pthread_create])
 # (which should be a no-op on later version of G++ anyway)
 
 AC_CHECK_FUNCS([pthread_win32_process_attach_np pthread_win32_process_detach_np pthread_win32_thread_attach_np pthread_win32_thread_detach_np ])
-
-AC_MSG_CHECKING([for __sync_fetch_and_add])
-AC_LINK_IFELSE(
-   [AC_LANG_SOURCE([
-    int main(void) { int i; return __sync_fetch_and_add(&i, 0); }
-   ])],
-   [
-     AC_MSG_RESULT([yes])
-     AC_DEFINE(HAVE___SYNC_FETCH_AND_ADD,1,[Defined if __sync_fetch_and_add was detected])
-    ],
-   [AC_MSG_RESULT([no])]
-)
 
 # end PTHREAD SUPPORT
 ################################################################
@@ -419,6 +269,7 @@ AC_ARG_WITH([o3], AC_HELP_STRING([--without-o3], [Do not force O3 optimization; 
 #
 # ZLIB is required:
 #  Note you cannot put comments in the AC_MSG_ERROR for some reason
+# Must be before ewf
 AC_CHECK_LIB([z],[uncompress],,
 	AC_MSG_ERROR([zlib libraries not installed; try installing zlib-devel zlib-dev zlib-devel zlib1g-dev or libz-dev]))
 
@@ -458,15 +309,23 @@ AC_CHECK_HEADER([afflib/afflib.h],
 
 ################################################################
 ## LIBEWF support
-libewf=yes
-AC_CHECK_HEADER([libewf.h],
+
+AC_ARG_ENABLE([libewf],
+    [AS_HELP_STRING([--disable-libewf], [disable libewf support])],
+    [libewf=no],
+    [libewf=yes])
+AC_MSG_NOTICE([libewf is $libewf])
+if test x"$libewf" == x"yes" ; then
+  AC_CHECK_HEADER([libewf.h],
 	[AC_DEFINE(HAVE_LIBEWF_H,1,[Do we have libewf.h?])]
 	[AC_CHECK_LIB([ewf],[libewf_get_version],,
 		[AC_MSG_WARN([libewf not found; no E01 support])]
 		[libewf=no])],
 	[AC_MSG_WARN([libewf.h not found; no E01 support])]
 	[libewf=no])
-AC_CHECK_FUNCS([libewf_handle_get_utf8_header_value_notes libewf_error_backtrace_fprint])
+  AC_CHECK_FUNCS([libewf_handle_get_utf8_header_value_notes libewf_error_backtrace_fprint])
+fi
+AC_MSG_NOTICE([libewf is now $libewf])
 
 
 ################################################################
@@ -476,7 +335,7 @@ AC_ARG_ENABLE([hashid],
     [hashid=no],
     [hashid=yes])
 
-if test x"$hashid" == xyes ; then
+if test x"$hashid" == x"yes" ; then
   AC_CHECK_LIB([zmq],[zmq_ctx_new],[LIBS="-lzmq $LIBS"],
     [AC_MSG_WARN([Could not find zeromq, zeromq v3 is required to build the hashid scanner])
     hashid=no])
@@ -604,6 +463,9 @@ AC_LANG_POP()
 AC_MSG_NOTICE([MINGW is $mingw])
 if test x"$mingw" = x"yes" ; then
   LIBS="$LIBS -lgdi32"
+else
+  CFLAGS="$CFLAGS -fPIC"
+  CXXFLAGS="$CXXFLAGS -fPIC"
 fi
 
 
@@ -628,11 +490,6 @@ else
   fi
 fi
 
-# generate position-independent code for creating the shared library
-CFLAGS="$CFLAGS -fPIC"
-CXXFLAGS="$CXXFLAGS -fPIC"
-
-
 AC_MSG_NOTICE([*************************************])
 AC_MSG_NOTICE([*************************************])
 AC_MSG_NOTICE([  PACKAGE_NAME:     $PACKAGE_NAME])
@@ -644,6 +501,10 @@ AC_MSG_NOTICE([  CFLAGS:           $CFLAGS])
 AC_MSG_NOTICE([  CXXFLAGS:         $CXXFLAGS])
 AC_MSG_NOTICE([  LIBS:             $LIBS])
 AC_MSG_NOTICE([  LDFLAGS:          $LDFLAGS])
+
+#
+# Generate special warnings
+#
 
 if test x"${libewf}" != "xyes" ; then
   AC_MSG_WARN([libewf-devel must be installed for E01 support.])

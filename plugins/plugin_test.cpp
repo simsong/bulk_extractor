@@ -137,6 +137,9 @@ feature_recorder  *feature_recorder_set::get_name(const std::string &name) const
 feature_recorder  *feature_recorder_set::get_alert_recorder() const { return 0;}
 void               feature_recorder_set::create_name(const std::string &name,bool create_stop_also){}
 void               feature_recorder_set::get_feature_file_list(std::vector<std::string> &ret){}
+void            feature_recorder_set::db_close(){}
+BEAPI_SQLITE3 *feature_recorder_set::db_create_empty(const std::string &s){return 0;}
+void            feature_recorder_set::db_send_sql(BEAPI_SQLITE3 *s,char const **val, ...){}
 feature_recorder  *feature_recorder_set::create_name_factory(const std::string &name_)
 {
     return 0;

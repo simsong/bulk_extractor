@@ -10,6 +10,7 @@ static uint32_t word_min = 6;
 static uint32_t word_max = 14;
 static uint64_t max_word_outfile_size=100*1000*1000;
 
+/* Wordlist support for flat files */
 class WordlistSorter {
 public:
     bool operator()(const std::string &a,const std::string &b) {
@@ -18,18 +19,51 @@ public:
 	return a<b;
     }
 };
+#define WORDLIST "wordlist"
 
-static void wordlist_split_and_dedup(std::string outdir_)
+/* wordlist support for SQL.  Note that the SQL-based wordlist is
+ * faster than the file-based wordlist, but it does not appear to be
+ * deterministic. We're not sure why.
+ */
+
+static bool wordlist_use_flatfiles = false;
+
+#ifdef HAVE_SQLITE3_H
+static const char *schema_wordlist[] = {
+    "CREATE TABLE wordlist (word BLOB)",
+    "CREATE UNIQUE INDEX wordlist_i on wordlist(word)",
+    0};
+static const char *insert_statement = "INSERT OR IGNORE INTO wordlist VALUES (?);";
+static feature_recorder::besql_stmt *wordlist_stmt=0;
+static const char *select_statement = "SELECT DISTINCT word FROM wordlist ORDER BY length(word),word";
+#endif
+
+
+/* Global variables for writing out wordlist */
+static std::ofstream of2;
+static std::string ofn_template;
+static int of2_counter = 0;
+static uint64_t outfilesize = 0;
+
+static void wordlist_write_word(const std::string &word)
 {
-    std::cout << "Phase 3. Uniquifying and recombining wordlist\n";
+    if(!of2.is_open() || outfilesize>max_word_outfile_size){ 
+        if(of2.is_open()) of2.close();
+        char fname[128];
+        snprintf(fname,sizeof(fname),ofn_template.c_str(),of2_counter++);
+        of2.open(fname);
+        if(!of2.is_open()) err(1,"Cannot open %s",fname);
+        outfilesize = 0;
+    }
+    of2 << word << '\n';
+    outfilesize += word.size() + 1;
+}
+	    
 
-    std::string ifn = outdir_+"/wordlist.txt";
-    std::string ofn_template = outdir_+"/wordlist_split_%03d.txt";
+static void wordlist_split_and_dedup(const std::string &ifn)
+{
     std::ifstream f2(ifn.c_str());
     if(!f2.is_open()) err(1,"Cannot open %s\n",ifn.c_str());
-    std::ofstream of2;
-    int of2_counter = 0;
-    uint64_t outfilesize = 0;
 
     /* Read all of the words */
 
@@ -45,8 +79,9 @@ static void wordlist_split_and_dedup(std::string outdir_)
 	    if(t1!=std::string::npos) line = line.substr(t1+1);
 	    size_t t2 = line.find('\t');		// find the end of the feature
 	    if(t2!=std::string::npos) line = line.substr(0,t2);
+            std::string word = feature_recorder::unquote_string(line);
 	    try {
-		if(line.size()>0) seen.insert(line);
+		if(word.size()>0) seen.insert(word);
 	    }
 	    catch (std::bad_alloc &er) {
 		std::cerr << er.what() << std::endl;
@@ -57,24 +92,29 @@ static void wordlist_split_and_dedup(std::string outdir_)
 	/* Dump the words so far */
 
 	for(std::set<std::string,WordlistSorter>::const_iterator it = seen.begin();it!=seen.end();it++){
-	    if(!of2.is_open() || outfilesize>max_word_outfile_size){ 
-		if(of2.is_open()) of2.close();
-		char fname[128];
-		snprintf(fname,sizeof(fname),ofn_template.c_str(),of2_counter++);
-		of2.open(fname);
-		if(!of2.is_open()) err(1,"Cannot open %s",fname);
-		outfilesize = 0;
-	    }
-	    
-	    if ((*it).size()>0) {
-		of2 << (*it) << '\n';
-		outfilesize += (*it).size() + 1;
-	    }
-	}
+	    if ((*it).size()>0) wordlist_write_word(*it);
+        }
     }
     if(of2.is_open()) of2.close();
     f2.close();
 }
+
+/* Similar to above; write out the wordlist using SQL.
+ * Not-multi-threaded, but threadsafe nonetheless.
+ */
+static void wordlist_sql_write(BEAPI_SQLITE3 *db3)
+{
+#ifdef HAVE_SQLITE3_H
+    feature_recorder::besql_stmt s(db3,select_statement);
+    while (sqlite3_step(s.stmt) != SQLITE_DONE) {
+        const char *base = (const char *)sqlite3_column_blob(s.stmt,0);
+        int len          = sqlite3_column_bytes(s.stmt,0);
+        wordlist_write_word(std::string(base,len));
+    }
+    if(of2.is_open()) of2.close();
+#endif
+}
+
 
 static bool wordchar[256];
 inline bool wordchar_func(unsigned char ch)
@@ -93,14 +133,20 @@ extern "C"
 void scan_wordlist(const class scanner_params &sp,const recursion_control_block &rcb)
 {
     assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
+    feature_recorder_set &fs = sp.fs;
     if(sp.phase==scanner_params::PHASE_STARTUP){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
-        sp.info->name  = "wordlist";
+        sp.info->name  = WORDLIST;
         sp.info->flags = scanner_info::SCANNER_DISABLED;
-        sp.info->feature_names.insert("wordlist");
         sp.info->get_config("word_min",&word_min,"Minimum word size");
         sp.info->get_config("word_max",&word_max,"Maximum word size");
-        sp.info->get_config("max_word_outfile_size",&max_word_outfile_size,"Maximum size of the words output file");
+        sp.info->get_config("max_word_outfile_size",&max_word_outfile_size,
+                            "Maximum size of the words output file");
+        sp.info->get_config("wordlist_use_flatfiles",&wordlist_use_flatfiles,"Override SQL settings and use flatfiles for wordlist");
+
+        if(wordlist_use_flatfiles || fs.db3==0){
+            sp.info->feature_names.insert(WORDLIST);
+        }
         if(word_min>word_max){
             fprintf(stderr,"ERROR: word_min=%d word_max=%d\n",word_min,word_max);
             exit(1);
@@ -108,42 +154,90 @@ void scan_wordlist(const class scanner_params &sp,const recursion_control_block 
 	wordchar_setup();
 	return;
     }
-    feature_recorder_set &fs = sp.fs;
-    feature_recorder *wordlist_recorder = fs.get_name("wordlist");
+
+    feature_recorder *wordlist_recorder = (wordlist_use_flatfiles || fs.db3==0) ? fs.get_name(WORDLIST) : 0;
+
+    /* not multi-threaded */
     if(sp.phase==scanner_params::PHASE_INIT){
-	wordlist_recorder->set_flag(feature_recorder::FLAG_NO_CONTEXT);  // not useful for wordlist
-	wordlist_recorder->set_flag(feature_recorder::FLAG_NO_STOPLIST); // not necessary for wordlist
-	wordlist_recorder->set_flag(feature_recorder::FLAG_NO_ALERTLIST); // not necessary for wordlist
-	wordlist_recorder->set_flag(feature_recorder::FLAG_NO_FEATURES_SQL); // SQL wordlist handled separately.
-        return;
+        if (wordlist_recorder) {
+            wordlist_recorder->set_flag(feature_recorder::FLAG_NO_CONTEXT);      // not useful for wordlist
+            wordlist_recorder->set_flag(feature_recorder::FLAG_NO_STOPLIST);     // not necessary for wordlist
+            wordlist_recorder->set_flag(feature_recorder::FLAG_NO_ALERTLIST);    // not necessary for wordlist
+            wordlist_recorder->set_flag(feature_recorder::FLAG_NO_FEATURES_SQL); // SQL wordlist handled separately.
+            return;
+        }
+        
+#ifdef HAVE_SQLITE3_H
+        if (fs.db3) {
+            fs.db_send_sql(fs.db3,schema_wordlist);
+            wordlist_stmt = new feature_recorder::besql_stmt(fs.db3,insert_statement);
+            return;
+        }
+#endif
+        assert(0);                      // shouldn't end up here
     }
         
+    /* not multi-threaded */
     if(sp.phase==scanner_params::PHASE_SHUTDOWN){
-	wordlist_split_and_dedup(sp.fs.get_outdir());
-	return;
-    }
-    if(sp.phase==scanner_params::PHASE_SCAN){
+        std::cout << "Phase 3. Uniquifying and recombining wordlist\n";
+        ofn_template = sp.fs.get_outdir()+"/wordlist_split_%03d.txt";
+        
+        if (wordlist_recorder) {
+            wordlist_split_and_dedup(sp.fs.get_outdir()+"/" WORDLIST ".txt");
+            return;
+        }
 
+        if (fs.db3) {
+            wordlist_sql_write(fs.db3);
+            return;
+        }
+    }
+
+
+    /* multi-threaded! */
+    if(sp.phase==scanner_params::PHASE_SCAN){
 	const sbuf_t &sbuf = sp.sbuf;
 
 	/* Look for words in the buffer. Runs a finite state machine.
-	 * for each character in the buffer:
+	 * for each character in the buffer. There are only two
+	 * transitions that we care about:
+         *
 	 * case 1 - we are not in a word & this character starts a word.
+         *
 	 * case 2 - we are in a word & this character ends a word.
 	 */
     
 	int wordstart = -1;			// >=0 means we are in a word
-	for(u_int i=0;i<sbuf.pagesize;i++){
-	    /* case 1 */
+	for(u_int i=0; i<sbuf.pagesize; i++){
+
+	    /* case 1 - we are not in a word & this character starts a word. */
 	    bool iswordchar = wordchar[sbuf.buf[i]];
 	    if(wordstart<0 && iswordchar && i!=sbuf.pagesize-1){
 		wordstart = i;
 		continue;
 	    }
+            /* case 2 - we are in a word & this character ends a word. */
 	    if(wordstart>=0 && (!iswordchar || i==sbuf.pagesize-1)){
 		uint32_t len = i-wordstart;
 		if((word_min <= len) && (len <=  word_max)){
-		    wordlist_recorder->write_buf(sbuf,wordstart,len);
+
+                    /* Save the word that starts at sbuf.buf+wordstart that has a length of len. */
+                    std::string word = sbuf.substr(wordstart,len);
+                    
+                    //std::cerr << "word=" << word << " wr=" << wordlist_recorder << " fs.db3=" << fs.db3 << "\n";
+
+                    if (wordlist_recorder) {
+                        wordlist_recorder->write(sbuf.pos0+wordstart,word,"");
+                    } else if (fs.db3) {
+#ifdef HAVE_SQLITE3_H
+                        cppmutex::lock lock(wordlist_stmt->Mstmt);
+                        sqlite3_bind_blob(wordlist_stmt->stmt, 1, (const char *)word.data(), word.size(), SQLITE_STATIC);
+                        if (sqlite3_step(wordlist_stmt->stmt) != SQLITE_DONE) {
+                            fprintf(stderr,"sqlite3_step failed on scan_wordlist\n");
+                        }
+                        sqlite3_reset(wordlist_stmt->stmt);
+#endif
+                    } 
 		}
 		wordstart = -1;
 	    }

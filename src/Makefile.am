@@ -29,31 +29,39 @@ TSK3INCS = \
 	tsk3/tsk_incs.h\
 	tsk3/vs/tsk_vs.h
 
+# These scanners are based on GNUflex
 flex_scanners = \
+	sbuf_flex_scanner.h \
 	scan_accts.flex \
 	scan_base16.flex \
 	scan_email.flex \
 	scan_gps.flex 
 
-bulk_scanners = \
+
+# These scanners are based on Lightbox Technology's lightgrep
+lightgrep_scanners = \
+	pattern_scanner.cpp pattern_scanner.h \
+	pattern_scanner_utils.cpp pattern_scanner_utils.h \
+	scan_lightgrep.cpp \
 	scan_accts_lg.cpp \
-	scan_aes.cpp \
 	scan_base16_lg.cpp \
+	scan_email_lg.cpp \
+	scan_gps_lg.cpp 
+
+bulk_scanners = \
+	scan_aes.cpp \
 	scan_base64.cpp \
 	scan_bulk.cpp\
 	scan_ccns2.cpp scan_ccns2.h \
 	scan_elf.cpp \
-	scan_email_lg.cpp \
 	scan_exif.cpp exif_reader.h exif_reader.cpp exif_entry.cpp\
 	scan_exiv2.cpp \
 	scan_extx.cpp \
 	scan_find.cpp \
-	scan_gps_lg.cpp \
 	scan_gzip.cpp \
 	scan_hiberfile.cpp pyxpress.c pyxpress.h \
 	scan_json.cpp \
 	scan_kml.cpp \
-	scan_lightgrep.cpp \
 	scan_net.cpp \
 	scan_outlook.cpp \
 	scan_pdf.cpp \
@@ -62,20 +70,25 @@ bulk_scanners = \
 	scan_sqlite.cpp \
 	scan_vcard.cpp \
 	scan_windirs.cpp \
+	scan_winlnk.cpp \
 	scan_winpe.cpp \
 	scan_winprefetch.cpp \
 	scan_wordlist.cpp \
 	scan_xor.cpp \
 	scan_zip.cpp \
-	sbuf_flex_scanner.h \
 	$(flex_scanners) 
 
+if LIGHTGREP_ENABLED
+  bulk_scanners += $(lightgrep_scanners)
+endif
+
+
 if RAR_ENABLED
-bulk_scanners += $(RAR_SUPPORT)
+  bulk_scanners += $(RAR_SUPPORT)
 endif
 
 if SCEADAN_ENABLED
-bulk_scanners += sceadan/src/sceadan.cpp sceadan/src/sceadan.h sceadan/src/sceadan_model_precompiled.c
+  bulk_scanners += sceadan/src/sceadan.cpp sceadan/src/sceadan.h sceadan/src/sceadan_model_precompiled.c
 endif
 
 
@@ -88,10 +101,6 @@ bulk_extractor_nomain = \
 	dig.h \
 	image_process.cpp \
 	image_process.h \
-	pattern_scanner.cpp \
-	pattern_scanner.h \
-	pattern_scanner_utils.cpp \
-	pattern_scanner_utils.h \
 	phase1.h \
 	phase1.cpp \
 	threadpool.cpp \
@@ -106,6 +115,8 @@ lib: libbulkextractor.so
 
 libbulkextractor.so: $(bulk_extractorlib_OBJECTS)
 	$(CXX) -shared -fPIC -o $@ $(LDFLAGS) $(bulk_extractorlib_OBJECTS) $(LIBS)
+
+
 
 stand_SOURCES = \
 	dig.cpp \

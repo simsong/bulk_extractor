@@ -61,15 +61,12 @@ scanner_t *scanners_builtin[] = {
     scan_wordlist,
     scan_aes,
     scan_json,
-#ifdef HAVE_LIBLIGHTGREP
+#if defined(HAVE_LIBLIGHTGREP) && defined(USE_LIGHTGREP)
     scan_accts_lg,
     scan_base16_lg,
     scan_email_lg,
     scan_gps_lg,
     scan_lightgrep,
-#endif
-#ifdef USE_LIFT
-    scan_lift,  // not ready for prime time
 #endif
     // scan_extx,  // not ready for prime time
 #ifdef HAVE_EXIV2
@@ -89,6 +86,7 @@ scanner_t *scanners_builtin[] = {
     scan_pdf,
     scan_winpe,
     scan_hiberfile,
+    scan_winlnk,
     scan_winprefetch,
     scan_windirs,
     scan_vcard,
