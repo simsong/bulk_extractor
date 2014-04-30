@@ -86,6 +86,7 @@ scanner_t *scanners_builtin[] = {
     scan_pdf,
     scan_winpe,
     scan_hiberfile,
+    scan_winlnk,
     scan_winprefetch,
     scan_windirs,
     scan_vcard,
