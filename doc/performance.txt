@@ -1,3 +1,38 @@
+CURRENT PERFORMANCE TUNING NOTES
+
+v1.5.0-dev0
+R4 (32-core Dell 760)
+--no-featuresql:
+writing to feature file files alone: 497 sec (86.25 MB/sec) (≈60 sec spent writing wordlist)
+                                     492 sec (86.55 MB/sec)
+
+--no-feqaturesql:
+    "PRAGMA synchronous =  OFF",       
+    "PRAGMA journal_mode=MEMORY",
+    "PRAGMA temp_store=MEMORY",
+    "PRAGMA cache_size = 200000",        // 10x normal cache 
+                Elapsed time: 431.621 sec; 99.5079
+
+    "PRAGMA synchronous =  OFF", 
+    "PRAGMA journal_mode=MEMORY", 
+    //"PRAGMA temp_store=MEMORY", 
+    "PRAGMA cache_size = 200000", 
+           Elapsed time: 409.784 sec. 
+
+    "PRAGMA synchronous =  OFF",
+    "PRAGMA journal_mode=MEMORY",
+    //"PRAGMA temp_store=MEMORY", 
+    //"PRAGMA cache_size = 200000", 
+           Elapsed time: 474.042 sec. 
+
+    "PRAGMA synchronous =  OFF",
+    //"PRAGMA journal_mode=MEMORY", 
+    //"PRAGMA temp_store=MEMORY", 
+    "PRAGMA cache_size = 200000",
+    Elapsed time: 501.194 sec., 
+
+
+
 HISTORIC PERFORMANCE STATISTICS
 
 This section tracks how performance of bulk_extractor has changed over
@@ -6,11 +41,13 @@ time.  We update it with each new release
 NOTE: We recommend compiling Version 1.4 with -O3 under GCC. Please
 use version GCC 4.7 or above. One a Mac you may wish to use clang.
 
+%% BEGIN NO FILL
+
+
 Use these configure flags to compile with a different optimization: 
 
   --without-opt           Drop all -O C flags
   --without-o3            Do not force O3 optimization; use default level
-
 
 
 Disk image: /corp/nps/drives/nps-2009-ubnist1/ubnist1.gen3.E01
@@ -30,7 +67,7 @@ version 1.4:    144 seconds (14.59 MBytes/sec)  (-O3; )
 version 1.3:    185 seconds (11.34 MBytes/sec)  (-O3; )
 version 1.2.0:  141 seconds (14.9 MBytes/sec)   (-O3; )
 version 1.1.3:  171 seconds (12.3 MBytes/sec)   (-O3; AES disabled)
-version 1.0.7:  256 seconds (8.22 MBytes/sec)   (-O3; AES disabled; 
+version 1.0.7:  256 seconds (8.22 MBytes/sec)   (-O3; AES disabled)
 
 MacOS 10.7.8; LLVM build 2336.1.00; No optimization
 
@@ -44,9 +81,6 @@ version 1.3:    198 seconds (10.6 MBytes/sec)  (-O3; AES enabled; 32bit)
 version 1.3:    186 seconds (11.33 MBytes/sec)  (-O3; AES enabled; 64bit)
 version 1.2.0: 	207.4 seconds (9.69 MBytes/sec, [2])
 
-
-
-%% BEGIN NO FILL
 
 Normalized Testing Results:
 

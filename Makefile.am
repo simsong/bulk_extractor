@@ -86,9 +86,23 @@ win64/bulk_extractor64.exe:
 	(cp win64/src/bulk_extractor.exe win64/bulk_extractor64.exe)
 	ls -l win64/bulk_extractor64.exe
 
+winlibs:
+	@echo '*****************************************'
+	@echo '*** making win32 and win64 libraries  ***'
+	@echo '*****************************************'
+	if [ -r Makefile ]; then $(MAKE) distclean ; fi
+	if [ ! -d win32  ]; then mkdir win32 ; fi
+	if [ ! -r win32/Makefile ]; then (cd win32;mingw32-configure --disable-libewf) ; fi
+	(cd win32/src;$(MAKE) lib;mv libbulkextractor.so ../../libbulkextractor32.so)	
+	if [ ! -d win64  ]; then mkdir win64 ; fi
+	if [ ! -r win64/Makefile ]; then (cd win64;mingw64-configure --disable-libewf) ; fi
+	(cd win64/src;$(MAKE) lib;mv libbulkextractor.so ../../libbulkextractor64.so)	
+	ls -l libbulk*.so
+
+
 .PHONY: lib
 lib:
-	(cd src; make lib)
+	(cd src; $(MAKE) lib)
 
 .PHONY: pull
 pull:
@@ -98,10 +112,16 @@ pull:
 
 .PHONY: publish
 publish:
-	make dist
+	$(MAKE) dist
 	scp $(DIST_ARCHIVES) ncr.nps.edu:/var/www/digitalcorpora/downloads/bulk_extractor
 
 gitfixup:
 	(cd src/be13_api/;git remote set-url origin git@github.com:/simsong/be13_api.git;git checkout master)
 	(cd src/dfxml/;git remote set-url origin git@github.com:/simsong/dfxml.git; git checkout master)
 	(cd src/sceadan/;git remote set-url origin git@github.com:/nbeebe/sceadan.git; git checkout master)
+
+.PHONY: libinstall
+libinstall:
+	install -D src/libbulkextractor.so $(prefix)/lib/libbulkextractor.so
+	install -D python/module/bulkextractor.py $(prefix)/lib/python2.7/dist-packages/bulkextractor.py
+	if [ -r /sbin/ldconfig ]; /sbin/ldconfig -v ; fi

@@ -70,6 +70,7 @@ bulk_scanners = \
 	scan_sqlite.cpp \
 	scan_vcard.cpp \
 	scan_windirs.cpp \
+	scan_winlnk.cpp \
 	scan_winpe.cpp \
 	scan_winprefetch.cpp \
 	scan_wordlist.cpp \
