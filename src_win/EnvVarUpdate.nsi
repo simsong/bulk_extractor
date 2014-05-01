@@ -155,8 +155,9 @@ Function ${UN}EnvVarUpdate
   ${If} $5 == ""
   ${OrIf} $8 >= ${NSIS_MAX_STRLEN}
     SetErrors
-    DetailPrint "ERROR: NSIS limitation: Unable to update PATH because existing PATH length is too long."
-    DetailPrint "       Please shorten existing PATH and retry or else set PATH manually"
+    DetailPrint "ERROR: NSIS limitation: Unable to update PATH because existing PATH length is too long or zero."
+    DetailPrint "       Please shorten existing PATH and retry or else manually add"
+    DetailPrint "       $4"
     pop $8
     pop $7
     pop $6

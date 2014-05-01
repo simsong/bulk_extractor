@@ -51,7 +51,7 @@ SRC_WIN_DIST = \
 # which causes problems if both try to do a distclean at the same time.
 # So this just manually checks to see if the prerequists are present and, if not, it makes them
 #
-$(UNVERSIONED_INSTALLER): BEViewerLauncher.exe build_installer.nsi $(PDFDOCS) bulk_extractor64.exe bulk_extractor32.exe BEViewer.jar
+$(UNVERSIONED_INSTALLER): BEViewerLauncher.exe build_installer.nsi EnvVarUpdate.nsi $(PDFDOCS) bulk_extractor64.exe bulk_extractor32.exe BEViewer.jar
 	@echo Making bulk_extractor version $(BEVERSION) Windows Installer
 	@echo 
 	makensis -DVERSION=$(BEVERSION) build_installer.nsi

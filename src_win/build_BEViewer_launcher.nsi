@@ -40,11 +40,11 @@ Function GetJRE
 
   ;TryJRE6432:
   ReadRegStr $JAVA_VER HKLM "SOFTWARE\Wow6432Node\JavaSoft\Java Runtime Environment" "CurrentVersion"
-  StrCmp "" "$JAVA_VER" TryJDK 0
+  StrCmp "" "$JAVA_VER" TryJDK6432 0
   ReadRegStr $JAVA_HOME HKLM "SOFTWARE\Wow6432Node\JavaSoft\Java Runtime Environment\$JAVA_VER" "JavaHome"
   goto CheckJavaVer
 
-  TryJDK:
+  TryJDK6432:
   ClearErrors
   ReadRegStr $JAVA_VER HKLM "SOFTWARE\Wow6432Node\JavaSoft\Java Development Kit" "CurrentVersion"
   StrCmp "" "$JAVA_VER" TryJRE 0
