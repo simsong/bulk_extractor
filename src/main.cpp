@@ -708,7 +708,7 @@ int main(int argc,char **argv)
     int         opt_H = 0;
     std::string opt_sampling_params;
     std::string opt_outdir;
-    bool        opt_write_flat_files = true;
+    bool        opt_write_feature_files = true;
     bool        opt_write_sqlite3     = false;
     bool        opt_enable_histograms=true;
 
@@ -864,7 +864,7 @@ int main(int argc,char **argv)
                   "Set >0 to make histogram maker fail with memory allocations");
     si.get_config("hash_alg",&be_hash_name,"Specifies hash algorithm to be used for all hash calculations");
     si.get_config("dup_data_alerts",&be13::plugin::dup_data_alerts,"Notify when duplicate data is not processed");
-    si.get_config("write_feature_files",&opt_write_flat_files,"Write features to flat files");
+    si.get_config("write_feature_files",&opt_write_feature_files,"Write features to flat files");
     si.get_config("write_feature_sqlite3",&opt_write_sqlite3,"Write feature files to report.sqlite3");
 
     /* Make sure that the user selected a valid hash */
@@ -979,9 +979,9 @@ int main(int argc,char **argv)
     feature_file_names_t feature_file_names;
     be13::plugin::get_scanner_feature_file_names(feature_file_names);
     uint32_t flags = 0;
-    if (stop_list.size()>0)     flags |= feature_recorder_set::CREATE_STOP_LIST_RECORDERS;
-    if (opt_write_sqlite3)      flags |= feature_recorder_set::ENABLE_SQLITE3_RECORDERS;
-    if (!opt_write_flat_files)  flags |= feature_recorder_set::DISABLE_FILE_RECORDERS;
+    if (stop_list.size()>0)        flags |= feature_recorder_set::CREATE_STOP_LIST_RECORDERS;
+    if (opt_write_sqlite3)         flags |= feature_recorder_set::ENABLE_SQLITE3_RECORDERS;
+    if (!opt_write_feature_files)  flags |= feature_recorder_set::DISABLE_FILE_RECORDERS;
     
     {
         feature_recorder_set fs(flags,be_hash);

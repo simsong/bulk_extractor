@@ -10,6 +10,13 @@ New functionality in Version 1.5 includes:
 
 * scan_sqlite ---- SQLite database carving (Note: only works for unfragmented databases)
 
+* scan_winlnk --- Windows LNK file carving
+
+* Enable/Disable writing features to SQLite3 database:
+    -S write_feature_sqlite3={YES|NO}
+
+* Enable/Disable writing features to flat files:
+     -S write_feature_files={YES|NO}
 
 
 Improvements
