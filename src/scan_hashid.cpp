@@ -339,7 +339,7 @@ static void do_scan(const class scanner_params &sp,
         // prepare forensic path (pos0, feature, context) as (pos0, hash_string, count_string)
 
         // pos0
-        pos0_t pos0 = sbuf.pos0 + it->first * hashdb_block_size;
+        pos0_t pos0 = sbuf.pos0 + it->first * hashdb_sector_size;
 
         // hash_string
         std::string hash_string = (*(scan_input))[it->first].hexdigest();
