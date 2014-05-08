@@ -56,6 +56,7 @@ Name "${APPNAME}"
  
 !include LogicLib.nsh
 !include EnvVarUpdate.nsi
+!include x64.nsh
  
 page components
 Page instfiles
@@ -137,12 +138,7 @@ function InstallOnce
 	AlreadyThere:
 functionEnd
 
-function .onInit
-	setShellVarContext all
-	!insertmacro VerifyUserIsAdmin
-functionEnd
-
-Section "32-bit configuration"
+Section "32-bit configuration" SEC0000
 
 	# install content common to both
 	call InstallOnce
@@ -159,7 +155,7 @@ Section "32-bit configuration"
 	createShortCut "$SMPROGRAMS\${APPNAME}\BEViewer with ${APPNAME} (32-bit).lnk" "$OUTDIR\BEViewerLauncher.exe"
 sectionEnd
 
-Section "64-bit configuration"
+Section "64-bit configuration" SEC0001
 
 	# install content common to both
 	call InstallOnce
@@ -176,7 +172,7 @@ Section "64-bit configuration"
 	createShortCut "$SMPROGRAMS\${APPNAME}\BEViewer with ${APPNAME} (64-bit).lnk" "$OUTDIR\BEViewerLauncher.exe"
 sectionEnd
 
-Section "Add to path"
+Section "Add to path" SEC0002
 	setOutPath "$INSTDIR"
         # note that path includes 32-bit and 64-bit, whether or not they
         # were both installed
@@ -184,6 +180,21 @@ Section "Add to path"
         ${EnvVarUpdate} $0 "PATH" "A" "HKLM" "$INSTDIR\32-bit"
         ${EnvVarUpdate} $0 "PATH" "A" "HKLM" "$INSTDIR\64-bit"
 sectionEnd
+
+function .onInit
+        #Determine the bitness of the OS and enable the correct section
+        ${If} ${RunningX64}
+            SectionSetFlags ${SEC0000}  0
+            SectionSetFlags ${SEC0001}  ${SF_SELECTED}
+        ${Else}
+            SectionSetFlags ${SEC0001}  0
+            SectionSetFlags ${SEC0000}  ${SF_SELECTED}
+        ${EndIf}
+
+        # require admin
+	setShellVarContext all
+	!insertmacro VerifyUserIsAdmin
+functionEnd
 
 !ifndef SIGN
 function un.onInit
