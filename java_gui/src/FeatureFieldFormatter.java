@@ -45,13 +45,23 @@ public class FeatureFieldFormatter {
       formattedText = getGPSFormat(contextField);
 
     } else if (filename.equals("ip.txt")) {
-      formattedText = getIPFormat(featureField, contextField);
+      // feature field, which contains IP, plus context, which contains
+      // IP metadata
+      formattedText = getGenericFormatWithContext(featureField, contextField);
 
 //      case "json.txt":
 //      case "tcp.txt":
 
     } else if (filename.equals("winpe.txt")) {
       formattedText = getWINPEFormat(contextField);
+
+    } else if (filename.equals("identified_blocks.txt")
+               // identified_sources.txt is the recommended filename to use
+               // for post-processing identified_blocks.txt using hashdb.
+            || filename.equals("identified_sources.txt")) {
+      // feature field, which contains hexdigest plus context which indicates
+      // information about the feature
+      formattedText = getGenericFormatWithContext(featureField, contextField);
 
     } else {
       formattedText = getGenericFormat(featureField);
@@ -134,12 +144,6 @@ public class FeatureFieldFormatter {
     return new String(contextField);
   }
   
-  private static String getIPFormat(byte[] featureField, byte[] contextField) {
-    // feature field, which contains IP, plus context, which contains
-    // IP metadata
-    return new String(featureField) + " " + new String(contextField);
-  }
-  
   // note: XML parsed output would look better.
   private static String getWINPEFormat(byte[] contextField) {
     byte[] winPEContextField = UTF8Tools.unescapeEscape(contextField);
@@ -162,6 +166,10 @@ public class FeatureFieldFormatter {
     return new String(escapedBytes, UTF8Tools.UTF_8);
   }
 
+  private static String getGenericFormatWithContext(byte[] featureField, byte[] contextField) {
+    return new String(featureField) + " " + new String(contextField);
+  }
+  
   // ************************************************************
   // Image highlight text
   // ************************************************************

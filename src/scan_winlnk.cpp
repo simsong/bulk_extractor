@@ -113,7 +113,7 @@ void scan_winlnk(const class scanner_params &sp,const recursion_control_block &r
                     loc += IDListSize + 2;
                 }
 
-                std::string path;
+                std::string path("NOLINKINFO");
                 if (HasLinkInfo ){
                     uint32_t LinkInfoSize       = sbuf.get32u(p+loc);
                     //uint32_t LinkInfoHeaderSize = sbuf.get32u(p+loc+4);
@@ -124,6 +124,7 @@ void scan_winlnk(const class scanner_params &sp,const recursion_control_block &r
                     //uint32_t CommonPathSuffixOffset = sbuf.get32u(p+loc+20);
 
                     /* copy out the pathname */
+                    path = "";
                     for(size_t i = p+loc+LocalBasePathOffset; i<sbuf.bufsize && sbuf[i]; i++){
                         path += sbuf[i];
                     }

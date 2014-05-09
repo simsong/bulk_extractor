@@ -82,7 +82,8 @@ public:
 
     virtual feature_recorder *create_name_factory(const std::string &name_);
     callback_feature_recorder_set(void *user_,be_callback_t *cb_):
-        feature_recorder_set(0,my_hasher),histogram_defs(),user(user_),cb(cb_),Mcb(){
+        feature_recorder_set(feature_recorder_set::DISABLE_FILE_RECORDERS,my_hasher),
+        histogram_defs(),user(user_),cb(cb_),Mcb(){
     }
 
     virtual void init_cfs(){
