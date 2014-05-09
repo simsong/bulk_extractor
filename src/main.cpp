@@ -982,7 +982,7 @@ int main(int argc,char **argv)
     if (stop_list.size()>0)        flags |= feature_recorder_set::CREATE_STOP_LIST_RECORDERS;
     if (opt_write_sqlite3)         flags |= feature_recorder_set::ENABLE_SQLITE3_RECORDERS;
     if (!opt_write_feature_files)  flags |= feature_recorder_set::DISABLE_FILE_RECORDERS;
-    
+
     {
         feature_recorder_set fs(flags,be_hash);
         fs.init(feature_file_names,image_fname,opt_outdir);

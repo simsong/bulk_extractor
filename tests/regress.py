@@ -268,54 +268,57 @@ def analyze_outdir(outdir):
         print("  {:>25} entries: {:>10,}  (top: {})".format(fn,len(h),firstline))
 
     fnpart = ".".join(b.image_filename().split('/')[-1].split('.')[:-1])
-    ffns = sorted(list(b.feature_files()))
-    features = {}
-    print("")
-    print("Feature Files:        {}".format(len(ffns)))
-    for fn in ffns:     # feature files
-        lines = 0
-        for line in b.open(fn,'r'):
-            if not bulk_extractor_reader.is_comment_line(line):
-                lines += 1
-        features[fn] = lines
-        print("  {:>25} features: {:>12,}  {}".format(fn,lines,analyze_warning(fnpart,fn,lines)))
-    
-    # If there is a SQLite database, analyze that too!
-    import sqlite3
-    conn = sqlite3.connect(os.path.join(outdir,"report.sqlite"))
-    if conn:
-        c = conn.cursor()
-        c.execute("PRAGMA cache_size = 200000")
-        print("Comparing SQLite3 database to feature files:")
-        for fn in ffns:
-            try:
-                table = "f_"+fn.lower().replace(".txt","")
-                cmd = "select count(*) from "+table
-                print(cmd)
-                c.execute(cmd);
-                ct = c.fetchone()[0]
-                print("{}:   {}  {}".format(fn,features[fn],ct))
-                # Now check them all to make sure that the all match
-                count = 0
-                for line in b.open(fn,'r'):
-                    ary = bulk_extractor_reader.parse_feature_line(line)
-                    if ary:
-                        (path,feature) = ary[0:2]
-                        path = path.decode('utf-8')
-                        feature = feature.decode('utf-8')
-                        c.execute("select count(*) from "+table+" where path=? and feature_eutf8=?",(path,feature))
-                        ct = c.fetchone()[0]
-                        if ct==1:
-                            #print("feature {} {} in table {} ({})".format(path,feature,table,ct))
-                            pass
-                        if ct==0:
-                            #pass
-                            print("feature {} {} not in table {} ({})".format(path,feature,table,ct))
-                        count += 1
-                        if count>args.featuretest: break
-                        
-            except sqlite3.OperationalError as e:
-                print(e)
+
+    if b.feature_files():
+        ffns = sorted(list(b.feature_files()))
+        features = {}
+        print("")
+        print("Feature Files:        {}".format(len(ffns)))
+        for fn in ffns:     # feature files
+            lines = 0
+            for line in b.open(fn,'r'):
+                if not bulk_extractor_reader.is_comment_line(line):
+                    lines += 1
+                    features[fn] = lines
+                    print("  {:>25} features: {:>12,}  {}".format(fn,lines,analyze_warning(fnpart,fn,lines)))
+                    
+        # If there is a SQLite database, analyze that too!
+    if args.featurefile and args.featuresql:
+        import sqlite3
+        conn = sqlite3.connect(os.path.join(outdir,"report.sqlite"))
+        if conn:
+            c = conn.cursor()
+            c.execute("PRAGMA cache_size = 200000")
+            print("Comparing SQLite3 database to feature files:")
+            for fn in ffns:
+                try:
+                    table = "f_"+fn.lower().replace(".txt","")
+                    cmd = "select count(*) from "+table
+                    print(cmd)
+                    c.execute(cmd);
+                    ct = c.fetchone()[0]
+                    print("{}:   {}  {}".format(fn,features[fn],ct))
+                    # Now check them all to make sure that the all match
+                    count = 0
+                    for line in b.open(fn,'r'):
+                        ary = bulk_extractor_reader.parse_feature_line(line)
+                        if ary:
+                            (path,feature) = ary[0:2]
+                            path = path.decode('utf-8')
+                            feature = feature.decode('utf-8')
+                            c.execute("select count(*) from "+table+" where path=? and feature_eutf8=?",(path,feature))
+                            ct = c.fetchone()[0]
+                            if ct==1:
+                                #print("feature {} {} in table {} ({})".format(path,feature,table,ct))
+                                pass
+                            if ct==0:
+                                #pass
+                                print("feature {} {} not in table {} ({})".format(path,feature,table,ct))
+                            count += 1
+                            if count>args.featuretest: break
+
+                except sqlite3.OperationalError as e:
+                    print(e)
 
 
 def make_zip(dname):
@@ -540,7 +543,9 @@ def run_and_analyze():
     if args.identify_filenames:
         if_outdir = identify_filenames(outdir)
     analyze_outdir(outdir)
-    print("Regression finished at {}. Elapsed time: {}\nOutput in {}".format(time.asctime(),ptime(time.time()-t0),outdir))
+    t = time.time() - t0
+    print("Regression finished at {}. Elapsed time: {} ({} sec)\nOutput in {}".format(
+        time.asctime(),ptime(t),t,outdir))
 
 if __name__=="__main__":
     import argparse 

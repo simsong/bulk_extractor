@@ -194,6 +194,12 @@ DEVELOPERS!
 
 If you are developing with github, after a checkout, you may wish to do this:
 
-for i in dfxml be13_api  ; do echo $i ; (cd $i && git remote rm origin && git add origin git@github.com:simsong/$i.git && git checkout master ) ; done
+make gitfixup   # brings every submodule to master
+CXXFLAGS="-fsanitize=address" ./configure   # Runs with ASan (requires clang & libasan to be installed)
+
+- Run -E with all of the scanners one-by-one with ASan to find scanner-specific bugs.
+Currently there seems to be a bug in email in the histogram generation process and in scan_hex
+
+
 
 

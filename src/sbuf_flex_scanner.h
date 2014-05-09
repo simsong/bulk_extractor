@@ -8,7 +8,7 @@
 #pragma GCC diagnostic ignored "-Weffc++"
 #pragma GCC diagnostic ignored "-Wredundant-decls"
 #pragma GCC diagnostic ignored "-Wmissing-noreturn"
-#pragma GCC diagnostic ignored "-Wdeprecated-register"
+//#pragma GCC diagnostic ignored "-Wdeprecated-register"
 
 #define YY_NO_INPUT
 

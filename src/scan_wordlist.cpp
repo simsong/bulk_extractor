@@ -144,6 +144,8 @@ void scan_wordlist(const class scanner_params &sp,const recursion_control_block 
                             "Maximum size of the words output file");
         sp.info->get_config("wordlist_use_flatfiles",&wordlist_use_flatfiles,"Override SQL settings and use flatfiles for wordlist");
 
+        fprintf(stderr,"wordlist fs flags=%x fs=\n",sp.fs.get_flags(),&sp.fs);
+
         if(wordlist_use_flatfiles || fs.db3==0){
             sp.info->feature_names.insert(WORDLIST);
         }
@@ -155,9 +157,11 @@ void scan_wordlist(const class scanner_params &sp,const recursion_control_block 
 	return;
     }
 
-    feature_recorder *wordlist_recorder = (wordlist_use_flatfiles || fs.db3==0) ? fs.get_name(WORDLIST) : 0;
+    bool use_wordlist_recorder  = (wordlist_use_flatfiles || (fs.db3==0 && sp.fs.flag_notset(feature_recorder_set::DISABLE_FILE_RECORDERS)));
+    feature_recorder *wordlist_recorder = use_wordlist_recorder ? fs.get_name(WORDLIST) : 0;
 
-    /* not multi-threaded */
+
+    /* init code is not multi-threaded */
     if(sp.phase==scanner_params::PHASE_INIT){
         if (wordlist_recorder) {
             wordlist_recorder->set_flag(feature_recorder::FLAG_NO_CONTEXT);      // not useful for wordlist
@@ -174,10 +178,11 @@ void scan_wordlist(const class scanner_params &sp,const recursion_control_block 
             return;
         }
 #endif
-        assert(0);                      // shouldn't end up here
+        assert(sp.fs.flag_set(feature_recorder_set::DISABLE_FILE_RECORDERS)); // this flag better be set
+        return;
     }
         
-    /* not multi-threaded */
+    /* shutdown code is multi-threaded */
     if(sp.phase==scanner_params::PHASE_SHUTDOWN){
         std::cout << "Phase 3. Uniquifying and recombining wordlist\n";
         ofn_template = sp.fs.get_outdir()+"/wordlist_split_%03d.txt";
