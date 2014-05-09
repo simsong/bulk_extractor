@@ -4,16 +4,22 @@
 
 bulk_extractor Version 1.5 has been released for Linux, MacOS and Windows.
 
-New functionality in Version 1.5 includes:
-
-* scan_outlook will decrypt "Outlook Compressible Encryption" used on some PST files. 
-
-* scan_sqlite ---- SQLite database carving (Note: only works for unfragmented databases)
 
 
 
 Improvements
 ============
+
+* Writes features to SQLite database
+
+New Scanners:
+-------------
+* scan_outlook will decrypt "Outlook Compressible Encryption" used on some PST files. 
+
+* scan_sqlite ---- SQLite database carving (Note: only works for unfragmented databases)
+
+* scan_winlnk --- 
+
 
 Improvements in existing scanners:
 ----------------------------------
@@ -23,6 +29,7 @@ Version 1.5 allows you to specify one of three SSN recognition modes:
     -S ssn_mode=0  SSN’s must be labeled “SSN:”. Dashes or no dashes okay.
     -S ssn_mode=1  No “SSN” required, but dashes are required.
     -S ssn_mode=2  No dashes required. Allow any 9-digit number that matches SSN allocation range.
+
 
 Improvements in Python programs:
 --------------------------------
@@ -145,13 +152,15 @@ scan_kml     - Detects KML files
 scan_lightgrep
 scan_net     - IP packet scanning and carving
 scan_pdf     - Extracts text from some kinds of PDF files
-scan_rar
+scan_sqlite  - SQLite3 databases (only if they are contigious)
+scan_rar     - RAR files
 scan_vcard   - Carvees VCARD files
-scan_windirs - TBD
+scan_windirs - Windows directory entries
+scan_winlkn  - Windows LNK files
 scan_winpe   -
 scan_winprefetch - Extracts fields from Windows prefetch files and file fragments.
 scan_wordlist - Builds word list for password cracking
-scan_xor
+scan_xor     - XOR obfuscation 
 scan_zip     - Detects and decompresses ZIP files and zlib streams
 ```
 
