@@ -35,6 +35,7 @@ public:
 	class feature_recorder *ccn_track2;
 	class feature_recorder *telephone_recorder;
 	class feature_recorder *alert_recorder;
+
 };
 #define YY_EXTRA_TYPE accts_scanner *             /* holds our class pointer */
 YY_EXTRA_TYPE yyaccts_get_extra (yyscan_t yyscanner );    /* redundent declaration */
@@ -98,6 +99,8 @@ DELIM	 ([- ])
 DB	({BLOCK}{DELIM})
 SDB	([45][0-9][0-9][0-9]{DELIM})
 TDEL	([ /.-])
+BASEEF  ([123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz])
+XBASEF  ([^123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz])
 
 PHONETEXT ([^a-z](tel[.ephon]*|(fax)|(facsimile)|DSN|telex|TTD|mobile|cell)):?
 
@@ -116,6 +119,14 @@ DATED	({MONTH}[ ]{DAY}[, ]+{YEAR})
 DATEFORMAT	({DATEA}|{DATEB}|{DATEC}|{DATED})
 
 %%
+
+[^0-9a-z][13]({BASEEF}{27,34})/{XBASEF} {
+    accts_scanner &s = *yyaccts_get_extra(yyscanner);
+    if(valid_bitcoin_address(yytext+1,yyleng-1)){
+       s.pii_recorder->write_buf(SBUF,s.pos+1,yyleng-1);       
+    }
+    s.pos += yyleng;
+}
 
 [^0-9a-z]{DB}{DB}{DB}{DB}{DB} {
     /* #### #### #### #### #### #### is definately not a CCN. */

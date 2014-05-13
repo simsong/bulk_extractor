@@ -4,5 +4,6 @@
  */
 bool  valid_ccn(const char *buf,int buflen);
 bool  valid_phone(const sbuf_t &sbuf,size_t pos,size_t len);
+bool  valid_bitcoin_address(const char *buf,size_t buflen);
 extern int scan_ccns2_debug;
 #endif

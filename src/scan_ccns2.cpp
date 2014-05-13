@@ -8,6 +8,7 @@
 #include "be13_api/bulk_extractor_i.h"
 #include "scan_ccns2.h"
 #include "utils.h"
+#include "dfxml/src/hash_t.h"
 
 int scan_ccns2_debug=0;
 
@@ -345,6 +346,40 @@ bool  valid_phone(const sbuf_t &sbuf,size_t pos,size_t len)
 
     return invalid_before!=0 && invalid_after!=0;
 }
+
+// http://rosettacode.org/wiki/Bitcoin/address_validation#C
+bool unbase58(const char *s,uint8_t *out,size_t len) {
+    static const char *tmpl = "123456789" "ABCDEFGHJKLMNPQRSTUVWXYZ" "abcdefghijkmnopqrstuvwxyz";
+    memset(out,0,25);
+    for(int i=0;s[i] && i<len;i++){
+        const char *p = strchr(tmpl, s[i]);
+        if (p==0) return false;  // invalid character
+        int c = p - tmpl;
+        for (int j = 25; j--; ) {
+            c += 58 * out[j];
+            out[j] = c % 256;
+            c /= 256;
+        }
+        if (c!=0) return false; // address too long
+    }
+    return true;
+}
+
+// A bitcoin address uses a base58 encoding, which uses an alphabet of the characters 0 .. 9, A ..Z, a .. z, 
+// but without the four characters 0, O, I and l.
+bool valid_bitcoin_address(const char *s,size_t len){
+    uint8_t dec[32];
+    if (unbase58(s,dec,len)==false) return false;
+    sha256_t d1 = sha256_generator::hash_buf(dec,21);
+    sha256_t d2 = sha256_generator::hash_buf(d1.digest,d1.size());
+    if (memcmp(dec+21, d2.digest, 4)!=0){
+        return false;
+    }
+    return true;  /* validates */
+};
+
+
+
 
 
 

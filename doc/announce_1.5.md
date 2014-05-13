@@ -37,6 +37,8 @@ Version 1.5 allows you to specify one of three SSN recognition modes:
     -S ssn_mode=2  No dashes required. Allow any 9-digit number that matches SSN allocation range.
 
 
+scan_accts now detects bitcoin addresses and writes them to pii.txt
+
 Improvements in Python programs:
 --------------------------------
 
