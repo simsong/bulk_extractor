@@ -355,7 +355,7 @@ void scan_email(const class scanner_params &sp,const recursion_control_block &rc
 	sp.info->histogram_defs.insert(histogram_def("email","","histogram",HistogramMaker::FLAG_LOWERCASE));
 	sp.info->histogram_defs.insert(histogram_def("email","(@.*)","domain_histogram",HistogramMaker::FLAG_LOWERCASE));
 	sp.info->histogram_defs.insert(histogram_def("domain","","histogram"));
-	sp.info->histogram_defs.insert(histogram_def("url","","histogram"));
+        sp.info->histogram_defs.insert(histogram_def("url","","histogram"));
 	sp.info->histogram_defs.insert(histogram_def("url","://([^/]+)","services"));
 	sp.info->histogram_defs.insert(histogram_def("url","://((cid-[0-9a-f])+[a-z.].live.com/)","microsoft-live"));
 	sp.info->histogram_defs.insert(histogram_def("url","://[-_a-z0-9.]+facebook.com/.*[&?]{1}id=([0-9]+)","facebook-id"));

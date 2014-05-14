@@ -137,7 +137,10 @@ AC_ARG_ENABLE([sceadan],
               AS_HELP_STRING([--enable-sceadan], [enable UTSA SCEADAN SVM for type identification]),
 	      [AC_DEFINE(USE_SCEADAN, 1, [Use SCEADAN FILE TYPE CLASSIFIER]) sceadan="yes"],
               [])
-AM_CONDITIONAL([SCEADAN_ENABLED], [test "yes" = "$sceadan"])
+if test x"$linear" != x"yes" ; then
+  sceadan = "no"
+fi
+AM_CONDITIONAL([SCEADAN_ENABLED], [test "$sceadan" = "yes" ])
 
 
 ## rar support
@@ -180,6 +183,15 @@ AC_ARG_ENABLE([mcheck], AS_HELP_STRING([--enable-mcheck], \
                Unfortunately, only addresses with written code are looked up, \
                in otherwords, use of malloc is looked up, but use of new is not.]))
 
+
+################################################################
+## AddressSanitizer support
+AC_ARG_ENABLE([address-sanitizer], AS_HELP_STRING([--enable-address-sanitizer], \
+              [enabled AddressSanitizer support for detecting a wide variety of \
+               memory allocation and deallocation errors]), \
+              [AC_DEFINE(HAVE_ADDRESS_SANITIZER, 1, [enable AddressSanitizer])
+              CFLAGS="$CFLAGS -fsanitize=address"
+              CXXFLAGS="$CXXFLAGS -fsanitize=address"])
 
 ################################################################
 # PTHREAD support
