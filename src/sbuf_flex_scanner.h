@@ -5,10 +5,16 @@
  */
 
 #pragma GCC diagnostic ignored "-Wshadow"
-#pragma GCC diagnostic ignored "-Weffc++"
 #pragma GCC diagnostic ignored "-Wredundant-decls"
 #pragma GCC diagnostic ignored "-Wmissing-noreturn"
-//#pragma GCC diagnostic ignored "-Wdeprecated-register"
+
+#ifdef HAVE_DIAGNOSTIC_EFFCPP
+#pragma GCC diagnostic ignored "-Weffc++"
+#endif
+
+#ifdef HAVE_DIAGNOSTIC_DEPRECATED_REGISTER
+#pragma GCC diagnostic ignored "-Wdeprecated-register"
+#endif
 
 #define YY_NO_INPUT
 
