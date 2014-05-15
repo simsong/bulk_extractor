@@ -144,13 +144,11 @@ void scan_wordlist(const class scanner_params &sp,const recursion_control_block 
                             "Maximum size of the words output file");
         sp.info->get_config("wordlist_use_flatfiles",&wordlist_use_flatfiles,"Override SQL settings and use flatfiles for wordlist");
 
-        fprintf(stderr,"wordlist fs flags=%x fs=\n",sp.fs.get_flags(),&sp.fs);
-
         if(wordlist_use_flatfiles || fs.db3==0){
             sp.info->feature_names.insert(WORDLIST);
         }
         if(word_min>word_max){
-            fprintf(stderr,"ERROR: word_min=%d word_max=%d\n",word_min,word_max);
+            fprintf(stderr,"ERROR: word_min (%d) > word_max (%d)\n",word_min,word_max);
             exit(1);
         }
 	wordchar_setup();
