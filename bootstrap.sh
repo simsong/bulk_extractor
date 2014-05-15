@@ -25,7 +25,10 @@ else
     autoreconf -f
 fi
 echo be sure to run ./configure
-echo For better debugging on Mac:
-echo CC=gcc-mp-4.8 CXX=g++-mp-4.8  sh configure --enable-address-sanitizer
-echo For better debugging elsewhere:
-echo sh configure --enable-address-sanitizer
+if [ `uname -s` == 'Darwin' ]; then
+  echo To enable AddressSanitizer on Mac, you must install gcc-4.8 with macports, then:
+  echo CC=gcc-mp-4.8 CXX=g++-mp-4.8  sh configure --enable-address-sanitizer
+else
+  echo To enable AddressSanitizer, install libasan and configure with:
+  echo sh configure --enable-address-sanitizer
+fi

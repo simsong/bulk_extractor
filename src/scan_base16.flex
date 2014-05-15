@@ -11,7 +11,7 @@
 
 #define SCANNER "scan_base16"
 
-static const int BASE16_IGNORE = -2;
+static const int BASE16_IGNORE  = -2;
 static const int BASE16_INVALID = -1;
 static int base16array[256];		
 
@@ -24,8 +24,7 @@ unsigned int opt_min_hex_buf = 64;           /* Don't re-analyze hex bufs smalle
 class base16_scanner : public sbuf_scanner {
 public:
     base16_scanner(const scanner_params &sp_,const recursion_control_block &rcb_):
-    sbuf_scanner(&sp_.sbuf),sp(sp_),rcb(rcb_),hex_recorder(){
-	hex_recorder          = sp.fs.get_name("hex");
+        sbuf_scanner(&sp_.sbuf),sp(sp_),rcb(rcb_),hex_recorder(sp.fs.get_name("hex")){
     }
     
     const class scanner_params &sp;    
@@ -88,13 +87,19 @@ void base16_scanner::decode(const sbuf_t &osbuf,size_t pos,size_t len)
 %option pointer
 %option noyymore
 %option prefix="yybase16_"
-%option fast
+
 
 UNICODE		([[:print:][:space:]]+)	
 
 %%
 
 ([0-9A-F][0-9A-F]([ \n]{0,2})){6,1024}	{
+    /*** WARNING:
+     *** DO NOT USE "%option fast" ABOVE.
+     *** IT GENERATES ADDRESS SANITIZER ERRORS IN THE LEXER.
+     *** SIMSON GARFINKEL, MAY 15, 2014
+     ***/
+
     /* hex with junk before it.
      * {0,4} means we have 0-4 space characters
      * {6,65536}  means 6-65536 characters
@@ -147,7 +152,7 @@ void scan_base16(const class scanner_params &sp,const recursion_control_block &r
 
 	{
 		base16_scanner lexer(sp,rcb);
-		yybase16_set_extra(&lexer,scanner);
+                yybase16_set_extra(&lexer,scanner);
 		yybase16_lex(scanner);
 	}
 

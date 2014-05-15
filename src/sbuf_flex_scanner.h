@@ -33,13 +33,13 @@ public:
     // pos & point may be redundent.
     // pos counts the number of bytes into the buffer and is incremented by the flex rules
     // point counts the point where we are removing characters
-    size_t pos;            
-    size_t point;
+    size_t pos;    /* The position regex is matching from---visible for C++ called by Flex */
+    size_t point;  /* The position we are reading from---visible to Flex machine */
 
     size_t get_input(char *buf,size_t max_size){
         if((int)max_size < 0) return 0;
         int count=0;
-        while(max_size > 0 && point < sbuf->bufsize && pos<sbuf->pagesize){
+        while ((max_size > 0) && (point < sbuf->bufsize) /* && (pos < sbuf->pagesize) */ ){
             *buf++ = (char)sbuf->buf[point++];
             max_size--;
             count++;

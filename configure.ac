@@ -130,7 +130,6 @@ m4_include([src/be13_api/be13_configure.m4])
 m4_include([src/sceadan/sceadan_configure.m4])
 
 ################################################################
-
 ## sceadan support
 ## Enabled for 1.5 release
 AC_ARG_ENABLE([sceadan],
@@ -138,11 +137,12 @@ AC_ARG_ENABLE([sceadan],
 	      [AC_DEFINE(USE_SCEADAN, 1, [Use SCEADAN FILE TYPE CLASSIFIER]) sceadan="yes"],
               [])
 if test x"$linear" != x"yes" ; then
-  sceadan = "no"
+  sceadan="no"
 fi
 AM_CONDITIONAL([SCEADAN_ENABLED], [test "$sceadan" = "yes" ])
 
 
+################################################################
 ## rar support
 ## Enabled for 1.4 release!
 AC_ARG_ENABLE([rar],
@@ -152,6 +152,7 @@ AC_ARG_ENABLE([rar],
 AM_CONDITIONAL([RAR_ENABLED], [test "yes" = "$rar"])
 
 
+################################################################
 ## lightgrep enabled
 AC_ARG_ENABLE([lightgrep],
               AS_HELP_STRING([--enable-lightgrep], [enable LIGHTGREP]),
@@ -191,7 +192,11 @@ AC_ARG_ENABLE([address-sanitizer], AS_HELP_STRING([--enable-address-sanitizer], 
                memory allocation and deallocation errors]), \
               [AC_DEFINE(HAVE_ADDRESS_SANITIZER, 1, [enable AddressSanitizer])
               CFLAGS="$CFLAGS -fsanitize=address"
-              CXXFLAGS="$CXXFLAGS -fsanitize=address"])
+              CXXFLAGS="$CXXFLAGS -fsanitize=address"
+              AC_TRY_COMPILE([],[const int i=0;],[AC_MSG_NOTICE([Address Sanitizer Enabled])],
+                                                 [AC_MSG_ERROR([Address Sanitizer not available])])
+              ])
+
 
 ################################################################
 # PTHREAD support
