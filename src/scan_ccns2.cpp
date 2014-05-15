@@ -348,13 +348,25 @@ bool  valid_phone(const sbuf_t &sbuf,size_t pos,size_t len)
 }
 
 // http://rosettacode.org/wiki/Bitcoin/address_validation#C
-bool unbase58(const char *s,uint8_t *out,size_t len) {
-    static const char *tmpl = "123456789" "ABCDEFGHJKLMNPQRSTUVWXYZ" "abcdefghijkmnopqrstuvwxyz";
+static const char *base58_chars =
+    "123456789"
+    "ABCDEFGHJKLMNPQRSTUVWXYZ"
+    "abcdefghijkmnopqrstuvwxyz";
+static int base58_vals[256];
+void build_unbase58()
+{
+    memset(base58_vals,-1,sizeof(base58_vals));
+    for(size_t i=0;base58_chars[i];i++){
+        base58_vals[(u_char)(base58_chars[i])] = i;
+    }
+}
+
+bool unbase58(const char *s,uint8_t *out,size_t len)
+{
     memset(out,0,25);
-    for(int i=0;s[i] && i<len;i++){
-        const char *p = strchr(tmpl, s[i]);
-        if (p==0) return false;  // invalid character
-        int c = p - tmpl;
+    for(size_t i=0;s[i] && i<len;i++){
+        int c = base58_vals[(u_char)(s[i])];
+        if (c==-1) return false; // invalid character
         for (int j = 25; j--; ) {
             c += 58 * out[j];
             out[j] = c % 256;

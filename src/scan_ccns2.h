@@ -5,5 +5,7 @@
 bool  valid_ccn(const char *buf,int buflen);
 bool  valid_phone(const sbuf_t &sbuf,size_t pos,size_t len);
 bool  valid_bitcoin_address(const char *buf,size_t buflen);
+void  build_unbase58();
+bool  unbase58(const char *s,uint8_t *out,size_t len);
 extern int scan_ccns2_debug;
 #endif
