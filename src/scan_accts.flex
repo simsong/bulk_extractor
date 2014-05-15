@@ -360,6 +360,7 @@ void scan_accts(const class scanner_params &sp,const recursion_control_block &rc
         sp.info->get_config("ssn_mode",&ssn_mode,"0=Normal; 1=No `SSN' required; 2=No dashes required");
         sp.info->get_config("min_phone_digits",&min_phone_digits,"Min. digits required in a phone");
         scan_ccns2_debug = sp.info->config->debug;           // get debug value
+        build_unbase58();
 	return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
