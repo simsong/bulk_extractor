@@ -38,11 +38,12 @@
 #include <sys/types.h>	// for getpid
 
 // user settings
-static std::string hashdb_mode="none";
-static uint32_t hashdb_block_size=4096;
-static uint32_t hashdb_max_duplicates=20;
-static std::string hashdb_path_or_socket="your_hashdb_directory";
-static size_t hashdb_sector_size = 512;
+static std::string hashdb_mode="none";                       // import or scan
+static uint32_t hashdb_block_size=4096;                      // import or scan
+static std::string hashdb_path_or_socket="your_hashdb_directory"; // scan only
+static size_t hashdb_sector_size = 512;                         // scan only
+static std::string hashdb_repository_name="default_repository"; // import only
+static uint32_t hashdb_max_duplicates=20;                       // import only
 
 // runtime modes
 // scanner mode
@@ -85,13 +86,9 @@ void scan_hashid(const class scanner_params &sp,
                 << "        scan    - Scan for matching block hashes.";
             sp.info->get_config("hashdb_mode", &hashdb_mode, ss_hashdb_mode.str());
 
-            // hashdb_max_duplicates
-            std::stringstream ss_hashdb_max_duplicates;
-            ss_hashdb_max_duplicates
-                << "The maximum number of duplicates to import\n"
-                << "      for a given hash value.  Valid only in import mode.";
-            sp.info->get_config("hashdb_max_duplicates", &hashdb_max_duplicates,
-                                ss_hashdb_max_duplicates.str());
+            // hashdb_block_size
+            sp.info->get_config("hashdb_block_size", &hashdb_block_size,
+                         "Hash block size, in bytes, used to generte hashes");
 
             // hashdb_path_or_socket
             std::stringstream ss_hashdb_path_or_socket;
@@ -108,6 +105,23 @@ void scan_hashid(const class scanner_params &sp,
                 << "      Valid only in scan mode.";
             sp.info->get_config("hashdb_sector_size", &hashdb_sector_size,
                                 ss_hashdb_sector_size.str());
+
+            // hashdb_repository_name
+            std::stringstream ss_hashdb_repository_name;
+            ss_hashdb_repository_name
+                << "Sets the repository name to attribute the import to.\n"
+                << "      Valid only in import mode.";
+            sp.info->get_config("hashdb_repository_name",
+                                &hashdb_repository_name,
+                                ss_hashdb_repository_name.str());
+
+            // hashdb_max_duplicates
+            std::stringstream ss_hashdb_max_duplicates;
+            ss_hashdb_max_duplicates
+                << "The maximum number of duplicates to import\n"
+                << "      for a given hash value.  Valid only in import mode.";
+            sp.info->get_config("hashdb_max_duplicates", &hashdb_max_duplicates,
+                                ss_hashdb_max_duplicates.str());
 
 
             // configure the feature file to accept scan features
@@ -272,7 +286,7 @@ static void do_import(const class scanner_params &sp,
 
         // create the import element
         hashdb_md5_t::import_element_t import_element(hash,
-                                           "no repository name",
+                                           hashdb_repository_name,
                                            sbuf.pos0.str(), // use as filename
                                            i);              // file offset
         // add the hash to the import input
