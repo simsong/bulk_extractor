@@ -7,6 +7,8 @@
 
 #include <lightgrep/api.h>
 
+#include "findopts.h"
+
 using namespace std;
 
 class PatternScanner;
@@ -94,7 +96,7 @@ public:
   static LightgrepController& Get();
 
   bool addScanner(PatternScanner& scanner);
-  bool addUserPatterns(PatternScanner& scanner, CallbackFnType* callbackPtr, const FindOptsStruct& userPatterns);
+  bool addUserPatterns(PatternScanner& scanner, CallbackFnType* callbackPtr, const FindOpts& userPatterns);
 
   void regcomp();
   void scan(const scanner_params& sp, const recursion_control_block& rcb);

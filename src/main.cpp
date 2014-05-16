@@ -16,6 +16,7 @@
 
 
 #include "bulk_extractor.h"
+#include "findopts.h"
 #include "image_process.h"
 #include "threadpool.h"
 #include "be13_api/aftimer.h"
@@ -769,8 +770,8 @@ int main(int argc,char **argv)
 	case 'e':
 	    be13::plugin::scanners_enable(optarg);
 	    break;
-	case 'F': FindOpts.Files.push_back(optarg); break;
-	case 'f': FindOpts.Patterns.push_back(optarg); break;
+	case 'F': FindOpts::get().Files.push_back(optarg); break;
+	case 'f': FindOpts::get().Patterns.push_back(optarg); break;
 	case 'G': cfg.opt_pagesize = scaled_stoi64(optarg); break;
 	case 'g': cfg.opt_marginsize = scaled_stoi64(optarg); break;
         case 'i':
@@ -887,7 +888,7 @@ int main(int argc,char **argv)
      * but no scanner that uses the find list is enabled.
      */
 
-    if(!(FindOpts.Files.empty() && FindOpts.Patterns.empty())) {
+    if(!FindOpts::get().empty()) {
         /* Look through the enabled scanners and make sure that
 	 * at least one of them is a FIND scanner
 	 */

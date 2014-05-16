@@ -87,7 +87,7 @@ bool LightgrepController::addScanner(PatternScanner& scanner) {
   return true;
 }
 
-bool LightgrepController::addUserPatterns(PatternScanner& scanner, CallbackFnType* callbackPtr, const FindOptsStruct& user) {
+bool LightgrepController::addUserPatterns(PatternScanner& scanner, CallbackFnType* callbackPtr, const FindOpts& user) {
   unsigned int patBegin = lg_pattern_map_size(PatternInfo),
                patEnd = 0;
 

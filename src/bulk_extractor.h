@@ -170,14 +170,6 @@
 #include <be13_api/beregex.h>
 #include "word_and_context_list.h"
 
-/* Find options */
-struct FindOptsStruct {
-    FindOptsStruct():Files(),Patterns(){};
-    std::vector<std::string> Files;     // accumulates pattern files
-    std::vector<std::string> Patterns;  // accumulates cmdline patterns
-};
-extern FindOptsStruct FindOpts;         // singleton
-extern regex_list find_list;
 extern scanner_t *scanners_builtin[];
 
 /****************************************************************
