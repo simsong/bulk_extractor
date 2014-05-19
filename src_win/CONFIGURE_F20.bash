@@ -152,12 +152,12 @@ build_mingw libewf   https://googledrive.com/host/0B3fBvzttpiiSMTdoaVExWWNsRjg/l
 #
 
 echo "Building and installing ICU for mingw"
-ICUVER=51_1
+ICUVER=53_1
 ICUFILE=icu4c-$ICUVER-src.tgz
 ICUDIR=icu
-ICUURL=http://download.icu-project.org/files/icu4c/51.1/$ICUFILE
+ICUURL=http://download.icu-project.org/files/icu4c/53.1/$ICUFILE
 
-if is_installed libsicuuc
+if is_installed libicuuc
 then
   echo ICU is already installed
 else
@@ -165,9 +165,14 @@ else
     wget $ICUURL
   fi
   tar xf $ICUFILE
-  patch -p1 < icu-mingw32-libprefix.patch
-  patch -p1 < icu-mingw64-libprefix.patch
-  
+
+  # patch ICU for MinGW cross-compilation
+  pushd icu
+  patch -p0 <../icu4c-53_1-simpler-crossbuild.patch
+  patch -p0 <../icu4c-53_1-use-correct-genccode-assembly-on-win32-and-win64.patch
+  patch -p0 <../icu4c-53_1-mingw-w64-mkdir-compatibility.patch
+  popd
+
   ICUDIR=`tar tf $ICUFILE|head -1`
   # build ICU for Linux to get packaging tools used by MinGW builds
   echo
@@ -188,7 +193,7 @@ else
     pushd icu-mingw$i
     eval MINGW=\$MINGW$i
     eval MINGW_DIR=\$MINGW${i}_DIR
-    ../icu/source/configure CC=$MINGW-gcc CXX=$MINGW-g++ CFLAGS=-O3 CXXFLAGS=-O3 CPPFLAGS="-DU_USING_ICU_NAMESPACE=0 -DU_CHARSET_IS_UTF8=1 -DUNISTR_FROM_CHAR_EXPLICIT=explicit -DUNSTR_FROM_STRING_EXPLICIT=explicit" --enable-static --disable-shared --prefix=$MINGW_DIR --host=$MINGW --with-cross-build=`realpath ../icu-linux` --disable-extras --disable-icuio --disable-layout --disable-samples --disable-tests --with-data-packaging=static --disable-dyload
+    ../icu/source/configure CC=$MINGW-gcc CXX=$MINGW-g++ CFLAGS=-O3 CXXFLAGS=-O3 CPPFLAGS="-DU_USING_ICU_NAMESPACE=0 -DU_CHARSET_IS_UTF8=1 -DUNISTR_FROM_CHAR_EXPLICIT=explicit -DUNSTR_FROM_STRING_EXPLICIT=explicit" --enable-static --disable-shared --prefix=$MINGW_DIR --host=$MINGW --with-cross-build=`realpath ../icu-linux` --disable-extras --disable-icuio --disable-layout --disable-samples --disable-tests --disable-tools --disable-dyload --with-data-packaging=static
     make VERBOSE=1
     sudo make install
     make clean
