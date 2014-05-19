@@ -34,7 +34,8 @@ else
 fi
 cd $DIR
 
-NEEDED_FILES=" icu-mingw32-libprefix.patch icu-mingw64-libprefix.patch"
+NEEDED_FILES="icu4c-53_1-mingw-w64-mkdir-compatibility.patch"
+NEEDED_FILES+=" icu4c-53_1-simpler-crossbuild.patch"
 NEEDED_FILES+=" zmq-configure.patch zmq-configure.in.patch"
 NEEDED_FILES+=" zmq-zmq.h.patch zmq-zmq_utils.h.patch"
 for i in $NEEDED_FILES ; do
@@ -121,7 +122,7 @@ function build_mingw {
   else
     echo Building $1 from $URL
     if [ ! -r $FILE ]; then
-       wget --content-disposition $URL
+      wget --content-disposition $URL
     fi
     tar xvf $FILE
     # Now get the directory that it unpacked into
@@ -169,7 +170,6 @@ else
   # patch ICU for MinGW cross-compilation
   pushd icu
   patch -p0 <../icu4c-53_1-simpler-crossbuild.patch
-  patch -p0 <../icu4c-53_1-use-correct-genccode-assembly-on-win32-and-win64.patch
   patch -p0 <../icu4c-53_1-mingw-w64-mkdir-compatibility.patch
   popd
 
@@ -208,7 +208,7 @@ fi
 # build liblightgrep
 #
 
-build_mingw liblightgrep   https://github.com/LightboxTech/liblightgrep/archive/v1.2.1.tar.gz   liblightgrep-1.2.1.tar.gz
+build_mingw liblightgrep  https://github.com/LightboxTech/liblightgrep/archive/v1.3.0.tar.gz  liblightgrep-1.3.0.tar.gz
 
 #
 # ZMQ requires patching
