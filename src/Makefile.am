@@ -99,6 +99,8 @@ bulk_extractor_nomain = \
 	bulk_extractor.h \
 	dig.cpp \
 	dig.h \
+	findopts.h \
+	findopts.cpp \
 	image_process.cpp \
 	image_process.h \
 	phase1.h \

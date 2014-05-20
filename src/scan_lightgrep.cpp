@@ -17,7 +17,6 @@
 
 using namespace std;
 
-
 namespace { // local namespace hides these from other translation units
 
   class FindScanner: public PatternScanner {
@@ -76,7 +75,7 @@ void scan_lightgrep(const class scanner_params &sp, const recursion_control_bloc
     {
       Scanner.init(sp);
       LightgrepController& lg(LightgrepController::Get());
-      lg.addUserPatterns(Scanner, &ProcessHit, FindOpts);
+      lg.addUserPatterns(Scanner, &ProcessHit, FindOpts::get());
       lg.regcomp();
       break;
     }

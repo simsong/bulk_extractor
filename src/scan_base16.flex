@@ -2,11 +2,6 @@
 
 /*
  * http://flex.sourceforge.net/manual/Cxx.html
- *
- * Credit card scanner (and then some).
- * For references, see:
- * http://en.wikipedia.org/wiki/Bank_card_number
- * http://en.wikipedia.org/wiki/List_of_Bank_Identification_Numbers
  */
 
 #define SCANNER "scan_base16"
@@ -35,6 +30,7 @@ public:
 #define YY_EXTRA_TYPE base16_scanner *   /* holds our class pointer */
 YY_EXTRA_TYPE yybase16_get_extra (yyscan_t yyscanner );    /* redundent declaration */
 inline class base16_scanner *get_extra(yyscan_t yyscanner) {return yybase16_get_extra(yyscanner);}
+
 
 
 
@@ -72,7 +68,7 @@ void base16_scanner::decode(const sbuf_t &osbuf,size_t pos,size_t len)
 	return;       /* Small keys don't get recursively analyzed */
     }
     if(p>opt_min_hex_buf){
-        sbuf_t nsbuf(sbuf.pos0,b.buf,p,p,false);
+        sbuf_t nsbuf(osbuf.pos0 + pos + rcb.partName,b.buf,p,p,false);
         (*rcb.callback)(scanner_params(sp,nsbuf)); // recurse
     }
 }
@@ -93,7 +89,7 @@ UNICODE		([[:print:][:space:]]+)
 
 %%
 
-([0-9A-F][0-9A-F]([ \n]{0,2})){6,1024}	{
+[0-9A-F]{2}(([ \x0A]|\x0D\x0A){0,2}[0-9A-F]{2}){5,}	{
     /*** WARNING:
      *** DO NOT USE "%option fast" ABOVE.
      *** IT GENERATES ADDRESS SANITIZER ERRORS IN THE LEXER.
@@ -131,7 +127,7 @@ void scan_base16(const class scanner_params &sp,const recursion_control_block &r
 	sp.info->description	= "Base16 (hex) scanner";
 	sp.info->scanner_version= "1.0";
 	sp.info->feature_names.insert("hex"); // notable hex values
-        sp.info->flags          = scanner_info::SCANNER_DISABLED | scanner_info::SCANNER_RECURSE;
+    sp.info->flags          = scanner_info::SCANNER_DISABLED | scanner_info::SCANNER_RECURSE;
 
 	/* Create the base16 array */
 	for(int i=0;i<256;i++){
@@ -152,7 +148,7 @@ void scan_base16(const class scanner_params &sp,const recursion_control_block &r
 
 	{
 		base16_scanner lexer(sp,rcb);
-                yybase16_set_extra(&lexer,scanner);
+		yybase16_set_extra(&lexer,scanner);
 		yybase16_lex(scanner);
 	}
 

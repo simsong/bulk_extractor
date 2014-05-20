@@ -251,7 +251,7 @@ namespace accts {
       REGEX2_UTF16LE,
       OnlyUTF16LEEncoding,
       DefaultOptions,
-      &Scanner::ccnHitHandler
+      &Scanner::ccnUTF16LEHitHandler
     );
 
     // FIXME: leading context
@@ -275,7 +275,7 @@ namespace accts {
       REGEX3_UTF16LE,
       OnlyUTF16LEEncoding,
       DefaultOptions,
-      &Scanner::ccnHitHandler
+      &Scanner::ccnUTF16LEHitHandler
     );
 
     // FIXME: leading context
@@ -299,7 +299,7 @@ namespace accts {
       REGEX4_UTF16LE,
       OnlyUTF16LEEncoding,
       DefaultOptions,
-      &Scanner::ccnHitHandler
+      &Scanner::ccnUTF16LEHitHandler
     );
 
     // FIXME: leading context
@@ -326,7 +326,7 @@ namespace accts {
       REGEX5_UTF16LE,
       OnlyUTF16LEEncoding,
       DefaultOptions,
-      &Scanner::ccnHitHandler
+      &Scanner::ccnUTF16LEHitHandler
     );
 
     // FIXME: leading context
@@ -553,7 +553,7 @@ namespace accts {
 
   void Scanner::ccnHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
     const size_t pos = hit.Start + 1;
-    const size_t len = hit.End - pos;
+    const size_t len = hit.End - (*(sp.sbuf.buf+hit.End-2) == '.' ? 2 : 1) - pos;
 
     if (valid_ccn(reinterpret_cast<const char*>(sp.sbuf.buf)+pos, len)) {
       CCN_Recorder->write_buf(sp.sbuf, pos, len);

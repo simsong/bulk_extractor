@@ -146,7 +146,7 @@ namespace base16 {
      * {0,2} means we have 0-2 space characters
      * {6,}  means minimum of 6 hex bytes
      */
-    const std::string HEX("([0-9A-F]{2}[ \\n\\r]{0,2}){6,}");
+    const std::string HEX("[0-9A-F]{2}(([ \\n]|\\r\\n){0,2}[0-9A-F]{2}){5,}");
 
     new Handler(
       *this, HEX, DefaultEncodings, DefaultOptions, &Scanner::hitHandler
@@ -160,7 +160,7 @@ namespace base16 {
   // Don't re-analyze hex bufs smaller than this
   const unsigned int opt_min_hex_buf = 64;
 
-  size_t base16_decode_skipping_whitespace(uint8_t* dst_start, const uint8_t* src, const uint8_t* src_end) {
+  size_t base16_decode_skipping_invalid(uint8_t* dst_start, const uint8_t* src, const uint8_t* src_end) {
     uint8_t* dst = dst_start;
     uint16_t byte;
     uint8_t msn, lsn;
@@ -169,10 +169,15 @@ namespace base16 {
       msn = *src++;
       lsn = *src++;
       byte = BASE16_MSN[msn] | BASE16_LSN[lsn];
-      // Precondition: input is only pairs of hex digits and whitespace.
-      // So a "byte" value over FF means we've hit whitespace.
       if (byte < 0x100) {
         *dst++ = static_cast<uint8_t>(byte);
+      }
+      else {
+        // A "byte" value over FF means we've hit something invalid. The
+        // pattern requires that hex digits come in pairs, so the first
+        // character is invalid. Just advance one byte (== backing up one
+        // byte now, since we've already gone ahead two bytes).
+        --src;
       }
     }
 
@@ -185,10 +190,10 @@ namespace base16 {
     managed_malloc<uint8_t> b(sbuf.pagesize/2);
     if (b.buf == 0) return;
 
-    const size_t p = base16_decode_skipping_whitespace(
+    const size_t p = base16_decode_skipping_invalid(
       b.buf, sbuf.buf, sbuf.buf+sbuf.pagesize
     );
-  
+
     // Alert on byte sequences of 48, 128 or 256 bits
     if (p == 48/8 || p == 128/8 || p == 256/8) {
       // it validates; write original with context
@@ -196,8 +201,10 @@ namespace base16 {
       return; // Small keys don't get recursively analyzed
     }
 
-    if (p > opt_min_hex_buf){
-      sbuf_t nsbuf(sbuf.pos0, b.buf, p, p, false);
+    if (p > opt_min_hex_buf) {
+      // NB: we manually add BASE16 here when recursing, because
+      // rcb.partName is LIGHTGREP here, which is not useful.
+      sbuf_t nsbuf(osbuf.pos0 + pos + "BASE16", b.buf, p, p, false);
       (*rcb.callback)(scanner_params(sp, nsbuf)); // recurse
     }
   }
