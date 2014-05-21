@@ -57,7 +57,7 @@
 #define Assert(Cond) if (!(Cond)) abort()
 
 static const char Base64[] =
-	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 static const char Pad64 = '=';
 
 /* (From RFC1521 and draft-ietf-dnssec-secext-03.txt)
@@ -113,14 +113,14 @@ static const char Pad64 = '=';
    
        (1) the final quantum of encoding input is an integral
            multiple of 24 bits; here, the final unit of encoded
-	   output will be an integral multiple of 4 characters
-	   with no "=" padding,
+           output will be an integral multiple of 4 characters
+           with no "=" padding,
        (2) the final quantum of encoding input is exactly 8 bits;
            here, the final unit of encoded output will be two
-	   characters followed by two "=" padding characters, or
+           characters followed by two "=" padding characters, or
        (3) the final quantum of encoding input is exactly 16 bits;
            here, the final unit of encoded output will be three
-	   characters followed by one "=" padding character.
+           characters followed by one "=" padding character.
    */
 
 
@@ -132,157 +132,157 @@ extern "C"
 int
 b64_pton_forensic(char const *src, int srclen, unsigned char *target, size_t targsize)
 {
-	int tarindex=0, state=0, ch=0;
-	char *pos=0;
+        int tarindex=0, state=0, ch=0;
+        char *pos=0;
 
-	state = 0;
-	tarindex = 0;
+        state = 0;
+        tarindex = 0;
 
-	// bug found by SLG on 2012-07-26:
-	// while ((ch = *src++) != '\0' && srclen>0){
-	// should be:
-	while (srclen>0 && (ch = *src++) != '\0' ){
-	    srclen--;
-		if (isspace(ch))	/* Skip whitespace anywhere. */
-			continue;
+        // bug found by SLG on 2012-07-26:
+        // while ((ch = *src++) != '\0' && srclen>0){
+        // should be:
+        while ((srclen>0) && ((ch = *src++) != '\0') ){
+            srclen--;
+                if (isspace(ch))        /* Skip whitespace anywhere. */
+                        continue;
 
-		if (ch == Pad64) break;
+                if (ch == Pad64) break;
 
 #ifdef HAVE_CONFORMING_STRCHR
-		pos = strchr(Base64, ch);
+                pos = strchr(Base64, ch);
 #else
-		pos = strchr((char *)Base64, ch);
+                pos = strchr((char *)Base64, ch);
 #endif
-		if (pos == 0){ 		/* A non-base64 character. */
-		    puts("B64 Fail at 1");
-		    /* return (-1);*/
-		    return tarindex;
-		}
+                if (pos == 0){          /* A non-base64 character. */
+                    puts("B64 Fail at 1");
+                    /* return (-1);*/
+                    return tarindex;
+                }
 
-		switch (state) {
-		case 0:
-			if (target) {
-			    if ((size_t)tarindex >= targsize){
-				puts("B64 fail at 2");
-				/* return (-1); */
-				return tarindex;
-			    }
-			    target[tarindex] = (pos - Base64) << 2;
-			}
-			state = 1;
-			break;
-		case 1:
-			if (target) {
-			    if ((size_t)tarindex + 1 >= targsize){
-				puts("B64 fail at 3");
-				/* return (-1); */
-				return tarindex;
-				
-			    }
-			    target[tarindex]   |=  (pos - Base64) >> 4;
-			    target[tarindex+1]  = ((pos - Base64) & 0x0f) << 4 ;
-			}
-			tarindex++;
-			state = 2;
-			break;
-		case 2:
-			if (target) {
-			    if ((size_t)tarindex + 1 >= targsize){
-				puts("B64 fail at 4");
-				/* return (-1);*/
-				return tarindex;
-			    }
-			    target[tarindex]   |=  (pos - Base64) >> 2;
-			    target[tarindex+1]  = ((pos - Base64) & 0x03) << 6;
-			}
-			tarindex++;
-			state = 3;
-			break;
-		case 3:
-			if (target) {
-			    if ((size_t)tarindex >= targsize){
-				puts("B64 fail at 5"); 
-				/* return (-1); */
-				return tarindex;
-			    }
-			    target[tarindex] |= (pos - Base64);
-			}
-			tarindex++;
-			state = 0;
-			break;
-		default:
-			abort();
-		}
-	}
+                switch (state) {
+                case 0:
+                        if (target) {
+                            if ((size_t)tarindex >= targsize){
+                                puts("B64 fail at 2");
+                                /* return (-1); */
+                                return tarindex;
+                            }
+                            target[tarindex] = (pos - Base64) << 2;
+                        }
+                        state = 1;
+                        break;
+                case 1:
+                        if (target) {
+                            if ((size_t)tarindex + 1 >= targsize){
+                                puts("B64 fail at 3");
+                                /* return (-1); */
+                                return tarindex;
+                                
+                            }
+                            target[tarindex]   |=  (pos - Base64) >> 4;
+                            target[tarindex+1]  = ((pos - Base64) & 0x0f) << 4 ;
+                        }
+                        tarindex++;
+                        state = 2;
+                        break;
+                case 2:
+                        if (target) {
+                            if ((size_t)tarindex + 1 >= targsize){
+                                puts("B64 fail at 4");
+                                /* return (-1);*/
+                                return tarindex;
+                            }
+                            target[tarindex]   |=  (pos - Base64) >> 2;
+                            target[tarindex+1]  = ((pos - Base64) & 0x03) << 6;
+                        }
+                        tarindex++;
+                        state = 3;
+                        break;
+                case 3:
+                        if (target) {
+                            if ((size_t)tarindex >= targsize){
+                                puts("B64 fail at 5"); 
+                                /* return (-1); */
+                                return tarindex;
+                            }
+                            target[tarindex] |= (pos - Base64);
+                        }
+                        tarindex++;
+                        state = 0;
+                        break;
+                default:
+                        abort();
+                }
+        }
 
-	/*
-	 * We are done decoding Base-64 chars.  Let's see if we ended
-	 * on a byte boundary, and/or with erroneous trailing characters.
-	 */
+        /*
+         * We are done decoding Base-64 chars.  Let's see if we ended
+         * on a byte boundary, and/or with erroneous trailing characters.
+         */
 
-	if (ch == Pad64) {		/* We got a pad char. */
-		ch = *src++;		/* Skip it, get next. */
-		srclen--;
-		
-		switch (state) {
-		case 0:		/* Invalid = in first position */
-		case 1:		/* Invalid = in second position */
-		    puts("B64 fail at 6");
-		    /* return (-1);*/
-		    return tarindex;	/* slg is nicer */
+        if (ch == Pad64) {              /* We got a pad char. */
+                ch = *src++;            /* Skip it, get next. */
+                srclen--;
+                
+                switch (state) {
+                case 0:         /* Invalid = in first position */
+                case 1:         /* Invalid = in second position */
+                    puts("B64 fail at 6");
+                    /* return (-1);*/
+                    return tarindex;    /* slg is nicer */
 
-		case 2:		/* Valid, means one byte of info */
-			/* Skip any number of spaces. */
-		    for ((void)NULL; ch != '\0' && srclen>0 ; ch = *src++,srclen--){
-			if (!isspace(ch)){
-			    break;
-			}
-		    }
-			/* Make sure there is another trailing = sign. */
-			if (ch != Pad64){
-			    puts("B64 fail at 7");
-			    /* return (-1); */
-			    return tarindex;
-			}
-			ch = *src++;		/* Skip the = */
-			srclen--;
-			/* Fall through to "single trailing =" case. */
-			/* FALLTHROUGH */
+                case 2:         /* Valid, means one byte of info */
+                        /* Skip any number of spaces. */
+                    for ((void)NULL; ch != '\0' && srclen>0 ; ch = *src++,srclen--){
+                        if (!isspace(ch)){
+                            break;
+                        }
+                    }
+                        /* Make sure there is another trailing = sign. */
+                        if (ch != Pad64){
+                            puts("B64 fail at 7");
+                            /* return (-1); */
+                            return tarindex;
+                        }
+                        ch = *src++;            /* Skip the = */
+                        srclen--;
+                        /* Fall through to "single trailing =" case. */
+                        /* FALLTHROUGH */
 
-		case 3:		/* Valid, means two bytes of info */
-			/*
-			 * We know this char is an =.  Is there anything but
-			 * whitespace after it?
-			 */
-			for ((void)NULL; ch != '\0' && srclen>0; ch = *src++,srclen--)
-			    if (!isspace(ch)){
-				puts("B64 fail at 8");
-				/* return (-1);*/
-				return tarindex;
-			    }
+                case 3:         /* Valid, means two bytes of info */
+                        /*
+                         * We know this char is an =.  Is there anything but
+                         * whitespace after it?
+                         */
+                        for ((void)NULL; ch != '\0' && srclen>0; ch = *src++,srclen--)
+                            if (!isspace(ch)){
+                                puts("B64 fail at 8");
+                                /* return (-1);*/
+                                return tarindex;
+                            }
 
-			/*
-			 * Now make sure for cases 2 and 3 that the "extra"
-			 * bits that slopped past the last full byte were
-			 * zeros.  If we don't check them, they become a
-			 * subliminal channel.
-			 */
-			if (target && target[tarindex] != 0){
-			    puts("B64 fail at 9");
-			    /* return (-1); */
-			    return tarindex;
-			}
-		}
-	} else {
-		/*
-		 * We ended by seeing the end of the string.  Make sure we
-		 * have no partial bytes lying around.
-		 */
-	    if (state != 0){
-		puts("B64 fail at 10");
-		/* return (-1); */
-		return tarindex;
-	    }
-	}
-	return tarindex;
+                        /*
+                         * Now make sure for cases 2 and 3 that the "extra"
+                         * bits that slopped past the last full byte were
+                         * zeros.  If we don't check them, they become a
+                         * subliminal channel.
+                         */
+                        if (target && target[tarindex] != 0){
+                            puts("B64 fail at 9");
+                            /* return (-1); */
+                            return tarindex;
+                        }
+                }
+        } else {
+                /*
+                 * We ended by seeing the end of the string.  Make sure we
+                 * have no partial bytes lying around.
+                 */
+            if (state != 0){
+                puts("B64 fail at 10");
+                /* return (-1); */
+                return tarindex;
+            }
+        }
+        return tarindex;
 }
