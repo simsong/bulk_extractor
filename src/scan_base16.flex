@@ -2,11 +2,6 @@
 
 /*
  * http://flex.sourceforge.net/manual/Cxx.html
- *
- * Credit card scanner (and then some).
- * For references, see:
- * http://en.wikipedia.org/wiki/Bank_card_number
- * http://en.wikipedia.org/wiki/List_of_Bank_Identification_Numbers
  */
 
 #define SCANNER "scan_base16"
@@ -30,16 +25,16 @@ public:
     const class scanner_params &sp;    
     const class recursion_control_block &rcb;
     class feature_recorder *hex_recorder;
-    void  decode(const sbuf_t &osbuf,size_t pos,size_t len);
+    void  decode(const sbuf_t &osbuf);
 };
 #define YY_EXTRA_TYPE base16_scanner *   /* holds our class pointer */
 YY_EXTRA_TYPE yybase16_get_extra (yyscan_t yyscanner );    /* redundent declaration */
 inline class base16_scanner *get_extra(yyscan_t yyscanner) {return yybase16_get_extra(yyscanner);}
 
 
-void base16_scanner::decode(const sbuf_t &buf)
+void base16_scanner::decode(const sbuf_t &sbuf)
 {
-    managed_malloc<uint8_t>b(sbuf.pagesize/2);
+    managed_malloc<uint8_t>b(sbuf.pagesize/2+1);
     if(b.buf==0) return;
 
     size_t p=0;
@@ -65,11 +60,11 @@ void base16_scanner::decode(const sbuf_t &buf)
 
     /* Alert on byte sequences of 48, 128 or 256 bits*/
     if(p==48/8 || p==128/8 || p==256/8){
-        hex_recorder->write_buf(osbuf,pos,len);  /* it validates; write original with context */
+        hex_recorder->write_buf(sbuf,0,sbuf.bufsize);  /* it validates; write original with context */
         return;                                  /* Small keys don't get recursively analyzed */
     }
     if(p>opt_min_hex_buf){
-        sbuf_t nsbuf(sbuf.pos0,b.buf,p,p,false);
+        sbuf_t nsbuf(sbuf.pos0 + rcb.partName,b.buf,p,p,false);
         (*rcb.callback)(scanner_params(sp,nsbuf)); // recurse
     }
 }
@@ -123,6 +118,7 @@ void scan_base16(const class scanner_params &sp,const recursion_control_block &r
     assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);      
     if(sp.phase==scanner_params::PHASE_STARTUP){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
+
         sp.info->name           = "base16";
         sp.info->author         = "Simson L. Garfinkel";
         sp.info->description    = "Base16 (hex) scanner";
@@ -152,6 +148,7 @@ void scan_base16(const class scanner_params &sp,const recursion_control_block &r
                 yybase16_set_extra(&lexer,scanner);
                 yybase16_lex(scanner);
         }
+
 
         yybase16_lex_destroy(scanner);
     }

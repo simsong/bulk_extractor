@@ -1,0 +1,68 @@
+--- source/config/mh-mingw.orig	2013-05-07 19:35:21.000000000 +0200
++++ source/config/mh-mingw	2014-04-18 19:03:07.075666167 +0200
+@@ -65,20 +65,16 @@
+ SO_TARGET_VERSION_SUFFIX = 
+ endif
+ 
+-# Static library prefix and file extension
+-LIBSICU = lib$(LIBPREFIX)$(STATIC_PREFIX)$(ICUPREFIX)
++# Static library file extension
+ A = a
+ 
+ ## An import library is needed for z/OS and MSVC
+ IMPORT_LIB_EXT = .dll.a
+ 
+-LIBPREFIX=
+-
+ # Change the stubnames so that poorly working FAT disks and installation programs can work.
+ # This is also for backwards compatibility.
+ DATA_STUBNAME = dt
+ I18N_STUBNAME = in
+-LIBICU = $(STATIC_PREFIX_WHEN_USED)$(ICUPREFIX)
+ 
+ # The #M# is used to delete lines for icu-config
+ # Current full path directory.
+@@ -142,5 +138,9 @@
+ # These are needed to allow the pkgdata GNU make files to work
+ PKGDATA_DEFS = -DU_MAKE=\"$(MAKE)\"
+ 
++## Remove shared library 's'
++STATIC_PREFIX_WHEN_USED = 
++STATIC_PREFIX = 
++
+ ## End Cygwin/MinGW specific setup
+ 
+--- source/config/mh-mingw64.orig	2013-05-07 19:35:21.000000000 +0200
++++ source/config/mh-mingw64	2014-04-18 18:44:54.788129110 +0200
+@@ -65,20 +65,16 @@
+ SO_TARGET_VERSION_SUFFIX = 
+ endif
+ 
+-# Static library prefix and file extension
+-LIBSICU = lib$(LIBPREFIX)$(STATIC_PREFIX)$(ICUPREFIX)
++# Static library file extension
+ A = a
+ 
+ ## An import library is needed for z/OS and MSVC
+ IMPORT_LIB_EXT = .dll.a
+ 
+-LIBPREFIX=
+-
+ # Change the stubnames so that poorly working FAT disks and installation programs can work.
+ # This is also for backwards compatibility.
+ DATA_STUBNAME = dt
+ I18N_STUBNAME = in
+-LIBICU = $(STATIC_PREFIX_WHEN_USED)$(ICUPREFIX)
+ 
+ # The #M# is used to delete lines for icu-config
+ # Current full path directory.
+@@ -142,5 +138,9 @@
+ # These are needed to allow the pkgdata GNU make files to work
+ PKGDATA_DEFS = -DU_MAKE=\"$(MAKE)\"
+ 
++## Remove shared library 's'
++STATIC_PREFIX_WHEN_USED = 
++STATIC_PREFIX = 
++
+ ## End Cygwin64/MinGW64 specific setup
+ 

@@ -7,16 +7,21 @@
 
 #include <lightgrep/api.h>
 
+#include "findopts.h"
+
 using namespace std;
 
 class PatternScanner;
 
+// the typedef for a handler callback
 typedef void (PatternScanner::*CallbackFnType)(const LG_SearchHit&, const scanner_params& sp, const recursion_control_block& rcb);
 
 /*********************************************************/
 
 class Handler;
 
+// Inherit from this to create your own Lightgrep-based scanners
+// clone(), startup(), init(), and initScan() must be overridden
 class PatternScanner {
 public:
   PatternScanner(const string& n): Name(n), Handlers(), PatternRange(0, 0) {}
@@ -61,6 +66,7 @@ protected:
 /*********************************************************/
 
 struct Handler {
+  // Agglomeration of the scanner, pattern, encodings, parse options, and callback
   template <typename Fn>
   Handler(
     PatternScanner& scanner,
@@ -88,13 +94,13 @@ struct Handler {
 
 /*********************************************************/
 
-class LightgrepController {
+class LightgrepController { // Centralized search facility amongst PatternScanners
 public:
 
-  static LightgrepController& Get();
+  static LightgrepController& Get(); // singleton instance
 
   bool addScanner(PatternScanner& scanner);
-  bool addUserPatterns(PatternScanner& scanner, CallbackFnType* callbackPtr, const FindOptsStruct& userPatterns);
+  bool addUserPatterns(PatternScanner& scanner, CallbackFnType* callbackPtr, const FindOpts& userPatterns);
 
   void regcomp();
   void scan(const scanner_params& sp, const recursion_control_block& rcb);
@@ -119,6 +125,7 @@ private:
 
 /*********************************************************/
 
+// Utility function. Makes your scan function a one-liner, given a PatternScanner instance
 void scan_lg(PatternScanner& scanner, const class scanner_params &sp, const recursion_control_block &rcb);
 
 #endif /* PATTERN_SCANNER_H */

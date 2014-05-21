@@ -34,7 +34,8 @@ else
 fi
 cd $DIR
 
-NEEDED_FILES=" icu-mingw32-libprefix.patch icu-mingw64-libprefix.patch"
+NEEDED_FILES="icu4c-53_1-mingw-w64-mkdir-compatibility.patch"
+NEEDED_FILES+=" icu4c-53_1-simpler-crossbuild.patch"
 NEEDED_FILES+=" zmq-configure.patch zmq-configure.in.patch"
 NEEDED_FILES+=" zmq-zmq.h.patch zmq-zmq_utils.h.patch"
 for i in $NEEDED_FILES ; do
@@ -121,7 +122,7 @@ function build_mingw {
   else
     echo Building $1 from $URL
     if [ ! -r $FILE ]; then
-       wget --content-disposition $URL
+      wget --content-disposition $URL
     fi
     tar xvf $FILE
     # Now get the directory that it unpacked into
@@ -152,12 +153,12 @@ build_mingw libewf   https://googledrive.com/host/0B3fBvzttpiiSMTdoaVExWWNsRjg/l
 #
 
 echo "Building and installing ICU for mingw"
-ICUVER=51_1
+ICUVER=53_1
 ICUFILE=icu4c-$ICUVER-src.tgz
 ICUDIR=icu
-ICUURL=http://download.icu-project.org/files/icu4c/51.1/$ICUFILE
+ICUURL=http://download.icu-project.org/files/icu4c/53.1/$ICUFILE
 
-if is_installed libsicuuc
+if is_installed libicuuc
 then
   echo ICU is already installed
 else
@@ -165,17 +166,26 @@ else
     wget $ICUURL
   fi
   tar xf $ICUFILE
-  patch -p1 < icu-mingw32-libprefix.patch
-  patch -p1 < icu-mingw64-libprefix.patch
-  
+
+  # patch ICU for MinGW cross-compilation
+  pushd icu
+  patch -p0 <../icu4c-53_1-simpler-crossbuild.patch
+  patch -p0 <../icu4c-53_1-mingw-w64-mkdir-compatibility.patch
+  popd
+
   ICUDIR=`tar tf $ICUFILE|head -1`
+
+  ICU_DEFINES="-DU_USING_ICU_NAMESPACE=0 -DU_CHARSET_IS_UTF8=1 -DUNISTR_FROM_CHAR_EXPLICIT=explicit -DUNSTR_FROM_STRING_EXPLICIT=explicit"
+
+  ICU_FLAGS="--disable-extras --disable-icuio --disable-layout --disable-samples --disable-tests"
+
   # build ICU for Linux to get packaging tools used by MinGW builds
   echo
   echo icu linux
   rm -rf icu-linux
   mkdir icu-linux
   pushd icu-linux
-  CC=gcc CXX=g++ CFLAGS=-O3 CXXFLAGS=-O3 CPPFLAGS="-DU_USING_ICU_NAMESPACE=0 -DU_CHARSET_IS_UTF8=1 -DUNISTR_FROM_CHAR_EXPLICIT=explicit -DUNSTR_FROM_STRING_EXPLICIT=explicit" ../icu/source/runConfigureICU Linux --enable-shared --disable-extras --disable-icuio --disable-layout --disable-samples --disable-tests
+  CC=gcc CXX=g++ CFLAGS=-O3 CXXFLAGS=-O3 CPPFLAGS="$ICU_DEFINES" ../icu/source/runConfigureICU Linux --enable-shared $ICU_FLAGS
   make VERBOSE=1
   popd
   
@@ -188,7 +198,7 @@ else
     pushd icu-mingw$i
     eval MINGW=\$MINGW$i
     eval MINGW_DIR=\$MINGW${i}_DIR
-    ../icu/source/configure CC=$MINGW-gcc CXX=$MINGW-g++ CFLAGS=-O3 CXXFLAGS=-O3 CPPFLAGS="-DU_USING_ICU_NAMESPACE=0 -DU_CHARSET_IS_UTF8=1 -DUNISTR_FROM_CHAR_EXPLICIT=explicit -DUNSTR_FROM_STRING_EXPLICIT=explicit" --enable-static --disable-shared --prefix=$MINGW_DIR --host=$MINGW --with-cross-build=`realpath ../icu-linux` --disable-extras --disable-icuio --disable-layout --disable-samples --disable-tests --with-data-packaging=static --disable-dyload
+    ../icu/source/configure CC=$MINGW-gcc CXX=$MINGW-g++ CFLAGS=-O3 CXXFLAGS=-O3 CPPFLAGS="$ICU_DEFINES" --enable-static --disable-shared --prefix=$MINGW_DIR --host=$MINGW --with-cross-build=`realpath ../icu-linux` $ICU_FLAGS --disable-tools --disable-dyload --with-data-packaging=static
     make VERBOSE=1
     sudo make install
     make clean
@@ -203,7 +213,7 @@ fi
 # build liblightgrep
 #
 
-build_mingw liblightgrep   https://github.com/LightboxTech/liblightgrep/archive/v1.2.1.tar.gz   liblightgrep-1.2.1.tar.gz
+build_mingw liblightgrep  https://github.com/LightboxTech/liblightgrep/archive/v1.3.0.tar.gz  liblightgrep-1.3.0.tar.gz
 
 #
 # ZMQ requires patching

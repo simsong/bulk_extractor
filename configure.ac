@@ -299,12 +299,24 @@ AC_CHECK_LIB([expat],[XML_ParserCreate])
 ## there are several options
 ## tre is better than regex
 AC_CHECK_LIB([stdc++],[main])
-AC_CHECK_LIB([sicudt],[main])
-AC_CHECK_HEADERS([unicode/ucnv.h])
-AC_SEARCH_LIBS([uset_close], [sicuuc])
-AC_CHECK_LIB([sicuuc],[main])
-AC_CHECK_HEADERS([lightgrep/api.h])
-AC_CHECK_LIB([lightgrep], [lg_create_pattern])
+
+if test x"$lightgrep" == x"yes"; then
+  if test x"$mingw" == x"yes" ; then
+    # get static flags when cross-compiling with mingw
+    PKG_CONFIG="$PKG_CONFIG --static"
+  else
+    # pkg-config doesn't look in /usr/local/lib on some systems
+    export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+  fi
+
+  PKG_CHECK_MODULES([lightgrep], [lightgrep])
+  AC_DEFINE([HAVE_LIBLIGHTGREP], 1, [Define to 1 if you have liblightgrep.])
+
+  CPPFLAGS="$CPPFLAGS $lightgrep_CFLAGS"
+  LIBS="$LIBS `$PKG_CONFIG --libs-only-l lightgrep`"
+  LDFLAGS="$LDFLAGS `$PKG_CONFIG --libs-only-L --libs-only-other lightgrep`"
+fi
+
 AC_CHECK_HEADERS([regex.h tre/tre.h])
 AC_CHECK_LIB([regex],[regcomp])
 AC_CHECK_LIB([tre],[tre_regcomp])

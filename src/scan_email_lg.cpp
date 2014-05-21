@@ -124,7 +124,7 @@ namespace email {
       return false;
     }
 
-    const struct {
+    static const struct {
       size_t pos;
       const char* str;
     } checks[] = {
@@ -148,7 +148,11 @@ namespace email {
     };
 
     for (size_t i = 0; i < sizeof(checks)/sizeof(checks[0]); ++i) {
-      if (search(context + checks[i].pos, context + 8, checks[i].str, checks[i].str + strlen(checks[i].str)) != context + 8) {
+      if (search(
+        context + checks[i].pos,
+        context + 8, checks[i].str,
+        checks[i].str + strlen(checks[i].str)
+      ) != context + 8) {
         return false;
       }
     }
@@ -240,7 +244,7 @@ namespace email {
     // patterns
     //
 
-    const string DATE(DAYOFWEEK + ",[ \\t\\n]+[0-9]{1,2}[ \\t\\n]+" + MONTH + "[ \\t\\n]+" + YEAR + "[ \\t\\n]+[0-2][0-9]:[0-5][0-9]:[0-5][0-9][ \\t\\n]+([+-][0-2][0-9][0314][05]|" + ABBREV + ")");
+    const string DATE(DAYOFWEEK + ",[ \\t\\n\\r]+[0-9]{1,2}[ \\t\\n\\r]+" + MONTH + "[ \\t\\n\\r]+" + YEAR + "[ \\t\\n\\r]+[0-2][0-9]:[0-5][0-9]:[0-5][0-9][ \\t\\n\\r]+([+-][0-2][0-9][0314][05]|" + ABBREV + ")");
 
     new Handler(
       *this,
@@ -250,7 +254,7 @@ namespace email {
       &Scanner::rfc822HitHandler
     );
 
-    const string MESSAGE_ID("Message-ID:[ \\t\\n]?<" + PC + "+>");
+    const string MESSAGE_ID("Message-ID:([ \\t\\n]|\\r\\n)?<" + PC + "+>");
 
     new Handler(
       *this,
@@ -435,7 +439,7 @@ namespace email {
   }
 
   void Scanner::etherUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
-    const size_t pos = hit.Start + (*(sp.sbuf.buf + 1) == '\0' ? 2 : 1);
+    const size_t pos = hit.Start + (*(sp.sbuf.buf+hit.Start+1) == '\0' ? 2 : 1);
     const size_t len = (hit.End -1) - pos;
 
     const string ascii(low_utf16le_to_ascii(sp.sbuf.buf+pos, len));

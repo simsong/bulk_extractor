@@ -9,6 +9,7 @@
 #include "threadpool.h"
 #include "be13_api/aftimer.h"
 #include "histogram.h"
+#include "findopts.h"
 #include "dfxml/src/dfxml_writer.h"
 #include "dfxml/src/hash_t.h"
 
@@ -23,19 +24,6 @@
 #include <queue>
 #include <unistd.h>
 #include <ctype.h>
-
-/****************************************************************
- *** COMMAND LINE OPTIONS
- ****************************************************************/
-
-/* Global find options and the find_list */
-
-FindOptsStruct FindOpts;         // singleton
-regex_list     find_list;
-
-/* global alert_list and stop_list
- * These should probably become static class variables
- */
 
 /************************
  *** SCANNER PLUG-INS ***
@@ -94,5 +82,3 @@ scanner_t *scanners_builtin[] = {
     scan_xor,
     scan_sqlite,
     0};
-
-
