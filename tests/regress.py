@@ -280,7 +280,7 @@ def analyze_outdir(outdir):
                 if not bulk_extractor_reader.is_comment_line(line):
                     lines += 1
                     features[fn] = lines
-                    print("  {:>25} features: {:>12,}  {}".format(fn,lines,analyze_warning(fnpart,fn,lines)))
+            print("  {:>25} features: {:>12,}  {}".format(fn,lines,analyze_warning(fnpart,fn,lines)))
                     
         # If there is a SQLite database, analyze that too!
     if args.featurefile and args.featuresql:
@@ -315,7 +315,8 @@ def analyze_outdir(outdir):
                                 #pass
                                 print("feature {} {} not in table {} ({})".format(path,feature,table,ct))
                             count += 1
-                            if count>args.featuretest: break
+                            if count>args.featuretest: 
+                                break
 
                 except sqlite3.OperationalError as e:
                     print(e)
@@ -487,8 +488,6 @@ def identify_filenames(outdir):
     if_outdir = outdir + "-annotated"
     ifname    = os.path.dirname(os.path.realpath(__file__)) + "/../python/identify_filenames.py"
     res = call([sys.executable,ifname,outdir,if_outdir,'--all'])
-
-
 
 def diff(dname1,dname2):
     args.max = int(args.max)

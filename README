@@ -7,8 +7,12 @@ Downloads and Websites
   * [Download Archive](http://digitalcorpora.org/downloads/bulk_extractor/)
   * [Forensics Wiki Entry](http://www.forensicswiki.org/wiki/Bulk_extractor)
 
+Compile with:
+   $ ./configure
+   $ make && make install
 
-Downloading the Development Tree
+
+Downloading and compiling the Development Tree
 --------------------------------
 
 Download the sources with git:
@@ -16,79 +20,22 @@ Download the sources with git:
   $ git clone --recursive https://github.com/simsong/bulk_extractor.git
 
 
+Compile with:
+   $ sh bootstrap
+   $ ./configure
+   $ make && make install
+
+
 Compiling Notes
 ---------------
 
-bulk_extractor builds with the GNU auto tools.  The maintainer has
-previously run automake and autoconf to produce the script
-"configure".  This script *should* be able to compile bulk_extractor
-for your platform. 
+1. bulk_extractor builds with the GNU auto tools.  
 
-We recommend compiling bulk_extractor with -O3 and that is the
-default. You can disable all optimization flags by specifying the
-configure option --with-noopt.
+2. We recommend compiling bulk_extractor with -O3 and that is the
+   default. You can disable all optimization flags by specifying the
+   configure option --with-noopt.
 
-
-Compiling for MacOS or Linux
-----------------------------
-
-From the downloaded source directory run bootstrap.sh, configure and make:
-
-  $ cd bulk_extractor
-  $ sh bootstrap.sh
-  $ sh configure
-  $ make
-  $ sudo make install
-
-
-Compiling for Windows
----------------------
-
-There are three ways to compile for Windows:
-
-  1. Cross-compiling from a Linux or Mac system with mingw.
-  2. Compiling natively on Windows using mingw.
-  3. Compiling natively on Windows using cygwin (untested)
-
-
-Cross-compiling for Windows using Debian Testing (wheezy) or Ubuntu 12.04 LTS (with mingw):
-------------------------------------------------------------------------------
-
-You will need to install mingw-w64 and zlib-dev:
-
-  $ sudo apt-get update
-  $ sudo apt-get upgrade
-  $ sudo apt-get -y install mingw-w64 
-
-Next, download zlib from zlib.net
-
-  $ ./configure --host=i686-w64-mingw32
-
-This allows the cross-compiling of the 64-bit and the 32-bit
-bulk_extractor.exe, although we do not recommend running the 32-bit
-version.  Now you are ready to compile:
-
-  $ git clone --recursive https://github.com/simsong/bulk_extractor.git
-  $ cd bulk_extractor
-  $ sh bootstrap.sh
-  $ mingw64-configure
-
-
-Cross-compiling for Windows using Fedora
-----------------------------------------
-
-Please see src_win/README for instructions on cross-compiling for Windows from Fedora
-using automated scripts.
-
-Set up mingw and the cross-compilation environment:
-
-  $ sudo yum -y install mingw64-gcc-c++ mingw64-zlib-static mingw64-pthreads flex 
-  $ sudo yum -y install autoconf automake  # not strictly needed, but necessary to build from SVN/GIT
-  $ sudo yum -y install zlib-devel zlib-static
-  * Run script CONFIGURE_F18.bash found in directory src_win/.
-  * Run script CONFIGURE_LIBRARIES.sh found in directory src_win/ to install libewf and TRE.
-  $ make win32
-  $ make win64
+3. The Windows release is cross-compiled using mingw. We provide a script in the src_win directory for configuring a Fedora virtual machine to compile windows. Users have also reported success at compiling on Ubuntu, but it is harder.
 
 
 Installing on a Linux/MacOS/Mingw system
