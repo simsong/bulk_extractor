@@ -1,0 +1,27 @@
+This file tests for social security numbers:
+
+
+SSN: 100-20-4011
+
+Another one is 100-20-4111
+
+And here is a third:
+
+SSN: 100204211
+
+That's all!
+=======
+SSN:  123-85-9999
+Another one is 545-68-7555
+888777999
+12345
+12345678
+======
+
+These should not be SSNs:
+
+000-12-3456
+123-00-4567
+123-45-0000
+
+

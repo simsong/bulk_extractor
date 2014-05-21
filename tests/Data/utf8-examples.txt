@@ -1,0 +1,83 @@
+http://en.wikipedia.org/wiki/Email_address
+
+Pelé@example.com (simple diacritic, still Latin)
+δοκιμή@παράδειγμα.δοκιμή
+甲斐@黒川.日本
+
+
+http://en.wikipedia.org/wiki/List_of_Internet_top-level_domains#Test_TLDs
+Test TLDs
+ICANN created a set of top-level Internationalized domain names in October 2007 for the purpose of testing the use of IDNA in the root zone and within those domains. They are expected to be available for a limited evaluation period.[11][12]. Each of these TLDs encodes a word meaning "test" in the respective language.[12][13]
+Each of these domains contains only one site with the word example encoded in the respective script and language. These example.test sites are test wikis used by ICANN.
+DNS name
+TLD
+Transliteration
+Language
+Script
+ICANN’s example.test
+xn--kgbechtv
+‎إختبار
+ạ̹kẖtbạr
+Arabic
+Perso-Arabic script (see also Arabic alphabet)
+http://مثال.إختبار/
+xn--hgbk6aj7f53bba
+‎آزمایشی
+ậzmạy̰sẖy
+Persian
+Perso-Arabic script
+http://مثال.آزمایشی/
+xn--0zwm56d
+测试
+cèshì
+Chinese
+Simplified Chinese characters
+http://例子.测试/
+xn--g6w251d
+測試
+cèshì
+Chinese
+Traditional Chinese characters
+http://例子.測試/
+xn--80akhbyknj4f
+испытание
+ispytánije
+Russian
+Cyrillic alphabet
+http://пример.испытание/
+xn--11b5bs3a9aj6g
+परीक्षा
+parīkṣā
+Hindi
+Devanagari
+http://उदाहरण.परीक्षा/
+xn--jxalpdlp
+δοκιμή
+dokimé
+Greek
+Greek alphabet
+http://παράδειγμα.δοκιμή/
+xn--9t4b11yi5a
+테스트
+teseuteu
+Korean
+Hangul
+http://실례.테스트/
+xn--deba0ad
+‎טעסט
+test
+Yiddish
+Hebrew alphabet
+http://בײַשפּיל.טעסט/
+xn--zckzah
+テスト
+tesuto
+Japanese
+Kanji, Hiragana, Katakana scripts
+http://例え.テスト/
+xn--hlcj6aya9esc7a
+பரிட்சை
+pariṭcai
+Tamil
+Tamil script
+http://உதாரணம்.பரிட்சை/

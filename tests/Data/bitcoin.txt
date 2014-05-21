@@ -1,0 +1,15 @@
+1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62i
+1111111111111111111114oLvT2
+17NdbrSGoUotzeGCcMMCqnFkEvLymoou9j
+
+              "1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62i"  -- VALID
+            , "1Q1pE5vPGEEMqRcVRMbtBK842Y6Pzo6nK9"  -- VALID
+            , "1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62X"  -- checksum changed, original data.
+            , "1ANNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62i"  -- data changed, original checksum.
+            , "1A Na15ZQXAZUgFiqJ2i7Z2DPU2J6hW62i"  -- invalid chars
+
+(validate-bitcoin-address "1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62i") ; => #t
+(validate-bitcoin-address "1111111111111111111114oLvT2")        ; => #t
+(validate-bitcoin-address "17NdbrSGoUotzeGCcMMCqnFkEvLymoou9j") ; => #t
+(validate-bitcoin-address "1Q1pE5vPGEEMqRcVRMbtBK842Y6Pzo6nK9") ; => #t
+(validate-bitcoin-address "1badbadbadbadbadbadbadbadbadbadbad") ; => #f
