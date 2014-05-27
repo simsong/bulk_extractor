@@ -143,7 +143,7 @@ static void usage(const char *progname)
     std::cout << "   -H           - print detailed info on the scanners\n";
     std::cout << "   -V           - print version number\n";
     std::cout << "   -z nn        - start on page nn\n";
-    std::cout << "   -dN          - debug mode (see source code\n";
+    std::cout << "   -dN          - debug mode (see source code)\n";
     std::cout << "   -Z           - zap (erase) output directory\n";
     std::cout << "\nControl of Scanners:\n";
     std::cout << "   -P <dir>     - Specifies a plugin directory\n";

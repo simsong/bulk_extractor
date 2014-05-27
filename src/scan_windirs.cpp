@@ -185,6 +185,15 @@ fat_validation_t valid_fat_directory_entry(const sbuf_t &sbuf)
 	    return INVALID;			// can't have both DIRECTORY and ARCHIVE set
 	}
 
+#if 0
+        /* This is for debugging specific filename bugs */
+        bool dn=false;
+        if(strncmp((const char *)dentry.name,"SYSLINUX",8)==0 && strncmp((const char *)dentry.ext,"CFG",3)==0){
+            dn=true;
+            printf("dn=%d\n",dn);
+        }
+#endif
+
         if(dentry.attrib & 0x40) return INVALID; // "Device, never found on disk" (wikipedia)
 
 	if(!valid_fat_dentry_name(dentry.name,dentry.ext)) return INVALID; // invalid name
@@ -224,6 +233,8 @@ fat_validation_t valid_fat_directory_entry(const sbuf_t &sbuf)
         if(dentry.ctimeten != 0 && dentry.ctimeten != 100) weird_count++;
         if(adate==0 && cdate==0) weird_count++;
         if(adate==0 && wdate==0) weird_count++;
+
+        //printf("wc=%d \n",weird_count);
 
         if(weird_count > opt_max_weird_count) return INVALID;
                                                                            
@@ -379,7 +390,14 @@ void scan_ntfsdirs(const sbuf_t &sbuf,feature_recorder *wrecorder)
 
 			if(attr_type==NTFS_ATYPE_SI){
 			    found_attrs++;
-			    if(debug & DEBUG_INFO) std::cerr << "NTFS_ATYPE_SI ignored\n";
+			    if(debug & DEBUG_INFO) std::cerr << "NTFS_ATYPE_SI\n";
+
+			    size_t soff         = n.get16u(attr_off+20);
+
+			    mftmap["crtime_si"] = microsoftDateToISODate(n.get64u(attr_off+soff+0));
+			    mftmap["mtime_si"]  = microsoftDateToISODate(n.get64u(attr_off+soff+8));
+			    mftmap["ctime_si"]  = microsoftDateToISODate(n.get64u(attr_off+soff+16));
+			    mftmap["atime_si"]  = microsoftDateToISODate(n.get64u(attr_off+soff+24));
 			}
 		    
 			if(attr_type==NTFS_ATYPE_ATTRLIST){
@@ -404,10 +422,10 @@ void scan_ntfsdirs(const sbuf_t &sbuf,feature_recorder *wrecorder)
 						     | ((uint64_t)n[attr_off+soff+4]<<32)
 						     | ((uint64_t)n[attr_off+soff+5]<<40));
 			    mftmap["par_seq"] = utos(n.get16u(attr_off+soff+6));
-			    mftmap["crtime"] = microsoftDateToISODate(n.get64u(attr_off+soff+8));
-			    mftmap["mtime"]  = microsoftDateToISODate(n.get64u(attr_off+soff+16));
-			    mftmap["ctime"]  = microsoftDateToISODate(n.get64u(attr_off+soff+24));
-			    mftmap["atime"]  = microsoftDateToISODate(n.get64u(attr_off+soff+32));
+			    mftmap["crtime_fn"] = microsoftDateToISODate(n.get64u(attr_off+soff+8));
+			    mftmap["mtime_fn"]  = microsoftDateToISODate(n.get64u(attr_off+soff+16));
+			    mftmap["ctime_fn"]  = microsoftDateToISODate(n.get64u(attr_off+soff+24));
+			    mftmap["atime_fn"]  = microsoftDateToISODate(n.get64u(attr_off+soff+32));
 
 			    // these can be sanity checked
 
@@ -439,6 +457,54 @@ void scan_ntfsdirs(const sbuf_t &sbuf,feature_recorder *wrecorder)
 			    filename = safe_utf16to8(utf16str);
 			    mftmap["filename"] = filename;
 			}
+
+                        if(attr_type==NTFS_ATYPE_OBJID){
+                            found_attrs++;
+                            if(debug & DEBUG_INFO) std::cerr << "NTFS_ATYPE_OBJID\n";
+
+                            size_t slen         = n.get32u(attr_off+16);
+                            size_t soff         = n.get16u(attr_off+20);
+                            char guid_objid[37], guid_bvolid[37], guid_bobjid[37], guid_domid[37];
+
+			    if(debug & DEBUG_INFO) std::cerr << " soff=" << soff << " slen=" << slen
+							     << "\n";    
+
+                            if(slen>=16){
+                                snprintf(guid_objid, 37, "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x", \
+                                    n[attr_off+soff+3], n[attr_off+soff+2], n[attr_off+soff+1], n[attr_off+soff+0],      \
+                                    n[attr_off+soff+5], n[attr_off+soff+4], n[attr_off+soff+7], n[attr_off+soff+6],      \
+                                    n[attr_off+soff+8], n[attr_off+soff+9], n[attr_off+soff+10], n[attr_off+soff+11],    \
+                                    n[attr_off+soff+12], n[attr_off+soff+13], n[attr_off+soff+14], n[attr_off+soff+15]);
+                                mftmap["guid_objectid"] = guid_objid;
+                            }
+                            if(slen>=32){
+                                soff+=16;
+                                snprintf(guid_bvolid, 37, "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x", \
+                                    n[attr_off+soff+3], n[attr_off+soff+2], n[attr_off+soff+1], n[attr_off+soff+0],      \
+                                    n[attr_off+soff+5], n[attr_off+soff+4], n[attr_off+soff+7], n[attr_off+soff+6],      \
+                                    n[attr_off+soff+8], n[attr_off+soff+9], n[attr_off+soff+10], n[attr_off+soff+11],    \
+                                    n[attr_off+soff+12], n[attr_off+soff+13], n[attr_off+soff+14], n[attr_off+soff+15]);
+                                mftmap["guid_birthvolumeid"] = guid_bvolid;
+                            }
+                            if(slen>=48){
+                                soff+=16;
+                                snprintf(guid_bobjid, 37, "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x", \
+                                    n[attr_off+soff+3], n[attr_off+soff+2], n[attr_off+soff+1], n[attr_off+soff+0],      \
+                                    n[attr_off+soff+5], n[attr_off+soff+4], n[attr_off+soff+7], n[attr_off+soff+6],      \
+                                    n[attr_off+soff+8], n[attr_off+soff+9], n[attr_off+soff+10], n[attr_off+soff+11],    \
+                                    n[attr_off+soff+12], n[attr_off+soff+13], n[attr_off+soff+14], n[attr_off+soff+15]);
+                                mftmap["guid_birthobjectid"] = guid_bobjid;
+                            }
+                            if(slen>=64){
+                                soff+=16;
+                                snprintf(guid_domid, 37, "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x", \
+                                    n[attr_off+soff+3], n[attr_off+soff+2], n[attr_off+soff+1], n[attr_off+soff+0],      \
+                                    n[attr_off+soff+5], n[attr_off+soff+4], n[attr_off+soff+7], n[attr_off+soff+6],      \
+                                    n[attr_off+soff+8], n[attr_off+soff+9], n[attr_off+soff+10], n[attr_off+soff+11],    \
+                                    n[attr_off+soff+12], n[attr_off+soff+13], n[attr_off+soff+14], n[attr_off+soff+15]);
+                                mftmap["guid_domainid"] = guid_domid;
+                            }
+                        }
 		    
 			attr_off += attr_len;
 		    }		
@@ -472,13 +538,12 @@ void scan_windirs(const class scanner_params &sp,const recursion_control_block &
         /* Figure out the current time */
         time_t t = time(0);
         struct tm now;
-	memset(&now,0,sizeof(now));
         gmtime_r(&t,&now);
         opt_last_year = now.tm_year + 1900 + 5; // allow up to 5 years in the future
 
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	sp.info->name		= "windirs";
-        sp.info->author         = "Simson Garfinkel";
+        sp.info->author         = "Simson Garfinkel and Maxim Suhanov";
         sp.info->description    = "Scans Microsoft directory structures";
 	sp.info->flags =  scanner_info::SCANNER_DEPTH_0; // only run at top level by default
         sp.info->scanner_version= "1.0";
