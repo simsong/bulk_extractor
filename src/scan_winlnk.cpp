@@ -82,7 +82,7 @@ void scan_winlnk(const class scanner_params &sp,const recursion_control_block &r
             return;
         }
 
-        for (size_t p=0;p < sbuf.pagesize - SMALLEST_LNK_FILE; p++){
+        for (size_t p=0;(p < sbuf.pagesize) &&  (p < sbuf.bufsize - SMALLEST_LNK_FILE); p++){
             if ( sbuf.get32u(p+0x00) == 0x0000004c &&
                  sbuf.get32u(p+0x04) == 0x00021401 &&
                  sbuf.get32u(p+0x08) == 0x00000000 &&
