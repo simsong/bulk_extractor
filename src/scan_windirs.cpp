@@ -377,18 +377,6 @@ void scan_ntfsdirs(const sbuf_t &sbuf,feature_recorder *wrecorder)
 			    continue;
 			}
 
-			if(attr_type==NTFS_ATYPE_SI){
-			    found_attrs++;
-			    if(debug & DEBUG_INFO) std::cerr << "NTFS_ATYPE_SI\n";
-
-			    size_t soff         = n.get16u(attr_off+20);
-
-			    mftmap["crtime_si"] = microsoftDateToISODate(n.get64u(attr_off+soff+0));
-			    mftmap["mtime_si"]  = microsoftDateToISODate(n.get64u(attr_off+soff+8));
-			    mftmap["ctime_si"]  = microsoftDateToISODate(n.get64u(attr_off+soff+16));
-			    mftmap["atime_si"]  = microsoftDateToISODate(n.get64u(attr_off+soff+24));
-			}
-		    
 			if(attr_type==NTFS_ATYPE_ATTRLIST){
 			    found_attrs++;
 			    if(debug & DEBUG_INFO) std::cerr << "NTFS_ATTRLIST ignored\n";
@@ -445,6 +433,18 @@ void scan_ntfsdirs(const sbuf_t &sbuf,feature_recorder *wrecorder)
 			    }
 			    filename = safe_utf16to8(utf16str);
 			    mftmap["filename"] = filename;
+			}
+
+			if(attr_type==NTFS_ATYPE_SI){
+			    found_attrs++;
+			    if(debug & DEBUG_INFO) std::cerr << "NTFS_ATYPE_SI\n";
+
+			    size_t soff         = n.get16u(attr_off+20);
+
+			    mftmap["crtime_si"] = microsoftDateToISODate(n.get64u(attr_off+soff+0));
+			    mftmap["mtime_si"]  = microsoftDateToISODate(n.get64u(attr_off+soff+8));
+			    mftmap["ctime_si"]  = microsoftDateToISODate(n.get64u(attr_off+soff+16));
+			    mftmap["atime_si"]  = microsoftDateToISODate(n.get64u(attr_off+soff+24));
 			}
 
                         if(attr_type==NTFS_ATYPE_OBJID){
