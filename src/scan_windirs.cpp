@@ -185,7 +185,6 @@ fat_validation_t valid_fat_directory_entry(const sbuf_t &sbuf)
 	    return INVALID;			// can't have both DIRECTORY and ARCHIVE set
 	}
 
-
         if(dentry.attrib & 0x40) return INVALID; // "Device, never found on disk" (wikipedia)
 
 	if(!valid_fat_dentry_name(dentry.name,dentry.ext)) return INVALID; // invalid name
