@@ -365,10 +365,6 @@ AC_ARG_ENABLE([hashid],
     [hashid=yes])
 
 if test x"$hashid" == x"yes" ; then
-  AC_CHECK_LIB([zmq],[zmq_ctx_new],[LIBS="-lzmq $LIBS"],
-    [AC_MSG_WARN([Could not find zeromq, zeromq v3 is required to build the hashid scanner])
-    hashid=no])
-
   if test x"$mingw" = x"yes";  then
     # the win32 configuration of libxml2 requires zlib and iconv libraries
     AC_CHECK_LIB([z], [gzdopen],[LIBS="-lz $LIBS"], [AC_MSG_ERROR([Could not find zlib library])])

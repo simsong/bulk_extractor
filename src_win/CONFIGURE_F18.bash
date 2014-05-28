@@ -35,8 +35,6 @@ fi
 cd $DIR
 
 NEEDED_FILES=" icu-mingw32-libprefix.patch icu-mingw64-libprefix.patch"
-NEEDED_FILES+=" zmq-configure.patch zmq-configure.in.patch"
-NEEDED_FILES+=" zmq-zmq.h.patch zmq-zmq_utils.h.patch"
 for i in $NEEDED_FILES ; do
   if [ ! -r $i ]; then
     echo This script requires the file $i which is distributed with $0
@@ -47,7 +45,7 @@ done
 MPKGS="autoconf automake flex gcc gcc-c++ git libtool "
 MPKGS+="md5deep osslsigncode patch wine wget bison zlib-devel "
 MPKGS+="libewf libewf-devel java-1.7.0-openjdk-devel "
-MPKGS+="libxml2-devel libxml2-static czmq-devel openssl-devel "
+MPKGS+="libxml2-devel libxml2-static openssl-devel "
 MPKGS+="boost-devel boost-static expat-devel "
 MPKGS+="mingw32-gcc mingw32-gcc-c++ "
 MPKGS+="mingw64-gcc mingw64-gcc-c++ "
@@ -202,56 +200,6 @@ fi
 
 build_mingw liblightgrep   https://github.com/LightboxTech/liblightgrep/archive/v1.2.1.tar.gz   liblightgrep-1.2.1.tar.gz
 
-#
-# ZMQ requires patching
-#
-
-# libzmq.a created with the FC18 cross-compiler is not compatible with
-# the FC19 cross-compiler, so if it can't compile, rebuild it.
-if [ -r /usr/x86_64-w64-mingw32/sys-root/mingw/lib/libzmq.a ]; then
-  cat > conftest.c <<EOF
-int main() { zmq_bind(0,0); return 0; }
-EOF
-  RESULT=`x86_64-w64-mingw32-gcc -o conftest.exe conftest.c -lzmq -lstdc++ -lws2_32 2>&1` || echo unable to compile existing libzmq.a
-  rm -f conftest.c conftest.exe
-  if [ -n "$RESULT" ]; then
-    echo Removing existing libzmq;
-    sudo rm -f /usr/x86_64-w64-mingw32/sys-root/mingw/lib/libzmq*
-  fi
-fi
-
-echo "Building and installing ZMQ for mingw"
-ZMQVER=3.2.2
-ZMQFILE=zeromq-$ZMQVER.tar.gz
-ZMQURL=download.zeromq.org/$ZMQFILE
-if is_installed libzmq
-then
-  echo ZMQ is already installed
-else
-  if [ ! -r $ZMQFILE ]; then
-    wget $ZMQURL
-  fi
-  tar xf $ZMQFILE
-  patch -p1 <zmq-configure.patch
-  patch -p1 <zmq-configure.in.patch
-  patch -p1 <zmq-zmq.h.patch
-  patch -p1 <zmq-zmq_utils.h.patch
-  
-  ZMQDIR=`tar tf $ZMQFILE|head -1`
-  
-  # build 32- and 64-bit ZMQ for MinGW
-  pushd $ZMQDIR
-  for i in 32 64 ; do
-    echo
-    echo zmq mingw$i
-    mingw$i-configure --enable-static --disable-shared
-    make
-    sudo make install
-    make clean
-  done
-  popd
-  rm -rf $ZMQDIR $ZMQFILE
-fi
 
 #
 #
