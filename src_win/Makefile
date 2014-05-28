@@ -30,14 +30,14 @@ JAVA_GUI  = BEViewer.jar
 PDFDOCS	  = BEProgrammersManual.pdf BEUsersManual.pdf BEWorkedExamplesStandalone.pdf
 
 SRC_WIN_DIST = \
-	$(SRC_WIN)CONFIGURE_F18.bash \
+	$(SRC_WIN)CONFIGURE_F20.bash \
 	$(SRC_WIN)EnvVarUpdate.nsi \
 	$(SRC_WIN)Makefile \
 	$(SRC_WIN)README_WINDOWS.txt \
 	$(SRC_WIN)build_BEViewer_launcher.nsi \
 	$(SRC_WIN)build_installer.nsi \
-	$(SRC_WIN)icu-mingw32-libprefix.patch \
-	$(SRC_WIN)icu-mingw64-libprefix.patch \
+	$(SRC_WIN)icu4c-53_1-mingw-w64-mkdir-compatibility.patch \
+	$(SRC_WIN)icu4c-53_1-simpler-crossbuild.patch \
 	$(SRC_WIN)sign_be_file
 
 

@@ -8,7 +8,7 @@ cat <<EOF
 This script will configure a fresh Fedora system to compile with
 mingw32 and 64.  Please perform the following steps:
 
-1. Install F18 or newer, running with you as an administrator.
+1. Install F20 or newer, running with you as an administrator.
    For a VM:
 
    1a - download the ISO for the 64-bit DVD (not the live media) from:
@@ -60,7 +60,7 @@ fi
 if grep 'Fedora.release.' /etc/redhat-release ; then
   echo Fedora Release detected
 else
-  echo This script is only tested for Fedora Release 18 and should work on F18 or newer.
+  echo This script is only tested for Fedora Release 20 and should work on F20 or newer.
   exit 1
 fi
 
