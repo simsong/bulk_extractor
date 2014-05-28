@@ -38,12 +38,7 @@ SRC_WIN_DIST = \
 	$(SRC_WIN)build_installer.nsi \
 	$(SRC_WIN)icu-mingw32-libprefix.patch \
 	$(SRC_WIN)icu-mingw64-libprefix.patch \
-	$(SRC_WIN)sign_be_file \
-	$(SRC_WIN)zmq-configure.in.patch \
-	$(SRC_WIN)zmq-configure.patch \
-	$(SRC_WIN)zmq-zmq.h.patch \
-	$(SRC_WIN)zmq-zmq_utils.h.patch 
-
+	$(SRC_WIN)sign_be_file
 
 
 # The prerequisites for the installer can't be listed after the colon, 
