@@ -646,64 +646,10 @@ The options -E, -e and -x are all processed in order. So, the following command 
 Some of the scanners installed with \bulk have parameters that can be set and utilized by advanced users for different purposes. Those parameters are also described in the -H output described above (as well as the -h output) and include the following:
 \begingroup
 \footnotesize
-\begin{Verbatim}[fontfamily=courier]
-Settable Options (and their defaults):
-   -S work_start_work_end=YES    Record work start and end of each scanner in 
-        report.xml file ()
-   -S enable_histograms=YES    Disable generation of histograms ()
-   -S debug_histogram_malloc_fail_frequency=0    Set >0 to make histogram maker 
-       fail with memory allocations ()
-   -S hash_alg=md5    Specifies hash algorithm to be used for all hash 
-       calculations ()
-   -S word_min=6    Minimum word size (wordlist)
-   -S word_max=14    Maximum word size (wordlist)
-   -S max_word_outfile_size=100000000    Maximum size of the words output file 
-       (wordlist)
-   -S query_type=not_selected    
-      <query_type> used to perform the query, where <query_type>
-      is one of use_path | use_socket (default not_selected)
-      use_path   - Lookups are performed from a hashdb in the filesystem
-                   at the specified <path>.
-      use_socket - Lookups are performed from a server service at the
-                   specified <socket>. (hashid)
-   -S path=a valid hashdb directory path is required    
-      Specifies the <path> to the hash database to be used for performing
-      the query service.  This option is only used when the query type
-      is set to "use_path". (hashid)
-   -S socket=tcp://localhost:14500    
-      Specifies the client <socket> endpoint to use to connect with the
-      hashdb_manager server (default 'tcp://localhost:14500').  Valid socket
-      transports supported by the zmq messaging kernel are tcp, ipc, and
-      inproc.  Currently, only tcp is tested.  This opition is only valid
-      when the query type is set to "query_socket". (hashid)
-   -S chunk_size=4096    Chunk size, in bytes, used to generate hashes (hashid)
-   -S sector_size=512    Sector size, in bytes
-      Hashes are generated on each sector_size boundary. (hashid)
-   -S exif_debug=0    debug exif decoder (exif)
-   -S jpeg_carve_mode=1    0=carve none; 1=carve encoded; 2=carve all (exif)
-   -S min_jpeg_size=1000    Smallest JPEG stream that will be carved (exif)
-   -S zip_min_uncompr_size=6    Minimum size of a ZIP uncompressed object (zip)
-   -S zip_max_uncompr_size=268435456    Maximum size of a ZIP uncompressed 
-       object (zip)
-   -S zip_name_len_max=1024    Maximum name of a ZIP component filename (zip)
-   -S rar_find_components=YES    Search for RAR components (rar)
-   -S raw_find_volumes=YES    Search for RAR volumes (rar)
-   -S gzip_max_uncompr_size=268435456    maximum size for decompressing GZIP 
-       objects (gzip)
-   -S pdf_dump=NO    Dump the contents of PDF buffers (pdf)
-   -S opt_weird_file_size=157286400    Weird file size (windirs)
-   -S opt_weird_file_size2=536870912    Weird file size2 (windirs)
-   -S opt_max_cluster=67108864    Ignore clusters larger than this (windirs)
-   -S opt_max_cluster2=268435456    Ignore clusters larger than this (windirs)
-   -S opt_max_bits_in_attrib=3    Ignore FAT32 entries with more attributes set 
-       than this (windirs)
-   -S opt_max_weird_count=2    Ignore FAT32 entries with more things weird than 
-       this (windirs)
-   -S opt_last_year=2020    Ignore FAT32 entries with a later year than this (windirs)
-   -S bulk_block_size=512    Block size (in bytes) for bulk data analysis (bulk)
-   -S DFRWS2012=NO    True if running DFRWS2012 challenge code (bulk)
-   -S xor_mask=255    XOR mask string, in decimal (xor) 
-\end{Verbatim}
+{
+\fontfamily{courier}\selectfont
+\verbatiminput{SettableOptions.txt}
+}
 \endgroup
 
 To use any of these options, the user should specify the -S with the name=value pair when running \bulk as in the following example:
