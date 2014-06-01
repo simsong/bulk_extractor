@@ -83,7 +83,7 @@ public:
     virtual feature_recorder *create_name_factory(const std::string &name_);
     callback_feature_recorder_set(void *user_,be_callback_t *cb_):
         feature_recorder_set(feature_recorder_set::DISABLE_FILE_RECORDERS,my_hasher,
-                             feature_recorder_set::NO_OUTDIR),
+                             feature_recorder_set::NO_INPUT,feature_recorder_set::NO_OUTDIR),
         histogram_defs(),user(user_),cb(cb_),Mcb(){
     }
 
@@ -91,7 +91,7 @@ public:
         feature_file_names_t feature_file_names;
         be13::plugin::scanners_process_enable_disable_commands();
         be13::plugin::get_scanner_feature_file_names(feature_file_names);
-        init(feature_file_names,feature_recorder_set::NO_INPUT); // creates the feature recorders
+        init(feature_file_names); // creates the feature recorders
         be13::plugin::add_enabled_scanner_histograms_to_feature_recorder_set(*this);
         be13::plugin::scanners_init(*this); // must be done after feature recorders are created
     }

@@ -111,7 +111,7 @@ int main(int argc,char **argv)
     }
 #endif
 
-    feature_recorder_set fs(0,my_hasher);
+    feature_recorder_set fs(0,my_hasher,feature_recorder_set::NO_INPUT,feature_recorder_set::NO_OUTDIR);
     uint8_t buf[100];
     pos0_t p0("");
     sbuf_t sbuf(p0,buf,sizeof(buf),sizeof(buf),false);
@@ -146,7 +146,8 @@ feature_recorder  *feature_recorder_set::create_name_factory(const std::string &
 }
 
 
-feature_recorder_set::feature_recorder_set(uint32_t f,const feature_recorder_set::hash_def &hasher_):
+feature_recorder_set::feature_recorder_set(uint32_t f,const feature_recorder_set::hash_def &hasher_,
+                                           const std::string &input_fname_,const std::string &outdir_):
     flags(f),seen_set(),input_fname(),outdir(),frm(),Mscanner_stats(),histogram_defs(),Min_transaction(),in_transaction(),db3(),alert_list(),stop_list(),scanner_stats(),hasher(hasher_)
 {
     /* not here */

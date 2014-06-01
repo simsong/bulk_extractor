@@ -447,7 +447,7 @@ static void process_open_path(const image_process &p,std::string path,scanner_pa
      * forensic path, so that has to be added.
      */
     feature_recorder_set fs(feature_recorder_set::SET_DISABLED,feature_recorder_set::null_hasher,
-                            feature_recorder_set::NO_OUTDIR);
+                            feature_recorder_set::NO_INPUT,feature_recorder_set::NO_OUTDIR);
 
     pos0_t pos0(path+"-PRINT"); // insert the PRINT token
     sbuf_t sbuf(pos0,buf,count,count,true); // sbuf system will free
@@ -986,8 +986,8 @@ int main(int argc,char **argv)
     if (!opt_write_feature_files)  flags |= feature_recorder_set::DISABLE_FILE_RECORDERS;
 
     {
-        feature_recorder_set fs(flags,be_hash,opt_outdir);
-        fs.init(feature_file_names,image_fname);
+        feature_recorder_set fs(flags,be_hash,image_fname,opt_outdir);
+        fs.init(feature_file_names);
         if(opt_enable_histograms) be13::plugin::add_enabled_scanner_histograms_to_feature_recorder_set(fs);
         be13::plugin::scanners_init(fs);
 
