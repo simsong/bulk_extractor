@@ -168,7 +168,7 @@ DATEFORMAT	({DATEA}|{DATEB}|{DATEC}|{DATED})
     s.pos += yyleng;
 }
 
-[^0-9a-z\.][4-6]([0-9]{15,18})/{END} {
+[^0-9a-z\.][3-6]([0-9]{15,18})/{END} {
     /* REGEX5 */
     /* ###############  13-19 numbers as a block beginning with a 4 or 5
      * followed by something that is not a digit.
