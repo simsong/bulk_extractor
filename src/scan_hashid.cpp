@@ -62,7 +62,8 @@ static void do_scan(const class scanner_params &sp,
 static std::string hashdb_dir;
 
 // hashdb manager
-hashdb_md5_t* hashdb;
+typedef hashdb_t__<md5_t> hashdb_t;
+hashdb_t* hashdb;
 
 extern "C"
 void scan_hashid(const class scanner_params &sp,
@@ -187,9 +188,9 @@ void scan_hashid(const class scanner_params &sp,
 
                     // create the new hashdb manager for importing
                     // currently, hashdb_dir is required to not exist
-                    hashdb = new hashdb_md5_t(hashdb_dir,
-                                                  hashdb_block_size,
-                                                  hashdb_max_duplicates);
+                    hashdb = new hashdb_t(hashdb_dir,
+                                          hashdb_block_size,
+                                          hashdb_max_duplicates);
 
                     // show relavent settable options
                     std::cout << "hashid: hashdb_mode=" << hashdb_mode << "\n"
@@ -207,7 +208,7 @@ void scan_hashid(const class scanner_params &sp,
                               << "hashid: hashdb_sector_size=" << hashdb_sector_size << "\n";
 
                     // open the hashdb manager for scanning
-                    hashdb = new hashdb_md5_t(hashdb_path_or_socket);
+                    hashdb = new hashdb_t(hashdb_path_or_socket);
                     return;
                 }
 
@@ -273,8 +274,8 @@ static void do_import(const class scanner_params &sp,
                       const recursion_control_block &rcb) {
 
     // allocate space on heap for import_input
-    std::vector<hashdb_md5_t::import_element_t>* import_input =
-                           new std::vector<hashdb_md5_t::import_element_t>;
+    std::vector<hashdb_t::import_element_t>* import_input =
+                           new std::vector<hashdb_t::import_element_t>;
 
     // get the sbuf
     const sbuf_t& sbuf = sp.sbuf;
@@ -285,7 +286,7 @@ static void do_import(const class scanner_params &sp,
         md5_t hash = md5_generator::hash_buf(sbuf.buf + i, hashdb_block_size);
 
         // create the import element
-        hashdb_md5_t::import_element_t import_element(hash,
+        hashdb_t::import_element_t import_element(hash,
                                            hashdb_repository_name,
                                            sbuf.pos0.str(), // use as filename
                                            i);              // file offset
@@ -334,7 +335,7 @@ static void do_scan(const class scanner_params &sp,
     }
 
     // allocate space on heap for scan_output
-    hashdb_md5_t::scan_output_t* scan_output = new hashdb_md5_t::scan_output_t;
+    hashdb_t::scan_output_t* scan_output = new hashdb_t::scan_output_t;
 
     // perform the scan
     int status = hashdb->scan(*scan_input, *scan_output);
@@ -348,7 +349,7 @@ static void do_scan(const class scanner_params &sp,
     feature_recorder* identified_blocks_recorder = sp.fs.get_name("identified_blocks");
 
     // record each feature returned in the response
-    for (hashdb_md5_t::scan_output_t::const_iterator it=scan_output->begin(); it!= scan_output->end(); ++it) {
+    for (hashdb_t::scan_output_t::const_iterator it=scan_output->begin(); it!= scan_output->end(); ++it) {
 
         // prepare forensic path (pos0, feature, context) as (pos0, hash_string, count_string)
 
