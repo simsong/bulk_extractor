@@ -1,8 +1,10 @@
 # Note that this file is different from how it is attributed.
 # This file was taken from git://anongit.freedesktop.org/libreoffice/coremaster
 # from http://code.ohloh.net/file?fid=b5GBy-OC8yZ5_j5q-TRsZb7vDkI&cid=fu_u3DInrXQ&s=&browser=Default#L0
-# because it supports cross-compiling with mingw
+# This file supports cross-compiling with mingw
 # and the current copy at gnu.org does not.
+# Also, this file uses -isystem rather than -I for BOOST_CPPFLAGS
+# in order to suppress Boost compiler warnings.
 #
 # ===========================================================================
 #       http://www.gnu.org/software/autoconf-archive/ax_boost_base.html
@@ -105,7 +107,7 @@ if test "x$want_boost" = "xyes"; then
     dnl this location ist chosen if boost libraries are installed with the --layout=system option
     dnl or if you install boost with RPM
     if test "$ac_boost_path" != ""; then
-        BOOST_CPPFLAGS="-I$ac_boost_path/include"
+        BOOST_CPPFLAGS="-isystem$ac_boost_path/include"
         for ac_boost_path_tmp in $libsubdirs; do
                 if test -d "$ac_boost_path"/"$ac_boost_path_tmp" ; then
                         BOOST_LDFLAGS="-L$ac_boost_path/$ac_boost_path_tmp"
@@ -124,7 +126,7 @@ if test "x$want_boost" = "xyes"; then
                     if ls "$ac_boost_path_tmp/$libsubdir/libboost_"* >/dev/null 2>&1 ; then break; fi
                 done
                 BOOST_LDFLAGS="-L$ac_boost_path_tmp/$libsubdir"
-                BOOST_CPPFLAGS="-I$ac_boost_path_tmp/include"
+                BOOST_CPPFLAGS="-isystem$ac_boost_path_tmp/include"
                 break;
             fi
         done
@@ -177,7 +179,7 @@ if test "x$want_boost" = "xyes"; then
                         _version=$_version_tmp
                     fi
                     VERSION_UNDERSCORE=`echo $_version | sed 's/\./_/'`
-                    BOOST_CPPFLAGS="-I$ac_boost_path/include/boost-$VERSION_UNDERSCORE"
+                    BOOST_CPPFLAGS="-isystem$ac_boost_path/include/boost-$VERSION_UNDERSCORE"
                 done
             fi
         else
@@ -200,7 +202,7 @@ if test "x$want_boost" = "xyes"; then
             done
 
             VERSION_UNDERSCORE=`echo $_version | sed 's/\./_/'`
-            BOOST_CPPFLAGS="-I$best_path/include/boost-$VERSION_UNDERSCORE"
+            BOOST_CPPFLAGS="-isystem$best_path/include/boost-$VERSION_UNDERSCORE"
             if test "$ac_boost_lib_path" = ""; then
                 for libsubdir in $libsubdirs ; do
                     if ls "$best_path/$libsubdir/libboost_"* >/dev/null 2>&1 ; then break; fi
@@ -219,7 +221,7 @@ if test "x$want_boost" = "xyes"; then
                     V_CHECK=`expr $stage_version_shorten \>\= $_version`
                     if test "$V_CHECK" = "1" -a "$ac_boost_lib_path" = "" ; then
                         AC_MSG_NOTICE(We will use a staged boost library from $BOOST_ROOT)
-                        BOOST_CPPFLAGS="-I$BOOST_ROOT"
+                        BOOST_CPPFLAGS="-isystem$BOOST_ROOT"
                         BOOST_LDFLAGS="-L$BOOST_ROOT/stage/$libsubdir"
                     fi
                 fi
