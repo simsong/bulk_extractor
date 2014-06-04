@@ -1,0 +1,7 @@
+Testing Framework for bulk_extractor.
+
+Systematic testing of all BE tests with a test fframework that tests each test file, runes it, and checks results.
+
+Output is a sqlite3 db in the Images directory of known output.
+
+Compares the two sqlite3 databases
