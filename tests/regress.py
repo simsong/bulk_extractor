@@ -342,6 +342,7 @@ def make_outdir(outdir_base):
 
 def run(cmd):
     print(" ".join(cmd))
+    if args.dry_run: return
     r = call(cmd)
     if r!=0:
         raise RuntimeError("{} crashed with error code {}".format(args.exe,r))
@@ -440,9 +441,9 @@ def invalid_feature_file_line(line,fields):
     return None
     
 def validate_file(f,kind):
-    kml = "kml" in f.name
+    is_kml = f.name.endswith(".kml")
     linenumber = 0
-    print("Validate UTF-8 encoding in ",f.name)
+    if args.debug: print("Validate UTF-8 encoding in ",f.name)
     for lineb in f:
         linenumber += 1
         lineb = lineb[:-1]      # remove the \n
@@ -460,20 +461,21 @@ def validate_file(f,kind):
             r = invalid_feature_file_line(line,fields)
             if r:
                 print("{}: {:8} {} Invalid feature file line: {}".format(f.name,linenumber,r,line))
-            if kml and fields[1].count("kml")!=2:
+            if is_kml and fields[1].count("kml")!=2:
                 print("{}: {:8} Invalid KML line: {}".format(f.name,linenumber,line))
 
 
 
-def validate_report(fn):
+def validate_report(fn,do_validate=True):
     """Make sure all of the lines in all of the files in the outdir are UTF-8 and that
     the feature files have 3 or more fields on each line.
+    And validate the XML!
     """
     import glob,os.path
-    print("\nValidate Report: ",fn)
+    if args.debug: print("Validating Report: ",fn)
     res = {}
     if os.path.isdir(fn) or fn.endswith(".zip"):
-        b = bulk_extractor_reader.BulkReport(fn)
+        b = bulk_extractor_reader.BulkReport(fn,do_validate=True)
         for fn in b.feature_files():
             if os.path.basename(fn) in str(args.ignore):
                 print("** ignore {} **".format(fn))
@@ -491,10 +493,18 @@ def identify_filenames(outdir):
 
 def diff(dname1,dname2):
     args.max = int(args.max)
+    def safe_filesize(fn):
+        try:
+            return os.path.getsize(fn)
+        except FileNotFoundError:
+            return 0
+
     def files_in_dir(dname):
-        return [fn.replace(dname+"/","") for fn in glob.glob(dname+"/*") if os.path.isfile(fn)]
+        files = [fn.replace(dname+"/","") for fn in glob.glob(dname+"/*") if os.path.isfile(fn)]
+        return filter(lambda fn: not fn.endswith(".sqlite") ,files)
     def lines_to_set(fn):
-        return set(open(fn).read().split("\n"))
+        "Read the lines in a file and return them as a set. Ignore the lines beginning with #"
+        return set(filter(lambda line:line[0:1]!='#',open(fn).read().split("\n")))
     
     files1 = set(files_in_dir(dname1))
     files2 = set(files_in_dir(dname2))
@@ -506,7 +516,18 @@ def diff(dname1,dname2):
     # Look at the common files. For each report the files only in one or the other
     common = files1.intersection(files2)
     for fn in sorted(common):
+        fn1 = os.path.join(dname1,fn)
+        fn2 = os.path.join(dname2,fn)
+        
+        if fn=="report.xml":
+            continue
         if fn=="wordlist.txt" and not args.diffwordlist:
+            continue
+        if fn=="packets.pcap": 
+            s1 = os.path.getsize(fn1)
+            s2 = os.path.getsize(fn2)
+            if s1!=s2:
+                print("size({})={} but size({})={}\n",fn1,s1,fn2,s2)
             continue
         def print_diff(dname,prefix,diffset):
             if not diffset:
@@ -523,13 +544,14 @@ def diff(dname1,dname2):
                     break
             return len(diffset)
 
-        print("regressdiff {}:".format(fn))
-        lines1 = lines_to_set(os.path.join(dname1,fn))
-        lines2 = lines_to_set(os.path.join(dname2,fn))
-        count1 = print_diff(dname1,"<",lines1.difference(lines2))
-        count2 = print_diff(dname2,">",lines2.difference(lines1))
-        if count1 or count2:
-            print("\n-------------\n")
+        lines1 = lines_to_set(fn1)
+        lines2 = lines_to_set(fn2)
+        if lines1!=lines2:
+            print("regressdiff {}:".format(fn))
+            count1 = print_diff(dname1,"<",lines1.difference(lines2))
+            count2 = print_diff(dname2,">",lines2.difference(lines1))
+            if count1 or count2:
+                print("\n-------------\n")
 
 
 def run_and_analyze():
@@ -546,6 +568,19 @@ def run_and_analyze():
     print("Regression finished at {}. Elapsed time: {} ({} sec)\nOutput in {}".format(
         time.asctime(),ptime(t),t,outdir))
 
+def datadircomp(dir1,dir2):
+    print("Validating reports in {} and {}".format(dir1,dir2))
+    for d in [dir1,dir2]:
+        for fn in glob.glob(os.path.join(d,"*")):
+            validate_report(fn,do_validate=True)
+    print("Comparing outputs".format(dir1,dir2))
+    for fn1 in glob.glob(os.path.join(dir1,"*")):
+        fn2 = fn1.replace(dir1,dir2)
+        diff(fn1,fn2)
+        
+
+    exit(0)
+
 if __name__=="__main__":
     import argparse 
     global args
@@ -555,7 +590,7 @@ if __name__=="__main__":
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--gdb",help="run under gdb",action="store_true")
     parser.add_argument("--debug",help="debug level",type=int)
-    parser.add_argument("--outdir",help="output directory base",default="regress")
+    parser.add_argument("--outdir",help="output directory base",default=None)
     parser.add_argument("--exe",help="Executable to run (default {})".format(exe),default=exe)
     parser.add_argument("--image",help="image to scan (default {})".format(default_infile),default=default_infile)
     parser.add_argument("--fast",help="Run with "+fast_infile,action="store_true")
@@ -577,7 +612,7 @@ if __name__=="__main__":
     parser.add_argument("--marginsize",help="Specifies the margin size",type=int)
     parser.add_argument("--extra",help="Specify extra arguments")
     parser.add_argument("--gprof",help="Recompile and run with gprof",action="store_true")
-    parser.add_argument("--diff",help="diff mode. Compare two outputs",type=str,nargs='*')
+    parser.add_argument("--diff",help="diff mode. Compare two reports",type=str,nargs='*')
     parser.add_argument("--diffwidth",type=int,help="Number of characters to display on diff lines",default=170)
     parser.add_argument("--diffwordlist",type=bool,help="compare wordlist.txt",default=False)
     parser.add_argument("--max",help="Maximum number of differences to display",default="5")
@@ -594,12 +629,20 @@ if __name__=="__main__":
             + "reproduce the crash")
     parser.add_argument("--clearcache",help="clear the disk cache",action="store_true")
     parser.add_argument("--tune",help="run bulk_extractor tuning. Args are coded in this script.",action="store_true")
-    parser.add_argument("--featuretest",help="Specifies number of features to test to make sure they are in the SQL database",default=50,type=int)
-    parser.add_argument("--no-identify_filenames",dest='identify_filenames',help="Do not run identify_filenames",action="store_false")
+    parser.add_argument("--featuretest",default=50,type=int,
+                        help="Specifies number of features to test to make sure they are in the SQL database",)
+    parser.add_argument("--no-identify_filenames",dest='identify_filenames',action="store_false",
+                        help="Do not run identify_filenames")
+    parser.add_argument("--datadir",help="Process all files in a directory")
+    parser.add_argument("--dry-run",help="Don't actually run the program",action='store_true')
+    parser.add_argument("--datadircomp",help="Compare two data dirs")
 
     args = parser.parse_args()
+    
+    if args.datadircomp:
+        dirs = args.datadircomp.split(",")
+        datadircomp(dirs[0],dirs[1])
 
-    # these are mostly for testing
     if args.validate:
         for v in args.validate:
             try:
@@ -635,7 +678,30 @@ if __name__=="__main__":
     if not os.path.exists(args.exe):
         raise RuntimeError("{} does not exist".format(args.exe))
 
+    if args.clearcache: clear_cache()
+
+    ################################################################
+    ### After this point the program is run
+    ################################################################
+
+    # Are we processing an entire directory?
+    if args.datadir:
+        try:
+            os.mkdir(args.outdir)
+        except FileExistsError:
+            pass
+        if not args.outdir:
+            print("--datadir requires that outdir be specified")
+            exit(0)
+        for fn in glob.glob(os.path.join(args.datadir,"*")):
+            args.image = fn
+            run_outdir(os.path.join(args.outdir,os.path.basename(fn)))
+        exit(0)
+
     # Find the bulk_extractor version and add it to the outdir
+    if args.outdir==None:
+        args.outdir="regress"
+
     args.outdir += "-"+bulk_extractor_reader.be_version(args.exe)
     corp = os.getenv("DOMEX_CORP")
     if not corp:
@@ -739,8 +805,5 @@ if __name__=="__main__":
             
         exit(0)
         
-    if args.clearcache:
-        clear_cache()
-
     run_and_analyze()
 
