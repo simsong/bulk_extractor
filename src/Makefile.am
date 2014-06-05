@@ -51,7 +51,7 @@ lightgrep_scanners = \
 bulk_scanners = \
 	scan_aes.cpp \
 	scan_base64.cpp \
-	scan_bulk.cpp\
+	scan_sceadan.cpp\
 	scan_ccns2.cpp scan_ccns2.h \
 	scan_elf.cpp \
 	scan_exif.cpp exif_reader.h exif_reader.cpp exif_entry.cpp\
@@ -87,9 +87,19 @@ if RAR_ENABLED
   bulk_scanners += $(RAR_SUPPORT)
 endif
 
-if SCEADAN_ENABLED
-  bulk_scanners += sceadan/src/sceadan.cpp sceadan/src/sceadan.h sceadan/src/sceadan_model_precompiled.c
-endif
+#  BLAS = $(LIN)/blas
+#  bulk_scanners += $(BLAS)/blas.h $(BLAS)/blasp.h $(BLAS)/daxpy.c $(BLAS)/ddot.c $(BLAS)/dnrm2.c $(BLAS)/dscal.c
+
+#if SCEADAN_ENABLED
+#  bulk_scanners += sceadan/liblinear/linear.cpp sceadan/liblinear/linear.h
+#  bulk_scanners += sceadan/liblinear/tron.cpp sceadan/liblinear/tron.h
+#  bulk_scanners += sceadan/liblinear/blas/blas.h sceadan/liblinear/blas/blasp.h 
+#  bulk_scanners += sceadan/liblinear/blas/daxpy.c  
+#  bulk_scanners += sceadan/liblinear/blas/ddot.c  
+#  bulk_scanners += sceadan/liblinear/blas/dnrm2.c  
+#  bulk_scanners += sceadan/liblinear/blas/dscal.c
+#  bulk_scanners += sceadan/src/sceadan.cpp sceadan/src/sceadan.h sceadan/src/sceadan_model_precompiled.c
+#endif
 
 
 bulk_extractor_nomain = \
@@ -122,7 +132,7 @@ libbulkextractor.so: $(bulk_extractorlib_OBJECTS)
 
 stand_SOURCES = \
 	dig.cpp \
-	scan_bulk.cpp \
+	scan_sceadan.cpp \
 	stand.cpp \
 	$(BE13_API) $(DFXML_WRITER) 
 

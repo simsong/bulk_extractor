@@ -230,8 +230,6 @@ The following are planned for 1.5 but have not been integrated yet:
 
 * identify_filenames should present the % of disk that has allocated files.
 
-* Python Bridge. 
-
 * Reporting into an sqlite database instead of or in addition to feature files
 
 Future Plans
@@ -242,9 +240,6 @@ Future Plans
 * improvements to identify_filename so it can run on a report in place.
 
 * Find more false positives with CCN validator by scanning through XOR data
-
-* Lnk File decoder (http://msdn.microsoft.com/en-us/library/dd871305.aspx)
-  for automatically detecting and reporting Window shortcut files.
 
 * xz, 7zip, and LZMA/LZMA2 decompression
 
@@ -264,3 +259,10 @@ Future Plans
 
 * Demonstration of bulk_extractor running on a grid (how fast can it run?)
 
+
+Abandoned Plans
+================
+
+* Python Bridge - it would make bulk_extractor run too slow.
+
+* Read from standard input - bulk_extarctor would cause the sending process to block. (People typically want to do this with a disk imaging tool like dcfldd. The problem is that bulk_extractor is inevitably CPU-bound, so this would make the disk imager block.)

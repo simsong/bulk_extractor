@@ -1,7 +1,7 @@
 #!/bin/sh
 # Hopefully you checked out with git clone --recursive git@github.com:simsong/bulk_extractor.git
 
-for sub in be13_api dfxml sceadan
+for sub in be13_api dfxml 
 do
   if [ ! -r src/$sub/.git ] ;
   then

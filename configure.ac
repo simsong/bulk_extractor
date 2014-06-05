@@ -125,21 +125,34 @@ m4_include([m4/slg_gcc_all_warnings.m4])
 ################################################################
 ## Includes
 
+CFLAGS="$CFLAGS -Isceadan/linear"
+
 m4_include([src/dfxml/src/dfxml_configure.m4])
 m4_include([src/be13_api/be13_configure.m4])
-m4_include([src/sceadan/sceadan_configure.m4])
 
 ################################################################
 ## sceadan support
 ## Enabled for 1.5 release
-AC_ARG_ENABLE([sceadan],
-              AS_HELP_STRING([--enable-sceadan], [enable UTSA SCEADAN SVM for type identification]),
+# m4_include([src/sceadan/sceadan_configure.m4])
+# https://www.gnu.org/software/autoconf/manual/autoconf-2.60/html_node/External-Software.html
+AC_ARG_WITH([sceadan],
+              AS_HELP_STRING([--with-sceadan], [specify location of UTSA SCEADAN file type identification]),
 	      [AC_DEFINE(USE_SCEADAN, 1, [Use SCEADAN FILE TYPE CLASSIFIER]) sceadan="yes"],
               [])
-if test x"$linear" != x"yes" ; then
-  sceadan="no"
-fi
-AM_CONDITIONAL([SCEADAN_ENABLED], [test "$sceadan" = "yes" ])
+
+AS_IF([test "x$with_sceadan" != xno],
+  [AC_MSG_NOTICE([with_sceadan = with_sceadan])
+   AM_CONDITIONAL([SCEADAN_ENABLED], 1)
+  ]
+)
+
+# if test x"$liblinear" != x"yes" ; then
+#  if test x"$sceadan" == x"yes" ; then
+#    AC_MSG_WARN([Disabling SCEADAN as liblinear is not present])  
+#    sceadan="no"
+#  fi
+#fi
+# AC_CHECK_HEADERS([src/sceadan/src/sceadan.h])
 
 
 ################################################################
@@ -450,19 +463,19 @@ if test x"$exiv2" == x"yes" ; then
   AC_LANG_POP()    
 fi
 
-AC_TRY_COMPILE([#pragma GCC diagnostic ignored "-Wshadow"],[int a=3;],
+AC_TRY_COMPILE([#pragma GCC diagnostic ignored "-Wshadow"],[return 0;],
   [AC_DEFINE(HAVE_DIAGNOSTIC_SHADOW,1,[define 1 if GCC supports -Wshadow])])
 
-AC_TRY_COMPILE([#pragma GCC diagnostic ignored "-Wundef"],[int a=3;],
+AC_TRY_COMPILE([#pragma GCC diagnostic ignored "-Wundef"],[return 0;],
   [AC_DEFINE(HAVE_DIAGNOSTIC_UNDEF,1,[define 1 if GCC supports -Wundef])])
 
-AC_TRY_COMPILE([#pragma GCC diagnostic ignored "-Wcast-qual"],[int a=3;],
+AC_TRY_COMPILE([#pragma GCC diagnostic ignored "-Wcast-qual"],[return 0;],
   [AC_DEFINE(HAVE_DIAGNOSTIC_CAST_QUAL,1,[define 1 if GCC supports -Wcast-qual])])
 
-AC_TRY_COMPILE([#pragma GCC diagnostic ignored "-Weffcpp"],[int a=3;],
+AC_TRY_COMPILE([#pragma GCC diagnostic ignored "-Weffcpp"],[return 0;],
   [AC_DEFINE(HAVE_DIAGNOSTIC_EFFCPP,1,[define 1 if GCC supports -Weffc++])])
 
-AC_TRY_COMPILE([#pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"],[int a=3;],
+AC_TRY_COMPILE([#pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"],[return 0;],
   [AC_DEFINE(HAVE_DIAGNOSTIC_SUGGEST_ATTRIBUTE,1,[define 1 if GCC supports -Wsuggest-attribute=noreturn])])
   
 AC_TRY_COMPILE([#pragma GCC diagnostic ignored "-Wdeprecated-register"],[return 0;],

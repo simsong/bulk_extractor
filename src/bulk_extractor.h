@@ -203,6 +203,7 @@ extern "C" scanner_t scan_hashid;
 #endif
 extern "C" scanner_t scan_aes;
 extern "C" scanner_t scan_bulk;
+extern "C" scanner_t scan_sceadan;
 extern "C" scanner_t scan_elf;
 extern "C" scanner_t scan_exif;
 extern "C" scanner_t scan_gzip;

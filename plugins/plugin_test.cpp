@@ -131,6 +131,8 @@ int main(int argc,char **argv)
 const std::string feature_recorder_set::ALERT_RECORDER_NAME = "alerts";
 const std::string feature_recorder_set::DISABLED_RECORDER_NAME = "disabled";
 const std::string outdir("outdir");
+const std::string feature_recorder_set::NO_INPUT = "<NO-INPUT>";
+const std::string feature_recorder_set::NO_OUTDIR = "<NO-OUTDIR>";
 
 bool               feature_recorder_set::check_previously_processed(const uint8_t *buf,size_t bufsize){return false;}
 feature_recorder  *feature_recorder_set::get_name(const std::string &name) const { return 0;}

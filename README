@@ -38,6 +38,12 @@ Compiling Notes
 3. The Windows release is cross-compiled using mingw. We provide a script in the src_win directory for configuring a Fedora virtual machine to compile windows. Users have also reported success at compiling on Ubuntu, but it is harder.
 
 
+Building with a different glibc
+-------------------------------
+In creating the bulk_extractor.so, it may be necessary to build with an older glibc. We're not sure how to do it, but one of these links may help:
+* http://forums.gentoo.org/viewtopic-t-537944.html
+* http://www.linuxforums.org/forum/gentoo-linux/85760-glibc-compiling-problem.html
+
 Installing on a Linux/MacOS/Mingw system
 ----------------------------------------
 

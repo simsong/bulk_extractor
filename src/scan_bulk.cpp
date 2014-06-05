@@ -3,24 +3,23 @@
 #include "dig.h"
 #include "be13_api/utils.h"
 #include "histogram.h"
-#include "sceadan/src/sceadan.h"
 #include <math.h>
 #include <algorithm>
 
-
+#include "sceadan/src/sceadan.h"
 
 /**
- * scan_bulk implements the bulk data analysis system.
+ * scan_sceadan implements the bulk data analysis system.
  * 
  * Method of operation:
  *
  * 1. Various scanners will perform bulk data analysis and write to a tag file.
  *
- * 2. If scan_bulk is called recursively, it will note the recursive
+ * 2. If scan_sceadan is called recursively, it will note the recursive
  * calls in the tag file as well. This provides tagging for recursive
  * scanners like BASE64 which do not write to tags.
  * 
- * 3. On post-processing, scan_bulk will look through all of the other feature files
+ * 3. On post-processing, scan_sceadan will look through all of the other feature files
  * and write to stdout a sorted file with all offsets and identified contents.
  *
  * There exist a number of hard-coded rules to improve the output.
@@ -28,7 +27,7 @@
  * rule 1 - If constant data is detected, no comments are provided.
  * rule 2 - If there is EXIF data, it's a JPEG
  * 
- * Scan_bulk can call additional bulk data analysis scanners.
+ * scan_sceadan can call additional bulk data analysis scanners.
  * They all use the standard bulk_extractor plug-in API.
  */
 
@@ -316,7 +315,7 @@ bool sector_classifier::check_bitlocker()
 
 
 extern "C"
-void scan_bulk(const class scanner_params &sp,const recursion_control_block &rcb)
+void scan_sceadan(const class scanner_params &sp,const recursion_control_block &rcb)
 {
     assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);      
 
