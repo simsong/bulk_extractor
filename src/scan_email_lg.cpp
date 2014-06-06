@@ -45,7 +45,7 @@ namespace email {
   const string YEAR("(19[6-9][0-9]|20[0-1][0-9])");
   const string DAYOFWEEK("(Mon|Tue|Wed|Thu|Fri|Sat|Sun)");
   const string MONTH("(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)");
-  const string ABBREV("(UT|GMT|EST|EDT|CST|CDT|MST|MDT|PST|PDT|[ZAMNY])");
+  const string ABBREV("(UTC?|GMT|EST|EDT|CST|CDT|MST|MDT|PST|PDT|[ZAMNY])");
 
   //
   // helper functions
