@@ -1,13 +1,10 @@
-http://en.wikipedia.org/wiki/Email_address
-
+Source: http://en.wikipedia.org/wiki/Email_address
 
 Pelé@example.com (simple diacritic, still Latin)
 
 δοκιμή@παράδειγμα.δοκιμή
 
 甲斐@黒川.日本
-
-
 
 http://en.wikipedia.org/wiki/List_of_Internet_top-level_domains#Test_TLDs
 
