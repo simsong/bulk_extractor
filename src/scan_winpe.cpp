@@ -25,6 +25,7 @@
  | "IMAGE_FILE_MACHINE_IA64"
  @NumberOfSections     => %d
  @TimeDateStamp        => %d
+ @TimeDateStampISO     => %s
  @PointToSymbolTable   => %d
  @NumberOfSymbols      => %d
  @SizeOfOptionalHeader => %d
@@ -525,6 +526,7 @@ static std::string scan_winpe_verify (const sbuf_t &sbuf)
     uint16_t pe_Machine              = sbuf.get16u(header_offset);
     uint16_t pe_NumberOfSections     = sbuf.get16u(header_offset + 2);
     uint32_t pe_TimeDateStamp        = sbuf.get32u(header_offset + 4);
+    std::string pe_TimeDateStampISO  = unixTimeToISODate(pe_TimeDateStamp);
     uint32_t pe_PointerToSymbolTable = sbuf.get32u(header_offset + 8);
     uint32_t pe_NumberOfSymbols      = sbuf.get32u(header_offset + 12);
     uint16_t pe_SizeOfOptionalHeader = sbuf.get16u(header_offset + 16);
@@ -545,6 +547,7 @@ static std::string scan_winpe_verify (const sbuf_t &sbuf)
     xml << " Machine=\""              << Machine                  << "\"";
     xml << " NumberOfSections=\""     << pe_NumberOfSections     << "\"";
     xml << " TimeDateStamp=\""        << pe_TimeDateStamp        << "\"";
+    xml << " TimeDateStampISO=\""     << pe_TimeDateStampISO     << "\"";
     xml << " PointerToSymbolTable=\"" << pe_PointerToSymbolTable << "\"";
     xml << " NumberOfSymbols=\""      << pe_NumberOfSymbols      << "\"";
     xml << " SizeOfOptionalHeader=\"" << pe_SizeOfOptionalHeader << "\"";
