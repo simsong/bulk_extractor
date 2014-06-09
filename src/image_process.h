@@ -128,7 +128,7 @@ public:
     virtual int open()=0;				    /* open; return 0 if successful */
     virtual int pread(uint8_t *,size_t bytes,int64_t offset) const =0;	    /* read */
     virtual int64_t image_size() const=0;
-    virtual std::string image_fname() const { return image_fname_;}
+    virtual const std::string &image_fname() const { return image_fname_;}
 
     /* iterator support; these virtual functions are called by iterator through (*myimage) */
     virtual image_process::iterator begin() const =0;
