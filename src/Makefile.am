@@ -59,6 +59,7 @@ bulk_scanners = \
 	scan_extx.cpp \
 	scan_find.cpp \
 	scan_gzip.cpp \
+	scan_httplogs.cpp \
 	scan_hiberfile.cpp pyxpress.c pyxpress.h \
 	scan_json.cpp \
 	scan_kml.cpp \

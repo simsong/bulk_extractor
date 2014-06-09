@@ -208,6 +208,7 @@ extern "C" scanner_t scan_elf;
 extern "C" scanner_t scan_exif;
 extern "C" scanner_t scan_gzip;
 extern "C" scanner_t scan_hiberfile;
+extern "C" scanner_t scan_httplogs;
 extern "C" scanner_t scan_json;
 #ifdef HAVE_LIBLIGHTGREP
 extern "C" scanner_t scan_accts_lg;
