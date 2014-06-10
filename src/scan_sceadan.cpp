@@ -33,13 +33,14 @@ SCEADAN is run through the scan_sceadan scanner:
  * 
  **/
 #ifdef USE_SCEADAN
-#include "sceadan/src/sceadan.h"
-static size_t opt_sceadan_block_size = 512;
+#include "src/sceadan.h"
+static size_t opt_sceadan_block_size = 16384;
 static std::string sceadan_model_file; 
 static std::string sceadan_class_file; 
 static std::string sceadan_mask_file; 
 static sceadan *s = 0;
 static int sceadan_mode = 0;
+static int sceadan_ngram_mode = 2;
 #endif
                  
 extern "C"
@@ -72,18 +73,25 @@ void scan_sceadan(const class scanner_params &sp, const recursion_control_block 
 #endif
     }
 
-#ifdef USE_SCEADAN
     if(sp.phase==scanner_params::PHASE_INIT){
+#ifdef USE_SCEADAN
         s = sceadan_open(sceadan_model_file.c_str(),sceadan_class_file.c_str(),sceadan_mask_file.c_str());
         if(!s){
             std::cerr << "Cannot open sceadan classifier\n";
             exit(1);
         }
+        sceadan_set_ngram_mode(s,sceadan_ngram_mode);
         feature_recorder *sceadanfs = sp.fs.get_name("sceadan");
+        sceadanfs->set_flag(feature_recorder::FLAG_NO_FEATURES);
         sceadanfs->enable_memory_histograms(); // is this really how they are enabled?
+#else
+        std::cerr << "scan_sceadan: not enabled. Recompile with sceadan.\n";
+        exit(1);
+#endif
     }
 
 
+#ifdef USE_SCEADAN
     // classify 
     if(sp.phase==scanner_params::PHASE_SCAN){
 
@@ -93,10 +101,11 @@ void scan_sceadan(const class scanner_params &sp, const recursion_control_block 
 	// Loop through the sbuf in opt_bulk_block_size sized chunks
 	// for each one, examine the entropy and scan for bitlocker (unfortunately hardcoded)
 	// This needs to have a general plug-in architecture
-	for(size_t base=0 ; base+opt_sceadan_block_size <= sp.sbuf.pagesize ; base+=opt_sceadan_block_size){
+	for(size_t base=0 ; base+opt_sceadan_block_size <= sp.sbuf.pagesize ;
+            base+=opt_sceadan_block_size){
 	    sbuf_t sbuf (sp.sbuf, base, opt_sceadan_block_size );
 
-            int code = sceadan_classify_buf(s, sbuf.buf, sbuf.bufsize);
+            int code = sceadan_classify_buf(s,sbuf.buf, sbuf.bufsize);
             const char *type = sceadan_name_for_type(s,code);
             sceadanfs->write(sbuf.pos0,type,"");
 	}

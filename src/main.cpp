@@ -668,14 +668,30 @@ static void dfxml_create(dfxml_writer &xreport,const std::string &command_line,c
 
 
 
+/* It is gross to do this with statics rather than a singleton whose address is passed in 'user',
+ * but that is the way it is implemented.
+ */
+static std::string current_ofname;
+static std::ofstream o;
 static int histogram_dump_callback(void *user,const feature_recorder &fr,
                                    const histogram_def &def,
                                    const std::string &str,const uint64_t &count)
 {
-    if(str.size()==0 && count==0){
-        std::cout << std::string(" ") << fr.name << " " << def.suffix + "...\n";
-        std::cout.flush();
+    if(count==0){
+        std::string ofname = fr.fname_counter(def.suffix);
+        std::cerr << "ofname=" << ofname << "\n";
+        if(current_ofname != ofname){
+            o.open(ofname.c_str());
+            if(!o.is_open()){
+                std::cerr << "Cannot open histogram output file: " << ofname << "\n";
+                return -1;
+            }
+            fr.banner_stamp(o,feature_recorder::histogram_file_header);
+        }
+        return 0;
     }
+
+    o << str << "\t" << "n=" << count << "\n";
     return 0;
 }
 
@@ -1059,15 +1075,15 @@ int main(int argc,char **argv)
 
         /*** PHASE 2 --- Shutdown ***/
         if(cfg.opt_quiet==0) std::cout << "Phase 2. Shutting down scanners\n";
-        xreport->add_timestamp("phase2 start");
+        xreport->add_timestamp("phase2 (shutdown) start");
         be13::plugin::phase_shutdown(fs);
-        xreport->add_timestamp("phase2 end");
+        xreport->add_timestamp("phase2 (shutdown) end");
 
         /*** PHASE 3 --- Create Histograms ***/
         if(cfg.opt_quiet==0) std::cout << "Phase 3. Creating Histograms\n";
-        xreport->add_timestamp("phase3 start");
+        xreport->add_timestamp("phase3 (histograms) start");
         if(opt_enable_histograms) fs.dump_histograms(0,histogram_dump_callback,0);        // TK - add an xml error notifier!
-        xreport->add_timestamp("phase3 end");
+        xreport->add_timestamp("phase3 (histograms) end");
 
         /*** PHASE 4 ---  report and then print final usage information ***/
         xreport->push("report");

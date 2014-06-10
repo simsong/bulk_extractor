@@ -125,35 +125,10 @@ m4_include([m4/slg_gcc_all_warnings.m4])
 ################################################################
 ## Includes
 
-CFLAGS="$CFLAGS -Isceadan/linear"
+CFLAGS="$CFLAGS"
 
 m4_include([src/dfxml/src/dfxml_configure.m4])
 m4_include([src/be13_api/be13_configure.m4])
-
-################################################################
-## sceadan support
-## Enabled for 1.5 release
-# m4_include([src/sceadan/sceadan_configure.m4])
-# https://www.gnu.org/software/autoconf/manual/autoconf-2.60/html_node/External-Software.html
-AC_ARG_WITH([sceadan],
-              AS_HELP_STRING([--with-sceadan], [specify location of UTSA SCEADAN file type identification]),
-	      [AC_DEFINE(USE_SCEADAN, 1, [Use SCEADAN FILE TYPE CLASSIFIER]) sceadan="yes"],
-              [])
-
-AS_IF([test "x$with_sceadan" != xno],
-  [AC_MSG_NOTICE([with_sceadan = with_sceadan])
-   AM_CONDITIONAL([SCEADAN_ENABLED], 1)
-  ]
-)
-
-# if test x"$liblinear" != x"yes" ; then
-#  if test x"$sceadan" == x"yes" ; then
-#    AC_MSG_WARN([Disabling SCEADAN as liblinear is not present])  
-#    sceadan="no"
-#  fi
-#fi
-# AC_CHECK_HEADERS([src/sceadan/src/sceadan.h])
-
 
 ################################################################
 ## rar support
@@ -482,6 +457,37 @@ AC_TRY_COMPILE([#pragma GCC diagnostic ignored "-Wdeprecated-register"],[return 
   [AC_DEFINE(HAVE_DIAGNOSTIC_DEPRECATED_REGISTER,1,[define 1 if GCC supports -Wdeprecated-register])])
   
 ################################################################
+## sceadan support
+## Enabled for 1.5 release
+# m4_include([src/sceadan/sceadan_configure.m4])
+# https://www.gnu.org/software/autoconf/manual/autoconf-2.60/html_node/External-Software.html
+AC_ARG_WITH([sceadan],
+              AS_HELP_STRING([--with-sceadan], [specify location of UTSA SCEADAN file type identification]),
+	      [AC_DEFINE(USE_SCEADAN, 1, [Use SCEADAN FILE TYPE CLASSIFIER]) 
+               sceadan="yes"
+               SCEADAN_DIR=$withval
+               CPPFLAGS="$CPPFLAGS -I$SCEADAN_DIR -I../$SCEADAN_DIR -I../../$SCEADAN_DIR"
+               LDFLAGS="$LDFLAGS -L$SCEADAN_DIR/ -L$SCEADAN_DIR/src/.libs -L../$SCEADAN_DIR/src/.libs"
+               AC_CHECK_LIB([linear],[load_model],,AC_MSG_ERROR([missing -llinear]))
+               AC_CHECK_LIB([m],[fmax],,AC_MSG_ERROR([missing -lm]))
+               AC_CHECK_LIB([sceadan],[sceadan_open],,AC_MSG_ERROR([missing -lsceadan]))
+              ],
+              [])
+
+AC_SUBST(SCEADAN_DIR)
+AM_CONDITIONAL([SCEADAN_ENABLED], [test "yes" = "$sceadan"])
+
+
+# if test x"$liblinear" != x"yes" ; then
+#  if test x"$sceadan" == x"yes" ; then
+#    AC_MSG_WARN([Disabling SCEADAN as liblinear is not present])  
+#    sceadan="no"
+#  fi
+#fi
+# AC_CHECK_HEADERS([src/sceadan/src/sceadan.h])
+
+
+################################################################
 # do we have a broken strchr?
 # This prevents errors in base64_forensics.cpp
 AC_LANG_PUSH(C++)
@@ -497,10 +503,9 @@ else
 fi
 AC_LANG_POP()
 
-## If we re compiling on mingw, add another -lgdi32 to be safe
+## If compiling on mingw, add another -lgdi32 to be safe
 ## This is required becuase some libraries reference functions in gdi32 and, for whatever reason,
 ## the linker is not smart enough to re-check the library
-AC_MSG_NOTICE([MINGW is $mingw])
 if test x"$mingw" = x"yes" ; then
   LIBS="$LIBS -lgdi32"
 else

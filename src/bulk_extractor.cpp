@@ -43,6 +43,7 @@ scanner_t *scanners_builtin[] = {
     scan_kml,
     scan_email,
     // scan_httpheader,
+    scan_httplogs,
     scan_gps,
     scan_net,
     scan_find,
