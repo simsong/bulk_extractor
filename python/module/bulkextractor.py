@@ -176,7 +176,7 @@ class BulkExtractorException(Exception):
 # done at the module level.
 scanners = None
 featurefiles = None
-def init(requested_scanners):
+def init(requested_scanners, lib_name=None):
     """
     Configure the global state of bulk_extractor.  Set the list of enabled
     scanners and disable all others.  This function must be called exactly once
@@ -184,6 +184,8 @@ def init(requested_scanners):
     """
     if initialized():
         raise BulkExtractorException("init may only be called once")
+
+    lib_init(lib_name)
 
     global scanners
     global featurefiles
@@ -275,10 +277,46 @@ def close_handle(handle):
     return lib_be.bulk_extractor_close(handle)
 
 lib_be = None
-if "BULK_EXTRACTOR_LIB_PATH" in os.environ:
-    lib_be = cdll.LoadLibrary(os.environ["BULK_EXTRACTOR_LIB_PATH"])
-else:
-    lib_be = cdll.LoadLibrary("libbulkextractor.so")
+
+def lib_init(lib_name=None):
+    """Initialize the underlying bulk_extractor shared library."""
+
+    if "BULK_EXTRACTOR_LIB_PATH" in os.environ:
+        lib_be = cdll.LoadLibrary(os.environ["BULK_EXTRACTOR_LIB_PATH"])
+    elif lib_name is None:
+        lib_be = cdll.LoadLibrary("libbulkextractor.so")
+    else:
+        lib_be = cdll.LoadLibrary(lib_name)
+
+    lib_be.bulk_extractor_open.restype = BeHandle
+    lib_be.bulk_extractor_open.argtypes = [
+            c_void_p,   # arbitrary user data
+            BeCallback, # callback for the duration of the handle
+            ]
+    lib_be.bulk_extractor_config.restype = None
+    lib_be.bulk_extractor_config.argtypes = [
+            BeHandle, # session obtained from bulk_extractor_open
+            c_uint32, # configuration command
+            c_char_p, # affected scanner
+            c_int64,  # configuration argument
+            ]
+    lib_be.bulk_extractor_analyze_buf.restype = c_int
+    lib_be.bulk_extractor_analyze_buf.argtypes = [
+            BeHandle, # session obtained from bulk_extractor_open
+            c_char_p, # the buffer
+            c_size_t, # buffer length
+            ]
+    lib_be.bulk_extractor_analyze_dev.restype = c_int
+    lib_be.bulk_extractor_analyze_dev.argtypes = [
+            BeHandle, # session obtained from bulk_extractor_open
+            c_char_p, # path to the device
+            c_float,  # fraction of the drive to sample
+            c_int,    # size of each sample (in bytes?)
+            ]
+    lib_be.bulk_extractor_close.restype = c_int
+    lib_be.bulk_extractor_close.argtypes = [
+            BeHandle, # session obtained from bulk_extractor_open
+            ]
 
 
 # see also bulk_extractor_api.h
@@ -318,33 +356,3 @@ BeCallback = CFUNCTYPE(
         c_char_p, # feature context data
         c_size_t, # context length
         )
-
-lib_be.bulk_extractor_open.restype = BeHandle
-lib_be.bulk_extractor_open.argtypes = [
-        c_void_p,   # arbitrary user data
-        BeCallback, # callback for the duration of the handle
-        ]
-lib_be.bulk_extractor_config.restype = None
-lib_be.bulk_extractor_config.argtypes = [
-        BeHandle, # session obtained from bulk_extractor_open
-        c_uint32, # configuration command
-        c_char_p, # affected scanner
-        c_int64,  # configuration argument
-        ]
-lib_be.bulk_extractor_analyze_buf.restype = c_int
-lib_be.bulk_extractor_analyze_buf.argtypes = [
-        BeHandle, # session obtained from bulk_extractor_open
-        c_char_p, # the buffer
-        c_size_t, # buffer length
-        ]
-lib_be.bulk_extractor_analyze_dev.restype = c_int
-lib_be.bulk_extractor_analyze_dev.argtypes = [
-        BeHandle, # session obtained from bulk_extractor_open
-        c_char_p, # path to the device
-        c_float,  # fraction of the drive to sample
-        c_int,    # size of each sample (in bytes?)
-        ]
-lib_be.bulk_extractor_close.restype = c_int
-lib_be.bulk_extractor_close.argtypes = [
-        BeHandle, # session obtained from bulk_extractor_open
-        ]
