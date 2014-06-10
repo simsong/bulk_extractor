@@ -1,3 +1,4 @@
+#include "config.h"
 #include "bulk_extractor.h"
 #include "image_process.h"
 #include "threadpool.h"

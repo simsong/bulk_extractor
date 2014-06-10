@@ -26,6 +26,7 @@
  * file system or remotely through a socket.
  */
 
+#include "config.h"
 #include "bulk_extractor.h"
 
 #ifdef HAVE_HASHID

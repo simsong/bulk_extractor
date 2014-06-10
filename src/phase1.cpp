@@ -1,3 +1,4 @@
+#include "config.h"
 #include "bulk_extractor.h"
 #include "phase1.h"
 #include "threadpool.h"

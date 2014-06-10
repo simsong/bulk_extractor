@@ -363,7 +363,7 @@ def run_outdir(outdir,gdb=False):
     if args.pagesize: cargs += ['-G'+str(args.pagesize)]
     if args.marginsize: cargs += ['-g'+str(args.marginsize)]
     
-    cargs += ['-e','all']    # enable all scanners
+    cargs += ['-e','all', '-x', 'sceadan']    # enable all scanners
     #cargs += ['-e','wordlist']    # enable all scanners
     if args.extra:
         while "  " in args.extra:

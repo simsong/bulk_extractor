@@ -10,6 +10,7 @@
 // Just for this module
 #define _FILE_OFFSET_BITS 64
 
+#include "config.h"
 #include "bulk_extractor.h"
 #include "dig.h"
 

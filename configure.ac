@@ -190,13 +190,17 @@ AC_ARG_ENABLE([address-sanitizer], AS_HELP_STRING([--enable-address-sanitizer], 
 # PTHREAD support
 # With special nods to compiling under mingw
 
-if test  x"$mingw" = x"yes";  then
+case $host in 
+ *mingw*)
+  AC_MSG_NOTICE([mingw pthreads support])
   CFLAGS="$CFLAGS -mthreads -pthread "
   CPPFLAGS="-DPTW32_STATIC_LIB $CPPFLAGS"
   CXXFLAGS="$CXXFLAGS -mthreads -pthread "
   LDFLAGS="$LDFLAGS -mthreads -pthread "
   AC_DEFINE(HAVE_PTHREAD,1,[Defined to POSIX threads for mingw])
-else
+ ;;
+ *)
+  AC_MSG_NOTICE([normal pthreads support])
   m4_include([m4/ax_pthread.m4])
   AC_MSG_CHECKING([Running pthread test from http://www.gnu.org/software/autoconf-archive/ax_pthread.html..])
   AX_PTHREAD([
@@ -206,7 +210,7 @@ else
               CXXFLAGS="$PTHREAD_CFLAGS $CXXFLAGS "
               CC="$PTHREAD_CC"],
             [AC_MSG_ERROR(bulk_extractor requires pthreads)])
-fi
+esac
 
 AC_MSG_NOTICE([After pthread test, CFLAGS: $CFLAGS])
 AC_MSG_NOTICE([After pthread test, CXXFLAGS: $CXXFLAGS])

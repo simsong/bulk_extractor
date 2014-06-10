@@ -15,6 +15,7 @@
 #include <stdint.h>
 
 #if defined(WIN32) || defined(MINGW) || defined(__MINGW32__) || defined(__MINGW64__)
+#include <winsock2.h>
 #include <windows.h>
 #include <windowsx.h>
 #include <tchar.h>
