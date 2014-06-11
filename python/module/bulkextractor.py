@@ -281,6 +281,10 @@ lib_be = None
 def lib_init(lib_name=None):
     """Initialize the underlying bulk_extractor shared library."""
 
+    global lib_be
+    if lib_be is not None:
+        return
+
     if "BULK_EXTRACTOR_LIB_PATH" in os.environ:
         lib_be = cdll.LoadLibrary(os.environ["BULK_EXTRACTOR_LIB_PATH"])
     elif lib_name is None:
