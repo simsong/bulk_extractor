@@ -62,7 +62,6 @@ void scan_sqlite(const class scanner_params &sp,const recursion_control_block &r
                 if (dbsize_in_pages>=1){
 
                     /* Write it out! */
-                    std::cerr << "calling carve " << sbuf << " " << begin << " dbsize=" << dbsize << " pagesize=" << pagesize << "\n";
                     sqlite_recorder->carve(sbuf,begin,begin+dbsize,".sqlite3");
             
                     /* Worry about overflow */

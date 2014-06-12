@@ -265,62 +265,49 @@ int bulk_extractor_analyze_dev(BEFILE *bef,const char *fname,float frac,int page
 {
     bool sampling_mode = frac < 1.0; // are we in sampling mode or full-disk mode?
 
-    struct stat st;
-    if(stat(fname,&st)){
-        return -1;                      // cannot stat file
-    }
-#if 0
-    if(S_ISREG(st.st_mode)){            // files we handle with a mapped sbuf
-        const sbuf_t *sbuf = sbuf_t::map_file(fname);
-        if(!sbuf) return -1;
-        be13::plugin::process_sbuf(scanner_params(scanner_params::PHASE_SCAN,*sbuf,bef->cfs));
-        delete sbuf;
-        return 0;
-    }
-#endif
-    if(S_ISBLK(st.st_mode) || S_ISCHR(st.st_mode) || S_ISREG(st.st_mode)){
-        /* A single-threaded sampling bulk_extractor.
-         * It may be better to do this with two threads---one that does the reading (and seeking),
-         * the other that doe the analysis.
-         * 
-         * This looks like the code in phase1.cpp.
-         */
-        BulkExtractor_Phase1::blocklist_t blocks_to_sample;
-        BulkExtractor_Phase1::blocklist_t::const_iterator si = blocks_to_sample.begin(); // sampling iterator
+    /* A single-threaded sampling bulk_extractor.
+     * It may be better to do this with two threads---one that does the reading (and seeking),
+     * the other that doe the analysis.
+     * 
+     * This looks like the code in phase1.cpp.
+     */
+    BulkExtractor_Phase1::blocklist_t blocks_to_sample;
+    BulkExtractor_Phase1::blocklist_t::const_iterator si = blocks_to_sample.begin(); // sampling iterator
 
-        image_process *p = image_process::open(fname,false,pagesize,pagesize);
-        image_process::iterator it = p->begin(); // get an iterator
+    image_process *p = image_process::open(fname,false,pagesize,pagesize);
+    image_process::iterator it = p->begin(); // get an iterator
 
-        if(sampling_mode){
-            BulkExtractor_Phase1::make_sorted_random_blocklist(&blocks_to_sample, it.max_blocks(),frac);
-            si = blocks_to_sample.begin();    // get the new beginning
+    if(sampling_mode){
+        BulkExtractor_Phase1::make_sorted_random_blocklist(&blocks_to_sample, it.max_blocks(),frac);
+        si = blocks_to_sample.begin();    // get the new beginning
+    }
+
+    while(true){
+        if(sampling_mode){             // sampling; position at the next block
+            if(si==blocks_to_sample.end()){
+                break;
+            }
+            it.seek_block(*si);
+        } else {
+            if (it == p->end()){    // end of regular image
+                break;
+            }
         }
 
-        while(true){
-            if(sampling_mode){             // sampling; position at the next block
-                if(si==blocks_to_sample.end()) break;
-                it.seek_block(*si);
-            } else {
-                if (it == p->end()){    // end of regular image
-                    break;
-                }
-            }
-
-            try {
-                sbuf_t *sbuf = it.sbuf_alloc();
-                if(sbuf==0) break;      // eof
-                be13::plugin::process_sbuf(scanner_params(scanner_params::PHASE_SCAN,*sbuf,bef->cfs));
-                delete sbuf;
-            }
-            catch (const std::exception &e) {
-                (*bef->cfs.cb)(bef->cfs.user,BULK_EXTRACTOR_API_EXCEPTION,0,
-                               e.what(),it.get_pos0().str().c_str(),"",0,"",0);
-            }
-            if(sampling_mode){
-                ++si;
-            } else {
-                ++it;
-            }
+        try {
+            sbuf_t *sbuf = it.sbuf_alloc();
+            if(sbuf==0) break;      // eof
+            be13::plugin::process_sbuf(scanner_params(scanner_params::PHASE_SCAN,*sbuf,bef->cfs));
+            delete sbuf;
+        }
+        catch (const std::exception &e) {
+            (*bef->cfs.cb)(bef->cfs.user,BULK_EXTRACTOR_API_EXCEPTION,0,
+                           e.what(),it.get_pos0().str().c_str(),"",0,"",0);
+        }
+        if(sampling_mode){
+            ++si;
+        } else {
+            ++it;
         }
     }
     return 0;

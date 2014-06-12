@@ -29,9 +29,6 @@
 #define PATH_MAX 65536
 #endif
 
-extern scanner_def scanners[];
-
-
 #ifndef MIN
 #define MIN(a,b) ((a)<(b) ? (a) : (b))
 #endif 
@@ -50,17 +47,35 @@ extern scanner_def scanners[];
  * files and devices. This seems to work. It only requires a functioning pread64 or pread.
  */
 
-#if !defined(HAVE_PREAD64) && !defined(HAVE_PREAD) && defined(HAVE__LSEEKI64)
+#ifdef WIN32
+int pread64(HANDLE current_handle,char *buf,size_t bytes,uint64_t offset)
+{
+    DWORD bytes_read = 0;
+    LARGE_INTEGER li;
+    li.QuadPart = offset;
+    li.LowPart = SetFilePointer(current_handle, li.LowPart, &li.HighPart, FILE_BEGIN);
+    if(li.LowPart == INVALID_SET_FILE_POINTER) return -1;
+    if (FALSE == ReadFile(current_handle, buf, (DWORD) bytes, &bytes_read, NULL)){
+        return -1;
+    }
+    return bytes_read;
+}
+#else
+  #if !defined(HAVE_PREAD64) && !defined(HAVE_PREAD) && defined(HAVE__LSEEKI64)
 static size_t pread64(int d,void *buf,size_t nbyte,int64_t offset)
 {
     if(_lseeki64(d,offset,0)!=offset) return -1;
     return read(d,buf,nbyte);
 }
+  #endif
 #endif
 
+#ifdef WIN32
+int64_t get_filesize(HANDLE fd)
+#else
 int64_t get_filesize(int fd)
+#endif
 {
-    struct stat st;
     char buf[64];
     int64_t raw_filesize = 0;		/* needs to be signed for lseek */
     int bits = 0;
@@ -79,10 +94,14 @@ int64_t get_filesize(int fd)
     }
 #endif
 
+#ifndef WIN32
     /* We can use fstat if sizeof(st_size)==8 and st_size>0 */
+    struct stat st;
+    memset(&st,0,sizeof(st));
     if(sizeof(st.st_size)==8 && fstat(fd,&st)==0){
 	if(st.st_size>0) return st.st_size;
     }
+#endif
 
     /* Phase 1; figure out how far we can seek... */
     for(bits=0;bits<60;bits++){
@@ -106,6 +125,35 @@ int64_t get_filesize(int fd)
     if(raw_filesize>0) raw_filesize+=1;	/* seems to be needed */
     return raw_filesize;
 }
+
+#ifndef O_BINARY
+#define O_BINARY 0
+#endif
+
+static int64_t getSizeOfFile(const std::string &fname)
+{
+#ifdef WIN32
+    HANDLE current_handle = CreateFileA(fname.c_str(), FILE_READ_DATA,
+                                    FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+				     OPEN_EXISTING, 0, NULL);
+    if(current_handle==INVALID_HANDLE_VALUE){
+        fprintf(stderr,"bulk_extractor WIN32 subsystem: cannot open file '%s'\n",fname.c_str());
+        return 0;
+    }
+    int64_t fname_length = get_filesize(current_handle);
+    ::CloseHandle(current_handle);
+#else
+    int fd = ::open(fname.c_str(),O_RDONLY|O_BINARY);
+    if(fd<0){
+        std::cerr << "*** unix getSizeOfFile: Cannot open " << fname << ": " << strerror(errno) << "\n";
+        return 0;
+    }
+    int64_t fname_length = get_filesize(fd);
+    ::close(fd);
+#endif
+    return fname_length;
+}
+
 
 
 /****************************************************************
@@ -533,18 +581,6 @@ process_raw::~process_raw() {
 #endif
 }
 
-static int64_t getSizeOfFile(const std::string &fname)
-{
-    int fd = ::open(fname.c_str(),O_RDONLY|O_BINARY);
-    if(fd<0){
-        std::cerr << "*** Cannot open " << fname << ": " << strerror(errno) << "\n";
-	exit(1);
-    }
-    int64_t fname_length = get_filesize(fd);
-    ::close(fd);
-    return fname_length;
-}
-
 #ifdef WIN32
 BOOL GetDriveGeometry(const wchar_t *wszPath, DISK_GEOMETRY *pdg)
 {
@@ -578,12 +614,6 @@ BOOL GetDriveGeometry(const wchar_t *wszPath, DISK_GEOMETRY *pdg)
     return (bResult);
 }
 
-static bool isPhysicalDrive(const std::string &fname)
-{
-    return strcasecmp("\\\\.\\PhysicalDrive",fname.substr(0,17).c_str())==0;
-}
-
-
 #endif
 
 /**
@@ -594,20 +624,18 @@ void process_raw::add_file(const std::string &fname)
     int64_t fname_length = 0;
   
     /* Get the physical size of drive under Windows */
+    fname_length = getSizeOfFile(fname);
 #ifdef WIN32
-    if(isPhysicalDrive(fname)){
-        fprintf(stderr,"%s is a physical drive\n",fname.c_str());
+    if (fname_length==0){
+        /* On Windows, see if we can use this */
+        fprintf(stderr,"%s checking physical drive\n",fname.c_str());
         // http://msdn.microsoft.com/en-gb/library/windows/desktop/aa363147%28v=vs.85%29.aspx
         DISK_GEOMETRY pdg = { 0 }; // disk drive geometry structure
         std::wstring wszDrive = safe_utf8to16(fname);
         GetDriveGeometry(wszDrive.c_str(), &pdg);
         fname_length = pdg.Cylinders.QuadPart * (ULONG)pdg.TracksPerCylinder *
             (ULONG)pdg.SectorsPerTrack * (ULONG)pdg.BytesPerSector;
-    } else {
-        fname_length = getSizeOfFile(fname);
     }
-#else
-    fname_length = getSizeOfFile(fname);
 #endif
     file_list.push_back(file_info(fname,raw_filesize,fname_length));
     raw_filesize += fname_length;
@@ -1003,7 +1031,8 @@ image_process *image_process::open(std::string fn,bool opt_recurse,
     }
     /* Try to open it */
     if(ip->open()){
-	errx(1,"Cannot open %s",fn.c_str());
+	fprintf(stderr,"Cannot open %s",fn.c_str());
+        return 0;
     }
     return ip;
 }
