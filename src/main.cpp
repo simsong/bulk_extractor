@@ -235,8 +235,11 @@ void validate_fn(const std::string &fn)
 {
     int r= access(fn.c_str(),R_OK);
     if(r!=0){
+#ifndef WIN32
+      /* ignore this check under windows for now */
         std::cerr << "cannot open: " << fn << ": " << strerror(errno) << " (code " << r << ")\n";
 	exit(1);
+#endif
     }
     if(fn.size()>3){
 	size_t e = fn.rfind('.');

@@ -316,7 +316,6 @@ int process_ewf::open()
     }
     libewf_handle_get_media_size(handle,(size64_t *)&ewf_filesize,NULL);
 #else
-
     amount_of_filenames = libewf_glob(fname,strlen(fname),LIBEWF_FORMAT_UNKNOWN,&libewf_filenames);
     if(amount_of_filenames<0){
 	err(1,"libewf_glob");
@@ -373,9 +372,6 @@ int process_ewf::pread(unsigned char *buf,size_t bytes,int64_t offset) const
     libewf_error_t *error=0;
     int ret = libewf_handle_read_random(handle,buf,bytes,offset,&error);
     if(ret<0){
-//#ifdef HAVE_LIBEWF_ERROR_BACKTRACE_FPRINT
-	//if(debug & DEBUG_PEDANTIC) libewf_error_backtrace_fprint(error,stderr);
-//#endif
 	libewf_error_fprint(error,stderr);
 	libewf_error_free(&error);
     }
@@ -522,9 +518,9 @@ process_raw::process_raw(const std::string &fname,size_t pagesize_,size_t margin
     :image_process(fname,pagesize_,margin_),
      file_list(),raw_filesize(0),current_file_name(),
 #ifdef WIN32
-                                        current_handle(INVALID_HANDLE_VALUE)
+     current_handle(INVALID_HANDLE_VALUE)
 #else
-                                        current_fd(-1)
+     current_fd(-1)
 #endif
 {
 }
@@ -537,10 +533,7 @@ process_raw::~process_raw() {
 #endif
 }
 
-/**
- * Add the file to the list, keeping track of the total size
- */
-void process_raw::add_file(const std::string &fname)
+static int64_t getSizeOfFile(const std::string &fname)
 {
     int fd = ::open(fname.c_str(),O_RDONLY|O_BINARY);
     if(fd<0){
@@ -549,6 +542,74 @@ void process_raw::add_file(const std::string &fname)
     }
     int64_t fname_length = get_filesize(fd);
     ::close(fd);
+    return fname_length;
+}
+
+#ifdef WIN32
+BOOL GetDriveGeometry(const wchar_t *wszPath, DISK_GEOMETRY *pdg)
+{
+    HANDLE hDevice = INVALID_HANDLE_VALUE;  // handle to the drive to be examined 
+    BOOL bResult   = FALSE;                 // results flag
+    DWORD junk     = 0;                     // discard results
+
+    hDevice = CreateFileW(wszPath,          // drive to open
+                          0,                // no access to the drive
+                          FILE_SHARE_READ | // share mode
+                          FILE_SHARE_WRITE, 
+                          NULL,             // default security attributes
+                          OPEN_EXISTING,    // disposition
+                          0,                // file attributes
+                          NULL);            // do not copy file attributes
+
+    if (hDevice == INVALID_HANDLE_VALUE)    // cannot open the drive
+        {
+            return (FALSE);
+        }
+
+    bResult = DeviceIoControl(hDevice,                       // device to be queried
+                              IOCTL_DISK_GET_DRIVE_GEOMETRY, // operation to perform
+                              NULL, 0,                       // no input buffer
+                              pdg, sizeof(*pdg),            // output buffer
+                              &junk,                         // # bytes returned
+                              (LPOVERLAPPED) NULL);          // synchronous I/O
+
+    CloseHandle(hDevice);
+
+    return (bResult);
+}
+
+static bool isPhysicalDrive(const std::string &fname)
+{
+    return strcasecmp("\\\\.\\PhysicalDrive",fname.substr(0,17).c_str())==0;
+}
+
+
+#endif
+
+/**
+ * Add the file to the list, keeping track of the total size
+ */
+void process_raw::add_file(const std::string &fname)
+{
+    int64_t fname_length = 0;
+  
+    /* Get the physical size of drive under Windows */
+#ifdef WIN32
+    if(isPhysicalDrive(fname)){
+        fprintf(stderr,"%s is a physical drive\n",fname.c_str());
+        // http://msdn.microsoft.com/en-gb/library/windows/desktop/aa363147%28v=vs.85%29.aspx
+        DISK_GEOMETRY pdg = { 0 }; // disk drive geometry structure
+        BOOL bResult = FALSE;      // generic results flag
+        std::wstring wszDrive = safe_utf8to16(fname);
+        bResult = GetDriveGeometry(wszDrive.c_str(), &pdg);
+        fname_length = pdg.Cylinders.QuadPart * (ULONG)pdg.TracksPerCylinder *
+            (ULONG)pdg.SectorsPerTrack * (ULONG)pdg.BytesPerSector;
+    } else {
+        fname_length = getSizeOfFile(fname);
+    }
+#else
+    fname_length = getSizeOfFile(fname);
+#endif
     file_list.push_back(file_info(fname,raw_filesize,fname_length));
     raw_filesize += fname_length;
 }
@@ -616,9 +677,14 @@ int process_raw::pread(unsigned char *buf,size_t bytes,int64_t offset) const
 	current_file_name = fi->name;
 #ifdef WIN32
         current_handle = CreateFileA(fi->name.c_str(), FILE_READ_DATA,
-                                    FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
-        if(current_handle==INVALID_HANDLE_VALUE) return -1;
+                                    FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+				     OPEN_EXISTING, 0, NULL);
+        if(current_handle==INVALID_HANDLE_VALUE){
+	  fprintf(stderr,"bulk_extractor WIN32 subsystem: cannot open file '%s'\n",fi->name.c_str());
+	  return -1;
+	}
 #else        
+	fprintf(stderr,"Attempt to open %s\n",fi->name.c_str());
 	current_fd = ::open(fi->name.c_str(),O_RDONLY|O_BINARY);
 	if(current_fd<=0) return -1;	// can't read this data
 #endif
@@ -866,8 +932,14 @@ image_process *image_process::open(std::string fn,bool opt_recurse,
     image_process *ip = 0;
     std::string ext = filename_extension(fn);
     struct stat st;
+    bool  is_windows_unc = false;
 
-    if(stat(fn.c_str(),&st)){
+#ifdef WIN32
+    if(fn.size()>2 && fn[0]=='\\' && fn[1]=='\\') is_windows_unc=true;
+#endif
+
+    memset(&st,0,sizeof(st));
+    if(stat(fn.c_str(),&st) && !is_windows_unc){
 	return 0;			// no file?
     }
     if(S_ISDIR(st.st_mode)){
