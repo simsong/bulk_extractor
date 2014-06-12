@@ -599,9 +599,8 @@ void process_raw::add_file(const std::string &fname)
         fprintf(stderr,"%s is a physical drive\n",fname.c_str());
         // http://msdn.microsoft.com/en-gb/library/windows/desktop/aa363147%28v=vs.85%29.aspx
         DISK_GEOMETRY pdg = { 0 }; // disk drive geometry structure
-        BOOL bResult = FALSE;      // generic results flag
         std::wstring wszDrive = safe_utf8to16(fname);
-        bResult = GetDriveGeometry(wszDrive.c_str(), &pdg);
+        GetDriveGeometry(wszDrive.c_str(), &pdg);
         fname_length = pdg.Cylinders.QuadPart * (ULONG)pdg.TracksPerCylinder *
             (ULONG)pdg.SectorsPerTrack * (ULONG)pdg.BytesPerSector;
     } else {
