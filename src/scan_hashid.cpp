@@ -196,7 +196,7 @@ void scan_hashid(const class scanner_params &sp,
                     // show relavent settable options
                     std::cout << "hashid: hashdb_mode=" << hashdb_mode << "\n"
                               << "hashid: hashdb_block_size=" << hashdb_block_size << "\n"
-                              << "hashid: hashdb_max_duplicates=" << hashdb_block_size << "\n";
+                              << "hashid: hashdb_max_duplicates=" << hashdb_max_duplicates << "\n";
                     std::cout << "hashid: Creating hashdb directory " << hashdb_dir << "\n";
                     return;
                 }
