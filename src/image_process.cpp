@@ -29,9 +29,6 @@
 #define PATH_MAX 65536
 #endif
 
-extern scanner_def scanners[];
-
-
 #ifndef MIN
 #define MIN(a,b) ((a)<(b) ? (a) : (b))
 #endif 
@@ -50,17 +47,35 @@ extern scanner_def scanners[];
  * files and devices. This seems to work. It only requires a functioning pread64 or pread.
  */
 
-#if !defined(HAVE_PREAD64) && !defined(HAVE_PREAD) && defined(HAVE__LSEEKI64)
+#ifdef WIN32
+int pread64(HANDLE current_handle,char *buf,size_t bytes,uint64_t offset)
+{
+    DWORD bytes_read = 0;
+    LARGE_INTEGER li;
+    li.QuadPart = offset;
+    li.LowPart = SetFilePointer(current_handle, li.LowPart, &li.HighPart, FILE_BEGIN);
+    if(li.LowPart == INVALID_SET_FILE_POINTER) return -1;
+    if (FALSE == ReadFile(current_handle, buf, (DWORD) bytes, &bytes_read, NULL)){
+        return -1;
+    }
+    return bytes_read;
+}
+#else
+  #if !defined(HAVE_PREAD64) && !defined(HAVE_PREAD) && defined(HAVE__LSEEKI64)
 static size_t pread64(int d,void *buf,size_t nbyte,int64_t offset)
 {
     if(_lseeki64(d,offset,0)!=offset) return -1;
     return read(d,buf,nbyte);
 }
+  #endif
 #endif
 
+#ifdef WIN32
+int64_t get_filesize(HANDLE fd)
+#else
 int64_t get_filesize(int fd)
+#endif
 {
-    struct stat st;
     char buf[64];
     int64_t raw_filesize = 0;		/* needs to be signed for lseek */
     int bits = 0;
@@ -79,10 +94,14 @@ int64_t get_filesize(int fd)
     }
 #endif
 
+#ifndef WIN32
     /* We can use fstat if sizeof(st_size)==8 and st_size>0 */
+    struct stat st;
+    memset(&st,0,sizeof(st));
     if(sizeof(st.st_size)==8 && fstat(fd,&st)==0){
 	if(st.st_size>0) return st.st_size;
     }
+#endif
 
     /* Phase 1; figure out how far we can seek... */
     for(bits=0;bits<60;bits++){
@@ -106,6 +125,35 @@ int64_t get_filesize(int fd)
     if(raw_filesize>0) raw_filesize+=1;	/* seems to be needed */
     return raw_filesize;
 }
+
+#ifndef O_BINARY
+#define O_BINARY 0
+#endif
+
+static int64_t getSizeOfFile(const std::string &fname)
+{
+#ifdef WIN32
+    HANDLE current_handle = CreateFileA(fname.c_str(), FILE_READ_DATA,
+                                    FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+				     OPEN_EXISTING, 0, NULL);
+    if(current_handle==INVALID_HANDLE_VALUE){
+        fprintf(stderr,"bulk_extractor WIN32 subsystem: cannot open file '%s'\n",fname.c_str());
+        return 0;
+    }
+    int64_t fname_length = get_filesize(current_handle);
+    ::CloseHandle(current_handle);
+#else
+    int fd = ::open(fname.c_str(),O_RDONLY|O_BINARY);
+    if(fd<0){
+        std::cerr << "*** unix getSizeOfFile: Cannot open " << fname << ": " << strerror(errno) << "\n";
+        return 0;
+    }
+    int64_t fname_length = get_filesize(fd);
+    ::close(fd);
+#endif
+    return fname_length;
+}
+
 
 
 /****************************************************************
@@ -316,7 +364,6 @@ int process_ewf::open()
     }
     libewf_handle_get_media_size(handle,(size64_t *)&ewf_filesize,NULL);
 #else
-
     amount_of_filenames = libewf_glob(fname,strlen(fname),LIBEWF_FORMAT_UNKNOWN,&libewf_filenames);
     if(amount_of_filenames<0){
 	err(1,"libewf_glob");
@@ -373,9 +420,6 @@ int process_ewf::pread(unsigned char *buf,size_t bytes,int64_t offset) const
     libewf_error_t *error=0;
     int ret = libewf_handle_read_random(handle,buf,bytes,offset,&error);
     if(ret<0){
-//#ifdef HAVE_LIBEWF_ERROR_BACKTRACE_FPRINT
-	//if(debug & DEBUG_PEDANTIC) libewf_error_backtrace_fprint(error,stderr);
-//#endif
 	libewf_error_fprint(error,stderr);
 	libewf_error_free(&error);
     }
@@ -522,9 +566,9 @@ process_raw::process_raw(const std::string &fname,size_t pagesize_,size_t margin
     :image_process(fname,pagesize_,margin_),
      file_list(),raw_filesize(0),current_file_name(),
 #ifdef WIN32
-                                        current_handle(INVALID_HANDLE_VALUE)
+     current_handle(INVALID_HANDLE_VALUE)
 #else
-                                        current_fd(-1)
+     current_fd(-1)
 #endif
 {
 }
@@ -537,18 +581,62 @@ process_raw::~process_raw() {
 #endif
 }
 
+#ifdef WIN32
+BOOL GetDriveGeometry(const wchar_t *wszPath, DISK_GEOMETRY *pdg)
+{
+    HANDLE hDevice = INVALID_HANDLE_VALUE;  // handle to the drive to be examined 
+    BOOL bResult   = FALSE;                 // results flag
+    DWORD junk     = 0;                     // discard results
+
+    hDevice = CreateFileW(wszPath,          // drive to open
+                          0,                // no access to the drive
+                          FILE_SHARE_READ | // share mode
+                          FILE_SHARE_WRITE, 
+                          NULL,             // default security attributes
+                          OPEN_EXISTING,    // disposition
+                          0,                // file attributes
+                          NULL);            // do not copy file attributes
+
+    if (hDevice == INVALID_HANDLE_VALUE)    // cannot open the drive
+        {
+            return (FALSE);
+        }
+
+    bResult = DeviceIoControl(hDevice,                       // device to be queried
+                              IOCTL_DISK_GET_DRIVE_GEOMETRY, // operation to perform
+                              NULL, 0,                       // no input buffer
+                              pdg, sizeof(*pdg),            // output buffer
+                              &junk,                         // # bytes returned
+                              (LPOVERLAPPED) NULL);          // synchronous I/O
+
+    CloseHandle(hDevice);
+
+    return (bResult);
+}
+
+#endif
+
 /**
  * Add the file to the list, keeping track of the total size
  */
 void process_raw::add_file(const std::string &fname)
 {
-    int fd = ::open(fname.c_str(),O_RDONLY|O_BINARY);
-    if(fd<0){
-        std::cerr << "*** Cannot open " << fname << ": " << strerror(errno) << "\n";
-	exit(1);
+    int64_t fname_length = 0;
+  
+    /* Get the physical size of drive under Windows */
+    fname_length = getSizeOfFile(fname);
+#ifdef WIN32
+    if (fname_length==0){
+        /* On Windows, see if we can use this */
+        fprintf(stderr,"%s checking physical drive\n",fname.c_str());
+        // http://msdn.microsoft.com/en-gb/library/windows/desktop/aa363147%28v=vs.85%29.aspx
+        DISK_GEOMETRY pdg = { 0 }; // disk drive geometry structure
+        std::wstring wszDrive = safe_utf8to16(fname);
+        GetDriveGeometry(wszDrive.c_str(), &pdg);
+        fname_length = pdg.Cylinders.QuadPart * (ULONG)pdg.TracksPerCylinder *
+            (ULONG)pdg.SectorsPerTrack * (ULONG)pdg.BytesPerSector;
     }
-    int64_t fname_length = get_filesize(fd);
-    ::close(fd);
+#endif
     file_list.push_back(file_info(fname,raw_filesize,fname_length));
     raw_filesize += fname_length;
 }
@@ -616,9 +704,14 @@ int process_raw::pread(unsigned char *buf,size_t bytes,int64_t offset) const
 	current_file_name = fi->name;
 #ifdef WIN32
         current_handle = CreateFileA(fi->name.c_str(), FILE_READ_DATA,
-                                    FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
-        if(current_handle==INVALID_HANDLE_VALUE) return -1;
+                                    FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+				     OPEN_EXISTING, 0, NULL);
+        if(current_handle==INVALID_HANDLE_VALUE){
+	  fprintf(stderr,"bulk_extractor WIN32 subsystem: cannot open file '%s'\n",fi->name.c_str());
+	  return -1;
+	}
 #else        
+	fprintf(stderr,"Attempt to open %s\n",fi->name.c_str());
 	current_fd = ::open(fi->name.c_str(),O_RDONLY|O_BINARY);
 	if(current_fd<=0) return -1;	// can't read this data
 #endif
@@ -866,8 +959,14 @@ image_process *image_process::open(std::string fn,bool opt_recurse,
     image_process *ip = 0;
     std::string ext = filename_extension(fn);
     struct stat st;
+    bool  is_windows_unc = false;
 
-    if(stat(fn.c_str(),&st)){
+#ifdef WIN32
+    if(fn.size()>2 && fn[0]=='\\' && fn[1]=='\\') is_windows_unc=true;
+#endif
+
+    memset(&st,0,sizeof(st));
+    if(stat(fn.c_str(),&st) && !is_windows_unc){
 	return 0;			// no file?
     }
     if(S_ISDIR(st.st_mode)){
@@ -932,7 +1031,8 @@ image_process *image_process::open(std::string fn,bool opt_recurse,
     }
     /* Try to open it */
     if(ip->open()){
-	errx(1,"Cannot open %s",fn.c_str());
+	fprintf(stderr,"Cannot open %s",fn.c_str());
+        return 0;
     }
     return ip;
 }

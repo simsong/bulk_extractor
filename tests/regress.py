@@ -269,8 +269,8 @@ def analyze_outdir(outdir):
 
     fnpart = ".".join(b.image_filename().split('/')[-1].split('.')[:-1])
 
-    if b.feature_files():
-        ffns = sorted(list(b.feature_files()))
+    ffns = sorted(list(b.feature_files())) 
+    if ffns:
         features = {}
         print("")
         print("Feature Files:        {}".format(len(ffns)))
