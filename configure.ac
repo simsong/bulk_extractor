@@ -298,7 +298,11 @@ if test x"$lightgrep" == x"yes"; then
     PKG_CONFIG="$PKG_CONFIG --static"
   else
     # pkg-config doesn't look in /usr/local/lib on some systems
-    export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+    if test x"$PKG_CONFIG_PATH" != x; then
+      export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig
+    else
+      export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+    fi
   fi
 
   PKG_CHECK_MODULES([lightgrep], [lightgrep])
