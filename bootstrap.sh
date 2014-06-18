@@ -23,8 +23,7 @@ if [ ! -e config.guess -o ! -e config.sub -o ! -e install-sh -o ! -e missing ]; 
 else
     autoreconf -f
 fi
-# inform user about address sanitizer
-echo be sure to run ./configure
+
 if [ `uname -s` = 'Darwin' ]; then
   echo To enable AddressSanitizer on Mac, you must install gcc-4.8 with macports, then:
   echo CC=gcc-mp-4.8 CXX=g++-mp-4.8  sh configure --enable-address-sanitizer
