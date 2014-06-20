@@ -6,7 +6,7 @@ R4 (32-core Dell 760)
 writing to feature file files alone: 497 sec (86.25 MB/sec) (≈60 sec spent writing wordlist)
                                      492 sec (86.55 MB/sec)
 
---no-feqaturesql:
+--no-featuresql
     "PRAGMA synchronous =  OFF",       
     "PRAGMA journal_mode=MEMORY",
     "PRAGMA temp_store=MEMORY",
