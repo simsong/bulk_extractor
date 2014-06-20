@@ -33,7 +33,7 @@ SCEADAN is run through the scan_sceadan scanner:
  * 
  **/
 #ifdef USE_SCEADAN
-#include "src/sceadan.h"
+#include "sceadan.h"
 static size_t opt_sceadan_block_size = 16384;
 static std::string sceadan_model_file; 
 static std::string sceadan_class_file; 

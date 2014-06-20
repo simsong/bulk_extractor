@@ -321,11 +321,20 @@ AC_CHECK_FUNCS([regcomp tre_regcomp tre_version])
 ## (Note that bulk_extractor itself no longer requires openssl)
 AC_DEFINE([HAVE_STL],1,[We have the Standard Template Library])
 AC_CHECK_HEADERS([openssl/x509.h openssl/pem.h])
-AC_CHECK_HEADER([afflib/afflib.h],
+
+AC_ARG_ENABLE([afflib],
+    [AS_HELP_STRING([--disable-afflib], [disable afflib support])],
+    [afflib=no],
+    [afflib=yes])
+AC_MSG_NOTICE([afflib is $afflib])
+
+if test x"$afflib" == x"yes" ; then
+  AC_CHECK_HEADER([afflib/afflib.h],
 	    	[AC_DEFINE(HAVE_AFFLIB_AFFLIB_H,1,[Do we have afflib/afflib.h?])]
 		[AC_CHECK_LIB([afflib],af_get_pagesize,,
 	   AC_MSG_WARN([AFFLIB not found or the version of AFFLIB installed does not support af_get_pagesize; no AFF support]))],
 	[])
+fi
 
 
 ################################################################
@@ -470,9 +479,8 @@ AC_ARG_WITH([sceadan],
 	      [AC_DEFINE(USE_SCEADAN, 1, [Use SCEADAN FILE TYPE CLASSIFIER]) 
                sceadan="yes"
                SCEADAN_DIR=$withval
-               CPPFLAGS="$CPPFLAGS -I$SCEADAN_DIR -I../$SCEADAN_DIR -I../../$SCEADAN_DIR"
+               CPPFLAGS="$CPPFLAGS -I$SCEADAN_DIR/src -I../$SCEADAN_DIR/src -I../../$SCEADAN_DIR/src"
                LDFLAGS="$LDFLAGS -L$SCEADAN_DIR/ -L$SCEADAN_DIR/src/.libs -L../$SCEADAN_DIR/src/.libs"
-               AC_CHECK_LIB([linear],[load_model],,AC_MSG_ERROR([missing -llinear]))
                AC_CHECK_LIB([m],[fmax],,AC_MSG_ERROR([missing -lm]))
                AC_CHECK_LIB([sceadan],[sceadan_open],,AC_MSG_ERROR([missing -lsceadan]))
               ],
@@ -481,14 +489,6 @@ AC_ARG_WITH([sceadan],
 AC_SUBST(SCEADAN_DIR)
 AM_CONDITIONAL([SCEADAN_ENABLED], [test "yes" = "$sceadan"])
 
-
-# if test x"$liblinear" != x"yes" ; then
-#  if test x"$sceadan" == x"yes" ; then
-#    AC_MSG_WARN([Disabling SCEADAN as liblinear is not present])  
-#    sceadan="no"
-#  fi
-#fi
-# AC_CHECK_HEADERS([src/sceadan/src/sceadan.h])
 
 
 ################################################################

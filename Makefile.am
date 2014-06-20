@@ -92,12 +92,12 @@ winlibs:
 	@echo '*****************************************'
 	if [ -r Makefile ]; then $(MAKE) distclean ; fi
 	if [ ! -d win32  ]; then mkdir win32 ; fi
-	if [ ! -r win32/Makefile ]; then (cd win32;mingw32-configure --disable-libewf) ; fi
-	(cd win32/src;$(MAKE) lib;mv libbulkextractor.so ../../libbulkextractor32.so)	
+	if [ ! -r win32/Makefile ]; then (cd win32;mingw32-configure --disable-libewf --disable-afflib) ; fi
+	(cd win32/src;$(MAKE) lib;mv libbulkextractor.so ../../libbulkextractor32.DLL)	
 	if [ ! -d win64  ]; then mkdir win64 ; fi
-	if [ ! -r win64/Makefile ]; then (cd win64;mingw64-configure --disable-libewf) ; fi
-	(cd win64/src;$(MAKE) lib;mv libbulkextractor.so ../../libbulkextractor64.so)	
-	ls -l libbulk*.so
+	if [ ! -r win64/Makefile ]; then (cd win64;mingw64-configure --disable-libewf --disable-afflib) ; fi
+	(cd win64/src;$(MAKE) lib;mv libbulkextractor.so ../../libbulkextractor64.DLL)	
+	ls -l libbulk*.DLL
 
 
 .PHONY: lib
