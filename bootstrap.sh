@@ -1,5 +1,6 @@
 #!/bin/sh
-# Hopefully you checked out with git clone --recursive git@github.com:simsong/bulk_extractor.git
+# Make sure it was checked out with git clone --recursive ...
+# If not, update the submodules
 
 for sub in be13_api dfxml 
 do
