@@ -118,7 +118,6 @@ publish:
 gitfixup:
 	(cd src/be13_api/;git remote set-url origin git@github.com:/simsong/be13_api.git;git checkout master)
 	(cd src/dfxml/;git remote set-url origin git@github.com:/simsong/dfxml.git; git checkout master)
-	(cd src/sceadan/;git remote set-url origin git@github.com:/nbeebe/sceadan.git; git checkout master)
 
 .PHONY: libinstall
 libinstall:

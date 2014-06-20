@@ -88,18 +88,6 @@ if RAR_ENABLED
   bulk_scanners += $(RAR_SUPPORT)
 endif
 
-#
-#  BLAS = $(LIN)/blas
-#  bulk_scanners += $(BLAS)/blas.h $(BLAS)/blasp.h $(BLAS)/daxpy.c $(BLAS)/ddot.c $(BLAS)/dnrm2.c $(BLAS)/dscal.c
-#  bulk_scanners += sceadan/liblinear/linear.cpp sceadan/liblinear/linear.h
-#  bulk_scanners += sceadan/liblinear/tron.cpp sceadan/liblinear/tron.h
-#  bulk_scanners += sceadan/liblinear/blas/blas.h sceadan/liblinear/blas/blasp.h 
-#  bulk_scanners += sceadan/liblinear/blas/daxpy.c  
-#  bulk_scanners += sceadan/liblinear/blas/ddot.c  
-#  bulk_scanners += sceadan/liblinear/blas/dnrm2.c  
-#  bulk_scanners += sceadan/liblinear/blas/dscal.c
-#  bulk_scanners += sceadan.cpp # sceadan/src/sceadan.h sceadan/src/sceadan_model_precompiled.c
-
 bulk_extractor_nomain = \
 	base64_forensic.cpp \
 	base64_forensic.h \
@@ -125,14 +113,6 @@ lib: libbulkextractor.so
 
 libbulkextractor.so: $(bulk_extractorlib_OBJECTS)
 	$(CXX) -shared -fPIC -o $@ $(LDFLAGS) $(bulk_extractorlib_OBJECTS) $(LIBS)
-
-#if SCEADAN_ENABLED
-#libsceadan.a: ../${SCEADAN_DIR}/src/.libs/libsceadan.a
-#	rm -f libsceadan.a
-#	cp -f ../${SCEADAN_DIR}/src/.libs/libsceadan.a libsceadan.a
-#bulk_extractor_LIBS = -L . -lsceadan
-#endif
-
 
 
 stand_SOURCES = \
