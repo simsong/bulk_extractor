@@ -107,3 +107,4 @@ bulk_extractor-*.*.*/
 test-driver
 src_win/liblightgrep-*/
 tests/Data-*/
+linux/

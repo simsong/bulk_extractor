@@ -100,6 +100,27 @@ winlibs:
 	ls -l libbulk*.DLL
 
 
+libs-with-sceadan:
+	@echo '************************************************'
+	@echo '*** make all exes and libraries with sceadan ***'
+	@echo '************************************************'
+	if [ ! -r ../sceadan ]; then echo sceadan must be installed at ../sceadan ; exit 1 ; fi
+	/bin/rm -rf linux win32 win64
+	make distclean
+	@echo Making Linux
+	(cd ../sceadan;make clean;sh configure;make)
+	mkdir linux
+	(cd linux;../configure --with-sceadan=../../sceadan --disable-afflib --disable-libewf;cd src;make bulk_extractor libbulkextractor.so)
+	@echo Making win32
+	(cd ../sceadan;make clean;mingw32-configure;make)
+	mkdir win32
+	(cd win32;mingw32-configure --with-sceadan=../../sceadan --disable-afflib --disable-libewf;cd src;make bulk_extractor.exe libbulkextractor.so)
+	@echo Making win64
+	(cd ../sceadan;make clean;mingw64-configure;make)
+	mkdir win64
+	(cd win64;mingw64-configure --with-sceadan=../../sceadan --disable-afflib --disable-libewf;cd src;make bulk_extractor.exe libbulkextractor.so)
+
+
 .PHONY: lib
 lib:
 	(cd src; $(MAKE) lib)
