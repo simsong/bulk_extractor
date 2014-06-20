@@ -235,8 +235,11 @@ void validate_fn(const std::string &fn)
 {
     int r= access(fn.c_str(),R_OK);
     if(r!=0){
+#ifndef WIN32
+      /* ignore this check under windows for now */
         std::cerr << "cannot open: " << fn << ": " << strerror(errno) << " (code " << r << ")\n";
 	exit(1);
+#endif
     }
     if(fn.size()>3){
 	size_t e = fn.rfind('.');
@@ -673,22 +676,28 @@ static void dfxml_create(dfxml_writer &xreport,const std::string &command_line,c
  */
 static std::string current_ofname;
 static std::ofstream o;
+static bool needs_stamping=false;
 static int histogram_dump_callback(void *user,const feature_recorder &fr,
                                    const histogram_def &def,
                                    const std::string &str,const uint64_t &count)
 {
     if(count==0){
+        if (o.is_open()) o.close();        // close old stream
         std::string ofname = fr.fname_counter(def.suffix);
-        std::cerr << "ofname=" << ofname << "\n";
-        if(current_ofname != ofname){
+        if (current_ofname != ofname){
             o.open(ofname.c_str());
             if(!o.is_open()){
                 std::cerr << "Cannot open histogram output file: " << ofname << "\n";
                 return -1;
             }
-            fr.banner_stamp(o,feature_recorder::histogram_file_header);
+            needs_stamping = true;
         }
         return 0;
+    }
+
+    if (needs_stamping){
+        fr.banner_stamp(o,feature_recorder::histogram_file_header);
+        needs_stamping = false;
     }
 
     o << str << "\t" << "n=" << count << "\n";

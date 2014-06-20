@@ -51,23 +51,22 @@ void scan_sceadan(const class scanner_params &sp, const recursion_control_block 
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	sp.info->name 		= "sceadan";
 	sp.info->author		= "Simson Garfinkel";
-#ifdef USE_SCEADAN
-	sp.info->description	= "performs statistical file type recognition of file fragment types";
-	sp.info->feature_names.insert("sceadan");
-
-        sp.info->histogram_defs.insert(histogram_def("sceadan","","histogram"));
 	sp.info->flags		= (scanner_info::SCANNER_DISABLED
                                    |scanner_info::SCANNER_WANTS_NGRAMS
                                    |scanner_info::SCANNER_DEPTH_0
 				   |scanner_info::SCANNER_NO_ALL);
    
+#ifdef USE_SCEADAN
+	sp.info->description	= "performs statistical file type recognition of file fragment types";
+	sp.info->feature_names.insert("sceadan");
+
+        sp.info->histogram_defs.insert(histogram_def("sceadan","","histogram"));
         std::string liftcmd;
         sp.info->get_config("sceadan_mode",&sceadan_mode,"0=memory histogram only; 1 = report all classified blocks");
         sp.info->get_config("sceadan_model_file",&sceadan_model_file,"Model file to use");
         sp.info->get_config("sceadan_class_file",&sceadan_class_file,"Class file to use");
         sp.info->get_config("sceadan_mask_file",&sceadan_mask_file,"Mask file to use");
         sp.info->get_config("sceadan_block_size",&opt_sceadan_block_size,"Block size (in bytes) for bulk data analysis");
-
 #else
 	sp.info->description	= "DISABLED";
 #endif
