@@ -43,6 +43,7 @@ static std::string hashdb_mode="none";                       // import or scan
 static uint32_t hashdb_block_size=4096;                      // import or scan
 static std::string hashdb_path_or_socket="your_hashdb_directory"; // scan only
 static size_t hashdb_sector_size = 512;                         // scan only
+static size_t hashdb_import_sector_size = 4096;                 // import only
 static std::string hashdb_repository_name="default_repository"; // import only
 static uint32_t hashdb_max_duplicates=0;                        // import only
 
@@ -108,6 +109,14 @@ void scan_hashid(const class scanner_params &sp,
             sp.info->get_config("hashdb_sector_size", &hashdb_sector_size,
                                 ss_hashdb_sector_size.str());
 
+            // hashdb_import_sector_size
+            std::stringstream ss_hashdb_import_sector_size;
+            ss_hashdb_import_sector_size
+                << "Selects the sector size.  Scans along sector boundaries.\n"
+                << "      Valid only in scan mode.";
+            sp.info->get_config("hashdb_import_sector_size", &hashdb_import_sector_size,
+                                ss_hashdb_import_sector_size.str());
+
             // hashdb_repository_name
             std::stringstream ss_hashdb_repository_name;
             ss_hashdb_repository_name
@@ -171,12 +180,28 @@ void scan_hashid(const class scanner_params &sp,
                 exit(1);
             }
 
+            if (hashdb_import_sector_size == 0) {
+                std::cerr << "Error.  Value for parameter 'hashdb_import_sector_size' is invalid.\n"
+                          << "Cannot continue.\n";
+                exit(1);
+            }
+
             // also, for valid operation, sectors must align on hash block boundaries
             if (hashdb_block_size % hashdb_sector_size != 0) {
                 std::cerr << "Error: invalid hashdb block size=" << hashdb_block_size
                           << " or hashdb sector size=" << hashdb_sector_size << ".\n"
                           << "Sectors must align on hash block boundaries.\n"
                           << "Specifically, hashdb_block_size \% hashdb_sector_size must be zero.\n"
+                          << "Cannot continue.\n";
+                exit(1);
+            }
+
+            // also, for valid operation, sectors must align on hash block boundaries
+            if (hashdb_block_size % hashdb_import_sector_size != 0) {
+                std::cerr << "Error: invalid hashdb block size=" << hashdb_block_size
+                          << " or hashdb sector size=" << hashdb_import_sector_size << ".\n"
+                          << "Sectors must align on hash block boundaries.\n"
+                          << "Specifically, hashdb_block_size \% hashdb_import_sector_size must be zero.\n"
                           << "Cannot continue.\n";
                 exit(1);
             }
@@ -196,7 +221,8 @@ void scan_hashid(const class scanner_params &sp,
                     // show relavent settable options
                     std::cout << "hashid: hashdb_mode=" << hashdb_mode << "\n"
                               << "hashid: hashdb_block_size=" << hashdb_block_size << "\n"
-                              << "hashid: hashdb_max_duplicates=" << hashdb_max_duplicates << "\n";
+                              << "hashid: hashdb_max_duplicates=" << hashdb_max_duplicates << "\n"
+                              << "hashid: hashdb_import_sector_size= " << hashdb_import_sector_size << "\n";
                     std::cout << "hashid: Creating hashdb directory " << hashdb_dir << "\n";
                     return;
                 }
@@ -282,7 +308,7 @@ static void do_import(const class scanner_params &sp,
     const sbuf_t& sbuf = sp.sbuf;
 
     // get all the cryptograph hash values of all the blocks from sbuf
-    for (size_t i=0; i + hashdb_block_size <= sbuf.pagesize; i += hashdb_block_size) {
+    for (size_t i=0; i + hashdb_block_size <= sbuf.pagesize; i += hashdb_import_sector_size) {
         // calculate the hash for this sector-aligned hash block
         md5_t hash = md5_generator::hash_buf(sbuf.buf + i, hashdb_block_size);
 
