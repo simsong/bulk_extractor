@@ -253,6 +253,7 @@ def configure(handle, cmd, scanner, arg):
     Configure the given handle.  Send a command with an argument to the named
     scanner.  See bulk_extractor documentation for details.
     """
+    if type(scanner)==str: scanner=scanner.encode('latin1')
     return lib_be.bulk_extractor_config(handle, cmd, scanner, arg)
 def analyze_buffer(handle, buf):
     """
@@ -360,3 +361,16 @@ BeCallback = CFUNCTYPE(
         c_char_p, # feature context data
         c_size_t, # context length
         )
+
+
+if __name__=="__main__":
+    print("Program to demonstrate the python module")
+    import bulkextractor
+    bulkextractor.lib_init('libbulkextractor.so')
+    bulkextractor.soft_init(['email','accts'])
+    be = bulkextractor.Session()
+    be.analyze_buffer(b"  user@company.com  617-555-1212 ")
+    be.finalize()
+    histograms = be.histograms()
+    print(histograms)
+
