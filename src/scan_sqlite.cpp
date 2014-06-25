@@ -43,7 +43,7 @@ void scan_sqlite(const class scanner_params &sp,const recursion_control_block &r
 
 	// Search for BEGIN:SQLITE\r in the sbuf
 	// we could do this with a loop, or with 
-	for (size_t i = 0;  i < sbuf.bufsize;)	{
+	for (size_t i = 0;  i + 512 <= sbuf.bufsize;)	{
 	    ssize_t begin = sbuf.find("SQLite format 3\000",i);
 	    if (begin==-1) return;		// no more
 
