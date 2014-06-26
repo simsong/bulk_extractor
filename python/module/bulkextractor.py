@@ -128,6 +128,7 @@ class Session(object):
         samples to capture.
         """
         handle = self._get_handle()
+        if type(path)==str: path=path.encode('latin1')
         analyze_device(handle, path, sample_rate, sample_size)
 
     def scanners(self, scanners=None):
