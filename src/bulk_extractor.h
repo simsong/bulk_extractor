@@ -198,8 +198,8 @@ extern "C" scanner_t scan_find;
 #ifdef HAVE_EXIV2
 extern "C" scanner_t scan_exiv2;
 #endif
-#ifdef HAVE_HASHID
-extern "C" scanner_t scan_hashid;
+#ifdef HAVE_HASHDB
+extern "C" scanner_t scan_hashdb;
 #endif
 extern "C" scanner_t scan_aes;
 extern "C" scanner_t scan_bulk;
