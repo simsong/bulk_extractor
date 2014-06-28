@@ -185,7 +185,7 @@ void scan_hashdb(const class scanner_params &sp,
             }
 
             // for valid operation, scan sectors must align on hash block boundaries
-            if (hashdb_block_size % hashdb_scan_sector_size != 0) {
+            if (mode == MODE_SCAN && hashdb_block_size % hashdb_scan_sector_size != 0) {
                 std::cerr << "Error: invalid hashdb block size=" << hashdb_block_size
                           << " or hashdb scan sector size=" << hashdb_scan_sector_size << ".\n"
                           << "Sectors must align on hash block boundaries.\n"
@@ -202,7 +202,7 @@ void scan_hashdb(const class scanner_params &sp,
             }
 
             // for valid operation, import sectors must align on hash block boundaries
-            if (hashdb_block_size % hashdb_import_sector_size != 0) {
+            if (mode == MODE_IMPORT && hashdb_block_size % hashdb_import_sector_size != 0) {
                 std::cerr << "Error: invalid hashdb block size=" << hashdb_block_size
                           << " or hashdb import sector size=" << hashdb_import_sector_size << ".\n"
                           << "Sectors must align on hash block boundaries.\n"
@@ -325,7 +325,6 @@ static void do_import(const class scanner_params &sp,
 
     // allocate space on heap for import_input
     std::vector<hashdb_t::import_element_t>* import_input =
-//       new std::vector<hashdb_t::import_element_t>(usable_size / hashdb_import_sector_size);
        new std::vector<hashdb_t::import_element_t>(usable_size / hashdb_import_sector_size);
 
     // import all the cryptograph hash values of all the blocks from sbuf
