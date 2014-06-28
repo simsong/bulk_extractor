@@ -63,8 +63,12 @@ static void do_scan(const class scanner_params &sp,
 // hashdb directory, import only
 static std::string hashdb_dir;
 
+// hash type
+typedef md5_t hash_t;
+typedef md5_generator hash_generator;
+
 // hashdb manager
-typedef hashdb_t__<md5_t> hashdb_t;
+typedef hashdb_t__<hash_t> hashdb_t;
 hashdb_t* hashdb;
 
 extern "C"
@@ -307,17 +311,27 @@ void scan_hashdb(const class scanner_params &sp,
 static void do_import(const class scanner_params &sp,
                       const recursion_control_block &rcb) {
 
-    // allocate space on heap for import_input
-    std::vector<hashdb_t::import_element_t>* import_input =
-                           new std::vector<hashdb_t::import_element_t>;
-
     // get the sbuf
     const sbuf_t& sbuf = sp.sbuf;
 
-    // get all the cryptograph hash values of all the blocks from sbuf
-    for (size_t i=0; i + hashdb_block_size <= sbuf.pagesize; i += hashdb_import_sector_size) {
+    // there should be at least one block to process
+    if (sbuf.bufsize < hashdb_block_size) {
+      return;
+    }
+
+    // find usable size
+    size_t usable_size = (sbuf.bufsize < sbuf.pagesize - hashdb_block_size) ?
+                           sbuf.bufsize : sbuf.pagesize - hashdb_block_size;
+
+    // allocate space on heap for import_input
+    std::vector<hashdb_t::import_element_t>* import_input =
+//       new std::vector<hashdb_t::import_element_t>(usable_size / hashdb_import_sector_size);
+       new std::vector<hashdb_t::import_element_t>(usable_size / hashdb_import_sector_size);
+
+    // import all the cryptograph hash values of all the blocks from sbuf
+    for (size_t i=0; i + hashdb_block_size <= usable_size; i += hashdb_import_sector_size) {
         // calculate the hash for this sector-aligned hash block
-        md5_t hash = md5_generator::hash_buf(sbuf.buf + i, hashdb_block_size);
+        hash_t hash = hash_generator::hash_buf(sbuf.buf + i, hashdb_block_size);
 
         // create the import element
         hashdb_t::import_element_t import_element(hash,
@@ -346,23 +360,26 @@ static void do_scan(const class scanner_params &sp,
     // get the sbuf
     const sbuf_t& sbuf = sp.sbuf;
 
-    // make sure there is enough data to calculate at least one cryptographic hash
-    if (sbuf.pagesize < hashdb_block_size) {
-      // not enough data
+    // there should be at least one block to process
+    if (sbuf.bufsize < hashdb_block_size) {
       return;
     }
 
+    // find usable size
+    size_t usable_size = (sbuf.bufsize < sbuf.pagesize - hashdb_block_size) ?
+                           sbuf.bufsize : sbuf.pagesize - hashdb_block_size;
+
     // number of hashes is highest index + 1
-    size_t num_hashes = ((sbuf.pagesize - hashdb_block_size) / hashdb_scan_sector_size) + 1;
+    size_t num_hashes = (usable_size / hashdb_scan_sector_size);
 
     // allocate space on heap for scan_input
-    std::vector<md5_t>* scan_input = new std::vector<md5_t>(num_hashes);
+    std::vector<hash_t>* scan_input = new std::vector<hash_t>(num_hashes);
 
     // get all the cryptograph hash values of all the blocks along
     // sector boundaries from sbuf
     for (size_t i=0; i< num_hashes; ++i) {
         // calculate the hash for this sector-aligned hash block
-        md5_t hash = md5_generator::hash_buf(sbuf.buf + i*hashdb_scan_sector_size, hashdb_block_size);
+        hash_t hash = hash_generator::hash_buf(sbuf.buf + i*hashdb_scan_sector_size, hashdb_block_size);
 
         // add the hash to scan input
         (*scan_input)[i] = hash;
