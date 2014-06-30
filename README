@@ -8,7 +8,7 @@ To build bulk_extractor in Linux or OS X,
    make
    make install
 
-For detailed instructions on installing packages and building builk_extractor, read the wiki page here:
+For detailed instructions on installing packages and building bulk_extractor, read the wiki page here:
 https://github.com/simsong/bulk_extractor/wiki/Installing-bulk_extractor
 
 To download the Windows installer and/or other releases of bulk_extractor, visit the downloads page here:
