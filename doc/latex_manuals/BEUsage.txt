@@ -1,0 +1,146 @@
+bulk_extractor version 1.5.0
+Usage: bulk_extractor [options] imagefile
+  runs bulk extractor and outputs to stdout a summary of what was found where
+
+Required parameters:
+   imagefile     - the file to extract
+ or  -R filedir  - recurse through a directory of files
+                  HAS SUPPORT FOR E01 FILES
+   -o outdir    - specifies output directory. Must not exist.
+                  bulk_extractor creates this directory.
+Options:
+   -i           - INFO mode. Do a quick random sample and print a report.
+   -b banner.txt- Add banner.txt contents to the top of every output file.
+   -r alert_list.txt  - a file containing the alert list of features to alert
+                       (can be a feature file or a list of globs)
+                       (can be repeated.)
+   -w stop_list.txt   - a file containing the stop list of features (white list
+                       (can be a feature file or a list of globs)s
+                       (can be repeated.)
+   -F <rfile>   - Read a list of regular expressions from <rfile> to find
+   -f <regex>   - find occurrences of <regex>; may be repeated.
+                  results go into find.txt
+   -q nn        - Quiet Rate; only print every nn status reports. Default 0; -1 for no status at all
+   -s frac[:passes] - Set random sampling parameters
+
+Tuning parameters:
+   -C NN        - specifies the size of the context window (default 16)
+   -S fr:<name>:window=NN   specifies context window for recorder to NN
+   -S fr:<name>:window_before=NN  specifies context window before to NN for recorder
+   -S fr:<name>:window_after=NN   specifies context window after to NN for recorder
+   -G NN        - specify the page size (default 16777216)
+   -g NN        - specify margin (default 4194304)
+   -j NN        - Number of analysis threads to run (default 4)
+   -M nn        - sets max recursion depth (default 7)
+   -m <max>     - maximum number of minutes to wait after all data read
+                  default is 60
+
+Path Processing Mode:
+   -p <path>/f  - print the value of <path> with a given format.
+                  formats: r = raw; h = hex.
+                  Specify -p - for interactive mode.
+                  Specify -p -http for HTTP mode.
+
+Parallelizing:
+   -Y <o1>      - Start processing at o1 (o1 may be 1, 1K, 1M or 1G)
+   -Y <o1>-<o2> - Process o1-o2
+   -A <off>     - Add <off> to all reported feature offsets
+
+Debugging:
+   -h           - print this message
+   -H           - print detailed info on the scanners
+   -V           - print version number
+   -z nn        - start on page nn
+   -dN          - debug mode (see source code)
+   -Z           - zap (erase) output directory
+
+Control of Scanners:
+   -P <dir>     - Specifies a plugin directory
+             Default dirs include /usr/local/lib/bulk_extractor /usr/lib/bulk_extractor and
+             BE_PATH environment variable
+   -E scanner   - turn off all scanners except scanner
+   -S name=value - sets a bulk extractor option name to be value
+
+
+Settable Options (and their defaults): 
+   -S work_start_work_end=YES    Record work start and end of each scanner in report.xml file ()
+   -S enable_histograms=YES    Disable generation of histograms ()
+   -S debug_histogram_malloc_fail_frequency=0    Set >0 to make histogram maker fail with memory allocations ()
+   -S hash_alg=md5    Specifies hash algorithm to be used for all hash calculations ()
+   -S dup_data_alerts=NO    Notify when duplicate data is not processed ()
+   -S write_feature_files=YES    Write features to flat files ()
+   -S write_feature_sqlite3=NO    Write feature files to report.sqlite3 ()
+   -S ssn_mode=0    0=Normal; 1=No `SSN' required; 2=No dashes required (accts)
+   -S min_phone_digits=6    Min. digits required in a phone (accts)
+   -S carve_net_memory=NO    Carve network  memory structures (net)
+   -S word_min=6    Minimum word size (wordlist)
+   -S word_max=14    Maximum word size (wordlist)
+   -S max_word_outfile_size=100000000    Maximum size of the words output file (wordlist)
+   -S wordlist_use_flatfiles=NO    Override SQL settings and use flatfiles for wordlist (wordlist)
+   -S hashdb_mode=none    Operational mode [none|import|scan]
+        none    - The scanner is active but performs no action.
+        import  - Import block hashes.
+        scan    - Scan for matching block hashes. (hashdb)
+   -S hashdb_block_size=4096    Hash block size, in bytes, used to generte hashes (hashdb)
+   -S hashdb_scan_path_or_socket=your_hashdb_directory    File path to a hash database or
+      socket to a hashdb server to scan against.  Valid only in scan mode. (hashdb)
+   -S hashdb_scan_sector_size=512    Selects the scan sector size.  Scans along
+      sector boundaries.  Valid only in scan mode. (hashdb)
+   -S hashdb_import_sector_size=4096    Selects the import sector size.  Scans along
+      sector boundaries.  Valid only in import mode. (hashdb)
+   -S hashdb_import_repository_name=default_repository    Sets the repository name to
+      attribute the import to.  Valid only in import mode. (hashdb)
+   -S hashdb_import_max_duplicates=0    The maximum number of duplicates to import
+      for a given hash value, or 0 for no limit.  Valid only in import mode. (hashdb)
+   -S exif_debug=0    debug exif decoder (exif)
+   -S jpeg_carve_mode=1    0=carve none; 1=carve encoded; 2=carve all (exif)
+   -S min_jpeg_size=1000    Smallest JPEG stream that will be carved (exif)
+   -S zip_min_uncompr_size=6    Minimum size of a ZIP uncompressed object (zip)
+   -S zip_max_uncompr_size=268435456    Maximum size of a ZIP uncompressed object (zip)
+   -S zip_name_len_max=1024    Maximum name of a ZIP component filename (zip)
+   -S unzip_carve_mode=1    0=carve none; 1=carve encoded; 2=carve all (zip)
+   -S rar_find_components=YES    Search for RAR components (rar)
+   -S raw_find_volumes=YES    Search for RAR volumes (rar)
+   -S unrar_carve_mode=1    0=carve none; 1=carve encoded; 2=carve all (rar)
+   -S gzip_max_uncompr_size=268435456    maximum size for decompressing GZIP objects (gzip)
+   -S pdf_dump=NO    Dump the contents of PDF buffers (pdf)
+   -S opt_weird_file_size=157286400    Weird file size (windirs)
+   -S opt_weird_file_size2=536870912    Weird file size2 (windirs)
+   -S opt_max_cluster=67108864    Ignore clusters larger than this (windirs)
+   -S opt_max_cluster2=268435456    Ignore clusters larger than this (windirs)
+   -S opt_max_bits_in_attrib=3    Ignore FAT32 entries with more attributes set than this (windirs)
+   -S opt_max_weird_count=2    Ignore FAT32 entries with more things weird than this (windirs)
+   -S opt_last_year=2019    Ignore FAT32 entries with a later year than this (windirs)
+   -S xor_mask=255    XOR mask string, in decimal (xor)
+   -S sqlite_carve_mode=2    0=carve none; 1=carve encoded; 2=carve all (sqlite)
+
+   -e base16 - enable scanner base16
+   -e hashdb - enable scanner hashdb
+   -e outlook - enable scanner outlook
+   -e sceadan - enable scanner sceadan
+   -e wordlist - enable scanner wordlist
+   -e xor - enable scanner xor
+
+   -x accts - disable scanner accts
+   -x aes - disable scanner aes
+   -x base64 - disable scanner base64
+   -x elf - disable scanner elf
+   -x email - disable scanner email
+   -x exif - disable scanner exif
+   -x find - disable scanner find
+   -x gps - disable scanner gps
+   -x gzip - disable scanner gzip
+   -x hiber - disable scanner hiber
+   -x httplogs - disable scanner httplogs
+   -x json - disable scanner json
+   -x kml - disable scanner kml
+   -x net - disable scanner net
+   -x pdf - disable scanner pdf
+   -x rar - disable scanner rar
+   -x sqlite - disable scanner sqlite
+   -x vcard - disable scanner vcard
+   -x windirs - disable scanner windirs
+   -x winlnk - disable scanner winlnk
+   -x winpe - disable scanner winpe
+   -x winprefetch - disable scanner winprefetch
+   -x zip - disable scanner zip

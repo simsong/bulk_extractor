@@ -15,16 +15,18 @@
    -S hashdb_mode=none    Operational mode [none|import|scan]
         none    - The scanner is active but performs no action.
         import  - Import block hashes.
-        scan    - Scan for matching block hashes. (hashid)
-   -S hashdb_block_size=4096    Hash block size, in bytes, used to generte hashes (hashid)
-   -S hashdb_path_or_socket=your_hashdb_directory    File path to a hash database or
-      socket to a hashdb server to scan against.  Valid only in scan mode. (hashid)
-   -S hashdb_sector_size=512    Selects the sector size.  Scans along sector boundaries.
-      Valid only in scan mode. (hashid)
-   -S hashdb_repository_name=default_repository    Sets the repository name to attribute
-      the import to.  Valid only in import mode. (hashid)
-   -S hashdb_max_duplicates=0    The maximum number of duplicates to import
-      for a given hash value, or 0 for no limit.  Valid only in import mode. (hashid)
+        scan    - Scan for matching block hashes. (hashdb)
+   -S hashdb_block_size=4096    Hash block size, in bytes, used to generte hashes (hashdb)
+   -S hashdb_scan_path_or_socket=your_hashdb_directory    File path to a hash database or
+      socket to a hashdb server to scan against.  Valid only in scan mode. (hashdb)
+   -S hashdb_scan_sector_size=512    Selects the scan sector size.  Scans along
+      sector boundaries.  Valid only in scan mode. (hashdb)
+   -S hashdb_import_sector_size=4096    Selects the import sector size.  Scans along
+      sector boundaries.  Valid only in import mode. (hashdb)
+   -S hashdb_import_repository_name=default_repository    Sets the repository name to
+      attribute the import to.  Valid only in import mode. (hashdb)
+   -S hashdb_import_max_duplicates=0    The maximum number of duplicates to import
+      for a given hash value, or 0 for no limit.  Valid only in import mode. (hashdb)
    -S exif_debug=0    debug exif decoder (exif)
    -S jpeg_carve_mode=1    0=carve none; 1=carve encoded; 2=carve all (exif)
    -S min_jpeg_size=1000    Smallest JPEG stream that will be carved (exif)

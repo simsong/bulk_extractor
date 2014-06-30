@@ -7,7 +7,7 @@
 # and http://www.openismus.com/documents/linux/automake/automake.shtml
 
 AC_PREREQ(2.57)
-AC_INIT(BULK_EXTRACTOR, 1.5.0-alpha1, bugs@digitalcorpora.org)
+AC_INIT(BULK_EXTRACTOR, 1.5.0-alpha6, bugs@digitalcorpora.org)
 
 AC_CONFIG_MACRO_DIR(m4)
 
@@ -363,13 +363,13 @@ AC_MSG_NOTICE([libewf is now $libewf])
 
 
 ################################################################
-## hashid support
-AC_ARG_ENABLE([hashid],
-    [AS_HELP_STRING([--disable-hashid], [disable hashid scanner support])],
-    [hashid=no],
-    [hashid=yes])
+## hashdb support
+AC_ARG_ENABLE([hashdb],
+    [AS_HELP_STRING([--disable-hashdb], [disable hashdb scanner support])],
+    [hashdb=no],
+    [hashdb=yes])
 
-if test x"$hashid" == x"yes" ; then
+if test x"$hashdb" == x"yes" ; then
   if test x"$mingw" = x"yes";  then
     # the win32 configuration of libxml2 requires zlib and iconv libraries
     AC_CHECK_LIB([z], [gzdopen],[LIBS="-lz $LIBS"], [AC_MSG_ERROR([Could not find zlib library])])
@@ -377,35 +377,35 @@ if test x"$hashid" == x"yes" ; then
   fi
 
   AC_CHECK_LIB([xml2], [xmlSAXUserParseFile],[LIBS="-lxml2 $LIBS"],
-    [AC_MSG_WARN([Could not find libxml2 library required to build the hashid scanner])
-    hashid=no])
+    [AC_MSG_WARN([Could not find libxml2 library required to build the hashdb scanner])
+    hashdb=no])
 
-  if test x"$hashid" == xyes ; then
+  if test x"$hashdb" == xyes ; then
     AX_BOOST_BASE([1.53],
       [AX_BOOST_SYSTEM
       AX_BOOST_FILESYSTEM
       AX_BOOST_IOSTREAMS
       LIBS="$BOOST_SYSTEM_LIB $BOOST_FILESYSTEM_LIB $BOOST_IOSTREAMS_LIB $LIBS"],
-      [AC_MSG_WARN([Boost 1.53 or newer is required to build the hashid scanner])
-      hashid=no])
+      [AC_MSG_WARN([Boost 1.53 or newer is required to build the hashdb scanner])
+      hashdb=no])
   fi
 
-  if test x"$hashid" == xyes ; then
+  if test x"$hashdb" == xyes ; then
     AC_LANG_PUSH(C++)
     AC_CHECK_HEADER([hashdb.hpp], [],
-      [AC_MSG_WARN([Could not find hashdb header file required to build the hashid scanner])
-      hashid=no])
+      [AC_MSG_WARN([Could not find hashdb header file required to build the hashdb scanner])
+      hashdb=no])
     AC_CHECK_LIB([hashdb], [hashdb_version], [],
-      [AC_MSG_WARN([Could not find hashdb library required to build the hashid scanner])
-      hashid=no])
+      [AC_MSG_WARN([Could not find hashdb library required to build the hashdb scanner])
+      hashdb=no])
     AC_LANG_POP()
   fi
 
 fi
-if test x"$hashid" == xyes ; then
-  AC_DEFINE(HAVE_HASHID,1,[define 1 to build the hashid scanner])
+if test x"$hashdb" == xyes ; then
+  AC_DEFINE(HAVE_HASHDB,1,[define 1 to build the hashdb scanner])
 else
-  AC_MSG_NOTICE([the hashid scanner will not be built])
+  AC_MSG_NOTICE([the hashdb scanner will not be built])
 fi
 
 

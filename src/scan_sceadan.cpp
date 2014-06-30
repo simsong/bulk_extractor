@@ -84,8 +84,7 @@ void scan_sceadan(const class scanner_params &sp, const recursion_control_block 
         sceadanfs->set_flag(feature_recorder::FLAG_NO_FEATURES);
         sceadanfs->enable_memory_histograms(); // is this really how they are enabled?
 #else
-        std::cerr << "scan_sceadan: not enabled. Recompile with sceadan.\n";
-        exit(1);
+        std::cerr << "scan_sceadan: not compiled in, will not enable.\n";
 #endif
     }
 
