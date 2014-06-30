@@ -106,6 +106,7 @@ public:
             wstring utf16_execution_filename;
             sbuf.getUTF16(0x10, utf16_execution_filename);
             execution_filename = safe_utf16to8(utf16_execution_filename);
+            if(execution_filename.size()==0) execution_filename="UNKNOWN_FILENAME";
 
             // get the offset to Section A
             uint32_t section_a_offset = sbuf.get32u(0x54);
