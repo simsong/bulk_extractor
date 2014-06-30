@@ -46,7 +46,7 @@
 static int debug=0;
 const size_t SMALLEST_LNK_FILE = 150;  // did you see smaller LNK file?
 
-/* Extract and form GUID */
+/* Extract and form GUID. Needs 16 bytes */
 std::string get_guid(const sbuf_t &buf, const size_t offset)
 {
     char str[37];
@@ -93,7 +93,7 @@ void scan_winlnk(const class scanner_params &sp,const recursion_control_block &r
             return;
         }
 
-        for (size_t p=0;(p < sbuf.pagesize) &&  (p < sbuf.bufsize - SMALLEST_LNK_FILE); p++){
+        for (size_t p=0;(p < sbuf.pagesize) &&  (p + SMALLEST_LNK_FILE < sbuf.bufsize ); p++){
             if ( sbuf.get32u(p+0x00) == 0x0000004c &&
                  sbuf.get32u(p+0x04) == 0x00021401 &&
                  sbuf.get32u(p+0x08) == 0x00000000 &&
@@ -153,7 +153,8 @@ void scan_winlnk(const class scanner_params &sp,const recursion_control_block &r
             if ( sbuf.get32u(p+0x00) == 0x00000060 &&
                  sbuf.get32u(p+0x04) == 0xa0000003 &&
                  sbuf.get32u(p+0x08) == 0x00000058 &&
-                 sbuf.get32u(p+0x0c) == 0x00000000){
+                 sbuf.get32u(p+0x0c) == 0x00000000 &&
+		 p+80+16 < sbuf.bufsize ){
 		dfxml_writer::strstrmap_t lnkguid;
                 std::string dvolid = get_guid(sbuf, p+32);
                 lnkguid["droid_volumeid"] = dvolid;
