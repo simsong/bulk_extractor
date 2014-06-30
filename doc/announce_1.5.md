@@ -152,7 +152,7 @@ scan_exif    - Decodes EXIF headers in JPEGs using built-in decoder.
 scan_find    - keyword searching
 scan_gps     - Detects XML from Garmin GPS devices
 scan_gzip    - Detects and decompresses GZIP files and gzip stream
-scan_hashid
+scan_hashdb
 scan_hiber   - Detects and decompresses Windows hibernation fragments
 scan_outlook - Decrypts Outlook Compressible Encryption
 scan_json    - Detects JavaScript Object Notation files

@@ -1,7 +1,7 @@
 bulk_extractor is a group effort from many authors and contributors, including:
 
 Simson L. Garfinkel <slgarfin@nps.edu>  (overall design)
-Bruce Allen <bdallen@nps.edu>           (BEViewer, exif analyzer, windows prefetch rewrite, hashid scanner)
+Bruce Allen <bdallen@nps.edu>           (BEViewer, exif analyzer, windows prefetch rewrite, hashdb scanner)
 Alex Eubanks <endeavor@rainbowsandpwnies.com>  (pe and ELF scanners)
 Luis E. Garcia II <legarcia@nps.edu>    (Initial windows prefetch implementation)
 Michael Shick <mfshick@nps.edu>         (odds and ends)
