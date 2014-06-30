@@ -32,7 +32,7 @@ void scan_facebook(const class scanner_params &sp,const recursion_control_block 
     if(sp.phase==scanner_params::PHASE_STARTUP)        {
             assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
             sp.info->name = "facebook";
-            sp.info->author = "Bryant Nichols";
+            sp.info->author = "";
             sp.info->description = "Searches for facebook html and json tags";
             sp.info->scanner_version = "2.0";
             sp.info->feature_names.insert("facebook");
