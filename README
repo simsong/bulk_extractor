@@ -1,14 +1,21 @@
 Welcome to bulk_extractor!
 
-Instructions on how to build and install bulk_extractor are now maintained here:
+To build bulk_extractor in Linux or OS X,
+
+1. Make sure required packages have been installed.
+2. Then run these commands:
+   ./configure
+   make
+   make install
+
+For detailed instructions on installing packages and building builk_extractor, read the wiki page here:
 https://github.com/simsong/bulk_extractor/wiki/Installing-bulk_extractor
 
-Downloads and Websites
-----------------------
+To download the Windows installer and/or other releases of bulk_extractor, visit the downloads page here:
+http://digitalcorpora.org/downloads/bulk_extractor
 
-  * [Current Release & Download Archive](http://digitalcorpora.org/downloads/bulk_extractor/)
-  * [Forensics Wiki Entry](http://www.forensicswiki.org/wiki/Bulk_extractor)
-  * [Installing Bulk Extractpr](https://github.com/simsong/bulk_extractor/wiki/Installing-bulk_extractor)
+For more information on bulk_extractor, visit: http://www.forensicswiki.org/wiki/Bulk_extractor
+
 
 
 
