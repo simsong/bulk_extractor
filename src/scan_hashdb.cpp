@@ -315,30 +315,37 @@ static void do_import(const class scanner_params &sp,
     const sbuf_t& sbuf = sp.sbuf;
 
     // there should be at least one block to process
-    if (sbuf.bufsize < hashdb_block_size) {
+    if (sbuf.pagesize < hashdb_block_size) {
       return;
     }
 
-    // find usable size
-    size_t usable_size = (sbuf.bufsize < sbuf.pagesize - hashdb_block_size) ?
-                           sbuf.bufsize : sbuf.pagesize - hashdb_block_size;
+    // get count of blocks to process
+    size_t count = sbuf.bufsize / hashdb_import_sector_size;
+    while ((count * hashdb_import_sector_size) +
+           (hashdb_block_size - hashdb_import_sector_size) > sbuf.pagesize) {
+      --count;
+    }
 
     // allocate space on heap for import_input
     std::vector<hashdb_t::import_element_t>* import_input =
-       new std::vector<hashdb_t::import_element_t>(usable_size / hashdb_import_sector_size);
+       new std::vector<hashdb_t::import_element_t>(count);
 
-    // import all the cryptograph hash values of all the blocks from sbuf
-    for (size_t i=0; i + hashdb_block_size <= usable_size; i += hashdb_import_sector_size) {
+    // import all the cryptograph hash values of all the blocks in sbuf
+    for (size_t i=0; i < count; ++i) {
+
         // calculate the hash for this sector-aligned hash block
-        hash_t hash = hash_generator::hash_buf(sbuf.buf + i, hashdb_block_size);
+        hash_t hash = hash_generator::hash_buf(
+                                 sbuf.buf + i*hashdb_import_sector_size,
+                                 hashdb_block_size);
 
         // create the import element
         hashdb_t::import_element_t import_element(hash,
-                                           hashdb_import_repository_name,
-                                           sbuf.pos0.str(), // use as filename
-                                           i);              // file offset
-        // add the hash to the import input
-        import_input->push_back(import_element);
+                                 hashdb_import_repository_name,
+                                 sbuf.pos0.str(), // use as filename
+                                 i * hashdb_import_sector_size); // file offset
+
+        // add the import element to the import input
+        (*import_input)[i] = import_element;
     }
 
     // perform the import
@@ -360,23 +367,23 @@ static void do_scan(const class scanner_params &sp,
     const sbuf_t& sbuf = sp.sbuf;
 
     // there should be at least one block to process
-    if (sbuf.bufsize < hashdb_block_size) {
+    if (sbuf.pagesize < hashdb_block_size) {
       return;
     }
 
-    // find usable size
-    size_t usable_size = (sbuf.bufsize < sbuf.pagesize - hashdb_block_size) ?
-                           sbuf.bufsize : sbuf.pagesize - hashdb_block_size;
-
-    // number of hashes is highest index + 1
-    size_t num_hashes = (usable_size / hashdb_scan_sector_size);
+    // get count of blocks to process
+    size_t count = sbuf.bufsize / hashdb_scan_sector_size;
+    while ((count * hashdb_scan_sector_size) +
+           (hashdb_block_size - hashdb_scan_sector_size) > sbuf.pagesize) {
+      --count;
+    }
 
     // allocate space on heap for scan_input
-    std::vector<hash_t>* scan_input = new std::vector<hash_t>(num_hashes);
+    std::vector<hash_t>* scan_input = new std::vector<hash_t>(count);
 
     // get all the cryptograph hash values of all the blocks along
     // sector boundaries from sbuf
-    for (size_t i=0; i< num_hashes; ++i) {
+    for (size_t i=0; i<count; ++i) {
         // calculate the hash for this sector-aligned hash block
         hash_t hash = hash_generator::hash_buf(sbuf.buf + i*hashdb_scan_sector_size, hashdb_block_size);
 
