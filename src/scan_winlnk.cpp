@@ -125,7 +125,8 @@ void scan_winlnk(const class scanner_params &sp,const recursion_control_block &r
                 }
 
                 std::string path("NO_LINKINFO");
-                if (HasLinkInfo ){
+
+                if (HasLinkInfo && p+loc+16+4 < sbuf.bufsize){
                     uint32_t LinkInfoSize       = sbuf.get32u(p+loc);
                     //uint32_t LinkInfoHeaderSize = sbuf.get32u(p+loc+4);
                     //uint32_t LinkInfoFlags      = sbuf.get32u(p+loc+8);
@@ -145,7 +146,8 @@ void scan_winlnk(const class scanner_params &sp,const recursion_control_block &r
                 }
                 winlnk_recorder->write(sbuf.pos0+p,path,dfxml_writer::xmlmap(lnkmap,"lnk",""));
                 p += loc;
-            } else
+                continue;
+            } 
             /**
              * At present we don't entirely support LNK parsing, and
              * some blocks need to be carved because of this.
@@ -155,6 +157,7 @@ void scan_winlnk(const class scanner_params &sp,const recursion_control_block &r
                  sbuf.get32u(p+0x08) == 0x00000058 &&
                  sbuf.get32u(p+0x0c) == 0x00000000 &&
 		 p+80+16 < sbuf.bufsize ){
+                
 		dfxml_writer::strstrmap_t lnkguid;
                 std::string dvolid = get_guid(sbuf, p+32);
                 lnkguid["droid_volumeid"] = dvolid;
