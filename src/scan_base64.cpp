@@ -1,8 +1,14 @@
+/* scan_base64 - rewritten for bulk_extractor 1.5 */
+
 #include "config.h"
 #include "be13_api/bulk_extractor_i.h"
 #include "base64_forensic.h"
 
-static bool   base64array[256];           // array of valid base64 characters
+static const uint32_t B64_LOWERCASE=1;
+static const uint32_t B64_UPPERCASE=2;
+static const uint32_t B64_NUMBER=4;
+static const uint32_t B64_SYMBOL=8;
+static int   base64array[256];           // array of valid base64 characters, 
 static size_t minlinewidth = 60;
 
 
@@ -10,17 +16,6 @@ inline bool isbase64(unsigned char ch)
 {
     return base64array[ch];
 }
-
-/* find64 - returns true if a region contains base64 code, but only if it also has something over F */
-inline ssize_t find64(const sbuf_t &sbuf,unsigned char ch,size_t start)
-{
-    for(;start<sbuf.bufsize;start++){
-	if(sbuf[start]==ch) return start;
-	if(isbase64(sbuf[start])==false) return -1;
-    }
-    return -1;
-}
-
 
 /* get the next line line from the sbuf.
  * @param sbuf - the sbuf to process
@@ -54,6 +49,7 @@ inline bool sbuf_getline(const sbuf_t &sbuf,size_t &pos,size_t &start,size_t &le
 /* Return true if the line only has base64 characters, space characters, or equal signs at the end */
 inline bool sbuf_line_is_base64(const sbuf_t &sbuf,const size_t &start,const size_t &len,bool &found_equal)
 {
+    int b64_classes = 0;
     if(start>sbuf.pagesize) return false;
     bool inequal = false;
     for(size_t i=start;i<start+len;i++){
@@ -62,10 +58,21 @@ inline bool sbuf_line_is_base64(const sbuf_t &sbuf,const size_t &start,const siz
             inequal=true;
             continue;
         }
-        if(inequal) return false;       // after we find an equal, only space is acceptable
-        if(!isbase64(sbuf[i])) return false; // non base64 character
+        if (inequal) return false;       // after we find an equal, only space is acceptable
+        uint8_t ch = sbuf[i];
+        if (base64array[ch]==0) return false;// non base64 character
+        b64_classes |= base64array[ch];      // record the classes we have found
     }
-    if(inequal) found_equal = true;
+    if (inequal) found_equal = true;
+
+    /* Additional tweak during 1.5 alpha testing. base64 scanner was taking too long on very long lines of HEX
+     * that are seen in some files. HEX typically has all lowercase or all uppercase but not both,
+     * so we now require that every base64 line have both uppercase and lowercase
+     */
+
+    if ((b64_classes & B64_UPPERCASE)==0) return false; // must have an uppercase character
+    if ((b64_classes & B64_LOWERCASE)==0) return false; // must have an lowercase character
+
     return true;
 }
 
@@ -108,11 +115,11 @@ void scan_base64(const class scanner_params &sp,const recursion_control_block &r
 
 	/* Create the base64 array */
 	memset(base64array,0,sizeof(base64array));
-	base64array[(int)'+'] = true;
-	base64array[(int)'/'] = true;
-	for(int ch='a';ch<='z';ch++){ base64array[ch] = true; }
-	for(int ch='A';ch<='Z';ch++){ base64array[ch] = true; }
-	for(int ch='0';ch<='9';ch++){ base64array[ch] = true; }
+	base64array[(int)'+'] = B64_SYMBOL;
+	base64array[(int)'/'] = B64_SYMBOL;
+	for(int ch='a';ch<='z';ch++){ base64array[ch] = B64_LOWERCASE; }
+	for(int ch='A';ch<='Z';ch++){ base64array[ch] = B64_UPPERCASE; }
+	for(int ch='0';ch<='9';ch++){ base64array[ch] = B64_NUMBER; }
 	return;	/* No feature files created */
     }
     if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;

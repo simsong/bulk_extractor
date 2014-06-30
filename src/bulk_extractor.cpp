@@ -82,4 +82,5 @@ scanner_t *scanners_builtin[] = {
     scan_sceadan,
     scan_xor,
     scan_sqlite,
+    scan_facebook,
     0};
