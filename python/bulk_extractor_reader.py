@@ -149,7 +149,7 @@ class BulkReport:
             try:
                 self.xmldoc = xml.dom.minidom.parse(self.open("report.xml"))
             except xml.parsers.expat.ExpatError as e:
-                raise IOError("Invalid or missing report.xml file. specify validate=False to avoid validation")
+                raise IOError("Invalid or missing report.xml file. specify do_validate=False to avoid validation")
             return True
 
         import os.path,glob
@@ -241,6 +241,14 @@ class BulkReport:
             f = open(fn,mode=mode)
         f.bulk_extractor_reader = self
         return f
+
+    def count_lines(self,fname):
+        count = 0
+        for line in self.open(fname):
+            if not is_comment_line(line):
+                count += 1
+        return count
+        
 
     def is_histogram_file(self,fn):
         if is_histogram_filename(fn)==True: return True

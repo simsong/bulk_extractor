@@ -33,10 +33,20 @@ def process(out,dname1,dname2):
     t.append_data(['POST Image:',b2.image_filename()])
     out.write(t.typeset(mode=mode))
 
-    if b1.files.difference(b2.files):
-        print("Files only in %s:\n   %s" % (b1.name," ".join(b1.files.difference(b2.files))))
-    if b2.files.difference(b1.files):
-        print("Files only in %s:\n   %s" % (b2.name," ".join(b2.files.difference(b1.files))))
+    for i in [1,2]:
+        if i==1:
+            a=b1;b=b2
+        else:
+            b=b1;a=b2;
+        r = a.files.difference(b.files)
+        if r:
+            print("Files only in {}:".format(a.name))
+            for f in r:
+                if "carved" in f:
+                    print("     %s" % (f))
+                else:
+                    print("     %s (%d lines)" % (f,a.count_lines(f)))
+            print("")
 
     # Report interesting differences based on the historgrams.
     # Output Example:
@@ -93,9 +103,9 @@ def process(out,dname1,dname2):
             out.write(t.typeset(mode=mode))
         if diffcount==0:
             if options.html:
-                out.write("{}: No differences\n\n".format(histogram_file))
+                out.write("{}: No differences\n".format(histogram_file))
             else:
-                out.write("{}: No differences\n\n".format(histogram_file))
+                out.write("{}: No differences\n".format(histogram_file))
             
 
 if __name__=="__main__":
