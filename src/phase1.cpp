@@ -88,6 +88,7 @@ void BulkExtractor_Phase1::make_sorted_random_blocklist(blocklist_t *blocklist,u
 void BulkExtractor_Phase1::run(image_process &p,feature_recorder_set &fs,
                                seen_page_ids_t &seen_page_ids)
 {
+    p.set_report_read_errors(config.opt_report_read_errors);
     md5g = new md5_generator();		// keep track of MD5
     uint64_t md5_next = 0;              // next byte to hash
 
@@ -166,8 +167,10 @@ void BulkExtractor_Phase1::run(image_process &p,feature_recorder_set &fs,
                     // report uncaught exceptions to both user and XML file
                     std::stringstream ss;
                     ss << "name='" << e.what() << "' " << "pos0='" << it.get_pos0() << "' ";
-                    std::cerr << "Exception " << e.what()
-                              << " skipping " << it.get_pos0() << "\n";
+
+                    if (config.opt_report_read_errors) {
+                        std::cerr << "Exception " << e.what() << " skipping " << it.get_pos0() << "\n";
+                    }
                     xreport.xmlout("debug:exception", e.what(), ss.str(), true);
                 }
             }

@@ -38,7 +38,8 @@ public:
             retry_seconds(60),
             num_threads(1),             // 
             sampling_fraction(1.0),
-            sampling_passes(1){}
+            sampling_passes(1),
+            opt_report_read_errors(true) {}
                  
         uint64_t debug;                 // debug 
         size_t   opt_pagesize;
@@ -55,6 +56,7 @@ public:
         u_int    num_threads;
         double   sampling_fraction;       // for random sampling
         u_int    sampling_passes;
+        bool     opt_report_read_errors;
 
         void validate(){
             if(opt_offset_start % opt_pagesize != 0) errx(1,"ERROR: start offset must be a multiple of the page size\n");
