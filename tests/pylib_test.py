@@ -16,3 +16,10 @@ for featurefile, histogram in be.histograms().items():
     print("{}:".format(featurefile))
     for entry in histogram:
         print("    {}		{}".format(entry.count, entry.feature))
+
+if len(sys.argv)==1:
+    print("enter a device to analyze it")
+else:
+    be.analyze_device(sys.argv[1],1.0,65536)
+
+
