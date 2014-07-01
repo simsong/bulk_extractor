@@ -1115,7 +1115,7 @@ int main(int argc,char **argv)
 
             std::cout.precision(4);
             printf("Elapsed time: %g sec.\n",timer.elapsed_seconds());
-            printf("Total MB processed: %d\n",int(phase1.total_bytes / 100000));
+            printf("Total MB processed: %d\n",int(phase1.total_bytes / 1000000));
         
             printf("Overall performance: %g MBytes/sec (%g MBytes/sec/thread)\n",
                    mb_per_sec,mb_per_sec/cfg.num_threads);

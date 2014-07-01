@@ -1,16 +1,27 @@
-                    Announcing bulk_extractor 1.5.
-                             June 1, 2014
+                    Announcing bulk_extractor 1.5 alpha6.
+                             July 1, 2014
                                 DRAFT
 
-bulk_extractor Version 1.5 has been released for Linux, MacOS and Windows.
+bulk_extractor Version 1.5 alpha 6 has been released for Linux, MacOS and
+Windows. 
+
+Release source code and Windows installer:
+    http://digitalcorpora.org/downloads/bulk_extractor/
+
+GIT repository:
+    https://github.com/simsong/bulk_extractor
 
 
-Improvements
-============
 
-* Writes features to SQLite database
+Major Improvements
+==================
+* BE now optionally writes features to SQLite database in addition to
+  flat files.
 
-* New scanners
+* New scanners, plus many fixes in existing scanners
+
+* Improved support for carving encoded objects missed by contemporary
+  carvers (e.g. ZIP-compressed JPEG files).
 
 * bulk_extractor is now available as a shared library
   (libbulkextractor.so and libbulkextractor.DLL). You can load this
@@ -48,18 +59,19 @@ time required to generate output.
 
 
 New Scanners:
-=============
+===============
+Bulk_extractor version 1.5 provides these new scanners:
 
 * scan_facebook --- Finds snippits of HTML with containing facebook strings
 * scan_httplogs --- A scanner that finds fragments of HTTP logs
 * scan_sqlite ---- SQLite database carving. (Note: only works for unfragmented databases.)
-* scan_winlnk --- Windows LNK file carving
+* scan_winlnk --- Windows LNK file detection. 
 * scan_outlook will decrypt "Outlook Compressible Encryption" used on some PST files.  (disabled by default)
 
 
 New LightGrep Scanners:
 -----------------------
-Bulk_Extractor now has a number of scanners built to take advantage of
+Bulk_Extractor also now has a number of scanners built to take advantage of
 lightgrep. These scanners generally replace the scanners written on
 top of gnuflex. These include:  
 
@@ -71,7 +83,6 @@ top of gnuflex. These include:
 
 These scanners are disabled by default unless bulk_extractor is built with LightGrep support.
 
-
 Scanners not in use:
 --------------------
 The following scanners are shipped but not actually in use:
@@ -79,43 +90,92 @@ The following scanners are shipped but not actually in use:
 * scan_lift
 
 
-Improvements in existing scanners:
-----------------------------------
+Improved Carving Support
+========================
+The following carving modes are specified in the default configuration:
 
-Version 1.5 allows you to specify one of three SSN recognition modes:
+   -S carve_net_memory=NO    Memory structures are not carved
+
+By default, Bulk_Extractor will not scan for in-memory TCP/IP structures.
+
+   -S jpeg_carve_mode=1    0=carve none; 1=carve encoded; 2=carve all (exif)
+   -S min_jpeg_size=1000    Smallest JPEG stream that will be carved (exif)
+
+JPEG files with valid Exif structures are carved if they are
+encoded. With this behavior JPEGs that can be carved with existing
+carvers such as Scalple and PhotoRec will not be carved, but JPEGs
+that can only be recovered using bulk_extractor's ability to carve
+encoded data will be.
+
+   -S unzip_carve_mode=1    0=carve none; 1=carve encoded; 2=carve all (zip)
+
+Components of ZIP files that have been encoded will be detected and
+carved. In practicle this means that ZIPed ZIP files will be
+uncompressed and carved, but normal ZIP files will be left as-is.
+
+
+   -S unrar_carve_mode=1    0=carve none; 1=carve encoded; 2=carve all (rar)
+
+RAR files that are themselves encoded will be carved. For example, RAR
+files that are sent as email attachments will be carved, but RAR files
+on the hard drive will not be carved.
+
+   -S sqlite_carve_mode=2    0=carve none; 1=carve encoded; 2=carve all (sqlite)
+
+By default, all sqlite files detected will be carved.  Note that only
+sqlite3 database files that were stored contigiously on the source
+media will be readable.
+
+
+
+Improvements in existing scanners:
+==================================
+
+scan_accts:
+    - now detects bitcoin addresses and writes them to pii.txt
+    - now detects TeamViewer addresses and writes them to pii.txt and pii_teamviewer.txt
+
+SSN recognition: you are now able to specify one of three SSN recognition modes:
 
     -S ssn_mode=0  SSN’s must be labeled “SSN:”. Dashes or no dashes okay.
     -S ssn_mode=1  No “SSN” required, but dashes are required.
-    -S ssn_mode=2  No dashes required. Allow any 9-digit number that matches SSN allocation range.
-
-
-scan_accts now detects bitcoin addresses and writes them to pii.txt
+    -S ssn_mode=2  No dashes required. Allow any 9-digit number 
+                   that matches SSN allocation range.
 
 scan_hashid has been renamed scan_hashdb so that it will be consistent
 with the library name.
 
-
-Improvements in Python programs:
---------------------------------
-
-* Minor improvements to regress.py
-
-
-Incompatiable changes:
-----------------------
 
 Overreporting Fixes:
 -------------------
 
 We have further improved overreporting problems:
 
-* scan_base16 is now disabled by default.
+* scan_base16 is now disabled by default (the hex values were not useful)
+
 
 Underreporting Fixes
 ---------------------
 
-Bug Fixes
----------
+* scan_base64 was ignoring a substantial amount of BASE64-encoded
+  data. This has been corrected. As a result, substantially more email
+  addresses and URLs from BASE64-encoded data will be reported in
+  version 1.5 compared with version 1.4
+
+
+Improvements in Python programs:
+--------------------------------
+
+* Minor improvements to regress.py, bulk_diff.py and bulk_extractor_reader.py
+
+
+Incompatiable changes:
+----------------------
+None.
+
+
+Internal Bug Fixes
+------------------
 
 * FLAG_NO_STOPLIST and FLAG_NO_ALERTLIST in feature_recorder.h were the same. They are now different.
 
@@ -130,17 +190,16 @@ Bug Fixes
   words containing backslashes did not appear in the split wordlist
   generated by scan_wordlist.
 
-Usability Improvement
-----------------------
 
 Internal Improvements
 --------------------- 
 
-* introduced an atomic set and histogram to minimize the use of
+* Introduced an atomic set and histogram to minimize the use of
   cppmutexes in the callers. 
 
 * bulk_extractor is now distributed as both an executable and as a
   library. The library called from C or Python as a shared lib
+
 
 
 PERFORMANCE COMPARISON WITH VERSION 1.4
@@ -153,22 +212,22 @@ Because of changes to underlying hardware, compilers and scanners,
 we are no longer reporting historical trends. Instead, we are
 reporting specific performance comparisons between version 1.4 and 1.5.
 
-Compiler: gcc 4.8.2 (Red Hat 4.8.2-7)
-Compiler Flags: -pthread -O3 -MD
-Runtime system: Supermicro AMD server with 64 cores
+    Compiler: gcc 4.8.2 (Red Hat 4.8.2-7)
+    Compiler Flags: -pthread -O3 -MD
+    Runtime system: Supermicro AMD server with 64 cores
 
-Disk Image: NPS-2011-2TB
-Media Size: 2,000,054,960,128 bytes
-MD5:        01990709b4a1a179bea86012223cc726
+    Disk Image: NPS-2011-2TB
+    Media Size: 2,000,054,960,128 bytes
+    MD5:        01990709b4a1a179bea86012223cc726
 
-             Clock Time       User Time   System Time
-Version 1.5:   18938 sec        509186 sec     11060 sec
-Version 1.4:   20109 sec        399903 sec      4791 sec
+                 Clock Time       User Time   System Time
+    Version 1.5:   18938 sec        510000 sec     11060 sec
+    Version 1.4:   20109 sec        422000 sec      4791 sec
 
 
-Disk Image: UBNIST1.gen3
-            Media size:         1.9 GiB (2106589184 bytes)
-            MD5:                49a775d8b109a469d9dd01dc92e0db9c
+    Disk Image: UBNIST1.gen3
+                Media size:         1.9 GiB (2106589184 bytes)
+                MD5:                49a775d8b109a469d9dd01dc92e0db9c
 
 
 
@@ -191,10 +250,12 @@ scan_exiv2   - Decodes EXIF headers in JPEGs using libexiv2 (for regression test
 scan_email   - 
 scan_exif    - Decodes EXIF headers in JPEGs using built-in decoder.
 scan_find    - keyword searching
+scan_facebook- Facebook HTML
 scan_gps     - Detects XML from Garmin GPS devices
 scan_gzip    - Detects and decompresses GZIP files and gzip stream
-scan_hashdb
+scan_hashdb  - Search for sector hashes/ make a sector hash database
 scan_hiber   - Detects and decompresses Windows hibernation fragments
+scan_httplog - search for web server logs
 scan_outlook - Decrypts Outlook Compressible Encryption
 scan_json    - Detects JavaScript Object Notation files
 scan_kml     - Detects KML files
@@ -265,11 +326,10 @@ sqlite/
 
 Planned for 1.6:
 ================
-The following are planned for 1.6:
 
-* replace as many and sets maps as possible with unordered equivallent (performance improvement)
+Version 1.6 is open pending feedback from users.
 
-* identify_filenames should present the % of disk that has allocated files.
+
 
 Future Plans
 ============
