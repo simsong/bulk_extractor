@@ -293,6 +293,9 @@ AC_CHECK_LIB([expat],[XML_ParserCreate])
 AC_CHECK_LIB([stdc++],[main])
 
 if test x"$lightgrep" == x"yes"; then
+  m4_ifndef([PKG_CHECK_MODULES],
+            [AC_MSG_ERROR([pkg-config autoconf macros are missing; try installing pkgconfig])])
+
   if test x"$mingw" == x"yes" ; then
     # get static flags when cross-compiling with mingw
     PKG_CONFIG="$PKG_CONFIG --static"
@@ -305,7 +308,9 @@ if test x"$lightgrep" == x"yes"; then
     fi
   fi
 
-  PKG_CHECK_MODULES([lightgrep], [lightgrep])
+  m4_ifdef([PKG_CHECK_MODULES],
+           [PKG_CHECK_MODULES([lightgrep], [lightgrep])])
+
   AC_DEFINE([HAVE_LIBLIGHTGREP], 1, [Define to 1 if you have liblightgrep.])
 
   CPPFLAGS="$CPPFLAGS $lightgrep_CFLAGS"
