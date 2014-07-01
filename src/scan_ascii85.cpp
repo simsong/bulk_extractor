@@ -138,7 +138,7 @@ void ascii85_decode(FILE *fp, int delims, int ignore_garbage) {
 
 
 extern "C"
-void scan_ascii84(const class scanner_params &sp,const recursion_control_block &rcb)
+void scan_ascii85(const class scanner_params &sp,const recursion_control_block &rcb)
 {
     assert(sp.version==scanner_params::CURRENT_SP_VERSION);      
     if(sp.phase==scanner_params::startup){
