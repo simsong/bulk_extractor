@@ -737,7 +737,7 @@ int main(int argc,char **argv)
     std::string opt_outdir;
     bool        opt_write_feature_files = true;
     bool        opt_write_sqlite3     = false;
-    bool        opt_enable_histograms=true;
+    bool        opt_enable_histograms = true;
 
     /* Startup */
     setvbuf(stdout,0,_IONBF,0);		// don't buffer stdout
@@ -893,6 +893,7 @@ int main(int argc,char **argv)
     si.get_config("dup_data_alerts",&be13::plugin::dup_data_alerts,"Notify when duplicate data is not processed");
     si.get_config("write_feature_files",&opt_write_feature_files,"Write features to flat files");
     si.get_config("write_feature_sqlite3",&opt_write_sqlite3,"Write feature files to report.sqlite3");
+    si.get_config("report_read_errors",&cfg.opt_report_read_errors,"Report read errors");
 
     /* Make sure that the user selected a valid hash */
     {

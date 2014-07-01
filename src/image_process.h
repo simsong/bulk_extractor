@@ -80,6 +80,7 @@ public:
                                size_t opt_pagesize,size_t opt_margin);
     const size_t pagesize;                    // page size we are using
     const size_t margin;                      // margin size we are using
+    bool  report_read_errors;
 
     class read_error: public std::exception {
 	virtual const char *what() const throw() {
@@ -121,7 +122,8 @@ public:
 	uint64_t seek_block(uint64_t block) { return myimage.seek_block(*this,block);} // returns block number 
     };
 
-    image_process(const std::string &fn,size_t pagesize_,size_t margin_):image_fname_(fn),pagesize(pagesize_),margin(margin_){}
+    image_process(const std::string &fn,size_t pagesize_,size_t margin_):image_fname_(fn),pagesize(pagesize_),margin(margin_),
+                                                                         report_read_errors(true){}
     virtual ~image_process(){};
 
     /* image support */
@@ -141,6 +143,7 @@ public:
     virtual uint64_t max_blocks(const class image_process::iterator &it) const = 0;
     // seek_block modifies the iterator, but not the image!
     virtual uint64_t seek_block(class image_process::iterator &it,uint64_t block) const = 0; // returns -1 if failure
+    virtual void set_report_read_errors(bool val){report_read_errors=val;}
 };
 
 inline image_process::iterator & operator++(image_process::iterator &it){

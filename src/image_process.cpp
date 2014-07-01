@@ -420,7 +420,7 @@ int process_ewf::pread(unsigned char *buf,size_t bytes,int64_t offset) const
     libewf_error_t *error=0;
     int ret = libewf_handle_read_random(handle,buf,bytes,offset,&error);
     if(ret<0){
-	libewf_error_fprint(error,stderr);
+	if (report_read_errors) libewf_error_fprint(error,stderr);
 	libewf_error_free(&error);
     }
     return ret;
