@@ -42,10 +42,10 @@ def process(out,dname1,dname2):
         if r:
             print("Files only in {}:".format(a.name))
             for f in r:
-                if "carved" in f:
-                    print("     %s" % (f))
-                else:
+                if ".txt" in f:
                     print("     %s (%d lines)" % (f,a.count_lines(f)))
+                else:
+                    print("     %s" % (f))
             print("")
 
     # Report interesting differences based on the historgrams.
