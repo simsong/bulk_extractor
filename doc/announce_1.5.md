@@ -92,9 +92,7 @@ The following scanners are shipped but not actually in use:
 
 Improved Carving Support
 ========================
-The following carving modes are specified in the default configuration:
-
-   -S carve_net_memory=NO    Memory structures are not carved
+Bulk_extractor 1.5 The following carving modes are specified in the default configuration:
 
 By default, Bulk_Extractor will not scan for in-memory TCP/IP structures.
 
@@ -126,6 +124,12 @@ By default, all sqlite files detected will be carved.  Note that only
 sqlite3 database files that were stored contigiously on the source
 media will be readable.
 
+
+Memory carving is the scan_net module can also be controlled, as it
+tends to generate a lot of false positives. Network carving is
+disabled by default:
+
+   -S carve_net_memory=NO    Memory structures are not carved
 
 
 Improvements in existing scanners:
@@ -179,7 +183,7 @@ Internal Bug Fixes
 
 * FLAG_NO_STOPLIST and FLAG_NO_ALERTLIST in feature_recorder.h were the same. They are now different.
 
-* FLAG_NO_QUOTE and FLAG_XML in feature_recorder.h were the same . They are different now.
+* FLAG_NO_QUOTE and FLAG_XML in feature_recorder.h were the same. They are different now.
 
 * The split wordlists contained utf8 escaped words, rather than pure UTF8. It now has pure UTF8.
 
