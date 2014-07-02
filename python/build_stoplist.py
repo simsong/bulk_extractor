@@ -36,11 +36,12 @@ def process(report):
 if __name__=="__main__":
     import argparse 
     global args
-    import sys,time,zlib
+    import sys,time,zlib,zipfile
 
     parser = argparse.ArgumentParser(description="Create a stop list from bulk_extractor reports",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("reports",nargs="+")
+    parser.add_argument("--outfile",default="stoplist-email.txt")
+    parser.add_argument("reports",nargs="+",help="BE reports or ZIPfiles with email.txt files to ignore")
     args = parser.parse_args()
 
     for fn in args.reports:
@@ -48,4 +49,8 @@ if __name__=="__main__":
             process(fn)
         except zlib.error:
             print("{} appears corrupt".format(fn))
+        except zipfile.BadZipFile:
+            print("{} has a bad zip file".format(fn))
 
+    with open(args.outfile,"wb") as f:
+        f.write(b"\n".join(sorted(all_emails)))

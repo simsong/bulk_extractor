@@ -59,7 +59,11 @@ public:
         bool     opt_report_read_errors;
 
         void validate(){
-            if(opt_offset_start % opt_pagesize != 0) errx(1,"ERROR: start offset must be a multiple of the page size\n");
+            if(opt_offset_start % opt_pagesize != 0){
+                std::cerr << "WARNING: start offset must be a multiple of the page size.\n";
+                opt_offset_start = (opt_offset_start / opt_pagesize) * opt_pagesize;
+                std::cerr << "         adjusted to " << opt_offset_start << "\n";
+            }
             if(opt_offset_end % opt_pagesize != 0) errx(1,"ERROR: end offset must be a multiple of the page size\n");
         };
     };
