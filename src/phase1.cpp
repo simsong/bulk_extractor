@@ -96,11 +96,6 @@ void BulkExtractor_Phase1::run(image_process &p,feature_recorder_set &fs,
     
     tp = new threadpool(config.num_threads,fs,xreport);	
 
-    if(config.debug & DEBUG_PRINT_STEPS){
-        std::cout << "DEBUG: HIT RETURN TO START...\n";
-        getchar();
-    }
-
     uint64_t page_ctr=0;
     xreport.push("runtime","xmlns:debug=\"http://www.afflib.org/bulk_extractor/debug\"");
 
