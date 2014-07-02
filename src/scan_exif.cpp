@@ -101,7 +101,7 @@ struct jpeg_validator {
                 break;
             default: // decode variable-length blocks
                 {
-                    if(i+2 >= sbuf.bufsize){i+=2;break;} // whoops - not enough
+                    if(i+2 >= sbuf.bufsize){i+=8;break;} // whoops - not enough
                     uint16_t block_length = sbuf.get16uBE(i+2);
                     if(sbuf[i+1]==0xc4) res.seen_ff_c4 = true;
                     if(sbuf[i+1]==0xcc) res.seen_ff_cc = true;
