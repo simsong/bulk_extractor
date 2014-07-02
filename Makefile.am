@@ -128,8 +128,8 @@ lib:
 .PHONY: pull
 pull:
 	git pull
-	(cd src/dfxml;git pull)
-	(cd src/be13_api;git pull)
+	(cd src/dfxml;git checkout master; git pull)
+	(cd src/be13_api;git checkout master; git pull)
 
 .PHONY: publish
 publish:
