@@ -164,6 +164,13 @@ public class BulkExtractorScanListReader {
 
           // parse tokens for scanner names, recognizing if they are enabled or disabled by default
           if (tokens.length >= 3) {
+
+            // do not accept instructions as valid scanner
+            if (tokens[2].equals("<scanner>")) {
+              continue;
+            }
+
+            // accept if "-e" or "-x"
             if (tokens[0].equals("") && tokens[1].equals("-e")) {  // disabled by default
               scanners.add(new Scanner(tokens[2], false));
             } else if (tokens[0].equals("") && tokens[1].equals("-x")) {  // enabled by default
