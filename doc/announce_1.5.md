@@ -93,9 +93,15 @@ The following scanners are shipped but not actually in use:
 
 Improved Carving Support
 ========================
-Bulk_extractor 1.5 The following carving modes are specified in the default configuration:
+Bulk_extractor 1.5 implements a sophisticated system for carving objects that it discovers.
 
-By default, Bulk_Extractor will not scan for in-memory TCP/IP structures.
+Bulk_extractor supports three carving mode for each kind of data that it can carve:
+
+  mode 0 - do not carve anything found
+  mode 1 - carve data if it is encoded (e.g. compressed, BASE64 encoded, etc.)
+  mode 2 - carve all recognized data
+
+The following carving modes are specified in the default configuration:
 
    -S jpeg_carve_mode=1    0=carve none; 1=carve encoded; 2=carve all (exif)
    -S min_jpeg_size=1000    Smallest JPEG stream that will be carved (exif)
@@ -125,12 +131,18 @@ By default, all sqlite files detected will be carved.  Note that only
 sqlite3 database files that were stored contigiously on the source
 media will be readable.
 
+Bulk_extractor carving now implements deduplciation, which means that
+the same object will not be carved twice. This is important when
+carving email archives, which tend to contain the same images as
+attachments to email messages.
 
 Memory carving is the scan_net module can also be controlled, as it
 tends to generate a lot of false positives. Network carving is
 disabled by default:
 
    -S carve_net_memory=NO    Memory structures are not carved
+
+By default, Bulk_Extractor will not scan for in-memory TCP/IP structures.
 
 
 Improvements in existing scanners:
