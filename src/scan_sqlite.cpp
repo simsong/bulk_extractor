@@ -19,6 +19,8 @@ static uint32_t sqlite_carve_mode = feature_recorder::CARVE_ALL;
 
 using namespace std;
 
+#define FEATURE_FILE_NAME "sqlite_carved"
+
 extern "C"
 void scan_sqlite(const class scanner_params &sp,const recursion_control_block &rcb)
 {
@@ -29,17 +31,17 @@ void scan_sqlite(const class scanner_params &sp,const recursion_control_block &r
         sp.info->author          = "Simson Garfinkel";
         sp.info->description     = "Scans for SQLITE3 data";
         sp.info->scanner_version = "1.0";
-	sp.info->feature_names.insert("sqlite");
+	sp.info->feature_names.insert(FEATURE_FILE_NAME);
         sp.info->get_config("sqlite_carve_mode",&sqlite_carve_mode,"0=carve none; 1=carve encoded; 2=carve all");
 	return;
     }
     if(sp.phase==scanner_params::PHASE_INIT){
-        sp.fs.get_name("sqlite")->set_carve_mode(static_cast<feature_recorder::carve_mode_t>(sqlite_carve_mode));
+        sp.fs.get_name(FEATURE_FILE_NAME)->set_carve_mode(static_cast<feature_recorder::carve_mode_t>(sqlite_carve_mode));
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
 	const sbuf_t &sbuf = sp.sbuf;
 	feature_recorder_set &fs = sp.fs;
-	feature_recorder *sqlite_recorder = fs.get_name("sqlite");
+	feature_recorder *sqlite_recorder = fs.get_name(FEATURE_FILE_NAME);
 
 	// Search for BEGIN:SQLITE\r in the sbuf
 	// we could do this with a loop, or with 
@@ -59,7 +61,7 @@ void scan_sqlite(const class scanner_params &sp,const recursion_control_block &r
                 uint32_t dbsize_in_pages = sbuf.get32uBE(begin+28);
                 size_t   dbsize = pagesize * dbsize_in_pages;
 
-                if (dbsize_in_pages>=1){
+                if (dbsize>0 && dbsize_in_pages>=1){
 
                     /* Write it out! */
                     sqlite_recorder->carve(sbuf,begin,begin+dbsize,".sqlite3");
