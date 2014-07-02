@@ -149,8 +149,8 @@ static void usage(const char *progname)
     std::cout << "   -P <dir>     - Specifies a plugin directory\n";
     std::cout << "             Default dirs include /usr/local/lib/bulk_extractor /usr/lib/bulk_extractor and\n";
     std::cout << "             BE_PATH environment variable\n";
-    std::cout << "   -e <scanner>    - enables <scanner> -- specify 'all' to enable all\n";
-    std::cout << "   -x <scanner>    - disables <scanner> -- specify 'all' to disable all\n";
+    std::cout << "   use -e <scanner>  to enables <scanner> -- specify 'all' to enable all\n";
+    std::cout << "   use -x <scanner>  to disable <scanner> -- specify 'all' to disable all\n";
     std::cout << "   -E <scanner>    - turn off all scanners except <scanner>\n";
     std::cout << "                     (Same as -x all -e <scanner>)\n";
     std::cout << "          note: -e, -x and -E commands are executed in order\n";
