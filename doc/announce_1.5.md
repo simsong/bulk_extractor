@@ -62,6 +62,7 @@ New Scanners:
 ===============
 Bulk_extractor version 1.5 provides these new scanners:
 
+* scan_base64   --- the Base64 scanner has been completely rewritten
 * scan_facebook --- Finds snippits of HTML with containing facebook strings
 * scan_httplogs --- A scanner that finds fragments of HTTP logs
 * scan_sqlite ---- SQLite database carving. (Note: only works for unfragmented databases.)
@@ -159,8 +160,9 @@ Underreporting Fixes
 
 * scan_base64 was ignoring a substantial amount of BASE64-encoded
   data. This has been corrected. As a result, substantially more email
-  addresses and URLs from BASE64-encoded data will be reported in
-  version 1.5 compared with version 1.4
+  addresses and URLs from BASE64-encoded data such as email
+  attachments and SSL certificates will be reported in version 1.5
+  compared with version 1.4
 
 
 Improvements in Python programs:

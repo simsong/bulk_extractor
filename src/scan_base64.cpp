@@ -49,7 +49,8 @@ inline bool sbuf_getline(const sbuf_t &sbuf,size_t &pos,size_t &start,size_t &le
 /* Return true if the line only has base64 characters, space characters, or equal signs at the end */
 inline bool sbuf_line_is_base64(const sbuf_t &sbuf,const size_t &start,const size_t &len,bool &found_equal)
 {
-    int b64_classes = 0;
+    int  b64_classes = 0;
+    bool only_A = true;
     if(start>sbuf.pagesize) return false;
     bool inequal = false;
     for(size_t i=start;i<start+len;i++){
@@ -62,14 +63,19 @@ inline bool sbuf_line_is_base64(const sbuf_t &sbuf,const size_t &start,const siz
         uint8_t ch = sbuf[i];
         if (base64array[ch]==0) return false;// non base64 character
         b64_classes |= base64array[ch];      // record the classes we have found
+        if (ch!='A') only_A = false;
     }
     if (inequal) found_equal = true;
 
-    /* Additional tweak during 1.5 alpha testing. base64 scanner was taking too long on very long lines of HEX
-     * that are seen in some files. HEX typically has all lowercase or all uppercase but not both,
-     * so we now require that every base64 line have both uppercase and lowercase
+    /* Additional tweak during 1.5 alpha testing. base64 scanner was
+     * taking too long on very long lines of HEX that are seen in some
+     * files. HEX typically has all lowercase or all uppercase but not
+     * both, so we now require that every base64 line have both
+     * uppercase and lowercase. The one exception is a line of all
+     * capital As, which is commonly seen in BASE64 (because all capital As are nulls)
      */
 
+    if (only_A) return true;                            // all capital As are true
     if ((b64_classes & B64_UPPERCASE)==0) return false; // must have an uppercase character
     if ((b64_classes & B64_LOWERCASE)==0) return false; // must have an lowercase character
 
@@ -135,28 +141,28 @@ void scan_base64(const class scanner_params &sp,const recursion_control_block &r
 	 * Note that this doesn't scan base64-encoded blobs smaller than two lines.
 	 * Perhaps we should do that.
 	 */
-        size_t blockstart = 0;
-        bool   inblock    = false;
-        size_t prevlen    = 0;
-        size_t linecount  = 0;
-        size_t pos = 0;
-        size_t start = 0;
-        size_t len   = 0;
+        bool   inblock    = false;      // are we in a base64 block?
+        size_t blockstart = 0;          // where the base64 started
+        size_t prevlen    = 0;          // length of previous line
+        size_t linecount  = 0;          // number of lines in region
+        size_t pos = 0;                 // where we are scanning
+        size_t line_start = 0;               // start of the line that was found
+        size_t line_len   = 0;               // length of the line
         bool   found_equal = false;
-        while(sbuf_getline(sbuf,pos,start,len)){
+        while(sbuf_getline(sbuf,pos,line_start,line_len)){
             //fprintf(stderr,"pos=%zd\n",pos);
-            if(sbuf_line_is_base64(sbuf,start,len,found_equal)){
+            if(sbuf_line_is_base64(sbuf,line_start,line_len,found_equal)){
                 if(inblock==false){
                     /* First line of a block! */
-                    if(len >= minlinewidth){
-                        inblock = true;
+                    if(line_len >= minlinewidth){
+                        inblock   = true;
+                        blockstart= line_start;
                         linecount = 1;
-                        blockstart = start;
-                        prevlen = len;
+                        prevlen   = line_len;
                     }
                     continue;
                 }
-                if(len!=prevlen){   // whoops! Lines are different lengths
+                if(line_len!=prevlen){   // whoops! Lines are different lengths
                     if(found_equal && linecount>1){
                         //fprintf(stderr,"1. linecount=%zd\n",linecount);
                         process(sp,rcb,blockstart,pos-blockstart);
@@ -166,13 +172,17 @@ void scan_base64(const class scanner_params &sp,const recursion_control_block &r
                 }
                 linecount++;
                 continue;
+            } else {
+                /* Next line is not Base64. If we had more than 2 lines, process them.
+                 * Note: hopefully the first line was the beginning of a BASE64 block to address
+                 * alignment issues.
+                 */
+                if(linecount>2 && inblock){
+                    //fprintf(stderr,"2. blockstart=%zd line_start=%zd pos=%zd linecount=%zd\n",blockstart,line_start,pos,linecount);
+                    process(sp,rcb,blockstart,pos-blockstart);
+                }
+                inblock = false;
             }
-            /* Ran out of the base64 block */
-            if(linecount>2){
-                //fprintf(stderr,"2. linecount=%zd\n",linecount);
-                process(sp,rcb,blockstart,pos-blockstart);
-            }
-            inblock = false;
         }
         //fprintf(stderr,"done\n");
     }
