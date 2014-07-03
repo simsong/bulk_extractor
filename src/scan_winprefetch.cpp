@@ -268,7 +268,8 @@ void scan_winprefetch(const class scanner_params &sp,const recursion_control_blo
 	if (sbuf.pagesize <= 0x10) {
 	    return;
 	}
-	size_t stop = sbuf.pagesize - 8;
+	size_t stop = (sbuf.pagesize > sbuf.bufsize + 8) ?
+                         sbuf.bufsize : sbuf.pagesize - 8;
 
 	// iterate through sbuf searching for winprefetch features
 	for (size_t start=0; start < stop; start++) {
