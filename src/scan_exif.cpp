@@ -594,9 +594,15 @@ public:
     // search through sbuf for potential exif content
     // Note: when data is found, we should skip to the end of the data
     void scan(const sbuf_t &sbuf){
+
+        // require at least this many bytes
         if(sbuf.bufsize < MIN_JPEG_SIZE) return;
 
-	for (size_t start=0; start < sbuf.pagesize - MIN_JPEG_SIZE; start++) {
+        // determine stop byte
+        size_t limit = (sbuf.pagesize > sbuf.bufsize + MIN_JPEG_SIZE) ?
+                           sbuf.bufsize : sbuf.pagesize - MIN_JPEG_SIZE;
+
+	for (size_t start=0; start < limit; start++) {
             // check for start of a JPEG
 	    if (sbuf[start + 0] == 0xff &&
                 sbuf[start + 1] == 0xd8 &&
