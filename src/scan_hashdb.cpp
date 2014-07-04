@@ -41,6 +41,7 @@
 // user settings
 static std::string hashdb_mode="none";                       // import or scan
 static uint32_t hashdb_block_size=4096;                      // import or scan
+static size_t hashdb_max_ngram=4;                            // import or scan
 static std::string hashdb_scan_path_or_socket="your_hashdb_directory"; // scan only
 static size_t hashdb_scan_sector_size = 512;                    // scan only
 static size_t hashdb_import_sector_size = 4096;                 // import only
@@ -57,6 +58,7 @@ static void do_import(const class scanner_params &sp,
                       const recursion_control_block &rcb);
 static void do_scan(const class scanner_params &sp,
                     const recursion_control_block &rcb);
+inline size_t ngram_match(const uint8_t *buf);
 
 // global state
 
@@ -96,6 +98,14 @@ void scan_hashdb(const class scanner_params &sp,
             // hashdb_block_size
             sp.info->get_config("hashdb_block_size", &hashdb_block_size,
                          "Hash block size, in bytes, used to generte hashes");
+
+            // hashdb_max_ngram
+            std::stringstream ss_hashdb_max_ngram;
+            ss_hashdb_max_ngram
+                << "Selects maximum ngram size, used to skip\n"
+                << "      low-entropy data, or 0 to disable";
+            sp.info->get_config("hashdb_max_ngram", &hashdb_max_ngram,
+                                ss_hashdb_max_ngram.str());
 
             // hashdb_scan_path_or_socket
             std::stringstream ss_hashdb_scan_path_or_socket;
@@ -164,6 +174,13 @@ void scan_hashdb(const class scanner_params &sp,
                 std::cerr << "Error.  Parameter 'hashdb_mode' value '"
                           << hashdb_mode << "' is invalid.\n"
                           << "Cannot continue.\n";
+                exit(1);
+            }
+
+            // hashdb_max_ngram
+            if (hashdb_max_ngram > hashdb_block_size) {
+                std::cerr << "Error.  Value for parameter 'hashdb_max_ngram' is invalid.\n"
+                         << "Cannot continue.\n";
                 exit(1);
             }
 
@@ -328,24 +345,31 @@ static void do_import(const class scanner_params &sp,
 
     // allocate space on heap for import_input
     std::vector<hashdb_t::import_element_t>* import_input =
-       new std::vector<hashdb_t::import_element_t>(count);
+       new std::vector<hashdb_t::import_element_t>;
 
-    // import all the cryptograph hash values of all the blocks in sbuf
+    // import all the cryptograph hash values from all the blocks in sbuf
     for (size_t i=0; i < count; ++i) {
+
+        // calculate the offset associated with this index
+        size_t offset = i * hashdb_import_sector_size;
+
+        // skip blocks that are in the low-entropy threshold
+        if (ngram_match(sbuf.buf + offset) > 0) {
+            // the data is an ngram
+            continue;
+        }
 
         // calculate the hash for this sector-aligned hash block
         hash_t hash = hash_generator::hash_buf(
-                                 sbuf.buf + i*hashdb_import_sector_size,
+                                 sbuf.buf + offset,
                                  hashdb_block_size);
 
-        // create the import element
-        hashdb_t::import_element_t import_element(hash,
+        // create and add the import element to the import input
+        import_input->push_back(hashdb_t::import_element_t(
+                                 hash,
                                  hashdb_import_repository_name,
                                  sbuf.pos0.str(), // use as filename
-                                 i * hashdb_import_sector_size); // file offset
-
-        // add the import element to the import input
-        (*import_input)[i] = import_element;
+                                 offset)); // file offset
     }
 
     // perform the import
@@ -379,16 +403,30 @@ static void do_scan(const class scanner_params &sp,
     }
 
     // allocate space on heap for scan_input
-    std::vector<hash_t>* scan_input = new std::vector<hash_t>(count);
+    std::vector<hash_t>* scan_input = new std::vector<hash_t>;
 
-    // get all the cryptograph hash values of all the blocks along
+    // allocate space on heap for the offset lookup table
+    std::vector<uint32_t>* offset_lookup_table = new std::vector<uint32_t>;
+
+    // get the cryptograph hash values of all the blocks along
     // sector boundaries from sbuf
     for (size_t i=0; i<count; ++i) {
-        // calculate the hash for this sector-aligned hash block
-        hash_t hash = hash_generator::hash_buf(sbuf.buf + i*hashdb_scan_sector_size, hashdb_block_size);
 
-        // add the hash to scan input
-        (*scan_input)[i] = hash;
+        // calculate the offset associated with this index
+        size_t offset = i * hashdb_scan_sector_size;
+
+        // skip blocks that are in the low-entropy threshold
+        if (ngram_match(sbuf.buf + offset) > 0) {
+            // the data is an ngram
+            continue;
+        }
+
+        // add the offset to the offset lookup table
+        offset_lookup_table->push_back(offset);
+
+        // calculate and add the hash to the scan input
+        scan_input->push_back(hash_generator::hash_buf(
+                    sbuf.buf + offset, hashdb_block_size));
     }
 
     // allocate space on heap for scan_output
@@ -408,13 +446,14 @@ static void do_scan(const class scanner_params &sp,
     // record each feature returned in the response
     for (hashdb_t::scan_output_t::const_iterator it=scan_output->begin(); it!= scan_output->end(); ++it) {
 
-        // prepare forensic path (pos0, feature, context) as (pos0, hash_string, count_string)
+        // prepare forensic path (pos0, feature, context)
+        // as (pos0, hash_string, count_string)
 
         // pos0
-        pos0_t pos0 = sbuf.pos0 + it->first * hashdb_scan_sector_size;
+        pos0_t pos0 = sbuf.pos0 + offset_lookup_table->at(it->first);
 
         // hash_string
-        std::string hash_string = (*(scan_input))[it->first].hexdigest();
+        std::string hash_string = scan_input->at(it->first).hexdigest();
 
         // count
         std::stringstream ss;
@@ -427,7 +466,24 @@ static void do_scan(const class scanner_params &sp,
 
     // clean up
     delete scan_input;
+    delete offset_lookup_table;
     delete scan_output;
+}
+
+// check for ngram match in block, return ngram size else 0
+inline size_t ngram_match(const uint8_t *buf) {
+
+    // increase ngram size to max, checking for a full-block ngram match
+    for(size_t ngram_size = 1; ngram_size <= hashdb_max_ngram; ngram_size++){
+        bool match = true;
+        for(size_t i=ngram_size; i<hashdb_block_size && match; i++){
+            if(buf[i%ngram_size]!=buf[i]) match = false;
+        }
+        if(match) return ngram_size;
+    }
+
+    // no ngram match
+    return 0;
 }
 
 #endif
