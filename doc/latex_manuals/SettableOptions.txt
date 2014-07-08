@@ -24,7 +24,7 @@ Settable Options (and their defaults):
       socket to a hashdb server to scan against.  Valid only in scan mode. (hashdb)
    -S hashdb_scan_sector_size=512    Selects the scan sector size.  Scans along
       sector boundaries.  Valid only in scan mode. (hashdb)
-   -S hashdb_import_sector_size=4096    Selects the import sector size.  Scans along
+   -S hashdb_import_sector_size=4096    Selects the import sector size.  Imports along
       sector boundaries.  Valid only in import mode. (hashdb)
    -S hashdb_import_repository_name=default_repository    Sets the repository name to
       attribute the import to.  Valid only in import mode. (hashdb)

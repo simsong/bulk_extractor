@@ -122,7 +122,7 @@ void scan_hashdb(const class scanner_params &sp,
             // hashdb_import_sector_size
             std::stringstream ss_hashdb_import_sector_size;
             ss_hashdb_import_sector_size
-                << "Selects the import sector size.  Scans along\n"
+                << "Selects the import sector size.  Imports along\n"
                 << "      sector boundaries.  Valid only in import mode.";
             sp.info->get_config("hashdb_import_sector_size", &hashdb_import_sector_size,
                                 ss_hashdb_import_sector_size.str());
