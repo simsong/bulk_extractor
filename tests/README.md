@@ -1,11 +1,11 @@
-==Regression testing for release==
+Regression testing for release
 
 - Compile with and without otimization and make sure results are the same
 
 - Compare results (with --diff) from last release and current release and report on the differences.
 
 
-==Features Files==
+Features Files
 
 aes_keys.txt				(scan_aes)
 alerts.txt --- which scanner is this associated with?
@@ -72,7 +72,7 @@ wordlist_histogram.txt
 
 report.xml
 
-==Regression Test Files==
+Regression Test Files
 
 These are the test files in git repository path bulk_extractor/tests/Data.
 I am trying to note the scanner(s) that read each file in parents to the right. 
@@ -110,7 +110,7 @@ utf8-examples.html
 utf8-examples.rtf
 
 
-==Map each scanner to associated feature files and test files==
+Map each scanner to associated feature files and test files
 
 Note: This needs to be corrected and updated still.
 
