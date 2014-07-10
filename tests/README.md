@@ -1,11 +1,11 @@
-Regression testing for release
+<h2>Regression testing for release</h2>
 
 - Compile with and without otimization and make sure results are the same
 
 - Compare results (with --diff) from last release and current release and report on the differences.
 
 
-Features Files
+<h2>Features Files</h2>
 
 aes_keys.txt				(scan_aes)
 alerts.txt --- which scanner is this associated with?
