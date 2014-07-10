@@ -132,32 +132,38 @@ Scanner aes     (Detects in-memory AES keys from their key schedules.)<br />
 	Test files:
 
 Scanner ascii85  (Description Needed)<br />
+	
 	Feature files:
 
 	Test files:
 
 Scanner base16  (Decodes hexadecimal test)<br />
+	
 	Feature files:	hex.txt
 
 	Test files:
 
 Scanner base64  (Decodes BASE64 text)<br />
+	
 	Feature files: 
 
 	Test files:		base64.eml
 					base64.emlx
 	
 Scanner bulk     (Description Needed)<br />
+	
 	Feature files: bulk.txt
 
 	Test files:
 
 Scanner elf     (Detects and decodes ELF headers)<br />
+	
 	Feature files: elf.txt
 
 	Test files:
 
 Scanner email    (Description Needed)<br />
+	
 	Feature files: 	domain.txt
 					email.txt
 					ether.txt
@@ -173,6 +179,7 @@ Scanner email    (Description Needed)<br />
 		nps-2010-emails.E01	
 
 Scanner exif    (Decodes EXIF headers in JPEGs using built-in decoder.)<br />
+	
 	Feature files: 	exif.txt 
 					gps.txt
 					jpeg_carved.txt
@@ -180,52 +187,62 @@ Scanner exif    (Decodes EXIF headers in JPEGs using built-in decoder.)<br />
 	Test files:
 
 Scanner exiv2    (Decodes EXIF headers in JPEGs using libexiv2 - for regression testing)<br />
+	
 	Feature files:	exif.txt
 					gps.txt
 
 	Test files:
 
 Scanner facebook  (Facebook HTML)<br />
+	
 	Feature files: facebook.txt
 
 	Test files:
 
 Scanner find     (Does keyword searching)<br />
+	
 	Feature files: 	find.txt
 
 	Test files:
 
 Scanner gps      (Detects XML from Garmin GPS devices)<br />
+	
 	Feature files: gps.txt
 
 	Test files:
 
 Scanner gzip     (Detects and decompresses GZIP files and gzip stream)<br />
+	
 	Feature files: zip.txt
 
 	Test files:
 
 Scanner hashdb   (Search for sector hashes/ make a sector hash database)<br />
+	
 	Feature files: identified_blocks.txt
 
 	Test files:
 
 Scanner hiber    (Detects and decompresses Windows hibernation fragments)<br />
+	
 	Feature files:
 
 	Test files:
 
 Scanner httplog  (Search for web server logs)<br />
+	
 	Feature files: httplog.txt
 
 	Test files:
 
 Scanner json     (Detects JavaScript Object Notation files)<br />
+	
 	Feature files: json.txt
 
 	Test files:
 
 Scanner kml      (Detects KML files)<br />
+	
 	Feature files: gps.txt, kml.txt
 
 	Test files:
@@ -237,6 +254,7 @@ Scanner lightgrep	 (Description Needed)<br />
 	Test files:
 
 Scanner net      (IP packet scanning and carving)<br />
+	
 	Feature files: 	domain.txt
 					ether.txt
 					ip.txt
@@ -245,61 +263,73 @@ Scanner net      (IP packet scanning and carving)<br />
 	Test files:
 	
 Scanner outlook  (Decrypts Outlook Compressible Encryption.)<br />
+	
 	Feature files:	
 	
 	Test files:
 
 Scanner pdf      (Extracts text from some kinds of PDF files.)<br />
+
 	Feature files:
 
 	Test files: 	pdf_fragment
 	
 Scanner rar      (RAR files)<br />
+	
 	Feature files:	rar.txt
 
 	Test files:		rar_samples.tar
 
 Scanner sqlite   (SQLite3 databases - only if they are contiguous.)<br />
+	
 	Feature files: sqlite.txt
 
 	Test files:
 
 Scanner vcard    (Carves VCARD files.)<br />
+	
 	Feature files: vcard.txt
 
 	Test files:
 
 Scanner windirs  (Windows directory entries)<br />
+	
 	Feature files: windirs.txt
 
 	Test files:
 
 Scanner winlnk   (Windows LNK files)<br />
+	
 	Feature files: winlnk.txt
 
 	Test files:
 
 Scanner winpe     (Description Needed)<br />
+	
 	Feature files: winpe.txt
 
 	Test files:
 
 Scanner winprefetch  (Extracts fields from Windows prefetch files and file fragments.)<br />
+	
 	Feature files: winprefetch.txt
 
 	Test files:
 	
 Scanner wordlist  (Builds word list for password cracking.)<br />
+
 	Feature files: wordlist.txt
 
 	Test files:
 
 Scanner xor      (XOR obfuscation)<br />
+
 	Feature files:
 
 	Test files:
 
 Scanner zip      (Detects and decompresses ZIP files and zlib streams.)<br />
+	
 	Feature files:	zip.tx
 
 	Test files:
