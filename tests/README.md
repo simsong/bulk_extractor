@@ -1,4 +1,4 @@
-a<h3>Regression testing for release</h3>
+<h3>Regression testing for release</h3>
 
 - Compile with and without otimization and make sure results are the same
 
