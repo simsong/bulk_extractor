@@ -79,35 +79,34 @@ I am trying to note the scanner(s) that read each file in parents to the right.<
 Note: The purpose of these test files still needs to be identified and associated with one or more scanners.<br />
 
 5.psd<br />	
-ansi.E01<br />		
+ansi.E01<br />
 base64.eml (scan_base64)<br />
-base64.emlx (scan_base64)<br />		
-beth.odt<br />		
-bitcoin.txt<br />		
-bitlocker.tar<br />		
+base64.emlx (scan_base64)<br />
+beth.odt<br />
+bitcoin.txt<br />
+bitlocker.tar<br />
 credit_card_numbers.htm (scan_accounts)<br />
 deployPkg.dll.lnk (scan_winlnk?)<br />
-FIREFOX.EXE-18ACFCFF.pf<br />	
-german_ansi.E01<br />		
-german_utf8.E01<br />		
+FIREFOX.EXE-18ACFCFF.pf<br />
+german_ansi.E01<br />
+german_utf8.E01<br />
 kml_samples.E01 (scan_kml)<br />
-MEGATRON-psd7909<br />	
-mywinprefetch_cat (scan_winprefetch)<br />	
+MEGATRON-psd7909<br />
+mywinprefetch_cat (scan_winprefetch)<br />
 nps-2010-emails.E01 (scan_email)<br />
 NTLM-wenchao.pcap (scan_net)<br />
 pdf_fragment (scan_pdf)<br />
 rar_samples.tar (scan_rar)<br />
 skipped-packets.bin (scan_net)<br />
-ssn_test.txt (scan_accounts)<br />	
+ssn_test.txt (scan_accounts)<br />
 test-acct.txt (scan_accounts)<br />
 test-urls.txt (scan_email)<br />
-testfile2_ANSI.txt<br />	
-testfile2_UTF-8.txt<br />	
+testfile2_ANSI.txt<br />
+testfile2_UTF-8.txt<br />
 utf8-examples.txt<br />
 testpage.bin<br />
 utf8-examples.html<br />
 utf8-examples.rtf<br />
-
 
 <h3>Map each scanner to associated feature files and test files</h3>
 
