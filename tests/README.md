@@ -8,39 +8,38 @@
 <h3>Features Files</h3>
 
 <p>aes_keys.txt				(scan_aes)</p>
-<p>alerts.txt --- which scanner is this associated with?
-<p>bulk.txt					(scan_bulk)
-<p>ccn.txt						(scan_accts)
-<p>ccn_track2.txt				(scan_accts)
-<p>domain.txt					(scan_email)
-<p>elf.txt						(scan_elf)
-<p>email.txt					(scan_email)
-<p>ether.txt					(scan_net, scan_email)
-<p>exif.txt					(scan_exif, scan_exiv2)
-<p>extx.txt					(scan_extx)
-<p>facebook.txt				(scan_facebook)
-<p>find.txt					(scan_find)
-<p>gps.txt						(scan_gps, scan_exif, scan_exiv2)
-<p>hex.txt						(scan_base16)
-<p>httpheader.txt				(scan_httpheader)
-<p>httplogs.txt				(scan_httplogs)		
-<p>identified_blocks.txt		(scan_hashdb)
-<p>ip.txt						(scan_net)
-<p>jpeg_carved.txt				(scan_exif)
-<p>json.txt					(scan_json)
-<p>kml.txt						(scan_kml)
-<p>lift_tags.txt				(scan_lift)
-<p>lightgrep.txt				(scan_lightgrep)
-<p>packets.pcap				(scan_net)
-<p>pii.txt						(scan_accts)
-<p>pipe.txt					(scan_pipe)
-<p>rar.txt						(scan_rar)
-<p>rfc822.txt					(scan_email)
-<p>sceadan.txt					(scan_sceadan)
-<p>sqlite.txt					(scan_sqlite)
-<p>tcp.txt						(scan_net)
-<p>telephone.txt				(scan_accts)
-<p>unrar_carved.				(scan_rar)
+<p>bulk.txt					(scan_bulk)</p>
+<p>ccn.txt						(scan_accts)</p>
+<p>ccn_track2.txt				(scan_accts)</p>
+<p>domain.txt					(scan_email)</p>
+<p>elf.txt						(scan_elf)</p>
+<p>email.txt					(scan_email)</p>
+<p>ether.txt					(scan_net, scan_email)</p>
+<p>exif.txt					(scan_exif, scan_exiv2)</p>
+<p>extx.txt					(scan_extx)</p>
+<p>facebook.txt				(scan_facebook)</p>
+<p>find.txt					(scan_find)</p>
+<p>gps.txt						(scan_gps, scan_exif, scan_exiv2)</p>
+<p>hex.txt						(scan_base16)</p>
+<p>httpheader.txt				(scan_httpheader)</p>
+<p>httplogs.txt				(scan_httplogs)</p>
+<p>identified_blocks.txt		(scan_hashdb)</p>
+<p>ip.txt						(scan_net)</p>
+<p>jpeg_carved.txt				(scan_exif)</p>
+<p>json.txt					(scan_json)</p>
+<p>kml.txt						(scan_kml)</p>
+<p>lift_tags.txt				(scan_lift)</p>
+<p>lightgrep.txt				(scan_lightgrep)</p>
+<p>packets.pcap				(scan_net)</p>
+<p>pii.txt						(scan_accts)</p>
+<p>pipe.txt					(scan_pipe)</p>
+<p>rar.txt						(scan_rar)</p>
+<p>rfc822.txt					(scan_email)</p>
+<p>sceadan.txt					(scan_sceadan)</p>
+<p>sqlite.txt					(scan_sqlite)</p>
+<p>tcp.txt						(scan_net)</p>
+<p>telephone.txt				(scan_accts)</p>
+<p>unrar_carved.txt				(scan_rar)</p>
 <p>unzip_carved.txt			(scan_zip)
 <p>url.txt						(scan_email)
 <p>url_facebook-address.txt	(scan_email)
