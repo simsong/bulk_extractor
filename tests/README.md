@@ -1,4 +1,4 @@
-<h3>Regression testing for release</h3>
+a<h3>Regression testing for release</h3>
 
 - Compile with and without otimization and make sure results are the same
 
@@ -7,53 +7,53 @@
 
 <h3>Features Files</h3>
 
-es_keys.txt (scan_aes)<br />
-bulk.txt (scan_bulk)<br />
-ccn.txt (scan_accts)<br />
-ccn_track2.txt (scan_accts)<br />
-domain.txt (scan_email)<br />
-elf.txt (scan_elf)<br />
-email.txt (scan_email)<br />
-ether.txt (scan_net, scan_email)<br />
-exif.txt (scan_exif, scan_exiv2)<br />
-extx.txt (scan_extx)<br />
-facebook.txt (scan_facebook)<br />
-find.txt (scan_find)<br />
-gps.txt (scan_gps, scan_exif, scan_exiv2)<br />
-hex.txt (scan_base16)<br />
-httpheader.txt (scan_httpheader)<br />
-httplogs.txt (scan_httplogs)<br />
-identified_blocks.txt (scan_hashdb)<br />
-ip.txt (scan_net)<br />
-jpeg_carved.txt (scan_exif)<br />
-json.txt (scan_json)<br />
-kml.txt (scan_kml)<br />
-lift_tags.txt (scan_lift)<br />
-lightgrep.txt (scan_lightgrep)<br />
-packets.pcap (scan_net)<br />
-pii.txt (scan_accts)<br />
-pipe.txt (scan_pipe)<br />
-rar.txt (scan_rar)<br />
-rfc822.txt (scan_email)<br />
-sceadan.txt (scan_sceadan)<br />
-sqlite.txt (scan_sqlite)<br />
-tcp.txt (scan_net)<br />
-telephone.txt (scan_accts)<br />
-unrar_carved.txt (scan_rar)<br />
-unzip_carved.txt (scan_zip)<br />
-url.txt (scan_email)<br />
-url_facebook-address.txt (scan_email)<br />
-url_facebook-id.txt (scan_email)<br />
-url_microsoft-live.txt (scan_email)<br />
-url_searches.txt (scan_email)<br />
-url_services.txt (scan_email)<br />
-vcard.txt (scan_vcard)<br />
-windirs.txt (scan_windirs)<br />
-winlnk.txt (scan_winlnk)<br />
-winpe.txt (scan_winpe)<br />
-winprefetch.txt (scan_winprefetch)<br />
-wordlist.txt (scan_wordlist)<br />
-zip.txt (scan_zip)<br />
+<strong>es_keys.txt</strong> (scan_aes)<br />
+<strong>bulk.txt</strong> (scan_bulk)<br />
+<strong>ccn.txt</strong> (scan_accts)<br />
+<strong>ccn_track2.txt</strong> (scan_accts)<br />
+<strong>domain.txt</strong> (scan_email)<br />
+<strong>elf.txt</strong> (scan_elf)<br />
+<strong>email.txt</strong> (scan_email)<br />
+<strong>ether.txt</strong> (scan_net, scan_email)<br />
+<strong>exif.txt</strong> (scan_exif, scan_exiv2)<br />
+<strong>extx.txt</strong> (scan_extx)<br />
+<strong>facebook.txt</strong> (scan_facebook)<br />
+<strong>find.txt</strong> (scan_find)<br />
+<strong>gps.txt</strong> (scan_gps, scan_exif, scan_exiv2)<br />
+<strong>hex.txt</strong> (scan_base16)<br />
+<strong>httpheader.txt</strong> (scan_httpheader)<br />
+<strong>httplogs.txt</strong> (scan_httplogs)<br />
+<strong>identified_blocks.txt</strong> (scan_hashdb)<br />
+<strong>ip.txt</strong> (scan_net)<br />
+<strong>jpeg_carved.txt</strong> (scan_exif)<br />
+<strong>json.txt</strong> (scan_json)<br />
+<strong>kml.txt</strong> (scan_kml)<br />
+<strong>lift_tags.txt</strong> (scan_lift)<br />
+<strong>lightgrep.txt</strong> (scan_lightgrep)<br />
+<strong>packets.pcap</strong> (scan_net)<br />
+<strong>pii.txt</strong> (scan_accts)<br />
+<strong>pipe.txt</strong> (scan_pipe)<br />
+<strong>rar.txt</strong> (scan_rar)<br />
+<strong>rfc822.txt</strong> (scan_email)<br />
+<strong>sceadan.txt</strong> (scan_sceadan)<br />
+<strong>sqlite.txt</strong> (scan_sqlite)<br />
+<strong>tcp.txt</strong> (scan_net)<br />
+<strong>telephone.txt</strong> (scan_accts)<br />
+<strong>unrar_carved.txt</strong> (scan_rar)<br />
+<strong>unzip_carved.txt</strong> (scan_zip)<br />
+<strong>url.txt</strong> (scan_email)<br />
+<strong>url_facebook-address.txt</strong> (scan_email)<br />
+<strong>url_facebook-id.txt</strong> (scan_email)<br />
+<strong>url_microsoft-live.txt</strong> (scan_email)<br />
+<strong>url_searches.txt</strong> (scan_email)<br />
+<strong>url_services.txt</strong> (scan_email)<br />
+<strong>vcard.txt</strong> (scan_vcard)<br />
+<strong>windirs.txt</strong> (scan_windirs)<br />
+<strong>winlnk.txt</strong> (scan_winlnk)<br />
+<strong>winpe.txt</strong> (scan_winpe)<br />
+<strong>winprefetch.txt</strong> (scan_winprefetch)<br />
+<strong>wordlist.txt</strong> (scan_wordlist)<br />
+<strong>zip.txt</strong> (scan_zip)<br />
 
 <h4>Other Files</h4>
 Scanners can also write out histogram files. Is there just a subset of scanners that do this?<br />
@@ -77,36 +77,35 @@ These are the test files in git repository path bulk_extractor/tests/Data.<br />
 I am trying to note the scanner(s) that read each file in parents to the right.<br />
 <br />
 Note: The purpose of these test files still needs to be identified and associated with one or more scanners.<br />
-
-5.psd<br />	
-ansi.E01<br />
-base64.eml (scan_base64)<br />
-base64.emlx (scan_base64)<br />
-beth.odt<br />
-bitcoin.txt<br />
-bitlocker.tar<br />
-credit_card_numbers.htm (scan_accounts)<br />
-deployPkg.dll.lnk (scan_winlnk?)<br />
-FIREFOX.EXE-18ACFCFF.pf<br />
-german_ansi.E01<br />
-german_utf8.E01<br />
-kml_samples.E01 (scan_kml)<br />
-MEGATRON-psd7909<br />
-mywinprefetch_cat (scan_winprefetch)<br />
-nps-2010-emails.E01 (scan_email)<br />
-NTLM-wenchao.pcap (scan_net)<br />
-pdf_fragment (scan_pdf)<br />
-rar_samples.tar (scan_rar)<br />
-skipped-packets.bin (scan_net)<br />
-ssn_test.txt (scan_accounts)<br />
-test-acct.txt (scan_accounts)<br />
-test-urls.txt (scan_email)<br />
-testfile2_ANSI.txt<br />
-testfile2_UTF-8.txt<br />
-utf8-examples.txt<br />
-testpage.bin<br />
-utf8-examples.html<br />
-utf8-examples.rtf<br />
+<strong>5.psd</strong><br />	
+<strong>ansi.E01</strong><br />
+<strong>base64.eml</strong> (scan_base64)<br />
+<strong>base64.emlx</strong> (scan_base64)<br />
+<strong>beth.odt</strong><br />
+<strong>bitcoin.txt</strong><br />
+<strong>bitlocker.tar</strong><br />
+<strong>credit_card_numbers.htm</strong> (scan_accounts)<br />
+<strong>deployPkg.dll.lnk</strong> (scan_winlnk?)<br />
+<strong>FIREFOX.EXE-18ACFCFF.pf</strong><br />
+<strong>german_ansi.E01</strong><br />
+<strong>german_utf8.E01</strong><br />
+<strong>kml_samples.E01</strong> (scan_kml)<br />
+<strong>MEGATRON-psd7909</strong><br />
+<strong>mywinprefetch_cat</strong> (scan_winprefetch)<br />
+<strong>nps-2010-emails.E01</strong> (scan_email)<br />
+<strong>NTLM-wenchao.pcap</strong> (scan_net)<br />
+<strong>pdf_fragment</strong> (scan_pdf)<br />
+<strong>rar_samples.tar</strong> (scan_rar)<br />
+<strong>skipped-packets.bin</strong> (scan_net)<br />
+<strong>ssn_test.txt</strong> (scan_accounts)<br />
+<strong>test-acct.txt</strong> (scan_accounts)<br />
+<strong>test-urls.txt</strong> (scan_email)<br />
+<strong>testfile2_ANSI.txt</strong><br />
+<strong>testfile2_UTF-8.txt</strong><br />
+<strong>utf8-examples.txt</strong><br />
+<strong>testpage.bin</strong><br />
+<strong>utf8-examples.html</strong><br />
+<strong>utf8-examples.rtf</strong><br />
 
 <h3>Map each scanner to associated feature files and test files</h3>
 
@@ -124,44 +123,44 @@ Scanner accts   (Looks for phone numbers, credit card numbers, etc.)<br />
 					ssn_test.txt		
 					test-acct.txt
 
-Scanner aes     (Detects in-memory AES keys from their key schedules.)<br />
+Scanner <strong>aes</strong>       (Detects in-memory AES keys from their key schedules.)<br />
 	
 	Feature files:  aes_keys.txt
 
 	Test files:
 
-Scanner ascii85  (Description Needed)<br />
+Scanner <strong>ascii85</strong>  (Description Needed)<br />
 	
 	Feature files:
 
 	Test files:
 
-Scanner base16  (Decodes hexadecimal test)<br />
+Scanner <strong>base16</strong>  (Decodes hexadecimal test)<br />
 	
 	Feature files:	hex.txt
 
 	Test files:
 
-Scanner base64  (Decodes BASE64 text)<br />
+Scanner <strong>base64</strong>  (Decodes BASE64 text)<br />
 	
 	Feature files: 
 
 	Test files:		base64.eml
 					base64.emlx
 	
-Scanner bulk     (Description Needed)<br />
+Scanner <strong>bulk</strong>     (Description Needed)<br />
 	
 	Feature files: bulk.txt
 
 	Test files:
 
-Scanner elf     (Detects and decodes ELF headers)<br />
+Scanner <strong>elf</strong>     (Detects and decodes ELF headers)<br />
 	
 	Feature files: elf.txt
 
 	Test files:
 
-Scanner email    (Description Needed)<br />
+Scanner <strong>email</strong>    (Description Needed)<br />
 	
 	Feature files: 	domain.txt
 					email.txt
@@ -177,7 +176,7 @@ Scanner email    (Description Needed)<br />
 	Test files:	
 			nps-2010-emails.E01	
 
-Scanner exif    (Decodes EXIF headers in JPEGs using built-in decoder.)<br />
+Scanner <strong>exif</strong>    (Decodes EXIF headers in JPEGs using built-in decoder.)<br />
 	
 	Feature files: 	exif.txt 
 					gps.txt
@@ -185,62 +184,62 @@ Scanner exif    (Decodes EXIF headers in JPEGs using built-in decoder.)<br />
 
 	Test files:
 
-Scanner exiv2    (Decodes EXIF headers in JPEGs using libexiv2 - for regression testing)<br />
+Scanner <strong>exiv2</strong>    (Decodes EXIF headers in JPEGs using libexiv2 - for regression testing)<br />
 	
 	Feature files:	exif.txt
 					gps.txt
 
 	Test files:
 
-Scanner facebook  (Facebook HTML)<br />
+Scanner <strong>facebook</strong>  (Facebook HTML)<br />
 	
 	Feature files: facebook.txt
 
 	Test files:
 
-Scanner find     (Does keyword searching)<br />
+Scanner <strong>find</strong>     (Does keyword searching)<br />
 	
 	Feature files: 	find.txt
 
 	Test files:
 
-Scanner gps      (Detects XML from Garmin GPS devices)<br />
+Scanner <strong>gps</strong>      (Detects XML from Garmin GPS devices)<br />
 	
 	Feature files: gps.txt
 
 	Test files:
 
-Scanner gzip     (Detects and decompresses GZIP files and gzip stream)<br />
+Scanner <strong>gzip</strong>     (Detects and decompresses GZIP files and gzip stream)<br />
 	
 	Feature files: zip.txt
 
 	Test files:
 
-Scanner hashdb   (Search for sector hashes/ make a sector hash database)<br />
+Scanner <strong>hashdb</strong>   (Search for sector hashes/ make a sector hash database)<br />
 	
 	Feature files: identified_blocks.txt
 
 	Test files:
 
-Scanner hiber    (Detects and decompresses Windows hibernation fragments)<br />
+Scanner <strong>hiber</strong>    (Detects and decompresses Windows hibernation fragments)<br />
 	
 	Feature files:
 
 	Test files:
 
-Scanner httplog  (Search for web server logs)<br />
+Scanner <strong>httplog</strong>  (Search for web server logs)<br />
 	
 	Feature files: httplog.txt
 
 	Test files:
 
-Scanner json     (Detects JavaScript Object Notation files)<br />
+Scanner <strong>json</strong>     (Detects JavaScript Object Notation files)<br />
 	
 	Feature files: json.txt
 
 	Test files:
 
-Scanner kml      (Detects KML files)<br />
+Scanner <strong>kml</strong>      (Detects KML files)<br />
 	
 	Feature files:  gps.txt
 					kml.txt
@@ -248,12 +247,12 @@ Scanner kml      (Detects KML files)<br />
 	Test files:
 					kml_samples.E01
 
-Scanner lightgrep	 (Description Needed)<br />
+Scanner <strong>lightgrep</strong>	 (Description Needed)<br />
 	Feature files: 	lightgrep.txt
 
 	Test files:
 
-Scanner net      (IP packet scanning and carving)<br />
+Scanner <strong>net</strong>      (IP packet scanning and carving)<br />
 	
 	Feature files: 	domain.txt
 					ether.txt
@@ -262,73 +261,73 @@ Scanner net      (IP packet scanning and carving)<br />
 					tcp.txt
 	Test files:
 	
-Scanner outlook  (Decrypts Outlook Compressible Encryption.)<br />
+Scanner <strong>outlook</strong>  (Decrypts Outlook Compressible Encryption.)<br />
 	
 	Feature files:	
 	
 	Test files:
 
-Scanner pdf      (Extracts text from some kinds of PDF files.)<br />
+Scanner <strong>pdf</strong>      (Extracts text from some kinds of PDF files.)<br />
 
 	Feature files:
 
 	Test files: 	pdf_fragment
 	
-Scanner rar      (RAR files)<br />
+Scanner <strong>rar</strong>      (RAR files)<br />
 	
 	Feature files:	rar.txt
 
 	Test files:		rar_samples.tar
 
-Scanner sqlite   (SQLite3 databases - only if they are contiguous.)<br />
+Scanner <strong>sqlite</strong>   (SQLite3 databases - only if they are contiguous.)<br />
 	
 	Feature files: sqlite.txt
 
 	Test files:
 
-Scanner vcard    (Carves VCARD files.)<br />
+Scanner <strong>vcard</strong>    (Carves VCARD files.)<br />
 	
 	Feature files: vcard.txt
 
 	Test files:
 
-Scanner windirs  (Windows directory entries)<br />
+Scanner <strong>windirs</strong>  (Windows directory entries)<br />
 	
 	Feature files: windirs.txt
 
 	Test files:
 
-Scanner winlnk   (Windows LNK files)<br />
+Scanner <strong>winlnk</strong>   (Windows LNK files)<br />
 	
 	Feature files: winlnk.txt
 
 	Test files:
 
-Scanner winpe     (Description Needed)<br />
+Scanner <strong>winpe</strong>     (Description Needed)<br />
 	
 	Feature files: winpe.txt
 
 	Test files:
 
-Scanner winprefetch  (Extracts fields from Windows prefetch files and file fragments.)<br />
+Scanner <strong>winprefetch</strong>  (Extracts fields from Windows prefetch files and file fragments.)<br />
 	
 	Feature files: winprefetch.txt
 
 	Test files:
 	
-Scanner wordlist  (Builds word list for password cracking.)<br />
+Scanner <strong>wordlist</strong>  (Builds word list for password cracking.)<br />
 
 	Feature files: wordlist.txt
 
 	Test files:
 
-Scanner xor      (XOR obfuscation)<br />
+Scanner <strong>xor</strong>      (XOR obfuscation)<br />
 
 	Feature files:
 
 	Test files:
 
-Scanner zip      (Detects and decompresses ZIP files and zlib streams.)<br />
+Scanner <strong>zip</strong>      (Detects and decompresses ZIP files and zlib streams.)<br />
 	
 	Feature files:	zip.tx
 
