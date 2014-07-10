@@ -164,15 +164,15 @@ Scanner elf     (Detects and decodes ELF headers)<br />
 Scanner email    (Description Needed)<br />
 	
 	Feature files: 	domain.txt
-			email.txt
-			ether.txt
-			rfc822.txt
-			url.txt
-			url_facebook-address
-			url_facebook-id
-			url_microsoft-live 
-			url_searches.txt
-			url_services.txt
+					email.txt
+					ether.txt
+					rfc822.txt
+					url.txt
+					url_facebook-address
+					url_facebook-id
+					url_microsoft-live 
+					url_searches.txt
+					url_services.txt
 
 	Test files:	
 			nps-2010-emails.E01	
