@@ -81,26 +81,26 @@ Note: The purpose of these test files still needs to be identified and associate
 5.psd<br />	
 ansi.E01<br />		
 base64.eml (scan_base64)<br />
-base64.emlx				(scan_base64)<br />		
+base64.emlx (scan_base64)<br />		
 beth.odt<br />		
 bitcoin.txt<br />		
 bitlocker.tar<br />		
-credit_card_numbers.htm		(scan_accounts)<br />
-deployPkg.dll.lnk<br />			(scan_winlnk?)<br />
+credit_card_numbers.htm (scan_accounts)<br />
+deployPkg.dll.lnk (scan_winlnk?)<br />
 FIREFOX.EXE-18ACFCFF.pf<br />	
 german_ansi.E01<br />		
 german_utf8.E01<br />		
-kml_samples.E01				(scan_kml)<br />
+kml_samples.E01 (scan_kml)<br />
 MEGATRON-psd7909<br />	
-mywinprefetch_cat			(scan_winprefetch)<br />	
-nps-2010-emails.E01	        (scan_email)<br />
-NTLM-wenchao.pcap			(scan_net)<br />
-pdf_fragment				(scan_pdf)<br />
-rar_samples.tar				(scan_rar)<br />
-skipped-packets.bin			(scan_net)<br />
-ssn_test.txt				(scan_accounts)<br />	
-test-acct.txt				(scan_accounts)<br />
-test-urls.txt				(scan_email)<br />
+mywinprefetch_cat (scan_winprefetch)<br />	
+nps-2010-emails.E01 (scan_email)<br />
+NTLM-wenchao.pcap (scan_net)<br />
+pdf_fragment (scan_pdf)<br />
+rar_samples.tar (scan_rar)<br />
+skipped-packets.bin (scan_net)<br />
+ssn_test.txt (scan_accounts)<br />	
+test-acct.txt (scan_accounts)<br />
+test-urls.txt (scan_email)<br />
 testfile2_ANSI.txt<br />	
 testfile2_UTF-8.txt<br />	
 utf8-examples.txt<br />
@@ -114,6 +114,7 @@ utf8-examples.rtf<br />
 Note: This needs to be corrected and updated still.<br />
 
 Scanner accts   (Looks for phone numbers, credit card numbers, etc.)<br />
+	
 	Feature files: 	ccn.txt
 					ccn_track2.txt
 					domain.txt
@@ -125,6 +126,7 @@ Scanner accts   (Looks for phone numbers, credit card numbers, etc.)<br />
 					test-acct.txt
 
 Scanner aes     (Detects in-memory AES keys from their key schedules.)<br />
+	
 	Feature files:  aes_keys.txt
 
 	Test files:
