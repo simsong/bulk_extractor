@@ -112,7 +112,7 @@ Note: The purpose of these test files still needs to be identified and associate
 
 Note: This needs to be corrected and updated still.<br />
 
-Scanner accts   (Looks for phone numbers, credit card numbers, etc.)<br />
+Scanner <strong>accts</strong>   (Looks for phone numbers, credit card numbers, etc.)<br />
 	
 	Feature files: 	ccn.txt
 					ccn_track2.txt
