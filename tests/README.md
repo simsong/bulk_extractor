@@ -171,7 +171,7 @@ Scanner email    (Description Needed)<br />
 			url_facebook-address
 			url_facebook-id
 			url_microsoft-live 
-	        	url_searches.txt
+			url_searches.txt
 			url_services.txt
 
 	Test files:	
@@ -242,13 +242,14 @@ Scanner json     (Detects JavaScript Object Notation files)<br />
 
 Scanner kml      (Detects KML files)<br />
 	
-	Feature files: gps.txt, kml.txt
+	Feature files:  gps.txt
+			kml.txt
 
 	Test files:
-		kml_samples.E01
+			kml_samples.E01
 
 Scanner lightgrep	 (Description Needed)<br />
-	Feature files: lightgrep.txt
+	Feature files: 	lightgrep.txt
 
 	Test files:
 
