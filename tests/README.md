@@ -1,11 +1,11 @@
-<h2>Regression testing for release</h2>
+<h3>Regression testing for release</h3>
 
 - Compile with and without otimization and make sure results are the same
 
 - Compare results (with --diff) from last release and current release and report on the differences.
 
 
-<h2>Features Files</h2>
+<h3>Features Files</h3>
 
 aes_keys.txt				(scan_aes)
 alerts.txt --- which scanner is this associated with?
@@ -56,7 +56,7 @@ winprefetch.txt				(scan_winprefetch)
 wordlist.txt				(scan_wordlist)
 zip.txt						(scan_zip)
 
-===Other Files===
+<h4>Other Files</h4>
 Scanners can also write out histogram files. Is there just a subset of scanners that do this?
 The histogram files mentioned in the manual include:
 ccn_histogram.txt
@@ -72,7 +72,7 @@ wordlist_histogram.txt
 
 report.xml
 
-Regression Test Files
+<h3>Regression Test Files</h3>
 
 These are the test files in git repository path bulk_extractor/tests/Data.
 I am trying to note the scanner(s) that read each file in parents to the right. 
@@ -110,7 +110,7 @@ utf8-examples.html
 utf8-examples.rtf
 
 
-Map each scanner to associated feature files and test files
+<h3>Map each scanner to associated feature files and test files</h3>
 
 Note: This needs to be corrected and updated still.
 
