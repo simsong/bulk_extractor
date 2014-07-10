@@ -77,7 +77,8 @@ These are the test files in git repository path bulk_extractor/tests/Data.<br />
 I am trying to note the scanner(s) that read each file in parents to the right.<br />
 <br />
 Note: The purpose of these test files still needs to be identified and associated with one or more scanners.<br />
-<strong>5.psd</strong><br />	
+
+<strong>5.psd</strong><br />
 <strong>ansi.E01</strong><br />
 <strong>base64.eml</strong> (scan_base64)<br />
 <strong>base64.emlx</strong> (scan_base64)<br />
