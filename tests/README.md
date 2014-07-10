@@ -40,20 +40,20 @@
 <p>tcp.txt						(scan_net)</p>
 <p>telephone.txt				(scan_accts)</p>
 <p>unrar_carved.txt				(scan_rar)</p>
-<p>unzip_carved.txt			(scan_zip)
-<p>url.txt						(scan_email)
-<p>url_facebook-address.txt	(scan_email)
-<p>url_facebook-id.txt			(scan_email)
-<p>url_microsoft-live.txt		(scan_email)
-<p>url_searches.txt			(scan_email)
-<p>url_services.txt			(scan_email)
-vcard.txt			   		(scan_vcard)
-windirs.txt					(scan_windirs)
-winlnk.txt					(scan_winlnk)
-winpe.txt					(scan_winpe)
-winprefetch.txt				(scan_winprefetch)
-wordlist.txt				(scan_wordlist)
-zip.txt						(scan_zip)
+<p>unzip_carved.txt			(scan_zip)</p>
+<p>url.txt						(scan_email)</p>
+<p>url_facebook-address.txt	(scan_email)</p>
+<p>url_facebook-id.txt			(scan_email)</p>
+<p>url_microsoft-live.txt		(scan_email)</p>
+<p>url_searches.txt			(scan_email)</p>
+<p>url_services.txt			(scan_email)</p>
+<p>vcard.txt			   		(scan_vcard)</p>
+<p>windirs.txt					(scan_windirs)</p>
+<p>winlnk.txt					(scan_winlnk)</p>
+<p>winpe.txt					(scan_winpe)</p>
+<p>winprefetch.txt				(scan_winprefetch)</p>
+<p>wordlist.txt				(scan_wordlist)</p>
+<p>zip.txt						(scan_zip)</p>
 
 <h4>Other Files</h4>
 Scanners can also write out histogram files. Is there just a subset of scanners that do this?
