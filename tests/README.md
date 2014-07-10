@@ -180,15 +180,15 @@ Scanner email    (Description Needed)<br />
 Scanner exif    (Decodes EXIF headers in JPEGs using built-in decoder.)<br />
 	
 	Feature files: 	exif.txt 
-			gps.txt
-			jpeg_carved.txt
+					gps.txt
+					jpeg_carved.txt
 
 	Test files:
 
 Scanner exiv2    (Decodes EXIF headers in JPEGs using libexiv2 - for regression testing)<br />
 	
 	Feature files:	exif.txt
-			gps.txt
+					gps.txt
 
 	Test files:
 
@@ -243,10 +243,10 @@ Scanner json     (Detects JavaScript Object Notation files)<br />
 Scanner kml      (Detects KML files)<br />
 	
 	Feature files:  gps.txt
-			kml.txt
+					kml.txt
 
 	Test files:
-			kml_samples.E01
+					kml_samples.E01
 
 Scanner lightgrep	 (Description Needed)<br />
 	Feature files: 	lightgrep.txt
@@ -256,10 +256,10 @@ Scanner lightgrep	 (Description Needed)<br />
 Scanner net      (IP packet scanning and carving)<br />
 	
 	Feature files: 	domain.txt
-			ether.txt
-			ip.txt
-			packets.pcap
-			tcp.txt
+					ether.txt
+					ip.txt
+					packets.pcap
+					tcp.txt
 	Test files:
 	
 Scanner outlook  (Decrypts Outlook Compressible Encryption.)<br />
