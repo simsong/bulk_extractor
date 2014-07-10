@@ -164,31 +164,31 @@ Scanner elf     (Detects and decodes ELF headers)<br />
 Scanner email    (Description Needed)<br />
 	
 	Feature files: 	domain.txt
-					email.txt
-					ether.txt
-					rfc822.txt
-					url.txt
-					url_facebook-address
-					url_facebook-id
-					url_microsoft-live 
-	        		url_searches.txt
-					url_services.txt
+			email.txt
+			ether.txt
+			rfc822.txt
+			url.txt
+			url_facebook-address
+			url_facebook-id
+			url_microsoft-live 
+	        	url_searches.txt
+			url_services.txt
 
 	Test files:	
-		nps-2010-emails.E01	
+			nps-2010-emails.E01	
 
 Scanner exif    (Decodes EXIF headers in JPEGs using built-in decoder.)<br />
 	
 	Feature files: 	exif.txt 
-					gps.txt
-					jpeg_carved.txt
+			gps.txt
+			jpeg_carved.txt
 
 	Test files:
 
 Scanner exiv2    (Decodes EXIF headers in JPEGs using libexiv2 - for regression testing)<br />
 	
 	Feature files:	exif.txt
-					gps.txt
+			gps.txt
 
 	Test files:
 
@@ -255,10 +255,10 @@ Scanner lightgrep	 (Description Needed)<br />
 Scanner net      (IP packet scanning and carving)<br />
 	
 	Feature files: 	domain.txt
-					ether.txt
-					ip.txt
-					packets.pcap
-					tcp.txt
+			ether.txt
+			ip.txt
+			packets.pcap
+			tcp.txt
 	Test files:
 	
 Scanner outlook  (Decrypts Outlook Compressible Encryption.)<br />
