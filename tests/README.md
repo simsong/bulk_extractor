@@ -261,7 +261,7 @@ Scanner <strong>lightgrep</strong>	 (Description Needed)<br />
 
 Scanner <strong>net</strong>      (IP packet scanning and carving)<br />
 	
-	Feature files: 	domain.txt
+	Feature files: domain.txt
 					ether.txt
 					ip.txt
 					packets.pcap
