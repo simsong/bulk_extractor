@@ -121,7 +121,7 @@ Note: This needs to be corrected and updated still.<br />
 
 Scanner <strong>accts</strong>   (Looks for phone numbers, credit card numbers, etc.)<br />
 	
-	Feature files: 	                ccn.txt
+	Feature files: ccn.txt
 					ccn_track2.txt
 					domain.txt
 					pii.txt
@@ -280,13 +280,13 @@ Scanner <strong>pdf</strong>      (Extracts text from some kinds of PDF files.)<
 
 	Feature files:
 
-	Test files: 	pdf_fragment
+	Test files: pdf_fragment
 	
 Scanner <strong>rar</strong>      (RAR files)<br />
 	
 	Feature files:	rar.txt
 
-	Test files:		rar_samples.tar
+	Test files: rar_samples.tar
 
 Scanner <strong>sqlite</strong>   (SQLite3 databases - only if they are contiguous.)<br />
 	
@@ -338,7 +338,7 @@ Scanner <strong>xor</strong>      (XOR obfuscation)<br />
 
 Scanner <strong>zip</strong>      (Detects and decompresses ZIP files and zlib streams.)<br />
 	
-	Feature files:	zip.tx
+	Feature files:	zip.txt
 
 	Test files:
 
