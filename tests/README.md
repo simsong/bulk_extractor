@@ -338,7 +338,7 @@ Scanner <strong>xor</strong>      (XOR obfuscation)<br />
 
 Scanner <strong>zip</strong>      (Detects and decompresses ZIP files and zlib streams.)<br />
 	
-	Feature files:	zip.txt
+	Feature files: zip.txt
 
 	Test files:
 
