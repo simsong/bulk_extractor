@@ -1,9 +1,16 @@
-<h3>Regression testing for release</h3>
+There are several scripts in tests that are useful for testing bulk_extractor. These needs to be documented here. 
+
+
+<h2>Regression Testing</2>
+
+<h3>Regression testing plan for release</h3>
 
 - Compile with and without otimization and make sure results are the same
 
 - Compare results (with --diff) from last release and current release and report on the differences.
 
+<h2>Data</h2>
+The tests/Data directory contains test data files to verify the behavior of scanners, and to use in regression testing to compare results of running different versions of bulk_extractor on the same test data.  Testers should be familiar with all the feature files that bulk_extractor scanners use to write out data that is found. For each feature file, we list in paraenthesis the scanner(s) that write to the file. The next section lists the test files in Data and in parenthesis the sanner(s) that should find data in the test file. The last section lists each scanner and the feature files and test files associated with the scanner. 
 
 <h3>Features Files</h3>
 
