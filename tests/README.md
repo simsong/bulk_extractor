@@ -182,7 +182,7 @@ Scanner <strong>email</strong>    (Description Needed)<br />
 					url_services.txt
 
 	Test files:	
-			nps-2010-emails.E01	
+					nps-2010-emails.E01	
 
 Scanner <strong>exif</strong>    (Decodes EXIF headers in JPEGs using built-in decoder.)<br />
 	
