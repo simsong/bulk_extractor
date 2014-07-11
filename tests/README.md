@@ -310,7 +310,7 @@ Scanner <strong>winlnk</strong>   (Windows LNK files)<br />
 	
 	Feature files: winlnk.txt
 
-	Test files:
+	Test files:    deployPkg.dll.lnk
 
 Scanner <strong>winpe</strong>     (Description Needed)<br />
 	
