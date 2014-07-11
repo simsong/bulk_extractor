@@ -127,7 +127,7 @@ Scanner <strong>accts</strong>   (Looks for phone numbers, credit card numbers, 
 					pii.txt
 					telephone.txt
 
-	Test files:	  	        credit_card_numbers.htm
+	Test files: credit_card_numbers.htm
 					ssn_test.txt		
 					test-acct.txt
 
