@@ -181,7 +181,7 @@ Scanner <strong>email</strong>    (Description Needed)<br />
 					url_searches.txt
 					url_services.txt
 
-	Test files:	        	nps-2010-emails.E01
+	Test files: nps-2010-emails.E01
 					test-urls.txt
 
 Scanner <strong>exif</strong>    (Decodes EXIF headers in JPEGs using built-in decoder.)<br />
@@ -209,7 +209,7 @@ Scanner <strong>find</strong>     (Does keyword searching)<br />
 	
 	Feature files: 	find.txt
 
-	Test files:
+	Test files: 
 
 Scanner <strong>gps</strong>      (Detects XML from Garmin GPS devices)<br />
 	
