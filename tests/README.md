@@ -252,8 +252,7 @@ Scanner <strong>kml</strong>      (Detects KML files)<br />
 	Feature files:  gps.txt
 					kml.txt
 
-	Test files:
-					kml_samples.E01
+	Test files: kml_samples.E01
 
 Scanner <strong>lightgrep</strong>	 (Description Needed)<br />
 	Feature files: 	lightgrep.txt
@@ -268,7 +267,7 @@ Scanner <strong>net</strong>      (IP packet scanning and carving)<br />
 					packets.pcap
 					tcp.txt
 					
-	Test files:                     NTLM-wenchao.pcap
+	Test files: NTLM-wenchao.pcap
 					skipped-packets.bin
 	
 Scanner <strong>outlook</strong>  (Decrypts Outlook Compressible Encryption.)<br />
