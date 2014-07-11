@@ -121,13 +121,13 @@ Note: This needs to be corrected and updated still.<br />
 
 Scanner <strong>accts</strong>   (Looks for phone numbers, credit card numbers, etc.)<br />
 	
-	Feature files: 	ccn.txt
+	Feature files: 	                ccn.txt
 					ccn_track2.txt
 					domain.txt
 					pii.txt
 					telephone.txt
 
-	Test files:		credit_card_numbers.htm
+	Test files:	  	        credit_card_numbers.htm
 					ssn_test.txt		
 					test-acct.txt
 
@@ -153,7 +153,7 @@ Scanner <strong>base64</strong>  (Decodes BASE64 text)<br />
 	
 	Feature files: 
 
-	Test files:		base64.eml
+	Test files: base64.eml
 					base64.emlx
 	
 Scanner <strong>bulk</strong>     (Description Needed)<br />
@@ -181,8 +181,8 @@ Scanner <strong>email</strong>    (Description Needed)<br />
 					url_searches.txt
 					url_services.txt
 
-	Test files:	
-					nps-2010-emails.E01	
+	Test files:	        	nps-2010-emails.E01
+					test-urls.txt
 
 Scanner <strong>exif</strong>    (Decodes EXIF headers in JPEGs using built-in decoder.)<br />
 	
@@ -267,7 +267,9 @@ Scanner <strong>net</strong>      (IP packet scanning and carving)<br />
 					ip.txt
 					packets.pcap
 					tcp.txt
-	Test files:
+					
+	Test files:                     NTLM-wenchao.pcap
+					skipped-packets.bin
 	
 Scanner <strong>outlook</strong>  (Decrypts Outlook Compressible Encryption.)<br />
 	
@@ -321,7 +323,7 @@ Scanner <strong>winprefetch</strong>  (Extracts fields from Windows prefetch fil
 	
 	Feature files: winprefetch.txt
 
-	Test files:
+	Test files: mywinprefetch_cat
 	
 Scanner <strong>wordlist</strong>  (Builds word list for password cracking.)<br />
 
