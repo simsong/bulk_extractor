@@ -1,7 +1,7 @@
 There are several scripts in tests that are useful for testing bulk_extractor. These needs to be documented here. 
 
 
-<h2>Regression Testing</2>
+<h2>Regression Testing</h2>
 
 <h3>Regression testing plan for release</h3>
 
