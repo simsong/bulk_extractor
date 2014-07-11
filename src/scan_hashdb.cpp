@@ -359,12 +359,30 @@ static void do_import(const class scanner_params &sp,
                                  sbuf.buf + offset,
                                  hashdb_block_size);
 
+        // compose the filename based on the forensic path
+        std::stringstream ss;
+        size_t p=sbuf.pos0.path.find('/');
+        if (p==std::string::npos) {
+            // no directory in forensic path so explicitly include the filename
+            ss << sp.fs.get_input_fname();
+            if (sbuf.pos0.isRecursive()) {
+                // forensic path is recursive so add "/" + forensic path
+                ss << "/" << sbuf.pos0.path;
+            }
+        } else {
+            // directory in forensic path so print forensic path as is
+            ss << sbuf.pos0.path;
+        }
+
+        // calculate the offset from the start of the media image
+        uint64_t image_offset = sbuf.pos0.offset + offset;
+
         // create and add the import element to the import input
         import_input->push_back(hashdb_t::import_element_t(
                                  hash,
                                  hashdb_import_repository_name,
-                                 sbuf.pos0.str(), // use as filename
-                                 offset)); // file offset
+                                 ss.str(),
+                                 image_offset));
     }
 
     // perform the import
