@@ -286,7 +286,7 @@ Scanner <strong>rar</strong>      (RAR files)<br />
 	
 	Feature files:	rar.txt
 
-	Test files: rar_samples.tar
+	Test files:     rar_samples.tar
 
 Scanner <strong>sqlite</strong>   (SQLite3 databases - only if they are contiguous.)<br />
 	
