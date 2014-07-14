@@ -56,7 +56,6 @@ bulk_scanners = \
 	scan_elf.cpp \
 	scan_exif.cpp exif_reader.h exif_reader.cpp exif_entry.cpp\
 	scan_exiv2.cpp \
-	scan_extx.cpp \
 	scan_find.cpp \
 	scan_gzip.cpp \
 	scan_httplogs.cpp \
