@@ -37,7 +37,7 @@ void scan_hiberfile(const class scanner_params &sp,const recursion_control_block
     assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
     if(sp.phase==scanner_params::PHASE_STARTUP){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
-	sp.info->name  = "hiber";
+	sp.info->name           = "hiberfile";
         sp.info->author         = "Simson Garfinkel and Matthieu Suiche";
         sp.info->description    = "Scans for Microsoft-XPress compressed data";
         sp.info->scanner_version= "1.0";
@@ -54,7 +54,7 @@ void scan_hiberfile(const class scanner_params &sp,const recursion_control_block
 	const sbuf_t &sbuf = sp.sbuf;
 	const pos0_t &pos0 = sp.sbuf.pos0;
 
-	if(pos0.path.find("HIBER")!=string::npos){
+	if(pos0.path.find("HIBERFILE")!=string::npos){ // don't do recursively
 	    return;
 	}
 
