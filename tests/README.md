@@ -1,5 +1,4 @@
-To do regression tests for release:
+See wiki page on testing:
 
-- Compile with and without otimization and make sure results are the same
+https://github.com/simsong/bulk_extractor/wiki/Testing
 
-- Compare results (with --diff) from last release and current release and report on the differences.

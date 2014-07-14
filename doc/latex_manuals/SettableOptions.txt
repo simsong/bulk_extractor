@@ -1,3 +1,4 @@
+Settable Options (and their defaults): 
    -S work_start_work_end=YES    Record work start and end of each scanner in report.xml file ()
    -S enable_histograms=YES    Disable generation of histograms ()
    -S debug_histogram_malloc_fail_frequency=0    Set >0 to make histogram maker fail with memory allocations ()
@@ -5,6 +6,7 @@
    -S dup_data_alerts=NO    Notify when duplicate data is not processed ()
    -S write_feature_files=YES    Write features to flat files ()
    -S write_feature_sqlite3=NO    Write feature files to report.sqlite3 ()
+   -S report_read_errors=YES    Report read errors ()
    -S ssn_mode=0    0=Normal; 1=No `SSN' required; 2=No dashes required (accts)
    -S min_phone_digits=6    Min. digits required in a phone (accts)
    -S carve_net_memory=NO    Carve network  memory structures (net)
@@ -17,11 +19,12 @@
         import  - Import block hashes.
         scan    - Scan for matching block hashes. (hashdb)
    -S hashdb_block_size=4096    Hash block size, in bytes, used to generte hashes (hashdb)
+   -S hashdb_ignore_empty_blocks=YES    Selects to ignore empty blocks. (hashdb)
    -S hashdb_scan_path_or_socket=your_hashdb_directory    File path to a hash database or
       socket to a hashdb server to scan against.  Valid only in scan mode. (hashdb)
    -S hashdb_scan_sector_size=512    Selects the scan sector size.  Scans along
       sector boundaries.  Valid only in scan mode. (hashdb)
-   -S hashdb_import_sector_size=4096    Selects the import sector size.  Scans along
+   -S hashdb_import_sector_size=4096    Selects the import sector size.  Imports along
       sector boundaries.  Valid only in import mode. (hashdb)
    -S hashdb_import_repository_name=default_repository    Sets the repository name to
       attribute the import to.  Valid only in import mode. (hashdb)
@@ -46,6 +49,5 @@
    -S opt_max_bits_in_attrib=3    Ignore FAT32 entries with more attributes set than this (windirs)
    -S opt_max_weird_count=2    Ignore FAT32 entries with more things weird than this (windirs)
    -S opt_last_year=2019    Ignore FAT32 entries with a later year than this (windirs)
-   -S bulk_block_size=512    Block size (in bytes) for bulk data analysis (bulk)
    -S xor_mask=255    XOR mask string, in decimal (xor)
    -S sqlite_carve_mode=2    0=carve none; 1=carve encoded; 2=carve all (sqlite)

@@ -42,7 +42,6 @@ scanner_t *scanners_builtin[] = {
     scan_base64,
     scan_kml,
     scan_email,
-    // scan_httpheader,
     scan_httplogs,
     scan_gps,
     scan_net,
@@ -57,7 +56,6 @@ scanner_t *scanners_builtin[] = {
     scan_gps_lg,
     scan_lightgrep,
 #endif
-    // scan_extx,  // not ready for prime time
 #ifdef HAVE_EXIV2
     scan_exiv2,
 #endif
@@ -83,4 +81,7 @@ scanner_t *scanners_builtin[] = {
     scan_xor,
     scan_sqlite,
     scan_facebook,
+// these are in the old_scanners directory. They never worked well:
+    // scan_extx,  // not ready for prime time
+    // scan_httpheader,
     0};

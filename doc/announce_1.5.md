@@ -2,6 +2,8 @@
                              July 1, 2014
                                 DRAFT
 
+                            RELEASE NOTES
+
 bulk_extractor Version 1.5 alpha 6 has been released for Linux, MacOS and
 Windows. 
 

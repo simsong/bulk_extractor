@@ -41,6 +41,7 @@
 // user settings
 static std::string hashdb_mode="none";                       // import or scan
 static uint32_t hashdb_block_size=4096;                      // import or scan
+static bool hashdb_ignore_empty_blocks=true;                 // import or scan
 static std::string hashdb_scan_path_or_socket="your_hashdb_directory"; // scan only
 static size_t hashdb_scan_sector_size = 512;                    // scan only
 static size_t hashdb_import_sector_size = 4096;                 // import only
@@ -57,6 +58,7 @@ static void do_import(const class scanner_params &sp,
                       const recursion_control_block &rcb);
 static void do_scan(const class scanner_params &sp,
                     const recursion_control_block &rcb);
+inline bool is_empty_block(const uint8_t *buf);
 
 // global state
 
@@ -97,6 +99,10 @@ void scan_hashdb(const class scanner_params &sp,
             sp.info->get_config("hashdb_block_size", &hashdb_block_size,
                          "Hash block size, in bytes, used to generte hashes");
 
+            // hashdb_ignore_empty_blocks
+            sp.info->get_config("hashdb_ignore_empty_blocks", &hashdb_ignore_empty_blocks,
+                         "Selects to ignore empty blocks.");
+
             // hashdb_scan_path_or_socket
             std::stringstream ss_hashdb_scan_path_or_socket;
             ss_hashdb_scan_path_or_socket
@@ -116,7 +122,7 @@ void scan_hashdb(const class scanner_params &sp,
             // hashdb_import_sector_size
             std::stringstream ss_hashdb_import_sector_size;
             ss_hashdb_import_sector_size
-                << "Selects the import sector size.  Scans along\n"
+                << "Selects the import sector size.  Imports along\n"
                 << "      sector boundaries.  Valid only in import mode.";
             sp.info->get_config("hashdb_import_sector_size", &hashdb_import_sector_size,
                                 ss_hashdb_import_sector_size.str());
@@ -166,6 +172,9 @@ void scan_hashdb(const class scanner_params &sp,
                           << "Cannot continue.\n";
                 exit(1);
             }
+
+            // hashdb_ignore_empty_blocks
+            // checks not performed
 
             // hashdb_block_size
             if (hashdb_block_size == 0) {
@@ -229,8 +238,10 @@ void scan_hashdb(const class scanner_params &sp,
                                           hashdb_import_max_duplicates);
 
                     // show relavent settable options
+                    std::string temp1((hashdb_ignore_empty_blocks) ? "YES" : "NO");
                     std::cout << "hashdb: hashdb_mode=" << hashdb_mode << "\n"
                               << "hashdb: hashdb_block_size=" << hashdb_block_size << "\n"
+                              << "hashdb: hashdb_ignore_empty_blocks=" << temp1 << "\n"
                               << "hashdb: hashdb_import_sector_size= " << hashdb_import_sector_size << "\n"
                               << "hashdb: hashdb_import_repository_name= " << hashdb_import_repository_name << "\n"
                               << "hashdb: hashdb_import_max_duplicates=" << hashdb_import_max_duplicates << "\n"
@@ -240,8 +251,10 @@ void scan_hashdb(const class scanner_params &sp,
 
                 case MODE_SCAN: {
                     // show relavent settable options
+                    std::string temp2((hashdb_ignore_empty_blocks) ? "YES" : "NO");
                     std::cout << "hashdb: hashdb_mode=" << hashdb_mode << "\n"
                               << "hashdb: hashdb_block_size=" << hashdb_block_size << "\n"
+                              << "hashdb: hashdb_ignore_empty_blocks=" << temp2 << "\n"
                               << "hashdb: hashdb_scan_path_or_socket=" << hashdb_scan_path_or_socket << "\n"
                               << "hashdb: hashdb_scan_sector_size=" << hashdb_scan_sector_size << "\n";
 
@@ -328,24 +341,48 @@ static void do_import(const class scanner_params &sp,
 
     // allocate space on heap for import_input
     std::vector<hashdb_t::import_element_t>* import_input =
-       new std::vector<hashdb_t::import_element_t>(count);
+       new std::vector<hashdb_t::import_element_t>;
 
-    // import all the cryptograph hash values of all the blocks in sbuf
+    // import all the cryptograph hash values from all the blocks in sbuf
     for (size_t i=0; i < count; ++i) {
+
+        // calculate the offset associated with this index
+        size_t offset = i * hashdb_import_sector_size;
+
+        // ignore empty blocks
+        if (hashdb_ignore_empty_blocks && is_empty_block(sbuf.buf + offset)) {
+            continue;
+        }
 
         // calculate the hash for this sector-aligned hash block
         hash_t hash = hash_generator::hash_buf(
-                                 sbuf.buf + i*hashdb_import_sector_size,
+                                 sbuf.buf + offset,
                                  hashdb_block_size);
 
-        // create the import element
-        hashdb_t::import_element_t import_element(hash,
-                                 hashdb_import_repository_name,
-                                 sbuf.pos0.str(), // use as filename
-                                 i * hashdb_import_sector_size); // file offset
+        // compose the filename based on the forensic path
+        std::stringstream ss;
+        size_t p=sbuf.pos0.path.find('/');
+        if (p==std::string::npos) {
+            // no directory in forensic path so explicitly include the filename
+            ss << sp.fs.get_input_fname();
+            if (sbuf.pos0.isRecursive()) {
+                // forensic path is recursive so add "/" + forensic path
+                ss << "/" << sbuf.pos0.path;
+            }
+        } else {
+            // directory in forensic path so print forensic path as is
+            ss << sbuf.pos0.path;
+        }
 
-        // add the import element to the import input
-        (*import_input)[i] = import_element;
+        // calculate the offset from the start of the media image
+        uint64_t image_offset = sbuf.pos0.offset + offset;
+
+        // create and add the import element to the import input
+        import_input->push_back(hashdb_t::import_element_t(
+                                 hash,
+                                 hashdb_import_repository_name,
+                                 ss.str(),
+                                 image_offset));
     }
 
     // perform the import
@@ -379,16 +416,29 @@ static void do_scan(const class scanner_params &sp,
     }
 
     // allocate space on heap for scan_input
-    std::vector<hash_t>* scan_input = new std::vector<hash_t>(count);
+    std::vector<hash_t>* scan_input = new std::vector<hash_t>;
 
-    // get all the cryptograph hash values of all the blocks along
+    // allocate space on heap for the offset lookup table
+    std::vector<uint32_t>* offset_lookup_table = new std::vector<uint32_t>;
+
+    // get the cryptograph hash values of all the blocks along
     // sector boundaries from sbuf
     for (size_t i=0; i<count; ++i) {
-        // calculate the hash for this sector-aligned hash block
-        hash_t hash = hash_generator::hash_buf(sbuf.buf + i*hashdb_scan_sector_size, hashdb_block_size);
 
-        // add the hash to scan input
-        (*scan_input)[i] = hash;
+        // calculate the offset associated with this index
+        size_t offset = i * hashdb_scan_sector_size;
+
+        // ignore empty blocks
+        if (hashdb_ignore_empty_blocks && is_empty_block(sbuf.buf + offset)) {
+            continue;
+        }
+
+        // add the offset to the offset lookup table
+        offset_lookup_table->push_back(offset);
+
+        // calculate and add the hash to the scan input
+        scan_input->push_back(hash_generator::hash_buf(
+                    sbuf.buf + offset, hashdb_block_size));
     }
 
     // allocate space on heap for scan_output
@@ -408,13 +458,14 @@ static void do_scan(const class scanner_params &sp,
     // record each feature returned in the response
     for (hashdb_t::scan_output_t::const_iterator it=scan_output->begin(); it!= scan_output->end(); ++it) {
 
-        // prepare forensic path (pos0, feature, context) as (pos0, hash_string, count_string)
+        // prepare forensic path (pos0, feature, context)
+        // as (pos0, hash_string, count_string)
 
         // pos0
-        pos0_t pos0 = sbuf.pos0 + it->first * hashdb_scan_sector_size;
+        pos0_t pos0 = sbuf.pos0 + offset_lookup_table->at(it->first);
 
         // hash_string
-        std::string hash_string = (*(scan_input))[it->first].hexdigest();
+        std::string hash_string = scan_input->at(it->first).hexdigest();
 
         // count
         std::stringstream ss;
@@ -427,7 +478,18 @@ static void do_scan(const class scanner_params &sp,
 
     // clean up
     delete scan_input;
+    delete offset_lookup_table;
     delete scan_output;
+}
+
+// detect if block is empty
+inline bool is_empty_block(const uint8_t *buf) {
+    for (size_t i=1; i<hashdb_block_size; i++) {
+        if (buf[i] != buf[0]) {
+            return false;
+        }
+    }
+    return true;
 }
 
 #endif

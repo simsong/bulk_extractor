@@ -101,7 +101,7 @@ struct jpeg_validator {
                 break;
             default: // decode variable-length blocks
                 {
-                    if(i+2 >= sbuf.bufsize){i+=2;break;} // whoops - not enough
+                    if(i+8 >= sbuf.bufsize){i+=8;break;} // whoops - not enough
                     uint16_t block_length = sbuf.get16uBE(i+2);
                     if(sbuf[i+1]==0xc4) res.seen_ff_c4 = true;
                     if(sbuf[i+1]==0xcc) res.seen_ff_cc = true;
@@ -594,9 +594,15 @@ public:
     // search through sbuf for potential exif content
     // Note: when data is found, we should skip to the end of the data
     void scan(const sbuf_t &sbuf){
+
+        // require at least this many bytes
         if(sbuf.bufsize < MIN_JPEG_SIZE) return;
 
-	for (size_t start=0; start < sbuf.pagesize - MIN_JPEG_SIZE; start++) {
+        // determine stop byte
+        size_t limit = (sbuf.pagesize > sbuf.bufsize + MIN_JPEG_SIZE) ?
+                           sbuf.bufsize : sbuf.pagesize - MIN_JPEG_SIZE;
+
+	for (size_t start=0; start < limit; start++) {
             // check for start of a JPEG
 	    if (sbuf[start + 0] == 0xff &&
                 sbuf[start + 1] == 0xd8 &&
