@@ -41,7 +41,7 @@
 // user settings
 static std::string hashdb_mode="none";                       // import or scan
 static uint32_t hashdb_block_size=4096;                      // import or scan
-static size_t hashdb_max_ngram=4;                            // import or scan
+static bool hashdb_ignore_empty_blocks=true;                 // import or scan
 static std::string hashdb_scan_path_or_socket="your_hashdb_directory"; // scan only
 static size_t hashdb_scan_sector_size = 512;                    // scan only
 static size_t hashdb_import_sector_size = 4096;                 // import only
@@ -58,7 +58,7 @@ static void do_import(const class scanner_params &sp,
                       const recursion_control_block &rcb);
 static void do_scan(const class scanner_params &sp,
                     const recursion_control_block &rcb);
-inline size_t ngram_match(const uint8_t *buf);
+inline bool is_empty_block(const uint8_t *buf);
 
 // global state
 
@@ -99,13 +99,9 @@ void scan_hashdb(const class scanner_params &sp,
             sp.info->get_config("hashdb_block_size", &hashdb_block_size,
                          "Hash block size, in bytes, used to generte hashes");
 
-            // hashdb_max_ngram
-            std::stringstream ss_hashdb_max_ngram;
-            ss_hashdb_max_ngram
-                << "Selects maximum ngram size, used to skip\n"
-                << "      low-entropy data, or 0 to disable";
-            sp.info->get_config("hashdb_max_ngram", &hashdb_max_ngram,
-                                ss_hashdb_max_ngram.str());
+            // hashdb_ignore_empty_blocks
+            sp.info->get_config("hashdb_ignore_empty_blocks", &hashdb_ignore_empty_blocks,
+                         "Selects to ignore empty blocks.");
 
             // hashdb_scan_path_or_socket
             std::stringstream ss_hashdb_scan_path_or_socket;
@@ -126,7 +122,7 @@ void scan_hashdb(const class scanner_params &sp,
             // hashdb_import_sector_size
             std::stringstream ss_hashdb_import_sector_size;
             ss_hashdb_import_sector_size
-                << "Selects the import sector size.  Scans along\n"
+                << "Selects the import sector size.  Imports along\n"
                 << "      sector boundaries.  Valid only in import mode.";
             sp.info->get_config("hashdb_import_sector_size", &hashdb_import_sector_size,
                                 ss_hashdb_import_sector_size.str());
@@ -177,12 +173,8 @@ void scan_hashdb(const class scanner_params &sp,
                 exit(1);
             }
 
-            // hashdb_max_ngram
-            if (hashdb_max_ngram > hashdb_block_size) {
-                std::cerr << "Error.  Value for parameter 'hashdb_max_ngram' is invalid.\n"
-                         << "Cannot continue.\n";
-                exit(1);
-            }
+            // hashdb_ignore_empty_blocks
+            // checks not performed
 
             // hashdb_block_size
             if (hashdb_block_size == 0) {
@@ -246,8 +238,10 @@ void scan_hashdb(const class scanner_params &sp,
                                           hashdb_import_max_duplicates);
 
                     // show relavent settable options
+                    std::string temp1((hashdb_ignore_empty_blocks) ? "YES" : "NO");
                     std::cout << "hashdb: hashdb_mode=" << hashdb_mode << "\n"
                               << "hashdb: hashdb_block_size=" << hashdb_block_size << "\n"
+                              << "hashdb: hashdb_ignore_empty_blocks=" << temp1 << "\n"
                               << "hashdb: hashdb_import_sector_size= " << hashdb_import_sector_size << "\n"
                               << "hashdb: hashdb_import_repository_name= " << hashdb_import_repository_name << "\n"
                               << "hashdb: hashdb_import_max_duplicates=" << hashdb_import_max_duplicates << "\n"
@@ -257,8 +251,10 @@ void scan_hashdb(const class scanner_params &sp,
 
                 case MODE_SCAN: {
                     // show relavent settable options
+                    std::string temp2((hashdb_ignore_empty_blocks) ? "YES" : "NO");
                     std::cout << "hashdb: hashdb_mode=" << hashdb_mode << "\n"
                               << "hashdb: hashdb_block_size=" << hashdb_block_size << "\n"
+                              << "hashdb: hashdb_ignore_empty_blocks=" << temp2 << "\n"
                               << "hashdb: hashdb_scan_path_or_socket=" << hashdb_scan_path_or_socket << "\n"
                               << "hashdb: hashdb_scan_sector_size=" << hashdb_scan_sector_size << "\n";
 
@@ -353,9 +349,8 @@ static void do_import(const class scanner_params &sp,
         // calculate the offset associated with this index
         size_t offset = i * hashdb_import_sector_size;
 
-        // skip blocks that are in the low-entropy threshold
-        if (ngram_match(sbuf.buf + offset) > 0) {
-            // the data is an ngram
+        // ignore empty blocks
+        if (hashdb_ignore_empty_blocks && is_empty_block(sbuf.buf + offset)) {
             continue;
         }
 
@@ -364,12 +359,30 @@ static void do_import(const class scanner_params &sp,
                                  sbuf.buf + offset,
                                  hashdb_block_size);
 
+        // compose the filename based on the forensic path
+        std::stringstream ss;
+        size_t p=sbuf.pos0.path.find('/');
+        if (p==std::string::npos) {
+            // no directory in forensic path so explicitly include the filename
+            ss << sp.fs.get_input_fname();
+            if (sbuf.pos0.isRecursive()) {
+                // forensic path is recursive so add "/" + forensic path
+                ss << "/" << sbuf.pos0.path;
+            }
+        } else {
+            // directory in forensic path so print forensic path as is
+            ss << sbuf.pos0.path;
+        }
+
+        // calculate the offset from the start of the media image
+        uint64_t image_offset = sbuf.pos0.offset + offset;
+
         // create and add the import element to the import input
         import_input->push_back(hashdb_t::import_element_t(
                                  hash,
                                  hashdb_import_repository_name,
-                                 sbuf.pos0.str(), // use as filename
-                                 offset)); // file offset
+                                 ss.str(),
+                                 image_offset));
     }
 
     // perform the import
@@ -415,9 +428,8 @@ static void do_scan(const class scanner_params &sp,
         // calculate the offset associated with this index
         size_t offset = i * hashdb_scan_sector_size;
 
-        // skip blocks that are in the low-entropy threshold
-        if (ngram_match(sbuf.buf + offset) > 0) {
-            // the data is an ngram
+        // ignore empty blocks
+        if (hashdb_ignore_empty_blocks && is_empty_block(sbuf.buf + offset)) {
             continue;
         }
 
@@ -470,20 +482,14 @@ static void do_scan(const class scanner_params &sp,
     delete scan_output;
 }
 
-// check for ngram match in block, return ngram size else 0
-inline size_t ngram_match(const uint8_t *buf) {
-
-    // increase ngram size to max, checking for a full-block ngram match
-    for(size_t ngram_size = 1; ngram_size <= hashdb_max_ngram; ngram_size++){
-        bool match = true;
-        for(size_t i=ngram_size; i<hashdb_block_size && match; i++){
-            if(buf[i%ngram_size]!=buf[i]) match = false;
+// detect if block is empty
+inline bool is_empty_block(const uint8_t *buf) {
+    for (size_t i=1; i<hashdb_block_size; i++) {
+        if (buf[i] != buf[0]) {
+            return false;
         }
-        if(match) return ngram_size;
     }
-
-    // no ngram match
-    return 0;
+    return true;
 }
 
 #endif
