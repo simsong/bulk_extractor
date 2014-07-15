@@ -22,15 +22,23 @@ bulk_diff_version = '1.3'
 
 all_emails = set()
 
-def process(report):
+def process(report,fsc):
     b1 = bulk_extractor_reader.BulkReport(report,do_validate=False)
+    print("Reading email.txt")
+    try:
+        for line in b1.open("email.txt"):
+            fsc.write(line)
+    except KeyError:
+        pass
+
     try:
         h = b1.read_histogram("email_histogram.txt")
+        for (a) in h:
+            all_emails.add(a)
     except KeyError:
-        return
-    for (a) in h:
-        all_emails.add(a)
+        pass
     print("Processed {}; now {} unique emails".format(report,len(all_emails)))
+
             
 
 if __name__=="__main__":
@@ -40,17 +48,20 @@ if __name__=="__main__":
 
     parser = argparse.ArgumentParser(description="Create a stop list from bulk_extractor reports",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("--outfile",default="stoplist-email.txt")
+    parser.add_argument("--stoplist",default="stop-list.txt")
+    parser.add_argument("--stopcontext",default="stop-context.txt")
     parser.add_argument("reports",nargs="+",help="BE reports or ZIPfiles with email.txt files to ignore")
     args = parser.parse_args()
 
+    fsc = open(args.stopcontext,"wb")
+
     for fn in args.reports:
         try:
-            process(fn)
+            process(fn,fsc)
         except zlib.error:
             print("{} appears corrupt".format(fn))
         except zipfile.BadZipFile:
             print("{} has a bad zip file".format(fn))
 
-    with open(args.outfile,"wb") as f:
+    with open(args.stoplist,"wb") as f:
         f.write(b"\n".join(sorted(all_emails)))

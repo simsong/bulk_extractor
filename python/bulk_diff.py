@@ -9,7 +9,7 @@
 
 b'This module needs Python 2.7 or later.'
 
-__version__='1.3.0'
+__version__='1.5.0'
 import os.path,sys
 
 if sys.version_info < (2,7):
@@ -91,7 +91,7 @@ def process(out,dname1,dname2):
             v2 = b2.hist.get(feature,0)
             if v1!=v2: diffcount += 1
             if v2>v1 or (v2==v1 and options.same) or (v2<v1 and options.smaller):
-                data.append((v1, v2, v2-v1, feature))
+                data.append((v1, v2, v2-v1, feature.decode('utf-8')))
 
         # Sort according the diff first, then v2 amount, then v1 amount, then alphabetically on value
         def mysortkey(a):

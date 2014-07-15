@@ -21,7 +21,7 @@ so the "b" must be added.
 """
 
 
-__version__ = "1.3.0"
+__version__ = "1.5.0"
 
 b'This module needs Python 2.7 or later.'
 import zipfile,os,os.path,glob,codecs,re
@@ -284,7 +284,7 @@ class BulkReport:
         return sorted(filter(lambda fn:"/" in fn,self.files))
 
     def read_histogram(self,fn):
-        """Read a histogram file and return a dictonary of the histogram """
+        """Read a histogram file and return a dictonary of the histogram. Removes \t(utf16=...) """
         import re
         ret = {}
         r = re.compile(b"^n=(\d+)\t(.*)$")
@@ -292,7 +292,10 @@ class BulkReport:
             # line = line.decode('utf-8')
             m = r.search(line)
             if m:
-                ret[m.group(2)] = int(m.group(1))
+                k = m.group(2)
+                p = k.find(b"\t")
+                if p>0: k = k[0:p]
+                ret[k] = int(m.group(1))
         return ret
         
 if(__name__=='__main__'):
