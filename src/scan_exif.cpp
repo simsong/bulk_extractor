@@ -41,7 +41,7 @@ static size_t min_jpeg_size = 1000; // don't carve smaller than this
 #undef BULK_EXTRACTOR
 #endif
 
-#define DEBUG(x) if(exif_debug) std::cout << x << "\n";
+#define DEBUG(x) if(exif_debug) std::cerr << x << "\n";
 
 struct jpeg_validator {
     typedef enum { UNKNOWN=0,COMPLETE=1,TRUNCATED=2,CORRUPT=-1 } how_t;
@@ -62,13 +62,13 @@ struct jpeg_validator {
         uint16_t width;
     };
     static struct results_t validate_jpeg(const sbuf_t &sbuf) {
-        //std::cout << "validate_jpeg " << sbuf << "\n";
+        if(exif_debug) std::cerr << "validate_jpeg " << sbuf << "\n";
         results_t res;
         res.how = UNKNOWN;
         size_t i = 0;
-        while(i+1 < sbuf.bufsize && res.seen_EOI==false && res.how!=CORRUPT){
+        while(i+1 < sbuf.bufsize && res.seen_EOI==false && res.how!=CORRUPT && res.how!=COMPLETE && res.how!=TRUNCATED){
             if (sbuf[i]!=0xff){
-                DEBUG("CORRUPT 1");
+                if(exif_debug) std::cerr << "sbuf[" << i << "]=" << (int)(sbuf[i]) << "CORRUPT 1\n";
                 res.how = CORRUPT;
                 break;
             }
@@ -154,13 +154,13 @@ struct jpeg_validator {
                         continue;
                     }
                     if(sbuf[i+1]==0xde){ // terminated by an EOI marker
-                        //printf("i=%zd FF DE EOI found\n",i);
+                        if(exif_debug) fprintf(stderr,"i=%zd FF DE EOI found\n",i);
                         res.how = COMPLETE;
                         i+=2;
                         break;
                     }
                     if(sbuf[i+1]==0xd9){ // terminated by an EOI marker
-                        //printf("i=%zd FF D9 EOI found\n",i);
+                        if(exif_debug) fprintf(stderr,"i=%zd FF D9 EOI found\n",i);
                         i+=2;
                         res.how = COMPLETE;
                         break;
@@ -168,11 +168,13 @@ struct jpeg_validator {
                     if(sbuf[i+1]>=0xc0 && sbuf[i+1]<=0xdf){
                         continue;   // This range seems to continue valid control characters
                     }
-                    //printf(" ** WTF? sbuf[%d+1]=%2x\n",i,sbuf[i+1]);
+                    if(exif_debug) fprintf(stderr," ** WTF? sbuf[%zd+1]=%2x\n",i,sbuf[i+1]);
                     res.how = CORRUPT;
                     break;
                 }
                 // ran off the end in the stream. Fall through below.
+                if(exif_debug) std::cerr << "END OF STREAM\n";
+                break;
             }
         } /* while */
         // The JPEG is incomplete.
@@ -571,11 +573,14 @@ public:
         if(found_start){
             jpeg_validator::results_t res = jpeg_validator::validate_jpeg(sbuf);
             
+            if(exif_debug) fprintf(stderr,"res.len=%d res.how=%d\n",res.len,res.how);
+
             // Is it valid?
             if(res.len<=0) return 0; 
 
             // Should we carve?
             if(res.how==jpeg_validator::COMPLETE || res.len>(ssize_t)min_jpeg_size){
+                if(exif_debug) fprintf(stderr,"CARVING\n");
                 jpeg_recorder.carve(sbuf,0,res.len,".jpg");
                 ret = res.len;
             }
