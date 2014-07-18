@@ -82,6 +82,11 @@ std::string utf8_line;
 	return utf8_line;
 }
 
+bool is_fbid(const sbuf_t &sbuf, size_t loc) {
+     if (loc>5 && sbuf.substr(loc-5,5)=="fbid=") return true;
+     return false;
+}
+
 #define SCANNER "scan_acct"
 %}
 
@@ -162,7 +167,7 @@ DATEFORMAT	({DATEA}|{DATEB}|{DATEC}|{DATED})
     /* REGEX4 */
     /* Must be american express... */ 
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
-    if(valid_ccn(yytext+1,yyleng-1)){
+    if(valid_ccn(yytext+1,yyleng-1) && !is_fbid(SBUF,s.pos+1) ){
         s.ccn_recorder->write_buf(SBUF,s.pos+1,yyleng-1);
     }	
     s.pos += yyleng;
@@ -170,13 +175,13 @@ DATEFORMAT	({DATEA}|{DATEB}|{DATEC}|{DATED})
 
 [^0-9a-z\.][3-6]([0-9]{15,18})/{END} {
     /* REGEX5 */
-    /* ###############  13-19 numbers as a block beginning with a 4 or 5
+    /* ###############  13-19 numbers as a block beginning with a 3, 4, 5 or 6.
      * followed by something that is not a digit.
      * Yes, CCNs can now be up to 19 digits long. 
      * http://www.creditcards.com/credit-card-news/credit-card-appearance-1268.php
      */
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
-    if(valid_ccn(yytext+1,yyleng-1)){
+    if(valid_ccn(yytext+1,yyleng-1) && !is_fbid(SBUF,s.pos+1)){
         s.ccn_recorder->write_buf(SBUF,s.pos+1,yyleng-1);
     }	
     s.pos += yyleng;

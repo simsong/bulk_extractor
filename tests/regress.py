@@ -12,7 +12,7 @@ Options include:
  - Total number of features are reported and compared with the archives.
 """
 
-__version__ = "1.3.0"
+__version__ = "1.5.0"
 
 b'This module needs Python 2.7 or later.'
 

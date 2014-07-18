@@ -605,7 +605,7 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
 	sp.info->feature_names.insert(RAR_RECORDER_NAME);
 	sp.info->feature_names.insert(UNRAR_RECORDER_NAME);
         sp.info->get_config("rar_find_components",&record_components,"Search for RAR components");
-        sp.info->get_config("raw_find_volumes",&record_volumes,"Search for RAR volumes");
+        sp.info->get_config("rar_find_volumes",&record_volumes,"Search for RAR volumes");
         sp.info->get_config("unrar_carve_mode",&unrar_carve_mode,CARVE_MODE_DESCRIPTION);
 #else
         sp.info->description = "(disabled in configure)";
