@@ -702,6 +702,7 @@ int process_raw::pread(unsigned char *buf,size_t bytes,int64_t offset) const
 #endif
 
 	current_file_name = fi->name;
+	fprintf(stderr,"Attempt to open %s\n",fi->name.c_str());
 #ifdef WIN32
         current_handle = CreateFileA(fi->name.c_str(), FILE_READ_DATA,
                                     FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
@@ -711,7 +712,6 @@ int process_raw::pread(unsigned char *buf,size_t bytes,int64_t offset) const
 	  return -1;
 	}
 #else        
-	fprintf(stderr,"Attempt to open %s\n",fi->name.c_str());
 	current_fd = ::open(fi->name.c_str(),O_RDONLY|O_BINARY);
 	if(current_fd<=0) return -1;	// can't read this data
 #endif
@@ -733,7 +733,7 @@ int process_raw::pread(unsigned char *buf,size_t bytes,int64_t offset) const
 #ifdef WIN32
     DWORD bytes_read = 0;
     LARGE_INTEGER li;
-    li.QuadPart = offset;
+    li.QuadPart = offset - fi->offset;
     li.LowPart = SetFilePointer(current_handle, li.LowPart, &li.HighPart, FILE_BEGIN);
     if(li.LowPart == INVALID_SET_FILE_POINTER) return -1;
     if (FALSE == ReadFile(current_handle, buf, (DWORD) bytes, &bytes_read, NULL)){

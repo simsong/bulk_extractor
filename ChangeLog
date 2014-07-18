@@ -1,3 +1,7 @@
+2014-07-18  Basic  <simsong@r4.ncr.nps.edu>
+
+	* src/image_process.cpp: multi-split files was not working properly on Windows. Fixed
+
 2014-07-17  Basic  <simsong@r4.ncr.nps.edu>
 
 	* src/scan_rar.cpp (scan_rar): fixed typo. raw_find_volume becomes rar_find_volume

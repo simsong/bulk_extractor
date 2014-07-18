@@ -193,8 +193,10 @@ Incompatiable changes:
 ----------------------
 
 
-Internal Bug Fixes
+Bug Fixes
 ------------------
+
+* Versions 1.4 through 1.5 beta2 could not handle split-raw files on Windows. Now it can.
 
 * FLAG_NO_STOPLIST and FLAG_NO_ALERTLIST in feature_recorder.h were the same. They are now different.
 
