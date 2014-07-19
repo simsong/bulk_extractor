@@ -112,7 +112,7 @@ $(SRC_WIN)distclean:
 	$(MAKE) clean
 
 $(SRC_WIN)release:
-	scp $(INSTALLER) ncr.nps.edu:/var/www/digitalcorpora/downloads/bulk_extractor/
+	scp $(INSTALLER) $(WIN32_EXE) $(WIN64_EXE) ncr.nps.edu:/var/www/digitalcorpora/downloads/bulk_extractor/
 
 $(SRC_WIN)distdir:
 	if [ ! -d src_win ]; then mkdir src_win ; fi

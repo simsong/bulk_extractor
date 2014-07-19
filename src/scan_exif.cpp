@@ -174,9 +174,10 @@ struct jpeg_validator {
                 }
                 // ran off the end in the stream. Fall through below.
                 if(exif_debug) std::cerr << "END OF STREAM\n";
-                break;
+                goto done;
             }
         } /* while */
+    done:;
         // The JPEG is incomplete.
         // We ran off the end *before* we entered the SOS. We may be in the Exif, but we have
         // nothing displayable.
