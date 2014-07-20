@@ -7,8 +7,14 @@
  */
 
 #include "bulk_extractor.h"
-#include "bulk_extractor_i.h"
+#include "findopts.h"
+#include "image_process.h"
+#include "threadpool.h"
+#include "be13_api/aftimer.h"
+#include "be13_api/histogram.h"
 #include "dfxml/src/dfxml_writer.h"
+#include "dfxml/src/hash_t.h"
+#include "be13_api/unicode_escape.h"
 
 #include <iostream>
 #include <fstream>

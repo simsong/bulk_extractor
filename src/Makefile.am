@@ -1,5 +1,5 @@
 bin_PROGRAMS   = bulk_extractor 
-EXTRA_PROGRAMS = stand bulk_extractorlib beapi_demo
+EXTRA_PROGRAMS = stand bulk_extractorlib beapi_demo bulk_extractor_noscanners
 CLEANFILES     = scan_accts.cpp scan_email.cpp scan_gps.cpp scan_base16.cpp *.d
 
 AM_CPPFLAGS = -I${top_srcdir}/src/be13_api
@@ -89,9 +89,9 @@ if RAR_ENABLED
 endif
 
 bulk_extractor_nomain = \
+	bulk_extractor_api.cpp bulk_extractor_api.h \
 	base64_forensic.cpp \
 	base64_forensic.h \
-	bulk_extractor.cpp \
 	bulk_extractor.h \
 	dig.cpp \
 	dig.h \
@@ -103,23 +103,21 @@ bulk_extractor_nomain = \
 	phase1.cpp \
 	threadpool.cpp \
 	threadpool.h \
-	$(bulk_scanners) $(TSK3INCS)  $(BE13_API) $(DFXML_WRITER) 
+	$(TSK3INCS)  $(BE13_API) $(DFXML_WRITER) 
 
-bulk_extractor_SOURCES = $(bulk_extractor_nomain) main.cpp bulk_extractor_api.cpp bulk_extractor_api.h
+bulk_extractor_SOURCES =    $(bulk_extractor_nomain) $(bulk_scanners) bulk_extractor_scanners.cpp main.cpp 
 
-bulk_extractorlib_SOURCES = $(bulk_extractor_nomain) bulk_extractor_api.cpp
+bulk_extractorlib_SOURCES = $(bulk_extractor_nomain) $(bulk_scanners) bulk_extractor_scanners.cpp 
+
+bulk_extractor_noscanners_SOURCES = $(bulk_extractor_nomain) bulk_extractor_noscanners.cpp main.cpp 
+
+stand_SOURCES = dig.cpp scan_sceadan.cpp stand.cpp $(TSK3INCS) $(BE13_API) $(DFXML_WRITER) 
 
 lib: libbulkextractor.so
 
 libbulkextractor.so: $(bulk_extractorlib_OBJECTS)
 	$(CXX) -shared -fPIC -o $@ $(LDFLAGS) $(bulk_extractorlib_OBJECTS) $(LIBS)
 
-
-stand_SOURCES = \
-	dig.cpp \
-	scan_sceadan.cpp \
-	stand.cpp \
-	$(BE13_API) $(DFXML_WRITER) 
 
 beapi_demo_SOURCES = beapi_demo.cpp
 beapi_demo$(EXEEXT): libbulkextractor.so		# needs an up-to-date .so

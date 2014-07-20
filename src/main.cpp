@@ -721,6 +721,7 @@ int main(int argc,char **argv)
 #ifdef HAVE_MCHECK
     mtrace();
 #endif
+
     /* setup */
     feature_recorder::set_main_threadid();
     const char *progname = argv[0];
