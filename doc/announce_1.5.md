@@ -126,9 +126,9 @@ uncompressed and carved, but normal ZIP files will be left as-is.
 
    -S unrar_carve_mode=1    0=carve none; 1=carve encoded; 2=carve all (rar)
 
-RAR files that are themselves encoded will be carved. For example, RAR
+RAR1/2/3 files that are encoded will be carved. For example, RAR
 files that are sent as email attachments will be carved, but RAR files
-on the hard drive will not be carved.
+on the hard drive will not be carved.  (Note that bulk_extractor does not support RAR5)
 
    -S sqlite_carve_mode=2    0=carve none; 1=carve encoded; 2=carve all (sqlite)
 
