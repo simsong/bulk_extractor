@@ -5,6 +5,7 @@
 
 % \usepackage{todonotes}
 % use \todo{note} OR \missingfigure{Add my picture here}
+\usepackage{longtable}
 \include{structure} 
 
 % slg commented out:
@@ -530,15 +531,20 @@ The \bulk system can handle multiple image formats including E01, raw, split raw
 
 The scanners all serve different functions and look for different types of information. Often, a feature will be stored in a format not easily accessible and will require multiple scanners to extract the feature data. For example, some PDF files contain text data but the PDF format is not directly searchable by the scanner that finds email addresses or the scanner that looks for keywords. \bulk resolves this by having the two scanners work together. The \textbf{\textit{pdf}} scanner will first extract all of the text from the PDF and then the other scanners will look at the extracted text for features. This is important to remember when turning scanners off and on, as scanners work together to retrieve the features from the disk image. The types of information examined, extracted or carved by the existing \bulk scanners are as described in Table ~\ref{tab:inputdata}, along with the scanners that process them and the specific sections where they are referenced in this manual.
 
-\begin{table}[!ht]
-
-\centering
-\caption{Input Data Processed by the Scanners}
-\label{tab:inputdata}
-\begin{tabular}{|p{2 cm}|p{6cm}|p{3 cm}|}
-\hline \hline
-\textbf{Scanner Name} & \textbf{Data Type} & \textbf{Section Discussed in Manual} \\
+\begin{longtable}{|p{2 cm}|p{6cm}|p{3 cm}|}
+\caption{Input Data Processed by the Scanners}\\
 \hline
+\textbf{Scanner Name} & \textbf{Data Type} & \textbf{Section Discussed in Manual} \\
+\endfirsthead
+\hline
+\textbf{Scanner Name} & \textbf{Data Type} & \textbf{Section Discussed in Manual} \\
+\endhead
+\hline
+\endfoot
+\hline
+\endlastfoot
+
+\label{tab:inputdata}
 \textbf{\textit{base16}} & Base 16 (hex) encoded data (includes MD5 codes embedded in the data) & \Autoref{cyber}\\
 \hline
 \textbf{\textit{base64}} & Base 64 code & \Autoref{compressedProcessing} and \Autoref{cyber} \\
@@ -575,8 +581,7 @@ The scanners all serve different functions and look for different types of infor
 \hline
 \textbf{\textit{zip}} & ZIP files and zlib streams (processed, and optionally carved) & \Autoref{carving} and \Autoref{compressedProcessing}\\
 \hline
-\end{tabular}
-\end{table}
+\end{longtable}
 
 \subsection{Scanners}
 \label{Scanners}
