@@ -69,7 +69,7 @@ In the \viewer, click on the Gear/down arrow icon as depicted below.
 \begin{minipage}{\linewidth}
 	\makebox[\linewidth]{%
 	\includegraphics[keepaspectratio=true,scale=0.6]{viewerPics/runBulkSnippet}}
-\label{fig:runBulk}
+\label{fig:runBulk1}
 \end{minipage}
 
 A window will pop up and the first two input boxes allow you to select an Image File and specify an Output Feature Directory to create. Enter both of those and then select the button at the bottom of the window titled "Start bulk\_extractor" to run \bulk.
@@ -102,7 +102,7 @@ In the \viewer, click on the Gear/down arrow icon as depicted below.
 \begin{minipage}{\linewidth}
 	\makebox[\linewidth]{%
 	\includegraphics[keepaspectratio=true,scale=0.6]{viewerPics/runBulkSnippet}}
-\label{fig:runBulk}
+\label{fig:runBulk2}
 \end{minipage}
 
 A window will pop up and the first two input boxes allow you to select an Image File and specify an Output Feature Directory to create. Enter both of those and then select the button at the bottom of the window titled "Start bulk\_extractor" to run \bulk.
@@ -143,7 +143,7 @@ In addition to the capabilities described above, \bulk also includes:
 	\item A graphical user interface, \viewer, for browsing features stored in feature files and for launching \bulk scans
 	\item A small number of python programs for performing additional analysis on feature files
 \end{itemize} 
-\bulk 1.4 detects and optimistically decompresses data in ZIP, GZIP, RAR, and Microsoft's Hibernation files. This has proven useful, for example, in recovering email addresses from fragments of compressed files found in unallocated space. \\
+\bulk 1.5 detects and optimistically decompresses data in ZIP, GZIP, RAR, and Microsoft's Hibernation files. This has proven useful, for example, in recovering email addresses from fragments of compressed files found in unallocated space. \\
 
 \bulk contains a simple but effective mechanism for protecting against decompression bombs. It also has capabilities specifically designed for Windows and malware analysis including decoders for the Windows PE, Linux ELF, VCARD, Base16, Base64 and Windows directory formats.\\
 
@@ -295,7 +295,7 @@ Mac users should note that libewf-devel may not be available in ports.  If it is
 \end{Verbatim}
 
 \textbf{Download and Install \bulk}\\
-Next, download the latest version of \bulk. The software can be downloaded from \url{http://digitalcorpora.org/downloads/bulk_extractor/}. The file to download will be called \texttt{bulk\_extractor-x.y.z.tar.gz} where x.y.z is the latest version. As of publication of this manual, the latest version of \bulk is 1.4.0. \\
+Next, download the latest version of \bulk. The software can be downloaded from \url{http://digitalcorpora.org/downloads/bulk_extractor/}. The file to download will be called \texttt{bulk\_extractor-x.y.z.tar.gz} where x.y.z is the latest version. As of publication of this manual, the latest version of \bulk is 1.5.0. \\
 
 
 After downloading the file, un-tar it. Then, in the newly created \textit{bulk\_extractor-x.y.z} directory, run the following commands to install \bulk in \textit{/usr/local/bin} (by default):
@@ -317,7 +317,7 @@ The \viewer tool is installed as part of the above installation process. Specifi
 
 \subsubsection{Installing on Windows}
 \label{InstallOnWindows}
-Windows users should download the Windows Installer for \bulk.  The file to download is located at \url{http://digitalcorpora.org/downloads/bulk_extractor/executables/} and is called \texttt{bulk\_extractor-x.y.z-windowsinstaller.exe} where x.y.z is the latest version number (1.4.0 - as of publication of this manual).   \\
+Windows users should download the Windows Installer for \bulk.  The file to download is located at \url{http://digitalcorpora.org/downloads/bulk_extractor/executables/} and is called \texttt{bulk\_extractor-x.y.z-windowsinstaller.exe} where x.y.z is the latest version number (1.5.0 as of publication of this manual).   \\
 
 Next, run the \texttt{bulk\_extractor-x.y.z-windowsinstaller.exe} file. This will automatically install \bulk on your machine. Because this file is not used by many Windows users, some anti-virus systems will try to manual delete it on download or block the download as shown in Figure ~\ref{fig:installer_download}.  Be aware that you may have to work around your anti-virus system. Additionally, some Windows versions will try to prevent you from running it. Figure ~\ref{fig:windowsWarning} shows the message Windows 8 displays when trying to run the installer. To run anyway, click on ``More info'' and then select ``Run Anyway.''\\
 \begin{figure}
@@ -367,7 +367,7 @@ The following text shows the output that is produced when \bulk is run on the fi
 \begingroup
 \footnotesize
 \begin{Verbatim}[fontfamily=courier]
-bulk_extractor version: 1.4.0
+bulk_extractor version: 1.5.0
 Input file: bulk_extractor\InputData\nps-2010-emails.E01
 Output directory: bulk_extractor\Output\nps-2010-emails
 Disk Size: 10485760
@@ -430,7 +430,7 @@ total 303
  0 ip.txt                    12 windirs.txt
  0 ip_histogram.txt           0 winpe.txt
  0 jpeg                       0 winprefetch.txt
- 8 jpeg.txt                  88 zip.txt
+ 8 jpeg_carved.txt            88 zip.txt
  0 json.txt
 \end{Verbatim}
 \endgroup
@@ -462,7 +462,7 @@ On a Linux or Mac system, go to the directory where the \viewer is installed or 
 
 Windows users should go to the Start menu and choose Programs->Bulk\_Extractor x.y.z->BE Viewer with Bulk\_extractor x.y.z (64-bit). If the 64-bit version can not be run on your machine, you can choose the 32-bit version. The Troubleshooting section describes some limits users of the 32-bit version might encounter.\\
 
-When the \viewer starts up, it will look like Figure ~\ref{fig:startup}. The look and feel may vary slightly according to the specific operating system but all options should appear similar. To run \bulk from the viewer, click on the icon that looks like a gear with a down arrow. It is next to the Print icon below the Tools menu. Clicking on this icon will bring up the ``Run bulk\_extractor'' Window as shown in Figure ~\ref{fig:runBulk}.\\
+When the \viewer starts up, it will look like Figure ~\ref{fig:startup}. The look and feel may vary slightly according to the specific operating system but all options should appear similar. To run \bulk from the viewer, click on the icon that looks like a gear with a down arrow. It is next to the Print icon below the Tools menu. Clicking on this icon will bring up the ``Run bulk\_extractor'' Window as shown in Figure ~\ref{fig:runBulk3}.\\
 \begin{figure}
 	\center
 	\includegraphics[scale=.8]{viewerPics/startup.png}
@@ -476,7 +476,7 @@ When the \viewer starts up, it will look like Figure ~\ref{fig:startup}. The loo
 	\includegraphics{viewerPics/runBulk.png}
 	%\captionsetup{font=LARGE}
 	\caption{Clicking on the gear icon brings up this ``Run bulk\_extractor'' Window}
-	\label{fig:runBulk}
+	\label{fig:runBulk3}
 \end{figure}
 
 Next, in the ``Run bulk\_extractor'' window select the Image File and Output Feature Directory to run \bulk. Figure ~\ref{fig:selectOutputDirectory} shows an example where the user has selected the file \texttt{nps-2010-emails.E01} as input and is going to create a directory called \textit{nps-2010-charlie-output} in the parent directory \textit{C:\textbackslash bulk\_extractor\textbackslash Output}. Note that figures may vary slightly in future versions of \bulk but the major functionality will remain the same.\\
@@ -545,41 +545,24 @@ The scanners all serve different functions and look for different types of infor
 \endlastfoot
 
 \label{tab:inputdata}
-\textbf{\textit{base16}} & Base 16 (hex) encoded data (includes MD5 codes embedded in the data) & \Autoref{cyber}\\
-\hline
-\textbf{\textit{base64}} & Base 64 code & \Autoref{compressedProcessing} and \Autoref{cyber} \\
-\hline
-\textbf{\textit{elf}} & Executable and Linkable Format (ELF) & \Autoref{malware} \\
-\hline
-\textbf{\textit{exif}} & EXIF structures from JPEGS (and carving of JPEG files) & \Autoref{imagery} \\
-\hline
-\textbf{\textit{gzip}} & GZIP files and ZLIB-compressed GZIP streams & \Autoref{compressedProcessing} and \Autoref{cyber} \\
-\hline
-\textbf{\textit{aes}} & In-memory AES keys from their key schedules & \Autoref{cyber}\\
-\hline
-\textbf{\textit{json}} & JavaScript Object Notation files and objects downloaded from web servers, as well as JSON-like objects found in source code & \Autoref{malware}\\
-\hline
-\textbf{\textit{jpeg}} & JPEG carving. Default is only encoded JPEGs are carved. JPEGs without EXIFs are also carved & \Autoref{carving} and \Autoref{imagery}\\
-\hline
-\textbf{\textit{kml}} & KML files (carved) & \Autoref{identity}\\
-\hline
-\textbf{\textit{rar}} &  RAR components in unencrypted archives are decrypted and processed. Encrypted RAR file are carved. & \Autoref{carving} \\
-\hline
-\textbf{\textit{pdf}} & Text from PDF files (extracted for processing not carved) & \Autoref{compressedProcessing} \\
-\hline
-\textbf{\textit{windirs}} & Windows FAT32 and NTFS directory entries& \Autoref{cyber}\\
-\hline
-\textbf{\textit{hiber}} & Windows Hibernation File Fragments (decompressed and processed, not carved) & \Autoref{compressedProcessing}  \\
-\hline
-\textbf{\textit{winprefetch}} & Windows Prefetch files, file fragments (processed) & \Autoref{malware} \\
-\hline
-\textbf{\textit{winpe}} & Windows Preinstallation Environment (PE) Executables (.exe and .dll files notated with MD5 hash of first 4k) & \Autoref{malware}\\
-\hline
-\textbf{\textit{vcard}} & vCard files (carved) & \Autoref{identity}\\
-\hline
-\textbf{\textit{gps}} & XML from Garmin GPS devices (processed) & \Autoref{identity}\\
-\hline
-\textbf{\textit{zip}} & ZIP files and zlib streams (processed, and optionally carved) & \Autoref{carving} and \Autoref{compressedProcessing}\\
+\hline\textbf{\textit{aes}} & In-memory AES keys from their key schedules & \Autoref{cyber}\\
+\hline\textbf{\textit{base16}} & Base 16 (hex) encoded data (includes MD5 codes embedded in the data) & \Autoref{cyber}\\
+\hline\textbf{\textit{base64}} & Base 64 code & \Autoref{compressedProcessing} and \Autoref{cyber} \\
+\hline\textbf{\textit{elf}} & Executable and Linkable Format (ELF) & \Autoref{malware} \\
+\hline\textbf{\textit{exif}} & EXIF structures from JPEGS (and carving of JPEG files) & \Autoref{imagery} \\
+\hline\textbf{\textit{gps}} & XML from Garmin GPS devices (processed) & \Autoref{identity}\\
+\hline\textbf{\textit{gzip}} & GZIP files and ZLIB-compressed GZIP streams & \Autoref{compressedProcessing} and \Autoref{cyber} \\
+\hline\textbf{\textit{hiber}} & Windows Hibernation File Fragments (decompressed and processed, not carved) & \Autoref{compressedProcessing}  \\
+\hline\textbf{\textit{jpeg}} & JPEG carving. Default is only encoded JPEGs are carved. JPEGs without EXIFs are also carved & \Autoref{carving} and \Autoref{imagery}\\
+\hline\textbf{\textit{json}} & JavaScript Object Notation files and objects downloaded from web servers, as well as JSON-like objects found in source code & \Autoref{malware}\\
+\hline\textbf{\textit{kml}} & KML files (carved) & \Autoref{identity}\\
+\hline\textbf{\textit{pdf}} & Text from PDF files (extracted for processing not carved) & \Autoref{compressedProcessing} \\
+\hline\textbf{\textit{rar}} &  RAR components in unencrypted archives are decrypted and processed. Encrypted RAR file are carved. & \Autoref{carving} \\
+\hline\textbf{\textit{vcard}} & vCard files (carved) & \Autoref{identity}\\
+\hline\textbf{\textit{windirs}} & Windows FAT32 and NTFS directory entries& \Autoref{cyber}\\
+\hline\textbf{\textit{winpe}} & Windows Preinstallation Environment (PE) Executables (.exe and .dll files notated with MD5 hash of first 4k) & \Autoref{malware}\\
+\hline\textbf{\textit{winprefetch}} & Windows Prefetch files, file fragments (processed) & \Autoref{malware} \\
+\hline\textbf{\textit{zip}} & ZIP files and zlib streams (processed, and optionally carved) & \Autoref{carving} and \Autoref{compressedProcessing}\\
 \hline
 \end{longtable}
 
@@ -668,7 +651,7 @@ As with the other scanner and \bulk usage options, most users will not have to u
 
 File carving is a special kind of carving in which files are recovered. File carving is useful for both data recovery and forensic investigations because it can recover files when sectors containing file system metadata are either overwritten or damaged \cite{digitalmediatriage}. Currently, \bulk provides carving of contiguous JPEG, ZIP and RAR files. To carve fragmented files we recommend \textbf{PhotoRec} (free) or \textbf{Adroit Photo Recovery}( commercial). Additionally, \textbf{Forensics Toolkit} and \textbf{EnCase Forensic} provide some carving capability on fragmented files.\\
 
-Carved results are stored in two different places. First, a file listing all the files that are carved are written to a corresponding .txt file: JPEG files to \texttt{jpeg.txt}, ZIP files to \texttt{unzip.txt} and RAR files to \texttt{unrar.txt}. Second, the carved JPEG, ZIP and RAR files are placed in binned directories that are named \textit{/jpeg}, \textit{/unzip} and \textit{/unrar} respectively. For example, all carved JPEGs will go in the directory \textit{/jpeg}. The output files are further binned with 1000 files in each directory. The directory names are 3 decimal digits. If there are more than 999,000 carved files of one type, then the next set of directories are named with 4 digits. File names for JPEGs are the forensicpath.jpg. File names for the ZIP carver are the forensicpath\_filename. If the ZIP file name has slashes in it (denoting directories), they are turned into '\_' (underbars). For example, the file \texttt{mydocs/output/specialfile} will be named \texttt{mydocs\_output\_specialfile}. \\
+Carved results are stored in two different places. First, a file listing all the files that are carved are written to a corresponding .txt file: JPEG files to \texttt{jpeg\_carved.txt}, ZIP files to \texttt{unzip.txt} and RAR files to \texttt{unrar.txt}. Second, the carved JPEG, ZIP and RAR files are placed in binned directories that are named \textit{/jpeg}, \textit{/unzip} and \textit{/unrar} respectively. For example, all carved JPEGs will go in the directory \textit{/jpeg}. The output files are further binned with 1000 files in each directory. The directory names are 3 decimal digits. If there are more than 999,000 carved files of one type, then the next set of directories are named with 4 digits. File names for JPEGs are the forensicpath.jpg. File names for the ZIP carver are the forensicpath\_filename. If the ZIP file name has slashes in it (denoting directories), they are turned into '\_' (underbars). For example, the file \texttt{mydocs/output/specialfile} will be named \texttt{mydocs\_output\_specialfile}. \\
 
 \begin{table}[!ht]
 \centering
@@ -760,12 +743,12 @@ While this list does not appear to help in any particular investigation, it demo
 \subsection{The Importance of Compressed Data Processing}
 \label{compressedProcessing}
 
-Many forensic tools frequently miss case-critical data because they do not examine certain classes of compressed data found. For example, a recent study of 1400 drives found thousands of email addresses that were compressed but in unallocated space\cite{encodedEvidence}. Without looking at all the data on each drive and optimistically decompressing it, those features would be missed. Compressed email addresses, such as those in a GZIP file, do not look like email addresses to a scanner; they must first be decompressed to be identified. Although some of these features are from software distributions, many are not. Table ~\ref{tab:encodings} shows the kinds of encodings that can be decoded by \bulk \cite{encodedEvidence}.
+Many forensic tools frequently miss case-critical data because they do not examine certain classes of compressed data found. For example, a recent study of 1400 drives found thousands of email addresses that were compressed but in unallocated space\cite{encodedEvidence}. Without looking at all the data on each drive and optimistically decompressing it, those features would be missed. Compressed email addresses, such as those in a GZIP file, do not look like email addresses to a scanner; they must first be decompressed to be identified. Although some of these features are from software distributions, many are not. Table ~\ref{tab:encodings2} shows the kinds of encodings that can be decoded by \bulk \cite{encodedEvidence}.
 
 \begin{table}[!ht]
 \centering
 \caption{The kinds of encodings that can be decoded by \bulk and the amount of context required for the decoding}
-\label{tab:encodings}
+\label{tab:encodings2}
 \begin{tabular}{|p{2 cm}|p{9 cm}|}
 \hline \hline
 \textbf{Encoding} & \textbf{Can be decoded when \bulk finds} \\
@@ -891,7 +874,7 @@ This will produce two files useful for password cracking, \texttt{wordlist\_hist
 
 \subsection{Analyzing Imagery Information}
 \label{imagery}
-In an investigator needs to specifically analyze imagery, for something such as a child pornography investigation, the \textbf{\textit{exif}} scanner would be useful. It finds JPEGs on the disk image and then carves the encoded ones that might be in, for example, ZIP files or hibernation files. It writes the output of this carving to \texttt{jpeg.txt}.
+In an investigator needs to specifically analyze imagery, for something such as a child pornography investigation, the \textbf{\textit{exif}} scanner would be useful. It finds JPEGs on the disk image and then carves the encoded ones that might be in, for example, ZIP files or hibernation files. It writes the output of this carving to \texttt{jpeg\_carved.txt}.
 
 \subsection{Using \bulk in a Highly Specialized Environment}
 If using \bulk in a specialized environment, two specific features might be useful.  The first is the option to include a banner on each output file created by \bulk. The banner file, specified in the example command below as \texttt{banner.txt} could include a security classification of the output data. When \bulk is run with the command specified below, the data in the banner file will be printed at the top of each output file produced.
@@ -979,7 +962,7 @@ Users may encounter errors if they are processing a large disk image and trying 
 \begingroup
 \footnotesize
 \begin{Verbatim}
-bulk_extractor version: 1.4.0
+bulk_extractor version: 1.5.0
 Input file: G:\nps-2011-2tb\nps-2011-2tb.E01
 Output directory: C:\Users\Mark Richer\Documents\BE Testing\OFD nps-2011-2tb 64bit
 Disk Size: 2000054960128
