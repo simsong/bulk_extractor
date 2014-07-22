@@ -69,13 +69,14 @@ New Scanners:
 ===============
 Bulk_extractor version 1.5 provides these new scanners:
 
-* scan_base64   --- the Base64 scanner has been completely rewritten
+* scan_base64   --- the Base64 scanner has been rewritten
 * scan_facebook --- Finds snippits of HTML with containing facebook strings
+* scan_hashdb  --- NPS hash database scanner (can create or search a hashdb)
 * scan_httplogs --- A scanner that finds fragments of HTTP logs
+* scan_outlook will decrypt "Outlook Compressible Encryption" used on some PST files.  (disabled by default)
+* scan_sceadan --- UTSA's "SCEADAN" file type classificaiton engine.
 * scan_sqlite ---- SQLite database carving. (Note: only works for unfragmented databases.)
 * scan_winlnk --- Windows LNK file detection. 
-* scan_outlook will decrypt "Outlook Compressible Encryption" used on some PST files.  (disabled by default)
-
 
 New LightGrep Scanners:
 -----------------------
@@ -98,9 +99,10 @@ Scanners that are shipped but not in use have been moved to the directory src/ol
 
 Improved Carving Support
 ========================
-Bulk_extractor 1.4 implements a sophisticated system for carving objects that it discovers.
+Bulk_extractor implements a sophisticated system for carving objects that it discovers.
 
-Bulk_extractor supports three carving mode for each kind of data that it can carve:
+Bulk_extractor version 1.4 and above support three carving mode for
+each kind of data that it can carve:
 
   mode 0 - do not carve anything found
   mode 1 - carve data if it is encoded (e.g. compressed, BASE64 encoded, etc.)
@@ -113,7 +115,7 @@ The following carving modes are specified in the default configuration:
 
 JPEG files with valid Exif structures are carved if they are
 encoded. With this behavior JPEGs that can be carved with existing
-carvers such as Scalple and PhotoRec will not be carved, but JPEGs
+carvers such as Scalpel and PhotoRec will not be carved, but JPEGs
 that can only be recovered using bulk_extractor's ability to carve
 encoded data will be.
 
@@ -126,9 +128,13 @@ uncompressed and carved, but normal ZIP files will be left as-is.
 
    -S unrar_carve_mode=1    0=carve none; 1=carve encoded; 2=carve all (rar)
 
-RAR1/2/3 files that are encoded will be carved. For example, RAR
-files that are sent as email attachments will be carved, but RAR files
-on the hard drive will not be carved.  (Note that bulk_extractor does not support RAR5)
+RAR1/2/3 files that are encoded will be carved. For example, RAR files
+that are sent as email attachments will be carved, but RAR files on
+the hard drive will not be carved.  (Note that bulk_extractor does not
+support RAR5. Also, during final testing, a bug was discovered in the
+RAR decompressor that sometimes results in corruption of
+RAR-compressed archives. This problem will not be fixed in
+bulk_extractor 1.5 but may be fixed in a later version.)
 
    -S sqlite_carve_mode=2    0=carve none; 1=carve encoded; 2=carve all (sqlite)
 
@@ -136,10 +142,11 @@ By default, all sqlite files detected will be carved.  Note that only
 sqlite3 database files that were stored contigiously on the source
 media will be readable.
 
-Bulk_extractor carving now implements deduplciation, which means that
-the same object will not be carved twice. This is important when
-carving email archives, which tend to contain the same images as
-attachments to email messages.
+Bulk_extractor 1.5 carving corrected several implementation bugs in the
+bulk_extractor 1.4 carving algorithms. It also now implements
+deduplication, which means that the same object will not be carved
+twice. This is important when carving email archives, which tend to
+contain the same images as attachments to email messages.
 
 Memory carving is the scan_net module can also be controlled, as it
 tends to generate a lot of false positives. Network carving is
@@ -150,8 +157,11 @@ disabled by default:
 By default, Bulk_Extractor will not scan for in-memory TCP/IP structures.
 
 
+Other Improvements:
+====================
+
 Improvements in existing scanners:
-==================================
+---------------------------------
 
 scan_accts:
     - now detects bitcoin addresses and writes them to pii.txt
@@ -159,7 +169,7 @@ scan_accts:
 
 SSN recognition: you are now able to specify one of three SSN recognition modes:
 
-    -S ssn_mode=0  SSN’s must be labeled “SSN:”. Dashes or no dashes okay.
+    -S ssn_mode=0  SSN’s must be labeled “SSN:”. Dashes or no dashes are okay.
     -S ssn_mode=1  No “SSN” required, but dashes are required.
     -S ssn_mode=2  No dashes required. Allow any 9-digit number 
                    that matches SSN allocation range.
@@ -193,8 +203,9 @@ Improvements in Python programs:
 * Minor improvements to regress.py, bulk_diff.py and bulk_extractor_reader.py
 
 
-Incompatiable changes:
-----------------------
+Incompatible changes:
+--------------------
+None that we know of.
 
 
 Bug Fixes
