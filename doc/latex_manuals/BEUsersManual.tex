@@ -142,7 +142,7 @@ In addition to the capabilities described above, \bulk also includes:
 	\item A graphical user interface, \viewer, for browsing features stored in feature files and for launching \bulk scans
 	\item A small number of python programs for performing additional analysis on feature files
 \end{itemize} 
-\bulk 1.4 detects and optimistically decompresses data in ZIP, GZIP, RAR, and Microsoft's Hibernation files. This has proven useful, for example, in recovering email addresses from fragments of compressed files found in unallocated space. \\
+\bulk 1.5 detects and optimistically decompresses data in ZIP, GZIP, RAR, and Microsoft's Hibernation files. This has proven useful, for example, in recovering email addresses from fragments of compressed files found in unallocated space. \\
 
 \bulk contains a simple but effective mechanism for protecting against decompression bombs. It also has capabilities specifically designed for Windows and malware analysis including decoders for the Windows PE, Linux ELF, VCARD, Base16, Base64 and Windows directory formats.\\
 
@@ -294,7 +294,7 @@ Mac users should note that libewf-devel may not be available in ports.  If it is
 \end{Verbatim}
 
 \textbf{Download and Install \bulk}\\
-Next, download the latest version of \bulk. The software can be downloaded from \url{http://digitalcorpora.org/downloads/bulk_extractor/}. The file to download will be called \texttt{bulk\_extractor-x.y.z.tar.gz} where x.y.z is the latest version. As of publication of this manual, the latest version of \bulk is 1.4.0. \\
+Next, download the latest version of \bulk. The software can be downloaded from \url{http://digitalcorpora.org/downloads/bulk_extractor/}. The file to download will be called \texttt{bulk\_extractor-x.y.z.tar.gz} where x.y.z is the latest version. As of publication of this manual, the latest version of \bulk is 1.5.0. \\
 
 
 After downloading the file, un-tar it. Then, in the newly created \textit{bulk\_extractor-x.y.z} directory, run the following commands to install \bulk in \textit{/usr/local/bin} (by default):
@@ -316,7 +316,7 @@ The \viewer tool is installed as part of the above installation process. Specifi
 
 \subsubsection{Installing on Windows}
 \label{InstallOnWindows}
-Windows users should download the Windows Installer for \bulk.  The file to download is located at \url{http://digitalcorpora.org/downloads/bulk_extractor/executables/} and is called \texttt{bulk\_extractor-x.y.z-windowsinstaller.exe} where x.y.z is the latest version number (1.4.0 - as of publication of this manual).   \\
+Windows users should download the Windows Installer for \bulk.  The file to download is located at \url{http://digitalcorpora.org/downloads/bulk_extractor/executables/} and is called \texttt{bulk\_extractor-x.y.z-windowsinstaller.exe} where x.y.z is the latest version number (1.5.0 as of publication of this manual).   \\
 
 Next, run the \texttt{bulk\_extractor-x.y.z-windowsinstaller.exe} file. This will automatically install \bulk on your machine. Because this file is not used by many Windows users, some anti-virus systems will try to manual delete it on download or block the download as shown in Figure ~\ref{fig:installer_download}.  Be aware that you may have to work around your anti-virus system. Additionally, some Windows versions will try to prevent you from running it. Figure ~\ref{fig:windowsWarning} shows the message Windows 8 displays when trying to run the installer. To run anyway, click on ``More info'' and then select ``Run Anyway.''\\
 \begin{figure}
@@ -366,7 +366,7 @@ The following text shows the output that is produced when \bulk is run on the fi
 \begingroup
 \footnotesize
 \begin{Verbatim}[fontfamily=courier]
-bulk_extractor version: 1.4.0
+bulk_extractor version: 1.5.0
 Input file: bulk_extractor\InputData\nps-2010-emails.E01
 Output directory: bulk_extractor\Output\nps-2010-emails
 Disk Size: 10485760
@@ -429,7 +429,7 @@ total 303
  0 ip.txt                    12 windirs.txt
  0 ip_histogram.txt           0 winpe.txt
  0 jpeg                       0 winprefetch.txt
- 8 jpeg.txt                  88 zip.txt
+ 8 jpeg_carved.txt            88 zip.txt
  0 json.txt
 \end{Verbatim}
 \endgroup
@@ -663,7 +663,7 @@ As with the other scanner and \bulk usage options, most users will not have to u
 
 File carving is a special kind of carving in which files are recovered. File carving is useful for both data recovery and forensic investigations because it can recover files when sectors containing file system metadata are either overwritten or damaged \cite{digitalmediatriage}. Currently, \bulk provides carving of contiguous JPEG, ZIP and RAR files. To carve fragmented files we recommend \textbf{PhotoRec} (free) or \textbf{Adroit Photo Recovery}( commercial). Additionally, \textbf{Forensics Toolkit} and \textbf{EnCase Forensic} provide some carving capability on fragmented files.\\
 
-Carved results are stored in two different places. First, a file listing all the files that are carved are written to a corresponding .txt file: JPEG files to \texttt{jpeg.txt}, ZIP files to \texttt{unzip.txt} and RAR files to \texttt{unrar.txt}. Second, the carved JPEG, ZIP and RAR files are placed in binned directories that are named \textit{/jpeg}, \textit{/unzip} and \textit{/unrar} respectively. For example, all carved JPEGs will go in the directory \textit{/jpeg}. The output files are further binned with 1000 files in each directory. The directory names are 3 decimal digits. If there are more than 999,000 carved files of one type, then the next set of directories are named with 4 digits. File names for JPEGs are the forensicpath.jpg. File names for the ZIP carver are the forensicpath\_filename. If the ZIP file name has slashes in it (denoting directories), they are turned into '\_' (underbars). For example, the file \texttt{mydocs/output/specialfile} will be named \texttt{mydocs\_output\_specialfile}. \\
+Carved results are stored in two different places. First, a file listing all the files that are carved are written to a corresponding .txt file: JPEG files to \texttt{jpeg_carved.txt}, ZIP files to \texttt{unzip.txt} and RAR files to \texttt{unrar.txt}. Second, the carved JPEG, ZIP and RAR files are placed in binned directories that are named \textit{/jpeg}, \textit{/unzip} and \textit{/unrar} respectively. For example, all carved JPEGs will go in the directory \textit{/jpeg}. The output files are further binned with 1000 files in each directory. The directory names are 3 decimal digits. If there are more than 999,000 carved files of one type, then the next set of directories are named with 4 digits. File names for JPEGs are the forensicpath.jpg. File names for the ZIP carver are the forensicpath\_filename. If the ZIP file name has slashes in it (denoting directories), they are turned into '\_' (underbars). For example, the file \texttt{mydocs/output/specialfile} will be named \texttt{mydocs\_output\_specialfile}. \\
 
 \begin{table}[!ht]
 \centering
@@ -886,7 +886,7 @@ This will produce two files useful for password cracking, \texttt{wordlist\_hist
 
 \subsection{Analyzing Imagery Information}
 \label{imagery}
-In an investigator needs to specifically analyze imagery, for something such as a child pornography investigation, the \textbf{\textit{exif}} scanner would be useful. It finds JPEGs on the disk image and then carves the encoded ones that might be in, for example, ZIP files or hibernation files. It writes the output of this carving to \texttt{jpeg.txt}.
+In an investigator needs to specifically analyze imagery, for something such as a child pornography investigation, the \textbf{\textit{exif}} scanner would be useful. It finds JPEGs on the disk image and then carves the encoded ones that might be in, for example, ZIP files or hibernation files. It writes the output of this carving to \texttt{jpeg_carved.txt}.
 
 \subsection{Using \bulk in a Highly Specialized Environment}
 If using \bulk in a specialized environment, two specific features might be useful.  The first is the option to include a banner on each output file created by \bulk. The banner file, specified in the example command below as \texttt{banner.txt} could include a security classification of the output data. When \bulk is run with the command specified below, the data in the banner file will be printed at the top of each output file produced.
@@ -974,7 +974,7 @@ Users may encounter errors if they are processing a large disk image and trying 
 \begingroup
 \footnotesize
 \begin{Verbatim}
-bulk_extractor version: 1.4.0
+bulk_extractor version: 1.5.0
 Input file: G:\nps-2011-2tb\nps-2011-2tb.E01
 Output directory: C:\Users\Mark Richer\Documents\BE Testing\OFD nps-2011-2tb 64bit
 Disk Size: 2000054960128

@@ -18,7 +18,7 @@ void scan_xor(const class scanner_params &sp,const recursion_control_block &rcb)
 	sp.info->author = "Michael Shick";
 	sp.info->description = "optimistic XOR deobfuscator";
 	sp.info->flags = scanner_info::SCANNER_DISABLED | scanner_info::SCANNER_RECURSE;
-        sp.info->get_config("xor_mask",&xor_mask,"XOR mask string, in decimal");
+        sp.info->get_config("xor_mask",&xor_mask,"XOR mask value, in decimal");
 	return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN) {
