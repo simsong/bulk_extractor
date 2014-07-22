@@ -16,7 +16,7 @@
  * http://en.wikipedia.org/wiki/List_of_Bank_Identification_Numbers
  */
 
-size_t min_phone_digits=6;
+size_t min_phone_digits=7;
 static int ssn_mode=0;
 
 class accts_scanner : public sbuf_scanner {
