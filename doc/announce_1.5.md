@@ -1,5 +1,5 @@
-                    Announcing bulk_extractor 1.5 alpha6.
-                             July 1, 2014
+                    Announcing bulk_extractor 1.5 beta5.
+                             July 23, 2014
                                 DRAFT
 
                             RELEASE NOTES
