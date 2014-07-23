@@ -4,7 +4,7 @@
 
                             RELEASE NOTES
 
-bulk_extractor Version 1.5 alpha 6 has been released for Linux, MacOS and
+bulk_extractor Version 1.5 alpha 6 has been released for Linux, Mac OS and
 Windows. 
 
 Release source code and Windows installer:
@@ -17,10 +17,10 @@ GIT repository:
 
 Major Improvements
 ==================
-* BE now optionally writes features to SQLite database in addition to
+* BE now optionally writes features to SQLite databases in addition to
   flat files.
 
-* New scanners, plus many fixes in existing scanners
+* New scanners, plus many fixes in existing scanners.
 
 * Improved support for carving encoded objects missed by contemporary
   carvers (e.g. ZIP-compressed JPEG files).
@@ -28,13 +28,13 @@ Major Improvements
 * bulk_extractor is now available as a shared library
   (libbulkextractor.so and libbulkextractor.DLL). You can load this
   shared library from Python using the bulk_extractor python module
-  (in the python/module directory)
+  (in the python/module directory).
 
-* bulk_extractor now supports in-memory histograms, which allows
-  histograms built from a large number of relatively few features to
-  be constructed efficiently. The in-memory histograms are used by
-  scan_sceadan, a bulk data type classifier built on top of UTSA's SCEADAN
-  statistical file type classifer.
+* bulk_extractor now supports in-memory histograms, which allows efficient
+  construction of histograms built from a large number of relatively few
+  features. The in-memory histograms are used by scan_sceadan, a bulk data
+  type classifier built on top of UTSA's SCEADAN statistical file type 
+  classifer.
 
 Writing to SQLite databases:
 ============================
@@ -43,7 +43,7 @@ databases. The database contains both the escaped UTF8 features and
 unescaped features. (The escaped features include invalid UTF8
 characters if the feature contained them.)
 
-By default, bulk_extractor 1.5 will write to feature files but not to
+By default, bulk_extractor 1.5 will write to feature files, but not to
 the SQLite3 database.
 
 * Enable/Disable writing features to SQLite3 database:
@@ -94,7 +94,7 @@ These scanners are disabled by default unless bulk_extractor is built with Light
 
 Scanners not in use:
 --------------------
-Scanners that are shipped but not in use have been moved to the directory src/old_scanners.
+Scanners that are shipped, but not in use have been moved to the directory src/old_scanners.
 
 
 Improved Carving Support
@@ -122,8 +122,8 @@ encoded data will be.
    -S unzip_carve_mode=1    0=carve none; 1=carve encoded; 2=carve all (zip)
 
 Components of ZIP files that have been encoded will be detected and
-carved. In practicle this means that ZIPed ZIP files will be
-uncompressed and carved, but normal ZIP files will be left as-is.
+carved. In practice, this means that ZIPed ZIP files will be
+uncompressed and carved, but normal ZIP files will be left as is.
 
 
    -S unrar_carve_mode=1    0=carve none; 1=carve encoded; 2=carve all (rar)
@@ -134,7 +134,7 @@ the hard drive will not be carved.  (Note that bulk_extractor does not
 support RAR5. Also, during final testing, a bug was discovered in the
 RAR decompressor that sometimes results in corruption of
 RAR-compressed archives. This problem will not be fixed in
-bulk_extractor 1.5 but may be fixed in a later version.)
+bulk_extractor 1.5, but may be fixed in a later version.)
 
    -S sqlite_carve_mode=2    0=carve none; 1=carve encoded; 2=carve all (sqlite)
 
@@ -148,7 +148,7 @@ deduplication, which means that the same object will not be carved
 twice. This is important when carving email archives, which tend to
 contain the same images as attachments to email messages.
 
-Memory carving is the scan_net module can also be controlled, as it
+Memory carving by the scan_net module can also be controlled, as it
 tends to generate a lot of false positives. Network carving is
 disabled by default:
 
@@ -175,7 +175,7 @@ SSN recognition: you are now able to specify one of three SSN recognition modes:
                    that matches SSN allocation range.
 
 scan_hashid has been renamed scan_hashdb so that it will be consistent
-with the library name.
+with the other library names.
 
 
 Overreporting Fixes:
@@ -183,7 +183,7 @@ Overreporting Fixes:
 
 We have further improved overreporting problems:
 
-* scan_base16 is now disabled by default (the hex values were not useful)
+* scan_base16 is now disabled by default (the hex values were not useful).
 
 * min_phone_digits is changed from 6 to 7, so that 6-digit phone numbers will no longer be reported.
 
@@ -194,7 +194,7 @@ Underreporting Fixes
   data. This has been corrected. As a result, substantially more email
   addresses and URLs from BASE64-encoded data such as email
   attachments and SSL certificates will be reported in version 1.5
-  compared with version 1.4
+  compared with version 1.4.
 
 
 Improvements in Python programs:
@@ -212,7 +212,7 @@ Bug Fixes
 ------------------
 
 * Versions 1.4 through 1.5 beta2 could not handle split-raw files on Windows. 
-  Now it can once more.
+  Now it can again.
 
 * FLAG_NO_STOPLIST and FLAG_NO_ALERTLIST in feature_recorder.h were the same. 
   They are now different.
@@ -226,7 +226,7 @@ Bug Fixes
 * A bug in feature_recorder::unquote_string caused strings containing
   the sequence \x5C to be improperly decoded. This was caused by a
   typo in the function hexval (we had a private implementation because
-  mingw had no equivillent function.) The primary impact was that
+  mingw had no equivalent function.) The primary impact was that
   words containing backslashes did not appear in the split wordlist
   generated by scan_wordlist.
 
@@ -241,12 +241,12 @@ Internal Improvements
   cppmutexes in the callers. 
 
 * bulk_extractor is now distributed as both an executable and as a
-  library. The library called from C or Python as a shared lib
+  library. The library called from C or Python as a shared lib.
 
 
 Remaining bugs:
 --------------
-* The RAR decompressor is does not reliably decompress all RAR files. 
+* The RAR decompressor does not reliably decompress all RAR files. 
 
 
 PERFORMANCE COMPARISON WITH VERSION 1.4
@@ -368,13 +368,10 @@ unzip/
 sqlite/
 ```
 
-
 Planned for 1.6:
 ================
 
-Version 1.6 is open pending feedback from users.
-
-
+Version 1.6 plan is open, pending feedback from users.
 
 Future Plans
 ============
