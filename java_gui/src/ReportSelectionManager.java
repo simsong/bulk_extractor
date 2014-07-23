@@ -184,7 +184,15 @@ public class ReportSelectionManager {
     // remove content after last "_" and add .txt to end
     String referencedFileString = histogramFileString.substring(0, lastUnderscorePosition) + ".txt";
 
-    return new File(referencedFileString);
+    File referencedFile = new File(referencedFileString);
+    if (referencedFile.exists()) {
+      // great, return the refernced file
+      return referencedFile;
+    } else {
+      // for example feature file email_domain_histogram.txt needs two
+      // underscores stripped, so try again with this new referenced file name
+      return getReferencedFile(referencedFile);
+    }
   }
 
   /**
