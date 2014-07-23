@@ -105,10 +105,15 @@ void scan_sceadan(const class scanner_params &sp, const recursion_control_block 
 
             int code = sceadan_classify_buf(s,sbuf.buf, sbuf.bufsize);
             const char *type = sceadan_name_for_type(s,code);
-            sceadanfs->write(sbuf.pos0,type,"");
+            if(type) {
+                sceadanfs->write(sbuf.pos0,type,"");
+            } else {
+                char buf[20];
+                snprintf(buf,sizeof(buf),"SCEADAN%d",code);
+                sceadanfs->write(sbuf.pos0,buf,"");
+            }
 	}
     }
-
     // shutdown --- this will be handled by scan_bulk.cpp
 #endif
 }

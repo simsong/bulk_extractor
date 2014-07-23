@@ -97,7 +97,7 @@ void scan_hashdb(const class scanner_params &sp,
 
             // hashdb_block_size
             sp.info->get_config("hashdb_block_size", &hashdb_block_size,
-                         "Hash block size, in bytes, used to generte hashes");
+                         "Hash block size, in bytes, used to generate hashes");
 
             // hashdb_ignore_empty_blocks
             sp.info->get_config("hashdb_ignore_empty_blocks", &hashdb_ignore_empty_blocks,

@@ -30,6 +30,11 @@ Major Improvements
   shared library from Python using the bulk_extractor python module
   (in the python/module directory)
 
+* bulk_extractor now supports in-memory histograms, which allows
+  histograms built from a large number of relatively few features to
+  be constructed efficiently. The in-memory histograms are used by
+  scan_sceadan, a bulk data type classifier built on top of UTSA's SCEADAN
+  statistical file type classifer.
 
 Writing to SQLite databases:
 ============================
@@ -64,13 +69,14 @@ New Scanners:
 ===============
 Bulk_extractor version 1.5 provides these new scanners:
 
-* scan_base64   --- the Base64 scanner has been completely rewritten
+* scan_base64   --- the Base64 scanner has been rewritten
 * scan_facebook --- Finds snippits of HTML with containing facebook strings
+* scan_hashdb  --- NPS hash database scanner (can create or search a hashdb)
 * scan_httplogs --- A scanner that finds fragments of HTTP logs
+* scan_outlook will decrypt "Outlook Compressible Encryption" used on some PST files.  (disabled by default)
+* scan_sceadan --- UTSA's "SCEADAN" file type classificaiton engine.
 * scan_sqlite ---- SQLite database carving. (Note: only works for unfragmented databases.)
 * scan_winlnk --- Windows LNK file detection. 
-* scan_outlook will decrypt "Outlook Compressible Encryption" used on some PST files.  (disabled by default)
-
 
 New LightGrep Scanners:
 -----------------------
@@ -88,16 +94,15 @@ These scanners are disabled by default unless bulk_extractor is built with Light
 
 Scanners not in use:
 --------------------
-The following scanners are shipped but not actually in use:
-* scan_ascii85
-* scan_lift
+Scanners that are shipped but not in use have been moved to the directory src/old_scanners.
 
 
 Improved Carving Support
 ========================
-Bulk_extractor 1.5 implements a sophisticated system for carving objects that it discovers.
+Bulk_extractor implements a sophisticated system for carving objects that it discovers.
 
-Bulk_extractor supports three carving mode for each kind of data that it can carve:
+Bulk_extractor version 1.4 and above support three carving mode for
+each kind of data that it can carve:
 
   mode 0 - do not carve anything found
   mode 1 - carve data if it is encoded (e.g. compressed, BASE64 encoded, etc.)
@@ -105,12 +110,12 @@ Bulk_extractor supports three carving mode for each kind of data that it can car
 
 The following carving modes are specified in the default configuration:
 
-   -S jpeg_carve_mode=1    0=carve none; 1=carve encoded; 2=carve all (exif)
+   -S jpeg_carve_mode=1     0=carve none; 1=carve encoded; 2=carve all (exif)
    -S min_jpeg_size=1000    Smallest JPEG stream that will be carved (exif)
 
 JPEG files with valid Exif structures are carved if they are
 encoded. With this behavior JPEGs that can be carved with existing
-carvers such as Scalple and PhotoRec will not be carved, but JPEGs
+carvers such as Scalpel and PhotoRec will not be carved, but JPEGs
 that can only be recovered using bulk_extractor's ability to carve
 encoded data will be.
 
@@ -123,9 +128,13 @@ uncompressed and carved, but normal ZIP files will be left as-is.
 
    -S unrar_carve_mode=1    0=carve none; 1=carve encoded; 2=carve all (rar)
 
-RAR1/2/3 files that are encoded will be carved. For example, RAR
-files that are sent as email attachments will be carved, but RAR files
-on the hard drive will not be carved.  (Note that bulk_extractor does not support RAR5)
+RAR1/2/3 files that are encoded will be carved. For example, RAR files
+that are sent as email attachments will be carved, but RAR files on
+the hard drive will not be carved.  (Note that bulk_extractor does not
+support RAR5. Also, during final testing, a bug was discovered in the
+RAR decompressor that sometimes results in corruption of
+RAR-compressed archives. This problem will not be fixed in
+bulk_extractor 1.5 but may be fixed in a later version.)
 
    -S sqlite_carve_mode=2    0=carve none; 1=carve encoded; 2=carve all (sqlite)
 
@@ -133,10 +142,11 @@ By default, all sqlite files detected will be carved.  Note that only
 sqlite3 database files that were stored contigiously on the source
 media will be readable.
 
-Bulk_extractor carving now implements deduplciation, which means that
-the same object will not be carved twice. This is important when
-carving email archives, which tend to contain the same images as
-attachments to email messages.
+Bulk_extractor 1.5 carving corrected several implementation bugs in the
+bulk_extractor 1.4 carving algorithms. It also now implements
+deduplication, which means that the same object will not be carved
+twice. This is important when carving email archives, which tend to
+contain the same images as attachments to email messages.
 
 Memory carving is the scan_net module can also be controlled, as it
 tends to generate a lot of false positives. Network carving is
@@ -147,8 +157,11 @@ disabled by default:
 By default, Bulk_Extractor will not scan for in-memory TCP/IP structures.
 
 
+Other Improvements:
+====================
+
 Improvements in existing scanners:
-==================================
+---------------------------------
 
 scan_accts:
     - now detects bitcoin addresses and writes them to pii.txt
@@ -156,7 +169,7 @@ scan_accts:
 
 SSN recognition: you are now able to specify one of three SSN recognition modes:
 
-    -S ssn_mode=0  SSN’s must be labeled “SSN:”. Dashes or no dashes okay.
+    -S ssn_mode=0  SSN’s must be labeled “SSN:”. Dashes or no dashes are okay.
     -S ssn_mode=1  No “SSN” required, but dashes are required.
     -S ssn_mode=2  No dashes required. Allow any 9-digit number 
                    that matches SSN allocation range.
@@ -172,6 +185,7 @@ We have further improved overreporting problems:
 
 * scan_base16 is now disabled by default (the hex values were not useful)
 
+* min_phone_digits is changed from 6 to 7, so that 6-digit phone numbers will no longer be reported.
 
 Underreporting Fixes
 ---------------------
@@ -189,20 +203,25 @@ Improvements in Python programs:
 * Minor improvements to regress.py, bulk_diff.py and bulk_extractor_reader.py
 
 
-Incompatiable changes:
-----------------------
+Incompatible changes:
+--------------------
+None that we know of.
 
 
 Bug Fixes
 ------------------
 
-* Versions 1.4 through 1.5 beta2 could not handle split-raw files on Windows. Now it can.
+* Versions 1.4 through 1.5 beta2 could not handle split-raw files on Windows. 
+  Now it can once more.
 
-* FLAG_NO_STOPLIST and FLAG_NO_ALERTLIST in feature_recorder.h were the same. They are now different.
+* FLAG_NO_STOPLIST and FLAG_NO_ALERTLIST in feature_recorder.h were the same. 
+  They are now different.
 
-* FLAG_NO_QUOTE and FLAG_XML in feature_recorder.h were the same. They are different now.
+* FLAG_NO_QUOTE and FLAG_XML in feature_recorder.h were the same. 
+  They are different now.
 
-* The split wordlists contained utf8 escaped words, rather than pure UTF8. It now has pure UTF8.
+* The split wordlists contained utf8 escaped words, rather than pure UTF8. 
+  It now has pure UTF8.
 
 * A bug in feature_recorder::unquote_string caused strings containing
   the sequence \x5C to be improperly decoded. This was caused by a
@@ -224,6 +243,10 @@ Internal Improvements
 * bulk_extractor is now distributed as both an executable and as a
   library. The library called from C or Python as a shared lib
 
+
+Remaining bugs:
+--------------
+* The RAR decompressor is does not reliably decompress all RAR files. 
 
 
 PERFORMANCE COMPARISON WITH VERSION 1.4
@@ -262,16 +285,14 @@ CURRENT CONFIGURATION
 Current list of bulk_extractor scanners:
 
 ```
-scan_accts   - Looks for phone numbers, credit card numbers, etc
+scan_accts   - Looks for phone numbers, credit card numbers, and other numeric info.
 scan_aes     - Detects in-memory AES keys from their key schedules
-scan_ascii85 - TBD
 scan_base16  - decodes hexadecimal test
 scan_base64  - decodes BASE64 text
-scan_bulk    - TBD     
 scan_elf     - Detects and decodes ELF headers
-scan_exif    - 
+scan_exif    - Decodes EXIF headers in JPEGs using built-in EXIF parser.
 scan_exiv2   - Decodes EXIF headers in JPEGs using libexiv2 (for regression testing)
-scan_email   - 
+scan_email   - Scans for email addresses, URLs, and other text-based information.
 scan_exif    - Decodes EXIF headers in JPEGs using built-in decoder.
 scan_find    - keyword searching
 scan_facebook- Facebook HTML
@@ -283,7 +304,7 @@ scan_httplog - search for web server logs
 scan_outlook - Decrypts Outlook Compressible Encryption
 scan_json    - Detects JavaScript Object Notation files
 scan_kml     - Detects KML files
-scan_lightgrep
+scan_lightgrep - performs searches with LightBox Technology's LightGrep.
 scan_net     - IP packet scanning and carving
 scan_pdf     - Extracts text from some kinds of PDF files
 scan_sqlite  - SQLite3 databases (only if they are contigious)
@@ -291,7 +312,7 @@ scan_rar     - RAR files
 scan_vcard   - Carvees VCARD files
 scan_windirs - Windows directory entries
 scan_winlkn  - Windows LNK files
-scan_winpe   -
+scan_winpe   - Windows executable headers.
 scan_winprefetch - Extracts fields from Windows prefetch files and file fragments.
 scan_wordlist - Builds word list for password cracking
 scan_xor     - XOR obfuscation 

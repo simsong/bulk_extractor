@@ -22,11 +22,10 @@ public:
 #define WORDLIST "wordlist"
 
 /* wordlist support for SQL.  Note that the SQL-based wordlist is
- * faster than the file-based wordlist, but it does not appear to be
- * deterministic. We're not sure why.
+ * faster than the file-based wordlist.
  */
 
-static bool wordlist_use_flatfiles = false;
+static bool wordlist_use_flatfiles = true;
 
 #ifdef HAVE_SQLITE3_H
 static const char *schema_wordlist[] = {
