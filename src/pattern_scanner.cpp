@@ -15,6 +15,9 @@
 #include <limits>
 #include <fstream>
 
+#include <ctime>
+#include <iostream>
+
 namespace {
   const char* DefaultEncodingsCStrings[] = {"UTF-8", "UTF-16LE"};
   const unsigned int NumDefaultEncodings = 2;
@@ -182,8 +185,12 @@ struct HitData {
 
 void gotHit(void* userData, const LG_SearchHit* hit) {
   // trampoline back into LightgrepController::processHit() from the void* userData
+  #ifdef LGBENCHMARK
+  ++(*static_cast<uint64_t*>(userData)); // increment hit counter
+  #else
   HitData* hd(static_cast<HitData*>(userData));
   hd->lgc->processHit(*hd->scannerTable, *hit, *hd->sp, *hd->rcb);
+  #endif
 }
 
 void LightgrepController::scan(const scanner_params& sp, const recursion_control_block &rcb) {
@@ -211,16 +218,35 @@ void LightgrepController::scan(const scanner_params& sp, const recursion_control
 
   const sbuf_t &sbuf = sp.sbuf;
 
-  HitData data = { this, &scannerTable, &sp, &rcb };
+  HitData callbackInfo = { this, &scannerTable, &sp, &rcb };
+  void*   userData = &callbackInfo;
+
+  #ifdef LGBENCHMARK
+  uint64_t hitCount = 0;
+  userData = &hitCount; // switch things out for a counter
+
+  clock_t  startClock = std::clock();
+  #endif
 
   // search the sbuf in one go
   // the gotHit() function will be invoked for each pattern hit
-  if (lg_search(ctx, (const char*)sbuf.buf, (const char*)sbuf.buf + sbuf.pagesize, 0, &data, gotHit) < numeric_limits<uint64_t>::max()) {
+  if (lg_search(ctx, (const char*)sbuf.buf, (const char*)sbuf.buf + sbuf.pagesize, 0, userData, gotHit) < numeric_limits<uint64_t>::max()) {
     // resolve potential hits that want data into the sbuf margin, without beginning any new hits
-    lg_search_resolve(ctx, (const char*)sbuf.buf + sbuf.pagesize, (const char*)sbuf.buf + sbuf.bufsize, sbuf.pagesize, &data, gotHit);
+    lg_search_resolve(ctx, (const char*)sbuf.buf + sbuf.pagesize, (const char*)sbuf.buf + sbuf.bufsize, sbuf.pagesize, userData, gotHit);
   }
   // flush any remaining hits; there's no more data
-  lg_closeout_search(ctx, &data, gotHit);
+  lg_closeout_search(ctx, userData, gotHit);
+
+  #ifdef LGBENCHMARK
+  clock_t endClock = std::clock();
+  double t = ((double)endClock - startClock) / CLOCKS_PER_SEC;
+  if (t > 0) { // it'd be weird if it wasn't, but I'm always making divide by zero bugs... not today!
+    double bw = (double)sbuf.pagesize / (t * 1024 * 1024);
+    std::stringstream buf;
+    buf << " ** Time: " << sbuf.pos0.str() << '\t' << sbuf.pagesize << '\t' << t << '\t' << hitCount << '\t' << bw << std::endl;
+    std::cout << buf.str();
+  }
+  #endif
 
   lg_destroy_context(ctx);
 
