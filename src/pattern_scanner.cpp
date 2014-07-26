@@ -15,8 +15,8 @@
 #include <limits>
 #include <fstream>
 
-#include <ctime>
 #include <iostream>
+#include <chrono>
 
 namespace {
   const char* DefaultEncodingsCStrings[] = {"UTF-8", "UTF-16LE"};
@@ -173,6 +173,8 @@ void LightgrepController::regcomp() {
   lg_destroy_fsm(Fsm);
 
   cerr << lg_pattern_map_size(PatternInfo) << " lightgrep patterns, logic size is " << lg_program_size(Prog) << " bytes, " << Scanners.size() << " active scanners" << std::endl;
+  cerr << "timer second ratio " << chrono::high_resolution_clock::period::num << "/" <<
+    chrono::high_resolution_clock::period::den << endl;
 }
 
 struct HitData {
@@ -225,7 +227,8 @@ void LightgrepController::scan(const scanner_params& sp, const recursion_control
   uint64_t hitCount = 0;
   userData = &hitCount; // switch things out for a counter
 
-  clock_t  startClock = std::clock();
+  auto startClock = std::chrono::high_resolution_clock::now();
+  // std::cout << "Starting block " << sbuf.pos0.str() << std::endl;
   #endif
 
   // search the sbuf in one go
@@ -238,14 +241,14 @@ void LightgrepController::scan(const scanner_params& sp, const recursion_control
   lg_closeout_search(ctx, userData, gotHit);
 
   #ifdef LGBENCHMARK
-  clock_t endClock = std::clock();
-  double t = ((double)endClock - startClock) / CLOCKS_PER_SEC;
-  if (t > 0) { // it'd be weird if it wasn't, but I'm always making divide by zero bugs... not today!
-    double bw = (double)sbuf.pagesize / (t * 1024 * 1024);
-    std::stringstream buf;
-    buf << " ** Time: " << sbuf.pos0.str() << '\t' << sbuf.pagesize << '\t' << t << '\t' << hitCount << '\t' << bw << std::endl;
-    std::cout << buf.str();
-  }
+  auto endClock = std::chrono::high_resolution_clock::now();
+  auto t = endClock - startClock;
+  double seconds = double(t.count()) / chrono::high_resolution_clock::period::den;
+  double bw = double(sbuf.pagesize) / (seconds * 1024 * 1024);
+  std::stringstream buf;
+  buf << " ** Time: " << sbuf.pos0.str() << '\t' << sbuf.pagesize << '\t' << t.count() << '\t' << seconds<< '\t' << hitCount << '\t' << bw << std::endl;
+  std::cout << buf.str();
+//  std::cout.flush();
   #endif
 
   lg_destroy_context(ctx);
