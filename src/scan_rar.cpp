@@ -340,6 +340,7 @@ static bool process_component(const unsigned char *buf, size_t buf_len, RarCompo
     if(!(flags & MANDATORY_FILE_FLAGS) || (flags & UNUSED_FILE_FLAGS)) {
         return false;
     }
+
     // ignore split files and encrypted files
     if(flags & (FLAG_CONT_PREV | FLAG_CONT_NEXT | FLAG_ENCRYPTED)) {
         return false;
@@ -389,6 +390,7 @@ static bool process_component(const unsigned char *buf, size_t buf_len, RarCompo
         filename_bytes += OPTIONAL_BIGFILE_LEN;
     }
     if(flags & FLAG_UNICODE_FILENAME) {
+
         // The unicode filename flag can indicate two filename formats,
         // predicated on the presence of a null byte:
         //   - If a null byte is present, it separates an ASCII
@@ -408,7 +410,7 @@ static bool process_component(const unsigned char *buf, size_t buf_len, RarCompo
         }
 
         if(null_byte_index == filename_bytes_len) {
-            // UTF-8 only
+            // UTF-8 only - go with UTF-8 string
             filename_len = filename_bytes_len;
             filename = string(filename_bytes, (size_t) filename_len);
         }
@@ -438,9 +440,9 @@ static bool process_component(const unsigned char *buf, size_t buf_len, RarCompo
         }
     }
     if(first_control_character != filename.end()) {
-        return false;
+        // no longer disallow ASCII control characters
+        //return false;
     }
-
 
     // RAR version required to extract: do we want to abort if it's too new?
     output.unpack_version = buf[OFFSET_UNP_VER];
