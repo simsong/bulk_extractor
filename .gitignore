@@ -108,3 +108,4 @@ test-driver
 src_win/liblightgrep-*/
 tests/Data-*/
 linux/
+bulk_extractor_noscanners

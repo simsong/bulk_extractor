@@ -244,10 +244,11 @@ Internal Improvements
   library. The library called from C or Python as a shared lib.
 
 
-Remaining bugs:
+Known bugs:
 --------------
 * The RAR decompressor does not reliably decompress all RAR files. 
 
+* The RAR scanner will not reliably carve RAR file components that contain UTF-8 characters in their name. 
 
 PERFORMANCE COMPARISON WITH VERSION 1.4
 ========================================
