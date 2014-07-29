@@ -545,21 +545,28 @@ The scanners all serve different functions and look for different types of infor
 \endlastfoot
 
 \label{tab:inputdata}
+\hline\textbf{\textit{accts}} & Numeric accounts, such as phone numbers and CCNs\\
 \hline\textbf{\textit{aes}} & In-memory AES keys from their key schedules & \Autoref{cyber}\\
 \hline\textbf{\textit{base16}} & Base 16 (hex) encoded data (includes MD5 codes embedded in the data) & \Autoref{cyber}\\
 \hline\textbf{\textit{base64}} & Base 64 code & \Autoref{compressedProcessing} and \Autoref{cyber} \\
 \hline\textbf{\textit{elf}} & Executable and Linkable Format (ELF) & \Autoref{malware} \\
 \hline\textbf{\textit{exif}} & EXIF structures from JPEGS (and carving of JPEG files) & \Autoref{imagery} \\
+\hline\textbf{\textit{facebook}} & Facebook HTML & \\
 \hline\textbf{\textit{gps}} & XML from Garmin GPS devices (processed) & \Autoref{identity}\\
 \hline\textbf{\textit{gzip}} & GZIP files and ZLIB-compressed GZIP streams & \Autoref{compressedProcessing} and \Autoref{cyber} \\
+\hline\textbf{\textit{hashdb}} & NPS Hash Database support\\
 \hline\textbf{\textit{hiber}} & Windows Hibernation File Fragments (decompressed and processed, not carved) & \Autoref{compressedProcessing}  \\
+\hline\textbf{\textit{httplogs}} & HTTP log files\\
 \hline\textbf{\textit{jpeg}} & JPEG carving. Default is only encoded JPEGs are carved. JPEGs without EXIFs are also carved & \Autoref{carving} and \Autoref{imagery}\\
 \hline\textbf{\textit{json}} & JavaScript Object Notation files and objects downloaded from web servers, as well as JSON-like objects found in source code & \Autoref{malware}\\
 \hline\textbf{\textit{kml}} & KML files (carved) & \Autoref{identity}\\
+\hline\textbf{\textit{outlook}} & Outlook Compressable Encryption\\
 \hline\textbf{\textit{pdf}} & Text from PDF files (extracted for processing not carved) & \Autoref{compressedProcessing} \\
 \hline\textbf{\textit{rar}} &  RAR components in unencrypted archives are decrypted and processed. Encrypted RAR file are carved. & \Autoref{carving} \\
+\hline\textbf{\textit{sqlite }} & SQLite3 database file detection and carving\\
 \hline\textbf{\textit{vcard}} & vCard files (carved) & \Autoref{identity}\\
 \hline\textbf{\textit{windirs}} & Windows FAT32 and NTFS directory entries& \Autoref{cyber}\\
+\hline\textbf{\textit{winlnk}} & Windows LNK file carving and decoding\\
 \hline\textbf{\textit{winpe}} & Windows Preinstallation Environment (PE) Executables (.exe and .dll files notated with MD5 hash of first 4k) & \Autoref{malware}\\
 \hline\textbf{\textit{winprefetch}} & Windows Prefetch files, file fragments (processed) & \Autoref{malware} \\
 \hline\textbf{\textit{zip}} & ZIP files and zlib streams (processed, and optionally carved) & \Autoref{carving} and \Autoref{compressedProcessing}\\

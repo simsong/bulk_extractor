@@ -1,10 +1,10 @@
-                    Announcing bulk_extractor 1.5 alpha6.
-                             July 1, 2014
+                    Announcing bulk_extractor 1.5 beta5.
+                             July 23, 2014
                                 DRAFT
 
                             RELEASE NOTES
 
-bulk_extractor Version 1.5 alpha 6 has been released for Linux, MacOS and
+bulk_extractor Version 1.5 alpha 6 has been released for Linux, Mac OS and
 Windows. 
 
 Release source code and Windows installer:
@@ -17,10 +17,10 @@ GIT repository:
 
 Major Improvements
 ==================
-* BE now optionally writes features to SQLite database in addition to
+* BE now optionally writes features to SQLite databases in addition to
   flat files.
 
-* New scanners, plus many fixes in existing scanners
+* New scanners, plus many fixes in existing scanners.
 
 * Improved support for carving encoded objects missed by contemporary
   carvers (e.g. ZIP-compressed JPEG files).
@@ -28,13 +28,13 @@ Major Improvements
 * bulk_extractor is now available as a shared library
   (libbulkextractor.so and libbulkextractor.DLL). You can load this
   shared library from Python using the bulk_extractor python module
-  (in the python/module directory)
+  (in the python/module directory).
 
-* bulk_extractor now supports in-memory histograms, which allows
-  histograms built from a large number of relatively few features to
-  be constructed efficiently. The in-memory histograms are used by
-  scan_sceadan, a bulk data type classifier built on top of UTSA's SCEADAN
-  statistical file type classifer.
+* bulk_extractor now supports in-memory histograms, which allows efficient
+  construction of histograms built from a large number of relatively few
+  features. The in-memory histograms are used by scan_sceadan, a bulk data
+  type classifier built on top of UTSA's SCEADAN statistical file type 
+  classifer.
 
 Writing to SQLite databases:
 ============================
@@ -43,7 +43,7 @@ databases. The database contains both the escaped UTF8 features and
 unescaped features. (The escaped features include invalid UTF8
 characters if the feature contained them.)
 
-By default, bulk_extractor 1.5 will write to feature files but not to
+By default, bulk_extractor 1.5 will write to feature files, but not to
 the SQLite3 database.
 
 * Enable/Disable writing features to SQLite3 database:
@@ -69,13 +69,14 @@ New Scanners:
 ===============
 Bulk_extractor version 1.5 provides these new scanners:
 
-* scan_base64   --- the Base64 scanner has been completely rewritten
+* scan_base64   --- the Base64 scanner has been rewritten
 * scan_facebook --- Finds snippits of HTML with containing facebook strings
+* scan_hashdb  --- NPS hash database scanner (can create or search a hashdb)
 * scan_httplogs --- A scanner that finds fragments of HTTP logs
+* scan_outlook will decrypt "Outlook Compressible Encryption" used on some PST files.  (disabled by default)
+* scan_sceadan --- UTSA's "SCEADAN" file type classificaiton engine.
 * scan_sqlite ---- SQLite database carving. (Note: only works for unfragmented databases.)
 * scan_winlnk --- Windows LNK file detection. 
-* scan_outlook will decrypt "Outlook Compressible Encryption" used on some PST files.  (disabled by default)
-
 
 New LightGrep Scanners:
 -----------------------
@@ -93,14 +94,15 @@ These scanners are disabled by default unless bulk_extractor is built with Light
 
 Scanners not in use:
 --------------------
-Scanners that are shipped but not in use have been moved to the directory src/old_scanners.
+Scanners that are shipped, but not in use have been moved to the directory src/old_scanners.
 
 
 Improved Carving Support
 ========================
-Bulk_extractor 1.4 implements a sophisticated system for carving objects that it discovers.
+Bulk_extractor implements a sophisticated system for carving objects that it discovers.
 
-Bulk_extractor supports three carving mode for each kind of data that it can carve:
+Bulk_extractor version 1.4 and above support three carving mode for
+each kind of data that it can carve:
 
   mode 0 - do not carve anything found
   mode 1 - carve data if it is encoded (e.g. compressed, BASE64 encoded, etc.)
@@ -113,22 +115,26 @@ The following carving modes are specified in the default configuration:
 
 JPEG files with valid Exif structures are carved if they are
 encoded. With this behavior JPEGs that can be carved with existing
-carvers such as Scalple and PhotoRec will not be carved, but JPEGs
+carvers such as Scalpel and PhotoRec will not be carved, but JPEGs
 that can only be recovered using bulk_extractor's ability to carve
 encoded data will be.
 
    -S unzip_carve_mode=1    0=carve none; 1=carve encoded; 2=carve all (zip)
 
 Components of ZIP files that have been encoded will be detected and
-carved. In practicle this means that ZIPed ZIP files will be
-uncompressed and carved, but normal ZIP files will be left as-is.
+carved. In practice, this means that ZIPed ZIP files will be
+uncompressed and carved, but normal ZIP files will be left as is.
 
 
    -S unrar_carve_mode=1    0=carve none; 1=carve encoded; 2=carve all (rar)
 
-RAR1/2/3 files that are encoded will be carved. For example, RAR
-files that are sent as email attachments will be carved, but RAR files
-on the hard drive will not be carved.  (Note that bulk_extractor does not support RAR5)
+RAR1/2/3 files that are encoded will be carved. For example, RAR files
+that are sent as email attachments will be carved, but RAR files on
+the hard drive will not be carved.  (Note that bulk_extractor does not
+support RAR5. Also, during final testing, a bug was discovered in the
+RAR decompressor that sometimes results in corruption of
+RAR-compressed archives. This problem will not be fixed in
+bulk_extractor 1.5, but may be fixed in a later version.)
 
    -S sqlite_carve_mode=2    0=carve none; 1=carve encoded; 2=carve all (sqlite)
 
@@ -136,12 +142,13 @@ By default, all sqlite files detected will be carved.  Note that only
 sqlite3 database files that were stored contigiously on the source
 media will be readable.
 
-Bulk_extractor carving now implements deduplciation, which means that
-the same object will not be carved twice. This is important when
-carving email archives, which tend to contain the same images as
-attachments to email messages.
+Bulk_extractor 1.5 carving corrected several implementation bugs in the
+bulk_extractor 1.4 carving algorithms. It also now implements
+deduplication, which means that the same object will not be carved
+twice. This is important when carving email archives, which tend to
+contain the same images as attachments to email messages.
 
-Memory carving is the scan_net module can also be controlled, as it
+Memory carving by the scan_net module can also be controlled, as it
 tends to generate a lot of false positives. Network carving is
 disabled by default:
 
@@ -150,8 +157,11 @@ disabled by default:
 By default, Bulk_Extractor will not scan for in-memory TCP/IP structures.
 
 
+Other Improvements:
+====================
+
 Improvements in existing scanners:
-==================================
+---------------------------------
 
 scan_accts:
     - now detects bitcoin addresses and writes them to pii.txt
@@ -159,13 +169,13 @@ scan_accts:
 
 SSN recognition: you are now able to specify one of three SSN recognition modes:
 
-    -S ssn_mode=0  SSN’s must be labeled “SSN:”. Dashes or no dashes okay.
+    -S ssn_mode=0  SSN’s must be labeled “SSN:”. Dashes or no dashes are okay.
     -S ssn_mode=1  No “SSN” required, but dashes are required.
     -S ssn_mode=2  No dashes required. Allow any 9-digit number 
                    that matches SSN allocation range.
 
 scan_hashid has been renamed scan_hashdb so that it will be consistent
-with the library name.
+with the other library names.
 
 
 Overreporting Fixes:
@@ -173,7 +183,7 @@ Overreporting Fixes:
 
 We have further improved overreporting problems:
 
-* scan_base16 is now disabled by default (the hex values were not useful)
+* scan_base16 is now disabled by default (the hex values were not useful).
 
 * min_phone_digits is changed from 6 to 7, so that 6-digit phone numbers will no longer be reported.
 
@@ -184,7 +194,7 @@ Underreporting Fixes
   data. This has been corrected. As a result, substantially more email
   addresses and URLs from BASE64-encoded data such as email
   attachments and SSL certificates will be reported in version 1.5
-  compared with version 1.4
+  compared with version 1.4.
 
 
 Improvements in Python programs:
@@ -193,15 +203,16 @@ Improvements in Python programs:
 * Minor improvements to regress.py, bulk_diff.py and bulk_extractor_reader.py
 
 
-Incompatiable changes:
-----------------------
+Incompatible changes:
+--------------------
+None that we know of.
 
 
 Bug Fixes
 ------------------
 
 * Versions 1.4 through 1.5 beta2 could not handle split-raw files on Windows. 
-  Now it can once more.
+  Now it can again.
 
 * FLAG_NO_STOPLIST and FLAG_NO_ALERTLIST in feature_recorder.h were the same. 
   They are now different.
@@ -215,7 +226,7 @@ Bug Fixes
 * A bug in feature_recorder::unquote_string caused strings containing
   the sequence \x5C to be improperly decoded. This was caused by a
   typo in the function hexval (we had a private implementation because
-  mingw had no equivillent function.) The primary impact was that
+  mingw had no equivalent function.) The primary impact was that
   words containing backslashes did not appear in the split wordlist
   generated by scan_wordlist.
 
@@ -230,13 +241,14 @@ Internal Improvements
   cppmutexes in the callers. 
 
 * bulk_extractor is now distributed as both an executable and as a
-  library. The library called from C or Python as a shared lib
+  library. The library called from C or Python as a shared lib.
 
 
-Remaining bugs:
+Known bugs:
 --------------
-* The RAR decompressor is does not reliably decompress all RAR files. 
+* The RAR decompressor does not reliably decompress all RAR files. 
 
+* The RAR scanner will not reliably carve RAR file components that contain UTF-8 characters in their name. 
 
 PERFORMANCE COMPARISON WITH VERSION 1.4
 ========================================
@@ -357,13 +369,10 @@ unzip/
 sqlite/
 ```
 
-
 Planned for 1.6:
 ================
 
-Version 1.6 is open pending feedback from users.
-
-
+Version 1.6 plan is open, pending feedback from users.
 
 Future Plans
 ============

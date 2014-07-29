@@ -2,11 +2,6 @@
 # coding=UTF-8
 # perform a diff of two bulk_extractor output directories.
 
-# for you and I, the more relevant would be the times of the b_e
-# reports, and ideally if they were e01 files the times the image was
-# created. But the legal folks would probably like to know when the
-# report was generated as well
-
 b'This module needs Python 2.7 or later.'
 
 __version__='1.3.0'
@@ -17,8 +12,7 @@ if sys.version_info < (2,7):
 
 import ttable, bulk_extractor_reader
 
-html_header = '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">\n'
-bulk_diff_version = '1.3'
+build_stoplist_version = '1.3'
 
 all_emails = set()
 

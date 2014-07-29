@@ -78,7 +78,7 @@ exif_entry::exif_entry(const exif_entry &that):ifd_type(that.ifd_type), name(tha
 
 exif_entry::~exif_entry() {
 #ifdef DEBUG
-    cout << "exif_entry.~ " << name.length() << "val " << value.length() << "\n";
+    std::cout << "exif_entry.~ " << name.length() << "val " << value.length() << "\n";
 #endif
 }
 
@@ -117,7 +117,7 @@ void entry_reader::parse_ifd_entries(ifd_type_t ifd_type, tiff_handle_t &tiff_ha
 				     size_t ifd_offset, entry_list_t &entries) {
     uint16_t num_entries = tiff_ifd_reader::get_num_entries(tiff_handle, ifd_offset);
 #ifdef DEBUG
-    cout << "exif_entry.parse_ifd_entries ifd type " << (uint32_t)ifd_type << ", num entries: " << num_entries << " from offset " << ifd_offset << "\n";
+    std::cout << "exif_entry.parse_ifd_entries ifd type " << (uint32_t)ifd_type << ", num entries: " << num_entries << " from offset " << ifd_offset << "\n";
 #endif
     if (num_entries == 0) {
         return;
@@ -135,7 +135,7 @@ void entry_reader::parse_ifd_entries(ifd_type_t ifd_type, tiff_handle_t &tiff_ha
         uint32_t ifd_entry_offset = tiff_ifd_reader::get_entry_offset(ifd_offset, i);
         if (ifd_entry_offset + 12 > tiff_handle.sbuf->bufsize) throw exif_failure_exception_t();
 #ifdef DEBUG
-	cout << "exif_entry.parse_ifd_entries ifd_entry_offset: " << ifd_entry_offset << "\n";
+	std::cout << "exif_entry.parse_ifd_entries ifd_entry_offset: " << ifd_entry_offset << "\n";
 #endif
 
         // parse the entry
@@ -164,12 +164,12 @@ void entry_reader::parse_entry(ifd_type_t ifd_type, tiff_handle_t &tiff_handle,
     const uint16_t zentry_type = get_entry_type(tiff_handle, ifd_entry_offset);
     uint32_t zcount = get_entry_count(tiff_handle, ifd_entry_offset);
     uint32_t zoffset = get_data_offset(tiff_handle, ifd_entry_offset);
-    cout << "exif_entry.parse_entry entry tag: " << entry_tag << ", entry type: " << zentry_type << " entry count: " << zcount << ", entry offset: " << zoffset;
+    std::cout << "exif_entry.parse_entry entry tag: " << entry_tag << ", entry type: " << zentry_type << " entry count: " << zcount << ", entry offset: " << zoffset << "\n";
 #endif
 
     // add entry or parse entry's nested IFD, based on entry_tag
 #ifdef DEBUG
-    cout << "exif_entry.parse_entry IFD type: " << (int)ifd_type << "\n";
+    std::cout << "exif_entry.parse_entry IFD type: " << (int)ifd_type << "\n";
 #endif
     std::string generic_name;
     std::string value_string;
@@ -327,12 +327,12 @@ void entry_reader::parse_entry(ifd_type_t ifd_type, tiff_handle_t &tiff_handle,
             forwarded_ifd_offset = get_ifd_offset(tiff_handle, ifd_entry_offset);
             if (ifd_type == IFD0_TIFF) {
 #ifdef DEBUG
-                cout << "exif_entry.parse_ifd_entries case8769 IFD0_tiff to IFD0_EXIF: ifd_entry_offset: " << ifd_entry_offset << " forwarded_ifd_offset " << forwarded_ifd_offset << "\n";
+                std::cout << "exif_entry.parse_ifd_entries case8769 IFD0_tiff to IFD0_EXIF: ifd_entry_offset: " << ifd_entry_offset << " forwarded_ifd_offset " << forwarded_ifd_offset << "\n";
 #endif
 		entry_reader::parse_ifd_entries(IFD0_EXIF, tiff_handle, forwarded_ifd_offset, entries);
             } else if (ifd_type == IFD1_TIFF) {
 #ifdef DEBUG
-                cout << "exif_entry.parse_ifd_entries case8769 IFD1_tiff to IFD1_EXIF: ifd_entry_offset:" << ifd_entry_offset << " forwarded_ifd_offset " << forwarded_ifd_offset << "\n";
+                std::cout << "exif_entry.parse_ifd_entries case8769 IFD1_tiff to IFD1_EXIF: ifd_entry_offset:" << ifd_entry_offset << " forwarded_ifd_offset " << forwarded_ifd_offset << "\n";
 #endif
 		entry_reader::parse_ifd_entries(IFD1_EXIF, tiff_handle, forwarded_ifd_offset, entries);
             } else {
@@ -343,12 +343,12 @@ void entry_reader::parse_entry(ifd_type_t ifd_type, tiff_handle_t &tiff_handle,
             forwarded_ifd_offset = get_ifd_offset(tiff_handle, ifd_entry_offset);
             if (ifd_type == IFD0_TIFF) {
 #ifdef DEBUG
-                cout << "exif_entry.parse_ifd_entries case8825 IFD0_tiff to IFD0_GPS: forwarded_ifd_offset " << forwarded_ifd_offset << "\n";
+                std::cout << "exif_entry.parse_ifd_entries case8825 IFD0_tiff to IFD0_GPS: forwarded_ifd_offset " << forwarded_ifd_offset << "\n";
 #endif
 		entry_reader::parse_ifd_entries(IFD0_GPS, tiff_handle, forwarded_ifd_offset, entries);
             } else if (ifd_type == IFD1_TIFF) {
 #ifdef DEBUG
-                cout << "exif_entry.parse_ifd_entries case8825 IFD1_tiff to IFD1_GPS: forwarded_ifd_offset " << forwarded_ifd_offset << "\n";
+                std::cout << "exif_entry.parse_ifd_entries case8825 IFD1_tiff to IFD1_GPS: forwarded_ifd_offset " << forwarded_ifd_offset << "\n";
 #endif
 		entry_reader::parse_ifd_entries(IFD1_GPS, tiff_handle, forwarded_ifd_offset, entries);
             } else {
@@ -516,9 +516,9 @@ void entry_reader::parse_entry(ifd_type_t ifd_type, tiff_handle_t &tiff_handle,
             // it to entries, so no action.
 #ifdef DEBUG
             value_string = get_value(tiff_handle, ifd_entry_offset);
-            cout << "exif_entry.add_entry ifd type: '" << (int)ifd_type << "' (skipped)\n";
-            cout << "exif_entry.add_entry name: '" << "MakerNote" << "' (skipped)\n";
-            cout << "exif_entry.add_entry value: '" << value_string << "' (skipped)\n";
+            std::cout << "exif_entry.add_entry ifd type: '" << (int)ifd_type << "' (skipped)\n";
+            std::cout << "exif_entry.add_entry name: '" << "MakerNote" << "' (skipped)\n";
+            std::cout << "exif_entry.add_entry value: '" << value_string << "' (skipped)\n";
 #endif
             //value_string = get_value(tiff_handle, ifd_entry_offset);
             //add_entry(ifd_type, "MakerNote", value_string, entries);
@@ -581,12 +581,12 @@ void entry_reader::parse_entry(ifd_type_t ifd_type, tiff_handle_t &tiff_handle,
             forwarded_ifd_offset = get_ifd_offset(tiff_handle, ifd_entry_offset);
             if (ifd_type == IFD0_EXIF) {
 #ifdef DEBUG
-                cout << "exif_entry.parse_ifd_entries casea005 IFD0_EXIF to IFD0_INTEROP: ifd_entry_offset: " << ifd_entry_offset << ", forwarded_ifd_offset " << forwarded_ifd_offset << "\n";
+                std::cout << "exif_entry.parse_ifd_entries casea005 IFD0_EXIF to IFD0_INTEROP: ifd_entry_offset: " << ifd_entry_offset << ", forwarded_ifd_offset " << forwarded_ifd_offset << "\n";
 #endif
 		entry_reader::parse_ifd_entries(IFD0_INTEROPERABILITY, tiff_handle, forwarded_ifd_offset, entries);
             } else if (ifd_type == IFD1_EXIF) {
 #ifdef DEBUG
-                cout << "exif_entry.parse_ifd_entries casea005 IFD1_EXIF to IFD1_INTEROP: forwarded_ifd_offset " << forwarded_ifd_offset << "\n";
+                std::cout << "exif_entry.parse_ifd_entries casea005 IFD1_EXIF to IFD1_INTEROP: forwarded_ifd_offset " << forwarded_ifd_offset << "\n";
 #endif
 		entry_reader::parse_ifd_entries(IFD1_INTEROPERABILITY, tiff_handle, forwarded_ifd_offset, entries);
             } else {
@@ -1023,9 +1023,9 @@ static void add_entry(ifd_type_t ifd_type, const std::string &name, const std::s
 
     // push the name and value onto entries
 #ifdef DEBUG
-    cout << "exif_entry.add_entry ifd type: '" << (int)ifd_type << "'\n";
-    cout << "exif_entry.add_entry name: '" << name << "'\n";
-    cout << "exif_entry.add_entry value: '" << value << "'\n";
+    std::cout << "exif_entry.add_entry ifd type: '" << (int)ifd_type << "'\n";
+    std::cout << "exif_entry.add_entry name: '" << name << "'\n";
+    std::cout << "exif_entry.add_entry value: '" << value << "'\n";
 #endif
 
     entries.push_back(new exif_entry(ifd_type, name, value));
@@ -1208,7 +1208,7 @@ std::string get_possible_utf16(const sbuf_t sbuf, size_t count, sbuf_t::byte_ord
     std::string utf8_string = all_utf16to8(wstr);
 
 #ifdef DEBUG
-    cout << "exif_entry.get_possible_utf16 utf8_string (escaped): '" << validateOrEscapeUTF8(utf8_string, true, true) << "'\n";
+    std::cout << "exif_entry.get_possible_utf16 utf8_string (escaped): '" << validateOrEscapeUTF8(utf8_string, true, true) << "'\n";
 #endif
     return utf8_string;
 }
@@ -1387,7 +1387,7 @@ static std::string get_exif_short(tiff_handle_t &tiff_handle, uint32_t ifd_entry
         // count is not 1 so print the uint16_t bytes as utf8
         std::string s = get_possible_utf16(*(tiff_handle.sbuf)+offset, count, tiff_handle.byte_order);
 #ifdef DEBUG
-        cout << "exif_entry.get_exif_short (escaped): '" << validateOrEscapeUTF8(s, true, true) << "'\n";
+        std::cout << "exif_entry.get_exif_short (escaped): '" << validateOrEscapeUTF8(s, true, true) << "'\n";
 #endif
         return s;
     }
@@ -1413,7 +1413,7 @@ static std::string get_exif_long(tiff_handle_t &tiff_handle, uint32_t ifd_entry_
         // count is 1 so print the long directly
         std::stringstream ss;
         try {
-	    ss << (uint32_t)tiff_handle.sbuf->get32u(offset);
+	    ss << (uint32_t)tiff_handle.sbuf->get32u(offset, tiff_handle.byte_order);
         } catch (sbuf_t::range_exception_t &e) {
             // add nothing to ss
         }
@@ -1423,7 +1423,7 @@ static std::string get_exif_long(tiff_handle_t &tiff_handle, uint32_t ifd_entry_
         // count is not 1 so print the uint32_t bytes as utf8
         std::string s = get_possible_utf32(*(tiff_handle.sbuf)+offset, count, tiff_handle.byte_order);
 #ifdef DEBUG
-        cout << "exif_entry.get_exif_short (escaped): '" << validateOrEscapeUTF8(s, true, true) << "'\n";
+        std::cout << "exif_entry.get_exif_short (escaped): '" << validateOrEscapeUTF8(s, true, true) << "'\n";
 #endif
         return s;
     }
