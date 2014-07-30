@@ -574,7 +574,7 @@ public:
         if(found_start){
             jpeg_validator::results_t res = jpeg_validator::validate_jpeg(sbuf);
             
-            if(exif_debug) fprintf(stderr,"res.len=%" PRId64 " res.how=%" PRId64 "\n",(long long)res.len,(long long)res.how);
+            if(exif_debug) std::cerr << "res.len=" << res.len << " res.how=" << (int)(res.how) << "\n";
 
             // Is it valid?
             if(res.len<=0) return 0; 

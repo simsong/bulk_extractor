@@ -1,6 +1,5 @@
-                    Announcing bulk_extractor 1.5 beta5.
-                             July 23, 2014
-                                DRAFT
+                    Announcing bulk_extractor 1.5
+                             July 29, 2014
 
                             RELEASE NOTES
 
@@ -248,7 +247,8 @@ Known bugs:
 --------------
 * The RAR decompressor does not reliably decompress all RAR files. 
 
-* The RAR scanner will not reliably carve RAR file components that contain UTF-8 characters in their name. 
+* The RAR scanner will not reliably name carved RAR file components
+  that contain UTF-8 characters in their name.
 
 PERFORMANCE COMPARISON WITH VERSION 1.4
 ========================================
@@ -398,8 +398,6 @@ Future Plans
 * NTFS decompression
 
 * Better handling of MIME encoding
-
-* Reimplement top-n with a priority queue, rather than a sort and subset
 
 * Process more data with -e xor and look for CCN hits. Most will be false positives
 
