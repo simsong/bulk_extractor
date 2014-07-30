@@ -15,6 +15,12 @@
 #include <limits>
 #include <fstream>
 
+#include <iostream>
+
+#ifdef LGBENCHMARK
+#include <chrono>
+#endif
+
 namespace {
   const char* DefaultEncodingsCStrings[] = {"UTF-8", "UTF-16LE"};
   const unsigned int NumDefaultEncodings = 2;
@@ -170,6 +176,10 @@ void LightgrepController::regcomp() {
   lg_destroy_fsm(Fsm);
 
   cerr << lg_pattern_map_size(PatternInfo) << " lightgrep patterns, logic size is " << lg_program_size(Prog) << " bytes, " << Scanners.size() << " active scanners" << std::endl;
+  #ifdef LGBENCHMARK
+  cerr << "timer second ratio " << chrono::high_resolution_clock::period::num << "/" <<
+    chrono::high_resolution_clock::period::den << endl;
+  #endif
 }
 
 struct HitData {
@@ -181,9 +191,14 @@ struct HitData {
 };
 
 void gotHit(void* userData, const LG_SearchHit* hit) {
+  #ifdef LGBENCHMARK
+  // no callback, just increment hit counter
+  ++(*static_cast<uint64_t*>(userData));
+  #else
   // trampoline back into LightgrepController::processHit() from the void* userData
   HitData* hd(static_cast<HitData*>(userData));
   hd->lgc->processHit(*hd->scannerTable, *hit, *hd->sp, *hd->rcb);
+  #endif
 }
 
 void LightgrepController::scan(const scanner_params& sp, const recursion_control_block &rcb) {
@@ -211,16 +226,36 @@ void LightgrepController::scan(const scanner_params& sp, const recursion_control
 
   const sbuf_t &sbuf = sp.sbuf;
 
-  HitData data = { this, &scannerTable, &sp, &rcb };
+  HitData callbackInfo = { this, &scannerTable, &sp, &rcb };
+  void*   userData = &callbackInfo;
+
+  #ifdef LGBENCHMARK // perform timings of lightgrep search functions only -- no callbacks
+  uint64_t hitCount = 0;
+  userData = &hitCount; // switch things out for a counter
+
+  auto startClock = std::chrono::high_resolution_clock::now();
+  // std::cout << "Starting block " << sbuf.pos0.str() << std::endl;
+  #endif
 
   // search the sbuf in one go
   // the gotHit() function will be invoked for each pattern hit
-  if (lg_search(ctx, (const char*)sbuf.buf, (const char*)sbuf.buf + sbuf.pagesize, 0, &data, gotHit) < numeric_limits<uint64_t>::max()) {
+  if (lg_search(ctx, (const char*)sbuf.buf, (const char*)sbuf.buf + sbuf.pagesize, 0, userData, gotHit) < numeric_limits<uint64_t>::max()) {
     // resolve potential hits that want data into the sbuf margin, without beginning any new hits
-    lg_search_resolve(ctx, (const char*)sbuf.buf + sbuf.pagesize, (const char*)sbuf.buf + sbuf.bufsize, sbuf.pagesize, &data, gotHit);
+    lg_search_resolve(ctx, (const char*)sbuf.buf + sbuf.pagesize, (const char*)sbuf.buf + sbuf.bufsize, sbuf.pagesize, userData, gotHit);
   }
   // flush any remaining hits; there's no more data
-  lg_closeout_search(ctx, &data, gotHit);
+  lg_closeout_search(ctx, userData, gotHit);
+
+  #ifdef LGBENCHMARK
+  auto endClock = std::chrono::high_resolution_clock::now();
+  auto t = endClock - startClock;
+  double seconds = double(t.count() * chrono::high_resolution_clock::period::num) / chrono::high_resolution_clock::period::den;
+  double bw = double(sbuf.pagesize) / (seconds * 1024 * 1024);
+  std::stringstream buf;
+  buf << " ** Time: " << sbuf.pos0.str() << '\t' << sbuf.pagesize << '\t' << t.count() << '\t' << seconds<< '\t' << hitCount << '\t' << bw << std::endl;
+  std::cout << buf.str();
+//  std::cout.flush();
+  #endif
 
   lg_destroy_context(ctx);
 
