@@ -16,7 +16,10 @@
 #include <fstream>
 
 #include <iostream>
+
+#ifdef LGBENCHMARK
 #include <chrono>
+#endif
 
 namespace {
   const char* DefaultEncodingsCStrings[] = {"UTF-8", "UTF-16LE"};
@@ -173,8 +176,10 @@ void LightgrepController::regcomp() {
   lg_destroy_fsm(Fsm);
 
   cerr << lg_pattern_map_size(PatternInfo) << " lightgrep patterns, logic size is " << lg_program_size(Prog) << " bytes, " << Scanners.size() << " active scanners" << std::endl;
+  #ifdef LGBENCHMARK
   cerr << "timer second ratio " << chrono::high_resolution_clock::period::num << "/" <<
     chrono::high_resolution_clock::period::den << endl;
+  #endif
 }
 
 struct HitData {
@@ -186,10 +191,11 @@ struct HitData {
 };
 
 void gotHit(void* userData, const LG_SearchHit* hit) {
-  // trampoline back into LightgrepController::processHit() from the void* userData
   #ifdef LGBENCHMARK
-  ++(*static_cast<uint64_t*>(userData)); // increment hit counter
+  // no callback, just increment hit counter
+  ++(*static_cast<uint64_t*>(userData));
   #else
+  // trampoline back into LightgrepController::processHit() from the void* userData
   HitData* hd(static_cast<HitData*>(userData));
   hd->lgc->processHit(*hd->scannerTable, *hit, *hd->sp, *hd->rcb);
   #endif
@@ -223,7 +229,7 @@ void LightgrepController::scan(const scanner_params& sp, const recursion_control
   HitData callbackInfo = { this, &scannerTable, &sp, &rcb };
   void*   userData = &callbackInfo;
 
-  #ifdef LGBENCHMARK
+  #ifdef LGBENCHMARK // perform timings of lightgrep search functions only -- no callbacks
   uint64_t hitCount = 0;
   userData = &hitCount; // switch things out for a counter
 
@@ -243,7 +249,7 @@ void LightgrepController::scan(const scanner_params& sp, const recursion_control
   #ifdef LGBENCHMARK
   auto endClock = std::chrono::high_resolution_clock::now();
   auto t = endClock - startClock;
-  double seconds = double(t.count()) / chrono::high_resolution_clock::period::den;
+  double seconds = double(t.count() * chrono::high_resolution_clock::period::num) / chrono::high_resolution_clock::period::den;
   double bw = double(sbuf.pagesize) / (seconds * 1024 * 1024);
   std::stringstream buf;
   buf << " ** Time: " << sbuf.pos0.str() << '\t' << sbuf.pagesize << '\t' << t.count() << '\t' << seconds<< '\t' << hitCount << '\t' << bw << std::endl;
