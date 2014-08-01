@@ -2,6 +2,8 @@ DOXYGEN_FILES = doxygen/Doxyfile doxygen/Makefile doxygen/programmer_manual.doxy
 	doxygen/images/BEViewer_blank.eps doxygen/images/BEViewer_blank.png
 
 EXTRA_DIST = \
+	ROADMAP_1.4.txt \
+	ROADMAP_1.4.1.txt \
 	2013.COSE.bulk_extractor.pdf \
 	announce_1.2.txt \
 	announce_1.3.1.txt \
