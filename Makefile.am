@@ -26,7 +26,6 @@ SUBDIRS = doc doc/latex_manuals src man plugins python specfiles tests $(BE_VIEW
 # It's only for people who check out the git repo
 
 EXTRA_DIST = \
-	ROADMAP.txt \
 	m4/ac_check_classpath.m4 \
 	m4/ac_check_junit.m4 \
 	m4/ac_check_rqrd_class.m4 \

@@ -13,6 +13,18 @@
 #include <errno.h>
 #include <sstream>
 
+/**
+ * NOTE: Although it is a simple matter to automatically validate the
+ * carved databases and delete those that do not contain recoverable
+ * data using the SQLite3 API, doing so would not be advised. These
+ * files invariably contain some data from the beginning of the
+ * SQLite3 database file: the data appear unrecoverable because the
+ * end of the SQLite3 database is not entact. It is highly likely that
+ * some of the data in these files can be recovered using forensic
+ * means.
+ */
+
+
 #include "utf8.h"
 
 static uint32_t sqlite_carve_mode = feature_recorder::CARVE_ALL;
