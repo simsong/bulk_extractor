@@ -1,3 +1,7 @@
+2014-08-03  Basic  <simsong@r4.ncr.nps.edu>
+
+	* configure.ac: incremented version number
+
 2014-07-18  Basic  <simsong@r4.ncr.nps.edu>
 
 	* src/image_process.cpp: multi-split files was not working properly on Windows. Fixed
