@@ -66,6 +66,7 @@ bulk_scanners = \
 	scan_outlook.cpp \
 	scan_facebook.cpp \
 	scan_pdf.cpp \
+	scan_msxml.cpp \
 	scan_rar.cpp \
 	scan_hashdb.cpp \
 	scan_sqlite.cpp \
