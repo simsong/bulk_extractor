@@ -148,6 +148,11 @@ b64_pton_forensic(char const *src, int srclen, unsigned char *target, size_t tar
 
                 if (ch == Pad64) break;
 
+/* HANDLE RFC4648 */
+                if(ch=='-') ch='+';
+                if(ch=='_') ch='/';
+
+
 #ifdef HAVE_CONFORMING_STRCHR
                 pos = strchr(Base64, ch);
 #else

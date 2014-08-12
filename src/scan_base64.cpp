@@ -10,6 +10,7 @@ static const uint32_t B64_NUMBER=4;
 static const uint32_t B64_SYMBOL=8;
 static int   base64array[256];           // array of valid base64 characters, 
 static size_t minlinewidth = 60;
+static size_t maxlinewidth_needed_for_character_classes = 160;
 
 
 inline bool isbase64(unsigned char ch)
@@ -25,7 +26,7 @@ inline bool isbase64(unsigned char ch)
  * @param len   - the length of the line
  * @return true - a line was found; false - a line was not found
  */
-inline bool sbuf_getline(const sbuf_t &sbuf,size_t &pos,size_t &start,size_t &len)
+inline bool sbuf_getline(const sbuf_t &sbuf,size_t &pos,size_t &line_start,size_t &line_len)
 {
     /* Scan forward until pos is at the beginning of a line */
     if(pos >= sbuf.pagesize) return false;
@@ -35,14 +36,14 @@ inline bool sbuf_getline(const sbuf_t &sbuf,size_t &pos,size_t &start,size_t &le
         }
         if(pos >= sbuf.pagesize) return false; // didn't find another start of a line
     }
-    start = pos;
+    line_start = pos;
     /* Now scan to end of the line, or the end of the buffer */
     while(++pos < sbuf.pagesize){
         if(sbuf[pos]=='\n'){
             break;
         }
     }
-    len = (pos-start);
+    line_len = (pos-line_start);
     return true;
 }
 
@@ -61,7 +62,10 @@ inline bool sbuf_line_is_base64(const sbuf_t &sbuf,const size_t &start,const siz
         }
         if (inequal) return false;       // after we find an equal, only space is acceptable
         uint8_t ch = sbuf[i];
-        if (base64array[ch]==0) return false;// non base64 character
+        if (base64array[ch]==0){
+            //fprintf(stderr,"NON CHAR '%c'\n",ch);
+            return false;// non base64 character
+        }
         b64_classes |= base64array[ch];      // record the classes we have found
         if (ch!='A') only_A = false;
     }
@@ -75,10 +79,12 @@ inline bool sbuf_line_is_base64(const sbuf_t &sbuf,const size_t &start,const siz
      * capital As, which is commonly seen in BASE64 (because all capital As are nulls)
      */
 
-    if (only_A) return true;                            // all capital As are true
-    if ((b64_classes & B64_UPPERCASE)==0) return false; // must have an uppercase character
-    if ((b64_classes & B64_LOWERCASE)==0) return false; // must have an lowercase character
-
+    if(len>maxlinewidth_needed_for_character_classes){
+        if (only_A) return true;                            // all capital As are true
+        if ((b64_classes & B64_UPPERCASE)==0) return false; // must have an uppercase character
+        if ((b64_classes & B64_LOWERCASE)==0) return false; // must have an lowercase character
+    }
+    //fprintf(stderr,"OK\n");
     return true;
 }
 
@@ -111,6 +117,8 @@ inline void process(const class scanner_params &sp,const recursion_control_block
 extern "C"
 void scan_base64(const class scanner_params &sp,const recursion_control_block &rcb)
 {
+    const int debug=0;
+
     assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);      
     if(sp.phase==scanner_params::PHASE_STARTUP){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
@@ -123,6 +131,8 @@ void scan_base64(const class scanner_params &sp,const recursion_control_block &r
 	memset(base64array,0,sizeof(base64array));
 	base64array[(int)'+'] = B64_SYMBOL;
 	base64array[(int)'/'] = B64_SYMBOL;
+	base64array[(int)'-'] = B64_SYMBOL; // RFC 4648
+	base64array[(int)'_'] = B64_SYMBOL; // RFC 4648
 	for(int ch='a';ch<='z';ch++){ base64array[ch] = B64_LOWERCASE; }
 	for(int ch='A';ch<='Z';ch++){ base64array[ch] = B64_UPPERCASE; }
 	for(int ch='0';ch<='9';ch++){ base64array[ch] = B64_NUMBER; }
@@ -131,6 +141,8 @@ void scan_base64(const class scanner_params &sp,const recursion_control_block &r
     if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;
     if(sp.phase==scanner_params::PHASE_SCAN){
 	const sbuf_t &sbuf = sp.sbuf;
+
+
 
 	/* base64 is a newline followed by at least two lines of constant length,
 	 * followed by an incomplete line ending with an equal sign.
@@ -150,7 +162,7 @@ void scan_base64(const class scanner_params &sp,const recursion_control_block &r
         size_t line_len   = 0;               // length of the line
         bool   found_equal = false;
         while(sbuf_getline(sbuf,pos,line_start,line_len)){
-            //fprintf(stderr,"pos=%zd\n",pos);
+            if(debug) fprintf(stderr,"BASE64 pos=%zd line_start=%zd line_len=%zd\n",pos,line_start,line_len);
             if(sbuf_line_is_base64(sbuf,line_start,line_len,found_equal)){
                 if(inblock==false){
                     /* First line of a block! */
@@ -163,8 +175,9 @@ void scan_base64(const class scanner_params &sp,const recursion_control_block &r
                     continue;
                 }
                 if(line_len!=prevlen){   // whoops! Lines are different lengths
-                    if(found_equal && linecount>1){
-                        //fprintf(stderr,"1. linecount=%zd\n",linecount);
+                    // equal signs no longer required at end of BASE64 blocks
+                    if(linecount>1){
+                        if(debug) fprintf(stderr,"BASE64 1. linecount=%zd (%zd!=%zd) \n",linecount,line_len,prevlen);
                         process(sp,rcb,blockstart,pos-blockstart);
                     }
                     inblock=false;
@@ -178,12 +191,11 @@ void scan_base64(const class scanner_params &sp,const recursion_control_block &r
                  * alignment issues.
                  */
                 if(linecount>2 && inblock){
-                    //fprintf(stderr,"2. blockstart=%zd line_start=%zd pos=%zd linecount=%zd\n",blockstart,line_start,pos,linecount);
+                    if(debug) fprintf(stderr,"BASE64 2. blockstart=%zd line_start=%zd pos=%zd linecount=%zd\n",blockstart,line_start,pos,linecount);
                     process(sp,rcb,blockstart,pos-blockstart);
                 }
                 inblock = false;
             }
         }
-        //fprintf(stderr,"done\n");
     }
 }
