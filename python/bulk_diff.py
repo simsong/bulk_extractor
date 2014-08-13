@@ -46,7 +46,6 @@ def process(out,dname1,dname2):
                     print("     %s (%d lines)" % (f,a.count_lines(f)))
                 else:
                     print("     %s" % (f))
-            print("")
 
     # Report interesting differences based on the historgrams.
     # Output Example:
@@ -56,8 +55,9 @@ def process(out,dname1,dname2):
  8           17             9      steve@mac.com
 11           16             5      bobsmith@hotmail.com
 """
-    common_files = b1.files.intersection(b2.files)
-    histogram_files = filter(lambda a:"histogram" in a,common_files)
+    b1_histograms = set(b1.histogram_files())
+    b2_histograms = set(b2.histogram_files())
+    common_histograms = b1_histograms.intersection(b2_histograms)
     
     if options.html:
         out.write("<ul>\n")
@@ -65,8 +65,8 @@ def process(out,dname1,dname2):
             out.write("<li><a href='#%s'>%s</a></li>\n" % (histogram_file,histogram_file))
         out.write("</ul>\n<hr/>\n")
 
-    diffcount = 0
-    for histogram_file in sorted(histogram_files):
+    for histogram_file in sorted(common_histograms):
+        diffcount = 0
         if options.html:
             out.write('<h2><a name="%s">%s</a></h2>\n' % (histogram_file,histogram_file))
         else:
@@ -106,7 +106,31 @@ def process(out,dname1,dname2):
                 out.write("{}: No differences\n".format(histogram_file))
             else:
                 out.write("{}: No differences\n".format(histogram_file))
+
             
+    if options.features:
+        for feature_file in b1.feature_files():
+            if feature_file not in b2.feature_files():
+                continue
+            print("Compare features",feature_file)
+            for p in [1,2]:
+                if p==1:
+                    a = b1; b = b2
+                else:
+                    a = b2; b = a
+                a_features = {}
+                for line in a.open(feature_file):
+                    r = bulk_extractor_reader.parse_feature_line(line)
+                    if not r: continue
+                    a_features[r[0]] = r[1]
+                for line in b.open(feature_file):
+                    r = bulk_extractor_reader.parse_feature_line(line)
+                    if not r: continue
+                    if r[0] not in a_features:
+                        print("{} {} is only in {}".format(r[0],r[1],a.name))
+
+
+
 
 if __name__=="__main__":
     from optparse import OptionParser
@@ -122,6 +146,7 @@ if __name__=="__main__":
     parser.add_option("--same",help="Also show values that didn't change",action="store_true")
     parser.add_option("--tabdel",help="Specify a tab-delimited output file for easy import into Excel")
     parser.add_option("--html",help="HTML output. Argument is file name base")
+    parser.add_option("--features",help="Compare feature files also",action='store_true')
 
     (options,args) = parser.parse_args()
     if len(args)!=2:

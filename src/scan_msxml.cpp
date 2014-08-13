@@ -76,16 +76,22 @@ void scan_msxml(const class scanner_params &sp,const recursion_control_block &rc
                         ss << "\n";
                     }
                     break;
-                case '>': instring=true;
+                case '>':
+                    instring=true;
                     break;
                 default:
                     if(instring) ss << sbuf[i];
                 }
             }
-            const char *buf  =  ss.str().c_str();
-            pos0_t pos0_xml    = sbuf.pos0 + rcb.partName;
-            const  sbuf_t sbuf_new(pos0_xml,reinterpret_cast<const u_char *>(buf),strlen(buf),strlen(buf),false);
-            (*rcb.callback)(scanner_params(sp,sbuf_new));
+            std::string  bufstr = ss.str();
+            size_t       buflen = bufstr.size();
+            managed_malloc<char *>buf(buflen);
+            if(buf.buf){
+                memcpy(buf.buf,bufstr.c_str(),buflen);
+                pos0_t pos0_xml    = sbuf.pos0 + rcb.partName;
+                const  sbuf_t sbuf_new(pos0_xml,reinterpret_cast<const u_char *>(buf.buf),buflen,buflen,false);
+                (*rcb.callback)(scanner_params(sp,sbuf_new));
+            }
         }
     }
 }
