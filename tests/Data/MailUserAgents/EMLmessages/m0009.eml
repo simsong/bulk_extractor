@@ -1,0 +1,27 @@
+From: "Doug Sauder" <doug@example.com>
+To: "Heinz Müller" <mueller@example.com>
+Subject: Die Hasen und die Frösche (Microsoft Outlook 00)
+Date: Wed, 17 May 2000 19:28:40 -0400
+Message-ID: <NDBBIAKOPKHFGPLCODIGOEKDCHAA.doug@example.com>
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook IMO, Build 9.0.2416 (9.0.2910.0)
+Importance: Normal
+X-MimeOLE: Produced By Microsoft MimeOLE V5.00.2314.1300
+
+Die Hasen und die Frösche
+
+Die Hasen klagten einst über ihre mißliche Lage; "wir leben", sprach ein
+Redner, "in steter Furcht vor Menschen und Tieren, eine Beute der Hunde, der
+Adler, ja fast aller Raubtiere! Unsere stete Angst ist ärger als der Tod
+selbst. Auf, laßt uns ein für allemal sterben."
+
+In einem nahen Teich wollten sie sich nun ersäufen; sie eilten ihm zu;
+allein das außerordentliche Getöse und ihre wunderbare Gestalt erschreckte
+eine Menge Frösche, die am Ufer saßen, so sehr, daß sie aufs schnellste
+untertauchten.
+
+"Halt", rief nun eben dieser Sprecher, "wir wollen das Ersäufen noch ein
+wenig aufschieben, denn auch uns fürchten, wie ihr seht, einige Tiere,
+welche also wohl noch unglücklicher sein müssen als wir."
+
