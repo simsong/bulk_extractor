@@ -114,9 +114,15 @@ ELEV    (-?[0-9]{1,6}[.][0-9]{0,3})
         s.clear();
         s.lat = gps_scanner::get_quoted_attrib(yytext,"lat");
         s.lon = gps_scanner::get_quoted_attrib(yytext,"lon");
-        s.pos += yyleng; 
+        s.pos += yyleng;
 }
 
+
+[<]/trkpt[>] {
+        gps_scanner &s = *yygps_get_extra(yyscanner);
+        s.clear();
+        s.pos += yyleng;
+}
 
 [<]ele[>]{ELEV}[<][/]ele[>] {
         gps_scanner &s = *yygps_get_extra(yyscanner);

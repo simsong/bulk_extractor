@@ -1,0 +1,45 @@
+This is from Wikipedia:
+
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<gpx xmlns="http://www.topografix.com/GPX/1/1" xmlns:gpxx="http://www.garmin.com/xmlschemas/GpxExtensions/v3" xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1" creator="Oregon 400t" version="1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd http://www.garmin.com/xmlschemas/GpxExtensions/v3 http://www.garmin.com/xmlschemas/GpxExtensionsv3.xsd http://www.garmin.com/xmlschemas/TrackPointExtension/v1 http://www.garmin.com/xmlschemas/TrackPointExtensionv1.xsd">
+  <metadata>
+    <link href="http://www.garmin.com">
+      <text>Garmin International</text>
+    </link>
+    <time>2009-10-17T22:58:43Z</time>
+  </metadata>
+  <trk>
+    <name>Example GPX Document</name>
+    <trkseg>
+      <trkpt lat="47.644548" lon="-122.326897">
+        <ele>4.46</ele>
+        <time>2009-10-17T18:37:26Z</time>
+      </trkpt>
+    </trkseg>
+  </trk>
+</gpx>
+
+
+<gpx>
+ <rte>
+  <name> xsd:string </name> [0..1] ?
+  <cmt> xsd:string </cmt> [0..1] ?
+  <desc> xsd:string </desc> [0..1] ?
+  <src> xsd:string </src> [0..1] ?
+  <link> linkType </link> [0..*] ?
+  <number> xsd:nonNegativeInteger </number> [0..1] ?
+  <type> xsd:string </type> [0..1] ?
+  <extensions> extensionsType </extensions> [0..1] ?
+  <rtept lat="47.644548" lon="-122.326897">
+    <name>rtename</name>
+  </rtept>
+ </rte>
+</gpx>
+
+
+ * Here are samples that we crib from:
+ *
+ * A garmin Trackpoint from a Nuvi 240
+ *
+
+<trkpt lat="38.866110" lon="-77.136286"><ele>90.98</ele><time>2010-10-16T20:46:52Z</time><extensions><gpxtpx:TrackPointExtension><gpxtpx:speed>21.96</gpxtpx:speed><gpxtpx:course>87.53</gpxtpx:course></gpxtpx:TrackPointExtension></extensions></trkpt>

@@ -284,10 +284,9 @@ class BulkReport:
     def carved_files(self):
         return sorted(filter(lambda fn:"/" in fn,self.files))
 
-    def read_histogram(self,fn):
+    def read_histogram_entries(self,fn):
         """Read a histogram file and return a dictonary of the histogram. Removes \t(utf16=...) """
         import re
-        ret = {}
         r = re.compile(b"^n=(\d+)\t(.*)$")
         for line in self.open(fn,'r'):
             # line = line.decode('utf-8')
@@ -296,15 +295,23 @@ class BulkReport:
                 k = m.group(2)
                 p = k.find(b"\t")
                 if p>0: k = k[0:p]
-                ret[k] = int(m.group(1))
+                yield (k,int(m.group(1)))
+
+
+    def read_histogram(self,fn):
+        """Read a histogram file and return a dictonary of the histogram. Removes \t(utf16=...) """
+        ret = {}
+        for (k,v) in self.read_histogram_entries(fn):
+            ret[k] = int(m.group(1))
         return ret
 
     def read_features(self,fname):
         """Just read the features out of a feature file"""
         """Usage: for (pos,feature,context) in br.read_features("fname")"""
         for line in self.open(fname):
-            if not is_comment_line(line):
-                yield parse_feature_line(line)
+            r = parse_feature_line(line)
+            if r:
+                yield r
         
         
 if(__name__=='__main__'):
