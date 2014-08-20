@@ -1,5 +1,12 @@
 #!/usr/bin/env python
 
+#
+# This program tests the bulk_extractor shared library
+# This test program rquires Python3 and should run on any OS for which the library is compiled.
+# 
+# The library's location is passed to the module in the environment variable
+# BULK_EXTRACTOR_LIB_PATH
+
 import os
 import sys
 sys.path.append("../python/module")

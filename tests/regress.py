@@ -621,8 +621,9 @@ def datacheckreport(outdir):
     print("Now reading features from data_features.txt")
     not_found = {}
     for line in open("data_features.txt","rb"):
-        if not bulk_extractor_reader.is_comment_line(line) and len(line)>2:
-            (pos,feature,context) = bulk_extractor_reader.parse_feature_line(line)
+        y = bulk_extractor_reader.parse_feature_line(line)
+        if y:
+            (pos,feature,context) = y
             if pos in found_features:
                 print("{} found".format(pos.decode('utf-8')))
             else:
@@ -678,7 +679,6 @@ if __name__=="__main__":
     parser.add_argument("--validate",help="Validate the contents of a report (do not run bulk_extractor)",
                         type=str,nargs='*')
     parser.add_argument("--ignore",help="Specifies a feature file or files (file1,file2) to ignore")
-    parser.add_argument("--sort",help="Sort the feature files",type=str,nargs='*')
     parser.add_argument("--reproduce",help="specifies a bulk_extractor output "
             + "file from a crash and produces bulk_extractor flags to quickly "
             + "reproduce the crash")
@@ -824,11 +824,6 @@ if __name__=="__main__":
         if len(args.diff)!=2:
             raise ValueError("--diff requires two arguments")
         diff(args.diff[0],args.diff[1])
-        exit(0)
-
-    if args.sort:
-        for s in args.sort:
-            sort_outdir(s)
         exit(0)
 
     if args.tune:

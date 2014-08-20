@@ -9,7 +9,6 @@
 #
 # bitlocker recovery key?
 Data/bitlocker.tar􀀜-2837	016357-554983-017490-229515-355432-139370-173008-116281	Possible BitLocker Recovery Key (UTF-16)
-#
 
 
 #
@@ -109,6 +108,28 @@ Data/jpegs.tar.gz􀀜-0-GZIP-25600	jpeg_carved/000/Data_jpegs.tar.gz____-0-GZIP-
 #
 
 #
+# scan_httplogs
+#
+
+#
+# scan_kml
+#
+
+#
+# scan_msxml
+#
+Data/Base64_files/README.docx􀀜-2685-ZIP-0-MSXML-579	RFC1421@RFC1421.com	f JPEG with GPS\x0ARFC1421@RFC1421.com\x0ARFC2045\x0ABase64 
+Data/Base64_files/README.docx􀀜-2685-ZIP-0-MSXML-671	RFC2045@RFC2045.com	f JPEG with GPS\x0ARFC2045@RFC2045.com\x0ARFC3548\x0AStandar
+Data/Base64_files/README.docx􀀜-2685-ZIP-0-MSXML-770	RFC3548@RFC3548.com	f JPEG with GPS\x0ARFC3548@RFC3548.com\x0ARADIX64\x0A'Radix-
+Data/Base64_files/README.docx􀀜-2685-ZIP-0-MSXML-860	RADIX64@RADIX64.com	f JPEG with GPS\x0ARADIX64@RADIX64.com\x0ARFC 1642\x0AModifi
+
+
+#
+# scan_net
+#
+
+
+#
 # scan_outlook:
 #
 Data/Outlook_Files/outlook.pst􀀜-0-OUTLOOK-45872	USER@OUTLOOK.COM	\x00\x00\x00\x00\x00\x00\x00\x00\xDF\xFB\xF8SMTP:USER@OUTLOOK.COM\x00\x00\x00\x00\x00\x81+\x1F\xA4\xBE\xA3\x10\x19\x9Dn\x00
@@ -118,3 +139,51 @@ Data/Outlook_Files/outlook.pst􀀜-0-OUTLOOK-45913	u\x00s\x00e\x00r\x00@\x00o\x0
 # scan_pdf:
 #
 Data/pdf_fragment􀀜-52-PDF-98	gsa.gov	 ofitrb.support@gsa.gov e-mail: www.itr
+
+
+#
+# scan_rar
+#
+Data/jpegs.rar􀀜-20-RAR-0	unrar_carved/000/Data_jpegs.rar____-20-RAR-0_jpegs_1.jpg	<fileobject>...
+Data/jpegs.rar􀀜-4340-RAR-0	unrar_carved/000/Data_jpegs.rar____-4340-RAR-0_jpegs_2.jpg	<fileobject>...
+Data/jpegs.rar􀀜-8708-RAR-0	unrar_carved/000/Data_jpegs.rar____-8708-RAR-0_jpegs_3.jpg	<fileobject>...
+
+
+#
+# scan_sqlite
+#
+
+#
+# scan_vcard
+#
+
+#
+# scan_windirs
+#
+
+#
+# scan_winlnk
+#
+
+#
+# scan_winpe
+#
+
+#
+# scan_winprefetch
+#
+
+Data/WindowsXPPrefetch_JAVA.exe.pdf􀀜-0	JAVA.EXE	<prefetch><os>Windows XP</os>...
+Data/Windows7Prefetch_AGENT.EXE-D2852D29.pf􀀜-0	AGENT.EXE	<prefetch><os>Windows Vista or Windows 7</os>...
+
+#
+# scan_wordlist
+#
+
+#
+# scan_zip
+#
+Data/Base64_files/README.docx􀀜-2685-ZIP-6260	RFC1421@RFC1421.com	5C35"><w:r><w:t>RFC1421@RFC1421.com</w:t></w:r></w:
+Data/Base64_files/README.docx􀀜-2685-ZIP-14165	RFC1642@RFC1642.com	w:pPr><w:r><w:t>RFC1642@RFC1642.com</w:t></w:r></w:
+Data/Base64_files/README.docx􀀜-2685-ZIP-18739	URLsafe@URLsafe.com	461C"><w:r><w:t>URLsafe@URLsafe.com</w:t></w:r></w:
+

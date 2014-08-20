@@ -1,0 +1,18 @@
+Example IDN hostnames. These lines contain valid UTF-8 Russian hostnames which are transformed by the browser into IDN names.
+
+Currently bulk_extractor will not recognize these names, but it will recognize the transformed names 
+
+http://россия.рф/main/page3.html
+http://президент.рф/
+http://хакер.su/
+http://анекдоты.com/
+http://кц.рф/ru/
+http://казино.рф/
+
+I don't know any examples of "international" e-mail addresses in Cyrillic.
+
+22 октября 2010 г. 3:57 пользователь Simson Garfinkel <simsong@acm.org> написал:
+Thanks for the info. Looks like index.dat is storing URLs as strings so I think that I'm getting them, just not the timestamp information. If you want to code it up, you can. My primary goal at the moment is to finish the journal article and any outstanding bugs.
+
+I looked at the alphabets that you sent me. I guess I wasn't specific. Sorry! What would be most useful would be russian email addresses and russian URLs. I'm also looking for email addresses in Chinese, arabic, and other languages.  Then I can run BE on them and see what it catches and what it doesn't.
+
