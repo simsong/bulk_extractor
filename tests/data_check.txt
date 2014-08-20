@@ -156,6 +156,7 @@ Data/jpegs.rar􀀜-8708-RAR-0	unrar_carved/000/Data_jpegs.rar____-8708-RAR-0_jpe
 #
 # scan_vcard
 #
+Data/John Jakes.vcf􀀜-0	vcard/000/Data_John_Jakes.vcf____-0.vcf	<fileobject>...
 
 #
 # scan_windirs
@@ -164,7 +165,8 @@ Data/jpegs.rar􀀜-8708-RAR-0	unrar_carved/000/Data_jpegs.rar____-8708-RAR-0_jpe
 #
 # scan_winlnk
 #
-
+Data/deployPkg.dll.lnk􀀜-0	C:\x5CProgram Files\x5CVMware\x5CVMware Tools\x5CdeployPkg.dll	<lnk><atime>2013-11-22T03:48:45Z</atime><ctime>2013-10-18T00:28:26Z</ctime><path>C:\x5CProgram Files\x5CVMware\x5CVMware Tools\x5CdeployPkg.dll</path><wtime>2013-10-18T00:28:26Z</wtime></lnk>
+Data/WindowsLNK.lnk􀀜-0	T	<lnk><atime>2014-08-04T20:24:03Z</atime><ctime>2014-07-11T21:27:32Z</ctime><path>T</path><wtime>2009-07-14T01:39:25Z</wtime></lnk
 #
 # scan_winpe
 #

@@ -618,25 +618,28 @@ def datacheckreport(outdir):
         print("Reading feature file {}".format(fn))
         for (pos,feature,context) in b.read_features(fn):
             found_features[pos] = feature
-    print("Now reading features from data_features.txt")
+    print("Now reading features from data_check.txt")
     not_found = {}
-    for line in open("data_features.txt","rb"):
+    report_mismatches = False 
+    found_count = 0
+    for line in open("data_check.txt","rb"):
         y = bulk_extractor_reader.parse_feature_line(line)
         if y:
             (pos,feature,context) = y
             if pos in found_features:
-                print("{} found".format(pos.decode('utf-8')))
+                found_count += 1
+                #print("{} found".format(pos.decode('utf-8')))
+                if found_features[pos]!=feature and report_mismatches:
+                    if found_features[pos]!=b'<CACHED>' and feature!=b'<CACHED>':
+                        print("   {} != {}".format(feature,found_features[pos]))
             else:
                 not_found[pos] = feature
     for pos in sorted(not_found):
         print("{} not found {}".format(pos,not_found[pos]))
+    print("Total features found: {}".format(found_count))
+    print("Total features not found: {}".format(len(not_found)))
         
         
-            
-
-
-    
-
 if __name__=="__main__":
     import argparse 
     global args
@@ -691,8 +694,8 @@ if __name__=="__main__":
     parser.add_argument("--datadir",help="Process all files in a directory")
     parser.add_argument("--dry-run",help="Don't actually run the program",action='store_true')
     parser.add_argument("--datadircomp",help="Compare two data dirs")
-    parser.add_argument("--datacheck",help="Runs BE on the files in Data/ directory and makes sure that all of the features in data_features.txt are found",action='store_true')
-    parser.add_argument("--datacheckreport",help="Checks the files in in Data/ directory and makes sure that all of the features in data_features.txt are found")
+    parser.add_argument("--datacheck",help="Runs BE on the files in Data/ directory and makes sure that all of the features in data_check.txt are found",action='store_true')
+    parser.add_argument("--datacheckreport",help="Checks the files in in Data/ directory and makes sure that all of the features in data_check.txt are found")
 
     args = parser.parse_args()
     
