@@ -1,6 +1,10 @@
 2014-08-20  Basic  <simsong@r4.ncr.nps.edu>
 
 	* src/scan_pipe.cpp (scan_pipe): removed scan_pipe (since you don't want to fork with threads)
+	
+2014-08-12  Man Page  <simsong@mncrnpsedu.local>
+
+	* doc/announce_1.5.2.md: annouced release 1.5.2
 
 2014-08-03  Basic  <simsong@r4.ncr.nps.edu>
 

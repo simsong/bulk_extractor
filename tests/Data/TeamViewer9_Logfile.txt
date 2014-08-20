@@ -1,0 +1,100 @@
+2014/03/06 06:55:09.543  7444  8020  0   UpdateOnlineState newOnlineValue 0
+2014/03/06 06:55:09.652  7444  8020  0   QueryVPNRegKey: Subkey 'SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}\Properties' (14) has no 'MatchingDeviceID' entry. Continuing...
+2014/03/06 06:55:09.668  7444  8020 S0   DesiredServices: waiting for service rpcss
+2014/03/06 06:55:09.668  7444  8020 S0   DesiredServices: waiting for service winmgmt
+                    
+                    
+                    
+Start:              2014/03/06 06:55:09.918 (UTC-5:00)
+Version:            9.0.26297 
+ID:                 945666034
+Loglevel:           Info (100)
+License:            10000
+Server:             master3.teamviewer.com
+IC:                 601660461
+CPU:                Intel64 Family 6 Model 30 Stepping 5, GenuineIntel
+CPU extensions:     p8
+OS:                 Win7 (64-bit)
+IP:                 10.10.142.14
+MID:                u4c4c4544005754108058cac04f524c31b8ac6fa99b427e42060f812a8fea1a8e1aa073709514
+MIDv:               1
+Proxy-Settings:     Type=1 IP= User=
+IE:                 9.0.8112.16421
+AppPath:            C:\Program Files (x86)\TeamViewer\Version9\TeamViewer_Service.exe
+UserAccount:        SYSTEM
+
+2014/03/06 06:55:09.933  7444  8020 S0   Using IPC-Port 5939
+2014/03/06 06:55:09.933  7444  8020 S0   UpdateOnlineState newOnlineValue 0
+2014/03/06 06:55:09.949  7444  8020 S0   Force Autostart GUI for session ID 2
+2014/03/06 06:55:10.011  7444  8020 S0   CTerminalServer::getPathToApplicationExe(): Choosing standard filename.
+2014/03/06 06:55:10.011  7444  8020 S0   CTerminalServer::StartGUIProcess() Filename for GUI process is C:\Program Files (x86)\TeamViewer\Version9\TeamViewer.exe
+2014/03/06 06:55:10.074  7444  8020 S0   CTerminalServer::StartGUIProcess() GUI process 5672 started for user xxxx\spuz in session 2
+2014/03/06 06:55:10.074  7444  8020 S0   CTerminalServer::StartGUIProcess() Event 5 sent to GUI.
+2014/03/06 06:55:10.370  7444  6184 S0   CAcceptServer::HandleAccept: new connection from 127.0.0.1:64922
+2014/03/06 06:55:10.370  7444  6184 S0   CInterProcessNetwork::SetDyngateIDforSession() id=945666034 session=2 ptype=2
+2014/03/06 06:55:10.370  7444  6184 S0   UpdateOnlineState newOnlineValue 1
+2014/03/06 06:55:10.370  7444  6184 S0   TeamViewer is going online!
+2014/03/06 06:55:10.370  7444  5292 S0   NetWatchdog: Internet is now connected
+2014/03/06 06:55:10.370  7444  4856 S0   KeepAliveThread started
+2014/03/06 06:55:10.386  7444  4856 S0   CT1 CT.Send.CMD_PING From=945666034 To=0 L=4
+2014/03/06 06:55:10.339  5672   296 G2   Monitors: Generic PnP Monitor, \\.\DISPLAY1, 1920x1080 (0,0), flags=3
+2014/03/06 06:55:10.339  5672   296 G2   Monitors: Generic PnP Monitor, \\.\DISPLAY2, 1920x1080 (1920,0), flags=3
+2014/03/06 06:55:10.339  5672   296 G2   Opening local TCP connection to 127.0.0.1:5939
+2014/03/06 06:55:10.370  5672   296 G2   Local TCP connection established
+2014/03/06 06:55:10.370  5672   296 G2   Received Control_InitIPC_Response processtype=1
+2014/03/06 06:55:10.370  5672   296 G2   Received Control_InitIPC_Response runningProcesses=3
+2014/03/06 06:55:10.370  5672   296 G2   Control_InitIPC_Response: all processes 3 completely initialized
+2014/03/06 06:55:10.386  5672   296 G2   MachineHooks: Initialized Shm
+2014/03/06 06:55:10.386  5672   296 G2   MachineHooks: refcount = 1
+2014/03/06 06:55:10.386  5672   296 G2   MachineHooks: x64 Machine detected
+2014/03/06 06:55:10.386  5672   296 G2   MachineHooks: w32 Loader is starting
+2014/03/06 06:55:10.386  5672   296 G2   MachineHooks: x64 Loader is starting
+2014/03/06 06:55:10.401  5672   296 G2   PredefinedSessionPassword (reset) ForceId(2) CurrentId(2) ConsoleId(2)
+2014/03/06 06:55:10.401  7444  4856 S0   CT1 CT.Receive.CMD_PINGOK From=0 To=945666034 L=4
+2014/03/06 06:55:10.401  7444  6184 S0   CToken::GetSystemToken() set session 2
+2014/03/06 06:55:10.401  7444  6184 S0   InterProcessNetwork: Loader process started, pid = 5424
+2014/03/06 06:55:10.417  7444  4856 S0   NetWatchdog: Ping successful!
+2014/03/06 06:55:10.417  7444  4856 S0   Resource-Language:en
+2014/03/06 06:55:10.417  7444  6184 S0   CToken::GetSystemToken() set session 2
+2014/03/06 06:55:10.417  7444  6184 S0   InterProcessNetwork: Loader process started, pid = 7704
+2014/03/06 06:55:10.448  5424  5824 L32  Loader started with: "C:\Program Files (x86)\TeamViewer\Version9\tv_w32.exe" --action hooks  --log C:\Program Files (x86)\TeamViewer\Version9\TeamViewer9_Logfile.log  
+2014/03/06 06:55:10.448  5424  5824 L32  Starting Loader
+2014/03/06 06:55:10.386  5672   296 H32  Loader: SharedMem Connected (seg = 0x3160000, refcnt = 1)
+2014/03/06 06:55:10.386  5672   296 H32  teamviewer.exe: SharedMem Connected (seg = 0x3160000, refcnt = 2)
+2014/03/06 06:55:10.448  7704  6232 L64  Loader started with: "C:\Program Files (x86)\TeamViewer\Version9\tv_x64.exe" --action hooks  --log C:\Program Files (x86)\TeamViewer\Version9\TeamViewer9_Logfile.log  
+2014/03/06 06:55:10.464  7704  6232 L64  Starting Loader
+2014/03/06 06:55:10.495  5672   296 G2   CTVUpdate::CheckForUpdate(): Start update check...
+2014/03/06 06:55:10.495  5672   296 G2   Tray created!
+2014/03/06 06:55:10.495  5672   296 G2   CMainWindow::ShouldShowDynamicPassword(): dynPw=1 allowIncoming=1 id=945666034 ka=0 lanAllowed=0 lanOnly=0 networkState=1
+2014/03/06 06:55:10.495  5672  7304 G2   CTVUpdate::StartVersionFileDownload(): Start download of version file...
+2014/03/06 06:55:10.495  5672  6568 G2   ChangeThreadDesktop(): SetThreadDesktop to default successful
+2014/03/06 06:55:10.510  5672   296 G2   P_FORCE_WINSTATE_ONCE = WinState_Maximized
+2014/03/06 06:55:10.542  5672  3408 G2   AudioDriver: Initializing Direct Sound 8
+2014/03/06 06:55:10.542  5672  4668 G2   AudioDriver: Thread Running
+2014/03/06 06:55:10.542  5672  3408 G2   AudioDriver: Direct Sound Initialized
+2014/03/06 06:55:10.666  7444  4856 S0   CT2 CT.Send.CMD_MASTERCOMMAND From=945666034 To=0 L=683
+2014/03/06 06:55:10.854  7444  4856 S0   CT2 CT.Receive.CMD_MASTERRESPONSE From=0 To=945666034 L=182
+2014/03/06 06:55:10.854  7444  4856 S0   CT2 CT.Disconnect
+2014/03/06 06:55:10.854  7444  4856 S0   CT3 CT.TM_WaitAtGateway.163.221.221.2:5938 - CT3 - S3
+2014/03/06 06:55:10.854  7444  4856 S0   CT3 CT.Connect to TeamViewer Router 163.221.221.2:5938
+2014/03/06 06:55:10.947  7444  4856 S0   CT3 CT.Connected
+2014/03/06 06:55:10.947  7444  4796 S0   CT3 CT.Run
+2014/03/06 06:55:10.947  7444  4796 S0   CT3 CT.Send.CMD_IDENTIFY From=945666034 To=0 L=32
+2014/03/06 06:55:10.947  7444  4796 S0   CT3 CT.Send.CMD_REQUESTKEEPALIVE2 From=945666034 To=0 L=24
+2014/03/06 06:55:11.056  7444  4796 S0   CT3 Activating support for ccmdV2
+2014/03/06 06:55:11.056  7444  4796 S0   CT3 CT.Receive.CMD_SESSIONID From=0 To=945666034 L=8
+2014/03/06 06:55:11.056  7444  4796 S0   CT3 CT.Receive.CMD_IDENTIFY From=0 To=945666034 L=32
+2014/03/06 06:55:11.056  7444  4796 S0   CT3 CConnectionThread::CmdPingRouter(): Router Pong Received with following Hops: 945666034 731666572
+2014/03/06 06:55:11.056  7444  4796 S0   TVRouterClock Schedule next request in 0 seconds
+2014/03/06 06:55:11.056  7444  4796 S0   CKeepAliveThreadServer::SyncClients(): Clients: 
+2014/03/06 06:55:11.056  7444  4796 S0   CSendCommandToMaster::SendBCommandToMaster: CC=3 CT=74
+2014/03/06 06:55:11.072  7444  4796 S0   TVRouterClock Schedule next request in 0 seconds
+2014/03/06 06:55:11.072  7444  4796 S0   CT3 CT.Send.CMD_ROUTERCMD From=945666034 To=731666572 L=32
+2014/03/06 06:55:11.072  7444  6184 S0   CSendCommandToMaster::SendBCommandToMaster: CC=3 CT=38
+2014/03/06 06:55:11.072  7444  6184 S0   CSendCommandToMaster::SendBCommandToMaster: CC=3 CT=38
+2014/03/06 06:55:11.072  7444  6184 S0   CSendCommandToMaster::SendBCommandToMaster: CC=3 CT=38
+2014/03/06 06:55:11.072  7444  6184 S0   CSendCommandToMaster::SendBCommandToMaster: CC=3 CT=38
+2014/03/06 06:55:11.072  7444  6184 S0   CSendCommandToMaster::SendBCommandToMaster: CC=3 CT=38
+2014/03/06 06:55:11.072  7444  6184 S0   CSendCommandToMaster::SendBCommandToMaster: CC=3 CT=38
+2014/03/06 06:55:11.072  7444  6184 S0   CSendCommandToMaster::SendBCommandToMaster: CC=3 CT=38
+2014/03/06 06:55:11.165  7444  4796 S0   CT3 CT.Receive.CMD_ROUTERCMD From=731666572 To=945666034 L=123
