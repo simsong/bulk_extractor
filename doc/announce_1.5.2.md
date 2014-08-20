@@ -1,9 +1,9 @@
-                    Announcing bulk_extractor 1.5
+                    Announcing bulk_extractor 1.5.2
                              July 29, 2014
 
                             RELEASE NOTES
 
-bulk_extractor Version 1.5 alpha 6 has been released for Linux, Mac OS and
+bulk_extractor Version 1.5.2 has been released for Linux, Mac OS and
 Windows. 
 
 Release source code and Windows installer:
@@ -11,6 +11,16 @@ Release source code and Windows installer:
 
 GIT repository:
     https://github.com/simsong/bulk_extractor
+
+
+Improvements over Version 1.5.0:
+================================
+
+* scan_outlook now properly decrypts Outlook Compressible Encryption
+
+* scan_base64 now handles RFC 4648-style BASE64 encoded data
+
+* scan_msxml - new scanner that does a better job extracting text from Microsoft .docx files.
 
 
 
