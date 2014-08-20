@@ -33,9 +33,6 @@ sys.path.append("../lib/")      # add the library
 
 import ttable, bulk_extractor_reader
 
-# This regular expression matches on bulk_extractor offset and item
-feature_re  = re.compile("([^\t]+)\t([^\t\n\r]+)") 
-
 class Correlator:
     """The main correlator class.
     Correlates features on different disks.
@@ -53,7 +50,7 @@ class Correlator:
         return max([len(s) for s in self.drives])
 
     def longest_feature_name(self):
-        return max([len(s) for s in self.items.keys()])
+        return max([len(s) for s in self.features.keys()])
 
     def ingest_feature_file(self,f,context_stop_list):
         """Read the lines in a feature file; returns how many lines were procesed"""
@@ -101,17 +98,17 @@ class Correlator:
             featuredict = self.features[feature]
             featuredict[drivename] = featuredict.get(drivename,0)+count
 
-    def print_stats(self,f):
+    def dump_stats(self,f):
         f.write("Total Drives: {}\n".format(len(self.drives)))
-        f.write("Distinct {} features: {}\n".format(self.name,len(self.items)))
-        fmt = "{:" + str(self.longest_feature_name()) + "} {}"
-        f.write(fmt.format("Feature","Drive Count"))
+        f.write("Distinct {} features: {}\n".format(self.name,len(self.features)))
+        fmt = "{:" + str(self.longest_feature_name()) + "} {} {}\n"
+        f.write(fmt.format("Feature","Count","Drives"))
 
         def keysortfun(k):
             return (-len(self.features[k]),k)
 
         for d in sorted(self.features.keys(),key=keysortfun):
-            f.write(fmt.format(d,len(self.features[d])))
+            f.write(fmt.format(d,len(self.features[d]),self.features[d]))
 
 
 if(__name__=="__main__"):
@@ -125,6 +122,7 @@ if(__name__=="__main__"):
     parser.add_argument("--makecombined",help="Combine multiple feature files into a single context stop list with no offests",action='store_true')
     parser.add_argument("--idfeatures",help="Specifies feature files used for identity operations",
                         type=str,default="email,ccn,telephone")
+    parser.add_argument('--dump',help='Dump the CDA database',action='store_true')
     parser.add_argument('reports', type=str, nargs='+', help='bulk_extractor report directories or ZIP files')
     args = parser.parse_args()
 
@@ -170,9 +168,14 @@ if(__name__=="__main__"):
                 for (feature,context) in context_stop_list:
                     f.write("".join(['','\t',feature,'\t',context,'\n']))
             print("Created {} with {} lines\n".format(fn,len(context_stop_list)))
-    if args.makecombined:
-        print("DONE")
-        exit(0)
+            print("DONE")
+            exit(0)
+    
+    if args.dump:
+        for c in correlators:
+            c.dump_stats(sys.stdout)
+
+
 
     # Does the user want to make a stoplist?
     if args.makestop:

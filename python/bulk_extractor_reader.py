@@ -99,6 +99,7 @@ def parse_feature_line(line):
     if len(ary)<MIN_FIELDS_PER_FEATURE_FILE_LINE or len(ary)>MAX_FIELDS_PER_FEATURE_FILE_LINE:
         # Don't know
         return None
+    if b"\xf4\x80\x80\x9c" in ary[0]: return ary # contains files
     if len(ary[0])<1: return None
     if ary[0][0]<ord('0') or ary[0][0]>ord('9'): return None
     return ary
@@ -124,7 +125,7 @@ def is_feature_filename(fname):
     if "_stopped" in fname: return False
     if "_tags" in fname: return False
     if "wordlist" in fname: return False
-    if "alerts.txt" in fname: return False
+    #if "alerts.txt" in fname: return False
     return None                 # don't know
 
 
@@ -138,6 +139,7 @@ class BulkReport:
     b.histogram_files()     - Set of histogram names
     b.feature_files()   
     b.files   - Set of all files
+    b.get_features(fname)   - just get the features
 """    
 
     def __init__(self,fn,do_validate=True):
@@ -249,7 +251,6 @@ class BulkReport:
                 count += 1
         return count
         
-
     def is_histogram_file(self,fn):
         if is_histogram_filename(fn)==True: return True
         for line in self.open(fn,'r'):
@@ -283,10 +284,9 @@ class BulkReport:
     def carved_files(self):
         return sorted(filter(lambda fn:"/" in fn,self.files))
 
-    def read_histogram(self,fn):
+    def read_histogram_entries(self,fn):
         """Read a histogram file and return a dictonary of the histogram. Removes \t(utf16=...) """
         import re
-        ret = {}
         r = re.compile(b"^n=(\d+)\t(.*)$")
         for line in self.open(fn,'r'):
             # line = line.decode('utf-8')
@@ -295,8 +295,24 @@ class BulkReport:
                 k = m.group(2)
                 p = k.find(b"\t")
                 if p>0: k = k[0:p]
-                ret[k] = int(m.group(1))
+                yield (k,int(m.group(1)))
+
+
+    def read_histogram(self,fn):
+        """Read a histogram file and return a dictonary of the histogram. Removes \t(utf16=...) """
+        ret = {}
+        for (k,v) in self.read_histogram_entries(fn):
+            ret[k] = int(m.group(1))
         return ret
+
+    def read_features(self,fname):
+        """Just read the features out of a feature file"""
+        """Usage: for (pos,feature,context) in br.read_features("fname")"""
+        for line in self.open(fname):
+            r = parse_feature_line(line)
+            if r:
+                yield r
+        
         
 if(__name__=='__main__'):
     from optparse import OptionParser

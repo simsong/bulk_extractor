@@ -34,7 +34,10 @@ corp_default = "/corp"
 default_infile   = "nps-2009-ubnist1/ubnist1.gen3.raw"
 fast_infile      = "nps-2010-emails/nps-2010-emails.raw"
 full_infile      = "nps-2009-domexusers/nps-2009-domexusers.raw"
-exe = "src/bulk_extractor"
+exe              = "src/bulk_extractor"
+if not os.path.exists(exe):
+    exe = "../src/bulk_extractor"
+
 nps_drives_path = "/nps/drives/"
 BOM = codecs.BOM_UTF8.decode('utf-8')
 
@@ -84,7 +87,14 @@ answers = {"ubnist1.gen3":{"ALERTS_found.txt":88,
                               "zip.txt":240}
            }
 
-
+def get_scanners(exe):
+    scanners = set()
+    for line in Popen([exe,'-h'],stdout=PIPE).communicate()[0].decode('utf-8').split("\n"):
+        atoms = line.strip().split(" ")
+        if len(atoms)>0 and atoms[0] in ['-x','-e']:
+            scanners.add(atoms[1])
+    return scanners
+    
 
 def ptime(t):
     r = ""
@@ -347,8 +357,9 @@ def run(cmd):
     if r!=0:
         raise RuntimeError("{} crashed with error code {}".format(args.exe,r))
 
-def run_outdir(outdir,gdb=False):
+def run_outdir(gdb=False):
     """Run bulk_extarctor to a given output directory """
+    outdir = make_outdir(args.outdir)
     print("run_outdir: ",outdir)
     cargs=['-o',outdir]
     if args.featuresql:
@@ -363,8 +374,7 @@ def run_outdir(outdir,gdb=False):
     if args.pagesize: cargs += ['-G'+str(args.pagesize)]
     if args.marginsize: cargs += ['-g'+str(args.marginsize)]
     
-    cargs += ['-e','all', '-x', 'sceadan']    # enable all scanners
-    #cargs += ['-e','wordlist']    # enable all scanners
+    cargs += ['-e','all']    # enable 'all' scanners 
     if args.extra:
         while "  " in args.extra:
             args.extra = args.extra.replace("  "," ")
@@ -377,7 +387,11 @@ def run_outdir(outdir,gdb=False):
         cargs += ['-w','tests/stop_list_context.txt']
         cargs += ['-f','[a-z\.0-9]*@gsa.gov']
         cargs += ['-F','tests/find_list.txt']
-    cargs += [args.image]
+
+    if args.image:
+        cargs += [args.image]
+    else:
+        cargs += ['-R',args.datadir]
 
     # Now that we have a command, figure out how to run it...
     if gdb:
@@ -391,6 +405,7 @@ def run_outdir(outdir,gdb=False):
     else:
         cmd = [args.exe] + cargs
     run(cmd)
+    return outdir
 
              
 def sort_outdir(outdir):
@@ -556,9 +571,8 @@ def diff(dname1,dname2):
 
 def run_and_analyze():
     global args
-    outdir = make_outdir(args.outdir)
     t0 = time.time()
-    run_outdir(outdir,args.gdb)
+    outdir = run_outdir(args.gdb)
     sort_outdir(outdir)
     validate_report(outdir)
     if args.identify_filenames:
@@ -577,9 +591,50 @@ def datadircomp(dir1,dir2):
     for fn1 in glob.glob(os.path.join(dir1,"*")):
         fn2 = fn1.replace(dir1,dir2)
         diff(fn1,fn2)
-        
-
     exit(0)
+
+def datacheck():
+    # First run bulk_extractor on
+    args.image = None
+    args.datadir = 'Data'
+    args.find  = None
+    if args.extra:
+        args.extra += " "
+    else:
+        args.extra = ""
+    if "outlook" in get_scanners(args.exe):
+        args.extra += "-e outlook"
+    outdir = run_outdir()
+    datacheckreport(outdir)
+        
+def datacheckreport(outdir):
+    # Open the datadir
+    print("opening ",outdir)
+    b = bulk_extractor_reader.BulkReport(outdir)
+    found_features = {}
+    print("Feature files:",list(b.feature_files()))
+    print("Histogram files:",list(b.histogram_files()))
+    for fn in b.feature_files():
+        print("Reading feature file {}".format(fn))
+        for (pos,feature,context) in b.read_features(fn):
+            found_features[pos] = feature
+    print("Now reading features from data_features.txt")
+    not_found = {}
+    for line in open("data_features.txt","rb"):
+        if not bulk_extractor_reader.is_comment_line(line) and len(line)>2:
+            (pos,feature,context) = bulk_extractor_reader.parse_feature_line(line)
+            if pos in found_features:
+                print("{} found".format(pos.decode('utf-8')))
+            else:
+                not_found[pos] = feature
+    for pos in sorted(not_found):
+        print("{} not found {}".format(pos,not_found[pos]))
+        
+        
+            
+
+
+    
 
 if __name__=="__main__":
     import argparse 
@@ -636,6 +691,8 @@ if __name__=="__main__":
     parser.add_argument("--datadir",help="Process all files in a directory")
     parser.add_argument("--dry-run",help="Don't actually run the program",action='store_true')
     parser.add_argument("--datadircomp",help="Compare two data dirs")
+    parser.add_argument("--datacheck",help="Runs BE on the files in Data/ directory and makes sure that all of the features in data_features.txt are found",action='store_true')
+    parser.add_argument("--datacheckreport",help="Checks the files in in Data/ directory and makes sure that all of the features in data_features.txt are found")
 
     args = parser.parse_args()
     
@@ -694,8 +751,9 @@ if __name__=="__main__":
             print("--datadir requires that outdir be specified")
             exit(0)
         for fn in glob.glob(os.path.join(args.datadir,"*")):
-            args.image = fn
-            run_outdir(os.path.join(args.outdir,os.path.basename(fn)))
+            args.image  = fn
+            args.outdir = os.path.join(args.outdir,os.path.basename(fn))
+            run_outdir()
         exit(0)
 
     # Find the bulk_extractor version and add it to the outdir
@@ -703,6 +761,12 @@ if __name__=="__main__":
         args.outdir="regress"
 
     args.outdir += "-"+bulk_extractor_reader.be_version(args.exe)
+
+    if args.datacheck: datacheck() ; exit(1)
+
+    if args.datacheckreport: datacheckreport(args.datacheckreport); exit(1)
+
+
     corp = os.getenv("DOMEX_CORP")
     if not corp:
         corp = corp_default
@@ -790,9 +854,8 @@ if __name__=="__main__":
             args.pagesize = pagesize
             args.margin = margin
             clear_cache()
-            outdir = make_outdir(args.outdir+"-{}-{}-{}".format(jobs,pagesize,margin))
+            args.outdir = make_outdir(args.outdir+"-{}-{}-{}".format(jobs,pagesize,margin))
             clear_cache()
-            run_outdir(outdir)
             ofn = "report-{}-{}-{}.xml".format(j,p,m)
             os.rename(outdir+"/report.xml",ofn)
 

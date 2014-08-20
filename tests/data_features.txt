@@ -1,0 +1,120 @@
+#
+# This file defines what features should be found in the Data directory
+# It is structured as a feature file.
+# Note that the features might be in ANY feature file. They are all listed here for convenience.
+# Context is optional
+# The goal is not to get EVERY feature, but to get a representative list of them.
+
+# scan_acct tests:
+#
+# bitlocker recovery key?
+Data/bitlocker.tar􀀜-2837	016357-554983-017490-229515-355432-139370-173008-116281	Possible BitLocker Recovery Key (UTF-16)
+#
+
+
+#
+# credit_card_numbers.htm
+#
+
+Data/credit_card_numbers.htm􀀜-3230	378282246310005	 class=CellBody>378282246310005</td></tr>\x0A<tr><
+Data/credit_card_numbers.htm􀀜-3430	371449635398431	 class=CellBody>371449635398431</td></tr>\x0A<tr><
+Data/credit_card_numbers.htm􀀜-3640	378734493671000	 class=CellBody>378734493671000</td></tr>\x0A<tr><
+Data/credit_card_numbers.htm􀀜-3843	5610591081018250	 class=CellBody>5610591081018250</td></tr>\x0A<tr><
+Data/credit_card_numbers.htm􀀜-4617	6011000990139424	 class=CellBody>6011000990139424</td></tr>\x0A<tr><
+Data/credit_card_numbers.htm􀀜-4993	3566002020360505	 class=CellBody>3566002020360505</td></tr>\x0A<tr><
+
+Data/test-acct.txt􀀜-221	378282246310005	erican Express: 378282246310005\x0AAmerican Expres
+Data/test-acct.txt􀀜-255	371449635398431	erican Express: 371449635398431\x0AAmerican Expres
+Data/test-acct.txt􀀜-299	378734493671000	ress Corporate: 378734493671000\x0AAustralian Bank
+Data/test-acct.txt􀀜-336	5610591081018250	alian BankCard: 5610591081018250\x0ADiners Club: 30
+Data/test-acct.txt􀀜-446	6011000990139424	11117\x0ADiscover: 6011000990139424\x0AJCB: 3530111333
+Data/test-acct.txt􀀜-490	3566002020360505	1333300000\x0AJCB: 3566002020360505\x0AMasterCard: 555
+
+Data/bitcoin.txt􀀜-63	17NdbrSGoUotzeGCcMMCqnFkEvLymoou9j	1111111114oLvT2\x0A17NdbrSGoUotzeGCcMMCqnFkEvLymoou9j\x0A\x0A              
+Data/bitcoin.txt􀀜-114	1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62i	\x0A              "1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62i"  -- VALID\x0A    
+Data/bitcoin.txt􀀜-175	1Q1pE5vPGEEMqRcVRMbtBK842Y6Pzo6nK9	\x0A            , "1Q1pE5vPGEEMqRcVRMbtBK842Y6Pzo6nK9"  -- VALID\x0A    
+Data/bitcoin.txt􀀜-494	1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62i	itcoin-address "1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62i") ; => #t\x0A(vali
+Data/bitcoin.txt􀀜-638	17NdbrSGoUotzeGCcMMCqnFkEvLymoou9j	itcoin-address "17NdbrSGoUotzeGCcMMCqnFkEvLymoou9j") ; => #t\x0A(vali
+Data/bitcoin.txt􀀜-710	1Q1pE5vPGEEMqRcVRMbtBK842Y6Pzo6nK9	itcoin-address "1Q1pE5vPGEEMqRcVRMbtBK842Y6Pzo6nK9") ; => #t\x0A(vali
+
+Data/ssn_test.txt􀀜-47	SSN: 100-20-4011	rity numbers:\x0A\x0A\x0ASSN: 100-20-4011\x0A\x0AAnother one is
+Data/ssn_test.txt􀀜-115	SSN: 100204211	re is a third:\x0A\x0ASSN: 100204211\x0A\x0AThat's all!\x0A==
+Data/ssn_test.txt􀀜-151	SSN:  123-85-9999	's all!\x0A=======\x0ASSN:  123-85-9999\x0AAnother one is 
+
+Data/test-acct.txt􀀜-31	SSN: 123-45-6789	r scan_acct\x0A\x0AAn SSN: 123-45-6789\x0A\x0ATest credit ca
+Data/test-acct.txt􀀜-1006	DOB: Jan 1, 2014	0) 77188030123\x0A\x0ADOB: Jan 1, 2014\x0ADOB: 2014-JAN-0
+Data/test-acct.txt􀀜-1023	DOB: 2014-JAN-02	OB: Jan 1, 2014\x0ADOB: 2014-JAN-02\x0ADOB: 03 JAN 14\x0A
+
+#
+# scan_base64 tests:
+# representative emails that were encoded with BASE64
+#
+Data/base64.emlx􀀜-289-BASE64-523	plain_email@base64.com	ent by email.\x0A\x0A\x09plain_email@base64.com\x0A\x0AThis is a mess
+Data/base64.eml􀀜-222-BASE64-580	plain_email@base64.com	ent by email.\x0A\x0A\x09plain_email@base64.com\x0A\x0AThis is a mess
+Data/Base64_files/EmailText/RFC1421􀀜-106-BASE64-2322-ZIP-1213	RFC1421@RFC1421.com	7E2E"><w:r><w:t>RFC1421@RFC1421.com</w:t></w:r><w:b
+Data/Base64_files/EmailText/RFC1642􀀜-0-BASE64-2370-ZIP-1213	RFC1642@RFC1642.com	7E2E"><w:r><w:t>RFC1642@RFC1642.com</w:t></w:r><w:b
+Data/Base64_files/EmailText/RADIX64􀀜-0-BASE64-2370-ZIP-0-MSXML-2	RADIX64@RADIX64.com	\x0D\x0ARADIX64@RADIX64.com\x0AThis is arbitra
+Data/Base64_files/EmailText/RFC2045􀀜-0-BASE64-2370-ZIP-0-MSXML-2	RFC2045@RFC2045.com	\x0D\x0ARFC2045@RFC2045.com \x0AThis is arbitr
+Data/Base64_files/EmailText/RFC3548􀀜-0-BASE64-2423-ZIP-0-MSXML-30	RFC3548@RFC3548.com	mailto:RFC3548" RFC3548@RFC3548.com\x0AThis is arbitra
+
+#
+# scan_ccns:
+#
+Data/credit_card_numbers.htm􀀜-3230	378282246310005	 class=CellBody>378282246310005</td></tr>\x0A<tr><
+Data/credit_card_numbers.htm􀀜-3430	371449635398431	 class=CellBody>371449635398431</td></tr>\x0A<tr><
+Data/credit_card_numbers.htm􀀜-3640	378734493671000	 class=CellBody>378734493671000</td></tr>\x0A<tr><
+Data/credit_card_numbers.htm􀀜-3843	5610591081018250	 class=CellBody>5610591081018250</td></tr>\x0A<tr><
+Data/credit_card_numbers.htm􀀜-4617	6011000990139424	 class=CellBody>6011000990139424</td></tr>\x0A<tr><
+Data/credit_card_numbers.htm􀀜-4993	3566002020360505	 class=CellBody>3566002020360505</td></tr>\x0A<tr><
+Data/test-acct.txt􀀜-221	378282246310005	erican Express: 378282246310005\x0AAmerican Expres
+Data/test-acct.txt􀀜-255	371449635398431	erican Express: 371449635398431\x0AAmerican Expres
+Data/test-acct.txt􀀜-299	378734493671000	ress Corporate: 378734493671000\x0AAustralian Bank
+Data/test-acct.txt􀀜-336	5610591081018250	alian BankCard: 5610591081018250\x0ADiners Club: 30
+Data/test-acct.txt􀀜-446	6011000990139424	11117\x0ADiscover: 6011000990139424\x0AJCB: 3530111333
+Data/test-acct.txt􀀜-490	3566002020360505	1333300000\x0AJCB: 3566002020360505\x0AMasterCard: 555
+
+#
+# scan_elf:
+#
+Data/ELF_2009-aor-test_spada4.iso􀀜-346112	8d1ae5bf59f18ddd5c6613cc0bc49c04	<ELF class="ELFCLASS32" ...
+Data/ELF_2009-aor-test_spada4.iso􀀜-520192	ddc7371c39d71b2587de8fa7d3242d9d	<ELF class="ELFCLASS32" ...
+Data/ELF_bin_yes􀀜-26784	4d2028c44bca6b6100c3786da1d7532a	<ELF class="ELFCLASS64" ...
+
+
+#
+# scan_exif:
+#
+Data/Base64_files/JEPG/RFC 1421􀀜-0-BASE64-0	057b7e3d9e7a3a3db3e147a6ce16e786	<exif>...
+Data/Base64_files/JEPG/ProgramIdentifiers_v1􀀜-0-BASE64-30	00000000000000000000000000000000	<exif>...
+Data/MEGATRON-psd79095.psd􀀜-22504	8f52fe2e4c679ac1dd4e8fab39ae43ec	<exif>...
+Data/Exif2-IPHONE5c.JPG􀀜-12	00000000000000000000000000000000	<exif>...
+
+#
+# scan_gps:
+#
+
+
+#
+# scan_gzip:
+# The GZIP-compressed JPEGs in the tar file verify that the GZIP coder is working properly.
+#
+Data/jpegs.tar.gz􀀜-0-GZIP-1024	jpeg_carved/000/Data_jpegs.tar.gz____-0-GZIP-1024.jpg	<fileobject>...
+Data/jpegs.tar.gz􀀜-0-GZIP-9216	jpeg_carved/000/Data_jpegs.tar.gz____-0-GZIP-9216.jpg	<fileobject>...
+Data/jpegs.tar.gz􀀜-0-GZIP-17408	jpeg_carved/000/Data_jpegs.tar.gz____-0-GZIP-17408.jpg	<fileobject>...
+Data/jpegs.tar.gz􀀜-0-GZIP-25600	jpeg_carved/000/Data_jpegs.tar.gz____-0-GZIP-25600.jpg	<fileobject>...
+
+
+#
+# scan_hiber:
+#
+
+#
+# scan_outlook:
+#
+Data/Outlook_Files/outlook.pst􀀜-0-OUTLOOK-45872	USER@OUTLOOK.COM	\x00\x00\x00\x00\x00\x00\x00\x00\xDF\xFB\xF8SMTP:USER@OUTLOOK.COM\x00\x00\x00\x00\x00\x81+\x1F\xA4\xBE\xA3\x10\x19\x9Dn\x00
+Data/Outlook_Files/outlook.pst􀀜-0-OUTLOOK-45913	u\x00s\x00e\x00r\x00@\x00o\x00u\x00t\x00l\x00o\x00o\x00k\x00.\x00c\x00o\x00m\x00	\xBE\xA3\x10\x19\x9Dn\x00\xDD\x01\x0FT\x02\x00\x00\x01\x90u\x00s\x00e\x00r\x00@\x00o\x00u\x00t\x00l\x00o\x00o\x00k\x00.\x00c\x00o\x00m\x00\x00\x00S\x00M\x00T\x00P\x00\x00\x00u\x00s\x00
+
+#
+# scan_pdf:
+#
+Data/pdf_fragment􀀜-52-PDF-98	gsa.gov	 ofitrb.support@gsa.gov e-mail: www.itr

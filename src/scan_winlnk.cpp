@@ -132,8 +132,10 @@ void scan_winlnk(const class scanner_params &sp,const recursion_control_block &r
                     //uint32_t LinkInfoFlags      = sbuf.get32u(p+loc+8);
                     //uint32_t VolumeIDOffset      = sbuf.get32u(p+loc+12);
                     uint32_t LocalBasePathOffset = sbuf.get32u(p+loc+16);
-                    //uint32_t CommonNetworkRelativeLinkOffset = sbuf.get32u(p+loc+20);
+                    uint32_t CommonNetworkRelativeLinkOffset = sbuf.get32u(p+loc+20);
+                    uint32_t CommonNetworkRelativeLinkPos = p+loc+CommonNetworkRelativeLinkOffset;
                     //uint32_t CommonPathSuffixOffset = sbuf.get32u(p+loc+20);
+
 
                     /* copy out the pathname */
                     path = "";
@@ -143,6 +145,37 @@ void scan_winlnk(const class scanner_params &sp,const recursion_control_block &r
                     if(path.size()==0) path="LINKINFO_PATH_EMPTY";
                     lnkmap["path"] = path;
                     loc += LinkInfoSize;
+
+
+                    // Parsing of network links does not work at the present time
+                    (void)CommonNetworkRelativeLinkPos; 
+#if 0
+                    for(int i=CommonNetworkRelativeLinkPos;i<CommonNetworkRelativeLinkPos+256;i++){
+                        fprintf(stderr,"sbuf[%d]=%x\n",i,sbuf[i]);
+                    }
+                    std::cerr << "CommonNetworkRelativeLinkOffset=" << CommonNetworkRelativeLinkOffset << "\n";
+                    
+
+                    uint32_t CommonNetworkRelativeLinkSize = sbuf.get32u(CommonNetworkRelativeLinkPos);
+                    uint32_t CommonNetworkRelativeLinkFlags = sbuf.get32u(CommonNetworkRelativeLinkPos+4);
+                    uint32_t NetNameOffset = sbuf.get32u(CommonNetworkRelativeLinkPos+8);
+                    uint32_t DeviceNameOffset = sbuf.get32u(CommonNetworkRelativeLinkPos+12);
+                    uint32_t NetworkProviderType = sbuf.get32u(CommonNetworkRelativeLinkPos+16);
+                    uint32_t NetNameOffsetUnicode = sbuf.get32u(CommonNetworkRelativeLinkPos+20);
+
+                    std::cerr << "CommonNetworkRelativeLinkSize="<<CommonNetworkRelativeLinkSize<<"\n";
+                    std::cerr << "NetNameOffset=" << NetNameOffset<<"\n";
+                    std::cerr << "DeviceNameOffset=" << DeviceNameOffset << "\n";
+                    std::cerr << "NetworkProviderType=" << NetworkProviderType << "\n";
+                    std::cerr << "NetNameOffsetUnicode=" << NetNameOffsetUnicode << "\n";
+
+ 
+                    for(size_t i=p+loc+CommonNetworkRelativeLinkSize+NetNameOffset-8;i<sbuf.bufsize;i++){
+                        fprintf(stderr,"sbuf[%d]=%x %c\n",i,sbuf[i],sbuf[i]);
+                    }
+#endif
+
+
                 }
                 winlnk_recorder->write(sbuf.pos0+p,path,dfxml_writer::xmlmap(lnkmap,"lnk",""));
                 p += loc;
