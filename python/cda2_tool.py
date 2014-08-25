@@ -36,10 +36,10 @@ schema = \
 PRAGMA cache_size = 200000;
 CREATE TABLE IF NOT EXISTS drives (driveid INTEGER PRIMARY KEY,drivename TEXT NOT NULL UNIQUE,ingested DATE);
 CREATE TABLE IF NOT EXISTS features (featureid INTEGER PRIMARY KEY,feature TEXT NOT NULL UNIQUE);
-CREATE INDEX features_idx ON features (feature);
+CREATE INDEX IF NOT EXSITS features_idx ON features (feature);
 CREATE TABLE IF NOT EXISTS feature_drive_counts (driveid INTEGER NOT NULL,feature_type INTEGER NOT NULL,featureid INTEGER NOT NULL,count INTEGER NOT NULL) ;
-CREATE INDEX feature_drive_counts_idx1 ON feature_drive_counts(featureid);
-CREATE INDEX feature_drive_counts_idx2 ON feature_drive_counts(count);
+CREATE INDEX IF NOT EXISTS feature_drive_counts_idx1 ON feature_drive_counts(featureid);
+CREATE INDEX IF NOT EXISTS feature_drive_counts_idx2 ON feature_drive_counts(count);
 CREATE TABLE IF NOT EXISTS feature_frequencies (id INTEGER PRIMARY KEY,feature_type INTEGER NOT NULL,featureid INTEGER NOT NULL,drivecount INTEGER,featurecount INTEGER);
 CREATE INDEX feature_frequences_idx ON feature_frequencies (featureid);
 """
@@ -155,7 +155,8 @@ def correlate_for_type(driveid,feature_type):
         if drivecount > args.drive_threshold:
             break
     for (driveid_,coef) in sorted(coefs.items(),key=lambda a:a[1],reverse=True):
-        print("Drive {} correlation: {:.6}".format(driveid_,coef))
+        print("Drive {} {}".format(driveid_,get_drivename(driveid_)))
+        print("Correlation: {:.6}".format(coef))
         for (weight,featureid,feature) in sorted(contribs[driveid_],reverse=True):
             print("   {:.2}   {}".format(weight,feature))
         print("")
@@ -193,7 +194,6 @@ def build_feature_frequences():
 
 if(__name__=="__main__"):
     import argparse,xml.parsers.expat
-
     parser = argparse.ArgumentParser(description='Cross Drive Analysis with bulk_extractor output')
     parser.add_argument("--ingest",help="Ingest a new BE report",action="store_true")
     parser.add_argument("--list",help="List the reports in the database",action='store_true')
