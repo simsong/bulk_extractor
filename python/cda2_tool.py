@@ -35,6 +35,7 @@ schema = \
 """
 PRAGMA cache_size = 200000;
 CREATE TABLE IF NOT EXISTS drives (driveid INTEGER PRIMARY KEY,drivename TEXT NOT NULL UNIQUE,ingested DATE);
+CREATE INDEX IF NOT EXISTS drives_idx1 ON drives(drivename);
 CREATE TABLE IF NOT EXISTS features (featureid INTEGER PRIMARY KEY,feature TEXT NOT NULL UNIQUE);
 CREATE INDEX IF NOT EXISTS features_idx ON features (feature);
 CREATE TABLE IF NOT EXISTS feature_drive_counts (driveid INTEGER NOT NULL,feature_type INTEGER NOT NULL,featureid INTEGER NOT NULL,count INTEGER NOT NULL) ;
