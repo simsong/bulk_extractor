@@ -34,8 +34,9 @@ sys.path.append("../lib/")      # add the library
 schema = \
 """
 PRAGMA cache_size = 200000;
-CREATE TABLE IF NOT EXISTS drives (driveid INTEGER PRIMARY KEY,drivename TEXT NOT NULL UNIQUE,ingested DATE);
+CREATE TABLE IF NOT EXISTS drives (driveid INTEGER PRIMARY KEY,drivename TEXT NOT NULL UNIQUE,report_fn TEXT,ingested DATE);
 CREATE INDEX IF NOT EXISTS drives_idx1 ON drives(drivename);
+CREATE INDEX IF NOT EXISTS drives_idx2 ON drives(report_fn);
 CREATE TABLE IF NOT EXISTS features (featureid INTEGER PRIMARY KEY,feature TEXT NOT NULL UNIQUE);
 CREATE INDEX IF NOT EXISTS features_idx ON features (feature);
 CREATE TABLE IF NOT EXISTS feature_drive_counts (driveid INTEGER NOT NULL,feature_type INTEGER NOT NULL,featureid INTEGER NOT NULL,count INTEGER NOT NULL) ;
@@ -66,10 +67,10 @@ def create_schema():
         print(line)
         c.execute(line)
 
-def get_driveid(drivename,create=True):
+def get_driveid(drivename,report_fn=None,create=True):
     c = conn.cursor()
     if create:
-        c.execute("INSERT OR IGNORE INTO drives (driveid,drivename) VALUES (NULL,?)",(drivename,))
+        c.execute("INSERT INTO drives (driveid,drivename,report_fn) VALUES (NULL,?,?)",(drivename,report_fn))
     c.execute("SELECT driveid from drives where drivename=?",(drivename,))
     r = c.fetchone()
     if r: return r[0]
@@ -100,11 +101,19 @@ def feature_drive_count(featureid):
 def ingest(report_fn):
     import time
     c = conn.cursor()
+    c.execute("select count(*) from drives where report_fn=?",(report_fn,))
+    if c.fetchone()[0]>0 and args.reimport==False:
+        print("{} already imported".format(report_fn))
+        return
+
     br = bulk_extractor_reader.BulkReport(report_fn)
     try:
         image_filename = br.image_filename()
     except IndexError:
         print("No image filename in bulk_extractor report for {}; will not ingest".format(report_fn))
+        return
+    except OSError:
+        print("Cannot open {}; will not ingest".format(report_fn))
         return
 
     if args.reimport==False:
@@ -113,7 +122,7 @@ def ingest(report_fn):
             print("{} already imported".format(image_filename))
             return
 
-    driveid = get_driveid(image_filename,create=True)
+    driveid = get_driveid(image_filename,report_fn,create=True)
     print("Ingesting {} as driveid {}".format(br.image_filename(),driveid))
     t0 = time.time()
     
