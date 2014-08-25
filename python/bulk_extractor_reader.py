@@ -192,7 +192,7 @@ class BulkReport:
             return
         if fn.endswith(".txt"):
             import sys
-            print("***\n*** {} ends with .txt\n*** BulkReader wants the report directory, not the individual feature file\n***".format(fn),file=sys.stderr)
+            print("***\n*** {} ends with .txt\n*** BulkReader wants the report directory, not the individual feature file\n***".format(fn))
         raise RuntimeError("Cannot process " + fn)
 
     def image_filename(self):
