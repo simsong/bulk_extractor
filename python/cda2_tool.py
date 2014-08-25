@@ -36,12 +36,12 @@ schema = \
 PRAGMA cache_size = 200000;
 CREATE TABLE IF NOT EXISTS drives (driveid INTEGER PRIMARY KEY,drivename TEXT NOT NULL UNIQUE,ingested DATE);
 CREATE TABLE IF NOT EXISTS features (featureid INTEGER PRIMARY KEY,feature TEXT NOT NULL UNIQUE);
-CREATE INDEX IF NOT EXSITS features_idx ON features (feature);
+CREATE INDEX IF NOT EXISTS features_idx ON features (feature);
 CREATE TABLE IF NOT EXISTS feature_drive_counts (driveid INTEGER NOT NULL,feature_type INTEGER NOT NULL,featureid INTEGER NOT NULL,count INTEGER NOT NULL) ;
 CREATE INDEX IF NOT EXISTS feature_drive_counts_idx1 ON feature_drive_counts(featureid);
 CREATE INDEX IF NOT EXISTS feature_drive_counts_idx2 ON feature_drive_counts(count);
 CREATE TABLE IF NOT EXISTS feature_frequencies (id INTEGER PRIMARY KEY,feature_type INTEGER NOT NULL,featureid INTEGER NOT NULL,drivecount INTEGER,featurecount INTEGER);
-CREATE INDEX feature_frequencies_idx ON feature_frequencies (featureid);
+CREATE INDEX IF NOT EXISTS feature_frequencies_idx ON feature_frequencies (featureid);
 """
 
 """Explaination of tables:
@@ -65,10 +65,14 @@ def create_schema():
         print(line)
         c.execute(line)
 
-def get_driveid(drivename):
+def get_driveid(drivename,create=True):
     c = conn.cursor()
-    c.execute("INSERT INTO drives (driveid,drivename) VALUES (NULL,?)",(drivename,))
-    return c.lastrowid
+    if create:
+        c.execute("INSERT OR IGNORE INTO drives (driveid,drivename) VALUES (NULL,?)",(drivename,))
+    c.execute("SELECT driveid from drives where drivename=?",(drivename,))
+    r = c.fetchone()
+    if r: return r[0]
+    return None
 
 def get_drivename(driveid):
     c = conn.cursor()
@@ -97,16 +101,24 @@ def ingest(report_fn):
     c = conn.cursor()
     br = bulk_extractor_reader.BulkReport(report_fn)
     try:
-        driveid = get_driveid(br.image_filename())
+        image_filename = br.image_filename()
     except IndexError:
         print("No image filename in bulk_extractor report for {}; will not ingest".format(report_fn))
         return
-    print("Ingesting {} as driveid {}".format(br.image_filename(),driveid))
 
+    if args.reimport==False:
+        driveid = get_driveid(image_filename,create=False)
+        if driveid:
+            print("{} already imported".format(image_filename))
+            return
+
+    driveid = get_driveid(image_filename,create=True)
+    print("Ingesting {} as driveid {}".format(br.image_filename(),driveid))
     t0 = time.time()
     
-    # Make sure that this driveid is not in the feature tables
-    c.execute("DELETE FROM feature_drive_counts where driveid=?",(driveid,))
+    if args.reimport:
+        # Make sure that this driveid is not in the feature tables
+        c.execute("DELETE FROM feature_drive_counts where driveid=?",(driveid,))
 
     # initial version we are ingesting search terms, winpe executables, and email addresses
     for (search,count) in br.read_histogram_entries("url_searches.txt"):
@@ -210,6 +222,7 @@ if(__name__=="__main__"):
     parser.add_argument('reports', type=str, nargs='*', help='bulk_extractor report directories or ZIP files')
     parser.add_argument("--drive_threshold",type=int,help="don't show features on more than this number of drives",default=10)
     parser.add_argument("--correlation_cutoff",type=float,help="don't show correlation drives for coefficient less than this",default=0.5)
+    parser.add_argument("--reimport",help="reimport drives, rather than ignoring drives already specified",action='store_true')
     args = parser.parse_args()
 
     if args.test:
