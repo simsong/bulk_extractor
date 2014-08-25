@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS feature_drive_counts (driveid INTEGER NOT NULL,featur
 CREATE INDEX IF NOT EXISTS feature_drive_counts_idx1 ON feature_drive_counts(featureid);
 CREATE INDEX IF NOT EXISTS feature_drive_counts_idx2 ON feature_drive_counts(count);
 CREATE TABLE IF NOT EXISTS feature_frequencies (id INTEGER PRIMARY KEY,feature_type INTEGER NOT NULL,featureid INTEGER NOT NULL,drivecount INTEGER,featurecount INTEGER);
-CREATE INDEX feature_frequences_idx ON feature_frequencies (featureid);
+CREATE INDEX feature_frequencies_idx ON feature_frequencies (featureid);
 """
 
 """Explaination of tables:
@@ -92,11 +92,15 @@ def feature_drive_count(featureid):
     c.execute("SELECT count(*) from feature_drive_counts where featureid=? ",(featureid,))
     return c.fetchone()[0]
 
-def ingest(report):
+def ingest(report_fn):
     import time
     c = conn.cursor()
-    br = bulk_extractor_reader.BulkReport(report)
-    driveid = get_driveid(br.image_filename())
+    br = bulk_extractor_reader.BulkReport(report_fn)
+    try:
+        driveid = get_driveid(br.image_filename())
+    except IndexError:
+        print("No image filename in bulk_extractor report for {}; will not ingest".format(report_fn))
+        return
     print("Ingesting {} as driveid {}".format(br.image_filename(),driveid))
 
     t0 = time.time()
@@ -144,11 +148,11 @@ def correlate_for_type(driveid,feature_type):
     coefs = {}                  # the coefficients
     contribs = {}
     for line in res:
-        print(line)
+        if args.debug: print(line)
         (drivecount,featureid,feature) = line
         for (driveid_,) in c.execute("select driveid from feature_drive_counts where featureid=? and driveid!=?",
                                      (featureid,driveid)):
-            print("  also on drive {}".format(driveid_))
+            if args.debug: print("  also on drive {}".format(driveid_))
             if driveid_ not in coefs: coefs[driveid_] = 0; contribs[driveid_] = []
             coefs[driveid_] += 1.0/drivecount
             contribs[driveid_].append([1.0/drivecount,featureid,feature])
@@ -162,7 +166,8 @@ def correlate_for_type(driveid,feature_type):
         print("")
 
 def make_report(driveid):
-    c.execute("select count(*) from feature_frequences")
+    c = conn.cursor()
+    c.execute("select count(*) from feature_frequencies")
     if c.fetchone()[0]==0:
         build_feature_frequences()
     print("Report for drive: {} {}".format(driveid,get_drivename(driveid)))
@@ -183,8 +188,8 @@ def test():
     conn.commit()
 
 
-def build_feature_frequences():
-    print("Building feature frequences...")
+def build_feature_frequencies():
+    print("Building feature frequencies...")
     c = conn.cursor()
     c.execute("delete from feature_frequencies")
     c.execute("insert into feature_frequencies (featureid,feature_type,drivecount,featurecount) select featureid,feature_type,count(*),sum(count) from feature_drive_counts group by featureid,feature_type")
@@ -195,6 +200,7 @@ def build_feature_frequences():
 if(__name__=="__main__"):
     import argparse,xml.parsers.expat
     parser = argparse.ArgumentParser(description='Cross Drive Analysis with bulk_extractor output')
+    parser.add_argument("--debug",action="store_true")
     parser.add_argument("--ingest",help="Ingest a new BE report",action="store_true")
     parser.add_argument("--list",help="List the reports in the database",action='store_true')
     parser.add_argument("--recalc",help="Recalculate all of the feature counts in database",action='store_true')
