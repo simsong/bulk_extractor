@@ -16,8 +16,6 @@
 # Version 1.3 - Complete rewrite; elimiantes driveids and featureids, since strings
 #               in Python are hashable (and thus integers). Also uses bulk_extractor_reader
 
-b'This module needs Python 3.2 or above.'
-
 __version__='1.3.1'
 import os.path,sys
 
