@@ -106,13 +106,16 @@ def ingest(report_fn):
         print("{} already imported".format(report_fn))
         return
 
-    br = bulk_extractor_reader.BulkReport(report_fn)
     try:
+        br = bulk_extractor_reader.BulkReport(report_fn)
         image_filename = br.image_filename()
     except IndexError:
         print("No image filename in bulk_extractor report for {}; will not ingest".format(report_fn))
         return
     except OSError:
+        print("Cannot open {}; will not ingest".format(report_fn))
+        return
+    except KeyError:
         print("Cannot open {}; will not ingest".format(report_fn))
         return
 
@@ -147,9 +150,13 @@ def ingest(report_fn):
     # Add hashes for Windows executables
     import collections
     pe_header_counts = collections.Counter()
-    for (pos,feature,context) in br.read_features("winpe.txt"):
-        featureid = get_featureid(feature)
-        pe_header_counts[featureid] += 1
+    for r in br.read_features("winpe.txt"):
+        try:
+            (pos,feature,context) = r
+            featureid = get_featureid(feature)
+            pe_header_counts[featureid] += 1
+        except ValueError:
+            print("got {} values".format(len(r)))
     for (featureid,count) in pe_header_counts.items():
         c.execute("INSERT INTO feature_drive_counts (driveid,feature_type,featureid,count) values (?,?,?,?);",
                   (driveid,WINPE_TYPE,featureid,count))
