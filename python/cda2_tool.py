@@ -106,13 +106,16 @@ def ingest(report_fn):
         print("{} already imported".format(report_fn))
         return
 
-    br = bulk_extractor_reader.BulkReport(report_fn)
     try:
+        br = bulk_extractor_reader.BulkReport(report_fn)
         image_filename = br.image_filename()
     except IndexError:
         print("No image filename in bulk_extractor report for {}; will not ingest".format(report_fn))
         return
     except OSError:
+        print("Cannot open {}; will not ingest".format(report_fn))
+        return
+    except KeyError:
         print("Cannot open {}; will not ingest".format(report_fn))
         return
 
@@ -147,9 +150,13 @@ def ingest(report_fn):
     # Add hashes for Windows executables
     import collections
     pe_header_counts = collections.Counter()
-    for (pos,feature,context) in br.read_features("winpe.txt"):
-        featureid = get_featureid(feature)
-        pe_header_counts[featureid] += 1
+    for r in br.read_features("winpe.txt"):
+        try:
+            (pos,feature,context) = r
+            featureid = get_featureid(feature)
+            pe_header_counts[featureid] += 1
+        except ValueError:
+            print("got {} values".format(len(r)))
     for (featureid,count) in pe_header_counts.items():
         c.execute("INSERT INTO feature_drive_counts (driveid,feature_type,featureid,count) values (?,?,?,?);",
                   (driveid,WINPE_TYPE,featureid,count))
@@ -161,11 +168,17 @@ def ingest(report_fn):
 def correlate_for_type(driveid,feature_type):
     c = conn.cursor()
     res = []
-    c.execute("SELECT R.drivecount,C.featureid,feature FROM feature_drive_counts as C JOIN features as F ON C.featureid = F.rowid JOIN feature_frequencies as R ON C.featureid = R.featureid where C.driveid=? and C.feature_type=?",(driveid,feature_type))
+    c.execute("SELECT R.drivecount,C.featureid,feature FROM feature_drive_counts as C JOIN features as F ON C.featureid = F.rowid "+
+              "JOIN feature_frequencies as R ON C.featureid = R.featureid where C.driveid=? and C.feature_type=?",
+              (driveid,feature_type))
     res = c.fetchall()
     # Strangely, when we add an ' order by R.drivecount where R.drivecount>1' above it kills performance
     # So we just do those two operations manually
-    res = filter(lambda r:r[0]>1,sorted(res))
+    # res = filter(lambda r:r[0]>1,sorted(res))
+    res = sorted(res)
+    print("Unique terms for this drive:")
+    for (drivecount,featureid,feature) in res:
+        if(drivecount==1): print("  {}".format(feature))
     # Now, for each feature, calculate the drive correlation
     coefs = {}                  # the coefficients
     contribs = {}
@@ -191,14 +204,14 @@ def make_report(driveid):
     c = conn.cursor()
     c.execute("select count(*) from feature_frequencies")
     if c.fetchone()[0]==0:
-        build_feature_frequences()
+        build_feature_frequencies()
     print("Report for drive: {} {}".format(driveid,get_drivename(driveid)))
     print("Email correlation report:")
-    correlate_for_type(driveid,EMAIL_TYPE)
+    #correlate_for_type(driveid,EMAIL_TYPE)
     print("Search correlation report:")
     correlate_for_type(driveid,SEARCH_TYPE)
     print("WINPE correlation report:")
-    correlate_for_type(driveid,WINPE_TYPE)
+    #correlate_for_type(driveid,WINPE_TYPE)
         
 
 def test():
