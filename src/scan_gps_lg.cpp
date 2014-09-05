@@ -120,7 +120,7 @@ namespace gps {
 
     new Handler(
       *this,
-      TRKPT,
+      ELE,
       DefaultEncodings,
       DefaultOptions,
       &Scanner::eleHandler
@@ -130,7 +130,7 @@ namespace gps {
 
     new Handler(
       *this,
-      TRKPT,
+      TIME,
       DefaultEncodings,
       DefaultOptions,
       &Scanner::timeHandler
@@ -140,7 +140,7 @@ namespace gps {
 
     new Handler(
       *this,
-      TRKPT,
+      GPXTPX_SPEED,
       DefaultEncodings,
       DefaultOptions,
       &Scanner::speedHandler
@@ -150,7 +150,7 @@ namespace gps {
     
     new Handler(
       *this,
-      TRKPT,
+      GPXTPX_COURSE,
       DefaultEncodings,
       DefaultOptions,
       &Scanner::courseHandler
