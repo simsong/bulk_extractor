@@ -302,7 +302,7 @@ class BulkReport:
         """Read a histogram file and return a dictonary of the histogram. Removes \t(utf16=...) """
         ret = {}
         for (k,v) in self.read_histogram_entries(fn):
-            ret[k] = int(m.group(1))
+            ret[k] = int(v)
         return ret
 
     def read_features(self,fname):

@@ -62,8 +62,7 @@ void scan_outlook(const class scanner_params &sp,const recursion_control_block &
 	sp.info->author = "Simson L. Garfinkel";
 	sp.info->description = "Outlook Compressible Encryption";
 	sp.info->flags = scanner_info::SCANNER_DISABLED \
-            | scanner_info::SCANNER_RECURSE | scanner_info::SCANNER_DEPTH_0 \
-            | scanner_info::SCANNER_NO_ALL;
+            | scanner_info::SCANNER_RECURSE | scanner_info::SCANNER_DEPTH_0 ;
 	return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN) {
