@@ -1052,8 +1052,10 @@ int main(int argc,char **argv)
             std::cout << "bulk_extractor version: " << PACKAGE_VERSION << "\n";
 #ifdef HAVE_GETHOSTNAME
             char hostname[1024];
-            gethostname(hostname,sizeof(hostname));
-            std::cout << "Hostname: " << hostname << "\n";
+            memset(hostname,0,sizeof(hostname));
+            if(gethostname(hostname,sizeof(hostname)-1)==0){
+                if (hostname[0]) std::cout << "Hostname: " << hostname << "\n";
+            }
 #endif
             std::cout << "Input file: " << image_fname << "\n";
             std::cout << "Output directory: " << opt_outdir << "\n";
