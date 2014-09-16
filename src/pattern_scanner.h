@@ -18,7 +18,7 @@ typedef void (PatternScanner::*CallbackFnType)(const LG_SearchHit&, const scanne
 
 /*********************************************************/
 
-class Handler;
+struct Handler;
 
 // Inherit from this to create your own Lightgrep-based scanners
 // clone(), startup(), init(), and initScan() must be overridden
