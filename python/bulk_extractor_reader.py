@@ -90,7 +90,7 @@ def parse_feature_line(line):
     """
     if len(line)<2: return None
     if line[0]==b'#': return None # can't parse a comment
-
+    if line[-1:]==b'\r': line=line[:-1] # remove \r if it is present (running on Windows?)
     ary = line.split(b"\t")
     
     # Should have betwen 3 fields (standard feature file)

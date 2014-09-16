@@ -166,6 +166,7 @@ def ingest(report_fn):
 
 
 def correlate_for_type(driveid,feature_type):
+    import urllib.parse
     c = conn.cursor()
     res = []
     c.execute("SELECT R.drivecount,C.featureid,feature FROM feature_drive_counts as C JOIN features as F ON C.featureid = F.rowid "+
@@ -197,7 +198,9 @@ def correlate_for_type(driveid,feature_type):
         print("Drive {} {}".format(driveid_,get_drivename(driveid_)))
         print("Correlation: {:.6}".format(coef))
         for (weight,featureid,feature) in sorted(contribs[driveid_],reverse=True):
-            print("   {:.2}   {}".format(weight,feature))
+            out = "   {:.2}   {}".format(weight,feature)
+            #if feature_type==SEARCH_TYPE and "%" in feature:
+            print(out)
         print("")
 
 def make_report(driveid):
