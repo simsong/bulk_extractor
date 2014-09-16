@@ -13,7 +13,7 @@ do
 done
 
 # have automake do an initial population if necessary
-if [ ! -e config.guess -o ! -e config.sub -o ! -e install-sh -o ! -e missing ]; then
+if [ ! -e config.guess -o ! -e config.sub -o ! -e install-sh -o ! -e missing -o ! -e test-driver ]; then
     autoheader -f
     touch NEWS README AUTHORS ChangeLog
     touch stamp-h
