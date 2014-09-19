@@ -168,7 +168,7 @@ void scan_hashdb(const class scanner_params &sp,
             } else {
                 // bad mode
                 std::cerr << "Error.  Parameter 'hashdb_mode' value '"
-                          << hashdb_mode << "' is invalid.\n"
+                          << hashdb_mode << "' must be [none|import|scan].\n"
                           << "Cannot continue.\n";
                 exit(1);
             }
@@ -179,7 +179,7 @@ void scan_hashdb(const class scanner_params &sp,
             // hashdb_block_size
             if (hashdb_block_size == 0) {
                 std::cerr << "Error.  Value for parameter 'hashdb_block_size' is invalid.\n"
-                         << "Cannot continue.\n";
+                          << "Cannot continue.\n";
                 exit(1);
             }
 
