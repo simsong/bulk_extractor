@@ -55,7 +55,7 @@ AC_DEFINE([BULK_EXTRACTOR],1,[We are compiling bulk_extractor])
 ## BEViewer
 AC_ARG_ENABLE(BEViewer,
     [AS_HELP_STRING([--disable-BEViewer],[disable BEViewer even if components for building it are available])], 
-      use_BEViewer=no, 
+      use_BEViewer=$enableval, 
       use_BEViewer=yes)
 if test "x$use_BEViewer" == "xyes"; then
     # validate availability of requisite programs
@@ -91,7 +91,7 @@ AM_CONDITIONAL([WANT_BE_VIEWER], [test x$has_javac == xtrue -a x$has_jar == xtru
 ## NSIS Windows Installer
 AC_ARG_ENABLE(win_installer,
     [AS_HELP_STRING([--enable-win_installer],[enable genration of the Windows installer, this also requires BEViewer])], 
-      request_win_installer=yes, 
+      request_win_installer=$enableval, 
       request_win_installer=no)
 if test x"$request_win_installer" == "xyes" ; then
     AC_CHECK_PROG(has_nsis, makensis, true, false)
@@ -135,7 +135,7 @@ m4_include([src/be13_api/be13_configure.m4])
 ## Enabled for 1.4 release!
 AC_ARG_ENABLE([rar],
               AS_HELP_STRING([--disable-rar], [Disable RAR decompression]),
-              [],
+              [AC_DEFINE(USE_RAR, [[test x"$enableval" == "xyes"]] && 1 || 0, [Use RAR decompression]) rar=$enableval],
 	      [AC_DEFINE(USE_RAR, 1, [Use RAR decompression]) rar="yes"])
 AM_CONDITIONAL([RAR_ENABLED], [test "yes" = "$rar"])
 
@@ -144,8 +144,8 @@ AM_CONDITIONAL([RAR_ENABLED], [test "yes" = "$rar"])
 ## lightgrep enabled
 AC_ARG_ENABLE([lightgrep],
               AS_HELP_STRING([--enable-lightgrep], [enable LIGHTGREP]),
-	      [AC_DEFINE(USE_LIGHTGREP, 1, [Use LIGHTGREP]) lightgrep="yes"],
-              [])
+	      [AC_DEFINE(USE_LIGHTGREP, [[test x"$enableval" == "xyes"]] && 1 || 0, [Use LIGHTGREP]) lightgrep=$enableval],
+	      [AC_DEFINE(USE_LIGHTGREP, 0, [Use RAR decompression]) rar="no"])
 AM_CONDITIONAL([LIGHTGREP_ENABLED], [test "yes" = "$lightgrep"])
 AC_ARG_ENABLE([flexscanners],
               AS_HELP_STRING([--disable-flexscanners], [disable FLEX-based scanners]),
@@ -337,7 +337,7 @@ AC_CHECK_HEADERS([openssl/x509.h openssl/pem.h])
 
 AC_ARG_ENABLE([afflib],
     [AS_HELP_STRING([--disable-afflib], [disable afflib support])],
-    [afflib=no],
+    [afflib=$enableval],
     [afflib=yes])
 AC_MSG_NOTICE([afflib is $afflib])
 
@@ -355,7 +355,7 @@ fi
 
 AC_ARG_ENABLE([libewf],
     [AS_HELP_STRING([--disable-libewf], [disable libewf support])],
-    [libewf=no],
+    [libewf=$enableval],
     [libewf=yes])
 AC_MSG_NOTICE([libewf is $libewf])
 if test x"$libewf" == x"yes" ; then
@@ -375,7 +375,7 @@ AC_MSG_NOTICE([libewf is now $libewf])
 ## hashdb support
 AC_ARG_ENABLE([hashdb],
     [AS_HELP_STRING([--disable-hashdb], [disable hashdb scanner support])],
-    [hashdb=no],
+    [hashdb=$enableval],
     [hashdb=yes])
 
 if test x"$hashdb" == x"yes" ; then
@@ -425,7 +425,7 @@ fi
 ## We should probably test to make sure that exiv2 works too
 
 AC_ARG_ENABLE([exiv2],[AS_HELP_STRING([--enable-exiv2=true to check for exiv2; warning: exiv2 crashes])],
-   exiv2=yes,
+   exiv2=$enableval,
    exiv2=no)
 if test x"$exiv2" == x"yes" ; then
   AC_CHECK_LIB([iconv],[libiconv_open])
