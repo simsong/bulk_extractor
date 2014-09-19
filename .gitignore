@@ -109,3 +109,4 @@ src_win/liblightgrep-*/
 tests/Data-*/
 linux/
 bulk_extractor_noscanners
+python/cda2_tool.db
