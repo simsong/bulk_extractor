@@ -145,7 +145,7 @@ AM_CONDITIONAL([RAR_ENABLED], [test "yes" = "$rar"])
 AC_ARG_ENABLE([lightgrep],
               AS_HELP_STRING([--enable-lightgrep], [enable LIGHTGREP]),
 	      [AC_DEFINE(USE_LIGHTGREP, [[test x"$enableval" == "xyes"]] && 1 || 0, [Use LIGHTGREP]) lightgrep=$enableval],
-	      [AC_DEFINE(USE_LIGHTGREP, 0, [Use RAR decompression]) rar="no"])
+	      [AC_DEFINE(USE_LIGHTGREP, 0, [enable LIGHTGREP]) lightgrep="no"])
 AM_CONDITIONAL([LIGHTGREP_ENABLED], [test "yes" = "$lightgrep"])
 AC_ARG_ENABLE([flexscanners],
               AS_HELP_STRING([--disable-flexscanners], [disable FLEX-based scanners]),
