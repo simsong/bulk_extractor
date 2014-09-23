@@ -343,35 +343,39 @@ static void do_import(const class scanner_params &sp,
     std::vector<hashdb_t::import_element_t>* import_input =
        new std::vector<hashdb_t::import_element_t>;
 
+    // compose the filename based on the forensic path
+    std::string path_without_map_file_delimiter =
+              (sbuf.pos0.path.size() > 4) ?
+              std::string(sbuf.pos0.path, 0, sbuf.pos0.path.size() - 4) : "";
+    std::stringstream ss;
+    size_t p=sbuf.pos0.path.find('/');
+    if (p==std::string::npos) {
+        // no directory in forensic path so explicitly include the filename
+        ss << sp.fs.get_input_fname();
+        if (sbuf.pos0.isRecursive()) {
+            // forensic path is recursive so add "/" + forensic path
+            ss << "/" << path_without_map_file_delimiter;
+        }
+    } else {
+        // directory in forensic path so print forensic path as is
+        ss << path_without_map_file_delimiter;
+    }
+    std::string filename = ss.str();
+
     // import all the cryptograph hash values from all the blocks in sbuf
     for (size_t i=0; i < count; ++i) {
 
         // calculate the offset associated with this index
         size_t offset = i * hashdb_import_sector_size;
 
-        // ignore empty blocks
-        if (hashdb_ignore_empty_blocks && is_empty_block(sbuf.buf + offset)) {
-            continue;
-        }
-
         // calculate the hash for this sector-aligned hash block
-        hash_t hash = hash_generator::hash_buf(
+    hash_t hash = hash_generator::hash_buf(
                                  sbuf.buf + offset,
                                  hashdb_block_size);
 
-        // compose the filename based on the forensic path
-        std::stringstream ss;
-        size_t p=sbuf.pos0.path.find('/');
-        if (p==std::string::npos) {
-            // no directory in forensic path so explicitly include the filename
-            ss << sp.fs.get_input_fname();
-            if (sbuf.pos0.isRecursive()) {
-                // forensic path is recursive so add "/" + forensic path
-                ss << "/" << sbuf.pos0.path;
-            }
-        } else {
-            // directory in forensic path so print forensic path as is
-            ss << sbuf.pos0.path;
+        // ignore empty blocks
+        if (hashdb_ignore_empty_blocks && is_empty_block(sbuf.buf + offset)) {
+            continue;
         }
 
         // calculate the offset from the start of the media image
@@ -381,7 +385,7 @@ static void do_import(const class scanner_params &sp,
         import_input->push_back(hashdb_t::import_element_t(
                                  hash,
                                  hashdb_import_repository_name,
-                                 ss.str(),
+                                 filename,
                                  image_offset));
     }
 
