@@ -53,13 +53,6 @@ static uint32_t hashdb_import_max_duplicates=0;                 // import only
 enum mode_type_t {MODE_NONE, MODE_SCAN, MODE_IMPORT};
 static mode_type_t mode = MODE_NONE;
 
-// internal helper functions
-static void do_import(const class scanner_params &sp,
-                      const recursion_control_block &rcb);
-static void do_scan(const class scanner_params &sp,
-                    const recursion_control_block &rcb);
-inline bool is_empty_block(const uint8_t *buf);
-
 // global state
 
 // hashdb directory, import only
@@ -72,6 +65,59 @@ typedef md5_generator hash_generator;
 // hashdb manager
 typedef hashdb_t__<hash_t> hashdb_t;
 hashdb_t* hashdb;
+
+static void do_import(const class scanner_params &sp,
+                      const recursion_control_block &rcb);
+static void do_scan(const class scanner_params &sp,
+                    const recursion_control_block &rcb);
+
+
+// rules for determining if a sector should be ignored
+static bool ramp_sector(const sbuf_t &sbuf)
+{
+    uint32_t count = 0;
+    for(size_t i=0;i<sbuf.pagesize-8;i+=4){
+        if (sbuf.get32u(i)+1 == sbuf.get32u(i+4)) {
+            count += 1;
+        }
+    }
+    return count > hashdb_block_size/8;
+}
+
+static bool hist_sector(const sbuf_t &sbuf)
+{
+    std::map<uint32_t,uint32_t> hist;
+    for(size_t i=0;i<sbuf.pagesize-4;i+=4){
+        hist[sbuf.get32uBE(i)] += 1;
+    }
+    if (hist.size() < 3) return true;
+    for (std::map<uint32_t,uint32_t>::const_iterator it = hist.begin();it != hist.end(); it++){
+        if ((it->second) > hashdb_block_size/16){
+            return true;
+        }
+    }
+    return false;
+}
+
+static bool whitespace_sector(const sbuf_t &sbuf)
+{
+    for(size_t i=0;i<sbuf.pagesize;i++){
+        if (!isspace(sbuf[i])) return false;
+    }
+    return true;
+}
+
+// detect if block is empty
+inline bool is_empty_block(const uint8_t *buf) {
+    for (size_t i=1; i<hashdb_block_size; i++) {
+        if (buf[i] != buf[0]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+
 
 extern "C"
 void scan_hashdb(const class scanner_params &sp,
@@ -285,7 +331,7 @@ void scan_hashdb(const class scanner_params &sp,
         case scanner_params::PHASE_SCAN: {
             switch(mode) {
                 case MODE_IMPORT:
-                     do_import(sp, rcb);
+                    do_import(sp, rcb);
                      return;
 
                 case MODE_SCAN:
@@ -333,6 +379,8 @@ static void do_import(const class scanner_params &sp,
     }
 
     // get count of blocks to process
+    // BRUCE - This is not a very efficient way to divide...
+
     size_t count = sbuf.bufsize / hashdb_import_sector_size;
     while ((count * hashdb_import_sector_size) +
            (hashdb_block_size - hashdb_import_sector_size) > sbuf.pagesize) {
@@ -344,6 +392,11 @@ static void do_import(const class scanner_params &sp,
        new std::vector<hashdb_t::import_element_t>;
 
     // compose the filename based on the forensic path
+    // BRUCE - I don't like the way that "4" is hard-coded. I know that's the length of
+    // the unicode character, but hard-coding magic numbers is not good. If we need to do this,
+    // there should be methods in sbuf_t for separating the filename from the path.
+    // And what is a "map file delimiter" ?
+
     std::string path_without_map_file_delimiter =
               (sbuf.pos0.path.size() > 4) ?
               std::string(sbuf.pos0.path, 0, sbuf.pos0.path.size() - 4) : "";
@@ -369,9 +422,9 @@ static void do_import(const class scanner_params &sp,
         size_t offset = i * hashdb_import_sector_size;
 
         // calculate the hash for this sector-aligned hash block
-    hash_t hash = hash_generator::hash_buf(
-                                 sbuf.buf + offset,
-                                 hashdb_block_size);
+        hash_t hash = hash_generator::hash_buf(
+                                               sbuf.buf + offset,
+                                               hashdb_block_size);
 
         // ignore empty blocks
         if (hashdb_ignore_empty_blocks && is_empty_block(sbuf.buf + offset)) {
@@ -413,6 +466,7 @@ static void do_scan(const class scanner_params &sp,
     }
 
     // get count of blocks to process
+    // BRUCE --- This is a poor way to do a division...
     size_t count = sbuf.bufsize / hashdb_scan_sector_size;
     while ((count * hashdb_scan_sector_size) +
            (hashdb_block_size - hashdb_scan_sector_size) > sbuf.pagesize) {
@@ -423,7 +477,8 @@ static void do_scan(const class scanner_params &sp,
     std::vector<hash_t>* scan_input = new std::vector<hash_t>;
 
     // allocate space on heap for the offset lookup table
-    std::vector<uint32_t>* offset_lookup_table = new std::vector<uint32_t>;
+    // BRUCE - offset_lookup_table should be a vector of size_t, not uint32_t.
+    std::vector<size_t>* offset_lookup_table = new std::vector<size_t>;
 
     // get the cryptograph hash values of all the blocks along
     // sector boundaries from sbuf
@@ -466,18 +521,23 @@ static void do_scan(const class scanner_params &sp,
         // as (pos0, hash_string, count_string)
 
         // pos0
-        pos0_t pos0 = sbuf.pos0 + offset_lookup_table->at(it->first);
+        size_t offset = offset_lookup_table->at(it->first);
+        pos0_t pos0 = sbuf.pos0 + offset;
 
         // hash_string
         std::string hash_string = scan_input->at(it->first).hexdigest();
 
-        // count
         std::stringstream ss;
-        ss << it->second;
-        std::string count_string = ss.str();
+        ss << it->second;        // count
+
+        // Construct an sbuf from the sector and subject it to the other tests
+        const sbuf_t s = sbuf_t(sbuf,offset,hashdb_block_size);
+        if (ramp_sector(s)) ss << " R";
+        if (hist_sector(s)) ss << " H";
+        if (whitespace_sector(s)) ss << " W";
 
         // record the feature
-        identified_blocks_recorder->write(pos0, hash_string, count_string);
+        identified_blocks_recorder->write(pos0, hash_string, ss.str());
     }
 
     // clean up
@@ -486,15 +546,6 @@ static void do_scan(const class scanner_params &sp,
     delete scan_output;
 }
 
-// detect if block is empty
-inline bool is_empty_block(const uint8_t *buf) {
-    for (size_t i=1; i<hashdb_block_size; i++) {
-        if (buf[i] != buf[0]) {
-            return false;
-        }
-    }
-    return true;
-}
 
 #endif
 

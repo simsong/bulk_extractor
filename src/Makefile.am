@@ -77,8 +77,11 @@ bulk_scanners = \
 	scan_winprefetch.cpp \
 	scan_wordlist.cpp \
 	scan_xor.cpp \
-	scan_zip.cpp \
-	$(flex_scanners) 
+	scan_zip.cpp 
+
+if FLEXSCANNERS_ENABLED
+  bulk_scanners += $(flex_scanners) 
+endif
 
 if LIGHTGREP_ENABLED
   bulk_scanners += $(lightgrep_scanners)

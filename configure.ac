@@ -150,7 +150,7 @@ AM_CONDITIONAL([LIGHTGREP_ENABLED], [test "yes" = "$lightgrep"])
 AC_ARG_ENABLE([flexscanners],
               AS_HELP_STRING([--disable-flexscanners], [disable FLEX-based scanners]),
               [],
-              [AC_DEFINE(FLEXSCANNERS_ENABLED, 1, [Use FLEX-based scanners]), flexscanners='yes'])
+              [AC_DEFINE(USE_FLEXSCANNERS, 1, [Use FLEX-based scanners]) flexscanners='yes'])
 AM_CONDITIONAL([FLEXSCANNERS_ENABLED], [test "yes" = "$flexscanners"])
 
 

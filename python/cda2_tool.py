@@ -2,21 +2,8 @@
 # coding=UTF-8
 #
 # Cross Drive Analysis tool for bulk extractor.
-# V4
-# Features of this program:
-# --netmap  -- makes a map of which computers exchanged packets (ethernet maps)
-# --makestop  -- Creates a stoplist of features that are on more than a fraction of the drives
-# --threshold -- sets the fraction of drives necessary for a feature to be ignored
-# --idfeatures  -- spcifies which feature files are used for identity operations
-#
-# reads multiple bulk_extractor histogram files and outputs:
-# stoplist.txt - list of email addresses on more than 1/3 of the disks
-# targets.txt  - list of email addresses not on stoplist and the # of drives on which they appear.
-#
-# Version 1.3 - Complete rewrite; elimiantes driveids and featureids, since strings
-#               in Python are hashable (and thus integers). Also uses bulk_extractor_reader
 
-__version__='1.3.1'
+__version__='2.0.0'
 import os.path,sys
 
 #if sys.version_info < (3,2):

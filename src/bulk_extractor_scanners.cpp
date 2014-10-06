@@ -37,18 +37,20 @@
 
 /* An array of the built-in scanners */
 scanner_t *scanners_builtin[] = {
-    scan_accts,
-    scan_base16,
     scan_base64,
     scan_kml,
-    scan_email,
     scan_httplogs,
-    scan_gps,
     scan_net,
     scan_find,
     scan_wordlist,
     scan_aes,
     scan_json,
+#if defined(USE_FLEXSCANNERS)
+    scan_accts,
+    scan_base16,
+    scan_email,
+    scan_gps,
+#endif
 #if defined(HAVE_LIBLIGHTGREP) && defined(USE_LIGHTGREP)
     scan_accts_lg,
     scan_base16_lg,

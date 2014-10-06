@@ -249,6 +249,23 @@ DATEFORMAT	({DATEA}|{DATEB}|{DATEC}|{DATED})
     s.pos += yyleng;
 }
 
+[ \t\n][+][1-9]([0-9]{10,18})/[^0-9] {
+     /* Experimental Regex to find phone numbers beginning with a + */
+     /* Phone numbers can be a maximum of 15 digits */
+    accts_scanner &s = *yyaccts_get_extra(yyscanner);
+    s.telephone_recorder->write_buf(SBUF,s.pos+1,yyleng-1);
+    s.pos += yyleng;
+}
+
+[ \t\n][0]([1-9][0-9]{9,15})/[^0-9] {
+     /* Experimental Regex to find phone numbers beginning with a 0 */
+    accts_scanner &s = *yyaccts_get_extra(yyscanner);
+    s.telephone_recorder->write_buf(SBUF,s.pos+1,yyleng-1);
+    s.pos += yyleng;
+}
+
+
+
 [^0-9]([0-9]{6}-){7}([0-9]{6})/[\r\n] {
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
     s.alert_recorder->write(SBUF.pos0+s.pos,yytext+1,"Possible BitLocker Recovery Key (ASCII).");

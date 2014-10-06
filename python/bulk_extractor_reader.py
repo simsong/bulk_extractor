@@ -230,7 +230,6 @@ class BulkReport:
 
     def open(self,fname,mode='r'):
         """Opens a named file in the bulk report. Default is text mode.
-        Returns .bulk_extractor_reader as a pointer to self.
         """
         # zipfile always opens in Binary mode, but generates an error
         # if the 'b' is present, so remove it if present.
@@ -241,7 +240,6 @@ class BulkReport:
             mode = mode.replace("b","")+"b"
             fn = os.path.join(self.dname,fname)
             f = open(fn,mode=mode)
-        f.bulk_extractor_reader = self
         return f
 
     def count_lines(self,fname):
@@ -308,7 +306,7 @@ class BulkReport:
     def read_features(self,fname):
         """Just read the features out of a feature file"""
         """Usage: for (pos,feature,context) in br.read_features("fname")"""
-        for line in self.open(fname):
+        for line in self.open(fname,"rb"):
             r = parse_feature_line(line)
             if r:
                 yield r
