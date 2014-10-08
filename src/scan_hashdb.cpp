@@ -72,20 +72,57 @@ static void do_scan(const class scanner_params &sp,
                     const recursion_control_block &rcb);
 
 
-// rules for determining if a sector should be ignored
-static bool ramp_sector(const sbuf_t &sbuf)
+// get byte count available for the block, which may be smaller than a block
+inline size_t block_byte_count(const sbuf_t &sbuf)
 {
+    return (sbuf.pagesize < hashdb_block_size)
+                             ? sbuf.pagesize : hashdb_block_size;
+}
+
+// safely hash sbuf range without overflow failure
+inline hash_t hash_one_block(const uint8_t *buf, size_t byte_count)
+{
+    if (byte_count == hashdb_block_size) {
+        // hash the block
+        return hash_generator::hash_buf(buf, hashdb_block_size);
+    } else {
+        // hash the available part
+        hash_generator g;
+        g.update(buf, byte_count);
+
+        // hash in extra zeros to fill out the block
+        size_t extra = hashdb_block_size - byte_count;
+        std::vector<uint8_t> zeros(extra);
+        g.update(&zeros[0], extra);
+        return g.final();
+    }
+}
+
+// rules for determining if a block should be ignored
+static bool ramp_trait(const sbuf_t &sbuf)
+{
+    if (sbuf.pagesize < 8) {
+        // not enough to process
+        return false;
+    }
+
     uint32_t count = 0;
     for(size_t i=0;i<sbuf.pagesize-8;i+=4){
+        // note that little endian is detected and big endian is not detected
         if (sbuf.get32u(i)+1 == sbuf.get32u(i+4)) {
             count += 1;
         }
     }
-    return count > hashdb_block_size/8;
+    return count > sbuf.pagesize/8;
 }
 
-static bool hist_sector(const sbuf_t &sbuf)
+static bool hist_trait(const sbuf_t &sbuf)
 {
+    if (sbuf.pagesize < hashdb_block_size) {
+        // do not perform any histogram analysis on short blocks
+        return false;
+    }
+
     std::map<uint32_t,uint32_t> hist;
     for(size_t i=0;i<sbuf.pagesize-4;i+=4){
         hist[sbuf.get32uBE(i)] += 1;
@@ -99,7 +136,7 @@ static bool hist_sector(const sbuf_t &sbuf)
     return false;
 }
 
-static bool whitespace_sector(const sbuf_t &sbuf)
+static bool whitespace_trait(const sbuf_t &sbuf)
 {
     for(size_t i=0;i<sbuf.pagesize;i++){
         if (!isspace(sbuf[i])) return false;
@@ -108,16 +145,15 @@ static bool whitespace_sector(const sbuf_t &sbuf)
 }
 
 // detect if block is empty
-inline bool is_empty_block(const uint8_t *buf) {
-    for (size_t i=1; i<hashdb_block_size; i++) {
+inline bool empty_block(const uint8_t *buf, size_t byte_count)
+{
+    for (size_t i=1; i<byte_count; i++) {
         if (buf[i] != buf[0]) {
             return false;
         }
     }
     return true;
 }
-
-
 
 extern "C"
 void scan_hashdb(const class scanner_params &sp,
@@ -373,33 +409,16 @@ static void do_import(const class scanner_params &sp,
     // get the sbuf
     const sbuf_t& sbuf = sp.sbuf;
 
-    // there should be at least one block to process
-    if (sbuf.pagesize < hashdb_block_size) {
-      return;
-    }
-
-    // get count of blocks to process
-    // BRUCE - This is not a very efficient way to divide...
-
-    size_t count = sbuf.bufsize / hashdb_import_sector_size;
-    while ((count * hashdb_import_sector_size) +
-           (hashdb_block_size - hashdb_import_sector_size) > sbuf.pagesize) {
-      --count;
-    }
-
     // allocate space on heap for import_input
     std::vector<hashdb_t::import_element_t>* import_input =
-       new std::vector<hashdb_t::import_element_t>;
+                                 new std::vector<hashdb_t::import_element_t>;
 
-    // compose the filename based on the forensic path
-    // BRUCE - I don't like the way that "4" is hard-coded. I know that's the length of
-    // the unicode character, but hard-coding magic numbers is not good. If we need to do this,
-    // there should be methods in sbuf_t for separating the filename from the path.
-    // And what is a "map file delimiter" ?
-
+    // the filename from sbuf without the sbuf map file delimiter
     std::string path_without_map_file_delimiter =
               (sbuf.pos0.path.size() > 4) ?
               std::string(sbuf.pos0.path, 0, sbuf.pos0.path.size() - 4) : "";
+ 
+    // get the filename to use for source attribution
     std::stringstream ss;
     size_t p=sbuf.pos0.path.find('/');
     if (p==std::string::npos) {
@@ -415,21 +434,18 @@ static void do_import(const class scanner_params &sp,
     }
     std::string filename = ss.str();
 
-    // import all the cryptograph hash values from all the blocks in sbuf
-    for (size_t i=0; i < count; ++i) {
-
-        // calculate the offset associated with this index
-        size_t offset = i * hashdb_import_sector_size;
-
-        // calculate the hash for this sector-aligned hash block
-        hash_t hash = hash_generator::hash_buf(
-                                               sbuf.buf + offset,
-                                               hashdb_block_size);
+    // import the cryptograph hash values from all the blocks in sbuf
+    for (size_t offset=0; offset<sbuf.pagesize; offset+=hashdb_import_sector_size) {
 
         // ignore empty blocks
-        if (hashdb_ignore_empty_blocks && is_empty_block(sbuf.buf + offset)) {
+        if (hashdb_ignore_empty_blocks && empty_block(sbuf.buf + offset,
+                                            block_byte_count(sbuf + offset))) {
             continue;
         }
+
+        // calculate the hash for this import-sector-aligned hash block
+        hash_t hash = hash_one_block(sbuf.buf + offset,
+                                     block_byte_count(sbuf + offset));
 
         // calculate the offset from the start of the media image
         uint64_t image_offset = sbuf.pos0.offset + offset;
@@ -449,55 +465,49 @@ static void do_import(const class scanner_params &sp,
         std::cerr << "scan_hashdb import failure\n";
     }
 
-    // clean up
+    // clean up import input buffer
     delete import_input;
+
+    // calculate the sbuf hash for the source metadata
+    hash_t sbuf_hash = hash_generator::hash_buf(sbuf.buf, sbuf.pagesize);
+
+    // store the source metadata
+    hashdb->import_metadata(hashdb_import_repository_name,
+                            filename,
+                            sbuf.pagesize,
+                            sbuf_hash);
 }
 
 // perform scan
 static void do_scan(const class scanner_params &sp,
                     const recursion_control_block &rcb) {
-
     // get the sbuf
     const sbuf_t& sbuf = sp.sbuf;
-
-    // there should be at least one block to process
-    if (sbuf.pagesize < hashdb_block_size) {
-      return;
-    }
-
-    // get count of blocks to process
-    // BRUCE --- This is a poor way to do a division...
-    size_t count = sbuf.bufsize / hashdb_scan_sector_size;
-    while ((count * hashdb_scan_sector_size) +
-           (hashdb_block_size - hashdb_scan_sector_size) > sbuf.pagesize) {
-      --count;
-    }
 
     // allocate space on heap for scan_input
     std::vector<hash_t>* scan_input = new std::vector<hash_t>;
 
     // allocate space on heap for the offset lookup table
-    // BRUCE - offset_lookup_table should be a vector of size_t, not uint32_t.
-    std::vector<size_t>* offset_lookup_table = new std::vector<size_t>;
+    std::vector<uint32_t>* offset_lookup_table = new std::vector<uint32_t>;
 
-    // get the cryptograph hash values of all the blocks along
-    // sector boundaries from sbuf
-    for (size_t i=0; i<count; ++i) {
-
-        // calculate the offset associated with this index
-        size_t offset = i * hashdb_scan_sector_size;
+    // process cryptographic hash values for blocks along sector boundaries
+    for (size_t offset=0; offset<sbuf.pagesize; offset+=hashdb_scan_sector_size) {
 
         // ignore empty blocks
-        if (hashdb_ignore_empty_blocks && is_empty_block(sbuf.buf + offset)) {
+        if (hashdb_ignore_empty_blocks && empty_block(sbuf.buf + offset,
+                                            block_byte_count(sbuf + offset))) {
             continue;
         }
 
         // add the offset to the offset lookup table
         offset_lookup_table->push_back(offset);
 
+        // calculate the hash for this scan-sector-aligned hash block
+        hash_t hash = hash_one_block(sbuf.buf + offset,
+                                     block_byte_count(sbuf + offset));
+
         // calculate and add the hash to the scan input
-        scan_input->push_back(hash_generator::hash_buf(
-                    sbuf.buf + offset, hashdb_block_size));
+        scan_input->push_back(hash);
     }
 
     // allocate space on heap for scan_output
@@ -530,11 +540,11 @@ static void do_scan(const class scanner_params &sp,
         std::stringstream ss;
         ss << it->second;        // count
 
-        // Construct an sbuf from the sector and subject it to the other tests
-        const sbuf_t s = sbuf_t(sbuf,offset,hashdb_block_size);
-        if (ramp_sector(s)) ss << " R";
-        if (hist_sector(s)) ss << " H";
-        if (whitespace_sector(s)) ss << " W";
+        // Construct an sbuf from the block and subject it to the other tests
+        const sbuf_t s = sbuf_t(sbuf, offset,block_byte_count(sbuf+offset));
+        if (ramp_trait(s)) ss << " R";
+        if (hist_trait(s)) ss << " H";
+        if (whitespace_trait(s)) ss << " W";
 
         // record the feature
         identified_blocks_recorder->write(pos0, hash_string, ss.str());
