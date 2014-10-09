@@ -170,7 +170,7 @@ xor_re = re.compile(b"^(\\d+)\\-XOR\\-(\\d+)")
 def cmd_line():
     "Return the binary value of the command that envoked this program "
     import sys
-    return b''.join([s.encode('latin1') for s in sys.argv])
+    return b' '.join([s.encode('latin1') for s in sys.argv])
 
 def process_featurefile2(rundb,infile,outfile):
     """Returns features from infile, determines the file for each, writes results to outfile"""
@@ -242,7 +242,7 @@ def process_featurefile2(rundb,infile,outfile):
 
 
 if __name__=="__main__":
-    import sys, time
+    import sys, time, pickle
 
     try:
         if dfxml.__version__ < "1.0.0":
@@ -286,6 +286,8 @@ if __name__=="__main__":
     parser.add_argument('--mactimes',action='store_true',
                         help="Include mactimes in annotated feature file")
     parser.add_argument('--path', action='store', help="Just locate path and exit. Only needs XML file, disk image, or bulk_extractor output")
+    parser.add_argument('--save', help='Save runs database in a file')
+    parser.add_argument('--load', help='Load runs database in a file')
 
     args = parser.parse_args()
 
@@ -300,7 +302,7 @@ if __name__=="__main__":
     t0 = time.time()
 
     rundb = byterundb2()
-    def read_filemap():
+    def read_filemap(rundb):
         if args.xmlfile:
             rundb.read_xmlfile(args.xmlfile)
             if len(rundb)==0:
@@ -315,7 +317,7 @@ if __name__=="__main__":
             raise RuntimeError("\nERROR: No files detected in image file {}\n".format(imagefile))
 
     if args.path:
-        read_filemap()
+        read_filemap(rundb)
         print("Locating {}: ".format(args.path))
         res = rundb.search_path(args.path.encode('utf-8'))
         if res:
@@ -345,8 +347,17 @@ if __name__=="__main__":
     # Read the file map
     if args.noxmlfile:
         print("TESTING --- will not read XML File");
+    elif args.load:
+        with open(args.load,'rb') as f:
+            rundb = pickle.load(f)
+        print("Runs database loaded from {}".format(args.load))
     else:
-        read_filemap()
+        read_filemap(rundb)
+
+    if args.save:
+        with open(args.save,'wb') as f:
+            pickle.dump(rundb, f)
+        print("Runs database saved in {}".format(args.save))
 
     # Make the output directory if needed
     if not os.path.exists(args.outdir):
