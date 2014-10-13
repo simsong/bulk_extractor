@@ -537,14 +537,22 @@ static void do_scan(const class scanner_params &sp,
         // hash_string
         std::string hash_string = scan_input->at(it->first).hexdigest();
 
-        std::stringstream ss;
-        ss << it->second;        // count
-
+        // set flags based on specific tests on the block
         // Construct an sbuf from the block and subject it to the other tests
         const sbuf_t s = sbuf_t(sbuf, offset,block_byte_count(sbuf+offset));
-        if (ramp_trait(s)) ss << " R";
-        if (hist_trait(s)) ss << " H";
-        if (whitespace_trait(s)) ss << " W";
+        std::stringstream ss_flags;
+        if (ramp_trait(s)) ss_flags << "R";
+        if (hist_trait(s)) ss_flags << "H";
+        if (whitespace_trait(s)) ss_flags << "W";
+
+        // build context field containing count and flags
+        std::stringstream ss;
+        ss << "{\"count\":" << it->second;
+        if (ss_flags.str().size() > 0) {
+            // show flags too
+            ss << ",\"flags\":\"" << ss_flags.str() << "\"";
+        }
+        ss << "}";
 
         // record the feature
         identified_blocks_recorder->write(pos0, hash_string, ss.str());
