@@ -106,6 +106,7 @@ class byterundb:
             except TypeError as e:
                 pass
            
+xor_re = re.compile(b"^(\\d+)\\-XOR\\-(\\d+)")
 class byterundb2:
     """Maintain two byte run databases, one for allocated files, one for unallocated files."""
     def __init__(self):
@@ -165,7 +166,6 @@ class byterundb2:
         print("Unallocated:")
         self.unallocated.dump()
             
-xor_re = re.compile(b"^(\\d+)\\-XOR\\-(\\d+)")
 
 def cmd_line():
     "Return the binary value of the command that envoked this program "

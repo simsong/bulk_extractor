@@ -1,12 +1,12 @@
+#
+# This program reads one or more databases created by the identified_blocks search
+# and builds an in-memory database. It then supports queries on that database
+#
+
+
 import os,pickle
 import collections
 
-class block:
-    def __init__(self,file_offset=None,disk_offset=None,md5=None,used=None):
-        self.file_offset = file_offset
-        self.disk_offset = disk_offset
-        self.md5 = md5
-        
 def make_runs(a):
     a = sorted(list(a))
     ret = []
@@ -27,12 +27,36 @@ def make_runs(a):
        first = None
     return ret
 
+def process_explained(fname,dbfile):
+    blocks_for_filename = collections.defaultdict(set)
+    hashes_for_filename = collections.defaultdict(set)
+    files_for_hash = collections.defaultdict(set)
+    for line in open(fname):
+        if line[0]=='#': continue
+        (hash,repo,filename,offset) = line.split(", ")[0:4]
+        block_number = int(offset) // 4096
+        blocks_for_filename[filename].add(block_number)
+        hashes_for_filename[filename].add(hash)
+        files_for_hash[hash].add(filename)
+    
+    for filename in blocks_for_filename:
+        runs = make_runs(blocks_for_filename[filename])
+        hash_counts = [len(files_for_hash[a]) for a in hashes_for_filename[filename]]
+        number_distinct_blocks = sum(filter(lambda a:a==1,hash_counts))
+        if number_distinct_blocks==0: continue
+        print("filename: {}".format(filename))
+        print("  runs: ",runs)
+        print("  lengths: ",[a[1]-a[0]+1 for a in runs])
+        print("  distinct blocks: ",number_distinct_blocks)
+
+
 #
 # prepare a report of the directory 'dn' examining the
 # identified_blocks.txt file and the identified_blocks_expanded.txt
 # files.
 #
 # Each block has a disk offset, a file offset, a hash, a file it was seen in.
+
 
 def process_expanded(dn,dbfile):
     if os.path.exists(dbfile):
@@ -51,6 +75,8 @@ def process_expanded(dn,dbfile):
 
     # Read the identified_blocks file to find out how many times
     # each hash was found.
+
+    hashes = dict()
 
     for line in open(os.path.join(dn,"identified_blocks.txt")):
         try:
@@ -77,9 +103,6 @@ def process_expanded(dn,dbfile):
         disk_offset = int(disk_offset)
         filename    = meta.split(",")[1].split('=')[1]
 
-        # This removes the \U00010001 on Windows Python 3.3.  Yes, it's gross
-        if ord(filename[-4])==244 and ord(filename[-3])==8364 and ord(filename[-2])==8364 and ord(filename[-1])==339:
-            filename = filename[:-4]
         file_offset = int(meta.split(",")[2].split('=')[1])
         file_block  = file_offset // 4096
         file_blocks[filename].add(file_block)
@@ -99,30 +122,6 @@ def process_expanded(dn,dbfile):
     with open(dbfile,'wb') as f:
         for obj in [file_offets,hash_counts, file_blocks, distinct_file_blocks,file_sector_hashes, h_hashes, w_hashes, r_hashes]:
             pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
-
-def process_explained(dn,dbfile):
-    blocks_for_filename = collections.defaultdict(set)
-    hashes_for_filename = collections.defaultdict(set)
-    files_for_hash = collections.defaultdict(set)
-    for line in open(os.path.join(dn,"identified_blocks_explained.txt")):
-        if line[0]=='#': continue
-        (hash,repo,filename,offset) = line.split(", ")[0:4]
-        block_number = int(offset) // 4096
-        blocks_for_filename[filename].add(block_number)
-        hashes_for_filename[filename].add(hash)
-        files_for_hash[hash].add(filename)
-
-    
-    for filename in blocks_for_filename:
-        runs = make_runs(blocks_for_filename[filename])
-        hash_counts = [len(files_for_hash[a]) for a in hashes_for_filename[filename]]
-        number_distinct_blocks = sum(filter(lambda a:a==1,hash_counts))
-        if number_distinct_blocks==0: continue
-        print("filename: {}".format(filename))
-        print("  runs: ",runs)
-        print("  lengths: ",[a[1]-a[0]+1 for a in runs])
-        print("  distinct blocks: ",number_distinct_blocks)
-
 
 
 def report(dbfile,outfile):
@@ -161,7 +160,6 @@ def report(dbfile,outfile):
         # another disk block that has the same disk offset
         # Count the number of aligned blocks
         aligned_blocks = 0
-
         
         # Try to identify pairs of blocks that have the same delta in file offsets as in
         # disk offsets. Do this only once for each file offset
@@ -170,8 +168,6 @@ def report(dbfile,outfile):
         solved_j_offsets    = set()
         for i in range(0,len(fos)-1):
             # Starting at i, look for the next array entry that has a different file_offset
-
-            if "168524" in filename: print(i,fos[i][0],fos[i][1],fos[i][2])
 
             a = fos[i]   # this block
             this_file_offset = a[0]
@@ -192,7 +188,6 @@ def report(dbfile,outfile):
                 if j in solved_j_offsets: continue
                 if fos[j][0]==next_file_offset and fos[j][0]-a[0]==fos[j][1]-a[1]:
                     # We found a match!
-                    if "168524" in filename: print("match",i,j)
                     solved_file_offsets.add(this_file_offset)
                     solved_j_offsets.add(j)
                     aligned_blocks += 1
@@ -201,8 +196,6 @@ def report(dbfile,outfile):
                 if fos[j][0]>next_file_offset: 
                     break
 
-        #if filename=='/raid/govdocs//115/115803.ppt':
-        #    print("aligned_blocks=",aligned_blocks,len(total_file_offsets)-1)
         percentage = 0
         seen_blocks = len(file_blocks[filename])
         if aligned_blocks>0 and seen_blocks>1:
@@ -218,7 +211,6 @@ def report(dbfile,outfile):
         b2  = max(file_blocks[filename]) # last block seen
         num = len(file_blocks[filename]) # number of blocks seen
         missing = (b2-b1+1)-num          # missing between b1 and b2
-
 
         # Tabulate the statistics on this file
         # counts keeps track of the number of 'distinct' counts for each hash in the file
@@ -251,8 +243,7 @@ def report(dbfile,outfile):
         distinct_lens = [a[1]-a[0]+1 for a in distinct_runs]
         longest_distinct_run = max(distinct_lens)
         
-        
-        possible_match = filename
+        pmatch         = filename
         blocks_seen    = count
         aligned_blocks = aligned_blocks_per_file[filename][0]
         aligned_percent= aligned_blocks_per_file[filename][1]*100.0
@@ -260,15 +251,10 @@ def report(dbfile,outfile):
         distinct_percent = distinct_count/count * 100.0
         block_range      = "{}--{}".format(b1,b2)
         
-        r = possible_match.find('JPG')
-        if r>0:
-            for j in range(r,len(possible_match)):
-                print(j,ord(possible_match[j]))
-
         if sys.version_info >= (3,0,0):
-            possible_match=possible_match.replace(u'\U0010001c',"")
+            pmatch=pmatch.replace(u'\U0010001c',"")
         else:
-            possible_match=possible_match.replace(b"\xe2\xa0\xc3\xc3\xa3","")
+            pmatch=pmatch.replace(b"\xe2\xa0\xc3\xc3\xa3","")
 
         if first:
             ofwriter.writerow(['Match','Blocks Seen','Range',
@@ -277,12 +263,10 @@ def report(dbfile,outfile):
                                'Blocks Aligned','% Aligned',
                                'BLocks Distinct','% distinct'])
             first = False
-        ofwriter.writerow([possible_match,blocks_seen,block_range,
+        ofwriter.writerow([pmatch,blocks_seen,block_range,
                            longest_run,
                            longest_distinct_run,
                            aligned_blocks,aligned_percent,distinct_count,distinct_percent])
-
-
 
 if __name__=="__main__":
     import sys
@@ -299,17 +283,22 @@ if __name__=="__main__":
     report_db     = os.path.join(args.reportdir,"blocks.db")
     report_output = os.path.join(args.reportdir,"blocks-report.csv")
 
+    if not os.path.exists(args.reportdir):
+        print("{} does not exist".format(args.reportdir))
+
     if args.force:
         if os.path.exists(report_db):
             os.unlink(report_db)
 
-    if os.path.exists(os.path.join(args.reportdir,"identified_blocks_explained.txt")):
-        process_explained(args.reportdir,report_db)
+    explained_fn = os.path.join(args.reportdir,"identified_blocks_explained.txt")
+    if os.path.exists(explained_fn):
+        process_explained(explained_fn,report_db)
+
+    expanded_fn = os.path.join(args.reportdir,"identified_blocks_expanded.txt")
+    if os.path.exists(expanded_fn):
+        process_expanded(args.reportdir,report_db)
 
     if os.path.exists(os.path.join(args.reportdir,"identified_blocks_expanded.txt")):
         process_expanded(args.reportdir,report_db)
         report(report_db,report_output)
         print("Output report in {}".format(report_output))
-
-
-
