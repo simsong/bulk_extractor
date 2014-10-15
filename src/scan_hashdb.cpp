@@ -44,6 +44,7 @@ static uint32_t hashdb_block_size=4096;                      // import or scan
 static bool hashdb_ignore_empty_blocks=true;                 // import or scan
 static std::string hashdb_scan_path_or_socket="your_hashdb_directory"; // scan only
 static size_t hashdb_scan_sector_size = 512;                    // scan only
+static size_t hashdb_scan_max_features = 0;                     // scan only
 static size_t hashdb_import_sector_size = 4096;                 // import only
 static std::string hashdb_import_repository_name="default_repository"; // import only
 static uint32_t hashdb_import_max_duplicates=0;                 // import only
@@ -201,6 +202,14 @@ void scan_hashdb(const class scanner_params &sp,
             sp.info->get_config("hashdb_scan_sector_size", &hashdb_scan_sector_size,
                                 ss_hashdb_scan_sector_size.str());
 
+            // hashdb_scan_max_features
+            std::stringstream ss_hashdb_scan_max_features;
+            ss_hashdb_scan_max_features
+                << "The maximum number of features lines to record\n"
+                << "      or 0 for no limit.  Valid only in scan mode.";
+            sp.info->get_config("hashdb_scan_max_features", &hashdb_scan_max_features,
+                                ss_hashdb_scan_max_features.str());
+
             // hashdb_import_sector_size
             std::stringstream ss_hashdb_import_sector_size;
             ss_hashdb_import_sector_size
@@ -275,6 +284,9 @@ void scan_hashdb(const class scanner_params &sp,
                 exit(1);
             }
 
+            // hashdb_scan_max_features
+            // checks not performed
+
             // for valid operation, scan sectors must align on hash block boundaries
             if (mode == MODE_SCAN && hashdb_block_size % hashdb_scan_sector_size != 0) {
                 std::cerr << "Error: invalid hashdb block size=" << hashdb_block_size
@@ -338,7 +350,8 @@ void scan_hashdb(const class scanner_params &sp,
                               << "hashdb: hashdb_block_size=" << hashdb_block_size << "\n"
                               << "hashdb: hashdb_ignore_empty_blocks=" << temp2 << "\n"
                               << "hashdb: hashdb_scan_path_or_socket=" << hashdb_scan_path_or_socket << "\n"
-                              << "hashdb: hashdb_scan_sector_size=" << hashdb_scan_sector_size << "\n";
+                              << "hashdb: hashdb_scan_sector_size=" << hashdb_scan_sector_size << "\n"
+                              << "hashdb: hashdb_scan_max_features=" << hashdb_scan_max_features << "\n";
 
                     // open the hashdb manager for scanning
                     hashdb = new hashdb_t(hashdb_scan_path_or_socket);
@@ -481,6 +494,16 @@ static void do_import(const class scanner_params &sp,
 // perform scan
 static void do_scan(const class scanner_params &sp,
                     const recursion_control_block &rcb) {
+
+    // get the feature recorder
+    feature_recorder* identified_blocks_recorder = sp.fs.get_name("identified_blocks");
+
+    // optimization: don't even scan if feature line count is at requested max
+    if (hashdb_scan_max_features > 0 && identified_blocks_recorder->count() >=
+                                                   hashdb_scan_max_features) {
+        return;
+    }
+
     // get the sbuf
     const sbuf_t& sbuf = sp.sbuf;
 
@@ -521,11 +544,14 @@ static void do_scan(const class scanner_params &sp,
         exit(1);
     }
 
-    // get the feature recorder
-    feature_recorder* identified_blocks_recorder = sp.fs.get_name("identified_blocks");
-
     // record each feature returned in the response
     for (hashdb_t::scan_output_t::const_iterator it=scan_output->begin(); it!= scan_output->end(); ++it) {
+
+        // stop recording if feature line count is at requested max
+        if (hashdb_scan_max_features > 0 && identified_blocks_recorder->count() >=
+                                                   hashdb_scan_max_features) {
+            break;
+        }
 
         // prepare forensic path (pos0, feature, context)
         // as (pos0, hash_string, count_string)
