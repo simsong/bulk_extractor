@@ -26,10 +26,11 @@ def process_report(reportdir):
     if reportdir.endswith("/") or reportdir.endswith("\\"):
         reportdir = reportdir[:-1]
 
-    source_id_filenames      = dict()
-    hash_disk_blocks       = defaultdict(set)
+    source_id_filenames     = dict()
+    hash_disk_blocks        = defaultdict(set)
+    hash_flags              = dict()
     hashes_for_source       = defaultdict(set)
-    hash_source_file_blocks= dict()             # for each hash, a dict of lists of the offsets were it was found
+    hash_source_file_blocks = dict()             # for each hash, a dict of lists of the offsets were it was found
     source_id_scores        = defaultdict(int)
 
     # Read the identified_blocks_explained file first
@@ -62,6 +63,10 @@ def process_report(reportdir):
         except ValueError:
             continue
         hash_disk_blocks[sector_hash].add(disk_offset // 512)
+        try:
+            hash_disk_flags[sector_hash] = json.loads(meta)['flags']
+        except KeyError:
+            continue
 
 
     # Open the report file
@@ -85,7 +90,8 @@ def process_report(reportdir):
                 file_blocks = set()
                 for file_block in hash_source_file_blocks[hash][source_id]:
                     file_blocks.add(file_block)
-                identified_file_blocks.append((disk_block,file_blocks,len(hash_source_file_blocks[hash])))
+                identified_file_blocks.append((disk_block,file_blocks,len(hash_source_file_blocks[hash]),
+                                               hash_disk_flags.get(hash,'')))
 
         # Now generate the output
         identified_file_blocks.sort()
@@ -93,6 +99,7 @@ def process_report(reportdir):
         # [0] = disk_block
         # [1] = set of file_blocks
         # [2] = count
+        # [3] = flags (not currently used)
 
         def exists_a_larger(set1,set2):
             # Return true if there exists an element in set2 that is one larger than an element in set1
