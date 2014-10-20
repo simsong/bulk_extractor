@@ -63,10 +63,6 @@ def process_report(reportdir):
         except ValueError:
             continue
         hash_disk_blocks[sector_hash].add(disk_offset // 512)
-        try:
-            hash_disk_flags[sector_hash] = json.loads(meta)['flags']
-        except KeyError:
-            continue
 
 
     # Open the report file
@@ -90,8 +86,8 @@ def process_report(reportdir):
                 file_blocks = set()
                 for file_block in hash_source_file_blocks[hash][source_id]:
                     file_blocks.add(file_block)
-                identified_file_blocks.append((disk_block,file_blocks,len(hash_source_file_blocks[hash]),
-                                               hash_disk_flags.get(hash,'')))
+                identified_file_blocks.append((disk_block,file_blocks,len(hash_source_file_blocks[hash])))
+
 
         # Now generate the output
         identified_file_blocks.sort()
