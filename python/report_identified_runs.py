@@ -1,7 +1,7 @@
 #
 # This program reads one or more databases created by the identified_blocks search
-# and builds an in-memory database. It then supports queries on that database
-#
+# and builds an in-memory database. It then supports queries on that database.
+# It is for the the hashdb version 1.0 "identified_blocks" file.
 
 
 import os,pickle
