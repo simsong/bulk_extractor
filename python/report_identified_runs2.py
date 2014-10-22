@@ -92,10 +92,10 @@ def process_report(reportdir):
         # Now generate the output
         identified_file_blocks.sort()
 
+        # Each element in the array inconsists of:
         # [0] = disk_block
         # [1] = set of file_blocks
         # [2] = count
-        # [3] = flags (not currently used)
 
         def exists_a_larger(set1,set2):
             # Return true if there exists an element in set2 that is one larger than an element in set1
@@ -119,6 +119,7 @@ def process_report(reportdir):
                         if block_runs: 
                             continue
                     if has_singleton and len(run)>1:
+                        # For debugging, print runs that are less than 100 lines
                         print("{} mod8={} using {} of {}".format(filename,mod8,len(block_runs),len(identified_file_blocks)))
                         if len(run)<100:
                             for br in run:
@@ -128,10 +129,10 @@ def process_report(reportdir):
                         score  = sum(map(lambda inv:1.0/inv,counts))
                         if first:
                             ofwriter.writerow(['Identified File','Score','Physical Block Start',
-                                               'Logical Block Start','--','Logical Block End'])
+                                               'Logical Block Start','--','Logical Block End','(mod 8)'])
                         first = False
                         ofwriter.writerow([filename,score,run[0][0],
-                                           run[0][1],'--',run[-1][1]])
+                                           run[0][1],'--',run[-1][1]],mod8)
                     run = []
                     has_singleton = False
 
