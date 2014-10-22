@@ -65,7 +65,7 @@ typedef md5_generator hash_generator;
 
 // hashdb manager
 typedef hashdb_t__<hash_t> hashdb_t;
-hashdb_t* hashdb;
+hashdb_t hashdb;
 
 static void do_import(const class scanner_params &sp,
                       const recursion_control_block &rcb);
@@ -325,11 +325,17 @@ void scan_hashdb(const class scanner_params &sp,
                     // set the path to the hashdb
                     hashdb_dir = sp.fs.get_outdir() + "/" + "hashdb.hdb";
 
-                    // create the new hashdb manager for importing
+                    // open hashdb for importing
                     // currently, hashdb_dir is required to not exist
-                    hashdb = new hashdb_t(hashdb_dir,
+                    std::pair<bool, std::string> open_import_pair = hashdb.open_import(
+                                          hashdb_dir,
                                           hashdb_block_size,
                                           hashdb_import_max_duplicates);
+                    if (open_import_pair.first == false) {
+                        std::cerr << "Error opening hashdb for importing.\n"
+                                  << open_import_pair.second << "\nAborting.\n";
+                        exit(1);
+                    }
 
                     // show relavent settable options
                     std::string temp1((hashdb_ignore_empty_blocks) ? "YES" : "NO");
@@ -353,8 +359,14 @@ void scan_hashdb(const class scanner_params &sp,
                               << "hashdb: hashdb_scan_sector_size=" << hashdb_scan_sector_size << "\n"
                               << "hashdb: hashdb_scan_max_features=" << hashdb_scan_max_features << "\n";
 
-                    // open the hashdb manager for scanning
-                    hashdb = new hashdb_t(hashdb_scan_path_or_socket);
+                    // open hashdb for scanning
+                    std::pair<bool, std::string> open_scan_pair = hashdb.open_scan(
+                                          hashdb_scan_path_or_socket);
+                    if (open_scan_pair.first == false) {
+                        std::cerr << "Error opening hashdb for scanning.\n"
+                                  << open_scan_pair.second << "\nAborting.\n";
+                        exit(1);
+                    }
                     return;
                 }
 
@@ -395,16 +407,8 @@ void scan_hashdb(const class scanner_params &sp,
 
         // shutdown
         case scanner_params::PHASE_SHUTDOWN: {
-            switch(mode) {
-                case MODE_SCAN:
-                     delete hashdb;
-                     return;
-                case MODE_IMPORT:
-                     delete hashdb;
-                     return;
-                default:
-                     return;
-            }
+            // no action, resources close when their scope closes
+            return;
         }
 
         // there are no other bulk_extractor scanner state actions
@@ -472,7 +476,7 @@ static void do_import(const class scanner_params &sp,
     }
 
     // perform the import
-    int status = hashdb->import(*import_input);
+    int status = hashdb.import(*import_input);
 
     if (status != 0) {
         std::cerr << "scan_hashdb import failure\n";
@@ -485,7 +489,7 @@ static void do_import(const class scanner_params &sp,
     hash_t sbuf_hash = hash_generator::hash_buf(sbuf.buf, sbuf.pagesize);
 
     // store the source metadata
-    hashdb->import_metadata(hashdb_import_repository_name,
+    hashdb.import_metadata(hashdb_import_repository_name,
                             filename,
                             sbuf.pagesize,
                             sbuf_hash);
@@ -537,7 +541,7 @@ static void do_scan(const class scanner_params &sp,
     hashdb_t::scan_output_t* scan_output = new hashdb_t::scan_output_t;
 
     // perform the scan
-    int status = hashdb->scan(*scan_input, *scan_output);
+    int status = hashdb.scan(*scan_input, *scan_output);
 
     if (status != 0) {
         std::cerr << "Error: scan_hashdb scan failure.  Aborting.\n";
