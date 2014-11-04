@@ -27,7 +27,11 @@ public:
 
 static bool wordlist_use_flatfiles = true;
 
-#ifdef HAVE_SQLITE3_H
+#if defined(HAVE_LIBSQLITE3) && defined(HAVE_SQLITE3_H)
+#define USE_SQLITE3
+#endif
+
+#ifdef USE_SQLITE3 
 static const char *schema_wordlist[] = {
     "CREATE TABLE wordlist (word BLOB)",
     "CREATE UNIQUE INDEX wordlist_i on wordlist(word)",
@@ -103,7 +107,7 @@ static void wordlist_split_and_dedup(const std::string &ifn)
  */
 static void wordlist_sql_write(BEAPI_SQLITE3 *db3)
 {
-#ifdef HAVE_SQLITE3_H
+#ifdef USE_SQLITE3
     feature_recorder::besql_stmt s(db3,select_statement);
     while (sqlite3_step(s.stmt) != SQLITE_DONE) {
         const char *base = (const char *)sqlite3_column_blob(s.stmt,0);
@@ -168,7 +172,7 @@ void scan_wordlist(const class scanner_params &sp,const recursion_control_block 
             return;
         }
         
-#ifdef HAVE_SQLITE3_H
+#ifdef USE_SQLITE3
         if (fs.db3) {
             fs.db_send_sql(fs.db3,schema_wordlist);
             wordlist_stmt = new feature_recorder::besql_stmt(fs.db3,insert_statement);
@@ -231,7 +235,7 @@ void scan_wordlist(const class scanner_params &sp,const recursion_control_block 
                     if (wordlist_recorder) {
                         wordlist_recorder->write(sbuf.pos0+wordstart,word,"");
                     } else if (fs.db3) {
-#ifdef HAVE_SQLITE3_H
+#ifdef USE_SQLITE3
                         cppmutex::lock lock(wordlist_stmt->Mstmt);
                         sqlite3_bind_blob(wordlist_stmt->stmt, 1, (const char *)word.data(), word.size(), SQLITE_STATIC);
                         if (sqlite3_step(wordlist_stmt->stmt) != SQLITE_DONE) {
