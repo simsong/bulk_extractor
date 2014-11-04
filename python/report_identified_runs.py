@@ -94,8 +94,7 @@ def process_report(reportdir):
         identified_file_blocks[filename].sort()
         for mod8 in range(0,8):
             block_runs = list(filter(lambda a:(a[0] % 8) == mod8,identified_file_blocks[filename] ))
-            file_blocks = [a[1] for a in block_runs]
-            if file_blocks:
+            if block_runs:
                 run = []
                 has_singleton = False
                 while block_runs:
@@ -108,7 +107,7 @@ def process_report(reportdir):
                         if block_runs: 
                             continue
                     if has_singleton and len(run)>1:
-                        print("{} mod8={} using {} of {}".format(clean_filename,mod8,len(file_blocks),len(identified_file_blocks[filename])))
+                        print("{} mod8={} ".format(clean_filename,mod8))
                         if len(run)<100:
                             for br in run:
                                 print(br)
