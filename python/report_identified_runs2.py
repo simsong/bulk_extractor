@@ -5,6 +5,7 @@
 # It works with the improved identified_blocks_explained available in hashdb 1.1
 
 
+import sqlite3
 import os,pickle,json
 from collections import defaultdict
 
@@ -63,8 +64,18 @@ def process_report(reportdir):
             filename = clean_target_filename(d['filename'])
             source_id_filenames[source_id] = filename
             source_id_filesize[source_id]  = d.get('filesize',get_filesize(filename))
-            print(filename, source_id_filesize[source_id])
+            #print(filename, source_id_filesize[source_id])
         
+
+    # Is there a sqlite3 database?
+
+    conn = None
+    cur  = None
+    dbname = os.path.join(reportdir,"tsk_db.sqlite3")
+    if os.path.exists(dbname):
+        import sqlite3
+        conn = sqlite3.connect(dbname)
+        cur  = conn.cursor()
 
     # Read the v1.1 identified_blocks file and build the list of where each hashes associated with each file.
 
@@ -119,6 +130,19 @@ def process_report(reportdir):
                     if s1+1==s2: return True
             return False
 
+        def get_filename(block):
+            if not cur: return ("",-1)
+            byte_start = block * 512
+            cur.execute("SELECT obj_id from tsk_file_layout where byte_start<=? and byte_start+byte_len>?",
+                        (byte_start,byte_start))
+            r = cur.fetchone()
+            if not r: return ("",-1)
+            cur.execute("SELECT parent_path||name,size from tsk_files where obj_id=?",(r[0],))
+            r2 = cur.fetchone()
+            if not r2: return ("",-1)
+            return (r2[0],r2[1])
+            
+
         for mod8 in range(0,8):
             block_runs = list(filter(lambda a:(a[0] % 8) == mod8,identified_file_blocks))
             if not block_runs: continue
@@ -154,10 +178,13 @@ def process_report(reportdir):
                         score  = sum(map(lambda inv:1.0/inv,counts))
                         if first:
                             ofwriter.writerow(['Identified File','Score','Physical Block Start',
-                                           'Logical Block Start','--','Logical Block End','(mod 8)'])
+                                               'Logical Block Start','--','Logical Block End','(mod 8)',
+                                               'Source File','Source Size'])
                         first = False
+                        (source_file,source_size) = get_filename(run[0][0])
                         ofwriter.writerow([filename,score,run[0][0],
-                                           run[0][1],'--',run[-1][1],mod8])
+                                           run[0][1],'--',run[-1][1],mod8,
+                                           source_file,source_size ])
                 run = []
                 has_singleton = False
 
