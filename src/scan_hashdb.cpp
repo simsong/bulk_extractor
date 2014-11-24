@@ -165,9 +165,12 @@ void scan_hashdb(const class scanner_params &sp,
         case scanner_params::PHASE_STARTUP: {
 
             // set properties for this scanner
+            std::string desc = "Search cryptographic hash IDs against hashes in a hashdb block hash database";
+            desc += std::string(" (hashdb version") + std::string(hashdb_version()) + std::string(")");
+
             sp.info->name        = "hashdb";
             sp.info->author      = "Bruce Allen";
-            sp.info->description = "Search cryptographic hash IDs against hashes in a hashdb block hash database";
+            sp.info->description = desc;
             sp.info->flags       = scanner_info::SCANNER_DISABLED;
 
             // hashdb_mode

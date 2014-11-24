@@ -52,9 +52,9 @@ def read_explained_file(reportdir):
     # Read the identified_blocks_explained file twice.
     # The first time is for candidate selection. The second time is to build the database
     identified_blocks_fn = os.path.join(reportdir,"identified_blocks_explained.txt")
-    print("reading "+identified_blocks_fn)
 
     # Candidate Selection
+    print("reading {} for candidate selection".format(identified_blocks_fn))
     for line in open(identified_blocks_fn):
         if line[0]=='[':        # a hash and its sources
             (hash,meta,sources) = json.loads(line)
@@ -66,6 +66,7 @@ def read_explained_file(reportdir):
 
     # Now re-read the file, but only consider blocks for candidates
 
+    print("re-reading {} to build source database".format(identified_blocks_fn))
     for line in open(identified_blocks_fn):
         if line[0]=='[':        # a hash and its sources
             (hash,meta,sources) = json.loads(line)
@@ -114,6 +115,7 @@ def hash_sets(reportdir,report_fn):
     # dump the database, I guess
     # Make a list of the all the sources and their score
     
+    print("Writing HASH-SETS output to {}".format(report_fn))
     of = open(report_fn, 'w', newline='')
     ofwriter = csv.writer(of,dialect='excel')
 
