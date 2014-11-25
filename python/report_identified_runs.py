@@ -146,24 +146,27 @@ def hash_runs(reportdir):
 
     conn = None
     cur  = None
-    dbname = os.path.join(reportdir,"tsk_db.sqlite3")
+    dbname = os.path.join(reportdir,args.dbname)
     if os.path.exists(dbname):
+        print("Reading {}".format(dbname))
         import sqlite3
         conn = sqlite3.connect(dbname)
         cur  = conn.cursor()
+    else:
+        print("Will not report allocated files; no file {}".format(dbname))
 
     def get_filename(block):
-        if not cur: return ("",-1)
+        if not cur: return (None,None)
         byte_start = block * 512
-        cur.execute("SELECT obj_id from tsk_file_layout where byte_start<=? and byte_start+byte_len>?",
+        cur.execute("SELECT parent_path||name,size from tsk_files where obj_id in (SELECT obj_id from tsk_file_layout where byte_start<=? and byte_start+byte_len>?)",
                     (byte_start,byte_start))
         r = cur.fetchone()
-        if not r: return ("",-1)
-        cur.execute("SELECT parent_path||name,size from tsk_files where obj_id=?",(r[0],))
-        r2 = cur.fetchone()
-        if not r2: return ("",-1)
-        return (r2[0],r2[1])
-            
+        if r:
+            (name,size) = r
+            if not name:
+                size = None
+            return (name,size)
+        return (None,None)
 
     # Now generate the output
     # Read the v1.1 identified_blocks file and build the list of
@@ -217,7 +220,11 @@ def hash_runs(reportdir):
                 if run_start>=run_end:
                     # No run.
                     run_start += 1
-                    run_end   = run_start-1
+                    continue
+
+                if run_end-run_start<args.minrun:
+                    # Run too small
+                    run_start = run_end+1
                     continue
 
                 # We are at the end of a run
@@ -232,6 +239,12 @@ def hash_runs(reportdir):
                                        'Logical Block Start','Logical Block End','(mod 8)',
                                        'Source File','Source Size'])
                 counts = [br[2] for br in block_runs[run_start:run_end]]
+
+                if min(counts) > args.mincount:
+                    # all of the counts are too high!
+                    run_start = run_end+1
+                    continue
+
                 score  = sum(map(lambda inv:1.0/inv,counts))
                 (source_file,source_size) = get_filename(block_runs[run_start][0])
                 logical_block_start = min(block_runs[run_start][1])
@@ -252,17 +265,41 @@ def hash_runs(reportdir):
 if __name__=="__main__":
     import sys
     import argparse
+    from subprocess import call
     parser = argparse.ArgumentParser()
     
     parser.add_argument("reportdir",help="Report directory")
     parser.add_argument("--sets",action='store_true',help='run HASH-SETS algorithm')
     parser.add_argument("--all",action='store_true',help='show all files; disable candidate selection')
     parser.add_argument("--debug",action='store_true',help='print debug info')
+    parser.add_argument("--minrun",help='do not report runs shorter than this',default=2)
+    parser.add_argument("--mincount",help='at least one of the blocks in each run must have a count less than this',default=10)
+    parser.add_argument("--run",help="run tsk_loaddb if not hasn't been run",action='store_true')
+    parser.add_argument("--dbname",help="name of tsk_loaddb database to use in REPORTDIR",default='tsk_db.sqlite3')
+    parser.add_argument("--explain",help="If identified_blocks_explained.txt is not present, run hashdb to produce it, and use this database")
     args = parser.parse_args()
 
     if not os.path.exists(args.reportdir):
         print("{} does not exist".format(args.reportdir))
         exit(1)
+
+    explainfile = os.path.join(args.reportdir,"identified_blocks_explained.txt")
+    if not os.path.exists(explainfile) and args.explain:
+        ifname = os.path.join(args.reportdir,"identified_blocks.txt")
+        ofname = os.path.join(args.reportdir,"identified_blocks_explained.txt")
+        cmd = ['hashdb','explain_identified_blocks',args.explain,ifname]
+        print(" ".join(cmd))
+        call(cmd,stdout=open(ofname,"w"))
+
+
+    dbname = os.path.join(args.reportdir,args.dbname)
+    if not os.path.exists(dbname) and args.run:
+        from bulk_extractor_reader import BulkReport
+        b = BulkReport(args.reportdir)
+        print("{} does not exist. Will try to run tsk_loaddb".format(dbname))
+        cmd=['tsk_loaddb','-d',dbname,b.image_filename()]
+        print(" ".join(cmd))
+        call(cmd)
 
     read_explained_file(args.reportdir)
     if args.sets:
