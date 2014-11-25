@@ -42,7 +42,7 @@ hash_disk_blocks        = defaultdict(set) # all of the disk blocks where a give
 hash_flags              = dict() # flags for a given hash
 hashes_for_source       = defaultdict(set) # for each source, a set of its hashes found
 source_id_scores        = defaultdict(int)
-source_id_filesize      = dict()
+source_id_filesizes     = dict()
 candidate_sources       = set()
 
 def read_explained_file(reportdir):
@@ -97,7 +97,7 @@ def read_explained_file(reportdir):
             source_id = d['source_id']
             filename = clean_target_filename(d['filename'])
             source_id_filenames[source_id] = filename
-            source_id_filesize[source_id]  = d.get('filesize',get_filesize(filename))
+            source_id_filesizes[source_id]  = d.get('filesize',get_filesize(filename))
         
 def get_disk_offsets(reportdir):
     identified_blocks_fn = os.path.join(reportdir,"identified_blocks.txt")
@@ -110,19 +110,28 @@ def get_disk_offsets(reportdir):
             continue
         hash_disk_blocks[sector_hash].add(disk_offset // 512)
 
-def hash_sets(reportdir,report_fn):
+def hash_sets(reportdir):
     # Implements the HASH-SETS algorithm. Basically reports which files are most likely to be present
     # dump the database, I guess
     # Make a list of the all the sources and their score
     
+    import math
+
+    report_fn = os.path.join(reportdir,"hash-sets-report.csv")
     print("Writing HASH-SETS output to {}".format(report_fn))
     of = open(report_fn, 'w', newline='')
-    ofwriter = csv.writer(of,dialect='excel')
+    ofwriter = csv.writer(of,  dialect='excel')
 
-    ofwriter.writerow(['Filename','Score'])
-    for source_id in sorted(candidate_sources,
-                            key=lambda id:(-source_id_scores[id],source_id_filenames[id])):
-        ofwriter.writerow([source_id_filenames[source_id],source_id_scores[source_id]])
+    ofwriter.writerow(['Filename','Raw Score','Normalized Score'])
+    res = []
+    for source_id in candidate_sources:
+        norm = ''
+        if source_id in source_id_filesizes:
+            norm = source_id_scores[source_id] / (math.floor(source_id_filesizes[source_id]/4096))
+            if norm>1: norm=1   # for cases where we successfully hashed the last block
+        res.append([source_id_filenames[source_id],source_id_scores[source_id],norm])
+    res.sort(reverse=True,key=lambda a:(a[2],a[1]))
+    ofwriter.writerows(res)
 
 
 def exists_a_larger(set1,set2):
@@ -161,7 +170,7 @@ def hash_runs(reportdir):
     # where each hashes associated with each file.
 
     # Open the report file
-    report_fn = os.path.join(reportdir,"blocks-report.csv")
+    report_fn = os.path.join(reportdir,"hash-runs-report.csv")
     print("writing "+report_fn)
     of = open(report_fn, 'w', newline='')
     ofwriter = csv.writer(of,  dialect='excel')
@@ -192,13 +201,14 @@ def hash_runs(reportdir):
                 mod8_block_runs[mod8].append((disk_block,file_blocks,hash_count[hash]))
 
         # now loop for each mod8 value
+        rows = []
         for block_runs in mod8_block_runs:
             if not block_runs: continue # empty
             block_runs.sort()
             run_start = 0
-            run_end   = 1
             while run_start < len(block_runs):
-                # Find the end of this run
+                # advance run_end until it points to the end of the run
+                run_end   = run_start
                 while ((run_end+1 < len(block_runs) and
                         (block_runs[run_end][0]+8 == block_runs[run_end+1][0]) and
                         (exists_a_larger(block_runs[run_end][1],block_runs[run_end+1][1])))):
@@ -224,12 +234,19 @@ def hash_runs(reportdir):
                 counts = [br[2] for br in block_runs[run_start:run_end]]
                 score  = sum(map(lambda inv:1.0/inv,counts))
                 (source_file,source_size) = get_filename(block_runs[run_start][0])
-                ofwriter.writerow([filename,score,block_runs[run_start][0],
-                                   block_runs[run_start][1],block_runs[run_end-1][1],
-                                   block_runs[run_start][0] % 8,
-                                   source_file,source_size])
+                logical_block_start = min(block_runs[run_start][1])
+                logical_block_end = min(block_runs[run_end-1][1])
+                rows.append([filename,score,block_runs[run_start][0],
+                             logical_block_start,logical_block_end,
+                             block_runs[run_start][0] % 8,
+                             source_file,source_size])
                 run_start = run_end+1
-                run_end   = run_start-1
+        # sort the rows by starting logical block
+        rows.sort(key=lambda a:a[4])
+        # Now write the rows
+        for row in rows:
+            ofwriter.writerow(row)
+    
 
 
 if __name__=="__main__":
@@ -238,7 +255,7 @@ if __name__=="__main__":
     parser = argparse.ArgumentParser()
     
     parser.add_argument("reportdir",help="Report directory")
-    parser.add_argument("--sets",help='run HASH-SETS algorithm, output to SETS')
+    parser.add_argument("--sets",action='store_true',help='run HASH-SETS algorithm')
     parser.add_argument("--all",action='store_true',help='show all files; disable candidate selection')
     parser.add_argument("--debug",action='store_true',help='print debug info')
     args = parser.parse_args()
@@ -249,7 +266,7 @@ if __name__=="__main__":
 
     read_explained_file(args.reportdir)
     if args.sets:
-        hash_sets(args.reportdir,args.sets)
+        hash_sets(args.reportdir)
     else:
         get_disk_offsets(args.reportdir)
         hash_runs(args.reportdir)
