@@ -158,8 +158,12 @@ def hash_runs(reportdir):
     def get_filename(block):
         if not cur: return (None,None)
         byte_start = block * 512
-        cur.execute("SELECT parent_path||name,size from tsk_files where obj_id in (SELECT obj_id from tsk_file_layout where byte_start<=? and byte_start+byte_len>?)",
-                    (byte_start,byte_start))
+        #
+        # This is wrong becuase it doesn't take into account img_offset (byte_start is from the start of the partition, not the start of the image)
+        # cur.execute("SELECT parent_path||name,size from tsk_files where obj_id in (SELECT obj_id from tsk_file_layout where byte_start<=? and byte_start+byte_len>?)", (byte_start,byte_start))
+
+        cur.execute("select B.parent_path||B.name,size from tsk_file_layout as A JOIN tsk_files as B on A.obj_id=B.obj_id JOIN tsk_fs_info as C on B.fs_obj_id=C.obj_id where byte_start+img_offset<=? and byte_start+img_offset+byte_len>?",(byte_start,byte_start))
+
         r = cur.fetchone()
         if r:
             (name,size) = r
@@ -175,7 +179,8 @@ def hash_runs(reportdir):
     # Open the report file
     report_fn = os.path.join(reportdir,"hash-runs-report.csv")
     print("writing "+report_fn)
-    of = open(report_fn, 'w', newline='')
+    of = open(report_fn, 'w', encoding='utf-8', newline='')
+    of.write("\ufeff")          # makes Excel open the file as Unicode
     ofwriter = csv.writer(of,  dialect='excel')
 
     # Now, for every source, make an array of all the blocks that were found

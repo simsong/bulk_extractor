@@ -139,10 +139,11 @@ static bool hist_trait(const sbuf_t &sbuf)
 
 static bool whitespace_trait(const sbuf_t &sbuf)
 {
+    size_t count = 0;
     for(size_t i=0;i<sbuf.pagesize;i++){
-        if (!isspace(sbuf[i])) return false;
+        if (isspace(sbuf[i])) count+=1;
     }
-    return true;
+    return count >= (sbuf.pagesize * 3)/4;
 }
 
 // detect if block is empty
