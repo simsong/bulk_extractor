@@ -150,8 +150,9 @@ def hash_runs(reportdir):
     if os.path.exists(dbname):
         print("Reading {}".format(dbname))
         import sqlite3
-        conn = sqlite3.connect(dbname)
+        conn = sqlite3.connect("file:{}?mode=ro".format(dbname),uri=True)
         cur  = conn.cursor()
+        cur.execute("PRAGMA cache_size = -1000000") # a gigabyte of cache
     else:
         print("Will not report allocated files; no file {}".format(dbname))
 
@@ -305,6 +306,16 @@ if __name__=="__main__":
         cmd=['tsk_loaddb','-d',dbname,b.image_filename()]
         print(" ".join(cmd))
         call(cmd)
+        # Add the indexes
+        print("Adding indexes to database")
+        import sqlite3
+        con = sqlite3.connect("file:{}".format(dbname),uri=True)
+        cur  = con.cursor()
+        cur.execute("create index if not exists start1 on tsk_file_layout(byte_start)");
+        cur.execute("create index if not exists start2 on tsk_file_layout(byte_len)");
+        con.close()
+
+
 
     read_explained_file(args.reportdir)
     if args.sets:
