@@ -146,11 +146,6 @@ inline bool empty_sbuf(const sbuf_t &sbuf)
             return false;
         }
     }
-    /* If bufsize is less than hashdb_block_size, this block will be zero-extended.
-     * So return false if the first byte is not 0.
-     */
-    if ((sbuf.bufsize < hashdb_block_size) && sbuf[0]!=0) return false;
-
     return true;                        // all the same
 }
 
