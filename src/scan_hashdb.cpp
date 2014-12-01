@@ -86,7 +86,7 @@ inline hash_t hash_one_block(const uint8_t *buf, size_t byte_count)
     if (byte_count == hashdb_block_size) {
         // hash the block
         return hash_generator::hash_buf(buf, hashdb_block_size);
-    } else {
+    } else if (byte_count < hashdb_block_size) {
         // hash the available part
         hash_generator g;
         g.update(buf, byte_count);
@@ -96,6 +96,9 @@ inline hash_t hash_one_block(const uint8_t *buf, size_t byte_count)
         std::vector<uint8_t> zeros(extra);
         g.update(&zeros[0], extra);
         return g.final();
+    } else {
+        // it is a program error if byte_count > hashdb_bock_size
+        assert(0);
     }
 }
 
@@ -458,7 +461,7 @@ static void do_import(const class scanner_params &sp,
     std::string filename = ss.str();
 
     // import the cryptograph hash values from all the blocks in sbuf
-    for (size_t offset=0; offset<sbuf.pagesize; offset+=hashdb_import_sector_size) {
+    for (size_t offset=0; offset<sbuf.bufsize; offset+=hashdb_import_sector_size) {
 
         // ignore empty blocks
         if (hashdb_ignore_empty_blocks && empty_block(sbuf.buf + offset,
@@ -524,7 +527,7 @@ static void do_scan(const class scanner_params &sp,
     std::vector<uint32_t>* offset_lookup_table = new std::vector<uint32_t>;
 
     // process cryptographic hash values for blocks along sector boundaries
-    for (size_t offset=0; offset<sbuf.pagesize; offset+=hashdb_scan_sector_size) {
+    for (size_t offset=0; offset<sbuf.bufsize; offset+=hashdb_scan_sector_size) {
 
         // ignore empty blocks
         if (hashdb_ignore_empty_blocks && empty_block(sbuf.buf + offset,
