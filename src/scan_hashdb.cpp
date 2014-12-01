@@ -74,7 +74,7 @@ static void do_scan(const class scanner_params &sp,
 
 
 // safely hash sbuf range without overflow failure
-inline hash_t hash_one_block(const sbuf_t &sbuf)
+inline const hash_t hash_one_block(const sbuf_t &sbuf)
 {
     if (sbuf.bufsize >= hashdb_block_size) {
         // hash from the beginning
@@ -435,7 +435,7 @@ static void do_import(const class scanner_params &sp,
  
     // get the filename to use for source attribution
     std::stringstream ss;
-    size_t p=sbuf.pos0.path.find('/');
+    const size_t p=sbuf.pos0.path.find('/');
     if (p==std::string::npos) {
         // no directory in forensic path so explicitly include the filename
         ss << sp.fs.get_input_fname();
@@ -461,10 +461,10 @@ static void do_import(const class scanner_params &sp,
         }
 
         // calculate the hash for this import-sector-aligned hash block
-        hash_t hash = hash_one_block(sbuf_to_hash);
+        const hash_t hash = hash_one_block(sbuf_to_hash);
 
         // calculate the offset from the start of the media image
-        uint64_t image_offset = sbuf_to_hash.pos0.offset;
+        const uint64_t image_offset = sbuf_to_hash.pos0.offset;
 
         // create and add the import element to the import input
         import_input->push_back(hashdb_t::import_element_t(
@@ -475,7 +475,7 @@ static void do_import(const class scanner_params &sp,
     }
 
     // perform the import
-    int status = hashdb->import(*import_input);
+    const int status = hashdb->import(*import_input);
 
     if (status != 0) {
         std::cerr << "scan_hashdb import failure\n";
@@ -485,7 +485,7 @@ static void do_import(const class scanner_params &sp,
     delete import_input;
 
     // calculate the sbuf hash for the source metadata
-    hash_t sbuf_hash = hash_generator::hash_buf(sbuf.buf, sbuf.pagesize);
+    const hash_t sbuf_hash = hash_generator::hash_buf(sbuf.buf, sbuf.pagesize);
 
     // store the source metadata
     hashdb->import_metadata(hashdb_import_repository_name,
@@ -531,7 +531,7 @@ static void do_scan(const class scanner_params &sp,
         offset_lookup_table->push_back(offset);
 
         // calculate the hash for this scan-sector-aligned hash block
-        hash_t hash = hash_one_block(sbuf_to_hash);
+        const hash_t hash = hash_one_block(sbuf_to_hash);
 
         // calculate and add the hash to the scan input
         scan_input->push_back(hash);
