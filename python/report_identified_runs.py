@@ -8,6 +8,9 @@
 import sqlite3
 import os,pickle,json,sys,csv
 from collections import defaultdict
+from be_image_reader import BEImageReader,all_null
+
+UTF8_BOM = "\ufeff"
 
 if sys.version_info < (3,0,0):
     raise RuntimeError("Requires Python 3.0 or above")
@@ -41,7 +44,7 @@ source_id_filenames     = dict() # filename for each source id
 hash_disk_blocks        = defaultdict(set) # all of the disk blocks where a given hash was seen
 hash_flags              = dict() # flags for a given hash
 hashes_for_source       = defaultdict(set) # for each source, a set of its hashes found
-source_id_scores        = defaultdict(int)
+source_id_count         = defaultdict(int)
 source_id_filesizes     = dict()
 candidate_sources       = set()
 
@@ -60,7 +63,7 @@ def read_explained_file(reportdir):
             (hash,meta,sources) = json.loads(line)
             count = meta.get('count',0)
             flags = meta.get('flags',None)
-            if (count==1 and not flags) or args.all:
+            if (count>=1 and not flags) or args.all:
                 for s in sources:
                     candidate_sources.add(s['source_id'])
 
@@ -89,7 +92,7 @@ def read_explained_file(reportdir):
                     file_block = s['file_offset'] // 4096
                     hashes_for_source[source_id].add(hash)
                     hash_source_file_blocks[hash][source_id].add(file_block)
-                    source_id_scores[source_id] += 1/count # for sorting
+                    source_id_count[source_id] += 1
 
         # Learn about the sources 
         if line[0]=='{':
@@ -115,6 +118,7 @@ def hash_sets(reportdir):
     # dump the database, I guess
     # Make a list of the all the sources and their score
     
+    print("running hash_sets")
     import math
 
     report_fn = os.path.join(reportdir,"hash-sets-report.csv")
@@ -127,9 +131,9 @@ def hash_sets(reportdir):
     for source_id in candidate_sources:
         norm = ''
         if source_id in source_id_filesizes:
-            norm = source_id_scores[source_id] / (math.floor(source_id_filesizes[source_id]/4096))
+            norm = source_id_count[source_id] / (math.floor(source_id_filesizes[source_id]/4096))
             if norm>1: norm=1   # for cases where we successfully hashed the last block
-        res.append([source_id_filenames[source_id],source_id_scores[source_id],norm])
+        res.append([source_id_filenames[source_id],source_id_count[source_id],norm])
     res.sort(reverse=True,key=lambda a:(a[2],a[1]))
     ofwriter.writerows(res)
 
@@ -144,6 +148,7 @@ def exists_a_larger(set1,set2):
 def hash_runs(reportdir):
     # Is there a sqlite3 database?
 
+    print("Running hash_runs")
     conn = None
     cur  = None
     dbname = os.path.join(reportdir,args.dbname)
@@ -181,14 +186,14 @@ def hash_runs(reportdir):
     report_fn = os.path.join(reportdir,"hash-runs-report.csv")
     print("writing "+report_fn)
     of = open(report_fn, 'w', encoding='utf-8', newline='')
-    of.write("\ufeff")          # makes Excel open the file as Unicode
+    of.write(UTF8_BOM)          # makes Excel open the file as Unicode
     ofwriter = csv.writer(of,  dialect='excel')
 
     # Now, for every source, make an array of all the blocks that were found
 
     if args.debug: print("Total Candidates:",len(candidate_sources))
     for source_id in sorted(candidate_sources,
-                            key=lambda id:(-source_id_scores[id],source_id_filenames[id])):
+                            key=lambda id:(-source_id_count[id],source_id_count[id])):
         filename = source_id_filenames[source_id]
         if args.debug: print("candidate source_id",source_id,"filename",filename)
 
@@ -240,10 +245,10 @@ def hash_runs(reportdir):
                         print(r,block_runs[r])
                     print("")
 
-                if of.tell()==0:
+                if of.tell()<4:
                     ofwriter.writerow(['Identified File','Score','Physical Block Start',
                                        'Logical Block Start','Logical Block End','(mod 8)',
-                                       'Source File','Source Size'])
+                                       'Source File','Source Size','Percentage'])
                 counts = [br[2] for br in block_runs[run_start:run_end]]
 
                 if min(counts) > args.mincount:
@@ -253,15 +258,48 @@ def hash_runs(reportdir):
 
                 score  = sum(map(lambda inv:1.0/inv,counts))
                 (source_file,source_size) = get_filename(block_runs[run_start][0])
+                physical_block_start = block_runs[run_start][0]
                 logical_block_start = min(block_runs[run_start][1])
                 logical_block_end = min(block_runs[run_end-1][1])
-                rows.append([filename,score,block_runs[run_start][0],
+                if source_size:
+                    percentage = "{:3.0f}%".format((logical_block_end-logical_block_start+1) / (source_size//4096) * 100.0)
+                else:
+                    percentage = ""
+                rows.append([filename,score,physical_block_start,
                              logical_block_start,logical_block_end,
-                             block_runs[run_start][0] % 8,
-                             source_file,source_size])
+                             physical_block_start % 8,
+                             source_file,source_size,percentage])
                 run_start = run_end+1
         # sort the rows by starting logical block
         rows.sort(key=lambda a:a[4])
+
+        # Are there runs that can be combined because the blocks on the disk are blank?
+        for i in range(0,len(rows)-1):
+            if(rows[i][0]==rows[i+1][0]):
+                physical_block_start0 = rows[i][2]
+                logical_block_start0 = rows[i][3]
+                logical_block_end0   = rows[i][4]
+
+                physical_block_start1 = rows[i+1][2]
+                logical_block_start1 = rows[i+1][3]
+                print(physical_block_start1-physical_block_start0,logical_block_start1-logical_block_start0)
+                if (physical_block_start1-physical_block_start0) == (logical_block_start1-logical_block_start0)*8:
+                    print("rows {} and {} might be combined".format(i,i+1))
+                    # If the blocks from physical_block_start0+1 through physical_block_start1-1 are all null, then they can!
+                    combine = True
+                    br = BEImageReader(args.image)
+                    # Note: we need to add 2 below. 1 to get the length of the run and another to step into the next region
+                    physical_block_end0 = physical_block_start0+(logical_block_end0+2-logical_block_start0)*8
+                    for sector in range(physical_block_end0,physical_block_start1,8):
+                        buf = br.read(sector*512,4096)
+                        print("check",sector,"=",all_null(buf))
+                        if not all_null(buf):
+                            combine = False
+                            break
+                    if combine:
+                        print("CAN be combined")
+               
+
         # Now write the rows
         for row in rows:
             ofwriter.writerow(row)
@@ -275,7 +313,6 @@ if __name__=="__main__":
     parser = argparse.ArgumentParser()
     
     parser.add_argument("reportdir",help="Report directory")
-    parser.add_argument("--sets",action='store_true',help='run HASH-SETS algorithm')
     parser.add_argument("--all",action='store_true',help='show all files; disable candidate selection')
     parser.add_argument("--debug",action='store_true',help='print debug info')
     parser.add_argument("--minrun",help='do not report runs shorter than this',default=2)
@@ -283,6 +320,7 @@ if __name__=="__main__":
     parser.add_argument("--run",help="run tsk_loaddb if not hasn't been run",action='store_true')
     parser.add_argument("--dbname",help="name of tsk_loaddb database to use in REPORTDIR",default='tsk_db.sqlite3')
     parser.add_argument("--explain",help="If identified_blocks_explained.txt is not present, run hashdb to produce it, and use this database")
+    parser.add_argument("--image",help="image file (defaults to what is in BE report)")
     args = parser.parse_args()
 
     if not os.path.exists(args.reportdir):
@@ -298,12 +336,15 @@ if __name__=="__main__":
         call(cmd,stdout=open(ofname,"w"))
 
 
-    dbname = os.path.join(args.reportdir,args.dbname)
-    if not os.path.exists(dbname) and args.run:
+    if not args.image:
         from bulk_extractor_reader import BulkReport
         b = BulkReport(args.reportdir)
+        args.image = b.image_filename()
+
+    dbname = os.path.join(args.reportdir,args.dbname)
+    if not os.path.exists(dbname) and args.run:
         print("{} does not exist. Will try to run tsk_loaddb".format(dbname))
-        cmd=['tsk_loaddb','-d',dbname,b.image_filename()]
+        cmd=['tsk_loaddb','-d',dbname,args.image]
         print(" ".join(cmd))
         call(cmd)
         # Add the indexes
@@ -318,8 +359,6 @@ if __name__=="__main__":
 
 
     read_explained_file(args.reportdir)
-    if args.sets:
-        hash_sets(args.reportdir)
-    else:
-        get_disk_offsets(args.reportdir)
-        hash_runs(args.reportdir)
+    hash_sets(args.reportdir)
+    get_disk_offsets(args.reportdir)
+    hash_runs(args.reportdir)
