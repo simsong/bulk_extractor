@@ -538,10 +538,10 @@ static void do_scan(const class scanner_params &sp,
     }
 
     // allocate space on heap for scan_output
-    hashdb_t::scan_output_t* scan_output = new hashdb_t::scan_output_t;
+    hashdb_t::scan_output_t *scan_output = new hashdb_t::scan_output_t;
 
     // perform the scan
-    int status = hashdb->scan(*scan_input, *scan_output);
+    const int status = hashdb->scan(*scan_input, *scan_output);
 
     if (status != 0) {
         std::cerr << "Error: scan_hashdb scan failure.  Aborting.\n";
@@ -561,8 +561,8 @@ static void do_scan(const class scanner_params &sp,
         // as (pos0, hash_string, count_string)
 
         // pos0
-        size_t offset = offset_lookup_table->at(it->first);
-        pos0_t pos0 = sbuf.pos0 + offset;
+        const size_t offset = offset_lookup_table->at(it->first);
+        const pos0_t pos0 = sbuf.pos0 + offset;
 
         // hash_string
         std::string hash_string = scan_input->at(it->first).hexdigest();
