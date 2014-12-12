@@ -45,6 +45,7 @@ static bool hashdb_ignore_empty_blocks=true;                 // import or scan
 static std::string hashdb_scan_path_or_socket="your_hashdb_directory"; // scan only
 static size_t hashdb_scan_sector_size = 512;                    // scan only
 static size_t hashdb_scan_max_features = 0;                     // scan only
+static bool hashdb_scan_open_per_thread = false;                // scan only
 static size_t hashdb_import_sector_size = 4096;                 // import only
 static std::string hashdb_import_repository_name="default_repository"; // import only
 static uint32_t hashdb_import_max_duplicates=0;                 // import only
@@ -206,6 +207,15 @@ void scan_hashdb(const class scanner_params &sp,
             sp.info->get_config("hashdb_scan_max_features", &hashdb_scan_max_features,
                                 ss_hashdb_scan_max_features.str());
 
+            // hashdb_scan_open_per_thread
+            std::stringstream ss_hashdb_scan_open_per_thread;
+            ss_hashdb_scan_open_per_thread
+                << "0=scan one database using a lock; 1=scan database\n"
+                << "      opened separately for each thread.\n"
+                << "      Valid only in scan mode.";
+            sp.info->get_config("hashdb_scan_open_per_thread", &hashdb_scan_open_per_thread,
+                                ss_hashdb_scan_open_per_thread.str());
+
             // hashdb_import_sector_size
             std::stringstream ss_hashdb_import_sector_size;
             ss_hashdb_import_sector_size
@@ -349,17 +359,26 @@ void scan_hashdb(const class scanner_params &sp,
                 case MODE_SCAN: {
                     // show relavent settable options
                     std::string temp2((hashdb_ignore_empty_blocks) ? "YES" : "NO");
+                    std::string temp3((hashdb_scan_open_per_thread) ? "YES" : "NO");
                     std::cout << "hashdb: hashdb_mode=" << hashdb_mode << "\n"
                               << "hashdb: hashdb_block_size=" << hashdb_block_size << "\n"
                               << "hashdb: hashdb_ignore_empty_blocks=" << temp2 << "\n"
                               << "hashdb: hashdb_scan_path_or_socket=" << hashdb_scan_path_or_socket << "\n"
                               << "hashdb: hashdb_scan_sector_size=" << hashdb_scan_sector_size << "\n"
-                              << "hashdb: hashdb_scan_max_features=" << hashdb_scan_max_features << "\n";
+                              << "hashdb: hashdb_scan_max_features=" << hashdb_scan_max_features << "\n"
+                              << "hashdb: hashdb_scan_open_per_thread=" << temp3 << "\n";
 
                     // open hashdb for scanning
                     hashdb = new hashdb_t();
-                    std::pair<bool, std::string> open_scan_pair = hashdb->open_scan(
-                                          hashdb_scan_path_or_socket);
+                    std::pair<bool, std::string> open_scan_pair;
+                    if (hashdb_scan_open_per_thread == false) {
+                        // open to scan one database from any thread using a lock
+                        open_scan_pair = hashdb->open_scan(hashdb_scan_path_or_socket);
+                    } else {
+                        // open to scan a database assigned to the thread
+                        open_scan_pair = hashdb->open_scan_pthread(hashdb_scan_path_or_socket);
+                    }
+
                     if (open_scan_pair.first == false) {
                         std::cerr << "Error opening hashdb for scanning.\n"
                                   << open_scan_pair.second << "\nAborting.\n";
