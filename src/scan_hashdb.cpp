@@ -45,6 +45,7 @@ static bool hashdb_ignore_empty_blocks=true;                 // import or scan
 static std::string hashdb_scan_path_or_socket="your_hashdb_directory"; // scan only
 static size_t hashdb_scan_sector_size = 512;                    // scan only
 static size_t hashdb_scan_max_features = 0;                     // scan only
+static bool hashdb_scan_open_per_thread = false;                // scan only
 static size_t hashdb_import_sector_size = 4096;                 // import only
 static std::string hashdb_import_repository_name="default_repository"; // import only
 static uint32_t hashdb_import_max_duplicates=0;                 // import only
@@ -73,30 +74,22 @@ static void do_scan(const class scanner_params &sp,
                     const recursion_control_block &rcb);
 
 
-// get byte count available for the block, which may be smaller than a block
-inline size_t block_byte_count(const sbuf_t &sbuf)
-{
-    return (sbuf.pagesize < hashdb_block_size)
-                             ? sbuf.pagesize : hashdb_block_size;
-}
-
 // safely hash sbuf range without overflow failure
-inline hash_t hash_one_block(const uint8_t *buf, size_t byte_count)
+inline const hash_t hash_one_block(const sbuf_t &sbuf)
 {
-    if (byte_count == hashdb_block_size) {
-        // hash the block
-        return hash_generator::hash_buf(buf, hashdb_block_size);
-    } else {
-        // hash the available part
-        hash_generator g;
-        g.update(buf, byte_count);
-
-        // hash in extra zeros to fill out the block
-        size_t extra = hashdb_block_size - byte_count;
-        std::vector<uint8_t> zeros(extra);
-        g.update(&zeros[0], extra);
-        return g.final();
+    if (sbuf.bufsize >= hashdb_block_size) {
+        // hash from the beginning
+        return hash_generator::hash_buf(sbuf.buf, hashdb_block_size);
     }
+    // hash the available part and zero-fill
+    hash_generator g;
+    g.update(sbuf.buf, sbuf.bufsize);
+
+    // hash in extra zeros to fill out the block
+    size_t extra = hashdb_block_size - sbuf.bufsize;
+    std::vector<uint8_t> zeros(extra);
+    g.update(&zeros[0], extra);
+    return g.final();
 }
 
 // rules for determining if a block should be ignored
@@ -146,15 +139,15 @@ static bool whitespace_trait(const sbuf_t &sbuf)
     return count >= (sbuf.pagesize * 3)/4;
 }
 
-// detect if block is empty
-inline bool empty_block(const uint8_t *buf, size_t byte_count)
+// detect if block is all the same
+inline bool empty_sbuf(const sbuf_t &sbuf)
 {
-    for (size_t i=1; i<byte_count; i++) {
-        if (buf[i] != buf[0]) {
+    for (size_t i=1; i<sbuf.bufsize; i++) {
+        if (sbuf[i] != sbuf[0]) {
             return false;
         }
     }
-    return true;
+    return true;                        // all the same
 }
 
 extern "C"
@@ -213,6 +206,15 @@ void scan_hashdb(const class scanner_params &sp,
                 << "      or 0 for no limit.  Valid only in scan mode.";
             sp.info->get_config("hashdb_scan_max_features", &hashdb_scan_max_features,
                                 ss_hashdb_scan_max_features.str());
+
+            // hashdb_scan_open_per_thread
+            std::stringstream ss_hashdb_scan_open_per_thread;
+            ss_hashdb_scan_open_per_thread
+                << "0=scan one database using a lock; 1=scan database\n"
+                << "      opened separately for each thread.\n"
+                << "      Valid only in scan mode.";
+            sp.info->get_config("hashdb_scan_open_per_thread", &hashdb_scan_open_per_thread,
+                                ss_hashdb_scan_open_per_thread.str());
 
             // hashdb_import_sector_size
             std::stringstream ss_hashdb_import_sector_size;
@@ -357,17 +359,26 @@ void scan_hashdb(const class scanner_params &sp,
                 case MODE_SCAN: {
                     // show relavent settable options
                     std::string temp2((hashdb_ignore_empty_blocks) ? "YES" : "NO");
+                    std::string temp3((hashdb_scan_open_per_thread) ? "YES" : "NO");
                     std::cout << "hashdb: hashdb_mode=" << hashdb_mode << "\n"
                               << "hashdb: hashdb_block_size=" << hashdb_block_size << "\n"
                               << "hashdb: hashdb_ignore_empty_blocks=" << temp2 << "\n"
                               << "hashdb: hashdb_scan_path_or_socket=" << hashdb_scan_path_or_socket << "\n"
                               << "hashdb: hashdb_scan_sector_size=" << hashdb_scan_sector_size << "\n"
-                              << "hashdb: hashdb_scan_max_features=" << hashdb_scan_max_features << "\n";
+                              << "hashdb: hashdb_scan_max_features=" << hashdb_scan_max_features << "\n"
+                              << "hashdb: hashdb_scan_open_per_thread=" << temp3 << "\n";
 
                     // open hashdb for scanning
                     hashdb = new hashdb_t();
-                    std::pair<bool, std::string> open_scan_pair = hashdb->open_scan(
-                                          hashdb_scan_path_or_socket);
+                    std::pair<bool, std::string> open_scan_pair;
+                    if (hashdb_scan_open_per_thread == false) {
+                        // open to scan one database from any thread using a lock
+                        open_scan_pair = hashdb->open_scan(hashdb_scan_path_or_socket);
+                    } else {
+                        // open to scan a database assigned to the thread
+                        open_scan_pair = hashdb->open_scan_pthread(hashdb_scan_path_or_socket);
+                    }
+
                     if (open_scan_pair.first == false) {
                         std::cerr << "Error opening hashdb for scanning.\n"
                                   << open_scan_pair.second << "\nAborting.\n";
@@ -443,7 +454,7 @@ static void do_import(const class scanner_params &sp,
  
     // get the filename to use for source attribution
     std::stringstream ss;
-    size_t p=sbuf.pos0.path.find('/');
+    const size_t p=sbuf.pos0.path.find('/');
     if (p==std::string::npos) {
         // no directory in forensic path so explicitly include the filename
         ss << sp.fs.get_input_fname();
@@ -460,18 +471,19 @@ static void do_import(const class scanner_params &sp,
     // import the cryptograph hash values from all the blocks in sbuf
     for (size_t offset=0; offset<sbuf.pagesize; offset+=hashdb_import_sector_size) {
 
+        // Create a child sbuf of what we would hash
+        const sbuf_t sbuf_to_hash(sbuf,offset,hashdb_block_size);
+
         // ignore empty blocks
-        if (hashdb_ignore_empty_blocks && empty_block(sbuf.buf + offset,
-                                            block_byte_count(sbuf + offset))) {
+        if (hashdb_ignore_empty_blocks && empty_sbuf(sbuf_to_hash)){
             continue;
         }
 
         // calculate the hash for this import-sector-aligned hash block
-        hash_t hash = hash_one_block(sbuf.buf + offset,
-                                     block_byte_count(sbuf + offset));
+        const hash_t hash = hash_one_block(sbuf_to_hash);
 
         // calculate the offset from the start of the media image
-        uint64_t image_offset = sbuf.pos0.offset + offset;
+        const uint64_t image_offset = sbuf_to_hash.pos0.offset;
 
         // create and add the import element to the import input
         import_input->push_back(hashdb_t::import_element_t(
@@ -482,7 +494,7 @@ static void do_import(const class scanner_params &sp,
     }
 
     // perform the import
-    int status = hashdb->import(*import_input);
+    const int status = hashdb->import(*import_input);
 
     if (status != 0) {
         std::cerr << "scan_hashdb import failure\n";
@@ -492,7 +504,7 @@ static void do_import(const class scanner_params &sp,
     delete import_input;
 
     // calculate the sbuf hash for the source metadata
-    hash_t sbuf_hash = hash_generator::hash_buf(sbuf.buf, sbuf.pagesize);
+    const hash_t sbuf_hash = hash_generator::hash_buf(sbuf.buf, sbuf.pagesize);
 
     // store the source metadata
     hashdb->import_metadata(hashdb_import_repository_name,
@@ -526,9 +538,11 @@ static void do_scan(const class scanner_params &sp,
     // process cryptographic hash values for blocks along sector boundaries
     for (size_t offset=0; offset<sbuf.pagesize; offset+=hashdb_scan_sector_size) {
 
+        // Create a child sbuf of what we would hash
+        const sbuf_t sbuf_to_hash(sbuf,offset,hashdb_block_size);
+
         // ignore empty blocks
-        if (hashdb_ignore_empty_blocks && empty_block(sbuf.buf + offset,
-                                            block_byte_count(sbuf + offset))) {
+        if (hashdb_ignore_empty_blocks && empty_sbuf(sbuf_to_hash)){
             continue;
         }
 
@@ -536,18 +550,17 @@ static void do_scan(const class scanner_params &sp,
         offset_lookup_table->push_back(offset);
 
         // calculate the hash for this scan-sector-aligned hash block
-        hash_t hash = hash_one_block(sbuf.buf + offset,
-                                     block_byte_count(sbuf + offset));
+        const hash_t hash = hash_one_block(sbuf_to_hash);
 
         // calculate and add the hash to the scan input
         scan_input->push_back(hash);
     }
 
     // allocate space on heap for scan_output
-    hashdb_t::scan_output_t* scan_output = new hashdb_t::scan_output_t;
+    hashdb_t::scan_output_t *scan_output = new hashdb_t::scan_output_t;
 
     // perform the scan
-    int status = hashdb->scan(*scan_input, *scan_output);
+    const int status = hashdb->scan(*scan_input, *scan_output);
 
     if (status != 0) {
         std::cerr << "Error: scan_hashdb scan failure.  Aborting.\n";
@@ -567,15 +580,15 @@ static void do_scan(const class scanner_params &sp,
         // as (pos0, hash_string, count_string)
 
         // pos0
-        size_t offset = offset_lookup_table->at(it->first);
-        pos0_t pos0 = sbuf.pos0 + offset;
+        const size_t offset = offset_lookup_table->at(it->first);
+        const pos0_t pos0 = sbuf.pos0 + offset;
 
         // hash_string
         std::string hash_string = scan_input->at(it->first).hexdigest();
 
         // set flags based on specific tests on the block
         // Construct an sbuf from the block and subject it to the other tests
-        const sbuf_t s = sbuf_t(sbuf, offset,block_byte_count(sbuf+offset));
+        const sbuf_t s(sbuf, offset,hashdb_block_size);
         std::stringstream ss_flags;
         if (ramp_trait(s)) ss_flags << "R";
         if (hist_trait(s)) ss_flags << "H";
