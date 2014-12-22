@@ -13,6 +13,7 @@
 #include "config.h"
 #include "bulk_extractor.h"
 #include "dig.h"
+#include "utf8.h"
 
 #ifdef HAVE_LIBAFFLIB
 #endif
@@ -334,6 +335,76 @@ process_ewf::~process_ewf()
 #endif    
 }
 
+static std::string utf16to8(const std::wstring &fn16)
+{
+    std::string fn8;
+    utf8::utf16to8(fn16.begin(),fn16.end(),back_inserter(fn8));
+    return fn8;
+}
+
+static std::wstring utf8to16(const std::string &fn8)
+{
+    std::wstring fn16;
+    utf8::utf8to16(fn8.begin(),fn8.end(),back_inserter(fn16));
+    return fn16;
+}
+
+int local_e01_glob(const std::string &fname,char ***libewf_filenames,int *amount_of_filenames)
+{
+    std::cerr << "Experimental code for E01 names with MD5s appended\n";
+#ifdef WIN32
+    /* Find the directory name */
+    std::string dirname(fname);
+    size_t pos = dirname.rfind("\\");                  // this this slash
+    if(pos==std::string::npos) pos=dirname.rfind("/"); // try the other slash!
+    if(pos!=std::string::npos){
+        dirname.resize(pos+1);          // remove what's after the 
+    } else {
+        dirname = "";                   // no directory?
+    }
+
+    /* Make the directory search template */
+    char *buf = (char *)malloc(fname.size()+16);
+    strcpy(buf,fname.c_str());
+    /* Find the E01 */
+    char *cc = strstr(buf,".E01.");
+    if(!cc){
+        err(1,"Cannot find .E01. in filename");
+    }
+    for(;*cc;cc++){
+        if(*cc!='.') *cc='?';          // replace the E01 and the MD5s at the end with ?s
+    }
+    std::wstring wbufstring = utf8to16(buf); // convert to utf16
+    const wchar_t *wbuf = wbufstring.c_str();
+
+    /* Find the files */
+    WIN32_FIND_DATA FindFileData;
+    HANDLE hFind = FindFirstFile(wbuf, &FindFileData);
+    if(hFind == INVALID_HANDLE_VALUE){
+        std::cerr << "Invalid file pattern: " << utf16to8(wbufstring) << "\n";
+        exit(1);
+    }
+    std::vector<std::string> files;
+    files.push_back(dirname + utf16to8(FindFileData.cFileName));
+    while(FindNextFile(hFind,&FindFileData)!=0){
+        files.push_back(dirname + utf16to8(FindFileData.cFileName));
+    }
+
+    /* Sort the files */
+    sort(files.begin(),files.end());
+    
+    /* Make the array */
+    *amount_of_filenames = files.size();
+    *libewf_filenames = (char **)calloc(sizeof(char *),files.size());
+    for(size_t i=0;i<files.size();i++){
+        (*libewf_filenames)[i] = strdup(files[i].c_str());
+    }
+    free((void *)buf);
+#else
+    std::cerr << "This code only runs on Windows.\n";
+#endif    
+}
+
 int process_ewf::open()
 {
     const char *fname = image_fname().c_str();
@@ -341,12 +412,25 @@ int process_ewf::open()
     int amount_of_filenames = 0;
 
 #ifdef LIBEWFNG
+    bool use_libewf_glob = true;
     libewf_error_t *error=0;
-    if(libewf_glob(fname,strlen(fname),LIBEWF_FORMAT_UNKNOWN,
-		   &libewf_filenames,&amount_of_filenames,&error)<0){
-	libewf_error_fprint(error,stdout);
-	libewf_error_free(&error);
-	err(1,"libewf_glob");
+    if(image_fname().find(".E01.")!=std::string::npos){
+        use_libewf_glob = false;
+    }
+
+    if(use_libewf_glob){
+        if(libewf_glob(fname,strlen(fname),LIBEWF_FORMAT_UNKNOWN,
+                       &libewf_filenames,&amount_of_filenames,&error)<0){
+            libewf_error_fprint(error,stdout);
+            libewf_error_free(&error);
+            err(1,"libewf_glob");
+        }
+    } else {
+        local_e01_glob(image_fname(),&libewf_filenames,&amount_of_filenames);
+        std::cerr << "amount of filenames=" << amount_of_filenames << "\n";
+        for(int i=0;i<amount_of_filenames;i++){
+            std::cerr << libewf_filenames[i] << "\n";
+        }
     }
     handle = 0;
     if(libewf_handle_initialize(&handle,NULL)<0){
@@ -357,10 +441,13 @@ int process_ewf::open()
 	if(error) libewf_error_fprint(error,stdout);
 	err(1,"Cannot open: %s",fname);
     }
-    if(libewf_glob_free(libewf_filenames,amount_of_filenames,&error)<0){
-	printf("libewf_glob_free failed\n");
-	if(error) libewf_error_fprint(error,stdout);
-	err(1,"libewf_glob_free");
+    /* Free the allocated filenames */
+    if(use_libewf_glob){
+        if(libewf_glob_free(libewf_filenames,amount_of_filenames,&error)<0){
+            printf("libewf_glob_free failed\n");
+            if(error) libewf_error_fprint(error,stdout);
+            err(1,"libewf_glob_free");
+        }
     }
     libewf_handle_get_media_size(handle,(size64_t *)&ewf_filesize,NULL);
 #else
@@ -1019,7 +1106,7 @@ image_process *image_process::open(std::string fn,bool opt_recurse,
 	    exit(1);
 #endif
 	}
-	if(ext=="e01"){
+	if(ext=="e01" || fn.find(".E01.")!=std::string::npos){
 #ifdef HAVE_LIBEWF
 	    ip = new process_ewf(fn,pagesize_,margin_);
 #else
