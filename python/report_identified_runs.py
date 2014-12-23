@@ -192,6 +192,7 @@ def hash_runs(reportdir):
     # Now, for every source, make an array of all the blocks that were found
 
     if args.debug: print("Total Candidates:",len(candidate_sources))
+    total_combined_rows = 0
     for source_id in sorted(candidate_sources,
                             key=lambda id:(-source_id_count[id],source_id_count[id])):
         filename = source_id_filenames[source_id]
@@ -283,7 +284,7 @@ def hash_runs(reportdir):
 
             physical_block_start1 = rows[b][2]
             logical_block_start1 = rows[b][3]
-            print(physical_block_start1-physical_block_start0,logical_block_start1-logical_block_start0)
+            if args.debug: print(physical_block_start1-physical_block_start0,logical_block_start1-logical_block_start0)
             if (physical_block_start1-physical_block_start0) != (logical_block_start1-logical_block_start0)*8:
                 return 0
             if args.debug: print("rows {} and {} might be combined".format(i,i+1))
@@ -311,10 +312,12 @@ def hash_runs(reportdir):
                 rows[i-1][1] += rows[i][1] + null_blocks # increment score
                 rows[i-1][4] = rows[i][4]  # logical_block_end
                 del rows[i]                # and combine the rows
+                total_combined_rows += 1
                 
         # Now write the rows
         for row in rows:
             ofwriter.writerow(row)
+    print("Rows combined: {}".format(total_combined_rows))
     
 
 
