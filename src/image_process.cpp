@@ -335,6 +335,7 @@ process_ewf::~process_ewf()
 #endif    
 }
 
+#ifdef WIN32
 static std::string utf16to8(const std::wstring &fn16)
 {
     std::string fn8;
@@ -348,8 +349,9 @@ static std::wstring utf8to16(const std::string &fn8)
     utf8::utf8to16(fn8.begin(),fn8.end(),back_inserter(fn16));
     return fn16;
 }
+#endif
 
-int local_e01_glob(const std::string &fname,char ***libewf_filenames,int *amount_of_filenames)
+void local_e01_glob(const std::string &fname,char ***libewf_filenames,int *amount_of_filenames)
 {
     std::cerr << "Experimental code for E01 names with MD5s appended\n";
 #ifdef WIN32
