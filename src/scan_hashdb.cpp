@@ -35,6 +35,7 @@
 #include <dfxml/src/hash_t.h>
 
 #include <iostream>
+#include <cmath>
 #include <unistd.h>	// for getpid
 #include <sys/types.h>	// for getpid
 
@@ -137,6 +138,24 @@ static bool whitespace_trait(const sbuf_t &sbuf)
         if (isspace(sbuf[i])) count+=1;
     }
     return count >= (sbuf.pagesize * 3)/4;
+}
+
+/* Compute the shannon entropy on 16-bit values */
+static double shannon16(const sbuf_t &sbuf)
+{
+    typedef std::map<uint16_t,uint32_t> hist_t; // histogram type
+    hist_t hist;
+    for(size_t i = 0;i < sbuf.bufsize; i+=2){
+        hist[sbuf.get16u(i)] += 1;
+    }
+    double sum = 0.0;
+    for(hist_t::const_iterator it = hist.begin(); it!=hist.end(); it++){
+        const uint16_t val = it->first;
+        const uint16_t count = it->second;
+        double p = (double)(count) / (double)(sbuf.bufsize/2);
+        sum += (p * std::log2(p));
+    }
+    return -sum;
 }
 
 // detect if block is all the same
@@ -590,9 +609,10 @@ static void do_scan(const class scanner_params &sp,
         // Construct an sbuf from the block and subject it to the other tests
         const sbuf_t s(sbuf, offset,hashdb_block_size);
         std::stringstream ss_flags;
-        if (ramp_trait(s)) ss_flags << "R";
-        if (hist_trait(s)) ss_flags << "H";
+        if (ramp_trait(s))       ss_flags << "R";
+        if (hist_trait(s))       ss_flags << "H";
         if (whitespace_trait(s)) ss_flags << "W";
+        double entropy = shannon16(s);
 
         // build context field containing count and flags
         std::stringstream ss;
@@ -600,6 +620,7 @@ static void do_scan(const class scanner_params &sp,
         if (ss_flags.str().size() > 0) {
             // show flags too
             ss << ",\"flags\":\"" << ss_flags.str() << "\"";
+            ss << ",\"entropy16\":" << entropy ;
         }
         ss << "}";
 
