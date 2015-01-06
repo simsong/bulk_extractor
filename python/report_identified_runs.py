@@ -192,6 +192,8 @@ def hash_runs(reportdir):
     # Now, for every source, make an array of all the blocks that were found
 
     if args.debug: print("Total Candidates:",len(candidate_sources))
+    total_combined_rows = 0
+
     for source_id in sorted(candidate_sources,
                             key=lambda id:(-source_id_count[id],source_id_count[id])):
         filename = source_id_filenames[source_id]
@@ -228,16 +230,6 @@ def hash_runs(reportdir):
                         (exists_a_larger(block_runs[run_end][1],block_runs[run_end+1][1])))):
                         run_end += 1
 
-                if run_start>=run_end:
-                    # No run.
-                    run_start += 1
-                    continue
-
-                if run_end-run_start<args.minrun:
-                    # Run too small
-                    run_start = run_end+1
-                    continue
-
                 # We are at the end of a run
                 # For debugging at the moment, print the whole thing out
                 if args.debug:
@@ -247,9 +239,10 @@ def hash_runs(reportdir):
 
                 if of.tell()<4:
                     ofwriter.writerow(['Identified File','Score','Physical Block Start',
-                                       'Logical Block Start','Logical Block End','(mod 8)',
-                                       'Source File','Source Size','Percentage'])
-                counts = [br[2] for br in block_runs[run_start:run_end]]
+                                       'Logical Block Start','Logical Block End',
+                                       'File Blocks','(mod 8)','Percentage',
+                                       'Source File','Source Size'])
+                counts = [br[2] for br in block_runs[run_start:run_end+1]]
 
                 if min(counts) > args.mincount:
                     # all of the counts are too high!
@@ -257,52 +250,79 @@ def hash_runs(reportdir):
                     continue
 
                 score  = sum(map(lambda inv:1.0/inv,counts))
-                (source_file,source_size) = get_filename(block_runs[run_start][0])
+                file_blocks = source_id_filesizes[source_id]//4096
                 physical_block_start = block_runs[run_start][0]
                 logical_block_start = min(block_runs[run_start][1])
-                logical_block_end = min(block_runs[run_end-1][1])
-                if source_size:
-                    percentage = "{:3.0f}%".format((logical_block_end-logical_block_start+1) / (source_size//4096) * 100.0)
-                else:
-                    percentage = ""
+                logical_block_end = min(block_runs[run_end][1])
                 rows.append([filename,score,physical_block_start,
                              logical_block_start,logical_block_end,
-                             physical_block_start % 8,
-                             source_file,source_size,percentage])
+                             file_blocks,physical_block_start % 8 ])
                 run_start = run_end+1
         # sort the rows by starting logical block
         rows.sort(key=lambda a:a[4])
 
         # Are there runs that can be combined because the blocks on the disk are blank?
-        for i in range(0,len(rows)-1):
-            if(rows[i][0]==rows[i+1][0]):
-                physical_block_start0 = rows[i][2]
-                logical_block_start0 = rows[i][3]
-                logical_block_end0   = rows[i][4]
+        def test_combine_rows(a,b):
+            if args.debug: print("can_combine({},{})".format(a,b))
+            if(rows[a][0]!=rows[b][0]):return 0
+            physical_block_start0 = rows[a][2]
+            logical_block_start0 = rows[a][3]
+            logical_block_end0   = rows[a][4]
 
-                physical_block_start1 = rows[i+1][2]
-                logical_block_start1 = rows[i+1][3]
-                print(physical_block_start1-physical_block_start0,logical_block_start1-logical_block_start0)
-                if (physical_block_start1-physical_block_start0) == (logical_block_start1-logical_block_start0)*8:
-                    print("rows {} and {} might be combined".format(i,i+1))
-                    # If the blocks from physical_block_start0+1 through physical_block_start1-1 are all null, then they can!
-                    combine = True
-                    br = BEImageReader(args.image)
-                    # Note: we need to add 2 below. 1 to get the length of the run and another to step into the next region
-                    physical_block_end0 = physical_block_start0+(logical_block_end0+2-logical_block_start0)*8
-                    for sector in range(physical_block_end0,physical_block_start1,8):
-                        buf = br.read(sector*512,4096)
-                        print("check",sector,"=",all_null(buf))
-                        if not all_null(buf):
-                            combine = False
-                            break
-                    if combine:
-                        print("CAN be combined")
-               
+            physical_block_start1 = rows[b][2]
+            logical_block_start1 = rows[b][3]
+            if args.debug: print(physical_block_start1-physical_block_start0,logical_block_start1-logical_block_start0)
+            if (physical_block_start1-physical_block_start0) != (logical_block_start1-logical_block_start0)*8:
+                return 0
+            if args.debug: print("rows {} and {} might be combined".format(i,i+1))
+            # If the blocks from physical_block_start0+1 through physical_block_start1-1 are all null, then they can!
+            combine = True
+            br = BEImageReader(args.image)
+            # Note: we need to add 2 below. 1 to get the length of the run and another to step into the next region
+            physical_block_end0 = physical_block_start0+(logical_block_end0+2-logical_block_start0)*8
+            null_blocks = 0
+            for sector in range(physical_block_end0,physical_block_start1,8):
+                buf = br.read(sector*512,4096)
+                if args.debug: print("check",sector,"=",all_null(buf))
+                if not all_null(buf):
+                    combine = False
+                    return 0
+                null_blocks += 1
+            if args.debug: print("CAN be combined")
+            return null_blocks
+
+        # See if runs can be combined
+        for i in range(len(rows)-1,0,-1):
+            null_blocks = test_combine_rows(i-1,i)
+            if null_blocks > 0:
+                if args.debug:
+                    print("combine rows {} and {}".format(i-1,i))
+                    print("old: {} {}".format(rows[i-1],rows[i]))
+                rows[i-1][1] += rows[i][1] + null_blocks # increment score
+                rows[i-1][4] = rows[i][4]  # logical_block_end
+                if args.debug:
+                    print("new: {}\n".format(rows[i-1]))
+                del rows[i]                # and combine the rows
+                total_combined_rows += 1
+                
+        # Delete the runs that are two small (after the combine step)
+        for i in range(len(rows)-1,-1,-1):
+            if rows[i][4] - rows[i][3] + 1 <= args.minrun:
+                del rows[i]
+
+        # Finally determine the source files and compute the percentages (after rows are combined)
+        for row in rows:
+            (source_file,source_size) = get_filename(row[2])
+            file_blocks = row[6]
+            found_blocks = row[4] - row[3] + 1
+            if found_blocks==file_blocks+1: file_blocks +=1 # sometimes we get the partial last block
+            percentage = "{:3.0f}%".format(found_blocks / file_blocks * 100.0)
+            row += [percentage,source_file,source_size]
 
         # Now write the rows
         for row in rows:
             ofwriter.writerow(row)
+    print("Rows combined: {}".format(total_combined_rows))
     
 
 
