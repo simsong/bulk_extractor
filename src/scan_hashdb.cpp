@@ -149,7 +149,7 @@ static double shannon16(const sbuf_t &sbuf)
     }
     double sum = 0.0;
     for(hist_t::const_iterator it = hist.begin(); it!=hist.end(); it++){
-        const uint16_t val = it->first;
+        // const uint16_t val = it->first;
         const uint16_t count = it->second;
         double p = (double)(count) / (double)(sbuf.bufsize/2);
         sum += (p * std::log2(p));
