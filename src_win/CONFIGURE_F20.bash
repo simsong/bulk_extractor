@@ -47,7 +47,7 @@ MPKGS="autoconf automake flex gcc gcc-c++ git libtool "
 MPKGS+="md5deep osslsigncode patch wine wget bison zlib-devel "
 MPKGS+="libewf libewf-devel java-1.7.0-openjdk-devel "
 MPKGS+="libxml2-devel libxml2-static openssl-devel "
-MPKGS+="boost-devel boost-static expat-devel "
+MPKGS+="expat-devel "
 MPKGS+="mingw64-gcc mingw64-gcc-c++ "
 MPKGS+="mingw32-nsis "
 
@@ -76,7 +76,7 @@ echo needed for bulk_extractor.
 echo At this point we will keep going even if there is an error...
 INST=""
 # For these install both DLL and static
-for lib in zlib gettext boost cairo pixman freetype fontconfig \
+for lib in zlib gettext cairo pixman freetype fontconfig \
     bzip2 expat winpthreads libgnurx libxml2 iconv openssl sqlite ; do
   INST+=" mingw64-${lib} mingw64-${lib}-static"
 done

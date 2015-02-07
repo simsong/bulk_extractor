@@ -390,16 +390,6 @@ if test x"$hashdb" == x"yes" ; then
     hashdb=no])
 
   if test x"$hashdb" == xyes ; then
-    AX_BOOST_BASE([1.53],
-      [AX_BOOST_SYSTEM
-      AX_BOOST_FILESYSTEM
-      AX_BOOST_IOSTREAMS
-      LIBS="$BOOST_SYSTEM_LIB $BOOST_FILESYSTEM_LIB $BOOST_IOSTREAMS_LIB $LIBS"],
-      [AC_MSG_WARN([Boost 1.53 or newer is required to build the hashdb scanner])
-      hashdb=no])
-  fi
-
-  if test x"$hashdb" == xyes ; then
     AC_LANG_PUSH(C++)
     AC_CHECK_HEADER([hashdb.hpp], [],
       [AC_MSG_WARN([Could not find hashdb header file required to build the hashdb scanner])
