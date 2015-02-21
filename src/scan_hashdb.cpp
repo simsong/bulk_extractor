@@ -61,11 +61,9 @@ static mode_type_t mode = MODE_NONE;
 static std::string hashdb_dir;
 
 // hash type
-typedef md5_t hash_t;
 typedef md5_generator hash_generator;
 
 // hashdb manager
-typedef hashdb_t__<hash_t> hashdb_t;
 static hashdb_t* hashdb;
 
 static void do_import(const class scanner_params &sp,
@@ -75,7 +73,7 @@ static void do_scan(const class scanner_params &sp,
 
 
 // safely hash sbuf range without overflow failure
-inline const hash_t hash_one_block(const sbuf_t &sbuf)
+inline const md5_t hash_one_block(const sbuf_t &sbuf)
 {
     if (sbuf.bufsize >= hashdb_block_size) {
         // hash from the beginning
@@ -481,17 +479,17 @@ static void do_import(const class scanner_params &sp,
         }
 
         // calculate the hash for this import-sector-aligned hash block
-        const hash_t hash = hash_one_block(sbuf_to_hash);
+        const md5_t hash = hash_one_block(sbuf_to_hash);
 
         // calculate the offset from the start of the media image
         const uint64_t image_offset = sbuf_to_hash.pos0.offset;
 
         // create and add the import element to the import input
         import_input->push_back(hashdb_t::import_element_t(
-                                 hash,
-                                 hashdb_import_repository_name,
-                                 filename,
-                                 image_offset));
+                  std::string(reinterpret_cast<const char*>(hash.digest), 16),
+                  hashdb_import_repository_name,
+                  filename,
+                  image_offset));
     }
 
     // perform the import
@@ -505,13 +503,13 @@ static void do_import(const class scanner_params &sp,
     delete import_input;
 
     // calculate the sbuf hash for the source metadata
-    const hash_t sbuf_hash = hash_generator::hash_buf(sbuf.buf, sbuf.pagesize);
+    const md5_t sbuf_hash = hash_generator::hash_buf(sbuf.buf, sbuf.pagesize);
 
     // store the source metadata
     hashdb->import_metadata(hashdb_import_repository_name,
-                            filename,
-                            sbuf.pagesize,
-                            sbuf_hash);
+             filename,
+             sbuf.pagesize,
+             std::string(reinterpret_cast<const char*>(sbuf_hash.digest), 16));
 }
 
 // perform scan
@@ -531,7 +529,7 @@ static void do_scan(const class scanner_params &sp,
     const sbuf_t& sbuf = sp.sbuf;
 
     // allocate space on heap for scan_input
-    std::vector<hash_t>* scan_input = new std::vector<hash_t>;
+    std::vector<std::string>* scan_input = new std::vector<std::string>;
 
     // allocate space on heap for the offset lookup table
     std::vector<uint32_t>* offset_lookup_table = new std::vector<uint32_t>;
@@ -551,10 +549,11 @@ static void do_scan(const class scanner_params &sp,
         offset_lookup_table->push_back(offset);
 
         // calculate the hash for this scan-sector-aligned hash block
-        const hash_t hash = hash_one_block(sbuf_to_hash);
+        const md5_t hash = hash_one_block(sbuf_to_hash);
 
         // calculate and add the hash to the scan input
-        scan_input->push_back(hash);
+        scan_input->push_back(
+             std::string(reinterpret_cast<const char*>(hash.digest), 16));
     }
 
     // allocate space on heap for scan_output
@@ -585,7 +584,12 @@ static void do_scan(const class scanner_params &sp,
         const pos0_t pos0 = sbuf.pos0 + offset;
 
         // hash_string
-        std::string hash_string = scan_input->at(it->first).hexdigest();
+        std::string binary_hash = scan_input->at(it->first);
+        if (binary_hash.size() != 16) {
+            assert(0);
+        }
+        md5_t hash = md5_t(reinterpret_cast<const uint8_t*>(binary_hash.c_str()));
+        std::string hash_string = hash.hexdigest();
 
         // set flags based on specific tests on the block
         // Construct an sbuf from the block and subject it to the other tests
