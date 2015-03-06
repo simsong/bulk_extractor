@@ -442,16 +442,12 @@ static void do_import(const class scanner_params &sp,
     // get the sbuf
     const sbuf_t& sbuf = sp.sbuf;
 
-    // allocate space on heap for import_input
-    std::vector<hashdb_t::import_element_t>* import_input =
-                                 new std::vector<hashdb_t::import_element_t>;
-
-    // the filename from sbuf without the sbuf map file delimiter
+    // get the filename from sbuf without the sbuf map file delimiter
     std::string path_without_map_file_delimiter =
               (sbuf.pos0.path.size() > 4) ?
               std::string(sbuf.pos0.path, 0, sbuf.pos0.path.size() - 4) : "";
  
-    // get the filename to use for source attribution
+    // get the filename to use as the source filename
     std::stringstream ss;
     const size_t p=sbuf.pos0.path.find('/');
     if (p==std::string::npos) {
@@ -465,7 +461,12 @@ static void do_import(const class scanner_params &sp,
         // directory in forensic path so print forensic path as is
         ss << path_without_map_file_delimiter;
     }
-    std::string filename = ss.str();
+    std::string source_filename = ss.str();
+
+    // calculate the file hash using the sbuf page
+    const md5_t sbuf_hash = hash_generator::hash_buf(sbuf.buf, sbuf.pagesize);
+    const std::string binary_file_hash =
+               std::string(reinterpret_cast<const char*>(sbuf_hash.digest), 16);
 
     // import the cryptograph hash values from all the blocks in sbuf
     for (size_t offset=0; offset<sbuf.pagesize; offset+=hashdb_import_sector_size) {
@@ -480,36 +481,34 @@ static void do_import(const class scanner_params &sp,
 
         // calculate the hash for this import-sector-aligned hash block
         const md5_t hash = hash_one_block(sbuf_to_hash);
+        const std::string binary_hash(reinterpret_cast<const char*>(hash.digest), 16);
 
         // calculate the offset from the start of the media image
         const uint64_t image_offset = sbuf_to_hash.pos0.offset;
 
-        // create and add the import element to the import input
-        import_input->push_back(hashdb_t::import_element_t(
-                  std::string(reinterpret_cast<const char*>(hash.digest), 16),
-                  hashdb_import_repository_name,
-                  filename,
-                  image_offset));
+        // put together any block classification labels
+        // set flags based on specific tests on the block
+        // Construct an sbuf from the block and subject it to the other tests
+        const sbuf_t s(sbuf, offset, hashdb_block_size);
+        std::stringstream ss_flags;
+        if (ramp_trait(s))       ss_flags << "R";
+        if (hist_trait(s))       ss_flags << "H";
+        if (whitespace_trait(s)) ss_flags << "W";
+        if (ss_flags.str().size() > 0) ss_flags << "," << shannon16(s);
+
+        // import the hash
+        const int status = hashdb->import(binary_hash,
+                                          image_offset,
+                                          hashdb_import_repository_name,
+                                          source_filename,
+                                          sbuf.pagesize,
+                                          binary_file_hash,
+                                          ss_flags.str());
+        if (status != 0) {
+            std::cerr << "scan_hashdb import failure.  Aborting.\n";
+            exit(1);
+        }
     }
-
-    // perform the import
-    const int status = hashdb->import(*import_input);
-
-    if (status != 0) {
-        std::cerr << "scan_hashdb import failure\n";
-    }
-
-    // clean up import input buffer
-    delete import_input;
-
-    // calculate the sbuf hash for the source metadata
-    const md5_t sbuf_hash = hash_generator::hash_buf(sbuf.buf, sbuf.pagesize);
-
-    // store the source metadata
-    hashdb->import_metadata(hashdb_import_repository_name,
-             filename,
-             sbuf.pagesize,
-             std::string(reinterpret_cast<const char*>(sbuf_hash.digest), 16));
 }
 
 // perform scan
@@ -519,56 +518,11 @@ static void do_scan(const class scanner_params &sp,
     // get the feature recorder
     feature_recorder* identified_blocks_recorder = sp.fs.get_name("identified_blocks");
 
-    // optimization: don't even scan if feature line count is at requested max
-    if (hashdb_scan_max_features > 0 && identified_blocks_recorder->count() >=
-                                                   hashdb_scan_max_features) {
-        return;
-    }
-
     // get the sbuf
     const sbuf_t& sbuf = sp.sbuf;
 
-    // allocate space on heap for scan_input
-    std::vector<std::string>* scan_input = new std::vector<std::string>;
-
-    // allocate space on heap for the offset lookup table
-    std::vector<uint32_t>* offset_lookup_table = new std::vector<uint32_t>;
-
     // process cryptographic hash values for blocks along sector boundaries
     for (size_t offset=0; offset<sbuf.pagesize; offset+=hashdb_scan_sector_size) {
-
-        // Create a child sbuf of what we would hash
-        const sbuf_t sbuf_to_hash(sbuf,offset,hashdb_block_size);
-
-        // ignore empty blocks
-        if (hashdb_ignore_empty_blocks && empty_sbuf(sbuf_to_hash)){
-            continue;
-        }
-
-        // add the offset to the offset lookup table
-        offset_lookup_table->push_back(offset);
-
-        // calculate the hash for this scan-sector-aligned hash block
-        const md5_t hash = hash_one_block(sbuf_to_hash);
-
-        // calculate and add the hash to the scan input
-        scan_input->push_back(
-             std::string(reinterpret_cast<const char*>(hash.digest), 16));
-    }
-
-    // allocate space on heap for scan_output
-    hashdb_t::scan_output_t *scan_output = new hashdb_t::scan_output_t;
-
-    // perform the scan
-    const int status = hashdb->scan(*scan_input, *scan_output);
-
-    if (status != 0) {
-        std::cerr << "Error: scan_hashdb scan failure.  Aborting.\n";
-        exit(1);
-    }
-
-    // record each feature returned in the response
-    for (hashdb_t::scan_output_t::const_iterator it=scan_output->begin(); it!= scan_output->end(); ++it) {
 
         // stop recording if feature line count is at requested max
         if (hashdb_scan_max_features > 0 && identified_blocks_recorder->count() >=
@@ -576,24 +530,42 @@ static void do_scan(const class scanner_params &sp,
             break;
         }
 
-        // prepare forensic path (pos0, feature, context)
-        // as (pos0, hash_string, count_string)
+        // Create a child sbuf of what we would hash
+        const sbuf_t sbuf_to_hash(sbuf, offset, hashdb_block_size);
 
-        // pos0
-        const size_t offset = offset_lookup_table->at(it->first);
-        const pos0_t pos0 = sbuf.pos0 + offset;
-
-        // hash_string
-        std::string binary_hash = scan_input->at(it->first);
-        if (binary_hash.size() != 16) {
-            assert(0);
+        // ignore empty blocks
+        if (hashdb_ignore_empty_blocks && empty_sbuf(sbuf_to_hash)){
+            continue;
         }
-        md5_t hash = md5_t(reinterpret_cast<const uint8_t*>(binary_hash.c_str()));
+
+        // calculate the hash for this scan-sector-aligned hash block
+        const md5_t hash = hash_one_block(sbuf_to_hash);
+        const std::string binary_hash =
+               std::string(reinterpret_cast<const char*>(hash.digest), 16);
+
+        // scan for the hash
+        uint32_t count;
+        const int status = hashdb->scan(binary_hash, count);
+        if (status != 0) {
+            std::cerr << "Error: scan_hashdb scan failure.  Aborting.\n";
+            exit(1);
+        }
+
+        // continue if hash not found
+        if (count == 0) {
+            continue;
+        }
+
+        // prepare fields to record the feature
+
+        // get hash_string from hash
         std::string hash_string = hash.hexdigest();
 
+//#define OLD_WAY_USE_FLAGS_IN_SCAN
+#ifdef OLD_WAY_USE_FLAGS_IN_SCAN
         // set flags based on specific tests on the block
         // Construct an sbuf from the block and subject it to the other tests
-        const sbuf_t s(sbuf, offset,hashdb_block_size);
+        const sbuf_t s(sbuf, offset, hashdb_block_size);
         std::stringstream ss_flags;
         if (ramp_trait(s))       ss_flags << "R";
         if (hist_trait(s))       ss_flags << "H";
@@ -602,24 +574,23 @@ static void do_scan(const class scanner_params &sp,
 
         // build context field containing count and flags
         std::stringstream ss;
-        ss << "{\"count\":" << it->second;
+        ss << "{\"count\":" << count;
         if (ss_flags.str().size() > 0) {
             // show flags too
             ss << ",\"flags\":\"" << ss_flags.str() << "\"";
             ss << ",\"entropy16\":" << entropy ;
         }
         ss << "}";
+#else
+        // build context field
+        std::stringstream ss;
+        ss << "{\"count\":" << count << "}";
 
         // record the feature
-        identified_blocks_recorder->write(pos0, hash_string, ss.str());
+        identified_blocks_recorder->write(sbuf.pos0+offset, hash_string, ss.str());
+#endif
     }
-
-    // clean up
-    delete scan_input;
-    delete offset_lookup_table;
-    delete scan_output;
 }
-
 
 #endif
 
