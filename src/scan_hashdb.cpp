@@ -332,6 +332,9 @@ void scan_hashdb(const class scanner_params &sp,
             // hashdb_import_max_duplicates
             // checks not performed
 
+            // indicate hashdb version
+            std::cout << "hashdb: hashdb version=" << hashdb_version() << "\n";
+
             // perform setup based on mode
             switch(mode) {
                 case MODE_IMPORT: {
@@ -351,7 +354,7 @@ void scan_hashdb(const class scanner_params &sp,
                         exit(1);
                     }
 
-                    // show relavent settable options
+                    // show relevant settable options
                     std::string temp1((hashdb_ignore_empty_blocks) ? "YES" : "NO");
                     std::cout << "hashdb: hashdb_mode=" << hashdb_mode << "\n"
                               << "hashdb: hashdb_block_size=" << hashdb_block_size << "\n"
@@ -364,7 +367,7 @@ void scan_hashdb(const class scanner_params &sp,
                 }
 
                 case MODE_SCAN: {
-                    // show relavent settable options
+                    // show relevant settable options
                     std::string temp2((hashdb_ignore_empty_blocks) ? "YES" : "NO");
                     std::cout << "hashdb: hashdb_mode=" << hashdb_mode << "\n"
                               << "hashdb: hashdb_block_size=" << hashdb_block_size << "\n"
@@ -387,7 +390,7 @@ void scan_hashdb(const class scanner_params &sp,
                 }
 
                 case MODE_NONE: {
-                    // show relavent settable options
+                    // show relevant settable options
                     std::cout << "hashdb: hashdb_mode=" << hashdb_mode << "\n"
                               << "WARNING: the hashdb scanner is enabled but it will not perform any action\n"
                               << "because no mode has been selected.  Please either select a hashdb mode or\n"
