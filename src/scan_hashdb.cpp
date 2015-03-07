@@ -333,7 +333,7 @@ void scan_hashdb(const class scanner_params &sp,
             // checks not performed
 
             // indicate hashdb version
-            std::cout << "hashdb: hashdb version=" << hashdb_version() << "\n";
+            std::cout << "hashdb: hashdb_version=" << hashdb_version() << "\n";
 
             // perform setup based on mode
             switch(mode) {
