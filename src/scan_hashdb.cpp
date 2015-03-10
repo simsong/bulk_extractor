@@ -497,7 +497,10 @@ static void do_import(const class scanner_params &sp,
         if (ramp_trait(s))       ss_flags << "R";
         if (hist_trait(s))       ss_flags << "H";
         if (whitespace_trait(s)) ss_flags << "W";
-        if (ss_flags.str().size() > 0) ss_flags << "," << shannon16(s);
+
+        // NOTE: shannon16 is Disabled because its results were not useful
+        // and because it needs fixed to not generate sbuf read exception.
+        //if (ss_flags.str().size() > 0) ss_flags << "," << shannon16(s);
 
         // import the hash
         const int status = hashdb->import(binary_hash,
