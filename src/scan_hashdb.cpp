@@ -344,15 +344,9 @@ void scan_hashdb(const class scanner_params &sp,
                     // open hashdb for importing
                     // currently, hashdb_dir is required to not exist
                     hashdb = new hashdb_t();
-                    std::pair<bool, std::string> open_import_pair = hashdb->open_import(
-                                          hashdb_dir,
-                                          hashdb_block_size,
-                                          hashdb_import_max_duplicates);
-                    if (open_import_pair.first == false) {
-                        std::cerr << "Error opening hashdb for importing.\n"
-                                  << open_import_pair.second << "\nAborting.\n";
-                        exit(1);
-                    }
+                    hashdb->open_import(hashdb_dir,
+                                        hashdb_block_size,
+                                        hashdb_import_max_duplicates);
 
                     // show relevant settable options
                     std::string temp1((hashdb_ignore_empty_blocks) ? "YES" : "NO");
@@ -378,14 +372,7 @@ void scan_hashdb(const class scanner_params &sp,
 
                     // open hashdb for scanning
                     hashdb = new hashdb_t();
-                    std::pair<bool, std::string> open_scan_pair;
-                    open_scan_pair = hashdb->open_scan(hashdb_scan_path_or_socket);
-
-                    if (open_scan_pair.first == false) {
-                        std::cerr << "Error opening hashdb for scanning.\n"
-                                  << open_scan_pair.second << "\nAborting.\n";
-                        exit(1);
-                    }
+                    hashdb->open_scan(hashdb_scan_path_or_socket);
                     return;
                 }
 
