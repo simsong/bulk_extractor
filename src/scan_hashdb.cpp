@@ -137,24 +137,6 @@ static bool whitespace_trait(const sbuf_t &sbuf)
     return count >= (sbuf.pagesize * 3)/4;
 }
 
-/* Compute the shannon entropy on 16-bit values */
-static double shannon16(const sbuf_t &sbuf)
-{
-    typedef std::map<uint16_t,uint32_t> hist_t; // histogram type
-    hist_t hist;
-    for(size_t i = 0;i < sbuf.bufsize; i+=2){
-        hist[sbuf.get16u(i)] += 1;
-    }
-    double sum = 0.0;
-    for(hist_t::const_iterator it = hist.begin(); it!=hist.end(); it++){
-        // const uint16_t val = it->first;
-        const uint16_t count = it->second;
-        double p = (double)(count) / (double)(sbuf.bufsize/2);
-        sum += (p * std::log2(p));
-    }
-    return -sum;
-}
-
 // detect if block is all the same
 inline bool empty_sbuf(const sbuf_t &sbuf)
 {
@@ -554,34 +536,12 @@ static void do_scan(const class scanner_params &sp,
         // get hash_string from hash
         std::string hash_string = hash.hexdigest();
 
-//#define OLD_WAY_USE_FLAGS_IN_SCAN
-#ifdef OLD_WAY_USE_FLAGS_IN_SCAN
-        // set flags based on specific tests on the block
-        // Construct an sbuf from the block and subject it to the other tests
-        const sbuf_t s(sbuf, offset, hashdb_block_size);
-        std::stringstream ss_flags;
-        if (ramp_trait(s))       ss_flags << "R";
-        if (hist_trait(s))       ss_flags << "H";
-        if (whitespace_trait(s)) ss_flags << "W";
-        double entropy = shannon16(s);
-
-        // build context field containing count and flags
-        std::stringstream ss;
-        ss << "{\"count\":" << count;
-        if (ss_flags.str().size() > 0) {
-            // show flags too
-            ss << ",\"flags\":\"" << ss_flags.str() << "\"";
-            ss << ",\"entropy16\":" << entropy ;
-        }
-        ss << "}";
-#else
         // build context field
         std::stringstream ss;
         ss << "{\"count\":" << count << "}";
 
         // record the feature
         identified_blocks_recorder->write(sbuf.pos0+offset, hash_string, ss.str());
-#endif
     }
 }
 
