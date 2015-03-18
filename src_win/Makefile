@@ -31,8 +31,7 @@ SRC_WIN_DIST = \
 	$(SRC_WIN)build_BEViewer_launcher.nsi \
 	$(SRC_WIN)build_installer.nsi \
 	$(SRC_WIN)icu4c-53_1-mingw-w64-mkdir-compatibility.patch \
-	$(SRC_WIN)icu4c-53_1-simpler-crossbuild.patch \
-	$(SRC_WIN)sign_be_file
+	$(SRC_WIN)icu4c-53_1-simpler-crossbuild.patch
 
 
 # The prerequisites for the installer can't be listed after the colon, 
