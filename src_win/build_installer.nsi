@@ -19,7 +19,7 @@
 
 !define APPNAME "Bulk Extractor ${VERSION}"
 !define REG_SUB_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}"
-!define COMPANYNAME "NPS"
+!define COMPANYNAME "Naval Postgraduate School"
 !define DESCRIPTION "bulk_extractor Feature extractor and BEViewer User Interface"
 
 # These will be displayed by the "Click here for support information" link in "Add/Remove Programs"
