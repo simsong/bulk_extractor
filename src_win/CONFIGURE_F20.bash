@@ -50,6 +50,7 @@ MPKGS+="libxml2-devel libxml2-static openssl-devel "
 MPKGS+="expat-devel "
 MPKGS+="mingw64-gcc mingw64-gcc-c++ "
 MPKGS+="mingw32-nsis "
+MPKGS+="java-1.8.0-openjdk-devel "
 
 if [ ! -r /etc/redhat-release ]; then
   echo This requires Fedora Linux
@@ -76,7 +77,8 @@ echo needed for bulk_extractor.
 echo At this point we will keep going even if there is an error...
 INST=""
 # For these install both DLL and static
-for lib in zlib gettext cairo pixman freetype fontconfig \
+# note that liblightgrep needs boost
+for lib in zlib gettext boost cairo pixman freetype fontconfig \
     bzip2 expat winpthreads libgnurx libxml2 iconv openssl sqlite ; do
   INST+=" mingw64-${lib} mingw64-${lib}-static"
 done
@@ -186,7 +188,7 @@ else
   mkdir icu-mingw64
   pushd icu-mingw64
   eval MINGW=\$MINGW64
-  eval MINGW_DIR=\$MINGW${i}_DIR
+  eval MINGW_DIR=\$MINGW64_DIR
   ../icu/source/configure CC=$MINGW-gcc CXX=$MINGW-g++ CFLAGS=-O3 CXXFLAGS=-O3 CPPFLAGS="$ICU_DEFINES" --enable-static --disable-shared --prefix=$MINGW_DIR --host=$MINGW --with-cross-build=`realpath ../icu-linux` $ICU_FLAGS --disable-tools --disable-dyload --with-data-packaging=static
   make VERBOSE=1
   sudo make install
