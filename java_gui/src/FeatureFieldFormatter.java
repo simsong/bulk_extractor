@@ -55,7 +55,7 @@ public class FeatureFieldFormatter {
     } else if (filename.equals("winpe.txt")) {
       formattedText = getWINPEFormat(contextField);
 
-    } else if (filename.indexOf("identified_blocks") >= 0) {
+    } else if (filename.indexOf("identified") >= 0) {
       // accept any filename starting with "identified_blocks"
       // feature field, which contains hexdigest plus context which indicates
       // information about the feature
