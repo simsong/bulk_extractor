@@ -272,7 +272,14 @@ public class WOpen extends JDialog {
                  + IMAGE_XPATH);
         return null;
       }
-      return new File(filename);
+      File imageFile = new File(filename);
+
+      // turn relative path into absolute path
+      if (!imageFile.isAbsolute() && reportFile.getParentFile() != null
+                     && reportFile.getParentFile().getParentFile() != null) {
+        imageFile = new File(reportFile.getParentFile().getParentFile(), filename);
+      }
+      return imageFile;
     } catch (XPathExpressionException xpe) {
       // give up on finding the image filename
       WLog.log("WOpen XML parser: unable to parse image filename from report file");
