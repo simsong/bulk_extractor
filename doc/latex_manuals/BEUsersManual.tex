@@ -285,8 +285,8 @@ The following command should add the appropriate libraries:
 Mac OS X users must first install Apple's Xcode application (available in the OS X App store), and then install the command line tools. 
 To install the command line tools in Mavericks and Yosemite, enter this command in the terminal:
 \begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{xcode-select --install
-\end{Verbatim}}
+\verbbf{xcode-select --install}
+\end{Verbatim}
 
 Other components can be downloaded using the MacPorts system. To install MacPorts, get the latest ports for your version of OS X here:
 http://macports.com
@@ -295,7 +295,7 @@ After the latest ports are installed, you still need to make sure some optional 
 \begin{Verbatim}[commandchars=\\\{\}]
 \verbbf{sudo port install flex autoconf automake}
 \verbbf{sudo port install libewf-devel}
-\end{Verbatim}}
+\end{Verbatim}
 
 Mac OS X users should note that libewf-devel may not be available in ports, and at present, libewf isn't new enough.  If the required version isn't available as a port, then download and un-tar the libewf source (for example, in /tmp), cd into the source directory and run:
 \begin{Verbatim}[commandchars=\\\{\}]
@@ -552,7 +552,6 @@ The scanners all serve different functions and look for different types of infor
 \hline
 \endlastfoot
 
-\label{tab:inputdata}
 \hline\textbf{\textit{accts}} & Numeric accounts, such as phone numbers and CCNs\\
 \hline\textbf{\textit{aes}} & In-memory AES keys from their key schedules & \Autoref{cyber}\\
 \hline\textbf{\textit{base16}} & Base 16 (hex) encoded data (includes MD5 codes embedded in the data) & \Autoref{cyber}\\
@@ -580,6 +579,7 @@ The scanners all serve different functions and look for different types of infor
 \hline\textbf{\textit{zip}} & ZIP files and zlib streams (processed, and optionally carved) & \Autoref{carving} and \Autoref{compressedProcessing}\\
 \hline
 \end{longtable}
+\label{tab:inputdata}
 
 \subsection{Scanners}
 \label{Scanners}
