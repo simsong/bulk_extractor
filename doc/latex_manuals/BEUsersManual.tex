@@ -693,11 +693,11 @@ To specify the carving modes for \bulk, command line arguments can be specified.
 \end{Verbatim} 
 To modify the ZIP carving modes, type the following  where carve mode 1=default value that does not need to be specified (carve encoded), 0=no carving or 2=carve everything:
 \begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{bulk_extractor -S zip_carve_mode=1 -o output diskimage.raw}
+\verbbf{bulk_extractor -S unzip_carve_mode=1 -o output diskimage.raw}
 \end{Verbatim} 
 To modify the RAR carving modes, type the following  where carve mode 1=default value that does not need to be specified (carve encoded), 0=no carving or 2=carve everything:
 \begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{bulk_extractor -S rar_carve_mode=1 -o output diskimage.raw}
+\verbbf{bulk_extractor -S unrar_carve_mode=1 -o output diskimage.raw}
 \end{Verbatim} 
 Any combination of the carving mode options can be specified for a given run. The carvers can run in any combination of modes. For example, the JPEG carver can be run in mode 2 while the RAR carving is turned off in mode 1 and the ZIP carver carves only encoded files in mode 1.\\
 
