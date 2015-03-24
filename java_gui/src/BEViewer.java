@@ -250,7 +250,8 @@ scanSettingsListModel.add(test);
     } else if (rangeSelectionManager.getProvider() == referencedFeaturesModel) {
       new FeatureRangePrinter().printFeatureRange(referencedFeaturesModel, minSelectionIndex, maxSelectionIndex);
     } else {
-      throw new RuntimeException("invalid request");
+      WError.showMessage("Printing of this selection is not supported.", "Not Supported");
+      //throw new RuntimeException("invalid request");
     }
   }
 

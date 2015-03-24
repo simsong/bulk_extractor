@@ -23,6 +23,7 @@ GIT repository:
    feature files if text `identified` is part of its filename.
  * The Reports list may now be refreshed using menu option View|Reports|Refresh,
    allowing new feature files to become visible.
+ * Fields such as the Image File filename may now be selected and copied.
 
 
 1.5.2 Improvements over Version 1.5.0:
