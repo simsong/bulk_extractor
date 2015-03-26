@@ -66,7 +66,7 @@ public class ImageModel {
         FeatureLine featureLine = featureLineSelectionManager.getFeatureLineSelection();
 
         // disregard request if this is a histogram line
-        if (ForensicPath.isHistogram(featureLine.forensicPath)) {
+        if (ForensicPath.isHistogram(featureLine.firstField)) {
           return;
         }
 

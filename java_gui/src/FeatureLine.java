@@ -20,7 +20,7 @@ public class FeatureLine {
   public final int numBytes;
 
   // extracted fields
-  public final String firstField;
+  public final byte[] firstField; // may be path with possible file or histogram
   public final byte[] featureField;
   public final byte[] contextField;
 
@@ -52,7 +52,7 @@ public class FeatureLine {
     startByte = 0;
     numBytes = 0;
 
-    firstField = "";
+    firstField = new byte[0];
     featureField = new byte[0];
     contextField = new byte[0];
 
@@ -109,7 +109,7 @@ public class FeatureLine {
       }
 
       // set remaining values for failed read
-      firstField = "";
+      firstField = new byte[0];
       featureField = new byte[0];
       contextField = new byte[0];
       actualImageFile = null;
@@ -143,7 +143,9 @@ public class FeatureLine {
     }
 
     // firstField is text before first tab
-    firstField = new String(lineBytes, 0, i);
+    ByteArrayOutputStream firstFieldStream = new ByteArrayOutputStream();
+    firstFieldStream.write(lineBytes, 0, i);
+    firstField = firstFieldStream.toByteArray();
 
     // featureField is text after first tab and before second tab
     // else remaining text

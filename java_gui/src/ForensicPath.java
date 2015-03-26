@@ -1,4 +1,5 @@
 import java.io.File;
+import java.nio.charset.Charset;
 
 /**
  * The <code>ForensicPath</code> class provides accessors to forensic path
@@ -56,24 +57,19 @@ public final class ForensicPath {
     return offset;
   }
 
-  // return start of path after file marker else 0
-  // Path has a filename if it includes control codes.
-  // Note: values were derived by parsing a feature file.
-  // Note: binary values appeard to be "f4 80  80 9c".
-  // should be U+10001C
-  private static int getForensicPathIndex(String firstField) {
-    final int length = firstField.length();
-    if (length < 3) {
-      return 0;
-    }
-    int i;
-    for (i=0; i < length - 3; i++) {
-      if (firstField.charAt(i) == 56256
-       && firstField.charAt(i+1) == 56348
-       && firstField.charAt(i+2) == '-') {
-        return i+3;
+  // return start of path after file marker and '-' else 0
+  // Path has filename if it includes control codes "f4 80  80 9c" or U+10001C
+  private static int getForensicPathIndex(byte[] firstField) {
+    for (int i=0; i < firstField.length - 5; i++) {
+      if (firstField[i+0] == (byte)0xf4 &&
+          firstField[i+1] == (byte)0x80 &&
+          firstField[i+2] == (byte)0x80 &&
+          firstField[i+3] == (byte)0x9c &&
+          firstField[i+4] == '-') {
+        return i+5;
       }
     }
+
     // not found
     return 0;
   }
@@ -94,20 +90,23 @@ public final class ForensicPath {
   /**
    * See if firstField includes filename.
    */
-  public static boolean hasFilename(String firstField) {
+  public static boolean hasFilename(byte[] firstField) {
     return (getForensicPathIndex(firstField) > 0);
   }
 
   /**
    * Return filename from firstField if available else "".
    */
-  public static String getFilename(String firstField) {
+  public static String getFilename(byte[] firstField) {
     int index = getForensicPathIndex(firstField);
     if (index == 0) {
       return "";
     } else {
+      return new String(firstField, 0, index - 5, Charset.forName("UTF-8"));
+/*
       String filename = firstField.substring(0, index-2-1);
       return filename;
+*/
     }
   }
 
@@ -115,14 +114,10 @@ public final class ForensicPath {
    * Return path from firstField without filename component,
    * returns same if there is no filename component
    */
-  public static String getPathWithoutFilename(String firstField) {
-    int index = getForensicPathIndex(firstField);
-    if (index == 0) {
-      return firstField;
-    } else {
-      String pathWithoutFilename = firstField.substring(index);
-      return pathWithoutFilename;
-    }
+  public static String getPathWithoutFilename(byte[] firstField) {
+    int index = getForensicPathIndex(firstField); // either 0 or >=5
+    return new String(firstField, index, firstField.length - index,
+                     Charset.forName("UTF-8"));
   }
 
   /**
@@ -158,17 +153,17 @@ public final class ForensicPath {
   /**
    * See if the first field is really a histogram entry.
    */
-  public static boolean isHistogram(String firstField) {
-    if (firstField.length() > 4
-     && firstField.charAt(0) == 'n'
-     && firstField.charAt(1) == '=') {
+  public static boolean isHistogram(byte[] firstField) {
+    if (firstField.length > 4
+     && firstField[0] == 'n'
+     && firstField[1] == '=') {
       int i;
-      for (i=2; i<firstField.length(); i++) {
-        if (firstField.charAt(i) < '0' || firstField.charAt(i) > '9') {
+      for (i=2; i<firstField.length; i++) {
+        if (firstField[i] < '0' || firstField[i] > '9') {
           break;
         }
       }
-      if (firstField.charAt(i) == '\t') {
+      if (firstField[i] == '\t') {
         return true;
       }
     }
