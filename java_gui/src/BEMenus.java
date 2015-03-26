@@ -813,15 +813,6 @@ public class BEMenus extends JMenuBar {
     // help|diagnostics|<separator>
     diagnostics.addSeparator();
 
-    // help|diagnostics|Close all Image Readers
-    mi = new JMenuItem("Close All Image Readers");
-    diagnostics.add(mi);
-    mi.addActionListener(new ActionListener() {
-      public void actionPerformed (ActionEvent e) {
-        BEViewer.imageModel.closeAllImageReaders();
-      }
-    });
-
     // help|diagnostics|run tests
     mi = new JMenuItem("Run Tests\u2026");	// ...
     diagnostics.add(mi);

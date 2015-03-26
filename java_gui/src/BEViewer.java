@@ -200,9 +200,6 @@ scanSettingsListModel.add(test);
     if (featureLine.isFromReport(reportTreeNode)) {
       featureLineSelectionManager.setFeatureLineSelection(new FeatureLine());
     }
-
-    // close the associated opened image readers
-    imageModel.closeImageReader(reportTreeNode.reportImageFile);
   }
 
   /**
@@ -218,9 +215,6 @@ scanSettingsListModel.add(test);
 
     // clear any image selection
     featureLineSelectionManager.setFeatureLineSelection(new FeatureLine());
-
-    // close any opened image readers
-    imageModel.closeAllImageReaders();
 
     // clear user highlighting
     BEViewer.userHighlightModel.setHighlightBytes(new byte[0]);
