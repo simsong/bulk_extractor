@@ -1,9 +1,9 @@
-                    Announcing bulk_extractor 1.5.2
-                             July 29, 2014
+                    Announcing bulk_extractor 1.5.6
+                             Date TBA
 
-                            RELEASE NOTES
+                            RELEASE NOTES (DRAFT)
 
-bulk_extractor Version 1.5.2 has been released for Linux, Mac OS and
+bulk_extractor Version 1.5.6 has been released for Linux, Mac OS and
 Windows. 
 
 Release source code and Windows installer:
@@ -13,7 +13,7 @@ GIT repository:
     https://github.com/simsong/bulk_extractor
 
 
-1.5.5 Improvements over Version 1.5.0:
+1.5.6 Improvements over Version 1.5.2:
 ================================
 
 * BEViewer usability is improved:
@@ -24,7 +24,10 @@ GIT repository:
  * The Reports list may now be refreshed using menu option View|Reports|Refresh,
    allowing new feature files to become visible.
  * Fields such as the Image File filename may now be selected and copied.
-
+ * The Media Image display now provides 64KiB per page instead of 4KiB per page.
+ * BEViewer may now browse to forensic paths generated using the bulk_extractor
+   `-R` recursive scan mode.  On Windows systems, attempting to browse to these
+   paths incorrectly resulted in an error.
 
 1.5.2 Improvements over Version 1.5.0:
 ================================
