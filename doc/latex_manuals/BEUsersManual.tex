@@ -574,7 +574,7 @@ The scanners all serve different functions and look for different types of infor
 \hline\textbf{\textit{vcard}} & vCard files (carved) & \Autoref{identity}\\
 \hline\textbf{\textit{windirs}} & Windows FAT32 and NTFS directory entries& \Autoref{cyber}\\
 \hline\textbf{\textit{winlnk}} & Windows LNK file carving and decoding\\
-\hline\textbf{\textit{winpe}} & Windows Preinstallation Environment (PE) Executables (.exe and .dll files notated with MD5 hash of first 4k) & \Autoref{malware}\\
+\hline\textbf{\textit{winpe}} & Windows Portable Executable (PE) (.exe and .dll files notated with MD5 hash of first 4k) & \Autoref{malware}\\
 \hline\textbf{\textit{winprefetch}} & Windows Prefetch files, file fragments (processed) & \Autoref{malware} \\
 \hline\textbf{\textit{zip}} & ZIP files and zlib streams (processed, and optionally carved) & \Autoref{carving} and \Autoref{compressedProcessing}\\
 \hline
@@ -804,7 +804,7 @@ Several output feature files produced by \bulk contain relevant and important in
 \end{itemize}
 The XML in these feature files is too complicated to review without using other applications. The recommended way to analyze the executable output is to use a third party tool that analyzes executables or pull the results into a spreadsheet. In a spreadsheet, one column could contain the hash values and those values can be compared against a database of executable hashes. There is also a python tool that comes with \bulk called \textbf{identify\_filenames.py} that can be used to get the full filename of the file. The python tool is discussed in more detail in \textbf{\Autoref{PostProcessing}}.\\
 
-For Windows specific malware investigations, the files \texttt{winpe.txt} and \texttt{winprefetch.txt} are very useful. They are produced by the \textbf{\textit{winpe}} and \textbf{\textit{winprefetch}} scanners respectively.  Windows Prefetch shows files that have been prefetched in the Windows prefetch directory and shows the deleted files that were found in unallocated space. The Windows PE feature file shows entries related to the Windows executable files. \\
+For Windows specific malware investigations, the files \texttt{winpe.txt} and \texttt{winprefetch.txt} are very useful. They are produced by the \textbf{\textit{winpe}} and \textbf{\textit{winprefetch}} scanners respectively.  Windows Prefetch shows files that have been prefetched in the Windows prefetch directory and shows the deleted files that were found in unallocated space. The Windows PE feature file shows entries related to Windows portable executable files. \\
 
 JSON, the JavaScript Object Notation, is a lightweight data-interchange format. Websites tend to download a lot of information using JSON. The output file \texttt{json.txt}, produced by the \textbf{\textit{json}} scanner, can be useful for malware investigations and analysis of web-based applications. If a website has downloaded information in JSON format, the JSON scanner may find that information in the browser cache. 
 
