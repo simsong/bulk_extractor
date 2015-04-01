@@ -12,6 +12,12 @@
  * For a description of the meanings of the field names below, please see
  * "Microsoft PE and COFF Specification," 
  * http://msdn.microsoft.com/en-us/library/windows/hardware/gg463119.aspx
+
+ * Revision history:
+ * 2015-april   bda - Removed requirement that pe_NumberOfRvaAndSizes, hardcoded
+                      to 16, be defined, since some data was found where it was
+                      0, resulting in failure to extract valid dll filenames.
+ * 2015-april   bda - added PE carving.
  */
  
 /**
@@ -213,6 +219,9 @@ enum E {
 /* For information on __attribute__((packed)), see:
  * http://gcc.gnu.org/onlinedocs/gcc-3.2/gcc/Type-Attributes.html
  */
+
+// tunable parameter
+static uint32_t winpe_carve_mode = feature_recorder::CARVE_ENCODED;
 
 typedef struct _Pe_Fileheader {
     uint16_t Machine              __attribute__((packed));
@@ -792,14 +801,14 @@ static std::string scan_winpe_verify (const sbuf_t &sbuf)
 
     // find the .idata DataDirectory
     const Pe_DataDirectory  * idd  = NULL; // idata Data Directory
-    if ((pe_Magic == IMAGE_FILE_TYPE_PE32) && (ohw_offset) && (2 <= pe_NumberOfRvaAndSizes)){
+    if ((pe_Magic == IMAGE_FILE_TYPE_PE32) && (ohw_offset)) {
 	idd = sbuf.get_struct_ptr<Pe_DataDirectory>(header_offset
 						    + sizeof(Pe_FileHeader)
 						    + sizeof(Pe_OptionalHeaderStandard)
 						    + sizeof(Pe_OptionalHeaderWindows)
 						    + sizeof(Pe_DataDirectory));
     }
-    if ((pe_Magic == IMAGE_FILE_TYPE_PE32PLUS) && (ohw_offset) && (2 <= pe_NumberOfRvaAndSizes)) {
+    if ((pe_Magic == IMAGE_FILE_TYPE_PE32PLUS) && (ohw_offset)) {
 	idd = sbuf.get_struct_ptr<Pe_DataDirectory>(header_offset
 						    + sizeof(Pe_FileHeader)
 						    + sizeof(Pe_OptionalHeaderStandardPlus)
@@ -870,7 +879,7 @@ static std::string scan_winpe_verify (const sbuf_t &sbuf)
     }
  end_of_sections:;
     xml << "</Sections>";
-    
+
     // get DLL names
     if (shi) {
         // find offset into PE where the Import Data Table resides
@@ -943,6 +952,70 @@ static std::string scan_winpe_verify (const sbuf_t &sbuf)
     return xml.str();
 }
 
+// the data that ends the furthest out is the carve size
+static size_t get_carve_size (const sbuf_t& sbuf)
+{
+    // heaser offset
+    const uint32_t header_offset = sbuf.get32u(PE_FILE_OFFSET) + PE_SIGNATURE_SIZE;
+
+    // OptionalHeaderStandard offset
+    const size_t ohs_offset = header_offset + sizeof(Pe_FileHeader);
+
+    // image file type
+    const uint16_t pe_Magic = sbuf.get16u(ohs_offset);
+
+    // check end of signature as potential carve size
+    // point to the certificate table containing the digital signature,
+    // IMAGE_DIRECTORY_ENTRY_SECURITY, index 4
+    const Pe_DataDirectory* ctd;
+    if (pe_Magic == IMAGE_FILE_TYPE_PE32) {
+	ctd = sbuf.get_struct_ptr<Pe_DataDirectory>(header_offset
+						    + sizeof(Pe_FileHeader)
+						    + sizeof(Pe_OptionalHeaderStandard)
+						    + sizeof(Pe_OptionalHeaderWindows)
+						    + sizeof(Pe_DataDirectory)*4);
+    } else if (pe_Magic == IMAGE_FILE_TYPE_PE32PLUS) {
+	ctd = sbuf.get_struct_ptr<Pe_DataDirectory>(header_offset
+						    + sizeof(Pe_FileHeader)
+						    + sizeof(Pe_OptionalHeaderStandardPlus)
+						    + sizeof(Pe_OptionalHeaderWindowsPlus)
+						    + sizeof(Pe_DataDirectory)*4);
+    } else {
+        // corrupt magic number so do not carve
+        return 0;
+    }
+
+    size_t carve_size = 0;
+    if (ctd != NULL && ctd->VirtualAddress < 1024*1024*1024 && ctd->Size < 1024*1024) {
+        // consider end of signature, which can be 0, as potential carve size
+        carve_size = ctd->VirtualAddress + ctd->Size;
+    }
+
+    // consider each section size as potential carve size
+    const uint16_t pe_NumberOfSections = sbuf.get16u(header_offset + 2);
+    const uint16_t pe_SizeOfOptionalHeader = sbuf.get16u(header_offset + 16);
+    for (int section_i = 0; section_i < pe_NumberOfSections; section_i++) {
+
+	const Pe_SectionHeader * sh =
+	    sbuf.get_struct_ptr<Pe_SectionHeader>(header_offset
+						  + sizeof(Pe_FileHeader)
+						  + pe_SizeOfOptionalHeader
+						  + sizeof(Pe_SectionHeader) * section_i);
+	if(sh==0) break; // end of sbuf
+
+        if (sh->PointerToRawData + sh->SizeOfRawData > carve_size) {
+            carve_size = sh->PointerToRawData + sh->SizeOfRawData;
+        }
+    }
+
+    // the carve size must not be totally unreasonable
+    if (carve_size > 1024*1024*1024) { // 1GiB
+        return 0;
+    }
+
+    return carve_size;
+}
+
 extern "C"
 void scan_winpe (const class scanner_params &sp,
 		 const recursion_control_block &rcb)
@@ -956,10 +1029,18 @@ void scan_winpe (const class scanner_params &sp,
         sp.info->description     = "Scan for Windows PE headers";
         sp.info->scanner_version = "1.0.0";
         sp.info->feature_names.insert("winpe");
+        sp.info->feature_names.insert("winpe_carved");
+        sp.info->get_config("winpe_carve_mode", &winpe_carve_mode,
+                            "0=carve none; 1=carve encoded; 2=carve all");
 
         return;
     }
-    
+
+    if(sp.phase==scanner_params::PHASE_INIT){
+        sp.fs.get_name("winpe_carved")->set_carve_mode(
+                  static_cast<feature_recorder::carve_mode_t>(winpe_carve_mode));
+    }
+
     if(sp.phase == scanner_params::PHASE_SCAN){    // phase 1
 	feature_recorder *f = sp.fs.get_name("winpe");
     
@@ -1002,6 +1083,9 @@ void scan_winpe (const class scanner_params &sp,
                     sbuf_t first4k(data,0,4096);
 		    std::string hash = f->fs.hasher.func(first4k.buf,first4k.bufsize);
 		    f->write(data.pos0,hash,xml);
+                    size_t carve_size = get_carve_size(data);
+                    feature_recorder *f_carved = sp.fs.get_name("winpe_carved");
+                    f_carved->carve(data, 0, carve_size, ".winpe");
 		}
 	    }
 	}
