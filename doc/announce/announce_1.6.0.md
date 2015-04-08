@@ -37,6 +37,8 @@ GIT repository:
    by the furthest byte allocated, which is either to the end of the
    Certificate Table Data Directory in the Optional Header
    or to the end of the furthest section defined in the Section Table.
+ * `scan_winlnk` captures more data fields.
+   This change was driven by the need to capture remote links.
 
 
 Incompatible changes:
