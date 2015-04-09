@@ -371,7 +371,7 @@ void scan_winlnk(const class scanner_params &sp,const recursion_control_block &r
                 // set path when no data
                 std::string path = "";
                 if (!has_data) {
-                    path = "FEATURE HAS NO DATA";
+                    path = "NO_LINKINFO";
                 }
 
                 // pick a path value from one of the lnkmap fields
@@ -383,7 +383,7 @@ void scan_winlnk(const class scanner_params &sp,const recursion_control_block &r
                 if (path == "") path = get_field(lnkmap, "relative_path");
                 if (path == "") path = get_field(lnkmap, "working_dir");
                 if (path == "") path = get_field(lnkmap, "droid_volumeid");
-                if (path == "") path = "FEATURE NOT IDENTIFIED"; // define it to something
+                if (path == "") path = "LINKINFO_PATH_EMPTY"; // nothing to assign to path
 
                 // record
                 winlnk_recorder->write(sbuf.pos0+p,path,dfxml_writer::xmlmap(lnkmap,"lnk",""));
