@@ -19,6 +19,7 @@
 
 #include "config.h"
 #include "be13_api/bulk_extractor_i.h"
+#include "be13_api/unicode_escape.h"
 
 #if defined(HAVE_LIBLNK_H) && defined(HAVE_LIBBFIO_H) && defined(HAVE_LIBLNK) && defined(HAVE_LIBBFIO)
 #include "liblnk.h"
@@ -92,7 +93,8 @@ size_t read_StringData(const std::string& tagname, sbuf_t sbuf,
     } else {
         // get string data from UTF8 input
         std::string utf8_string;
-        sbuf.getUTF8WithQuoting(2, count, utf8_string);
+        sbuf.getUTF8(2, count, utf8_string);
+        validateOrEscapeUTF8(utf8_string,true,false);
         if (utf8_string.size()==0) utf8_string="INVALID_DATA";
         lnkmap[tagname] = utf8_string;
     }
@@ -101,7 +103,8 @@ size_t read_StringData(const std::string& tagname, sbuf_t sbuf,
 
 void read_utf8(const std::string& tagname, sbuf_t sbuf, dfxml_writer::strstrmap_t& lnkmap) {
     std::string utf8_string;
-    sbuf.getUTF8WithQuoting(0, utf8_string);
+    sbuf.getUTF8(0, utf8_string);
+    validateOrEscapeUTF8(utf8_string,true,false);
     // there can be fields with size 0 so skip them
     if (utf8_string.size()>0) {
         lnkmap[tagname] = utf8_string;
