@@ -8,11 +8,11 @@ from subprocess import Popen,PIPE
 
 class BEImageReader:
     def __init__(self,fname):
+        open(fname,"rb").close() # generate a file not found error if it does not exist
         self.fname = fname
         self.p = Popen(["bulk_extractor","-p",'-http',self.fname],stdin=PIPE,stdout=PIPE,bufsize=0)
 
     def read(self,offset,amount):
-        
         def readline():
             r = b'';
             while True:
