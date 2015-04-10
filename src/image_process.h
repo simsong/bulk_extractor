@@ -119,7 +119,8 @@ public:
 	double fraction_done() const { return myimage.fraction_done(*this); }
         std::string str() const { return myimage.str(*this); }
 	uint64_t max_blocks() const { return myimage.max_blocks(*this);}
-	uint64_t seek_block(uint64_t block) { return myimage.seek_block(*this,block);} // returns block number 
+	uint64_t seek_block(uint64_t block) { return myimage.seek_block(*this,block);} // returns block number
+        void set_raw_offset(int64_t anOffset){ raw_offset=anOffset;}
     };
 
     image_process(const std::string &fn,size_t pagesize_,size_t margin_):image_fname_(fn),pagesize(pagesize_),margin(margin_),

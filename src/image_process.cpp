@@ -234,7 +234,7 @@ void process_aff::increment_iterator(class image_process::iterator &it) const
 {
     if(it.page_counter < pagelist.size()){
 	it.page_counter++;
-	it.raw_offset += it.page_counter * af_get_pagesize(af);
+	it.raw_offset = pagelist[it.page_counter] * af_get_pagesize(af);
     } else {
 	it.eof = true;
     }

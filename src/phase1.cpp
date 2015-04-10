@@ -110,6 +110,12 @@ void BulkExtractor_Phase1::run(image_process &p,feature_recorder_set &fs,
     blocklist_t blocks_to_sample;
     blocklist_t::const_iterator si = blocks_to_sample.begin(); // sampling iterator
     image_process::iterator     it = p.begin(); // sequential iterator
+
+    if(config.opt_offset_start){
+        std::cout << "offset set to " << config.opt_offset_start << "\n";
+        it.set_raw_offset(config.opt_offset_start);
+    }
+
     if(sampling()){
         /* Create a list of blocks to sample */
         make_sorted_random_blocklist(&blocks_to_sample,it.max_blocks(),config.sampling_fraction);
