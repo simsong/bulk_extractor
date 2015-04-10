@@ -64,22 +64,12 @@ std::string get_guid(const sbuf_t &buf, const size_t offset)
 size_t read_StringData(const std::string& tagname, sbuf_t sbuf,
                        const bool is_unicode, dfxml_writer::strstrmap_t& lnkmap) {
 
-    // check size
-    if (sbuf.pagesize < 2) {
-        return 2;
-    }
-
     // get count to read
     const uint16_t count = sbuf.get16u(0);
     const size_t size = 2 + count * (is_unicode ? 2 : 1);
 
     if (count >= 4000) {
         // skip unreasonably long count
-        return size;
-    }
-
-    // check size
-    if (sbuf.pagesize < size) {
         return size;
     }
 
@@ -137,10 +127,6 @@ void read_VolumeID(sbuf_t sbuf, dfxml_writer::strstrmap_t& lnkmap) {
 }
 
 void read_CommonNetworkRelativeLink(sbuf_t sbuf, dfxml_writer::strstrmap_t& lnkmap) {
-    // check size
-    if (sbuf.pagesize < 12) {
-        return;
-    }
 
     // data state
     //const uint32_t CommonNetworkRelativeLinkSize = sbuf.get32u(0);
@@ -167,25 +153,15 @@ void read_CommonNetworkRelativeLink(sbuf_t sbuf, dfxml_writer::strstrmap_t& lnkm
 
     // DeviceNameOffsetUnicode
     if (NetNameOffset > 0x14) {
-        const uint32_t DeviceNameOffsetUnicode = sbuf.get32u(20);
+        const uint32_t DeviceNameOffsetUnicode = sbuf.get32u(24);
         read_utf16("device_name_unicode", sbuf+DeviceNameOffsetUnicode, lnkmap);
     }
 }
 
 size_t read_LinkInfo(sbuf_t sbuf, dfxml_writer::strstrmap_t& lnkmap) {
 
-    // check size
-    if (sbuf.pagesize < 4) {
-        return 4;
-    }
-
     // data state
     const uint32_t LinkInfoSize = sbuf.get32u(0);
-
-    // check size
-    if (sbuf.pagesize < LinkInfoSize) {
-        return LinkInfoSize;
-    }
 
     const uint32_t LinkInfoHeaderSize = sbuf.get32u(4);
     const uint32_t LinkInfoFlags = sbuf.get32u(8);
@@ -214,16 +190,14 @@ size_t read_LinkInfo(sbuf_t sbuf, dfxml_writer::strstrmap_t& lnkmap) {
 
     // local base path unicode
     if (LinkInfoFlags & (1 << 0)) {    // A VolumeIDAndLocalBasePath
-        // note: documentation says >=24 but to fit it must be >=32
-        if (LinkInfoHeaderSize >=32) {
+        if (LinkInfoHeaderSize >=0x24) {
             const uint32_t LocalBasePathOffsetUnicode = sbuf.get32u(28);
             read_utf16("local_base_path_unicode", sbuf+LocalBasePathOffsetUnicode, lnkmap);
         }
     }
 
     // common path suffix unicode
-        // note: documentation says >=24 but to fit it must be >=36
-    if (LinkInfoHeaderSize >=36) {
+    if (LinkInfoHeaderSize >=0x24) {
         const uint32_t CommonPathSuffixOffsetUnicode = sbuf.get32u(32);
         read_utf16("common_path_suffix_unicode", sbuf+CommonPathSuffixOffsetUnicode, lnkmap);
     }
@@ -271,12 +245,7 @@ bool read_ShellLinkHeader(const sbuf_t sbuf, dfxml_writer::strstrmap_t& lnkmap) 
     }
 
     int i;
-    for (i=0; i<20; i++) {
-
-        // check size
-        if (sbuf.pagesize < offset + 8) {
-            break;
-        }
+    for (i=0; i<20; i++) { // there should be at most 11 of these
 
         // read any extra data blocks
         const uint32_t BlockSize = sbuf.get32u(offset+0);
@@ -288,11 +257,6 @@ bool read_ShellLinkHeader(const sbuf_t sbuf, dfxml_writer::strstrmap_t& lnkmap) 
         // only some block types are interesting
         const uint32_t BlockSignature = sbuf.get32u(offset+4);
         if(BlockSize == 0x60 && BlockSignature == 0xa0000003) {
-
-            // check size
-            if (sbuf.pagesize < offset + 0x60) {
-                break;
-            }
 
             // Tracker Data Block
             std::string dvolid = get_guid(sbuf, offset+32);
@@ -369,7 +333,16 @@ void scan_winlnk(const class scanner_params &sp,const recursion_control_block &r
 		dfxml_writer::strstrmap_t lnkmap;
 
                 // read
-                bool has_data = read_ShellLinkHeader(sbuf+p, lnkmap);
+                bool has_data = true;
+                try {
+                    has_data = read_ShellLinkHeader(sbuf+p, lnkmap);
+                } catch (sbuf_t::range_exception_t &e) {
+                    // add error field to indicate that the read was not complete
+                    lnkmap["error"] = "LINKINFO_DATA_ERROR";
+                    if (debug) {
+                        std::cerr << "scan_winlnk error at path " << sbuf.pos0+p << "\n";
+                    }
+                }
 
                 // set path when no data
                 std::string path = "";
@@ -384,7 +357,13 @@ void scan_winlnk(const class scanner_params &sp,const recursion_control_block &r
                 if (path == "") path = get_field(lnkmap, "common_path_suffix_unicode");
                 if (path == "") path = get_field(lnkmap, "name_string");
                 if (path == "") path = get_field(lnkmap, "relative_path");
+                if (path == "") path = get_field(lnkmap, "net_name");
+                if (path == "") path = get_field(lnkmap, "net_name_unicode");
+                if (path == "") path = get_field(lnkmap, "device_name");
+                if (path == "") path = get_field(lnkmap, "device_name_unicode");
                 if (path == "") path = get_field(lnkmap, "working_dir");
+                if (path == "") path = get_field(lnkmap, "command_line_arguments");
+                if (path == "") path = get_field(lnkmap, "volume_label");
                 if (path == "") path = get_field(lnkmap, "droid_volumeid");
                 if (path == "") path = "LINKINFO_PATH_EMPTY"; // nothing to assign to path
 
