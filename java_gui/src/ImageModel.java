@@ -36,7 +36,6 @@ public class ImageModel {
   private boolean imageSelectionChanged = false;
 
   // resources
-  public final ImageReaderManager imageReaderManager = new ImageReaderManager();
   private final FeatureLineSelectionManager featureLineSelectionManager;
   private final WIndeterminateProgress busyIndicator = new WIndeterminateProgress("Reading Image");
   private final ModelChangedNotifier<Object> imageChangedNotifier = new ModelChangedNotifier<Object>();
@@ -45,7 +44,7 @@ public class ImageModel {
   /**
    * The default size of the page to be read, {@value}.
    */
-  public static final int PAGE_SIZE = 4096;
+  public static final int PAGE_SIZE = 65536;
 
   private final Runnable fireChanged = new Runnable() {
     public void run() {
@@ -67,7 +66,7 @@ public class ImageModel {
         FeatureLine featureLine = featureLineSelectionManager.getFeatureLineSelection();
 
         // disregard request if this is a histogram line
-        if (ForensicPath.isHistogram(featureLine.forensicPath)) {
+        if (ForensicPath.isHistogram(featureLine.firstField)) {
           return;
         }
 
@@ -103,31 +102,6 @@ public class ImageModel {
     imageSelectionChanged = true;  // synchronized
     this.pageForensicPath = ForensicPath.getAlignedPath(forensicPath);
     manageModelChanges();
-  }
-
-  /**
-   * Force refresh of the Image Model.
-   * Use this after <code>ImageReaderManager.setReaderTypeAllowed</code>
-   * in order to force an ImageModel reload.
-   */
-  public synchronized void refresh() {
-    // force an image reload, useful when the image reader changes
-    imageSelectionChanged = true;  // synchronized
-    manageModelChanges();
-  }
-
-  /**
-   * Close the image reader associated with the image file.
-   */
-  public void closeImageReader(File imageFile) {
-    imageReaderManager.close(imageFile);
-  }
-
-  /**
-   * Close all image readers.
-   */
-  public void closeAllImageReaders() {
-    imageReaderManager.closeAll();
   }
 
   // ************************************************************
@@ -230,7 +204,7 @@ public class ImageModel {
         String paddedForensicPath = ForensicPath.getAdjustedPath(pageForensicPath, paddedPageOffset);
           
         // begin thread processing
-        imageReaderThread = new ImageReaderThread( this, imageReaderManager,
+        imageReaderThread = new ImageReaderThread( this,
                featureLine.actualImageFile, paddedForensicPath,
                paddingPrefixSize + PAGE_SIZE + PAGE_SIZE);
         imageReaderThread.start();

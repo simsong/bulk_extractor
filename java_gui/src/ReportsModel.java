@@ -342,6 +342,12 @@ public class ReportsModel {
     return includeEmptyFiles;
   }
 
+  /**
+   * Refresh the list of files.
+   */
+  public void refreshFiles() {
+    setFiles();
+  }
 
   // reload FeaturesFileTreeNode and reload the treeModel
   private void setFiles() {

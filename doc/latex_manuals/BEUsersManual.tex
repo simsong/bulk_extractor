@@ -35,10 +35,10 @@ basicstyle=\footnotesize\ttfamily, frame=single, float=htpb}
 \thispagestyle{empty}
 \mbox{}
 \newpage
-\section*{One Page Quickstart for Linux \& Mac Users}
+\section*{One Page Quickstart for Linux \& Mac OS X Users}
 This page provides a very brief introduction to downloading, installing and running \bulk. 
 \begin{enumerate}
-\item If you do not already have one, obtain a disk image on which to run \bulk. Sample images can be downloaded from \url{http://digitalcorpora.org/corpora/disk-images}. Suggestions include \texttt{nps-2009-domexusers} and \\ \texttt{nps-2009-ubnist1.gen3}.
+\item If you do not already have one, obtain a disk image on which to run \bulk. Sample images can be downloaded from \url{http://digitalcorpora.org/corpora/disk-images}. Suggestions include \texttt{nps-2009-domexusers} and \\ \texttt{nps-2009-ubnist1.gen3.E01}.
 \item Download the latest version of \bulk. It can be obtained from \url{http://digitalcorpora.org/downloads/bulk_extractor/}. The file is called \texttt{bulk\_extractor-x.y.z.tar.gz} where x.y.z is the latest version. 
 
 \item Un-tar and un-zip the file.  In the newly created \textit{bulk\_extractor-x.y} directory, run the following commands:
@@ -84,7 +84,7 @@ A window will pop up and the first two input boxes allow you to select an Image 
 \section*{One Page Quickstart for Windows Users}
 This page provides a very brief introduction to downloading, installing and running \bulk. 
 \begin{enumerate}
-\item If you do not already have one, obtain a disk image on which to run \bulk. Sample images can be downloaded from \url{http://digitalcorpora.org/corpora/disk-images}. Suggestions include \texttt{nps-2009-domexusers} and \\ \texttt{nps-2009-ubnist1.gen3}.
+\item If you do not already have one, obtain a disk image on which to run \bulk. Sample images can be downloaded from \url{http://digitalcorpora.org/corpora/disk-images}. Suggestions include \texttt{nps-2009-domexusers} and \\ \texttt{nps-2009-ubnist1.gen3.E01}.
 \item Download the latest version of the \bulk Windows installer. It can be obtained from \url{http://digitalcorpora.org/downloads/bulk_extractor}. The file to download is called \texttt{bulk\_extractor-x.y.z-windowsinstaller.exe} where x.y.z is the latest version number.  Run the installer file. This will automatically install \bulk on your machine. The automatic installation includes the complete \bulk system as well as the \viewer tool. [See \textbf{\Autoref{InstallOnWindows}} \textbf{\nameref{InstallOnWindows}}]
 
 \item To run \bulk from the command line, type the following command:
@@ -128,7 +128,7 @@ A window will pop up and the first two input boxes allow you to select an Image 
 \section{Introduction}
 
 \subsection{Overview of \bulk}
-\bulk is a program that extracts features such as email addresses, credit card numbers, URLs, and other types of information from digital evidence files. It is a useful forensic investigation tool for many tasks such as malware and intrusion investigations, identity investigations and cyber investigations, as well as analyzing imagery and password cracking. The program provides several unusual capabilities including:
+\bulk is a program that extracts features such as email addresses, credit card numbers, URLs, and other types of information from digital evidence media. It is a useful forensic investigation tool for many tasks such as malware and intrusion investigations, identity investigations and cyber investigations, as well as analyzing imagery and password cracking. The program provides several unusual capabilities including:
 \begin{itemize}
 \item It finds email addresses, URLs and credit card numbers that other tools miss because it can process compressed data (like ZIP, PDF and GZIP files) and incomplete or partially corrupted data. It can carve JPEGs, office documents and other kinds of files out of fragments of compressed data. It will detect and carve encrypted RAR files.
 \item It builds word lists based on all of the words found within the data, even those in compressed files that are in unallocated space. Those word lists can be useful for password cracking.
@@ -151,7 +151,7 @@ In addition to the capabilities described above, \bulk also includes:
 
 \bulk is distinguished from other forensic tools by its speed and thoroughness. Because it ignores file system structure, \bulk can process different parts of the disk in parallel. This means that an 8-core machine will process a disk image roughly 8 times faster than a 1-core machine. \bulk is also thorough. It automatically detects, decompresses, and recursively re-processes data that has been compressed with a variety of algorithms. Our testing has shown there is a significant amount of compressed data in the unallocated regions of file systems missed by most forensics tools that are commonly in use today\cite{encodedEvidence}.  Another advantage of ignoring file systems is that \bulk can be used to process any kind of digital media. The program has been used to process hard drives, SSDs, optical media, camera cards, cell phones, network packet dumps, and other kinds of digital information.\\
 
-Between 2005 and 2008, the \bulk team interviewed law enforcement regarding their use of forensic tools. Law enforcement officers wanted a highly automated tool for finding email addresses and credit card numbers (including track 2 information), phone numbers, GPS coordinates and EXIF information from JPEGs, search terms (extracted from URLs), and all words that were present on the disk (for password cracking). The tool needed to run on Windows, Linux and Mac-based systems with no user interaction. It also had to operate on raw disk images, split-raw volumes and E01 files. The tool needed to run at the maximum I/O speed of the physical drive and never crash. Through these interviews, the initial  requirements for the \bulk system were developed. Over the past five years, we have worked to create the tool that those officers desired. \\
+Between 2005 and 2008, the \bulk team interviewed law enforcement regarding their use of forensic tools. Law enforcement officers wanted a highly automated tool for finding email addresses and credit card numbers (including track 2 information), phone numbers, GPS coordinates and EXIF information from JPEGs, search terms (extracted from URLs), and all words that were present on the disk (for password cracking). The tool needed to run on Windows, Linux and Mac OS X systems with no user interaction. It also had to operate on raw disk images, split-raw volumes and E01 files. The tool needed to run at the maximum I/O speed of the physical drive and never crash. Through these interviews, the initial  requirements for the \bulk system were developed. Over the past five years, we have worked to create the tool that those officers desired. \\
 
 \subsubsection{A \bulk Success Story}
 One early \bulk success story comes from the City of San Luis Obispo Police Department in the Spring of 2010. The District Attorney filed charges against two individuals for credit card fraud and possession of materials to commit credit card fraud. The defendants were arrested with a computer. Defense attorneys were expected to argue that the defendants were unsophisticated and lacked knowledge to commit the crime. The examiner was given a 250 GB drive the day before the preliminary hearing; typically it would take several days to conduct a proper forensic investigation of that much data.\\
@@ -189,7 +189,7 @@ The first character on the line is the terminal prompt, and should not be typed.
 
 
 \section{How \bulk Works}
-\bulk finds email addresses, URLS,  and CCNs that other tools miss. This is due in part to the fact that \bulk optimistically decompresses and re-analyzes all data (e.g. zip fragments, gzip browser cache runs). The decompression operates on incomplete and corrupted data until decompression fails. \bulk can also build word lists for password cracking\\
+\bulk finds email addresses, URLs,  and CCNs that other tools miss. This is due in part to the fact that \bulk optimistically decompresses and re-analyzes all data (e.g. zip fragments, gzip browser cache runs). The decompression operates on incomplete and corrupted data until decompression fails. \bulk can also build word lists for password cracking\\
 
 There are three phases of operation in \bulk:  feature extraction, histogram creation, post processing as shown in Figure ~\ref{fig:overviewPic}. The output feature files contain extracted data designed for easy processing by third party programs or use in spreadsheet tools. The \bulk histogram system automatically summarizes features.\\
 
@@ -257,37 +257,47 @@ The full functionality of \bulk is provided both through command line operation 
 \section{Running \bulk}
 \bulk is a command line tool with an accompanying graphical user interface tool, \viewer. All of the command line functionality of \bulk is also available in the \viewer. Users can access the functionality in whichever way they prefer. In this manual we review the \bulk user options in both formats.\\
 
-\bulk can be run on a Linux, MacOS or Windows system. The fastest way to run \bulk is on a Linux system.  Running on Windows provides the same results, but the run will typically take 40% longer on the same hardware. The software actually runs faster on a Linux virtual machine running on Windows with VMware workstation than on the native Windows OS. 
+\bulk can be run on a Linux, Mac OS X or Windows system. The fastest way to run \bulk is on a Linux system. Running \bulk on Windows provides the same results, but the run will typically take 40 percent longer on the same hardware. The software can actually run faster on a Linux virtual machine running on Windows with VMware workstation than on the native Windows OS. 
 
 
 \subsection{Installation Guide}
-Installation instructions vary for Linux/Mac users and Windows users. The following sections explain how to install \bulk.
+Installation instructions vary for Linux, Mac OS X users and Windows users. The following sections explain how to install \bulk.
 
-\subsubsection{Installing on Linux or Mac}
+\subsubsection{Installing on Linux or Mac OS X}
 \label{InstallOnLinuxMac}
 Before compiling \bulk for your platform, you may need to install other packages on your system which \bulk requires to compile cleanly and with a full set of capabilities.\\
 
-\textbf{Dependencies for Linux Fedora}\\
-This command should add the appropriate packages:
+\textbf{Dependencies for Fedora}\\
+The following commands should add the appropriate packages:
 \begin{Verbatim}[commandchars=\\\{\}]
 \verbbf{sudo yum update}
 \verbbf{sudo yum groupinstall development-tools}
 \verbbf{sudo yum install flex}
 \end{Verbatim}
 
-\textbf{Dependencies for Linux Debian Testing (wheezy) or Ubuntu 13.0}\\
+\textbf{Dependencies for Debian (wheezy) or Ubuntu (13.0)}\\
 The following command should add the appropriate libraries:
 \begin{Verbatim}[commandchars=\\\{\}]
 \verbbf{sudo apt-get -y install gcc g++ flex libewf-dev} 
 \end{Verbatim}
 
-\textbf{Dependencies for Mac Systems}\\
-Mac users must first install Apple's Xcode development system. Other components should be downloaded using the MacPorts system. If you do not have MacPorts, go to the App store and download and install it. It is free. Once it is installed, try:
+\textbf{Dependencies for Mac OS X}\\
+Mac OS X users must first install Apple's Xcode application (available in the OS X App store), and then install the command line tools. 
+To install the command line tools in Mavericks and Yosemite, enter this command in the terminal:
 \begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{sudo port install flex autoconf automake libewf-devel}
+\verbbf{xcode-select --install}
 \end{Verbatim}
 
-Mac users should note that libewf-devel may not be available in ports.  If it is not, download and un-tar the libewf source, cd into the directory and run:
+Other components can be downloaded using the MacPorts system. To install MacPorts, get the latest ports for your version of OS X here:
+http://macports.com
+After the latest ports are installed, you still need to make sure some optional packages are added using these commands:
+
+\begin{Verbatim}[commandchars=\\\{\}]
+\verbbf{sudo port install flex autoconf automake}
+\verbbf{sudo port install libewf-devel}
+\end{Verbatim}
+
+Mac OS X users should note that libewf-devel may not be available in ports, and at present, libewf isn't new enough.  If the required version isn't available as a port, then download and un-tar the libewf source (for example, in /tmp), cd into the source directory and run:
 \begin{Verbatim}[commandchars=\\\{\}]
 \verbbf{./configure} 
 \verbbf{make}
@@ -295,17 +305,15 @@ Mac users should note that libewf-devel may not be available in ports.  If it is
 \end{Verbatim}
 
 \textbf{Download and Install \bulk}\\
-Next, download the latest version of \bulk. The software can be downloaded from \url{http://digitalcorpora.org/downloads/bulk_extractor/}. The file to download will be called \texttt{bulk\_extractor-x.y.z.tar.gz} where x.y.z is the latest version. As of publication of this manual, the latest version of \bulk is 1.5.0. \\
+Next, download the latest version of \bulk. The software can be downloaded from \url{http://digitalcorpora.org/downloads/bulk_extractor/}. The file to download will be called \texttt{bulk\_extractor-x.y.z.tar.gz} where x.y.z is the latest version. As of publication of this manual, the latest version of \bulk is 1.5. \\
 
-
-After downloading the file, un-tar it. Then, in the newly created \textit{bulk\_extractor-x.y.z} directory, run the following commands to install \bulk in \textit{/usr/local/bin} (by default):
+After downloading the tar.gz file, decompress and un-tar it. Then, cd into the newly created \textit{bulk\_extractor-x.y.z} directory, and run the following commands to install \bulk in \textit{/usr/local/bin} (by default):
 
 \begin{Verbatim}[commandchars=\\\{\}]
 \verbbf{./configure}
 \verbbf{make}
 \verbbf{sudo make install}
 \end{Verbatim}
-
 
 With these instructions, the following directory will not be installed:
 \begin{itemize}
@@ -317,7 +325,7 @@ The \viewer tool is installed as part of the above installation process. Specifi
 
 \subsubsection{Installing on Windows}
 \label{InstallOnWindows}
-Windows users should download the Windows Installer for \bulk.  The file to download is located at \url{http://digitalcorpora.org/downloads/bulk_extractor/executables/} and is called \texttt{bulk\_extractor-x.y.z-windowsinstaller.exe} where x.y.z is the latest version number (1.5.0 as of publication of this manual).   \\
+Windows users should download the Windows Installer for \bulk.  The file to download is located at \url{http://digitalcorpora.org/downloads/bulk_extractor/} and is called \texttt{bulk\_extractor-x.y.z-windowsinstaller.exe} where x.y.z is the latest version number (1.5.0 as of publication of this manual).   \\
 
 Next, run the \texttt{bulk\_extractor-x.y.z-windowsinstaller.exe} file. This will automatically install \bulk on your machine. Because this file is not used by many Windows users, some anti-virus systems will try to manual delete it on download or block the download as shown in Figure ~\ref{fig:installer_download}.  Be aware that you may have to work around your anti-virus system. Additionally, some Windows versions will try to prevent you from running it. Figure ~\ref{fig:windowsWarning} shows the message Windows 8 displays when trying to run the installer. To run anyway, click on ``More info'' and then select ``Run Anyway.''\\
 \begin{figure}
@@ -347,7 +355,7 @@ The automatic installation includes the \viewer tool as well as the complete \bu
 
 \subsection {Run \bulk from the Command Line}
 \label{RunFromCommandLine}
-The two main parameters required to run \bulk are an output directory and a disk image. The output directory must be a directory that does not already exist. The disk image can be either a file such as a disk image or a directory of individual files. \bulk cannot process a directory of disk images.\\
+The two main parameters required to run \bulk are an output directory and a disk image. The output directory must be a directory that does not already exist. The disk image can be either a file such as a disk image or a directory of individual files. Note that \bulk cannot process a directory of disk images.\\
 
 In the following instructions, \textit{output} is the name of the directory that will be created to store the \bulk output. The file \texttt{mydisk.raw} is the name of the disk image that will be extracted by \bulk. \\
 
@@ -395,7 +403,7 @@ Total email features found: 67
 \end{Verbatim}
 \endgroup
 
-Note that \bulk has automatically selected to use 4 threads; this is because the program was run on a computer with 4 cores. In general, \bulk automatically determines the correct number of cores to use. It is not necessary to set the number of threads to use.\\
+Note that \bulk automatically choose to use 4 threads because the program was run on a computer with 4 cores. In general, \bulk automatically determines the number of cores to use. Therefore, it is not necessary to set the number of threads unless you want to limit the number to use.\\
 
 After running \bulk, examine the output directory specified by name in the run command. There should now be a number of generated output files in that directory. There are several categories of output created for each \bulk run. First, there are feature files grouped by category, which contain the features found and include the path, feature and context. Second, there are histogram files that allow users to quickly see the features grouped by the frequency in which they occur. Certain kinds of files, such as JPEGs and KML files, may be carved into directories. Finally, \bulk creates a file \texttt{report.xml}, in DFXML format, that captures the provenance of the run. After \bulk has been run, all of these files will be found in the output directory specified by the user.\\
 
@@ -453,7 +461,7 @@ The specific order in which multiple usage options are specified matters. Some o
 \subsection{Run \bulk from \viewer}
 \label{RunningViewer}
 
-On a Linux or Mac system, go to the directory where the \viewer is installed or specify the full path name to the jar file. It will be in the location where the \bulk code was installed and in the sub-directory labeled \textit{java\_gui}. From that directory, run the following command to start the \viewer:
+On a Linux or Mac OS X system, go to the directory where the \viewer is installed or specify the full path name to the jar file. It will be in the location where the \bulk code was installed and in the sub-directory labeled \textit{java\_gui}. From that directory, run the following command to start the \viewer:
 \begin{Verbatim}[commandchars=\\\{\}]
 \verbbf{./BEViewer}
 \end{Verbatim}
@@ -507,15 +515,15 @@ When the run is complete, a dialog will pop-up indicating the results are ready 
 	\caption{Reports window shows the newly created report and all of the files created in that report}
 	\label{fig:listOfOutput}
 \end{figure}
-Clicking on one of the files will bring that file up in the ``Feature File'' window in the middle of the screen. In the example, the user clicked on \texttt{email.txt} to view the email feature file. Clicking on one of the features, in this case \textbf{rtf\_text@textedit.com}, shows the feature in context within the feature file on the right hand side of the window as shown in Figure ~\ref{fig:emailFeatureFile}.\\
+Clicking on one of the files will bring that file up in the ``Feature File'' window in the middle of the screen. In the example, the user clicked on \texttt{email.txt} to view the email feature file. Clicking on one of the features, in this case \textbf{rtf\_text@textedit.com}, shows the feature in context within the feature file on the right-hand side of the window as shown in Figure ~\ref{fig:emailFeatureFile}.\\
 
 \begin{figure}
 	\includegraphics[scale=.7]{viewerPics/emailFeatureFile.png}
-	\caption{While viewing the feature file, the user can select a feature to view with it's full context in the feature file as shown in the right hand side of the window}
+	\caption{While viewing the feature file, the user can select a feature to view with it full context in the feature file as shown in the right-hand side of the window}
 	\label{fig:emailFeatureFile}
 \end{figure}
 
-The user can also view histogram files in the \viewer. Clicking on the file, \texttt{email\_histogram.txt} in the Reports window on the left hand side will bring up the contents of the histogram file in the middle window. It will also display the referenced feature file in the window below the histogram file. In this case, the referenced feature file is \texttt{email.txt}. Clicking on a feature in the histogram, in this example \textbf{rtf\_text@textedit.com}, will display the feature in context as found within the feature file on the right hand side of the screen as shown in Figure ~\ref{fig:emailHistogramView}.\\
+The user can also view histogram files in the \viewer. Clicking on the file, \texttt{email\_histogram.txt} in the Reports window on the left hand side will bring up the contents of the histogram file in the middle window. It will also display the referenced feature file in the window below the histogram file. In this case, the referenced feature file is \texttt{email.txt}. Clicking on a feature in the histogram, in this example \textbf{rtf\_text@textedit.com}, will display the feature in context as found within the feature file on the right-hand side of the screen as shown in Figure ~\ref{fig:emailHistogramView}.\\
 
 \begin{figure}
 	\includegraphics[scale=.70]{viewerPics/emailHistogramView.png}
@@ -544,7 +552,6 @@ The scanners all serve different functions and look for different types of infor
 \hline
 \endlastfoot
 
-\label{tab:inputdata}
 \hline\textbf{\textit{accts}} & Numeric accounts, such as phone numbers and CCNs\\
 \hline\textbf{\textit{aes}} & In-memory AES keys from their key schedules & \Autoref{cyber}\\
 \hline\textbf{\textit{base16}} & Base 16 (hex) encoded data (includes MD5 codes embedded in the data) & \Autoref{cyber}\\
@@ -567,11 +574,12 @@ The scanners all serve different functions and look for different types of infor
 \hline\textbf{\textit{vcard}} & vCard files (carved) & \Autoref{identity}\\
 \hline\textbf{\textit{windirs}} & Windows FAT32 and NTFS directory entries& \Autoref{cyber}\\
 \hline\textbf{\textit{winlnk}} & Windows LNK file carving and decoding\\
-\hline\textbf{\textit{winpe}} & Windows Preinstallation Environment (PE) Executables (.exe and .dll files notated with MD5 hash of first 4k) & \Autoref{malware}\\
+\hline\textbf{\textit{winpe}} & Windows Portable Executable (PE) (.exe and .dll files notated with MD5 hash of first 4k) & \Autoref{malware}\\
 \hline\textbf{\textit{winprefetch}} & Windows Prefetch files, file fragments (processed) & \Autoref{malware} \\
 \hline\textbf{\textit{zip}} & ZIP files and zlib streams (processed, and optionally carved) & \Autoref{carving} and \Autoref{compressedProcessing}\\
 \hline
 \end{longtable}
+\label{tab:inputdata}
 
 \subsection{Scanners}
 \label{Scanners}
@@ -656,7 +664,7 @@ As with the other scanner and \bulk usage options, most users will not have to u
 \subsection{Carving}
 \label{carving}
 
-File carving is a special kind of carving in which files are recovered. File carving is useful for both data recovery and forensic investigations because it can recover files when sectors containing file system metadata are either overwritten or damaged \cite{digitalmediatriage}. Currently, \bulk provides carving of contiguous JPEG, ZIP and RAR files. To carve fragmented files we recommend \textbf{PhotoRec} (free) or \textbf{Adroit Photo Recovery}( commercial). Additionally, \textbf{Forensics Toolkit} and \textbf{EnCase Forensic} provide some carving capability on fragmented files.\\
+File carving is a special kind of carving in which files are recovered. File carving is useful for both data recovery and forensic investigations because it can recover files when sectors containing file system metadata are either overwritten or damaged \cite{digitalmediatriage}. Currently, \bulk provides carving of contiguous JPEG, ZIP and RAR files. To carve fragmented files we recommend \textbf{PhotoRec} (free) or \textbf{Adroit Photo Recovery} (commercial). Additionally, \textbf{Forensics Toolkit} and \textbf{EnCase Forensic} provide some carving capability on fragmented files.\\
 
 Carved results are stored in two different places. First, a file listing all the files that are carved are written to a corresponding .txt file: JPEG files to \texttt{jpeg\_carved.txt}, ZIP files to \texttt{unzip.txt} and RAR files to \texttt{unrar.txt}. Second, the carved JPEG, ZIP and RAR files are placed in binned directories that are named \textit{/jpeg}, \textit{/unzip} and \textit{/unrar} respectively. For example, all carved JPEGs will go in the directory \textit{/jpeg}. The output files are further binned with 1000 files in each directory. The directory names are 3 decimal digits. If there are more than 999,000 carved files of one type, then the next set of directories are named with 4 digits. File names for JPEGs are the forensicpath.jpg. File names for the ZIP carver are the forensicpath\_filename. If the ZIP file name has slashes in it (denoting directories), they are turned into '\_' (underbars). For example, the file \texttt{mydocs/output/specialfile} will be named \texttt{mydocs\_output\_specialfile}. \\
 
@@ -685,11 +693,11 @@ To specify the carving modes for \bulk, command line arguments can be specified.
 \end{Verbatim} 
 To modify the ZIP carving modes, type the following  where carve mode 1=default value that does not need to be specified (carve encoded), 0=no carving or 2=carve everything:
 \begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{bulk_extractor -S zip_carve_mode=1 -o output diskimage.raw}
+\verbbf{bulk_extractor -S unzip_carve_mode=1 -o output diskimage.raw}
 \end{Verbatim} 
 To modify the RAR carving modes, type the following  where carve mode 1=default value that does not need to be specified (carve encoded), 0=no carving or 2=carve everything:
 \begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{bulk_extractor -S rar_carve_mode=1 -o output diskimage.raw}
+\verbbf{bulk_extractor -S unrar_carve_mode=1 -o output diskimage.raw}
 \end{Verbatim} 
 Any combination of the carving mode options can be specified for a given run. The carvers can run in any combination of modes. For example, the JPEG carver can be run in mode 2 while the RAR carving is turned off in mode 1 and the ZIP carver carves only encoded files in mode 1.\\
 
@@ -736,7 +744,7 @@ However for the reasons stated above, it is recommended that users rely on conte
 Stopped results are not completely hidden from users. If stopped feature are discovered, they will be written to the appropriate category feature file with the extension \texttt{\_stopped.txt}. For example, stopped domain names that are found in the disk image will be written to \texttt{domain\_stopped.txt} in the output directory. The stopped files serve the purpose of allowing users to verify that \bulk is functioning properly and that the lists they have written are being processed correctly.
 
 \subsection{Using an Alert List}
-Users may have specific words, or feature in a given context, that are important to their investigation. The alert list allows \bulk to specifically alert or flag the user when those concepts are found. Alert lists can contain a list of words or a feature file. The feature file operates much in the same way as the feature files used for context-sensitive stop lists. It will provide a feature but alert on that feature only when it's found in the specified context.\\
+Specific words or features in a given context might be important to a user's investigation. The alert list can contain a list of words and/or feature filenames, and when a match is found, it will alert the user. The way the feature file alert works is similar to how they are used for context-sensitive stop lists. It will only alert on a specified feature when it's found in the specified context.\\
 
 A sample alert list file might look like the following:
 \begin{verbatim}
@@ -745,12 +753,12 @@ SilentFury2012
 www.maliciousintent.com
 \end{verbatim}
 
-While this list does not appear to help in any particular investigation, it demonstrates that you can specify distinct words that are important to their analysis. Results containing the alert list information are found in the file \texttt{alert.txt} in the run output directory.
+While this list does not appear to help in any particular investigation, it demonstrates that you can specify distinct words that are important to their analysis. Results containing the alert list information are found in the file \texttt{alert.txt} in the \bulk output directory.
 
 \subsection{The Importance of Compressed Data Processing}
 \label{compressedProcessing}
 
-Many forensic tools frequently miss case-critical data because they do not examine certain classes of compressed data found. For example, a recent study of 1400 drives found thousands of email addresses that were compressed but in unallocated space\cite{encodedEvidence}. Without looking at all the data on each drive and optimistically decompressing it, those features would be missed. Compressed email addresses, such as those in a GZIP file, do not look like email addresses to a scanner; they must first be decompressed to be identified. Although some of these features are from software distributions, many are not. Table ~\ref{tab:encodings2} shows the kinds of encodings that can be decoded by \bulk \cite{encodedEvidence}.
+Many forensic tools frequently miss case-critical data because they do not examine certain classes of compressed data. For example, a recent study of 1400 drives found thousands of email addresses that were compressed (and happened to be in unallocated space).\cite{encodedEvidence}. Without looking at all the data on each drive and optimistically decompressing it, critical features might be missed. Compressed email addresses, such as those in a GZIP file, do not look like email addresses to a scanner; they must first be decompressed to be identified. Although some of these features are from software distributions, many are not. Table ~\ref{tab:encodings2} shows the kinds of encodings that can be decoded by \bulk \cite{encodedEvidence}.
 
 \begin{table}[!ht]
 \centering
@@ -774,7 +782,7 @@ ZIP & The local file header of a ZIP-file component \\
 \end{table}
 
 
-The reason that users must be aware of this is because users have a tendency to want to enable and disable scanners for specific uses; They can unintentionally damage their results. For example, if a user only wants to find email addresses, they may try to turn off all scanners except the email scanner. This will find some email addresses. However, it will miss the email addresses on the media that are only present in compressed data. This is because scanners such as \textbf{\textit{zip}},  \textbf{\textit{rar}} and  \textbf{\textit{gzip}} will not be running. Those scanners each work on a different type of compressed data. For example, the  \textbf{\textit{gzip}} scanner will find GZIP compressed data, decompress it and then pass it other scanners to search for features. In that way, GZIP compressed emails can be processed by \bulk. \\
+The reason that users must be aware of this is because users have a tendency to want to enable and disable scanners for specific uses, but one can unintentionally compromise the results. For example, if a user only wants to find email addresses, they may try to turn off all scanners except the email scanner. This will find some email addresses. However, it will miss the email addresses on the media that are only present in compressed data. This is because scanners such as \textbf{\textit{zip}},  \textbf{\textit{rar}} and  \textbf{\textit{gzip}} will not be running. Those scanners each work on a different type of compressed data. For example, the  \textbf{\textit{gzip}} scanner will find GZIP compressed data, decompress it and then pass it other scanners to search for features. In that way, GZIP compressed emails can be processed by \bulk. \\
 
 The  \textbf{\textit{pdf}} scanner is another type of scanner that finds text that otherwise wouldn't be found. While PDF files are human readable, they are not readable but many software tools and scanners because of their formatting. The  \textbf{\textit{pdf}} scanner extracts some kinds of text found within PDFs and then passes that text on to other scanners for further processing. Many typical disk images include PDF files, so most users will want to have this scanner enabled (as it is by default).\\
 
@@ -791,12 +799,12 @@ First, \bulk finds evidence of virtually all executables on the hard drive inclu
 
 Several output feature files produced by \bulk contain relevant and important information about executables. These files include:
 \begin{itemize}
-\item \texttt{elf.txt} --- This file (produced by the \textbf{\textit{elf}} scanner) contains information about ELF executables that can be used to target Linux and Mac systems.
+\item \texttt{elf.txt} --- This file (produced by the \textbf{\textit{elf}} scanner) contains information about ELF executables that can be used to target Linux and Mac OS X systems.
 \item \texttt{winprefetch.txt} --- This file (produced by the \textbf{\textit{winprefetch} scanner} lists the current and deleted files found in the Windows prefetch directory.
 \end{itemize}
 The XML in these feature files is too complicated to review without using other applications. The recommended way to analyze the executable output is to use a third party tool that analyzes executables or pull the results into a spreadsheet. In a spreadsheet, one column could contain the hash values and those values can be compared against a database of executable hashes. There is also a python tool that comes with \bulk called \textbf{identify\_filenames.py} that can be used to get the full filename of the file. The python tool is discussed in more detail in \textbf{\Autoref{PostProcessing}}.\\
 
-For Windows specific malware investigations, the files \texttt{winpe.txt} and \texttt{winprefetch.txt} are very useful. They are produced by the \textbf{\textit{winpe}} and \textbf{\textit{winprefetch}} scanners respectively.  Windows Prefetch shows files that have been prefetched in the Windows prefetch directory and shows the deleted files that were found in unallocated space. The Windows PE feature file shows entries related to the Windows executable files. \\
+For Windows specific malware investigations, the files \texttt{winpe.txt} and \texttt{winprefetch.txt} are very useful. They are produced by the \textbf{\textit{winpe}} and \textbf{\textit{winprefetch}} scanners respectively.  Windows Prefetch shows files that have been prefetched in the Windows prefetch directory and shows the deleted files that were found in unallocated space. The Windows PE feature file shows entries related to Windows portable executable files. \\
 
 JSON, the JavaScript Object Notation, is a lightweight data-interchange format. Websites tend to download a lot of information using JSON. The output file \texttt{json.txt}, produced by the \textbf{\textit{json}} scanner, can be useful for malware investigations and analysis of web-based applications. If a website has downloaded information in JSON format, the JSON scanner may find that information in the browser cache. 
 
@@ -832,7 +840,7 @@ The  \textbf{\textit{kml}} and  \textbf{\textit{gps}} scanner both produce GPS i
 
 The  \textbf{\textit{email}} scanner looks for email addresses in all data and writes that to \texttt{email.txt}. The  \textbf{\textit{vcard}} scanner looks at vCard data, an electronic business card format, and finds names, email addresses and phone numbers to write to the respective feature file.\\
 
-The are multiple url files including \texttt{url.txt}, \texttt{url\_facebook-address}, \texttt{url\_facebook-id}, \texttt{url\_microsoft-live}, \texttt{url\_searches.txt} and \texttt{url\_services.txt} that are produced by the \textbf{\textit{email}} scanner. They are useful for looking at what websites a person has visited as well as the people they are associating with.\\
+The are multiple url files including \texttt{url.txt}, \texttt{url\_facebook-address.txt}, \texttt{url\_facebook-id.txt}, \texttt{url\_microsoft-live.txt}, \texttt{url\_searches.txt} and \texttt{url\_services.txt} that are produced by the \textbf{\textit{email}} scanner. They are useful for looking at what websites a person has visited as well as the people they are associating with.\\
 
 An important aspect of identity investigations (as well as other types) is the ability to search the data for a list of keywords. \bulk provides the capability to do that through two different means. First, the  \textbf{\textit{find}} scanner is a simple regular expression finder that uses regular expressions. The \textbf{\textit{find}} scanner looks through the data for anything listed in the global find list. The format of the find list should be rows of regular expressions while any line beginning with a \# is considered a comment. The following is an excerpt from a sample find list file:
 \lstset{style=customfile}
@@ -923,7 +931,7 @@ The program \textbf{bulk\_diff.py} takes the results of two \bulk runs and shows
 \begin{Verbatim}[commandchars=\\\{\}]
 \verbbf{bulk\_diff.py <pre> <post> }
 \end{Verbatim} 
-Note, Linux and Mac users may have to type \textbf{python2.7}, \textbf{python3}, or \textbf{python3.3} before the command, indicating the version of Python installed on your machine. An example use of the \textbf{bulk\_diff.py} program can be found in \Autoref{Examples}.
+Note, Linux and Mac OS X users may have to type \textbf{python2.7}, \textbf{python3}, or \textbf{python3.3} before the command, indicating the version of Python installed on your machine. An example use of the \textbf{bulk\_diff.py} program can be found in \Autoref{Examples}.
 
 
 \subsection{identify\_filenames.py: Identify File Origin of Features}
@@ -935,7 +943,7 @@ The \textbf{identify\_filenames.py} program provides various usage options but t
 \begin{Verbatim}[commandchars=\\\{\}]
 \verbbf{identify\_filenames.py --all bulkoutputdirectory idoutput}
 \end{Verbatim} 
-Note, Linux and Mac users may have to type \textbf{python2.7}, \textbf{python3}, or \textbf{python3.3} before the command, indicating the version of Python installed on your machine.  An example use of the \textbf{bulk\_diff.py} program can be found in \Autoref{Examples}.
+Note, Linux and Mac OS X users may have to type \textbf{python2.7}, \textbf{python3}, or \textbf{python3.3} before the command, indicating the version of Python installed on your machine.  An example use of the \textbf{bulk\_diff.py} program can be found in \Autoref{Examples}.
 
 \section{Worked Examples}
 \label{Examples}

@@ -40,9 +40,6 @@ EXTRA_DIST = \
 	m4/ac_prog_javah.m4 \
 	m4/ac_try_compile_java.m4 \
 	m4/ac_try_run_javac.m4 \
-	m4/ax_boost_base.m4 \
-	m4/ax_boost_filesystem.m4 \
-	m4/ax_boost_system.m4 \
 	m4/ax_pthread.m4 \
 	bootstrap.sh \
 	$(SRC_WIN_DIST)

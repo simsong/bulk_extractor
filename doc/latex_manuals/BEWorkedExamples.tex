@@ -674,7 +674,7 @@ src='mft'><atime>2008-10-21T00:45:51Z</atime><attr_flags>8224</attr_flags>
 \end{lstlisting}
 The line from the file gives information about the disk entry \texttt{A0001801.dll}. It provides some data about the file including the file size, file creation time (ctime) and time of last file modification (mtime). It is important to note that the error rate for FAT32 entries is high and those entries should be ignored if the drive is not FAT. \\
 
-For investigations on Windows disk images, such as the \texttt{nps-2009-domexusers}, the file \texttt{winpe.txt} shows Windows executables related to the Windows Preinstallation Environment. These file entries contain very long lines. The following is \textbf{one} line from the file:
+For investigations on Windows disk images, such as the \texttt{nps-2009-domexusers}, the file \texttt{winpe.txt} shows information relating to Windows Portable Executable files.  These file entries contain very long lines. The following is \textbf{one} line from the file:
 \lstset{style=customfile}
 \begin{lstlisting}
 42753536 87d84154e7789013878c6340a4d2d445 <PE><FileHeader Machine=

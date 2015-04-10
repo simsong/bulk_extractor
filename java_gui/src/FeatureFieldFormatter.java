@@ -55,10 +55,8 @@ public class FeatureFieldFormatter {
     } else if (filename.equals("winpe.txt")) {
       formattedText = getWINPEFormat(contextField);
 
-    } else if (filename.equals("identified_blocks.txt")
-               // identified_sources.txt is the recommended filename to use
-               // for post-processing identified_blocks.txt using hashdb.
-            || filename.equals("identified_sources.txt")) {
+    } else if (filename.indexOf("identified") >= 0) {
+      // accept any filename starting with "identified_blocks"
       // feature field, which contains hexdigest plus context which indicates
       // information about the feature
       formattedText = getGenericFormatWithContext(featureField, contextField);

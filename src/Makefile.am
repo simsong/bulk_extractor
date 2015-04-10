@@ -117,8 +117,6 @@ bulk_extractor_noscanners_SOURCES = $(bulk_extractor_nomain) bulk_extractor_nosc
 
 stand_SOURCES = dig.cpp scan_sceadan.cpp stand.cpp $(TSK3INCS) $(BE13_API) $(DFXML_WRITER) 
 
-TESTS=test1.sh
-
 lib: libbulkextractor.so
 
 libbulkextractor.so: $(bulk_extractorlib_OBJECTS)

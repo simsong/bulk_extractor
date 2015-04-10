@@ -7,7 +7,7 @@
 # and http://www.openismus.com/documents/linux/automake/automake.shtml
 
 AC_PREREQ(2.57)
-AC_INIT(BULK_EXTRACTOR, 1.5.5-dev, bugs@digitalcorpora.org)
+AC_INIT(BULK_EXTRACTOR, 1.6.0-dev, bugs@digitalcorpora.org)
 
 AC_CONFIG_MACRO_DIR(m4)
 
@@ -388,16 +388,6 @@ if test x"$hashdb" == x"yes" ; then
   AC_CHECK_LIB([xml2], [xmlSAXUserParseFile],[LIBS="-lxml2 $LIBS"],
     [AC_MSG_WARN([Could not find libxml2 library required to build the hashdb scanner])
     hashdb=no])
-
-  if test x"$hashdb" == xyes ; then
-    AX_BOOST_BASE([1.53],
-      [AX_BOOST_SYSTEM
-      AX_BOOST_FILESYSTEM
-      AX_BOOST_IOSTREAMS
-      LIBS="$BOOST_SYSTEM_LIB $BOOST_FILESYSTEM_LIB $BOOST_IOSTREAMS_LIB $LIBS"],
-      [AC_MSG_WARN([Boost 1.53 or newer is required to build the hashdb scanner])
-      hashdb=no])
-  fi
 
   if test x"$hashdb" == xyes ; then
     AC_LANG_PUSH(C++)

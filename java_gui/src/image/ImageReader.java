@@ -31,7 +31,7 @@ public class ImageReader {
   private PrintWriter writeToProcess;
   private InputStream readFromProcess;
   ThreadReaderModel stderrThread;
-  boolean readerIsValid = true;
+  private boolean readerIsValid = true;
   String readerFailure = "";
 
   // input request
@@ -54,12 +54,7 @@ public class ImageReader {
     file = newFile;
 
     if (file == null) {
-throw new RuntimeException("imageReader");
-/*
-      // an empty image reader is created when a report is closed
-      readerIsValid = false;
-      return;
-*/
+      throw new RuntimeException("imageReader");
     }
 
     // open interactive http channel with bulk_extractor
@@ -121,7 +116,6 @@ throw new RuntimeException("imageReader");
 
   public ImageReaderResponse read(String forensicPath, long numBytes) {
     if (!readerIsValid) {
-//      return new ImageReaderResponse(new byte[0], 0);
       throw new RuntimeException("bad state");
     }
 
@@ -366,21 +360,6 @@ throw new RuntimeException("imageReader");
 
       // stop watchdog for this process wait
       aborter.cancel();
-
-/*
-      // close resources, this may already be happening
-      if (writeToProcess != null) {
-        writeToProcess.close();
-      }
-      if (readFromProcess != null) {
-        try {
-        readFromProcess.close();
-        } catch (IOException e) {
-          WError.showErrorLater("Unable to close read stream.",
-                            "Error Closing Image", e);
-        }
-      }
-*/
 
     } catch (InterruptedException e) {
       // NOTE: gjc doesn't support IOException(Throwable) so use this:

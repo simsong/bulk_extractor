@@ -223,52 +223,5 @@ public class UTF8Tools {
     }
     return s.toByteArray();
   }
-
-// too fancy.  We now just strip NULLs if probable UTF-16.
-//  /*
-//   * Determine probable UTF format and then convert the bytes to string.
-//   */
-//  public static String bytesToString(byte[] bytes) {
-//
-//    // if too short, use UTF-8
-//    if (bytes.length < 2) {
-//      return new String(bytes, UTF_8);
-//    }
-//
-//    // if BOM, use UTF-16
-//    if (bytes[0] == 0xff && bytes[1] == 0xfe || bytes[0] == 0xfe && bytes[1] == 0xff) {
-//      return new String(bytes, UTF_16);
-//    }
-//
-//    // Check for UTF-16 by counting \0 in even and odd slots
-//    int evenNullCount = 0;
-//    int oddNullCount = 0;
-//    for (int i=0; i+1<bytes.length; i+=2) {
-//      if (bytes[i] == 0) {
-//        evenNullCount++;
-//      }
-//      if (bytes[i+1] == 0) {
-//        oddNullCount++;
-//      }
-//    }
-//    // it looks like utf16 when no even \0 and more than 1 odd \0 or vice versa
-//    // NOTE: adapted from histogram.cpp
-//    if (evenNullCount == 0 && oddNullCount > 1) {
-//      return new String(bytes, UTF_16LE);
-//    }
-//    if (evenNullCount > 1 && oddNullCount == 0) {
-//      return new String(bytes, UTF_16BE);
-//    }
-//
-//    // probably UTF8
-//    return new String(bytes, UTF_8);
-//  }
-
-  /*
-   * Convert string to bytes using the specified encoding.
-   */
-  public static byte[] stringToBytes(String text, Charset utfCharset) {
-    return text.getBytes(utfCharset);
-  }
 }
 

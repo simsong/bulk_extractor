@@ -97,7 +97,6 @@ $(srcdir)/src/WURL.java \
 $(srcdir)/src/image/BulkExtractorScanListReader.java \
 $(srcdir)/src/image/BulkExtractorVersionReader.java \
 $(srcdir)/src/image/ImageReader.java \
-$(srcdir)/src/image/ImageReaderManager.java \
 $(srcdir)/src/image/ThreadAborterTimer.java
 
 ICON_FILES = \

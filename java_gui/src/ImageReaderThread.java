@@ -14,7 +14,6 @@ public class ImageReaderThread extends Thread {
  
   // resources
   private final ImageModel imageModel;
-  private final ImageReaderManager imageReaderManager;
 
   /**
    * The <code>ImageReaderThread</code> class performs reading from an image
@@ -22,13 +21,11 @@ public class ImageReaderThread extends Thread {
    * imageModel.manageModelChanges is called when done, which consumes the response.
    */
   public ImageReaderThread(ImageModel imageModel,
-                           ImageReaderManager imageReaderManager,
                            File imageFile,
                            String forensicPath,
                            int numBytes) {
 
     this.imageModel = imageModel;
-    this.imageReaderManager = imageReaderManager;
     this.imageFile = imageFile;
     this.forensicPath = forensicPath;
     this.numBytes = numBytes;
@@ -40,7 +37,9 @@ public class ImageReaderThread extends Thread {
     // handle the read request
     try {
       // issue the read
-      response = imageReaderManager.read(imageFile, forensicPath, numBytes);
+      ImageReader reader = new ImageReader(imageFile);
+      response = reader.read(forensicPath, numBytes);
+      reader.close();
 
       // note if no bytes were returned
       if (response.bytes.length == 0) {

@@ -161,7 +161,7 @@ public class BEToolbar extends JToolBar {
     copyB.setFocusable(false);
     copyB.setOpaque(false);
     copyB.setBorderPainted(false);
-    copyB.setToolTipText("Copy feature or image selection to the System Clipboard");
+    copyB.setToolTipText("Copy selection to the System Clipboard");
     copyB.addActionListener(new ActionListener() {
       public void actionPerformed (ActionEvent e) {
         RangeSelectionManager.setSystemClipboard(BEViewer.rangeSelectionManager.getSelection());

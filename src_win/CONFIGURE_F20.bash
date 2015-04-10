@@ -1,12 +1,12 @@
 #!/bin/bash
 cat <<EOF
 *******************************************************************
-  Configuring Fedora for cross-compiling multi-threaded 32-bit and
+        Configuring Fedora for cross-compiling multi-threaded
 		 64-bit Windows programs with mingw.
 *******************************************************************
 
 This script will configure a fresh Fedora system to compile with
-mingw32 and 64.  Please perform the following steps:
+mingw64.  Please perform the following steps:
 
 1. Install F20 or newer, running with you as an administrator.
    For a VM:
@@ -47,10 +47,10 @@ MPKGS="autoconf automake flex gcc gcc-c++ git libtool "
 MPKGS+="md5deep osslsigncode patch wine wget bison zlib-devel "
 MPKGS+="libewf libewf-devel java-1.7.0-openjdk-devel "
 MPKGS+="libxml2-devel libxml2-static openssl-devel "
-MPKGS+="boost-devel boost-static expat-devel "
-MPKGS+="mingw32-gcc mingw32-gcc-c++ "
+MPKGS+="expat-devel "
 MPKGS+="mingw64-gcc mingw64-gcc-c++ "
 MPKGS+="mingw32-nsis "
+MPKGS+="java-1.8.0-openjdk-devel "
 
 if [ ! -r /etc/redhat-release ]; then
   echo This requires Fedora Linux
@@ -76,23 +76,20 @@ echo Attempting to install both DLL and static version of all mingw libraries
 echo needed for bulk_extractor.
 echo At this point we will keep going even if there is an error...
 INST=""
-for M in mingw32 mingw64 ; do
-  # For these install both DLL and static
-  for lib in zlib gettext boost cairo pixman freetype fontconfig \
-      bzip2 expat winpthreads libgnurx libxml2 iconv openssl sqlite ; do
-    INST+=" ${M}-${lib} ${M}-${lib}-static"
-  done
-done 
+# For these install both DLL and static
+# note that liblightgrep needs boost
+for lib in zlib gettext boost cairo pixman freetype fontconfig \
+    bzip2 expat winpthreads libgnurx libxml2 iconv openssl sqlite ; do
+  INST+=" mingw64-${lib} mingw64-${lib}-static"
+done
 sudo yum -y install $INST
 
 echo 
 echo "Now performing a yum update to update system packages"
 sudo yum -y update
 
-MINGW32=i686-w64-mingw32
 MINGW64=x86_64-w64-mingw32
 
-MINGW32_DIR=/usr/$MINGW32/sys-root/mingw
 MINGW64_DIR=/usr/$MINGW64/sys-root/mingw
 
 # from here on, exit if any command fails
@@ -100,8 +97,7 @@ set -e
 
 function is_installed {
   LIB=$1
-  if [ -r /usr/x86_64-w64-mingw32/sys-root/mingw/lib/$LIB.a ] && \
-     [ -r /usr/i686-w64-mingw32/sys-root/mingw/lib/$LIB.a ];
+  if [ -r /usr/x86_64-w64-mingw32/sys-root/mingw/lib/$LIB.a ];
   then
     return 0
   else 
@@ -126,18 +122,16 @@ function build_mingw {
     # Now get the directory that it unpacked into
     DIR=`tar tf $FILE |head -1`
     pushd $DIR
-    for i in 32 64 ; do
-      echo
-      echo %%% $LIB mingw$i
-      if [ ! -r configure -a -r bootstrap.sh ]; then
-        . bootstrap.sh
-      fi
-      CPPFLAGS=-DHAVE_LOCAL_LIBEWF mingw$i-configure --enable-static --disable-shared
-      make clean
-      make
-      sudo make install
-      make clean
-    done
+    echo
+    echo %%% $LIB mingw64
+    if [ ! -r configure -a -r bootstrap.sh ]; then
+      . bootstrap.sh
+    fi
+    CPPFLAGS=-DHAVE_LOCAL_LIBEWF mingw64-configure --enable-static --disable-shared
+    make clean
+    make
+    sudo make install
+    make clean
     popd
     rm -rf $DIR
   fi
@@ -187,22 +181,20 @@ else
   make VERBOSE=1
   popd
   
-  # build 32- and 64-bit ICU for MinGW
-  for i in 32 64 ; do
-    echo
-    echo icu mingw$i
-    rm -rf icu-mingw$i
-    mkdir icu-mingw$i
-    pushd icu-mingw$i
-    eval MINGW=\$MINGW$i
-    eval MINGW_DIR=\$MINGW${i}_DIR
-    ../icu/source/configure CC=$MINGW-gcc CXX=$MINGW-g++ CFLAGS=-O3 CXXFLAGS=-O3 CPPFLAGS="$ICU_DEFINES" --enable-static --disable-shared --prefix=$MINGW_DIR --host=$MINGW --with-cross-build=`realpath ../icu-linux` $ICU_FLAGS --disable-tools --disable-dyload --with-data-packaging=static
-    make VERBOSE=1
-    sudo make install
-    make clean
-    popd
-    rm -rf icu-mingw$i
-  done
+  # build 64-bit ICU for MinGW
+  echo
+  echo icu mingw64
+  rm -rf icu-mingw64
+  mkdir icu-mingw64
+  pushd icu-mingw64
+  eval MINGW=\$MINGW64
+  eval MINGW_DIR=\$MINGW64_DIR
+  ../icu/source/configure CC=$MINGW-gcc CXX=$MINGW-g++ CFLAGS=-O3 CXXFLAGS=-O3 CPPFLAGS="$ICU_DEFINES" --enable-static --disable-shared --prefix=$MINGW_DIR --host=$MINGW --with-cross-build=`realpath ../icu-linux` $ICU_FLAGS --disable-tools --disable-dyload --with-data-packaging=static
+  make VERBOSE=1
+  sudo make install
+  make clean
+  popd
+  rm -rf icu-mingw64
   rm -rf $ICUDIR icu-linux
   echo "ICU mingw installation complete."
 fi
@@ -226,8 +218,7 @@ sh configure
 popd
 echo ================================================================
 echo ================================================================
-echo 'You are now ready to cross-compile for win32 and win64.'
-echo 'To make bulk_extractor32.exe: cd ..; make win32'
+echo 'You are now ready to cross-compile for win64.'
 echo 'To make bulk_extractor64.exe: cd ..; make win64'
 echo 'To make ZIP file with both:   cd ..; make windist'
 echo 'To make the Nulsoft installer with both and the Java GUI: make'

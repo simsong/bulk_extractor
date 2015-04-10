@@ -337,9 +337,6 @@ public class WManageBookmarks extends JDialog {
       // close the output writer
       bookmarkTextWriter.close();
 
-      // close all image readers
-      bookmarkImageModel.closeAllImageReaders();
-
       // close the Export Bookmarks window
       closeWindow();
 

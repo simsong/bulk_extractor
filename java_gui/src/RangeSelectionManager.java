@@ -119,12 +119,18 @@ public class RangeSelectionManager {
     // create a string buffer for containing the selection
     StringBuffer stringBuffer = new StringBuffer();
 
-    // loop through each selected line to compose the text
-    for (int line = minSelectionIndex; line <= maxSelectionIndex; line++) {
+    if (minSelectionIndex == maxSelectionIndex) {
+      // no "\n" appended
+      stringBuffer.append(provider.getCopyableLine(minSelectionIndex));
+    } else {
 
-      // append the composed line to the selection buffer
-      stringBuffer.append(provider.getCopyableLine(line));
-      stringBuffer.append("\n");
+      // loop through each selected line to compose the text
+      for (int line = minSelectionIndex; line <= maxSelectionIndex; line++) {
+
+        // append the composed line to the selection buffer
+        stringBuffer.append(provider.getCopyableLine(line));
+        stringBuffer.append("\n");
+      }
     }
 
     String selection = stringBuffer.toString();

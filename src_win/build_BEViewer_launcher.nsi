@@ -6,8 +6,6 @@ Caption "Java Launcher for BEViewer"
 ;Icon "Java Launcher.ico"
 OutFile "BEViewerLauncher.exe"
  
-!define JARPATH "..\BEViewer.jar"
- 
 ; use javaw.exe to avoid dosbox or use java.exe to keep stdout/stderr
 !define JAVAEXE "javaw.exe"
 !define JAVA_URL "http://www.java.com"
@@ -27,7 +25,7 @@ Section ""
   Call GetJRE
   ${GetParameters} $1
 
-  StrCpy $0 '"$JAVA_HOME\bin\${JAVAEXE}" -Xmx1g -jar "${JARPATH}" $1'
+  StrCpy $0 '"$JAVA_HOME\bin\${JAVAEXE}" -Xmx1g -jar BEViewer.jar" $1'
  
   SetOutPath $EXEDIR
   ExecWait $0

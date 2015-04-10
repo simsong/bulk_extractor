@@ -46,7 +46,6 @@ static bool hashdb_ignore_empty_blocks=true;                 // import or scan
 static std::string hashdb_scan_path_or_socket="your_hashdb_directory"; // scan only
 static size_t hashdb_scan_sector_size = 512;                    // scan only
 static size_t hashdb_scan_max_features = 0;                     // scan only
-static bool hashdb_scan_open_per_thread = false;                // scan only
 static size_t hashdb_import_sector_size = 4096;                 // import only
 static std::string hashdb_import_repository_name="default_repository"; // import only
 static uint32_t hashdb_import_max_duplicates=0;                 // import only
@@ -62,11 +61,9 @@ static mode_type_t mode = MODE_NONE;
 static std::string hashdb_dir;
 
 // hash type
-typedef md5_t hash_t;
 typedef md5_generator hash_generator;
 
 // hashdb manager
-typedef hashdb_t__<hash_t> hashdb_t;
 static hashdb_t* hashdb;
 
 static void do_import(const class scanner_params &sp,
@@ -76,7 +73,7 @@ static void do_scan(const class scanner_params &sp,
 
 
 // safely hash sbuf range without overflow failure
-inline const hash_t hash_one_block(const sbuf_t &sbuf)
+inline const md5_t hash_one_block(const sbuf_t &sbuf)
 {
     if (sbuf.bufsize >= hashdb_block_size) {
         // hash from the beginning
@@ -138,24 +135,6 @@ static bool whitespace_trait(const sbuf_t &sbuf)
         if (isspace(sbuf[i])) count+=1;
     }
     return count >= (sbuf.pagesize * 3)/4;
-}
-
-/* Compute the shannon entropy on 16-bit values */
-static double shannon16(const sbuf_t &sbuf)
-{
-    typedef std::map<uint16_t,uint32_t> hist_t; // histogram type
-    hist_t hist;
-    for(size_t i = 0;i < sbuf.bufsize; i+=2){
-        hist[sbuf.get16u(i)] += 1;
-    }
-    double sum = 0.0;
-    for(hist_t::const_iterator it = hist.begin(); it!=hist.end(); it++){
-        const uint16_t val = it->first;
-        const uint16_t count = it->second;
-        double p = (double)(count) / (double)(sbuf.bufsize/2);
-        sum += (p * std::log2(p));
-    }
-    return -sum;
 }
 
 // detect if block is all the same
@@ -225,15 +204,6 @@ void scan_hashdb(const class scanner_params &sp,
                 << "      or 0 for no limit.  Valid only in scan mode.";
             sp.info->get_config("hashdb_scan_max_features", &hashdb_scan_max_features,
                                 ss_hashdb_scan_max_features.str());
-
-            // hashdb_scan_open_per_thread
-            std::stringstream ss_hashdb_scan_open_per_thread;
-            ss_hashdb_scan_open_per_thread
-                << "0=scan one database using a lock; 1=scan database\n"
-                << "      opened separately for each thread.\n"
-                << "      Valid only in scan mode.";
-            sp.info->get_config("hashdb_scan_open_per_thread", &hashdb_scan_open_per_thread,
-                                ss_hashdb_scan_open_per_thread.str());
 
             // hashdb_import_sector_size
             std::stringstream ss_hashdb_import_sector_size;
@@ -344,6 +314,9 @@ void scan_hashdb(const class scanner_params &sp,
             // hashdb_import_max_duplicates
             // checks not performed
 
+            // indicate hashdb version
+            std::cout << "hashdb: hashdb_version=" << hashdb_version() << "\n";
+
             // perform setup based on mode
             switch(mode) {
                 case MODE_IMPORT: {
@@ -353,17 +326,11 @@ void scan_hashdb(const class scanner_params &sp,
                     // open hashdb for importing
                     // currently, hashdb_dir is required to not exist
                     hashdb = new hashdb_t();
-                    std::pair<bool, std::string> open_import_pair = hashdb->open_import(
-                                          hashdb_dir,
-                                          hashdb_block_size,
-                                          hashdb_import_max_duplicates);
-                    if (open_import_pair.first == false) {
-                        std::cerr << "Error opening hashdb for importing.\n"
-                                  << open_import_pair.second << "\nAborting.\n";
-                        exit(1);
-                    }
+                    hashdb->open_import(hashdb_dir,
+                                        hashdb_block_size,
+                                        hashdb_import_max_duplicates);
 
-                    // show relavent settable options
+                    // show relevant settable options
                     std::string temp1((hashdb_ignore_empty_blocks) ? "YES" : "NO");
                     std::cout << "hashdb: hashdb_mode=" << hashdb_mode << "\n"
                               << "hashdb: hashdb_block_size=" << hashdb_block_size << "\n"
@@ -376,38 +343,23 @@ void scan_hashdb(const class scanner_params &sp,
                 }
 
                 case MODE_SCAN: {
-                    // show relavent settable options
+                    // show relevant settable options
                     std::string temp2((hashdb_ignore_empty_blocks) ? "YES" : "NO");
-                    std::string temp3((hashdb_scan_open_per_thread) ? "YES" : "NO");
                     std::cout << "hashdb: hashdb_mode=" << hashdb_mode << "\n"
                               << "hashdb: hashdb_block_size=" << hashdb_block_size << "\n"
                               << "hashdb: hashdb_ignore_empty_blocks=" << temp2 << "\n"
                               << "hashdb: hashdb_scan_path_or_socket=" << hashdb_scan_path_or_socket << "\n"
                               << "hashdb: hashdb_scan_sector_size=" << hashdb_scan_sector_size << "\n"
-                              << "hashdb: hashdb_scan_max_features=" << hashdb_scan_max_features << "\n"
-                              << "hashdb: hashdb_scan_open_per_thread=" << temp3 << "\n";
+                              << "hashdb: hashdb_scan_max_features=" << hashdb_scan_max_features << "\n";
 
                     // open hashdb for scanning
                     hashdb = new hashdb_t();
-                    std::pair<bool, std::string> open_scan_pair;
-                    if (hashdb_scan_open_per_thread == false) {
-                        // open to scan one database from any thread using a lock
-                        open_scan_pair = hashdb->open_scan(hashdb_scan_path_or_socket);
-                    } else {
-                        // open to scan a database assigned to the thread
-                        open_scan_pair = hashdb->open_scan_pthread(hashdb_scan_path_or_socket);
-                    }
-
-                    if (open_scan_pair.first == false) {
-                        std::cerr << "Error opening hashdb for scanning.\n"
-                                  << open_scan_pair.second << "\nAborting.\n";
-                        exit(1);
-                    }
+                    hashdb->open_scan(hashdb_scan_path_or_socket);
                     return;
                 }
 
                 case MODE_NONE: {
-                    // show relavent settable options
+                    // show relevant settable options
                     std::cout << "hashdb: hashdb_mode=" << hashdb_mode << "\n"
                               << "WARNING: the hashdb scanner is enabled but it will not perform any action\n"
                               << "because no mode has been selected.  Please either select a hashdb mode or\n"
@@ -462,16 +414,12 @@ static void do_import(const class scanner_params &sp,
     // get the sbuf
     const sbuf_t& sbuf = sp.sbuf;
 
-    // allocate space on heap for import_input
-    std::vector<hashdb_t::import_element_t>* import_input =
-                                 new std::vector<hashdb_t::import_element_t>;
-
-    // the filename from sbuf without the sbuf map file delimiter
+    // get the filename from sbuf without the sbuf map file delimiter
     std::string path_without_map_file_delimiter =
               (sbuf.pos0.path.size() > 4) ?
               std::string(sbuf.pos0.path, 0, sbuf.pos0.path.size() - 4) : "";
  
-    // get the filename to use for source attribution
+    // get the filename to use as the source filename
     std::stringstream ss;
     const size_t p=sbuf.pos0.path.find('/');
     if (p==std::string::npos) {
@@ -485,7 +433,12 @@ static void do_import(const class scanner_params &sp,
         // directory in forensic path so print forensic path as is
         ss << path_without_map_file_delimiter;
     }
-    std::string filename = ss.str();
+    std::string source_filename = ss.str();
+
+    // calculate the file hash using the sbuf page
+    const md5_t sbuf_hash = hash_generator::hash_buf(sbuf.buf, sbuf.pagesize);
+    const std::string binary_file_hash =
+               std::string(reinterpret_cast<const char*>(sbuf_hash.digest), 16);
 
     // import the cryptograph hash values from all the blocks in sbuf
     for (size_t offset=0; offset<sbuf.pagesize; offset+=hashdb_import_sector_size) {
@@ -499,37 +452,38 @@ static void do_import(const class scanner_params &sp,
         }
 
         // calculate the hash for this import-sector-aligned hash block
-        const hash_t hash = hash_one_block(sbuf_to_hash);
+        const md5_t hash = hash_one_block(sbuf_to_hash);
+        const std::string binary_hash(reinterpret_cast<const char*>(hash.digest), 16);
 
         // calculate the offset from the start of the media image
         const uint64_t image_offset = sbuf_to_hash.pos0.offset;
 
-        // create and add the import element to the import input
-        import_input->push_back(hashdb_t::import_element_t(
-                                 hash,
-                                 hashdb_import_repository_name,
-                                 filename,
-                                 image_offset));
+        // put together any block classification labels
+        // set flags based on specific tests on the block
+        // Construct an sbuf from the block and subject it to the other tests
+        const sbuf_t s(sbuf, offset, hashdb_block_size);
+        std::stringstream ss_flags;
+        if (ramp_trait(s))       ss_flags << "R";
+        if (hist_trait(s))       ss_flags << "H";
+        if (whitespace_trait(s)) ss_flags << "W";
+
+        // NOTE: shannon16 is Disabled because its results were not useful
+        // and because it needs fixed to not generate sbuf read exception.
+        //if (ss_flags.str().size() > 0) ss_flags << "," << shannon16(s);
+
+        // import the hash
+        const int status = hashdb->import(binary_hash,
+                                          image_offset,
+                                          hashdb_import_repository_name,
+                                          source_filename,
+                                          sbuf.pagesize,
+                                          binary_file_hash,
+                                          ss_flags.str());
+        if (status != 0) {
+            std::cerr << "scan_hashdb import failure.  Aborting.\n";
+            exit(1);
+        }
     }
-
-    // perform the import
-    const int status = hashdb->import(*import_input);
-
-    if (status != 0) {
-        std::cerr << "scan_hashdb import failure\n";
-    }
-
-    // clean up import input buffer
-    delete import_input;
-
-    // calculate the sbuf hash for the source metadata
-    const hash_t sbuf_hash = hash_generator::hash_buf(sbuf.buf, sbuf.pagesize);
-
-    // store the source metadata
-    hashdb->import_metadata(hashdb_import_repository_name,
-                            filename,
-                            sbuf.pagesize,
-                            sbuf_hash);
 }
 
 // perform scan
@@ -539,55 +493,11 @@ static void do_scan(const class scanner_params &sp,
     // get the feature recorder
     feature_recorder* identified_blocks_recorder = sp.fs.get_name("identified_blocks");
 
-    // optimization: don't even scan if feature line count is at requested max
-    if (hashdb_scan_max_features > 0 && identified_blocks_recorder->count() >=
-                                                   hashdb_scan_max_features) {
-        return;
-    }
-
     // get the sbuf
     const sbuf_t& sbuf = sp.sbuf;
 
-    // allocate space on heap for scan_input
-    std::vector<hash_t>* scan_input = new std::vector<hash_t>;
-
-    // allocate space on heap for the offset lookup table
-    std::vector<uint32_t>* offset_lookup_table = new std::vector<uint32_t>;
-
     // process cryptographic hash values for blocks along sector boundaries
     for (size_t offset=0; offset<sbuf.pagesize; offset+=hashdb_scan_sector_size) {
-
-        // Create a child sbuf of what we would hash
-        const sbuf_t sbuf_to_hash(sbuf,offset,hashdb_block_size);
-
-        // ignore empty blocks
-        if (hashdb_ignore_empty_blocks && empty_sbuf(sbuf_to_hash)){
-            continue;
-        }
-
-        // add the offset to the offset lookup table
-        offset_lookup_table->push_back(offset);
-
-        // calculate the hash for this scan-sector-aligned hash block
-        const hash_t hash = hash_one_block(sbuf_to_hash);
-
-        // calculate and add the hash to the scan input
-        scan_input->push_back(hash);
-    }
-
-    // allocate space on heap for scan_output
-    hashdb_t::scan_output_t *scan_output = new hashdb_t::scan_output_t;
-
-    // perform the scan
-    const int status = hashdb->scan(*scan_input, *scan_output);
-
-    if (status != 0) {
-        std::cerr << "Error: scan_hashdb scan failure.  Aborting.\n";
-        exit(1);
-    }
-
-    // record each feature returned in the response
-    for (hashdb_t::scan_output_t::const_iterator it=scan_output->begin(); it!= scan_output->end(); ++it) {
 
         // stop recording if feature line count is at requested max
         if (hashdb_scan_max_features > 0 && identified_blocks_recorder->count() >=
@@ -595,45 +505,45 @@ static void do_scan(const class scanner_params &sp,
             break;
         }
 
-        // prepare forensic path (pos0, feature, context)
-        // as (pos0, hash_string, count_string)
+        // Create a child sbuf of what we would hash
+        const sbuf_t sbuf_to_hash(sbuf, offset, hashdb_block_size);
 
-        // pos0
-        const size_t offset = offset_lookup_table->at(it->first);
-        const pos0_t pos0 = sbuf.pos0 + offset;
-
-        // hash_string
-        std::string hash_string = scan_input->at(it->first).hexdigest();
-
-        // set flags based on specific tests on the block
-        // Construct an sbuf from the block and subject it to the other tests
-        const sbuf_t s(sbuf, offset,hashdb_block_size);
-        std::stringstream ss_flags;
-        if (ramp_trait(s))       ss_flags << "R";
-        if (hist_trait(s))       ss_flags << "H";
-        if (whitespace_trait(s)) ss_flags << "W";
-        double entropy = shannon16(s);
-
-        // build context field containing count and flags
-        std::stringstream ss;
-        ss << "{\"count\":" << it->second;
-        if (ss_flags.str().size() > 0) {
-            // show flags too
-            ss << ",\"flags\":\"" << ss_flags.str() << "\"";
-            ss << ",\"entropy16\":" << entropy ;
+        // ignore empty blocks
+        if (hashdb_ignore_empty_blocks && empty_sbuf(sbuf_to_hash)){
+            continue;
         }
-        ss << "}";
+
+        // calculate the hash for this scan-sector-aligned hash block
+        const md5_t hash = hash_one_block(sbuf_to_hash);
+        const std::string binary_hash =
+               std::string(reinterpret_cast<const char*>(hash.digest), 16);
+
+        // scan for the hash
+        uint32_t count;
+        const int status = hashdb->scan(binary_hash, count);
+        if (status != 0) {
+            std::cerr << "Error: scan_hashdb scan failure.  Aborting.\n";
+            exit(1);
+        }
+
+        // continue if hash not found
+        if (count == 0) {
+            continue;
+        }
+
+        // prepare fields to record the feature
+
+        // get hash_string from hash
+        std::string hash_string = hash.hexdigest();
+
+        // build context field
+        std::stringstream ss;
+        ss << "{\"count\":" << count << "}";
 
         // record the feature
-        identified_blocks_recorder->write(pos0, hash_string, ss.str());
+        identified_blocks_recorder->write(sbuf.pos0+offset, hash_string, ss.str());
     }
-
-    // clean up
-    delete scan_input;
-    delete offset_lookup_table;
-    delete scan_output;
 }
-
 
 #endif
 

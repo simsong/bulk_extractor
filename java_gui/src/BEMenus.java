@@ -466,6 +466,96 @@ public class BEMenus extends JMenuBar {
       }
     });
 
+    // view|Reports
+    JMenu reportsMenu = new JMenu("Reports");
+    view.add(reportsMenu);
+
+    // view|Reports|Show Stoplist Files
+    cbShowStoplistFiles = new JCheckBoxMenuItem("Show Stoplist Files");
+    reportsMenu.add(cbShowStoplistFiles);
+    cbShowStoplistFiles.addActionListener(new ActionListener() {
+      public void actionPerformed (ActionEvent e) {
+        BEViewer.reportsModel.setIncludeStoplistFiles(cbShowStoplistFiles.getState());
+      }
+    });
+
+    // wire ReportsModel's report tree model listener to manage when show stoplist files is enabled
+    BEViewer.reportsModel.getTreeModel().addTreeModelListener(new TreeModelListener() {
+      public void treeNodesChanged(TreeModelEvent e) {
+        setShowStoplistVisibility();
+      }
+      public void treeNodesInserted(TreeModelEvent e) {
+        setShowStoplistVisibility();
+      }
+      public void treeNodesRemoved(TreeModelEvent e) {
+        setShowStoplistVisibility();
+      }
+      public void treeStructureChanged(TreeModelEvent e) {
+        setShowStoplistVisibility();
+      }
+      private void setShowStoplistVisibility() {
+        Enumeration<ReportsModel.ReportTreeNode> e = BEViewer.reportsModel.elements();
+        cbShowStoplistFiles.setSelected(BEViewer.reportsModel.isIncludeStoplistFiles());
+      }
+    });
+
+    // view|Reports|Show Empty Files
+    cbShowEmptyFiles = new JCheckBoxMenuItem("Show Empty Files");
+    reportsMenu.add(cbShowEmptyFiles);
+    cbShowEmptyFiles.addActionListener(new ActionListener() {
+      public void actionPerformed (ActionEvent e) {
+        BEViewer.reportsModel.setIncludeEmptyFiles(cbShowEmptyFiles.getState());
+      }
+    });
+
+    // wire ReportsModel's report tree model listener to manage when show empty files is enabled
+    BEViewer.reportsModel.getTreeModel().addTreeModelListener(new TreeModelListener() {
+      public void treeNodesChanged(TreeModelEvent e) {
+        setShowEmptyFilesVisibility();
+      }
+      public void treeNodesInserted(TreeModelEvent e) {
+        setShowEmptyFilesVisibility();
+      }
+      public void treeNodesRemoved(TreeModelEvent e) {
+        setShowEmptyFilesVisibility();
+      }
+      public void treeStructureChanged(TreeModelEvent e) {
+        setShowEmptyFilesVisibility();
+      }
+      private void setShowEmptyFilesVisibility() {
+        Enumeration<ReportsModel.ReportTreeNode> e = BEViewer.reportsModel.elements();
+        cbShowEmptyFiles.setSelected(BEViewer.reportsModel.isIncludeEmptyFiles());
+      }
+    });
+
+    // view|Reports|Refresh
+    mi = new JMenuItem("Refresh");
+    reportsMenu.add(mi);
+    mi.addActionListener(new ActionListener() {
+      public void actionPerformed (ActionEvent e) {
+        BEViewer.reportsModel.refreshFiles();
+      }
+    });
+
+    // wire ReportsModel's report tree model listener to manage when show empty files is enabled
+    BEViewer.reportsModel.getTreeModel().addTreeModelListener(new TreeModelListener() {
+      public void treeNodesChanged(TreeModelEvent e) {
+        doRefresh();
+      }
+      public void treeNodesInserted(TreeModelEvent e) {
+        doRefresh();
+      }
+      public void treeNodesRemoved(TreeModelEvent e) {
+        doRefresh();
+      }
+      public void treeStructureChanged(TreeModelEvent e) {
+        doRefresh();
+      }
+      private void doRefresh() {
+        Enumeration<ReportsModel.ReportTreeNode> e = BEViewer.reportsModel.elements();
+      }
+    });
+
     // view|Referenced Features
     JMenu referencedFeaturesMenu = new JMenu("Referenced Features");
     view.add(referencedFeaturesMenu);
@@ -504,68 +594,6 @@ public class BEMenus extends JMenuBar {
       }
     });
     
-    // view|Feature Files
-    JMenu featureFilesMenu = new JMenu("Feature Files");
-    view.add(featureFilesMenu);
-
-    // view|Feature Files|Show Stoplist Files
-    cbShowStoplistFiles = new JCheckBoxMenuItem("Show Stoplist Files");
-    featureFilesMenu.add(cbShowStoplistFiles);
-    cbShowStoplistFiles.addActionListener(new ActionListener() {
-      public void actionPerformed (ActionEvent e) {
-        BEViewer.reportsModel.setIncludeStoplistFiles(cbShowStoplistFiles.getState());
-      }
-    });
-
-    // wire ReportsModel's report tree model listener to manage when show stoplist files is enabled
-    BEViewer.reportsModel.getTreeModel().addTreeModelListener(new TreeModelListener() {
-      public void treeNodesChanged(TreeModelEvent e) {
-        setShowStoplistVisibility();
-      }
-      public void treeNodesInserted(TreeModelEvent e) {
-        setShowStoplistVisibility();
-      }
-      public void treeNodesRemoved(TreeModelEvent e) {
-        setShowStoplistVisibility();
-      }
-      public void treeStructureChanged(TreeModelEvent e) {
-        setShowStoplistVisibility();
-      }
-      private void setShowStoplistVisibility() {
-        Enumeration<ReportsModel.ReportTreeNode> e = BEViewer.reportsModel.elements();
-        cbShowStoplistFiles.setSelected(BEViewer.reportsModel.isIncludeStoplistFiles());
-      }
-    });
-
-    // view|Feature Files|Show Empty Files
-    cbShowEmptyFiles = new JCheckBoxMenuItem("Show Empty Files");
-    featureFilesMenu.add(cbShowEmptyFiles);
-    cbShowEmptyFiles.addActionListener(new ActionListener() {
-      public void actionPerformed (ActionEvent e) {
-        BEViewer.reportsModel.setIncludeEmptyFiles(cbShowEmptyFiles.getState());
-      }
-    });
-
-    // wire ReportsModel's report tree model listener to manage when show empty files is enabled
-    BEViewer.reportsModel.getTreeModel().addTreeModelListener(new TreeModelListener() {
-      public void treeNodesChanged(TreeModelEvent e) {
-        setShowEmptyFilesVisibility();
-      }
-      public void treeNodesInserted(TreeModelEvent e) {
-        setShowEmptyFilesVisibility();
-      }
-      public void treeNodesRemoved(TreeModelEvent e) {
-        setShowEmptyFilesVisibility();
-      }
-      public void treeStructureChanged(TreeModelEvent e) {
-        setShowEmptyFilesVisibility();
-      }
-      private void setShowEmptyFilesVisibility() {
-        Enumeration<ReportsModel.ReportTreeNode> e = BEViewer.reportsModel.elements();
-        cbShowEmptyFiles.setSelected(BEViewer.reportsModel.isIncludeEmptyFiles());
-      }
-    });
-
     // view|<separator>
     view.addSeparator();
 
@@ -784,15 +812,6 @@ public class BEMenus extends JMenuBar {
 
     // help|diagnostics|<separator>
     diagnostics.addSeparator();
-
-    // help|diagnostics|Close all Image Readers
-    mi = new JMenuItem("Close All Image Readers");
-    diagnostics.add(mi);
-    mi.addActionListener(new ActionListener() {
-      public void actionPerformed (ActionEvent e) {
-        BEViewer.imageModel.closeAllImageReaders();
-      }
-    });
 
     // help|diagnostics|run tests
     mi = new JMenuItem("Run Tests\u2026");	// ...
