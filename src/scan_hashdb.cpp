@@ -137,6 +137,18 @@ static bool whitespace_trait(const sbuf_t &sbuf)
     return count >= (sbuf.pagesize * 3)/4;
 }
 
+static bool monotonic_trait(const sbuf_t &sbuf)
+{
+    int increasing = 0;
+    for (size_t i=0; i+8<sbuf.pagesize; i+=4) {
+        if (sbuf.get32u(i+4) > sbuf.get32u(i)) {
+            increasing++;
+        }
+    }
+    double ratio = increasing*1.0/(sbuf.pagesize/4 * 1.0);
+    return ratio < 0.25 || ratio > 0.75;
+}
+
 // detect if block is all the same
 inline bool empty_sbuf(const sbuf_t &sbuf)
 {
@@ -466,6 +478,7 @@ static void do_import(const class scanner_params &sp,
         if (ramp_trait(s))       ss_flags << "R";
         if (hist_trait(s))       ss_flags << "H";
         if (whitespace_trait(s)) ss_flags << "W";
+        if (monotonic_trait(s))  ss_flags << "M";
 
         // NOTE: shannon16 is Disabled because its results were not useful
         // and because it needs fixed to not generate sbuf read exception.

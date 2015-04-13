@@ -39,6 +39,8 @@ GIT repository:
    or to the end of the furthest section defined in the Section Table.
  * `scan_winlnk` captures more data fields.
    This change was driven by the need to capture remote links.
+ * `scan_hashdb` includes flag `M` to detect monotonically increasing or
+   decreasing data by comparing adjacent 4-byte unsigned integer values.
 
 
 Incompatible changes:
