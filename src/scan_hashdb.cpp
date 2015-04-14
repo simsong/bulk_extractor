@@ -139,14 +139,25 @@ static bool whitespace_trait(const sbuf_t &sbuf)
 
 static bool monotonic_trait(const sbuf_t &sbuf)
 {
-    int increasing = 0;
+    if (sbuf.pagesize < 16) {
+        // not enough data
+    } return false;
+
+    double count = sbuf.pagesize / 4.0;
+    int increasing, decreasing, same = 0;
     for (size_t i=0; i+8<sbuf.pagesize; i+=4) {
         if (sbuf.get32u(i+4) > sbuf.get32u(i)) {
             increasing++;
+        } else if (sbuf.get32u(i+4) < sbuf.get32u(i)) {
+            decreasing++;
+        } else {
+            same++;
         }
     }
-    double ratio = increasing*1.0/(sbuf.pagesize/4 * 1.0);
-    return ratio < 0.25 || ratio > 0.75;
+    if (increasing / count >= 0.75) return true;
+    if (decreasing / count >= 0.75) return true;
+    if (same / count >= 0.75) return true;
+    return false;
 }
 
 // detect if block is all the same
