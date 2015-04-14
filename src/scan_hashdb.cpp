@@ -141,9 +141,10 @@ static bool monotonic_trait(const sbuf_t &sbuf)
 {
     if (sbuf.pagesize < 16) {
         // not enough data
-    } return false;
+        return false;
+    }
 
-    double count = sbuf.pagesize / 4.0;
+    const double total = sbuf.pagesize / 4.0;
     int increasing, decreasing, same = 0;
     for (size_t i=0; i+8<sbuf.pagesize; i+=4) {
         if (sbuf.get32u(i+4) > sbuf.get32u(i)) {
@@ -154,9 +155,9 @@ static bool monotonic_trait(const sbuf_t &sbuf)
             same++;
         }
     }
-    if (increasing / count >= 0.75) return true;
-    if (decreasing / count >= 0.75) return true;
-    if (same / count >= 0.75) return true;
+    if (increasing / total >= 0.75) return true;
+    if (decreasing / total >= 0.75) return true;
+    if (same / total >= 0.75) return true;
     return false;
 }
 
