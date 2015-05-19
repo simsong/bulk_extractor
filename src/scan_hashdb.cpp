@@ -145,7 +145,7 @@ static bool monotonic_trait(const sbuf_t &sbuf)
     }
 
     const double total = sbuf.pagesize / 4.0;
-    int increasing, decreasing, same = 0;
+    int increasing = 0, decreasing = 0, same = 0;
     for (size_t i=0; i+8<sbuf.pagesize; i+=4) {
         if (sbuf.get32u(i+4) > sbuf.get32u(i)) {
             increasing++;
