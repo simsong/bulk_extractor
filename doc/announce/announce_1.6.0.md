@@ -4,7 +4,7 @@
 
                             RELEASE NOTES (DRAFT)
 
-bulk_extractor Version 1.6.0 is still under development for for Linux, Mac OS and Windows. 
+bulk_extractor Version 1.6.0 is still under development for Linux, Mac OS and Windows. 
 
 Release source code and Windows installer:
     http://digitalcorpora.org/downloads/bulk_extractor/
