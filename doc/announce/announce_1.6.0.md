@@ -1,10 +1,10 @@
+                           (PRE-RELEASE DRAFT)
                     Announcing bulk_extractor 1.6.0
                              Date TBA
 
                             RELEASE NOTES (DRAFT)
 
-bulk_extractor Version 1.6.0 has been released for Linux, Mac OS and
-Windows. 
+bulk_extractor Version 1.6.0 is still under development for for Linux, Mac OS and Windows. 
 
 Release source code and Windows installer:
     http://digitalcorpora.org/downloads/bulk_extractor/
