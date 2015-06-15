@@ -51,6 +51,7 @@ None.
 Bug Fixes
 ------------------
 * `scan_winpe` more consistently extracts `.dll` filenames.
+* The Windows installer is corrected to install to the 64-bit executable directory.
 
 Internal Improvements
 --------------------- 

@@ -35,7 +35,7 @@ SetCompressor lzma
  
 RequestExecutionLevel admin
  
-InstallDir "$PROGRAMFILES\${APPNAME}"
+InstallDir "$PROGRAMFILES64\${APPNAME}"
  
 Name "${APPNAME}"
 outFile "bulk_extractor-${VERSION}-windowsinstaller.exe"
