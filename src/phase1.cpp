@@ -97,7 +97,7 @@ void BulkExtractor_Phase1::run(image_process &p,feature_recorder_set &fs,
     tp = new threadpool(config.num_threads,fs,xreport);	
 
     uint64_t page_ctr=0;
-    xreport.push("runtime","xmlns:debug=\"http://www.afflib.org/bulk_extractor/debug\"");
+    xreport.push("runtime","xmlns:debug=\"http://www.github.com/simsong/bulk_extractor/issues\"");
 
     /* A single loop with two iterators.
      *

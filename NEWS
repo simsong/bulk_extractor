@@ -199,9 +199,7 @@ which is derrived from the following operating systems:
    winXP-32bit-sp3
    winXP-64bit
       
-You can download version 1.0 of the stoplist from:
-
-    http://afflib.org/downloads/feature_context.1.0.zip
+You can download version 1.0 of the stoplist.
 
 Be sure to decompress the list first!  We are distributing it in ZIP
 form because is the 70 megabytes in length. A future version of
@@ -241,7 +239,7 @@ Excel that breaks each EXIF field into its own spreadsheet column.
 Download Information
 ====================
 As always, the current version of bulk_extractor can be downloaded
-from the website at http://afflib.org/.
+from the website at http://digitalcorpora.org/downloads/bulk_extractor.
 
 
 
@@ -304,7 +302,7 @@ Incompatabilities:
 	- bulk_extractor now *requires* the experimental, alpha-version
 	of libewf version 2. You are best off with libewf-alpha-20100907 or later.
 
-bulk_extractor can be downloaded from http://www.afflib/org/
+bulk_extractor can be downloaded from http://digitalcorpora.org/downloads/bulk_extractor.
 
 
 ================================================================
@@ -371,10 +369,8 @@ minutes. Running the same extraction with the "-j4" flag (meaning, run
 4 simultaneous extractions on each of 4 cores) lowered the the time to
 just 18 minutes.
 
-You can download bulk_extractor from http://afflib.org/.
+You can download bulk_extractor from http://digitalcorpora.org/downloads/bulk_extractor.
 
-The precompiled version for Windows can be downloaded from
-http://afflib.org/downloads/bulk_extractor-0.3.0.exe
 
 
 
@@ -451,7 +447,7 @@ bulk_extractor now evaluates how fast it is running and reports and
 Estimated Time of Completion (ETA).
 
 bulk_extractor can be downloaded in source code form from
-http://afflib.org/. We should have a command-line windows version
+http://digitalcorpora.org/downloads/bulk_extractor. We should have a command-line windows version
 released shortly.
 
 ================================================================

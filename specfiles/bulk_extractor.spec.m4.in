@@ -10,7 +10,7 @@ Version:        @VERSION@
 Release:        1
 License:        Public-Domain
 Summary:        Forensics tool for extracting email addresses and URLs from bulk data.
-Url:            http://afflib.org/downloads/bulk_extractor-@VERSION@.tar.gz
+Url:            http://digitalcorpora.org/downloads/bulk_extractor/bulk_extractor-@VERSION@.tar.gz
 Group:          Productivity/File utilities
 AutoReqProv:    on
 Source:         bulk_extractor-@VERSION@.tar.gz
