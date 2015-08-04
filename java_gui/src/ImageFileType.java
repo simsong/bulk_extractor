@@ -8,7 +8,7 @@ import javax.swing.filechooser.FileFilter;
 
 public class ImageFileType {
   // the suffix arrays
-  private static final String[] RAW_SUFFIX_ARRAY = {".raw", ".img", ".cc"};
+  private static final String[] RAW_SUFFIX_ARRAY = {".raw", ".img", ".dd"};
   private static final String[] MULTIPART_SUFFIX_ARRAY = {".000", ".001", "001.vmdk"};
   private static final String[] E01_SUFFIX_ARRAY = {".E01"};
   private static final String[] AFF_SUFFIX_ARRAY = {".aff"};
