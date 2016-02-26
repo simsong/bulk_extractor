@@ -31,6 +31,8 @@
 
 #ifdef HAVE_HASHDB
 
+#define DEBUG_V2_OUT
+
 #include "hashdb.hpp"
 #include <dfxml/src/hash_t.h>
 
@@ -40,15 +42,12 @@
 #include <sys/types.h>	// for getpid
 
 // user settings
-static std::string hashdb_mode="none";                       // import or scan
-static uint32_t hashdb_block_size=4096;                      // import or scan
-static bool hashdb_ignore_empty_blocks=true;                 // import or scan
-static std::string hashdb_scan_path_or_socket="your_hashdb_directory"; // scan only
-static size_t hashdb_scan_sector_size = 512;                    // scan only
-static size_t hashdb_scan_max_features = 0;                     // scan only
-static size_t hashdb_import_sector_size = 4096;                 // import only
-static std::string hashdb_import_repository_name="default_repository"; // import only
-static uint32_t hashdb_import_max_duplicates=0;                 // import only
+static std::string hashdb_mode="none";                                 // import or scan
+static uint32_t hashdb_block_size=512;                                 // import or scan
+static uint32_t hashdb_sector_size=512;                                // import or scan
+static std::string hashdb_scan_path="your_hashdb_directory";           // scan only
+static std::string hashdb_repository_name="default_repository";        // import only
+static uint32_t hashdb_max_feature_file_lines=0;                       // scan only for feature file
 
 // runtime modes
 // scanner mode
@@ -64,7 +63,8 @@ static std::string hashdb_dir;
 typedef md5_generator hash_generator;
 
 // hashdb manager
-static hashdb_t* hashdb;
+static hashdb::import_manager_t* import_manager;
+static hashdb::scan_manager_t* scan_manager;
 
 static void do_import(const class scanner_params &sp,
                       const recursion_control_block &rcb);
@@ -199,67 +199,51 @@ void scan_hashdb(const class scanner_params &sp,
 
             // hashdb_block_size
             sp.info->get_config("hashdb_block_size", &hashdb_block_size,
-                         "Hash block size, in bytes, used to generate hashes");
+                         "Selects the block size to hash, in bytes.");
 
-            // hashdb_ignore_empty_blocks
-            sp.info->get_config("hashdb_ignore_empty_blocks", &hashdb_ignore_empty_blocks,
-                         "Selects to ignore empty blocks.");
+            // hashdb_sector_size
+            std::stringstream ss_hashdb_sector_size;
+            ss_hashdb_sector_size
+                << "Selects the sector size.  Scans and imports along\n"
+                << "      sector boundaries.";
+            sp.info->get_config("hashdb_sector_size", &hashdb_sector_size,
+                                ss_hashdb_sector_size.str());
 
-            // hashdb_scan_path_or_socket
-            std::stringstream ss_hashdb_scan_path_or_socket;
-            ss_hashdb_scan_path_or_socket
-                << "File path to a hash database or\n"
-                << "      socket to a hashdb server to scan against.  Valid only in scan mode.";
-            sp.info->get_config("hashdb_scan_path_or_socket", &hashdb_scan_path_or_socket,
-                                ss_hashdb_scan_path_or_socket.str());
 
-            // hashdb_scan_sector_size
-            std::stringstream ss_hashdb_scan_sector_size;
-            ss_hashdb_scan_sector_size
-                << "Selects the scan sector size.  Scans along\n"
-                << "      sector boundaries.  Valid only in scan mode.";
-            sp.info->get_config("hashdb_scan_sector_size", &hashdb_scan_sector_size,
-                                ss_hashdb_scan_sector_size.str());
+            // hashdb_scan_path
+            std::stringstream ss_hashdb_scan_path;
+            ss_hashdb_scan_path
+                << "File path to a hash database to scan against.\n"
+                << "      Valid only in scan mode.";
+            sp.info->get_config("hashdb_scan_path", &hashdb_scan_path,
+                                ss_hashdb_scan_path.str());
 
-            // hashdb_scan_max_features
-            std::stringstream ss_hashdb_scan_max_features;
-            ss_hashdb_scan_max_features
-                << "The maximum number of features lines to record\n"
-                << "      or 0 for no limit.  Valid only in scan mode.";
-            sp.info->get_config("hashdb_scan_max_features", &hashdb_scan_max_features,
-                                ss_hashdb_scan_max_features.str());
-
-            // hashdb_import_sector_size
-            std::stringstream ss_hashdb_import_sector_size;
-            ss_hashdb_import_sector_size
-                << "Selects the import sector size.  Imports along\n"
-                << "      sector boundaries.  Valid only in import mode.";
-            sp.info->get_config("hashdb_import_sector_size", &hashdb_import_sector_size,
-                                ss_hashdb_import_sector_size.str());
-
-            // hashdb_import_repository_name
+            // hashdb_repository_name
             std::stringstream ss_hashdb_import_repository_name;
             ss_hashdb_import_repository_name
                 << "Sets the repository name to\n"
                 << "      attribute the import to.  Valid only in import mode.";
-            sp.info->get_config("hashdb_import_repository_name",
-                                &hashdb_import_repository_name,
+            sp.info->get_config("hashdb_repository_name",
+                                &hashdb_repository_name,
                                 ss_hashdb_import_repository_name.str());
-
-            // hashdb_import_max_duplicates
-            std::stringstream ss_hashdb_import_max_duplicates;
-            ss_hashdb_import_max_duplicates
-                << "The maximum number of duplicates to import\n"
-                << "      for a given hash value, or 0 for no limit.  Valid only in import mode.";
-            sp.info->get_config("hashdb_import_max_duplicates", &hashdb_import_max_duplicates,
-                                ss_hashdb_import_max_duplicates.str());
-
 
             // configure the feature file to accept scan features
             // but only if in scan mode
             if (hashdb_mode == "scan") {
                 sp.info->feature_names.insert("identified_blocks");
+#ifdef DEBUG_V2_OUT
+                sp.info->feature_names.insert("identified_blocks2");
+#endif
             }
+
+            // hashdb_max_feature_file_lines
+            std::stringstream ss_hashdb_max_feature_file_lines;
+            ss_hashdb_max_feature_file_lines
+                << "The maximum number of features lines to record\n"
+                << "      or 0 for no limit.  Valid only in scan mode.";
+            sp.info->get_config("hashdb_max_feature_file_lines", &hashdb_max_feature_file_lines,
+                                ss_hashdb_max_feature_file_lines.str());
+
 
             return;
         }
@@ -283,9 +267,6 @@ void scan_hashdb(const class scanner_params &sp,
                 exit(1);
             }
 
-            // hashdb_ignore_empty_blocks
-            // checks not performed
-
             // hashdb_block_size
             if (hashdb_block_size == 0) {
                 std::cerr << "Error.  Value for parameter 'hashdb_block_size' is invalid.\n"
@@ -293,50 +274,22 @@ void scan_hashdb(const class scanner_params &sp,
                 exit(1);
             }
 
-            // hashdb_scan_path_or_socket
-            // checks not performed
-
-            // hashdb_scan_sector_size
-            if (hashdb_scan_sector_size == 0) {
-                std::cerr << "Error.  Value for parameter 'hashdb_scan_sector_size' is invalid.\n"
+            // hashdb_sector_size
+            if (hashdb_sector_size == 0) {
+                std::cerr << "Error.  Value for parameter 'hashdb_sector_size' is invalid.\n"
                           << "Cannot continue.\n";
                 exit(1);
             }
-
-            // hashdb_scan_max_features
-            // checks not performed
 
             // for valid operation, scan sectors must align on hash block boundaries
-            if (mode == MODE_SCAN && hashdb_block_size % hashdb_scan_sector_size != 0) {
+            if (hashdb_block_size % hashdb_sector_size != 0) {
                 std::cerr << "Error: invalid hashdb block size=" << hashdb_block_size
-                          << " or hashdb scan sector size=" << hashdb_scan_sector_size << ".\n"
+                          << " or hashdb sector size=" << hashdb_sector_size << ".\n"
                           << "Sectors must align on hash block boundaries.\n"
-                          << "Specifically, hashdb_block_size \% hashdb_scan_sector_size must be zero.\n"
+                          << "Specifically, hashdb_block_size \% hashdb_sector_size must be zero.\n"
                           << "Cannot continue.\n";
                 exit(1);
             }
-
-            // hashdb_import_sector_size
-            if (hashdb_import_sector_size == 0) {
-                std::cerr << "Error.  Value for parameter 'hashdb_import_sector_size' is invalid.\n"
-                          << "Cannot continue.\n";
-                exit(1);
-            }
-
-            // for valid operation, import sectors must align on hash block boundaries
-            if (mode == MODE_IMPORT && hashdb_block_size % hashdb_import_sector_size != 0) {
-                std::cerr << "Error: invalid hashdb block size=" << hashdb_block_size
-                          << " or hashdb import sector size=" << hashdb_import_sector_size << ".\n"
-                          << "Sectors must align on hash block boundaries.\n"
-                          << "Specifically, hashdb_block_size \% hashdb_import_sector_size must be zero.\n"
-                          << "Cannot continue.\n";
-                exit(1);
-            }
-
-            // hashdb_import_repository_name
-            // checks not performed
-            // hashdb_import_max_duplicates
-            // checks not performed
 
             // indicate hashdb version
             std::cout << "hashdb: hashdb_version=" << hashdb_version() << "\n";
@@ -347,38 +300,38 @@ void scan_hashdb(const class scanner_params &sp,
                     // set the path to the hashdb
                     hashdb_dir = sp.fs.get_outdir() + "/" + "hashdb.hdb";
 
-                    // open hashdb for importing
-                    // currently, hashdb_dir is required to not exist
-                    hashdb = new hashdb_t();
-                    hashdb->open_import(hashdb_dir,
-                                        hashdb_block_size,
-                                        hashdb_import_max_duplicates);
-
                     // show relevant settable options
-                    std::string temp1((hashdb_ignore_empty_blocks) ? "YES" : "NO");
                     std::cout << "hashdb: hashdb_mode=" << hashdb_mode << "\n"
                               << "hashdb: hashdb_block_size=" << hashdb_block_size << "\n"
-                              << "hashdb: hashdb_ignore_empty_blocks=" << temp1 << "\n"
-                              << "hashdb: hashdb_import_sector_size= " << hashdb_import_sector_size << "\n"
-                              << "hashdb: hashdb_import_repository_name= " << hashdb_import_repository_name << "\n"
-                              << "hashdb: hashdb_import_max_duplicates=" << hashdb_import_max_duplicates << "\n"
+                              << "hashdb: hashdb_sector_size= " << hashdb_sector_size << "\n"
+                              << "hashdb: hashdb_repository_name= " << hashdb_repository_name << "\n"
                               << "hashdb: Creating hashdb directory " << hashdb_dir << "\n";
+
+                    // open hashdb for importing
+                    // currently, hashdb_dir is required to not exist
+                    hashdb::settings_t settings;
+                    settings.sector_size = hashdb_sector_size;
+                    settings.block_size = hashdb_block_size;
+                    std::pair<bool, std::string> pair = hashdb::create_hashdb(hashdb_dir, settings, "");
+                    if (pair.first == false) {
+                        std::cerr << "Error: " << pair.second << "\n";
+                        exit(1);
+                    }
+                    import_manager = new hashdb::import_manager_t(hashdb_dir, "");
                     return;
                 }
 
                 case MODE_SCAN: {
                     // show relevant settable options
-                    std::string temp2((hashdb_ignore_empty_blocks) ? "YES" : "NO");
                     std::cout << "hashdb: hashdb_mode=" << hashdb_mode << "\n"
                               << "hashdb: hashdb_block_size=" << hashdb_block_size << "\n"
-                              << "hashdb: hashdb_ignore_empty_blocks=" << temp2 << "\n"
-                              << "hashdb: hashdb_scan_path_or_socket=" << hashdb_scan_path_or_socket << "\n"
-                              << "hashdb: hashdb_scan_sector_size=" << hashdb_scan_sector_size << "\n"
-                              << "hashdb: hashdb_scan_max_features=" << hashdb_scan_max_features << "\n";
+                              << "hashdb: hashdb_sector_size= " << hashdb_sector_size << "\n"
+                              << "hashdb: hashdb_scan_path=" << hashdb_scan_path << "\n"
+                              << "hashdb: hashdb_max_feature_file_lines=" << hashdb_max_feature_file_lines
+                              << "\n";
 
                     // open hashdb for scanning
-                    hashdb = new hashdb_t();
-                    hashdb->open_scan(hashdb_scan_path_or_socket);
+                    scan_manager = new hashdb::scan_manager_t(hashdb_scan_path);
                     return;
                 }
 
@@ -419,8 +372,19 @@ void scan_hashdb(const class scanner_params &sp,
 
         // shutdown
         case scanner_params::PHASE_SHUTDOWN: {
-            delete hashdb;
-            return;
+            switch(mode) {
+                case MODE_IMPORT:
+                    delete import_manager;
+                    return;
+
+                case MODE_SCAN:
+                    delete scan_manager;
+                    return;
+                default:
+                    // the user should have just left the scanner disabled.
+                    // no action.
+                    return;
+            }
         }
 
         // there are no other bulk_extractor scanner state actions
@@ -461,17 +425,21 @@ static void do_import(const class scanner_params &sp,
 
     // calculate the file hash using the sbuf page
     const md5_t sbuf_hash = hash_generator::hash_buf(sbuf.buf, sbuf.pagesize);
-    const std::string binary_file_hash =
+    const std::string file_binary_hash =
                std::string(reinterpret_cast<const char*>(sbuf_hash.digest), 16);
 
+    // track nonprobative count
+    size_t nonprobative_count = 0;
+
     // import the cryptograph hash values from all the blocks in sbuf
-    for (size_t offset=0; offset<sbuf.pagesize; offset+=hashdb_import_sector_size) {
+    for (size_t offset=0; offset<sbuf.pagesize; offset+=hashdb_sector_size) {
 
         // Create a child sbuf of what we would hash
         const sbuf_t sbuf_to_hash(sbuf,offset,hashdb_block_size);
 
         // ignore empty blocks
-        if (hashdb_ignore_empty_blocks && empty_sbuf(sbuf_to_hash)){
+        if (empty_sbuf(sbuf_to_hash)){
+            ++nonprobative_count;
             continue;
         }
 
@@ -496,19 +464,28 @@ static void do_import(const class scanner_params &sp,
         // and because it needs fixed to not generate sbuf read exception.
         //if (ss_flags.str().size() > 0) ss_flags << "," << shannon16(s);
 
-        // import the hash
-        const int status = hashdb->import(binary_hash,
-                                          image_offset,
-                                          hashdb_import_repository_name,
-                                          source_filename,
-                                          sbuf.pagesize,
-                                          binary_file_hash,
-                                          ss_flags.str());
-        if (status != 0) {
-            std::cerr << "scan_hashdb import failure.  Aborting.\n";
-            exit(1);
+        // flags means nonprobative
+        if (ss_flags.str().size() > 0) {
+            ++nonprobative_count;
         }
+
+        // import the hash
+        import_manager->insert_hash(binary_hash,
+                                    file_binary_hash,
+                                    image_offset,
+                                    0,    // entropy
+                                    "");  // block label
     }
+
+    // insert the source name pair
+    import_manager->insert_source_name(file_binary_hash,
+                              hashdb_repository_name, source_filename);
+
+    // insert the source data
+    import_manager->insert_source_data(file_binary_hash,
+                                       sbuf.pagesize,
+                                       "", // file type
+                                       nonprobative_count);
 }
 
 // perform scan
@@ -517,42 +494,41 @@ static void do_scan(const class scanner_params &sp,
 
     // get the feature recorder
     feature_recorder* identified_blocks_recorder = sp.fs.get_name("identified_blocks");
+#ifdef DEBUG_V2_OUT
+    feature_recorder* identified_blocks_recorder2 = sp.fs.get_name("identified_blocks2");
+#endif
 
     // get the sbuf
     const sbuf_t& sbuf = sp.sbuf;
 
     // process cryptographic hash values for blocks along sector boundaries
-    for (size_t offset=0; offset<sbuf.pagesize; offset+=hashdb_scan_sector_size) {
+    for (size_t offset=0; offset<sbuf.pagesize; offset+=hashdb_sector_size) {
 
-        // stop recording if feature line count is at requested max
-        if (hashdb_scan_max_features > 0 && identified_blocks_recorder->count() >=
-                                                   hashdb_scan_max_features) {
+        // stop recording if feature file line count is at requested max
+        if (hashdb_max_feature_file_lines > 0 && identified_blocks_recorder->count() >=
+                                                   hashdb_max_feature_file_lines) {
             break;
         }
 
-        // Create a child sbuf of what we would hash
+        // Create a child sbuf of the block
         const sbuf_t sbuf_to_hash(sbuf, offset, hashdb_block_size);
 
         // ignore empty blocks
-        if (hashdb_ignore_empty_blocks && empty_sbuf(sbuf_to_hash)){
+        if (empty_sbuf(sbuf_to_hash)){
             continue;
         }
 
-        // calculate the hash for this scan-sector-aligned hash block
+        // calculate the hash for this sector-aligned hash block
         const md5_t hash = hash_one_block(sbuf_to_hash);
         const std::string binary_hash =
                std::string(reinterpret_cast<const char*>(hash.digest), 16);
 
         // scan for the hash
-        uint32_t count;
-        const int status = hashdb->scan(binary_hash, count);
-        if (status != 0) {
-            std::cerr << "Error: scan_hashdb scan failure.  Aborting.\n";
-            exit(1);
-        }
+        std::string* json_text = new std::string;
+        bool hash_found = scan_manager->find_expanded_hash(binary_hash, *json_text);
 
         // continue if hash not found
-        if (count == 0) {
+        if (!hash_found) {
             continue;
         }
 
@@ -561,12 +537,21 @@ static void do_scan(const class scanner_params &sp,
         // get hash_string from hash
         std::string hash_string = hash.hexdigest();
 
+        // record the feature, there is no context field
+        identified_blocks_recorder->write(sbuf.pos0+offset, hash_string, *json_text);
+        delete json_text;
+
+#ifdef DEBUG_V2_OUT
+        size_t count = scan_manager->find_hash_count(binary_hash);
+
         // build context field
         std::stringstream ss;
         ss << "{\"count\":" << count << "}";
 
         // record the feature
-        identified_blocks_recorder->write(sbuf.pos0+offset, hash_string, ss.str());
+        identified_blocks_recorder2->write(sbuf.pos0+offset, hash_string, ss.str());
+#endif
+
     }
 }
 
