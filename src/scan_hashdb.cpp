@@ -312,9 +312,9 @@ void scan_hashdb(const class scanner_params &sp,
                     hashdb::settings_t settings;
                     settings.sector_size = hashdb_sector_size;
                     settings.block_size = hashdb_block_size;
-                    std::pair<bool, std::string> pair = hashdb::create_hashdb(hashdb_dir, settings, "");
-                    if (pair.first == false) {
-                        std::cerr << "Error: " << pair.second << "\n";
+                    std::string error_message = hashdb::create_hashdb(hashdb_dir, settings, "");
+                    if (error_message.size() != 0) {
+                        std::cerr << "Error: " << error_message << "\n";
                         exit(1);
                     }
                     import_manager = new hashdb::import_manager_t(hashdb_dir, "");
@@ -524,12 +524,10 @@ static void do_scan(const class scanner_params &sp,
                std::string(reinterpret_cast<const char*>(hash.digest), 16);
 
         // scan for the hash
-        std::string* json_text = new std::string;
-        bool hash_found = scan_manager->find_expanded_hash(binary_hash, *json_text);
-
-        // continue if hash not found
-        if (!hash_found) {
-            continue;
+        std::string json_text = scan_manager->find_expanded_hash(binary_hash);
+        if (json_text.size() == 0) {
+          // hash not found
+          continue;
         }
 
         // prepare fields to record the feature
@@ -538,8 +536,7 @@ static void do_scan(const class scanner_params &sp,
         std::string hash_string = hash.hexdigest();
 
         // record the feature, there is no context field
-        identified_blocks_recorder->write(sbuf.pos0+offset, hash_string, *json_text);
-        delete json_text;
+        identified_blocks_recorder->write(sbuf.pos0+offset, hash_string, json_text);
 
 #ifdef DEBUG_V2_OUT
         size_t count = scan_manager->find_hash_count(binary_hash);
