@@ -43,8 +43,9 @@
 
 // user settings
 static std::string hashdb_mode="none";                                 // import or scan
+static uint32_t hashdb_byte_alignment=512;                             // import only
 static uint32_t hashdb_block_size=512;                                 // import or scan
-static uint32_t hashdb_sector_size=512;                                // import or scan
+static uint32_t hashdb_step_size=512;                                  // import or scan
 static std::string hashdb_scan_path="your_hashdb_directory";           // scan only
 static std::string hashdb_repository_name="default_repository";        // import only
 static uint32_t hashdb_max_feature_file_lines=0;                       // scan only for feature file
@@ -197,17 +198,25 @@ void scan_hashdb(const class scanner_params &sp,
                 << "        scan    - Scan for matching block hashes.";
             sp.info->get_config("hashdb_mode", &hashdb_mode, ss_hashdb_mode.str());
 
+            // hashdb_byte_alignment
+            std::stringstream ss_hashdb_byte_alignment;
+            ss_hashdb_byte_alignment
+                << "Selects the byte alignment to use in the new import\n"
+                << "      database.";
+            sp.info->get_config("hashdb_byte_alignment", &hashdb_byte_alignment,
+                                ss_hashdb_byte_alignment.str());
+
             // hashdb_block_size
             sp.info->get_config("hashdb_block_size", &hashdb_block_size,
                          "Selects the block size to hash, in bytes.");
 
-            // hashdb_sector_size
-            std::stringstream ss_hashdb_sector_size;
-            ss_hashdb_sector_size
-                << "Selects the sector size.  Scans and imports along\n"
-                << "      sector boundaries.";
-            sp.info->get_config("hashdb_sector_size", &hashdb_sector_size,
-                                ss_hashdb_sector_size.str());
+            // hashdb_step_size
+            std::stringstream ss_hashdb_step_size;
+            ss_hashdb_step_size
+                << "Selects the step size.  Scans and imports along\n"
+                << "      this step value.";
+            sp.info->get_config("hashdb_step_size", &hashdb_step_size,
+                                ss_hashdb_step_size.str());
 
 
             // hashdb_scan_path
@@ -267,6 +276,13 @@ void scan_hashdb(const class scanner_params &sp,
                 exit(1);
             }
 
+            // hashdb_byte_alignment
+            if (hashdb_byte_alignment == 0) {
+                std::cerr << "Error.  Value for parameter 'hashdb_byte_alignment' is invalid.\n"
+                          << "Cannot continue.\n";
+                exit(1);
+            }
+
             // hashdb_block_size
             if (hashdb_block_size == 0) {
                 std::cerr << "Error.  Value for parameter 'hashdb_block_size' is invalid.\n"
@@ -274,19 +290,19 @@ void scan_hashdb(const class scanner_params &sp,
                 exit(1);
             }
 
-            // hashdb_sector_size
-            if (hashdb_sector_size == 0) {
-                std::cerr << "Error.  Value for parameter 'hashdb_sector_size' is invalid.\n"
+            // hashdb_step_size
+            if (hashdb_step_size == 0) {
+                std::cerr << "Error.  Value for parameter 'hashdb_step_size' is invalid.\n"
                           << "Cannot continue.\n";
                 exit(1);
             }
 
-            // for valid operation, scan sectors must align on hash block boundaries
-            if (hashdb_block_size % hashdb_sector_size != 0) {
+            // for valid operation, scan sectors must align on byte aligned boundaries
+            if (hashdb_block_size % hashdb_byte_alignment != 0) {
                 std::cerr << "Error: invalid hashdb block size=" << hashdb_block_size
-                          << " or hashdb sector size=" << hashdb_sector_size << ".\n"
-                          << "Sectors must align on hash block boundaries.\n"
-                          << "Specifically, hashdb_block_size \% hashdb_sector_size must be zero.\n"
+                          << " or byte alignment size=" << hashdb_byte_alignment << ".\n"
+                          << "Sectors must align on byte aligned boundaries.\n"
+                          << "Specifically, hashdb_block_size \% hashdb_byte_alignment must be zero.\n"
                           << "Cannot continue.\n";
                 exit(1);
             }
@@ -302,15 +318,16 @@ void scan_hashdb(const class scanner_params &sp,
 
                     // show relevant settable options
                     std::cout << "hashdb: hashdb_mode=" << hashdb_mode << "\n"
+                              << "hashdb: hashdb_byte_alignment= " << hashdb_byte_alignment << "\n"
                               << "hashdb: hashdb_block_size=" << hashdb_block_size << "\n"
-                              << "hashdb: hashdb_sector_size= " << hashdb_sector_size << "\n"
+                              << "hashdb: hashdb_step_size= " << hashdb_step_size << "\n"
                               << "hashdb: hashdb_repository_name= " << hashdb_repository_name << "\n"
                               << "hashdb: Creating hashdb directory " << hashdb_dir << "\n";
 
                     // open hashdb for importing
                     // currently, hashdb_dir is required to not exist
                     hashdb::settings_t settings;
-                    settings.sector_size = hashdb_sector_size;
+                    settings.byte_alignment = hashdb_byte_alignment;
                     settings.block_size = hashdb_block_size;
                     std::string error_message = hashdb::create_hashdb(hashdb_dir, settings, "");
                     if (error_message.size() != 0) {
@@ -325,7 +342,7 @@ void scan_hashdb(const class scanner_params &sp,
                     // show relevant settable options
                     std::cout << "hashdb: hashdb_mode=" << hashdb_mode << "\n"
                               << "hashdb: hashdb_block_size=" << hashdb_block_size << "\n"
-                              << "hashdb: hashdb_sector_size= " << hashdb_sector_size << "\n"
+                              << "hashdb: hashdb_step_size= " << hashdb_step_size << "\n"
                               << "hashdb: hashdb_scan_path=" << hashdb_scan_path << "\n"
                               << "hashdb: hashdb_max_feature_file_lines=" << hashdb_max_feature_file_lines
                               << "\n";
@@ -432,7 +449,7 @@ static void do_import(const class scanner_params &sp,
     size_t nonprobative_count = 0;
 
     // import the cryptograph hash values from all the blocks in sbuf
-    for (size_t offset=0; offset<sbuf.pagesize; offset+=hashdb_sector_size) {
+    for (size_t offset=0; offset<sbuf.pagesize; offset+=hashdb_step_size) {
 
         // Create a child sbuf of what we would hash
         const sbuf_t sbuf_to_hash(sbuf,offset,hashdb_block_size);
@@ -502,7 +519,7 @@ static void do_scan(const class scanner_params &sp,
     const sbuf_t& sbuf = sp.sbuf;
 
     // process cryptographic hash values for blocks along sector boundaries
-    for (size_t offset=0; offset<sbuf.pagesize; offset+=hashdb_sector_size) {
+    for (size_t offset=0; offset<sbuf.pagesize; offset+=hashdb_step_size) {
 
         // stop recording if feature file line count is at requested max
         if (hashdb_max_feature_file_lines > 0 && identified_blocks_recorder->count() >=
