@@ -31,7 +31,7 @@
 
 #ifdef HAVE_HASHDB
 
-#define DEBUG_V2_OUT
+//#define DEBUG_V2_OUT
 
 #include "hashdb.hpp"
 #include <dfxml/src/hash_t.h>
@@ -349,6 +349,13 @@ void scan_hashdb(const class scanner_params &sp,
 
                     // open hashdb for scanning
                     scan_manager = new hashdb::scan_manager_t(hashdb_scan_path);
+
+                    // set the feature recorder to leave context alone but fix invalid utf8
+                    sp.fs.get_name("identified_blocks")->set_flag(feature_recorder::FLAG_XML);
+#ifdef DEBUG_V2_OUT
+                    sp.fs.get_name("identified_blocks2")->set_flag(feature_recorder::FLAG_XML);
+#endif
+
                     return;
                 }
 
