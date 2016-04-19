@@ -298,11 +298,11 @@ void scan_hashdb(const class scanner_params &sp,
             }
 
             // for valid operation, scan sectors must align on byte aligned boundaries
-            if (hashdb_block_size % hashdb_byte_alignment != 0) {
-                std::cerr << "Error: invalid hashdb block size=" << hashdb_block_size
-                          << " or byte alignment size=" << hashdb_byte_alignment << ".\n"
-                          << "Sectors must align on byte aligned boundaries.\n"
-                          << "Specifically, hashdb_block_size \% hashdb_byte_alignment must be zero.\n"
+            if (hashdb_step_size % hashdb_byte_alignment != 0) {
+                std::cerr << "Error: invalid byte alignment=" << hashdb_byte_alignment
+                          << " for step size=" << hashdb_step_size << ".\n"
+                          << "Steps must fit along byte alignment boundaries.\n"
+                          << "Specifically, hashdb_step_size \% hashdb_byte_alignment must be zero.\n"
                           << "Cannot continue.\n";
                 exit(1);
             }
