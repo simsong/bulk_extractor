@@ -548,7 +548,8 @@ static void do_scan(const class scanner_params &sp,
                std::string(reinterpret_cast<const char*>(hash.digest), 16);
 
         // scan for the hash
-        std::string json_text = scan_manager->find_expanded_hash(binary_hash);
+        std::string json_text = scan_manager->find_expanded_hash_json(binary_hash);
+
         if (json_text.size() == 0) {
           // hash not found
           continue;
