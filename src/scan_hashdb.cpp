@@ -452,7 +452,8 @@ static void do_import(const class scanner_params &sp,
     const std::string file_binary_hash =
                std::string(reinterpret_cast<const char*>(sbuf_hash.digest), 16);
 
-    // track nonprobative count
+    // track count values
+    size_t zero_count = 0;
     size_t nonprobative_count = 0;
 
     // import the cryptograph hash values from all the blocks in sbuf
@@ -463,7 +464,7 @@ static void do_import(const class scanner_params &sp,
 
         // ignore empty blocks
         if (empty_sbuf(sbuf_to_hash)){
-            ++nonprobative_count;
+            ++zero_count;
             continue;
         }
 
@@ -509,6 +510,7 @@ static void do_import(const class scanner_params &sp,
     import_manager->insert_source_data(file_binary_hash,
                                        sbuf.pagesize,
                                        "", // file type
+                                       zero_count,
                                        nonprobative_count);
 }
 
