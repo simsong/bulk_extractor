@@ -457,6 +457,7 @@ static void do_import(const class scanner_params &sp,
     size_t nonprobative_count = 0;
 
     // import the cryptograph hash values from all the blocks in sbuf
+    std::set<uint64_t> file_offsets;
     for (size_t offset=0; offset<sbuf.pagesize; offset+=hashdb_step_size) {
 
         // Create a child sbuf of what we would hash
@@ -495,11 +496,14 @@ static void do_import(const class scanner_params &sp,
         }
 
         // import the hash
+        file_offsets.clear();
+        file_offsets.insert(image_offset);
         import_manager->insert_hash(binary_hash,
-                                    file_binary_hash,
-                                    image_offset,
                                     0,    // entropy
-                                    "");  // block label
+                                    ss_flags.str(),
+                                    file_binary_hash,
+                                    1,    // sub_count
+                                    file_offsets);
     }
 
     // insert the source name pair
