@@ -414,7 +414,7 @@ void scan_ntfsdirs(const sbuf_t &sbuf,feature_recorder *wrecorder)
 
 			    uint64_t filesize = n.get64u(attr_off+soff+48);
 			    if(filesize > (1000L * terabyte)) break;
-			    mftmap["filesize"]       = utos(terabyte);
+			    mftmap["filesize"]       = utos(filesize);
 
 			    mftmap["attr_flags"]     = utos(n.get64u(attr_off+soff+56));
 			    size_t  fname_nlen   = n.get8u(attr_off+soff+64);
