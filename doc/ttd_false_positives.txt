@@ -1,0 +1,9 @@
+This file documents sources of false positives observed in bulk_extractor.
+
+Cookie filenames.
+
+  We have seen that approximately 1% of email addresses are actually the filenames of Windows Internet Explorer cookie files. In one case, the reported email address was user@blue.administrator.co, whereas the actual data was user@blue.adminstrator.co[5]. 
+
+Possible Rule-based options:
+ - If an email address is followed by '[n]', then it is not valid and should be suppressed.
+ - If an email address is UTF-16 encoded and it also appears in a filename, and both have the same forensic path, ignore it.
