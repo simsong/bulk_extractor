@@ -2,7 +2,7 @@
 # make bulk_extractor plugins
 # stand
 
-AM_CPPFLAGS =  -I../src/be13_api  -I../src/  -I$(top_srcdir)/src/be13_api
+AM_CPPFLAGS =  -I.. -I../src  -I../src/be13_api  -I$(top_srcdir)/src/be13_api
 
 bin_PROGRAMS = plugin_test 
 
