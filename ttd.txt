@@ -9,3 +9,12 @@ approach for histogram transformation:
 Then:
 - in-memory histogram needs to create a different in-memory for each def.
 
+
+
+Car VIN detector:
+https://en.wikipedia.org/wiki/Vehicle_identification_number
+1G1FP31F8KL297099
+2HGFA1F52BH523214
+1FTWF3D56AEA90906
+3C6JR6AT8FG525132
+JA4MW51R91J008713

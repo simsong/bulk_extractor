@@ -1,0 +1,4 @@
+This file has a unicode filename.
+unicode@filename.com
+
+Let's see if you can scan it!

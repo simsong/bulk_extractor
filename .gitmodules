@@ -7,3 +7,6 @@
 [submodule "src/sceadan"]
 	path = src/sceadan
 	url = https://github.com/nbeebe/sceadan.git
+[submodule "src/aff4"]
+	path = src/aff4
+	url = https://github.com/google/aff4.git
