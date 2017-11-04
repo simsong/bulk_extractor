@@ -97,30 +97,19 @@ void scan_winusn(const class scanner_params &sp,const recursion_control_block &r
         size_t total_record_size=0;
 
         while (offset < stop-60) {
-            // skip $LogFile RCRD Record
-            /*
-              if (sbuf[offset + 0] == 0x52 && sbuf[offset + 1] == 0x43 && sbuf[offset + 2] == 0x52
-              && sbuf[offset + 3] == 0x44 && sbuf[offset + 4] == 0x28 && sbuf[offset + 5] == 0x00) {
-              offset = offset + 4096 - (offset % 4096);
-              continue;
-              }
-            */
             record_size = check_usnrecordv2_signature(offset,sbuf);
             if (record_size == 0) {	      
                 offset += 8;
                 continue;
             }
             total_record_size = record_size;
-            //		printf("first record_size %d\n", record_size);
             while (true) {
                 record_size = check_usnrecordv2_or_v4_signature(offset+total_record_size,sbuf);
                 if (record_size != 0) {
                     if (offset+total_record_size+record_size < stop) {
-                        //  			    printf("next record %d \n", record_size);
                         total_record_size += record_size;
                     }
                     else {
-                        //    printf("reach stop offset %d \n", record_size);
                         total_record_size = stop-offset;
                         break;
                     }
@@ -131,26 +120,19 @@ void scan_winusn(const class scanner_params &sp,const recursion_control_block &r
                         next_boundary_offset = offset + total_record_size + SECTOR_SIZE - (total_record_size % SECTOR_SIZE);
                         record_size = check_usnrecordv2_or_v4_signature(next_boundary_offset,sbuf);
                         if (record_size != 0) {
-                            //    printf("next record is USN at next boundary\n");
                             total_record_size = next_boundary_offset - offset;
                             continue;
                         }
                         else {
-                            //    printf("next record is not USN\n");
                             break;
                         }
                     }
                     else {
-                        //    printf("next record is not USN record\n");
                         break;
                     }
                 }
             }
-            //		printf("offset %d, total record size: %d\n", offset, total_record_size);
-            if (total_record_size > CLUSTER_SIZE)
-                winusn_recorder->carve(sbuf,offset,total_record_size,".usn");
-            else
-                winusn_recorder->carve_records(sbuf,offset,total_record_size,"fragment_records_set.usn");
+            winusn_recorder->carve_records(sbuf,offset,total_record_size,"usnjrnl");
             offset += total_record_size - 8;
         }
         offset += 8;
