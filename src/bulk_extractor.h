@@ -223,6 +223,7 @@ extern "C" scanner_t scan_msxml;
 extern "C" scanner_t scan_winlnk;
 extern "C" scanner_t scan_winpe;
 extern "C" scanner_t scan_winprefetch;
+extern "C" scanner_t scan_winusn;
 extern "C" scanner_t scan_zip;
 extern "C" scanner_t scan_rar;
 extern "C" scanner_t scan_windirs;

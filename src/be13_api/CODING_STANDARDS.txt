@@ -1,0 +1,49 @@
+Coding Standards v1.0
+Simson L. Garfinkel
+December 3, 2013
+
+All standards are based on compromise. These standards seem to be a
+good compromise between a variety of coding styles and existing
+standards.
+
+Executive summary:
+
+* No tabs in source code.
+
+  Legacy code has tabs at 8 characters; they can be freely converted
+  to spaces as necessary.
+
+* Indent at 4 spaces. 
+
+* Open braces start on the SAME LINE for:
+  - if statements
+  - inline functions in .h headers
+  - Java function declarations
+
+* Open braces start on NEXT LINE for:
+  - C function declarations
+
+* We use the following lines/configuration variables to try to enforce
+  the above:
+
+  For EMACS at the top of c programs:
+  /* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+
+  In .emacs files:
+  (setq-default indent-tabs-mode nil)
+  (setq c-basic-offset 4)
+
+
+References:
+===========
+
+* http://www.emacswiki.org/emacs/NoTabs
+
+* http://www.jwz.org/doc/tabs-vs-spaces.html
+
+* http://slashdot.org/pollBooth.pl?qid=395&aid=-1
+
+* http://google-styleguide.googlecode.com/svn/trunk/cppguide.xml
+
+* http://www.python.org/dev/peps/pep-0008/#maximum-line-length
+

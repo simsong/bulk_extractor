@@ -75,6 +75,7 @@ bulk_scanners = \
 	scan_winlnk.cpp \
 	scan_winpe.cpp \
 	scan_winprefetch.cpp \
+	scan_winusn.cpp \
 	scan_wordlist.cpp \
 	scan_xor.cpp \
 	scan_zip.cpp 
