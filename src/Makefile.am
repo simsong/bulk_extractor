@@ -63,6 +63,7 @@ bulk_scanners = \
 	scan_json.cpp \
 	scan_kml.cpp \
 	scan_net.cpp \
+	scan_ntfsusn.cpp \
 	scan_outlook.cpp \
 	scan_facebook.cpp \
 	scan_pdf.cpp \
@@ -75,7 +76,6 @@ bulk_scanners = \
 	scan_winlnk.cpp \
 	scan_winpe.cpp \
 	scan_winprefetch.cpp \
-	scan_winusn.cpp \
 	scan_wordlist.cpp \
 	scan_xor.cpp \
 	scan_zip.cpp 
