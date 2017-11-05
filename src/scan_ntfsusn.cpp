@@ -1,5 +1,5 @@
 /**
- * Plugin: scan_winusn
+ * Plugin: scan_ntfsusn
  * Purpose: Find all USN_RECORD v2/v4 record into one file
  * USN_RECORD_V2 format https://msdn.microsoft.com/ja-jp/library/windows/desktop/aa365722(v=vs.85).aspx
  * USN_RECORD_V4 format https://msdn.microsoft.com/ja-jp/library/windows/desktop/mt684964(v=vs.85).aspx
@@ -18,13 +18,13 @@
 
 #include "utf8.h"
 
-static uint32_t winusn_carve_mode = feature_recorder::CARVE_ALL;
+static uint32_t ntfsusn_carve_mode = feature_recorder::CARVE_ALL;
 
 using namespace std;
 
 #define SECTOR_SIZE 512
 #define CLUSTER_SIZE 4096
-#define FEATURE_FILE_NAME "winusn_carved"
+#define FEATURE_FILE_NAME "ntfsusn_carved"
 
 size_t check_usnrecordv2_signature(size_t offset, const sbuf_t &sbuf) {
     size_t record_size;
@@ -69,26 +69,26 @@ size_t check_usnrecordv2_or_v4_signature(size_t offset, const sbuf_t &sbuf) {
 
 extern "C"
 
-void scan_winusn(const class scanner_params &sp,const recursion_control_block &rcb)
+void scan_ntfsusn(const class scanner_params &sp,const recursion_control_block &rcb)
 {
     assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
     if(sp.phase==scanner_params::PHASE_STARTUP){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
-        sp.info->name            = "winusn";
+        sp.info->name            = "ntfsusn";
         sp.info->author          = "Teru Yamazaki";
         sp.info->description     = "Scans for USN_RECORD v2/v4 record";
         sp.info->scanner_version = "1.0";
         sp.info->feature_names.insert(FEATURE_FILE_NAME);
-        //        sp.info->get_config("winusn_carve_mode",&winusn_carve_mode,"0=carve none; 1=carve encoded; 2=carve all");
+        //        sp.info->get_config("ntfsusn_carve_mode",&ntfsusn_carve_mode,"0=carve none; 1=carve encoded; 2=carve all");
         return;
     }
     if(sp.phase==scanner_params::PHASE_INIT){
-        sp.fs.get_name(FEATURE_FILE_NAME)->set_carve_mode(static_cast<feature_recorder::carve_mode_t>(winusn_carve_mode));
+        sp.fs.get_name(FEATURE_FILE_NAME)->set_carve_mode(static_cast<feature_recorder::carve_mode_t>(ntfsusn_carve_mode));
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
         const sbuf_t &sbuf = sp.sbuf;
         feature_recorder_set &fs = sp.fs;
-        feature_recorder *winusn_recorder = fs.get_name(FEATURE_FILE_NAME);
+        feature_recorder *ntfsusn_recorder = fs.get_name(FEATURE_FILE_NAME);
 
         size_t offset = 0;
         size_t stop = sbuf.pagesize;
@@ -133,7 +133,7 @@ void scan_winusn(const class scanner_params &sp,const recursion_control_block &r
                     }
                 }
             }
-            winusn_recorder->carve_records(sbuf,offset,total_record_size,"usnjrnl");
+            ntfsusn_recorder->carve_records(sbuf,offset,total_record_size,"usnjrnl");
             offset += total_record_size;
         }
     }
