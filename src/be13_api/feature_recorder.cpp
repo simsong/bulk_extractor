@@ -987,6 +987,9 @@ std::string feature_recorder::carve_records(const sbuf_t &sbuf,size_t pos,size_t
         return std::string();
     }
 
+    // To control multiple thread writing
+    cppmutex::lock lock(Mf);
+
     /* Write the file into the directory */
     int fd = ::open(fname.c_str(),O_APPEND|O_CREAT|O_BINARY|O_RDWR,0666);
     if(fd<0){

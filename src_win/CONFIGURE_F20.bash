@@ -45,12 +45,11 @@ done
 
 MPKGS="autoconf automake flex gcc gcc-c++ git libtool "
 MPKGS+="md5deep osslsigncode patch wine wget bison zlib-devel "
-MPKGS+="libewf libewf-devel java-1.7.0-openjdk-devel "
+MPKGS+="libewf libewf-devel java-1.8.0-openjdk-devel "
 MPKGS+="libxml2-devel libxml2-static openssl-devel "
 MPKGS+="expat-devel "
 MPKGS+="mingw64-gcc mingw64-gcc-c++ "
 MPKGS+="mingw32-nsis "
-MPKGS+="java-1.7.0-openjdk-devel "
 
 if [ ! -r /etc/redhat-release ]; then
   echo This requires Fedora Linux

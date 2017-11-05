@@ -3,7 +3,7 @@
  * Purpose: Find all USN_RECORD v2/v4 record into one file
  * USN_RECORD_V2 format https://msdn.microsoft.com/ja-jp/library/windows/desktop/aa365722(v=vs.85).aspx
  * USN_RECORD_V4 format https://msdn.microsoft.com/ja-jp/library/windows/desktop/mt684964(v=vs.85).aspx
- */
+ **/
 #include "config.h"
 #include "be13_api/bulk_extractor_i.h"
 #include <iostream>
@@ -90,18 +90,19 @@ void scan_winusn(const class scanner_params &sp,const recursion_control_block &r
         feature_recorder_set &fs = sp.fs;
         feature_recorder *winusn_recorder = fs.get_name(FEATURE_FILE_NAME);
 
-        // Search for USN_RECORD_V2 Structure in the sbuf
         size_t offset = 0;
         size_t stop = sbuf.pagesize;
         size_t record_size=0;
         size_t total_record_size=0;
 
+        // Search for USN_RECORD_V2 Structure in the sbuf
         while (offset < stop-60) {
             record_size = check_usnrecordv2_signature(offset,sbuf);
             if (record_size == 0) {	      
-                offset += 8;
+                offset += 8; // because of USN_RECORD stored at 8 byte boundary
                 continue;
             }
+            // found one record then also checks following valid records and writes all at once 
             total_record_size = record_size;
             while (true) {
                 record_size = check_usnrecordv2_or_v4_signature(offset+total_record_size,sbuf);
@@ -114,7 +115,7 @@ void scan_winusn(const class scanner_params &sp,const recursion_control_block &r
                         break;
                     }
                 }
-                else {
+                else { // consider padding area around sector boundary
                     if ((offset+total_record_size) % SECTOR_SIZE != 0) {
                         size_t next_boundary_offset;
                         next_boundary_offset = offset + total_record_size + SECTOR_SIZE - (total_record_size % SECTOR_SIZE);
@@ -133,8 +134,7 @@ void scan_winusn(const class scanner_params &sp,const recursion_control_block &r
                 }
             }
             winusn_recorder->carve_records(sbuf,offset,total_record_size,"usnjrnl");
-            offset += total_record_size - 8;
+            offset += total_record_size;
         }
-        offset += 8;
     }
 }
