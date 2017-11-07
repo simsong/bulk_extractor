@@ -133,7 +133,7 @@ void scan_ntfsusn(const class scanner_params &sp,const recursion_control_block &
                     }
                 }
             }
-            ntfsusn_recorder->carve_records(sbuf,offset,total_record_size,"usnjrnl");
+            ntfsusn_recorder->carve_records(sbuf,offset,total_record_size,"UsnJrnl-J");
             offset += total_record_size;
         }
     }
