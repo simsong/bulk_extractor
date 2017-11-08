@@ -87,7 +87,7 @@ void scan_ntfslogfile(const class scanner_params &sp,const recursion_control_blo
         while (offset <= stop-CLUSTER_SIZE) {
 
             result_type = check_logfilerecord_signature(offset, sbuf);
-            total_record_size += CLUSTER_SIZE;
+            total_record_size = CLUSTER_SIZE;
 
             if (result_type == 1) {
 

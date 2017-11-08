@@ -88,7 +88,7 @@ void scan_ntfsmft(const class scanner_params &sp,const recursion_control_block &
         while (offset <= stop-MFT_RECORD_SIZE) {
 
             result_type = check_mftrecord_signature(offset, sbuf);
-            total_record_size += MFT_RECORD_SIZE;
+            total_record_size = MFT_RECORD_SIZE;
 
             if (result_type == 1) {
 
