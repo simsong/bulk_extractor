@@ -218,6 +218,7 @@ extern "C" scanner_t scan_gps_lg;
 extern "C" scanner_t scan_lightgrep;
 #endif
 extern "C" scanner_t scan_facebook;
+extern "C" scanner_t scan_ntfsindx;
 extern "C" scanner_t scan_ntfslogfile;
 extern "C" scanner_t scan_ntfsmft;
 extern "C" scanner_t scan_ntfsusn;

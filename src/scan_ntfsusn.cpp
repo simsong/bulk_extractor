@@ -95,7 +95,7 @@ void scan_ntfsusn(const class scanner_params &sp,const recursion_control_block &
         size_t record_size=0;
         size_t total_record_size=0;
 
-        // Search for USN_RECORD_V2 Structure in the sbuf
+        // search for USN_RECORD_V2 Structure in the sbuf
         while (offset < stop-60) {
             record_size = check_usnrecordv2_signature(offset,sbuf);
             if (record_size == 0) {	      
