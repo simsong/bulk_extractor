@@ -74,6 +74,7 @@ scanner_t *scanners_builtin[] = {
     scan_ntfslogfile,
     scan_ntfsmft,
     scan_ntfsusn,
+    scan_utmp,
     scan_outlook,
     scan_pdf,
     scan_winpe,

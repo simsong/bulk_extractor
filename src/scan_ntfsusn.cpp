@@ -96,14 +96,18 @@ void scan_ntfsusn(const class scanner_params &sp,const recursion_control_block &
         size_t total_record_size=0;
 
         // search for USN_RECORD_V2 Structure in the sbuf
-        while (offset < stop-60) {
+        while (offset < stop) {
             record_size = check_usnrecordv2_signature(offset,sbuf);
             if (record_size == 0) {	      
                 offset += 8; // because of USN_RECORD stored at 8 byte boundary
                 continue;
             }
-            // found one record then also checks following valid records and writes all at once 
             total_record_size = record_size;
+            if (offset+total_record_size > stop) {
+                ntfsusn_recorder->carve_records(sbuf,offset,total_record_size,"UsnJrnl-J");
+                break;
+            }
+            // found one record then also checks following valid records and writes all at once 
             while (true) {
                 record_size = check_usnrecordv2_or_v4_signature(offset+total_record_size,sbuf);
                 if (record_size != 0) {

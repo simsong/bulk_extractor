@@ -67,6 +67,7 @@ bulk_scanners = \
 	scan_ntfslogfile.cpp \
 	scan_ntfsmft.cpp \
 	scan_ntfsusn.cpp \
+	scan_utmp.cpp \
 	scan_outlook.cpp \
 	scan_facebook.cpp \
 	scan_pdf.cpp \
