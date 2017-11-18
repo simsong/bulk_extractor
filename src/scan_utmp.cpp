@@ -37,7 +37,7 @@ bool check_utmprecord_signature(size_t offset, const sbuf_t &sbuf) {
         return false;
 
     line = sbuf[offset+8];
-    if (line != 0 && (line < 32 && line > 126))
+    if (line != 0 && (line < 32 || line > 126))
         return false;
     for (i=0; i<32; i++)
         if (sbuf[offset+8+i] == 0) // 0x00 found then it should be continued 0x00 at the end of string
@@ -46,7 +46,7 @@ bool check_utmprecord_signature(size_t offset, const sbuf_t &sbuf) {
                     return false;
 
     user = sbuf[offset+44];
-    if (user != 0 && (user < 32 && user > 126))
+    if (user != 0 && (user < 32 || user > 126))
         return false;
     for (i=0; i<32; i++)
         if (sbuf[offset+44+i] == 0) // 0x00 found then it should be continued 0x00 at the end of string
@@ -55,7 +55,9 @@ bool check_utmprecord_signature(size_t offset, const sbuf_t &sbuf) {
                     return false;
 
     host = sbuf[offset+76];
-    if (host != 0 && (host < 32 && host > 126))
+    if (host != 0 && (host < 35 || host > 126)
+        && host != 33 && host != 37 && host != 60 && host != 62 && host != 92
+        && host != 94 && host != 123 && host != 124 && host != 125) // use RFC3986 for soft restriction 
         return false;
     for (i=0; i<256; i++)
         if (sbuf[offset+76+i] == 0) // 0x00 found then it should be continued 0x00 at the end of string
@@ -66,7 +68,7 @@ bool check_utmprecord_signature(size_t offset, const sbuf_t &sbuf) {
     if (sbuf.get32i(offset+340) <= 0) //tv_sec
         return false;
 
-    if (sbuf.get32i(offset+344) < 0) //tv_usec
+    if (sbuf.get32i(offset+344) < 0 || sbuf.get32i(offset+344) >= 1000000) //tv_usec
         return false;
 
     for (i=0; i<20; i++) { 
