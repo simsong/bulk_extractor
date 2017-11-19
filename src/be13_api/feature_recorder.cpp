@@ -944,17 +944,14 @@ std::string feature_recorder::carve_records(const sbuf_t &sbuf,size_t pos,size_t
     /* See if this is in the cache */
     bool in_cache = carve_cache.check_for_presence_and_insert(carved_hash_hexvalue);
 
-    // uint64_t this_file_number = file_number_add(in_cache ? 0 : 1); // increment if we are not in the cache
-    std::string dirname1 = fs.get_outdir() + "/" + name;
+    std::string dirname1 = fs.get_outdir();
 
     std::stringstream ss;
-    //   ss << dirname1 << "/" << std::setw(3) << std::setfill('0') << (this_file_number / 100000);
     ss << dirname1;
    
     std::string dirname2 = ss.str(); 
-    std::string fname         = dirname2 + std::string("/") + valid_dosname(filename);
+    std::string fname = dirname2 + std::string("/") + valid_dosname(filename);
     std::string fname_feature = fname.substr(fs.get_outdir().size()+1); 
-    // std::string fname_feature = "<FOUND>";
     
     /* Record what was found in the feature file.
      */
@@ -963,7 +960,7 @@ std::string feature_recorder::carve_records(const sbuf_t &sbuf,size_t pos,size_t
         fname_feature="<CACHED>";
     }
 
-    // write to the record into specified file
+    // write to the feature file
     ss.str(std::string()); // clear the stringstream
     ss << len;
     this->write(cbuf.pos0,fname_feature,ss.str());

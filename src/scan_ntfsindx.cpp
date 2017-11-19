@@ -104,7 +104,7 @@ void scan_ntfsindx(const class scanner_params &sp,const recursion_control_block 
         size_t total_record_size=0;
         int8_t result_type, record_type;
 
-        while (offset <= stop-CLUSTER_SIZE) {
+        while (offset < stop) {
 
             result_type = check_indxrecord_signature(offset, sbuf);
             total_record_size = CLUSTER_SIZE;
@@ -116,13 +116,13 @@ void scan_ntfsindx(const class scanner_params &sp,const recursion_control_block 
 
                     // found one valid INDX record then also checks following valid records and writes all at once
                     while (true) {
-                        if (offset+total_record_size > stop-CLUSTER_SIZE)
+                        if (offset+total_record_size >= stop)
                             break;
 
                         result_type = check_indxrecord_signature(offset+total_record_size, sbuf);
 
                         if (result_type == 1) {
-                            record_type = check_indxrecord_type(offset, sbuf);
+                            record_type = check_indxrecord_type(offset+total_record_size, sbuf);
                             if (record_type == 1)
                                 total_record_size += CLUSTER_SIZE;
                             else
@@ -136,12 +136,12 @@ void scan_ntfsindx(const class scanner_params &sp,const recursion_control_block 
                 else if(record_type == 2) {
                     ntfsindx_recorder->carve_records(sbuf,offset,total_record_size,"INDX_ObjId-O");                    
                 }
-                else {
+                else { // 0 - Other INDX record (Secure-SDH, Secure-SII, etc.)
                     ntfsindx_recorder->carve_records(sbuf,offset,total_record_size,"INDX_Misc");
                 }
             }
             else if (result_type == 2) {
-                ntfsindx_recorder->carve_records(sbuf,offset,CLUSTER_SIZE,"INDX_corrupted");
+                ntfsindx_recorder->carve_records(sbuf,offset,total_record_size,"INDX_corrupted");
             }
             else { // result_type == 0
             }

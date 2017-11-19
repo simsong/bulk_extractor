@@ -7,7 +7,7 @@
 # and http://www.openismus.com/documents/linux/automake/automake.shtml
 
 AC_PREREQ(2.57)
-AC_INIT(BULK_EXTRACTOR, 1.6.0-dev-rec, bugs@digitalcorpora.org)
+AC_INIT(BULK_EXTRACTOR, 1.6.0-dev-rec01, https://github.com/4n6ist/bulk_extractor/tree/rec-dev)
 
 AC_CONFIG_MACRO_DIR(m4)
 

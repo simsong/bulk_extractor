@@ -43,7 +43,7 @@ int8_t check_mftrecord_signature(size_t offset, const sbuf_t &sbuf) {
             return 0;
         fixup_count = sbuf.get16i(offset + 6);
         if (fixup_count <= 0 || fixup_count >= SECTOR_SIZE)
-            return 0;        
+            return 0;
 
         fixup_value = sbuf.get16i(offset + fixup_offset);
 
@@ -85,7 +85,7 @@ void scan_ntfsmft(const class scanner_params &sp,const recursion_control_block &
         size_t total_record_size=0;
         int8_t result_type;
 
-        while (offset <= stop-MFT_RECORD_SIZE) {
+        while (offset < stop) {
 
             result_type = check_mftrecord_signature(offset, sbuf);
             total_record_size = MFT_RECORD_SIZE;
@@ -94,7 +94,7 @@ void scan_ntfsmft(const class scanner_params &sp,const recursion_control_block &
 
                 // found one valid record then also checks following valid records and writes all at once
                 while (true) {
-                    if (offset+total_record_size > stop-MFT_RECORD_SIZE)
+                    if (offset+total_record_size >= stop)
                         break;
 
                     result_type = check_mftrecord_signature(offset+total_record_size, sbuf);
@@ -107,9 +107,9 @@ void scan_ntfsmft(const class scanner_params &sp,const recursion_control_block &
                 ntfsmft_recorder->carve_records(sbuf,offset,total_record_size,"MFT");
             }
             else if (result_type == 2) {
-                ntfsmft_recorder->carve_records(sbuf,offset,MFT_RECORD_SIZE,"MFT_corrputed");
+                ntfsmft_recorder->carve_records(sbuf,offset,total_record_size,"MFT_corrputed");
             }
-            else {
+            else { // result_type == 0 - not MFT record
             }
             offset += total_record_size;
         }

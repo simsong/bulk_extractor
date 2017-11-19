@@ -27,7 +27,8 @@ using namespace std;
 
 
 // check $LogFile RCRD Signature
-// return: 1 - valid RCRD record, 2 - corrupt RCRD record, 0 - not RCRD record
+// return: 1 - valid RCRD record, 2 - corrupt RCRD record,
+// retrun: 3 - valid RSRT record, 4 - corrupt RSTR record, 0 - not RCRD record
 int8_t check_logfilerecord_signature(size_t offset, const sbuf_t &sbuf) {
     int16_t fixup_offset;
     int16_t fixup_count;
@@ -35,7 +36,7 @@ int8_t check_logfilerecord_signature(size_t offset, const sbuf_t &sbuf) {
     int16_t i;
 
     if (sbuf[offset] == 0x52 && sbuf[offset + 1] == 0x43 &&
-        sbuf[offset + 2] == 0x52  && sbuf[offset + 3] == 0x44) {
+        sbuf[offset + 2] == 0x52  && sbuf[offset + 3] == 0x44) { // RCRD
 
         fixup_offset = sbuf.get16i(offset + 4);
         if (fixup_offset <= 0 || fixup_offset >= SECTOR_SIZE)
@@ -51,7 +52,25 @@ int8_t check_logfilerecord_signature(size_t offset, const sbuf_t &sbuf) {
                 return 2;
         }
         return 1;
-    } else {
+    } else if (sbuf[offset] == 0x52 && sbuf[offset + 1] == 0x53 &&
+               sbuf[offset + 2] == 0x54  && sbuf[offset + 3] == 0x52) { // RSTR
+
+        fixup_offset = sbuf.get16i(offset + 4);
+        if (fixup_offset <= 0 || fixup_offset >= SECTOR_SIZE)
+            return 0;
+        fixup_count = sbuf.get16i(offset + 6);
+        if (fixup_count <= 0 || fixup_count >= SECTOR_SIZE)
+            return 0;
+
+        fixup_value = sbuf.get16i(offset + fixup_offset);
+
+        for(i=1;i<fixup_count;i++){
+            if (fixup_value != sbuf.get16i(offset + (SECTOR_SIZE * i) - 2))
+                return 4;
+        }
+        return 3;
+    }
+    else {
         return 0;
     }
 }
@@ -84,7 +103,7 @@ void scan_ntfslogfile(const class scanner_params &sp,const recursion_control_blo
         size_t total_record_size=0;
         int8_t result_type;
 
-        while (offset <= stop-CLUSTER_SIZE) {
+        while (offset < stop) {
 
             result_type = check_logfilerecord_signature(offset, sbuf);
             total_record_size = CLUSTER_SIZE;
@@ -93,7 +112,7 @@ void scan_ntfslogfile(const class scanner_params &sp,const recursion_control_blo
 
                 // found one valid record then also checks following valid records and writes all at once
                 while (true) {
-                    if (offset+total_record_size > stop-CLUSTER_SIZE)
+                    if (offset+total_record_size >= stop)
                         break;
 
                     result_type = check_logfilerecord_signature(offset+total_record_size, sbuf);
@@ -106,9 +125,15 @@ void scan_ntfslogfile(const class scanner_params &sp,const recursion_control_blo
                 ntfslogfile_recorder->carve_records(sbuf,offset,total_record_size,"LogFile-RCRD");
             }
             else if (result_type == 2) {
-                ntfslogfile_recorder->carve_records(sbuf,offset,CLUSTER_SIZE,"LogFile-RCRD_corrupted");
+                ntfslogfile_recorder->carve_records(sbuf,offset,total_record_size,"LogFile-RCRD_corrupted");
             }
-            else {
+            else if (result_type == 3) {
+                ntfslogfile_recorder->carve_records(sbuf,offset,total_record_size,"LogFile-RSTR");
+            }
+            else if (result_type == 4) {
+                ntfslogfile_recorder->carve_records(sbuf,offset,total_record_size,"LogFile-RSTR_corrupted");
+            }            
+            else { // result_type == 0 - not RCRD record
             }
             offset += total_record_size;
         }
