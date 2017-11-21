@@ -41,6 +41,27 @@ cd src_win
 ./CONFIGURE_F20.bash
 make
 ```
+
+If you encounter an error at libewf when you run CONFIGURE_F20.bash , then edit libewf-########/libuna/libuna_extern.h
+
+```
+(Line 44)
+#define LIBUNA_EXTERN /* extern */
+->
+#define LIBUNA_EXTERN extern
+```
+
+Then try to build/install libewf and run CONFIGURE_F20.bash again.
+
+```
+cd libewf-########
+make
+sudo make install
+cd ..
+./CONFIGURE_F20.bash
+make
+```
+
 ### Linux
 
 ```
