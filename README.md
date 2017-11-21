@@ -1,6 +1,6 @@
 # Record carving with bulk_extractor (bulk_extractor-rec)
 
-It based on [bulk_extrator](https://github.com/simsong/bulk_extractor) and supports following scanner: 
+It is based on [bulk_extrator](https://github.com/simsong/bulk_extractor) and supports following scanner: 
 
 * ntfsindx - $INDEX_ALLOCATION record (INDX)
 * ntfslogfile - $LogFile record (RSTR/RCRD)
