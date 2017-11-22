@@ -137,7 +137,7 @@ function build_mingw {
 }
 
 build_mingw libtre   http://laurikari.net/tre/tre-0.8.0.tar.gz   tre-0.8.0.tar.gz
-build_mingw libewf   https://github.com/libyal/libewf-legacy/releases/download/20140802/libewf-20140802.tar.gz libewf-20140802.tar.gz
+build_mingw libewf   https://github.com/libyal/legacy/raw/master/libewf/libewf-20140608.tar.gz libewf-20140608.tar.gz
 
 #
 # ICU requires patching and a special build sequence
@@ -202,8 +202,7 @@ fi
 # build liblightgrep
 #
 
-build_mingw liblightgrep  https://github.com/LightboxTech/liblightgrep/archive/v1.4.tar.gz liblightgrep-1.4.tar.gz
-
+build_mingw liblightgrep  https://github.com/LightboxTech/liblightgrep/archive/v1.3.0.tar.gz  liblightgrep-1.3.0.tar.gz
 
 #
 #
