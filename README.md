@@ -1,4 +1,4 @@
-# Record carving with bulk_extractor (bulk_extractor-rec)
+# Bulk Extractor with Record Carving (bulk_extractor-rec)
 
 It is based on [bulk_extrator](https://github.com/simsong/bulk_extractor) and supports following scanner: 
 
