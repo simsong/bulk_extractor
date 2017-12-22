@@ -1,0 +1,24 @@
+*.swp
+*.swo
+# http://www.gnu.org/software/automake
+*~
+*.o
+*.so
+
+Makefile.in
+
+# http://www.gnu.org/software/autoconf
+
+/autom4te.cache
+/aclocal.m4
+/compile
+/configure
+/depcomp
+/install-sh
+/missing
+.deps
+.dirstamp
+_deps
+a.out
+*.sql3
+stand

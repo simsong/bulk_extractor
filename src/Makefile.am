@@ -63,6 +63,11 @@ bulk_scanners = \
 	scan_json.cpp \
 	scan_kml.cpp \
 	scan_net.cpp \
+	scan_ntfsindx.cpp \
+	scan_ntfslogfile.cpp \
+	scan_ntfsmft.cpp \
+	scan_ntfsusn.cpp \
+	scan_utmp.cpp \
 	scan_outlook.cpp \
 	scan_facebook.cpp \
 	scan_pdf.cpp \

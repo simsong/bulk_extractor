@@ -64,7 +64,6 @@ src/TAGS
 src/tags
 TAGS
 tags
-core.*
 plugins/plugin_test
 specfiles/bulk_extractor.fedora.spec
 specfiles/bulk_extractor.opensuse.spec
