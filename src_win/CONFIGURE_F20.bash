@@ -45,12 +45,11 @@ done
 
 MPKGS="autoconf automake flex gcc gcc-c++ git libtool "
 MPKGS+="md5deep osslsigncode patch wine wget bison zlib-devel "
-MPKGS+="libewf libewf-devel java-1.7.0-openjdk-devel "
+MPKGS+="libewf libewf-devel java-1.8.0-openjdk-devel "
 MPKGS+="libxml2-devel libxml2-static openssl-devel "
 MPKGS+="expat-devel "
 MPKGS+="mingw64-gcc mingw64-gcc-c++ "
 MPKGS+="mingw32-nsis "
-MPKGS+="java-1.8.0-openjdk-devel "
 
 if [ ! -r /etc/redhat-release ]; then
   echo This requires Fedora Linux
@@ -66,7 +65,7 @@ fi
 
 echo Will now try to install 
 
-sudo yum install -y $MPKGS
+sudo yum install -y $MPKGS --skip-broken
 if [ $? != 0 ]; then
   echo "Could not install some of the packages. Will not proceed."
   exit 1
@@ -138,7 +137,7 @@ function build_mingw {
 }
 
 build_mingw libtre   http://laurikari.net/tre/tre-0.8.0.tar.gz   tre-0.8.0.tar.gz
-build_mingw libewf   https://googledrive.com/host/0B3fBvzttpiiSMTdoaVExWWNsRjg/libewf-20140406.tar.gz   libewf-20140406.tar.gz
+build_mingw libewf   https://github.com/libyal/legacy/raw/master/libewf/libewf-20140608.tar.gz libewf-20140608.tar.gz
 
 #
 # ICU requires patching and a special build sequence
