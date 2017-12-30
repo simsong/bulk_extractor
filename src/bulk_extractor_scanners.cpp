@@ -71,6 +71,7 @@ scanner_t *scanners_builtin[] = {
     scan_rar,
 #endif
     scan_gzip,
+    scan_ntfsusn,
     scan_outlook,
     scan_pdf,
     scan_msxml,
