@@ -102,15 +102,27 @@ void scan_ntfsusn(const class scanner_params &sp,const recursion_control_block &
                 offset += 8; // because of USN_RECORD stored at 8 byte boundary
                 continue;
             }
+            if (record_size % 8 != 0) { // illegal size
+                uint8_t padding;
+                padding = 8 - (record_size % 8);
+                ntfsusn_recorder->carve_records(sbuf,offset,record_size+padding,"UsnJrnl-J_corrupted");
+                offset += record_size+padding;
+                continue;
+            }
             total_record_size = record_size;
             if (offset+total_record_size > stop) {
-                ntfsusn_recorder->carve_records(sbuf,offset,total_record_size,"UsnJrnl-J");
+                if(offset+total_record_size < sbuf.bufsize)
+                    ntfsusn_recorder->carve_records(sbuf,offset,total_record_size,"UsnJrnl-J");
+                else
+                    ntfsusn_recorder->carve_records(sbuf,offset,total_record_size,"UsnJrnl-J_corrupted");
                 break;
             }
             // found one record then also checks following valid records and writes all at once 
             while (true) {
                 record_size = check_usnrecordv2_or_v4_signature(offset+total_record_size,sbuf);
-                if (record_size != 0) {
+                if (record_size % 8 != 0) // illegal size and stop process
+		            break;
+                if (record_size > 0) {
                     if (offset+total_record_size+record_size < stop) {
                         total_record_size += record_size;
                     }
@@ -122,9 +134,9 @@ void scan_ntfsusn(const class scanner_params &sp,const recursion_control_block &
                 else { // consider padding area around sector boundary
                     if ((offset+total_record_size) % SECTOR_SIZE != 0) {
                         size_t next_boundary_offset;
-                        next_boundary_offset = offset + total_record_size + SECTOR_SIZE - (total_record_size % SECTOR_SIZE);
+                        next_boundary_offset = offset + total_record_size + SECTOR_SIZE - ((offset+total_record_size) % SECTOR_SIZE);
                         record_size = check_usnrecordv2_or_v4_signature(next_boundary_offset,sbuf);
-                        if (record_size != 0) {
+                        if (record_size > 0 && record_size % 8 == 0 && offset+total_record_size+record_size < stop ) {
                             total_record_size = next_boundary_offset - offset;
                             continue;
                         }

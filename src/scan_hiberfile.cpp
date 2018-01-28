@@ -70,7 +70,9 @@ void scan_hiberfile(const class scanner_params &sp,const recursion_control_block
 	    if(cc[0]==0x81 && cc[1]==0x81 && cc[2]==0x78 && cc[3]==0x70 &&
 	       cc[4]==0x72 && cc[5]==0x65 && cc[6]==0x73 && cc[7]==0x73){
 
-		u_int compressed_length = (((cc[9]<<8) + (cc[10] << 16) + (cc[11]<<24)) >> 10) + 1;
+        //u_int compressed_length = (((cc[9]<<8) + (cc[10] << 16) + (cc[11]<<24)) >> 10) + 1;
+        u_int compressed_length = ((cc[8] + (cc[9]<<8) + (cc[10] << 16) + (cc[11]<<24)) >> 10) + 1; // ref: Hibr2bin/MemoryBlocks.cpp
+        compressed_length = (compressed_length + 7) & ~7; // ref: Hibr2bin/MemoryBlocks.cpp    
 		const u_char *compressed_buf = cc+32;		 // "the header contains 32 bytes"
 		u_int  remaining_size = sbuf.bufsize - (compressed_buf-sbuf.buf); // up to the end of the buffer
 		size_t compr_size = compressed_length < remaining_size ? compressed_length : remaining_size;
