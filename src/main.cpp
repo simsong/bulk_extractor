@@ -845,7 +845,7 @@ int main(int argc,char **argv)
 #endif
             opt_sampling_params = optarg;
             break;
-	case 'V': std::cout << "bulk_extractor " << PACKAGE_VERSION << "\n"; exit (1);
+	case 'V': std::cout << "bulk_extractor " << PACKAGE_VERSION << "\n"; exit (0);
 	case 'W':
             fprintf(stderr,"-W has been deprecated. Specify with -S word_min=NN and -S word_max=NN\n");
             exit(1);
