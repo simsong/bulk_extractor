@@ -12,9 +12,10 @@
 #pragma GCC diagnostic ignored "-Weffc++"
 #endif
 
-#ifdef HAVE_DIAGNOSTIC_DEPRECATED_REGISTER
-#pragma GCC diagnostic ignored "-Wdeprecated-register"
-#endif
+//2018-03-03: slg - this doesn't seem to be an issue anymore
+//#ifdef HAVE_DIAGNOSTIC_DEPRECATED_REGISTER
+//#pragma GCC diagnostic ignored "-Wdeprecated-register"
+//#endif
 
 #define YY_NO_INPUT
 

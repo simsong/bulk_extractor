@@ -366,7 +366,7 @@ if test x"$libewf" == x"yes" ; then
 		[libewf=no])],
 	[AC_MSG_WARN([libewf.h not found; no E01 support])]
 	[libewf=no])
-  AC_CHECK_FUNCS([libewf_handle_get_utf8_header_value_notes libewf_error_backtrace_fprint])
+  AC_CHECK_FUNCS([libewf_handle_get_utf8_header_value_notes libewf_error_backtrace_fprint libewf_handle_close libewf_handle_free libewf_handle_read_buffer_at_offset libewf_handle_read_random])
 fi
 AC_MSG_NOTICE([libewf is now $libewf])
 

@@ -323,7 +323,7 @@ process_aff::~process_aff()
 
 process_ewf::~process_ewf()
 {
-#ifdef LIBEWFNG
+#ifdef HAVE_LIBEWF_HANDLE_CLOSE
     if(handle){
 	libewf_handle_close(handle,NULL);
 	libewf_handle_free(&handle,NULL);
@@ -413,7 +413,7 @@ int process_ewf::open()
     char **libewf_filenames = NULL;
     int amount_of_filenames = 0;
 
-#ifdef LIBEWFNG
+#ifdef HAVE_LIBEWF_HANDLE_CLOSE
     bool use_libewf_glob = true;
     libewf_error_t *error=0;
     if(image_fname().find(".E01.")!=std::string::npos){
@@ -505,9 +505,14 @@ std::vector<std::string> process_ewf::getewfdetails() const{
 //int process_ewf::debug = 0;
 int process_ewf::pread(unsigned char *buf,size_t bytes,int64_t offset) const
 {
-#ifdef LIBEWFNG
+#ifdef HAVE_LIBEWF_HANDLE_CLOSE
     libewf_error_t *error=0;
+#if defined(HAVE_LIBEWF_HANDLE_READ_RANDOM)
     int ret = libewf_handle_read_random(handle,buf,bytes,offset,&error);
+#endif
+#if defined(HAVE_LIBEWF_HANDLE_READ_BUFFER_AT_OFFSET) && !defined(HAVE_LIBEWF_HANDLE_READ_RANDOM)
+    int ret = libewf_handle_read_buffer_at_offset(handle,buf,bytes,offset,&error);
+#endif
     if(ret<0){
 	if (report_read_errors) libewf_error_fprint(error,stderr);
 	libewf_error_free(&error);
