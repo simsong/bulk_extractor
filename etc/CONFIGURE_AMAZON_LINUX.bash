@@ -66,9 +66,10 @@ echo
 echo "Now installing libewf"
 wget https://github.com/libyal/libewf/releases/download/20171104/libewf-experimental-20171104.tar.gz
 tar xfvz $LIBEWF_FNAME
-cd $LIBEWF_DIR
+pushd $LIBEWF_DIR
 ./configure && make
 sudo make install
+popd
 
 # Make sure that /usr/local/lib is in ldconfig
 sudo /bin/rm -f /tmp/local.conf
