@@ -1,4 +1,5 @@
 #!/bin/bash
+LIBEWF_URL=https://github.com/libyal/libewf/releases/download/20171104/libewf-experimental-20171104.tar.gz
 cat <<EOF
 *******************************************************************
         Configuring Amazon Linux for compiling bulk_extractor
@@ -58,6 +59,22 @@ echo
 echo "Now performing a yum update to update system packages"
 sudo yum -y update
 
+
+LIBEWF_FNAME=`echo $LIBEWF_URL| sed s:.*/::`
+LIBEWF_DIR=`echo $LIBEWF_FNAME | sed s/-experimental// | sed s/.tar.gz//`
+echo 
+echo "Now installing libewf"
+wget https://github.com/libyal/libewf/releases/download/20171104/libewf-experimental-20171104.tar.gz
+tar xfvz $LIBEWF_FNAME
+cd $LIBEWF_DIR
+./configure && make
+sudo make install
+
+# Make sure that /usr/local/lib is in ldconfig
+sudo /bin/rm -f /tmp/local.conf
+echo /usr/local/lib > /tmp/local.conf
+sudo mv /tmp/local.conf /etc/ld.so.conf.d/local.conf
+sudo ldconfig
 
 #
 #
