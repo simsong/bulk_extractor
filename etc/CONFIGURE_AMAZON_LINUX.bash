@@ -34,7 +34,7 @@ MPKGS="autoconf automake flex gcc gcc-c++ git libtool "
 MPKGS+="md5deep wget bison zlib-devel "
 MPKGS+="libewf libewf-devel java-1.8.0-openjdk-devel "
 MPKGS+="libxml2-devel libxml2-static openssl-devel "
-MPKGS+="expat-devel "
+MPKGS+="sqlite-devel expat-devel "
 
 if [ ! -r /etc/os-release ]; then
   echo This requires Amazon Linux
