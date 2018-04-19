@@ -1,3 +1,7 @@
+Wordlist:
+ - new options to make it a plain wordlist, with no other information in the file.
+
+
 approach for histogram transformation:
 
 - Each feature recorder keeps track of the histogram defs.
