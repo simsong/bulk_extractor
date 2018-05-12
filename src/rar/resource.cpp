@@ -10,6 +10,7 @@ const char *St(MSGID StringId)
 #endif
 
 
+#if 0
 #ifndef RARDLL
 const wchar *StW(MSGID StringId)
 {
@@ -22,6 +23,7 @@ const wchar *StW(MSGID StringId)
   CharToWide(StringId,Str,ASIZE(StrTable[0]));
   return(Str);
 }
+#endif
 #endif
 
 

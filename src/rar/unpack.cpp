@@ -1015,7 +1015,8 @@ void Unpack::MakeDecodeTables(byte *LengthTable,DecodeTable *Dec,uint Size)
   
     // Find the upper limit for current bit field and adjust the bit length
     // accordingly if necessary.
-    while (BitField>=Dec->DecodeLen[CurBitLength] && CurBitLength<ASIZE(Dec->DecodeLen))
+    // SLG added: && CurBitLength < 16
+    while (CurBitLength < 16 && BitField>=Dec->DecodeLen[CurBitLength] && CurBitLength<ASIZE(Dec->DecodeLen))
       CurBitLength++;
 
     // Translation of right aligned bit string to bit length.

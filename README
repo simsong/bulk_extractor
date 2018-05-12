@@ -3,6 +3,9 @@ Welcome to bulk_extractor!
 To build bulk_extractor in Linux or OS X,
 
 1. Make sure required packages have been installed.
+   ** You can do this by going into the etc/ directory and looking for a script that 
+   ** installs the necessary packages for your platform.
+
 2. Then run these commands:
    ./configure
    make
