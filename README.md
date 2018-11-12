@@ -19,6 +19,11 @@ http://digitalcorpora.org/downloads/bulk_extractor
 
 For more information on bulk_extractor, visit: http://www.forensicswiki.org/wiki/Bulk_extractor
 
+RECOMMENDED CITATION
+====================
+If you are writing a scientific paper and using bulk_extractor, please cite it with:
+
+* Garfinkel, Simson, Digital media triage with bulk data analysis and bulk_extractor. Computers and Security 32: 56-72 (2013)  https://simson.net/clips/academic/2013.COSE.bulk_extractor.pdf
 
 
 
