@@ -403,6 +403,9 @@ if test x"$hashdb" == x"yes" ; then
 fi
 if test x"$hashdb" == xyes ; then
   AC_DEFINE(HAVE_HASHDB,1,[define 1 to build the hashdb scanner])
+  if [[ $(hashdb -v | cut -d' ' -f2) == "3.1.0" ]]; then
+    AC_DEFINE(HAVE_HASHDB_3_1,1,[using hashdb-3.1.0 version])
+  fi
 else
   AC_MSG_NOTICE([the hashdb scanner will not be built])
 fi
