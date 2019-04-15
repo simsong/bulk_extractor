@@ -351,14 +351,14 @@ CT[.](Send|Receive)[.]CMD_([A-Z0-9_]{4,25})[ ]From=([0-9]{2,12}+)(([ ]To=([0-9]{
     s.pos += yyleng;
 }
 
-sin:?[ \t]*[0-9][0-9][0-9][ -]?[0-9][0-9][0-9][ -]?[0-9][0-9][0-9] {
+sin:?[ \t]*[0-9][0-9][0-9][ -]?[0-9][0-9][0-9][ -]?[0-9][0-9][0-9]/{END} {
     /* Canadian SIN with prefix, optional dashes or spaces */
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
     s.sin_recorder->write_buf(SBUF,s.pos,yyleng);
     s.pos += yyleng;
 }
 
-[^0-9][0-9][0-9]-[0-9][0-9][0-9]-[0-9][0-9][0-9] {
+[^0-9][0-9][0-9]-[0-9][0-9][0-9]-[0-9][0-9][0-9]/{END} {
     /* Canadian SIN without prefix, dashes required */
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
     s.sin_recorder->write_buf(SBUF,s.pos+1,yyleng-1);
