@@ -25,13 +25,15 @@ public:
 	  sbuf_scanner(&sp.sbuf),
 	  ccn_recorder(sp.fs.get_name("ccn")),
           pii_recorder(sp.fs.get_name("pii")),
+          sin_recorder(sp.fs.get_name("sin")),
           ccn_track2(sp.fs.get_name("ccn_track2")),
           telephone_recorder(sp.fs.get_name("telephone")),
           alert_recorder(sp.fs.get_alert_recorder()){
 	}
 
 	class feature_recorder *ccn_recorder;
-        class feature_recorder *pii_recorder;
+    class feature_recorder *pii_recorder;
+    class feature_recorder *sin_recorder;
 	class feature_recorder *ccn_track2;
 	class feature_recorder *telephone_recorder;
 	class feature_recorder *alert_recorder;
@@ -347,7 +349,21 @@ CT[.](Send|Receive)[.]CMD_([A-Z0-9_]{4,25})[ ]From=([0-9]{2,12}+)(([ ]To=([0-9]{
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
     s.pii_recorder->write_buf(SBUF,s.pos,yyleng);
     s.pos += yyleng;
-}    
+}
+
+sin:?[ \t]*[0-9][0-9][0-9][ -]?[0-9][0-9][0-9][ -]?[0-9][0-9][0-9]/{END} {
+    /* Canadian SIN with prefix, optional dashes or spaces */
+    accts_scanner &s = *yyaccts_get_extra(yyscanner);
+    s.sin_recorder->write_buf(SBUF,s.pos,yyleng);
+    s.pos += yyleng;
+}
+
+[^0-9][0-9][0-9]-[0-9][0-9][0-9]-[0-9][0-9][0-9]/{END} {
+    /* Canadian SIN without prefix, dashes required */
+    accts_scanner &s = *yyaccts_get_extra(yyscanner);
+    s.sin_recorder->write_buf(SBUF,s.pos+1,yyleng-1);
+    s.pos += yyleng;
+} 
 
 .|\n { 
      /**
@@ -368,11 +384,12 @@ void scan_accts(const class scanner_params &sp,const recursion_control_block &rc
     if(sp.phase==scanner_params::PHASE_STARTUP){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	sp.info->name  = "accts";
-	sp.info->author		= "Simson L. Garfinkel";
-	sp.info->description	= "scans for CCNs, track 2, and phone #s";
+	sp.info->author		= "Simson L. Garfinkel, modified by Tim Walsh";
+	sp.info->description	= "scans for CCNs, track 2, PII (including SSN and Canadian SIN), and phone #s";
 	sp.info->scanner_version= "1.0";
         sp.info->feature_names.insert("ccn");
         sp.info->feature_names.insert("pii");  // personally identifiable information
+        sp.info->feature_names.insert("sin");
         sp.info->feature_names.insert("ccn_track2");
         sp.info->feature_names.insert("telephone");
 	sp.info->histogram_defs.insert(histogram_def("ccn","","histogram"));
