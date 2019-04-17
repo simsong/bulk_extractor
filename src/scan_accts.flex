@@ -358,7 +358,7 @@ sin:?[ \t]*[0-9][0-9][0-9][ -]?[0-9][0-9][0-9][ -]?[0-9][0-9][0-9]/{END} {
     s.pos += yyleng;
 }
 
-[^0-9][0-9][0-9]-[0-9][0-9][0-9]-[0-9][0-9][0-9]/{END} {
+[^0-9][0-9][0-9][0-9]-[0-9][0-9][0-9]-[0-9][0-9][0-9]/{END} {
     /* Canadian SIN without prefix, dashes required */
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
     s.sin_recorder->write_buf(SBUF,s.pos+1,yyleng-1);
