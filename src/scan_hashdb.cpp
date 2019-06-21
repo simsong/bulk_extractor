@@ -43,7 +43,9 @@
 
 // user settings
 static std::string hashdb_mode="none";                                 // import or scan
+#ifndef HAVE_HASHDB_3_1
 static uint32_t hashdb_byte_alignment=512;                             // import only
+#endif
 static uint32_t hashdb_block_size=512;                                 // import or scan
 static uint32_t hashdb_step_size=512;                                  // import or scan
 static std::string hashdb_scan_path="your_hashdb_directory";           // scan only
@@ -198,6 +200,7 @@ void scan_hashdb(const class scanner_params &sp,
                 << "        scan    - Scan for matching block hashes.";
             sp.info->get_config("hashdb_mode", &hashdb_mode, ss_hashdb_mode.str());
 
+#ifndef HAVE_HASHDB_3_1
             // hashdb_byte_alignment
             std::stringstream ss_hashdb_byte_alignment;
             ss_hashdb_byte_alignment
@@ -205,6 +208,7 @@ void scan_hashdb(const class scanner_params &sp,
                 << "      database.";
             sp.info->get_config("hashdb_byte_alignment", &hashdb_byte_alignment,
                                 ss_hashdb_byte_alignment.str());
+#endif
 
             // hashdb_block_size
             sp.info->get_config("hashdb_block_size", &hashdb_block_size,
@@ -276,6 +280,7 @@ void scan_hashdb(const class scanner_params &sp,
                 exit(1);
             }
 
+#ifndef HAVE_HASHDB_3_1
             // hashdb_byte_alignment
             if (hashdb_byte_alignment == 0) {
                 std::cerr << "Error.  Value for parameter 'hashdb_byte_alignment' is invalid.\n"
@@ -289,6 +294,7 @@ void scan_hashdb(const class scanner_params &sp,
                           << "Cannot continue.\n";
                 exit(1);
             }
+#endif
 
             // hashdb_step_size
             if (hashdb_step_size == 0) {
@@ -297,6 +303,7 @@ void scan_hashdb(const class scanner_params &sp,
                 exit(1);
             }
 
+#ifndef HAVE_HASHDB_3_1
             // for valid operation, scan sectors must align on byte aligned boundaries
             if (hashdb_step_size % hashdb_byte_alignment != 0) {
                 std::cerr << "Error: invalid byte alignment=" << hashdb_byte_alignment
@@ -306,6 +313,7 @@ void scan_hashdb(const class scanner_params &sp,
                           << "Cannot continue.\n";
                 exit(1);
             }
+#endif
 
             // indicate hashdb version
             std::cout << "hashdb: hashdb_version=" << hashdb_version() << "\n";
@@ -318,7 +326,9 @@ void scan_hashdb(const class scanner_params &sp,
 
                     // show relevant settable options
                     std::cout << "hashdb: hashdb_mode=" << hashdb_mode << "\n"
+#ifndef HAVE_HASHDB_3_1
                               << "hashdb: hashdb_byte_alignment= " << hashdb_byte_alignment << "\n"
+#endif
                               << "hashdb: hashdb_block_size=" << hashdb_block_size << "\n"
                               << "hashdb: hashdb_step_size= " << hashdb_step_size << "\n"
                               << "hashdb: hashdb_repository_name= " << hashdb_repository_name << "\n"
@@ -327,7 +337,9 @@ void scan_hashdb(const class scanner_params &sp,
                     // open hashdb for importing
                     // currently, hashdb_dir is required to not exist
                     hashdb::settings_t settings;
+#ifndef HAVE_HASHDB_3_1
                     settings.byte_alignment = hashdb_byte_alignment;
+#endif
                     settings.block_size = hashdb_block_size;
                     std::string error_message = hashdb::create_hashdb(hashdb_dir, settings, "");
                     if (error_message.size() != 0) {
@@ -472,8 +484,10 @@ static void do_import(const class scanner_params &sp,
         const md5_t hash = hash_one_block(sbuf_to_hash);
         const std::string binary_hash(reinterpret_cast<const char*>(hash.digest), 16);
 
+#ifndef HAVE_HASHDB_3_1
         // calculate the offset from the start of the media image
         const uint64_t image_offset = sbuf_to_hash.pos0.offset;
+#endif
 
         // put together any block classification labels
         // set flags based on specific tests on the block
@@ -498,8 +512,12 @@ static void do_import(const class scanner_params &sp,
         import_manager->insert_hash(binary_hash,
                                     0,    // entropy
                                     ss_flags.str(),
+#ifndef HAVE_HASHDB_3_1
                                     file_binary_hash,
                                     image_offset);
+#else
+                                    file_binary_hash);
+#endif
     }
 
     // insert the source name pair

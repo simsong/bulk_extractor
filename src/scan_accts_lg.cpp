@@ -143,7 +143,7 @@ namespace accts {
 
   class Scanner: public PatternScanner {
   public:
-    Scanner(): PatternScanner("accts_lg"), CCN_Recorder(0), CCN_Track2_Recorder(0), Telephone_Recorder(0), Alert_Recorder(0), PII_Recorder(0) {}
+    Scanner(): PatternScanner("accts_lg"), CCN_Recorder(0), CCN_Track2_Recorder(0), Telephone_Recorder(0), Alert_Recorder(0), PII_Recorder(0), SIN_Recorder(0) {}
     virtual ~Scanner() {}
 
     virtual Scanner* clone() const { return new Scanner(*this); }
@@ -157,6 +157,7 @@ namespace accts {
     feature_recorder* Telephone_Recorder;
     feature_recorder* Alert_Recorder;
     feature_recorder* PII_Recorder;
+    feature_recorder* SIN_Recorder;
 
     void ccnHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
 
@@ -186,6 +187,14 @@ namespace accts {
 
     void piiUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
 
+    void sinHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+
+    void sinUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+
+    void sinHitHandler2(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+
+    void sinUTF16LEHitHandler2(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+
     void dateHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
 
   private:
@@ -195,7 +204,8 @@ namespace accts {
       CCN_Track2_Recorder(s.CCN_Track2_Recorder),
       Telephone_Recorder(s.Telephone_Recorder),
       Alert_Recorder(s.Alert_Recorder),
-      PII_Recorder(s.PII_Recorder)
+      PII_Recorder(s.PII_Recorder),
+      SIN_Recorder(s.SIN_Recorder)
     {}
 
     Scanner& operator=(const Scanner&);
@@ -206,13 +216,14 @@ namespace accts {
     assert(sp.info->si_version == scanner_info::CURRENT_SI_VERSION);
 
     sp.info->name            = "accts_lg";
-    sp.info->author          = "Simson L. Garfinkel";
-    sp.info->description     = "scans for CCNs, track 2, and phone #s";
+    sp.info->author          = "Simson L. Garfinkel, modified by Tim Walsh";
+    sp.info->description     = "scans for CCNs, track 2, PII (including SSN and Canadian SIN), and phone #s";
     sp.info->scanner_version = "1.0";
 
     // define the feature files this scanner creates
     sp.info->feature_names.insert("ccn");
     sp.info->feature_names.insert("pii");  // personally identifiable information
+    sp.info->feature_names.insert("sin");  // canadian social insurance number
     sp.info->feature_names.insert("ccn_track2");
     sp.info->feature_names.insert("telephone");
     sp.info->histogram_defs.insert(histogram_def("ccn", "", "histogram"));
@@ -519,6 +530,43 @@ namespace accts {
       &Scanner::dateHitHandler
     );
 
+    // FIXME: trailing context
+    const string REGEX15("sin:?[ \\t]+[0-9]{3}[ -]?[0-9]{3}[ -]?[0-9]{3}" + END);
+
+    new Handler(
+      *this,
+      REGEX15,
+      OnlyUTF8Encoding,
+      DefaultOptions,
+      &Scanner::sinHitHandler
+    );
+
+    new Handler(
+      *this,
+      REGEX15,
+      OnlyUTF16LEEncoding,
+      DefaultOptions,
+      &Scanner::sinUTF16LEHitHandler
+    );
+
+    const string REGEX16("[^0-9][0-9]{3}-[0-9]{3}-[0-9]{3}" + END);
+
+    new Handler(
+      *this,
+      REGEX16,
+      OnlyUTF8Encoding,
+      DefaultOptions,
+      &Scanner::sinHitHandler2
+    );
+
+    new Handler(
+      *this,
+      REGEX16,
+      OnlyUTF16LEEncoding,
+      DefaultOptions,
+      &Scanner::sinUTF16LEHitHandler2
+    );
+
     // FIXME: leading context
     // FIXME: trailing context
     /* Possible BitLocker Recovery Key. */
@@ -549,6 +597,7 @@ namespace accts {
     Telephone_Recorder = sp.fs.get_name("telephone");
     Alert_Recorder = sp.fs.get_alert_recorder();
     PII_Recorder = sp.fs.get_name("pii");
+    SIN_Recorder = sp.fs.get_name("sin");
   }
 
   void Scanner::ccnHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
@@ -654,6 +703,34 @@ namespace accts {
   void Scanner::piiUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
     PII_Recorder->write_buf(
       sp.sbuf, hit.Start,
+      hit.End - (*(sp.sbuf.buf+hit.End-3) == '.' ? 3 : 1) - hit.Start
+    );
+  }
+
+  void Scanner::sinHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+    SIN_Recorder->write_buf(
+      sp.sbuf, hit.Start,
+      hit.End - (*(sp.sbuf.buf+hit.End-2) == '.' ? 2 : 1) - hit.Start
+    );
+  }
+
+  void Scanner::sinUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+    SIN_Recorder->write_buf(
+      sp.sbuf, hit.Start,
+      hit.End - (*(sp.sbuf.buf+hit.End-3) == '.' ? 3 : 1) - hit.Start
+    );
+  }
+
+  void Scanner::sinHitHandler2(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+    SIN_Recorder->write_buf(
+      sp.sbuf, hit.Start+1,
+      hit.End - (*(sp.sbuf.buf+hit.End-2) == '.' ? 2 : 1) - hit.Start
+    );
+  }
+
+  void Scanner::sinUTF16LEHitHandler2(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+    SIN_Recorder->write_buf(
+      sp.sbuf, hit.Start+1,
       hit.End - (*(sp.sbuf.buf+hit.End-3) == '.' ? 3 : 1) - hit.Start
     );
   }
