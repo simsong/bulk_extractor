@@ -214,7 +214,7 @@ void scan_wordlist(const class scanner_params &sp,const recursion_control_block 
 	 */
     
 	int wordstart = -1;			// >=0 means we are in a word
-	for(u_int i=0; i<sbuf.pagesize; i++){
+	for(u_int i=0; i<=sbuf.pagesize; i++){
 
 	    /* case 1 - we are not in a word & this character starts a word. */
 	    bool iswordchar = wordchar[sbuf.buf[i]];
@@ -223,7 +223,7 @@ void scan_wordlist(const class scanner_params &sp,const recursion_control_block 
 		continue;
 	    }
             /* case 2 - we are in a word & this character ends a word. */
-	    if(wordstart>=0 && (!iswordchar || i==sbuf.pagesize-1)){
+	    if(wordstart>=0 && (!iswordchar || i==sbuf.pagesize)){
 		uint32_t len = i-wordstart;
 		if((word_min <= len) && (len <=  word_max)){
 
