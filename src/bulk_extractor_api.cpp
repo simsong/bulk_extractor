@@ -255,7 +255,7 @@ extern "C"
 int bulk_extractor_analyze_buf(BEFILE *bef,uint8_t *buf,size_t buflen)
 {
     pos0_t pos0("");
-    const sbuf_t sbuf(pos0,buf,buflen,buflen,false);
+    const sbuf_t sbuf(pos0,buf,buflen,buflen,0,false);
     be13::plugin::process_sbuf(scanner_params(scanner_params::PHASE_SCAN,sbuf,bef->cfs));
     return 0;
 }

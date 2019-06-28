@@ -208,9 +208,9 @@ image_process::iterator process_aff::begin() const
 image_process::iterator process_aff::end() const
 {
     image_process::iterator it(this);
-    it.page_counter = pagelist.size();
-    it.raw_offset = af_get_imagesize(af);
-    it.eof = true;
+    it.page_number_ = pagelist.size();
+    it.raw_offset    = af_get_imagesize(af);
+    it.eof           = true;
     return it;
 }
 
@@ -232,9 +232,9 @@ __END_DECLS
  */
 void process_aff::increment_iterator(class image_process::iterator &it) const
 {
-    if(it.page_counter < pagelist.size()){
-	it.page_counter++;
-	it.raw_offset = pagelist[it.page_counter] * af_get_pagesize(af);
+    if(it.page_number < pagelist.size()){
+	it.page_number++;
+	it.raw_offset = pagelist[it.page_number] * af_get_pagesize(af);
     } else {
 	it.eof = true;
     }
@@ -242,7 +242,7 @@ void process_aff::increment_iterator(class image_process::iterator &it) const
 
 pos0_t process_aff::get_pos0(const image_process::iterator &it) const
 {
-    int64_t pagenum = pagelist[it.page_counter];
+    int64_t pagenum = pagelist[it.page_number];
     return pos0_t("",pagenum * af_get_pagesize(af));
 }
 
@@ -264,7 +264,7 @@ sbuf_t *process_aff::sbuf_alloc(image_process::iterator &it) const
     if(bytes_read>=0){
 	ssize_t af_pagesize = af_get_pagesize(af);
 	if(af_pagesize>bytes_read) af_pagesize = bytes_read;
-	sbuf_t *sbuf = new sbuf_t(pos0,buf,bytes_read,af_pagesize,true);
+	sbuf_t *sbuf = new sbuf_t(pos0,buf,bytes_read,af_pagesize,it.page_number,true);
 	return sbuf;
     }
     free(buf);
@@ -273,13 +273,13 @@ sbuf_t *process_aff::sbuf_alloc(image_process::iterator &it) const
 
 double process_aff::fraction_done(const image_process::iterator &it) const
 {
-    return (double)it.page_counter / (double)pagelist.size();
+    return (double)it.page_number / (double)pagelist.size();
 }
 
 std::string process_aff::str(const image_process::iterator &it) const
 {
     char buf[64];
-    snprintf(buf,sizeof(buf),"Page %" PRId64 "",it.page_counter);
+    snprintf(buf,sizeof(buf),"Page %" PRId64 "",it.page_number);
     return std::string(buf);
 }
 
@@ -290,7 +290,7 @@ uint64_t process_aff::max_blocks(const image_process::iterator &it) const
 
 uint64_t process_aff::seek_block(image_process::iterator &it,uint64_t block) const
 {
-    it.page_counter = block;
+    it.page_number = block;
     return block;
 }
 
@@ -577,7 +577,7 @@ sbuf_t *process_ewf::sbuf_alloc(image_process::iterator &it) const
 	return 0;
     }
 
-    sbuf_t *sbuf = new sbuf_t(get_pos0(it),buf,count,pagesize,true);
+    sbuf_t *sbuf = new sbuf_t(get_pos0(it),buf,count,pagesize,it.page_number,true);
     return sbuf;
 }
 
@@ -910,7 +910,7 @@ sbuf_t *process_raw::sbuf_alloc(image_process::iterator &it) const
 	free(buf);
 	throw read_error();
     }
-    sbuf_t *sbuf = new sbuf_t(get_pos0(it),buf,count,pagesize,true);
+    sbuf_t *sbuf = new sbuf_t(get_pos0(it),buf,count,pagesize,it.page_number,true);
     return sbuf;
 }
 

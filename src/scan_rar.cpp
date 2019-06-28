@@ -671,7 +671,7 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
                     /* Create a child sbuf with the updated pos0 for recursive processing */
                     const pos0_t pos0_rar = (pos0 + pos) + rcb.partName;
                     {
-                        const sbuf_t child_sbuf(pos0_rar, dbuf.buf, component.uncompressed_size, component.uncompressed_size, false);
+                        const sbuf_t child_sbuf(pos0_rar, dbuf.buf, component.uncompressed_size, component.uncompressed_size, 0, false);
                         scanner_params child_params(sp, child_sbuf);
                         (*rcb.callback)(child_params);
 

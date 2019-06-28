@@ -90,7 +90,7 @@ void scan_hiberfile(const class scanner_params &sp,const recursion_control_block
 		if(decompress_size>0){
 		    const ssize_t pos = cc-sbuf.buf;
 		    const pos0_t pos0_hiber = (pos0 + pos) + rcb.partName;
-		    const sbuf_t sbuf_new(pos0_hiber,decomp.buf,decompress_size,decompress_size,false);
+		    const sbuf_t sbuf_new(pos0_hiber,decomp.buf,decompress_size,decompress_size,0,false);
 
                     /* sbuf_new is an sbuf that may extend over multiple pages.
                      * Unfortunately the pages are not logically connected, because they are physical memory, and it is

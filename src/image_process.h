@@ -96,17 +96,17 @@ public:
     class iterator {
     public:
 	int64_t  raw_offset;		
-	uint64_t page_counter;
+	uint64_t page_number;
 	size_t   file_number;
 	const class image_process &myimage;
 	bool     eof;
 	iterator(const class image_process *myimage_):
-            raw_offset(0),page_counter(0),file_number(0),myimage(*myimage_),eof(false){
+            raw_offset(0),page_number(0),file_number(0),myimage(*myimage_),eof(false){
 	}
 	bool operator !=(const iterator &it) const{
 	    if(this->eof && it.eof) return false; /* both in EOF states, so they are equal */
 	    if(this->raw_offset!=it.raw_offset
-	       || this->page_counter!=it.page_counter
+	       || this->page_number!=it.page_number
 	       || this->file_number!=it.file_number
 	       ) return true;
 	    return false;
@@ -115,7 +115,7 @@ public:
             return !((*this) != it);
         }
 	pos0_t get_pos0() const { return myimage.get_pos0(*this); }			   // returns the current pos0
-	sbuf_t *sbuf_alloc() { return myimage.sbuf_alloc(*this); }   // allocates an sbuf at pos0
+	sbuf_t *sbuf_alloc()    { return myimage.sbuf_alloc(*this); }   // allocates an sbuf at pos0
 	double fraction_done() const { return myimage.fraction_done(*this); }
         std::string str() const { return myimage.str(*this); }
 	uint64_t max_blocks() const { return myimage.max_blocks(*this);}

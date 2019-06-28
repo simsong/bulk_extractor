@@ -1,7 +1,7 @@
 /**
  * scan_pdf:
  * Extracts text from PDF files by decompressing streams and extracting text between parentheses.
- *  
+ * Currently this is dead-simple. It should be rewritten to position the text on an (x,y) grid and find the words. 
  */
 
 #include "config.h"
@@ -15,6 +15,10 @@
 #include <iomanip>
 #include <cassert>
 
+/* Debug by setting DEBUG or by setting pdf_dump at runtime */
+
+#define DEBUG
+
 #define ZLIB_CONST
 #ifdef HAVE_DIAGNOSTIC_UNDEF
 #  pragma GCC diagnostic ignored "-Wundef"
@@ -25,6 +29,7 @@
 #include <zlib.h>
 
 using namespace std;
+
 static bool pdf_dump = false;
 
 /*
@@ -63,10 +68,10 @@ static void pdf_extract_text(std::string &tbuf,const unsigned char *buf,size_t b
 {
     int maxwordsize = 0;
     bool words_have_spaces = false;
+    /* pass = 0 --- analysis. Find maxwordsize
+     * pass = 1 --- creation.
+     */
     for(int pass=0;pass<2;pass++){
-        /* pass = 0 --- analysis. Find maxwordsize
-         * pass = 1 --- creation.
-         */
         bool in_paren = false;
         int  wordsize = 0;
         for(const unsigned char *cc = buf;cc<buf+bufsize;cc++){
@@ -136,7 +141,7 @@ inline int analyze_stream(const class scanner_params &sp,const recursion_control
                     if(text.size()>0){
                         pos0_t pos0_pdf    = (sbuf.pos0 + stream_tag) + rcb.partName;
                         const  sbuf_t sbuf_new(pos0_pdf, reinterpret_cast<const uint8_t *>(&text[0]),
-                                               text.size(),text.size(),false);
+                                               text.size(),text.size(),0, false);
                         (*rcb.callback)(scanner_params(sp,sbuf_new));
                     }
                     if(pdf_dump) std::cout << "Extracted Text:\n" << text << "\n";
@@ -158,7 +163,7 @@ void scan_pdf(const class scanner_params &sp,const recursion_control_block &rcb)
     assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
     if(sp.phase==scanner_params::PHASE_STARTUP){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
-        sp.info->name  = "pdf";
+        sp.info->name           = "pdf";
         sp.info->author         = "Simson Garfinkel";
         sp.info->description    = "Extracts text from PDF files";
         sp.info->scanner_version= "1.0";
@@ -169,6 +174,9 @@ void scan_pdf(const class scanner_params &sp,const recursion_control_block &rcb)
     if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;
     if(sp.phase==scanner_params::PHASE_SCAN){
 
+#ifdef DEBUG
+        pdf_dump = true;
+#endif
 	const sbuf_t &sbuf = sp.sbuf;
 
 	/* Look for signature for the beginning of a PDF stream */

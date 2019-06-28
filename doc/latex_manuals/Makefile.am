@@ -1,4 +1,4 @@
-PDFS=BEUsersManual.pdf BEWorkedExamplesStandalone.pdf BETheoryOfOperation.pdf
+PDFS=BEUsersManual.pdf BEWorkedExamplesStandalone.pdf BETheoryOfOperation.pdf beviewer_old.pdf
 
 all:	
 	echo type \"make doc\" to create documentation

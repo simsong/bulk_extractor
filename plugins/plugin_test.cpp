@@ -114,7 +114,7 @@ int main(int argc,char **argv)
     feature_recorder_set fs(0,my_hasher,feature_recorder_set::NO_INPUT,feature_recorder_set::NO_OUTDIR);
     uint8_t buf[100];
     pos0_t p0("");
-    sbuf_t sbuf(p0,buf,sizeof(buf),sizeof(buf),false);
+    sbuf_t sbuf(p0, buf, sizeof(buf), sizeof(buf), 0, false);
     scanner_params sp(scanner_params::PHASE_STARTUP,sbuf,fs);
     recursion_control_block rcb(0,"STAND");
     scanner_info si;

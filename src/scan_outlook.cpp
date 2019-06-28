@@ -82,7 +82,7 @@ void scan_outlook(const class scanner_params &sp,const recursion_control_block &
         }
         
         const pos0_t pos0_oce = pos0 + "OUTLOOK";
-        const sbuf_t child_sbuf(pos0_oce, dbuf.buf, sbuf.bufsize, sbuf.pagesize, false);
+        const sbuf_t child_sbuf(pos0_oce, dbuf.buf, sbuf.bufsize, sbuf.pagesize, 0, false);
         scanner_params child_params(sp, child_sbuf);
         (*rcb.callback)(child_params);    // recurse on deobfuscated buffer
     }

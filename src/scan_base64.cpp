@@ -108,7 +108,7 @@ inline void process(const class scanner_params &sp,const recursion_control_block
         //fwrite(base64_target.buf,1,conv_len,stderr);
 
         const pos0_t pos0_base64 = (sbuf.pos0 + start) + rcb.partName;
-        const sbuf_t sbuf_base64(pos0_base64, base64_target.buf,conv_len,conv_len,false); // we will free
+        const sbuf_t sbuf_base64(pos0_base64, base64_target.buf,conv_len,conv_len, 0, false); // we will free
         (*rcb.callback)(scanner_params(sp,sbuf_base64));
     }
 }

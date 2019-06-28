@@ -96,7 +96,6 @@ void BulkExtractor_Phase1::run(image_process &p,feature_recorder_set &fs,
     
     tp = new threadpool(config.num_threads,fs,xreport);	
 
-    uint64_t page_ctr=0;
     xreport.push("runtime","xmlns:debug=\"http://www.github.com/simsong/bulk_extractor/issues\"");
 
     /* A single loop with two iterators.
@@ -136,13 +135,13 @@ void BulkExtractor_Phase1::run(image_process &p,feature_recorder_set &fs,
         if(config.opt_offset_end!=0 && config.opt_offset_end <= it.raw_offset ){
             break;                      // passed the offset
         }
-        if(config.opt_page_start<=page_ctr && config.opt_offset_start<=it.raw_offset){
+
+        if(config.opt_page_start<=it.page_number && config.opt_offset_start<=it.raw_offset){
             // Make sure we haven't done this page yet
             if(seen_page_ids.find(it.get_pos0().str()) == seen_page_ids.end()){
                 try {
                     sbuf_t *sbuf = get_sbuf(it);
                     if(sbuf==0) break;	// eof?
-                    sbuf->page_number = page_ctr;
                         
                     /* compute the md5 hash */
                     if(md5g){
@@ -185,7 +184,6 @@ void BulkExtractor_Phase1::run(image_process &p,feature_recorder_set &fs,
         } else {
             ++it;
         }
-        ++page_ctr;
     }
 	    
     if(!config.opt_quiet){

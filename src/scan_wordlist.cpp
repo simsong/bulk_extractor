@@ -13,7 +13,7 @@ static uint64_t max_word_outfile_size=100*1000*1000;
 /* Wordlist support for flat files */
 class WordlistSorter {
 public:
-    bool operator()(const std::string &a,const std::string &b) {
+    bool operator()(const std::string &a,const std::string &b) const {
 	if(a.size() < b.size()) return true;
 	if(a.size() > b.size()) return false;
 	return a<b;
@@ -72,7 +72,7 @@ static void wordlist_split_and_dedup(const std::string &ifn)
 
     while(!f2.eof()){
 	// set is the sorted list of words we have seen
-	std::set<std::string,WordlistSorter> seen;	
+	std::set<std::string, WordlistSorter> seen;	
 	while(!f2.eof()){
 	    /* Create the first file (of2==0) or roll-over if outfilesize>100M */
 	    std::string line;
@@ -213,19 +213,25 @@ void scan_wordlist(const class scanner_params &sp,const recursion_control_block 
 	 * case 2 - we are in a word & this character ends a word.
 	 */
     
-	int wordstart = -1;			// >=0 means we are in a word
-	for(u_int i=0; i<=sbuf.pagesize; i++){
+        bool  inword = false;
+	u_int wordstart = 0;		
+	for(u_int i = 0; i <= sbuf.pagesize; i++){
+
+            /* Find if the current character at sbuf.buf[i] is a word character, or if we ran off the end of a word */
+	    bool iswordchar = (i < sbuf.pagesize) ? wordchar[sbuf.buf[i]] : false; 
 
 	    /* case 1 - we are not in a word & this character starts a word. */
-	    bool iswordchar = wordchar[sbuf.buf[i]];
-	    if(wordstart<0 && iswordchar && i!=sbuf.pagesize-1){
+	    if (inword==false && iswordchar){
+                inword    = true;
 		wordstart = i;
 		continue;
 	    }
-            /* case 2 - we are in a word & this character ends a word. */
-	    if(wordstart>=0 && (!iswordchar || i==sbuf.pagesize)){
+            /* case 2 - we are in a word & this character ends a word. 
+                      - or we ran off the end of the sbuf (e.g. i==sbuf.pagesize)
+             */
+	    if (inword && !iswordchar ){
 		uint32_t len = i-wordstart;
-		if((word_min <= len) && (len <=  word_max)){
+		if ((word_min <= len) && (len <=  word_max)){
 
                     /* Save the word that starts at sbuf.buf+wordstart that has a length of len. */
                     std::string word = sbuf.substr(wordstart,len);
@@ -245,7 +251,7 @@ void scan_wordlist(const class scanner_params &sp,const recursion_control_block 
 #endif
                     } 
 		}
-		wordstart = -1;
+		inword = false;
 	    }
 	}
     }

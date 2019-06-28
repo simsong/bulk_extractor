@@ -77,7 +77,7 @@ void scan_gzip(const class scanner_params &sp,const recursion_control_block &rcb
 			     */
 			    const ssize_t pos = cc-sbuf.buf;
 			    const pos0_t pos0_gzip = (pos0 + pos) + rcb.partName;
-			    const sbuf_t sbuf_new(pos0_gzip,decompress.buf,zs.total_out,zs.total_out,false);
+			    const sbuf_t sbuf_new(pos0_gzip,decompress.buf,zs.total_out,zs.total_out,0,false);
 			    (*rcb.callback)(scanner_params(sp,sbuf_new)); // recurse
 			}
 			r = inflateEnd(&zs);

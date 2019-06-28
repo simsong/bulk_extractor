@@ -763,7 +763,7 @@ int main(int argc,char **argv)
     (void)min_jpeg_size;
     argc--;argv++;
     while(*argv){
-        sbuf_t *sbuf = sbuf_t::map_file(*argv,pos0_t(*argv));
+        sbuf_t *sbuf = sbuf_t::map_file(*argv, pos0_t(*argv) );
         if(sbuf==0){
             perror(*argv);
         } else {

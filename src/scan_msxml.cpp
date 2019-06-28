@@ -89,7 +89,7 @@ void scan_msxml(const class scanner_params &sp,const recursion_control_block &rc
             if(buf.buf){
                 memcpy(buf.buf,bufstr.c_str(),buflen);
                 pos0_t pos0_xml    = sbuf.pos0 + rcb.partName;
-                const  sbuf_t sbuf_new(pos0_xml,reinterpret_cast<const u_char *>(buf.buf),buflen,buflen,false);
+                const  sbuf_t sbuf_new(pos0_xml,reinterpret_cast<const u_char *>(buf.buf),buflen,buflen,0, false);
                 (*rcb.callback)(scanner_params(sp,sbuf_new));
             }
         }

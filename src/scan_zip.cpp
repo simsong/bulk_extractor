@@ -200,7 +200,7 @@ inline void scan_zip_component(const class scanner_params &sp,const recursion_co
             /* Ignore the error return; process data if we got anything */
             if(zs.total_out>0){
                 const pos0_t pos0_zip = (pos0 + pos) + rcb.partName;
-                const sbuf_t sbuf_new(pos0_zip, dbuf.buf,zs.total_out,zs.total_out,false); // sbuf w/ decompressed data
+                const sbuf_t sbuf_new(pos0_zip, dbuf.buf,zs.total_out,zs.total_out, 0, false); // sbuf w/ decompressed data
 
                 scanner_params spnew(sp,sbuf_new); // scanner_params that points to the sbuf
                 (*rcb.callback)(spnew);            // process the sbuf

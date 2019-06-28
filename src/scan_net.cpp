@@ -856,7 +856,7 @@ public:
 	} 
 	memcpy(buf+14,sb2.buf,packet_len-14); // copy the packet data
 	/* make an sbuf to write */
-	sbuf_t sb3(pos0_t(),buf,packet_len,packet_len,false);
+	sbuf_t sb3(pos0_t(),buf,packet_len,packet_len,0,false);
 	struct pcap_hdr hz(0,0,packet_len,packet_len); // make a fake header
 	pcap_writepkt(hz,sb3,0,false,0x0000);	   // write the packet
 	return ip_len;				   // return that we processed this much

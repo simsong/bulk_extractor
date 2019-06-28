@@ -458,7 +458,7 @@ static void process_open_path(const image_process &p,std::string path,scanner_pa
                             feature_recorder_set::NO_INPUT,feature_recorder_set::NO_OUTDIR);
 
     pos0_t pos0(path+"-PRINT"); // insert the PRINT token
-    sbuf_t sbuf(pos0,buf,count,count,true); // sbuf system will free
+    sbuf_t sbuf(pos0, buf, count, count, 0, true); // sbuf system will free
     scanner_params sp(scanner_params::PHASE_SCAN,sbuf,fs,po);
     try {
         process_path_printer(sp);
