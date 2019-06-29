@@ -20,26 +20,29 @@ import ttable, bulk_extractor_reader
 html_header = '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">\n'
 bulk_diff_version = '1.3'
 
-def process(out,dname1,dname2):
+def process(out,dname1,dname2,verbose=False):
     mode = 'text'
-    if options.html: mode='html'
+    if args.html: mode='html'
 
     b1 = bulk_extractor_reader.BulkReport(dname1)
     b2 = bulk_extractor_reader.BulkReport(dname2)
 
-    t = ttable.ttable()
-    t.append_data(['bulk_diff.py Version:',bulk_diff_version])
-    t.append_data(['PRE Image:',b1.image_filename()])
-    t.append_data(['POST Image:',b2.image_filename()])
-    out.write(t.typeset(mode=mode))
+    if args.verbose:
+        t = ttable.ttable()
+        t.append_data(['bulk_diff.py Version:',bulk_diff_version])
+        t.append_data(['PRE Image:',b1.image_filename()])
+        t.append_data(['POST Image:',b2.image_filename()])
+        out.write(t.typeset(mode=mode))
 
     for i in [1,2]:
         if i==1:
-            a=b1;b=b2
+            a = b1 ; b = b2
         else:
-            b=b1;a=b2;
+            b = b1 ; a = b2
         r = a.files.difference(b.files)
-        if r:
+        total_diff  = sum([a.count_lines(f) for f in r if ".txt" in f])
+        total_other = sum(1 for f in r if ".txt" not in f)
+        if total_diff>0 or total_other>0 or args.verbose:
             print("Files only in {}:".format(a.name))
             for f in r:
                 if ".txt" in f:
@@ -59,7 +62,7 @@ def process(out,dname1,dname2):
     b2_histograms = set(b2.histogram_files())
     common_histograms = b1_histograms.intersection(b2_histograms)
     
-    if options.html:
+    if args.html:
         out.write("<ul>\n")
         for histogram_file in sorted(histogram_files):
             out.write("<li><a href='#%s'>%s</a></li>\n" % (histogram_file,histogram_file))
@@ -67,10 +70,8 @@ def process(out,dname1,dname2):
 
     for histogram_file in sorted(common_histograms):
         diffcount = 0
-        if options.html:
+        if args.html:
             out.write('<h2><a name="%s">%s</a></h2>\n' % (histogram_file,histogram_file))
-        else:
-            out.write('\n')
         t = ttable.ttable()
         t.set_col_alignment(0,t.RIGHT)
         t.set_col_alignment(1,t.RIGHT)
@@ -90,7 +91,7 @@ def process(out,dname1,dname2):
             v1 = b1.hist.get(feature,0)
             v2 = b2.hist.get(feature,0)
             if v1!=v2: diffcount += 1
-            if v2>v1 or (v2==v1 and options.same) or (v2<v1 and options.smaller):
+            if v2>v1 or (v2==v1 and args.same) or (v2<v1 and args.smaller):
                 data.append((v1, v2, v2-v1, feature.decode('utf-8')))
 
         # Sort according the diff first, then v2 amount, then v1 amount, then alphabetically on value
@@ -101,14 +102,14 @@ def process(out,dname1,dname2):
             for row in sorted(data,key=mysortkey):
                 t.append_data(row)
             out.write(t.typeset(mode=mode))
-        if diffcount==0:
-            if options.html:
+        if diffcount==0 and args.verbose:
+            if args.html:
                 out.write("{}: No differences\n".format(histogram_file))
             else:
                 out.write("{}: No differences\n".format(histogram_file))
 
             
-    if options.features:
+    if args.features:
         for feature_file in b1.feature_files():
             if feature_file not in b2.feature_files():
                 continue
@@ -133,32 +134,27 @@ def process(out,dname1,dname2):
 
 
 if __name__=="__main__":
-    from optparse import OptionParser
-    global options
+    from argparse import ArgumentParser
     import sys,time
 
-    parser = OptionParser()
-    parser.usage = """usage: %prog [options] <pre> <post>
-<pre> and <post> may be a bulk_extractor output directory or a zip file of a report.
-"""
-    parser.add_option("--smaller",help="Also show values that didn't change or got smaller",
-                      action="store_true")
-    parser.add_option("--same",help="Also show values that didn't change",action="store_true")
-    parser.add_option("--tabdel",help="Specify a tab-delimited output file for easy import into Excel")
-    parser.add_option("--html",help="HTML output. Argument is file name base")
-    parser.add_option("--features",help="Compare feature files also",action='store_true')
+    parser = ArgumentParser()
+    parser.add_argument("--smaller",help="Also show values that didn't change or got smaller",
+                        action="store_true")
+    parser.add_argument("--same",help="Also show values that didn't change",action="store_true")
+    parser.add_argument("--tabdel",help="Specify a tab-delimited output file for easy import into Excel")
+    parser.add_argument("--html",help="HTML output. Argument is file name base")
+    parser.add_argument("--features",help="Compare feature files also",action='store_true')
+    parser.add_argument("--verbose", help="Notify of things that are the same", action='store_true')
+    parser.add_argument("file1")
+    parser.add_argument("file2")
 
-    (options,args) = parser.parse_args()
-    if len(args)!=2:
-        parser.print_help()
-        exit(1)
-        
+    args = parser.parse_args()
     out = sys.stdout
-    if options.html:
-        out = open(options.html,"w")
+    if args.html:
+        out = open(args.html,"w")
         out.write(html_header)
         out.write('<html><head>\n')
         out.write('<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>\n')
         out.write("</head><body>\n")
 
-    process(out,args[0],args[1])
+    process(out,args.file1,args.file2,verbose=args.verbose)

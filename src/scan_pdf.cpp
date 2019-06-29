@@ -17,7 +17,7 @@
 
 /* Debug by setting DEBUG or by setting pdf_dump at runtime */
 
-#define DEBUG
+//#define DEBUG
 
 #define ZLIB_CONST
 #ifdef HAVE_DIAGNOSTIC_UNDEF
