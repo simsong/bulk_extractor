@@ -1,3 +1,8 @@
+bulk_extractor SQL tests:
+- Regression tests
+- test image w/ known outputs
+- Test image with 1B words and run in reduced memory environment to make sure that histogram overflow works properly.
+
 Wordlist:
  - new options to make it a plain wordlist, with no other information in the file.
 
