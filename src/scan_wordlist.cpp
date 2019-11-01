@@ -9,6 +9,7 @@
 static uint32_t word_min = 6;
 static uint32_t word_max = 14;
 static uint64_t max_word_outfile_size=100*1000*1000;
+static bool strings = false;
 
 /* Wordlist support for flat files */
 class WordlistSorter {
@@ -122,13 +123,17 @@ static void wordlist_sql_write(BEAPI_SQLITE3 *db3)
 static bool wordchar[256];
 inline bool wordchar_func(unsigned char ch)
 {
-    return isprint(ch) && ch!=' ' && ch<128;
+    if(strings) {
+      return isprint(ch) && ch<128;
+    } else {
+      return isprint(ch) && ch!=' ' && ch<128;
+    }
 }
 
 static void wordchar_setup()
 {
     for(int i=0;i<256;i++){
-	wordchar[i] = wordchar_func(i);
+      wordchar[i] = wordchar_func(i);
     }
 }
 
@@ -146,6 +151,7 @@ void scan_wordlist(const class scanner_params &sp,const recursion_control_block 
         sp.info->get_config("max_word_outfile_size",&max_word_outfile_size,
                             "Maximum size of the words output file");
         sp.info->get_config("wordlist_use_flatfiles",&wordlist_use_flatfiles,"Override SQL settings and use flatfiles for wordlist");
+        sp.info->get_config("strings",&strings,"Scan for strings instead of words");
 
         if(wordlist_use_flatfiles || fs.db3==0){
             sp.info->feature_names.insert(WORDLIST);
@@ -185,12 +191,14 @@ void scan_wordlist(const class scanner_params &sp,const recursion_control_block 
         
     /* shutdown code is multi-threaded */
     if(sp.phase==scanner_params::PHASE_SHUTDOWN){
-        std::cout << "Phase 3. Uniquifying and recombining wordlist\n";
-        ofn_template = sp.fs.get_outdir()+"/wordlist_split_%03d.txt";
-        
-        if (wordlist_recorder) {
-            wordlist_split_and_dedup(sp.fs.get_outdir()+"/" WORDLIST ".txt");
-            return;
+        if(!strings){
+          std::cout << "Phase 3. Uniquifying and recombining wordlist\n";
+          ofn_template = sp.fs.get_outdir()+"/wordlist_split_%03d.txt";
+
+          if (wordlist_recorder) {
+              wordlist_split_and_dedup(sp.fs.get_outdir()+"/" WORDLIST ".txt");
+              return;
+          }
         }
 
         if (fs.db3) {
