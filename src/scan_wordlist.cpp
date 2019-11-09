@@ -14,7 +14,7 @@ static bool strings = false;
 /* Wordlist support for flat files */
 class WordlistSorter {
 public:
-    bool operator()(const std::string &a,const std::string &b) {
+    bool operator()(const std::string &a,const std::string &b) const {
 	if(a.size() < b.size()) return true;
 	if(a.size() > b.size()) return false;
 	return a<b;

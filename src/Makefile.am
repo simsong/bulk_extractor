@@ -142,11 +142,13 @@ unitest$(EXEEXT): unicode_escape.cpp
 # Rule to compile .flex into a .o
 # FreeBSD NOTE: flex does not support -R and -o does not work properly
 # | sed "s/static int yy_get_next_buffer/static int XXyy_get_next_buffer/" 
+#
+# 2019-11-09 - updated to remove the word 'register' which is no longer needed
 
 SUFFIXES = .flex
 FLEX_CXXFLAGS=-Wno-shadow -Wno-effc++ -Wno-redundant-decls -Wno-missing-noreturn
 .flex.o:
-	$(LEX) -R -t $<  > `basename $@ .o`.cpp 
+	$(LEX) -R -t $<  | sed "s/register //" > `basename $@ .o`.cpp 
 	$(CXX) $(CPPFLAGS) $(AM_CPPFLAGS) $(CXXFLAGS) $(FLEX_CXXFLAGS) \
 		-I${top_srcdir} -I${srcdir} -I.. -I../../_build -c `basename $@ .o`.cpp 
 
