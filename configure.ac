@@ -65,7 +65,7 @@ if test "x$use_BEViewer" == "xyes"; then
     if test x"$has_javac" == "xtrue" ; then
       # javac must be version 6 or later, indicated by the minor number
       javac_version=`javac -version 2>&1`
-      javac_minor=`echo "$javac_version" | sed -e 's/javac 1\.//' | sed -e 's/\..*//'`
+      javac_minor=`echo "$javac_version" | sed -e 's/javac //' | sed -e 's/^1\.//' | sed -e 's/\..*//'`
       if test $javac_minor ; then
         if test $javac_minor -lt "6" ; then
           has_javac=false
