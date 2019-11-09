@@ -1,4 +1,4 @@
-Welcome to bulk_extractor!
+Welcome to bulk_extractor version 1.5.6.
 
 To build bulk_extractor in Linux or OS X,
 
@@ -18,6 +18,17 @@ To download the Windows installer and/or other releases of bulk_extractor, visit
 http://digitalcorpora.org/downloads/bulk_extractor
 
 For more information on bulk_extractor, visit: http://www.forensicswiki.org/wiki/Bulk_extractor
+
+Tested Configurations
+=====================
+This release of bulk_extractor has been tested to compile on the following platforms:
+* Amazon Linus as of 2019-11-09
+* Ubuntu 16.04LTS
+* Ubuntu 18.04LTS
+
+To configure your operating system, please run the appropriate scripts in the [etc/](/etc) directory.
+
+
 
 RECOMMENDED CITATION
 ====================
