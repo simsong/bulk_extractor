@@ -175,7 +175,6 @@ Data/WindowsLNK.lnk􀀜-0	T	<lnk><atime>2014-08-04T20:24:03Z</atime><ctime>2014-
 # scan_winprefetch
 #
 
-Data/WindowsXPPrefetch_JAVA.exe.pdf􀀜-0	JAVA.EXE	<prefetch><os>Windows XP</os>...
 Data/Windows7Prefetch_AGENT.EXE-D2852D29.pf􀀜-0	AGENT.EXE	<prefetch><os>Windows Vista or Windows 7</os>...
 
 #

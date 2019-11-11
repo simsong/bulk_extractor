@@ -54,6 +54,7 @@ bulk_scanners = \
 	scan_sceadan.cpp\
 	scan_ccns2.cpp scan_ccns2.h \
 	scan_elf.cpp \
+	scan_evtx.cpp \
 	scan_exif.cpp exif_reader.h exif_reader.cpp exif_entry.cpp\
 	scan_exiv2.cpp \
 	scan_find.cpp \
@@ -64,6 +65,8 @@ bulk_scanners = \
 	scan_kml.cpp \
 	scan_net.cpp \
 	scan_ntfsusn.cpp \
+	scan_ntfsindx.cpp \
+	scan_ntfslogfile.cpp \
 	scan_outlook.cpp \
 	scan_facebook.cpp \
 	scan_pdf.cpp \
@@ -72,6 +75,7 @@ bulk_scanners = \
 	scan_hashdb.cpp \
 	scan_sqlite.cpp \
 	scan_vcard.cpp \
+	scan_utmp.cpp \
 	scan_windirs.cpp \
 	scan_winlnk.cpp \
 	scan_winpe.cpp \

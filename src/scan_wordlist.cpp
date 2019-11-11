@@ -221,39 +221,60 @@ void scan_wordlist(const class scanner_params &sp,const recursion_control_block 
 	 * case 2 - we are in a word & this character ends a word.
 	 */
     
-	int wordstart = -1;			// >=0 means we are in a word
-	for(u_int i=0; i<=sbuf.pagesize; i++){
+        if (sbuf.bufsize==0){           // nothing to scan
+            return;
+        }
 
-	    /* case 1 - we are not in a word & this character starts a word. */
-	    bool iswordchar = wordchar[sbuf.buf[i]];
-	    if(wordstart<0 && iswordchar && i!=sbuf.pagesize-1){
-		wordstart = i;
-		continue;
+        bool in_word     = false;        // true if we are in a word
+        u_int wordstart = 0;            // if we are in the word, where it started
+	for(u_int i=0; i<sbuf.bufsize; i++){
+            bool is_wordchar = wordchar[sbuf.get8u(i)];
+            if (!in_word) {
+                /* case 1 - we are not in a word */
+                /* does this character start a word? */
+                if (is_wordchar){
+                    in_word = true;
+                    wordstart = i;
+                }
+                /* If we are not in a word and we have extended into the margin, quit. */
+                if (i>sbuf.pagesize){
+                    return;
+                }
+                continue;
 	    }
-            /* case 2 - we are in a word & this character ends a word. */
-	    if(wordstart>=0 && (!iswordchar || i==sbuf.pagesize)){
-		uint32_t len = i-wordstart;
-		if((word_min <= len) && (len <=  word_max)){
-
-                    /* Save the word that starts at sbuf.buf+wordstart that has a length of len. */
-                    std::string word = sbuf.substr(wordstart,len);
+            else {
+                /* case 2 - we are in a word */
+                /* If this is the end of the word, or we are in the word and this is the end of the margin,
+                 * do end-of-word processing.
+                 */
+                /* Does - we are in a word & this character ends a word. */
+                if (in_word && !is_wordchar){
+                    uint32_t len = i - wordstart;
+                    if ((word_min <= len) && (len <=  word_max)){
+                        /* Save the word that starts at sbuf.buf+wordstart that has a length of len. */
+                        std::string word = sbuf.substr(wordstart,len);
                     
-                    //std::cerr << "word=" << word << " wr=" << wordlist_recorder << " fs.db3=" << fs.db3 << "\n";
-
-                    if (wordlist_recorder) {
-                        wordlist_recorder->write(sbuf.pos0+wordstart,word,"");
-                    } else if (fs.db3) {
-#ifdef USE_SQLITE3
-                        cppmutex::lock lock(wordlist_stmt->Mstmt);
-                        sqlite3_bind_blob(wordlist_stmt->stmt, 1, (const char *)word.data(), word.size(), SQLITE_STATIC);
-                        if (sqlite3_step(wordlist_stmt->stmt) != SQLITE_DONE) {
-                            fprintf(stderr,"sqlite3_step failed on scan_wordlist\n");
-                        }
-                        sqlite3_reset(wordlist_stmt->stmt);
+#ifdef DEBUG_THIS
+                        std::cerr << "word=" << word << " wr="
+                                  << wordlist_recorder << " fs.db3=" << fs.db3 << "\n";
 #endif
-                    } 
-		}
-		wordstart = -1;
+                        if (wordlist_recorder) {
+                            wordlist_recorder->write(sbuf.pos0+wordstart,word,"");
+                        } else if (fs.db3) {
+#ifdef USE_SQLITE3
+                            cppmutex::lock lock(wordlist_stmt->Mstmt);
+                            sqlite3_bind_blob(wordlist_stmt->stmt, 1,
+                                              (const char *)word.data(), word.size(), SQLITE_STATIC);
+                            if (sqlite3_step(wordlist_stmt->stmt) != SQLITE_DONE) {
+                                fprintf(stderr,"sqlite3_step failed on scan_wordlist\n");
+                            }
+                            sqlite3_reset(wordlist_stmt->stmt);
+#endif
+                        } 
+                    }
+                    wordstart = 0;
+                    in_word = false;
+                }
 	    }
 	}
     }

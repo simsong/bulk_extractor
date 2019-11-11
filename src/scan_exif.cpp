@@ -588,7 +588,7 @@ public:
 
             // Record the hash of the first 4K
             sbuf_t tohash(sbuf,0,4096);
-            feature_text = jpeg_recorder.fs.hasher.func(tohash.buf,tohash.bufsize);
+            feature_text = jpeg_recorder.fs.hasher.func(tohash.buf, tohash.bufsize);
         }
         /* Record entries (if present) in the feature files */
         record_exif_data(&exif_recorder, sbuf.pos0, feature_text, entries);

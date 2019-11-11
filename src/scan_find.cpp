@@ -74,7 +74,7 @@ void scan_find(const class scanner_params &sp,const recursion_control_block &rcb
 
         managed_malloc<u_char> tmpbuf(sp.sbuf.bufsize+1);
         if(!tmpbuf.buf) return;				     // no memory for searching
-        memcpy(tmpbuf.buf,sp.sbuf.buf,sp.sbuf.bufsize);
+        memcpy(tmpbuf.buf, sp.sbuf.buf, sp.sbuf.bufsize);
         tmpbuf.buf[sp.sbuf.bufsize]=0;
         for(size_t pos = 0; pos < sp.sbuf.pagesize && pos < sp.sbuf.bufsize;) {
             /* Now see if we can find a string */
