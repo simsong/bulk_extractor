@@ -340,6 +340,7 @@ int64 atoil(const wchar *Str)
 }
 
 
+#ifdef DOES_NOT_LOOK_LIKE_WE_USE_GETWIDE
 const wchar* GetWide(const char *Src)
 {
   const size_t MaxLength=NM;
@@ -352,6 +353,7 @@ const wchar* GetWide(const char *Src)
   Str[MaxLength-1]=0;
   return(Str);
 }
+#endif
 
 
 #ifdef _WIN_ALL

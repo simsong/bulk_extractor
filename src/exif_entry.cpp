@@ -1005,7 +1005,7 @@ static std::string get_generic_name(tiff_handle_t &tiff_handle, uint32_t ifd_ent
     uint16_t entry_tag;
     try {
         entry_tag = tiff_handle.sbuf->get16u(ifd_entry_offset + 0, tiff_handle.byte_order);
-    } catch (sbuf_t::range_exception_t &e) {
+    } catch (const sbuf_t::range_exception_t &e) {
         entry_tag = 0;
     }
     std::stringstream ss;
@@ -1034,7 +1034,7 @@ static void add_entry(ifd_type_t ifd_type, const std::string &name, const std::s
 inline static uint16_t get_entry_tag(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset) {
     try {
         return tiff_handle.sbuf->get16u(ifd_entry_offset + 0, tiff_handle.byte_order);
-    } catch (sbuf_t::range_exception_t &e) {
+    } catch (const sbuf_t::range_exception_t &e) {
         return 0;
     }
 }
@@ -1042,7 +1042,7 @@ inline static uint16_t get_entry_tag(tiff_handle_t &tiff_handle, uint32_t ifd_en
 inline static uint16_t get_entry_type(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset) {
     try {
         return tiff_handle.sbuf->get16u(ifd_entry_offset + 2, tiff_handle.byte_order);
-    } catch (sbuf_t::range_exception_t &e) {
+    } catch (const sbuf_t::range_exception_t &e) {
         return 0;
     }
 }
@@ -1053,7 +1053,7 @@ inline static uint32_t get_entry_count(tiff_handle_t &tiff_handle, uint32_t ifd_
     uint32_t requested_count;
     try {
         requested_count = tiff_handle.sbuf->get32u(ifd_entry_offset + 4, tiff_handle.byte_order);
-    } catch (sbuf_t::range_exception_t &e) {
+    } catch (const sbuf_t::range_exception_t &e) {
         requested_count = 0;
     }
     return requested_count;
@@ -1064,7 +1064,7 @@ inline static uint16_t get_data_offset(tiff_handle_t &tiff_handle, uint32_t ifd_
     uint16_t entry_type;
     try {
         entry_type = tiff_handle.sbuf->get16u(ifd_entry_offset + 2, tiff_handle.byte_order);
-    } catch (sbuf_t::range_exception_t &e) {
+    } catch (const sbuf_t::range_exception_t &e) {
         return 0;
     }
 
@@ -1092,7 +1092,7 @@ inline static uint16_t get_data_offset(tiff_handle_t &tiff_handle, uint32_t ifd_
     uint32_t requested_count;
     try {
         requested_count = tiff_handle.sbuf->get32u(ifd_entry_offset + 4, tiff_handle.byte_order);
-    } catch (sbuf_t::range_exception_t &e) {
+    } catch (const sbuf_t::range_exception_t &e) {
         requested_count = 0;
     }
 
@@ -1107,7 +1107,7 @@ inline static uint16_t get_data_offset(tiff_handle_t &tiff_handle, uint32_t ifd_
         // look up the value offset
         try {
             return tiff_handle.sbuf->get32u(ifd_entry_offset + 8, tiff_handle.byte_order);
-        } catch (sbuf_t::range_exception_t &e) {
+        } catch (const sbuf_t::range_exception_t &e) {
             // return an out-of-range value
             return ifd_entry_offset + 12;
         }
@@ -1118,7 +1118,7 @@ inline static uint16_t get_data_offset(tiff_handle_t &tiff_handle, uint32_t ifd_
 inline static uint32_t get_ifd_offset(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset) {
     try {
         return tiff_handle.sbuf->get32u(ifd_entry_offset + 8, tiff_handle.byte_order);
-    } catch (sbuf_t::range_exception_t &e) {
+    } catch (const sbuf_t::range_exception_t &e) {
         // return an out-of-range value
         return ifd_entry_offset + 12;
     }
@@ -1231,7 +1231,7 @@ std::string get_possible_utf32(const sbuf_t &sbuf, size_t count, sbuf_t::byte_or
             code_point = sbuf.get32u(i * 4, byte_order);
             try {
                 result = utf8::append(code_point, result);
-            } catch (utf8::invalid_code_point) {
+            } catch (const utf8::invalid_code_point &) {
 
                 // invalid code point so put in the byte values directly,
                 // disregarding endian convention
@@ -1240,7 +1240,7 @@ std::string get_possible_utf32(const sbuf_t &sbuf, size_t count, sbuf_t::byte_or
                 utf8_string += (uint8_t)code_point/0x10000;
                 utf8_string += (uint8_t)code_point/0x1000000;
             }
-        } catch (sbuf_t::range_exception_t &e) {
+        } catch (const sbuf_t::range_exception_t &e) {
             // at end of buffer
             break;
         }
@@ -1282,7 +1282,7 @@ std::string all_utf16to8 (std::wstring utf16_string) {
 
         try {
             result = utf8::append(code_point, result);
-        } catch (utf8::invalid_code_point) {
+        } catch (const utf8::invalid_code_point &) {
             // invalid code point so put in unescaped byte values, disregarding endian convention
             utf8_string += (uint8_t)code_point;
             utf8_string += (uint8_t)code_point/0x100;
@@ -1317,7 +1317,7 @@ static std::string get_exif_byte(tiff_handle_t &tiff_handle, uint32_t ifd_entry_
         std::stringstream ss;
         try {
 	    ss << (int)tiff_handle.sbuf->get8u(offset);
-        } catch (sbuf_t::range_exception_t &e) {
+        } catch (const sbuf_t::range_exception_t &e) {
             // add nothing to ss
         }
         return ss.str();
@@ -1351,7 +1351,7 @@ static std::string get_exif_ascii(tiff_handle_t &tiff_handle, uint32_t ifd_entry
         if (count > 0 && tiff_handle.sbuf->get8u(offset + count - 1) == 0) {
 	    count--;
         }
-    } catch (sbuf_t::range_exception_t &e) {
+    } catch (const sbuf_t::range_exception_t &e) {
         // at end so there is nothing to strip
     }
 
@@ -1379,7 +1379,7 @@ static std::string get_exif_short(tiff_handle_t &tiff_handle, uint32_t ifd_entry
         std::stringstream ss;
         try {
 	    ss << (int)tiff_handle.sbuf->get16u(offset, tiff_handle.byte_order);
-        } catch (sbuf_t::range_exception_t &e) {
+        } catch (const sbuf_t::range_exception_t &e) {
             // add nothing to ss
         }
         return ss.str();
@@ -1415,7 +1415,7 @@ static std::string get_exif_long(tiff_handle_t &tiff_handle, uint32_t ifd_entry_
         std::stringstream ss;
         try {
 	    ss << (uint32_t)tiff_handle.sbuf->get32u(offset, tiff_handle.byte_order);
-        } catch (sbuf_t::range_exception_t &e) {
+        } catch (const sbuf_t::range_exception_t &e) {
             // add nothing to ss
         }
         return ss.str();
@@ -1454,7 +1454,7 @@ static std::string get_exif_rational(tiff_handle_t &tiff_handle, uint32_t ifd_en
 	    if (i + 1 < count) {
 	        ss << " ";
 	    }
-        } catch (sbuf_t::range_exception_t &e) {
+        } catch (const sbuf_t::range_exception_t &e) {
             break;
         }
     }
@@ -1486,7 +1486,7 @@ static  std::string get_exif_slong(tiff_handle_t &tiff_handle, uint32_t ifd_entr
     for (uint32_t i=0; i<count; i++) {
         try {
 	    ss << tiff_handle.sbuf->get32i(offset + i * 4, tiff_handle.byte_order);
-        } catch (sbuf_t::range_exception_t &e) {
+        } catch (const sbuf_t::range_exception_t &e) {
             // at end
             break;
         }
@@ -1522,7 +1522,7 @@ static std::string get_exif_srational(tiff_handle_t &tiff_handle, uint32_t ifd_e
 	    if (i + 1 < count) {
 	        ss << " ";
 	    }
-        } catch (sbuf_t::range_exception_t &e) {
+        } catch (const sbuf_t::range_exception_t &e) {
             break;
         }
     }

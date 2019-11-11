@@ -47,7 +47,7 @@ if [ $ID != 'centos' ]; then
     exit 1
 fi
 
-if [ $VERSION_$ID -ne 7 ]; then
+if [ $VERSION_ID -ne 7 ]; then
     echo This requires version 7 of Centos. You have $VERSION_ID. 
     exit 1
 fi
