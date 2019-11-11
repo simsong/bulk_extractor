@@ -1,3 +1,5 @@
+# Standalone makefile, not made with autotools.
+#
 # NOTE 1: This Makefile does not define a primary, so source files are manually included
 # using EXTRA_DIST.
 #
@@ -12,7 +14,7 @@
 # NOTE 3: This makefile is not automatically configured. If it were, then 'make distclean' 
 # would wipe it.
 
-BEVERSION=`grep ^AC_INIT ../configure.ac | awk -F, '{print $$2;}' | sed 's/ //'`
+BEVERSION:=`grep ^AC_INIT ../configure.ac | awk -F, '{print $$2;}' | sed 's/ //'`
 
 INSTALLER=bulk_extractor-$(BEVERSION)-windowsinstaller.exe
 
@@ -33,6 +35,8 @@ SRC_WIN_DIST = \
 	$(SRC_WIN)icu4c-53_1-mingw-w64-mkdir-compatibility.patch \
 	$(SRC_WIN)icu4c-53_1-simpler-crossbuild.patch
 
+zipfile: 
+	zip bulk_extractor-$(BEVERSION).zip $(SRC_WIN)bulk_extractor.exe bulk_extractor-$(BEVERSION)-windowsinstaller.exe 
 
 # The prerequisites for the installer can't be listed after the colon, 
 # becuase then the system will try to generate them simultaneously,
@@ -71,7 +75,6 @@ $(SRC_WIN)BEViewer.jar:
 	echo '**** running make in build_java/ to create BEViewer.jar ****'; \
 	(cd ../build_java/java_gui;$(MAKE))
 	cp ../build_java/java_gui/BEViewer.jar BEViewer.jar
-
 
 BEViewerLauncher.exe: build_BEViewer_launcher.nsi
 	makensis build_BEViewer_launcher.nsi

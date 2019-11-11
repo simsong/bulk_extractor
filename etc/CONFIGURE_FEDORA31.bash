@@ -37,7 +37,7 @@ MPKGS+="libxml2-devel libxml2-static openssl-devel "
 MPKGS+="sqlite-devel expat-devel "
 
 if [ ! -r /etc/os-release ]; then
-  echo This requires Amazon Linux
+  echo This requires Fedora Linux
   exit 1
 fi
 
