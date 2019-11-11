@@ -2,7 +2,7 @@
  * Plugin: scan_evtx
  * Purpose: Find all of evtx component, carve out and reconstruct evtx file
  * Reference: https://github.com/libyal/libevtx/blob/master/documentation/Windows%20XML%20Event%20Log%20(EVTX).asciidoc
- * Contributed by https://github.com/4n6ist/bulk_extractor-rec 
+ * Teru Yamazaki(@4n6ist) - https://github.com/4n6ist/bulk_extractor-rec 
  **/
 #include "config.h"
 #include "be13_api/bulk_extractor_i.h"

@@ -3,6 +3,7 @@
  * Purpose: Find all USN_RECORD v2/v4 record into one file
  * USN_RECORD_V2 format https://msdn.microsoft.com/ja-jp/library/windows/desktop/aa365722(v=vs.85).aspx
  * USN_RECORD_V4 format https://msdn.microsoft.com/ja-jp/library/windows/desktop/mt684964(v=vs.85).aspx
+ * Teru Yamazaki(@4n6ist) - https://github.com/4n6ist/bulk_extractor-rec
  **/
 #include "config.h"
 #include "be13_api/bulk_extractor_i.h"

@@ -5,6 +5,9 @@ Bruce Allen <bdallen@nps.edu>           (BEViewer, exif analyzer, windows prefet
 Alex Eubanks <endeavor@rainbowsandpwnies.com>  (pe and ELF scanners)
 Luis E. Garcia II <legarcia@nps.edu>    (Initial windows prefetch implementation)
 Michael Shick <mfshick@nps.edu>         (odds and ends)
+Teru Yamazaki(@4n6ist)                  (scan_evtx, scan_ntfsindx, scan_ntfslogfile, scan_ntfsmft, scan_ntfsusn)
+Alex Eubanks (endeav0r)                 (scan_winpe)
+
 
 LIFT was developed by CMU under contract to the Department of Defense. The team members were:
   Siddharth Gopal <sgopall@cs.cmu.edu>

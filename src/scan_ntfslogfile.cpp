@@ -2,7 +2,7 @@
  * Plugin: scan_ntfslogfile
  * Purpose: Find all $LogFile RCRD record into one file
  * Reference: https://flatcap.org/linux-ntfs/ntfs/files/logfile.html
- * Contributed by https://github.com/4n6ist/bulk_extractor-rec 
+ * Teru Yamazaki(@4n6ist) - https://github.com/4n6ist/bulk_extractor-rec
  **/
 #include "config.h"
 #include "be13_api/bulk_extractor_i.h"
