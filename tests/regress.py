@@ -42,7 +42,7 @@ IMAGE_PATH = {IMAGE_UBNIST1:"nps-2009-ubnist1/ubnist1.gen3.raw",
 DEFAULT_INFILE = IMAGE_UBNIST1
 FAST_INFILE    = IMAGE_EMAILS
 FULL_INFILE    = IMAGE_DOMEXUSERS
-exe              = "src/bulk_extractor"
+exe            = "src/bulk_extractor"
 
 if not os.path.exists(exe):
     exe = "../src/bulk_extractor"
@@ -600,7 +600,7 @@ def datacheck():
     if "outlook" in get_scanners(args.exe):
         args.extra += "-e outlook"
     outdir = run_outdir()
-    datacheckreport(outdir)
+    datacheck_checkreport(outdir)
         
 def image_path(name):
     return os.path.join(os.environ.get(CORP_ENV,CORP_DEFAULT), IMAGE_PATH[name])
@@ -616,7 +616,7 @@ def download():
             subprocess.check_call(['curl','-o',path,url])
         
 
-def dataacheck_checkreport(outdir):
+def datacheck_checkreport(outdir):
     """Reports on whether the output in outdir matches the datacheck report"""
     print("opening ",outdir)
     b = bulk_extractor_reader.BulkReport(outdir)
@@ -662,7 +662,9 @@ if __name__=="__main__":
     parser.add_argument("--debug",help="debug level",type=int)
     parser.add_argument("--outdir",help="output directory base",default=None)
     parser.add_argument("--exe",help="Executable to run (default {})".format(exe),default=exe)
-    parser.add_argument("--image",help="image to scan (default is {})".format(os.path.basename(IMAGE_PATH[DEFAULT_INFILE])))
+    parser.add_argument("--image",
+                        help="image to scan (default is {})".format(os.path.basename(IMAGE_PATH[DEFAULT_INFILE])),
+                        default=DEFAULT_INFILE)
     parser.add_argument("--fast",help="Run with "+os.path.basename(IMAGE_PATH[FAST_INFILE]),action="store_true")
     parser.add_argument("--full",help="Run with "+os.path.basename(IMAGE_PATH[FULL_INFILE]),action="store_true")
     parser.add_argument("--jobs",help="Specifies number of worker threads",type=int)
@@ -706,7 +708,7 @@ if __name__=="__main__":
     parser.add_argument("--dry-run",help="Don't actually run the program",action='store_true')
     parser.add_argument("--datadircomp",help="Compare two data dirs")
     parser.add_argument("--datacheck",help="Runs BE on the files in Data/ directory and makes sure that all of the features in data_check.txt are found",action='store_true')
-    parser.add_argument("--dataacheck_checkreport",help="Checks the files in in Data/ directory and makes sure that all of the features in data_check.txt are found")
+    parser.add_argument("--datacheck_checkreport",help="Checks the files in in Data/ directory and makes sure that all of the features in data_check.txt are found")
 
     args = parser.parse_args()
     
@@ -785,8 +787,8 @@ if __name__=="__main__":
         datacheck() ;
         exit(0)
 
-    if args.dataacheck_checkreport:
-        dataacheck_checkreport(args.dataacheck_checkreport);
+    if args.datacheck_checkreport:
+        datacheck_checkreport(args.datacheck_checkreport);
         exit(0)
 
     if args.fast:
