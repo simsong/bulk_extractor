@@ -3,18 +3,19 @@ DOXYGEN_FILES = doxygen/Doxyfile doxygen/Makefile doxygen/programmer_manual.doxy
 
 EXTRA_DIST = \
 	ROADMAP_1.4.txt \
-	ROADMAP_1.4.1.txt \
+	ROADMAP_1.5.md \
+	ROADMAP_1.6.md \
 	2013.COSE.bulk_extractor.pdf \
-	announce_1.2.txt \
-	announce_1.3.1.txt \
-	announce_1.3.txt \
-	announce_1.4.txt \
-	announce_1.5.md \
+	announce/announce_1.2.txt \
+	announce/announce_1.3.1.txt \
+	announce/announce_1.3.txt \
+	announce/announce_1.4.txt \
+	announce/announce_1.5.md \
+	announce/announce_1.6.md \
 	bulk_extractor.html \
 	bulk_extractor_paper.pdf \
 	bulk_extractor_slides.pdf\
 	crash_diagnosis1.txt \
 	crash_diagnosis2.txt\
 	debugging_performance_problems.html \
-	scan_lift_report.pdf \
 	$(DOXYGEN_FILES)
