@@ -2,7 +2,7 @@
  * Plugin: scan_ntfsmft
  * Purpose: Find all MFT file record into one file
  * Reference: http://www.digital-evidence.org/fsfa/
- * Contributed by https://github.com/4n6ist/bulk_extractor-rec 
+ * Teru Yamazaki(@4n6ist) - https://github.com/4n6ist/bulk_extractor-rec
  **/
 #include "config.h"
 #include "be13_api/bulk_extractor_i.h"
