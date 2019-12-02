@@ -14,7 +14,7 @@
 # NOTE 3: This makefile is not automatically configured. If it were, then 'make distclean' 
 # would wipe it.
 
-BEVERSION:=`grep ^AC_INIT ../configure.ac | awk -F, '{print $$2;}' | sed 's/ //'`
+BEVERSION=`grep ^AC_INIT ../configure.ac | awk -F, '{print $$2;}' | sed 's/ //'`
 
 INSTALLER=bulk_extractor-$(BEVERSION)-windowsinstaller.exe
 

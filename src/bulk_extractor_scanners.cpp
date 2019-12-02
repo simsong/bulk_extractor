@@ -85,6 +85,12 @@ scanner_t *scanners_builtin[] = {
     scan_xor,
     scan_sqlite,
     scan_facebook,
+    // scanners provided by 4n6ist:
+    scan_utmp,
+    scan_ntfsmft,
+    scan_ntfslogfile,
+    scan_ntfsindx,
+    scan_evtx,
 // these are in the old_scanners directory. They never worked well:
     // scan_extx,  // not ready for prime time
     // scan_httpheader,

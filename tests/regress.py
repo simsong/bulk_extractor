@@ -25,6 +25,7 @@ from subprocess import Popen,call,PIPE
 import subprocess
 import os.path,glob,zipfile,codecs
 import bulk_extractor_reader
+import logging
 
 CORP_ENV     = "DOMEX_CORP"     # default environment variable where corpus is located
 CORP_DEFAULT = "/corp"
@@ -48,6 +49,9 @@ if not os.path.exists(exe):
     exe = "../src/bulk_extractor"
 
 BOM = codecs.BOM_UTF8.decode('utf-8')
+
+def image_path(name):
+    return os.path.join(os.environ.get(CORP_ENV,CORP_DEFAULT), IMAGE_PATH[name])
 
 # Performance tuning
 
@@ -386,6 +390,8 @@ def run_outdir(gdb=False):
         cargs += ['-F','find_list.txt']
 
     if args.image:
+        if not os.path.exists(args.image):
+            raise FileNotFoundError(args.image)
         cargs += [args.image]
     else:
         cargs += ['-R',args.datadir]
@@ -567,7 +573,7 @@ def diff(dname1,dname2):
 
 def run_and_analyze(args):
     t0 = time.time()
-    outdir = run_outdir(args.gdb)
+    outdir = run_outdir(gdb=args.gdb)
     sort_outdir(outdir)
     validate_report(outdir)
     if args.identify_filenames:
@@ -602,17 +608,20 @@ def datacheck():
     outdir = run_outdir()
     datacheck_checkreport(outdir)
         
-def image_path(name):
-    return os.path.join(os.environ.get(CORP_ENV,CORP_DEFAULT), IMAGE_PATH[name])
-
 def download():
     print("Checking downloads:")
-    for name in IMAGE_PATH:
+    for name in IMAGE_PATH.keys():
         path = image_path(name)
         if not os.path.exists(path):
             url = os.path.join(DOWNLOAD_URL, IMAGE_PATH[name])
             print(f"Downloading {url} to {path}")
-            os.makedirs( os.path.dirname(path), exist_ok=True)
+            try:
+                os.makedirs( os.path.dirname(path), exist_ok=True)
+            except OSError as e:
+                logging.error("Cannot create directory %s",os.path.dirname(path))
+                logging.error("HINT: Set envrionment variable %s to be the top-level directory of your corpus archive",CORP_ENV)
+                logging.error("getenv(%s)=%s",CORP_ENV,os.environ.get(CORP_ENV,None))
+                exit(1)
             subprocess.check_call(['curl','-o',path,url])
         
 
@@ -664,7 +673,7 @@ if __name__=="__main__":
     parser.add_argument("--exe",help="Executable to run (default {})".format(exe),default=exe)
     parser.add_argument("--image",
                         help="image to scan (default is {})".format(os.path.basename(IMAGE_PATH[DEFAULT_INFILE])),
-                        default=DEFAULT_INFILE)
+                        default=image_path(DEFAULT_INFILE))
     parser.add_argument("--fast",help="Run with "+os.path.basename(IMAGE_PATH[FAST_INFILE]),action="store_true")
     parser.add_argument("--full",help="Run with "+os.path.basename(IMAGE_PATH[FULL_INFILE]),action="store_true")
     parser.add_argument("--jobs",help="Specifies number of worker threads",type=int)

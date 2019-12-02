@@ -51,31 +51,32 @@ lightgrep_scanners = \
 bulk_scanners = \
 	scan_aes.cpp \
 	scan_base64.cpp \
-	scan_sceadan.cpp\
 	scan_ccns2.cpp scan_ccns2.h \
 	scan_elf.cpp \
 	scan_evtx.cpp \
 	scan_exif.cpp exif_reader.h exif_reader.cpp exif_entry.cpp\
 	scan_exiv2.cpp \
+	scan_facebook.cpp \
 	scan_find.cpp \
 	scan_gzip.cpp \
-	scan_httplogs.cpp \
+	scan_hashdb.cpp \
 	scan_hiberfile.cpp pyxpress.c pyxpress.h \
+	scan_httplogs.cpp \
 	scan_json.cpp \
 	scan_kml.cpp \
+	scan_msxml.cpp \
 	scan_net.cpp \
-	scan_ntfsusn.cpp \
 	scan_ntfsindx.cpp \
 	scan_ntfslogfile.cpp \
+	scan_ntfsmft.cpp \
+	scan_ntfsusn.cpp \
 	scan_outlook.cpp \
-	scan_facebook.cpp \
 	scan_pdf.cpp \
-	scan_msxml.cpp \
 	scan_rar.cpp \
-	scan_hashdb.cpp \
+	scan_sceadan.cpp\
 	scan_sqlite.cpp \
-	scan_vcard.cpp \
 	scan_utmp.cpp \
+	scan_vcard.cpp \
 	scan_windirs.cpp \
 	scan_winlnk.cpp \
 	scan_winpe.cpp \
