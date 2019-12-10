@@ -1,7 +1,7 @@
 #!/bin/bash
 cat <<EOF
 *******************************************************************
-        Configuring Debian 9 to compile bulk_extractor.
+        Configuring Ubuntu 16.04 LTS to compile bulk_extractor.
 *******************************************************************
 
 Install Ubuntu 16.04 LTS and follow these commands:
