@@ -7,7 +7,7 @@ cat <<EOF
 Install Ubuntu 18.04 and follow these commands:
 
 # apt-get install git
-# git clone --recursive git@github.com:simsong/bulk_extractor.git
+# git clone --recursive https://github.com/simsong/bulk_extractor.git
 # cd bulk_extractor
 # bash etc/CONFIGURE_UBUNTU18.bash
 # bootstrap.sh
