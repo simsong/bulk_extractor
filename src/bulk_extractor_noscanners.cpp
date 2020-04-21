@@ -36,4 +36,4 @@
  */
 
 /* An array of the built-in scanners */
-scanner_t *scanners_builtin[] = { 0};
+scanner_t *scanners_builtin[] = { 0 };
