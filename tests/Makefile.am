@@ -8,3 +8,5 @@ regress:
 	python3 regress.py --fast
 	python3 regress.py --full
 
+clean-local:
+	-rm -rf regress-*/
