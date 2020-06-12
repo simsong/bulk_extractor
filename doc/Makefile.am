@@ -11,7 +11,7 @@ EXTRA_DIST = \
 	announce/announce_1.3.txt \
 	announce/announce_1.4.txt \
 	announce/announce_1.5.md \
-	announce/announce_1.6.md \
+	announce/announce_1.6.0.md \
 	bulk_extractor.html \
 	bulk_extractor_paper.pdf \
 	bulk_extractor_slides.pdf\
