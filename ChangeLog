@@ -1,4 +1,7 @@
-2019-11-10  Simson Garfinkel  <simsong@nimi.local>
+2020-06-13  Simson Garfinkel <simsong@acm.org>
+	* updated license to MIT License, copyright Simson L. Garfinkel, consistent with the fact that this is no longer an official US Government work product.
+
+2019-11-10  Simson Garfinkel  <simsong@acm.org>
 
 	* tests/data_check.txt: updated offset for JAVA.EXE
 	sadly, Data/WindowsXPPrefetch_JAVA.exe.pdf was removed because it seems that the file was not in the git repo.
