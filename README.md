@@ -34,7 +34,10 @@ RECOMMENDED CITATION
 ====================
 If you are writing a scientific paper and using bulk_extractor, please cite it with:
 
-* Garfinkel, Simson, Digital media triage with bulk data analysis and bulk_extractor. Computers and Security 32: 56-72 (2013)  https://simson.net/clips/academic/2013.COSE.bulk_extractor.pdf
+Garfinkel, Simson, Digital media triage with bulk data analysis and bulk_extractor. Computers and Security 32: 56-72 (2013) 
+* [Science Direct](https://www.sciencedirect.com/science/article/pii/S0167404812001472)
+* [Bibliometrics](https://plu.mx/plum/a/?doi=10.1016/j.cose.2012.09.011&theme=plum-sciencedirect-theme&hideUsage=true)
+* [Author's website](https://simson.net/clips/academic/2013.COSE.bulk_extractor.pdf)
 ```
 @article{10.5555/2748150.2748581,
 author = {Garfinkel, Simson L.},
