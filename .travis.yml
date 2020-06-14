@@ -1,0 +1,18 @@
+version: ~> 1.0
+language: c
+os: linux
+dist: bionic
+jobs:
+  include:
+  - name: "Linux with gcc"
+    compiler: gcc
+    group: edge
+before_install:
+- sudo apt-get install -y autoconf automake autopoint build-essential libtool pkg-config
+install:
+- sh bootstrap.sh
+script:
+- ./configure
+- make >/dev/null
+- make dist
+- cd tests && python3 regress.py --datacheck
