@@ -22,7 +22,8 @@ For more information on bulk_extractor, visit: http://www.forensicswiki.org/wiki
 Tested Configurations
 =====================
 This release of bulk_extractor has been tested to compile on the following platforms:
-* Amazon Linus as of 2019-11-09
+* Amazon Linux as of 2019-11-09
+* Fedora 32
 * Ubuntu 16.04LTS
 * Ubuntu 18.04LTS
 
