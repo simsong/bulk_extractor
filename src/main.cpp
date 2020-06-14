@@ -49,10 +49,6 @@
 #include <sys/resource.h>
 #endif
 
-#ifdef HAVE_SYS_SYSCTL_H
-#include <sys/sysctl.h>
-#endif
-
 #ifdef WIN32 
 // Allows us to open standard input in binary mode by default 
 // See http://gnuwin32.sourceforge.net/compile.html for more 
