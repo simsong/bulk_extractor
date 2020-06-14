@@ -281,7 +281,7 @@ static uint16_t IPv6L3Chksum(const sbuf_t &sbuf, u_int chksum_byteoffset)
 static uint16_t cksum(const struct be13::ip4 * const ip, int len) 
 {
     long  sum = 0;  /* assume 32 bit long, 16 bit short */
-    const uint16_t *ipp = (uint16_t *) ip;
+    const uint16_t *ipp = (const uint16_t *) ip;
     int   octets_processed = 0;
 
     while (len > 1) {
