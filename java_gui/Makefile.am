@@ -131,12 +131,11 @@ all: $(BE_VIEWER_JAR)
 
 # compile BEViewer to classes, extract jars to classes,
 # then jar together all classes and other requisite files
-# NOTE: for now, compile to Java6 until win, mac, and Linux people are all ready for Java7
 $(BE_VIEWER_JAR): $(SOURCE_FILES)
 	rm -rf classes
 	mkdir -p classes
 	echo $(SOURCE_FILES) > temp_generated_source_list
-	javac -source 1.6 -target 1.6 -Xlint:unchecked -d classes -classpath @temp_generated_source_list
+	javac -source 1.8 -target 1.8 -Xlint:unchecked -d classes -classpath @temp_generated_source_list
 	rm -f temp_generated_source_list
 	echo $(ICON_FILES) | sed s:$(srcdir)/:\ : > temp_generated_icon_list
 	jar cfm $(BE_VIEWER_JAR) $(MANIFEST_FILE) -C $(srcdir) @temp_generated_icon_list -C classes .
