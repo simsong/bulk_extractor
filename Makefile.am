@@ -46,6 +46,15 @@ EXTRA_DIST = \
 
 ACLOCAL_AMFLAGS = -I m4
 
+distclean2: 
+	@echo Deleting:
+	@find . \
+        \( -name '*.orig' -o -name '*.rej' -o -name '*~' \
+        -o -name '*.bak' -o -name '#*#' -o -name '.*.orig' \
+        -o -name '.*.rej' -o -size 0 \
+        -o -name '*%' -o -name '.*.cmd' -o -name 'core' \) \
+        -type f -print | tee /dev/tty | xargs rm -f
+
 .PHONY: exels
 exels:
 	/bin/ls -l */*exe
