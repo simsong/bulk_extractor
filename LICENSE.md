@@ -94,6 +94,8 @@ Licensed under Lesser General Public License version 3 and later
 
 * src/dfxml is Copyright 2012 (C) Simson L. Garfinkel
 
+* src/scan_outlook.h is Copyright (C) 2008-2014, Joachim Metz <joachim.metz@gmail.com>
+
 
 Licensed under General Public License version 3 with the Autoconf exception:
 
