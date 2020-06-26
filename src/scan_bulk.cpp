@@ -38,42 +38,6 @@ static const std::string HUFFMAN("huffman_compressed");
 
 static int debug=0;
 
-#if 0
-/* Voting on the contents of each sector */
-class sector_typetag {
-public:
-    /* the specificity is how 'specific' a type identification is.
-     * It's currently 10 points for each slash and 5 point for each character
-     * that is directly after a slash.
-     * A 0-length is never specific.
-     */
-    static int specificity(const std::string &str){
-	if(str.size()==0) return -100;
-	int count = 0;
-	for(size_t i=0;i<str.size();i++){
-	    if(str[i]=='/') count += 10;
-	    if(str[i]=='/' && i+1<str.size()) count += 5;
-	}
-	return count;
-    }
-    sector_typetag(uint32_t bytes_,const std::string &stype_,const std::string &scomment_):
-	bytes(bytes_),stype(stype_),scomment(scomment_){}
-    sector_typetag():bytes(0),stype(),scomment(){}
-    uint32_t bytes;			// number of bytes in this tag
-    std::string stype;			// the sector type
-    std::string scomment;		// the comments
-    int specificity(){			// number of slashes in stype; a measure of the specificity
-	return specificity(stype);
-    }
-};
-std::ostream & operator<< (std::ostream &os, const sector_typetag &ss) {
-    os << "[" << ss.bytes << " " << ss.stype << " " << ss.scomment << "]";
-    return os;
-};
-typedef vector<sector_typetag> sector_typetags_vector_t; //
-sector_typetags_vector_t sector_typetags;		      // what gets put where
-#endif
-
 static size_t opt_bulk_block_size = 512;	// 
 
 

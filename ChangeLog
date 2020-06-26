@@ -1,3 +1,6 @@
+2020-06-20 simson garfinkel
+	* Removed Java GUI
+	
 2020-06-14  fedora Cloud User  <fedora@ip-172-30-4-244.ec2.internal>
 
 	* src/threadpool.cpp: numCPU() now simply calls std::thread::hardware_concurrency(). Perhaps more should be replaced over time, but it would be super-exciting to see the threadpool be able to spin of threads onto other servers, which was the original intent. 
