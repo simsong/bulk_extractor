@@ -1,5 +1,7 @@
 Welcome to bulk_extractor version 1.5.6.
 
+Note: bulk_extractor version 2.0 is now under development. For information, please see [Release 2.0 roadmap in the release-2.0-dev branch](https://github.com/simsong/bulk_extractor/blob/release-2.0-dev/doc/ROADMAP_2.0.md).
+
 To build bulk_extractor in Linux or OS X,
 
 1. Make sure required packages have been installed. **You can do this by going into the etc/ directory and looking for a script that installs the necessary packages for your platform.**
