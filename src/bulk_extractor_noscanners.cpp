@@ -1,6 +1,6 @@
 /*
- * bulk_extractor.cpp:
- * Feature Extraction Framework...
+ * bulk_extractor_noscanners.cpp:
+ * The bulk_extractor program with no scanners. This is useful for testing plugins without loading all of the scanners.
  *
  */
 
@@ -36,55 +36,4 @@
  */
 
 /* An array of the built-in scanners */
-scanner_t *scanners_builtin[] = {
-#if 0
-    scan_accts,
-    scan_base16,
-    scan_base64,
-    scan_kml,
-    scan_email,
-    scan_httplogs,
-    scan_gps,
-    scan_net,
-    scan_find,
-    scan_wordlist,
-    scan_aes,
-    scan_json,
-#if defined(HAVE_LIBLIGHTGREP) && defined(USE_LIGHTGREP)
-    scan_accts_lg,
-    scan_base16_lg,
-    scan_email_lg,
-    scan_gps_lg,
-    scan_lightgrep,
-#endif
-#ifdef HAVE_EXIV2
-    scan_exiv2,
-#endif
-#ifdef HAVE_HASHDB
-    scan_hashdb,
-#endif
-    scan_elf,
-    scan_exif,
-    scan_zip,
-#ifdef USE_RAR
-    scan_rar,
-#endif
-    scan_gzip,
-    scan_ntfsusn,
-    scan_outlook,
-    scan_pdf,
-    scan_winpe,
-    scan_hiberfile,
-    scan_winlnk,
-    scan_winprefetch,
-    scan_windirs,
-    scan_vcard,
-    scan_sceadan,
-    scan_xor,
-    scan_sqlite,
-    scan_facebook,
-// these are in the old_scanners directory. They never worked well:
-    // scan_extx,  // not ready for prime time
-    // scan_httpheader,
-#endif
-    0};
+scanner_t *scanners_builtin[] = { 0 };

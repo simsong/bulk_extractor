@@ -1,0 +1,28 @@
+version: ~> 1.0
+language: c
+os: linux
+dist: bionic
+jobs:
+  include:
+  - name: "Linux with gcc"
+    env:
+    - PYTHON3="python3"
+    compiler: gcc
+    group: edge
+  - name: "Mac OS with clang"
+    env:
+    - PYTHON3="/usr/local/bin/python3"
+    compiler: clang
+    os: osx
+    osx_image: xcode10
+before_install:
+- if test ${TRAVIS_OS_NAME} = "linux"; then sudo apt-get install -y autoconf automake autopoint build-essential libtool pkg-config; fi
+- if test ${TRAVIS_OS_NAME} = "osx"; then brew update; fi
+install:
+- if test ${TRAVIS_OS_NAME} = "osx"; then export CPPFLAGS="-I/usr/local/opt/openssl@1.1/include ${CPPFLAGS}"; export LDFLAGS="-L/usr/local/opt/openssl@1.1/lib ${LDFLAGS}"; fi
+- sh bootstrap.sh
+script:
+- ./configure
+- make >/dev/null
+- make dist
+- cd tests && ${PYTHON3} regress.py --datacheck

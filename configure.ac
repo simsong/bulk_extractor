@@ -7,7 +7,7 @@
 # and http://www.openismus.com/documents/linux/automake/automake.shtml
 
 AC_PREREQ(2.57)
-AC_INIT(BULK_EXTRACTOR, 1.6.0-dev, bugs@digitalcorpora.org)
+AC_INIT(BULK_EXTRACTOR, 1.6.0, bugs@digitalcorpora.org)
 
 AC_CONFIG_MACRO_DIR(m4)
 
@@ -21,8 +21,7 @@ AC_CONFIG_MACRO_DIR(m4)
 AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile doc/latex_manuals/Makefile \
 			  man/Makefile python/Makefile \
                           plugins/Makefile \
-			  specfiles/Makefile specfiles/bulk_extractor.spec.m4 \
-			  java_gui/Makefile tests/Makefile ])
+			  specfiles/Makefile specfiles/bulk_extractor.spec.m4 tests/Makefile ])
 AC_CONFIG_HEADER([config.h])
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
@@ -50,56 +49,6 @@ AC_C_BIGENDIAN
 
 # These are needed for bulk_extractor. They are not needed for tcpflow
 AC_DEFINE([BULK_EXTRACTOR],1,[We are compiling bulk_extractor])
-
-## 
-## BEViewer
-AC_ARG_ENABLE(BEViewer,
-    [AS_HELP_STRING([--disable-BEViewer],[disable BEViewer even if components for building it are available])], 
-      use_BEViewer=no, 
-      use_BEViewer=yes)
-if test "x$use_BEViewer" == "xyes"; then
-    # validate availability of requisite programs
-
-    # javac
-    AC_CHECK_PROG(has_javac, javac, true, false)
-    if test x"$has_javac" == "xtrue" ; then
-      # javac must be version 6 or later, indicated by the minor number
-      javac_version=`javac -version 2>&1`
-      javac_minor=`echo "$javac_version" | sed -e 's/javac //' | sed -e 's/^1\.//' | sed -e 's/\..*//'`
-      if test $javac_minor ; then
-        if test $javac_minor -lt "6" ; then
-          has_javac=false
-        fi
-      else
-        has_javac=false
-      fi
-    fi
-
-    if test x"$has_javac" == "xfalse" ; then
-        AC_MSG_NOTICE([javac 6 or later is not available for compiling BEViewer.  Try 'apt-get install java-1.7.0-openjdk-devel' or 'yum install java-1.7.0-openjdk-devel' or 'port install java-1.7.0-openjdk-devel' or whatever package manager you happen to be using....])
-    fi
-
-    # jar
-    AC_CHECK_PROG(has_jar, jar, true, false)
-    if test x"$has_jar" == "xfalse" ; then
-        AC_MSG_NOTICE([jar is not available for compiling BEViewer.  Try 'apt-get install java-1.7.0-openjdk-devel' or 'yum install java-1.7.0-openjdk-devel' or 'port install java-1.7.0-openjdk-devel' or whatever package manager you happen to be using....])
-    fi
-fi
-AM_CONDITIONAL([WANT_BE_VIEWER], [test x$has_javac == xtrue -a x$has_jar == xtrue])
-
-##
-## NSIS Windows Installer
-AC_ARG_ENABLE(win_installer,
-    [AS_HELP_STRING([--enable-win_installer],[enable genration of the Windows installer, this also requires BEViewer])], 
-      request_win_installer=yes, 
-      request_win_installer=no)
-if test x"$request_win_installer" == "xyes" ; then
-    AC_CHECK_PROG(has_nsis, makensis, true, false)
-    if test x"$has_nsis" == "xfalse" ; then
-      AC_MSG_NOTICE([nsis is not available for creating the Windows installer.  Try 'apt-get install mingw32-nsis' or 'yum install mingw32-nsis' or 'port install mingw32-nsis' or whatever package manager you happen to be using....])
-    fi
-fi
-AM_CONDITIONAL([WANT_WIN_INSTALLER], [test x"$has_nsis" == xtrue -a x"$has_javac" == xtrue -a x"$has_jar" == xtrue])
 
 if test x"$LEX" == x ; then
   AC_MSG_ERROR([flex not required.])
@@ -243,7 +192,7 @@ AC_SYS_POSIX_TERMIOS
 
 ## Check for headers used by bulk Extractor
 ## do not put pthread here
-AC_CHECK_HEADERS([alloca.h dirent.h dlfcn.h err.h errno.h fcntl.h inttypes.h libgen.h limits.h malloc.h mmap.h pwd.h signal.h stdarg.h stdint.h stdio.h strings.h string.h stdlib.h sys/cdefs.h sys/disk.h sys/fcntl.h sys/ioctl.h sys/mman.h sys/mmap.h sys/mount.h sys/param.h sys/socket.h sys/stat.h sys/types.h sys/time.h sys/resource.h sys/sysctl.h time.h unistd.h windows.h CoreServices/CoreServices.h])
+AC_CHECK_HEADERS([alloca.h dirent.h dlfcn.h err.h errno.h fcntl.h inttypes.h libgen.h limits.h malloc.h mmap.h pwd.h signal.h stdarg.h stdint.h stdio.h strings.h string.h stdlib.h sys/cdefs.h sys/disk.h sys/fcntl.h sys/ioctl.h sys/mman.h sys/mmap.h sys/mount.h sys/param.h sys/socket.h sys/stat.h sys/types.h sys/time.h sys/resource.h time.h unistd.h windows.h CoreServices/CoreServices.h])
 AC_CHECK_FUNCS([err errx getuid getpwuid gethostname getrusage gmtime_r isxdigit ishexnumber le64toh localtime_r _lseeki64 inet_ntop pread64 pread printf mmap munmap MD5 mkstemp mktemp random srandom srandomdev sleep SleepEx strptime usleep vasprintf warn warnx])
 AC_CHECK_FUNCS([CreateProcess LoadLibrary IncrementAtomic InterlockedIncrement])
 
@@ -565,30 +514,7 @@ if test x"${libewf}" != "xyes" ; then
   AC_MSG_WARN([libewf-devel must be installed for E01 support.])
 fi  
 
-# if making BEViewer is not disabled then warn about any missing requisite components
-if test "x$use_BEViewer" == "xyes"; then
-  if test x$has_javac == xfalse -o x$has_jar == xfalse ; then
-    AC_MSG_WARN([javac for BEViewer is unavailable because one or more requisite components are not available:])
-  fi
-  if test "x$has_javac" == "xfalse" ; then
-    echo javac Version 6 or later must be installed to allow javac support for BEViewer.
-  fi
-  if test "x$has_jar" == "xfalse" ; then
-    echo jar must be installed to allow javac support for BEViewer.
-  fi
-else
-  AC_MSG_NOTICE([NOTE: BEViewer is disabled.])
-fi
-
 AC_OUTPUT
-
-## Create the BEViewer Java config file
-echo "// This file is generated by autoconf.  Do not edit this file." > $srcdir/java_gui/src/Config.java
-echo "public final class Config {" >> $srcdir/java_gui/src/Config.java
-echo "  private Config() { }" // no constructor >> $srcdir/java_gui/src/Config.java
-echo "  /** BEViewer Version {@value} */" >> $srcdir/java_gui/src/Config.java
-echo "  public static final String VERSION = \"$PACKAGE_VERSION\";" >> $srcdir/java_gui/src/Config.java
-echo "}" >> $srcdir/java_gui/src/Config.java
 
 ## Finally, record the values of CFLAGS, CPPFLAGS, and CXXFLAGS for DFXML
 echo "#define CPPFLAGS \"$CPPFLAGS\"" >> config.h

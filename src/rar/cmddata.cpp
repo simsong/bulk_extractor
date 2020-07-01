@@ -747,12 +747,14 @@ void CommandData::ProcessSwitch(const char *Switch,const wchar *SwitchW)
                 *End=0;
               if (*Names=='.')
                 Names++;
+#ifdef WE_DONT_USE_THIS_IN_BULKC_EXTRACTOR
               char Mask[NM];
               if (strpbrk(Names,"*?.")==NULL)
-                sprintf(Mask,"*.%s",Names);
+                snprintf(Mask,sizeof(Mask)-1, "*.%s",Names);
               else
                 strcpy(Mask,Names);
               StoreArgs->AddString(Mask);
+#endif
               if (End==NULL)
                 break;
               Names=End+1;

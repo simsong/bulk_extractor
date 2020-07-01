@@ -231,6 +231,14 @@ extern "C" scanner_t scan_xor;
 extern "C" scanner_t scan_outlook;
 extern "C" scanner_t scan_sqlite;
 
+    // scanners provided by 4n6ist:
+extern "C" scanner_t scan_utmp;
+extern "C" scanner_t scan_ntfsmft;
+extern "C" scanner_t scan_ntfslogfile;
+extern "C" scanner_t scan_ntfsindx;
+extern "C" scanner_t scan_evtx;
+
+
 #endif
 #endif
 

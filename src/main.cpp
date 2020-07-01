@@ -49,10 +49,6 @@
 #include <sys/resource.h>
 #endif
 
-#ifdef HAVE_SYS_SYSCTL_H
-#include <sys/sysctl.h>
-#endif
-
 #ifdef WIN32 
 // Allows us to open standard input in binary mode by default 
 // See http://gnuwin32.sourceforge.net/compile.html for more 
@@ -278,6 +274,49 @@ static bool directory_empty(const std::string &d)
     return false;
 }
 
+/* An array of the built-in scanners */
+scanner_t *scanners_builtin[] = {
+    scan_accts,
+    scan_base16,
+    scan_base64,
+    scan_kml,
+    scan_email,
+    //    scan_httpheader,
+    scan_gps,
+    scan_net,
+    scan_find,
+    scan_wordlist,
+    scan_aes,
+    scan_json,
+#ifdef HAVE_LIBLIGHTGREP
+    scan_lightgrep,
+#endif
+#ifdef USE_SCEADAN
+    scan_sceadan,  // not ready for prime time
+#endif
+    //scan_extx,  // not ready for prime time
+#ifdef HAVE_EXIV2
+    scan_exiv2,
+#endif
+#ifdef HAVE_HASHID
+    scan_hashid,
+#endif
+    scan_elf,
+    scan_exif,
+    scan_zip,
+#ifdef USE_RAR
+    scan_rar,
+#endif
+    scan_gzip,
+    scan_pdf,
+    scan_winpe,
+    scan_hiberfile,
+    scan_winprefetch,
+    scan_windirs,
+    scan_vcard,
+    scan_bulk,
+    scan_xor,
+    0};
 
 /***************************************************************************************
  *** PATH PRINTER - Used by bulk_extractor for printing pages associated with a path ***

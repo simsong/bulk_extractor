@@ -819,7 +819,7 @@ void scan_elf (const class scanner_params          &sp,
 		xml = scan_elf_verify(data);
 		if (xml != "") {
                     sbuf_t hdata(data,0,4096);
-                    std::string hexhash = f->fs.hasher.func(hdata.buf,hdata.bufsize);
+                    std::string hexhash = f->fs.hasher.func(hdata.buf, hdata.bufsize);
 		    f->write(data.pos0, hexhash,xml);
 		}
 	    }

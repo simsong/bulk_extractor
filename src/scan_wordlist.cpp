@@ -9,6 +9,7 @@
 static uint32_t word_min = 6;
 static uint32_t word_max = 14;
 static uint64_t max_word_outfile_size=100*1000*1000;
+static bool strings = false;
 
 /* Wordlist support for flat files */
 class WordlistSorter {
@@ -122,13 +123,17 @@ static void wordlist_sql_write(BEAPI_SQLITE3 *db3)
 static bool wordchar[256];
 inline bool wordchar_func(unsigned char ch)
 {
-    return isprint(ch) && ch!=' ' && ch<128;
+    if(strings) {
+      return isprint(ch) && ch<128;
+    } else {
+      return isprint(ch) && ch!=' ' && ch<128;
+    }
 }
 
 static void wordchar_setup()
 {
     for(int i=0;i<256;i++){
-	wordchar[i] = wordchar_func(i);
+      wordchar[i] = wordchar_func(i);
     }
 }
 
@@ -146,6 +151,7 @@ void scan_wordlist(const class scanner_params &sp,const recursion_control_block 
         sp.info->get_config("max_word_outfile_size",&max_word_outfile_size,
                             "Maximum size of the words output file");
         sp.info->get_config("wordlist_use_flatfiles",&wordlist_use_flatfiles,"Override SQL settings and use flatfiles for wordlist");
+        sp.info->get_config("strings",&strings,"Scan for strings instead of words");
 
         if(wordlist_use_flatfiles || fs.db3==0){
             sp.info->feature_names.insert(WORDLIST);
@@ -185,12 +191,14 @@ void scan_wordlist(const class scanner_params &sp,const recursion_control_block 
         
     /* shutdown code is multi-threaded */
     if(sp.phase==scanner_params::PHASE_SHUTDOWN){
-        std::cout << "Phase 3. Uniquifying and recombining wordlist\n";
-        ofn_template = sp.fs.get_outdir()+"/wordlist_split_%03d.txt";
-        
-        if (wordlist_recorder) {
-            wordlist_split_and_dedup(sp.fs.get_outdir()+"/" WORDLIST ".txt");
-            return;
+        if(!strings){
+          std::cout << "Phase 3. Uniquifying and recombining wordlist\n";
+          ofn_template = sp.fs.get_outdir()+"/wordlist_split_%03d.txt";
+
+          if (wordlist_recorder) {
+              wordlist_split_and_dedup(sp.fs.get_outdir()+"/" WORDLIST ".txt");
+              return;
+          }
         }
 
         if (fs.db3) {
@@ -204,54 +212,61 @@ void scan_wordlist(const class scanner_params &sp,const recursion_control_block 
     if(sp.phase==scanner_params::PHASE_SCAN){
 	const sbuf_t &sbuf = sp.sbuf;
 
-	/* Look for words in the buffer. Runs a finite state machine.
-	 * for each character in the buffer. There are only two
-	 * transitions that we care about:
-         *
-	 * case 1 - we are not in a word & this character starts a word.
-         *
-	 * case 2 - we are in a word & this character ends a word.
-	 */
+	/* Simplified word extractor. */
     
-        bool  inword = false;
-	u_int wordstart = 0;		
-	for(u_int i = 0; i <= sbuf.pagesize; i++){
-
-            /* Find if the current character at sbuf.buf[i] is a word character, or if we ran off the end of a word */
-	    bool iswordchar = (i < sbuf.pagesize) ? wordchar[sbuf.buf[i]] : false; 
-
-	    /* case 1 - we are not in a word & this character starts a word. */
-	    if (inword==false && iswordchar){
-                inword    = true;
-		wordstart = i;
-		continue;
+        if (sbuf.bufsize==0){           // nothing to scan
+            return;
+        }
+        bool in_word     = false;        // true if we are in a word
+        u_int wordstart = 0;            // if we are in the word, where it started
+	for(u_int i=0; i<sbuf.bufsize; i++){
+            bool is_wordchar = wordchar[sbuf.get8u(i)];
+            if (!in_word) {
+                /* case 1 - we are not in a word */
+                /* does this character start a word? */
+                if (is_wordchar){
+                    in_word = true;
+                    wordstart = i;
+                }
+                /* If we are not in a word and we have extended into the margin, quit. */
+                if (i>sbuf.pagesize){
+                    return;
+                }
+                continue;
 	    }
-            /* case 2 - we are in a word & this character ends a word. 
-                      - or we ran off the end of the sbuf (e.g. i==sbuf.pagesize)
-             */
-	    if (inword && !iswordchar ){
-		uint32_t len = i-wordstart;
-		if ((word_min <= len) && (len <=  word_max)){
-
-                    /* Save the word that starts at sbuf.buf+wordstart that has a length of len. */
-                    std::string word = sbuf.substr(wordstart,len);
+            else {
+                /* case 2 - we are in a word */
+                /* If this is the end of the word, or we are in the word and this is the end of the margin,
+                 * do end-of-word processing.
+                 */
+                /* Does - we are in a word & this character ends a word. */
+                if (in_word && !is_wordchar){
+                    uint32_t len = i - wordstart;
+                    if ((word_min <= len) && (len <=  word_max)){
+                        /* Save the word that starts at sbuf.buf+wordstart that has a length of len. */
+                        std::string word = sbuf.substr(wordstart,len);
                     
-                    //std::cerr << "word=" << word << " wr=" << wordlist_recorder << " fs.db3=" << fs.db3 << "\n";
-
-                    if (wordlist_recorder) {
-                        wordlist_recorder->write(sbuf.pos0+wordstart,word,"");
-                    } else if (fs.db3) {
-#ifdef USE_SQLITE3
-                        cppmutex::lock lock(wordlist_stmt->Mstmt);
-                        sqlite3_bind_blob(wordlist_stmt->stmt, 1, (const char *)word.data(), word.size(), SQLITE_STATIC);
-                        if (sqlite3_step(wordlist_stmt->stmt) != SQLITE_DONE) {
-                            fprintf(stderr,"sqlite3_step failed on scan_wordlist\n");
-                        }
-                        sqlite3_reset(wordlist_stmt->stmt);
+#ifdef DEBUG_THIS
+                        std::cerr << "word=" << word << " wr="
+                                  << wordlist_recorder << " fs.db3=" << fs.db3 << "\n";
 #endif
-                    } 
-		}
-		inword = false;
+                        if (wordlist_recorder) {
+                            wordlist_recorder->write(sbuf.pos0+wordstart,word,"");
+                        } else if (fs.db3) {
+#ifdef USE_SQLITE3
+                            cppmutex::lock lock(wordlist_stmt->Mstmt);
+                            sqlite3_bind_blob(wordlist_stmt->stmt, 1,
+                                              (const char *)word.data(), word.size(), SQLITE_STATIC);
+                            if (sqlite3_step(wordlist_stmt->stmt) != SQLITE_DONE) {
+                                fprintf(stderr,"sqlite3_step failed on scan_wordlist\n");
+                            }
+                            sqlite3_reset(wordlist_stmt->stmt);
+#endif
+                        } 
+                    }
+                    wordstart = 0;
+                    in_word = false;
+                }
 	    }
 	}
     }

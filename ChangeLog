@@ -1,7 +1,41 @@
+2020-06-20 simson garfinkel
+	* Removed Java GUI
+	
+2020-06-14  fedora Cloud User  <fedora@ip-172-30-4-244.ec2.internal>
+
+	* src/threadpool.cpp: numCPU() now simply calls std::thread::hardware_concurrency(). Perhaps more should be replaced over time, but it would be super-exciting to see the threadpool be able to spin of threads onto other servers, which was the original intent. 
+
+2020-06-13  Simson Garfinkel <simsong@acm.org>
+	* updated license to MIT License, copyright Simson L. Garfinkel, consistent with the fact that this is no longer an official US Government work product.
+
+2019-11-10  Simson Garfinkel  <simsong@acm.org>
+
+	* tests/data_check.txt: updated offset for JAVA.EXE
+	sadly, Data/WindowsXPPrefetch_JAVA.exe.pdf was removed because it seems that the file was not in the git repo.
+
+	* src/scan_wordlist.cpp (scan_wordlist): changed sbuf.buf[i] to sbuf.get8u(i) to eliminate crash.
+	(scan_wordlist): cleaned up state machine. (The above fix made it clear there was a state machine error.)
+
+	* configure.ac: increased version number to 1.6.0 to celebrate the new scanners
+
+	* src/scan_utmp.cpp: added scanner
+
+	* src/scan_ntfsmft.cpp: added scanner
+
+	* src/scan_ntfslogfile.cpp: added scanner
+
+	* src/scan_ntfsindx.cpp: added scanner
+
+	* src/scan_evtx.cpp: added scanner
+
+2019-11-09 Overall <simsong@acm.org>
+
+	* ChangeLog - cleaned up for current release. Incremented version number to 1.5.6
+
 2014-08-20  Basic  <simsong@r4.ncr.nps.edu>
 
 	* src/scan_pipe.cpp (scan_pipe): removed scan_pipe (since you don't want to fork with threads)
-	
+
 2014-08-12  Man Page  <simsong@mncrnpsedu.local>
 
 	* doc/announce_1.5.2.md: annouced release 1.5.2

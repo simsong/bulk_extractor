@@ -7,6 +7,7 @@ A basic framework for running bulk_extractor and viewing the results.
 
 Options include:
 
+ --download - download files needed
  --verify  - verify a single BE report
  --tune    - runs bulk_extractor under a variety of conditions
  - Total number of features are reported and compared with the archives.
@@ -17,29 +18,40 @@ __version__ = "1.5.0"
 b'This module needs Python 2.7 or later.'
 
 import os,sys
-try:
-    sys.path.append(os.getenv("DOMEX_HOME") + "/src/bulk_extractor/trunk/python/") # add the library
-except TypeError as e:
-    pass
-sys.path.append("../python/")      # add the library
+sys.path.append("../python/")   # add the library
 sys.path.append("python/")      # add the library
 
 from subprocess import Popen,call,PIPE
+import subprocess
 import os.path,glob,zipfile,codecs
 import bulk_extractor_reader
+import logging
 
-corp_default = "/corp"
+CORP_ENV     = "DOMEX_CORP"     # default environment variable where corpus is located
+CORP_DEFAULT = "/corp"
 
+DOWNLOAD_URL = "http://downloads.digitalcorpora.org/corpora/drives"
 
-default_infile   = "nps-2009-ubnist1/ubnist1.gen3.raw"
-fast_infile      = "nps-2010-emails/nps-2010-emails.raw"
-full_infile      = "nps-2009-domexusers/nps-2009-domexusers.raw"
-exe              = "src/bulk_extractor"
+IMAGE_UBNIST1 = "ubnist1"
+IMAGE_EMAILS  = "emails"
+IMAGE_DOMEXUSERS = "domexusers"
+
+IMAGE_PATH = {IMAGE_UBNIST1:"nps-2009-ubnist1/ubnist1.gen3.raw",
+              IMAGE_EMAILS:"nps-2010-emails/nps-2010-emails.E01",
+              IMAGE_DOMEXUSERS:"nps-2009-domexusers/nps-2009-domexusers.E01"}
+
+DEFAULT_INFILE = IMAGE_UBNIST1
+FAST_INFILE    = IMAGE_EMAILS
+FULL_INFILE    = IMAGE_DOMEXUSERS
+exe            = "src/bulk_extractor"
+
 if not os.path.exists(exe):
     exe = "../src/bulk_extractor"
 
-nps_drives_path = "/nps/drives/"
 BOM = codecs.BOM_UTF8.decode('utf-8')
+
+def image_path(name):
+    return os.path.join(os.environ.get(CORP_ENV,CORP_DEFAULT), IMAGE_PATH[name])
 
 # Performance tuning
 
@@ -108,17 +120,6 @@ def ptime(t):
         t = t%60
     r += "%d sec " % t
     return r
-
-def find_file(fn):
-    if os.path.exists(fn): return fn
-    chk = []
-    for ne in ('.E01','.aff','.000','.001'):
-        tfn = fn.replace(".raw",ne)
-        if os.path.exists(tfn):
-            return tfn
-        chk.append([tfn])
-    raise RuntimeError("Cannot find file "+tfn)
-
 
 if sys.version_info < (2,7):
     raise "Requires Python 2.7 or above"
@@ -382,13 +383,15 @@ def run_outdir(gdb=False):
     if args.debug: cargs += ['-d'+str(args.debug)]
 
     if args.find:
-        cargs += ['-r','tests/alert_list.txt']
-        cargs += ['-w','tests/stop_list.txt']
-        cargs += ['-w','tests/stop_list_context.txt']
+        cargs += ['-r','alert_list.txt']
+        cargs += ['-w','stop_list.txt']
+        cargs += ['-w','stop_list_context.txt']
         cargs += ['-f','[a-z\.0-9]*@gsa.gov']
-        cargs += ['-F','tests/find_list.txt']
+        cargs += ['-F','find_list.txt']
 
     if args.image:
+        if not os.path.exists(args.image):
+            raise FileNotFoundError(args.image)
         cargs += [args.image]
     else:
         cargs += ['-R',args.datadir]
@@ -568,11 +571,9 @@ def diff(dname1,dname2):
             if count1 or count2:
                 print("\n-------------\n")
 
-
-def run_and_analyze():
-    global args
+def run_and_analyze(args):
     t0 = time.time()
-    outdir = run_outdir(args.gdb)
+    outdir = run_outdir(gdb=args.gdb)
     sort_outdir(outdir)
     validate_report(outdir)
     if args.identify_filenames:
@@ -605,10 +606,27 @@ def datacheck():
     if "outlook" in get_scanners(args.exe):
         args.extra += "-e outlook"
     outdir = run_outdir()
-    datacheckreport(outdir)
+    datacheck_checkreport(outdir)
         
-def datacheckreport(outdir):
-    # Open the datadir
+def download():
+    print("Checking downloads:")
+    for name in IMAGE_PATH.keys():
+        path = image_path(name)
+        if not os.path.exists(path):
+            url = os.path.join(DOWNLOAD_URL, IMAGE_PATH[name])
+            print(f"Downloading {url} to {path}")
+            try:
+                os.makedirs( os.path.dirname(path), exist_ok=True)
+            except OSError as e:
+                logging.error("Cannot create directory %s",os.path.dirname(path))
+                logging.error("HINT: Set envrionment variable %s to be the top-level directory of your corpus archive",CORP_ENV)
+                logging.error("getenv(%s)=%s",CORP_ENV,os.environ.get(CORP_ENV,None))
+                exit(1)
+            subprocess.check_call(['curl','-o',path,url])
+        
+
+def datacheck_checkreport(outdir):
+    """Reports on whether the output in outdir matches the datacheck report"""
     print("opening ",outdir)
     b = bulk_extractor_reader.BulkReport(outdir)
     found_features = {}
@@ -647,13 +665,17 @@ if __name__=="__main__":
 
     parser = argparse.ArgumentParser(description="Perform regression testing on bulk_extractor",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument("--download", help="Download the regression images", action='store_true')
+    parser.add_argument("--corp", help="Specification root of corpus. Defaults to location specified by environment variable {} or to {} if environment variable is not present".format(CORP_ENV,CORP_DEFAULT))
     parser.add_argument("--gdb",help="run under gdb",action="store_true")
     parser.add_argument("--debug",help="debug level",type=int)
     parser.add_argument("--outdir",help="output directory base",default=None)
     parser.add_argument("--exe",help="Executable to run (default {})".format(exe),default=exe)
-    parser.add_argument("--image",help="image to scan (default {})".format(default_infile),default=default_infile)
-    parser.add_argument("--fast",help="Run with "+fast_infile,action="store_true")
-    parser.add_argument("--full",help="Run with "+full_infile,action="store_true")
+    parser.add_argument("--image",
+                        help="image to scan (default is {})".format(os.path.basename(IMAGE_PATH[DEFAULT_INFILE])),
+                        default=image_path(DEFAULT_INFILE))
+    parser.add_argument("--fast",help="Run with "+os.path.basename(IMAGE_PATH[FAST_INFILE]),action="store_true")
+    parser.add_argument("--full",help="Run with "+os.path.basename(IMAGE_PATH[FULL_INFILE]),action="store_true")
     parser.add_argument("--jobs",help="Specifies number of worker threads",type=int)
     parser.add_argument("--pagesize",help="Specifies page size",type=int)
     parser.add_argument("--no-find",dest='find',help="Does not do find test (faster)",action="store_false")
@@ -695,10 +717,15 @@ if __name__=="__main__":
     parser.add_argument("--dry-run",help="Don't actually run the program",action='store_true')
     parser.add_argument("--datadircomp",help="Compare two data dirs")
     parser.add_argument("--datacheck",help="Runs BE on the files in Data/ directory and makes sure that all of the features in data_check.txt are found",action='store_true')
-    parser.add_argument("--datacheckreport",help="Checks the files in in Data/ directory and makes sure that all of the features in data_check.txt are found")
+    parser.add_argument("--datacheck_checkreport",help="Checks the files in in Data/ directory and makes sure that all of the features in data_check.txt are found")
 
     args = parser.parse_args()
     
+    if args.download:
+        download()
+        print("All image downloaded")
+        exit(0)
+
     if args.datadircomp:
         dirs = args.datadircomp.split(",")
         datadircomp(dirs[0],dirs[1])
@@ -765,30 +792,26 @@ if __name__=="__main__":
 
     args.outdir += "-"+bulk_extractor_reader.be_version(args.exe)
 
-    if args.datacheck: datacheck() ; exit(1)
+    if args.datacheck:
+        datacheck() ;
+        exit(0)
 
-    if args.datacheckreport: datacheckreport(args.datacheckreport); exit(1)
-
-
-    corp = os.getenv("DOMEX_CORP")
-    if not corp:
-        corp = corp_default
-    drives =  corp + nps_drives_path
+    if args.datacheck_checkreport:
+        datacheck_checkreport(args.datacheck_checkreport);
+        exit(0)
 
     if args.fast:
-        args.image  = fast_infile
+        args.image = image_path(FAST_INFILE)
         if args.extra:
             args.extra += ' '
         else:
             args.extra = ''
         args.extra  += '-G 65536'
+
     if args.full:
-        args.image  = full_infile
+        args.image  = image_path(FULL_INFILE)
 
     args.outdir += "-" + os.path.basename(args.image)
-
-    if not os.path.exists(args.image):
-        args.image = find_file(drives+args.image)
 
     if args.memdebug:
         fn = "/usr/lib/libgmalloc.dylib"
@@ -814,13 +837,13 @@ if __name__=="__main__":
         os.putenv("MallocCheckHeapAbort","1")
         os.putenv("MallocErrorAbort","1")
         os.putenv("MallocCorruptionAbort","1")
-        run_and_analyze()
+        run_and_analyze(args)
         exit(0)
 
     if args.gprof:
         call(['make','clean'])
         call(['make','CFLAGS=-pg','CXXFLAGS=-pg','LDFLAGS=-pg'])
-        outdir = run_and_analyze()
+        outdir = run_and_analyze(args)
         call(['gprof',program,"gmon.out"],stdout=open(outdir+"/GPROF.txt","w"))
 
     if args.diff:
@@ -866,5 +889,5 @@ if __name__=="__main__":
             
         exit(0)
         
-    run_and_analyze()
+    run_and_analyze(args)
 

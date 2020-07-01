@@ -51,26 +51,31 @@ lightgrep_scanners = \
 bulk_scanners = \
 	scan_aes.cpp \
 	scan_base64.cpp \
-	scan_sceadan.cpp\
 	scan_ccns2.cpp scan_ccns2.h \
 	scan_elf.cpp \
+	scan_evtx.cpp \
 	scan_exif.cpp exif_reader.h exif_reader.cpp exif_entry.cpp\
 	scan_exiv2.cpp \
+	scan_facebook.cpp \
 	scan_find.cpp \
 	scan_gzip.cpp \
-	scan_httplogs.cpp \
+	scan_hashdb.cpp \
 	scan_hiberfile.cpp pyxpress.c pyxpress.h \
+	scan_httplogs.cpp \
 	scan_json.cpp \
 	scan_kml.cpp \
+	scan_msxml.cpp \
 	scan_net.cpp \
+	scan_ntfsindx.cpp \
+	scan_ntfslogfile.cpp \
+	scan_ntfsmft.cpp \
 	scan_ntfsusn.cpp \
 	scan_outlook.cpp \
-	scan_facebook.cpp \
 	scan_pdf.cpp \
-	scan_msxml.cpp \
 	scan_rar.cpp \
-	scan_hashdb.cpp \
+	scan_sceadan.cpp\
 	scan_sqlite.cpp \
+	scan_utmp.cpp \
 	scan_vcard.cpp \
 	scan_windirs.cpp \
 	scan_winlnk.cpp \
@@ -142,11 +147,13 @@ unitest$(EXEEXT): unicode_escape.cpp
 # Rule to compile .flex into a .o
 # FreeBSD NOTE: flex does not support -R and -o does not work properly
 # | sed "s/static int yy_get_next_buffer/static int XXyy_get_next_buffer/" 
+#
+# 2019-11-09 - updated to remove the word 'register' which is no longer needed
 
 SUFFIXES = .flex
 FLEX_CXXFLAGS=-Wno-shadow -Wno-effc++ -Wno-redundant-decls -Wno-missing-noreturn
 .flex.o:
-	$(LEX) -R -t $<  > `basename $@ .o`.cpp 
+	$(LEX) -R -t $<  | sed "s/register //" > `basename $@ .o`.cpp 
 	$(CXX) $(CPPFLAGS) $(AM_CPPFLAGS) $(CXXFLAGS) $(FLEX_CXXFLAGS) \
 		-I${top_srcdir} -I${srcdir} -I.. -I../../_build -c `basename $@ .o`.cpp 
 

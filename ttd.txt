@@ -6,6 +6,7 @@ bulk_extractor SQL tests:
 Wordlist:
  - new options to make it a plain wordlist, with no other information in the file.
 
+scan_hex to decode hex-coded strings.
 
 approach for histogram transformation:
 
