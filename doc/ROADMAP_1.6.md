@@ -148,7 +148,7 @@ associated with the Feature that is currently navigated to.
 	http://www.woanware.co.uk/?page_id=173	
 
   - Ability to detect and analyze SuperFetch files
-	http://www.forensicswiki.org/wiki/SuperFetch
+	https://forensicswiki.xyz/wiki/index.php?title=SuperFetch
 
 - scan_plist
  - create. Give it the ability to find and decode Mac plist files (binary and XML)

@@ -13,8 +13,8 @@
  *                   that were missed when the scanner ran on Windows.
  *
  * Resources:
- * - http://forensicswiki.org/wiki/Prefetch
- * - http://www.forensicswiki.org/wiki/Windows_Prefetch_File_Format
+ * - https://forensicswiki.xyz/wiki/index.php?title=Prefetch
+ * - https://forensicswiki.xyz/wiki/index.php?title=Windows_Prefetch_File_Format
  * - prefetch research discussion: http://42llc.net/?p=375
  * - a viewer: http://www.nirsoft.net/utils/win_prefetch_view.html
  * - Use of UTF16 in Windows OS: http://en.wikipedia.org/wiki/UTF-16
