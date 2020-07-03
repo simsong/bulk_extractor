@@ -4,7 +4,7 @@
 # 2020-06-27 - slg - expanded to G++ for MacOS
 # 2020-07-03 - slg - ported to be13_api; removed python (be13_api doesn't use python)
 
-name: BE13_API CI (c++14)
+name: BE2 CI (c++14)
 on: [push]
 
 jobs:
@@ -29,11 +29,20 @@ jobs:
       - name: Install C++ dependencies on Ubuntu
         if: startsWith(matrix.os, 'ubuntu')
         run: |
-           sudo apt install libtool autoconf automake
-           automake --help
+           sudo apt install libtool autoconf automake build-essentials pkg-config
 
-      - name: c/c++ test
+      - name: c/c++ compile test
         run: |
           bash bootstrap.sh
           ./configure && make && make check 
+
+      - name: make dist test
+        run: |
+          bash bootstrap.sh
+          make dist
+
+      - name: regresion test
+        run: |
+          cd tests
+          python3 regress.py --datacheck
 
