@@ -217,6 +217,7 @@ void scan_wordlist(const class scanner_params &sp,const recursion_control_block 
         if (sbuf.bufsize==0){           // nothing to scan
             return;
         }
+
         bool in_word     = false;        // true if we are in a word
         u_int wordstart = 0;            // if we are in the word, where it started
 	for(u_int i=0; i<sbuf.bufsize; i++){

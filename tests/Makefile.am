@@ -21,3 +21,13 @@ regress:
 clean-local:
 	-rm -rf regress-*/
 
+regress:
+	@echo Making regression tests
+	python3 regress.py --download
+	python3 regress.py --datacheck
+	python3 regress.py
+	python3 regress.py --fast
+	python3 regress.py --full
+
+clean-local:
+	-rm -rf regress-*/

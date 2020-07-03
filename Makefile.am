@@ -5,6 +5,8 @@
 # (C) 2020 Simson L. Garfinkel
 # https://www.gnu.org/licenses/lgpl-3.0.en.html
 
+
+
 SUBDIRS = doc doc/latex_manuals src man plugins python specfiles tests $(BE_VIEWER_DIR) 
 
 # don't include bootstrap. People run it, and they shoudln't
