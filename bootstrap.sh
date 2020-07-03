@@ -2,13 +2,11 @@
 # Make sure it was checked out with git clone --recursive ...
 # If not, update the submodules
 
-for sub in be13_api dfxml 
+for sub in be13_api be13_api/dfxml 
 do
   if [ ! -r src/$sub/.git ] ;  then
-    echo bringing in submodules
-    echo next time check out with git clone --recursive
-    git submodule init
-    git submodule update
+    echo submodule $sub is not present. 
+    exit 1
   fi
 done
 

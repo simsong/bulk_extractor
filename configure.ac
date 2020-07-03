@@ -41,11 +41,10 @@ AC_PROG_LEX
 # https://www.gnu.org/software/autoconf-archive/ax_cxx_compile_stdcxx_11.html
 
 m4_include([m4/ax_cxx_compile_stdcxx_11.m4])
+AC_LANG_PUSH(C++)
 AX_CXX_COMPILE_STDCXX_11(noext, optional)
+AC_LANG_POP()
 
-
-# Endian check is required for MD5 implementation
-AC_C_BIGENDIAN
 
 # These are needed for bulk_extractor. They are not needed for tcpflow
 AC_DEFINE([BULK_EXTRACTOR],1,[We are compiling bulk_extractor])
@@ -66,7 +65,6 @@ else
   AC_MSG_ERROR([$LEX does not support -R.  Please get a modern version of gnu flex])
 fi
 
-
 m4_include([m4/slg_mingw_support.m4])
 m4_include([m4/slg_searchdirs.m4])
 m4_include([m4/slg_gcc_all_warnings.m4])
@@ -76,7 +74,7 @@ m4_include([m4/slg_gcc_all_warnings.m4])
 
 CFLAGS="$CFLAGS"
 
-m4_include([src/dfxml/src/dfxml_configure.m4])
+m4_include([src/be13_api/dfxml/src/dfxml_configure.m4])
 m4_include([src/be13_api/be13_configure.m4])
 
 ################################################################
@@ -240,9 +238,8 @@ AC_CHECK_HEADERS([expat.h])
 AC_CHECK_LIB([expat],[XML_ParserCreate])
 
 ################################################################
-## regex support
-## there are several options
-## tre is better than regex
+## Lightgrep support
+## 
 AC_CHECK_LIB([stdc++],[main])
 
 if test x"$lightgrep" == x"yes"; then
@@ -271,10 +268,7 @@ if test x"$lightgrep" == x"yes"; then
   LDFLAGS="$LDFLAGS `$PKG_CONFIG --libs-only-L --libs-only-other lightgrep`"
 fi
 
-AC_CHECK_HEADERS([regex.h tre/tre.h])
-AC_CHECK_LIB([regex],[regcomp])
-AC_CHECK_LIB([tre],[tre_regcomp])
-AC_CHECK_FUNCS([regcomp tre_regcomp tre_version])
+# We can also use C++11 regex, which we just assume we have, because it's the standard.
 
 ################################################################
 ## AFFLIB support

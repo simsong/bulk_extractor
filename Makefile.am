@@ -2,6 +2,8 @@
 # This file is compiled with automake to create Makefile.in. 
 # Makefile.in is transformed by "configure" to create Makefile
 #
+# (C) 2020 Simson L. Garfinkel
+# https://www.gnu.org/licenses/lgpl-3.0.en.html
 
 SUBDIRS = doc doc/latex_manuals src man plugins python specfiles tests $(BE_VIEWER_DIR) 
 

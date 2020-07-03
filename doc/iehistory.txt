@@ -1,0 +1,29 @@
+- new scanner for Windows iedownloadhistory index.dat file contents
+File /users/<username>/appdata/roaming/microsoft/windows/iedownloadhistory/index.dat
+contains download history and timestamp information from IE9.
+
+Here is the data structure, contributed by Fornzix on linux_forensics on 6/26/12:
+1. Records show up as gibberish until the computer is restarted for
+some reason. Even shutting down IE9 didn't help. After the restart,
+the records are readable.
+2. Individual download records are sized in multiples of 128 bytes
+(896,1024,1152,1280,.....).
+3. Individual downloads start with "URL" (bytes 1-3).
+4. Byte 4 = unknown.
+5. Byte 5-6 = These two bytes make a 16 bit Integer which is the
+length of the record in 128 byte chunks (i.e. hex 0B 00 = 11, and 11 x
+128 = 1408, which is the total record length from "URL" to #12 below).
+6. Bytes 17-24 = 8 byte Windows Date / Time when the download
+finished.
+7. Bytes 81-84 = 4 byte DOS (GMT) Time when download finished (funny
+though... it's a few 1000's of a second longer than bytes 17-24)
+8. Bytes 193-200 = 8 byte Windows Date / Time when the download
+finished. (same as bytes 17-24)
+9. Byte 469 = Start of download URL "http".
+10. Three hex "00" in a row separate the end of the download URL from
+the beginning of the location saved to on the hard drive.
+11. There are three hex "00" at the end of the location where the file
+was stored on the hard drive.
+12. The remainder of the record, which could be considered 'slack
+space' is taken up with hex EF:BE:AD:DE which is "DEADBEEF".
+

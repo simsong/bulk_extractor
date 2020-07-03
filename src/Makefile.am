@@ -8,7 +8,7 @@ AM_CPPFLAGS = -I${top_srcdir}/src/be13_api
 AUTOMAKE_OPTIONS = subdir-objects
 
 # bring in defs from two included projects
-include dfxml/src/Makefile.defs
+include be13_api/dfxml/src/Makefile.defs
 include be13_api/Makefile.defs
 include rar/Makefile.defs
 
