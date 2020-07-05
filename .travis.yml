@@ -6,6 +6,9 @@ jobs:
   include:
   - name: "Linux with gcc"
     env:
+    - CFLAGS="--coverage"
+    - CXXFLAGS="--coverage"
+    - LDFLAGS="--coverage"
     - PYTHON3="python3"
     compiler: gcc
     group: edge
@@ -26,3 +29,5 @@ script:
 - make >/dev/null
 - make dist
 - cd tests && ${PYTHON3} regress.py --datacheck
+after_success:
+- if test ${TRAVIS_COMPILER} = "gcc"; then curl -o codecov.sh -s https://codecov.io/bash && /bin/bash ./codecov.sh; fi
