@@ -133,7 +133,7 @@ int
 b64_pton_forensic(char const *src, int srclen, unsigned char *target, size_t targsize)
 {
         int tarindex=0, state=0, ch=0;
-        char *pos=0;
+        const char *pos=0;
 
         state = 0;
         tarindex = 0;
@@ -153,11 +153,8 @@ b64_pton_forensic(char const *src, int srclen, unsigned char *target, size_t tar
                 if(ch=='_') ch='/';
 
 
-#ifdef HAVE_CONFORMING_STRCHR
                 pos = strchr(Base64, ch);
-#else
-                pos = strchr((char *)Base64, ch);
-#endif
+
                 if (pos == 0){          /* A non-base64 character. */
                     puts("B64 Fail at 1");
                     /* return (-1);*/

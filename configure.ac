@@ -7,7 +7,7 @@
 # and http://www.openismus.com/documents/linux/automake/automake.shtml
 
 AC_PREREQ(2.57)
-AC_INIT(BULK_EXTRACTOR, 1.6.0, bugs@digitalcorpora.org)
+AC_INIT(BULK_EXTRACTOR, 2.0.0-dev, bugs@digitalcorpora.org)
 
 AC_CONFIG_MACRO_DIR(m4)
 
@@ -30,21 +30,17 @@ AC_PREFIX_PROGRAM(bulk_extractor) dnl build for same location
 # Programs we will be using
 AC_PROG_CC
 AC_PROG_CXX
-AC_PROG_CC_C99 
 AM_PROG_CC_C_O                    dnl allow per-produce flags
 AC_PROG_INSTALL
 AC_PROG_LEX
 # LT_INIT([disable-shared])
 
-# use C++11 mode if available; HAVE_CXX11 is defined in config.h if so.  Don't
-# use the GNU C++11 extensions for portability's sake (noext).
-# https://www.gnu.org/software/autoconf-archive/ax_cxx_compile_stdcxx_11.html
+# Must use C++14 mode. (mandatory)
+# Don't use the GNU C++14 extensions for portability (noext).
 
-m4_include([m4/ax_cxx_compile_stdcxx_11.m4])
 AC_LANG_PUSH(C++)
-AX_CXX_COMPILE_STDCXX_11(noext, optional)
+AX_CXX_COMPILE_STDCXX([14], [noext], [mandatory]) 
 AC_LANG_POP()
-
 
 # These are needed for bulk_extractor. They are not needed for tcpflow
 AC_DEFINE([BULK_EXTRACTOR],1,[We are compiling bulk_extractor])
@@ -271,29 +267,6 @@ fi
 # We can also use C++11 regex, which we just assume we have, because it's the standard.
 
 ################################################################
-## AFFLIB support
-## AFFLIB requires OpenSSL
-## Link in openssl if it is available, because afflib requires it.
-## (Note that bulk_extractor itself no longer requires openssl)
-AC_DEFINE([HAVE_STL],1,[We have the Standard Template Library])
-AC_CHECK_HEADERS([openssl/x509.h openssl/pem.h])
-
-AC_ARG_ENABLE([afflib],
-    [AS_HELP_STRING([--disable-afflib], [disable afflib support])],
-    [afflib=no],
-    [afflib=yes])
-AC_MSG_NOTICE([afflib is $afflib])
-
-if test x"$afflib" == x"yes" ; then
-  AC_CHECK_HEADER([afflib/afflib.h],
-	    	[AC_DEFINE(HAVE_AFFLIB_AFFLIB_H,1,[Do we have afflib/afflib.h?])]
-		[AC_CHECK_LIB([afflib],af_get_pagesize,,
-	   AC_MSG_WARN([AFFLIB not found or the version of AFFLIB installed does not support af_get_pagesize; no AFF support]))],
-	[])
-fi
-
-
-################################################################
 ## LIBEWF support
 
 AC_ARG_ENABLE([libewf],
@@ -312,46 +285,6 @@ if test x"$libewf" == x"yes" ; then
   AC_CHECK_FUNCS([libewf_handle_get_utf8_header_value_notes libewf_error_backtrace_fprint libewf_handle_close libewf_handle_free libewf_handle_read_buffer_at_offset libewf_handle_read_random])
 fi
 AC_MSG_NOTICE([libewf is now $libewf])
-
-
-################################################################
-## hashdb support
-AC_ARG_ENABLE([hashdb],
-    [AS_HELP_STRING([--disable-hashdb], [disable hashdb scanner support])],
-    [hashdb=no],
-    [hashdb=yes])
-
-if test x"$hashdb" == x"yes" ; then
-  if test x"$mingw" = x"yes";  then
-    # the win32 configuration of libxml2 requires zlib and iconv libraries
-    AC_CHECK_LIB([z], [gzdopen],[LIBS="-lz $LIBS"], [AC_MSG_ERROR([Could not find zlib library])])
-    AC_CHECK_LIB([iconv], [iconv],[LIBS="-liconv $LIBS"], [AC_MSG_ERROR([Could not find win-iconv library])])
-  fi
-
-  AC_CHECK_LIB([xml2], [xmlSAXUserParseFile],[LIBS="-lxml2 $LIBS"],
-    [AC_MSG_WARN([Could not find libxml2 library required to build the hashdb scanner])
-    hashdb=no])
-
-  if test x"$hashdb" == xyes ; then
-    AC_LANG_PUSH(C++)
-    AC_CHECK_HEADER([hashdb.hpp], [],
-      [AC_MSG_WARN([Could not find hashdb header file required to build the hashdb scanner])
-      hashdb=no])
-    AC_CHECK_LIB([hashdb], [hashdb_version], [],
-      [AC_MSG_WARN([Could not find hashdb library required to build the hashdb scanner])
-      hashdb=no])
-    AC_LANG_POP()
-  fi
-
-fi
-if test x"$hashdb" == xyes ; then
-  AC_DEFINE(HAVE_HASHDB,1,[define 1 to build the hashdb scanner])
-  if [[ $(hashdb -v | cut -d' ' -f2) == "3.1.0" ]]; then
-    AC_DEFINE(HAVE_HASHDB_3_1,1,[using hashdb-3.1.0 version])
-  fi
-else
-  AC_MSG_NOTICE([the hashdb scanner will not be built])
-fi
 
 
 ################################################################
@@ -400,62 +333,8 @@ if test x"$exiv2" == x"yes" ; then
   AC_LANG_POP()    
 fi
 
-AC_TRY_COMPILE([#pragma GCC diagnostic ignored "-Wshadow"],[return 0;],
-  [AC_DEFINE(HAVE_DIAGNOSTIC_SHADOW,1,[define 1 if GCC supports -Wshadow])])
-
-AC_TRY_COMPILE([#pragma GCC diagnostic ignored "-Wundef"],[return 0;],
-  [AC_DEFINE(HAVE_DIAGNOSTIC_UNDEF,1,[define 1 if GCC supports -Wundef])])
-
-AC_TRY_COMPILE([#pragma GCC diagnostic ignored "-Wcast-qual"],[return 0;],
-  [AC_DEFINE(HAVE_DIAGNOSTIC_CAST_QUAL,1,[define 1 if GCC supports -Wcast-qual])])
-
-AC_TRY_COMPILE([#pragma GCC diagnostic ignored "-Weffcpp"],[return 0;],
-  [AC_DEFINE(HAVE_DIAGNOSTIC_EFFCPP,1,[define 1 if GCC supports -Weffc++])])
-
-AC_TRY_COMPILE([#pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"],[return 0;],
-  [AC_DEFINE(HAVE_DIAGNOSTIC_SUGGEST_ATTRIBUTE,1,[define 1 if GCC supports -Wsuggest-attribute=noreturn])])
+m4_include([m4/slg_check_gcc_diagnostics.m4])
   
-AC_TRY_COMPILE([#pragma GCC diagnostic ignored "-Wdeprecated-register"],[return 0;],
-  [AC_DEFINE(HAVE_DIAGNOSTIC_DEPRECATED_REGISTER,1,[define 1 if GCC supports -Wdeprecated-register])])
-  
-################################################################
-## sceadan support
-## Enabled for 1.5 release
-# m4_include([src/sceadan/sceadan_configure.m4])
-# https://www.gnu.org/software/autoconf/manual/autoconf-2.60/html_node/External-Software.html
-AC_ARG_WITH([sceadan],
-              AS_HELP_STRING([--with-sceadan], [specify location of UTSA SCEADAN file type identification]),
-	      [AC_DEFINE(USE_SCEADAN, 1, [Use SCEADAN FILE TYPE CLASSIFIER]) 
-               sceadan="yes"
-               SCEADAN_DIR=$withval
-               CPPFLAGS="$CPPFLAGS -I$SCEADAN_DIR/src -I../$SCEADAN_DIR/src -I../../$SCEADAN_DIR/src"
-               LDFLAGS="$LDFLAGS -L$SCEADAN_DIR/ -L$SCEADAN_DIR/src/.libs -L../$SCEADAN_DIR/src/.libs"
-               AC_CHECK_LIB([m],[fmax],,AC_MSG_ERROR([missing -lm]))
-               AC_CHECK_LIB([sceadan],[sceadan_open],,AC_MSG_ERROR([missing -lsceadan]))
-              ],
-              [])
-
-AC_SUBST(SCEADAN_DIR)
-AM_CONDITIONAL([SCEADAN_ENABLED], [test "yes" = "$sceadan"])
-
-
-
-################################################################
-# do we have a broken strchr?
-# This prevents errors in base64_forensics.cpp
-AC_LANG_PUSH(C++)
-AC_TRY_COMPILE([#include <string.h>],
-               [static const char Base64[] = "ABCDEFGH";int ch=3;char *pos = strchr(Base64, ch);],
-               conforming_strchr=yes,
-               conforming_strchr=no)
-if test "$conforming_strchr" = yes; then
-  AC_MSG_NOTICE([strchr is conforming])
-  AC_DEFINE(HAVE_CONFORMING_STRCHR, 1,[define to 1 if strchr takes const char*])
-else
-  AC_MSG_NOTICE([strchr is not conforming])
-fi
-AC_LANG_POP()
-
 ## If compiling on mingw, add another -lgdi32 to be safe
 ## This is required becuase some libraries reference functions in gdi32 and, for whatever reason,
 ## the linker is not smart enough to re-check the library
