@@ -10,6 +10,15 @@ AC_PREREQ(2.57)
 AC_INIT(BULK_EXTRACTOR, 2.0.0-dev, bugs@digitalcorpora.org)
 
 AC_CONFIG_MACRO_DIR(m4)
+################################################################
+## Includes
+
+m4_include([m4/ax_cxx_compile_stdcxx.m4])
+m4_include([m4/slg_mingw_support.m4])
+m4_include([m4/slg_searchdirs.m4])
+m4_include([m4/slg_gcc_all_warnings.m4])
+m4_include([src/be13_api/dfxml/src/dfxml_configure.m4])
+m4_include([src/be13_api/be13_configure.m4])
 
 # 
 # NOTE 1 - plugins/Makefile is referenced so that the plugins Makefile is created.
@@ -36,7 +45,6 @@ AC_PROG_LEX
 # LT_INIT([disable-shared])
 
 # Must use C++14 mode. (mandatory)
-# Don't use the GNU C++14 extensions for portability (noext).
 
 AC_LANG_PUSH(C++)
 AX_CXX_COMPILE_STDCXX([14], [noext], [mandatory]) 
@@ -61,17 +69,7 @@ else
   AC_MSG_ERROR([$LEX does not support -R.  Please get a modern version of gnu flex])
 fi
 
-m4_include([m4/slg_mingw_support.m4])
-m4_include([m4/slg_searchdirs.m4])
-m4_include([m4/slg_gcc_all_warnings.m4])
 
-################################################################
-## Includes
-
-CFLAGS="$CFLAGS"
-
-m4_include([src/be13_api/dfxml/src/dfxml_configure.m4])
-m4_include([src/be13_api/be13_configure.m4])
 
 ################################################################
 ## rar support

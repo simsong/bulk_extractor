@@ -21,9 +21,9 @@
 #include "threadpool.h"
 #include "be13_api/aftimer.h"
 #include "be13_api/histogram.h"
+#include "be13_api/unicode_escape.h"
 #include "dfxml/src/dfxml_writer.h"
 #include "dfxml/src/hash_t.h"
-#include "be13_api/unicode_escape.h"
 
 #include "phase1.h"
 
@@ -54,6 +54,12 @@
 // See http://gnuwin32.sourceforge.net/compile.html for more 
 int _CRT_fmode = _O_BINARY;
 #endif
+
+/* Bring in the compiled-in scanners */
+#define SCANNER(scanner) extern "C" scanner_t scan_#scanner;
+#include "bulk_extractor_scanners.h"
+#undef SCANNER
+
 
 /* Debug help */
 __attribute__((noreturn)) 
@@ -275,48 +281,11 @@ static bool directory_empty(const std::string &d)
 }
 
 /* An array of the built-in scanners */
+#define SCANNER(scanner) scan_#scanner ,
 scanner_t *scanners_builtin[] = {
-    scan_accts,
-    scan_base16,
-    scan_base64,
-    scan_kml,
-    scan_email,
-    //    scan_httpheader,
-    scan_gps,
-    scan_net,
-    scan_find,
-    scan_wordlist,
-    scan_aes,
-    scan_json,
-#ifdef HAVE_LIBLIGHTGREP
-    scan_lightgrep,
-#endif
-#ifdef USE_SCEADAN
-    scan_sceadan,  // not ready for prime time
-#endif
-    //scan_extx,  // not ready for prime time
-#ifdef HAVE_EXIV2
-    scan_exiv2,
-#endif
-#ifdef HAVE_HASHID
-    scan_hashid,
-#endif
-    scan_elf,
-    scan_exif,
-    scan_zip,
-#ifdef USE_RAR
-    scan_rar,
-#endif
-    scan_gzip,
-    scan_pdf,
-    scan_winpe,
-    scan_hiberfile,
-    scan_winprefetch,
-    scan_windirs,
-    scan_vcard,
-    scan_bulk,
-    scan_xor,
+#include "bulk_extractor_scanners.h"
     0};
+#undef SCANNER
 
 /***************************************************************************************
  *** PATH PRINTER - Used by bulk_extractor for printing pages associated with a path ***
