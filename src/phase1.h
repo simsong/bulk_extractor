@@ -72,9 +72,12 @@ public:
 private:
 
     /** Sleep for a minimum of msec */
-    static void msleep(uint32_t msec);       // sleep for a specified number of msec
-    bool sampling(){return config.sampling_fraction<1.0;} // are we random sampling?
-    static std::string minsec(time_t tsec);                      // return "5 min 10 sec" string
+    static void msleep(uint32_t msec); // sleep for a specified number of msec
+    bool sampling(){                    // are we random sampling?
+        return config.sampling_fraction<1.0;
+    } 
+    // return "5 min 10 sec" string
+    static std::string minsec(time_t tsec);
 
     class threadpool *tp;
     void print_tp_status();
@@ -86,12 +89,12 @@ public:
      * print the status of a threadpool
      */
     /* Instance variables */
-    dfxml_writer &xreport;
-    aftimer &timer;
-    Config &config;
-    u_int   notify_ctr;    /* for random sampling */
-    uint64_t total_bytes;               // 
-    md5_generator *md5g;
+    dfxml_writer  &xreport;
+    aftimer       &timer;
+    Config        &config;
+    u_int         notify_ctr;    /* for random sampling */
+    uint64_t      total_bytes;               // 
+    dfxml::md5_generator *md5g;
 
     /* Get the sbuf from current image iterator location, with retries */
     sbuf_t *get_sbuf(image_process::iterator &it);
@@ -134,10 +137,6 @@ public:
 	    }
 	}
     }
-
-#ifndef HAVE_RANDOM
-#define random(x) rand(x)
-#endif
 
     BulkExtractor_Phase1(dfxml_writer &xreport_,aftimer &timer_,Config &config_):
         tp(),xreport(xreport_),timer(timer_),config(config_),notify_ctr(0),total_bytes(0),md5g(){}

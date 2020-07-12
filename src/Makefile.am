@@ -12,9 +12,18 @@ include be13_api/dfxml/src/Makefile.defs
 include be13_api/Makefile.defs
 include rar/Makefile.defs
 
+TESTS = $(check_PROGRAMS)
+check_PROGRAMS = test_bulkextractor jpegdump
+
+# Slowly add modules as tests are written for them.
+test_bulkextractor_SOURCES = be13api/tests/catch2.h\
+	test_bulkextractor.cpp
+
+
 # This was for building a test program
-jpegdump: scan_exif.cpp be13_api/sbuf.o be13_api/unicode_escape.o 
-	g++ -o jpegdump $(CPPFLAGS) $(CXXFLAGS) $(AM_CPPFLAGS) -I.. -DDUMPTEST scan_exif.cpp be13_api/sbuf.o be13_api/unicode_escape.o
+jpegdump_SOURCES = scan_exif.cpp be13_api/sbuf.cpp be13_api/sbuf.h be13_api/unicode_escape.cpp be13_api/unicode_escape.h
+#jpegdump: scan_exif.cpp be13_api/sbuf.o be13_api/unicode_escape.o 
+#	g++ -o jpegdump $(CPPFLAGS) $(CXXFLAGS) $(AM_CPPFLAGS) -I.. -DDUMPTEST scan_exif.cpp be13_api/sbuf.o be13_api/unicode_escape.o
 
 TSK3INCS = \
 	tsk3/auto/tsk_auto.h\
@@ -48,7 +57,7 @@ lightgrep_scanners = \
 	scan_email_lg.cpp \
 	scan_gps_lg.cpp 
 
-bulk_scanners = \
+scanners_builtin = \
 	scan_aes.cpp \
 	scan_base64.cpp \
 	scan_ccns2.cpp scan_ccns2.h \
@@ -86,16 +95,16 @@ bulk_scanners = \
 	scan_zip.cpp 
 
 if FLEXSCANNERS_ENABLED
-  bulk_scanners += $(flex_scanners) 
+  scanners_builtin += $(flex_scanners) 
 endif
 
 if LIGHTGREP_ENABLED
-  bulk_scanners += $(lightgrep_scanners)
+  scanners_builtin += $(lightgrep_scanners)
 endif
 
 
 if RAR_ENABLED
-  bulk_scanners += $(RAR_SUPPORT)
+  scanners_builtin += $(RAR_SUPPORT)
 endif
 
 bulk_extractor_nomain = \
@@ -115,9 +124,9 @@ bulk_extractor_nomain = \
 	threadpool.h \
 	$(TSK3INCS)  $(BE13_API) $(DFXML_WRITER) 
 
-bulk_extractor_SOURCES =    $(bulk_extractor_nomain) $(bulk_scanners) bulk_extractor_scanners.cpp main.cpp 
+bulk_extractor_SOURCES =    $(bulk_extractor_nomain) $(scanners_builtin) bulk_extractor_scanners.cpp main.cpp 
 
-bulk_extractorlib_SOURCES = $(bulk_extractor_nomain) $(bulk_scanners) bulk_extractor_scanners.cpp 
+bulk_extractorlib_SOURCES = $(bulk_extractor_nomain) $(scanners_builtin) bulk_extractor_scanners.cpp 
 
 bulk_extractor_noscanners_SOURCES = $(bulk_extractor_nomain) bulk_extractor_noscanners.cpp main.cpp 
 

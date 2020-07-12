@@ -65,7 +65,7 @@ class threadpool {
 #endif
     typedef std::vector<class worker *> worker_vector;
     worker_vector	workers;
-    pthread_mutex_t	M;		// protects the following variables
+    std::mutex  	M;		// protects the following variables
     pthread_cond_t	TOMAIN;
     pthread_cond_t	TOWORKER;
     int			freethreads;

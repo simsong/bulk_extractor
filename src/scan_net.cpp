@@ -23,15 +23,15 @@
 
 #include "config.h"
 #include "be13_api/bulk_extractor_i.h"
-#include "be13_api/cppmutex.h"
 #include "be13_api/utils.h"
 
+#include <cstdlib>
+#include <cstring>
+
 #include <set>
-//#include <tr1/unordered_set>
+#include <mutex>
 
 #include <sys/types.h>
-#include <stdlib.h>
-#include <string.h>
 #include <ctype.h>
 
 #ifdef HAVE_SYS_SOCKET_H
@@ -62,7 +62,7 @@ const uint32_t min_packet_size = 20;		// don't bother with ethernet packets smal
 /* mutex for writing packets.
  * This is not in the class because it will be accessed by multiple threads.
  */
-static cppmutex Mfcap;              // mutex for fcap
+static std::mutex Mfcap;              // mutex for fcap
 static FILE *fcap = 0;		// capture file, protected by M
 static bool carve_net_memory = false;
 
@@ -656,7 +656,7 @@ public:
                        const bool add_frame,
                        const uint16_t frame_type) {
 	// Make sure that neither this packet nor an encapsulated version of this packet has been written
-	cppmutex::lock lock(Mfcap);		// lock the mutex
+        const std::lock_guard<std::mutex> lock(Mfcap);// lock the mutex
         if(fcap==0){
             std::string ofn = ip_recorder->get_outdir() + "/" + default_filename;
             fcap = fopen(ofn.c_str(),"wb"); // write the output
@@ -1007,8 +1007,10 @@ public:
 	    }
 	    i += (carved>0 ? carved : 1);	// advance the pointer
 	}
-	cppmutex::lock lock(Mfcap);
-	if(fcap) fflush(fcap);
+	if(fcap){
+            const std::lock_guard<std::mutex> lock(Mfcap);
+            fflush(fcap);
+        }
     };
 };
 
@@ -1051,8 +1053,10 @@ void scan_net(const class scanner_params &sp,const recursion_control_block &rcb)
 	carver.carve(sp.sbuf);
     }
     if(sp.phase==scanner_params::PHASE_SHUTDOWN){
-	cppmutex::lock lock(Mfcap);
-	if(fcap) fclose(fcap);
+	if(fcap){
+            const std::lock_guard<std::mutex> lock(Mfcap);
+            fclose(fcap);
+        }
 	return;
     }
 }

@@ -2,9 +2,9 @@
 #include "be13_api/bulk_extractor_i.h"
 #include "utils.h"
 
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
+#include <cstdlib>
+#include <cstring>
+#include <cinttypes>
 
 static uint32_t word_min = 6;
 static uint32_t word_max = 14;
@@ -78,7 +78,7 @@ static void wordlist_split_and_dedup(const std::string &ifn)
 	    /* Create the first file (of2==0) or roll-over if outfilesize>100M */
 	    std::string line;
 	    getline(f2,line);
-	    if(line[0]=='#') continue;	// ignore comments
+	    if(line[0]=='#') continue;	                // ignore comments
 	    size_t t1 = line.find('\t');		// find the beginning of the feature
 	    if(t1!=std::string::npos) line = line.substr(t1+1);
 	    size_t t2 = line.find('\t');		// find the end of the feature
@@ -164,7 +164,8 @@ void scan_wordlist(const class scanner_params &sp,const recursion_control_block 
 	return;
     }
 
-    bool use_wordlist_recorder  = (wordlist_use_flatfiles || (fs.db3==0 && sp.fs.flag_notset(feature_recorder_set::DISABLE_FILE_RECORDERS)));
+    bool use_wordlist_recorder  = (wordlist_use_flatfiles ||
+                                   (fs.db3==0 && sp.fs.flag_notset(feature_recorder_set::DISABLE_FILE_RECORDERS)));
     feature_recorder *wordlist_recorder = use_wordlist_recorder ? fs.get_name(WORDLIST) : 0;
 
 
@@ -255,7 +256,7 @@ void scan_wordlist(const class scanner_params &sp,const recursion_control_block 
                             wordlist_recorder->write(sbuf.pos0+wordstart,word,"");
                         } else if (fs.db3) {
 #ifdef USE_SQLITE3
-                            cppmutex::lock lock(wordlist_stmt->Mstmt);
+                            const std::lock_guard<std::mutex> lock(wordlist_stmt->Mstmt);
                             sqlite3_bind_blob(wordlist_stmt->stmt, 1,
                                               (const char *)word.data(), word.size(), SQLITE_STATIC);
                             if (sqlite3_step(wordlist_stmt->stmt) != SQLITE_DONE) {

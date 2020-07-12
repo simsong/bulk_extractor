@@ -50,13 +50,13 @@ static std::string hash_name("md5");
 static std::string hash_func(const uint8_t *buf,size_t bufsize)
 {
     if(hash_name=="md5" || hash_name=="MD5"){
-        return md5_generator::hash_buf(buf,bufsize).hexdigest();
+        return dfxml::md5_generator::hash_buf(buf,bufsize).hexdigest();
     }
     if(hash_name=="sha1" || hash_name=="SHA1" || hash_name=="sha-1" || hash_name=="SHA-1"){
-        return sha1_generator::hash_buf(buf,bufsize).hexdigest();
+        return dfxml::sha1_generator::hash_buf(buf,bufsize).hexdigest();
     }
     if(hash_name=="sha256" || hash_name=="SHA256" || hash_name=="sha-256" || hash_name=="SHA-256"){
-        return sha256_generator::hash_buf(buf,bufsize).hexdigest();
+        return dfxml::sha256_generator::hash_buf(buf,bufsize).hexdigest();
     }
     std::cerr << "Invalid hash name: " << hash_name << "\n";
     std::cerr << "This version of bulk_extractor only supports MD5, SHA1, and SHA256\n";
@@ -66,15 +66,14 @@ static std::string hash_func(const uint8_t *buf,size_t bufsize)
 static feature_recorder_set::hash_def my_hasher(hash_name,hash_func);
 
 class callback_feature_recorder_set: public feature_recorder_set {
-    // neither copying nor assignment are implemented
-    callback_feature_recorder_set(const callback_feature_recorder_set &cfs);
-    callback_feature_recorder_set &operator=(const callback_feature_recorder_set &cfs);
+    callback_feature_recorder_set(const callback_feature_recorder_set &cfs)=delete;
+    callback_feature_recorder_set &operator=(const callback_feature_recorder_set &cfs)=delete;
     histogram_defs_t histogram_defs;        
 
 public:
     void            *user;
     be_callback_t   *cb;
-    mutable cppmutex Mcb;               // mutex for the callback
+    mutable std::mutex Mcb;               // mutex for the callback
 
     virtual void heartbeat() {
         (*cb)(user, BULK_EXTRACTOR_API_CODE_HEARTBEAT,0,0,0,0,0,0,0);
@@ -97,13 +96,13 @@ public:
     }
 
     virtual void write(const std::string &feature_recorder_name,const std::string &str){
-        cppmutex::lock lock(Mcb);
+        const std::lock_guard<std::mutex> lock(Mcb);
         (*cb)(user,BULK_EXTRACTOR_API_CODE_FEATURE,0,
               feature_recorder_name.c_str(),"",str.c_str(),str.size(),"",0);
     }
     virtual void write0(const std::string &feature_recorder_name,
                         const pos0_t &pos0,const std::string &feature,const std::string &context){
-        cppmutex::lock lock(Mcb);
+        const std::lock_guard<std::mutex> lock(Mcb);
         (*cb)(user,BULK_EXTRACTOR_API_CODE_FEATURE,0,
               feature_recorder_name.c_str(),pos0.str().c_str(),
               feature.c_str(),feature.size(),context.c_str(),context.size());
@@ -175,15 +174,7 @@ extern "C"
 BEFILE *bulk_extractor_open(void *user,be_callback_t cb)
 {
     histogram_defs_t histograms;
-    feature_recorder::set_main_threadid();
     scanner_info::scanner_config   s_config; // the bulk extractor config
-
-#if defined(HAVE_SRANDOM) && !defined(HAVE_SRANDOMDEV)
-    srandom(time(0));
-#endif
-#if defined(HAVE_SRANDOMDEV)
-    srandomdev();               // if we are sampling initialize
-#endif
 
     s_config.debug       = 0;           // default debug
 

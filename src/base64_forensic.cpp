@@ -44,14 +44,10 @@
 
 #include "config.h"
 
-//#define __CORRECT_ISO_CPP_STRING_H_PROTO 
-//#define __CORRECT_ISO_CPP_WCHAR_H_PROTO 
-
 #include <cstdlib>
 #include <cctype>
 #include <cstring>
-#include <sys/types.h>
-#include <sys/param.h>
+#include <cinttypes>
 
 
 #define Assert(Cond) if (!(Cond)) abort()
