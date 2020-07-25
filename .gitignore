@@ -110,3 +110,4 @@ tests/Makefile
 win32
 win64
 ar-lib
+.idea

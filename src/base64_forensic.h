@@ -11,7 +11,7 @@
 #ifndef BASE64_H
 #define BASE64_H
 
-#include <sys/types.h>
+#include <ctypes>
 
 /* Win32 adds */
 #ifndef __BEGIN_DECLS

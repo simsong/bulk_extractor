@@ -11,9 +11,8 @@
  *
  * Subclasses of this class are used to process:
  * process_ewf - process an EWF file
- * process_aff - process an AFF file
  * process_raw - process a RAW or splitraw file.
- * process_dir - recursively process a directory of files (but not E01 or AFF files)
+ * process_dir - recursively process a directory of files (but not E01  files)
  * 
  * Conditional compilation assures that this compiles no matter which class libraries are installed.
  *
@@ -49,16 +48,6 @@
 #  include <winsock2.h>
 #  include <windows.h>
 #  include <windowsx.h>
-#endif
-
-/* Undef HAVE_LIBAFFLIB if we don't have the include files */
-#if defined(HAVE_LIBAFFLIB) && !defined(HAVE_AFFLIB_AFFLIB_H)
-#  undef HAVE_LIBAFFLIB
-#endif
-
-
-#ifndef HAVE_STL
-#  define HAVE_STL			/* needed for AFFLIB */
 #endif
 
 class image_process {
@@ -151,47 +140,6 @@ inline image_process::iterator & operator++(image_process::iterator &it){
     it.myimage.increment_iterator(it);
     return it;
 }
-
-
-/****************************************************************
- *** AFF
- ****************************************************************/
-
-#ifdef HAVE_LIBAFFLIB
-//#pragma GCC diagnostic ignored "-Wreserved-user-defined-literal"               // required for C11
-#include <afflib/afflib.h>
-#include <vector>			
-class process_aff : public image_process {
-    /******************************************************
-     *** neither copying nor assignment is implemented. ***
-     ******************************************************/
-    process_aff(const process_aff &);
-    process_aff &operator=(const process_aff &);
-    /****************************************************************/
-
-    mutable AFFILE *af;
-    std::vector<int64_t> pagelist;
-public:
-    process_aff(std::string fname,size_t pagesize_,size_t margin_) : image_process(fname,pagesize_,margin_),af(0),pagelist(){}
-    virtual ~process_aff();
-
-    virtual image_process::iterator begin() const;
-    virtual image_process::iterator end() const;
-    virtual void increment_iterator(class image_process::iterator &it) const;
-
-    /* Iterator Support */
-    virtual int open();
-    virtual int pread(uint8_t *,size_t bytes,int64_t offset) const;	    /* read */
-    virtual pos0_t get_pos0(const class image_process::iterator &it) const;    
-    virtual sbuf_t *sbuf_alloc(class image_process::iterator &it) const;
-    virtual double fraction_done(const class image_process::iterator &it) const;
-    virtual std::string str(const class image_process::iterator &it) const;
-    virtual int64_t image_size() const;
-    virtual uint64_t max_blocks(const class image_process::iterator &it) const;
-    virtual uint64_t seek_block(class image_process::iterator &it,uint64_t block) const; // returns -1 if failue
-};
-#endif
-
 
 
 /****************************************************************

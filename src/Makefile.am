@@ -18,25 +18,10 @@ check_PROGRAMS = test_bulkextractor jpegdump
 # Slowly add modules as tests are written for them.
 test_bulkextractor_SOURCES = be13api/tests/catch2.h\
 	test_bulkextractor.cpp
-
+#	threadpool.cpp threadpool.h \
 
 # This was for building a test program
 jpegdump_SOURCES = scan_exif.cpp be13_api/sbuf.cpp be13_api/sbuf.h be13_api/unicode_escape.cpp be13_api/unicode_escape.h
-#jpegdump: scan_exif.cpp be13_api/sbuf.o be13_api/unicode_escape.o 
-#	g++ -o jpegdump $(CPPFLAGS) $(CXXFLAGS) $(AM_CPPFLAGS) -I.. -DDUMPTEST scan_exif.cpp be13_api/sbuf.o be13_api/unicode_escape.o
-
-TSK3INCS = \
-	tsk3/auto/tsk_auto.h\
-	tsk3/base/tsk_base.h\
-	tsk3/base/tsk_os.h\
-	tsk3/fs/tsk_fatfs.h\
-	tsk3/fs/tsk_fs.h\
-	tsk3/fs/tsk_ntfs.h\
-	tsk3/hashdb/tsk_hashdb.h\
-	tsk3/img/tsk_img.h\
-	tsk3/libtsk.h\
-	tsk3/tsk_incs.h\
-	tsk3/vs/tsk_vs.h
 
 # These scanners are based on GNUflex
 flex_scanners = \
@@ -68,7 +53,6 @@ scanners_builtin = \
 	scan_facebook.cpp \
 	scan_find.cpp \
 	scan_gzip.cpp \
-	scan_hashdb.cpp \
 	scan_hiberfile.cpp pyxpress.c pyxpress.h \
 	scan_httplogs.cpp \
 	scan_json.cpp \
@@ -82,7 +66,6 @@ scanners_builtin = \
 	scan_outlook.cpp \
 	scan_pdf.cpp \
 	scan_rar.cpp \
-	scan_sceadan.cpp\
 	scan_sqlite.cpp \
 	scan_utmp.cpp \
 	scan_vcard.cpp \
@@ -122,7 +105,7 @@ bulk_extractor_nomain = \
 	phase1.cpp \
 	threadpool.cpp \
 	threadpool.h \
-	$(TSK3INCS)  $(BE13_API) $(DFXML_WRITER) 
+	$(BE13_API) $(DFXML_WRITER) 
 
 bulk_extractor_SOURCES =    $(bulk_extractor_nomain) $(scanners_builtin) bulk_extractor_scanners.cpp main.cpp 
 
@@ -130,7 +113,7 @@ bulk_extractorlib_SOURCES = $(bulk_extractor_nomain) $(scanners_builtin) bulk_ex
 
 bulk_extractor_noscanners_SOURCES = $(bulk_extractor_nomain) bulk_extractor_noscanners.cpp main.cpp 
 
-stand_SOURCES = dig.cpp scan_sceadan.cpp stand.cpp $(TSK3INCS) $(BE13_API) $(DFXML_WRITER) 
+stand_SOURCES = dig.cpp scan_sceadan.cpp stand.cpp $(BE13_API) $(DFXML_WRITER) 
 
 lib: libbulkextractor.so
 

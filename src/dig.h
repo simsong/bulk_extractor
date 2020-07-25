@@ -6,14 +6,16 @@
 #ifndef DIG_H
 #define DIG_H
 
+#include <sys/stat.h>
+
 #include <string>
 #include <stack>
-#include <dirent.h>
+#include <cstdint>
+
 #include <iostream>
 #include <set>
-#include <sys/stat.h>
-#include <stdint.h>
 
+#include <dirent.h>
 #if defined(WIN32) || defined(MINGW) || defined(__MINGW32__) || defined(__MINGW64__)
 #include <winsock2.h>
 #include <windows.h>

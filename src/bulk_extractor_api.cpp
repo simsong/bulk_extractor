@@ -1,6 +1,6 @@
 /*
- * bulk_extractor.cpp:
- * Feature Extraction Framework...
+ * bulk_extractor_api.cpp:
+ * Implements an API for incorporating bulk_extractor in other programs.
  *
  */
 
@@ -62,8 +62,6 @@ static std::string hash_func(const uint8_t *buf,size_t bufsize)
     std::cerr << "This version of bulk_extractor only supports MD5, SHA1, and SHA256\n";
     exit(1);
 }
-
-static feature_recorder_set::hash_def my_hasher(hash_name,hash_func);
 
 class callback_feature_recorder_set: public feature_recorder_set {
     callback_feature_recorder_set(const callback_feature_recorder_set &cfs)=delete;
@@ -127,8 +125,8 @@ public:
 
 class callback_feature_recorder: public feature_recorder {
     // neither copying nor assignment are implemented
-    callback_feature_recorder(const callback_feature_recorder &cfr);
-    callback_feature_recorder &operator=(const callback_feature_recorder&cfr);
+    callback_feature_recorder(const callback_feature_recorder &cfr)=delete;
+    callback_feature_recorder &operator=(const callback_feature_recorder&cfr)=delete;
     be_callback_t *cb;
 public:
     callback_feature_recorder(be_callback_t *cb_,

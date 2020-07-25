@@ -32,8 +32,11 @@ Goals for the 2.0 release
   that most users do not understand command-line options,
   bulk_extractor now runs with fewer command-line options.
 
-* Standards-compliant. Where possible, we are adopting C++11 features
+* Standards-compliant. Where possible, we are adopting C++14 features
   that are now widely available.
+
+* Experimental features have been removed. Experiments are now
+  conducted with plugin-s.
 
 # Architecture Changes
 - [ ]  be13_api will build a .a library
@@ -73,19 +76,22 @@ Here is the proposed plan for development of Release 2.0. This list will be tran
 - [ ] Begin end-to-end regression testing, making sure that all features identified by BE1.5 are still identified by BE2.0
 - [ ] Begin performance testing.
 
-
-
-Release 2.0 Features
-====================
-
-## Remove features
+Features Removed from Release 2.0
+=================================
+## Remove Scanners
 These scanners are removed. Each can be used if you make it a plug-in:
 * scan_lift
 * scedan 
 * hashdb
 
-Support for these input file formats have been removed:
-* aff4. 
+## Other removed functionality
+* Support for AFF and AFF4 input file formats.
+
+## Compiling on non-standard platforms
+Where possible, C++14 
+
+Release 2.0 Features
+====================
 
 ## New scanners:
 * iCalendar carver

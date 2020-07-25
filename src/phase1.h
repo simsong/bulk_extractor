@@ -65,7 +65,7 @@ public:
                 opt_offset_start = (opt_offset_start / opt_pagesize) * opt_pagesize;
                 std::cerr << "         adjusted to " << opt_offset_start << "\n";
             }
-            if(opt_offset_end % opt_pagesize != 0) errx(1,"ERROR: end offset must be a multiple of the page size\n");
+            if(opt_offset_end % opt_pagesize != 0) throw std::runtime_error("end offset must be a multiple of the page size");
 #endif
         };
     };
@@ -94,7 +94,7 @@ public:
     Config        &config;
     u_int         notify_ctr;    /* for random sampling */
     uint64_t      total_bytes;               // 
-    dfxml::md5_generator *md5g;
+    dfxml::md5_generator *md5g;              // the MD5 of the image. Set to 0 if a gap is encountered
 
     /* Get the sbuf from current image iterator location, with retries */
     sbuf_t *get_sbuf(image_process::iterator &it);
@@ -124,23 +124,23 @@ public:
     static void set_sampling_parameters(Config &c,std::string &p){
 	std::vector<std::string> params = split(p,':');
 	if(params.size()!=1 && params.size()!=2){
-	    errx(1,"error: sampling parameters must be fraction[:passes]");
+	    throw std::runtime_error("sampling parameters must be fraction[:passes]");
 	}
 	c.sampling_fraction = atof(params.at(0).c_str());
 	if(c.sampling_fraction<=0 || c.sampling_fraction>=1){
-	    errx(1,"error: sampling fraction f must be 0<f<=1; you provided '%s'",params.at(0).c_str());
+            throw std::runtime_error("error: sampling fraction f must be 0<f<=1");
 	}
 	if(params.size()==2){
 	    c.sampling_passes = atoi(params.at(1).c_str());
 	    if(c.sampling_passes==0){
-		errx(1,"error: sampling passes must be >=1; you provided '%s'",params.at(1).c_str());
+		throw std::runtime_error("error: sampling passes must be >=1");
 	    }
 	}
     }
 
     BulkExtractor_Phase1(dfxml_writer &xreport_,aftimer &timer_,Config &config_):
-        tp(),xreport(xreport_),timer(timer_),config(config_),notify_ctr(0),total_bytes(0),md5g(){}
-
+        tp(),xreport(xreport_),timer(timer_),config(config_),notify_ctr(0),total_bytes(0),
+        md5g(new dfxml::md5_generator()){}	// keep track of MD5
     void run(image_process &p,feature_recorder_set &fs, seen_page_ids_t &seen_page_ids);
     void wait_for_workers(image_process &p,std::string *md5_string);
 };

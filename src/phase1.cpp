@@ -85,11 +85,11 @@ void BulkExtractor_Phase1::make_sorted_random_blocklist(blocklist_t *blocklist,u
 }
 
 
-void BulkExtractor_Phase1::run(image_process &p,feature_recorder_set &fs,
+void BulkExtractor_Phase1::run(image_process &p,
+                               feature_recorder_set &fs,
                                seen_page_ids_t &seen_page_ids)
 {
     p.set_report_read_errors(config.opt_report_read_errors);
-    md5g = new md5_generator();		// keep track of MD5
     uint64_t md5_next = 0;              // next byte to hash
 
     if(config.debug & DEBUG_PRINT_STEPS) std::cout << "DEBUG: CREATING THREAD POOL\n";
@@ -231,7 +231,7 @@ void BulkExtractor_Phase1::wait_for_workers(image_process &p,std::string *md5_st
     xreport.xmlout("image_filename",p.image_fname());
     xreport.xmlout("image_size",p.image_size());  
     if(md5g){
-        md5_t md5 = md5g->final();
+        dfxml::md5_t md5 = md5g->digest();
         if(md5_string) *md5_string = md5.hexdigest();
         xreport.xmlout("hashdigest",md5.hexdigest(),"type='MD5'",false);
         delete md5g;

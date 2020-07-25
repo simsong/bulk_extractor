@@ -28,26 +28,28 @@
 #undef HAVE_EXTERN_PROGNAME
 #endif
 
-#include <assert.h>
-#include <math.h>
-#include <ctype.h>
-#include <errno.h>
+#include <cassert>
+#include <cctype>
+#include <cerrno>
+#include <cinttypes>
+#include <climits>
+#include <cmath>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
 
-
-#ifdef HAVE_STDLIB_H
-# include <stdlib.h>
-#endif
-
-#ifdef HAVE_LIMITS_H
-# include <limits.h>
-#endif
+#include <algorithm>
+#include <iostream>
+#include <list>
+#include <map>
+#include <set>
+#include <sstream>
+#include <string>
+#include <vector>
+#include <vector>
 
 #ifdef HAVE_DIRENT_H
 # include <dirent.h>
-#endif
-
-#ifdef HAVE_STRING_H
-# include <string.h>
 #endif
 
 #ifdef HAVE_UNISTD_H
@@ -56,10 +58,6 @@
 
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
-#endif
-
-#ifdef HAVE_TIME_H
-#include <time.h>
 #endif
 
 #ifdef HAVE_SYS_TYPES_H
@@ -94,25 +92,12 @@
 # include <sys/cdefs.h>
 #endif
 
-#include <pthread.h>                    // must have pthread
-
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
 
 #ifdef HAVE_SYS_FCNTL_H
 #include <sys/fcntl.h>
-#endif
-
-/* If we are including inttypes.h, mmake sure __STDC_FORMAT_MACROS is defined */
-#ifdef HAVE_INTTYPES_H
-#ifndef __STDC_FORMAT_MACROS
-#define __STDC_FORMAT_MACROS
-#endif
-# include <inttypes.h>
-#else
-// This should really have been caught during configuration, but just in case...
-# error Unable to work without inttypes.h!
 #endif
 
 #ifdef HAVE_STDINT_H
@@ -151,23 +136,10 @@
 # define ATTR_FORMAT(spec) /* empty */
 #endif
 
-#ifdef	__cplusplus
-#include <algorithm>
-#include <cstdlib>
-#include <vector>
-#include <string>
-#include <set>
-#include <map>
-#include <list>
-#include <iostream>
-#include <sstream>
-#include <vector>
-
 #include "be13_api/bulk_extractor_i.h"
 #include "be13_api/word_and_context_list.h"
 
-extern scanner_t *scanners_builtin[];
+extern be13::scanner_t *scanners_builtin[];
 
-#endif
 #endif
 

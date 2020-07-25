@@ -26,7 +26,6 @@ must be installed in the Mingw library directories:
   3 - (optional) libewf (for handling EnCase files)
   4 - (optional) libaff and openssl (for handling AFF files) 
   5 - (optional) liblightgrep (for Lightgrep)
-  6 - (optional) hashdb (for the sector hash)
 
 In general, to create the cross-compiled versions of the above
 library, you do the following

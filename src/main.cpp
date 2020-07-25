@@ -94,9 +94,6 @@ static void usage(const char *progname)
 #ifdef HAVE_LIBEWF
     std::cout << "                  HAS SUPPORT FOR E01 FILES\n";
 #endif
-#ifdef HAVE_LIBAFFLIB
-    std::cout << "                  HAS SUPPORT FOR AFF FILES\n";
-#endif    
 #ifdef HAVE_EXIV2
     std::cout << "                  EXIV2 ENABLED\n";
 #endif    
@@ -127,7 +124,8 @@ static void usage(const char *progname)
     std::cout << "   -S fr:<name>:window_after=NN   specifies context window after to NN for recorder\n";
     std::cout << "   -G NN        - specify the page size (default " << cfg.opt_pagesize << ")\n";
     std::cout << "   -g NN        - specify margin (default " <<cfg.opt_marginsize << ")\n";
-    std::cout << "   -j NN        - Number of analysis threads to run (default " <<threadpool::numCPU() << ")\n";
+    std::cout << "   -j NN        - Number of analysis threads to run (default "
+              << std::thread::hardware_concurrency() << ")\n";
     std::cout << "   -M nn        - sets max recursion depth (default " << scanner_def::max_depth << ")\n";
     std::cout << "   -m <max>     - maximum number of minutes to wait after all data read\n";
     std::cout << "                  default is " << cfg.max_bad_alloc_errors << "\n";
@@ -183,27 +181,6 @@ static uint64_t scaled_stoi64(const std::string &str)
     return val;
 }
 
-
-/* be_hash. Currently this just returns the MD5 of the sbuf,
- * but eventually it will allow the use of different hashes.
- */
-static std::string be_hash_name("md5");
-static std::string be_hash_func(const uint8_t *buf,size_t bufsize)
-{
-    if(be_hash_name=="md5" || be_hash_name=="MD5"){
-        return md5_generator::hash_buf(buf,bufsize).hexdigest();
-    }
-    if(be_hash_name=="sha1" || be_hash_name=="SHA1" || be_hash_name=="sha-1" || be_hash_name=="SHA-1"){
-        return sha1_generator::hash_buf(buf,bufsize).hexdigest();
-    }
-    if(be_hash_name=="sha256" || be_hash_name=="SHA256" || be_hash_name=="sha-256" || be_hash_name=="SHA-256"){
-        return sha256_generator::hash_buf(buf,bufsize).hexdigest();
-    }
-    std::cerr << "Invalid hash name: " << be_hash_name << "\n";
-    std::cerr << "This version of bulk_extractor only supports MD5, SHA1, and SHA256\n";
-    exit(1);
-}
-static feature_recorder_set::hash_def be_hash(be_hash_name,be_hash_func);
 
 static int stat_callback(void *user,const std::string &name,uint64_t calls,double seconds)
 {
@@ -647,7 +624,7 @@ public:;
             exit(1);
         }
 #else
-        errx(1,"Compiled without libexpat; cannot restart.");
+        throw std::runtime_error("Compiled without libexpat; cannot restart.");
 #endif
     }
 };
@@ -739,7 +716,7 @@ int main(int argc,char **argv)
 
     scanner_info::scanner_config   s_config;    // the bulk extractor phase 1 config created from the command line
     BulkExtractor_Phase1::Config   cfg;
-    cfg.num_threads = threadpool::numCPU();
+    cfg.num_threads = std::thread::hardware_concurrency();
 
     /* Options */
     const char *opt_path = 0;
@@ -928,16 +905,16 @@ int main(int argc,char **argv)
 	 * at least one of them is a FIND scanner
 	 */
         if(!be13::plugin::find_scanner_enabled()){
-            errx(1,"find words are specified with -F but no find scanner is enabled.\n");
+            throw std::runtime_error("find words are specified with -F but no find scanner is enabled.\n");
         }
     }
 
     if(opt_path){
-	if(argc!=1) errx(1,"-p requires a single argument.");
+	if(argc!=1) throw std::runtime_error("-p requires a single argument.");
 	process_path(argv[0],opt_path,cfg.opt_pagesize,cfg.opt_marginsize);
 	exit(0);
     }
-    if(opt_outdir.size()==0) errx(1,"error: -o outdir must be specified");
+    if(opt_outdir.size()==0) throw std::runtime_error("error: -o outdir must be specified");
 
     /* The zap option wipes the contents of a directory, useful for debugging */
     if(opt_zap){
@@ -986,7 +963,7 @@ int main(int argc,char **argv)
     if(directory_missing(opt_outdir) || directory_empty(opt_outdir)){
         /* First time running */
 	/* Validate the args */
-	if ( argc !=1 ) errx(1,"Disk image option not provided. Run with -h for help.");
+	if ( argc !=1 ) throw std::runtime_error("Disk image option not provided. Run with -h for help.");
 	validate_fn(image_fname);
 	if (directory_missing(opt_outdir)) be_mkdir(opt_outdir);
     } else {
@@ -1020,9 +997,9 @@ int main(int argc,char **argv)
     if (!opt_write_feature_files)  flags |= feature_recorder_set::DISABLE_FILE_RECORDERS;
 
     {
-        feature_recorder_set fs(flags,be_hash,image_fname,opt_outdir);
-        fs.init(feature_file_names);
-        if(opt_enable_histograms) be13::plugin::add_enabled_scanner_histograms_to_feature_recorder_set(fs);
+        feature_recorder_set fs(flags, be_hash_name, image_fname, opt_outdir);
+        fs.init( feature_file_names );
+        if (opt_enable_histograms) be13::plugin::add_enabled_scanner_histograms_to_feature_recorder_set(fs);
         be13::plugin::scanners_init(fs);
 
         fs.set_stop_list(&stop_list);

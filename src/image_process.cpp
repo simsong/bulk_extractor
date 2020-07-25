@@ -15,16 +15,7 @@
 #include "dig.h"
 #include "utf8.h"
 
-#ifdef HAVE_LIBAFFLIB
-#endif
-
 #include "image_process.h"
-#ifdef HAVE_LIBAFFLIB
-#ifndef HAVE_STL
-#define HAVE_STL			/* needed */
-#endif
-#include <afflib/utils.h>
-#endif
 
 #ifndef PATH_MAX
 #define PATH_MAX 65536
@@ -111,7 +102,7 @@ int64_t get_filesize(int fd)
 	    break;
 	}
     }
-    if(bits==60) errx(1,"Partition detection not functional.\n");
+    if(bits==60) throw std::runtime_error("Partition detection not functional.\n");
 
     /* Phase 2; blank bits as necessary */
     for(i=bits;i>=0;i--){
@@ -155,156 +146,6 @@ static int64_t getSizeOfFile(const std::string &fname)
     return fname_length;
 }
 
-
-
-/****************************************************************
- *** AFF START
- ****************************************************************/
-
-#ifdef HAVE_LIBAFFLIB
-int process_aff::open()
-{
-    const char *fn = image_fname().c_str();
-    af = af_open(fn,O_RDONLY,0666);
-    if(!af){
-	return -1;
-    }
-    if(af_cannot_decrypt(af)) errx(1,"Cannot decrypt %s: encryption key not set?",fn);
-
-    /* build the pagelist */
-    aff::seglist sl(af);			// get a segment list
-    for(aff::seglist::const_iterator i=sl.begin();i!=sl.end();i++){
-	if((*i).pagenumber()>=0){
-	    pagelist.push_back((*i).pagenumber());
-	}
-    }
-    sort(pagelist.begin(),pagelist.end());
-    return 0;
-}
-
-int process_aff::pread(unsigned char *buf,size_t bytes,int64_t offset) const
-{
-    af_seek(af,offset,0);
-    return af_read(af,buf,bytes);
-}
-
-int64_t process_aff::image_size() const
-{
-    return af_get_imagesize(af);
-}
-
-
-/**
- * Iterator support
- */
-
-image_process::iterator process_aff::begin() const
-{
-    image_process::iterator it(this);
-    it.raw_offset = 0;
-    return it;
-}
-
-image_process::iterator process_aff::end() const
-{
-    image_process::iterator it(this);
-    it.page_number_ = pagelist.size();
-    it.raw_offset    = af_get_imagesize(af);
-    it.eof           = true;
-    return it;
-}
-
-/* Note - af_get_pagesize() used to be in afflib_i.h; it was moved,
- * but we may not have the new definition.
- */
-#ifdef HAVE_LIBAFFLIB
-__BEGIN_DECLS
-#ifdef HAVE_DIAGNOSTIC_REDUNDANT_DECLS
-#pragma GCC diagnostic ignored "-Wredundant-decls"
-#endif
-int	af_get_pagesize(AFFILE *af);	// returns page size, or -1
-__END_DECLS
-#endif
-
-
-/* Increment the AFF iterator by going to the next page.
- * If we hit the end of the pagelist, note that we are at the end of file.
- */
-void process_aff::increment_iterator(class image_process::iterator &it) const
-{
-    if(it.page_number < pagelist.size()){
-	it.page_number++;
-	it.raw_offset = pagelist[it.page_number] * af_get_pagesize(af);
-    } else {
-	it.eof = true;
-    }
-}
-
-pos0_t process_aff::get_pos0(const image_process::iterator &it) const
-{
-    int64_t pagenum = pagelist[it.page_number];
-    return pos0_t("",pagenum * af_get_pagesize(af));
-}
-
-sbuf_t *process_aff::sbuf_alloc(image_process::iterator &it) const
-{
-    size_t bufsize  = af_get_pagesize(af)+margin;
-    unsigned char *buf = (unsigned char *)malloc(bufsize);
-    if(!buf) throw std::bad_alloc();
-
-    pos0_t pos0 = get_pos0(it);
-    
-    af_seek(af,pos0.offset,0);
-    ssize_t bytes_read = af_read(af,buf,bufsize);
-    /**
-     * af_read() returns 0 at end of file, if no data is available,
-     * or if the data is bad. We need to be willing to return an sbuf
-     * with zero bytes, which we do below.
-     */
-    if(bytes_read>=0){
-	ssize_t af_pagesize = af_get_pagesize(af);
-	if(af_pagesize>bytes_read) af_pagesize = bytes_read;
-	sbuf_t *sbuf = new sbuf_t(pos0,buf,bytes_read,af_pagesize,it.page_number,true);
-	return sbuf;
-    }
-    free(buf);
-    return 0;				// no buffer to return
-}
-
-double process_aff::fraction_done(const image_process::iterator &it) const
-{
-    return (double)it.page_number / (double)pagelist.size();
-}
-
-std::string process_aff::str(const image_process::iterator &it) const
-{
-    char buf[64];
-    snprintf(buf,sizeof(buf),"Page %" PRId64 "",it.page_number);
-    return std::string(buf);
-}
-
-uint64_t process_aff::max_blocks(const image_process::iterator &it) const
-{
-    return pagelist.size();
-}
-
-uint64_t process_aff::seek_block(image_process::iterator &it,uint64_t block) const
-{
-    it.page_number = block;
-    return block;
-}
-
-
-process_aff::~process_aff()
-{
-    if(af) af_close(af);
-}
-#endif
-
-
-/****************************************************************
- *** AFF END
- ****************************************************************/
 
 
 
@@ -1105,14 +946,6 @@ image_process *image_process::open(std::string fn,bool opt_recurse,
 
 	std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 	
-	if(ext=="aff"){
-#ifdef HAVE_LIBAFFLIB
-	    ip = new process_aff(fn,pagesize_,margin_);
-#else
-            std::cerr << "This program was compiled without AFF support\n";
-	    exit(1);
-#endif
-	}
 	if(ext=="e01" || fn.find(".E01.")!=std::string::npos){
 #ifdef HAVE_LIBEWF
 	    ip = new process_ewf(fn,pagesize_,margin_);

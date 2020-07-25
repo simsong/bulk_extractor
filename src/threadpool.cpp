@@ -16,43 +16,6 @@
 #include <thread>
 
 
-/* Return the number of CPUs we have on various architectures.
- * From http://stackoverflow.com/questions/150355/programmatically-find-the-number-of-cores-on-a-machine
- * 2020-06-14 - slg - Migrated to std::thread::hardware_concurrency() per C++11.
- */
-
-u_int threadpool::numCPU()
-{
-    return std::thread::hardware_concurrency();
-}
-
-#ifdef WIN32
-/**
- * From the pthreads readme for mingw:
- * Define PTW32_STATIC_LIB when building your application. Also, your
- * application must call a two non-portable routines to initialise the
- * some state on startup and cleanup before exit. One other routine needs
- * to be called to cleanup after any Win32 threads have called POSIX API
- * routines. See README.NONPORTABLE or the html reference manual pages for
- * details on these routines:
- * 
- * BOOL pthread_win32_process_attach_np (void);
- * BOOL pthread_win32_process_detach_np (void);
- * BOOL pthread_win32_thread_attach_np (void); // Currently a no-op
- * BOOL pthread_win32_thread_detach_np (void);
- *
- */
-void threadpool::win32_init()
-{
-#ifdef HAVE_PTHREAD_WIN32_PROCESS_ATTACH_NP
-    pthread_win32_process_attach_np();
-#endif
-#ifdef HAVE_PTHREAD_WIN32_THREAD_ATTACH_NP
-    pthread_win32_thread_attach_np();
-#endif
-}
-#endif
-
 /**
  * Create the thread pool.
  * Each thread has its own feature_recorder_set.
@@ -62,13 +25,13 @@ threadpool::threadpool(int numthreads,feature_recorder_set &fs_,dfxml_writer &xr
     workers(),M(),TOMAIN(),TOWORKER(),freethreads(numthreads),work_queue(),
     fs(fs_),xreport(xreport_),thread_status(),waiting(),mode()
 {
-    if(pthread_mutex_init(&M,NULL))       errx(1,"pthread_mutex_init failed");
-    if(pthread_cond_init(&TOMAIN,NULL))   errx(1,"pthread_cond_init #1 failed");
-    if(pthread_cond_init(&TOWORKER,NULL)) errx(1,"pthread_cond_init #2 failed");
+    if ( pthread_mutex_init(&M,NULL))       throw std::runtime_error("pthread_mutex_init failed");
+    if ( pthread_cond_init(&TOMAIN,NULL))   throw std::runtime_error("pthread_cond_init #1 failed");
+    if ( pthread_cond_init(&TOWORKER,NULL)) throw std::runtime_error("pthread_cond_init #2 failed");
 
     // lock while I create the threads
-    if(pthread_mutex_lock(&M)) errx(1,"pthread_mutex_lock failed");
-    for(int i=0;i<numthreads;i++){
+    if (pthread_mutex_lock(&M)) throw std::runtime_error("pthread_mutex_lock failed");
+    for (int i=0; i<numthreads; i++){
 	class worker *w = new worker(*this,i);
 	workers.push_back(w);
 	thread_status.push_back(std::string());
@@ -139,7 +102,7 @@ int threadpool::get_free_count()
 void threadpool::set_thread_status(uint32_t id,const std::string &status)
 {
     if(pthread_mutex_lock(&M)){
-	errx(1,"threadpool::set_thread_status pthread_mutex_lock failed");
+	throw std::runtime_error("threadpool::set_thread_status pthread_mutex_lock failed");
     }
     if(id < thread_status.size()){
 	thread_status.at(id) = status;
@@ -150,7 +113,7 @@ void threadpool::set_thread_status(uint32_t id,const std::string &status)
 std::string threadpool::get_thread_status(uint32_t id)
 {
     if(pthread_mutex_lock(&M)){
-	errx(1,"threadpool::set_thread_status pthread_mutex_lock failed");
+	throw std::runtime_error("threadpool::set_thread_status pthread_mutex_lock failed");
     }
     std::string status;
     if(id < thread_status.size()){

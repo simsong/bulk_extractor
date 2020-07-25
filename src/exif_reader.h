@@ -12,9 +12,10 @@
 #ifndef EXIF_READER_H
 #define EXIF_READER_H
 
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
+#include <cstdlib>
+#include <cstring>
+#include <cstdio>
+
 #include <vector>
 #include <iostream>
 #include <iomanip>
