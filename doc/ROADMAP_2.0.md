@@ -38,6 +38,20 @@ Goals for the 2.0 release
 * Experimental features have been removed. Experiments are now
   conducted with plugin-s.
 
+* BE2.0 will be released as a pure command-line tool. The user
+  interface with the windows installer (and embedded CLI) will be
+  released afterwards.
+
+* SQL will be turned on by default and the program will provide the
+  user with instructions on how to use it. Performance will be
+  analyzed to determine the fastest way to create the text feature
+  files, the SQLite3 database, and the histograms. 
+
+* Include other easy-to-output feature files by default, such as
+  collect all email messages.
+
+* Integration with The Sleuth Kit for file enumeration
+
 # Architecture Changes
 - [ ]  be13_api will build a .a library
 - [ ]  be13_api will include tests and have its own makefile system.
