@@ -1,6 +1,7 @@
 #ifndef PHASE1_H
 #define PHASE1_H
 
+#include "be13_api/utils.h"             // split()
 #include "be13_api/aftimer.h"
 #include "threadpool.h"
 #include "image_process.h"

@@ -1,7 +1,7 @@
 #ifndef BULK_EXTRACTOR_API_H
 #define BULK_EXTRACTOR_API_H
 
-#include <ctypes>
+#include <cctype>
 #include <cstdint>
 
 /*

@@ -1,7 +1,5 @@
 #include "findopts.h"
 
-FindOpts::FindOpts(): Files(), Patterns() {}
-
 FindOpts::FindOpts(const FindOpts& x):
   Files(x.Files), Patterns(x.Patterns) {}
 

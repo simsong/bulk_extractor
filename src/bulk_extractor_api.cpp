@@ -46,23 +46,6 @@ class callback_feature_recorder_set;
  */ 
 
 
-static std::string hash_name("md5");
-static std::string hash_func(const uint8_t *buf,size_t bufsize)
-{
-    if(hash_name=="md5" || hash_name=="MD5"){
-        return dfxml::md5_generator::hash_buf(buf,bufsize).hexdigest();
-    }
-    if(hash_name=="sha1" || hash_name=="SHA1" || hash_name=="sha-1" || hash_name=="SHA-1"){
-        return dfxml::sha1_generator::hash_buf(buf,bufsize).hexdigest();
-    }
-    if(hash_name=="sha256" || hash_name=="SHA256" || hash_name=="sha-256" || hash_name=="SHA-256"){
-        return dfxml::sha256_generator::hash_buf(buf,bufsize).hexdigest();
-    }
-    std::cerr << "Invalid hash name: " << hash_name << "\n";
-    std::cerr << "This version of bulk_extractor only supports MD5, SHA1, and SHA256\n";
-    exit(1);
-}
-
 class callback_feature_recorder_set: public feature_recorder_set {
     callback_feature_recorder_set(const callback_feature_recorder_set &cfs)=delete;
     callback_feature_recorder_set &operator=(const callback_feature_recorder_set &cfs)=delete;
@@ -78,8 +61,8 @@ public:
     }
 
     virtual feature_recorder *create_name_factory(const std::string &name_);
-    callback_feature_recorder_set(void *user_,be_callback_t *cb_):
-        feature_recorder_set(feature_recorder_set::DISABLE_FILE_RECORDERS,my_hasher,
+    callback_feature_recorder_set(void *user_, be_callback_t *cb_, const std::string &hash_alg):
+        feature_recorder_set(feature_recorder_set::DISABLE_FILE_RECORDERS, hash_alg,
                              feature_recorder_set::NO_INPUT,feature_recorder_set::NO_OUTDIR),
         histogram_defs(),user(user_),cb(cb_),Mcb(){
     }
@@ -172,7 +155,7 @@ extern "C"
 BEFILE *bulk_extractor_open(void *user,be_callback_t cb)
 {
     histogram_defs_t histograms;
-    scanner_info::scanner_config   s_config; // the bulk extractor config
+    be13::scanner_info::scanner_config   s_config; // the bulk extractor config
 
     s_config.debug       = 0;           // default debug
 
@@ -245,7 +228,7 @@ int bulk_extractor_analyze_buf(BEFILE *bef,uint8_t *buf,size_t buflen)
 {
     pos0_t pos0("");
     const sbuf_t sbuf(pos0,buf,buflen,buflen,0,false);
-    be13::plugin::process_sbuf(scanner_params(scanner_params::PHASE_SCAN,sbuf,bef->cfs));
+    be13::plugin::process_sbuf(scanner_params(be13::scanner_params::PHASE_SCAN,sbuf,bef->cfs));
     return 0;
 }
 
@@ -286,7 +269,7 @@ int bulk_extractor_analyze_dev(BEFILE *bef,const char *fname,float frac,int page
         try {
             sbuf_t *sbuf = it.sbuf_alloc();
             if(sbuf==0) break;      // eof
-            be13::plugin::process_sbuf(scanner_params(scanner_params::PHASE_SCAN,*sbuf,bef->cfs));
+            be13::plugin::process_sbuf(scanner_params(be13::scanner_params::PHASE_SCAN,*sbuf,bef->cfs));
             delete sbuf;
         }
         catch (const std::exception &e) {

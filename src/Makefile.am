@@ -12,16 +12,20 @@ include be13_api/dfxml/src/Makefile.defs
 include be13_api/Makefile.defs
 include rar/Makefile.defs
 
-TESTS = $(check_PROGRAMS)
-check_PROGRAMS = test_bulkextractor jpegdump
+#TESTS = $(check_PROGRAMS)
+TESTS = test_bulkextractor
+check_PROGRAMS = test_bulkextractor 
+
+#check_PROGRAMS = test_bulkextractor jpegdump
 
 # Slowly add modules as tests are written for them.
 test_bulkextractor_SOURCES = be13api/tests/catch2.h\
+	base64_forensic.h base64_forensic.cpp \
 	test_bulkextractor.cpp
-#	threadpool.cpp threadpool.h \
+#	threadpool.cpp threadpool.h 
 
 # This was for building a test program
-jpegdump_SOURCES = scan_exif.cpp be13_api/sbuf.cpp be13_api/sbuf.h be13_api/unicode_escape.cpp be13_api/unicode_escape.h
+#jpegdump_SOURCES = scan_exif.cpp be13_api/sbuf.cpp be13_api/sbuf.h be13_api/unicode_escape.cpp be13_api/unicode_escape.h
 
 # These scanners are based on GNUflex
 flex_scanners = \

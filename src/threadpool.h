@@ -50,6 +50,7 @@
 #include <queue>
 #include "be13_api/aftimer.h"
 #include "dfxml/src/dfxml_writer.h"
+#include "feature_recorder_set.h"
 
 // There is a single threadpool object
 class threadpool {

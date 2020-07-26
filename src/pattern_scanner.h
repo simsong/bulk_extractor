@@ -1,6 +1,9 @@
 #ifndef PATTERN_SCANNER_H
 #define PATTERN_SCANNER_H
 
+// if liblightgrep isn't present, compiles to nothing
+#ifdef HAVE_LIBLIGHTGREP
+
 #include <vector>
 #include <string>
 #include <utility>
@@ -128,4 +131,5 @@ private:
 // Utility function. Makes your scan function a one-liner, given a PatternScanner instance
 void scan_lg(PatternScanner& scanner, const class scanner_params &sp, const recursion_control_block &rcb);
 
+#endif
 #endif /* PATTERN_SCANNER_H */
