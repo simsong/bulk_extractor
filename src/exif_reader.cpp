@@ -1,5 +1,6 @@
 /**
  * exif_reader: - custom exif reader for identifying specific features for bulk_extractor.
+ *              - we wrote our own because the freely available libraries kept crashing on random data.
  * Revision history:
  * 2012-jan-05 bda - Created.
  */

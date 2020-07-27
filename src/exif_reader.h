@@ -36,15 +36,6 @@ struct tiff_handle_t {
     }
 };
 
-//struct tiff_handle_t {
-//    const uint8_t *buf;
-//    const size_t bufsize;
-//    const bool intel_byte_order;
-//    tiff_handle_t(const uint8_t *buf_, size_t bufsize_, bool intel_byte_order_)
-//                :buf(buf_), bufsize(bufsize_), intel_byte_order(intel_byte_order_) {
-//    }
-//};
-
 /**
  * types of IFDs
  * NOTE: some manufacturers treat Maker Notes as an IFD, but not all.

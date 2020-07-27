@@ -34,6 +34,11 @@ TEST_CASE("base64_forensic", "[utilities]") {
     REQUIRE( strncmp( (char *)output, decoded, strlen(decoded))==0 );
 }
 
+TEST_CASE("dig", "[utilities]") {
+}
+
+TEST_CASE("exif_reader", "[utilities]") {
+}
 
 /* Test the threadpool */
 TEST_CASE("threadpool", "[threads]") {
