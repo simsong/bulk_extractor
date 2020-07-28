@@ -8,8 +8,12 @@ AM_CPPFLAGS = -I${top_srcdir}/src/be13_api
 AUTOMAKE_OPTIONS = subdir-objects
 
 # bring in defs from two included projects
-include be13_api/dfxml/src/Makefile.defs
-include be13_api/Makefile.defs
+DFXML_SRC_DIR = be13_api/dfxml/src/
+include $(DFXML_SRC_DIR)Makefile.defs
+
+BE13_API_DIR= be13_api/
+include $(BE13_API_DIR)Makefile.defs
+
 include rar/Makefile.defs
 
 #TESTS = $(check_PROGRAMS)
@@ -102,7 +106,6 @@ bulk_extractor_nomain = \
 	dig.cpp \
 	dig.h \
 	findopts.h \
-	findopts.cpp \
 	image_process.cpp \
 	image_process.h \
 	phase1.h \
@@ -117,7 +120,7 @@ bulk_extractorlib_SOURCES = $(bulk_extractor_nomain) $(scanners_builtin) bulk_ex
 
 bulk_extractor_noscanners_SOURCES = $(bulk_extractor_nomain) bulk_extractor_noscanners.cpp main.cpp 
 
-stand_SOURCES = dig.cpp scan_sceadan.cpp stand.cpp $(BE13_API) $(DFXML_WRITER) 
+stand_SOURCES = dig.cpp stand.cpp $(BE13_API) $(DFXML_WRITER) 
 
 lib: libbulkextractor.so
 

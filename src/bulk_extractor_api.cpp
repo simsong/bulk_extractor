@@ -36,15 +36,14 @@
  * that writes to a callback function instead of a
  */
 
-class callback_feature_recorder;
 class callback_feature_recorder_set;
 
-/* a special feature_recorder_set that calls a callback rather than writing to a file.
+/* callback_feature_recorder_set is 
+ * a special feature_recorder_set that calls a callback rather than writing to a file.
  * Typically we will instantiate a single object called the 'cfs' for each BEFILE.
  * It creates multiple named callback_feature_recorders, but they all callback through the same
  * callback function using the same set of locks
  */ 
-
 
 class callback_feature_recorder_set: public feature_recorder_set {
     callback_feature_recorder_set(const callback_feature_recorder_set &cfs)=delete;
@@ -110,8 +109,8 @@ class callback_feature_recorder: public feature_recorder {
     // neither copying nor assignment are implemented
     callback_feature_recorder(const callback_feature_recorder &cfr)=delete;
     callback_feature_recorder &operator=(const callback_feature_recorder&cfr)=delete;
-    be_callback_t *cb;
 public:
+    be_callback_t *cb;                  // the callback function
     callback_feature_recorder(be_callback_t *cb_,
                               class feature_recorder_set &fs_,const std::string &name_):
         feature_recorder(fs_,name_),cb(cb_){
@@ -144,7 +143,7 @@ feature_recorder *callback_feature_recorder_set::create_name_factory(const std::
 }
 
 struct BEFILE_t {
-    BEFILE_t(void *user,be_callback_t cb):fd(),cfs(user,cb),cfg(){};
+    BEFILE_t(void *user,be_callback_t cb):fd(),cfs(user,cb,"md5"),cfg(){};
     int                            fd;
     callback_feature_recorder_set  cfs;
     BulkExtractor_Phase1::Config   cfg;
@@ -228,7 +227,7 @@ int bulk_extractor_analyze_buf(BEFILE *bef,uint8_t *buf,size_t buflen)
 {
     pos0_t pos0("");
     const sbuf_t sbuf(pos0,buf,buflen,buflen,0,false);
-    be13::plugin::process_sbuf(scanner_params(be13::scanner_params::PHASE_SCAN,sbuf,bef->cfs));
+    be13::plugin::process_sbuf(be13::scanner_params(be13::scanner_params::PHASE_SCAN,sbuf,bef->cfs));
     return 0;
 }
 
@@ -269,7 +268,7 @@ int bulk_extractor_analyze_dev(BEFILE *bef,const char *fname,float frac,int page
         try {
             sbuf_t *sbuf = it.sbuf_alloc();
             if(sbuf==0) break;      // eof
-            be13::plugin::process_sbuf(scanner_params(be13::scanner_params::PHASE_SCAN,*sbuf,bef->cfs));
+            be13::plugin::process_sbuf(be13::scanner_params(be13::scanner_params::PHASE_SCAN,*sbuf,bef->cfs));
             delete sbuf;
         }
         catch (const std::exception &e) {

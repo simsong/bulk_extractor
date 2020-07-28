@@ -39,7 +39,7 @@ const char *image_fname = 0;
 //be_config_t be_config; // system configuration
 
 scanner_t *scanners_builtin[] = {
-    scan_bulk,
+    scan_json,
     0
 };
 
