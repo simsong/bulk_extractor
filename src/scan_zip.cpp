@@ -98,7 +98,7 @@ inline void scan_zip_component(const class scanner_params &sp,const recursion_co
 {
     const sbuf_t &sbuf = sp.sbuf;
     const pos0_t &pos0 = sp.sbuf.pos0;
-                
+
     /* Local file header */
     uint16_t version_needed_to_extract= sbuf.get16u(pos+4);
     uint16_t general_purpose_bit_flag = sbuf.get16u(pos+6);
@@ -145,7 +145,7 @@ inline void scan_zip_component(const class scanner_params &sp,const recursion_co
     if(data_buf > sbuf.buf+sbuf.bufsize){ // past the end of buffer?
         xmlstream << "<disposition>end-of-buffer</disposition></zipinfo>";
         zip_recorder->write(pos0+pos,name,xmlstream.str());
-        return; 
+        return;
     }
 
     /* OpenOffice makes invalid ZIP files with compr_size=0 and uncompr_size=0.
@@ -157,13 +157,13 @@ inline void scan_zip_component(const class scanner_params &sp,const recursion_co
     }
 
     /* See if we can decompress */
-    if(version_needed_to_extract==20 && uncompr_size>=zip_min_uncompr_size){ 
+    if(version_needed_to_extract==20 && uncompr_size>=zip_min_uncompr_size){
         if(uncompr_size > zip_max_uncompr_size){
             uncompr_size = zip_max_uncompr_size; // don't uncompress bigger than 16MB
         }
 
         // don't decompress beyond end of buffer
-        if((u_int)compr_size > sbuf.bufsize - (data_buf-sbuf.buf)){ 
+        if((u_int)compr_size > sbuf.bufsize - (data_buf-sbuf.buf)){
             compr_size = sbuf.bufsize - (data_buf-sbuf.buf);
         }
 
@@ -185,12 +185,12 @@ inline void scan_zip_component(const class scanner_params &sp,const recursion_co
         }
         z_stream zs;
         memset(&zs,0,sizeof(zs));
-		
+
         zs.next_in = (Bytef *)data_buf; // note that next_in should be typedef const but is not
         zs.avail_in = compr_size;
         zs.next_out = dbuf.buf;
         zs.avail_out = uncompr_size;
-		
+
         int r = inflateInit2(&zs,-15);
         if(r==0){
             r = inflate(&zs,Z_SYNC_FLUSH);
@@ -228,10 +228,9 @@ inline void scan_zip_component(const class scanner_params &sp,const recursion_co
 extern "C"
 void scan_zip(const class scanner_params &sp,const recursion_control_block &rcb)
 {
-    assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
+    sp.check_version();
 
     if(sp.phase==scanner_params::PHASE_STARTUP){
-        assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	sp.info->name  = "zip";
         sp.info->flags = scanner_info::SCANNER_RECURSE | scanner_info::SCANNER_RECURSE_EXPAND;
         sp.info->get_config("zip_min_uncompr_size",&zip_min_uncompr_size,"Minimum size of a ZIP uncompressed object");

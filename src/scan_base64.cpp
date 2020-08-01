@@ -8,7 +8,7 @@ static const uint32_t B64_LOWERCASE=1;
 static const uint32_t B64_UPPERCASE=2;
 static const uint32_t B64_NUMBER=4;
 static const uint32_t B64_SYMBOL=8;
-static int   base64array[256];           // array of valid base64 characters, 
+static int   base64array[256];           // array of valid base64 characters,
 static size_t minlinewidth = 60;
 static size_t maxlinewidth_needed_for_character_classes = 160;
 
@@ -119,9 +119,8 @@ void scan_base64(const class scanner_params &sp,const recursion_control_block &r
 {
     const int debug=0;
 
-    assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);      
+    sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP){
-        assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	sp.info->name		= "base64";
         sp.info->author         = "Simson L. Garfinkel";
         sp.info->description    = "scans for Base64-encoded data";

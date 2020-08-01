@@ -27,9 +27,8 @@ extern "C"
 void scan_kml(const class scanner_params &sp,const recursion_control_block &rcb)
 {
     string myString;
-    assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
+    sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP){
-        assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	sp.info->name		= "kml";
         sp.info->author         = "Simson Garfinkel ";
         sp.info->description    = "Scans for KML files";
@@ -43,7 +42,7 @@ void scan_kml(const class scanner_params &sp,const recursion_control_block &rcb)
 	feature_recorder *kml_recorder = fs.get_name("kml");
 
 	// Search for <xml BEGIN:VCARD\r in the sbuf
-	// we could do this with a loop, or with 
+	// we could do this with a loop, or with
 	for(size_t i = 0;  i < sbuf.bufsize;)	{
 	    ssize_t xml_loc = sbuf.find("<?xml ",i);
 	    if(xml_loc==-1) return;		// no more

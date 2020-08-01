@@ -3,10 +3,20 @@
 
 #include "be13_api/utils.h"             // split()
 #include "be13_api/aftimer.h"
-#include "threadpool.h"
 #include "image_process.h"
 #include "dfxml/src/dfxml_writer.h"
 #include "dfxml/src/hash_t.h"
+#include "threadpool.hpp"               // new threadpool!
+
+/**
+ * bulk_extractor:
+ * phase 0 - Load every scanner, create the feature recorder set, create the feature recorders
+ * phase 1 - process every buffer with every scanner.
+ *           BE1.0 - Each sbuf is loaded by the producer. Each worker runs all scanners.
+ *           BE2.0 - Each sbuf is loaded by the producer. Each worker runs a single scanner.
+ * phase 2 - histograms are made.
+ *
+ */
 
 
 /****************************************************************
@@ -20,45 +30,30 @@ public:
     static void make_sorted_random_blocklist(blocklist_t *blocklist,uint64_t max_blocks,float frac);
 
     /* configuration for phase1 */
+    static const auto MB = 1024*1024;
     class Config {
-    Config &operator=(const Config &);  // not implemented
-    Config(const Config &);             // not implemented
+        Config &operator=(const Config &);  // not implemented
+        Config(const Config &);             // not implemented
     public:
-        Config():
-            debug(0),
-            opt_pagesize(1024*1024*16),
-            opt_marginsize(1024*1024*4),
-            max_bad_alloc_errors(60),
-            opt_info(false),
-            opt_notify_rate(4),
-            opt_page_start(0),
-            opt_offset_start(0),
-            opt_offset_end(0),
-            max_wait_time(3600),
-            opt_quiet(0),
-            retry_seconds(60),
-            num_threads(1),             // 
-            sampling_fraction(1.0),
-            sampling_passes(1),
-            opt_report_read_errors(true) {}
-                 
-        uint64_t debug;                 // debug 
-        size_t   opt_pagesize;
-        size_t   opt_marginsize;
-        uint32_t max_bad_alloc_errors;
-        bool     opt_info;
-        uint32_t opt_notify_rate;		// by default, notify every 4 pages
-        uint64_t opt_page_start;
-        int64_t  opt_offset_start;
-        int64_t  opt_offset_end;
-        time_t   max_wait_time;
-        int      opt_quiet;                  // -1 = no output
-        int      retry_seconds;
-        u_int    num_threads;
-        double   sampling_fraction;       // for random sampling
-        u_int    sampling_passes;
-        bool     opt_report_read_errors;
+        Config() {}
+        uint64_t debug;                 // debug
+        size_t   opt_pagesize {16 * MB};
+        size_t   opt_marginsize { 4 * MB};
+        uint32_t max_bad_alloc_errors {0};
+        bool     opt_info {false};
+        uint32_t opt_notify_rate {4};		// by default, notify every 4 pages
+        uint64_t opt_page_start {0};
+        int64_t  opt_offset_start {0};
+        int64_t  opt_offset_end {0};
+        time_t   max_wait_time {3600};  // after an hour, terminate a scanner
+        int      opt_quiet {false};                  // -1 = no output
+        int      retry_seconds {60};
+        u_int    num_threads {1};
+        double   sampling_fraction {1.0};       // for random sampling
+        u_int    sampling_passes {1};
+        bool     opt_report_read_errors {true};
 
+#if 0
         void validate(){
 #if 0
             if(opt_offset_start % opt_pagesize != 0){
@@ -69,6 +64,7 @@ public:
             if(opt_offset_end % opt_pagesize != 0) throw std::runtime_error("end offset must be a multiple of the page size");
 #endif
         };
+#endif
     };
 private:
 
@@ -76,7 +72,7 @@ private:
     static void msleep(uint32_t msec); // sleep for a specified number of msec
     bool sampling(){                    // are we random sampling?
         return config.sampling_fraction<1.0;
-    } 
+    }
     // return "5 min 10 sec" string
     static std::string minsec(time_t tsec);
 
@@ -93,9 +89,9 @@ public:
     dfxml_writer  &xreport;
     aftimer       &timer;
     Config        &config;
-    u_int         notify_ctr;    /* for random sampling */
-    uint64_t      total_bytes;               // 
-    dfxml::md5_generator *md5g;              // the MD5 of the image. Set to 0 if a gap is encountered
+    u_int         notify_ctr  {0};    /* for random sampling */
+    uint64_t      total_bytes {0};               //
+    //dfxml::md5_generator *md5g;              // the MD5 of the image. Set to 0 if a gap is encountered
 
     /* Get the sbuf from current image iterator location, with retries */
     sbuf_t *get_sbuf(image_process::iterator &it);
@@ -140,8 +136,7 @@ public:
     }
 
     BulkExtractor_Phase1(dfxml_writer &xreport_,aftimer &timer_,Config &config_):
-        tp(),xreport(xreport_),timer(timer_),config(config_),notify_ctr(0),total_bytes(0),
-        md5g(new dfxml::md5_generator()){}	// keep track of MD5
+        xreport(xreport_),timer(timer_),config(config_){}	// keep track of MD5
     void run(image_process &p,feature_recorder_set &fs, seen_page_ids_t &seen_page_ids);
     void wait_for_workers(image_process &p,std::string *md5_string);
 };

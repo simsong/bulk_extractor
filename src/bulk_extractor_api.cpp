@@ -8,7 +8,7 @@
 #include "bulk_extractor.h"
 #include "bulk_extractor_api.h"
 #include "image_process.h"
-#include "threadpool.h"
+//#include "be_threadpool.h"
 #include "be13_api/aftimer.h"
 #include "histogram.h"
 #include "dfxml/src/dfxml_writer.h"
@@ -38,17 +38,17 @@
 
 class callback_feature_recorder_set;
 
-/* callback_feature_recorder_set is 
+/* callback_feature_recorder_set is
  * a special feature_recorder_set that calls a callback rather than writing to a file.
  * Typically we will instantiate a single object called the 'cfs' for each BEFILE.
  * It creates multiple named callback_feature_recorders, but they all callback through the same
  * callback function using the same set of locks
- */ 
+ */
 
 class callback_feature_recorder_set: public feature_recorder_set {
     callback_feature_recorder_set(const callback_feature_recorder_set &cfs)=delete;
     callback_feature_recorder_set &operator=(const callback_feature_recorder_set &cfs)=delete;
-    histogram_defs_t histogram_defs;        
+    histogram_defs_t histogram_defs;
 
 public:
     void            *user;
@@ -115,7 +115,7 @@ public:
                               class feature_recorder_set &fs_,const std::string &name_):
         feature_recorder(fs_,name_),cb(cb_){
     }
-    virtual std::string carve(const sbuf_t &sbuf,size_t pos,size_t len, 
+    virtual std::string carve(const sbuf_t &sbuf,size_t pos,size_t len,
                               const std::string &ext){ // appended to forensic path
         return("");                      // no file created
     }
@@ -150,7 +150,7 @@ struct BEFILE_t {
 };
 
 typedef struct BEFILE_t BEFILE;
-extern "C" 
+extern "C"
 BEFILE *bulk_extractor_open(void *user,be_callback_t cb)
 {
     histogram_defs_t histograms;
@@ -163,7 +163,7 @@ BEFILE *bulk_extractor_open(void *user,be_callback_t cb)
     BEFILE *bef = new BEFILE_t(user,cb);
     return bef;
 }
-    
+
 extern "C" void bulk_extractor_config(BEFILE *bef,uint32_t cmd,const char *name,int64_t arg)
 {
     switch(cmd){
@@ -196,7 +196,7 @@ extern "C" void bulk_extractor_config(BEFILE *bef,uint32_t cmd,const char *name,
         bef->cfs.set_flag(feature_recorder_set::MEM_HISTOGRAM);
         break;
 
-    case BEAPI_MEMHIST_LIMIT:{ 
+    case BEAPI_MEMHIST_LIMIT:{
         feature_recorder *fr = bef->cfs.get_name(name);
         assert(fr);
         fr->set_memhist_limit(arg);
@@ -222,7 +222,7 @@ extern "C" void bulk_extractor_config(BEFILE *bef,uint32_t cmd,const char *name,
 }
 
 
-extern "C" 
+extern "C"
 int bulk_extractor_analyze_buf(BEFILE *bef,uint8_t *buf,size_t buflen)
 {
     pos0_t pos0("");
@@ -231,7 +231,7 @@ int bulk_extractor_analyze_buf(BEFILE *bef,uint8_t *buf,size_t buflen)
     return 0;
 }
 
-extern "C" 
+extern "C"
 int bulk_extractor_analyze_dev(BEFILE *bef,const char *fname,float frac,int pagesize)
 {
     bool sampling_mode = frac < 1.0; // are we in sampling mode or full-disk mode?
@@ -239,7 +239,7 @@ int bulk_extractor_analyze_dev(BEFILE *bef,const char *fname,float frac,int page
     /* A single-threaded sampling bulk_extractor.
      * It may be better to do this with two threads---one that does the reading (and seeking),
      * the other that doe the analysis.
-     * 
+     *
      * This looks like the code in phase1.cpp.
      */
     BulkExtractor_Phase1::blocklist_t blocks_to_sample;
@@ -284,14 +284,11 @@ int bulk_extractor_analyze_dev(BEFILE *bef,const char *fname,float frac,int page
     return 0;
 }
 
-extern "C" 
+extern "C"
 int bulk_extractor_close(BEFILE *bef)
 {
     bef->cfs.dump_histograms((void *)&bef->cfs,
-                             callback_feature_recorder_set::histogram_dump_callback,0); 
+                             callback_feature_recorder_set::histogram_dump_callback,0);
     delete bef;
     return 0;
 }
-
-
-    

@@ -124,8 +124,7 @@ namespace base16 {
   };
 
   void Scanner::startup(const scanner_params& sp) {
-    assert(sp.sp_version == scanner_params::CURRENT_SP_VERSION);
-    assert(sp.info->si_version == scanner_info::CURRENT_SI_VERSION);
+      sp.check_version();
 
     sp.info->name             = "base16_lg";
     sp.info->author           = "Simson L. Garfinkel";

@@ -1,4 +1,4 @@
-bin_PROGRAMS   = bulk_extractor 
+bin_PROGRAMS   = bulk_extractor
 EXTRA_PROGRAMS = stand bulk_extractorlib beapi_demo bulk_extractor_noscanners
 CLEANFILES     = scan_accts.cpp scan_email.cpp scan_gps.cpp scan_base16.cpp *.d
 
@@ -18,15 +18,15 @@ include rar/Makefile.defs
 
 #TESTS = $(check_PROGRAMS)
 TESTS = test_bulkextractor
-check_PROGRAMS = test_bulkextractor 
+check_PROGRAMS = test_bulkextractor
 
 #check_PROGRAMS = test_bulkextractor jpegdump
 
 # Slowly add modules as tests are written for them.
 test_bulkextractor_SOURCES = be13api/tests/catch2.h\
 	base64_forensic.h base64_forensic.cpp \
-	test_bulkextractor.cpp
-#	threadpool.cpp threadpool.h 
+	test_bulkextractor.cpp \
+	threadpool.hpp
 
 # This was for building a test program
 #jpegdump_SOURCES = scan_exif.cpp be13_api/sbuf.cpp be13_api/sbuf.h be13_api/unicode_escape.cpp be13_api/unicode_escape.h
@@ -37,7 +37,7 @@ flex_scanners = \
 	scan_accts.flex \
 	scan_base16.flex \
 	scan_email.flex \
-	scan_gps.flex 
+	scan_gps.flex
 
 
 # These scanners are based on Lightbox Technology's lightgrep
@@ -48,7 +48,7 @@ lightgrep_scanners = \
 	scan_accts_lg.cpp \
 	scan_base16_lg.cpp \
 	scan_email_lg.cpp \
-	scan_gps_lg.cpp 
+	scan_gps_lg.cpp
 
 scanners_builtin = \
 	scan_aes.cpp \
@@ -83,10 +83,10 @@ scanners_builtin = \
 	scan_winprefetch.cpp \
 	scan_wordlist.cpp \
 	scan_xor.cpp \
-	scan_zip.cpp 
+	scan_zip.cpp
 
 if FLEXSCANNERS_ENABLED
-  scanners_builtin += $(flex_scanners) 
+  scanners_builtin += $(flex_scanners)
 endif
 
 if LIGHTGREP_ENABLED
@@ -112,15 +112,15 @@ bulk_extractor_nomain = \
 	phase1.cpp \
 	threadpool.cpp \
 	threadpool.h \
-	$(BE13_API) $(DFXML_WRITER) 
+	$(BE13_API) $(DFXML_WRITER)
 
-bulk_extractor_SOURCES =    $(bulk_extractor_nomain) $(scanners_builtin) bulk_extractor_scanners.cpp main.cpp 
+bulk_extractor_SOURCES =    $(bulk_extractor_nomain) $(scanners_builtin) bulk_extractor_scanners.cpp main.cpp
 
-bulk_extractorlib_SOURCES = $(bulk_extractor_nomain) $(scanners_builtin) bulk_extractor_scanners.cpp 
+bulk_extractorlib_SOURCES = $(bulk_extractor_nomain) $(scanners_builtin) bulk_extractor_scanners.cpp
 
-bulk_extractor_noscanners_SOURCES = $(bulk_extractor_nomain) bulk_extractor_noscanners.cpp main.cpp 
+bulk_extractor_noscanners_SOURCES = $(bulk_extractor_nomain) bulk_extractor_noscanners.cpp main.cpp
 
-stand_SOURCES = dig.cpp stand.cpp $(BE13_API) $(DFXML_WRITER) 
+stand_SOURCES = dig.cpp stand.cpp $(BE13_API) $(DFXML_WRITER)
 
 lib: libbulkextractor.so
 
@@ -145,14 +145,13 @@ unitest$(EXEEXT): unicode_escape.cpp
 #
 # Rule to compile .flex into a .o
 # FreeBSD NOTE: flex does not support -R and -o does not work properly
-# | sed "s/static int yy_get_next_buffer/static int XXyy_get_next_buffer/" 
+# | sed "s/static int yy_get_next_buffer/static int XXyy_get_next_buffer/"
 #
 # 2019-11-09 - updated to remove the word 'register' which is no longer needed
 
 SUFFIXES = .flex
 FLEX_CXXFLAGS=-Wno-shadow -Wno-effc++ -Wno-redundant-decls -Wno-missing-noreturn
 .flex.o:
-	$(LEX) -R -t $<  | sed "s/register //" > `basename $@ .o`.cpp 
+	$(LEX) -R -t $<  | sed "s/register //" > `basename $@ .o`.cpp
 	$(CXX) $(CPPFLAGS) $(AM_CPPFLAGS) $(CXXFLAGS) $(FLEX_CXXFLAGS) \
-		-I${top_srcdir} -I${srcdir} -I.. -I../../_build -c `basename $@ .o`.cpp 
-
+		-I${top_srcdir} -I${srcdir} -I.. -I../../_build -c `basename $@ .o`.cpp

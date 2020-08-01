@@ -24,7 +24,7 @@ bool test_threadpool()
     /* Create a threadpool and run it. */
     return true;
 }
-    
+
 TEST_CASE("base64_forensic", "[utilities]") {
     const char *encoded="SGVsbG8gV29ybGQhCg==";
     const char *decoded="Hello World!\n";
@@ -62,7 +62,25 @@ TEST_CASE("scan_json", "[scanners]") {
 }
 
 /* Test the threadpool */
+std::atomic<int> counter{0};
 TEST_CASE("threadpool", "[threads]") {
-    REQUIRE( test_threadpool()==true);
+    thread_pool t(10);
+    for(int i=0;i<1000;i++){
+        t.push( []{
+                    counter += 1;
+                } );
+    }
+    t.join();
+    REQUIRE( counter=1000 )
+#import <iostream>
+#import <unistd.h>
+
+std::mutex M;
+int main(int argc,char **argv)
+{
+
+    exit(0);
 }
 
+
+}

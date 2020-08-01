@@ -2,7 +2,7 @@
  * Plugin: scan_utmp
  * Purpose: Find all utmp record into one file
  * Reference: http://man7.org/linux/man-pages/man5/utmp.5.html
- * Contributed by https://github.com/4n6ist/bulk_extractor-rec 
+ * Contributed by https://github.com/4n6ist/bulk_extractor-rec
  **/
 #include "config.h"
 #include "be13_api/bulk_extractor_i.h"
@@ -29,7 +29,7 @@ using namespace std;
 
 bool check_utmprecord_signature(size_t offset, const sbuf_t &sbuf) {
     int ut_type; // defined as short at man page but I have seen 4 byte type on real system
-    char line, user, host;    
+    char line, user, host;
 
     ut_type = sbuf.get32i(offset);
     if(ut_type < 1 || ut_type > 8) // not search for ut_type 0 'UT_UNKNOWN' and 9 "ACCOUNTING"
@@ -56,7 +56,7 @@ bool check_utmprecord_signature(size_t offset, const sbuf_t &sbuf) {
     host = sbuf[offset+76];
     if (host != 0 && (host < 35 || host > 126)
         && host != 33 && host != 37 && host != 60 && host != 62 && host != 92
-        && host != 94 && host != 123 && host != 124 && host != 125) // use RFC3986 for soft restriction 
+        && host != 94 && host != 123 && host != 124 && host != 125) // use RFC3986 for soft restriction
         return false;
     for (int i=0; i<256; i++)
         if (sbuf[offset+76+i] == 0) // 0x00 found then it should be continued 0x00 at the end of string
@@ -70,10 +70,10 @@ bool check_utmprecord_signature(size_t offset, const sbuf_t &sbuf) {
     if (sbuf.get32i(offset+344) < 0 || sbuf.get32i(offset+344) >= 1000000) //tv_usec
         return false;
 
-    for (int i=0; i<20; i++) { 
+    for (int i=0; i<20; i++) {
         if (sbuf[offset+364+i] != 0) // unused
             return false;
-    }                   
+    }
 
     return true;
 }
@@ -82,9 +82,8 @@ extern "C"
 
 void scan_utmp(const class scanner_params &sp,const recursion_control_block &rcb)
 {
-    assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
+    sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP){
-        assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
         sp.info->name            = "utmp";
         sp.info->author          = "Teru Yamazaki";
         sp.info->description     = "Scans for utmp record";

@@ -211,9 +211,9 @@ static int state_transition_table[NR_STATES][NR_CLASSES] = {
     These modes can be pushed on the stack.
 */
 enum modes {
-    MODE_ARRAY, 
-    MODE_DONE,  
-    MODE_KEY,   
+    MODE_ARRAY,
+    MODE_DONE,
+    MODE_KEY,
     MODE_OBJECT,
 };
 
@@ -226,7 +226,7 @@ json_checker::json_checker():
      * To continue the process, call JSON_checker_char for each
      * character in the JSON text, and then call JSON_checker_done to
      * obtain the final result.  These functions are fully reentrant.
-     * 
+     *
      */
     push(MODE_DONE);			// we know we are done when this is the top of stack
 }
@@ -433,9 +433,8 @@ static const char *json_second_chars = "0123456789.-{[ \t\n\r\"";
 extern "C"
 void scan_json(const class scanner_params &sp,const recursion_control_block &rcb)
 {
-    assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
+    sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP){
-        assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	sp.info->name		= "json";
         sp.info->author         = "Simson Garfinkel";
         sp.info->description    = "Scans for JSON-encoded data";
@@ -447,7 +446,7 @@ void scan_json(const class scanner_params &sp,const recursion_control_block &rcb
 	for(int i=0;json_second_chars[i];i++){
 	    is_json_second_char[(uint8_t)json_second_chars[i]] = true;
 	}
-	return; 
+	return;
     }
     const sbuf_t &sbuf = sp.sbuf;
     feature_recorder *fr = sp.fs.get_name("json");

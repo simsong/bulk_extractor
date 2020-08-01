@@ -15,7 +15,7 @@
  * Slightly more advanced:
  * 1 - Find a BEGIN:VCARD
  * 2 - Scan a line-at-a-time until we find:
- *     2a - END:VCARD 
+ *     2a - END:VCARD
  *     2b - invalid UTF-8
  *     2c - non-printable
  * 3 - Throw it in a file (except the invalid stuff, of course)
@@ -38,9 +38,8 @@ using namespace std;
 extern "C"
 void scan_vcard(const class scanner_params &sp,const recursion_control_block &rcb)
 {
-    assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
+    sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP){
-        assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	sp.info->name  = "vcard";
         sp.info->author         = "Simson Garfinkel and Tony Melaragno";
         sp.info->description    = "Scans for VCARD data";
@@ -55,14 +54,14 @@ void scan_vcard(const class scanner_params &sp,const recursion_control_block &rc
 	size_t end_len = strlen("END:VCARD\r\n");
 
 	// Search for BEGIN:VCARD\r in the sbuf
-	// we could do this with a loop, or with 
+	// we could do this with a loop, or with
 	for(size_t i = 0;  i < sbuf.bufsize;i++)	{
 	    ssize_t begin = sbuf.find("BEGIN:VCARD\r",i);
 	    if(begin==-1) return;		// no more
 
 	    /* We found a BEGIN:VCARD\r. Is there an end? */
 	    ssize_t end = sbuf.find("END:VCARD\r",begin);
-	
+
 	    if(end!=-1){
 		/* We found a beginning and an ending; verify if what's between them is
 		 * printable UTF-8.
@@ -80,7 +79,7 @@ void scan_vcard(const class scanner_params &sp,const recursion_control_block &rc
 		    i = end+end_len;		// skip to the end of the vcard
 		    continue;			// loop again!
 		}
-	    } 
+	    }
 	    /* vcard is incomplete; carve what we can and then continue */
 	    /* RIGHT NOW, JUST GIVE UP */
 	    break;				// stop when we don't have a valid VCARD

@@ -27,7 +27,7 @@ class dig {
 public:
 #ifdef WIN32
     typedef std::wstring filename_t;
-#else    
+#else
     typedef std::string filename_t;
 #endif
     static bool ignore_file_name(const filename_t &name);
@@ -41,8 +41,8 @@ public:
 	public:
 	    devinode(dev_t dev_,ino_t ino_):dev(dev_),ino(ino_){}
 	    devinode(const devinode &di):dev(di.dev),ino(di.ino){}
-	    dev_t dev;
-	    ino_t ino;
+	    dev_t dev{};
+	    ino_t ino{};
 	    bool operator<(const devinode t2) const{
 		return this->dev < t2.dev || (this->dev==t2.dev && this->ino < t2.ino);
 	    }
@@ -64,16 +64,14 @@ public:
 #endif
 	};
 
-	std::set<devinode> seen;	// things not to repeat
-	std::stack<dirstackelement>dirstack;	// stack of open directories
-	filename_t current_file;	// file I'm supposed to get
-	bool ready;			// has this file been processed?
+	std::set<devinode> seen {};	// things not to repeat
+	std::stack<dirstackelement>dirstack {};	// stack of open directories
+	filename_t current_file {};	// file I'm supposed to get
+	bool ready {};			// has this file been processed?
 
     public:
-	const_iterator():
-	    seen(),dirstack(),current_file(),ready(false){ };
-	const_iterator(filename_t current_file_):
-	    seen(),dirstack(),current_file(current_file_),ready(false){ };
+	const_iterator() {};
+	const_iterator(filename_t current_file_):current_file(current_file_){};
 	bool operator == (const const_iterator &i2);
 	bool operator != (const const_iterator &i2) { return !(*this == i2); };
 	filename_t operator*();		// returns the file currently pointed to

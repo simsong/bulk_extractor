@@ -23,7 +23,7 @@ namespace { // anonymous namespace hides symbols from other cpp files (like "sta
     void process_find_file(const char *findfile)
     {
         std::ifstream in;
-        
+
         in.open(findfile,std::ifstream::in);
         if(!in.good()) {
             err(1,"Cannot open %s",findfile);
@@ -43,9 +43,8 @@ namespace { // anonymous namespace hides symbols from other cpp files (like "sta
 extern "C"
 void scan_find(const class scanner_params &sp,const recursion_control_block &rcb)
 {
-    assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);      
+    sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP) {
-        assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
         sp.info->name		= "find";
         sp.info->author         = "Simson Garfinkel";
         sp.info->description    = "Simple search for patterns";

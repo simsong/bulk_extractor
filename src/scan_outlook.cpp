@@ -13,7 +13,7 @@
  * unsigned char plaintext_c = libpff_encryption_compressible[ ciphertext_c ];
  *
  * This comes from Herr Metz's libpff/libpff_encryption.c, under LGPL.
- * 
+ *
  * Outlook also has a "high compression" scheme, that's basically a
  * salted three-rotor scheme.
  *
@@ -55,9 +55,8 @@ static uint8_t libpff_encryption_compressible[] = {
 extern "C"
 void scan_outlook(const class scanner_params &sp,const recursion_control_block &rcb)
 {
-    assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
+    sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP) {
-        assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	sp.info->name  = "outlook";
 	sp.info->author = "Simson L. Garfinkel";
 	sp.info->description = "Outlook Compressible Encryption";
@@ -80,7 +79,7 @@ void scan_outlook(const class scanner_params &sp,const recursion_control_block &
             uint8_t ch = sbuf.buf[ii];
             dbuf.buf[ii] = libpff_encryption_compressible[ ch ];
         }
-        
+
         const pos0_t pos0_oce = pos0 + "OUTLOOK";
         const sbuf_t child_sbuf(pos0_oce, dbuf.buf, sbuf.bufsize, sbuf.pagesize, 0, false);
         scanner_params child_params(sp, child_sbuf);

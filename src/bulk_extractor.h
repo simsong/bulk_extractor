@@ -7,6 +7,8 @@
 #ifndef _BULK_EXTRACTOR_H_
 #define _BULK_EXTRACTOR_H_
 
+#include "be13_api/bulk_extractor_i.h"
+
 /* Don't include config.h twice */
 #ifndef PACKAGE_NAME
 #include "config.h"
@@ -54,7 +56,7 @@
 
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
-#endif 
+#endif
 
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
@@ -78,7 +80,7 @@
 
 #ifdef HAVE_SYS_MOUNT_H
 # include <sys/mount.h>
-#endif 
+#endif
 
 #ifdef HAVE_SYS_DISK_H
 # include <sys/disk.h>
@@ -128,18 +130,13 @@
 #include <sys/mman.h>
 #endif
 
-#include "be13_api/utils.h"
-
 #if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 7)
 # define ATTR_FORMAT(param,arg) __attribute__ ((__printf__,param,arg))
 #else
 # define ATTR_FORMAT(spec) /* empty */
 #endif
 
-#include "be13_api/bulk_extractor_i.h"
-#include "be13_api/word_and_context_list.h"
 
 extern be13::scanner_t *scanners_builtin[];
 
 #endif
-

@@ -1,3 +1,5 @@
+- make setting sp.info a function.
+- better plan for hashing than md5g in phase1
 - modify stand-alone scanner so that you can specify the scanner to add in?
 - or #include it
 - new idea - improve multi-threading by creating new workers for each scanner, rather than each sbuf. Free the sbuf when the last scanner is done with it. Use the auto_pointer?

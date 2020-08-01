@@ -28,9 +28,8 @@ uint32_t   gzip_max_uncompr_size = 256*1024*1024; // don't decompress objects la
 extern "C"
 void scan_gzip(const class scanner_params &sp,const recursion_control_block &rcb)
 {
-    assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
+    sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP){
-        assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
         sp.info->name  = "gzip";
         sp.info->author         = "Simson Garfinkel";
         sp.info->description    = "Searches for GZIP-compressed data";
@@ -54,17 +53,17 @@ void scan_gzip(const class scanner_params &sp,const recursion_control_block &rcb
 	     *
 	     */
 	    if(cc[0]==0x1f && cc[1]==0x8b && cc[2]==0x08){ // gzip HTTP flag
-		u_int compr_size = sbuf.bufsize - (cc-sbuf.buf); // up to the end of the buffer 
+		u_int compr_size = sbuf.bufsize - (cc-sbuf.buf); // up to the end of the buffer
                 managed_malloc<u_char>decompress(gzip_max_uncompr_size);
 		if(decompress.buf){
 		    z_stream zs;
 		    memset(&zs,0,sizeof(zs));
-		
+
 		    zs.next_in = (Bytef *)cc;
 		    zs.avail_in = compr_size;
 		    zs.next_out = (Bytef *)decompress.buf;
 		    zs.avail_out = gzip_max_uncompr_size;
-		
+
 		    gz_header_s gzh;
 		    memset(&gzh,0,sizeof(gzh));
 
@@ -72,7 +71,7 @@ void scan_gzip(const class scanner_params &sp,const recursion_control_block &rcb
 		    if(r==0){
 			r = inflate(&zs,Z_SYNC_FLUSH);
 			/* Ignore the error code; process data if we got any */
-			if(zs.total_out>0){	
+			if(zs.total_out>0){
 			    /* run decompress.buf through the recognizer.
 			     */
 			    const ssize_t pos = cc-sbuf.buf;

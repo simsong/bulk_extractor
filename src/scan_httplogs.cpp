@@ -58,9 +58,8 @@ bool validDottedQuad(std::string str)
 extern "C"
 void scan_httplogs(const class scanner_params &sp, const recursion_control_block &rcb)
 {
-    assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
+    sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP){
-        assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
         sp.info->name		= "httplogs";
         sp.info->author		= "Maxim Suhanov";
         sp.info->description	= "Extract various web server access logs";

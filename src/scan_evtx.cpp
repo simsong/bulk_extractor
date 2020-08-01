@@ -2,7 +2,7 @@
  * Plugin: scan_evtx
  * Purpose: Find all of evtx component, carve out and reconstruct evtx file
  * Reference: https://github.com/libyal/libevtx/blob/master/documentation/Windows%20XML%20Event%20Log%20(EVTX).asciidoc
- * Teru Yamazaki(@4n6ist) - https://github.com/4n6ist/bulk_extractor-rec 
+ * Teru Yamazaki(@4n6ist) - https://github.com/4n6ist/bulk_extractor-rec
  **/
 #include "config.h"
 #include "be13_api/bulk_extractor_i.h"
@@ -78,9 +78,9 @@ struct crc32 {
 };
 
 // check EVTX Header Signature
-// return: > 0 - valid header and number of chunks, 0 - not header, -1 - valid header but invalid num of chunk 
+// return: > 0 - valid header and number of chunks, 0 - not header, -1 - valid header but invalid num of chunk
 int64_t check_evtxheader_signature(size_t offset, const sbuf_t &sbuf) {
-    int16_t num_of_chunks;  
+    int16_t num_of_chunks;
     // \x45\x6c\x66\x46\x69\x6c\x65 ElfFile
     if (sbuf[offset] == 0x45 &&
         sbuf[offset + 1] == 0x6c &&
@@ -126,7 +126,7 @@ int64_t check_evtxchunk_signature(size_t offset, const sbuf_t &sbuf) {
 }
 
 // check EVTX Record Signature
-// return: > 0 - record size, 0 - not record, 
+// return: > 0 - record size, 0 - not record,
 int64_t check_evtxrecord_signature(size_t offset, const sbuf_t &sbuf) {
     int64_t record_size;
     // \x2a\x2a\x00\x00
@@ -146,9 +146,8 @@ extern "C"
 
 void scan_evtx(const class scanner_params &sp,const recursion_control_block &rcb)
 {
-    assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
+    sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP){
-        assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
         sp.info->name            = "evtx";
         sp.info->author          = "Teru Yamazaki";
         sp.info->description     = "Scans for EVTX Chunks and generates valid EVTX file";
@@ -188,8 +187,8 @@ void scan_evtx(const class scanner_params &sp,const recursion_control_block &rcb
                         result_last_record_id = check_evtxchunk_signature(offset+total_size, sbuf);
                     }
                     std::string filename = (sbuf.pos0+offset).str() + "_valid_header_" +
-                        std::to_string(result_num_of_chunks) + "chunks_" + 
-                        std::to_string(actual_num_of_chunk) + "actual.evtx";                
+                        std::to_string(result_num_of_chunks) + "chunks_" +
+                        std::to_string(actual_num_of_chunk) + "actual.evtx";
                     evtx_recorder->carve_records(sbuf, offset, total_size, filename);
                 } else if (result_last_record_id == -1) {
                     // If valid ElfChnk and invalid record then skip
@@ -197,19 +196,19 @@ void scan_evtx(const class scanner_params &sp,const recursion_control_block &rcb
                 }
                 offset += total_size;
                 continue;
-            } 
+            }
             result_last_record_id = check_evtxchunk_signature(offset, sbuf);
             // ElfChnk
             if (result_last_record_id > 0) {
                 int32_t last_chunk = 0;
-                last_record_id = result_last_record_id; 
+                last_record_id = result_last_record_id;
                 int64_t first_record_id = sbuf.get64i(offset + 24); // First Record ID
                 int64_t num_of_records = last_record_id - first_record_id +1;
                 total_size += ELFCHNK_SIZE;
                 result_last_record_id = check_evtxchunk_signature(offset+total_size, sbuf);
                 while (result_last_record_id > 0 && offset+total_size < stop) {
                     first_record_id = sbuf.get64i(offset+ total_size + 24); // First Record ID
-                    last_record_id = result_last_record_id; 
+                    last_record_id = result_last_record_id;
                     num_of_records += last_record_id - first_record_id +1;
                     ++last_chunk;
                     total_size += ELFCHNK_SIZE;
@@ -231,11 +230,11 @@ void scan_evtx(const class scanner_params &sp,const recursion_control_block &rcb
                 uint32_t table[256];
                 crc32::generate_table(table);
                 // CRC32 of the first 120 bytes == header.part struct
-                header.crc32 = crc32::update(table, 0, &header.part, 120); 
+                header.crc32 = crc32::update(table, 0, &header.part, 120);
                 memset(header.unknown2,'\0', sizeof(header.unknown2));
                 std::string filename = (sbuf.pos0+offset).str() + "_" +
                     std::to_string(header.part.number_of_chunks) + "chunks_" +
-                    std::to_string(num_of_records) + "records.evtx";                
+                    std::to_string(num_of_records) + "records.evtx";
                 // generate evtx header based on elfchnk information
                 evtx_recorder->write_data((unsigned char *)&header,sizeof(elffile),filename);
                 evtx_recorder->carve_records(sbuf, offset, total_size, filename);
@@ -257,5 +256,3 @@ void scan_evtx(const class scanner_params &sp,const recursion_control_block &rcb
         } // end while
     } // end PHASE_SCAN
 }
-
-

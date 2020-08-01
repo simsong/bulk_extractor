@@ -248,9 +248,8 @@ std::string prefetch_record_t::to_xml()
 extern "C"
 void scan_winprefetch(const class scanner_params &sp,const recursion_control_block &rcb)
 {
-    assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
+    sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP){
-        assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
         sp.info->name		= "winprefetch";
         sp.info->author		= "Bruce Allen";
         sp.info->description	= "Search for Windows Prefetch files";
@@ -259,7 +258,7 @@ void scan_winprefetch(const class scanner_params &sp,const recursion_control_blo
         return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
-	
+
 	// phase 1: set up the feature recorder and search for winprefetch features
 	const sbuf_t &sbuf = sp.sbuf;
 	feature_recorder *winprefetch_recorder = sp.fs.get_name("winprefetch");
@@ -302,4 +301,3 @@ void scan_winprefetch(const class scanner_params &sp,const recursion_control_blo
 	}
     }
 }
-

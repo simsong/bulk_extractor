@@ -80,9 +80,8 @@ extern "C"
 
 void scan_ntfslogfile(const class scanner_params &sp,const recursion_control_block &rcb)
 {
-    assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
+    sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP){
-        assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
         sp.info->name            = "ntfslogfile";
         sp.info->author          = "Teru Yamazaki";
         sp.info->description     = "Scans for NTFS $LogFile RCRD record";
@@ -133,7 +132,7 @@ void scan_ntfslogfile(const class scanner_params &sp,const recursion_control_blo
             }
             else if (result_type == 4) {
                 ntfslogfile_recorder->carve_records(sbuf,offset,total_record_size,"LogFile-RSTR_corrupted");
-            }            
+            }
             else { // result_type == 0 - not RCRD record
             }
             offset += total_record_size;

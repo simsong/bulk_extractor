@@ -29,7 +29,7 @@ using namespace std;
 
 size_t check_usnrecordv2_signature(size_t offset, const sbuf_t &sbuf) {
     size_t record_size;
-    if (sbuf[offset + 2] == 0x00 && sbuf[offset + 3] == 0x00 && sbuf[offset + 4] == 0x02 
+    if (sbuf[offset + 2] == 0x00 && sbuf[offset + 3] == 0x00 && sbuf[offset + 4] == 0x02
         && sbuf[offset + 5] == 0x00 && sbuf[offset + 6] == 0x00 && sbuf[offset + 7] == 0x00
         && sbuf[offset + 58] == 0x3c && sbuf[offset + 59] == 0x00) {
         record_size = sbuf.get16i(offset);
@@ -43,7 +43,7 @@ size_t check_usnrecordv2_signature(size_t offset, const sbuf_t &sbuf) {
 
 size_t check_usnrecordv4_signature(size_t offset, const sbuf_t &sbuf) {
     size_t record_size;
-    if (sbuf[offset + 2] == 0x00 && sbuf[offset + 3] == 0x00 && sbuf[offset + 4] == 0x04 
+    if (sbuf[offset + 2] == 0x00 && sbuf[offset + 3] == 0x00 && sbuf[offset + 4] == 0x04
         && sbuf[offset + 5] == 0x00 && sbuf[offset + 6] == 0x00 && sbuf[offset + 7] == 0x00
         && sbuf[offset + 62] == 0x10 && sbuf[offset + 63] == 0x00) {
         record_size = sbuf.get16i(offset);
@@ -72,9 +72,8 @@ extern "C"
 
 void scan_ntfsusn(const class scanner_params &sp,const recursion_control_block &rcb)
 {
-    assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
+    sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP){
-        assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
         sp.info->name            = "ntfsusn";
         sp.info->author          = "Teru Yamazaki";
         sp.info->description     = "Scans for USN_RECORD v2/v4 record";
@@ -99,7 +98,7 @@ void scan_ntfsusn(const class scanner_params &sp,const recursion_control_block &
         // search for USN_RECORD_V2 Structure in the sbuf
         while (offset < stop) {
             record_size = check_usnrecordv2_signature(offset,sbuf);
-            if (record_size == 0) {	      
+            if (record_size == 0) {
                 offset += 8; // because of USN_RECORD stored at 8 byte boundary
                 continue;
             }
@@ -118,7 +117,7 @@ void scan_ntfsusn(const class scanner_params &sp,const recursion_control_block &
                     ntfsusn_recorder->carve_records(sbuf,offset,total_record_size,"UsnJrnl-J_corrupted");
                 break;
             }
-            // found one record then also checks following valid records and writes all at once 
+            // found one record then also checks following valid records and writes all at once
             while (true) {
                 record_size = check_usnrecordv2_or_v4_signature(offset+total_record_size,sbuf);
                 if (record_size % 8 != 0) // illegal size and stop process

@@ -200,10 +200,10 @@ public:
         uint8_t days = (dos_date & DOS_MASK_DAY) >> DOS_SHIFT_DAY;
         uint8_t months = (dos_date & DOS_MASK_MONTH) >> DOS_SHIFT_MONTH;
         uint16_t years = (dos_date & DOS_MASK_YEAR) >> DOS_SHIFT_YEAR;
-        
+
         years += DOS_OFFSET_YEAR;
         seconds *= 2;
-        
+
         char buf[STRING_BUF_LEN];
         snprintf(buf,sizeof(buf),"%04d-%02d-%02dT%02d:%02d:%02dZ",
                  years, months, days, hours, minutes, seconds);
@@ -587,8 +587,8 @@ static bool is_mark_block(const uint8_t* buf, size_t buf_len, size_t offset)
 //25 50 44 46 2D
 //25 25 45 4F 46
 size_t sz = component.uncompressed_size;
-assert(dbuf.buf[0] == 0x25); assert(dbuf.buf[1] == 0x50); assert(dbuf.buf[2] == 0x44); assert(dbuf.buf[3] == 0x46); assert(dbuf.buf[4] == 0x2D); 
-assert(dbuf.buf[sz-5] == 0x25); assert(dbuf.buf[sz-4] == 0x25); assert(dbuf.buf[sz-3] == 0x45); assert(dbuf.buf[sz-2] == 0x4F); assert(dbuf.buf[sz-1] == 0x46); 
+assert(dbuf.buf[0] == 0x25); assert(dbuf.buf[1] == 0x50); assert(dbuf.buf[2] == 0x44); assert(dbuf.buf[3] == 0x46); assert(dbuf.buf[4] == 0x2D);
+assert(dbuf.buf[sz-5] == 0x25); assert(dbuf.buf[sz-4] == 0x25); assert(dbuf.buf[sz-3] == 0x45); assert(dbuf.buf[sz-2] == 0x4F); assert(dbuf.buf[sz-1] == 0x46);
 #endif
 
 
@@ -596,9 +596,8 @@ static uint32_t unrar_carve_mode = feature_recorder::CARVE_ENCODED;
 extern "C"
 void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
 {
-    assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
+    sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP){
-        assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	sp.info->name  = "rar";
 	sp.info->author = "Michael Shick";
 #ifdef USE_RAR

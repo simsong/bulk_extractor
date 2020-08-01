@@ -30,7 +30,7 @@
  *         decrement freethreads
  *         cond-signal TOWORKER
  *         release M
- * 
+ *
  * worker:
  *     init
  *     while true:
@@ -48,17 +48,15 @@
  */
 
 #include <queue>
-#include "be13_api/aftimer.h"
-#include "dfxml/src/dfxml_writer.h"
-#include "feature_recorder_set.h"
+#include "bulk_extractor_i.h"
 
 // There is a single threadpool object
-class threadpool {
+class be_threadpool {
  private:
     /*** neither copying nor assignment is implemented ***/
     threadpool(const threadpool &);
     threadpool &operator=(const threadpool &);
-    
+
  public:
     typedef std::vector<class worker *> worker_vector;
     worker_vector	workers;

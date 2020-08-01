@@ -1,7 +1,7 @@
 /**
  * Plugin: scan_windirs
  * Purpose: scan for Microsoft directory and MFT structures
- * FAT32 directories always start on sector boundaries. 
+ * FAT32 directories always start on sector boundaries.
  */
 
 #include "config.h"
@@ -226,7 +226,7 @@ fat_validation_t valid_fat_directory_entry(const sbuf_t &sbuf)
         if(adate==0 && wdate==0) weird_count++;
 
         if(weird_count > opt_max_weird_count) return INVALID;
-                                                                           
+
     }
     return VALID_DENTRY;
 }
@@ -234,11 +234,11 @@ fat_validation_t valid_fat_directory_entry(const sbuf_t &sbuf)
 
 void scan_fatdirs(const sbuf_t &sbuf,feature_recorder *wrecorder)
 {
-    /* 
+    /*
      * Directory structures are 32 bytes long and will always be sector-aligned.
      * So try every 512 byte sector, within that try every 32 byte record.
      */
-    
+
     for(size_t base = 0;base<sbuf.pagesize;base+=512){
 	sbuf_t sector(sbuf,base,512);
 	if(sector.bufsize < 512){
@@ -253,7 +253,7 @@ void scan_fatdirs(const sbuf_t &sbuf,feature_recorder *wrecorder)
 	memset(slots,0,sizeof(slots));
 	for(ssize_t entry_number = 0; entry_number < max_entries; entry_number++){
 	    sbuf_t n(sector,entry_number*32,32);
-	    
+
 	    int ret = valid_fat_directory_entry(n);
 	    if(ret==ALL_NULL) break;		// no more valid
 	    slots[entry_number] = ret;
@@ -281,7 +281,7 @@ void scan_fatdirs(const sbuf_t &sbuf,feature_recorder *wrecorder)
 	    }
 	    if(ret==VALID_LAST_DENTRY){		// valid; no more remain
 		last_valid_entry_number = entry_number;
-		break;		
+		break;
 	    }
 	}
 	/* Now print the valid entry numbers */
@@ -292,7 +292,7 @@ void scan_fatdirs(const sbuf_t &sbuf,feature_recorder *wrecorder)
 		entry_number++){
 		sbuf_t n(sector,entry_number*32,32);
 		dfxml_writer::strstrmap_t fatmap;
-		
+
 		if(valid_fat_directory_entry(n)==1){
 		    const fatfs_dentry &dentry = *n.get_struct_ptr<fatfs_dentry>(0);
 		    std::stringstream ss;
@@ -316,7 +316,7 @@ void scan_fatdirs(const sbuf_t &sbuf,feature_recorder *wrecorder)
 }
 
 /**
- * Examine an sbuf and see if it contains an NTFS MFT entry. If it does, then process the entry 
+ * Examine an sbuf and see if it contains an NTFS MFT entry. If it does, then process the entry
  */
 void scan_ntfsdirs(const sbuf_t &sbuf,feature_recorder *wrecorder)
 {
@@ -353,13 +353,13 @@ void scan_ntfsdirs(const sbuf_t &sbuf,feature_recorder *wrecorder)
 			    std::cerr << " attr_off=" << attr_off << " attr_type=" << attr_type
 				      << " attr_len=" << attr_len;
 			}
-		    
+
 			if(attr_len==0){
 			    if(debug & DEBUG_INFO) std::cerr << "\n";
-			
+
 			    break;	// something is wrong; skip this entry
 			}
-		    
+
 			// get the values for all entries
 			int  res         = n.get8u(attr_off+8);
 			size_t nlen      = n.get8u(attr_off+9);
@@ -381,8 +381,8 @@ void scan_ntfsdirs(const sbuf_t &sbuf,feature_recorder *wrecorder)
 			    found_attrs++;
 			    if(debug & DEBUG_INFO) std::cerr << "NTFS_ATTRLIST ignored\n";
 			}
-		    
-			if(attr_type==NTFS_ATYPE_FNAME ){ 
+
+			if(attr_type==NTFS_ATYPE_FNAME ){
 			    found_attrs++;
 			    if(debug & DEBUG_INFO) std::cerr << "NTFS_ATYPE_FNAME\n";
 
@@ -456,7 +456,7 @@ void scan_ntfsdirs(const sbuf_t &sbuf,feature_recorder *wrecorder)
                             char guid_objid[37], guid_bvolid[37], guid_bobjid[37], guid_domid[37];
 
 			    if(debug & DEBUG_INFO) std::cerr << " soff=" << soff << " slen=" << slen
-							     << "\n";    
+							     << "\n";
 
                             if(slen>=16){
                                 snprintf(guid_objid, 37, "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x", \
@@ -494,9 +494,9 @@ void scan_ntfsdirs(const sbuf_t &sbuf,feature_recorder *wrecorder)
                                 mftmap["guid_domainid"] = guid_domid;
                             }
                         }
-		    
+
 			attr_off += attr_len;
-		    }		
+		    }
 		    if(mftmap.size()>3){
 			if(filename.size()==0) filename="$NOFILENAME"; // avoids problems
 			wrecorder->write(n.pos0,filename,dfxml_writer::xmlmap(mftmap,"fileobject","src='mft'"));
@@ -511,7 +511,7 @@ void scan_ntfsdirs(const sbuf_t &sbuf,feature_recorder *wrecorder)
 	     * If we got a range exception, then the region we were reading
 	     * can't be a valid MFT entry...
 	     */
-	    continue;			
+	    continue;
 	}
     }
 }
@@ -521,17 +521,16 @@ extern "C"
 void scan_windirs(const class scanner_params &sp,const recursion_control_block &rcb)
 {
     std::string myString;
-    assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
+    sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP){
 
         /* Figure out the current time */
         time_t t = time(0);
         struct tm now;
         memset(&now,0,sizeof(now));     // assures all of now is cleared; required for static analysis tools
-        gmtime_r(&t,&now);                     
+        gmtime_r(&t,&now);
         opt_last_year = now.tm_year + 1900 + 5; // allow up to 5 years in the future
 
-        assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	sp.info->name		= "windirs";
         sp.info->author         = "Simson Garfinkel and Maxim Suhanov";
         sp.info->description    = "Scans Microsoft directory structures";
@@ -550,7 +549,7 @@ void scan_windirs(const class scanner_params &sp,const recursion_control_block &
 
         debug = sp.info->config->debug;
 
-        
+
 
 	return;
     }
