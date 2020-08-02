@@ -3,6 +3,9 @@
 // https://raw.githubusercontent.com/Ethan13310/Thread-Pool-Cpp/master/LICENSE
 // https://github.com/Ethan13310/Thread-Pool-Cpp/blob/master/ThreadPool.hpp
 
+#ifndef THREADPOOL_HPP
+#define THREADPOOL_HPP
+
 #include <atomic>
 #include <condition_variable>
 #include <functional>
@@ -147,3 +150,4 @@ private:
     std::vector<std::thread> m_workers;
     std::queue<task_type> m_tasks;
 };
+#endif

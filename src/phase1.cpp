@@ -1,8 +1,26 @@
 #include "config.h"
 #include "bulk_extractor.h"
 #include "phase1.h"
-//#include "threadpool.h"
 
+#include <random>
+
+/**
+ * Implementation of the bulk_extractor Phase 1.
+ *
+ * bulk_extractor 1.0:
+ * - run() creates worker threads.
+ *   -  main thread stuffs the work queue with sbufs to process.
+ *   -  workers remove each sbuf and process with each scanner.
+ *   -  recursive work is processed within each thread.
+ *
+ * bulk_extractor 2.0:
+ * - implements 1.0 mechanism.
+ * - implements 2.0 mechanism, which uses a work unit for each sbuf/scanner combination.
+ */
+
+/**
+ * Sleep for msec miliseconds.
+ */
 void BulkExtractor_Phase1::msleep(uint32_t msec)
 {
 #if _WIN32
@@ -18,6 +36,10 @@ void BulkExtractor_Phase1::msleep(uint32_t msec)
 #endif
 }
 
+/**
+ * convert tsec into a string.
+ */
+
 std::string BulkExtractor_Phase1::minsec(time_t tsec)
 {
     time_t min = tsec / 60;
@@ -28,8 +50,12 @@ std::string BulkExtractor_Phase1::minsec(time_t tsec)
     return ss.str();
 }
 
+/*
+ * Print the status of each thread in the threadpool.
+ */
 void BulkExtractor_Phase1::print_tp_status()
 {
+#if 0
     std::stringstream ss;
     for(u_int i=0;i<config.num_threads;i++){
         std::string status = tp->get_thread_status(i);
@@ -38,11 +64,14 @@ void BulkExtractor_Phase1::print_tp_status()
         }
     }
     std::cout << ss.str() << "\n";
+#endif
 }
 
 /**
  * attempt to get an sbuf. If we can't get it, we may be in a
  * low-memory situation.  wait for 30 seconds.
+ *
+ * TODO: do not get an sbuf if more than N tasks in workqueue.
  */
 
 sbuf_t *BulkExtractor_Phase1::get_sbuf(image_process::iterator &it)
@@ -70,24 +99,29 @@ sbuf_t *BulkExtractor_Phase1::get_sbuf(image_process::iterator &it)
         }
     }
     std::cerr << "Too many errors encountered in a row. Diagnose and restart.\n";
-    exit(1);
+    throw std::runtime_error("too many sbuf allocation errors");
 }
 
 
+/**
+ * Create a list sorted list of random blocks.
+ */
 void BulkExtractor_Phase1::make_sorted_random_blocklist(blocklist_t *blocklist,uint64_t max_blocks,float frac)
 {
+    if (frac>0.2){
+        std::cerr << "A better random sampler is needed for this many random blocks. We should have an iterator that decides if to include or not to include based on frac.\n";
+        throw std::runtime_error("Specify frac<0.2");
+    }
+
+    std::default_random_engine generator;
+    std::uniform_int_distribution<uint64_t> distribution(0,max_blocks);
     while(blocklist->size() < max_blocks * frac){
-        uint64_t blk_high = ((uint64_t)random()) << 32;
-        uint64_t blk_low  = random();
-        uint64_t blk      = (blk_high | blk_low) % max_blocks;
-        blocklist->insert(blk); // will be added even if already present
+        blocklist->insert( distribution(generator) ); // will be added even if already present
     }
 }
 
 
-void BulkExtractor_Phase1::run(image_process &p,
-                               feature_recorder_set &fs,
-                               seen_page_ids_t &seen_page_ids)
+void BulkExtractor_Phase1::load_workers(image_process &p, feature_recorder_set &fs, seen_page_ids_t &seen_page_ids)
 {
     p.set_report_read_errors(config.opt_report_read_errors);
     uint64_t md5_next = 0;              // next byte to hash
@@ -191,6 +225,8 @@ void BulkExtractor_Phase1::run(image_process &p,
     }
 }
 
+
+
 void BulkExtractor_Phase1::wait_for_workers(image_process &p,std::string *md5_string)
 {
     /* Now wait for all of the threads to be free */
@@ -271,4 +307,12 @@ void BulkExtractor_Phase1::wait_for_workers(image_process &p,std::string *md5_st
         std::cout << "*******************************************\n";
     }
     /* end of phase 1 */
+}
+
+void BulkExtractor_Phase1::run(image_process &p,
+                               feature_recorder_set &fs,
+                               seen_page_ids_t &seen_page_ids)
+{
+    load_workers(p, fs, seen_page_ids);
+    wait_for_workers();
 }
