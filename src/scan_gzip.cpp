@@ -17,8 +17,6 @@
 #include <iomanip>
 #include <cassert>
 
-using namespace std;
-
 #ifdef HAVE_DIAGNOSTIC_CAST_QUAL
 #  pragma GCC diagnostic ignored "-Wcast-qual"
 #endif

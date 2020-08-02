@@ -9,15 +9,13 @@
 #include "bulk_extractor.h" // for regex_list type
 #include "findopts.h"
 
-using namespace std;
-
 namespace { // anonymous namespace hides symbols from other cpp files (like "static" applied to functions)
 
-    regex_list find_list;
+    regex_vector find_list;
 
-    void add_find_pattern(const string &pat)
+    void add_find_pattern(const std::string &pat)
     {
-        find_list.add_regex("(" + pat + ")"); // make a group
+        find_list.push_back("(" + pat + ")"); // make a group
     }
 
     void process_find_file(const char *findfile)
@@ -26,7 +24,8 @@ namespace { // anonymous namespace hides symbols from other cpp files (like "sta
 
         in.open(findfile,std::ifstream::in);
         if(!in.good()) {
-            err(1,"Cannot open %s",findfile);
+            std::cerr << "Cannot open " << findfile << "\n";
+            throw std::runtime_error(findfile);
         }
         while(!in.eof()){
             std::string line;
@@ -57,11 +56,11 @@ void scan_find(const class scanner_params &sp,const recursion_control_block &rcb
     if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;
 
     if (scanner_params::PHASE_INIT == sp.phase) {
-        for (vector<string>::const_iterator itr(FindOpts::get().Patterns.begin()); itr != FindOpts::get().Patterns.end(); ++itr) {
-            add_find_pattern(*itr);
+        for (auto const &it : FindOpts::get().Patterns) {
+            add_find_pattern(it);
         }
-        for (vector<string>::const_iterator itr(FindOpts::get().Files.begin()); itr != FindOpts::get().Files.end(); ++itr) {
-            process_find_file(itr->c_str());
+        for (auto const &it : FindOpts::get().Files) {
+            process_find_file(it.c_str());
         }
     }
 
@@ -75,12 +74,12 @@ void scan_find(const class scanner_params &sp,const recursion_control_block &rcb
         if(!tmpbuf.buf) return;				     // no memory for searching
         memcpy(tmpbuf.buf, sp.sbuf.buf, sp.sbuf.bufsize);
         tmpbuf.buf[sp.sbuf.bufsize]=0;
-        for(size_t pos = 0; pos < sp.sbuf.pagesize && pos < sp.sbuf.bufsize;) {
+        for (size_t pos = 0; pos < sp.sbuf.pagesize && pos < sp.sbuf.bufsize;) {
             /* Now see if we can find a string */
             std::string found;
             size_t offset=0;
             size_t len = 0;
-            if(find_list.check((const char *)tmpbuf.buf+pos,&found,&offset,&len)) {
+            if ( find_list.search_all((const char *)tmpbuf.buf+pos, &found, &offset, &len)) {
                 if(len == 0) {
                     len+=1;
                     continue;

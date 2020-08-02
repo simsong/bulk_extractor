@@ -110,8 +110,7 @@ bulk_extractor_nomain = \
 	image_process.h \
 	phase1.h \
 	phase1.cpp \
-	threadpool.cpp \
-	threadpool.h \
+	threadpool.hpp \
 	$(BE13_API) $(DFXML_WRITER)
 
 bulk_extractor_SOURCES =    $(bulk_extractor_nomain) $(scanners_builtin) bulk_extractor_scanners.cpp main.cpp

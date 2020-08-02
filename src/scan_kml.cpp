@@ -21,12 +21,10 @@
 
 #include "utf8.h"
 
-using namespace std;
-
 extern "C"
 void scan_kml(const class scanner_params &sp,const recursion_control_block &rcb)
 {
-    string myString;
+    std::string myString;
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP){
 	sp.info->name		= "kml";

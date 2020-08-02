@@ -350,8 +350,6 @@ namespace psd_reader {
 /****************************************************************/
 /* C++ string splitting code from http://stackoverflow.com/questions/236129/how-to-split-a-string-in-c */
 
-//using namespace std;
-
 inline size_t min(size_t a,size_t b){
     return a<b ? a : b;
 }

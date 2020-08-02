@@ -33,8 +33,6 @@
 
 #include "utf8.h"
 
-using namespace std;
-
 extern "C"
 void scan_vcard(const class scanner_params &sp,const recursion_control_block &rcb)
 {

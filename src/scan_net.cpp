@@ -634,19 +634,22 @@ private:
     void pcap_write_bytes(const uint8_t * const val, size_t num_bytes) {
         size_t count = fwrite(val,1,num_bytes,fcap);
         if (count != num_bytes) {
-            err(1, "scanner scan_net is unable to write to file %s", default_filename);
+            std::cerr << "scanner scan_net is unable to write to file " << default_filename << "\n";
+            throw std::runtime_error("fwrite failed");
         }
     }
     void pcap_write2(const uint16_t val) {
         size_t count = fwrite(&val,1,2,fcap);
         if (count != 2) {
-            err(1, "scanner scan_net is unable to write to file %s", default_filename);
+            std::cerr << "scanner scan_net is unable to write to file " << default_filename << "\n";
+            throw std::runtime_error("fwrite failed");
         }
     }
     void pcap_write4(const uint32_t val) {
         size_t count = fwrite(&val,1,4,fcap);
         if (count != 4) {
-            err(1, "scanner scan_net is unable to write to file %s", default_filename);
+            std::cerr << "scanner scan_net is unable to write to file " << default_filename << "\n";
+            throw std::runtime_error("fwrite failed");
         }
     }
 

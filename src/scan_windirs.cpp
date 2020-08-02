@@ -18,17 +18,9 @@
 #include "utf8.h"
 #include "dfxml/src/dfxml_writer.h"
 
+#include "tsk3_fatdirs.h"
+#if 0
 
-/* We have a private version of these #include files in case the system one is not present */
-#pragma GCC diagnostic ignored "-Wshadow"
-#pragma GCC diagnostic ignored "-Weffc++"
-#pragma GCC diagnostic ignored "-Wredundant-decls"
-#include "tsk3/libtsk.h"
-#include "tsk3/fs/tsk_fatfs.h"
-#include "tsk3/fs/tsk_ntfs.h"
-#pragma GCC diagnostic warning "-Wshadow"
-#pragma GCC diagnostic warning "-Weffc++"
-#pragma GCC diagnostic warning "-Wredundant-decls"
 
 #define CLUSTERS_IN_1MiB 2*1024
 #define CLUSTERS_IN_1GiB 2*1024*1024
@@ -42,44 +34,6 @@ static uint32_t opt_max_bits_in_attrib = 3;
 static uint32_t opt_max_weird_count    = 2;
 static uint32_t opt_last_year = 2020;
 static int  debug=0;
-
-/**
- * code from tsk3
- */
-
-//using namespace std;
-
-
-inline uint16_t fat16int(const uint8_t buf[2]){
-    return buf[0] | (buf[1]<<8);
-}
-
-inline uint32_t fat32int(const uint8_t buf[4]){
-    return buf[0] | (buf[1]<<8) | (buf[2]<<16) | (buf[3]<<24);
-}
-
-inline uint32_t fat32int(const uint8_t high[2],const uint8_t low[2]){
-    return low[0] | (low[1]<<8) | (high[0]<<16) | (high[1]<<24);
-}
-
-
-inline int fatYear(int x){  return (x & FATFS_YEAR_MASK) >> FATFS_YEAR_SHIFT;}
-inline int fatMonth(int x){ return (x & FATFS_MON_MASK) >> FATFS_MON_SHIFT;}
-inline int fatDay(int x){   return (x & FATFS_DAY_MASK) >> FATFS_DAY_SHIFT;}
-inline int fatHour(int x){  return (x & FATFS_HOUR_MASK) >> FATFS_HOUR_SHIFT;}
-inline int fatMin(int x){   return (x & FATFS_MIN_MASK) >> FATFS_MIN_SHIFT;}
-inline int fatSec(int x){   return (x & FATFS_SEC_MASK) >> FATFS_SEC_SHIFT;}
-
-inline std::string fatDateToISODate(const uint16_t d,const uint16_t t)
-{
-    char buf[256];
-    snprintf(buf, sizeof(buf), "%04d-%02d-%02dT%02d:%02d:%02d",
-	     fatYear(d)+1980,fatMonth(d),fatDay(d),
-	     fatHour(t),fatMin(t),fatSec(t)); // local time
-    return std::string(buf);
-}
-
-
 
 /* validate an 8.3 name (not a long file name) */
 bool valid_fat_dentry_name(const uint8_t name[8],const uint8_t ext[3])
@@ -187,8 +141,8 @@ fat_validation_t valid_fat_directory_entry(const sbuf_t &sbuf)
 
         if(dentry.attrib & 0x40) return INVALID; // "Device, never found on disk" (wikipedia)
 
-	if(!valid_fat_dentry_name(dentry.name,dentry.ext)) return INVALID; // invalid name
-	if(dentry.ctimeten>199) return INVALID;	// create time fine resolution, 0..199
+	if (!valid_fat_dentry_name(dentry.name,dentry.ext)) return INVALID; // invalid name
+	if (dentry.ctimeten>199) return INVALID;	// create time fine resolution, 0..199
 	uint16_t ctime = fat16int(dentry.ctime);
 	uint16_t cdate = fat16int(dentry.cdate);
 	uint16_t adate = fat16int(dentry.adate);
@@ -516,10 +470,12 @@ void scan_ntfsdirs(const sbuf_t &sbuf,feature_recorder *wrecorder)
     }
 }
 
+#endif
 
 extern "C"
 void scan_windirs(const class scanner_params &sp,const recursion_control_block &rcb)
 {
+#if 0
     std::string myString;
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP){
@@ -548,9 +504,6 @@ void scan_windirs(const class scanner_params &sp,const recursion_control_block &
         sp.info->get_config("opt_last_year",&opt_last_year,"Ignore FAT32 entries with a later year than this");
 
         debug = sp.info->config->debug;
-
-
-
 	return;
     }
     if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;		// no shutdown
@@ -559,4 +512,5 @@ void scan_windirs(const class scanner_params &sp,const recursion_control_block &
 	scan_fatdirs(sp.sbuf,wrecorder);
 	scan_ntfsdirs(sp.sbuf,wrecorder);
     }
+#endif
 }

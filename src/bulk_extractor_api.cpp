@@ -68,11 +68,11 @@ public:
 
     virtual void init_cfs(){
         feature_file_names_t feature_file_names;
-        be13::plugin::scanners_process_enable_disable_commands();
-        be13::plugin::get_scanner_feature_file_names(feature_file_names);
+        plugin::scanners_process_enable_disable_commands();
+        plugin::get_scanner_feature_file_names(feature_file_names);
         init(feature_file_names); // creates the feature recorders
-        be13::plugin::add_enabled_scanner_histograms_to_feature_recorder_set(*this);
-        be13::plugin::scanners_init(*this); // must be done after feature recorders are created
+        plugin::add_enabled_scanner_histograms_to_feature_recorder_set(*this);
+        plugin::scanners_init(*this); // must be done after feature recorders are created
     }
 
     virtual void write(const std::string &feature_recorder_name,const std::string &str){
@@ -154,11 +154,11 @@ extern "C"
 BEFILE *bulk_extractor_open(void *user,be_callback_t cb)
 {
     histogram_defs_t histograms;
-    be13::scanner_info::scanner_config   s_config; // the bulk extractor config
+    scanner_info::scanner_config   s_config; // the bulk extractor config
 
     s_config.debug       = 0;           // default debug
 
-    be13::plugin::load_scanners(scanners_builtin,s_config);
+    plugin::load_scanners(scanners_builtin,s_config);
 
     BEFILE *bef = new BEFILE_t(user,cb);
     return bef;
@@ -172,11 +172,11 @@ extern "C" void bulk_extractor_config(BEFILE *bef,uint32_t cmd,const char *name,
         break;
 
     case BEAPI_SCANNER_DISABLE:
-        be13::plugin::scanners_disable(name);
+        plugin::scanners_disable(name);
         break;
 
     case BEAPI_SCANNER_ENABLE:
-        be13::plugin::scanners_enable(name);
+        plugin::scanners_enable(name);
         break;
 
     case BEAPI_FEATURE_DISABLE: {
@@ -204,7 +204,7 @@ extern "C" void bulk_extractor_config(BEFILE *bef,uint32_t cmd,const char *name,
     }
 
     case BEAPI_DISABLE_ALL:
-        be13::plugin::scanners_disable_all();
+        plugin::scanners_disable_all();
         break;
 
     case BEAPI_FEATURE_LIST: {
@@ -227,7 +227,7 @@ int bulk_extractor_analyze_buf(BEFILE *bef,uint8_t *buf,size_t buflen)
 {
     pos0_t pos0("");
     const sbuf_t sbuf(pos0,buf,buflen,buflen,0,false);
-    be13::plugin::process_sbuf(be13::scanner_params(be13::scanner_params::PHASE_SCAN,sbuf,bef->cfs));
+    plugin::process_sbuf(scanner_params(scanner_params::PHASE_SCAN,sbuf,bef->cfs));
     return 0;
 }
 
@@ -268,7 +268,7 @@ int bulk_extractor_analyze_dev(BEFILE *bef,const char *fname,float frac,int page
         try {
             sbuf_t *sbuf = it.sbuf_alloc();
             if(sbuf==0) break;      // eof
-            be13::plugin::process_sbuf(be13::scanner_params(be13::scanner_params::PHASE_SCAN,*sbuf,bef->cfs));
+            plugin::process_sbuf(scanner_params(scanner_params::PHASE_SCAN,*sbuf,bef->cfs));
             delete sbuf;
         }
         catch (const std::exception &e) {

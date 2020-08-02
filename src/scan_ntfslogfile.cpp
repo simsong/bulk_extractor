@@ -20,8 +20,6 @@
 
 static uint32_t ntfslogfile_carve_mode = feature_recorder::CARVE_ALL;
 
-using namespace std;
-
 #define SECTOR_SIZE 512
 #define CLUSTER_SIZE 4096
 #define FEATURE_FILE_NAME "ntfslogfile_carved"

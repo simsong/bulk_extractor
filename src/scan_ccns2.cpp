@@ -92,7 +92,7 @@ static int ccv1_test(const char *digits)
     int len = strlen(digits);
     int i;
     int doubled[] = { 0,2,4,6,8,1,3,5,7,9 };	/* what are number when "doubled" */
-   
+
     for(i=len-1;i>=0;i--){
 	int val = digit_val(digits[i]);
 	if(double_flag==0){
@@ -118,7 +118,7 @@ static int ccv1_test(const char *digits)
 static int histogram_test(const char *digits)
 {
     int cntscore = 0;
-    int digit_counts[10];			// count of each character 
+    int digit_counts[10];			// count of each character
 
     memset((void*)digit_counts,0,sizeof(digit_counts));
     while(*digits){
@@ -126,7 +126,7 @@ static int histogram_test(const char *digits)
 	digits++;
     }
 
-    /* If we have more than 7 of one digit, 
+    /* If we have more than 7 of one digit,
      * or two digits with more than 5,
      * this isn't a valid number.
      */
@@ -171,7 +171,7 @@ static int pattern_test(const char *digits)
     int b = int4(digits+4);
     int c = int4(digits+8);
     int d = int4(digits+12);
-    
+
     if(b-a == c-d) return -1;		/* something fishy going on... */
     return 0;
 }
@@ -377,13 +377,13 @@ bool unbase58(const char *s,uint8_t *out,size_t len)
     return true;
 }
 
-// A bitcoin address uses a base58 encoding, which uses an alphabet of the characters 0 .. 9, A ..Z, a .. z, 
+// A bitcoin address uses a base58 encoding, which uses an alphabet of the characters 0 .. 9, A ..Z, a .. z,
 // but without the four characters 0, O, I and l.
 bool valid_bitcoin_address(const char *s,size_t len){
     uint8_t dec[32];
     if (unbase58(s,dec,len)==false) return false;
-    sha256_t d1 = sha256_generator::hash_buf(dec,21);
-    sha256_t d2 = sha256_generator::hash_buf(d1.digest,d1.size());
+    dfxml::sha256_t d1 = dfxml::sha256_generator::hash_buf(dec,21);
+    dfxml::sha256_t d2 = dfxml::sha256_generator::hash_buf(d1.digest,d1.size());
     if (memcmp(dec+21, d2.digest, 4)!=0){
         return false;
     }

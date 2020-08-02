@@ -38,8 +38,6 @@ const size_t min_exif_size = 4096;
 const size_t exif_gulp_size = 1024*1024;	// how many bytes of EXIF to read
 
 
-using namespace std;
-
 /**
  * jpeg_start() returns true if the buffer starts with a jpeg.
  */

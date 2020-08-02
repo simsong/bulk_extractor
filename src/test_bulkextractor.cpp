@@ -43,12 +43,12 @@ TEST_CASE("exif_reader", "[utilities]") {
 
 TEST_CASE("scan_json", "[scanners]") {
     /* Test the json scanner without a mock */
-    be13::plugin::scanners_process_enable_disable_commands();
+    plugin::scanners_process_enable_disable_commands();
     feature_file_names_t feature_file_names;
-    be13::plugin::get_scanner_feature_file_names(feature_file_names);
+    plugin::get_scanner_feature_file_names(feature_file_names);
     feature_recorder_set fs(0);	// where the features will be put
     fs.init(feature_file_names,argv[0],opt_outdir);
-    be13::plugin::scanners_init(fs);
+    plugin::scanners_init(fs);
 
     /* Make the sbuf */
     sbuf_t *sbuf = sbuf_t::map_file(argv[0]);
@@ -56,8 +56,8 @@ TEST_CASE("scan_json", "[scanners]") {
 	err(1,"Cannot map file %s:%s\n",argv[0],strerror(errno));
     }
 
-    be13::plugin::process_sbuf(scanner_params(scanner_params::PHASE_SCAN,*sbuf,fs));
-    be13::plugin::phase_shutdown(fs);
+    plugin::process_sbuf(scanner_params(scanner_params::PHASE_SCAN,*sbuf,fs));
+    plugin::phase_shutdown(fs);
     fs.process_histograms(0);
 }
 

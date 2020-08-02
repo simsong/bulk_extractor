@@ -120,7 +120,7 @@ void scan_base64(const class scanner_params &sp,const recursion_control_block &r
     const int debug=0;
 
     sp.check_version();
-    if(sp.phase==scanner_params::PHASE_STARTUP){
+    if( sp.phase == scanner_params::PHASE_STARTUP){
 	sp.info->name		= "base64";
         sp.info->author         = "Simson L. Garfinkel";
         sp.info->description    = "scans for Base64-encoded data";
@@ -137,8 +137,8 @@ void scan_base64(const class scanner_params &sp,const recursion_control_block &r
 	for(int ch='0';ch<='9';ch++){ base64array[ch] = B64_NUMBER; }
 	return;	/* No feature files created */
     }
-    if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;
-    if(sp.phase==scanner_params::PHASE_SCAN){
+    if( sp.phase==scanner_params::PHASE_SHUTDOWN) return;
+    if( sp.phase==scanner_params::PHASE_SCAN){
 	const sbuf_t &sbuf = sp.sbuf;
 
 

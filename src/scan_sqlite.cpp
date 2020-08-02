@@ -29,8 +29,6 @@
 
 static uint32_t sqlite_carve_mode = feature_recorder::CARVE_ALL;
 
-using namespace std;
-
 #define FEATURE_FILE_NAME "sqlite_carved"
 
 extern "C"

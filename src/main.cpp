@@ -395,7 +395,7 @@ void process_path_printer(const scanner_params &sp)
 	return;
     }
     /* Find the scanner and use it */
-    scanner_t *s = be13::plugin::find_scanner(lowerstr(prefix));
+    scanner_t *s = plugin::find_scanner(lowerstr(prefix));
     if(s){
         (*s)(scanner_params(scanner_params::PHASE_SCAN,
                             sbuf_t(new_path,sp.sbuf),
@@ -656,7 +656,7 @@ static void dfxml_create(dfxml_writer &xreport,const std::string &command_line,c
 
     /* Generate a list of the scanners in use */
     std::vector<std::string> ev;
-    be13::plugin::get_enabled_scanners(ev);
+    plugin::get_enabled_scanners(ev);
     for(std::vector<std::string>::const_iterator it=ev.begin();it!=ev.end();it++){
         xreport.xmlout("scanner",(*it));
     }
@@ -782,15 +782,15 @@ int main(int argc,char **argv)
 		cfg.debug  = d;
 		break;
 	    }
-            be13::plugin::set_scanner_debug(cfg.debug);
+            plugin::set_scanner_debug(cfg.debug);
 	}
 	break;
 	case 'E':
-            be13::plugin::scanners_disable_all();
-	    be13::plugin::scanners_enable(optarg);
+            plugin::scanners_disable_all();
+	    plugin::scanners_enable(optarg);
 	    break;
 	case 'e':
-	    be13::plugin::scanners_enable(optarg);
+	    plugin::scanners_enable(optarg);
 	    break;
 	case 'F': FindOpts::get().Files.push_back(optarg); break;
 	case 'f': FindOpts::get().Patterns.push_back(optarg); break;
@@ -839,7 +839,7 @@ int main(int argc,char **argv)
 	    }
 	    break;
 	case 'x':
-	    be13::plugin::scanners_disable(optarg);
+	    plugin::scanners_disable(optarg);
 	    break;
 	case 'Y': {
 	    std::string optargs = optarg;
@@ -880,7 +880,7 @@ int main(int argc,char **argv)
     si.get_config("debug_histogram_malloc_fail_frequency",&HistogramMaker::debug_histogram_malloc_fail_frequency,
                   "Set >0 to make histogram maker fail with memory allocations");
     si.get_config("hash_alg",&be_hash_name,"Specifies hash algorithm to be used for all hash calculations");
-    si.get_config("dup_data_alerts",&be13::plugin::dup_data_alerts,"Notify when duplicate data is not processed");
+    si.get_config("dup_data_alerts",&plugin::dup_data_alerts,"Notify when duplicate data is not processed");
     si.get_config("write_feature_files",&opt_write_feature_files,"Write features to flat files");
     si.get_config("write_feature_sqlite3",&opt_write_sqlite3,"Write feature files to report.sqlite3");
     si.get_config("report_read_errors",&cfg.opt_report_read_errors,"Report read errors");
@@ -893,13 +893,13 @@ int main(int argc,char **argv)
 
     /* Load all the scanners and enable the ones we care about */
 
-    be13::plugin::load_scanner_directories(scanner_dirs,s_config);
-    be13::plugin::load_scanners(scanners_builtin,s_config);
-    be13::plugin::scanners_process_enable_disable_commands();
+    plugin::load_scanner_directories(scanner_dirs,s_config);
+    plugin::load_scanners(scanners_builtin,s_config);
+    plugin::scanners_process_enable_disable_commands();
 
     /* Print usage if necessary */
-    if(opt_H){ be13::plugin::info_scanners(true,true,scanners_builtin,'e','x'); exit(0);}
-    if(opt_h){ usage(progname);be13::plugin::info_scanners(false,true,scanners_builtin,'e','x'); exit(0);}
+    if(opt_H){ plugin::info_scanners(true,true,scanners_builtin,'e','x'); exit(0);}
+    if(opt_h){ usage(progname);plugin::info_scanners(false,true,scanners_builtin,'e','x'); exit(0);}
 
     /* Give an error if a find list was specified
      * but no scanner that uses the find list is enabled.
@@ -909,7 +909,7 @@ int main(int argc,char **argv)
         /* Look through the enabled scanners and make sure that
 	 * at least one of them is a FIND scanner
 	 */
-        if(!be13::plugin::find_scanner_enabled()){
+        if(!plugin::find_scanner_enabled()){
             throw std::runtime_error("find words are specified with -F but no find scanner is enabled.\n");
         }
     }
@@ -994,7 +994,7 @@ int main(int argc,char **argv)
 
     /* Determine the feature files that will be used from the scanners that were enabled */
     feature_file_names_t feature_file_names;
-    be13::plugin::get_scanner_feature_file_names(feature_file_names);
+    plugin::get_scanner_feature_file_names(feature_file_names);
     uint32_t flags = 0;
     if (stop_list.size()>0)        flags |= feature_recorder_set::CREATE_STOP_LIST_RECORDERS;
     if (opt_write_sqlite3)         flags |= feature_recorder_set::ENABLE_SQLITE3_RECORDERS;
@@ -1005,8 +1005,8 @@ int main(int argc,char **argv)
     fs.init( feature_file_names );      // TODO: this should be in the initializer
 
     /* Enable histograms */
-    if (opt_enable_histograms) be13::plugin::add_enabled_scanner_histograms_to_feature_recorder_set(fs); // TODO: This should be in initializer
-    be13::plugin::scanners_init(fs);    // TODO: This should be in the initiazer
+    if (opt_enable_histograms) plugin::add_enabled_scanner_histograms_to_feature_recorder_set(fs); // TODO: This should be in initializer
+    plugin::scanners_init(fs);    // TODO: This should be in the initiazer
 
     fs.set_stop_list(&stop_list);
     fs.set_alert_list(&alert_list);
@@ -1053,6 +1053,7 @@ int main(int argc,char **argv)
     if ( fs.flag_set(feature_recorder_set::ENABLE_SQLITE3_RECORDERS )) {
         fs.db_transaction_begin();
     }
+TODO: constructor should take p and fs
     BulkExtractor_Phase1 phase1(*xreport,timer,cfg);
     if(cfg.debug & DEBUG_PRINT_STEPS) std::cerr << "DEBUG: STARTING PHASE 1\n";
 
@@ -1074,7 +1075,7 @@ int main(int argc,char **argv)
     /*** PHASE 2 --- Shutdown ***/
     if(cfg.opt_quiet==0) std::cout << "Phase 2. Shutting down scanners\n";
     xreport->add_timestamp("phase2 (shutdown) start");
-    be13::plugin::phase_shutdown(fs);
+    plugin::phase_shutdown(fs);
     xreport->add_timestamp("phase2 (shutdown) end");
 
     /*** PHASE 3 --- Create Histograms ***/
@@ -1087,8 +1088,8 @@ int main(int argc,char **argv)
     xreport->push("report");
     xreport->xmlout("total_bytes",phase1.total_bytes);
     xreport->xmlout("elapsed_seconds",timer.elapsed_seconds());
-    xreport->xmlout("max_depth_seen",be13::plugin::get_max_depth_seen());
-    xreport->xmlout("dup_data_encountered",be13::plugin::dup_data_encountered);
+    xreport->xmlout("max_depth_seen",plugin::get_max_depth_seen());
+    xreport->xmlout("dup_data_encountered",plugin::dup_data_encountered);
     xreport->pop();			// report
     xreport->flush();
 

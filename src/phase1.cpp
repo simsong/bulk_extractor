@@ -103,13 +103,35 @@ sbuf_t *BulkExtractor_Phase1::get_sbuf(image_process::iterator &it)
 }
 
 
+void BulkExtractor_Phase1::notify_user(image_process::iterator &it)
+{
+    if(notify_ctr++ >= config.opt_notify_rate){
+        time_t t = time(0);
+        struct tm tm;
+        localtime_r(&t,&tm);
+        printf("%2d:%02d:%02d %s ",tm.tm_hour,tm.tm_min,tm.tm_sec,it.str().c_str());
+
+        /* not sure how to do the rest if sampling */
+        if(!sampling()){
+            printf("(%4.2f%%) Done in %s at %s",
+                   it.fraction_done()*100.0,
+                   timer.eta_text(it.fraction_done()).c_str(),
+                   timer.eta_time(it.fraction_done()).c_str());
+        }
+        printf("\n");
+        fflush(stdout);
+        notify_ctr = 0;
+    }
+}
+
 /**
  * Create a list sorted list of random blocks.
  */
 void BulkExtractor_Phase1::make_sorted_random_blocklist(blocklist_t *blocklist,uint64_t max_blocks,float frac)
 {
     if (frac>0.2){
-        std::cerr << "A better random sampler is needed for this many random blocks. We should have an iterator that decides if to include or not to include based on frac.\n";
+        std::cerr << "A better random sampler is needed for this many random blocks. \n"
+                  << "We should have an iterator that decides if to include or not to include based on frac.\n";
         throw std::runtime_error("Specify frac<0.2");
     }
 
@@ -121,14 +143,33 @@ void BulkExtractor_Phase1::make_sorted_random_blocklist(blocklist_t *blocklist,u
 }
 
 
-void BulkExtractor_Phase1::load_workers(image_process &p, feature_recorder_set &fs, seen_page_ids_t &seen_page_ids)
+void BulkExtractor_Phase1::set_sampling_parameters(Config &c,std::string &p)
 {
+    std::vector<std::string> params = split(p,':');
+    if(params.size()!=1 && params.size()!=2){
+        throw std::runtime_error("sampling parameters must be fraction[:passes]");
+    }
+    c.sampling_fraction = atof(params.at(0).c_str());
+    if(c.sampling_fraction<=0 || c.sampling_fraction>=1){
+        throw std::runtime_error("error: sampling fraction f must be 0<f<=1");
+    }
+    if(params.size()==2){
+        c.sampling_passes = atoi(params.at(1).c_str());
+        if(c.sampling_passes==0){
+            throw std::runtime_error("error: sampling passes must be >=1");
+        }
+    }
+}
+
+void BulkExtractor_Phase1::load_workers()
+{
+#if 0
     p.set_report_read_errors(config.opt_report_read_errors);
     uint64_t md5_next = 0;              // next byte to hash
 
     if(config.debug & DEBUG_PRINT_STEPS) std::cout << "DEBUG: CREATING THREAD POOL\n";
 
-    tp = new threadpool(config.num_threads,fs,xreport);
+    //tp = new thread_pool(config.num_threads); // ,fs,xreport);
 
     xreport.push("runtime","xmlns:debug=\"http://www.github.com/simsong/bulk_extractor/issues\"");
 
@@ -178,6 +219,7 @@ void BulkExtractor_Phase1::load_workers(image_process &p, feature_recorder_set &
                     if(sbuf==0) break;	// eof?
 
                     /* compute the md5 hash */
+#if 0
                     if(md5g){
                         if(sbuf->pos0.offset==md5_next){
                             // next byte follows logically, so continue to compute hash
@@ -188,13 +230,14 @@ void BulkExtractor_Phase1::load_workers(image_process &p, feature_recorder_set &
                             md5g = 0;
                         }
                     }
+#endif
                     total_bytes += sbuf->pagesize;
 
                     /***************************
                      **** SCHEDULE THE WORK ****
                      ***************************/
 
-                    tp->schedule_work(sbuf);
+                    //tp->schedule_work(sbuf);
                     if(!config.opt_quiet) notify_user(it);
                 }
                 catch (const std::exception &e) {
@@ -223,12 +266,13 @@ void BulkExtractor_Phase1::load_workers(image_process &p, feature_recorder_set &
     if(!config.opt_quiet){
         std::cout << "All data are read; waiting for threads to finish...\n";
     }
+#endif
 }
 
 
-
-void BulkExtractor_Phase1::wait_for_workers(image_process &p,std::string *md5_string)
+void BulkExtractor_Phase1::wait_for_workers()
 {
+#if 0
     /* Now wait for all of the threads to be free */
     tp->mode = 1;			// waiting for workers to finish
     time_t wait_start = time(0);
@@ -307,12 +351,11 @@ void BulkExtractor_Phase1::wait_for_workers(image_process &p,std::string *md5_st
         std::cout << "*******************************************\n";
     }
     /* end of phase 1 */
+#endif
 }
 
-void BulkExtractor_Phase1::run(image_process &p,
-                               feature_recorder_set &fs,
-                               seen_page_ids_t &seen_page_ids)
+void BulkExtractor_Phase1::run()
 {
-    load_workers(p, fs, seen_page_ids);
+    load_workers();
     wait_for_workers();
 }

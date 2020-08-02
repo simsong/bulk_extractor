@@ -24,8 +24,6 @@
 static const uint32_t windows_page_size = 4096;
 static const uint32_t min_uncompr_size = 4096; // allow at least this much when uncompressing
 
-using namespace std;
-
 /**
  * scan_hiberfile:
  * Look for elements of the hibernation file and decompress them.
@@ -53,7 +51,7 @@ void scan_hiberfile(const class scanner_params &sp,const recursion_control_block
 	const sbuf_t &sbuf = sp.sbuf;
 	const pos0_t &pos0 = sp.sbuf.pos0;
 
-	if(pos0.path.find("HIBERFILE")!=string::npos){ // don't do recursively
+	if(pos0.path.find("HIBERFILE")!=std::string::npos){ // don't do recursively
 	    return;
 	}
 

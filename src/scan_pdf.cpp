@@ -28,8 +28,6 @@
 #endif
 #include <zlib.h>
 
-using namespace std;
-
 static bool pdf_dump = false;
 
 /*

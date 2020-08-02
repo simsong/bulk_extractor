@@ -8,12 +8,10 @@
 #include <errno.h>
 #include <sstream>
 
-using namespace std;
-
 struct used_offsets_t {
     used_offsets_t():offsets(){};
     virtual ~used_offsets_t(){};
-    vector<ssize_t> offsets;
+    std::vector<ssize_t> offsets;
     static const ssize_t window = 4096;
 
     bool value_used(ssize_t value) {

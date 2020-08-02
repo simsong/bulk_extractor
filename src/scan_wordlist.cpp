@@ -51,12 +51,12 @@ static uint64_t outfilesize = 0;
 
 static void wordlist_write_word(const std::string &word)
 {
-    if(!of2.is_open() || outfilesize>max_word_outfile_size){
+    if (!of2.is_open() || outfilesize>max_word_outfile_size){
         if(of2.is_open()) of2.close();
         char fname[128];
         snprintf(fname,sizeof(fname),ofn_template.c_str(),of2_counter++);
         of2.open(fname);
-        if(!of2.is_open()) err(1,"Cannot open %s",fname);
+        if(!of2.is_open()) throw std::runtime_error(std::string("Cannot open ") + fname);
         outfilesize = 0;
     }
     of2 << word << '\n';
@@ -67,7 +67,7 @@ static void wordlist_write_word(const std::string &word)
 static void wordlist_split_and_dedup(const std::string &ifn)
 {
     std::ifstream f2(ifn.c_str());
-    if(!f2.is_open()) err(1,"Cannot open %s\n",ifn.c_str());
+    if (!f2.is_open()) throw std::runtime_error(std::string("Cannot open ")+ifn);
 
     /* Read all of the words */
 
@@ -152,10 +152,10 @@ void scan_wordlist(const class scanner_params &sp,const recursion_control_block 
         sp.info->get_config("wordlist_use_flatfiles",&wordlist_use_flatfiles,"Override SQL settings and use flatfiles for wordlist");
         sp.info->get_config("strings",&strings,"Scan for strings instead of words");
 
-        if(wordlist_use_flatfiles || fs.db3==0){
+        if (wordlist_use_flatfiles || fs.db3==0){
             sp.info->feature_names.insert(WORDLIST);
         }
-        if(word_min>word_max){
+        if (word_min>word_max){
             fprintf(stderr,"ERROR: word_min (%d) > word_max (%d)\n",word_min,word_max);
             exit(1);
         }

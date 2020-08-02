@@ -50,14 +50,14 @@ class prefetch_record_t {
 public:
     std::string prefetch_version;
     uint32_t header_size;
-    string   execution_filename;
+    std::string   execution_filename;
     uint32_t execution_counter;
     int64_t  execution_time;
-    string   volume_path_name;
+    std::string   volume_path_name;
     uint32_t volume_serial_number;
     int64_t  volume_creation_time;
-    vector<std::string> files;		// files in prefect record
-    vector<std::string> directories;	// directories in prefect
+    std::vector<std::string> files;		// files in prefect record
+    std::vector<std::string> directories;	// directories in prefect
 
     std::string to_xml();		// turns the record to an XML
 
@@ -103,7 +103,7 @@ public:
             uint32_t prefetch_file_length = sbuf.get32u(0x0c);
 
             // get execution file filename
-            wstring utf16_execution_filename;
+            std::wstring utf16_execution_filename;
             sbuf.getUTF16(0x10, utf16_execution_filename);
             execution_filename = safe_utf16to8(utf16_execution_filename);
             if(execution_filename.size()==0) execution_filename="UNKNOWN_FILENAME";
@@ -127,9 +127,9 @@ public:
             uint32_t section_c_length = sbuf.get32u(0x68);
             sbuf_stream filename_stream(sbuf + section_c_offset);
             while (filename_stream.tell() < section_c_length) {
-                wstring utf16_filename;
+                std::wstring utf16_filename;
                 filename_stream.getUTF16(utf16_filename);
-                string filename = safe_utf16to8(utf16_filename);
+                std::string filename = safe_utf16to8(utf16_filename);
 		if (!valid_full_path_name(filename)) return;
                 files.push_back(filename);
             }
@@ -138,7 +138,7 @@ public:
             uint32_t section_d_offset = sbuf.get32u(0x6c);
 
             uint32_t volume_name_offset = sbuf.get32u(section_d_offset + 0x00);
-            wstring utf16_volume_name;
+            std::wstring utf16_volume_name;
             sbuf.getUTF16(section_d_offset+volume_name_offset, utf16_volume_name);
             volume_path_name = safe_utf16to8(utf16_volume_name);
 
@@ -154,8 +154,7 @@ public:
                 // the offset is out of range so don't get the list of directories
             } else {
                 // calculate a rough maximum number of bytes for directory entries
-                size_t upper_max = prefetch_file_length - directory_offset;
-
+                size_t      upper_max = prefetch_file_length - directory_offset;
                 sbuf_stream directory_stream = sbuf_stream(sbuf + directory_offset);
 
                 for (uint32_t i=0; i<num_directory_entries; i++) {
@@ -169,9 +168,9 @@ public:
                     directory_stream.get16u();
 
                     // read the directory name
-                    wstring utf16_directory_name;
+                    std::wstring utf16_directory_name;
                     directory_stream.getUTF16(utf16_directory_name);
-                    string directory_name = safe_utf16to8(utf16_directory_name);
+                    std::string directory_name = safe_utf16to8(utf16_directory_name);
 		    if (!valid_full_path_name(directory_name)) return;
                     directories.push_back(directory_name);
                 }
@@ -181,8 +180,7 @@ public:
         }
     }
 
-    ~prefetch_record_t() {
-    }
+    ~prefetch_record_t() { }
 };
 
 /**
@@ -191,38 +189,36 @@ public:
 // Private helper functions; turn a prefect record into an XML string */
 std::string prefetch_record_t::to_xml()
 {
-    stringstream ss;
+    std::stringstream ss;
 
     // generate the prefetch feature in a stringstream
     ss << "<prefetch>";
-        ss << "<os>"       << dfxml_writer::xmlescape(prefetch_version) << "</os>";
-        ss << "<filename>" << dfxml_writer::xmlescape(execution_filename) << "</filename>";
-        ss << "<header_size>" << header_size << "</header_size>";
-        ss << "<atime>"    << microsoftDateToISODate(execution_time) << "</atime>";
-        ss << "<runs>"     << execution_counter << "</runs>";
-        ss << "<filenames>";
-            for(vector<string>::const_iterator it = files.begin();
-                it != files.end(); it++) {
-                ss << "<file>" << dfxml_writer::xmlescape(*it) << "</file>";
-            }
-        ss << "</filenames>";
+    ss << "<os>"       << dfxml_writer::xmlescape(prefetch_version) << "</os>";
+    ss << "<filename>" << dfxml_writer::xmlescape(execution_filename) << "</filename>";
+    ss << "<header_size>" << header_size << "</header_size>";
+    ss << "<atime>"    << microsoftDateToISODate(execution_time) << "</atime>";
+    ss << "<runs>"     << execution_counter << "</runs>";
+    ss << "<filenames>";
+    for (auto const &it : files) {
+        ss << "<file>" << dfxml_writer::xmlescape(it) << "</file>";
+    }
+    ss << "</filenames>";
 
-        ss << "<volume>";
-            ss << "<path>" << dfxml_writer::xmlescape(volume_path_name) << "</path>";
-            ss << "<creation>" << microsoftDateToISODate(volume_creation_time) << "</creation>";
-            ss << "<serial_number>" << hex << volume_serial_number << dec << "</serial_number>";
+    ss << "<volume>";
+    ss << "<path>" << dfxml_writer::xmlescape(volume_path_name) << "</path>";
+    ss << "<creation>" << microsoftDateToISODate(volume_creation_time) << "</creation>";
+    ss << "<serial_number>" << std::hex << volume_serial_number << std::dec << "</serial_number>";
 
-            ss << "<dirnames>";
-                for(vector<string>::const_iterator it = directories.begin();
-                    it != directories.end(); it++) {
-                    ss << "<dir>" << dfxml_writer::xmlescape(*it) << "</dir>";
-                }
-            ss << "</dirnames>";
-        ss << "</volume>";
+    ss << "<dirnames>";
+    for (auto const &it:directories) {
+        ss << "<dir>" << dfxml_writer::xmlescape(it) << "</dir>";
+    }
+    ss << "</dirnames>";
+    ss << "</volume>";
     ss << "</prefetch>";
 
     // return the xml as a string
-    string prefetch_xml = ss.str();
+    std::string prefetch_xml = ss.str();
     return prefetch_xml;
 }
 

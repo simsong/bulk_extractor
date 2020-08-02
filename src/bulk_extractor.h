@@ -137,6 +137,6 @@
 #endif
 
 
-extern be13::scanner_t *scanners_builtin[];
+extern scanner_t *scanners_builtin[];
 
 #endif

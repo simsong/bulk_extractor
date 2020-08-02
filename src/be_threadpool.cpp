@@ -148,7 +148,7 @@ void worker::do_work(sbuf_t *sbuf)
 
     aftimer t;
     t.start();
-    be13::plugin::process_sbuf(scanner_params(scanner_params::PHASE_SCAN,*sbuf,master.fs)); 
+    plugin::process_sbuf(scanner_params(scanner_params::PHASE_SCAN,*sbuf,master.fs)); 
     t.stop();
 
     /* If we are logging starting and ending, save the end */
@@ -170,7 +170,7 @@ void worker::do_work(sbuf_t *sbuf)
 void *worker::run() 
 {
     /* Initialize any per-thread variables in the scanners */
-    be13::plugin::message_enabled_scanners(scanner_params::PHASE_THREAD_BEFORE_SCAN,master.fs);
+    plugin::message_enabled_scanners(scanner_params::PHASE_THREAD_BEFORE_SCAN,master.fs);
 
     while(true){
 	/* Get the lock, then wait for the queue to be empty.

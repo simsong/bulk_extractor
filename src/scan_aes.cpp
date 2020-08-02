@@ -389,7 +389,7 @@ static std::string key_to_string(const unsigned char * key, uint64_t sz)
 #define WINDOW_SIZE  AES256_KEY_SCHEDULE_SIZE
 
 extern "C"
-void scan_aes(const class be13::scanner_params &sp,const be13::recursion_control_block &rcb)
+void scan_aes(const class scanner_params &sp,const recursion_control_block &rcb)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP){
