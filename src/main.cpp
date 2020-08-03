@@ -58,9 +58,16 @@ int _CRT_fmode = _O_BINARY;
 #include "phase1.h"
 
 
-/* Bring in the compiled-in scanners */
-#define SCANNER(scanner) extern "C" scanner_t scan_#scanner;
+/* Bring in the definitions for the  */
+#define SCANNER(scanner) extern "C" scanner_t scan_ ## scanner;
 #include "bulk_extractor_scanners.h"
+#undef SCANNER
+
+/* Create an array of the built-in scanners */
+#define SCANNER(scanner) scan_ ## scanner ,
+scanner_t *scanners_builtin[] = {
+#include "bulk_extractor_scanners.h"
+    0};
 #undef SCANNER
 
 /**
@@ -168,6 +175,12 @@ std::string svn_revision_clean()
     return std::string("");
 }
 
+void throw_FileNotFoundError(const std::string &fname)
+{
+    std::cerr << "Cannot open: " << fname << "\n";
+    throw std::runtime_error("Cannot open file");
+}
+
 /**
  * scaled_stoi64:
  * Like a normal stoi, except it can handle modifies k, m, and g
@@ -260,12 +273,6 @@ static bool directory_empty(const std::string &d)
     return false;
 }
 
-/* An array of the built-in scanners */
-#define SCANNER(scanner) scan_#scanner ,
-scanner_t *scanners_builtin[] = {
-#include "bulk_extractor_scanners.h"
-    0};
-#undef SCANNER
 
 /***************************************************************************************
  *** PATH PRINTER - Used by bulk_extractor for printing pages associated with a path ***
@@ -444,8 +451,10 @@ static void process_open_path(const image_process &p,std::string path,scanner_pa
      * The printer is called when a PRINT token is found in the
      * forensic path, so that has to be added.
      */
-    feature_recorder_set fs(feature_recorder_set::SET_DISABLED,feature_recorder_set::null_hasher,
-                            feature_recorder_set::NO_INPUT,feature_recorder_set::NO_OUTDIR);
+    feature_recorder_set fs(feature_recorder_set::SET_DISABLED,
+                            "md5",
+                            feature_recorder_set::NO_INPUT,
+                            feature_recorder_set::NO_OUTDIR);
 
     pos0_t pos0(path+"-PRINT"); // insert the PRINT token
     sbuf_t sbuf(pos0, buf, count, count, 0, true); // sbuf system will free
@@ -638,7 +647,7 @@ public:;
  * Create the dfxml output
  */
 
-static void dfxml_create(dfxml_writer &xreport,const std::string &command_line,const BulkExtractor_Phase1::Config &cfg)
+static void dfxml_create(dfxml_writer &xreport, int argc, char * const *argv,const BulkExtractor_Phase1::Config &cfg)
 {
     xreport.push("dfxml","xmloutputversion='1.0'");
     xreport.push("metadata",
@@ -647,7 +656,7 @@ static void dfxml_create(dfxml_writer &xreport,const std::string &command_line,c
 		 "\n  xmlns:dc='http://purl.org/dc/elements/1.1/'" );
     xreport.xmlout("dc:type","Feature Extraction","",false);
     xreport.pop();
-    xreport.add_DFXML_creator(PACKAGE_NAME,PACKAGE_VERSION,svn_revision_clean(),command_line);
+    xreport.add_DFXML_creator(PACKAGE_NAME, PACKAGE_VERSION, svn_revision_clean(), argc, argv);
     xreport.push("configuration");
     xreport.xmlout("threads",cfg.num_threads);
     xreport.xmlout("pagesize",cfg.opt_pagesize);
@@ -706,6 +715,8 @@ static void add_if_present(std::vector<std::string> &scanner_dirs,const std::str
     }
 }
 
+std::string be_hash_name {"md5"};
+
 int main(int argc,char **argv)
 {
 #ifdef HAVE_MCHECK
@@ -713,7 +724,6 @@ int main(int argc,char **argv)
 #endif
 
     /* setup */
-    feature_recorder::set_main_threadid();
     const char *progname = argv[0];
 
     word_and_context_list alert_list;		/* shold be flagged */
@@ -812,7 +822,7 @@ int main(int argc,char **argv)
 	    break;
 	case 'r':
 	    if(alert_list.readfile(optarg)){
-		err(1,"Cannot read alert list %s",optarg);
+                throw_FileNotFoundError(optarg);
 	    }
 	    break;
 	case 'R': opt_recurse = 1; break;
@@ -835,7 +845,7 @@ int main(int argc,char **argv)
             exit(1);
 	    break;
 	case 'w': if(stop_list.readfile(optarg)){
-		err(1,"Cannot read stop list %s",optarg);
+                throw_FileNotFoundError(optarg);
 	    }
 	    break;
 	case 'x':
@@ -859,12 +869,10 @@ int main(int argc,char **argv)
 	}
     }
 
-    cfg.validate();
     argc -= optind;
     argv += optind;
 
     if(cfg.debug & DEBUG_PRINT_STEPS) std::cerr << "DEBUG: DEBUG_PRINT_STEPS\n";
-    if(cfg.debug & DEBUG_PEDANTIC) validateOrEscapeUTF8_validate = true;
 
     /* Create a configuration that will be used to initialize the scanners */
     scanner_info si;
@@ -982,7 +990,7 @@ int main(int argc,char **argv)
         std::string old_reportfilename = reportfilename + "." + itos(time(0));
         if(rename(reportfilename.c_str(),old_reportfilename.c_str())){
             std::cerr << "Could not rename " << reportfilename << " to " << old_reportfilename << ": " << strerror(errno) << "\n";
-            exit(1);
+            throw std::runtime_error("Could not rename file");
         }
     }
 
@@ -990,7 +998,7 @@ int main(int argc,char **argv)
      * We use *p because we don't know which subclass we will be getting.
      */
     image_process *p = image_process::open(image_fname,opt_recurse,cfg.opt_pagesize,cfg.opt_marginsize);
-    if(!p) err(1,"Cannot open %s: ",image_fname.c_str());
+    if(!p) throw_FileNotFoundError(image_fname);
 
     /* Determine the feature files that will be used from the scanners that were enabled */
     feature_file_names_t feature_file_names;
@@ -1029,7 +1037,7 @@ int main(int argc,char **argv)
 
     /* Store the configuration in the XML file */
     dfxml_writer  *xreport = new dfxml_writer(reportfilename,false);
-    dfxml_create(*xreport,command_line,cfg);
+    dfxml_create(*xreport, argc, argv, cfg);
     xreport->xmlout("provided_filename",image_fname); // save this information
 
     /* provide documentation to the user; the DFXML information comes from elsewhere */
@@ -1053,23 +1061,19 @@ int main(int argc,char **argv)
     if ( fs.flag_set(feature_recorder_set::ENABLE_SQLITE3_RECORDERS )) {
         fs.db_transaction_begin();
     }
-TODO: constructor should take p and fs
-    BulkExtractor_Phase1 phase1(*xreport,timer,cfg);
+    BulkExtractor_Phase1 phase1(*xreport, timer, cfg, *p, fs, seen_page_ids);
     if(cfg.debug & DEBUG_PRINT_STEPS) std::cerr << "DEBUG: STARTING PHASE 1\n";
 
     if(opt_sampling_params.size()>0) BulkExtractor_Phase1::set_sampling_parameters(cfg,opt_sampling_params);
-    std::string md5_string;
     xreport->add_timestamp("phase1 start");
-    phase1.run(*p,fs,seen_page_ids,&md5_string);
-    delete p;				// not strictly needed, but why not?
-    p = 0;
+    phase1.run();
 
     if ( fs.flag_set(feature_recorder_set::ENABLE_SQLITE3_RECORDERS )) {
         fs.db_transaction_commit();
     }
     xreport->add_timestamp("phase1 end");
-    if(md5_string.size()>0){
-        std::cout << "MD5 of Disk Image: " << md5_string << "\n";
+    if (phase1.image_hash().size() > 0 ){
+        std::cout << "Hash of Disk Image: " << phase1.image_hash() << "\n";
     }
 
     /*** PHASE 2 --- Shutdown ***/

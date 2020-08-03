@@ -4,26 +4,22 @@
  *
  */
 
+#include <dirent.h>
+#include <fcntl.h>
+#include <setjmp.h>
+#include <unistd.h>
+
+#include "config.h"
+
+#include "bulk_extractor_i.h"
 #include "bulk_extractor.h"
 #include "image_process.h"
-#include "threadpool.h"
-#include "be13_api/aftimer.h"
 #include "histogram.h"
 #include "findopts.h"
 #include "dfxml/src/dfxml_writer.h"
 #include "dfxml/src/hash_t.h"
 
 #include "phase1.h"
-
-#include <dirent.h>
-#include <ctype.h>
-#include <fcntl.h>
-#include <set>
-#include <setjmp.h>
-#include <vector>
-#include <queue>
-#include <unistd.h>
-#include <ctype.h>
 
 /************************
  *** SCANNER PLUG-INS ***
@@ -36,7 +32,11 @@
  */
 
 /* An array of the built-in scanners */
-#define SCANNER(scanner) scan_#scanner ,
+#define SCANNER(scanner) extern "C" scanner_t scan_ ## scanner;
+#include "bulk_extractor_scanners.h"
+#undef SCANNER
+
+#define SCANNER(scanner) scan_ ## scanner ,
 scanner_t *scanners_builtin[] = {
 #include "bulk_extractor_scanners.h"
     0};

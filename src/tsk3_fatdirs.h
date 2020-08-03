@@ -5,7 +5,7 @@
 #pragma GCC diagnostic ignored "-Wshadow"
 #pragma GCC diagnostic ignored "-Weffc++"
 #pragma GCC diagnostic ignored "-Wredundant-decls"
-#include tsk3/libtsk.h"
+#include "tsk3/libtsk.h"
 #include "tsk3/fs/tsk_fatfs.h"
 #include "tsk3/fs/tsk_ntfs.h"
 #pragma GCC diagnostic warning "-Wshadow"

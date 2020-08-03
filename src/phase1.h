@@ -96,6 +96,7 @@ public:
     void load_workers();
     void wait_for_workers();
     void run();
+    std::string image_hash() const;
 };
 
 #endif
