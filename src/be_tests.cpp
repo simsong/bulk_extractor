@@ -47,17 +47,26 @@ TEST_CASE("scan_json", "[scanners]") {
     plugin::scanners_process_enable_disable_commands();
     feature_file_names_t feature_file_names;
     plugin::get_scanner_feature_file_names(feature_file_names);
-    feature_recorder_set fs(0,"md5","/dev/null","/tmp");	// where the features will be put
-    fs.init(feature_file_names);             // shoudln't even be used
+    std::cerr << "A1  \n";
+
+    feature_recorder_set fs(feature_recorder_set::DISABLE_FILE_RECORDERS,"md5","/dev/null","/tmp");	// where the features will be put
+    std::cerr << "A2  \n";
+TODO: REmove fs.init()
+    //fs.init(feature_file_names);             // shoudln't even be used
     plugin::scanners_init(fs);
+    std::cerr << "A3  \n";
 
     /* Make the sbuf */
     const std::string json_demo {" hello [1,2,3] world"};
     const uint8_t *buf =reinterpret_cast<const uint8_t *>(json_demo.c_str());
+    std::cerr << "A4  \n";
     sbuf_t sbuf = sbuf_t(pos0_t(), buf, json_demo.size(), json_demo.size(), 0, false);
+    std::cerr << "A5  \n";
     plugin::process_sbuf(scanner_params(scanner_params::PHASE_SCAN,sbuf,fs));
+    std::cerr << "A6  \n";
     plugin::phase_shutdown(fs);
-    //fs.process_histograms(0);
+    std::cerr << "A7  \n";
+    fs.process_histograms(0);
 }
 
 /* Test the threadpool */

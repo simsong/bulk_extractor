@@ -103,7 +103,7 @@ bulk_extractor_nomain = \
 	phase1.h \
 	phase1.cpp \
 	threadpool.hpp \
-	$(BE13_API) $(DFXML_WRITER)
+	$(BE13_API_SRC) $(DFXML_WRITER)
 
 bulk_extractor_SOURCES = $(bulk_extractor_nomain) $(scanners_builtin) bulk_extractor_scanners.cpp main.cpp
 
@@ -111,7 +111,7 @@ bulk_extractorlib_SOURCES = $(bulk_extractor_nomain) $(scanners_builtin) bulk_ex
 
 bulk_extractor_noscanners_SOURCES = $(bulk_extractor_nomain) bulk_extractor_noscanners.cpp main.cpp
 
-stand_SOURCES = dig.cpp stand.cpp $(BE13_API) $(DFXML_WRITER)
+stand_SOURCES = dig.cpp stand.cpp $(BE13_API_SRC) $(DFXML_WRITER)
 
 lib: libbulkextractor.so
 
