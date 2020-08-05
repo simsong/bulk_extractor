@@ -20,7 +20,7 @@ m4_include([m4/slg_gcc_all_warnings.m4])
 m4_include([src/be13_api/dfxml/src/dfxml_configure.m4])
 m4_include([src/be13_api/be13_configure.m4])
 
-# 
+#
 # NOTE 1 - plugins/Makefile is referenced so that the plugins Makefile is created.
 # However, plugins is not listed as a SUBDIR for Makefile.am in this directory.
 # That prevents the plugins from automatically being built each time.
@@ -47,7 +47,7 @@ AC_PROG_LEX
 # Must use C++14 mode. (mandatory)
 
 AC_LANG_PUSH(C++)
-AX_CXX_COMPILE_STDCXX([14], [noext], [mandatory]) 
+AX_CXX_COMPILE_STDCXX([14], [noext], [mandatory])
 AC_LANG_POP()
 
 # These are needed for bulk_extractor. They are not needed for tcpflow
@@ -55,7 +55,7 @@ AC_DEFINE([BULK_EXTRACTOR],1,[We are compiling bulk_extractor])
 
 if test x"$LEX" == x ; then
   AC_MSG_ERROR([flex not required.])
-fi  
+fi
 
 if test `basename "$LEX"` != flex; then
   AC_MSG_ERROR([gnu flex is required.])
@@ -63,7 +63,7 @@ fi
 
 ## Determine if we can use flex -R
 if eval "echo %% | $LEX -R -t > /dev/null 2>&1"
-then 
+then
   AC_MSG_NOTICE([$LEX supports -R])
 else
   AC_MSG_ERROR([$LEX does not support -R.  Please get a modern version of gnu flex])
@@ -135,7 +135,7 @@ AC_ARG_ENABLE([address-sanitizer], AS_HELP_STRING([--enable-address-sanitizer], 
 # PTHREAD support
 # With special nods to compiling under mingw
 
-case $host in 
+case $host in
  *mingw*)
   AC_MSG_NOTICE([mingw pthreads support])
   CFLAGS="$CFLAGS -mthreads -pthread "
@@ -188,10 +188,10 @@ AC_CHECK_HEADERS([alloca.h dirent.h dlfcn.h err.h errno.h fcntl.h inttypes.h lib
 AC_CHECK_FUNCS([getuid getpwuid gethostname getrusage gmtime_r isxdigit ishexnumber le64toh localtime_r _lseeki64 inet_ntop pread64 pread printf mmap munmap MD5 mkstemp mktemp sleep SleepEx strptime usleep vasprintf])
 AC_CHECK_FUNCS([CreateProcess LoadLibrary IncrementAtomic InterlockedIncrement])
 
-## dlopen is now itself in a different library 
+## dlopen is now itself in a different library
 ## Explicitly check for dlopen library before checking for dlopen
 ##       -ldl (see http://stackoverflow.com/questions/956640/linux-c-error-undefined-reference-to-dlopen)
-AC_CHECK_LIB([dl],[dlopen])		              
+AC_CHECK_LIB([dl],[dlopen])
 AC_CHECK_FUNCS([dlopen dlopen_preflight])
 
 # Test for sin_len
@@ -233,7 +233,7 @@ AC_CHECK_LIB([expat],[XML_ParserCreate])
 
 ################################################################
 ## Lightgrep support
-## 
+##
 AC_CHECK_LIB([stdc++],[main])
 
 if test x"$lightgrep" == x"yes"; then
@@ -328,11 +328,11 @@ if test x"$exiv2" == x"yes" ; then
       		     [Exiv2::LogMsg::setLevel(Exiv2::LogMsg::mute);],
   		   [AC_DEFINE(HAVE_EXIV2__LOGMSG__SETLEVEL,1,[define 1 if EXIV2 exists and works])])
     fi
-  AC_LANG_POP()    
+  AC_LANG_POP()
 fi
 
 m4_include([m4/slg_check_gcc_diagnostics.m4])
-  
+
 ## If compiling on mingw, add another -lgdi32 to be safe
 ## This is required becuase some libraries reference functions in gdi32 and, for whatever reason,
 ## the linker is not smart enough to re-check the library
@@ -351,7 +351,7 @@ if test x"${AFF_NOOPT}" != "x" ; then
 fi
 
 if test "${with_opt}" = "no" ; then
-  CFLAGS=`echo   -g "$CFLAGS"   | sed s/-O[[0-9]]//`             # note the double quoting! 
+  CFLAGS=`echo   -g "$CFLAGS"   | sed s/-O[[0-9]]//`             # note the double quoting!
   CXXFLAGS=`echo -g "$CXXFLAGS" | sed s/-O[[0-9]]//`
 else
   # If we are not stripping the optimizer, add fortify source
@@ -360,7 +360,7 @@ else
 
   # and increase optimizer from -O2 to -O3 if not explicitly forbidden
   if test "${with_o3}" != "no" ; then
-      CFLAGS=`echo   -g "$CFLAGS"   | sed s/-O2/-O3/`             # note the double quoting! 
+      CFLAGS=`echo   -g "$CFLAGS"   | sed s/-O2/-O3/`             # note the double quoting!
       CXXFLAGS=`echo -g "$CXXFLAGS" | sed s/-O2/-O3/`
   fi
 fi
@@ -383,7 +383,7 @@ AC_MSG_NOTICE([  LDFLAGS:          $LDFLAGS])
 
 if test x"${libewf}" != "xyes" ; then
   AC_MSG_WARN([libewf-devel must be installed for E01 support.])
-fi  
+fi
 
 AC_OUTPUT
 
@@ -396,4 +396,3 @@ echo "#define LDFLAGS  \"$LDFLAGS\""  >> config.h
 if test x"$GIT_COMMIT" != "x" ; then
   echo "#define GIT_COMMIT  \"$GIT_COMMIT\""  >> config.h
 fi
-

@@ -4,19 +4,20 @@
 
 #define CATCH_CONFIG_MAIN
 #include "config.h"
+#include "be13_api/tests/catch.hpp"
+#include "be13_api/bulk_extractor_i.h"
+#include "phase1.h"
+
 #include "base64_forensic.h"
 #include "dig.h"
 #include "exif_reader.h"
-#include "be13_api/tests/catch.hpp"
 #include "findopts.h"
 #include "image_process.h"
 #include "pattern_scanner.h"
 #include "pattern_scanner_utils.h"
-#include "phase1.h"
 #include "pyxpress.h"
 #include "sbuf_flex_scanner.h"
 #include "scan_ccns2.h"
-#include "threadpool.h"
 
 
 bool test_threadpool()
@@ -46,19 +47,17 @@ TEST_CASE("scan_json", "[scanners]") {
     plugin::scanners_process_enable_disable_commands();
     feature_file_names_t feature_file_names;
     plugin::get_scanner_feature_file_names(feature_file_names);
-    feature_recorder_set fs(0);	// where the features will be put
-    fs.init(feature_file_names,argv[0],opt_outdir);
+    feature_recorder_set fs(0,"md5","/dev/null","/tmp");	// where the features will be put
+    fs.init(feature_file_names);             // shoudln't even be used
     plugin::scanners_init(fs);
 
     /* Make the sbuf */
-    sbuf_t *sbuf = sbuf_t::map_file(argv[0]);
-    if(!sbuf){
-	err(1,"Cannot map file %s:%s\n",argv[0],strerror(errno));
-    }
-
-    plugin::process_sbuf(scanner_params(scanner_params::PHASE_SCAN,*sbuf,fs));
+    const std::string json_demo {" hello [1,2,3] world"};
+    const uint8_t *buf =reinterpret_cast<const uint8_t *>(json_demo.c_str());
+    sbuf_t sbuf = sbuf_t(pos0_t(), buf, json_demo.size(), json_demo.size(), 0, false);
+    plugin::process_sbuf(scanner_params(scanner_params::PHASE_SCAN,sbuf,fs));
     plugin::phase_shutdown(fs);
-    fs.process_histograms(0);
+    //fs.process_histograms(0);
 }
 
 /* Test the threadpool */
@@ -71,16 +70,8 @@ TEST_CASE("threadpool", "[threads]") {
                 } );
     }
     t.join();
-    REQUIRE( counter=1000 )
+    REQUIRE( counter==1000 );
 #import <iostream>
 #import <unistd.h>
-
-std::mutex M;
-int main(int argc,char **argv)
-{
-
-    exit(0);
-}
-
 
 }

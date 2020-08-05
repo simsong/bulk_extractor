@@ -1,22 +1,20 @@
-/* compiled-in scanners. 
+/* compiled-in scanners.
  *
  * scanners are brought in by defining the SCANNER macro and then including this file.
  */
 
 /* flex-based scanners */
-SCANNER(email)  
-SCANNER(accts)  
+SCANNER(email)
+SCANNER(accts)
 SCANNER(kml)
 SCANNER(gps)
 
 /* Regular scanners */
-SCANNER(wordlist) 
-SCANNER(net) 
+SCANNER(wordlist)
+SCANNER(net)
 SCANNER(base16)
 SCANNER(base64)
 SCANNER(vcard)
-SCANNER(lift)
-SCANNER(extx)
 SCANNER(find)
 
 #ifdef HAVE_EXIV2
@@ -24,8 +22,6 @@ SCANNER(exiv2)
 #endif
 
 SCANNER(aes)
-SCANNER(bulk)
-SCANNER(sceadan)
 SCANNER(elf)
 SCANNER(exif)
 SCANNER(gzip)
@@ -59,5 +55,3 @@ SCANNER(ntfsmft)
 SCANNER(ntfslogfile)
 SCANNER(ntfsindx)
 SCANNER(evtx)
-
-

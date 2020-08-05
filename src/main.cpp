@@ -175,7 +175,7 @@ std::string svn_revision_clean()
     return std::string("");
 }
 
-void throw_FileNotFoundError(const std::string &fname)
+[[noreturn]] void throw_FileNotFoundError(const std::string &fname)
 {
     std::cerr << "Cannot open: " << fname << "\n";
     throw std::runtime_error("Cannot open file");
@@ -881,23 +881,19 @@ int main(int argc,char **argv)
     si.config = &s_config;
 
     /* Make individual configuration options appear on the command line interface. */
+#if 0
     si.get_config("work_start_work_end",&worker::opt_work_start_work_end,
                   "Record work start and end of each scanner in report.xml file");
-    si.get_config("enable_histograms",&opt_enable_histograms,
-                  "Disable generation of histograms");
     si.get_config("debug_histogram_malloc_fail_frequency",&HistogramMaker::debug_histogram_malloc_fail_frequency,
                   "Set >0 to make histogram maker fail with memory allocations");
+#endif
+    si.get_config("enable_histograms",&opt_enable_histograms,
+                  "Disable generation of histograms");
     si.get_config("hash_alg",&be_hash_name,"Specifies hash algorithm to be used for all hash calculations");
     si.get_config("dup_data_alerts",&plugin::dup_data_alerts,"Notify when duplicate data is not processed");
     si.get_config("write_feature_files",&opt_write_feature_files,"Write features to flat files");
     si.get_config("write_feature_sqlite3",&opt_write_sqlite3,"Write feature files to report.sqlite3");
     si.get_config("report_read_errors",&cfg.opt_report_read_errors,"Report read errors");
-
-    /* Make sure that the user selected a valid hash */
-    {
-        uint8_t buf[1];
-        be_hash_func(buf,0);
-    }
 
     /* Load all the scanners and enable the ones we care about */
 

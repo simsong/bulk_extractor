@@ -1,11 +1,12 @@
 #ifndef PHASE1_H
 #define PHASE1_H
 
-#include "be13_api/utils.h"             // split()
-#include "be13_api/aftimer.h"
+#include "bulk_extractor_i.h"
+//#include "be13_api/aftimer.h"
+//#include "image_process.h"
+//#include "dfxml/src/dfxml_writer.h"
+//#include "dfxml/src/hash_t.h"
 #include "image_process.h"
-#include "dfxml/src/dfxml_writer.h"
-#include "dfxml/src/hash_t.h"
 #include "threadpool.hpp"               // new threadpool!
 
 /**

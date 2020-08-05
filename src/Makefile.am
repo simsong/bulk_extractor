@@ -4,32 +4,25 @@ CLEANFILES     = scan_accts.cpp scan_email.cpp scan_gps.cpp scan_base16.cpp *.d
 
 AM_CPPFLAGS = -I${top_srcdir}/src/be13_api
 
-# http://stackoverflow.com/questions/11438613/conditional-subdir-objects
 AUTOMAKE_OPTIONS = subdir-objects
 
 # bring in defs from two included projects
+# note: don't be clever and use the $variable on the Include line. it doesn't work
 DFXML_SRC_DIR = be13_api/dfxml/src/
-include $(DFXML_SRC_DIR)Makefile.defs
+include be13_api/dfxml/src/Makefile.defs
 
 BE13_API_DIR= be13_api/
-include $(BE13_API_DIR)Makefile.defs
-
+include be13_api/Makefile.defs
 include rar/Makefile.defs
 
-#TESTS = $(check_PROGRAMS)
-TESTS = test_bulkextractor
-check_PROGRAMS = test_bulkextractor
-
-#check_PROGRAMS = test_bulkextractor jpegdump
+TESTS = be_tests
+check_PROGRAMS = be_tests
 
 # Slowly add modules as tests are written for them.
-test_bulkextractor_SOURCES = be13api/tests/catch2.h\
+be_tests_SOURCES = be13api/tests/catch2.h \
+	$(BE13_API_SRC) $(DFXML_WRITER) \
 	base64_forensic.h base64_forensic.cpp \
-	test_bulkextractor.cpp \
-	threadpool.hpp
-
-# This was for building a test program
-#jpegdump_SOURCES = scan_exif.cpp be13_api/sbuf.cpp be13_api/sbuf.h be13_api/unicode_escape.cpp be13_api/unicode_escape.h
+	be_tests.cpp threadpool.hpp
 
 # These scanners are based on GNUflex
 flex_scanners = \
@@ -38,7 +31,6 @@ flex_scanners = \
 	scan_base16.flex \
 	scan_email.flex \
 	scan_gps.flex
-
 
 # These scanners are based on Lightbox Technology's lightgrep
 lightgrep_scanners = \
@@ -113,7 +105,7 @@ bulk_extractor_nomain = \
 	threadpool.hpp \
 	$(BE13_API) $(DFXML_WRITER)
 
-bulk_extractor_SOURCES =    $(bulk_extractor_nomain) $(scanners_builtin) bulk_extractor_scanners.cpp main.cpp
+bulk_extractor_SOURCES = $(bulk_extractor_nomain) $(scanners_builtin) bulk_extractor_scanners.cpp main.cpp
 
 bulk_extractorlib_SOURCES = $(bulk_extractor_nomain) $(scanners_builtin) bulk_extractor_scanners.cpp
 
@@ -126,7 +118,6 @@ lib: libbulkextractor.so
 libbulkextractor.so: $(bulk_extractorlib_OBJECTS)
 	$(CXX) -shared -fPIC -o $@ $(LDFLAGS) $(bulk_extractorlib_OBJECTS) $(LIBS)
 
-
 beapi_demo_SOURCES = beapi_demo.cpp
 beapi_demo$(EXEEXT): libbulkextractor.so		# needs an up-to-date .so
 
@@ -138,8 +129,8 @@ rd: beapi_demo libbulkextractor.so
 digtest$(EXEEXT): dig.cpp
 	$(CXX) -DSTANDALONE -o digtest$(EXEEXT) -g dig.cpp $(CPPFLAGS) $(CXXFLAGS) -I..
 
-unitest$(EXEEXT): unicode_escape.cpp
-	$(CXX) -DSTANDALONE -o unitest$(EXEEXT) -g unicode_escape.cpp  $(CPPFLAGS) $(CXXFLAGS) -I..
+#unitest$(EXEEXT): unicode_escape.cpp
+#	$(CXX) -DSTANDALONE -o unitest$(EXEEXT) -g unicode_escape.cpp  $(CPPFLAGS) $(CXXFLAGS) -I..
 
 #
 # Rule to compile .flex into a .o
