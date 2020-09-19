@@ -142,7 +142,7 @@ int64_t check_evtxrecord_signature(size_t offset, const sbuf_t &sbuf) {
 
 extern "C"
 
-void scan_evtx(const class scanner_params &sp,const recursion_control_block &rcb)
+void scan_evtx(const scanner_params &sp,const recursion_control_block &rcb)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP){

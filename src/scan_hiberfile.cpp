@@ -30,7 +30,7 @@ static const uint32_t min_uncompr_size = 4096; // allow at least this much when 
  */
 
 extern "C"
-void scan_hiberfile(const class scanner_params &sp,const recursion_control_block &rcb)
+void scan_hiberfile(const scanner_params &sp,const recursion_control_block &rcb)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP){

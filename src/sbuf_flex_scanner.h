@@ -27,10 +27,13 @@
 class sbuf_scanner {
 public:
     class sbuf_scanner_exception: public std::exception {
+    private:
+        std::string m_error;
     public:
-        const char *msg;
-        sbuf_scanner_exception(const char *m):msg(m){}
-        virtual const char *what() const throw() { return msg; }
+        sbuf_scanner_exception(std::string error):m_error(error){}
+        const char* what() const noexcept {
+            return m_error.c_str();
+        }
     };
     explicit sbuf_scanner(const sbuf_t *sbuf_): sbuf(sbuf_){}
     virtual ~sbuf_scanner(){}

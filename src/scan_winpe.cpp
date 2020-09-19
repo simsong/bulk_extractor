@@ -1017,8 +1017,7 @@ static size_t get_carve_size (const sbuf_t& sbuf)
 }
 
 extern "C"
-void scan_winpe (const class scanner_params &sp,
-		 const recursion_control_block &rcb)
+void scan_winpe (const scanner_params &sp, const recursion_control_block &rcb)
 {
     sp.check_version();
     std::string xml;

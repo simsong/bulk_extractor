@@ -473,7 +473,7 @@ void scan_ntfsdirs(const sbuf_t &sbuf,feature_recorder *wrecorder)
 #endif
 
 extern "C"
-void scan_windirs(const class scanner_params &sp,const recursion_control_block &rcb)
+void scan_windirs(const scanner_params &sp,const recursion_control_block &rcb)
 {
 #if 0
     std::string myString;

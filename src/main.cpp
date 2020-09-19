@@ -59,7 +59,7 @@ int _CRT_fmode = _O_BINARY;
 
 
 /* Bring in the definitions for the  */
-#define SCANNER(scanner) extern "C" scanner_t scan_ ## scanner;
+#define SCANNER(scanner) extern "C" scanner_set::scanner_t scan_ ## scanner;
 #include "bulk_extractor_scanners.h"
 #undef SCANNER
 

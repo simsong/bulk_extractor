@@ -136,6 +136,6 @@
 # define ATTR_FORMAT(spec) /* empty */
 #endif
 
-extern scanner_t *scanners_builtin[];
+extern scanner_set::scanner_t *scanners_builtin[];
 
 #endif

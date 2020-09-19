@@ -89,7 +89,7 @@ inline bool sbuf_line_is_base64(const sbuf_t &sbuf,const size_t &start,const siz
 }
 
 /* Found the end of the base64 string; process. */
-inline void process(const class scanner_params &sp,const recursion_control_block &rcb,size_t start,size_t len)
+inline void process(const scanner_params &sp,const recursion_control_block &rcb,size_t start,size_t len)
 {
     //fprintf(stderr,"process start=%zd  len=%zd\n",start,len);
     //fprintf(stderr,"To convert:\n");
@@ -115,7 +115,7 @@ inline void process(const class scanner_params &sp,const recursion_control_block
 
 
 extern "C"
-void scan_base64(const class scanner_params &sp,const recursion_control_block &rcb)
+void scan_base64(const scanner_params &sp,const recursion_control_block &rcb)
 {
     const int debug=0;
 

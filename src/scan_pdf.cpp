@@ -107,7 +107,7 @@ static void pdf_extract_text(std::string &tbuf,const unsigned char *buf,size_t b
     }
 }
 
-inline int analyze_stream(const class scanner_params &sp,const recursion_control_block &rcb,
+inline int analyze_stream(const scanner_params &sp,const recursion_control_block &rcb,
                           size_t stream_tag,size_t stream_start,size_t endstream)
 {
     const sbuf_t &sbuf = sp.sbuf;
@@ -156,7 +156,7 @@ inline int analyze_stream(const class scanner_params &sp,const recursion_control
 
 
 extern "C"
-void scan_pdf(const class scanner_params &sp,const recursion_control_block &rcb)
+void scan_pdf(const scanner_params &sp,const recursion_control_block &rcb)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP){

@@ -431,7 +431,7 @@ static bool is_json_second_char[256];		// shared between all threads
 
 static const char *json_second_chars = "0123456789.-{[ \t\n\r\"";
 extern "C"
-void scan_json(const class scanner_params &sp,const recursion_control_block &rcb)
+void scan_json(const scanner_params &sp,const recursion_control_block &rcb)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP){

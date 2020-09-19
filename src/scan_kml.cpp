@@ -22,7 +22,7 @@
 #include "utf8.h"
 
 extern "C"
-void scan_kml(const class scanner_params &sp,const recursion_control_block &rcb)
+void scan_kml(const scanner_params &sp,const recursion_control_block &rcb)
 {
     std::string myString;
     sp.check_version();

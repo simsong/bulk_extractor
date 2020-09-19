@@ -53,7 +53,7 @@ bool has_control_characters(const std::string &name)
  * given a location in an sbuf, determine if it contains a zip component.
  * If it does and if it passes validity tests, unzip and recurse.
  */
-inline void scan_zip_component(const class scanner_params &sp,const recursion_control_block &rcb,
+inline void scan_zip_component(const scanner_params &sp,const recursion_control_block &rcb,
                                feature_recorder *zip_recorder,feature_recorder *unzip_recorder,size_t pos)
 {
     const sbuf_t &sbuf = sp.sbuf;
@@ -186,7 +186,7 @@ inline void scan_zip_component(const class scanner_params &sp,const recursion_co
 }
 
 extern "C"
-void scan_zip(const class scanner_params &sp,const recursion_control_block &rcb)
+void scan_zip(const scanner_params &sp,const recursion_control_block &rcb)
 {
     sp.check_version();
 

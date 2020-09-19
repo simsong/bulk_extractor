@@ -242,7 +242,7 @@ std::string prefetch_record_t::to_xml()
  * Method dfxml_writer::xml_escape() is used to help format XML output.
  */
 extern "C"
-void scan_winprefetch(const class scanner_params &sp,const recursion_control_block &rcb)
+void scan_winprefetch(const scanner_params &sp,const recursion_control_block &rcb)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP){

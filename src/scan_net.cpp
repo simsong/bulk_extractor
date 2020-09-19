@@ -612,7 +612,7 @@ public:
     feature_recorder *tcp_recorder;
     feature_recorder *ether_recorder;
 
-    packet_carver(const class scanner_params &sp):
+    packet_carver(const scanner_params &sp):
 	fs(sp.fs),/*ps(),*/ip_recorder(0),tcp_recorder(0),ether_recorder(0){
 	ip_recorder = fs.get_name("ip");
 	ether_recorder = fs.get_name("ether");
@@ -1021,7 +1021,7 @@ std::string packet_carver::chksum_ok("cksum-ok");
 std::string packet_carver::chksum_bad("cksum-bad");
 
 extern "C"
-void scan_net(const class scanner_params &sp,const recursion_control_block &rcb)
+void scan_net(const scanner_params &sp,const recursion_control_block &rcb)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP){

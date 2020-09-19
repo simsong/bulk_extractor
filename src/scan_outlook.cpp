@@ -53,7 +53,7 @@ static uint8_t libpff_encryption_compressible[] = {
 
 
 extern "C"
-void scan_outlook(const class scanner_params &sp,const recursion_control_block &rcb)
+void scan_outlook(const scanner_params &sp,const recursion_control_block &rcb)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP) {

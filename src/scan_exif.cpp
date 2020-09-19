@@ -544,7 +544,7 @@ static void clear_entries(entry_list_t &entries) {
 class exif_scanner {
 private:
 public:
-    exif_scanner(const class scanner_params &sp):
+    exif_scanner(const scanner_params &sp):
         entries(),
         exif_recorder(*sp.fs.get_name("exif")),
         gps_recorder(*sp.fs.get_name("gps")),
@@ -723,7 +723,7 @@ public:
 };
 
 extern "C"
-void scan_exif(const class scanner_params &sp,const recursion_control_block &rcb)
+void scan_exif(const scanner_params &sp,const recursion_control_block &rcb)
 {
     if(exif_debug) std::cerr << "scan_exif start phase " << (uint32_t)sp.phase << "\n";
     sp.check_version();

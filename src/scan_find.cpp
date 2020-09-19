@@ -40,7 +40,7 @@ namespace { // anonymous namespace hides symbols from other cpp files (like "sta
 }
 
 extern "C"
-void scan_find(const class scanner_params &sp,const recursion_control_block &rcb)
+void scan_find(const scanner_params &sp,const recursion_control_block &rcb)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP) {

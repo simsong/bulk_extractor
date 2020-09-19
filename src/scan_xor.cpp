@@ -9,7 +9,7 @@
 
 static uint8_t xor_mask = 255;
 extern "C"
-void scan_xor(const class scanner_params &sp,const recursion_control_block &rcb)
+void scan_xor(const scanner_params &sp,const recursion_control_block &rcb)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP) {

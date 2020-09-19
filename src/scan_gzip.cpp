@@ -24,7 +24,7 @@
 uint32_t   gzip_max_uncompr_size = 256*1024*1024; // don't decompress objects larger than this
 
 extern "C"
-void scan_gzip(const class scanner_params &sp,const recursion_control_block &rcb)
+void scan_gzip(const scanner_params &sp,const recursion_control_block &rcb)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP){
