@@ -65,7 +65,7 @@ int _CRT_fmode = _O_BINARY;
 
 /* Create an array of the built-in scanners */
 #define SCANNER(scanner) scan_ ## scanner ,
-scanner_t *scanners_builtin[] = {
+scanner_set::scanner_t *scanners_builtin[] = {
 #include "bulk_extractor_scanners.h"
     0};
 #undef SCANNER
@@ -126,7 +126,7 @@ static void usage(const char *progname)
     std::cout << "   -G NN        - specify the page size (default " << cfg.opt_pagesize << ")\n";
     std::cout << "   -g NN        - specify margin (default " <<cfg.opt_marginsize << ")\n";
     std::cout << "   -j NN        - Number of analysis threads to run (default " << std::thread::hardware_concurrency() << ")\n";
-    std::cout << "   -M nn        - sets max recursion depth (default " << scanner_def::max_depth << ")\n";
+    std::cout << "   -M nn        - sets max recursion depth (default " << scanner_set::scanner_def::max_depth << ")\n";
     std::cout << "   -m <max>     - maximum number of minutes to wait after all data read\n";
     std::cout << "                  default is " << cfg.max_bad_alloc_errors << "\n";
     std::cout << "\nPath Processing Mode:\n";
@@ -340,19 +340,18 @@ void process_path_printer(const scanner_params &sp)
 	uint64_t print_len = 4096;
 
 	/* Check for options */
-	scanner_params::PrintOptions::iterator it;
+	scanner_params::PrintOptions::iterator it = sp.print_options.find(CONTENT_LENGTH);
 
-	it = sp.print_options.find(CONTENT_LENGTH);
 	if(it!=sp.print_options.end()){
 	    print_len = stoi64(it->second);
 	}
 
-	it = sp.print_options.find("Range");
-	if(it!=sp.print_options.end()){
-	    if(it->second[5]=='='){
-		size_t dash = it->second.find('-');
-                std::string v1 = it->second.substr(6,dash-6);
-                std::string v2 = it->second.substr(dash+1);
+        scanner_params::PrintOptions::iterator it2 = sp.print_options.find("Range");
+	if(it2!=sp.print_options.end()){
+	    if(it2->second[5]=='='){
+		size_t dash = it2->second.find('-');
+                std::string v1 = it2->second.substr(6,dash-6);
+                std::string v2 = it2->second.substr(dash+1);
 		print_start = stoi64(v1);
 		print_len = stoi64(v2)-print_start+1;
 	    }
@@ -402,7 +401,7 @@ void process_path_printer(const scanner_params &sp)
 	return;
     }
     /* Find the scanner and use it */
-    scanner_t *s = plugin::find_scanner(lowerstr(prefix));
+    scanner_set::scanner_t *s = plugin::find_scanner(lowerstr(prefix));
     if(s){
         (*s)(scanner_params(scanner_params::PHASE_SCAN,
                             sbuf_t(new_path,sp.sbuf),

@@ -17,7 +17,6 @@
 static uint32_t  zip_max_uncompr_size = 256*1024*1024; // don't decompress objects larger than this
 static uint32_t  zip_min_uncompr_size = 6;	// don't bother with objects smaller than this
 static uint32_t  zip_name_len_max = 1024;
-const uint32_t   MIN_ZIP_SIZE = 38;     // minimum size of a zip header and file name
 
 // these are tunable
 static uint32_t unzip_carve_mode = feature_recorder::CARVE_ENCODED;
@@ -49,6 +48,8 @@ bool has_control_characters(const std::string &name)
 
 #include "tsk3_fatdirs.h"
 
+#if 0
+const uint32_t   MIN_ZIP_SIZE = 38;     // minimum size of a zip header and file name
 /**
  * given a location in an sbuf, determine if it contains a zip component.
  * If it does and if it passes validity tests, unzip and recurse.
@@ -56,6 +57,7 @@ bool has_control_characters(const std::string &name)
 inline void scan_zip_component(const scanner_params &sp,const recursion_control_block &rcb,
                                feature_recorder *zip_recorder,feature_recorder *unzip_recorder,size_t pos)
 {
+
     const sbuf_t &sbuf = sp.sbuf;
     const pos0_t &pos0 = sp.sbuf.pos0;
 
@@ -101,8 +103,10 @@ inline void scan_zip_component(const scanner_params &sp,const recursion_control_
     std::stringstream xmlstream;
     xmlstream << b2;
 
-    const unsigned char *data_buf = sbuf.buf+pos+30+name_len+extra_field_len; // where the data starts
-    if(data_buf > sbuf.buf+sbuf.bufsize){ // past the end of buffer?
+    //const unsigned char *data_buf = sbuf.buf+pos+30+name_len+extra_field_len; // where the data starts
+    const sbuf_t data_sbuf(sbuf,pos+30+name_len+extra_field_len); // where the data starts
+    //if(data_buf > sbuf.buf+sbuf.bufsize){ // past the end of buffer?
+    if (data_sbuf.pagesize==0){
         xmlstream << "<disposition>end-of-buffer</disposition></zipinfo>";
         zip_recorder->write(pos0+pos,name,xmlstream.str());
         return;
@@ -129,7 +133,7 @@ inline void scan_zip_component(const scanner_params &sp,const recursion_control_
 
         /* If depth is more than 0, don't decompress if we have seen this component before */
         if(sp.depth>0){
-            if(sp.fs.check_previously_processed(data_buf,compr_size)){
+            if(sp.fs.check_previously_processed(data_buf)){
                 xmlstream << "<disposition>previously-processed</disposition></zipinfo>";
                 zip_recorder->write(pos0+pos,name,xmlstream.str());
                 return;
@@ -184,6 +188,7 @@ inline void scan_zip_component(const scanner_params &sp,const recursion_control_
         }
     }
 }
+#endif
 
 extern "C"
 void scan_zip(const scanner_params &sp,const recursion_control_block &rcb)
@@ -203,6 +208,10 @@ void scan_zip(const scanner_params &sp,const recursion_control_block &rcb)
         }
 	return;
     }
+
+    throw std::runtime_error("scan_zip_component not reimplemented yet");
+#if 0
+
     feature_recorder *zip_recorder = sp.fs.get_name(ZIP_RECORDER_NAME);
     feature_recorder *unzip_recorder = unzip_carve_mode ? sp.fs.get_name(UNZIP_RECORDER_NAME) : 0;
     if(sp.phase==scanner_params::PHASE_INIT && unzip_carve_mode!=feature_recorder::CARVE_NONE){
@@ -222,4 +231,5 @@ void scan_zip(const scanner_params &sp,const recursion_control_block &rcb)
 	    }
 	}
     }
+#endif
 }

@@ -3,6 +3,8 @@
  * Implements an API for incorporating bulk_extractor in other programs.
  *
  */
+#if 0
+
 
 #include "config.h"
 #include "bulk_extractor.h"
@@ -44,6 +46,9 @@ class callback_feature_recorder_set;
  * It creates multiple named callback_feature_recorders, but they all callback through the same
  * callback function using the same set of locks
  */
+
+#if 0
+TK: plugin:: had been moved from a global to a scanner_set class, so these need to be changed to create an instance of the class, rather than using a statiatlcaly allocated global.
 
 class callback_feature_recorder_set: public feature_recorder_set {
     callback_feature_recorder_set(const callback_feature_recorder_set &cfs)=delete;
@@ -103,7 +108,11 @@ public:
                           count,name.c_str(),"",str.c_str(),str.size(),"",0);
     }
 };
+#endif
 
+
+#if 0
+I'm not sure what this is for?
 
 class callback_feature_recorder: public feature_recorder {
     // neither copying nor assignment are implemented
@@ -142,12 +151,16 @@ feature_recorder *callback_feature_recorder_set::create_name_factory(const std::
     return new callback_feature_recorder(cb,*this,name_);
 }
 
+
+
+
 struct BEFILE_t {
     BEFILE_t(void *user,be_callback_t cb):fd(),cfs(user,cb,"md5"),cfg(){};
     int                            fd;
     callback_feature_recorder_set  cfs;
     BulkExtractor_Phase1::Config   cfg;
 };
+#endif
 
 typedef struct BEFILE_t BEFILE;
 extern "C"
@@ -292,3 +305,4 @@ int bulk_extractor_close(BEFILE *bef)
     delete bef;
     return 0;
 }
+#endif
