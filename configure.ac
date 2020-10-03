@@ -45,7 +45,6 @@ AC_PROG_LEX
 # LT_INIT([disable-shared])
 
 # Must use C++14 mode. (mandatory)
-
 AC_LANG_PUSH(C++)
 AX_CXX_COMPILE_STDCXX([14], [noext], [mandatory])
 AC_LANG_POP()
@@ -131,50 +130,6 @@ AC_ARG_ENABLE([address-sanitizer], AS_HELP_STRING([--enable-address-sanitizer], 
               ])
 
 
-################################################################
-# PTHREAD support
-# With special nods to compiling under mingw
-
-case $host in
- *mingw*)
-  AC_MSG_NOTICE([mingw pthreads support])
-  CFLAGS="$CFLAGS -mthreads -pthread "
-  CPPFLAGS="-DPTW32_STATIC_LIB $CPPFLAGS"
-  CXXFLAGS="$CXXFLAGS -mthreads -pthread "
-  LDFLAGS="$LDFLAGS -mthreads -pthread "
-  AC_DEFINE(HAVE_PTHREAD,1,[Defined to POSIX threads for mingw])
- ;;
- *)
-  AC_MSG_NOTICE([normal pthreads support])
-  m4_include([m4/ax_pthread.m4])
-  AC_MSG_CHECKING([Running pthread test from http://www.gnu.org/software/autoconf-archive/ax_pthread.html..])
-  AX_PTHREAD([
-              echo Using settings from AX_PTHREAD
-              LIBS="$PTHREAD_LIBS $LIBS"
-              CFLAGS="  $PTHREAD_CFLAGS $CFLAGS"
-              CXXFLAGS="$PTHREAD_CFLAGS $CXXFLAGS "
-              CC="$PTHREAD_CC"],
-            [AC_MSG_ERROR(bulk_extractor requires pthreads)])
-esac
-
-AC_MSG_NOTICE([After pthread test, CFLAGS: $CFLAGS])
-AC_MSG_NOTICE([After pthread test, CXXFLAGS: $CXXFLAGS])
-AC_MSG_NOTICE([After pthread test, LDFLAGS: $LDFLAGS])
-
-AC_CHECK_HEADERS([pthread.h])
-AC_CHECK_LIB([pthreadGC2],[pthread_create])
-
-################################################################
-##
-## Multithreading stuff
-
-# On mingw, be sure to use the static version and be sure we are using mthread option
-# (which should be a no-op on later version of G++ anyway)
-
-AC_CHECK_FUNCS([pthread_win32_process_attach_np pthread_win32_process_detach_np pthread_win32_thread_attach_np pthread_win32_thread_detach_np ])
-
-# end PTHREAD SUPPORT
-################################################################
 
 # Specific include files and functions for bulk-extractor
 AC_HEADER_STDC
@@ -183,7 +138,6 @@ AC_SYS_LARGEFILE
 AC_SYS_POSIX_TERMIOS
 
 ## Check for headers used by bulk Extractor
-## do not put pthread here
 AC_CHECK_HEADERS([alloca.h dirent.h dlfcn.h err.h errno.h fcntl.h inttypes.h libgen.h limits.h malloc.h mmap.h pwd.h signal.h stdarg.h stdint.h stdio.h strings.h string.h stdlib.h sys/cdefs.h sys/disk.h sys/fcntl.h sys/ioctl.h sys/mman.h sys/mmap.h sys/mount.h sys/param.h sys/socket.h sys/stat.h sys/types.h sys/time.h sys/resource.h time.h unistd.h windows.h CoreServices/CoreServices.h])
 AC_CHECK_FUNCS([getuid getpwuid gethostname getrusage gmtime_r isxdigit ishexnumber le64toh localtime_r _lseeki64 inet_ntop pread64 pread printf mmap munmap MD5 mkstemp mktemp sleep SleepEx strptime usleep vasprintf])
 AC_CHECK_FUNCS([CreateProcess LoadLibrary IncrementAtomic InterlockedIncrement])

@@ -2,10 +2,10 @@
 # Make sure it was checked out with git clone --recursive ...
 # If not, update the submodules
 
-for sub in be13_api be13_api/dfxml 
+for sub in be13_api be13_api/dfxml
 do
   if [ ! -r src/$sub/.git ] ;  then
-    echo submodule $sub is not present. 
+    echo submodule $sub is not present.
     exit 1
   fi
 done
@@ -17,7 +17,6 @@ if [ ! -e config.guess -o ! -e config.sub -o ! -e install-sh -o ! -e missing -o 
     touch stamp-h
     aclocal -I m4
     autoconf -f
-    #libtoolize || glibtoolize
     automake --add-missing --copy
 else
     autoreconf -f

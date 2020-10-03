@@ -1,20 +1,12 @@
 /**
  *
  * ABOUT:
- *	A standalone program debug scanner. Compile in the scanner you want.
+ *	A standalone program debug scanner.
+ *      Solely for testing.
+ *      Compile in the scanner you want.
  *
  *
  */
-
-#include "bulk_extractor.h"
-#include "findopts.h"
-#include "image_process.h"
-#include "threadpool.h"
-#include "be13_api/aftimer.h"
-#include "be13_api/histogram.h"
-#include "dfxml/src/dfxml_writer.h"
-#include "dfxml/src/hash_t.h"
-#include "be13_api/unicode_escape.h"
 
 #include <iostream>
 #include <fstream>
@@ -27,6 +19,17 @@
 #include <sstream>
 #include <vector>
 
+#include "config.h"
+#include "bulk_extractor.h"
+//#include "findopts.h"
+//#include "image_process.h"
+//#include "threadpool.h"
+//#include "be13_api/aftimer.h"
+//#include "be13_api/histogram.h"
+//#include "dfxml/src/dfxml_writer.h"
+//#include "dfxml/src/hash_t.h"
+//#include "be13_api/unicode_escape.h"
+
 /**
  * Stand alone tester.
  * 1. allocate an sbuf for the file.
@@ -38,7 +41,12 @@ int debug=0;
 const char *image_fname = 0;
 //be_config_t be_config; // system configuration
 
-scanner_t *scanners_builtin[] = {
+/* Bring in the definitions for the  */
+#define SCANNER(scanner) extern "C" scanner_set::scanner_t scan_ ## scanner;
+#include "bulk_extractor_scanners.h"
+#undef SCANNER
+
+scanner_set::scanner_t *scanners_builtin[] = {
     scan_json,
     0
 };
@@ -56,15 +64,18 @@ void usage()
 int main(int argc,char **argv)
 {
 
-    scanner_info::scanner_config   s_config; 
-    plugin::load_scanners(scanners_builtin,s_config); 
+    TODO - create a scanner set, which includes a feature_recorder_set
+
+
+    scanner_info::scanner_config   s_config;
+    plugin::load_scanners(scanners_builtin,s_config);
 
     /* look for usage first */
     if(argc==1 || (strcmp(argv[1],"-h")==0)){
 	usage();
 	return(1);
     }
-    
+
     int ch;
     std::string opt_outdir;
     while ((ch = getopt(argc, argv, "e:o:s:x:h?")) != -1) {
@@ -113,4 +124,3 @@ int main(int argc,char **argv)
     fs.process_histograms(0);
     return(0);
 }
-
