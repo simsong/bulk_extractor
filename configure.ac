@@ -6,10 +6,10 @@
 # See http://autotoolset.sourceforge.net/tutorial.html
 # and http://www.openismus.com/documents/linux/automake/automake.shtml
 
-AC_PREREQ(2.57)
-AC_INIT(BULK_EXTRACTOR, 2.0.0-dev, bugs@digitalcorpora.org)
-
+AC_PREREQ([2.71])
+AC_INIT([BULK_EXTRACTOR],[2.0.0-dev],[bugs@digitalcorpora.org])
 AC_CONFIG_MACRO_DIR(m4)
+AC_CONFIG_AUX_DIR([build-aux])
 ################################################################
 ## Includes
 
@@ -31,7 +31,7 @@ AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile doc/latex_manuals/Makefile \
 			  man/Makefile python/Makefile \
                           plugins/Makefile \
 			  specfiles/Makefile specfiles/bulk_extractor.spec.m4 tests/Makefile ])
-AC_CONFIG_HEADER([src/config.h])
+AC_CONFIG_HEADERS([src/config.h])
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
 AC_PREFIX_PROGRAM(bulk_extractor) dnl build for same location
@@ -42,12 +42,15 @@ AC_PROG_CXX
 AM_PROG_CC_C_O                    dnl allow per-produce flags
 AC_PROG_INSTALL
 AC_PROG_LEX
-# LT_INIT([disable-shared])
 
-# Must use C++14 mode. (mandatory)
+
+# Must use C++17 mode. (mandatory)
 AC_LANG_PUSH(C++)
-AX_CXX_COMPILE_STDCXX([14], [noext], [mandatory])
+AX_CXX_COMPILE_STDCXX([17], [noext], [mandatory])
 AC_LANG_POP()
+
+# Turn on all warnings
+m4_include([src/be13_api/m4/slg_gcc_all_warnings.m4])
 
 # These are needed for bulk_extractor. They are not needed for tcpflow
 AC_DEFINE([BULK_EXTRACTOR],1,[We are compiling bulk_extractor])
@@ -68,11 +71,8 @@ else
   AC_MSG_ERROR([$LEX does not support -R.  Please get a modern version of gnu flex])
 fi
 
-
-
 ################################################################
 ## rar support
-## Enabled for 1.4 release!
 AC_ARG_ENABLE([rar],
               AS_HELP_STRING([--disable-rar], [Disable RAR decompression]),
               [],
@@ -125,14 +125,17 @@ AC_ARG_ENABLE([address-sanitizer], AS_HELP_STRING([--enable-address-sanitizer], 
               [AC_DEFINE(HAVE_ADDRESS_SANITIZER, 1, [enable AddressSanitizer])
               CFLAGS="$CFLAGS -fsanitize=address"
               CXXFLAGS="$CXXFLAGS -fsanitize=address"
-              AC_TRY_COMPILE([],[const int i=0;],[AC_MSG_NOTICE([Address Sanitizer Enabled])],
-                                                 [AC_MSG_ERROR([Address Sanitizer not available])])
+              AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[const int i=0;]])],[AC_MSG_NOTICE([Address Sanitizer Enabled])],[AC_MSG_ERROR([Address Sanitizer not available])])
               ])
 
 
 
 # Specific include files and functions for bulk-extractor
-AC_HEADER_STDC
+# Autoupdate added the next two lines to ensure that your configure
+# script's behavior did not change.  They are probably safe to remove.
+AC_CHECK_INCLUDES_DEFAULT
+AC_PROG_EGREP
+
 AC_TYPE_INT64_T
 AC_SYS_LARGEFILE
 AC_SYS_POSIX_TERMIOS
@@ -170,9 +173,9 @@ AC_CHECK_MEMBER([struct sockaddr_in.sin_len],
 		])
 
 # Should we disable optimization?
-AC_ARG_WITH([opt], AC_HELP_STRING([--without-opt], [Drop all -O C flags]))
+AC_ARG_WITH([opt], AS_HELP_STRING([--without-opt],[Drop all -O C flags]))
 # Or maybe just tone it down a bit?
-AC_ARG_WITH([o3], AC_HELP_STRING([--without-o3], [Do not force O3 optimization; use default level]))
+AC_ARG_WITH([o3], AS_HELP_STRING([--without-o3],[Do not force O3 optimization; use default level]))
 
 #
 # ZLIB is required:
@@ -181,7 +184,7 @@ AC_ARG_WITH([o3], AC_HELP_STRING([--without-o3], [Do not force O3 optimization; 
 AC_CHECK_LIB([z],[uncompress],,
 	AC_MSG_ERROR([zlib libraries not installed; try installing zlib-devel zlib-dev zlib-devel zlib1g-dev or libz-dev]))
 
-## EXPAT is now a main line requirements for restarting
+## EXPAT is required for reading the dfxml file for restrarting.
 AC_CHECK_HEADERS([expat.h])
 AC_CHECK_LIB([expat],[XML_ParserCreate])
 
@@ -215,8 +218,6 @@ if test x"$lightgrep" == x"yes"; then
   LIBS="$LIBS `$PKG_CONFIG --libs-only-l lightgrep`"
   LDFLAGS="$LDFLAGS `$PKG_CONFIG --libs-only-L --libs-only-other lightgrep`"
 fi
-
-# We can also use C++11 regex, which we just assume we have, because it's the standard.
 
 ################################################################
 ## LIBEWF support
@@ -261,12 +262,9 @@ fi
 if test x"$exiv2" == x"yes" ; then
   AC_LANG_PUSH(C++)
   AC_CHECK_HEADERS([exiv2/image.hpp exiv2/exif.hpp exiv2/error.hpp])
-    AC_TRY_COMPILE([#include <exiv2/image.hpp>
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <exiv2/image.hpp>
     	    	    #include <exiv2/exif.hpp>
-                    #include <exiv2/error.hpp>],
-      		    [Exiv2::ImageFactory::open(0,0);],
-  	  	  exiv2=yes,
-  		  exiv2=no)
+                    #include <exiv2/error.hpp>]], [[Exiv2::ImageFactory::open(0,0);]])],[exiv2=yes],[exiv2=no])
     if test "${exiv2}" = yes; then
       AC_DEFINE(HAVE_EXIV2,1,[define 1 if EXIV2 exists and works])
       echo Using EXIV2
@@ -276,11 +274,9 @@ if test x"$exiv2" == x"yes" ; then
         LIBS="$LIBS -lexiv2.dll"	# static version does not work on mingw
       fi
       dnl see if we have the error feature
-      AC_TRY_COMPILE([#include <exiv2/image.hpp>
+      AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <exiv2/image.hpp>
     	              #include <exiv2/exif.hpp>
-                      #include <exiv2/error.hpp>],
-      		     [Exiv2::LogMsg::setLevel(Exiv2::LogMsg::mute);],
-  		   [AC_DEFINE(HAVE_EXIV2__LOGMSG__SETLEVEL,1,[define 1 if EXIV2 exists and works])])
+                      #include <exiv2/error.hpp>]], [[Exiv2::LogMsg::setLevel(Exiv2::LogMsg::mute);]])],[AC_DEFINE(HAVE_EXIV2__LOGMSG__SETLEVEL,1,[define 1 if EXIV2 exists and works])],[])
     fi
   AC_LANG_POP()
 fi

@@ -1,13 +1,11 @@
 # bulk_extractor Makefile.am
-# This file is compiled with automake to create Makefile.in. 
+# This file is compiled with automake to create Makefile.in.
 # Makefile.in is transformed by "configure" to create Makefile
 #
 # (C) 2020 Simson L. Garfinkel
 # https://www.gnu.org/licenses/lgpl-3.0.en.html
 
-
-
-SUBDIRS = doc doc/latex_manuals src man plugins python specfiles tests $(BE_VIEWER_DIR) 
+SUBDIRS = doc doc/latex_manuals src man plugins python specfiles tests $(BE_VIEWER_DIR)
 
 # don't include bootstrap. People run it, and they shoudln't
 # It's only for people who check out the git repo
@@ -76,13 +74,11 @@ winlibs:
 	if [ -r Makefile ]; then $(MAKE) distclean ; fi
 	if [ ! -d win32  ]; then mkdir win32 ; fi
 	if [ ! -r win32/Makefile ]; then (cd win32;mingw32-configure --disable-libewf --disable-afflib) ; fi
-	(cd win32/src;$(MAKE) lib;mv libbulkextractor.so ../../libbulkextractor32.DLL)	
+	(cd win32/src;$(MAKE) lib;mv libbulkextractor.so ../../libbulkextractor32.DLL)
 	if [ ! -d win64  ]; then mkdir win64 ; fi
 	if [ ! -r win64/Makefile ]; then (cd win64;mingw64-configure --disable-libewf --disable-afflib) ; fi
-	(cd win64/src;$(MAKE) lib;mv libbulkextractor.so ../../libbulkextractor64.DLL)	
+	(cd win64/src;$(MAKE) lib;mv libbulkextractor.so ../../libbulkextractor64.DLL)
 	ls -l libbulk*.DLL
-
-
 
 .PHONY: lib
 lib:
