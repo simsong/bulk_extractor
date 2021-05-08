@@ -6,12 +6,12 @@
 # See http://autotoolset.sourceforge.net/tutorial.html
 # and http://www.openismus.com/documents/linux/automake/automake.shtml
 
-AC_PREREQ(2.57)
-AC_INIT(BULK_EXTRACTOR, 2.0.0-dev, bugs@digitalcorpora.org)
+AC_PREREQ([2.71])
+AC_INIT([BULK_EXTRACTOR],[2.0.0-dev],[bugs@digitalcorpora.org])
 
 AC_CONFIG_MACRO_DIR(m4)
 
-# 
+#
 # NOTE 1 - plugins/Makefile is referenced so that the plugins Makefile is created.
 # However, plugins is not listed as a SUBDIR for Makefile.am in this directory.
 # That prevents the plugins from automatically being built each time.
@@ -22,7 +22,7 @@ AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile doc/latex_manuals/Makefile \
 			  man/Makefile python/Makefile \
                           plugins/Makefile \
 			  specfiles/Makefile specfiles/bulk_extractor.spec.m4 tests/Makefile ])
-AC_CONFIG_HEADER([config.h])
+AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
 AC_PREFIX_PROGRAM(bulk_extractor) dnl build for same location
@@ -32,14 +32,14 @@ AC_PROG_CC
 AC_PROG_CXX
 AM_PROG_CC_C_O                    dnl allow per-produce flags
 AC_PROG_INSTALL
-AC_PROG_LEX
+AC_PROG_LEX([noyywrap])
 # LT_INIT([disable-shared])
 
 # Must use C++14 mode. (mandatory)
 # Don't use the GNU C++14 extensions for portability (noext).
 
 AC_LANG_PUSH(C++)
-AX_CXX_COMPILE_STDCXX([14], [noext], [mandatory]) 
+AX_CXX_COMPILE_STDCXX([14], [noext], [mandatory])
 AC_LANG_POP()
 
 # These are needed for bulk_extractor. They are not needed for tcpflow
@@ -47,7 +47,7 @@ AC_DEFINE([BULK_EXTRACTOR],1,[We are compiling bulk_extractor])
 
 if test x"$LEX" == x ; then
   AC_MSG_ERROR([flex not required.])
-fi  
+fi
 
 if test `basename "$LEX"` != flex; then
   AC_MSG_ERROR([gnu flex is required.])
@@ -55,7 +55,7 @@ fi
 
 ## Determine if we can use flex -R
 if eval "echo %% | $LEX -R -t > /dev/null 2>&1"
-then 
+then
   AC_MSG_NOTICE([$LEX supports -R])
 else
   AC_MSG_ERROR([$LEX does not support -R.  Please get a modern version of gnu flex])
@@ -128,8 +128,9 @@ AC_ARG_ENABLE([address-sanitizer], AS_HELP_STRING([--enable-address-sanitizer], 
               [AC_DEFINE(HAVE_ADDRESS_SANITIZER, 1, [enable AddressSanitizer])
               CFLAGS="$CFLAGS -fsanitize=address"
               CXXFLAGS="$CXXFLAGS -fsanitize=address"
-              AC_TRY_COMPILE([],[const int i=0;],[AC_MSG_NOTICE([Address Sanitizer Enabled])],
-                                                 [AC_MSG_ERROR([Address Sanitizer not available])])
+              AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[const int i=0;]])],
+                 [AC_MSG_NOTICE([Address Sanitizer Enabled])],
+                 [AC_MSG_ERROR([Address Sanitizer not available])])
               ])
 
 
@@ -137,7 +138,7 @@ AC_ARG_ENABLE([address-sanitizer], AS_HELP_STRING([--enable-address-sanitizer], 
 # PTHREAD support
 # With special nods to compiling under mingw
 
-case $host in 
+case $host in
  *mingw*)
   AC_MSG_NOTICE([mingw pthreads support])
   CFLAGS="$CFLAGS -mthreads -pthread "
@@ -178,8 +179,11 @@ AC_CHECK_FUNCS([pthread_win32_process_attach_np pthread_win32_process_detach_np 
 # end PTHREAD SUPPORT
 ################################################################
 
-# Specific include files and functions for bulk-extractor
-AC_HEADER_STDC
+# Autoupdate added the next two lines to ensure that your configure
+# script's behavior did not change.  They are probably safe to remove.
+AC_CHECK_INCLUDES_DEFAULT
+AC_PROG_EGREP
+
 AC_TYPE_INT64_T
 AC_SYS_LARGEFILE
 AC_SYS_POSIX_TERMIOS
@@ -190,10 +194,10 @@ AC_CHECK_HEADERS([alloca.h dirent.h dlfcn.h err.h errno.h fcntl.h inttypes.h lib
 AC_CHECK_FUNCS([err errx getuid getpwuid gethostname getrusage gmtime_r isxdigit ishexnumber le64toh localtime_r _lseeki64 inet_ntop pread64 pread printf mmap munmap MD5 mkstemp mktemp random srandom srandomdev sleep SleepEx strptime usleep vasprintf warn warnx])
 AC_CHECK_FUNCS([CreateProcess LoadLibrary IncrementAtomic InterlockedIncrement])
 
-## dlopen is now itself in a different library 
+## dlopen is now itself in a different library
 ## Explicitly check for dlopen library before checking for dlopen
 ##       -ldl (see http://stackoverflow.com/questions/956640/linux-c-error-undefined-reference-to-dlopen)
-AC_CHECK_LIB([dl],[dlopen])		              
+AC_CHECK_LIB([dl],[dlopen])
 AC_CHECK_FUNCS([dlopen dlopen_preflight])
 
 # Test for sin_len
@@ -218,9 +222,9 @@ AC_CHECK_MEMBER([struct sockaddr_in.sin_len],
 		])
 
 # Should we disable optimization?
-AC_ARG_WITH([opt], AC_HELP_STRING([--without-opt], [Drop all -O C flags]))
+AC_ARG_WITH([opt], AS_HELP_STRING([--without-opt],[Drop all -O C flags]))
 # Or maybe just tone it down a bit?
-AC_ARG_WITH([o3], AC_HELP_STRING([--without-o3], [Do not force O3 optimization; use default level]))
+AC_ARG_WITH([o3], AS_HELP_STRING([--without-o3],[Do not force O3 optimization; use default level]))
 
 #
 # ZLIB is required:
@@ -235,7 +239,7 @@ AC_CHECK_LIB([expat],[XML_ParserCreate])
 
 ################################################################
 ## Lightgrep support
-## 
+##
 AC_CHECK_LIB([stdc++],[main])
 
 if test x"$lightgrep" == x"yes"; then
@@ -309,12 +313,14 @@ fi
 if test x"$exiv2" == x"yes" ; then
   AC_LANG_PUSH(C++)
   AC_CHECK_HEADERS([exiv2/image.hpp exiv2/exif.hpp exiv2/error.hpp])
-    AC_TRY_COMPILE([#include <exiv2/image.hpp>
-    	    	    #include <exiv2/exif.hpp>
-                    #include <exiv2/error.hpp>],
-      		    [Exiv2::ImageFactory::open(0,0);],
-  	  	  exiv2=yes,
-  		  exiv2=no)
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+         #include <exiv2/image.hpp>
+    	 #include <exiv2/exif.hpp>
+         #include <exiv2/error.hpp>
+         ]],
+         [[Exiv2::ImageFactory::open(0,0);]])],
+         [exiv2=yes],
+         [exiv2=no])
     if test "${exiv2}" = yes; then
       AC_DEFINE(HAVE_EXIV2,1,[define 1 if EXIV2 exists and works])
       echo Using EXIV2
@@ -324,17 +330,19 @@ if test x"$exiv2" == x"yes" ; then
         LIBS="$LIBS -lexiv2.dll"	# static version does not work on mingw
       fi
       dnl see if we have the error feature
-      AC_TRY_COMPILE([#include <exiv2/image.hpp>
-    	              #include <exiv2/exif.hpp>
-                      #include <exiv2/error.hpp>],
-      		     [Exiv2::LogMsg::setLevel(Exiv2::LogMsg::mute);],
-  		   [AC_DEFINE(HAVE_EXIV2__LOGMSG__SETLEVEL,1,[define 1 if EXIV2 exists and works])])
+      AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+            #include <exiv2/image.hpp>
+    	    #include <exiv2/exif.hpp>
+            #include <exiv2/error.hpp>
+            ]],
+            [[Exiv2::LogMsg::setLevel(Exiv2::LogMsg::mute);]],
+  	    [AC_DEFINE(HAVE_EXIV2__LOGMSG__SETLEVEL,1,[define 1 if EXIV2 exists and works])])])
     fi
-  AC_LANG_POP()    
+  AC_LANG_POP()
 fi
 
 m4_include([m4/slg_check_gcc_diagnostics.m4])
-  
+
 ## If compiling on mingw, add another -lgdi32 to be safe
 ## This is required becuase some libraries reference functions in gdi32 and, for whatever reason,
 ## the linker is not smart enough to re-check the library
@@ -353,7 +361,7 @@ if test x"${AFF_NOOPT}" != "x" ; then
 fi
 
 if test "${with_opt}" = "no" ; then
-  CFLAGS=`echo   -g "$CFLAGS"   | sed s/-O[[0-9]]//`             # note the double quoting! 
+  CFLAGS=`echo   -g "$CFLAGS"   | sed s/-O[[0-9]]//`             # note the double quoting!
   CXXFLAGS=`echo -g "$CXXFLAGS" | sed s/-O[[0-9]]//`
 else
   # If we are not stripping the optimizer, add fortify source
@@ -362,7 +370,7 @@ else
 
   # and increase optimizer from -O2 to -O3 if not explicitly forbidden
   if test "${with_o3}" != "no" ; then
-      CFLAGS=`echo   -g "$CFLAGS"   | sed s/-O2/-O3/`             # note the double quoting! 
+      CFLAGS=`echo   -g "$CFLAGS"   | sed s/-O2/-O3/`             # note the double quoting!
       CXXFLAGS=`echo -g "$CXXFLAGS" | sed s/-O2/-O3/`
   fi
 fi
@@ -385,7 +393,7 @@ AC_MSG_NOTICE([  LDFLAGS:          $LDFLAGS])
 
 if test x"${libewf}" != "xyes" ; then
   AC_MSG_WARN([libewf-devel must be installed for E01 support.])
-fi  
+fi
 
 AC_OUTPUT
 
@@ -398,4 +406,3 @@ echo "#define LDFLAGS  \"$LDFLAGS\""  >> config.h
 if test x"$GIT_COMMIT" != "x" ; then
   echo "#define GIT_COMMIT  \"$GIT_COMMIT\""  >> config.h
 fi
-
