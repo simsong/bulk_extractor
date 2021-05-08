@@ -12,9 +12,10 @@
 #ifndef EXIF_READER_H
 #define EXIF_READER_H
 
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
+#include <cstdlib>
+#include <cstring>
+#include <cstdio>
+
 #include <vector>
 #include <iostream>
 #include <iomanip>
@@ -34,15 +35,6 @@ struct tiff_handle_t {
                  :sbuf(sbuf_), byte_order(byte_order_), bytes_read(0) {
     }
 };
-
-//struct tiff_handle_t {
-//    const uint8_t *buf;
-//    const size_t bufsize;
-//    const bool intel_byte_order;
-//    tiff_handle_t(const uint8_t *buf_, size_t bufsize_, bool intel_byte_order_)
-//                :buf(buf_), bufsize(bufsize_), intel_byte_order(intel_byte_order_) {
-//    }
-//};
 
 /**
  * types of IFDs
@@ -66,9 +58,9 @@ typedef enum {
  */
 class exif_entry {
 public:
-    const uint16_t ifd_type;
-    const std::string name;
-    const std::string value;
+    const uint16_t ifd_type {};
+    const std::string name {};
+    const std::string value {};
     exif_entry(uint16_t ifd_type_, const std::string &name_, const std::string &value_);
 
     // copy
@@ -144,13 +136,13 @@ namespace tiff_ifd_reader {
  * entry reader
  */
 namespace entry_reader {
-    /** 
+    /**
      * parse_ifd_entries() extracts entries from an offset given its type
      */
     void parse_ifd_entries(ifd_type_t ifd_type, tiff_handle_t &tiff_handle,
                        size_t ifd_offset, entry_list_t &entries);
 
-    /** 
+    /**
      * parse_entry() extracts entry and if entry add entry else IFD so parse its entries
      */
     void parse_entry(ifd_type_t ifd_type, tiff_handle_t &tiff_handle,
@@ -162,16 +154,15 @@ namespace entry_reader {
  */
 namespace exif_reader {
 
-  /** 
+  /**
    * is_valid_exif() validates that sbuf is at valid exif structure
    */
   bool is_valid_exif(const sbuf_t &exif_sbuf);
 
-  /** 
+  /**
    * exif_reader() extracts specific hardcoded entry values, where present, into list.
    */
   void read_exif_data(const sbuf_t &exif_sbuf, entry_list_t &entries);
 }
 
 #endif
-

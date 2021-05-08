@@ -1,14 +1,16 @@
 /*
- * bulk_extractor.cpp:
- * Feature Extraction Framework...
+ * bulk_extractor_api.cpp:
+ * Implements an API for incorporating bulk_extractor in other programs.
  *
  */
+#if 0
+
 
 #include "config.h"
 #include "bulk_extractor.h"
 #include "bulk_extractor_api.h"
 #include "image_process.h"
-#include "threadpool.h"
+//#include "be_threadpool.h"
 #include "be13_api/aftimer.h"
 #include "histogram.h"
 #include "dfxml/src/dfxml_writer.h"
@@ -36,74 +38,56 @@
  * that writes to a callback function instead of a
  */
 
-class callback_feature_recorder;
 class callback_feature_recorder_set;
 
-/* a special feature_recorder_set that calls a callback rather than writing to a file.
+/* callback_feature_recorder_set is
+ * a special feature_recorder_set that calls a callback rather than writing to a file.
  * Typically we will instantiate a single object called the 'cfs' for each BEFILE.
  * It creates multiple named callback_feature_recorders, but they all callback through the same
  * callback function using the same set of locks
- */ 
+ */
 
-
-static std::string hash_name("md5");
-static std::string hash_func(const uint8_t *buf,size_t bufsize)
-{
-    if(hash_name=="md5" || hash_name=="MD5"){
-        return md5_generator::hash_buf(buf,bufsize).hexdigest();
-    }
-    if(hash_name=="sha1" || hash_name=="SHA1" || hash_name=="sha-1" || hash_name=="SHA-1"){
-        return sha1_generator::hash_buf(buf,bufsize).hexdigest();
-    }
-    if(hash_name=="sha256" || hash_name=="SHA256" || hash_name=="sha-256" || hash_name=="SHA-256"){
-        return sha256_generator::hash_buf(buf,bufsize).hexdigest();
-    }
-    std::cerr << "Invalid hash name: " << hash_name << "\n";
-    std::cerr << "This version of bulk_extractor only supports MD5, SHA1, and SHA256\n";
-    exit(1);
-}
-
-static feature_recorder_set::hash_def my_hasher(hash_name,hash_func);
+#if 0
+TK: plugin:: had been moved from a global to a scanner_set class, so these need to be changed to create an instance of the class, rather than using a statiatlcaly allocated global.
 
 class callback_feature_recorder_set: public feature_recorder_set {
-    // neither copying nor assignment are implemented
-    callback_feature_recorder_set(const callback_feature_recorder_set &cfs);
-    callback_feature_recorder_set &operator=(const callback_feature_recorder_set &cfs);
-    histogram_defs_t histogram_defs;        
+    callback_feature_recorder_set(const callback_feature_recorder_set &cfs)=delete;
+    callback_feature_recorder_set &operator=(const callback_feature_recorder_set &cfs)=delete;
+    histogram_defs_t histogram_defs;
 
 public:
     void            *user;
     be_callback_t   *cb;
-    mutable cppmutex Mcb;               // mutex for the callback
+    mutable std::mutex Mcb;               // mutex for the callback
 
     virtual void heartbeat() {
         (*cb)(user, BULK_EXTRACTOR_API_CODE_HEARTBEAT,0,0,0,0,0,0,0);
     }
 
     virtual feature_recorder *create_name_factory(const std::string &name_);
-    callback_feature_recorder_set(void *user_,be_callback_t *cb_):
-        feature_recorder_set(feature_recorder_set::DISABLE_FILE_RECORDERS,my_hasher,
+    callback_feature_recorder_set(void *user_, be_callback_t *cb_, const std::string &hash_alg):
+        feature_recorder_set(feature_recorder_set::DISABLE_FILE_RECORDERS, hash_alg,
                              feature_recorder_set::NO_INPUT,feature_recorder_set::NO_OUTDIR),
         histogram_defs(),user(user_),cb(cb_),Mcb(){
     }
 
     virtual void init_cfs(){
         feature_file_names_t feature_file_names;
-        be13::plugin::scanners_process_enable_disable_commands();
-        be13::plugin::get_scanner_feature_file_names(feature_file_names);
+        plugin::scanners_process_enable_disable_commands();
+        plugin::get_scanner_feature_file_names(feature_file_names);
         init(feature_file_names); // creates the feature recorders
-        be13::plugin::add_enabled_scanner_histograms_to_feature_recorder_set(*this);
-        be13::plugin::scanners_init(*this); // must be done after feature recorders are created
+        plugin::add_enabled_scanner_histograms_to_feature_recorder_set(*this);
+        plugin::scanners_init(*this); // must be done after feature recorders are created
     }
 
     virtual void write(const std::string &feature_recorder_name,const std::string &str){
-        cppmutex::lock lock(Mcb);
+        const std::lock_guard<std::mutex> lock(Mcb);
         (*cb)(user,BULK_EXTRACTOR_API_CODE_FEATURE,0,
               feature_recorder_name.c_str(),"",str.c_str(),str.size(),"",0);
     }
     virtual void write0(const std::string &feature_recorder_name,
                         const pos0_t &pos0,const std::string &feature,const std::string &context){
-        cppmutex::lock lock(Mcb);
+        const std::lock_guard<std::mutex> lock(Mcb);
         (*cb)(user,BULK_EXTRACTOR_API_CODE_FEATURE,0,
               feature_recorder_name.c_str(),pos0.str().c_str(),
               feature.c_str(),feature.size(),context.c_str(),context.size());
@@ -124,19 +108,23 @@ public:
                           count,name.c_str(),"",str.c_str(),str.size(),"",0);
     }
 };
+#endif
 
+
+#if 0
+I'm not sure what this is for?
 
 class callback_feature_recorder: public feature_recorder {
     // neither copying nor assignment are implemented
-    callback_feature_recorder(const callback_feature_recorder &cfr);
-    callback_feature_recorder &operator=(const callback_feature_recorder&cfr);
-    be_callback_t *cb;
+    callback_feature_recorder(const callback_feature_recorder &cfr)=delete;
+    callback_feature_recorder &operator=(const callback_feature_recorder&cfr)=delete;
 public:
+    be_callback_t *cb;                  // the callback function
     callback_feature_recorder(be_callback_t *cb_,
                               class feature_recorder_set &fs_,const std::string &name_):
         feature_recorder(fs_,name_),cb(cb_){
     }
-    virtual std::string carve(const sbuf_t &sbuf,size_t pos,size_t len, 
+    virtual std::string carve(const sbuf_t &sbuf,size_t pos,size_t len,
                               const std::string &ext){ // appended to forensic path
         return("");                      // no file created
     }
@@ -163,36 +151,32 @@ feature_recorder *callback_feature_recorder_set::create_name_factory(const std::
     return new callback_feature_recorder(cb,*this,name_);
 }
 
+
+
+
 struct BEFILE_t {
-    BEFILE_t(void *user,be_callback_t cb):fd(),cfs(user,cb),cfg(){};
+    BEFILE_t(void *user,be_callback_t cb):fd(),cfs(user,cb,"md5"),cfg(){};
     int                            fd;
     callback_feature_recorder_set  cfs;
     BulkExtractor_Phase1::Config   cfg;
 };
+#endif
 
 typedef struct BEFILE_t BEFILE;
-extern "C" 
+extern "C"
 BEFILE *bulk_extractor_open(void *user,be_callback_t cb)
 {
     histogram_defs_t histograms;
-    feature_recorder::set_main_threadid();
     scanner_info::scanner_config   s_config; // the bulk extractor config
-
-#if defined(HAVE_SRANDOM) && !defined(HAVE_SRANDOMDEV)
-    srandom(time(0));
-#endif
-#if defined(HAVE_SRANDOMDEV)
-    srandomdev();               // if we are sampling initialize
-#endif
 
     s_config.debug       = 0;           // default debug
 
-    be13::plugin::load_scanners(scanners_builtin,s_config);
+    plugin::load_scanners(scanners_builtin,s_config);
 
     BEFILE *bef = new BEFILE_t(user,cb);
     return bef;
 }
-    
+
 extern "C" void bulk_extractor_config(BEFILE *bef,uint32_t cmd,const char *name,int64_t arg)
 {
     switch(cmd){
@@ -201,11 +185,11 @@ extern "C" void bulk_extractor_config(BEFILE *bef,uint32_t cmd,const char *name,
         break;
 
     case BEAPI_SCANNER_DISABLE:
-        be13::plugin::scanners_disable(name);
+        plugin::scanners_disable(name);
         break;
 
     case BEAPI_SCANNER_ENABLE:
-        be13::plugin::scanners_enable(name);
+        plugin::scanners_enable(name);
         break;
 
     case BEAPI_FEATURE_DISABLE: {
@@ -225,7 +209,7 @@ extern "C" void bulk_extractor_config(BEFILE *bef,uint32_t cmd,const char *name,
         bef->cfs.set_flag(feature_recorder_set::MEM_HISTOGRAM);
         break;
 
-    case BEAPI_MEMHIST_LIMIT:{ 
+    case BEAPI_MEMHIST_LIMIT:{
         feature_recorder *fr = bef->cfs.get_name(name);
         assert(fr);
         fr->set_memhist_limit(arg);
@@ -233,7 +217,7 @@ extern "C" void bulk_extractor_config(BEFILE *bef,uint32_t cmd,const char *name,
     }
 
     case BEAPI_DISABLE_ALL:
-        be13::plugin::scanners_disable_all();
+        plugin::scanners_disable_all();
         break;
 
     case BEAPI_FEATURE_LIST: {
@@ -251,16 +235,16 @@ extern "C" void bulk_extractor_config(BEFILE *bef,uint32_t cmd,const char *name,
 }
 
 
-extern "C" 
+extern "C"
 int bulk_extractor_analyze_buf(BEFILE *bef,uint8_t *buf,size_t buflen)
 {
     pos0_t pos0("");
     const sbuf_t sbuf(pos0,buf,buflen,buflen,0,false);
-    be13::plugin::process_sbuf(scanner_params(scanner_params::PHASE_SCAN,sbuf,bef->cfs));
+    plugin::process_sbuf(scanner_params(scanner_params::PHASE_SCAN,sbuf,bef->cfs));
     return 0;
 }
 
-extern "C" 
+extern "C"
 int bulk_extractor_analyze_dev(BEFILE *bef,const char *fname,float frac,int pagesize)
 {
     bool sampling_mode = frac < 1.0; // are we in sampling mode or full-disk mode?
@@ -268,7 +252,7 @@ int bulk_extractor_analyze_dev(BEFILE *bef,const char *fname,float frac,int page
     /* A single-threaded sampling bulk_extractor.
      * It may be better to do this with two threads---one that does the reading (and seeking),
      * the other that doe the analysis.
-     * 
+     *
      * This looks like the code in phase1.cpp.
      */
     BulkExtractor_Phase1::blocklist_t blocks_to_sample;
@@ -297,7 +281,7 @@ int bulk_extractor_analyze_dev(BEFILE *bef,const char *fname,float frac,int page
         try {
             sbuf_t *sbuf = it.sbuf_alloc();
             if(sbuf==0) break;      // eof
-            be13::plugin::process_sbuf(scanner_params(scanner_params::PHASE_SCAN,*sbuf,bef->cfs));
+            plugin::process_sbuf(scanner_params(scanner_params::PHASE_SCAN,*sbuf,bef->cfs));
             delete sbuf;
         }
         catch (const std::exception &e) {
@@ -313,14 +297,12 @@ int bulk_extractor_analyze_dev(BEFILE *bef,const char *fname,float frac,int page
     return 0;
 }
 
-extern "C" 
+extern "C"
 int bulk_extractor_close(BEFILE *bef)
 {
     bef->cfs.dump_histograms((void *)&bef->cfs,
-                             callback_feature_recorder_set::histogram_dump_callback,0); 
+                             callback_feature_recorder_set::histogram_dump_callback,0);
     delete bef;
     return 0;
 }
-
-
-    
+#endif

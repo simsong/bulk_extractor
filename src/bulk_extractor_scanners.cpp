@@ -4,26 +4,22 @@
  *
  */
 
+#include <dirent.h>
+#include <fcntl.h>
+#include <setjmp.h>
+#include <unistd.h>
+
+#include "config.h"
+
+#include "bulk_extractor_i.h"
 #include "bulk_extractor.h"
 #include "image_process.h"
-#include "threadpool.h"
-#include "be13_api/aftimer.h"
 #include "histogram.h"
 #include "findopts.h"
 #include "dfxml/src/dfxml_writer.h"
 #include "dfxml/src/hash_t.h"
 
 #include "phase1.h"
-
-#include <dirent.h>
-#include <ctype.h>
-#include <fcntl.h>
-#include <set>
-#include <setjmp.h>
-#include <vector>
-#include <queue>
-#include <unistd.h>
-#include <ctype.h>
 
 /************************
  *** SCANNER PLUG-INS ***
@@ -36,67 +32,12 @@
  */
 
 /* An array of the built-in scanners */
-scanner_t *scanners_builtin[] = {
-    scan_base64,
-    scan_kml,
-    scan_httplogs,
-    scan_net,
-    scan_find,
-    scan_wordlist,
-    scan_aes,
-    scan_json,
-#if defined(USE_FLEXSCANNERS)
-    scan_accts,
-    scan_base16,
-    scan_email,
-    scan_gps,
-#endif
-#if defined(HAVE_LIBLIGHTGREP) && defined(USE_LIGHTGREP)
-    scan_accts_lg,
-    scan_base16_lg,
-    scan_email_lg,
-    scan_gps_lg,
-    scan_lightgrep,
-#endif
-#ifdef HAVE_EXIV2
-    scan_exiv2,
-#endif
-#ifdef HAVE_HASHDB
-    scan_hashdb,
-#endif
-    scan_elf,
-    scan_exif,
-    scan_zip,
-#ifdef USE_RAR
-    scan_rar,
-#endif
-    scan_gzip,
-    scan_evtx,
-    scan_ntfsindx,
-    scan_ntfslogfile,
-    scan_ntfsmft,
-    scan_ntfsusn,
-    scan_utmp,
-    scan_outlook,
-    scan_pdf,
-    scan_msxml,
-    scan_winpe,
-    scan_hiberfile,
-    scan_winlnk,
-    scan_winprefetch,
-    scan_windirs,
-    scan_vcard,
-    scan_sceadan,
-    scan_xor,
-    scan_sqlite,
-    scan_facebook,
-    // scanners provided by 4n6ist:
-    scan_utmp,
-    scan_ntfsmft,
-    scan_ntfslogfile,
-    scan_ntfsindx,
-    scan_evtx,
-// these are in the old_scanners directory. They never worked well:
-    // scan_extx,  // not ready for prime time
-    // scan_httpheader,
+#define SCANNER(scanner) extern "C" scanner_set::scanner_t scan_ ## scanner;
+#include "bulk_extractor_scanners.h"
+#undef SCANNER
+
+#define SCANNER(scanner) scan_ ## scanner ,
+scanner_set::scanner_t *scanners_builtin[] = {
+#include "bulk_extractor_scanners.h"
     0};
+#undef SCANNER

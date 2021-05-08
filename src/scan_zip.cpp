@@ -17,7 +17,6 @@
 static uint32_t  zip_max_uncompr_size = 256*1024*1024; // don't decompress objects larger than this
 static uint32_t  zip_min_uncompr_size = 6;	// don't bother with objects smaller than this
 static uint32_t  zip_name_len_max = 1024;
-const uint32_t   MIN_ZIP_SIZE = 38;     // minimum size of a zip header and file name
 
 // these are tunable
 static uint32_t unzip_carve_mode = feature_recorder::CARVE_ENCODED;
@@ -47,58 +46,21 @@ bool has_control_characters(const std::string &name)
  * code from tsk3
  */
 
-/* We have a private version of these #include files in case the system one is not present */
-#pragma GCC diagnostic ignored "-Wshadow"
-#pragma GCC diagnostic ignored "-Weffc++"
-#pragma GCC diagnostic ignored "-Wredundant-decls"
-#include "tsk3/libtsk.h"
-#include "tsk3/fs/tsk_fatfs.h"
-#include "tsk3/fs/tsk_ntfs.h"
-#pragma GCC diagnostic warning "-Wshadow"
-#pragma GCC diagnostic warning "-Weffc++"
-#pragma GCC diagnostic warning "-Wredundant-decls"
-//using namespace std;
+#include "tsk3_fatdirs.h"
 
-
-inline uint16_t fat16int(const uint8_t buf[2]){
-    return buf[0] | (buf[1]<<8);
-}
-
-inline uint32_t fat32int(const uint8_t buf[4]){
-    return buf[0] | (buf[1]<<8) | (buf[2]<<16) | (buf[3]<<24);
-}
-
-inline uint32_t fat32int(const uint8_t high[2],const uint8_t low[2]){
-    return low[0] | (low[1]<<8) | (high[0]<<16) | (high[1]<<24);
-}
-
-
-inline int fatYear(int x){  return (x & FATFS_YEAR_MASK) >> FATFS_YEAR_SHIFT;}
-inline int fatMonth(int x){ return (x & FATFS_MON_MASK) >> FATFS_MON_SHIFT;}
-inline int fatDay(int x){   return (x & FATFS_DAY_MASK) >> FATFS_DAY_SHIFT;}
-inline int fatHour(int x){  return (x & FATFS_HOUR_MASK) >> FATFS_HOUR_SHIFT;}
-inline int fatMin(int x){   return (x & FATFS_MIN_MASK) >> FATFS_MIN_SHIFT;}
-inline int fatSec(int x){   return (x & FATFS_SEC_MASK) >> FATFS_SEC_SHIFT;}
-
-inline std::string fatDateToISODate(const uint16_t d,const uint16_t t)
-{
-    char buf[256];
-    snprintf(buf, sizeof(buf), "%04d-%02d-%02dT%02d:%02d:%02d",
-	     fatYear(d)+1980,fatMonth(d),fatDay(d),
-	     fatHour(t),fatMin(t),fatSec(t)); // local time
-    return std::string(buf);
-}
-
+#if 0
+const uint32_t   MIN_ZIP_SIZE = 38;     // minimum size of a zip header and file name
 /**
  * given a location in an sbuf, determine if it contains a zip component.
  * If it does and if it passes validity tests, unzip and recurse.
  */
-inline void scan_zip_component(const class scanner_params &sp,const recursion_control_block &rcb,
+inline void scan_zip_component(const scanner_params &sp,const recursion_control_block &rcb,
                                feature_recorder *zip_recorder,feature_recorder *unzip_recorder,size_t pos)
 {
+
     const sbuf_t &sbuf = sp.sbuf;
     const pos0_t &pos0 = sp.sbuf.pos0;
-                
+
     /* Local file header */
     uint16_t version_needed_to_extract= sbuf.get16u(pos+4);
     uint16_t general_purpose_bit_flag = sbuf.get16u(pos+6);
@@ -141,11 +103,13 @@ inline void scan_zip_component(const class scanner_params &sp,const recursion_co
     std::stringstream xmlstream;
     xmlstream << b2;
 
-    const unsigned char *data_buf = sbuf.buf+pos+30+name_len+extra_field_len; // where the data starts
-    if(data_buf > sbuf.buf+sbuf.bufsize){ // past the end of buffer?
+    //const unsigned char *data_buf = sbuf.buf+pos+30+name_len+extra_field_len; // where the data starts
+    const sbuf_t data_sbuf(sbuf,pos+30+name_len+extra_field_len); // where the data starts
+    //if(data_buf > sbuf.buf+sbuf.bufsize){ // past the end of buffer?
+    if (data_sbuf.pagesize==0){
         xmlstream << "<disposition>end-of-buffer</disposition></zipinfo>";
         zip_recorder->write(pos0+pos,name,xmlstream.str());
-        return; 
+        return;
     }
 
     /* OpenOffice makes invalid ZIP files with compr_size=0 and uncompr_size=0.
@@ -157,19 +121,19 @@ inline void scan_zip_component(const class scanner_params &sp,const recursion_co
     }
 
     /* See if we can decompress */
-    if(version_needed_to_extract==20 && uncompr_size>=zip_min_uncompr_size){ 
+    if(version_needed_to_extract==20 && uncompr_size>=zip_min_uncompr_size){
         if(uncompr_size > zip_max_uncompr_size){
             uncompr_size = zip_max_uncompr_size; // don't uncompress bigger than 16MB
         }
 
         // don't decompress beyond end of buffer
-        if((u_int)compr_size > sbuf.bufsize - (data_buf-sbuf.buf)){ 
+        if((u_int)compr_size > sbuf.bufsize - (data_buf-sbuf.buf)){
             compr_size = sbuf.bufsize - (data_buf-sbuf.buf);
         }
 
         /* If depth is more than 0, don't decompress if we have seen this component before */
         if(sp.depth>0){
-            if(sp.fs.check_previously_processed(data_buf,compr_size)){
+            if(sp.fs.check_previously_processed(data_buf)){
                 xmlstream << "<disposition>previously-processed</disposition></zipinfo>";
                 zip_recorder->write(pos0+pos,name,xmlstream.str());
                 return;
@@ -185,12 +149,12 @@ inline void scan_zip_component(const class scanner_params &sp,const recursion_co
         }
         z_stream zs;
         memset(&zs,0,sizeof(zs));
-		
+
         zs.next_in = (Bytef *)data_buf; // note that next_in should be typedef const but is not
         zs.avail_in = compr_size;
         zs.next_out = dbuf.buf;
         zs.avail_out = uncompr_size;
-		
+
         int r = inflateInit2(&zs,-15);
         if(r==0){
             r = inflate(&zs,Z_SYNC_FLUSH);
@@ -224,14 +188,14 @@ inline void scan_zip_component(const class scanner_params &sp,const recursion_co
         }
     }
 }
+#endif
 
 extern "C"
-void scan_zip(const class scanner_params &sp,const recursion_control_block &rcb)
+void scan_zip(const scanner_params &sp,const recursion_control_block &rcb)
 {
-    assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
+    sp.check_version();
 
     if(sp.phase==scanner_params::PHASE_STARTUP){
-        assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	sp.info->name  = "zip";
         sp.info->flags = scanner_info::SCANNER_RECURSE | scanner_info::SCANNER_RECURSE_EXPAND;
         sp.info->get_config("zip_min_uncompr_size",&zip_min_uncompr_size,"Minimum size of a ZIP uncompressed object");
@@ -244,6 +208,10 @@ void scan_zip(const class scanner_params &sp,const recursion_control_block &rcb)
         }
 	return;
     }
+
+    throw std::runtime_error("scan_zip_component not reimplemented yet");
+#if 0
+
     feature_recorder *zip_recorder = sp.fs.get_name(ZIP_RECORDER_NAME);
     feature_recorder *unzip_recorder = unzip_carve_mode ? sp.fs.get_name(UNZIP_RECORDER_NAME) : 0;
     if(sp.phase==scanner_params::PHASE_INIT && unzip_carve_mode!=feature_recorder::CARVE_NONE){
@@ -263,4 +231,5 @@ void scan_zip(const class scanner_params &sp,const recursion_control_block &rcb)
 	    }
 	}
     }
+#endif
 }

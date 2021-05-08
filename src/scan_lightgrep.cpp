@@ -15,8 +15,6 @@
 #include <iterator>
 #include <numeric>
 
-using namespace std;
-
 namespace { // local namespace hides these from other translation units
 
   class FindScanner: public PatternScanner {

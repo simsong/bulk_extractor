@@ -1,6 +1,9 @@
 #ifndef PATTERN_SCANNER_H
 #define PATTERN_SCANNER_H
 
+// if liblightgrep isn't present, compiles to nothing
+#ifdef HAVE_LIBLIGHTGREP
+
 #include <vector>
 #include <string>
 #include <utility>
@@ -8,13 +11,22 @@
 #include <lightgrep/api.h>
 
 #include "findopts.h"
+#include "be13/plugin.h"
 
 using namespace std;
 
 class PatternScanner;
 
-// the typedef for a handler callback
-typedef void (PatternScanner::*CallbackFnType)(const LG_SearchHit&, const scanner_params& sp, const recursion_control_block& rcb);
+/**
+ * the function prototype for a handler callback
+ * LG_SearchHit            - LightGrep Search Hit.
+ * scanner_params          - the parameters available to the scanner.
+ * recursion_control_clock - information about where we are in the recursive analysis.
+ */
+
+typedef void (PatternScanner::*CallbackFnType)(const LG_SearchHit&,
+                                               const scanner_params& sp,
+                                               const recursion_control_block& rcb);
 
 /*********************************************************/
 
@@ -128,4 +140,5 @@ private:
 // Utility function. Makes your scan function a one-liner, given a PatternScanner instance
 void scan_lg(PatternScanner& scanner, const class scanner_params &sp, const recursion_control_block &rcb);
 
+#endif
 #endif /* PATTERN_SCANNER_H */

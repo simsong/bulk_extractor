@@ -8,7 +8,7 @@
  * scan_winlnk finds windows LNK files
  *
  * Revision history:
- * - 2014-apr-30 slg - created 
+ * - 2014-apr-30 slg - created
  * - 2015-apr-08 bda - scan nested data structures per MS-SHLLINK Doc
  *                     in particualr to capture remote links
  *
@@ -84,7 +84,7 @@ size_t read_StringData(const std::string& tagname, sbuf_t sbuf,
         // get string data from UTF8 input
         std::string utf8_string;
         sbuf.getUTF8(2, count, utf8_string);
-        validateOrEscapeUTF8(utf8_string,true,false);
+        validateOrEscapeUTF8(utf8_string,true,false,false);
         if (utf8_string.size()==0) utf8_string="INVALID_DATA";
         lnkmap[tagname] = utf8_string;
     }
@@ -94,7 +94,7 @@ size_t read_StringData(const std::string& tagname, sbuf_t sbuf,
 void read_utf8(const std::string& tagname, sbuf_t sbuf, dfxml_writer::strstrmap_t& lnkmap) {
     std::string utf8_string;
     sbuf.getUTF8(0, utf8_string);
-    validateOrEscapeUTF8(utf8_string,true,false);
+    validateOrEscapeUTF8(utf8_string,true,false,false);
     // there can be fields with size 0 so skip them
     if (utf8_string.size()>0) {
         lnkmap[tagname] = utf8_string;
@@ -297,11 +297,10 @@ std::string get_field(const dfxml_writer::strstrmap_t& lnkmap, const std::string
  * scan_winlnk iterates through each byte of sbuf
  */
 extern "C"
-void scan_winlnk(const class scanner_params &sp,const recursion_control_block &rcb)
+void scan_winlnk(const scanner_params &sp,const recursion_control_block &rcb)
 {
-    assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
+    sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP){
-        assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
         sp.info->name		= "winlnk";
         sp.info->author		= "Simson Garfinkel";
         sp.info->description	= "Search for Windows LNK files";
@@ -310,7 +309,7 @@ void scan_winlnk(const class scanner_params &sp,const recursion_control_block &r
         return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
-	
+
 	// phase 1: set up the feature recorder and search for winlnk features
 	const sbuf_t &sbuf = sp.sbuf;
 	feature_recorder *winlnk_recorder = sp.fs.get_name("winlnk");
@@ -369,7 +368,7 @@ void scan_winlnk(const class scanner_params &sp,const recursion_control_block &r
 
                 // record
                 winlnk_recorder->write(sbuf.pos0+p,path,dfxml_writer::xmlmap(lnkmap,"lnk",""));
-            } 
-        } 
-    } 
+            }
+        }
+    }
 }

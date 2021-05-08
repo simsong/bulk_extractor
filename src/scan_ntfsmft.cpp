@@ -20,8 +20,6 @@
 
 static uint32_t ntfsmft_carve_mode = feature_recorder::CARVE_ALL;
 
-using namespace std;
-
 #define SECTOR_SIZE 512
 #define CLUSTER_SIZE 4096
 #define MFT_RECORD_SIZE 1024
@@ -59,11 +57,10 @@ int8_t check_mftrecord_signature(size_t offset, const sbuf_t &sbuf) {
 
 extern "C"
 
-void scan_ntfsmft(const class scanner_params &sp,const recursion_control_block &rcb)
+void scan_ntfsmft(const scanner_params &sp,const recursion_control_block &rcb)
 {
-    assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
+    sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP){
-        assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
         sp.info->name            = "ntfsmft";
         sp.info->author          = "Teru Yamazaki";
         sp.info->description     = "Scans for NTFS MFT record";

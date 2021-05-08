@@ -8,12 +8,10 @@
 #include <errno.h>
 #include <sstream>
 
-using namespace std;
-
 struct used_offsets_t {
     used_offsets_t():offsets(){};
     virtual ~used_offsets_t(){};
-    vector<ssize_t> offsets;
+    std::vector<ssize_t> offsets;
     static const ssize_t window = 4096;
 
     bool value_used(ssize_t value) {
@@ -46,11 +44,10 @@ static const char *facebook_searches[] = {"hovercard/page",
                                           0};
 
 extern "C"
-void scan_facebook(const class scanner_params &sp,const recursion_control_block &rcb)
+void scan_facebook(const scanner_params &sp,const recursion_control_block &rcb)
 {
-    assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
+    sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP)        {
-            assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
             sp.info->name = "facebook";
             sp.info->author = "";
             sp.info->description = "Searches for facebook html and json tags";
@@ -62,7 +59,7 @@ void scan_facebook(const class scanner_params &sp,const recursion_control_block 
     if(sp.phase==scanner_params::PHASE_SCAN) {
         feature_recorder *facebook_recorder = sp.fs.get_name("facebook");
         used_offsets_t used_offsets;
-        
+
         for (int j = 0; facebook_searches[j]; j++) {
             const char *text_search = facebook_searches[j];
             for (size_t i = 0;  i+50 < sp.sbuf.bufsize; i++) {
@@ -72,7 +69,7 @@ void scan_facebook(const class scanner_params &sp,const recursion_control_block 
                     i = location + used_offsets_t::window;
                     continue;
                 }
-                
+
                 ssize_t begin = (location > used_offsets_t::window / 2) ? (location-used_offsets_t::window/2) : 0;
                 size_t end = begin + used_offsets_t::window;
                 if (end + 10 > sp.sbuf.bufsize) end = sp.sbuf.bufsize - 10;

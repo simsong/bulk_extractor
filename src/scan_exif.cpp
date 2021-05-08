@@ -82,7 +82,7 @@ struct jpeg_validator {
                 res.seen_SOI = true;
                 i+=2;
                 break;
-            case 0x01: // TEM 
+            case 0x01: // TEM
                 DEBUG("TEM");
                 res.how = COMPLETE;
                 i+=2;
@@ -107,19 +107,19 @@ struct jpeg_validator {
                     if(sbuf[i+1]==0xcc) res.seen_ff_cc = true;
                     if(sbuf[i+1]==0xdb) res.seen_ff_db = true;
                     if(sbuf[i+1]==0xe1) res.seen_ff_e1 = true;
-                
+
                     if(sbuf[i+1]==0xe0 && block_length>8){        // see if this is a JFIF
                         DEBUG("JFIF");
                         if(sbuf[i+4]=='J' && sbuf[i+5]=='F' && sbuf[i+6]=='I' && sbuf[i+7]=='F'){
                             res.seen_JFIF = true;
                         }
                     }
-                
+
                     if(sbuf[i+1]==0xc0 && block_length>8){        // FFC0 is start of frame
                         res.height = sbuf.get16uBE(i+5);
                         res.width  = sbuf.get16uBE(i+7);
                     }
-                
+
                     i += 2 + sbuf.get16uBE(i+2);    // add variable length size
                     break;
                 }
@@ -193,7 +193,7 @@ struct jpeg_validator {
             res.how = TRUNCATED;
             return res; // at least we saw an EXIF, so return true
         }
-    
+
         // If we didn't get a color table, it's corrupt
         if(res.seen_ff_c4==false && res.seen_ff_cc==false && res.seen_ff_db==false){
             res.how = CORRUPT;
@@ -257,7 +257,7 @@ namespace psd_reader {
     static uint32_t get_uint16_psd(const sbuf_t &exif_sbuf, uint32_t offset);
     static uint32_t get_uint32_psd(const sbuf_t &exif_sbuf, uint32_t offset);
 
-    /** 
+    /**
      * finds the TIFF header within the PSD region, or 0 if invalid
      */
     size_t get_tiff_offset_from_psd(const sbuf_t &exif_sbuf) {
@@ -349,8 +349,6 @@ namespace psd_reader {
 
 /****************************************************************/
 /* C++ string splitting code from http://stackoverflow.com/questions/236129/how-to-split-a-string-in-c */
-
-//using namespace std;
 
 inline size_t min(size_t a,size_t b){
     return a<b ? a : b;
@@ -546,7 +544,7 @@ static void clear_entries(entry_list_t &entries) {
 class exif_scanner {
 private:
 public:
-    exif_scanner(const class scanner_params &sp):
+    exif_scanner(const scanner_params &sp):
         entries(),
         exif_recorder(*sp.fs.get_name("exif")),
         gps_recorder(*sp.fs.get_name("gps")),
@@ -561,23 +559,23 @@ public:
     /* Verify a jpeg internal structure and return the length of the validated portion */
     // http://www.w3.org/Graphics/JPEG/itu-t81.pdf
     // http://stackoverflow.com/questions/1557071/the-size-of-a-jpegjfif-image
-    
+
     /**
      * Process the JPEG, including - calculate its hash, carve it, record exif and gps data
      * Return the size of the object carved, or 0 if unknown
      */
-    
+
     size_t process(const sbuf_t &sbuf,bool found_start){
         // get md5 for this exif
         size_t ret = 0;
         std::string feature_text = "00000000000000000000000000000000";
         if(found_start){
             jpeg_validator::results_t res = jpeg_validator::validate_jpeg(sbuf);
-            
+
             if(exif_debug) std::cerr << "res.len=" << res.len << " res.how=" << (int)(res.how) << "\n";
 
             // Is it valid?
-            if(res.len<=0) return 0; 
+            if(res.len<=0) return 0;
 
             // Should we carve?
             if(res.how==jpeg_validator::COMPLETE || res.len>(ssize_t)min_jpeg_size){
@@ -643,14 +641,14 @@ public:
                     if(exif_debug) std::cerr << "scan_exif.tiff_offset in ffd8 " << tiff_offset;
                 }
                 // Try to process if it is exif or not
-                  
+
                 size_t skip = process(sbuf+start,true);
                 if(skip>1) start += skip-1;
                 if(exif_debug){
                     std::cerr << "scan_exif Done processing JPEG/Exif ffd8ff at "
                               << start << " len=" << skip << "\n";
                 }
-                continue;                
+                continue;
             }
 		// check for possible TIFF in photoshop PSD header
             if (sbuf[start + 0] == '8' && sbuf[start + 1] == 'B' && sbuf[start + 2] == 'P' &&
@@ -711,7 +709,7 @@ public:
                     } catch (exif_failure_exception_t &e) {
                         // accept whatever entries were gleaned before the exif failure
                     }
-                    
+
                     // there is no MD5 because there is no associated file for this TIFF marker
                     process(sbuf+start,false);
 		    if(exif_debug){
@@ -725,12 +723,11 @@ public:
 };
 
 extern "C"
-void scan_exif(const class scanner_params &sp,const recursion_control_block &rcb)
+void scan_exif(const scanner_params &sp,const recursion_control_block &rcb)
 {
     if(exif_debug) std::cerr << "scan_exif start phase " << (uint32_t)sp.phase << "\n";
-    assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
+    sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP){
-        assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	sp.info->name		= "exif";
 	sp.info->author         = "Bruce Allen";
         sp.info->description    = "Search for EXIF sections in JPEG files";

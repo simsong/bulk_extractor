@@ -8,7 +8,7 @@ static const uint32_t B64_LOWERCASE=1;
 static const uint32_t B64_UPPERCASE=2;
 static const uint32_t B64_NUMBER=4;
 static const uint32_t B64_SYMBOL=8;
-static int   base64array[256];           // array of valid base64 characters, 
+static int   base64array[256];           // array of valid base64 characters,
 static size_t minlinewidth = 60;
 static size_t maxlinewidth_needed_for_character_classes = 160;
 
@@ -89,7 +89,7 @@ inline bool sbuf_line_is_base64(const sbuf_t &sbuf,const size_t &start,const siz
 }
 
 /* Found the end of the base64 string; process. */
-inline void process(const class scanner_params &sp,const recursion_control_block &rcb,size_t start,size_t len)
+inline void process(const scanner_params &sp,const recursion_control_block &rcb,size_t start,size_t len)
 {
     //fprintf(stderr,"process start=%zd  len=%zd\n",start,len);
     //fprintf(stderr,"To convert:\n");
@@ -115,13 +115,12 @@ inline void process(const class scanner_params &sp,const recursion_control_block
 
 
 extern "C"
-void scan_base64(const class scanner_params &sp,const recursion_control_block &rcb)
+void scan_base64(const scanner_params &sp,const recursion_control_block &rcb)
 {
     const int debug=0;
 
-    assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);      
-    if(sp.phase==scanner_params::PHASE_STARTUP){
-        assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
+    sp.check_version();
+    if( sp.phase == scanner_params::PHASE_STARTUP){
 	sp.info->name		= "base64";
         sp.info->author         = "Simson L. Garfinkel";
         sp.info->description    = "scans for Base64-encoded data";
@@ -138,8 +137,8 @@ void scan_base64(const class scanner_params &sp,const recursion_control_block &r
 	for(int ch='0';ch<='9';ch++){ base64array[ch] = B64_NUMBER; }
 	return;	/* No feature files created */
     }
-    if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;
-    if(sp.phase==scanner_params::PHASE_SCAN){
+    if( sp.phase==scanner_params::PHASE_SHUTDOWN) return;
+    if( sp.phase==scanner_params::PHASE_SCAN){
 	const sbuf_t &sbuf = sp.sbuf;
 
 

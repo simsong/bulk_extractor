@@ -15,16 +15,7 @@
 #include "dig.h"
 #include "utf8.h"
 
-#ifdef HAVE_LIBAFFLIB
-#endif
-
 #include "image_process.h"
-#ifdef HAVE_LIBAFFLIB
-#ifndef HAVE_STL
-#define HAVE_STL			/* needed */
-#endif
-#include <afflib/utils.h>
-#endif
 
 #ifndef PATH_MAX
 #define PATH_MAX 65536
@@ -32,11 +23,11 @@
 
 #ifndef MIN
 #define MIN(a,b) ((a)<(b) ? (a) : (b))
-#endif 
+#endif
 
 #ifndef MAX
 #define MAX(a,b) ((a)>(b) ? (a) : (b))
-#endif 
+#endif
 
 
 /****************************************************************
@@ -91,7 +82,7 @@ int64_t get_filesize(int fd)
     /* if we are not using pread64, make sure that off_t is 8 bytes in size */
 #define pread64(d,buf,nbyte,offset) pread(d,buf,nbyte,offset)
     if(sizeof(off_t)!=8){
-	err(1,"Compiled with off_t==%d and no pread64 support.",(int)sizeof(off_t));
+	throw std::runtime_error("Compiled with off_t!=8 no pread64 support.");
     }
 #endif
 
@@ -111,7 +102,7 @@ int64_t get_filesize(int fd)
 	    break;
 	}
     }
-    if(bits==60) errx(1,"Partition detection not functional.\n");
+    if(bits==60) throw std::runtime_error("Partition detection not functional.\n");
 
     /* Phase 2; blank bits as necessary */
     for(i=bits;i>=0;i--){
@@ -157,156 +148,6 @@ static int64_t getSizeOfFile(const std::string &fname)
 
 
 
-/****************************************************************
- *** AFF START
- ****************************************************************/
-
-#ifdef HAVE_LIBAFFLIB
-int process_aff::open()
-{
-    const char *fn = image_fname().c_str();
-    af = af_open(fn,O_RDONLY,0666);
-    if(!af){
-	return -1;
-    }
-    if(af_cannot_decrypt(af)) errx(1,"Cannot decrypt %s: encryption key not set?",fn);
-
-    /* build the pagelist */
-    aff::seglist sl(af);			// get a segment list
-    for(aff::seglist::const_iterator i=sl.begin();i!=sl.end();i++){
-	if((*i).pagenumber()>=0){
-	    pagelist.push_back((*i).pagenumber());
-	}
-    }
-    sort(pagelist.begin(),pagelist.end());
-    return 0;
-}
-
-int process_aff::pread(unsigned char *buf,size_t bytes,int64_t offset) const
-{
-    af_seek(af,offset,0);
-    return af_read(af,buf,bytes);
-}
-
-int64_t process_aff::image_size() const
-{
-    return af_get_imagesize(af);
-}
-
-
-/**
- * Iterator support
- */
-
-image_process::iterator process_aff::begin() const
-{
-    image_process::iterator it(this);
-    it.raw_offset = 0;
-    return it;
-}
-
-image_process::iterator process_aff::end() const
-{
-    image_process::iterator it(this);
-    it.page_number_ = pagelist.size();
-    it.raw_offset    = af_get_imagesize(af);
-    it.eof           = true;
-    return it;
-}
-
-/* Note - af_get_pagesize() used to be in afflib_i.h; it was moved,
- * but we may not have the new definition.
- */
-#ifdef HAVE_LIBAFFLIB
-__BEGIN_DECLS
-#ifdef HAVE_DIAGNOSTIC_REDUNDANT_DECLS
-#pragma GCC diagnostic ignored "-Wredundant-decls"
-#endif
-int	af_get_pagesize(AFFILE *af);	// returns page size, or -1
-__END_DECLS
-#endif
-
-
-/* Increment the AFF iterator by going to the next page.
- * If we hit the end of the pagelist, note that we are at the end of file.
- */
-void process_aff::increment_iterator(class image_process::iterator &it) const
-{
-    if(it.page_number < pagelist.size()){
-	it.page_number++;
-	it.raw_offset = pagelist[it.page_number] * af_get_pagesize(af);
-    } else {
-	it.eof = true;
-    }
-}
-
-pos0_t process_aff::get_pos0(const image_process::iterator &it) const
-{
-    int64_t pagenum = pagelist[it.page_number];
-    return pos0_t("",pagenum * af_get_pagesize(af));
-}
-
-sbuf_t *process_aff::sbuf_alloc(image_process::iterator &it) const
-{
-    size_t bufsize  = af_get_pagesize(af)+margin;
-    unsigned char *buf = (unsigned char *)malloc(bufsize);
-    if(!buf) throw std::bad_alloc();
-
-    pos0_t pos0 = get_pos0(it);
-    
-    af_seek(af,pos0.offset,0);
-    ssize_t bytes_read = af_read(af,buf,bufsize);
-    /**
-     * af_read() returns 0 at end of file, if no data is available,
-     * or if the data is bad. We need to be willing to return an sbuf
-     * with zero bytes, which we do below.
-     */
-    if(bytes_read>=0){
-	ssize_t af_pagesize = af_get_pagesize(af);
-	if(af_pagesize>bytes_read) af_pagesize = bytes_read;
-	sbuf_t *sbuf = new sbuf_t(pos0,buf,bytes_read,af_pagesize,it.page_number,true);
-	return sbuf;
-    }
-    free(buf);
-    return 0;				// no buffer to return
-}
-
-double process_aff::fraction_done(const image_process::iterator &it) const
-{
-    return (double)it.page_number / (double)pagelist.size();
-}
-
-std::string process_aff::str(const image_process::iterator &it) const
-{
-    char buf[64];
-    snprintf(buf,sizeof(buf),"Page %" PRId64 "",it.page_number);
-    return std::string(buf);
-}
-
-uint64_t process_aff::max_blocks(const image_process::iterator &it) const
-{
-    return pagelist.size();
-}
-
-uint64_t process_aff::seek_block(image_process::iterator &it,uint64_t block) const
-{
-    it.page_number = block;
-    return block;
-}
-
-
-process_aff::~process_aff()
-{
-    if(af) af_close(af);
-}
-#endif
-
-
-/****************************************************************
- *** AFF END
- ****************************************************************/
-
-
 
 /****************************************************************
  *** EWF START
@@ -332,7 +173,7 @@ process_ewf::~process_ewf()
     if(handle){
 	libewf_close(handle);
     }
-#endif    
+#endif
 }
 
 #ifdef WIN32
@@ -360,7 +201,7 @@ void local_e01_glob(const std::string &fname,char ***libewf_filenames,int *amoun
     size_t pos = dirname.rfind("\\");                  // this this slash
     if(pos==std::string::npos) pos=dirname.rfind("/"); // try the other slash!
     if(pos!=std::string::npos){
-        dirname.resize(pos+1);          // remove what's after the 
+        dirname.resize(pos+1);          // remove what's after the
     } else {
         dirname = "";                   // no directory?
     }
@@ -371,7 +212,7 @@ void local_e01_glob(const std::string &fname,char ***libewf_filenames,int *amoun
     /* Find the E01 */
     char *cc = strstr(buf,".E01.");
     if(!cc){
-        err(1,"Cannot find .E01. in filename");
+        throw std::runtime_error("Cannot find .E01. in filename");
     }
     for(;*cc;cc++){
         if(*cc!='.') *cc='?';          // replace the E01 and the MD5s at the end with ?s
@@ -394,7 +235,7 @@ void local_e01_glob(const std::string &fname,char ***libewf_filenames,int *amoun
 
     /* Sort the files */
     sort(files.begin(),files.end());
-    
+
     /* Make the array */
     *amount_of_filenames = files.size();
     *libewf_filenames = (char **)calloc(sizeof(char *),files.size());
@@ -404,7 +245,7 @@ void local_e01_glob(const std::string &fname,char ***libewf_filenames,int *amoun
     free((void *)buf);
 #else
     std::cerr << "This code only runs on Windows.\n";
-#endif    
+#endif
 }
 
 int process_ewf::open()
@@ -425,7 +266,7 @@ int process_ewf::open()
                        &libewf_filenames,&amount_of_filenames,&error)<0){
             libewf_error_fprint(error,stdout);
             libewf_error_free(&error);
-            err(1,"libewf_glob");
+            throw std::invalid_argument("libewf_glob");
         }
     } else {
         local_e01_glob(image_fname(),&libewf_filenames,&amount_of_filenames);
@@ -436,19 +277,19 @@ int process_ewf::open()
     }
     handle = 0;
     if(libewf_handle_initialize(&handle,NULL)<0){
-	err(1,"Cannot initialize EWF handle?");
+	throw std::runtime_error("Cannot initialize EWF handle?");
     }
     if(libewf_handle_open(handle,libewf_filenames,amount_of_filenames,
 			  LIBEWF_OPEN_READ,&error)<0){
 	if(error) libewf_error_fprint(error,stdout);
-	err(1,"Cannot open: %s",fname);
+	throw std::runtime_error(Formatter() << "Cannot open: " << fname);
     }
     /* Free the allocated filenames */
     if(use_libewf_glob){
         if(libewf_glob_free(libewf_filenames,amount_of_filenames,&error)<0){
             printf("libewf_glob_free failed\n");
             if(error) libewf_error_fprint(error,stdout);
-            err(1,"libewf_glob_free");
+            throw std::runtime_error("libewf_glob_free");
         }
     }
     libewf_handle_get_media_size(handle,(size64_t *)&ewf_filesize,NULL);
@@ -463,7 +304,7 @@ int process_ewf::open()
 	for(int i=0;i<amount_of_filenames;i++){
 	    fprintf(stderr,"  %s\n",libewf_filenames[i]);
 	}
-	err(1,"libewf_open");
+	throw std::runtime_error("libewf_open");
     }
     libewf_get_media_size(handle,(size64_t *)&ewf_filesize);
 #endif
@@ -475,7 +316,7 @@ int process_ewf::open()
 	std::string notes = reinterpret_cast<char *>(ewfbuf);
 	details.push_back(std::string("NOTES: ")+notes);
     }
-  
+
     status = libewf_handle_get_utf8_header_value_case_number(handle, ewfbuf, sizeof(ewfbuf)-1, &error);
     if(status == 1 && strlen(ewfbuf)>0){
 	std::string case_number = reinterpret_cast<char *>(ewfbuf);
@@ -493,7 +334,7 @@ int process_ewf::open()
 	std::string examinername = reinterpret_cast<char *>(ewfbuf) ;
 	details.push_back(std::string("EXAMINER NAME: "+examinername));
     }
-#endif	
+#endif
     return 0;
 }
 
@@ -649,7 +490,7 @@ static std::string make_list_template(std::string fn,int *start)
     size_t p = fn.rfind("000");
     if(p==std::string::npos) p = fn.rfind("001");
     assert(p!=std::string::npos);
-    
+
     *start = atoi(fn.substr(p,3).c_str()) + 1;
     fn.replace(p,3,"%03d");	// make it a format
     return fn;
@@ -678,14 +519,14 @@ process_raw::~process_raw() {
 #ifdef WIN32
 BOOL GetDriveGeometry(const wchar_t *wszPath, DISK_GEOMETRY *pdg)
 {
-    HANDLE hDevice = INVALID_HANDLE_VALUE;  // handle to the drive to be examined 
+    HANDLE hDevice = INVALID_HANDLE_VALUE;  // handle to the drive to be examined
     BOOL bResult   = FALSE;                 // results flag
     DWORD junk     = 0;                     // discard results
 
     hDevice = CreateFileW(wszPath,          // drive to open
                           0,                // no access to the drive
                           FILE_SHARE_READ | // share mode
-                          FILE_SHARE_WRITE, 
+                          FILE_SHARE_WRITE,
                           NULL,             // default security attributes
                           OPEN_EXISTING,    // disposition
                           0,                // file attributes
@@ -716,7 +557,7 @@ BOOL GetDriveGeometry(const wchar_t *wszPath, DISK_GEOMETRY *pdg)
 void process_raw::add_file(const std::string &fname)
 {
     int64_t fname_length = 0;
-  
+
     /* Get the physical size of drive under Windows */
     fname_length = getSizeOfFile(fname);
 #ifdef WIN32
@@ -758,7 +599,7 @@ int process_raw::open()
         std::string templ = make_list_template(image_fname(),&num);
 	for(;;num++){
 	    char probename[PATH_MAX];
-	    snprintf(probename,sizeof(probename),templ.c_str(),num); 
+	    snprintf(probename,sizeof(probename),templ.c_str(),num);
 	    if(access(probename,R_OK)!=0) break;	    // no more files
 	    add_file(std::string(probename)); // found another name
 	}
@@ -805,7 +646,7 @@ int process_raw::pread(unsigned char *buf,size_t bytes,int64_t offset) const
 	  fprintf(stderr,"bulk_extractor WIN32 subsystem: cannot open file '%s'\n",fi->name.c_str());
 	  return -1;
 	}
-#else        
+#else
 	current_fd = ::open(fi->name.c_str(),O_RDONLY|O_BINARY);
 	if(current_fd<=0) return -1;	// can't read this data
 #endif
@@ -972,7 +813,7 @@ int process_dir::open()
 
 int process_dir::pread(unsigned char *buf,size_t bytes,int64_t offset) const
 {
-    err(1,"process_dir does not support pread");
+    throw std::runtime_error("process_dir does not support pread");
 }
 
 int64_t process_dir::image_size() const
@@ -1104,15 +945,7 @@ image_process *image_process::open(std::string fn,bool opt_recurse,
 	 */
 
 	std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
-	
-	if(ext=="aff"){
-#ifdef HAVE_LIBAFFLIB
-	    ip = new process_aff(fn,pagesize_,margin_);
-#else
-            std::cerr << "This program was compiled without AFF support\n";
-	    exit(1);
-#endif
-	}
+
 	if(ext=="e01" || fn.find(".E01.")!=std::string::npos){
 #ifdef HAVE_LIBEWF
 	    ip = new process_ewf(fn,pagesize_,margin_);
@@ -1130,4 +963,3 @@ image_process *image_process::open(std::string fn,bool opt_recurse,
     }
     return ip;
 }
-

@@ -1,7 +1,7 @@
 /**
  * scan_xml:
  * Extracts text from XML files.
- *  
+ *
  */
 
 #include "config.h"
@@ -24,7 +24,6 @@
 #endif
 #include <zlib.h>
 
-using namespace std;
 static bool pdf_dump = false;
 
 /*
@@ -45,13 +44,12 @@ static bool pdf_dump = false;
  * Spaces are always added between arrays [foo].
  * So we just put a space between them all and hope.
  */
- 
+
 extern "C"
-void scan_msxml(const class scanner_params &sp,const recursion_control_block &rcb)
+void scan_msxml(const scanner_params &sp,const recursion_control_block &rcb)
 {
-    assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
+    sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP){
-        assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
         sp.info->name           = "msxml";
         sp.info->author         = "Simson Garfinkel";
         sp.info->description    = "Extracts text from Microsoft XML files";
@@ -95,4 +93,3 @@ void scan_msxml(const class scanner_params &sp,const recursion_control_block &rc
         }
     }
 }
-

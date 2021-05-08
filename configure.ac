@@ -8,8 +8,17 @@
 
 AC_PREREQ([2.71])
 AC_INIT([BULK_EXTRACTOR],[2.0.0-dev],[bugs@digitalcorpora.org])
-
 AC_CONFIG_MACRO_DIR(m4)
+AC_CONFIG_AUX_DIR([build-aux])
+################################################################
+## Includes
+
+m4_include([m4/ax_cxx_compile_stdcxx.m4])
+m4_include([m4/slg_mingw_support.m4])
+m4_include([m4/slg_searchdirs.m4])
+m4_include([m4/slg_gcc_all_warnings.m4])
+m4_include([src/be13_api/dfxml/src/dfxml_configure.m4])
+m4_include([src/be13_api/be13_configure.m4])
 
 #
 # NOTE 1 - plugins/Makefile is referenced so that the plugins Makefile is created.
@@ -42,6 +51,9 @@ AC_LANG_PUSH(C++)
 AX_CXX_COMPILE_STDCXX([17], [noext], [mandatory])
 AC_LANG_POP()
 
+# Turn on all warnings
+m4_include([src/be13_api/m4/slg_gcc_all_warnings.m4])
+
 # These are needed for bulk_extractor. They are not needed for tcpflow
 AC_DEFINE([BULK_EXTRACTOR],1,[We are compiling bulk_extractor])
 
@@ -61,21 +73,8 @@ else
   AC_MSG_ERROR([$LEX does not support -R.  Please get a modern version of gnu flex])
 fi
 
-m4_include([m4/slg_mingw_support.m4])
-m4_include([m4/slg_searchdirs.m4])
-m4_include([m4/slg_gcc_all_warnings.m4])
-
-################################################################
-## Includes
-
-CFLAGS="$CFLAGS"
-
-m4_include([src/be13_api/dfxml/src/dfxml_configure.m4])
-m4_include([src/be13_api/be13_configure.m4])
-
 ################################################################
 ## rar support
-## Enabled for 1.4 release!
 AC_ARG_ENABLE([rar],
               AS_HELP_STRING([--disable-rar], [Disable RAR decompression]),
               [],
@@ -128,6 +127,7 @@ AC_ARG_ENABLE([address-sanitizer], AS_HELP_STRING([--enable-address-sanitizer], 
               [AC_DEFINE(HAVE_ADDRESS_SANITIZER, 1, [enable AddressSanitizer])
               CFLAGS="$CFLAGS -fsanitize=address"
               CXXFLAGS="$CXXFLAGS -fsanitize=address"
+<<<<<<< HEAD
               AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[const int i=0;]])],
                  [AC_MSG_NOTICE([Address Sanitizer Enabled])],
                  [AC_MSG_ERROR([Address Sanitizer not available])])
@@ -179,6 +179,14 @@ AC_CHECK_FUNCS([pthread_win32_process_attach_np pthread_win32_process_detach_np 
 # end PTHREAD SUPPORT
 ################################################################
 
+=======
+              AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[const int i=0;]])],[AC_MSG_NOTICE([Address Sanitizer Enabled])],[AC_MSG_ERROR([Address Sanitizer not available])])
+              ])
+
+
+
+# Specific include files and functions for bulk-extractor
+>>>>>>> 9bc2926c4a2df82b189b30631210a8f719b74520
 # Autoupdate added the next two lines to ensure that your configure
 # script's behavior did not change.  They are probably safe to remove.
 AC_CHECK_INCLUDES_DEFAULT
@@ -189,9 +197,8 @@ AC_SYS_LARGEFILE
 AC_SYS_POSIX_TERMIOS
 
 ## Check for headers used by bulk Extractor
-## do not put pthread here
 AC_CHECK_HEADERS([alloca.h dirent.h dlfcn.h err.h errno.h fcntl.h inttypes.h libgen.h limits.h malloc.h mmap.h pwd.h signal.h stdarg.h stdint.h stdio.h strings.h string.h stdlib.h sys/cdefs.h sys/disk.h sys/fcntl.h sys/ioctl.h sys/mman.h sys/mmap.h sys/mount.h sys/param.h sys/socket.h sys/stat.h sys/types.h sys/time.h sys/resource.h time.h unistd.h windows.h CoreServices/CoreServices.h])
-AC_CHECK_FUNCS([err errx getuid getpwuid gethostname getrusage gmtime_r isxdigit ishexnumber le64toh localtime_r _lseeki64 inet_ntop pread64 pread printf mmap munmap MD5 mkstemp mktemp random srandom srandomdev sleep SleepEx strptime usleep vasprintf warn warnx])
+AC_CHECK_FUNCS([getuid getpwuid gethostname getrusage gmtime_r isxdigit ishexnumber le64toh localtime_r _lseeki64 inet_ntop pread64 pread printf mmap munmap MD5 mkstemp mktemp sleep SleepEx strptime usleep vasprintf])
 AC_CHECK_FUNCS([CreateProcess LoadLibrary IncrementAtomic InterlockedIncrement])
 
 ## dlopen is now itself in a different library
@@ -233,7 +240,7 @@ AC_ARG_WITH([o3], AS_HELP_STRING([--without-o3],[Do not force O3 optimization; u
 AC_CHECK_LIB([z],[uncompress],,
 	AC_MSG_ERROR([zlib libraries not installed; try installing zlib-devel zlib-dev zlib-devel zlib1g-dev or libz-dev]))
 
-## EXPAT is now a main line requirements for restarting
+## EXPAT is required for reading the dfxml file for restrarting.
 AC_CHECK_HEADERS([expat.h])
 AC_CHECK_LIB([expat],[XML_ParserCreate])
 
@@ -267,8 +274,6 @@ if test x"$lightgrep" == x"yes"; then
   LIBS="$LIBS `$PKG_CONFIG --libs-only-l lightgrep`"
   LDFLAGS="$LDFLAGS `$PKG_CONFIG --libs-only-L --libs-only-other lightgrep`"
 fi
-
-# We can also use C++11 regex, which we just assume we have, because it's the standard.
 
 ################################################################
 ## LIBEWF support

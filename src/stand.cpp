@@ -1,13 +1,18 @@
 /**
  *
  * ABOUT:
- *	A standalone program debug scanner. Compile in the scanner you want.
+ *	A standalone program debug scanner.
+ *      Solely for testing.
+ *      Compile in the scanner you want.
  *
  *
  */
 
+<<<<<<< HEAD
 #include "config.h"
 
+=======
+>>>>>>> 9bc2926c4a2df82b189b30631210a8f719b74520
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -19,6 +24,7 @@
 #include <sstream>
 #include <vector>
 
+<<<<<<< HEAD
 #include "scanners.h"
 #include "be13_api/scanner_set.h"
 
@@ -27,12 +33,23 @@
 //#include "image_process.h"
 //#include "threadpool.h"
 ////#include "be13_api/aftimer.h"
+=======
+#include "config.h"
+#include "bulk_extractor.h"
+//#include "findopts.h"
+//#include "image_process.h"
+//#include "threadpool.h"
+//#include "be13_api/aftimer.h"
+>>>>>>> 9bc2926c4a2df82b189b30631210a8f719b74520
 //#include "be13_api/histogram.h"
 //#include "dfxml/src/dfxml_writer.h"
 //#include "dfxml/src/hash_t.h"
 //#include "be13_api/unicode_escape.h"
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 9bc2926c4a2df82b189b30631210a8f719b74520
 /**
  * Stand alone tester.
  * 1. allocate an sbuf for the file.
@@ -44,8 +61,13 @@ int debug=0;
 const char *image_fname = 0;
 //be_config_t be_config; // system configuration
 
-scanner_t *scanners_builtin[] = {
-    scan_bulk,
+/* Bring in the definitions for the  */
+#define SCANNER(scanner) extern "C" scanner_set::scanner_t scan_ ## scanner;
+#include "bulk_extractor_scanners.h"
+#undef SCANNER
+
+scanner_set::scanner_t *scanners_builtin[] = {
+    scan_json,
     0
 };
 
@@ -56,14 +78,27 @@ void usage(scanner_set &ss)
     std::cerr << "   -h           - print this message\n";
     std::cerr << "  -e scanner    - enable scanner\n";
     std::cerr << "  -o outdir     - specify output directory\n";
+<<<<<<< HEAD
     ss.info_scanners(std::cerr, false,true, 'e','x');
+=======
+    plugin::info_scanners(false,true,scanners_builtin,'e','x');
+>>>>>>> 9bc2926c4a2df82b189b30631210a8f719b74520
 }
 
 int main(int argc,char **argv)
 {
+<<<<<<< HEAD
     scanner_config   sc;
     struct feature_recorder_set::flags_t f;
     //be13::plugin::load_scanners(scanners_builtin,sc);
+=======
+
+    TODO - create a scanner set, which includes a feature_recorder_set
+
+
+    scanner_info::scanner_config   s_config;
+    plugin::load_scanners(scanners_builtin,s_config);
+>>>>>>> 9bc2926c4a2df82b189b30631210a8f719b74520
 
     /* look for usage first */
     if(argc==1 || (strcmp(argv[1],"-h")==0)){
@@ -77,8 +112,13 @@ int main(int argc,char **argv)
     while ((ch = getopt(argc, argv, "e:o:s:x:h?")) != -1) {
 	switch (ch) {
 	case 'o': opt_outdir = optarg;break;
+<<<<<<< HEAD
 	case 'e': sc.push_scanner_command(optarg, true);break;
 	case 'x': sc.push_scanner_command(optarg, false); break;
+=======
+	case 'e': plugin::scanners_enable(optarg);break;
+	case 'x': plugin::scanners_disable(optarg);break;
+>>>>>>> 9bc2926c4a2df82b189b30631210a8f719b74520
 	case 's':
 	    {
 		std::vector<std::string> params = split(optarg,'=');
@@ -102,6 +142,7 @@ int main(int argc,char **argv)
 
     //opt_scan_bulk_block_size = stoi64(be_config["bulk_block_size"]);
 
+<<<<<<< HEAD
     //be13::plugin::scanners_process_enable_disable_commands();
 
     //feature_file_names_t feature_file_names;
@@ -109,6 +150,15 @@ int main(int argc,char **argv)
     //feature_recorder_set fs(0);	// where the features will be put
     //fs.init(feature_file_names,argv[0],opt_outdir);
     //be13::plugin::scanners_init(fs);
+=======
+    plugin::scanners_process_enable_disable_commands();
+
+    feature_file_names_t feature_file_names;
+    plugin::get_scanner_feature_file_names(feature_file_names);
+    feature_recorder_set fs(0);	// where the features will be put
+    fs.init(feature_file_names,argv[0],opt_outdir);
+    plugin::scanners_init(fs);
+>>>>>>> 9bc2926c4a2df82b189b30631210a8f719b74520
 
     /* Make an sbuf for the file. */
     sbuf_t sbuf = sbuf_t::map_file(argv[0]);
@@ -116,7 +166,13 @@ int main(int argc,char **argv)
 	err(1,"Cannot map file %s:%s\n",argv[0],strerror(errno));
     }
 
+<<<<<<< HEAD
     ss.process_sbuf( sbuf );
     ss.shutdown();
+=======
+    plugin::process_sbuf(scanner_params(scanner_params::PHASE_SCAN,*sbuf,fs));
+    plugin::phase_shutdown(fs);
+    fs.process_histograms(0);
+>>>>>>> 9bc2926c4a2df82b189b30631210a8f719b74520
     return(0);
 }

@@ -1,7 +1,7 @@
 /**
  * scan_pdf:
  * Extracts text from PDF files by decompressing streams and extracting text between parentheses.
- * Currently this is dead-simple. It should be rewritten to position the text on an (x,y) grid and find the words. 
+ * Currently this is dead-simple. It should be rewritten to position the text on an (x,y) grid and find the words.
  */
 
 #include "config.h"
@@ -27,8 +27,6 @@
 #  pragma GCC diagnostic ignored "-Wcast-qual"
 #endif
 #include <zlib.h>
-
-using namespace std;
 
 static bool pdf_dump = false;
 
@@ -63,7 +61,7 @@ static bool mostly_printable_ascii(const unsigned char *buf,size_t bufsize)
  * Spaces are always added between arrays [foo].
  * So we just put a space between them all and hope.
  */
- 
+
 static void pdf_extract_text(std::string &tbuf,const unsigned char *buf,size_t bufsize)
 {
     int maxwordsize = 0;
@@ -109,7 +107,7 @@ static void pdf_extract_text(std::string &tbuf,const unsigned char *buf,size_t b
     }
 }
 
-inline int analyze_stream(const class scanner_params &sp,const recursion_control_block &rcb,
+inline int analyze_stream(const scanner_params &sp,const recursion_control_block &rcb,
                           size_t stream_tag,size_t stream_start,size_t endstream)
 {
     const sbuf_t &sbuf = sp.sbuf;
@@ -158,11 +156,10 @@ inline int analyze_stream(const class scanner_params &sp,const recursion_control
 
 
 extern "C"
-void scan_pdf(const class scanner_params &sp,const recursion_control_block &rcb)
+void scan_pdf(const scanner_params &sp,const recursion_control_block &rcb)
 {
-    assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
+    sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP){
-        assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
         sp.info->name           = "pdf";
         sp.info->author         = "Simson Garfinkel";
         sp.info->description    = "Extracts text from PDF files";
@@ -182,7 +179,7 @@ void scan_pdf(const class scanner_params &sp,const recursion_control_block &rcb)
 	/* Look for signature for the beginning of a PDF stream */
 	for(size_t loc=0;loc+15<sbuf.pagesize;loc++){
 	    ssize_t stream_tag = sbuf.find("stream",loc);
-	    if(stream_tag==-1) break;   
+	    if(stream_tag==-1) break;
 	    /* Now skip past the \r or \r\n or \n */
 	    size_t stream_start = stream_tag+6;
 	    if(sbuf[stream_start]=='\r' && sbuf[stream_start+1]=='\n') stream_start+=2;
@@ -212,4 +209,3 @@ void scan_pdf(const class scanner_params &sp,const recursion_control_block &rcb)
 	}
     }
 }
-

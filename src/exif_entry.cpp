@@ -106,8 +106,8 @@ const std::string exif_entry::get_full_name() const {
     }
     return "ERROR";			// required to avoid compiler warning
 }
- 
-/** 
+
+/**
  * parse_ifd_entries() extracts entries from an offset given its type.
  * Throws exif_failure_exception if the exif data state is determined to be invalid
  * such that further entry parsing would be invalid.
@@ -145,7 +145,7 @@ void entry_reader::parse_ifd_entries(ifd_type_t ifd_type, tiff_handle_t &tiff_ha
 
 void entry_reader::parse_entry(ifd_type_t ifd_type, tiff_handle_t &tiff_handle,
 			       size_t ifd_entry_offset, entry_list_t &entries) {
-/** 
+/**
  * parse_ifd_entry() parses one entry and places it into entries.
  * Throws exif_failure_exception if the exif data state is determined to be invalid
  * such that further entry parsing would be invalid.
@@ -1183,7 +1183,7 @@ static std::string get_possible_utf8(const sbuf_t &sbuf, size_t count) {
     } else {
         std::string s;
         sbuf.getUTF8(0, count, s);
-        validateOrEscapeUTF8(s,true,false);
+        validateOrEscapeUTF8(s,true,false,true);
         return s;
     }
 }
@@ -1304,7 +1304,7 @@ std::string all_utf16to8 (std::wstring utf16_string) {
  * @Throws exif_failure_exception_t
  */
 static std::string get_exif_byte(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset) {
- 
+
     uint32_t count = get_entry_count(tiff_handle, ifd_entry_offset);
     uint32_t offset = get_data_offset(tiff_handle, ifd_entry_offset);
 
@@ -1528,4 +1528,3 @@ static std::string get_exif_srational(tiff_handle_t &tiff_handle, uint32_t ifd_e
     }
     return ss.str();
 }
-

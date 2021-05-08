@@ -30,7 +30,7 @@
  *         decrement freethreads
  *         cond-signal TOWORKER
  *         release M
- * 
+ *
  * worker:
  *     init
  *     while true:
@@ -48,24 +48,19 @@
  */
 
 #include <queue>
-#include <pthread.h>
-#include "be13_api/aftimer.h"
-#include "dfxml/src/dfxml_writer.h"
+#include "bulk_extractor_i.h"
 
 // There is a single threadpool object
-class threadpool {
+class be_threadpool {
  private:
     /*** neither copying nor assignment is implemented ***/
     threadpool(const threadpool &);
     threadpool &operator=(const threadpool &);
-    
+
  public:
-#ifdef WIN32
-    static void win32_init();		// must be called on win32
-#endif
     typedef std::vector<class worker *> worker_vector;
     worker_vector	workers;
-    pthread_mutex_t	M;		// protects the following variables
+    std::mutex  	M;		// protects the following variables
     pthread_cond_t	TOMAIN;
     pthread_cond_t	TOWORKER;
     int			freethreads;
@@ -75,8 +70,6 @@ class threadpool {
     std::vector<std::string> thread_status;	// for each thread, its status
     aftimer		waiting;	// time spend waiting
     int			mode;		// 0=running; 1 = waiting for workers to finish
-
-    static u_int	numCPU();
 
     threadpool(int numthreads,feature_recorder_set &fs_,dfxml_writer &xreport);
     virtual ~threadpool();

@@ -2,7 +2,7 @@
  * Alex Eubanks, June 2012 - endeavor at rainbowsandpwnies.com
  * The structures used for this code come from
  * https://github.com/endeav0r/Rainbows-And-Pwnies-Tools .
- * 
+ *
  * Originally (C) 2011 Alex Eubanks.
  * Released into the public domain on June 7, 2012.
  *
@@ -10,7 +10,7 @@
  * mirror those found in the PE specification given by Microsoft.
  *
  * For a description of the meanings of the field names below, please see
- * "Microsoft PE and COFF Specification," 
+ * "Microsoft PE and COFF Specification,"
  * http://msdn.microsoft.com/en-us/library/windows/hardware/gg463119.aspx
 
  * Revision history:
@@ -19,7 +19,7 @@
                       0, resulting in failure to extract valid dll filenames.
  * 2015-april   bda - added PE carving.
  */
- 
+
 /**
  * XML_SPEC
  PE
@@ -326,9 +326,9 @@ typedef struct _Pe_ImportDirectoryTable {
 } Pe_ImportDirectoryTable;
 
 std::ostream & operator << (std::ostream &os,const Pe_ImportDirectoryTable &idt){
-    os << " ImportLookupTableRVA=" << idt.ImportLookupTableRVA 
+    os << " ImportLookupTableRVA=" << idt.ImportLookupTableRVA
        << " TimeDateStamp=" << idt.TimeDateStamp
-       << " ForwarderChain=" << idt.ForwarderChain 
+       << " ForwarderChain=" << idt.ForwarderChain
        << " NameRVA=" << idt.NameRVA
        << " ImportAddressTableRVA=" << idt.ImportAddressTableRVA;
     return os;
@@ -515,23 +515,23 @@ static std::string scan_winpe_verify (const sbuf_t &sbuf)
     int          section_i;
     std::stringstream xml;
     //int dlli;
-    
+
     // set Pe_FileHeader to correct address
     uint32_t header_offset = sbuf.get32u(PE_FILE_OFFSET);
-    
+
     // we adjust header_offset to account for PE_SIGNATURE_SIZE, and use
     // header_offset throughout the code to insure we don't have
     // out-of-bounds errors
     header_offset += PE_SIGNATURE_SIZE;
-   
+
     /******************************************
      * BEGIN HEADER                            *
      ******************************************/
     if (header_offset + sizeof(Pe_FileHeader) > size)
         return "";
-    
+
     xml << "<PE><FileHeader";
-    
+
     uint16_t pe_Machine              = sbuf.get16u(header_offset);
     uint16_t pe_NumberOfSections     = sbuf.get16u(header_offset + 2);
     uint32_t pe_TimeDateStamp        = sbuf.get32u(header_offset + 4);
@@ -544,10 +544,10 @@ static std::string scan_winpe_verify (const sbuf_t &sbuf)
     // 2^11.75 confidence, 2^20.25 to go
     std::string Machine = match_switch_case(pe_fileheader_machine, pe_Machine);
     if (Machine == "") return "";
-        
+
     // A PE with (0|>256) sections? Doubtful
     if ((pe_NumberOfSections == 0) || (pe_NumberOfSections > 256)) return "";
-    
+
     if (    ((pe_NumberOfSymbols == 0) && (pe_PointerToSymbolTable != 0))
 	    || (pe_NumberOfSymbols > 1000000)) return "";
 
@@ -569,16 +569,16 @@ static std::string scan_winpe_verify (const sbuf_t &sbuf)
 
     xml << "</FileHeader>";
 
-    
+
     /******************************************
      * BEGIN OPTIONAL HEADER STANDARD          *
      ******************************************/
 
     // we assume an optional header exists
     uint16_t pe_Magic;
-    
+
     xml << "<OptionalHeaderStandard";
-    
+
     // if we're going to segfault on this dereference, we don't have
     // enough information to confirm this PE. return false
     // Note: sizeof(*ohs) == sizeof(*ohsp) + 4
@@ -586,7 +586,7 @@ static std::string scan_winpe_verify (const sbuf_t &sbuf)
         + sizeof(Pe_OptionalHeaderStandard) > size)
         return "";
     ohs_offset = header_offset + sizeof(Pe_FileHeader);
-    
+
     pe_Magic = sbuf.get16u(ohs_offset);
     uint8_t  pe_MajorLinkerVersion;
     uint8_t  pe_MinorLinkerVersion;
@@ -607,11 +607,11 @@ static std::string scan_winpe_verify (const sbuf_t &sbuf)
         // this field isn't used to make OptionalHeaderStandard and
         // OptionalHeaderStandardPlus consistent (this field isn't in Plus header)
         //uint32_t pe_BaseOfData              = sbuf.get32u(ohs_offset + 24);
-        
+
         // check for values resembling sanity
         if (pe_BaseOfCode          > 0x10000000) return "";
         if (pe_AddressOfEntryPoint > 0x10000000) return "";
-        
+
         xml << " Magic=\"PE32\"";
         xml << " MajorLinkerVersion=\""      << ((int) pe_MajorLinkerVersion) << "\"";
         xml << " MinorLinkerVersion=\""      << ((int) pe_MinorLinkerVersion) << "\"";
@@ -620,7 +620,7 @@ static std::string scan_winpe_verify (const sbuf_t &sbuf)
         xml << " SizeOfUninitializedData=\"" << pe_SizeOfUninitializedData    << "\"";
         xml << " AddressOfEntryPoint=\"0x"   << std::hex << pe_AddressOfEntryPoint << "\"";
         xml << " BaseOfCode=\"0x"            << std::hex << pe_BaseOfCode          << "\"";
-        
+
         break;
 
     case IMAGE_FILE_TYPE_PE32PLUS :
@@ -631,10 +631,10 @@ static std::string scan_winpe_verify (const sbuf_t &sbuf)
         pe_SizeOfUninitializedData = sbuf.get32u(ohs_offset + 12);
         pe_AddressOfEntryPoint     = sbuf.get32u(ohs_offset + 16);
         pe_BaseOfCode              = sbuf.get32u(ohs_offset + 20);
-        
+
         if (pe_BaseOfCode          > 0x10000000) return "";
         if (pe_AddressOfEntryPoint > 0x10000000) return "";
-        
+
         xml << " Magic=\"PE32+\"";
         xml << " MajorLinkerVersion=\""      << ((int) pe_MajorLinkerVersion) << "\"";
         xml << " MinorLinkerVersion=\""      << ((int) pe_MinorLinkerVersion) << "\"";
@@ -643,15 +643,15 @@ static std::string scan_winpe_verify (const sbuf_t &sbuf)
         xml << " SizeOfUninitializedData=\"" << pe_SizeOfUninitializedData    << "\"";
         xml << " AddressOfEntryPoint=\"0x"   << std::hex << pe_AddressOfEntryPoint << "\"";
         xml << " BaseOfCode=\"0x"            << std::hex << pe_BaseOfCode          << "\"";
-        
+
         break;
-        
+
     default :
         return "";
     }
 
     xml << " />";
-    
+
 
     /******************************************
      * BEGIN OPTIONAL HEADER WINDOWS           *
@@ -677,27 +677,27 @@ static std::string scan_winpe_verify (const sbuf_t &sbuf)
     uint16_t pe_DllCharacteristics = 0;
     uint32_t pe_LoaderFlags = 0;
     uint32_t pe_NumberOfRvaAndSizes = 0;
-    
+
     uint64_t pe_ImageBase = 0;
     uint64_t pe_SizeOfStackReserve = 0;
     uint64_t pe_SizeOfStackCommit = 0;
     uint64_t pe_SizeOfHeapReserve = 0;
     uint64_t pe_SizeOfHeapCommit = 0;
-    
+
     std::string Subsystem = "";
     bool ohw_xml = true;
-    
+
     if (    (pe_Magic == IMAGE_FILE_TYPE_PE32)
 	    && (pe_SizeOfOptionalHeader > sizeof(Pe_OptionalHeaderStandard) +
 		sizeof(Pe_OptionalHeaderWindows))
 	    // do we have enough buffer space for this?
-	    && (header_offset 
+	    && (header_offset
 		+ sizeof(Pe_FileHeader)
 		+ sizeof(Pe_OptionalHeaderStandard)
 		+ sizeof(Pe_OptionalHeaderWindows) <= size)) {
-        
+
         ohw_offset = ohs_offset + sizeof(Pe_OptionalHeaderStandard);
-        
+
         pe_ImageBase                   = sbuf.get32u(ohw_offset);
         pe_SectionAlignment            = sbuf.get32u(ohw_offset + 4);
         pe_FileAlignment               = sbuf.get32u(ohw_offset + 8);
@@ -719,9 +719,9 @@ static std::string scan_winpe_verify (const sbuf_t &sbuf)
         pe_SizeOfHeapCommit            = sbuf.get32u(ohw_offset + 56);
         pe_LoaderFlags                 = sbuf.get32u(ohw_offset + 60);
         pe_NumberOfRvaAndSizes         = sbuf.get32u(ohw_offset + 64);
-        
+
         Subsystem = match_switch_case(pe_optionalwindowsheader_subsystem, pe_Subsystem);
-    }   
+    }
     else if (    (pe_Magic == IMAGE_FILE_TYPE_PE32PLUS)
 		 && (pe_SizeOfOptionalHeader > sizeof(Pe_OptionalHeaderStandardPlus) +
 		     sizeof(Pe_OptionalHeaderWindowsPlus))
@@ -730,7 +730,7 @@ static std::string scan_winpe_verify (const sbuf_t &sbuf)
 		     + sizeof(Pe_FileHeader)
 		     + sizeof(Pe_OptionalHeaderStandardPlus)
 		     + sizeof(Pe_OptionalHeaderWindowsPlus) <= size)) {
-        
+
         ohw_offset = ohs_offset + sizeof(Pe_OptionalHeaderStandardPlus);
 
         pe_ImageBase                   = sbuf.get64u(ohw_offset);
@@ -754,11 +754,11 @@ static std::string scan_winpe_verify (const sbuf_t &sbuf)
         pe_SizeOfHeapCommit            = sbuf.get32u(ohw_offset + 60);
         pe_LoaderFlags                 = sbuf.get32u(ohw_offset + 64);
         pe_NumberOfRvaAndSizes         = sbuf.get32u(ohw_offset + 68);
-        
+
         Subsystem = match_switch_case(pe_optionalwindowsheader_subsystem, pe_Subsystem);
     }
     else ohw_xml = false;
-    
+
     if (ohw_xml) {
         xml << "<OptionalHeaderWindows";
         xml << " ImageBase=\"0x"                 << std::hex << pe_ImageBase       << "\"";
@@ -781,7 +781,7 @@ static std::string scan_winpe_verify (const sbuf_t &sbuf)
         xml << " SizeOfHeapCommit=\""            << pe_SizeOfHeapCommit            << "\"";
         xml << " LoaderFlags=\""                 << pe_LoaderFlags                 << "\"";
         xml << " NumberOfRvaAndSizes=\""         << pe_NumberOfRvaAndSizes         << "\">";
-        
+
         /* Note: This field name is DllCharacteristics in the Microsoft
          * spec, not Characteristics.  We have chosen to preserve
          * Microsoft's inconsistency in the XML.
@@ -792,8 +792,8 @@ static std::string scan_winpe_verify (const sbuf_t &sbuf)
                      pe_DllCharacteristics);
         xml << "</OptionalHeaderWindows>";
     }
-    
-    
+
+
     // Before we loop through sections, we're going to locate the
     // virtual address of the idata directory. If we load a valid
     // section that holds the idata, we'll save the address of the idata
@@ -815,40 +815,40 @@ static std::string scan_winpe_verify (const sbuf_t &sbuf)
 						    + sizeof(Pe_OptionalHeaderWindowsPlus)
 						    + sizeof(Pe_DataDirectory));
     }
-    
+
     // Section Header for Imports (shi):
     // if this not NULL once we're done processing sections,
     // it points to the Section Header of the section which
     // holds the import table data
-    const Pe_SectionHeader * shi  = NULL; 
+    const Pe_SectionHeader * shi  = NULL;
     xml << "<Sections>";
     for (section_i = 0; section_i < pe_NumberOfSections; section_i++) {
-        
+
 	const Pe_SectionHeader * sh =
 	    sbuf.get_struct_ptr<Pe_SectionHeader>(header_offset
 						  + sizeof(Pe_FileHeader)
 						  + pe_SizeOfOptionalHeader
 						  + sizeof(Pe_SectionHeader) * section_i);
 	if(sh==0) break; // no more!
-        
+
         // the following flags are reserved for future use and should
         // not be set. If we get something invalid, we've probably gone
         // into garbage, so just give up on the sections.
         if (sh->Characteristics & PE_SECTION_RESERVED_FLAGS) break;
-        
-        if (sh->VirtualSize & 0x80000000) break; 
-        
+
+        if (sh->VirtualSize & 0x80000000) break;
+
         // this allows for sections up to 256mb in size, more than
         // generous
         if (sh->SizeOfRawData & 0xe0000000) break;
 
-        
+
         // section names do not have to be null-terminated,
         // so termiante it.
-        char section_name[9];       
+        char section_name[9];
         strncpy(section_name, sh->Name, sizeof(section_name));
         section_name[8] = '\0';
-        
+
 	if(!valid_section_name(section_name)){
 	    shi = 0;			// don't get the shi
 	    goto end_of_sections;
@@ -863,11 +863,11 @@ static std::string scan_winpe_verify (const sbuf_t &sbuf)
         xml << " PointerToRelocations=\"" << sh->PointerToRelocations << "\"";
         xml << " PointerToLinenumbers=\"" << sh->PointerToLinenumbers << "\"";
         xml << " >";
-        
+
         decode_flags(xml,"Characteristics",pe_section_characteristic_names,sh->Characteristics);
-        
+
         xml << "</SectionHeader>";
-        
+
         // check if import data resides in this section
         if (idd) {
             if (    (idd->VirtualAddress >= sh->VirtualAddress)
@@ -887,12 +887,12 @@ static std::string scan_winpe_verify (const sbuf_t &sbuf)
         for (int idt_i = 0;  ; idt_i++) {
 	    const Pe_ImportDirectoryTable * idt  = sbuf.get_struct_ptr<Pe_ImportDirectoryTable>(shi->PointerToRawData + (  idd->VirtualAddress - shi->VirtualAddress) + sizeof(Pe_ImportDirectoryTable)*idt_i);
 	    if(idt==0) break;
-            
+
             // The Import Data Table is terminated by a null entry
             if (idt->ImportLookupTableRVA == 0 && idt->TimeDateStamp==0 && idt->ForwarderChain==0 && idt->NameRVA==0 && idt->ImportAddressTableRVA==0){
 		break;
 	    }
-                
+
             // We are given the RVA of a string which contains the
             // name of the DLL. We're going to loop through sections,
             // attempt to find a section which is loaded into this
@@ -903,13 +903,13 @@ static std::string scan_winpe_verify (const sbuf_t &sbuf)
                     + pe_SizeOfOptionalHeader
                     + sizeof(Pe_SectionHeader) * (si + 1) > size)
                     break;
-                    
+
                 const Pe_SectionHeader *sht =
 		    sbuf.get_struct_ptr<Pe_SectionHeader>(header_offset
 							  + sizeof(Pe_FileHeader)
 							  + pe_SizeOfOptionalHeader
 							  + sizeof(Pe_SectionHeader) * si);
-                    
+
                 // find target section
                 if (    (sht->VirtualAddress < idt->NameRVA)
 			&& (sht->VirtualAddress + sht->SizeOfRawData > idt->NameRVA)) {
@@ -920,7 +920,7 @@ static std::string scan_winpe_verify (const sbuf_t &sbuf)
 			+ (idt->NameRVA - sht->VirtualAddress)
 			+ 32 >= size)
 			break;
-            
+
 		    // place dll name in a buffer string and add the xml
 		    // Note --- currently this copies then verifies; it would be better
 		    // to verify while copying...
@@ -1017,14 +1017,12 @@ static size_t get_carve_size (const sbuf_t& sbuf)
 }
 
 extern "C"
-void scan_winpe (const class scanner_params &sp,
-		 const recursion_control_block &rcb)
+void scan_winpe (const scanner_params &sp, const recursion_control_block &rcb)
 {
-    assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
+    sp.check_version();
     std::string xml;
-    
+
     if (sp.phase == scanner_params::PHASE_STARTUP){
-        assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
         sp.info->name            = "winpe";
         sp.info->description     = "Scan for Windows PE headers";
         sp.info->scanner_version = "1.0.0";
@@ -1043,8 +1041,8 @@ void scan_winpe (const class scanner_params &sp,
 
     if(sp.phase == scanner_params::PHASE_SCAN){    // phase 1
 	feature_recorder *f = sp.fs.get_name("winpe");
-    
-	/* 
+
+	/*
 	 * Portable Executables start with a MS-DOS stub. The actual PE
 	 * begins at an offset of 0x3c (PE_FILE_OFFSET) bytes. The signature
 	 * is "PE\0\0"
@@ -1053,13 +1051,13 @@ void scan_winpe (const class scanner_params &sp,
 	// complete MS-Dos Stub, Signature and PE header, and an optional
 	// header and/or at least one section
 
-    
+
 	/* Return if the buffer is impossibly small to contain a PE header */
 	if ((sp.sbuf.bufsize < PE_SIGNATURE_SIZE + sizeof(Pe_FileHeader) + 40) ||
 	    (sp.sbuf.bufsize < PE_FILE_OFFSET+4)){
 	    return;
 	}
-    
+
 	/* Loop through the sbuf, go to the offset, and see if there is a PE signature */
 	for (size_t pos = 0; pos < sp.sbuf.pagesize; pos++) {
 	    size_t bytes_left = sp.sbuf.bufsize - pos;

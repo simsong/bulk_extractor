@@ -38,9 +38,7 @@ const size_t min_exif_size = 4096;
 const size_t exif_gulp_size = 1024*1024;	// how many bytes of EXIF to read
 
 
-using namespace std;
-
-/** 
+/**
  * jpeg_start() returns true if the buffer starts with a jpeg.
  */
 inline bool jpeg_start(const sbuf_t &sbuf){
@@ -103,9 +101,8 @@ int exif_show_all=1;
 extern "C"
 void scan_exiv2(const class scanner_params &sp,const recursion_control_block &rcb)
 {
-    assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
+    sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP){
-        assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	sp.info->name  = "exiv2";
         sp.info->author         = "Simson L. Garfinkel";
         sp.info->description    = "Searches for EXIF information using exiv2";
@@ -125,13 +122,13 @@ void scan_exiv2(const class scanner_params &sp,const recursion_control_block &rc
 #ifdef HAVE_EXIV2__LOGMSG__SETLEVEL
 	/* New form to suppress error messages on exiv2 */
 	Exiv2::LogMsg::setLevel(Exiv2::LogMsg::mute);
-#endif    
+#endif
 
 	size_t pos_max = 1;		// by default, just scan 1 byte
 	if(sbuf.bufsize > min_exif_size){
 	    pos_max = sbuf.bufsize - min_exif_size; //  we can scan more!
 	}
-    
+
 	/* Loop through all possible locations in the buffer */
 	for(size_t pos=0;pos<pos_max;pos++){
 	    size_t count = exif_gulp_size;
@@ -147,10 +144,10 @@ void scan_exiv2(const class scanner_params &sp,const recursion_control_block &rc
 		    Exiv2::Image::AutoPtr image = Exiv2::ImageFactory::open(sbuf.buf+pos,count);
 		    if(image->good()){
 			image->readMetadata();
-		    
+
 			Exiv2::ExifData &exifData = image->exifData();
 			if (exifData.empty()) continue;
-		    
+
 			/*
 			 * Create the MD5 of the first 4K to use as a unique identifier.
 			 */

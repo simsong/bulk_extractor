@@ -44,14 +44,10 @@
 
 #include "config.h"
 
-//#define __CORRECT_ISO_CPP_STRING_H_PROTO 
-//#define __CORRECT_ISO_CPP_WCHAR_H_PROTO 
-
 #include <cstdlib>
 #include <cctype>
 #include <cstring>
-#include <sys/types.h>
-#include <sys/param.h>
+#include <cinttypes>
 
 
 #define Assert(Cond) if (!(Cond)) abort()
@@ -124,13 +120,12 @@ static const char Pad64 = '=';
    */
 
 
-/* we don't report errors */
+/* We don't report errors.
+ * Return value is the number of bytes converted.
+ */
 #define puts(x) {}
 
-extern "C" int b64_pton_forensic(const char *src, int srclen, unsigned char *target, size_t targsize);
-extern "C"
-int
-b64_pton_forensic(char const *src, int srclen, unsigned char *target, size_t targsize)
+int b64_pton_forensic(char const *src, int srclen, unsigned char *target, size_t targsize)
 {
         int tarindex=0, state=0, ch=0;
         const char *pos=0;

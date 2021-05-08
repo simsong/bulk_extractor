@@ -89,8 +89,6 @@
 
 #define STRING_BUF_LEN 2048
 
-using namespace std;
-
 static inline int int2(const u_char *cc)
 {
     return (cc[1]<<8) + cc[0];
@@ -200,14 +198,14 @@ public:
         uint8_t days = (dos_date & DOS_MASK_DAY) >> DOS_SHIFT_DAY;
         uint8_t months = (dos_date & DOS_MASK_MONTH) >> DOS_SHIFT_MONTH;
         uint16_t years = (dos_date & DOS_MASK_YEAR) >> DOS_SHIFT_YEAR;
-        
+
         years += DOS_OFFSET_YEAR;
         seconds *= 2;
-        
+
         char buf[STRING_BUF_LEN];
         snprintf(buf,sizeof(buf),"%04d-%02d-%02dT%02d:%02d:%02dZ",
                  years, months, days, hours, minutes, seconds);
-        stringstream ss;
+        std::stringstream ss;
         ss << buf;
         return ss.str();
     }
@@ -233,7 +231,7 @@ std::string RarComponentInfo::to_xml() const
     char string_buf[STRING_BUF_LEN];
 
     // build XML output
-    string filename = dfxml_writer::xmlescape(name);
+    std::string filename = dfxml_writer::xmlescape(name);
 
     snprintf(string_buf,sizeof(string_buf),
              "<rar_component>"
@@ -250,7 +248,7 @@ std::string RarComponentInfo::to_xml() const
     return std::string(string_buf);
 }
 
-string RarComponentInfo::compression_method_label() const
+std::string RarComponentInfo::compression_method_label() const
 {
     char string_buf[5];
     switch(compression_method) {
@@ -268,11 +266,11 @@ string RarComponentInfo::compression_method_label() const
             return "smallest";
         default:
             snprintf(string_buf, sizeof(string_buf), "0x%02X", compression_method);
-            return string(string_buf);
+            return std::string(string_buf);
     }
 }
 
-string RarComponentInfo::host_os_label() const
+std::string RarComponentInfo::host_os_label() const
 {
     char string_buf[5];
     switch(host_os) {
@@ -290,7 +288,7 @@ string RarComponentInfo::host_os_label() const
             return "BeOS";
         default:
             snprintf(string_buf, sizeof(string_buf), "0x%02X", host_os);
-            return string(string_buf);
+            return std::string(string_buf);
     }
 }
 
@@ -306,7 +304,7 @@ public:
     uint16_t len;
 };
 
-string RarVolumeInfo::to_xml() const
+std::string RarVolumeInfo::to_xml() const
 {
     char string_buf[STRING_BUF_LEN];
 
@@ -316,7 +314,7 @@ string RarVolumeInfo::to_xml() const
              "</rar_volume>",
              flags & FLAG_HEADERS_ENCRYPTED ? "true" : "false");
 
-    return string(string_buf);
+    return std::string(string_buf);
 }
 
 // settings - these configuration vars are set when the scanner is created
@@ -381,7 +379,7 @@ static bool process_component(const unsigned char *buf, size_t buf_len, RarCompo
     //
     // Filename extraction
     //
-    string& filename = output.name;
+    std::string &filename = output.name;
     uint16_t filename_len = 0;
     const char *filename_bytes = (const char *) buf + OFFSET_FILE_NAME;
     if(flags & FLAG_BIGFILE) {
@@ -412,12 +410,12 @@ static bool process_component(const unsigned char *buf, size_t buf_len, RarCompo
         if(null_byte_index == filename_bytes_len) {
             // UTF-8 only - go with UTF-8 string
             filename_len = filename_bytes_len;
-            filename = string(filename_bytes, (size_t) filename_len);
+            filename = std::string(filename_bytes, (size_t) filename_len);
         }
         else {
             // if both ASCII and UTF-8 are present, disregard ASCII
             filename_len = filename_bytes_len - (null_byte_index + 1);
-            filename = string(filename_bytes + null_byte_index + 1, filename_len);
+            filename = std::string(filename_bytes + null_byte_index + 1, filename_len);
         }
         // validate extracted UTF-8
         if(utf8::find_invalid(filename.begin(),filename.end()) != filename.end()) {
@@ -426,14 +424,14 @@ static bool process_component(const unsigned char *buf, size_t buf_len, RarCompo
     }
     else {
         filename_len = filename_bytes_len;
-        filename = string(filename_bytes, filename_len);
+        filename = std::string(filename_bytes, filename_len);
     }
 
     // throw out zero-length filename
     if(filename.size()==0) return false;
 
     // disallow ASCII control characters, which may also appear in valid UTF-8
-    string::const_iterator first_control_character = filename.begin();
+    std::string::const_iterator first_control_character = filename.begin();
     for(; first_control_character != filename.end(); first_control_character++) {
         if((char) *first_control_character < ' ') {
             break;
@@ -531,7 +529,7 @@ static void unpack_buf(const uint8_t* input, size_t input_len, uint8_t* output, 
     args[4] = &arg_bufs[4][0];
     args[5] = &arg_bufs[5][0];
 
-    string xmloutput = "<rar>\n";
+    std::string xmloutput = "<rar>\n";
     CommandData data; //this variable is for assigning the commands to execute
     data.ParseCommandLine(6, args); //input the commands and have them parsed
     const wchar_t* c = L"aRarFile.rar"; //the 'L' prefix tells it to convert an ASCII Literal
@@ -587,18 +585,17 @@ static bool is_mark_block(const uint8_t* buf, size_t buf_len, size_t offset)
 //25 50 44 46 2D
 //25 25 45 4F 46
 size_t sz = component.uncompressed_size;
-assert(dbuf.buf[0] == 0x25); assert(dbuf.buf[1] == 0x50); assert(dbuf.buf[2] == 0x44); assert(dbuf.buf[3] == 0x46); assert(dbuf.buf[4] == 0x2D); 
-assert(dbuf.buf[sz-5] == 0x25); assert(dbuf.buf[sz-4] == 0x25); assert(dbuf.buf[sz-3] == 0x45); assert(dbuf.buf[sz-2] == 0x4F); assert(dbuf.buf[sz-1] == 0x46); 
+assert(dbuf.buf[0] == 0x25); assert(dbuf.buf[1] == 0x50); assert(dbuf.buf[2] == 0x44); assert(dbuf.buf[3] == 0x46); assert(dbuf.buf[4] == 0x2D);
+assert(dbuf.buf[sz-5] == 0x25); assert(dbuf.buf[sz-4] == 0x25); assert(dbuf.buf[sz-3] == 0x45); assert(dbuf.buf[sz-2] == 0x4F); assert(dbuf.buf[sz-1] == 0x46);
 #endif
 
 
 static uint32_t unrar_carve_mode = feature_recorder::CARVE_ENCODED;
 extern "C"
-void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
+void scan_rar(const scanner_params &sp,const recursion_control_block &rcb)
 {
-    assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
+    sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP){
-        assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	sp.info->name  = "rar";
 	sp.info->author = "Michael Shick";
 #ifdef USE_RAR
@@ -677,8 +674,8 @@ void scan_rar(const class scanner_params &sp,const recursion_control_block &rcb)
 
                         std::string carve_name("_");
                         carve_name += component.name;
-                        for(std::string::iterator it = carve_name.begin(); it!=carve_name.end();it++){
-                            if(*it=='/') *it = '_';
+                        for(auto &it : carve_name){
+                            if(it=='/') it = '_';
                         }
                         std::string fn = unrar_recorder->carve(child_sbuf,0,child_sbuf.bufsize,carve_name);
                         unrar_recorder->set_carve_mtime(fn,component.iso_timestamp());

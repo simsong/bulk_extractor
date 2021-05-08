@@ -1,8 +1,8 @@
 #ifndef BULK_EXTRACTOR_API_H
 #define BULK_EXTRACTOR_API_H
 
-#include <sys/types.h>
-#include <stdint.h>
+#include <cctype>
+#include <cstdint>
 
 /*
  * The bulk_extractor_api is an easy-to-use API for bulk_extractor.

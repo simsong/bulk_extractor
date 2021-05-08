@@ -2,7 +2,7 @@
  * Plugin: scan_ntfsindx
  * Purpose: Find all $INDEX_ALLOCATION INDX record into one file
  * Reference: http://www.digital-evidence.org/fsfa/
- * Teru Yamazaki(@4n6ist) - https://github.com/4n6ist/bulk_extractor-rec 
+ * Teru Yamazaki(@4n6ist) - https://github.com/4n6ist/bulk_extractor-rec
  **/
 #include "config.h"
 #include "be13_api/bulk_extractor_i.h"
@@ -19,8 +19,6 @@
 #include "utf8.h"
 
 static uint32_t ntfsindx_carve_mode = feature_recorder::CARVE_ALL;
-
-using namespace std;
 
 #define SECTOR_SIZE 512
 #define CLUSTER_SIZE 4096
@@ -64,7 +62,7 @@ int8_t check_indxrecord_type(size_t offset, const sbuf_t &sbuf) {
 
     // 4 FILETIME pattern
     if (sbuf[offset + 95] == 0x01 && sbuf[offset + 103] == 0x01 &&
-        sbuf[offset + 111] == 0x01 && sbuf[offset + 119] == 0x01)        
+        sbuf[offset + 111] == 0x01 && sbuf[offset + 119] == 0x01)
         return 1;
     // ObjId-O magic number
     else if (sbuf[offset + 64] == 0x20 && sbuf[offset + 72] == 0x58)
@@ -75,11 +73,10 @@ int8_t check_indxrecord_type(size_t offset, const sbuf_t &sbuf) {
 
 extern "C"
 
-void scan_ntfsindx(const class scanner_params &sp,const recursion_control_block &rcb)
+void scan_ntfsindx(const scanner_params &sp,const recursion_control_block &rcb)
 {
-    assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
+    sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP){
-        assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
         sp.info->name            = "ntfsindx";
         sp.info->author          = "Teru Yamazaki";
         sp.info->description     = "Scans for NTFS $INDEX_ALLOCATION INDX record";
@@ -131,7 +128,7 @@ void scan_ntfsindx(const class scanner_params &sp,const recursion_control_block 
                     ntfsindx_recorder->carve_records(sbuf,offset,total_record_size,"INDX");
                 }
                 else if(record_type == 2) {
-                    ntfsindx_recorder->carve_records(sbuf,offset,total_record_size,"INDX_ObjId-O");                    
+                    ntfsindx_recorder->carve_records(sbuf,offset,total_record_size,"INDX_ObjId-O");
                 }
                 else { // 0 - Other INDX record (Secure-SDH, Secure-SII, etc.)
                     ntfsindx_recorder->carve_records(sbuf,offset,total_record_size,"INDX_Misc");

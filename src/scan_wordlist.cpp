@@ -2,9 +2,9 @@
 #include "be13_api/bulk_extractor_i.h"
 #include "utils.h"
 
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
+#include <cstdlib>
+#include <cstring>
+#include <cinttypes>
 
 static uint32_t word_min = 6;
 static uint32_t word_max = 14;
@@ -27,12 +27,13 @@ public:
  */
 
 static bool wordlist_use_flatfiles = true;
+static bool wordlist_use_sql = true;
 
 #if defined(HAVE_LIBSQLITE3) && defined(HAVE_SQLITE3_H)
 #define USE_SQLITE3
 #endif
 
-#ifdef USE_SQLITE3 
+#ifdef USE_SQLITE3
 static const char *schema_wordlist[] = {
     "CREATE TABLE wordlist (word BLOB)",
     "CREATE UNIQUE INDEX wordlist_i on wordlist(word)",
@@ -51,34 +52,34 @@ static uint64_t outfilesize = 0;
 
 static void wordlist_write_word(const std::string &word)
 {
-    if(!of2.is_open() || outfilesize>max_word_outfile_size){ 
+    if (!of2.is_open() || outfilesize>max_word_outfile_size){
         if(of2.is_open()) of2.close();
         char fname[128];
         snprintf(fname,sizeof(fname),ofn_template.c_str(),of2_counter++);
         of2.open(fname);
-        if(!of2.is_open()) err(1,"Cannot open %s",fname);
+        if(!of2.is_open()) throw std::runtime_error(std::string("Cannot open ") + fname);
         outfilesize = 0;
     }
     of2 << word << '\n';
     outfilesize += word.size() + 1;
 }
-	    
+
 
 static void wordlist_split_and_dedup(const std::string &ifn)
 {
     std::ifstream f2(ifn.c_str());
-    if(!f2.is_open()) err(1,"Cannot open %s\n",ifn.c_str());
+    if (!f2.is_open()) throw std::runtime_error(std::string("Cannot open ")+ifn);
 
     /* Read all of the words */
 
     while(!f2.eof()){
 	// set is the sorted list of words we have seen
-	std::set<std::string, WordlistSorter> seen;	
+	std::set<std::string, WordlistSorter> seen;
 	while(!f2.eof()){
 	    /* Create the first file (of2==0) or roll-over if outfilesize>100M */
 	    std::string line;
 	    getline(f2,line);
-	    if(line[0]=='#') continue;	// ignore comments
+	    if(line[0]=='#') continue;	                // ignore comments
 	    size_t t1 = line.find('\t');		// find the beginning of the feature
 	    if(t1!=std::string::npos) line = line.substr(t1+1);
 	    size_t t2 = line.find('\t');		// find the end of the feature
@@ -106,10 +107,10 @@ static void wordlist_split_and_dedup(const std::string &ifn)
 /* Similar to above; write out the wordlist using SQL.
  * Not-multi-threaded, but threadsafe nonetheless.
  */
-static void wordlist_sql_write(BEAPI_SQLITE3 *db3)
+static void wordlist_sql_write(BEAPI_SQLITE3 *db)
 {
 #ifdef USE_SQLITE3
-    feature_recorder::besql_stmt s(db3,select_statement);
+    feature_recorder::besql_stmt s(db,select_statement);
     while (sqlite3_step(s.stmt) != SQLITE_DONE) {
         const char *base = (const char *)sqlite3_column_blob(s.stmt,0);
         int len          = sqlite3_column_bytes(s.stmt,0);
@@ -137,34 +138,36 @@ static void wordchar_setup()
     }
 }
 
-extern "C" 
-void scan_wordlist(const class scanner_params &sp,const recursion_control_block &rcb)
+extern "C"
+void scan_wordlist(const scanner_params &sp,const recursion_control_block &rcb)
 {
-    assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
+    sp.check_version();
     feature_recorder_set &fs = sp.fs;
     if(sp.phase==scanner_params::PHASE_STARTUP){
-        assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
         sp.info->name  = WORDLIST;
         sp.info->flags = scanner_info::SCANNER_DISABLED;
         sp.info->get_config("word_min",&word_min,"Minimum word size");
         sp.info->get_config("word_max",&word_max,"Maximum word size");
         sp.info->get_config("max_word_outfile_size",&max_word_outfile_size,
                             "Maximum size of the words output file");
-        sp.info->get_config("wordlist_use_flatfiles",&wordlist_use_flatfiles,"Override SQL settings and use flatfiles for wordlist");
+        sp.info->get_config("wordlist_use_flatfiles",&wordlist_use_flatfiles,"Use flatfiles for wordlist");
+        sp.info->get_config("wordlist_use_sql",&wordlist_use_sql,"Use SQL DB for wordlist");
         sp.info->get_config("strings",&strings,"Scan for strings instead of words");
 
-        if(wordlist_use_flatfiles || fs.db3==0){
+        if (wordlist_use_flatfiles){
             sp.info->feature_names.insert(WORDLIST);
         }
-        if(word_min>word_max){
+        if (word_min>word_max){
             fprintf(stderr,"ERROR: word_min (%d) > word_max (%d)\n",word_min,word_max);
             exit(1);
         }
 	wordchar_setup();
 	return;
     }
+    throw std::runtime_error("scan_wordlist hasn't been updated yet");
+#if 0
 
-    bool use_wordlist_recorder  = (wordlist_use_flatfiles || (fs.db3==0 && sp.fs.flag_notset(feature_recorder_set::DISABLE_FILE_RECORDERS)));
+    bool use_wordlist_recorder  = (wordlist_use_flatfiles || wordlist_use_sql);
     feature_recorder *wordlist_recorder = use_wordlist_recorder ? fs.get_name(WORDLIST) : 0;
 
 
@@ -177,18 +180,18 @@ void scan_wordlist(const class scanner_params &sp,const recursion_control_block 
             wordlist_recorder->set_flag(feature_recorder::FLAG_NO_FEATURES_SQL); // SQL wordlist handled separately.
             return;
         }
-        
+
 #ifdef USE_SQLITE3
-        if (fs.db3) {
-            fs.db_send_sql(fs.db3,schema_wordlist);
-            wordlist_stmt = new feature_recorder::besql_stmt(fs.db3,insert_statement);
+        if (fs.db) {
+            fs.db_send_sql(fs.db,schema_wordlist);
+            wordlist_stmt = new feature_recorder::besql_stmt(fs.db,insert_statement);
             return;
         }
 #endif
         assert(sp.fs.flag_set(feature_recorder_set::DISABLE_FILE_RECORDERS)); // this flag better be set
         return;
     }
-        
+
     /* shutdown code is multi-threaded */
     if(sp.phase==scanner_params::PHASE_SHUTDOWN){
         if(!strings){
@@ -201,8 +204,8 @@ void scan_wordlist(const class scanner_params &sp,const recursion_control_block 
           }
         }
 
-        if (fs.db3) {
-            wordlist_sql_write(fs.db3);
+        if (fs.db) {
+            wordlist_sql_write(fs.db);
             return;
         }
     }
@@ -213,7 +216,7 @@ void scan_wordlist(const class scanner_params &sp,const recursion_control_block 
 	const sbuf_t &sbuf = sp.sbuf;
 
 	/* Simplified word extractor. */
-    
+
         if (sbuf.bufsize==0){           // nothing to scan
             return;
         }
@@ -246,16 +249,16 @@ void scan_wordlist(const class scanner_params &sp,const recursion_control_block 
                     if ((word_min <= len) && (len <=  word_max)){
                         /* Save the word that starts at sbuf.buf+wordstart that has a length of len. */
                         std::string word = sbuf.substr(wordstart,len);
-                    
+
 #ifdef DEBUG_THIS
                         std::cerr << "word=" << word << " wr="
-                                  << wordlist_recorder << " fs.db3=" << fs.db3 << "\n";
+                                  << wordlist_recorder << " fs.db=" << fs.db << "\n";
 #endif
                         if (wordlist_recorder) {
                             wordlist_recorder->write(sbuf.pos0+wordstart,word,"");
-                        } else if (fs.db3) {
+                        } else if (fs.db) {
 #ifdef USE_SQLITE3
-                            cppmutex::lock lock(wordlist_stmt->Mstmt);
+                            const std::lock_guard<std::mutex> lock(wordlist_stmt->Mstmt);
                             sqlite3_bind_blob(wordlist_stmt->stmt, 1,
                                               (const char *)word.data(), word.size(), SQLITE_STATIC);
                             if (sqlite3_step(wordlist_stmt->stmt) != SQLITE_DONE) {
@@ -263,7 +266,7 @@ void scan_wordlist(const class scanner_params &sp,const recursion_control_block 
                             }
                             sqlite3_reset(wordlist_stmt->stmt);
 #endif
-                        } 
+                        }
                     }
                     wordstart = 0;
                     in_word = false;
@@ -271,4 +274,5 @@ void scan_wordlist(const class scanner_params &sp,const recursion_control_block 
 	    }
 	}
     }
+#endif
 }

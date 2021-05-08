@@ -9,11 +9,10 @@
 
 static uint8_t xor_mask = 255;
 extern "C"
-void scan_xor(const class scanner_params &sp,const recursion_control_block &rcb)
+void scan_xor(const scanner_params &sp,const recursion_control_block &rcb)
 {
-    assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
+    sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP) {
-        assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	sp.info->name  = "xor";
 	sp.info->author = "Michael Shick";
 	sp.info->description = "optimistic XOR deobfuscator";
@@ -50,10 +49,10 @@ void scan_xor(const class scanner_params &sp,const recursion_control_block &rcb)
         for(size_t ii = 0; ii < sbuf.bufsize; ii++) {
             dbuf.buf[ii] = sbuf.buf[ii] ^ xor_mask;
         }
-        
+
         std::stringstream ss;
         ss << "XOR(" << uint32_t(xor_mask) << ")";
-        
+
         const pos0_t pos0_xor = pos0 + ss.str();
         const sbuf_t child_sbuf(pos0_xor, dbuf.buf, sbuf.bufsize, sbuf.pagesize, 0, false);
         scanner_params child_params(sp, child_sbuf);

@@ -27,24 +27,25 @@
 class sbuf_scanner {
 public:
     class sbuf_scanner_exception: public std::exception {
+    private:
+        std::string m_error;
     public:
-        const char *msg;
-        sbuf_scanner_exception(const char *m):msg(m){}
-        virtual const char *what() const throw() {
-            return msg;
+        sbuf_scanner_exception(std::string error):m_error(error){}
+        const char* what() const noexcept {
+            return m_error.c_str();
         }
     };
-    explicit sbuf_scanner(const sbuf_t *sbuf_): sbuf(sbuf_),pos(0),point(0){}
+    explicit sbuf_scanner(const sbuf_t *sbuf_): sbuf(sbuf_){}
     virtual ~sbuf_scanner(){}
     const sbuf_t *sbuf;
     // pos & point may be redundent.
     // pos counts the number of bytes into the buffer and is incremented by the flex rules
     // point counts the point where we are removing characters
-    size_t pos;    /* The position regex is matching from---visible for C++ called by Flex */
-    size_t point;  /* The position we are reading from---visible to Flex machine */
+    size_t pos   {0};    /* The position regex is matching from---visible for C++ called by Flex */
+    size_t point {0};  /* The position we are reading from---visible to Flex machine */
 
     size_t get_input(char *buf,size_t max_size){
-        if((int)max_size < 0) return 0;
+        if ((int)max_size < 0) return 0;
         int count=0;
         while ((max_size > 0) && (point < sbuf->bufsize) /* && (pos < sbuf->pagesize) */ ){
             *buf++ = (char)sbuf->buf[point++];

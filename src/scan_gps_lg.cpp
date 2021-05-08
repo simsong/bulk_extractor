@@ -78,7 +78,7 @@ namespace gps {
     void timeHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
 
     void speedHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
- 
+
     void courseHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
 
   private:
@@ -91,8 +91,7 @@ namespace gps {
   };
 
   void Scanner::startup(const scanner_params& sp) {
-    assert(sp.sp_version == scanner_params::CURRENT_SP_VERSION);      
-    assert(sp.info->si_version == scanner_info::CURRENT_SI_VERSION);
+      sp.check_version();
 
     sp.info->name            = "gps_lg";
     sp.info->author          = "Simson L. Garfinkel";
@@ -147,7 +146,7 @@ namespace gps {
     );
 
     const string GPXTPX_COURSE("<gpxtpx:course>" + ELEV + "</gpxtpx:course>");
-    
+
     new Handler(
       *this,
       GPXTPX_COURSE,
@@ -158,7 +157,7 @@ namespace gps {
   }
 
   void Scanner::initScan(const scanner_params& sp) {
-    Recorder = sp.fs.get_name("gps"); 
+    Recorder = sp.fs.get_name("gps");
   }
 
   void Scanner::clear(const scanner_params& sp, size_t pos) {
@@ -196,7 +195,7 @@ namespace gps {
   void Scanner::speedHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
     Speed = get_cdata(reinterpret_cast<const char*>(sp.sbuf.buf));
   }
- 
+
   void Scanner::courseHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
     Course = get_cdata(reinterpret_cast<const char*>(sp.sbuf.buf));
   }

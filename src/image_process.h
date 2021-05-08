@@ -2,7 +2,7 @@
 #define IMAGE_PROCESS_H
 
 /** image processing plug-in framework for working with images.
- * Right now it's pretty specific to bulk_extractor. 
+ * Right now it's pretty specific to bulk_extractor.
  *
  * However, with the introduction of iterators, it could be removed from bulk_extractor.
  *
@@ -11,10 +11,9 @@
  *
  * Subclasses of this class are used to process:
  * process_ewf - process an EWF file
- * process_aff - process an AFF file
  * process_raw - process a RAW or splitraw file.
- * process_dir - recursively process a directory of files (but not E01 or AFF files)
- * 
+ * process_dir - recursively process a directory of files (but not E01  files)
+ *
  * Conditional compilation assures that this compiles no matter which class libraries are installed.
  *
  * subclasses must implement these two methods for path printing:
@@ -45,20 +44,10 @@
 #include "sbuf.h"
 #include "dig.h"
 
-#if defined(WIN32) 
+#if defined(WIN32)
 #  include <winsock2.h>
 #  include <windows.h>
 #  include <windowsx.h>
-#endif
-
-/* Undef HAVE_LIBAFFLIB if we don't have the include files */
-#if defined(HAVE_LIBAFFLIB) && !defined(HAVE_AFFLIB_AFFLIB_H)
-#  undef HAVE_LIBAFFLIB
-#endif
-
-
-#ifndef HAVE_STL
-#  define HAVE_STL			/* needed for AFFLIB */
 #endif
 
 class image_process {
@@ -71,7 +60,7 @@ private:
 
     /****************************************************************/
     const std::string image_fname_;			/* image filename */
-public:    
+public:
     /**
      * open() figures out which child class to call, calls its open, then
      * returns an object.
@@ -95,23 +84,21 @@ public:
      */
     class iterator {
     public:
-	int64_t  raw_offset;		
-	uint64_t page_number;
-	size_t   file_number;
 	const class image_process &myimage;
-	bool     eof;
-	iterator(const class image_process *myimage_):
-            raw_offset(0),page_number(0),file_number(0),myimage(*myimage_),eof(false){
-	}
-	bool operator !=(const iterator &it) const{
-	    if(this->eof && it.eof) return false; /* both in EOF states, so they are equal */
-	    if(this->raw_offset!=it.raw_offset
+	int64_t  raw_offset {};
+	uint64_t page_number {};
+	size_t   file_number {};
+	bool     eof {};
+	iterator(const class image_process *myimage_):myimage(*myimage_) { }
+	bool operator !=(const iterator &it) const {
+	    if (this->eof && it.eof) return false; /* both in EOF states, so they are equal */
+	    if (this->raw_offset!=it.raw_offset
 	       || this->page_number!=it.page_number
 	       || this->file_number!=it.file_number
 	       ) return true;
 	    return false;
 	}
-        bool operator ==(const iterator &it) const{
+        bool operator ==(const iterator &it) const {
             return !((*this) != it);
         }
 	pos0_t get_pos0() const { return myimage.get_pos0(*this); }			   // returns the current pos0
@@ -154,47 +141,6 @@ inline image_process::iterator & operator++(image_process::iterator &it){
 
 
 /****************************************************************
- *** AFF
- ****************************************************************/
-
-#ifdef HAVE_LIBAFFLIB
-//#pragma GCC diagnostic ignored "-Wreserved-user-defined-literal"               // required for C11
-#include <afflib/afflib.h>
-#include <vector>			
-class process_aff : public image_process {
-    /******************************************************
-     *** neither copying nor assignment is implemented. ***
-     ******************************************************/
-    process_aff(const process_aff &);
-    process_aff &operator=(const process_aff &);
-    /****************************************************************/
-
-    mutable AFFILE *af;
-    std::vector<int64_t> pagelist;
-public:
-    process_aff(std::string fname,size_t pagesize_,size_t margin_) : image_process(fname,pagesize_,margin_),af(0),pagelist(){}
-    virtual ~process_aff();
-
-    virtual image_process::iterator begin() const;
-    virtual image_process::iterator end() const;
-    virtual void increment_iterator(class image_process::iterator &it) const;
-
-    /* Iterator Support */
-    virtual int open();
-    virtual int pread(uint8_t *,size_t bytes,int64_t offset) const;	    /* read */
-    virtual pos0_t get_pos0(const class image_process::iterator &it) const;    
-    virtual sbuf_t *sbuf_alloc(class image_process::iterator &it) const;
-    virtual double fraction_done(const class image_process::iterator &it) const;
-    virtual std::string str(const class image_process::iterator &it) const;
-    virtual int64_t image_size() const;
-    virtual uint64_t max_blocks(const class image_process::iterator &it) const;
-    virtual uint64_t seek_block(class image_process::iterator &it,uint64_t block) const; // returns -1 if failue
-};
-#endif
-
-
-
-/****************************************************************
  *** EWF
  ****************************************************************/
 
@@ -215,14 +161,12 @@ class process_ewf : public image_process {
     process_ewf &operator=(const process_ewf &);
     /****************************************************************/
 
-    int64_t ewf_filesize;
-    std::vector<std::string> details; 	       
-    mutable libewf_handle_t *handle;
-    //static int debug;
+    int64_t ewf_filesize {};
+    std::vector<std::string> details {};
+    mutable libewf_handle_t *handle {};
 
  public:
-    process_ewf(const std::string &fname,size_t pagesize_,size_t margin_) :
-        image_process(fname,pagesize_,margin_), ewf_filesize(0), details() ,handle(0) {}
+    process_ewf(const std::string &fname,size_t pagesize_,size_t margin_) : image_process(fname,pagesize_,margin_), {}
     virtual ~process_ewf();
     std::vector<std::string> getewfdetails() const;
     int open();
@@ -232,7 +176,7 @@ class process_ewf : public image_process {
     virtual image_process::iterator begin() const;
     virtual image_process::iterator end() const;
     virtual void    increment_iterator(class image_process::iterator &it) const;
-    virtual pos0_t  get_pos0(const class image_process::iterator &it) const;    
+    virtual pos0_t  get_pos0(const class image_process::iterator &it) const;
     virtual sbuf_t *sbuf_alloc(class image_process::iterator &it) const;
     virtual double  fraction_done(const class image_process::iterator &it) const;
     virtual std::string str(const class image_process::iterator &it) const;
@@ -250,20 +194,20 @@ class process_raw : public image_process {
     class file_info {
     public:;
         file_info(const std::string &name_,int64_t offset_,int64_t length_):name(name_),offset(offset_),length(length_){};
-        std::string name;
-	int64_t offset;
-	int64_t length;
+        std::string name {};
+	int64_t offset   {};
+	int64_t length   {};
     };
-    typedef std::vector<file_info> file_list_t;
-    file_list_t file_list;
+    typedef std::vector<file_info> file_list_t ;
+    file_list_t file_list {};
     void        add_file(const std::string &fname);
     class       file_info const *find_offset(int64_t offset) const;
-    int64_t     raw_filesize;			/* sume of all the lengths */
-    mutable std::string current_file_name;		/* which file is currently open */
+    int64_t     raw_filesize {};			/* sume of all the lengths */
+    mutable std::string current_file_name {};		/* which file is currently open */
 #ifdef WIN32
-    mutable HANDLE current_handle;		/* currently open file */
+    mutable HANDLE current_handle {};		/* currently open file */
 #else
-    mutable int current_fd;			/* currently open file */
+    mutable int current_fd {};			/* currently open file */
 #endif
 public:
     process_raw(const std::string &image_fname,size_t pagesize,size_t margin);
@@ -276,7 +220,7 @@ public:
     virtual image_process::iterator end() const;
     virtual void     increment_iterator(class image_process::iterator &it) const;
 
-    virtual pos0_t   get_pos0(const class image_process::iterator &it) const;    
+    virtual pos0_t   get_pos0(const class image_process::iterator &it) const;
     virtual sbuf_t  *sbuf_alloc(class image_process::iterator &it) const;
     virtual double   fraction_done(const class image_process::iterator &it) const;
     virtual std::string str(const class image_process::iterator &it) const;
@@ -292,7 +236,7 @@ public:
 
 class process_dir : public image_process {
  private:
-    std::vector<std::string> files;		/* all of the files */
+    std::vector<std::string> files {};		/* all of the files */
 
  public:
     process_dir(const std::string &image_dir);
@@ -300,13 +244,13 @@ class process_dir : public image_process {
 
     virtual int open();
     virtual int pread(uint8_t *,size_t bytes,int64_t offset) const __attribute__((__noreturn__));	 /* read */
-    
+
     /* iterator support */
     virtual image_process::iterator begin() const;
     virtual image_process::iterator end() const;
     virtual void increment_iterator(class image_process::iterator &it) const;
-    
-    virtual pos0_t   get_pos0(const class image_process::iterator &it)   const;    
+
+    virtual pos0_t   get_pos0(const class image_process::iterator &it)   const;
     virtual sbuf_t   *sbuf_alloc(class image_process::iterator &it) const;   /* maps the next dir */
     virtual double   fraction_done(const class image_process::iterator &it) const; /* number of dirs processed */
     virtual std::string str(const class image_process::iterator &it) const;
@@ -318,10 +262,6 @@ class process_dir : public image_process {
 /****************************************************************
  *** MISC
  ****************************************************************/
-
-/**
- * Open the type as specified by extension.
- */
 
 
 #endif
