@@ -35,11 +35,11 @@ AC_PROG_INSTALL
 AC_PROG_LEX([noyywrap])
 # LT_INIT([disable-shared])
 
-# Must use C++14 mode. (mandatory)
-# Don't use the GNU C++14 extensions for portability (noext).
+# Must use C++17 mode.
 
+m4_include([m4/ax_cxx_compile_stdcxx.m4])
 AC_LANG_PUSH(C++)
-AX_CXX_COMPILE_STDCXX([14], [noext], [mandatory])
+AX_CXX_COMPILE_STDCXX([17], [noext], [mandatory])
 AC_LANG_POP()
 
 # These are needed for bulk_extractor. They are not needed for tcpflow
