@@ -1003,7 +1003,7 @@ int main(int argc,char **argv)
     if (opt_write_sqlite3)         flags |= feature_recorder_set::ENABLE_SQLITE3_RECORDERS;
     if (!opt_write_feature_files)  flags |= feature_recorder_set::DISABLE_FILE_RECORDERS;
 
-    /* Create the featurr_recorder_set */
+    /* Create the feature_recorder_set */
     feature_recorder_set fs(flags, be_hash_name, image_fname, opt_outdir);
     fs.init( feature_file_names );      // TODO: this should be in the initializer
 
