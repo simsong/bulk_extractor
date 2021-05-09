@@ -32,7 +32,7 @@ AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile doc/latex_manuals/Makefile \
 			  man/Makefile python/Makefile \
                           plugins/Makefile \
 			  specfiles/Makefile specfiles/bulk_extractor.spec.m4 tests/Makefile ])
-AC_CONFIG_HEADERS([src/config.h])
+AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
 AC_PREFIX_PROGRAM(bulk_extractor) dnl build for same location
@@ -42,10 +42,12 @@ AC_PROG_CC
 AC_PROG_CXX
 AM_PROG_CC_C_O                    dnl allow per-produce flags
 AC_PROG_INSTALL
-AC_PROG_LEX
+AC_PROG_LEX([noyywrap])
+# LT_INIT([disable-shared])
 
+# Must use C++17 mode.
 
-# Must use C++17 mode. (mandatory)
+m4_include([m4/ax_cxx_compile_stdcxx.m4])
 AC_LANG_PUSH(C++)
 AX_CXX_COMPILE_STDCXX([17], [noext], [mandatory])
 AC_LANG_POP()
@@ -126,12 +128,66 @@ AC_ARG_ENABLE([address-sanitizer], AS_HELP_STRING([--enable-address-sanitizer], 
               [AC_DEFINE(HAVE_ADDRESS_SANITIZER, 1, [enable AddressSanitizer])
               CFLAGS="$CFLAGS -fsanitize=address"
               CXXFLAGS="$CXXFLAGS -fsanitize=address"
+<<<<<<< HEAD
+              AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[const int i=0;]])],
+                 [AC_MSG_NOTICE([Address Sanitizer Enabled])],
+                 [AC_MSG_ERROR([Address Sanitizer not available])])
+              ])
+
+
+################################################################
+# PTHREAD support
+# With special nods to compiling under mingw
+
+case $host in
+ *mingw*)
+  AC_MSG_NOTICE([mingw pthreads support])
+  CFLAGS="$CFLAGS -mthreads -pthread "
+  CPPFLAGS="-DPTW32_STATIC_LIB $CPPFLAGS"
+  CXXFLAGS="$CXXFLAGS -mthreads -pthread "
+  LDFLAGS="$LDFLAGS -mthreads -pthread "
+  AC_DEFINE(HAVE_PTHREAD,1,[Defined to POSIX threads for mingw])
+ ;;
+ *)
+  AC_MSG_NOTICE([normal pthreads support])
+  m4_include([m4/ax_pthread.m4])
+  AC_MSG_CHECKING([Running pthread test from http://www.gnu.org/software/autoconf-archive/ax_pthread.html..])
+  AX_PTHREAD([
+              echo Using settings from AX_PTHREAD
+              LIBS="$PTHREAD_LIBS $LIBS"
+              CFLAGS="  $PTHREAD_CFLAGS $CFLAGS"
+              CXXFLAGS="$PTHREAD_CFLAGS $CXXFLAGS "
+              CC="$PTHREAD_CC"],
+            [AC_MSG_ERROR(bulk_extractor requires pthreads)])
+esac
+
+AC_MSG_NOTICE([After pthread test, CFLAGS: $CFLAGS])
+AC_MSG_NOTICE([After pthread test, CXXFLAGS: $CXXFLAGS])
+AC_MSG_NOTICE([After pthread test, LDFLAGS: $LDFLAGS])
+
+AC_CHECK_HEADERS([pthread.h])
+AC_CHECK_LIB([pthreadGC2],[pthread_create])
+
+################################################################
+##
+## Multithreading stuff
+
+# On mingw, be sure to use the static version and be sure we are using mthread option
+# (which should be a no-op on later version of G++ anyway)
+
+AC_CHECK_FUNCS([pthread_win32_process_attach_np pthread_win32_process_detach_np pthread_win32_thread_attach_np pthread_win32_thread_detach_np ])
+
+# end PTHREAD SUPPORT
+################################################################
+
+=======
               AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[const int i=0;]])],[AC_MSG_NOTICE([Address Sanitizer Enabled])],[AC_MSG_ERROR([Address Sanitizer not available])])
               ])
 
 
 
 # Specific include files and functions for bulk-extractor
+>>>>>>> 9bc2926c4a2df82b189b30631210a8f719b74520
 # Autoupdate added the next two lines to ensure that your configure
 # script's behavior did not change.  They are probably safe to remove.
 AC_CHECK_INCLUDES_DEFAULT
@@ -263,9 +319,14 @@ fi
 if test x"$exiv2" == x"yes" ; then
   AC_LANG_PUSH(C++)
   AC_CHECK_HEADERS([exiv2/image.hpp exiv2/exif.hpp exiv2/error.hpp])
-    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <exiv2/image.hpp>
-    	    	    #include <exiv2/exif.hpp>
-                    #include <exiv2/error.hpp>]], [[Exiv2::ImageFactory::open(0,0);]])],[exiv2=yes],[exiv2=no])
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+         #include <exiv2/image.hpp>
+    	 #include <exiv2/exif.hpp>
+         #include <exiv2/error.hpp>
+         ]],
+         [[Exiv2::ImageFactory::open(0,0);]])],
+         [exiv2=yes],
+         [exiv2=no])
     if test "${exiv2}" = yes; then
       AC_DEFINE(HAVE_EXIV2,1,[define 1 if EXIV2 exists and works])
       echo Using EXIV2
@@ -275,9 +336,13 @@ if test x"$exiv2" == x"yes" ; then
         LIBS="$LIBS -lexiv2.dll"	# static version does not work on mingw
       fi
       dnl see if we have the error feature
-      AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <exiv2/image.hpp>
-    	              #include <exiv2/exif.hpp>
-                      #include <exiv2/error.hpp>]], [[Exiv2::LogMsg::setLevel(Exiv2::LogMsg::mute);]])],[AC_DEFINE(HAVE_EXIV2__LOGMSG__SETLEVEL,1,[define 1 if EXIV2 exists and works])],[])
+      AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+            #include <exiv2/image.hpp>
+    	    #include <exiv2/exif.hpp>
+            #include <exiv2/error.hpp>
+            ]],
+            [[Exiv2::LogMsg::setLevel(Exiv2::LogMsg::mute);]],
+  	    [AC_DEFINE(HAVE_EXIV2__LOGMSG__SETLEVEL,1,[define 1 if EXIV2 exists and works])])])
     fi
   AC_LANG_POP()
 fi

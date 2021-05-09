@@ -1,5 +1,5 @@
 bin_PROGRAMS   = bulk_extractor
-EXTRA_PROGRAMS = stand bulk_extractorlib beapi_demo bulk_extractor_noscanners
+EXTRA_PROGRAMS = stand bulk_extractorlib beapi_demo bulk_extractor_noscanners jpegdump
 CLEANFILES     = scan_accts.cpp scan_email.cpp scan_gps.cpp scan_base16.cpp *.d
 
 AM_CPPFLAGS = -I${top_srcdir}/src/be13_api
@@ -14,6 +14,25 @@ include be13_api/dfxml/src/Makefile.defs
 BE13_API_DIR= be13_api/
 include be13_api/Makefile.defs
 include rar/Makefile.defs
+
+# This was for building the jpegdump test program
+# Note that we use scan_exif.cpp because we want to compile it with -DDUMPTEST
+JPEGDUMP_OBJECTS = scan_exif.cpp be13_api/sbuf.o be13_api/unicode_escape.o
+jpegdump$(EXEEXT): $(JPEGDUMP_OBJECTS)
+	g++ -o jpegdump$(EXEEXT) $(CPPFLAGS) $(CXXFLAGS) $(AM_CPPFLAGS) -I.. -DDUMPTEST $(JPEGDUMP_OBJECTS)
+
+TSK3INCS = \
+	tsk3/auto/tsk_auto.h\
+	tsk3/base/tsk_base.h\
+	tsk3/base/tsk_os.h\
+	tsk3/fs/tsk_fatfs.h\
+	tsk3/fs/tsk_fs.h\
+	tsk3/fs/tsk_ntfs.h\
+	tsk3/hashdb/tsk_hashdb.h\
+	tsk3/img/tsk_img.h\
+	tsk3/libtsk.h\
+	tsk3/tsk_incs.h\
+	tsk3/vs/tsk_vs.h
 
 TESTS = be_tests
 check_PROGRAMS = be_tests
@@ -102,15 +121,22 @@ bulk_extractor_nomain = \
 	image_process.h \
 	phase1.h \
 	phase1.cpp \
+	threadpool.cpp \
+	threadpool.h \
+	$(TSK3INCS)  $(BE13_API) $(DFXML_WRITER)
 	threadpool.hpp \
 	$(BE13_API_SRC) $(DFXML_WRITER)
 
+bulk_extractor_SOURCES =    $(bulk_extractor_nomain) $(bulk_scanners) bulk_extractor_scanners.cpp main.cpp
 bulk_extractor_SOURCES = $(bulk_extractor_nomain) $(scanners_builtin) bulk_extractor_scanners.cpp main.cpp
 
+bulk_extractorlib_SOURCES = $(bulk_extractor_nomain) $(bulk_scanners) bulk_extractor_scanners.cpp
 bulk_extractorlib_SOURCES = $(bulk_extractor_nomain) $(scanners_builtin) bulk_extractor_scanners.cpp
 
 bulk_extractor_noscanners_SOURCES = $(bulk_extractor_nomain) bulk_extractor_noscanners.cpp main.cpp
+bulk_extractor_noscanners_SOURCES = $(bulk_extractor_nomain) bulk_extractor_noscanners.cpp main.cpp
 
+stand_SOURCES = dig.cpp stand.cpp $(TSK3INCS) $(BE13_API) $(DFXML_WRITER)
 stand_SOURCES = dig.cpp stand.cpp $(BE13_API_SRC) $(DFXML_WRITER)
 
 lib: libbulkextractor.so

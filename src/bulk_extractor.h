@@ -136,6 +136,31 @@
 # define ATTR_FORMAT(spec) /* empty */
 #endif
 
+<<<<<<< HEAD
+#ifdef	__cplusplus
+#include <algorithm>
+#include <cstdlib>
+#include <vector>
+#include <string>
+#include <set>
+#include <map>
+#include <list>
+#include <iostream>
+#include <sstream>
+#include <vector>
+
+#include "be13_api/bulk_extractor_i.h"
+
+/* bulk_extractor.cpp */
+
+#include <be13_api/beregex.h>
+#include "word_and_context_list.h"
+
+
+#endif
+#endif
+=======
 extern scanner_set::scanner_t *scanners_builtin[];
 
 #endif
+>>>>>>> 9bc2926c4a2df82b189b30631210a8f719b74520
