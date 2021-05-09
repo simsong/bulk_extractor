@@ -5,6 +5,7 @@
 # Order is largely irrevellant, although it must start with AC_INIT and end with AC_OUTPUT
 # See http://autotoolset.sourceforge.net/tutorial.html
 # and http://www.openismus.com/documents/linux/automake/automake.shtml
+# and http://www.bioinf.uni-freiburg.de/~mmann/HowTo/automake.html
 
 AC_PREREQ([2.71])
 AC_INIT([BULK_EXTRACTOR],[2.0.0-dev],[bugs@digitalcorpora.org])
