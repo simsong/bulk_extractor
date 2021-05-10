@@ -14,7 +14,6 @@ AC_CONFIG_AUX_DIR([build-aux])
 ################################################################
 ## Includes
 
-m4_include([m4/ax_cxx_compile_stdcxx.m4])
 m4_include([m4/slg_mingw_support.m4])
 m4_include([m4/slg_searchdirs.m4])
 m4_include([m4/slg_gcc_all_warnings.m4])
@@ -108,86 +107,35 @@ AM_CONDITIONAL([FLEXSCANNERS_ENABLED], [test "yes" = "$flexscanners"])
 ##        e.g. "export MALLOC_TRACE=~/malloc_outfile.txt"
 ##   3. improve readability of malloc_outfile.txt using mtrace,
 ##        e.g. "mtrace /usr/local/bin/bulk_extractor ~/malloc_outfile.txt
-AC_ARG_ENABLE([mcheck], AS_HELP_STRING([--enable-mcheck], \
-              [enable memory analysis support for detecting memory leaks \
-               and detecting multiply deallocated memory resources]), \
-              AC_DEFINE(HAVE_MCHECK, 1, \
-              [define the output file using global variable MALLOC_TRACE, \
-               for example "MALLOC_TRACE=./mcheck.out; export MALLOC_TRACE". \
-               Then post-process unreadable file mcheck.out using the mtrace command line tool, \
-               for example "mtrace /usr/local/bin/bulk_extractor mcheck.out".  \
-               Unfortunately, only addresses with written code are looked up, \
-               in otherwords, use of malloc is looked up, but use of new is not.]))
+AC_ARG_ENABLE([mcheck],
+              [AS_HELP_STRING([--enable-mcheck],
+                            [enable memory analysis support for detecting memory leaks
+                             and detecting multiply deallocated memory resources])],
+              [AC_DEFINE(HAVE_MCHECK, 1,
+                [define the output file using global variable MALLOC_TRACE,
+                 for example "MALLOC_TRACE=./mcheck.out; export MALLOC_TRACE".
+                 Then post-process unreadable file mcheck.out using the mtrace command line tool,
+                 for example "mtrace /usr/local/bin/bulk_extractor mcheck.out".
+                 Unfortunately, only addresses with written code are looked up,
+                 in otherwords, use of malloc is looked up, but use of new is not.])]
+                 )
 
 
 ################################################################
 ## AddressSanitizer support
-AC_ARG_ENABLE([address-sanitizer], AS_HELP_STRING([--enable-address-sanitizer], \
-              [enabled AddressSanitizer support for detecting a wide variety of \
-               memory allocation and deallocation errors]), \
+AC_ARG_ENABLE([address-sanitizer],
+              [AS_HELP_STRING([--enable-address-sanitizer],
+                              [enabled AddressSanitizer support for detecting a wide variety of
+                               memory allocation and deallocation errors])],
               [AC_DEFINE(HAVE_ADDRESS_SANITIZER, 1, [enable AddressSanitizer])
+              address_sanitizer="yes"
               CFLAGS="$CFLAGS -fsanitize=address"
               CXXFLAGS="$CXXFLAGS -fsanitize=address"
-<<<<<<< HEAD
-              AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[const int i=0;]])],
-                 [AC_MSG_NOTICE([Address Sanitizer Enabled])],
-                 [AC_MSG_ERROR([Address Sanitizer not available])])
-              ])
-
-
-################################################################
-# PTHREAD support
-# With special nods to compiling under mingw
-
-case $host in
- *mingw*)
-  AC_MSG_NOTICE([mingw pthreads support])
-  CFLAGS="$CFLAGS -mthreads -pthread "
-  CPPFLAGS="-DPTW32_STATIC_LIB $CPPFLAGS"
-  CXXFLAGS="$CXXFLAGS -mthreads -pthread "
-  LDFLAGS="$LDFLAGS -mthreads -pthread "
-  AC_DEFINE(HAVE_PTHREAD,1,[Defined to POSIX threads for mingw])
- ;;
- *)
-  AC_MSG_NOTICE([normal pthreads support])
-  m4_include([m4/ax_pthread.m4])
-  AC_MSG_CHECKING([Running pthread test from http://www.gnu.org/software/autoconf-archive/ax_pthread.html..])
-  AX_PTHREAD([
-              echo Using settings from AX_PTHREAD
-              LIBS="$PTHREAD_LIBS $LIBS"
-              CFLAGS="  $PTHREAD_CFLAGS $CFLAGS"
-              CXXFLAGS="$PTHREAD_CFLAGS $CXXFLAGS "
-              CC="$PTHREAD_CC"],
-            [AC_MSG_ERROR(bulk_extractor requires pthreads)])
-esac
-
-AC_MSG_NOTICE([After pthread test, CFLAGS: $CFLAGS])
-AC_MSG_NOTICE([After pthread test, CXXFLAGS: $CXXFLAGS])
-AC_MSG_NOTICE([After pthread test, LDFLAGS: $LDFLAGS])
-
-AC_CHECK_HEADERS([pthread.h])
-AC_CHECK_LIB([pthreadGC2],[pthread_create])
-
-################################################################
-##
-## Multithreading stuff
-
-# On mingw, be sure to use the static version and be sure we are using mthread option
-# (which should be a no-op on later version of G++ anyway)
-
-AC_CHECK_FUNCS([pthread_win32_process_attach_np pthread_win32_process_detach_np pthread_win32_thread_attach_np pthread_win32_thread_detach_np ])
-
-# end PTHREAD SUPPORT
-################################################################
-
-=======
-              AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[const int i=0;]])],[AC_MSG_NOTICE([Address Sanitizer Enabled])],[AC_MSG_ERROR([Address Sanitizer not available])])
-              ])
-
+              ],
+              [])
 
 
 # Specific include files and functions for bulk-extractor
->>>>>>> 9bc2926c4a2df82b189b30631210a8f719b74520
 # Autoupdate added the next two lines to ensure that your configure
 # script's behavior did not change.  They are probably safe to remove.
 AC_CHECK_INCLUDES_DEFAULT
@@ -236,7 +184,7 @@ AC_ARG_WITH([o3], AS_HELP_STRING([--without-o3],[Do not force O3 optimization; u
 
 #
 # ZLIB is required:
-#  Note you cannot put comments in the AC_MSG_ERROR for some reason
+# Note you cannot put comments in the AC_MSG_ERROR for some reason
 # Must be before ewf
 AC_CHECK_LIB([z],[uncompress],,
 	AC_MSG_ERROR([zlib libraries not installed; try installing zlib-devel zlib-dev zlib-devel zlib1g-dev or libz-dev]))

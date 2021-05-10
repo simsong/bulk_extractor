@@ -1,11 +1,11 @@
 /*
  *
+ * 2021-05-09 - updated for bulk_extractor 2.0
  * 2011-08-21 - moved to C++ by Simson Garfinkel.
- *
  * 2007-08-24 - other changes
  *
  *
-Copyright (c) 2005 JSON.org
+Originally Copyright (c) 2005 JSON.org
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -28,10 +28,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+#include <cstdlib>
+#include <cstdint>
+
 #include "config.h"
-#include "be13_api/bulk_extractor_i.h"
-#include <stdlib.h>
-#include <stdint.h>
+#include "be13_api/scanner_params.h"
 
 class json_checker {
     static const int stacksize=256;	// max stack

@@ -11,7 +11,7 @@ AUTOMAKE_OPTIONS = subdir-objects
 DFXML_SRC_DIR = be13_api/dfxml/src/
 include be13_api/dfxml/src/Makefile.defs
 
-BE13_API_DIR= be13_api/
+BE13_API_DIR= be13_api
 include be13_api/Makefile.defs
 include rar/Makefile.defs
 
@@ -61,6 +61,8 @@ lightgrep_scanners = \
 	scan_email_lg.cpp \
 	scan_gps_lg.cpp
 
+
+# scanners_builtin are the scanners that will be compiled into the binary
 scanners_builtin = \
 	scan_aes.cpp \
 	scan_base64.cpp \
@@ -110,6 +112,7 @@ if RAR_ENABLED
 endif
 
 bulk_extractor_nomain = \
+        $(TSK3INCS)  $(BE13_API_SRC) $(DFXML_WRITER) \
 	bulk_extractor_api.cpp bulk_extractor_api.h \
 	base64_forensic.cpp \
 	base64_forensic.h \
@@ -123,21 +126,17 @@ bulk_extractor_nomain = \
 	phase1.cpp \
 	threadpool.cpp \
 	threadpool.h \
-	$(TSK3INCS)  $(BE13_API) $(DFXML_WRITER)
-	threadpool.hpp \
-	$(BE13_API_SRC) $(DFXML_WRITER)
+	threadpool.hpp
 
-bulk_extractor_SOURCES =    $(bulk_extractor_nomain) $(bulk_scanners) bulk_extractor_scanners.cpp main.cpp
+
 bulk_extractor_SOURCES = $(bulk_extractor_nomain) $(scanners_builtin) bulk_extractor_scanners.cpp main.cpp
 
-bulk_extractorlib_SOURCES = $(bulk_extractor_nomain) $(bulk_scanners) bulk_extractor_scanners.cpp
 bulk_extractorlib_SOURCES = $(bulk_extractor_nomain) $(scanners_builtin) bulk_extractor_scanners.cpp
 
 bulk_extractor_noscanners_SOURCES = $(bulk_extractor_nomain) bulk_extractor_noscanners.cpp main.cpp
-bulk_extractor_noscanners_SOURCES = $(bulk_extractor_nomain) bulk_extractor_noscanners.cpp main.cpp
 
-stand_SOURCES = dig.cpp stand.cpp $(TSK3INCS) $(BE13_API) $(DFXML_WRITER)
-stand_SOURCES = dig.cpp stand.cpp $(BE13_API_SRC) $(DFXML_WRITER)
+# stand is the standalone program that just runs on a single file.
+stand_SOURCES = dig.cpp stand.cpp $(TSK3INCS) $(BE13_API_SRC) $(DFXML_WRITER) scan_json.cpp
 
 lib: libbulkextractor.so
 

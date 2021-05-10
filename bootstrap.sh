@@ -2,6 +2,8 @@
 # Make sure it was checked out with git clone --recursive ...
 # If not, update the submodules
 
+mkdir -p build-aux
+
 for sub in be13_api be13_api/dfxml
 do
   if [ ! -r src/$sub/.git ] ;  then

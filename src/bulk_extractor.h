@@ -1,13 +1,11 @@
 /*
  *
  * Bulk Extractor's master include file.
- *
+ * This is being phased out.
  */
 
 #ifndef _BULK_EXTRACTOR_H_
 #define _BULK_EXTRACTOR_H_
-
-#include "be13_api/bulk_extractor_i.h"
 
 /* Don't include config.h twice */
 #ifndef PACKAGE_NAME
@@ -20,16 +18,12 @@
 #  include <windowsx.h>
 #endif
 
-/* required per C++ standard */
-#ifndef __STDC_FORMAT_MACROS
-#define __STDC_FORMAT_MACROS
-#endif
-
 #ifdef _WIN32
 /* For some reason this doesn't work properly with mingw */
 #undef HAVE_EXTERN_PROGNAME
 #endif
 
+#include <algorithm>
 #include <cassert>
 #include <cctype>
 #include <cerrno>
@@ -39,15 +33,12 @@
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
-
-#include <algorithm>
 #include <iostream>
 #include <list>
 #include <map>
 #include <set>
 #include <sstream>
 #include <string>
-#include <vector>
 #include <vector>
 
 #ifdef HAVE_DIRENT_H
@@ -58,13 +49,13 @@
 # include <unistd.h>
 #endif
 
-#ifdef HAVE_SYS_TIME_H
-#include <sys/time.h>
-#endif
+//#ifdef HAVE_SYS_TIME_H
+//#include <sys/time.h>
+//#endif
 
-#ifdef HAVE_SYS_TYPES_H
-# include <sys/types.h>
-#endif
+//#ifdef HAVE_SYS_TYPES_H
+//# include <sys/types.h>
+//#endif
 
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
@@ -130,37 +121,17 @@
 #include <sys/mman.h>
 #endif
 
-#if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 7)
-# define ATTR_FORMAT(param,arg) __attribute__ ((__printf__,param,arg))
-#else
-# define ATTR_FORMAT(spec) /* empty */
-#endif
+//#if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 7)
+//# define ATTR_FORMAT(param,arg) __attribute__ ((__printf__,param,arg))
+//#else
+//# define ATTR_FORMAT(spec) /* empty */
+//#endif
 
-<<<<<<< HEAD
-#ifdef	__cplusplus
-#include <algorithm>
-#include <cstdlib>
-#include <vector>
-#include <string>
-#include <set>
-#include <map>
-#include <list>
-#include <iostream>
-#include <sstream>
-#include <vector>
-
-#include "be13_api/bulk_extractor_i.h"
 
 /* bulk_extractor.cpp */
 
-#include <be13_api/beregex.h>
+#include "be13_api/beregex.h"
+#include "be13_api/bulk_extractor_i.h"
 #include "word_and_context_list.h"
 
-
-#endif
-#endif
-=======
-extern scanner_set::scanner_t *scanners_builtin[];
-
-#endif
->>>>>>> 9bc2926c4a2df82b189b30631210a8f719b74520
+extern scanner_t *scanners_builtin[];
