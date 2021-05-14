@@ -434,23 +434,24 @@ static const char *json_second_chars = "0123456789.-{[ \t\n\r\"";
 extern "C"
 void scan_json(const scanner_params &sp,const recursion_control_block &rcb)
 {
-    sp.check_version();
-    if(sp.phase==scanner_params::PHASE_STARTUP){
-	sp.info->name		= "json";
-        sp.info->author         = "Simson Garfinkel";
-        sp.info->description    = "Scans for JSON-encoded data";
-        sp.info->scanner_version= "1.1";
-        sp.info->feature_names.insert("json");
+    if(sp.phase==scanner_params::PHASE_INIT){
+        auto info = new scanner_params::scanner_info;
+	info->name		= "json";
+        info->author         = "Simson Garfinkel";
+        info->description    = "Scans for JSON-encoded data";
+        info->scanner_version= "1.1";
+        info->feature_names.insert("json");
 
 	/* Create a fast map of the valid json characters.*/
 	memset(is_json_second_char,0,sizeof(is_json_second_char));
 	for(int i=0;json_second_chars[i];i++){
 	    is_json_second_char[(uint8_t)json_second_chars[i]] = true;
 	}
-	return;
+        sp.register_info(info);
+        return;
     }
-    const sbuf_t &sbuf = sp.sbuf;
-    feature_recorder *fr = sp.fs.get_name("json");
+    auto &sbuf = sp.sbuf;
+    feature_recorder *fr = sp.ss.get_name("json");
 
     if(sp.phase==scanner_params::PHASE_INIT){
         fr->set_flag(feature_recorder::FLAG_XML);
