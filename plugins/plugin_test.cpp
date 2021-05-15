@@ -162,13 +162,14 @@ feature_recorder_set::feature_recorder_set(uint32_t f,const feature_recorder_set
 
 void scanner_info::get_config(const scanner_info::config_t &c, const std::string &n,std::string *val,const std::string &help){}
 void scanner_info::get_config(const std::string &n,std::string *val,const std::string &help) {}
-void scanner_info::get_config(const std::string &n,uint64_t *val,const std::string &help) {}
-void scanner_info::get_config(const std::string &n,int32_t *val,const std::string &help) {}
-void scanner_info::get_config(const std::string &n,uint32_t *val,const std::string &help) {}
-void scanner_info::get_config(const std::string &n,uint16_t *val,const std::string &help) {}
-void scanner_info::get_config(const std::string &n,uint8_t *val,const std::string &help) {}
-#ifdef __APPLE__
-void scanner_info::get_config(const std::string &n,size_t *val,const std::string &help) {}
-#define HAVE_GET_CONFIG_SIZE_T
-#endif
+void scanner_info::get_config(const std::string &n,signed char *val,const std::string &help) {}
+void scanner_info::get_config(const std::string &n,short *val,const std::string &help) {}
+void scanner_info::get_config(const std::string &n,int *val,const std::string &help) {}
+void scanner_info::get_config(const std::string &n,long *val,const std::string &help) {}
+void scanner_info::get_config(const std::string &n,long long *val,const std::string &help) {}
+void scanner_info::get_config(const std::string &n,unsigned char *val,const std::string &help) {}
+void scanner_info::get_config(const std::string &n,unsigned short *val,const std::string &help) {}
+void scanner_info::get_config(const std::string &n,unsigned int *val,const std::string &help) {}
+void scanner_info::get_config(const std::string &n,unsigned long *val,const std::string &help) {}
+void scanner_info::get_config(const std::string &n,unsigned long long *val,const std::string &help) {}
 void scanner_info::get_config(const std::string &n,bool *val,const std::string &help) {}
