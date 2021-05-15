@@ -5,6 +5,7 @@
  */
 #include "config.h"
 #include "be13_api/bulk_extractor_i.h"
+#include "scan_outlook.h"
 #include "utils.h"
 
 /*
@@ -16,8 +17,6 @@
  *
  * Outlook also has a "high compression" scheme, that's basically a
  * salted three-rotor scheme.
- *
- * We do not implement it here.
  *
  * Inverse map to encrypt:
  */

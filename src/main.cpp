@@ -1019,7 +1019,7 @@ int main(int argc,char **argv)
         /* see if there is a <recorder>: */
         std::vector<std::string> params = split(it->first,':');
         if(params.size()>=3 && params.at(0)=="fr"){
-            feature_recorder *fr = fs.get_name(params.at(1));
+            feature_recorder &fr = fs.named_feature_recorder(params.at(1));
             const std::string &cmd = params.at(2);
             if(fr){
                 if(cmd=="window")        fr->set_context_window(stoi64(it->second));
@@ -1108,7 +1108,7 @@ int main(int argc,char **argv)
         printf("Overall performance: %g MBytes/sec (%g MBytes/sec/thread)\n",
                mb_per_sec,mb_per_sec/cfg.num_threads);
         if (fs.has_name("email")) {
-            feature_recorder *fr = fs.get_name("email");
+            feature_recorder &fr = fs.named_feature_recorder("email");
             if(fr){
                 std::cout << "Total " << fr->name << " features found: " << fr->count() << "\n";
             }

@@ -36,7 +36,7 @@ namespace base16 {
     virtual void init(const scanner_params& sp);
     virtual void initScan(const scanner_params&);
 
-    feature_recorder* Recorder;
+    feature_recorder &Recorder;
 
     void hitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
       decode(sp.sbuf, hit.Start, hit.End - hit.Start, sp, rcb);
@@ -153,7 +153,7 @@ namespace base16 {
   }
 
   void Scanner::initScan(const scanner_params& sp) {
-    Recorder = sp.fs.get_name("hex");
+    Recorder = sp.fs.named_feature_recorder("hex");
   }
 
   // Don't re-analyze hex bufs smaller than this

@@ -408,7 +408,7 @@ void scan_aes(const scanner_params &sp,const recursion_control_block &rcb)
      */
 
     if(sp.phase==scanner_params::PHASE_SCAN && sp.sbuf.bufsize >= WINDOW_SIZE){
-	feature_recorder *aes_recorder = sp.fs.get_name("aes_keys");
+	feature_recorder &aes_recorder = sp.fs.named_feature_recorder("aes_keys");
 
 	/* Simple mod: Keep a rolling window of the entropy and don't
 	 * we see fewer than 10 distinct characters in window. This will

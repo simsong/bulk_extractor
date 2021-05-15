@@ -11,6 +11,11 @@ SUBDIRS = doc doc/latex_manuals src man plugins python specfiles tests $(BE_VIEW
 # It's only for people who check out the git repo
 
 EXTRA_DIST = \
+	licenses/LICENSE.Autoconf_exception \
+	licenses/LICENSE.CPL1 \
+	licenses/LICENSE.GPLv3 \
+	licenses/LICENSE.LGPLv2.1 \
+	licenses/LICENSE.LGPLv3 \
 	m4/ac_check_classpath.m4 \
 	m4/ac_check_junit.m4 \
 	m4/ac_check_rqrd_class.m4 \
@@ -30,6 +35,15 @@ EXTRA_DIST = \
 	$(SRC_WIN_DIST)
 
 ACLOCAL_AMFLAGS = -I m4
+
+distclean2: 
+	@echo Deleting:
+	@find . \
+        \( -name '*.orig' -o -name '*.rej' -o -name '*~' \
+        -o -name '*.bak' -o -name '#*#' -o -name '.*.orig' \
+        -o -name '.*.rej' -o -size 0 \
+        -o -name '*%' -o -name '.*.cmd' -o -name 'core' \) \
+        -type f -print | tee /dev/tty | xargs rm -f
 
 .PHONY: exels
 exels:

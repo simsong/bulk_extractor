@@ -33,6 +33,8 @@ SOFTWARE.
 
 #include "config.h"
 #include "be13_api/scanner_params.h"
+#include "be13_api/scanner_set.h"
+
 
 class json_checker {
     static const int stacksize=256;	// max stack
@@ -432,7 +434,7 @@ static bool is_json_second_char[256];		// shared between all threads
 
 static const char *json_second_chars = "0123456789.-{[ \t\n\r\"";
 extern "C"
-void scan_json(const scanner_params &sp,const recursion_control_block &rcb)
+void scan_json(struct scanner_params &sp)
 {
     if(sp.phase==scanner_params::PHASE_INIT){
         auto info = new scanner_params::scanner_info;
@@ -440,7 +442,8 @@ void scan_json(const scanner_params &sp,const recursion_control_block &rcb)
         info->author         = "Simson Garfinkel";
         info->description    = "Scans for JSON-encoded data";
         info->scanner_version= "1.1";
-        info->feature_names.insert("json");
+        feature_recorder_def frd("json"); frd.flags.xml = true;
+        info->feature_defs.push_back( frd );
 
 	/* Create a fast map of the valid json characters.*/
 	memset(is_json_second_char,0,sizeof(is_json_second_char));
@@ -450,17 +453,10 @@ void scan_json(const scanner_params &sp,const recursion_control_block &rcb)
         sp.register_info(info);
         return;
     }
-    auto &sbuf = sp.sbuf;
-    feature_recorder *fr = sp.ss.get_name("json");
 
-    if(sp.phase==scanner_params::PHASE_INIT){
-        fr->set_flag(feature_recorder::FLAG_XML);
-        return;
-    }
-
-    if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;
     if(sp.phase==scanner_params::PHASE_SCAN){
-
+        auto &sbuf = sp.sbuf;
+        feature_recorder &fr = sp.ss.named_feature_recorder("json");
 	for(size_t pos = 0;pos+1<sbuf.pagesize;pos++){
 	    /* Find the beginning of a json object. This will improve later... */
 	    if((sbuf[pos]=='{' || sbuf[pos]=='[') && is_json_second_char[sbuf[pos+1]]){
@@ -474,8 +470,8 @@ void scan_json(const scanner_params &sp,const recursion_control_block &rcb)
 			// Only write JSON objects with more than 2 commas
 			if(jc.comma_count > 2 ){
 			    sbuf_t json(sbuf,pos,i-pos+1);
-                            std::string json_hash = (*fr->fs.hasher.func)(json.buf,json.bufsize);
-			    fr->write(sbuf.pos0+i,json.asString(),json_hash);;
+                            std::string json_hash = fr.hash(json);
+			    fr.write(sbuf.pos0+i,json.asString(),json_hash);;
 			}
 			pos = i;		// skip to the end
 			break;

@@ -591,12 +591,12 @@ namespace accts {
   }
 
   void Scanner::initScan(const scanner_params& sp) {
-    CCN_Recorder = sp.fs.get_name("ccn");
-    CCN_Track2_Recorder = sp.fs.get_name("ccn_track2");
-    Telephone_Recorder = sp.fs.get_name("telephone");
+    CCN_Recorder = sp.fs.named_feature_recorder("ccn");
+    CCN_Track2_Recorder = sp.fs.named_feature_recorder("ccn_track2");
+    Telephone_Recorder = sp.fs.named_feature_recorder("telephone");
     Alert_Recorder = sp.fs.get_alert_recorder();
-    PII_Recorder = sp.fs.get_name("pii");
-    SIN_Recorder = sp.fs.get_name("sin");
+    PII_Recorder = sp.fs.named_feature_recorder("pii");
+    SIN_Recorder = sp.fs.named_feature_recorder("sin");
   }
 
   void Scanner::ccnHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {

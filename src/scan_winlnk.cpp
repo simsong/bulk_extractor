@@ -14,7 +14,7 @@
  *
  * Resources:
  * - http://msdn.microsoft.com/en-us/library/dd871305.aspx
- * - http://www.forensicswiki.org/wiki/LNK
+ * - https://forensicswiki.xyz/wiki/index.php?title=LNK
  */
 
 #include "config.h"

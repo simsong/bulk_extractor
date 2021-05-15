@@ -11,7 +11,7 @@ components are licensed as noted.
 
 ## MIT License
 
-Copyright (c) 2020, Simson L. Garfinkel {{ organization }}
+Copyright (C) 2020, Simson L. Garfinkel {{ organization }}
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -55,22 +55,64 @@ have the source code be made easily available.)
 
 ## Other materials
 
-bulk_extractor includes the following materials:
+bulk_extractor provides other materials with different licenses than the
+ones mentioned previously. Copies of the licenses mentioned below can be
+found under the licenses/ directory.
 
-* uses some SleuthKit 3 include files. There are present
-in the directory src/tsk3. 
+Licensed under the Common Public License 1.0
 
-* src/tsk3/ includes SleuthKit 3 include files that are party of
-SleuthKit 3. These files are  Copyright (C) 2010 Brian Carrier and covered under
-the Common Public License 1.0
+* src/tsk3 includes SleuthKit 3 include files that are party of
+SleuthKit 3. These files are  Copyright (C) 2010 Brian Carrier
+
+
+Licensed under the MIT License
+
+* src/base64_forensic.cpp is Copyright (C) 1996-1999 by Internet Software Consortium, with
+ portions Copyright (C) 1995 by International Business Machines, Inc.
 
 * src/be13_api/utf8.h is Copyright 2006 Nemanja Trifunovic
 
-* src/base64_forensic.cpp is Copyright (C) 1996-1999 by Internet Software Consortium, with
- portions Copyright (c) 1995 by International Business Machines, Inc.
+* src/old_scanners/scan_ascii85.cpp is Copyright (C) 2011 Remy Oukaour
 
-* src/scan_ascii85.cpp is  Copyright (C) 2011 Remy Oukaour
 
-* src/scan_json.cpp is Copyright (c) 2005 JSON.org
+Licensed under the JSON License
 
-* src/pyxpress.c is Copyright 2008 (c) Matthieu Suiche. <msuiche[at]gmail.com> 
+* src/scan_json.cpp is Copyright (C) 2005 JSON.org
+
+
+Licensed under General Public License version 3 and later
+
+* src/pyxpress.c is Copyright 2008 (C) Matthieu Suiche. <msuiche[at]gmail.com> 
+
+
+Licensed under Lesser General Public License version 2.1
+
+* src/scan_elf.cpp
+
+
+Licensed under Lesser General Public License version 3 and later
+
+* src/dfxml is Copyright 2012 (C) Simson L. Garfinkel
+
+* src/scan_outlook.h is Copyright (C) 2008-2014, Joachim Metz <joachim.metz@gmail.com>
+
+
+Licensed under General Public License version 3 with the Autoconf exception:
+
+* m4/ac_prog_java.m4 is Copyright (C) 2000 Stephane Bortzmeyer <bortzmeyer@pasteur.fr>
+
+* m4/ac_prog_java_works.m4 is Copyright (C) 2000 Stephane Bortzmeyer <bortzmeyer@pasteur.fr>
+
+* m4/ac_check_rqrd_class.m4 is Copyright (C) 2000 Stephane Bortzmeyer <bortzmeyer@pasteur.fr>
+
+* m4/ax_pthread.m4 is Copyright (C) 2008 Steven G. Johnson <stevenj@alum.mit.edu>,
+ 2011 Daniel Richard G. <skunk@iSKUNK.ORG>
+
+* m4/ac_prog_java_cc.m4 is Copyright (C) 2002 Nic Ferrier <nferrier@tapsellferrier.co.uk>
+
+* m4/ac_prog_javac.m4 is Copyright (C) 2000 Stephane Bortzmeyer <bortzmeyer@pasteur.fr>
+
+* m4/ac_prog_javac_works.m4 is Copyright (C) 2000 Stephane Bortzmeyer <bortzmeyer@pasteur.fr>
+
+* m4/ac_check_classpath.m4 is Copyright (C) 2000 Stephane Bortzmeyer <bortzmeyer@pasteur.fr>
+

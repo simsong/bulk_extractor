@@ -1,14 +1,17 @@
-Welcome to bulk_extractor version 1.5.6.
+Welcome to bulk_extractor.
 
-To build bulk_extractor in Linux or OS X,
+Note: bulk_extractor version 2.0 is now under development. For information, please see [Release 2.0 roadmap in the release-2.0-dev branch](https://github.com/simsong/bulk_extractor/blob/release-2.0-dev/doc/ROADMAP_2.0.md).
+
+To build bulk_extractor in Linux or Mac OS:
 
 1. Make sure required packages have been installed. **You can do this by going into the etc/ directory and looking for a script that installs the necessary packages for your platform.**
 
 2. Then run these commands:
+
 ```
-    ./configure
-    make
-    make install
+./configure
+make
+make install
 ```
 
 For detailed instructions on installing packages and building bulk_extractor, read the wiki page here:
@@ -19,18 +22,19 @@ The Windows version of bulk_extractor must be built on Fedora.
 To download the Windows installer and/or other releases of bulk_extractor, visit the downloads page here:
 http://digitalcorpora.org/downloads/bulk_extractor
 
-For more information on bulk_extractor, visit: http://www.forensicswiki.org/wiki/Bulk_extractor
+For more information on bulk_extractor, visit: https://forensicswiki.xyz/wiki/index.php?title=Bulk_extractor
+
 
 Tested Configurations
 =====================
 This release of bulk_extractor has been tested to compile on the following platforms:
+
 * Amazon Linux as of 2019-11-09
 * Fedora 32
 * Ubuntu 16.04LTS
 * Ubuntu 18.04LTS
 
 To configure your operating system, please run the appropriate scripts in the [etc/](/etc) directory.
-
 
 
 RECOMMENDED CITATION
@@ -60,5 +64,12 @@ keywords = {Digital forensics, Bulk data analysis, bulk_extractor, Stream-based 
 }
 ```
 
+BULK_EXTRACTOR 2.0 STATUS REPORT
+================================
+I continue to port bulk_extractor, tcpflow, be13_api and dfxml to modern C++. After surveying the standards I’ve decided to go with C++17 and not C++14, as support for 17 is now widespread. (I probably don’t need 20). I am sticking with autotools, although there seems a strong reason to move to CMake. I am keeping be13_api and dfxml as a modules that are included, python-style, rather than making them stand-alone libraries that are linked against. I’m not 100% sure that’s the correct decision, though.
 
+The project is taking longer than anticipated because I am also doing a general code refactoring. The main thing that is taking time is figuring out how to detangle all of the C++ objects having to do with parser options and configuration. 
 
+Given that tcpflow and bulk_extractor both use be13_api, my attention has shifted to using tcpflow to get be13_api operational, as it is a simpler program. I’m about three quarters of the way through now. I anticipate having something finished before the end of 2020.
+
+--- Simson Garfinkel, October 18, 2020
