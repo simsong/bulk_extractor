@@ -436,9 +436,10 @@ static const char *json_second_chars = "0123456789.-{[ \t\n\r\"";
 extern "C"
 void scan_json(struct scanner_params &sp)
 {
+    std::cerr << "AAAAAAAAAA\n";
     if(sp.phase==scanner_params::PHASE_INIT){
-        auto info = new scanner_params::scanner_info;
-	info->name		= "json";
+        auto info = new scanner_params::scanner_info(scan_json);
+	info->name	     = "json";
         info->author         = "Simson Garfinkel";
         info->description    = "Scans for JSON-encoded data";
         info->scanner_version= "1.1";
@@ -450,6 +451,7 @@ void scan_json(struct scanner_params &sp)
 	for(int i=0;json_second_chars[i];i++){
 	    is_json_second_char[(uint8_t)json_second_chars[i]] = true;
 	}
+        std::cerr << "calling register_info \n";
         sp.register_info(info);
         return;
     }

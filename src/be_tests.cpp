@@ -47,13 +47,24 @@ TEST_CASE("scan_json", "[scanners]") {
     /* Make a scanner set with a single scanner and a single command to enable all the scanners.
      */
     std::vector<scanner_config::scanner_command> my_scanner_commands = {
-        scanner_config::scanner_command(scanner_config::scanner_command::ALL_SCANNERS, scanner_config::scanner_command::ENABLE)
+        scanner_config::scanner_command(scanner_config::scanner_command::ALL_SCANNERS,
+                                        scanner_config::scanner_command::ENABLE)
     };
     const feature_recorder_set::flags_t frs_flags;
     scanner_config sc;
     sc.scanner_commands = my_scanner_commands;
     sc.outdir = std::filesystem::temp_directory_path().string();
     scanner_set ss(sc, frs_flags);
+    ss.add_scanners(my_scanners);
+    std::cerr << "1commands: " << my_scanner_commands.size() << "\n";
+    std::cerr << "2commands: " << sc.scanner_commands.size() << "\n";
+    ss.apply_scanner_commands();
+    for (auto it: ss.get_enabled_scanners()) {
+        std::cerr << "enabled scanner: " << it << "\n";
+    }
+    for (auto it: ss.feature_file_list()) {
+        std::cerr << "feature_file: " << it << "\n";
+    }
 #if 0
     //std::vector<scanner_config::scanner_command> scanner_commands = {
     //scanner_config::scanner_command(
@@ -63,7 +74,6 @@ TEST_CASE("scan_json", "[scanners]") {
 
     .......
 
-    plugin::scanners_process_enable_disable_commands();
     feature_file_names_t feature_file_names;
     plugin::get_scanner_feature_file_names(feature_file_names);
     std::cerr << "A1  \n";
