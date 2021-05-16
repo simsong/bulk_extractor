@@ -78,7 +78,6 @@ int main(int argc,char **argv)
     struct feature_recorder_set::flags_t f;
     sc.outdir =  std::filesystem::temp_directory_path().string(); // default
     //be13::plugin::load_scanners(scanners_builtin,sc);
-
     //TODO - create a scanner set, which includes a feature_recorder_set
 
 
@@ -121,9 +120,7 @@ int main(int argc,char **argv)
     if(argc!=1) usage(ss);
 
     //opt_scan_bulk_block_size = stoi64(be_config["bulk_block_size"]);
-
     //be13::plugin::scanners_process_enable_disable_commands();
-
     //feature_file_names_t feature_file_names;
     //be13::plugin::get_scanner_feature_file_names(feature_file_names);
     //feature_recorder_set fs(0);	// where the features will be put

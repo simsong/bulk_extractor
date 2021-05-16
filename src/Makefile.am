@@ -41,7 +41,7 @@ check_PROGRAMS = be_tests
 be_tests_SOURCES = be13api/tests/catch2.h \
 	$(BE13_API_SRC) $(DFXML_WRITER) \
 	base64_forensic.h base64_forensic.cpp \
-	be_tests.cpp threadpool.hpp
+	be_tests.cpp threadpool.hpp scan_json.cpp
 
 # These scanners are based on GNUflex
 flex_scanners = \
