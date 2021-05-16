@@ -130,8 +130,9 @@
 
 /* bulk_extractor.cpp */
 
-#include "be13_api/beregex.h"
-#include "be13_api/bulk_extractor_i.h"
-#include "word_and_context_list.h"
+//#include "be13_api/beregex.h"
+//#include "be13_api/bulk_extractor_i.h"
+//#include "word_and_context_list.h"
 
-extern scanner_t *scanners_builtin[];
+//extern scanner_t *scanners_builtin[];
+#endif
