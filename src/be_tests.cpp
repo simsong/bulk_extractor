@@ -59,46 +59,28 @@ TEST_CASE("scan_json", "[scanners]") {
     std::cerr << "1commands: " << my_scanner_commands.size() << "\n";
     std::cerr << "2commands: " << sc.scanner_commands.size() << "\n";
     ss.apply_scanner_commands();
+#if 0
     for (auto it: ss.get_enabled_scanners()) {
         std::cerr << "enabled scanner: " << it << "\n";
     }
     for (auto it: ss.feature_file_list()) {
         std::cerr << "feature_file: " << it << "\n";
     }
-#if 0
-    //std::vector<scanner_config::scanner_command> scanner_commands = {
-    //scanner_config::scanner_command(
-    //feature_recorder_set fs(feature_recorder_set::DISABLE_FILE_RECORDERS,
-    //"md5","/dev/null","/tmp");	// where the features will be put
+#endif
+    REQUIRE (ss.get_enabled_scanners().size()==1); // json
+    REQUIRE (ss.feature_file_list().size()==2); // alert & json
 
-
-    .......
-
-    feature_file_names_t feature_file_names;
-    plugin::get_scanner_feature_file_names(feature_file_names);
-    std::cerr << "A1  \n";
-
-    std::cerr << "A2  \n";
-    //fs.init(feature_file_names);             // shoudln't even be used
-    plugin::scanners_init(fs);
-    std::cerr << "A3  \n";
-
- TODO: Move process_sbuf out of plugin:: and into feature_recorder_set
-
-    /* Make the sbuf */
-    const std::string json_demo {" hello [1,2,3] world"};
-    const uint8_t *buf =reinterpret_cast<const uint8_t *>(json_demo.c_str());
-    std::cerr << "A4  \n";
-    sbuf_t sbuf = sbuf_t(pos0_t(), buf, json_demo.size(), json_demo.size(), 0, false);
-    std::cerr << "A5  \n";
-    ss.process_sbuf(scanner_params(scanner_params::PHASE_SCAN,sbuf,fs));
+    /* Make an sbuf */
+    sbuf_t sbuf("hello [1,2,3] world");
+    ss.phase_scan();
+    ss.process_sbuf(sbuf);
     ss.shutdown();
     std::cerr << "A6  \n";
-    plugin::phase_shutdown(fs);
+    //plugin::phase_shutdown(fs);
     std::cerr << "A7  \n";
-    fs.process_histograms(0);
-#endif
+    //fs.process_histograms(0);
     /* And verify that the histogram is correct */
+    std::cerr << "check in " << sc.outdir << "\n";
 }
 
 #if 0
