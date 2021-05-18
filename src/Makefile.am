@@ -8,8 +8,8 @@ AUTOMAKE_OPTIONS = subdir-objects
 
 # bring in defs from two included projects
 # note: don't be clever and use the $variable on the Include line. it doesn't work
-DFXML_SRC_DIR = be13_api/dfxml/src/
-include be13_api/dfxml/src/Makefile.defs
+#DFXML_SRC_DIR = be13_api/dfxml/src/
+#include be13_api/dfxml/src/Makefile.defs
 
 
 BE13_API_DIR= be13_api
@@ -120,7 +120,7 @@ if RAR_ENABLED
 endif
 
 bulk_extractor_nomain = \
-        $(TSK3INCS)  $(BE13_API_SRC) $(DFXML_WRITER) \
+        $(TSK3INCS)  $(BE13_API_SRC) $(DFXML_WRITER_SRC) \
 	bulk_extractor_api.cpp bulk_extractor_api.h \
 	base64_forensic.cpp \
 	base64_forensic.h \
@@ -144,7 +144,7 @@ bulk_extractorlib_SOURCES = $(bulk_extractor_nomain) $(scanners_builtin) bulk_ex
 bulk_extractor_noscanners_SOURCES = $(bulk_extractor_nomain) bulk_extractor_noscanners.cpp main.cpp
 
 # stand is the standalone program that just runs on a single file.
-stand_SOURCES = dig.cpp stand.cpp $(TSK3INCS) $(BE13_API_SRC) $(DFXML_WRITER) scan_json.cpp
+stand_SOURCES = dig.cpp stand.cpp $(TSK3INCS) $(BE13_API_SRC) $(DFXML_WRITER_SRC) scan_json.cpp
 
 lib: libbulkextractor.so
 
