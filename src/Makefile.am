@@ -11,6 +11,7 @@ AUTOMAKE_OPTIONS = subdir-objects
 DFXML_SRC_DIR = be13_api/dfxml/src/
 include be13_api/dfxml/src/Makefile.defs
 
+
 BE13_API_DIR= be13_api
 include be13_api/Makefile.defs
 include rar/Makefile.defs
@@ -38,7 +39,7 @@ TESTS = be_tests
 check_PROGRAMS = be_tests
 
 # Slowly add modules as tests are written for them.
-be_tests_SOURCES = be13api/tests/catch2.h \
+be_tests_SOURCES = be13_api/tests/catch2.h \
 	$(BE13_API_SRC) $(DFXML_WRITER) \
 	base64_forensic.h base64_forensic.cpp \
 	be_tests.cpp threadpool.hpp
