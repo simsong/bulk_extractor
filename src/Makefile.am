@@ -39,9 +39,15 @@ TSK3INCS = \
 TESTS = be_tests
 check_PROGRAMS = be_tests
 
+DFXML_SRC_DIR = be13_api/dfxml/src/
+DFXML_WRITER_SRC = $(DFXML_SRC_DIR)dfxml_writer.cpp \
+      $(DFXML_SRC_DIR)dfxml_writer.h \
+      $(DFXML_SRC_DIR)hash_t.h \
+      $(DFXML_SRC_DIR)cpuid.h
+
 # Slowly add modules as tests are written for them.
 be_tests_SOURCES = be13_api/tests/catch2.h \
-	$(BE13_API_SRC) $(DFXML_WRITER) \
+	$(BE13_API_SRC) $(DFXML_WRITER_SRC) \
 	base64_forensic.h base64_forensic.cpp \
 	be_tests.cpp threadpool.hpp scan_json.cpp
 
