@@ -294,9 +294,9 @@ int json_checker::pop(uint8_t mode)
 int json_checker::check_char(int next_char)
 {
     int next_class, next_state;
-/*
-    Determine the character's class.
-*/
+    /*
+     * Determine the character's class.
+     */
     if(reject) return -1;		// in rejecting mode
 
     if (next_char < 0) {
@@ -436,7 +436,6 @@ static const char *json_second_chars = "0123456789.-{[ \t\n\r\"";
 extern "C"
 void scan_json(struct scanner_params &sp)
 {
-    std::cerr << "AAAAAAAAAA\n";
     if(sp.phase==scanner_params::PHASE_INIT){
         auto info = new scanner_params::scanner_info(scan_json,"json");
         info->author         = "Simson Garfinkel";
@@ -450,7 +449,6 @@ void scan_json(struct scanner_params &sp)
 	for(int i=0;json_second_chars[i];i++){
 	    is_json_second_char[(uint8_t)json_second_chars[i]] = true;
 	}
-        std::cerr << "calling register_info \n";
         sp.register_info(info);
         return;
     }

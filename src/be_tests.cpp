@@ -27,6 +27,24 @@
 //#include "sbuf_flex_scanner.h"
 //#include "scan_ccns2.h"
 
+/* Read all of the lines of a file and return them as a vector */
+std::vector<std::string> getLines(const std::string &filename)
+{
+    std::vector<std::string> lines;
+    std::string line;
+    std::ifstream inFile;
+    inFile.open(filename.c_str());
+    if (!inFile.is_open()) {
+        throw std::runtime_error("getLines: Cannot open file: "+filename);
+    }
+    while (std::getline(inFile, line)){
+        if (line.size()>0){
+            lines.push_back(line);
+        }
+    }
+    return lines;
+}
+
 TEST_CASE("base64_forensic", "[utilities]") {
     const char *encoded="SGVsbG8gV29ybGQhCg==";
     const char *decoded="Hello World!\n";
@@ -44,6 +62,7 @@ TEST_CASE("exif_reader", "[utilities]") {
 
 scanner_t *my_scanners[] = {scan_json, 0};
 TEST_CASE("scan_json", "[scanners]") {
+
     /* Make a scanner set with a single scanner and a single command to enable all the scanners.
      */
     std::vector<scanner_config::scanner_command> my_scanner_commands = {
@@ -53,34 +72,27 @@ TEST_CASE("scan_json", "[scanners]") {
     const feature_recorder_set::flags_t frs_flags;
     scanner_config sc;
     sc.scanner_commands = my_scanner_commands;
-    sc.outdir = std::filesystem::temp_directory_path().string();
+
+    char tmpl[] = "/tmp/dirXXXXXX";
+    mkdtemp(tmpl);
+    sc.outdir = tmpl;
+
     scanner_set ss(sc, frs_flags);
     ss.add_scanners(my_scanners);
-    std::cerr << "1commands: " << my_scanner_commands.size() << "\n";
-    std::cerr << "2commands: " << sc.scanner_commands.size() << "\n";
     ss.apply_scanner_commands();
-#if 0
-    for (auto it: ss.get_enabled_scanners()) {
-        std::cerr << "enabled scanner: " << it << "\n";
-    }
-    for (auto it: ss.feature_file_list()) {
-        std::cerr << "feature_file: " << it << "\n";
-    }
-#endif
     REQUIRE (ss.get_enabled_scanners().size()==1); // json
     REQUIRE (ss.feature_file_list().size()==2); // alert & json
 
     /* Make an sbuf */
-    sbuf_t sbuf("hello [1,2,3] world");
+    sbuf_t sbuf("hello {\"hello\": 10, \"world\": 20, \"another\": 30, \"language\": 40} world");
     ss.phase_scan();
     ss.process_sbuf(sbuf);
     ss.shutdown();
-    std::cerr << "A6  \n";
-    //plugin::phase_shutdown(fs);
-    std::cerr << "A7  \n";
-    //fs.process_histograms(0);
-    /* And verify that the histogram is correct */
-    std::cerr << "check in " << sc.outdir << "\n";
+
+    /* Read the output */
+    std::vector<std::string> json_txt = getLines( sc.outdir + "/json.txt");
+    auto last = json_txt[json_txt.size()-1];
+    REQUIRE(last.substr( last.size() - 40) == "6ee8c369e2f111caa9610afc99d7fae877e616c9");
 }
 
 #if 0
