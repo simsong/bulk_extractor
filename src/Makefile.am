@@ -8,8 +8,6 @@ AUTOMAKE_OPTIONS = subdir-objects
 
 # bring in defs from two included projects
 # note: don't be clever and use the $variable on the Include line. it doesn't work
-#DFXML_SRC_DIR = be13_api/dfxml/src/
-#include be13_api/dfxml/src/Makefile.defs
 
 
 BE13_API_DIR= be13_api
@@ -39,15 +37,9 @@ TSK3INCS = \
 TESTS = be_tests
 check_PROGRAMS = be_tests
 
-DFXML_SRC_DIR = be13_api/dfxml/src/
-DFXML_WRITER_SRC = $(DFXML_SRC_DIR)dfxml_writer.cpp \
-      $(DFXML_SRC_DIR)dfxml_writer.h \
-      $(DFXML_SRC_DIR)hash_t.h \
-      $(DFXML_SRC_DIR)cpuid.h
-
 # Slowly add modules as tests are written for them.
 be_tests_SOURCES = be13_api/tests/catch2.h \
-	$(BE13_API_SRC) $(DFXML_WRITER_SRC) \
+	$(BE13_API_SRC) \
 	base64_forensic.h base64_forensic.cpp \
 	be_tests.cpp threadpool.hpp scan_json.cpp
 
@@ -120,7 +112,7 @@ if RAR_ENABLED
 endif
 
 bulk_extractor_nomain = \
-        $(TSK3INCS)  $(BE13_API_SRC) $(DFXML_WRITER_SRC) \
+        $(TSK3INCS)  $(BE13_API_SRC) \
 	bulk_extractor_api.cpp bulk_extractor_api.h \
 	base64_forensic.cpp \
 	base64_forensic.h \
@@ -144,7 +136,7 @@ bulk_extractorlib_SOURCES = $(bulk_extractor_nomain) $(scanners_builtin) bulk_ex
 bulk_extractor_noscanners_SOURCES = $(bulk_extractor_nomain) bulk_extractor_noscanners.cpp main.cpp
 
 # stand is the standalone program that just runs on a single file.
-stand_SOURCES = dig.cpp stand.cpp $(TSK3INCS) $(BE13_API_SRC) $(DFXML_WRITER_SRC) scan_json.cpp
+stand_SOURCES = dig.cpp stand.cpp $(TSK3INCS) $(BE13_API_SRC)  scan_json.cpp
 
 lib: libbulkextractor.so
 
