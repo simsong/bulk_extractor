@@ -41,6 +41,8 @@ jobs:
 
       - name: c/c++ compile test
         run: |
+          autoconf --version
+          automake --version
           bash bootstrap.sh && ./configure
           echo ++++++++++++++++++++++++++++++++++++
           cat src/Makefile
