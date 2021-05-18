@@ -20,7 +20,8 @@ include rar/Makefile.defs
 # Note that we use scan_exif.cpp because we want to compile it with -DDUMPTEST
 JPEGDUMP_OBJECTS = scan_exif.cpp be13_api/sbuf.o be13_api/unicode_escape.o
 jpegdump$(EXEEXT): $(JPEGDUMP_OBJECTS)
-	g++ -o jpegdump$(EXEEXT) $(CPPFLAGS) $(CXXFLAGS) $(AM_CPPFLAGS) -I.. -DDUMPTEST $(JPEGDUMP_OBJECTS)
+	g++ -o jpegdump$(EXEEXT) $(CPPFLAGS) $(CXXFLAGS) $(AM_CPPFLAGS) \
+		-I.. -DDUMPTEST $(JPEGDUMP_OBJECTS)
 
 TSK3INCS = \
 	tsk3/auto/tsk_auto.h\
@@ -42,7 +43,7 @@ check_PROGRAMS = be_tests
 be_tests_SOURCES = be13_api/tests/catch2.h \
 	$(BE13_API_SRC) $(DFXML_WRITER) \
 	base64_forensic.h base64_forensic.cpp \
-	be_tests.cpp threadpool.hpp
+	be_tests.cpp threadpool.hpp scan_json.cpp
 
 # These scanners are based on GNUflex
 flex_scanners = \
@@ -85,7 +86,7 @@ scanners_builtin = \
 	scan_ntfslogfile.cpp \
 	scan_ntfsmft.cpp \
 	scan_ntfsusn.cpp \
-	scan_outlook.cpp \
+	scan_outlook.cpp scan_outlook.h \
 	scan_pdf.cpp \
 	scan_rar.cpp \
 	scan_sqlite.cpp \

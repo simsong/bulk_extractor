@@ -193,13 +193,13 @@ extern "C" void bulk_extractor_config(BEFILE *bef,uint32_t cmd,const char *name,
         break;
 
     case BEAPI_FEATURE_DISABLE: {
-        feature_recorder *fr = bef->cfs.get_name(name);
+        feature_recorder &fr = bef->cfs.named_feature_recorder(name);
         if(fr) fr->set_flag(feature_recorder::FLAG_NO_FEATURES);
         break;
     }
 
     case BEAPI_FEATURE_ENABLE:{
-        feature_recorder *fr = bef->cfs.get_name(name);
+        feature_recorder &fr = bef->cfs.named_feature_recorder(name);
         assert(fr);
         if(fr) fr->unset_flag(feature_recorder::FLAG_NO_FEATURES);
         break;
@@ -210,7 +210,7 @@ extern "C" void bulk_extractor_config(BEFILE *bef,uint32_t cmd,const char *name,
         break;
 
     case BEAPI_MEMHIST_LIMIT:{
-        feature_recorder *fr = bef->cfs.get_name(name);
+        feature_recorder &fr = bef->cfs.named_feature_recorder(name);
         assert(fr);
         fr->set_memhist_limit(arg);
         break;

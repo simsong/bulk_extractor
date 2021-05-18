@@ -16,7 +16,12 @@ bulk_extractor SQL tests:
 Wordlist:
  - new options to make it a plain wordlist, with no other information in the file.
 
-scan_hex to decode hex-coded strings.
+- [ ] Remove dependency on OpenSSL
+
+
+- [ ] Wordlist:  new options to make it a plain wordlist, with no other information in the file.
+
+- [ ] scan_hex to decode hex-coded strings.
 
 approach for histogram transformation:
 
@@ -31,10 +36,13 @@ Then:
 
 
 
-Car VIN detector:
-https://en.wikipedia.org/wiki/Vehicle_identification_number
+- [ ] Car VIN detector. See https://en.wikipedia.org/wiki/Vehicle_identification_number.
+
+Sample VINs:
+```
 1G1FP31F8KL297099
 2HGFA1F52BH523214
 1FTWF3D56AEA90906
 3C6JR6AT8FG525132
 JA4MW51R91J008713
+```

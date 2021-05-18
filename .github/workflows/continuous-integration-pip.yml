@@ -13,7 +13,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: ['ubuntu-20.04', 'macos-10.15']   # 'ubuntu-18.04'
+        os: ['macos-10.15']   # 'ubuntu-18.04'
 
     steps:
       # https://github.com/actions/checkout
@@ -31,7 +31,7 @@ jobs:
       - name: Install C++ dependencies on Ubuntu
         if: startsWith(matrix.os, 'ubuntu')
         run: |
-           sudo apt install -y libtool autoconf automake libssl-dev pkg-config build-essentials
+           sudo apt install -y libtool autoconf automake libssl-dev pkg-config
 
       - name: Update autoconf
         if: startsWith(matrix.os, 'ubuntu')
@@ -41,7 +41,12 @@ jobs:
 
       - name: c/c++ compile test
         run: |
-          bash bootstrap.sh && ./configure && make
+          autoconf --version
+          automake --version
+          bash bootstrap.sh && ./configure
+          echo ++++++++++++++++++++++++++++++++++++
+          cat src/Makefile
+          echo ++++++++++++++++++++++++++++++++++++
           make check  || (for fn in test*.log ; do echo ""; echo $fn ; cat $fn ; done; exit 1)
           make distcheck
 
