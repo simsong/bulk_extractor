@@ -26,6 +26,7 @@
 //#include "pyxpress.h"
 //#include "sbuf_flex_scanner.h"
 //#include "scan_ccns2.h"
+#include "threadpool.hpp"
 
 /* Read all of the lines of a file and return them as a vector */
 std::vector<std::string> getLines(const std::string &filename)
@@ -95,11 +96,10 @@ TEST_CASE("scan_json", "[scanners]") {
     REQUIRE(last.substr( last.size() - 40) == "6ee8c369e2f111caa9610afc99d7fae877e616c9");
 }
 
-#if 0
 /* Test the threadpool */
 std::atomic<int> counter{0};
 TEST_CASE("threadpool", "[threads]") {
-    thread_pool t(10);
+    class thread_pool t(10);
     for(int i=0;i<1000;i++){
         t.push( []{
                     counter += 1;
@@ -108,4 +108,3 @@ TEST_CASE("threadpool", "[threads]") {
     t.join();
     REQUIRE( counter==1000 );
 }
-#endif

@@ -19,7 +19,8 @@ include rar/Makefile.defs
 # Note that we use scan_exif.cpp because we want to compile it with -DDUMPTEST
 JPEGDUMP_OBJECTS = scan_exif.cpp be13_api/sbuf.o be13_api/unicode_escape.o
 jpegdump$(EXEEXT): $(JPEGDUMP_OBJECTS)
-	g++ -o jpegdump$(EXEEXT) $(CPPFLAGS) $(CXXFLAGS) $(AM_CPPFLAGS) -I.. -DDUMPTEST $(JPEGDUMP_OBJECTS)
+	g++ -o jpegdump$(EXEEXT) $(CPPFLAGS) $(CXXFLAGS) $(AM_CPPFLAGS) \
+		-I.. -DDUMPTEST $(JPEGDUMP_OBJECTS)
 
 TSK3INCS = \
 	tsk3/auto/tsk_auto.h\
