@@ -1,4 +1,5 @@
-bin_PROGRAMS   = bulk_extractor
+#bin_PROGRAMS   = bulk_extractor
+bin_PROGRAMS    = be_tests
 EXTRA_PROGRAMS = stand bulk_extractorlib beapi_demo bulk_extractor_noscanners jpegdump
 CLEANFILES     = scan_accts.cpp scan_email.cpp scan_gps.cpp scan_base16.cpp *.d
 
@@ -12,7 +13,7 @@ AUTOMAKE_OPTIONS = subdir-objects
 
 BE13_API_DIR= be13_api
 include be13_api/Makefile.defs
-include rar/Makefile.defs
+#include rar/Makefile.defs
 
 # This was for building the jpegdump test program
 # Note that we use scan_exif.cpp because we want to compile it with -DDUMPTEST
@@ -63,7 +64,11 @@ lightgrep_scanners = \
 
 
 # scanners_builtin are the scanners that will be compiled into the binary
+
 scanners_builtin = \
+	scan_json.cpp
+
+scanners_builtin_broken = \
 	scan_aes.cpp \
 	scan_base64.cpp \
 	scan_ccns2.cpp scan_ccns2.h \
@@ -124,8 +129,6 @@ bulk_extractor_nomain = \
 	image_process.h \
 	phase1.h \
 	phase1.cpp \
-	threadpool.cpp \
-	threadpool.h \
 	threadpool.hpp
 
 

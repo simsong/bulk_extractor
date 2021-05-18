@@ -14,7 +14,7 @@
 #include "bulk_extractor_i.h"
 #include "bulk_extractor.h"
 #include "image_process.h"
-#include "histogram.h"
+//#include "histogram.h"
 #include "findopts.h"
 #include "dfxml/src/dfxml_writer.h"
 #include "dfxml/src/hash_t.h"

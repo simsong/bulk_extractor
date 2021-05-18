@@ -74,7 +74,7 @@ void BulkExtractor_Phase1::print_tp_status()
  * TODO: do not get an sbuf if more than N tasks in workqueue.
  */
 
-sbuf_t *BulkExtractor_Phase1::get_sbuf(image_process::iterator &it)
+sbuf_t BulkExtractor_Phase1::get_sbuf(image_process::iterator &it)
 {
     for(u_int retry_count=0;retry_count<config.max_bad_alloc_errors;retry_count++){
         try {

@@ -1,21 +1,25 @@
 /**
  * plugin_test.cpp:
- * 
+ *
  * This program will load a bulk_extractor .so or .dll plug-in and
  * perform a rudimentary test.
  */
 
 
 #include "config.h"                     // from ../config.h
-#include "be13_api/bulk_extractor_i.h"  // from ../src/be13_api/bulk_extractor_i.h
-#include "be13_api/beregex.cpp"
+//#include "be13_api/bulk_extractor_i.h"  // from ../src/be13_api/bulk_extractor_i.h
+//#include "be13_api/beregex.cpp"
+
+#include <string>
+#include <cstring>
+#include <cstdlib>
 
 #include <stdio.h>
 #ifdef HAVE_ERR_H
 #include <err.h>
 #endif
-#include <stdlib.h>
-#include <string.h>
+//#include <stdlib.h>
+//#include <string.h>
 
 #ifdef HAVE_DLFCN_H
 #include <dlfcn.h>
@@ -23,8 +27,11 @@
 
 #ifdef HAVE_WINDOWS_H
 #include <windows.h>
-typedef int (__cdecl *MYPROC)(LPWSTR); 
+typedef int (__cdecl *MYPROC)(LPWSTR);
 #endif
+
+#if 0
+
 
 static std::string hash_name("md5");
 static std::string hash_func(const uint8_t *buf,size_t bufsize)
@@ -44,7 +51,9 @@ static std::string hash_func(const uint8_t *buf,size_t bufsize)
 }
 static feature_recorder_set::hash_def my_hasher(hash_name,hash_func);
 
-scanner_params::PrintOptions scanner_params::no_options; 
+scanner_params::PrintOptions scanner_params::no_options;
+#endif
+
 int main(int argc,char **argv)
 {
     if(argc!=2){
@@ -53,6 +62,7 @@ int main(int argc,char **argv)
 	exit(1);
     }
 
+#if 0
     /* Strip extension and path */
     std::string fname = argv[1];
     scanner_t *fn=0;
@@ -62,7 +72,7 @@ int main(int argc,char **argv)
 	fprintf(stderr,"%s: cannot strip extension\n",name.c_str());
 	exit(1);
     }
-    name = name.substr(0,dot);         
+    name = name.substr(0,dot);
 
     /* Strip dir */
     size_t slash = name.rfind('.');
@@ -124,9 +134,11 @@ int main(int argc,char **argv)
 #ifdef HAVE_DLOPEN
     dlclose(lib);
 #endif
+#endif
     return 0;
 }
 
+#if 0
 /*** bogus feature recorder set ***/
 const std::string feature_recorder_set::ALERT_RECORDER_NAME = "alerts";
 const std::string feature_recorder_set::DISABLED_RECORDER_NAME = "disabled";
@@ -156,7 +168,7 @@ feature_recorder_set::feature_recorder_set(uint32_t f,const feature_recorder_set
 }
 
 
-/* http://stackoverflow.com/questions/9406580/c-undefined-reference-to-vtable-and-inheritance 
+/* http://stackoverflow.com/questions/9406580/c-undefined-reference-to-vtable-and-inheritance
  * Must provide definitions for all virtual functions
  */
 
@@ -172,3 +184,4 @@ void scanner_info::get_config(const std::string &n,size_t *val,const std::string
 #define HAVE_GET_CONFIG_SIZE_T
 #endif
 void scanner_info::get_config(const std::string &n,bool *val,const std::string &help) {}
+#endif

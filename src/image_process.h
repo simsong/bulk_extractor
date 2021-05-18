@@ -61,6 +61,13 @@ private:
     /****************************************************************/
     const std::string image_fname_;			/* image filename */
 public:
+
+    class EndOfImage : public std::exception {
+    public:
+        EndOfImage(){}
+        const char *what() const noexcept override {return "end of image.";}
+    };
+
     /**
      * open() figures out which child class to call, calls its open, then
      * returns an object.
@@ -102,7 +109,7 @@ public:
             return !((*this) != it);
         }
 	pos0_t get_pos0() const { return myimage.get_pos0(*this); }			   // returns the current pos0
-	sbuf_t *sbuf_alloc()    { return myimage.sbuf_alloc(*this); }   // allocates an sbuf at pos0
+	sbuf_t sbuf_alloc()    { return myimage.sbuf_alloc(*this); }   // allocates an sbuf at pos0
 	double fraction_done() const { return myimage.fraction_done(*this); }
         std::string str() const { return myimage.str(*this); }
 	uint64_t max_blocks() const { return myimage.max_blocks(*this);}
@@ -125,7 +132,7 @@ public:
     virtual image_process::iterator end() const=0;
     virtual void increment_iterator(class image_process::iterator &it) const = 0;
     virtual pos0_t get_pos0(const class image_process::iterator &it) const =0;
-    virtual sbuf_t *sbuf_alloc(class image_process::iterator &it) const = 0;
+    virtual sbuf_t sbuf_alloc(class image_process::iterator &it) const = 0;
     virtual double fraction_done(const class image_process::iterator &it) const = 0;
     virtual std::string str(const class image_process::iterator &it) const = 0; // returns a string representation of where we are
     virtual uint64_t max_blocks(const class image_process::iterator &it) const = 0;
@@ -177,7 +184,7 @@ class process_ewf : public image_process {
     virtual image_process::iterator end() const;
     virtual void    increment_iterator(class image_process::iterator &it) const;
     virtual pos0_t  get_pos0(const class image_process::iterator &it) const;
-    virtual sbuf_t *sbuf_alloc(class image_process::iterator &it) const;
+    virtual sbuf_t  sbuf_alloc(class image_process::iterator &it) const;
     virtual double  fraction_done(const class image_process::iterator &it) const;
     virtual std::string str(const class image_process::iterator &it) const;
     virtual int64_t  image_size() const;
@@ -221,7 +228,7 @@ public:
     virtual void     increment_iterator(class image_process::iterator &it) const;
 
     virtual pos0_t   get_pos0(const class image_process::iterator &it) const;
-    virtual sbuf_t  *sbuf_alloc(class image_process::iterator &it) const;
+    virtual sbuf_t  sbuf_alloc(class image_process::iterator &it) const;
     virtual double   fraction_done(const class image_process::iterator &it) const;
     virtual std::string str(const class image_process::iterator &it) const;
     virtual int64_t  image_size() const;
@@ -251,7 +258,7 @@ class process_dir : public image_process {
     virtual void increment_iterator(class image_process::iterator &it) const;
 
     virtual pos0_t   get_pos0(const class image_process::iterator &it)   const;
-    virtual sbuf_t   *sbuf_alloc(class image_process::iterator &it) const;   /* maps the next dir */
+    virtual sbuf_t   sbuf_alloc(class image_process::iterator &it) const;   /* maps the next dir */
     virtual double   fraction_done(const class image_process::iterator &it) const; /* number of dirs processed */
     virtual std::string str(const class image_process::iterator &it) const;
     virtual int64_t  image_size() const;				    /* total bytes */
