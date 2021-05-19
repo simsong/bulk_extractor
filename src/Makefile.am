@@ -1,6 +1,7 @@
 #bin_PROGRAMS   = bulk_extractor
 bin_PROGRAMS    = be_tests
-EXTRA_PROGRAMS = stand bulk_extractorlib beapi_demo bulk_extractor_noscanners jpegdump
+#jpegdump
+EXTRA_PROGRAMS = stand bulk_extractorlib beapi_demo bulk_extractor_noscanners
 CLEANFILES     = scan_accts.cpp scan_email.cpp scan_gps.cpp scan_base16.cpp *.d
 
 AM_CPPFLAGS = -I${top_srcdir}/src/be13_api
@@ -17,10 +18,10 @@ include be13_api/Makefile.defs
 
 # This was for building the jpegdump test program
 # Note that we use scan_exif.cpp because we want to compile it with -DDUMPTEST
-JPEGDUMP_OBJECTS = scan_exif.cpp be13_api/sbuf.o be13_api/unicode_escape.o
-jpegdump$(EXEEXT): $(JPEGDUMP_OBJECTS)
-	g++ -o jpegdump$(EXEEXT) $(CPPFLAGS) $(CXXFLAGS) $(AM_CPPFLAGS) \
-		-I.. -DDUMPTEST $(JPEGDUMP_OBJECTS)
+#JPEGDUMP_OBJECTS = scan_exif.cpp be13_api/sbuf.o be13_api/unicode_escape.o
+#jpegdump$(EXEEXT): $(JPEGDUMP_OBJECTS)
+#	g++ -o jpegdump$(EXEEXT) $(CPPFLAGS) $(CXXFLAGS) $(AM_CPPFLAGS) \
+#		-I.. -DDUMPTEST $(JPEGDUMP_OBJECTS)
 
 TSK3INCS = \
 	tsk3/auto/tsk_auto.h\
@@ -129,6 +130,7 @@ bulk_extractor_nomain = \
 	image_process.h \
 	phase1.h \
 	phase1.cpp \
+	scanners.h \
 	threadpool.hpp
 
 
