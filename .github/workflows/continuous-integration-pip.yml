@@ -57,7 +57,7 @@ jobs:
         run: |
            bash .make-codecov
 
-      - name: regresion test
-        run: |
-          cd tests
-          python3 regress.py --datacheck
+#      - name: regresion test
+#        run: |
+#          cd tests
+#          python3 regress.py --datacheck
