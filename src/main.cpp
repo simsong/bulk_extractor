@@ -65,7 +65,7 @@ int _CRT_fmode = _O_BINARY;
 
 /* Create an array of the built-in scanners */
 #define SCANNER(scanner) scan_ ## scanner ,
-scanner_set::scanner_t *scanners_builtin[] = {
+scanner_t *scanners_builtin[] = {
 #include "bulk_extractor_scanners.h"
     0};
 #undef SCANNER
@@ -119,14 +119,14 @@ static void usage(const char *progname)
     std::cout << "   -q nn        - Quiet Rate; only print every nn status reports. Default 0; -1 for no status at all\n";
     std::cout << "   -s frac[:passes] - Set random sampling parameters\n";
     std::cout << "\nTuning parameters:\n";
-    std::cout << "   -C NN        - specifies the size of the context window (default " << feature_recorder::context_window_default << ")\n";
+    //    std::cout << "   -C NN        - specifies the size of the context window (default " << feature_recorder::context_window_default << ")\n";
     std::cout << "   -S fr:<name>:window=NN   specifies context window for recorder to NN\n";
     std::cout << "   -S fr:<name>:window_before=NN  specifies context window before to NN for recorder\n";
     std::cout << "   -S fr:<name>:window_after=NN   specifies context window after to NN for recorder\n";
     std::cout << "   -G NN        - specify the page size (default " << cfg.opt_pagesize << ")\n";
     std::cout << "   -g NN        - specify margin (default " <<cfg.opt_marginsize << ")\n";
     std::cout << "   -j NN        - Number of analysis threads to run (default " << std::thread::hardware_concurrency() << ")\n";
-    std::cout << "   -M nn        - sets max recursion depth (default " << scanner_set::scanner_def::max_depth << ")\n";
+    //std::cout << "   -M nn        - sets max recursion depth (default " << scanner_set::scanner_def::max_depth << ")\n";
     std::cout << "   -m <max>     - maximum number of minutes to wait after all data read\n";
     std::cout << "                  default is " << cfg.max_bad_alloc_errors << "\n";
     std::cout << "\nPath Processing Mode:\n";
@@ -274,6 +274,7 @@ static bool directory_empty(const std::string &d)
 }
 
 
+#if 0
 /***************************************************************************************
  *** PATH PRINTER - Used by bulk_extractor for printing pages associated with a path ***
  ***************************************************************************************/
@@ -411,9 +412,10 @@ void process_path_printer(const scanner_params &sp)
     }
     std::cerr << "Unknown name in path: " << prefix << "\n";
 }
+#endif
 
 
-
+#if 0
 /**
  * process_path uses the scanners to decode the path for the purpose of
  * decoding the image data and extracting the information.
@@ -561,6 +563,7 @@ static void process_path(const char *fn,std::string path,size_t pagesize,size_t 
     scanner_params::setPrintMode(po,mode);
     process_open_path(*pp,path,po,pagesize+marginsize);
 }
+#endif
 
 class bulk_extractor_restarter {
     std::stringstream cdata;

@@ -37,7 +37,7 @@
 #undef SCANNER
 
 #define SCANNER(scanner) scan_ ## scanner ,
-scanner_set::scanner_t *scanners_builtin[] = {
+scanner_t *scanners_builtin[] = {
 #include "bulk_extractor_scanners.h"
     0};
 #undef SCANNER
