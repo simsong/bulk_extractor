@@ -44,10 +44,7 @@ jobs:
           autoconf --version
           automake --version
           bash bootstrap.sh && ./configure
-          echo ++++++++++++++++++++++++++++++++++++
-          cat src/Makefile
-          echo ++++++++++++++++++++++++++++++++++++
-          make check  || (for fn in test*.log ; do echo ""; echo $fn ; cat $fn ; done; exit 1)
+          make check  || (cat src/Makefile ; for fn in test*.log ; do echo ""; echo $fn ; cat $fn ; done; exit 1)
           make distcheck
 
       - uses: ammaraskar/gcc-problem-matcher@0.1

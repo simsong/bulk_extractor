@@ -1,0 +1,1 @@
+(cd ..;sh bootstrap.sh)
