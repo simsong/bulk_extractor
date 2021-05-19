@@ -39,7 +39,7 @@ TESTS = be_tests
 check_PROGRAMS = be_tests
 
 # Slowly add modules as tests are written for them.
-be_tests_SOURCES = be13_api/tests/catch2.h \
+be_tests_SOURCES = be13_api/catch.hpp \
 	$(BE13_API_SRC) \
 	base64_forensic.h base64_forensic.cpp \
 	be_tests.cpp threadpool.hpp scan_json.cpp
