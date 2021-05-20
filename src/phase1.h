@@ -89,7 +89,7 @@ public:
         p(p_), fs(fs_), seen_page_ids(seen_page_ids_)  {}
 
     /* Get the sbuf from current image iterator location, with retries */
-    sbuf_t *get_sbuf(image_process::iterator &it);
+    sbuf_t get_sbuf(image_process::iterator &it);
 
     /* Notify user about current state of phase1 */
     void notify_user(image_process::iterator &it);

@@ -645,6 +645,7 @@ public:;
     }
 };
 
+#if 0
 /**
  * Create the dfxml output
  */
@@ -674,9 +675,10 @@ static void dfxml_create(dfxml_writer &xreport, int argc, char * const *argv,con
     xreport.pop();			// scanners
     xreport.pop();			// configuration
 }
+#endif
 
 
-
+#if 0
 /* It is gross to do this with statics rather than a singleton whose address is passed in 'user',
  * but that is the way it is implemented.
  */
@@ -718,6 +720,7 @@ static void add_if_present(std::vector<std::string> &scanner_dirs,const std::str
 }
 
 std::string be_hash_name {"md5"};
+#endif
 
 int main(int argc,char **argv)
 {
@@ -731,7 +734,7 @@ int main(int argc,char **argv)
     word_and_context_list alert_list;		/* shold be flagged */
     word_and_context_list stop_list;		/* should be ignored */
 
-    scanner_info::scanner_config   s_config;    // the bulk extractor phase 1 config created from the command line
+    scanner_config   sc;             // the bulk extractor phase 1 config created from the command line
     BulkExtractor_Phase1::Config   cfg;
     cfg.num_threads = std::thread::hardware_concurrency();
 
@@ -766,7 +769,7 @@ int main(int argc,char **argv)
 
 #ifdef WIN32
     setmode(1,O_BINARY);		// make stdout binary
-    threadpool::win32_init();
+    //threadpool::win32_init();
 #endif
     /* look for usage first */
     if(argc==1) opt_h=1;
@@ -835,7 +838,7 @@ int main(int argc,char **argv)
 		std::cerr << "Invalid paramter: " << optarg << "\n";
 		exit(1);
 	    }
-	    s_config.namevals[params[0]] = params[1];
+	    sc.namevals[params[0]] = params[1];
 	    continue;
 	}
 	case 's':
@@ -879,8 +882,8 @@ int main(int argc,char **argv)
     /* Create a configuration that will be used to initialize the scanners */
     scanner_info si;
 
-    s_config.debug       = cfg.debug;
-    si.config = &s_config;
+    sc.debug       = cfg.debug;
+    si.config = &sc;
 
     /* Make individual configuration options appear on the command line interface. */
 #if 0
@@ -899,13 +902,18 @@ int main(int argc,char **argv)
 
     /* Load all the scanners and enable the ones we care about */
 
-    plugin::load_scanner_directories(scanner_dirs,s_config);
-    plugin::load_scanners(scanners_builtin,s_config);
+    plugin::load_scanner_directories(scanner_dirs,sc);
+    plugin::load_scanners(scanners_builtin,sc);
     plugin::scanners_process_enable_disable_commands();
 
     /* Print usage if necessary */
-    if(opt_H){ plugin::info_scanners(true,true,scanners_builtin,'e','x'); exit(0);}
-    if(opt_h){ usage(progname);plugin::info_scanners(false,true,scanners_builtin,'e','x'); exit(0);}
+    if(opt_H || opt_h){
+        struct feature_recorder_set::flags_t f;
+        scanner_set ss(sc, f);
+        if (opt_h) usage(ss);
+        ss.info_scanners(std::cout, true, true, 'e', 'x');
+        exit(1);
+    }
 
     /* Give an error if a find list was specified
      * but no scanner that uses the find list is enabled.
@@ -1018,7 +1026,7 @@ int main(int argc,char **argv)
     fs.set_alert_list(&alert_list);
 
     /* Look for commands that impact per-recorders */
-    for(scanner_info::config_t::const_iterator it=s_config.namevals.begin();it!=s_config.namevals.end();it++){
+    for(scanner_info::config_t::const_iterator it=sc.namevals.begin();it!=sc.namevals.end();it++){
         /* see if there is a <recorder>: */
         std::vector<std::string> params = split(it->first,':');
         if(params.size()>=3 && params.at(0)=="fr"){
@@ -1035,7 +1043,7 @@ int main(int argc,char **argv)
 
     /* Store the configuration in the XML file */
     dfxml_writer  *xreport = new dfxml_writer(reportfilename,false);
-    dfxml_create(*xreport, argc, argv, cfg);
+    //dfxml_create(*xreport, argc, argv, cfg);
     xreport->xmlout("provided_filename",image_fname); // save this information
 
     /* provide documentation to the user; the DFXML information comes from elsewhere */

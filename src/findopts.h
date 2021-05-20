@@ -4,7 +4,11 @@
 #include <vector>
 #include <string>
 
-// Lists of patterns and pattern files
+/*
+ * Small class for accumulating command line options.
+ *
+ * Lists of patterns and pattern files
+ */
 class FindOpts {
 public:
     std::vector<std::string> Files {};     // accumulates pattern files

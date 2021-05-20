@@ -18,12 +18,12 @@ unsigned int opt_min_hex_buf = 64;           /* Don't re-analyze hex bufs smalle
 
 class base16_scanner : public sbuf_scanner {
 public:
-    base16_scanner(const scanner_params &sp_,const recursion_control_block &rcb_):
-        sbuf_scanner(&sp_.sbuf),sp(sp_),rcb(rcb_),hex_recorder(sp.fs.get_name("hex")){
+    base16_scanner(const scanner_params &sp_):
+        sbuf_scanner(&sp_.sbuf),sp(sp_),hex_recorder(sp.named_feature_recorder("hex")){
     }
-    
-    const class scanner_params &sp;    
-    const class recursion_control_block &rcb;
+
+    const struct scanner_params &sp;
+    const struct recursion_control_block &rcb;
     class feature_recorder *hex_recorder;
     void  decode(const sbuf_t &osbuf);
 };
@@ -100,23 +100,23 @@ UNICODE         ([[:print:][:space:]]+)
     s.decode(sbuf_t(s.sp.sbuf, s.pos, yyleng));
     s.pos += yyleng;
 }
- 
-.|\n { 
+
+.|\n {
      /**
       * The no-match rule.
       * If we are beyond the end of the margin, call it quits.
       */
     sbuf_scanner &s = *yybase16_get_extra(yyscanner);
-    s.pos++; 
+    s.pos++;
 }
 %%
 
 extern "C"
-void scan_base16(const class scanner_params &sp,const recursion_control_block &rcb)
+void scan_base16(const struct scanner_params &sp,const recursion_control_block &rcb)
 {
     static const u_char *ignore_string = (const u_char *)"\r\n \t";
-    assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);      
-    if(sp.phase==scanner_params::PHASE_STARTUP){
+    assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
+    if(sp.phase==scanner_params::PHASE_INIT){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 
         sp.info->name           = "base16";

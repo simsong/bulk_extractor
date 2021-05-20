@@ -3,7 +3,6 @@
  * scanners are brought in by defining the SCANNER macro and then including this file.
  */
 
-#if 0
 /* flex-based scanners */
 SCANNER(email)
 SCANNER(accts)
@@ -56,4 +55,3 @@ SCANNER(ntfsmft)
 SCANNER(ntfslogfile)
 SCANNER(ntfsindx)
 SCANNER(evtx)
-#endif

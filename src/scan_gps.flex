@@ -29,7 +29,7 @@ class gps_scanner : public sbuf_scanner {
       public:
       gps_scanner(const scanner_params &sp): sbuf_scanner(&sp.sbuf),
         gps_recorder(),lat(),lon(),ele(),time(),speed(),course(){
-           gps_recorder = sp.fs.get_name("gps");
+           gps_recorder = sp.named_feature_recorder("gps");
         }
 
       static std::string get_quoted_attrib(std::string text,std::string attrib);
@@ -127,13 +127,13 @@ ELEV    (-?[0-9]{1,6}[.][0-9]{0,3})
 [<]ele[>]{ELEV}[<][/]ele[>] {
         gps_scanner &s = *yygps_get_extra(yyscanner);
         s.ele = gps_scanner::get_cdata(yytext);
-        s.pos += yyleng; 
+        s.pos += yyleng;
 }
 
 [<]time[>][0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9][ T][0-9][0-9]:[0-9][0-9]:[0-9][0-9](Z|([-+][0-9.]))[<][/]time[>] {
         gps_scanner &s = *yygps_get_extra(yyscanner);
         s.time = gps_scanner::get_cdata(yytext);
-        s.pos += yyleng; 
+        s.pos += yyleng;
 }
 
 [<]gpxtpx:speed[>]{ELEV}[<][/]gpxtpx:speed[>] {
@@ -148,7 +148,7 @@ ELEV    (-?[0-9]{1,6}[.][0-9]{0,3})
         s.pos += yyleng;
 }
 
-.|\n { 
+.|\n {
     /**
      * The no-match rule.
      * If we are beyond the end of the margin, call it quits.
@@ -160,14 +160,14 @@ ELEV    (-?[0-9]{1,6}[.][0-9]{0,3})
     if(yytext[0] & 0x80){
         s.clear();
     }
-    s.pos++; 
+    s.pos++;
 }
 %%
 
 extern "C"
-void scan_gps(const class scanner_params &sp,const recursion_control_block &rcb)
+void scan_gps(const struct scanner_params &sp,const recursion_control_block &rcb)
 {
-    assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);      
+    assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
     if(sp.phase==scanner_params::PHASE_STARTUP){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
         sp.info->name           = "gps";
@@ -191,4 +191,3 @@ void scan_gps(const class scanner_params &sp,const recursion_control_block &rcb)
         (void)yyunput;                  // avoids defined but not used
     }
 }
-

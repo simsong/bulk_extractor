@@ -503,7 +503,7 @@ namespace email {
 }
 
 extern "C"
-void scan_email_lg(const class scanner_params &sp, const recursion_control_block &rcb) {
+void scan_email_lg(const struct scanner_params &sp, const recursion_control_block &rcb) {
   scan_lg(email::TheScanner, sp, rcb);
 }
 

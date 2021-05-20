@@ -742,7 +742,7 @@ namespace accts {
 }
 
 extern "C"
-void scan_accts_lg(const class scanner_params &sp, const recursion_control_block &rcb) {
+void scan_accts_lg(const struct scanner_params &sp, const recursion_control_block &rcb) {
   scan_lg(accts::TheScanner, sp, rcb);
 }
 

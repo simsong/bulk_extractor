@@ -1,6 +1,6 @@
 %{
 /* scan_email.flex
- * 
+ *
  * Note below:
  * U_TLD1 is a regular expression that catches top level domains in UTF-16.
  * Also scans for ethernet addresses; addresses are validated by algorithm below.
@@ -21,11 +21,11 @@ public:
       email_scanner(const scanner_params &sp):
         sbuf_scanner(&sp.sbuf),
 	email_recorder(),rfc822_recorder(),domain_recorder(),url_recorder(),ether_recorder(){
-          email_recorder  = sp.fs.get_name("email");
-	  domain_recorder = sp.fs.get_name("domain");
-	  url_recorder    = sp.fs.get_name("url");
-	  rfc822_recorder = sp.fs.get_name("rfc822");
-	  ether_recorder  = sp.fs.get_name("ether");
+          email_recorder  = sp.named_feature_recorder("email");
+	  domain_recorder = sp.named_feature_recorder("domain");
+	  url_recorder    = sp.named_feature_recorder("url");
+	  rfc822_recorder = sp.named_feature_recorder("rfc822");
+	  ether_recorder  = sp.named_feature_recorder("ether");
       }
       class feature_recorder *email_recorder;
       class feature_recorder *rfc822_recorder;
@@ -151,7 +151,7 @@ U_TLD4		(Q\0A\0|R\0E\0|R\0O\0|R\0S\0|R\0U\0|R\0W\0|S\0A\0|S\0B\0|S\0C\0|S\0D\0|S
 {DAYOFWEEK},[ \t\x0A\x0D]+[0-9]{1,2}[ \t\x0A\x0D]+{MONTH}[ \t\x0A\x0D]+{YEAR}[ \t\x0A\x0D]+[0-2][0-9]:[0-5][0-9]:[0-5][0-9][ \t\x0A\x0D]+([+-][0-2][0-9][0314][05]|{ABBREV}) {
     email_scanner &s = * yyemail_get_extra(yyscanner);
     s.rfc822_recorder->write_buf(SBUF,s.pos,yyleng);
-    s.pos += yyleng; 
+    s.pos += yyleng;
 
     /************
      *** NOTE ***
@@ -165,29 +165,29 @@ U_TLD4		(Q\0A\0|R\0E\0|R\0O\0|R\0S\0|R\0U\0|R\0W\0|S\0A\0|S\0B\0|S\0C\0|S\0D\0|S
 Message-ID:([ \t\x0A]|\x0D\x0A)?<{PC}{1,80}> {
     email_scanner &s = * yyemail_get_extra(yyscanner);
     s.rfc822_recorder->write_buf(SBUF,s.pos,yyleng);
-    s.pos += yyleng; 
+    s.pos += yyleng;
 }
 
 Subject:[ \t]?({PC}{1,80}) {
-    email_scanner &s = * yyemail_get_extra(yyscanner);	      
+    email_scanner &s = * yyemail_get_extra(yyscanner);
     s.rfc822_recorder->write_buf(SBUF,s.pos,yyleng);
-    s.pos += yyleng; 
+    s.pos += yyleng;
 }
 
-Cookie:[ \t]?({PC}{1,80}) {   
-    email_scanner &s = * yyemail_get_extra(yyscanner);	      
+Cookie:[ \t]?({PC}{1,80}) {
+    email_scanner &s = * yyemail_get_extra(yyscanner);
     s.rfc822_recorder->write_buf(SBUF,s.pos,yyleng);
-    s.pos += yyleng; 
+    s.pos += yyleng;
 }
 
-Host:[ \t]?([a-zA-Z0-9._]{1,64}) {   
-    email_scanner &s = * yyemail_get_extra(yyscanner);	      
+Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
+    email_scanner &s = * yyemail_get_extra(yyscanner);
     s.rfc822_recorder->write_buf(SBUF,s.pos,yyleng);
-    s.pos += yyleng; 
+    s.pos += yyleng;
 }
 
 {EMAIL}/[^a-zA-Z]	{
-    email_scanner &s = * yyemail_get_extra(yyscanner);	      
+    email_scanner &s = * yyemail_get_extra(yyscanner);
     if(validate_email(yytext)){
         s.email_recorder->write_buf(SBUF,s.pos,yyleng);
 	size_t domain_start = find_domain_in_email(SBUF.buf+s.pos,yyleng);
@@ -195,30 +195,30 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
             s.domain_recorder->write_buf(SBUF,s.pos+domain_start,yyleng-domain_start);
         }
     }
-    s.pos += yyleng; 
+    s.pos += yyleng;
 }
 
 
 {INUM}?\.{INUM}\.{INUM}\.{INUM}\.{INUM}	{
     /* Not an IP address, but could generate a false positive */
     // printf("IP Address False Positive at 1 '%s'\n",yytext);
-    email_scanner &s = * yyemail_get_extra(yyscanner);	      
+    email_scanner &s = * yyemail_get_extra(yyscanner);
     s.pos += yyleng;
 }
 
 [0-9][0-9][0-9][0-9]\.{INUM}\.{INUM}\.{INUM}	{
     /* Also not an IP address, but could generate a false positive */
     // printf("IP Address False Positive at 2 '%s'\n",yytext);
-    email_scanner &s = * yyemail_get_extra(yyscanner);	      
+    email_scanner &s = * yyemail_get_extra(yyscanner);
     s.pos += yyleng;
 }
 
 
 {INUM}\.{INUM}\.{INUM}\.{INUM}/[^0-9\-\.\+A-Z_] {
     /* Numeric IP addresses. Get the context before and throw away some things */
-    email_scanner &s = * yyemail_get_extra(yyscanner);	      
-    int ignore=0;						
-    
+    email_scanner &s = * yyemail_get_extra(yyscanner);
+    int ignore=0;
+
     /* Get 8 characters of left context, right-justified */
     int context_len = 8;
     int c0 = s.pos-context_len;
@@ -227,7 +227,7 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
        context_len--;
     }
     std::string context = SBUF.substr(c0,context_len);
-    while(context.size()<8){    
+    while(context.size()<8){
         context = std::string(" ")+context;
     }
 
@@ -247,7 +247,7 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
     if(context.find("ver",4) != std::string::npos) ignore=1;
     if(context.find("Ver",4) != std::string::npos) ignore=1;
     if(context.find("VER",4) != std::string::npos) ignore=1;
-    
+
     if(context.find("rsion") != std::string::npos) ignore=1;
     if(context.find("ion=")  != std::string::npos) ignore=1;
     if(context.find("PSW/")  != std::string::npos) ignore=1;  /* PWS/1.5.19.3 ... */
@@ -270,18 +270,18 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
 
 [^0-9A-Z:]{HEX}{HEX}:{HEX}{HEX}:{HEX}{HEX}:{HEX}{HEX}:{HEX}{HEX}:{HEX}{HEX}/[^0-9A-Z:] {
     /* found a possible ethernet address! */
-    email_scanner &s = * yyemail_get_extra(yyscanner);	      
+    email_scanner &s = * yyemail_get_extra(yyscanner);
     if(s.valid_ether_addr(s.pos+1)){
        s.ether_recorder->write_buf(SBUF,s.pos+1,yyleng-1);
     }
-    s.pos += yyleng;						      
+    s.pos += yyleng;
 }
 
 ((https?)|afp|smb):\/\/[a-zA-Z0-9_%/\-+@:=&\?#~.;]{1,384}	{
     // for reasons that aren't clear, there are a lot of net protocols that have an http://domain
     // in them followed by numbers. So this counts the number of slashes and if it is only 2
     // the size is pruned until the last character is a letter
-    email_scanner &s = * yyemail_get_extra(yyscanner);	      
+    email_scanner &s = * yyemail_get_extra(yyscanner);
     int slash_count = 0;
     int feature_len = yyleng;
     for(unsigned int i=0;i<(unsigned int)yyleng;i++){
@@ -298,11 +298,11 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
     if(domain_start>0 && domain_len>0){
 	s.domain_recorder->write_buf(SBUF,s.pos+domain_start,domain_len);
     }
-    s.pos += yyleng; 
+    s.pos += yyleng;
 }
 
 [a-zA-Z0-9]\0([a-zA-Z0-9._%\-+]\0){1,128}@\0([a-zA-Z0-9._%\-]\0){1,128}\.\0({U_TLD1}|{U_TLD2}|{U_TLD3}|{U_TLD4})/[^a-zA-Z]|([^][^\0])	{
-    email_scanner &s = * yyemail_get_extra(yyscanner);	      
+    email_scanner &s = * yyemail_get_extra(yyscanner);
     if(validate_email(yytext)){
         s.email_recorder->write_buf(SBUF,s.pos,yyleng);
         size_t domain_start = find_domain_in_email(SBUF.buf+s.pos,yyleng) + 1;
@@ -310,33 +310,33 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
             s.domain_recorder->write_buf(SBUF,s.pos+domain_start,yyleng-domain_start);
         }
     }
-    s.pos += yyleng; 
+    s.pos += yyleng;
 }
 
 h\0t\0t\0p\0(s\0)?:\0([a-zA-Z0-9_%/\-+@:=&\?#~.;]\0){1,128}/[^a-zA-Z0-9_%\/\-+@:=&\?#~.;]|([^][^\0])	{
-    email_scanner &s = * yyemail_get_extra(yyscanner);	      
+    email_scanner &s = * yyemail_get_extra(yyscanner);
     s.url_recorder->write_buf(SBUF,s.pos,yyleng);
     size_t domain_start = find_domain_in_email(SBUF.buf+s.pos,yyleng);
     if(domain_start>0){
 	s.domain_recorder->write_buf(SBUF,s.pos+domain_start,yyleng-domain_start);
     }
-    s.pos += yyleng; 
+    s.pos += yyleng;
 }
 
-.|\n { 
+.|\n {
      /**
       * The no-match rule. VERY IMPORTANT!
       * If we are beyond the end of the margin, call it quits.
       */
-     email_scanner &s = *yyemail_get_extra(yyscanner);	      
-     s.pos++; 
+     email_scanner &s = *yyemail_get_extra(yyscanner);
+     s.pos++;
 }
 %%
 
 extern "C"
-void scan_email(const class scanner_params &sp,const recursion_control_block &rcb)
+void scan_email(const struct scanner_params &sp,const recursion_control_block &rcb)
 {
-    assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);      
+    assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
     if(sp.phase==scanner_params::PHASE_STARTUP){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
 	sp.info->name		= "email";
@@ -364,7 +364,7 @@ void scan_email(const class scanner_params &sp,const recursion_control_block &rc
 	return;
     }
     if(sp.phase==scanner_params::PHASE_SHUTDOWN){
-        return; 
+        return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
 	/* Set up the buffer. Scan it. Exit */
@@ -384,4 +384,3 @@ void scan_email(const class scanner_params &sp,const recursion_control_block &rc
 	(void)yyunput;			// avoids defined but not used
     }
 }
-

@@ -131,28 +131,27 @@ U_TLD4		(Q\0A\0|R\0E\0|R\0O\0|R\0S\0|R\0U\0|R\0W\0|S\0A\0|S\0B\0|S\0C\0|S\0D\0|S
     pos += yyleng;
 }
 
-.|\n { 
+.|\n {
      /**
       * The no-match rule.
       * If we are beyond the end of the margin, call it quits.
       */
      /* putchar(yytext[0]); */ /* Uncomment for debugging */
-     pos++; 
+     pos++;
      if(pos>=sbuf.pagesize) eof=true;
 }
 %%
 
-void scan_headers(const class scanner_params &sp,const recursion_control_block &rcb)
+void scan_headers(const struct scanner_params &sp)
 {
     if(sp.feature_names){
         sp.feature_names->insert("header");
     }
-    if(sp.fs==0) return;	
+    if(sp.fs==0) return;
 
     MyScanFlexLexer  lexer(sp.sbuf);
-    lexer.header_recorder = sp.fs->get_name("header");
+    lexer.header_recorder = sp.named_feature_recorder("header");
 
     while(lexer.yylex() != 0) {
     }
 }
-
