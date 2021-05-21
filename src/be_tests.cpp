@@ -9,7 +9,7 @@
 
 #include "config.h"
 
-#include "scanners.h"
+
 #include "be13_api/scanner_set.h"
 #include "be13_api/catch.hpp"
 //#include "be13_api/bulk_extractor_i.h"
@@ -26,6 +26,13 @@
 //#include "pyxpress.h"
 //#include "sbuf_flex_scanner.h"
 //#include "scan_ccns2.h"
+
+/* Bring in the definitions for the  */
+#define SCANNER(scanner) extern "C" scanner_t scan_ ## scanner;
+#include "bulk_extractor_scanners.h"
+#undef SCANNER
+
+
 #include "threadpool.hpp"
 
 /* Read all of the lines of a file and return them as a vector */

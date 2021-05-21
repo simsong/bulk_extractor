@@ -1,6 +1,6 @@
 bin_PROGRAMS   = bulk_extractor be_tests
 #jpegdump
-EXTRA_PROGRAMS = stand bulk_extractorlib beapi_demo bulk_extractor_noscanners
+#EXTRA_PROGRAMS = stand bulk_extractorlib beapi_demo bulk_extractor_noscanners
 CLEANFILES     = scan_accts.cpp scan_email.cpp scan_gps.cpp scan_base16.cpp *.d
 
 AM_CPPFLAGS = -I${top_srcdir}/src/be13_api
@@ -103,19 +103,19 @@ scanners_builtin_broken = \
 	scan_xor.cpp \
 	scan_zip.cpp
 
-if FLEXSCANNERS_ENABLED
-  scanners_builtin += $(flex_scanners)
-endif
-
-if LIGHTGREP_ENABLED
-  scanners_builtin += $(lightgrep_scanners)
-endif
-
-
-if RAR_ENABLED
-  scanners_builtin += $(RAR_SUPPORT)
-endif
-
+#if FLEXSCANNERS_ENABLED
+#  scanners_builtin += $(flex_scanners)
+#endif
+#
+#if LIGHTGREP_ENABLED
+#  scanners_builtin += $(lightgrep_scanners)
+#endif
+#
+#
+#if RAR_ENABLED
+#  scanners_builtin += $(RAR_SUPPORT)
+#endif
+#
 bulk_extractor_nomain = \
         $(TSK3INCS)  $(BE13_API_SRC) \
 	bulk_extractor_api.cpp bulk_extractor_api.h \

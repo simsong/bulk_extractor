@@ -58,8 +58,9 @@ int _CRT_fmode = _O_BINARY;
 #include "phase1.h"
 
 
+#if 0
 /* Bring in the definitions for the  */
-#define SCANNER(scanner) extern "C" scanner_set::scanner_t scan_ ## scanner;
+#define SCANNER(scanner) extern "C" scanner_t scan_ ## scanner;
 #include "bulk_extractor_scanners.h"
 #undef SCANNER
 
@@ -69,6 +70,7 @@ scanner_t *scanners_builtin[] = {
 #include "bulk_extractor_scanners.h"
     0};
 #undef SCANNER
+#endif
 
 /**
  * Output the #defines for our debug parameters. Used by the automake system.
@@ -91,7 +93,7 @@ void debug_help()
  *** Usage for the stand-alone program
  ****************************************************************/
 
-static void usage(const char *progname)
+static void usage(const char *progname, scanner_set &ss)
 {
     BulkExtractor_Phase1::Config cfg;   // get a default config
 
@@ -157,6 +159,7 @@ static void usage(const char *progname)
     std::cout << "              e.g.: '-E gzip -e facebook' runs only gzip and facebook\n";
     std::cout << "   -S name=value - sets a bulk extractor option name to be value\n";
     std::cout << "\n";
+    ss.info_scanners(std::cerr, false, true, 'e', 'x');
 #ifdef HAVE_LIBEWF
     std::cout << "                  HAS SUPPORT FOR E01 FILES\n";
 #endif
@@ -198,6 +201,7 @@ static uint64_t scaled_stoi64(const std::string &str)
 }
 
 
+#if 0
 static int stat_callback(void *user,const std::string &name,uint64_t calls,double seconds)
 {
     dfxml_writer *xreport = reinterpret_cast<dfxml_writer *>(user);
@@ -211,6 +215,7 @@ static int stat_callback(void *user,const std::string &name,uint64_t calls,doubl
     xreport->set_oneline(false);
     return 0;
 }
+#endif
 
 void be_mkdir(const std::string &dir)
 {
@@ -712,6 +717,8 @@ static int histogram_dump_callback(void *user,const feature_recorder &fr,
     return 0;
 }
 
+#endif
+std::string be_hash_name {"md5"};
 static void add_if_present(std::vector<std::string> &scanner_dirs,const std::string &dir)
 {
     if (access(dir.c_str(),O_RDONLY) == 0){
@@ -719,8 +726,6 @@ static void add_if_present(std::vector<std::string> &scanner_dirs,const std::str
     }
 }
 
-std::string be_hash_name {"md5"};
-#endif
 
 int main(int argc,char **argv)
 {
@@ -734,8 +739,8 @@ int main(int argc,char **argv)
     word_and_context_list alert_list;		/* shold be flagged */
     word_and_context_list stop_list;		/* should be ignored */
 
-    scanner_config   sc;             // the bulk extractor phase 1 config created from the command line
-    BulkExtractor_Phase1::Config   cfg;
+    scanner_config                 sc;   // config for be13_api
+    BulkExtractor_Phase1::Config   cfg;  // config for the image_processing system
     cfg.num_threads = std::thread::hardware_concurrency();
 
     /* Options */
@@ -769,23 +774,24 @@ int main(int argc,char **argv)
 
 #ifdef WIN32
     setmode(1,O_BINARY);		// make stdout binary
-    //threadpool::win32_init();
 #endif
-    /* look for usage first */
-    if(argc==1) opt_h=1;
+
+    if(argc==1) opt_h=1;                // generate help if no arguments provided
 
     /* Process options */
     int ch;
     while ((ch = getopt(argc, argv, "A:B:b:C:d:E:e:F:f:G:g:Hhij:M:m:o:P:p:q:Rr:S:s:VW:w:x:Y:z:Z")) != -1) {
 	switch (ch) {
-	case 'A': feature_recorder::offset_add  = stoi64(optarg);break;
-	case 'b': feature_recorder::banner_file = optarg; break;
-	case 'C': feature_recorder::context_window_default = atoi(optarg);break;
+	case 'A': /*sc.offset_add  = stoi64(optarg);*/break;
+	case 'b': /*sc.banner_file = optarg;*/ break;
+	case 'C': /*sc.context_window_default = atoi(optarg);*/break;
 	case 'd':
 	{
             if(strcmp(optarg,"h")==0) debug_help();
 	    int d = atoi(optarg);
+            /* Used to simulate low memory situations */
 	    switch(d){
+#if 0
 	    case DEBUG_ALLOCATE_512MiB:
 		if(calloc(1024*1024*512,1)){
                     std::cerr << "-d1002 -- Allocating 512MB of RAM; may be repeated\n";
@@ -793,19 +799,20 @@ int main(int argc,char **argv)
                     std::cerr << "-d1002 -- CANNOT ALLOCATE MORE RAM\n";
 		}
 		break;
+#endif
 	    default:
 		cfg.debug  = d;
 		break;
 	    }
-            plugin::set_scanner_debug(cfg.debug);
+            //plugin::set_scanner_debug(cfg.debug);
 	}
 	break;
 	case 'E':
-            plugin::scanners_disable_all();
-	    plugin::scanners_enable(optarg);
+            sc.push_scanner_command(scanner_config::scanner_command::ALL_SCANNERS, scanner_config::scanner_command::DISABLE);
+            sc.push_scanner_command(optarg, scanner_config::scanner_command::ENABLE);
 	    break;
 	case 'e':
-	    plugin::scanners_enable(optarg);
+            sc.push_scanner_command(optarg, scanner_config::scanner_command::ENABLE);
 	    break;
 	case 'F': FindOpts::get().Files.push_back(optarg); break;
 	case 'f': FindOpts::get().Patterns.push_back(optarg); break;
@@ -816,7 +823,7 @@ int main(int argc,char **argv)
             cfg.opt_info = true;
             break;
 	case 'j': cfg.num_threads = atoi(optarg); break;
-	case 'M': scanner_def::max_depth = atoi(optarg); break;
+	case 'M': /*sc.max_depth = atoi(optarg); */break;
 	case 'm': cfg.max_bad_alloc_errors = atoi(optarg); break;
 	case 'o': opt_outdir = optarg;break;
 	case 'P': scanner_dirs.push_back(optarg);break;
@@ -854,7 +861,7 @@ int main(int argc,char **argv)
 	    }
 	    break;
 	case 'x':
-	    plugin::scanners_disable(optarg);
+            sc.push_scanner_command(scanner_config::scanner_command::ALL_SCANNERS, scanner_config::scanner_command::DISABLE);
 	    break;
 	case 'Y': {
 	    std::string optargs = optarg;
@@ -877,40 +884,44 @@ int main(int argc,char **argv)
     argc -= optind;
     argv += optind;
 
-    if(cfg.debug & DEBUG_PRINT_STEPS) std::cerr << "DEBUG: DEBUG_PRINT_STEPS\n";
+    //if(cfg.debug & DEBUG_PRINT_STEPS) std::cerr << "DEBUG: DEBUG_PRINT_STEPS\n";
 
     /* Create a configuration that will be used to initialize the scanners */
-    scanner_info si;
+    //scanner_info si;
 
-    sc.debug       = cfg.debug;
-    si.config = &sc;
+    //sc.debug       = cfg.debug;
+    //si.config = &sc;
 
     /* Make individual configuration options appear on the command line interface. */
 #if 0
-    si.get_config("work_start_work_end",&worker::opt_work_start_work_end,
+    sc.get_config("work_start_work_end",&worker::opt_work_start_work_end,
                   "Record work start and end of each scanner in report.xml file");
-    si.get_config("debug_histogram_malloc_fail_frequency",&HistogramMaker::debug_histogram_malloc_fail_frequency,
+    sc.get_config("debug_histogram_malloc_fail_frequency",&HistogramMaker::debug_histogram_malloc_fail_frequency,
                   "Set >0 to make histogram maker fail with memory allocations");
 #endif
-    si.get_config("enable_histograms",&opt_enable_histograms,
+    sc.get_config("enable_histograms",&opt_enable_histograms,
                   "Disable generation of histograms");
-    si.get_config("hash_alg",&be_hash_name,"Specifies hash algorithm to be used for all hash calculations");
-    si.get_config("dup_data_alerts",&plugin::dup_data_alerts,"Notify when duplicate data is not processed");
-    si.get_config("write_feature_files",&opt_write_feature_files,"Write features to flat files");
-    si.get_config("write_feature_sqlite3",&opt_write_sqlite3,"Write feature files to report.sqlite3");
-    si.get_config("report_read_errors",&cfg.opt_report_read_errors,"Report read errors");
+    sc.get_config("hash_alg",&be_hash_name,"Specifies hash algorithm to be used for all hash calculations");
+    //sc.get_config("dup_data_alerts",&plugin::dup_data_alerts,"Notify when duplicate data is not processed");
+    sc.get_config("write_feature_files",&opt_write_feature_files,"Write features to flat files");
+    sc.get_config("write_feature_sqlite3",&opt_write_sqlite3,"Write feature files to report.sqlite3");
+    sc.get_config("report_read_errors",&cfg.opt_report_read_errors,"Report read errors");
 
     /* Load all the scanners and enable the ones we care about */
 
-    plugin::load_scanner_directories(scanner_dirs,sc);
-    plugin::load_scanners(scanners_builtin,sc);
-    plugin::scanners_process_enable_disable_commands();
+    //plugin::load_scanner_directories(scanner_dirs,sc);
+    //plugin::load_scanners(scanners_builtin,sc);
+    if(opt_outdir.size()==0){
+        std::cerr << "error: -o outdir must be specified\n";
+        exit(1);
+    }
+    struct feature_recorder_set::flags_t f;
+    scanner_set ss(sc, f);
+    ss.apply_scanner_commands();
 
     /* Print usage if necessary */
     if(opt_H || opt_h){
-        struct feature_recorder_set::flags_t f;
-        scanner_set ss(sc, f);
-        if (opt_h) usage(ss);
+        if (opt_h) usage(progname, ss);
         ss.info_scanners(std::cout, true, true, 'e', 'x');
         exit(1);
     }
@@ -923,17 +934,16 @@ int main(int argc,char **argv)
         /* Look through the enabled scanners and make sure that
 	 * at least one of them is a FIND scanner
 	 */
-        if(!plugin::find_scanner_enabled()){
+        if(!ss.is_find_scanner_enabled()){
             throw std::runtime_error("find words are specified with -F but no find scanner is enabled.\n");
         }
     }
 
     if(opt_path){
 	if(argc!=1) throw std::runtime_error("-p requires a single argument.");
-	process_path(argv[0],opt_path,cfg.opt_pagesize,cfg.opt_marginsize);
+	//process_path(argv[0],opt_path,cfg.opt_pagesize,cfg.opt_marginsize);
 	exit(0);
     }
-    if(opt_outdir.size()==0) throw std::runtime_error("error: -o outdir must be specified");
 
     /* The zap option wipes the contents of a directory, useful for debugging */
     if(opt_zap){
@@ -993,7 +1003,7 @@ int main(int argc,char **argv)
         bulk_extractor_restarter r(opt_outdir,reportfilename,image_fname,seen_page_ids);
 
         /* Rename the old report and create a new one */
-        std::string old_reportfilename = reportfilename + "." + itos(time(0));
+        std::string old_reportfilename = reportfilename + "." + std::to_string(time(0));
         if(rename(reportfilename.c_str(),old_reportfilename.c_str())){
             std::cerr << "Could not rename " << reportfilename << " to " << old_reportfilename << ": " << strerror(errno) << "\n";
             throw std::runtime_error("Could not rename file");
@@ -1007,8 +1017,8 @@ int main(int argc,char **argv)
     if(!p) throw_FileNotFoundError(image_fname);
 
     /* Determine the feature files that will be used from the scanners that were enabled */
-    feature_file_names_t feature_file_names;
-    plugin::get_scanner_feature_file_names(feature_file_names);
+    auto feature_file_names = ss.feature_file_list();
+#if 0
     uint32_t flags = 0;
     if (stop_list.size()>0)        flags |= feature_recorder_set::CREATE_STOP_LIST_RECORDERS;
     if (opt_write_sqlite3)         flags |= feature_recorder_set::ENABLE_SQLITE3_RECORDERS;
@@ -1040,6 +1050,7 @@ int main(int argc,char **argv)
         }
         /* See if there is a scanner? */
     }
+#endif
 
     /* Store the configuration in the XML file */
     dfxml_writer  *xreport = new dfxml_writer(reportfilename,false);
@@ -1064,6 +1075,7 @@ int main(int argc,char **argv)
 
     /*** PHASE 1 --- Run on the input image */
 
+#if 0
     if ( fs.flag_set(feature_recorder_set::ENABLE_SQLITE3_RECORDERS )) {
         fs.db_transaction_begin();
     }
@@ -1125,6 +1137,7 @@ int main(int argc,char **argv)
             }
         }
     }
+#endif
 
 #ifdef HAVE_MCHECK
     muntrace();

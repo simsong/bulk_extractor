@@ -36,7 +36,7 @@ class gps_scanner : public sbuf_scanner {
       static std::string get_cdata(std::string text);
       void clear();
 
-      class feature_recorder *gps_recorder;
+      class feature_recorder &gps_recorder;
       std::string lat;
       std::string lon;
       std::string ele;
@@ -167,7 +167,7 @@ ELEV    (-?[0-9]{1,6}[.][0-9]{0,3})
 extern "C"
 void scan_gps(const struct scanner_params &sp,const recursion_control_block &rcb)
 {
-    assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
+    //assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
     if(sp.phase==scanner_params::PHASE_STARTUP){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
         sp.info->name           = "gps";

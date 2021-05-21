@@ -69,7 +69,6 @@ void usage(scanner_set &ss)
     std::cerr << "  -e scanner    - enable scanner\n";
     std::cerr << "  -o outdir     - specify output directory\n";
     ss.info_scanners(std::cerr, false, true, 'e','x');
-    //plugin::info_scanners(false,true,scanners_builtin,'e','x');
 }
 
 int main(int argc,char **argv)

@@ -32,7 +32,7 @@
  */
 
 /* An array of the built-in scanners */
-#define SCANNER(scanner) extern "C" scanner_set::scanner_t scan_ ## scanner;
+#define SCANNER(scanner) extern "C" scanner_t scan_ ## scanner;
 #include "bulk_extractor_scanners.h"
 #undef SCANNER
 
