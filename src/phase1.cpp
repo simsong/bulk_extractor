@@ -1,8 +1,10 @@
+#include <random>
+
 #include "config.h"
 #include "bulk_extractor.h"
 #include "phase1.h"
+#include "be13_api/utils.h"
 
-#include <random>
 
 /**
  * Implementation of the bulk_extractor Phase 1.
@@ -88,10 +90,9 @@ sbuf_t BulkExtractor_Phase1::get_sbuf(image_process::iterator &it)
                       << " (retry_count=" << retry_count
                       << " of " << config.max_bad_alloc_errors << ")\n";
 
-            std::stringstream ss;
-            ss << "name='bad_alloc' " << "pos0='" << it.get_pos0() << "' "
-               << "retry_count='"     << retry_count << "' ";
-            xreport.xmlout("debug:exception", e.what(), ss.str(), true);
+            std::stringstream str;
+            str << "name='bad_alloc' " << "pos0='" << it.get_pos0() << "' " << "retry_count='"     << retry_count << "' ";
+            xreport.xmlout("debug:exception", e.what(), str.str(), true);
         }
         if(retry_count < config.max_bad_alloc_errors+1){
             std::cerr << "will wait for " << config.retry_seconds << " seconds and try again...\n";

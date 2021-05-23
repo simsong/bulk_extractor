@@ -1,6 +1,6 @@
 bin_PROGRAMS   = bulk_extractor be_tests
 #jpegdump
-#EXTRA_PROGRAMS = stand bulk_extractorlib beapi_demo bulk_extractor_noscanners
+EXTRA_PROGRAMS = stand bulk_extractorlib beapi_demo bulk_extractor_noscanners
 CLEANFILES     = scan_accts.cpp scan_email.cpp scan_gps.cpp scan_base16.cpp *.d
 
 AM_CPPFLAGS = -I${top_srcdir}/src/be13_api

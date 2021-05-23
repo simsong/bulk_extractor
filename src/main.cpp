@@ -27,8 +27,6 @@
 #include <unistd.h>
 #include <ctype.h>
 
-
-
 #ifdef HAVE_EXPAT_H
 #include <expat.h>
 #endif
@@ -75,8 +73,7 @@ scanner_t *scanners_builtin[] = {
 /**
  * Output the #defines for our debug parameters. Used by the automake system.
  */
-__attribute__((noreturn))
-void debug_help()
+[[noreturn]] void debug_help()
 {
     puts("#define DEBUG_PEDANTIC    0x0001	// check values more rigorously");
     puts("#define DEBUG_PRINT_STEPS 0x0002      // prints as each scanner is started");
@@ -650,12 +647,15 @@ public:;
     }
 };
 
-#if 0
 /**
  * Create the dfxml output
  */
 
-static void dfxml_create(dfxml_writer &xreport, int argc, char * const *argv,const BulkExtractor_Phase1::Config &cfg)
+static void dfxml_create(dfxml_writer &xreport,
+                         int argc, char * const *argv,
+                         const BulkExtractor_Phase1::Config &cfg,
+                         scanner_set &ss
+                         )
 {
     xreport.push("dfxml","xmloutputversion='1.0'");
     xreport.push("metadata",
@@ -672,28 +672,27 @@ static void dfxml_create(dfxml_writer &xreport, int argc, char * const *argv,con
     xreport.push("scanners");
 
     /* Generate a list of the scanners in use */
-    std::vector<std::string> ev;
-    plugin::get_enabled_scanners(ev);
-    for(std::vector<std::string>::const_iterator it=ev.begin();it!=ev.end();it++){
-        xreport.xmlout("scanner",(*it));
+    auto ev = ss.get_enabled_scanners();
+    for (auto const &it : ev) {
+        xreport.xmlout("scanner",it);
     }
     xreport.pop();			// scanners
     xreport.pop();			// configuration
 }
-#endif
 
 
-#if 0
+
 /* It is gross to do this with statics rather than a singleton whose address is passed in 'user',
  * but that is the way it is implemented.
  */
 static std::string current_ofname;
 static std::ofstream o;
-static bool needs_stamping=false;
+#if 0
 static int histogram_dump_callback(void *user,const feature_recorder &fr,
                                    const histogram_def &def,
                                    const std::string &str,const uint64_t &count)
 {
+    static bool needs_stamping=false;
     if(count==0){
         if (o.is_open()) o.close();        // close old stream
         std::string ofname = fr.fname_counter(def.suffix);
@@ -750,7 +749,6 @@ int main(int argc,char **argv)
     int         opt_h = 0;
     int         opt_H = 0;
     std::string opt_sampling_params;
-    std::string opt_outdir;
     bool        opt_write_feature_files = true;
     bool        opt_write_sqlite3     = false;
     bool        opt_enable_histograms = true;
@@ -825,7 +823,7 @@ int main(int argc,char **argv)
 	case 'j': cfg.num_threads = atoi(optarg); break;
 	case 'M': /*sc.max_depth = atoi(optarg); */break;
 	case 'm': cfg.max_bad_alloc_errors = atoi(optarg); break;
-	case 'o': opt_outdir = optarg;break;
+	case 'o': sc.outdir = optarg;break;
 	case 'P': scanner_dirs.push_back(optarg);break;
 	case 'p': opt_path = optarg; break;
         case 'q':
@@ -911,7 +909,7 @@ int main(int argc,char **argv)
 
     //plugin::load_scanner_directories(scanner_dirs,sc);
     //plugin::load_scanners(scanners_builtin,sc);
-    if(opt_outdir.size()==0){
+    if(sc.outdir.size()==0){
         std::cerr << "error: -o outdir must be specified\n";
         exit(1);
     }
@@ -947,19 +945,19 @@ int main(int argc,char **argv)
 
     /* The zap option wipes the contents of a directory, useful for debugging */
     if(opt_zap){
-	DIR *dirp = opendir(opt_outdir.c_str());
+	DIR *dirp = opendir(sc.outdir.c_str());
 	if(dirp){
 	    struct dirent *dp;
 	    while ((dp = readdir(dirp)) != NULL){
                 std::string name = dp->d_name;
 		if(name=="." || name=="..") continue;
-                std::string fname = opt_outdir + std::string("/") + name;
+                std::string fname = sc.outdir + std::string("/") + name;
 		unlink(fname.c_str());
 		std::cout << "erasing " << fname << "\n";
 	    }
 	}
-	if(rmdir(opt_outdir.c_str())){
-            std::cout << "rmdir " << opt_outdir << "\n";
+	if(rmdir(sc.outdir.c_str())){
+            std::cout << "rmdir " << sc.outdir << "\n";
         }
     }
 
@@ -968,7 +966,7 @@ int main(int argc,char **argv)
     timer.start();
 
     /* If output directory does not exist, we are not restarting! */
-    std::string reportfilename = opt_outdir + "/report.xml";
+    std::string reportfilename = sc.outdir + "/report.xml";
 
     BulkExtractor_Phase1::seen_page_ids_t seen_page_ids; // pages that do not need re-processing
 
@@ -983,7 +981,7 @@ int main(int argc,char **argv)
     }
     std::string image_fname = *argv;
 
-    if(opt_outdir.size()==0){
+    if(sc.outdir.size()==0){
         fprintf(stderr,"output directory not provided\n");
         exit(1);
     }
@@ -991,16 +989,16 @@ int main(int argc,char **argv)
     /* Determine if this is the first time through or if the program was restarted.
      * Restart procedure: re-run the command in verbatim.
      */
-    if (directory_missing(opt_outdir) || directory_empty(opt_outdir)){
+    if (directory_missing(sc.outdir) || directory_empty(sc.outdir)){
         /* First time running */
 	/* Validate the args */
 	if ( argc !=1 ) throw std::runtime_error("Disk image option not provided. Run with -h for help.");
 	validate_fn(image_fname);
-	if (directory_missing(opt_outdir)) be_mkdir(opt_outdir);
+	if (directory_missing(sc.outdir)) be_mkdir(sc.outdir);
     } else {
 	/* Restarting */
-	std::cout << "Restarting from " << opt_outdir << "\n";
-        bulk_extractor_restarter r(opt_outdir,reportfilename,image_fname,seen_page_ids);
+	std::cout << "Restarting from " << sc.outdir << "\n";
+        bulk_extractor_restarter r(sc.outdir,reportfilename,image_fname,seen_page_ids);
 
         /* Rename the old report and create a new one */
         std::string old_reportfilename = reportfilename + "." + std::to_string(time(0));
@@ -1025,7 +1023,7 @@ int main(int argc,char **argv)
     if (!opt_write_feature_files)  flags |= feature_recorder_set::DISABLE_FILE_RECORDERS;
 
     /* Create the feature_recorder_set */
-    feature_recorder_set fs(flags, be_hash_name, image_fname, opt_outdir);
+    feature_recorder_set fs(flags, be_hash_name, image_fname, sc.outdir);
     fs.init( feature_file_names );      // TODO: this should be in the initializer
 
     /* Enable histograms */
@@ -1054,7 +1052,7 @@ int main(int argc,char **argv)
 
     /* Store the configuration in the XML file */
     dfxml_writer  *xreport = new dfxml_writer(reportfilename,false);
-    //dfxml_create(*xreport, argc, argv, cfg);
+    dfxml_create(*xreport, argc, argv, cfg, ss);
     xreport->xmlout("provided_filename",image_fname); // save this information
 
     /* provide documentation to the user; the DFXML information comes from elsewhere */
@@ -1068,55 +1066,60 @@ int main(int argc,char **argv)
         }
 #endif
         std::cout << "Input file: " << image_fname << "\n";
-        std::cout << "Output directory: " << opt_outdir << "\n";
+        std::cout << "Output directory: " << sc.outdir << "\n";
         std::cout << "Disk Size: " << p->image_size() << "\n";
         std::cout << "Threads: " << cfg.num_threads << "\n";
     }
 
     /*** PHASE 1 --- Run on the input image */
+    ss.phase_scan();
 
 #if 0
     if ( fs.flag_set(feature_recorder_set::ENABLE_SQLITE3_RECORDERS )) {
         fs.db_transaction_begin();
     }
-    BulkExtractor_Phase1 phase1(*xreport, timer, cfg, *p, fs, seen_page_ids);
-    if(cfg.debug & DEBUG_PRINT_STEPS) std::cerr << "DEBUG: STARTING PHASE 1\n";
+#endif
+    BulkExtractor_Phase1 phase1(*xreport, timer, cfg, *p, ss, seen_page_ids);
+    //if(cfg.debug & DEBUG_PRINT_STEPS) std::cerr << "DEBUG: STARTING PHASE 1\n";
 
     if(opt_sampling_params.size()>0) BulkExtractor_Phase1::set_sampling_parameters(cfg,opt_sampling_params);
     xreport->add_timestamp("phase1 start");
     phase1.run();
 
+#if 0
     if ( fs.flag_set(feature_recorder_set::ENABLE_SQLITE3_RECORDERS )) {
         fs.db_transaction_commit();
     }
+#endif
     xreport->add_timestamp("phase1 end");
-    if (phase1.image_hash().size() > 0 ){
-        std::cout << "Hash of Disk Image: " << phase1.image_hash() << "\n";
+    if (phase1.image_hash.size() > 0 ){
+        std::cout << "Hash of Disk Image: " << phase1.image_hash << "\n";
     }
 
     /*** PHASE 2 --- Shutdown ***/
-    if(cfg.opt_quiet==0) std::cout << "Phase 2. Shutting down scanners\n";
+    if (!cfg.opt_quiet) std::cout << "Phase 2. Shutting down scanners\n";
     xreport->add_timestamp("phase2 (shutdown) start");
-    plugin::phase_shutdown(fs);
+    ss.shutdown();
     xreport->add_timestamp("phase2 (shutdown) end");
 
     /*** PHASE 3 --- Create Histograms ***/
-    if(cfg.opt_quiet==0) std::cout << "Phase 3. Creating Histograms\n";
-    xreport->add_timestamp("phase3 (histograms) start");
-    if(opt_enable_histograms) fs.dump_histograms(0,histogram_dump_callback,0);        // TK - add an xml error notifier!
-    xreport->add_timestamp("phase3 (histograms) end");
+    // note - this is now done as part of the scanner_set shutdown
+    //if(cfg.opt_quiet==0) std::cout << "Phase 3. Creating Histograms\n";
+    //xreport->add_timestamp("phase3 (histograms) start");
+    //if(opt_enable_histograms) fs.dump_histograms(0,histogram_dump_callback,0);        // TK - add an xml error notifier!
+    //xreport->add_timestamp("phase3 (histograms) end");
 
     /*** PHASE 4 ---  report and then print final usage information ***/
     xreport->push("report");
     xreport->xmlout("total_bytes",phase1.total_bytes);
     xreport->xmlout("elapsed_seconds",timer.elapsed_seconds());
-    xreport->xmlout("max_depth_seen",plugin::get_max_depth_seen());
-    xreport->xmlout("dup_data_encountered",plugin::dup_data_encountered);
+    //xreport->xmlout("max_depth_seen",plugin::get_max_depth_seen());
+    //xreport->xmlout("dup_data_encountered",plugin::dup_data_encountered);
     xreport->pop();			// report
     xreport->flush();
 
     xreport->push("scanner_times");
-    fs.get_stats(xreport,stat_callback);
+    //fs.get_stats(xreport,stat_callback);
     xreport->pop();
     xreport->add_rusage();
     xreport->pop();			// bulk_extractor
@@ -1130,14 +1133,16 @@ int main(int argc,char **argv)
 
         printf("Overall performance: %g MBytes/sec (%g MBytes/sec/thread)\n",
                mb_per_sec,mb_per_sec/cfg.num_threads);
+#if 0
         if (fs.has_name("email")) {
             feature_recorder &fr = fs.named_feature_recorder("email");
             if(fr){
                 std::cout << "Total " << fr->name << " features found: " << fr->count() << "\n";
             }
         }
-    }
 #endif
+    }
+
 
 #ifdef HAVE_MCHECK
     muntrace();

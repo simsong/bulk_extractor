@@ -1,11 +1,13 @@
 #ifndef PHASE1_H
 #define PHASE1_H
 
-#include "bulk_extractor_i.h"
-//#include "be13_api/aftimer.h"
+#include "be13_api/aftimer.h"
+#include "be13_api/scanner_set.h"
+#include "dfxml/src/dfxml_writer.h"
+#include "dfxml/src/hash_t.h"
+
+//#include "bulk_extractor_i.h"
 //#include "image_process.h"
-//#include "dfxml/src/dfxml_writer.h"
-//#include "dfxml/src/hash_t.h"
 #include "image_process.h"
 #include "threadpool.hpp"               // new threadpool!
 
@@ -79,14 +81,14 @@ public:
     u_int         notify_ctr  {0};    /* for random sampling */
     uint64_t      total_bytes {0};               //
     image_process &p;
-    feature_recorder_set &fs;
+    scanner_set   &ss;
     seen_page_ids_t &seen_page_ids;
-    dfxml::md5_generator *md5g {nullptr};        // the MD5 of the image. Set to 0 if a gap is encountered
+    dfxml::sha1_generator *sha1g {nullptr};        // the MD5 of the image. Set to 0 if a gap is encountered
 
     BulkExtractor_Phase1(dfxml_writer &xreport_,aftimer &timer_,Config &config_,
-                         image_process &p_, feature_recorder_set &fs_, seen_page_ids_t &seen_page_ids_):
+                         image_process &p_, scanner_set &ss_, seen_page_ids_t &seen_page_ids_):
         xreport(xreport_),timer(timer_),config(config_),
-        p(p_), fs(fs_), seen_page_ids(seen_page_ids_)  {}
+        p(p_), ss(ss_), seen_page_ids(seen_page_ids_)  {}
 
     /* Get the sbuf from current image iterator location, with retries */
     sbuf_t get_sbuf(image_process::iterator &it);
@@ -97,7 +99,7 @@ public:
     void load_workers();
     void wait_for_workers();
     void run();
-    std::string image_hash() const;
+    std::string image_hash;
 };
 
 #endif
