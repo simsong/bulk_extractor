@@ -52,6 +52,7 @@ int _CRT_fmode = _O_BINARY;
 #include "image_process.h"
 #include "dfxml/src/dfxml_writer.h"
 #include "dfxml/src/hash_t.h"
+#include "be13_api/utils.h"
 
 #include "phase1.h"
 
@@ -214,21 +215,6 @@ static int stat_callback(void *user,const std::string &name,uint64_t calls,doubl
 }
 #endif
 
-void be_mkdir(const std::string &dir)
-{
-#ifdef WIN32
-    if(mkdir(dir.c_str())){
-        std::cerr << "Could not make directory " << dir << "\n";
-        exit(1);
-    }
-#else
-    if(mkdir(dir.c_str(),0777)){
-        std::cerr << "Could not make directory " << dir << "\n";
-        exit(1);
-    }
-#endif
-}
-
 /*
  * Make sure that the filename provided is sane.
  * That is, do not allow the analysis of a *.E02 file...
@@ -259,21 +245,6 @@ void validate_fn(const std::string &fn)
     }
 }
 
-
-static bool directory_missing(const std::string &d)
-{
-    return access(d.c_str(),F_OK)<0;
-}
-
-
-static bool directory_empty(const std::string &d)
-{
-    if(directory_missing(d)==false){
-	std::string reportfn = d + "/report.xml";
-	if(access(reportfn.c_str(),R_OK)<0) return true;
-    }
-    return false;
-}
 
 
 #if 0
@@ -874,8 +845,12 @@ int main(int argc,char **argv)
 	}
 	case 'z': cfg.opt_page_start = stoi64(optarg);break;
 	case 'Z': opt_zap=true;break;
-	case 'H': opt_H++;continue;
-	case 'h': opt_h++;continue;
+	case 'H':
+            opt_H++;
+            continue;
+	case 'h':
+            opt_h++;
+            continue;
 	}
     }
 
@@ -909,20 +884,32 @@ int main(int argc,char **argv)
 
     //plugin::load_scanner_directories(scanner_dirs,sc);
     //plugin::load_scanners(scanners_builtin,sc);
+    if (opt_H || opt_h) {
+        sc.outdir = scanner_config::NO_OUTDIR; // don't create outdir if we are getting help.
+    }
+
     if(sc.outdir.size()==0){
         std::cerr << "error: -o outdir must be specified\n";
         exit(1);
     }
+
     struct feature_recorder_set::flags_t f;
     scanner_set ss(sc, f);
-    ss.apply_scanner_commands();
 
-    /* Print usage if necessary */
+    /* Print usage if necessary. Requires scanner set, but not commands applied.
+     * This would create the outdir if one was specified.
+     */
     if(opt_H || opt_h){
         if (opt_h) usage(progname, ss);
         ss.info_scanners(std::cout, true, true, 'e', 'x');
         exit(1);
     }
+
+    /* Remember if directory is clean or not */
+    bool clean_start = directory_empty(sc.outdir);
+
+    /* Applying the scanner commands will create the alert recorder. */
+    ss.apply_scanner_commands();
 
     /* Give an error if a find list was specified
      * but no scanner that uses the find list is enabled.
@@ -959,6 +946,7 @@ int main(int argc,char **argv)
 	if(rmdir(sc.outdir.c_str())){
             std::cout << "rmdir " << sc.outdir << "\n";
         }
+        clean_start = true;
     }
 
     /* Start the clock */
@@ -981,20 +969,16 @@ int main(int argc,char **argv)
     }
     std::string image_fname = *argv;
 
-    if(sc.outdir.size()==0){
-        fprintf(stderr,"output directory not provided\n");
-        exit(1);
-    }
+    namespace fs = std::filesystem;
 
     /* Determine if this is the first time through or if the program was restarted.
      * Restart procedure: re-run the command in verbatim.
      */
-    if (directory_missing(sc.outdir) || directory_empty(sc.outdir)){
+    if (clean_start){
         /* First time running */
 	/* Validate the args */
 	if ( argc !=1 ) throw std::runtime_error("Disk image option not provided. Run with -h for help.");
 	validate_fn(image_fname);
-	if (directory_missing(sc.outdir)) be_mkdir(sc.outdir);
     } else {
 	/* Restarting */
 	std::cout << "Restarting from " << sc.outdir << "\n";

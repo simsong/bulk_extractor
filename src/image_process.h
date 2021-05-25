@@ -55,13 +55,13 @@ private:
     /******************************************************
      *** neither copying nor assignment is implemented. ***
      ******************************************************/
-    image_process(const image_process &);
-    image_process &operator=(const image_process &);
+    image_process(const image_process &)=delete;
+    image_process &operator=(const image_process &)=delete;
 
     /****************************************************************/
     const std::string image_fname_;			/* image filename */
-public:
 
+public:
     class EndOfImage : public std::exception {
     public:
         EndOfImage(){}

@@ -4,6 +4,8 @@
 #include <iostream>
 #include <unistd.h>
 
+#include <cstdio>
+
 #define CATCH_CONFIG_MAIN
 #define CATCH_CONFIG_CONSOLE_WIDTH 120
 
@@ -12,6 +14,7 @@
 
 #include "be13_api/scanner_set.h"
 #include "be13_api/catch.hpp"
+#include "be13_api/utils.h"
 //#include "be13_api/bulk_extractor_i.h"
 //#include "phase1.h"
 
@@ -81,9 +84,7 @@ TEST_CASE("scan_json", "[scanners]") {
     scanner_config sc;
     sc.scanner_commands = my_scanner_commands;
 
-    char tmpl[] = "/tmp/dirXXXXXX";
-    mkdtemp(tmpl);
-    sc.outdir = tmpl;
+    sc.outdir = NamedTemporaryDirectory();
 
     scanner_set ss(sc, frs_flags);
     ss.add_scanners(my_scanners);

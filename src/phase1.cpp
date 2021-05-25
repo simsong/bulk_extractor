@@ -1,4 +1,6 @@
 #include <random>
+#include <chrono>
+#include <thread>
 
 #include "config.h"
 #include "bulk_extractor.h"
@@ -20,23 +22,7 @@
  * - implements 2.0 mechanism, which uses a work unit for each sbuf/scanner combination.
  */
 
-/**
- * Sleep for msec miliseconds.
- */
-void BulkExtractor_Phase1::msleep(uint32_t msec)
-{
-#if _WIN32
-	Sleep(msec);
-#else
-# ifdef HAVE_USLEEP
-	usleep(msec*1000);
-# else
-	int sec = msec/1000;
-	if(sec<1) sec=1;
-	sleep(sec);			// posix
-# endif
-#endif
-}
+using namespace std::chrono_literals;
 
 /**
  * convert tsec into a string.
@@ -96,7 +82,7 @@ sbuf_t BulkExtractor_Phase1::get_sbuf(image_process::iterator &it)
         }
         if(retry_count < config.max_bad_alloc_errors+1){
             std::cerr << "will wait for " << config.retry_seconds << " seconds and try again...\n";
-            msleep(config.retry_seconds*1000);
+            std::this_thread::sleep_for(config.retry_seconds * 1000ms);
         }
     }
     std::cerr << "Too many errors encountered in a row. Diagnose and restart.\n";
@@ -281,7 +267,7 @@ void BulkExtractor_Phase1::wait_for_workers()
         int num_remaining = config.num_threads - tp->get_free_count();
         if(num_remaining==0) break;
 
-        msleep(100);
+        std::this_thread::sleep_for(100ms);
         time_t time_waiting   = time(0) - wait_start;
         time_t time_remaining = config.max_wait_time - time_waiting;
 
