@@ -56,20 +56,10 @@ int _CRT_fmode = _O_BINARY;
 
 #include "phase1.h"
 
-
-#if 0
 /* Bring in the definitions for the  */
 #define SCANNER(scanner) extern "C" scanner_t scan_ ## scanner;
 #include "bulk_extractor_scanners.h"
 #undef SCANNER
-
-/* Create an array of the built-in scanners */
-#define SCANNER(scanner) scan_ ## scanner ,
-scanner_t *scanners_builtin[] = {
-#include "bulk_extractor_scanners.h"
-    0};
-#undef SCANNER
-#endif
 
 /**
  * Output the #defines for our debug parameters. Used by the automake system.
@@ -883,7 +873,6 @@ int main(int argc,char **argv)
     /* Load all the scanners and enable the ones we care about */
 
     //plugin::load_scanner_directories(scanner_dirs,sc);
-    //plugin::load_scanners(scanners_builtin,sc);
     if (opt_H || opt_h) {
         sc.outdir = scanner_config::NO_OUTDIR; // don't create outdir if we are getting help.
     }
@@ -895,12 +884,16 @@ int main(int argc,char **argv)
 
     struct feature_recorder_set::flags_t f;
     scanner_set ss(sc, f);
+    ss.add_scanners(scanners_builtin);
 
     /* Print usage if necessary. Requires scanner set, but not commands applied.
      * This would create the outdir if one was specified.
      */
-    if(opt_H || opt_h){
-        if (opt_h) usage(progname, ss);
+    if ( opt_h ) {
+        usage(progname, ss);
+        exit(1);
+    }
+    if ( opt_H) {
         ss.info_scanners(std::cout, true, true, 'e', 'x');
         exit(1);
     }

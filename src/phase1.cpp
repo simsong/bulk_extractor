@@ -43,16 +43,15 @@ std::string BulkExtractor_Phase1::minsec(time_t tsec)
  */
 void BulkExtractor_Phase1::print_tp_status()
 {
-#if 0
-    std::stringstream ss;
     for(u_int i=0;i<config.num_threads;i++){
+#if 0
         std::string status = tp->get_thread_status(i);
         if(status.size() && status!="Free"){
-            ss << "Thread " << i << ": " << status << "\n";
+            std::cout << "Thread " << i << ": " << status << "\n";
         }
-    }
-    std::cout << ss.str() << "\n";
 #endif
+    }
+    std::cout << "\n";
 }
 
 /**
@@ -148,16 +147,17 @@ void BulkExtractor_Phase1::set_sampling_parameters(Config &c,std::string &p)
     }
 }
 
-void BulkExtractor_Phase1::load_workers()
+void BulkExtractor_Phase1::launch_workers()
 {
-#if 0
     p.set_report_read_errors(config.opt_report_read_errors);
-    uint64_t md5_next = 0;              // next byte to hash
 
-    if(config.debug & DEBUG_PRINT_STEPS) std::cout << "DEBUG: CREATING THREAD POOL\n";
+    //if (config.debug & DEBUG_PRINT_STEPS) std::cout << "DEBUG: CREATING THREAD POOL\n";
 
-    //tp = new thread_pool(config.num_threads); // ,fs,xreport);
+    tp = new thread_pool(config.num_threads); // ,fs,xreport);
+}
 
+void BulkExtractor_Phase1::send_data_to_workers()
+{
     xreport.push("runtime","xmlns:debug=\"http://www.github.com/simsong/bulk_extractor/issues\"");
 
     /* A single loop with two iterators.
@@ -202,23 +202,20 @@ void BulkExtractor_Phase1::load_workers()
             // Make sure we haven't done this page yet
             if(seen_page_ids.find(it.get_pos0().str()) == seen_page_ids.end()){
                 try {
-                    sbuf_t *sbuf = get_sbuf(it);
-                    if(sbuf==0) break;	// eof?
+                    sbuf_t sbuf = get_sbuf(it);
 
-                    /* compute the md5 hash */
-#if 0
-                    if(md5g){
-                        if(sbuf->pos0.offset==md5_next){
+                    /* compute the sha1 hash */
+                    if(sha1g){
+                        if(sbuf.pos0.offset==sha1_next){
                             // next byte follows logically, so continue to compute hash
-                            md5g->update(sbuf->buf,sbuf->pagesize);
-                            md5_next += sbuf->pagesize;
+                            sha1g->update(sbuf.buf, sbuf.pagesize);
+                            sha1_next += sbuf.pagesize;
                         } else {
-                            delete md5g; // we had a logical gap; stop hashing
-                            md5g = 0;
+                            delete sha1g; // we had a logical gap; stop hashing
+                            sha1g = 0;
                         }
                     }
-#endif
-                    total_bytes += sbuf->pagesize;
+                    total_bytes += sbuf.pagesize;
 
                     /***************************
                      **** SCHEDULE THE WORK ****
@@ -229,13 +226,13 @@ void BulkExtractor_Phase1::load_workers()
                 }
                 catch (const std::exception &e) {
                     // report uncaught exceptions to both user and XML file
-                    std::stringstream ss;
-                    ss << "name='" << e.what() << "' " << "pos0='" << it.get_pos0() << "' ";
+                    std::stringstream sstr;
+                    sstr << "name='" << e.what() << "' " << "pos0='" << it.get_pos0() << "' ";
 
                     if (config.opt_report_read_errors) {
                         std::cerr << "Exception " << e.what() << " skipping " << it.get_pos0() << "\n";
                     }
-                    xreport.xmlout("debug:exception", e.what(), ss.str(), true);
+                    xreport.xmlout("debug:exception", e.what(), sstr.str(), true);
                 }
             }
         } // end that we haven't seen it
@@ -253,35 +250,33 @@ void BulkExtractor_Phase1::load_workers()
     if(!config.opt_quiet){
         std::cout << "All data are read; waiting for threads to finish...\n";
     }
-#endif
 }
 
 
 void BulkExtractor_Phase1::wait_for_workers()
 {
-#if 0
     /* Now wait for all of the threads to be free */
-    tp->mode = 1;			// waiting for workers to finish
+    //tp->mode = 1;			// waiting for workers to finish
     time_t wait_start = time(0);
     for(int32_t counter = 0;;counter++){
         int num_remaining = config.num_threads - tp->get_free_count();
-        if(num_remaining==0) break;
+        if (num_remaining==0) break;
 
         std::this_thread::sleep_for(100ms);
         time_t time_waiting   = time(0) - wait_start;
         time_t time_remaining = config.max_wait_time - time_waiting;
 
-        if(counter%60==0){
-            std::stringstream ss;
-            ss << "Time elapsed waiting for " << num_remaining
+        if (counter%60==0){
+            std::stringstream sstr;
+            sstr << "Time elapsed waiting for " << num_remaining
                << " thread" << (num_remaining>1 ? "s" : "")
                << " to finish:\n    " << minsec(time_waiting)
                << " (timeout in "     << minsec(time_remaining) << ".)\n";
             if(config.opt_quiet==0){
-                std::cout << ss.str();
+                std::cout << sstr.str();
                 if(counter>0) print_tp_status();
             }
-            xreport.comment(ss.str());
+            xreport.comment(sstr.str());
         }
         if(time_waiting>config.max_wait_time){
             std::cout << "\n\n";
@@ -297,31 +292,34 @@ void BulkExtractor_Phase1::wait_for_workers()
     xreport.push("source");
     xreport.xmlout("image_filename",p.image_fname());
     xreport.xmlout("image_size",p.image_size());
-    if(md5g){
-        dfxml::md5_t md5 = md5g->digest();
-        if(md5_string) *md5_string = md5.hexdigest();
-        xreport.xmlout("hashdigest",md5.hexdigest(),"type='MD5'",false);
-        delete md5g;
+    if (sha1g){
+        dfxml::sha1_t sha1 = sha1g->digest();
+        //if (sha1_string) *sha1_string = sha1.hexdigest();
+        xreport.xmlout("hashdigest",sha1.hexdigest(),"type='SHA1'",false);
+        delete sha1g;
     }
     xreport.pop();			// source
 
     /* Record the feature files and their counts in the output */
-    tp->fs.dump_name_count_stats(xreport);
+    //tp->fs.dump_name_count_stats(xreport);
 
-    if(config.opt_quiet==0) std::cout << "Producer time spent waiting: " << tp->waiting.elapsed_seconds() << " sec.\n";
+    //if (config.opt_quiet==0) std::cout << "Producer time spent waiting: " << tp->waiting.elapsed_seconds() << " sec.\n";
 
-    xreport.xmlout("thread_wait",dtos(tp->waiting.elapsed_seconds()),"thread='0'",false);
+    //xreport.xmlout("thread_wait",dtos(tp->waiting.elapsed_seconds()),"thread='0'",false);
     double worker_wait_average = 0;
+#if 0
     for(threadpool::worker_vector::const_iterator ij=tp->workers.begin();ij!=tp->workers.end();ij++){
         worker_wait_average += (*ij)->waiting.elapsed_seconds() / config.num_threads;
-        std::stringstream ss;
-        ss << "thread='" << (*ij)->id << "'";
-        xreport.xmlout("thread_wait",dtos((*ij)->waiting.elapsed_seconds()),ss.str(),false);
+        std::stringstream sstr;
+        sstr << "thread='" << (*ij)->id << "'";
+        xreport.xmlout("thread_wait",dtos((*ij)->waiting.elapsed_seconds()),sstr.str(),false);
     }
+#endif
     xreport.pop();
     xreport.flush();
-    if(config.opt_quiet==0) std::cout << "Average consumer time spent waiting: " << worker_wait_average << " sec.\n";
-    if(worker_wait_average > tp->waiting.elapsed_seconds()*2
+    if (config.opt_quiet==0) std::cout << "Average consumer time spent waiting: " << worker_wait_average << " sec.\n";
+#if 0
+    if (worker_wait_average > tp->waiting.elapsed_seconds()*2
        && worker_wait_average>10 && config.opt_quiet==0){
         std::cout << "*******************************************\n";
         std::cout << "** bulk_extractor is probably I/O bound. **\n";
@@ -337,12 +335,13 @@ void BulkExtractor_Phase1::wait_for_workers()
         std::cout << "**      to get better performance.       **\n";
         std::cout << "*******************************************\n";
     }
-    /* end of phase 1 */
 #endif
+    /* end of phase 1 */
 }
 
 void BulkExtractor_Phase1::run()
 {
-    load_workers();
+    launch_workers();
+    send_data_to_workers();
     wait_for_workers();
 }

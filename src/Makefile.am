@@ -118,7 +118,9 @@ scanners_builtin_broken = \
 #
 bulk_extractor_nomain = \
         $(TSK3INCS)  $(BE13_API_SRC) \
-	bulk_extractor_api.cpp bulk_extractor_api.h \
+	bulk_extractor_scanners.h \
+	bulk_extractor_api.cpp \
+	bulk_extractor_api.h \
 	base64_forensic.cpp \
 	base64_forensic.h \
 	bulk_extractor.h \
@@ -129,7 +131,6 @@ bulk_extractor_nomain = \
 	image_process.h \
 	phase1.h \
 	phase1.cpp \
-	scanners.h \
 	threadpool.hpp
 
 

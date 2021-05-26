@@ -66,7 +66,7 @@ private:
         return config.sampling_fraction<1.0;
     }
 
-    class threadpool *tp;
+    class thread_pool *tp;
     void print_tp_status();
 
 public:
@@ -83,12 +83,16 @@ public:
     image_process &p;
     scanner_set   &ss;
     seen_page_ids_t &seen_page_ids;
-    dfxml::sha1_generator *sha1g {nullptr};        // the MD5 of the image. Set to 0 if a gap is encountered
+    dfxml::sha1_generator *sha1g {nullptr};        // the SHA1 of the image. Set to 0 if a gap is encountered
+
+    uint64_t      sha1_next {0};                   // next byte to hash
 
     BulkExtractor_Phase1(dfxml_writer &xreport_,aftimer &timer_,Config &config_,
                          image_process &p_, scanner_set &ss_, seen_page_ids_t &seen_page_ids_):
         xreport(xreport_),timer(timer_),config(config_),
         p(p_), ss(ss_), seen_page_ids(seen_page_ids_)  {}
+
+    std::string image_hash;
 
     /* Get the sbuf from current image iterator location, with retries */
     sbuf_t get_sbuf(image_process::iterator &it);
@@ -96,10 +100,10 @@ public:
     /* Notify user about current state of phase1 */
     void notify_user(image_process::iterator &it);
 
-    void load_workers();
-    void wait_for_workers();
-    void run();
-    std::string image_hash;
+    void launch_workers();              // launch all of the workers
+    void send_data_to_workers();        // launch all of the workers
+    void wait_for_workers();            //
+    void run();                         // does the above
 };
 
 #endif

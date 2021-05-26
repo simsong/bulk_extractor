@@ -1,7 +1,13 @@
-/* compiled-in scanners.
- *
- * scanners are brought in by defining the SCANNER macro and then including this file.
+/* A list of the compiled-in -scanners
+ * Included twice by bulk_extractor_scanners.cpp
  */
+
+#ifndef BULK_EXTRACTOR_SCANNERS_H_FIRST_INCLUDE
+#define BULK_EXTRACTOR_SCANNERS_H_FIRST_INCLUDE
+#include "be13_api/scanner_set.h"
+extern "C" scanner_t *scanners_builtin[];
+#endif
+
 
 /* flex-based scanners */
 //SCANNER(email)

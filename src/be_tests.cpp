@@ -109,10 +109,24 @@ std::atomic<int> counter{0};
 TEST_CASE("threadpool", "[threads]") {
     class thread_pool t(10);
     for(int i=0;i<1000;i++){
-        t.push( []{
-                    counter += 1;
-                } );
+        t.push( []{ counter += 1; } );
     }
     t.join();
     REQUIRE( counter==1000 );
+}
+
+/* Test the threadpool with a function */
+std::atomic<int> counter2{0};
+void inc_counter2(int i)
+{
+    counter2 += i;
+}
+TEST_CASE("threadpool", "[threads]") {
+    class thread_pool t(10);
+    for(int i=0;i<1000;i++){
+        t.push( [i]{ inc_counter2(i); } );
+    }
+    t.join();
+    REQUIRE( counter==1000 );
+    std::cerr << "counter2 = " << counter2 << "\n";
 }
