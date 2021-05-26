@@ -2,15 +2,15 @@
 
 #include <cstring>
 #include <iostream>
-#include <unistd.h>
-
+#include <memory>
 #include <cstdio>
+
+#include <unistd.h>
 
 #define CATCH_CONFIG_MAIN
 #define CATCH_CONFIG_CONSOLE_WIDTH 120
 
 #include "config.h"
-
 
 #include "be13_api/scanner_set.h"
 #include "be13_api/catch.hpp"
@@ -115,16 +115,71 @@ TEST_CASE("threadpool", "[threads]") {
     REQUIRE( counter==1000 );
 }
 
-/* Test the threadpool with a function */
+/* Test the threadpool with a function
+ * and some threadsafety for printing
+ */
+std::mutex M;
 std::atomic<int> counter2{0};
 void inc_counter2(int i)
 {
     counter2 += i;
 }
-TEST_CASE("threadpool", "[threads]") {
+TEST_CASE("threadpool2", "[threads]") {
     class thread_pool t(10);
     for(int i=0;i<1000;i++){
         t.push( [i]{ inc_counter2(i); } );
+    }
+    t.join();
+    REQUIRE( counter2==499500 );
+    {
+        std::lock_guard<std::mutex> lock(M);
+        std::cerr << "counter2 = " << counter2 << "\n";
+    }
+}
+
+sbuf_t *make_sbuf()
+{
+    auto sbuf = new sbuf_t("Hello World!");
+    {
+        std::lock_guard<std::mutex> lock(M);
+        std::cerr << "made " << static_cast<void *>(&sbuf) << " children= " << sbuf->children << "\n";
+    }
+    return sbuf;
+}
+
+/* Test that sbuf data  are not copied when moved to a child.*/
+const uint8_t *sbuf_buf_loc = nullptr;
+void process_sbuf(sbuf_t *sbuf)
+{
+    std::lock_guard<std::mutex> lock(M);
+    std::cerr << "child loc=" << static_cast<const void *>(sbuf) << " children= " << sbuf->children << "\n";
+    if (sbuf_buf_loc != nullptr) {
+        std::cerr << "sbuf_buf_loc=" << static_cast<const void *>(sbuf_buf_loc) << "\n";
+        REQUIRE( sbuf_buf_loc == sbuf->buf );
+    }
+    delete sbuf;
+}
+
+TEST_CASE("sbuf_no_copy", "[threads]") {
+    std::cerr << "sbuf_no_copy\n";
+    for(int i=0;i<100;i++){
+        auto sbuf = make_sbuf();
+        sbuf_buf_loc = sbuf->buf;
+        std::cerr << "thread parent i=" << i << " loc=" << static_cast<void *>(sbuf)
+                  << " buf loc=" << static_cast<const void *>(sbuf->buf) << " children= " << sbuf->children << "\n";
+        process_sbuf(sbuf);
+    }
+}
+
+TEST_CASE("threadpool3", "[threads]") {
+    class thread_pool t(10);
+    for(int i=0;i<100;i++){
+        auto sbuf = make_sbuf();
+        {
+            std::lock_guard<std::mutex> lock(M);
+            std::cerr << "parent i=" << i << " loc=" << static_cast<void *>(sbuf) << " children= " << sbuf->children << "\n";
+        }
+        t.push( [sbuf]{ process_sbuf(sbuf); } );
     }
     t.join();
     REQUIRE( counter==1000 );
