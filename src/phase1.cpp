@@ -33,8 +33,8 @@ std::string BulkExtractor_Phase1::minsec(time_t tsec)
     time_t min = tsec / 60;
     time_t sec = tsec % 60;
     std::stringstream ss;
-    if(min>0) ss << min << " min";
-    if(sec>0) ss << sec << " sec";
+    if (min>0) ss << min << " min";
+    if (sec>0) ss << sec << " sec";
     return ss.str();
 }
 
@@ -46,7 +46,7 @@ void BulkExtractor_Phase1::print_tp_status()
     for(u_int i=0;i<config.num_threads;i++){
 #if 0
         std::string status = tp->get_thread_status(i);
-        if(status.size() && status!="Free"){
+        if (status.size() && status!="Free"){
             std::cout << "Thread " << i << ": " << status << "\n";
         }
 #endif
@@ -61,7 +61,7 @@ void BulkExtractor_Phase1::print_tp_status()
  * TODO: do not get an sbuf if more than N tasks in workqueue.
  */
 
-sbuf_t BulkExtractor_Phase1::get_sbuf(image_process::iterator &it)
+sbuf_t *BulkExtractor_Phase1::get_sbuf(image_process::iterator &it)
 {
     for(u_int retry_count=0;retry_count<config.max_bad_alloc_errors;retry_count++){
         try {
@@ -79,7 +79,7 @@ sbuf_t BulkExtractor_Phase1::get_sbuf(image_process::iterator &it)
             str << "name='bad_alloc' " << "pos0='" << it.get_pos0() << "' " << "retry_count='"     << retry_count << "' ";
             xreport.xmlout("debug:exception", e.what(), str.str(), true);
         }
-        if(retry_count < config.max_bad_alloc_errors+1){
+        if (retry_count < config.max_bad_alloc_errors+1){
             std::cerr << "will wait for " << config.retry_seconds << " seconds and try again...\n";
             std::this_thread::sleep_for(config.retry_seconds * 1000ms);
         }
@@ -91,14 +91,14 @@ sbuf_t BulkExtractor_Phase1::get_sbuf(image_process::iterator &it)
 
 void BulkExtractor_Phase1::notify_user(image_process::iterator &it)
 {
-    if(notify_ctr++ >= config.opt_notify_rate){
+    if (notify_ctr++ >= config.opt_notify_rate){
         time_t t = time(0);
         struct tm tm;
         localtime_r(&t,&tm);
         printf("%2d:%02d:%02d %s ",tm.tm_hour,tm.tm_min,tm.tm_sec,it.str().c_str());
 
         /* not sure how to do the rest if sampling */
-        if(!sampling()){
+        if (!sampling()){
             printf("(%4.2f%%) Done in %s at %s",
                    it.fraction_done()*100.0,
                    timer.eta_text(it.fraction_done()).c_str(),
@@ -132,29 +132,29 @@ void BulkExtractor_Phase1::make_sorted_random_blocklist(blocklist_t *blocklist,u
 void BulkExtractor_Phase1::set_sampling_parameters(Config &c,std::string &p)
 {
     std::vector<std::string> params = split(p,':');
-    if(params.size()!=1 && params.size()!=2){
+    if (params.size()!=1 && params.size()!=2){
         throw std::runtime_error("sampling parameters must be fraction[:passes]");
     }
     c.sampling_fraction = atof(params.at(0).c_str());
-    if(c.sampling_fraction<=0 || c.sampling_fraction>=1){
+    if (c.sampling_fraction<=0 || c.sampling_fraction>=1){
         throw std::runtime_error("error: sampling fraction f must be 0<f<=1");
     }
-    if(params.size()==2){
+    if (params.size()==2){
         c.sampling_passes = atoi(params.at(1).c_str());
-        if(c.sampling_passes==0){
+        if (c.sampling_passes==0){
             throw std::runtime_error("error: sampling passes must be >=1");
         }
     }
 }
 
-void BulkExtractor_Phase1::launch_workers()
-{
-    p.set_report_read_errors(config.opt_report_read_errors);
-
-    //if (config.debug & DEBUG_PRINT_STEPS) std::cout << "DEBUG: CREATING THREAD POOL\n";
-
-    tp = new thread_pool(config.num_threads); // ,fs,xreport);
-}
+struct  work_unit {
+    work_unit(scanner_set &ss_,sbuf_t *sbuf_):ss(ss_),sbuf(sbuf_){}
+    scanner_set &ss;
+    sbuf_t *sbuf;
+    void process(){
+        ss.process_sbuf(sbuf);
+    }
+};
 
 void BulkExtractor_Phase1::send_data_to_workers()
 {
@@ -172,20 +172,20 @@ void BulkExtractor_Phase1::send_data_to_workers()
     blocklist_t::const_iterator si = blocks_to_sample.begin(); // sampling iterator
     image_process::iterator     it = p.begin(); // sequential iterator
 
-    if(config.opt_offset_start){
+    if (config.opt_offset_start){
         std::cout << "offset set to " << config.opt_offset_start << "\n";
         it.set_raw_offset(config.opt_offset_start);
     }
 
-    if(sampling()){
+    if (sampling()){
         /* Create a list of blocks to sample */
         make_sorted_random_blocklist(&blocks_to_sample,it.max_blocks(),config.sampling_fraction);
         si = blocks_to_sample.begin();    // get the new beginning
     }
     /* Loop over the blocks to sample */
     while(true){
-        if(sampling()){
-            if(si==blocks_to_sample.end()) break;
+        if (sampling()){
+            if (si==blocks_to_sample.end()) break;
             it.seek_block(*si);
         } else {
             /* Not sampling; no need to seek, it's the next one */
@@ -194,19 +194,19 @@ void BulkExtractor_Phase1::send_data_to_workers()
             }
         }
 
-        if(config.opt_offset_end!=0 && config.opt_offset_end <= it.raw_offset ){
+        if (config.opt_offset_end!=0 && config.opt_offset_end <= it.raw_offset ){
             break;                      // passed the offset
         }
 
-        if(config.opt_page_start<=it.page_number && config.opt_offset_start<=it.raw_offset){
+        if (config.opt_page_start<=it.page_number && config.opt_offset_start<=it.raw_offset){
             // Make sure we haven't done this page yet
-            if(seen_page_ids.find(it.get_pos0().str()) == seen_page_ids.end()){
+            if (seen_page_ids.find(it.get_pos0().str()) == seen_page_ids.end()){
                 try {
                     sbuf_t sbuf = get_sbuf(it);
 
                     /* compute the sha1 hash */
-                    if(sha1g){
-                        if(sbuf.pos0.offset==sha1_next){
+                    if (sha1g){
+                        if (sbuf.pos0.offset==sha1_next){
                             // next byte follows logically, so continue to compute hash
                             sha1g->update(sbuf.buf, sbuf.pagesize);
                             sha1_next += sbuf.pagesize;
@@ -221,8 +221,11 @@ void BulkExtractor_Phase1::send_data_to_workers()
                      **** SCHEDULE THE WORK ****
                      ***************************/
 
-                    //tp->schedule_work(sbuf);
-                    if(!config.opt_quiet) notify_user(it);
+                    struct work_unit wu(ss, sbufp);
+                    tp->push( [wu]{ wu.process(); } );
+                    if (config.opt_quiet == false ){
+                        notify_user(it);
+                    }
                 }
                 catch (const std::exception &e) {
                     // report uncaught exceptions to both user and XML file
@@ -240,14 +243,14 @@ void BulkExtractor_Phase1::send_data_to_workers()
         /* If we are random sampling, move to the next random sample.
          * Otherwise increment the it iterator.
          */
-        if(sampling()){
+        if (sampling()){
             ++si;
         } else {
             ++it;
         }
     }
 
-    if(!config.opt_quiet){
+    if (!config.opt_quiet){
         std::cout << "All data are read; waiting for threads to finish...\n";
     }
 }
@@ -259,8 +262,8 @@ void BulkExtractor_Phase1::wait_for_workers()
     //tp->mode = 1;			// waiting for workers to finish
     time_t wait_start = time(0);
     for(int32_t counter = 0;;counter++){
-        int num_remaining = config.num_threads - tp->get_free_count();
-        if (num_remaining==0) break;
+        //int num_remaining = config.num_threads - tp->get_free_count();
+        //if (num_remaining==0) break;
 
         std::this_thread::sleep_for(100ms);
         time_t time_waiting   = time(0) - wait_start;
@@ -268,24 +271,25 @@ void BulkExtractor_Phase1::wait_for_workers()
 
         if (counter%60==0){
             std::stringstream sstr;
-            sstr << "Time elapsed waiting for " << num_remaining
-               << " thread" << (num_remaining>1 ? "s" : "")
+            sstr << "Time elapsed waiting for "
+                // << num_remaining
+                // << " thread" << (num_remaining>1 ? "s" : "")
                << " to finish:\n    " << minsec(time_waiting)
                << " (timeout in "     << minsec(time_remaining) << ".)\n";
-            if(config.opt_quiet==0){
+            if (config.opt_quiet==0){
                 std::cout << sstr.str();
-                if(counter>0) print_tp_status();
+                if (counter>0) print_tp_status();
             }
             xreport.comment(sstr.str());
         }
-        if(time_waiting>config.max_wait_time){
+        if (time_waiting>config.max_wait_time){
             std::cout << "\n\n";
             std::cout << " ... this shouldn't take more than an hour. Exiting ... \n";
             std::cout << " ... Please report to the bulk_extractor maintainer ... \n";
             break;
         }
     }
-    if(config.opt_quiet==0) std::cout << "All Threads Finished!\n";
+    if (config.opt_quiet==0) std::cout << "All Threads Finished!\n";
 
     xreport.pop();			// pop runtime
     /* We can write out the source info now, since we (might) know the hash */
@@ -327,7 +331,7 @@ void BulkExtractor_Phase1::wait_for_workers()
         std::cout << "**      to get better performance.       **\n";
         std::cout << "*******************************************\n";
     }
-    if(tp->waiting.elapsed_seconds() > worker_wait_average * 2
+    if (tp->waiting.elapsed_seconds() > worker_wait_average * 2
        && tp->waiting.elapsed_seconds()>10 && config.opt_quiet==0){
         std::cout << "*******************************************\n";
         std::cout << "** bulk_extractor is probably CPU bound. **\n";
@@ -341,7 +345,10 @@ void BulkExtractor_Phase1::wait_for_workers()
 
 void BulkExtractor_Phase1::run()
 {
-    launch_workers();
+    /* Create the threadpool and launch the workers */
+    p.set_report_read_errors(config.opt_report_read_errors);
+    tp = new threadpool(config.num_threads); // ,fs,xreport);
+
     send_data_to_workers();
     wait_for_workers();
 }

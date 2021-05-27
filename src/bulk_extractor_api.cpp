@@ -279,7 +279,7 @@ int bulk_extractor_analyze_dev(BEFILE *bef,const char *fname,float frac,int page
         }
 
         try {
-            sbuf_t sbuf = it.sbuf_alloc();
+            auto sbuf = it.sbuf_alloc();
             plugin::process_sbuf(scanner_params(scanner_params::PHASE_SCAN,sbuf,bef->cfs));
         }
         catch (const EOFException &e) {

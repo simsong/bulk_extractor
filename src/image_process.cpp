@@ -396,7 +396,7 @@ pos0_t process_ewf::get_pos0(const image_process::iterator &it) const
 }
 
 /** Read from the iterator into a newly allocated sbuf */
-sbuf_t 1process_ewf::sbuf_alloc(image_process::iterator &it) const
+sbuf_t *process_ewf::sbuf_alloc(image_process::iterator &it) const
 {
     int count = pagesize + margin;
 
@@ -731,7 +731,7 @@ pos0_t process_raw::get_pos0(const image_process::iterator &it) const
 /** Read from the iterator into a newly allocated sbuf.
  * uses pagesize.
  */
-sbuf_t process_raw::sbuf_alloc(image_process::iterator &it) const
+sbuf_t *process_raw::sbuf_alloc(image_process::iterator &it) const
 {
     int count = pagesize + margin;
 
@@ -750,7 +750,7 @@ sbuf_t process_raw::sbuf_alloc(image_process::iterator &it) const
 	free(buf);
 	throw read_error();
     }
-    return sbuf_t(get_pos0(it),buf,count,pagesize,it.page_number,true);
+    return new sbuf_t(get_pos0(it),buf,count,pagesize,it.page_number,true);
 }
 
 static std::string filename_extension(std::string fn)
@@ -847,7 +847,7 @@ pos0_t process_dir::get_pos0(const image_process::iterator &it) const
 /** Read from the iterator into a newly allocated sbuf
  * with mapped memory.
  */
-sbuf_t process_dir::sbuf_alloc(image_process::iterator &it) const
+sbuf_t *process_dir::sbuf_alloc(image_process::iterator &it) const
 {
     std::string fname = files[it.file_number];
     return sbuf_t::map_file(fname);

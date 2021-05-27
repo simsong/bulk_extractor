@@ -30,15 +30,15 @@
 class BulkExtractor_Phase1 {
 public:
     /* Configuration Control */
-    class Config {
-        static const auto MB = 1024*1024;
-        Config &operator=(const Config &);  // not implemented
-        Config(const Config &);             // not implemented
+    struct Config {
+        static const auto MiB = 1024*1024;
+        Config(const Config &that) = default; // copy constructor - default
+        Config &operator=(const Config &that) = delete;        // assignment constructor - delete
     public:
         Config() {}
         uint64_t debug;                 // debug
-        size_t   opt_pagesize {16 * MB};
-        size_t   opt_marginsize { 4 * MB};
+        size_t   opt_pagesize {16 * MiB};
+        size_t   opt_marginsize { 4 * MiB};
         uint32_t max_bad_alloc_errors {0};
         bool     opt_info {false};
         uint32_t opt_notify_rate {4};		// by default, notify every 4 pages
@@ -54,19 +54,18 @@ public:
         bool     opt_report_read_errors {true};
     };
 
-    typedef std::set<uint64_t> blocklist_t; // a list of blocks
+    typedef std::set<uint64_t> blocklist_t; // a list of blocks (for random sampling)
     static void msleep(uint32_t msec); // sleep for a specified number of msec
     static std::string minsec(time_t tsec);    // return "5 min 10 sec" string
     static void make_sorted_random_blocklist(blocklist_t *blocklist,uint64_t max_blocks,float frac);
     static void set_sampling_parameters(Config &c,std::string &p);
 
 private:
-    /** Sleep for a minimum of msec */
     bool sampling(){                    // are we random sampling?
         return config.sampling_fraction<1.0;
     }
 
-    class thread_pool *tp;
+    class threadpool *tp;
     void print_tp_status();
 
 public:
@@ -76,8 +75,8 @@ public:
      */
     /* Instance variables */
     dfxml_writer  &xreport;
-    aftimer       &timer;
-    Config        &config;
+    aftimer       timer;
+    const Config  config;
     u_int         notify_ctr  {0};    /* for random sampling */
     uint64_t      total_bytes {0};               //
     image_process &p;
@@ -87,20 +86,21 @@ public:
 
     uint64_t      sha1_next {0};                   // next byte to hash
 
-    BulkExtractor_Phase1(dfxml_writer &xreport_,aftimer &timer_,Config &config_,
+    BulkExtractor_Phase1(dfxml_writer &xreport_,Config config_,
                          image_process &p_, scanner_set &ss_, seen_page_ids_t &seen_page_ids_):
-        xreport(xreport_),timer(timer_),config(config_),
-        p(p_), ss(ss_), seen_page_ids(seen_page_ids_)  {}
+        xreport(xreport_),config(config_),
+        p(p_), ss(ss_), seen_page_ids(seen_page_ids_)  {
+        timer.start();
+    }
 
     std::string image_hash;
 
     /* Get the sbuf from current image iterator location, with retries */
-    sbuf_t get_sbuf(image_process::iterator &it);
+    sbuf_t *get_sbuf(image_process::iterator &it);
 
     /* Notify user about current state of phase1 */
     void notify_user(image_process::iterator &it);
 
-    void launch_workers();              // launch all of the workers
     void send_data_to_workers();        // launch all of the workers
     void wait_for_workers();            //
     void run();                         // does the above

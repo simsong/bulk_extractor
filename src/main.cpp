@@ -1056,7 +1056,7 @@ int main(int argc,char **argv)
         fs.db_transaction_begin();
     }
 #endif
-    BulkExtractor_Phase1 phase1(*xreport, timer, cfg, *p, ss, seen_page_ids);
+    BulkExtractor_Phase1 phase1(*xreport, cfg, *p, ss, seen_page_ids);
     //if(cfg.debug & DEBUG_PRINT_STEPS) std::cerr << "DEBUG: STARTING PHASE 1\n";
 
     if(opt_sampling_params.size()>0) BulkExtractor_Phase1::set_sampling_parameters(cfg,opt_sampling_params);

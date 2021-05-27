@@ -135,7 +135,7 @@ int main(int argc,char **argv)
     //plugin::scanners_init(fs);
 
     /* Make an sbuf for the file. */
-    sbuf_t sbuf = sbuf_t::map_file(argv[0]);
+    sbuf_t *sbuf = sbuf_t::map_file(argv[0]);
     ss.phase_scan();                    // start the scanner phase
     ss.process_sbuf( sbuf );
     ss.shutdown();
