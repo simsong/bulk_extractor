@@ -151,7 +151,7 @@ struct  work_unit {
     work_unit(scanner_set &ss_,sbuf_t *sbuf_):ss(ss_),sbuf(sbuf_){}
     scanner_set &ss;
     sbuf_t *sbuf;
-    void process(){
+    void process() const {
         ss.process_sbuf(sbuf);
     }
 };
@@ -202,7 +202,8 @@ void BulkExtractor_Phase1::send_data_to_workers()
             // Make sure we haven't done this page yet
             if (seen_page_ids.find(it.get_pos0().str()) == seen_page_ids.end()){
                 try {
-                    sbuf_t sbuf = get_sbuf(it);
+                    sbuf_t *sbufp = get_sbuf(it);
+                    auto   &sbuf = *sbufp;
 
                     /* compute the sha1 hash */
                     if (sha1g){
