@@ -41,8 +41,16 @@ check_PROGRAMS = be_tests
 # Slowly add modules as tests are written for them.
 be_tests_SOURCES = be13_api/catch.hpp \
 	$(BE13_API_SRC) \
-	base64_forensic.h base64_forensic.cpp \
-	be_tests.cpp threadpool.hpp scan_json.cpp
+	base64_forensic.cpp \
+	base64_forensic.h \
+	be_tests.cpp \
+	dig.cpp \
+	dig.h \
+	image_process.cpp \
+	image_process.h \
+	scan_json.cpp \
+	threadpool.hpp
+
 
 # These scanners are based on GNUflex
 flex_scanners = \

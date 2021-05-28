@@ -532,7 +532,6 @@ class bulk_extractor_restarter {
     std::stringstream cdata;
     std::string thisElement;
     std::string provided_filename;
-    BulkExtractor_Phase1::seen_page_ids_t &seen_page_ids;
 #ifdef HAVE_LIBEXPAT
     static void startElement(void *userData, const char *name_, const char **attrs) {
         class bulk_extractor_restarter &self = *(bulk_extractor_restarter *)userData;
@@ -615,8 +614,7 @@ public:;
 static void dfxml_create(dfxml_writer &xreport,
                          int argc, char * const *argv,
                          const BulkExtractor_Phase1::Config &cfg,
-                         scanner_set &ss
-                         )
+                         scanner_set &ss )
 {
     xreport.push("dfxml","xmloutputversion='1.0'");
     xreport.push("metadata",
@@ -949,7 +947,6 @@ int main(int argc,char **argv)
     /* If output directory does not exist, we are not restarting! */
     std::string reportfilename = sc.outdir + "/report.xml";
 
-    BulkExtractor_Phase1::seen_page_ids_t seen_page_ids; // pages that do not need re-processing
 
     /* Get image or directory */
     if (*argv == NULL) {
@@ -975,7 +972,7 @@ int main(int argc,char **argv)
     } else {
 	/* Restarting */
 	std::cout << "Restarting from " << sc.outdir << "\n";
-        bulk_extractor_restarter r(sc.outdir,reportfilename,image_fname,seen_page_ids);
+        bulk_extractor_restarter r(sc.outdir,reportfilename,image_fname);
 
         /* Rename the old report and create a new one */
         std::string old_reportfilename = reportfilename + "." + std::to_string(time(0));
@@ -988,7 +985,7 @@ int main(int argc,char **argv)
     /* Open the image file (or the device) now.
      * We use *p because we don't know which subclass we will be getting.
      */
-    image_process *p = image_process::open(image_fname,opt_recurse,cfg.opt_pagesize,cfg.opt_marginsize);
+    image_process *p = image_process::open( image_fname, opt_recurse, cfg.opt_pagesize, cfg.opt_marginsize);
     if(!p) throw_FileNotFoundError(image_fname);
 
     /* Determine the feature files that will be used from the scanners that were enabled */
@@ -1028,8 +1025,8 @@ int main(int argc,char **argv)
 #endif
 
     /* Store the configuration in the XML file */
-    dfxml_writer  *xreport = new dfxml_writer(reportfilename,false);
-    dfxml_create(*xreport, argc, argv, cfg, ss);
+    dfxml_writer *xreport = new dfxml_writer(reportfilename, false);
+    dfxml_create( *xreport, argc, argv, cfg, ss);
     xreport->xmlout("provided_filename",image_fname); // save this information
 
     /* provide documentation to the user; the DFXML information comes from elsewhere */
@@ -1056,7 +1053,10 @@ int main(int argc,char **argv)
         fs.db_transaction_begin();
     }
 #endif
-    BulkExtractor_Phase1 phase1(*xreport, cfg, *p, ss, seen_page_ids);
+    BulkExtractor_Phase1 phase1(*xreport, cfg, *p, ss);
+
+    /* TODO: Load up phase1 seen_page_ideas if we are restarting */
+
     //if(cfg.debug & DEBUG_PRINT_STEPS) std::cerr << "DEBUG: STARTING PHASE 1\n";
 
     if(opt_sampling_params.size()>0) BulkExtractor_Phase1::set_sampling_parameters(cfg,opt_sampling_params);

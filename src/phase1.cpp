@@ -351,5 +351,8 @@ void BulkExtractor_Phase1::run()
     tp = new threadpool(config.num_threads); // ,fs,xreport);
 
     send_data_to_workers();
-    wait_for_workers();
+    std::cerr << "calling join...\n";
+    tp->join();
+    //wait_for_workers();
+    std::cerr << "done!\n";
 }

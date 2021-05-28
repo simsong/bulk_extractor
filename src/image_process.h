@@ -62,18 +62,21 @@ private:
     const std::string image_fname_;			/* image filename */
 
 public:
-    class EndOfImage : public std::exception {
-    public:
-        EndOfImage(){}
+    struct EndOfImage : public std::exception {
+        EndOfImage(){};
         const char *what() const noexcept override {return "end of image.";}
+    };
+    struct NoSuchFile : public std::exception {
+        std::string m_error{};
+        NoSuchFile(std::string_view error):m_error(error){}
+        const char *what() const noexcept override {return m_error.c_str();}
     };
 
     /**
      * open() figures out which child class to call, calls its open, then
      * returns an object.
      */
-    static image_process *open(std::string fn,bool recurse,
-                               size_t opt_pagesize,size_t opt_margin);
+    static image_process *open(std::string fn, bool recurse, size_t opt_pagesize, size_t opt_margin);
     const size_t pagesize;                    // page size we are using
     const size_t margin;                      // margin size we are using
     bool  report_read_errors;
@@ -117,8 +120,9 @@ public:
         void set_raw_offset(int64_t anOffset){ raw_offset=anOffset;}
     };
 
-    image_process(const std::string &fn,size_t pagesize_,size_t margin_):image_fname_(fn),pagesize(pagesize_),margin(margin_),
-                                                                         report_read_errors(true){}
+    image_process(const std::string &fn,size_t pagesize_,size_t margin_):
+        image_fname_(fn),pagesize(pagesize_),margin(margin_),report_read_errors(true){
+    }
     virtual ~image_process(){};
 
     /* image support */

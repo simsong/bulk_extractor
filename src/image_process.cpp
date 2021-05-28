@@ -10,11 +10,16 @@
 // Just for this module
 #define _FILE_OFFSET_BITS 64
 
+#include <stdexcept>
+#include <functional>
+#include <locale>
+
 #include "config.h"
 #include "bulk_extractor.h"
 #include "dig.h"
 #include "utf8.h"
 
+#include "formatter.h"
 #include "image_process.h"
 
 #ifndef PATH_MAX
@@ -46,20 +51,24 @@ int pread64(HANDLE current_handle,char *buf,size_t bytes,uint64_t offset)
     LARGE_INTEGER li;
     li.QuadPart = offset;
     li.LowPart = SetFilePointer(current_handle, li.LowPart, &li.HighPart, FILE_BEGIN);
-    if(li.LowPart == INVALID_SET_FILE_POINTER) return -1;
+    if(li.LowPart == INVALID_SET_FILE_POINTER){
+        throw std::runtime_error("pread64: INVALID_FILE_SET_POINTER");
+    }
     if (FALSE == ReadFile(current_handle, buf, (DWORD) bytes, &bytes_read, NULL)){
-        return -1;
+        throw std::runtime_error("pread64: ReadFile returned FALSE");
     }
     return bytes_read;
 }
 #else
-  #if !defined(HAVE_PREAD64) && !defined(HAVE_PREAD) && defined(HAVE__LSEEKI64)
+#if !defined(HAVE_PREAD64) && !defined(HAVE_PREAD) && defined(HAVE__LSEEKI64)
 static size_t pread64(int d,void *buf,size_t nbyte,int64_t offset)
 {
-    if(_lseeki64(d,offset,0)!=offset) return -1;
+    if(_lseeki64(d,offset,0)!=offset){
+        throw std::runtime_error("_lseeki64 did not return offset");
+    }
     return read(d,buf,nbyte);
 }
-  #endif
+#endif
 #endif
 
 #ifdef WIN32
@@ -91,7 +100,9 @@ int64_t get_filesize(int fd)
     struct stat st;
     memset(&st,0,sizeof(st));
     if(sizeof(st.st_size)==8 && fstat(fd,&st)==0){
-	if(st.st_size>0) return st.st_size;
+	if(st.st_size>0){
+            return st.st_size;
+        }
     }
 #endif
 
@@ -129,16 +140,15 @@ static int64_t getSizeOfFile(const std::string &fname)
                                     FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
 				     OPEN_EXISTING, 0, NULL);
     if(current_handle==INVALID_HANDLE_VALUE){
-        fprintf(stderr,"bulk_extractor WIN32 subsystem: cannot open file '%s'\n",fname.c_str());
-        return 0;
+        std::string err = std::string("getSizeOfFile: cannot open file '") + fname + "'";
+        throw image_process::NoSuchFile(err.c_str());
     }
     int64_t fname_length = get_filesize(current_handle);
     ::CloseHandle(current_handle);
 #else
     int fd = ::open(fname.c_str(),O_RDONLY|O_BINARY);
     if(fd<0){
-        std::cerr << "*** unix getSizeOfFile: Cannot open " << fname << ": " << strerror(errno) << "\n";
-        return 0;
+        throw image_process::NoSuchFile(std::string("getSizeOfFile: cannot open file '") + fname + "'");
     }
     int64_t fname_length = get_filesize(fd);
     ::close(fd);
@@ -212,7 +222,7 @@ void local_e01_glob(const std::string &fname,char ***libewf_filenames,int *amoun
     /* Find the E01 */
     char *cc = strstr(buf,".E01.");
     if(!cc){
-        throw std::runtime_error("Cannot find .E01. in filename");
+        throw image_process::NoSuchFile("Cannot find .E01. in filename");
     }
     for(;*cc;cc++){
         if(*cc!='.') *cc='?';          // replace the E01 and the MD5s at the end with ?s
@@ -277,19 +287,19 @@ int process_ewf::open()
     }
     handle = 0;
     if(libewf_handle_initialize(&handle,NULL)<0){
-	throw std::runtime_error("Cannot initialize EWF handle?");
+	throw image_process::NoSuchFile("Cannot initialize EWF handle?");
     }
     if(libewf_handle_open(handle,libewf_filenames,amount_of_filenames,
 			  LIBEWF_OPEN_READ,&error)<0){
 	if(error) libewf_error_fprint(error,stdout);
-	throw std::runtime_error(Formatter() << "Cannot open: " << fname);
+	throw image_process::NoSuchFile(Formatter() << "Cannot open: " << fname);
     }
     /* Free the allocated filenames */
     if(use_libewf_glob){
         if(libewf_glob_free(libewf_filenames,amount_of_filenames,&error)<0){
             printf("libewf_glob_free failed\n");
             if(error) libewf_error_fprint(error,stdout);
-            throw std::runtime_error("libewf_glob_free");
+            throw image_process::NoSuchFile("libewf_glob_free");
         }
     }
     libewf_handle_get_media_size(handle,(size64_t *)&ewf_filesize,NULL);
@@ -304,7 +314,7 @@ int process_ewf::open()
 	for(int i=0;i<amount_of_filenames;i++){
 	    fprintf(stderr,"  %s\n",libewf_filenames[i]);
 	}
-	throw std::runtime_error("libewf_open");
+	throw image_process::NoSuchFile("libewf_open");
     }
     libewf_get_media_size(handle,(size64_t *)&ewf_filesize);
 #endif
@@ -531,10 +541,9 @@ BOOL GetDriveGeometry(const wchar_t *wszPath, DISK_GEOMETRY *pdg)
                           0,                // file attributes
                           NULL);            // do not copy file attributes
 
-    if (hDevice == INVALID_HANDLE_VALUE)    // cannot open the drive
-        {
-            return (FALSE);
-        }
+    if (hDevice == INVALID_HANDLE_VALUE){    // cannot open the drive
+        throw image_process::NoSuchFile("GetDriveGeometry: Cannot open drive");
+    }
 
     bResult = DeviceIoControl(hDevice,                       // device to be queried
                               IOCTL_DISK_GET_DRIVE_GEOMETRY, // operation to perform
@@ -642,12 +651,13 @@ int process_raw::pread(unsigned char *buf,size_t bytes,int64_t offset) const
                                     FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
 				     OPEN_EXISTING, 0, NULL);
         if(current_handle==INVALID_HANDLE_VALUE){
-	  fprintf(stderr,"bulk_extractor WIN32 subsystem: cannot open file '%s'\n",fi->name.c_str());
-	  return -1;
+            throw image_process::NoSuchFile("pread: INVALID_HANDLE_VALUE");
 	}
 #else
 	current_fd = ::open(fi->name.c_str(),O_RDONLY|O_BINARY);
-	if(current_fd<=0) return -1;	// can't read this data
+	if(current_fd<=0){
+            throw image_process::NoSuchFile("pread: Cannot ::open file");
+        }
 #endif
     }
 
@@ -662,7 +672,6 @@ int process_raw::pread(unsigned char *buf,size_t bytes,int64_t offset) const
 #endif
 
     /* we have neither, so just hack it with lseek64 */
-
     assert(fi->offset <= offset);
 #ifdef WIN32
     DWORD bytes_read = 0;
@@ -671,12 +680,14 @@ int process_raw::pread(unsigned char *buf,size_t bytes,int64_t offset) const
     li.LowPart = SetFilePointer(current_handle, li.LowPart, &li.HighPart, FILE_BEGIN);
     if(li.LowPart == INVALID_SET_FILE_POINTER) return -1;
     if (FALSE == ReadFile(current_handle, buf, (DWORD) bytes, &bytes_read, NULL)){
-        return -1;
+        throw image_process::NoSuchFile("pread: INVALID_FILE_SET_POINTER");
     }
 #else
     ssize_t bytes_read = ::pread64(current_fd,buf,bytes,offset - fi->offset);
 #endif
-    if(bytes_read<0) return -1;		// error???
+    if(bytes_read<0){
+        throw image_process::NoSuchFile("pread64: READ LESS THAN 0 BYTES");
+    }
     if((size_t)bytes_read==bytes) return bytes_read; // read precisely the correct amount!
 
     /* Need to recurse */
@@ -882,10 +893,7 @@ uint64_t process_dir::seek_block(class image_process::iterator &it,uint64_t bloc
  *** COMMON - Implement 'open' for the iterator
  ****************************************************************/
 
-#include <functional>
-#include <locale>
-image_process *image_process::open(std::string fn,bool opt_recurse,
-                                   size_t pagesize_,size_t margin_)
+image_process *image_process::open(std::string fn,bool opt_recurse, size_t pagesize_, size_t margin_)
 {
     image_process *ip = 0;
     std::string ext = filename_extension(fn);
@@ -897,15 +905,15 @@ image_process *image_process::open(std::string fn,bool opt_recurse,
 #endif
 
     memset(&st,0,sizeof(st));
-    if(stat(fn.c_str(),&st) && !is_windows_unc){
-	return 0;			// no file?
+    if (stat(fn.c_str(),&st) && !is_windows_unc){
+	throw NoSuchFile(fn);
     }
     if(S_ISDIR(st.st_mode)){
 	/* If this is a directory, process specially */
 	if(opt_recurse==0){
 	    std::cerr << "error: " << fn << " is a directory but -R (opt_recurse) not set\n";
 	    errno = 0;
-	    return 0;	// directory and cannot recurse
+	    throw NoSuchFile(fn);	// directory and cannot recurse
 	}
         /* Quickly scan the directory and see if it has a .E01, .000 or .001 file.
          * If so, give the user an error.
@@ -913,9 +921,7 @@ image_process *image_process::open(std::string fn,bool opt_recurse,
         DIR *dirp = opendir(fn.c_str());
         struct dirent *dp=0;
         if(!dirp){
-            std::cerr <<"error: cannot open directory " << fn << ": " << strerror(errno) << "\n";
-            errno=0;
-            return 0;
+            throw NoSuchFile(fn);
         }
         while ((dp = readdir(dirp)) != NULL){
             if (strstr(dp->d_name,".E01") || strstr(dp->d_name,".000") || strstr(dp->d_name,".001")){
@@ -924,9 +930,8 @@ image_process *image_process::open(std::string fn,bool opt_recurse,
                 std::cerr << "       or a directory of disk image parts. Please process these\n";
                 std::cerr << "       as a single disk image. If you need to process these files\n";
                 std::cerr << "       then place them in a sub directory of " << fn << "\n";
-                errno=0;
                 closedir(dirp);
-                return 0;
+                throw NoSuchFile(fn);
             }
         }
         closedir(dirp);
@@ -953,9 +958,8 @@ image_process *image_process::open(std::string fn,bool opt_recurse,
 	if(!ip) ip = new process_raw(fn,pagesize_,margin_);
     }
     /* Try to open it */
-    if(ip->open()){
-	fprintf(stderr,"Cannot open %s",fn.c_str());
-        return 0;
+    if (ip->open()){
+        throw NoSuchFile(fn);
     }
     return ip;
 }

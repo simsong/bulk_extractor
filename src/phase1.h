@@ -81,15 +81,14 @@ public:
     uint64_t      total_bytes {0};               //
     image_process &p;
     scanner_set   &ss;
-    seen_page_ids_t &seen_page_ids;
+    seen_page_ids_t seen_page_ids;
     dfxml::sha1_generator *sha1g {nullptr};        // the SHA1 of the image. Set to 0 if a gap is encountered
 
     uint64_t      sha1_next {0};                   // next byte to hash
 
     BulkExtractor_Phase1(dfxml_writer &xreport_,Config config_,
-                         image_process &p_, scanner_set &ss_, seen_page_ids_t &seen_page_ids_):
-        xreport(xreport_),config(config_),
-        p(p_), ss(ss_), seen_page_ids(seen_page_ids_)  {
+                         image_process &p_, scanner_set &ss_):
+        xreport(xreport_),config(config_), p(p_), ss(ss_) {
         timer.start();
     }
 

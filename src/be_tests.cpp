@@ -4,6 +4,7 @@
 #include <iostream>
 #include <memory>
 #include <cstdio>
+#include <stdexcept>
 
 #include <unistd.h>
 
@@ -15,15 +16,16 @@
 #include "be13_api/scanner_set.h"
 #include "be13_api/catch.hpp"
 #include "be13_api/utils.h"
-//#include "be13_api/bulk_extractor_i.h"
-//#include "phase1.h"
 
+
+#include "image_process.h"
 #include "base64_forensic.h"
 
+//#include "be13_api/bulk_extractor_i.h"
+//#include "phase1.h"
 //#include "dig.h"
 //#include "exif_reader.h"
 //#include "findopts.h"
-//#include "image_process.h"
 //#include "pattern_scanner.h"
 //#include "pattern_scanner_utils.h"
 //#include "pyxpress.h"
@@ -168,3 +170,35 @@ TEST_CASE("threadpool3", "[threads]") {
     t.join();
     REQUIRE( counter==1000 );
 }
+
+TEST_CASE("image_process", "[phase1]") {
+    //auto outdir = NamedTemporaryDirectory();
+    image_process *p = nullptr;
+    REQUIRE_THROWS_AS( p = image_process::open( "no-such-file", false, 65536, 65536), image_process::NoSuchFile);
+    p = image_process::open( "tests/test_data.txt", false, 65536, 65536);
+    REQUIRE( p != nullptr );
+    std::cerr << "times=0 p=" << p << "\n";
+    int times = 0;
+    for(auto it = p->begin(); it!=p->end(); ++it){
+        REQUIRE( times==0 );
+        std::cerr << "times=0 again\n";
+        sbuf_t *sbufp = it.sbuf_alloc();
+        std::cerr << "foo. sbufp=" << sbufp << "\n";
+        REQUIRE( sbufp->bufsize == 79 );
+        REQUIRE( sbufp->pagesize == 79 );
+        delete sbufp;
+        times += 1;
+    }
+}
+
+#if 0
+TEST_CASE("get_sbuf", "[phase1]") {
+    image_process *p = image_process::open( image_fname, opt_recurse, cfg.opt_pagesize, cfg.opt_marginsize);
+    dfxml_writer  *xreport = new dfxml_writer(reportfilename, false);
+    BulkExtractor_Phase1::Config   cfg;  // config for the image_processing system
+    scanner_config sc;
+    const feature_recorder_set::flags_t frs_flags;
+    scanner_set ss(sc, frs_flags);
+    BulkExtractor_Phase1 phase1(*xreport, cfg, *p, ss);
+}
+#endif
