@@ -1,6 +1,8 @@
 #ifndef PHASE1_H
 #define PHASE1_H
 
+#include <thread>
+
 #include "be13_api/aftimer.h"
 #include "be13_api/scanner_set.h"
 #include "dfxml/src/dfxml_writer.h"
@@ -27,7 +29,7 @@
  *** For every page of the iterator, schedule work.
  ****************************************************************/
 
-class BulkExtractor_Phase1 {
+class Phase1 {
 public:
     /* Configuration Control */
     struct Config {
@@ -35,11 +37,11 @@ public:
         Config(const Config &that) = default; // copy constructor - default
         Config &operator=(const Config &that) = delete;        // assignment constructor - delete
     public:
-        Config() {}
+        Config() { }
         uint64_t debug;                 // debug
         size_t   opt_pagesize {16 * MiB};
         size_t   opt_marginsize { 4 * MiB};
-        uint32_t max_bad_alloc_errors {0};
+        uint32_t max_bad_alloc_errors {3}; // by default, 3 retries
         bool     opt_info {false};
         uint32_t opt_notify_rate {4};		// by default, notify every 4 pages
         uint64_t opt_page_start {0};
@@ -48,17 +50,17 @@ public:
         time_t   max_wait_time {3600};  // after an hour, terminate a scanner
         int      opt_quiet {false};                  // -1 = no output
         int      retry_seconds {60};
-        u_int    num_threads {1};
+        u_int    num_threads  { std::thread::hardware_concurrency() }; // default to # of cores
         double   sampling_fraction {1.0};       // for random sampling
         u_int    sampling_passes {1};
         bool     opt_report_read_errors {true};
+        void     set_sampling_parameters(std::string p);
     };
 
     typedef std::set<uint64_t> blocklist_t; // a list of blocks (for random sampling)
     static void msleep(uint32_t msec); // sleep for a specified number of msec
     static std::string minsec(time_t tsec);    // return "5 min 10 sec" string
     static void make_sorted_random_blocklist(blocklist_t *blocklist,uint64_t max_blocks,float frac);
-    static void set_sampling_parameters(Config &c,std::string &p);
 
 private:
     bool sampling(){                    // are we random sampling?
@@ -86,11 +88,6 @@ public:
 
     uint64_t      sha1_next {0};                   // next byte to hash
 
-    BulkExtractor_Phase1(dfxml_writer &xreport_,Config config_,
-                         image_process &p_, scanner_set &ss_):
-        xreport(xreport_),config(config_), p(p_), ss(ss_) {
-        timer.start();
-    }
 
     std::string image_hash;
 
@@ -100,6 +97,7 @@ public:
     /* Notify user about current state of phase1 */
     void notify_user(image_process::iterator &it);
 
+    Phase1(dfxml_writer &xreport_,Config config_, image_process &p_, scanner_set &ss_);
     void send_data_to_workers();        // launch all of the workers
     void wait_for_workers();            //
     void run();                         // does the above

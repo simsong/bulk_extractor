@@ -467,7 +467,7 @@ void scan_json(struct scanner_params &sp)
 		    }
 		    if((sbuf[i]==']' || sbuf[i]=='}') && jc.check_if_done()){
 			// Only write JSON objects with more than 2 commas
-			if(jc.comma_count > 2 ){
+			if(jc.comma_count >= 2 ){
 			    sbuf_t json(sbuf,pos,i-pos+1);
                             std::string json_hash = fr.hash(json);
 			    fr.write(sbuf.pos0+i,json.asString(),json_hash);;

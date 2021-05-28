@@ -158,7 +158,7 @@ struct BEFILE_t {
     BEFILE_t(void *user,be_callback_t cb):fd(),cfs(user,cb,"md5"),cfg(){};
     int                            fd;
     callback_feature_recorder_set  cfs;
-    BulkExtractor_Phase1::Config   cfg;
+    Phase1::Config   cfg;
 };
 #endif
 
@@ -255,14 +255,14 @@ int bulk_extractor_analyze_dev(BEFILE *bef,const char *fname,float frac,int page
      *
      * This looks like the code in phase1.cpp.
      */
-    BulkExtractor_Phase1::blocklist_t blocks_to_sample;
-    BulkExtractor_Phase1::blocklist_t::const_iterator si = blocks_to_sample.begin(); // sampling iterator
+    Phase1::blocklist_t blocks_to_sample;
+    Phase1::blocklist_t::const_iterator si = blocks_to_sample.begin(); // sampling iterator
 
     image_process *p = image_process::open(fname,false,pagesize,pagesize);
     image_process::iterator it = p->begin(); // get an iterator
 
     if(sampling_mode){
-        BulkExtractor_Phase1::make_sorted_random_blocklist(&blocks_to_sample, it.max_blocks(),frac);
+        Phase1::make_sorted_random_blocklist(&blocks_to_sample, it.max_blocks(),frac);
         si = blocks_to_sample.begin();    // get the new beginning
     }
 

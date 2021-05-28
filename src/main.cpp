@@ -83,7 +83,7 @@ int _CRT_fmode = _O_BINARY;
 
 static void usage(const char *progname, scanner_set &ss)
 {
-    BulkExtractor_Phase1::Config cfg;   // get a default config
+    Phase1::Config cfg;   // get a default config
 
     std::cout << "bulk_extractor version " PACKAGE_VERSION " " << /* svn_revision << */ "\n";
     std::cout << "Usage: " << progname << " [options] imagefile\n";
@@ -529,9 +529,10 @@ static void process_path(const char *fn,std::string path,size_t pagesize,size_t 
 #endif
 
 class bulk_extractor_restarter {
-    std::stringstream cdata;
-    std::string thisElement;
-    std::string provided_filename;
+    std::stringstream cdata {};
+    std::string thisElement {};
+    std::string provided_filename {};
+    Phase1::seen_page_ids_t seen_page_ids {};
 #ifdef HAVE_LIBEXPAT
     static void startElement(void *userData, const char *name_, const char **attrs) {
         class bulk_extractor_restarter &self = *(bulk_extractor_restarter *)userData;
@@ -559,9 +560,7 @@ class bulk_extractor_restarter {
 public:;
     bulk_extractor_restarter(const std::string &opt_outdir,
                              const std::string &reportfilename,
-                             const std::string &image_fname,
-                             BulkExtractor_Phase1::seen_page_ids_t &seen_page_ids_):
-        cdata(),thisElement(),provided_filename(),seen_page_ids(seen_page_ids_){
+                             const std::string &image_fname){
 #ifdef HAVE_LIBEXPAT
         if(access(reportfilename.c_str(),R_OK)){
             std::cerr << opt_outdir << ": error\n";
@@ -613,7 +612,7 @@ public:;
 
 static void dfxml_create(dfxml_writer &xreport,
                          int argc, char * const *argv,
-                         const BulkExtractor_Phase1::Config &cfg,
+                         const Phase1::Config &cfg,
                          scanner_set &ss )
 {
     xreport.push("dfxml","xmloutputversion='1.0'");
@@ -691,15 +690,13 @@ int main(int argc,char **argv)
     mtrace();
 #endif
 
-    /* setup */
     const char *progname = argv[0];
 
     word_and_context_list alert_list;		/* shold be flagged */
     word_and_context_list stop_list;		/* should be ignored */
 
-    scanner_config                 sc;   // config for be13_api
-    BulkExtractor_Phase1::Config   cfg;  // config for the image_processing system
-    cfg.num_threads = std::thread::hardware_concurrency();
+    scanner_config   sc;   // config for be13_api
+    Phase1::Config   cfg;  // config for the image_processing system
 
     /* Options */
     const char *opt_path = 0;
@@ -947,7 +944,6 @@ int main(int argc,char **argv)
     /* If output directory does not exist, we are not restarting! */
     std::string reportfilename = sc.outdir + "/report.xml";
 
-
     /* Get image or directory */
     if (*argv == NULL) {
         if (opt_recurse) {
@@ -958,8 +954,6 @@ int main(int argc,char **argv)
         exit(1);
     }
     std::string image_fname = *argv;
-
-    namespace fs = std::filesystem;
 
     /* Determine if this is the first time through or if the program was restarted.
      * Restart procedure: re-run the command in verbatim.
@@ -972,7 +966,7 @@ int main(int argc,char **argv)
     } else {
 	/* Restarting */
 	std::cout << "Restarting from " << sc.outdir << "\n";
-        bulk_extractor_restarter r(sc.outdir,reportfilename,image_fname);
+        bulk_extractor_restarter r(sc.outdir, reportfilename, image_fname);
 
         /* Rename the old report and create a new one */
         std::string old_reportfilename = reportfilename + "." + std::to_string(time(0));
@@ -986,7 +980,6 @@ int main(int argc,char **argv)
      * We use *p because we don't know which subclass we will be getting.
      */
     image_process *p = image_process::open( image_fname, opt_recurse, cfg.opt_pagesize, cfg.opt_marginsize);
-    if(!p) throw_FileNotFoundError(image_fname);
 
     /* Determine the feature files that will be used from the scanners that were enabled */
     auto feature_file_names = ss.feature_file_list();
@@ -1053,13 +1046,16 @@ int main(int argc,char **argv)
         fs.db_transaction_begin();
     }
 #endif
-    BulkExtractor_Phase1 phase1(*xreport, cfg, *p, ss);
+    if(opt_sampling_params.size()>0){
+        cfg.set_sampling_parameters(opt_sampling_params);
+    }
+
+    Phase1 phase1(*xreport, cfg, *p, ss);
 
     /* TODO: Load up phase1 seen_page_ideas if we are restarting */
 
     //if(cfg.debug & DEBUG_PRINT_STEPS) std::cerr << "DEBUG: STARTING PHASE 1\n";
 
-    if(opt_sampling_params.size()>0) BulkExtractor_Phase1::set_sampling_parameters(cfg,opt_sampling_params);
     xreport->add_timestamp("phase1 start");
     phase1.run();
 
@@ -1096,7 +1092,7 @@ int main(int argc,char **argv)
     xreport->flush();
 
     xreport->push("scanner_times");
-    //fs.get_stats(xreport,stat_callback);
+    ss.dump_name_count_stats(*xreport);
     xreport->pop();
     xreport->add_rusage();
     xreport->pop();			// bulk_extractor

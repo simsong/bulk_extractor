@@ -28,7 +28,7 @@ using namespace std::chrono_literals;
  * convert tsec into a string.
  */
 
-std::string BulkExtractor_Phase1::minsec(time_t tsec)
+std::string Phase1::minsec(time_t tsec)
 {
     time_t min = tsec / 60;
     time_t sec = tsec % 60;
@@ -41,7 +41,7 @@ std::string BulkExtractor_Phase1::minsec(time_t tsec)
 /*
  * Print the status of each thread in the threadpool.
  */
-void BulkExtractor_Phase1::print_tp_status()
+void Phase1::print_tp_status()
 {
     for(u_int i=0;i<config.num_threads;i++){
 #if 0
@@ -54,6 +54,26 @@ void BulkExtractor_Phase1::print_tp_status()
     std::cout << "\n";
 }
 
+void Phase1::Config::set_sampling_parameters(std::string param)
+{
+    std::vector<std::string> params = split(param,':');
+    if (params.size()!=1 && params.size()!=2){
+        throw std::runtime_error("sampling parameters must be fraction[:passes]");
+    }
+    sampling_fraction = atof(params.at(0).c_str());
+    if (sampling_fraction<=0 || sampling_fraction>=1){
+        throw std::runtime_error("error: sampling fraction f must be 0<f<=1");
+    }
+    if (params.size()==2){
+        sampling_passes = atoi(params.at(1).c_str());
+        if (sampling_passes==0){
+            throw std::runtime_error("error: sampling passes must be >=1");
+        }
+    }
+}
+
+
+
 /**
  * attempt to get an sbuf. If we can't get it, we may be in a
  * low-memory situation.  wait for 30 seconds.
@@ -61,11 +81,12 @@ void BulkExtractor_Phase1::print_tp_status()
  * TODO: do not get an sbuf if more than N tasks in workqueue.
  */
 
-sbuf_t *BulkExtractor_Phase1::get_sbuf(image_process::iterator &it)
+sbuf_t *Phase1::get_sbuf(image_process::iterator &it)
 {
+    assert(config.max_bad_alloc_errors>0);
     for(u_int retry_count=0;retry_count<config.max_bad_alloc_errors;retry_count++){
         try {
-            return it.sbuf_alloc(); // may throw exception
+            return p.sbuf_alloc(it); // may throw exception
         }
         catch (const std::bad_alloc &e) {
             // Low memory could come from a bad sbuf alloc or another low memory condition.
@@ -89,7 +110,7 @@ sbuf_t *BulkExtractor_Phase1::get_sbuf(image_process::iterator &it)
 }
 
 
-void BulkExtractor_Phase1::notify_user(image_process::iterator &it)
+void Phase1::notify_user(image_process::iterator &it)
 {
     if (notify_ctr++ >= config.opt_notify_rate){
         time_t t = time(0);
@@ -113,7 +134,7 @@ void BulkExtractor_Phase1::notify_user(image_process::iterator &it)
 /**
  * Create a list sorted list of random blocks.
  */
-void BulkExtractor_Phase1::make_sorted_random_blocklist(blocklist_t *blocklist,uint64_t max_blocks,float frac)
+void Phase1::make_sorted_random_blocklist(blocklist_t *blocklist,uint64_t max_blocks,float frac)
 {
     if (frac>0.2){
         std::cerr << "A better random sampler is needed for this many random blocks. \n"
@@ -129,24 +150,6 @@ void BulkExtractor_Phase1::make_sorted_random_blocklist(blocklist_t *blocklist,u
 }
 
 
-void BulkExtractor_Phase1::set_sampling_parameters(Config &c,std::string &p)
-{
-    std::vector<std::string> params = split(p,':');
-    if (params.size()!=1 && params.size()!=2){
-        throw std::runtime_error("sampling parameters must be fraction[:passes]");
-    }
-    c.sampling_fraction = atof(params.at(0).c_str());
-    if (c.sampling_fraction<=0 || c.sampling_fraction>=1){
-        throw std::runtime_error("error: sampling fraction f must be 0<f<=1");
-    }
-    if (params.size()==2){
-        c.sampling_passes = atoi(params.at(1).c_str());
-        if (c.sampling_passes==0){
-            throw std::runtime_error("error: sampling passes must be >=1");
-        }
-    }
-}
-
 struct  work_unit {
     work_unit(scanner_set &ss_,sbuf_t *sbuf_):ss(ss_),sbuf(sbuf_){}
     scanner_set &ss;
@@ -156,7 +159,7 @@ struct  work_unit {
     }
 };
 
-void BulkExtractor_Phase1::send_data_to_workers()
+void Phase1::send_data_to_workers()
 {
     xreport.push("runtime","xmlns:debug=\"http://www.github.com/simsong/bulk_extractor/issues\"");
 
@@ -179,21 +182,17 @@ void BulkExtractor_Phase1::send_data_to_workers()
 
     if (sampling()){
         /* Create a list of blocks to sample */
+        std::cerr << "sampling\n";
         make_sorted_random_blocklist(&blocks_to_sample,it.max_blocks(),config.sampling_fraction);
         si = blocks_to_sample.begin();    // get the new beginning
     }
     /* Loop over the blocks to sample */
-    while(true){
-        if (sampling()){
+    while(it != p.end()) {
+        if (sampling()){                // if sampling, seek the iterator
             if (si==blocks_to_sample.end()) break;
             it.seek_block(*si);
-        } else {
-            /* Not sampling; no need to seek, it's the next one */
-            if (it == p.end()){
-                break;
-            }
         }
-
+        /* If we have gone to far, break */
         if (config.opt_offset_end!=0 && config.opt_offset_end <= it.raw_offset ){
             break;                      // passed the offset
         }
@@ -202,7 +201,10 @@ void BulkExtractor_Phase1::send_data_to_workers()
             // Make sure we haven't done this page yet
             if (seen_page_ids.find(it.get_pos0().str()) == seen_page_ids.end()){
                 try {
+                    std::cerr << "getting an sbuf\n";
                     sbuf_t *sbufp = get_sbuf(it);
+                    //sbuf_t *sbufp = p.sbuf_alloc(it);
+                    std::cerr << "got an sbuf\n";
                     auto   &sbuf = *sbufp;
 
                     /* compute the sha1 hash */
@@ -246,9 +248,8 @@ void BulkExtractor_Phase1::send_data_to_workers()
          */
         if (sampling()){
             ++si;
-        } else {
-            ++it;
         }
+        ++it;
     }
 
     if (!config.opt_quiet){
@@ -257,7 +258,7 @@ void BulkExtractor_Phase1::send_data_to_workers()
 }
 
 
-void BulkExtractor_Phase1::wait_for_workers()
+void Phase1::wait_for_workers()
 {
     /* Now wait for all of the threads to be free */
     //tp->mode = 1;			// waiting for workers to finish
@@ -344,12 +345,34 @@ void BulkExtractor_Phase1::wait_for_workers()
     /* end of phase 1 */
 }
 
-void BulkExtractor_Phase1::run()
+Phase1::Phase1(dfxml_writer &xreport_,Config config_, image_process &p_, scanner_set &ss_):
+    xreport(xreport_),config(config_), p(p_), ss(ss_)
+{
+}
+
+
+
+#if 0
+/* Single threaded */
+void Phase1::run()
+{
+    image_process::iterator     it = p.begin(); // sequential iterator
+    while (it != p.end()) {
+        sbuf_t *sbuf = p.sbuf_alloc(it);
+        ss.process_sbuf(sbuf);
+        ++it;
+    }
+    return;
+}
+#endif
+
+/* multi-threaded */
+void Phase1::run()
 {
     /* Create the threadpool and launch the workers */
-    p.set_report_read_errors(config.opt_report_read_errors);
+    timer.start();
+    //p.set_report_read_errors(config.opt_report_read_errors);
     tp = new threadpool(config.num_threads); // ,fs,xreport);
-
     send_data_to_workers();
     std::cerr << "calling join...\n";
     tp->join();

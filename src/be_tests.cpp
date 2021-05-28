@@ -195,10 +195,10 @@ TEST_CASE("image_process", "[phase1]") {
 TEST_CASE("get_sbuf", "[phase1]") {
     image_process *p = image_process::open( image_fname, opt_recurse, cfg.opt_pagesize, cfg.opt_marginsize);
     dfxml_writer  *xreport = new dfxml_writer(reportfilename, false);
-    BulkExtractor_Phase1::Config   cfg;  // config for the image_processing system
+    Phase1::Config   cfg;  // config for the image_processing system
     scanner_config sc;
     const feature_recorder_set::flags_t frs_flags;
     scanner_set ss(sc, frs_flags);
-    BulkExtractor_Phase1 phase1(*xreport, cfg, *p, ss);
+    Phase1 phase1(*xreport, cfg, *p, ss);
 }
 #endif
