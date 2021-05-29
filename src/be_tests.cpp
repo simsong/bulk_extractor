@@ -175,15 +175,12 @@ TEST_CASE("image_process", "[phase1]") {
     //auto outdir = NamedTemporaryDirectory();
     image_process *p = nullptr;
     REQUIRE_THROWS_AS( p = image_process::open( "no-such-file", false, 65536, 65536), image_process::NoSuchFile);
-    p = image_process::open( "tests/test_data.txt", false, 65536, 65536);
+    p = image_process::open( "tests/test_json.txt", false, 65536, 65536);
     REQUIRE( p != nullptr );
-    std::cerr << "times=0 p=" << p << "\n";
     int times = 0;
     for(auto it = p->begin(); it!=p->end(); ++it){
         REQUIRE( times==0 );
-        std::cerr << "times=0 again\n";
         sbuf_t *sbufp = it.sbuf_alloc();
-        std::cerr << "foo. sbufp=" << sbufp << "\n";
         REQUIRE( sbufp->bufsize == 79 );
         REQUIRE( sbufp->pagesize == 79 );
         delete sbufp;

@@ -18,7 +18,7 @@ extern "C" scanner_t *scanners_builtin[];
 /* Regular scanners */
 //SCANNER(wordlist)
 //SCANNER(net)
-//SCANNER(base16)
+SCANNER(base16)
 //SCANNER(base64)
 //SCANNER(vcard)
 //SCANNER(find)

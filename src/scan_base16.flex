@@ -1,4 +1,5 @@
 %{
+/* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 
 /*
  * http://flex.sourceforge.net/manual/Cxx.html
@@ -13,18 +14,19 @@ static int base16array[256];
 unsigned int opt_min_hex_buf = 64;           /* Don't re-analyze hex bufs smaller than this */
 
 #include "config.h"
-#include "be13_api/bulk_extractor_i.h"
+//#include "be13_api/bulk_extractor_i.h"
 #include "sbuf_flex_scanner.h"
+#include "managed_malloc.h"
 
 class base16_scanner : public sbuf_scanner {
 public:
-    base16_scanner(const scanner_params &sp_):
-        sbuf_scanner(&sp_.sbuf),sp(sp_),hex_recorder(sp.named_feature_recorder("hex")){
+    base16_scanner(struct scanner_params &sp_):
+        sbuf_scanner(*sp_.sbuf), sp(sp_), hex_recorder(sp.named_feature_recorder("hex")){
     }
 
     const struct scanner_params &sp;
-    const struct recursion_control_block &rcb;
-    class feature_recorder *hex_recorder;
+    //const struct recursion_control_block &rcb;
+    class feature_recorder &hex_recorder;
     void  decode(const sbuf_t &osbuf);
 };
 #define YY_EXTRA_TYPE base16_scanner *   /* holds our class pointer */
@@ -60,12 +62,15 @@ void base16_scanner::decode(const sbuf_t &sbuf)
 
     /* Alert on byte sequences of 48, 128 or 256 bits*/
     if(p==48/8 || p==128/8 || p==256/8){
-        hex_recorder->write_buf(sbuf,0,sbuf.bufsize);  /* it validates; write original with context */
+        hex_recorder.write_buf(sbuf,0,sbuf.bufsize);  /* it validates; write original with context */
         return;                                  /* Small keys don't get recursively analyzed */
     }
     if(p>opt_min_hex_buf){
-        sbuf_t nsbuf(sbuf.pos0 + rcb.partName, b.buf, p, p, 0, false);
-        (*rcb.callback)(scanner_params(sp,nsbuf)); // recurse
+        std::cerr << "scan_base16: ** need to recurse \n";
+        auto *nsbuf = new sbuf_t(sbuf.pos0 + "BASE16", b.buf, p, p, 0, false);
+        std::cerr << "new sbuf: " << *nsbuf << "\n";
+        sp.recurse(nsbuf);    // recurse
+        // (*rcb.callback)(scanner_params(sp,nsbuf)); // recurse
     }
 }
 
@@ -97,7 +102,7 @@ UNICODE         ([[:print:][:space:]]+)
      * {6,65536}  means 6-65536 characters
      */
     base16_scanner &s = *yybase16_get_extra(yyscanner);
-    s.decode(sbuf_t(s.sp.sbuf, s.pos, yyleng));
+    s.decode(sbuf_t(s.sbuf, s.pos, yyleng));
     s.pos += yyleng;
 }
 
@@ -111,20 +116,24 @@ UNICODE         ([[:print:][:space:]]+)
 }
 %%
 
+/* Linkage */
+#define MINIMUM_SIZE_TO_SCAN 24
+
 extern "C"
-void scan_base16(const struct scanner_params &sp,const recursion_control_block &rcb)
+void scan_base16(struct scanner_params &sp)
 {
     static const u_char *ignore_string = (const u_char *)"\r\n \t";
-    assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
     if(sp.phase==scanner_params::PHASE_INIT){
-        assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
+        auto info = new scanner_params::scanner_info(scan_base16,"base16");
+        info->author         = "Simson L. Garfinkel";
+        info->description    = "Base16 (hex) scanner";
+        info->scanner_version= "1.1";
+        feature_recorder_def frd("hex"); frd.flags.disabled=true; /* disabled by default */ /* frd.flags.recurse=true;*/
+        info->feature_defs.push_back( frd );
+        //sp.info->feature_names.insert("hex"); // notable hex values
+        //sp.info->flags          = scanner_info::SCANNER_DISABLED | scanner_info::SCANNER_RECURSE;
 
-        sp.info->name           = "base16";
-        sp.info->author         = "Simson L. Garfinkel";
-        sp.info->description    = "Base16 (hex) scanner";
-        sp.info->scanner_version= "1.0";
-        sp.info->feature_names.insert("hex"); // notable hex values
-        sp.info->flags          = scanner_info::SCANNER_DISABLED | scanner_info::SCANNER_RECURSE;
+        sp.register_info(info);
 
         /* Create the base16 array */
         for(int i=0;i<256;i++){
@@ -139,17 +148,14 @@ void scan_base16(const struct scanner_params &sp,const recursion_control_block &
         return; /* No feature files created */
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
-        if(sp.sbuf.pagesize<24) return; /* minimum size to scan */
+        if(sp.sbuf->pagesize < MINIMUM_SIZE_TO_SCAN) return;
         yyscan_t scanner;
         yybase16_lex_init(&scanner);
-
         {
-                base16_scanner lexer(sp,rcb);
+                base16_scanner lexer(sp);
                 yybase16_set_extra(&lexer,scanner);
                 yybase16_lex(scanner);
         }
-
-
         yybase16_lex_destroy(scanner);
     }
 }

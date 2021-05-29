@@ -54,11 +54,12 @@ be_tests_SOURCES = be13_api/catch.hpp \
 
 # These scanners are based on GNUflex
 flex_scanners = \
-	sbuf_flex_scanner.h \
-	scan_accts.flex \
-	scan_base16.flex \
-	scan_email.flex \
-	scan_gps.flex
+	scan_base16.flex
+
+#	sbuf_flex_scanner.h \
+#	scan_accts.flex \
+#	scan_email.flex \
+#	scan_gps.flex
 
 # These scanners are based on Lightbox Technology's lightgrep
 lightgrep_scanners = \
@@ -111,9 +112,9 @@ scanners_builtin_broken = \
 	scan_xor.cpp \
 	scan_zip.cpp
 
-#if FLEXSCANNERS_ENABLED
-#  scanners_builtin += $(flex_scanners)
-#endif
+if FLEXSCANNERS_ENABLED
+  scanners_builtin += $(flex_scanners)
+endif
 #
 #if LIGHTGREP_ENABLED
 #  scanners_builtin += $(lightgrep_scanners)

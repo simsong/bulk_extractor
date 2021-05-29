@@ -46,7 +46,11 @@ int _CRT_fmode = _O_BINARY;
 #endif
 
 #include "bulk_extractor.h"
-#include "be13_api/bulk_extractor_i.h"
+//#include "be13_api/bulk_extractor_i.h"
+#include "be13_api/word_and_context_list.h"
+#include "be13_api/scanner_set.h"
+#include "be13_api/scanner_params.h"
+
 
 #include "findopts.h"
 #include "image_process.h"

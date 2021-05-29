@@ -430,9 +430,8 @@ int json_checker::check_char(int next_char)
  ** Make the JSON validator work with bulk_extractor
  */
 
-static bool is_json_second_char[256];		// shared between all threads
-
-static const char *json_second_chars = "0123456789.-{[ \t\n\r\"";
+static const char *json_second_chars = "0123456789.-{[ \t\n\r\""; // valid second chars in a JSON block
+static bool is_json_second_char[256];   // fast lookup to determine if a second char is in JSON or not.
 extern "C"
 void scan_json(struct scanner_params &sp)
 {
@@ -454,8 +453,8 @@ void scan_json(struct scanner_params &sp)
     }
 
     if(sp.phase==scanner_params::PHASE_SCAN){
-        auto &sbuf = sp.sbuf;
-        feature_recorder &fr = sp.ss.named_feature_recorder("json");
+        auto &sbuf = *(sp.sbuf);
+        feature_recorder &fr = sp.ss.named_feature_recorder("json"); // do we want to do this every time through? Perhaps the scanners should be C++ classes with C linkage
 	for(size_t pos = 0;pos+1<sbuf.pagesize;pos++){
 	    /* Find the beginning of a json object. This will improve later... */
 	    if((sbuf[pos]=='{' || sbuf[pos]=='[') && is_json_second_char[sbuf[pos+1]]){
