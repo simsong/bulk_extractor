@@ -48,6 +48,7 @@ be_tests_SOURCES = be13_api/catch.hpp \
 	dig.h \
 	image_process.cpp \
 	image_process.h \
+	managed_malloc.h \
 	scan_json.cpp \
 	threadpool.hpp
 
