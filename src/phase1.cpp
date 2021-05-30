@@ -38,6 +38,36 @@ std::string Phase1::minsec(time_t tsec)
     return ss.str();
 }
 
+void Phase1::dfxml_create(int argc, char * const *argv)
+{
+    xreport.push("dfxml","xmloutputversion='1.0'");
+    xreport.push("metadata",
+		 "\n  xmlns='http://afflib.org/bulk_extractor/' "
+		 "\n  xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' "
+		 "\n  xmlns:dc='http://purl.org/dc/elements/1.1/'" );
+    xreport.xmlout("dc:type","Feature Extraction","",false);
+    xreport.pop();
+    if (argc && argv){
+        xreport.add_DFXML_creator(PACKAGE_NAME, PACKAGE_VERSION, "", argc, argv);
+    }
+    xreport.push("configuration");
+    xreport.xmlout("threads",config.num_threads);
+    xreport.xmlout("pagesize",config.opt_pagesize);
+    xreport.xmlout("marginsize",config.opt_marginsize);
+    xreport.push("scanners");
+
+    /* Generate a list of the scanners in use */
+    auto ev = ss.get_enabled_scanners();
+    for (auto const &it : ev) {
+        xreport.xmlout("scanner",it);
+    }
+    xreport.pop();			// scanners
+    xreport.pop();			// configuration
+}
+
+
+
+
 /*
  * Print the status of each thread in the threadpool.
  */
@@ -369,13 +399,12 @@ void Phase1::run()
 /* multi-threaded */
 void Phase1::run()
 {
+    assert(ss.get_current_phase() == scanner_params::PHASE_SCAN);
     /* Create the threadpool and launch the workers */
     timer.start();
     //p.set_report_read_errors(config.opt_report_read_errors);
     tp = new threadpool(config.num_threads); // ,fs,xreport);
     send_data_to_workers();
-    std::cerr << "calling join...\n";
     tp->join();
     //wait_for_workers();
-    std::cerr << "done!\n";
 }

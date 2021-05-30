@@ -8,6 +8,9 @@
 extern "C" scanner_t *scanners_builtin[];
 #endif
 
+#ifndef SCANNER
+#define SCANNER(scanner) extern "C" scanner_t scan_ ## scanner;
+#endif
 
 /* flex-based scanners */
 //SCANNER(email)

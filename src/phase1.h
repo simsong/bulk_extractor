@@ -37,6 +37,7 @@ public:
         Config(const Config &that) = default; // copy constructor - default
         Config &operator=(const Config &that) = delete;        // assignment constructor - delete
     public:
+
         Config() { }
         uint64_t debug;                 // debug
         size_t   opt_pagesize {16 * MiB};
@@ -98,6 +99,7 @@ public:
     void notify_user(image_process::iterator &it);
 
     Phase1(dfxml_writer &xreport_,Config config_, image_process &p_, scanner_set &ss_);
+    void dfxml_create(int argc, char * const *argv);
     void send_data_to_workers();        // launch all of the workers
     void wait_for_workers();            //
     void run();                         // does the above

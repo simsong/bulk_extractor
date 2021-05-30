@@ -61,9 +61,7 @@ int _CRT_fmode = _O_BINARY;
 #include "phase1.h"
 
 /* Bring in the definitions for the  */
-#define SCANNER(scanner) extern "C" scanner_t scan_ ## scanner;
 #include "bulk_extractor_scanners.h"
-#undef SCANNER
 
 /**
  * Output the #defines for our debug parameters. Used by the automake system.
@@ -164,11 +162,6 @@ static void usage(const char *progname, scanner_set &ss)
     std::cout << "\n";
 }
 
-
-std::string svn_revision_clean()
-{
-    return std::string("");
-}
 
 [[noreturn]] void throw_FileNotFoundError(const std::string &fname)
 {
@@ -614,35 +607,6 @@ public:;
  * Create the dfxml output
  */
 
-static void dfxml_create(dfxml_writer &xreport,
-                         int argc, char * const *argv,
-                         const Phase1::Config &cfg,
-                         scanner_set &ss )
-{
-    xreport.push("dfxml","xmloutputversion='1.0'");
-    xreport.push("metadata",
-		 "\n  xmlns='http://afflib.org/bulk_extractor/' "
-		 "\n  xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' "
-		 "\n  xmlns:dc='http://purl.org/dc/elements/1.1/'" );
-    xreport.xmlout("dc:type","Feature Extraction","",false);
-    xreport.pop();
-    xreport.add_DFXML_creator(PACKAGE_NAME, PACKAGE_VERSION, svn_revision_clean(), argc, argv);
-    xreport.push("configuration");
-    xreport.xmlout("threads",cfg.num_threads);
-    xreport.xmlout("pagesize",cfg.opt_pagesize);
-    xreport.xmlout("marginsize",cfg.opt_marginsize);
-    xreport.push("scanners");
-
-    /* Generate a list of the scanners in use */
-    auto ev = ss.get_enabled_scanners();
-    for (auto const &it : ev) {
-        xreport.xmlout("scanner",it);
-    }
-    xreport.pop();			// scanners
-    xreport.pop();			// configuration
-}
-
-
 
 /* It is gross to do this with statics rather than a singleton whose address is passed in 'user',
  * but that is the way it is implemented.
@@ -1021,11 +985,6 @@ int main(int argc,char **argv)
     }
 #endif
 
-    /* Store the configuration in the XML file */
-    dfxml_writer *xreport = new dfxml_writer(reportfilename, false);
-    dfxml_create( *xreport, argc, argv, cfg, ss);
-    xreport->xmlout("provided_filename",image_fname); // save this information
-
     /* provide documentation to the user; the DFXML information comes from elsewhere */
     if(!cfg.opt_quiet){
         std::cout << "bulk_extractor version: " << PACKAGE_VERSION << "\n";
@@ -1054,7 +1013,10 @@ int main(int argc,char **argv)
         cfg.set_sampling_parameters(opt_sampling_params);
     }
 
+    dfxml_writer *xreport = new dfxml_writer(reportfilename, false);
     Phase1 phase1(*xreport, cfg, *p, ss);
+    phase1.dfxml_create( argc, argv);
+    xreport->xmlout("provided_filename",image_fname); // save this information
 
     /* TODO: Load up phase1 seen_page_ideas if we are restarting */
 

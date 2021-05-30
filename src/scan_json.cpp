@@ -440,7 +440,9 @@ void scan_json(struct scanner_params &sp)
         info->author          = "Simson Garfinkel";
         info->description     = "Scans for JSON-encoded data";
         info->scanner_version = "1.1";
-        feature_recorder_def frd("json"); frd.flags.xml = true;
+        feature_recorder_def frd("json");
+        frd.flags.xml = true;
+        frd.max_feature_size = 1024*1024;   // Accept large JSON features
         info->feature_defs.push_back( frd );
 
 	/* Create a fast map of the valid json characters.*/
@@ -467,9 +469,9 @@ void scan_json(struct scanner_params &sp)
 		    if((sbuf[i]==']' || sbuf[i]=='}') && jc.check_if_done()){
 			// Only write JSON objects with more than 2 commas
 			if(jc.comma_count >= 2 ){
-			    sbuf_t json(sbuf,pos,i-pos+1);
-                            std::string json_hash = fr.hash(json);
-			    fr.write(sbuf.pos0+i,json.asString(),json_hash);;
+			    sbuf_t json_sbuf(sbuf, pos, (i-pos)+1);
+                            std::string json_sbuf_hash = fr.hash(json_sbuf);
+			    fr.write(json_sbuf.pos0, json_sbuf.asString(), json_sbuf_hash);;
 			}
 			pos = i;		// skip to the end
 			break;

@@ -13,6 +13,7 @@
 
 #include "config.h"
 
+#include "be13_api/dfxml/src/dfxml_writer.h"
 #include "be13_api/scanner_set.h"
 #include "be13_api/catch.hpp"
 #include "be13_api/utils.h"
@@ -20,9 +21,10 @@
 
 #include "image_process.h"
 #include "base64_forensic.h"
+#include "phase1.h"
+#include "bulk_extractor_scanners.h"
 
 //#include "be13_api/bulk_extractor_i.h"
-//#include "phase1.h"
 //#include "dig.h"
 //#include "exif_reader.h"
 //#include "findopts.h"
@@ -74,19 +76,18 @@ TEST_CASE("exif_reader", "[utilities]") {
 }
 
 scanner_t *my_scanners[] = {scan_json, 0};
-TEST_CASE("scan_json", "[scanners]") {
+std::vector<scanner_config::scanner_command> enable_all_scanners = {
+    scanner_config::scanner_command(scanner_config::scanner_command::ALL_SCANNERS,
+                                    scanner_config::scanner_command::ENABLE)
+};
+TEST_CASE("scan_json1", "[scanners]") {
 
     /* Make a scanner set with a single scanner and a single command to enable all the scanners.
      */
-    std::vector<scanner_config::scanner_command> my_scanner_commands = {
-        scanner_config::scanner_command(scanner_config::scanner_command::ALL_SCANNERS,
-                                        scanner_config::scanner_command::ENABLE)
-    };
     const feature_recorder_set::flags_t frs_flags;
     scanner_config sc;
-    sc.scanner_commands = my_scanner_commands;
-
     sc.outdir = NamedTemporaryDirectory();
+    sc.scanner_commands = enable_all_scanners;
 
     scanner_set ss(sc, frs_flags);
     ss.add_scanners(my_scanners);
@@ -172,8 +173,8 @@ TEST_CASE("threadpool3", "[threads]") {
 }
 
 TEST_CASE("image_process", "[phase1]") {
-    //auto outdir = NamedTemporaryDirectory();
     image_process *p = nullptr;
+    REQUIRE_THROWS_AS( p = image_process::open( "no-such-file", false, 65536, 65536), image_process::NoSuchFile);
     REQUIRE_THROWS_AS( p = image_process::open( "no-such-file", false, 65536, 65536), image_process::NoSuchFile);
     p = image_process::open( "tests/test_json.txt", false, 65536, 65536);
     REQUIRE( p != nullptr );
@@ -188,14 +189,86 @@ TEST_CASE("image_process", "[phase1]") {
     }
 }
 
+
+struct Check {
+    Check(std::string fname_, Feature feature_):
+        fname(fname_),
+        feature(feature_) {};
+    std::string fname;
+    Feature feature;
+};
+
+void validate(std::string image_fname, std::vector<Check> &expected)
+{
+    auto p = image_process::open( image_fname, false, 65536, 65536);
+    Phase1::Config   cfg;  // config for the image_processing system
+    scanner_config sc;
+
+    sc.outdir = NamedTemporaryDirectory();
+    sc.scanner_commands = enable_all_scanners;
+    const feature_recorder_set::flags_t frs_flags;
+    scanner_set ss(sc, frs_flags);
+    ss.add_scanners(scanners_builtin);
+    ss.apply_scanner_commands();
+
+    auto *xreport = new dfxml_writer(sc.outdir + "/report.xml", false);
+    Phase1 phase1(*xreport, cfg, *p, ss);
+    phase1.dfxml_create( 0, nullptr);
+    ss.phase_scan();
+    phase1.run();
+    ss.shutdown();
+    xreport->close();
+
+    for(int i=0; i<expected.size(); i++){
+        std::string fname  = sc.outdir + std::string("/") + expected[i].fname;
+        std::cerr << "checking " << i << " in " << fname << "\n";
+        std::string line;
+        std::ifstream inFile;
+        inFile.open(fname);
+        if (!inFile.is_open()) {
+            throw std::runtime_error("validate_scanners:[phase1] Could not open "+fname);
+        }
+        bool found = false;
+        while (std::getline(inFile, line)) {
+            auto words = split(line, '\t');
+            if (words.size()==3 && words[0]==expected[i].feature.pos && words[1]==expected[i].feature.feature && words[2]==expected[i].feature.context){
+                found = true;
+                break;
+            }
+        }
+        if (!found){
+            std::cerr << fname << " did not find " << expected[i].feature.pos << " " << expected[i].feature.feature << " " << expected[i].feature.context << "\t";
+        }
+        REQUIRE(found);
+    }
+}
+
+TEST_CASE("validate_scanners", "[phase1]") {
+    auto fn1 = "tests/test_json.txt";
+    std::vector<Check> ex1 {
+        Check("json.txt",
+              Feature( "0",
+                       "[{\"1\": \"one@company.com\"}, {\"2\": \"two@company.com\"}, {\"3\": \"two@company.com\"}]",
+                       "ef2b5d7ee21e14eeebb5623784f73724218ee5dd")),
+    };
+    validate(fn1, ex1);
+
+    auto fn2 = "tests/test_base16json.txt";
+    std::vector<Check> ex2 {
+        Check("json.txt",
+              Feature( "50-BASE16-0",
+                       "[{\"1\": \"one@base16_company.com\"}, {\"2\": \"two@base16_company.com\"}, {\"3\": \"two@base16_company.com\"}]",
+                       "41e3ec783b9e2c2ffd93fe82079b3eef8579a6cd")),
+    };
+    validate(fn2, ex2);
+
+
+
+}
+
+
 #if 0
 TEST_CASE("get_sbuf", "[phase1]") {
     image_process *p = image_process::open( image_fname, opt_recurse, cfg.opt_pagesize, cfg.opt_marginsize);
-    dfxml_writer  *xreport = new dfxml_writer(reportfilename, false);
-    Phase1::Config   cfg;  // config for the image_processing system
-    scanner_config sc;
-    const feature_recorder_set::flags_t frs_flags;
-    scanner_set ss(sc, frs_flags);
-    Phase1 phase1(*xreport, cfg, *p, ss);
 }
 #endif

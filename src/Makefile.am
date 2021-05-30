@@ -43,6 +43,8 @@ be_tests_SOURCES = be13_api/catch.hpp \
 	$(BE13_API_SRC) \
 	base64_forensic.cpp \
 	base64_forensic.h \
+	bulk_extractor_scanners.cpp \
+	bulk_extractor_scanners.h \
 	be_tests.cpp \
 	dig.cpp \
 	dig.h \
@@ -50,6 +52,9 @@ be_tests_SOURCES = be13_api/catch.hpp \
 	image_process.h \
 	managed_malloc.h \
 	scan_json.cpp \
+	scan_base16.flex \
+	phase1.h \
+	phase1.cpp \
 	threadpool.hpp
 
 
