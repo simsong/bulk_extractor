@@ -14,7 +14,6 @@ static int base16array[256];
 unsigned int opt_min_hex_buf = 64;           /* Don't re-analyze hex bufs smaller than this */
 
 #include "config.h"
-//#include "be13_api/bulk_extractor_i.h"
 #include "sbuf_flex_scanner.h"
 #include "managed_malloc.h"
 
@@ -37,22 +36,22 @@ inline class base16_scanner *get_extra(yyscan_t yyscanner) {return yybase16_get_
 void base16_scanner::decode(const sbuf_t &sbuf)
 {
     managed_malloc<uint8_t>b(sbuf.pagesize/2+1);
-    if(b.buf==0) return;
+    if (b.buf==0) return;
 
     size_t p=0;
     /* First get the characters */
-    for(size_t i=0;i+1<sbuf.pagesize;){
+    for (size_t i=0;i+1<sbuf.pagesize;){
         /* stats on the new characters */
 
         /* decode the two characters */
         int msb = base16array[sbuf[i]];
-        if(msb==BASE16_IGNORE || msb==BASE16_INVALID){
+        if (msb==BASE16_IGNORE || msb==BASE16_INVALID){
             i++;          /* This character not valid */
             continue;
         }
         assert(msb>=0 && msb<16);
         int lsb = base16array[sbuf[i+1]];
-        if(lsb==BASE16_IGNORE || lsb==BASE16_INVALID){
+        if (lsb==BASE16_IGNORE || lsb==BASE16_INVALID){
             return;       /* If first char is valid hex and second isn't, this isn't hex */
         }
         assert(lsb>=0 && lsb<16);
@@ -61,11 +60,11 @@ void base16_scanner::decode(const sbuf_t &sbuf)
     }
 
     /* Alert on byte sequences of 48, 128 or 256 bits*/
-    if(p==48/8 || p==128/8 || p==256/8){
+    if (p==48/8 || p==128/8 || p==256/8){
         hex_recorder.write_buf(sbuf,0,sbuf.bufsize);  /* it validates; write original with context */
         return;                                  /* Small keys don't get recursively analyzed */
     }
-    if(p>opt_min_hex_buf){
+    if (p>opt_min_hex_buf){
         std::cerr << "scan_base16: ** need to recurse \n";
         auto *nsbuf = new sbuf_t(sbuf.pos0 + "BASE16", b.buf, p, p, 0, false);
         std::cerr << "new sbuf: " << *nsbuf << "\n";
@@ -123,7 +122,7 @@ extern "C"
 void scan_base16(struct scanner_params &sp)
 {
     static const u_char *ignore_string = (const u_char *)"\r\n \t";
-    if(sp.phase==scanner_params::PHASE_INIT){
+    if (sp.phase==scanner_params::PHASE_INIT){
         auto info = new scanner_params::scanner_info(scan_base16,"base16");
         info->author         = "Simson L. Garfinkel";
         info->description    = "Base16 (hex) scanner";
@@ -136,26 +135,24 @@ void scan_base16(struct scanner_params &sp)
         sp.register_info(info);
 
         /* Create the base16 array */
-        for(int i=0;i<256;i++){
+        for (int i=0;i<256;i++){
             base16array[i] = BASE16_INVALID;
         }
-        for(const u_char *ch = ignore_string;*ch;ch++){
+        for (const u_char *ch = ignore_string;*ch;ch++){
             base16array[(int)*ch] = BASE16_IGNORE;
         }
-        for(int ch='A';ch<='F';ch++){ base16array[ch] = ch-'A'+10; }
-        for(int ch='a';ch<='f';ch++){ base16array[ch] = ch-'a'+10; }
-        for(int ch='0';ch<='9';ch++){ base16array[ch] = ch-'0'; }
+        for (int ch='A';ch<='F';ch++){ base16array[ch] = ch-'A'+10; }
+        for (int ch='a';ch<='f';ch++){ base16array[ch] = ch-'a'+10; }
+        for (int ch='0';ch<='9';ch++){ base16array[ch] = ch-'0'; }
         return; /* No feature files created */
     }
-    if(sp.phase==scanner_params::PHASE_SCAN){
-        if(sp.sbuf->pagesize < MINIMUM_SIZE_TO_SCAN) return;
+    if (sp.phase==scanner_params::PHASE_SCAN){
+        if (sp.sbuf->pagesize < MINIMUM_SIZE_TO_SCAN) return;
         yyscan_t scanner;
         yybase16_lex_init(&scanner);
-        {
-                base16_scanner lexer(sp);
-                yybase16_set_extra(&lexer,scanner);
-                yybase16_lex(scanner);
-        }
+        base16_scanner lexer(sp);
+        yybase16_set_extra(&lexer,scanner);
+        yybase16_lex(scanner);
         yybase16_lex_destroy(scanner);
     }
 }

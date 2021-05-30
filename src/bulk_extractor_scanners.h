@@ -13,7 +13,7 @@ extern "C" scanner_t *scanners_builtin[];
 #endif
 
 /* flex-based scanners */
-//SCANNER(email)
+SCANNER(email)
 //SCANNER(accts)
 //SCANNER(kml)
 //SCANNER(gps)

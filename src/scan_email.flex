@@ -4,38 +4,40 @@
  * Note below:
  * U_TLD1 is a regular expression that catches top level domains in UTF-16.
  * Also scans for ethernet addresses; addresses are validated by algorithm below.
+ *
+ * If you want better precision, use scan_email_lg
  */
 
+#include <cstdlib>
+#include <cstring>
+#include <cctype>
+
 #include "config.h"
-#include "be13_api/bulk_extractor_i.h"
-#include "utils.h"
-#include "histogram.h"
-
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-
 #include "sbuf_flex_scanner.h"
+//#include "be13_api/bulk_extractor_i.h"
+//#include "utils.h"
+//#include "histogram.h"
+
+
 class email_scanner : public sbuf_scanner {
 public:
       email_scanner(const scanner_params &sp):
-        sbuf_scanner(&sp.sbuf),
-	email_recorder(),rfc822_recorder(),domain_recorder(),url_recorder(),ether_recorder(){
-          email_recorder  = sp.named_feature_recorder("email");
-	  domain_recorder = sp.named_feature_recorder("domain");
-	  url_recorder    = sp.named_feature_recorder("url");
-	  rfc822_recorder = sp.named_feature_recorder("rfc822");
-	  ether_recorder  = sp.named_feature_recorder("ether");
+          sbuf_scanner(*sp.sbuf),
+          email_recorder(sp.named_feature_recorder("email")),
+          rfc822_recorder(sp.named_feature_recorder("rfc822")),
+          domain_recorder(sp.named_feature_recorder("domain")),
+          url_recorder(sp.named_feature_recorder("url")),
+          ether_recorder(sp.named_feature_recorder("ether")){
       }
-      class feature_recorder *email_recorder;
-      class feature_recorder *rfc822_recorder;
-      class feature_recorder *domain_recorder;
-      class feature_recorder *url_recorder;
-      class feature_recorder *ether_recorder;
+      class feature_recorder &email_recorder;
+      class feature_recorder &rfc822_recorder;
+      class feature_recorder &domain_recorder;
+      class feature_recorder &url_recorder;
+      class feature_recorder &ether_recorder;
 
       bool valid_ether_addr(size_t pos){
-	if(sbuf->memcmp((const uint8_t *)"00:00:00:00:00:00",pos,17)==0) return false;
-	if(sbuf->memcmp((const uint8_t *)"00:11:22:33:44:55",pos,17)==0) return false;
+	if (sbuf.memcmp((const uint8_t *)"00:00:00:00:00:00",pos,17)==0) return false;
+	if (sbuf.memcmp((const uint8_t *)"00:11:22:33:44:55",pos,17)==0) return false;
 	/* Perform a quick histogram analysis.
 	 * For each group of characters, create a value based on the two digits.
 	 * There is no need to convert them to their 'actual' value.
@@ -45,13 +47,13 @@ public:
 	 * Otherwise its is some pattern we don't want.
 	 */
 	std::set<uint16_t> ctr;
-	for(uint32_t i=0;i<6;i++){	/* loop for each group of numbers */
-            u_char ch1 = (*sbuf)[pos+i*3];
-            u_char ch2 = (*sbuf)[pos+i*3+1];
+	for (uint32_t i=0;i<6;i++){	/* loop for each group of numbers */
+            u_char ch1 = (sbuf)[pos+i*3];
+            u_char ch2 = (sbuf)[pos+i*3+1];
             uint16_t val = (ch1<<8) + (ch2); /* create a value of the two characters (it's not */
             ctr.insert(val);
 	}
-	if(ctr.size()<4) return false;
+	if (ctr.size()<4) return false;
         return true;		/* all tests pass */
       }
 
@@ -64,7 +66,7 @@ inline class email_scanner *get_extra(yyscan_t yyscanner) {return yyemail_get_ex
 /* Address some common false positives in email scanner */
 inline bool validate_email(const char *email)
 {
-    if(strstr(email,"..")) return false;
+    if (strstr(email,"..")) return false;
     return true;
 }
 
@@ -75,18 +77,18 @@ inline bool validate_email(const char *email)
  */
 inline size_t find_domain_in_email(const unsigned char *buf,size_t buflen)
 {
-    for(size_t i=0;i<buflen;i++){
-	if(buf[i]=='@') return i+1;
+    for (size_t i=0;i<buflen;i++){
+	if (buf[i]=='@') return i+1;
     }
     return 0;				// not found
 }
 
 inline size_t find_domain_in_url(const unsigned char *buf,size_t buflen,size_t *domain_len)
 {
-    for(size_t i=2;i<buflen-1;i++){
-	if(buf[i-1]=='/' && buf[i-2]=='/'){
-	    for(size_t j=i;j<buflen;j++){
-		if(buf[j]=='/' || buf[j]==':'){
+    for (size_t i=2;i<buflen-1;i++){
+	if (buf[i-1]=='/' && buf[i-2]=='/'){
+	    for (size_t j=i;j<buflen;j++){
+		if (buf[j]=='/' || buf[j]==':'){
 		    *domain_len = (j-i);
 		    return i;
 		}
@@ -150,7 +152,7 @@ U_TLD4		(Q\0A\0|R\0E\0|R\0O\0|R\0S\0|R\0U\0|R\0W\0|S\0A\0|S\0B\0|S\0C\0|S\0D\0|S
 
 {DAYOFWEEK},[ \t\x0A\x0D]+[0-9]{1,2}[ \t\x0A\x0D]+{MONTH}[ \t\x0A\x0D]+{YEAR}[ \t\x0A\x0D]+[0-2][0-9]:[0-5][0-9]:[0-5][0-9][ \t\x0A\x0D]+([+-][0-2][0-9][0314][05]|{ABBREV}) {
     email_scanner &s = * yyemail_get_extra(yyscanner);
-    s.rfc822_recorder->write_buf(SBUF,s.pos,yyleng);
+    s.rfc822_recorder.write_buf(SBUF,s.pos,yyleng);
     s.pos += yyleng;
 
     /************
@@ -164,35 +166,35 @@ U_TLD4		(Q\0A\0|R\0E\0|R\0O\0|R\0S\0|R\0U\0|R\0W\0|S\0A\0|S\0B\0|S\0C\0|S\0D\0|S
 
 Message-ID:([ \t\x0A]|\x0D\x0A)?<{PC}{1,80}> {
     email_scanner &s = * yyemail_get_extra(yyscanner);
-    s.rfc822_recorder->write_buf(SBUF,s.pos,yyleng);
+    s.rfc822_recorder.write_buf(SBUF,s.pos,yyleng);
     s.pos += yyleng;
 }
 
 Subject:[ \t]?({PC}{1,80}) {
     email_scanner &s = * yyemail_get_extra(yyscanner);
-    s.rfc822_recorder->write_buf(SBUF,s.pos,yyleng);
+    s.rfc822_recorder.write_buf(SBUF,s.pos,yyleng);
     s.pos += yyleng;
 }
 
 Cookie:[ \t]?({PC}{1,80}) {
     email_scanner &s = * yyemail_get_extra(yyscanner);
-    s.rfc822_recorder->write_buf(SBUF,s.pos,yyleng);
+    s.rfc822_recorder.write_buf(SBUF,s.pos,yyleng);
     s.pos += yyleng;
 }
 
 Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
     email_scanner &s = * yyemail_get_extra(yyscanner);
-    s.rfc822_recorder->write_buf(SBUF,s.pos,yyleng);
+    s.rfc822_recorder.write_buf(SBUF,s.pos,yyleng);
     s.pos += yyleng;
 }
 
 {EMAIL}/[^a-zA-Z]	{
     email_scanner &s = * yyemail_get_extra(yyscanner);
-    if(validate_email(yytext)){
-        s.email_recorder->write_buf(SBUF,s.pos,yyleng);
+    if (validate_email(yytext)){
+        s.email_recorder.write_buf(SBUF,s.pos,yyleng);
 	size_t domain_start = find_domain_in_email(SBUF.buf+s.pos,yyleng);
-        if(domain_start>0){
-            s.domain_recorder->write_buf(SBUF,s.pos+domain_start,yyleng-domain_start);
+        if (domain_start>0){
+            s.domain_recorder.write_buf(SBUF,s.pos+domain_start,yyleng-domain_start);
         }
     }
     s.pos += yyleng;
@@ -232,38 +234,38 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
     }
 
     /* Now have some rules for ignoring */
-    if(isalnum(context[7])) ignore=1;
-    if(context[7]=='.' || context[7]=='-' || context[7]=='+') ignore=1;
-    if(ishexnumber(context[4]) && ishexnumber(context[5]) && ishexnumber(context[6]) && context[7]=='}') ignore=1;
+    if (isalnum(context[7])) ignore=1;
+    if (context[7]=='.' || context[7]=='-' || context[7]=='+') ignore=1;
+    if (ishexnumber(context[4]) && ishexnumber(context[5]) && ishexnumber(context[6]) && context[7]=='}') ignore=1;
 
-    if(context.find("v.",5) != std::string::npos) ignore=1;
-    if(context.find("v ",5) != std::string::npos) ignore=1;
-    if(context.find("rv:",5) != std::string::npos) ignore=1;       /* rv:1.9.2.8 as in Mozilla */
+    if (context.find("v.",5) != std::string::npos) ignore=1;
+    if (context.find("v ",5) != std::string::npos) ignore=1;
+    if (context.find("rv:",5) != std::string::npos) ignore=1;       /* rv:1.9.2.8 as in Mozilla */
 
-    if(context.find(">=",4) != std::string::npos) ignore=1;   /* >= 1.8.0.10 */
-    if(context.find("<=",4) != std::string::npos) ignore=1;   /* <= 1.8.0.10 */
-    if(context.find("<<",4) != std::string::npos) ignore=1;   /* <= 1.8.0.10 */
+    if (context.find(">=",4) != std::string::npos) ignore=1;   /* >= 1.8.0.10 */
+    if (context.find("<=",4) != std::string::npos) ignore=1;   /* <= 1.8.0.10 */
+    if (context.find("<<",4) != std::string::npos) ignore=1;   /* <= 1.8.0.10 */
 
-    if(context.find("ver",4) != std::string::npos) ignore=1;
-    if(context.find("Ver",4) != std::string::npos) ignore=1;
-    if(context.find("VER",4) != std::string::npos) ignore=1;
+    if (context.find("ver",4) != std::string::npos) ignore=1;
+    if (context.find("Ver",4) != std::string::npos) ignore=1;
+    if (context.find("VER",4) != std::string::npos) ignore=1;
 
-    if(context.find("rsion") != std::string::npos) ignore=1;
-    if(context.find("ion=")  != std::string::npos) ignore=1;
-    if(context.find("PSW/")  != std::string::npos) ignore=1;  /* PWS/1.5.19.3 ... */
+    if (context.find("rsion") != std::string::npos) ignore=1;
+    if (context.find("ion=")  != std::string::npos) ignore=1;
+    if (context.find("PSW/")  != std::string::npos) ignore=1;  /* PWS/1.5.19.3 ... */
 
-    if(context.find("flash=") != std::string::npos) ignore=1;   /* flash= */
-    if(context.find("stone=") != std::string::npos) ignore=1;   /* Milestone= */
-    if(context.find("NSS",4)  != std::string::npos) ignore=1;
+    if (context.find("flash=") != std::string::npos) ignore=1;   /* flash= */
+    if (context.find("stone=") != std::string::npos) ignore=1;   /* Milestone= */
+    if (context.find("NSS",4)  != std::string::npos) ignore=1;
 
-    if(context.find("/2001,") != std::string::npos) ignore=1;     /* /2001,3.60.50.8 */
-    if(context.find("TI_SZ") != std::string::npos) ignore=1;     /* %REG_MULTI_SZ%, */
+    if (context.find("/2001,") != std::string::npos) ignore=1;     /* /2001,3.60.50.8 */
+    if (context.find("TI_SZ") != std::string::npos) ignore=1;     /* %REG_MULTI_SZ%, */
 
     /* Ignore 0. */
-    if(SBUF[s.pos]=='0' && SBUF[s.pos+1]=='.') ignore=1;
+    if (SBUF[s.pos]=='0' && SBUF[s.pos+1]=='.') ignore=1;
 
-    if(!ignore) {
-        s.domain_recorder->write_buf(SBUF,s.pos,yyleng);
+    if (!ignore) {
+        s.domain_recorder.write_buf(SBUF,s.pos,yyleng);
     }
     s.pos += yyleng;
 }
@@ -271,8 +273,8 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
 [^0-9A-Z:]{HEX}{HEX}:{HEX}{HEX}:{HEX}{HEX}:{HEX}{HEX}:{HEX}{HEX}:{HEX}{HEX}/[^0-9A-Z:] {
     /* found a possible ethernet address! */
     email_scanner &s = * yyemail_get_extra(yyscanner);
-    if(s.valid_ether_addr(s.pos+1)){
-       s.ether_recorder->write_buf(SBUF,s.pos+1,yyleng-1);
+    if (s.valid_ether_addr(s.pos+1)){
+       s.ether_recorder.write_buf(SBUF,s.pos+1,yyleng-1);
     }
     s.pos += yyleng;
 }
@@ -284,30 +286,30 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
     email_scanner &s = * yyemail_get_extra(yyscanner);
     int slash_count = 0;
     int feature_len = yyleng;
-    for(unsigned int i=0;i<(unsigned int)yyleng;i++){
-        if(SBUF[s.pos+i]=='/') slash_count++;
+    for (unsigned int i=0;i<(unsigned int)yyleng;i++){
+        if (SBUF[s.pos+i]=='/') slash_count++;
     }
-    if(slash_count==2){
+    if (slash_count==2){
        while(feature_len>0 && !isalpha(SBUF[s.pos+feature_len-1])){
          feature_len--;
        }
     }
-    s.url_recorder->write_buf(SBUF,s.pos,feature_len);                // record the URL
+    s.url_recorder.write_buf(SBUF,s.pos,feature_len);                // record the URL
     size_t domain_len=0;
     size_t domain_start = find_domain_in_url(SBUF.buf+s.pos,feature_len,&domain_len);  // find the start of domain?
-    if(domain_start>0 && domain_len>0){
-	s.domain_recorder->write_buf(SBUF,s.pos+domain_start,domain_len);
+    if (domain_start>0 && domain_len>0){
+	s.domain_recorder.write_buf(SBUF,s.pos+domain_start,domain_len);
     }
     s.pos += yyleng;
 }
 
 [a-zA-Z0-9]\0([a-zA-Z0-9._%\-+]\0){1,128}@\0([a-zA-Z0-9._%\-]\0){1,128}\.\0({U_TLD1}|{U_TLD2}|{U_TLD3}|{U_TLD4})/[^a-zA-Z]|([^][^\0])	{
     email_scanner &s = * yyemail_get_extra(yyscanner);
-    if(validate_email(yytext)){
-        s.email_recorder->write_buf(SBUF,s.pos,yyleng);
+    if (validate_email(yytext)){
+        s.email_recorder.write_buf(SBUF,s.pos,yyleng);
         size_t domain_start = find_domain_in_email(SBUF.buf+s.pos,yyleng) + 1;
-        if(domain_start>0){
-            s.domain_recorder->write_buf(SBUF,s.pos+domain_start,yyleng-domain_start);
+        if (domain_start>0){
+            s.domain_recorder.write_buf(SBUF,s.pos+domain_start,yyleng-domain_start);
         }
     }
     s.pos += yyleng;
@@ -315,10 +317,10 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
 
 h\0t\0t\0p\0(s\0)?:\0([a-zA-Z0-9_%/\-+@:=&\?#~.;]\0){1,128}/[^a-zA-Z0-9_%\/\-+@:=&\?#~.;]|([^][^\0])	{
     email_scanner &s = * yyemail_get_extra(yyscanner);
-    s.url_recorder->write_buf(SBUF,s.pos,yyleng);
+    s.url_recorder.write_buf(SBUF,s.pos,yyleng);
     size_t domain_start = find_domain_in_email(SBUF.buf+s.pos,yyleng);
-    if(domain_start>0){
-	s.domain_recorder->write_buf(SBUF,s.pos+domain_start,yyleng-domain_start);
+    if (domain_start>0){
+	s.domain_recorder.write_buf(SBUF,s.pos+domain_start,yyleng-domain_start);
     }
     s.pos += yyleng;
 }
@@ -334,52 +336,56 @@ h\0t\0t\0p\0(s\0)?:\0([a-zA-Z0-9_%/\-+@:=&\?#~.;]\0){1,128}/[^a-zA-Z0-9_%\/\-+@:
 %%
 
 extern "C"
-void scan_email(const struct scanner_params &sp,const recursion_control_block &rcb)
+void scan_email(struct scanner_params &sp)
 {
-    assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
-    if(sp.phase==scanner_params::PHASE_STARTUP){
-        assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
-	sp.info->name		= "email";
-        sp.info->author         = "Simson L. Garfinkel";
-        sp.info->description    = "Scans for email addresses, domains, URLs, RFC822 headers, etc.";
-        sp.info->scanner_version= "1.0";
+    if (sp.phase==scanner_params::PHASE_INIT){
+        auto info = new scanner_params::scanner_info(scan_email,"email");
+        info->author            = "Simson L. Garfinkel";
+        info->description       = "Scans for email addresses, domains, URLs, RFC822 headers, etc.";
+        info->scanner_version   = "1.1";
 
 	/* define the feature files this scanner created */
-        sp.info->feature_names.insert("email");
-        sp.info->feature_names.insert("domain");
-        sp.info->feature_names.insert("url");
-        sp.info->feature_names.insert("rfc822");
-        sp.info->feature_names.insert("ether");
+        info->feature_defs.push_back( feature_recorder_def("email"));
+        info->feature_defs.push_back( feature_recorder_def("domain"));
+        info->feature_defs.push_back( feature_recorder_def("url"));
+        info->feature_defs.push_back( feature_recorder_def("rfc822"));
+        info->feature_defs.push_back( feature_recorder_def("ether"));
+        //sp.info->feature_names.insert("email");
+        //sp.info->feature_names.insert("domain");
+        //sp.info->feature_names.insert("url");
+        //sp.info->feature_names.insert("rfc822");
+        //sp.info->feature_names.insert("ether");
 
 	/* define the histograms to make */
-	sp.info->histogram_defs.insert(histogram_def("email","","histogram",HistogramMaker::FLAG_LOWERCASE));
-	sp.info->histogram_defs.insert(histogram_def("email","(@.*)","domain_histogram",HistogramMaker::FLAG_LOWERCASE));
-	sp.info->histogram_defs.insert(histogram_def("domain","","histogram"));
-        sp.info->histogram_defs.insert(histogram_def("url","","histogram"));
-	sp.info->histogram_defs.insert(histogram_def("url","://([^/]+)","services"));
-	sp.info->histogram_defs.insert(histogram_def("url","://((cid-[0-9a-f])+[a-z.].live.com/)","microsoft-live"));
-	sp.info->histogram_defs.insert(histogram_def("url","://[-_a-z0-9.]+facebook.com/.*[&?]{1}id=([0-9]+)","facebook-id"));
-	sp.info->histogram_defs.insert(histogram_def("url","://[-_a-z0-9.]+facebook.com/([a-zA-Z0-9.]*[^/?&]$)","facebook-address",HistogramMaker::FLAG_LOWERCASE));
-	sp.info->histogram_defs.insert(histogram_def("url","search.*[?&/;fF][pq]=([^&/]+)","searches"));
+        auto no_flags  = histogram_def::flags_t();
+        auto lowercase = histogram_def::flags_t(); lowercase.lowercase = true;
+
+	info->histogram_defs.push_back( histogram_def("email1", "email",  "",                                     "", "histogram",lowercase));
+	info->histogram_defs.push_back( histogram_def("email2", "email",  "(@.*)",                                "", "domain_histogram",lowercase));
+	info->histogram_defs.push_back( histogram_def("email3", "domain", "",                                     "", "histogram", no_flags));
+        info->histogram_defs.push_back( histogram_def("url1",   "url",    "",                                     "", "histogram", no_flags));
+	info->histogram_defs.push_back( histogram_def("url2",   "url",    "://([^/]+)",                           "", "services", no_flags));
+	info->histogram_defs.push_back( histogram_def("url3",   "url",    "://((cid-[0-9a-f])+[a-z.].live.com/)", "", "microsoft-live", no_flags));
+	info->histogram_defs.push_back( histogram_def("url4",   "url",    "://[-_a-z0-9.]+facebook.com/.*[&?]{1}id=([0-9]+)","", "facebook-id", no_flags));
+	info->histogram_defs.push_back( histogram_def("url5",   "url",    "://[-_a-z0-9.]+facebook.com/([a-zA-Z0-9.]*[^/?&]$)","", "facebook-address",lowercase));
+	info->histogram_defs.push_back( histogram_def("url6",   "url",    "search.*[?&/;fF][pq]=([^&/]+)",       "", "searches", no_flags));
+        sp.register_info(info);
 	return;
     }
-    if(sp.phase==scanner_params::PHASE_SHUTDOWN){
-        return;
-    }
-    if(sp.phase==scanner_params::PHASE_SCAN){
+    if (sp.phase==scanner_params::PHASE_SCAN){
 	/* Set up the buffer. Scan it. Exit */
-	email_scanner lexer(sp);
 	yyscan_t scanner;
         yyemail_lex_init(&scanner);
-	yyemail_set_extra(&lexer,scanner);
+
+        email_scanner lexer(sp);
+        yyemail_set_extra(&lexer, scanner);
         try {
             yyemail_lex(scanner);
         }
-        catch (sbuf_scanner::sbuf_scanner_exception *e ) {
-            std::cerr << "Scanner " << SCANNER << "Exception " << e->what() << " processing " << sp.sbuf.pos0 << "\n";
-            delete e;
+        catch (sbuf_scanner::sbuf_scanner_exception e ) {
+            std::cerr << "Scanner " << SCANNER << "Exception " << e.what() << " processing " << sp.sbuf->pos0 << "\n";
         }
-	yyemail_lex(scanner);
+        yyemail_lex(scanner);           // cleanup at end
         yyemail_lex_destroy(scanner);
 	(void)yyunput;			// avoids defined but not used
     }

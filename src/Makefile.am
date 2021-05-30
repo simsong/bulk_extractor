@@ -1,7 +1,7 @@
 bin_PROGRAMS   = bulk_extractor be_tests
 #jpegdump
 # EXTRA_PROGRAMS = stand bulk_extractorlib beapi_demo bulk_extractor_noscanners
-CLEANFILES     = scan_accts.cpp scan_email.cpp scan_gps.cpp scan_base16.cpp *.d
+CLEANFILES     = scan_accts.cpp scan_base16.cpp scan_email.cpp scan_gps.cpp *.d *~
 
 AM_CPPFLAGS = -I${top_srcdir}/src/be13_api
 
@@ -53,6 +53,7 @@ be_tests_SOURCES = be13_api/catch.hpp \
 	managed_malloc.h \
 	scan_json.cpp \
 	scan_base16.flex \
+	scan_email.flex \
 	phase1.h \
 	phase1.cpp \
 	threadpool.hpp
@@ -60,11 +61,11 @@ be_tests_SOURCES = be13_api/catch.hpp \
 
 # These scanners are based on GNUflex
 flex_scanners = \
-	scan_base16.flex
+	scan_base16.flex \
+	sbuf_flex_scanner.h \
+	scan_email.flex
 
-#	sbuf_flex_scanner.h \
 #	scan_accts.flex \
-#	scan_email.flex \
 #	scan_gps.flex
 
 # These scanners are based on Lightbox Technology's lightgrep
@@ -81,10 +82,10 @@ lightgrep_scanners = \
 # scanners_builtin are the scanners that will be compiled into the binary
 
 scanners_builtin = \
+	scan_aes.cpp \
 	scan_json.cpp
 
 scanners_builtin_broken = \
-	scan_aes.cpp \
 	scan_base64.cpp \
 	scan_ccns2.cpp scan_ccns2.h \
 	scan_elf.cpp \

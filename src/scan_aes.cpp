@@ -29,10 +29,13 @@
  */
 
 
+#include <string>
+#include <cstdint>
+
 #include "config.h"
-#include "be13_api/bulk_extractor_i.h"
-
-
+//#include "be13_api/bulk_extractor_i.h"
+#include "be13_api/scanner_params.h"
+#include "be13_api/scanner_set.h"
 
 /* old aes.h file */
 
@@ -59,9 +62,9 @@
 // have been optimized to find values that are not key schedules.
 //
 // Returns TRUE if 'in' is a valid 128-bit AES key schedule, otherwise FALSE
-int valid_aes128_schedule(const unsigned char * in);
-int valid_aes192_schedule(const unsigned char * in);
-int valid_aes256_schedule(const unsigned char * in);
+int valid_aes128_schedule(const uint8_t * in);
+int valid_aes192_schedule(const uint8_t * in);
+int valid_aes256_schedule(const uint8_t * in);
 
 /* old aes.c file */
 
@@ -70,13 +73,13 @@ int valid_aes256_schedule(const unsigned char * in);
 
 /* 8 bit x 8 bit group multiplication.
  */
-inline unsigned char gmul(unsigned char a, unsigned char b)
+inline uint8_t gmul(uint8_t a, uint8_t b)
 {
-    unsigned char p = 0;
+    uint8_t p = 0;
 
-    for(u_char counter = 0; counter < 8; counter++) {
+    for(uint8_t counter = 0; counter < 8; counter++) {
 	if((b & 1) == 1) p ^= a;
-	u_char hi_bit_set = (a & 0x80);
+	uint8_t hi_bit_set = (a & 0x80);
 	a <<= 1;
 	if(hi_bit_set == 0x80) a ^= 0x1b;
 	b >>= 1;
@@ -87,9 +90,9 @@ inline unsigned char gmul(unsigned char a, unsigned char b)
 /* The rcon function.
  * This function is now solely used to create the rcon table
  */
-inline unsigned char rcon_function(unsigned char in)
+inline uint8_t rcon_function(uint8_t in)
 {
-    unsigned char c=1;
+    uint8_t c=1;
 
     if(in == 0) return 0;
     while(in != 1) {
@@ -99,7 +102,7 @@ inline unsigned char rcon_function(unsigned char in)
     return c;
 }
 
-u_char rcon[256];
+uint8_t rcon[256];
 void rcon_setup()
 {
     for(int i=0;i<256;i++){
@@ -109,7 +112,7 @@ void rcon_setup()
 
 
 // Log table using 0xe5 (229) as the generator
-static unsigned char ltable[256] = {
+static uint8_t ltable[256] = {
   0x00, 0xff, 0xc8, 0x08, 0x91, 0x10, 0xd0, 0x36,
   0x5a, 0x3e, 0xd8, 0x43, 0x99, 0x77, 0xfe, 0x18,
   0x23, 0x20, 0x07, 0x70, 0xa1, 0x6c, 0x0c, 0x7f,
@@ -144,7 +147,7 @@ static unsigned char ltable[256] = {
   0x68, 0x1b, 0x64, 0x04, 0x06, 0xbf, 0x83, 0x38 };
 
 // Anti-log table:
-static unsigned char atable[256] = {
+static uint8_t atable[256] = {
   0x01, 0xe5, 0x4c, 0xb5, 0xfb, 0x9f, 0xfc, 0x12,
   0x03, 0x34, 0xd4, 0xc4, 0x16, 0xba, 0x1f, 0x36,
   0x05, 0x5c, 0x67, 0x57, 0x3a, 0xd5, 0x21, 0x5a,
@@ -179,7 +182,7 @@ static unsigned char atable[256] = {
   0xaa, 0xcd, 0x9a, 0xa0, 0x75, 0x54, 0x0e, 0x01 };
 
 
-inline unsigned char gmul_inverse(unsigned char in)
+inline uint8_t gmul_inverse(uint8_t in)
 {
     if(in == 0)     return 0;    // 0 is self inverting
     return atable[(255 - ltable[in])];
@@ -188,10 +191,10 @@ inline unsigned char gmul_inverse(unsigned char in)
 
 // sbox function is now used only to create the sbox table
 
-unsigned char sbox[256];
-inline unsigned char sbox_function(unsigned char in)
+uint8_t sbox[256];
+inline uint8_t sbox_function(uint8_t in)
 {
-  unsigned char c, s, x;
+  uint8_t c, s, x;
   s = x = gmul_inverse(in);
   for(c = 0; c < 4; c++)   {
     // One bit circular rotate to the left
@@ -214,9 +217,9 @@ void sbox_setup()
 // Rotate a 32-bit word
 // We can't make this a table; it would take 4GB!
 // but it should be recoded with a rotate left instruction
-inline void rotate(unsigned char *in)
+inline void rotate(uint8_t *in)
 {
-    unsigned char in0 = in[0];
+    uint8_t in0 = in[0];
     in[0] = in[1];
     in[1] = in[2];
     in[2] = in[3];
@@ -225,7 +228,7 @@ inline void rotate(unsigned char *in)
 
 // This is the core key expansion, which, given a 4-byte value,
 // does some scrambling
-inline void schedule_core(unsigned char *in, unsigned char i)
+inline void schedule_core(uint8_t *in, uint8_t i)
 {
     // Rotate the input 8 bits to the left
     rotate(in);
@@ -242,14 +245,14 @@ inline void schedule_core(unsigned char *in, unsigned char i)
 
 // Returns TRUE if the buffer in contains a valid AES-128 key
 // schedule, otherwise, FALSE.
-int valid_aes128_schedule(const unsigned char * in)
+int valid_aes128_schedule(const uint8_t * in)
 {
-  unsigned char computed[AES128_KEY_SCHEDULE_SIZE];
-  unsigned char t[4];
+  uint8_t computed[AES128_KEY_SCHEDULE_SIZE];
+  uint8_t t[4];
 
   // c is 16 because the first sub-key is the user-supplied key
-  unsigned char pos = AES128_KEY_SIZE;
-  unsigned char i = 1;
+  uint8_t pos = AES128_KEY_SIZE;
+  uint8_t i = 1;
 
   memcpy(computed, in, AES128_KEY_SIZE);
 
@@ -264,7 +267,7 @@ int valid_aes128_schedule(const unsigned char * in)
       i++;
     }
 
-    for (u_char a = 0; a < 4 && pos<AES128_KEY_SCHEDULE_SIZE; a++) {
+    for (uint8_t a = 0; a < 4 && pos<AES128_KEY_SCHEDULE_SIZE; a++) {
       computed[pos] = computed[pos - AES128_KEY_SIZE] ^ t[a];
 
       // If the computed schedule doesn't match our goal,
@@ -281,15 +284,15 @@ int valid_aes128_schedule(const unsigned char * in)
 
 // Returns TRUE if the buffer in contains a valid AES-192 key
 // schedule, otherwise, FALSE.
-int valid_aes192_schedule(const unsigned char * in)
+int valid_aes192_schedule(const uint8_t * in)
 {
-  unsigned char computed[AES192_KEY_SCHEDULE_SIZE];
-  unsigned char t[4];
+  uint8_t computed[AES192_KEY_SCHEDULE_SIZE];
+  uint8_t t[4];
 
   // c is 24 because the first sub-key is the user-supplied key
-  unsigned char pos = AES192_KEY_SIZE;
-  unsigned char i = 0;
-  unsigned char a;
+  uint8_t pos = AES192_KEY_SIZE;
+  uint8_t i = 0;
+  uint8_t a;
 
   memcpy(computed, in, AES192_KEY_SIZE);
 
@@ -323,14 +326,14 @@ int valid_aes192_schedule(const unsigned char * in)
 
 // Returns TRUE if the buffer in contains a valid AES-256 key
 // schedule, otherwise, FALSE.
-int valid_aes256_schedule(const unsigned char * in)
+int valid_aes256_schedule(const uint8_t * in)
 {
-  unsigned char computed[AES256_KEY_SCHEDULE_SIZE];
-  unsigned char t[4];
+  uint8_t computed[AES256_KEY_SCHEDULE_SIZE];
+  uint8_t t[4];
 
   // c is 32 because the first sub-key is the user-supplied key
-  unsigned char pos = AES256_KEY_SIZE;
-  unsigned char i = 1;
+  uint8_t pos = AES256_KEY_SIZE;
+  uint8_t i = 1;
 
   memcpy(computed, in, AES256_KEY_SIZE);
 
@@ -347,11 +350,11 @@ int valid_aes256_schedule(const unsigned char * in)
 
     // For 256-bit keys, we add an extra sbox to the calculation
     if (16 == pos % AES256_KEY_SIZE)    {
-      for (u_char a = 0 ; a < 4 ; ++a)
+      for (uint8_t a = 0 ; a < 4 ; ++a)
 	t[a] = sbox_function(t[a]);
     }
 
-    for (u_char a = 0; a < 4 && pos<AES256_KEY_SCHEDULE_SIZE; a++)     {
+    for (uint8_t a = 0; a < 4 && pos<AES256_KEY_SCHEDULE_SIZE; a++)     {
       computed[pos] = computed[pos - AES256_KEY_SIZE] ^ t[a];
 
       // If the computed schedule doesn't match our goal,
@@ -374,7 +377,7 @@ int valid_aes256_schedule(const unsigned char * in)
 
 
 
-static std::string key_to_string(const unsigned char * key, uint64_t sz)
+static std::string key_to_string(const uint8_t * key, uint64_t sz)
 {
     std::string ret;
     for(size_t pos=0;pos<sz;pos++){
@@ -385,30 +388,31 @@ static std::string key_to_string(const unsigned char * key, uint64_t sz)
     return ret;
 }
 
-#define BUFFER_SIZE  10485760
 #define WINDOW_SIZE  AES256_KEY_SCHEDULE_SIZE
 
 extern "C"
-void scan_aes(const scanner_params &sp,const recursion_control_block &rcb)
+void scan_aes(struct scanner_params &sp)
 {
-    sp.check_version();
-    if(sp.phase==scanner_params::PHASE_STARTUP){
-	sp.info->name		= "aes";
-	sp.info->author		= "Sam Trenholme, Jesse Kornblum and Simson Garfinkel";
-	sp.info->description    = "Search for AES key schedules";
-	sp.info->feature_names.insert("aes_keys");
+    if(sp.phase==scanner_params::PHASE_INIT){
+        auto info = new scanner_params::scanner_info(scan_aes,"aes");
+	info->author		= "Sam Trenholme, Jesse Kornblum and Simson Garfinkel";
+	info->description    = "Search for AES key schedules";
+        info->scanner_version = "1.1";
+        feature_recorder_def frd("aes_keys");
+        info->feature_defs.push_back( frd );
 
 	rcon_setup();
 	sbox_setup();
 
+        sp.register_info(info);
 	return;
     }
 
     /* We don't need to check for phase 2 of if sbuf isn't big enough to hold a KEY_SCHEDULE
      */
 
-    if(sp.phase==scanner_params::PHASE_SCAN && sp.sbuf.bufsize >= WINDOW_SIZE){
-	feature_recorder &aes_recorder = sp.fs.named_feature_recorder("aes_keys");
+    if(sp.phase==scanner_params::PHASE_SCAN && sp.sbuf->bufsize >= WINDOW_SIZE){
+	auto &aes_recorder = sp.ss.named_feature_recorder("aes_keys");
 
 	/* Simple mod: Keep a rolling window of the entropy and don't
 	 * we see fewer than 10 distinct characters in window. This will
@@ -421,44 +425,44 @@ void scan_aes(const scanner_params &sp,const recursion_control_block &rcb)
 
 	/* Initialize the sliding window */
 	for (size_t pos = 0; pos < WINDOW_SIZE ; pos++)	{
-	    const u_char val = sp.sbuf[pos];
+	    const uint8_t val = (*sp.sbuf)[pos];
 	    counts[val]++;
 	    if (counts[val] == 1) {
 		distinct_counts++;
 	    }
 	}
 	for (size_t pos = 0 ;
-	     pos < sp.sbuf.bufsize-WINDOW_SIZE && pos < sp.sbuf.pagesize;
+	     pos < sp.sbuf->bufsize-WINDOW_SIZE && pos < sp.sbuf->pagesize;
 	     pos++){
-
 
 	    /* add value at end of 128 bits to sliding window */
 	    {
-		const u_char val = sp.sbuf[pos+AES256_KEY_SCHEDULE_SIZE];
+		const uint8_t val = (*sp.sbuf)[pos+AES256_KEY_SCHEDULE_SIZE];
 		counts[val]++;
 		if(counts[val]==1) {		// we have one more distinct count
 		    distinct_counts++;
 		}
 	    }
 
+            /* TODO: Remove direct memory access with mediated access */
 	    if(distinct_counts>10){
-		const u_char *p2 = sp.sbuf.buf + pos;
+		const uint8_t *p2 = sp.sbuf->buf + pos;
 		if (valid_aes128_schedule(p2)) {
                     std::string key = key_to_string(p2, AES128_KEY_SIZE);
-		    aes_recorder->write(sp.sbuf.pos0+pos,key,std::string("AES128"));
+		    aes_recorder.write(sp.sbuf->pos0+pos,key,std::string("AES128"));
 		}
 		if (valid_aes192_schedule(p2)) {
                     std::string key = key_to_string(p2, AES192_KEY_SIZE);
-		    aes_recorder->write(sp.sbuf.pos0+pos,key,std::string("AES192"));
+		    aes_recorder.write(sp.sbuf->pos0+pos,key,std::string("AES192"));
 		}
 		if (valid_aes256_schedule(p2)) {
                     std::string key = key_to_string(p2, AES256_KEY_SIZE);
-		    aes_recorder->write(sp.sbuf.pos0+pos,key,std::string("AES256"));
+		    aes_recorder.write(sp.sbuf->pos0+pos,key,std::string("AES256"));
 		}
 	    }
 	    /* remove current byte being analyzed */
 	    if(pos>WINDOW_SIZE){
-		const u_char val = sp.sbuf[pos];
+		const uint8_t val = (*sp.sbuf)[pos];
 		counts[val]--;
 		if(counts[val]==0){
 		    distinct_counts--;	// we have one fewer

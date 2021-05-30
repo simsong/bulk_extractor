@@ -442,7 +442,6 @@ void scan_json(struct scanner_params &sp)
         info->scanner_version = "1.1";
         feature_recorder_def frd("json");
         frd.flags.xml = true;
-        frd.max_feature_size = 1024*1024;   // Accept large JSON features
         info->feature_defs.push_back( frd );
 
 	/* Create a fast map of the valid json characters.*/
