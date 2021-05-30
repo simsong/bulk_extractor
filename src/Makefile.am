@@ -1,6 +1,6 @@
 bin_PROGRAMS   = bulk_extractor be_tests
 #jpegdump
-EXTRA_PROGRAMS = stand bulk_extractorlib beapi_demo bulk_extractor_noscanners
+# EXTRA_PROGRAMS = stand bulk_extractorlib beapi_demo bulk_extractor_noscanners
 CLEANFILES     = scan_accts.cpp scan_email.cpp scan_gps.cpp scan_base16.cpp *.d
 
 AM_CPPFLAGS = -I${top_srcdir}/src/be13_api
@@ -22,19 +22,19 @@ include be13_api/Makefile.defs
 #	g++ -o jpegdump$(EXEEXT) $(CPPFLAGS) $(CXXFLAGS) $(AM_CPPFLAGS) \
 #		-I.. -DDUMPTEST $(JPEGDUMP_OBJECTS)
 
-TSK3INCS = \
-	tsk3/auto/tsk_auto.h\
-	tsk3/base/tsk_base.h\
-	tsk3/base/tsk_os.h\
-	tsk3/fs/tsk_fatfs.h\
-	tsk3/fs/tsk_fs.h\
-	tsk3/fs/tsk_ntfs.h\
-	tsk3/hashdb/tsk_hashdb.h\
-	tsk3/img/tsk_img.h\
-	tsk3/libtsk.h\
-	tsk3/tsk_incs.h\
-	tsk3/vs/tsk_vs.h
-
+# TSK3INCS = \
+# 	tsk3/auto/tsk_auto.h\
+# 	tsk3/base/tsk_base.h\
+# 	tsk3/base/tsk_os.h\
+# 	tsk3/fs/tsk_fatfs.h\
+# 	tsk3/fs/tsk_fs.h\
+# 	tsk3/fs/tsk_ntfs.h\
+# 	tsk3/hashdb/tsk_hashdb.h\
+# 	tsk3/img/tsk_img.h\
+# 	tsk3/libtsk.h\
+# 	tsk3/tsk_incs.h\
+# 	tsk3/vs/tsk_vs.h
+#
 TESTS = be_tests
 check_PROGRAMS = be_tests
 
@@ -132,7 +132,8 @@ endif
 #endif
 #
 bulk_extractor_nomain = \
-        $(TSK3INCS)  $(BE13_API_SRC) \
+        $(TSK3INCS)  \
+	$(BE13_API_SRC) \
 	bulk_extractor_scanners.h \
 	bulk_extractor_api.cpp \
 	bulk_extractor_api.h \
@@ -151,12 +152,12 @@ bulk_extractor_nomain = \
 
 bulk_extractor_SOURCES = $(bulk_extractor_nomain) $(scanners_builtin) bulk_extractor_scanners.cpp main.cpp
 
-bulk_extractorlib_SOURCES = $(bulk_extractor_nomain) $(scanners_builtin) bulk_extractor_scanners.cpp
+# bulk_extractorlib_SOURCES = $(bulk_extractor_nomain) $(scanners_builtin) bulk_extractor_scanners.cpp
 
-bulk_extractor_noscanners_SOURCES = $(bulk_extractor_nomain) bulk_extractor_noscanners.cpp main.cpp
+# bulk_extractor_noscanners_SOURCES = $(bulk_extractor_nomain) bulk_extractor_noscanners.cpp main.cpp
 
 # stand is the standalone program that just runs on a single file.
-stand_SOURCES = dig.cpp stand.cpp $(TSK3INCS) $(BE13_API_SRC)  scan_json.cpp
+# stand_SOURCES = dig.cpp stand.cpp $(TSK3INCS) $(BE13_API_SRC)  scan_json.cpp
 
 lib: libbulkextractor.so
 
