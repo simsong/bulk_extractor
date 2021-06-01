@@ -92,7 +92,7 @@ bool LightgrepController::addScanner(PatternScanner& scanner) {
       }
       else {
         return false;
-      }      
+      }
     }
   }
   patEnd = lg_pattern_map_size(PatternInfo);
@@ -278,7 +278,7 @@ unsigned int LightgrepController::numPatterns() const {
 
 /*********************************************************/
 
-void scan_lg(PatternScanner& scanner, const class scanner_params &sp, const recursion_control_block &rcb) {
+void scan_lg(PatternScanner& scanner, class scanner_params &sp) {
   // utility implementation of the normal scan function for a PatternScanner instance
   switch (sp.phase) {
   case scanner_params::PHASE_STARTUP:

@@ -44,7 +44,7 @@ static const char *facebook_searches[] = {"hovercard/page",
                                           0};
 
 extern "C"
-void scan_facebook(const scanner_params &sp,const recursion_control_block &rcb)
+void scan_facebook(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP)        {

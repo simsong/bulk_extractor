@@ -723,7 +723,7 @@ public:
 };
 
 extern "C"
-void scan_exif(const scanner_params &sp,const recursion_control_block &rcb)
+void scan_exif(scanner_params &sp)
 {
     if(exif_debug) std::cerr << "scan_exif start phase " << (uint32_t)sp.phase << "\n";
     sp.check_version();

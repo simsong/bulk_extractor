@@ -212,7 +212,7 @@ namespace base16 {
 }
 
 extern "C"
-void scan_base16_lg(const struct scanner_params &sp, const recursion_control_block &rcb) {
+void scan_base16_lg(struct scanner_params &sp) {
   scan_lg(base16::TheScanner, sp, rcb);
 }
 

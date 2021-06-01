@@ -54,7 +54,7 @@ const uint32_t   MIN_ZIP_SIZE = 38;     // minimum size of a zip header and file
  * given a location in an sbuf, determine if it contains a zip component.
  * If it does and if it passes validity tests, unzip and recurse.
  */
-inline void scan_zip_component(const scanner_params &sp,const recursion_control_block &rcb,
+inline void scan_zip_component(scanner_params &sp,
                                feature_recorder *zip_recorder,feature_recorder *unzip_recorder,size_t pos)
 {
 
@@ -191,7 +191,7 @@ inline void scan_zip_component(const scanner_params &sp,const recursion_control_
 #endif
 
 extern "C"
-void scan_zip(const scanner_params &sp,const recursion_control_block &rcb)
+void scan_zip(scanner_params &sp)
 {
     sp.check_version();
 

@@ -56,7 +56,7 @@ bool validDottedQuad(std::string str)
 
 /* Main function */
 extern "C"
-void scan_httplogs(const scanner_params &sp, const recursion_control_block &rcb)
+void scan_httplogs(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP){

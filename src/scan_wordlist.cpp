@@ -139,7 +139,7 @@ static void wordchar_setup()
 }
 
 extern "C"
-void scan_wordlist(const scanner_params &sp,const recursion_control_block &rcb)
+void scan_wordlist(scanner_params &sp)
 {
     sp.check_version();
     feature_recorder_set &fs = sp.fs;

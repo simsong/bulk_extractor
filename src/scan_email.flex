@@ -338,6 +338,7 @@ h\0t\0t\0p\0(s\0)?:\0([a-zA-Z0-9_%/\-+@:=&\?#~.;]\0){1,128}/[^a-zA-Z0-9_%\/\-+@:
 extern "C"
 void scan_email(struct scanner_params &sp)
 {
+    sp.check_version();
     if (sp.phase==scanner_params::PHASE_INIT){
         auto info = new scanner_params::scanner_info(scan_email,"email");
         info->author            = "Simson L. Garfinkel";
@@ -350,11 +351,6 @@ void scan_email(struct scanner_params &sp)
         info->feature_defs.push_back( feature_recorder_def("url"));
         info->feature_defs.push_back( feature_recorder_def("rfc822"));
         info->feature_defs.push_back( feature_recorder_def("ether"));
-        //sp.info->feature_names.insert("email");
-        //sp.info->feature_names.insert("domain");
-        //sp.info->feature_names.insert("url");
-        //sp.info->feature_names.insert("rfc822");
-        //sp.info->feature_names.insert("ether");
 
 	/* define the histograms to make */
         auto no_flags  = histogram_def::flags_t();

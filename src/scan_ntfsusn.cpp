@@ -68,7 +68,7 @@ size_t check_usnrecordv2_or_v4_signature(size_t offset, const sbuf_t &sbuf) {
 
 extern "C"
 
-void scan_ntfsusn(const scanner_params &sp,const recursion_control_block &rcb)
+void scan_ntfsusn(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP){

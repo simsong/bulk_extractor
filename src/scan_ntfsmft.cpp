@@ -57,7 +57,7 @@ int8_t check_mftrecord_signature(size_t offset, const sbuf_t &sbuf) {
 
 extern "C"
 
-void scan_ntfsmft(const scanner_params &sp,const recursion_control_block &rcb)
+void scan_ntfsmft(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP){

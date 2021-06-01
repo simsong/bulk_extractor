@@ -297,7 +297,7 @@ std::string get_field(const dfxml_writer::strstrmap_t& lnkmap, const std::string
  * scan_winlnk iterates through each byte of sbuf
  */
 extern "C"
-void scan_winlnk(const scanner_params &sp,const recursion_control_block &rcb)
+void scan_winlnk(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP){

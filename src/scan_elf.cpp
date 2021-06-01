@@ -790,7 +790,7 @@ std::string scan_elf_verify (const sbuf_t & data)
 }
 
 extern "C"
-void scan_elf (const scanner_params &sp, const recursion_control_block &rcb)
+void scan_elf (scanner_params &sp)
 {
     sp.check_version();
     std::string xml;

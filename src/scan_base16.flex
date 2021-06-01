@@ -119,6 +119,7 @@ extern "C"
 void scan_base16(struct scanner_params &sp)
 {
     static const u_char *ignore_string = (const u_char *)"\r\n \t";
+    sp.check_version();
     if (sp.phase==scanner_params::PHASE_INIT){
         auto info = new scanner_params::scanner_info(scan_base16,"base16");
         info->author         = "Simson L. Garfinkel";

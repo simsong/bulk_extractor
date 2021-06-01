@@ -138,7 +138,7 @@ private:
 /*********************************************************/
 
 // Utility function. Makes your scan function a one-liner, given a PatternScanner instance
-void scan_lg(PatternScanner& scanner, const struct scanner_params &sp, const recursion_control_block &rcb);
+void scan_lg(PatternScanner& scanner, struct scanner_params &sp;
 
 #endif
 #endif /* PATTERN_SCANNER_H */

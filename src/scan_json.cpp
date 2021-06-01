@@ -435,6 +435,7 @@ static bool is_json_second_char[256];   // fast lookup to determine if a second 
 extern "C"
 void scan_json(struct scanner_params &sp)
 {
+    sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
         auto info = new scanner_params::scanner_info(scan_json,"json");
         info->author          = "Simson Garfinkel";
@@ -454,8 +455,10 @@ void scan_json(struct scanner_params &sp)
     }
 
     if(sp.phase==scanner_params::PHASE_SCAN){
+        // do we want to look up the feature_recorder every time through?
+        // Perhaps the scanners should be C++ classes with C linkage
         auto &sbuf = *(sp.sbuf);
-        feature_recorder &fr = sp.ss.named_feature_recorder("json"); // do we want to do this every time through? Perhaps the scanners should be C++ classes with C linkage
+        feature_recorder &fr = sp.ss.named_feature_recorder("json");
 	for(size_t pos = 0;pos+1<sbuf.pagesize;pos++){
 	    /* Find the beginning of a json object. This will improve later... */
 	    if((sbuf[pos]=='{' || sbuf[pos]=='[') && is_json_second_char[sbuf[pos+1]]){

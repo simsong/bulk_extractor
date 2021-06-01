@@ -204,7 +204,7 @@ namespace gps {
 }
 
 extern "C"
-void scan_gps_lg(const struct scanner_params &sp, const recursion_control_block &rcb) {
+void scan_gps_lg(scanner_params &sp) {
   scan_lg(gps::TheScanner, sp, rcb);
 }
 

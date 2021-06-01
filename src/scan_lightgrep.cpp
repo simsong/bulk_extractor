@@ -63,7 +63,7 @@ namespace { // local namespace hides these from other translation units
 }
 
 extern "C"
-void scan_lightgrep(const struct scanner_params &sp, const recursion_control_block &rcb) {
+void scan_lightgrep(struct scanner_params &sp) {
   switch (sp.phase) {
   case scanner_params::PHASE_STARTUP:
     Scanner.startup(sp);

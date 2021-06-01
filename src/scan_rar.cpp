@@ -592,7 +592,7 @@ assert(dbuf.buf[sz-5] == 0x25); assert(dbuf.buf[sz-4] == 0x25); assert(dbuf.buf[
 
 static uint32_t unrar_carve_mode = feature_recorder::CARVE_ENCODED;
 extern "C"
-void scan_rar(const scanner_params &sp,const recursion_control_block &rcb)
+void scan_rar(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP){

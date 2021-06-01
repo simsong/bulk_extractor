@@ -99,7 +99,7 @@ static string fix_gps_ref(string s)
 
 int exif_show_all=1;
 extern "C"
-void scan_exiv2(const struct scanner_params &sp,const recursion_control_block &rcb)
+void scan_exiv2(struct scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP){

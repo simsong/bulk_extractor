@@ -165,9 +165,9 @@ ELEV    (-?[0-9]{1,6}[.][0-9]{0,3})
 %%
 
 extern "C"
-void scan_gps(const struct scanner_params &sp,const recursion_control_block &rcb)
+void scan_gps(scanner_params &sp)
 {
-    //assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
+    sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP){
         assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
         sp.info->name           = "gps";

@@ -76,7 +76,7 @@ int8_t check_logfilerecord_signature(size_t offset, const sbuf_t &sbuf) {
 
 extern "C"
 
-void scan_ntfslogfile(const scanner_params &sp,const recursion_control_block &rcb)
+void scan_ntfslogfile(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_STARTUP){

@@ -115,7 +115,7 @@ inline void process(const scanner_params &sp,const recursion_control_block &rcb,
 
 
 extern "C"
-void scan_base64(const scanner_params &sp,const recursion_control_block &rcb)
+void scan_base64(scanner_params &sp)
 {
     const int debug=0;
 
