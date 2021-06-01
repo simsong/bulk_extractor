@@ -112,3 +112,5 @@ win64
 ar-lib
 .idea
 build-aux
+out??/
+out?/
