@@ -46,6 +46,7 @@ be_tests_SOURCES = be13_api/catch.hpp \
 	bulk_extractor_scanners.cpp \
 	bulk_extractor_scanners.h \
 	be_tests.cpp \
+	formatter.h \
 	image_process.cpp \
 	image_process.h \
 	managed_malloc.h \
