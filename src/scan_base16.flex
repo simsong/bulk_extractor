@@ -65,11 +65,8 @@ void base16_scanner::decode(const sbuf_t &sbuf)
         return;                                  /* Small keys don't get recursively analyzed */
     }
     if (p>opt_min_hex_buf){
-        std::cerr << "scan_base16: ** need to recurse \n";
         auto *nsbuf = new sbuf_t(sbuf.pos0 + "BASE16", b.buf, p, p, 0, false);
-        std::cerr << "new sbuf: " << *nsbuf << "\n";
         sp.recurse(nsbuf);    // recurse
-        // (*rcb.callback)(scanner_params(sp,nsbuf)); // recurse
     }
 }
 

@@ -16,7 +16,7 @@
 
 #include "config.h"
 #include "bulk_extractor.h"
-#include "dig.h"
+//#include "dig.h"
 #include "utf8.h"
 
 #include "formatter.h"
@@ -795,19 +795,12 @@ uint64_t process_raw::seek_block(image_process::iterator &it,uint64_t block) con
  * directories don't get page sizes or margins; the page size is the entire
  * file and the margin is 0.
  */
-process_dir::process_dir(const std::string &image_dir):
-    image_process(image_dir,0,0),files()
+process_dir::process_dir(const std::string &image_dir): image_process(image_dir,0,0)
 {
-    /* Use dig to get a list of all the files */
-    dig d(image_dir);
-    for(dig::const_iterator it=d.begin();it!=d.end();++it){
-#ifdef WIN32
-	std::string fn = safe_utf16to8(*it);
-	if(ends_with(fn,"/.")) continue;
-	files.push_back(fn);
-#else
-	files.push_back(*it);
-#endif
+    for (const auto& entry : std::filesystem::recursive_directory_iterator( image_dir )) {
+        if (entry.is_regular_file()) {
+            files.push_back( entry );
+        }
     }
 }
 
@@ -871,7 +864,7 @@ double process_dir::fraction_done(const image_process::iterator &it) const
 
 std::string process_dir::str(const image_process::iterator &it) const
 {
-    return std::string("File ")+files[it.file_number];
+    return std::string("File ") + files[it.file_number].string();
 }
 
 

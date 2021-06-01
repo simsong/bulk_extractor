@@ -42,7 +42,7 @@
  */
 
 #include "sbuf.h"
-#include "dig.h"
+//#include "dig.h"
 
 #if defined(WIN32)
 #  include <winsock2.h>
@@ -247,7 +247,7 @@ public:
 
 class process_dir : public image_process {
  private:
-    std::vector<std::string> files {};		/* all of the files */
+    std::vector<std::filesystem::path> files {};		/* all of the files */
 
  public:
     process_dir(const std::string &image_dir);

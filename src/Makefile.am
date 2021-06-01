@@ -46,8 +46,6 @@ be_tests_SOURCES = be13_api/catch.hpp \
 	bulk_extractor_scanners.cpp \
 	bulk_extractor_scanners.h \
 	be_tests.cpp \
-	dig.cpp \
-	dig.h \
 	image_process.cpp \
 	image_process.h \
 	managed_malloc.h \
@@ -141,8 +139,6 @@ bulk_extractor_nomain = \
 	base64_forensic.cpp \
 	base64_forensic.h \
 	bulk_extractor.h \
-	dig.cpp \
-	dig.h \
 	findopts.h \
 	image_process.cpp \
 	image_process.h \
@@ -158,23 +154,20 @@ bulk_extractor_SOURCES = $(bulk_extractor_nomain) $(scanners_builtin) bulk_extra
 # bulk_extractor_noscanners_SOURCES = $(bulk_extractor_nomain) bulk_extractor_noscanners.cpp main.cpp
 
 # stand is the standalone program that just runs on a single file.
-# stand_SOURCES = dig.cpp stand.cpp $(TSK3INCS) $(BE13_API_SRC)  scan_json.cpp
+# stand_SOURCES = stand.cpp $(TSK3INCS) $(BE13_API_SRC)  scan_json.cpp
 
-lib: libbulkextractor.so
+#lib: libbulkextractor.so
 
-libbulkextractor.so: $(bulk_extractorlib_OBJECTS)
-	$(CXX) -shared -fPIC -o $@ $(LDFLAGS) $(bulk_extractorlib_OBJECTS) $(LIBS)
+#libbulkextractor.so: $(bulk_extractorlib_OBJECTS)
+#	$(CXX) -shared -fPIC -o $@ $(LDFLAGS) $(bulk_extractorlib_OBJECTS) $(LIBS)
 
-beapi_demo_SOURCES = beapi_demo.cpp
-beapi_demo$(EXEEXT): libbulkextractor.so		# needs an up-to-date .so
+#beapi_demo_SOURCES = beapi_demo.cpp
+#beapi_demo$(EXEEXT): libbulkextractor.so		# needs an up-to-date .so
+#
+#rd: beapi_demo libbulkextractor.so
+#	echo run the demo
+#	./beapi_demo /corp/nps/drives/nps-2010-emails/nps-2010-emails.raw
 
-rd: beapi_demo libbulkextractor.so
-	echo run the demo
-	./beapi_demo /corp/nps/drives/nps-2010-emails/nps-2010-emails.raw
-
-
-digtest$(EXEEXT): dig.cpp
-	$(CXX) -DSTANDALONE -o digtest$(EXEEXT) -g dig.cpp $(CPPFLAGS) $(CXXFLAGS) -I..
 
 #unitest$(EXEEXT): unicode_escape.cpp
 #	$(CXX) -DSTANDALONE -o unitest$(EXEEXT) -g unicode_escape.cpp  $(CPPFLAGS) $(CXXFLAGS) -I..

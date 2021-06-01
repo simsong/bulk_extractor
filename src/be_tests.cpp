@@ -102,7 +102,7 @@ TEST_CASE("scan_json1", "[scanners]") {
     ss.shutdown();
 
     /* Read the output */
-    std::vector<std::string> json_txt = getLines( sc.outdir + "/json.txt");
+    std::vector<std::string> json_txt = getLines( sc.outdir / "json.txt" );
     auto last = json_txt[json_txt.size()-1];
     REQUIRE(last.substr( last.size() - 40) == "6ee8c369e2f111caa9610afc99d7fae877e616c9");
 }
@@ -211,7 +211,7 @@ void validate(std::string image_fname, std::vector<Check> &expected)
     ss.add_scanners(scanners_builtin);
     ss.apply_scanner_commands();
 
-    auto *xreport = new dfxml_writer(sc.outdir + "/report.xml", false);
+    auto *xreport = new dfxml_writer(sc.outdir / "report.xml", false);
     Phase1 phase1(*xreport, cfg, *p, ss);
     phase1.dfxml_create( 0, nullptr);
     ss.phase_scan();
@@ -220,13 +220,13 @@ void validate(std::string image_fname, std::vector<Check> &expected)
     xreport->close();
 
     for(int i=0; i<expected.size(); i++){
-        std::string fname  = sc.outdir + std::string("/") + expected[i].fname;
-        std::cerr << "checking " << i << " in " << fname << "\n";
+        std::filesystem::path fname  = sc.outdir / expected[i].fname;
+        std::cerr << "checking " << i << " in " << fname.string() << "\n";
         std::string line;
         std::ifstream inFile;
         inFile.open(fname);
         if (!inFile.is_open()) {
-            throw std::runtime_error("validate_scanners:[phase1] Could not open "+fname);
+            throw std::runtime_error("validate_scanners:[phase1] Could not open "+fname.string());
         }
         bool found = false;
         while (std::getline(inFile, line)) {
@@ -259,6 +259,12 @@ TEST_CASE("validate_scanners", "[phase1]") {
               Feature( "50-BASE16-0",
                        "[{\"1\": \"one@base16_company.com\"}, {\"2\": \"two@base16_company.com\"}, {\"3\": \"two@base16_company.com\"}]",
                        "41e3ec783b9e2c2ffd93fe82079b3eef8579a6cd")),
+
+        Check("email.txt",
+              Feature( "50-BASE16-8",
+                       "one@base16_company.com",
+                       "[{\"1\": \"one@base16_company.com\"}, {\"2\": \"two@b")),
+
     };
     validate(fn2, ex2);
 

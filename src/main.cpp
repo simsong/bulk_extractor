@@ -704,9 +704,9 @@ int main(int argc,char **argv)
     int ch;
     while ((ch = getopt(argc, argv, "A:B:b:C:d:E:e:F:f:G:g:Hhij:M:m:o:P:p:q:Rr:S:s:VW:w:x:Y:z:Z")) != -1) {
 	switch (ch) {
-	case 'A': /*sc.offset_add  = stoi64(optarg);*/break;
-	case 'b': /*sc.banner_file = optarg;*/ break;
-	case 'C': /*sc.context_window_default = atoi(optarg);*/break;
+	case 'A': sc.offset_add  = stoi64(optarg);break;
+	case 'b': sc.banner_file = optarg; break;
+	case 'C': sc.context_window_default = atoi(optarg);break;
 	case 'd':
 	{
             if(strcmp(optarg,"h")==0) debug_help();
@@ -840,7 +840,7 @@ int main(int argc,char **argv)
         sc.outdir = scanner_config::NO_OUTDIR; // don't create outdir if we are getting help.
     }
 
-    if(sc.outdir.size()==0){
+    if(sc.outdir.empty()){
         std::cerr << "error: -o outdir must be specified\n";
         exit(1);
     }
@@ -887,21 +887,13 @@ int main(int argc,char **argv)
     }
 
     /* The zap option wipes the contents of a directory, useful for debugging */
-    if(opt_zap){
-	DIR *dirp = opendir(sc.outdir.c_str());
-	if(dirp){
-	    struct dirent *dp;
-	    while ((dp = readdir(dirp)) != NULL){
-                std::string name = dp->d_name;
-		if(name=="." || name=="..") continue;
-                std::string fname = sc.outdir + std::string("/") + name;
-		unlink(fname.c_str());
-		std::cout << "erasing " << fname << "\n";
-	    }
+    if (opt_zap){
+        for (const auto &entry : std::filesystem::directory_iterator( sc.outdir ) ) {
+            std::cout << "erasing " << entry.path().string() << "\n";
+            std::filesystem::remove( entry );
 	}
-	if(rmdir(sc.outdir.c_str())){
-            std::cout << "rmdir " << sc.outdir << "\n";
-        }
+	std::filesystem::remove( sc.outdir ) ;
+        std::cout << "rmdir " << sc.outdir << "\n";
         clean_start = true;
     }
 
@@ -910,7 +902,7 @@ int main(int argc,char **argv)
     timer.start();
 
     /* If output directory does not exist, we are not restarting! */
-    std::string reportfilename = sc.outdir + "/report.xml";
+    std::filesystem::path report_path = sc.outdir / "report.xml";
 
     /* Get image or directory */
     if (*argv == NULL) {
@@ -934,14 +926,11 @@ int main(int argc,char **argv)
     } else {
 	/* Restarting */
 	std::cout << "Restarting from " << sc.outdir << "\n";
-        bulk_extractor_restarter r(sc.outdir, reportfilename, image_fname);
+        bulk_extractor_restarter r(sc.outdir, report_path, image_fname);
 
         /* Rename the old report and create a new one */
-        std::string old_reportfilename = reportfilename + "." + std::to_string(time(0));
-        if(rename(reportfilename.c_str(),old_reportfilename.c_str())){
-            std::cerr << "Could not rename " << reportfilename << " to " << old_reportfilename << ": " << strerror(errno) << "\n";
-            throw std::runtime_error("Could not rename file");
-        }
+        std::filesystem::path old_report_path = report_path.string() + std::string(".") + std::to_string(time(0));
+        std::filesystem::rename(report_path, old_report_path);
     }
 
     /* Open the image file (or the device) now.
@@ -1013,7 +1002,7 @@ int main(int argc,char **argv)
         cfg.set_sampling_parameters(opt_sampling_params);
     }
 
-    dfxml_writer *xreport = new dfxml_writer(reportfilename, false);
+    dfxml_writer *xreport = new dfxml_writer(report_path, false);
     Phase1 phase1(*xreport, cfg, *p, ss);
     phase1.dfxml_create( argc, argv);
     xreport->xmlout("provided_filename",image_fname); // save this information

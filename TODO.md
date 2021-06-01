@@ -48,3 +48,4 @@ JA4MW51R91J008713
 ```
 
 - [ ] Make scan_scan command-count a tunable parameter?
+- [ ] Add a command-line option so that image_process will follow symlinks or not follow them.

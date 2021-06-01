@@ -231,24 +231,20 @@ void Phase1::send_data_to_workers()
             // Make sure we haven't done this page yet
             if (seen_page_ids.find(it.get_pos0().str()) == seen_page_ids.end()){
                 try {
-                    std::cerr << "getting an sbuf\n";
                     sbuf_t *sbufp = get_sbuf(it);
-                    //sbuf_t *sbufp = p.sbuf_alloc(it);
-                    std::cerr << "got an sbuf\n";
-                    auto   &sbuf = *sbufp;
 
                     /* compute the sha1 hash */
                     if (sha1g){
-                        if (sbuf.pos0.offset==sha1_next){
+                        if (sbufp->pos0.offset==sha1_next){
                             // next byte follows logically, so continue to compute hash
-                            sha1g->update(sbuf.buf, sbuf.pagesize);
-                            sha1_next += sbuf.pagesize;
+                            sha1g->update(sbufp->buf, sbufp->pagesize);
+                            sha1_next += sbufp->pagesize;
                         } else {
                             delete sha1g; // we had a logical gap; stop hashing
                             sha1g = 0;
                         }
                     }
-                    total_bytes += sbuf.pagesize;
+                    total_bytes += sbufp->pagesize;
 
                     /***************************
                      **** SCHEDULE THE WORK ****
