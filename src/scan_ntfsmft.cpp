@@ -4,16 +4,19 @@
  * Reference: http://www.digital-evidence.org/fsfa/
  * Teru Yamazaki(@4n6ist) - https://github.com/4n6ist/bulk_extractor-rec
  **/
-#include "config.h"
-#include "be13_api/bulk_extractor_i.h"
+
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <stdlib.h>
-#include <strings.h>
-#include <errno.h>
+#include <cstdlib>
+#include <cstrings>
 #include <sstream>
 #include <vector>
+#include <cerrno>
+
+#include "config.h"
+#include "be13_api/bulk_extractor_i.h"
+
 #include "sbuf_stream.h"
 
 #include "utf8.h"
@@ -60,7 +63,7 @@ extern "C"
 void scan_ntfsmft(scanner_params &sp)
 {
     sp.check_version();
-    if(sp.phase==scanner_params::PHASE_STARTUP){
+    if(sp.phase==scanner_params::PHASE_INIT){
         sp.info->name            = "ntfsmft";
         sp.info->author          = "Teru Yamazaki";
         sp.info->description     = "Scans for NTFS MFT record";

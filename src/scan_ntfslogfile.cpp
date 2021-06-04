@@ -4,16 +4,19 @@
  * Reference: https://flatcap.org/linux-ntfs/ntfs/files/logfile.html
  * Teru Yamazaki(@4n6ist) - https://github.com/4n6ist/bulk_extractor-rec
  **/
-#include "config.h"
-#include "be13_api/bulk_extractor_i.h"
+
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <stdlib.h>
-#include <strings.h>
+#include <cstdlib>
+#include <cstrings>
 #include <errno.h>
 #include <sstream>
 #include <vector>
+
+#include "config.h"
+#include "be13_api/scanner_params.h"
+
 #include "sbuf_stream.h"
 
 #include "utf8.h"
@@ -79,7 +82,7 @@ extern "C"
 void scan_ntfslogfile(scanner_params &sp)
 {
     sp.check_version();
-    if(sp.phase==scanner_params::PHASE_STARTUP){
+    if(sp.phase==scanner_params::PHASE_INIT){
         sp.info->name            = "ntfslogfile";
         sp.info->author          = "Teru Yamazaki";
         sp.info->description     = "Scans for NTFS $LogFile RCRD record";

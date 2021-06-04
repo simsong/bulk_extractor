@@ -16,23 +16,16 @@
 
 #include "config.h"
 #include "bulk_extractor.h"
-//#include "dig.h"
 #include "utf8.h"
+//#include "dig.h"
 
-#include "formatter.h"
+#include "be13_api/formatter.h"
 #include "image_process.h"
 
 #ifndef PATH_MAX
 #define PATH_MAX 65536
 #endif
 
-#ifndef MIN
-#define MIN(a,b) ((a)<(b) ? (a) : (b))
-#endif
-
-#ifndef MAX
-#define MAX(a,b) ((a)>(b) ? (a) : (b))
-#endif
 
 
 /****************************************************************

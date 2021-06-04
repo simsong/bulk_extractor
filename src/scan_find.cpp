@@ -3,10 +3,12 @@
  */
 
 #include "config.h"
-#include "be13_api/bulk_extractor_i.h"
+
+#include "be13_api/scanner_params.h"
+
 #include "histogram.h"
 
-#include "bulk_extractor.h" // for regex_list type
+//#include "bulk_extractor.h" // for regex_list type
 #include "findopts.h"
 
 namespace { // anonymous namespace hides symbols from other cpp files (like "static" applied to functions)
@@ -43,7 +45,7 @@ extern "C"
 void scan_find(scanner_params &sp)
 {
     sp.check_version();
-    if(sp.phase==scanner_params::PHASE_STARTUP) {
+    if(sp.phase==scanner_params::PHASE_INIT) {
         sp.info->name		= "find";
         sp.info->author         = "Simson Garfinkel";
         sp.info->description    = "Simple search for patterns";

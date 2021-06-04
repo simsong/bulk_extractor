@@ -27,22 +27,20 @@
 class gps_scanner : public sbuf_scanner {
       /* Standards for all flex lexers */
       public:
-      gps_scanner(const scanner_params &sp): sbuf_scanner(&sp.sbuf),
-        gps_recorder(),lat(),lon(),ele(),time(),speed(),course(){
-           gps_recorder = sp.named_feature_recorder("gps");
-        }
+      gps_scanner(const scanner_params &sp): sbuf_scanner(*sp.sbuf),
+           gps_recorder(sp.named_feature_recorder("gps")) {};
 
       static std::string get_quoted_attrib(std::string text,std::string attrib);
       static std::string get_cdata(std::string text);
       void clear();
 
       class feature_recorder &gps_recorder;
-      std::string lat;
-      std::string lon;
-      std::string ele;
-      std::string time;
-      std::string speed;
-      std::string course;
+      std::string lat    {};
+      std::string lon    {};
+      std::string ele    {};
+      std::string time   {};
+      std::string speed  {};
+      std::string course {};
 };
 
 #define YY_EXTRA_TYPE gps_scanner *         /* holds our class pointer */
@@ -56,11 +54,11 @@ inline class gps_scanner *get_extra(yyscan_t yyscanner) {return yygps_get_extra(
 std::string gps_scanner::get_quoted_attrib(std::string text,std::string attrib)
 {
         size_t pos = text.find(attrib);
-        if(pos==std::string::npos) return "";  /* no attrib */
+        if (pos==std::string::npos) return "";  /* no attrib */
         ssize_t quote1 = text.find('\"',pos);
-        if(quote1<0) return "";           /* no opening quote */
+        if (quote1<0) return "";           /* no opening quote */
         ssize_t quote2 = text.find('\"',quote1+1);
-        if(quote2<0) return "";           /* no closing quote */
+        if (quote2<0) return "";           /* no closing quote */
         return text.substr(quote1+1,quote2-(quote1+1));
 }
 
@@ -71,9 +69,9 @@ std::string gps_scanner::get_quoted_attrib(std::string text,std::string attrib)
 std::string gps_scanner::get_cdata(std::string text)
 {
         ssize_t gt = text.find('>');
-        if(gt<0) return "";           /* no > */
+        if (gt<0) return "";           /* no > */
         ssize_t lt = text.find('<',gt+1);
-        if(lt<0) return "";           /* no < */
+        if (lt<0) return "";           /* no < */
         return text.substr(gt+1,lt-(gt+1));
 }
 
@@ -82,15 +80,15 @@ std::string gps_scanner::get_cdata(std::string text)
  */
 void gps_scanner::clear()
 {
-        if(time.size() || lat.size() || lon.size() || ele.size() || speed.size() || course.size()){
+        if (time.size() || lat.size() || lon.size() || ele.size() || speed.size() || course.size()){
                 std::string what = time+","+lat+","+lon+","+ele+","+speed+","+course;
-                gps_recorder->write(sbuf->pos0+pos,what,"");
+                gps_recorder.write(sbuf.pos0+pos,what,"");
         }
-        time = "";
-        lat = "";
-        lon = "";
-        ele = "";
-        speed = "";
+        time   = "";
+        lat    = "";
+        lon    = "";
+        ele    = "";
+        speed  = "";
         course = "";
 }
 
@@ -157,7 +155,7 @@ ELEV    (-?[0-9]{1,6}[.][0-9]{0,3})
 
     /* If we have an invalid character, then we are out of this XML block. Clear */
     gps_scanner &s = *yygps_get_extra(yyscanner);
-    if(yytext[0] & 0x80){
+    if (yytext[0] & 0x80){
         s.clear();
     }
     s.pos++;
@@ -168,25 +166,30 @@ extern "C"
 void scan_gps(scanner_params &sp)
 {
     sp.check_version();
-    if(sp.phase==scanner_params::PHASE_STARTUP){
-        assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
-        sp.info->name           = "gps";
-        sp.info->author         = "Simson L. Garfinkel";
-        sp.info->description    = "Garmin Trackpt XML info";
-        sp.info->scanner_version= "1.0";
-        sp.info->feature_names.insert("gps");
+    if (sp.phase==scanner_params::PHASE_INIT){
+        auto info = new scanner_params::scanner_info(scan_gps,"gps");
+        info->author         = "Simson L. Garfinkel";
+        info->description    = "Garmin Trackpt XML info";
+        info->scanner_version= "1.1";
+        info->feature_defs.push_back( feature_recorder_def("gps"));
+        sp.register_info(info);
         return;
     }
-    if(sp.phase==scanner_params::PHASE_SCAN){
+    if (sp.phase==scanner_params::PHASE_SCAN){
         /* Prescan */
-        if(sp.sbuf.find("trkpt",0)==-1 || sp.sbuf.find("lat=",0)==-1 || sp.sbuf.find("lon=",0)==-1) return;
+        if (sp.sbuf->find("trkpt",0)==-1 || sp.sbuf->find("lat=",0)==-1 || sp.sbuf->find("lon=",0)==-1) return;
 
         /* Scan */
         gps_scanner lexer(sp);
         yyscan_t scanner;
         yygps_lex_init(&scanner);
         yygps_set_extra(&lexer,scanner);
-        yygps_lex(scanner);
+        try {
+            yygps_lex(scanner);
+        }
+        catch (sbuf_scanner::sbuf_scanner_exception e ) {
+            std::cerr << "GPS Scanner Exception " << e.what() << " processing " << sp.sbuf->pos0 << "\n";
+        }
         yygps_lex_destroy(scanner);
         (void)yyunput;                  // avoids defined but not used
     }

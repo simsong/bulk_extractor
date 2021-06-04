@@ -3,8 +3,7 @@
  * Purpose: Find sqlite databases and carve them.
  * File format described at http://www.sqlite.org/fileformat.html
  */
-#include "config.h"
-#include "be13_api/bulk_extractor_i.h"
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -12,6 +11,11 @@
 #include <strings.h>
 #include <errno.h>
 #include <sstream>
+
+
+#include "config.h"
+#include "be13_api/scanner_params.h"
+
 
 /**
  * NOTE: Although it is a simple matter to automatically validate the
@@ -35,7 +39,7 @@ extern "C"
 void scan_sqlite(scanner_params &sp)
 {
     sp.check_version();
-    if(sp.phase==scanner_params::PHASE_STARTUP){
+    if(sp.phase==scanner_params::PHASE_INIT){
 	sp.info->name            = "sqlite";
         sp.info->author          = "Simson Garfinkel";
         sp.info->description     = "Scans for SQLITE3 data";

@@ -6,7 +6,8 @@
  */
 
 #include "config.h"
-#include "be13_api/bulk_extractor_i.h"
+
+#include "be13_api/scanner_params.h"
 
 /* tunable constants */
 u_int sht_null_counter_max = 10;
@@ -795,7 +796,7 @@ void scan_elf (scanner_params &sp)
     sp.check_version();
     std::string xml;
 
-    if (sp.phase == scanner_params::PHASE_STARTUP){
+    if (sp.phase == scanner_params::PHASE_INIT){
         sp.info->name   = "elf";
 	sp.info->author = "Alex Eubanks";
         sp.info->feature_names.insert("elf");

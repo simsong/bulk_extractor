@@ -41,7 +41,7 @@
  * seek_block(block_number) - seeks to a block number n where 0 <= n < max_blocks()
  */
 
-#include "sbuf.h"
+#include "be13_api/sbuf.h"
 //#include "dig.h"
 
 #if defined(WIN32)

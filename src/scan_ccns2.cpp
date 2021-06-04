@@ -4,11 +4,15 @@
  * used by the scan_accts.flex system.
  */
 
+#include <cassert>
+
+
 #include "config.h"
-#include "be13_api/bulk_extractor_i.h"
 #include "scan_ccns2.h"
 #include "utils.h"
 #include "dfxml/src/hash_t.h"
+
+#include "be13_api/scanner_params.h"
 
 int scan_ccns2_debug=0;
 
@@ -258,7 +262,7 @@ static int prefix_test(const char *digits)
     return -1;
 }
 
-#define RETURN(code,reason) {if(scan_ccns2_debug & DEBUG_INFO) std::cerr << reason << "\n";return code;}
+#define RETURN(code,reason) {if(scan_ccns2_debug){std::cerr << reason << "\n";} return code;}
 /**
  * Determine if this is or is not a credit card number.
  * Return 1 if it is, 0 if it is not.
@@ -353,16 +357,19 @@ static const char *base58_chars =
     "ABCDEFGHJKLMNPQRSTUVWXYZ"
     "abcdefghijkmnopqrstuvwxyz";
 static int base58_vals[256];
+static bool unbase58_built = false;
 void build_unbase58()
 {
     memset(base58_vals,-1,sizeof(base58_vals));
     for(size_t i=0;base58_chars[i];i++){
         base58_vals[(u_char)(base58_chars[i])] = i;
     }
+    unbase58_built = true;
 }
 
 bool unbase58(const char *s,uint8_t *out,size_t len)
 {
+    assert(unbase58_built==true);
     memset(out,0,25);
     for(size_t i=0;s[i] && i<len;i++){
         int c = base58_vals[(u_char)(s[i])];

@@ -7,12 +7,6 @@
  * 2011-dec-12 bda - Ported from file scan_exif.cpp.
  */
 
-#include "config.h"
-#include "be13_api/bulk_extractor_i.h"
-#include "be13_api/utils.h"
-
-#include "dfxml/src/dfxml_writer.h"
-
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -20,6 +14,14 @@
 #include <iomanip>
 #include <cassert>
 #include <algorithm>
+
+#include "config.h"
+
+#include "be13_api/scanner_params.h"
+#include "be13_api/utils.h"
+
+#include "dfxml/src/dfxml_writer.h"
+
 
 #include "exif_reader.h"
 #include "unicode_escape.h"
@@ -237,8 +239,7 @@ static std::string fix_gps(std::string s)
     std::vector<std::string> parts = split(s,' ');
     if(parts.size()!=3) return s;	// return the original
     double res = rational(parts[0]) + rational(parts[1])/60.0 + rational(parts[2])/3600.0;
-    s = dtos(res);
-    return s;
+    return std::to_string(res);
 }
 
 static std::string fix_gps_ref(std::string s)
@@ -382,7 +383,7 @@ static void record_exif_data(feature_recorder *exif_recorder, const pos0_t &pos0
         }
 
         // validate against maximum entry size
-        if (exif_debug & DEBUG_PEDANTIC) {
+        if (exif_debug) {
             if (prepared_value.size() > MAX_ENTRY_SIZE) {
                 std::cerr << "ERROR exif_entry: prepared_value.size()==" << prepared_value.size() << "\n" ;
                 assert(0);
@@ -500,10 +501,10 @@ static void record_gps_data(feature_recorder *gps_recorder, const pos0_t &pos0,
                 gps_lat = fix_gps((*it)->value);
             } else if ((*it)->name.compare("GPSAltitude") == 0) {
                 has_gps = true;
-                gps_ele = dtos(rational((*it)->value));
+                gps_ele = std::to_string(rational((*it)->value));
             } else if ((*it)->name.compare("GPSSpeed") == 0) {
                 has_gps = true;
-                gps_speed = dtos(rational((*it)->value));
+                gps_speed = std::to_string(rational((*it)->value));
             } else if ((*it)->name.compare("GPSTrack") == 0) {
                 has_gps = true;
                 gps_course = (*it)->value;
@@ -545,13 +546,14 @@ class exif_scanner {
 private:
 public:
     exif_scanner(const scanner_params &sp):
-        entries(),
-        exif_recorder(*sp.fs.get_name("exif")),
-        gps_recorder(*sp.fs.get_name("gps")),
-        jpeg_recorder(*sp.fs.get_name("jpeg_carved")) {
+        ss(sp.ss),
+        exif_recorder(sp.ss.named_feature_recorder("exif")),
+        gps_recorder(sp.ss.named_feature_recorder("gps")),
+        jpeg_recorder(sp.ss.named_feature_recorder("jpeg_carved")) {
     }
 
-    entry_list_t entries;
+    entry_list_t entries {};
+    scanner_set &ss;
     feature_recorder &exif_recorder;
     feature_recorder &gps_recorder;
     feature_recorder &jpeg_recorder;
@@ -580,13 +582,12 @@ public:
             // Should we carve?
             if(res.how==jpeg_validator::COMPLETE || res.len>(ssize_t)min_jpeg_size){
                 if(exif_debug) fprintf(stderr,"CARVING\n");
-                jpeg_recorder.carve(sbuf,0,res.len,".jpg");
+                jpeg_recorder.carve_data(sbuf, 0,res.len,".jpg");
                 ret = res.len;
             }
 
             // Record the hash of the first 4K
-            sbuf_t tohash(sbuf,0,4096);
-            feature_text = jpeg_recorder.fs.hasher.func(tohash.buf, tohash.bufsize);
+            feature_text = ss.hash(sbuf_t(sbuf,0,4096));
         }
         /* Record entries (if present) in the feature files */
         record_exif_data(&exif_recorder, sbuf.pos0, feature_text, entries);
@@ -727,26 +728,29 @@ void scan_exif(scanner_params &sp)
 {
     if(exif_debug) std::cerr << "scan_exif start phase " << (uint32_t)sp.phase << "\n";
     sp.check_version();
-    if(sp.phase==scanner_params::PHASE_STARTUP){
-	sp.info->name		= "exif";
-	sp.info->author         = "Bruce Allen";
-        sp.info->description    = "Search for EXIF sections in JPEG files";
-	sp.info->feature_names.insert("exif");
-	sp.info->feature_names.insert("gps");
-	sp.info->feature_names.insert("jpeg_carved");
-        sp.info->get_config("exif_debug",&exif_debug,"debug exif decoder");
-        sp.info->get_config("jpeg_carve_mode",&jpeg_carve_mode,"0=carve none; 1=carve encoded; 2=carve all");
-        sp.info->get_config("min_jpeg_size",&min_jpeg_size,"Smallest JPEG stream that will be carved");
+    if(sp.phase==scanner_params::PHASE_INIT){
+        auto info = new scanner_params::scanner_info(scan_exif,"exif");
+	info->author          = "Bruce Allen";
+	info->scanner_version = "1.1";
+        info->description     = "Search for EXIF sections in JPEG files";
+        struct feature_recorder_def::flags_t xml_flag;
+        xml_flag.xml = true;
+	info->feature_defs.push_back( feature_recorder_def("exif", xml_flag));
+	info->feature_defs.push_back( feature_recorder_def("gps"));
+	info->feature_defs.push_back( feature_recorder_def("jpeg_carved"));
+        sp.register_info(info);
+        sp.ss.sc.get_config("exif_debug",&exif_debug,"debug exif decoder");
+        sp.ss.sc.get_config("jpeg_carve_mode",&jpeg_carve_mode,"0=carve none; 1=carve encoded; 2=carve all");
+        sp.ss.sc.get_config("min_jpeg_size",&min_jpeg_size,"Smallest JPEG stream that will be carved");
+        sp.register_info(info);
 	return;
     }
-    if(sp.phase==scanner_params::PHASE_INIT){
-        sp.fs.get_name("exif")->set_flag(feature_recorder::FLAG_XML); // to escape all but backslashes
-        sp.fs.get_name("jpeg_carved")->set_carve_mode(static_cast<feature_recorder::carve_mode_t>(jpeg_carve_mode));
-    }
-    if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;
+    //if(sp.phase==scanner_params::PHASE_INIT){
+    //    sp.fs.named_feature_recorder("jpeg_carved")->set_carve_mode(static_cast<feature_recorder::carve_mode_t>(jpeg_carve_mode));
+    //}
     if(sp.phase==scanner_params::PHASE_SCAN){
         exif_scanner escan(sp);
-        escan.scan(sp.sbuf);
+        escan.scan(*sp.sbuf);
     }
 }
 #endif

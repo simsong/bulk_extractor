@@ -23,6 +23,8 @@
 #include "base64_forensic.h"
 #include "phase1.h"
 #include "bulk_extractor_scanners.h"
+#include "scan_base64.h"
+#include "scan_vcard.h"
 
 //#include "be13_api/bulk_extractor_i.h"
 //#include "dig.h"
@@ -81,7 +83,6 @@ std::vector<scanner_config::scanner_command> enable_all_scanners = {
                                     scanner_config::scanner_command::ENABLE)
 };
 TEST_CASE("scan_json1", "[scanners]") {
-
     /* Make a scanner set with a single scanner and a single command to enable all the scanners.
      */
     const feature_recorder_set::flags_t frs_flags;
@@ -189,6 +190,30 @@ TEST_CASE("image_process", "[phase1]") {
     }
 }
 
+/****************************************************************/
+TEST_CASE("scan_base64", "[scanners]" ){
+    base64array_initialize();
+    auto sbuf1 = new sbuf_t("W3siMSI6ICJvbmVAYmFzZTY0LmNvbSJ9LCB7IjIiOiAidHdvQGJhc2U2NC5jb20i");
+    auto sbuf2 = new sbuf_t("W3siMSI6ICJvbmVAYmFzZTY0LmNvbSJ9LCB7IjIiOiAidHdvQGJhc2U2NC5jb20i\nfSwgeyIzIjogInRocmVlQGJhc2U2NC5jb20ifV0K");
+    bool found_equal = false;
+    REQUIRE(sbuf_line_is_base64(*sbuf1, 0, sbuf1->bufsize, found_equal) == true);
+    REQUIRE(found_equal == false);
+    auto sbuf3 = decode_base64(*sbuf2, 0, sbuf2->bufsize);
+    std::cerr << "sbuf3: " << *sbuf3 << "\n";
+}
+
+TEST_CASE("scan_vcard", "[scanners]" ) {
+#if 0
+    scanner_config sc;
+    sc.outdir = NamedTemporaryDirectory();
+    sc.add_scanner(scan_vcard);
+#endif
+
+    base64array_initialize();
+    auto sbuf = sbuf_t::map_file( "tests/john_jakes.vcf" );
+
+TODO: Call scan_vcards and see if it can find them.
+}
 
 struct Check {
     Check(std::string fname_, Feature feature_):

@@ -21,66 +21,79 @@
  * 3 - Throw it in a file (except the invalid stuff, of course)
  * 4 - If we didn't write a END:VCARD, add an END:VCARD  (clean it up)
  */
-#include "config.h"
-#include "be13_api/bulk_extractor_i.h"
+
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <stdlib.h>
-#include <strings.h>
-#include <errno.h>
+#include <cstdlib>
+#include <cstring>
+#include <cerrno>
 #include <sstream>
 
+
+#include "config.h"
+#include "be13_api/scanner_params.h"
+
+#include "scan_vcard.h"
+
 #include "utf8.h"
+
+void carve_vcards(const sbuf_t &sbuf, feature_recorder &vcard_recorder)
+{
+    size_t end_len = strlen("END:VCARD\r\n");
+
+    // Search for BEGIN:VCARD\r in the sbuf
+    // we could do this with a loop, or with
+    for(size_t i = 0;  i < sbuf.bufsize;i++)	{
+        ssize_t begin = sbuf.find("BEGIN:VCARD\r",i);
+        if(begin==-1) return;		// no more
+
+        /* We found a BEGIN:VCARD\r. Is there an end? */
+        ssize_t end = sbuf.find("END:VCARD\r",begin);
+
+        if(end!=-1){
+            /* We found a beginning and an ending; verify if what's between them is
+             * printable UTF-8.
+             */
+            bool valid = true;
+            for(ssize_t j = begin; j<end && valid; j++){
+                if(sbuf[j]<' ' && sbuf[j]!='\r' && sbuf[j]!='\n' && sbuf[j]!='\t'){
+                    valid=false;
+                }
+            }
+            /* We should probably validate the UTF-8. */
+            if(valid){
+                /* got a valid card; I can carve it! */
+                vcard_recorder.carve_data(sbuf, begin,(end-begin)+end_len, ".vcf");
+                i = end+end_len;		// skip to the end of the vcard
+                continue;			// loop again!
+            }
+        }
+        /* vcard is incomplete; carve what we can and then continue */
+        /* RIGHT NOW, JUST GIVE UP */
+        break;				// stop when we don't have a valid VCARD
+    }
+}
+
 
 extern "C"
 void scan_vcard(scanner_params &sp)
 {
     sp.check_version();
-    if(sp.phase==scanner_params::PHASE_STARTUP){
-	sp.info->name  = "vcard";
-        sp.info->author         = "Simson Garfinkel and Tony Melaragno";
-        sp.info->description    = "Scans for VCARD data";
-        sp.info->scanner_version= "1.0";
-	sp.info->feature_names.insert("vcard");
+    if(sp.phase==scanner_params::PHASE_INIT){
+        auto info = new scanner_params::scanner_info(scan_vcard,"vcard");
+	info->name           = "vcard";
+        info->author         = "Simson Garfinkel and Tony Melaragno";
+        info->description    = "Scans for VCARD data";
+        info->scanner_version= "1.1";
+        info->feature_defs.push_back( feature_recorder_def("vcard"));
+        sp.register_info(info);
 	return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
-	const sbuf_t &sbuf = sp.sbuf;
-	feature_recorder_set &fs = sp.fs;
-	feature_recorder *vcard_recorder = fs.get_name("vcard");
-	size_t end_len = strlen("END:VCARD\r\n");
+	const sbuf_t &sbuf       = *sp.sbuf;
+	feature_recorder &vcard_recorder = sp.named_feature_recorder("vcard");
 
-	// Search for BEGIN:VCARD\r in the sbuf
-	// we could do this with a loop, or with
-	for(size_t i = 0;  i < sbuf.bufsize;i++)	{
-	    ssize_t begin = sbuf.find("BEGIN:VCARD\r",i);
-	    if(begin==-1) return;		// no more
-
-	    /* We found a BEGIN:VCARD\r. Is there an end? */
-	    ssize_t end = sbuf.find("END:VCARD\r",begin);
-
-	    if(end!=-1){
-		/* We found a beginning and an ending; verify if what's between them is
-		 * printable UTF-8.
-		 */
-		bool valid = true;
-		for(ssize_t j = begin; j<end && valid; j++){
-		    if(sbuf[j]<' ' && sbuf[j]!='\r' && sbuf[j]!='\n' && sbuf[j]!='\t'){
-			valid=false;
-		    }
-		}
-		/* We should probably validate the UTF-8. */
-		if(valid){
-		    /* got a valid card; I can carve it! */
-		    vcard_recorder->carve(sbuf,begin,(end-begin)+end_len,".vcf");
-		    i = end+end_len;		// skip to the end of the vcard
-		    continue;			// loop again!
-		}
-	    }
-	    /* vcard is incomplete; carve what we can and then continue */
-	    /* RIGHT NOW, JUST GIVE UP */
-	    break;				// stop when we don't have a valid VCARD
-	}
+        carve_vcards(sbuf, vcard_recorder);
     }
 }

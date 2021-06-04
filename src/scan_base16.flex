@@ -122,15 +122,14 @@ void scan_base16(struct scanner_params &sp)
     sp.check_version();
     if (sp.phase==scanner_params::PHASE_INIT){
         auto info = new scanner_params::scanner_info(scan_base16,"base16");
-        info->author         = "Simson L. Garfinkel";
-        info->description    = "Base16 (hex) scanner";
-        info->scanner_version= "1.1";
+        info->author          = "Simson L. Garfinkel";
+        info->description     = "Base16 (hex) scanner";
+        info->scanner_version = "1.1";
+        info->pathPrefix      = "BASE16";
         feature_recorder_def frd("hex"); frd.flags.disabled=true; /* disabled by default */ /* frd.flags.recurse=true;*/
         info->feature_defs.push_back( frd );
         //sp.info->feature_names.insert("hex"); // notable hex values
         //sp.info->flags          = scanner_info::SCANNER_DISABLED | scanner_info::SCANNER_RECURSE;
-
-        sp.register_info(info);
 
         /* Create the base16 array */
         for (int i=0;i<256;i++){
@@ -142,6 +141,7 @@ void scan_base16(struct scanner_params &sp)
         for (int ch='A';ch<='F';ch++){ base16array[ch] = ch-'A'+10; }
         for (int ch='a';ch<='f';ch++){ base16array[ch] = ch-'a'+10; }
         for (int ch='0';ch<='9';ch++){ base16array[ch] = ch-'0'; }
+        sp.register_info(info);
         return; /* No feature files created */
     }
     if (sp.phase==scanner_params::PHASE_SCAN){

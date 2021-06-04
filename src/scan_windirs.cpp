@@ -4,16 +4,19 @@
  * FAT32 directories always start on sector boundaries.
  */
 
-#include "config.h"
-#include "be13_api/bulk_extractor_i.h"
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <stdlib.h>
-#include <strings.h>
+#include <cstdlib>
+#include <cstrings>
 #include <errno.h>
 #include <sstream>
 #include <sys/time.h>
+
+
+#include "config.h"
+#include "be13_api/scanner_params.h"
+
 
 #include "utf8.h"
 #include "dfxml/src/dfxml_writer.h"
@@ -478,7 +481,7 @@ void scan_windirs(scanner_params &sp)
 #if 0
     std::string myString;
     sp.check_version();
-    if(sp.phase==scanner_params::PHASE_STARTUP){
+    if(sp.phase==scanner_params::PHASE_INIT){
 
         /* Figure out the current time */
         time_t t = time(0);

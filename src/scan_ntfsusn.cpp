@@ -5,16 +5,20 @@
  * USN_RECORD_V4 format https://msdn.microsoft.com/ja-jp/library/windows/desktop/mt684964(v=vs.85).aspx
  * Teru Yamazaki(@4n6ist) - https://github.com/4n6ist/bulk_extractor-rec
  **/
-#include "config.h"
-#include "be13_api/bulk_extractor_i.h"
+
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <stdlib.h>
-#include <strings.h>
-#include <errno.h>
+#include <cstdlib>
+#include <cstrings>
 #include <sstream>
 #include <vector>
+//#include <errno.h>
+
+#include "config.h"
+
+#include "be13_api/scanner_params.h"
+
 #include "sbuf_stream.h"
 
 #include "utf8.h"
@@ -71,7 +75,7 @@ extern "C"
 void scan_ntfsusn(scanner_params &sp)
 {
     sp.check_version();
-    if(sp.phase==scanner_params::PHASE_STARTUP){
+    if(sp.phase==scanner_params::PHASE_INIT){
         sp.info->name            = "ntfsusn";
         sp.info->author          = "Teru Yamazaki";
         sp.info->description     = "Scans for USN_RECORD v2/v4 record";

@@ -1,10 +1,12 @@
-#include "config.h"
-#include "be13_api/bulk_extractor_i.h"
-#include "utils.h"
-
 #include <cstdlib>
 #include <cstring>
 #include <cinttypes>
+
+
+#include "config.h"
+#include "be13_api/scanner_params.h"
+#include "utils.h"
+
 
 static uint32_t word_min = 6;
 static uint32_t word_max = 14;
@@ -143,7 +145,7 @@ void scan_wordlist(scanner_params &sp)
 {
     sp.check_version();
     feature_recorder_set &fs = sp.fs;
-    if(sp.phase==scanner_params::PHASE_STARTUP){
+    if(sp.phase==scanner_params::PHASE_INIT){
         sp.info->name  = WORDLIST;
         sp.info->flags = scanner_info::SCANNER_DISABLED;
         sp.info->get_config("word_min",&word_min,"Minimum word size");

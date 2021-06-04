@@ -1,14 +1,15 @@
-#include "config.h"
-#include "be13_api/bulk_extractor_i.h"
-#include "dfxml/src/dfxml_writer.h"
-#include "utf8.h"
-
-#include <stdlib.h>
-#include <string.h>
-
+#include <stdlib>
+#include <string>
 #include <iostream>
 #include <iomanip>
 #include <cassert>
+
+
+#include "config.h"
+#include "be13_api/scanner_params.h"
+#include "dfxml/src/dfxml_writer.h"
+#include "utf8.h"
+
 
 #define ZIP_RECORDER_NAME "zip"
 #define UNZIP_RECORDER_NAME "unzip_carved"
@@ -195,7 +196,7 @@ void scan_zip(scanner_params &sp)
 {
     sp.check_version();
 
-    if(sp.phase==scanner_params::PHASE_STARTUP){
+    if(sp.phase==scanner_params::PHASE_INIT){
 	sp.info->name  = "zip";
         sp.info->flags = scanner_info::SCANNER_RECURSE | scanner_info::SCANNER_RECURSE_EXPAND;
         sp.info->get_config("zip_min_uncompr_size",&zip_min_uncompr_size,"Minimum size of a ZIP uncompressed object");

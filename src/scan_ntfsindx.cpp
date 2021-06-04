@@ -4,8 +4,7 @@
  * Reference: http://www.digital-evidence.org/fsfa/
  * Teru Yamazaki(@4n6ist) - https://github.com/4n6ist/bulk_extractor-rec
  **/
-#include "config.h"
-#include "be13_api/bulk_extractor_i.h"
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -14,8 +13,12 @@
 #include <errno.h>
 #include <sstream>
 #include <vector>
-#include "sbuf_stream.h"
 
+#include "config.h"
+
+#include "be13_api/scanner_params.h"
+
+#include "sbuf_stream.h"
 #include "utf8.h"
 
 static uint32_t ntfsindx_carve_mode = feature_recorder::CARVE_ALL;
@@ -76,7 +79,7 @@ extern "C"
 void scan_ntfsindx(scanner_params &sp)
 {
     sp.check_version();
-    if(sp.phase==scanner_params::PHASE_STARTUP){
+    if(sp.phase==scanner_params::PHASE_INIT){
         sp.info->name            = "ntfsindx";
         sp.info->author          = "Teru Yamazaki";
         sp.info->description     = "Scans for NTFS $INDEX_ALLOCATION INDX record";

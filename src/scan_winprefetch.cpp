@@ -20,19 +20,21 @@
  * - Use of UTF16 in Windows OS: http://en.wikipedia.org/wiki/UTF-16
  */
 
-#include "config.h"
-#include "be13_api/bulk_extractor_i.h"
-
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <stdlib.h>
-#include <strings.h>
-#include <string.h>
-#include <stdint.h>
-#include <errno.h>
+#include <cstdlib>
+#include <cstrings>
+#include <cstring>
+#include <cstdint>
+#include <cerrno>
 #include <sstream>
 #include <vector>
+
+
+#include "config.h"
+#include "be13_api/scanner_params.h"
+
 
 #include "utf8.h"
 #include "dfxml/src/dfxml_writer.h"
@@ -245,7 +247,7 @@ extern "C"
 void scan_winprefetch(scanner_params &sp)
 {
     sp.check_version();
-    if(sp.phase==scanner_params::PHASE_STARTUP){
+    if(sp.phase==scanner_params::PHASE_INIT){
         sp.info->name		= "winprefetch";
         sp.info->author		= "Bruce Allen";
         sp.info->description	= "Search for Windows Prefetch files";

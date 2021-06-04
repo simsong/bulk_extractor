@@ -35,37 +35,15 @@ include be13_api/Makefile.defs
 # 	tsk3/tsk_incs.h\
 # 	tsk3/vs/tsk_vs.h
 #
-TESTS = be_tests
-check_PROGRAMS = be_tests
-
-# Slowly add modules as tests are written for them.
-be_tests_SOURCES = be13_api/catch.hpp \
-	$(BE13_API_SRC) \
-	base64_forensic.cpp \
-	base64_forensic.h \
-	bulk_extractor_scanners.cpp \
-	bulk_extractor_scanners.h \
-	be_tests.cpp \
-	formatter.h \
-	image_process.cpp \
-	image_process.h \
-	managed_malloc.h \
-	scan_json.cpp \
-	scan_base16.flex \
-	scan_email.flex \
-	phase1.h \
-	phase1.cpp \
-	threadpool.hpp
 
 
 # These scanners are based on GNUflex
 flex_scanners = \
-	scan_base16.flex \
 	sbuf_flex_scanner.h \
-	scan_email.flex
-
-#	scan_accts.flex \
-#	scan_gps.flex
+	scan_base16.flex \
+	scan_accts.flex \
+	scan_email.flex \
+	scan_gps.flex
 
 # These scanners are based on Lightbox Technology's lightgrep
 lightgrep_scanners = \
@@ -82,22 +60,23 @@ lightgrep_scanners = \
 
 scanners_builtin = \
 	scan_aes.cpp \
+	scan_ccns2.cpp scan_ccns2.h \
+	scan_exif.cpp exif_reader.h exif_reader.cpp exif_entry.cpp\
+	scan_exiv2.cpp \
+	scan_base64.cpp \
+	scan_kml.cpp \
+	scan_vcard.cpp \
 	scan_json.cpp
 
 scanners_builtin_broken = \
-	scan_base64.cpp \
-	scan_ccns2.cpp scan_ccns2.h \
 	scan_elf.cpp \
 	scan_evtx.cpp \
-	scan_exif.cpp exif_reader.h exif_reader.cpp exif_entry.cpp\
-	scan_exiv2.cpp \
 	scan_facebook.cpp \
 	scan_find.cpp \
 	scan_gzip.cpp \
 	scan_hiberfile.cpp pyxpress.c pyxpress.h \
 	scan_httplogs.cpp \
 	scan_json.cpp \
-	scan_kml.cpp \
 	scan_msxml.cpp \
 	scan_net.cpp \
 	scan_ntfsindx.cpp \
@@ -109,7 +88,6 @@ scanners_builtin_broken = \
 	scan_rar.cpp \
 	scan_sqlite.cpp \
 	scan_utmp.cpp \
-	scan_vcard.cpp \
 	scan_windirs.cpp \
 	scan_winlnk.cpp \
 	scan_winpe.cpp \
@@ -149,6 +127,25 @@ bulk_extractor_nomain = \
 
 
 bulk_extractor_SOURCES = $(bulk_extractor_nomain) $(scanners_builtin) bulk_extractor_scanners.cpp main.cpp
+
+TESTS = be_tests
+check_PROGRAMS = be_tests
+
+# Slowly add modules as tests are written for them.
+be_tests_SOURCES = be13_api/catch.hpp \
+	$(BE13_API_SRC) \
+	$(scanners_builtin) \
+	base64_forensic.cpp \
+	base64_forensic.h \
+	bulk_extractor_scanners.cpp \
+	bulk_extractor_scanners.h \
+	be_tests.cpp \
+	image_process.cpp \
+	image_process.h \
+	managed_malloc.h \
+	phase1.h \
+	phase1.cpp \
+	threadpool.hpp
 
 # bulk_extractorlib_SOURCES = $(bulk_extractor_nomain) $(scanners_builtin) bulk_extractor_scanners.cpp
 

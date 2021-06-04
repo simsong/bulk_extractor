@@ -18,7 +18,7 @@
  */
 
 #include "config.h"
-#include "be13_api/bulk_extractor_i.h"
+#include "be13_api/scanner_params.h"
 #include "be13_api/unicode_escape.h"
 
 #if defined(HAVE_LIBLNK_H) && defined(HAVE_LIBBFIO_H) && defined(HAVE_LIBLNK) && defined(HAVE_LIBBFIO)
@@ -300,7 +300,7 @@ extern "C"
 void scan_winlnk(scanner_params &sp)
 {
     sp.check_version();
-    if(sp.phase==scanner_params::PHASE_STARTUP){
+    if(sp.phase==scanner_params::PHASE_INIT){
         sp.info->name		= "winlnk";
         sp.info->author		= "Simson Garfinkel";
         sp.info->description	= "Search for Windows LNK files";

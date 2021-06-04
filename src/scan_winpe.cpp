@@ -1022,7 +1022,7 @@ void scan_winpe (scanner_params &sp)
     sp.check_version();
     std::string xml;
 
-    if (sp.phase == scanner_params::PHASE_STARTUP){
+    if (sp.phase == scanner_params::PHASE_INIT){
         sp.info->name            = "winpe";
         sp.info->description     = "Scan for Windows PE headers";
         sp.info->scanner_version = "1.0.0";

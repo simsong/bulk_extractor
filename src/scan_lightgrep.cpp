@@ -3,17 +3,19 @@
 // if liblightgrep isn't present, compiles to nothing
 #ifdef HAVE_LIBLIGHTGREP
 
-#include "be13_api/bulk_extractor_i.h"
-#include "be13_api/beregex.h"
+#include <algorithm>
+#include <iostream>
+#include <iterator>
+#include <numeric>
+
+#include "be13_api/scanner_params.h"
+
+//#include "be13_api/beregex.h"
 #include "histogram.h"
 #include "pattern_scanner.h"
 
 #include <lightgrep/api.h>
 
-#include <algorithm>
-#include <iostream>
-#include <iterator>
-#include <numeric>
 
 namespace { // local namespace hides these from other translation units
 
@@ -65,7 +67,7 @@ namespace { // local namespace hides these from other translation units
 extern "C"
 void scan_lightgrep(struct scanner_params &sp) {
   switch (sp.phase) {
-  case scanner_params::PHASE_STARTUP:
+  case scanner_params::PHASE_INIT:
     Scanner.startup(sp);
     ProcessHit = static_cast<CallbackFnType>(&FindScanner::processHit);
     break;

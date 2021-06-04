@@ -1,5 +1,3 @@
-#include "config.h"
-#include "be13_api/bulk_extractor_i.h"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -7,6 +5,11 @@
 #include <strings.h>
 #include <errno.h>
 #include <sstream>
+
+#include "config.h"
+
+#include "be13_api/scanner_params.h"
+
 
 struct used_offsets_t {
     used_offsets_t():offsets(){};
@@ -47,7 +50,7 @@ extern "C"
 void scan_facebook(scanner_params &sp)
 {
     sp.check_version();
-    if(sp.phase==scanner_params::PHASE_STARTUP)        {
+    if(sp.phase==scanner_params::PHASE_INIT)        {
             sp.info->name = "facebook";
             sp.info->author = "";
             sp.info->description = "Searches for facebook html and json tags";

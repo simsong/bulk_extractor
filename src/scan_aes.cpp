@@ -398,8 +398,7 @@ void scan_aes(struct scanner_params &sp)
 	info->author		= "Sam Trenholme, Jesse Kornblum and Simson Garfinkel";
 	info->description    = "Search for AES key schedules";
         info->scanner_version = "1.1";
-        feature_recorder_def frd("aes_keys");
-        info->feature_defs.push_back( frd );
+        info->feature_defs.push_back( feature_recorder_def("aes_keys"));
 
 	rcon_setup();
 	sbox_setup();

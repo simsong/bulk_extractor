@@ -1,16 +1,16 @@
-#include "config.h"
-
-
-#include "be13_api/bulk_extractor_i.h"
-#include "utf8.h"
-#include "dfxml/src/dfxml_writer.h"
-
-#include <stdlib.h>
-#include <string.h>
-
+#include <cstdlib>
+#include <cstring>
 #include <iostream>
 #include <iomanip>
 #include <cassert>
+
+#include "config.h"
+
+#include "be13_api/scanner_params.h"
+
+#include "utf8.h"
+#include "dfxml/src/dfxml_writer.h"
+
 
 #ifdef USE_RAR
 #include "rar/rar.hpp"
@@ -595,7 +595,7 @@ extern "C"
 void scan_rar(scanner_params &sp)
 {
     sp.check_version();
-    if(sp.phase==scanner_params::PHASE_STARTUP){
+    if(sp.phase==scanner_params::PHASE_INIT){
 	sp.info->name  = "rar";
 	sp.info->author = "Michael Shick";
 #ifdef USE_RAR

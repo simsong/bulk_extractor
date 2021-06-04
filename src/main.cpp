@@ -54,9 +54,9 @@ int _CRT_fmode = _O_BINARY;
 
 #include "findopts.h"
 #include "image_process.h"
-#include "dfxml/src/dfxml_writer.h"
-#include "dfxml/src/hash_t.h"
 #include "be13_api/utils.h"
+#include "be13_api/dfxml/src/dfxml_writer.h"
+#include "be13_api/dfxml/src/hash_t.h"
 
 #include "phase1.h"
 

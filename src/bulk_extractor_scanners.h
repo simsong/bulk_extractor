@@ -13,17 +13,17 @@ extern "C" scanner_t *scanners_builtin[];
 #endif
 
 /* flex-based scanners */
+SCANNER(base16)
 SCANNER(email)
-//SCANNER(accts)
-//SCANNER(kml)
-//SCANNER(gps)
+SCANNER(accts)
+SCANNER(gps)
 
 /* Regular scanners */
 //SCANNER(wordlist)
 //SCANNER(net)
-SCANNER(base16)
-//SCANNER(base64)
-//SCANNER(vcard)
+SCANNER(base64)
+SCANNER(kml)
+SCANNER(vcard)
 //SCANNER(find)
 
 #ifdef HAVE_EXIV2

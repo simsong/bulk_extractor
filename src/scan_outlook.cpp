@@ -4,7 +4,8 @@
  * created:  2014-01-28
  */
 #include "config.h"
-#include "be13_api/bulk_extractor_i.h"
+
+#include "be13_api/scanner_params.h"
 #include "scan_outlook.h"
 #include "utils.h"
 
@@ -55,7 +56,7 @@ extern "C"
 void scan_outlook(scanner_params &sp)
 {
     sp.check_version();
-    if(sp.phase==scanner_params::PHASE_STARTUP) {
+    if(sp.phase==scanner_params::PHASE_INIT) {
 	sp.info->name  = "outlook";
 	sp.info->author = "Simson L. Garfinkel";
 	sp.info->description = "Outlook Compressible Encryption";

@@ -4,7 +4,7 @@
  * created:  2013-03-18
  */
 #include "config.h"
-#include "be13_api/bulk_extractor_i.h"
+#include "be13_api/scanner_params.h"
 #include "utils.h"
 
 static uint8_t xor_mask = 255;
@@ -12,7 +12,7 @@ extern "C"
 void scan_xor(scanner_params &sp)
 {
     sp.check_version();
-    if(sp.phase==scanner_params::PHASE_STARTUP) {
+    if(sp.phase==scanner_params::PHASE_INIT) {
 	sp.info->name  = "xor";
 	sp.info->author = "Michael Shick";
 	sp.info->description = "optimistic XOR deobfuscator";

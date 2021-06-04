@@ -48,7 +48,7 @@
  */
 
 #include <queue>
-#include "bulk_extractor_i.h"
+//#include "bulk_extractor_i.h"
 
 // There is a single threadpool object
 class be_threadpool {

@@ -21,18 +21,19 @@
  * not subject to copyright.
  */
 
-#include "config.h"
-#include "be13_api/bulk_extractor_i.h"
-#include "be13_api/utils.h"
-
 #include <cstdlib>
 #include <cstring>
-
 #include <set>
 #include <mutex>
-
-#include <sys/types.h>
 #include <ctype.h>
+//#include <sys/types.h>
+
+
+#include "config.h"
+
+#include "be13_api/scanner_params.h"
+#include "be13_api/utils.h"
+
 
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
@@ -1024,7 +1025,7 @@ extern "C"
 void scan_net(scanner_params &sp)
 {
     sp.check_version();
-    if(sp.phase==scanner_params::PHASE_STARTUP){
+    if(sp.phase==scanner_params::PHASE_INIT){
 	assert(sizeof(struct be13::ip4)==20);	// we've had problems on some systems
 	sp.info->name           = "net";
         sp.info->author         = "Simson Garfinkel and Rob Beverly";

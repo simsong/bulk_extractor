@@ -5,18 +5,21 @@
  *                 - Added support for getting GPS information from photo and adding it to gps.txt
  */
 
-#include "config.h"
-#include "be13_api/bulk_extractor_i.h"
-#include "be13_api/utils.h"
-
-#include "dfxml/src/dfxml_writer.h"
-
 #include <stdlib.h>
 #include <string.h>
 #include <iostream>
 #include <iomanip>
 #include <cassert>
 #include <algorithm>
+
+#include "config.h"
+
+#include "be13_api/scanner_params.h"
+
+#include "be13_api/utils.h"
+
+#include "dfxml/src/dfxml_writer.h"
+
 
 //#include "md5.h"
 
@@ -102,7 +105,7 @@ extern "C"
 void scan_exiv2(struct scanner_params &sp)
 {
     sp.check_version();
-    if(sp.phase==scanner_params::PHASE_STARTUP){
+    if(sp.phase==scanner_params::PHASE_INIT){
 	sp.info->name  = "exiv2";
         sp.info->author         = "Simson L. Garfinkel";
         sp.info->description    = "Searches for EXIF information using exiv2";

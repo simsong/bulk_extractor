@@ -4,16 +4,18 @@
  * Currently this is dead-simple. It should be rewritten to position the text on an (x,y) grid and find the words.
  */
 
-#include "config.h"
-#include "be13_api/bulk_extractor_i.h"
-#include "image_process.h"
-
-#include <stdlib.h>
-#include <string.h>
-
+#include <cstdlib>
+#include <cstring>
 #include <iostream>
 #include <iomanip>
 #include <cassert>
+
+
+#include "config.h"
+
+#include "be13_api/scanner_params.h"
+#include "image_process.h"
+
 
 /* Debug by setting DEBUG or by setting pdf_dump at runtime */
 
@@ -159,7 +161,7 @@ extern "C"
 void scan_pdf(scanner_params &sp)
 {
     sp.check_version();
-    if(sp.phase==scanner_params::PHASE_STARTUP){
+    if(sp.phase==scanner_params::PHASE_INIT){
         sp.info->name           = "pdf";
         sp.info->author         = "Simson Garfinkel";
         sp.info->description    = "Extracts text from PDF files";

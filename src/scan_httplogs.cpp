@@ -8,7 +8,8 @@
  */
 
 #include "config.h"
-#include "be13_api/bulk_extractor_i.h"
+
+#include "be13_api/scanner_params.h"
 
 /* We accept printable ASCII characters and \n, \r only */
 bool isok(const char chr)
@@ -59,7 +60,7 @@ extern "C"
 void scan_httplogs(scanner_params &sp)
 {
     sp.check_version();
-    if(sp.phase==scanner_params::PHASE_STARTUP){
+    if(sp.phase==scanner_params::PHASE_INIT){
         sp.info->name		= "httplogs";
         sp.info->author		= "Maxim Suhanov";
         sp.info->description	= "Extract various web server access logs";

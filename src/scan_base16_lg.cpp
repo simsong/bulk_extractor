@@ -5,7 +5,7 @@
 
 #include <string>
 
-#include "be13_api/bulk_extractor_i.h"
+#include "be13_api/scanner_params.h"
 #include "histogram.h"
 #include "pattern_scanner.h"
 

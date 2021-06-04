@@ -4,16 +4,17 @@
  *
  */
 
-#include "config.h"
-#include "be13_api/bulk_extractor_i.h"
-#include "image_process.h"
-
-#include <stdlib.h>
-#include <string.h>
-
+#include <cstdlib>
+#include <cstring>
 #include <iostream>
 #include <iomanip>
 #include <cassert>
+
+#include "config.h"
+#include "be13_api/scanner_params.h"
+
+#include "image_process.h"
+
 
 #define ZLIB_CONST
 #ifdef HAVE_DIAGNOSTIC_UNDEF
@@ -49,7 +50,7 @@ extern "C"
 void scan_msxml(scanner_params &sp)
 {
     sp.check_version();
-    if(sp.phase==scanner_params::PHASE_STARTUP){
+    if(sp.phase==scanner_params::PHASE_INIT){
         sp.info->name           = "msxml";
         sp.info->author         = "Simson Garfinkel";
         sp.info->description    = "Extracts text from Microsoft XML files";

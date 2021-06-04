@@ -4,8 +4,7 @@
  * Reference: https://github.com/libyal/libevtx/blob/master/documentation/Windows%20XML%20Event%20Log%20(EVTX).asciidoc
  * Teru Yamazaki(@4n6ist) - https://github.com/4n6ist/bulk_extractor-rec
  **/
-#include "config.h"
-#include "be13_api/bulk_extractor_i.h"
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -14,6 +13,11 @@
 #include <errno.h>
 #include <sstream>
 #include <vector>
+
+#include "config.h"
+
+#include "be13_api/scanner_params.h"
+
 #include "sbuf_stream.h"
 
 #include "utf8.h"
@@ -145,7 +149,7 @@ extern "C"
 void scan_evtx(scanner_params &sp)
 {
     sp.check_version();
-    if(sp.phase==scanner_params::PHASE_STARTUP){
+    if(sp.phase==scanner_params::PHASE_INIT){
         sp.info->name            = "evtx";
         sp.info->author          = "Teru Yamazaki";
         sp.info->description     = "Scans for EVTX Chunks and generates valid EVTX file";

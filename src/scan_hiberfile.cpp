@@ -1,11 +1,14 @@
-#include "config.h"
-#include "be13_api/bulk_extractor_i.h"
-#include "image_process.h"
-#include "pyxpress.h"
-
 
 #include <stdlib.h>
 #include <string.h>
+
+#include "config.h"
+
+#include "be13_api/scanner_params.h"
+
+#include "image_process.h"
+#include "pyxpress.h"
+
 
 
 #define ZLIB_CONST
@@ -33,7 +36,7 @@ extern "C"
 void scan_hiberfile(scanner_params &sp)
 {
     sp.check_version();
-    if(sp.phase==scanner_params::PHASE_STARTUP){
+    if(sp.phase==scanner_params::PHASE_INIT){
 	sp.info->name           = "hiberfile";
         sp.info->author         = "Simson Garfinkel and Matthieu Suiche";
         sp.info->description    = "Scans for Microsoft-XPress compressed data";

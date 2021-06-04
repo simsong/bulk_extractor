@@ -1,8 +1,10 @@
-#include "config.h"
-#include "be13_api/bulk_extractor_i.h"
-
 #include <stdlib.h>
 #include <string.h>
+
+#include "config.h"
+
+#include "be13_api/scanner_params.h"
+
 
 #define ZLIB_CONST
 #ifdef HAVE_DIAGNOSTIC_UNDEF
@@ -27,7 +29,7 @@ extern "C"
 void scan_gzip(scanner_params &sp)
 {
     sp.check_version();
-    if(sp.phase==scanner_params::PHASE_STARTUP){
+    if(sp.phase==scanner_params::PHASE_INIT){
         sp.info->name  = "gzip";
         sp.info->author         = "Simson Garfinkel";
         sp.info->description    = "Searches for GZIP-compressed data";

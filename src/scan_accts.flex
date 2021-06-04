@@ -1,10 +1,10 @@
 %{
 
 #include "config.h"
-#include "be13_api/bulk_extractor_i.h"
+#include "sbuf_flex_scanner.h"
+//#include "be13_api/bulk_extractor_i.h"
 //#include "histogram.h"
 #include "scan_ccns2.h"
-#include "sbuf_flex_scanner.h"
 
 
 /*
@@ -22,7 +22,7 @@ static int ssn_mode=0;
 class accts_scanner : public sbuf_scanner {
 public:
 	accts_scanner(const scanner_params &sp):
-	  sbuf_scanner(&sp.sbuf),
+	  sbuf_scanner(*sp.sbuf),
 	  ccn_recorder(sp.named_feature_recorder("ccn")),
           pii_recorder(sp.named_feature_recorder("pii")),
           sin_recorder(sp.named_feature_recorder("sin")),
@@ -381,6 +381,7 @@ extern "C"
 void scan_accts( struct scanner_params &sp )
 {
     //  assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
+    sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
         //assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
         build_unbase58();
@@ -393,12 +394,6 @@ void scan_accts( struct scanner_params &sp )
         info->feature_defs.push_back( feature_recorder_def( "sin" ));
         info->feature_defs.push_back( feature_recorder_def( "ccn_track2" ));
         info->feature_defs.push_back( feature_recorder_def( "telephone" ));
-
-        //sp.info->feature_names.insert("ccn");
-        //sp.info->feature_names.insert("pii");  // personally identifiable information
-        //sp.info->feature_names.insert("sin");
-        //sp.info->feature_names.insert("ccn_track2");
-        //sp.info->feature_names.insert("telephone");
 
         histogram_def::flags_t flag_numeric;
         flag_numeric.numeric = true;
@@ -428,7 +423,7 @@ void scan_accts( struct scanner_params &sp )
             yyaccts_lex(scanner);
         }
         catch (sbuf_scanner::sbuf_scanner_exception e ) {
-            std::cerr << "Scanner " << SCANNER << "Exception " << e->what() << " processing " << sp.sbuf.pos0 << "\n";
+            std::cerr << "Scanner " << SCANNER << "Exception " << e.what() << " processing " << sp.sbuf->pos0 << "\n";
         }
 
         yyaccts_lex_destroy(scanner);

@@ -4,8 +4,7 @@
  * Reference: http://man7.org/linux/man-pages/man5/utmp.5.html
  * Contributed by https://github.com/4n6ist/bulk_extractor-rec
  **/
-#include "config.h"
-#include "be13_api/bulk_extractor_i.h"
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -14,6 +13,10 @@
 #include <errno.h>
 #include <sstream>
 #include <vector>
+
+#include "config.h"
+#include "be13_api/scanner_params.h"
+
 #include "sbuf_stream.h"
 
 #include "utf8.h"
@@ -81,7 +84,7 @@ extern "C"
 void scan_utmp(scanner_params &sp)
 {
     sp.check_version();
-    if(sp.phase==scanner_params::PHASE_STARTUP){
+    if(sp.phase==scanner_params::PHASE_INIT){
         sp.info->name            = "utmp";
         sp.info->author          = "Teru Yamazaki";
         sp.info->description     = "Scans for utmp record";
