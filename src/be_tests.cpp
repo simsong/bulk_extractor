@@ -77,35 +77,48 @@ TEST_CASE("dig", "[utilities]") {
 TEST_CASE("exif_reader", "[utilities]") {
 }
 
-scanner_t *my_scanners[] = {scan_json, 0};
+/* Setup and run a scanner. Return the output directory */
 std::vector<scanner_config::scanner_command> enable_all_scanners = {
     scanner_config::scanner_command(scanner_config::scanner_command::ALL_SCANNERS,
                                     scanner_config::scanner_command::ENABLE)
 };
-TEST_CASE("scan_json1", "[scanners]") {
-    /* Make a scanner set with a single scanner and a single command to enable all the scanners.
-     */
+
+std::filesystem::path test_scanner(scanner_t scanner, sbuf_t *sbuf)
+{
     const feature_recorder_set::flags_t frs_flags;
     scanner_config sc;
-    sc.outdir = NamedTemporaryDirectory();
+    sc.outdir           = NamedTemporaryDirectory();
     sc.scanner_commands = enable_all_scanners;
-
     scanner_set ss(sc, frs_flags);
-    ss.add_scanners(my_scanners);
+    ss.add_scanner(scanner);
     ss.apply_scanner_commands();
-    REQUIRE (ss.get_enabled_scanners().size()==1); // json
-    REQUIRE (ss.feature_file_list().size()==2); // alert & json
-
-    /* Make an sbuf */
-    auto  sbuf = new sbuf_t("hello {\"hello\": 10, \"world\": 20, \"another\": 30, \"language\": 40} world");
+    REQUIRE (ss.get_enabled_scanners().size()==1); // the one scanner
+    std::cerr << "output in " << sc.outdir << " for " << ss.get_enabled_scanners()[0] << "\n";
     ss.phase_scan();
     ss.process_sbuf(sbuf);
     ss.shutdown();
+    return sc.outdir;
+}
+
+TEST_CASE("scan_json1", "[scanners]") {
+    /* Make a scanner set with a single scanner and a single command to enable all the scanners.
+     */
+    auto  sbuf1 = new sbuf_t("hello {\"hello\": 10, \"world\": 20, \"another\": 30, \"language\": 40} world");
+    auto outdir = test_scanner(scan_json, sbuf1);
 
     /* Read the output */
-    std::vector<std::string> json_txt = getLines( sc.outdir / "json.txt" );
+    std::vector<std::string> json_txt = getLines( outdir / "json.txt" );
     auto last = json_txt[json_txt.size()-1];
     REQUIRE(last.substr( last.size() - 40) == "6ee8c369e2f111caa9610afc99d7fae877e616c9");
+}
+
+TEST_CASE("scan_vcard", "[scanners]") {
+    /* Make a scanner set with a single scanner and a single command to enable all the scanners.
+     */
+    auto sbuf2 = sbuf_t::map_file( "tests/john_jakes.vcf" );
+    auto outdir = test_scanner(scan_vcard, sbuf2);
+
+    /* Read the output */
 }
 
 /* Test the threadpool */
@@ -202,18 +215,6 @@ TEST_CASE("scan_base64", "[scanners]" ){
     std::cerr << "sbuf3: " << *sbuf3 << "\n";
 }
 
-TEST_CASE("scan_vcard", "[scanners]" ) {
-#if 0
-    scanner_config sc;
-    sc.outdir = NamedTemporaryDirectory();
-    sc.add_scanner(scan_vcard);
-#endif
-
-    base64array_initialize();
-    auto sbuf = sbuf_t::map_file( "tests/john_jakes.vcf" );
-
-TODO: Call scan_vcards and see if it can find them.
-}
 
 struct Check {
     Check(std::string fname_, Feature feature_):
