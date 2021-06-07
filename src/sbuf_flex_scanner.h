@@ -52,7 +52,7 @@ public:
     size_t get_input(char *buf, size_t max_size){
         if ((int)max_size < 0) return 0;
         int count=0;
-        while ((max_size > 0) && (point < sbuf.bufsize) /* && (pos < sbuf.pagesize) */ ){
+        while ((max_size > 0) && (point < sbuf.bufsize) ){
             *buf++ = (char)sbuf.buf[point++];
             max_size--;
             count++;
@@ -62,7 +62,7 @@ public:
 };
 
 #define YY_INPUT(buf,result,max_size) result = get_extra(yyscanner)->get_input(buf,max_size);
-#define POS  s.pos
+#define POS   s.pos
 #define SBUF (s.sbuf)
 #define YY_FATAL_ERROR(msg) {throw sbuf_scanner::sbuf_scanner_exception(msg);}
 

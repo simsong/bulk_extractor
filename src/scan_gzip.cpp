@@ -4,6 +4,7 @@
 #include "config.h"
 
 #include "be13_api/scanner_params.h"
+#include "managed_malloc.h"
 
 
 #define ZLIB_CONST
@@ -29,20 +30,20 @@ extern "C"
 void scan_gzip(scanner_params &sp)
 {
     sp.check_version();
-    if(sp.phase==scanner_params::PHASE_INIT){
-        sp.info->name  = "gzip";
-        sp.info->author         = "Simson Garfinkel";
-        sp.info->description    = "Searches for GZIP-compressed data";
-        sp.info->scanner_version= "1.0";
-        sp.info->flags          = scanner_info::SCANNER_RECURSE | scanner_info::SCANNER_RECURSE_EXPAND;
-        sp.info->get_config("gzip_max_uncompr_size",&gzip_max_uncompr_size,"maximum size for decompressing GZIP objects");
+    if (sp.phase==scanner_params::PHASE_INIT){
+        auto info = new scanner_params::scanner_info( scan_gzip, "gzip" );
+        info->author         = "Simson Garfinkel";
+        info->description    = "Searches for GZIP-compressed data";
+        info->scanner_version= "1.1";
+        //info->flags          = scanner_info::SCANNER_RECURSE | scanner_info::SCANNER_RECURSE_EXPAND;
+        sp.ss.sc.get_config("gzip_max_uncompr_size",&gzip_max_uncompr_size,"maximum size for decompressing GZIP objects");
+        sp.register_info(info);
 	return ;		/* no features */
     }
-    if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;
-    if(sp.phase==scanner_params::PHASE_SCAN){
+    if (sp.phase==scanner_params::PHASE_SCAN){
 
-	const sbuf_t &sbuf = sp.sbuf;
-	const pos0_t &pos0 = sp.sbuf.pos0;
+	const sbuf_t &sbuf = (*sp.sbuf);
+	const pos0_t &pos0 = sbuf.pos0;
 
 	for(const unsigned char *cc=sbuf.buf ;
 	    cc < sbuf.buf+sbuf.pagesize && cc < sbuf.buf+sbuf.bufsize-4 ;
@@ -52,10 +53,10 @@ void scan_gzip(scanner_params &sp)
 	     * http://www.15seconds.com/Issue/020314.htm
 	     *
 	     */
-	    if(cc[0]==0x1f && cc[1]==0x8b && cc[2]==0x08){ // gzip HTTP flag
+	    if (cc[0]==0x1f && cc[1]==0x8b && cc[2]==0x08){ // gzip HTTP flag
 		u_int compr_size = sbuf.bufsize - (cc-sbuf.buf); // up to the end of the buffer
                 managed_malloc<u_char>decompress(gzip_max_uncompr_size);
-		if(decompress.buf){
+		if (decompress.buf){
 		    z_stream zs;
 		    memset(&zs,0,sizeof(zs));
 
@@ -68,16 +69,18 @@ void scan_gzip(scanner_params &sp)
 		    memset(&gzh,0,sizeof(gzh));
 
 		    int r = inflateInit2(&zs,16+MAX_WBITS);
-		    if(r==0){
+                    if (r==0){
 			r = inflate(&zs,Z_SYNC_FLUSH);
 			/* Ignore the error code; process data if we got any */
-			if(zs.total_out>0){
+			if (zs.total_out>0){
 			    /* run decompress.buf through the recognizer.
 			     */
 			    const ssize_t pos = cc-sbuf.buf;
-			    const pos0_t pos0_gzip = (pos0 + pos) + rcb.partName;
-			    const sbuf_t sbuf_new(pos0_gzip,decompress.buf,zs.total_out,zs.total_out,0,false);
-			    (*rcb.callback)(scanner_params(sp,sbuf_new)); // recurse
+			    const pos0_t pos0_gzip = (pos0 + pos) + "GZIP";
+			    //const sbuf_t sbuf_new(pos0_gzip,decompress.buf,zs.total_out,zs.total_out,0,false);
+                            auto *nsbuf = new sbuf_t( pos0_gzip, decompress.buf, zs.total_out, zs.total_out, 0, false);
+                            sp.recurse(nsbuf);
+                            //(*rcb.callback)(scanner_params(sp,sbuf_new)); // recurse
 			}
 			r = inflateEnd(&zs);
 		    }

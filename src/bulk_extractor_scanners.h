@@ -19,24 +19,39 @@ SCANNER(accts)
 SCANNER(gps)
 
 /* Regular scanners */
-//SCANNER(wordlist)
-//SCANNER(net)
+
 SCANNER(base64)
-SCANNER(kml)
-SCANNER(vcard)
-//SCANNER(find)
-
-#ifdef HAVE_EXIV2
-//SCANNER(exiv2)
-#endif
-
-//SCANNER(aes)
 //SCANNER(elf)
 //SCANNER(exif)
-//SCANNER(gzip)
+#ifdef HAVE_EXIV2
+SCANNER(exiv2)
+#endif
+//SCANNER(facebook)
+//SCANNER(find)
 //SCANNER(hiberfile)
 //SCANNER(httplogs)
+SCANNER(kml)
+//SCANNER(msxml)
+//SCANNER(net)
+//SCANNER(ntfsusn)
+//SCANNER(outlook)
+//SCANNER(rar)
+//SCANNER(sqlite)
+//SCANNER(windirs)
+//SCANNER(winlnk)
+//SCANNER(winpe)
+//SCANNER(winprefetch)
+SCANNER(aes)
+SCANNER(gzip)
 SCANNER(json)
+SCANNER(pdf)
+
+SCANNER(xor)
+SCANNER(vcard)
+SCANNER(wordlist)
+SCANNER(zip)
+
+
 #ifdef HAVE_LIBLIGHTGREP
 //SCANNER(accts_lg)
 //SCANNER(base16_lg)
@@ -44,19 +59,7 @@ SCANNER(json)
 //SCANNER(gps_lg)
 //SCANNER(lightgrep)
 #endif
-//SCANNER(facebook)
-//SCANNER(ntfsusn)
-//SCANNER(pdf)
-//SCANNER(msxml)
-//SCANNER(winlnk)
-//SCANNER(winpe)
-//SCANNER(winprefetch)
-//SCANNER(zip)
-//SCANNER(rar)
-//SCANNER(windirs)
-//SCANNER(xor)
-//SCANNER(outlook)
-//SCANNER(sqlite)
+
 
 // scanners provided by 4n6ist:
 //SCANNER(utmp)

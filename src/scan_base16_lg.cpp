@@ -38,7 +38,7 @@ namespace base16 {
 
     feature_recorder &Recorder;
 
-    void hitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+    void hitHandler(const LG_SearchHit& hit, const scanner_params& sp) {
       decode(sp.sbuf, hit.Start, hit.End - hit.Start, sp, rcb);
     }
 
@@ -50,7 +50,7 @@ namespace base16 {
 
     Scanner& operator=(const Scanner&);
 
-    void decode(const sbuf_t& osbuf, size_t pos, size_t len, const scanner_params& sp, const recursion_control_block& rcb);
+    void decode(const sbuf_t& osbuf, size_t pos, size_t len, const scanner_params& sp);
   };
 
   const uint16_t BASE16_LSN[256] = {
@@ -183,7 +183,7 @@ namespace base16 {
     return dst - dst_start;
   }
 
-  void Scanner::decode(const sbuf_t& osbuf, size_t pos, size_t len, const scanner_params& sp, const recursion_control_block& rcb) {
+  void Scanner::decode(const sbuf_t& osbuf, size_t pos, size_t len, const scanner_params& sp) {
     sbuf_t sbuf(osbuf, pos, len);  // the substring we are working with
 
     managed_malloc<uint8_t> b(sbuf.pagesize/2);

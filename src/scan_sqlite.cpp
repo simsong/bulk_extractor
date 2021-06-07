@@ -40,12 +40,13 @@ void scan_sqlite(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-	sp.info->name            = "sqlite";
-        sp.info->author          = "Simson Garfinkel";
-        sp.info->description     = "Scans for SQLITE3 data";
-        sp.info->scanner_version = "1.0";
+        auto info = new scanner_params::scanner_info( scan_sqlite, "sqlite" );
+        info->author          = "Simson Garfinkel";
+        info->description     = "Scans for SQLITE3 data";
+        info->scanner_version = "1.1";
 	sp.info->feature_names.insert(FEATURE_FILE_NAME);
-        sp.info->get_config("sqlite_carve_mode",&sqlite_carve_mode,"0=carve none; 1=carve encoded; 2=carve all");
+        sp.sp.ss.sc.get_config("sqlite_carve_mode",&sqlite_carve_mode,"0=carve none; 1=carve encoded; 2=carve all");
+        sp.register_info(info);
 	return;
     }
     if(sp.phase==scanner_params::PHASE_INIT){

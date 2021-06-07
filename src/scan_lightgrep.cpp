@@ -49,7 +49,7 @@ namespace { // local namespace hides these from other translation units
 
     feature_recorder* LgRec;
 
-    void processHit(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+    void processHit(const LG_SearchHit& hit, const scanner_params& sp) {
       LgRec->write_buf(sp.sbuf, hit.Start, hit.End - hit.Start);
     }
 
@@ -80,7 +80,7 @@ void scan_lightgrep(struct scanner_params &sp) {
       break;
     }
   case scanner_params::PHASE_SCAN:
-    LightgrepController::Get().scan(sp, rcb);
+    LightgrepController::Get().scan(sp);
     break;
   case scanner_params::PHASE_SHUTDOWN:
     Scanner.shutdown(sp);

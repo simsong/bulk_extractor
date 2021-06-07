@@ -56,27 +56,30 @@ lightgrep_scanners = \
 	scan_gps_lg.cpp
 
 
-# scanners_builtin are the scanners that will be compiled into the binary
+# scanners_builtin are the scanners that are compiled into the binary
 
 scanners_builtin = \
 	scan_aes.cpp \
+	scan_base64.cpp \
 	scan_ccns2.cpp scan_ccns2.h \
 	scan_exif.cpp exif_reader.h exif_reader.cpp exif_entry.cpp\
 	scan_exiv2.cpp \
-	scan_base64.cpp \
+	scan_gzip.cpp \
+	scan_json.cpp \
 	scan_kml.cpp \
+	scan_pdf.cpp \
 	scan_vcard.cpp \
-	scan_json.cpp
+	scan_wordlist.cpp \
+	scan_xor.cpp \
+	scan_zip.cpp
 
 scanners_builtin_broken = \
 	scan_elf.cpp \
 	scan_evtx.cpp \
 	scan_facebook.cpp \
 	scan_find.cpp \
-	scan_gzip.cpp \
 	scan_hiberfile.cpp pyxpress.c pyxpress.h \
 	scan_httplogs.cpp \
-	scan_json.cpp \
 	scan_msxml.cpp \
 	scan_net.cpp \
 	scan_ntfsindx.cpp \
@@ -84,17 +87,13 @@ scanners_builtin_broken = \
 	scan_ntfsmft.cpp \
 	scan_ntfsusn.cpp \
 	scan_outlook.cpp scan_outlook.h \
-	scan_pdf.cpp \
 	scan_rar.cpp \
 	scan_sqlite.cpp \
 	scan_utmp.cpp \
 	scan_windirs.cpp \
 	scan_winlnk.cpp \
 	scan_winpe.cpp \
-	scan_winprefetch.cpp \
-	scan_wordlist.cpp \
-	scan_xor.cpp \
-	scan_zip.cpp
+	scan_winprefetch.cpp
 
 if FLEXSCANNERS_ENABLED
   scanners_builtin += $(flex_scanners)
@@ -124,7 +123,6 @@ bulk_extractor_nomain = \
 	phase1.h \
 	phase1.cpp \
 	threadpool.hpp
-
 
 bulk_extractor_SOURCES = $(bulk_extractor_nomain) $(scanners_builtin) bulk_extractor_scanners.cpp main.cpp
 

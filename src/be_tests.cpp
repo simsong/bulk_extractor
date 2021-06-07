@@ -116,7 +116,7 @@ TEST_CASE("scan_vcard", "[scanners]") {
     /* Make a scanner set with a single scanner and a single command to enable all the scanners.
      */
     auto sbuf2 = sbuf_t::map_file( "tests/john_jakes.vcf" );
-    auto outdir = test_scanner(scan_vcard, sbuf2);
+    //auto outdir = test_scanner(scan_vcard, sbuf2);
 
     /* Read the output */
 }
@@ -226,6 +226,8 @@ struct Check {
 
 void validate(std::string image_fname, std::vector<Check> &expected)
 {
+    std::cerr << "================ validate  " << image_fname << " ================\n";
+
     auto p = image_process::open( image_fname, false, 65536, 65536);
     Phase1::Config   cfg;  // config for the image_processing system
     scanner_config sc;
@@ -247,7 +249,7 @@ void validate(std::string image_fname, std::vector<Check> &expected)
 
     for(int i=0; i<expected.size(); i++){
         std::filesystem::path fname  = sc.outdir / expected[i].fname;
-        std::cerr << "checking " << i << " in " << fname.string() << "\n";
+        std::cerr << "---- " << i << " -- " << fname.string() << " ----\n";
         std::string line;
         std::ifstream inFile;
         inFile.open(fname);
@@ -257,7 +259,10 @@ void validate(std::string image_fname, std::vector<Check> &expected)
         bool found = false;
         while (std::getline(inFile, line)) {
             auto words = split(line, '\t');
-            if (words.size()==3 && words[0]==expected[i].feature.pos && words[1]==expected[i].feature.feature && words[2]==expected[i].feature.context){
+            if (words.size()==3 &&
+                words[0]==expected[i].feature.pos &&
+                words[1]==expected[i].feature.feature &&
+                words[2]==expected[i].feature.context){
                 found = true;
                 break;
             }
@@ -293,9 +298,6 @@ TEST_CASE("validate_scanners", "[phase1]") {
 
     };
     validate(fn2, ex2);
-
-
-
 }
 
 
