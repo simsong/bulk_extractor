@@ -40,6 +40,12 @@ jobs:
           wget https://ftpmirror.gnu.org/autoconf/autoconf-2.71.tar.gz
           tar xfz autoconf-2.71.tar.gz && cd autoconf-2.71 && ./configure && make && sudo make install
 
+      - name: Update make on Ubuntu
+        if: startsWith(matrix.os, 'ubuntu')
+        run: |
+          wget https://ftpmirror.gnu.org/automake/automake-1.16.3.tar.gz
+          tar xfz automake-1.16.3.tar.gz && cd automake-1.16.3 && ./configure && make && sudo make install
+
       - name: Report automake and autoconf version
         run: |
           automake --version
