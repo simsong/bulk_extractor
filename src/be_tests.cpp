@@ -98,13 +98,7 @@ std::filesystem::path test_scanner(scanner_t scanner, sbuf_t *sbuf)
     REQUIRE (ss.get_enabled_scanners().size()==1); // the one scanner
     std::cerr << "output in " << sc.outdir << " for " << ss.get_enabled_scanners()[0] << "\n";
     ss.phase_scan();
-
-    auto sbuf = new sbuf_t("hello {\"hello\": 10, \"world\": 20, \"another\": 30, \"language\": 40} world");
     ss.process_sbuf(sbuf);
-
-    sbuf = sbuf_t::map_file( "tests/john_jakes.vcf" );
-    ss.process_sbuf(sbuf);
-
     ss.shutdown();
     return sc.outdir;
 }
@@ -116,7 +110,7 @@ TEST_CASE("scan_json1", "[scanners]") {
     auto outdir = test_scanner(scan_json, sbuf1);
 
     /* Read the output */
-    std::vector<std::string> json_txt = getLines( outdir / "json.txt" );
+    auto json_txt = getLines( outdir / "json.txt" );
     auto last = json_txt[json_txt.size()-1];
     REQUIRE(last.substr( last.size() - 40) == "6ee8c369e2f111caa9610afc99d7fae877e616c9");
 }
@@ -125,7 +119,7 @@ TEST_CASE("scan_vcard", "[scanners]") {
     /* Make a scanner set with a single scanner and a single command to enable all the scanners.
      */
     auto sbuf2 = sbuf_t::map_file( "tests/john_jakes.vcf" );
-    //auto outdir = test_scanner(scan_vcard, sbuf2);
+    auto outdir = test_scanner(scan_vcard, sbuf2);
 
     /* Read the output */
 }
