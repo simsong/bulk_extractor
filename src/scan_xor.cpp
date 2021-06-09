@@ -20,7 +20,7 @@ void scan_xor(scanner_params &sp)
 	info->description = "optimistic XOR deobfuscator";
 	info->scanner_flags.default_enabled = false; // = scanner_info::SCANNER_DISABLED | scanner_info::SCANNER_RECURSE;
         sp.ss.sc.get_config("xor_mask",&xor_mask,"XOR mask value, in decimal");
-        sp.register_info(info);
+        sp.info = info;
 	return;
     }
     if (sp.phase==scanner_params::PHASE_SCAN) {

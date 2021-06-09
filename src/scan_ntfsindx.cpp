@@ -85,7 +85,7 @@ void scan_ntfsindx(scanner_params &sp)
         info->description     = "Scans for NTFS $INDEX_ALLOCATION INDX record";
         info->scanner_version = "1.1";
         info->feature_names.push_back( feature_recorder_def(FEATURE_FILE_NAME));
-        sp.register_info(info);
+        sp.info = info;
         return;
     }
     if(sp.phase==scanner_params::PHASE_INIT){

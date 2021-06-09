@@ -141,7 +141,7 @@ void scan_base16(struct scanner_params &sp)
         for (int ch='A';ch<='F';ch++){ base16array[ch] = ch-'A'+10; }
         for (int ch='a';ch<='f';ch++){ base16array[ch] = ch-'a'+10; }
         for (int ch='0';ch<='9';ch++){ base16array[ch] = ch-'0'; }
-        sp.register_info(info);
+        sp.info = info;
         return; /* No feature files created */
     }
     if (sp.phase==scanner_params::PHASE_SCAN){

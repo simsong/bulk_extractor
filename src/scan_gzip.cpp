@@ -37,7 +37,7 @@ void scan_gzip(scanner_params &sp)
         info->scanner_version= "1.1";
         //info->flags          = scanner_info::SCANNER_RECURSE | scanner_info::SCANNER_RECURSE_EXPAND;
         sp.ss.sc.get_config("gzip_max_uncompr_size",&gzip_max_uncompr_size,"maximum size for decompressing GZIP objects");
-        sp.register_info(info);
+        sp.info = info;
 	return ;		/* no features */
     }
     if (sp.phase==scanner_params::PHASE_SCAN){

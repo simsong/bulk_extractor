@@ -1045,8 +1045,8 @@ void scan_net(scanner_params &sp)
         }
 
 	/* scan_net has its own output as well */
-        sp.register_info(info)
-	return;
+        sp.info = info;
+        return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
 	packet_carver carver(sp);

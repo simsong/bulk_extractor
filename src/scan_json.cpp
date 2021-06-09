@@ -450,7 +450,7 @@ void scan_json(struct scanner_params &sp)
 	for(int i=0;json_second_chars[i];i++){
 	    is_json_second_char[(uint8_t)json_second_chars[i]] = true;
 	}
-        sp.register_info(info);
+        sp.info = info;
         return;
     }
 

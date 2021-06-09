@@ -175,7 +175,7 @@ void scan_wordlist(scanner_params &sp)
             exit(1);
         }
 	wordchar_setup();
-        sp.register_info(info);
+        sp.info = info;
 	return;
     }
 #if 0

@@ -129,7 +129,7 @@ void scan_base64(scanner_params &sp)
         info->pathPrefix     = "BASE64";
 
         base64array_initialize();
-        sp.register_info(info);
+        sp.info = info;
 	return;
     }
     if ( sp.phase==scanner_params::PHASE_SCAN){

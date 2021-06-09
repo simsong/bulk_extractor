@@ -411,7 +411,7 @@ void scan_accts( struct scanner_params &sp )
         sp.ss.sc.get_config("ssn_mode", &ssn_mode,"0=Normal; 1=No `SSN' required; 2=No dashes required");
         sp.ss.sc.get_config("min_phone_digits",&min_phone_digits,"Min. digits required in a phone");
         //scan_ccns2_debug = sp.ss.sc.debug;           // get debug value
-        sp.register_info(info);
+        sp.info = info;
 	return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN){

@@ -87,7 +87,7 @@ void scan_vcard(scanner_params &sp)
         info->description    = "Scans for VCARD data";
         info->scanner_version= "1.1";
         info->feature_defs.push_back( feature_recorder_def("vcard"));
-        sp.register_info(info);
+        sp.info = info;
 	return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN){

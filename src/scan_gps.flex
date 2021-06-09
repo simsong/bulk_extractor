@@ -172,7 +172,7 @@ void scan_gps(scanner_params &sp)
         info->description    = "Garmin Trackpt XML info";
         info->scanner_version= "1.1";
         info->feature_defs.push_back( feature_recorder_def("gps"));
-        sp.register_info(info);
+        sp.info = info;
         return;
     }
     if (sp.phase==scanner_params::PHASE_SCAN){

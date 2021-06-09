@@ -403,7 +403,7 @@ void scan_aes(struct scanner_params &sp)
 	rcon_setup();
 	sbox_setup();
 
-        sp.register_info(info);
+        sp.info = info;
 	return;
     }
 

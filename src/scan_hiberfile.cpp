@@ -43,7 +43,7 @@ void scan_hiberfile(scanner_params &sp)
         info->description    = "Scans for Microsoft-XPress compressed data";
         info->scanner_version= "1.0";
         info->flags          = scanner_info::SCANNER_RECURSE | scanner_info::SCANNER_RECURSE_EXPAND;
-        sp.register_info(info);
+        sp.info = info;
 	return; /* no features */
     }
     if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;

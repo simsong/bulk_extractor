@@ -1031,7 +1031,7 @@ void scan_winpe (scanner_params &sp)
         sp.ss.sc.get_config("winpe_carve_mode", &winpe_carve_mode,
                             "0=carve none; 1=carve encoded; 2=carve all");
 
-        sp.register_info(info);
+        sp.info = info;
         return;
     }
 

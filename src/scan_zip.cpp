@@ -212,7 +212,7 @@ void scan_zip(scanner_params &sp)
             //info->feature_names.insert(UNZIP_RECORDER_NAME);
             info->feature_defs.push_back( feature_recorder_def(UNZIP_RECORDER_NAME));
         }
-        sp.register_info(info);
+        sp.info = info;
 	return;
     }
 

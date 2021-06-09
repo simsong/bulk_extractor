@@ -34,7 +34,7 @@ void scan_kml(scanner_params &sp)
         info->description    = "Scans for KML files";
         info->scanner_version= "1.0";
         info->feature_defs.push_back( feature_recorder_def("kml"));
-        sp.register_info(info);
+        sp.info = info;
 	return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN){

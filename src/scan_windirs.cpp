@@ -506,7 +506,7 @@ void scan_windirs(scanner_params &sp)
         sp.ss.sc.get_config("opt_last_year",&opt_last_year,"Ignore FAT32 entries with a later year than this");
 
         debug = info->config->debug;
-        sp.register_info(info);
+        sp.info = info;
 	return;
     }
     if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;		// no shutdown

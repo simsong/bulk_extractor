@@ -82,7 +82,7 @@ void scan_ntfsusn(scanner_params &sp)
         sp.info->scanner_version = "1.1";
         sp.info->feature_names.insert(FEATURE_FILE_NAME);
         sp.sp.ss.sc.get_config("ntfsusn_carve_mode",&ntfsusn_carve_mode,"0=carve none; 1=carve encoded; 2=carve all");
-        sp.register_info(info)
+        sp.info = info;
         return;
     }
     if(sp.phase==scanner_params::PHASE_INIT){

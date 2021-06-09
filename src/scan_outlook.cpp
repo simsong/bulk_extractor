@@ -64,7 +64,7 @@ void scan_outlook(scanner_params &sp)
 	info->description = "Outlook Compressible Encryption";
 	info->flags = scanner_info::SCANNER_DISABLED \
             | scanner_info::SCANNER_RECURSE | scanner_info::SCANNER_DEPTH_0 ;
-        sp.register_info(info);
+        sp.info = info;
 	return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN) {

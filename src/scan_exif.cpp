@@ -738,11 +738,10 @@ void scan_exif(scanner_params &sp)
 	info->feature_defs.push_back( feature_recorder_def("exif", xml_flag));
 	info->feature_defs.push_back( feature_recorder_def("gps"));
 	info->feature_defs.push_back( feature_recorder_def("jpeg_carved"));
-        sp.register_info(info);
         sp.ss.sc.get_config("exif_debug",&exif_debug,"debug exif decoder");
         sp.ss.sc.get_config("jpeg_carve_mode",&jpeg_carve_mode,"0=carve none; 1=carve encoded; 2=carve all");
         sp.ss.sc.get_config("min_jpeg_size",&min_jpeg_size,"Smallest JPEG stream that will be carved");
-        sp.register_info(info);
+        sp.info = info;
 	return;
     }
     //if(sp.phase==scanner_params::PHASE_INIT){

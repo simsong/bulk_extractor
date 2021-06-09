@@ -170,7 +170,7 @@ void scan_pdf(scanner_params &sp)
         info->scanner_version= "1.0";
         //info->flags          = scanner_info::SCANNER_RECURSE;
         sp.ss.sc.get_config("pdf_dump",&pdf_dump,"Dump the contents of PDF buffers");
-        sp.register_info(info);
+        sp.info = info;
 	return;	/* No features recorded */
     }
     if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;

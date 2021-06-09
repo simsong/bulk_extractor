@@ -611,7 +611,7 @@ void scan_rar(scanner_params &sp)
         info->description = "(disabled in configure)";
         info->flags = scanner_info::SCANNER_DISABLED | scanner_info::SCANNER_NO_USAGE | scanner_info::SCANNER_NO_ALL;
 #endif
-        sp.register_info(info);
+        sp.info = info;
 	return;
     }
 #ifdef USE_RAR
