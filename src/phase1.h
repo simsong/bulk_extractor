@@ -29,6 +29,8 @@
  ****************************************************************/
 
 class Phase1 {
+    Phase1(const Phase1 &that) = delete; // no copy constructor
+    Phase1 &operator=(const Phase1 &that) = delete; // no assignment
 public:
     /* Configuration Control */
     struct Config {
@@ -38,7 +40,7 @@ public:
     public:
 
         Config() { }
-        uint64_t debug;                 // debug
+        uint64_t debug {false};                 // debug
         size_t   opt_pagesize {16 * MiB};
         size_t   opt_marginsize { 4 * MiB};
         uint32_t max_bad_alloc_errors {3}; // by default, 3 retries
@@ -67,7 +69,7 @@ private:
         return config.sampling_fraction<1.0;
     }
 
-    class threadpool *tp;
+    class threadpool *tp {nullptr};
     void print_tp_status();
 
 public:
@@ -77,19 +79,17 @@ public:
      */
     /* Instance variables */
     dfxml_writer  &xreport;
-    aftimer       timer;
+    aftimer       timer {};
     const Config  config;
     u_int         notify_ctr  {0};    /* for random sampling */
     uint64_t      total_bytes {0};               //
     image_process &p;
     scanner_set   &ss;
-    seen_page_ids_t seen_page_ids;
+    seen_page_ids_t seen_page_ids {};
     dfxml::sha1_generator *sha1g {nullptr};        // the SHA1 of the image. Set to 0 if a gap is encountered
-
     uint64_t      sha1_next {0};                   // next byte to hash
 
-
-    std::string image_hash;
+    std::string image_hash {};
 
     /* Get the sbuf from current image iterator location, with retries */
     sbuf_t *get_sbuf(image_process::iterator &it);

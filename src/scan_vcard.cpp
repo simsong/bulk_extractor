@@ -69,7 +69,7 @@ void carve_vcards(const sbuf_t &sbuf, feature_recorder &vcard_recorder)
                 continue;			// loop again!
             }
         }
-        /* vcard is incomplete; carve what we can and then continue */
+        /* TODO: vcard is incomplete; carve what we can and then continue */
         /* RIGHT NOW, JUST GIVE UP */
         break;				// stop when we don't have a valid VCARD
     }

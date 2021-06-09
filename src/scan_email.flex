@@ -14,6 +14,7 @@
 
 #include "config.h"
 #include "sbuf_flex_scanner.h"
+#include "be13_api/utils.h"
 //#include "be13_api/bulk_extractor_i.h"
 //#include "utils.h"
 //#include "histogram.h"
@@ -378,7 +379,7 @@ void scan_email(struct scanner_params &sp)
         try {
             yyemail_lex(scanner);
         }
-        catch (sbuf_scanner::sbuf_scanner_exception e ) {
+        catch (sbuf_scanner::sbuf_scanner_exception &e ) {
             std::cerr << "Scanner " << SCANNER << "Exception " << e.what() << " processing " << sp.sbuf->pos0 << "\n";
         }
         yyemail_lex(scanner);           // cleanup at end

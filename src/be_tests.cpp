@@ -22,6 +22,7 @@
 #include "image_process.h"
 #include "base64_forensic.h"
 #include "phase1.h"
+
 #include "bulk_extractor_scanners.h"
 #include "scan_base64.h"
 #include "scan_vcard.h"
@@ -37,9 +38,9 @@
 //#include "scan_ccns2.h"
 
 /* Bring in the definitions for the  */
-#define SCANNER(scanner) extern "C" scanner_t scan_ ## scanner;
-#include "bulk_extractor_scanners.h"
-#undef SCANNER
+//#define SCANNER(scanner) extern "C" scanner_t scan_ ## scanner;
+//#include "bulk_extractor_scanners.h"
+//#undef SCANNER
 
 
 #include "threadpool.hpp"
@@ -66,40 +67,43 @@ TEST_CASE("base64_forensic", "[utilities]") {
     const char *encoded="SGVsbG8gV29ybGQhCg==";
     const char *decoded="Hello World!\n";
     unsigned char output[64];
-    int result = b64_pton_forensic(encoded, strlen(encoded), output, sizeof(output));
+    size_t result = b64_pton_forensic(encoded, strlen(encoded), output, sizeof(output));
     REQUIRE( result == strlen(decoded) );
     REQUIRE( strncmp( (char *)output, decoded, strlen(decoded))==0 );
 }
 
-TEST_CASE("dig", "[utilities]") {
-}
-
-TEST_CASE("exif_reader", "[utilities]") {
-}
-
-scanner_t *my_scanners[] = {scan_json, 0};
+/* Unit test individual scanners */
+scanner_t *my_scanners[] = {scan_json, scan_vcard, 0};
 std::vector<scanner_config::scanner_command> enable_all_scanners = {
     scanner_config::scanner_command(scanner_config::scanner_command::ALL_SCANNERS,
                                     scanner_config::scanner_command::ENABLE)
 };
-TEST_CASE("scan_json1", "[scanners]") {
+TEST_CASE("scanners", "[scanners]") {
     /* Make a scanner set with a single scanner and a single command to enable all the scanners.
      */
+    base64array_initialize();
+
     const feature_recorder_set::flags_t frs_flags;
     scanner_config sc;
     sc.outdir = NamedTemporaryDirectory();
     sc.scanner_commands = enable_all_scanners;
 
+    std::cerr << "Single scanner output in " << sc.outdir << "\n";
+
     scanner_set ss(sc, frs_flags);
     ss.add_scanners(my_scanners);
     ss.apply_scanner_commands();
-    REQUIRE (ss.get_enabled_scanners().size()==1); // json
-    REQUIRE (ss.feature_file_list().size()==2); // alert & json
+    REQUIRE (ss.get_enabled_scanners().size()==2); // json & vcard
+    REQUIRE (ss.feature_file_list().size()==3); // alert & json & vcard
 
-    /* Make an sbuf */
-    auto  sbuf = new sbuf_t("hello {\"hello\": 10, \"world\": 20, \"another\": 30, \"language\": 40} world");
     ss.phase_scan();
+
+    auto sbuf = new sbuf_t("hello {\"hello\": 10, \"world\": 20, \"another\": 30, \"language\": 40} world");
     ss.process_sbuf(sbuf);
+
+    sbuf = sbuf_t::map_file( "tests/john_jakes.vcf" );
+    ss.process_sbuf(sbuf);
+
     ss.shutdown();
 
     /* Read the output */
@@ -202,19 +206,6 @@ TEST_CASE("scan_base64", "[scanners]" ){
     std::cerr << "sbuf3: " << *sbuf3 << "\n";
 }
 
-TEST_CASE("scan_vcard", "[scanners]" ) {
-#if 0
-    scanner_config sc;
-    sc.outdir = NamedTemporaryDirectory();
-    sc.add_scanner(scan_vcard);
-#endif
-
-    base64array_initialize();
-    auto sbuf = sbuf_t::map_file( "tests/john_jakes.vcf" );
-
-TODO: Call scan_vcards and see if it can find them.
-}
-
 struct Check {
     Check(std::string fname_, Feature feature_):
         fname(fname_),
@@ -244,7 +235,7 @@ void validate(std::string image_fname, std::vector<Check> &expected)
     ss.shutdown();
     xreport->close();
 
-    for(int i=0; i<expected.size(); i++){
+    for(size_t i=0; i<expected.size(); i++){
         std::filesystem::path fname  = sc.outdir / expected[i].fname;
         std::cerr << "checking " << i << " in " << fname.string() << "\n";
         std::string line;
