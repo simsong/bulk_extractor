@@ -794,17 +794,16 @@ extern "C"
 void scan_elf (scanner_params &sp)
 {
     sp.check_version();
-    std::string xml;
 
     if (sp.phase == scanner_params::PHASE_INIT){
-        sp.info->name   = "elf";
-	sp.info->author = "Alex Eubanks";
-        sp.info->feature_names.insert("elf");
+        auto info = new scanner_params::scanner_info(scan_elf,"elf");
+	info->author = "Alex Eubanks";
+        info->feature_defs.push_back( feature_recorder_def("elf"));
         return;
     }
     if ( sp.phase == scanner_params::PHASE_SCAN){
 
-	feature_recorder *f = sp.fs.get_name("elf");
+	feature_recorder &f = sp.ss.named_feature_recorder("elf");
 
 	for (size_t pos = 0; pos < sp.sbuf.bufsize; pos++) {
 	    // Look for the magic number
@@ -815,11 +814,11 @@ void scan_elf (scanner_params &sp)
 		 && (sp.sbuf[pos+3] == 'F')) {
 
 		const sbuf_t data(sp.sbuf + pos);
-		xml = scan_elf_verify(data);
+                std::string xml = scan_elf_verify(data);
 		if (xml != "") {
                     sbuf_t hdata(data,0,4096);
                     std::string hexhash = f->fs.hasher.func(hdata.buf, hdata.bufsize);
-		    f->write(data.pos0, hexhash,xml);
+		    f.write(data.pos0, hexhash,xml);
 		}
 	    }
 	}

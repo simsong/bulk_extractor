@@ -75,9 +75,8 @@ void scan_ntfsmft(scanner_params &sp)
         sp.fs.get_name(FEATURE_FILE_NAME)->set_carve_mode(static_cast<feature_recorder::carve_mode_t>(ntfsmft_carve_mode));
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
-        const sbuf_t &sbuf = sp.sbuf;
-        feature_recorder_set &fs = sp.fs;
-        feature_recorder *ntfsmft_recorder = fs.get_name(FEATURE_FILE_NAME);
+        const sbuf_t &sbuf = (*sp.sbuf);
+        feature_recorder &ntfsmft_recorder = sp.ss.named_feature_recorder(FEATURE_FILE_NAME);
 
         // search for NTFS MFT record in the sbuf
         size_t offset = 0;

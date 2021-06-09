@@ -380,11 +380,11 @@ namespace email {
   }
 
   void Scanner::initScan(const scanner_params& sp) {
-    RFC822_Recorder = sp.fs.get_name("rfc822");
-    Email_Recorder = sp.fs.get_name("email");
-    Domain_Recorder = sp.fs.get_name("domain");
-    Ether_Recorder = sp.fs.get_name("ether");
-    URL_Recorder = sp.fs.get_name("url");
+    RFC822_Recorder = sp.ss.named_feature_recorder("rfc822");
+    Email_Recorder = sp.ss.named_feature_recorder("email");
+    Domain_Recorder = sp.ss.named_feature_recorder("domain");
+    Ether_Recorder = sp.ss.named_feature_recorder("ether");
+    URL_Recorder = sp.ss.named_feature_recorder("url");
   }
 
   void Scanner::rfc822HitHandler(const LG_SearchHit& hit, const scanner_params& sp) {

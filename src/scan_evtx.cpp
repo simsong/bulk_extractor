@@ -162,8 +162,7 @@ void scan_evtx(scanner_params &sp)
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
         const sbuf_t &sbuf = sp.sbuf;
-        feature_recorder_set &fs = sp.fs;
-        feature_recorder *evtx_recorder = fs.get_name(FEATURE_FILE_NAME);
+        feature_recorder &evtx_recorder = sp.ss.named_feature_recorder(FEATURE_FILE_NAME);
 
         // search for EVTX chunk in the sbuf
         size_t offset = 0;

@@ -100,7 +100,7 @@ void scan_utmp(scanner_params &sp)
     if(sp.phase==scanner_params::PHASE_SCAN){
         const sbuf_t &sbuf = sp.sbuf;
         feature_recorder_set &fs = sp.fs;
-        feature_recorder *utmp_recorder = fs.get_name(FEATURE_FILE_NAME);
+        feature_recorder &utmp_recorder = sp.ss.named_feature_recorder(FEATURE_FILE_NAME);
 
         size_t offset = 0;
         size_t stop = sbuf.pagesize;

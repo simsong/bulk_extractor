@@ -71,7 +71,7 @@ void scan_httplogs(scanner_params &sp)
     if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;
 
     if(sp.phase==scanner_params::PHASE_SCAN){
-	feature_recorder *httplogs_recorder = sp.fs.get_name("httplogs");
+	feature_recorder &httplogs_recorder = sp.ss.named_feature_recorder("httplogs");
 
         for (size_t p = 0; p < sp.sbuf.pagesize; p++) {
             /* We support the following methods: GET, HEAD, POST, PUT, DELETE, TRACE, OPTIONS, CONNECT;

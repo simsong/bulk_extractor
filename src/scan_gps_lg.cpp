@@ -70,7 +70,7 @@ namespace gps {
     virtual void init(const scanner_params& sp);
     virtual void initScan(const scanner_params&);
 
-    feature_recorder* Recorder;
+      feature_recorder* Recorder {};
 
     void trkptHandler(const LG_SearchHit& hit, const scanner_params& sp);
 
@@ -158,7 +158,7 @@ namespace gps {
   }
 
   void Scanner::initScan(const scanner_params& sp) {
-    Recorder = sp.fs.get_name("gps");
+    Recorder = &sp.ss.named_feature_recorder("gps");
   }
 
   void Scanner::clear(const scanner_params& sp, size_t pos) {

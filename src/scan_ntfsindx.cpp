@@ -80,20 +80,20 @@ void scan_ntfsindx(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-        sp.info->name            = "ntfsindx";
-        sp.info->author          = "Teru Yamazaki";
-        sp.info->description     = "Scans for NTFS $INDEX_ALLOCATION INDX record";
-        sp.info->scanner_version = "1.0";
-        sp.info->feature_names.insert(FEATURE_FILE_NAME);
+        auto info = new scanner_params::scanner_info(scan_ntfsindx,"ntfsindx");
+        info->author          = "Teru Yamazaki";
+        info->description     = "Scans for NTFS $INDEX_ALLOCATION INDX record";
+        info->scanner_version = "1.1";
+        info->feature_names.push_back( feature_recorder_def(FEATURE_FILE_NAME));
+        sp.register_info(info);
         return;
     }
     if(sp.phase==scanner_params::PHASE_INIT){
-        sp.fs.get_name(FEATURE_FILE_NAME)->set_carve_mode(static_cast<feature_recorder::carve_mode_t>(ntfsindx_carve_mode));
+        sp.ss.get_name(FEATURE_FILE_NAME)->set_carve_mode(static_cast<feature_recorder::carve_mode_t>(ntfsindx_carve_mode));
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
-        const sbuf_t &sbuf = sp.sbuf;
-        feature_recorder_set &fs = sp.fs;
-        feature_recorder *ntfsindx_recorder = fs.get_name(FEATURE_FILE_NAME);
+        const sbuf_t &sbuf = *(sp.sbuf);
+        feature_recorder &ntfsindx_recorder = sp.ss.named_feature_recorder(FEATURE_FILE_NAME);
 
         // search for NTFS $INDEX_ALLOCATION INDX record in the sbuf
         size_t offset = 0;

@@ -62,6 +62,7 @@ scanners_builtin = \
 	scan_aes.cpp \
 	scan_base64.cpp \
 	scan_ccns2.cpp scan_ccns2.h \
+	scan_elf.cpp \
 	scan_exif.cpp exif_reader.h exif_reader.cpp exif_entry.cpp\
 	scan_exiv2.cpp \
 	scan_gzip.cpp \
@@ -74,7 +75,6 @@ scanners_builtin = \
 	scan_zip.cpp
 
 scanners_builtin_broken = \
-	scan_elf.cpp \
 	scan_evtx.cpp \
 	scan_facebook.cpp \
 	scan_find.cpp \

@@ -627,8 +627,8 @@ void scan_rar(scanner_params &sp)
 	const sbuf_t &sbuf = sp.sbuf;
 	const pos0_t &pos0 = sp.sbuf.pos0;
 	feature_recorder_set &fs = sp.fs;
-	feature_recorder *rar_recorder = fs.get_name(RAR_RECORDER_NAME);
-	feature_recorder *unrar_recorder = fs.get_name(UNRAR_RECORDER_NAME);
+	feature_recorder &rar_recorder   = sp.ss.named_feature_recorder(RAR_RECORDER_NAME);
+	feature_recorder &unrar_recorder = sp.ss.named_feature_recorder(UNRAR_RECORDER_NAME);
 
         RarComponentInfo component;
         RarVolumeInfo volume;

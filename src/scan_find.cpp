@@ -70,7 +70,7 @@ void scan_find(scanner_params &sp)
         /* The current regex library treats \0 as the end of a string.
          * So we make a copy of the current buffer to search that's one bigger, and the copy has a \0 at the end.
          */
-        feature_recorder *f = sp.fs.get_name("find");
+        feature_recorder &f = sp.ss.named_feature_recorder("find");
 
         managed_malloc<u_char> tmpbuf(sp.sbuf.bufsize+1);
         if(!tmpbuf.buf) return;				     // no memory for searching

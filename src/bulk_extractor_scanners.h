@@ -21,7 +21,7 @@ SCANNER(gps)
 /* Regular scanners */
 
 SCANNER(base64)
-//SCANNER(elf)
+SCANNER(elf)
 //SCANNER(exif)
 #ifdef HAVE_EXIV2
 SCANNER(exiv2)

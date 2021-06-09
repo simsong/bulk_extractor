@@ -54,8 +54,7 @@ void scan_sqlite(scanner_params &sp)
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
 	const sbuf_t &sbuf = sp.sbuf;
-	feature_recorder_set &fs = sp.fs;
-	feature_recorder *sqlite_recorder = fs.get_name(FEATURE_FILE_NAME);
+	feature_recorder &sqlite_recorder = sp.ss.named_feature_recorder(FEATURE_FILE_NAME);
 
 	// Search for BEGIN:SQLITE\r in the sbuf
 	// we could do this with a loop, or with

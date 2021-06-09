@@ -89,9 +89,8 @@ void scan_ntfsusn(scanner_params &sp)
         sp.fs.get_name(FEATURE_FILE_NAME)->set_carve_mode(static_cast<feature_recorder::carve_mode_t>(ntfsusn_carve_mode));
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
-        const sbuf_t &sbuf = sp.sbuf;
-        feature_recorder_set &fs = sp.fs;
-        feature_recorder *ntfsusn_recorder = fs.get_name(FEATURE_FILE_NAME);
+        const sbuf_t &sbuf = *(sp.sbuf);
+        feature_recorder &ntfsusn_recorder = sp.ss.named_feature_recorder(FEATURE_FILE_NAME);
 
         size_t offset = 0;
         size_t stop = sbuf.pagesize;
@@ -108,16 +107,16 @@ void scan_ntfsusn(scanner_params &sp)
             if (record_size % 8 != 0) { // illegal size
                 uint8_t padding;
                 padding = 8 - (record_size % 8);
-                ntfsusn_recorder->carve_records(sbuf,offset,record_size+padding,"UsnJrnl-J_corrupted");
+                ntfsusn_recorder.carve_records(sbuf,offset,record_size+padding,"UsnJrnl-J_corrupted");
                 offset += record_size+padding;
                 continue;
             }
             total_record_size = record_size;
             if (offset+total_record_size > stop) {
                 if(offset+total_record_size < sbuf.bufsize)
-                    ntfsusn_recorder->carve_records(sbuf,offset,total_record_size,"UsnJrnl-J");
+                    ntfsusn_recorder.carve_records(sbuf,offset,total_record_size,"UsnJrnl-J");
                 else
-                    ntfsusn_recorder->carve_records(sbuf,offset,total_record_size,"UsnJrnl-J_corrupted");
+                    ntfsusn_recorder.carve_records(sbuf,offset,total_record_size,"UsnJrnl-J_corrupted");
                 break;
             }
             // found one record then also checks following valid records and writes all at once
@@ -152,7 +151,7 @@ void scan_ntfsusn(scanner_params &sp)
                     }
                 }
             }
-            ntfsusn_recorder->carve_records(sbuf,offset,total_record_size,"UsnJrnl-J");
+            ntfsusn_recorder.carve_records(sbuf,offset,total_record_size,"UsnJrnl-J");
             offset += total_record_size;
         }
     }

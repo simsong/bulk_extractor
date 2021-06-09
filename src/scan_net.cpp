@@ -607,20 +607,15 @@ private:
     }
 public:
     //typedef std::tr1::unordered_set<const void *> packetset;
-    feature_recorder_set &fs;
     //packetset ps;
-    feature_recorder *ip_recorder;
-    feature_recorder *tcp_recorder;
-    feature_recorder *ether_recorder;
+    feature_recorder &ip_recorder;
+    feature_recorder &tcp_recorder;
+    feature_recorder &ether_recorder;
 
     packet_carver(const scanner_params &sp):
-	fs(sp.fs),/*ps(),*/ip_recorder(0),tcp_recorder(0),ether_recorder(0){
-	ip_recorder = fs.get_name("ip");
-	ether_recorder = fs.get_name("ether");
-	if(carve_net_memory){
-            tcp_recorder = fs.get_name("tcp");
-        }
-    }
+        ip_recorder(sp.ss.named_feature_recorder("ip")),
+        tcp_recorder(sp.ss.named_feature_recorder("tcp")),
+        ether_recorder(sp.ss.named_feature_recorder("ether")){ }
 
 private:
     /*
