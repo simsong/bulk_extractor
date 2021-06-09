@@ -112,7 +112,6 @@ public:
 
 
 #if 0
-I'm not sure what this is for?
 
 class callback_feature_recorder: public feature_recorder {
     // neither copying nor assignment are implemented

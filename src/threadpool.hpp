@@ -147,10 +147,10 @@ private:
     std::atomic<bool> m_stop{ false };
     std::atomic<std::size_t> m_active{ 0 };
 
-    std::condition_variable m_notifier;
-    std::mutex m_mutex;
+    std::condition_variable m_notifier {};
+    std::mutex m_mutex {};
 
-    std::vector<std::thread> m_workers;
-    std::queue<task_type> m_tasks;
+    std::vector<std::thread> m_workers {};
+    std::queue<task_type> m_tasks {};
 };
 #endif

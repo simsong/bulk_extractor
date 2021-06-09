@@ -22,6 +22,7 @@
 #include "image_process.h"
 #include "base64_forensic.h"
 #include "phase1.h"
+
 #include "bulk_extractor_scanners.h"
 #include "scan_base64.h"
 #include "scan_vcard.h"
@@ -37,9 +38,9 @@
 //#include "scan_ccns2.h"
 
 /* Bring in the definitions for the  */
-#define SCANNER(scanner) extern "C" scanner_t scan_ ## scanner;
-#include "bulk_extractor_scanners.h"
-#undef SCANNER
+//#define SCANNER(scanner) extern "C" scanner_t scan_ ## scanner;
+//#include "bulk_extractor_scanners.h"
+//#undef SCANNER
 
 
 #include "threadpool.hpp"
@@ -66,12 +67,9 @@ TEST_CASE("base64_forensic", "[utilities]") {
     const char *encoded="SGVsbG8gV29ybGQhCg==";
     const char *decoded="Hello World!\n";
     unsigned char output[64];
-    int result = b64_pton_forensic(encoded, strlen(encoded), output, sizeof(output));
+    size_t result = b64_pton_forensic(encoded, strlen(encoded), output, sizeof(output));
     REQUIRE( result == strlen(decoded) );
     REQUIRE( strncmp( (char *)output, decoded, strlen(decoded))==0 );
-}
-
-TEST_CASE("dig", "[utilities]") {
 }
 
 TEST_CASE("exif_reader", "[utilities]") {
@@ -83,15 +81,20 @@ std::vector<scanner_config::scanner_command> enable_all_scanners = {
                                     scanner_config::scanner_command::ENABLE)
 };
 
+
 std::filesystem::path test_scanner(scanner_t scanner, sbuf_t *sbuf)
 {
     const feature_recorder_set::flags_t frs_flags;
     scanner_config sc;
     sc.outdir           = NamedTemporaryDirectory();
     sc.scanner_commands = enable_all_scanners;
+
+    std::cerr << "Single scanner output in " << sc.outdir << "\n";
+
     scanner_set ss(sc, frs_flags);
     ss.add_scanner(scanner);
     ss.apply_scanner_commands();
+
     REQUIRE (ss.get_enabled_scanners().size()==1); // the one scanner
     std::cerr << "output in " << sc.outdir << " for " << ss.get_enabled_scanners()[0] << "\n";
     ss.phase_scan();
@@ -107,7 +110,7 @@ TEST_CASE("scan_json1", "[scanners]") {
     auto outdir = test_scanner(scan_json, sbuf1);
 
     /* Read the output */
-    std::vector<std::string> json_txt = getLines( outdir / "json.txt" );
+    auto json_txt = getLines( outdir / "json.txt" );
     auto last = json_txt[json_txt.size()-1];
     REQUIRE(last.substr( last.size() - 40) == "6ee8c369e2f111caa9610afc99d7fae877e616c9");
 }
@@ -116,7 +119,7 @@ TEST_CASE("scan_vcard", "[scanners]") {
     /* Make a scanner set with a single scanner and a single command to enable all the scanners.
      */
     auto sbuf2 = sbuf_t::map_file( "tests/john_jakes.vcf" );
-    //auto outdir = test_scanner(scan_vcard, sbuf2);
+    auto outdir = test_scanner(scan_vcard, sbuf2);
 
     /* Read the output */
 }
@@ -215,7 +218,6 @@ TEST_CASE("scan_base64", "[scanners]" ){
     std::cerr << "sbuf3: " << *sbuf3 << "\n";
 }
 
-
 struct Check {
     Check(std::string fname_, Feature feature_):
         fname(fname_),
@@ -247,7 +249,7 @@ void validate(std::string image_fname, std::vector<Check> &expected)
     ss.shutdown();
     xreport->close();
 
-    for(int i=0; i<expected.size(); i++){
+    for(size_t i=0; i<expected.size(); i++){
         std::filesystem::path fname  = sc.outdir / expected[i].fname;
         std::cerr << "---- " << i << " -- " << fname.string() << " ----\n";
         std::string line;

@@ -422,7 +422,7 @@ void scan_accts( struct scanner_params &sp )
         try {
             yyaccts_lex(scanner);
         }
-        catch (sbuf_scanner::sbuf_scanner_exception e ) {
+        catch (sbuf_scanner::sbuf_scanner_exception &e ) {
             std::cerr << "Scanner " << SCANNER << "Exception " << e.what() << " processing " << sp.sbuf->pos0 << "\n";
         }
 
