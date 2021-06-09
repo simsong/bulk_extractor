@@ -85,12 +85,13 @@ void scan_utmp(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-        sp.info->name            = "utmp";
-        sp.info->author          = "Teru Yamazaki";
-        sp.info->description     = "Scans for utmp record";
-        sp.info->scanner_version = "1.0";
-        sp.info->feature_names.insert(FEATURE_FILE_NAME);
-        //        sp.info->get_config("utmp_carve_mode",&utmp_carve_mode,"0=carve none; 1=carve encoded; 2=carve all");
+        auto info = new scanner_params::scanner_info( scan_utmp, "utmp" );
+        info->author          = "Teru Yamazaki";
+        info->description     = "Scans for utmp record";
+        info->scanner_version = "1.1";
+        info->feature_names.insert(FEATURE_FILE_NAME);
+        sp.ss.sc.get_config("utmp_carve_mode",&utmp_carve_mode,"0=carve none; 1=carve encoded; 2=carve all");
+        sp.register_info(info)
         return;
     }
     if(sp.phase==scanner_params::PHASE_INIT){

@@ -76,12 +76,13 @@ void scan_ntfsusn(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-        sp.info->name            = "ntfsusn";
+        auto info = new scanner_params::scanner_info(scan_ntfsusn,"ntfsusn");
         sp.info->author          = "Teru Yamazaki";
         sp.info->description     = "Scans for USN_RECORD v2/v4 record";
-        sp.info->scanner_version = "1.0";
+        sp.info->scanner_version = "1.1";
         sp.info->feature_names.insert(FEATURE_FILE_NAME);
-        //        sp.info->get_config("ntfsusn_carve_mode",&ntfsusn_carve_mode,"0=carve none; 1=carve encoded; 2=carve all");
+        sp.sp.ss.sc.get_config("ntfsusn_carve_mode",&ntfsusn_carve_mode,"0=carve none; 1=carve encoded; 2=carve all");
+        sp.register_info(info)
         return;
     }
     if(sp.phase==scanner_params::PHASE_INIT){

@@ -72,15 +72,15 @@ namespace gps {
 
     feature_recorder* Recorder;
 
-    void trkptHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+    void trkptHandler(const LG_SearchHit& hit, const scanner_params& sp);
 
-    void eleHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+    void eleHandler(const LG_SearchHit& hit, const scanner_params& sp);
 
-    void timeHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+    void timeHandler(const LG_SearchHit& hit, const scanner_params& sp);
 
-    void speedHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+    void speedHandler(const LG_SearchHit& hit, const scanner_params& sp);
 
-    void courseHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+    void courseHandler(const LG_SearchHit& hit, const scanner_params& sp);
 
   private:
     Scanner(const Scanner& s): PatternScanner(s), Recorder(s.Recorder), Lat(s.Lat), Lon(s.Lon), Ele(s.Ele), Time(s.Time), Speed(s.Speed), Course(s.Course) {}
@@ -179,25 +179,25 @@ namespace gps {
     }
   }
 
-  void Scanner::trkptHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+  void Scanner::trkptHandler(const LG_SearchHit& hit, const scanner_params& sp) {
     clear(sp, hit.Start);
     Lat = get_quoted_attrib(reinterpret_cast<const char*>(sp.sbuf.buf), "lat");
     Lon = get_quoted_attrib(reinterpret_cast<const char*>(sp.sbuf.buf), "lon");
   }
 
-  void Scanner::eleHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+  void Scanner::eleHandler(const LG_SearchHit& hit, const scanner_params& sp) {
     Ele = get_cdata(reinterpret_cast<const char*>(sp.sbuf.buf));
   }
 
-  void Scanner::timeHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+  void Scanner::timeHandler(const LG_SearchHit& hit, const scanner_params& sp) {
     Time = get_cdata(reinterpret_cast<const char*>(sp.sbuf.buf));
   }
 
-  void Scanner::speedHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+  void Scanner::speedHandler(const LG_SearchHit& hit, const scanner_params& sp) {
     Speed = get_cdata(reinterpret_cast<const char*>(sp.sbuf.buf));
   }
 
-  void Scanner::courseHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+  void Scanner::courseHandler(const LG_SearchHit& hit, const scanner_params& sp) {
     Course = get_cdata(reinterpret_cast<const char*>(sp.sbuf.buf));
   }
 

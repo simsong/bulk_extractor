@@ -15,6 +15,7 @@
 
 #include "be13_api/scanner_params.h"
 #include "image_process.h"
+#include "managed_malloc.h"
 
 
 /* Debug by setting DEBUG or by setting pdf_dump at runtime */
@@ -109,10 +110,9 @@ static void pdf_extract_text(std::string &tbuf,const unsigned char *buf,size_t b
     }
 }
 
-inline int analyze_stream(const scanner_params &sp,const recursion_control_block &rcb,
-                          size_t stream_tag,size_t stream_start,size_t endstream)
+inline int analyze_stream(const scanner_params &sp, size_t stream_tag,size_t stream_start,size_t endstream)
 {
-    const sbuf_t &sbuf = sp.sbuf;
+    const sbuf_t &sbuf = (*sp.sbuf);
     size_t compr_size = endstream-stream_start;
     size_t uncompr_size = compr_size * 8;       // good assumption for expansion
     managed_malloc<Bytef>decomp(uncompr_size);
@@ -139,10 +139,11 @@ inline int analyze_stream(const scanner_params &sp,const recursion_control_block
                     std::string text;
                     pdf_extract_text(text,decomp.buf,zs.total_out);
                     if(text.size()>0){
-                        pos0_t pos0_pdf    = (sbuf.pos0 + stream_tag) + rcb.partName;
-                        const  sbuf_t sbuf_new(pos0_pdf, reinterpret_cast<const uint8_t *>(&text[0]),
-                                               text.size(),text.size(),0, false);
-                        (*rcb.callback)(scanner_params(sp,sbuf_new));
+                        pos0_t pos0_pdf    = (sbuf.pos0 + stream_tag) + "PDF";//rcb.partName;
+                        //const  sbuf_t sbuf_new(pos0_pdf, reinterpret_cast<const uint8_t *>(&text[0]), text.size(),text.size(),0, false);
+                        //(*rcb.callback)(scanner_params(sp,sbuf_new));
+                        auto *nsbuf = new sbuf_t(pos0_pdf, reinterpret_cast<const uint8_t *>(&text[0]), text.size(),text.size(), 0, false);
+                        sp.recurse(nsbuf);
                     }
                     if(pdf_dump) std::cout << "Extracted Text:\n" << text << "\n";
                 }
@@ -162,12 +163,14 @@ void scan_pdf(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-        sp.info->name           = "pdf";
-        sp.info->author         = "Simson Garfinkel";
-        sp.info->description    = "Extracts text from PDF files";
-        sp.info->scanner_version= "1.0";
-        sp.info->flags          = scanner_info::SCANNER_RECURSE;
-        sp.info->get_config("pdf_dump",&pdf_dump,"Dump the contents of PDF buffers");
+        auto info = new scanner_params::scanner_info( scan_pdf, "pdf" );
+        //sp.info->name           = "pdf";
+        info->author         = "Simson Garfinkel";
+        info->description    = "Extracts text from PDF files";
+        info->scanner_version= "1.0";
+        //info->flags          = scanner_info::SCANNER_RECURSE;
+        sp.ss.sc.get_config("pdf_dump",&pdf_dump,"Dump the contents of PDF buffers");
+        sp.register_info(info);
 	return;	/* No features recorded */
     }
     if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;
@@ -176,7 +179,7 @@ void scan_pdf(scanner_params &sp)
 #ifdef DEBUG
         pdf_dump = true;
 #endif
-	const sbuf_t &sbuf = sp.sbuf;
+	const sbuf_t &sbuf = (*sp.sbuf);
 
 	/* Look for signature for the beginning of a PDF stream */
 	for(size_t loc=0;loc+15<sbuf.pagesize;loc++){
@@ -204,7 +207,7 @@ void scan_pdf(scanner_params &sp)
                 loc = nextstream - 1;
                 continue;
             }
-            if(analyze_stream(sp,rcb,stream_tag,stream_start,endstream)==-1){
+            if(analyze_stream(sp,stream_tag,stream_start,endstream)==-1){
                 return;
             }
             loc=endstream+9;

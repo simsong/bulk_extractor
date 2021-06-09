@@ -187,7 +187,7 @@ struct HitData {
   LightgrepController* lgc;
   const vector<PatternScanner*>* scannerTable;
   const scanner_params* sp;
-  const recursion_control_block* rcb;
+    //const recursion_control_block* rcb;
 };
 
 void gotHit(void* userData, const LG_SearchHit* hit) {

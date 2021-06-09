@@ -478,10 +478,10 @@ void scan_ntfsdirs(const sbuf_t &sbuf,feature_recorder *wrecorder)
 extern "C"
 void scan_windirs(scanner_params &sp)
 {
-#if 0
     std::string myString;
-    sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
+        auto info = new scanner_params::scanner_info( scan_windirs, "windirs" );
+        sp.check_version();
 
         /* Figure out the current time */
         time_t t = time(0);
@@ -490,23 +490,23 @@ void scan_windirs(scanner_params &sp)
         gmtime_r(&t,&now);
         opt_last_year = now.tm_year + 1900 + 5; // allow up to 5 years in the future
 
-	sp.info->name		= "windirs";
-        sp.info->author         = "Simson Garfinkel and Maxim Suhanov";
-        sp.info->description    = "Scans Microsoft directory structures";
-	sp.info->flags =  scanner_info::SCANNER_DEPTH_0; // only run at top level by default
-        sp.info->scanner_version= "1.0";
-	sp.info->feature_names.insert("windirs");
+        info->author         = "Simson Garfinkel and Maxim Suhanov";
+        info->description    = "Scans Microsoft directory structures";
+	info->flags =  scanner_info::SCANNER_DEPTH_0; // only run at top level by default
+        info->scanner_version= "1.0";
+	info->feature_names.insert("windirs");
 
-        sp.info->get_config("opt_weird_file_size",&opt_weird_file_size,"Threshold for FAT32 scanner");
-        sp.info->get_config("opt_weird_file_size2",&opt_weird_file_size2,"Threshold for FAT32 scanner");
-        sp.info->get_config("opt_weird_cluster_count",&opt_weird_cluster_count,"Threshold for FAT32 scanner");
-        sp.info->get_config("opt_weird_cluster_count2",&opt_weird_cluster_count2,"Threshold for FAT32 scanner");
-        sp.info->get_config("opt_max_bits_in_attrib",&opt_max_bits_in_attrib,
+        sp.ss.sc.get_config("opt_weird_file_size",&opt_weird_file_size,"Threshold for FAT32 scanner");
+        sp.ss.sc.get_config("opt_weird_file_size2",&opt_weird_file_size2,"Threshold for FAT32 scanner");
+        sp.ss.sc.get_config("opt_weird_cluster_count",&opt_weird_cluster_count,"Threshold for FAT32 scanner");
+        sp.ss.sc.get_config("opt_weird_cluster_count2",&opt_weird_cluster_count2,"Threshold for FAT32 scanner");
+        sp.ss.sc.get_config("opt_max_bits_in_attrib",&opt_max_bits_in_attrib,
                             "Ignore FAT32 entries with more attributes set than this");
-        sp.info->get_config("opt_max_weird_count",&opt_max_weird_count,"Number of 'weird' counts to ignore a FAT32 entry");
-        sp.info->get_config("opt_last_year",&opt_last_year,"Ignore FAT32 entries with a later year than this");
+        sp.ss.sc.get_config("opt_max_weird_count",&opt_max_weird_count,"Number of 'weird' counts to ignore a FAT32 entry");
+        sp.ss.sc.get_config("opt_last_year",&opt_last_year,"Ignore FAT32 entries with a later year than this");
 
-        debug = sp.info->config->debug;
+        debug = info->config->debug;
+        sp.register_info(info);
 	return;
     }
     if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;		// no shutdown
@@ -515,5 +515,4 @@ void scan_windirs(scanner_params &sp)
 	scan_fatdirs(sp.sbuf,wrecorder);
 	scan_ntfsdirs(sp.sbuf,wrecorder);
     }
-#endif
 }

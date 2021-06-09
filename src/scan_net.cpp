@@ -1027,12 +1027,13 @@ void scan_net(scanner_params &sp)
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
 	assert(sizeof(struct be13::ip4)==20);	// we've had problems on some systems
+        auto info = new scanner_params::scanner_info(scan_net,"net");
 	sp.info->name           = "net";
         sp.info->author         = "Simson Garfinkel and Rob Beverly";
         sp.info->description    = "Scans for IP packets";
         sp.info->scanner_version= "1.0";
 
-        sp.info->get_config("carve_net_memory",&carve_net_memory,"Carve network  memory structures");
+        sp.sp.ss.sc.get_config("carve_net_memory",&carve_net_memory,"Carve network  memory structures");
 
 	sp.info->feature_names.insert("ip");
 	sp.info->feature_names.insert("ether");
@@ -1049,6 +1050,7 @@ void scan_net(scanner_params &sp)
         }
 
 	/* scan_net has its own output as well */
+        sp.register_info(info)
 	return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN){

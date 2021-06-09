@@ -51,12 +51,14 @@ void scan_msxml(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-        sp.info->name           = "msxml";
-        sp.info->author         = "Simson Garfinkel";
-        sp.info->description    = "Extracts text from Microsoft XML files";
-        sp.info->scanner_version= "1.0";
-        sp.info->flags          = scanner_info::SCANNER_RECURSE;
-        sp.info->get_config("pdf_dump",&pdf_dump,"Dump the contents of PDF buffers");
+        auto info = new scanner_params::scanner_info( scan_msxml, "msxml" );
+        //sp.info->name           = "msxml";
+        info->author         = "Simson Garfinkel";
+        info->description    = "Extracts text from Microsoft XML files";
+        info->scanner_version= "1.0";
+        info->flags          = scanner_info::SCANNER_RECURSE;
+        sp.ss.sc.get_config("pdf_dump",&pdf_dump,"Dump the contents of PDF buffers");
+        sp.register_info(info);
 	return;	/* No features recorded */
     }
     if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;

@@ -6,40 +6,42 @@
 #include "config.h"
 #include "be13_api/scanner_params.h"
 #include "utils.h"
+#include "managed_malloc.h"
 
 static uint8_t xor_mask = 255;
 extern "C"
 void scan_xor(scanner_params &sp)
 {
     sp.check_version();
-    if(sp.phase==scanner_params::PHASE_INIT) {
-	sp.info->name  = "xor";
-	sp.info->author = "Michael Shick";
-	sp.info->description = "optimistic XOR deobfuscator";
-	sp.info->flags = scanner_info::SCANNER_DISABLED | scanner_info::SCANNER_RECURSE;
-        sp.info->get_config("xor_mask",&xor_mask,"XOR mask value, in decimal");
+    if (sp.phase==scanner_params::PHASE_INIT) {
+        auto info = new scanner_params::scanner_info( scan_xor, "xor" );
+	//sp.info->name  = "xor";
+	info->author = "Michael Shick";
+	info->description = "optimistic XOR deobfuscator";
+	info->scanner_flags.default_enabled = false; // = scanner_info::SCANNER_DISABLED | scanner_info::SCANNER_RECURSE;
+        sp.ss.sc.get_config("xor_mask",&xor_mask,"XOR mask value, in decimal");
+        sp.register_info(info);
 	return;
     }
-    if(sp.phase==scanner_params::PHASE_SCAN) {
-	const sbuf_t &sbuf = sp.sbuf;
-	const pos0_t &pos0 = sp.sbuf.pos0;
+    if (sp.phase==scanner_params::PHASE_SCAN) {
+	const sbuf_t &sbuf = (*sp.sbuf);
+	const pos0_t &pos0 = sbuf.pos0;
 
-        if(xor_mask == 0x00){           // this would do nothing
+        if (xor_mask == 0x00){           // this would do nothing
             return;
         }
 
         // dodge infinite recursion by refusing to operate on an XOR'd buffer
-        if(rcb.partName == pos0.lastAddedPart()) {
+        if (pos0.lastAddedPart() == "XOR" ) {
             return;
         }
 
         // dodge running after unzip after self
         std::vector<std::string> parts = split(pos0.str(),'-');
-        if(parts.size()>4){
+        if (parts.size()>4){
             std::string parent = parts.at(parts.size()-2);
             std::string grandp = parts.at(parts.size()-4);
-            if(parent.find("ZIP") != std::string::npos &&
-               grandp == rcb.partName){
+            if (parent.find("ZIP") != std::string::npos && grandp == "XOR"){
                 return;
             }
         }
@@ -54,8 +56,10 @@ void scan_xor(scanner_params &sp)
         ss << "XOR(" << uint32_t(xor_mask) << ")";
 
         const pos0_t pos0_xor = pos0 + ss.str();
-        const sbuf_t child_sbuf(pos0_xor, dbuf.buf, sbuf.bufsize, sbuf.pagesize, 0, false);
-        scanner_params child_params(sp, child_sbuf);
-        (*rcb.callback)(child_params);    // recurse on deobfuscated buffer
+        //const sbuf_t child_sbuf(pos0_xor, dbuf.buf, sbuf.bufsize, sbuf.pagesize, 0, false);
+        //scanner_params child_params(sp, child_sbuf);
+        //(*rcb.callback)(child_params);    // recurse on deobfuscated buffer
+        auto *nsbuf = new sbuf_t(pos0_xor, dbuf.buf, sbuf.bufsize, sbuf.pagesize, 0, false);
+        sp.recurse(nsbuf);
     }
 }

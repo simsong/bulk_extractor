@@ -596,20 +596,22 @@ void scan_rar(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-	sp.info->name  = "rar";
-	sp.info->author = "Michael Shick";
+        auto info = new scanner_params::scanner_info( scan_rar, "rar" );
+	//sp.info->name  = "rar";
+	info->author = "Michael Shick";
 #ifdef USE_RAR
-	sp.info->description = "RAR volume locator and component decompresser";
-        sp.info->flags = scanner_info::SCANNER_RECURSE | scanner_info::SCANNER_RECURSE_EXPAND;
-	sp.info->feature_names.insert(RAR_RECORDER_NAME);
-	sp.info->feature_names.insert(UNRAR_RECORDER_NAME);
-        sp.info->get_config("rar_find_components",&record_components,"Search for RAR components");
-        sp.info->get_config("rar_find_volumes",&record_volumes,"Search for RAR volumes");
-        sp.info->get_config("unrar_carve_mode",&unrar_carve_mode,CARVE_MODE_DESCRIPTION);
+	info->description = "RAR volume locator and component decompresser";
+        info->flags = scanner_info::SCANNER_RECURSE | scanner_info::SCANNER_RECURSE_EXPAND;
+	info->feature_names.insert(RAR_RECORDER_NAME);
+	info->feature_names.insert(UNRAR_RECORDER_NAME);
+        sp.ss.sc.get_config("rar_find_components",&record_components,"Search for RAR components");
+        sp.ss.sc.get_config("rar_find_volumes",&record_volumes,"Search for RAR volumes");
+        sp.ss.sc.get_config("unrar_carve_mode",&unrar_carve_mode,CARVE_MODE_DESCRIPTION);
 #else
-        sp.info->description = "(disabled in configure)";
-        sp.info->flags = scanner_info::SCANNER_DISABLED | scanner_info::SCANNER_NO_USAGE | scanner_info::SCANNER_NO_ALL;
+        info->description = "(disabled in configure)";
+        info->flags = scanner_info::SCANNER_DISABLED | scanner_info::SCANNER_NO_USAGE | scanner_info::SCANNER_NO_ALL;
 #endif
+        sp.register_info(info);
 	return;
     }
 #ifdef USE_RAR

@@ -159,43 +159,43 @@ namespace accts {
     feature_recorder* PII_Recorder;
     feature_recorder* SIN_Recorder;
 
-    void ccnHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+    void ccnHitHandler(const LG_SearchHit& hit, const scanner_params& sp);
 
-    void ccnUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+    void ccnUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp);
 
-    void ccnTrack2HitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+    void ccnTrack2HitHandler(const LG_SearchHit& hit, const scanner_params& sp);
 
-    void ccnTrack2UTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+    void ccnTrack2UTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp);
 
-    void telephoneHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+    void telephoneHitHandler(const LG_SearchHit& hit, const scanner_params& sp);
 
-    void telephoneUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+    void telephoneUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp);
 
-    void telephoneTrailingCtxHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+    void telephoneTrailingCtxHitHandler(const LG_SearchHit& hit, const scanner_params& sp);
 
-    void telephoneTrailingCtxUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+    void telephoneTrailingCtxUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp);
 
-    void validatedTelephoneHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+    void validatedTelephoneHitHandler(const LG_SearchHit& hit, const scanner_params& sp);
 
-    void validatedTelephoneUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+    void validatedTelephoneUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp);
 
-    void bitlockerHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+    void bitlockerHitHandler(const LG_SearchHit& hit, const scanner_params& sp);
 
-    void bitlockerUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+    void bitlockerUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp);
 
-    void piiHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+    void piiHitHandler(const LG_SearchHit& hit, const scanner_params& sp);
 
-    void piiUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+    void piiUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp);
 
-    void sinHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+    void sinHitHandler(const LG_SearchHit& hit, const scanner_params& sp);
 
-    void sinUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+    void sinUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp);
 
-    void sinHitHandler2(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+    void sinHitHandler2(const LG_SearchHit& hit, const scanner_params& sp);
 
-    void sinUTF16LEHitHandler2(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+    void sinUTF16LEHitHandler2(const LG_SearchHit& hit, const scanner_params& sp);
 
-    void dateHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+    void dateHitHandler(const LG_SearchHit& hit, const scanner_params& sp);
 
   private:
     Scanner(const Scanner& s):
@@ -599,7 +599,7 @@ namespace accts {
     SIN_Recorder = sp.fs.named_feature_recorder("sin");
   }
 
-  void Scanner::ccnHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+  void Scanner::ccnHitHandler(const LG_SearchHit& hit, const scanner_params& sp) {
     const size_t pos = hit.Start + 1;
     const size_t len = hit.End - (*(sp.sbuf.buf+hit.End-2) == '.' ? 2 : 1) - pos;
 
@@ -608,7 +608,7 @@ namespace accts {
     }
   }
 
-  void Scanner::ccnUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+  void Scanner::ccnUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp) {
     const size_t pos = hit.Start + (*(sp.sbuf.buf+hit.Start+1) == '\0' ? 2 : 1);    const size_t len = hit.End - pos;
 
     const string ascii(low_utf16le_to_ascii(sp.sbuf.buf+pos, len));
@@ -617,7 +617,7 @@ namespace accts {
     }
   }
 
-  void Scanner::ccnTrack2HitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+  void Scanner::ccnTrack2HitHandler(const LG_SearchHit& hit, const scanner_params& sp) {
     const size_t pos = hit.Start + 1;
     const size_t len = hit.End - pos;
 
@@ -626,7 +626,7 @@ namespace accts {
     }
   }
 
-  void Scanner::ccnTrack2UTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+  void Scanner::ccnTrack2UTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp) {
     const size_t pos = hit.Start + (*(sp.sbuf.buf+hit.Start+1) == '\0' ? 2 : 1);
     const size_t len = hit.End - pos;
 
@@ -636,18 +636,18 @@ namespace accts {
     }
   }
 
-  void Scanner::telephoneHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+  void Scanner::telephoneHitHandler(const LG_SearchHit& hit, const scanner_params& sp) {
     Telephone_Recorder->write_buf(sp.sbuf, hit.Start+1, hit.End-hit.Start-1);
   }
 
-  void Scanner::telephoneUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+  void Scanner::telephoneUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp) {
     const size_t start = hit.Start + (*(sp.sbuf.buf + hit.Start + 1) == '\0' ? 2 : 1);
     const size_t len = hit.End - start;
 
     Telephone_Recorder->write_buf(sp.sbuf, start, len);
   }
 
-  void Scanner::telephoneTrailingCtxHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+  void Scanner::telephoneTrailingCtxHitHandler(const LG_SearchHit& hit, const scanner_params& sp) {
     Telephone_Recorder->write_buf(
       sp.sbuf,
       hit.Start+1,
@@ -655,7 +655,7 @@ namespace accts {
     );
   }
 
-  void Scanner::telephoneTrailingCtxUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+  void Scanner::telephoneTrailingCtxUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp) {
     Telephone_Recorder->write_buf(
       sp.sbuf,
       hit.Start+1,
@@ -663,7 +663,7 @@ namespace accts {
     );
   }
 
-  void Scanner::validatedTelephoneHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+  void Scanner::validatedTelephoneHitHandler(const LG_SearchHit& hit, const scanner_params& sp) {
     const size_t pos = hit.Start + 1;
     const size_t len = hit.End - (*(sp.sbuf.buf+hit.End-2) == '.' ? 2 : 1) - pos;
     if (valid_phone(sp.sbuf, pos, len)){
@@ -673,7 +673,7 @@ namespace accts {
     }
   }
 
-  void Scanner::validatedTelephoneUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+  void Scanner::validatedTelephoneUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp) {
     const size_t pos = hit.Start + 1;
     const size_t len = hit.End - (*(sp.sbuf.buf+hit.End-2) == '.' ? 2 : 1) - pos;
     if (valid_phone_utf16le(sp.sbuf, pos, len)){
@@ -681,60 +681,60 @@ namespace accts {
     }
   }
 
-  void Scanner::bitlockerHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+  void Scanner::bitlockerHitHandler(const LG_SearchHit& hit, const scanner_params& sp) {
     Alert_Recorder->write(sp.sbuf.pos0 + hit.Start + 1, reinterpret_cast<const char*>(sp.sbuf.buf) + 1, "Possible BitLocker Recovery Key (ASCII).");
   }
 
-  void Scanner::bitlockerUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+  void Scanner::bitlockerUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp) {
     const size_t pos = hit.Start + (*(sp.sbuf.buf + hit.Start + 1) == '\0' ? 2 : 1);
     const size_t len = (hit.End - 1) - pos;
 
     Alert_Recorder->write(sp.sbuf.pos0 + pos, low_utf16le_to_ascii(sp.sbuf.buf + pos, len), "Possible BitLocker Recovery Key (UTF-16).");
   }
 
-  void Scanner::piiHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+  void Scanner::piiHitHandler(const LG_SearchHit& hit, const scanner_params& sp) {
     PII_Recorder->write_buf(
       sp.sbuf, hit.Start,
       hit.End - (*(sp.sbuf.buf+hit.End-2) == '.' ? 2 : 1) - hit.Start
     );
   }
 
-  void Scanner::piiUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+  void Scanner::piiUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp) {
     PII_Recorder->write_buf(
       sp.sbuf, hit.Start,
       hit.End - (*(sp.sbuf.buf+hit.End-3) == '.' ? 3 : 1) - hit.Start
     );
   }
 
-  void Scanner::sinHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+  void Scanner::sinHitHandler(const LG_SearchHit& hit, const scanner_params& sp) {
     SIN_Recorder->write_buf(
       sp.sbuf, hit.Start,
       hit.End - (*(sp.sbuf.buf+hit.End-2) == '.' ? 2 : 1) - hit.Start
     );
   }
 
-  void Scanner::sinUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+  void Scanner::sinUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp) {
     SIN_Recorder->write_buf(
       sp.sbuf, hit.Start,
       hit.End - (*(sp.sbuf.buf+hit.End-3) == '.' ? 3 : 1) - hit.Start
     );
   }
 
-  void Scanner::sinHitHandler2(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+  void Scanner::sinHitHandler2(const LG_SearchHit& hit, const scanner_params& sp) {
     SIN_Recorder->write_buf(
       sp.sbuf, hit.Start+1,
       hit.End - (*(sp.sbuf.buf+hit.End-2) == '.' ? 2 : 1) - hit.Start
     );
   }
 
-  void Scanner::sinUTF16LEHitHandler2(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+  void Scanner::sinUTF16LEHitHandler2(const LG_SearchHit& hit, const scanner_params& sp) {
     SIN_Recorder->write_buf(
       sp.sbuf, hit.Start+1,
       hit.End - (*(sp.sbuf.buf+hit.End-3) == '.' ? 3 : 1) - hit.Start
     );
   }
 
-  void Scanner::dateHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+  void Scanner::dateHitHandler(const LG_SearchHit& hit, const scanner_params& sp) {
     PII_Recorder->write_buf(sp.sbuf, hit.Start, hit.End - hit.Start);
   }
 

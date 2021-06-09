@@ -1023,14 +1023,15 @@ void scan_winpe (scanner_params &sp)
     std::string xml;
 
     if (sp.phase == scanner_params::PHASE_INIT){
-        sp.info->name            = "winpe";
-        sp.info->description     = "Scan for Windows PE headers";
-        sp.info->scanner_version = "1.0.0";
-        sp.info->feature_names.insert("winpe");
-        sp.info->feature_names.insert("winpe_carved");
-        sp.info->get_config("winpe_carve_mode", &winpe_carve_mode,
+        auto info = new scanner_params::scanner_info( scan_winpe, "winpe" );
+        info->description     = "Scan for Windows PE headers";
+        info->scanner_version = "1.1.0";
+        info->feature_names.insert("winpe");
+        info->feature_names.insert("winpe_carved");
+        sp.ss.sc.get_config("winpe_carve_mode", &winpe_carve_mode,
                             "0=carve none; 1=carve encoded; 2=carve all");
 
+        sp.register_info(info);
         return;
     }
 

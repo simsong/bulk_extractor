@@ -57,11 +57,14 @@ void scan_outlook(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT) {
-	sp.info->name  = "outlook";
-	sp.info->author = "Simson L. Garfinkel";
-	sp.info->description = "Outlook Compressible Encryption";
-	sp.info->flags = scanner_info::SCANNER_DISABLED \
+        auto info = new scanner_params::scanner_info( scan_outlook, "outlook" ); scan_outlook, "outlook" );
+    //auto info = new scanner_params::scanner_info(
+	//info->name  = "outlook";
+	info->author = "Simson L. Garfinkel";
+	info->description = "Outlook Compressible Encryption";
+	info->flags = scanner_info::SCANNER_DISABLED \
             | scanner_info::SCANNER_RECURSE | scanner_info::SCANNER_DEPTH_0 ;
+        sp.register_info(info);
 	return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN) {

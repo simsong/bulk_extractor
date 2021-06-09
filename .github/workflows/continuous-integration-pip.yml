@@ -13,8 +13,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: ['macos-10.15']
-        #os: ['macos-10.15', 'ubuntu-18.04']
+        #os: ['macos-10.15']
+        os: ['macos-10.15', 'ubuntu-20.04']
 
     steps:
       # https://github.com/actions/checkout
@@ -28,25 +28,31 @@ jobs:
         run: |
           brew install autoconf automake libtool
 
-
       - name: Install C++ dependencies on Ubuntu
         if: startsWith(matrix.os, 'ubuntu')
         run: |
-           sudo apt install -y libtool autoconf automake libssl-dev pkg-config
+          sudo apt install -y libtool autoconf automake libssl-dev pkg-config
 
-      - name: Update autoconf
+      - name: Update autoconf on Ubuntu
         if: startsWith(matrix.os, 'ubuntu')
         run: |
           wget https://ftpmirror.gnu.org/autoconf/autoconf-2.71.tar.gz
           tar xfz autoconf-2.71.tar.gz && cd autoconf-2.71 && ./configure && make && sudo make install
 
-      - name: c/c++ compile test
+      - name: Update automake on Ubuntu
+        if: startsWith(matrix.os, 'ubuntu')
         run: |
-          autoconf --version
+          wget https://ftpmirror.gnu.org/automake/automake-1.16.3.tar.gz
+          tar xfz automake-1.16.3.tar.gz && cd automake-1.16.3 && ./configure && make && sudo make install
+
+      - name: Report automake and autoconf version
+        run: |
           automake --version
-          bash bootstrap.sh && ./configure
-          make check  || (cat src/Makefile ; for fn in test*.log ; do echo ""; echo $fn ; cat $fn ; done; exit 1)
-          make distcheck
+          autoconf --version
+
+      - name: make check
+        run: |
+          bash bootstrap.sh && ./configure && make check
 
       - uses: ammaraskar/gcc-problem-matcher@0.1
         name: GCC Problem Matcher

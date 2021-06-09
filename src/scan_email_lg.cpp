@@ -182,23 +182,23 @@ namespace email {
     feature_recorder* Ether_Recorder;
     feature_recorder* URL_Recorder;
 
-    void rfc822HitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+    void rfc822HitHandler(const LG_SearchHit& hit, const scanner_params& sp);
 
-    void emailHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+    void emailHitHandler(const LG_SearchHit& hit, const scanner_params& sp);
 
-    void emailUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+    void emailUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp);
 
-    void ipaddrHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+    void ipaddrHitHandler(const LG_SearchHit& hit, const scanner_params& sp);
 
-    void ipaddrUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+    void ipaddrUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp);
 
-    void etherHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+    void etherHitHandler(const LG_SearchHit& hit, const scanner_params& sp);
 
-    void etherUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+    void etherUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp);
 
-    void protoHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+    void protoHitHandler(const LG_SearchHit& hit, const scanner_params& sp);
 
-    void protoUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+    void protoUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp);
 
   private:
     Scanner(const Scanner& s):
@@ -387,11 +387,11 @@ namespace email {
     URL_Recorder = sp.fs.get_name("url");
   }
 
-  void Scanner::rfc822HitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+  void Scanner::rfc822HitHandler(const LG_SearchHit& hit, const scanner_params& sp) {
     RFC822_Recorder->write_buf(sp.sbuf, hit.Start, hit.End - hit.Start);
   }
 
-  void Scanner::emailHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+  void Scanner::emailHitHandler(const LG_SearchHit& hit, const scanner_params& sp) {
     const size_t len = (hit.End - 1) - hit.Start;
     const uint8_t* matchStart = sp.sbuf.buf + hit.Start;
 
@@ -402,7 +402,7 @@ namespace email {
     }
   }
 
-  void Scanner::emailUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+  void Scanner::emailUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp) {
     const size_t len = (hit.End - 1) - hit.Start;
     const uint8_t* matchStart = sp.sbuf.buf + hit.Start;
 
@@ -413,13 +413,13 @@ namespace email {
     }
   }
 
-  void Scanner::ipaddrHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+  void Scanner::ipaddrHitHandler(const LG_SearchHit& hit, const scanner_params& sp) {
     if (valid_ipaddr(sp.sbuf.buf, sp.sbuf.buf + hit.Start + 1)) {
       Domain_Recorder->write_buf(sp.sbuf, hit.Start+1, hit.End - hit.Start - 2);
     }
   }
 
-  void Scanner::ipaddrUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+  void Scanner::ipaddrUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp) {
     const size_t pos = hit.Start + (*(sp.sbuf.buf+hit.Start+1) == '\0' ? 2 : 1);
     const size_t len = (hit.End - 1) - pos;
     // this assumes sp.sbuf.pos will never be an odd memory address...
@@ -430,7 +430,7 @@ namespace email {
     }
   }
 
-  void Scanner::etherHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+  void Scanner::etherHitHandler(const LG_SearchHit& hit, const scanner_params& sp) {
     const size_t pos = hit.Start + 1;
     const size_t len = (hit.End - 1) - pos;
     if (valid_ether_addr(sp.sbuf.buf+pos)){
@@ -438,7 +438,7 @@ namespace email {
     }
   }
 
-  void Scanner::etherUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+  void Scanner::etherUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp) {
     const size_t pos = hit.Start + (*(sp.sbuf.buf+hit.Start+1) == '\0' ? 2 : 1);
     const size_t len = (hit.End -1) - pos;
 
@@ -448,7 +448,7 @@ namespace email {
     }
   }
 
-  void Scanner::protoHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+  void Scanner::protoHitHandler(const LG_SearchHit& hit, const scanner_params& sp) {
     // for reasons that aren't clear, there are a lot of net protocols that
     // have an http://domain in them followed by numbers. So this counts the
     // number of slashes and if it is only 2 the size is pruned until the
@@ -475,7 +475,7 @@ namespace email {
     }
   }
 
-  void Scanner::protoUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
+  void Scanner::protoUTF16LEHitHandler(const LG_SearchHit& hit, const scanner_params& sp) {
     const int slash_count = count(
       sp.sbuf.buf + hit.Start,
       sp.sbuf.buf + hit.End, '/'
