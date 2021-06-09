@@ -803,22 +803,22 @@ void scan_elf (scanner_params &sp)
     }
     if ( sp.phase == scanner_params::PHASE_SCAN){
 
-	feature_recorder &f = sp.ss.named_feature_recorder("elf");
+	auto &f = sp.ss.named_feature_recorder("elf");
+        auto &sbuf = *(sp.sbuf);
 
-	for (size_t pos = 0; pos < sp.sbuf.bufsize; pos++) {
+	for (size_t pos = 0; pos < sbuf.bufsize; pos++) {
 	    // Look for the magic number
 	    // If we find it, make an sbuf and analyze...
-	    if ( (sp.sbuf[pos+0] == 0x7f)
-		 && (sp.sbuf[pos+1] == 'E')
-		 && (sp.sbuf[pos+2] == 'L')
-		 && (sp.sbuf[pos+3] == 'F')) {
+	    if ( (sbuf[pos+0] == 0x7f)
+		 && (sbuf[pos+1] == 'E')
+		 && (sbuf[pos+2] == 'L')
+		 && (sbuf[pos+3] == 'F')) {
 
-		const sbuf_t data(sp.sbuf + pos);
+		const sbuf_t data(sbuf + pos);
                 std::string xml = scan_elf_verify(data);
 		if (xml != "") {
                     sbuf_t hdata(data,0,4096);
-                    std::string hexhash = f->fs.hasher.func(hdata.buf, hdata.bufsize);
-		    f.write(data.pos0, hexhash,xml);
+		    f.write(data.pos0, hdata.hash(), xml);
 		}
 	    }
 	}

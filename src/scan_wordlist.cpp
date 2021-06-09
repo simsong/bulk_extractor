@@ -51,10 +51,10 @@ static const char *select_statement = "SELECT DISTINCT word FROM wordlist ORDER 
 /* Global variables for writing out wordlist */
 static std::ofstream of2;
 static std::string ofn_template;
-static int of2_counter = 0;
-static uint64_t outfilesize = 0;
 
 #if 0
+static int of2_counter = 0;
+static uint64_t outfilesize = 0;
 static void wordlist_write_word(const std::string &word)
 {
     if (!of2.is_open() || outfilesize>max_word_outfile_size){
