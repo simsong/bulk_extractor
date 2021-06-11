@@ -64,7 +64,7 @@ void scan_httplogs(scanner_params &sp)
         sp.info->name		= "httplogs";
         sp.info->author		= "Maxim Suhanov";
         sp.info->description	= "Extract various web server access logs";
-        sp.info->feature_names.insert("httplogs");
+        sp.info->feature_defs.push_back( feature_recorder_def("httplogs"));
         return;
     }
 
@@ -72,8 +72,9 @@ void scan_httplogs(scanner_params &sp)
 
     if(sp.phase==scanner_params::PHASE_SCAN){
 	feature_recorder &httplogs_recorder = sp.ss.named_feature_recorder("httplogs");
+        const sbuf_t &sbuf = *(sp.sbuf);
 
-        for (size_t p = 0; p < sp.sbuf.pagesize; p++) {
+        for (size_t p = 0; p < sbuf.pagesize; p++) {
             /* We support the following methods: GET, HEAD, POST, PUT, DELETE, TRACE, OPTIONS, CONNECT;
              * and the following protocol versions: HTTP/1.1, HTTP/1.0, HTTP/0.9.
              *
@@ -84,47 +85,47 @@ void scan_httplogs(scanner_params &sp)
              *
              * The plugin should output access log entries even for incorrect requests (like POST in HTTP/0.9).
              */
-            ssize_t bytes_left = sp.sbuf.bufsize - p;
+            ssize_t bytes_left = sbuf.bufsize - p;
             if(((bytes_left > 3)
-             && (sp.sbuf[p+0] == 'G') && (sp.sbuf[p+1] == 'E') && (sp.sbuf[p+2] == 'T')
-             && (sp.sbuf[p+3] == ' ')) ||
+             && (sbuf[p+0] == 'G') && (sbuf[p+1] == 'E') && (sbuf[p+2] == 'T')
+             && (sbuf[p+3] == ' ')) ||
 
              ((bytes_left > 4)
-             && (sp.sbuf[p+0] == 'H') && (sp.sbuf[p+1] == 'E') && (sp.sbuf[p+2] == 'A')
-             && (sp.sbuf[p+3] == 'D') && (sp.sbuf[p+4] == ' ')) ||
+             && (sbuf[p+0] == 'H') && (sbuf[p+1] == 'E') && (sbuf[p+2] == 'A')
+             && (sbuf[p+3] == 'D') && (sbuf[p+4] == ' ')) ||
 
              ((bytes_left > 4)
-             && (sp.sbuf[p+0] == 'P') && (sp.sbuf[p+1] == 'O') && (sp.sbuf[p+2] == 'S')
-             && (sp.sbuf[p+3] == 'T') && (sp.sbuf[p+4] == ' ')) ||
+             && (sbuf[p+0] == 'P') && (sbuf[p+1] == 'O') && (sbuf[p+2] == 'S')
+             && (sbuf[p+3] == 'T') && (sbuf[p+4] == ' ')) ||
 
              ((bytes_left > 3)
-             && (sp.sbuf[p+0] == 'P') && (sp.sbuf[p+1] == 'U') && (sp.sbuf[p+2] == 'T')
-             && (sp.sbuf[p+3] == ' ')) ||
+             && (sbuf[p+0] == 'P') && (sbuf[p+1] == 'U') && (sbuf[p+2] == 'T')
+             && (sbuf[p+3] == ' ')) ||
 
              ((bytes_left > 6)
-             && (sp.sbuf[p+0] == 'D') && (sp.sbuf[p+1] == 'E') && (sp.sbuf[p+2] == 'L')
-             && (sp.sbuf[p+3] == 'E') && (sp.sbuf[p+4] == 'T') && (sp.sbuf[p+5] == 'E')
-             && (sp.sbuf[p+6] == ' ')) ||
+             && (sbuf[p+0] == 'D') && (sbuf[p+1] == 'E') && (sbuf[p+2] == 'L')
+             && (sbuf[p+3] == 'E') && (sbuf[p+4] == 'T') && (sbuf[p+5] == 'E')
+             && (sbuf[p+6] == ' ')) ||
 
              ((bytes_left > 5)
-             && (sp.sbuf[p+0] == 'T') && (sp.sbuf[p+1] == 'R') && (sp.sbuf[p+2] == 'A')
-             && (sp.sbuf[p+3] == 'C') && (sp.sbuf[p+4] == 'E')
-             && (sp.sbuf[p+5] == ' ')) ||
+             && (sbuf[p+0] == 'T') && (sbuf[p+1] == 'R') && (sbuf[p+2] == 'A')
+             && (sbuf[p+3] == 'C') && (sbuf[p+4] == 'E')
+             && (sbuf[p+5] == ' ')) ||
 
              ((bytes_left > 7)
-             && (sp.sbuf[p+0] == 'O') && (sp.sbuf[p+1] == 'P') && (sp.sbuf[p+2] == 'T')
-             && (sp.sbuf[p+3] == 'I') && (sp.sbuf[p+4] == 'O') && (sp.sbuf[p+5] == 'N')
-             && (sp.sbuf[p+6] == 'S') && (sp.sbuf[p+7] == ' ')) ||
+             && (sbuf[p+0] == 'O') && (sbuf[p+1] == 'P') && (sbuf[p+2] == 'T')
+             && (sbuf[p+3] == 'I') && (sbuf[p+4] == 'O') && (sbuf[p+5] == 'N')
+             && (sbuf[p+6] == 'S') && (sbuf[p+7] == ' ')) ||
 
              ((bytes_left > 7)
-             && (sp.sbuf[p+0] == 'C') && (sp.sbuf[p+1] == 'O') && (sp.sbuf[p+2] == 'N')
-             && (sp.sbuf[p+3] == 'N') && (sp.sbuf[p+4] == 'E') && (sp.sbuf[p+5] == 'C')
-             && (sp.sbuf[p+6] == 'T') && (sp.sbuf[p+7] == ' '))) {
+             && (sbuf[p+0] == 'C') && (sbuf[p+1] == 'O') && (sbuf[p+2] == 'N')
+             && (sbuf[p+3] == 'N') && (sbuf[p+4] == 'E') && (sbuf[p+5] == 'C')
+             && (sbuf[p+6] == 'T') && (sbuf[p+7] == ' '))) {
                 /* Got something, now we should find the next \n (in the nearest kilobyte) */
                 size_t lineend = 0;
-                for (size_t np = p + 5; ((np < sp.sbuf.bufsize) && (np <= p + 5 + 1024)); np++) {
-                if(!isok(sp.sbuf[np])) break; /* Bad character found */
-                    if(sp.sbuf[np] == '\n') {
+                for (size_t np = p + 5; ((np < sbuf.bufsize) && (np <= p + 5 + 1024)); np++) {
+                if(!isok(sbuf[np])) break; /* Bad character found */
+                    if(sbuf[np] == '\n') {
                         lineend = np;
                         break;
                     }
@@ -136,7 +137,7 @@ void scan_httplogs(scanner_params &sp)
                     size_t linestart = 0;
                     bool foundlinestart = false;
                     for (np = p-1; ((np > 0) && (p - np <= 1024)); np--) {
-                        if((!isok(sp.sbuf[np])) || (sp.sbuf[np] == '\n')) {
+                        if((!isok(sbuf[np])) || (sbuf[np] == '\n')) {
                             linestart = np + 1;
                             foundlinestart = true;
                             break;
@@ -148,14 +149,14 @@ void scan_httplogs(scanner_params &sp)
                         /* Check for a valid IP address (dotted quad) */
                         bool ipaddrfound = false;
                         size_t length = lineend - linestart;
-                        sbuf_t n(sp.sbuf, linestart, length);
+                        sbuf_t n(sbuf, linestart, length);
                         for (size_t cp = 0; (cp < length) && !ipaddrfound; cp++) {
                             ipaddrfound = validDottedQuad(std::string(n.asString(), cp, length-cp));
                             if((cp > 0) && (n[cp-1] == '/')) ipaddrfound = false; /* False positive */
                         }
 
                         /* Output the entry found */
-                        if(ipaddrfound) httplogs_recorder->write_buf(n, 0, length);
+                        if(ipaddrfound) httplogs_recorder.write_buf(n, 0, length);
                         p = lineend;
                     }
                 }

@@ -221,7 +221,6 @@ enum E {
  */
 
 // tunable parameter
-static uint32_t winpe_carve_mode = feature_recorder::CARVE_ENCODED;
 
 typedef struct _Pe_Fileheader {
     uint16_t Machine              __attribute__((packed));
@@ -1023,21 +1022,12 @@ void scan_winpe (scanner_params &sp)
     std::string xml;
 
     if (sp.phase == scanner_params::PHASE_INIT){
-        auto info = new scanner_params::scanner_info( scan_winpe, "winpe" );
-        info->description     = "Scan for Windows PE headers";
-        info->scanner_version = "1.1.0";
-        info->feature_names.insert("winpe");
-        info->feature_names.insert("winpe_carved");
-        sp.ss.sc.get_config("winpe_carve_mode", &winpe_carve_mode,
-                            "0=carve none; 1=carve encoded; 2=carve all");
-
-        sp.info = info;
+        sp.info = new scanner_params::scanner_info( scan_winpe, "winpe" );
+        sp.info->description     = "Scan for Windows PE headers";
+        sp.info->scanner_version = "1.1.0";
+        sp.info->feature_names.insert("winpe");
+        sp.info->feature_names.insert("winpe_carved");
         return;
-    }
-
-    if(sp.phase==scanner_params::PHASE_INIT){
-        sp.fs.get_name("winpe_carved")->set_carve_mode(
-                  static_cast<feature_recorder::carve_mode_t>(winpe_carve_mode));
     }
 
     if(sp.phase == scanner_params::PHASE_SCAN){    // phase 1
@@ -1078,13 +1068,13 @@ void scan_winpe (scanner_params &sp)
 
 		xml = scan_winpe_verify(data);
 		if (xml != "") {
-		    // If we have 4096 bytes, generate md5 hash
+		    // If we have 4096 bytes, generate hash of first 4K
                     sbuf_t first4k(data,0,4096);
 		    std::string hash = f->fs.hasher.func(first4k.buf,first4k.bufsize);
 		    f->write(data.pos0,hash,xml);
                     size_t carve_size = get_carve_size(data);
-                    feature_recorder *f_carved = sp.fs.get_name("winpe_carved");
-                    f_carved->carve(data, 0, carve_size, ".winpe");
+                    feature_recorder &f_carved = sp.ss.named_feature_recorder("winpe_carved");
+                    f_carved.carve(data, 0, carve_size, ".winpe");
 		}
 	    }
 	}

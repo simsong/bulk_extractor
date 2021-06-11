@@ -14,7 +14,7 @@ AUTOMAKE_OPTIONS = subdir-objects
 
 BE13_API_DIR= be13_api
 include be13_api/Makefile.defs
-#include rar/Makefile.defs
+include rar/Makefile.defs
 
 # This was for building the jpegdump test program
 # Note that we use scan_exif.cpp because we want to compile it with -DDUMPTEST
@@ -56,7 +56,6 @@ lightgrep_scanners = \
 	scan_email_lg.cpp \
 	scan_gps_lg.cpp
 
-
 # scanners_builtin are the scanners that are compiled into the binary
 
 scanners_builtin = \
@@ -64,23 +63,16 @@ scanners_builtin = \
 	scan_base64.cpp \
 	scan_ccns2.cpp scan_ccns2.h \
 	scan_elf.cpp \
+	scan_evtx.cpp \
 	scan_exif.cpp exif_reader.h exif_reader.cpp exif_entry.cpp\
 	scan_exiv2.cpp \
-	scan_gzip.cpp \
-	scan_json.cpp \
-	scan_kml.cpp \
-	scan_pdf.cpp \
-	scan_vcard.cpp \
-	scan_wordlist.cpp \
-	scan_xor.cpp \
-	scan_zip.cpp
-
-scanners_builtin_broken = \
-	scan_evtx.cpp \
 	scan_facebook.cpp \
 	scan_find.cpp \
+	scan_gzip.cpp \
 	scan_hiberfile.cpp pyxpress.c pyxpress.h \
 	scan_httplogs.cpp \
+	scan_json.cpp \
+	scan_kml.cpp \
 	scan_msxml.cpp \
 	scan_net.cpp \
 	scan_ntfsindx.cpp \
@@ -88,27 +80,32 @@ scanners_builtin_broken = \
 	scan_ntfsmft.cpp \
 	scan_ntfsusn.cpp \
 	scan_outlook.cpp scan_outlook.h \
-	scan_rar.cpp \
+	scan_pdf.cpp \
+	scan_rar.cpp
 	scan_sqlite.cpp \
 	scan_utmp.cpp \
+	scan_vcard.cpp \
 	scan_windirs.cpp \
 	scan_winlnk.cpp \
 	scan_winpe.cpp \
-	scan_winprefetch.cpp
+	scan_winprefetch.cpp \
+	scan_wordlist.cpp \
+	scan_xor.cpp \
+	scan_zip.cpp
 
 if FLEXSCANNERS_ENABLED
   scanners_builtin += $(flex_scanners)
 endif
-#
-#if LIGHTGREP_ENABLED
-#  scanners_builtin += $(lightgrep_scanners)
-#endif
-#
-#
-#if RAR_ENABLED
-#  scanners_builtin += $(RAR_SUPPORT)
-#endif
-#
+
+if LIGHTGREP_ENABLED
+  scanners_builtin += $(lightgrep_scanners)
+endif
+
+
+if RAR_ENABLED
+  scanners_builtin += $(RAR_SUPPORT)
+endif
+
 bulk_extractor_nomain = \
         $(TSK3INCS)  \
 	$(BE13_API_SRC) \
@@ -174,7 +171,6 @@ be_tests_SOURCES = be13_api/catch.hpp \
 # FreeBSD NOTE: flex does not support -R and -o does not work properly
 # | sed "s/static int yy_get_next_buffer/static int XXyy_get_next_buffer/"
 #
-# 2019-11-09 - updated to remove the word 'register' which is no longer needed
 
 SUFFIXES = .flex
 FLEX_CXXFLAGS=-Wno-shadow -Wno-effc++ -Wno-redundant-decls -Wno-missing-noreturn

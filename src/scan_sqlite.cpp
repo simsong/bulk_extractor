@@ -31,8 +31,6 @@
 
 #include "utf8.h"
 
-static uint32_t sqlite_carve_mode = feature_recorder::CARVE_ALL;
-
 #define FEATURE_FILE_NAME "sqlite_carved"
 
 extern "C"
@@ -40,17 +38,12 @@ void scan_sqlite(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-        auto info = new scanner_params::scanner_info( scan_sqlite, "sqlite" );
-        info->author          = "Simson Garfinkel";
-        info->description     = "Scans for SQLITE3 data";
-        info->scanner_version = "1.1";
-	sp.info->feature_names.insert(FEATURE_FILE_NAME);
-        sp.sp.ss.sc.get_config("sqlite_carve_mode",&sqlite_carve_mode,"0=carve none; 1=carve encoded; 2=carve all");
-        sp.info = info;
+        sp.info = new scanner_params::scanner_info( scan_sqlite, "sqlite" );
+        sp.info->author          = "Simson Garfinkel";
+        sp.info->description     = "Scans for SQLITE3 data";
+        sp.info->scanner_version = "1.1";
+	sp.info->feature_defs.push_back( feature_recorder_def(FEATURE_FILE_NAME));
 	return;
-    }
-    if(sp.phase==scanner_params::PHASE_INIT){
-        sp.fs.get_name(FEATURE_FILE_NAME)->set_carve_mode(static_cast<feature_recorder::carve_mode_t>(sqlite_carve_mode));
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
 	const sbuf_t &sbuf = sp.sbuf;

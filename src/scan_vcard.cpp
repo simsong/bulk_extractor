@@ -64,7 +64,7 @@ void carve_vcards(const sbuf_t &sbuf, feature_recorder &vcard_recorder)
             /* We should probably validate the UTF-8. */
             if(valid){
                 /* got a valid card; I can carve it! */
-                vcard_recorder.carve_data(sbuf, begin,(end-begin)+end_len, ".vcf");
+                vcard_recorder.carve(sbuf, begin,(end-begin)+end_len, ".vcf");
                 i = end+end_len;		// skip to the end of the vcard
                 continue;			// loop again!
             }

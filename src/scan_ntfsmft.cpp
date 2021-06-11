@@ -9,19 +9,19 @@
 #include <fstream>
 #include <string>
 #include <cstdlib>
-#include <cstrings>
+#include <cstring>
 #include <sstream>
 #include <vector>
 #include <cerrno>
 
 #include "config.h"
-#include "be13_api/bulk_extractor_i.h"
+#include "be13_api/scanner_params.h"
 
-#include "sbuf_stream.h"
+//#include "be13_api/bulk_extractor_i.h"
+//#include "sbuf_stream.h"
 
 #include "utf8.h"
 
-static uint32_t ntfsmft_carve_mode = feature_recorder::CARVE_ALL;
 
 #define SECTOR_SIZE 512
 #define CLUSTER_SIZE 4096
@@ -68,11 +68,8 @@ void scan_ntfsmft(scanner_params &sp)
         sp.info->author          = "Teru Yamazaki";
         sp.info->description     = "Scans for NTFS MFT record";
         sp.info->scanner_version = "1.0";
-        sp.info->feature_names.insert(FEATURE_FILE_NAME);
+        sp.info->feature_defs.push_back( feature_recorder_def(FEATURE_FILE_NAME));
         return;
-    }
-    if(sp.phase==scanner_params::PHASE_INIT){
-        sp.fs.get_name(FEATURE_FILE_NAME)->set_carve_mode(static_cast<feature_recorder::carve_mode_t>(ntfsmft_carve_mode));
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
         const sbuf_t &sbuf = (*sp.sbuf);
@@ -103,10 +100,10 @@ void scan_ntfsmft(scanner_params &sp)
                     else
                         break;
                 }
-                ntfsmft_recorder->carve_records(sbuf,offset,total_record_size,"MFT");
+                ntfsmft_recorder.carve(sbuf_t(sbuf,offset,total_record_size),"MFT");
             }
             else if (result_type == 2) {
-                ntfsmft_recorder->carve_records(sbuf,offset,total_record_size,"MFT_corrputed");
+                ntfsmft_recorder.carve(sbuf_t(sbuf,offset,total_record_size),"MFT_corrputed");
             }
             else { // result_type == 0 - not MFT record
             }

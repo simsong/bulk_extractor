@@ -796,9 +796,10 @@ void scan_elf (scanner_params &sp)
     sp.check_version();
 
     if (sp.phase == scanner_params::PHASE_INIT){
-        auto info = new scanner_params::scanner_info(scan_elf,"elf");
-	info->author = "Alex Eubanks";
-        info->feature_defs.push_back( feature_recorder_def("elf"));
+        sp.info = new scanner_params::scanner_info(scan_elf,"elf");
+	sp.info->author          = "Alex Eubanks";
+        sp.info->scanner_version = "1.1";
+        sp.info->feature_defs.push_back( feature_recorder_def("elf") );
         return;
     }
     if ( sp.phase == scanner_params::PHASE_SCAN){

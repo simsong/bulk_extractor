@@ -21,8 +21,6 @@
 
 #include "utf8.h"
 
-static uint32_t utmp_carve_mode = feature_recorder::CARVE_ALL;
-
 #define SECTOR_SIZE 512
 #define CLUSTER_SIZE 4096
 #define UTMP_RECORD 384
@@ -90,12 +88,8 @@ void scan_utmp(scanner_params &sp)
         info->description     = "Scans for utmp record";
         info->scanner_version = "1.1";
         info->feature_names.insert(FEATURE_FILE_NAME);
-        sp.ss.sc.get_config("utmp_carve_mode",&utmp_carve_mode,"0=carve none; 1=carve encoded; 2=carve all");
         sp.info = info;
         return;
-    }
-    if(sp.phase==scanner_params::PHASE_INIT){
-        sp.fs.get_name(FEATURE_FILE_NAME)->set_carve_mode(static_cast<feature_recorder::carve_mode_t>(utmp_carve_mode));
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
         const sbuf_t &sbuf = sp.sbuf;
@@ -111,7 +105,7 @@ void scan_utmp(scanner_params &sp)
         // search for utmp record in the sbuf
         while (offset < stop-UTMP_RECORD) {
             if (check_utmprecord_signature(offset, sbuf)) {
-                utmp_recorder->carve_records(sbuf,offset,UTMP_RECORD,"utmp");
+                utmp_recorder->carve(sbut_f(sbuf,offset,UTMP_RECORD),"utmp");
                 offset += UTMP_RECORD;
             } else {
                 offset += 8;

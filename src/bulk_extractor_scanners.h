@@ -20,35 +20,39 @@ SCANNER(gps)
 
 /* Regular scanners */
 
+SCANNER(aes)
 SCANNER(base64)
 SCANNER(elf)
-//SCANNER(exif)
+SCANNER(exif)
 #ifdef HAVE_EXIV2
 SCANNER(exiv2)
 #endif
-//SCANNER(facebook)
-//SCANNER(find)
-//SCANNER(hiberfile)
-//SCANNER(httplogs)
-SCANNER(kml)
-//SCANNER(msxml)
-//SCANNER(net)
-//SCANNER(ntfsusn)
-//SCANNER(outlook)
-//SCANNER(rar)
-//SCANNER(sqlite)
-//SCANNER(windirs)
-//SCANNER(winlnk)
-//SCANNER(winpe)
-//SCANNER(winprefetch)
-SCANNER(aes)
+SCANNER(evtx)        // scanner provided by 4n6ist:
+SCANNER(facebook)
+SCANNER(find)
 SCANNER(gzip)
+SCANNER(hiberfile)
+SCANNER(httplogs)
 SCANNER(json)
+SCANNER(kml)
+SCANNER(msxml)
+SCANNER(net)
+SCANNER(ntfsindx)    // scanner provided by 4n6ist:
+SCANNER(ntfslogfile) // scanner provided by 4n6ist:
+SCANNER(ntfsmft)     // scanner provided by 4n6ist:
+SCANNER(ntfsusn)
+SCANNER(outlook)
 SCANNER(pdf)
-
-SCANNER(xor)
+SCANNER(rar)
+SCANNER(sqlite)
+SCANNER(utmp)        // scanner provided by 4n6ist:
 SCANNER(vcard)
+SCANNER(windirs)
+SCANNER(winlnk)
+SCANNER(winpe)
+SCANNER(winprefetch)
 SCANNER(wordlist)
+SCANNER(xor)
 SCANNER(zip)
 
 
@@ -59,11 +63,3 @@ SCANNER(zip)
 //SCANNER(gps_lg)
 //SCANNER(lightgrep)
 #endif
-
-
-// scanners provided by 4n6ist:
-//SCANNER(utmp)
-//SCANNER(ntfsmft)
-//SCANNER(ntfslogfile)
-//SCANNER(ntfsindx)
-//SCANNER(evtx)

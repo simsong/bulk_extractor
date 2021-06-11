@@ -50,23 +50,24 @@ extern "C"
 void scan_facebook(scanner_params &sp)
 {
     sp.check_version();
-    if(sp.phase==scanner_params::PHASE_INIT)        {
-            sp.info->name = "facebook";
-            sp.info->author = "";
-            sp.info->description = "Searches for facebook html and json tags";
-            sp.info->scanner_version = "2.0";
-            sp.info->feature_names.insert("facebook");
-            sp.info->flags = scanner_info::SCANNER_DISABLED;
-            return;
+    if (sp.phase==scanner_params::PHASE_INIT)        {
+        sp.info = new scanner_params::scanner_info(scan_facebook,"facebook");
+        sp.info->name = "facebook";
+        sp.info->author = "";
+        sp.info->description = "Searches for facebook html and json tags";
+        sp.info->scanner_version = "2.0";
+        sp.info->feature_defs.push_back( feature_recorder_def("facebook"));
+        //sp.info->flags = scanner_params::scanner_info::SCANNER_DISABLED;
+        return;
     }
-    if(sp.phase==scanner_params::PHASE_SCAN) {
+    if (sp.phase==scanner_params::PHASE_SCAN) {
         feature_recorder &facebook_recorder = sp.ss.named_feature_recorder("facebook");
         used_offsets_t used_offsets;
 
         for (int j = 0; facebook_searches[j]; j++) {
             const char *text_search = facebook_searches[j];
-            for (size_t i = 0;  i+50 < sp.sbuf.bufsize; i++) {
-                ssize_t location = sp.sbuf.find(text_search, i);
+            for (size_t i = 0;  i+50 < sp.sbuf->bufsize; i++) {
+                ssize_t location = sp.sbuf->find(text_search, i);
                 if (location < 1) break;
                 if (used_offsets.value_used(location)) {
                     i = location + used_offsets_t::window;
@@ -75,9 +76,9 @@ void scan_facebook(scanner_params &sp)
 
                 ssize_t begin = (location > used_offsets_t::window / 2) ? (location-used_offsets_t::window/2) : 0;
                 size_t end = begin + used_offsets_t::window;
-                if (end + 10 > sp.sbuf.bufsize) end = sp.sbuf.bufsize - 10;
+                if (end + 10 > sp.sbuf->bufsize) end = sp.sbuf->bufsize - 10;
                 ssize_t length = end - begin;
-                facebook_recorder->write_buf(sp.sbuf, begin, length);
+                facebook_recorder.write_buf(*sp.sbuf, begin, length);
                 i = location + used_offsets_t::window;
             }
         }

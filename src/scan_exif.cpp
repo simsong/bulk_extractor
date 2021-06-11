@@ -32,7 +32,6 @@ static const uint32_t MIN_JPEG_SIZE = 200;    // don't consider something smalle
 
 // these are tunable
 static int exif_debug=0;
-static uint32_t jpeg_carve_mode = feature_recorder::CARVE_ENCODED;
 static size_t min_jpeg_size = 1000; // don't carve smaller than this
 
 /****************************************************************
@@ -567,7 +566,7 @@ public:
      * Return the size of the object carved, or 0 if unknown
      */
 
-    size_t process(const sbuf_t &sbuf,bool found_start){
+    size_t process(const sbuf_t &sbuf, bool found_start){
         // get md5 for this exif
         size_t ret = 0;
         std::string feature_text = "00000000000000000000000000000000";
@@ -582,7 +581,7 @@ public:
             // Should we carve?
             if(res.how==jpeg_validator::COMPLETE || res.len>(ssize_t)min_jpeg_size){
                 if(exif_debug) fprintf(stderr,"CARVING\n");
-                jpeg_recorder.carve_data(sbuf, 0,res.len,".jpg");
+                jpeg_recorder.carve( sbuf_t(sbuf, 0, res.len), ".jpg");
                 ret = res.len;
             }
 
@@ -739,14 +738,10 @@ void scan_exif(scanner_params &sp)
 	info->feature_defs.push_back( feature_recorder_def("gps"));
 	info->feature_defs.push_back( feature_recorder_def("jpeg_carved"));
         sp.ss.sc.get_config("exif_debug",&exif_debug,"debug exif decoder");
-        sp.ss.sc.get_config("jpeg_carve_mode",&jpeg_carve_mode,"0=carve none; 1=carve encoded; 2=carve all");
         sp.ss.sc.get_config("min_jpeg_size",&min_jpeg_size,"Smallest JPEG stream that will be carved");
         sp.info = info;
 	return;
     }
-    //if(sp.phase==scanner_params::PHASE_INIT){
-    //    sp.fs.named_feature_recorder("jpeg_carved")->set_carve_mode(static_cast<feature_recorder::carve_mode_t>(jpeg_carve_mode));
-    //}
     if(sp.phase==scanner_params::PHASE_SCAN){
         exif_scanner escan(sp);
         escan.scan(*sp.sbuf);
@@ -759,7 +754,6 @@ int debug=1;
 int main(int argc,char **argv)
 {
     exif_debug = debug;
-    (void)jpeg_carve_mode;
     (void)min_jpeg_size;
     argc--;argv++;
     while(*argv){

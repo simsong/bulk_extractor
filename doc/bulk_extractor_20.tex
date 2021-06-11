@@ -1,3 +1,4 @@
+
 Goals:
 
 Rely on the C++ standard to provide platform-independence, because the
@@ -71,3 +72,32 @@ the pos0_t record.
 (requires an additional field be added to the feature file).
 
 * Removing the dependence on Java for the user interface.
+
+
+
+Removed functionality:
+- TO the best of our knowledge, no one (other than the original
+developer) ever used bulk_extractor's shared library to let the
+program's scanner system be called from C++ or from Python, so we did
+dropped support for that. (It could be trivially added in the future.)
+
+- The stand-alone bulk_extractor test program that only scans a single
+file was dropped as additional code that did not need to be
+maintained. Instead, we now have unit tests.
+
+- The ability to load scanners as shared libraries at startup was
+kept, although it is not clear that this has ever been used. It was
+created so that bulk_extractor users could develop and maintain their
+own scanners without telling the developers of them. This might be
+useful if \be was being used in a highly restricted environment. If
+such use was ever made, the developers were never told! Such unknown
+users are advised that they will need to revise their scanners for
+version 2.0.
+
+
+- Moved common code out of the scanners and into the framework. For
+example, rather than each scanner having options for setting its carve
+mode, the framework understands how to set them for any named
+scanner.
+
+(explain carve mode.)

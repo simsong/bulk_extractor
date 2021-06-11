@@ -1,17 +1,17 @@
 ## Copyright/Non-Copyright Statements
 
 **bulk_extractor** was originally developed by Simson Garfinkel while at
-the Naval Postgraduate School. As a work of the US Government this
+the Naval Postgraduate School. As a work of the US Government that
 work is not subject to copyright law.
 
 Simson Garfinkel left the Naval Postgraduate School in January 2015
 and continued to work on **bulk_extractor** in his personal
-capacity. Those modifications are covered under the MIT license. Other
+capacity. Those modifications are covered under the MIT license (below). Other
 components are licensed as noted.
 
 ## MIT License
 
-Copyright (C) 2020, Simson L. Garfinkel {{ organization }}
+Copyright (C) 2020, Simson L. Garfinkel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -34,7 +34,7 @@ OR OTHER DEALINGS IN THE SOFTWARE.
 ## CC0 Original Summary
 
 Except as otherwise noted, bulk_extractor source code files are public domain
-software. 
+software.
 
 That software provided here is released by the Naval Postgraduate
 School, an agency of the U.S. Department of Navy.  The software bears
@@ -45,7 +45,7 @@ results of such use.
 Please note that within the United States, copyright protection, under
 Section 105 of the United States Code, Title 17, is not available for
 any work of the United States Government and/or for any works created
-by United States Government employees. 
+by United States Government employees.
 
 However, because some bulk_extractor source modules (e.g. pyxpress.c)
 are covered under the GNU Public License, the compiled bulk_extractor
@@ -82,7 +82,7 @@ Licensed under the JSON License
 
 Licensed under General Public License version 3 and later
 
-* src/pyxpress.c is Copyright 2008 (C) Matthieu Suiche. <msuiche[at]gmail.com> 
+* src/pyxpress.c is Copyright 2008 (C) Matthieu Suiche. <msuiche[at]gmail.com>
 
 
 Licensed under Lesser General Public License version 2.1
@@ -115,4 +115,3 @@ Licensed under General Public License version 3 with the Autoconf exception:
 * m4/ac_prog_javac_works.m4 is Copyright (C) 2000 Stephane Bortzmeyer <bortzmeyer@pasteur.fr>
 
 * m4/ac_check_classpath.m4 is Copyright (C) 2000 Stephane Bortzmeyer <bortzmeyer@pasteur.fr>
-

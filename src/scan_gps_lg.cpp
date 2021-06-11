@@ -98,7 +98,7 @@ namespace gps {
     sp.info->author          = "Simson L. Garfinkel";
     sp.info->description     = "Garmin Trackpt XML info";
     sp.info->scanner_version = "1.0";
-    sp.info->feature_names.insert("gps");
+    sp.info->feature_defs.push_back( feature_recorder_def("gps"));
   }
 
   void Scanner::init(const scanner_params& sp) {

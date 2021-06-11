@@ -9,6 +9,7 @@
 #include "image_process.h"
 #include "pyxpress.h"
 
+#define SCANNER_NAME "HIBERFILE"
 
 
 #define ZLIB_CONST
@@ -36,27 +37,24 @@ extern "C"
 void scan_hiberfile(scanner_params &sp)
 {
     sp.check_version();
-    if(sp.phase==scanner_params::PHASE_INIT){
-        auto info = new scanner_params::scanner_info( scan_hiberfile, "hiberfile" );
-	//sp.info->name           = "hiberfile";
-        info->author         = "Simson Garfinkel and Matthieu Suiche";
-        info->description    = "Scans for Microsoft-XPress compressed data";
-        info->scanner_version= "1.0";
-        info->flags          = scanner_info::SCANNER_RECURSE | scanner_info::SCANNER_RECURSE_EXPAND;
-        sp.info = info;
+    if (sp.phase==scanner_params::PHASE_INIT){
+        sp.info = new scanner_params::scanner_info( scan_hiberfile, "hiberfile" );
+        sp.info->author         = "Simson Garfinkel and Matthieu Suiche";
+        sp.info->description    = "Scans for Microsoft-XPress compressed data";
+        sp.info->scanner_version= "1.0";
 	return; /* no features */
     }
-    if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;
-    if(sp.phase==scanner_params::PHASE_SCAN){
+    if (sp.phase==scanner_params::PHASE_SHUTDOWN) return;
+    if (sp.phase==scanner_params::PHASE_SCAN){
 
 	/* Do not scan for hibernation decompression if we are already
 	 * inside a hibernation file decompression.
 	 * Right now this is a hack; it should be done by the system with some kind of flag.
 	 */
-	const sbuf_t &sbuf = sp.sbuf;
-	const pos0_t &pos0 = sp.sbuf.pos0;
+	const sbuf_t &sbuf = *(sp.sbuf);
+	const pos0_t &pos0 = sbuf.pos0;
 
-	if(pos0.path.find("HIBERFILE")!=std::string::npos){ // don't do recursively
+	if (pos0.path.find( SCANNER_NAME )!=std::string::npos){ // don't do recursively
 	    return;
 	}
 
@@ -69,7 +67,7 @@ void scan_hiberfile(scanner_params &sp)
 	     * http://www.pyflag.net/pyflag/src/lib/pyxpress.c
              * Decompress each block separetly
 	     */
-	    if(cc[0]==0x81 && cc[1]==0x81 && cc[2]==0x78 && cc[3]==0x70 &&
+	    if (cc[0]==0x81 && cc[1]==0x81 && cc[2]==0x78 && cc[3]==0x70 &&
 	       cc[4]==0x72 && cc[5]==0x65 && cc[6]==0x73 && cc[7]==0x73){
 
         //u_int compressed_length = (((cc[9]<<8) + (cc[10] << 16) + (cc[11]<<24)) >> 10) + 1;
@@ -79,30 +77,32 @@ void scan_hiberfile(scanner_params &sp)
 		u_int  remaining_size = sbuf.bufsize - (compressed_buf-sbuf.buf); // up to the end of the buffer
 		size_t compr_size = compressed_length < remaining_size ? compressed_length : remaining_size;
 		size_t max_uncompr_size_ = compr_size * 10; // hope that's good enough
-		if(max_uncompr_size_<min_uncompr_size){
+		if (max_uncompr_size_<min_uncompr_size){
                     max_uncompr_size_=min_uncompr_size; // it should at least be this large!
                 }
 
-		managed_malloc<u_char>decomp(max_uncompr_size_);
+		u_char *decomp      = (u_char *)malloc(max_uncompr_size_);
+		int decompress_size = Xpress_Decompress(compressed_buf,compr_size, decomp, max_uncompr_size_);
 
-
-		int decompress_size = Xpress_Decompress(compressed_buf,compr_size,
-							decomp.buf,max_uncompr_size_);
-
-		if(decompress_size>0){
+		if (decompress_size>0){
 		    const ssize_t pos = cc-sbuf.buf;
-		    const pos0_t pos0_hiber = (pos0 + pos) + rcb.partName;
-		    const sbuf_t sbuf_new(pos0_hiber,decomp.buf,decompress_size,decompress_size,0,false);
+		    const pos0_t pos0_hiber = (pos0 + pos) + SCANNER_NAME;
+		    const sbuf_t sbuf_decomp(pos0_hiber, decomp, decompress_size, decompress_size, 0, false, true, false);
 
                     /* sbuf_new is an sbuf that may extend over multiple pages.
                      * Unfortunately the pages are not logically connected, because they are physical memory, and it is
                      * highly unlikely that adjacent logical pages will have adjacent physical pages. Therefore we now
                      * break up this sbuf into 4096 byte chunks and process each individually. This prevents scanners like the JPEG carver
                      * from inadvertantly reassembling objects that make no semantic sense.
+                     *
+                     * Because the callbacks can be asynchronus, and must be able to free the sbuf, we have to copy
+                     * the data out of each sbuf.
+                     *
+                     * Perhaps .malloc() should be a method for sbuf.
                      */
-                    for(size_t start = 0; start < sbuf_new.bufsize; start += windows_page_size){
-                        const sbuf_t sbuf2(sbuf_new,start,windows_page_size);
-                        (*rcb.callback)(scanner_params(sp,sbuf2)); // recurse
+                    for (size_t start = 0; start < sbuf_decomp.bufsize; start += windows_page_size){
+                        sbuf_t *sbuf2 = sbuf_decomp.sbuf_malloc(start, windows_page_size);
+                        sp.recurse(sbuf2);
                     }
 		}
 	    }

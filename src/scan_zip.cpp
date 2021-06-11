@@ -19,9 +19,6 @@ static uint32_t  zip_max_uncompr_size = 256*1024*1024; // don't decompress objec
 static uint32_t  zip_min_uncompr_size = 6;	// don't bother with objects smaller than this
 static uint32_t  zip_name_len_max = 1024;
 
-// these are tunable
-static uint32_t unzip_carve_mode = feature_recorder::CARVE_ENCODED;
-
 /* These are to eliminate compiler warnings */
 #define ZLIB_CONST
 #ifdef HAVE_DIAGNOSTIC_UNDEF
@@ -163,6 +160,7 @@ inline void scan_zip_component(scanner_params &sp, feature_recorder &zip_recorde
             if (zs.total_out>0){
                 const pos0_t pos0_zip = (pos0 + pos) + "ZIP";
                 // Make a sbuf w/ decompressed data. The sbuf is responsible for freeing the data
+                // the sbuf gets freed by sp.recurse()
                 auto *sbuf_new = new sbuf_t(pos0_zip, dbuf, zs.total_out, zs.total_out, 0, false, true, false);
 
                 /* If we are carving, then carve. Set the 'extension' to be '_' followed by the file name in archive.
@@ -178,8 +176,7 @@ inline void scan_zip_component(scanner_params &sp, feature_recorder &zip_recorde
                     strptime(mtime.c_str(), "%Y-%m-%d %H:%M:%S", &t);
                     time_t t2 = mktime(&t);
 
-                    unzip_recorder->carve_data(*sbuf_new, 0, sbuf_new->bufsize,
-                                               carve_name, t2);
+                    unzip_recorder->carve( sbut_t(*sbuf_new, 0, sbuf_new->bufsize), carve_name, t2);
                 }
 
                 // recurse. Remember that recurse will free the sbuf
@@ -200,19 +197,12 @@ void scan_zip(scanner_params &sp)
     sp.check_version();
 
     if (sp.phase==scanner_params::PHASE_INIT){
-        auto info = new scanner_params::scanner_info( scan_zip, "zip" );
-        //info->flags = scanner_info::SCANNER_RECURSE | scanner_info::SCANNER_RECURSE_EXPAND;
+        feature_recorder_def::flags_t xml; xml.xml = true;
+        sp.info = new scanner_params::scanner_info( scan_zip, "zip" );
+	sp.info->feature_defs.push_back( feature_recorder_def(ZIP_RECORDER_NAME, xml ));
         sp.ss.sc.get_config("zip_min_uncompr_size",&zip_min_uncompr_size,"Minimum size of a ZIP uncompressed object");
         sp.ss.sc.get_config("zip_max_uncompr_size",&zip_max_uncompr_size,"Maximum size of a ZIP uncompressed object");
         sp.ss.sc.get_config("zip_name_len_max",&zip_name_len_max,"Maximum name of a ZIP component filename");
-        sp.ss.sc.get_config("unzip_carve_mode",&unzip_carve_mode, feature_recorder::CARVE_MODE_DESCRIPTION);
-        feature_recorder_def::flags_t xml; xml.xml = true;
-	info->feature_defs.push_back( feature_recorder_def(ZIP_RECORDER_NAME, xml ));
-        if (unzip_carve_mode){
-            //info->feature_names.insert(UNZIP_RECORDER_NAME);
-            info->feature_defs.push_back( feature_recorder_def(UNZIP_RECORDER_NAME));
-        }
-        sp.info = info;
 	return;
     }
 
@@ -225,7 +215,6 @@ void scan_zip(scanner_params &sp)
         feature_recorder *unzip_recorder = nullptr;
         if (unzip_carve_mode != feature_recorder::CARVE_NONE) {
             unzip_recorder = &sp.named_feature_recorder(UNZIP_RECORDER_NAME);
-            unzip_recorder->carve_mode = static_cast<feature_recorder::carve_mode_t>(unzip_carve_mode);
         }
 
 	for(size_t i=0 ; i < sbuf.pagesize && i < sbuf.bufsize-MIN_ZIP_SIZE; i++){

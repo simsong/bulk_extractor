@@ -16,13 +16,8 @@
 
 #include "config.h"
 
-#include "be13_api/scanner_params.h"
-
-#include "sbuf_stream.h"
-
 #include "utf8.h"
-
-static uint32_t evtx_carve_mode = feature_recorder::CARVE_ALL;
+#include "be13_api/scanner_params.h"
 
 #define SECTOR_SIZE 512
 #define CLUSTER_SIZE 4096
@@ -154,14 +149,11 @@ void scan_evtx(scanner_params &sp)
         sp.info->author          = "Teru Yamazaki";
         sp.info->description     = "Scans for EVTX Chunks and generates valid EVTX file";
         sp.info->scanner_version = "1.0";
-        sp.info->feature_names.insert(FEATURE_FILE_NAME);
+        sp.info->feature_defs.push_back( feature_recorder_def(FEATURE_FILE_NAME));
         return;
     }
-    if(sp.phase==scanner_params::PHASE_INIT){
-        sp.fs.get_name(FEATURE_FILE_NAME)->set_carve_mode(static_cast<feature_recorder::carve_mode_t>(evtx_carve_mode));
-    }
     if(sp.phase==scanner_params::PHASE_SCAN){
-        const sbuf_t &sbuf = sp.sbuf;
+        const sbuf_t &sbuf = *(sp.sbuf);
         feature_recorder &evtx_recorder = sp.ss.named_feature_recorder(FEATURE_FILE_NAME);
 
         // search for EVTX chunk in the sbuf
@@ -190,7 +182,8 @@ void scan_evtx(scanner_params &sp)
                     std::string filename = (sbuf.pos0+offset).str() + "_valid_header_" +
                         std::to_string(result_num_of_chunks) + "chunks_" +
                         std::to_string(actual_num_of_chunk) + "actual.evtx";
-                    evtx_recorder->carve_records(sbuf, offset, total_size, filename);
+                    sbuf_t data(sbuf, offset, total_size);
+                    evtx_recorder.carve(data, filename);
                 } else if (result_last_record_id == -1) {
                     // If valid ElfChnk and invalid record then skip
                     total_size += ELFCHNK_SIZE;
@@ -237,15 +230,20 @@ void scan_evtx(scanner_params &sp)
                     std::to_string(header.part.number_of_chunks) + "chunks_" +
                     std::to_string(num_of_records) + "records.evtx";
                 // generate evtx header based on elfchnk information
-                evtx_recorder->write_data((unsigned char *)&header,sizeof(elffile),filename);
-                evtx_recorder->carve_records(sbuf, offset, total_size, filename);
+                sbuf_t sbuf_header(pos0_t(), reinterpret_cast<unsigned char *>(&header), sizeof(header), sizeof(header),
+                                   0, false, false, false );
+                sbuf_t sbuf_records(sbuf, offset, total_size);
+                evtx_recorder.carve(sbuf_header, sbuf_records, filename);
+                //evtx_recorder.write_data((unsigned char *)&header,sizeof(elffile),filename);
+                //evtx_recorder.carve(sbuf, offset, total_size, filename);
                 offset += total_size;
             } else { // scans orphan record
                 size_t i=0;
                 while (i < CLUSTER_SIZE) {
                     int64_t result_record_size = check_evtxrecord_signature(offset+i, sbuf);
                     if (result_record_size > 0) {
-                        evtx_recorder->carve_records(sbuf,offset+i,result_record_size,"evtx_orphan_record");
+                        sbuf_t data(sbuf,offset+i, result_record_size);
+                        evtx_recorder.carve(data, "evtx_orphan_record");
                         i += result_record_size;
                     } else {
                         i += 8;

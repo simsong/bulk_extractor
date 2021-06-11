@@ -1,1 +1,2 @@
 - [ ] BE_DEBUG = print_steps to print the steps
+- [ ] Generic approach for setting the carve mode for a scanner.
