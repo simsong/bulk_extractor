@@ -1,4 +1,4 @@
-Bulk Extractor 2.0.   Planned Release: September 30, 2020
+Bulk Extractor 2.0.   Planned Release: January 1, 2022
 =========================================================
 
 This is the planning document for bulk_extractor version 2.0.
