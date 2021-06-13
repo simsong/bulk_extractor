@@ -35,8 +35,10 @@ inline class base16_scanner *get_extra(yyscan_t yyscanner) {return yybase16_get_
 
 void base16_scanner::decode(const sbuf_t &sbuf)
 {
-    managed_malloc<uint8_t>b(sbuf.pagesize/2+1);
-    if (b.buf==0) return;
+    u_char *buf = (u_char *)malloc(sbuf.pagesize/2+1);
+    if (buf==0){
+        throw std::bad_alloc();
+    }
 
     size_t p=0;
     /* First get the characters */
@@ -52,21 +54,23 @@ void base16_scanner::decode(const sbuf_t &sbuf)
         assert(msb>=0 && msb<16);
         int lsb = base16array[sbuf[i+1]];
         if (lsb==BASE16_IGNORE || lsb==BASE16_INVALID){
+            free(buf);
             return;       /* If first char is valid hex and second isn't, this isn't hex */
         }
         assert(lsb>=0 && lsb<16);
-        b.buf[p++] = (msb<<4) | lsb;
+        buf[p++] = (msb<<4) | lsb;
         i+=2;
     }
 
     /* Alert on byte sequences of 48, 128 or 256 bits*/
     if (p==48/8 || p==128/8 || p==256/8){
         hex_recorder.write_buf(sbuf,0,sbuf.bufsize);  /* it validates; write original with context */
+        free(buf);
         return;                                  /* Small keys don't get recursively analyzed */
     }
     if (p>opt_min_hex_buf){
-        auto *nsbuf = new sbuf_t(sbuf.pos0 + "BASE16", b.buf, p, p, 0, false);
-        sp.recurse(nsbuf);    // recurse
+        auto *nsbuf = new sbuf_t(sbuf.pos0 + "BASE16", buf, p, p, 0, false, true, false);
+        sp.recurse(nsbuf);    // recurse, and this will free buf
     }
 }
 
@@ -128,8 +132,6 @@ void scan_base16(struct scanner_params &sp)
         info->pathPrefix      = "BASE16";
         feature_recorder_def frd("hex"); frd.flags.disabled=true; /* disabled by default */ /* frd.flags.recurse=true;*/
         info->feature_defs.push_back( frd );
-        //sp.info->feature_names.insert("hex"); // notable hex values
-        //sp.info->flags          = scanner_info::SCANNER_DISABLED | scanner_info::SCANNER_RECURSE;
 
         /* Create the base16 array */
         for (int i=0;i<256;i++){

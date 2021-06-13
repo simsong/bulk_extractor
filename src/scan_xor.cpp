@@ -5,8 +5,7 @@
  */
 #include "config.h"
 #include "be13_api/scanner_params.h"
-#include "utils.h"
-#include "managed_malloc.h"
+#include "be13_api/utils.h"
 
 static uint8_t xor_mask = 255;
 extern "C"
@@ -15,8 +14,7 @@ void scan_xor(scanner_params &sp)
     sp.check_version();
     if (sp.phase==scanner_params::PHASE_INIT) {
         auto info = new scanner_params::scanner_info( scan_xor, "xor" );
-	//sp.info->name  = "xor";
-	info->author = "Michael Shick";
+	info->author      = "Michael Shick";
 	info->description = "optimistic XOR deobfuscator";
 	info->scanner_flags.default_enabled = false; // = scanner_info::SCANNER_DISABLED | scanner_info::SCANNER_RECURSE;
         sp.ss.sc.get_config("xor_mask",&xor_mask,"XOR mask value, in decimal");
@@ -46,20 +44,21 @@ void scan_xor(scanner_params &sp)
             }
         }
 
-        // managed_malloc throws an exception if allocation fails.
-        managed_malloc<uint8_t>dbuf(sbuf.bufsize);
+        // allocate memory; will be freed by recuse()
+        uint8_t *buf = (uint8_t *)malloc(sbuf.bufsize);
+        if (buf==nullptr) {
+            throw std::bad_alloc();
+        }
+        // perform the xor operation
         for(size_t ii = 0; ii < sbuf.bufsize; ii++) {
-            dbuf.buf[ii] = sbuf.buf[ii] ^ xor_mask;
+            buf[ii] = sbuf.buf[ii] ^ xor_mask;
         }
 
         std::stringstream ss;
         ss << "XOR(" << uint32_t(xor_mask) << ")";
 
         const pos0_t pos0_xor = pos0 + ss.str();
-        //const sbuf_t child_sbuf(pos0_xor, dbuf.buf, sbuf.bufsize, sbuf.pagesize, 0, false);
-        //scanner_params child_params(sp, child_sbuf);
-        //(*rcb.callback)(child_params);    // recurse on deobfuscated buffer
-        auto *nsbuf = new sbuf_t(pos0_xor, dbuf.buf, sbuf.bufsize, sbuf.pagesize, 0, false);
+        auto *nsbuf = new sbuf_t(pos0_xor, buf, sbuf.bufsize, sbuf.pagesize, 0, false, true, false);
         sp.recurse(nsbuf);
     }
 }

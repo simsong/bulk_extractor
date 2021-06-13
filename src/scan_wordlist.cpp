@@ -4,8 +4,8 @@
 
 
 #include "config.h"
+#include "be13_api/utils.h"
 #include "be13_api/scanner_params.h"
-#include "utils.h"
 
 
 static uint32_t word_min = 6;

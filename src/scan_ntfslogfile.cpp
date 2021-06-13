@@ -17,8 +17,6 @@
 #include "config.h"
 #include "be13_api/scanner_params.h"
 
-//#include "sbuf_stream.h"
-
 #include "utf8.h"
 
 #define SECTOR_SIZE 512
@@ -82,7 +80,6 @@ void scan_ntfslogfile(scanner_params &sp)
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
         sp.info = new scanner_params::scanner_info(scan_ntfslogfile,"ntfslogfile");
-        sp.info->name            = "ntfslogfile";
         sp.info->author          = "Teru Yamazaki";
         sp.info->description     = "Scans for NTFS $LogFile RCRD record";
         sp.info->scanner_version = "1.1";

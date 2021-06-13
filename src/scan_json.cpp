@@ -437,20 +437,19 @@ void scan_json(struct scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-        auto info = new scanner_params::scanner_info(scan_json,"json");
-        info->author          = "Simson Garfinkel";
-        info->description     = "Scans for JSON-encoded data";
-        info->scanner_version = "1.1";
+        sp.info = new scanner_params::scanner_info(scan_json,"json");
+        sp.info->author          = "Simson Garfinkel";
+        sp.info->description     = "Scans for JSON-encoded data";
+        sp.info->scanner_version = "1.1";
         feature_recorder_def frd("json");
         frd.flags.xml = true;
-        info->feature_defs.push_back( frd );
+        sp.info->feature_defs.push_back( frd );
 
 	/* Create a fast map of the valid json characters.*/
 	memset(is_json_second_char,0,sizeof(is_json_second_char));
 	for(int i=0;json_second_chars[i];i++){
 	    is_json_second_char[(uint8_t)json_second_chars[i]] = true;
 	}
-        sp.info = info;
         return;
     }
 

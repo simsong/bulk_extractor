@@ -61,7 +61,7 @@ void scan_httplogs(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-        sp.info->name		= "httplogs";
+        sp.info = new scanner_params::scanner_info(scan_httplogs,"httplogs");
         sp.info->author		= "Maxim Suhanov";
         sp.info->description	= "Extract various web server access logs";
         sp.info->feature_defs.push_back( feature_recorder_def("httplogs"));

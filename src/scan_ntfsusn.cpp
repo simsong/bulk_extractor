@@ -19,8 +19,6 @@
 
 #include "be13_api/scanner_params.h"
 
-//#include "sbuf_stream.h"
-
 #include "utf8.h"
 
 #define SECTOR_SIZE 512

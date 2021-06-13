@@ -9,8 +9,8 @@
 
 #include "config.h"
 #include "scan_ccns2.h"
-#include "utils.h"
-#include "dfxml/src/hash_t.h"
+#include "utils.h"                      // needs config.h
+#include "dfxml/src/hash_t.h"           // needs config.h
 
 #include "be13_api/scanner_params.h"
 

@@ -28,13 +28,11 @@ void scan_kml(scanner_params &sp)
     std::string myString;
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-        auto info = new scanner_params::scanner_info(scan_kml,"kml");
-	info->name		= "kml";
-        info->author         = "Simson Garfinkel ";
-        info->description    = "Scans for KML files";
-        info->scanner_version= "1.0";
-        info->feature_defs.push_back( feature_recorder_def("kml"));
-        sp.info = info;
+        sp.info = new scanner_params::scanner_info(scan_kml,"kml");
+        sp.info->author         = "Simson Garfinkel ";
+        sp.info->description    = "Scans for KML files";
+        sp.info->scanner_version= "1.0";
+        sp.info->feature_defs.push_back( feature_recorder_def("kml"));
 	return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN){

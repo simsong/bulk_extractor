@@ -1,6 +1,6 @@
 #include "rar.hpp"
 
-using namespace std;
+//using namespace std;
 
 CmdExtract::CmdExtract() :
     StartTime(), DataIO(), Unp(), TotalFileCount(), FileCount(), MatchedArgs(),
@@ -70,8 +70,8 @@ void CmdExtract::DoExtract(CommandData *Cmd, byte* ptrlocation, int64 ptrlength,
       wcscpy(PrevCmdPassword,Cmd->Password);
 
       EXTRACT_ARC_CODE Code=ExtractArchive(Cmd, ptrlocation, ptrlength, xml);  //this is where the files are extracted
-	
-	
+
+
       // Restore Cmd->Password, which could be changed in IsArchive() call
       // for next header encrypted archive.
       wcscpy(Cmd->Password,PrevCmdPassword);
@@ -198,7 +198,7 @@ EXTRACT_ARC_CODE CmdExtract::ExtractArchive(CommandData *Cmd, byte *ptrlocation,
 
     while (true)
     {
-      // First volume is already added to DataIO.TotalArcSize 
+      // First volume is already added to DataIO.TotalArcSize
       // in initial TotalArcSize calculation in DoExtract.
       // So we skip it and start from second volume.
       NextVolumeName(NextName,NextNameW,ASIZE(NextName),(Arc.NewMhd.Flags & MHD_NEWNUMBERING)==0 || Arc.OldFormat);
@@ -236,7 +236,7 @@ EXTRACT_ARC_CODE CmdExtract::ExtractArchive(CommandData *Cmd, byte *ptrlocation,
 #endif
 	std::ostringstream ss;
 #if 0
-	
+
 	/*Array<byte> CmtBuf;
 	if(Arc.GetComment(&CmtBuf,NULL))
 	{
@@ -688,8 +688,8 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,size_t HeaderS
         TotalFileCount++;
       }
       FileCount++;
-	string theos = "";
-	ostringstream ss;
+      std::string theos = "";
+      std::ostringstream ss;
 #ifndef GUI
       if (Command=='I')
           switch(Cmd->Test ? 'T':Command)
@@ -716,20 +716,20 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,size_t HeaderS
 	else    theos = "Other OS";
 
 
-	ss << "\n<File>\n<FileName>" << Arc.NewLhd.FileName << "</FileName>\n<Name_Size>" 
-		<< Arc.NewLhd.NameSize << "</Name_Size>\n<Unpack_Size>" 
+	ss << "\n<File>\n<FileName>" << Arc.NewLhd.FileName << "</FileName>\n<Name_Size>"
+		<< Arc.NewLhd.NameSize << "</Name_Size>\n<Unpack_Size>"
 		<< Arc.NewLhd.UnpSize << "</Unpack_Size>\n<Data_Size>"
 		<< Arc.NewLhd.DataSize << "</Data_Size\n<Pack_Size>"
 		<< Arc.NewLhd.DataSize << "</Pack_Size>\n<High_Pack_Size>"
 		<< Arc.NewLhd.HighPackSize << "</High_Pack_Size>\n<High_Unp_Size>"
-		<< Arc.NewLhd.HighUnpSize << "</High_Unp_Size>\n<Host_OS>" 
-		<< theos << "</Host_OS>\n<Method>" 
-		<< Arc.NewLhd.Method << "</Method>\n<File_CRC>" 
-		<< Arc.NewLhd.FileCRC << "</File_CRC>\n<File_Time>" 
-		<< Arc.NewLhd.FileTime << "</File_Time>\n<Unpack_Version>" 
+		<< Arc.NewLhd.HighUnpSize << "</High_Unp_Size>\n<Host_OS>"
+		<< theos << "</Host_OS>\n<Method>"
+		<< Arc.NewLhd.Method << "</Method>\n<File_CRC>"
+		<< Arc.NewLhd.FileCRC << "</File_CRC>\n<File_Time>"
+		<< Arc.NewLhd.FileTime << "</File_Time>\n<Unpack_Version>"
 		<< Arc.NewLhd.UnpVer << "</Unpack_Version>\n";
-	ss << "<TimeInfo><mtime>" << Arc.NewLhd.mtime.GetLocalTimeXML() 
-		<< "</mtime>\n<ctime>" << Arc.NewLhd.ctime.GetLocalTimeXML() 
+	ss << "<TimeInfo><mtime>" << Arc.NewLhd.mtime.GetLocalTimeXML()
+		<< "</mtime>\n<ctime>" << Arc.NewLhd.ctime.GetLocalTimeXML()
 		<< "</ctime>\n<atime>" << Arc.NewLhd.atime.GetLocalTimeXML()
 		<< "</atime>\n<arctime>" << Arc.NewLhd.arctime.GetLocalTimeXML()
 		<< "</arctime>\n</TimeInfo>";
@@ -765,7 +765,7 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,size_t HeaderS
       else
 #endif
         wcscpy(FilePassword,Password);
-      
+
       DataIO.SetEncryption(
         (Arc.NewLhd.Flags & LHD_PASSWORD)!=0 ? Arc.NewLhd.UnpVer:0,FilePassword,
         (Arc.NewLhd.Flags & LHD_SALT)!=0 ? Arc.NewLhd.Salt:NULL,false,
@@ -826,7 +826,7 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,size_t HeaderS
       else
         if (Arc.NewLhd.Method!=0x30 && Arc.NewLhd.FullUnpSize>0 && ValidCRC)
           AnySolidDataUnpackedWell=true;
- 
+
       bool BrokenFile=false;
       if (!SkipSolid)
       {
@@ -917,4 +917,3 @@ void CmdExtract::SetComprDataIO(ComprDataIO dataio)
 {
 	DataIO = dataio;
 }
-

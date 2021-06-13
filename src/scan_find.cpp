@@ -6,7 +6,7 @@
 
 #include "be13_api/scanner_params.h"
 #include "be13_api/regex_vector.h"
-#include "be13_api/utils.h"
+#include "be13_api/utils.h" // needs config.h
 #include "findopts.h"
 #include "managed_malloc.h"
 
@@ -46,6 +46,7 @@ void scan_find(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT) {
+        sp.info = new scanner_params::scanner_info(scan_find,"find");
         sp.info->name		= "find";
         sp.info->author         = "Simson Garfinkel";
         sp.info->description    = "Simple search for patterns";

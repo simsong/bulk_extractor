@@ -17,8 +17,6 @@
 #include "config.h"
 #include "be13_api/scanner_params.h"
 
-#include "sbuf_stream.h"
-
 #include "utf8.h"
 
 #define SECTOR_SIZE 512
@@ -83,17 +81,16 @@ void scan_utmp(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-        auto info = new scanner_params::scanner_info( scan_utmp, "utmp" );
-        info->author          = "Teru Yamazaki";
-        info->description     = "Scans for utmp record";
-        info->scanner_version = "1.1";
-        info->feature_names.insert(FEATURE_FILE_NAME);
-        sp.info = info;
+        sp.info = new scanner_params::scanner_info( scan_utmp, "utmp" );
+        sp.info->author          = "Teru Yamazaki";
+        sp.info->description     = "Scans for utmp record";
+        sp.info->scanner_version = "1.1";
+        sp.info->feature_defs.push_back(feature_recorder_def(FEATURE_FILE_NAME));
         return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
-        const sbuf_t &sbuf = sp.sbuf;
-        feature_recorder_set &fs = sp.fs;
+        const sbuf_t &sbuf = *(sp.sbuf);
+        //feature_recorder_set &fs = sp.fs;
         feature_recorder &utmp_recorder = sp.ss.named_feature_recorder(FEATURE_FILE_NAME);
 
         size_t offset = 0;
@@ -105,7 +102,7 @@ void scan_utmp(scanner_params &sp)
         // search for utmp record in the sbuf
         while (offset < stop-UTMP_RECORD) {
             if (check_utmprecord_signature(offset, sbuf)) {
-                utmp_recorder->carve(sbut_f(sbuf,offset,UTMP_RECORD),"utmp");
+                utmp_recorder.carve(sbuf_t(sbuf,offset,UTMP_RECORD),"utmp");
                 offset += UTMP_RECORD;
             } else {
                 offset += 8;

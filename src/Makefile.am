@@ -81,7 +81,7 @@ scanners_builtin = \
 	scan_ntfsusn.cpp \
 	scan_outlook.cpp scan_outlook.h \
 	scan_pdf.cpp \
-	scan_rar.cpp
+	scan_rar.cpp \
 	scan_sqlite.cpp \
 	scan_utmp.cpp \
 	scan_vcard.cpp \

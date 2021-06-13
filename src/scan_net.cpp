@@ -34,6 +34,7 @@
 #include "config.h"
 // for localtime_r
 
+// these need config.h:
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
@@ -49,7 +50,7 @@ typedef char sa_family_t;
 #endif
 
 #include "be13_api/scanner_params.h"
-#include "be13_api/utils.h"
+#include "be13_api/utils.h" // needs config.h
 #include "be13_api/packet_info.h"
 
 /* Hardcoded tunings */
@@ -861,7 +862,7 @@ public:
 	}
 	memcpy(buf+14,sb2.buf,packet_len-14); // copy the packet data
 	/* make an sbuf to write */
-	sbuf_t sb3(pos0_t(),buf,packet_len,packet_len,0,false);
+	sbuf_t sb3(pos0_t(),buf,packet_len,packet_len,0,false, true, false);
 	struct pcap_hdr hz(0,0,packet_len,packet_len); // make a fake header
 	pcap_writepkt(hz,sb3,0,false,0x0000);	   // write the packet
 	return ip_len;				   // return that we processed this much
@@ -1026,7 +1027,6 @@ void scan_net(scanner_params &sp)
     if (sp.phase==scanner_params::PHASE_INIT){
 	assert(sizeof(struct be13::ip4)==20);	// we've had problems on some systems
         sp.info = new scanner_params::scanner_info(scan_net,"net");
-	sp.info->name           = "net";
         sp.info->author         = "Simson Garfinkel and Rob Beverly";
         sp.info->description    = "Scans for IP packets";
         sp.info->scanner_version= "1.0";

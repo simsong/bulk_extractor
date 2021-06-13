@@ -52,12 +52,10 @@ void scan_facebook(scanner_params &sp)
     sp.check_version();
     if (sp.phase==scanner_params::PHASE_INIT)        {
         sp.info = new scanner_params::scanner_info(scan_facebook,"facebook");
-        sp.info->name = "facebook";
         sp.info->author = "";
         sp.info->description = "Searches for facebook html and json tags";
         sp.info->scanner_version = "2.0";
         sp.info->feature_defs.push_back( feature_recorder_def("facebook"));
-        //sp.info->flags = scanner_params::scanner_info::SCANNER_DISABLED;
         return;
     }
     if (sp.phase==scanner_params::PHASE_SCAN) {

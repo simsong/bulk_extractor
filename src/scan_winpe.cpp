@@ -20,6 +20,15 @@
  * 2015-april   bda - added PE carving.
  */
 
+
+#include "config.h"
+#include <cstdint>
+#include "be13_api/utils.h"  // needs config.h
+#include "be13_api/scanner_params.h"
+
+//#include "be13_api/bulk_extractor_i.h"
+
+
 /**
  * XML_SPEC
  PE
@@ -97,10 +106,7 @@
  // <dlls><dll>msvcrt.dll</dll><dll>ntdll.dll</dll></dlls>
  */
 
-#include "config.h"
-#include "be13_api/bulk_extractor_i.h"
 
-#include <stdio.h>
 
 #define PE_SIGNATURE         "PE\0\0"
 #define PE_SIGNATURE_SIZE    4
@@ -490,9 +496,9 @@ struct flagnames_t pe_optionalwindowsheader_subsystem[] = {
 
 static bool valid_dll_name(const std::string &dllname)
 {
-    if(!validASCIIName(dllname)) return false;
-    if(dllname.size()<5) return false; /* DLL names have at least a character, a period and an extension */
-    if(dllname.at(dllname.size()-4)!='.') return false; // check for the '.'
+    if (!validASCIIName(dllname)) return false;
+    if (dllname.size()<5) return false; /* DLL names have at least a character, a period and an extension */
+    if (dllname.at(dllname.size()-4)!='.') return false; // check for the '.'
     return true;			// looks valid
 }
 
@@ -1025,13 +1031,14 @@ void scan_winpe (scanner_params &sp)
         sp.info = new scanner_params::scanner_info( scan_winpe, "winpe" );
         sp.info->description     = "Scan for Windows PE headers";
         sp.info->scanner_version = "1.1.0";
-        sp.info->feature_names.insert("winpe");
-        sp.info->feature_names.insert("winpe_carved");
+        sp.info->feature_defs.push_back( feature_recorder_def("winpe"));
+        sp.info->feature_defs.push_back( feature_recorder_def("winpe_carved"));
         return;
     }
 
     if(sp.phase == scanner_params::PHASE_SCAN){    // phase 1
-	feature_recorder *f = sp.fs.get_name("winpe");
+	feature_recorder &f = sp.ss.named_feature_recorder("winpe");
+        const sbuf_t &sbuf = *(sp.sbuf);
 
 	/*
 	 * Portable Executables start with a MS-DOS stub. The actual PE
@@ -1044,37 +1051,37 @@ void scan_winpe (scanner_params &sp)
 
 
 	/* Return if the buffer is impossibly small to contain a PE header */
-	if ((sp.sbuf.bufsize < PE_SIGNATURE_SIZE + sizeof(Pe_FileHeader) + 40) ||
-	    (sp.sbuf.bufsize < PE_FILE_OFFSET+4)){
+	if ((sbuf.bufsize < PE_SIGNATURE_SIZE + sizeof(Pe_FileHeader) + 40) ||
+	    (sbuf.bufsize < PE_FILE_OFFSET+4)){
 	    return;
 	}
 
 	/* Loop through the sbuf, go to the offset, and see if there is a PE signature */
-	for (size_t pos = 0; pos < sp.sbuf.pagesize; pos++) {
-	    size_t bytes_left = sp.sbuf.bufsize - pos;
+	for (size_t pos = 0; pos < sbuf.pagesize; pos++) {
+	    size_t bytes_left = sbuf.bufsize - pos;
 	    if(bytes_left < PE_FILE_OFFSET+4) break; // ran out of space
 
 	    // offset to the header is at 0x3c
-	    const uint32_t pe_header_offset = sp.sbuf.get32u(pos+PE_FILE_OFFSET);
+	    const uint32_t pe_header_offset = sbuf.get32u(pos+PE_FILE_OFFSET);
 	    if (pe_header_offset + 4 > bytes_left) continue; // points to region outside the sbuf
 
 	    // check for magic number. If found, analyze
-	    if (    (sp.sbuf[pos+pe_header_offset    ] == PE_SIGNATURE[0])
-		    && (sp.sbuf[pos+pe_header_offset + 1] == PE_SIGNATURE[1])
-		    && (sp.sbuf[pos+pe_header_offset + 2] == PE_SIGNATURE[2])
-		    && (sp.sbuf[pos+pe_header_offset + 3] == PE_SIGNATURE[3])) {
+	    if (    (sbuf[pos+pe_header_offset    ] == PE_SIGNATURE[0])
+		    && (sbuf[pos+pe_header_offset + 1] == PE_SIGNATURE[1])
+		    && (sbuf[pos+pe_header_offset + 2] == PE_SIGNATURE[2])
+		    && (sbuf[pos+pe_header_offset + 3] == PE_SIGNATURE[3])) {
 
-		const sbuf_t data(sp.sbuf + pos);
+		const sbuf_t data(sbuf + pos);
 
 		xml = scan_winpe_verify(data);
 		if (xml != "") {
 		    // If we have 4096 bytes, generate hash of first 4K
                     sbuf_t first4k(data,0,4096);
-		    std::string hash = f->fs.hasher.func(first4k.buf,first4k.bufsize);
-		    f->write(data.pos0,hash,xml);
+		    f.write(data.pos0, first4k.hash(), xml);
+
                     size_t carve_size = get_carve_size(data);
                     feature_recorder &f_carved = sp.ss.named_feature_recorder("winpe_carved");
-                    f_carved.carve(data, 0, carve_size, ".winpe");
+                    f_carved.carve(sbuf_t(data, 0, carve_size), ".winpe");
 		}
 	    }
 	}

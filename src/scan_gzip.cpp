@@ -78,7 +78,7 @@ void scan_gzip(scanner_params &sp)
 			    const ssize_t pos = cc-sbuf.buf;
 			    const pos0_t pos0_gzip = (pos0 + pos) + "GZIP";
 			    //const sbuf_t sbuf_new(pos0_gzip,decompress.buf,zs.total_out,zs.total_out,0,false);
-                            auto *nsbuf = new sbuf_t( pos0_gzip, decompress.buf, zs.total_out, zs.total_out, 0, false);
+                            auto *nsbuf = new sbuf_t( pos0_gzip, decompress.buf, zs.total_out, zs.total_out, 0, false, true, false);
                             sp.recurse(nsbuf);
                             //(*rcb.callback)(scanner_params(sp,sbuf_new)); // recurse
 			}

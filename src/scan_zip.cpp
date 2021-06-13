@@ -51,7 +51,7 @@ const uint32_t   MIN_ZIP_SIZE = 38;     // minimum size of a zip header and file
  * given a location in an sbuf, determine if it contains a zip component.
  * If it does and if it passes validity tests, unzip and recurse.
  */
-inline void scan_zip_component(scanner_params &sp, feature_recorder &zip_recorder, feature_recorder *unzip_recorder, size_t pos)
+inline void scan_zip_component(scanner_params &sp, feature_recorder &zip_recorder, feature_recorder &unzip_recorder, size_t pos)
 {
 
     const sbuf_t &sbuf = (*sp.sbuf);
@@ -164,9 +164,10 @@ inline void scan_zip_component(scanner_params &sp, feature_recorder &zip_recorde
                 auto *sbuf_new = new sbuf_t(pos0_zip, dbuf, zs.total_out, zs.total_out, 0, false, true, false);
 
                 /* If we are carving, then carve. Set the 'extension' to be '_' followed by the file name in archive.
-                 * Change any problematic characters to underbars in filename.
+                 * Change any problematic characters to underbars in filename. This is expensive, so we only do it if
+                 * we know that we are carving.
                  */
-                if (unzip_recorder){
+                if (unzip_recorder.carve_mode != feature_recorder_def::carve_mode_t::CARVE_NONE){
                     std::string carve_name("_"); // begin with a _
                     for(std::string::const_iterator it = name.begin(); it!=name.end();it++){
                         carve_name.push_back((*it=='/' || *it=='\\') ? '_' : *it);
@@ -176,7 +177,7 @@ inline void scan_zip_component(scanner_params &sp, feature_recorder &zip_recorde
                     strptime(mtime.c_str(), "%Y-%m-%d %H:%M:%S", &t);
                     time_t t2 = mktime(&t);
 
-                    unzip_recorder->carve( sbut_t(*sbuf_new, 0, sbuf_new->bufsize), carve_name, t2);
+                    unzip_recorder.carve( sbuf_t(*sbuf_new, 0, sbuf_new->bufsize), carve_name, t2);
                 }
 
                 // recurse. Remember that recurse will free the sbuf
@@ -200,6 +201,7 @@ void scan_zip(scanner_params &sp)
         feature_recorder_def::flags_t xml; xml.xml = true;
         sp.info = new scanner_params::scanner_info( scan_zip, "zip" );
 	sp.info->feature_defs.push_back( feature_recorder_def(ZIP_RECORDER_NAME, xml ));
+	sp.info->feature_defs.push_back( feature_recorder_def(UNZIP_RECORDER_NAME ));
         sp.ss.sc.get_config("zip_min_uncompr_size",&zip_min_uncompr_size,"Minimum size of a ZIP uncompressed object");
         sp.ss.sc.get_config("zip_max_uncompr_size",&zip_max_uncompr_size,"Maximum size of a ZIP uncompressed object");
         sp.ss.sc.get_config("zip_name_len_max",&zip_name_len_max,"Maximum name of a ZIP component filename");
@@ -210,12 +212,8 @@ void scan_zip(scanner_params &sp)
 	const sbuf_t &sbuf = (*sp.sbuf);
         if (sbuf.bufsize < MIN_ZIP_SIZE) return;
 
-        /* It would be good if we only got these if we needed them */
         feature_recorder &zip_recorder   = sp.named_feature_recorder(ZIP_RECORDER_NAME);
-        feature_recorder *unzip_recorder = nullptr;
-        if (unzip_carve_mode != feature_recorder::CARVE_NONE) {
-            unzip_recorder = &sp.named_feature_recorder(UNZIP_RECORDER_NAME);
-        }
+        feature_recorder &unzip_recorder = sp.named_feature_recorder(ZIP_RECORDER_NAME);
 
 	for(size_t i=0 ; i < sbuf.pagesize && i < sbuf.bufsize-MIN_ZIP_SIZE; i++){
 	    /** Look for signature for beginning of a ZIP component. */

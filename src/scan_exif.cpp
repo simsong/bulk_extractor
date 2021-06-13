@@ -18,7 +18,7 @@
 #include "config.h"
 
 #include "be13_api/scanner_params.h"
-#include "be13_api/utils.h"
+#include "be13_api/utils.h"// needs config.h
 
 #include "dfxml/src/dfxml_writer.h"
 

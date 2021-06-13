@@ -7,7 +7,7 @@
 
 #include "be13_api/scanner_params.h"
 #include "scan_outlook.h"
-#include "utils.h"
+#include "utils.h"// needs config.h
 
 /*
  * Below is the decoding array, i.e.:
@@ -60,7 +60,7 @@ void scan_outlook(scanner_params &sp)
     if(sp.phase==scanner_params::PHASE_INIT) {
         sp.info = new scanner_params::scanner_info( scan_outlook, "outlook" );
         sp.info->scanner_flags.default_enabled = false;
-        sp.info->scanner_flags.depth_0 = true; // only run depth 0
+        sp.info->scanner_flags.depth0_only = true; // only run depth 0
 	sp.info->author = "Simson L. Garfinkel";
 	sp.info->description = "Outlook Compressible Encryption. Very CPU intensive.";
         // TODO: Previously this has SCANNER_DEPTH_0 set so that it only ran at top-level. But this means we would

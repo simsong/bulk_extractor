@@ -38,9 +38,9 @@ typedef ushort wchar;
 #define INT32TO64(high,low) ((((uint64)(high))<<32)+((uint64)low))
 
 // Special int64 value, large enough to never be found in real life.
-// We use it in situations, when we need to indicate that parameter 
+// We use it in situations, when we need to indicate that parameter
 // is not defined and probably should be calculated inside of function.
-// Lower part is intentionally 0x7fffffff, not 0xffffffff, to make it 
+// Lower part is intentionally 0x7fffffff, not 0xffffffff, to make it
 // compatible with 32 bit int64.
 #define INT64NDF INT32TO64(0x7fffffff,0x7fffffff)
 

@@ -142,7 +142,7 @@ inline int analyze_stream(const scanner_params &sp, size_t stream_tag,size_t str
                         pos0_t pos0_pdf    = (sbuf.pos0 + stream_tag) + "PDF";//rcb.partName;
                         //const  sbuf_t sbuf_new(pos0_pdf, reinterpret_cast<const uint8_t *>(&text[0]), text.size(),text.size(),0, false);
                         //(*rcb.callback)(scanner_params(sp,sbuf_new));
-                        auto *nsbuf = new sbuf_t(pos0_pdf, reinterpret_cast<const uint8_t *>(&text[0]), text.size(),text.size(), 0, false);
+                        auto *nsbuf = new sbuf_t(pos0_pdf, reinterpret_cast<const uint8_t *>(&text[0]), text.size(),text.size(), 0, false, true, false);
                         sp.recurse(nsbuf);
                     }
                     if(pdf_dump) std::cout << "Extracted Text:\n" << text << "\n";
@@ -163,14 +163,11 @@ void scan_pdf(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-        auto info = new scanner_params::scanner_info( scan_pdf, "pdf" );
-        //sp.info->name           = "pdf";
-        info->author         = "Simson Garfinkel";
-        info->description    = "Extracts text from PDF files";
-        info->scanner_version= "1.0";
-        //info->flags          = scanner_info::SCANNER_RECURSE;
+        sp.info = new scanner_params::scanner_info( scan_pdf, "pdf" );
+        sp.info->author         = "Simson Garfinkel";
+        sp.info->description    = "Extracts text from PDF files";
+        sp.info->scanner_version= "1.0";
         sp.ss.sc.get_config("pdf_dump",&pdf_dump,"Dump the contents of PDF buffers");
-        sp.info = info;
 	return;	/* No features recorded */
     }
     if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;

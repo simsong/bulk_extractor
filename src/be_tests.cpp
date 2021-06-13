@@ -16,7 +16,7 @@
 #include "be13_api/dfxml/src/dfxml_writer.h"
 #include "be13_api/scanner_set.h"
 #include "be13_api/catch.hpp"
-#include "be13_api/utils.h"
+#include "be13_api/utils.h"             // needs config.h
 
 
 #include "image_process.h"

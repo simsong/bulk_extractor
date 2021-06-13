@@ -17,9 +17,6 @@
 #include "config.h"
 #include "be13_api/scanner_params.h"
 
-//#include "be13_api/bulk_extractor_i.h"
-//#include "sbuf_stream.h"
-
 #include "utf8.h"
 
 
@@ -64,7 +61,7 @@ void scan_ntfsmft(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-        sp.info->name            = "ntfsmft";
+        sp.info = new scanner_params::scanner_info(scan_ntfsmft,"ntfsmft");
         sp.info->author          = "Teru Yamazaki";
         sp.info->description     = "Scans for NTFS MFT record";
         sp.info->scanner_version = "1.0";
