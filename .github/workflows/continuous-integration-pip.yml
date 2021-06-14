@@ -52,7 +52,9 @@ jobs:
 
       - name: make check
         run: |
-          bash bootstrap.sh && ./configure && make check
+          bash bootstrap.sh && ./configure
+          cd src
+          make check || (echo ==error== ; cat test-suite.log; exit 1)
 
       - uses: ammaraskar/gcc-problem-matcher@0.1
         name: GCC Problem Matcher
