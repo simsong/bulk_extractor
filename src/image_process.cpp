@@ -285,7 +285,7 @@ int process_ewf::open()
     if(libewf_handle_open(handle,libewf_filenames,amount_of_filenames,
 			  LIBEWF_OPEN_READ,&error)<0){
 	if(error) libewf_error_fprint(error,stdout);
-	throw image_process::NoSuchFile(Formatter() << "Cannot open: " << fname);
+	throw image_process::NoSuchFile( (Formatter() << "Cannot open: " << fname).str());
     }
     /* Free the allocated filenames */
     if(use_libewf_glob){
@@ -421,7 +421,7 @@ sbuf_t *process_ewf::sbuf_alloc(image_process::iterator &it) const
 	return 0;
     }
 
-    return sbuf_t(get_pos0(it),buf,count,pagesize,it.page_number,true);
+    return new sbuf_t(get_pos0(it), buf, count, pagesize, it.page_number, false, true, false);
 }
 
 /**
@@ -847,7 +847,11 @@ pos0_t process_dir::get_pos0(const image_process::iterator &it) const
 sbuf_t *process_dir::sbuf_alloc(image_process::iterator &it) const
 {
     std::string fname = files[it.file_number];
-    return sbuf_t::map_file(fname);
+    sbuf_t *sbuf = sbuf_t::map_file(fname);     // returns a new sbuf
+    assert(sbuf->should_close == true);
+    assert(sbuf->should_free == false);
+    assert(sbuf->should_unmap == true);
+    return sbuf;
 }
 
 double process_dir::fraction_done(const image_process::iterator &it) const
@@ -871,7 +875,6 @@ uint64_t process_dir::seek_block(class image_process::iterator &it,uint64_t bloc
     it.file_number = block;
     return it.file_number;
 }
-
 
 
 

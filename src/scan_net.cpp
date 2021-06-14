@@ -987,12 +987,12 @@ public:
 	 *
 	 * Please remember that this is called for every byte, so it needs to be fast.
 	 */
-	for(u_int i=0 ; i<sbuf.pagesize && i<sbuf.bufsize;){
+	for(size_t i=0 ; i<sbuf.pagesize && i<sbuf.bufsize;){
 	    const sbuf_t sb2 = sbuf+i;
 
             /* Look for a PCAPFile header */
 	    size_t sfile = carvePCAPFile( sb2 );
-	    if (sfile>0) { i+= sfile;continue;}
+	    if (sfile>0) { i+= sfile; continue;}
 
             /* Look for a PCAP Packet */
 	    size_t spacket = carvePCAPPacket( sb2 );

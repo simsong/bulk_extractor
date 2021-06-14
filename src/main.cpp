@@ -810,6 +810,8 @@ int main(int argc,char **argv)
     argc -= optind;
     argv += optind;
 
+    std::cerr <<"argc=" << argc << "\n";
+
     //if(cfg.debug & DEBUG_PRINT_STEPS) std::cerr << "DEBUG: DEBUG_PRINT_STEPS\n";
 
     /* Create a configuration that will be used to initialize the scanners */
@@ -921,7 +923,11 @@ int main(int argc,char **argv)
     if (clean_start){
         /* First time running */
 	/* Validate the args */
-	if ( argc !=1 ) throw std::runtime_error("Disk image option not provided. Run with -h for help.");
+	if ( argc == 0 ) throw std::runtime_error("Clean start, but no disk image provided. Run with -h for help.");
+        if ( argc > 1  ){
+            std::cerr << "argc=" << argc << "\n";
+            throw std::runtime_error("Clean start, but too many arguments provided. Run with -h for help.");
+        }
 	validate_fn(image_fname);
     } else {
 	/* Restarting */

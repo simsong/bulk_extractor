@@ -4,3 +4,4 @@ x.cpp
 be_tests
 stand
 *.trs
+out*/

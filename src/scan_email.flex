@@ -366,6 +366,8 @@ void scan_email(struct scanner_params &sp)
 	info->histogram_defs.push_back( histogram_def("url4",   "url",    "://[-_a-z0-9.]+facebook.com/.*[&?]{1}id=([0-9]+)","", "facebook-id", no_flags));
 	info->histogram_defs.push_back( histogram_def("url5",   "url",    "://[-_a-z0-9.]+facebook.com/([a-zA-Z0-9.]*[^/?&]$)","", "facebook-address",lowercase));
 	info->histogram_defs.push_back( histogram_def("url6",   "url",    "search.*[?&/;fF][pq]=([^&/]+)",       "", "searches", no_flags));
+
+        info->histogram_defs.push_back( histogram_def("ether","ether", "([^\(]+)","", "histogram", histogram_def::flags_t()));
         sp.info = info;
 	return;
     }

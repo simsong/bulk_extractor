@@ -177,7 +177,7 @@ class process_ewf : public image_process {
     mutable libewf_handle_t *handle {};
 
  public:
-    process_ewf(const std::string &fname,size_t pagesize_,size_t margin_) : image_process(fname,pagesize_,margin_), {}
+    process_ewf(const std::string &fname, size_t pagesize_, size_t margin_) : image_process(fname, pagesize_, margin_) {}
     virtual ~process_ewf();
     std::vector<std::string> getewfdetails() const;
     int open();
