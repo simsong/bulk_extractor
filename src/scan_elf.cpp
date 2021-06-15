@@ -814,7 +814,7 @@ void scan_elf (scanner_params &sp)
 		 && (sbuf[pos+2] == 'L')
 		 && (sbuf[pos+3] == 'F')) {
 
-		const sbuf_t data(sbuf + pos);
+		const sbuf_t data = sbuf.splice(pos);
                 std::string xml = scan_elf_verify(data);
 		if (xml != "") {
                     sbuf_t hdata(data,0,4096);

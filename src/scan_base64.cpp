@@ -88,7 +88,7 @@ bool sbuf_line_is_base64(const sbuf_t &sbuf, const size_t &start, const size_t &
 /* Found the end of the base64 string and make the recursive call */
 sbuf_t *decode_base64(const sbuf_t &sbuf, size_t start, size_t src_len)
 {
-    const char *src    = (const char *)(sbuf.buf+start);
+    const char *src    = sbuf.get_buf() + start;
     if (src_len + start > sbuf.bufsize){ // make sure it doesn't go beyond buffer
         src_len = sbuf.bufsize-start;
     }
@@ -101,7 +101,7 @@ sbuf_t *decode_base64(const sbuf_t &sbuf, size_t start, size_t src_len)
     int conv_len = b64_pton_forensic(src, src_len, dst, dst_len);
     if (conv_len>0){
         const pos0_t pos0_base64 = (sbuf.pos0 + start) + "BASE64";
-        return new sbuf_t(pos0_base64, dst, conv_len, conv_len, 0, false, true, false);
+        return sbuf_t::sbuf_new(pos0_base64, dst, conv_len, conv_len);
     }
     return nullptr;
 }

@@ -32,7 +32,7 @@ static const uint32_t MIN_JPEG_SIZE = 200;    // don't consider something smalle
 
 // these are tunable
 static int exif_debug=0;
-static uint32_t jpeg_carve_mode = feature_recorder::CARVE_ENCODED;
+static uint32_t jpeg_carve_mode = feature_recorder_def::CARVE_ENCODED;
 static size_t min_jpeg_size = 1000; // don't carve smaller than this
 
 /****************************************************************
@@ -582,7 +582,7 @@ public:
             // Should we carve?
             if(res.how==jpeg_validator::COMPLETE || res.len>(ssize_t)min_jpeg_size){
                 if(exif_debug) fprintf(stderr,"CARVING\n");
-                jpeg_recorder.carve_data(sbuf, 0,res.len,".jpg");
+                jpeg_recorder.carve(sbuf, ".jpg", 0);
                 ret = res.len;
             }
 
@@ -616,13 +616,13 @@ public:
 		if(exif_debug) std::cerr << "scan_exif checking ffd8ff at start " << start << "\n";
 
 		// Does this JPEG have an EXIF?
-		size_t possible_tiff_offset_from_exif = exif_reader::get_tiff_offset_from_exif(sbuf+start);
+		size_t possible_tiff_offset_from_exif = exif_reader::get_tiff_offset_from_exif(sbuf.slice(start));
 		if(exif_debug){
                     std::cerr << "scan_exif.possible_tiff_offset_from_exif "
                               << possible_tiff_offset_from_exif << "\n";
                 }
 		if ((possible_tiff_offset_from_exif != 0)
-                    && tiff_reader::is_maybe_valid_tiff(sbuf + start + possible_tiff_offset_from_exif)) {
+                    && tiff_reader::is_maybe_valid_tiff(sbuf.splice(start + possible_tiff_offset_from_exif))) {
 
 		    // TIFF in Exif is valid, so process TIFF
 		    size_t tiff_offset = start + possible_tiff_offset_from_exif;
@@ -634,7 +634,7 @@ public:
 
 		    // get entries for this exif
                     try {
-		        tiff_reader::read_tiff_data(sbuf + tiff_offset, entries);
+		        tiff_reader::read_tiff_data(sbuf.splice(tiff_offset), entries);
                     } catch (exif_failure_exception_t &e) {
                         // accept whatever entries were gleaned before the exif failure
                     }
@@ -643,7 +643,7 @@ public:
                 }
                 // Try to process if it is exif or not
 
-                size_t skip = process(sbuf+start,true);
+                size_t skip = process( sbuf.splice(start),true);
                 if(skip>1) start += skip-1;
                 if(exif_debug){
                     std::cerr << "scan_exif Done processing JPEG/Exif ffd8ff at "
