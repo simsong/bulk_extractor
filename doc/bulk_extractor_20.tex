@@ -101,3 +101,8 @@ mode, the framework understands how to set them for any named
 scanner.
 
 (explain carve mode.)
+
+Simplified the API. sbuf previously had a two map_file's - one that
+took filename already open and the fd, and ht eother which just took
+the filename. Now it just has one; if it is already open, then it is
+oepened a secon time.

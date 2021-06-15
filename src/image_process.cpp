@@ -401,27 +401,25 @@ pos0_t process_ewf::get_pos0(const image_process::iterator &it) const
 /** Read from the iterator into a newly allocated sbuf */
 sbuf_t *process_ewf::sbuf_alloc(image_process::iterator &it) const
 {
-    int count = pagesize + margin;
+    size_t count = pagesize + margin;
 
     if(this->ewf_filesize < it.raw_offset + count){    /* See if that's more than I need */
 	count = this->ewf_filesize - it.raw_offset;
     }
 
-    unsigned char *buf = (unsigned char *)malloc(count);
-    if(!buf) throw std::bad_alloc();			// no memory
-
-    count = this->pread(buf,count,it.raw_offset); // do the read
-    if(count<0){
-	free(buf);
+    auto sbuf = sbuf_t::sbuf_malloc(get_pos0(it), count);
+    unsigned char *buf = sbuf->malloc_buf();
+    int count_read = this->pread(buf, count, it.raw_offset);
+    if(count_read<0){
+        delete sbuf;
 	throw read_error();
     }
     if(count==0){
-	free(buf);
+        delete sbuf;
 	it.eof = true;
 	return 0;
     }
-
-    return new sbuf_t(get_pos0(it), buf, count, pagesize, it.page_number, false, true, false);
+    return sbuf;
 }
 
 /**
@@ -742,19 +740,19 @@ sbuf_t *process_raw::sbuf_alloc(image_process::iterator &it) const
     if(this->raw_filesize < it.raw_offset + count){    /* See if that's more than I need */
 	count = this->raw_filesize - it.raw_offset;
     }
-    unsigned char *buf = (unsigned char *)malloc(count);
-    if(!buf) throw std::bad_alloc();			// no memory
-    count = this->pread(buf,count,it.raw_offset);       // do the read
-    if(count==0){
-	free(buf);
+    auto sbuf = sbuf_t::sbuf_malloc( get_pos0(it), count);
+    unsigned char *buf = sbuf->malloc_buf();
+    int count_read = this->pread(buf, count, it.raw_offset);       // do the read
+    if (count_read==0){
+        delete sbuf;
 	it.eof = true;
         throw EndOfImage();
     }
-    if(count<0){
-	free(buf);
+    if(count_read<0){
+        delete sbuf;
 	throw read_error();
     }
-    return new sbuf_t(get_pos0(it),buf,count,pagesize,it.page_number,false,true,false);
+    return sbuf;
 }
 
 static std::string filename_extension(std::string fn)
@@ -848,9 +846,6 @@ sbuf_t *process_dir::sbuf_alloc(image_process::iterator &it) const
 {
     std::string fname = files[it.file_number];
     sbuf_t *sbuf = sbuf_t::map_file(fname);     // returns a new sbuf
-    assert(sbuf->should_close == true);
-    assert(sbuf->should_free == false);
-    assert(sbuf->should_unmap == true);
     return sbuf;
 }
 

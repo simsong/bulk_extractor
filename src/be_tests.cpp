@@ -27,22 +27,6 @@
 #include "scan_base64.h"
 #include "scan_vcard.h"
 
-//#include "be13_api/bulk_extractor_i.h"
-//#include "dig.h"
-//#include "exif_reader.h"
-//#include "findopts.h"
-//#include "pattern_scanner.h"
-//#include "pattern_scanner_utils.h"
-//#include "pyxpress.h"
-//#include "sbuf_flex_scanner.h"
-//#include "scan_ccns2.h"
-
-/* Bring in the definitions for the  */
-//#define SCANNER(scanner) extern "C" scanner_t scan_ ## scanner;
-//#include "bulk_extractor_scanners.h"
-//#undef SCANNER
-
-
 #include "threadpool.hpp"
 
 /* Read all of the lines of a file and return them as a vector */

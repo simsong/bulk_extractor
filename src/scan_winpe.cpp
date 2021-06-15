@@ -26,9 +26,6 @@
 #include "be13_api/utils.h"  // needs config.h
 #include "be13_api/scanner_params.h"
 
-//#include "be13_api/bulk_extractor_i.h"
-
-
 /**
  * XML_SPEC
  PE

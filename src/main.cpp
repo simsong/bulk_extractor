@@ -46,7 +46,6 @@ int _CRT_fmode = _O_BINARY;
 #endif
 
 #include "bulk_extractor.h"
-//#include "be13_api/bulk_extractor_i.h"
 #include "be13_api/word_and_context_list.h"
 #include "be13_api/scanner_set.h"
 #include "be13_api/scanner_params.h"
@@ -915,7 +914,7 @@ int main(int argc,char **argv)
         }
         exit(1);
     }
-    std::string image_fname = *argv;
+    sc.image_fname = *argv;
 
     /* Determine if this is the first time through or if the program was restarted.
      * Restart procedure: re-run the command in verbatim.
@@ -928,11 +927,11 @@ int main(int argc,char **argv)
             std::cerr << "argc=" << argc << "\n";
             throw std::runtime_error("Clean start, but too many arguments provided. Run with -h for help.");
         }
-	validate_fn(image_fname);
+	validate_fn(sc.image_fname);
     } else {
 	/* Restarting */
 	std::cout << "Restarting from " << sc.outdir << "\n";
-        bulk_extractor_restarter r(sc.outdir, report_path, image_fname);
+        bulk_extractor_restarter r(sc.outdir, report_path, sc.image_fname);
 
         /* Rename the old report and create a new one */
         std::filesystem::path old_report_path = report_path.string() + std::string(".") + std::to_string(time(0));
@@ -942,7 +941,7 @@ int main(int argc,char **argv)
     /* Open the image file (or the device) now.
      * We use *p because we don't know which subclass we will be getting.
      */
-    image_process *p = image_process::open( image_fname, opt_recurse, cfg.opt_pagesize, cfg.opt_marginsize);
+    image_process *p = image_process::open( sc.image_fname, opt_recurse, cfg.opt_pagesize, cfg.opt_marginsize);
 
     /* Determine the feature files that will be used from the scanners that were enabled */
     auto feature_file_names = ss.feature_file_list();
@@ -953,7 +952,7 @@ int main(int argc,char **argv)
     if (!opt_write_feature_files)  flags |= feature_recorder_set::DISABLE_FILE_RECORDERS;
 
     /* Create the feature_recorder_set */
-    feature_recorder_set fs(flags, be_hash_name, image_fname, sc.outdir);
+    feature_recorder_set fs(flags, be_hash_name, sc.image_fname, sc.outdir);
     fs.init( feature_file_names );      // TODO: this should be in the initializer
 
     /* Enable histograms */
@@ -990,7 +989,7 @@ int main(int argc,char **argv)
             if (hostname[0]) std::cout << "Hostname: " << hostname << "\n";
         }
 #endif
-        std::cout << "Input file: " << image_fname << "\n";
+        std::cout << "Input file: " << sc.image_fname << "\n";
         std::cout << "Output directory: " << sc.outdir << "\n";
         std::cout << "Disk Size: " << p->image_size() << "\n";
         std::cout << "Threads: " << cfg.num_threads << "\n";
@@ -1011,7 +1010,7 @@ int main(int argc,char **argv)
     dfxml_writer *xreport = new dfxml_writer(report_path, false);
     Phase1 phase1(*xreport, cfg, *p, ss);
     phase1.dfxml_create( argc, argv);
-    xreport->xmlout("provided_filename",image_fname); // save this information
+    xreport->xmlout("provided_filename", sc.image_fname); // save this information
 
     /* TODO: Load up phase1 seen_page_ideas if we are restarting */
 

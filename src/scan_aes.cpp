@@ -33,7 +33,6 @@
 #include <cstdint>
 
 #include "config.h"
-//#include "be13_api/bulk_extractor_i.h"
 #include "be13_api/scanner_params.h"
 #include "be13_api/scanner_set.h"
 
@@ -445,7 +444,7 @@ void scan_aes(struct scanner_params &sp)
 
             /* TODO: Remove direct memory access with mediated access */
 	    if(distinct_counts>10){
-		const uint8_t *p2 = sp.sbuf->buf + pos;
+		const uint8_t *p2 = sp.sbuf->get_buf() + pos;
 		if (valid_aes128_schedule(p2)) {
                     std::string key = key_to_string(p2, AES128_KEY_SIZE);
 		    aes_recorder.write(sp.sbuf->pos0+pos,key,std::string("AES128"));
