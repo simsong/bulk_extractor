@@ -102,9 +102,8 @@ public:
 	iterator(const class image_process *myimage_):myimage(*myimage_) { }
 	bool operator !=(const iterator &it) const {
 	    if (this->eof && it.eof) return false; /* both in EOF states, so they are equal */
-	    if (this->raw_offset!=it.raw_offset
-	       || this->page_number!=it.page_number
-	       || this->file_number!=it.file_number
+	    if (this->raw_offset!=it.raw_offset ||
+                this->page_number!=it.page_number || this->file_number!=it.file_number
 	       ) return true;
 	    return false;
 	}

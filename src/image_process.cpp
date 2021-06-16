@@ -421,7 +421,7 @@ sbuf_t *process_ewf::sbuf_alloc(image_process::iterator &it) const
 	return 0;
     }
 
-    return sbuf_t(get_pos0(it),buf,count,pagesize,it.page_number,true);
+    return sbuf_t::sbuf_new(get_pos0(it), buf, count, pagesize );
 }
 
 /**
@@ -754,7 +754,7 @@ sbuf_t *process_raw::sbuf_alloc(image_process::iterator &it) const
 	free(buf);
 	throw read_error();
     }
-    return new sbuf_t(get_pos0(it),buf,count,pagesize,it.page_number,true);
+    return sbuf_t::sbuf_new(get_pos0(it), buf, count, pagesize);
 }
 
 static std::string filename_extension(std::string fn)

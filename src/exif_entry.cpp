@@ -1324,7 +1324,9 @@ static std::string get_exif_byte(tiff_handle_t &tiff_handle, uint32_t ifd_entry_
 
     } else {
         // count is not 1 so return the bytes as utf8
-        return get_possible_utf8(*(tiff_handle.sbuf)+offset, count);
+        // TODO: replace this with sbuf mechanism to get UTF8?
+        // return tiff_handle.getUTF8(offset, count, utf8_string)
+        return get_possible_utf8(*(tiff_handle.sbuf+offset), count);
     }
 }
 
@@ -1356,7 +1358,7 @@ static std::string get_exif_ascii(tiff_handle_t &tiff_handle, uint32_t ifd_entry
     }
 
     // although 7-bit ascii is expected, parse using UTF-8
-    return get_possible_utf8(*(tiff_handle.sbuf)+offset, count);
+    return get_possible_utf8(tiff_handle.sbuf.splice(offset), count);
 }
 
 // EXIF_SHORT uint16
@@ -1386,7 +1388,7 @@ static std::string get_exif_short(tiff_handle_t &tiff_handle, uint32_t ifd_entry
 
     } else {
         // count is not 1 so print the uint16_t bytes as utf8
-        std::string s = get_possible_utf16(*(tiff_handle.sbuf)+offset, count, tiff_handle.byte_order);
+        std::string s = get_possible_utf16( tiff_handle.sbuf.splice(offset), count, tiff_handle.byte_order);
 #ifdef DEBUG
         std::cout << "exif_entry.get_exif_short (escaped): '" << validateOrEscapeUTF8(s, true, false) << "'\n";
 #endif
@@ -1422,7 +1424,7 @@ static std::string get_exif_long(tiff_handle_t &tiff_handle, uint32_t ifd_entry_
 
     } else {
         // count is not 1 so print the uint32_t bytes as utf8
-        std::string s = get_possible_utf32(*(tiff_handle.sbuf)+offset, count, tiff_handle.byte_order);
+        std::string s = get_possible_utf32( tiff_handle.sbuf.splice(offset), count, tiff_handle.byte_order);
 #ifdef DEBUG
         std::cout << "exif_entry.get_exif_short (escaped): '" << validateOrEscapeUTF8(s, true, false) << "'\n";
 #endif

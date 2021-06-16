@@ -237,7 +237,7 @@ void Phase1::send_data_to_workers()
                     if (sha1g){
                         if (sbufp->pos0.offset==sha1_next){
                             // next byte follows logically, so continue to compute hash
-                            sha1g->update(sbufp->buf, sbufp->pagesize);
+                            sha1g->update(sbufp->get_buf(), sbufp->pagesize);
                             sha1_next += sbufp->pagesize;
                         } else {
                             delete sha1g; // we had a logical gap; stop hashing

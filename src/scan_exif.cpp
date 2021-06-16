@@ -622,7 +622,7 @@ public:
                               << possible_tiff_offset_from_exif << "\n";
                 }
 		if ((possible_tiff_offset_from_exif != 0)
-                    && tiff_reader::is_maybe_valid_tiff(sbuf.splice(start + possible_tiff_offset_from_exif))) {
+                    && tiff_reader::is_maybe_valid_tiff(sbuf.slice(start + possible_tiff_offset_from_exif))) {
 
 		    // TIFF in Exif is valid, so process TIFF
 		    size_t tiff_offset = start + possible_tiff_offset_from_exif;
@@ -634,7 +634,7 @@ public:
 
 		    // get entries for this exif
                     try {
-		        tiff_reader::read_tiff_data(sbuf.splice(tiff_offset), entries);
+		        tiff_reader::read_tiff_data(sbuf.slice(tiff_offset), entries);
                     } catch (exif_failure_exception_t &e) {
                         // accept whatever entries were gleaned before the exif failure
                     }
@@ -643,7 +643,7 @@ public:
                 }
                 // Try to process if it is exif or not
 
-                size_t skip = process( sbuf.splice(start),true);
+                size_t skip = process( sbuf.slice(start),true);
                 if(skip>1) start += skip-1;
                 if(exif_debug){
                     std::cerr << "scan_exif Done processing JPEG/Exif ffd8ff at "
@@ -656,19 +656,19 @@ public:
                 sbuf[start + 3] == 'S' && sbuf[start + 4] == 0 && sbuf[start + 5] == 1) {
 	        if(exif_debug) std::cerr << "scan_exif checking 8BPS at start " << start << "\n";
 		// perform thorough check for TIFF in photoshop PSD
-		size_t possible_tiff_offset_from_psd = psd_reader::get_tiff_offset_from_psd(sbuf+start);
+		size_t possible_tiff_offset_from_psd = psd_reader::get_tiff_offset_from_psd(sbuf.slice(start));
 		if(exif_debug){
                     std::cerr << "scan_exif.psd possible_tiff_offset_from_psd "
                               << possible_tiff_offset_from_psd << "\n";
                 }
 		if ((possible_tiff_offset_from_psd != 0)
-		    && tiff_reader::is_maybe_valid_tiff(sbuf + start + possible_tiff_offset_from_psd)) {
+		    && tiff_reader::is_maybe_valid_tiff(sbuf.slice(start + possible_tiff_offset_from_psd))) {
 		    // TIFF in PSD is valid, so process TIFF
 		    size_t tiff_offset = start + possible_tiff_offset_from_psd;
 
 		    // get entries for this exif
                     try {
-		        tiff_reader::read_tiff_data(sbuf + tiff_offset, entries);
+		        tiff_reader::read_tiff_data(sbuf.slice(tiff_offset), entries);
                     } catch (exif_failure_exception_t &e) {
                         // accept whatever entries were gleaned before the exif failure
                     }
@@ -677,7 +677,7 @@ public:
                         std::cerr << "scan_exif Start processing validated Photoshop 8BPS at start "
                                   << start << " tiff_offset " << tiff_offset << "\n";
                     }
-                    size_t skip = process(sbuf+start,true);
+                    size_t skip = process(sbuf.slice(start),true);
                     // std::cerr << "2 skip=" << skip << "\n";
                     if(skip>1) start += skip-1;
 		    if(exif_debug){
@@ -700,19 +700,19 @@ public:
                 ){
 
 		// probably a match so check further
-		if (tiff_reader::is_maybe_valid_tiff(sbuf+start)) {
+		if (tiff_reader::is_maybe_valid_tiff(sbuf.slice(start))) {
 		    // treat this as a valid match
 		    //if(debug) std::cerr << "scan_exif Start processing validated TIFF II42 or MM42 at start "
                     //<< start << ", last tiff_offset: " << tiff_offset << "\n";
 		    // get entries for this exif
                     try {
-		        tiff_reader::read_tiff_data(sbuf + start, entries);
+		        tiff_reader::read_tiff_data(sbuf.slice(start), entries);
                     } catch (exif_failure_exception_t &e) {
                         // accept whatever entries were gleaned before the exif failure
                     }
 
                     // there is no MD5 because there is no associated file for this TIFF marker
-                    process(sbuf+start,false);
+                    process(sbuf.slice(start),false);
 		    if(exif_debug){
                         std::cerr << "scan_exif Done processing validated TIFF II42 or MM42 at start "
                                   << start << "\n";

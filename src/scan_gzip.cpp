@@ -45,47 +45,51 @@ void scan_gzip(scanner_params &sp)
 	const sbuf_t &sbuf = (*sp.sbuf);
 	const pos0_t &pos0 = sbuf.pos0;
 
-	for(const unsigned char *cc=sbuf.buf ;
-	    cc < sbuf.buf+sbuf.pagesize && cc < sbuf.buf+sbuf.bufsize-4 ;
-	    cc++){
+        for (int i=0; i < sbuf.pagesize && i < sbuf.bufsize-4; i++) {
+
 	    /** Look for the signature for beginning of a GZIP file.
 	     * See zlib.h and RFC1952
 	     * http://www.15seconds.com/Issue/020314.htm
 	     *
 	     */
-	    if (cc[0]==0x1f && cc[1]==0x8b && cc[2]==0x08){ // gzip HTTP flag
-		u_int compr_size = sbuf.bufsize - (cc-sbuf.buf); // up to the end of the buffer
-                managed_malloc<u_char>decompress(gzip_max_uncompr_size);
-		if (decompress.buf){
-		    z_stream zs;
-		    memset(&zs,0,sizeof(zs));
+	    if (sbuf[i+0]==0x1f && sbuf[i+1]==0x8b && sbuf[i+2]==0x08){ // gzip HTTP flag
+		u_int compr_size = sbuf.bufsize - i; // up to the end of the buffer
+                u_char *decompress_buf = (u_char *)malloc(gzip_max_uncompr_size); // allocate a huge chunk of memory
+                if (decompress_buf==nullptr){
+                    throw std::bad_alloc();
+                }
+                const unsigned char *src = sbuf.get_buf() + i;
+                z_stream zs;
+                memset(&zs,0,sizeof(zs));
 
-		    zs.next_in = (Bytef *)cc;
-		    zs.avail_in = compr_size;
-		    zs.next_out = (Bytef *)decompress.buf;
-		    zs.avail_out = gzip_max_uncompr_size;
+                zs.next_in  = (Bytef *)src;
+                zs.avail_in = compr_size;
+                zs.next_out = (Bytef *)decompress_buf;
+                zs.avail_out = gzip_max_uncompr_size;
 
-		    gz_header_s gzh;
-		    memset(&gzh,0,sizeof(gzh));
+                gz_header_s gzh;
+                memset(&gzh,0,sizeof(gzh));
 
-		    int r = inflateInit2(&zs,16+MAX_WBITS);
-                    if (r==0){
-			r = inflate(&zs,Z_SYNC_FLUSH);
-			/* Ignore the error code; process data if we got any */
-			if (zs.total_out>0){
-			    /* run decompress.buf through the recognizer.
-			     */
-			    const ssize_t pos = cc-sbuf.buf;
-			    const pos0_t pos0_gzip = (pos0 + pos) + "GZIP";
-			    //const sbuf_t sbuf_new(pos0_gzip,decompress.buf,zs.total_out,zs.total_out,0,false);
-                            auto *nsbuf = new sbuf_t( pos0_gzip, decompress.buf, zs.total_out, zs.total_out, 0, false);
-                            sp.recurse(nsbuf);
-                            //(*rcb.callback)(scanner_params(sp,sbuf_new)); // recurse
-			}
-			r = inflateEnd(&zs);
-		    }
-		}
-	    }
+                int r = inflateInit2(&zs,16+MAX_WBITS);
+                if (r==0){
+                    r = inflate(&zs,Z_SYNC_FLUSH);
+                    /* Ignore the error code; process data if we got any */
+                    if (zs.total_out>0){
+                        /* Shrink the allocated region */
+                        decompress_buf = realloc(decompress_buf, zs.total_out);
+
+                        /* run decompress.buf through the recognizer.
+                         */
+                        const pos0_t pos0_gzip = (pos0 + i) + "GZIP";
+                        auto *nsbuf = sbuf_t::sbuf_new( pos0_gzip, decompress_buf, zs.total_out, zs.total_out);
+                        sp.recurse(nsbuf);
+                    }
+                    r = inflateEnd(&zs);
+                } else {
+                    /* just free the buffer */
+                    free(decompress_buf);
+                }
+            }
 	}
     }
 }
