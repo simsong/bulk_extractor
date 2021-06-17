@@ -53,7 +53,7 @@ public:
         if ((int)max_size < 0) return 0;
         int count=0;
         while ((max_size > 0) && (point < sbuf.bufsize) ){
-            *buf++ = (char)sbuf.buf[point++];
+            *buf++ = sbuf[point++];
             max_size--;
             count++;
         }

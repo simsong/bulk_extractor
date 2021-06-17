@@ -1,7 +1,11 @@
 /**
  * exif_reader: - custom exif reader for identifying specific features for bulk_extractor.
+ *
+ * Called from exif_entry.cpp, exif_reader.cpp and scan_exif.cpp
+ *
  * Revision history:
  * 2012-jan-05 bda - Created.
+ * 2021-jun-16 slg - Updated comments to indicate where this is called from. Updated for C++17.
  *
  * TESTING:
  *  1) Validate that entries may be read from both Intel and Motorola file types.
@@ -28,7 +32,7 @@
  * Handle to the beginning of the tiff structure.
  */
 struct tiff_handle_t {
-    const sbuf_t *sbuf;
+    const sbuf_t *sbuf;                 // TODO: Make me &sbuf, since we never want to have a nullptr
     const sbuf_t::byte_order_t byte_order;
     uint32_t bytes_read;
     tiff_handle_t(const sbuf_t *sbuf_, sbuf_t::byte_order_t byte_order_)

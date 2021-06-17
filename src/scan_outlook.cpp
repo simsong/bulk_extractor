@@ -77,15 +77,12 @@ void scan_outlook(scanner_params &sp)
         }
 
         // managed_malloc throws an exception if allocation fails.
-        managed_malloc<uint8_t>dbuf(sbuf.bufsize);
+        auto *dbuf = sbuf_t::sbuf_malloc(pos0+"OUTLOOK", sbuf.bufsize);
         for(size_t ii = 0; ii < sbuf.bufsize; ii++) {
             uint8_t ch = sbuf.buf[ii];
-            dbuf.buf[ii] = libpff_encryption_compressible[ ch ];
+            dbuf.wbuf(ii,libpff_encryption_compressible[ ch ]);
         }
 
-        const pos0_t pos0_oce = pos0 + "OUTLOOK";
-        const sbuf_t child_sbuf(pos0_oce, dbuf.buf, sbuf.bufsize, sbuf.pagesize, 0, false);
-        scanner_params child_params(sp, child_sbuf);
-        (*rcb.callback)(child_params);    // recurse on deobfuscated buffer
+        sp.recurse(dbuf);
     }
 }

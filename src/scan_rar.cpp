@@ -662,26 +662,18 @@ void scan_rar(scanner_params &sp)
                 // only decompress and recur if the component compression isn't
                 // no-op to avoid duplicate features
                 if(component.compression_method != METHOD_UNCOMPRESSED) {
-                    managed_malloc<uint8_t>dbuf(component.uncompressed_size);
-                    memset(dbuf.buf, 0x00, component.uncompressed_size);
+                    auto *dbuf = sbuf_t::sbuf_malloc((pos0 + pos) + "RAR", component.uncompressed_size);
+                    auto *dbuf_buf = dbuf->malloc_buf();
+                    memset(dbuf_buf, 0x00, component.uncompressed_size);
+                    unpack_buf(cc, cc_len, dbuf_buf, component.uncompressed_size);
 
-                    unpack_buf(cc, cc_len, dbuf.buf, component.uncompressed_size);
-
-                    /* Create a child sbuf with the updated pos0 for recursive processing */
-                    const pos0_t pos0_rar = (pos0 + pos) + rcb.partName;
-                    {
-                        const sbuf_t child_sbuf(pos0_rar, dbuf.buf, component.uncompressed_size, component.uncompressed_size, 0, false);
-                        scanner_params child_params(sp, child_sbuf);
-                        (*rcb.callback)(child_params);
-
-                        std::string carve_name("_");
-                        carve_name += component.name;
-                        for(auto &it : carve_name){
-                            if(it=='/') it = '_';
-                        }
-                        std::string fn = unrar_recorder->carve(child_sbuf,0,child_sbuf.bufsize,carve_name);
-                        unrar_recorder->set_carve_mtime(fn,component.iso_timestamp());
+                    std::string carve_name("_");
+                    carve_name += component.name;
+                    for(auto &it : carve_name){
+                        if(it=='/') it = '_';
                     }
+                    unrar_recorder->carve(*dbuf, carve_name, component.iso_timestamp());
+                    sp.recurse(dbuf);
                 }
             }
 	}

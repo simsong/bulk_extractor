@@ -56,7 +56,7 @@ void scan_kml(scanner_params &sp)
 	    std::string possible_kml = sbuf.substr(xml_loc, kml_len);
 	    if(utf8::find_invalid(possible_kml.begin(),possible_kml.end()) == possible_kml.end()){
 		/* No invalid UTF-8 */
-		kml_recorder.carve_data(sbuf, xml_loc, kml_len, ".kml");
+		kml_recorder.carve(sbuf.slice(xml_loc, kml_len), ".kml", 0);
 		i = ekml_loc + 6;	// skip past end of </kml>
 	    }
 	    else {

@@ -84,15 +84,11 @@ void scan_msxml(scanner_params &sp)
                     if(instring) ss << sbuf[i];
                 }
             }
+            /* Two copy operations. Ick. */
             std::string  bufstr = ss.str();
-            size_t       buflen = bufstr.size();
-            managed_malloc<char *>buf(buflen);
-            if(buf.buf){
-                memcpy(buf.buf,bufstr.c_str(),buflen);
-                pos0_t pos0_xml    = sbuf.pos0 + rcb.partName;
-                const  sbuf_t sbuf_new(pos0_xml,reinterpret_cast<const u_char *>(buf.buf),buflen,buflen,0, false);
-                (*rcb.callback)(scanner_params(sp,sbuf_new));
-            }
+            auto *dbuf = sbuf_t::sbuf_malloc(sbuf.pos0+"MSXML", bufstr.size());
+            memcpy(bufstr.c_str(), dbuf.malloc_buf(), bufstr.size());
+            sp.recurse(dbuf);
         }
     }
 }

@@ -186,6 +186,7 @@ namespace base16 {
   void Scanner::decode(const sbuf_t& osbuf, size_t pos, size_t len, const scanner_params& sp) {
     sbuf_t sbuf(osbuf, pos, len);  // the substring we are working with
 
+  TODO: Replace managed_malloc with a sbuf_t::sbuf_malloc
     managed_malloc<uint8_t> b(sbuf.pagesize/2);
     if (b.buf == 0) return;
 

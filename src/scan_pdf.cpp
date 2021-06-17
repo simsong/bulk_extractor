@@ -10,26 +10,13 @@
 #include <iomanip>
 #include <cassert>
 
-
 #include "config.h"
 
+#include "sbuf_decompress.h"
 #include "be13_api/scanner_params.h"
 #include "image_process.h"
-#include "managed_malloc.h"
-
 
 /* Debug by setting DEBUG or by setting pdf_dump at runtime */
-
-//#define DEBUG
-
-#define ZLIB_CONST
-#ifdef HAVE_DIAGNOSTIC_UNDEF
-#  pragma GCC diagnostic ignored "-Wundef"
-#endif
-#ifdef HAVE_DIAGNOSTIC_CAST_QUAL
-#  pragma GCC diagnostic ignored "-Wcast-qual"
-#endif
-#include <zlib.h>
 
 static bool pdf_dump = false;
 
@@ -37,13 +24,13 @@ static bool pdf_dump = false;
  * Return TRUE if most of the characters (90%) are printable ASCII.
  */
 
-static bool mostly_printable_ascii(const unsigned char *buf,size_t bufsize)
+static bool mostly_printable_ascii(const sbuf_t &sbuf)
 {
     size_t count = 0;
-    for(const unsigned char *cc = buf; cc<buf+bufsize;cc++){
-	if(isprint(*cc) || isspace(*cc)) count++;
+    for(int i=0;i<sbuf.pagesize;i++){
+        if (isprint(sbuf[i]) || isspace(sbuf[i])) count++;
     }
-    return count > (bufsize*9/10);
+    return count > (sbuf.pagesize);
 }
 
 /*
@@ -65,8 +52,9 @@ static bool mostly_printable_ascii(const unsigned char *buf,size_t bufsize)
  * So we just put a space between them all and hope.
  */
 
-static void pdf_extract_text(std::string &tbuf,const unsigned char *buf,size_t bufsize)
+static std::string  pdf_extract_text(const sbuf_t &sbuf)
 {
+    std::string tbuf {};
     int maxwordsize = 0;
     bool words_have_spaces = false;
     /* pass = 0 --- analysis. Find maxwordsize
@@ -75,22 +63,23 @@ static void pdf_extract_text(std::string &tbuf,const unsigned char *buf,size_t b
     for(int pass=0;pass<2;pass++){
         bool in_paren = false;
         int  wordsize = 0;
-        for(const unsigned char *cc = buf;cc<buf+bufsize;cc++){
-            if(in_paren==false && *cc=='[') {
+        for (int i=0;i<sbuf.pagesize;i++){
+            const unsigned char cc = sbuf[i];
+            if(in_paren==false && cc=='[') {
                 /* Beginning of bracket group not in paren; ignore */
                 continue;
             }
-            if(in_paren==false && *cc==']') {
+            if(in_paren==false && cc==']') {
                 /* End of bracket group not in paren; ignore */
                 continue;
             }
-            if(in_paren==false && *cc=='(') {
+            if(in_paren==false && cc=='(') {
                 /* beginning of word */
                 wordsize = 0;
                 in_paren = true;
                 continue;
             }
-            if(in_paren==true &&  *cc==')') {
+            if(in_paren==true &&  cc==')') {
                 /* end of word */
                 in_paren = false;
                 if(pass==0 && (wordsize > maxwordsize))  maxwordsize = wordsize;
@@ -102,56 +91,38 @@ static void pdf_extract_text(std::string &tbuf,const unsigned char *buf,size_t b
             }
             if(in_paren){
                 /* in a word */
-                if(*cc==' ') words_have_spaces = true;
-                if(pass==1) tbuf.push_back(*cc);
+                if(cc==' ') words_have_spaces = true;
+                if(pass==1) tbuf.push_back(cc);
                 wordsize+=1;
             }
         }
     }
+    return tbuf;
 }
 
-inline int analyze_stream(const scanner_params &sp, size_t stream_tag,size_t stream_start,size_t endstream)
+void analyze_stream(const scanner_params &sp, size_t stream_tag,size_t stream_start,size_t endstream)
 {
     const sbuf_t &sbuf = (*sp.sbuf);
     size_t compr_size = endstream-stream_start;
-    size_t uncompr_size = compr_size * 8;       // good assumption for expansion
-    managed_malloc<Bytef>decomp(uncompr_size);
-    if(decomp.buf){
-        z_stream zs;
-        memset(&zs,0,sizeof(zs));
-        zs.next_in = (Bytef *)sbuf.buf+stream_start;
-        zs.avail_in = compr_size;
-        zs.next_out = decomp.buf;
-        zs.avail_out = uncompr_size;
-        int r = inflateInit(&zs);
-        if(r==Z_OK){
-            r = inflate(&zs,Z_FINISH);
-            if(zs.total_out>0){
-                sbuf_t dbuf(sbuf.pos0 + "-PDFDECOMP",
-                            decomp.buf,zs.total_out,zs.total_out,0,
-                            false,false,false);
-                if(pdf_dump){
-                    std::cout << "====== " << dbuf.pos0 << "=====\n";
-                    dbuf.hex_dump(std::cout);
-                    std::cout << "\n";
-                }
-                if(mostly_printable_ascii(decomp.buf,zs.total_out)){
-                    std::string text;
-                    pdf_extract_text(text,decomp.buf,zs.total_out);
-                    if(text.size()>0){
-                        pos0_t pos0_pdf    = (sbuf.pos0 + stream_tag) + "PDF";//rcb.partName;
-                        //const  sbuf_t sbuf_new(pos0_pdf, reinterpret_cast<const uint8_t *>(&text[0]), text.size(),text.size(),0, false);
-                        //(*rcb.callback)(scanner_params(sp,sbuf_new));
-                        auto *nsbuf = new sbuf_t(pos0_pdf, reinterpret_cast<const uint8_t *>(&text[0]), text.size(),text.size(), 0, false);
-                        sp.recurse(nsbuf);
-                    }
-                    if(pdf_dump) std::cout << "Extracted Text:\n" << text << "\n";
-                }
-                if(pdf_dump){
-                    std::cout << "================\n";
-                }
-            }
-            inflateEnd(&zs);            // prevent leak; still not exception safe.
+    size_t max_uncompr_size = compr_size * 8;       // good assumption for expansion
+
+    auto *dbuf = sbuf_decompress_zlib_new( sbuf.slice(stream_start, compr_size), max_uncompr_size, "PDFDECOMP");
+    if (dbuf==nullptr) return;
+
+    if(pdf_dump){
+        std::cout << "====== " << dbuf->pos0 << "=====\n";
+        dbuf->hex_dump(std::cout);
+        std::cout << "\n";
+    }
+    if (mostly_printable_ascii(*dbuf)){
+        std::string text = pdf_extract_text(text,decomp.buf,zs.total_out);
+        if(text.size()>0){
+            if (pdf_dump) std::cout << "Extracted Text:\n" << text << "================\n";
+            pos0_t pos0_pdf    = (sbuf.pos0 + stream_tag) + "PDF";//rcb.partName;
+            //const  sbuf_t sbuf_new(pos0_pdf, reinterpret_cast<const uint8_t *>(&text[0]), text.size(),text.size(),0, false);
+            //(*rcb.callback)(scanner_params(sp,sbuf_new));
+            auto *nsbuf = new sbuf_t(pos0_pdf, text);
+            sp.recurse(nsbuf);
         }
     }
     return 0;
@@ -164,16 +135,13 @@ void scan_pdf(scanner_params &sp)
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
         auto info = new scanner_params::scanner_info( scan_pdf, "pdf" );
-        //sp.info->name           = "pdf";
         info->author         = "Simson Garfinkel";
         info->description    = "Extracts text from PDF files";
         info->scanner_version= "1.0";
-        //info->flags          = scanner_info::SCANNER_RECURSE;
         sp.ss.sc.get_config("pdf_dump",&pdf_dump,"Dump the contents of PDF buffers");
         sp.info = info;
 	return;	/* No features recorded */
     }
-    if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;
     if(sp.phase==scanner_params::PHASE_SCAN){
 
 #ifdef DEBUG
@@ -207,7 +175,7 @@ void scan_pdf(scanner_params &sp)
                 loc = nextstream - 1;
                 continue;
             }
-            if(analyze_stream(sp,stream_tag,stream_start,endstream)==-1){
+            if(analyze_stream(sp,stream_tag,stream_start,endstream) == -1){
                 return;
             }
             loc=endstream+9;

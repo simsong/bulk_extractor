@@ -69,6 +69,7 @@ void scan_find(scanner_params &sp)
     if(sp.phase==scanner_params::PHASE_SCAN) {
         /* The current regex library treats \0 as the end of a string.
          * So we make a copy of the current buffer to search that's one bigger, and the copy has a \0 at the end.
+         * This is super-wasteful. Does Lightgrep have this problem?
          */
         feature_recorder &f = sp.ss.named_feature_recorder("find");
 

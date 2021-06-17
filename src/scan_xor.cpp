@@ -6,7 +6,6 @@
 #include "config.h"
 #include "be13_api/scanner_params.h"
 #include "utils.h"
-#include "managed_malloc.h"
 
 static uint8_t xor_mask = 255;
 extern "C"
@@ -46,20 +45,15 @@ void scan_xor(scanner_params &sp)
             }
         }
 
-        // managed_malloc throws an exception if allocation fails.
-        managed_malloc<uint8_t>dbuf(sbuf.bufsize);
-        for(size_t ii = 0; ii < sbuf.bufsize; ii++) {
-            dbuf.buf[ii] = sbuf.buf[ii] ^ xor_mask;
-        }
-
         std::stringstream ss;
         ss << "XOR(" << uint32_t(xor_mask) << ")";
-
         const pos0_t pos0_xor = pos0 + ss.str();
-        //const sbuf_t child_sbuf(pos0_xor, dbuf.buf, sbuf.bufsize, sbuf.pagesize, 0, false);
-        //scanner_params child_params(sp, child_sbuf);
-        //(*rcb.callback)(child_params);    // recurse on deobfuscated buffer
-        auto *nsbuf = new sbuf_t(pos0_xor, dbuf.buf, sbuf.bufsize, sbuf.pagesize, 0, false);
-        sp.recurse(nsbuf);
+
+        // managed_malloc throws an exception if allocation fails.
+        auto *dbuf = sbuf_t::sbuf_malloc(pos0_xor, sbuf.bufsize);
+        for(size_t ii = 0; ii < sbuf.bufsize; ii++) {
+            dbuf->wbuf(ii, sbuf[ii] ^ xor_mask);
+        }
+        sp.recurse(dbuf);
     }
 }
