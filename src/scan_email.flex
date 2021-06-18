@@ -15,6 +15,8 @@
 #include "config.h"
 #include "sbuf_flex_scanner.h"
 #include "be13_api/utils.h"
+#include "scan_email.h"
+
 //#include "be13_api/bulk_extractor_i.h"
 //#include "utils.h"
 //#include "histogram.h"
@@ -64,42 +66,44 @@ YY_EXTRA_TYPE yyemail_get_extra (yyscan_t yyscanner );    /* redundent declarati
 inline class email_scanner *get_extra(yyscan_t yyscanner) {return yyemail_get_extra(yyscanner);}
 
 
-/* Address some common false positives in email scanner */
-inline bool validate_email(const char *email)
+/* Address some common false positives in email scanner.
+ * We don't need to do a full regular expression check, because one has already been done.
+ */
+bool extra_validate_email(const char *email)
 {
     if (strstr(email,"..")) return false;
     return true;
 }
 
 
-/** return the offset of the domain in an email address.
- * returns 0 if the domain is not found.
- * the domain extends to the end of the email address
+/** return the position of the domain email address if one is present.
  */
-inline size_t find_domain_in_email(const unsigned char *buf,size_t buflen)
+ssize_t find_host_in_email(const sbuf_t &sbuf)
 {
-    for (size_t i=0;i<buflen;i++){
-	if (buf[i]=='@') return i+1;
+    ssize_t loc = sbuf.find('@');
+    if (loc >= 0 && sbuf.bufsize > loc+1) {
+        return loc+1;
     }
-    return 0;				// not found
+    return -1;
 }
 
-inline size_t find_domain_in_url(const unsigned char *buf,size_t buflen,size_t *domain_len)
+/*
+ * Return the domain in a URL.
+ */
+// https://stackoverflow.com/questions/2616011/easy-way-to-parse-a-url-in-c-cross-platform
+ssize_t find_host_in_url(const sbuf_t &sbuf, size_t *domain_len)
 {
-    for (size_t i=2;i<buflen-1;i++){
-	if (buf[i-1]=='/' && buf[i-2]=='/'){
-	    for (size_t j=i;j<buflen;j++){
-		if (buf[j]=='/' || buf[j]==':'){
-		    *domain_len = (j-i);
-		    return i;
-		}
-	    }
-	    /* Looks like it's the rest of the buffer */
-	    *domain_len = buflen-i;
-	    return i;
-	}
+    std::string uri = sbuf.asString();
+    size_t start =  uri.find("://", 0);
+    if (start==std::string::npos) return -1;
+    start += 3;
+    size_t end = uri.find("/", start);
+    if (end==std::string::npos) {
+       *domain_len = sbuf.bufsize - start;
+    } else {
+       *domain_len = end-start;
     }
-    return 0;				// not found
+    return start;
 }
 
 #define SCANNER "scan_email"
@@ -191,11 +195,11 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
 
 {EMAIL}/[^a-zA-Z]	{
     email_scanner &s = * yyemail_get_extra(yyscanner);
-    if (validate_email(yytext)){
+    if (extra_validate_email(yytext)){
         s.email_recorder.write_buf(SBUF,s.pos,yyleng);
-	size_t domain_start = find_domain_in_email(SBUF.buf+s.pos,yyleng);
+	ssize_t domain_start = find_host_in_email(SBUF.slice(s.pos,yyleng));
         if (domain_start>0){
-            s.domain_recorder.write_buf(SBUF,s.pos+domain_start,yyleng-domain_start);
+            s.domain_recorder.write_buf(SBUF, s.pos+domain_start,yyleng-domain_start);
         }
     }
     s.pos += yyleng;
@@ -297,8 +301,8 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
     }
     s.url_recorder.write_buf(SBUF,s.pos,feature_len);                // record the URL
     size_t domain_len=0;
-    size_t domain_start = find_domain_in_url(SBUF.buf+s.pos,feature_len,&domain_len);  // find the start of domain?
-    if (domain_start>0 && domain_len>0){
+    ssize_t domain_start = find_host_in_url(SBUF.slice(s.pos,feature_len), &domain_len);  // find the start of domain?
+    if (domain_start >= 0 && domain_len > 0){
 	s.domain_recorder.write_buf(SBUF,s.pos+domain_start,domain_len);
     }
     s.pos += yyleng;
@@ -306,10 +310,10 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
 
 [a-zA-Z0-9]\0([a-zA-Z0-9._%\-+]\0){1,128}@\0([a-zA-Z0-9._%\-]\0){1,128}\.\0({U_TLD1}|{U_TLD2}|{U_TLD3}|{U_TLD4})/[^a-zA-Z]|([^][^\0])	{
     email_scanner &s = * yyemail_get_extra(yyscanner);
-    if (validate_email(yytext)){
+    if (extra_validate_email(yytext)){
         s.email_recorder.write_buf(SBUF,s.pos,yyleng);
-        size_t domain_start = find_domain_in_email(SBUF.buf+s.pos,yyleng) + 1;
-        if (domain_start>0){
+        ssize_t domain_start = find_host_in_email(SBUF.slice(s.pos,yyleng)) + 1;
+        if (domain_start >= 0){
             s.domain_recorder.write_buf(SBUF,s.pos+domain_start,yyleng-domain_start);
         }
     }
@@ -319,8 +323,8 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
 h\0t\0t\0p\0(s\0)?:\0([a-zA-Z0-9_%/\-+@:=&\?#~.;]\0){1,128}/[^a-zA-Z0-9_%\/\-+@:=&\?#~.;]|([^][^\0])	{
     email_scanner &s = * yyemail_get_extra(yyscanner);
     s.url_recorder.write_buf(SBUF,s.pos,yyleng);
-    size_t domain_start = find_domain_in_email(SBUF.buf+s.pos,yyleng);
-    if (domain_start>0){
+    ssize_t domain_start = find_host_in_email(SBUF.slice(s.pos,yyleng));
+    if (domain_start >= 0){
 	s.domain_recorder.write_buf(SBUF,s.pos+domain_start,yyleng-domain_start);
     }
     s.pos += yyleng;

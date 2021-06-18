@@ -799,6 +799,7 @@ void scan_elf (scanner_params &sp)
         auto info = new scanner_params::scanner_info(scan_elf,"elf");
 	info->author = "Alex Eubanks";
         info->feature_defs.push_back( feature_recorder_def("elf"));
+        sp.info = info;
         return;
     }
     if ( sp.phase == scanner_params::PHASE_SCAN){

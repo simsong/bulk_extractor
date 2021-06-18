@@ -100,14 +100,14 @@ static std::string  pdf_extract_text(const sbuf_t &sbuf)
     return tbuf;
 }
 
-void analyze_stream(const scanner_params &sp, size_t stream_tag,size_t stream_start,size_t endstream)
+bool analyze_stream(const scanner_params &sp, size_t stream_tag,size_t stream_start,size_t endstream)
 {
     const sbuf_t &sbuf = (*sp.sbuf);
     size_t compr_size = endstream-stream_start;
     size_t max_uncompr_size = compr_size * 8;       // good assumption for expansion
 
-    auto *dbuf = sbuf_decompress_zlib_new( sbuf.slice(stream_start, compr_size), max_uncompr_size, "PDFDECOMP");
-    if (dbuf==nullptr) return;
+    auto *dbuf = sbuf_decompress_zlib_new( sbuf.slice(stream_start, compr_size), max_uncompr_size, "PDFZLIB");
+    if (dbuf==nullptr) return false;
 
     if(pdf_dump){
         std::cout << "====== " << dbuf->pos0 << "=====\n";
@@ -115,17 +115,18 @@ void analyze_stream(const scanner_params &sp, size_t stream_tag,size_t stream_st
         std::cout << "\n";
     }
     if (mostly_printable_ascii(*dbuf)){
-        std::string text = pdf_extract_text(text,decomp.buf,zs.total_out);
+        std::string text = pdf_extract_text( *dbuf );
         if(text.size()>0){
             if (pdf_dump) std::cout << "Extracted Text:\n" << text << "================\n";
-            pos0_t pos0_pdf    = (sbuf.pos0 + stream_tag) + "PDF";//rcb.partName;
+            //pos0_t pos0_pdf    = (sbuf.pos0 + stream_tag) + "PDF";//rcb.partName;
             //const  sbuf_t sbuf_new(pos0_pdf, reinterpret_cast<const uint8_t *>(&text[0]), text.size(),text.size(),0, false);
             //(*rcb.callback)(scanner_params(sp,sbuf_new));
-            auto *nsbuf = new sbuf_t(pos0_pdf, text);
+            auto *nsbuf = sbuf_t::sbuf_new(dbuf->pos0 + "PDF", text);
             sp.recurse(nsbuf);
+            return true;
         }
     }
-    return 0;
+    return false;
 }
 
 
@@ -175,7 +176,7 @@ void scan_pdf(scanner_params &sp)
                 loc = nextstream - 1;
                 continue;
             }
-            if(analyze_stream(sp,stream_tag,stream_start,endstream) == -1){
+            if (analyze_stream(sp,stream_tag,stream_start,endstream)){
                 return;
             }
             loc=endstream+9;

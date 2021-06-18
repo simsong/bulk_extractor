@@ -6,6 +6,7 @@
 
 
 #include "config.h"
+#include "sbuf_decompress.h"
 #include "be13_api/scanner_params.h"
 #include "dfxml/src/dfxml_writer.h"
 #include "utf8.h"
@@ -20,7 +21,7 @@ static uint32_t  zip_min_uncompr_size = 6;	// don't bother with objects smaller 
 static uint32_t  zip_name_len_max = 1024;
 
 // these are tunable
-static uint32_t unzip_carve_mode = feature_recorder::CARVE_ENCODED;
+static uint32_t unzip_carve_mode = feature_recorder_def::CARVE_ENCODED;
 
 /* These are to eliminate compiler warnings */
 #define ZLIB_CONST
@@ -74,7 +75,6 @@ inline void scan_zip_component(scanner_params &sp, feature_recorder &zip_recorde
 
     if ((name_len<=0) || (name_len > zip_name_len_max)) return;	 // unreasonable name length
     if (pos+30+name_len > sbuf.bufsize) return; // name is bigger than what's left
-    //if (compr_size<0 || uncompr_size<0) return; // sanity check
 
     std::string name = sbuf.substr(pos+30,name_len);
     /* scan for unprintable characters, which means this isn't a validate zip header
@@ -104,6 +104,7 @@ inline void scan_zip_component(scanner_params &sp, feature_recorder &zip_recorde
 
     // Create an sbuf that contains the source data pointed to by the header that is to be decompressed
     const sbuf_t sbuf_src(sbuf, pos+30+name_len+extra_field_len);
+
     // If there is no data, then just indicate this and return.
     if (sbuf_src.pagesize==0){
         xmlstream << "<disposition>end-of-buffer</disposition></zipinfo>";
@@ -125,11 +126,6 @@ inline void scan_zip_component(scanner_params &sp, feature_recorder &zip_recorde
             uncompr_size = zip_max_uncompr_size; // don't uncompress bigger than 16MB
         }
 
-        // don't decompress beyond end of buffer
-        if ((u_int)compr_size > sbuf_src.bufsize){
-            compr_size = sbuf_src.bufsize;
-        }
-
         /* If depth is more than 0, don't decompress if we have seen this component before */
         if (sp.depth>0){
             if (sp.ss.check_previously_processed(sbuf_src)){
@@ -139,57 +135,24 @@ inline void scan_zip_component(scanner_params &sp, feature_recorder &zip_recorde
             }
         }
 
-        Bytef *dbuf = (Bytef *)malloc(uncompr_size); // malloc the data
-        if (!dbuf){
-            xmlstream << "<disposition>calloc-failed</disposition></zipinfo>";
-            zip_recorder.write(pos0+pos,name,xmlstream.str());
-            return;
-        }
-        z_stream zs;
-        memset(&zs,0,sizeof(zs));
-
-        zs.next_in = (Bytef *)sbuf_src.buf; // note that next_in should be typedef const but is not
-        zs.avail_in = compr_size;
-        zs.next_out = dbuf;
-        zs.avail_out = uncompr_size;
-
-        int r = inflateInit2(&zs,-15);
-        if (r==0){
-            r = inflate(&zs, Z_SYNC_FLUSH);
-            xmlstream << "<disposition bytes='" << zs.total_out << "'>decompressed</disposition></zipinfo>";
+        auto *decomp = sbuf_decompress_zlib_new(sbuf, uncompr_size, "ZIP");
+        if (decomp!=nullptr) {
+            xmlstream << "<disposition bytes='" << decomp->bufsize << "'>decompressed</disposition></zipinfo>";
             zip_recorder.write(pos0+pos,name,xmlstream.str());
 
-            /* Ignore the error return; process data if we got anything */
-            if (zs.total_out>0){
-                const pos0_t pos0_zip = (pos0 + pos) + "ZIP";
-                // Make a sbuf w/ decompressed data. The sbuf is responsible for freeing the data
-                auto *sbuf_new = new sbuf_t(pos0_zip, dbuf, zs.total_out, zs.total_out, 0, false, true, false);
-
-                /* If we are carving, then carve. Set the 'extension' to be '_' followed by the file name in archive.
-                 * Change any problematic characters to underbars in filename.
-                 */
-                if (unzip_recorder){
-                    std::string carve_name("_"); // begin with a _
-                    for(std::string::const_iterator it = name.begin(); it!=name.end();it++){
-                        carve_name.push_back((*it=='/' || *it=='\\') ? '_' : *it);
-                    }
-
-                    struct tm t;
-                    strptime(mtime.c_str(), "%Y-%m-%d %H:%M:%S", &t);
-                    time_t t2 = mktime(&t);
-
-                    unzip_recorder->carve_data(*sbuf_new, 0, sbuf_new->bufsize,
-                                               carve_name, t2);
+            if (unzip_recorder != nullptr) {
+                std::string carve_name("_"); // begin with a _
+                for(std::string::const_iterator it = name.begin(); it!=name.end();it++){
+                    carve_name.push_back((*it=='/' || *it=='\\') ? '_' : *it);
                 }
-
-                // recurse. Remember that recurse will free the sbuf
-                sp.recurse(sbuf_new);
+                unzip_recorder->carve(*decomp, carve_name, mtime);
             }
-            r = inflateEnd(&zs);
+
+            // recurse. Remember that recurse will free the sbuf
+            sp.recurse( decomp );
         } else {
             xmlstream << "<disposition>decompress-failed</disposition></zipinfo>";
             zip_recorder.write(pos0+pos,name,xmlstream.str());
-            free(dbuf);
         }
     }
 }
@@ -223,9 +186,9 @@ void scan_zip(scanner_params &sp)
         /* It would be good if we only got these if we needed them */
         feature_recorder &zip_recorder   = sp.named_feature_recorder(ZIP_RECORDER_NAME);
         feature_recorder *unzip_recorder = nullptr;
-        if (unzip_carve_mode != feature_recorder::CARVE_NONE) {
+        if (unzip_carve_mode != feature_recorder_def::CARVE_NONE) {
             unzip_recorder = &sp.named_feature_recorder(UNZIP_RECORDER_NAME);
-            unzip_recorder->carve_mode = static_cast<feature_recorder::carve_mode_t>(unzip_carve_mode);
+            unzip_recorder->carve_mode = static_cast<feature_recorder_def::carve_mode_t>(unzip_carve_mode);
         }
 
 	for(size_t i=0 ; i < sbuf.pagesize && i < sbuf.bufsize-MIN_ZIP_SIZE; i++){

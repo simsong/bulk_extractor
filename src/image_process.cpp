@@ -10,6 +10,7 @@
 // Just for this module
 #define _FILE_OFFSET_BITS 64
 
+#include <algorithm>
 #include <stdexcept>
 #include <functional>
 #include <locale>
@@ -737,14 +738,14 @@ pos0_t process_raw::get_pos0(const image_process::iterator &it) const
  */
 sbuf_t *process_raw::sbuf_alloc(image_process::iterator &it) const
 {
-    int count = pagesize + margin;
+    size_t count = pagesize + margin;
 
     if(this->raw_filesize < it.raw_offset + count){    /* See if that's more than I need */
 	count = this->raw_filesize - it.raw_offset;
     }
-    unsigned char *buf = (unsigned char *)malloc(count);
+    unsigned char *buf = reinterpret_cast<unsigned char *>(malloc(count));
     if(!buf) throw std::bad_alloc();			// no memory
-    count = this->pread(buf,count,it.raw_offset);       // do the read
+    count = this->pread(buf, count, it.raw_offset);       // do the read
     if(count==0){
 	free(buf);
 	it.eof = true;
@@ -754,7 +755,7 @@ sbuf_t *process_raw::sbuf_alloc(image_process::iterator &it) const
 	free(buf);
 	throw read_error();
     }
-    return sbuf_t::sbuf_new(get_pos0(it), buf, count, pagesize);
+    return sbuf_t::sbuf_new(get_pos0(it), buf, count, std::min(count,pagesize));
 }
 
 static std::string filename_extension(std::string fn)
@@ -878,6 +879,7 @@ uint64_t process_dir::seek_block(class image_process::iterator &it,uint64_t bloc
 /****************************************************************
  *** COMMON - Implement 'open' for the iterator
  ****************************************************************/
+/* Static function */
 
 image_process *image_process::open(std::string fn,bool opt_recurse, size_t pagesize_, size_t margin_)
 {

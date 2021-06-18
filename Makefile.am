@@ -5,6 +5,7 @@
 # (C) 2020 Simson L. Garfinkel
 # https://www.gnu.org/licenses/lgpl-3.0.en.html
 
+# Remember to update ocnfigure.ac when we re-enable doc
 #SUBDIRS = doc doc/latex_manuals src man plugins python specfiles tests $(BE_VIEWER_DIR)
 SUBDIRS = src man plugins python specfiles tests $(BE_VIEWER_DIR)
 

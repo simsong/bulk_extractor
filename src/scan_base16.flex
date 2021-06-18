@@ -35,8 +35,7 @@ inline class base16_scanner *get_extra(yyscan_t yyscanner) {return yybase16_get_
 
 void base16_scanner::decode(const sbuf_t &sbuf)
 {
-    managed_malloc<uint8_t>b(sbuf.pagesize/2+1);
-    if (b.buf==0) return;
+    auto *dbuf = sbuf_t::sbuf_malloc(sbuf.pos0 + "BASE16", sbuf.pagesize/2+1);
 
     size_t p=0;
     /* First get the characters */
@@ -55,18 +54,19 @@ void base16_scanner::decode(const sbuf_t &sbuf)
             return;       /* If first char is valid hex and second isn't, this isn't hex */
         }
         assert(lsb>=0 && lsb<16);
-        b.buf[p++] = (msb<<4) | lsb;
+        dbuf->wbuf(p++, (msb<<4) | lsb);
         i+=2;
     }
 
     /* Alert on byte sequences of 48, 128 or 256 bits*/
     if (p==48/8 || p==128/8 || p==256/8){
         hex_recorder.write_buf(sbuf,0,sbuf.bufsize);  /* it validates; write original with context */
-        return;                                  /* Small keys don't get recursively analyzed */
+        return;                                       /* Small keys don't get recursively analyzed */
     }
     if (p>opt_min_hex_buf){
-        auto *nsbuf = new sbuf_t(sbuf.pos0 + "BASE16", b.buf, p, p, 0, false);
-        sp.recurse(nsbuf);    // recurse
+        sp.recurse( dbuf );    // recurse; will delete
+    } else {
+        delete dbuf;           // otherwise we delete
     }
 }
 

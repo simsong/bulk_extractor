@@ -146,6 +146,8 @@ be_tests_SOURCES = be13_api/catch.hpp \
 	managed_malloc.h \
 	phase1.h \
 	phase1.cpp \
+	sbuf_decompress.cpp \
+	sbuf_decompress.h \
 	threadpool.hpp
 
 # bulk_extractorlib_SOURCES = $(bulk_extractor_nomain) $(scanners_builtin) bulk_extractor_scanners.cpp
