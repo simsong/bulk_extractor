@@ -104,9 +104,7 @@ std::filesystem::path test_scanner(scanner_t scanner, sbuf_t *sbuf)
     REQUIRE(sbuf->children == 0);
     ss.phase_scan();
     REQUIRE(sbuf->children == 0);
-#if 0
     ss.process_sbuf(sbuf);
-#endif
     ss.shutdown();
     return sc.outdir;
 }
@@ -115,19 +113,14 @@ std::filesystem::path test_scanner(scanner_t scanner, sbuf_t *sbuf)
 TEST_CASE("scan_json1", "[scanners]") {
     /* Make a scanner set with a single scanner and a single command to enable all the scanners.
      */
-    std::cerr << "point1\n";
     auto  sbuf1 = new sbuf_t("hello {\"hello\": 10, \"world\": 20, \"another\": 30, \"language\": 40} world");
-    std::cerr << "point2\n";
     auto outdir = test_scanner(scan_json, sbuf1);
 
     /* Read the output */
-    std::cerr << "point3\n";
-    //auto json_txt = getLines( outdir / "json.txt" );
-    std::cerr << "point4\n";
-    //auto last = json_txt[json_txt.size()-1];
-    std::cerr << "point5\n";
+    auto json_txt = getLines( outdir / "json.txt" );
+    auto last = json_txt[json_txt.size()-1];
 
-    //REQUIRE(last.substr( last.size() - 40) == "6ee8c369e2f111caa9610afc99d7fae877e616c9");
+    REQUIRE(last.substr( last.size() - 40) == "6ee8c369e2f111caa9610afc99d7fae877e616c9");
     REQUIRE(true);
 }
 
@@ -217,8 +210,6 @@ TEST_CASE("image_process", "[phase1]") {
         REQUIRE( times==0 );
         sbuf_t *sbufp = it.sbuf_alloc();
 
-        std::cerr << "test_json.txt = " << *sbufp << "\n";
-
         REQUIRE( sbufp->bufsize == 79 );
         REQUIRE( sbufp->pagesize == 79 );
         delete sbufp;
@@ -291,7 +282,8 @@ void validate(std::string image_fname, std::vector<Check> &expected)
             }
         }
         if (!found){
-            std::cerr << fname << " did not find " << expected[i].feature.pos << " " << expected[i].feature.feature << " " << expected[i].feature.context << "\t";
+            std::cerr << fname << " did not find " << expected[i].feature.pos
+                      << " " << expected[i].feature.feature << " " << expected[i].feature.context << "\t";
         }
         REQUIRE(found);
     }
@@ -307,7 +299,6 @@ TEST_CASE("validate_scanners", "[phase1]") {
     };
     validate(fn1, ex1);
 
-#if 0
     auto fn2 = "tests/test_base16json.txt";
     std::vector<Check> ex2 {
         Check("json.txt",
@@ -322,7 +313,6 @@ TEST_CASE("validate_scanners", "[phase1]") {
 
     };
     validate(fn2, ex2);
-#endif
 }
 
 
