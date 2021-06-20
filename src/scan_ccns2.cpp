@@ -9,7 +9,7 @@
 
 #include "config.h"
 #include "scan_ccns2.h"
-#include "utils.h"
+#include "be13_api/utils.h"
 #include "dfxml/src/hash_t.h"
 
 #include "be13_api/scanner_params.h"

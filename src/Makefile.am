@@ -1,9 +1,12 @@
 bin_PROGRAMS   = bulk_extractor be_tests
-#jpegdump
-# EXTRA_PROGRAMS = stand bulk_extractorlib beapi_demo bulk_extractor_noscanners
-CLEANFILES     = scan_accts.cpp scan_base16.cpp scan_email.cpp scan_gps.cpp \
-	be13_api/config.h be13_api/dfxml/src/config.h *.d *~
 
+CLEANFILES     = scan_accts.cpp scan_base16.cpp scan_email.cpp scan_gps.cpp \
+	be13_api/config.h be13_api/dfxml/src/config.h config.h *.d *~
+
+TESTS = be_tests
+check_PROGRAMS = be_tests
+
+# So that relative imports from be13_api work
 AM_CPPFLAGS = -I${top_srcdir}/src/be13_api
 
 AUTOMAKE_OPTIONS = subdir-objects
@@ -14,14 +17,11 @@ AUTOMAKE_OPTIONS = subdir-objects
 
 BE13_API_DIR= be13_api
 include be13_api/Makefile.defs
+
 #include rar/Makefile.defs
 
-# This was for building the jpegdump test program
-# Note that we use scan_exif.cpp because we want to compile it with -DDUMPTEST
-#JPEGDUMP_OBJECTS = scan_exif.cpp be13_api/sbuf.o be13_api/unicode_escape.o
-#jpegdump$(EXEEXT): $(JPEGDUMP_OBJECTS)
-#	g++ -o jpegdump$(EXEEXT) $(CPPFLAGS) $(CXXFLAGS) $(AM_CPPFLAGS) \
-#		-I.. -DDUMPTEST $(JPEGDUMP_OBJECTS)
+#jpeg_dump_SOURCES = 	scan_exif.cpp scan_exif.h exif_reader.cpp exif_reader.h exif_entry.cpp\
+#	be13_api/sbuf.h be13_api/sbuf.cpp be13_api/unicode_escape.o jpeg_dump.cpp
 
 # TSK3INCS = \
 # 	tsk3/auto/tsk_auto.h\
@@ -64,7 +64,7 @@ scanners_builtin = \
 	scan_base64.cpp \
 	scan_ccns2.cpp scan_ccns2.h \
 	scan_elf.cpp \
-	scan_exif.cpp exif_reader.h exif_reader.cpp exif_entry.cpp\
+	scan_exif.cpp scan_exif.h exif_reader.cpp exif_reader.h exif_entry.cpp jpeg_validator.h \
 	scan_exiv2.cpp \
 	scan_gzip.cpp \
 	scan_json.cpp \
@@ -129,8 +129,6 @@ bulk_extractor_nomain = \
 
 bulk_extractor_SOURCES = $(bulk_extractor_nomain) $(scanners_builtin) bulk_extractor_scanners.cpp main.cpp
 
-TESTS = be_tests
-check_PROGRAMS = be_tests
 
 # Slowly add modules as tests are written for them.
 be_tests_SOURCES = be13_api/catch.hpp \
@@ -168,7 +166,6 @@ be_tests_SOURCES = be13_api/catch.hpp \
 #rd: beapi_demo libbulkextractor.so
 #	echo run the demo
 #	./beapi_demo /corp/nps/drives/nps-2010-emails/nps-2010-emails.raw
-
 
 #unitest$(EXEEXT): unicode_escape.cpp
 #	$(CXX) -DSTANDALONE -o unitest$(EXEEXT) -g unicode_escape.cpp  $(CPPFLAGS) $(CXXFLAGS) -I..

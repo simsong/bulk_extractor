@@ -18,7 +18,6 @@
 #include "be13_api/catch.hpp"
 #include "be13_api/utils.h"
 
-
 #include "image_process.h"
 #include "base64_forensic.h"
 #include "phase1.h"
@@ -27,25 +26,14 @@
 #include "scan_base64.h"
 #include "scan_vcard.h"
 #include "scan_email.h"
+#include "exif_reader.h"
+#include "jpeg_validator.h"
+
 
 #include "threadpool.hpp"
 
-/* scan_email.flex checks */
-TEST_CASE("scan_email", "[scanners]") {
-    REQUIRE( extra_validate_email("this@that.com")==true);
-    REQUIRE( extra_validate_email("this@that..com")==false);
-    auto s1 = sbuf_t("this@that.com");
-    auto s2 = sbuf_t("this_that.com");
-    REQUIRE( find_host_in_email(s1) == 5);
-    REQUIRE( find_host_in_email(s2) == -1);
-
-
-    auto s3 = sbuf_t("https://domain.com/foobar");
-    size_t domain_len = 0;
-    REQUIRE( find_host_in_url(s3, &domain_len)==8);
-    REQUIRE( domain_len == 10);
-
-}
+const std::string JSON1 {"[{\"1\": \"one@company.com\"}, {\"2\": \"two@company.com\"}, {\"3\": \"two@company.com\"}]"};
+const std::string JSON2 {"[{\"1\": \"one@base64.com\"}, {\"2\": \"two@base64.com\"}, {\"3\": \"three@base64.com\"}]\n"};
 
 /* Read all of the lines of a file and return them as a vector */
 std::vector<std::string> getLines(const std::string &filename)
@@ -72,9 +60,6 @@ TEST_CASE("base64_forensic", "[utilities]") {
     size_t result = b64_pton_forensic(encoded, strlen(encoded), output, sizeof(output));
     REQUIRE( result == strlen(decoded) );
     REQUIRE( strncmp( (char *)output, decoded, strlen(decoded))==0 );
-}
-
-TEST_CASE("exif_reader", "[utilities]") {
 }
 
 /* Setup and run a scanner. Return the output directory */
@@ -109,7 +94,43 @@ std::filesystem::path test_scanner(scanner_t scanner, sbuf_t *sbuf)
     return sc.outdir;
 }
 
-// here!
+TEST_CASE("scan_base64", "[scanners]" ){
+    base64array_initialize();
+    auto sbuf1 = new sbuf_t("W3siMSI6ICJvbmVAYmFzZTY0LmNvbSJ9LCB7IjIiOiAidHdvQGJhc2U2NC5jb20i");
+    auto sbuf2 = new sbuf_t("W3siMSI6ICJvbmVAYmFzZTY0LmNvbSJ9LCB7IjIiOiAidHdvQGJhc2U2NC5jb20i\n"
+                            "fSwgeyIzIjogInRocmVlQGJhc2U2NC5jb20ifV0K");
+    bool found_equal = false;
+    REQUIRE(sbuf_line_is_base64(*sbuf1, 0, sbuf1->bufsize, found_equal) == true);
+    REQUIRE(found_equal == false);
+    auto sbuf3 = decode_base64(*sbuf2, 0, sbuf2->bufsize);
+    REQUIRE(sbuf3->bufsize == 78);
+    REQUIRE(sbuf3->asString() == JSON2);
+}
+
+/* scan_email.flex checks */
+TEST_CASE("scan_email", "[scanners]") {
+    REQUIRE( extra_validate_email("this@that.com")==true);
+    REQUIRE( extra_validate_email("this@that..com")==false);
+    auto s1 = sbuf_t("this@that.com");
+    auto s2 = sbuf_t("this_that.com");
+    REQUIRE( find_host_in_email(s1) == 5);
+    REQUIRE( find_host_in_email(s2) == -1);
+
+
+    auto s3 = sbuf_t("https://domain.com/foobar");
+    size_t domain_len = 0;
+    REQUIRE( find_host_in_url(s3, &domain_len)==8);
+    REQUIRE( domain_len == 10);
+}
+
+TEST_CASE("scan_exif", "[scanners]") {
+    auto sbufj = sbuf_t::map_file("tests/1.jpg");
+    REQUIRE( sbufj->bufsize == 7323 );
+    auto res = jpeg_validator::validate_jpeg(*sbufj);
+    REQUIRE( res.how == jpeg_validator::COMPLETE );
+
+}
+
 TEST_CASE("scan_json1", "[scanners]") {
     /* Make a scanner set with a single scanner and a single command to enable all the scanners.
      */
@@ -128,11 +149,118 @@ TEST_CASE("scan_vcard", "[scanners]") {
     /* Make a scanner set with a single scanner and a single command to enable all the scanners.
      */
     auto sbuf2 = sbuf_t::map_file( "tests/john_jakes.vcf" );
-    auto outdir = test_scanner(scan_vcard, sbuf2);
+    auto outdir = test_scanner(scan_vcard, sbuf2); // deletes sbuf2
 
     /* Read the output */
+
 }
 
+
+struct Check {
+    Check(std::string fname_, Feature feature_):
+        fname(fname_),
+        feature(feature_) {};
+    std::string fname;
+    Feature feature;
+};
+
+/*
+ * Run the scanners on a specific image, look for the given features, and return the directory.
+ */
+std::string validate(std::string image_fname, std::vector<Check> &expected)
+{
+    std::cerr << "================ validate  " << image_fname << " ================\n";
+
+    auto p = image_process::open( image_fname, false, 65536, 65536);
+    Phase1::Config   cfg;  // config for the image_processing system
+    scanner_config sc;
+
+    sc.outdir = NamedTemporaryDirectory();
+    sc.scanner_commands = enable_all_scanners;
+    const feature_recorder_set::flags_t frs_flags;
+    scanner_set ss(sc, frs_flags);
+    ss.add_scanners(scanners_builtin);
+    ss.apply_scanner_commands();
+
+    auto *xreport = new dfxml_writer(sc.outdir / "report.xml", false);
+    Phase1 phase1(*xreport, cfg, *p, ss);
+    phase1.dfxml_create( 0, nullptr);
+    ss.phase_scan();
+    phase1.run();
+    ss.shutdown();
+    xreport->close();
+
+    for(size_t i=0; i<expected.size(); i++){
+        std::filesystem::path fname  = sc.outdir / expected[i].fname;
+        std::cerr << "---- " << i << " -- " << fname.string() << " ----\n";
+        std::string line;
+        std::ifstream inFile;
+        inFile.open(fname);
+        if (!inFile.is_open()) {
+            throw std::runtime_error("validate_scanners:[phase1] Could not open "+fname.string());
+        }
+        bool found = false;
+        while (std::getline(inFile, line)) {
+            auto words = split(line, '\t');
+            if (words.size()==3 &&
+                words[0]==expected[i].feature.pos &&
+                words[1]==expected[i].feature.feature &&
+                words[2]==expected[i].feature.context){
+                found = true;
+                break;
+            }
+        }
+        if (!found){
+            std::cerr << fname << " did not find " << expected[i].feature.pos
+                      << " " << expected[i].feature.feature << " " << expected[i].feature.context << "\t";
+        }
+        REQUIRE(found);
+    }
+    return sc.outdir;
+}
+
+TEST_CASE("validate_scanners", "[phase1]") {
+    auto fn1 = "tests/test_json.txt";
+    std::vector<Check> ex1 {
+        Check("json.txt",
+              Feature( "0",
+                       JSON1,
+                       "ef2b5d7ee21e14eeebb5623784f73724218ee5dd")),
+    };
+    validate(fn1, ex1);
+
+    auto fn2 = "tests/test_base16json.txt";
+    std::vector<Check> ex2 {
+        Check("json.txt",
+              Feature( "50-BASE16-0",
+                       "[{\"1\": \"one@base16_company.com\"}, "
+                       "{\"2\": \"two@base16_company.com\"}, "
+                       "{\"3\": \"two@base16_company.com\"}]",
+                       "41e3ec783b9e2c2ffd93fe82079b3eef8579a6cd")),
+
+        Check("email.txt",
+              Feature( "50-BASE16-8",
+                       "one@base16_company.com",
+                       "[{\"1\": \"one@base16_company.com\"}, {\"2\": \"two@b")),
+
+    };
+    validate(fn2, ex2);
+
+    auto fn3 = "tests/test_hello.gz";
+    std::vector<Check> ex3 {
+        Check("email.txt",
+              Feature( "0-GZIP-0",
+                       "hello@world.com",
+                       "hello@world.com\\x0A"))
+
+    };
+    validate(fn3, ex3);
+
+}
+
+
+
+/****************************************************************/
 /* Test the threadpool */
 std::atomic<int> counter{0};
 TEST_CASE("threadpool", "[threads]") {
@@ -198,6 +326,7 @@ TEST_CASE("threadpool3", "[threads]") {
     REQUIRE( counter==1000 );
 }
 
+/****************************************************************/
 TEST_CASE("image_process", "[phase1]") {
     image_process *p = nullptr;
     REQUIRE_THROWS_AS( p = image_process::open( "no-such-file", false, 65536, 65536), image_process::NoSuchFile);
@@ -216,103 +345,6 @@ TEST_CASE("image_process", "[phase1]") {
         times += 1;
     }
     REQUIRE(times==1);
-}
-
-/****************************************************************/
-TEST_CASE("scan_base64", "[scanners]" ){
-    base64array_initialize();
-    auto sbuf1 = new sbuf_t("W3siMSI6ICJvbmVAYmFzZTY0LmNvbSJ9LCB7IjIiOiAidHdvQGJhc2U2NC5jb20i");
-    auto sbuf2 = new sbuf_t("W3siMSI6ICJvbmVAYmFzZTY0LmNvbSJ9LCB7IjIiOiAidHdvQGJhc2U2NC5jb20i\nfSwgeyIzIjogInRocmVlQGJhc2U2NC5jb20ifV0K");
-    bool found_equal = false;
-    REQUIRE(sbuf_line_is_base64(*sbuf1, 0, sbuf1->bufsize, found_equal) == true);
-    REQUIRE(found_equal == false);
-    auto sbuf3 = decode_base64(*sbuf2, 0, sbuf2->bufsize);
-    std::cerr << "sbuf3: " << *sbuf3 << "\n";
-}
-
-struct Check {
-    Check(std::string fname_, Feature feature_):
-        fname(fname_),
-        feature(feature_) {};
-    std::string fname;
-    Feature feature;
-};
-
-void validate(std::string image_fname, std::vector<Check> &expected)
-{
-    std::cerr << "================ validate  " << image_fname << " ================\n";
-
-    auto p = image_process::open( image_fname, false, 65536, 65536);
-    Phase1::Config   cfg;  // config for the image_processing system
-    scanner_config sc;
-
-    sc.outdir = NamedTemporaryDirectory();
-    sc.scanner_commands = enable_all_scanners;
-    const feature_recorder_set::flags_t frs_flags;
-    scanner_set ss(sc, frs_flags);
-    ss.add_scanners(scanners_builtin);
-    ss.apply_scanner_commands();
-
-    auto *xreport = new dfxml_writer(sc.outdir / "report.xml", false);
-    Phase1 phase1(*xreport, cfg, *p, ss);
-    phase1.dfxml_create( 0, nullptr);
-    ss.phase_scan();
-    phase1.run();
-    ss.shutdown();
-    xreport->close();
-
-    for(size_t i=0; i<expected.size(); i++){
-        std::filesystem::path fname  = sc.outdir / expected[i].fname;
-        std::cerr << "---- " << i << " -- " << fname.string() << " ----\n";
-        std::string line;
-        std::ifstream inFile;
-        inFile.open(fname);
-        if (!inFile.is_open()) {
-            throw std::runtime_error("validate_scanners:[phase1] Could not open "+fname.string());
-        }
-        bool found = false;
-        while (std::getline(inFile, line)) {
-            auto words = split(line, '\t');
-            if (words.size()==3 &&
-                words[0]==expected[i].feature.pos &&
-                words[1]==expected[i].feature.feature &&
-                words[2]==expected[i].feature.context){
-                found = true;
-                break;
-            }
-        }
-        if (!found){
-            std::cerr << fname << " did not find " << expected[i].feature.pos
-                      << " " << expected[i].feature.feature << " " << expected[i].feature.context << "\t";
-        }
-        REQUIRE(found);
-    }
-}
-
-TEST_CASE("validate_scanners", "[phase1]") {
-    auto fn1 = "tests/test_json.txt";
-    std::vector<Check> ex1 {
-        Check("json.txt",
-              Feature( "0",
-                       "[{\"1\": \"one@company.com\"}, {\"2\": \"two@company.com\"}, {\"3\": \"two@company.com\"}]",
-                       "ef2b5d7ee21e14eeebb5623784f73724218ee5dd")),
-    };
-    validate(fn1, ex1);
-
-    auto fn2 = "tests/test_base16json.txt";
-    std::vector<Check> ex2 {
-        Check("json.txt",
-              Feature( "50-BASE16-0",
-                       "[{\"1\": \"one@base16_company.com\"}, {\"2\": \"two@base16_company.com\"}, {\"3\": \"two@base16_company.com\"}]",
-                       "41e3ec783b9e2c2ffd93fe82079b3eef8579a6cd")),
-
-        Check("email.txt",
-              Feature( "50-BASE16-8",
-                       "one@base16_company.com",
-                       "[{\"1\": \"one@base16_company.com\"}, {\"2\": \"two@b")),
-
-    };
-    validate(fn2, ex2);
 }
 
 

@@ -26,7 +26,7 @@
 #include <cassert>
 #include <algorithm>
 
-#include "sbuf.h"
+#include "be13_api/sbuf.h"
 
 /**
  * Handle to the beginning of the tiff structure.
@@ -157,11 +157,10 @@ namespace entry_reader {
  * Exif reader.
  */
 namespace exif_reader {
-
   /**
    * is_valid_exif() validates that sbuf is at valid exif structure
    */
-  bool is_valid_exif(const sbuf_t &exif_sbuf);
+    //bool is_valid_exif(const sbuf_t &exif_sbuf);
 
   /**
    * exif_reader() extracts specific hardcoded entry values, where present, into list.

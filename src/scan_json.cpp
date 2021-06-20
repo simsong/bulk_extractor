@@ -407,7 +407,7 @@ int json_checker::check_char(int next_char)
 /* : */ case -2:
 /*
  *   A colon causes a flip from key mode to object mode.
-*/
+ */
             if (!pop( MODE_KEY) || !push( MODE_OBJECT)) {
 		reject = true;
 		return -1;
@@ -416,7 +416,7 @@ int json_checker::check_char(int next_char)
             break;
 /*
     Bad action.
-*/
+ */
         default:
 	    reject = true;
 	    return -1;

@@ -17,7 +17,7 @@
 
 #include "config.h"
 #include "bulk_extractor.h"
-#include "utf8.h"
+#include "be13_api/utf8.h"
 //#include "dig.h"
 
 #include "be13_api/formatter.h"
