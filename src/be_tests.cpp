@@ -55,15 +55,6 @@ std::vector<std::string> getLines(const std::string &filename)
     return lines;
 }
 
-TEST_CASE("base64_forensic", "[utilities]") {
-    const char *encoded="SGVsbG8gV29ybGQhCg==";
-    const char *decoded="Hello World!\n";
-    unsigned char output[64];
-    size_t result = b64_pton_forensic(encoded, strlen(encoded), output, sizeof(output));
-    REQUIRE( result == strlen(decoded) );
-    REQUIRE( strncmp( (char *)output, decoded, strlen(decoded))==0 );
-}
-
 /* Setup and run a scanner. Return the output directory */
 std::vector<scanner_config::scanner_command> enable_all_scanners = {
     scanner_config::scanner_command(scanner_config::scanner_command::ALL_SCANNERS,
@@ -96,7 +87,16 @@ std::filesystem::path test_scanner(scanner_t scanner, sbuf_t *sbuf)
     return sc.outdir;
 }
 
-TEST_CASE("scan_base64", "[scanners]" ){
+TEST_CASE("base64_forensic", "[support]") {
+    const char *encoded="SGVsbG8gV29ybGQhCg==";
+    const char *decoded="Hello World!\n";
+    unsigned char output[64];
+    size_t result = b64_pton_forensic(encoded, strlen(encoded), output, sizeof(output));
+    REQUIRE( result == strlen(decoded) );
+    REQUIRE( strncmp( (char *)output, decoded, strlen(decoded))==0 );
+}
+
+TEST_CASE("scan_base64_functions", "[support]" ){
     base64array_initialize();
     auto sbuf1 = new sbuf_t("W3siMSI6ICJvbmVAYmFzZTY0LmNvbSJ9LCB7IjIiOiAidHdvQGJhc2U2NC5jb20i");
     auto sbuf2 = new sbuf_t("W3siMSI6ICJvbmVAYmFzZTY0LmNvbSJ9LCB7IjIiOiAidHdvQGJhc2U2NC5jb20i\n"
@@ -110,7 +110,7 @@ TEST_CASE("scan_base64", "[scanners]" ){
 }
 
 /* scan_email.flex checks */
-TEST_CASE("scan_email", "[scanners]") {
+TEST_CASE("scan_email_functions", "[support]") {
     REQUIRE( extra_validate_email("this@that.com")==true);
     REQUIRE( extra_validate_email("this@that..com")==false);
     auto s1 = sbuf_t("this@that.com");
@@ -125,7 +125,7 @@ TEST_CASE("scan_email", "[scanners]") {
     REQUIRE( domain_len == 10);
 }
 
-TEST_CASE("scan_gzip", "[scanners]") {
+TEST_CASE("sbuf_decompress_zlib_new", "[support]") {
     auto *sbufj = sbuf_t::map_file("tests/test_hello.gz");
     REQUIRE( sbuf_decompress_zlib_possible( *sbufj, 0) == true);
     REQUIRE( sbuf_decompress_zlib_possible( *sbufj, 10) == false);

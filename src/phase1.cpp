@@ -281,6 +281,7 @@ void Phase1::send_data_to_workers()
     if (!config.opt_quiet){
         std::cout << "All data are read; waiting for threads to finish...\n";
     }
+    xreport.pop();                      // runtime
 }
 
 

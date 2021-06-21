@@ -28,7 +28,7 @@ void scan_gzip(scanner_params &sp)
     if (sp.phase==scanner_params::PHASE_SCAN){
 	const sbuf_t &sbuf = (*sp.sbuf);
 
-        for (int i=0; i < sbuf.pagesize && i < sbuf.bufsize-4; i++) {
+        for (unsigned int i=0; i < sbuf.pagesize && i < sbuf.bufsize-4; i++) {
 
 	    /** Look for the signature for beginning of a GZIP file.
 	     * See zlib.h and RFC1952

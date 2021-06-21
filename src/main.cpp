@@ -1049,13 +1049,14 @@ int main(int argc,char **argv)
     //xreport->xmlout("max_depth_seen",plugin::get_max_depth_seen());
     //xreport->xmlout("dup_data_encountered",plugin::dup_data_encountered);
     xreport->pop();			// report
-    xreport->flush();
 
     xreport->push("scanner_times");
     ss.dump_name_count_stats(*xreport);
-    xreport->pop();
+    xreport->pop();                     // scanner_times
+
     xreport->add_rusage();
     xreport->pop();			// bulk_extractor
+
     xreport->close();
     if(cfg.opt_quiet==0){
         float mb_per_sec = (phase1.total_bytes / 1000000.0) / timer.elapsed_seconds();

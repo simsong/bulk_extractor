@@ -23,7 +23,7 @@ SCANNER(gps)
 SCANNER(aes)
 SCANNER(base64)
 SCANNER(elf)
-//SCANNER(exif)
+SCANNER(exif)    // JPEG carver
 //SCANNER(exiv2)
 //SCANNER(evtx)        // scanner provided by 4n6ist:
 //SCANNER(facebook)
