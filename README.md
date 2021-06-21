@@ -1,3 +1,5 @@
+[![codecov](https://codecov.io/gh/simsong/bulk_extractor/branch/master/graph/badge.svg?token=3w691sdgLu)](https://codecov.io/gh/simsong/bulk_extractor)
+
 Welcome to bulk_extractor.
 
 Note: bulk_extractor version 2.0 is now under development. For information, please see [Release 2.0 roadmap in the release-2.0-dev branch](https://github.com/simsong/bulk_extractor/blob/release-2.0-dev/doc/ROADMAP_2.0.md).
