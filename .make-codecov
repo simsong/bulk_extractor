@@ -7,7 +7,7 @@ bash bootstrap.sh
             CXXFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' \
             LIBS='-lgcov'
 make clean \
-     && cd src
+     && cd src \
      && make check \
      && gcov-9 -n -o . *cpp \
      && bash <(curl -s https://codecov.io/bash)
