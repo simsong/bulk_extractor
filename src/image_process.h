@@ -171,7 +171,7 @@ class process_ewf : public image_process {
     process_ewf &operator=(const process_ewf &);
     /****************************************************************/
 
-    int64_t ewf_filesize {};
+    uint64_t ewf_filesize {};
     std::vector<std::string> details {};
     mutable libewf_handle_t *handle {};
 
@@ -212,7 +212,7 @@ class process_raw : public image_process {
     file_list_t file_list {};
     void        add_file(const std::string &fname);
     class       file_info const *find_offset(int64_t offset) const;
-    int64_t     raw_filesize {};			/* sume of all the lengths */
+    uint64_t    raw_filesize {};			/* sume of all the lengths */
     mutable std::string current_file_name {};		/* which file is currently open */
 #ifdef WIN32
     mutable HANDLE current_handle {};		/* currently open file */
