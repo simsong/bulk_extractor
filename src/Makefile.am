@@ -68,6 +68,7 @@ scanners_builtin = \
 	scan_exif.cpp scan_exif.h exif_reader.cpp exif_reader.h exif_entry.cpp jpeg_validator.h \
 	scan_gzip.cpp \
 	scan_json.cpp \
+	scan_pdf.cpp \
 	scan_vcard.cpp \
 	scan_xor.cpp \
 	scan_zip.cpp
@@ -87,7 +88,6 @@ not_used_yet = \
 	scan_ntfsmft.cpp \
 	scan_ntfsusn.cpp \
 	scan_outlook.cpp scan_outlook.h \
-	scan_pdf.cpp \
 	scan_rar.cpp \
 	scan_sqlite.cpp \
 	scan_utmp.cpp \

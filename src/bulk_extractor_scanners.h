@@ -40,7 +40,7 @@ SCANNER(json)
 //SCANNER(ntfsmft)     // scanner provided by 4n6ist:
 //SCANNER(ntfsusn)
 //SCANNER(outlook)
-//SCANNER(pdf)
+SCANNER(pdf)
 //SCANNER(rar)
 //SCANNER(sqlite)
 //SCANNER(utmp)        // scanner provided by 4n6ist:

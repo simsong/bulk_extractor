@@ -63,6 +63,7 @@ void Phase1::dfxml_create(int argc, char * const *argv)
     }
     xreport.pop();			// scanners
     xreport.pop();			// configuration
+    xreport.flush();                    // get it to the disk
 }
 
 

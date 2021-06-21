@@ -185,7 +185,7 @@ std::string validate(std::string image_fname, std::vector<Check> &expected)
     std::cerr << "================ validate  " << image_fname << " ================\n";
 
     auto p = image_process::open( image_fname, false, 65536, 65536);
-    Phase1::Config   cfg;  // config for the image_processing system
+    Phase1::Config cfg;  // config for the image_processing system
     scanner_config sc;
 
     sc.outdir = NamedTemporaryDirectory();
@@ -201,6 +201,7 @@ std::string validate(std::string image_fname, std::vector<Check> &expected)
     ss.phase_scan();
     phase1.run();
     ss.shutdown();
+    xreport->pop();                     // dfxml
     xreport->close();
 
     for(size_t i=0; i<expected.size(); i++){
