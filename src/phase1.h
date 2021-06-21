@@ -8,7 +8,6 @@
 #include "be13_api/dfxml/src/dfxml_writer.h"
 #include "be13_api/dfxml/src/hash_t.h"
 
-//#include "bulk_extractor_i.h"
 #include "image_process.h"
 #include "threadpool.hpp"               // new threadpool!
 

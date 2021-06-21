@@ -16,7 +16,7 @@
 #include "be13_api/dfxml/src/dfxml_writer.h"
 #include "be13_api/scanner_set.h"
 #include "be13_api/catch.hpp"
-#include "be13_api/utils.h"
+#include "be13_api/utils.h"             // needs config.h
 
 #include "image_process.h"
 #include "base64_forensic.h"
@@ -25,6 +25,7 @@
 #include "bulk_extractor_scanners.h"
 #include "scan_base64.h"
 #include "scan_vcard.h"
+
 #include "scan_email.h"
 #include "exif_reader.h"
 #include "jpeg_validator.h"
@@ -216,10 +217,12 @@ std::string validate(std::string image_fname, std::vector<Check> &expected)
         }
         REQUIRE(found);
     }
+    std::cerr << "--- done ---\n\n";
     return sc.outdir;
 }
 
 TEST_CASE("validate_scanners", "[phase1]") {
+    std::cerr  << "point 1\n";
     auto fn1 = "tests/test_json.txt";
     std::vector<Check> ex1 {
         Check("json.txt",
@@ -227,9 +230,13 @@ TEST_CASE("validate_scanners", "[phase1]") {
                        JSON1,
                        "ef2b5d7ee21e14eeebb5623784f73724218ee5dd")),
     };
+    std::cerr  << "point 11\n";
     validate(fn1, ex1);
+    return;
+    std::cerr  << "point 2\n";
 
     auto fn2 = "tests/test_base16json.txt";
+    std::cerr  << "point 2\n";
     std::vector<Check> ex2 {
         Check("json.txt",
               Feature( "50-BASE16-0",
@@ -244,9 +251,12 @@ TEST_CASE("validate_scanners", "[phase1]") {
                        "[{\"1\": \"one@base16_company.com\"}, {\"2\": \"two@b")),
 
     };
+    std::cerr  << "point 3\n";
     validate(fn2, ex2);
+    std::cerr  << "point 4\n";
 
     auto fn3 = "tests/test_hello.gz";
+    std::cerr  << "point 5\n";
     std::vector<Check> ex3 {
         Check("email.txt",
               Feature( "0-GZIP-0",
@@ -254,8 +264,9 @@ TEST_CASE("validate_scanners", "[phase1]") {
                        "hello@world.com\\x0A"))
 
     };
+    std::cerr  << "point 6\n";
     validate(fn3, ex3);
-
+    std::cerr  << "point 7\n";
 }
 
 

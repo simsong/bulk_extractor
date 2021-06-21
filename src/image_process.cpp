@@ -286,7 +286,7 @@ int process_ewf::open()
     if(libewf_handle_open(handle,libewf_filenames,amount_of_filenames,
 			  LIBEWF_OPEN_READ,&error)<0){
 	if(error) libewf_error_fprint(error,stdout);
-	throw image_process::NoSuchFile(Formatter() << "Cannot open: " << fname);
+	throw image_process::NoSuchFile( (Formatter() << "Cannot open: " << fname).str());
     }
     /* Free the allocated filenames */
     if(use_libewf_glob){
@@ -402,27 +402,25 @@ pos0_t process_ewf::get_pos0(const image_process::iterator &it) const
 /** Read from the iterator into a newly allocated sbuf */
 sbuf_t *process_ewf::sbuf_alloc(image_process::iterator &it) const
 {
-    int count = pagesize + margin;
+    size_t count = pagesize + margin;
 
     if(this->ewf_filesize < it.raw_offset + count){    /* See if that's more than I need */
 	count = this->ewf_filesize - it.raw_offset;
     }
 
-    unsigned char *buf = (unsigned char *)malloc(count);
-    if(!buf) throw std::bad_alloc();			// no memory
-
-    count = this->pread(buf,count,it.raw_offset); // do the read
-    if(count<0){
-	free(buf);
+    auto sbuf = sbuf_t::sbuf_malloc(get_pos0(it), count);
+    unsigned char *buf = sbuf->malloc_buf();
+    int count_read = this->pread(buf, count, it.raw_offset);
+    if(count_read<0){
+        delete sbuf;
 	throw read_error();
     }
     if(count==0){
-	free(buf);
+        delete sbuf;
 	it.eof = true;
 	return 0;
     }
-
-    return sbuf_t::sbuf_new(get_pos0(it), buf, count, pagesize );
+    return sbuf;
 }
 
 /**
@@ -743,19 +741,19 @@ sbuf_t *process_raw::sbuf_alloc(image_process::iterator &it) const
     if(this->raw_filesize < it.raw_offset + count){    /* See if that's more than I need */
 	count = this->raw_filesize - it.raw_offset;
     }
-    unsigned char *buf = reinterpret_cast<unsigned char *>(malloc(count));
-    if(!buf) throw std::bad_alloc();			// no memory
-    count = this->pread(buf, count, it.raw_offset);       // do the read
-    if(count==0){
-	free(buf);
+    auto sbuf = sbuf_t::sbuf_malloc( get_pos0(it), count);
+    unsigned char *buf = reinterpret_cast<unsigned char *>(sbuf->malloc_buf());
+    int count_read = this->pread(buf, count, it.raw_offset);       // do the read
+    if (count_read==0){
+        delete sbuf;
 	it.eof = true;
         throw EndOfImage();
     }
-    if(count<0){
-	free(buf);
+    if(count_read<0){
+        delete sbuf;
 	throw read_error();
     }
-    return sbuf_t::sbuf_new(get_pos0(it), buf, count, std::min(count,pagesize));
+    return sbuf;
 }
 
 static std::string filename_extension(std::string fn)
@@ -848,7 +846,8 @@ pos0_t process_dir::get_pos0(const image_process::iterator &it) const
 sbuf_t *process_dir::sbuf_alloc(image_process::iterator &it) const
 {
     std::string fname = files[it.file_number];
-    return sbuf_t::map_file(fname);
+    sbuf_t *sbuf = sbuf_t::map_file(fname);     // returns a new sbuf
+    return sbuf;
 }
 
 double process_dir::fraction_done(const image_process::iterator &it) const
@@ -872,7 +871,6 @@ uint64_t process_dir::seek_block(class image_process::iterator &it,uint64_t bloc
     it.file_number = block;
     return it.file_number;
 }
-
 
 
 

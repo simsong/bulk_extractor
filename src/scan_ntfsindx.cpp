@@ -18,10 +18,7 @@
 
 #include "be13_api/scanner_params.h"
 
-#include "sbuf_stream.h"
 #include "utf8.h"
-
-static uint32_t ntfsindx_carve_mode = feature_recorder::CARVE_ALL;
 
 #define SECTOR_SIZE 512
 #define CLUSTER_SIZE 4096
@@ -84,12 +81,9 @@ void scan_ntfsindx(scanner_params &sp)
         info->author          = "Teru Yamazaki";
         info->description     = "Scans for NTFS $INDEX_ALLOCATION INDX record";
         info->scanner_version = "1.1";
-        info->feature_names.push_back( feature_recorder_def(FEATURE_FILE_NAME));
+        info->feature_defs.push_back( feature_recorder_def(FEATURE_FILE_NAME));
         sp.info = info;
         return;
-    }
-    if(sp.phase==scanner_params::PHASE_INIT){
-        sp.ss.get_name(FEATURE_FILE_NAME)->set_carve_mode(static_cast<feature_recorder::carve_mode_t>(ntfsindx_carve_mode));
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
         const sbuf_t &sbuf = *(sp.sbuf);
@@ -128,17 +122,17 @@ void scan_ntfsindx(scanner_params &sp)
                         else
                             break;
                     }
-                    ntfsindx_recorder->carve_records(sbuf,offset,total_record_size,"INDX");
+                    ntfsindx_recorder.carve(sbuf_t(sbuf,offset,total_record_size), "INDX");
                 }
                 else if(record_type == 2) {
-                    ntfsindx_recorder->carve_records(sbuf,offset,total_record_size,"INDX_ObjId-O");
+                    ntfsindx_recorder.carve(sbuf_t(sbuf,offset,total_record_size),"INDX_ObjId-O");
                 }
                 else { // 0 - Other INDX record (Secure-SDH, Secure-SII, etc.)
-                    ntfsindx_recorder->carve_records(sbuf,offset,total_record_size,"INDX_Misc");
+                    ntfsindx_recorder.carve(sbuf_t(sbuf,offset,total_record_size),"INDX_Misc");
                 }
             }
             else if (result_type == 2) {
-                ntfsindx_recorder->carve_records(sbuf,offset,total_record_size,"INDX_corrupted");
+                ntfsindx_recorder.carve(sbuf_t(sbuf,offset,total_record_size),"INDX_corrupted");
             }
             else { // result_type == 0
             }

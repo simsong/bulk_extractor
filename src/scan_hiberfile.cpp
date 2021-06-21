@@ -9,6 +9,7 @@
 #include "image_process.h"
 #include "pyxpress.h"
 
+#define SCANNER_NAME "HIBERFILE"
 
 
 #define ZLIB_CONST
@@ -36,27 +37,24 @@ extern "C"
 void scan_hiberfile(scanner_params &sp)
 {
     sp.check_version();
-    if(sp.phase==scanner_params::PHASE_INIT){
-        auto info = new scanner_params::scanner_info( scan_hiberfile, "hiberfile" );
-	//sp.info->name           = "hiberfile";
-        info->author         = "Simson Garfinkel and Matthieu Suiche";
-        info->description    = "Scans for Microsoft-XPress compressed data";
-        info->scanner_version= "1.0";
-        info->flags          = scanner_info::SCANNER_RECURSE | scanner_info::SCANNER_RECURSE_EXPAND;
-        sp.info = info;
+    if (sp.phase==scanner_params::PHASE_INIT){
+        sp.info = new scanner_params::scanner_info( scan_hiberfile, "hiberfile" );
+        sp.info->author         = "Simson Garfinkel and Matthieu Suiche";
+        sp.info->description    = "Scans for Microsoft-XPress compressed data";
+        sp.info->scanner_version= "1.0";
 	return; /* no features */
     }
-    if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;
-    if(sp.phase==scanner_params::PHASE_SCAN){
+    if (sp.phase==scanner_params::PHASE_SHUTDOWN) return;
+    if (sp.phase==scanner_params::PHASE_SCAN){
 
 	/* Do not scan for hibernation decompression if we are already
 	 * inside a hibernation file decompression.
 	 * Right now this is a hack; it should be done by the system with some kind of flag.
 	 */
-	const sbuf_t &sbuf = sp.sbuf;
-	const pos0_t &pos0 = sp.sbuf.pos0;
+	const sbuf_t &sbuf = *(sp.sbuf);
+	const pos0_t &pos0 = sbuf.pos0;
 
-	if(pos0.path.find("HIBERFILE")!=std::string::npos){ // don't do recursively
+	if (pos0.path.find( SCANNER_NAME )!=std::string::npos){ // don't do recursively
 	    return;
 	}
 

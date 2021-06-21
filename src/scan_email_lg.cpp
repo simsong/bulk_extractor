@@ -12,7 +12,7 @@
 #include "histogram.h"
 #include "pattern_scanner.h"
 #include "pattern_scanner_utils.h"
-#include "utils.h"
+#include "utils.h"                      // needs config.h
 
 using namespace std;
 

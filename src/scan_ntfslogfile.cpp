@@ -9,7 +9,7 @@
 #include <fstream>
 #include <string>
 #include <cstdlib>
-#include <cstrings>
+#include <cstring>
 #include <errno.h>
 #include <sstream>
 #include <vector>
@@ -17,11 +17,7 @@
 #include "config.h"
 #include "be13_api/scanner_params.h"
 
-#include "sbuf_stream.h"
-
 #include "utf8.h"
-
-static uint32_t ntfslogfile_carve_mode = feature_recorder::CARVE_ALL;
 
 #define SECTOR_SIZE 512
 #define CLUSTER_SIZE 4096
@@ -83,15 +79,12 @@ void scan_ntfslogfile(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-        sp.info->name            = "ntfslogfile";
+        sp.info = new scanner_params::scanner_info(scan_ntfslogfile,"ntfslogfile");
         sp.info->author          = "Teru Yamazaki";
         sp.info->description     = "Scans for NTFS $LogFile RCRD record";
-        sp.info->scanner_version = "1.0";
-        sp.info->feature_names.insert(FEATURE_FILE_NAME);
+        sp.info->scanner_version = "1.1";
+        sp.info->feature_defs.push_back( feature_recorder_def(FEATURE_FILE_NAME));
         return;
-    }
-    if(sp.phase==scanner_params::PHASE_INIT){
-        sp.fs.get_name(FEATURE_FILE_NAME)->set_carve_mode(static_cast<feature_recorder::carve_mode_t>(ntfslogfile_carve_mode));
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
         const sbuf_t &sbuf = (*sp.sbuf);
@@ -109,7 +102,6 @@ void scan_ntfslogfile(scanner_params &sp)
             total_record_size = CLUSTER_SIZE;
 
             if (result_type == 1) {
-
                 // found one valid record then also checks following valid records and writes all at once
                 while (true) {
                     if (offset+total_record_size >= stop)
@@ -122,16 +114,16 @@ void scan_ntfslogfile(scanner_params &sp)
                     else
                         break;
                 }
-                ntfslogfile_recorder->carve_records(sbuf,offset,total_record_size,"LogFile-RCRD");
+                ntfslogfile_recorder.carve( sbuf_t(sbuf,offset,total_record_size), "LogFile-RCRD");
             }
             else if (result_type == 2) {
-                ntfslogfile_recorder->carve_records(sbuf,offset,total_record_size,"LogFile-RCRD_corrupted");
+                ntfslogfile_recorder.carve( sbuf_t(sbuf,offset,total_record_size), "LogFile-RCRD_corrupted");
             }
             else if (result_type == 3) {
-                ntfslogfile_recorder->carve_records(sbuf,offset,total_record_size,"LogFile-RSTR");
+                ntfslogfile_recorder.carve( sbuf_t(sbuf,offset,total_record_size), "LogFile-RSTR");
             }
             else if (result_type == 4) {
-                ntfslogfile_recorder->carve_records(sbuf,offset,total_record_size,"LogFile-RSTR_corrupted");
+                ntfslogfile_recorder.carve( sbuf_t(sbuf,offset,total_record_size),"LogFile-RSTR_corrupted");
             }
             else { // result_type == 0 - not RCRD record
             }

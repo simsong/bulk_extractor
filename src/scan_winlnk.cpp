@@ -18,9 +18,8 @@
  */
 
 #include "config.h"
-#include "be13_api/scanner_params.h"
-#include "be13_api/unicode_escape.h"
 
+// these need config.h
 #if defined(HAVE_LIBLNK_H) && defined(HAVE_LIBBFIO_H) && defined(HAVE_LIBLNK) && defined(HAVE_LIBBFIO)
 #include "liblnk.h"
 #include "libbfio.h"
@@ -41,12 +40,12 @@
 #include <vector>
 
 #include "utf8.h"
+#include "be13_api/utils.h"// needs config.h
+#include "be13_api/scanner_params.h"
+#include "be13_api/unicode_escape.h"
 #include "dfxml/src/dfxml_writer.h"
 
-// sbuf_stream.h needs integrated into another include file as is done with sbuf_h?
-#include "sbuf_stream.h"
 
-static int debug=0;
 static const size_t SMALLEST_LNK_FILE = 150;  // did you see smaller LNK file?
 
 /* Extract and form GUID. Needs 16 bytes */
@@ -301,18 +300,17 @@ void scan_winlnk(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-        sp.info->name		= "winlnk";
+        sp.info = new scanner_params::scanner_info(scan_winlnk,"winlnk");
         sp.info->author		= "Simson Garfinkel";
         sp.info->description	= "Search for Windows LNK files";
-        sp.info->feature_names.insert("winlnk");
-        debug = sp.info->config->debug;
+        sp.info->feature_defs.push_back( feature_recorder_def("winlnk"));
         return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
 
 	// phase 1: set up the feature recorder and search for winlnk features
-	const sbuf_t &sbuf = sp.sbuf;
-	feature_recorder *winlnk_recorder = sp.fs.get_name("winlnk");
+	const sbuf_t &sbuf = *(sp.sbuf);
+	feature_recorder &winlnk_recorder = sp.ss.named_feature_recorder("winlnk");
 
 	// make sure that potential LNK file is large enough and has the correct signature
 	if (sbuf.pagesize <= SMALLEST_LNK_FILE){
@@ -338,9 +336,6 @@ void scan_winlnk(scanner_params &sp)
                 } catch (sbuf_t::range_exception_t &e) {
                     // add error field to indicate that the read was not complete
                     lnkmap["error"] = "LINKINFO_DATA_ERROR";
-                    if (debug) {
-                        std::cerr << "scan_winlnk error at path " << sbuf.pos0+p << "\n";
-                    }
                 }
 
                 // set path when no data
@@ -367,7 +362,7 @@ void scan_winlnk(scanner_params &sp)
                 if (path == "") path = "LINKINFO_PATH_EMPTY"; // nothing to assign to path
 
                 // record
-                winlnk_recorder->write(sbuf.pos0+p,path,dfxml_writer::xmlmap(lnkmap,"lnk",""));
+                winlnk_recorder.write(sbuf.pos0+p,path,dfxml_writer::xmlmap(lnkmap,"lnk",""));
             }
         }
     }

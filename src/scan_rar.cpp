@@ -18,6 +18,18 @@
 #define RAR_RECORDER_NAME "rar"
 #define UNRAR_RECORDER_NAME "unrar_carved"
 
+time_t decode_iso8601(const std::string mtime_iso8601)
+{
+    struct tm tm;
+    if(strptime(mtime_iso8601.c_str(),"%Y-%m-%dT%H:%M:%S",&tm)){
+        time_t t = mktime(&tm);
+        return t;
+    }
+    return 0;
+}
+
+
+
 
 // The mark block is a specially-crafted constant block that acts as a magic
 // number for rar files as a whole
@@ -590,43 +602,47 @@ assert(dbuf.buf[sz-5] == 0x25); assert(dbuf.buf[sz-4] == 0x25); assert(dbuf.buf[
 #endif
 
 
-static uint32_t unrar_carve_mode = feature_recorder::CARVE_ENCODED;
 extern "C"
 void scan_rar(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-        auto info = new scanner_params::scanner_info( scan_rar, "rar" );
-	//sp.info->name  = "rar";
-	info->author = "Michael Shick";
+        sp.info = new scanner_params::scanner_info( scan_rar, "rar" );
+	sp.info->author = "Michael Shick";
 #ifdef USE_RAR
-	info->description = "RAR volume locator and component decompresser";
-        info->flags = scanner_info::SCANNER_RECURSE | scanner_info::SCANNER_RECURSE_EXPAND;
-	info->feature_names.insert(RAR_RECORDER_NAME);
-	info->feature_names.insert(UNRAR_RECORDER_NAME);
+	sp.info->description = "RAR volume locator and component decompresser";
+        //sp.info->flags = scanner_info::SCANNER_RECURSE | scanner_info::SCANNER_RECURSE_EXPAND;
+        feature_recorder_def::flags_t flags;
+        flags.xml = true;
+
+        auto rar_def = feature_recorder_def(RAR_RECORDER_NAME, flags);
+        rar_def.default_carve_mode = feature_recorder_def::carve_mode_t::CARVE_ENCODED;
+	sp.info->feature_defs.push_back( rar_def );
+
+        auto unrar_def = feature_recorder_def(UNRAR_RECORDER_NAME, flags);
+        unrar_def.default_carve_mode = feature_recorder_def::carve_mode_t::CARVE_ENCODED;
+	sp.info->feature_defs.push_back( unrar_def );
         sp.ss.sc.get_config("rar_find_components",&record_components,"Search for RAR components");
         sp.ss.sc.get_config("rar_find_volumes",&record_volumes,"Search for RAR volumes");
-        sp.ss.sc.get_config("unrar_carve_mode",&unrar_carve_mode,CARVE_MODE_DESCRIPTION);
 #else
-        info->description = "(disabled in configure)";
-        info->flags = scanner_info::SCANNER_DISABLED | scanner_info::SCANNER_NO_USAGE | scanner_info::SCANNER_NO_ALL;
+        sp.info->description = "(disabled in configure)";
+        sp.info->flags = scanner_info::SCANNER_DISABLED | scanner_info::SCANNER_NO_USAGE | scanner_info::SCANNER_NO_ALL;
 #endif
-        sp.info = info;
+        //sp.info = info;
 	return;
     }
 #ifdef USE_RAR
-    if(sp.phase==scanner_params::PHASE_INIT){
-	feature_recorder *rar_recorder = sp.fs.get_name(RAR_RECORDER_NAME);
-	feature_recorder *unrar_recorder = sp.fs.get_name(UNRAR_RECORDER_NAME);
-        rar_recorder->set_carve_mode(feature_recorder::CARVE_ALL);
-	rar_recorder->set_flag(feature_recorder::FLAG_XML); // because we are sending through XML
-        unrar_recorder->set_carve_mode(static_cast<feature_recorder::carve_mode_t>(unrar_carve_mode));
-        unrar_recorder->set_carve_ignore_encoding("RAR");
-    }
+    //if(sp.phase==scanner_params::PHASE_INIT){
+	//feature_recorder &rar_recorder = sp.ss.named_feature_recorder(RAR_RECORDER_NAME);
+	//feature_recorder &unrar_recorder = sp.ss.named_feature_recorder(UNRAR_RECORDER_NAME);
+        //rar_recorder->set_carve_mode(feature_recorder::CARVE_ALL);
+	//rar_recorder->set_flag(feature_recorder::FLAG_XML); // because we are sending through XML
+        //unrar_recorder->set_carve_mode(static_cast<feature_recorder::carve_mode_t>(unrar_carve_mode));
+        //unrar_recorder->set_carve_ignore_encoding("RAR"); TODO
+    //}
     if(sp.phase==scanner_params::PHASE_SCAN){
-	const sbuf_t &sbuf = sp.sbuf;
-	const pos0_t &pos0 = sp.sbuf.pos0;
-	feature_recorder_set &fs = sp.fs;
+	const sbuf_t &sbuf = *(sp.sbuf);
+	const pos0_t &pos0 = sbuf.pos0;
 	feature_recorder &rar_recorder   = sp.ss.named_feature_recorder(RAR_RECORDER_NAME);
 	feature_recorder &unrar_recorder = sp.ss.named_feature_recorder(UNRAR_RECORDER_NAME);
 
@@ -646,18 +662,18 @@ void scan_rar(scanner_params &sp)
             // volumes are considered false positives if they are not preceeded by the magic number marker block
             if(record_volumes && cc_len > MARK_LEN && is_mark_block(cc, cc_len, 0) &&
                     process_volume(cc + MARK_LEN, cc_len - MARK_LEN, volume)) {
-                rar_recorder->write(pos0 + pos, "<volume>", volume.to_xml());
+                rar_recorder.write(pos0 + pos, "<volume>", volume.to_xml());
                 // carve encrypted RAR files
                 if(volume.flags & FLAG_HEADERS_ENCRYPTED) {
                     size_t encrypted_len = guess_encrypted_len(cc, cc_len, MARK_LEN + volume.len);
                     size_t enc_rar_pos = pos;
                     size_t enc_rar_len = MARK_LEN + volume.len + encrypted_len;
 
-                    rar_recorder->carve(sbuf, enc_rar_pos, enc_rar_len, ".rar");
+                    rar_recorder.carve(sbuf_t(sbuf, enc_rar_pos, enc_rar_len), ".rar");
                 }
             }
             if(record_components && process_component(cc, cc_len, component)) {
-                rar_recorder->write(pos0 + pos, component.name, component.to_xml());
+                rar_recorder.write(pos0 + pos, component.name, component.to_xml());
 
                 // only decompress and recur if the component compression isn't
                 // no-op to avoid duplicate features

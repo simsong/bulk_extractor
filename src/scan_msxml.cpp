@@ -27,6 +27,8 @@
 
 static bool pdf_dump = false;
 
+#define SCANNER_NAME "msxml"
+
 /*
  * The problem with trying to extract text from PDF is that sometimes PDF splits actual
  * things that we want, like (exampl) (le@co) (mpany.com).
@@ -50,21 +52,19 @@ extern "C"
 void scan_msxml(scanner_params &sp)
 {
     sp.check_version();
-    if(sp.phase==scanner_params::PHASE_INIT){
-        auto info = new scanner_params::scanner_info( scan_msxml, "msxml" );
-        //sp.info->name           = "msxml";
-        info->author         = "Simson Garfinkel";
-        info->description    = "Extracts text from Microsoft XML files";
-        info->scanner_version= "1.0";
-        info->flags          = scanner_info::SCANNER_RECURSE;
+    if (sp.phase==scanner_params::PHASE_INIT){
+        sp.info = new scanner_params::scanner_info( scan_msxml, SCANNER_NAME );
+        sp.info->author         = "Simson Garfinkel";
+        sp.info->description    = "Extracts text from Microsoft XML files";
+        sp.info->scanner_version= "1.0";
+        //sp.info->flags          = scanner_info::SCANNER_RECURSE;
         sp.ss.sc.get_config("pdf_dump",&pdf_dump,"Dump the contents of PDF buffers");
-        sp.info = info;
+        //sp.info = info;
 	return;	/* No features recorded */
     }
-    if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;
-    if(sp.phase==scanner_params::PHASE_SCAN){
+    if (sp.phase==scanner_params::PHASE_SCAN){
 
-	const sbuf_t &sbuf = sp.sbuf;
+	const sbuf_t &sbuf = *(sp.sbuf);
         if (sbuf.substr(0,6)=="<?xml "){
             /* copy out the data to a new buffer. The < character turns off copying the > character turns it on */
             std::stringstream ss;
@@ -73,7 +73,7 @@ void scan_msxml(scanner_params &sp)
                 switch(sbuf[i]){
                 case '<':
                     instring=false;
-                    if(sbuf.substr(i,6)=="</w:p>"){
+                    if (sbuf.substr(i,6)=="</w:p>"){
                         ss << "\n";
                     }
                     break;
@@ -81,7 +81,7 @@ void scan_msxml(scanner_params &sp)
                     instring=true;
                     break;
                 default:
-                    if(instring) ss << sbuf[i];
+                    if (instring) ss << sbuf[i];
                 }
             }
             /* Two copy operations. Ick. */

@@ -135,12 +135,11 @@ void scan_pdf(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-        auto info = new scanner_params::scanner_info( scan_pdf, "pdf" );
-        info->author         = "Simson Garfinkel";
-        info->description    = "Extracts text from PDF files";
-        info->scanner_version= "1.0";
+        sp.info = new scanner_params::scanner_info( scan_pdf, "pdf" );
+        sp.info->author         = "Simson Garfinkel";
+        sp.info->description    = "Extracts text from PDF files";
+        sp.info->scanner_version= "1.0";
         sp.ss.sc.get_config("pdf_dump",&pdf_dump,"Dump the contents of PDF buffers");
-        sp.info = info;
 	return;	/* No features recorded */
     }
     if(sp.phase==scanner_params::PHASE_SCAN){

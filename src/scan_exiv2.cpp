@@ -16,7 +16,7 @@
 
 #include "be13_api/scanner_params.h"
 
-#include "be13_api/utils.h"
+#include "be13_api/utils.h"// needs config.h
 
 #include "dfxml/src/dfxml_writer.h"
 
@@ -106,13 +106,13 @@ void scan_exiv2(struct scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-	sp.info->name  = "exiv2";
+        sp.info = new scanner_params::scanner_info( scan_exiv2, "exiv2" );
         sp.info->author         = "Simson L. Garfinkel";
-        sp.info->description    = "Searches for EXIF information using exiv2";
-        sp.info->scanner_version= "1.0";
-	sp.info->feature_names.insert("exif");
-	sp.info->feature_names.insert("gps");
-	sp.info->flags = scanner_info::SCANNER_DISABLED; // disabled because we have be_exif
+        sp.info->description    = "Searches for EXIF information using exiv2. Use exif scanner if this is not available or if this crashes.";
+        sp.info->scanner_flags.default_enabled = false;
+        sp.info->scanner_version= "1.1";
+	sp.info->feature_defs.push_back( feature_recorder_def("exif"));
+	sp.info->feature_defs.push_back( feature_recorder_def("gps"));
 	return;
     }
     if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;

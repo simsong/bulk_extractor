@@ -18,6 +18,7 @@ AUTOMAKE_OPTIONS = subdir-objects
 BE13_API_DIR= be13_api
 include be13_api/Makefile.defs
 
+
 #include rar/Makefile.defs
 
 #jpeg_dump_SOURCES = 	scan_exif.cpp scan_exif.h exif_reader.cpp exif_reader.h exif_entry.cpp\
@@ -56,31 +57,29 @@ lightgrep_scanners = \
 	scan_email_lg.cpp \
 	scan_gps_lg.cpp
 
-
 # scanners_builtin are the scanners that are compiled into the binary
 
 scanners_builtin = \
+	bulk_extractor_scanners.cpp \
 	scan_aes.cpp \
 	scan_base64.cpp \
 	scan_ccns2.cpp scan_ccns2.h \
 	scan_elf.cpp \
 	scan_exif.cpp scan_exif.h exif_reader.cpp exif_reader.h exif_entry.cpp jpeg_validator.h \
-	scan_exiv2.cpp \
-	scan_gzip.cpp \
 	scan_json.cpp \
-	scan_kml.cpp \
-	scan_pdf.cpp \
 	scan_vcard.cpp \
-	scan_wordlist.cpp \
 	scan_xor.cpp \
 	scan_zip.cpp
 
-scanners_builtin_broken = \
+not_used_yet = \
 	scan_evtx.cpp \
+	scan_exiv2.cpp \
 	scan_facebook.cpp \
 	scan_find.cpp \
+	scan_gzip.cpp \
 	scan_hiberfile.cpp pyxpress.c pyxpress.h \
 	scan_httplogs.cpp \
+	scan_kml.cpp \
 	scan_msxml.cpp \
 	scan_net.cpp \
 	scan_ntfsindx.cpp \
@@ -88,27 +87,30 @@ scanners_builtin_broken = \
 	scan_ntfsmft.cpp \
 	scan_ntfsusn.cpp \
 	scan_outlook.cpp scan_outlook.h \
+	scan_pdf.cpp \
 	scan_rar.cpp \
 	scan_sqlite.cpp \
 	scan_utmp.cpp \
 	scan_windirs.cpp \
 	scan_winlnk.cpp \
 	scan_winpe.cpp \
-	scan_winprefetch.cpp
+	scan_winprefetch.cpp \
+	scan_wordlist.cpp
+
 
 if FLEXSCANNERS_ENABLED
   scanners_builtin += $(flex_scanners)
 endif
-#
-#if LIGHTGREP_ENABLED
-#  scanners_builtin += $(lightgrep_scanners)
-#endif
-#
-#
-#if RAR_ENABLED
-#  scanners_builtin += $(RAR_SUPPORT)
-#endif
-#
+
+if LIGHTGREP_ENABLED
+  scanners_builtin += $(lightgrep_scanners)
+endif
+
+
+if RAR_ENABLED
+  scanners_builtin += $(RAR_SUPPORT)
+endif
+
 bulk_extractor_nomain = \
         $(TSK3INCS)  \
 	$(BE13_API_SRC) \
@@ -127,29 +129,10 @@ bulk_extractor_nomain = \
 	sbuf_decompress.h \
 	threadpool.hpp
 
-bulk_extractor_SOURCES = $(bulk_extractor_nomain) $(scanners_builtin) bulk_extractor_scanners.cpp main.cpp
-
-
-# Slowly add modules as tests are written for them.
-be_tests_SOURCES = be13_api/catch.hpp \
-	$(BE13_API_SRC) \
-	$(scanners_builtin) \
-	base64_forensic.cpp \
-	base64_forensic.h \
-	bulk_extractor_scanners.cpp \
-	bulk_extractor_scanners.h \
-	be_tests.cpp \
-	image_process.cpp \
-	image_process.h \
-	managed_malloc.h \
-	phase1.h \
-	phase1.cpp \
-	sbuf_decompress.cpp \
-	sbuf_decompress.h \
-	threadpool.hpp
+bulk_extractor_SOURCES = $(bulk_extractor_nomain) $(scanners_builtin) main.cpp
+be_tests_SOURCES = $(bulk_extractor_nomain) $(scanners_builtin) be13_api/catch.hpp be_tests.cpp
 
 # bulk_extractorlib_SOURCES = $(bulk_extractor_nomain) $(scanners_builtin) bulk_extractor_scanners.cpp
-
 # bulk_extractor_noscanners_SOURCES = $(bulk_extractor_nomain) bulk_extractor_noscanners.cpp main.cpp
 
 # stand is the standalone program that just runs on a single file.
@@ -175,7 +158,6 @@ be_tests_SOURCES = be13_api/catch.hpp \
 # FreeBSD NOTE: flex does not support -R and -o does not work properly
 # | sed "s/static int yy_get_next_buffer/static int XXyy_get_next_buffer/"
 #
-# 2019-11-09 - updated to remove the word 'register' which is no longer needed
 
 SUFFIXES = .flex
 FLEX_CXXFLAGS=-Wno-shadow -Wno-effc++ -Wno-redundant-decls -Wno-missing-noreturn

@@ -51,6 +51,7 @@ void base16_scanner::decode(const sbuf_t &sbuf)
         assert(msb>=0 && msb<16);
         int lsb = base16array[sbuf[i+1]];
         if (lsb==BASE16_IGNORE || lsb==BASE16_INVALID){
+            delete dbuf;
             return;       /* If first char is valid hex and second isn't, this isn't hex */
         }
         assert(lsb>=0 && lsb<16);
@@ -128,8 +129,6 @@ void scan_base16(struct scanner_params &sp)
         info->pathPrefix      = "BASE16";
         feature_recorder_def frd("hex"); frd.flags.disabled=true; /* disabled by default */ /* frd.flags.recurse=true;*/
         info->feature_defs.push_back( frd );
-        //sp.info->feature_names.insert("hex"); // notable hex values
-        //sp.info->flags          = scanner_info::SCANNER_DISABLED | scanner_info::SCANNER_RECURSE;
 
         /* Create the base16 array */
         for (int i=0;i<256;i++){

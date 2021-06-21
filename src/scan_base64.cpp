@@ -9,7 +9,6 @@
 #include "config.h"
 #include "be13_api/scanner_params.h"
 
-//#include "be13_api/bulk_extractor_i.h"
 #include "base64_forensic.h"
 #include "scan_base64.h"
 
@@ -95,14 +94,17 @@ sbuf_t *decode_base64(const sbuf_t &sbuf, size_t start, size_t src_len)
 
     // Make room for the destination.
     size_t dst_len = src_len + 4; // it can only get smaller, but give some extra space
-    unsigned char *dst = (unsigned char *)malloc(dst_len);
-
+    pos0_t pos0 = (sbuf.pos0 + start) + "BASE64";
+    uint8_t *dst = reinterpret_cast<uint8_t *>(malloc(dst_len));
+    if (dst==nullptr) {
+        throw std::bad_alloc();
+    }
     // Perform the conversion
     int conv_len = b64_pton_forensic(src, src_len, dst, dst_len);
     if (conv_len>0){
-        const pos0_t pos0_base64 = (sbuf.pos0 + start) + "BASE64";
-        return sbuf_t::sbuf_new(pos0_base64, dst, conv_len, conv_len);
+        return sbuf_t::sbuf_new(pos0, dst, conv_len, conv_len);
     }
+    free(dst);
     return nullptr;
 }
 

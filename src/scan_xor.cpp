@@ -5,7 +5,7 @@
  */
 #include "config.h"
 #include "be13_api/scanner_params.h"
-#include "utils.h"
+#include "be13_api/utils.h"
 
 static uint8_t xor_mask = 255;
 extern "C"
@@ -14,8 +14,7 @@ void scan_xor(scanner_params &sp)
     sp.check_version();
     if (sp.phase==scanner_params::PHASE_INIT) {
         auto info = new scanner_params::scanner_info( scan_xor, "xor" );
-	//sp.info->name  = "xor";
-	info->author = "Michael Shick";
+	info->author      = "Michael Shick";
 	info->description = "optimistic XOR deobfuscator";
 	info->scanner_flags.default_enabled = false; // = scanner_info::SCANNER_DISABLED | scanner_info::SCANNER_RECURSE;
         sp.ss.sc.get_config("xor_mask",&xor_mask,"XOR mask value, in decimal");

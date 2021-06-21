@@ -7,7 +7,7 @@
 
 #include "be13_api/scanner_params.h"
 #include "scan_outlook.h"
-#include "utils.h"
+#include "utils.h"// needs config.h
 
 /*
  * Below is the decoding array, i.e.:
@@ -51,38 +51,40 @@ static uint8_t libpff_encryption_compressible[] = {
 };
 
 
+#define SCANNER_NAME "OUTLOOK"
 
 extern "C"
 void scan_outlook(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT) {
-        auto info = new scanner_params::scanner_info( scan_outlook, "outlook" ); scan_outlook, "outlook" );
-    //auto info = new scanner_params::scanner_info(
-	//info->name  = "outlook";
-	info->author = "Simson L. Garfinkel";
-	info->description = "Outlook Compressible Encryption";
-	info->flags = scanner_info::SCANNER_DISABLED \
-            | scanner_info::SCANNER_RECURSE | scanner_info::SCANNER_DEPTH_0 ;
-        sp.info = info;
+        sp.info = new scanner_params::scanner_info( scan_outlook, "outlook" );
+        sp.info->scanner_flags.default_enabled = false;
+        sp.info->scanner_flags.depth0_only = true; // only run depth 0
+	sp.info->author = "Simson L. Garfinkel";
+	sp.info->description = "Outlook Compressible Encryption. Very CPU intensive.";
+        // TODO: Previously this has SCANNER_DEPTH_0 set so that it only ran at top-level. But this means we would
+        // miss an outlook file that had been zipped and sent by email or archived. OMG, did we really want to miss that file?
+        // well, yes, we do, because it's just so crazy expensive to re-analyze everything twice
+	//info->flags = scanner_info::SCANNER_DISABLED | scanner_info::SCANNER_RECURSE | scanner_info::SCANNER_DEPTH_0 ;
 	return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN) {
-	const sbuf_t &sbuf = sp.sbuf;
-	const pos0_t &pos0 = sp.sbuf.pos0;
+	const sbuf_t &sbuf = *(sp.sbuf);
+	const pos0_t &pos0 = sbuf.pos0;
 
         // dodge infinite recursion by refusing to operate on an OFE'd buffer
-        if(rcb.partName == pos0.lastAddedPart()) {
-            return;
-        }
+        if(pos0.lastAddedPart() != SCANNER_NAME) {
+            uint8_t *buf = (uint8_t *)malloc(sbuf.bufsize);
+            if (buf==nullptr){
+                throw std::bad_alloc();
+            }
+            for(size_t ii = 0; ii < sbuf.bufsize; ii++) {
+                buf[ii] = libpff_encryption_compressible[ sbuf.buf[ii] ];
+            }
 
-        // managed_malloc throws an exception if allocation fails.
-        auto *dbuf = sbuf_t::sbuf_malloc(pos0+"OUTLOOK", sbuf.bufsize);
-        for(size_t ii = 0; ii < sbuf.bufsize; ii++) {
-            uint8_t ch = sbuf.buf[ii];
-            dbuf.wbuf(ii,libpff_encryption_compressible[ ch ]);
+            const pos0_t pos0_oce = pos0 + SCANNER_NAME;
+            sp.recurse(new sbuf_t(pos0_oce, buf, sbuf.bufsize, sbuf.pagesize, 0, false, true, false));
         }
-
-        sp.recurse(dbuf);
     }
 }

@@ -13,42 +13,44 @@ extern "C" scanner_t *scanners_builtin[];
 #endif
 
 /* flex-based scanners */
-SCANNER(base16)
-SCANNER(email)
-SCANNER(accts)
-SCANNER(gps)
+// SCANNER(base16)
+// SCANNER(email)
+// SCANNER(accts)
+// SCANNER(gps)
 
 /* Regular scanners */
 
+SCANNER(aes)
 SCANNER(base64)
 SCANNER(elf)
 //SCANNER(exif)
-#ifdef HAVE_EXIV2
-SCANNER(exiv2)
-#endif
+//SCANNER(exiv2)
+//SCANNER(evtx)        // scanner provided by 4n6ist:
 //SCANNER(facebook)
 //SCANNER(find)
+//SCANNER(gzip)
 //SCANNER(hiberfile)
 //SCANNER(httplogs)
-SCANNER(kml)
+SCANNER(json)
+//SCANNER(kml)
 //SCANNER(msxml)
 //SCANNER(net)
+//SCANNER(ntfsindx)    // scanner provided by 4n6ist:
+//SCANNER(ntfslogfile) // scanner provided by 4n6ist:
+//SCANNER(ntfsmft)     // scanner provided by 4n6ist:
 //SCANNER(ntfsusn)
 //SCANNER(outlook)
+//SCANNER(pdf)
 //SCANNER(rar)
 //SCANNER(sqlite)
+//SCANNER(utmp)        // scanner provided by 4n6ist:
+SCANNER(vcard)
 //SCANNER(windirs)
 //SCANNER(winlnk)
 //SCANNER(winpe)
 //SCANNER(winprefetch)
-SCANNER(aes)
-SCANNER(gzip)
-SCANNER(json)
-SCANNER(pdf)
-
+//SCANNER(wordlist)
 SCANNER(xor)
-SCANNER(vcard)
-SCANNER(wordlist)
 SCANNER(zip)
 
 
@@ -59,11 +61,3 @@ SCANNER(zip)
 //SCANNER(gps_lg)
 //SCANNER(lightgrep)
 #endif
-
-
-// scanners provided by 4n6ist:
-//SCANNER(utmp)
-//SCANNER(ntfsmft)
-//SCANNER(ntfslogfile)
-//SCANNER(ntfsindx)
-//SCANNER(evtx)

@@ -24,7 +24,6 @@
 #include <fstream>
 #include <string>
 #include <cstdlib>
-#include <cstrings>
 #include <cstring>
 #include <cstdint>
 #include <cerrno>
@@ -33,16 +32,11 @@
 
 
 #include "config.h"
-#include "be13_api/scanner_params.h"
-
-
 #include "utf8.h"
-#include "dfxml/src/dfxml_writer.h"
-
-// sbuf_stream.h needs integrated into another include file as is done with sbuf_h?
-#include "sbuf_stream.h"
-
-static int debug=0;
+#include "be13_api/utils.h"             // for safe_utf16to8, requires config.h
+#include "be13_api/scanner_params.h"
+#include "be13_api/sbuf_stream.h"
+#include "dfxml/src/dfxml_writer.h"     // requires config.h
 
 /**
  * Instantiates a populated prefetch record from the buffer provided.
@@ -248,18 +242,18 @@ void scan_winprefetch(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
+        sp.info = new scanner_params::scanner_info(scan_winprefetch,"winprefetch");
         sp.info->name		= "winprefetch";
         sp.info->author		= "Bruce Allen";
         sp.info->description	= "Search for Windows Prefetch files";
-        sp.info->feature_names.insert("winprefetch");
-        debug = sp.info->config->debug;
+        sp.info->feature_defs.push_back( feature_recorder_def("winprefetch"));
         return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
 
 	// phase 1: set up the feature recorder and search for winprefetch features
-	const sbuf_t &sbuf = sp.sbuf;
-	feature_recorder *winprefetch_recorder = sp.fs.get_name("winprefetch");
+	const sbuf_t &sbuf = *(sp.sbuf);
+	feature_recorder &winprefetch_recorder = sp.ss.named_feature_recorder("winprefetch");
 
 	// optimization: first useful data starts after byte 0x10.
 	if (sbuf.pagesize <= 0x10) {
@@ -281,15 +275,11 @@ void scan_winprefetch(scanner_params &sp)
 		&& sbuf[start + 6] == 0x43
 		&& sbuf[start + 7] == 0x41) {
 
-		if(debug & DEBUG_INFO) std::cerr << "scan_winprefetch checking match at start " << start << "\n";
-
 		// create the populated prefetch record
 		prefetch_record_t prefetch_record(sbuf + start);
 
 		// record the winprefetch entry
-		winprefetch_recorder->write(sp.sbuf.pos0+start,
-					    prefetch_record.execution_filename,
-					    prefetch_record.to_xml());
+		winprefetch_recorder.write(sbuf.pos0+start, prefetch_record.execution_filename, prefetch_record.to_xml());
 
 		/* Should really skip to the end of the record we just
 		 * parsed, but it's not immediately obvious how to get

@@ -10,7 +10,7 @@
 #include <fstream>
 #include <string>
 #include <cstdlib>
-#include <cstrings>
+#include <cstring>
 #include <sstream>
 #include <vector>
 //#include <errno.h>
@@ -19,11 +19,7 @@
 
 #include "be13_api/scanner_params.h"
 
-#include "sbuf_stream.h"
-
 #include "utf8.h"
-
-static uint32_t ntfsusn_carve_mode = feature_recorder::CARVE_ALL;
 
 #define SECTOR_SIZE 512
 #define CLUSTER_SIZE 4096
@@ -76,17 +72,12 @@ void scan_ntfsusn(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-        auto info = new scanner_params::scanner_info(scan_ntfsusn,"ntfsusn");
+        sp.info = new scanner_params::scanner_info(scan_ntfsusn,"ntfsusn");
         sp.info->author          = "Teru Yamazaki";
         sp.info->description     = "Scans for USN_RECORD v2/v4 record";
         sp.info->scanner_version = "1.1";
-        sp.info->feature_names.insert(FEATURE_FILE_NAME);
-        sp.sp.ss.sc.get_config("ntfsusn_carve_mode",&ntfsusn_carve_mode,"0=carve none; 1=carve encoded; 2=carve all");
-        sp.info = info;
+        sp.info->feature_defs.push_back( feature_recorder_def(FEATURE_FILE_NAME));
         return;
-    }
-    if(sp.phase==scanner_params::PHASE_INIT){
-        sp.fs.get_name(FEATURE_FILE_NAME)->set_carve_mode(static_cast<feature_recorder::carve_mode_t>(ntfsusn_carve_mode));
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
         const sbuf_t &sbuf = *(sp.sbuf);
@@ -107,16 +98,16 @@ void scan_ntfsusn(scanner_params &sp)
             if (record_size % 8 != 0) { // illegal size
                 uint8_t padding;
                 padding = 8 - (record_size % 8);
-                ntfsusn_recorder.carve_records(sbuf,offset,record_size+padding,"UsnJrnl-J_corrupted");
+                ntfsusn_recorder.carve( sbuf_t(sbuf,offset,record_size+padding), "UsnJrnl-J_corrupted");
                 offset += record_size+padding;
                 continue;
             }
             total_record_size = record_size;
             if (offset+total_record_size > stop) {
                 if(offset+total_record_size < sbuf.bufsize)
-                    ntfsusn_recorder.carve_records(sbuf,offset,total_record_size,"UsnJrnl-J");
+                    ntfsusn_recorder.carve( sbuf_t(sbuf,offset,total_record_size), "UsnJrnl-J");
                 else
-                    ntfsusn_recorder.carve_records(sbuf,offset,total_record_size,"UsnJrnl-J_corrupted");
+                    ntfsusn_recorder.carve( sbuf_t(sbuf,offset,total_record_size), "UsnJrnl-J_corrupted");
                 break;
             }
             // found one record then also checks following valid records and writes all at once
@@ -151,7 +142,7 @@ void scan_ntfsusn(scanner_params &sp)
                     }
                 }
             }
-            ntfsusn_recorder.carve_records(sbuf,offset,total_record_size,"UsnJrnl-J");
+            ntfsusn_recorder.carve(sbuf_t(sbuf,offset,total_record_size),"UsnJrnl-J");
             offset += total_record_size;
         }
     }
