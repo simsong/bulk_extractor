@@ -13,10 +13,10 @@ extern "C" scanner_t *scanners_builtin[];
 #endif
 
 /* flex-based scanners */
-// SCANNER(base16)
-// SCANNER(email)
-// SCANNER(accts)
-// SCANNER(gps)
+SCANNER(base16)
+SCANNER(email)
+SCANNER(accts)
+SCANNER(gps)
 
 /* Regular scanners */
 
@@ -28,7 +28,7 @@ SCANNER(elf)
 //SCANNER(evtx)        // scanner provided by 4n6ist:
 //SCANNER(facebook)
 //SCANNER(find)
-//SCANNER(gzip)
+SCANNER(gzip)
 //SCANNER(hiberfile)
 //SCANNER(httplogs)
 SCANNER(json)

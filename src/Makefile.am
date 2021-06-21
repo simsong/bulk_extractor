@@ -66,6 +66,7 @@ scanners_builtin = \
 	scan_ccns2.cpp scan_ccns2.h \
 	scan_elf.cpp \
 	scan_exif.cpp scan_exif.h exif_reader.cpp exif_reader.h exif_entry.cpp jpeg_validator.h \
+	scan_gzip.cpp \
 	scan_json.cpp \
 	scan_vcard.cpp \
 	scan_xor.cpp \
@@ -76,7 +77,6 @@ not_used_yet = \
 	scan_exiv2.cpp \
 	scan_facebook.cpp \
 	scan_find.cpp \
-	scan_gzip.cpp \
 	scan_hiberfile.cpp pyxpress.c pyxpress.h \
 	scan_httplogs.cpp \
 	scan_kml.cpp \

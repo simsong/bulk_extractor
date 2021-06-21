@@ -22,6 +22,7 @@
 #include "base64_forensic.h"
 #include "phase1.h"
 
+#include "sbuf_decompress.h"
 #include "bulk_extractor_scanners.h"
 #include "scan_base64.h"
 #include "scan_vcard.h"
@@ -122,6 +123,17 @@ TEST_CASE("scan_email", "[scanners]") {
     size_t domain_len = 0;
     REQUIRE( find_host_in_url(s3, &domain_len)==8);
     REQUIRE( domain_len == 10);
+}
+
+TEST_CASE("scan_gzip", "[scanners]") {
+    auto *sbufj = sbuf_t::map_file("tests/test_hello.gz");
+    REQUIRE( sbuf_decompress_zlib_possible( *sbufj, 0) == true);
+    REQUIRE( sbuf_decompress_zlib_possible( *sbufj, 10) == false);
+    auto *decomp = sbuf_decompress_zlib_new( *sbufj, 1024*1024, "GZIP" );
+    REQUIRE( decomp != nullptr);
+    REQUIRE( decomp->asString() == "hello@world.com\n");
+    delete decomp;
+    delete sbufj;
 }
 
 TEST_CASE("scan_exif", "[scanners]") {
@@ -232,7 +244,6 @@ TEST_CASE("validate_scanners", "[phase1]") {
     };
     std::cerr  << "point 11\n";
     validate(fn1, ex1);
-    return;
     std::cerr  << "point 2\n";
 
     auto fn2 = "tests/test_base16json.txt";
