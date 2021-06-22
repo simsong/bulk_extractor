@@ -116,3 +116,7 @@ Licensed under General Public License version 3 with the Autoconf exception:
 
 * m4/ac_check_classpath.m4 is Copyright (C) 2000 Stephane Bortzmeyer <bortzmeyer@pasteur.fr>
 
+
+Licensed under OpenSSL License  
+
+Because of the fact, that the GPL (including version 3) is incompatible with some terms of the OpenSSL license, the author hereby explicitly states a license exception, which permits the linking of bulk_extractor with OpenSSL.
