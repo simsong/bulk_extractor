@@ -1,5 +1,5 @@
 # bulk_extractor Makefile.am
-# This file is compiled with automake to create Makefile.in. 
+# This file is compiled with automake to create Makefile.in.
 # Makefile.in is transformed by "configure" to create Makefile
 #
 
@@ -8,7 +8,7 @@ SRC_WIN=src_win/
 include src_win/Makefile
 
 
-# These two conditionals are set by configure. If they, 
+# These two conditionals are set by configure. If they,
 # they cause a "make" in the top-level to automatically run make in the subdirs
 if WANT_BE_VIEWER
 BE_VIEWER_DIR = java_gui
@@ -20,7 +20,7 @@ endif
 ## SRC_WIN_DIR=src_win
 ## endif
 
-SUBDIRS = doc doc/latex_manuals src man plugins python specfiles tests $(BE_VIEWER_DIR) 
+SUBDIRS = doc doc/latex_manuals src man plugins python specfiles tests $(BE_VIEWER_DIR)
 
 # don't include bootstrap. People run it, and they shoudln't
 # It's only for people who check out the git repo
@@ -51,7 +51,7 @@ EXTRA_DIST = \
 
 ACLOCAL_AMFLAGS = -I m4
 
-distclean2: 
+distclean2:
 	@echo Deleting:
 	@find . \
         \( -name '*.orig' -o -name '*.rej' -o -name '*~' \
@@ -103,10 +103,10 @@ winlibs:
 	if [ -r Makefile ]; then $(MAKE) distclean ; fi
 	if [ ! -d win32  ]; then mkdir win32 ; fi
 	if [ ! -r win32/Makefile ]; then (cd win32;mingw32-configure --disable-libewf --disable-afflib) ; fi
-	(cd win32/src;$(MAKE) lib;mv libbulkextractor.so ../../libbulkextractor32.DLL)	
+	(cd win32/src;$(MAKE) lib;mv libbulkextractor.so ../../libbulkextractor32.DLL)
 	if [ ! -d win64  ]; then mkdir win64 ; fi
 	if [ ! -r win64/Makefile ]; then (cd win64;mingw64-configure --disable-libewf --disable-afflib) ; fi
-	(cd win64/src;$(MAKE) lib;mv libbulkextractor.so ../../libbulkextractor64.DLL)	
+	(cd win64/src;$(MAKE) lib;mv libbulkextractor.so ../../libbulkextractor64.DLL)
 	ls -l libbulk*.DLL
 
 

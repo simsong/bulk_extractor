@@ -36,6 +36,7 @@ MPKGS+="md5deep wget bison zlib-devel "
 MPKGS+="libewf libewf-devel java-1.8.0-openjdk-devel "
 MPKGS+="libxml2-devel libxml2-static openssl-devel "
 MPKGS+="sqlite-devel expat-devel "
+MPKGS+="libjson-c-devel "
 
 if [ ! -r /etc/os-release ]; then
   echo This requires Fedora Linux

@@ -27,7 +27,7 @@ fi
 cd $DIR
 
 MPKGS="autoconf automake flex gcc git libtool "
-MPKGS+="md5deep openssl patch wget bison g[+][+] libssl-dev zlib1g-dev libxml2-dev"
+MPKGS+="md5deep openssl patch wget bison g[+][+] libssl-dev zlib1g-dev libxml2-dev libjson-c-dev"
 
 if [ ! -r /etc/os-release ]; then
     echo This requires Debian Linux.
