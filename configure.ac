@@ -474,7 +474,13 @@ AC_TRY_COMPILE([#pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"],[
   
 AC_TRY_COMPILE([#pragma GCC diagnostic ignored "-Wdeprecated-register"],[return 0;],
   [AC_DEFINE(HAVE_DIAGNOSTIC_DEPRECATED_REGISTER,1,[define 1 if GCC supports -Wdeprecated-register])])
-  
+
+################################################################
+## Enable json-c >= 0.15
+AC_CHECK_LIB([json-c], [json_tokener_parse],[LIBS="-ljson-c $LIBS"],
+    [AC_MSG_WARN([Could not find libjson-c library])])
+
+
 ################################################################
 ## sceadan support
 ## Enabled for 1.5 release

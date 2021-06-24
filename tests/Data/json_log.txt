@@ -1,0 +1,26 @@
+2021-06-18 21:00:05.4521|INFO|Technical|Starting process|
+2021-06-18 21:00:08.8740|INFO|Technical|Got entries from 2021-06-18 00:00 : 
+{
+"name": "Turing",
+"surname": "Alan",
+"inventions": [{
+    "name": "Turing Maching",
+    "year": "1936"
+}, {
+    "name": "Bombe",
+    "year": "1940"
+}]
+}
+
+2021-06-10 21:00:05.4521|INFO|Technical|Another batch Started|
+2021-06-19 21:00:08.8740|INFO|Technical|Got entries from 2021-06-19 12:00 :
+{
+"name": "Murdock",
+"surname": "Ian", 
+"inventions": [{
+    "name": "Debian",
+    "year": "1993"
+}]
+}
+2021-06-10 21:00:05.4521|INFO|Technical|Another batch Started|
+2021-06-19 21:00:08.8740|INFO|Technical|Got entries from 2021-06-19 12:00 :
