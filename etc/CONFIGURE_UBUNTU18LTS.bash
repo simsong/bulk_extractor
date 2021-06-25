@@ -60,13 +60,10 @@ sudo apt autoremove -y
 
 echo apt install -y $MKPGS
 sudo apt install -y $MKPGS 
-exit 1
 if [ $? != 0 ]; then
   echo "Could not install some of the packages. Will not proceed."
   exit 1
 fi
-
-exit 0
 
 # ICU requires patching and a special build sequence
 #
