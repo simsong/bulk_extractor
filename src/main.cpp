@@ -826,7 +826,7 @@ int main(int argc,char **argv)
 	{
 	    std::vector<std::string> params = split(optarg,'=');
 	    if(params.size()!=2){
-		std::cerr << "Invalid paramter: " << optarg << "\n";
+		std::cerr << "Invalid parameter: " << optarg << "\n";
 		exit(1);
 	    }
 	    s_config.namevals[params[0]] = params[1];

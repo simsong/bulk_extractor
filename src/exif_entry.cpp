@@ -101,7 +101,7 @@ const std::string exif_entry::get_full_name() const {
     case IFD1_INTEROPERABILITY:
         return "ifd1.interoperability." + name;
     default:
-        std::cerr << "Program state errror: Invalid ifd type " << ifd_type << "\n";
+        std::cerr << "Program state error: Invalid ifd type " << ifd_type << "\n";
         assert(0);
     }
     return "ERROR";			// required to avoid compiler warning
