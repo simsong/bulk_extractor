@@ -55,7 +55,7 @@ echo Will now try to install
 # I use emacs. Installing it may install requiremnts
 sudo apt update -y
 sudo apt install -y emacs
-sudo apt autoremove -y autoremove
+sudo apt autoremove -y
 # Now install what is required
 
 echo apt install -y $MKPGS
