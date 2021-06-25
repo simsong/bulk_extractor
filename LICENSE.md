@@ -74,10 +74,7 @@ Licensed under the MIT License
 
 * src/old_scanners/scan_ascii85.cpp is Copyright (C) 2011 Remy Oukaour
 
-
-Licensed under the JSON License
-
-* src/scan_json.cpp is Copyright (C) 2005 JSON.org
+* src/scan_json.cpp is Copyright (C) 2021 Simson L. Garfinkel and Jan Gruber
 
 
 Licensed under General Public License version 3 and later
@@ -117,6 +114,6 @@ Licensed under General Public License version 3 with the Autoconf exception:
 * m4/ac_check_classpath.m4 is Copyright (C) 2000 Stephane Bortzmeyer <bortzmeyer@pasteur.fr>
 
 
-Licensed under OpenSSL License  
+Licensed under OpenSSL License
 
 Because of the fact, that the GPL (including version 3) is incompatible with some terms of the OpenSSL license, the author hereby explicitly states a license exception, which permits the linking of bulk_extractor with OpenSSL.
