@@ -5,7 +5,9 @@
 #include <json-c/json.h>
 
 #define MIN_SIZE 16
-static bool is_json_second_char[256];		// shared between all threads
+#define IS_STRICT 1
+
+static bool is_json_second_char[256]; /* shared between all threads */
 
 static const char *json_second_chars = "0123456789.-{[ \t\n\r\"";
 extern "C"
@@ -44,7 +46,6 @@ void scan_json(const class scanner_params &sp,const recursion_control_block &rcb
       char* js = NULL; 
       size_t end = 0;
       enum json_tokener_error je;
-
       
       for(size_t pos = 0;pos+1<sbuf.pagesize;pos++){
 
@@ -53,7 +54,8 @@ void scan_json(const class scanner_params &sp,const recursion_control_block &rcb
 
 	  /* Setup parser */
 	  jt = json_tokener_new();
-	  //json_tokener_set_flags(jt, JSON_TOKENER_STRICT);
+	  if (IS_STRICT)
+	    json_tokener_set_flags(jt, JSON_TOKENER_STRICT);
 	  
 	  /* Try to parse string */
 	  const char* c = (const char*) &sbuf.buf[pos]; /* Solution for 1.6 */
@@ -62,7 +64,8 @@ void scan_json(const class scanner_params &sp,const recursion_control_block &rcb
 	  
 	  /* String was a valid JSON object */
 	  if (je == json_tokener_success && jo){
-	    end = json_tokener_get_parse_end(jt);
+	    /* Change this to `json_tokener_get_parse_end(jt);` for libjson-c > 0.15 */
+	    end = jt->char_offset;
 	    js = (char*) json_object_to_json_string_ext(jo, JSON_C_TO_STRING_PLAIN);
 
 	    /* Discard very short matches */
