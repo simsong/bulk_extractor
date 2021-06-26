@@ -35,7 +35,7 @@ void scan_gzip(scanner_params &sp)
 	     * http://www.15seconds.com/Issue/020314.htm
 	     *
 	     */
-            if(sbuf_decompress_zlib_possible( sbuf, i)){
+            if(sbuf_gzip_header( sbuf, i)){
                 auto *decomp = sbuf_decompress_zlib_new( sbuf.slice(i), gzip_max_uncompr_size, "GZIP" );
                 if (decomp==nullptr) continue;
                 sp.recurse(decomp);      // recurse will free the sbuf

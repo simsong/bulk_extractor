@@ -26,6 +26,7 @@
 #include "bulk_extractor_scanners.h"
 #include "scan_base64.h"
 #include "scan_vcard.h"
+#include "scan_pdf.h"
 
 #include "scan_email.h"
 #include "exif_reader.h"
@@ -127,8 +128,8 @@ TEST_CASE("scan_email_functions", "[support]") {
 
 TEST_CASE("sbuf_decompress_zlib_new", "[support]") {
     auto *sbufj = sbuf_t::map_file("tests/test_hello.gz");
-    REQUIRE( sbuf_decompress_zlib_possible( *sbufj, 0) == true);
-    REQUIRE( sbuf_decompress_zlib_possible( *sbufj, 10) == false);
+    REQUIRE( sbuf_gzip_header( *sbufj, 0) == true);
+    REQUIRE( sbuf_gzip_header( *sbufj, 10) == false);
     auto *decomp = sbuf_decompress_zlib_new( *sbufj, 1024*1024, "GZIP" );
     REQUIRE( decomp != nullptr);
     REQUIRE( decomp->asString() == "hello@world.com\n");
@@ -141,8 +142,21 @@ TEST_CASE("scan_exif", "[scanners]") {
     REQUIRE( sbufj->bufsize == 7323 );
     auto res = jpeg_validator::validate_jpeg(*sbufj);
     REQUIRE( res.how == jpeg_validator::COMPLETE );
-
 }
+
+TEST_CASE("scan_pdf", "[scanners]") {
+    auto *sbufj = sbuf_t::map_file("tests/pdf_words2.pdf");
+    pdf_extractor pe(*sbufj);
+
+    pe.find_streams();
+    REQUIRE( pe.streams.size() == 4 );
+    REQUIRE( pe.streams[1].stream_start == 2214);
+    REQUIRE( pe.streams[1].endstream == 4827);
+    pe.decompress_streams_extract_text();
+    REQUIRE( pe.streams[0].text.substr(0,30) == "-rw-r--r--    1 simsong  staff");
+    delete sbufj;
+}
+
 
 TEST_CASE("scan_json1", "[scanners]") {
     /* Make a scanner set with a single scanner and a single command to enable all the scanners.
@@ -165,7 +179,6 @@ TEST_CASE("scan_vcard", "[scanners]") {
     auto outdir = test_scanner(scan_vcard, sbuf2); // deletes sbuf2
 
     /* Read the output */
-
 }
 
 
@@ -204,24 +217,32 @@ std::string validate(std::string image_fname, std::vector<Check> &expected)
     xreport->pop();                     // dfxml
     xreport->close();
 
-    for(size_t i=0; i<expected.size(); i++){
+    for (size_t i=0; i<expected.size(); i++){
         std::filesystem::path fname  = sc.outdir / expected[i].fname;
         std::cerr << "---- " << i << " -- " << fname.string() << " ----\n";
-        std::string line;
-        std::ifstream inFile;
-        inFile.open(fname);
-        if (!inFile.is_open()) {
-            throw std::runtime_error("validate_scanners:[phase1] Could not open "+fname.string());
-        }
         bool found = false;
-        while (std::getline(inFile, line)) {
-            auto words = split(line, '\t');
-            if (words.size()==3 &&
-                words[0]==expected[i].feature.pos &&
-                words[1]==expected[i].feature.feature &&
-                words[2]==expected[i].feature.context){
-                found = true;
-                break;
+        for (int pass=0 ; pass<2 && !found;pass++){
+            std::string line;
+            std::ifstream inFile;
+            if (pass==1) {
+                std::cerr << fname << ":\n";
+            }
+            inFile.open(fname);
+            if (!inFile.is_open()) {
+                throw std::runtime_error("validate_scanners:[phase1] Could not open "+fname.string());
+            }
+            while (std::getline(inFile, line)) {
+                if (pass==1) {
+                    std::cerr << line << "\n"; // print the file the second time through
+                }
+                auto words = split(line, '\t');
+                if (words.size()==3 &&
+                    words[0]==expected[i].feature.pos &&
+                    words[1]==expected[i].feature.feature &&
+                    words[2]==expected[i].feature.context){
+                    found = true;
+                    break;
+                }
             }
         }
         if (!found){
@@ -235,7 +256,6 @@ std::string validate(std::string image_fname, std::vector<Check> &expected)
 }
 
 TEST_CASE("validate_scanners", "[phase1]") {
-    std::cerr  << "point 1\n";
     auto fn1 = "tests/test_json.txt";
     std::vector<Check> ex1 {
         Check("json.txt",
@@ -243,12 +263,9 @@ TEST_CASE("validate_scanners", "[phase1]") {
                        JSON1,
                        "ef2b5d7ee21e14eeebb5623784f73724218ee5dd")),
     };
-    std::cerr  << "point 11\n";
     validate(fn1, ex1);
-    std::cerr  << "point 2\n";
 
     auto fn2 = "tests/test_base16json.txt";
-    std::cerr  << "point 2\n";
     std::vector<Check> ex2 {
         Check("json.txt",
               Feature( "50-BASE16-0",
@@ -263,12 +280,9 @@ TEST_CASE("validate_scanners", "[phase1]") {
                        "[{\"1\": \"one@base16_company.com\"}, {\"2\": \"two@b")),
 
     };
-    std::cerr  << "point 3\n";
     validate(fn2, ex2);
-    std::cerr  << "point 4\n";
 
     auto fn3 = "tests/test_hello.gz";
-    std::cerr  << "point 5\n";
     std::vector<Check> ex3 {
         Check("email.txt",
               Feature( "0-GZIP-0",
@@ -276,9 +290,7 @@ TEST_CASE("validate_scanners", "[phase1]") {
                        "hello@world.com\\x0A"))
 
     };
-    std::cerr  << "point 6\n";
     validate(fn3, ex3);
-    std::cerr  << "point 7\n";
 }
 
 

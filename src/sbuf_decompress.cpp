@@ -23,38 +23,49 @@
 
 sbuf_t *sbuf_decompress_zlib_new(const sbuf_t &sbuf, uint32_t max_uncompr_size, const std::string name)
 {
-    if (!sbuf_decompress_zlib_possible(sbuf, 0)){
-        return nullptr;
-    }
     Bytef *decompress_buf = reinterpret_cast<Bytef *>(malloc(max_uncompr_size)); // allocate a huge chunk of memory
     if (decompress_buf==nullptr){
         throw std::bad_alloc();
     }
-    z_stream zs;
-    memset(&zs,0,sizeof(zs));
+    /* Generic zlib decompresser. If there is a gzip header, try that first, then try raw. Otherwise try
+     * raw first, then gzip
+     */
 
-    zs.next_in  = reinterpret_cast<const Bytef *>(sbuf.get_buf());
-    zs.avail_in = sbuf.pagesize;
-    zs.next_out = decompress_buf;
-    zs.avail_out = max_uncompr_size;
+    for (int pass=0; pass<2; pass++){
+        z_stream zs;
+        memset(&zs,0,sizeof(zs));
 
-    gz_header_s gzh;
-    memset(&gzh,0,sizeof(gzh));
+        zs.next_in  = reinterpret_cast<const Bytef *>(sbuf.get_buf());
+        zs.avail_in = sbuf.bufsize;
+        zs.next_out = decompress_buf;
+        zs.avail_out = max_uncompr_size;
 
-    int r = inflateInit2(&zs,16+MAX_WBITS);
-    if (r!=0){
-        free(decompress_buf);
-        return nullptr;
+        /* If there is a gzip header, "Add 32 to windowBits to enable zlib and gzip decoding with automatic header detection" */
+        int r = 0;
+        if ((pass==0 && sbuf_gzip_header(sbuf,0)) || (pass==1 && !sbuf_gzip_header(sbuf,0))) {
+            r = inflateInit2(&zs, 32+MAX_WBITS);
+            if (r!=0){                  // something go wrong. get out of here.
+                break;
+            }
+            r = inflate(&zs,Z_SYNC_FLUSH);
+        }
+        else {
+            r = inflateInit(&zs);
+            if (r!=0){                  // something went wrong.
+                break;
+            }
+            r = inflate(&zs, Z_FINISH);
+        }
+
+        /* Ignore the error code; process data if we got any */
+        if (zs.total_out > 0){
+            /* Shrink the allocated region */
+            decompress_buf = reinterpret_cast<u_char *>(realloc(decompress_buf, zs.total_out));
+
+            /* And return a new sbuf, which will be freed by the caller */
+            return sbuf_t::sbuf_new( sbuf.pos0 + name, decompress_buf, zs.total_out, zs.total_out );
+        }
     }
-    r = inflate(&zs,Z_SYNC_FLUSH);
-    /* Ignore the error code; process data if we got any */
-    if (zs.total_out<=0){
-        free(decompress_buf);
-        return nullptr;
-    }
-    /* Shrink the allocated region */
-    decompress_buf = reinterpret_cast<u_char *>(realloc(decompress_buf, zs.total_out));
-
-    /* And return a new sbuf, which will be freed by the caller */
-    return sbuf_t::sbuf_new( sbuf.pos0 + name, decompress_buf, zs.total_out, zs.total_out );
+    free(decompress_buf);
+    return nullptr;                     // couldn't decompress
 }
