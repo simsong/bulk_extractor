@@ -68,7 +68,7 @@ scanners_builtin = \
 	scan_exif.cpp scan_exif.h exif_reader.cpp exif_reader.h exif_entry.cpp jpeg_validator.h \
 	scan_gzip.cpp \
 	scan_json.cpp \
-	scan_pdf.cpp \
+	scan_pdf.cpp scan_pdf.h \
 	scan_vcard.cpp \
 	scan_xor.cpp \
 	scan_zip.cpp
