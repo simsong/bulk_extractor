@@ -44,7 +44,7 @@ pdf_extractor::~pdf_extractor()
 bool pdf_extractor::mostly_printable_ascii(const sbuf_t &s)
 {
     size_t count = 0;
-    for(int i=0; i<s.pagesize; i++){
+    for(u_int i=0; i<s.pagesize; i++){
         if (isprint(s[i]) || isspace(s[i])) count++;
     }
     return count > (s.pagesize * 9 / 10);
@@ -80,10 +80,10 @@ std::string  pdf_extractor::extract_text(const sbuf_t &sb)
     /* pass = 0 --- analysis. Find maxwordsize
      * pass = 1 --- creation.
      */
-    for(int pass=0;pass<2;pass++){
+    for (u_int pass=0;pass<2;pass++){
         bool in_paren = false;
         int  wordsize = 0;
-        for (int i=0;i<sb.pagesize;i++){
+        for (u_int i=0;i<sb.pagesize;i++){
             const unsigned char cc = sb[i];
             if(in_paren==false && cc=='[') {
                 /* Beginning of bracket group not in paren; ignore */

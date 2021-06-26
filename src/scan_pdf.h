@@ -17,6 +17,7 @@ class pdf_extractor {
         ssize_t endstream {0};
         pos0_t *pos0 {nullptr};                   // where dbuf->pos0 was (after dbuf is deleted )
         std::string text {};                      // extracted text from the stream
+        stream & operator =(const stream &)=delete;
     };
 
 public:
@@ -26,7 +27,7 @@ public:
     pdf_extractor(const sbuf_t &sbuf_);
     ~pdf_extractor();
 
-    std::vector<stream> streams;        // streams we found
+    std::vector<stream> streams {};        // streams we found
     const sbuf_t &sbuf;                 // analyzed sbuf
 
     static bool mostly_printable_ascii(const sbuf_t &sbuf);

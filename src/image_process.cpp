@@ -710,7 +710,7 @@ image_process::iterator process_raw::end() const
 void process_raw::increment_iterator(image_process::iterator &it) const
 {
     it.raw_offset += pagesize;
-    if(it.raw_offset > this->raw_filesize) it.raw_offset = this->raw_filesize;
+    if (it.raw_offset > this->raw_filesize) it.raw_offset = this->raw_filesize;
 }
 
 double process_raw::fraction_done(const image_process::iterator &it) const

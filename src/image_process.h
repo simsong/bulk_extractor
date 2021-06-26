@@ -95,7 +95,7 @@ public:
     class iterator {
     public:
 	const class image_process &myimage;
-	int64_t  raw_offset {};
+	uint64_t raw_offset {};
 	uint64_t page_number {};
 	size_t   file_number {};
 	bool     eof {};
@@ -116,7 +116,7 @@ public:
         std::string str() const { return myimage.str(*this); }
 	uint64_t max_blocks() const { return myimage.max_blocks(*this);}
 	uint64_t seek_block(uint64_t block) { return myimage.seek_block(*this,block);} // returns block number
-        void set_raw_offset(int64_t anOffset){ raw_offset=anOffset;}
+        void set_raw_offset(uint64_t anOffset){ raw_offset=anOffset;}
     };
 
     image_process(const std::string &fn,size_t pagesize_,size_t margin_):
