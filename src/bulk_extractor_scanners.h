@@ -26,7 +26,7 @@ SCANNER(elf)
 SCANNER(exif)    // JPEG carver
 //SCANNER(exiv2)
 //SCANNER(evtx)        // scanner provided by 4n6ist:
-//SCANNER(facebook)
+SCANNER(facebook)
 //SCANNER(find)
 SCANNER(gzip)
 //SCANNER(hiberfile)
