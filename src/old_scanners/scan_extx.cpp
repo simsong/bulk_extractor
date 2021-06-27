@@ -5,7 +5,7 @@
 #include <string>
 #include <stdlib.h>
 #include <strings.h>
-#include <errno.h>
+//#include <errno.h>
 #include <sstream>
 #include <ctype.h>
 #include <stdlib.h>
@@ -14,7 +14,7 @@
 
 // This code is not ready for prime time
 // Don't use it
-#ifdef ENABLE_SCAN_EXTX			
+#ifdef ENABLE_SCAN_EXTX
 
 #ifdef HAVE_TSK3_LIBTSK_H
 
@@ -115,7 +115,7 @@ int validate_x(const ext2fs_dentry1 *dentry1, const ext2fs_dentry2 *dentry2)
     // if the type field is valid then it is a dentry 2 and process
 
     size_t type = static_cast <size_t> (dentry2->type);
-	
+
     if((type == 1) && (!v2)) {
 	v2 = validate_version2(dentry2);
 	if(v2 == true)
@@ -130,7 +130,7 @@ int validate_x(const ext2fs_dentry1 *dentry1, const ext2fs_dentry2 *dentry2)
 }
 
 /**************************************************************************************************
- * Examine an sbuf and see if it contains an ext2 entry. If it does, then process the entry 
+ * Examine an sbuf and see if it contains an ext2 entry. If it does, then process the entry
  *
  */
 
@@ -148,31 +148,31 @@ void scan_ext1byte(const sbuf_t &sbuf, feature_recorder *extxrecorder)
 	// Case 2: ext2fs_dentry type 2 found
 
 	switch(validate_x(dentry1, dentry2)){
-	case 0: // not boundary aligned 
+	case 0: // not boundary aligned
 	    {
 		//	cout << "dentry not found / not boundary aligned" << endl;
 		break;
 	    }
 
-	case 1: // dentry type 1 
+	case 1: // dentry type 1
 	    {
 		// Simple check after initial detection we will see if we received a space as our initial
-		// detection in the name character array - 
-		int name = int(dentry1->name[0]);	
+		// detection in the name character array -
+		int name = int(dentry1->name[0]);
 		if(name > 0){
 		    extxrecorder->write(dentry1->name);
-		}	
+		}
 
 		size_t reclen = static_cast <size_t> (*dentry1->rec_len);
-		index += reclen; 
+		index += reclen;
 		break;
 	    }
-			
+
 	case 2: // dentry type 2
 	    {
 		extxrecorder->write(dentry2->name);
 		size_t reclen = static_cast<size_t> (*dentry2->rec_len);
-		index += reclen; 
+		index += reclen;
 		break;
 	    }
 	}

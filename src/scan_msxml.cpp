@@ -87,7 +87,7 @@ void scan_msxml(scanner_params &sp)
             /* Two copy operations. Ick. */
             std::string  bufstr = ss.str();
             auto *dbuf = sbuf_t::sbuf_malloc(sbuf.pos0+"MSXML", bufstr.size());
-            memcpy(bufstr.c_str(), dbuf.malloc_buf(), bufstr.size());
+            memcpy(dbuf->malloc_buf(), bufstr.c_str(), bufstr.size());
             sp.recurse(dbuf);
         }
     }

@@ -10,9 +10,6 @@
 #include <getopt.h>
 
 #include <stdio.h>
-#ifdef HAVE_ERR_H
-#include <err.h>
-#endif
 #include <stdlib.h>
 #include <string.h>
 #include <vector>
@@ -23,7 +20,7 @@
 
 #ifdef HAVE_WINDOWS_H
 #include <windows.h>
-typedef int (__cdecl *MYPROC)(LPWSTR); 
+typedef int (__cdecl *MYPROC)(LPWSTR);
 #endif
 
 std::vector<std::string> feature_files;
@@ -40,7 +37,7 @@ int be_cb_demo(void *user,
         std::cout << "   feature: " << feature << " len=" << feature_len
                   << " context:" << context << " len=" << context_len << "\n";
         return 0;
-        
+
     case BULK_EXTRACTOR_API_CODE_HISTOGRAM:
         if(feature_len==0 && arg==0){
             std::cout << "Feature recorder: " << name << "\n";
@@ -85,7 +82,7 @@ int main(int argc,char **argv)
     int ch;
     while ((ch = getopt(argc,argv,"h")) != -1) {
         switch(ch){
-        case 'h': 
+        case 'h':
         default: usage(progname);
         }
     }
@@ -124,21 +121,21 @@ int main(int argc,char **argv)
     /* Now configure the scanners */
     (*be_config)(bef,BEAPI_DISABLE_ALL,     "bulk",0); // turn off all scanners
 
-    (*be_config)(bef,BEAPI_SCANNER_ENABLE,  "email",0);        // 
-    (*be_config)(bef,BEAPI_SCANNER_ENABLE,  "accts",0);        // 
-    (*be_config)(bef,BEAPI_SCANNER_ENABLE,  "exif",0);         // 
-    (*be_config)(bef,BEAPI_SCANNER_ENABLE,  "zip",0);          // 
-    (*be_config)(bef,BEAPI_SCANNER_ENABLE,  "gzip",0);         // 
-    (*be_config)(bef,BEAPI_SCANNER_ENABLE,  "rar",0);          // 
+    (*be_config)(bef,BEAPI_SCANNER_ENABLE,  "email",0);        //
+    (*be_config)(bef,BEAPI_SCANNER_ENABLE,  "accts",0);        //
+    (*be_config)(bef,BEAPI_SCANNER_ENABLE,  "exif",0);         //
+    (*be_config)(bef,BEAPI_SCANNER_ENABLE,  "zip",0);          //
+    (*be_config)(bef,BEAPI_SCANNER_ENABLE,  "gzip",0);         //
+    (*be_config)(bef,BEAPI_SCANNER_ENABLE,  "rar",0);          //
 
     (*be_config)(bef,BEAPI_SCANNER_ENABLE,  "bulk",0);        // enable the bulk scanner
 
     (*be_config)(bef,BEAPI_PROCESS_COMMANDS,"",0);          // process the enable/disable commands
 
     /* Let's get a list of all the feature files in use and tell them that they are all using memory histograms */
-    (*be_config)(bef,BEAPI_FEATURE_LIST,   "", 0);   
+    (*be_config)(bef,BEAPI_FEATURE_LIST,   "", 0);
     (*be_config)(bef,BEAPI_MEMHIST_ENABLE, "", 0);   // enable in-memory histograms
-    
+
     /* Now enable memory histograms for each */
     for(std::vector<std::string>::const_iterator it=feature_files.begin();
         it!=feature_files.end();++it){
@@ -159,4 +156,3 @@ int main(int argc,char **argv)
 #endif
     return 0;
 }
-

@@ -13,6 +13,10 @@
 
 #include "config.h"
 
+#ifdef HAVE_MACH_O_DYLD_H
+#include "mach-o/dyld.h"
+#endif
+
 #include "be13_api/dfxml/src/dfxml_writer.h"
 #include "be13_api/scanner_set.h"
 #include "be13_api/catch.hpp"
@@ -38,13 +42,33 @@
 const std::string JSON1 {"[{\"1\": \"one@company.com\"}, {\"2\": \"two@company.com\"}, {\"3\": \"two@company.com\"}]"};
 const std::string JSON2 {"[{\"1\": \"one@base64.com\"}, {\"2\": \"two@base64.com\"}, {\"3\": \"three@base64.com\"}]\n"};
 
+std::filesystem::path test_dir()
+{
+#ifdef HAVE__NSGETEXECUTABLEPATH
+    char path[1024];
+    uint32_t size = sizeof(path);
+    if (_NSGetExecutablePath(path, &size) == 0){
+        std::cerr << "executable path is " << path << "\n";
+    }
+    return std::filesystem::path(path).parent_path() / "tests";
+#else
+    return std::filesystem::canonical("/proc/self/exe").parent_path() / "tests";
+#endif
+}
+
+sbuf_t *map_file(std::filesystem::path p)
+{
+    return sbuf_t::map_file( test_dir() / p );
+}
+
+
 /* Read all of the lines of a file and return them as a vector */
 std::vector<std::string> getLines(const std::string &filename)
 {
     std::vector<std::string> lines;
     std::string line;
     std::ifstream inFile;
-    inFile.open(filename.c_str());
+    inFile.open( filename);
     if (!inFile.is_open()) {
         throw std::runtime_error("getLines: Cannot open file: "+filename);
     }
@@ -127,7 +151,7 @@ TEST_CASE("scan_email_functions", "[support]") {
 }
 
 TEST_CASE("sbuf_decompress_zlib_new", "[support]") {
-    auto *sbufj = sbuf_t::map_file("tests/test_hello.gz");
+    auto *sbufj = map_file("test_hello.gz");
     REQUIRE( sbuf_gzip_header( *sbufj, 0) == true);
     REQUIRE( sbuf_gzip_header( *sbufj, 10) == false);
     auto *decomp = sbuf_decompress_zlib_new( *sbufj, 1024*1024, "GZIP" );
@@ -138,14 +162,14 @@ TEST_CASE("sbuf_decompress_zlib_new", "[support]") {
 }
 
 TEST_CASE("scan_exif", "[scanners]") {
-    auto sbufj = sbuf_t::map_file("tests/1.jpg");
+    auto sbufj = map_file("1.jpg");
     REQUIRE( sbufj->bufsize == 7323 );
     auto res = jpeg_validator::validate_jpeg(*sbufj);
     REQUIRE( res.how == jpeg_validator::COMPLETE );
 }
 
 TEST_CASE("scan_pdf", "[scanners]") {
-    auto *sbufj = sbuf_t::map_file("tests/pdf_words2.pdf");
+    auto *sbufj = map_file("pdf_words2.pdf");
     pdf_extractor pe(*sbufj);
 
     pe.find_streams();
@@ -175,7 +199,7 @@ TEST_CASE("scan_json1", "[scanners]") {
 TEST_CASE("scan_vcard", "[scanners]") {
     /* Make a scanner set with a single scanner and a single command to enable all the scanners.
      */
-    auto sbuf2 = sbuf_t::map_file( "tests/john_jakes.vcf" );
+    auto sbuf2 = map_file( "john_jakes.vcf" );
     auto outdir = test_scanner(scan_vcard, sbuf2); // deletes sbuf2
 
     /* Read the output */
@@ -191,13 +215,13 @@ struct Check {
 };
 
 /*
- * Run the scanners on a specific image, look for the given features, and return the directory.
+ * Run all of the built-in scanners on a specific image, look for the given features, and return the directory.
  */
 std::string validate(std::string image_fname, std::vector<Check> &expected)
 {
     std::cerr << "================ validate  " << image_fname << " ================\n";
 
-    auto p = image_process::open( image_fname, false, 65536, 65536);
+    auto p = image_process::open( test_dir() / image_fname, false, 65536, 65536);
     Phase1::Config cfg;  // config for the image_processing system
     scanner_config sc;
 
@@ -256,7 +280,7 @@ std::string validate(std::string image_fname, std::vector<Check> &expected)
 }
 
 TEST_CASE("validate_scanners", "[phase1]") {
-    auto fn1 = "tests/test_json.txt";
+    auto fn1 = "test_json.txt";
     std::vector<Check> ex1 {
         Check("json.txt",
               Feature( "0",
@@ -265,7 +289,7 @@ TEST_CASE("validate_scanners", "[phase1]") {
     };
     validate(fn1, ex1);
 
-    auto fn2 = "tests/test_base16json.txt";
+    auto fn2 = "test_base16json.txt";
     std::vector<Check> ex2 {
         Check("json.txt",
               Feature( "50-BASE16-0",
@@ -282,7 +306,7 @@ TEST_CASE("validate_scanners", "[phase1]") {
     };
     validate(fn2, ex2);
 
-    auto fn3 = "tests/test_hello.gz";
+    auto fn3 = "test_hello.gz";
     std::vector<Check> ex3 {
         Check("email.txt",
               Feature( "0-GZIP-0",
@@ -366,7 +390,7 @@ TEST_CASE("image_process", "[phase1]") {
     image_process *p = nullptr;
     REQUIRE_THROWS_AS( p = image_process::open( "no-such-file", false, 65536, 65536), image_process::NoSuchFile);
     REQUIRE_THROWS_AS( p = image_process::open( "no-such-file", false, 65536, 65536), image_process::NoSuchFile);
-    p = image_process::open( "tests/test_json.txt", false, 65536, 65536);
+    p = image_process::open( test_dir() / "test_json.txt", false, 65536, 65536);
     REQUIRE( p != nullptr );
     int times = 0;
 

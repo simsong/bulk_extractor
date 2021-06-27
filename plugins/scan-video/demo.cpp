@@ -1,7 +1,6 @@
 #include "../config.h"
 
 #include <stdio.h>
-#include <err.h>
 
 #ifdef HAVE_DLFCN_H
 #include <dlfcn.h>
@@ -9,7 +8,7 @@
 
 #ifdef HAVE_WINDOWS_H
 #include <windows.h>
-typedef int (__cdecl *MYPROC)(LPWSTR); 
+typedef int (__cdecl *MYPROC)(LPWSTR);
 #endif
 
 

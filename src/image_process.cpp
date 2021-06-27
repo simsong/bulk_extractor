@@ -18,7 +18,6 @@
 #include "config.h"
 #include "bulk_extractor.h"
 #include "be13_api/utf8.h"
-//#include "dig.h"
 
 #include "be13_api/formatter.h"
 #include "image_process.h"
@@ -904,23 +903,18 @@ image_process *image_process::open(std::string fn,bool opt_recurse, size_t pages
         /* Quickly scan the directory and see if it has a .E01, .000 or .001 file.
          * If so, give the user an error.
          */
-        DIR *dirp = opendir(fn.c_str());
-        struct dirent *dp=0;
-        if(!dirp){
-            throw NoSuchFile(fn);
-        }
-        while ((dp = readdir(dirp)) != NULL){
-            if (strstr(dp->d_name,".E01") || strstr(dp->d_name,".000") || strstr(dp->d_name,".001")){
-                std::cerr << "error: file " << dp->d_name << " is in directory " << fn << "\n";
+        for( const auto &p : std::filesystem::directory_iterator( fn )){
+            if ( p.path().extension()==".E01" ||
+                 p.path().extension()==".000" ||
+                 p.path().extension()==".001") {
+                std::cerr << "error: file " << p.path() << " is in directory " << fn << "\n";
                 std::cerr << "       The -R option is not for reading a directory of EnCase files\n";
                 std::cerr << "       or a directory of disk image parts. Please process these\n";
                 std::cerr << "       as a single disk image. If you need to process these files\n";
                 std::cerr << "       then place them in a sub directory of " << fn << "\n";
-                closedir(dirp);
                 throw NoSuchFile(fn);
             }
         }
-        closedir(dirp);
 	ip = new process_dir(fn);
     }
     else {

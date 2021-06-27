@@ -10,7 +10,7 @@
 #include <string>
 #include <cstdlib>
 #include <cstring>
-#include <errno.h>
+//#include <cerrno>
 #include <sstream>
 #include <vector>
 

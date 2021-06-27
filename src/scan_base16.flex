@@ -15,7 +15,6 @@ unsigned int opt_min_hex_buf = 64;           /* Don't re-analyze hex bufs smalle
 
 #include "config.h"
 #include "sbuf_flex_scanner.h"
-#include "managed_malloc.h"
 
 class base16_scanner : public sbuf_scanner {
 public:
