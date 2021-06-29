@@ -62,7 +62,7 @@ static const uint16_t sane_ports_len = sizeof(sane_ports) / sizeof(uint16_t);
 const uint32_t jan1_1990 = 631152000;   //
 
 const uint32_t TIME_MIN = jan1_1990;
-const uint32_t TIME_MAX = 0;            // will be set to five years in the future
+uint32_t TIME_MAX = 0;            // will be set to five years in the future
 const uint32_t max_packet_len = 65535;
 const uint32_t min_packet_size = 20;		// don't bother with ethernet packets smaller than this
 
