@@ -19,7 +19,7 @@ BE13_API_DIR= be13_api
 include be13_api/Makefile.defs
 
 
-#include rar/Makefile.defs
+include rar/Makefile.defs
 
 #jpeg_dump_SOURCES = 	scan_exif.cpp scan_exif.h exif_reader.cpp exif_reader.h exif_entry.cpp\
 #	be13_api/sbuf.h be13_api/sbuf.cpp be13_api/unicode_escape.o jpeg_dump.cpp
@@ -71,31 +71,31 @@ scanners_builtin = \
 	scan_facebook.cpp \
 	scan_find.cpp \
 	scan_gzip.cpp \
+	scan_hiberfile.cpp pyxpress.c pyxpress.h \
 	scan_httplogs.cpp \
 	scan_json.cpp \
 	scan_kml.cpp \
 	scan_msxml.cpp \
-	scan_pdf.cpp scan_pdf.h \
-	scan_vcard.cpp \
-	scan_xor.cpp \
-	scan_zip.cpp
-
-not_used_yet = \
-	scan_hiberfile.cpp pyxpress.c pyxpress.h \
-	scan_net.cpp \
 	scan_ntfsindx.cpp \
 	scan_ntfslogfile.cpp \
 	scan_ntfsmft.cpp \
 	scan_ntfsusn.cpp \
 	scan_outlook.cpp scan_outlook.h \
+	scan_pdf.cpp scan_pdf.h \
 	scan_rar.cpp \
 	scan_sqlite.cpp \
 	scan_utmp.cpp \
+	scan_vcard.cpp \
 	scan_windirs.cpp \
 	scan_winlnk.cpp \
 	scan_winpe.cpp \
 	scan_winprefetch.cpp \
-	scan_wordlist.cpp
+	scan_wordlist.cpp \
+	scan_xor.cpp \
+	scan_zip.cpp
+
+not_used_yet = \
+	scan_net.cpp
 
 
 if FLEXSCANNERS_ENABLED

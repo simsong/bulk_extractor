@@ -38,11 +38,11 @@ SCANNER(evtx)        // scanner provided by 4n6ist:
 SCANNER(facebook)
 SCANNER(find)
 SCANNER(gzip)
-//SCANNER(hiberfile)
+SCANNER(hiberfile)
 SCANNER(httplogs)
 SCANNER(json)
-//SCANNER(kml)
-//SCANNER(msxml)
+SCANNER(kml)
+SCANNER(msxml)
 //SCANNER(net)
 //SCANNER(ntfsindx)    // scanner provided by 4n6ist:
 //SCANNER(ntfslogfile) // scanner provided by 4n6ist:
