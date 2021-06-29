@@ -22,16 +22,16 @@
  */
 
 
+#include "config.h"
+
 #include <cstdlib>
 #include <cstring>
 #include <set>
 #include <mutex>
 #include <ctype.h>
+
 //#include <sys/types.h>
 
-
-
-#include "config.h"
 // for localtime_r
 
 // these need config.h:
@@ -59,8 +59,10 @@ typedef char sa_family_t;
 static const uint16_t sane_ports[] = {80, 443, 53, 25, 110, 143, 993, 587, 23, 22, 21, 20, 119, 123};
 static const uint16_t sane_ports_len = sizeof(sane_ports) / sizeof(uint16_t);
 
-const uint32_t jan1_1990 = 631152000;
-const uint32_t jan1_2020 = 1577836800;
+const uint32_t jan1_1990 = 631152000;   //
+
+const uint32_t TIME_MIN = jan1_1990;
+const uint32_t TIME_MAX = 0;            // will be set to five years in the future
 const uint32_t max_packet_len = 65535;
 const uint32_t min_packet_size = 20;		// don't bother with ethernet packets smaller than this
 
@@ -591,7 +593,7 @@ static bool   likely_valid_pcap_header(const sbuf_t &sbuf,struct pcap_hdr &h)
     h.cap_len = sbuf.get32u(8); if (h.cap_len<min_packet_size) return false;
     h.pkt_len = sbuf.get32u(12);if (h.pkt_len<min_packet_size) return false;
 
-    if (h.seconds<jan1_1990 || h.seconds>jan1_2020) return false;
+    if (h.seconds<TIME_MIN || h.seconds>TIME_MAX) return false;
 
     if (h.cap_len<min_packet_size || h.cap_len>max_packet_len) return false;
     if (h.pkt_len<min_packet_size || h.pkt_len>max_packet_len) return false;
@@ -605,23 +607,15 @@ static bool   likely_valid_pcap_header(const sbuf_t &sbuf,struct pcap_hdr &h)
 class packet_carver {
 private:
     packet_carver(const packet_carver &pc) = delete;
-//    :
-//        /* fs(pc.fs), *//*ps(pc.ps),*/
-//        ip_recorder(pc.ip_recorder),
-//        tcp_recorder(pc.tcp_recorder),
-//        ether_recorder(pc.ether_recorder){
-//    }
     packet_carver &operator=(const packet_carver &that) = delete;
 public:
     //typedef std::tr1::unordered_set<const void *> packetset;
     //packetset ps;
-    std::filesystem::path outdir;
     feature_recorder &ip_recorder;
     feature_recorder &tcp_recorder;
     feature_recorder &ether_recorder;
 
     packet_carver(const scanner_params &sp):
-        outdir(sp.ss.sc.outdir),
         ip_recorder(sp.ss.named_feature_recorder("ip")),
         tcp_recorder(sp.ss.named_feature_recorder("tcp")),
         ether_recorder(sp.ss.named_feature_recorder("ether")){ }
@@ -1025,6 +1019,9 @@ void scan_net(scanner_params &sp)
 {
     sp.check_version();
     if (sp.phase==scanner_params::PHASE_INIT){
+
+        TIME_MAX = time(0) + 365*24*60*60*5; // five years in the future
+
 	assert(sizeof(struct be13::ip4)==20);	// we've had problems on some systems
         sp.info = new scanner_params::scanner_info(scan_net,"net");
         sp.info->author         = "Simson Garfinkel and Rob Beverly";
@@ -1045,7 +1042,6 @@ void scan_net(scanner_params &sp)
         sp.info->feature_defs.push_back( feature_recorder_def("tcp"));
         sp.info->histogram_defs.push_back(histogram_def("tcp", "tcp", "", "", "histogram", histogram_def::flags_t()));
 
-	/* scan_net has its own output as well */
         return;
     }
     if (sp.phase==scanner_params::PHASE_SCAN){

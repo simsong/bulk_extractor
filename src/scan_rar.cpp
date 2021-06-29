@@ -99,18 +99,6 @@ time_t decode_iso8601(const std::string mtime_iso8601)
 
 #define STRING_BUF_LEN 2048
 
-#if 0
-static inline int int2(const u_char *cc)
-{
-    return (cc[1]<<8) + cc[0];
-}
-
-static inline int int4(const u_char *cc)
-{
-    return (cc[3]<<24) + (cc[2]<<16) + (cc[1]<<8) + (cc[0]);
-}
-#endif
-
 #define DOS_MASK_SECOND 0x0000001F
 #define DOS_SHIFT_SECOND 0
 #define DOS_MASK_MINUTE 0x000007E0
@@ -590,7 +578,7 @@ static bool is_mark_block(const sbuf_t &sbuf)
 #endif
 
 #if 0
-// Old code vor validating a specific RAR that we were searching for
+// Old code for validating a specific RAR that we were searching for
 // assume that we are decompressing "15 Feet of Time.pdf" while fixing warnings for rapid testing
 //25 50 44 46 2D
 //25 25 45 4F 46
@@ -607,6 +595,7 @@ void scan_rar(scanner_params &sp)
     if (sp.phase==scanner_params::PHASE_INIT){
         sp.info = new scanner_params::scanner_info( scan_rar, "rar" );
 	sp.info->author = "Michael Shick";
+        sp.info->scanner_version = "1.1";
 #ifdef USE_RAR
 	sp.info->description = "RAR volume locator and component decompresser";
         //sp.info->flags = scanner_info::SCANNER_RECURSE | scanner_info::SCANNER_RECURSE_EXPAND;
@@ -624,9 +613,7 @@ void scan_rar(scanner_params &sp)
         sp.ss.sc.get_config("rar_find_volumes",&record_volumes,"Search for RAR volumes");
 #else
         sp.info->description = "(disabled in configure)";
-        sp.info->flags = scanner_info::SCANNER_DISABLED | scanner_info::SCANNER_NO_USAGE | scanner_info::SCANNER_NO_ALL;
 #endif
-        //sp.info = info;
 	return;
     }
 #ifdef USE_RAR

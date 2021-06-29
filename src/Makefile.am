@@ -76,6 +76,7 @@ scanners_builtin = \
 	scan_json.cpp \
 	scan_kml.cpp \
 	scan_msxml.cpp \
+	scan_net.cpp \
 	scan_ntfsindx.cpp \
 	scan_ntfslogfile.cpp \
 	scan_ntfsmft.cpp \
@@ -93,10 +94,6 @@ scanners_builtin = \
 	scan_wordlist.cpp \
 	scan_xor.cpp \
 	scan_zip.cpp
-
-not_used_yet = \
-	scan_net.cpp
-
 
 if FLEXSCANNERS_ENABLED
   scanners_builtin += $(flex_scanners)
