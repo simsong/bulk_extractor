@@ -9,7 +9,7 @@
 #include <string>
 #include <stdlib.h>
 #include <strings.h>
-#include <errno.h>
+//#include <cerrno>
 #include <sstream>
 
 

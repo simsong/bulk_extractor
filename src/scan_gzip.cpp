@@ -28,14 +28,14 @@ void scan_gzip(scanner_params &sp)
     if (sp.phase==scanner_params::PHASE_SCAN){
 	const sbuf_t &sbuf = (*sp.sbuf);
 
-        for (int i=0; i < sbuf.pagesize && i < sbuf.bufsize-4; i++) {
+        for (unsigned int i=0; i < sbuf.pagesize && i < sbuf.bufsize-4; i++) {
 
 	    /** Look for the signature for beginning of a GZIP file.
 	     * See zlib.h and RFC1952
 	     * http://www.15seconds.com/Issue/020314.htm
 	     *
 	     */
-            if(sbuf_decompress_zlib_possible( sbuf, i)){
+            if(sbuf_gzip_header( sbuf, i)){
                 auto *decomp = sbuf_decompress_zlib_new( sbuf.slice(i), gzip_max_uncompr_size, "GZIP" );
                 if (decomp==nullptr) continue;
                 sp.recurse(decomp);      // recurse will free the sbuf

@@ -121,7 +121,7 @@ public:
             // get the list of files from Section C
             uint32_t section_c_offset = sbuf.get32u(0x64);
             uint32_t section_c_length = sbuf.get32u(0x68);
-            sbuf_stream filename_stream(sbuf + section_c_offset);
+            sbuf_stream filename_stream( sbuf.slice(section_c_offset));
             while (filename_stream.tell() < section_c_length) {
                 std::wstring utf16_filename;
                 filename_stream.getUTF16(utf16_filename);
@@ -151,7 +151,7 @@ public:
             } else {
                 // calculate a rough maximum number of bytes for directory entries
                 size_t      upper_max = prefetch_file_length - directory_offset;
-                sbuf_stream directory_stream = sbuf_stream(sbuf + directory_offset);
+                sbuf_stream directory_stream = sbuf_stream( sbuf.slice(directory_offset));
 
                 for (uint32_t i=0; i<num_directory_entries; i++) {
                     // break if obviously out of range
@@ -195,7 +195,7 @@ std::string prefetch_record_t::to_xml()
     ss << "<atime>"    << microsoftDateToISODate(execution_time) << "</atime>";
     ss << "<runs>"     << execution_counter << "</runs>";
     ss << "<filenames>";
-    for (auto const &it : files) {
+    for (const auto &it : files) {
         ss << "<file>" << dfxml_writer::xmlescape(it) << "</file>";
     }
     ss << "</filenames>";
@@ -206,7 +206,7 @@ std::string prefetch_record_t::to_xml()
     ss << "<serial_number>" << std::hex << volume_serial_number << std::dec << "</serial_number>";
 
     ss << "<dirnames>";
-    for (auto const &it:directories) {
+    for (const auto &it:directories) {
         ss << "<dir>" << dfxml_writer::xmlescape(it) << "</dir>";
     }
     ss << "</dirnames>";
@@ -276,7 +276,7 @@ void scan_winprefetch(scanner_params &sp)
 		&& sbuf[start + 7] == 0x41) {
 
 		// create the populated prefetch record
-		prefetch_record_t prefetch_record(sbuf + start);
+		prefetch_record_t prefetch_record( sbuf.slice(start));
 
 		// record the winprefetch entry
 		winprefetch_recorder.write(sbuf.pos0+start, prefetch_record.execution_filename, prefetch_record.to_xml());

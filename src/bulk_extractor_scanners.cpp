@@ -4,7 +4,6 @@
  *
  */
 
-#include <dirent.h>
 #include <fcntl.h>
 #include <setjmp.h>
 #include <unistd.h>

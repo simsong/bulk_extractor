@@ -46,8 +46,8 @@ public:
         bool     opt_info {false};
         uint32_t opt_notify_rate {4};		// by default, notify every 4 pages
         uint64_t opt_page_start {0};
-        int64_t  opt_offset_start {0};
-        int64_t  opt_offset_end {0};
+        uint64_t  opt_offset_start {0};
+        uint64_t  opt_offset_end {0};
         time_t   max_wait_time {3600};  // after an hour, terminate a scanner
         int      opt_quiet {false};                  // -1 = no output
         int      retry_seconds {60};

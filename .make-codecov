@@ -7,8 +7,8 @@ bash bootstrap.sh
             CXXFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' \
             LIBS='-lgcov'
 make clean \
-     && make test_be13_api \
-     && ./test_be13_api \
+     && cd src \
+     && make check \
      && gcov-9 -n -o . *cpp \
      && bash <(curl -s https://codecov.io/bash)
 make distclean

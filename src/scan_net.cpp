@@ -22,16 +22,16 @@
  */
 
 
+#include "config.h"
+
 #include <cstdlib>
 #include <cstring>
 #include <set>
 #include <mutex>
 #include <ctype.h>
+
 //#include <sys/types.h>
 
-
-
-#include "config.h"
 // for localtime_r
 
 // these need config.h:
@@ -59,8 +59,10 @@ typedef char sa_family_t;
 static const uint16_t sane_ports[] = {80, 443, 53, 25, 110, 143, 993, 587, 23, 22, 21, 20, 119, 123};
 static const uint16_t sane_ports_len = sizeof(sane_ports) / sizeof(uint16_t);
 
-const uint32_t jan1_1990 = 631152000;
-const uint32_t jan1_2020 = 1577836800;
+const uint32_t jan1_1990 = 631152000;   //
+
+const uint32_t TIME_MIN = jan1_1990;
+uint32_t TIME_MAX = 0;            // will be set to five years in the future
 const uint32_t max_packet_len = 65535;
 const uint32_t min_packet_size = 20;		// don't bother with ethernet packets smaller than this
 
@@ -283,34 +285,29 @@ static uint16_t IPv6L3Chksum(const sbuf_t &sbuf, u_int chksum_byteoffset)
 #  ifdef HAVE_DIAGNOSTIC_CAST_ALIGN
 #    pragma GCC diagnostic ignored "-Wcast-align"
 #  endif
-static uint16_t cksum(const struct be13::ip4 * const ip, int len)
+uint16_t ip4_cksum(const sbuf_t &ipp)
 {
-    long  sum = 0;  /* assume 32 bit long, 16 bit short */
-    const uint16_t *ipp = (const uint16_t *) ip;
-    int   octets_processed = 0;
+    uint32_t  sum = 0;  /* assume 32 bit long, 16 bit short */
 
-    while (len > 1) {
-        if (octets_processed != 10) {
-            sum += *ipp;
+    for (size_t offset = 0; offset< ipp.bufsize; offset+=2){
+        if (offset != 10) {   // do not include the checksum field
+            sum += ipp.get16u(offset);
             if (sum & 0x80000000){   /* if high order bit set, fold */
                 sum = (sum & 0xFFFF) + (sum >> 16);
 	    }
         }
-        ipp++;
-        len -= 2;
-        octets_processed+=2;
     }
 
-    if (len) sum += *ipp;     /* take care of left over byte */
+    if (ipp.bufsize % 2 != 0){
+        sum += ipp[ipp.bufsize-1];     /* take care of left over byte */
+    }
 
+    /* Now add all of the 1st complements */
     while(sum>>16){
         sum = (sum & 0xFFFF) + (sum >> 16);
     }
     return ~sum;
 }
-#  ifdef HAVE_DIAGNOSTIC_CAST_ALIGN
-#    pragma GCC diagnostic warning "-Wcast-align"
-#  endif
 
 /* determine if an integer is a power of two; used for the TTL */
 static bool isPowerOfTwo(const uint8_t val)
@@ -477,7 +474,8 @@ static bool sanityCheckIP46Header(const sbuf_t &sbuf, bool *checksum_valid, gene
 	/* reject anything larger than a jumbo gram or smaller than min-size IP */
 	if ( (ntohs(ip->ip_len) > 8192) || (ntohs(ip->ip_len) < 28) ) return false;
 
-    	(*checksum_valid) = (ip->ip_sum == cksum(ip, ip->ip_hl * 4));
+    	(*checksum_valid) = (ip->ip_sum == ip4_cksum(sbuf_t(pos0_t(),
+                                                            reinterpret_cast<const uint8_t *>(ip), ip->ip_hl * 4)));
 
 	/* create a generic_iphdr_t, similar to tcpip.c from tcpflow code */
 	h->family = AF_INET;
@@ -591,7 +589,7 @@ static bool   likely_valid_pcap_header(const sbuf_t &sbuf,struct pcap_hdr &h)
     h.cap_len = sbuf.get32u(8); if (h.cap_len<min_packet_size) return false;
     h.pkt_len = sbuf.get32u(12);if (h.pkt_len<min_packet_size) return false;
 
-    if (h.seconds<jan1_1990 || h.seconds>jan1_2020) return false;
+    if (h.seconds<TIME_MIN || h.seconds>TIME_MAX) return false;
 
     if (h.cap_len<min_packet_size || h.cap_len>max_packet_len) return false;
     if (h.pkt_len<min_packet_size || h.pkt_len>max_packet_len) return false;
@@ -605,12 +603,6 @@ static bool   likely_valid_pcap_header(const sbuf_t &sbuf,struct pcap_hdr &h)
 class packet_carver {
 private:
     packet_carver(const packet_carver &pc) = delete;
-//    :
-//        /* fs(pc.fs), *//*ps(pc.ps),*/
-//        ip_recorder(pc.ip_recorder),
-//        tcp_recorder(pc.tcp_recorder),
-//        ether_recorder(pc.ether_recorder){
-//    }
     packet_carver &operator=(const packet_carver &that) = delete;
 public:
     //typedef std::tr1::unordered_set<const void *> packetset;
@@ -860,9 +852,9 @@ public:
 	case AF_INET6: buf[12] = 0xdd; buf[13] = 0x86; break;
 	default:       buf[12] = 0xff; buf[13] = 0xff; break; // shouldn't happen
 	}
-	memcpy(buf+14,sb2.buf,packet_len-14); // copy the packet data
+	memcpy(buf+14,sb2.get_buf(),packet_len-14); // copy the packet data
 	/* make an sbuf to write */
-	sbuf_t sb3(pos0_t(),buf,packet_len,packet_len,0,false, true, false);
+	sbuf_t sb3(pos0_t(),buf, packet_len);
 	struct pcap_hdr hz(0,0,packet_len,packet_len); // make a fake header
 	pcap_writepkt(hz,sb3,0,false,0x0000);	   // write the packet
 	return ip_len;				   // return that we processed this much
@@ -1025,6 +1017,9 @@ void scan_net(scanner_params &sp)
 {
     sp.check_version();
     if (sp.phase==scanner_params::PHASE_INIT){
+
+        TIME_MAX = time(0) + 365*24*60*60*5; // five years in the future
+
 	assert(sizeof(struct be13::ip4)==20);	// we've had problems on some systems
         sp.info = new scanner_params::scanner_info(scan_net,"net");
         sp.info->author         = "Simson Garfinkel and Rob Beverly";
@@ -1045,7 +1040,6 @@ void scan_net(scanner_params &sp)
         sp.info->feature_defs.push_back( feature_recorder_def("tcp"));
         sp.info->histogram_defs.push_back(histogram_def("tcp", "tcp", "", "", "histogram", histogram_def::flags_t()));
 
-	/* scan_net has its own output as well */
         return;
     }
     if (sp.phase==scanner_params::PHASE_SCAN){

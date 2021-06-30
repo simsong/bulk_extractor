@@ -50,9 +50,14 @@ jobs:
           automake --version
           autoconf --version
 
-      - name: make check
+      - name: make
         run: |
           bash bootstrap.sh && ./configure
+          cd src
+          make
+
+      - name: make check
+        run: |
           cd src
           make check || (echo ==error== ; cat test-suite.log; exit 1)
 

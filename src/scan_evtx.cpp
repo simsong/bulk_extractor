@@ -8,9 +8,9 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <stdlib.h>
+#include <cstdlib>
 #include <strings.h>
-#include <errno.h>
+//#include <cerrno>
 #include <sstream>
 #include <vector>
 
@@ -208,7 +208,8 @@ void scan_evtx(scanner_params &sp)
                     total_size += ELFCHNK_SIZE;
                     result_last_record_id = check_evtxchunk_signature(offset+total_size, sbuf);
                 }
-                struct elffile header;
+                uint8_t *header_buf = static_cast<uint8_t *>(malloc(sizeof(struct elffile))); // allocate memory for header
+                struct elffile &header = *(reinterpret_cast<struct elffile *>(header_buf)); // make header. a reference to the buffer
                 // set header values for found ElfChnk records
                 strcpy(header.part.magic, "ElfFile");
                 header.part.first_chunk = 0;
@@ -230,10 +231,12 @@ void scan_evtx(scanner_params &sp)
                     std::to_string(header.part.number_of_chunks) + "chunks_" +
                     std::to_string(num_of_records) + "records.evtx";
                 // generate evtx header based on elfchnk information
-                sbuf_t sbuf_header(pos0_t(), reinterpret_cast<unsigned char *>(&header), sizeof(header), sizeof(header),
-                                   0, false, false, false );
+                // make an sbuf for the header that will free it automatically when we are finished
+                sbuf_t *sbuf_header = sbuf_t::sbuf_new(pos0_t(), header_buf, sizeof(header), sizeof(header));
+                //sbuf_t sbuf_header(pos0_t(), reinterpret_cast<unsigned char *>(&header), sizeof(header), sizeof(header), 0, false, false, false );
                 sbuf_t sbuf_records(sbuf, offset, total_size);
-                evtx_recorder.carve(sbuf_header, sbuf_records, filename);
+                evtx_recorder.carve(*sbuf_header, sbuf_records, filename);
+                delete sbuf_header;
                 //evtx_recorder.write_data((unsigned char *)&header,sizeof(elffile),filename);
                 //evtx_recorder.carve(sbuf, offset, total_size, filename);
                 offset += total_size;

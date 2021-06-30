@@ -127,7 +127,7 @@ fat_validation_t valid_fat_directory_entry(const sbuf_t &sbuf)
     if ((dentry.attrib & ~FATFS_ATTR_ALL) != 0) return INVALID; // invalid attribute bit set
     if (dentry.attrib == FATFS_ATTR_LFN){
 	/* This may be a VFAT long file name */
-	const fatfs_dentry_lfn &lfn = *(const fatfs_dentry_lfn *)sbuf.buf;
+	const fatfs_dentry_lfn &lfn = *(const fatfs_dentry_lfn *)sbuf.get_buf();
 	if ((lfn.seq & ~0x40) > 10) return INVALID;	// invalid sequence number
 	if (lfn.reserved1 != 0) return INVALID;          // invalid reserved1 (LDIR_Type)
 	if (fat16int(lfn.reserved2)!=0) return INVALID;  // LDIR_FstClusLO "Must be ZERO"

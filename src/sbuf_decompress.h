@@ -13,7 +13,7 @@
 /* returns true if it is possible to decompress at offset.
  * inline for maximum speed
  */
-inline bool sbuf_decompress_zlib_possible(const sbuf_t &sbuf, size_t offset) {
+inline bool sbuf_gzip_header(const sbuf_t &sbuf, size_t offset) {
     return sbuf[offset+0]==0x1f && sbuf[offset+1]==0x8b && sbuf[offset+2]==0x08;
 }
 

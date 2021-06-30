@@ -4,7 +4,6 @@
 #include "threadpool.h"
 #include "be13_api/aftimer.h"
 
-#include <dirent.h>
 #include <ctype.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -69,7 +68,7 @@ threadpool::~threadpool()
 #endif
 }
 
-/** 
+/**
  * work is delivered in sbufs.
  * This blocks the caller if there are no free workers.
  * Called from the threadpool master thread
@@ -85,7 +84,7 @@ void threadpool::schedule_work(sbuf_t *sbuf)
 	}
 	waiting.stop();
     }
-    work_queue.push(sbuf); 
+    work_queue.push(sbuf);
     freethreads--;
     pthread_cond_signal(&TOWORKER);
     pthread_mutex_unlock(&M);
@@ -139,7 +138,7 @@ void worker::do_work(sbuf_t *sbuf)
 	   << " bufsize='"  << sbuf->bufsize << "'";
 	master.xreport.xmlout("debug:work_start","",ss.str(),true);
     }
-	
+
     /**
      * HERE IT IS!!!
      * Construct a scanner_params() object from the sbuf that was pulled
@@ -148,7 +147,7 @@ void worker::do_work(sbuf_t *sbuf)
 
     aftimer t;
     t.start();
-    plugin::process_sbuf(scanner_params(scanner_params::PHASE_SCAN,*sbuf,master.fs)); 
+    plugin::process_sbuf(scanner_params(scanner_params::PHASE_SCAN,*sbuf,master.fs));
     t.stop();
 
     /* If we are logging starting and ending, save the end */
@@ -167,7 +166,7 @@ void worker::do_work(sbuf_t *sbuf)
  * Note that we used to throw internal errors, but this caused problems with some versions of GCC.
  * Now we simply return when there is an error.
  */
-void *worker::run() 
+void *worker::run()
 {
     /* Initialize any per-thread variables in the scanners */
     plugin::message_enabled_scanners(scanner_params::PHASE_THREAD_BEFORE_SCAN,master.fs);
@@ -210,4 +209,3 @@ void *worker::run()
     }
     return 0;
 }
-

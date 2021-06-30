@@ -186,7 +186,7 @@ void scan_gps(scanner_params &sp)
         try {
             yygps_lex(scanner);
         }
-        catch (sbuf_scanner::sbuf_scanner_exception e ) {
+        catch (sbuf_scanner::sbuf_scanner_exception &e ) {
             std::cerr << "GPS Scanner Exception " << e.what() << " processing " << sp.sbuf->pos0 << "\n";
         }
         yygps_lex_destroy(scanner);

@@ -77,19 +77,19 @@ void scan_hiberfile(scanner_params &sp)
 		const u_char *compressed_buf = sbuf.get_buf() + pos + 32;		 // "the header contains 32 bytes"
 		u_int  remaining_size = sbuf.bufsize - (pos+32); // up to the end of the buffer
 		size_t compr_size = compressed_length < remaining_size ? compressed_length : remaining_size;
-		size_t max_uncompr_size_ = compr_size * 10; // hope that's good enough
-		if (max_uncompr_size_ < min_uncompr_size) {
-                    max_uncompr_size_ = min_uncompr_size; // it should at least be this large!
+		size_t max_uncompr_size = compr_size * 10; // hope that's good enough
+		if (max_uncompr_size < min_uncompr_size) {
+                    max_uncompr_size = min_uncompr_size; // it should at least be this large!
                 }
 
-                u_char *decomp      = reinterpret_cast<u_char *>(malloc(max_uncompr_size_));
-		int decompress_size = Xpress_Decompress(compressed_buf, compr_size, decomp, max_uncompr_size_);
+                auto *decomp_sbuf = sbuf_t::sbuf_malloc(sbuf.pos0 + "HIBERFILE", max_uncompr_size);
+                u_char *decomp = reinterpret_cast<u_char *>(decomp_sbuf->malloc_buf());
+		int decompress_size = Xpress_Decompress(compressed_buf, compr_size, decomp, max_uncompr_size);
 
                 if (decompress_size<=0) {
-                    free(decomp);
+                    delete decomp;
                     return;
                 }
-                decomp = reinterpret_cast<u_char *>(realloc(decomp, decompress_size));
                 /* decomp is a buffer that may extend over multiple pages.
                  * Unfortunately the pages are not logically connected, because they are physical memory, and it is
                  * highly unlikely that adjacent logical pages will have adjacent physical pages. Therefore we now
@@ -97,13 +97,11 @@ void scan_hiberfile(scanner_params &sp)
                  * This prevents scanners like the JPEG carver from inadvertantly reassembling objects that make no semantic sense.
                  * However, we need to copy the data into each one (a copy!) because they may be processed asynchronously.
                  */
-                pos0_t decomp_start = sbuf.pos0 + pos + "HIBERFILE";
-                for(size_t start = 0; start < decompress_size; start += windows_page_size){
-                    size_t len = start+windows_page_size < decompress_size ? windows_page_size : decompress_size - start;
-                    auto *dbuf = sbuf_t::sbuf_malloc(decomp_start + start, len);
-                    memcpy(decomp_start + start, dbuf.malloc_buf(), len); // ick
+                for(ssize_t start = 0; start < decompress_size; start += windows_page_size){
+                    auto *dbuf = decomp_sbuf->new_slice_copy( start, windows_page_size);
                     sp.recurse(dbuf);
 		}
+                delete decomp;
 	    }
 	}
     }

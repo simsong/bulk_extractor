@@ -18,7 +18,7 @@
 #include <strings.h>
 #include <string.h>
 #include <stdint.h>
-#include <errno.h>
+//#include <errno.h>
 #include <sstream>
 #include <vector>
 

@@ -13,6 +13,10 @@
 
 #include "config.h"
 
+#ifdef HAVE_MACH_O_DYLD_H
+#include "mach-o/dyld.h"
+#endif
+
 #include "be13_api/dfxml/src/dfxml_writer.h"
 #include "be13_api/scanner_set.h"
 #include "be13_api/catch.hpp"
@@ -26,6 +30,7 @@
 #include "bulk_extractor_scanners.h"
 #include "scan_base64.h"
 #include "scan_vcard.h"
+#include "scan_pdf.h"
 
 #include "scan_email.h"
 #include "exif_reader.h"
@@ -37,13 +42,33 @@
 const std::string JSON1 {"[{\"1\": \"one@company.com\"}, {\"2\": \"two@company.com\"}, {\"3\": \"two@company.com\"}]"};
 const std::string JSON2 {"[{\"1\": \"one@base64.com\"}, {\"2\": \"two@base64.com\"}, {\"3\": \"three@base64.com\"}]\n"};
 
+std::filesystem::path test_dir()
+{
+#ifdef HAVE__NSGETEXECUTABLEPATH
+    char path[1024];
+    uint32_t size = sizeof(path);
+    if (_NSGetExecutablePath(path, &size) == 0){
+        std::cerr << "executable path is " << path << "\n";
+    }
+    return std::filesystem::path(path).parent_path() / "tests";
+#else
+    return std::filesystem::canonical("/proc/self/exe").parent_path() / "tests";
+#endif
+}
+
+sbuf_t *map_file(std::filesystem::path p)
+{
+    return sbuf_t::map_file( test_dir() / p );
+}
+
+
 /* Read all of the lines of a file and return them as a vector */
 std::vector<std::string> getLines(const std::string &filename)
 {
     std::vector<std::string> lines;
     std::string line;
     std::ifstream inFile;
-    inFile.open(filename.c_str());
+    inFile.open( filename);
     if (!inFile.is_open()) {
         throw std::runtime_error("getLines: Cannot open file: "+filename);
     }
@@ -53,15 +78,6 @@ std::vector<std::string> getLines(const std::string &filename)
         }
     }
     return lines;
-}
-
-TEST_CASE("base64_forensic", "[utilities]") {
-    const char *encoded="SGVsbG8gV29ybGQhCg==";
-    const char *decoded="Hello World!\n";
-    unsigned char output[64];
-    size_t result = b64_pton_forensic(encoded, strlen(encoded), output, sizeof(output));
-    REQUIRE( result == strlen(decoded) );
-    REQUIRE( strncmp( (char *)output, decoded, strlen(decoded))==0 );
 }
 
 /* Setup and run a scanner. Return the output directory */
@@ -96,7 +112,16 @@ std::filesystem::path test_scanner(scanner_t scanner, sbuf_t *sbuf)
     return sc.outdir;
 }
 
-TEST_CASE("scan_base64", "[scanners]" ){
+TEST_CASE("base64_forensic", "[support]") {
+    const char *encoded="SGVsbG8gV29ybGQhCg==";
+    const char *decoded="Hello World!\n";
+    unsigned char output[64];
+    size_t result = b64_pton_forensic(encoded, strlen(encoded), output, sizeof(output));
+    REQUIRE( result == strlen(decoded) );
+    REQUIRE( strncmp( (char *)output, decoded, strlen(decoded))==0 );
+}
+
+TEST_CASE("scan_base64_functions", "[support]" ){
     base64array_initialize();
     auto sbuf1 = new sbuf_t("W3siMSI6ICJvbmVAYmFzZTY0LmNvbSJ9LCB7IjIiOiAidHdvQGJhc2U2NC5jb20i");
     auto sbuf2 = new sbuf_t("W3siMSI6ICJvbmVAYmFzZTY0LmNvbSJ9LCB7IjIiOiAidHdvQGJhc2U2NC5jb20i\n"
@@ -110,7 +135,7 @@ TEST_CASE("scan_base64", "[scanners]" ){
 }
 
 /* scan_email.flex checks */
-TEST_CASE("scan_email", "[scanners]") {
+TEST_CASE("scan_email_functions", "[support]") {
     REQUIRE( extra_validate_email("this@that.com")==true);
     REQUIRE( extra_validate_email("this@that..com")==false);
     auto s1 = sbuf_t("this@that.com");
@@ -125,10 +150,10 @@ TEST_CASE("scan_email", "[scanners]") {
     REQUIRE( domain_len == 10);
 }
 
-TEST_CASE("scan_gzip", "[scanners]") {
-    auto *sbufj = sbuf_t::map_file("tests/test_hello.gz");
-    REQUIRE( sbuf_decompress_zlib_possible( *sbufj, 0) == true);
-    REQUIRE( sbuf_decompress_zlib_possible( *sbufj, 10) == false);
+TEST_CASE("sbuf_decompress_zlib_new", "[support]") {
+    auto *sbufj = map_file("test_hello.gz");
+    REQUIRE( sbuf_gzip_header( *sbufj, 0) == true);
+    REQUIRE( sbuf_gzip_header( *sbufj, 10) == false);
     auto *decomp = sbuf_decompress_zlib_new( *sbufj, 1024*1024, "GZIP" );
     REQUIRE( decomp != nullptr);
     REQUIRE( decomp->asString() == "hello@world.com\n");
@@ -137,12 +162,26 @@ TEST_CASE("scan_gzip", "[scanners]") {
 }
 
 TEST_CASE("scan_exif", "[scanners]") {
-    auto sbufj = sbuf_t::map_file("tests/1.jpg");
+    auto sbufj = map_file("1.jpg");
     REQUIRE( sbufj->bufsize == 7323 );
     auto res = jpeg_validator::validate_jpeg(*sbufj);
     REQUIRE( res.how == jpeg_validator::COMPLETE );
-
 }
+
+TEST_CASE("scan_pdf", "[scanners]") {
+    auto *sbufj = map_file("pdf_words2.pdf");
+    pdf_extractor pe(*sbufj);
+
+    pe.find_streams();
+    REQUIRE( pe.streams.size() == 4 );
+    REQUIRE( pe.streams[1].stream_start == 2214);
+    REQUIRE( pe.streams[1].endstream == 4827);
+    pe.decompress_streams_extract_text();
+    REQUIRE( pe.texts.size() == 1 );
+    REQUIRE( pe.texts[0].txt.substr(0,30) == "-rw-r--r--    1 simsong  staff");
+    delete sbufj;
+}
+
 
 TEST_CASE("scan_json1", "[scanners]") {
     /* Make a scanner set with a single scanner and a single command to enable all the scanners.
@@ -158,14 +197,17 @@ TEST_CASE("scan_json1", "[scanners]") {
     REQUIRE(true);
 }
 
+TEST_CASE("scan_net", "[scanners]") {
+//TODO: Add checks for IPv4 and IPv6 header checksumers
+}
+
 TEST_CASE("scan_vcard", "[scanners]") {
     /* Make a scanner set with a single scanner and a single command to enable all the scanners.
      */
-    auto sbuf2 = sbuf_t::map_file( "tests/john_jakes.vcf" );
+    auto sbuf2 = map_file( "john_jakes.vcf" );
     auto outdir = test_scanner(scan_vcard, sbuf2); // deletes sbuf2
 
     /* Read the output */
-
 }
 
 
@@ -178,14 +220,14 @@ struct Check {
 };
 
 /*
- * Run the scanners on a specific image, look for the given features, and return the directory.
+ * Run all of the built-in scanners on a specific image, look for the given features, and return the directory.
  */
 std::string validate(std::string image_fname, std::vector<Check> &expected)
 {
     std::cerr << "================ validate  " << image_fname << " ================\n";
 
-    auto p = image_process::open( image_fname, false, 65536, 65536);
-    Phase1::Config   cfg;  // config for the image_processing system
+    auto p = image_process::open( test_dir() / image_fname, false, 65536, 65536);
+    Phase1::Config cfg;  // config for the image_processing system
     scanner_config sc;
 
     sc.outdir = NamedTemporaryDirectory();
@@ -201,26 +243,35 @@ std::string validate(std::string image_fname, std::vector<Check> &expected)
     ss.phase_scan();
     phase1.run();
     ss.shutdown();
+    xreport->pop();                     // dfxml
     xreport->close();
 
-    for(size_t i=0; i<expected.size(); i++){
+    for (size_t i=0; i<expected.size(); i++){
         std::filesystem::path fname  = sc.outdir / expected[i].fname;
         std::cerr << "---- " << i << " -- " << fname.string() << " ----\n";
-        std::string line;
-        std::ifstream inFile;
-        inFile.open(fname);
-        if (!inFile.is_open()) {
-            throw std::runtime_error("validate_scanners:[phase1] Could not open "+fname.string());
-        }
         bool found = false;
-        while (std::getline(inFile, line)) {
-            auto words = split(line, '\t');
-            if (words.size()==3 &&
-                words[0]==expected[i].feature.pos &&
-                words[1]==expected[i].feature.feature &&
-                words[2]==expected[i].feature.context){
-                found = true;
-                break;
+        for (int pass=0 ; pass<2 && !found;pass++){
+            std::string line;
+            std::ifstream inFile;
+            if (pass==1) {
+                std::cerr << fname << ":\n";
+            }
+            inFile.open(fname);
+            if (!inFile.is_open()) {
+                throw std::runtime_error("validate_scanners:[phase1] Could not open "+fname.string());
+            }
+            while (std::getline(inFile, line)) {
+                if (pass==1) {
+                    std::cerr << line << "\n"; // print the file the second time through
+                }
+                auto words = split(line, '\t');
+                if (words.size()==3 &&
+                    words[0]==expected[i].feature.pos &&
+                    words[1]==expected[i].feature.feature &&
+                    words[2]==expected[i].feature.context){
+                    found = true;
+                    break;
+                }
             }
         }
         if (!found){
@@ -234,20 +285,16 @@ std::string validate(std::string image_fname, std::vector<Check> &expected)
 }
 
 TEST_CASE("validate_scanners", "[phase1]") {
-    std::cerr  << "point 1\n";
-    auto fn1 = "tests/test_json.txt";
+    auto fn1 = "test_json.txt";
     std::vector<Check> ex1 {
         Check("json.txt",
               Feature( "0",
                        JSON1,
                        "ef2b5d7ee21e14eeebb5623784f73724218ee5dd")),
     };
-    std::cerr  << "point 11\n";
     validate(fn1, ex1);
-    std::cerr  << "point 2\n";
 
-    auto fn2 = "tests/test_base16json.txt";
-    std::cerr  << "point 2\n";
+    auto fn2 = "test_base16json.txt";
     std::vector<Check> ex2 {
         Check("json.txt",
               Feature( "50-BASE16-0",
@@ -262,12 +309,9 @@ TEST_CASE("validate_scanners", "[phase1]") {
                        "[{\"1\": \"one@base16_company.com\"}, {\"2\": \"two@b")),
 
     };
-    std::cerr  << "point 3\n";
     validate(fn2, ex2);
-    std::cerr  << "point 4\n";
 
-    auto fn3 = "tests/test_hello.gz";
-    std::cerr  << "point 5\n";
+    auto fn3 = "test_hello.gz";
     std::vector<Check> ex3 {
         Check("email.txt",
               Feature( "0-GZIP-0",
@@ -275,9 +319,7 @@ TEST_CASE("validate_scanners", "[phase1]") {
                        "hello@world.com\\x0A"))
 
     };
-    std::cerr  << "point 6\n";
     validate(fn3, ex3);
-    std::cerr  << "point 7\n";
 }
 
 
@@ -353,7 +395,7 @@ TEST_CASE("image_process", "[phase1]") {
     image_process *p = nullptr;
     REQUIRE_THROWS_AS( p = image_process::open( "no-such-file", false, 65536, 65536), image_process::NoSuchFile);
     REQUIRE_THROWS_AS( p = image_process::open( "no-such-file", false, 65536, 65536), image_process::NoSuchFile);
-    p = image_process::open( "tests/test_json.txt", false, 65536, 65536);
+    p = image_process::open( test_dir() / "test_json.txt", false, 65536, 65536);
     REQUIRE( p != nullptr );
     int times = 0;
 

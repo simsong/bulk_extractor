@@ -15,7 +15,6 @@
 
 #include "phase1.h"
 
-#include <dirent.h>
 #include <ctype.h>
 #include <fcntl.h>
 #include <set>

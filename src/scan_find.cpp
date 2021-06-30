@@ -8,7 +8,6 @@
 #include "be13_api/regex_vector.h"
 #include "be13_api/utils.h" // needs config.h
 #include "findopts.h"
-#include "managed_malloc.h"
 
 //#include "histogram.h"
 
@@ -60,10 +59,10 @@ void scan_find(scanner_params &sp)
     if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;
 
     if (scanner_params::PHASE_INIT == sp.phase) {
-        for (auto const &it : FindOpts::get().Patterns) {
+        for (const auto &it : FindOpts::get().Patterns) {
             add_find_pattern(it);
         }
-        for (auto const &it : FindOpts::get().Files) {
+        for (const auto &it : FindOpts::get().Files) {
             process_find_file(it.c_str());
         }
     }
@@ -75,27 +74,28 @@ void scan_find(scanner_params &sp)
          */
         feature_recorder &f = sp.ss.named_feature_recorder("find");
 
-        managed_malloc<u_char> tmpbuf(sp.sbuf->bufsize+1);
-        if(!tmpbuf.buf) return;				     // no memory for searching
-        memcpy(tmpbuf.buf, sp.sbuf->buf, sp.sbuf->bufsize);    // copy the data in
-        tmpbuf.buf[sp.sbuf->bufsize]=0;                       // null terminate
+        auto *tbuf = sbuf_t::sbuf_malloc(sp.sbuf->pos0, sp.sbuf->bufsize+1);
+        memcpy(tbuf->malloc_buf(), sp.sbuf->get_buf(), sp.sbuf->bufsize);
+        const char *base = static_cast<const char *>(tbuf->malloc_buf());
+        tbuf->wbuf(sp.sbuf->bufsize, 0); // null terminate
+
+        /* Now see if we can find a string */
         for (size_t pos = 0; pos < sp.sbuf->pagesize && pos < sp.sbuf->bufsize;) {
-            /* Now see if we can find a string */
             std::string found;
             size_t offset=0;
             size_t len = 0;
-            if ( find_list.search_all((const char *)tmpbuf.buf+pos, &found, &offset, &len)) {
+            if ( find_list.search_all( base+pos, &found, &offset, &len)) {
                 if(len == 0) {
                     len+=1;
                     continue;
                 }
-                f.write_buf(*sp.sbuf,pos+offset,len);
+                f.write_buf( *sp.sbuf, pos+offset, len);
                 pos += offset+len;
             } else {
                 /* nothing was found; skip past the first \0 and repeat. */
-                const u_char *eos = (const u_char *)memchr(tmpbuf.buf+pos,'\000',sp.sbuf->bufsize-pos);
-                if(eos) pos=(eos-tmpbuf.buf)+1;		// skip 1 past the \0
-                else    pos=sp.sbuf->bufsize;	// skip to the end of the buffer
+                const char *eos = static_cast<const char *>(memchr( base+pos, '\000', sp.sbuf->bufsize-pos));
+                if (eos) pos=(eos-base)+1;		// skip 1 past the \0
+                else     pos=sp.sbuf->bufsize;	// skip to the end of the buffer
             }
         }
     }

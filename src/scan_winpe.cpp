@@ -1068,17 +1068,17 @@ void scan_winpe (scanner_params &sp)
 		    && (sbuf[pos+pe_header_offset + 2] == PE_SIGNATURE[2])
 		    && (sbuf[pos+pe_header_offset + 3] == PE_SIGNATURE[3])) {
 
-		const sbuf_t data(sbuf + pos);
+		sbuf_t data = sbuf.slice(pos);
 
 		xml = scan_winpe_verify(data);
 		if (xml != "") {
 		    // If we have 4096 bytes, generate hash of first 4K
-                    sbuf_t first4k(data,0,4096);
+                    sbuf_t first4k = data.slice(0, 4096);
 		    f.write(data.pos0, first4k.hash(), xml);
 
                     size_t carve_size = get_carve_size(data);
                     feature_recorder &f_carved = sp.ss.named_feature_recorder("winpe_carved");
-                    f_carved.carve(sbuf_t(data, 0, carve_size), ".winpe");
+                    f_carved.carve(data.slice(0, carve_size), ".winpe");
 		}
 	    }
 	}
