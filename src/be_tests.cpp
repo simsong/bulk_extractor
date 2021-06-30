@@ -177,7 +177,8 @@ TEST_CASE("scan_pdf", "[scanners]") {
     REQUIRE( pe.streams[1].stream_start == 2214);
     REQUIRE( pe.streams[1].endstream == 4827);
     pe.decompress_streams_extract_text();
-    REQUIRE( pe.streams[0].text.substr(0,30) == "-rw-r--r--    1 simsong  staff");
+    REQUIRE( pe.texts.size() == 1 );
+    REQUIRE( pe.texts[0].txt.substr(0,30) == "-rw-r--r--    1 simsong  staff");
     delete sbufj;
 }
 
@@ -194,6 +195,10 @@ TEST_CASE("scan_json1", "[scanners]") {
 
     REQUIRE(last.substr( last.size() - 40) == "6ee8c369e2f111caa9610afc99d7fae877e616c9");
     REQUIRE(true);
+}
+
+TEST_CASE("scan_net", "[scanners]") {
+//TODO: Add checks for IPv4 and IPv6 header checksumers
 }
 
 TEST_CASE("scan_vcard", "[scanners]") {

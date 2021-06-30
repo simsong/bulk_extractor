@@ -58,7 +58,7 @@ void Phase1::dfxml_create(int argc, char * const *argv)
 
     /* Generate a list of the scanners in use */
     auto ev = ss.get_enabled_scanners();
-    for (auto const &it : ev) {
+    for (const auto &it : ev) {
         xreport.xmlout("scanner",it);
     }
     xreport.pop();			// scanners

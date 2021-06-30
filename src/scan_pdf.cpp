@@ -31,10 +31,8 @@ pdf_extractor::pdf_extractor(const sbuf_t &sbuf_):
 
 pdf_extractor::~pdf_extractor()
 {
-    for (auto it: streams) {
-        if (it.pos0!=nullptr) { delete it.pos0; }
-    }
-    streams.clear();                    // empty and delete all objects
+    streams.clear();     // may not be necessary
+    texts.clear();       // may not be necessary
 }
 
 /*
@@ -120,15 +118,15 @@ std::string  pdf_extractor::extract_text(const sbuf_t &sb)
     return tbuf;
 }
 
-void pdf_extractor::recurse_streams(scanner_params &sp)
+void pdf_extractor::recurse_texts(scanner_params &sp)
 {
-    for (auto it: streams) {
-        if(it.text.size()>0){
+    for (const auto &it: texts) {
+        if(it.txt.size()>0){
             if (pdf_dump_text){
-                std::cout << "====== " << *it.pos0 << " TEXT =====\n";
-                std::cout << it.text << "\n";
+                std::cout << "====== " << it.pos0 << " TEXT =====\n";
+                std::cout << it.txt << "\n";
             }
-            auto *nsbuf = sbuf_t::sbuf_new( (*it.pos0) + "PDF", it.text);
+            auto *nsbuf = sbuf_t::sbuf_new( (it.pos0) + "PDF", it.txt);
             sp.recurse(nsbuf);
         }
     }
@@ -136,7 +134,9 @@ void pdf_extractor::recurse_streams(scanner_params &sp)
 
 void pdf_extractor::decompress_streams_extract_text()
 {
-    for (auto &it: streams) {           // & because I want to modify the contents
+    // note: below we do *not* use a const auto,
+    // because we want to modify the contents of the vector
+    for (const auto &it: streams) {           //
         size_t compr_size = it.endstream - it.stream_start;
         size_t max_uncompr_size = compr_size * 8;       // good assumption for expansion
 
@@ -154,8 +154,7 @@ void pdf_extractor::decompress_streams_extract_text()
             std::cout << "\n";
         }
         if (mostly_printable_ascii(*dbuf)){
-            it.text = extract_text( *dbuf );
-            it.pos0 = new pos0_t(dbuf->pos0);
+            texts.push_back(text(pos0_t(dbuf->pos0), extract_text( *dbuf )));
         }
         delete dbuf;
     }
@@ -204,7 +203,7 @@ void pdf_extractor::run(scanner_params &sp)
 {
     find_streams();
     decompress_streams_extract_text();
-    recurse_streams(sp);
+    recurse_texts(sp);
 }
 
 extern "C"

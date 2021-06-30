@@ -553,7 +553,7 @@ static size_t guess_encrypted_len(const sbuf_t &sbuf)
     // encrypted data?
     const unsigned threshold = 4;
 
-    int ii;
+    size_t ii;
     for(ii = 0; ii< sbuf.bufsize-threshold; ii++) {
         size_t mismatch_index = 0;
         for (mismatch_index = ii + 1; mismatch_index < ii + threshold; mismatch_index++) {
@@ -673,6 +673,7 @@ void scan_rar(scanner_params &sp)
 
                     std::string carve_name("_");
                     carve_name += component.name;
+                    // note - can't use const because we want to modify
                     for(auto &it : carve_name){
                         if (it=='/') it = '_';
                     }

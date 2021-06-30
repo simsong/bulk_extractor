@@ -195,7 +195,7 @@ std::string prefetch_record_t::to_xml()
     ss << "<atime>"    << microsoftDateToISODate(execution_time) << "</atime>";
     ss << "<runs>"     << execution_counter << "</runs>";
     ss << "<filenames>";
-    for (auto const &it : files) {
+    for (const auto &it : files) {
         ss << "<file>" << dfxml_writer::xmlescape(it) << "</file>";
     }
     ss << "</filenames>";
@@ -206,7 +206,7 @@ std::string prefetch_record_t::to_xml()
     ss << "<serial_number>" << std::hex << volume_serial_number << std::dec << "</serial_number>";
 
     ss << "<dirnames>";
-    for (auto const &it:directories) {
+    for (const auto &it:directories) {
         ss << "<dir>" << dfxml_writer::xmlescape(it) << "</dir>";
     }
     ss << "</dirnames>";

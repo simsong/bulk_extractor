@@ -97,7 +97,7 @@ void scan_hiberfile(scanner_params &sp)
                  * This prevents scanners like the JPEG carver from inadvertantly reassembling objects that make no semantic sense.
                  * However, we need to copy the data into each one (a copy!) because they may be processed asynchronously.
                  */
-                for(size_t start = 0; start < decompress_size; start += windows_page_size){
+                for(ssize_t start = 0; start < decompress_size; start += windows_page_size){
                     auto *dbuf = decomp_sbuf->new_slice_copy( start, windows_page_size);
                     sp.recurse(dbuf);
 		}

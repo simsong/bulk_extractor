@@ -59,10 +59,10 @@ void scan_find(scanner_params &sp)
     if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;
 
     if (scanner_params::PHASE_INIT == sp.phase) {
-        for (auto const &it : FindOpts::get().Patterns) {
+        for (const auto &it : FindOpts::get().Patterns) {
             add_find_pattern(it);
         }
-        for (auto const &it : FindOpts::get().Files) {
+        for (const auto &it : FindOpts::get().Files) {
             process_find_file(it.c_str());
         }
     }
