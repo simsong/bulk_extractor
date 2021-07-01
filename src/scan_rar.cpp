@@ -200,10 +200,10 @@ public:
         uint8_t days = (dos_date & DOS_MASK_DAY) >> DOS_SHIFT_DAY;
         uint8_t months = (dos_date & DOS_MASK_MONTH) >> DOS_SHIFT_MONTH;
         uint16_t years = (dos_date & DOS_MASK_YEAR) >> DOS_SHIFT_YEAR;
-        
+
         years += DOS_OFFSET_YEAR;
         seconds *= 2;
-        
+
         char buf[STRING_BUF_LEN];
         snprintf(buf,sizeof(buf),"%04d-%02d-%02dT%02d:%02d:%02dZ",
                  years, months, days, hours, minutes, seconds);
@@ -539,7 +539,7 @@ static void unpack_buf(const uint8_t* input, size_t input_len, uint8_t* output, 
 
     CmdExtract extract; //from the extract.cpp file; allows the extraction to occur
 
-    byte *startingaddress = (byte*) input;
+    unsigned char *startingaddress = (unsigned char*) input;
 
     ComprDataIO mydataio;
     mydataio.SetSkipUnpCRC(true); //skip checking the CRC to allow more processing to occur
@@ -587,8 +587,8 @@ static bool is_mark_block(const uint8_t* buf, size_t buf_len, size_t offset)
 //25 50 44 46 2D
 //25 25 45 4F 46
 size_t sz = component.uncompressed_size;
-assert(dbuf.buf[0] == 0x25); assert(dbuf.buf[1] == 0x50); assert(dbuf.buf[2] == 0x44); assert(dbuf.buf[3] == 0x46); assert(dbuf.buf[4] == 0x2D); 
-assert(dbuf.buf[sz-5] == 0x25); assert(dbuf.buf[sz-4] == 0x25); assert(dbuf.buf[sz-3] == 0x45); assert(dbuf.buf[sz-2] == 0x4F); assert(dbuf.buf[sz-1] == 0x46); 
+assert(dbuf.buf[0] == 0x25); assert(dbuf.buf[1] == 0x50); assert(dbuf.buf[2] == 0x44); assert(dbuf.buf[3] == 0x46); assert(dbuf.buf[4] == 0x2D);
+assert(dbuf.buf[sz-5] == 0x25); assert(dbuf.buf[sz-4] == 0x25); assert(dbuf.buf[sz-3] == 0x45); assert(dbuf.buf[sz-2] == 0x4F); assert(dbuf.buf[sz-1] == 0x46);
 #endif
 
 

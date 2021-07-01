@@ -36,12 +36,12 @@ public:
             max_wait_time(3600),
             opt_quiet(0),
             retry_seconds(60),
-            num_threads(1),             // 
+            num_threads(1),             //
             sampling_fraction(1.0),
             sampling_passes(1),
             opt_report_read_errors(true) {}
-                 
-        uint64_t debug;                 // debug 
+
+        uint64_t debug;                 // debug
         size_t   opt_pagesize;
         size_t   opt_marginsize;
         uint32_t max_bad_alloc_errors;
@@ -90,8 +90,8 @@ public:
     aftimer &timer;
     Config &config;
     u_int   notify_ctr;    /* for random sampling */
-    uint64_t total_bytes;               // 
-    md5_generator *md5g;
+    uint64_t total_bytes;               //
+    dfxml::md5_generator *md5g;
 
     /* Get the sbuf from current image iterator location, with retries */
     sbuf_t *get_sbuf(image_process::iterator &it);

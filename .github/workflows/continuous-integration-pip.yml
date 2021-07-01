@@ -14,8 +14,7 @@ jobs:
     strategy:
       matrix:
         #os: ['macos-10.15']
-        #os: ['macos-10.15', 'ubuntu-18.04', 'ubuntu-20.04']
-        os: ['ubuntu-20.04']
+        os: ['macos-10.15', 'ubuntu-20.04']
 
     steps:
       # https://github.com/actions/checkout
@@ -27,17 +26,38 @@ jobs:
       - name: Install C++ dependencies on MacOS
         if: startsWith(matrix.os, 'macos')
         run: |
-          brew install autoconf automake libtool json-c openssl@1.1
-          cp /usr/local/opt/openssl@1.1/lib/pkgconfig/*.pc /usr/local/lib/pkgconfig/
+          brew install autoconf automake libtool
 
       - name: Install C++ dependencies on Ubuntu
         if: startsWith(matrix.os, 'ubuntu')
         run: |
-          sudo apt install -y libtool autoconf automake libssl-dev pkg-config libjson-c-dev
+          sudo apt install -y libtool autoconf automake libssl-dev pkg-config
+
+      - name: Update autoconf on Ubuntu
+        if: startsWith(matrix.os, 'ubuntu')
+        run: |
+          wget https://ftpmirror.gnu.org/autoconf/autoconf-2.71.tar.gz
+          tar xfz autoconf-2.71.tar.gz && cd autoconf-2.71 && ./configure && make && sudo make install
+
+      - name: Update automake on Ubuntu
+        if: startsWith(matrix.os, 'ubuntu')
+        run: |
+          wget https://ftpmirror.gnu.org/automake/automake-1.16.3.tar.gz
+          tar xfz automake-1.16.3.tar.gz && cd automake-1.16.3 && ./configure && make && sudo make install
+
+      - name: Report automake and autoconf version
+        run: |
+          automake --version
+          autoconf --version
+
+      - name: make
+        run: |
+          bash bootstrap.sh && ./configure
+          cd src
+          make
 
       - name: make check
         run: |
-          bash bootstrap.sh && ./configure
           cd src
           make check || (echo ==error== ; cat test-suite.log; exit 1)
 
@@ -49,6 +69,9 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         run: |
-          bash bootstrap.sh
-          ./configure CFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' CXXFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' LIBS='-lgcov'
-          make clean && cd src && make check && gcov-9 -n -o . *cpp && bash <(curl -s https://codecov.io/bash)
+           bash .make-codecov
+
+#      - name: regresion test
+#        run: |
+#          cd tests
+#          python3 regress.py --datacheck
