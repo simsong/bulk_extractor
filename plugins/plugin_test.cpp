@@ -1,6 +1,6 @@
 /**
  * plugin_test.cpp:
- * 
+ *
  * This program will load a bulk_extractor .so or .dll plug-in and
  * perform a rudimentary test.
  */
@@ -23,20 +23,20 @@
 
 #ifdef HAVE_WINDOWS_H
 #include <windows.h>
-typedef int (__cdecl *MYPROC)(LPWSTR); 
+typedef int (__cdecl *MYPROC)(LPWSTR);
 #endif
 
 static std::string hash_name("md5");
 static std::string hash_func(const uint8_t *buf,size_t bufsize)
 {
     if(hash_name=="md5" || hash_name=="MD5"){
-        return md5_generator::hash_buf(buf,bufsize).hexdigest();
+        return dfxml::md5_generator::hash_buf(buf,bufsize).hexdigest();
     }
     if(hash_name=="sha1" || hash_name=="SHA1" || hash_name=="sha-1" || hash_name=="SHA-1"){
-        return sha1_generator::hash_buf(buf,bufsize).hexdigest();
+        return dfxml::sha1_generator::hash_buf(buf,bufsize).hexdigest();
     }
     if(hash_name=="sha256" || hash_name=="SHA256" || hash_name=="sha-256" || hash_name=="SHA-256"){
-        return sha256_generator::hash_buf(buf,bufsize).hexdigest();
+        return dfxml::sha256_generator::hash_buf(buf,bufsize).hexdigest();
     }
     std::cerr << "Invalid hash name: " << hash_name << "\n";
     std::cerr << "This version of bulk_extractor only supports MD5, SHA1, and SHA256\n";
@@ -44,7 +44,7 @@ static std::string hash_func(const uint8_t *buf,size_t bufsize)
 }
 static feature_recorder_set::hash_def my_hasher(hash_name,hash_func);
 
-scanner_params::PrintOptions scanner_params::no_options; 
+scanner_params::PrintOptions scanner_params::no_options;
 int main(int argc,char **argv)
 {
     if(argc!=2){
@@ -62,7 +62,7 @@ int main(int argc,char **argv)
 	fprintf(stderr,"%s: cannot strip extension\n",name.c_str());
 	exit(1);
     }
-    name = name.substr(0,dot);         
+    name = name.substr(0,dot);
 
     /* Strip dir */
     size_t slash = name.rfind('.');
@@ -156,17 +156,17 @@ feature_recorder_set::feature_recorder_set(uint32_t f,const feature_recorder_set
 }
 
 
-/* http://stackoverflow.com/questions/9406580/c-undefined-reference-to-vtable-and-inheritance 
+/* http://stackoverflow.com/questions/9406580/c-undefined-reference-to-vtable-and-inheritance
  * Must provide definitions for all virtual functions
  */
 
 void scanner_info::get_config(const scanner_info::config_t &c, const std::string &n,std::string *val,const std::string &help){}
 void scanner_info::get_config(const std::string &n,std::string *val,const std::string &help) {}
-void scanner_info::get_config(const std::string &n,signed char *val,const std::string &help) {}
-void scanner_info::get_config(const std::string &n,short *val,const std::string &help) {}
+//void scanner_info::get_config(const std::string &n,signed char *val,const std::string &help) {}
+//void scanner_info::get_config(const std::string &n,short *val,const std::string &help) {}
 void scanner_info::get_config(const std::string &n,int *val,const std::string &help) {}
-void scanner_info::get_config(const std::string &n,long *val,const std::string &help) {}
-void scanner_info::get_config(const std::string &n,long long *val,const std::string &help) {}
+//void scanner_info::get_config(const std::string &n,long *val,const std::string &help) {}
+//void scanner_info::get_config(const std::string &n,long long *val,const std::string &help) {}
 void scanner_info::get_config(const std::string &n,unsigned char *val,const std::string &help) {}
 void scanner_info::get_config(const std::string &n,unsigned short *val,const std::string &help) {}
 void scanner_info::get_config(const std::string &n,unsigned int *val,const std::string &help) {}

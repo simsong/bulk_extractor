@@ -10,7 +10,7 @@
  * feature_recorder_set fs - the collection of feature recorders.
  * xml xreport             - the DFXML output.
  * image_process p         - the image being processed.
- * 
+ *
  * Note that all of the singletons are passed to the phase1() function.
  */
 
@@ -49,14 +49,14 @@
 #include <sys/resource.h>
 #endif
 
-#ifdef WIN32 
-// Allows us to open standard input in binary mode by default 
-// See http://gnuwin32.sourceforge.net/compile.html for more 
+#ifdef WIN32
+// Allows us to open standard input in binary mode by default
+// See http://gnuwin32.sourceforge.net/compile.html for more
 int _CRT_fmode = _O_BINARY;
 #endif
 
 /* Debug help */
-__attribute__((noreturn)) 
+__attribute__((noreturn))
 void debug_help()
 {
     puts("#define DEBUG_PEDANTIC    0x0001	// check values more rigorously");
@@ -90,10 +90,10 @@ static void usage(const char *progname)
 #endif
 #ifdef HAVE_LIBAFFLIB
     std::cout << "                  HAS SUPPORT FOR AFF FILES\n";
-#endif    
+#endif
 #ifdef HAVE_EXIV2
     std::cout << "                  EXIV2 ENABLED\n";
-#endif    
+#endif
 #ifdef HAVE_LIBLIGHTGREP
     std::cout << "                  LIGHTGREP ENABLED\n";
 #endif
@@ -185,13 +185,13 @@ static std::string be_hash_name("md5");
 static std::string be_hash_func(const uint8_t *buf,size_t bufsize)
 {
     if(be_hash_name=="md5" || be_hash_name=="MD5"){
-        return md5_generator::hash_buf(buf,bufsize).hexdigest();
+        return dfxml::md5_generator::hash_buf(buf,bufsize).hexdigest();
     }
     if(be_hash_name=="sha1" || be_hash_name=="SHA1" || be_hash_name=="sha-1" || be_hash_name=="SHA-1"){
-        return sha1_generator::hash_buf(buf,bufsize).hexdigest();
+        return dfxml::sha1_generator::hash_buf(buf,bufsize).hexdigest();
     }
     if(be_hash_name=="sha256" || be_hash_name=="SHA256" || be_hash_name=="sha-256" || be_hash_name=="SHA-256"){
-        return sha256_generator::hash_buf(buf,bufsize).hexdigest();
+        return dfxml::sha256_generator::hash_buf(buf,bufsize).hexdigest();
     }
     std::cerr << "Invalid hash name: " << be_hash_name << "\n";
     std::cerr << "This version of bulk_extractor only supports MD5, SHA1, and SHA256\n";
@@ -321,7 +321,7 @@ public:
 static std::string HTTP_EOL = "\r\n";		// stdout is in binary form
 void process_path_printer(const scanner_params &sp)
 {
-    /* 1. Get next token 
+    /* 1. Get next token
      * 2. if prefix part is a number, skip forward that much in sbuf and repeat.
      *    if the prefix is PRINT, print the buffer
      *    if next part is a string, strip it and run that decoder.
@@ -337,7 +337,7 @@ void process_path_printer(const scanner_params &sp)
 
 	uint64_t print_start = 0;
 	uint64_t print_len = 4096;
-    
+
 	/* Check for options */
 	scanner_params::PrintOptions::iterator it;
 
@@ -503,7 +503,7 @@ static void process_path(const char *fn,std::string path,size_t pagesize,size_t 
             std::string line;		// the specific query
 	    scanner_params::PrintOptions po;
 	    scanner_params::setPrintMode(po,scanner_params::MODE_HTTP);	// options for this query
-	    
+
 	    getline(std::cin,line);
 	    truncate_at(line,'\r');
 	    if(line.substr(0,4)!="GET "){
@@ -583,7 +583,7 @@ class bulk_extractor_restarter {
         if(self.thisElement=="provided_filename") self.provided_filename = self.cdata.str();
         self.cdata.str("");
     }
-    static void characterDataHandler(void *userData,const XML_Char *s,int len){ 
+    static void characterDataHandler(void *userData,const XML_Char *s,int len){
         class bulk_extractor_restarter &self = *(bulk_extractor_restarter *)userData;
         self.cdata.write(s,len);
     }
@@ -603,7 +603,7 @@ public:;
             std::cerr << "Cannot continue.\n";
             exit(1);
         }
-	
+
         XML_Parser parser = XML_ParserCreate(NULL);
         XML_SetUserData(parser, this);
         XML_SetElementHandler(parser, startElement, endElement);
@@ -644,7 +644,7 @@ public:;
  * Create the dfxml output
  */
 
-static void dfxml_create(dfxml_writer &xreport,const std::string &command_line,const BulkExtractor_Phase1::Config &cfg)
+static void dfxml_create(dfxml_writer &xreport,int argc,char * const *argv,const BulkExtractor_Phase1::Config &cfg)
 {
     xreport.push("dfxml","xmloutputversion='1.0'");
     xreport.push("metadata",
@@ -653,7 +653,7 @@ static void dfxml_create(dfxml_writer &xreport,const std::string &command_line,c
 		 "\n  xmlns:dc='http://purl.org/dc/elements/1.1/'" );
     xreport.xmlout("dc:type","Feature Extraction","",false);
     xreport.pop();
-    xreport.add_DFXML_creator(PACKAGE_NAME,PACKAGE_VERSION,svn_revision_clean(),command_line);
+    xreport.add_DFXML_creator(PACKAGE_NAME,PACKAGE_VERSION,svn_revision_clean(),argc,argv);
     xreport.push("configuration");
     xreport.xmlout("threads",cfg.num_threads);
     xreport.xmlout("pagesize",cfg.opt_pagesize);
@@ -718,6 +718,9 @@ int main(int argc,char **argv)
     mtrace();
 #endif
 
+    auto argc_ = argc;
+    auto argv_ = argv;
+
     /* setup */
     feature_recorder::set_main_threadid();
     const char *progname = argv[0];
@@ -777,7 +780,7 @@ int main(int argc,char **argv)
             if(strcmp(optarg,"h")==0) debug_help();
 	    int d = atoi(optarg);
 	    switch(d){
-	    case DEBUG_ALLOCATE_512MiB: 
+	    case DEBUG_ALLOCATE_512MiB:
 		if(calloc(1024*1024*512,1)){
                     std::cerr << "-d1002 -- Allocating 512MB of RAM; may be repeated\n";
 		} else {
@@ -906,7 +909,7 @@ int main(int argc,char **argv)
     /* Load all the scanners and enable the ones we care about */
 
     be13::plugin::load_scanner_directories(scanner_dirs,s_config);
-    be13::plugin::load_scanners(scanners_builtin,s_config); 
+    be13::plugin::load_scanners(scanners_builtin,s_config);
     be13::plugin::scanners_process_enable_disable_commands();
 
     /* Print usage if necessary */
@@ -999,7 +1002,7 @@ int main(int argc,char **argv)
     /* Open the image file (or the device) now */
     p = image_process::open(image_fname,opt_recurse,cfg.opt_pagesize,cfg.opt_marginsize);
     if(!p) err(1,"Cannot open %s: ",image_fname.c_str());
-    
+
     /***
      *** Create the feature recording set.
      *** Initialize the scanners.
@@ -1040,7 +1043,7 @@ int main(int argc,char **argv)
 
         /* Store the configuration in the XML file */
         dfxml_writer  *xreport = new dfxml_writer(reportfilename,false);
-        dfxml_create(*xreport,command_line,cfg);
+        dfxml_create(*xreport,argc_,argv_,cfg);
         xreport->xmlout("provided_filename",image_fname); // save this information
 
         /* provide documentation to the user; the DFXML information comes from elsewhere */
@@ -1120,7 +1123,7 @@ int main(int argc,char **argv)
             std::cout.precision(4);
             printf("Elapsed time: %g sec.\n",timer.elapsed_seconds());
             printf("Total MB processed: %d\n",int(phase1.total_bytes / 1000000));
-        
+
             printf("Overall performance: %g MBytes/sec (%g MBytes/sec/thread)\n",
                    mb_per_sec,mb_per_sec/cfg.num_threads);
             if (fs.has_name("email")) {

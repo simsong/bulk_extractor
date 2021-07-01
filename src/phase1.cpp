@@ -58,7 +58,7 @@ sbuf_t *BulkExtractor_Phase1::get_sbuf(image_process::iterator &it)
                       << " reading " << it.get_pos0()
                       << " (retry_count=" << retry_count
                       << " of " << config.max_bad_alloc_errors << ")\n";
-		
+
             std::stringstream ss;
             ss << "name='bad_alloc' " << "pos0='" << it.get_pos0() << "' "
                << "retry_count='"     << retry_count << "' ";
@@ -89,12 +89,12 @@ void BulkExtractor_Phase1::run(image_process &p,feature_recorder_set &fs,
                                seen_page_ids_t &seen_page_ids)
 {
     p.set_report_read_errors(config.opt_report_read_errors);
-    md5g = new md5_generator();		// keep track of MD5
+    md5g = new dfxml::md5_generator();		// keep track of MD5
     uint64_t md5_next = 0;              // next byte to hash
 
     if(config.debug & DEBUG_PRINT_STEPS) std::cout << "DEBUG: CREATING THREAD POOL\n";
-    
-    tp = new threadpool(config.num_threads,fs,xreport);	
+
+    tp = new threadpool(config.num_threads,fs,xreport);
 
     uint64_t page_ctr=0;
     xreport.push("runtime","xmlns:debug=\"http://www.github.com/simsong/bulk_extractor/issues\"");
@@ -102,7 +102,7 @@ void BulkExtractor_Phase1::run(image_process &p,feature_recorder_set &fs,
     /* A single loop with two iterators.
      *
      * it -- the regular image_iterator; it knows how to read blocks.
-     * 
+     *
      * si -- the sampling iterator. It is a iterator for an STL set.
      *
      * If sampling, si is used to ask for a specific page from it.
@@ -132,7 +132,7 @@ void BulkExtractor_Phase1::run(image_process &p,feature_recorder_set &fs,
                 break;
             }
         }
-                
+
         if(config.opt_offset_end!=0 && config.opt_offset_end <= it.raw_offset ){
             break;                      // passed the offset
         }
@@ -143,10 +143,10 @@ void BulkExtractor_Phase1::run(image_process &p,feature_recorder_set &fs,
                     sbuf_t *sbuf = get_sbuf(it);
                     if(sbuf==0) break;	// eof?
                     sbuf->page_number = page_ctr;
-                        
+
                     /* compute the md5 hash */
                     if(md5g){
-                        if(sbuf->pos0.offset==md5_next){ 
+                        if(sbuf->pos0.offset==md5_next){
                             // next byte follows logically, so continue to compute hash
                             md5g->update(sbuf->buf,sbuf->pagesize);
                             md5_next += sbuf->pagesize;
@@ -156,12 +156,12 @@ void BulkExtractor_Phase1::run(image_process &p,feature_recorder_set &fs,
                         }
                     }
                     total_bytes += sbuf->pagesize;
-                        
+
                     /***************************
                      **** SCHEDULE THE WORK ****
                      ***************************/
-                        
-                    tp->schedule_work(sbuf);	
+
+                    tp->schedule_work(sbuf);
                     if(!config.opt_quiet) notify_user(it);
                 }
                 catch (const std::exception &e) {
@@ -187,7 +187,7 @@ void BulkExtractor_Phase1::run(image_process &p,feature_recorder_set &fs,
         }
         ++page_ctr;
     }
-	    
+
     if(!config.opt_quiet){
         std::cout << "All data are read; waiting for threads to finish...\n";
     }
@@ -209,8 +209,8 @@ void BulkExtractor_Phase1::wait_for_workers(image_process &p,std::string *md5_st
         if(counter%60==0){
             std::stringstream ss;
             ss << "Time elapsed waiting for " << num_remaining
-               << " thread" << (num_remaining>1 ? "s" : "") 
-               << " to finish:\n    " << minsec(time_waiting) 
+               << " thread" << (num_remaining>1 ? "s" : "")
+               << " to finish:\n    " << minsec(time_waiting)
                << " (timeout in "     << minsec(time_remaining) << ".)\n";
             if(config.opt_quiet==0){
                 std::cout << ss.str();
@@ -226,14 +226,14 @@ void BulkExtractor_Phase1::wait_for_workers(image_process &p,std::string *md5_st
         }
     }
     if(config.opt_quiet==0) std::cout << "All Threads Finished!\n";
-	
+
     xreport.pop();			// pop runtime
     /* We can write out the source info now, since we (might) know the hash */
     xreport.push("source");
     xreport.xmlout("image_filename",p.image_fname());
-    xreport.xmlout("image_size",p.image_size());  
+    xreport.xmlout("image_size",p.image_size());
     if(md5g){
-        md5_t md5 = md5g->final();
+        auto md5 = md5g->digest();
         if(md5_string) *md5_string = md5.hexdigest();
         xreport.xmlout("hashdigest",md5.hexdigest(),"type='MD5'",false);
         delete md5g;
@@ -244,7 +244,7 @@ void BulkExtractor_Phase1::wait_for_workers(image_process &p,std::string *md5_st
     tp->fs.dump_name_count_stats(xreport);
 
     if(config.opt_quiet==0) std::cout << "Producer time spent waiting: " << tp->waiting.elapsed_seconds() << " sec.\n";
-    
+
     xreport.xmlout("thread_wait",dtos(tp->waiting.elapsed_seconds()),"thread='0'",false);
     double worker_wait_average = 0;
     for(threadpool::worker_vector::const_iterator ij=tp->workers.begin();ij!=tp->workers.end();ij++){
