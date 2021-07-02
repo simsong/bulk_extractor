@@ -69,9 +69,15 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         run: |
-           bash .make-codecov
+          ./configure CFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' CXXFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' LIBS='-lgcov'
+          cd src
+          make check
+          gcov-9 -n -o . `find . -name '*cpp'`
+          bash <(curl -s https://codecov.io/bash)
+          make distclean
 
-#      - name: regresion test
-#        run: |
-#          cd tests
-#          python3 regress.py --datacheck
+      - name: regresion test
+        if: startsWith(matrix.os, 'disabled')
+        run: |
+          cd tests
+          python3 regress.py --datacheck
