@@ -9,11 +9,8 @@
 #include "be13_api/utils.h" // needs config.h
 #include "findopts.h"
 
-//#include "histogram.h"
-
-//#include "bulk_extractor.h" // for regex_list type
-
 // anonymous namespace hides symbols from other cpp files (like "static" applied to functions)
+// TODO: make this not a global variable
 namespace {
     regex_vector find_list;
     void add_find_pattern(const std::string &pat) {
@@ -50,7 +47,7 @@ void scan_find(scanner_params &sp)
         sp.info->author         = "Simson Garfinkel";
         sp.info->description    = "Simple search for patterns";
         sp.info->scanner_version= "1.1";
-        //sp.info->flags		= scanner_info::SCANNER_FIND_SCANNER;
+        sp.info->scanner_flags.find_scanner = true; // this is a find scanner
         sp.info->feature_defs.push_back( feature_recorder_def("find"));
         auto lowercase = histogram_def::flags_t(); lowercase.lowercase = true;
       	sp.info->histogram_defs.push_back( histogram_def("find", "find", "", "","histogram", lowercase));

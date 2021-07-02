@@ -101,21 +101,6 @@ winlibs:
 lib:
 	(cd src; $(MAKE) lib)
 
-.PHONY: pull
-pull:
-	git pull
-	(cd src/dfxml;git checkout master; git pull)
-	(cd src/be13_api;git checkout master; git pull)
-
-.PHONY: publish
-publish:
-	$(MAKE) dist
-	scp $(DIST_ARCHIVES) ncr.nps.edu:/var/www/digitalcorpora/downloads/bulk_extractor
-
-gitfixup:
-	(cd src/be13_api/;git remote set-url origin git@github.com:/simsong/be13_api.git;git checkout master)
-	(cd src/dfxml/;git remote set-url origin git@github.com:/simsong/dfxml.git; git checkout master)
-
 .PHONY: libinstall
 libinstall:
 	install -D src/libbulkextractor.so $(prefix)/lib/libbulkextractor.so
