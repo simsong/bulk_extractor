@@ -36,7 +36,7 @@
 #include "be13_api/utils.h"             // for safe_utf16to8, requires config.h
 #include "be13_api/scanner_params.h"
 #include "be13_api/sbuf_stream.h"
-#include "dfxml/src/dfxml_writer.h"     // requires config.h
+#include "dfxml_cpp/src/dfxml_writer.h"     // requires config.h
 
 /**
  * Instantiates a populated prefetch record from the buffer provided.

@@ -43,7 +43,7 @@
 #include "be13_api/utils.h"// needs config.h
 #include "be13_api/scanner_params.h"
 #include "be13_api/unicode_escape.h"
-#include "dfxml/src/dfxml_writer.h"
+#include "dfxml_cpp/src/dfxml_writer.h"
 
 
 static const size_t SMALLEST_LNK_FILE = 150;  // did you see smaller LNK file?

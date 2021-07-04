@@ -5,8 +5,8 @@
 
 #include "be13_api/aftimer.h"
 #include "be13_api/scanner_set.h"
-#include "be13_api/dfxml/src/dfxml_writer.h"
-#include "be13_api/dfxml/src/hash_t.h"
+#include "be13_api/dfxml_cpp/src/dfxml_writer.h"
+#include "be13_api/dfxml_cpp/src/hash_t.h"
 
 #include "image_process.h"
 #include "threadpool.hpp"               // new threadpool!
@@ -97,9 +97,9 @@ public:
     void notify_user(image_process::iterator &it);
 
     Phase1(dfxml_writer &xreport_,Config config_, image_process &p_, scanner_set &ss_);
-    void dfxml_create(int argc, char * const *argv);
+    void dfxml_write_create(int argc, char * const *argv);
     void send_data_to_workers();        // launch all of the workers
-    void wait_for_workers();            //
+    void dfxml_write_source();            //
     void run();                         // does the above
 };
 

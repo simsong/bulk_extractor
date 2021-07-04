@@ -21,7 +21,7 @@
 #include "tsk3_fatdirs.h"
 
 #include "utf8.h"
-#include "dfxml/src/dfxml_writer.h"     // requires config.h
+#include "dfxml_cpp/src/dfxml_writer.h"     // requires config.h
 #include "be13_api/utils.h" // for microsoftDateToISODate, requires config.h
 #include "be13_api/scanner_params.h"
 
@@ -260,13 +260,13 @@ void scan_fatdirs(const sbuf_t &sbuf, feature_recorder &wrecorder)
 		    for(int j=0;j<3;j++){ if (dentry.ext[j]!=' ') ss << dentry.ext[j]; }
 		    std::string filename = ss.str();
 		    fatmap["filename"] = filename;
-		    fatmap["ctimeten"] = std::to_string(dentry.ctimeten);
+		    fatmap["ctimeten"] = std::to_string(static_cast<unsigned int>(dentry.ctimeten));
 		    fatmap["ctime"]    = fatDateToISODate(fat16int(dentry.cdate),fat16int(dentry.ctime));
 		    fatmap["atime"]    = fatDateToISODate(fat16int(dentry.adate),0);
 		    fatmap["mtime"]    = fatDateToISODate(fat16int(dentry.wdate),fat16int(dentry.wtime));
 		    fatmap["startcluster"] = std::to_string(fat32int(dentry.highclust,dentry.startclust));
 		    fatmap["filesize"] = std::to_string(fat32int(dentry.size));
-		    fatmap["attrib"]   = std::to_string(dentry.attrib);
+		    fatmap["attrib"]   = std::to_string(static_cast<unsigned int>(dentry.attrib));
 		    wrecorder.write(n.pos0,filename,dfxml_writer::xmlmap(fatmap,"fileobject","src='fat'"));
 		}
 	    }

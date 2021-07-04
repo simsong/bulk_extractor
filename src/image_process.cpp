@@ -408,7 +408,7 @@ sbuf_t *process_ewf::sbuf_alloc(image_process::iterator &it) const
     }
 
     auto sbuf = sbuf_t::sbuf_malloc(get_pos0(it), count);
-    unsigned char *buf = sbuf->malloc_buf();
+    unsigned char *buf = static_cast<unsigned char *>(sbuf->malloc_buf());
     int count_read = this->pread(buf, count, it.raw_offset);
     if(count_read<0){
         delete sbuf;

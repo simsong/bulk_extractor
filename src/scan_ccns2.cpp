@@ -11,7 +11,7 @@
 #include "scan_ccns2.h"
 
 #include "be13_api/utils.h"
-#include "dfxml/src/hash_t.h"
+#include "dfxml_cpp/src/hash_t.h"
 
 #include "be13_api/scanner_params.h"
 

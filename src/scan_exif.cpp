@@ -21,7 +21,7 @@
 #include "be13_api/scanner_params.h"
 #include "be13_api/utils.h"// needs config.h
 
-#include "dfxml/src/dfxml_writer.h"
+#include "dfxml_cpp/src/dfxml_writer.h"
 
 #include "exif_reader.h"
 #include "unicode_escape.h"

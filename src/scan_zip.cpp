@@ -8,7 +8,7 @@
 #include "config.h"
 #include "sbuf_decompress.h"
 #include "be13_api/scanner_params.h"
-#include "dfxml/src/dfxml_writer.h"
+#include "dfxml_cpp/src/dfxml_writer.h"
 #include "utf8.h"
 
 

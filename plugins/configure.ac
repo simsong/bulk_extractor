@@ -1,4 +1,4 @@
-                                               -*- Autoconf -*-
+#                                              -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 # Order is largely irrevellant, although it must start with AC_INIT and end with AC_OUTPUT
 # See http://autotoolset.sourceforge.net/tutorial.html
@@ -48,14 +48,14 @@ fi
 
 mingw="no"
 case $host in
-  *-*-*linux*-*) 
+  *-*-*linux*-*)
      AC_DEFINE([__LINUX__],1,[Linux operating system functions])
      ;;
 
-  *-*-mingw32*)   
-     LIBS="-lpsapi -lws2_32 -lgdi32 $LIBS"  # previously had -liberty 
+  *-*-mingw32*)
+     LIBS="-lpsapi -lws2_32 -lgdi32 $LIBS"  # previously had -liberty
      CPPFLAGS="-DUNICODE -D_UNICODE -D__MSVCRT_VERSION__=0x0601 -DWINVER=0x0500 -D_WIN32_WINNT=0x0500 -g $CPPFLAGS"
-     # Removed: -DHAVE_STRUCT_TIMESPEC 
+     # Removed: -DHAVE_STRUCT_TIMESPEC
      CXXFLAGS="$CXXFLAGS -Wno-format "  # compiler mingw-4.3.0 is broken on I64u formats
      CFLAGS="$CFLAGS --static"
      CPPFLAGS="$CPPFLAGS --static"
@@ -64,7 +64,7 @@ case $host in
      # Removed
      # LDFLAGS="$LDFLAGS -shared-libgcc" # allows exiv2 to throw an exception that's caught elsewhere
      mingw="yes"
-     ;;		 		     
+     ;;
 esac
 
 if test x"${mingw}" == "xno" ; then
@@ -79,8 +79,8 @@ if test x"${mingw}" == "xno" ; then
         AC_MSG_NOTICE([ *** ADDING ${spfx}/lib to LDFLAGS *** ])
     fi
   done
-  AC_MSG_NOTICE([ CPPFLAGS = ${CPPFLAGS} ])        
-  AC_MSG_NOTICE([ LDFLAGS = ${LDFLAGS} ])        
+  AC_MSG_NOTICE([ CPPFLAGS = ${CPPFLAGS} ])
+  AC_MSG_NOTICE([ LDFLAGS = ${LDFLAGS} ])
 fi
 
 if test -r /bin/uname.exe ; then
@@ -95,14 +95,14 @@ fi
 # Enable all the compiler debugging we can find
 #
 # This is originally from PhotoRec, but modified substantially by Simson
-# Figure out which flags we can use with the compiler. 
+# Figure out which flags we can use with the compiler.
 #
 # These I don't like:
 # -Wdeclaration-after-statement -Wconversion
-# doesn't work: -Wunreachable-code 
-# causes configure to crash on gcc-4.2.1: -Wsign-compare-Winline 
-# causes warnings with unistd.h:  -Wnested-externs 
-# Just causes too much annoyance: -Wmissing-format-attribute 
+# doesn't work: -Wunreachable-code
+# causes configure to crash on gcc-4.2.1: -Wsign-compare-Winline
+# causes warnings with unistd.h:  -Wnested-externs
+# Just causes too much annoyance: -Wmissing-format-attribute
 
 # Check GCC
 WARNINGS_TO_TEST="-MD -Wpointer-arith -Wmissing-declarations -Wmissing-prototypes \
@@ -146,14 +146,14 @@ unset option
 ##        e.g. "export MALLOC_TRACE=~/malloc_outfile.txt"
 ##   3. improve readability of malloc_outfile.txt using mtrace,
 ##        e.g. "mtrace /usr/local/bin/bulk_extractor ~/malloc_outfile.txt
-AC_ARG_ENABLE([mcheck], AS_HELP_STRING([--enable-mcheck], 
- [enable memory analysis support for detecting memory leaks and detecting multiply deallocated memory resources]), 
- AC_DEFINE(HAVE_MCHECK, 1, 
-          [define the output file using global variable MALLOC_TRACE, 
-           for example "MALLOC_TRACE=./mcheck.out; export MALLOC_TRACE". 
-           Then post-process unreadable file mcheck.out using the mtrace command line tool, 
-           for example "mtrace /usr/local/bin/bulk_extractor mcheck.out".  
-           Unfortunately, only addresses with written code are looked up, 
+AC_ARG_ENABLE([mcheck], AS_HELP_STRING([--enable-mcheck],
+ [enable memory analysis support for detecting memory leaks and detecting multiply deallocated memory resources]),
+ AC_DEFINE(HAVE_MCHECK, 1,
+          [define the output file using global variable MALLOC_TRACE,
+           for example "MALLOC_TRACE=./mcheck.out; export MALLOC_TRACE".
+           Then post-process unreadable file mcheck.out using the mtrace command line tool,
+           for example "mtrace /usr/local/bin/bulk_extractor mcheck.out".
+           Unfortunately, only addresses with written code are looked up,
            in otherwords, use of malloc is looked up, but use of new is not.]))
 
 
@@ -163,7 +163,7 @@ AC_ARG_ENABLE([mcheck], AS_HELP_STRING([--enable-mcheck],
 # -Waggregate-return -- aggregate returns are GOOD; they simplify code design
 # We can use these warnings after ZLIB gets upgraded:
 # -Wundef  --- causes problems with zlib
-# -Wcast-qual 
+# -Wcast-qual
 # -Wmissing-format-attribute  --- Just too annoying
 AC_LANG_PUSH(C++)
 CXX_WARNINGS_TO_TEST="-Wall -MD -Wpointer-arith \
@@ -195,7 +195,7 @@ do
   unset SAVE_CXXFLAGS
 done
 unset option
-AC_LANG_POP()    
+AC_LANG_POP()
 
 # Determine UTC date offset
 CPPFLAGS="$CPPFLAGS -DUTC_OFFSET=`date +%z`"
@@ -203,7 +203,7 @@ CPPFLAGS="$CPPFLAGS -DUTC_OFFSET=`date +%z`"
 
 ################################################################
 # DFXML support
-m4_include([dfxml/src/dfxml_configure.m4])
+m4_include([dfxml_cpp/src/dfxml_configure.m4])
 
 ################################################################
 # BE13_API
@@ -266,10 +266,10 @@ AC_CHECK_HEADERS([alloca.h dirent.h dlfcn.h err.h errno.h fcntl.h inttypes.h lib
 AC_CHECK_FUNCS([err errx getuid getpwuid gethostname getrusage gmtime_r isxdigit ishexnumber le64toh localtime_r _lseeki64 inet_ntop pread64 pread printf mmap munmap MD5 mkstemp mktemp sleep SleepEx strptime usleep vasprintf warn warnx])
 AC_CHECK_FUNCS([CreateProcess LoadLibrary IncrementAtomic InterlockedIncrement])
 
-## dlopen is now itself in a different library 
+## dlopen is now itself in a different library
 ## Explicitly check for dlopen library before checking for dlopen
 ##       -ldl (see http://stackoverflow.com/questions/956640/linux-c-error-undefined-reference-to-dlopen)
-AC_CHECK_LIB([dl],[dlopen])		              
+AC_CHECK_LIB([dl],[dlopen])
 AC_CHECK_FUNCS([dlopen dlopen_preflight])
 
 ## Look for a regular expression system to use
@@ -310,7 +310,7 @@ AC_CHECK_LIB([z],[uncompress],,
 AC_TRY_COMPILE([#pragma GCC diagnostic ignored "-Wshadow"],[int a=3;],
   [AC_DEFINE(GNUC_HAS_DIAGNOSTIC_PRAGMA,1,[define 1 if GCC supports #pragma GCC diagnostic])]
 )
-  
+
 ################################################################
 ############## drop optimization flags and add -g if requested ################
 if test x"${AFF_NOOPT}" != "x" ; then
@@ -318,7 +318,7 @@ if test x"${AFF_NOOPT}" != "x" ; then
 fi
 
 if test "${with_opt}" = "no" ; then
-  CFLAGS=`echo   -g "$CFLAGS"   | sed s/-O[[0-9]]//`             # note the double quoting! 
+  CFLAGS=`echo   -g "$CFLAGS"   | sed s/-O[[0-9]]//`             # note the double quoting!
   CXXFLAGS=`echo -g "$CXXFLAGS" | sed s/-O[[0-9]]//`
 else
   # If we are not stripping the optimizer, add fortify source
@@ -327,7 +327,7 @@ else
 
   # and increase optimizer from -O2 to -O3 if not explicitly forbidden
   if test "${with_o3}" != "no" ; then
-      CFLAGS=`echo   -g "$CFLAGS"   | sed s/-O2/-O3/`             # note the double quoting! 
+      CFLAGS=`echo   -g "$CFLAGS"   | sed s/-O2/-O3/`             # note the double quoting!
       CXXFLAGS=`echo -g "$CXXFLAGS" | sed s/-O2/-O3/`
   fi
 fi
@@ -353,4 +353,3 @@ echo "#define CFLAGS   \"$CFLAGS\""   >> config.h
 echo "#define CXXFLAGS \"$CXXFLAGS\"" >> config.h
 echo "#define LIBS     \"$LIBS\""     >> config.h
 echo "#define LDFLAGS  \"$LDFLAGS\""  >> config.h
-

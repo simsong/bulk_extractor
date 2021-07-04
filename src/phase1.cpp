@@ -38,37 +38,6 @@ std::string Phase1::minsec(time_t tsec)
     return ss.str();
 }
 
-void Phase1::dfxml_create(int argc, char * const *argv)
-{
-    xreport.push("dfxml","xmloutputversion='1.0'");
-    xreport.push("metadata",
-		 "\n  xmlns='http://afflib.org/bulk_extractor/' "
-		 "\n  xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' "
-		 "\n  xmlns:dc='http://purl.org/dc/elements/1.1/'" );
-    xreport.xmlout("dc:type","Feature Extraction","",false);
-    xreport.pop();
-    if (argc && argv){
-        xreport.add_DFXML_creator(PACKAGE_NAME, PACKAGE_VERSION, "", argc, argv);
-    }
-    xreport.push("configuration");
-    xreport.xmlout("threads",config.num_threads);
-    xreport.xmlout("pagesize",config.opt_pagesize);
-    xreport.xmlout("marginsize",config.opt_marginsize);
-    xreport.push("scanners");
-
-    /* Generate a list of the scanners in use */
-    auto ev = ss.get_enabled_scanners();
-    for (const auto &it : ev) {
-        xreport.xmlout("scanner",it);
-    }
-    xreport.pop();			// scanners
-    xreport.pop();			// configuration
-    xreport.flush();                    // get it to the disk
-}
-
-
-
-
 /*
  * Print the status of each thread in the threadpool.
  */
@@ -192,8 +161,6 @@ struct  work_unit {
 
 void Phase1::send_data_to_workers()
 {
-    xreport.push("runtime","xmlns:debug=\"http://www.github.com/simsong/bulk_extractor/issues\"");
-
     /* A single loop with two iterators.
      *
      * it -- the regular image_iterator; it knows how to read blocks.
@@ -216,6 +183,9 @@ void Phase1::send_data_to_workers()
         std::cerr << "sampling\n";
         make_sorted_random_blocklist(&blocks_to_sample,it.max_blocks(),config.sampling_fraction);
         si = blocks_to_sample.begin();    // get the new beginning
+    } else {
+        /* Not sampling */
+        sha1g = new dfxml::sha1_generator();
     }
     /* Loop over the blocks to sample */
     while(it != p.end()) {
@@ -282,14 +252,11 @@ void Phase1::send_data_to_workers()
     if (!config.opt_quiet){
         std::cout << "All data are read; waiting for threads to finish...\n";
     }
-    xreport.pop();                      // runtime
 }
 
-
-void Phase1::wait_for_workers()
-{
+#if 0
+TODO: Turn this into a real-time status thread.
     /* Now wait for all of the threads to be free */
-    //tp->mode = 1;			// waiting for workers to finish
     time_t wait_start = time(0);
     for(int32_t counter = 0;;counter++){
         //int num_remaining = config.num_threads - tp->get_free_count();
@@ -320,22 +287,59 @@ void Phase1::wait_for_workers()
         }
     }
     if (config.opt_quiet==0) std::cout << "All Threads Finished!\n";
+#endif
 
-    xreport.pop();			// pop runtime
+
+
+Phase1::Phase1(dfxml_writer &xreport_,Config config_, image_process &p_, scanner_set &ss_):
+    xreport(xreport_),config(config_), p(p_), ss(ss_)
+{
+}
+
+
+void Phase1::dfxml_write_create(int argc, char * const *argv)
+{
+    xreport.push("dfxml","xmloutputversion='1.0'");
+    xreport.push("metadata",
+		 "\n  xmlns='http://afflib.org/bulk_extractor/' "
+		 "\n  xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' "
+		 "\n  xmlns:dc='http://purl.org/dc/elements/1.1/'" );
+    xreport.xmlout("dc:type","Feature Extraction","",false);
+    xreport.pop();
+    if (argc && argv){
+        xreport.add_DFXML_creator(PACKAGE_NAME, PACKAGE_VERSION, "", argc, argv);
+    }
+    xreport.push("configuration");
+    xreport.xmlout("threads",config.num_threads);
+    xreport.xmlout("pagesize",config.opt_pagesize);
+    xreport.xmlout("marginsize",config.opt_marginsize);
+    xreport.push("scanners");
+
+    /* Generate a list of the scanners in use */
+    auto ev = ss.get_enabled_scanners();
+    for (const auto &it : ev) {
+        xreport.xmlout("scanner",it);
+    }
+    xreport.pop("scanners");		// scanners
+    xreport.pop("configuration");	// configuration
+    xreport.flush();                    // get it to the disk
+}
+
+void Phase1::dfxml_write_source()
+{
     /* We can write out the source info now, since we (might) know the hash */
     xreport.push("source");
     xreport.xmlout("image_filename",p.image_fname());
     xreport.xmlout("image_size",p.image_size());
     if (sha1g){
         dfxml::sha1_t sha1 = sha1g->digest();
-        //if (sha1_string) *sha1_string = sha1.hexdigest();
         xreport.xmlout("hashdigest",sha1.hexdigest(),"type='SHA1'",false);
         delete sha1g;
     }
-    xreport.pop();			// source
+    xreport.pop("source");			// source
 
     /* Record the feature files and their counts in the output */
-    //tp->fs.dump_name_count_stats(xreport);
+    ss.dump_name_count_stats(xreport);
 
     //if (config.opt_quiet==0) std::cout << "Producer time spent waiting: " << tp->waiting.elapsed_seconds() << " sec.\n";
 
@@ -349,9 +353,11 @@ void Phase1::wait_for_workers()
         xreport.xmlout("thread_wait",dtos((*ij)->waiting.elapsed_seconds()),sstr.str(),false);
     }
 #endif
-    xreport.pop();
+    //xreport.pop();
     xreport.flush();
-    if (config.opt_quiet==0) std::cout << "Average consumer time spent waiting: " << worker_wait_average << " sec.\n";
+    if (config.opt_quiet==0) {
+        std::cout << "Average consumer time spent waiting: " << worker_wait_average << " sec.\n";
+    }
 #if 0
     if (worker_wait_average > tp->waiting.elapsed_seconds()*2
        && worker_wait_average>10 && config.opt_quiet==0){
@@ -373,26 +379,6 @@ void Phase1::wait_for_workers()
     /* end of phase 1 */
 }
 
-Phase1::Phase1(dfxml_writer &xreport_,Config config_, image_process &p_, scanner_set &ss_):
-    xreport(xreport_),config(config_), p(p_), ss(ss_)
-{
-}
-
-
-
-#if 0
-/* Single threaded */
-void Phase1::run()
-{
-    image_process::iterator     it = p.begin(); // sequential iterator
-    while (it != p.end()) {
-        sbuf_t *sbuf = p.sbuf_alloc(it);
-        ss.process_sbuf(sbuf);
-        ++it;
-    }
-    return;
-}
-#endif
 
 /* multi-threaded */
 void Phase1::run()
@@ -402,7 +388,9 @@ void Phase1::run()
     timer.start();
     //p.set_report_read_errors(config.opt_report_read_errors);
     tp = new threadpool(config.num_threads); // ,fs,xreport);
+    xreport.push("runtime","xmlns:debug=\"http://www.github.com/simsong/bulk_extractor/issues\"");
     send_data_to_workers();
     tp->join();
-    //wait_for_workers();
+    xreport.pop("runtime");
+    dfxml_write_source();
 }

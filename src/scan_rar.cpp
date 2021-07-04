@@ -9,7 +9,7 @@
 #include "be13_api/scanner_params.h"
 
 #include "utf8.h"
-#include "dfxml/src/dfxml_writer.h"
+#include "dfxml_cpp/src/dfxml_writer.h"
 
 
 #ifdef USE_RAR

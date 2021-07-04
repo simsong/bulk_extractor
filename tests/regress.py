@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # coding=UTF-8
 """
-Regression system: 
+Regression system:
 
 A basic framework for running bulk_extractor and viewing the results.
 
@@ -106,7 +106,7 @@ def get_scanners(exe):
         if len(atoms)>0 and atoms[0] in ['-x','-e']:
             scanners.add(atoms[1])
     return scanners
-    
+
 
 def ptime(t):
     r = ""
@@ -227,10 +227,10 @@ def analyze_reportxml(xmldoc):
             print("*** error: pos0={} was ended by threadid {} but ended by threadid {}".format(pos0,proc[pos0],threadid))
         else:
             del proc[pos0]
-    
+
     for (pos0,threadid) in proc.items():
         print("*** error: pos0={} was started by threadid {} but never ended".format(pos0,threadid))
-    
+
     scanner_times = []
     scanners = xmldoc.getElementsByTagName("scanner_times")[0]
     total = 0
@@ -247,8 +247,8 @@ def analyze_reportxml(xmldoc):
     for (name,calls,seconds) in scanner_times:
         print("  {:>25}  {:8.0f}  {:12.4f}  {:12.4f}  {:5.2f}%".format(
                 name,calls,seconds,seconds/calls,100.0*seconds/total))
-    
-    
+
+
 def analyze_outdir(outdir):
     """Print statistics about an output directory"""
     print("Analyze {}".format(outdir))
@@ -256,10 +256,10 @@ def analyze_outdir(outdir):
     b = bulk_extractor_reader.BulkReport(outdir)
     print("bulk_extractor version: {}".format(b.version()))
     print("Image filename:         {}".format(b.image_filename()))
-    
+
     # Print which scanners were run and how long they took
     analyze_reportxml(b.xmldoc)
-    
+
     hfns = list(b.histogram_files()) # histogram files
     print("")
     print("Histogram Files:        {}".format(len(hfns)))
@@ -280,7 +280,7 @@ def analyze_outdir(outdir):
 
     fnpart = ".".join(b.image_filename().split('/')[-1].split('.')[:-1])
 
-    ffns = sorted(list(b.feature_files())) 
+    ffns = sorted(list(b.feature_files()))
     if ffns:
         features = {}
         print("")
@@ -292,7 +292,7 @@ def analyze_outdir(outdir):
                     lines += 1
                     features[fn] = lines
             print("  {:>25} features: {:>12,}  {}".format(fn,lines,analyze_warning(fnpart,fn,lines)))
-                    
+
         # If there is a SQLite database, analyze that too!
     if args.featurefile and args.featuresql:
         import sqlite3
@@ -326,7 +326,7 @@ def analyze_outdir(outdir):
                                 #pass
                                 print("feature {} {} not in table {} ({})".format(path,feature,table,ct))
                             count += 1
-                            if count>args.featuretest: 
+                            if count>args.featuretest:
                                 break
 
                 except sqlite3.OperationalError as e:
@@ -341,7 +341,7 @@ def make_zip(dname):
     for fname in b.all_files:
         print("  adding {} ...".format(fname))
         z.write(os.path.join(dname,fname),arcname=os.path.basename(fname))
-    
+
 
 def make_outdir(outdir_base):
     counter = 1
@@ -374,8 +374,8 @@ def run_outdir(gdb=False):
     if args.jobs: cargs += ['-j'+str(args.jobs)]
     if args.pagesize: cargs += ['-G'+str(args.pagesize)]
     if args.marginsize: cargs += ['-g'+str(args.marginsize)]
-    
-    cargs += ['-e','all']    # enable 'all' scanners 
+
+    cargs += ['-e','all']    # enable 'all' scanners
     if args.extra:
         while "  " in args.extra:
             args.extra = args.extra.replace("  "," ")
@@ -403,14 +403,14 @@ def run_outdir(gdb=False):
             f.write("run ")
             f.write(" ".join(cargs))
             f.write("\n")
-            
+
         cmd = ['gdb','-e',args.exe,'-x','/tmp/cmds']
     else:
         cmd = [args.exe] + cargs
     run(cmd)
     return outdir
 
-             
+
 def sort_outdir(outdir):
     """Sort the output directory with gnu sort"""
     print("Now sorting files in "+outdir)
@@ -442,7 +442,7 @@ def asbinary(s):
             count = 0
             ret += " "
     return ret
-        
+
 
 FEATURE_FILE = 1
 MAX_OFFSET_SIZE  = 100
@@ -457,7 +457,7 @@ def invalid_feature_file_line(line,fields):
     if len(fields[1])>MAX_FEATURE_SIZE: return "FEATURE > "+str(MAX_FEATURE_SIZE)
     if len(fields[2])>MAX_CONTEXT_SIZE: return "CONTEXT > "+str(MAX_CONTEXT_SIZE)
     return None
-    
+
 def validate_file(f,kind):
     is_kml = f.name.endswith(".kml")
     linenumber = 0
@@ -501,8 +501,8 @@ def validate_report(fn,do_validate=True):
             validate_file(b.open(fn,'rb'),FEATURE_FILE)
     else:
         validate_file(open(fn,'rb'))
-            
-            
+
+
 def identify_filenames(outdir):
     """Run identify_filenames on output using the installed fiwalk"""
     if_outdir = outdir + "-annotated"
@@ -523,7 +523,7 @@ def diff(dname1,dname2):
     def lines_to_set(fn):
         "Read the lines in a file and return them as a set. Ignore the lines beginning with #"
         return set(filter(lambda line:line[0:1]!='#',open(fn).read().split("\n")))
-    
+
     files1 = set(files_in_dir(dname1))
     files2 = set(files_in_dir(dname2))
     if files1.difference(files2):
@@ -536,12 +536,12 @@ def diff(dname1,dname2):
     for fn in sorted(common):
         fn1 = os.path.join(dname1,fn)
         fn2 = os.path.join(dname2,fn)
-        
+
         if fn=="report.xml":
             continue
         if fn=="wordlist.txt" and not args.diffwordlist:
             continue
-        if fn=="packets.pcap": 
+        if fn=="packets.pcap":
             s1 = os.path.getsize(fn1)
             s2 = os.path.getsize(fn2)
             if s1!=s2:
@@ -607,7 +607,7 @@ def datacheck():
         args.extra += "-e outlook"
     outdir = run_outdir()
     datacheck_checkreport(outdir)
-        
+
 def download():
     print("Checking downloads:")
     for name in IMAGE_PATH.keys():
@@ -622,8 +622,8 @@ def download():
                 logging.error("HINT: Set envrionment variable %s to be the top-level directory of your corpus archive",CORP_ENV)
                 logging.error("getenv(%s)=%s",CORP_ENV,os.environ.get(CORP_ENV,None))
                 exit(1)
-            subprocess.check_call(['curl','-o',path,url])
-        
+            subprocess.check_call(['curl','-L','-o',path,url])
+
 
 def datacheck_checkreport(outdir):
     """Reports on whether the output in outdir matches the datacheck report"""
@@ -638,7 +638,7 @@ def datacheck_checkreport(outdir):
             found_features[pos] = feature
     print("Now reading features from data_check.txt")
     not_found = {}
-    report_mismatches = False 
+    report_mismatches = False
     found_count = 0
     for line in open("data_check.txt","rb"):
         y = bulk_extractor_reader.parse_feature_line(line)
@@ -656,24 +656,24 @@ def datacheck_checkreport(outdir):
         print("{} not found {}".format(pos,not_found[pos]))
     print("Total features found: {}".format(found_count))
     print("Total features not found: {}".format(len(not_found)))
-        
-        
+
+
 if __name__=="__main__":
-    import argparse 
+    import argparse
     global args
     import sys,time
 
     parser = argparse.ArgumentParser(description="Perform regression testing on bulk_extractor",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--download", help="Download the regression images", action='store_true')
-    parser.add_argument("--corp", help="Specification root of corpus. Defaults to location specified by environment variable {} or to {} if environment variable is not present".format(CORP_ENV,CORP_DEFAULT))
-    parser.add_argument("--gdb",help="run under gdb",action="store_true")
+    parser.add_argument("--corp", help="Specification root of corpus. "
+                        "Defaults to location specified by environment variable {} or to {} if "
+                        "environment variable is not present".format(CORP_ENV,CORP_DEFAULT))
+    parser.add_argument("--gdb",help="run under gdb. Useful for crashes",action="store_true")
     parser.add_argument("--debug",help="debug level",type=int)
     parser.add_argument("--outdir",help="output directory base",default=None)
-    parser.add_argument("--exe",help="Executable to run (default {})".format(exe),default=exe)
-    parser.add_argument("--image",
-                        help="image to scan (default is {})".format(os.path.basename(IMAGE_PATH[DEFAULT_INFILE])),
-                        default=image_path(DEFAULT_INFILE))
+    parser.add_argument("--exe",help="Executable to run. ",default=exe)
+    parser.add_argument("--image", help="image to scan. ", default=image_path(DEFAULT_INFILE))
     parser.add_argument("--fast",help="Run with "+os.path.basename(IMAGE_PATH[FAST_INFILE]),action="store_true")
     parser.add_argument("--full",help="Run with "+os.path.basename(IMAGE_PATH[FULL_INFILE]),action="store_true")
     parser.add_argument("--jobs",help="Specifies number of worker threads",type=int)
@@ -720,7 +720,7 @@ if __name__=="__main__":
     parser.add_argument("--datacheck_checkreport",help="Checks the files in in Data/ directory and makes sure that all of the features in data_check.txt are found")
 
     args = parser.parse_args()
-    
+
     if args.download:
         download()
         print("All image downloaded")
@@ -886,8 +886,7 @@ if __name__=="__main__":
 
         for j in range(tune_jobs_start,tune_jobs_end+1,tune_jobs_step):
             run_with_parms(j,None,None)
-            
-        exit(0)
-        
-    run_and_analyze(args)
 
+        exit(0)
+
+    run_and_analyze(args)

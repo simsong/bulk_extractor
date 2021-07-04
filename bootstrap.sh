@@ -4,7 +4,7 @@
 
 mkdir -p build-aux
 
-for sub in be13_api be13_api/dfxml
+for sub in be13_api be13_api/dfxml_cpp
 do
   if [ ! -r src/$sub/.git ] ;  then
     echo submodule $sub is not present.
@@ -13,16 +13,12 @@ do
 done
 
 # have automake do an initial population if necessary
-if [ ! -e config.guess -o ! -e config.sub -o ! -e install-sh -o ! -e missing -o ! -e test-driver ]; then
-    autoheader -f
-    touch NEWS README AUTHORS ChangeLog
-    touch stamp-h
-    aclocal -I m4
-    autoconf -f
-    automake --add-missing --copy
-else
-    autoreconf -f
-fi
+autoheader -f
+touch NEWS README AUTHORS ChangeLog
+touch stamp-h
+aclocal -I m4
+autoconf -f
+automake --add-missing --copy
 
 # We were very excited about AddressSanitizer.
 # This is how to enable it...

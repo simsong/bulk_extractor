@@ -53,8 +53,8 @@ int _CRT_fmode = _O_BINARY;
 #include "findopts.h"
 #include "image_process.h"
 #include "be13_api/utils.h"             // needs config.h
-#include "be13_api/dfxml/src/dfxml_writer.h"
-#include "be13_api/dfxml/src/hash_t.h"  // needs config.h
+#include "dfxml_cpp/src/dfxml_writer.h"
+#include "dfxml_cpp/src/hash_t.h"  // needs config.h
 
 #include "phase1.h"
 
@@ -194,7 +194,7 @@ static int stat_callback(void *user,const std::string &name,uint64_t calls,doubl
     xreport->xmlout("name",name);
     xreport->xmlout("calls",(int64_t)calls);
     xreport->xmlout("seconds",seconds);
-    xreport->pop();
+    xreport->pop("path");
     xreport->set_oneline(false);
     return 0;
 }
@@ -204,29 +204,19 @@ static int stat_callback(void *user,const std::string &name,uint64_t calls,doubl
  * Make sure that the filename provided is sane.
  * That is, do not allow the analysis of a *.E02 file...
  */
-void validate_fn(const std::string &fn)
+void validate_path(const std::filesystem::path fn)
 {
-    int r= access(fn.c_str(),R_OK);
-    if(r!=0){
-#ifndef WIN32
-        /* ignore this check under windows for now */
-        std::cerr << "cannot open: " << fn << ": " << strerror(errno) << " (code " << r << ")\n";
-	exit(1);
-#endif
+    if(!std::filesystem::exists(fn)){
+        std::cerr << "file does not exist: " << fn << "\n";
+        exit(1);
     }
-    if(fn.size()>3){
-	size_t e = fn.rfind('.');
-	if(e!=std::string::npos){
-            std::string ext = fn.substr(e+1);
-	    if(ext=="E02" || ext=="e02"){
-                std::cerr << "Error: invalid file name\n";
-                std::cerr << "Do not use bulk_extractor to process individual EnCase files.\n";
-                std::cerr << "Instead, just run bulk_extractor with FILENAME.E01\n";
-                std::cerr << "The other files in an EnCase multi-volume archive will be opened\n";
-                std::cerr << "automatically.\n";
-		exit(1);
-	    }
-	}
+    if(fn.extension()=="E02" || fn.extension()=="e02"){
+        std::cerr << "Error: invalid file name\n";
+        std::cerr << "Do not use bulk_extractor to process individual EnCase files.\n";
+        std::cerr << "Instead, just run bulk_extractor with FILENAME.E01\n";
+        std::cerr << "The other files in an EnCase multi-volume archive will be opened\n";
+        std::cerr << "automatically.\n";
+        exit(1);
     }
 }
 
@@ -260,7 +250,7 @@ static std::string get_and_remove_token(std::string &path)
  * upperstr - Turns an ASCII string into upper case (should be UTF-8)
  */
 
-static std::string lowerstr(const std::string &str)
+static std::string lowerstr(const std::string str)
 {
     std::string ret;
     for(std::string::const_iterator i=str.begin();i!=str.end();i++){
@@ -609,39 +599,9 @@ public:;
 /* It is gross to do this with statics rather than a singleton whose address is passed in 'user',
  * but that is the way it is implemented.
  */
-static std::string current_ofname;
-static std::ofstream o;
-#if 0
-static int histogram_dump_callback(void *user,const feature_recorder &fr,
-                                   const histogram_def &def,
-                                   const std::string &str,const uint64_t &count)
-{
-    static bool needs_stamping=false;
-    if(count==0){
-        if (o.is_open()) o.close();        // close old stream
-        std::string ofname = fr.fname_counter(def.suffix);
-        if (current_ofname != ofname){
-            o.open(ofname.c_str());
-            if(!o.is_open()){
-                std::cerr << "Cannot open histogram output file: " << ofname << "\n";
-                return -1;
-            }
-            needs_stamping = true;
-        }
-        return 0;
-    }
-
-    if (needs_stamping){
-        fr.banner_stamp(o,feature_recorder::histogram_file_header);
-        needs_stamping = false;
-    }
-
-    o << str << "\t" << "n=" << count << "\n";
-    return 0;
-}
-
-#endif
-std::string be_hash_name {"md5"};
+//static std::string current_ofname;
+//static std::ofstream o;
+std::string be_hash_name {"sha1"};
 static void add_if_present(std::vector<std::string> &scanner_dirs,const std::string &dir)
 {
     if (access(dir.c_str(),O_RDONLY) == 0){
@@ -699,6 +659,8 @@ int main(int argc,char **argv)
     if(argc==1) opt_h=1;                // generate help if no arguments provided
 
     /* Process options */
+    const std::string ALL { "all" };
+    std::string arg {};
     int ch;
     while ((ch = getopt(argc, argv, "A:B:b:C:d:E:e:F:f:G:g:Hhij:M:m:o:P:p:q:Rr:S:s:VW:w:x:Y:z:Z")) != -1) {
 	switch (ch) {
@@ -727,12 +689,13 @@ int main(int argc,char **argv)
             //plugin::set_scanner_debug(cfg.debug);
 	}
 	break;
-	case 'E':
+	case 'E':            /* Enable all scanners */
             sc.push_scanner_command(scanner_config::scanner_command::ALL_SCANNERS, scanner_config::scanner_command::DISABLE);
             sc.push_scanner_command(optarg, scanner_config::scanner_command::ENABLE);
 	    break;
-	case 'e':
-            sc.push_scanner_command(optarg, scanner_config::scanner_command::ENABLE);
+	case 'e':           /* enable a spedcific scanner */
+            arg = optarg!=ALL ? optarg : scanner_config::scanner_command::ALL_SCANNERS;
+            sc.push_scanner_command(arg, scanner_config::scanner_command::ENABLE);
 	    break;
 	case 'F': FindOpts::get().Files.push_back(optarg); break;
 	case 'f': FindOpts::get().Patterns.push_back(optarg); break;
@@ -856,7 +819,7 @@ int main(int argc,char **argv)
         usage(progname, ss);
         exit(1);
     }
-    if ( opt_H) {
+    if ( opt_H ) {
         ss.info_scanners(std::cout, true, true, 'e', 'x');
         exit(1);
     }
@@ -865,7 +828,13 @@ int main(int argc,char **argv)
     bool clean_start = directory_empty(sc.outdir);
 
     /* Applying the scanner commands will create the alert recorder. */
-    ss.apply_scanner_commands();
+    try {
+        ss.apply_scanner_commands();
+    }
+    catch (const scanner_set::NoSuchScanner &e) {
+        std::cerr << "no such scanner: " << e.what() << "\n";
+        exit(1);
+    }
 
     /* Give an error if a find list was specified
      * but no scanner that uses the find list is enabled.
@@ -926,7 +895,7 @@ int main(int argc,char **argv)
             std::cerr << "argc=" << argc << "\n";
             throw std::runtime_error("Clean start, but too many arguments provided. Run with -h for help.");
         }
-	validate_fn(sc.input_fname);
+	validate_path(sc.input_fname);
     } else {
 	/* Restarting */
 	std::cout << "Restarting from " << sc.outdir << "\n";
@@ -1008,7 +977,7 @@ int main(int argc,char **argv)
 
     dfxml_writer *xreport = new dfxml_writer(report_path, false);
     Phase1 phase1(*xreport, cfg, *p, ss);
-    phase1.dfxml_create( argc, argv);
+    phase1.dfxml_write_create( argc, argv);
     xreport->xmlout("provided_filename", sc.input_fname); // save this information
 
     /* TODO: Load up phase1 seen_page_ideas if we are restarting */
@@ -1047,14 +1016,16 @@ int main(int argc,char **argv)
     xreport->xmlout("elapsed_seconds",timer.elapsed_seconds());
     //xreport->xmlout("max_depth_seen",plugin::get_max_depth_seen());
     //xreport->xmlout("dup_data_encountered",plugin::dup_data_encountered);
-    xreport->pop();			// report
+
+    xreport->pop("report");
 
     xreport->push("scanner_times");
     ss.dump_name_count_stats(*xreport);
-    xreport->pop();                     // scanner_times
+    xreport->pop("scanner_times");                     // scanner_times
 
     xreport->add_rusage();
-    xreport->pop();			// bulk_extractor
+    xreport->pop("dfxml");			// bulk_extractor
+
 
     xreport->close();
     if(cfg.opt_quiet==0){
