@@ -4,7 +4,7 @@
 
 mkdir -p build-aux
 
-for sub in be13_api be13_api/dfxml
+for sub in be13_api be13_api/dfxml_cpp
 do
   if [ ! -r src/$sub/.git ] ;  then
     echo submodule $sub is not present.
