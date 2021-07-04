@@ -38,8 +38,6 @@ std::string Phase1::minsec(time_t tsec)
     return ss.str();
 }
 
-
-
 /*
  * Print the status of each thread in the threadpool.
  */

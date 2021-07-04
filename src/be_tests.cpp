@@ -243,7 +243,7 @@ std::string validate(std::string image_fname, std::vector<Check> &expected)
     ss.phase_scan();
     phase1.run();
     ss.shutdown();
-    xreport->pop();                     // dfxml
+    xreport->pop("dfxml");
     xreport->close();
 
     for (size_t i=0; i<expected.size(); i++){

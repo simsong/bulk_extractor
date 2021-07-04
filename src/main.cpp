@@ -1016,6 +1016,7 @@ int main(int argc,char **argv)
     xreport->xmlout("elapsed_seconds",timer.elapsed_seconds());
     //xreport->xmlout("max_depth_seen",plugin::get_max_depth_seen());
     //xreport->xmlout("dup_data_encountered",plugin::dup_data_encountered);
+
     xreport->pop("report");
 
     xreport->push("scanner_times");
@@ -1024,6 +1025,8 @@ int main(int argc,char **argv)
 
     xreport->add_rusage();
     xreport->pop("dfxml");			// bulk_extractor
+
+
     xreport->close();
     if(cfg.opt_quiet==0){
         float mb_per_sec = (phase1.total_bytes / 1000000.0) / timer.elapsed_seconds();
