@@ -21,7 +21,7 @@
 #include "tsk3_fatdirs.h"
 
 #include "utf8.h"
-#include "dfxml/src/dfxml_writer.h"     // requires config.h
+#include "dfxml_cpp/src/dfxml_writer.h"     // requires config.h
 #include "be13_api/utils.h" // for microsoftDateToISODate, requires config.h
 #include "be13_api/scanner_params.h"
 

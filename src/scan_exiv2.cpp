@@ -18,7 +18,7 @@
 
 #include "be13_api/utils.h"// needs config.h
 
-#include "dfxml/src/dfxml_writer.h"
+#include "dfxml_cpp/src/dfxml_writer.h"
 
 
 //#include "md5.h"

@@ -114,3 +114,4 @@ ar-lib
 build-aux
 out??/
 out?/
+*.xml

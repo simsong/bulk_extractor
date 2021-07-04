@@ -17,7 +17,7 @@
 #include "mach-o/dyld.h"
 #endif
 
-#include "be13_api/dfxml/src/dfxml_writer.h"
+#include "dfxml_cpp/src/dfxml_writer.h"
 #include "be13_api/scanner_set.h"
 #include "be13_api/catch.hpp"
 #include "be13_api/utils.h"             // needs config.h
@@ -239,7 +239,7 @@ std::string validate(std::string image_fname, std::vector<Check> &expected)
 
     auto *xreport = new dfxml_writer(sc.outdir / "report.xml", false);
     Phase1 phase1(*xreport, cfg, *p, ss);
-    phase1.dfxml_create( 0, nullptr);
+    phase1.dfxml_write_create( 0, nullptr);
     ss.phase_scan();
     phase1.run();
     ss.shutdown();

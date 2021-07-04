@@ -53,8 +53,8 @@ int _CRT_fmode = _O_BINARY;
 #include "findopts.h"
 #include "image_process.h"
 #include "be13_api/utils.h"             // needs config.h
-#include "be13_api/dfxml/src/dfxml_writer.h"
-#include "be13_api/dfxml/src/hash_t.h"  // needs config.h
+#include "dfxml_cpp/src/dfxml_writer.h"
+#include "dfxml_cpp/src/hash_t.h"  // needs config.h
 
 #include "phase1.h"
 
@@ -194,7 +194,7 @@ static int stat_callback(void *user,const std::string &name,uint64_t calls,doubl
     xreport->xmlout("name",name);
     xreport->xmlout("calls",(int64_t)calls);
     xreport->xmlout("seconds",seconds);
-    xreport->pop();
+    xreport->pop("path");
     xreport->set_oneline(false);
     return 0;
 }
@@ -977,7 +977,7 @@ int main(int argc,char **argv)
 
     dfxml_writer *xreport = new dfxml_writer(report_path, false);
     Phase1 phase1(*xreport, cfg, *p, ss);
-    phase1.dfxml_create( argc, argv);
+    phase1.dfxml_write_create( argc, argv);
     xreport->xmlout("provided_filename", sc.input_fname); // save this information
 
     /* TODO: Load up phase1 seen_page_ideas if we are restarting */
@@ -1016,15 +1016,14 @@ int main(int argc,char **argv)
     xreport->xmlout("elapsed_seconds",timer.elapsed_seconds());
     //xreport->xmlout("max_depth_seen",plugin::get_max_depth_seen());
     //xreport->xmlout("dup_data_encountered",plugin::dup_data_encountered);
-    xreport->pop();			// report
+    xreport->pop("report");
 
     xreport->push("scanner_times");
     ss.dump_name_count_stats(*xreport);
-    xreport->pop();                     // scanner_times
+    xreport->pop("scanner_times");                     // scanner_times
 
     xreport->add_rusage();
-    xreport->pop();			// bulk_extractor
-
+    xreport->pop("dfxml");			// bulk_extractor
     xreport->close();
     if(cfg.opt_quiet==0){
         float mb_per_sec = (phase1.total_bytes / 1000000.0) / timer.elapsed_seconds();
