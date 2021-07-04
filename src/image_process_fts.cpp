@@ -7,7 +7,7 @@
  * MacOS & FreeBSD: Not needed; off_t is a 64-bit value.
  */
 
-#include "bulk_extractor.h"
+//#include "bulk_extractor.h"
 #include "image_process.h"
 
 #ifdef HAVE_FTS_H
@@ -18,7 +18,7 @@
  *** Directory Recursion
  ****************************************************************/
 
-process_dir::process_dir(const std::string &image_dir):image_process(image_dir),files(0) 
+process_dir::process_dir(const std::string &image_dir):image_process(image_dir),files(0)
 {
 #if defined(HAVE_FTS_H) && defined(HAVE_FTS_OPEN)
     bool have_E01=false;
@@ -58,6 +58,5 @@ process_dir::process_dir(const std::string &image_dir):image_process(image_dir),
     cout << "Total files: " << files.size() << "\n";
 #else
     cerr << "support for process_dir not compiled in.\n";
-#endif    
+#endif
 }
-

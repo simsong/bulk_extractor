@@ -10,15 +10,34 @@
 // Just for this module
 #define _FILE_OFFSET_BITS 64
 
+#include "config.h"
+
 #include <algorithm>
 #include <stdexcept>
 #include <functional>
 #include <locale>
+#include <string>
+#include <vector>
 
-#include "config.h"
-#include "bulk_extractor.h"
+#ifdef HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
+
+#ifdef HAVE_SYS_IOCTL_H
+# include <sys/ioctl.h>
+#endif
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
+#ifdef HAVE_SYS_FCNTL_H
+#include <sys/fcntl.h>
+#endif
+
+
+
 #include "be13_api/utf8.h"
-
 #include "be13_api/formatter.h"
 #include "image_process.h"
 
@@ -148,7 +167,6 @@ static int64_t getSizeOfFile(const std::string &fname)
 #endif
     return fname_length;
 }
-
 
 
 

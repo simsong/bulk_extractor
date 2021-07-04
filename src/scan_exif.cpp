@@ -26,10 +26,7 @@
 #include "exif_reader.h"
 #include "unicode_escape.h"
 
-// these are not tunable
-
 // these are tunable
-//static int exif_debug=0;
 static size_t min_jpeg_size = 1000; // don't carve smaller than this
 
 /****************************************************************

@@ -112,8 +112,6 @@ bulk_extractor_nomain = \
         $(TSK3INCS)  \
 	$(BE13_API_SRC) \
 	bulk_extractor_scanners.h \
-	bulk_extractor_api.cpp \
-	bulk_extractor_api.h \
 	base64_forensic.cpp \
 	base64_forensic.h \
 	bulk_extractor.h \
@@ -129,20 +127,10 @@ bulk_extractor_nomain = \
 bulk_extractor_SOURCES = $(bulk_extractor_nomain) $(scanners_builtin) main.cpp
 be_tests_SOURCES = $(bulk_extractor_nomain) $(scanners_builtin) be13_api/catch.hpp be_tests.cpp
 
-# bulk_extractorlib_SOURCES = $(bulk_extractor_nomain) $(scanners_builtin) bulk_extractor_scanners.cpp
-# bulk_extractor_noscanners_SOURCES = $(bulk_extractor_nomain) bulk_extractor_noscanners.cpp main.cpp
-
 #lib: libbulkextractor.so
 
 #libbulkextractor.so: $(bulk_extractorlib_OBJECTS)
 #	$(CXX) -shared -fPIC -o $@ $(LDFLAGS) $(bulk_extractorlib_OBJECTS) $(LIBS)
-
-#beapi_demo_SOURCES = beapi_demo.cpp
-#beapi_demo$(EXEEXT): libbulkextractor.so		# needs an up-to-date .so
-#
-#rd: beapi_demo libbulkextractor.so
-#	echo run the demo
-#	./beapi_demo /corp/nps/drives/nps-2010-emails/nps-2010-emails.raw
 
 #unitest$(EXEEXT): unicode_escape.cpp
 #	$(CXX) -DSTANDALONE -o unitest$(EXEEXT) -g unicode_escape.cpp  $(CPPFLAGS) $(CXXFLAGS) -I..

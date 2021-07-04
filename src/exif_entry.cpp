@@ -22,8 +22,6 @@
 #include "unicode_escape.h" // for validating or escaping UTF8
 #include "exif_reader.h"
 
-// #define DEBUG 1
-
 static const uint32_t OPT_MAX_IFD_ENTRIES = 1000;	// don't parse more than this
 static const uint32_t OPT_MAX_EXIF_BYTES = 64 * 1024; // rough sanity limit
 static const bool opt_exif_suppress_unknown_entry_types = true; // suppress undefined entry types

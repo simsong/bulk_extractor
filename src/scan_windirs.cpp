@@ -10,16 +10,13 @@
 #include <cstdlib>
 #include <cstring>
 #include <sstream>
-
 #include <cerrno>
 
 #include <sys/time.h>
 
-
 #include "config.h"
 
 #include "tsk3_fatdirs.h"
-
 #include "utf8.h"
 #include "dfxml_cpp/src/dfxml_writer.h"     // requires config.h
 #include "be13_api/utils.h" // for microsoftDateToISODate, requires config.h
@@ -29,8 +26,8 @@
 /* fat32 tuning parameters for weirdness. Each of these define something weird. If too much is weird, it's probably not a FAT32 directory entry.. */
 static const uint32_t CLUSTERS_IN_1GiB = 2*1024*1024;
 
-static uint32_t opt_weird_file_size    = 1024*1024*150; // max file size
-static uint32_t opt_weird_file_size2   = 1024*1024*512; // max file size
+static uint32_t opt_weird_file_size        = 1024*1024*150; // max file size
+static uint32_t opt_weird_file_size2       = 1024*1024*512; // max file size
 static uint32_t opt_weird_cluster_count    = 32*CLUSTERS_IN_1GiB; // assume smaller than 32GB with 512 byte clusters
 static uint32_t opt_weird_cluster_count2   = 128*CLUSTERS_IN_1GiB; // assume smaller than 512GB with 512 byte clusters
 static uint32_t opt_max_bits_in_attrib = 3;
@@ -294,9 +291,9 @@ void scan_ntfsdirs(const sbuf_t &sbuf,feature_recorder &wrecorder)
 		if (nlink<10){ // sanity check - most files have less than 10 links
 
 		    dfxml_writer::strstrmap_t mftmap;
-		    mftmap["nlink"] = std::to_string(nlink);
+		    mftmap["nlink"] = std::to_string(static_cast<unsigned int>(nlink));
 		    mftmap["lsn"]   = std::to_string(n.get64u(8)); // $LogFile Sequence Number
-		    mftmap["seq"]   = std::to_string(n.get16u(18));
+		    mftmap["seq"]   = std::to_string(static_cast<unsigned int>(n.get16u(18)));
 		    size_t attr_off = n.get16u(20); // don't make 16bit!
 
 		    // Now look at every attribute for the ones that we care about
@@ -358,7 +355,7 @@ void scan_ntfsdirs(const sbuf_t &sbuf,feature_recorder &wrecorder)
 						     | (n[attr_off+soff+3]<<24)
 						     | ((uint64_t)n[attr_off+soff+4]<<32)
 						     | ((uint64_t)n[attr_off+soff+5]<<40));
-			    mftmap["par_seq"] = std::to_string(n.get16u(attr_off+soff+6));
+			    mftmap["par_seq"]   = std::to_string(static_cast<unsigned int>(n.get16u(attr_off+soff+6)));
 			    mftmap["crtime_fn"] = microsoftDateToISODate(n.get64u(attr_off+soff+8));
 			    mftmap["mtime_fn"]  = microsoftDateToISODate(n.get64u(attr_off+soff+16));
 			    mftmap["ctime_fn"]  = microsoftDateToISODate(n.get64u(attr_off+soff+24));
@@ -376,7 +373,7 @@ void scan_ntfsdirs(const sbuf_t &sbuf,feature_recorder &wrecorder)
 			    if (filesize > (1000L * terabyte)) break;
 			    mftmap["filesize"]       = std::to_string(filesize);
 
-			    mftmap["attr_flags"]     = std::to_string(n.get64u(attr_off+soff+56));
+			    mftmap["attr_flags"] = std::to_string(n.get64u(attr_off+soff+56));
 			    size_t  fname_nlen   = n.get8u(attr_off+soff+64);
 			    size_t  fname_nspace = n.get8u(attr_off+soff+65);
 			    size_t  fname_npos   = attr_off+soff+66;

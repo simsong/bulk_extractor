@@ -36,7 +36,6 @@
 #include "exif_reader.h"
 #include "jpeg_validator.h"
 
-
 #include "threadpool.hpp"
 
 const std::string JSON1 {"[{\"1\": \"one@company.com\"}, {\"2\": \"two@company.com\"}, {\"3\": \"two@company.com\"}]"};
@@ -103,7 +102,7 @@ std::filesystem::path test_scanner(scanner_t scanner, sbuf_t *sbuf)
     ss.apply_scanner_commands();
 
     REQUIRE (ss.get_enabled_scanners().size()==1); // the one scanner
-    std::cerr << "output in " << sc.outdir << " for " << ss.get_enabled_scanners()[0] << "\n";
+    std::cerr << "## output in " << sc.outdir << " for " << ss.get_enabled_scanners()[0] << "\n";
     REQUIRE(sbuf->children == 0);
     ss.phase_scan();
     REQUIRE(sbuf->children == 0);

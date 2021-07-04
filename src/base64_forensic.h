@@ -13,21 +13,6 @@
 
 #include <cctype>
 
-/* Win32 adds */
-//#ifndef __BEGIN_DECLS
-//#include <winsock.h>
-//#if defined(__cplusplus)
-//#define __BEGIN_DECLS   extern "C" {
-//#define __END_DECLS     }
-//#else
-//#define __BEGIN_DECLS
-//#define __END_DECLS
-//#endif
-//#endif
-/* End Win32 */
-
-
-
 /* Convert from printable base64 to binary.
  * Returns number of bytes converted
  */

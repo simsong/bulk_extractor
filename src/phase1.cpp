@@ -3,7 +3,6 @@
 #include <thread>
 
 #include "config.h"
-#include "bulk_extractor.h"
 #include "phase1.h"
 #include "be13_api/utils.h"             // needs config.h
 
