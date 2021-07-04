@@ -52,7 +52,8 @@ jobs:
 
       - name: make
         run: |
-          bash bootstrap.sh && ./configure
+          bash bootstrap.sh
+          ./configure
           cd src
           make
 

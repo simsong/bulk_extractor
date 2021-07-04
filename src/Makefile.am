@@ -132,9 +132,6 @@ be_tests_SOURCES = $(bulk_extractor_nomain) $(scanners_builtin) be13_api/catch.h
 # bulk_extractorlib_SOURCES = $(bulk_extractor_nomain) $(scanners_builtin) bulk_extractor_scanners.cpp
 # bulk_extractor_noscanners_SOURCES = $(bulk_extractor_nomain) bulk_extractor_noscanners.cpp main.cpp
 
-# stand is the standalone program that just runs on a single file.
-# stand_SOURCES = stand.cpp $(TSK3INCS) $(BE13_API_SRC)  scan_json.cpp
-
 #lib: libbulkextractor.so
 
 #libbulkextractor.so: $(bulk_extractorlib_OBJECTS)
