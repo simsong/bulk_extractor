@@ -14,28 +14,26 @@
 #include "config.h"
 
 #ifdef HAVE_MACH_O_DYLD_H
-#include "mach-o/dyld.h"
+#include "mach-o/dyld.h"         // Needed for _NSGetExecutablePath
 #endif
 
 #include "dfxml_cpp/src/dfxml_writer.h"
-#include "be13_api/scanner_set.h"
 #include "be13_api/catch.hpp"
+#include "be13_api/scanner_set.h"
 #include "be13_api/utils.h"             // needs config.h
 
-#include "image_process.h"
 #include "base64_forensic.h"
-#include "phase1.h"
-
-#include "sbuf_decompress.h"
 #include "bulk_extractor_scanners.h"
-#include "scan_base64.h"
-#include "scan_vcard.h"
-#include "scan_pdf.h"
-
-#include "scan_email.h"
 #include "exif_reader.h"
+#include "image_process.h"
 #include "jpeg_validator.h"
-
+#include "phase1.h"
+#include "sbuf_decompress.h"
+#include "scan_base64.h"
+#include "scan_email.h"
+#include "scan_pdf.h"
+#include "scan_vcard.h"
+#include "scan_wordlist.h"
 #include "threadpool.hpp"
 
 const std::string JSON1 {"[{\"1\": \"one@company.com\"}, {\"2\": \"two@company.com\"}, {\"3\": \"two@company.com\"}]"};
@@ -208,6 +206,22 @@ TEST_CASE("scan_vcard", "[scanners]") {
 
     /* Read the output */
 }
+
+
+TEST_CASE("scan_wordlist", "[scanners]") {
+    /* Make a scanner set with a single scanner and a single command to enable all the scanners.
+     */
+    auto sbuf2 = map_file( "john_jakes.vcf" );
+    auto outdir = test_scanner(scan_wordlist, sbuf2); // deletes sbuf2
+
+    /* Read the output */
+    auto wordlist_txt = getLines( outdir / "wordlist_dedup_1.txt");
+    REQUIRE( wordlist_txt[0] == "States" );
+    REQUIRE( wordlist_txt[1] == "America" );
+    REQUIRE( wordlist_txt[2] == "Company" );
+}
+
+
 
 
 struct Check {

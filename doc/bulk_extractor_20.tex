@@ -106,3 +106,21 @@ Simplified the API. sbuf previously had a two map_file's - one that
 took filename already open and the fd, and ht eother which just took
 the filename. Now it just has one; if it is already open, then it is
 oepened a secon time.
+
+
+* Use google searches to see if options are being used. Based on this,
+we were able to eliminate the following options:
+- [ ] opt_work_start_work_end - "Record work start and end of each scanner in report.xml file");
+
+- [ ] opt_enable_histograms- "Disable generation of histograms"
+
+Wordlist had its own writer.
+
+
+To do:
+Some scanners (such as wordlist) still have global state. There should
+be a way to allocate data within the scanner_set, perhaps using
+tmalloc.
+
+- we call get_scanner a lot. Would be better to store this in local
+space for each scanner.

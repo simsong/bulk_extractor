@@ -58,7 +58,7 @@ SCANNER(vcard)
 //SCANNER(winlnk)
 //SCANNER(winpe)
 //SCANNER(winprefetch)
-//SCANNER(wordlist)
+SCANNER(wordlist)
 SCANNER(xor)
 SCANNER(zip)
 
