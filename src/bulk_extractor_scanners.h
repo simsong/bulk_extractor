@@ -43,21 +43,21 @@ SCANNER(httplogs)
 SCANNER(json)
 SCANNER(kml)
 SCANNER(msxml)
-//SCANNER(net)
-//SCANNER(ntfsindx)    // scanner provided by 4n6ist:
-//SCANNER(ntfslogfile) // scanner provided by 4n6ist:
-//SCANNER(ntfsmft)     // scanner provided by 4n6ist:
-//SCANNER(ntfsusn)
-//SCANNER(outlook)
+SCANNER(net)
+SCANNER(ntfsindx)    // scanner provided by 4n6ist:
+SCANNER(ntfslogfile) // scanner provided by 4n6ist:
+SCANNER(ntfsmft)     // scanner provided by 4n6ist:
+SCANNER(ntfsusn)
+SCANNER(outlook)
 SCANNER(pdf)
-//SCANNER(rar)
-//SCANNER(sqlite)
-//SCANNER(utmp)        // scanner provided by 4n6ist:
+SCANNER(rar)
+SCANNER(sqlite)
+SCANNER(utmp)        // scanner provided by 4n6ist:
 SCANNER(vcard)
-//SCANNER(windirs)
-//SCANNER(winlnk)
-//SCANNER(winpe)
-//SCANNER(winprefetch)
+SCANNER(windirs)
+SCANNER(winlnk)
+SCANNER(winpe)
+SCANNER(winprefetch)
 SCANNER(wordlist)
 SCANNER(xor)
 SCANNER(zip)

@@ -1,3 +1,57 @@
+\documentclass[5p]{elsarticle}
+\usepackage{lineno,hyperref}
+\usepackage{shortvrb} \MakeShortVerb{\|}
+\newcommand{\be}{\texttt{bulk\_extractor}}
+\modulolinenumbers[5]
+\journal{Journal Peer Review Conferences}
+
+\bibliographystyle{model2-names}\biboptions{authoryear}
+%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+\begin{frontmatter}
+
+\title{Sharpening Your Tools: Updating {\tt bulk\_extractor} for the 2020s.}
+%\tnotetext[mytitlenote]{Fully documented templates are available in the elsarticle package on \href{http://www.ctan.org/tex-archive/macros/latex/contrib/elsarticle}{CTAN}.}
+
+%% Group authors per affiliation:
+\author{Simson Garfinkel}
+\address{Arlington, VA}
+
+%% or include affiliations in footnotes:
+
+\begin{abstract}
+Years of work...
+\end{abstract}
+
+\begin{keyword}
+bulk\_extractor
+\end{keyword}
+
+\end{frontmatter}
+
+\linenumbers
+
+\section{The Elsevier article class}
+
+\paragraph{Installation} If the document class \emph{elsarticle} is not available on your computer, you can download and install the system package \emph{texlive-publishers} (Linux) or install the \LaTeX\ package \emph{elsarticle} using the package manager of your \TeX\ installation, which is typically \TeX\ Live or Mik\TeX.
+
+\paragraph{Usage} Once the package is properly installed, you can use the document class \emph{elsarticle} to create a manuscript. Please make sure that your manuscript follows the guidelines in the Guide for Authors of the relevant journal. It is not necessary to typeset your manuscript in exactly the same way as an article, unless you are submitting to a camera-ready copy (CRC) journal.
+
+\paragraph{Functionality} The Elsevier article class is based on the standard article class and supports almost all of the functionality of that class. In addition, it features commands and options to format the
+\begin{itemize}
+\item document style
+\item baselineskip
+\item front matter
+\item keywords and MSC codes
+\item theorems, definitions and proofs
+\item lables of enumerations
+\item citation style and labeling.
+\end{itemize}
+
+\section{Front matter}
+
+
 
 Goals:
 
@@ -17,12 +71,12 @@ specifying that standard to the compiler.
 maintained with code now supported in the C++ standard
 
 We originally chose C++14 but changed to C++17 to get the
-std::filesystem support.
+|std::filesystem| support.
 
 
 Dramatically improve reliability. This means:
-* Whereas previously many strings were passed by reference as 'const std::string &',
-there are now passed by value 'std::string'. This necessitates a
+* Whereas previously many strings were passed by reference as |const std::string &|,
+there are now passed by value |std::string|. This necessitates a
 string copy, but it is not a meaningful impact on performance,
 especially when compared with the improved safety against possibly
 using an invalidated reference.
@@ -37,13 +91,13 @@ clear policy described above, we were able to find the bug!
 * Unit tests and code-coverage, rather than simply end-to-end
 regression tests.
 
-* Moved more functionality into the sbuf_t structure, such as
+* Moved more functionality into the |sbuf_t| structure, such as
 computing the hash of an sbuf. We also now cache the hash, so we are
 assured that each block of data will only be hashed once.
 
 
 Code Quality Goals:
-* Significantly reduce the size of the bulk_extractor code base.
+* Significantly reduce the size of the |bulk_extractor| code base.
 * Eliminate global variables used to track state. (Global variables
 used to implement static tables and data-driven functions were allowed
 to persist, although the code that uses these variables now checks to
@@ -56,7 +110,7 @@ catch error conditions.
 atomic template.
 
 Performance Goals:
-* Run twice as fast as the original bulk_extractor when compiled with
+* Run twice as fast as the original bulk\_extractor when compiled with
 the same (modern) compiler with the same number of cores.
 * Be able to run on a cluster with a high-performance storage system,
 such as Amazon EBS or S3, and process with Amazon Lambda, with the
@@ -68,7 +122,7 @@ Functionality Goals:
 files if the file system is intact. Automatically report features by
 both location on the disk and the file in which they are found. We did
 this in a backwards compatiable manner by adding an addition field to
-the pos0_t record.
+the pos0\_t record.
 (requires an additional field be added to the feature file).
 
 * Removing the dependence on Java for the user interface.
@@ -77,17 +131,17 @@ the pos0_t record.
 
 Removed functionality:
 - TO the best of our knowledge, no one (other than the original
-developer) ever used bulk_extractor's shared library to let the
+developer) ever used bulk\_extractor's shared library to let the
 program's scanner system be called from C++ or from Python, so we did
 dropped support for that. (It could be trivially added in the future.)
 
-- The stand-alone bulk_extractor test program that only scans a single
+- The stand-alone bulk\_extractor test program that only scans a single
 file was dropped as additional code that did not need to be
 maintained. Instead, we now have unit tests.
 
 - The ability to load scanners as shared libraries at startup was
 kept, although it is not clear that this has ever been used. It was
-created so that bulk_extractor users could develop and maintain their
+created so that bulk\_extractor users could develop and maintain their
 own scanners without telling the developers of them. This might be
 useful if \be was being used in a highly restricted environment. If
 such use was ever made, the developers were never told! Such unknown
@@ -102,7 +156,7 @@ scanner.
 
 (explain carve mode.)
 
-Simplified the API. sbuf previously had a two map_file's - one that
+Simplified the API. sbuf previously had a two map\_file's - one that
 took filename already open and the fd, and ht eother which just took
 the filename. Now it just has one; if it is already open, then it is
 oepened a secon time.
@@ -110,17 +164,35 @@ oepened a secon time.
 
 * Use google searches to see if options are being used. Based on this,
 we were able to eliminate the following options:
-- [ ] opt_work_start_work_end - "Record work start and end of each scanner in report.xml file");
+- [ ] opt\_work\_start\_work\_end - "Record work start and end of each scanner in report.xml file");
 
-- [ ] opt_enable_histograms- "Disable generation of histograms"
+- [ ] opt\_enable\_histograms- "Disable generation of histograms"
 
 Wordlist had its own writer.
 
 
 To do:
 Some scanners (such as wordlist) still have global state. There should
-be a way to allocate data within the scanner_set, perhaps using
+be a way to allocate data within the scanner\_set, perhaps using
 tmalloc.
 
-- we call get_scanner a lot. Would be better to store this in local
+- we call get\_scanner a lot. Would be better to store this in local
 space for each scanner.
+The author names and affiliations could be formatted in two ways:
+\begin{enumerate}[(1)]
+\item Group the authors per affiliation.
+\item Use footnotes to indicate the affiliations.
+\end{enumerate}
+See the front matter of this document for examples. You are recommended to conform your choice to the journal you are submitting to.
+
+\section{Bibliography styles}
+
+There are various bibliography styles available. You can select the style of your choice in the preamble of this document. These styles are Elsevier styles based on standard styles like Harvard and Vancouver. Please use Bib\TeX\ to generate your bibliography and include DOIs whenever available.
+
+Here are two sample references: \cite{Feynman1963118,Dirac1953888}.
+
+\section*{References}
+
+\bibliography{references}
+
+\end{document}
