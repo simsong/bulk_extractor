@@ -1,6 +1,0 @@
-2019-06-28    <simsong@lastdance.local>
-
-	* phase1.cpp (BulkExtractor_Phase1::run):  removed page_ctr; now uses page_counter in iterator.
-
-	* Globally renamed page_counter to page_number since it was defined both ways (and redundent in phase1)
-

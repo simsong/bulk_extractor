@@ -42,7 +42,6 @@
  */
 
 #include "be13_api/sbuf.h"
-//#include "dig.h"
 
 #if defined(WIN32)
 #  include <winsock2.h>

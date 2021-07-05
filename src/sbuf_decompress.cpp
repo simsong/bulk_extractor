@@ -2,7 +2,7 @@
  *
  * sbuf_decompress.h:
  *
- * Decompress an sbuf.
+ * Decompress an sbuf using zlib.
  */
 
 /* Decompress an sbuf with zlib and return an sbuf that needs to be deleted.
