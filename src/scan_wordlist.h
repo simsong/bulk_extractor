@@ -13,11 +13,13 @@ class Scan_Wordlist {
             return a<b;
         }
     };
-    std::set<std::string, WordlistSorter> seen_wordlist;
+    std::set<std::string, WordlistSorter> seen_wordlist {};
     int wordlist_segment {1};
     std::ofstream *wordlist_out {nullptr};
     void dump_seen_wordlist();
     bool wordchar[256] {};              // map of characters that break words
+    Scan_Wordlist(const Scan_Wordlist &)=delete; // no copy
+    Scan_Wordlist & operator=(const Scan_Wordlist &)=delete; // no assignment
 
 public:;
     inline static const std::string WORDLIST {"wordlist"};

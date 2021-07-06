@@ -118,12 +118,10 @@ void Scan_Wordlist::process_sbuf(scanner_params &sp)
 void Scan_Wordlist::dump_seen_wordlist()
 {
     /* Dump the words so far */
-    std::cerr << "Scan_Wordlist::dump_seen_wordlist()  size=" << seen_wordlist.size() << "\n";
     for(const auto &it : seen_wordlist){
         if (it.size()>0) {
             if (wordlist_out == nullptr ){
                 auto wordlist_segment_path = flat_wordlist->fname_in_outdir("dedup", wordlist_segment++);
-                std::cerr << "wordlist_segment_path: " << wordlist_segment_path << "\n";
                 wordlist_out = new std::ofstream( wordlist_segment_path);
                 if (!wordlist_out->is_open()) {
                     throw std::runtime_error("cannot open: " + wordlist_segment_path.string());
@@ -157,28 +155,25 @@ void Scan_Wordlist::shutdown(scanner_params &sp)
 
     /* Read all of the words and uniquify them */
     while(!f2.eof()){
-	// set is the sorted list of words we have seen
-	while(!f2.eof()){
-	    /* Create the first file (of2==0) or roll-over if outfilesize>100M */
-	    std::string line;
-	    getline(f2,line);
-	    if (line[0]=='#') continue;	                // ignore comments
-	    size_t t1 = line.find('\t');		// find the beginning of the feature
-	    if (t1!=std::string::npos) line = line.substr(t1+1);
+        /* Create the first file (of2==0) or roll-over if outfilesize>100M */
+        std::string line;
+        getline(f2,line);
+        if (line[0]=='#') continue;	                // ignore comments
+        size_t t1 = line.find('\t');		// find the beginning of the feature
+        if (t1!=std::string::npos) line = line.substr(t1+1);
 
-            // The end of the feature is the end of the line, since we did not write the context
-            std::string word = feature_recorder::unquote_string(line);
+        // The end of the feature is the end of the line, since we did not write the context
+        std::string word = feature_recorder::unquote_string(line);
 
-            // Insert into the hash list. If we ran out of space, dump it all and restart.
-	    try {
-		if (word.size()>0) seen_wordlist.insert(word);
-	    }
-	    catch (std::bad_alloc &er) {
-		std::cerr << er.what() << std::endl;
-		std::cerr << "Dumping current dataset; will then restart dedup." << std::endl;
-                dump_seen_wordlist();
-	    }
-	}
+        // Insert into the hash list. If we ran out of space, dump it all and restart.
+        try {
+            if (word.size()>0) seen_wordlist.insert(word);
+        }
+        catch (std::bad_alloc &er) {
+            std::cerr << er.what() << std::endl;
+            std::cerr << "scan_wordlist:bad_alloc: Dumping current dataset; will then restart dedup." << std::endl;
+            dump_seen_wordlist();
+        }
     }
     dump_seen_wordlist();
     f2.close();

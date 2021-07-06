@@ -70,7 +70,9 @@ std::vector<std::string> getLines(const std::filesystem::path path)
         std::cerr << "getLines: Cannot open file: " << path << "\n";
         std::string cmd("ls -l " + path.parent_path().string());
         std::cerr << cmd << "\n";
-        system( cmd.c_str());
+        if (system( cmd.c_str())) {
+            std::cerr << "error\n";
+        }
         throw std::runtime_error("be_tests:getLines");
     }
     while (std::getline(inFile, line)){
@@ -97,14 +99,12 @@ std::filesystem::path test_scanner(scanner_t scanner, sbuf_t *sbuf)
     sc.outdir           = NamedTemporaryDirectory();
     sc.scanner_commands = enable_all_scanners;
 
-    std::cerr << "Single scanner output in " << sc.outdir << "\n";
-
     scanner_set ss(sc, frs_flags);
     ss.add_scanner(scanner);
     ss.apply_scanner_commands();
 
     REQUIRE (ss.get_enabled_scanners().size()==1); // the one scanner
-    std::cerr << "## output in " << sc.outdir << " for " << ss.get_enabled_scanners()[0] << "\n";
+    std::cerr << "\n## output in " << sc.outdir << " for " << ss.get_enabled_scanners()[0] << "\n";
     REQUIRE(sbuf->children == 0);
     ss.phase_scan();
     REQUIRE(sbuf->children == 0);
