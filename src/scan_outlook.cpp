@@ -64,6 +64,8 @@ void scan_outlook(scanner_params &sp)
         sp.info = new scanner_params::scanner_info( scan_outlook, "outlook" );
         sp.info->scanner_flags.default_enabled = false;
         sp.info->scanner_flags.depth0_only = true; // only run depth 0
+        sp.info->scanner_flags.recurse = true;
+        sp.info->scanner_flags.recurse_always = true;
 	sp.info->author = "Simson L. Garfinkel";
 	sp.info->description = "Outlook Compressible Encryption. Very CPU intensive.";
 	return;

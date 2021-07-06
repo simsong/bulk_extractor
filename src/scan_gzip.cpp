@@ -20,7 +20,7 @@ void scan_gzip(scanner_params &sp)
         info->author         = "Simson Garfinkel";
         info->description    = "Searches for GZIP-compressed data";
         info->scanner_version= "1.1";
-        //info->flags          = scanner_info::SCANNER_RECURSE | scanner_info::SCANNER_RECURSE_EXPAND;
+        info->scanner_flags.recurse = true;
         sp.ss.sc.get_config("gzip_max_uncompr_size",&gzip_max_uncompr_size,"maximum size for decompressing GZIP objects");
         sp.info = info;
 	return ;		/* no features */

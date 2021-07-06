@@ -57,10 +57,9 @@ void scan_msxml(scanner_params &sp)
         sp.info->author         = "Simson Garfinkel";
         sp.info->description    = "Extracts text from Microsoft XML files";
         sp.info->scanner_version= "1.0";
-        //sp.info->flags          = scanner_info::SCANNER_RECURSE;
+        sp.info->scanner_flags.recurse = true;
         sp.ss.sc.get_config("pdf_dump",&pdf_dump,"Dump the contents of PDF buffers");
-        //sp.info = info;
-	return;	/* No features recorded */
+	return;
     }
     if (sp.phase==scanner_params::PHASE_SCAN){
 

@@ -1,11 +1,23 @@
 \documentclass[5p]{elsarticle}
 \usepackage{lineno,hyperref}
 \usepackage{shortvrb} \MakeShortVerb{\|}
-\newcommand{\be}{\texttt{bulk\_extractor}}
+\usepackage{xspace}
+\newcommand{\be}{\texttt{bulk\_extractor}\xspace}
 \modulolinenumbers[5]
 \journal{Journal Peer Review Conferences}
-
 \bibliographystyle{model2-names}\biboptions{authoryear}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Cross-reference macros
+\newcommand{\figref}[1]{Figure~\ref{#1}}
+\newcommand{\tabref}[1]{Table~\ref{#1}}
+\newcommand{\chapref}[1]{Chapter~\ref{#1}}
+\newcommand{\secref}[1]{Section~\ref{#1} (p.~\pageref{#1})}
+\newcommand{\secnameref}[1]{Section~\ref{#1}, ``\nameref{#1}'' (p.~\pageref{#1})}
+
+\newcommand{\partref}[1]{ Part~\ref{#1}, ``\nameref{#1}'' (p.~\pageref{#1})}
+\newcommand{\partrefbold}[1]{\textbf{Part~\ref{#1}, ``\nameref{#1}''} (p.~\pageref{#1})}
+\newcommand{\appendixref}[1]{Appendix~\ref{#1}}
+
 %%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{document}
@@ -32,47 +44,117 @@ bulk\_extractor
 
 \linenumbers
 
-\section{The Elsevier article class}
+\section{Introduction}
+Digital forensics is a fast moving field. In general, a digital
+investigator must be able to analyze ``any data that might be found on
+any device anywhere on the planet.''\cite{article} As a result,
+digital forensics tools must be continually updated to address new
+file formats, new encoding schemes, and new ways that the subjects of
+an investigation (targets) use their computers.
 
-\paragraph{Installation} If the document class \emph{elsarticle} is not available on your computer, you can download and install the system package \emph{texlive-publishers} (Linux) or install the \LaTeX\ package \emph{elsarticle} using the package manager of your \TeX\ installation, which is typically \TeX\ Live or Mik\TeX.
+The fact that many digital forensics tools are software that run on
+stock operating systems (MacOS, Linux and Windows) adds another layer
+of complexity: operating systems are constantly evolving, and the
+analysts that do not update their systems risk having their systems
+compromised by malware. This is true even for analyst workstations
+that are ``air gapped'' and not connected to the Internet. Although
+new versions of operating systems attempt to provide
+compatiability for software that ran on previous versions, these
+compatability layers are not perfect. Perhaps more importantly, such
+compatability layers typically emphasize compatability for software
+that is distributed as compiled binary executables: applications
+distributed in source code frequently requires some updating when
+there is a new major release of an operating system, a computer
+language, or a library on which the application depends. In theory
+this isn't an insurmountable problem, because the user has the source
+code and is therefore able to update the application (or pay for a
+programmer to update the application). In practice, many users of
+digital forensic tools lack both the expertise and funding to update
+their applications.
 
-\paragraph{Usage} Once the package is properly installed, you can use the document class \emph{elsarticle} to create a manuscript. Please make sure that your manuscript follows the guidelines in the Guide for Authors of the relevant journal. It is not necessary to typeset your manuscript in exactly the same way as an article, unless you are submitting to a camera-ready copy (CRC) journal.
+This article presents the updating of the digital forensics tool \be.
+In \secref{background} we present \be, including the tool's history,
+it's use in digital forensics research and education. We also discuss
+why it is difficult to ascertain the extent that an open source digital
+forensics tool is used operationally. In \secref{analysis} we present
+an analysis of the \be verison 1.6 code base.\footnote{Although \be version 1.5.3
+is the most recent version of the program that was widely in use at
+the start of this project, v1.5.3 would
+no longer compile on modern systems. Therefore we had to separately
+update v1.5.3, producing version 1.6, in addition to our rewrite that
+produced v2.0.}
 
-\paragraph{Functionality} The Elsevier article class is based on the standard article class and supports almost all of the functionality of that class. In addition, it features commands and options to format the
+In \secref{improvement} we present how we planned the update of the
+tool. Included in this section is a discussion of the improvements in
+the C++ and Python programming languages over the past decade that
+might inspire others to upgrade their tools.
+
+
+
+\section{Background}\label{background}
+
+\subsection{History}
+\subsection{Use in research and education}
+\subsection{Estimating use in the field}
+
+\section{Analyzing \be}\label{analysis}
+\section{Planning the Upgrade}\label{improvement}
+\subsection{Upgrade Goals}
+
+\paragraph{Make the program easier to compile and maintain by relying on the
+C++ standard.} This was the primary reason for the \be upgrade: the
+program no longer compiled on modern operating systems. In part, this
+was because \be pre-dated the C++11 standard. As a result, the program
+shipped with a complex set of files for \emph{GNU autoconf}
+file. Although the autoconf system is resillient, it has its limits,
+and after six years of abaondment, they were beginning to show.
+
+We were especially eager to rely on the C++ standard to provide platform-independence, because the
+C++ standard is designed so that conforming code can compile in the
+future on platforms that do not exist today. It does this by
+specifying the \emph{version} of the standard to use when compiling
+and linking the executable: C++11, C++14, C++17 and so-on. Using the
+C++ standard meant:
+
 \begin{itemize}
-\item document style
-\item baselineskip
-\item front matter
-\item keywords and MSC codes
-\item theorems, definitions and proofs
-\item lables of enumerations
-\item citation style and labeling.
+
+\item Using C++ functionality rather than POSIX or Windows functionality.
+
+\item Choosing a specific C++ standard that we used, and then specifying that standard to the compiler.
+
+\item Removing as many |#ifdef| preprocessor directives as possible.
+
+\item Replacing code that the original authors had painstakingly written, debugged and
+maintained with code now supported in the C++ standard. This meant
+that we might be introducing bugs into working code, so we needed to
+have a better strangey for unit testing than the original authors.
+
 \end{itemize}
 
-\section{Front matter}
+We originally choose the C++14 standard, as C++17 was not widely
+available when this project started. We eventually migrated to C++17 to get the
+|std::filesystem| support, and because the project had dragged on for
+so long.
+
+\paragraph{Improve reliability}
+
+\paragraph{Make it easier for others to contribute.}
+
+\paragraph{Remove experimental code from the code base}
+
+\paragraph{simplifiy the code base.}
+
+\paragraph{Make the program faster}
+
+Our final objective was to improve the performance of the program.
 
 
+\subsection{Addressing \be's limitations}
+\subsection{Improvements in C++}
+\subsection{Improvements in Python}
+\subsection{Improvements in testing}
 
-Goals:
-
-Rely on the C++ standard to provide platform-independence, because the
-C++ standard will work on future platforms without requiring
-source-code changes. This means:
-
-* Using C++ functionality rather than POSIX or Windows functionality.
-
-* Choosing a specific C++ standard , and then
-specifying that standard to the compiler.
-
-
-* Remove as many \#ifdef preprocess directives as possible.
-
-* Replacing code that we had painstakingly written, debugged and
-maintained with code now supported in the C++ standard
-
-We originally chose C++14 but changed to C++17 to get the
-|std::filesystem| support.
-
+\section{Implementing the Upgrade}
 
 Dramatically improve reliability. This means:
 * Whereas previously many strings were passed by reference as |const std::string &|,

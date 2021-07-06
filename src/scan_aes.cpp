@@ -30,7 +30,7 @@
 
 
 #include <string>
-#include <cstdint>
+//#include <cstdint>
 
 #include "config.h"
 #include "be13_api/scanner_params.h"

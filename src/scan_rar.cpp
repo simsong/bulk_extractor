@@ -596,6 +596,7 @@ void scan_rar(scanner_params &sp)
         sp.info = new scanner_params::scanner_info( scan_rar, "rar" );
 	sp.info->author = "Michael Shick";
         sp.info->scanner_version = "1.1";
+        sp.info->scanner_flags.recurse = true;
 #ifdef USE_RAR
 	sp.info->description = "RAR volume locator and component decompresser";
         //sp.info->flags = scanner_info::SCANNER_RECURSE | scanner_info::SCANNER_RECURSE_EXPAND;

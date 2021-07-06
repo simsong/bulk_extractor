@@ -213,6 +213,7 @@ void scan_pdf(scanner_params &sp)
         sp.info->author         = "Simson Garfinkel";
         sp.info->description    = "Extracts text from PDF files";
         sp.info->scanner_version= "1.0";
+        sp.info->scanner_flags.recurse = true;
         sp.ss.sc.get_config("pdf_dump_hex" , &pdf_extractor::pdf_dump_hex, "Dump the contents of PDF buffers as hex");
         sp.ss.sc.get_config("pdf_dump_text", &pdf_extractor::pdf_dump_text, "Dump the contents of PDF buffers showing extracted text");
         if (getenv("DEBUG_PDF_DUMP_HEX")) pdf_extractor::pdf_dump_hex=true;

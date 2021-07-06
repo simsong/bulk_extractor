@@ -17,6 +17,8 @@ void scan_xor(scanner_params &sp)
 	info->author      = "Michael Shick";
 	info->description = "optimistic XOR deobfuscator";
 	info->scanner_flags.default_enabled = false; // = scanner_info::SCANNER_DISABLED | scanner_info::SCANNER_RECURSE;
+        info->scanner_flags.recurse = true;
+        info->scanner_flags.recurse_always = true;
         sp.ss.sc.get_config("xor_mask",&xor_mask,"XOR mask value, in decimal");
         sp.info = info;
 	return;

@@ -60,14 +60,18 @@ sbuf_t *map_file(std::filesystem::path p)
 
 
 /* Read all of the lines of a file and return them as a vector */
-std::vector<std::string> getLines(const std::string &filename)
+std::vector<std::string> getLines(const std::filesystem::path path)
 {
     std::vector<std::string> lines;
     std::string line;
     std::ifstream inFile;
-    inFile.open( filename);
+    inFile.open( path );
     if (!inFile.is_open()) {
-        throw std::runtime_error("getLines: Cannot open file: "+filename);
+        std::cerr << "getLines: Cannot open file: " << path << "\n";
+        std::string cmd("ls -l " + path.string());
+        std::cerr << cmd << "\n";
+        system( cmd.c_str());
+        throw std::runtime_error("be_tests:getLines");
     }
     while (std::getline(inFile, line)){
         if (line.size()>0){

@@ -43,6 +43,8 @@
 
 #include "be13_api/sbuf.h"
 
+#include <filesystem>
+
 #if defined(WIN32)
 #  include <winsock2.h>
 #  include <windows.h>
@@ -202,8 +204,8 @@ class process_ewf : public image_process {
 class process_raw : public image_process {
     class file_info {
     public:;
-        file_info(const std::string &name_,int64_t offset_,int64_t length_):name(name_),offset(offset_),length(length_){};
-        std::string name {};
+        file_info(const std::filesystem::path name_,int64_t offset_,int64_t length_):name(name_),offset(offset_),length(length_){};
+        std::filesystem::path name {};
 	int64_t offset   {};
 	int64_t length   {};
     };
@@ -212,7 +214,7 @@ class process_raw : public image_process {
     void        add_file(const std::string &fname);
     class       file_info const *find_offset(int64_t offset) const;
     uint64_t    raw_filesize {};			/* sume of all the lengths */
-    mutable std::string current_file_name {};		/* which file is currently open */
+    mutable std::filesystem::path current_file_name {};		/* which file is currently open */
 #ifdef WIN32
     mutable HANDLE current_handle {};		/* currently open file */
 #else
