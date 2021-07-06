@@ -1043,8 +1043,13 @@ void scan_net(scanner_params &sp)
         return;
     }
     if (sp.phase==scanner_params::PHASE_SCAN){
-	packet_carver carver(sp);
-	carver.carve(*sp.sbuf);
+        try {
+            packet_carver carver(sp);
+            carver.carve(*sp.sbuf);
+        }
+        catch (const sbuf_t::range_exception_t &e ) {
+            std::cerr << "sbuf_t range exception: " << e.what() << "\n";
+        }
     }
     if (sp.phase==scanner_params::PHASE_SHUTDOWN){
 	if (fcap){
