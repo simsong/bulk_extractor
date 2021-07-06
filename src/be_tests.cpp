@@ -68,7 +68,7 @@ std::vector<std::string> getLines(const std::filesystem::path path)
     inFile.open( path );
     if (!inFile.is_open()) {
         std::cerr << "getLines: Cannot open file: " << path << "\n";
-        std::string cmd("ls -l " + path.string());
+        std::string cmd("ls -l " + path.parent_path().string());
         std::cerr << cmd << "\n";
         system( cmd.c_str());
         throw std::runtime_error("be_tests:getLines");
