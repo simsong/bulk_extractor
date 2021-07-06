@@ -118,10 +118,12 @@ void Scan_Wordlist::process_sbuf(scanner_params &sp)
 void Scan_Wordlist::dump_seen_wordlist()
 {
     /* Dump the words so far */
+    std::cerr << "Scan_Wordlist::dump_seen_wordlist()  size=" << seen_wordlist.size() << "\n";
     for(const auto &it : seen_wordlist){
         if (it.size()>0) {
             if (wordlist_out == nullptr ){
                 auto wordlist_segment_path = flat_wordlist->fname_in_outdir("dedup", wordlist_segment++);
+                std::cerr << "wordlist_segment_path: " << wordlist_segment_path << "\n";
                 wordlist_out = new std::ofstream( wordlist_segment_path);
                 if (!wordlist_out->is_open()) {
                     throw std::runtime_error("cannot open: " + wordlist_segment_path.string());
@@ -149,7 +151,9 @@ void Scan_Wordlist::shutdown(scanner_params &sp)
     flat_wordlist->flush();
     auto feature_recorder_path = flat_wordlist->fname_in_outdir("", feature_recorder::NO_COUNT);
     std::ifstream f2( feature_recorder_path );
-    if (!f2.is_open()) throw std::runtime_error(std::string("Cannot open ")+feature_recorder_path.string());
+    if (!f2.is_open()) {
+        throw std::runtime_error(std::string("Scan_Wordlist::shutdown: Cannot open ")+feature_recorder_path.string());
+    }
 
     /* Read all of the words and uniquify them */
     while(!f2.eof()){
