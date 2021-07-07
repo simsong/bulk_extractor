@@ -144,7 +144,6 @@ TEST_CASE("scan_email_functions", "[support]") {
     REQUIRE( find_host_in_email(s1) == 5);
     REQUIRE( find_host_in_email(s2) == -1);
 
-
     auto s3 = sbuf_t("https://domain.com/foobar");
     size_t domain_len = 0;
     REQUIRE( find_host_in_url(s3, &domain_len)==8);

@@ -89,9 +89,36 @@ tool. Included in this section is a discussion of the improvements in
 the C++ and Python programming languages over the past decade that
 might inspire others to upgrade their tools.
 
-
-
 \section{Background}\label{background}
+
+Broadly there are two strategies for trying to extract useful
+information from a block of data. The first is to use some kind of metadata or external
+information to decode the data. The second is to introspectively look
+at the data and attempt to extract any information in a recognizable
+format. Most digital forensics employ a hybride of these two
+strategies.
+
+For example, The Sleuth Kit's |mmls| tool will attempt to identify the
+partition type, and |fls| will attempt to identify the file system
+type, but |mmls| will not identify a file system and hand the data off
+to |fls| for analysis. Likewise, a JPEG carving tool such as photorec
+will look for JPEGs, but it will not proactively scan the disk being
+carved for GZIP files with the hope that there might be a
+GZIP-compressed TAR file that contains JPEGs.
+
+The \be tool is a different kind of digital forensics tool. It bases
+its analysis entirely on the contents of the data being analyzed,
+proactively attempting to decode every byte of data with every tool in
+its arsenal. To recast the above examples, \be will examine every
+input block to see if that block contains FAT32 or NTFS directory
+entries and, if any are found, they are reported in the
+output. Likewise, it scans every byte see if that byte is the
+beginning of a JPEG and, if it is, the JPEG is carved. And every byte
+is examined to see if it is the beginning of a GZIP-compressed stream
+and, if so, the program attempts to decompress that stream and then
+recurisvely re-analyzes it for JPEGs, directory entries, and other
+kinds of information that might possibly be stored within a compressed
+stream.
 
 \subsection{History}
 \subsection{Use in research and education}
