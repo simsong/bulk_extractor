@@ -83,6 +83,19 @@ std::vector<std::string> getLines(const std::filesystem::path path)
     return lines;
 }
 
+/* Requires that a feature in a set of lines */
+bool requireFeature(const std::vector<std::string> &lines, const std::string feature)
+{
+    for (const auto &it : lines) {
+        if ( it.find(feature) != std::string::npos) return true;
+    }
+    std::cerr << "feature not found: " << feature << "\nfeatures:\n";
+    for (const auto &it : lines) {
+        std::cerr << "  " << it << "\n";
+    }
+    return false;
+}
+
 /* Setup and run a scanner. Return the output directory */
 std::vector<scanner_config::scanner_command> enable_all_scanners = {
     scanner_config::scanner_command(scanner_config::scanner_command::ALL_SCANNERS,
@@ -90,7 +103,7 @@ std::vector<scanner_config::scanner_command> enable_all_scanners = {
 };
 
 
-std::filesystem::path test_scanner(scanner_t scanner, sbuf_t *sbuf)
+std::filesystem::path test_scanners(scanner_t **scanners, sbuf_t *sbuf)
 {
     REQUIRE(sbuf->children == 0);
 
@@ -100,7 +113,9 @@ std::filesystem::path test_scanner(scanner_t scanner, sbuf_t *sbuf)
     sc.scanner_commands = enable_all_scanners;
 
     scanner_set ss(sc, frs_flags);
-    ss.add_scanner(scanner);
+    for(int i=0;scanners[i];i++){
+        ss.add_scanner( scanners[i] );
+    }
     ss.apply_scanner_commands();
 
     REQUIRE (ss.get_enabled_scanners().size()==1); // the one scanner
@@ -112,6 +127,16 @@ std::filesystem::path test_scanner(scanner_t scanner, sbuf_t *sbuf)
     ss.shutdown();
     return sc.outdir;
 }
+
+std::filesystem::path test_scanner(scanner_t scanner, sbuf_t *sbuf)
+{
+    // I couldn't figure out how to pass a vector of scanner_t objects...
+    scanner_t *scanners[2];
+    scanners[0] = scanner;
+    scanners[1] = nullptr;
+    return test_scanners(scanners, sbuf);
+}
+
 
 TEST_CASE("base64_forensic", "[support]") {
     const char *encoded="SGVsbG8gV29ybGQhCg==";
@@ -148,29 +173,39 @@ TEST_CASE("scan_email_functions", "[support]") {
     size_t domain_len = 0;
     REQUIRE( find_host_in_url(s3, &domain_len)==8);
     REQUIRE( domain_len == 10);
+
+    auto *sbufp = map_file("nps-2010-emails.100k.raw");
+    auto outdir = test_scanner(scan_email, sbufp);
+    auto email_txt = getLines( outdir / "email.txt" );
+    REQUIRE( requireFeature(email_txt,"80896\tplain_text@textedit.com"));
+    REQUIRE( requireFeature(email_txt,"70727-PDF-0\tplain_text_pdf@textedit.com\t"));
+    REQUIRE( requireFeature(email_txt,"81991-PDF-0\trtf_text_pdf@textedit.com\t"));
+    REQUIRE( requireFeature(email_txt,"92231-PDF-0\tplain_utf16_pdf@textedit.com\t"));
 }
 
 TEST_CASE("sbuf_decompress_zlib_new", "[support]") {
-    auto *sbufj = map_file("test_hello.gz");
-    REQUIRE( sbuf_gzip_header( *sbufj, 0) == true);
-    REQUIRE( sbuf_gzip_header( *sbufj, 10) == false);
-    auto *decomp = sbuf_decompress_zlib_new( *sbufj, 1024*1024, "GZIP" );
+    auto *sbufp = map_file("test_hello.gz");
+    REQUIRE( sbuf_gzip_header( *sbufp, 0) == true);
+    REQUIRE( sbuf_gzip_header( *sbufp, 10) == false);
+    auto *decomp = sbuf_decompress_zlib_new( *sbufp, 1024*1024, "GZIP" );
     REQUIRE( decomp != nullptr);
     REQUIRE( decomp->asString() == "hello@world.com\n");
     delete decomp;
-    delete sbufj;
+    delete sbufp;
 }
 
 TEST_CASE("scan_exif", "[scanners]") {
-    auto sbufj = map_file("1.jpg");
-    REQUIRE( sbufj->bufsize == 7323 );
-    auto res = jpeg_validator::validate_jpeg(*sbufj);
+    auto *sbufp = map_file("1.jpg");
+    REQUIRE( sbufp->bufsize == 7323 );
+    auto res = jpeg_validator::validate_jpeg(*sbufp);
     REQUIRE( res.how == jpeg_validator::COMPLETE );
+    delete sbufp;
 }
 
 TEST_CASE("scan_pdf", "[scanners]") {
-    auto *sbufj = map_file("pdf_words2.pdf");
-    pdf_extractor pe(*sbufj);
+    auto *sbufp = map_file("pdf_words2.pdf");
+    pdf_extractor pe(*sbufp);
+    delete sbufp;
 
     pe.find_streams();
     REQUIRE( pe.streams.size() == 4 );
@@ -179,15 +214,14 @@ TEST_CASE("scan_pdf", "[scanners]") {
     pe.decompress_streams_extract_text();
     REQUIRE( pe.texts.size() == 1 );
     REQUIRE( pe.texts[0].txt.substr(0,30) == "-rw-r--r--    1 simsong  staff");
-    delete sbufj;
 }
 
 
 TEST_CASE("scan_json1", "[scanners]") {
     /* Make a scanner set with a single scanner and a single command to enable all the scanners.
      */
-    auto  sbuf1 = new sbuf_t("hello {\"hello\": 10, \"world\": 20, \"another\": 30, \"language\": 40} world");
-    auto outdir = test_scanner(scan_json, sbuf1);
+    auto *sbufp = new sbuf_t("hello {\"hello\": 10, \"world\": 20, \"another\": 30, \"language\": 40} world");
+    auto outdir = test_scanner(scan_json, sbufp); // delete sbufp
 
     /* Read the output */
     auto json_txt = getLines( outdir / "json.txt" );
@@ -204,8 +238,8 @@ TEST_CASE("scan_net", "[scanners]") {
 TEST_CASE("scan_vcard", "[scanners]") {
     /* Make a scanner set with a single scanner and a single command to enable all the scanners.
      */
-    auto sbuf2 = map_file( "john_jakes.vcf" );
-    auto outdir = test_scanner(scan_vcard, sbuf2); // deletes sbuf2
+    auto *sbufp = map_file( "john_jakes.vcf" );
+    auto outdir = test_scanner(scan_vcard, sbufp); // deletes sbuf2
 
     /* Read the output */
 }
@@ -214,8 +248,8 @@ TEST_CASE("scan_vcard", "[scanners]") {
 TEST_CASE("scan_wordlist", "[scanners]") {
     /* Make a scanner set with a single scanner and a single command to enable all the scanners.
      */
-    auto sbuf2 = map_file( "john_jakes.vcf" );
-    auto outdir = test_scanner(scan_wordlist, sbuf2); // deletes sbuf2
+    auto *sbufp = map_file( "john_jakes.vcf" );
+    auto outdir = test_scanner(scan_wordlist, sbufp); // deletes sbuf2
 
     /* Read the output */
     auto wordlist_txt = getLines( outdir / "wordlist_dedup_1.txt");
