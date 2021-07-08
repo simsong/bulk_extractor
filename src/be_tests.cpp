@@ -103,7 +103,7 @@ std::vector<scanner_config::scanner_command> enable_all_scanners = {
 };
 
 
-std::filesystem::path test_scanners(scanner_t **scanners, sbuf_t *sbuf)
+std::filesystem::path test_scanners(const std::vector<scanner_t *> & scanners, sbuf_t *sbuf)
 {
     REQUIRE(sbuf->children == 0);
 
@@ -113,12 +113,12 @@ std::filesystem::path test_scanners(scanner_t **scanners, sbuf_t *sbuf)
     sc.scanner_commands = enable_all_scanners;
 
     scanner_set ss(sc, frs_flags);
-    for(int i=0;scanners[i];i++){
-        ss.add_scanner( scanners[i] );
+    for (auto const &it : scanners ){
+        ss.add_scanner( it );
     }
     ss.apply_scanner_commands();
 
-    REQUIRE (ss.get_enabled_scanners().size()==1); // the one scanner
+    REQUIRE (ss.get_enabled_scanners().size() == scanners.size()); // the one scanner
     std::cerr << "\n## output in " << sc.outdir << " for " << ss.get_enabled_scanners()[0] << "\n";
     REQUIRE(sbuf->children == 0);
     ss.phase_scan();
@@ -131,9 +131,7 @@ std::filesystem::path test_scanners(scanner_t **scanners, sbuf_t *sbuf)
 std::filesystem::path test_scanner(scanner_t scanner, sbuf_t *sbuf)
 {
     // I couldn't figure out how to pass a vector of scanner_t objects...
-    scanner_t *scanners[2];
-    scanners[0] = scanner;
-    scanners[1] = nullptr;
+    std::vector<scanner_t *>scanners = {scanner };
     return test_scanners(scanners, sbuf);
 }
 
@@ -161,7 +159,7 @@ TEST_CASE("scan_base64_functions", "[support]" ){
 }
 
 /* scan_email.flex checks */
-TEST_CASE("scan_email_functions", "[support]") {
+TEST_CASE("scan_email", "[support]") {
     REQUIRE( extra_validate_email("this@that.com")==true);
     REQUIRE( extra_validate_email("this@that..com")==false);
     auto s1 = sbuf_t("this@that.com");
@@ -174,8 +172,10 @@ TEST_CASE("scan_email_functions", "[support]") {
     REQUIRE( find_host_in_url(s3, &domain_len)==8);
     REQUIRE( domain_len == 10);
 
+    std::vector<scanner_t *>scanners = {scan_email, scan_pdf };
+
     auto *sbufp = map_file("nps-2010-emails.100k.raw");
-    auto outdir = test_scanner(scan_email, sbufp);
+    auto outdir = test_scanners(scanners, sbufp);
     auto email_txt = getLines( outdir / "email.txt" );
     REQUIRE( requireFeature(email_txt,"80896\tplain_text@textedit.com"));
     REQUIRE( requireFeature(email_txt,"70727-PDF-0\tplain_text_pdf@textedit.com\t"));
