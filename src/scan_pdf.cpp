@@ -21,8 +21,8 @@
 
 /* Debug by setting DEBUG or by setting pdf_dump at runtime */
 
-bool pdf_extractor::pdf_dump_hex  = false;       // dump the contents HEX
-bool pdf_extractor::pdf_dump_text = false;      // dump the extracted text.
+bool pdf_extractor::pdf_dump_hex  = true;       // dump the contents HEX
+bool pdf_extractor::pdf_dump_text = true;      // dump the extracted text.
 
 pdf_extractor::pdf_extractor(const sbuf_t &sbuf_):
     sbuf(sbuf_)
@@ -120,13 +120,15 @@ std::string  pdf_extractor::extract_text(const sbuf_t &sb)
 
 void pdf_extractor::recurse_texts(scanner_params &sp)
 {
+    std::cerr << "pdf_extractor::recurse_texts\n";
     for (const auto &it: texts) {
         if(it.txt.size()>0){
             if (pdf_dump_text){
-                std::cout << "====== " << it.pos0 << " TEXT =====\n";
+                std::cout << "====== pdf_extractor::recurse_texts: " << it.pos0 << " TEXT =====\n";
                 std::cout << it.txt << "\n";
             }
             auto *nsbuf = sbuf_t::sbuf_new( (it.pos0) + "PDF", it.txt);
+            std::cerr << "sbuf:\n" << *nsbuf << "\n";
             sp.recurse(nsbuf);
         }
     }
@@ -140,19 +142,23 @@ void pdf_extractor::decompress_streams_extract_text()
         size_t compr_size = it.endstream - it.stream_start;
         size_t max_uncompr_size = compr_size * 8;       // good assumption for expansion
 
+        std::cerr << "attempt to decompress stream " << it.stream_start << " - " << it.endstream << "\n";
+
         auto *dbuf = sbuf_decompress_zlib_new( sbuf.slice(it.stream_start, compr_size), max_uncompr_size, "PDFZLIB");
         if (dbuf==nullptr) {
+            std::cerr << "failed\n";
             continue ;   // could not decompress
         }
 
         if (pdf_dump_hex){
-            std::cout << "====== " << dbuf->pos0 << " HEX =====\n";
+            std::cout << "===== scan_pdf.c:decompress_streams_extract_text: dbuf->pos0 = " << dbuf->pos0 << " =====\n";
             dbuf->hex_dump(std::cout);
             std::cout << "mostly printable: " << (mostly_printable_ascii(*dbuf) ? "true" : "false") << "\n";
-            std::cout << "\n";
+            std::cout << "---dbuf end---\n";
         }
         if (mostly_printable_ascii(*dbuf)){
             texts.push_back(text(pos0_t(dbuf->pos0), extract_text( *dbuf )));
+            std::cerr << "pushing text\n";
         }
         delete dbuf;
     }
@@ -162,8 +168,10 @@ void pdf_extractor::decompress_streams_extract_text()
 void pdf_extractor::find_streams()
 {
     /* Look for signature for the beginning of a PDF stream and record the start and end of each */
+    std::cerr << "sbuf: " << sbuf << "\n";
     for(size_t loc=0;loc+15<sbuf.pagesize;loc++){
         ssize_t stream_tag = sbuf.find("stream",loc);
+        std::cerr << "stream_tag: " << stream_tag << "\n";
         if(stream_tag==-1) break;
         /* Now skip past the \r or \r\n or \n */
         size_t stream_start = stream_tag+6;
@@ -177,6 +185,8 @@ void pdf_extractor::find_streams()
          */
         ssize_t endstream = sbuf.find("endstream",stream_start);
         if (endstream==-1) break;    // no endstream tag
+
+        std::cerr << "endstream" << endstream << "\n";
 
         ssize_t nextstream = sbuf.find("stream",stream_start);
 
@@ -192,9 +202,11 @@ void pdf_extractor::find_streams()
         /* Analyze this stream and then see if there is another one following!
          * This is a change from BE1.5, which stopped after it found the first stream.
          */
+        std::cerr << "push " <<stream_start << " " << endstream << "\n";
         streams.push_back( stream( stream_start, endstream ));
         loc=endstream+9;
     }
+    std::cerr << "streams found: " << streams.size() << "\n";
 }
 
 void pdf_extractor::run(scanner_params &sp)

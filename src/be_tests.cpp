@@ -42,12 +42,12 @@ const std::string JSON2 {"[{\"1\": \"one@base64.com\"}, {\"2\": \"two@base64.com
 std::filesystem::path test_dir()
 {
 #ifdef HAVE__NSGETEXECUTABLEPATH
-    char path[1024];
+    char path[4096];
     uint32_t size = sizeof(path);
     if (_NSGetExecutablePath(path, &size) == 0){
-        std::cerr << "executable path is " << path << "\n";
+        return std::filesystem::path(path).parent_path() / "tests";
     }
-    return std::filesystem::path(path).parent_path() / "tests";
+    throw std::runtime_error("_NSGetExecutablePath failed???\n");
 #else
     return std::filesystem::canonical("/proc/self/exe").parent_path() / "tests";
 #endif
@@ -89,7 +89,7 @@ bool requireFeature(const std::vector<std::string> &lines, const std::string fea
     for (const auto &it : lines) {
         if ( it.find(feature) != std::string::npos) return true;
     }
-    std::cerr << "feature not found: " << feature << "\nfeatures:\n";
+    std::cerr << "feature not found: " << feature << "\nfeatures found (perhaps one of these is the feature you are looking for?):\n";
     for (const auto &it : lines) {
         std::cerr << "  " << it << "\n";
     }
@@ -162,6 +162,7 @@ TEST_CASE("scan_base64_functions", "[support]" ){
 TEST_CASE("scan_email", "[support]") {
     REQUIRE( extra_validate_email("this@that.com")==true);
     REQUIRE( extra_validate_email("this@that..com")==false);
+    REQUIRE( extra_validate_email("plain_text_pdf@textedit.com")==true);
     auto s1 = sbuf_t("this@that.com");
     auto s2 = sbuf_t("this_that.com");
     REQUIRE( find_host_in_email(s1) == 5);
@@ -172,15 +173,30 @@ TEST_CASE("scan_email", "[support]") {
     REQUIRE( find_host_in_url(s3, &domain_len)==8);
     REQUIRE( domain_len == 10);
 
-    std::vector<scanner_t *>scanners = {scan_email, scan_pdf };
-
-    auto *sbufp = map_file("nps-2010-emails.100k.raw");
-    auto outdir = test_scanners(scanners, sbufp);
+    /* This is text from a PDF, decompressed */
+    auto *sbufp = new sbuf_t("q Q q 72 300 460 420 re W n /Gs1 gs /Cs1 cs 1 sc 72 300 460 420re f 0 sc./Gs2 gs q 1 0 0 -1 72720 cm BT 10 0 0 -10 5 10 Tm /F1.0 1 Tf (plain_text_pdf@textedit.com).Tj ET Q Q");
+    auto outdir = test_scanner(scan_email, sbufp);
     auto email_txt = getLines( outdir / "email.txt" );
+    REQUIRE( requireFeature(email_txt,"135\tplain_text_pdf@textedit.com"));
+
+    /* See if it can find just the email */
+    // <sp><email><sp> found
+    // <email><sp> not found
+    // <sp><email> not found
+    sbufp = new sbuf_t(" plain_text_pdf@textedit.com ");
+    outdir = test_scanner(scan_email, sbufp);
+    email_txt = getLines( outdir / "email.txt" );
+    REQUIRE( requireFeature(email_txt,"1\tplain_text_pdf@textedit.com"));
+
+    std::vector<scanner_t *>scanners = {scan_email, scan_pdf };
+    sbufp = map_file("nps-2010-emails.100k.raw");
+    outdir = test_scanners(scanners, sbufp);
+    email_txt = getLines( outdir / "email.txt" );
     REQUIRE( requireFeature(email_txt,"80896\tplain_text@textedit.com"));
     REQUIRE( requireFeature(email_txt,"70727-PDF-0\tplain_text_pdf@textedit.com\t"));
     REQUIRE( requireFeature(email_txt,"81991-PDF-0\trtf_text_pdf@textedit.com\t"));
     REQUIRE( requireFeature(email_txt,"92231-PDF-0\tplain_utf16_pdf@textedit.com\t"));
+
 }
 
 TEST_CASE("sbuf_decompress_zlib_new", "[support]") {
@@ -205,8 +221,6 @@ TEST_CASE("scan_exif", "[scanners]") {
 TEST_CASE("scan_pdf", "[scanners]") {
     auto *sbufp = map_file("pdf_words2.pdf");
     pdf_extractor pe(*sbufp);
-    delete sbufp;
-
     pe.find_streams();
     REQUIRE( pe.streams.size() == 4 );
     REQUIRE( pe.streams[1].stream_start == 2214);
@@ -214,6 +228,7 @@ TEST_CASE("scan_pdf", "[scanners]") {
     pe.decompress_streams_extract_text();
     REQUIRE( pe.texts.size() == 1 );
     REQUIRE( pe.texts[0].txt.substr(0,30) == "-rw-r--r--    1 simsong  staff");
+    delete sbufp;
 }
 
 

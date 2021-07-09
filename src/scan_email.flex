@@ -17,11 +17,6 @@
 #include "be13_api/utils.h"
 #include "scan_email.h"
 
-//#include "be13_api/bulk_extractor_i.h"
-//#include "utils.h"
-//#include "histogram.h"
-
-
 class email_scanner : public sbuf_scanner {
 public:
       email_scanner(const scanner_params &sp):
@@ -38,6 +33,7 @@ public:
       class feature_recorder &url_recorder;
       class feature_recorder &ether_recorder;
 
+      /* Hard-coded program to reject wacky ethers that showed up a lot */
       bool valid_ether_addr(size_t pos){
 	if (sbuf.memcmp((const uint8_t *)"00:00:00:00:00:00",pos,17)==0) return false;
 	if (sbuf.memcmp((const uint8_t *)"00:11:22:33:44:55",pos,17)==0) return false;
