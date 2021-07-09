@@ -52,9 +52,8 @@ public:
             max_size--;
             count++;
         }
-        /* Provide an extra space at the end */
+        /* Provide an extra space at the end, so that regular expressions that specify "/<text>" always find an end */
         if (point==sbuf.bufsize && max_size>0){
-            std::cerr << "*** ADDING EXTRA ***  max_size=" << max_size << "\n";
             *buf++ = ' ';
             point++;
             max_size--;
