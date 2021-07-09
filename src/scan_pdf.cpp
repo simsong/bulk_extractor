@@ -21,18 +21,18 @@
 
 /* Debug by setting DEBUG or by setting pdf_dump at runtime */
 
-bool pdf_extractor::pdf_dump_hex  = true;       // dump the contents HEX
+bool pdf_extractor::pdf_dump_hex  = false;       // dump the contents HEX
 bool pdf_extractor::pdf_dump_text = true;      // dump the extracted text.
 
-pdf_extractor::pdf_extractor(const sbuf_t &sbuf_):
-    sbuf(sbuf_)
+pdf_extractor::pdf_extractor(const sbuf_t &sbuf):
+    sbuf_root(sbuf)
 {
 }
 
 pdf_extractor::~pdf_extractor()
 {
-    streams.clear();     // may not be necessary
-    texts.clear();       // may not be necessary
+    streams.clear();     // clean, but may not be necessary
+    texts.clear();       // clean, but may not be necessary
 }
 
 /*
@@ -69,6 +69,7 @@ bool pdf_extractor::mostly_printable_ascii(const sbuf_t &s)
 
 /*
  * Extract the text from the decompressed sbuf and return it.
+ * Two part algorithm. First we analyze the sbuf to see the PDF encoding style, then we extract the text.
  */
 std::string  pdf_extractor::extract_text(const sbuf_t &sb)
 {
@@ -118,20 +119,44 @@ std::string  pdf_extractor::extract_text(const sbuf_t &sb)
     return tbuf;
 }
 
-void pdf_extractor::recurse_texts(scanner_params &sp)
+
+/* Look for signature for the beginning of a PDF stream and record the start and end of each
+ *
+ */
+
+void pdf_extractor::find_streams()
 {
-    std::cerr << "pdf_extractor::recurse_texts\n";
-    for (const auto &it: texts) {
-        if(it.txt.size()>0){
-            if (pdf_dump_text){
-                std::cout << "====== pdf_extractor::recurse_texts: " << it.pos0 << " TEXT =====\n";
-                std::cout << it.txt << "\n";
-            }
-            auto *nsbuf = sbuf_t::sbuf_new( (it.pos0) + "PDF", it.txt);
-            std::cerr << "sbuf:\n" << *nsbuf << "\n";
-            sp.recurse(nsbuf);
+    //std::cerr << "sbuf_root: " << sbuf_root << "\n";
+    for(size_t loc=0; loc+15 < sbuf_root.pagesize; loc++){
+        ssize_t stream_tag = sbuf_root.find("stream",loc);
+        //std::cerr << "stream_tag: " << stream_tag << "\n";
+        if (stream_tag==std::string::npos) break; // no more 'stream' tags
+        /* Now skip past the \r or \r\n or \n */
+        size_t stream_start = stream_tag+6;
+        if (sbuf_root[stream_start]=='\r' && sbuf_root[stream_start+1]=='\n') stream_start+=2;
+        else stream_start +=1;
+
+        /* See if we can find the endstream; here we can scan to the end of the buffer.
+         * Also, make sure that the endstream comes before the next stream. This is easily
+         * determined by doing a search for 'stream' and 'endstream' and making sure that
+         * the next 'stream' we find is, in fact, in the 'endsream'.
+         */
+        ssize_t endstream_tag = sbuf_root.find("endstream",stream_start);
+        ssize_t next_stream_tag = sbuf_root.find("stream",stream_start);
+
+        if (endstream_tag==std::string::npos) break;    // no endstream tag
+        if (next_stream_tag!=std::string::npos && endstream_tag +3 != next_stream_tag){
+            /* The 'stream' after the stream_tag is not the 'endstream',
+             * so advance loc so that it will find the nextstream
+             */
+            loc = next_stream_tag - 1;
+            continue;
         }
+        /* Remember the stream to analyze later */
+        streams.push_back( stream( stream_tag, stream_start, endstream_tag ));
+        loc = endstream_tag + 9;
     }
+    std::cerr << "streams found: " << streams.size() << "\n";
 }
 
 void pdf_extractor::decompress_streams_extract_text()
@@ -139,12 +164,12 @@ void pdf_extractor::decompress_streams_extract_text()
     // note: below we do *not* use a const auto,
     // because we want to modify the contents of the vector
     for (const auto &it: streams) {           //
-        size_t compr_size = it.endstream - it.stream_start;
+        size_t compr_size = it.endstream_tag - it.stream_start;
         size_t max_uncompr_size = compr_size * 8;       // good assumption for expansion
 
-        std::cerr << "attempt to decompress stream " << it.stream_start << " - " << it.endstream << "\n";
+        std::cerr << "attempt to decompress stream @" << it.stream_tag << " zlib: it.stream_start << " - " << it.endstream_tag << "\n";
 
-        auto *dbuf = sbuf_decompress_zlib_new( sbuf.slice(it.stream_start, compr_size), max_uncompr_size, "PDFZLIB");
+        auto *dbuf = sbuf_decompress_zlib_new( sbuf_root.slice(it.stream_start, compr_size), max_uncompr_size, "PDFZLIB");
         if (dbuf==nullptr) {
             std::cerr << "failed\n";
             continue ;   // could not decompress
@@ -156,64 +181,43 @@ void pdf_extractor::decompress_streams_extract_text()
             std::cout << "mostly printable: " << (mostly_printable_ascii(*dbuf) ? "true" : "false") << "\n";
             std::cout << "---dbuf end---\n";
         }
+
         if (mostly_printable_ascii(*dbuf)){
-            texts.push_back(text(pos0_t(dbuf->pos0), extract_text( *dbuf )));
-            std::cerr << "pushing text\n";
+            pos0_t pos0 = (sbuf_root.pos0 + it.stream_tag) + "PDF";
+            std::string the_text = extract_text( *dbuf );
+
+            texts.push_back( text(pos0, the_text) );
+            std::cerr << "pushing " << pos0 << " " << the_text << "\n";
         }
         delete dbuf;
     }
 }
-
-
-void pdf_extractor::find_streams()
+/*
+ * For all of the texts that have been found, recruse on each.
+ */
+void pdf_extractor::recurse_texts(scanner_params &sp)
 {
-    /* Look for signature for the beginning of a PDF stream and record the start and end of each */
-    std::cerr << "sbuf: " << sbuf << "\n";
-    for(size_t loc=0;loc+15<sbuf.pagesize;loc++){
-        ssize_t stream_tag = sbuf.find("stream",loc);
-        std::cerr << "stream_tag: " << stream_tag << "\n";
-        if(stream_tag==-1) break;
-        /* Now skip past the \r or \r\n or \n */
-        size_t stream_start = stream_tag+6;
-        if(sbuf[stream_start]=='\r' && sbuf[stream_start+1]=='\n') stream_start+=2;
-        else stream_start +=1;
-
-        /* See if we can find the endstream; here we can scan to the end of the buffer.
-         * Also, make sure that the endstream comes before the next stream. This is easily
-         * determined by doing a search for 'stream' and 'endstream' and making sure that
-         * the next 'stream' we find is, in fact, in the 'endsream'.
-         */
-        ssize_t endstream = sbuf.find("endstream",stream_start);
-        if (endstream==-1) break;    // no endstream tag
-
-        std::cerr << "endstream" << endstream << "\n";
-
-        ssize_t nextstream = sbuf.find("stream",stream_start);
-
-        if (endstream+3 != nextstream){
-            /* The 'stream' after the stream_tag is not the 'endstream',
-             * so advance loc so that it will find the nextstream
-             */
-            loc = nextstream - 1;
-            continue;
+    std::cerr << "pdf_extractor::recurse_texts\n";
+    for (const auto &it: texts) {
+        std::string text = it.txt;
+        if (text.size()>0){
+            if (pdf_dump_text){
+                std::cout << "====== pdf_extractor::recurse_texts: " << it.pos0 << "  =====\n";
+                std::cout << text << "\n";
+            }
+            auto *nsbuf = sbuf_t::sbuf_new( it.pos0, text);
+            nsbuf->hex_dump(std::cerr);
+            sp.recurse(nsbuf);
+            std::cerr << "----------------- back from recurse (scan_pdf) -----------------\n";
         }
-        /* Remember the stream to analyze later */
-
-        /* Analyze this stream and then see if there is another one following!
-         * This is a change from BE1.5, which stopped after it found the first stream.
-         */
-        std::cerr << "push " <<stream_start << " " << endstream << "\n";
-        streams.push_back( stream( stream_start, endstream ));
-        loc=endstream+9;
     }
-    std::cerr << "streams found: " << streams.size() << "\n";
 }
 
 void pdf_extractor::run(scanner_params &sp)
 {
     find_streams();
-    decompress_streams_extract_text();
-    recurse_texts(sp);
+    if (streams.size()) decompress_streams_extract_text();
+    if (texts.size()) recurse_texts(sp);
 }
 
 extern "C"
