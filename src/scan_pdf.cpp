@@ -167,8 +167,6 @@ void pdf_extractor::decompress_streams_extract_text()
         size_t compr_size = it.endstream_tag - it.stream_start;
         size_t max_uncompr_size = compr_size * 8;       // good assumption for expansion
 
-        std::cerr << "attempt to decompress stream @" << it.stream_tag << " zlib: " << it.stream_start << " - " << it.endstream_tag << "\n";
-
         auto *dbuf = sbuf_decompress_zlib_new( sbuf_root.slice(it.stream_start, compr_size), max_uncompr_size, "PDFZLIB");
         if (dbuf==nullptr) {
             std::cerr << "failed\n";

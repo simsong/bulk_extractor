@@ -127,6 +127,7 @@ bulk_extractor_nomain = \
 bulk_extractor_SOURCES = $(bulk_extractor_nomain) $(scanners_builtin) main.cpp
 be_tests_SOURCES = $(bulk_extractor_nomain) $(scanners_builtin) be13_api/catch.hpp be_tests.cpp
 
+
 #lib: libbulkextractor.so
 
 #libbulkextractor.so: $(bulk_extractorlib_OBJECTS)
