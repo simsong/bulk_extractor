@@ -57,7 +57,7 @@ public:
       }
 
 };
-#define YY_EXTRA_TYPE email_scanner *             /* holds our class pointer */
+#define YY_EXTRA_TYPE email_scanner *                     /* holds our class pointer */
 YY_EXTRA_TYPE yyemail_get_extra (yyscan_t yyscanner );    /* redundent declaration */
 inline class email_scanner *get_extra(yyscan_t yyscanner) {return yyemail_get_extra(yyscanner);}
 

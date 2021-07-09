@@ -12,11 +12,6 @@
 #pragma GCC diagnostic ignored "-Weffc++"
 #endif
 
-//2018-03-03: slg - this doesn't seem to be an issue anymore
-//#ifdef HAVE_DIAGNOSTIC_DEPRECATED_REGISTER
-//#pragma GCC diagnostic ignored "-Wdeprecated-register"
-//#endif
-
 #define YY_NO_INPUT
 
 /* Needed for flex: */
@@ -54,6 +49,14 @@ public:
         int count=0;
         while ((max_size > 0) && (point < sbuf.bufsize) ){
             *buf++ = sbuf[point++];
+            max_size--;
+            count++;
+        }
+        /* Provide an extra space at the end */
+        if (point==sbuf.bufsize && max_size>0){
+            std::cerr << "*** ADDING EXTRA ***  max_size=" << max_size << "\n";
+            *buf++ = ' ';
+            point++;
             max_size--;
             count++;
         }
