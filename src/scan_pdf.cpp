@@ -22,7 +22,7 @@
 /* Debug by setting DEBUG or by setting pdf_dump at runtime */
 
 bool pdf_extractor::pdf_dump_hex  = false;       // dump the contents HEX
-bool pdf_extractor::pdf_dump_text = true;      // dump the extracted text.
+bool pdf_extractor::pdf_dump_text = false;      // dump the extracted text.
 
 pdf_extractor::pdf_extractor(const sbuf_t &sbuf):
     sbuf_root(sbuf)
@@ -156,7 +156,7 @@ void pdf_extractor::find_streams()
         streams.push_back( stream( stream_tag, stream_start, endstream_tag ));
         loc = endstream_tag + 9;
     }
-    std::cerr << "streams found: " << streams.size() << "\n";
+    //std::cerr << "streams found: " << streams.size() << "\n";
 }
 
 void pdf_extractor::decompress_streams_extract_text()
@@ -167,7 +167,8 @@ void pdf_extractor::decompress_streams_extract_text()
         size_t compr_size = it.endstream_tag - it.stream_start;
         size_t max_uncompr_size = compr_size * 8;       // good assumption for expansion
 
-        auto *dbuf = sbuf_decompress_zlib_new( sbuf_root.slice(it.stream_start, compr_size), max_uncompr_size, "PDFZLIB");
+        auto *dbuf = sbuf_decompress::sbuf_new_decompress( sbuf_root.slice(it.stream_start, compr_size), max_uncompr_size, "PDFZLIB",
+                                               sbuf_decompress::mode_t::PDF );
         if (dbuf==nullptr) {
             std::cerr << "failed\n";
             continue ;   // could not decompress
@@ -185,7 +186,7 @@ void pdf_extractor::decompress_streams_extract_text()
             std::string the_text = extract_text( *dbuf );
 
             texts.push_back( text(pos0, the_text) );
-            std::cerr << "pushing " << pos0 << " " << the_text << "\n";
+            //std::cerr << "pushing " << pos0 << " " << the_text << "\n";
         }
         delete dbuf;
     }
@@ -195,7 +196,7 @@ void pdf_extractor::decompress_streams_extract_text()
  */
 void pdf_extractor::recurse_texts(scanner_params &sp)
 {
-    std::cerr << "pdf_extractor::recurse_texts\n";
+    //std::cerr << "pdf_extractor::recurse_texts\n";
     for (const auto &it: texts) {
         std::string text = it.txt;
         if (text.size()>0){
@@ -204,10 +205,10 @@ void pdf_extractor::recurse_texts(scanner_params &sp)
                 std::cout << text << "\n";
             }
             auto *nsbuf = sbuf_t::sbuf_malloc( it.pos0, text);
-            std::cerr << "just made nsbuf:\n" << *nsbuf << "\n";
-            nsbuf->hex_dump(std::cerr);
+            //std::cerr << "just made nsbuf:\n" << *nsbuf << "\n";
+            //nsbuf->hex_dump(std::cerr);
             sp.recurse(nsbuf);          // it will delete the sbuf
-            std::cerr << "----------------- back from recurse (scan_pdf) -----------------\n";
+            //std::cerr << "----------------- back from recurse (scan_pdf) -----------------\n";
         }
     }
 }
