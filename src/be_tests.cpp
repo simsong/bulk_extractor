@@ -160,7 +160,6 @@ TEST_CASE("scan_base64_functions", "[support]" ){
 
 /* scan_email.flex checks */
 TEST_CASE("scan_email", "[support]") {
-#if 0
     {
         REQUIRE( extra_validate_email("this@that.com")==true);
         REQUIRE( extra_validate_email("this@that..com")==false);
@@ -183,7 +182,6 @@ TEST_CASE("scan_email", "[support]") {
         REQUIRE( requireFeature(email_txt,"135\tplain_text_pdf@textedit.com"));
     }
 
-#endif
     {
         auto *sbufp = new sbuf_t("plain_text_pdf@textedit.com");
         auto outdir = test_scanner(scan_email, sbufp);

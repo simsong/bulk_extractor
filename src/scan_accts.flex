@@ -127,8 +127,8 @@ DATEFORMAT	({DATEA}|{DATEB}|{DATEC}|{DATED})
 
 [^0-9a-z][13]({BASEEF}{27,34})/{XBASEF} {
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
-    if(valid_bitcoin_address(yytext+1,yyleng-1)){
-       s.pii_recorder.write_buf(SBUF,s.pos+1,yyleng-1);
+    if(valid_bitcoin_address(yytext+1, yyleng-1)){
+       s.pii_recorder.write_buf(SBUF, POS+1, yyleng-1);
     }
     s.pos += yyleng;
 }
@@ -145,8 +145,8 @@ DATEFORMAT	({DATEA}|{DATEB}|{DATEC}|{DATED})
     /* #### #### #### #### --- most credit card numbers*/
     /* don't include the non-numeric character in the hand-off */
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
-    if(valid_ccn(yytext+1,yyleng-1)){
-        s.ccn_recorder.write_buf(SBUF,s.pos+1,yyleng-1);
+    if(valid_ccn(yytext+1, yyleng-1)){
+        s.ccn_recorder.write_buf(SBUF, POS+1, yyleng-1);
     }
     s.pos += yyleng;
 }
@@ -156,8 +156,8 @@ DATEFORMAT	({DATEA}|{DATEB}|{DATEC}|{DATED})
     /* REGEX3 */
     /* Must be american express... */
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
-    if(valid_ccn(yytext+1,yyleng-1)){
-        s.ccn_recorder.write_buf(SBUF,s.pos+1,yyleng-1);
+    if(valid_ccn(yytext+1, yyleng-1)){
+        s.ccn_recorder.write_buf(SBUF, POS+1, yyleng-1);
     }
     s.pos += yyleng;
 }
@@ -167,8 +167,8 @@ DATEFORMAT	({DATEA}|{DATEB}|{DATEC}|{DATED})
     /* REGEX4 */
     /* Must be american express... */
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
-    if(valid_ccn(yytext+1,yyleng-1) && !is_fbid(SBUF,s.pos+1) ){
-        s.ccn_recorder.write_buf(SBUF,s.pos+1,yyleng-1);
+    if(valid_ccn(yytext+1, yyleng-1) && !is_fbid(SBUF, POS+1) ){
+        s.ccn_recorder.write_buf(SBUF, POS+1, yyleng-1);
     }
     s.pos += yyleng;
 }
@@ -181,8 +181,8 @@ DATEFORMAT	({DATEA}|{DATEB}|{DATEC}|{DATED})
      * http://www.creditcards.com/credit-card-news/credit-card-appearance-1268.php
      */
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
-    if(valid_ccn(yytext+1,yyleng-1) && !is_fbid(SBUF,s.pos+1)){
-        s.ccn_recorder.write_buf(SBUF,s.pos+1,yyleng-1);
+    if(valid_ccn(yytext+1, yyleng-1) && !is_fbid(SBUF, POS+1)){
+        s.ccn_recorder.write_buf(SBUF, POS+1, yyleng-1);
     }
     s.pos += yyleng;
 }
@@ -194,7 +194,7 @@ DATEFORMAT	({DATEA}|{DATEB}|{DATEC}|{DATED})
     /* REGEX6 */
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
     if(valid_ccn(yytext+1,16)){  /* validate the first 16 digits */
-    	s.ccn_track2.write_buf(SBUF,s.pos+1,yyleng-1);
+    	s.ccn_track2.write_buf(SBUF, POS+1, yyleng-1);
     }
     s.pos += yyleng;
 }
@@ -207,8 +207,8 @@ DATEFORMAT	({DATEA}|{DATEB}|{DATEC}|{DATED})
      * PDF files.
      */
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
-    if(valid_phone(SBUF,s.pos+1,yyleng-1)){
-       s.telephone_recorder.write_buf(SBUF,s.pos+1,yyleng-1);
+    if(valid_phone(SBUF, POS+1, yyleng-1)){
+       s.telephone_recorder.write_buf(SBUF, POS+1, yyleng-1);
     }
     s.pos += yyleng;
 }
@@ -217,7 +217,7 @@ DATEFORMAT	({DATEA}|{DATEB}|{DATEC}|{DATED})
     /* REGEX8 */
     /* US phone number with parens, like (215) 555-1212 */
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
-    s.telephone_recorder.write_buf(SBUF,s.pos+1,yyleng-1);
+    s.telephone_recorder.write_buf(SBUF, POS+1, yyleng-1);
     s.pos += yyleng;
 }
 
@@ -226,8 +226,8 @@ DATEFORMAT	({DATEA}|{DATEB}|{DATEC}|{DATED})
     /* Generalized international phone numbers */
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
     if(has_min_digits(yytext)){
-        if(valid_phone(SBUF,s.pos+1,yyleng-1)){
-            s.telephone_recorder.write_buf(SBUF,s.pos+1,yyleng-1);
+        if(valid_phone(SBUF, POS+1, yyleng-1)){
+            s.telephone_recorder.write_buf(SBUF, POS+1, yyleng-1);
         }
     }
     s.pos += yyleng;
@@ -237,7 +237,7 @@ DATEFORMAT	({DATEA}|{DATEB}|{DATEC}|{DATED})
     /* REGEX10 */
     /* Generalized number with prefix */
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
-    s.telephone_recorder.write_buf(SBUF,s.pos+1,yyleng-1);
+    s.telephone_recorder.write_buf(SBUF, POS+1, yyleng-1);
     s.pos += yyleng;
 }
 
@@ -245,7 +245,7 @@ DATEFORMAT	({DATEA}|{DATEB}|{DATEC}|{DATED})
     /* REGEX11 */
     /* Generalized number with city code and prefix */
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
-    s.telephone_recorder.write_buf(SBUF,s.pos+1,yyleng-1);
+    s.telephone_recorder.write_buf(SBUF, POS+1, yyleng-1);
     s.pos += yyleng;
 }
 
@@ -253,14 +253,14 @@ DATEFORMAT	({DATEA}|{DATEB}|{DATEC}|{DATED})
      /* Experimental Regex to find phone numbers beginning with a + */
      /* Phone numbers can be a maximum of 15 digits */
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
-    s.telephone_recorder.write_buf(SBUF,s.pos+1,yyleng-1);
+    s.telephone_recorder.write_buf(SBUF, POS+1, yyleng-1);
     s.pos += yyleng;
 }
 
 [ \t\n][0]([1-9][0-9]{9,15})/[^0-9] {
      /* Experimental Regex to find phone numbers beginning with a 0 */
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
-    s.telephone_recorder.write_buf(SBUF,s.pos+1,yyleng-1);
+    s.telephone_recorder.write_buf(SBUF, POS+1, yyleng-1);
     s.pos += yyleng;
 }
 
@@ -268,7 +268,7 @@ DATEFORMAT	({DATEA}|{DATEB}|{DATEC}|{DATED})
 
 [^0-9]([0-9]{6}-){7}([0-9]{6})/[\r\n] {
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
-    s.alert_recorder.write(SBUF.pos0+s.pos,yytext+1,"Possible BitLocker Recovery Key (ASCII).");
+    s.alert_recorder.write(SBUF.pos0 + POS, yytext+1,"Possible BitLocker Recovery Key (ASCII).");
     s.pos += yyleng;
 }
 
@@ -279,7 +279,7 @@ DATEFORMAT	({DATEA}|{DATEB}|{DATEC}|{DATED})
     for(size_t i=1;i+1<(size_t)yyleng;i+=2){
        stmp.push_back(yytext[i] | (yytext[i+1]<<8));
     }
-    s.alert_recorder.write(SBUF.pos0+s.pos,utf16to8(stmp),"Possible BitLocker Recovery Key (UTF-16)");
+    s.alert_recorder.write(SBUF.pos0 + POS, utf16to8(stmp),"Possible BitLocker Recovery Key (UTF-16)");
     s.pos += yyleng;
 }
 
@@ -288,14 +288,14 @@ fedex[^a-z]+[0-9][0-9][0-9][0-9][- ]?[0-9][0-9][0-9][0-9][- ]?[0-9]/{END}	{
     /* REGEX12 */
     /* Generalized international phone numbers */
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
-    s.pii_recorder.write_buf(SBUF,s.pos,yyleng);
+    s.pii_recorder.write_buf(SBUF, POS, yyleng);
     s.pos += yyleng;
 }
 
 ssn:?[ \t]*[0-9][0-9][0-9]-?[0-9][0-9]-?[0-9][0-9][0-9][0-9]/{END}	{
     /* REGEX13 */
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
-    s.pii_recorder.write_buf(SBUF,s.pos,yyleng);
+    s.pii_recorder.write_buf(SBUF, POS, yyleng);
     s.pos += yyleng;
 }
 
@@ -303,7 +303,7 @@ ssn:?[ \t]*[0-9][0-9][0-9]-?[0-9][0-9]-?[0-9][0-9][0-9][0-9]/{END}	{
     /* REGEX13 --- SSNs without the SSN prefix, ssn_mode > 0*/
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
     if(ssn_mode>0){
-        s.pii_recorder.write_buf(SBUF,s.pos+1,yyleng-1);
+        s.pii_recorder.write_buf(SBUF, POS+1, yyleng-1);
     }
     s.pos += yyleng;
 }
@@ -314,7 +314,7 @@ ssn:?[ \t]*[0-9][0-9][0-9]-?[0-9][0-9]-?[0-9][0-9][0-9][0-9]/{END}	{
      */
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
     if(ssn_mode>1){
-        s.pii_recorder.write_buf(SBUF,s.pos+1,yyleng-1);
+        s.pii_recorder.write_buf(SBUF, POS+1, yyleng-1);
     }
     s.pos += yyleng;
 }
@@ -322,7 +322,7 @@ ssn:?[ \t]*[0-9][0-9][0-9]-?[0-9][0-9]-?[0-9][0-9][0-9][0-9]/{END}	{
 dob:?[ \t]+{DATEFORMAT}	{
     /* REGEX14 */
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
-    s.pii_recorder.write_buf(SBUF,s.pos,yyleng);
+    s.pii_recorder.write_buf(SBUF, POS, yyleng);
     s.pos += yyleng;
 }
 
@@ -345,21 +345,21 @@ box[ ]?[\[][0-9 -]{0,40}[\]] {
 CT[.](Send|Receive)[.]CMD_([A-Z0-9_]{4,25})[ ]From=([0-9]{2,12}+)(([ ]To=([0-9]{2,12}+))?) {
     /* TeamViewer */
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
-    s.pii_recorder.write_buf(SBUF,s.pos,yyleng);
+    s.pii_recorder.write_buf(SBUF, POS, yyleng);
     s.pos += yyleng;
 }
 
 sin:?[ \t]*[0-9][0-9][0-9][ -]?[0-9][0-9][0-9][ -]?[0-9][0-9][0-9]/{END} {
     /* Canadian SIN with prefix, optional dashes or spaces */
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
-    s.sin_recorder.write_buf(SBUF,s.pos,yyleng);
+    s.sin_recorder.write_buf(SBUF, POS, yyleng);
     s.pos += yyleng;
 }
 
 [^0-9][0-9][0-9][0-9]-[0-9][0-9][0-9]-[0-9][0-9][0-9]/{END} {
     /* Canadian SIN without prefix, dashes required */
     accts_scanner &s = *yyaccts_get_extra(yyscanner);
-    s.sin_recorder.write_buf(SBUF,s.pos+1,yyleng-1);
+    s.sin_recorder.write_buf(SBUF, POS+1, yyleng-1);
     s.pos += yyleng;
 }
 

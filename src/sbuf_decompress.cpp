@@ -23,10 +23,7 @@
 
 sbuf_t *sbuf_decompress_zlib_new(const sbuf_t &sbuf, uint32_t max_uncompr_size, const std::string name)
 {
-    Bytef *decompress_buf = reinterpret_cast<Bytef *>(malloc(max_uncompr_size)); // allocate a huge chunk of memory
-    if (decompress_buf==nullptr){
-        throw std::bad_alloc();
-    }
+    sbuf_t *ret = sbuf_t::sbuf_malloc(sbuf.pos0 + name, max_uncompr_size);
     /* Generic zlib decompresser. If there is a gzip header, try that first, then try raw. Otherwise try
      * raw first, then gzip
      */
@@ -35,9 +32,9 @@ sbuf_t *sbuf_decompress_zlib_new(const sbuf_t &sbuf, uint32_t max_uncompr_size, 
         z_stream zs;
         memset(&zs,0,sizeof(zs));
 
-        zs.next_in  = reinterpret_cast<const Bytef *>(sbuf.get_buf());
+        zs.next_in  = static_cast<const Bytef *>(sbuf.get_buf());
         zs.avail_in = sbuf.bufsize;
-        zs.next_out = decompress_buf;
+        zs.next_out = static_cast<Bytef *>(ret->malloc_buf());
         zs.avail_out = max_uncompr_size;
 
         /* If there is a gzip header, "Add 32 to windowBits to enable zlib and gzip decoding with automatic header detection" */
@@ -60,12 +57,10 @@ sbuf_t *sbuf_decompress_zlib_new(const sbuf_t &sbuf, uint32_t max_uncompr_size, 
         /* Ignore the error code; process data if we got any */
         if (zs.total_out > 0){
             /* Shrink the allocated region */
-            decompress_buf = reinterpret_cast<u_char *>(realloc(decompress_buf, zs.total_out));
-
-            /* And return a new sbuf, which will be freed by the caller */
-            return sbuf_t::sbuf_new( sbuf.pos0 + name, decompress_buf, zs.total_out, zs.total_out );
+            ret = ret->realloc(zs.total_out);
+            return ret;
         }
     }
-    free(decompress_buf);
+    delete ret;
     return nullptr;                     // couldn't decompress
 }

@@ -224,7 +224,7 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
 
     /* Get 8 characters of left context, right-justified */
     int context_len = 8;
-    int c0 = s.pos-context_len;
+    int c0 = POS - context_len;
     while(c0<0){
        c0++;
        context_len--;

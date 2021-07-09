@@ -98,7 +98,7 @@ UNICODE         ([[:print:][:space:]]+)
      * {6,65536}  means 6-65536 characters
      */
     base16_scanner &s = *yybase16_get_extra(yyscanner);
-    s.decode(sbuf_t(s.sbuf, s.pos, yyleng));
+    s.decode(sbuf_t(SBUF, POS, yyleng));
     s.pos += yyleng;
 }
 
