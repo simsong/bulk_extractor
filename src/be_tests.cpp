@@ -181,13 +181,11 @@ TEST_CASE("scan_email", "[support]") {
     }
 
     {
-        auto *sbufp = new sbuf_t(" plain_text_pdf@textedit.com");
+        auto *sbufp = new sbuf_t("plain_text_pdf@textedit.com");
         auto outdir = test_scanner(scan_email, sbufp);
         auto email_txt = getLines( outdir / "email.txt" );
-        REQUIRE( requireFeature(email_txt,"1\tplain_text_pdf@textedit.com"));
+        REQUIRE( requireFeature(email_txt,"0\tplain_text_pdf@textedit.com"));
     }
-
-    return;
 
     {
         std::vector<scanner_t *>scanners = {scan_email, scan_pdf };

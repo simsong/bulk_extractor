@@ -43,10 +43,20 @@ public:
     // point counts the point where we are removing characters
     size_t pos   {0};  /* The position regex is matching from---visible for C++ called by Flex */
     size_t point {0};  /* The position we are reading from---visible to Flex machine */
+    bool   first {true}; /* True if we have sent the first character */
 
     size_t get_input(char *buf, size_t max_size){
         if ((int)max_size < 0) return 0;
         int count=0;
+
+        /* Provide a leading space the first time through */
+        if (first && max_size>0) {
+            *buf++ = ' ';
+            max_size--;
+            count++;
+            first = false;
+        }
+
         while ((max_size > 0) && (point < sbuf.bufsize) ){
             *buf++ = sbuf[point++];
             max_size--;
@@ -64,8 +74,8 @@ public:
 };
 
 #define YY_INPUT(buf,result,max_size) result = get_extra(yyscanner)->get_input(buf,max_size);
-#define POS   s.pos
 #define SBUF (s.sbuf)
+#define POS  (s.pos-1)
 #define YY_FATAL_ERROR(msg) {throw sbuf_scanner::sbuf_scanner_exception(msg);}
 
 #pragma GCC diagnostic ignored "-Wunused-function"
