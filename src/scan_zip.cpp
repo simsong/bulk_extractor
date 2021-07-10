@@ -83,8 +83,6 @@ inline void scan_zip_component(scanner_params &sp, feature_recorder &zip_recorde
 
     if (name.size()==0) name="<NONAME>";    // If no name is provided, use this
 
-    std::cerr << "================================================================\nscan_zip_component:\nname=" << name << "\n";
-
     /* Save details of the zip header */
     std::string mtime = fatDateToISODate(lastmoddate,lastmodtime);
     char b2[1024];
@@ -118,8 +116,6 @@ inline void scan_zip_component(scanner_params &sp, feature_recorder &zip_recorde
         // Create an sbuf that contains the source data pointed to by the header that is to be decompressed
         const sbuf_t sbuf_src(sbuf, pos+30+name_len+extra_field_len);
 
-        std::cerr << "sbuf_src:\n" << sbuf_src << "\n------------\n";
-
         // If there is no data, then just indicate this and return.
         if (sbuf_src.pagesize==0){
             xmlstream << "<disposition>end-of-buffer</disposition></zipinfo>";
@@ -137,7 +133,6 @@ inline void scan_zip_component(scanner_params &sp, feature_recorder &zip_recorde
         }
 
         auto *decomp = sbuf_decompress::sbuf_new_decompress(sbuf_src, uncompr_size, "ZIP", sbuf_decompress::mode_t::ZIP);
-        std::cerr << "decomp= " << decomp << "\n";
         if (decomp!=nullptr) {
             xmlstream << "<disposition bytes='" << decomp->bufsize << "'>decompressed</disposition></zipinfo>";
             zip_recorder.write(pos0+pos,name,xmlstream.str());
@@ -149,15 +144,11 @@ inline void scan_zip_component(scanner_params &sp, feature_recorder &zip_recorde
             unzip_recorder.carve(*decomp, carve_name, mtime);
 
             // recurse. Remember that recurse will free the sbuf
-            std::cerr << "san_zip: recurse on this: \n" << *decomp << "\n";
-            decomp->hex_dump(std::cerr);
-
             sp.recurse( decomp );
         } else {
             xmlstream << "<disposition>decompress-failed</disposition></zipinfo>";
             zip_recorder.write(pos0+pos,name,xmlstream.str());
         }
-        std::cerr << "\n==end==\n\n";
     }
 }
 

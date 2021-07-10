@@ -68,14 +68,11 @@ sbuf_t *sbuf_decompress::sbuf_new_decompress(const sbuf_t &sbuf, uint32_t max_un
         inflateEnd(&zs);
         break;
     case mode_t::ZIP:
-        std::cerr << "ZIP\n";
         r = inflateInit2(&zs,-15);
         if (r!=0){                  // something went wrong.
             throw std::runtime_error("ZIP inflateInit failed");
         }
         r = inflate(&zs,Z_SYNC_FLUSH);
-        std::cerr << "zs=" << zs << "\n";
-        std::cerr << "r=" << r << "\n";
         break;
     default:
         throw std::runtime_error("sbuf_decompress.cpp: invalid mode");

@@ -280,8 +280,8 @@ TEST_CASE("scan_zip", "[scanners]") {
     auto *sbufp = map_file( "testfilex.docx" );
     auto outdir = test_scanners( scanners, sbufp); // deletes sbuf2
     auto email_txt = getLines( outdir / "email.txt" );
-    REQUIRE( requireFeature(email_txt,"ZIP-402\tuser_docx@microsoftword.com"));
-
+    REQUIRE( requireFeature(email_txt,"2093-ZIP-402\tuser_docx@microsoftword.com"));
+    REQUIRE( requireFeature(email_txt,"2443-ZIP-1012\tuser_docx@microsoftword.com"));
 }
 
 
