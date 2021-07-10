@@ -266,7 +266,7 @@ TEST_CASE("scan_wordlist", "[scanners]") {
     /* Make a scanner set with a single scanner and a single command to enable all the scanners.
      */
     auto *sbufp = map_file( "john_jakes.vcf" );
-    auto outdir = test_scanner(scan_wordlist, sbufp); // deletes sbuf2
+    auto outdir = test_scanner(scan_wordlist, sbufp); // deletes sbufp
 
     /* Read the output */
     auto wordlist_txt = getLines( outdir / "wordlist_dedup_1.txt");

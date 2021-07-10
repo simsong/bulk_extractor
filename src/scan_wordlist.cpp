@@ -93,6 +93,17 @@ void Scan_Wordlist::process_sbuf(scanner_params &sp)
                      */
                     std::string word = sbuf.substr(wordstart,len);
                     flat_wordlist->write(sbuf.pos0+wordstart, word, "");
+
+                    /* check for (word), <word>, and [word] */
+                    if (word.size()>2 && word[0]=='(' && word[word.size()-1]==')') {
+                        flat_wordlist->write(sbuf.pos0+wordstart+1, word.substr(1,word.size()-2), "");
+                    }
+                    if (word.size()>2 && word[0]=='<' && word[word.size()-1]=='>') {
+                        flat_wordlist->write(sbuf.pos0+wordstart+1, word.substr(1,word.size()-2), "");
+                    }
+                    if (word.size()>2 && word[0]=='[' && word[word.size()-1]==']') {
+                        flat_wordlist->write(sbuf.pos0+wordstart+1, word.substr(1,word.size()-2), "");
+                    }
                 }
 #if 0
 #ifdef USE_SQLITE3
@@ -163,7 +174,7 @@ void Scan_Wordlist::shutdown(scanner_params &sp)
         if (t1!=std::string::npos) line = line.substr(t1+1);
 
         // The end of the feature is the end of the line, since we did not write the context
-        std::string word = feature_recorder::unquote_string(line);
+        const std::string &word = line;
 
         // Insert into the hash list. If we ran out of space, dump it all and restart.
         try {

@@ -3,9 +3,18 @@
 
 #include <filesystem>
 #include "be13_api/scanner_params.h"
+#include "be13_api/atomic_set.h"
 
 
+/* NOTE: Wordlist is a singleton!
+ * It may be called from multiple threads, so we cannot make sp a class variable.
+ *
+ * However we do not need to make seen_wordlist atomic because it is only used
+ * during the single-threaded uniquify pass. We use that pass so we do not need to
+ * hold the entire wordlist in memory during processing, but it does add to processing time.
+ */
 class Scan_Wordlist {
+    /* SHUTDOWN PASS - SINGLE-THREADED INSTANCE VARIABLES */
     struct WordlistSorter {
         bool operator()(const std::string &a,const std::string &b) const {
             if (a.size() < b.size()) return true;
@@ -38,7 +47,9 @@ public:;
 
     bool wordlist_use_flatfiles {true};
     bool wordlist_use_sql {false};
+    /* MULTI-THREADED - sp cannot be an class variable */
     void process_sbuf(scanner_params &sp);
+    /* SINGLE-THREADED */
     void shutdown(scanner_params &sp);
 };
 

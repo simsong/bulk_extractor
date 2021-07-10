@@ -180,6 +180,45 @@ Our final objective was to improve the performance of the program.
 \subsection{Improvements in C++}
 \subsection{Improvements in Python}
 \subsection{Improvements in testing}
+We decided to track and systematically increase the \emph{code
+coverage} of the unit tests. As noted above, previously \be had no
+unit tests. We started by picking a unit test framework. After
+reviewing several available for C++, we chose Catch2 becuase it was
+header-only (which meant that it was easier to integrate) and it
+appeared to be well supported and well maintained.
+
+We started with unit tests for the BE13 framework. We wrote the unit
+tests at the same time we did the refactoring. We generally wrote unit
+tests as the new interfaces were designed and implemented. Legacy
+interfaces generally did not get unit tests.  We used the popular
+CodeCov.io website to display the code coverage of the unit tests.
+
+Creating code coverage reports for C++ was straightfowrard: we re-ran
+configure specifying additional compiler flags and libraries, then run
+a post-processing tool after the unit test runs, and finally run
+CodeCov's script to upload the report to the website. After we got
+this working, we then integrated it with GitHub's ``Actions,'' so that
+the unit tests would automatically be run and coverage reports
+uploaded after every commit to GitHub or pull request.
+
+After all of the new and refactored code had unit tests, we examined
+the code coverage reports to determine which pieces of legacy code
+were not covered by the newly written unit tests. In some cases,
+legacy code \emph{was} covered by the new tests, because the new code
+called the old code. But for roughly two thrids of the code, there was
+no coverage by unit tests. For this legacy code, writing unit tests
+seemed largely like a compliance
+exercise---after all, \be has been in use for more than a decade, so
+we thought that all of the significant bugs, such a memory allocation
+errors, off-by-one errors, and so on, were gone from the code base.
+This turned out to be the case! However, the act of writing the unit
+tests forced us to clarify internal documentation, simplify
+internal implementations, and in some cases we were able to eliminate
+legacy code that was no longer being used. To paraphrase the immortal
+Steve Jobs, the most reliable piece of code, the piece of code that
+you never need to test, is the line of code that you don't write---or
+in this case, the line of code that you remove from your legacy programs.
+
 
 \section{Implementing the Upgrade}
 
@@ -294,11 +333,6 @@ The author names and affiliations could be formatted in two ways:
 \end{enumerate}
 See the front matter of this document for examples. You are recommended to conform your choice to the journal you are submitting to.
 
-\section{Bibliography styles}
-
-There are various bibliography styles available. You can select the style of your choice in the preamble of this document. These styles are Elsevier styles based on standard styles like Harvard and Vancouver. Please use Bib\TeX\ to generate your bibliography and include DOIs whenever available.
-
-Here are two sample references: \cite{Feynman1963118,Dirac1953888}.
 
 \section*{References}
 
