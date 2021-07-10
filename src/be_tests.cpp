@@ -14,29 +14,26 @@
 #include "config.h"
 
 #ifdef HAVE_MACH_O_DYLD_H
-#include "mach-o/dyld.h"
+#include "mach-o/dyld.h"         // Needed for _NSGetExecutablePath
 #endif
 
 #include "dfxml_cpp/src/dfxml_writer.h"
-#include "be13_api/scanner_set.h"
 #include "be13_api/catch.hpp"
+#include "be13_api/scanner_set.h"
 #include "be13_api/utils.h"             // needs config.h
 
-#include "image_process.h"
 #include "base64_forensic.h"
-#include "phase1.h"
-
-#include "sbuf_decompress.h"
 #include "bulk_extractor_scanners.h"
-#include "scan_base64.h"
-#include "scan_vcard.h"
-#include "scan_pdf.h"
-
-#include "scan_email.h"
 #include "exif_reader.h"
+#include "image_process.h"
 #include "jpeg_validator.h"
-
-
+#include "phase1.h"
+#include "sbuf_decompress.h"
+#include "scan_base64.h"
+#include "scan_email.h"
+#include "scan_pdf.h"
+#include "scan_vcard.h"
+#include "scan_wordlist.h"
 #include "threadpool.hpp"
 
 const std::string JSON1 {"[{\"1\": \"one@company.com\"}, {\"2\": \"two@company.com\"}, {\"3\": \"two@company.com\"}]"};
@@ -45,12 +42,12 @@ const std::string JSON2 {"[{\"1\": \"one@base64.com\"}, {\"2\": \"two@base64.com
 std::filesystem::path test_dir()
 {
 #ifdef HAVE__NSGETEXECUTABLEPATH
-    char path[1024];
+    char path[4096];
     uint32_t size = sizeof(path);
     if (_NSGetExecutablePath(path, &size) == 0){
-        std::cerr << "executable path is " << path << "\n";
+        return std::filesystem::path(path).parent_path() / "tests";
     }
-    return std::filesystem::path(path).parent_path() / "tests";
+    throw std::runtime_error("_NSGetExecutablePath failed???\n");
 #else
     return std::filesystem::canonical("/proc/self/exe").parent_path() / "tests";
 #endif
@@ -63,14 +60,20 @@ sbuf_t *map_file(std::filesystem::path p)
 
 
 /* Read all of the lines of a file and return them as a vector */
-std::vector<std::string> getLines(const std::string &filename)
+std::vector<std::string> getLines(const std::filesystem::path path)
 {
     std::vector<std::string> lines;
     std::string line;
     std::ifstream inFile;
-    inFile.open( filename);
+    inFile.open( path );
     if (!inFile.is_open()) {
-        throw std::runtime_error("getLines: Cannot open file: "+filename);
+        std::cerr << "getLines: Cannot open file: " << path << "\n";
+        std::string cmd("ls -l " + path.parent_path().string());
+        std::cerr << cmd << "\n";
+        if (system( cmd.c_str())) {
+            std::cerr << "error\n";
+        }
+        throw std::runtime_error("be_tests:getLines");
     }
     while (std::getline(inFile, line)){
         if (line.size()>0){
@@ -80,6 +83,19 @@ std::vector<std::string> getLines(const std::string &filename)
     return lines;
 }
 
+/* Requires that a feature in a set of lines */
+bool requireFeature(const std::vector<std::string> &lines, const std::string feature)
+{
+    for (const auto &it : lines) {
+        if ( it.find(feature) != std::string::npos) return true;
+    }
+    std::cerr << "feature not found: " << feature << "\nfeatures found (perhaps one of these is the feature you are looking for?):\n";
+    for (const auto &it : lines) {
+        std::cerr << "  " << it << "\n";
+    }
+    return false;
+}
+
 /* Setup and run a scanner. Return the output directory */
 std::vector<scanner_config::scanner_command> enable_all_scanners = {
     scanner_config::scanner_command(scanner_config::scanner_command::ALL_SCANNERS,
@@ -87,7 +103,7 @@ std::vector<scanner_config::scanner_command> enable_all_scanners = {
 };
 
 
-std::filesystem::path test_scanner(scanner_t scanner, sbuf_t *sbuf)
+std::filesystem::path test_scanners(const std::vector<scanner_t *> & scanners, sbuf_t *sbuf)
 {
     REQUIRE(sbuf->children == 0);
 
@@ -96,14 +112,14 @@ std::filesystem::path test_scanner(scanner_t scanner, sbuf_t *sbuf)
     sc.outdir           = NamedTemporaryDirectory();
     sc.scanner_commands = enable_all_scanners;
 
-    std::cerr << "Single scanner output in " << sc.outdir << "\n";
-
     scanner_set ss(sc, frs_flags);
-    ss.add_scanner(scanner);
+    for (auto const &it : scanners ){
+        ss.add_scanner( it );
+    }
     ss.apply_scanner_commands();
 
-    REQUIRE (ss.get_enabled_scanners().size()==1); // the one scanner
-    std::cerr << "output in " << sc.outdir << " for " << ss.get_enabled_scanners()[0] << "\n";
+    REQUIRE (ss.get_enabled_scanners().size() == scanners.size()); // the one scanner
+    std::cerr << "\n## output in " << sc.outdir << " for " << ss.get_enabled_scanners()[0] << "\n";
     REQUIRE(sbuf->children == 0);
     ss.phase_scan();
     REQUIRE(sbuf->children == 0);
@@ -111,6 +127,14 @@ std::filesystem::path test_scanner(scanner_t scanner, sbuf_t *sbuf)
     ss.shutdown();
     return sc.outdir;
 }
+
+std::filesystem::path test_scanner(scanner_t scanner, sbuf_t *sbuf)
+{
+    // I couldn't figure out how to pass a vector of scanner_t objects...
+    std::vector<scanner_t *>scanners = {scanner };
+    return test_scanners(scanners, sbuf);
+}
+
 
 TEST_CASE("base64_forensic", "[support]") {
     const char *encoded="SGVsbG8gV29ybGQhCg==";
@@ -135,59 +159,86 @@ TEST_CASE("scan_base64_functions", "[support]" ){
 }
 
 /* scan_email.flex checks */
-TEST_CASE("scan_email_functions", "[support]") {
-    REQUIRE( extra_validate_email("this@that.com")==true);
-    REQUIRE( extra_validate_email("this@that..com")==false);
-    auto s1 = sbuf_t("this@that.com");
-    auto s2 = sbuf_t("this_that.com");
-    REQUIRE( find_host_in_email(s1) == 5);
-    REQUIRE( find_host_in_email(s2) == -1);
+TEST_CASE("scan_email", "[support]") {
+    {
+        REQUIRE( extra_validate_email("this@that.com")==true);
+        REQUIRE( extra_validate_email("this@that..com")==false);
+        auto s1 = sbuf_t("this@that.com");
+        auto s2 = sbuf_t("this_that.com");
+        REQUIRE( find_host_in_email(s1) == 5);
+        REQUIRE( find_host_in_email(s2) == -1);
 
+        auto s3 = sbuf_t("https://domain.com/foobar");
+        size_t domain_len = 0;
+        REQUIRE( find_host_in_url(s3, &domain_len)==8);
+        REQUIRE( domain_len == 10);
+    }
 
-    auto s3 = sbuf_t("https://domain.com/foobar");
-    size_t domain_len = 0;
-    REQUIRE( find_host_in_url(s3, &domain_len)==8);
-    REQUIRE( domain_len == 10);
+    {
+        /* This is text from a PDF, decompressed */
+        auto *sbufp = new sbuf_t("q Q q 72 300 460 420 re W n /Gs1 gs /Cs1 cs 1 sc 72 300 460 420re f 0 sc./Gs2 gs q 1 0 0 -1 72720 cm BT 10 0 0 -10 5 10 Tm /F1.0 1 Tf (plain_text_pdf@textedit.com).Tj ET Q Q");
+        auto outdir = test_scanner(scan_email, sbufp);
+        auto email_txt = getLines( outdir / "email.txt" );
+        REQUIRE( requireFeature(email_txt,"135\tplain_text_pdf@textedit.com"));
+    }
+
+    {
+        auto *sbufp = new sbuf_t("plain_text_pdf@textedit.com");
+        auto outdir = test_scanner(scan_email, sbufp);
+        auto email_txt = getLines( outdir / "email.txt" );
+        REQUIRE( requireFeature(email_txt,"0\tplain_text_pdf@textedit.com"));
+    }
+
+    {
+        std::vector<scanner_t *>scanners = {scan_email, scan_pdf };
+        auto *sbufp = map_file("nps-2010-emails.100k.raw");
+        auto outdir = test_scanners(scanners, sbufp);
+        auto email_txt = getLines( outdir / "email.txt" );
+        REQUIRE( requireFeature(email_txt,"80896\tplain_text@textedit.com"));
+        REQUIRE( requireFeature(email_txt,"70727-PDF-0\tplain_text_pdf@textedit.com\t"));
+        REQUIRE( requireFeature(email_txt,"81991-PDF-0\trtf_text_pdf@textedit.com\t"));
+        REQUIRE( requireFeature(email_txt,"92231-PDF-0\tplain_utf16_pdf@textedit.com\t"));
+    }
 }
 
 TEST_CASE("sbuf_decompress_zlib_new", "[support]") {
-    auto *sbufj = map_file("test_hello.gz");
-    REQUIRE( sbuf_gzip_header( *sbufj, 0) == true);
-    REQUIRE( sbuf_gzip_header( *sbufj, 10) == false);
-    auto *decomp = sbuf_decompress_zlib_new( *sbufj, 1024*1024, "GZIP" );
+    auto *sbufp = map_file("test_hello.gz");
+    REQUIRE( sbuf_decompress::is_gzip_header( *sbufp, 0) == true);
+    REQUIRE( sbuf_decompress::is_gzip_header( *sbufp, 10) == false);
+    auto *decomp = sbuf_decompress::sbuf_new_decompress( *sbufp, 1024*1024, "GZIP", sbuf_decompress::mode_t::GZIP );
     REQUIRE( decomp != nullptr);
     REQUIRE( decomp->asString() == "hello@world.com\n");
     delete decomp;
-    delete sbufj;
+    delete sbufp;
 }
 
 TEST_CASE("scan_exif", "[scanners]") {
-    auto sbufj = map_file("1.jpg");
-    REQUIRE( sbufj->bufsize == 7323 );
-    auto res = jpeg_validator::validate_jpeg(*sbufj);
+    auto *sbufp = map_file("1.jpg");
+    REQUIRE( sbufp->bufsize == 7323 );
+    auto res = jpeg_validator::validate_jpeg(*sbufp);
     REQUIRE( res.how == jpeg_validator::COMPLETE );
+    delete sbufp;
 }
 
 TEST_CASE("scan_pdf", "[scanners]") {
-    auto *sbufj = map_file("pdf_words2.pdf");
-    pdf_extractor pe(*sbufj);
-
+    auto *sbufp = map_file("pdf_words2.pdf");
+    pdf_extractor pe(*sbufp);
     pe.find_streams();
     REQUIRE( pe.streams.size() == 4 );
     REQUIRE( pe.streams[1].stream_start == 2214);
-    REQUIRE( pe.streams[1].endstream == 4827);
+    REQUIRE( pe.streams[1].endstream_tag == 4827);
     pe.decompress_streams_extract_text();
     REQUIRE( pe.texts.size() == 1 );
     REQUIRE( pe.texts[0].txt.substr(0,30) == "-rw-r--r--    1 simsong  staff");
-    delete sbufj;
+    delete sbufp;
 }
 
 
 TEST_CASE("scan_json1", "[scanners]") {
     /* Make a scanner set with a single scanner and a single command to enable all the scanners.
      */
-    auto  sbuf1 = new sbuf_t("hello {\"hello\": 10, \"world\": 20, \"another\": 30, \"language\": 40} world");
-    auto outdir = test_scanner(scan_json, sbuf1);
+    auto *sbufp = new sbuf_t("hello {\"hello\": 10, \"world\": 20, \"another\": 30, \"language\": 40} world");
+    auto outdir = test_scanner(scan_json, sbufp); // delete sbufp
 
     /* Read the output */
     auto json_txt = getLines( outdir / "json.txt" );
@@ -204,10 +255,33 @@ TEST_CASE("scan_net", "[scanners]") {
 TEST_CASE("scan_vcard", "[scanners]") {
     /* Make a scanner set with a single scanner and a single command to enable all the scanners.
      */
-    auto sbuf2 = map_file( "john_jakes.vcf" );
-    auto outdir = test_scanner(scan_vcard, sbuf2); // deletes sbuf2
+    auto *sbufp = map_file( "john_jakes.vcf" );
+    auto outdir = test_scanner(scan_vcard, sbufp); // deletes sbuf2
 
     /* Read the output */
+}
+
+
+TEST_CASE("scan_wordlist", "[scanners]") {
+    /* Make a scanner set with a single scanner and a single command to enable all the scanners.
+     */
+    auto *sbufp = map_file( "john_jakes.vcf" );
+    auto outdir = test_scanner(scan_wordlist, sbufp); // deletes sbufp
+
+    /* Read the output */
+    auto wordlist_txt = getLines( outdir / "wordlist_dedup_1.txt");
+    REQUIRE( wordlist_txt[0] == "States" );
+    REQUIRE( wordlist_txt[1] == "America" );
+    REQUIRE( wordlist_txt[2] == "Company" );
+}
+
+TEST_CASE("scan_zip", "[scanners]") {
+    std::vector<scanner_t *>scanners = {scan_email, scan_zip };
+    auto *sbufp = map_file( "testfilex.docx" );
+    auto outdir = test_scanners( scanners, sbufp); // deletes sbuf2
+    auto email_txt = getLines( outdir / "email.txt" );
+    REQUIRE( requireFeature(email_txt,"2093-ZIP-402\tuser_docx@microsoftword.com"));
+    REQUIRE( requireFeature(email_txt,"2443-ZIP-1012\tuser_docx@microsoftword.com"));
 }
 
 

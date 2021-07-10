@@ -2,39 +2,33 @@
 #include <cstring>
 #include <cinttypes>
 
+/*
+ * This module creates a wordlist that can be used for password cracking.
+ * To minimize memory pressure, the wordlist is created in two passes.
+ * Pass 1 - During scanning (phase 1), each word found is written to a word.
+ * Pass 2 - the words are read, uniquified, and written out in sorted order,
+ *          shortest to longest, in files no longer than 100MB each.
+ *          This is designed for Elcomsoft's tools, but you may have success
+ *          with others.
+ *
+ * In BE1.6 we also had the ability to use SQLite3 for making the password list.
+ * We haven't gotten that working here yet.
+ */
+
+
 
 #include "config.h"
 #include "be13_api/utils.h"
 #include "be13_api/scanner_params.h"
-
-
-static uint32_t word_min = 6;
-static uint32_t word_max = 14;
-static uint64_t max_word_outfile_size=100*1000*1000;
-static bool strings = false;
-
-/* Wordlist support for flat files */
-class WordlistSorter {
-public:
-    bool operator()(const std::string &a,const std::string &b) const {
-	if(a.size() < b.size()) return true;
-	if(a.size() > b.size()) return false;
-	return a<b;
-    }
-};
-#define WORDLIST "wordlist"
-
-/* wordlist support for SQL.  Note that the SQL-based wordlist is
- * faster than the file-based wordlist.
- */
-
-static bool wordlist_use_flatfiles = true;
-static bool wordlist_use_sql = true;
+#include "scan_wordlist.h"
 
 #if defined(HAVE_LIBSQLITE3) && defined(HAVE_SQLITE3_H)
 #define USE_SQLITE3
 #endif
 
+bool wordlist_strings = false;
+
+/* Haven't figured out the SQL interface yet. */
 #if 0
 #ifdef USE_SQLITE3
 static const char *schema_wordlist[] = {
@@ -48,74 +42,218 @@ static const char *select_statement = "SELECT DISTINCT word FROM wordlist ORDER 
 #endif
 
 
-/* Global variables for writing out wordlist */
-static std::ofstream of2;
-static std::string ofn_template;
-
-#if 0
-static int of2_counter = 0;
-static uint64_t outfilesize = 0;
-static void wordlist_write_word(const std::string &word)
+Scan_Wordlist::Scan_Wordlist(scanner_params &sp, bool strings_):strings(strings_)
 {
-    if (!of2.is_open() || outfilesize>max_word_outfile_size){
-        if(of2.is_open()) of2.close();
-        char fname[128];
-        snprintf(fname,sizeof(fname),ofn_template.c_str(),of2_counter++);
-        of2.open(fname);
-        if(!of2.is_open()) throw std::runtime_error(std::string("Cannot open ") + fname);
-        outfilesize = 0;
-    }
-    of2 << word << '\n';
-    outfilesize += word.size() + 1;
-}
-#endif
-
-#if 0
-static void wordlist_split_and_dedup(const std::string &ifn)
-{
-    std::ifstream f2(ifn.c_str());
-    if (!f2.is_open()) throw std::runtime_error(std::string("Cannot open ")+ifn);
-
-    /* Read all of the words */
-
-    while(!f2.eof()){
-	// set is the sorted list of words we have seen
-	std::set<std::string, WordlistSorter> seen;
-	while(!f2.eof()){
-	    /* Create the first file (of2==0) or roll-over if outfilesize>100M */
-	    std::string line;
-	    getline(f2,line);
-	    if(line[0]=='#') continue;	                // ignore comments
-	    size_t t1 = line.find('\t');		// find the beginning of the feature
-	    if(t1!=std::string::npos) line = line.substr(t1+1);
-	    size_t t2 = line.find('\t');		// find the end of the feature
-	    if(t2!=std::string::npos) line = line.substr(0,t2);
-            std::string word = feature_recorder::unquote_string(line);
-	    try {
-		if(word.size()>0) seen.insert(word);
-	    }
-	    catch (std::bad_alloc &er) {
-		std::cerr << er.what() << std::endl;
-		std::cerr << "Dumping current dataset; will then restart dedup." << std::endl;
-		break;
-	    }
-	}
-	/* Dump the words so far */
-
-	for(std::set<std::string,WordlistSorter>::const_iterator it = seen.begin();it!=seen.end();it++){
-	    if ((*it).size()>0) wordlist_write_word(*it);
+    // Build the truth table for the wordlist separator values.
+    for(int ch=0; ch<256; ch++){
+        if (strings) {
+            wordchar[ch] = isprint(ch) && ch<128;
+        } else {
+            wordchar[ch] = isprint(ch) && ch!=' ' && ch<128;
         }
     }
-    if(of2.is_open()) of2.close();
+}
+
+void Scan_Wordlist::process_sbuf(scanner_params &sp)
+{
+    const sbuf_t &sbuf = *sp.sbuf;
+    if (flat_wordlist==nullptr) {
+        flat_wordlist = &sp.ss.named_feature_recorder("wordlist");
+    }
+
+    /* Simplified word extractor. It's good enough to pull out stuff for cryptanalysis. */
+    bool in_word     = false;        // true if we are in a word
+    size_t wordstart = 0;            // if we are in the word, where it started
+    for(size_t i=0; i<sbuf.bufsize; i++){
+        bool is_wordchar = wordchar[sbuf[i]];
+        if (!in_word) {
+            /* case 1 - we are not in a word */
+            /* does this character start a word? */
+            if (is_wordchar){
+                in_word = true;
+                wordstart = i;
+            }
+            /* If we are not in a word and we have extended into the margin, quit. */
+            if (i > sbuf.pagesize){
+                return;
+            }
+        }
+        else {
+            /* case 2 - we are in a word */
+            /* If this is the end of the word, or we are in the word and this is the end of the margin,
+             * do end-of-word processing.
+             */
+            /* Does - we are in a word & this character ends a word. */
+            if (in_word && !is_wordchar){
+                uint32_t len = i - wordstart;
+                if ((word_min <= len) && (len <=  word_max)){
+
+                    /* Save the word that starts at sbuf.buf+wordstart that has a length of len.
+                     * Do we need to keep the position? It might be useful in some applications.
+                     */
+                    std::string word = sbuf.substr(wordstart,len);
+                    flat_wordlist->write(sbuf.pos0+wordstart, word, "");
+
+                    /* check for (word), <word>, and [word] */
+                    if (word.size()>2 && word[0]=='(' && word[word.size()-1]==')') {
+                        flat_wordlist->write(sbuf.pos0+wordstart+1, word.substr(1,word.size()-2), "");
+                    }
+                    if (word.size()>2 && word[0]=='<' && word[word.size()-1]=='>') {
+                        flat_wordlist->write(sbuf.pos0+wordstart+1, word.substr(1,word.size()-2), "");
+                    }
+                    if (word.size()>2 && word[0]=='[' && word[word.size()-1]==']') {
+                        flat_wordlist->write(sbuf.pos0+wordstart+1, word.substr(1,word.size()-2), "");
+                    }
+                }
+#if 0
+#ifdef USE_SQLITE3
+                /* Figure out how to write the wordlist to the SQL later. */
+                if (fs.db) {
+                    const std::lock_guard<std::mutex> lock(wordlist_stmt->Mstmt);
+                    sqlite3_bind_blob(wordlist_stmt->stmt, 1,
+                                      (const char *)word.data(), word.size(), SQLITE_STATIC);
+                    if (sqlite3_step(wordlist_stmt->stmt) != SQLITE_DONE) {
+                        fprintf(stderr,"sqlite3_step failed on scan_wordlist\n");
+                    }
+                    sqlite3_reset(wordlist_stmt->stmt);
+                }
+#endif
+#endif
+                wordstart = 0;
+                in_word = false;
+            }
+        }
+    }
+}
+
+void Scan_Wordlist::dump_seen_wordlist()
+{
+    /* Dump the words so far */
+    for(const auto &it : seen_wordlist){
+        if (it.size()>0) {
+            if (wordlist_out == nullptr ){
+                auto wordlist_segment_path = flat_wordlist->fname_in_outdir("dedup", wordlist_segment++);
+                wordlist_out = new std::ofstream( wordlist_segment_path);
+                if (!wordlist_out->is_open()) {
+                    throw std::runtime_error("cannot open: " + wordlist_segment_path.string());
+                }
+            }
+            (*wordlist_out) << it << "\n";
+        }
+    }
+    if (wordlist_out != nullptr) {
+        wordlist_out->close();
+        wordlist_out = nullptr;
+    }
+    seen_wordlist.clear();
+}
+
+
+void Scan_Wordlist::shutdown(scanner_params &sp)
+{
+    if (strings){
+        return;
+    }
+    std::cout << "Phase 3. Uniquifying and recombining wordlist\n";
+    flat_wordlist = &sp.ss.named_feature_recorder("wordlist");
+
+    flat_wordlist->flush();
+    auto feature_recorder_path = flat_wordlist->fname_in_outdir("", feature_recorder::NO_COUNT);
+    std::ifstream f2( feature_recorder_path );
+    if (!f2.is_open()) {
+        throw std::runtime_error(std::string("Scan_Wordlist::shutdown: Cannot open ")+feature_recorder_path.string());
+    }
+
+    /* Read all of the words and uniquify them */
+    while(!f2.eof()){
+        /* Create the first file (of2==0) or roll-over if outfilesize>100M */
+        std::string line;
+        getline(f2,line);
+        if (line[0]=='#') continue;	                // ignore comments
+        size_t t1 = line.find('\t');		// find the beginning of the feature
+        if (t1!=std::string::npos) line = line.substr(t1+1);
+
+        // The end of the feature is the end of the line, since we did not write the context
+        const std::string &word = line;
+
+        // Insert into the hash list. If we ran out of space, dump it all and restart.
+        try {
+            if (word.size()>0) seen_wordlist.insert(word);
+        }
+        catch (std::bad_alloc &er) {
+            std::cerr << er.what() << std::endl;
+            std::cerr << "scan_wordlist:bad_alloc: Dumping current dataset; will then restart dedup." << std::endl;
+            dump_seen_wordlist();
+        }
+    }
+    dump_seen_wordlist();
     f2.close();
 }
 
+
+/* Note that this is a singleton. Would be useful to have a mehcanism for per-invocation */
+Scan_Wordlist *wordlist = nullptr;
+
+extern "C"
+void scan_wordlist(scanner_params &sp)
+{
+    bool wordlist_use_flatfiles = true;
+
+    if (sp.phase==scanner_params::PHASE_INIT){
+        sp.check_version();
+        auto info = new scanner_params::scanner_info( scan_wordlist, "wordlist" );
+        info->scanner_flags.default_enabled = false; // = scanner_info::SCANNER_DISABLED;
+        //sp.ss.sc.get_config("word_min",&word_min,"Minimum word size");
+        //sp.ss.sc.get_config("word_max",&word_max,"Maximum word size");
+        //sp.ss.sc.get_config("max_word_outfile_size",&max_word_outfile_size, "Maximum size of the words output file");
+        sp.ss.sc.get_config("wordlist_use_flatfiles",&wordlist_use_flatfiles,"Use flatfiles for wordlist");
+        //sp.ss.sc.get_config("wordlist_use_sql",&wordlist_use_sql,"Use SQL DB for wordlist");
+        sp.ss.sc.get_config("strings",&wordlist_strings,"Scan for strings instead of words");
+
+        if (wordlist_use_flatfiles){
+            auto def = feature_recorder_def(Scan_Wordlist::WORDLIST);
+            def.flags.no_context   = true;
+            def.flags.no_stoplist  = true;
+            def.flags.no_alertlist = true;
+            info->feature_defs.push_back( def );
+        }
+#if 0
+        if (word_min > word_max){
+            std::cerr << "ERROR: word_min (" << word_min << ") > word_max (" << word_max << ")\n";
+            throw std::runtime_error("word_min > word_max");
+        }
+#endif
+        wordlist = new Scan_Wordlist(sp, wordlist_strings);
+        sp.info = info;
+
+#if 0
+#ifdef USE_SQLITE3
+    TODO: Do something to send the SQL through
+        if (fs.db) {
+            fs.db_send_sql(fs.db,schema_wordlist);
+            wordlist_stmt = new feature_recorder::besql_stmt(fs.db,insert_statement);
+            return;
+        }
+#endif
+#endif
+    }
+
+    if (sp.phase==scanner_params::PHASE_SCAN){
+        wordlist->process_sbuf(sp);
+    }
+
+    if (sp.phase==scanner_params::PHASE_SHUTDOWN){
+        wordlist->shutdown(sp);
+    }
+}
+
+
+#if 0
 /* Similar to above; write out the wordlist using SQL.
  * Not-multi-threaded, but threadsafe nonetheless.
  */
 static void wordlist_sql_write(sqlite3 *db)
 {
-#if 0
 #ifdef USE_SQLITE3
     feature_recorder::besql_stmt s(db,select_statement);
     while (sqlite3_step(s.stmt) != SQLITE_DONE) {
@@ -123,164 +261,7 @@ static void wordlist_sql_write(sqlite3 *db)
         int len          = sqlite3_column_bytes(s.stmt,0);
         wordlist_write_word(std::string(base,len));
     }
-    if(of2.is_open()) of2.close();
-#endif
-#endif
-}
-#endif
-
-
-static bool wordchar[256];
-inline bool wordchar_func(unsigned char ch)
-{
-    if(strings) {
-      return isprint(ch) && ch<128;
-    } else {
-      return isprint(ch) && ch!=' ' && ch<128;
-    }
-}
-
-static void wordchar_setup()
-{
-    for(int i=0;i<256;i++){
-      wordchar[i] = wordchar_func(i);
-    }
-}
-
-extern "C"
-void scan_wordlist(scanner_params &sp)
-{
-    if(sp.phase==scanner_params::PHASE_INIT){
-        sp.check_version();
-        auto info = new scanner_params::scanner_info( scan_wordlist, "wordlist" );
-        info->scanner_flags.default_enabled = false; // = scanner_info::SCANNER_DISABLED;
-        sp.ss.sc.get_config("word_min",&word_min,"Minimum word size");
-        sp.ss.sc.get_config("word_max",&word_max,"Maximum word size");
-        sp.ss.sc.get_config("max_word_outfile_size",&max_word_outfile_size,
-                            "Maximum size of the words output file");
-        sp.ss.sc.get_config("wordlist_use_flatfiles",&wordlist_use_flatfiles,"Use flatfiles for wordlist");
-        sp.ss.sc.get_config("wordlist_use_sql",&wordlist_use_sql,"Use SQL DB for wordlist");
-        sp.ss.sc.get_config("strings",&strings,"Scan for strings instead of words");
-
-        if (wordlist_use_flatfiles){
-            //info->feature_names.insert(WORDLIST);
-            auto def = feature_recorder_def(WORDLIST);
-            def.flags.no_context = true;
-            def.flags.no_stoplist = true;
-            def.flags.no_alertlist = true;
-            info->feature_defs.push_back( def );
-        }
-        if (word_min>word_max){
-            fprintf(stderr,"ERROR: word_min (%d) > word_max (%d)\n",word_min,word_max);
-            exit(1);
-        }
-	wordchar_setup();
-        sp.info = info;
-	return;
-    }
-#if 0
-    throw std::runtime_error("scan_wordlist hasn't been updated yet");
-
-    //feature_recorder_set &fs = sp.fs;
-    //bool use_wordlist_recorder  = (wordlist_use_flatfiles || wordlist_use_sql);
-    //feature_recorder &wordlist_recorder = use_wordlist_recorder ? sp.get_scanner_name(WORDLIST) : 0;
-
-    /* init code is not multi-threaded */
-#if 0
-    if(sp.phase==scanner_params::PHASE_INIT){
-#ifdef USE_SQLITE3
-        if (fs.db) {
-            fs.db_send_sql(fs.db,schema_wordlist);
-            wordlist_stmt = new feature_recorder::besql_stmt(fs.db,insert_statement);
-            return;
-        }
-#endif
-        assert(sp.fs.flag_set(feature_recorder_set::DISABLE_FILE_RECORDERS)); // this flag better be set
-        return;
-    }
-#endif
-
-    /* shutdown code is not multi-threaded */
-    if(sp.phase==scanner_params::PHASE_SHUTDOWN){
-        if(!strings){
-          std::cout << "Phase 3. Uniquifying and recombining wordlist\n";
-          ofn_template = sp.ss.get_outdir()+"/wordlist_split_%03d.txt";
-
-          if (wordlist_recorder) {
-              wordlist_split_and_dedup(sp.ss.get_outdir()+"/" WORDLIST ".txt");
-              return;
-          }
-        }
-
-        if (fs.db) {
-            wordlist_sql_write(fs.db);
-            return;
-        }
-    }
-
-
-    /* multi-threaded! */
-    if(sp.phase==scanner_params::PHASE_SCAN){
-	const sbuf_t &sbuf = sp.sbuf;
-
-	/* Simplified word extractor. */
-
-        if (sbuf.bufsize==0){           // nothing to scan
-            return;
-        }
-
-        bool in_word     = false;        // true if we are in a word
-        u_int wordstart = 0;            // if we are in the word, where it started
-	for(u_int i=0; i<sbuf.bufsize; i++){
-            bool is_wordchar = wordchar[sbuf.get8u(i)];
-            if (!in_word) {
-                /* case 1 - we are not in a word */
-                /* does this character start a word? */
-                if (is_wordchar){
-                    in_word = true;
-                    wordstart = i;
-                }
-                /* If we are not in a word and we have extended into the margin, quit. */
-                if (i>sbuf.pagesize){
-                    return;
-                }
-                continue;
-	    }
-            else {
-                /* case 2 - we are in a word */
-                /* If this is the end of the word, or we are in the word and this is the end of the margin,
-                 * do end-of-word processing.
-                 */
-                /* Does - we are in a word & this character ends a word. */
-                if (in_word && !is_wordchar){
-                    uint32_t len = i - wordstart;
-                    if ((word_min <= len) && (len <=  word_max)){
-                        /* Save the word that starts at sbuf.buf+wordstart that has a length of len. */
-                        std::string word = sbuf.substr(wordstart,len);
-
-#ifdef DEBUG_THIS
-                        std::cerr << "word=" << word << " wr="
-                                  << wordlist_recorder << " fs.db=" << fs.db << "\n";
-#endif
-                        if (wordlist_recorder) {
-                            wordlist_recorder->write(sbuf.pos0+wordstart,word,"");
-                        } else if (fs.db) {
-#ifdef USE_SQLITE3
-                            const std::lock_guard<std::mutex> lock(wordlist_stmt->Mstmt);
-                            sqlite3_bind_blob(wordlist_stmt->stmt, 1,
-                                              (const char *)word.data(), word.size(), SQLITE_STATIC);
-                            if (sqlite3_step(wordlist_stmt->stmt) != SQLITE_DONE) {
-                                fprintf(stderr,"sqlite3_step failed on scan_wordlist\n");
-                            }
-                            sqlite3_reset(wordlist_stmt->stmt);
-#endif
-                        }
-                    }
-                    wordstart = 0;
-                    in_word = false;
-                }
-	    }
-	}
-    }
+    if (of2.is_open()) of2.close();
 #endif
 }
+#endif

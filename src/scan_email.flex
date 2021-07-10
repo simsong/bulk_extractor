@@ -17,11 +17,6 @@
 #include "be13_api/utils.h"
 #include "scan_email.h"
 
-//#include "be13_api/bulk_extractor_i.h"
-//#include "utils.h"
-//#include "histogram.h"
-
-
 class email_scanner : public sbuf_scanner {
 public:
       email_scanner(const scanner_params &sp):
@@ -38,6 +33,7 @@ public:
       class feature_recorder &url_recorder;
       class feature_recorder &ether_recorder;
 
+      /* Hard-coded program to reject wacky ethers that showed up a lot */
       bool valid_ether_addr(size_t pos){
 	if (sbuf.memcmp((const uint8_t *)"00:00:00:00:00:00",pos,17)==0) return false;
 	if (sbuf.memcmp((const uint8_t *)"00:11:22:33:44:55",pos,17)==0) return false;
@@ -61,7 +57,7 @@ public:
       }
 
 };
-#define YY_EXTRA_TYPE email_scanner *             /* holds our class pointer */
+#define YY_EXTRA_TYPE email_scanner *                     /* holds our class pointer */
 YY_EXTRA_TYPE yyemail_get_extra (yyscan_t yyscanner );    /* redundent declaration */
 inline class email_scanner *get_extra(yyscan_t yyscanner) {return yyemail_get_extra(yyscanner);}
 
@@ -157,7 +153,7 @@ U_TLD4		(Q\0A\0|R\0E\0|R\0O\0|R\0S\0|R\0U\0|R\0W\0|S\0A\0|S\0B\0|S\0C\0|S\0D\0|S
 
 {DAYOFWEEK},[ \t\x0A\x0D]+[0-9]{1,2}[ \t\x0A\x0D]+{MONTH}[ \t\x0A\x0D]+{YEAR}[ \t\x0A\x0D]+[0-2][0-9]:[0-5][0-9]:[0-5][0-9][ \t\x0A\x0D]+([+-][0-2][0-9][0314][05]|{ABBREV}) {
     email_scanner &s = * yyemail_get_extra(yyscanner);
-    s.rfc822_recorder.write_buf(SBUF,s.pos,yyleng);
+    s.rfc822_recorder.write_buf(SBUF,POS,yyleng);
     s.pos += yyleng;
 
     /************
@@ -171,35 +167,35 @@ U_TLD4		(Q\0A\0|R\0E\0|R\0O\0|R\0S\0|R\0U\0|R\0W\0|S\0A\0|S\0B\0|S\0C\0|S\0D\0|S
 
 Message-ID:([ \t\x0A]|\x0D\x0A)?<{PC}{1,80}> {
     email_scanner &s = * yyemail_get_extra(yyscanner);
-    s.rfc822_recorder.write_buf(SBUF,s.pos,yyleng);
+    s.rfc822_recorder.write_buf(SBUF,POS,yyleng);
     s.pos += yyleng;
 }
 
 Subject:[ \t]?({PC}{1,80}) {
     email_scanner &s = * yyemail_get_extra(yyscanner);
-    s.rfc822_recorder.write_buf(SBUF,s.pos,yyleng);
+    s.rfc822_recorder.write_buf(SBUF,POS,yyleng);
     s.pos += yyleng;
 }
 
 Cookie:[ \t]?({PC}{1,80}) {
     email_scanner &s = * yyemail_get_extra(yyscanner);
-    s.rfc822_recorder.write_buf(SBUF,s.pos,yyleng);
+    s.rfc822_recorder.write_buf(SBUF,POS,yyleng);
     s.pos += yyleng;
 }
 
 Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
     email_scanner &s = * yyemail_get_extra(yyscanner);
-    s.rfc822_recorder.write_buf(SBUF,s.pos,yyleng);
+    s.rfc822_recorder.write_buf(SBUF,POS,yyleng);
     s.pos += yyleng;
 }
 
 {EMAIL}/[^a-zA-Z]	{
     email_scanner &s = * yyemail_get_extra(yyscanner);
     if (extra_validate_email(yytext)){
-        s.email_recorder.write_buf(SBUF,s.pos,yyleng);
-	ssize_t domain_start = find_host_in_email(SBUF.slice(s.pos,yyleng));
+        s.email_recorder.write_buf(SBUF,POS,yyleng);
+	ssize_t domain_start = find_host_in_email(SBUF.slice(POS,yyleng));
         if (domain_start>0){
-            s.domain_recorder.write_buf(SBUF, s.pos+domain_start,yyleng-domain_start);
+            s.domain_recorder.write_buf(SBUF, POS+domain_start,yyleng-domain_start);
         }
     }
     s.pos += yyleng;
@@ -228,7 +224,7 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
 
     /* Get 8 characters of left context, right-justified */
     int context_len = 8;
-    int c0 = s.pos-context_len;
+    int c0 = POS - context_len;
     while(c0<0){
        c0++;
        context_len--;
@@ -267,10 +263,10 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
     if (context.find("TI_SZ") != std::string::npos) ignore=1;     /* %REG_MULTI_SZ%, */
 
     /* Ignore 0. */
-    if (SBUF[s.pos]=='0' && SBUF[s.pos+1]=='.') ignore=1;
+    if (SBUF[POS]=='0' && SBUF[POS+1]=='.') ignore=1;
 
     if (!ignore) {
-        s.domain_recorder.write_buf(SBUF,s.pos,yyleng);
+        s.domain_recorder.write_buf(SBUF,POS,yyleng);
     }
     s.pos += yyleng;
 }
@@ -278,8 +274,8 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
 [^0-9A-Z:]{HEX}{HEX}:{HEX}{HEX}:{HEX}{HEX}:{HEX}{HEX}:{HEX}{HEX}:{HEX}{HEX}/[^0-9A-Z:] {
     /* found a possible ethernet address! */
     email_scanner &s = * yyemail_get_extra(yyscanner);
-    if (s.valid_ether_addr(s.pos+1)){
-       s.ether_recorder.write_buf(SBUF,s.pos+1,yyleng-1);
+    if (s.valid_ether_addr(POS+1)){
+       s.ether_recorder.write_buf(SBUF,POS+1,yyleng-1);
     }
     s.pos += yyleng;
 }
@@ -292,18 +288,18 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
     int slash_count = 0;
     int feature_len = yyleng;
     for (unsigned int i=0;i<(unsigned int)yyleng;i++){
-        if (SBUF[s.pos+i]=='/') slash_count++;
+        if (SBUF[POS+i]=='/') slash_count++;
     }
     if (slash_count==2){
-       while(feature_len>0 && !isalpha(SBUF[s.pos+feature_len-1])){
+       while(feature_len>0 && !isalpha(SBUF[POS+feature_len-1])){
          feature_len--;
        }
     }
-    s.url_recorder.write_buf(SBUF,s.pos,feature_len);                // record the URL
+    s.url_recorder.write_buf(SBUF,POS,feature_len);                // record the URL
     size_t domain_len=0;
-    ssize_t domain_start = find_host_in_url(SBUF.slice(s.pos,feature_len), &domain_len);  // find the start of domain?
+    ssize_t domain_start = find_host_in_url(SBUF.slice(POS,feature_len), &domain_len);  // find the start of domain?
     if (domain_start >= 0 && domain_len > 0){
-	s.domain_recorder.write_buf(SBUF,s.pos+domain_start,domain_len);
+	s.domain_recorder.write_buf(SBUF,POS+domain_start,domain_len);
     }
     s.pos += yyleng;
 }
@@ -311,10 +307,10 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
 [a-zA-Z0-9]\0([a-zA-Z0-9._%\-+]\0){1,128}@\0([a-zA-Z0-9._%\-]\0){1,128}\.\0({U_TLD1}|{U_TLD2}|{U_TLD3}|{U_TLD4})/[^a-zA-Z]|([^][^\0])	{
     email_scanner &s = * yyemail_get_extra(yyscanner);
     if (extra_validate_email(yytext)){
-        s.email_recorder.write_buf(SBUF,s.pos,yyleng);
-        ssize_t domain_start = find_host_in_email(SBUF.slice(s.pos,yyleng)) + 1;
+        s.email_recorder.write_buf(SBUF,POS,yyleng);
+        ssize_t domain_start = find_host_in_email(SBUF.slice(POS,yyleng)) + 1;
         if (domain_start >= 0){
-            s.domain_recorder.write_buf(SBUF,s.pos+domain_start,yyleng-domain_start);
+            s.domain_recorder.write_buf(SBUF,POS+domain_start,yyleng-domain_start);
         }
     }
     s.pos += yyleng;
@@ -322,10 +318,10 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
 
 h\0t\0t\0p\0(s\0)?:\0([a-zA-Z0-9_%/\-+@:=&\?#~.;]\0){1,128}/[^a-zA-Z0-9_%\/\-+@:=&\?#~.;]|([^][^\0])	{
     email_scanner &s = * yyemail_get_extra(yyscanner);
-    s.url_recorder.write_buf(SBUF,s.pos,yyleng);
-    ssize_t domain_start = find_host_in_email(SBUF.slice(s.pos,yyleng));
+    s.url_recorder.write_buf(SBUF,POS,yyleng);
+    ssize_t domain_start = find_host_in_email(SBUF.slice(POS,yyleng));
     if (domain_start >= 0){
-	s.domain_recorder.write_buf(SBUF,s.pos+domain_start,yyleng-domain_start);
+	s.domain_recorder.write_buf(SBUF,POS+domain_start,yyleng-domain_start);
     }
     s.pos += yyleng;
 }

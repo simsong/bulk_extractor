@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # coding=UTF-8
 """
-Regression system:
+Original BE1.5.3 regression system:
 
-A basic framework for running bulk_extractor and viewing the results.
+A basic framework for running bulk_extractor and comparing the number of results for each kind of feature file
+to hard-coded answers.
 
 Options include:
 
@@ -13,19 +14,25 @@ Options include:
  - Total number of features are reported and compared with the archives.
 """
 
-__version__ = "1.5.0"
+__version__ = "1.5.3"
 
-b'This module needs Python 2.7 or later.'
 
-import os,sys
-sys.path.append("../python/")   # add the library
-sys.path.append("python/")      # add the library
+import codecs
+import glob
+import logging
+import os
+import os.path
+import subprocess
+import sys
+import time
+import zipfile
 
 from subprocess import Popen,call,PIPE
-import subprocess
-import os.path,glob,zipfile,codecs
+
+sys.path.append("../python/")   # add the library
+sys.path.append("python/")      # add the library
 import bulk_extractor_reader
-import logging
+
 
 CORP_ENV     = "DOMEX_CORP"     # default environment variable where corpus is located
 CORP_DEFAULT = "/corp"
@@ -69,7 +76,7 @@ tune_marginsize_end   = 4 * MiB
 tune_marginsize_step  = 1 * MiB
 
 
-answers = {"ubnist1.gen3":{"ALERTS_found.txt":88,
+be153_counts = {"ubnist1.gen3":{"ALERTS_found.txt":88,
                            "bulk_tags.txt":7477796,
                            "ccn.txt":1,
                            "domain.txt":233055,
@@ -199,11 +206,11 @@ def reproduce_flags(outdir):
     return "-Y {offset} {filename}".format(offset=offset, filename=filename)
 
 def analyze_warning(fnpart,fn,lines):
-    if fnpart not in answers:
+    if fnpart not in be153_counts:
         return "(No answers for {})".format(fnpart)
-    if fn not in answers[fnpart]:
+    if fn not in be153_counts[fnpart]:
         return "(No answer for {})".format(fn)
-    ref = answers[fnpart][fn]
+    ref = be153_counts[fnpart][fn]
     if ref==lines: return "OK"
     if lines<ref: return "LOW (expected {})".format(ref)
     return "HIGH (expected {})".format(ref)
@@ -430,7 +437,6 @@ def check(fn,lines):
     found_lines = len(file(fn).read().split("\n"))-1
     if lines!=found_lines:
         print("{:10} expected lines: {} found lines: {}".format(fn,found_lines,lines))
-
 
 def asbinary(s):
     ret = ""
@@ -661,7 +667,6 @@ def datacheck_checkreport(outdir):
 if __name__=="__main__":
     import argparse
     global args
-    import sys,time
 
     parser = argparse.ArgumentParser(description="Perform regression testing on bulk_extractor",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)

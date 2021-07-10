@@ -7,7 +7,7 @@
 # and http://www.openismus.com/documents/linux/automake/automake.shtml
 # and http://www.bioinf.uni-freiburg.de/~mmann/HowTo/automake.html
 
-AC_PREREQ([2.71])
+AC_PREREQ([2.69])
 AC_INIT([BULK_EXTRACTOR],[2.0.0-dev],[bugs@digitalcorpora.org])
 AC_CONFIG_MACRO_DIR(m4)
 AC_CONFIG_AUX_DIR([build-aux])
@@ -149,8 +149,8 @@ AC_ARG_ENABLE([address-sanitizer],
 # Specific include files and functions for bulk-extractor
 # Autoupdate added the next two lines to ensure that your configure
 # script's behavior did not change.  They are probably safe to remove.
-AC_CHECK_INCLUDES_DEFAULT
-AC_PROG_EGREP
+# AC_CHECK_INCLUDES_DEFAULT
+# AC_PROG_EGREP
 
 AC_TYPE_INT64_T
 AC_SYS_LARGEFILE

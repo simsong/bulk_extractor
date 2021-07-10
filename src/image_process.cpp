@@ -10,15 +10,34 @@
 // Just for this module
 #define _FILE_OFFSET_BITS 64
 
+#include "config.h"
+
 #include <algorithm>
 #include <stdexcept>
 #include <functional>
 #include <locale>
+#include <string>
+#include <vector>
 
-#include "config.h"
-#include "bulk_extractor.h"
+#ifdef HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
+
+#ifdef HAVE_SYS_IOCTL_H
+# include <sys/ioctl.h>
+#endif
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
+#ifdef HAVE_SYS_FCNTL_H
+#include <sys/fcntl.h>
+#endif
+
+
+
 #include "be13_api/utf8.h"
-
 #include "be13_api/formatter.h"
 #include "image_process.h"
 
@@ -148,7 +167,6 @@ static int64_t getSizeOfFile(const std::string &fname)
 #endif
     return fname_length;
 }
-
 
 
 
@@ -636,7 +654,6 @@ int process_raw::pread(unsigned char *buf,size_t bytes,int64_t offset) const
 #endif
 
 	current_file_name = fi->name;
-	fprintf(stderr,"Attempt to open %s\n",fi->name.c_str());
 #ifdef WIN32
         current_handle = CreateFileA(fi->name.c_str(), FILE_READ_DATA,
                                     FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
@@ -647,6 +664,7 @@ int process_raw::pread(unsigned char *buf,size_t bytes,int64_t offset) const
 #else
 	current_fd = ::open(fi->name.c_str(),O_RDONLY|O_BINARY);
 	if(current_fd<=0){
+            std::cerr << "process_raw::pread: cannot open " << fi->name << "\n";
             throw image_process::NoSuchFile("pread: Cannot ::open file");
         }
 #endif

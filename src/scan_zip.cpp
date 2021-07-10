@@ -64,14 +64,14 @@ inline void scan_zip_component(scanner_params &sp, feature_recorder &zip_recorde
     uint16_t compression_method=sbuf.get16u(pos+8);
     uint16_t lastmodtime=sbuf.get16u(pos+10);
     uint16_t lastmoddate=sbuf.get16u(pos+12);
-    uint32_t crc32=sbuf.get32u(pos+14);	/* not used needed */
+    uint32_t crc32=sbuf.get32u(pos+14);	        /* not used needed */
     uint32_t compr_size=sbuf.get32u(pos+18);
     uint32_t uncompr_size=sbuf.get32u(pos+22);
     uint16_t name_len=sbuf.get16u(pos+26);
     uint16_t extra_field_len=sbuf.get16u(pos+28);
 
     if ((name_len<=0) || (name_len > zip_name_len_max)) return;	 // unreasonable name length
-    if (pos+30+name_len > sbuf.bufsize) return; // name is bigger than what's left
+    if (pos+30+name_len > sbuf.bufsize) return;                  // name is bigger than what's left
 
     std::string name = sbuf.substr(pos+30,name_len);
     /* scan for unprintable characters, which means this isn't a validate zip header
@@ -99,16 +99,6 @@ inline void scan_zip_component(scanner_params &sp, feature_recorder &zip_recorde
     std::stringstream xmlstream;
     xmlstream << b2;
 
-    // Create an sbuf that contains the source data pointed to by the header that is to be decompressed
-    const sbuf_t sbuf_src(sbuf, pos+30+name_len+extra_field_len);
-
-    // If there is no data, then just indicate this and return.
-    if (sbuf_src.pagesize==0){
-        xmlstream << "<disposition>end-of-buffer</disposition></zipinfo>";
-        zip_recorder.write(pos0+pos,name,xmlstream.str());
-        return;
-    }
-
     /* OpenOffice makes invalid ZIP files with compr_size=0 and uncompr_size=0.
      * If compr_size==uncompr_size==0, then assume it may go to the end of the sbuf.
      */
@@ -117,10 +107,20 @@ inline void scan_zip_component(scanner_params &sp, feature_recorder &zip_recorde
         compr_size   = zip_max_uncompr_size;
     }
 
+    if (uncompr_size > zip_max_uncompr_size){
+        uncompr_size = zip_max_uncompr_size; // don't uncompress bigger than 16MB
+    }
+
     /* See if we can decompress */
     if (version_needed_to_extract==20 && uncompr_size>=zip_min_uncompr_size){
-        if (uncompr_size > zip_max_uncompr_size){
-            uncompr_size = zip_max_uncompr_size; // don't uncompress bigger than 16MB
+        // Create an sbuf that contains the source data pointed to by the header that is to be decompressed
+        const sbuf_t sbuf_src(sbuf, pos+30+name_len+extra_field_len);
+
+        // If there is no data, then just indicate this and return.
+        if (sbuf_src.pagesize==0){
+            xmlstream << "<disposition>end-of-buffer</disposition></zipinfo>";
+            zip_recorder.write(pos0+pos,name,xmlstream.str());
+            return;
         }
 
         /* If depth is more than 0, don't decompress if we have seen this component before */
@@ -132,7 +132,7 @@ inline void scan_zip_component(scanner_params &sp, feature_recorder &zip_recorde
             }
         }
 
-        auto *decomp = sbuf_decompress_zlib_new(sbuf, uncompr_size, "ZIP");
+        auto *decomp = sbuf_decompress::sbuf_new_decompress(sbuf_src, uncompr_size, "ZIP", sbuf_decompress::mode_t::ZIP);
         if (decomp!=nullptr) {
             xmlstream << "<disposition bytes='" << decomp->bufsize << "'>decompressed</disposition></zipinfo>";
             zip_recorder.write(pos0+pos,name,xmlstream.str());
@@ -160,6 +160,7 @@ void scan_zip(scanner_params &sp)
     if (sp.phase==scanner_params::PHASE_INIT){
         feature_recorder_def::flags_t xml; xml.xml = true;
         sp.info = new scanner_params::scanner_info( scan_zip, "zip" );
+        sp.info->scanner_flags.recurse = true;
 	sp.info->feature_defs.push_back( feature_recorder_def(ZIP_RECORDER_NAME, xml ));
 	sp.info->feature_defs.push_back( feature_recorder_def(UNZIP_RECORDER_NAME ));
         sp.ss.sc.get_config("zip_min_uncompr_size",&zip_min_uncompr_size,"Minimum size of a ZIP uncompressed object");
@@ -170,6 +171,7 @@ void scan_zip(scanner_params &sp)
 
     if (sp.phase==scanner_params::PHASE_SCAN){
 	const sbuf_t &sbuf = (*sp.sbuf);
+
         if (sbuf.bufsize < MIN_ZIP_SIZE) return;
 
         feature_recorder &zip_recorder   = sp.named_feature_recorder(ZIP_RECORDER_NAME);

@@ -98,7 +98,7 @@ UNICODE         ([[:print:][:space:]]+)
      * {6,65536}  means 6-65536 characters
      */
     base16_scanner &s = *yybase16_get_extra(yyscanner);
-    s.decode(sbuf_t(s.sbuf, s.pos, yyleng));
+    s.decode(sbuf_t(SBUF, POS, yyleng));
     s.pos += yyleng;
 }
 
@@ -122,11 +122,13 @@ void scan_base16(struct scanner_params &sp)
     sp.check_version();
     if (sp.phase==scanner_params::PHASE_INIT){
         auto info = new scanner_params::scanner_info(scan_base16,"base16");
+        info->scanner_flags.recurse = true;
         info->author          = "Simson L. Garfinkel";
         info->description     = "Base16 (hex) scanner";
         info->scanner_version = "1.1";
         info->pathPrefix      = "BASE16";
-        feature_recorder_def frd("hex"); frd.flags.disabled=true; /* disabled by default */ /* frd.flags.recurse=true;*/
+        feature_recorder_def frd("hex");
+        frd.flags.disabled=true; /* disabled by default */
         info->feature_defs.push_back( frd );
 
         /* Create the base16 array */

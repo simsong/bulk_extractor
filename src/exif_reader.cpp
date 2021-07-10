@@ -16,10 +16,9 @@
 
 #include "exif_reader.h"
 
-// #define DEBUG 1
-// ************************************************************
-// exif_reader
-// ************************************************************
+/************************************************************
+ * exif_reader
+ ************************************************************/
 namespace be_exif {
     const char* version() {
         return "0.01";
@@ -27,7 +26,7 @@ namespace be_exif {
 }
 
 namespace exif_reader {
-    /** 
+    /**
      * get_tiff_offset_from_exif() returns the offset to the TIFF data from the EXIF header,
      *                             or 0 if exif is invalid.
      */
@@ -45,7 +44,7 @@ namespace exif_reader {
         while (true) {
 //cout << "exif_reader.get_tiff_offset_from_exif next_offset: " << next_offset << "\n";
 //cout << "exif_reader.get_tiff_offset_from_exif seeking, next 4: "
-//                << (int)exif_sbuf[next_offset] << " " << (int)exif_sbuf[next_offset+1] << " " 
+//                << (int)exif_sbuf[next_offset] << " " << (int)exif_sbuf[next_offset+1] << " "
 //                << (int)exif_sbuf[next_offset+ 2] << " " << (int)exif_sbuf[next_offset+3] << "\n";
             // abort if EOF
             if (exif_sbuf.pagesize < next_offset + 2 + 2 + 6) {
@@ -90,7 +89,7 @@ namespace exif_reader {
 
 // public accessors for a TIFF entry
 namespace tiff_reader {
-    /** 
+    /**
      * read_tiff_data() extracts specific hardcoded entry values, where present, from exif.
      */
     void read_tiff_data(const sbuf_t &tiff_sbuf, entry_list_t &entries) {
@@ -231,7 +230,7 @@ namespace tiff_reader {
         }
     }
 }
- 
+
 // ************************************************************
 // IFD reader
 // ************************************************************
@@ -273,4 +272,3 @@ namespace tiff_ifd_reader {
         }
     }
 }
-

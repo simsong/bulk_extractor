@@ -25,22 +25,6 @@
 #include "be13_api/scanner_set.h"
 #include "be13_api/utils.h"
 
-//#include "scanners.h"
-
-//#include "bulk_extractor.h"
-//#include "findopts.h"
-//#include "image_process.h"
-//#include "threadpool.h"
-////#include "be13_api/aftimer.h"
-//#include "findopts.h"
-//#include "image_process.h"
-//#include "threadpool.h"
-//#include "be13_api/aftimer.h"
-//#include "be13_api/histogram.h"
-//#include "dfxml/src/dfxml_writer.h"
-//#include "dfxml/src/hash_t.h"
-//#include "be13_api/unicode_escape.h"
-
 /**
  * Stand alone tester.
  * 1. allocate an sbuf for the file.
@@ -76,9 +60,6 @@ int main(int argc,char **argv)
     scanner_config   sc;
     struct feature_recorder_set::flags_t f;
     sc.outdir =  std::filesystem::temp_directory_path().string(); // default
-    //be13::plugin::load_scanners(scanners_builtin,sc);
-    //TODO - create a scanner set, which includes a feature_recorder_set
-
 
     /* look for usage first */
     if(argc==1 || (strcmp(argv[1],"-h")==0)){
@@ -118,21 +99,8 @@ int main(int argc,char **argv)
     scanner_set ss(sc, f);
     if(argc!=1) usage(ss);
 
-    //opt_scan_bulk_block_size = stoi64(be_config["bulk_block_size"]);
-    //be13::plugin::scanners_process_enable_disable_commands();
-    //feature_file_names_t feature_file_names;
-    //be13::plugin::get_scanner_feature_file_names(feature_file_names);
-    //feature_recorder_set fs(0);	// where the features will be put
-    //fs.init(feature_file_names,argv[0],opt_outdir);
-    //be13::plugin::scanners_init(fs);
     ss.apply_scanner_commands();        // applied after all scanners are added
 
-
-    //feature_file_names_t feature_file_names;
-    //plugin::get_scanner_feature_file_names(feature_file_names);
-    //feature_recorder_set fs(0);	// where the features will be put
-    //fs.init(feature_file_names,argv[0],opt_outdir);
-    //plugin::scanners_init(fs);
 
     /* Make an sbuf for the file. */
     sbuf_t *sbuf = sbuf_t::map_file(argv[0]);

@@ -24,7 +24,7 @@
 #include <vector>
 #include <queue>
 #include <unistd.h>
-#include <ctype.h>
+#include <cctype>
 
 #ifdef HAVE_EXPAT_H
 #include <expat.h>
@@ -44,7 +44,6 @@
 int _CRT_fmode = _O_BINARY;
 #endif
 
-#include "bulk_extractor.h"
 #include "be13_api/word_and_context_list.h"
 #include "be13_api/scanner_set.h"
 #include "be13_api/scanner_params.h"
@@ -633,7 +632,6 @@ int main(int argc,char **argv)
     std::string opt_sampling_params;
     bool        opt_write_feature_files = true;
     bool        opt_write_sqlite3     = false;
-    bool        opt_enable_histograms = true;
 
     /* Startup */
     setvbuf(stdout,0,_IONBF,0);		// don't buffer stdout
@@ -771,27 +769,11 @@ int main(int argc,char **argv)
     argc -= optind;
     argv += optind;
 
-    std::cerr <<"argc=" << argc << "\n";
-
-    //if(cfg.debug & DEBUG_PRINT_STEPS) std::cerr << "DEBUG: DEBUG_PRINT_STEPS\n";
-
     /* Create a configuration that will be used to initialize the scanners */
-    //scanner_info si;
-
-    //sc.debug       = cfg.debug;
-    //si.config = &sc;
-
     /* Make individual configuration options appear on the command line interface. */
-#if 0
-    sc.get_config("work_start_work_end",&worker::opt_work_start_work_end,
-                  "Record work start and end of each scanner in report.xml file");
-    sc.get_config("debug_histogram_malloc_fail_frequency",&HistogramMaker::debug_histogram_malloc_fail_frequency,
+    sc.get_config("debug_histogram_malloc_fail_frequency",&AtomicUnicodeHistogram::debug_histogram_malloc_fail_frequency,
                   "Set >0 to make histogram maker fail with memory allocations");
-#endif
-    sc.get_config("enable_histograms",&opt_enable_histograms,
-                  "Disable generation of histograms");
     sc.get_config("hash_alg",&be_hash_name,"Specifies hash algorithm to be used for all hash calculations");
-    //sc.get_config("dup_data_alerts",&plugin::dup_data_alerts,"Notify when duplicate data is not processed");
     sc.get_config("write_feature_files",&opt_write_feature_files,"Write features to flat files");
     sc.get_config("write_feature_sqlite3",&opt_write_sqlite3,"Write feature files to report.sqlite3");
     sc.get_config("report_read_errors",&cfg.opt_report_read_errors,"Report read errors");

@@ -1,5 +1,13 @@
+/*
+ * jpeg_validator.h:
+ * go over a set of bytes and determine if the file follows the JPEG packing conventions.
+ * Uses sbuf to hold the data
+ */
+
 #ifndef JPEG_VALIDTOR_H
 #define JPEG_VALIDTOR_H
+
+#include "be13_api/sbuf.h"
 
 extern bool exif_debug;
 

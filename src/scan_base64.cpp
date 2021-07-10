@@ -3,7 +3,7 @@
  */
 
 #include <cassert>
-#include <cstdint>
+//#include <cstdint>
 #include <cstring>
 
 #include "config.h"
@@ -128,8 +128,7 @@ void scan_base64(scanner_params &sp)
         info->author         = "Simson L. Garfinkel";
         info->description    = "scans for Base64-encoded data";
         info->scanner_version= "1.1";
-        info->pathPrefix     = "BASE64";
-
+        info->scanner_flags.recurse = true;
         base64array_initialize();
         sp.info = info;
 	return;

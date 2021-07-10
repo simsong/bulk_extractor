@@ -30,10 +30,6 @@
 #include <mutex>
 #include <ctype.h>
 
-//#include <sys/types.h>
-
-// for localtime_r
-
 // these need config.h:
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
@@ -1043,8 +1039,18 @@ void scan_net(scanner_params &sp)
         return;
     }
     if (sp.phase==scanner_params::PHASE_SCAN){
-	packet_carver carver(sp);
-	carver.carve(*sp.sbuf);
+        try {
+            packet_carver carver(sp);
+            carver.carve(*sp.sbuf);
+        }
+        catch (const sbuf_t::range_exception_t &e ) {
+            /*
+             * the decoder above happily goes off the end of the sbuf. When that happens,
+             * we get an exception, which is caught here. It is non-fatal. The code below
+             * was just for testing.
+             */
+            // std::cerr << "sbuf_t range exception: " << e.what() << "\n";
+        }
     }
     if (sp.phase==scanner_params::PHASE_SHUTDOWN){
 	if (fcap){
