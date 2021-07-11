@@ -8,6 +8,7 @@
       Just put one file on the list, vs. many.
       map the entire file but process it with pages and margins using overlapping sbufs. Free it when finished?
 
-
+- [ ] When carving tests/len6192.jpg, the JPEG should only be 6192 bytes.
+- [ ] When scanning tests/testfilex.docx, the JPEG should only be 6192 bytes
 
 # Ideas:

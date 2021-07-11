@@ -359,16 +359,17 @@ std::string validate(std::string image_fname, std::vector<Check> &expected)
 }
 
 TEST_CASE("validate_scanners", "[phase1]") {
-    auto fn1 = "test_json.txt";
+    std::string fn;
+    fn = "test_json.txt";
     std::vector<Check> ex1 {
         Check("json.txt",
               Feature( "0",
                        JSON1,
                        "ef2b5d7ee21e14eeebb5623784f73724218ee5dd")),
     };
-    validate(fn1, ex1);
+    validate(fn, ex1);
 
-    auto fn2 = "test_base16json.txt";
+    fn = "test_base16json.txt";
     std::vector<Check> ex2 {
         Check("json.txt",
               Feature( "50-BASE16-0",
@@ -383,9 +384,9 @@ TEST_CASE("validate_scanners", "[phase1]") {
                        "[{\"1\": \"one@base16_company.com\"}, {\"2\": \"two@b")),
 
     };
-    validate(fn2, ex2);
+    validate(fn, ex2);
 
-    auto fn3 = "test_hello.gz";
+    fn = "test_hello.gz";
     std::vector<Check> ex3 {
         Check("email.txt",
               Feature( "0-GZIP-0",
@@ -393,8 +394,20 @@ TEST_CASE("validate_scanners", "[phase1]") {
                        "hello@world.com\\x0A"))
 
     };
-    validate(fn3, ex3);
+    validate(fn, ex3);
+
+    fn = "KML_Samples.kml";
+    std::vector<Check> ex4 {
+        Check("kml.txt",
+              Feature( "0",
+                       "kml/000/00000000.kml",
+                       "<fileobject><filename>kml/000/00000000.kml</filename><filesize>35919</filesize><hashdigest type='sha1'>cffc78e27ac32414b33d595a0fefcb971eaadaa3</hashdigest></fileobject>"))
+    };
+    validate(fn, ex4);
+
 }
+
+
 
 
 
