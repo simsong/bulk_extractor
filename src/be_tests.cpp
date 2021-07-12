@@ -257,36 +257,9 @@ TEST_CASE("scan_vcard", "[scanners]") {
      */
     auto *sbufp = map_file( "john_jakes.vcf" );
     auto outdir = test_scanner(scan_vcard, sbufp); // deletes sbuf2
-<<<<<<< HEAD
-=======
 
     /* Read the output */
 }
-
-
-TEST_CASE("scan_wordlist", "[scanners]") {
-    /* Make a scanner set with a single scanner and a single command to enable all the scanners.
-     */
-    auto *sbufp = map_file( "john_jakes.vcf" );
-    auto outdir = test_scanner(scan_wordlist, sbufp); // deletes sbufp
->>>>>>> origin/release-2.0-dev
-
-    /* Read the output */
-    auto wordlist_txt = getLines( outdir / "wordlist_dedup_1.txt");
-    REQUIRE( wordlist_txt[0] == "States" );
-    REQUIRE( wordlist_txt[1] == "America" );
-    REQUIRE( wordlist_txt[2] == "Company" );
-}
-
-TEST_CASE("scan_zip", "[scanners]") {
-    std::vector<scanner_t *>scanners = {scan_email, scan_zip };
-    auto *sbufp = map_file( "testfilex.docx" );
-    auto outdir = test_scanners( scanners, sbufp); // deletes sbuf2
-    auto email_txt = getLines( outdir / "email.txt" );
-    REQUIRE( requireFeature(email_txt,"2093-ZIP-402\tuser_docx@microsoftword.com"));
-    REQUIRE( requireFeature(email_txt,"2443-ZIP-1012\tuser_docx@microsoftword.com"));
-}
-
 
 TEST_CASE("scan_wordlist", "[scanners]") {
     /* Make a scanner set with a single scanner and a single command to enable all the scanners.
@@ -306,8 +279,8 @@ TEST_CASE("scan_zip", "[scanners]") {
     auto *sbufp = map_file( "testfilex.docx" );
     auto outdir = test_scanners( scanners, sbufp); // deletes sbuf2
     auto email_txt = getLines( outdir / "email.txt" );
-    REQUIRE( requireFeature(email_txt,"2093-ZIP-402\tuser_docx@microsoftword.com"));
-    REQUIRE( requireFeature(email_txt,"2443-ZIP-1012\tuser_docx@microsoftword.com"));
+    REQUIRE( requireFeature(email_txt,"1771-ZIP-402\tuser_docx@microsoftword.com"));
+    REQUIRE( requireFeature(email_txt,"2396-ZIP-1012\tuser_docx@microsoftword.com"));
 }
 
 
