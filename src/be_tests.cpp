@@ -205,7 +205,7 @@ TEST_CASE("sbuf_decompress_zlib_new", "[support]") {
     auto *sbufp = map_file("test_hello.gz");
     REQUIRE( sbuf_decompress::is_gzip_header( *sbufp, 0) == true);
     REQUIRE( sbuf_decompress::is_gzip_header( *sbufp, 10) == false);
-    auto *decomp = sbuf_decompress::sbuf_new_decompress( *sbufp, 1024*1024, "GZIP", sbuf_decompress::mode_t::GZIP );
+    auto *decomp = sbuf_decompress::sbuf_new_decompress( *sbufp, 1024*1024, "GZIP", sbuf_decompress::mode_t::GZIP, 0 );
     REQUIRE( decomp != nullptr);
     REQUIRE( decomp->asString() == "hello@world.com\n");
     delete decomp;

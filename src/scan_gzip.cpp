@@ -37,7 +37,7 @@ void scan_gzip(scanner_params &sp)
 	     */
             if( sbuf_decompress::is_gzip_header( sbuf, i)){
                 auto *decomp = sbuf_decompress::sbuf_new_decompress( sbuf.slice(i),
-                                                                     gzip_max_uncompr_size, "GZIP" ,sbuf_decompress::mode_t::GZIP);
+                                                                     gzip_max_uncompr_size, "GZIP" ,sbuf_decompress::mode_t::GZIP, 0);
                 if (decomp==nullptr) continue;
                 sp.recurse(decomp);      // recurse will free the sbuf
             }

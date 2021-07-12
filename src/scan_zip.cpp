@@ -114,7 +114,8 @@ inline void scan_zip_component(scanner_params &sp, feature_recorder &zip_recorde
     /* See if we can decompress */
     if (version_needed_to_extract==20 && uncompr_size>=zip_min_uncompr_size){
         // Create an sbuf that contains the source data pointed to by the header that is to be decompressed
-        const sbuf_t sbuf_src(sbuf, pos+30+name_len+extra_field_len);
+        size_t header_size = 30+name_len+extra_field_len; // how far past 'pos' that the decompress starts
+        const sbuf_t sbuf_src(sbuf, pos+header_size);
 
         // If there is no data, then just indicate this and return.
         if (sbuf_src.pagesize==0){
@@ -132,7 +133,7 @@ inline void scan_zip_component(scanner_params &sp, feature_recorder &zip_recorde
             }
         }
 
-        auto *decomp = sbuf_decompress::sbuf_new_decompress(sbuf_src, uncompr_size, "ZIP", sbuf_decompress::mode_t::ZIP);
+        auto *decomp = sbuf_decompress::sbuf_new_decompress(sbuf_src, uncompr_size, "ZIP", sbuf_decompress::mode_t::ZIP, header_size);
         if (decomp!=nullptr) {
             xmlstream << "<disposition bytes='" << decomp->bufsize << "'>decompressed</disposition></zipinfo>";
             zip_recorder.write(pos0+pos,name,xmlstream.str());
