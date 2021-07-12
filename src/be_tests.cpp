@@ -426,8 +426,8 @@ TEST_CASE("validate_scanners", "[phase1]") {
     std::vector<Check> ex4 {
         Check("kml.txt",
               Feature( "0",
-                       "kml/000/00000000.kml",
-                       "<fileobject><filename>kml/000/00000000.kml</filename><filesize>35919</filesize><hashdigest type='sha1'>cffc78e27ac32414b33d595a0fefcb971eaadaa3</hashdigest></fileobject>"))
+                       "kml/000/0.kml",
+                       "<fileobject><filename>kml/000/0.kml</filename><filesize>35919</filesize><hashdigest type='sha1'>cffc78e27ac32414b33d595a0fefcb971eaadaa3</hashdigest></fileobject>"))
     };
     validate(fn, ex4);
 
