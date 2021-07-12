@@ -334,6 +334,40 @@ The author names and affiliations could be formatted in two ways:
 See the front matter of this document for examples. You are recommended to conform your choice to the journal you are submitting to.
 
 
+\subsection{Validating}
+
+In comparing the output of be16 and BE20, we discovered bugs in the
+BE16 output that had never been validated. Most of these had to do
+with the location of recursively-analyzed features in the feature
+file.
+
+For example, the BE forensic path |456536-ZIP-1255117| is read to mean
+that there is a feature that is located 1255117 bytes into a
+inflated ZIP stream that is itself located 456536 bytes from the
+beginning of the disk image. With the disk image nps-2010-emails, BE16
+reported the ZIP stream beginning at 456536, but BE20 reports the same
+ZIP stream beginning at location 456596. The 60-byte difference is the
+result of the ZIP header. BE20 correctly reported that the ZIP stream
+began at 456596 because the address was tracked automatically by the
+revised memory allocation routines that tracked the location of the
+sliced buffer that was handed to the decompressor. In BE16, the
+address was computed with explicit code, and that explicit code
+(rightly or wrongly) computed the location of the ZIP segment header,
+rather than the ZLIB-deflated stream.
+
+In this case we concluded that BE16 was actually wrong.
+
+\begin{figure*}
+\begin{Verbatim}
+nps-2010-emails_be16/email.txt:456536-ZIP-0-MSXML-9	iwork09.comkeynote_comment@iwork09.com	\x0Akeynote@iwork09.comkeynote_comment@iwork09.com\x0A
+nps-2010-emails_be16/email.txt:456536-ZIP-1255117	keynote@iwork09.com	nk href="mailto:keynote@iwork09.com?subject="><sf:s
+nps-2010-emails_be16/email.txt:456536-ZIP-1255189	keynote@iwork09.com	racterStyle-38">keynote@iwork09.com</sf:span></sf:l
+nps-2010-emails_be20v1/email.txt:456596-ZIP-0-MSXML-9	iwork09.comkeynote_comment@iwork09.com	\x0Akeynote@iwork09.comkeynote_comment@iwork09.com\x0A
+nps-2010-emails_be20v1/email.txt:456596-ZIP-1255117	keynote@iwork09.com	nk href="mailto:keynote@iwork09.com?subject="><sf:s
+nps-2010-emails_be20v1/email.txt:456596-ZIP-1255189	keynote@iwork09.com	racterStyle-38">keynote@iwork09.com</sf:span></sf:l
+\end{Verbatim}
+\end{figure*}
+
 \section*{References}
 
 \bibliography{references}

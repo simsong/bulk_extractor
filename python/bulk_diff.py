@@ -136,7 +136,7 @@ class BulkDiff:
                     r = bulk_extractor_reader.parse_feature_line(line)
                     if not r: continue
                     if r[0] not in a_features:
-                        print("{} {} is only in {}".format(r[0].decode('utf-8'),r[1].decode('utf-8'),a.name), file=out)
+                        print("{} {} is only in {}".format(r[0].decode('utf-8'),r[1].decode('utf-8'),b.name), file=out)
 
 
 if __name__=="__main__":

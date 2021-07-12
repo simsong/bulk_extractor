@@ -205,7 +205,7 @@ TEST_CASE("sbuf_decompress_zlib_new", "[support]") {
     auto *sbufp = map_file("test_hello.gz");
     REQUIRE( sbuf_decompress::is_gzip_header( *sbufp, 0) == true);
     REQUIRE( sbuf_decompress::is_gzip_header( *sbufp, 10) == false);
-    auto *decomp = sbuf_decompress::sbuf_new_decompress( *sbufp, 1024*1024, "GZIP", sbuf_decompress::mode_t::GZIP );
+    auto *decomp = sbuf_decompress::sbuf_new_decompress( *sbufp, 1024*1024, "GZIP", sbuf_decompress::mode_t::GZIP, 0 );
     REQUIRE( decomp != nullptr);
     REQUIRE( decomp->asString() == "hello@world.com\n");
     delete decomp;
@@ -261,7 +261,6 @@ TEST_CASE("scan_vcard", "[scanners]") {
     /* Read the output */
 }
 
-
 TEST_CASE("scan_wordlist", "[scanners]") {
     /* Make a scanner set with a single scanner and a single command to enable all the scanners.
      */
@@ -280,8 +279,8 @@ TEST_CASE("scan_zip", "[scanners]") {
     auto *sbufp = map_file( "testfilex.docx" );
     auto outdir = test_scanners( scanners, sbufp); // deletes sbuf2
     auto email_txt = getLines( outdir / "email.txt" );
-    REQUIRE( requireFeature(email_txt,"2093-ZIP-402\tuser_docx@microsoftword.com"));
-    REQUIRE( requireFeature(email_txt,"2443-ZIP-1012\tuser_docx@microsoftword.com"));
+    REQUIRE( requireFeature(email_txt,"1771-ZIP-402\tuser_docx@microsoftword.com"));
+    REQUIRE( requireFeature(email_txt,"2396-ZIP-1012\tuser_docx@microsoftword.com"));
 }
 
 
@@ -359,16 +358,17 @@ std::string validate(std::string image_fname, std::vector<Check> &expected)
 }
 
 TEST_CASE("validate_scanners", "[phase1]") {
-    auto fn1 = "test_json.txt";
+    std::string fn;
+    fn = "test_json.txt";
     std::vector<Check> ex1 {
         Check("json.txt",
               Feature( "0",
                        JSON1,
                        "ef2b5d7ee21e14eeebb5623784f73724218ee5dd")),
     };
-    validate(fn1, ex1);
+    validate(fn, ex1);
 
-    auto fn2 = "test_base16json.txt";
+    fn = "test_base16json.txt";
     std::vector<Check> ex2 {
         Check("json.txt",
               Feature( "50-BASE16-0",
@@ -383,9 +383,9 @@ TEST_CASE("validate_scanners", "[phase1]") {
                        "[{\"1\": \"one@base16_company.com\"}, {\"2\": \"two@b")),
 
     };
-    validate(fn2, ex2);
+    validate(fn, ex2);
 
-    auto fn3 = "test_hello.gz";
+    fn = "test_hello.gz";
     std::vector<Check> ex3 {
         Check("email.txt",
               Feature( "0-GZIP-0",
@@ -393,8 +393,20 @@ TEST_CASE("validate_scanners", "[phase1]") {
                        "hello@world.com\\x0A"))
 
     };
-    validate(fn3, ex3);
+    validate(fn, ex3);
+
+    fn = "KML_Samples.kml";
+    std::vector<Check> ex4 {
+        Check("kml.txt",
+              Feature( "0",
+                       "kml/000/0.kml",
+                       "<fileobject><filename>kml/000/0.kml</filename><filesize>35919</filesize><hashdigest type='sha1'>cffc78e27ac32414b33d595a0fefcb971eaadaa3</hashdigest></fileobject>"))
+    };
+    validate(fn, ex4);
+
 }
+
+
 
 
 

@@ -168,7 +168,7 @@ void pdf_extractor::decompress_streams_extract_text()
         size_t max_uncompr_size = compr_size * 8;       // good assumption for expansion
 
         auto *dbuf = sbuf_decompress::sbuf_new_decompress( sbuf_root.slice(it.stream_start, compr_size), max_uncompr_size, "PDFZLIB",
-                                               sbuf_decompress::mode_t::PDF );
+                                                           sbuf_decompress::mode_t::PDF, 0 );
         if (dbuf==nullptr) {
             std::cerr << "failed\n";
             continue ;   // could not decompress
