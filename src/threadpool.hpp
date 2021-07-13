@@ -20,9 +20,6 @@
 
 */
 
-
-
-
 #ifndef THREADPOOL_HPP
 #define THREADPOOL_HPP
 
@@ -43,6 +40,13 @@ class threadpool
     using task_type = std::function<void()>;
 
 public:
+    std::atomic<bool>        m_stop{ false }; // set true to terminate workers
+    std::atomic<std::size_t> m_active{ 0 };   // number of active workers
+    std::condition_variable m_notifier {};
+    std::mutex m_mutex {};              // protects m_workers and m_tasks
+    std::vector<std::thread> m_workers {};
+    std::queue<task_type> m_tasks {};
+
     explicit threadpool(std::size_t thread_count = std::thread::hardware_concurrency()) {
         for (std::size_t i{ 0 }; i < thread_count; ++i) {
             m_workers.emplace_back(std::bind(&threadpool::thread_loop, this));
@@ -144,13 +148,5 @@ private:
         return task;
     }
 
-    std::atomic<bool> m_stop{ false };
-    std::atomic<std::size_t> m_active{ 0 };
-
-    std::condition_variable m_notifier {};
-    std::mutex m_mutex {};
-
-    std::vector<std::thread> m_workers {};
-    std::queue<task_type> m_tasks {};
 };
 #endif

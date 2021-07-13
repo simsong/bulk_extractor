@@ -790,8 +790,11 @@ int main(int argc,char **argv)
         exit(1);
     }
 
+    /* If output directory does not exist, we are not restarting! */
+    std::filesystem::path report_path = sc.outdir / "report.xml";
+    dfxml_writer *xreport = new dfxml_writer(report_path, false);
     struct feature_recorder_set::flags_t f;
-    scanner_set ss(sc, f);
+    scanner_set ss(sc, f, xreport);
     ss.add_scanners(scanners_builtin);
 
     /* Print usage if necessary. Requires scanner set, but not commands applied.
@@ -852,8 +855,6 @@ int main(int argc,char **argv)
     aftimer timer;
     timer.start();
 
-    /* If output directory does not exist, we are not restarting! */
-    std::filesystem::path report_path = sc.outdir / "report.xml";
 
     /* Get image or directory */
     if (*argv == NULL) {
@@ -957,7 +958,6 @@ int main(int argc,char **argv)
         cfg.set_sampling_parameters(opt_sampling_params);
     }
 
-    dfxml_writer *xreport = new dfxml_writer(report_path, false);
     Phase1 phase1(*xreport, cfg, *p, ss);
     phase1.dfxml_write_create( argc, argv);
     xreport->xmlout("provided_filename", sc.input_fname); // save this information

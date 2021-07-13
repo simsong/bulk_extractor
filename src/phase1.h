@@ -30,13 +30,28 @@
 class Phase1 {
     Phase1(const Phase1 &that) = delete; // no copy constructor
     Phase1 &operator=(const Phase1 &that) = delete; // no assignment
+    bool sampling(){                    // are we random sampling?
+        return config.sampling_fraction<1.0;
+    }
+
+    class threadpool *tp {nullptr};
+    void print_tp_status();
+
+    struct  work_unit {
+        work_unit(scanner_set &ss_,sbuf_t *sbuf_):ss(ss_),sbuf(sbuf_){}
+        scanner_set &ss;
+        sbuf_t *sbuf {};
+        void process() const {
+            ss.process_sbuf(sbuf);
+        }
+    };
+
 public:
     /* Configuration Control */
     struct Config {
         static const auto MiB = 1024*1024;
         Config(const Config &that) = default; // copy constructor - default
         Config &operator=(const Config &that) = delete;        // assignment constructor - delete
-    public:
 
         Config() { }
         uint64_t debug {false};                 // debug
@@ -59,17 +74,11 @@ public:
     };
 
     typedef std::set<uint64_t> blocklist_t; // a list of blocks (for random sampling)
-    static void msleep(uint32_t msec); // sleep for a specified number of msec
+    //static void msleep(uint32_t msec); // sleep for a specified number of msec
     static std::string minsec(time_t tsec);    // return "5 min 10 sec" string
     static void make_sorted_random_blocklist(blocklist_t *blocklist,uint64_t max_blocks,float frac);
 
 private:
-    bool sampling(){                    // are we random sampling?
-        return config.sampling_fraction<1.0;
-    }
-
-    class threadpool *tp {nullptr};
-    void print_tp_status();
 
 public:
     typedef std::set<std::string> seen_page_ids_t;

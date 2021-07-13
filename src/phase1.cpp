@@ -23,6 +23,12 @@
 
 using namespace std::chrono_literals;
 
+Phase1::Phase1(dfxml_writer &xreport_,Config config_, image_process &p_, scanner_set &ss_):
+    xreport(xreport_),config(config_), p(p_), ss(ss_)
+{
+}
+
+
 /**
  * convert tsec into a string.
  */
@@ -148,16 +154,6 @@ void Phase1::make_sorted_random_blocklist(blocklist_t *blocklist,uint64_t max_bl
     }
 }
 
-
-struct  work_unit {
-    work_unit(scanner_set &ss_,sbuf_t *sbuf_):ss(ss_),sbuf(sbuf_){}
-    scanner_set &ss;
-    sbuf_t *sbuf;
-    void process() const {
-        ss.process_sbuf(sbuf);
-    }
-};
-
 void Phase1::send_data_to_workers()
 {
     /* A single loop with two iterators.
@@ -215,6 +211,8 @@ void Phase1::send_data_to_workers()
                         }
                     }
                     total_bytes += sbufp->pagesize;
+                    std::cerr << "calling ss.log\n";
+                    ss.log( *sbufp, "read sbuf");
 
                     /***************************
                      **** SCHEDULE THE WORK ****
@@ -287,13 +285,6 @@ TODO: Turn this into a real-time status thread.
     }
     if (config.opt_quiet==0) std::cout << "All Threads Finished!\n";
 #endif
-
-
-
-Phase1::Phase1(dfxml_writer &xreport_,Config config_, image_process &p_, scanner_set &ss_):
-    xreport(xreport_),config(config_), p(p_), ss(ss_)
-{
-}
 
 
 void Phase1::dfxml_write_create(int argc, char * const *argv)
