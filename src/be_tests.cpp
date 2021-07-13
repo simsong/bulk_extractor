@@ -112,7 +112,7 @@ std::filesystem::path test_scanners(const std::vector<scanner_t *> & scanners, s
     sc.outdir           = NamedTemporaryDirectory();
     sc.scanner_commands = enable_all_scanners;
 
-    scanner_set ss(sc, frs_flags);
+    scanner_set ss(sc, frs_flags, nullptr);
     for (auto const &it : scanners ){
         ss.add_scanner( it );
     }
@@ -306,12 +306,12 @@ std::string validate(std::string image_fname, std::vector<Check> &expected)
     sc.outdir = NamedTemporaryDirectory();
     sc.scanner_commands = enable_all_scanners;
     const feature_recorder_set::flags_t frs_flags;
-    scanner_set ss(sc, frs_flags);
+    auto *xreport = new dfxml_writer(sc.outdir / "report.xml", false);
+    scanner_set ss(sc, frs_flags, xreport);
     ss.add_scanners(scanners_builtin);
     ss.apply_scanner_commands();
 
-    auto *xreport = new dfxml_writer(sc.outdir / "report.xml", false);
-    Phase1 phase1(*xreport, cfg, *p, ss);
+    Phase1 phase1(cfg, *p, ss);
     phase1.dfxml_write_create( 0, nullptr);
     ss.phase_scan();
     phase1.run();

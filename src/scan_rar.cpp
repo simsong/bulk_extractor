@@ -139,10 +139,10 @@ static inline uint32_t crc_finalize(uint32_t crc)
 }
 static uint32_t crc_update(uint32_t crc, const sbuf_t &sbuf)
 {
-    for( size_t i = 0; i < sbuf.bufsize; i++){
+    for( size_t pos = 0; pos < sbuf.bufsize; pos++){
         bool bit;
-        unsigned char c = sbuf[i];
-        for (i = 0x01; i & 0xff; i <<= 1) {
+        unsigned char c = sbuf[pos];
+        for (unsigned int i = 0x01; i & 0xff; i <<= 1) {
             bit = crc & 0x80000000;
             if (c & i) {
                 bit = !bit;

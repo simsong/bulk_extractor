@@ -37,13 +37,12 @@ class Phase1 {
     class threadpool *tp {nullptr};
     void print_tp_status();
 
+    /* The thread pool contains a queue of std::function<void()>, which are calls to work_unit::process() */
     struct  work_unit {
         work_unit(scanner_set &ss_,sbuf_t *sbuf_):ss(ss_),sbuf(sbuf_){}
         scanner_set &ss;
         sbuf_t *sbuf {};
-        void process() const {
-            ss.process_sbuf(sbuf);
-        }
+        void process() const;
     };
 
 public:
@@ -86,7 +85,6 @@ public:
      * print the status of a threadpool
      */
     /* Instance variables */
-    dfxml_writer  &xreport;
     aftimer       timer {};
     const Config  config;
     u_int         notify_ctr  {0};    /* for random sampling */
@@ -98,6 +96,7 @@ public:
     uint64_t      sha1_next {0};                   // next byte to hash
 
     std::string image_hash {};
+    dfxml_writer &xreport;
 
     /* Get the sbuf from current image iterator location, with retries */
     sbuf_t *get_sbuf(image_process::iterator &it);
@@ -105,7 +104,7 @@ public:
     /* Notify user about current state of phase1 */
     void notify_user(image_process::iterator &it);
 
-    Phase1(dfxml_writer &xreport_,Config config_, image_process &p_, scanner_set &ss_);
+    Phase1(Config config_, image_process &p_, scanner_set &ss_);
     void dfxml_write_create(int argc, char * const *argv);
     void send_data_to_workers();        // launch all of the workers
     void dfxml_write_source();            //

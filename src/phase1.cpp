@@ -23,8 +23,8 @@
 
 using namespace std::chrono_literals;
 
-Phase1::Phase1(dfxml_writer &xreport_,Config config_, image_process &p_, scanner_set &ss_):
-    xreport(xreport_),config(config_), p(p_), ss(ss_)
+Phase1::Phase1(Config config_, image_process &p_, scanner_set &ss_):
+    config(config_), p(p_), ss(ss_), xreport(*ss_.get_dfxml_writer())
 {
 }
 
@@ -41,6 +41,11 @@ std::string Phase1::minsec(time_t tsec)
     if (min>0) ss << min << " min";
     if (sec>0) ss << sec << " sec";
     return ss.str();
+}
+
+void Phase1::work_unit::process() const
+{
+    ss.process_sbuf(sbuf);
 }
 
 /*
@@ -373,6 +378,7 @@ void Phase1::dfxml_write_source()
 /* multi-threaded */
 void Phase1::run()
 {
+    ss.log("Starting Phase 1");
     assert(ss.get_current_phase() == scanner_params::PHASE_SCAN);
     /* Create the threadpool and launch the workers */
     timer.start();
@@ -380,7 +386,9 @@ void Phase1::run()
     tp = new threadpool(config.num_threads); // ,fs,xreport);
     xreport.push("runtime","xmlns:debug=\"http://www.github.com/simsong/bulk_extractor/issues\"");
     send_data_to_workers();
+    ss.log("Calling tp->join()");
     tp->join();
     xreport.pop("runtime");
     dfxml_write_source();
+    ss.log("Ending Phase 1");
 }

@@ -658,9 +658,9 @@ int main(int argc,char **argv)
 
     /* Process options */
     const std::string ALL { "all" };
-    std::string arg {};
     int ch;
     while ((ch = getopt(argc, argv, "A:B:b:C:d:E:e:F:f:G:g:Hhij:M:m:o:P:p:q:Rr:S:s:VW:w:x:Y:z:Z")) != -1) {
+        std::string arg = optarg!=ALL ? optarg : scanner_config::scanner_command::ALL_SCANNERS;
 	switch (ch) {
 	case 'A': sc.offset_add  = stoi64(optarg);break;
 	case 'b': sc.banner_file = optarg; break;
@@ -688,11 +688,10 @@ int main(int argc,char **argv)
 	}
 	break;
 	case 'E':            /* Enable all scanners */
-            sc.push_scanner_command(scanner_config::scanner_command::ALL_SCANNERS, scanner_config::scanner_command::DISABLE);
-            sc.push_scanner_command(optarg, scanner_config::scanner_command::ENABLE);
+            sc.push_scanner_command( scanner_config::scanner_command::ALL_SCANNERS, scanner_config::scanner_command::DISABLE);
+            sc.push_scanner_command( arg, scanner_config::scanner_command::ENABLE);
 	    break;
 	case 'e':           /* enable a spedcific scanner */
-            arg = optarg!=ALL ? optarg : scanner_config::scanner_command::ALL_SCANNERS;
             sc.push_scanner_command(arg, scanner_config::scanner_command::ENABLE);
 	    break;
 	case 'F': FindOpts::get().Files.push_back(optarg); break;
@@ -742,7 +741,7 @@ int main(int argc,char **argv)
 	    }
 	    break;
 	case 'x':
-            sc.push_scanner_command(scanner_config::scanner_command::ALL_SCANNERS, scanner_config::scanner_command::DISABLE);
+            sc.push_scanner_command( arg, scanner_config::scanner_command::DISABLE);
 	    break;
 	case 'Y': {
 	    std::string optargs = optarg;
@@ -790,11 +789,8 @@ int main(int argc,char **argv)
         exit(1);
     }
 
-    /* If output directory does not exist, we are not restarting! */
-    std::filesystem::path report_path = sc.outdir / "report.xml";
-    dfxml_writer *xreport = new dfxml_writer(report_path, false);
     struct feature_recorder_set::flags_t f;
-    scanner_set ss(sc, f, xreport);
+    scanner_set ss(sc, f, nullptr);
     ss.add_scanners(scanners_builtin);
 
     /* Print usage if necessary. Requires scanner set, but not commands applied.
@@ -855,7 +851,6 @@ int main(int argc,char **argv)
     aftimer timer;
     timer.start();
 
-
     /* Get image or directory */
     if (*argv == NULL) {
         if (opt_recurse) {
@@ -866,6 +861,10 @@ int main(int argc,char **argv)
         exit(1);
     }
     sc.input_fname = *argv;
+
+    std::filesystem::path report_path = sc.outdir / "report.xml";
+    dfxml_writer *xreport = new dfxml_writer(report_path, false); // do not make DTD
+    ss.set_dfxml_writer( xreport );
 
     /* Determine if this is the first time through or if the program was restarted.
      * Restart procedure: re-run the command in verbatim.
@@ -958,7 +957,7 @@ int main(int argc,char **argv)
         cfg.set_sampling_parameters(opt_sampling_params);
     }
 
-    Phase1 phase1(*xreport, cfg, *p, ss);
+    Phase1 phase1(cfg, *p, ss);
     phase1.dfxml_write_create( argc, argv);
     xreport->xmlout("provided_filename", sc.input_fname); // save this information
 
