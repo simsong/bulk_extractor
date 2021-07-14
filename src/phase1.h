@@ -3,7 +3,6 @@
 
 #include <thread>
 
-#include "be13_api/aftimer.h"
 #include "be13_api/scanner_set.h"
 #include "be13_api/dfxml_cpp/src/dfxml_writer.h"
 #include "be13_api/dfxml_cpp/src/hash_t.h"
@@ -19,6 +18,9 @@
  *           BE2.0 - Each sbuf is loaded by the producer. Each worker runs a single scanner.
  * phase 2 - histograms are made.
  *
+ * This file implements Phase 1 - reads some or all of the sbufs and asks the scanner set to process them.
+ * A regular scanner set will process them sequentially in a single-thread. The multithreaded_scanner_set will
+ * create a work queue, queue each sbuf to be processed, and process them in parallel.
  */
 
 
@@ -33,17 +35,6 @@ class Phase1 {
     bool sampling(){                    // are we random sampling?
         return config.sampling_fraction<1.0;
     }
-
-    class threadpool *tp {nullptr};
-    void print_tp_status();
-
-    /* The thread pool contains a queue of std::function<void()>, which are calls to work_unit::process() */
-    struct  work_unit {
-        work_unit(scanner_set &ss_,sbuf_t *sbuf_):ss(ss_),sbuf(sbuf_){}
-        scanner_set &ss;
-        sbuf_t *sbuf {};
-        void process() const;
-    };
 
 public:
     /* Configuration Control */
@@ -65,7 +56,7 @@ public:
         time_t   max_wait_time {3600};  // after an hour, terminate a scanner
         int      opt_quiet {false};                  // -1 = no output
         int      retry_seconds {60};
-        u_int    num_threads  { std::thread::hardware_concurrency() }; // default to # of cores
+        u_int    num_threads  { std::thread::hardware_concurrency() }; // default to # of cores; 0 for no threads;
         double   sampling_fraction {1.0};       // for random sampling
         u_int    sampling_passes {1};
         bool     opt_report_read_errors {true};
@@ -73,42 +64,35 @@ public:
     };
 
     typedef std::set<uint64_t> blocklist_t; // a list of blocks (for random sampling)
-    //static void msleep(uint32_t msec); // sleep for a specified number of msec
     static std::string minsec(time_t tsec);    // return "5 min 10 sec" string
     static void make_sorted_random_blocklist(blocklist_t *blocklist,uint64_t max_blocks,float frac);
 
-private:
-
-public:
     typedef std::set<std::string> seen_page_ids_t;
     /**
      * print the status of a threadpool
      */
     /* Instance variables */
-    aftimer       timer {};
-    const Config  config;
-    u_int         notify_ctr  {0};    /* for random sampling */
-    uint64_t      total_bytes {0};               //
-    image_process &p;
-    scanner_set   &ss;
-    seen_page_ids_t seen_page_ids {};
+    const Config  config;               // phase1 config passed in
+    u_int         notify_ctr  {0};      // for random sampling
+    uint64_t      total_bytes {0};      // processed
+    image_process &p;                   // image being processed
+    scanner_set   &ss;                  // our scanner set
+    seen_page_ids_t seen_page_ids {};   // to avoid processing each twice
     dfxml::sha1_generator *sha1g {nullptr};        // the SHA1 of the image. Set to 0 if a gap is encountered
-    uint64_t      sha1_next {0};                   // next byte to hash
+    uint64_t      sha1_next {0};        // next byte to hash, to detect gaps
 
-    std::string image_hash {};
-    dfxml_writer &xreport;
+    std::string image_hash {};          // when hashed, the image hash
+    dfxml_writer &xreport;              // we always write out the DFXML. Allows restart to be handled in phase1
 
     /* Get the sbuf from current image iterator location, with retries */
     sbuf_t *get_sbuf(image_process::iterator &it);
 
-    /* Notify user about current state of phase1 */
-    void notify_user(image_process::iterator &it);
 
     Phase1(Config config_, image_process &p_, scanner_set &ss_);
-    void dfxml_write_create(int argc, char * const *argv);
-    void send_data_to_workers();        // launch all of the workers
-    void dfxml_write_source();            //
-    void run();                         // does the above
+    void dfxml_write_create(int argc, char * const *argv); // create the DFXML header
+    void dfxml_write_source();                             // create the DFXML <source> block
+    void read_process_sbufs(); // read and process the sbufs
+    void phase1_run();         // run phase1
 };
 
 #endif

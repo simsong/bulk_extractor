@@ -118,6 +118,8 @@ bulk_extractor_nomain = \
 	findopts.h \
 	image_process.cpp \
 	image_process.h \
+	multithreaded_scanner_set.h \
+	multithreaded_scanner_set.cpp \
 	phase1.h \
 	phase1.cpp \
 	sbuf_decompress.cpp \

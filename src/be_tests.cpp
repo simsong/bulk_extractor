@@ -314,7 +314,7 @@ std::string validate(std::string image_fname, std::vector<Check> &expected)
     Phase1 phase1(cfg, *p, ss);
     phase1.dfxml_write_create( 0, nullptr);
     ss.phase_scan();
-    phase1.run();
+    phase1.phase1_run();
     ss.shutdown();
     xreport->pop("dfxml");
     xreport->close();

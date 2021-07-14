@@ -44,21 +44,24 @@
 int _CRT_fmode = _O_BINARY;
 #endif
 
-#include "be13_api/word_and_context_list.h"
-#include "be13_api/scanner_set.h"
+#include "dfxml_cpp/src/dfxml_writer.h"
+#include "dfxml_cpp/src/hash_t.h"  // needs config.h
+
+#include "be13_api/aftimer.h"
 #include "be13_api/scanner_params.h"
+#include "be13_api/scanner_set.h"
+#include "be13_api/utils.h"             // needs config.h
+#include "be13_api/word_and_context_list.h"
 
 
 #include "findopts.h"
 #include "image_process.h"
-#include "be13_api/utils.h"             // needs config.h
-#include "dfxml_cpp/src/dfxml_writer.h"
-#include "dfxml_cpp/src/hash_t.h"  // needs config.h
 
 #include "phase1.h"
 
 /* Bring in the definitions for the  */
 #include "bulk_extractor_scanners.h"
+#include "multithreaded_scanner_set.h"
 
 /**
  * Output the #defines for our debug parameters. Used by the automake system.
@@ -115,7 +118,8 @@ static void usage(const char *progname, scanner_set &ss)
     std::cout << "   -G NN        - specify the page size (default " << cfg.opt_pagesize << ")\n";
     std::cout << "   -g NN        - specify margin (default " <<cfg.opt_marginsize << ")\n";
     std::cout << "   -j NN        - Number of analysis threads to run (default " << std::thread::hardware_concurrency() << ")\n";
-    //std::cout << "   -M nn        - sets max recursion depth (default " << scanner_set::scanner_def::max_depth << ")\n";
+    std::cout << "   -J           - no threading: read and process data in the primary thread.\n";
+    std::cout << "   -M nn        - sets max recursion depth (default " << scanner_config::DEFAULT_MAX_DEPTH << ")\n";
     std::cout << "   -m <max>     - maximum number of minutes to wait after all data read\n";
     std::cout << "                  default is " << cfg.max_bad_alloc_errors << "\n";
     std::cout << "\nPath Processing Mode:\n";
@@ -659,7 +663,9 @@ int main(int argc,char **argv)
     /* Process options */
     const std::string ALL { "all" };
     int ch;
+    char *empty = strdup("");
     while ((ch = getopt(argc, argv, "A:B:b:C:d:E:e:F:f:G:g:Hhij:M:m:o:P:p:q:Rr:S:s:VW:w:x:Y:z:Z")) != -1) {
+        if (optarg==nullptr) optarg=empty;
         std::string arg = optarg!=ALL ? optarg : scanner_config::scanner_command::ALL_SCANNERS;
 	switch (ch) {
 	case 'A': sc.offset_add  = stoi64(optarg);break;
@@ -703,7 +709,8 @@ int main(int argc,char **argv)
             cfg.opt_info = true;
             break;
 	case 'j': cfg.num_threads = atoi(optarg); break;
-	case 'M': /*sc.max_depth = atoi(optarg); */break;
+        case 'J': cfg.num_threads = -1; break;
+	case 'M': sc.max_depth = atoi(optarg); break;
 	case 'm': cfg.max_bad_alloc_errors = atoi(optarg); break;
 	case 'o': sc.outdir = optarg;break;
 	case 'P': scanner_dirs.push_back(optarg);break;
@@ -790,7 +797,7 @@ int main(int argc,char **argv)
     }
 
     struct feature_recorder_set::flags_t f;
-    scanner_set ss(sc, f, nullptr);
+    multithreaded_scanner_set ss(sc, f, nullptr);
     ss.add_scanners(scanners_builtin);
 
     /* Print usage if necessary. Requires scanner set, but not commands applied.
@@ -942,11 +949,21 @@ int main(int argc,char **argv)
         std::cout << "Input file: " << sc.input_fname << "\n";
         std::cout << "Output directory: " << sc.outdir << "\n";
         std::cout << "Disk Size: " << p->image_size() << "\n";
-        std::cout << "Threads: " << cfg.num_threads << "\n";
+        if (cfg.num_threads>0){
+            std::cout << "Threads: " << cfg.num_threads << "\n";
+        } else {
+            std::cout << "Threading Disabled\n";
+        }
     }
+
 
     /*** PHASE 1 --- Run on the input image */
     ss.phase_scan();
+
+    // go multi-threaded if requested
+    //tp = new threadpool(config.num_threads); // ,fs,xreport);
+
+
 
 #if 0
     if ( fs.flag_set(feature_recorder_set::ENABLE_SQLITE3_RECORDERS )) {
@@ -955,6 +972,11 @@ int main(int argc,char **argv)
 #endif
     if(opt_sampling_params.size()>0){
         cfg.set_sampling_parameters(opt_sampling_params);
+    }
+
+    /* Go multi-threaded if requested */
+    if (cfg.num_threads > 0){
+        ss.launch_workers(cfg.num_threads);
     }
 
     Phase1 phase1(cfg, *p, ss);
@@ -966,7 +988,8 @@ int main(int argc,char **argv)
     //if(cfg.debug & DEBUG_PRINT_STEPS) std::cerr << "DEBUG: STARTING PHASE 1\n";
 
     xreport->add_timestamp("phase1 start");
-    phase1.run();
+    phase1.phase1_run();
+    ss.join();                          // wait for threads to come together
 
 #if 0
     if ( fs.flag_set(feature_recorder_set::ENABLE_SQLITE3_RECORDERS )) {
@@ -980,9 +1003,9 @@ int main(int argc,char **argv)
 
     /*** PHASE 2 --- Shutdown ***/
     if (!cfg.opt_quiet) std::cout << "Phase 2. Shutting down scanners\n";
-    xreport->add_timestamp("phase2 (shutdown) start");
+    xreport->add_timestamp("phase2 start");
     ss.shutdown();
-    xreport->add_timestamp("phase2 (shutdown) end");
+    xreport->add_timestamp("phase2 end");
 
     /*** PHASE 3 --- Create Histograms ***/
     // note - this is now done as part of the scanner_set shutdown
@@ -995,30 +1018,31 @@ int main(int argc,char **argv)
     xreport->push("report");
     xreport->xmlout("total_bytes",phase1.total_bytes);
     xreport->xmlout("elapsed_seconds",timer.elapsed_seconds());
-    //xreport->xmlout("max_depth_seen",plugin::get_max_depth_seen());
-    //xreport->xmlout("dup_data_encountered",plugin::dup_data_encountered);
-
-    xreport->pop("report");
-
+    xreport->xmlout("max_depth_seen",ss.get_max_depth_seen());
+    xreport->xmlout("dup_data_encountered",ss.dup_data_encountered);
     xreport->push("scanner_times");
     ss.dump_name_count_stats(*xreport);
     xreport->pop("scanner_times");                     // scanner_times
+    xreport->pop("report");
 
     xreport->add_rusage();
     xreport->pop("dfxml");			// bulk_extractor
-
-
     xreport->close();
+
     if(cfg.opt_quiet==0){
         float mb_per_sec = (phase1.total_bytes / 1000000.0) / timer.elapsed_seconds();
 
         std::cout.precision(4);
-        printf("Elapsed time: %g sec.\n",timer.elapsed_seconds());
-        printf("Total MB processed: %d\n",int(phase1.total_bytes / 1000000));
+        std::cout << "Elapsed time: " << timer.elapsed_seconds() << " sec.\n"
+                  << "Total MB processed: " << int(phase1.total_bytes / 1000000) << "\n"
+                  << "Overall performance: " << mb_per_sec << " << MBytes/sec";
+        if(cfg.num_threads>0){
+            std::cout << mb_per_sec/cfg.num_threads << " (MBytes/sec/thread)\n";
+        }
+    }
 
-        printf("Overall performance: %g MBytes/sec (%g MBytes/sec/thread)\n",
-               mb_per_sec,mb_per_sec/cfg.num_threads);
 #if 0
+TODO: Perhaps print the total number of features found
         if (fs.has_name("email")) {
             feature_recorder &fr = fs.named_feature_recorder("email");
             if(fr){
@@ -1026,8 +1050,6 @@ int main(int argc,char **argv)
             }
         }
 #endif
-    }
-
 
 #ifdef HAVE_MCHECK
     muntrace();
