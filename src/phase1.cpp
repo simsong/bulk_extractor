@@ -23,6 +23,11 @@
 
 using namespace std::chrono_literals;
 
+Phase1::Phase1(Config config_, image_process &p_, multithreaded_scanner_set &ss_):
+    config(config_), p(p_), ss(ss_), xreport(*ss_.get_dfxml_writer())
+{
+}
+
 /**
  * convert tsec into a string.
  */
@@ -35,22 +40,6 @@ std::string Phase1::minsec(time_t tsec)
     if (min>0) ss << min << " min";
     if (sec>0) ss << sec << " sec";
     return ss.str();
-}
-
-/*
- * Print the status of each thread in the threadpool.
- */
-void Phase1::print_tp_status()
-{
-    for(u_int i=0;i<config.num_threads;i++){
-#if 0
-        std::string status = tp->get_thread_status(i);
-        if (status.size() && status!="Free"){
-            std::cout << "Thread " << i << ": " << status << "\n";
-        }
-#endif
-    }
-    std::cout << "\n";
 }
 
 void Phase1::Config::set_sampling_parameters(std::string param)
@@ -109,27 +98,6 @@ sbuf_t *Phase1::get_sbuf(image_process::iterator &it)
 }
 
 
-void Phase1::notify_user(image_process::iterator &it)
-{
-    if (notify_ctr++ >= config.opt_notify_rate){
-        time_t t = time(0);
-        struct tm tm;
-        localtime_r(&t,&tm);
-        printf("%2d:%02d:%02d %s ",tm.tm_hour,tm.tm_min,tm.tm_sec,it.str().c_str());
-
-        /* not sure how to do the rest if sampling */
-        if (!sampling()){
-            printf("(%4.2f%%) Done in %s at %s",
-                   it.fraction_done()*100.0,
-                   timer.eta_text(it.fraction_done()).c_str(),
-                   timer.eta_time(it.fraction_done()).c_str());
-        }
-        printf("\n");
-        fflush(stdout);
-        notify_ctr = 0;
-    }
-}
-
 /**
  * Create a list sorted list of random blocks.
  */
@@ -148,17 +116,7 @@ void Phase1::make_sorted_random_blocklist(blocklist_t *blocklist,uint64_t max_bl
     }
 }
 
-
-struct  work_unit {
-    work_unit(scanner_set &ss_,sbuf_t *sbuf_):ss(ss_),sbuf(sbuf_){}
-    scanner_set &ss;
-    sbuf_t *sbuf;
-    void process() const {
-        ss.process_sbuf(sbuf);
-    }
-};
-
-void Phase1::send_data_to_workers()
+void Phase1::read_process_sbufs()
 {
     /* A single loop with two iterators.
      *
@@ -215,16 +173,7 @@ void Phase1::send_data_to_workers()
                         }
                     }
                     total_bytes += sbufp->pagesize;
-
-                    /***************************
-                     **** SCHEDULE THE WORK ****
-                     ***************************/
-
-                    struct work_unit wu(ss, sbufp);
-                    tp->push( [wu]{ wu.process(); } );
-                    if (config.opt_quiet == false ){
-                        notify_user(it);
-                    }
+                    ss.schedule_sbuf(sbufp); // processes the sbuf, then deletes it
                 }
                 catch (const std::exception &e) {
                     // report uncaught exceptions to both user and XML file
@@ -289,13 +238,6 @@ TODO: Turn this into a real-time status thread.
 #endif
 
 
-
-Phase1::Phase1(dfxml_writer &xreport_,Config config_, image_process &p_, scanner_set &ss_):
-    xreport(xreport_),config(config_), p(p_), ss(ss_)
-{
-}
-
-
 void Phase1::dfxml_write_create(int argc, char * const *argv)
 {
     xreport.push("dfxml","xmloutputversion='1.0'");
@@ -336,9 +278,7 @@ void Phase1::dfxml_write_source()
         delete sha1g;
     }
     xreport.pop("source");			// source
-
-    /* Record the feature files and their counts in the output */
-    ss.dump_name_count_stats(xreport);
+    xreport.flush();
 
     //if (config.opt_quiet==0) std::cout << "Producer time spent waiting: " << tp->waiting.elapsed_seconds() << " sec.\n";
 
@@ -352,8 +292,6 @@ void Phase1::dfxml_write_source()
         xreport.xmlout("thread_wait",dtos((*ij)->waiting.elapsed_seconds()),sstr.str(),false);
     }
 #endif
-    //xreport.pop();
-    xreport.flush();
     if (config.opt_quiet==0) {
         std::cout << "Average consumer time spent waiting: " << worker_wait_average << " sec.\n";
     }
@@ -379,17 +317,14 @@ void Phase1::dfxml_write_source()
 }
 
 
-/* multi-threaded */
-void Phase1::run()
+void Phase1::phase1_run()
 {
     assert(ss.get_current_phase() == scanner_params::PHASE_SCAN);
+    ss.run_notify_thread();
     /* Create the threadpool and launch the workers */
-    timer.start();
     //p.set_report_read_errors(config.opt_report_read_errors);
-    tp = new threadpool(config.num_threads); // ,fs,xreport);
     xreport.push("runtime","xmlns:debug=\"http://www.github.com/simsong/bulk_extractor/issues\"");
-    send_data_to_workers();
-    tp->join();
+    read_process_sbufs();
     xreport.pop("runtime");
-    dfxml_write_source();
+    dfxml_write_source();               // written here so it may also include hash
 }

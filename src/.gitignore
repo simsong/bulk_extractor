@@ -5,3 +5,5 @@ be_tests
 stand
 *.trs
 out*/
+*out*/
+*.tmp

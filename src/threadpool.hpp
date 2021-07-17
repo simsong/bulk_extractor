@@ -83,6 +83,11 @@ public:
         }
     }
 
+    void set_status(const std::string &msg){}
+    void dump_status(std::ostream &os) {}
+    std::size_t task_count() const {return 0;}
+
+
     // Wait all workers to finish
     void join() {
         m_stop = true;

@@ -35,6 +35,7 @@
 #include "scan_vcard.h"
 #include "scan_wordlist.h"
 #include "threadpool.hpp"
+#include "multithreaded_scanner_set.h"
 
 const std::string JSON1 {"[{\"1\": \"one@company.com\"}, {\"2\": \"two@company.com\"}, {\"3\": \"two@company.com\"}]"};
 const std::string JSON2 {"[{\"1\": \"one@base64.com\"}, {\"2\": \"two@base64.com\"}, {\"3\": \"three@base64.com\"}]\n"};
@@ -112,7 +113,7 @@ std::filesystem::path test_scanners(const std::vector<scanner_t *> & scanners, s
     sc.outdir           = NamedTemporaryDirectory();
     sc.scanner_commands = enable_all_scanners;
 
-    scanner_set ss(sc, frs_flags);
+    scanner_set ss(sc, frs_flags, nullptr);
     for (auto const &it : scanners ){
         ss.add_scanner( it );
     }
@@ -306,15 +307,15 @@ std::string validate(std::string image_fname, std::vector<Check> &expected)
     sc.outdir = NamedTemporaryDirectory();
     sc.scanner_commands = enable_all_scanners;
     const feature_recorder_set::flags_t frs_flags;
-    scanner_set ss(sc, frs_flags);
+    auto *xreport = new dfxml_writer(sc.outdir / "report.xml", false);
+    multithreaded_scanner_set ss(sc, frs_flags, xreport);
     ss.add_scanners(scanners_builtin);
     ss.apply_scanner_commands();
 
-    auto *xreport = new dfxml_writer(sc.outdir / "report.xml", false);
-    Phase1 phase1(*xreport, cfg, *p, ss);
+    Phase1 phase1(cfg, *p, ss);
     phase1.dfxml_write_create( 0, nullptr);
     ss.phase_scan();
-    phase1.run();
+    phase1.phase1_run();
     ss.shutdown();
     xreport->pop("dfxml");
     xreport->close();
@@ -357,18 +358,17 @@ std::string validate(std::string image_fname, std::vector<Check> &expected)
     return sc.outdir;
 }
 
-TEST_CASE("validate_scanners", "[phase1]") {
-    std::string fn;
-    fn = "test_json.txt";
+TEST_CASE("test_json", "[phase1]") {
     std::vector<Check> ex1 {
         Check("json.txt",
               Feature( "0",
                        JSON1,
                        "ef2b5d7ee21e14eeebb5623784f73724218ee5dd")),
     };
-    validate(fn, ex1);
+    validate("test_json.txt", ex1);
+}
 
-    fn = "test_base16json.txt";
+TEST_CASE("test_base16json", "[phase1]") {
     std::vector<Check> ex2 {
         Check("json.txt",
               Feature( "50-BASE16-0",
@@ -383,9 +383,10 @@ TEST_CASE("validate_scanners", "[phase1]") {
                        "[{\"1\": \"one@base16_company.com\"}, {\"2\": \"two@b")),
 
     };
-    validate(fn, ex2);
+    validate("test_base16json.txt", ex2);
+}
 
-    fn = "test_hello.gz";
+TEST_CASE("test_hello", "[phase1]") {
     std::vector<Check> ex3 {
         Check("email.txt",
               Feature( "0-GZIP-0",
@@ -393,17 +394,17 @@ TEST_CASE("validate_scanners", "[phase1]") {
                        "hello@world.com\\x0A"))
 
     };
-    validate(fn, ex3);
+    validate("test_hello.gz", ex3);
+}
 
-    fn = "KML_Samples.kml";
+TEST_CASE("KML_Samples.kml","[phase1]"){
     std::vector<Check> ex4 {
         Check("kml.txt",
               Feature( "0",
                        "kml/000/0.kml",
                        "<fileobject><filename>kml/000/0.kml</filename><filesize>35919</filesize><hashdigest type='sha1'>cffc78e27ac32414b33d595a0fefcb971eaadaa3</hashdigest></fileobject>"))
     };
-    validate(fn, ex4);
-
+    validate("KML_Samples.kml", ex4);
 }
 
 
@@ -449,7 +450,7 @@ sbuf_t *make_sbuf()
 
 /* Test that sbuf data  are not copied when moved to a child.*/
 const uint8_t *sbuf_buf_loc = nullptr;
-void process_sbuf(sbuf_t *sbuf)
+void test_process_sbuf(sbuf_t *sbuf)
 {
     std::lock_guard<std::mutex> lock(M);
     if (sbuf_buf_loc != nullptr) {
@@ -462,7 +463,7 @@ TEST_CASE("sbuf_no_copy", "[threads]") {
     for(int i=0;i<100;i++){
         auto sbuf = make_sbuf();
         sbuf_buf_loc = sbuf->get_buf();
-        process_sbuf(sbuf);
+        test_process_sbuf(sbuf);
     }
 }
 
@@ -470,7 +471,7 @@ TEST_CASE("threadpool3", "[threads]") {
     class threadpool t(10);
     for(int i=0;i<100;i++){
         auto sbuf = make_sbuf();
-        t.push( [sbuf]{ process_sbuf(sbuf); } );
+        t.push( [sbuf]{ test_process_sbuf(sbuf); } );
     }
     t.join();
     REQUIRE( counter==1000 );
