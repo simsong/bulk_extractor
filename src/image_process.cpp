@@ -759,7 +759,7 @@ sbuf_t *process_raw::sbuf_alloc(image_process::iterator &it) const
 	count = this->raw_filesize - it.raw_offset;
     }
     std::cerr << "process_row::sbuf_alloc get_pos(it)=" << get_pos0(it) << " count=" << count << "\n";
-    auto sbuf = sbuf_t::sbuf_malloc( get_pos0(it), count);
+    sbuf_t *sbuf = sbuf_t::sbuf_malloc( get_pos0(it), count);
     unsigned char *buf = reinterpret_cast<unsigned char *>(sbuf->malloc_buf());
     int count_read = this->pread(buf, count, it.raw_offset);       // do the read
     std::cerr << "  count_read= " << count_read << "\n";
@@ -772,6 +772,7 @@ sbuf_t *process_raw::sbuf_alloc(image_process::iterator &it) const
         delete sbuf;
 	throw read_error();
     }
+    std::cerr << "--sbuf_alloc::returning--\n";
     return sbuf;
 }
 

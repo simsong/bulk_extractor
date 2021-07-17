@@ -81,21 +81,32 @@ void multithreaded_scanner_set::schedule_sbuf(sbuf_t *sbufp)
 
     std::cerr << std::this_thread::get_id() << "                new thread: " << sbufp->pos0 << " depth: " << sbufp->depth() << "\n";
     if (sbufp->depth()==0) {
-        sbuf_depth0 += 1;
+        depth0_sbufs_in_queue += 1;
+        depth0_bytes_in_queue += sbufp->bufsize;
     }
+    sbufs_in_queue += 1;
+    bytes_in_queue += sbufp->bufsize;
 
     /* Run in a different thread */
+    std::cerr << "multithreaded_scanner: making work unit\n";
     struct work_unit wu(*this, sbufp);
+    std::cerr << "multithreaded_scanner: pushing work unit\n";
     tp->push( [wu]{ wu.process(); } );
+    std::cerr << "multithreaded_scanner: printing_tp_stats\n";
     print_tp_status();
 }
 
 void multithreaded_scanner_set::delete_sbuf(sbuf_t *sbufp)
 {
     if (sbufp->depth()==0){
-        sbuf_depth0 -= 1;
-        std::cerr << std::this_thread::get_id() << " deleted sbuf. " << *sbufp << " total depth0 now=" << sbuf_depth0 << "\n";
+        depth0_sbufs_in_queue -= 1;
+        assert(depth0_sbufs_in_queue>=0);
+        depth0_bytes_in_queue -= sbufp->bufsize;
+        std::cerr << std::this_thread::get_id() << " deleted sbuf. " << *sbufp << " total depth0 now=" << depth0_sbufs_in_queue << "\n";
     }
+    sbufs_in_queue -= 1;
+    assert(sbufs_in_queue>=0);
+    bytes_in_queue -= sbufp->bufsize;
     set_status(sbufp->pos0.str() + " delete_sbuf");
     scanner_set::delete_sbuf(sbufp);
 }
@@ -134,11 +145,15 @@ void multithreaded_scanner_set::run_notify_thread()
  */
 void multithreaded_scanner_set::print_tp_status()
 {
+    std::cout << "---enter print_tp_status----------------\n";
     std::cerr << "thread count " << tp->thread_count() << "\n";
     std::cerr << "active count " << tp->active_count() << "\n";
     std::cerr << "task count " << tp->task_count() << "\n";
-    std::cerr << "total depth0 " << sbuf_depth0 << "\n";
+    std::cerr << "depth 0 sbufs in queue " << depth0_sbufs_in_queue << "\n";
+    std::cerr << "depth 0 bytes in queue " << depth0_bytes_in_queue << "\n";
+    std::cerr << "sbufs in queue " << sbufs_in_queue << "\n";
+    std::cerr << "bytes in queue " << bytes_in_queue << "\n";
     show_free();
     tp->dump_status(std::cerr);
-    std::cout << "-------------------\n";
+    std::cout << "---exit print_tp_status----------------\n";
 }

@@ -74,7 +74,9 @@ sbuf_t *Phase1::get_sbuf(image_process::iterator &it)
     assert(config.max_bad_alloc_errors>0);
     for(u_int retry_count=0;retry_count<config.max_bad_alloc_errors;retry_count++){
         try {
+            std::cerr << "POINT1\n";
             return p.sbuf_alloc(it); // may throw exception
+            std::cerr << "POINT2\n";
         }
         catch (const std::bad_alloc &e) {
             // Low memory could come from a bad sbuf alloc or another low memory condition.
@@ -156,41 +158,46 @@ void Phase1::read_process_sbufs()
         }
 
         if (config.opt_page_start<=it.page_number && config.opt_offset_start<=it.raw_offset){
-            // Make sure we haven't done this page yet
-            if (seen_page_ids.find(it.get_pos0().str()) == seen_page_ids.end()){
-                try {
-                    sbuf_t *sbufp = get_sbuf(it);
-
-                    /* compute the sha1 hash */
-                    if (sha1g){
-                        if (sbufp->pos0.offset==sha1_next){
-                            // next byte follows logically, so continue to compute hash
-                            sha1g->update(sbufp->get_buf(), sbufp->pagesize);
-                            sha1_next += sbufp->pagesize;
-                        } else {
-                            delete sha1g; // we had a logical gap; stop hashing
-                            sha1g = 0;
-                        }
-                    }
-                    total_bytes += sbufp->pagesize;
-                    ss.schedule_sbuf(sbufp); // processes the sbuf, then deletes it
-                }
-                catch (const std::exception &e) {
-                    // report uncaught exceptions to both user and XML file
-                    std::stringstream sstr;
-                    sstr << "name='" << e.what() << "' " << "pos0='" << it.get_pos0() << "' ";
-
-                    if (config.opt_report_read_errors) {
-                        std::cerr << "Exception " << e.what() << " skipping " << it.get_pos0() << "\n";
-                    }
-                    xreport.xmlout("debug:exception", e.what(), sstr.str(), true);
-                }
+            // Make sure we haven't done this page yet. This should never happen
+            if (seen_page_ids.find(it.get_pos0().str()) != seen_page_ids.end()){
+                std::cerr << "Phase 1 error: " << it.get_pos0().str() << " provided twice\n";
+                throw std::runtime_error("phase1 error - page provided twice");
             }
-        } // end that we haven't seen it
+            try {
+                std::cerr << "XX point 1\n";
+                sbuf_t *sbufp = get_sbuf(it);
+                std::cerr << "XX point 2\n";
 
-        /* If we are random sampling, move to the next random sample.
-         * Otherwise increment the it iterator.
-         */
+                /* compute the sha1 hash */
+                if (sha1g){
+                    if (sbufp->pos0.offset==sha1_next){
+                        // next byte follows logically, so continue to compute hash
+                        sha1g->update(sbufp->get_buf(), sbufp->pagesize);
+                        sha1_next += sbufp->pagesize;
+                    } else {
+                        delete sha1g; // we had a logical gap; stop hashing
+                        sha1g = 0;
+                    }
+                }
+                std::cerr << "XX point 3\n";
+                total_bytes += sbufp->pagesize;
+                std::cerr << "XX point 4\n";
+                ss.schedule_sbuf(sbufp); // processes the sbuf, then deletes it
+                std::cerr << "XX point 5\n";
+            }
+            catch (const std::exception &e) {
+                // report uncaught exceptions to both user and XML file
+                std::stringstream sstr;
+                sstr << "phase=1 name='" << e.what() << "' " << "pos0='" << it.get_pos0() << "' ";
+
+                if (config.opt_report_read_errors) {
+                    std::cerr << "Phase 1 Exception " << e.what() << " skipping " << it.get_pos0() << "\n";
+                }
+                xreport.xmlout("debug:exception", e.what(), sstr.str(), true);
+            }
+        }
+
+        /* If we are random sampling, move to the next random sample. */
         if (sampling()){
             ++si;
         }

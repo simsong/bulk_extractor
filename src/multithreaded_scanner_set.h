@@ -14,12 +14,15 @@ class multithreaded_scanner_set: public scanner_set {
 
     /* The thread pool contains a queue of std::function<void()>, which are calls to work_unit::process() */
     struct  work_unit {
-        work_unit(multithreaded_scanner_set &ss_,sbuf_t *sbuf_):ss(ss_),sbuf(sbuf_){}
+        work_unit(multithreaded_scanner_set &ss_, sbuf_t *sbuf_):ss(ss_),sbuf(sbuf_){}
         multithreaded_scanner_set &ss;
         sbuf_t *sbuf {};
         void process() const;
     };
-    std::atomic<int> sbuf_depth0 {0};
+    std::atomic<int> depth0_sbufs_in_queue {0};
+    std::atomic<uint64_t> depth0_bytes_in_queue {0};
+    std::atomic<int> sbufs_in_queue {0};
+    std::atomic<uint64_t> bytes_in_queue {0};
     [[noreturn]] void notify_thread();               // notify what's going on
     std::thread *nt {nullptr};
 
