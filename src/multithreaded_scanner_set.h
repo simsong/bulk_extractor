@@ -7,9 +7,10 @@
 #include "threadpool.hpp"
 #include "be13_api/scanner_set.h"
 class multithreaded_scanner_set: public scanner_set {
+
     static const inline size_t SAME_THREAD_SBUF_SIZE = 8192; // sbufs smaller than this run in the same thread.
-    multithreaded_scanner_set(const scanner_set& s) = delete;
-    multithreaded_scanner_set& operator=(const scanner_set& s) = delete;
+    multithreaded_scanner_set(const multithreaded_scanner_set& s) = delete;
+    multithreaded_scanner_set& operator=(const multithreaded_scanner_set& s) = delete;
     class threadpool *tp {nullptr};     // nullptr means we are not threading
 
     /* The thread pool contains a queue of std::function<void()>, which are calls to work_unit::process() */
@@ -28,6 +29,7 @@ class multithreaded_scanner_set: public scanner_set {
 
 public:
     multithreaded_scanner_set(const scanner_config& sc, const feature_recorder_set::flags_t& f, class dfxml_writer* writer);
+    virtual ~multithreaded_scanner_set(){};
     void launch_workers(int count);
     virtual void decrement_queue_stats(sbuf_t *sbufp);
     virtual void process_sbuf(sbuf_t* sbuf) override; // process the sbuf, then delete it.

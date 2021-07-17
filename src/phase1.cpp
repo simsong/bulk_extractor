@@ -320,7 +320,7 @@ void Phase1::dfxml_write_source()
 void Phase1::phase1_run()
 {
     assert(ss.get_current_phase() == scanner_params::PHASE_SCAN);
-    ss.run_notify_thread();
+    //ss.run_notify_thread();
     /* Create the threadpool and launch the workers */
     //p.set_report_read_errors(config.opt_report_read_errors);
     xreport.push("runtime","xmlns:debug=\"http://www.github.com/simsong/bulk_extractor/issues\"");

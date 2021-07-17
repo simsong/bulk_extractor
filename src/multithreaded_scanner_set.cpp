@@ -2,11 +2,17 @@
 
 #include <thread>
 #include <sys/types.h>
-#include <sys/sysctl.h>
-#include <sys/vmmeter.h>
 #include <time.h>
 
-int show_free()
+#if defined(HAVE_SYS_SYSCTL_H) && defined(HAVE_SYS_VMMETER_H)
+#include <sys/sysctl.h>
+#include <sys/vmmeter.h>
+#define BSD_STYLE
+#endif
+
+
+#ifdef BSD_STYLE
+int show_free_bsd()
 {
     int rc;
     u_int page_size;
@@ -40,6 +46,8 @@ int show_free()
     }
     return 0;
 }
+#endif
+
 
 /*
  * Called in the worker thread to process the sbuf.
@@ -160,7 +168,9 @@ void multithreaded_scanner_set::print_tp_status()
     std::cerr << "depth 0 bytes in queue " << depth0_bytes_in_queue << "\n";
     std::cerr << "sbufs in queue " << sbufs_in_queue << "\n";
     std::cerr << "bytes in queue " << bytes_in_queue << "\n";
-    show_free();
+#ifdef BSD_STYLE
+    show_free_bsd();
+#endif
     tp->dump_status(std::cerr);
     std::cout << "---exit print_tp_status----------------\n";
 }

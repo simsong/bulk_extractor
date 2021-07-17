@@ -108,7 +108,7 @@ if RAR_ENABLED
   scanners_builtin += $(RAR_SUPPORT)
 endif
 
-bulk_extractor_nomain = \
+bulk_extractor_parts = \
         $(TSK3INCS)  \
 	$(BE13_API_SRC) \
 	bulk_extractor_scanners.h \
@@ -118,14 +118,16 @@ bulk_extractor_nomain = \
 	findopts.h \
 	image_process.cpp \
 	image_process.h \
+	multithreaded_scanner_set.cpp \
+	multithreaded_scanner_set.h \
 	phase1.h \
 	phase1.cpp \
 	sbuf_decompress.cpp \
 	sbuf_decompress.h \
 	threadpool.hpp
 
-bulk_extractor_SOURCES = $(bulk_extractor_nomain) $(scanners_builtin) main.cpp
-be_tests_SOURCES = $(bulk_extractor_nomain) $(scanners_builtin) be13_api/catch.hpp be_tests.cpp
+bulk_extractor_SOURCES = $(bulk_extractor_parts) $(scanners_builtin) main.cpp
+be_tests_SOURCES = $(bulk_extractor_parts) $(scanners_builtin) be13_api/catch.hpp be_tests.cpp
 
 
 #lib: libbulkextractor.so
