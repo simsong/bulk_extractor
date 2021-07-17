@@ -35,6 +35,7 @@
 #include "scan_vcard.h"
 #include "scan_wordlist.h"
 #include "threadpool.hpp"
+#include "multithreaded_scanner_set.h"
 
 const std::string JSON1 {"[{\"1\": \"one@company.com\"}, {\"2\": \"two@company.com\"}, {\"3\": \"two@company.com\"}]"};
 const std::string JSON2 {"[{\"1\": \"one@base64.com\"}, {\"2\": \"two@base64.com\"}, {\"3\": \"three@base64.com\"}]\n"};
@@ -307,7 +308,7 @@ std::string validate(std::string image_fname, std::vector<Check> &expected)
     sc.scanner_commands = enable_all_scanners;
     const feature_recorder_set::flags_t frs_flags;
     auto *xreport = new dfxml_writer(sc.outdir / "report.xml", false);
-    scanner_set ss(sc, frs_flags, xreport);
+    multithreaded_scanner_set ss(sc, frs_flags, xreport);
     ss.add_scanners(scanners_builtin);
     ss.apply_scanner_commands();
 
@@ -449,7 +450,7 @@ sbuf_t *make_sbuf()
 
 /* Test that sbuf data  are not copied when moved to a child.*/
 const uint8_t *sbuf_buf_loc = nullptr;
-void process_sbuf(sbuf_t *sbuf)
+void test_process_sbuf(sbuf_t *sbuf)
 {
     std::lock_guard<std::mutex> lock(M);
     if (sbuf_buf_loc != nullptr) {
@@ -462,7 +463,7 @@ TEST_CASE("sbuf_no_copy", "[threads]") {
     for(int i=0;i<100;i++){
         auto sbuf = make_sbuf();
         sbuf_buf_loc = sbuf->get_buf();
-        process_sbuf(sbuf);
+        test_process_sbuf(sbuf);
     }
 }
 
@@ -470,7 +471,7 @@ TEST_CASE("threadpool3", "[threads]") {
     class threadpool t(10);
     for(int i=0;i<100;i++){
         auto sbuf = make_sbuf();
-        t.push( [sbuf]{ process_sbuf(sbuf); } );
+        t.push( [sbuf]{ test_process_sbuf(sbuf); } );
     }
     t.join();
     REQUIRE( counter==1000 );

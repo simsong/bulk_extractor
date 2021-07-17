@@ -33,6 +33,9 @@
 #include <thread>
 #include <type_traits>
 #include <vector>
+#include <map>
+#include <string>
+#include <iostream>
 
 class threadpool
 {
@@ -43,9 +46,12 @@ public:
     std::atomic<bool>        m_stop{ false }; // set true to terminate workers
     std::atomic<std::size_t> m_active{ 0 };   // number of active workers
     std::condition_variable m_notifier {};
-    std::mutex m_mutex {};              // protects m_workers and m_tasks
+    std::mutex m_mutex {};              // protects m_workers, m_tasks
     std::vector<std::thread> m_workers {};
-    std::queue<task_type> m_tasks {};
+    std::queue<task_type>    m_tasks {};
+
+    std::mutex m_status_mutex {};                       // protext m_status_mutex
+    std::map<std::thread::id, std::string> m_status {}; // status of each thread
 
     explicit threadpool(std::size_t thread_count = std::thread::hardware_concurrency()) {
         for (std::size_t i{ 0 }; i < thread_count; ++i) {
@@ -76,6 +82,20 @@ public:
         lock.unlock();
         m_notifier.notify_one();
         return future;
+    }
+
+    // Set status
+    void set_status(const std::string &status){
+        std::unique_lock<std::mutex> lock(m_status_mutex);
+        m_status[std::this_thread::get_id()] = status;
+    }
+
+    // Dump the status
+    void dump_status(std::ostream &os) {
+        std::unique_lock<std::mutex> lock(m_status_mutex);
+        for(const auto &it : m_status) {
+            os << it.second << "\n";
+        }
     }
 
     // Remove all pending tasks from the queue
@@ -111,6 +131,11 @@ public:
         return m_active;
     }
 
+    // Get the number of active tasks
+    std::size_t task_count() const {
+        return m_tasks.size();
+    }
+
 private:
     // Thread main loop
     void thread_loop() {
@@ -120,7 +145,9 @@ private:
 
             if (task) {
                 ++m_active;
+                set_status("ACTIVE");
                 task();
+                set_status("IDLE");
                 --m_active;
             }
             else if (m_stop) {
@@ -133,7 +160,6 @@ private:
     // Get the next pending task
     task_type next_task() {
         std::unique_lock<std::mutex> lock{ m_mutex };
-
         m_notifier.wait(lock, [this]() {
                                   return !m_tasks.empty() || m_stop;
                               });

@@ -5,16 +5,6 @@
  * This has all of the code and global variables that aren't needed when BE is running as a library.
  */
 
-/**
- * Singletons:
- * feature_recorder_set fs - the collection of feature recorders.
- * xml xreport             - the DFXML output.
- * image_process p         - the image being processed.
- *
- * Note that all of the singletons are passed to the phase1() function.
- */
-
-
 #include "config.h"
 
 #include <ctype.h>
@@ -52,7 +42,6 @@ int _CRT_fmode = _O_BINARY;
 #include "be13_api/scanner_set.h"
 #include "be13_api/utils.h"             // needs config.h
 #include "be13_api/word_and_context_list.h"
-
 
 #include "findopts.h"
 #include "image_process.h"
@@ -598,10 +587,6 @@ public:;
  * Create the dfxml output
  */
 
-
-/* It is gross to do this with statics rather than a singleton whose address is passed in 'user',
- * but that is the way it is implemented.
- */
 //static std::string current_ofname;
 //static std::ofstream o;
 std::string be_hash_name {"sha1"};
@@ -620,6 +605,8 @@ int main(int argc,char **argv)
 #endif
 
     const char *progname = argv[0];
+    const auto original_argc = argc;
+    const auto original_argv = argv;
 
     word_and_context_list alert_list;		/* shold be flagged */
     word_and_context_list stop_list;		/* should be ignored */
@@ -639,7 +626,7 @@ int main(int argc,char **argv)
 
     /* Startup */
     setvbuf(stdout,0,_IONBF,0);		// don't buffer stdout
-    std::string command_line = dfxml_writer::make_command_line(argc,argv);
+    //std::string command_line = dfxml_writer::make_command_line(argc,argv);
     std::vector<std::string> scanner_dirs; // where to look for scanners
 
     /* Add the default plugin_path */
@@ -963,8 +950,6 @@ int main(int argc,char **argv)
     // go multi-threaded if requested
     //tp = new threadpool(config.num_threads); // ,fs,xreport);
 
-
-
 #if 0
     if ( fs.flag_set(feature_recorder_set::ENABLE_SQLITE3_RECORDERS )) {
         fs.db_transaction_begin();
@@ -980,7 +965,7 @@ int main(int argc,char **argv)
     }
 
     Phase1 phase1(cfg, *p, ss);
-    phase1.dfxml_write_create( argc, argv);
+    phase1.dfxml_write_create( original_argc, original_argv);
     xreport->xmlout("provided_filename", sc.input_fname); // save this information
 
     /* TODO: Load up phase1 seen_page_ideas if we are restarting */
@@ -1019,7 +1004,7 @@ int main(int argc,char **argv)
     xreport->xmlout("total_bytes",phase1.total_bytes);
     xreport->xmlout("elapsed_seconds",timer.elapsed_seconds());
     xreport->xmlout("max_depth_seen",ss.get_max_depth_seen());
-    xreport->xmlout("dup_data_encountered",ss.dup_data_encountered);
+    xreport->xmlout("dup_bytes_encountered",ss.get_dup_bytes_encountered());
     xreport->push("scanner_times");
     ss.dump_name_count_stats(*xreport);
     xreport->pop("scanner_times");                     // scanner_times

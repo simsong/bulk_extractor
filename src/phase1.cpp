@@ -23,7 +23,7 @@
 
 using namespace std::chrono_literals;
 
-Phase1::Phase1(Config config_, image_process &p_, scanner_set &ss_):
+Phase1::Phase1(Config config_, image_process &p_, multithreaded_scanner_set &ss_):
     config(config_), p(p_), ss(ss_), xreport(*ss_.get_dfxml_writer())
 {
 }
@@ -173,7 +173,7 @@ void Phase1::read_process_sbufs()
                         }
                     }
                     total_bytes += sbufp->pagesize;
-                    ss.process_sbuf(sbufp); // processes the sbuf, then deletes it
+                    ss.schedule_sbuf(sbufp); // processes the sbuf, then deletes it
                 }
                 catch (const std::exception &e) {
                     // report uncaught exceptions to both user and XML file
@@ -278,9 +278,7 @@ void Phase1::dfxml_write_source()
         delete sha1g;
     }
     xreport.pop("source");			// source
-
-    /* Record the feature files and their counts in the output */
-    ss.dump_name_count_stats(xreport);
+    xreport.flush();
 
     //if (config.opt_quiet==0) std::cout << "Producer time spent waiting: " << tp->waiting.elapsed_seconds() << " sec.\n";
 
@@ -294,8 +292,6 @@ void Phase1::dfxml_write_source()
         xreport.xmlout("thread_wait",dtos((*ij)->waiting.elapsed_seconds()),sstr.str(),false);
     }
 #endif
-    //xreport.pop();
-    xreport.flush();
     if (config.opt_quiet==0) {
         std::cout << "Average consumer time spent waiting: " << worker_wait_average << " sec.\n";
     }
@@ -324,6 +320,7 @@ void Phase1::dfxml_write_source()
 void Phase1::phase1_run()
 {
     assert(ss.get_current_phase() == scanner_params::PHASE_SCAN);
+    ss.run_notify_thread();
     /* Create the threadpool and launch the workers */
     //p.set_report_read_errors(config.opt_report_read_errors);
     xreport.push("runtime","xmlns:debug=\"http://www.github.com/simsong/bulk_extractor/issues\"");

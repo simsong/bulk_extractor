@@ -16,7 +16,7 @@ void scan_xor(scanner_params &sp)
         auto info = new scanner_params::scanner_info( scan_xor, "xor" );
 	info->author      = "Michael Shick";
 	info->description = "optimistic XOR deobfuscator";
-	info->scanner_flags.default_enabled = false; // = scanner_info::SCANNER_DISABLED | scanner_info::SCANNER_RECURSE;
+	info->scanner_flags.default_enabled = false;
         info->scanner_flags.recurse = true;
         info->scanner_flags.recurse_always = true;
         sp.ss.sc.get_config("xor_mask",&xor_mask,"XOR mask value, in decimal");
@@ -52,6 +52,13 @@ void scan_xor(scanner_params &sp)
 
         // managed_malloc throws an exception if allocation fails.
         auto *dbuf = sbuf_t::sbuf_malloc(pos0_xor, sbuf.bufsize);
+        assert( dbuf!= nullptr);
+        if (sbuf.depth()+1 != dbuf->depth()) {
+            std::cerr << "sbuf: " << sbuf << "\n";
+            std::cerr << "dbuf: " << *dbuf << "\n";
+        }
+        assert( sbuf.depth() +1 == dbuf->depth());
+
         for(size_t ii = 0; ii < sbuf.bufsize; ii++) {
             dbuf->wbuf(ii, sbuf[ii] ^ xor_mask);
         }
