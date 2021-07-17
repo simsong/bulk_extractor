@@ -66,7 +66,7 @@ void multithreaded_scanner_set::set_status(const std::string &status)
 
 void multithreaded_scanner_set::process_sbuf(sbuf_t *sbufp)
 {
-    set_status(sbufp->pos0.str());
+    set_status(sbufp->pos0.str() + " process_sbuf");
     scanner_set::process_sbuf(sbufp);
 }
 
@@ -96,6 +96,7 @@ void multithreaded_scanner_set::delete_sbuf(sbuf_t *sbufp)
         sbuf_depth0 -= 1;
         std::cerr << std::this_thread::get_id() << " deleted sbuf. " << *sbufp << " total depth0 now=" << sbuf_depth0 << "\n";
     }
+    set_status(sbufp->pos0.str() + " delete_sbuf");
     scanner_set::delete_sbuf(sbufp);
 }
 
