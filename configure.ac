@@ -73,15 +73,6 @@ else
   AC_MSG_ERROR([$LEX does not support -R.  Please get a modern version of gnu flex])
 fi
 
-################################################################
-## compile with pthread if its available
-SAVE_CXXFLAGS="$CXXFLAGS"
-CXXFLAGS="$CXXFLAGS -pthread"
-AC_MSG_CHECKING([whether C++ compiler understands $option])
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
-     [AC_MSG_RESULT([Adding -pthread to CXXFLAGS])],
-     [AC_MSG_RESULT([Compiler does not understand -pthread]); CXXFLAGS="$SAVE_CXXFLAGS"])
-unset SAVE_CXXFLAGS
 
 
 ################################################################
