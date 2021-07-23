@@ -19,7 +19,7 @@ void scan_xor(scanner_params &sp)
 	info->scanner_flags.default_enabled = false;
         info->scanner_flags.recurse = true;
         info->scanner_flags.recurse_always = true;
-        sp.ss.sc.get_config("xor_mask",&xor_mask,"XOR mask value, in decimal");
+        sp.get_config("xor_mask",&xor_mask,"XOR mask value, in decimal");
         sp.info = info;
 	return;
     }

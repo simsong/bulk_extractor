@@ -88,7 +88,7 @@ void scan_ntfslogfile(scanner_params &sp)
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
         const sbuf_t &sbuf = (*sp.sbuf);
-        feature_recorder &ntfslogfile_recorder = sp.ss.named_feature_recorder(FEATURE_FILE_NAME);
+        feature_recorder &ntfslogfile_recorder = sp.named_feature_recorder(FEATURE_FILE_NAME);
 
         // search for NTFS $LogFile RCRD record in the sbuf
         size_t offset = 0;

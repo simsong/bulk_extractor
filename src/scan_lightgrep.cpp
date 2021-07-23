@@ -44,7 +44,7 @@ namespace { // local namespace hides these from other translation units
     }
 
     virtual void initScan(const scanner_params& sp) {
-      LgRec = &sp.ss.named_feature_recorder(name());
+      LgRec = &sp.named_feature_recorder(name());
     }
 
     feature_recorder* LgRec;

@@ -73,15 +73,6 @@ else
   AC_MSG_ERROR([$LEX does not support -R.  Please get a modern version of gnu flex])
 fi
 
-################################################################
-## compile with pthread if its available
-SAVE_CXXFLAGS="$CXXFLAGS"
-CXXFLAGS="$CXXFLAGS -pthread"
-AC_MSG_CHECKING([whether C++ compiler understands $option])
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
-     [AC_MSG_RESULT([Adding -pthread to CXXFLAGS])],
-     [AC_MSG_RESULT([Compiler does not understand -pthread]); CXXFLAGS="$SAVE_CXXFLAGS"])
-unset SAVE_CXXFLAGS
 
 
 ################################################################
@@ -158,7 +149,7 @@ AC_SYS_LARGEFILE
 AC_SYS_POSIX_TERMIOS
 
 ## Check for headers used by bulk Extractor
-AC_CHECK_HEADERS([dlfcn.h fcntl.h inttypes.h libgen.h limits.h mmap.h pwd.h signal.h stdint.h sys/cdefs.h sys/disk.h sys/fcntl.h sys/ioctl.h sys/mman.h sys/mmap.h sys/mount.h sys/param.h sys/socket.h sys/stat.h sys/types.h sys/time.h sys/resource.h time.h unistd.h windows.h CoreServices/CoreServices.h mach-o/dyld.h])
+AC_CHECK_HEADERS([dlfcn.h fcntl.h inttypes.h libgen.h limits.h mmap.h pwd.h signal.h stdint.h sys/cdefs.h sys/disk.h sys/fcntl.h sys/ioctl.h sys/mman.h sys/mmap.h sys/mount.h sys/param.h sys/socket.h sys/stat.h sys/types.h sys/time.h sys/resource.h sys/sysctl.h sys/vmmeter.h time.h unistd.h windows.h CoreServices/CoreServices.h mach-o/dyld.h])
 AC_CHECK_FUNCS([getuid getpwuid gethostname getrusage gmtime_r getprogname isxdigit ishexnumber le64toh localtime_r _lseeki64 inet_ntop pread64 pread printf mmap munmap MD5 mkstemp mktemp sleep SleepEx strptime usleep vasprintf _NSGetExecutablePath])
 AC_CHECK_FUNCS([CreateProcess LoadLibrary IncrementAtomic InterlockedIncrement])
 

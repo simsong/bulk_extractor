@@ -119,8 +119,8 @@ void scan_exiv2(struct scanner_params &sp)
     if(sp.phase==scanner_params::PHASE_SCAN){
 
 	const sbuf_t &sbuf = sp.sbuf;
-	feature_recorder &exif_recorder = sp.ss.named_feature_recorder("exif");
-	feature_recorder &gps_recorder  = sp.ss.named_feature_recorder("gps");
+	feature_recorder &exif_recorder = sp.named_feature_recorder("exif");
+	feature_recorder &gps_recorder  = sp.named_feature_recorder("gps");
 
 #ifdef HAVE_EXIV2__LOGMSG__SETLEVEL
 	/* New form to suppress error messages on exiv2 */

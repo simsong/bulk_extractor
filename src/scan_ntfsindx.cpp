@@ -87,7 +87,7 @@ void scan_ntfsindx(scanner_params &sp)
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
         const sbuf_t &sbuf = *(sp.sbuf);
-        feature_recorder &ntfsindx_recorder = sp.ss.named_feature_recorder(FEATURE_FILE_NAME);
+        feature_recorder &ntfsindx_recorder = sp.named_feature_recorder(FEATURE_FILE_NAME);
 
         // search for NTFS $INDEX_ALLOCATION INDX record in the sbuf
         size_t offset = 0;

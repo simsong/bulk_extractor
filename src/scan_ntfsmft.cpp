@@ -70,7 +70,7 @@ void scan_ntfsmft(scanner_params &sp)
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
         const sbuf_t &sbuf = (*sp.sbuf);
-        feature_recorder &ntfsmft_recorder = sp.ss.named_feature_recorder(FEATURE_FILE_NAME);
+        feature_recorder &ntfsmft_recorder = sp.named_feature_recorder(FEATURE_FILE_NAME);
 
         // search for NTFS MFT record in the sbuf
         size_t offset = 0;

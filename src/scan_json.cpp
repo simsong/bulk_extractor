@@ -29,7 +29,6 @@ SOFTWARE.
 */
 
 #include <cstdlib>
-//#include <cstdint>
 
 #include "config.h"
 #include "be13_api/scanner_params.h"
@@ -457,7 +456,7 @@ void scan_json(struct scanner_params &sp)
         // do we want to look up the feature_recorder every time through?
         // Perhaps the scanners should be C++ classes with C linkage
         auto &sbuf = *(sp.sbuf);
-        feature_recorder &fr = sp.ss.named_feature_recorder("json");
+        feature_recorder &fr = sp.named_feature_recorder("json");
 	for(size_t pos = 0;pos+1<sbuf.pagesize;pos++){
 	    /* Find the beginning of a json object. This will improve later... */
 	    if((sbuf[pos]=='{' || sbuf[pos]=='[') && is_json_second_char[sbuf[pos+1]]){

@@ -406,8 +406,8 @@ void scan_accts( struct scanner_params &sp )
                                                                                       "", "teamviewer", flag_numeric));
 
         /* This modifies the scanner_config by adding informaton about the help strings, so scanner_config can't be const */
-        sp.ss.sc.get_config("ssn_mode", &ssn_mode,"0=Normal; 1=No `SSN' required; 2=No dashes required");
-        sp.ss.sc.get_config("min_phone_digits",&min_phone_digits,"Min. digits required in a phone");
+        sp.get_config("ssn_mode", &ssn_mode,"0=Normal; 1=No `SSN' required; 2=No dashes required");
+        sp.get_config("min_phone_digits",&min_phone_digits,"Min. digits required in a phone");
         //scan_ccns2_debug = sp.ss.sc.debug;           // get debug value
         sp.info = info;
 	return;

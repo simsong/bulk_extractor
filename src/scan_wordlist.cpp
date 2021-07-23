@@ -58,7 +58,7 @@ void Scan_Wordlist::process_sbuf(scanner_params &sp)
 {
     const sbuf_t &sbuf = *sp.sbuf;
     if (flat_wordlist==nullptr) {
-        flat_wordlist = &sp.ss.named_feature_recorder("wordlist");
+        flat_wordlist = &sp.named_feature_recorder("wordlist");
     }
 
     /* Simplified word extractor. It's good enough to pull out stuff for cryptanalysis. */
@@ -155,7 +155,7 @@ void Scan_Wordlist::shutdown(scanner_params &sp)
         return;
     }
     std::cout << "Phase 3. Uniquifying and recombining wordlist\n";
-    flat_wordlist = &sp.ss.named_feature_recorder("wordlist");
+    flat_wordlist = &sp.named_feature_recorder("wordlist");
 
     flat_wordlist->flush();
     auto feature_recorder_path = flat_wordlist->fname_in_outdir("", feature_recorder::NO_COUNT);
@@ -203,12 +203,12 @@ void scan_wordlist(scanner_params &sp)
         sp.check_version();
         auto info = new scanner_params::scanner_info( scan_wordlist, "wordlist" );
         info->scanner_flags.default_enabled = false; // = scanner_info::SCANNER_DISABLED;
-        //sp.ss.sc.get_config("word_min",&word_min,"Minimum word size");
-        //sp.ss.sc.get_config("word_max",&word_max,"Maximum word size");
-        //sp.ss.sc.get_config("max_word_outfile_size",&max_word_outfile_size, "Maximum size of the words output file");
-        sp.ss.sc.get_config("wordlist_use_flatfiles",&wordlist_use_flatfiles,"Use flatfiles for wordlist");
-        //sp.ss.sc.get_config("wordlist_use_sql",&wordlist_use_sql,"Use SQL DB for wordlist");
-        sp.ss.sc.get_config("strings",&wordlist_strings,"Scan for strings instead of words");
+        //sp.get_config("word_min",&word_min,"Minimum word size");
+        //sp.get_config("word_max",&word_max,"Maximum word size");
+        //sp.get_config("max_word_outfile_size",&max_word_outfile_size, "Maximum size of the words output file");
+        sp.get_config("wordlist_use_flatfiles",&wordlist_use_flatfiles,"Use flatfiles for wordlist");
+        //sp.get_config("wordlist_use_sql",&wordlist_use_sql,"Use SQL DB for wordlist");
+        sp.get_config("strings",&wordlist_strings,"Scan for strings instead of words");
 
         if (wordlist_use_flatfiles){
             auto def = feature_recorder_def(Scan_Wordlist::WORDLIST);

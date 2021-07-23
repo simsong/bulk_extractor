@@ -253,7 +253,7 @@ void scan_winprefetch(scanner_params &sp)
 
 	// phase 1: set up the feature recorder and search for winprefetch features
 	const sbuf_t &sbuf = *(sp.sbuf);
-	feature_recorder &winprefetch_recorder = sp.ss.named_feature_recorder("winprefetch");
+	feature_recorder &winprefetch_recorder = sp.named_feature_recorder("winprefetch");
 
 	// optimization: first useful data starts after byte 0x10.
 	if (sbuf.pagesize <= 0x10) {

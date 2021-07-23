@@ -609,10 +609,10 @@ public:
     feature_recorder &ether_recorder;
 
     packet_carver(const scanner_params &sp):
-        outdir(sp.ss.sc.outdir),
-        ip_recorder(sp.ss.named_feature_recorder("ip")),
-        tcp_recorder(sp.ss.named_feature_recorder("tcp")),
-        ether_recorder(sp.ss.named_feature_recorder("ether")){ }
+        outdir(sp.sc.outdir),
+        ip_recorder(sp.named_feature_recorder("ip")),
+        tcp_recorder(sp.named_feature_recorder("tcp")),
+        ether_recorder(sp.named_feature_recorder("ether")){ }
 
 private:
     /*
@@ -1022,7 +1022,7 @@ void scan_net(scanner_params &sp)
         sp.info->description    = "Scans for IP packets";
         sp.info->scanner_version= "1.0";
 
-        sp.ss.sc.get_config("carve_net_memory",&carve_net_memory,"Carve network  memory structures");
+        sp.get_config("carve_net_memory",&carve_net_memory,"Carve network  memory structures");
 
 	sp.info->feature_defs.push_back( feature_recorder_def("ip"));
 	sp.info->feature_defs.push_back( feature_recorder_def("ether"));

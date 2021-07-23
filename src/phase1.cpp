@@ -23,7 +23,7 @@
 
 using namespace std::chrono_literals;
 
-Phase1::Phase1(Config config_, image_process &p_, multithreaded_scanner_set &ss_):
+Phase1::Phase1(Config config_, image_process &p_, mt_scanner_set &ss_):
     config(config_), p(p_), ss(ss_), xreport(*ss_.get_dfxml_writer())
 {
 }
@@ -291,14 +291,6 @@ void Phase1::dfxml_write_source()
 
     //xreport.xmlout("thread_wait",dtos(tp->waiting.elapsed_seconds()),"thread='0'",false);
     double worker_wait_average = 0;
-#if 0
-    for(threadpool::worker_vector::const_iterator ij=tp->workers.begin();ij!=tp->workers.end();ij++){
-        worker_wait_average += (*ij)->waiting.elapsed_seconds() / config.num_threads;
-        std::stringstream sstr;
-        sstr << "thread='" << (*ij)->id << "'";
-        xreport.xmlout("thread_wait",dtos((*ij)->waiting.elapsed_seconds()),sstr.str(),false);
-    }
-#endif
     if (config.opt_quiet==0) {
         std::cout << "Average consumer time spent waiting: " << worker_wait_average << " sec.\n";
     }
@@ -327,11 +319,12 @@ void Phase1::dfxml_write_source()
 void Phase1::phase1_run()
 {
     assert(ss.get_current_phase() == scanner_params::PHASE_SCAN);
-    ss.run_notify_thread();
+    //ss.run_notify_thread();
     /* Create the threadpool and launch the workers */
     //p.set_report_read_errors(config.opt_report_read_errors);
     xreport.push("runtime","xmlns:debug=\"http://www.github.com/simsong/bulk_extractor/issues\"");
     read_process_sbufs();
+    ss.join();
     xreport.pop("runtime");
     dfxml_write_source();               // written here so it may also include hash
 }

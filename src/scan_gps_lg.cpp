@@ -158,7 +158,7 @@ namespace gps {
   }
 
   void Scanner::initScan(const scanner_params& sp) {
-    Recorder = &sp.ss.named_feature_recorder("gps");
+    Recorder = &sp.named_feature_recorder("gps");
   }
 
   void Scanner::clear(const scanner_params& sp, size_t pos) {

@@ -71,7 +71,7 @@ void scan_httplogs(scanner_params &sp)
     if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;
 
     if(sp.phase==scanner_params::PHASE_SCAN){
-	feature_recorder &httplogs_recorder = sp.ss.named_feature_recorder("httplogs");
+	feature_recorder &httplogs_recorder = sp.named_feature_recorder("httplogs");
         const sbuf_t &sbuf = *(sp.sbuf);
 
         for (size_t p = 0; p < sbuf.pagesize; p++) {

@@ -10,7 +10,6 @@
 #include <string>
 #include <cstdlib>
 #include <strings.h>
-//#include <cerrno>
 #include <sstream>
 #include <vector>
 
@@ -18,6 +17,7 @@
 
 #include "utf8.h"
 #include "be13_api/scanner_params.h"
+#include "be13_api/mt_scanner_set.h"
 
 #define SECTOR_SIZE 512
 #define CLUSTER_SIZE 4096
@@ -154,7 +154,7 @@ void scan_evtx(scanner_params &sp)
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
         const sbuf_t &sbuf = *(sp.sbuf);
-        feature_recorder &evtx_recorder = sp.ss.named_feature_recorder(FEATURE_FILE_NAME);
+        feature_recorder &evtx_recorder = sp.named_feature_recorder(FEATURE_FILE_NAME);
 
         // search for EVTX chunk in the sbuf
         size_t offset = 0;

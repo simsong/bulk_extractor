@@ -39,7 +39,7 @@ int _CRT_fmode = _O_BINARY;
 
 #include "be13_api/aftimer.h"
 #include "be13_api/scanner_params.h"
-#include "be13_api/scanner_set.h"
+#include "be13_api/mt_scanner_set.h"
 #include "be13_api/utils.h"             // needs config.h
 #include "be13_api/word_and_context_list.h"
 
@@ -50,7 +50,6 @@ int _CRT_fmode = _O_BINARY;
 
 /* Bring in the definitions for the  */
 #include "bulk_extractor_scanners.h"
-#include "multithreaded_scanner_set.h"
 
 /**
  * Output the #defines for our debug parameters. Used by the automake system.
@@ -784,7 +783,7 @@ int main(int argc,char **argv)
     }
 
     struct feature_recorder_set::flags_t f;
-    multithreaded_scanner_set ss(sc, f, nullptr);
+    mt_scanner_set ss(sc, f, nullptr);
     ss.add_scanners(scanners_builtin);
 
     /* Print usage if necessary. Requires scanner set, but not commands applied.
@@ -946,9 +945,6 @@ int main(int argc,char **argv)
 
     /*** PHASE 1 --- Run on the input image */
     ss.phase_scan();
-
-    // go multi-threaded if requested
-    //tp = new threadpool(config.num_threads); // ,fs,xreport);
 
 #if 0
     if ( fs.flag_set(feature_recorder_set::ENABLE_SQLITE3_RECORDERS )) {

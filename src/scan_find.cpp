@@ -5,6 +5,7 @@
 #include "config.h"
 
 #include "be13_api/scanner_params.h"
+#include "be13_api/mt_scanner_set.h"
 #include "be13_api/regex_vector.h"
 #include "be13_api/utils.h" // needs config.h
 #include "findopts.h"
@@ -69,7 +70,7 @@ void scan_find(scanner_params &sp)
          * So we make a copy of the current buffer to search that's one bigger, and the copy has a \0 at the end.
          * This is super-wasteful. Does Lightgrep have this problem?
          */
-        feature_recorder &f = sp.ss.named_feature_recorder("find");
+        feature_recorder &f = sp.named_feature_recorder("find");
 
         auto *tbuf = sbuf_t::sbuf_malloc(sp.sbuf->pos0, sp.sbuf->bufsize+1);
         memcpy(tbuf->malloc_buf(), sp.sbuf->get_buf(), sp.sbuf->bufsize);

@@ -410,7 +410,7 @@ void scan_aes(struct scanner_params &sp)
      */
 
     if(sp.phase==scanner_params::PHASE_SCAN && sp.sbuf->bufsize >= WINDOW_SIZE){
-	auto &aes_recorder = sp.ss.named_feature_recorder("aes_keys");
+	auto &aes_recorder = sp.named_feature_recorder("aes_keys");
 
 	/* Simple mod: Keep a rolling window of the entropy and don't
 	 * we see fewer than 10 distinct characters in window. This will

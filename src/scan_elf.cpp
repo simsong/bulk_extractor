@@ -804,7 +804,7 @@ void scan_elf (scanner_params &sp)
     }
     if ( sp.phase == scanner_params::PHASE_SCAN){
 
-	auto &f = sp.ss.named_feature_recorder("elf");
+	auto &f = sp.named_feature_recorder("elf");
         auto &sbuf = *(sp.sbuf);
 
 	for (size_t pos = 0; pos < sbuf.bufsize; pos++) {

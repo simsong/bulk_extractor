@@ -126,7 +126,7 @@ inline void scan_zip_component(scanner_params &sp, feature_recorder &zip_recorde
 
         /* If depth is more than 0, don't decompress if we have seen this component before */
         if (sp.depth>0){
-            if (sp.ss.check_previously_processed(sbuf_src)){
+            if (sp.check_previously_processed(sbuf_src)){
                 xmlstream << "<disposition>previously-processed</disposition></zipinfo>";
                 zip_recorder.write(pos0+pos,name,xmlstream.str());
                 return;
@@ -164,9 +164,9 @@ void scan_zip(scanner_params &sp)
         sp.info->scanner_flags.recurse = true;
 	sp.info->feature_defs.push_back( feature_recorder_def(ZIP_RECORDER_NAME, xml ));
 	sp.info->feature_defs.push_back( feature_recorder_def(UNZIP_RECORDER_NAME ));
-        sp.ss.sc.get_config("zip_min_uncompr_size",&zip_min_uncompr_size,"Minimum size of a ZIP uncompressed object");
-        sp.ss.sc.get_config("zip_max_uncompr_size",&zip_max_uncompr_size,"Maximum size of a ZIP uncompressed object");
-        sp.ss.sc.get_config("zip_name_len_max",&zip_name_len_max,"Maximum name of a ZIP component filename");
+        sp.get_config("zip_min_uncompr_size",&zip_min_uncompr_size,"Minimum size of a ZIP uncompressed object");
+        sp.get_config("zip_max_uncompr_size",&zip_max_uncompr_size,"Maximum size of a ZIP uncompressed object");
+        sp.get_config("zip_name_len_max",&zip_name_len_max,"Maximum name of a ZIP component filename");
 	return;
     }
 

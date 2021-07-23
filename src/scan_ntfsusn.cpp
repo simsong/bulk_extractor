@@ -81,7 +81,7 @@ void scan_ntfsusn(scanner_params &sp)
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
         const sbuf_t &sbuf = *(sp.sbuf);
-        feature_recorder &ntfsusn_recorder = sp.ss.named_feature_recorder(FEATURE_FILE_NAME);
+        feature_recorder &ntfsusn_recorder = sp.named_feature_recorder(FEATURE_FILE_NAME);
 
         size_t offset = 0;
         size_t stop = sbuf.pagesize;

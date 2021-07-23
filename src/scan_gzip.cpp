@@ -21,7 +21,7 @@ void scan_gzip(scanner_params &sp)
         info->description    = "Searches for GZIP-compressed data";
         info->scanner_version= "1.1";
         info->scanner_flags.recurse = true;
-        sp.ss.sc.get_config("gzip_max_uncompr_size",&gzip_max_uncompr_size,"maximum size for decompressing GZIP objects");
+        sp.get_config("gzip_max_uncompr_size",&gzip_max_uncompr_size,"maximum size for decompressing GZIP objects");
         sp.info = info;
 	return ;		/* no features */
     }

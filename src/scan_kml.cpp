@@ -37,7 +37,7 @@ void scan_kml(scanner_params &sp)
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
 	const sbuf_t &sbuf = *(sp.sbuf);
-	feature_recorder &kml_recorder = sp.ss.named_feature_recorder("kml");
+	feature_recorder &kml_recorder = sp.named_feature_recorder("kml");
 
 	// Search for <xml BEGIN:VCARD\r in the sbuf
 	// we could do this with a loop, or with

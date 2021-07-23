@@ -5,7 +5,6 @@
 #include <memory>
 #include <cstdio>
 #include <stdexcept>
-
 #include <unistd.h>
 
 #define CATCH_CONFIG_MAIN
@@ -31,11 +30,10 @@
 #include "sbuf_decompress.h"
 #include "scan_base64.h"
 #include "scan_email.h"
+#include "scan_msxml.h"
 #include "scan_pdf.h"
 #include "scan_vcard.h"
 #include "scan_wordlist.h"
-#include "threadpool.hpp"
-#include "multithreaded_scanner_set.h"
 
 const std::string JSON1 {"[{\"1\": \"one@company.com\"}, {\"2\": \"two@company.com\"}, {\"3\": \"two@company.com\"}]"};
 const std::string JSON2 {"[{\"1\": \"one@base64.com\"}, {\"2\": \"two@base64.com\"}, {\"3\": \"three@base64.com\"}]\n"};
@@ -221,6 +219,18 @@ TEST_CASE("scan_exif", "[scanners]") {
     delete sbufp;
 }
 
+TEST_CASE("scan_msxml","[scanners]") {
+    auto *sbufp = map_file("KML_Samples.kml");
+    std::string bufstr = msxml_extract_text(*sbufp);
+
+    std::cerr << "msxml: " << bufstr << "\n";
+    auto *dbuf = sbuf_t::sbuf_malloc(sbufp->pos0+"MSXML", bufstr.size());
+    memcpy(dbuf->malloc_buf(), bufstr.c_str(), bufstr.size());
+    std::cerr << *dbuf << "\n";
+    delete sbufp;
+    delete dbuf;
+}
+
 TEST_CASE("scan_pdf", "[scanners]") {
     auto *sbufp = map_file("pdf_words2.pdf");
     pdf_extractor pe(*sbufp);
@@ -308,7 +318,7 @@ std::string validate(std::string image_fname, std::vector<Check> &expected)
     sc.scanner_commands = enable_all_scanners;
     const feature_recorder_set::flags_t frs_flags;
     auto *xreport = new dfxml_writer(sc.outdir / "report.xml", false);
-    multithreaded_scanner_set ss(sc, frs_flags, xreport);
+    mt_scanner_set ss(sc, frs_flags, xreport);
     ss.add_scanners(scanners_builtin);
     ss.apply_scanner_commands();
 
@@ -358,18 +368,17 @@ std::string validate(std::string image_fname, std::vector<Check> &expected)
     return sc.outdir;
 }
 
-TEST_CASE("validate_scanners", "[phase1]") {
-    std::string fn;
-    fn = "test_json.txt";
+TEST_CASE("test_json", "[phase1]") {
     std::vector<Check> ex1 {
         Check("json.txt",
               Feature( "0",
                        JSON1,
                        "ef2b5d7ee21e14eeebb5623784f73724218ee5dd")),
     };
-    validate(fn, ex1);
+    validate("test_json.txt", ex1);
+}
 
-    fn = "test_base16json.txt";
+TEST_CASE("test_base16json", "[phase1]") {
     std::vector<Check> ex2 {
         Check("json.txt",
               Feature( "50-BASE16-0",
@@ -384,9 +393,10 @@ TEST_CASE("validate_scanners", "[phase1]") {
                        "[{\"1\": \"one@base16_company.com\"}, {\"2\": \"two@b")),
 
     };
-    validate(fn, ex2);
+    validate("test_base16json.txt", ex2);
+}
 
-    fn = "test_hello.gz";
+TEST_CASE("test_hello", "[phase1]") {
     std::vector<Check> ex3 {
         Check("email.txt",
               Feature( "0-GZIP-0",
@@ -394,65 +404,31 @@ TEST_CASE("validate_scanners", "[phase1]") {
                        "hello@world.com\\x0A"))
 
     };
-    validate(fn, ex3);
+    validate("test_hello.gz", ex3);
+}
 
-    fn = "KML_Samples.kml";
+TEST_CASE("KML_Samples.kml","[phase1]"){
     std::vector<Check> ex4 {
         Check("kml.txt",
               Feature( "0",
                        "kml/000/0.kml",
-                       "<fileobject><filename>kml/000/0.kml</filename><filesize>35919</filesize><hashdigest type='sha1'>cffc78e27ac32414b33d595a0fefcb971eaadaa3</hashdigest></fileobject>"))
+                       "<fileobject><filename>kml/000/0.kml</filename><filesize>35919</filesize><hashdigest type='sha1'>"
+                       "cffc78e27ac32414b33d595a0fefcb971eaadaa3</hashdigest></fileobject>"))
     };
-    validate(fn, ex4);
-
-}
-
-
-
-
-
-/****************************************************************/
-/* Test the threadpool */
-std::atomic<int> counter{0};
-TEST_CASE("threadpool", "[threads]") {
-    class threadpool t(10);
-    for(int i=0;i<1000;i++){
-        t.push( []{ counter += 1; } );
-    }
-    t.join();
-    REQUIRE( counter==1000 );
-}
-
-/* Test the threadpool with a function
- * and some threadsafety for printing
- */
-std::mutex M;
-std::atomic<int> counter2{0};
-void inc_counter2(int i)
-{
-    counter2 += i;
-}
-TEST_CASE("threadpool2", "[threads]") {
-    class threadpool t(10);
-    for(int i=0;i<1000;i++){
-        t.push( [i]{ inc_counter2(i); } );
-    }
-    t.join();
-    REQUIRE( counter2==499500 );
+    validate("KML_Samples.kml", ex4);
 }
 
 sbuf_t *make_sbuf()
 {
     auto sbuf = new sbuf_t("Hello World!");
-    std::lock_guard<std::mutex> lock(M);
     return sbuf;
 }
 
 /* Test that sbuf data  are not copied when moved to a child.*/
+std::atomic<int> counter{0};
 const uint8_t *sbuf_buf_loc = nullptr;
 void test_process_sbuf(sbuf_t *sbuf)
 {
-    std::lock_guard<std::mutex> lock(M);
     if (sbuf_buf_loc != nullptr) {
         REQUIRE( sbuf_buf_loc == sbuf->get_buf() );
     }
@@ -467,15 +443,19 @@ TEST_CASE("sbuf_no_copy", "[threads]") {
     }
 }
 
+#if 0
+/* Make the sbufs in the primary thread and dispose of them in the worker thread */
 TEST_CASE("threadpool3", "[threads]") {
-    class threadpool t(10);
+    counter = 0;
+    class thread_pool pool;
     for(int i=0;i<100;i++){
         auto sbuf = make_sbuf();
-        t.push( [sbuf]{ test_process_sbuf(sbuf); } );
+        pool.push_task( [sbuf]{ test_process_sbuf(sbuf); } );
     }
-    t.join();
+    pool.wait_for_tasks();
     REQUIRE( counter==1000 );
 }
+#endif
 
 /****************************************************************/
 TEST_CASE("image_process", "[phase1]") {

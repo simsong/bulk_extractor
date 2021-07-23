@@ -310,7 +310,7 @@ void scan_winlnk(scanner_params &sp)
 
 	// phase 1: set up the feature recorder and search for winlnk features
 	const sbuf_t &sbuf = *(sp.sbuf);
-	feature_recorder &winlnk_recorder = sp.ss.named_feature_recorder("winlnk");
+	feature_recorder &winlnk_recorder = sp.named_feature_recorder("winlnk");
 
 	// make sure that potential LNK file is large enough and has the correct signature
 	if (sbuf.pagesize <= SMALLEST_LNK_FILE){
