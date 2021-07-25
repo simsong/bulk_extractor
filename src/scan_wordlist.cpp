@@ -130,19 +130,19 @@ void Scan_Wordlist::dump_seen_wordlist()
 {
     /* Dump the words so far */
     for(const auto &it : seen_wordlist){
-        if (it.size()>0) {
-            if (wordlist_out == nullptr ){
-                auto wordlist_segment_path = flat_wordlist->fname_in_outdir("dedup", wordlist_segment++);
-                wordlist_out = new std::ofstream( wordlist_segment_path);
-                if (!wordlist_out->is_open()) {
-                    throw std::runtime_error("cannot open: " + wordlist_segment_path.string());
-                }
+        if (it.size()==0) continue;
+        if (wordlist_out == nullptr ){
+            auto wordlist_segment_path = flat_wordlist->fname_in_outdir("dedup", wordlist_segment++);
+            wordlist_out = new std::ofstream( wordlist_segment_path );
+            if (!wordlist_out->is_open()) {
+                throw std::runtime_error("cannot open: " + wordlist_segment_path.string());
             }
-            (*wordlist_out) << it << "\n";
         }
+        (*wordlist_out) << it << "\n";
     }
     if (wordlist_out != nullptr) {
         wordlist_out->close();
+        delete wordlist_out;
         wordlist_out = nullptr;
     }
     seen_wordlist.clear();
@@ -243,6 +243,8 @@ void scan_wordlist(scanner_params &sp)
 
     if (sp.phase==scanner_params::PHASE_SHUTDOWN){
         wordlist->shutdown(sp);
+        delete wordlist;
+        wordlist = nullptr;
     }
 }
 

@@ -33,6 +33,12 @@ class Scan_Wordlist {
 public:;
     inline static const std::string WORDLIST {"wordlist"};
     Scan_Wordlist(scanner_params &sp, bool strings_);
+    ~Scan_Wordlist() {
+        if (wordlist_out){
+            wordlist_out->close();
+            delete wordlist_out;
+        }
+    }
     std::filesystem::path flat_wordlist_path {}; //
     feature_recorder *flat_wordlist = nullptr;
 

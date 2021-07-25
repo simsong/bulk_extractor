@@ -158,8 +158,8 @@ TEST_CASE("scan_base64_functions", "[support]" ){
 
     sbuf_t *sbuf3 = decode_base64(sbuf2, 0, sbuf2.bufsize);
     REQUIRE(sbuf3 != nullptr);
-    //REQUIRE(sbuf3->bufsize == 78);
-    //REQUIRE(sbuf3->asString() == JSON2);
+    REQUIRE(sbuf3->bufsize == 78);
+    REQUIRE(sbuf3->asString() == JSON2);
     delete sbuf3;
 }
 
@@ -276,6 +276,7 @@ TEST_CASE("scan_vcard", "[scanners]") {
     auto outdir = test_scanner(scan_vcard, sbufp); // deletes sbuf2
 
     /* Read the output */
+    delete sbufp;
 }
 
 TEST_CASE("scan_wordlist", "[scanners]") {
