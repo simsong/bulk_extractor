@@ -139,8 +139,8 @@ inline void scan_zip_component(scanner_params &sp, feature_recorder &zip_recorde
             zip_recorder.write(pos0+pos,name,xmlstream.str());
 
             std::string carve_name("_"); // begin with a _
-            for(std::string::const_iterator it = name.begin(); it!=name.end();it++){
-                carve_name.push_back((*it=='/' || *it=='\\') ? '_' : *it);
+            for(auto const &it : name ){
+                carve_name.push_back((it=='/' || it=='\\') ? '_' : it);
             }
             unzip_recorder.carve(*decomp, carve_name, mtime);
 

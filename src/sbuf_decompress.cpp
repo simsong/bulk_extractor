@@ -73,6 +73,7 @@ sbuf_t *sbuf_decompress::sbuf_new_decompress(const sbuf_t &sbuf, uint32_t max_un
             throw std::runtime_error("ZIP inflateInit failed");
         }
         r = inflate(&zs,Z_SYNC_FLUSH);
+        inflateEnd(&zs);
         break;
     default:
         throw std::runtime_error("sbuf_decompress.cpp: invalid mode");
