@@ -9,6 +9,8 @@
 
 struct exif_scanner {
     bool exif_scanner_debug {false};
+    exif_scanner(const exif_scanner&) = delete;
+    exif_scanner & operator=(const exif_scanner &) = delete;
 
     exif_scanner(const scanner_params &sp):
         ss(sp.ss),

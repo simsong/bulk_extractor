@@ -44,7 +44,7 @@ void base64array_initialize()
 }
 
 /* Return true if the line only has base64 characters, space characters, or equal signs at the end */
-bool sbuf_line_is_base64(const sbuf_t &sbuf, const size_t &start, const size_t &len, bool &found_equal)
+bool sbuf_line_is_base64(const sbuf_t &sbuf, size_t start, size_t len, bool &found_equal)
 {
     assert(base64array_initialized==true);
     int  b64_classes = 0;
@@ -84,17 +84,35 @@ bool sbuf_line_is_base64(const sbuf_t &sbuf, const size_t &start, const size_t &
     return true;
 }
 
-/* Found the end of the base64 string and make the recursive call */
+/* Found the end of the base64 string. Decode and return the new sbuf. */
 sbuf_t *decode_base64(const sbuf_t &sbuf, size_t start, size_t src_len)
 {
-    const char *src    = reinterpret_cast<const char *>(sbuf.get_buf() + start);
-    if (src_len + start > sbuf.bufsize){ // make sure it doesn't go beyond buffer
+    // make sure it doesn't go beyond buffer
+    if (src_len + start > sbuf.bufsize){
         src_len = sbuf.bufsize-start;
     }
+    const char *src    = reinterpret_cast<const char *>(sbuf.get_buf() + start);
+
+
+    const size_t max_dst = src_len+64;// it can only get smaller, but give some extra space
+    sbuf_t        *sbufr = sbuf_t::sbuf_malloc( (sbuf.pos0 + start) + "BASE64", max_dst );
+    unsigned char   *dst = static_cast<unsigned char *>(sbufr->malloc_buf());
+
+    // COMMENT OUT FOR TESTING
+    int conv_len  = b64_pton_forensic(src, src_len, dst, max_dst );
+    if (conv_len > 0){
+        sbufr = sbufr->realloc(conv_len); // note crazy realloc syntax
+        return sbufr;
+    }
+    // could not decode
+    delete sbufr;
+    return nullptr;
+
+#if 0
 
     // Make room for the destination.
     size_t dst_len = src_len + 4; // it can only get smaller, but give some extra space
-    pos0_t pos0 = (sbuf.pos0 + start) + "BASE64";
+    pos0_t pos0 = ;
     uint8_t *dst = reinterpret_cast<uint8_t *>(malloc(dst_len));
     if (dst==nullptr) {
         throw std::bad_alloc();
@@ -106,13 +124,14 @@ sbuf_t *decode_base64(const sbuf_t &sbuf, size_t start, size_t src_len)
     }
     free(dst);
     return nullptr;
+#endif
 }
 
 void process_base64(const scanner_params &sp, size_t start, size_t src_len)
 {
     auto sbuf2 = decode_base64(*sp.sbuf, start, src_len);
     if (sbuf2) {
-        sp.recurse(sbuf2);
+        sp.recurse(sbuf2);              // deletes sbuf2
     }
 }
 
@@ -124,13 +143,12 @@ void scan_base64(scanner_params &sp)
 
     sp.check_version();
     if ( sp.phase == scanner_params::PHASE_INIT){
-        auto info = new scanner_params::scanner_info(scan_base64,"base64");
-        info->author         = "Simson L. Garfinkel";
-        info->description    = "scans for Base64-encoded data";
-        info->scanner_version= "1.1";
-        info->scanner_flags.recurse = true;
+        sp.info = std::make_unique<scanner_params::scanner_info>(scan_base64,"base64");
+        sp.info->author         = "Simson L. Garfinkel";
+        sp.info->description    = "scans for Base64-encoded data";
+        sp.info->scanner_version= "1.1";
+        sp.info->scanner_flags.recurse = true;
         base64array_initialize();
-        sp.info = info;
 	return;
     }
     if ( sp.phase==scanner_params::PHASE_SCAN){

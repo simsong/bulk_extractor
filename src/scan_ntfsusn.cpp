@@ -72,7 +72,7 @@ void scan_ntfsusn(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-        sp.info = new scanner_params::scanner_info(scan_ntfsusn,"ntfsusn");
+        sp.info = std::make_unique<scanner_params::scanner_info>(scan_ntfsusn,"ntfsusn");
         sp.info->author          = "Teru Yamazaki";
         sp.info->description     = "Scans for USN_RECORD v2/v4 record";
         sp.info->scanner_version = "1.1";

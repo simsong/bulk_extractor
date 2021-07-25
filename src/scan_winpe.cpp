@@ -1025,7 +1025,7 @@ void scan_winpe (scanner_params &sp)
     std::string xml;
 
     if (sp.phase == scanner_params::PHASE_INIT){
-        sp.info = new scanner_params::scanner_info( scan_winpe, "winpe" );
+        sp.info = std::make_unique<scanner_params::scanner_info>( scan_winpe, "winpe" );
         sp.info->description     = "Scan for Windows PE headers";
         sp.info->scanner_version = "1.1.0";
         sp.info->feature_defs.push_back( feature_recorder_def("winpe"));

@@ -242,7 +242,7 @@ void scan_winprefetch(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-        sp.info = new scanner_params::scanner_info(scan_winprefetch,"winprefetch");
+        sp.info = std::make_unique<scanner_params::scanner_info>(scan_winprefetch,"winprefetch");
         sp.info->name		= "winprefetch";
         sp.info->author		= "Bruce Allen";
         sp.info->description	= "Search for Windows Prefetch files";

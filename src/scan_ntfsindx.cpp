@@ -77,12 +77,11 @@ void scan_ntfsindx(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-        auto info = new scanner_params::scanner_info(scan_ntfsindx,"ntfsindx");
-        info->author          = "Teru Yamazaki";
-        info->description     = "Scans for NTFS $INDEX_ALLOCATION INDX record";
-        info->scanner_version = "1.1";
-        info->feature_defs.push_back( feature_recorder_def(FEATURE_FILE_NAME));
-        sp.info = info;
+        sp.info = std::make_unique<scanner_params::scanner_info>(scan_ntfsindx,"ntfsindx");
+        sp.info->author          = "Teru Yamazaki";
+        sp.info->description     = "Scans for NTFS $INDEX_ALLOCATION INDX record";
+        sp.info->scanner_version = "1.1";
+        sp.info->feature_defs.push_back( feature_recorder_def(FEATURE_FILE_NAME));
         return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN){

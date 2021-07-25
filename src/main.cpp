@@ -96,7 +96,7 @@ static void usage(const char *progname, scanner_set &ss)
     std::cout << "   -F <rfile>   - Read a list of regular expressions from <rfile> to find\n";
     std::cout << "   -f <regex>   - find occurrences of <regex>; may be repeated.\n";
     std::cout << "                  results go into find.txt\n";
-    std::cout << "   -q nn        - Quiet Rate; only print every nn status reports. Default 0; -1 for no status at all\n";
+    std::cout << "   -q           - quiet - no status output (changed in v2.0).\n";
     std::cout << "   -s frac[:passes] - Set random sampling parameters\n";
     std::cout << "\nTuning parameters:\n";
     //    std::cout << "   -C NN        - specifies the size of the context window (default " << feature_recorder::context_window_default << ")\n";
@@ -650,7 +650,7 @@ int main(int argc,char **argv)
     const std::string ALL { "all" };
     int ch;
     char *empty = strdup("");
-    while ((ch = getopt(argc, argv, "A:B:b:C:d:E:e:F:f:G:g:Hhij:M:m:o:P:p:q:Rr:S:s:VW:w:x:Y:z:Z")) != -1) {
+    while ((ch = getopt(argc, argv, "A:B:b:C:d:E:e:F:f:G:g:HhiJj:M:m:o:P:p:qRr:S:s:VW:w:x:Y:z:Z")) != -1) {
         if (optarg==nullptr) optarg=empty;
         std::string arg = optarg!=ALL ? optarg : scanner_config::scanner_command::ALL_SCANNERS;
 	switch (ch) {
@@ -695,16 +695,13 @@ int main(int argc,char **argv)
             cfg.opt_info = true;
             break;
 	case 'j': cfg.num_threads = atoi(optarg); break;
-        case 'J': cfg.num_threads = -1; break;
+        case 'J': cfg.num_threads = 0; break;
 	case 'M': sc.max_depth = atoi(optarg); break;
 	case 'm': cfg.max_bad_alloc_errors = atoi(optarg); break;
 	case 'o': sc.outdir = optarg;break;
 	case 'P': scanner_dirs.push_back(optarg);break;
 	case 'p': opt_path = optarg; break;
-        case 'q':
-	    if(atoi(optarg)==-1) cfg.opt_quiet = 1;// -q -1 turns off notifications
-	    else cfg.opt_notify_rate = atoi(optarg);
-	    break;
+        case 'q': cfg.opt_quiet = true; break;
 	case 'r':
 	    if(alert_list.readfile(optarg)){
                 throw_FileNotFoundError(optarg);
@@ -784,7 +781,18 @@ int main(int argc,char **argv)
 
     struct feature_recorder_set::flags_t f;
     mt_scanner_set ss(sc, f, nullptr);
+
+    sbuf_t slg("Simson");
+    std::cerr << "first=" << ss.previously_processed_count(slg) << "\n";
+    std::cerr << "second=" << ss.previously_processed_count(slg) << "\n";
+    exit(0);
+
+
+
     ss.add_scanners(scanners_builtin);
+
+
+
 
     /* Print usage if necessary. Requires scanner set, but not commands applied.
      * This would create the outdir if one was specified.
@@ -835,8 +843,6 @@ int main(int argc,char **argv)
             std::cout << "erasing " << entry.path().string() << "\n";
             std::filesystem::remove( entry );
 	}
-	std::filesystem::remove( sc.outdir ) ;
-        std::cout << "rmdir " << sc.outdir << "\n";
         clean_start = true;
     }
 
@@ -923,7 +929,7 @@ int main(int argc,char **argv)
 #endif
 
     /* provide documentation to the user; the DFXML information comes from elsewhere */
-    if(!cfg.opt_quiet){
+    if (!cfg.opt_quiet){
         std::cout << "bulk_extractor version: " << PACKAGE_VERSION << "\n";
 #ifdef HAVE_GETHOSTNAME
         char hostname[1024];
@@ -935,12 +941,20 @@ int main(int argc,char **argv)
         std::cout << "Input file: " << sc.input_fname << "\n";
         std::cout << "Output directory: " << sc.outdir << "\n";
         std::cout << "Disk Size: " << p->image_size() << "\n";
+        std::cout << "Scanners: ";
+        for (auto const &it : ss.get_enabled_scanners()){
+            std::cout << it << " ";
+        }
+        std::cout << "\n";
+
         if (cfg.num_threads>0){
             std::cout << "Threads: " << cfg.num_threads << "\n";
         } else {
             std::cout << "Threading Disabled\n";
         }
     }
+
+
 
 
     /*** PHASE 1 --- Run on the input image */
@@ -957,8 +971,13 @@ int main(int argc,char **argv)
 
     /* Go multi-threaded if requested */
     if (cfg.num_threads > 0){
+        std::cout << "going multi-threaded...(" << cfg.num_threads << ")\n";
         ss.launch_workers(cfg.num_threads);
+    } else {
+        std::cout << "running single-threaded (DEBUG)...\n";
+
     }
+
 
     Phase1 phase1(cfg, *p, ss);
     phase1.dfxml_write_create( original_argc, original_argv);
@@ -969,6 +988,10 @@ int main(int argc,char **argv)
     //if(cfg.debug & DEBUG_PRINT_STEPS) std::cerr << "DEBUG: STARTING PHASE 1\n";
 
     xreport->add_timestamp("phase1 start");
+
+    std::cerr << "Calling check_previously_processed at one\n";
+
+
     phase1.phase1_run();
     ss.join();                          // wait for threads to come together
 

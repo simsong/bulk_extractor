@@ -81,7 +81,7 @@ void scan_vcard(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-        sp.info = new scanner_params::scanner_info(scan_vcard,"vcard");
+        sp.info = std::make_unique<scanner_params::scanner_info>(scan_vcard,"vcard");
         sp.info->author         = "Simson Garfinkel and Tony Melaragno";
         sp.info->description    = "Scans for VCARD data";
         sp.info->scanner_version= "1.1";

@@ -487,7 +487,7 @@ void scan_windirs(scanner_params &sp)
         gmtime_r(&t,&now);
         opt_last_year = now.tm_year + 1900 + 5; // allow up to 5 years in the future
 
-        sp.info = new scanner_params::scanner_info( scan_windirs, "windirs" );
+        sp.info = std::make_unique<scanner_params::scanner_info>( scan_windirs, "windirs" );
         sp.info->author         = "Simson Garfinkel and Maxim Suhanov";
         sp.info->description    = "Scans Microsoft directory structures";
 

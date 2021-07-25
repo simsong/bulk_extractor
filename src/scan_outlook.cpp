@@ -61,7 +61,7 @@ void scan_outlook(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT) {
-        sp.info = new scanner_params::scanner_info( scan_outlook, "outlook" );
+        sp.info = std::make_unique<scanner_params::scanner_info>( scan_outlook, "outlook" );
         sp.info->scanner_flags.default_enabled = false;
         sp.info->scanner_flags.depth0_only = true; // only run depth 0
         sp.info->scanner_flags.recurse = true;

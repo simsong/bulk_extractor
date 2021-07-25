@@ -81,7 +81,7 @@ void scan_utmp(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-        sp.info = new scanner_params::scanner_info( scan_utmp, "utmp" );
+        sp.info = std::make_unique<scanner_params::scanner_info>( scan_utmp, "utmp" );
         sp.info->author          = "Teru Yamazaki";
         sp.info->description     = "Scans for utmp record";
         sp.info->scanner_version = "1.1";

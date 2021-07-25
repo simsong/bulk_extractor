@@ -123,21 +123,6 @@ AC_ARG_ENABLE([mcheck],
                  )
 
 
-################################################################
-## AddressSanitizer support
-# https://github.com/libMesh/libmesh/issues/1396
-AC_ARG_ENABLE([address-sanitizer],
-              [AS_HELP_STRING([--enable-address-sanitizer],
-                              [enabled AddressSanitizer support for detecting a wide variety of
-                               memory allocation and deallocation errors])],
-              [AC_DEFINE(HAVE_ADDRESS_SANITIZER, 1, [enable AddressSanitizer])
-              address_sanitizer="yes"
-              CXXFLAGS="$CXXFLAGS -fsanitize=address"
-              LDFLAGS="-lclang_rt.osx $LDFLAGS"
-              ],
-              [])
-
-
 # Specific include files and functions for bulk-extractor
 # Autoupdate added the next two lines to ensure that your configure
 # script's behavior did not change.  They are probably safe to remove.
@@ -179,11 +164,6 @@ AC_CHECK_MEMBER([struct sockaddr_in.sin_len],
 #include <netinet/in.h>
 #endif
 		])
-
-# Should we disable optimization?
-AC_ARG_WITH([opt], AS_HELP_STRING([--without-opt],[Drop all -O C flags]))
-# Or maybe just tone it down a bit?
-AC_ARG_WITH([o3], AS_HELP_STRING([--without-o3],[Do not force O3 optimization; use default level]))
 
 #
 # ZLIB is required:
@@ -310,27 +290,9 @@ else
   CXXFLAGS="$CXXFLAGS -fPIC"
 fi
 
+m4_include([src/be13_api/m4/slg_address_sanitizer.m4])
+m4_include([src/be13_api/m4/slg_noopt.m4])
 
-################################################################
-############## drop optimization flags and add -g if requested ################
-if test x"${AFF_NOOPT}" != "x" ; then
-   with_noopt="yes";
-fi
-
-if test "${with_opt}" = "no" ; then
-  CFLAGS=`echo   -g "$CFLAGS"   | sed s/-O[[0-9]]//`             # note the double quoting!
-  CXXFLAGS=`echo -g "$CXXFLAGS" | sed s/-O[[0-9]]//`
-else
-  # If we are not stripping the optimizer, add fortify source
-  CFLAGS="  $CFLAGS   -D_FORTIFY_SOURCE=2 "
-  CXXFLAGS="$CXXFLAGS -D_FORTIFY_SOURCE=2 "
-
-  # and increase optimizer from -O2 to -O3 if not explicitly forbidden
-  if test "${with_o3}" != "no" ; then
-      CFLAGS=`echo   -g "$CFLAGS"   | sed s/-O2/-O3/`             # note the double quoting!
-      CXXFLAGS=`echo -g "$CXXFLAGS" | sed s/-O2/-O3/`
-  fi
-fi
 
 AC_MSG_NOTICE([*************************************])
 AC_MSG_NOTICE([*************************************])

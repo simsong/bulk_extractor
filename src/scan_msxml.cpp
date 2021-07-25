@@ -56,10 +56,10 @@ void scan_msxml(scanner_params &sp)
 {
     sp.check_version();
     if (sp.phase==scanner_params::PHASE_INIT){
-        sp.info = new scanner_params::scanner_info( scan_msxml, SCANNER_NAME );
-        sp.info->author         = "Simson Garfinkel";
-        sp.info->description    = "Extracts text from Microsoft XML files";
-        sp.info->scanner_version= "1.0";
+        sp.info = std::make_unique<scanner_params::scanner_info>( scan_msxml, SCANNER_NAME );
+        sp.info->author          = "Simson Garfinkel";
+        sp.info->description     = "Extracts text from Microsoft XML files";
+        sp.info->scanner_version = "1.0";
         sp.info->scanner_flags.recurse = true;
 	return;
     }

@@ -48,14 +48,14 @@ public:
         size_t   opt_marginsize { 4 * MiB};
         uint32_t max_bad_alloc_errors {3}; // by default, 3 retries
         bool     opt_info {false};
-        uint32_t opt_notify_rate {4};		// by default, notify every 4 pages
+        uint32_t opt_notify_rate {1};		// by default, notify every second
         uint64_t opt_page_start {0};
         uint64_t  opt_offset_start {0};
         uint64_t  opt_offset_end {0};
         time_t   max_wait_time {3600};  // after an hour, terminate a scanner
         int      opt_quiet {false};                  // -1 = no output
         int      retry_seconds {60};
-        u_int    num_threads  { std::thread::hardware_concurrency() }; // default to # of cores; 0 for no threads;
+        u_int      num_threads  { std::thread::hardware_concurrency() }; // default to # of cores; 0 for no threads
         double   sampling_fraction {1.0};       // for random sampling
         u_int    sampling_passes {1};
         bool     opt_report_read_errors {true};

@@ -201,8 +201,8 @@ void scan_wordlist(scanner_params &sp)
 
     if (sp.phase==scanner_params::PHASE_INIT){
         sp.check_version();
-        auto info = new scanner_params::scanner_info( scan_wordlist, "wordlist" );
-        info->scanner_flags.default_enabled = false; // = scanner_info::SCANNER_DISABLED;
+        sp.info = std::make_unique<scanner_params::scanner_info>( scan_wordlist, "wordlist" );
+        sp.info->scanner_flags.default_enabled = false; // = scanner_info::SCANNER_DISABLED;
         //sp.get_config("word_min",&word_min,"Minimum word size");
         //sp.get_config("word_max",&word_max,"Maximum word size");
         //sp.get_config("max_word_outfile_size",&max_word_outfile_size, "Maximum size of the words output file");
@@ -215,7 +215,7 @@ void scan_wordlist(scanner_params &sp)
             def.flags.no_context   = true;
             def.flags.no_stoplist  = true;
             def.flags.no_alertlist = true;
-            info->feature_defs.push_back( def );
+            sp.info->feature_defs.push_back( def );
         }
 #if 0
         if (word_min > word_max){
@@ -224,7 +224,6 @@ void scan_wordlist(scanner_params &sp)
         }
 #endif
         wordlist = new Scan_Wordlist(sp, wordlist_strings);
-        sp.info = info;
 
 #if 0
 #ifdef USE_SQLITE3

@@ -29,15 +29,13 @@ namespace { // local namespace hides these from other translation units
     };
 
     virtual void startup(const scanner_params& sp) {
-      sp.info->name            = name();
-      sp.info->author          = "Jon Stewart";
-      sp.info->description     = "Advanced search for patterns";
-      sp.info->scanner_version = "0.2";
-      sp.info->flags           = scanner_info::SCANNER_FIND_SCANNER |
-                                 scanner_info::SCANNER_FAST_FIND;
-      sp.info->feature_names.insert(name());
-      sp.info->histogram_defs.insert(histogram_def(
-       name(), "", "histogram", HistogramMaker::FLAG_LOWERCASE));
+        sp.info->name            = std::make_unique<scanner_params::scanner_info>(scan_lightgrep, "scan_lightgrep");
+        sp.info->author          = "Jon Stewart";
+        sp.info->description     = "Advanced search for patterns";
+        sp.info->scanner_version = "0.2";
+        sp.info->flags           = scanner_info::SCANNER_FIND_SCANNER | scanner_info::SCANNER_FAST_FIND;
+        sp.info->feature_names.insert(name());
+        sp.info->histogram_defs.insert(histogram_def( name(), "", "histogram", HistogramMaker::FLAG_LOWERCASE));
     }
 
     virtual void init(const scanner_params& sp) {

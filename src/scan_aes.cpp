@@ -393,16 +393,13 @@ extern "C"
 void scan_aes(struct scanner_params &sp)
 {
     if(sp.phase==scanner_params::PHASE_INIT){
-        auto info = new scanner_params::scanner_info(scan_aes,"aes");
-	info->author		= "Sam Trenholme, Jesse Kornblum and Simson Garfinkel";
-	info->description    = "Search for AES key schedules";
-        info->scanner_version = "1.1";
-        info->feature_defs.push_back( feature_recorder_def("aes_keys"));
-
+        sp.info = std::make_unique<scanner_params::scanner_info>(scan_aes,"aes");
+	sp.info->author		= "Sam Trenholme, Jesse Kornblum and Simson Garfinkel";
+	sp.info->description    = "Search for AES key schedules";
+        sp.info->scanner_version = "1.1";
+        sp.info->feature_defs.push_back( feature_recorder_def("aes_keys"));
 	rcon_setup();
 	sbox_setup();
-
-        sp.info = info;
 	return;
     }
 

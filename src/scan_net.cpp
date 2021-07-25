@@ -1015,14 +1015,14 @@ void scan_net(scanner_params &sp)
     if (sp.phase==scanner_params::PHASE_INIT){
 
         TIME_MAX = time(0) + 365*24*60*60*5; // five years in the future
+        sp.get_config("carve_net_memory",&carve_net_memory,"Carve network  memory structures");
 
 	assert(sizeof(struct be13::ip4)==20);	// we've had problems on some systems
-        sp.info = new scanner_params::scanner_info(scan_net,"net");
+        sp.info = std::make_unique<scanner_params::scanner_info>(scan_net,"net");
         sp.info->author         = "Simson Garfinkel and Rob Beverly";
         sp.info->description    = "Scans for IP packets";
         sp.info->scanner_version= "1.0";
 
-        sp.get_config("carve_net_memory",&carve_net_memory,"Carve network  memory structures");
 
 	sp.info->feature_defs.push_back( feature_recorder_def("ip"));
 	sp.info->feature_defs.push_back( feature_recorder_def("ether"));
