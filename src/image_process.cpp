@@ -749,7 +749,7 @@ pos0_t process_raw::get_pos0(const image_process::iterator &it) const
 }
 
 /** Read from the iterator into a newly allocated sbuf.
- * uses pagesize.
+ * uses pagesize. We don't memory map the file. Perhaps we should. But then we could only do 4K pages.
  */
 sbuf_t *process_raw::sbuf_alloc(image_process::iterator &it) const
 {
@@ -758,7 +758,7 @@ sbuf_t *process_raw::sbuf_alloc(image_process::iterator &it) const
     if(this->raw_filesize < it.raw_offset + count){    /* See if that's more than I need */
 	count = this->raw_filesize - it.raw_offset;
     }
-    auto sbuf = sbuf_t::sbuf_malloc( get_pos0(it), count);
+    sbuf_t *sbuf = sbuf_t::sbuf_malloc( get_pos0(it), count);
     unsigned char *buf = reinterpret_cast<unsigned char *>(sbuf->malloc_buf());
     int count_read = this->pread(buf, count, it.raw_offset);       // do the read
     if (count_read==0){

@@ -609,10 +609,10 @@ public:
     feature_recorder &ether_recorder;
 
     packet_carver(const scanner_params &sp):
-        outdir(sp.ss.sc.outdir),
-        ip_recorder(sp.ss.named_feature_recorder("ip")),
-        tcp_recorder(sp.ss.named_feature_recorder("tcp")),
-        ether_recorder(sp.ss.named_feature_recorder("ether")){ }
+        outdir(sp.sc.outdir),
+        ip_recorder(sp.named_feature_recorder("ip")),
+        tcp_recorder(sp.named_feature_recorder("tcp")),
+        ether_recorder(sp.named_feature_recorder("ether")){ }
 
 private:
     /*
@@ -1015,14 +1015,14 @@ void scan_net(scanner_params &sp)
     if (sp.phase==scanner_params::PHASE_INIT){
 
         TIME_MAX = time(0) + 365*24*60*60*5; // five years in the future
+        sp.get_config("carve_net_memory",&carve_net_memory,"Carve network  memory structures");
 
 	assert(sizeof(struct be13::ip4)==20);	// we've had problems on some systems
-        sp.info = new scanner_params::scanner_info(scan_net,"net");
+        sp.info = std::make_unique<scanner_params::scanner_info>(scan_net,"net");
         sp.info->author         = "Simson Garfinkel and Rob Beverly";
         sp.info->description    = "Scans for IP packets";
         sp.info->scanner_version= "1.0";
 
-        sp.ss.sc.get_config("carve_net_memory",&carve_net_memory,"Carve network  memory structures");
 
 	sp.info->feature_defs.push_back( feature_recorder_def("ip"));
 	sp.info->feature_defs.push_back( feature_recorder_def("ether"));

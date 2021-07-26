@@ -341,34 +341,33 @@ void scan_email(struct scanner_params &sp)
 {
     sp.check_version();
     if (sp.phase==scanner_params::PHASE_INIT){
-        auto info = new scanner_params::scanner_info(scan_email,"email");
-        info->author            = "Simson L. Garfinkel";
-        info->description       = "Scans for email addresses, domains, URLs, RFC822 headers, etc.";
-        info->scanner_version   = "1.1";
+        sp.info = std::make_unique<scanner_params::scanner_info>(scan_email,"email");
+        sp.info->author            = "Simson L. Garfinkel";
+        sp.info->description       = "Scans for email addresses, domains, URLs, RFC822 headers, etc.";
+        sp.info->scanner_version   = "1.1";
 
 	/* define the feature files this scanner created */
-        info->feature_defs.push_back( feature_recorder_def("email"));
-        info->feature_defs.push_back( feature_recorder_def("domain"));
-        info->feature_defs.push_back( feature_recorder_def("url"));
-        info->feature_defs.push_back( feature_recorder_def("rfc822"));
-        info->feature_defs.push_back( feature_recorder_def("ether"));
+        sp.info->feature_defs.push_back( feature_recorder_def("email"));
+        sp.info->feature_defs.push_back( feature_recorder_def("domain"));
+        sp.info->feature_defs.push_back( feature_recorder_def("url"));
+        sp.info->feature_defs.push_back( feature_recorder_def("rfc822"));
+        sp.info->feature_defs.push_back( feature_recorder_def("ether"));
 
 	/* define the histograms to make */
         auto no_flags  = histogram_def::flags_t();
         auto lowercase = histogram_def::flags_t(); lowercase.lowercase = true;
 
-	info->histogram_defs.push_back( histogram_def("email1", "email",  "",                                     "", "histogram",lowercase));
-	info->histogram_defs.push_back( histogram_def("email2", "email",  "(@.*)",                                "", "domain_histogram",lowercase));
-	info->histogram_defs.push_back( histogram_def("email3", "domain", "",                                     "", "histogram", no_flags));
-        info->histogram_defs.push_back( histogram_def("url1",   "url",    "",                                     "", "histogram", no_flags));
-	info->histogram_defs.push_back( histogram_def("url2",   "url",    "://([^/]+)",                           "", "services", no_flags));
-	info->histogram_defs.push_back( histogram_def("url3",   "url",    "://((cid-[0-9a-f])+[a-z.].live.com/)", "", "microsoft-live", no_flags));
-	info->histogram_defs.push_back( histogram_def("url4",   "url",    "://[-_a-z0-9.]+facebook.com/.*[&?]{1}id=([0-9]+)","", "facebook-id", no_flags));
-	info->histogram_defs.push_back( histogram_def("url5",   "url",    "://[-_a-z0-9.]+facebook.com/([a-zA-Z0-9.]*[^/?&]$)","", "facebook-address",lowercase));
-	info->histogram_defs.push_back( histogram_def("url6",   "url",    "search.*[?&/;fF][pq]=([^&/]+)",       "", "searches", no_flags));
+	sp.info->histogram_defs.push_back( histogram_def("email1", "email",  "",                                     "", "histogram",lowercase));
+	sp.info->histogram_defs.push_back( histogram_def("email2", "email",  "(@.*)",                                "", "domain_histogram",lowercase));
+	sp.info->histogram_defs.push_back( histogram_def("email3", "domain", "",                                     "", "histogram", no_flags));
+        sp.info->histogram_defs.push_back( histogram_def("url1",   "url",    "",                                     "", "histogram", no_flags));
+	sp.info->histogram_defs.push_back( histogram_def("url2",   "url",    "://([^/]+)",                           "", "services", no_flags));
+	sp.info->histogram_defs.push_back( histogram_def("url3",   "url",    "://((cid-[0-9a-f])+[a-z.].live.com/)", "", "microsoft-live", no_flags));
+	sp.info->histogram_defs.push_back( histogram_def("url4",   "url",    "://[-_a-z0-9.]+facebook.com/.*[&?]{1}id=([0-9]+)","", "facebook-id", no_flags));
+	sp.info->histogram_defs.push_back( histogram_def("url5",   "url",    "://[-_a-z0-9.]+facebook.com/([a-zA-Z0-9.]*[^/?&]$)","", "facebook-address",lowercase));
+	sp.info->histogram_defs.push_back( histogram_def("url6",   "url",    "search.*[?&/;fF][pq]=([^&/]+)",       "", "searches", no_flags));
 
-        info->histogram_defs.push_back( histogram_def("ether","ether", "([^\(]+)","", "histogram", histogram_def::flags_t()));
-        sp.info = info;
+        sp.info->histogram_defs.push_back( histogram_def("ether","ether", "([^\(]+)","", "histogram", histogram_def::flags_t()));
 	return;
     }
     if (sp.phase==scanner_params::PHASE_SCAN){

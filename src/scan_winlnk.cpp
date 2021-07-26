@@ -300,7 +300,7 @@ void scan_winlnk(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-        sp.info = new scanner_params::scanner_info(scan_winlnk,"winlnk");
+        sp.info = std::make_unique<scanner_params::scanner_info>(scan_winlnk,"winlnk");
         sp.info->author		= "Simson Garfinkel";
         sp.info->description	= "Search for Windows LNK files";
         sp.info->feature_defs.push_back( feature_recorder_def("winlnk"));
@@ -310,7 +310,7 @@ void scan_winlnk(scanner_params &sp)
 
 	// phase 1: set up the feature recorder and search for winlnk features
 	const sbuf_t &sbuf = *(sp.sbuf);
-	feature_recorder &winlnk_recorder = sp.ss.named_feature_recorder("winlnk");
+	feature_recorder &winlnk_recorder = sp.named_feature_recorder("winlnk");
 
 	// make sure that potential LNK file is large enough and has the correct signature
 	if (sbuf.pagesize <= SMALLEST_LNK_FILE){

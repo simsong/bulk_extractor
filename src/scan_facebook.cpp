@@ -9,6 +9,7 @@
 #include "config.h"
 
 #include "be13_api/scanner_params.h"
+#include "be13_api/scanner_set.h"
 
 
 struct used_offsets_t {
@@ -51,7 +52,7 @@ void scan_facebook(scanner_params &sp)
 {
     sp.check_version();
     if (sp.phase==scanner_params::PHASE_INIT)        {
-        sp.info = new scanner_params::scanner_info(scan_facebook,"facebook");
+        sp.info = std::make_unique<scanner_params::scanner_info>(scan_facebook,"facebook");
         sp.info->author = "";
         sp.info->description = "Searches for facebook html and json tags";
         sp.info->scanner_version = "2.0";
@@ -59,7 +60,7 @@ void scan_facebook(scanner_params &sp)
         return;
     }
     if (sp.phase==scanner_params::PHASE_SCAN) {
-        feature_recorder &facebook_recorder = sp.ss.named_feature_recorder("facebook");
+        feature_recorder &facebook_recorder = sp.named_feature_recorder("facebook");
         used_offsets_t used_offsets;
 
         for (int j = 0; facebook_searches[j]; j++) {

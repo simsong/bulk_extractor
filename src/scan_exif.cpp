@@ -367,7 +367,7 @@ size_t exif_scanner::process_possible_jpeg(const sbuf_t &sbuf,bool found_start)
         }
 
         // Record the hash of the first 4K
-        feature_text = ss.hash(sbuf_t(sbuf,0,4096));
+        feature_text = ss->hash(sbuf_t(sbuf,0,4096));
     }
     /* Record entries (if present) in the feature files */
     record_exif_data(sbuf.pos0, feature_text);
@@ -500,17 +500,16 @@ void scan_exif (scanner_params &sp)
 {
     sp.check_version();
     if (sp.phase==scanner_params::PHASE_INIT){
-        auto info = new scanner_params::scanner_info(scan_exif,"exif");
-	info->author          = "Bruce Allen";
-	info->scanner_version = "1.1";
-        info->description     = "Search for EXIF sections in JPEG files";
+        sp.info = std::make_unique<scanner_params::scanner_info>(scan_exif,"exif");
+	sp.info->author          = "Bruce Allen";
+	sp.info->scanner_version = "1.1";
+        sp.info->description     = "Search for EXIF sections in JPEG files";
         struct feature_recorder_def::flags_t xml_flag;
         xml_flag.xml = true;
-	info->feature_defs.push_back( feature_recorder_def("exif", xml_flag));
-	info->feature_defs.push_back( feature_recorder_def("gps"));
-	info->feature_defs.push_back( feature_recorder_def("jpeg_carved"));
-        sp.ss.sc.get_config("exif_debug",&exif_debug,"debug exif decoder");
-        sp.info = info;
+	sp.info->feature_defs.push_back( feature_recorder_def("exif", xml_flag));
+	sp.info->feature_defs.push_back( feature_recorder_def("gps"));
+	sp.info->feature_defs.push_back( feature_recorder_def("jpeg_carved"));
+        sp.get_config("exif_debug",&exif_debug,"debug exif decoder");
 	return;
     }
     if (sp.phase==scanner_params::PHASE_SCAN){

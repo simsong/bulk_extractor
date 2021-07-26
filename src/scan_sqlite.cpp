@@ -38,7 +38,7 @@ void scan_sqlite(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-        sp.info = new scanner_params::scanner_info( scan_sqlite, "sqlite" );
+        sp.info = std::make_unique<scanner_params::scanner_info>( scan_sqlite, "sqlite" );
         sp.info->author          = "Simson Garfinkel";
         sp.info->description     = "Scans for SQLITE3 data";
         sp.info->scanner_version = "1.1";
@@ -47,7 +47,7 @@ void scan_sqlite(scanner_params &sp)
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
 	const sbuf_t &sbuf = *(sp.sbuf);
-	feature_recorder &sqlite_recorder = sp.ss.named_feature_recorder(FEATURE_FILE_NAME);
+	feature_recorder &sqlite_recorder = sp.named_feature_recorder(FEATURE_FILE_NAME);
 
 	// Search for BEGIN:SQLITE\r in the sbuf
 	// we could do this with a loop, or with

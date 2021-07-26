@@ -796,7 +796,7 @@ void scan_elf (scanner_params &sp)
     sp.check_version();
 
     if (sp.phase == scanner_params::PHASE_INIT){
-        sp.info = new scanner_params::scanner_info(scan_elf,"elf");
+        sp.info = std::make_unique<scanner_params::scanner_info>(scan_elf,"elf");
 	sp.info->author          = "Alex Eubanks";
         sp.info->scanner_version = "1.1";
         sp.info->feature_defs.push_back( feature_recorder_def("elf") );
@@ -804,7 +804,7 @@ void scan_elf (scanner_params &sp)
     }
     if ( sp.phase == scanner_params::PHASE_SCAN){
 
-	auto &f = sp.ss.named_feature_recorder("elf");
+	auto &f = sp.named_feature_recorder("elf");
         auto &sbuf = *(sp.sbuf);
 
 	for (size_t pos = 0; pos < sbuf.bufsize; pos++) {

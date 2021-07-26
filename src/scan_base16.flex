@@ -61,6 +61,7 @@ void base16_scanner::decode(const sbuf_t &sbuf)
     /* Alert on byte sequences of 48, 128 or 256 bits*/
     if (p==48/8 || p==128/8 || p==256/8){
         hex_recorder.write_buf(sbuf,0,sbuf.bufsize);  /* it validates; write original with context */
+        delete dbuf;
         return;                                       /* Small keys don't get recursively analyzed */
     }
     if (p>opt_min_hex_buf){
@@ -121,15 +122,15 @@ void scan_base16(struct scanner_params &sp)
     static const u_char *ignore_string = (const u_char *)"\r\n \t";
     sp.check_version();
     if (sp.phase==scanner_params::PHASE_INIT){
-        auto info = new scanner_params::scanner_info(scan_base16,"base16");
-        info->scanner_flags.recurse = true;
-        info->author          = "Simson L. Garfinkel";
-        info->description     = "Base16 (hex) scanner";
-        info->scanner_version = "1.1";
-        info->pathPrefix      = "BASE16";
+        sp.info = std::make_unique<scanner_params::scanner_info>(scan_base16,"base16");
+        sp.info->scanner_flags.recurse = true;
+        sp.info->author          = "Simson L. Garfinkel";
+        sp.info->description     = "Base16 (hex) scanner";
+        sp.info->scanner_version = "1.1";
+        sp.info->pathPrefix      = "BASE16";
         feature_recorder_def frd("hex");
         frd.flags.disabled=true; /* disabled by default */
-        info->feature_defs.push_back( frd );
+        sp.info->feature_defs.push_back( frd );
 
         /* Create the base16 array */
         for (int i=0;i<256;i++){
@@ -141,7 +142,6 @@ void scan_base16(struct scanner_params &sp)
         for (int ch='A';ch<='F';ch++){ base16array[ch] = ch-'A'+10; }
         for (int ch='a';ch<='f';ch++){ base16array[ch] = ch-'a'+10; }
         for (int ch='0';ch<='9';ch++){ base16array[ch] = ch-'0'; }
-        sp.info = info;
         return; /* No feature files created */
     }
     if (sp.phase==scanner_params::PHASE_SCAN){

@@ -33,11 +33,9 @@
 
 #include "config.h"
 #include "be13_api/scanner_params.h"
-
 #include "scan_vcard.h"
 
 #include "utf8.h"
-
 void carve_vcards(const sbuf_t &sbuf, feature_recorder &vcard_recorder)
 {
     size_t end_len = strlen("END:VCARD\r\n");
@@ -81,7 +79,7 @@ void scan_vcard(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-        sp.info = new scanner_params::scanner_info(scan_vcard,"vcard");
+        sp.info = std::make_unique<scanner_params::scanner_info>(scan_vcard,"vcard");
         sp.info->author         = "Simson Garfinkel and Tony Melaragno";
         sp.info->description    = "Scans for VCARD data";
         sp.info->scanner_version= "1.1";
@@ -91,7 +89,6 @@ void scan_vcard(scanner_params &sp)
     if(sp.phase==scanner_params::PHASE_SCAN){
 	const sbuf_t &sbuf       = *sp.sbuf;
 	feature_recorder &vcard_recorder = sp.named_feature_recorder("vcard");
-
         carve_vcards(sbuf, vcard_recorder);
     }
 }

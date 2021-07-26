@@ -16,13 +16,12 @@ void scan_gzip(scanner_params &sp)
 {
     sp.check_version();
     if (sp.phase==scanner_params::PHASE_INIT){
-        auto info = new scanner_params::scanner_info( scan_gzip, "gzip" );
-        info->author         = "Simson Garfinkel";
-        info->description    = "Searches for GZIP-compressed data";
-        info->scanner_version= "1.1";
-        info->scanner_flags.recurse = true;
-        sp.ss.sc.get_config("gzip_max_uncompr_size",&gzip_max_uncompr_size,"maximum size for decompressing GZIP objects");
-        sp.info = info;
+        sp.info = std::make_unique<scanner_params::scanner_info>( scan_gzip, "gzip" );
+        sp.info->author         = "Simson Garfinkel";
+        sp.info->description    = "Searches for GZIP-compressed data";
+        sp.info->scanner_version= "1.1";
+        sp.info->scanner_flags.recurse = true;
+        sp.get_config("gzip_max_uncompr_size",&gzip_max_uncompr_size,"maximum size for decompressing GZIP objects");
 	return ;		/* no features */
     }
     if (sp.phase==scanner_params::PHASE_SCAN){
@@ -39,6 +38,7 @@ void scan_gzip(scanner_params &sp)
                 auto *decomp = sbuf_decompress::sbuf_new_decompress( sbuf.slice(i),
                                                                      gzip_max_uncompr_size, "GZIP" ,sbuf_decompress::mode_t::GZIP, 0);
                 if (decomp==nullptr) continue;
+                assert(sbuf.depth() +1 == decomp->depth());
                 sp.recurse(decomp);      // recurse will free the sbuf
             }
 	}

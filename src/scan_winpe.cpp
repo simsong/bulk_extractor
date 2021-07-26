@@ -1025,7 +1025,7 @@ void scan_winpe (scanner_params &sp)
     std::string xml;
 
     if (sp.phase == scanner_params::PHASE_INIT){
-        sp.info = new scanner_params::scanner_info( scan_winpe, "winpe" );
+        sp.info = std::make_unique<scanner_params::scanner_info>( scan_winpe, "winpe" );
         sp.info->description     = "Scan for Windows PE headers";
         sp.info->scanner_version = "1.1.0";
         sp.info->feature_defs.push_back( feature_recorder_def("winpe"));
@@ -1034,7 +1034,7 @@ void scan_winpe (scanner_params &sp)
     }
 
     if(sp.phase == scanner_params::PHASE_SCAN){    // phase 1
-	feature_recorder &f = sp.ss.named_feature_recorder("winpe");
+	feature_recorder &f = sp.named_feature_recorder("winpe");
         const sbuf_t &sbuf = *(sp.sbuf);
 
 	/*
@@ -1077,7 +1077,7 @@ void scan_winpe (scanner_params &sp)
 		    f.write(data.pos0, first4k.hash(), xml);
 
                     size_t carve_size = get_carve_size(data);
-                    feature_recorder &f_carved = sp.ss.named_feature_recorder("winpe_carved");
+                    feature_recorder &f_carved = sp.named_feature_recorder("winpe_carved");
                     f_carved.carve(data.slice(0, carve_size), ".winpe");
 		}
 	    }

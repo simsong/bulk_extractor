@@ -58,7 +58,7 @@ void Scan_Wordlist::process_sbuf(scanner_params &sp)
 {
     const sbuf_t &sbuf = *sp.sbuf;
     if (flat_wordlist==nullptr) {
-        flat_wordlist = &sp.ss.named_feature_recorder("wordlist");
+        flat_wordlist = &sp.named_feature_recorder("wordlist");
     }
 
     /* Simplified word extractor. It's good enough to pull out stuff for cryptanalysis. */
@@ -130,19 +130,19 @@ void Scan_Wordlist::dump_seen_wordlist()
 {
     /* Dump the words so far */
     for(const auto &it : seen_wordlist){
-        if (it.size()>0) {
-            if (wordlist_out == nullptr ){
-                auto wordlist_segment_path = flat_wordlist->fname_in_outdir("dedup", wordlist_segment++);
-                wordlist_out = new std::ofstream( wordlist_segment_path);
-                if (!wordlist_out->is_open()) {
-                    throw std::runtime_error("cannot open: " + wordlist_segment_path.string());
-                }
+        if (it.size()==0) continue;
+        if (wordlist_out == nullptr ){
+            auto wordlist_segment_path = flat_wordlist->fname_in_outdir("dedup", wordlist_segment++);
+            wordlist_out = new std::ofstream( wordlist_segment_path );
+            if (!wordlist_out->is_open()) {
+                throw std::runtime_error("cannot open: " + wordlist_segment_path.string());
             }
-            (*wordlist_out) << it << "\n";
         }
+        (*wordlist_out) << it << "\n";
     }
     if (wordlist_out != nullptr) {
         wordlist_out->close();
+        delete wordlist_out;
         wordlist_out = nullptr;
     }
     seen_wordlist.clear();
@@ -155,7 +155,7 @@ void Scan_Wordlist::shutdown(scanner_params &sp)
         return;
     }
     std::cout << "Phase 3. Uniquifying and recombining wordlist\n";
-    flat_wordlist = &sp.ss.named_feature_recorder("wordlist");
+    flat_wordlist = &sp.named_feature_recorder("wordlist");
 
     flat_wordlist->flush();
     auto feature_recorder_path = flat_wordlist->fname_in_outdir("", feature_recorder::NO_COUNT);
@@ -201,21 +201,21 @@ void scan_wordlist(scanner_params &sp)
 
     if (sp.phase==scanner_params::PHASE_INIT){
         sp.check_version();
-        auto info = new scanner_params::scanner_info( scan_wordlist, "wordlist" );
-        info->scanner_flags.default_enabled = false; // = scanner_info::SCANNER_DISABLED;
-        //sp.ss.sc.get_config("word_min",&word_min,"Minimum word size");
-        //sp.ss.sc.get_config("word_max",&word_max,"Maximum word size");
-        //sp.ss.sc.get_config("max_word_outfile_size",&max_word_outfile_size, "Maximum size of the words output file");
-        sp.ss.sc.get_config("wordlist_use_flatfiles",&wordlist_use_flatfiles,"Use flatfiles for wordlist");
-        //sp.ss.sc.get_config("wordlist_use_sql",&wordlist_use_sql,"Use SQL DB for wordlist");
-        sp.ss.sc.get_config("strings",&wordlist_strings,"Scan for strings instead of words");
+        sp.info = std::make_unique<scanner_params::scanner_info>( scan_wordlist, "wordlist" );
+        sp.info->scanner_flags.default_enabled = false; // = scanner_info::SCANNER_DISABLED;
+        //sp.get_config("word_min",&word_min,"Minimum word size");
+        //sp.get_config("word_max",&word_max,"Maximum word size");
+        //sp.get_config("max_word_outfile_size",&max_word_outfile_size, "Maximum size of the words output file");
+        sp.get_config("wordlist_use_flatfiles",&wordlist_use_flatfiles,"Use flatfiles for wordlist");
+        //sp.get_config("wordlist_use_sql",&wordlist_use_sql,"Use SQL DB for wordlist");
+        sp.get_config("strings",&wordlist_strings,"Scan for strings instead of words");
 
         if (wordlist_use_flatfiles){
             auto def = feature_recorder_def(Scan_Wordlist::WORDLIST);
             def.flags.no_context   = true;
             def.flags.no_stoplist  = true;
             def.flags.no_alertlist = true;
-            info->feature_defs.push_back( def );
+            sp.info->feature_defs.push_back( def );
         }
 #if 0
         if (word_min > word_max){
@@ -224,7 +224,6 @@ void scan_wordlist(scanner_params &sp)
         }
 #endif
         wordlist = new Scan_Wordlist(sp, wordlist_strings);
-        sp.info = info;
 
 #if 0
 #ifdef USE_SQLITE3
@@ -244,6 +243,8 @@ void scan_wordlist(scanner_params &sp)
 
     if (sp.phase==scanner_params::PHASE_SHUTDOWN){
         wordlist->shutdown(sp);
+        delete wordlist;
+        wordlist = nullptr;
     }
 }
 

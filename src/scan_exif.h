@@ -4,20 +4,23 @@
 #include "exif_reader.h"
 #include "be13_api/sbuf.h"
 #include "be13_api/scanner_params.h"
+#include "be13_api/scanner_set.h"
 #include "jpeg_validator.h"
 
 struct exif_scanner {
     bool exif_scanner_debug {false};
+    exif_scanner(const exif_scanner&) = delete;
+    exif_scanner & operator=(const exif_scanner &) = delete;
 
     exif_scanner(const scanner_params &sp):
         ss(sp.ss),
-        exif_recorder(sp.ss.named_feature_recorder("exif")),
-        gps_recorder(sp.ss.named_feature_recorder("gps")),
-        jpeg_recorder(sp.ss.named_feature_recorder("jpeg_carved")) {
+        exif_recorder(sp.named_feature_recorder("exif")),
+        gps_recorder(sp.named_feature_recorder("gps")),
+        jpeg_recorder(sp.named_feature_recorder("jpeg_carved")) {
     }
 
     entry_list_t entries {};
-    scanner_set &ss;            //  for the hashing function
+    scanner_set *ss;            //  for the hashing function
     feature_recorder &exif_recorder;
     feature_recorder &gps_recorder;
     feature_recorder &jpeg_recorder;

@@ -79,7 +79,7 @@ void scan_ntfslogfile(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-        sp.info = new scanner_params::scanner_info(scan_ntfslogfile,"ntfslogfile");
+        sp.info = std::make_unique<scanner_params::scanner_info>(scan_ntfslogfile,"ntfslogfile");
         sp.info->author          = "Teru Yamazaki";
         sp.info->description     = "Scans for NTFS $LogFile RCRD record";
         sp.info->scanner_version = "1.1";
@@ -88,7 +88,7 @@ void scan_ntfslogfile(scanner_params &sp)
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
         const sbuf_t &sbuf = (*sp.sbuf);
-        feature_recorder &ntfslogfile_recorder = sp.ss.named_feature_recorder(FEATURE_FILE_NAME);
+        feature_recorder &ntfslogfile_recorder = sp.named_feature_recorder(FEATURE_FILE_NAME);
 
         // search for NTFS $LogFile RCRD record in the sbuf
         size_t offset = 0;

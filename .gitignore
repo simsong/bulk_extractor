@@ -115,3 +115,4 @@ build-aux
 out??/
 out?/
 *.xml
+*out*/

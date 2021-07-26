@@ -61,7 +61,7 @@ void scan_httplogs(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-        sp.info = new scanner_params::scanner_info(scan_httplogs,"httplogs");
+        sp.info = std::make_unique<scanner_params::scanner_info>(scan_httplogs,"httplogs");
         sp.info->author		= "Maxim Suhanov";
         sp.info->description	= "Extract various web server access logs";
         sp.info->feature_defs.push_back( feature_recorder_def("httplogs"));
@@ -71,7 +71,7 @@ void scan_httplogs(scanner_params &sp)
     if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;
 
     if(sp.phase==scanner_params::PHASE_SCAN){
-	feature_recorder &httplogs_recorder = sp.ss.named_feature_recorder("httplogs");
+	feature_recorder &httplogs_recorder = sp.named_feature_recorder("httplogs");
         const sbuf_t &sbuf = *(sp.sbuf);
 
         for (size_t p = 0; p < sbuf.pagesize; p++) {

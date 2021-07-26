@@ -73,15 +73,6 @@ else
   AC_MSG_ERROR([$LEX does not support -R.  Please get a modern version of gnu flex])
 fi
 
-################################################################
-## compile with pthread if its available
-SAVE_CXXFLAGS="$CXXFLAGS"
-CXXFLAGS="$CXXFLAGS -pthread"
-AC_MSG_CHECKING([whether C++ compiler understands $option])
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
-     [AC_MSG_RESULT([Adding -pthread to CXXFLAGS])],
-     [AC_MSG_RESULT([Compiler does not understand -pthread]); CXXFLAGS="$SAVE_CXXFLAGS"])
-unset SAVE_CXXFLAGS
 
 
 ################################################################
@@ -132,21 +123,6 @@ AC_ARG_ENABLE([mcheck],
                  )
 
 
-################################################################
-## AddressSanitizer support
-# https://github.com/libMesh/libmesh/issues/1396
-AC_ARG_ENABLE([address-sanitizer],
-              [AS_HELP_STRING([--enable-address-sanitizer],
-                              [enabled AddressSanitizer support for detecting a wide variety of
-                               memory allocation and deallocation errors])],
-              [AC_DEFINE(HAVE_ADDRESS_SANITIZER, 1, [enable AddressSanitizer])
-              address_sanitizer="yes"
-              CXXFLAGS="$CXXFLAGS -fsanitize=address"
-              LDFLAGS="-lclang_rt.osx $LDFLAGS"
-              ],
-              [])
-
-
 # Specific include files and functions for bulk-extractor
 # Autoupdate added the next two lines to ensure that your configure
 # script's behavior did not change.  They are probably safe to remove.
@@ -158,7 +134,7 @@ AC_SYS_LARGEFILE
 AC_SYS_POSIX_TERMIOS
 
 ## Check for headers used by bulk Extractor
-AC_CHECK_HEADERS([dlfcn.h fcntl.h inttypes.h libgen.h limits.h mmap.h pwd.h signal.h stdint.h sys/cdefs.h sys/disk.h sys/fcntl.h sys/ioctl.h sys/mman.h sys/mmap.h sys/mount.h sys/param.h sys/socket.h sys/stat.h sys/types.h sys/time.h sys/resource.h time.h unistd.h windows.h CoreServices/CoreServices.h mach-o/dyld.h])
+AC_CHECK_HEADERS([dlfcn.h fcntl.h inttypes.h libgen.h limits.h mmap.h pwd.h signal.h stdint.h sys/cdefs.h sys/disk.h sys/fcntl.h sys/ioctl.h sys/mman.h sys/mmap.h sys/mount.h sys/param.h sys/socket.h sys/stat.h sys/types.h sys/time.h sys/resource.h sys/sysctl.h sys/vmmeter.h time.h unistd.h windows.h CoreServices/CoreServices.h mach-o/dyld.h])
 AC_CHECK_FUNCS([getuid getpwuid gethostname getrusage gmtime_r getprogname isxdigit ishexnumber le64toh localtime_r _lseeki64 inet_ntop pread64 pread printf mmap munmap MD5 mkstemp mktemp sleep SleepEx strptime usleep vasprintf _NSGetExecutablePath])
 AC_CHECK_FUNCS([CreateProcess LoadLibrary IncrementAtomic InterlockedIncrement])
 
@@ -188,11 +164,6 @@ AC_CHECK_MEMBER([struct sockaddr_in.sin_len],
 #include <netinet/in.h>
 #endif
 		])
-
-# Should we disable optimization?
-AC_ARG_WITH([opt], AS_HELP_STRING([--without-opt],[Drop all -O C flags]))
-# Or maybe just tone it down a bit?
-AC_ARG_WITH([o3], AS_HELP_STRING([--without-o3],[Do not force O3 optimization; use default level]))
 
 #
 # ZLIB is required:
@@ -319,27 +290,9 @@ else
   CXXFLAGS="$CXXFLAGS -fPIC"
 fi
 
+m4_include([src/be13_api/m4/slg_address_sanitizer.m4])
+m4_include([src/be13_api/m4/slg_noopt.m4])
 
-################################################################
-############## drop optimization flags and add -g if requested ################
-if test x"${AFF_NOOPT}" != "x" ; then
-   with_noopt="yes";
-fi
-
-if test "${with_opt}" = "no" ; then
-  CFLAGS=`echo   -g "$CFLAGS"   | sed s/-O[[0-9]]//`             # note the double quoting!
-  CXXFLAGS=`echo -g "$CXXFLAGS" | sed s/-O[[0-9]]//`
-else
-  # If we are not stripping the optimizer, add fortify source
-  CFLAGS="  $CFLAGS   -D_FORTIFY_SOURCE=2 "
-  CXXFLAGS="$CXXFLAGS -D_FORTIFY_SOURCE=2 "
-
-  # and increase optimizer from -O2 to -O3 if not explicitly forbidden
-  if test "${with_o3}" != "no" ; then
-      CFLAGS=`echo   -g "$CFLAGS"   | sed s/-O2/-O3/`             # note the double quoting!
-      CXXFLAGS=`echo -g "$CXXFLAGS" | sed s/-O2/-O3/`
-  fi
-fi
 
 AC_MSG_NOTICE([*************************************])
 AC_MSG_NOTICE([*************************************])

@@ -61,7 +61,7 @@ void scan_ntfsmft(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-        sp.info = new scanner_params::scanner_info(scan_ntfsmft,"ntfsmft");
+        sp.info = std::make_unique<scanner_params::scanner_info>(scan_ntfsmft,"ntfsmft");
         sp.info->author          = "Teru Yamazaki";
         sp.info->description     = "Scans for NTFS MFT record";
         sp.info->scanner_version = "1.0";
@@ -70,7 +70,7 @@ void scan_ntfsmft(scanner_params &sp)
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
         const sbuf_t &sbuf = (*sp.sbuf);
-        feature_recorder &ntfsmft_recorder = sp.ss.named_feature_recorder(FEATURE_FILE_NAME);
+        feature_recorder &ntfsmft_recorder = sp.named_feature_recorder(FEATURE_FILE_NAME);
 
         // search for NTFS MFT record in the sbuf
         size_t offset = 0;

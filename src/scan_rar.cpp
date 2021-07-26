@@ -139,10 +139,10 @@ static inline uint32_t crc_finalize(uint32_t crc)
 }
 static uint32_t crc_update(uint32_t crc, const sbuf_t &sbuf)
 {
-    for( size_t i = 0; i < sbuf.bufsize; i++){
+    for( size_t pos = 0; pos < sbuf.bufsize; pos++){
         bool bit;
-        unsigned char c = sbuf[i];
-        for (i = 0x01; i & 0xff; i <<= 1) {
+        unsigned char c = sbuf[pos];
+        for (unsigned int i = 0x01; i & 0xff; i <<= 1) {
             bit = crc & 0x80000000;
             if (c & i) {
                 bit = !bit;
@@ -593,7 +593,7 @@ void scan_rar(scanner_params &sp)
 {
     sp.check_version();
     if (sp.phase==scanner_params::PHASE_INIT){
-        sp.info = new scanner_params::scanner_info( scan_rar, "rar" );
+        sp.info = std::make_unique<scanner_params::scanner_info>( scan_rar, "rar" );
 	sp.info->author = "Michael Shick";
         sp.info->scanner_version = "1.1";
         sp.info->scanner_flags.recurse = true;
@@ -610,8 +610,8 @@ void scan_rar(scanner_params &sp)
         auto unrar_def = feature_recorder_def(UNRAR_RECORDER_NAME, flags);
         unrar_def.default_carve_mode = feature_recorder_def::carve_mode_t::CARVE_ENCODED;
 	sp.info->feature_defs.push_back( unrar_def );
-        sp.ss.sc.get_config("rar_find_components",&record_components,"Search for RAR components");
-        sp.ss.sc.get_config("rar_find_volumes",&record_volumes,"Search for RAR volumes");
+        sp.get_config("rar_find_components",&record_components,"Search for RAR components");
+        sp.get_config("rar_find_volumes",&record_volumes,"Search for RAR volumes");
 #else
         sp.info->description = "(disabled in configure)";
 #endif
@@ -619,8 +619,8 @@ void scan_rar(scanner_params &sp)
     }
 #ifdef USE_RAR
     //if (sp.phase==scanner_params::PHASE_INIT){
-	//feature_recorder &rar_recorder = sp.ss.named_feature_recorder(RAR_RECORDER_NAME);
-	//feature_recorder &unrar_recorder = sp.ss.named_feature_recorder(UNRAR_RECORDER_NAME);
+	//feature_recorder &rar_recorder = sp.named_feature_recorder(RAR_RECORDER_NAME);
+	//feature_recorder &unrar_recorder = sp.named_feature_recorder(UNRAR_RECORDER_NAME);
         //rar_recorder->set_carve_mode(feature_recorder::CARVE_ALL);
 	//rar_recorder->set_flag(feature_recorder::FLAG_XML); // because we are sending through XML
         //unrar_recorder->set_carve_mode(static_cast<feature_recorder::carve_mode_t>(unrar_carve_mode));
@@ -629,8 +629,8 @@ void scan_rar(scanner_params &sp)
     if (sp.phase==scanner_params::PHASE_SCAN){
 	const sbuf_t &sbuf = *(sp.sbuf);
 	const pos0_t &pos0 = sbuf.pos0;
-	feature_recorder &rar_recorder   = sp.ss.named_feature_recorder(RAR_RECORDER_NAME);
-	feature_recorder &unrar_recorder = sp.ss.named_feature_recorder(UNRAR_RECORDER_NAME);
+	feature_recorder &rar_recorder   = sp.named_feature_recorder(RAR_RECORDER_NAME);
+	feature_recorder &unrar_recorder = sp.named_feature_recorder(UNRAR_RECORDER_NAME);
 
         RarComponentInfo component;
         RarVolumeInfo volume;

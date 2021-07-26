@@ -81,7 +81,7 @@ void scan_utmp(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-        sp.info = new scanner_params::scanner_info( scan_utmp, "utmp" );
+        sp.info = std::make_unique<scanner_params::scanner_info>( scan_utmp, "utmp" );
         sp.info->author          = "Teru Yamazaki";
         sp.info->description     = "Scans for utmp record";
         sp.info->scanner_version = "1.1";
@@ -91,7 +91,7 @@ void scan_utmp(scanner_params &sp)
     if(sp.phase==scanner_params::PHASE_SCAN){
         const sbuf_t &sbuf = *(sp.sbuf);
         //feature_recorder_set &fs = sp.fs;
-        feature_recorder &utmp_recorder = sp.ss.named_feature_recorder(FEATURE_FILE_NAME);
+        feature_recorder &utmp_recorder = sp.named_feature_recorder(FEATURE_FILE_NAME);
 
         size_t offset = 0;
         size_t stop = sbuf.pagesize;

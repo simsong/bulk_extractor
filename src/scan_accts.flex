@@ -383,15 +383,15 @@ void scan_accts( struct scanner_params &sp )
     if(sp.phase==scanner_params::PHASE_INIT){
         //assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
         build_unbase58();
-        auto info = new scanner_params::scanner_info(scan_accts,"accts");
-	info->author		= "Simson L. Garfinkel, modified by Tim Walsh";
-	info->description	= "scans for CCNs, track 2, PII (including SSN and Canadian SIN), and phone #s";
-	info->scanner_version= "1.1";
-        info->feature_defs.push_back( feature_recorder_def( "ccn" ));
-        info->feature_defs.push_back( feature_recorder_def( "pii" ));
-        info->feature_defs.push_back( feature_recorder_def( "sin" ));
-        info->feature_defs.push_back( feature_recorder_def( "ccn_track2" ));
-        info->feature_defs.push_back( feature_recorder_def( "telephone" ));
+        sp.info = std::make_unique<scanner_params::scanner_info>(scan_accts,"accts");
+	sp.info->author		= "Simson L. Garfinkel, modified by Tim Walsh";
+	sp.info->description	= "scans for CCNs, track 2, PII (including SSN and Canadian SIN), and phone #s";
+	sp.info->scanner_version= "1.1";
+        sp.info->feature_defs.push_back( feature_recorder_def( "ccn" ));
+        sp.info->feature_defs.push_back( feature_recorder_def( "pii" ));
+        sp.info->feature_defs.push_back( feature_recorder_def( "sin" ));
+        sp.info->feature_defs.push_back( feature_recorder_def( "ccn_track2" ));
+        sp.info->feature_defs.push_back( feature_recorder_def( "telephone" ));
 
         histogram_def::flags_t flag_numeric;
         flag_numeric.numeric = true;
@@ -399,17 +399,16 @@ void scan_accts( struct scanner_params &sp )
                                                    // name , feature,        pattern, require, suffix, flags
         histogram_def hd1("ccn",       "ccn",       "", "", "histogram", flag_numeric);
 
-	info->histogram_defs.push_back( hd1 );
-	info->histogram_defs.push_back( histogram_def("ccn_track2","ccn_track2","", "", "histogram", nf));
-	info->histogram_defs.push_back( histogram_def("telephone", "telephone", "", "", "histogram", flag_numeric));
-        info->histogram_defs.push_back( histogram_def("pii",       "pii",  "CT.*CMD_.*((From|To)=[0-9]+)",
+	sp.info->histogram_defs.push_back( hd1 );
+	sp.info->histogram_defs.push_back( histogram_def("ccn_track2","ccn_track2","", "", "histogram", nf));
+	sp.info->histogram_defs.push_back( histogram_def("telephone", "telephone", "", "", "histogram", flag_numeric));
+        sp.info->histogram_defs.push_back( histogram_def("pii",       "pii",  "CT.*CMD_.*((From|To)=[0-9]+)",
                                                                                       "", "teamviewer", flag_numeric));
 
         /* This modifies the scanner_config by adding informaton about the help strings, so scanner_config can't be const */
-        sp.ss.sc.get_config("ssn_mode", &ssn_mode,"0=Normal; 1=No `SSN' required; 2=No dashes required");
-        sp.ss.sc.get_config("min_phone_digits",&min_phone_digits,"Min. digits required in a phone");
+        sp.get_config("ssn_mode", &ssn_mode,"0=Normal; 1=No `SSN' required; 2=No dashes required");
+        sp.get_config("min_phone_digits",&min_phone_digits,"Min. digits required in a phone");
         //scan_ccns2_debug = sp.ss.sc.debug;           // get debug value
-        sp.info = info;
 	return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN){

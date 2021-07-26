@@ -126,7 +126,7 @@ inline void scan_zip_component(scanner_params &sp, feature_recorder &zip_recorde
 
         /* If depth is more than 0, don't decompress if we have seen this component before */
         if (sp.depth>0){
-            if (sp.ss.check_previously_processed(sbuf_src)){
+            if (sp.check_previously_processed(sbuf_src)){
                 xmlstream << "<disposition>previously-processed</disposition></zipinfo>";
                 zip_recorder.write(pos0+pos,name,xmlstream.str());
                 return;
@@ -139,8 +139,8 @@ inline void scan_zip_component(scanner_params &sp, feature_recorder &zip_recorde
             zip_recorder.write(pos0+pos,name,xmlstream.str());
 
             std::string carve_name("_"); // begin with a _
-            for(std::string::const_iterator it = name.begin(); it!=name.end();it++){
-                carve_name.push_back((*it=='/' || *it=='\\') ? '_' : *it);
+            for(auto const &it : name ){
+                carve_name.push_back((it=='/' || it=='\\') ? '_' : it);
             }
             unzip_recorder.carve(*decomp, carve_name, mtime);
 
@@ -160,13 +160,13 @@ void scan_zip(scanner_params &sp)
 
     if (sp.phase==scanner_params::PHASE_INIT){
         feature_recorder_def::flags_t xml; xml.xml = true;
-        sp.info = new scanner_params::scanner_info( scan_zip, "zip" );
+        sp.info = std::make_unique<scanner_params::scanner_info>( scan_zip, "zip" );
         sp.info->scanner_flags.recurse = true;
 	sp.info->feature_defs.push_back( feature_recorder_def(ZIP_RECORDER_NAME, xml ));
 	sp.info->feature_defs.push_back( feature_recorder_def(UNZIP_RECORDER_NAME ));
-        sp.ss.sc.get_config("zip_min_uncompr_size",&zip_min_uncompr_size,"Minimum size of a ZIP uncompressed object");
-        sp.ss.sc.get_config("zip_max_uncompr_size",&zip_max_uncompr_size,"Maximum size of a ZIP uncompressed object");
-        sp.ss.sc.get_config("zip_name_len_max",&zip_name_len_max,"Maximum name of a ZIP component filename");
+        sp.get_config("zip_min_uncompr_size",&zip_min_uncompr_size,"Minimum size of a ZIP uncompressed object");
+        sp.get_config("zip_max_uncompr_size",&zip_max_uncompr_size,"Maximum size of a ZIP uncompressed object");
+        sp.get_config("zip_name_len_max",&zip_name_len_max,"Maximum name of a ZIP component filename");
 	return;
     }
 
