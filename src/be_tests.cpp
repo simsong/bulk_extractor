@@ -276,7 +276,6 @@ TEST_CASE("scan_vcard", "[scanners]") {
     auto outdir = test_scanner(scan_vcard, sbufp); // deletes sbuf2
 
     /* Read the output */
-    delete sbufp;
 }
 
 TEST_CASE("scan_wordlist", "[scanners]") {
