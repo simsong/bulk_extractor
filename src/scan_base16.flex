@@ -61,6 +61,7 @@ void base16_scanner::decode(const sbuf_t &sbuf)
     /* Alert on byte sequences of 48, 128 or 256 bits*/
     if (p==48/8 || p==128/8 || p==256/8){
         hex_recorder.write_buf(sbuf,0,sbuf.bufsize);  /* it validates; write original with context */
+        delete dbuf;
         return;                                       /* Small keys don't get recursively analyzed */
     }
     if (p>opt_min_hex_buf){
