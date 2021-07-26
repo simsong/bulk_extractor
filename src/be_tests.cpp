@@ -511,6 +511,7 @@ TEST_CASE("image_process", "[phase1]") {
         times += 1;
     }
     REQUIRE(times==1);
+    delete p;
 }
 
 
