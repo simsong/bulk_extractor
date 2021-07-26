@@ -23,7 +23,7 @@
 
 using namespace std::chrono_literals;
 
-Phase1::Phase1(Config config_, image_process &p_, mt_scanner_set &ss_):
+Phase1::Phase1(Config config_, image_process &p_, scanner_set &ss_):
     config(config_), p(p_), ss(ss_), xreport(*ss_.get_dfxml_writer())
 {
 }

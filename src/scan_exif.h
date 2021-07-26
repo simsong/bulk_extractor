@@ -4,7 +4,7 @@
 #include "exif_reader.h"
 #include "be13_api/sbuf.h"
 #include "be13_api/scanner_params.h"
-#include "be13_api/mt_scanner_set.h"
+#include "be13_api/scanner_set.h"
 #include "jpeg_validator.h"
 
 struct exif_scanner {

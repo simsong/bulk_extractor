@@ -310,32 +310,57 @@ struct Check {
     Feature feature;
 };
 
+TEST_CASE("test_validate", "[phase1]" ) {
+    scanner_config sc;
+
+    sc.outdir = NamedTemporaryDirectory();
+    sc.scanner_commands = enable_all_scanners;
+    const feature_recorder_set::flags_t frs_flags;
+
+    auto *xreport = new dfxml_writer(sc.outdir / "report.xml", false);
+
+    scanner_set ss(sc, frs_flags, xreport);
+    ss.add_scanners(scanners_builtin);
+    ss.apply_scanner_commands();
+    ss.phase_scan();
+    ss.shutdown();
+    delete xreport;
+}
+
+
+
 /*
  * Run all of the built-in scanners on a specific image, look for the given features, and return the directory.
  */
 std::string validate(std::string image_fname, std::vector<Check> &expected)
 {
     std::cerr << "================ validate  " << image_fname << " ================\n";
-
-    auto p = image_process::open( test_dir() / image_fname, false, 65536, 65536);
-    Phase1::Config cfg;  // config for the image_processing system
     scanner_config sc;
 
     sc.outdir = NamedTemporaryDirectory();
     sc.scanner_commands = enable_all_scanners;
     const feature_recorder_set::flags_t frs_flags;
     auto *xreport = new dfxml_writer(sc.outdir / "report.xml", false);
-    mt_scanner_set ss(sc, frs_flags, xreport);
+    scanner_set ss(sc, frs_flags, xreport);
     ss.add_scanners(scanners_builtin);
     ss.apply_scanner_commands();
 
-    Phase1 phase1(cfg, *p, ss);
-    phase1.dfxml_write_create( 0, nullptr);
-    ss.phase_scan();
-    phase1.phase1_run();
+    if (image_fname != "" ) {
+        auto p = image_process::open( test_dir() / image_fname, false, 65536, 65536);
+        Phase1::Config cfg;  // config for the image_processing system
+        Phase1 phase1(cfg, *p, ss);
+        phase1.dfxml_write_create( 0, nullptr);
+
+        ss.phase_scan();
+        phase1.phase1_run();
+        delete p;
+    }
     ss.shutdown();
+
     xreport->pop("dfxml");
     xreport->close();
+    delete xreport;
+
 
     for (size_t i=0; i<expected.size(); i++){
         std::filesystem::path fname  = sc.outdir / expected[i].fname;
@@ -374,6 +399,9 @@ std::string validate(std::string image_fname, std::vector<Check> &expected)
     std::cerr << "--- done ---\n\n";
     return sc.outdir;
 }
+
+
+
 
 TEST_CASE("test_json", "[phase1]") {
     std::vector<Check> ex1 {

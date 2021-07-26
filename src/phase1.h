@@ -3,7 +3,7 @@
 
 #include <thread>
 
-#include "be13_api/mt_scanner_set.h"
+#include "be13_api/scanner_set.h"
 #include "be13_api/dfxml_cpp/src/dfxml_writer.h"
 #include "be13_api/dfxml_cpp/src/hash_t.h"
 
@@ -72,7 +72,7 @@ public:
     u_int         notify_ctr  {0};      // for random sampling
     uint64_t      total_bytes {0};      // processed
     image_process &p;                   // image being processed
-    mt_scanner_set   &ss;                  // our scanner set
+    scanner_set   &ss;                  // our scanner set
     seen_page_ids_t seen_page_ids {};   // to avoid processing each twice
     dfxml::sha1_generator *sha1g {nullptr};        // the SHA1 of the image. Set to 0 if a gap is encountered
     uint64_t      sha1_next {0};        // next byte to hash, to detect gaps
@@ -84,7 +84,7 @@ public:
     sbuf_t *get_sbuf(image_process::iterator &it);
 
 
-    Phase1(Config config_, image_process &p_, mt_scanner_set &ss_);
+    Phase1(Config config_, image_process &p_, scanner_set &ss_);
     void dfxml_write_create(int argc, char * const *argv); // create the DFXML header
     void dfxml_write_source();                             // create the DFXML <source> block
     void read_process_sbufs(); // read and process the sbufs

@@ -39,7 +39,7 @@ int _CRT_fmode = _O_BINARY;
 
 #include "be13_api/aftimer.h"
 #include "be13_api/scanner_params.h"
-#include "be13_api/mt_scanner_set.h"
+#include "be13_api/scanner_set.h"
 #include "be13_api/utils.h"             // needs config.h
 #include "be13_api/word_and_context_list.h"
 
@@ -780,7 +780,7 @@ int main(int argc,char **argv)
     }
 
     struct feature_recorder_set::flags_t f;
-    mt_scanner_set ss(sc, f, nullptr);
+    scanner_set ss(sc, f, nullptr);
 
     sbuf_t slg("Simson");
     std::cerr << "first=" << ss.previously_processed_count(slg) << "\n";

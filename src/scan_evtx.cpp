@@ -17,7 +17,7 @@
 
 #include "utf8.h"
 #include "be13_api/scanner_params.h"
-#include "be13_api/mt_scanner_set.h"
+#include "be13_api/scanner_set.h"
 
 #define SECTOR_SIZE 512
 #define CLUSTER_SIZE 4096

@@ -5,7 +5,7 @@
 #include "config.h"
 
 #include "be13_api/scanner_params.h"
-#include "be13_api/mt_scanner_set.h"
+#include "be13_api/scanner_set.h"
 #include "be13_api/regex_vector.h"
 #include "be13_api/utils.h" // needs config.h
 #include "findopts.h"
@@ -96,5 +96,6 @@ void scan_find(scanner_params &sp)
                 else     pos=sp.sbuf->bufsize;	// skip to the end of the buffer
             }
         }
+        delete tbuf;
     }
 }
