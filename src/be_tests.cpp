@@ -228,13 +228,9 @@ TEST_CASE("scan_exif", "[scanners]") {
 TEST_CASE("scan_msxml","[scanners]") {
     auto *sbufp = map_file("KML_Samples.kml");
     std::string bufstr = msxml_extract_text(*sbufp);
-
-    std::cerr << "msxml: " << bufstr << "\n";
-    auto *dbuf = sbuf_t::sbuf_malloc(sbufp->pos0+"MSXML", bufstr.size());
-    memcpy(dbuf->malloc_buf(), bufstr.c_str(), bufstr.size());
-    std::cerr << *dbuf << "\n";
+    REQUIRE( bufstr.find("http://maps.google.com/mapfiles/kml/pal3/icon19.png") != std::string::npos);
+    REQUIRE( bufstr.find("A collection showing how easy it is to create 3-dimensional") != std::string::npos);
     delete sbufp;
-    delete dbuf;
 }
 
 TEST_CASE("scan_pdf", "[scanners]") {

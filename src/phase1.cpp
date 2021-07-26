@@ -74,9 +74,7 @@ sbuf_t *Phase1::get_sbuf(image_process::iterator &it)
     assert(config.max_bad_alloc_errors>0);
     for(u_int retry_count=0;retry_count<config.max_bad_alloc_errors;retry_count++){
         try {
-            std::cerr << "POINT1\n";
             return p.sbuf_alloc(it); // may throw exception
-            std::cerr << "POINT2\n";
         }
         catch (const std::bad_alloc &e) {
             // Low memory could come from a bad sbuf alloc or another low memory condition.
@@ -164,9 +162,7 @@ void Phase1::read_process_sbufs()
                 throw std::runtime_error("phase1 error - page provided twice");
             }
             try {
-                std::cerr << "XX point 1\n";
                 sbuf_t *sbufp = get_sbuf(it);
-                std::cerr << "XX point 2\n";
 
                 /* compute the sha1 hash */
                 if (sha1g){
@@ -179,11 +175,8 @@ void Phase1::read_process_sbufs()
                         sha1g = 0;
                     }
                 }
-                std::cerr << "XX point 3\n";
                 total_bytes += sbufp->pagesize;
-                std::cerr << "XX point 4\n";
                 ss.schedule_sbuf(sbufp); // processes the sbuf, then deletes it
-                std::cerr << "XX point 5\n";
             }
             catch (const std::exception &e) {
                 // report uncaught exceptions to both user and XML file

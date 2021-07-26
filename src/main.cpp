@@ -781,17 +781,7 @@ int main(int argc,char **argv)
 
     struct feature_recorder_set::flags_t f;
     scanner_set ss(sc, f, nullptr);
-
-    sbuf_t slg("Simson");
-    std::cerr << "first=" << ss.previously_processed_count(slg) << "\n";
-    std::cerr << "second=" << ss.previously_processed_count(slg) << "\n";
-    exit(0);
-
-
-
     ss.add_scanners(scanners_builtin);
-
-
 
 
     /* Print usage if necessary. Requires scanner set, but not commands applied.
