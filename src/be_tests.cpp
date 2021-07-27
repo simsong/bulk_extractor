@@ -122,7 +122,7 @@ std::filesystem::path test_scanners(const std::vector<scanner_t *> & scanners, s
     REQUIRE(sbuf->children == 0);
     ss.phase_scan();
     REQUIRE(sbuf->children == 0);
-    ss.process_sbuf(sbuf);
+    ss.schedule_sbuf(sbuf);
     ss.shutdown();
     return sc.outdir;
 }

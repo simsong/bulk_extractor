@@ -1,6 +1,7 @@
 #include <random>
 #include <chrono>
 #include <thread>
+#include <chrono>
 
 #include "config.h"
 #include "phase1.h"
@@ -155,6 +156,15 @@ void Phase1::read_process_sbufs()
             break;                      // passed the offset
         }
 
+        /* If there are too many in the queue, wait... */
+        std::cerr << "sbufs_in_queue=" << ss.sbufs_in_queue << "\n";
+        if (ss.depth0_sbufs_in_queue > ss.get_thread_count()) {
+            using namespace std::chrono_literals;
+            std::cerr << "too many depth0 sbufs in queue! waiting for 1 second\n";
+            std::this_thread::sleep_for(2000ms);
+            continue;
+        }
+
         if (config.opt_page_start<=it.page_number && config.opt_offset_start<=it.raw_offset){
             // Make sure we haven't done this page yet. This should never happen
             if (seen_page_ids.find(it.get_pos0().str()) != seen_page_ids.end()){
@@ -163,6 +173,10 @@ void Phase1::read_process_sbufs()
             }
             try {
                 sbuf_t *sbufp = get_sbuf(it);
+
+                std::stringstream attribute;
+                attribute << "t='" << time(0) << "'";
+                xreport.xmlout("sbuf_read",sbufp->pos0.str(), attribute.str(), false);
 
                 /* compute the sha1 hash */
                 if (sha1g){

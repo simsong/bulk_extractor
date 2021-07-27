@@ -211,7 +211,7 @@ public:
         return dos_date_to_iso(dos_time);
     }
 
-    std::string name;
+    std::string name;                   // filename
     uint16_t flags;
     uint8_t  unpack_version;
     uint8_t  compression_method;
@@ -376,13 +376,12 @@ static bool process_component(const sbuf_t &sbuf, RarComponentInfo &output)
     //
     // Filename extraction
     //
-    std::string &filename = output.name;
     uint16_t filename_len = 0;
-    const char *filename_bytes = (const char *) sbuf.get_buf() + OFFSET_FILE_NAME;
+    size_t filename_start = OFFSET_FILE_NAME;
     if (flags & FLAG_BIGFILE) {
         // if present, the high 32 bits of 64 bit file sizes offset the
         // location of the filename by 8
-        filename_bytes += OPTIONAL_BIGFILE_LEN;
+        filename_start += OPTIONAL_BIGFILE_LEN;
     }
     if (flags & FLAG_UNICODE_FILENAME) {
 
@@ -393,8 +392,8 @@ static bool process_component(const sbuf_t &sbuf, RarComponentInfo &output)
         //     in that order
         //   - If no null byte is present, the filename is UTF-8 encoded
         size_t null_byte_index = 0;
-        for(; null_byte_index < filename_bytes_len; null_byte_index++) {
-            if (filename_bytes[null_byte_index] == 0x00) {
+        for( null_byte_index = 0; null_byte_index < filename_bytes_len; null_byte_index++) {
+            if (sbuf[filename_start + null_byte_index] == 0x00) {
                 break;
             }
         }
@@ -407,34 +406,34 @@ static bool process_component(const sbuf_t &sbuf, RarComponentInfo &output)
         if (null_byte_index == filename_bytes_len) {
             // UTF-8 only - go with UTF-8 string
             filename_len = filename_bytes_len;
-            filename = std::string(filename_bytes, (size_t) filename_len);
+            output.name = sbuf.substr(filename_start, filename_len);
         }
         else {
             // if both ASCII and UTF-8 are present, disregard ASCII
             filename_len = filename_bytes_len - (null_byte_index + 1);
-            filename = std::string(filename_bytes + null_byte_index + 1, filename_len);
+            output.name = sbuf.substr(filename_start + null_byte_index + 1, filename_len);
         }
         // validate extracted UTF-8
-        if (utf8::find_invalid(filename.begin(),filename.end()) != filename.end()) {
+        if (utf8::find_invalid(output.name.begin(),output.name.end()) != output.name.end()) {
             return false;
         }
     }
     else {
         filename_len = filename_bytes_len;
-        filename = std::string(filename_bytes, filename_len);
+        output.name = sbuf.substr(filename_start, filename_len);
     }
 
     // throw out zero-length filename
-    if (filename.size()==0) return false;
+    if (output.name.size()==0) return false;
 
     // disallow ASCII control characters, which may also appear in valid UTF-8
-    std::string::const_iterator first_control_character = filename.begin();
-    for(; first_control_character != filename.end(); first_control_character++) {
+    std::string::const_iterator first_control_character = output.name.begin();
+    for(; first_control_character != output.name.end(); first_control_character++) {
         if ((char) *first_control_character < ' ') {
             break;
         }
     }
-    if (first_control_character != filename.end()) {
+    if (first_control_character != output.name.end()) {
         // no longer disallow ASCII control characters
         //return false;
     }
