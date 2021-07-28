@@ -25,7 +25,6 @@
 #include <string>
 #include <cstdlib>
 #include <cstring>
-//#include <cstdint>
 #include <cerrno>
 #include <sstream>
 #include <vector>
@@ -44,43 +43,41 @@
 class prefetch_record_t {
 
 public:
-    std::string prefetch_version;
-    uint32_t header_size;
-    std::string   execution_filename;
-    uint32_t execution_counter;
-    int64_t  execution_time;
-    std::string   volume_path_name;
-    uint32_t volume_serial_number;
-    int64_t  volume_creation_time;
-    std::vector<std::string> files;		// files in prefect record
-    std::vector<std::string> directories;	// directories in prefect
+    std::string prefetch_version {};
+    uint32_t header_size         {};
+    std::string   execution_filename {};
+    uint32_t execution_counter   {};
+    int64_t  execution_time      {};
+    std::string   volume_path_name {};
+    uint32_t volume_serial_number  {};
+    int64_t  volume_creation_time  {};
+    std::vector<std::string> files {};		// files in prefect record
+    std::vector<std::string> directories {};	// directories in prefect
 
     std::string to_xml();		// turns the record to an XML
 
     bool valid_full_path_name(const std::string &str){
-	if(str.size()<2) return false;
-	if(str.at(0)!='\\') return false;
-	for(size_t i=0;i<str.size();i++){
-	    if((uint8_t)str.at(i)=='\000') return false; // no null characters in UTF-8
+	if (str.size()<2) return false;
+	if (str.at(0)!='\\') return false;
+	for (size_t i=0;i<str.size();i++){
+	    if ((uint8_t)str.at(i)=='\000') return false; // no null characters in UTF-8
 	}
 	/* Additional checks? */
 	return true;
     }
 
-    prefetch_record_t(const sbuf_t &sbuf):prefetch_version(), header_size(0), execution_filename(),
-                      execution_counter(0), execution_time(0), volume_path_name(),
-                      volume_serial_number(0), volume_creation_time(0),
-                      files(), directories() {
+    prefetch_record_t(const sbuf_t &sbuf) {
 
         // read fields in order until done or range exception
         try {
 
             // get prefetch version identifier
-            uint8_t prefetch_version_byte = sbuf.get8u(0);
+            uint8_t prefetch_version_byte   = sbuf.get8u(0);
 
             // set values based on prefetch version
-            size_t execution_time_offset=0;
-            size_t execution_counter_offset=0;
+            size_t execution_time_offset    = 0;
+            size_t execution_counter_offset = 0;
+
             if (prefetch_version_byte == 0x11) {
                 prefetch_version = "Windows XP";
                 execution_time_offset = 0x78;
@@ -102,7 +99,7 @@ public:
             std::wstring utf16_execution_filename;
             sbuf.getUTF16(0x10, utf16_execution_filename);
             execution_filename = safe_utf16to8(utf16_execution_filename);
-            if(execution_filename.size()==0) execution_filename="UNKNOWN_FILENAME";
+            if (execution_filename.size()==0) execution_filename="UNKNOWN_FILENAME";
 
             // get the offset to Section A
             uint32_t section_a_offset = sbuf.get32u(0x54);
@@ -241,7 +238,7 @@ extern "C"
 void scan_winprefetch(scanner_params &sp)
 {
     sp.check_version();
-    if(sp.phase==scanner_params::PHASE_INIT){
+    if (sp.phase==scanner_params::PHASE_INIT){
         sp.info = std::make_unique<scanner_params::scanner_info>(scan_winprefetch,"winprefetch");
         sp.info->name		= "winprefetch";
         sp.info->author		= "Bruce Allen";
@@ -249,7 +246,7 @@ void scan_winprefetch(scanner_params &sp)
         sp.info->feature_defs.push_back( feature_recorder_def("winprefetch"));
         return;
     }
-    if(sp.phase==scanner_params::PHASE_SCAN){
+    if (sp.phase==scanner_params::PHASE_SCAN){
 
 	// phase 1: set up the feature recorder and search for winprefetch features
 	const sbuf_t &sbuf = *(sp.sbuf);
