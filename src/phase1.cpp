@@ -6,6 +6,7 @@
 #include "config.h"
 #include "phase1.h"
 #include "be13_api/utils.h"             // needs config.h
+#include "be13_api/aftimer.h"             // needs config.h
 
 
 /**
@@ -173,10 +174,7 @@ void Phase1::read_process_sbufs()
             }
             try {
                 sbuf_t *sbufp = get_sbuf(it);
-
-                std::stringstream attribute;
-                attribute << "t='" << time(0) << "'";
-                xreport.xmlout("sbuf_read",sbufp->pos0.str(), attribute.str(), false);
+                xreport.xmlout("sbuf_read",sbufp->pos0.str(), aftimer::now_str("t='","'"), false);
 
                 /* compute the sha1 hash */
                 if (sha1g){
@@ -268,14 +266,7 @@ void Phase1::dfxml_write_create(int argc, char * const *argv)
     xreport.xmlout("threads",config.num_threads);
     xreport.xmlout("pagesize",config.opt_pagesize);
     xreport.xmlout("marginsize",config.opt_marginsize);
-    xreport.push("scanners");
-
-    /* Generate a list of the scanners in use */
-    auto ev = ss.get_enabled_scanners();
-    for (const auto &it : ev) {
-        xreport.xmlout("scanner",it);
-    }
-    xreport.pop("scanners");		// scanners
+    ss.dump_enabled_scanner_config();
     xreport.pop("configuration");	// configuration
     xreport.flush();                    // get it to the disk
 }
