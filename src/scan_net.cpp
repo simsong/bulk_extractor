@@ -576,14 +576,14 @@ struct pcap_hdr {
 
 /* Decode a header at a location and return true if it looks good */
 static const size_t PCAP_RECORD_HEADER_SIZE = 16;
-static bool   likely_valid_pcap_header(const sbuf_t &sbuf,struct pcap_hdr &h)
+static inline bool likely_valid_pcap_header(const sbuf_t &sbuf, size_t offset, struct pcap_hdr &h)
 {
-    if (sbuf.bufsize < PCAP_RECORD_HEADER_SIZE) return false;
+    if (sbuf.bufsize < PCAP_RECORD_HEADER_SIZE+offset) return false;
 
-    h.seconds = sbuf.get32u(0);  if (h.seconds==0) return false;
-    h.useconds = sbuf.get32u(4); if (h.useconds>1000000) return false;
-    h.cap_len = sbuf.get32u(8); if (h.cap_len<min_packet_size) return false;
-    h.pkt_len = sbuf.get32u(12);if (h.pkt_len<min_packet_size) return false;
+    h.seconds  = sbuf.get32u( offset+0 ); if (h.seconds==0) return false;
+    h.useconds = sbuf.get32u( offset+4 ); if (h.useconds>1000000) return false;
+    h.cap_len  = sbuf.get32u( offset+8 ); if (h.cap_len<min_packet_size) return false;
+    h.pkt_len  = sbuf.get32u( offset+12); if (h.pkt_len<min_packet_size) return false;
 
     if (h.seconds<TIME_MIN || h.seconds>TIME_MAX) return false;
 
@@ -691,7 +691,7 @@ public:
         if (add_frame_and_safe) {
             pcap_write_bytes(forged_header, sizeof(forged_header));
         }
-        sbuf.write(fcap,offset,h.cap_len);	// the packet
+        sbuf.write(fcap, offset, h.cap_len );	// the packet
     }
 
     /**
@@ -699,7 +699,7 @@ public:
      */
     size_t carvePCAPPacket(const sbuf_t &sb2) {
         struct pcap_hdr h;
-	if (likely_valid_pcap_header(sb2,h)==false) return 0;
+	if (likely_valid_pcap_header(sb2, 0, h)==false) return 0;
         if (sb2.bufsize < PCAP_RECORD_HEADER_SIZE+h.cap_len) return 0; // packet was truncated
 
         /* If buffer is the size of the record,
@@ -708,7 +708,7 @@ public:
          */
         struct pcap_hdr h2;
         if ((sb2.bufsize==h.cap_len+PCAP_RECORD_HEADER_SIZE) ||
-           likely_valid_pcap_header(sb2+PCAP_RECORD_HEADER_SIZE+h.cap_len,h2)){
+            likely_valid_pcap_header(sb2, PCAP_RECORD_HEADER_SIZE+h.cap_len, h2)){
 
             // If it looks like the pcap record begins with an IP header rather than a link-level frame,
             // tell writepkt what kind of header so it can create a valid pseudo Ethernet II header
@@ -975,7 +975,7 @@ public:
 	 *
 	 * Please remember that this is called for every byte, so it needs to be fast.
 	 */
-	for(size_t i=0 ; i<sbuf.pagesize && i<sbuf.bufsize;){
+	for(size_t i=0 ; i<sbuf.pagesize && i < (sbuf.bufsize - 16) ;){
 	    const sbuf_t sb2 = sbuf+i;
 
             /* Look for a PCAPFile header */
@@ -1030,7 +1030,8 @@ void scan_net(scanner_params &sp)
 	/* changed the pattern to be the entire feature,
 	 * since histogram was not being created with previous pattern
 	 */
-	sp.info->histogram_defs.push_back( histogram_def("ip",  "ip",      "",       "cksum-ok", "histogram", histogram_def::flags_t()) );
+        /*                                               name,  feature_file, pattern, require, filename_suffix , flags */
+	sp.info->histogram_defs.push_back( histogram_def("ip",  "ip",      "",   cksum_ok, "histogram", histogram_def::flags_t()) );
         sp.info->histogram_defs.push_back( histogram_def("ether","ether", "([^\(]+)","", "histogram", histogram_def::flags_t()));
 
         sp.info->feature_defs.push_back( feature_recorder_def("tcp"));
