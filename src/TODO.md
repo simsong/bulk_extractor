@@ -10,5 +10,7 @@
 
 - [ ] When carving tests/len6192.jpg, the JPEG should only be 6192 bytes.
 - [ ] When scanning tests/testfilex.docx, the JPEG should only be 6192 bytes
+- [ ] Automatically set carve mode for in the main.cpp abstractly for
+  every feature recorder based on name.
 
 # Ideas:

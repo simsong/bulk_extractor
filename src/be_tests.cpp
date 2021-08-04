@@ -302,7 +302,7 @@ struct Check {
         fname(fname_),
         feature(feature_) {};
     std::string fname;
-    Feature feature;
+    Feature feature;                    // defined in be13_api/feature_recorder.h
 };
 
 TEST_CASE("test_validate", "[phase1]" ) {
@@ -341,14 +341,20 @@ std::string validate(std::string image_fname, std::vector<Check> &expected)
     ss.apply_scanner_commands();
 
     if (image_fname != "" ) {
-        auto p = image_process::open( test_dir() / image_fname, false, 65536, 65536);
-        Phase1::Config cfg;  // config for the image_processing system
-        Phase1 phase1(cfg, *p, ss);
-        phase1.dfxml_write_create( 0, nullptr);
+        try {
+            auto p = image_process::open( test_dir() / image_fname, false, 65536, 65536);
+            Phase1::Config cfg;  // config for the image_processing system
+            Phase1 phase1(cfg, *p, ss);
+            phase1.dfxml_write_create( 0, nullptr);
 
-        ss.phase_scan();
-        phase1.phase1_run();
-        delete p;
+            ss.phase_scan();
+            phase1.phase1_run();
+            delete p;
+        } catch (image_process::NoSuchFile &e) {
+            std::cerr << "no such file: " << e.what() << "\n";
+            bool file_found=false;
+            REQUIRE(file_found);
+        }
     }
     ss.shutdown();
 
@@ -377,9 +383,9 @@ std::string validate(std::string image_fname, std::vector<Check> &expected)
                 }
                 auto words = split(line, '\t');
                 if (words.size()==3 &&
-                    words[0]==expected[i].feature.pos &&
-                    words[1]==expected[i].feature.feature &&
-                    words[2]==expected[i].feature.context){
+                    (words[0]==expected[i].feature.pos) &&
+                    (words[1]==expected[i].feature.feature) &&
+                    (words[2]==expected[i].feature.context || expected[i].feature.context.size()==0)) {
                     found = true;
                     break;
                 }
@@ -394,8 +400,6 @@ std::string validate(std::string image_fname, std::vector<Check> &expected)
     std::cerr << "--- done ---\n\n";
     return sc.outdir;
 }
-
-
 
 
 TEST_CASE("test_json", "[phase1]") {
@@ -448,6 +452,15 @@ TEST_CASE("KML_Samples.kml","[phase1]"){
     validate("KML_Samples.kml", ex4);
 }
 
+TEST_CASE("test_jpeg_rar", "[phase1]") {
+    std::vector<Check> ex2 {
+        Check("jpeg_carved.txt",
+              Feature( "13259-RAR-0", "jpeg_carved/000/13259-RAR-0.jpg"))
+
+    };
+    validate("jpegs.rar", ex2);
+}
+
 sbuf_t *make_sbuf()
 {
     auto sbuf = new sbuf_t("Hello World!");
@@ -473,20 +486,6 @@ TEST_CASE("sbuf_no_copy", "[threads]") {
     }
 }
 
-#if 0
-/* Make the sbufs in the primary thread and dispose of them in the worker thread */
-TEST_CASE("threadpool3", "[threads]") {
-    counter = 0;
-    class thread_pool pool;
-    for(int i=0;i<100;i++){
-        auto sbuf = make_sbuf();
-        pool.push_task( [sbuf]{ test_process_sbuf(sbuf); } );
-    }
-    pool.wait_for_tasks();
-    REQUIRE( counter==1000 );
-}
-#endif
-
 /****************************************************************/
 TEST_CASE("image_process", "[phase1]") {
     image_process *p = nullptr;
@@ -508,10 +507,3 @@ TEST_CASE("image_process", "[phase1]") {
     REQUIRE(times==1);
     delete p;
 }
-
-
-#if 0
-TEST_CASE("get_sbuf", "[phase1]") {
-    image_process *p = image_process::open( image_fname, opt_recurse, cfg.opt_pagesize, cfg.opt_marginsize);
-}
-#endif

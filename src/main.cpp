@@ -1028,13 +1028,15 @@ int main(int argc,char **argv)
         if(cfg.num_threads>0){
             std::cout << mb_per_sec/cfg.num_threads << " (MBytes/sec/thread)\n";
         }
+        std::cout << "sbufs created:   " << sbuf_t::sbuf_total << "\n";
+        std::cout << "sbufs remaining: " << sbuf_t::sbuf_count << "\n";
     }
 
     try {
         feature_recorder &fr = ss.fs.named_feature_recorder("email");
         std::cout << "Total " << fr.name << " features found: " << fr.features_written << "\n";
     }
-    catch (const scanner_set::NoSuchScanner &e) {
+    catch (const feature_recorder_set::NoSuchFeatureRecorder &e) {
         std::cout << "Did not scan for email addresses.\n";
     }
 
