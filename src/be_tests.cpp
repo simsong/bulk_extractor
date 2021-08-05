@@ -6,6 +6,8 @@
 #include <cstdio>
 #include <stdexcept>
 #include <unistd.h>
+#include <string>
+#include <string_view>
 
 #define CATCH_CONFIG_MAIN
 #define CATCH_CONFIG_CONSOLE_WIDTH 120
@@ -382,10 +384,18 @@ std::string validate(std::string image_fname, std::vector<Check> &expected)
                     std::cerr << line << "\n"; // print the file the second time through
                 }
                 auto words = split(line, '\t');
-                if (words.size()==3 &&
+                std::string pos = expected[i].feature.pos.str();
+                if (ends_with(pos,"-0")) {
+                    pos = pos.substr(0,pos.size()-2);
+                }
+                if (ends_with(pos,"|0")) {
+                    pos = pos.substr(0,pos.size()-2);
+                }
+                if (words.size()>=2 &&
                     (words[0]==expected[i].feature.pos) &&
                     (words[1]==expected[i].feature.feature) &&
-                    (words[2]==expected[i].feature.context || expected[i].feature.context.size()==0)) {
+                    (words.size()==2 ||
+                     (words[2]==expected[i].feature.context || expected[i].feature.context.size()==0))) {
                     found = true;
                     break;
                 }
@@ -459,6 +469,16 @@ TEST_CASE("test_jpeg_rar", "[phase1]") {
 
     };
     validate("jpegs.rar", ex2);
+}
+
+TEST_CASE("test_net1", "[phase1]") {
+    std::vector<Check> ex2 {
+        Check("ip.txt",
+              Feature( "54", "192.168.0.91", "struct ip L (src) cksum-ok")),
+        Check("ip_histogram.txt",
+              Feature( "n=79", "192.168.0.91"))
+    };
+    validate("ntlm.pcap", ex2);
 }
 
 sbuf_t *make_sbuf()
