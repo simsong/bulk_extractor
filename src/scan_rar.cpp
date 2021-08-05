@@ -640,6 +640,7 @@ void scan_rar(scanner_params &sp)
             // try each of the possible RAR blocks we may want to record
 
             // volumes are considered false positives if they are not preceeded by the magic number marker block
+            // TODO: change is_mark_block to a sbuf.find
             if (record_volumes &&
                 cc_len > MARK_LEN &&
                 is_mark_block( sbuf, pos) &&

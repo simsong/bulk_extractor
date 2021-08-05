@@ -45,9 +45,10 @@
 typedef char sa_family_t;
 #endif
 
-#include "be13_api/scanner_params.h"
 #include "be13_api/utils.h" // needs config.h
+#include "be13_api/scanner_params.h"
 #include "be13_api/packet_info.h"
+#include "scan_net.h"
 
 /* Hardcoded tunings */
 
@@ -55,18 +56,15 @@ typedef char sa_family_t;
 static const uint16_t sane_ports[] = {80, 443, 53, 25, 110, 143, 993, 587, 23, 22, 21, 20, 119, 123};
 static const uint16_t sane_ports_len = sizeof(sane_ports) / sizeof(uint16_t);
 
-const uint32_t jan1_1990 = 631152000;   //
-
-const uint32_t TIME_MIN = jan1_1990;
-uint32_t TIME_MAX = 0;            // will be set to five years in the future
+const uint32_t JAN1_1990 = 631152000;   // we won't get packets before this date.
+const uint32_t TIME_MIN = JAN1_1990;
 const uint32_t max_packet_len = 65535;
 const uint32_t min_packet_size = 20;		// don't bother with ethernet packets smaller than this
+uint32_t TIME_MAX = 0;            // will be set to five years in the future
 
 /* mutex for writing packets.
  * This is not in the class because it will be accessed by multiple threads.
  */
-static std::mutex Mfcap;              // mutex for fcap
-static FILE *fcap = 0;		// capture file, protected by M
 static bool carve_net_memory = false;
 
 /****************************************************************/
@@ -95,6 +93,7 @@ static bool carve_net_memory = false;
 
 
 int opt_report_checksum_bad= 0;		// if true, report bad chksums
+int opt_report_packet_path = 0;         // if true, report packets to packets.txt
 static const char *default_filename = "packets.pcap";
 
 /* packetset is a set of the addresses of packets that have been written.
@@ -229,7 +228,7 @@ struct be_udphdr {
  *	- Next Header (1 octet)
  * Total: 40 octets
  */
-static uint16_t IPv6L3Chksum(const sbuf_t &sbuf, u_int chksum_byteoffset)
+uint16_t scan_net::IPv6L3Chksum(const sbuf_t &sbuf, u_int chksum_byteoffset)
 {
     const struct ip6_hdr *ip6 = sbuf.get_struct_ptr<struct ip6_hdr>(0);
     if (ip6==0) return 0;		// cannot compute; not enough data
@@ -518,7 +517,7 @@ static bool sanityCheckIP46Header(const sbuf_t &sbuf, bool *checksum_valid, gene
                 if (!tcp) return false;	// not sufficient room
 
                 /* tcp chksum is at byte offset 16 from tcp hdr + 40 w/ pseudo hdr */
-                (*checksum_valid) = (tcp->th_sum == IPv6L3Chksum(sbuf, 56));
+                (*checksum_valid) = (tcp->th_sum == scan_net::IPv6L3Chksum(sbuf, 56));
                 break;
 	    }
 	case IPPROTO_UDP:
@@ -527,7 +526,7 @@ static bool sanityCheckIP46Header(const sbuf_t &sbuf, bool *checksum_valid, gene
                 if (!udp) return false;	// not sufficient room
 
                 /* udp chksum is at byte offset 6 from udp hdr + 40 w/ pseudo hdr */
-                (*checksum_valid) = (udp->uh_sum == IPv6L3Chksum(sbuf, 46));
+                (*checksum_valid) = (udp->uh_sum == scan_net::IPv6L3Chksum(sbuf, 46));
                 break;
 	    }
 	case IPPROTO_ICMPV6:
@@ -536,7 +535,7 @@ static bool sanityCheckIP46Header(const sbuf_t &sbuf, bool *checksum_valid, gene
                 if (!icmp6) return false;	// not sufficient room
 
                 /* icmpv6 chksum is at byte offset 2 from icmpv6 hdr + 40 w/ pseudo hdr */
-                (*checksum_valid) = (icmp6->icmp6_cksum == IPv6L3Chksum(sbuf, 42));
+                (*checksum_valid) = (icmp6->icmp6_cksum == scan_net::IPv6L3Chksum(sbuf, 42));
                 break;
 	    }
 	}
@@ -597,24 +596,15 @@ static inline bool likely_valid_pcap_header(const sbuf_t &sbuf, size_t offset, s
  * Currently this will not write out a truncated packet.
  */
 class packet_carver {
-private:
     packet_carver(const packet_carver &pc) = delete;
     packet_carver &operator=(const packet_carver &that) = delete;
-public:
-    //typedef std::tr1::unordered_set<const void *> packetset;
-    //packetset ps;
+    std::mutex Mfcap {};              // mutex for fcap
+    FILE *fcap = 0;		      // capture file, protected by M
     std::filesystem::path outdir;
     feature_recorder &ip_recorder;
     feature_recorder &tcp_recorder;
     feature_recorder &ether_recorder;
 
-    packet_carver(const scanner_params &sp):
-        outdir(sp.sc.outdir),
-        ip_recorder(sp.named_feature_recorder("ip")),
-        tcp_recorder(sp.named_feature_recorder("tcp")),
-        ether_recorder(sp.named_feature_recorder("ether")){ }
-
-private:
     /*
      * According to 'man pcap-savefile', you need to implement this file format,
      * but there are no functions to do so.
@@ -647,6 +637,25 @@ private:
     }
 
 public:
+    static inline const std::string CHKSUM_OK {"cksum-ok"};
+    static inline const std::string CHKSUM_BAD {"cksum-bad"};
+    packet_carver(const scanner_params &sp):
+        outdir(sp.sc.outdir),
+        ip_recorder(sp.named_feature_recorder("ip")),
+        tcp_recorder(sp.named_feature_recorder("tcp")),
+        ether_recorder(sp.named_feature_recorder("ether")){
+    }
+
+    ~packet_carver() {
+	if (fcap){
+            const std::lock_guard<std::mutex> lock(Mfcap);
+            fclose(fcap);
+            fcap = nullptr;
+        }
+    }
+
+
+
     void pcap_writepkt(const struct pcap_hdr &h,
 		       const sbuf_t &sbuf,const size_t offset,
                        const bool add_frame,
@@ -758,8 +767,6 @@ public:
      * Please remember this is called for every byte of the disk image,
      * so it needs to be as fast as possible.
      */
-    static std::string chksum_ok;
-    static std::string chksum_bad;
 
     /** Write the ethernet addresses and the TCP info into the appropriate feature files.
      */
@@ -767,7 +774,7 @@ public:
     void documentIPFields(const sbuf_t &sb2,const generic_iphdr_t &h,bool checksum_valid) {
 	/* Report the IP address */
 	/* based on the TTL, infer whether remote or local */
-	const std::string &chksum_status = checksum_valid ? chksum_ok : chksum_bad;
+	const std::string &chksum_status = checksum_valid ? CHKSUM_OK : CHKSUM_BAD;
         std::string src,dst;
 
 	if (isPowerOfTwo(h.ttl)){
@@ -912,7 +919,6 @@ public:
     }
 
 
-
     /* Test for a possible sockaddr_in <netinet/in.h>
      * Please remember that this is called for every byte, so it needs to be fast.
      */
@@ -953,7 +959,7 @@ public:
      */
     size_t carveTCPTOBJ(const sbuf_t &sb2){
 	const struct tcpt_object *to = sb2.get_struct_ptr<struct tcpt_object>(0);
-	if (to==0) return false;
+	if (to==nullptr) return false;
 
 	/* 0x54455054 == "TCPT" */
 	if ( (to->sig == htonl(0x54435054)) && (to->pool_size == htons(0x330A)) ) {
@@ -1005,8 +1011,7 @@ public:
     };
 };
 
-std::string packet_carver::chksum_ok("cksum-ok");
-std::string packet_carver::chksum_bad("cksum-bad");
+packet_carver *carver = nullptr;
 
 extern "C"
 void scan_net(scanner_params &sp)
@@ -1031,7 +1036,10 @@ void scan_net(scanner_params &sp)
 	 * since histogram was not being created with previous pattern
 	 */
         /*                                               name,  feature_file, pattern, require, filename_suffix , flags */
-	sp.info->histogram_defs.push_back( histogram_def("ip",  "ip",      "",   cksum_ok, "histogram", histogram_def::flags_t()) );
+        histogram_def::flags_t f;
+        f.require_context = true;
+        f.require_feature = false;
+	sp.info->histogram_defs.push_back( histogram_def("ip",  "ip",      "", packet_carver::CHKSUM_OK, "histogram", f));
         sp.info->histogram_defs.push_back( histogram_def("ether","ether", "([^\(]+)","", "histogram", histogram_def::flags_t()));
 
         sp.info->feature_defs.push_back( feature_recorder_def("tcp"));
@@ -1039,10 +1047,12 @@ void scan_net(scanner_params &sp)
 
         return;
     }
+    if (sp.phase==scanner_params::PHASE_INIT2){
+        carver = new packet_carver(sp);
+    }
     if (sp.phase==scanner_params::PHASE_SCAN){
         try {
-            packet_carver carver(sp);
-            carver.carve(*sp.sbuf);
+            carver->carve(*sp.sbuf);
         }
         catch (const sbuf_t::range_exception_t &e ) {
             /*
@@ -1054,9 +1064,8 @@ void scan_net(scanner_params &sp)
         }
     }
     if (sp.phase==scanner_params::PHASE_SHUTDOWN){
-	if (fcap){
-            const std::lock_guard<std::mutex> lock(Mfcap);
-            fclose(fcap);
+        if (carver) {
+            delete carver;
         }
 	return;
     }
