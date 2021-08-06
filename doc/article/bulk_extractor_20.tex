@@ -368,6 +368,19 @@ nps-2010-emails_be20v1/email.txt:456596-ZIP-1255189	keynote@iwork09.com	racterSt
 \end{Verbatim}
 \end{figure*}
 
+Many of hte code paths in the BE16 code base were painstakingly
+developed on specific test cases, but those test cases were not added
+to the code base as unit tests. For example, the scan\_net network
+packet scanner, used as the basis of the [BEVERLY-GARFINKEL] article,
+could carve IPv4 and IPv6 packets as well as recognize in-memory TCP
+header structures from Microsoft Windows memory dumps. The part of the
+scanners that accessed raw memory received significant rewrites to go
+through the new sbuf structure. We then wanted to validate that the
+rewritten scanners had the same functionality as the old ones. THe
+only way to do this was by assembling specific test cases for eaach
+data type---and adding them to the code base. This is something that
+wasn't done originally,
+
 \subsection{Performance Tuning}
 Despite the effort to eliminate all memory copies, the initial verison
 of BE2.0 was dramatically slower than BE1.6. For example, scanning the

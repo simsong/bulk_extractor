@@ -13,4 +13,10 @@
 - [ ] Automatically set carve mode for in the main.cpp abstractly for
   every feature recorder based on name.
 
+# scan_net
+- [ ] test against v1.6 with IPv4 UDP
+- [ ] test against v1.6 with IPv4 TCP
+- [ ] test against v1.6 with IPv6 UDP
+- [ ] test against v1.6 with IPv6 TCP
+
 # Ideas:
