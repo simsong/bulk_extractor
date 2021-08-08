@@ -194,30 +194,31 @@ size_t read_LinkInfo(const sbuf_t &sbuf, size_t offset, dfxml_writer::strstrmap_
 
 // top level data structrue, true if has data
 // This one doesn't take an offset; we make a child sbuf because we use it a lot
-bool read_ShellLinkHeader(const sbuf_t &sbuf, dfxml_writer::strstrmap_t& lnkmap) {
-
+bool read_ShellLinkHeader(const sbuf_t &sbuf, size_t pos, dfxml_writer::strstrmap_t& lnkmap)
+{
+    sbuf_t sb2 = sbuf.slice(pos);
     // record fields in this header
-    const uint64_t CreationTime   = sbuf.get64u(0x001c);
-    const uint64_t AccessTime     = sbuf.get64u(0x0024);
-    const uint64_t WriteTime      = sbuf.get64u(0x002c);
+    const uint64_t CreationTime   = sb2.get64u(0x001c);
+    const uint64_t AccessTime     = sb2.get64u(0x0024);
+    const uint64_t WriteTime      = sb2.get64u(0x002c);
     lnkmap["ctime"] = microsoftDateToISODate(CreationTime);
     lnkmap["atime"] = microsoftDateToISODate(AccessTime);
     lnkmap["wtime"] = microsoftDateToISODate(WriteTime);
 
     // flags dictating how the structure will be parsed
-    const uint32_t LinkFlags      = sbuf.get32u(0x0014);
+    const uint32_t LinkFlags      = sb2.get32u(0x0014);
     const bool is_unicode         = LinkFlags & (1 << 7);
 
     // read the optional fields
     size_t offset = 0x004c;
     if (LinkFlags & (1 << 0)) {    // LinkFlags A HasLinkTargetIDList
-        offset += read_LinkTargetIDList(sbuf, offset, lnkmap) + 2;
+        offset += read_LinkTargetIDList(sb2, offset, lnkmap) + 2;
     }
 
     // If I return here, it doesn't crash
 
     if (LinkFlags & (1 << 1)) {    // LinkFlags B HasLinkInfo
-        offset += read_LinkInfo(sbuf, offset, lnkmap); // causing crash
+        offset += read_LinkInfo(sb2, offset, lnkmap); // causing crash
     }
 
     // what if we return here?
@@ -225,41 +226,41 @@ bool read_ShellLinkHeader(const sbuf_t &sbuf, dfxml_writer::strstrmap_t& lnkmap)
 
 
     if (LinkFlags & (1 << 2)) {    // LinkFlags C HasName
-        offset += read_StringData("name_string", sbuf, offset, is_unicode, lnkmap);
+        offset += read_StringData("name_string", sb2, offset, is_unicode, lnkmap);
     }
     if (LinkFlags & (1 << 3)) {    // LinkFlags D HasRelativePath
-        offset += read_StringData("relative_path", sbuf, offset, is_unicode, lnkmap);
+        offset += read_StringData("relative_path", sb2, offset, is_unicode, lnkmap);
     }
     if (LinkFlags & (1 << 4)) {    // LinkFlags E HasWorkingDir
-        offset += read_StringData("working_dir", sbuf, offset, is_unicode, lnkmap);
+        offset += read_StringData("working_dir", sb2, offset, is_unicode, lnkmap);
     }
     if (LinkFlags & (1 << 5)) {    // LinkFlags F HasArguments
-        offset += read_StringData("command_line_arguments", sbuf, offset, is_unicode, lnkmap);
+        offset += read_StringData("command_line_arguments", sb2, offset, is_unicode, lnkmap);
     }
     if (LinkFlags & (1 << 6)) {    // LinkFlags G HasIconLocation
-        offset += read_StringData("icon_location", sbuf, offset, is_unicode, lnkmap);
+        offset += read_StringData("icon_location", sb2, offset, is_unicode, lnkmap);
     }
 
     int lkcount = 0;
     while (lkcount < 20) { // there should be at most 11 of these
 
         // read any extra data blocks
-        const uint32_t BlockSize = sbuf.get32u(offset+0);
+        const uint32_t BlockSize = sb2.get32u(offset+0);
         if (BlockSize < 4) {
             // the end block is defined as having BlockSize<4
             break;
         }
 
         // only some block types are interesting
-        const uint32_t BlockSignature = sbuf.get32u(offset+4);
+        const uint32_t BlockSignature = sb2.get32u(offset+4);
         if (BlockSize == 0x60 && BlockSignature == 0xa0000003) {
 
             // Tracker Data Block
-            std::string dvolid = get_guid(sbuf, offset+32);
+            std::string dvolid = get_guid(sb2, offset+32);
             lnkmap["droid_volumeid"] = dvolid;
-            lnkmap["droid_fileid"] = get_guid(sbuf, offset+48);
-            lnkmap["birth_volumeid"] = get_guid(sbuf, offset+64);
-            lnkmap["birth_fileid"] = get_guid(sbuf, offset+80);
+            lnkmap["droid_fileid"] = get_guid(sb2, offset+48);
+            lnkmap["birth_volumeid"] = get_guid(sb2, offset+64);
+            lnkmap["birth_fileid"] = get_guid(sb2, offset+80);
         }
 
         offset += BlockSize;
@@ -316,15 +317,15 @@ void scan_winlnk(scanner_params &sp)
 	// phase 1: set up the feature recorder and search for winlnk features
 	const sbuf_t &sbuf = *(sp.sbuf);
 
-        for (size_t p=0;(p < sbuf.pagesize) &&  (p + SMALLEST_LNK_FILE < sbuf.bufsize ); p++){
+        for (size_t pos=0;(pos < sbuf.pagesize) &&  (pos + SMALLEST_LNK_FILE < sbuf.bufsize ); pos++){
 
             // look for Shell Link (.LNK) binary file format magic number
             // Move this to a b-m search.
-            if ( sbuf.get32u(p+0x00) == 0x0000004c &&      // header size
-                 sbuf.get32u(p+0x04) == 0x00021401 &&      // LinkCLSID 1
-                 sbuf.get32u(p+0x08) == 0x00000000 &&      // LinkCLSID 2
-                 sbuf.get32u(p+0x0c) == 0x000000c0 &&      // LinkCLSID 3
-                 sbuf.get32u(p+0x10) == 0x46000000 ){      // LinkCLSID 4
+            if ( sbuf.get32u(pos+0x00) == 0x0000004c &&      // header size
+                 sbuf.get32u(pos+0x04) == 0x00021401 &&      // LinkCLSID 1
+                 sbuf.get32u(pos+0x08) == 0x00000000 &&      // LinkCLSID 2
+                 sbuf.get32u(pos+0x0c) == 0x000000c0 &&      // LinkCLSID 3
+                 sbuf.get32u(pos+0x10) == 0x46000000 ){      // LinkCLSID 4
 
                 // container for reported fields
 		dfxml_writer::strstrmap_t lnkmap;
@@ -332,7 +333,7 @@ void scan_winlnk(scanner_params &sp)
                 // read
                 bool has_data = true;
                 try {
-                    has_data = read_ShellLinkHeader(sbuf+p, lnkmap);
+                    has_data = read_ShellLinkHeader(sbuf, pos, lnkmap);
                 } catch (sbuf_t::range_exception_t &e) {
                     // add error field to indicate that the read was not complete
                     lnkmap["error"] = "LINKINFO_DATA_ERROR";
@@ -362,7 +363,7 @@ void scan_winlnk(scanner_params &sp)
                 if (path == "") path = "LINKINFO_PATH_EMPTY"; // nothing to assign to path
 
                 // record
-                winlnk_recorder->write(sbuf.pos0+p,path,dfxml_writer::xmlmap(lnkmap,"lnk",""));
+                winlnk_recorder->write(sbuf.pos0+pos, path, dfxml_writer::xmlmap(lnkmap,"lnk",""));
             }
         }
     }

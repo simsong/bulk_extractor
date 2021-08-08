@@ -30,24 +30,6 @@
 #include <mutex>
 #include <ctype.h>
 
-// these need config.h:
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
-
-#ifdef HAVE_ARPA_INET_H
-#include <arpa/inet.h>
-#endif
-#ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
-#endif
-#ifdef HAVE_WSIPX_H
-typedef char sa_family_t;
-#endif
-
-#include "be13_api/utils.h" // needs config.h
-#include "be13_api/scanner_params.h"
-#include "be13_api/packet_info.h"
 #include "scan_net.h"
 
 /* Hardcoded tunings */
@@ -65,8 +47,6 @@ uint32_t TIME_MAX = 0;            // will be set to five years in the future
 /* mutex for writing packets.
  * This is not in the class because it will be accessed by multiple threads.
  */
-static bool carve_net_memory = false;
-
 /****************************************************************/
 
 #ifdef HAVE_PCAP_PCAP_H
@@ -103,25 +83,6 @@ static const char *default_filename = "packets.pcap";
  * Previously this was a set, but unordered_sets are faster.
  * It doesn't need to be mutex locked, because we do the tests for each thread.
  */
-
-/* generic ip header for IPv4 and IPv6 packets */
-typedef struct generic_iphdr {
-    sa_family_t family;		/* AF_INET or AF_INET6 */
-    uint8_t src[16];		/* Source IP address; holds v4 or v6 */
-    uint8_t dst[16];		/* Destination IP address; holds v4 or v6 */
-    uint8_t ttl;		/* ttl from ip_hdr and hop_limit for ip6_hdr */
-    uint8_t nxthdr;		/* nxt hdr type */
-    uint8_t nxthdr_offs;	/* nxt hdr offset, also IP hdr len */
-    uint16_t payload_len; 	/* IP total len - IP hdr */
-} generic_iphdr_t;
-
-/* pseudo-header of our making */
-struct macip {
-    be13::ether_addr ether_dhost;
-    be13::ether_addr ether_shost;
-    uint16_t ether_type;
-    uint8_t ipv;
-};
 
 /****************************************************************/
 /*
@@ -214,6 +175,39 @@ struct be_udphdr {
 };
 
 
+#  ifdef HAVE_DIAGNOSTIC_CAST_ALIGN
+#    pragma GCC diagnostic ignored "-Wcast-align"
+#  endif
+
+/* compute an Internet-style checksum, from Stevens.
+ * The ipchecksum is stored 10 bytes in, so do not include it.
+ */
+uint16_t scan_net::ip4_cksum(const sbuf_t &sbuf, size_t pos, size_t len)
+{
+    uint32_t  sum = 0;  /* assume 32 bit long, 16 bit short */
+
+    for (size_t offset = 0; offset+pos < sbuf.bufsize && offset<len; offset+=2){
+        if (offset != 10) {   // do not include the checksum field
+            sum += sbuf.get16u( pos+offset );
+            if (sum & 0x80000000){   /* if high order bit set, fold */
+                sum = (sum & 0xFFFF) + (sum >> 16);
+	    }
+        }
+    }
+
+    if (len % 2 != 0){
+        sum += sbuf[ pos+len-1];     /* take care of left over byte */
+    }
+
+    /* Now add all of the 1st complements */
+    while (sum>>16) {
+        sum = (sum & 0xFFFF) + (sum >> 16);
+    }
+    return ~sum;
+}
+
+
+
 /**
  * Computes the checksum for IPv6 TCP, UDP and ICMPv6.
  *
@@ -278,34 +272,6 @@ uint16_t scan_net::IPv6L3Chksum(const sbuf_t &sbuf, size_t pos, u_int chksum_byt
     }
 
     return ~sum;			// return the complement of the checksum
-}
-
-/* compute an Internet-style checksum, from Stevens */
-#  ifdef HAVE_DIAGNOSTIC_CAST_ALIGN
-#    pragma GCC diagnostic ignored "-Wcast-align"
-#  endif
-uint16_t ip4_cksum(const sbuf_t &ipp)
-{
-    uint32_t  sum = 0;  /* assume 32 bit long, 16 bit short */
-
-    for (size_t offset = 0; offset< ipp.bufsize; offset+=2){
-        if (offset != 10) {   // do not include the checksum field
-            sum += ipp.get16u(offset);
-            if (sum & 0x80000000){   /* if high order bit set, fold */
-                sum = (sum & 0xFFFF) + (sum >> 16);
-	    }
-        }
-    }
-
-    if (ipp.bufsize % 2 != 0){
-        sum += ipp[ipp.bufsize-1];     /* take care of left over byte */
-    }
-
-    /* Now add all of the 1st complements */
-    while(sum>>16){
-        sum = (sum & 0xFFFF) + (sum >> 16);
-    }
-    return ~sum;
 }
 
 /* determine if an integer is a power of two; used for the TTL */
@@ -461,7 +427,8 @@ static bool sanePort(const uint16_t port) {
  *
  * http://en.wikipedia.org/wiki/Transmission_Control_Protocol#TCP_checksum_for_IPv6
  */
-static bool sanityCheckIP46Header(const sbuf_t &sbuf, size_t pos, bool *checksum_valid, generic_iphdr_t *h)
+bool scan_net::sanityCheckIP46Header(const sbuf_t &sbuf, size_t pos, bool *checksum_valid,
+                                     scan_net::generic_iphdr_t *h)
 {
     const struct be13::ip4 *ip = sbuf.get_struct_ptr<struct be13::ip4>( pos );
     if (!ip) return false;		// not enough space
@@ -476,8 +443,7 @@ static bool sanityCheckIP46Header(const sbuf_t &sbuf, size_t pos, bool *checksum
 	if ( (ntohs(ip->ip_len) > 8192) || (ntohs(ip->ip_len) < 28) ) return false;
 
         /* Validate the checksum */
-    	(*checksum_valid) = (ip->ip_sum == ip4_cksum(sbuf_t(pos0_t(),
-                                                            reinterpret_cast<const uint8_t *>(ip), ip->ip_hl * 4)));
+    	(*checksum_valid) = (ip->ip_sum == ip4_cksum(sbuf, pos, ip->ip_hl * 4 ));
 
 	/* create a generic_iphdr_t, similar to tcpip.c from tcpflow code */
 	h->family = AF_INET;
@@ -673,10 +639,14 @@ public:
 
 
 
-    void pcap_writepkt(const struct pcap_hdr &h,
-		       const sbuf_t &sbuf, const size_t offset,
-                       const bool add_frame,
-                       const uint16_t frame_type) {
+    /* write an IP packet to the output stream, optionally writing a pcap header.
+     * Length of packet is determined from IP header.
+     */
+    void pcap_writepkt(const struct pcap_hdr &h, // packet header
+		       const sbuf_t &sbuf,       // sbuf where packet is located
+                       const size_t pos,         // position within the sbuf
+                       const bool add_frame,     // whether or not to create a synthetic ethernet frame
+                       const uint16_t frame_type) { // ethernet frame type
 	// Make sure that neither this packet nor an encapsulated version of this packet has been written
         const std::lock_guard<std::mutex> lock(Mfcap);// lock the mutex
         if (fcap==0){
@@ -717,7 +687,7 @@ public:
         if (add_frame_and_safe) {
             pcap_write_bytes(forged_header, sizeof(forged_header));
         }
-        sbuf.write(fcap, offset, h.cap_len );	// the packet
+        sbuf.write(fcap, pos, h.cap_len );	// the packet
     }
 
     /**
@@ -765,7 +735,7 @@ public:
 	 * which may cause issues if there is encapsulation present
 	 */
 	size_t len = 0;
-	if (sbuf.memcmp(PCAP_HEADER, pos, sizeof(PCAP_HEADER))) {
+	if (sbuf.memcmp(PCAP_HEADER, pos, sizeof(PCAP_HEADER))==0) {
 	    ip_recorder.write(sbuf.pos0+pos,"0xd4,0xc3,0xb2,0xa1","TCPDUMP file");
 	    /* now scan for packets */
 	    len = 24;
@@ -825,7 +795,7 @@ public:
 	}
 	if (h.nxthdr==IPPROTO_ICMPV6){
 	    const struct icmp6_hdr *icmp6 = sbuf.get_struct_ptr<struct icmp6_hdr>(offset+h.nxthdr_offs);
-	    if (icmp6) tcp_recorder.write(sbuf.pos0+offsset,
+	    if (icmp6) tcp_recorder.write(sbuf.pos0+offset,
 					  ip2string(h.src, h.family) + " -> " +
 					  ip2string(h.dst, h.family) + " (ICMPv6)",
 					  " Type: " + i2str(icmp6->icmp6_type) + " Code: " + i2str(icmp6->icmp6_code)
@@ -833,7 +803,7 @@ public:
 	}
     }
 
-    size_t carveIPFrame(const sbuf_t &buf, size_t offset) {
+    size_t carveIPFrame(const sbuf_t &sbuf, size_t offset) {
 	generic_iphdr_t h;
 	bool checksum_valid = false;
 
@@ -842,7 +812,7 @@ public:
 	 * Unfortunately the sanity checks are not highly discriminatory.
 	 * The call below sets the 'h' structure as necessary
 	 */
-	if (!sanityCheckIP46Header(sb2, &checksum_valid, &h)) return 0;
+	if (!sanityCheckIP46Header(sbuf, offset, &checksum_valid, &h)) return 0;
 	if (invalidIP(h.src,h.family) || invalidIP(h.dst,h.family)) return 0;
 	if (h.family!=AF_INET && h.family!=AF_INET6) return 0; // only care about IPv4 and IPv6
 
@@ -854,12 +824,12 @@ public:
 	/* IPv4 has a checksum; use it if we can */
 	if (checksum_valid==false && opt_report_checksum_bad==false) return 0; // user does not want invalid checksums
 
-	documentIPFields(sb2,h,checksum_valid);
+	documentIPFields( sbuf, offset, h, checksum_valid);
 
-	/* A valid IPframe but not proceeded by an Ethernet or a pcap header */
+	/* A valid IPframe but not proceeded by an Ethernet or a pcap header. */
 	uint8_t buf[PCAP_MAX_PKT_LEN+14];
-	ssize_t ip_len         = h.nxthdr_offs + h.payload_len;
-	if (ip_len > (ssize_t)sb2.bufsize) ip_len = sb2.bufsize;
+	size_t ip_len         = h.nxthdr_offs + h.payload_len;
+	if (ip_len + offset > sbuf.bufsize) ip_len = sbuf.bufsize-offset;
 	ssize_t packet_len = 14 + ip_len ;
 	if (packet_len > PCAP_MAX_PKT_LEN){
 	    packet_len = PCAP_MAX_PKT_LEN;
@@ -871,19 +841,20 @@ public:
 	case AF_INET6: buf[12] = 0xdd; buf[13] = 0x86; break;
 	default:       buf[12] = 0xff; buf[13] = 0xff; break; // shouldn't happen
 	}
-	memcpy(buf+14,sb2.get_buf(),packet_len-14); // copy the packet data
+	memcpy(buf+14,sbuf.get_buf(),packet_len-14);       // copy the packet data
+
 	/* make an sbuf to write */
-	sbuf_t sb3(pos0_t(),buf, packet_len);
-	struct pcap_hdr hz(0,0,packet_len,packet_len); // make a fake header
-	pcap_writepkt(hz,sb3,0,false,0x0000);	   // write the packet
-	return ip_len;				   // return that we processed this much
+	sbuf_t sb3(pos0_t(), buf, packet_len);
+	struct pcap_hdr hz(0, 0, packet_len, packet_len);  // make a fake header
+	pcap_writepkt(hz, sb3, 0, false, 0x0000);	   // write the packet
+	return ip_len;                                     // return that we processed this much
     }
 
     /* Test for Ethernet link-layer MACs
      * Returns the size of the object carved
      */
-    size_t carveEther(const sbuf_t &sb2)    {
-	const struct macip *er = sb2.get_struct_ptr<struct macip>(0);
+    size_t carveEther(const sbuf_t &sbuf, size_t pos)    {
+	const struct macip *er = sbuf.get_struct_ptr<struct macip>(0);
 	if (er){
 	    if ( (er->ether_type != htons(ETHERTYPE_IP)) &&   // 0x0800
 		 (er->ether_type != htons(ETHERTYPE_IPV6)) ){ // 0x86dd
@@ -893,28 +864,24 @@ public:
 		return 0;
 	    }
 	}
-#if 0
 
 	size_t data_offset = (2*ETHER_ADDR_LEN)+sizeof(uint16_t);
 
 	/**
 	 * We have enough data to document what is in the packet! Hurrah! Let's save it.
 	 */
-	if (data_offset < sb2.bufsize){
+	if (data_offset + pos < sbuf.bufsize){
 	    bool checksum_valid = false;
 	    generic_iphdr_t h;
 
-	    sbuf_t ip_sbuf(sb2+data_offset);
-            std::cerr << ip_sbuf << "\n"; // force it not to be optimized away
-
-	    if (sanityCheckIP46Header(ip_sbuf, &checksum_valid, &h) && checksum_valid) {
+	    if (sanityCheckIP46Header(sbuf, pos + data_offset, &checksum_valid, &h) && checksum_valid) {
 		if (!invalidMAC(&(er->ether_dhost))){
-		    ether_recorder.write(sb2.pos0, mac2string(&(er->ether_dhost)), " (ether_dhost) ");
+		    ether_recorder.write(sbuf.pos0 + pos, mac2string(&(er->ether_dhost)), " (ether_dhost) ");
 		}
 		if (!invalidMAC(&(er->ether_shost))){
-		    ether_recorder.write(sb2.pos0, mac2string(&(er->ether_shost)), " (ether_shost) ");
+		    ether_recorder.write(sbuf.pos0 + pos, mac2string(&(er->ether_shost)), " (ether_shost) ");
 		}
-		documentIPFields(ip_sbuf, h, checksum_valid);
+		documentIPFields(sbuf, pos+data_offset , h, checksum_valid);
 	    }
 	}
 
@@ -925,18 +892,17 @@ public:
 	generic_iphdr_t h;
 	bool checksum_valid = false;
 	/* the IP pkt starts after the Ethernet header, 14 byte offset */
-	if (sanityCheckIP46Header(sb2+14, &checksum_valid, &h)){
+	if (sanityCheckIP46Header(sbuf, pos+14, &checksum_valid, &h)){
 	    if (checksum_valid){
 		ssize_t packet_len     = 14 + h.nxthdr_offs + h.payload_len; // ether size + ip size + ip data
-		if (packet_len > (ssize_t)sb2.bufsize) packet_len = sb2.bufsize;
+		if (packet_len + pos > sbuf.bufsize) packet_len = sbuf.bufsize - pos;
 		if (packet_len > 0 ){
-		    struct pcap_hdr hz(0,0,packet_len,packet_len);
-		    pcap_writepkt(hz,sb2,0,false,0x0000);
+		    struct pcap_hdr hz(0, 0, packet_len, packet_len);
+		    pcap_writepkt(hz, sbuf, pos, false, 0x0000);
 		    return packet_len;
 		}
 	    }
 	}
-#endif
 	return 0;
     }
 
@@ -944,8 +910,8 @@ public:
     /* Test for a possible sockaddr_in <netinet/in.h>
      * Please remember that this is called for every byte, so it needs to be fast.
      */
-    size_t carveSockAddrIn(const sbuf_t &sb2) {
-	const struct sockaddr_in *in = sb2.get_struct_ptr<struct sockaddr_in>(0);
+    size_t carveSockAddrIn(const sbuf_t &sbuf, size_t pos) {
+	const struct sockaddr_in *in = sbuf.get_struct_ptr<struct sockaddr_in>( pos );
 	if (in==0) return 0;
 
 	/* Note that the sin_len member of the sockaddr_in struct is optional
@@ -972,24 +938,24 @@ public:
 	/* Only use candidate with ports we believe most likely */
 	if (!sanePort(in->sin_port)) return 0;
 
-	ip_recorder.write(sb2.pos0, ip2string((const be13::ip4_addr *)&(in->sin_addr)), "sockaddr_in");
+	ip_recorder.write(sbuf.pos0 + pos, ip2string((const be13::ip4_addr *)&(in->sin_addr)), "sockaddr_in");
 	return sizeof(struct sockaddr_in);
     }
 
     /* Test for possible _TCPT_OBJECT
      * Please remember that this is called for every byte, so it needs to be fast.
      */
-    size_t carveTCPTOBJ(const sbuf_t &sb2){
-	const struct tcpt_object *to = sb2.get_struct_ptr<struct tcpt_object>(0);
+    size_t carveTCPTOBJ(const sbuf_t &sbuf, size_t pos){
+	const struct tcpt_object *to = sbuf.get_struct_ptr<struct tcpt_object>( pos );
 	if (to==nullptr) return false;
 
 	/* 0x54455054 == "TCPT" */
 	if ( (to->sig == htonl(0x54435054)) && (to->pool_size == htons(0x330A)) ) {
-	    ip_recorder.write( sb2.pos0, ip2string(&(to->src)), "tcpt");
-	    ip_recorder.write( sb2.pos0, ip2string(&(to->dst)), "tcpt");
-            tcp_recorder.write(sb2.pos0, ip2string(&(to->src)) + ":" + i2str(ntohs(to->src_port)) + " -> " +
-                               ip2string(&(to->dst)) + ":" + i2str(ntohs(to->dst_port)) + " (TCPT)",
-                               "" );
+            pos0_t p = sbuf.pos0 + pos;
+	    ip_recorder.write(  p, ip2string(&(to->src)), "tcpt");
+	    ip_recorder.write(  p, ip2string(&(to->dst)), "tcpt");
+            tcp_recorder.write( p, ip2string(&(to->src)) + ":" + i2str(ntohs(to->src_port)) + " -> " +
+                               ip2string(&(to->dst)) + ":" + i2str(ntohs(to->dst_port)),  "TCPT");
             return sizeof(struct tcpt_object);
         }
         return 0;
@@ -1004,7 +970,6 @@ public:
 	 * Please remember that this is called for every byte, so it needs to be fast.
 	 */
 	for(size_t i=0 ; i<sbuf.pagesize && i < (sbuf.bufsize - 16) ;){
-	    //const sbuf_t sb2 = sbuf+i;
 	    size_t carved = 0;
 
             /* Look for a PCAPFile header */
@@ -1015,21 +980,17 @@ public:
 	    size_t spacket = carvePCAPPacket( sbuf, i ); // doesn't make negative ones
 	    if (spacket>0) { i+= spacket; continue;}
 
-
             /* Look for another recognizable structure. If we find it, advance as far as a the biggest one */
             // carve either caused the problems!
-#if 0
-	    carved = carveEther( sb2); // look for an ethernet packet; true causes the packet to be carved if found
+	    carved = carveEther( sbuf, i ); // look for an ethernet packet; true causes the packet to be carved if found
 	    if (carved==0){
-		carved = carveIPFrame( sb2); // look for an IP packet
+		carved = carveIPFrame( sbuf, i ); // look for an IP packet
 	    }
-
 
 	    if (carved==0 && carve_net_memory){
 		/* If we can't carve a packet, look for these two memory structures */
-		carved = std::max(carveSockAddrIn( sb2 ), carveTCPTOBJ( sb2 ));
+		carved = std::max(carveSockAddrIn( sbuf, i ), carveTCPTOBJ( sbuf, i ));
 	    }
-#endif
 	    i += (carved>0 ? carved : 1);	// advance the pointer
 	}
         flush();
@@ -1037,6 +998,7 @@ public:
 };
 
 packet_carver *carver = nullptr;
+bool opt_carve_net_memory = false;
 
 extern "C"
 void scan_net(scanner_params &sp)
@@ -1045,7 +1007,7 @@ void scan_net(scanner_params &sp)
     if (sp.phase==scanner_params::PHASE_INIT){
 
         TIME_MAX = time(0) + 365*24*60*60*5; // five years in the future
-        sp.get_config("carve_net_memory",&carve_net_memory,"Carve network  memory structures");
+        sp.get_config("carve_net_memory",&opt_carve_net_memory,"Carve network  memory structures");
 
 	assert(sizeof(struct be13::ip4)==20);	// we've had problems on some systems
         sp.info = std::make_unique<scanner_params::scanner_info>(scan_net,"net");
@@ -1060,7 +1022,7 @@ void scan_net(scanner_params &sp)
 	/* changed the pattern to be the entire feature,
 	 * since histogram was not being created with previous pattern
 	 */
-        /*                                               name,  feature_file, pattern, require, filename_suffix , flags */
+        /*                                              name,  feature_file, pattern, require, filename_suffix , flags */
         histogram_def::flags_t f;
         f.require_context = true;
         f.require_feature = false;
@@ -1074,6 +1036,7 @@ void scan_net(scanner_params &sp)
     }
     if (sp.phase==scanner_params::PHASE_INIT2){
         carver = new packet_carver(sp);
+        carver->carve_net_memory = opt_carve_net_memory;
     }
     if (sp.phase==scanner_params::PHASE_SCAN){
         try {

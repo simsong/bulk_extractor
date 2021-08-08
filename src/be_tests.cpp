@@ -32,6 +32,7 @@
 #include "sbuf_decompress.h"
 #include "scan_base64.h"
 #include "scan_email.h"
+#include "scan_net.h"
 #include "scan_msxml.h"
 #include "scan_pdf.h"
 #include "scan_vcard.h"
@@ -263,8 +264,133 @@ TEST_CASE("scan_json1", "[scanners]") {
     REQUIRE(true);
 }
 
+/****************************************************************
+ ** Network test cases
+ */
+
+/*
+ * First packet of a wget from http://www.google.com/ over ipv4:
+
+# ifconfig en0
+en0: flags=8863<UP,BROADCAST,SMART,RUNNING,SIMPLEX,MULTICAST> mtu 1500
+	options=400<CHANNEL_IO>
+	ether 2c:f0:a2:f3:a8:ee
+	inet6 fe80::1896:319a:43fa:a6fe%en0 prefixlen 64 secured scopeid 0x4
+	inet 172.20.0.185 netmask 0xfffff000 broadcast 172.20.15.255
+	nd6 options=201<PERFORMNUD,DAD>
+	media: autoselect
+	status: active
+# tcpdump -r packet1.pcap -vvvv -x
+reading from file packet1.pcap, link-type EN10MB (Ethernet)
+08:39:26.039111 IP (tos 0x0, ttl 64, id 0, offset 0, flags [DF], proto TCP (6), length 64)
+    172.20.0.185.59910 > lax30s03-in-f4.1e100.net.http: Flags [SEW], cksum 0x8efd (correct), seq 2878109014, win 65535, options [mss 1460,nop,wscale 6,nop,nop,TS val 1914841783 ecr 0,sackOK,eol], length 0
+	0x0000:  4500 0040 0000 4000 4006 3b8d ac14 00b9
+	0x0010:  acd9 a584 ea06 0050 ab8c 7556 0000 0000
+	0x0020:  b0c2 ffff 8efd 0000 0204 05b4 0103 0306
+	0x0030:  0101 080a 7222 2ab7 0000 0000 0402 0000
+bash-3.2# xxd packet1.pcap
+00000000: d4c3 b2a1 0200 0400 0000 0000 0000 0000  ................
+00000010: 0000 0400 0100 0000 fe7e 0e61 c798 0000  .........~.a....
+00000020: 4e00 0000 4e00 0000 0050 e804 774b 2cf0  N...N....P..wK,.
+00000030: a2f3 a8ee 0800 4500 0040 0000 4000 4006  ......E..@..@.@.
+00000040: 3b8d ac14 00b9 acd9 a584 ea06 0050 ab8c  ;............P..
+00000050: 7556 0000 0000 b0c2 ffff 8efd 0000 0204  uV..............
+00000060: 05b4 0103 0306 0101 080a 7222 2ab7 0000  ..........r"*...
+00000070: 0000 0402 0000                           ......
+*/
+
+/* ethernet frame for packet above. Note that it starts 6 bytes before the source ethernet mac address.
+ * validated with packet decoder at https://hpd.gasmi.net/.
+ 172.20.0.185 → 172.217.165.132 TCP 59910 → 80 [SYN, ECN, CWR]
+Ethernet II
+Destination: Nomadix_04:77:4b (00:50:e8:04:77:4b)
+Source: Apple_f3:a8:ee (2c:f0:a2:f3:a8:ee)
+Type: IPv4 (0x0800)
+Internet Protocol Version 4
+0100 .... = Version: 4
+.... 0101 = Header Length: 20 bytes (5)
+Differentiated Services Field: 0x00 (DSCP: CS0, ECN: Not-ECT)
+Total Length: 64
+Identification: 0x0000 (0)
+Flags: 0x40, Don't fragment
+Fragment Offset: 0
+Time to Live: 64
+Protocol: TCP (6)
+Header Checksum: 0x3b8d   (15245)
+Header checksum status: Unverified
+Source Address: 172.20.0.185
+Destination Address: 172.217.165.132
+Transmission Control Protocol
+Source Port: 59910
+Destination Port: 80
+Stream index: 0
+TCP Segment Len: 0
+Sequence Number: 0
+Sequence Number (raw): 2878109014
+Next Sequence Number: 1
+Acknowledgment Number: 0
+Acknowledgment number (raw): 0
+1011 .... = Header Length: 44 bytes (11)
+Flags: 0x0c2 (SYN, ECN, CWR)
+Window: 65535
+Calculated window size: 65535
+Checksum: 0x8efd
+Checksum Status: Unverified
+Urgent Pointer: 0
+Options: (24 bytes), Maximum segment size, No-Operation (NOP), Window scale, No-Operation (NOP), No-Operation (NOP), Timestamps, SACK permitted, End of Option List (EOL)
+Timestamps
+
+ */
+uint8_t packet1[] = {
+    0x00, 0x50, 0xe8, 0x04, 0x77, 0x4b, 0x2c, 0xf0,
+    0xa2, 0xf3, 0xa8, 0xee, 0x08, 0x00, 0x45, 0x00, 0x00, 0x40, 0x00, 0x00, 0x40, 0x00, 0x40, 0x06,
+    0x3b, 0x8d, 0xac, 0x14, 0x00, 0xb9, 0xac, 0xd9, 0xa5, 0x84, 0xea, 0x06, 0x00, 0x50, 0xab, 0x8c,
+    0x75, 0x56, 0x00, 0x00, 0x00, 0x00, 0xb0, 0xc2, 0xff, 0xff, 0x8e, 0xfd, 0x00, 0x00, 0x02, 0x04,
+    0x05, 0xb4, 0x01, 0x03, 0x03, 0x06, 0x01, 0x01, 0x08, 0x0a, 0x72, 0x22, 0x2a, 0xb7, 0x00, 0x00,
+    0x00, 0x00, 0x04, 0x02, 0x00, 0x00
+};
+
 TEST_CASE("scan_net", "[scanners]") {
-//TODO: Add checks for IPv4 and IPv6 header checksumers
+    /* We did a rather involved rewrite of scan_net for BE2 so we want to check all of the methods with the
+     * data a few bytes into the sbuf.
+     */
+    constexpr size_t frame_offset = 15;           // where we put the packet. Make sure that it is not byte-aligned!
+    constexpr size_t ETHERNET_FRAME_SIZE = 14;
+    uint8_t buf[1024];
+    memset(buf,0xee,sizeof(buf));       // arbitrary data
+    memcpy(buf + frame_offset, packet1, sizeof(packet1)); // copy it to an offset that is not byte-aligned
+    sbuf_t sbuf(pos0_t(), buf, sizeof(buf));
+
+    constexpr size_t packet1_ip_len = sizeof(packet1) - ETHERNET_FRAME_SIZE; // 14 bytes for ethernet header
+
+    REQUIRE( packet1_ip_len == 64); // from above
+
+    /* Make an sbuf with just the packet, for initial testing */
+    sbuf_t sbufip = sbuf.slice(frame_offset + ETHERNET_FRAME_SIZE);
+    std::cerr << "IP PACKET:\n";
+    sbufip.hex_dump(std::cerr);
+    std::cerr << "=========\n";
+
+    bool checksum_valid = false;
+    scan_net::generic_iphdr_t h;
+
+    REQUIRE( scan_net::sanityCheckIP46Header( sbufip, 0 , &checksum_valid, &h) == true );
+    REQUIRE( checksum_valid == true );
+
+    /* Now try with the offset */
+    REQUIRE( scan_net::sanityCheckIP46Header( sbuf, frame_offset + ETHERNET_FRAME_SIZE, &checksum_valid, &h) == true );
+    REQUIRE( checksum_valid == true );
+
+    /* Change the IP address and make sure that the header is valid but the checksum is not */
+    buf[frame_offset + ETHERNET_FRAME_SIZE + 14]++; // increment destination address
+    REQUIRE( scan_net::sanityCheckIP46Header( sbufip, 0 , &checksum_valid, &h) == true );
+    REQUIRE( checksum_valid == false );
+
+    /* Break the port and make sure that the header is no longer valid */
+    buf[frame_offset + ETHERNET_FRAME_SIZE] += 0x10; // increment header length
+    REQUIRE( scan_net::sanityCheckIP46Header( sbufip, 0 , &checksum_valid, &h) == false );
+
+
 }
 
 TEST_CASE("scan_vcard", "[scanners]") {
@@ -336,6 +462,8 @@ std::string validate(std::string image_fname, std::vector<Check> &expected)
 
     sc.outdir = NamedTemporaryDirectory();
     sc.scanner_commands = enable_all_scanners;
+    sc.input_fname      = image_fname;
+
     const feature_recorder_set::flags_t frs_flags;
     auto *xreport = new dfxml_writer(sc.outdir / "report.xml", false);
     scanner_set ss(sc, frs_flags, xreport);
