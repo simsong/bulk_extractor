@@ -456,7 +456,7 @@ TEST_CASE("test_validate", "[phase1]" ) {
 /*
  * Run all of the built-in scanners on a specific image, look for the given features, and return the directory.
  */
-std::filesystem::path validate(std::string image_fname, std::vector<Check> &expected, bool recurse=true)
+std::filesystem::path validate(std::string image_fname, std::vector<Check> &expected, bool recurse=true, size_t offset=0)
 {
     sbuf_t::debug_range_exception = true;
     std::cerr << "================ validate  " << image_fname << " ================\n";
@@ -472,6 +472,19 @@ std::filesystem::path validate(std::string image_fname, std::vector<Check> &expe
     scanner_set ss(sc, frs_flags, xreport);
     ss.add_scanners(scanners_builtin);
     ss.apply_scanner_commands();
+
+    if (offset) {
+        std::ifstream in(  sc.input_fname, std::ios::binary);
+        sc.input_fname = sc.outdir / "offset_file"; // new name!
+        std::ofstream out( sc.input_fname, std::ios::binary);
+        in.seekg(offset);
+        while (!in.eof()) {
+            uint8_t ch;
+            in >> ch;
+            out << ch;
+            std::cerr << int(ch) << " ";
+        }
+    }
 
     if (image_fname != "" ) {
         try {
@@ -641,18 +654,45 @@ TEST_CASE("test_net1", "[phase1]") {
 
 TEST_CASE("test_net2", "[phase1]") {
     std::vector<Check> ex2 {
-        Check("ip.txt", Feature( "54", "192.168.0.91", "struct ip L (src) cksum-ok")),
-        Check("ip_histogram.txt", Feature( "n=1", "192.168.0.91"))
+        Check("ip.txt", Feature( "40", "192.168.0.91", "struct ip L (src) cksum-ok")),
+        Check("ip.txt", Feature( "40", "192.168.0.55", "struct ip R (dst) cksum-ok")),
+        Check("ip.txt", Feature( "482", "192.168.0.55", "struct ip L (src) cksum-ok")),
+        Check("ip.txt", Feature( "482", "192.168.0.91", "struct ip R (dst) cksum-ok")),
+        Check("ip_histogram.txt", Feature( "n=2", "192.168.0.91")),
+        Check("ip_histogram.txt", Feature( "n=2", "192.168.0.55"))
     };
-    validate("ntlm2.pcap", ex2);
+    auto outdir = validate("ntlm2.pcap", ex2);
+    REQUIRE(validate_files(test_dir() / "ntlm2.pcap", outdir / "packets.pcap"));
 }
 
+/* Look at a file with three packets */
 TEST_CASE("test_net3", "[phase1]") {
     std::vector<Check> ex2 {
-        Check("ip.txt", Feature( "54", "192.168.0.91", "struct ip L (src) cksum-ok")),
-        Check("ip_histogram.txt", Feature( "n=2", "192.168.0.91"))
+        Check("ip.txt", Feature( "40", "192.168.0.91", "struct ip L (src) cksum-ok")),
+        Check("ip.txt", Feature( "40", "192.168.0.55", "struct ip R (dst) cksum-ok")),
+        Check("ip.txt", Feature( "482", "192.168.0.55", "struct ip L (src) cksum-ok")),
+        Check("ip.txt", Feature( "482", "192.168.0.91", "struct ip R (dst) cksum-ok")),
+        Check("ip.txt", Feature( "1010", "192.168.0.91", "struct ip L (src) cksum-ok")),
+        Check("ip.txt", Feature( "1010", "192.168.0.55", "struct ip R (dst) cksum-ok")),
+        Check("ip_histogram.txt", Feature( "n=3", "192.168.0.91")),
+        Check("ip_histogram.txt", Feature( "n=3", "192.168.0.55"))
     };
     validate("ntlm3.pcap", ex2);
+}
+
+/* Look at a file with three packets with an offset of 1, to see if we can find the packets even when the PCAP file header is missing */
+TEST_CASE("test_net3+10", "[phase1]") {
+    std::vector<Check> ex2 {
+        Check("ip.txt", Feature( "30", "192.168.0.91", "struct ip L (src) cksum-ok")),
+        Check("ip.txt", Feature( "30", "192.168.0.55", "struct ip R (dst) cksum-ok")),
+        Check("ip.txt", Feature( "472", "192.168.0.55", "struct ip L (src) cksum-ok")),
+        Check("ip.txt", Feature( "472", "192.168.0.91", "struct ip R (dst) cksum-ok")),
+        Check("ip.txt", Feature( "1000", "192.168.0.91", "struct ip L (src) cksum-ok")),
+        Check("ip.txt", Feature( "1000", "192.168.0.55", "struct ip R (dst) cksum-ok")),
+        Check("ip_histogram.txt", Feature( "n=3", "192.168.0.91")),
+        Check("ip_histogram.txt", Feature( "n=3", "192.168.0.55"))
+    };
+    validate("ntlm3.pcap", ex2, false, 10);
 }
 
 TEST_CASE("test_net80", "[phase1]") {
