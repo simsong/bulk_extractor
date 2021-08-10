@@ -10,5 +10,21 @@
 
 - [ ] When carving tests/len6192.jpg, the JPEG should only be 6192 bytes.
 - [ ] When scanning tests/testfilex.docx, the JPEG should only be 6192 bytes
+- [ ] Automatically set carve mode for in the main.cpp abstractly for
+  every feature recorder based on name.
 
-# Ideas:
+# scan_net
+- [ ] test against v1.6 with IPv4 UDP
+- [ ] test against v1.6 with IPv4 TCP
+- [ ] test against v1.6 with IPv6 UDP
+- [ ] test against v1.6 with IPv6 TCP
+
+# dfxml:
+build environment:
+- [ ] Missing CPPFLAGS, CXXFLAGS, LDFLAGS, LIBS and CFLAGS.
+- [ ] Missing git commit
+- [ ] sbuf_read -> debug:work_start; add t=
+- [ ] sbuf_delete -> debug:work_end; add time=;
+- [ ] missing <hashdigest> inside <source.>
+- [ ] Does not have the time that each thread spent waiting.
+- [ ] <total_bytes> is larger than it should be.

@@ -22,7 +22,6 @@
 
 
 #include "config.h"
-//#include <cstdint>
 #include "be13_api/utils.h"  // needs config.h
 #include "be13_api/scanner_params.h"
 
@@ -481,15 +480,6 @@ struct flagnames_t pe_optionalwindowsheader_subsystem[] = {
 // Takes a pointer to data which matches PE_SIGNATURE at PE_FILE_OFFSET
 // Returns an empty string if this is not a PE, or a bunch of XML
 // describing the PE if it is
-
-//#define sbuf_struct(sbuf,struct_name,pos) (pos+sizeof(struct_name) <= sbuf.bufsize ? (const struct_name *)(sbuf.buf+pos) : 0)
-//template<class Type>
-//const Type * sbuf_struct(const sbuf_t &sbuf, uint32_t pos)
-//{
-//    if (pos + sizeof(Type) <= sbuf.bufsize)
-//  return (const Type *) (sbuf.buf+pos);
-//    return NULL;
-//}
 
 static bool valid_dll_name(const std::string &dllname)
 {

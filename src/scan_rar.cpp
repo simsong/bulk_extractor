@@ -211,7 +211,7 @@ public:
         return dos_date_to_iso(dos_time);
     }
 
-    std::string name;
+    std::string name;                   // filename
     uint16_t flags;
     uint8_t  unpack_version;
     uint8_t  compression_method;
@@ -319,19 +319,14 @@ static bool record_components = true;
 static bool record_volumes = true;
 
 // component processing (compressed file within an archive)
-static bool process_component(const sbuf_t &sbuf, RarComponentInfo &output)
+static inline bool process_component(const sbuf_t &sbufq, size_t offset, RarComponentInfo &output)
 {
-    // confirm that the smallest possible component block header could fit in
-    // the buffer
-    if (sbuf.bufsize < FILE_HEAD_MIN_LEN) {
-        return false;
-    }
     // Initial RAR file block anchor is 0x74 magic byte
-    if (sbuf[OFFSET_HEAD_TYPE] != FILE_MAGIC) {
+    if (sbufq[ offset + OFFSET_HEAD_TYPE] != FILE_MAGIC) {
         return false;
     }
     // check for invalid flags
-    uint16_t flags = sbuf.get16u(OFFSET_HEAD_FLAGS);
+    uint16_t flags = sbufq.get16u(offset + OFFSET_HEAD_FLAGS);
     if (!(flags & MANDATORY_FILE_FLAGS) || (flags & UNUSED_FILE_FLAGS)) {
         return false;
     }
@@ -342,20 +337,24 @@ static bool process_component(const sbuf_t &sbuf, RarComponentInfo &output)
     }
 
     // ignore impossible or improbable header lengths
-    uint16_t header_len = sbuf.get16u(OFFSET_HEAD_SIZE);
+    uint16_t header_len = sbufq.get16u(offset + OFFSET_HEAD_SIZE);
     if (header_len < FILE_HEAD_MIN_LEN || header_len > SUSPICIOUS_HEADER_LEN) {
         return false;
     }
     // abort if header is longer than the remaining buf
-    if (header_len >= sbuf.bufsize) {
+    if (sbufq.bufsize < header_len + offset  ) {
         return false;
     }
 
     // ignore huge filename lengths
-    uint16_t filename_bytes_len = (uint16_t) sbuf.get16u(OFFSET_NAME_SIZE);
+    uint16_t filename_bytes_len = (uint16_t) sbufq.get16u(offset + OFFSET_NAME_SIZE);
     if (filename_bytes_len > SUSPICIOUS_HEADER_LEN) {
         return false;
     }
+
+    // Okay, make a slice
+    auto sbuf = sbufq.slice(offset);
+
 
     // ignore strange file sizes
     uint64_t& packed_size = output.compressed_size;
@@ -376,13 +375,12 @@ static bool process_component(const sbuf_t &sbuf, RarComponentInfo &output)
     //
     // Filename extraction
     //
-    std::string &filename = output.name;
     uint16_t filename_len = 0;
-    const char *filename_bytes = (const char *) sbuf.get_buf() + OFFSET_FILE_NAME;
+    size_t filename_start = OFFSET_FILE_NAME;
     if (flags & FLAG_BIGFILE) {
         // if present, the high 32 bits of 64 bit file sizes offset the
         // location of the filename by 8
-        filename_bytes += OPTIONAL_BIGFILE_LEN;
+        filename_start += OPTIONAL_BIGFILE_LEN;
     }
     if (flags & FLAG_UNICODE_FILENAME) {
 
@@ -393,8 +391,8 @@ static bool process_component(const sbuf_t &sbuf, RarComponentInfo &output)
         //     in that order
         //   - If no null byte is present, the filename is UTF-8 encoded
         size_t null_byte_index = 0;
-        for(; null_byte_index < filename_bytes_len; null_byte_index++) {
-            if (filename_bytes[null_byte_index] == 0x00) {
+        for( null_byte_index = 0; null_byte_index < filename_bytes_len; null_byte_index++) {
+            if (sbuf[filename_start + null_byte_index] == 0x00) {
                 break;
             }
         }
@@ -407,34 +405,34 @@ static bool process_component(const sbuf_t &sbuf, RarComponentInfo &output)
         if (null_byte_index == filename_bytes_len) {
             // UTF-8 only - go with UTF-8 string
             filename_len = filename_bytes_len;
-            filename = std::string(filename_bytes, (size_t) filename_len);
+            output.name = sbuf.substr(filename_start, filename_len);
         }
         else {
             // if both ASCII and UTF-8 are present, disregard ASCII
             filename_len = filename_bytes_len - (null_byte_index + 1);
-            filename = std::string(filename_bytes + null_byte_index + 1, filename_len);
+            output.name = sbuf.substr(filename_start + null_byte_index + 1, filename_len);
         }
         // validate extracted UTF-8
-        if (utf8::find_invalid(filename.begin(),filename.end()) != filename.end()) {
+        if (utf8::find_invalid(output.name.begin(),output.name.end()) != output.name.end()) {
             return false;
         }
     }
     else {
         filename_len = filename_bytes_len;
-        filename = std::string(filename_bytes, filename_len);
+        output.name = sbuf.substr(filename_start, filename_len);
     }
 
     // throw out zero-length filename
-    if (filename.size()==0) return false;
+    if (output.name.size()==0) return false;
 
     // disallow ASCII control characters, which may also appear in valid UTF-8
-    std::string::const_iterator first_control_character = filename.begin();
-    for(; first_control_character != filename.end(); first_control_character++) {
+    std::string::const_iterator first_control_character = output.name.begin();
+    for(; first_control_character != output.name.end(); first_control_character++) {
         if ((char) *first_control_character < ' ') {
             break;
         }
     }
-    if (first_control_character != filename.end()) {
+    if (first_control_character != output.name.end()) {
         // no longer disallow ASCII control characters
         //return false;
     }
@@ -568,25 +566,21 @@ static size_t guess_encrypted_len(const sbuf_t &sbuf)
     return sbuf.bufsize - ii;
 }
 
-static bool is_mark_block(const sbuf_t &sbuf)
+/* Return true if this is the start of a rar mark */
+static inline bool is_mark_block(const sbuf_t &sbuf, size_t pos)
 {
-    return (sbuf.bufsize  >= MARK_LEN) && sbuf[0] == 0x52 &&
-        sbuf[1] == 0x61 && sbuf[2] == 0x72 &&
-        sbuf[3] == 0x21 && sbuf[4] == 0x1A &&
-        sbuf[5] == 0x07 && sbuf[6] == 0x00;
+    return (sbuf[ pos+0 ] == 0x52 &&
+            sbuf[ pos+1 ] == 0x61 &&
+            sbuf[ pos+2 ] == 0x72 &&
+            sbuf[ pos+3 ] == 0x21 &&
+            sbuf[ pos+4 ] == 0x1A &&
+            sbuf[ pos+5 ] == 0x07 &&
+            sbuf[ pos+6 ] == 0x00 );
 }
 #endif
 
-#if 0
-// Old code for validating a specific RAR that we were searching for
-// assume that we are decompressing "15 Feet of Time.pdf" while fixing warnings for rapid testing
-//25 50 44 46 2D
-//25 25 45 4F 46
-size_t sz = component.uncompressed_size;
-assert(dbuf.buf[0] == 0x25); assert(dbuf.buf[1] == 0x50); assert(dbuf.buf[2] == 0x44); assert(dbuf.buf[3] == 0x46); assert(dbuf.buf[4] == 0x2D);
-assert(dbuf.buf[sz-5] == 0x25); assert(dbuf.buf[sz-4] == 0x25); assert(dbuf.buf[sz-3] == 0x45); assert(dbuf.buf[sz-2] == 0x4F); assert(dbuf.buf[sz-1] == 0x46);
-#endif
-
+feature_recorder *rar_recorder   = nullptr;
+feature_recorder *unrar_recorder = nullptr;
 
 extern "C"
 void scan_rar(scanner_params &sp)
@@ -599,7 +593,6 @@ void scan_rar(scanner_params &sp)
         sp.info->scanner_flags.recurse = true;
 #ifdef USE_RAR
 	sp.info->description = "RAR volume locator and component decompresser";
-        //sp.info->flags = scanner_info::SCANNER_RECURSE | scanner_info::SCANNER_RECURSE_EXPAND;
         feature_recorder_def::flags_t flags;
         flags.xml = true;
 
@@ -614,29 +607,23 @@ void scan_rar(scanner_params &sp)
         sp.get_config("rar_find_volumes",&record_volumes,"Search for RAR volumes");
 #else
         sp.info->description = "(disabled in configure)";
+        sp.info->flags.default_enabled = false;
 #endif
 	return;
     }
 #ifdef USE_RAR
-    //if (sp.phase==scanner_params::PHASE_INIT){
-	//feature_recorder &rar_recorder = sp.named_feature_recorder(RAR_RECORDER_NAME);
-	//feature_recorder &unrar_recorder = sp.named_feature_recorder(UNRAR_RECORDER_NAME);
-        //rar_recorder->set_carve_mode(feature_recorder::CARVE_ALL);
-	//rar_recorder->set_flag(feature_recorder::FLAG_XML); // because we are sending through XML
-        //unrar_recorder->set_carve_mode(static_cast<feature_recorder::carve_mode_t>(unrar_carve_mode));
-        //unrar_recorder->set_carve_ignore_encoding("RAR"); TODO
-    //}
+    if (sp.phase==scanner_params::PHASE_INIT2){
+	rar_recorder   = &sp.named_feature_recorder(RAR_RECORDER_NAME);
+	unrar_recorder = &sp.named_feature_recorder(UNRAR_RECORDER_NAME);
+    }
+
     if (sp.phase==scanner_params::PHASE_SCAN){
 	const sbuf_t &sbuf = *(sp.sbuf);
 	const pos0_t &pos0 = sbuf.pos0;
-	feature_recorder &rar_recorder   = sp.named_feature_recorder(RAR_RECORDER_NAME);
-	feature_recorder &unrar_recorder = sp.named_feature_recorder(UNRAR_RECORDER_NAME);
 
         RarComponentInfo component;
         RarVolumeInfo volume;
-	//for (const unsigned char *cc=sbuf.buf; cc < sbuf.buf+sbuf.pagesize && cc < sbuf.buf + sbuf.bufsize; cc++) {
-	for (size_t pos = 0 ; pos < sbuf.bufsize; pos++ ){
-            //size_t cc_len = sbuf.buf + sbuf.bufsize - cc;
+	for (size_t pos = 0 ; pos + FILE_HEAD_MIN_LEN < sbuf.bufsize ; pos++ ){
             size_t cc_len = sbuf.bufsize - pos;
 
             // feature files have three columns: forensic path / offset,
@@ -649,20 +636,24 @@ void scan_rar(scanner_params &sp)
             // try each of the possible RAR blocks we may want to record
 
             // volumes are considered false positives if they are not preceeded by the magic number marker block
-            if (record_volumes && cc_len > MARK_LEN && is_mark_block(sbuf.slice(pos)) &&
+            // TODO: change is_mark_block to a sbuf.find
+            if (record_volumes &&
+                cc_len > MARK_LEN &&
+                is_mark_block( sbuf, pos) &&
                 process_volume(sbuf.slice(pos+MARK_LEN), volume)) {
-                rar_recorder.write(pos0 + pos, "<volume>", volume.to_xml());
+                rar_recorder->write(pos0 + pos, "<volume>", volume.to_xml());
                 // carve encrypted RAR files
                 if (volume.flags & FLAG_HEADERS_ENCRYPTED) {
                     size_t encrypted_len = guess_encrypted_len( sbuf.slice(pos, MARK_LEN + volume.len));
                     size_t enc_rar_pos = pos;
                     size_t enc_rar_len = MARK_LEN + volume.len + encrypted_len;
 
-                    rar_recorder.carve(sbuf_t(sbuf, enc_rar_pos, enc_rar_len), ".rar");
+                    rar_recorder->carve(sbuf_t(sbuf, enc_rar_pos, enc_rar_len), ".rar");
                 }
             }
-            if (record_components && process_component( sbuf.slice(pos), component)) {
-                rar_recorder.write(pos0 + pos, component.name, component.to_xml());
+            if (record_components &&
+                process_component( sbuf, pos, component)) {
+                rar_recorder->write(pos0 + pos, component.name, component.to_xml());
 
                 // only decompress and recur if the component compression isn't
                 // no-op to avoid duplicate features
@@ -678,7 +669,7 @@ void scan_rar(scanner_params &sp)
                     for(auto &it : carve_name){
                         if (it=='/') it = '_';
                     }
-                    unrar_recorder.carve(*dbuf, carve_name, component.iso_timestamp());
+                    unrar_recorder->carve(*dbuf, carve_name, component.iso_timestamp());
                     sp.recurse(dbuf);
                 }
             }

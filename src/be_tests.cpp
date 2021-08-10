@@ -6,6 +6,8 @@
 #include <cstdio>
 #include <stdexcept>
 #include <unistd.h>
+#include <string>
+#include <string_view>
 
 #define CATCH_CONFIG_MAIN
 #define CATCH_CONFIG_CONSOLE_WIDTH 120
@@ -28,8 +30,10 @@
 #include "jpeg_validator.h"
 #include "phase1.h"
 #include "sbuf_decompress.h"
+#include "scan_aes.h"
 #include "scan_base64.h"
 #include "scan_email.h"
+#include "scan_net.h"
 #include "scan_msxml.h"
 #include "scan_pdf.h"
 #include "scan_vcard.h"
@@ -54,6 +58,7 @@ std::filesystem::path test_dir()
 
 sbuf_t *map_file(std::filesystem::path p)
 {
+    sbuf_t::debug_range_exception = true;
     return sbuf_t::map_file( test_dir() / p );
 }
 
@@ -122,7 +127,7 @@ std::filesystem::path test_scanners(const std::vector<scanner_t *> & scanners, s
     REQUIRE(sbuf->children == 0);
     ss.phase_scan();
     REQUIRE(sbuf->children == 0);
-    ss.process_sbuf(sbuf);
+    ss.schedule_sbuf(sbuf);
     ss.shutdown();
     return sc.outdir;
 }
@@ -136,6 +141,7 @@ std::filesystem::path test_scanner(scanner_t scanner, sbuf_t *sbuf)
 
 
 TEST_CASE("base64_forensic", "[support]") {
+    sbuf_t::debug_range_exception = true;
     const char *encoded="SGVsbG8gV29ybGQhCg==";
     const char *decoded="Hello World!\n";
     unsigned char output[64];
@@ -261,8 +267,129 @@ TEST_CASE("scan_json1", "[scanners]") {
     REQUIRE(true);
 }
 
+/****************************************************************
+ ** Network test cases
+ */
+
+/*
+ * First packet of a wget from http://www.google.com/ over ipv4:
+
+# ifconfig en0
+en0: flags=8863<UP,BROADCAST,SMART,RUNNING,SIMPLEX,MULTICAST> mtu 1500
+	options=400<CHANNEL_IO>
+	ether 2c:f0:a2:f3:a8:ee
+	inet6 fe80::1896:319a:43fa:a6fe%en0 prefixlen 64 secured scopeid 0x4
+	inet 172.20.0.185 netmask 0xfffff000 broadcast 172.20.15.255
+	nd6 options=201<PERFORMNUD,DAD>
+	media: autoselect
+	status: active
+# tcpdump -r packet1.pcap -vvvv -x
+reading from file packet1.pcap, link-type EN10MB (Ethernet)
+08:39:26.039111 IP (tos 0x0, ttl 64, id 0, offset 0, flags [DF], proto TCP (6), length 64)
+    172.20.0.185.59910 > lax30s03-in-f4.1e100.net.http: Flags [SEW], cksum 0x8efd (correct), seq 2878109014, win 65535, options [mss 1460,nop,wscale 6,nop,nop,TS val 1914841783 ecr 0,sackOK,eol], length 0
+	0x0000:  4500 0040 0000 4000 4006 3b8d ac14 00b9
+	0x0010:  acd9 a584 ea06 0050 ab8c 7556 0000 0000
+	0x0020:  b0c2 ffff 8efd 0000 0204 05b4 0103 0306
+	0x0030:  0101 080a 7222 2ab7 0000 0000 0402 0000
+bash-3.2# xxd packet1.pcap
+00000000: d4c3 b2a1 0200 0400 0000 0000 0000 0000  ................
+00000010: 0000 0400 0100 0000 fe7e 0e61 c798 0000  .........~.a....
+00000020: 4e00 0000 4e00 0000 0050 e804 774b 2cf0  N...N....P..wK,.
+00000030: a2f3 a8ee 0800 4500 0040 0000 4000 4006  ......E..@..@.@.
+00000040: 3b8d ac14 00b9 acd9 a584 ea06 0050 ab8c  ;............P..
+00000050: 7556 0000 0000 b0c2 ffff 8efd 0000 0204  uV..............
+00000060: 05b4 0103 0306 0101 080a 7222 2ab7 0000  ..........r"*...
+00000070: 0000 0402 0000                           ......
+*/
+
+/* ethernet frame for packet above. Note that it starts 6 bytes before the source ethernet mac address.
+ * validated with packet decoder at https://hpd.gasmi.net/.
+ 172.20.0.185 → 172.217.165.132 TCP 59910 → 80 [SYN, ECN, CWR]
+Ethernet II
+Destination: Nomadix_04:77:4b (00:50:e8:04:77:4b)
+Source: Apple_f3:a8:ee (2c:f0:a2:f3:a8:ee)
+Type: IPv4 (0x0800)
+Internet Protocol Version 4
+0100 .... = Version: 4
+.... 0101 = Header Length: 20 bytes (5)
+Differentiated Services Field: 0x00 (DSCP: CS0, ECN: Not-ECT)
+Total Length: 64
+Identification: 0x0000 (0)
+Flags: 0x40, Don't fragment
+Fragment Offset: 0
+Time to Live: 64
+Protocol: TCP (6)
+Header Checksum: 0x3b8d   (15245)
+Header checksum status: Unverified
+Source Address: 172.20.0.185
+Destination Address: 172.217.165.132
+Transmission Control Protocol
+Source Port: 59910
+Destination Port: 80
+Stream index: 0
+TCP Segment Len: 0
+Sequence Number: 0
+Sequence Number (raw): 2878109014
+Next Sequence Number: 1
+Acknowledgment Number: 0
+Acknowledgment number (raw): 0
+1011 .... = Header Length: 44 bytes (11)
+Flags: 0x0c2 (SYN, ECN, CWR)
+Window: 65535
+Calculated window size: 65535
+Checksum: 0x8efd
+Checksum Status: Unverified
+Urgent Pointer: 0
+Options: (24 bytes), Maximum segment size, No-Operation (NOP), Window scale, No-Operation (NOP), No-Operation (NOP), Timestamps, SACK permitted, End of Option List (EOL)
+Timestamps
+
+ */
+uint8_t packet1[] = {
+    0x00, 0x50, 0xe8, 0x04, 0x77, 0x4b, 0x2c, 0xf0,
+    0xa2, 0xf3, 0xa8, 0xee, 0x08, 0x00, 0x45, 0x00, 0x00, 0x40, 0x00, 0x00, 0x40, 0x00, 0x40, 0x06,
+    0x3b, 0x8d, 0xac, 0x14, 0x00, 0xb9, 0xac, 0xd9, 0xa5, 0x84, 0xea, 0x06, 0x00, 0x50, 0xab, 0x8c,
+    0x75, 0x56, 0x00, 0x00, 0x00, 0x00, 0xb0, 0xc2, 0xff, 0xff, 0x8e, 0xfd, 0x00, 0x00, 0x02, 0x04,
+    0x05, 0xb4, 0x01, 0x03, 0x03, 0x06, 0x01, 0x01, 0x08, 0x0a, 0x72, 0x22, 0x2a, 0xb7, 0x00, 0x00,
+    0x00, 0x00, 0x04, 0x02, 0x00, 0x00
+};
+
 TEST_CASE("scan_net", "[scanners]") {
-//TODO: Add checks for IPv4 and IPv6 header checksumers
+    /* We did a rather involved rewrite of scan_net for BE2 so we want to check all of the methods with the
+     * data a few bytes into the sbuf.
+     */
+    constexpr size_t frame_offset = 15;           // where we put the packet. Make sure that it is not byte-aligned!
+    constexpr size_t ETHERNET_FRAME_SIZE = 14;
+    uint8_t buf[1024];
+    memset(buf,0xee,sizeof(buf));       // arbitrary data
+    memcpy(buf + frame_offset, packet1, sizeof(packet1)); // copy it to an offset that is not byte-aligned
+    sbuf_t sbuf(pos0_t(), buf, sizeof(buf));
+
+    constexpr size_t packet1_ip_len = sizeof(packet1) - ETHERNET_FRAME_SIZE; // 14 bytes for ethernet header
+
+    REQUIRE( packet1_ip_len == 64); // from above
+
+    /* Make an sbuf with just the packet, for initial testing */
+    sbuf_t sbufip = sbuf.slice(frame_offset + ETHERNET_FRAME_SIZE);
+
+    scan_net::generic_iphdr_t h;
+
+    REQUIRE( scan_net::sanityCheckIP46Header( sbufip, 0 , &h) == true );
+    REQUIRE( h.checksum_valid == true );
+
+    /* Now try with the offset */
+    REQUIRE( scan_net::sanityCheckIP46Header( sbuf, frame_offset + ETHERNET_FRAME_SIZE, &h) == true );
+    REQUIRE( h.checksum_valid == true );
+
+    /* Change the IP address and make sure that the header is valid but the checksum is not */
+    buf[frame_offset + ETHERNET_FRAME_SIZE + 14]++; // increment destination address
+    REQUIRE( scan_net::sanityCheckIP46Header( sbufip, 0 , &h) == true );
+    REQUIRE( h.checksum_valid == false );
+
+    /* Break the port and make sure that the header is no longer valid */
+    buf[frame_offset + ETHERNET_FRAME_SIZE] += 0x10; // increment header length
+    REQUIRE( scan_net::sanityCheckIP46Header( sbufip, 0 , &h) == false );
+
+
 }
 
 TEST_CASE("scan_vcard", "[scanners]") {
@@ -302,7 +429,7 @@ struct Check {
         fname(fname_),
         feature(feature_) {};
     std::string fname;
-    Feature feature;
+    Feature feature;                    // defined in be13_api/feature_recorder.h
 };
 
 TEST_CASE("test_validate", "[phase1]" ) {
@@ -327,13 +454,36 @@ TEST_CASE("test_validate", "[phase1]" ) {
 /*
  * Run all of the built-in scanners on a specific image, look for the given features, and return the directory.
  */
-std::string validate(std::string image_fname, std::vector<Check> &expected)
+std::filesystem::path validate(std::string image_fname, std::vector<Check> &expected, bool recurse=true, size_t offset=0)
 {
+    sbuf_t::debug_range_exception = true;
     std::cerr << "================ validate  " << image_fname << " ================\n";
     scanner_config sc;
 
-    sc.outdir = NamedTemporaryDirectory();
+    sc.outdir           = NamedTemporaryDirectory();
     sc.scanner_commands = enable_all_scanners;
+    sc.allow_recurse    = recurse;
+
+    if (offset==0) {
+        sc.input_fname = test_dir() / image_fname;
+    } else {
+        std::string offset_name = sc.outdir / "offset_file";
+
+        std::ifstream in(  test_dir() / image_fname, std::ios::binary);
+        std::ofstream out( offset_name );
+        in.seekg(offset);
+        char ch;
+        size_t written = 0;
+        while (in.get(ch)) {
+            out << ch;
+            written ++;
+        }
+        in.close();
+        out.close();
+        std::cerr << "offset created. bytes written: " << written << "\n";
+        sc.input_fname = offset_name;
+    }
+
     const feature_recorder_set::flags_t frs_flags;
     auto *xreport = new dfxml_writer(sc.outdir / "report.xml", false);
     scanner_set ss(sc, frs_flags, xreport);
@@ -341,21 +491,26 @@ std::string validate(std::string image_fname, std::vector<Check> &expected)
     ss.apply_scanner_commands();
 
     if (image_fname != "" ) {
-        auto p = image_process::open( test_dir() / image_fname, false, 65536, 65536);
-        Phase1::Config cfg;  // config for the image_processing system
-        Phase1 phase1(cfg, *p, ss);
-        phase1.dfxml_write_create( 0, nullptr);
+        try {
+            auto p = image_process::open( sc.input_fname, false, 65536, 65536);
+            Phase1::Config cfg;  // config for the image_processing system
+            Phase1 phase1(cfg, *p, ss);
+            phase1.dfxml_write_create( 0, nullptr);
 
-        ss.phase_scan();
-        phase1.phase1_run();
-        delete p;
+            ss.phase_scan();
+            phase1.phase1_run();
+            delete p;
+        } catch (image_process::NoSuchFile &e) {
+            std::cerr << "sc.input_fname=" << sc.input_fname << " no such file: " << e.what() << "\n";
+            bool file_found=false;
+            REQUIRE(file_found);
+        }
     }
     ss.shutdown();
 
     xreport->pop("dfxml");
     xreport->close();
     delete xreport;
-
 
     for (size_t i=0; i<expected.size(); i++){
         std::filesystem::path fname  = sc.outdir / expected[i].fname;
@@ -376,10 +531,18 @@ std::string validate(std::string image_fname, std::vector<Check> &expected)
                     std::cerr << line << "\n"; // print the file the second time through
                 }
                 auto words = split(line, '\t');
-                if (words.size()==3 &&
-                    words[0]==expected[i].feature.pos &&
-                    words[1]==expected[i].feature.feature &&
-                    words[2]==expected[i].feature.context){
+                std::string pos = expected[i].feature.pos.str();
+                if (ends_with(pos,"-0")) {
+                    pos = pos.substr(0,pos.size()-2);
+                }
+                if (ends_with(pos,"|0")) {
+                    pos = pos.substr(0,pos.size()-2);
+                }
+                if (words.size()>=2 &&
+                    (words[0]==expected[i].feature.pos) &&
+                    (words[1]==expected[i].feature.feature) &&
+                    (words.size()==2 ||
+                     (words[2]==expected[i].feature.context || expected[i].feature.context.size()==0))) {
                     found = true;
                     break;
                 }
@@ -396,17 +559,66 @@ std::string validate(std::string image_fname, std::vector<Check> &expected)
 }
 
 
-
-
-TEST_CASE("test_json", "[phase1]") {
-    std::vector<Check> ex1 {
-        Check("json.txt",
-              Feature( "0",
-                       JSON1,
-                       "ef2b5d7ee21e14eeebb5623784f73724218ee5dd")),
-    };
-    validate("test_json.txt", ex1);
+bool validate_files(const std::filesystem::path &fn0, const std::filesystem::path &fn1)
+{
+    std::ifstream in0( fn0, std::ios::binary);
+    std::ifstream in1( fn1, std::ios::binary);
+    REQUIRE( in0.is_open());
+    REQUIRE( in1.is_open());
+    int errors = 0;
+    for(size_t i=0;;i++) {
+        uint8_t ch0,ch1;
+        in0 >> ch0;
+        in1 >> ch1;
+        if (ch0 != ch1 ){
+            if (errors==0) {
+                std::cerr << "file 0 " << fn0 << "\n";
+                std::cerr << "file 1 " << fn1 << "\n";
+            }
+            std::cerr << "i=" << i << "  ch0=" << static_cast<u_int>(ch0) << " ch1=" << static_cast<u_int>(ch1) << "\n";
+            errors += 1;
+        }
+        if (in0.eof() || in1.eof()) break;
+    }
+    return errors == 0;
 }
+
+
+TEST_CASE("test_aes", "[phase1]") {
+    /* Test rotation with various sign extension snaffu */
+    uint8_t in[4];
+    in[0] = 0;
+    in[1] = 0xf1;
+    in[2] = 2;
+    in[3] = 0xf3;
+    rotate32x8(in);
+    REQUIRE(in[0] == 0xf1);
+    REQUIRE(in[1] == 2);
+    REQUIRE(in[2] == 0xf3);
+    REQUIRE(in[3] == 0);
+
+    /* Test rotation with various sign extension snaffu */
+    in[0] = 0xff;
+    in[1] = 1;
+    in[2] = 0xf2;
+    in[3] = 3;
+    rotate32x8(in);
+    REQUIRE(in[0] == 1);
+    REQUIRE(in[1] == 0xf2);
+    REQUIRE(in[2] == 3);
+    REQUIRE(in[3] == 0xff);
+
+    /* Try with sign extension */
+
+    std::vector<Check> ex3 {
+        Check("aes_keys.txt", Feature("496", "a2 6e 0e 4c 06 c4 bb bf 5d 62 8b c7 f8 b3 91 b6", "AES128")),
+        Check("aes_keys.txt", Feature("1120", "dc d2 05 18 c4 16 c0 e2 8e d8 59 9c 86 ed e8 e6", "AES128")),
+        Check("aes_keys.txt", Feature("7008", "09 23 e0 4d 40 44 57 1f 55 bf 43 bc ac 06 11 04 45 63 03 a1 52 c5 4c 16 ba a6 96 e9 a6 18 80 65", "AES256")),
+        Check("aes_keys.txt", Feature("7304", "00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f 10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f", "AES256"))
+    };
+    validate("ram_2pages.bin", ex3);
+}
+
 
 TEST_CASE("test_base16json", "[phase1]") {
     std::vector<Check> ex2 {
@@ -426,15 +638,18 @@ TEST_CASE("test_base16json", "[phase1]") {
     validate("test_base16json.txt", ex2);
 }
 
-TEST_CASE("test_hello", "[phase1]") {
+TEST_CASE("test_gzip", "[phase1]") {
     std::vector<Check> ex3 {
-        Check("email.txt",
-              Feature( "0-GZIP-0",
-                       "hello@world.com",
-                       "hello@world.com\\x0A"))
-
+        Check("email.txt", Feature( "0-GZIP-0", "hello@world.com", "hello@world.com\\x0A"))
     };
     validate("test_hello.gz", ex3);
+}
+
+TEST_CASE("test_json", "[phase1]") {
+    std::vector<Check> ex1 {
+        Check("json.txt", Feature( "0", JSON1, "ef2b5d7ee21e14eeebb5623784f73724218ee5dd")),
+    };
+    validate("test_json.txt", ex1);
 }
 
 TEST_CASE("KML_Samples.kml","[phase1]"){
@@ -446,6 +661,95 @@ TEST_CASE("KML_Samples.kml","[phase1]"){
                        "cffc78e27ac32414b33d595a0fefcb971eaadaa3</hashdigest></fileobject>"))
     };
     validate("KML_Samples.kml", ex4);
+}
+
+TEST_CASE("test_jpeg_rar", "[phase1]") {
+    std::vector<Check> ex2 {
+        Check("jpeg_carved.txt",
+              Feature( "13259-RAR-0", "jpeg_carved/000/13259-RAR-0.jpg"))
+
+    };
+    validate("jpegs.rar", ex2);
+}
+
+TEST_CASE("test_net1", "[phase1]") {
+    std::vector<Check> ex2 {
+        Check("ip.txt", Feature( "40", "192.168.0.91", "struct ip L (src) cksum-ok")),
+        Check("ip.txt", Feature( "40", "192.168.0.55", "struct ip R (dst) cksum-ok")),
+        Check("ip_histogram.txt", Feature( "n=1", "192.168.0.91")),
+        Check("ip_histogram.txt", Feature( "n=1", "192.168.0.55"))
+    };
+    auto outdir = validate("ntlm1.pcap", ex2, false);
+    /* The output file should equal the input file */
+    REQUIRE(validate_files(test_dir() / "ntlm1.pcap", outdir / "packets.pcap"));
+}
+
+TEST_CASE("test_net2", "[phase1]") {
+    std::vector<Check> ex2 {
+        Check("ip.txt", Feature( "40", "192.168.0.91", "struct ip L (src) cksum-ok")),
+        Check("ip.txt", Feature( "40", "192.168.0.55", "struct ip R (dst) cksum-ok")),
+        Check("ip.txt", Feature( "482", "192.168.0.55", "struct ip L (src) cksum-ok")),
+        Check("ip.txt", Feature( "482", "192.168.0.91", "struct ip R (dst) cksum-ok")),
+        Check("ip_histogram.txt", Feature( "n=2", "192.168.0.91")),
+        Check("ip_histogram.txt", Feature( "n=2", "192.168.0.55"))
+    };
+    auto outdir = validate("ntlm2.pcap", ex2);
+    REQUIRE(validate_files(test_dir() / "ntlm2.pcap", outdir / "packets.pcap"));
+}
+
+/* Look at a file with three packets */
+TEST_CASE("test_net3", "[phase1]") {
+    std::vector<Check> ex2 {
+        Check("ip.txt", Feature( "40", "192.168.0.91", "struct ip L (src) cksum-ok")),
+        Check("ip.txt", Feature( "40", "192.168.0.55", "struct ip R (dst) cksum-ok")),
+        Check("ip.txt", Feature( "482", "192.168.0.55", "struct ip L (src) cksum-ok")),
+        Check("ip.txt", Feature( "482", "192.168.0.91", "struct ip R (dst) cksum-ok")),
+        Check("ip.txt", Feature( "1010", "192.168.0.91", "struct ip L (src) cksum-ok")),
+        Check("ip.txt", Feature( "1010", "192.168.0.55", "struct ip R (dst) cksum-ok")),
+        Check("ip_histogram.txt", Feature( "n=3", "192.168.0.91")),
+        Check("ip_histogram.txt", Feature( "n=3", "192.168.0.55"))
+    };
+    validate("ntlm3.pcap", ex2);
+}
+
+/* Look at a file with three packets with an offset of 10, to see if we can find the packets even when the PCAP file header is missing */
+TEST_CASE("test_net3+10", "[phase1]") {
+    std::vector<Check> ex2 {
+        Check("ip.txt", Feature( "30", "192.168.0.91", "struct ip L (src) cksum-ok")),
+        Check("ip.txt", Feature( "30", "192.168.0.55", "struct ip R (dst) cksum-ok")),
+        Check("ip.txt", Feature( "472", "192.168.0.55", "struct ip L (src) cksum-ok")),
+        Check("ip.txt", Feature( "472", "192.168.0.91", "struct ip R (dst) cksum-ok")),
+        Check("ip.txt", Feature( "1000", "192.168.0.91", "struct ip L (src) cksum-ok")),
+        Check("ip.txt", Feature( "1000", "192.168.0.55", "struct ip R (dst) cksum-ok")),
+        Check("ip_histogram.txt", Feature( "n=3", "192.168.0.91")),
+        Check("ip_histogram.txt", Feature( "n=3", "192.168.0.55"))
+    };
+    validate("ntlm3.pcap", ex2, false, 10);
+}
+
+/* Look at a file with three packets with an offset of 24, to see if we can find the packets even when the PCAP record header is missing.
+ * (of course, it's only missing for one.)
+ */
+TEST_CASE("test_net3+24", "[phase1]") {
+    std::vector<Check> ex2 {
+        Check("ip.txt", Feature( "16", "192.168.0.91", "struct ip L (src) cksum-ok")),
+        Check("ip.txt", Feature( "16", "192.168.0.55", "struct ip R (dst) cksum-ok")),
+        Check("ip.txt", Feature( "458", "192.168.0.55", "struct ip L (src) cksum-ok")),
+        Check("ip.txt", Feature( "458", "192.168.0.91", "struct ip R (dst) cksum-ok")),
+        Check("ip.txt", Feature( "986", "192.168.0.91", "struct ip L (src) cksum-ok")),
+        Check("ip.txt", Feature( "986", "192.168.0.55", "struct ip R (dst) cksum-ok")),
+        Check("ip_histogram.txt", Feature( "n=3", "192.168.0.91")),
+        Check("ip_histogram.txt", Feature( "n=3", "192.168.0.55"))
+    };
+    validate("ntlm3.pcap", ex2, false, 24);
+}
+
+TEST_CASE("test_net80", "[phase1]") {
+    std::vector<Check> ex2 {
+        Check("ip.txt", Feature( "40", "192.168.0.91", "struct ip L (src) cksum-ok")),
+        Check("ip_histogram.txt", Feature( "n=80", "192.168.0.91"))
+    };
+    validate("ntlm80.pcap", ex2);
 }
 
 sbuf_t *make_sbuf()
@@ -473,20 +777,6 @@ TEST_CASE("sbuf_no_copy", "[threads]") {
     }
 }
 
-#if 0
-/* Make the sbufs in the primary thread and dispose of them in the worker thread */
-TEST_CASE("threadpool3", "[threads]") {
-    counter = 0;
-    class thread_pool pool;
-    for(int i=0;i<100;i++){
-        auto sbuf = make_sbuf();
-        pool.push_task( [sbuf]{ test_process_sbuf(sbuf); } );
-    }
-    pool.wait_for_tasks();
-    REQUIRE( counter==1000 );
-}
-#endif
-
 /****************************************************************/
 TEST_CASE("image_process", "[phase1]") {
     image_process *p = nullptr;
@@ -508,10 +798,3 @@ TEST_CASE("image_process", "[phase1]") {
     REQUIRE(times==1);
     delete p;
 }
-
-
-#if 0
-TEST_CASE("get_sbuf", "[phase1]") {
-    image_process *p = image_process::open( image_fname, opt_recurse, cfg.opt_pagesize, cfg.opt_marginsize);
-}
-#endif

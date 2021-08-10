@@ -368,6 +368,50 @@ nps-2010-emails_be20v1/email.txt:456596-ZIP-1255189	keynote@iwork09.com	racterSt
 \end{Verbatim}
 \end{figure*}
 
+Many of hte code paths in the BE16 code base were painstakingly
+developed on specific test cases, but those test cases were not added
+to the code base as unit tests. For example, the scan\_net network
+packet scanner, used as the basis of the [BEVERLY-GARFINKEL] article,
+could carve IPv4 and IPv6 packets as well as recognize in-memory TCP
+header structures from Microsoft Windows memory dumps. The part of the
+scanners that accessed raw memory received significant rewrites to go
+through the new sbuf structure. We then wanted to validate that the
+rewritten scanners had the same functionality as the old ones. THe
+only way to do this was by assembling specific test cases for eaach
+data type---and adding them to the code base. This is something that
+wasn't done originally,
+
+\subsection{Performance Tuning}
+Despite the effort to eliminate all memory copies, the initial verison
+of BE2.0 was dramatically slower than BE1.6. For example, scanning the
+2009-domexusers disk image on a 6-core macMini required approximately 10 minutes
+with BE1.6, but took 70 minutes with BE2.0.
+
+BE has long had the ability to measure the contribution to runtime
+caused by each scanner. Specifically, it keeps counters (in
+std::atomic variables) of how many times each scanner is called and
+how many nanoseconds it spends executing. These counters became more
+accurate in BE2.0, with the decision to queue the recursive processing
+of sbufs longer than 4K to another thread. Looking at these counters
+we saw that just three scanners (rar, net, and aes) were responsible
+for the vast majority of the time spent scanning.
+
+Each of these scanners has a hand-coded loop that scans through the
+memory image looking for a magic number. The loop had been implemented
+making a new sbuf for each location. The subfs weren't copied, but
+they were created.  Analysis of a 2GiB disk image required creating
+over 3 billion sbufs!  The first improvement we made was to implement
+the validator so that instead of validating the first position in the
+sbuf, it would take an offset. This eliminated the need to create a
+new sbuf. Once the magic number was found, a new sbuf was created, so
+as to take advantage of the algorithmic simplification. Additional
+improvements were realized by moving the search for magic numbers into
+the sbuf implementation itself, so that it could be performed with
+memchr. (We hope to move this to the boyer-meyer search implementation
+e.g. https://titanwolf.org/Network/Articles/Article?AID=dd71b04e-fe50-4be5-9908-067f4af9afb5#gsc.tab=0)
+
+
+
 \section*{References}
 
 \bibliography{references}

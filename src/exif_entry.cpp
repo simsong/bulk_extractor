@@ -1179,8 +1179,7 @@ static std::string get_possible_utf8(const sbuf_t &sbuf, size_t count) {
         // this is an uninteresting sequence, so return ""
         return "";
     } else {
-        std::string s;
-        sbuf.getUTF8(0, count, s);
+        std::string s = sbuf.getUTF8(0, count);
         validateOrEscapeUTF8(s,true,false,true);
         return s;
     }
@@ -1200,8 +1199,7 @@ std::string get_possible_utf16(const sbuf_t sbuf, size_t count, sbuf_t::byte_ord
     }
 
     // get wstring accounting for byte order
-    std::wstring wstr;
-    sbuf.getUTF16(0, count, byte_order, wstr);
+    std::wstring wstr = sbuf.getUTF16(0, count, byte_order);
 
     // convert wstring to string
     std::string utf8_string = all_utf16to8(wstr);

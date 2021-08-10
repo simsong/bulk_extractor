@@ -1,10 +1,12 @@
 #include <random>
 #include <chrono>
 #include <thread>
+#include <chrono>
 
 #include "config.h"
 #include "phase1.h"
 #include "be13_api/utils.h"             // needs config.h
+#include "be13_api/aftimer.h"             // needs config.h
 
 
 /**
@@ -155,6 +157,15 @@ void Phase1::read_process_sbufs()
             break;                      // passed the offset
         }
 
+        /* If there are too many in the queue, wait... */
+        std::cerr << "sbufs_in_queue=" << ss.sbufs_in_queue << "\n";
+        if (ss.depth0_sbufs_in_queue > ss.get_thread_count()) {
+            using namespace std::chrono_literals;
+            std::cerr << "too many depth0 sbufs in queue! waiting for 1 second\n";
+            std::this_thread::sleep_for(2000ms);
+            continue;
+        }
+
         if (config.opt_page_start<=it.page_number && config.opt_offset_start<=it.raw_offset){
             // Make sure we haven't done this page yet. This should never happen
             if (seen_page_ids.find(it.get_pos0().str()) != seen_page_ids.end()){
@@ -163,6 +174,7 @@ void Phase1::read_process_sbufs()
             }
             try {
                 sbuf_t *sbufp = get_sbuf(it);
+                xreport.xmlout("sbuf_read",sbufp->pos0.str(), aftimer::now_str("t='","'"), false);
 
                 /* compute the sha1 hash */
                 if (sha1g){
@@ -254,14 +266,7 @@ void Phase1::dfxml_write_create(int argc, char * const *argv)
     xreport.xmlout("threads",config.num_threads);
     xreport.xmlout("pagesize",config.opt_pagesize);
     xreport.xmlout("marginsize",config.opt_marginsize);
-    xreport.push("scanners");
-
-    /* Generate a list of the scanners in use */
-    auto ev = ss.get_enabled_scanners();
-    for (const auto &it : ev) {
-        xreport.xmlout("scanner",it);
-    }
-    xreport.pop("scanners");		// scanners
+    ss.dump_enabled_scanner_config();
     xreport.pop("configuration");	// configuration
     xreport.flush();                    // get it to the disk
 }

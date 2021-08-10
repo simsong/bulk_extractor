@@ -22,15 +22,18 @@
 
 #ifdef HAVE_MCHECK
 #include <mcheck.h>
+#else
+void mtrace(){}
+void muntrace(){}
 #endif
 
 #ifdef HAVE_SYS_RESOURCE_H
 #include <sys/resource.h>
 #endif
 
-#ifdef WIN32
-// Allows us to open standard input in binary mode by default
+// Open standard input in binary mode by default on Win32.
 // See http://gnuwin32.sourceforge.net/compile.html for more
+#ifdef WIN32
 int _CRT_fmode = _O_BINARY;
 #endif
 
@@ -48,7 +51,7 @@ int _CRT_fmode = _O_BINARY;
 
 #include "phase1.h"
 
-/* Bring in the definitions for the  */
+/* Bring in the definitions  */
 #include "bulk_extractor_scanners.h"
 
 /**
@@ -162,17 +165,6 @@ static void usage(const char *progname, scanner_set &ss)
  * scaled_stoi64:
  * Like a normal stoi, except it can handle modifies k, m, and g
  */
-static uint64_t scaled_stoi64(const std::string &str)
-{
-    std::stringstream ss(str);
-    uint64_t val;
-    ss >> val;
-    if(str.find('k')!=std::string::npos  || str.find('K')!=std::string::npos) val *= 1024LL;
-    if(str.find('m')!=std::string::npos  || str.find('m')!=std::string::npos) val *= 1024LL * 1024LL;
-    if(str.find('g')!=std::string::npos  || str.find('g')!=std::string::npos) val *= 1024LL * 1024LL * 1024LL;
-    if(str.find('t')!=std::string::npos  || str.find('T')!=std::string::npos) val *= 1024LL * 1024LL * 1024LL * 1024LL;
-    return val;
-}
 
 
 #if 0
@@ -199,7 +191,7 @@ void validate_path(const std::filesystem::path fn)
 {
     if(!std::filesystem::exists(fn)){
         std::cerr << "file does not exist: " << fn << "\n";
-        exit(1);
+        throw std::runtime_error("file not found.");
     }
     if(fn.extension()=="E02" || fn.extension()=="e02"){
         std::cerr << "Error: invalid file name\n";
@@ -207,13 +199,12 @@ void validate_path(const std::filesystem::path fn)
         std::cerr << "Instead, just run bulk_extractor with FILENAME.E01\n";
         std::cerr << "The other files in an EnCase multi-volume archive will be opened\n";
         std::cerr << "automatically.\n";
-        exit(1);
+        throw std::runtime_error("run on E02.");
     }
 }
 
 
 
-#if 0
 /***************************************************************************************
  *** PATH PRINTER - Used by bulk_extractor for printing pages associated with a path ***
  ***************************************************************************************/
@@ -221,7 +212,7 @@ void validate_path(const std::filesystem::path fn)
 /* Get the next token from the path. Tokens are separated by dashes.
  * NOTE: modifies argument
  */
-static std::string get_and_remove_token(std::string &path)
+std::string get_and_remove_token(std::string &path)
 {
     while(path[0]=='-'){
 	path = path.substr(1); // remove any leading dashes.
@@ -238,10 +229,10 @@ static std::string get_and_remove_token(std::string &path)
 }
 
 /**
- * upperstr - Turns an ASCII string into upper case (should be UTF-8)
+ * lowerstr - Turns an ASCII string into all lowercase case (should be UTF-8)
  */
 
-static std::string lowerstr(const std::string str)
+std::string lowerstr(const std::string str)
 {
     std::string ret;
     for(std::string::const_iterator i=str.begin();i!=str.end();i++){
@@ -260,6 +251,7 @@ public:
 static std::string HTTP_EOL {"\r\n"};		// stdout is in binary form
 static std::string PRINT {"PRINT"};
 static std::string CONTENT_LENGTH {"Content-Length"};
+#if 0
 void process_path_printer(const scanner_params &sp)
 {
     /* 1. Get next token
@@ -270,7 +262,7 @@ void process_path_printer(const scanner_params &sp)
      * 3. If we are print, throw an exception to prevent continued analysis of buffer.
      */
 
-    std::string new_path = sp.sbuf.pos0.path;
+    std::string new_path = sp.sbuf->pos0.path;
     std::string prefix = get_and_remove_token(new_path);
 
     /* Time to print ?*/
@@ -351,10 +343,8 @@ void process_path_printer(const scanner_params &sp)
     }
     std::cerr << "Unknown name in path: " << prefix << "\n";
 }
-#endif
 
 
-#if 0
 /**
  * process_path uses the scanners to decode the path for the purpose of
  * decoding the image data and extracting the information.
@@ -586,8 +576,6 @@ public:;
  * Create the dfxml output
  */
 
-//static std::string current_ofname;
-//static std::ofstream o;
 std::string be_hash_name {"sha1"};
 static void add_if_present(std::vector<std::string> &scanner_dirs,const std::string &dir)
 {
@@ -596,12 +584,27 @@ static void add_if_present(std::vector<std::string> &scanner_dirs,const std::str
     }
 }
 
+[[noreturn]] void notify_thread(scanner_set *ssp)
+{
+    while(true){
+        if (ssp) {
+            time_t rawtime = time (0);
+            struct tm *timeinfo = localtime (&rawtime);
+            std::cerr << asctime(timeinfo) << "\n";
+            std::map<std::string,std::string> stats = ssp->get_realtime_stats();
+            for(const auto &it : stats ){
+                std::cerr << it.first << ": " << it.second << "\n";
+            }
+            std::cerr << "================================================================\n";
+        }
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+}
+
 
 int main(int argc,char **argv)
 {
-#ifdef HAVE_MCHECK
     mtrace();
-#endif
 
     const char *progname = argv[0];
     const auto original_argc = argc;
@@ -780,7 +783,7 @@ int main(int argc,char **argv)
     }
 
     struct feature_recorder_set::flags_t f;
-    scanner_set ss(sc, f, nullptr);
+    scanner_set ss(sc, f, nullptr);     // make a scanner_set but with no XML writer. We will create it below
     ss.add_scanners(scanners_builtin);
 
 
@@ -948,6 +951,7 @@ int main(int argc,char **argv)
 
 
     /*** PHASE 1 --- Run on the input image */
+    new std::thread(&notify_thread, &ss);    // launch the notify thread
     ss.phase_scan();
 
 #if 0
@@ -1001,21 +1005,14 @@ int main(int argc,char **argv)
     ss.shutdown();
     xreport->add_timestamp("phase2 end");
 
-    /*** PHASE 3 --- Create Histograms ***/
-    // note - this is now done as part of the scanner_set shutdown
-    //if(cfg.opt_quiet==0) std::cout << "Phase 3. Creating Histograms\n";
-    //xreport->add_timestamp("phase3 (histograms) start");
-    //if(opt_enable_histograms) fs.dump_histograms(0,histogram_dump_callback,0);        // TK - add an xml error notifier!
-    //xreport->add_timestamp("phase3 (histograms) end");
-
-    /*** PHASE 4 ---  report and then print final usage information ***/
+    /*** PHASE 3 ---  report and then print final usage information ***/
     xreport->push("report");
     xreport->xmlout("total_bytes",phase1.total_bytes);
     xreport->xmlout("elapsed_seconds",timer.elapsed_seconds());
     xreport->xmlout("max_depth_seen",ss.get_max_depth_seen());
     xreport->xmlout("dup_bytes_encountered",ss.get_dup_bytes_encountered());
     xreport->push("scanner_times");
-    ss.dump_name_count_stats(*xreport);
+    ss.dump_name_count_stats();
     xreport->pop("scanner_times");                     // scanner_times
     xreport->pop("report");
 
@@ -1033,20 +1030,18 @@ int main(int argc,char **argv)
         if(cfg.num_threads>0){
             std::cout << mb_per_sec/cfg.num_threads << " (MBytes/sec/thread)\n";
         }
+        std::cout << "sbufs created:   " << sbuf_t::sbuf_total << "\n";
+        std::cout << "sbufs remaining: " << sbuf_t::sbuf_count << "\n";
     }
 
-#if 0
-TODO: Perhaps print the total number of features found
-        if (fs.has_name("email")) {
-            feature_recorder &fr = fs.named_feature_recorder("email");
-            if(fr){
-                std::cout << "Total " << fr->name << " features found: " << fr->count() << "\n";
-            }
-        }
-#endif
+    try {
+        feature_recorder &fr = ss.fs.named_feature_recorder("email");
+        std::cout << "Total " << fr.name << " features found: " << fr.features_written << "\n";
+    }
+    catch (const feature_recorder_set::NoSuchFeatureRecorder &e) {
+        std::cout << "Did not scan for email addresses.\n";
+    }
 
-#ifdef HAVE_MCHECK
     muntrace();
-#endif
     exit(0);
 }
