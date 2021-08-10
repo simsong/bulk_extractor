@@ -26,11 +26,16 @@
  * here is that the key scheduling process creates high-entropy
  * data. So there is no reason to examine low-entropy data for a
  * scheduled key, becuase you won't find it.
+ *
+ * 2021-aug-10  slg updated for BE2.0 and C++17
+
  */
 
 
 #include <string>
-//#include <cstdint>
+#include <string.h>
+#include <inttypes.h>
+
 
 #include "config.h"
 #include "be13_api/scanner_params.h"
@@ -38,19 +43,16 @@
 
 /* old aes.h file */
 
+static const u_int AES128_KEY_SIZE  =               16; //  Size of a 128-bit AES key, in bytes
+static const u_int AES192_KEY_SIZE  =               24; // Size of a 192-bit AES key, in bytes
+static const u_int AES256_KEY_SIZE  =               32; // Size of a 256-bit AES key, in bytes
 
-#define AES128_KEY_SIZE                  16 //  Size of a 128-bit AES key, in bytes
-#define AES192_KEY_SIZE                  24 // Size of a 192-bit AES key, in bytes
-#define AES256_KEY_SIZE                  32 // Size of a 256-bit AES key, in bytes
+static const u_int AES128_KEY_SCHEDULE_SIZE =      176; // Size of a 128-bit AES key schedule, in bytes
+static const u_int AES192_KEY_SCHEDULE_SIZE =      208; // Size of a 128-bit AES key schedule, in bytes
+static const u_int AES256_KEY_SCHEDULE_SIZE =      240; // Size of a 128-bit AES key schedule, in bytes
 
-#define AES128_KEY_SCHEDULE_SIZE        176 // Size of a 128-bit AES key schedule, in bytes
-#define AES192_KEY_SCHEDULE_SIZE        208 // Size of a 128-bit AES key schedule, in bytes
-#define AES256_KEY_SCHEDULE_SIZE        240 // Size of a 128-bit AES key schedule, in bytes
+static const u_int REQUIRED_DISTINCT_COUNTS =	10; // number of unique  bytes to require in AES key
 
-#define REQUIRED_DISTINCT_COUNTS	10 // number of unique  bytes to require in AES key
-
-#define FALSE 0
-#define TRUE  1
 
 // Determines whether or not data represents valid
 // AES key schedules. In reality, this is very efficient code for
@@ -60,15 +62,9 @@
 // valid key schedules far more often than not, these functions
 // have been optimized to find values that are not key schedules.
 //
-// Returns TRUE if 'in' is a valid 128-bit AES key schedule, otherwise FALSE
-int valid_aes128_schedule(const uint8_t * in);
-int valid_aes192_schedule(const uint8_t * in);
-int valid_aes256_schedule(const uint8_t * in);
+// Returns TRUE if 'in' is a valid 128-bit AES key schedule, otherwise false
 
-/* old aes.c file */
-
-#include <string.h>
-#include <inttypes.h>
+#include "scan_aes.h"
 
 /* 8 bit x 8 bit group multiplication.
  */
@@ -111,7 +107,7 @@ void rcon_setup()
 
 
 // Log table using 0xe5 (229) as the generator
-static uint8_t ltable[256] = {
+static constexpr uint8_t ltable[256] = {
   0x00, 0xff, 0xc8, 0x08, 0x91, 0x10, 0xd0, 0x36,
   0x5a, 0x3e, 0xd8, 0x43, 0x99, 0x77, 0xfe, 0x18,
   0x23, 0x20, 0x07, 0x70, 0xa1, 0x6c, 0x0c, 0x7f,
@@ -146,7 +142,7 @@ static uint8_t ltable[256] = {
   0x68, 0x1b, 0x64, 0x04, 0x06, 0xbf, 0x83, 0x38 };
 
 // Anti-log table:
-static uint8_t atable[256] = {
+static constexpr uint8_t atable[256] = {
   0x01, 0xe5, 0x4c, 0xb5, 0xfb, 0x9f, 0xfc, 0x12,
   0x03, 0x34, 0xd4, 0xc4, 0x16, 0xba, 0x1f, 0x36,
   0x05, 0x5c, 0x67, 0x57, 0x3a, 0xd5, 0x21, 0x5a,
@@ -213,24 +209,12 @@ void sbox_setup()
 }
 
 
-// Rotate a 32-bit word
-// We can't make this a table; it would take 4GB!
-// but it should be recoded with a rotate left instruction
-inline void rotate(uint8_t *in)
-{
-    uint8_t in0 = in[0];
-    in[0] = in[1];
-    in[1] = in[2];
-    in[2] = in[3];
-    in[3] = in0;
-}
-
 // This is the core key expansion, which, given a 4-byte value,
 // does some scrambling
 inline void schedule_core(uint8_t *in, uint8_t i)
 {
     // Rotate the input 8 bits to the left
-    rotate(in);
+    rotate32x8(in);
     // Apply Rijndael's s-box on all 4 bytes
 
     for(uint8_t a = 0; a < 4; a++) {
@@ -244,7 +228,7 @@ inline void schedule_core(uint8_t *in, uint8_t i)
 
 // Returns TRUE if the buffer in contains a valid AES-128 key
 // schedule, otherwise, FALSE.
-int valid_aes128_schedule(const uint8_t * in)
+bool valid_aes128_schedule(const uint8_t * in)
 {
   uint8_t computed[AES128_KEY_SCHEDULE_SIZE];
   uint8_t t[4];
@@ -272,18 +256,18 @@ int valid_aes128_schedule(const uint8_t * in)
       // If the computed schedule doesn't match our goal,
       // punt immediately!
       if (computed[pos] != in[pos]){
-	return FALSE;
+	return false;
       }
       pos++;
     }
   }
-  return TRUE;
+  return true;
 }
 
 
 // Returns TRUE if the buffer in contains a valid AES-192 key
 // schedule, otherwise, FALSE.
-int valid_aes192_schedule(const uint8_t * in)
+bool valid_aes192_schedule(const uint8_t * in)
 {
   uint8_t computed[AES192_KEY_SCHEDULE_SIZE];
   uint8_t t[4];
@@ -312,20 +296,20 @@ int valid_aes192_schedule(const uint8_t * in)
       // If the computed schedule doesn't match our goal,
       // punt immediately!
       if (computed[pos] != in[pos])
-	return FALSE;
+	return false;
 
       pos++;
     }
   }
 
-  return TRUE;
+  return true;
 }
 
 
 
 // Returns TRUE if the buffer in contains a valid AES-256 key
 // schedule, otherwise, FALSE.
-int valid_aes256_schedule(const uint8_t * in)
+bool valid_aes256_schedule(const uint8_t * in)
 {
   uint8_t computed[AES256_KEY_SCHEDULE_SIZE];
   uint8_t t[4];
@@ -359,15 +343,13 @@ int valid_aes256_schedule(const uint8_t * in)
       // If the computed schedule doesn't match our goal,
       // punt immediately!
       if (computed[pos] != in[pos])
-	return FALSE;
+	return false;
 
       pos++;
     }
   }
-
-  return TRUE;
+  return true;
 }
-
 
 // FindAES version 1.0 by Jesse Kornblum
 // http://jessekornblum.com/tools/findaes/
@@ -375,14 +357,16 @@ int valid_aes256_schedule(const uint8_t * in)
 // Substantially modified by Simson Garfinkel
 
 
-
 static std::string key_to_string(const uint8_t * key, uint64_t sz)
 {
     std::string ret;
     for(size_t pos=0;pos<sz;pos++){
 	char buf[4];
-	snprintf(buf,sizeof(buf),"%02x ", key[pos]);
+	snprintf(buf,sizeof(buf),"%02x", key[pos]);
 	ret += buf;
+        if (pos!=sz-1) {
+            ret += ' ';
+        }
     }
     return ret;
 }
@@ -440,7 +424,7 @@ void scan_aes(struct scanner_params &sp)
 	    }
 
             /* TODO: Remove direct memory access with mediated access */
-	    if(distinct_counts>10){
+	    if(distinct_counts > REQUIRED_DISTINCT_COUNTS){
 		const uint8_t *p2 = sp.sbuf->get_buf() + pos;
 		if (valid_aes128_schedule(p2)) {
                     std::string key = key_to_string(p2, AES128_KEY_SIZE);

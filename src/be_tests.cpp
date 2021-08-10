@@ -30,6 +30,7 @@
 #include "jpeg_validator.h"
 #include "phase1.h"
 #include "sbuf_decompress.h"
+#include "scan_aes.h"
 #include "scan_base64.h"
 #include "scan_email.h"
 #include "scan_net.h"
@@ -369,9 +370,6 @@ TEST_CASE("scan_net", "[scanners]") {
 
     /* Make an sbuf with just the packet, for initial testing */
     sbuf_t sbufip = sbuf.slice(frame_offset + ETHERNET_FRAME_SIZE);
-    std::cerr << "IP PACKET:\n";
-    sbufip.hex_dump(std::cerr);
-    std::cerr << "=========\n";
 
     scan_net::generic_iphdr_t h;
 
@@ -467,7 +465,7 @@ std::filesystem::path validate(std::string image_fname, std::vector<Check> &expe
     sc.allow_recurse    = recurse;
 
     if (offset==0) {
-        sc.input_fname = image_fname;
+        sc.input_fname = test_dir() / image_fname;
     } else {
         std::string offset_name = sc.outdir / "offset_file";
 
@@ -503,7 +501,7 @@ std::filesystem::path validate(std::string image_fname, std::vector<Check> &expe
             phase1.phase1_run();
             delete p;
         } catch (image_process::NoSuchFile &e) {
-            std::cerr << "no such file: " << e.what() << "\n";
+            std::cerr << "sc.input_fname=" << sc.input_fname << " no such file: " << e.what() << "\n";
             bool file_found=false;
             REQUIRE(file_found);
         }
@@ -513,7 +511,6 @@ std::filesystem::path validate(std::string image_fname, std::vector<Check> &expe
     xreport->pop("dfxml");
     xreport->close();
     delete xreport;
-
 
     for (size_t i=0; i<expected.size(); i++){
         std::filesystem::path fname  = sc.outdir / expected[i].fname;
@@ -587,14 +584,39 @@ bool validate_files(const std::filesystem::path &fn0, const std::filesystem::pat
 }
 
 
-TEST_CASE("test_json", "[phase1]") {
-    std::vector<Check> ex1 {
-        Check("json.txt",
-              Feature( "0",
-                       JSON1,
-                       "ef2b5d7ee21e14eeebb5623784f73724218ee5dd")),
+TEST_CASE("test_aes", "[phase1]") {
+    /* Test rotation with various sign extension snaffu */
+    uint8_t in[4];
+    in[0] = 0;
+    in[1] = 0xf1;
+    in[2] = 2;
+    in[3] = 0xf3;
+    rotate32x8(in);
+    REQUIRE(in[0] == 0xf1);
+    REQUIRE(in[1] == 2);
+    REQUIRE(in[2] == 0xf3);
+    REQUIRE(in[3] == 0);
+
+    /* Test rotation with various sign extension snaffu */
+    in[0] = 0xff;
+    in[1] = 1;
+    in[2] = 0xf2;
+    in[3] = 3;
+    rotate32x8(in);
+    REQUIRE(in[0] == 1);
+    REQUIRE(in[1] == 0xf2);
+    REQUIRE(in[2] == 3);
+    REQUIRE(in[3] == 0xff);
+
+    /* Try with sign extension */
+
+    std::vector<Check> ex3 {
+        Check("aes_keys.txt", Feature("496", "a2 6e 0e 4c 06 c4 bb bf 5d 62 8b c7 f8 b3 91 b6", "AES128")),
+        Check("aes_keys.txt", Feature("1120", "dc d2 05 18 c4 16 c0 e2 8e d8 59 9c 86 ed e8 e6", "AES128")),
+        Check("aes_keys.txt", Feature("7008", "09 23 e0 4d 40 44 57 1f 55 bf 43 bc ac 06 11 04 45 63 03 a1 52 c5 4c 16 ba a6 96 e9 a6 18 80 65", "AES256")),
+        Check("aes_keys.txt", Feature("7304", "00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f 10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f", "AES256"))
     };
-    validate("test_json.txt", ex1);
+    validate("ram_2pages.bin", ex3);
 }
 
 TEST_CASE("test_base16json", "[phase1]") {
@@ -615,15 +637,23 @@ TEST_CASE("test_base16json", "[phase1]") {
     validate("test_base16json.txt", ex2);
 }
 
-TEST_CASE("test_hello", "[phase1]") {
+TEST_CASE("test_gzip", "[phase1]") {
     std::vector<Check> ex3 {
         Check("email.txt",
-              Feature( "0-GZIP-0",
-                       "hello@world.com",
-                       "hello@world.com\\x0A"))
+              Feature( "0-GZIP-0", "hello@world.com", "hello@world.com\\x0A"))
 
     };
     validate("test_hello.gz", ex3);
+}
+
+TEST_CASE("test_json", "[phase1]") {
+    std::vector<Check> ex1 {
+        Check("json.txt",
+              Feature( "0",
+                       JSON1,
+                       "ef2b5d7ee21e14eeebb5623784f73724218ee5dd")),
+    };
+    validate("test_json.txt", ex1);
 }
 
 TEST_CASE("KML_Samples.kml","[phase1]"){
