@@ -57,6 +57,7 @@ std::filesystem::path test_dir()
 
 sbuf_t *map_file(std::filesystem::path p)
 {
+    sbuf_t::debug_range_exception = true;
     return sbuf_t::map_file( test_dir() / p );
 }
 
@@ -139,6 +140,7 @@ std::filesystem::path test_scanner(scanner_t scanner, sbuf_t *sbuf)
 
 
 TEST_CASE("base64_forensic", "[support]") {
+    sbuf_t::debug_range_exception = true;
     const char *encoded="SGVsbG8gV29ybGQhCg==";
     const char *decoded="Hello World!\n";
     unsigned char output[64];
@@ -371,24 +373,23 @@ TEST_CASE("scan_net", "[scanners]") {
     sbufip.hex_dump(std::cerr);
     std::cerr << "=========\n";
 
-    bool checksum_valid = false;
     scan_net::generic_iphdr_t h;
 
-    REQUIRE( scan_net::sanityCheckIP46Header( sbufip, 0 , &checksum_valid, &h) == true );
-    REQUIRE( checksum_valid == true );
+    REQUIRE( scan_net::sanityCheckIP46Header( sbufip, 0 , &h) == true );
+    REQUIRE( h.checksum_valid == true );
 
     /* Now try with the offset */
-    REQUIRE( scan_net::sanityCheckIP46Header( sbuf, frame_offset + ETHERNET_FRAME_SIZE, &checksum_valid, &h) == true );
-    REQUIRE( checksum_valid == true );
+    REQUIRE( scan_net::sanityCheckIP46Header( sbuf, frame_offset + ETHERNET_FRAME_SIZE, &h) == true );
+    REQUIRE( h.checksum_valid == true );
 
     /* Change the IP address and make sure that the header is valid but the checksum is not */
     buf[frame_offset + ETHERNET_FRAME_SIZE + 14]++; // increment destination address
-    REQUIRE( scan_net::sanityCheckIP46Header( sbufip, 0 , &checksum_valid, &h) == true );
-    REQUIRE( checksum_valid == false );
+    REQUIRE( scan_net::sanityCheckIP46Header( sbufip, 0 , &h) == true );
+    REQUIRE( h.checksum_valid == false );
 
     /* Break the port and make sure that the header is no longer valid */
     buf[frame_offset + ETHERNET_FRAME_SIZE] += 0x10; // increment header length
-    REQUIRE( scan_net::sanityCheckIP46Header( sbufip, 0 , &checksum_valid, &h) == false );
+    REQUIRE( scan_net::sanityCheckIP46Header( sbufip, 0 , &h) == false );
 
 
 }
@@ -455,14 +456,16 @@ TEST_CASE("test_validate", "[phase1]" ) {
 /*
  * Run all of the built-in scanners on a specific image, look for the given features, and return the directory.
  */
-std::string validate(std::string image_fname, std::vector<Check> &expected)
+std::filesystem::path validate(std::string image_fname, std::vector<Check> &expected, bool recurse=true)
 {
+    sbuf_t::debug_range_exception = true;
     std::cerr << "================ validate  " << image_fname << " ================\n";
     scanner_config sc;
 
     sc.outdir = NamedTemporaryDirectory();
     sc.scanner_commands = enable_all_scanners;
     sc.input_fname      = image_fname;
+    sc.allow_recurse    = recurse;
 
     const feature_recorder_set::flags_t frs_flags;
     auto *xreport = new dfxml_writer(sc.outdir / "report.xml", false);
@@ -601,12 +604,57 @@ TEST_CASE("test_jpeg_rar", "[phase1]") {
 
 TEST_CASE("test_net1", "[phase1]") {
     std::vector<Check> ex2 {
-        Check("ip.txt",
-              Feature( "54", "192.168.0.91", "struct ip L (src) cksum-ok")),
-        Check("ip_histogram.txt",
-              Feature( "n=79", "192.168.0.91"))
+        Check("ip.txt", Feature( "54", "192.168.0.91", "struct ip L (src) cksum-ok")),
+        Check("ip_histogram.txt", Feature( "n=1", "192.168.0.91"))
     };
-    validate("ntlm.pcap", ex2);
+    auto outdir = validate("ntlm1.pcap", ex2, false);
+    /* The output file should equal the input file */
+    std::filesystem::path fn0 = test_dir() / "ntlm1.pcap";
+    std::filesystem::path fn1 = outdir / "packets.pcap";
+    std::ifstream in0( fn0, std::ios::binary);
+    std::ifstream in1( fn1, std::ios::binary);
+    REQUIRE( in0.is_open());
+    REQUIRE( in1.is_open());
+    int errors = 0;
+    for(size_t i=0;;i++) {
+        uint8_t ch0,ch1;
+        in0 >> ch0;
+        in1 >> ch1;
+        if (ch0 != ch1 ){
+            if (errors==0) {
+                std::cerr << "file 0 " << fn0 << "\n";
+                std::cerr << "file 1 " << fn1 << "\n";
+            }
+            std::cerr << "i=" << i << "  ch0=" << static_cast<u_int>(ch0) << " ch1=" << static_cast<u_int>(ch1) << "\n";
+            errors += 1;
+        }
+        if (in0.eof() || in1.eof()) break;
+    }
+    REQUIRE(errors == 0);
+}
+
+TEST_CASE("test_net2", "[phase1]") {
+    std::vector<Check> ex2 {
+        Check("ip.txt", Feature( "54", "192.168.0.91", "struct ip L (src) cksum-ok")),
+        Check("ip_histogram.txt", Feature( "n=1", "192.168.0.91"))
+    };
+    validate("ntlm2.pcap", ex2);
+}
+
+TEST_CASE("test_net3", "[phase1]") {
+    std::vector<Check> ex2 {
+        Check("ip.txt", Feature( "54", "192.168.0.91", "struct ip L (src) cksum-ok")),
+        Check("ip_histogram.txt", Feature( "n=2", "192.168.0.91"))
+    };
+    validate("ntlm3.pcap", ex2);
+}
+
+TEST_CASE("test_net80", "[phase1]") {
+    std::vector<Check> ex2 {
+        Check("ip.txt", Feature( "54", "192.168.0.91", "struct ip L (src) cksum-ok")),
+        Check("ip_histogram.txt", Feature( "n=80", "192.168.0.91"))
+    };
+    validate("ntlm80.pcap", ex2);
 }
 
 sbuf_t *make_sbuf()
