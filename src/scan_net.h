@@ -63,12 +63,13 @@ struct scan_net {
 
     bool carve_net_memory {false};      // should we carve for network memory?
 
-    /* Decode a header at a location and return true if it looks good */
-    constexpr static size_t PCAP_RECORD_HEADER_SIZE = 16;
+    /* Header for the PCAP file */
     constexpr static uint8_t PCAP_HEADER[] {
         0xd4, 0xc3, 0xb2, 0xa1, // magic
         0x02, 0x00, 0x04, 0x00  // version_major, version_minor
             };
+    /* Header for each packet */
+    constexpr static size_t PCAP_RECORD_HEADER_SIZE = 16;
 
     /*
      * Sanity check the header values

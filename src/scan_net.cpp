@@ -671,8 +671,6 @@ size_t scan_net::carveIPFrame(const sbuf_t &sbuf, size_t pos) const
     /* IPv4 has a checksum; use it if we can */
     if (h.checksum_valid==false && opt_report_checksum_bad==false) return 0; // user does not want invalid checksums
 
-    std::cerr << "point a\n";
-
     /* A valid IPframe but not proceeded by an Ethernet or a pcap header. */
     uint8_t buf[PCAP_MAX_PKT_LEN+14];
     size_t ip_len         = h.nxthdr_offs + h.payload_len;
@@ -697,7 +695,6 @@ size_t scan_net::carveIPFrame(const sbuf_t &sbuf, size_t pos) const
     /* make an sbuf to write */
     sbuf_t sb3(pos0_t(), buf, packet_len);
     struct pcap_hdr ph(0, 0, packet_len, packet_len);  // make a fake header
-    std::cerr << "document1\n";
     documentIPFields(sb3, 0, h);
     pcap_writepkt(ph, sb3, 0, false, 0x0000);	   // write the packet
     return ip_len;                                     // return that we processed this much
@@ -735,7 +732,6 @@ size_t scan_net::carveEther(const sbuf_t &sbuf, size_t pos) const
             if (!invalidMAC(&(er->ether_shost))){
                 ether_recorder->write(sbuf.pos0 + pos, mac2string(&(er->ether_shost)), " (ether_shost) ");
             }
-            std::cerr << "document2\n";
             documentIPFields(sbuf, pos+data_offset, h);
         }
     }
@@ -840,11 +836,8 @@ void pcap_writer::pcap_writepkt(const struct pcap_hdr &h, // packet header
                                 const uint16_t frame_type) const // if we add a frame, the frame type
 {
     // Make sure that neither this packet nor an encapsulated version of this packet has been written
-    std::cerr << "pcap_writepkt pos=" << pos << "\n";
-
     const std::lock_guard<std::mutex> lock(Mfcap);// lock the mutex
     if (fcap==0){
-        std::cerr << "writing pcap file header\n";
         std::filesystem::path ofn = outdir / default_filename;
         fcap = fopen(ofn.c_str(),"wb"); // write the output
         pcap_write4(0xa1b2c3d4);
@@ -865,10 +858,8 @@ void pcap_writer::pcap_writepkt(const struct pcap_hdr &h, // packet header
      * make the packet larger than the largest allowable packet in a pcap file.
      */
     bool add_frame_and_safe = add_frame && h.cap_len + ETHER_HEAD_LEN <= PCAP_MAX_PKT_LEN;
-    std::cerr << "   c add_frame=" << int(add_frame) << " add_frame_and_safe=" << int(add_frame_and_safe) << "\n";
     if (add_frame_and_safe) {
         forged_header_len = sizeof(forged_header);
-        std::cerr << "add_frame_and_safe forged_header_len=" << forged_header_len << "\n";
 
         // forge Ethernet II header
         //   - source and destination addrs are all zeroes, ethernet type is supplied by function caller
@@ -886,7 +877,6 @@ void pcap_writer::pcap_writepkt(const struct pcap_hdr &h, // packet header
     if (add_frame_and_safe) {
         pcap_write_bytes(forged_header, sizeof(forged_header));
     }
-    std::cerr << "sbuf. write @" << pos << " len=" << h.cap_len << "\n";
     sbuf.write(fcap, pos, h.cap_len );	// the packet
 
 }
@@ -912,11 +902,6 @@ size_t scan_net::carvePCAPPacket(const sbuf_t &sbuf, size_t pos) const
     bool packet_at_end_of_sbuf   = ( pos + h.cap_len+PCAP_RECORD_HEADER_SIZE == sbuf.bufsize);
     bool next_packet_looks_valid = likely_valid_pcap_packet_header(sbuf, pos+PCAP_RECORD_HEADER_SIZE+h.cap_len, h2);
 
-    std::cerr << "  cpp - ";
-    if (packet_at_end_of_sbuf)   std::cerr << " packet_at_end_of_sbuf ";
-    if (next_packet_looks_valid) std::cerr << " next_packet_looks_valid ";
-    std::cerr << "\n";
-
     if ( packet_at_end_of_sbuf || next_packet_looks_valid ){
 
         // If we got here, then carve the packet. If it is a raw_ip, add a pseudo-ethernet header.
@@ -924,19 +909,15 @@ size_t scan_net::carvePCAPPacket(const sbuf_t &sbuf, size_t pos) const
 
         generic_iphdr_t header_info;
         bool is_raw_ip = sanityCheckIP46Header(sbuf, pos+PCAP_RECORD_HEADER_SIZE, &header_info);
-        std::cerr << "is_raw_ip = " << int(is_raw_ip) << "\n";
 
         uint16_t pseudo_frame_ethertype = 0;
         if (is_raw_ip) {
             pseudo_frame_ethertype = (header_info.family == AF_INET6) ? ETHERTYPE_IPV6 : ETHERTYPE_IP;
         } else {
-            std::cerr << "old header_info: " << header_info << "\n";
             sanityCheckIP46Header(sbuf, pos+PCAP_RECORD_HEADER_SIZE+ETHER_HEAD_LEN, &header_info);
-            std::cerr << "new header_info: " << header_info << "\n";
         }
 
         /* We are at the end of the file, or the next slot is also a packet */
-        std::cerr << "document3 " << header_info << "\n";
         documentIPFields(sbuf, pos+PCAP_RECORD_HEADER_SIZE, header_info);
         pcap_writepkt(h, sbuf, pos+PCAP_RECORD_HEADER_SIZE, is_raw_ip,pseudo_frame_ethertype);
         return PCAP_RECORD_HEADER_SIZE + h.cap_len;    // what is hard-coded 16?
@@ -958,24 +939,18 @@ size_t scan_net::carvePCAPFile(const sbuf_t &sbuf, size_t pos) const
      * which may cause issues if there is encapsulation present
      */
 
-    std::cerr << "   cpf 0\n";
     if (sbuf.memcmp(PCAP_HEADER, pos, sizeof(PCAP_HEADER))!=0) {
-        std::cerr << "   cpf 1\n";
         return 0;
     }
-    std::cerr << "   cpf 2\n";
 
     ip_recorder->write(sbuf.pos0+pos, TCPDUMP_FR_FEATURE, TCPDUMP_FR_CONTEXT);
-    std::cerr << "   cpf 3\n";
 
     size_t bytes = TCPDUMP_HEADER_SIZE;
     pos += TCPDUMP_HEADER_SIZE;
 
     /* now scan for packets */
     while (pos < sbuf.pagesize ) {
-        std::cerr << "   cpf 4\n";
         size_t len = carvePCAPPacket(sbuf, pos); // look for next packet
-        std::cerr << "   cpf 5  len=" << len << "\n";
         if (len==0) break;
         pos += len;
         bytes += len;
@@ -992,26 +967,19 @@ void scan_net::carve(const sbuf_t &sbuf) const
      * Please remember that this is called for every byte, so it needs to be fast.
      */
     size_t pos = 0;
-    std::cerr << "scan_net::carve " << sbuf << "\n";
     while (pos < sbuf.pagesize && pos < sbuf.bufsize - MIN_SBUF_SIZE) {
-        std::cerr << " 1 carve pos=" << pos << "\n";
         size_t carved = 0;
 
         /* Look for a PCAPFile header */
-        std::cerr << " 2 carve pos=" << pos << "\n";
         size_t sfile = carvePCAPFile( sbuf, pos );
-        std::cerr << " 3 carve pos=" << pos << "\n";
-        std::cerr << "  sfile=" << sfile << "\n";
         if (sfile>0) {
-            pos+= sfile;
+            pos += sfile;
             continue;
         }
-#if 0
         /* Look for a PCAP Packet without a PCAP File header. Could just be floating in space...*/
         size_t spacket = carvePCAPPacket( sbuf, pos );
         if (spacket>0) {
-            std::cerr << "  spacket=" << spacket << "\n";
-            pos+= spacket;
+            pos += spacket;
             continue;
         }
 
@@ -1026,8 +994,6 @@ void scan_net::carve(const sbuf_t &sbuf) const
             /* If we can't carve a packet, look for these two memory structures */
             carved = std::max(carveSockAddrIn( sbuf, pos ), carveTCPTOBJ( sbuf, pos ));
         }
-        std::cerr << "  carved=" << carved << "\n";
-#endif
         pos += (carved>0 ? carved : 1);	// advance the pointer
     }
     flush();
@@ -1084,7 +1050,6 @@ void scan_net(scanner_params &sp)
              * we get an exception, which is caught here. It is non-fatal. The code below
              * was just for testing.
              */
-            // std::cerr << "sbuf_t range exception: " << e.what() << "\n";
         }
     }
     if (sp.phase==scanner_params::PHASE_SHUTDOWN){

@@ -462,10 +462,29 @@ std::filesystem::path validate(std::string image_fname, std::vector<Check> &expe
     std::cerr << "================ validate  " << image_fname << " ================\n";
     scanner_config sc;
 
-    sc.outdir = NamedTemporaryDirectory();
+    sc.outdir           = NamedTemporaryDirectory();
     sc.scanner_commands = enable_all_scanners;
-    sc.input_fname      = image_fname;
     sc.allow_recurse    = recurse;
+
+    if (offset==0) {
+        sc.input_fname = image_fname;
+    } else {
+        std::string offset_name = sc.outdir / "offset_file";
+
+        std::ifstream in(  test_dir() / image_fname, std::ios::binary);
+        std::ofstream out( offset_name );
+        in.seekg(offset);
+        char ch;
+        size_t written = 0;
+        while (in.get(ch)) {
+            out << ch;
+            written ++;
+        }
+        in.close();
+        out.close();
+        std::cerr << "offset created. bytes written: " << written << "\n";
+        sc.input_fname = offset_name;
+    }
 
     const feature_recorder_set::flags_t frs_flags;
     auto *xreport = new dfxml_writer(sc.outdir / "report.xml", false);
@@ -473,22 +492,9 @@ std::filesystem::path validate(std::string image_fname, std::vector<Check> &expe
     ss.add_scanners(scanners_builtin);
     ss.apply_scanner_commands();
 
-    if (offset) {
-        std::ifstream in(  sc.input_fname, std::ios::binary);
-        sc.input_fname = sc.outdir / "offset_file"; // new name!
-        std::ofstream out( sc.input_fname, std::ios::binary);
-        in.seekg(offset);
-        while (!in.eof()) {
-            uint8_t ch;
-            in >> ch;
-            out << ch;
-            std::cerr << int(ch) << " ";
-        }
-    }
-
     if (image_fname != "" ) {
         try {
-            auto p = image_process::open( test_dir() / image_fname, false, 65536, 65536);
+            auto p = image_process::open( sc.input_fname, false, 65536, 65536);
             Phase1::Config cfg;  // config for the image_processing system
             Phase1 phase1(cfg, *p, ss);
             phase1.dfxml_write_create( 0, nullptr);
@@ -680,7 +686,7 @@ TEST_CASE("test_net3", "[phase1]") {
     validate("ntlm3.pcap", ex2);
 }
 
-/* Look at a file with three packets with an offset of 1, to see if we can find the packets even when the PCAP file header is missing */
+/* Look at a file with three packets with an offset of 10, to see if we can find the packets even when the PCAP file header is missing */
 TEST_CASE("test_net3+10", "[phase1]") {
     std::vector<Check> ex2 {
         Check("ip.txt", Feature( "30", "192.168.0.91", "struct ip L (src) cksum-ok")),
@@ -694,6 +700,25 @@ TEST_CASE("test_net3+10", "[phase1]") {
     };
     validate("ntlm3.pcap", ex2, false, 10);
 }
+
+/* Look at a file with three packets with an offset of 24, to see if we can find the packets even when the PCAP record header is missing.
+ * (of course, it's only missing for one.)
+ */
+TEST_CASE("test_net3+24", "[phase1]") {
+    std::vector<Check> ex2 {
+        Check("ip.txt", Feature( "16", "192.168.0.91", "struct ip L (src) cksum-ok")),
+        Check("ip.txt", Feature( "16", "192.168.0.55", "struct ip R (dst) cksum-ok")),
+        Check("ip.txt", Feature( "458", "192.168.0.55", "struct ip L (src) cksum-ok")),
+        Check("ip.txt", Feature( "458", "192.168.0.91", "struct ip R (dst) cksum-ok")),
+        Check("ip.txt", Feature( "986", "192.168.0.91", "struct ip L (src) cksum-ok")),
+        Check("ip.txt", Feature( "986", "192.168.0.55", "struct ip R (dst) cksum-ok")),
+        Check("ip_histogram.txt", Feature( "n=3", "192.168.0.91")),
+        Check("ip_histogram.txt", Feature( "n=3", "192.168.0.55"))
+    };
+    validate("ntlm3.pcap", ex2, false, 24);
+}
+
+
 
 TEST_CASE("test_net80", "[phase1]") {
     std::vector<Check> ex2 {
