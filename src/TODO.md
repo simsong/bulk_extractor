@@ -19,4 +19,12 @@
 - [ ] test against v1.6 with IPv6 UDP
 - [ ] test against v1.6 with IPv6 TCP
 
-# Ideas:
+# dfxml:
+build environment:
+- [ ] Missing CPPFLAGS, CXXFLAGS, LDFLAGS, LIBS and CFLAGS.
+- [ ] Missing git commit
+- [ ] sbuf_read -> debug:work_start; add t=
+- [ ] sbuf_delete -> debug:work_end; add time=;
+- [ ] missing <hashdigest> inside <source.>
+- [ ] Does not have the time that each thread spent waiting.
+- [ ] <total_bytes> is larger than it should be.

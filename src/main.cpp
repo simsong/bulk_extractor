@@ -784,7 +784,6 @@ int main(int argc,char **argv)
 
     struct feature_recorder_set::flags_t f;
     scanner_set ss(sc, f, nullptr);     // make a scanner_set but with no XML writer. We will create it below
-
     ss.add_scanners(scanners_builtin);
 
 
@@ -947,6 +946,9 @@ int main(int argc,char **argv)
             std::cout << "Threading Disabled\n";
         }
     }
+
+
+
 
     /*** PHASE 1 --- Run on the input image */
     new std::thread(&notify_thread, &ss);    // launch the notify thread

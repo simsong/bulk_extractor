@@ -621,13 +621,9 @@ void scan_rar(scanner_params &sp)
 	const sbuf_t &sbuf = *(sp.sbuf);
 	const pos0_t &pos0 = sbuf.pos0;
 
-        if (sbuf.bufsize < FILE_HEAD_MIN_LEN){
-            return;
-        }
-
         RarComponentInfo component;
         RarVolumeInfo volume;
-	for (size_t pos = 0 ; pos < sbuf.bufsize - FILE_HEAD_MIN_LEN; pos++ ){
+	for (size_t pos = 0 ; pos + FILE_HEAD_MIN_LEN < sbuf.bufsize ; pos++ ){
             size_t cc_len = sbuf.bufsize - pos;
 
             // feature files have three columns: forensic path / offset,

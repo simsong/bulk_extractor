@@ -619,6 +619,7 @@ TEST_CASE("test_aes", "[phase1]") {
     validate("ram_2pages.bin", ex3);
 }
 
+
 TEST_CASE("test_base16json", "[phase1]") {
     std::vector<Check> ex2 {
         Check("json.txt",
@@ -639,19 +640,14 @@ TEST_CASE("test_base16json", "[phase1]") {
 
 TEST_CASE("test_gzip", "[phase1]") {
     std::vector<Check> ex3 {
-        Check("email.txt",
-              Feature( "0-GZIP-0", "hello@world.com", "hello@world.com\\x0A"))
-
+        Check("email.txt", Feature( "0-GZIP-0", "hello@world.com", "hello@world.com\\x0A"))
     };
     validate("test_hello.gz", ex3);
 }
 
 TEST_CASE("test_json", "[phase1]") {
     std::vector<Check> ex1 {
-        Check("json.txt",
-              Feature( "0",
-                       JSON1,
-                       "ef2b5d7ee21e14eeebb5623784f73724218ee5dd")),
+        Check("json.txt", Feature( "0", JSON1, "ef2b5d7ee21e14eeebb5623784f73724218ee5dd")),
     };
     validate("test_json.txt", ex1);
 }
@@ -748,11 +744,9 @@ TEST_CASE("test_net3+24", "[phase1]") {
     validate("ntlm3.pcap", ex2, false, 24);
 }
 
-
-
 TEST_CASE("test_net80", "[phase1]") {
     std::vector<Check> ex2 {
-        Check("ip.txt", Feature( "54", "192.168.0.91", "struct ip L (src) cksum-ok")),
+        Check("ip.txt", Feature( "40", "192.168.0.91", "struct ip L (src) cksum-ok")),
         Check("ip_histogram.txt", Feature( "n=80", "192.168.0.91"))
     };
     validate("ntlm80.pcap", ex2);

@@ -266,7 +266,6 @@ void scan_winprefetch(scanner_params &sp)
 	// phase 1: set up the feature recorder and search for winprefetch features
 	const sbuf_t &sbuf = *(sp.sbuf);
 
-
 	size_t stop = (sbuf.pagesize > sbuf.bufsize + 8) ? sbuf.bufsize : sbuf.pagesize - 8;
 
 	// iterate through sbuf searching for winprefetch features
