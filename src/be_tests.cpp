@@ -543,6 +543,31 @@ std::filesystem::path validate(std::string image_fname, std::vector<Check> &expe
 }
 
 
+bool validate_files(const std::filesystem::path &fn0, const std::filesystem::path &fn1)
+{
+    std::ifstream in0( fn0, std::ios::binary);
+    std::ifstream in1( fn1, std::ios::binary);
+    REQUIRE( in0.is_open());
+    REQUIRE( in1.is_open());
+    int errors = 0;
+    for(size_t i=0;;i++) {
+        uint8_t ch0,ch1;
+        in0 >> ch0;
+        in1 >> ch1;
+        if (ch0 != ch1 ){
+            if (errors==0) {
+                std::cerr << "file 0 " << fn0 << "\n";
+                std::cerr << "file 1 " << fn1 << "\n";
+            }
+            std::cerr << "i=" << i << "  ch0=" << static_cast<u_int>(ch0) << " ch1=" << static_cast<u_int>(ch1) << "\n";
+            errors += 1;
+        }
+        if (in0.eof() || in1.eof()) break;
+    }
+    return errors == 0;
+}
+
+
 TEST_CASE("test_json", "[phase1]") {
     std::vector<Check> ex1 {
         Check("json.txt",
@@ -604,33 +629,14 @@ TEST_CASE("test_jpeg_rar", "[phase1]") {
 
 TEST_CASE("test_net1", "[phase1]") {
     std::vector<Check> ex2 {
-        Check("ip.txt", Feature( "54", "192.168.0.91", "struct ip L (src) cksum-ok")),
-        Check("ip_histogram.txt", Feature( "n=1", "192.168.0.91"))
+        Check("ip.txt", Feature( "40", "192.168.0.91", "struct ip L (src) cksum-ok")),
+        Check("ip.txt", Feature( "40", "192.168.0.55", "struct ip R (dst) cksum-ok")),
+        Check("ip_histogram.txt", Feature( "n=1", "192.168.0.91")),
+        Check("ip_histogram.txt", Feature( "n=1", "192.168.0.55"))
     };
     auto outdir = validate("ntlm1.pcap", ex2, false);
     /* The output file should equal the input file */
-    std::filesystem::path fn0 = test_dir() / "ntlm1.pcap";
-    std::filesystem::path fn1 = outdir / "packets.pcap";
-    std::ifstream in0( fn0, std::ios::binary);
-    std::ifstream in1( fn1, std::ios::binary);
-    REQUIRE( in0.is_open());
-    REQUIRE( in1.is_open());
-    int errors = 0;
-    for(size_t i=0;;i++) {
-        uint8_t ch0,ch1;
-        in0 >> ch0;
-        in1 >> ch1;
-        if (ch0 != ch1 ){
-            if (errors==0) {
-                std::cerr << "file 0 " << fn0 << "\n";
-                std::cerr << "file 1 " << fn1 << "\n";
-            }
-            std::cerr << "i=" << i << "  ch0=" << static_cast<u_int>(ch0) << " ch1=" << static_cast<u_int>(ch1) << "\n";
-            errors += 1;
-        }
-        if (in0.eof() || in1.eof()) break;
-    }
-    REQUIRE(errors == 0);
+    REQUIRE(validate_files(test_dir() / "ntlm1.pcap", outdir / "packets.pcap"));
 }
 
 TEST_CASE("test_net2", "[phase1]") {
