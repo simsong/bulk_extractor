@@ -399,6 +399,7 @@ TEST_CASE("scan_vcard", "[scanners]") {
     auto outdir = test_scanner(scan_vcard, sbufp); // deletes sbuf2
 
     /* Read the output */
+    REQUIRE( std::filesystem::exists( outdir / "vcard/000/john_jakes.vcf􀀜-0.vcf") == true);
 }
 
 TEST_CASE("scan_wordlist", "[scanners]") {
@@ -419,6 +420,7 @@ TEST_CASE("scan_zip", "[scanners]") {
     auto *sbufp = map_file( "testfilex.docx" );
     auto outdir = test_scanners( scanners, sbufp); // deletes sbuf2
     auto email_txt = getLines( outdir / "email.txt" );
+    REQUIRE( std::filesystem::exists( outdir / "zip/000/testfilex.docx􀀜-0-ZIP-0_[Content_Types].xml") == true);
     REQUIRE( requireFeature(email_txt,"1771-ZIP-402\tuser_docx@microsoftword.com"));
     REQUIRE( requireFeature(email_txt,"2396-ZIP-1012\tuser_docx@microsoftword.com"));
 }
