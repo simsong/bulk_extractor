@@ -28,3 +28,4 @@ build environment:
 - [ ] missing <hashdigest> inside <source.>
 - [ ] Does not have the time that each thread spent waiting.
 - [ ] <total_bytes> is larger than it should be.
+- [ ] instead of <ns>, perhaps print <seconds> ?
