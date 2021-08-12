@@ -36,7 +36,7 @@ std::ostream & operator<<(std::ostream &os, const z_stream &zs)
 sbuf_t *sbuf_decompress::sbuf_new_decompress(const sbuf_t &sbuf, uint32_t max_uncompr_size, const std::string name,
                                              sbuf_decompress::mode_t mode, ssize_t header_size)
 {
-    sbuf_t *ret = sbuf_t::sbuf_malloc((sbuf.pos0 - header_size) + name, max_uncompr_size);
+    sbuf_t *ret = sbuf_t::sbuf_malloc((sbuf.pos0 - header_size) + name, max_uncompr_size, max_uncompr_size);
     /* Generic zlib decompresser. Works with all the versions we've seen zlib be used. */
 
     z_stream zs;

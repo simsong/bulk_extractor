@@ -174,7 +174,6 @@ void Phase1::read_process_sbufs()
             }
             try {
                 sbuf_t *sbufp = get_sbuf(it);
-                xreport.xmlout("sbuf_read",sbufp->pos0.str(), aftimer::now_str("t='","'"), false);
 
                 /* compute the sha1 hash */
                 if (sha1g){

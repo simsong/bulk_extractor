@@ -50,7 +50,7 @@ void scan_xor(scanner_params &sp)
         const pos0_t pos0_xor = pos0 + ss.str();
 
         // managed_malloc throws an exception if allocation fails.
-        auto *dbuf = sbuf_t::sbuf_malloc(pos0_xor, sbuf.bufsize);
+        auto *dbuf = sbuf_t::sbuf_malloc(pos0_xor, sbuf.bufsize, sbuf.pagesize);
         assert( dbuf!= nullptr);
         if (sbuf.depth()+1 != dbuf->depth()) {
             std::cerr << "sbuf: " << sbuf << "\n";

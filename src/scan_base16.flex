@@ -34,7 +34,7 @@ inline class base16_scanner *get_extra(yyscan_t yyscanner) {return yybase16_get_
 
 void base16_scanner::decode(const sbuf_t &sbuf)
 {
-    auto *dbuf = sbuf_t::sbuf_malloc(sbuf.pos0 + "BASE16", sbuf.pagesize/2+1);
+    auto *dbuf = sbuf_t::sbuf_malloc(sbuf.pos0 + "BASE16", sbuf.pagesize/2+1, sbuf.pagesize/2+1);
 
     size_t p=0;
     /* First get the characters */

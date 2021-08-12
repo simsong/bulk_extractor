@@ -76,7 +76,7 @@ void scan_outlook(scanner_params &sp)
 
         // dodge infinite recursion by refusing to operate on an OFE'd buffer
         if(pos0.lastAddedPart() != SCANNER_NAME) {
-            auto *nbuf = sbuf_t::sbuf_malloc(pos0 + SCANNER_NAME, sbuf.bufsize);
+            auto *nbuf = sbuf_t::sbuf_malloc(pos0 + SCANNER_NAME, sbuf.bufsize, sbuf.bufsize);
             for(size_t ii = 0; ii < nbuf->bufsize; ii++) {
                 nbuf->wbuf(ii, libpff_encryption_compressible[ sbuf[ii] ]);
             }
