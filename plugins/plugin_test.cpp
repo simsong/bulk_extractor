@@ -171,5 +171,5 @@ void scanner_info::get_config(const std::string &n,unsigned char *val,const std:
 void scanner_info::get_config(const std::string &n,unsigned short *val,const std::string &help) {}
 void scanner_info::get_config(const std::string &n,unsigned int *val,const std::string &help) {}
 void scanner_info::get_config(const std::string &n,unsigned long *val,const std::string &help) {}
-void scanner_info::get_config(const std::string &n,unsigned long long *val,const std::string &help) {}
+//void scanner_info::get_config(const std::string &n,unsigned long long *val,const std::string &help) {}
 void scanner_info::get_config(const std::string &n,bool *val,const std::string &help) {}
