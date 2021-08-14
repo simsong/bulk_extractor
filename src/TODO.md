@@ -29,3 +29,9 @@ build environment:
 - [ ] Does not have the time that each thread spent waiting.
 - [ ] <total_bytes> is larger than it should be.
 - [ ] instead of <ns>, perhaps print <seconds> ?
+
+- [ ] Histograms not sorted
+- [ ] utf16 in histograms not working properly
+- [ ] JPEGs too long
+- [ ] searches not working with regular expression to prune thme.
+- [ ] Don't carve IPv6 with bad checksum by default.

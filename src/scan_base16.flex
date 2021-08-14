@@ -124,6 +124,7 @@ void scan_base16(struct scanner_params &sp)
     if (sp.phase==scanner_params::PHASE_INIT){
         sp.info = std::make_unique<scanner_params::scanner_info>(scan_base16,"base16");
         sp.info->scanner_flags.recurse = true;
+        sp.info->scanner_flags.default_enabled = false;
         sp.info->author          = "Simson L. Garfinkel";
         sp.info->description     = "Base16 (hex) scanner";
         sp.info->scanner_version = "1.1";
