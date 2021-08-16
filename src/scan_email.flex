@@ -61,7 +61,6 @@ public:
 YY_EXTRA_TYPE yyemail_get_extra (yyscan_t yyscanner );    /* redundent declaration */
 inline class email_scanner *get_extra(yyscan_t yyscanner) {return yyemail_get_extra(yyscanner);}
 
-
 /* Address some common false positives in email scanner.
  * We don't need to do a full regular expression check, because one has already been done.
  */
@@ -141,7 +140,6 @@ DAYOFWEEK	(Mon|Tue|Wed|Thu|Fri|Sat|Sun)
 MONTH		(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)
 ABBREV		(UT|GMT|EST|EDT|CST|CDT|MST|MDT|PST|PDT|Z|A|M|N|Y)
 
-
 U_TLD1		(A\0C\0|A\0D\0|A\0E\0|A\0E\0R\0O\0|A\0F\0|A\0G\0|A\0I\0|A\0L\0|A\0M\0|A\0N\0|A\0O\0|A\0Q\0|A\0R\0|A\0R\0P\0A\0|A\0S\0|A\0S\0I\0A\0|A\0T\0|A\0U\0|A\0W\0|A\0X\0|A\0Z\0|B\0A\0|B\0B\0|B\0D\0|B\0E\0|B\0F\0|B\0G\0|B\0H\0|B\0I\0|B\0I\0Z\0|B\0J\0|B\0L\0|B\0M\0|B\0N\0|B\0O\0|B\0R\0|B\0S\0|B\0T\0|B\0V\0|B\0W\0|B\0Y\0|B\0Z\0|C\0A\0|C\0A\0T\0|C\0C\0|C\0D\0|C\0F\0|C\0G\0|C\0H\0|C\0I\0|C\0K\0|C\0L\0|C\0M\0|C\0N\0|C\0O\0|C\0O\0M\0|C\0O\0O\0P\0|C\0R\0|C\0U\0|C\0V\0|C\0X\0|C\0Y\0|C\0Z\0)
 U_TLD2		(D\0E\0|D\0J\0|D\0K\0|D\0M\0|D\0O\0|D\0Z\0|E\0C\0|E\0D\0U\0|E\0E\0|E\0G\0|E\0H\0|E\0R\0|E\0S\0|E\0T\0|E\0U\0|F\0I\0|F\0J\0|F\0K\0|F\0M\0|F\0O\0|F\0R\0|G\0A\0|G\0B\0|G\0D\0|G\0E\0|G\0F\0|G\0G\0|G\0H\0|G\0I\0|G\0L\0|G\0M\0|G\0N\0|G\0O\0V\0|G\0P\0|G\0Q\0|G\0R\0|G\0S\0|G\0T\0|G\0U\0|G\0W\0|G\0Y\0|H\0K\0|H\0M\0|H\0N\0|H\0R\0|H\0T\0|H\0U\0|I\0D\0|I\0E\0|I\0L\0|I\0M\0|I\0N\0|I\0N\0F\0O\0|I\0N\0T\0|I\0O\0|I\0Q\0|I\0R\0|I\0S\0|I\0T\0|J\0E\0|J\0M\0|J\0O\0|J\0O\0B\0S\0|J\0P\0|K\0E\0|K\0G\0|K\0H\0|K\0I\0|K\0M\0|K\0N\0|K\0P\0|K\0R\0|K\0W\0|K\0Y\0|K\0Z\0)
 U_TLD3		(L\0A\0|L\0B\0|L\0C\0|L\0I\0|L\0K\0|L\0R\0|L\0S\0|L\0T\0|L\0U\0|L\0V\0|L\0Y\0|M\0A\0|M\0C\0|M\0D\0|M\0E\0|M\0F\0|M\0G\0|M\0H\0|M\0I\0L\0|M\0K\0|M\0L\0|M\0M\0|M\0N\0|M\0O\0|M\0O\0B\0I\0|M\0P\0|M\0Q\0|M\0R\0|M\0S\0|M\0T\0|M\0U\0|M\0U\0S\0E\0U\0M\0|M\0V\0|M\0W\0|M\0X\0|M\0Y\0|M\0Z\0|N\0A\0|N\0A\0M\0E\0|N\0C\0|N\0E\0|N\0E\0T\0|N\0F\0|N\0G\0|N\0I\0|N\0L\0|N\0O\0|N\0P\0|N\0R\0|N\0U\0|N\0Z\0|O\0M\0|O\0R\0G\0|P\0A\0|P\0E\0|P\0F\0|P\0G\0|P\0H\0|P\0K\0|P\0L\0|P\0M\0|P\0N\0|P\0R\0|P\0R\0O\0|P\0S\0|P\0T\0|P\0W\0|P\0Y\0)
@@ -162,7 +160,6 @@ U_TLD4		(Q\0A\0|R\0E\0|R\0O\0|R\0S\0|R\0U\0|R\0W\0|S\0A\0|S\0B\0|S\0C\0|S\0D\0|S
      *
      * NEVER modify yyleng, or else pos will not reflect the current position in the buffer.
      */
-
 }
 
 Message-ID:([ \t\x0A]|\x0D\x0A)?<{PC}{1,80}> {
@@ -218,6 +215,7 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
 
 
 {INUM}\.{INUM}\.{INUM}\.{INUM}/[^0-9\-\.\+A-Z_] {
+    // UTF-8 IPv4 address canner
     /* Numeric IP addresses. Get the context before and throw away some things */
     email_scanner &s = * yyemail_get_extra(yyscanner);
     int ignore=0;
@@ -272,6 +270,7 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
 }
 
 [^0-9A-Z:]{HEX}{HEX}:{HEX}{HEX}:{HEX}{HEX}:{HEX}{HEX}:{HEX}{HEX}:{HEX}{HEX}/[^0-9A-Z:] {
+    // UTF-8 Ethernet scanner
     /* found a possible ethernet address! */
     email_scanner &s = * yyemail_get_extra(yyscanner);
     if (s.valid_ether_addr(POS+1)){
@@ -281,6 +280,7 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
 }
 
 ((https?)|afp|smb):\/\/[a-zA-Z0-9_%/\-+@:=&\?#~.;]{1,384}	{
+    // UTF-8 http scanner
     // for reasons that aren't clear, there are a lot of net protocols that have an http://domain
     // in them followed by numbers. So this counts the number of slashes and if it is only 2
     // the size is pruned until the last character is a letter
@@ -305,6 +305,10 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
 }
 
 [a-zA-Z0-9]\0([a-zA-Z0-9._%\-+]\0){1,128}@\0([a-zA-Z0-9._%\-]\0){1,128}\.\0({U_TLD1}|{U_TLD2}|{U_TLD3}|{U_TLD4})/[^a-zA-Z]|([^][^\0])	{
+    /* UTF-16 URL scanner */
+    std::cerr << "scan_email.flex: found1\n";
+
+
     email_scanner &s = * yyemail_get_extra(yyscanner);
     if (extra_validate_email(yytext)){
         s.email_recorder.write_buf(SBUF,POS,yyleng);
@@ -314,9 +318,13 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
         }
     }
     s.pos += yyleng;
+    std::cerr << "scan_email.flex===DONE1===\n";
 }
 
 h\0t\0t\0p\0(s\0)?:\0([a-zA-Z0-9_%/\-+@:=&\?#~.;]\0){1,128}/[^a-zA-Z0-9_%\/\-+@:=&\?#~.;]|([^][^\0])	{
+    /* UTF-16 URL scanner */
+    std::cerr << "scan_email.flex: found2\n";
+
     email_scanner &s = * yyemail_get_extra(yyscanner);
     s.url_recorder.write_buf(SBUF,POS,yyleng);
     ssize_t domain_start = find_host_in_email(SBUF.slice(POS,yyleng));
@@ -324,6 +332,7 @@ h\0t\0t\0p\0(s\0)?:\0([a-zA-Z0-9_%/\-+@:=&\?#~.;]\0){1,128}/[^a-zA-Z0-9_%\/\-+@:
 	s.domain_recorder.write_buf(SBUF,POS+domain_start,yyleng-domain_start);
     }
     s.pos += yyleng;
+    std::cerr << "scan_email.flex===DONE2===\n";
 }
 
 .|\n {

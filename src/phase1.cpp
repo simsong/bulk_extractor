@@ -158,10 +158,8 @@ void Phase1::read_process_sbufs()
         }
 
         /* If there are too many in the queue, wait... */
-        std::cerr << "sbufs_in_queue=" << ss.sbufs_in_queue << "\n";
         if (ss.depth0_sbufs_in_queue > ss.get_thread_count()) {
             using namespace std::chrono_literals;
-            std::cerr << "too many depth0 sbufs in queue! waiting for 1 second\n";
             std::this_thread::sleep_for(2000ms);
             continue;
         }
@@ -174,7 +172,6 @@ void Phase1::read_process_sbufs()
             }
             try {
                 sbuf_t *sbufp = get_sbuf(it);
-                xreport.xmlout("sbuf_read",sbufp->pos0.str(), aftimer::now_str("t='","'"), false);
 
                 /* compute the sha1 hash */
                 if (sha1g){

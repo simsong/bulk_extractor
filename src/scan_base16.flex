@@ -34,7 +34,7 @@ inline class base16_scanner *get_extra(yyscan_t yyscanner) {return yybase16_get_
 
 void base16_scanner::decode(const sbuf_t &sbuf)
 {
-    auto *dbuf = sbuf_t::sbuf_malloc(sbuf.pos0 + "BASE16", sbuf.pagesize/2+1);
+    auto *dbuf = sbuf_t::sbuf_malloc(sbuf.pos0 + "BASE16", sbuf.pagesize/2+1, sbuf.pagesize/2+1);
 
     size_t p=0;
     /* First get the characters */
@@ -124,6 +124,7 @@ void scan_base16(struct scanner_params &sp)
     if (sp.phase==scanner_params::PHASE_INIT){
         sp.info = std::make_unique<scanner_params::scanner_info>(scan_base16,"base16");
         sp.info->scanner_flags.recurse = true;
+        sp.info->scanner_flags.default_enabled = false;
         sp.info->author          = "Simson L. Garfinkel";
         sp.info->description     = "Base16 (hex) scanner";
         sp.info->scanner_version = "1.1";

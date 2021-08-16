@@ -658,7 +658,7 @@ void scan_rar(scanner_params &sp)
                 // only decompress and recur if the component compression isn't
                 // no-op to avoid duplicate features
                 if (component.compression_method != METHOD_UNCOMPRESSED) {
-                    auto *dbuf = sbuf_t::sbuf_malloc((pos0 + pos) + "RAR", component.uncompressed_size);
+                    auto *dbuf = sbuf_t::sbuf_malloc((pos0 + pos) + "RAR", component.uncompressed_size, component.uncompressed_size);
                     auto *dbuf_buf = dbuf->malloc_buf();
                     memset(dbuf_buf, 0x00, component.uncompressed_size);
                     unpack_buf(sbuf.get_buf()+pos, cc_len, reinterpret_cast<uint8_t *>(dbuf_buf), component.uncompressed_size);

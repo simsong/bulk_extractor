@@ -72,7 +72,7 @@ void scan_find(scanner_params &sp)
          */
         feature_recorder &f = sp.named_feature_recorder("find");
 
-        auto *tbuf = sbuf_t::sbuf_malloc(sp.sbuf->pos0, sp.sbuf->bufsize+1);
+        auto *tbuf = sbuf_t::sbuf_malloc(sp.sbuf->pos0, sp.sbuf->bufsize+1, sp.sbuf->bufsize+1);
         memcpy(tbuf->malloc_buf(), sp.sbuf->get_buf(), sp.sbuf->bufsize);
         const char *base = static_cast<const char *>(tbuf->malloc_buf());
         tbuf->wbuf(sp.sbuf->bufsize, 0); // null terminate

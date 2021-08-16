@@ -28,9 +28,12 @@ typedef char sa_family_t;
 #include "be13_api/packet_info.h"
 #include "be13_api/feature_recorder.h"
 
-struct scan_net {
-    scan_net();
-    virtual ~scan_net();
+struct scan_net_t {
+    scan_net_t(const scan_net_t &that) = delete;
+    scan_net_t &operator=(const scan_net_t & that) = delete;
+
+    scan_net_t();
+    virtual ~scan_net_t();
     static inline const std::string CHKSUM_OK  {"cksum-ok"};
     static inline const std::string CHKSUM_BAD {"cksum-bad"};
     feature_recorder *ip_recorder {nullptr};
@@ -39,13 +42,13 @@ struct scan_net {
 
 /* generic ip header for IPv4 and IPv6 packets */
     typedef struct generic_iphdr {
-        sa_family_t family;		/* AF_INET or AF_INET6 */
+        sa_family_t family {};		/* AF_INET or AF_INET6 */
         uint8_t src[16];		/* Source IP address; holds v4 or v6 */
         uint8_t dst[16];		/* Destination IP address; holds v4 or v6 */
-        uint8_t ttl;		/* ttl from ip_hdr and hop_limit for ip6_hdr */
-        uint8_t nxthdr;		/* nxt hdr type */
-        uint8_t nxthdr_offs;	/* nxt hdr offset, also IP hdr len */
-        uint16_t payload_len; 	/* IP total len - IP hdr */
+        uint8_t ttl {};		/* ttl from ip_hdr and hop_limit for ip6_hdr */
+        uint8_t nxthdr {};		/* nxt hdr type */
+        uint8_t nxthdr_offs {};	/* nxt hdr offset, also IP hdr len */
+        uint16_t payload_len {}; 	/* IP total len - IP hdr */
         bool checksum_valid {false};  // if computed checksum was valid
     } generic_iphdr_t;
 
@@ -148,7 +151,7 @@ struct scan_net {
 
 };
 
-inline std::ostream& operator<<(std::ostream& os, const scan_net::generic_iphdr_t &h) {
+inline std::ostream& operator<<(std::ostream& os, const scan_net_t::generic_iphdr_t &h) {
     os << "<< generic_iphdr_t family=";
     switch (h.family) {
     case AF_INET: os << "AFINET";break;

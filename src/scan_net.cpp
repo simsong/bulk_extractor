@@ -165,8 +165,8 @@ struct be_udphdr {
 
 
 /* For virtual functions */
-scan_net::scan_net() {}
-scan_net::~scan_net() {}
+scan_net_t::scan_net_t() {}
+scan_net_t::~scan_net_t() {}
 
 
 #  ifdef HAVE_DIAGNOSTIC_CAST_ALIGN
@@ -176,7 +176,7 @@ scan_net::~scan_net() {}
 /* compute an Internet-style checksum, from Stevens.
  * The ipchecksum is stored 10 bytes in, so do not include it.
  */
-uint16_t scan_net::ip4_cksum(const sbuf_t &sbuf, size_t pos, size_t len)
+uint16_t scan_net_t::ip4_cksum(const sbuf_t &sbuf, size_t pos, size_t len)
 {
     uint32_t  sum = 0;  /* assume 32 bit long, 16 bit short */
 
@@ -220,7 +220,7 @@ uint16_t scan_net::ip4_cksum(const sbuf_t &sbuf, size_t pos, size_t len)
  * @param - pos  - the byte offset of the packet header
  * @param - chksum_byteoffset - from the start of the header, where the checksum is.
  */
-uint16_t scan_net::IPv6L3Chksum(const sbuf_t &sbuf, size_t pos, u_int chksum_byteoffset)
+uint16_t scan_net_t::IPv6L3Chksum(const sbuf_t &sbuf, size_t pos, u_int chksum_byteoffset)
 {
     const struct ip6_hdr *ip6 = sbuf.get_struct_ptr<struct ip6_hdr>(pos);
     if (ip6==0) return 0;           // cannot compute; not enough data
@@ -408,7 +408,7 @@ static inline std::string i2str(const int i) { return std::to_string(i); }
  * http://answers.yahoo.com/question/index?qid=20080529062909AAAYN3X
  * http://en.wikipedia.org/wiki/Transmission_Control_Protocol#TCP_checksum_for_IPv6
  */
-bool scan_net::sanityCheckIP46Header(const sbuf_t &sbuf, size_t pos, scan_net::generic_iphdr_t *h)
+bool scan_net_t::sanityCheckIP46Header(const sbuf_t &sbuf, size_t pos, scan_net_t::generic_iphdr_t *h)
 {
     const struct be13::ip4 *ip = sbuf.get_struct_ptr<struct be13::ip4>( pos );
     if (!ip) return false;		// not enough space
@@ -471,7 +471,7 @@ bool scan_net::sanityCheckIP46Header(const sbuf_t &sbuf, size_t pos, scan_net::g
             if (!tcp) return false;	// not sufficient room
 
             /* tcp chksum is at byte offset 16 from tcp hdr + 40 w/ pseudo hdr */
-            h->checksum_valid = (tcp->th_sum == scan_net::IPv6L3Chksum(sbuf, pos, 56));
+            h->checksum_valid = (tcp->th_sum == scan_net_t::IPv6L3Chksum(sbuf, pos, 56));
             break;
         }
 	case IPPROTO_UDP:
@@ -480,7 +480,7 @@ bool scan_net::sanityCheckIP46Header(const sbuf_t &sbuf, size_t pos, scan_net::g
             if (!udp) return false;	// not sufficient room
 
             /* udp chksum is at byte offset 6 from udp hdr + 40 w/ pseudo hdr */
-            h->checksum_valid = (udp->uh_sum == scan_net::IPv6L3Chksum(sbuf, pos, 46));
+            h->checksum_valid = (udp->uh_sum == scan_net_t::IPv6L3Chksum(sbuf, pos, 46));
             break;
         }
 	case IPPROTO_ICMPV6:
@@ -489,7 +489,7 @@ bool scan_net::sanityCheckIP46Header(const sbuf_t &sbuf, size_t pos, scan_net::g
             if (!icmp6) return false;	// not sufficient room
 
             /* icmpv6 chksum is at byte offset 2 from icmpv6 hdr + 40 w/ pseudo hdr */
-            h->checksum_valid = (icmp6->icmp6_cksum == scan_net::IPv6L3Chksum(sbuf, pos, 42));
+            h->checksum_valid = (icmp6->icmp6_cksum == scan_net_t::IPv6L3Chksum(sbuf, pos, 42));
             break;
         }
 	}
@@ -514,7 +514,7 @@ bool scan_net::sanityCheckIP46Header(const sbuf_t &sbuf, size_t pos, scan_net::g
  *
  * Should probably be implemented as a stand-alone class, rather than a subclass of scan_net, to make it testable.
  */
-class pcap_writer: public scan_net {
+class pcap_writer: public scan_net_t {
     pcap_writer(const pcap_writer &pc) = delete;
     pcap_writer &operator=(const pcap_writer &that) = delete;
     mutable std::mutex Mfcap {};              // mutex for fcap
@@ -601,13 +601,13 @@ pcap_writer::~pcap_writer()
 /** Write the ethernet addresses and the TCP info into the appropriate feature files.
  */
 
-void scan_net::documentIPFields(const sbuf_t &sbuf, size_t pos, const generic_iphdr_t &h) const
+void scan_net_t::documentIPFields(const sbuf_t &sbuf, size_t pos, const generic_iphdr_t &h) const
 {
     pos0_t pos0 = sbuf.pos0 + pos;
 
     /* Report the IP address */
     /* based on the TTL, infer whether remote or local */
-    const std::string &chksum_status = h.checksum_valid ? scan_net::CHKSUM_OK : scan_net::CHKSUM_BAD;
+    const std::string &chksum_status = h.checksum_valid ? scan_net_t::CHKSUM_OK : scan_net_t::CHKSUM_BAD;
     std::string src,dst;
 
     if (isPowerOfTwo(h.ttl)){
@@ -650,9 +650,9 @@ void scan_net::documentIPFields(const sbuf_t &sbuf, size_t pos, const generic_ip
     }
 }
 
-size_t scan_net::carveIPFrame(const sbuf_t &sbuf, size_t pos) const
+size_t scan_net_t::carveIPFrame(const sbuf_t &sbuf, size_t pos) const
 {
-    generic_iphdr_t h;
+    generic_iphdr_t h {};
 
     /* check if it looks like ipv4 or ipv6 packet
      * if neither, return false.
@@ -704,7 +704,7 @@ size_t scan_net::carveIPFrame(const sbuf_t &sbuf, size_t pos) const
  * Returns the size of the object carved
  */
 
-size_t scan_net::carveEther(const sbuf_t &sbuf, size_t pos) const
+size_t scan_net_t::carveEther(const sbuf_t &sbuf, size_t pos) const
 {
     const struct macip *er = sbuf.get_struct_ptr<struct macip>(0);
     if (er){
@@ -760,7 +760,7 @@ size_t scan_net::carveEther(const sbuf_t &sbuf, size_t pos) const
 /* Test for a possible sockaddr_in <netinet/in.h>
  * Please remember that this is called for every byte, so it needs to be fast.
  */
-size_t scan_net::carveSockAddrIn(const sbuf_t &sbuf, size_t pos) const
+size_t scan_net_t::carveSockAddrIn(const sbuf_t &sbuf, size_t pos) const
 {
     const struct sockaddr_in *in = sbuf.get_struct_ptr<struct sockaddr_in>( pos );
     if (in==0) return 0;
@@ -796,7 +796,7 @@ size_t scan_net::carveSockAddrIn(const sbuf_t &sbuf, size_t pos) const
 /* Test for possible _TCPT_OBJECT
  * Please remember that this is called for every byte, so it needs to be fast.
  */
-size_t scan_net::carveTCPTOBJ(const sbuf_t &sbuf, size_t pos) const
+size_t scan_net_t::carveTCPTOBJ(const sbuf_t &sbuf, size_t pos) const
 {
     const struct tcpt_object *to = sbuf.get_struct_ptr<struct tcpt_object>( pos );
     if (to==nullptr) return false;
@@ -818,7 +818,7 @@ size_t scan_net::carveTCPTOBJ(const sbuf_t &sbuf, size_t pos) const
 /* write an IP packet to the output stream, optionally writing a pcap header.
  * Length of packet is determined from IP header.
  */
-void scan_net::pcap_writepkt(const struct pcap_hdr &h, // packet header
+void scan_net_t::pcap_writepkt(const struct pcap_hdr &h, // packet header
                              const sbuf_t &sbuf,       // sbuf where packet is located
                              const size_t pos,         // position within the sbuf
                              const bool add_frame,     // whether or not to create a synthetic ethernet frame
@@ -885,7 +885,7 @@ void pcap_writer::pcap_writepkt(const struct pcap_hdr &h, // packet header
  * Validate and write a pcap packet. Return the number of bytes written.
  * Called on every byte, so it mus be fast.
  */
-size_t scan_net::carvePCAPPacket(const sbuf_t &sbuf, size_t pos) const
+size_t scan_net_t::carvePCAPPacket(const sbuf_t &sbuf, size_t pos) const
 {
     struct pcap_hdr h;
     if (likely_valid_pcap_packet_header(sbuf, pos, h)==false){
@@ -931,7 +931,7 @@ size_t scan_net::carvePCAPPacket(const sbuf_t &sbuf, size_t pos) const
  * If so, carve the packets, and return the number of bytes consumed.
  */
 
-size_t scan_net::carvePCAPFile(const sbuf_t &sbuf, size_t pos) const
+size_t scan_net_t::carvePCAPFile(const sbuf_t &sbuf, size_t pos) const
 {
     /* If this is a pcap file, write it out.
      *
@@ -958,7 +958,7 @@ size_t scan_net::carvePCAPFile(const sbuf_t &sbuf, size_t pos) const
     return bytes;
 }
 
-void scan_net::carve(const sbuf_t &sbuf) const
+void scan_net_t::carve(const sbuf_t &sbuf) const
 {
     /* Scan through every byte of the buffer for all possible packets
      * If we find a pcap file or a packet at the present location,

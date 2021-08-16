@@ -95,7 +95,7 @@ sbuf_t *decode_base64(const sbuf_t &sbuf, size_t start, size_t src_len)
 
 
     const size_t max_dst = src_len+64;// it can only get smaller, but give some extra space
-    sbuf_t        *sbufr = sbuf_t::sbuf_malloc( (sbuf.pos0 + start) + "BASE64", max_dst );
+    sbuf_t        *sbufr = sbuf_t::sbuf_malloc( (sbuf.pos0 + start) + "BASE64", max_dst, max_dst );
     unsigned char   *dst = static_cast<unsigned char *>(sbufr->malloc_buf());
 
     // COMMENT OUT FOR TESTING

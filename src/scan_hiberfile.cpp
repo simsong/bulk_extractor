@@ -83,7 +83,7 @@ void scan_hiberfile(scanner_params &sp)
                     max_uncompr_size = min_uncompr_size; // it should at least be this large!
                 }
 
-                auto *decomp_sbuf = sbuf_t::sbuf_malloc(sbuf.pos0 + "HIBERFILE", max_uncompr_size);
+                auto *decomp_sbuf = sbuf_t::sbuf_malloc(sbuf.pos0 + "HIBERFILE", max_uncompr_size, max_uncompr_size);
                 u_char *decomp = reinterpret_cast<u_char *>(decomp_sbuf->malloc_buf());
 		int decompress_size = Xpress_Decompress(compressed_buf, compr_size, decomp, max_uncompr_size);
 
