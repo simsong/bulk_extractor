@@ -111,7 +111,8 @@ std::filesystem::path test_scanners(const std::vector<scanner_t *> & scanners, s
 {
     REQUIRE(sbuf->children == 0);
 
-    const feature_recorder_set::flags_t frs_flags;
+    feature_recorder_set::flags_t frs_flags;
+    frs_flags.pedantic = true;          // for testing
     scanner_config sc;
     sc.outdir           = NamedTemporaryDirectory();
     sc.scanner_commands = enable_all_scanners;
@@ -170,7 +171,7 @@ TEST_CASE("scan_base64_functions", "[support]" ){
 }
 
 /* scan_email.flex checks */
-TEST_CASE("scan_email", "[support]") {
+TEST_CASE("scan_email8", "[support]") {
     {
         REQUIRE( extra_validate_email("this@that.com")==true);
         REQUIRE( extra_validate_email("this@that..com")==false);
@@ -209,6 +210,21 @@ TEST_CASE("scan_email", "[support]") {
         REQUIRE( requireFeature(email_txt,"70727-PDF-0\tplain_text_pdf@textedit.com\t"));
         REQUIRE( requireFeature(email_txt,"81991-PDF-0\trtf_text_pdf@textedit.com\t"));
         REQUIRE( requireFeature(email_txt,"92231-PDF-0\tplain_utf16_pdf@textedit.com\t"));
+    }
+}
+
+TEST_CASE("scan_email16", "[support]") {
+    /* utf-16 tests */
+    {
+        uint8_t c[] {"h\000t\000t\000p\000:\000/\000/\000w\000w\000w\000.\000h\000h\000s\000.\000g\000o\000v\000/\000o\000"
+                "c\000r\000/\000h\000i\000p\000a\000a\000/\000c\000o\000n\000s\000u\000m\000"
+                "e\000r\000_\000r\000i\000g\000h\000t\000s\000.\000p\000d\000f\000"};
+        auto *sbufp = new sbuf_t(pos0_t(), c, sizeof(c));
+        auto outdir = test_scanner(scan_email, sbufp);
+        auto url_txt = getLines( outdir / "url.txt" );
+        REQUIRE( requireFeature(url_txt,"0\thttp://www.hhs.gov/ocr/hipaa/consumer_rights.pdf\t"));
+        auto url_histogram_txt = getLines( outdir / "url_histogram.txt" );
+        REQUIRE( requireFeature(url_histogram_txt,"n=1\thttp://www.hhs.gov/ocr/hipaa/consumer_rights.pdf\t(utf16=1)"));
     }
 }
 
@@ -439,7 +455,8 @@ TEST_CASE("test_validate", "[phase1]" ) {
 
     sc.outdir = NamedTemporaryDirectory();
     sc.scanner_commands = enable_all_scanners;
-    const feature_recorder_set::flags_t frs_flags;
+    feature_recorder_set::flags_t frs_flags;
+    frs_flags.pedantic = true;          // for testing
 
     auto *xreport = new dfxml_writer(sc.outdir / "report.xml", false);
 
@@ -486,7 +503,8 @@ std::filesystem::path validate(std::string image_fname, std::vector<Check> &expe
         sc.input_fname = offset_name;
     }
 
-    const feature_recorder_set::flags_t frs_flags;
+    feature_recorder_set::flags_t frs_flags;
+    frs_flags.pedantic = true;          // for testing
     auto *xreport = new dfxml_writer(sc.outdir / "report.xml", false);
     scanner_set ss(sc, frs_flags, xreport);
     ss.add_scanners(scanners_builtin);
@@ -642,7 +660,7 @@ TEST_CASE("test_base16json", "[phase1]") {
 
 TEST_CASE("test_gzip", "[phase1]") {
     std::vector<Check> ex3 {
-        Check("email.txt", Feature( "0-GZIP-0", "hello@world.com", "hello@world.com\\x0A"))
+        Check("email.txt", Feature( "0-GZIP-0", "hello@world.com", "hello@world.com\\012"))
     };
     validate("test_hello.gz", ex3);
 }

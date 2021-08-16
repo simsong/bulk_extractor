@@ -411,6 +411,17 @@ memchr. (We hope to move this to the boyer-meyer search implementation
 e.g. https://titanwolf.org/Network/Articles/Article?AID=dd71b04e-fe50-4be5-9908-067f4af9afb5#gsc.tab=0)
 
 
+upgrades:
+- converts utf-16 features to utf-8 for the feature file in the
+'feature' column, leaves as-is in the context column.
+
+changed the feature file from hex-escaping to octal. This is because
+the C++ langauge defines \verb+"\001ab"+ as two-character string of
+with a character 001 followed by the character 'a' and then the
+character 'b'. However, C++ defines \verb+"\x01ab"+ as a 16-byte value
+0x01ab, or a 2-character string. This is confusing. Handling of octal
+constants is unambigious.
+
 
 \section*{References}
 
