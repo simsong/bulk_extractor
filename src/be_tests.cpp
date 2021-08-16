@@ -387,23 +387,23 @@ TEST_CASE("scan_net", "[scanners]") {
     /* Make an sbuf with just the packet, for initial testing */
     sbuf_t sbufip = sbuf.slice(frame_offset + ETHERNET_FRAME_SIZE);
 
-    scan_net::generic_iphdr_t h;
+    scan_net_t::generic_iphdr_t h;
 
-    REQUIRE( scan_net::sanityCheckIP46Header( sbufip, 0 , &h) == true );
+    REQUIRE( scan_net_t::sanityCheckIP46Header( sbufip, 0 , &h) == true );
     REQUIRE( h.checksum_valid == true );
 
     /* Now try with the offset */
-    REQUIRE( scan_net::sanityCheckIP46Header( sbuf, frame_offset + ETHERNET_FRAME_SIZE, &h) == true );
+    REQUIRE( scan_net_t::sanityCheckIP46Header( sbuf, frame_offset + ETHERNET_FRAME_SIZE, &h) == true );
     REQUIRE( h.checksum_valid == true );
 
     /* Change the IP address and make sure that the header is valid but the checksum is not */
     buf[frame_offset + ETHERNET_FRAME_SIZE + 14]++; // increment destination address
-    REQUIRE( scan_net::sanityCheckIP46Header( sbufip, 0 , &h) == true );
+    REQUIRE( scan_net_t::sanityCheckIP46Header( sbufip, 0 , &h) == true );
     REQUIRE( h.checksum_valid == false );
 
     /* Break the port and make sure that the header is no longer valid */
     buf[frame_offset + ETHERNET_FRAME_SIZE] += 0x10; // increment header length
-    REQUIRE( scan_net::sanityCheckIP46Header( sbufip, 0 , &h) == false );
+    REQUIRE( scan_net_t::sanityCheckIP46Header( sbufip, 0 , &h) == false );
 
 
 }
@@ -499,7 +499,6 @@ std::filesystem::path validate(std::string image_fname, std::vector<Check> &expe
         }
         in.close();
         out.close();
-        std::cerr << "offset created. bytes written: " << written << "\n";
         sc.input_fname = offset_name;
     }
 
@@ -534,7 +533,6 @@ std::filesystem::path validate(std::string image_fname, std::vector<Check> &expe
 
     for (size_t i=0; i<expected.size(); i++){
         std::filesystem::path fname  = sc.outdir / expected[i].fname;
-        std::cerr << "---- " << i << " -- " << fname.string() << " ----\n";
         bool found = false;
         for (int pass=0 ; pass<2 && !found;pass++){
             std::string line;
@@ -574,7 +572,6 @@ std::filesystem::path validate(std::string image_fname, std::vector<Check> &expe
         }
         REQUIRE(found);
     }
-    std::cerr << "--- done ---\n\n";
     return sc.outdir;
 }
 
