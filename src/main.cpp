@@ -1011,9 +1011,8 @@ int main(int argc,char **argv)
     xreport->xmlout("elapsed_seconds",timer.elapsed_seconds());
     xreport->xmlout("max_depth_seen",ss.get_max_depth_seen());
     xreport->xmlout("dup_bytes_encountered",ss.get_dup_bytes_encountered());
-    xreport->push("scanner_times");
+    ss.dump_scanner_stats();
     ss.dump_name_count_stats();
-    xreport->pop("scanner_times");                     // scanner_times
     xreport->pop("report");
 
     xreport->add_rusage();
