@@ -118,6 +118,8 @@ bulk_extractor_parts = \
 	findopts.h \
 	image_process.cpp \
 	image_process.h \
+	path_printer.h \
+	path_printer.cpp \
 	phase1.h \
 	phase1.cpp \
 	sbuf_decompress.cpp \
