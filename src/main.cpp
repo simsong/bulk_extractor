@@ -189,29 +189,6 @@ void validate_path(const std::filesystem::path fn)
 
 
 
-/***************************************************************************************
- *** PATH PRINTER - Used by bulk_extractor for printing pages associated with a path ***
- ***************************************************************************************/
-
-/* Get the next token from the path. Tokens are separated by dashes.
- * NOTE: modifies argument
- */
-std::string get_and_remove_token(std::string &path)
-{
-    while(path[0]=='-'){
-	path = path.substr(1); // remove any leading dashes.
-    }
-    size_t dash = path.find('-');	// find next dash
-    if(dash==std::string::npos){		// no string; return the rest
-        std::string prefix = path;
-	path = "";
-	return prefix;
-    }
-    std::string prefix = path.substr(0,dash);
-    path = path.substr(dash+1);
-    return prefix;
-}
-
 class bulk_extractor_restarter {
     std::stringstream cdata {};
     std::string thisElement {};
@@ -529,7 +506,8 @@ int main(int argc,char **argv)
 
     if(opt_path){
 	if(argc!=1) throw std::runtime_error("-p requires a single argument.");
-	//process_path(argv[0],opt_path,cfg.opt_pagesize,cfg.opt_marginsize);
+        path_printer pp(argv[0]);
+        pp.process(opt_path, cfg.opt_pagesize, cfg.opt_marginsize);
 	exit(0);
     }
 

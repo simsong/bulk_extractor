@@ -42,6 +42,7 @@
  */
 
 #include "be13_api/sbuf.h"
+#include "be13_api/abstract_image_reader"
 
 #include <filesystem>
 
@@ -51,8 +52,7 @@
 #  include <windowsx.h>
 #endif
 
-class image_process {
-private:
+class image_process : abstract_image_reader {
     /******************************************************
      *** neither copying nor assignment is implemented. ***
      ******************************************************/
@@ -127,9 +127,9 @@ public:
 
     /* image support */
     virtual int open()=0;				    /* open; return 0 if successful */
-    virtual int pread(uint8_t *,size_t bytes,int64_t offset) const =0;	    /* read */
+    virtual int pread(uint8_t *,size_t bytes,int64_t offset) const = 0;	    /* read */
     virtual int64_t image_size() const=0;
-    virtual const std::string &image_fname() const { return image_fname_;}
+    virtual const std::string &image_fname() const;
 
     /* iterator support; these virtual functions are called by iterator through (*myimage) */
     virtual image_process::iterator begin() const =0;
@@ -140,6 +140,7 @@ public:
     virtual double fraction_done(const class image_process::iterator &it) const = 0;
     virtual std::string str(const class image_process::iterator &it) const = 0; // returns a string representation of where we are
     virtual uint64_t max_blocks(const class image_process::iterator &it) const = 0;
+
     // seek_block modifies the iterator, but not the image!
     virtual uint64_t seek_block(class image_process::iterator &it,uint64_t block) const = 0; // returns -1 if failure
     virtual void set_report_read_errors(bool val){report_read_errors=val;}
@@ -181,7 +182,7 @@ class process_ewf : public image_process {
     virtual ~process_ewf();
     std::vector<std::string> getewfdetails() const;
     int open();
-    int pread(uint8_t *,size_t bytes,int64_t offset) const;	    /* read */
+    int pread(uint8_t *,size_t bytes,int64_t offset) const override;	    /* read */
 
     /* iterator support */
     virtual image_process::iterator begin() const;
@@ -224,7 +225,7 @@ public:
     process_raw(const std::string &image_fname,size_t pagesize,size_t margin);
     virtual ~process_raw();
     virtual int open();
-    virtual int pread(uint8_t *,size_t bytes,int64_t offset) const;	    /* read */
+    virtual int pread(uint8_t *,size_t bytes,int64_t offset) const override;	    /* read */
 
     /* iterator support */
     virtual image_process::iterator begin() const;
@@ -254,7 +255,7 @@ class process_dir : public image_process {
     virtual ~process_dir();
 
     virtual int open();
-    virtual int pread(uint8_t *,size_t bytes,int64_t offset) const __attribute__((__noreturn__));	 /* read */
+    virtual int pread(uint8_t *,size_t bytes,int64_t offset) const override __attribute__((__noreturn__));	 /* read */
 
     /* iterator support */
     virtual image_process::iterator begin() const;

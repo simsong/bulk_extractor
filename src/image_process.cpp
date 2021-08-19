@@ -389,6 +389,12 @@ int process_ewf::pread(unsigned char *buf,size_t bytes,int64_t offset) const
 }
 
 
+const std::string &image_process::image_fname() const
+{
+    return image_fname_;
+}
+
+
 int64_t process_ewf::image_size() const
 {
     return ewf_filesize;
