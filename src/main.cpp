@@ -173,11 +173,11 @@ static void usage(const char *progname, scanner_set &ss)
  */
 void validate_path(const std::filesystem::path fn)
 {
-    if(!std::filesystem::exists(fn)){
+    if (!std::filesystem::exists(fn)){
         std::cerr << "file does not exist: " << fn << "\n";
         throw std::runtime_error("file not found.");
     }
-    if(fn.extension()=="E02" || fn.extension()=="e02"){
+    if (fn.extension()=="E02" || fn.extension()=="e02"){
         std::cerr << "Error: invalid file name\n";
         std::cerr << "Do not use bulk_extractor to process individual EnCase files.\n";
         std::cerr << "Instead, just run bulk_extractor with FILENAME.E01\n";
@@ -199,9 +199,9 @@ class bulk_extractor_restarter {
         class bulk_extractor_restarter &self = *(bulk_extractor_restarter *)userData;
         self.cdata.str("");
         self.thisElement = name_;
-        if(self.thisElement=="debug:work_start"){
+        if (self.thisElement=="debug:work_start"){
             for(int i=0;attrs[i] && attrs[i+1];i+=2){
-                if(strcmp(attrs[i],"pos0") == 0){
+                if (strcmp(attrs[i],"pos0") == 0){
                     self.seen_page_ids.insert(attrs[i+1]);
                 }
             }
@@ -209,7 +209,7 @@ class bulk_extractor_restarter {
     }
     static void endElement(void *userData,const char *name_){
         class bulk_extractor_restarter &self = *(bulk_extractor_restarter *)userData;
-        if(self.thisElement=="provided_filename") self.provided_filename = self.cdata.str();
+        if (self.thisElement=="provided_filename") self.provided_filename = self.cdata.str();
         self.cdata.str("");
     }
     static void characterDataHandler(void *userData,const XML_Char *s,int len){
@@ -223,7 +223,7 @@ public:;
                              const std::string &reportfilename,
                              const std::string &image_fname){
 #ifdef HAVE_LIBEXPAT
-        if(access(reportfilename.c_str(),R_OK)){
+        if (access(reportfilename.c_str(),R_OK)){
             std::cerr << opt_outdir << ": error\n";
             std::cerr << "report.xml file is missing or unreadable.\n";
             std::cerr << "Directory may not have been created by bulk_extractor.\n";
@@ -236,7 +236,7 @@ public:;
         XML_SetElementHandler(parser, startElement, endElement);
         XML_SetCharacterDataHandler(parser,characterDataHandler);
         std::fstream in(reportfilename.c_str());
-        if(!in.is_open()){
+        if (!in.is_open()){
             std::cout << "Cannot open " << reportfilename << ": " << strerror(errno) << "\n";
             exit(1);
         }
@@ -251,13 +251,13 @@ public:;
                     break;
                 }
             }
-            if(!error) XML_Parse(parser, "", 0, 1);    // clear the parser
+            if (!error) XML_Parse(parser, "", 0, 1);    // clear the parser
         }
         catch (const std::exception &e) {
             std::cout << "ERROR: " << e.what() << "\n";
         }
         XML_ParserFree(parser);
-        if(image_fname != provided_filename){
+        if (image_fname != provided_filename){
             std::cerr << "Error: \n" << image_fname << " != " << provided_filename << "\n";
             exit(1);
         }
@@ -312,7 +312,7 @@ int main(int argc,char **argv)
     Phase1::Config   cfg;  // config for the image_processing system
 
     /* Options */
-    const char *opt_path = 0;
+    std::string opt_path {};
     int         opt_recurse = 0;
     int         opt_zap = 0;
     int         opt_h = 0;
@@ -342,7 +342,7 @@ int main(int argc,char **argv)
     setmode(1,O_BINARY);		// make stdout binary
 #endif
 
-    if(argc==1) opt_h=1;                // generate help if no arguments provided
+    if (argc==1) opt_h=1;                // generate help if no arguments provided
 
     /* Process options */
     const std::string ALL { "all" };
@@ -357,9 +357,9 @@ int main(int argc,char **argv)
 	case 'C': sc.context_window_default = atoi(optarg);break;
 	case 'd':
 	{
-            if(strcmp(optarg,"h")==0) debug_help();
+            if (strcmp(optarg,"h")==0) debug_help();
 	    cfg.debug = atoi(optarg);
-            if(cfg.debug==0) cfg.debug=1;
+            if (cfg.debug==0) cfg.debug=1;
 	}
 	break;
 	case 'E':            /* Enable all scanners */
@@ -386,7 +386,7 @@ int main(int argc,char **argv)
 	case 'p': opt_path = optarg; break;
         case 'q': cfg.opt_quiet = true; break;
 	case 'r':
-	    if(alert_list.readfile(optarg)){
+	    if (alert_list.readfile(optarg)){
                 throw_FileNotFoundError(optarg);
 	    }
 	    break;
@@ -394,7 +394,7 @@ int main(int argc,char **argv)
 	case 'S':
 	{
 	    std::vector<std::string> params = split(optarg,'=');
-	    if(params.size()!=2){
+	    if (params.size()!=2){
 		std::cerr << "Invalid paramter: " << optarg << "\n";
 		exit(1);
 	    }
@@ -409,7 +409,7 @@ int main(int argc,char **argv)
             fprintf(stderr,"-W has been deprecated. Specify with -S word_min=NN and -S word_max=NN\n");
             exit(1);
 	    break;
-	case 'w': if(stop_list.readfile(optarg)){
+	case 'w': if (stop_list.readfile(optarg)){
                 throw_FileNotFoundError(optarg);
 	    }
 	    break;
@@ -419,7 +419,7 @@ int main(int argc,char **argv)
 	case 'Y': {
 	    std::string optargs = optarg;
 	    size_t dash = optargs.find('-');
-	    if(dash==std::string::npos){
+	    if (dash==std::string::npos){
 		cfg.opt_offset_start = stoi64(optargs);
 	    } else {
 		cfg.opt_offset_start = scaled_stoi64(optargs.substr(0,dash));
@@ -457,7 +457,7 @@ int main(int argc,char **argv)
         sc.outdir = scanner_config::NO_OUTDIR; // don't create outdir if we are getting help.
     }
 
-    if(sc.outdir.empty()){
+    if (sc.outdir.empty()){
         std::cerr << "error: -o outdir must be specified\n";
         exit(1);
     }
@@ -495,20 +495,13 @@ int main(int argc,char **argv)
      * but no scanner that uses the find list is enabled.
      */
 
-    if(!FindOpts::get().empty()) {
+    if (!FindOpts::get().empty()) {
         /* Look through the enabled scanners and make sure that
 	 * at least one of them is a FIND scanner
 	 */
-        if(!ss.is_find_scanner_enabled()){
+        if (!ss.is_find_scanner_enabled()){
             throw std::runtime_error("find words are specified with -F but no find scanner is enabled.\n");
         }
-    }
-
-    if(opt_path){
-	if(argc!=1) throw std::runtime_error("-p requires a single argument.");
-        path_printer pp(argv[0]);
-        pp.process(opt_path, cfg.opt_pagesize, cfg.opt_marginsize);
-	exit(0);
     }
 
     /* The zap option wipes the contents of a directory, useful for debugging */
@@ -534,6 +527,23 @@ int main(int argc,char **argv)
         exit(1);
     }
     sc.input_fname = *argv;
+
+    /* are we supposed to run the path printer? */
+    if (opt_path.size() > 0){
+	if (argc!=1) throw std::runtime_error("-p requires a single argument.");
+        image_process *p = image_process::open( sc.input_fname, opt_recurse, cfg.opt_pagesize, cfg.opt_marginsize);
+        path_printer pp(&ss, p, std::cout);
+        if (opt_path=="-http" || opt_path=="--http"){
+            pp.process_http(std::cin);
+        } else if (opt_path=="-i" || opt_path=="-"){
+            pp.process_interactive(std::cin);
+        } else {
+            pp.process_path(opt_path);
+        }
+	exit(0);
+    }
+
+
 
     std::filesystem::path report_path = sc.outdir / "report.xml";
     dfxml_writer *xreport = new dfxml_writer(report_path, false); // do not make DTD
@@ -589,13 +599,13 @@ int main(int argc,char **argv)
     for(scanner_info::config_t::const_iterator it=sc.namevals.begin();it!=sc.namevals.end();it++){
         /* see if there is a <recorder>: */
         std::vector<std::string> params = split(it->first,':');
-        if(params.size()>=3 && params.at(0)=="fr"){
+        if (params.size()>=3 && params.at(0)=="fr"){
             feature_recorder &fr = fs.named_feature_recorder(params.at(1));
             const std::string &cmd = params.at(2);
-            if(fr){
-                if(cmd=="window")        fr->set_context_window(stoi64(it->second));
-                if(cmd=="window_before") fr->set_context_window_before(stoi64(it->second));
-                if(cmd=="window_after")  fr->set_context_window_after(stoi64(it->second));
+            if (fr){
+                if (cmd=="window")        fr->set_context_window(stoi64(it->second));
+                if (cmd=="window_before") fr->set_context_window_before(stoi64(it->second));
+                if (cmd=="window_after")  fr->set_context_window_after(stoi64(it->second));
             }
         }
         /* See if there is a scanner? */
@@ -608,7 +618,7 @@ int main(int argc,char **argv)
 #ifdef HAVE_GETHOSTNAME
         char hostname[1024];
         memset(hostname,0,sizeof(hostname));
-        if(gethostname(hostname,sizeof(hostname)-1)==0){
+        if (gethostname(hostname,sizeof(hostname)-1)==0){
             if (hostname[0]) std::cout << "Hostname: " << hostname << "\n";
         }
 #endif
@@ -640,7 +650,7 @@ int main(int argc,char **argv)
         fs.db_transaction_begin();
     }
 #endif
-    if(opt_sampling_params.size()>0){
+    if (opt_sampling_params.size()>0){
         cfg.set_sampling_parameters(opt_sampling_params);
     }
 
@@ -660,7 +670,7 @@ int main(int argc,char **argv)
 
     /* TODO: Load up phase1 seen_page_ideas if we are restarting */
 
-    //if(cfg.debug & DEBUG_PRINT_STEPS) std::cerr << "DEBUG: STARTING PHASE 1\n";
+    //if (cfg.debug & DEBUG_PRINT_STEPS) std::cerr << "DEBUG: STARTING PHASE 1\n";
 
     xreport->add_timestamp("phase1 start");
 
@@ -700,14 +710,14 @@ int main(int argc,char **argv)
     xreport->pop("dfxml");			// bulk_extractor
     xreport->close();
 
-    if(cfg.opt_quiet==0){
+    if (cfg.opt_quiet==0){
         float mb_per_sec = (phase1.total_bytes / 1000000.0) / timer.elapsed_seconds();
 
         std::cout.precision(4);
         std::cout << "Elapsed time: " << timer.elapsed_seconds() << " sec.\n"
                   << "Total MB processed: " << int(phase1.total_bytes / 1000000) << "\n"
                   << "Overall performance: " << mb_per_sec << " << MBytes/sec";
-        if(cfg.num_threads>0){
+        if (cfg.num_threads>0){
             std::cout << mb_per_sec/cfg.num_threads << " (MBytes/sec/thread)\n";
         }
         std::cout << "sbufs created:   " << sbuf_t::sbuf_total << "\n";

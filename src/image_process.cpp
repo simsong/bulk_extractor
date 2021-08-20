@@ -365,7 +365,7 @@ std::vector<std::string> process_ewf::getewfdetails() const{
 
 
 //int process_ewf::debug = 0;
-int process_ewf::pread(unsigned char *buf,size_t bytes,int64_t offset) const
+ssize_t process_ewf::pread(void *buf,size_t bytes,uint64_t offset) const
 {
 #ifdef HAVE_LIBEWF_HANDLE_CLOSE
     libewf_error_t *error=0;
@@ -648,7 +648,7 @@ int64_t process_raw::image_size() const
  * 3. If there are additional files to read in the next file, recurse.
  */
 
-int process_raw::pread(unsigned char *buf,size_t bytes,int64_t offset) const
+ssize_t process_raw::pread(void *buf,size_t bytes,uint64_t offset) const
 {
     const file_info *fi = find_offset(offset);
     if(fi==0) return 0;			// nothing to read.
@@ -711,7 +711,7 @@ int process_raw::pread(unsigned char *buf,size_t bytes,int64_t offset) const
     if((size_t)bytes_read==bytes) return bytes_read; // read precisely the correct amount!
 
     /* Need to recurse */
-    ssize_t bytes_read2 = this->pread(buf+bytes_read,bytes-bytes_read,offset+bytes_read);
+    ssize_t bytes_read2 = this->pread(static_cast<char *>(buf)+bytes_read,bytes-bytes_read,offset+bytes_read);
     if(bytes_read2<0) return -1;	// error on second read
     if(bytes_read==0) return 0;		// kind of odd.
 
@@ -838,7 +838,7 @@ int process_dir::open()
     return 0;				// always successful
 }
 
-int process_dir::pread(unsigned char *buf,size_t bytes,int64_t offset) const
+ssize_t process_dir::pread(void *buf,size_t bytes,uint64_t offset) const
 {
     throw std::runtime_error("process_dir does not support pread");
 }

@@ -125,7 +125,7 @@ inline void scan_zip_component(scanner_params &sp, feature_recorder &zip_recorde
         }
 
         /* If depth is more than 0, don't decompress if we have seen this component before */
-        if (sp.depth>0){
+        if (sbuf_src.depth() > 0){
             if (sp.check_previously_processed(sbuf_src)){
                 xmlstream << "<disposition>previously-processed</disposition></zipinfo>";
                 zip_recorder.write(pos0+pos,name,xmlstream.str());
