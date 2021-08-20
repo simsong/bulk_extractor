@@ -129,7 +129,7 @@ public:
     virtual int open()=0;				    /* open; return 0 if successful */
     //virtual int pread(void *,size_t bytes,int64_t offset) const = 0 ;	    /* defined in super class */
     virtual int64_t image_size() const=0;
-    virtual const std::string &image_fname() const;
+    virtual const std::string image_fname() const;
 
     /* iterator support; these virtual functions are called by iterator through (*myimage) */
     virtual image_process::iterator begin() const =0;

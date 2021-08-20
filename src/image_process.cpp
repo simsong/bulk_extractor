@@ -389,7 +389,7 @@ ssize_t process_ewf::pread(void *buf,size_t bytes,uint64_t offset) const
 }
 
 
-const std::string &image_process::image_fname() const
+const std::string image_process::image_fname() const
 {
     return image_fname_;
 }
@@ -537,7 +537,8 @@ process_raw::process_raw(const std::string &fname,size_t pagesize_,size_t margin
 {
 }
 
-process_raw::~process_raw() {
+process_raw::~process_raw()
+{
 #ifdef WIN32
     if(current_handle!=INVALID_HANDLE_VALUE) ::CloseHandle(current_handle);
 #else
