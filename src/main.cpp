@@ -466,7 +466,6 @@ int main(int argc,char **argv)
     scanner_set ss(sc, f, nullptr);     // make a scanner_set but with no XML writer. We will create it below
     ss.add_scanners(scanners_builtin);
 
-
     /* Print usage if necessary. Requires scanner set, but not commands applied.
      * This would create the outdir if one was specified.
      */

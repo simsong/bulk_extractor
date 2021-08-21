@@ -605,7 +605,7 @@ void process_raw::add_file(const std::string &fname)
     raw_filesize += fname_length;
 }
 
-const process_raw::file_info *process_raw::find_offset(int64_t pos) const
+const process_raw::file_info *process_raw::find_offset(uint64_t pos) const
 {
     for(process_raw::file_list_t::const_iterator it = file_list.begin();it != file_list.end();it++){
 	if((*it).offset<=pos && pos< ((*it).offset+(*it).length)){
@@ -649,7 +649,7 @@ int64_t process_raw::image_size() const
  * 3. If there are additional files to read in the next file, recurse.
  */
 
-ssize_t process_raw::pread(void *buf,size_t bytes,uint64_t offset) const
+ssize_t process_raw::pread(void *buf, size_t bytes, uint64_t offset) const
 {
     const file_info *fi = find_offset(offset);
     if(fi==0) return 0;			// nothing to read.

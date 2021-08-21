@@ -205,15 +205,15 @@ class process_ewf : public image_process {
 class process_raw : public image_process {
     class file_info {
     public:;
-        file_info(const std::filesystem::path name_,int64_t offset_,int64_t length_):name(name_),offset(offset_),length(length_){};
+        file_info(const std::filesystem::path name_,uint64_t offset_,uint64_t length_):name(name_),offset(offset_),length(length_){};
         std::filesystem::path name {};
-	int64_t offset   {};
-	int64_t length   {};
+	uint64_t offset   {};
+	uint64_t length   {};
     };
     typedef std::vector<file_info> file_list_t ;
     file_list_t file_list {};
     void        add_file(const std::string &fname);
-    class       file_info const *find_offset(int64_t offset) const;
+    class       file_info const *find_offset(uint64_t offset) const; /* finds which file this offset would map to */
     uint64_t    raw_filesize {};			/* sume of all the lengths */
     mutable std::filesystem::path current_file_name {};		/* which file is currently open */
 #ifdef WIN32
