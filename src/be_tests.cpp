@@ -835,8 +835,6 @@ TEST_CASE("path_printer", "[path_printer]") {
     class path_printer pp(&ss, reader, str);
     pp.process_path("512-GZIP-0/h");    // create a hex dump
 
-    std::cerr << "str:\n";
-    std::cerr << str.str();
     REQUIRE(str.str() == "0000: 6865 6c6c 6f40 776f 726c 642e 636f 6d0a hello@world.com.\n");
     str.str("");
 
