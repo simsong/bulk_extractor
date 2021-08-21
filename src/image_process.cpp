@@ -36,15 +36,23 @@
 #endif
 
 
-
-#include "be13_api/utf8.h"
-#include "be13_api/formatter.h"
-#include "image_process.h"
+#ifndef O_BINARY
+#define O_BINARY 0
+#endif
 
 #ifndef PATH_MAX
 #define PATH_MAX 65536
 #endif
 
+#include "be13_api/utf8.h"
+#include "be13_api/formatter.h"
+#include "image_process.h"
+
+
+
+/****************************************************************
+ ** patches for missing operating system calls.
+ ****************************************************************/
 
 
 /****************************************************************
@@ -141,11 +149,9 @@ int64_t get_filesize(int fd)
     return raw_filesize;
 }
 
-#ifndef O_BINARY
-#define O_BINARY 0
-#endif
 
-static int64_t getSizeOfFile(const std::string &fname)
+
+int64_t image_process::getSizeOfFile(std::string fname)
 {
 #ifdef WIN32
     HANDLE current_handle = CreateFileA(fname.c_str(), FILE_READ_DATA,
@@ -169,6 +175,65 @@ static int64_t getSizeOfFile(const std::string &fname)
 }
 
 
+/* These are only used in WIN32 but are defined here so that they can be tested on all platforms */
+std::string image_process::utf16to8(std::wstring fn16)
+{
+    std::string fn8;
+    utf8::utf16to8(fn16.begin(),fn16.end(),back_inserter(fn8));
+    return fn8;
+}
+
+std::wstring image_process::utf8to16(std::string fn8)
+{
+    std::wstring fn16;
+    utf8::utf8to16(fn8.begin(),fn8.end(),back_inserter(fn16));
+    return fn16;
+}
+
+image_process::image_process(std::string fn, size_t pagesize_, size_t margin_):
+    image_fname_(fn),pagesize(pagesize_),margin(margin_),report_read_errors(true)
+{
+}
+
+image_process::~image_process()
+{
+}
+
+
+std::string image_process::image_fname() const
+{
+    return image_fname_;
+}
+
+
+
+bool image_process::fn_ends_with(std::string str,std::string suffix)
+{
+    if(suffix.size() > str.size()) return false;
+    return str.substr(str.size()-suffix.size())==suffix;
+}
+
+bool image_process::is_multipart_file(std::string fn)
+{
+    return fn_ends_with(fn,".000")
+	|| fn_ends_with(fn,".001")
+	|| fn_ends_with(fn,"001.vmdk");
+}
+
+/* fn can't be & because it will get modified */
+std::string image_process::make_list_template(std::string fn,int *start)
+{
+    /* First find where the digits are */
+    size_t p = fn.rfind("000");
+    if(p==std::string::npos) p = fn.rfind("001");
+    assert(p!=std::string::npos);
+
+    *start = atoi(fn.substr(p,3).c_str()) + 1;
+    fn.replace(p,3,"%03d");	// make it a format
+    return fn;
+}
+
+
 
 /****************************************************************
  *** EWF START
@@ -183,37 +248,11 @@ static int64_t getSizeOfFile(const std::string &fname)
 #define LIBEWFNG
 #endif
 
-process_ewf::~process_ewf()
-{
-#ifdef HAVE_LIBEWF_HANDLE_CLOSE
-    if(handle){
-	libewf_handle_close(handle,NULL);
-	libewf_handle_free(&handle,NULL);
-    }
-#else
-    if(handle){
-	libewf_close(handle);
-    }
-#endif
-}
+/****************************************************************
+ ** process_ewf
+ */
 
-#ifdef WIN32
-static std::string utf16to8(const std::wstring &fn16)
-{
-    std::string fn8;
-    utf8::utf16to8(fn16.begin(),fn16.end(),back_inserter(fn8));
-    return fn8;
-}
-
-static std::wstring utf8to16(const std::string &fn8)
-{
-    std::wstring fn16;
-    utf8::utf8to16(fn8.begin(),fn8.end(),back_inserter(fn16));
-    return fn16;
-}
-#endif
-
-void local_e01_glob(const std::string &fname,char ***libewf_filenames,int *amount_of_filenames)
+void process_ewf::local_e01_glob(std::string fname,char ***libewf_filenames,int *amount_of_filenames)
 {
     std::cerr << "Experimental code for E01 names with MD5s appended\n";
 #ifdef WIN32
@@ -268,6 +307,22 @@ void local_e01_glob(const std::string &fname,char ***libewf_filenames,int *amoun
     std::cerr << "This code only runs on Windows.\n";
 #endif
 }
+
+
+process_ewf::~process_ewf()
+{
+#ifdef HAVE_LIBEWF_HANDLE_CLOSE
+    if(handle){
+	libewf_handle_close(handle,NULL);
+	libewf_handle_free(&handle,NULL);
+    }
+#else
+    if(handle){
+	libewf_close(handle);
+    }
+#endif
+}
+
 
 int process_ewf::open()
 {
@@ -388,13 +443,6 @@ ssize_t process_ewf::pread(void *buf,size_t bytes,uint64_t offset) const
 #endif
 }
 
-
-const std::string image_process::image_fname() const
-{
-    return image_fname_;
-}
-
-
 int64_t process_ewf::image_size() const
 {
     return ewf_filesize;
@@ -482,10 +530,9 @@ uint64_t process_ewf::seek_block(image_process::iterator &it,uint64_t block) con
     it.raw_offset = pagesize * block;
     return block;
 }
-
-
-
 #endif
+
+
 
 /****************************************************************
  *** RAW
@@ -495,39 +542,12 @@ uint64_t process_ewf::seek_block(image_process::iterator &it,uint64_t block) con
  * process a raw, with the appropriate threading.
  */
 
-#ifndef O_BINARY
-#define O_BINARY 0
-#endif
+/****************************************************************
+ * process_raw
+ */
 
-static bool fn_ends_with(const std::string &str,const std::string &suffix)
-{
-    if(suffix.size() > str.size()) return false;
-    return str.substr(str.size()-suffix.size())==suffix;
-}
-
-static bool is_multipart_file(const std::string &fn)
-{
-    return fn_ends_with(fn,".000")
-	|| fn_ends_with(fn,".001")
-	|| fn_ends_with(fn,"001.vmdk");
-}
-
-/* fn can't be & because it will get modified */
-static std::string make_list_template(std::string fn,int *start)
-{
-    /* First find where the digits are */
-    size_t p = fn.rfind("000");
-    if(p==std::string::npos) p = fn.rfind("001");
-    assert(p!=std::string::npos);
-
-    *start = atoi(fn.substr(p,3).c_str()) + 1;
-    fn.replace(p,3,"%03d");	// make it a format
-    return fn;
-}
-
-
-process_raw::process_raw(const std::string &fname,size_t pagesize_,size_t margin_)
-    :image_process(fname,pagesize_,margin_),
+process_raw::process_raw(std::string fname, size_t pagesize_, size_t margin_)
+    :image_process(fname, pagesize_, margin_),
      file_list(),raw_filesize(0),current_file_name(),
 #ifdef WIN32
      current_handle(INVALID_HANDLE_VALUE)
@@ -583,7 +603,7 @@ BOOL GetDriveGeometry(const wchar_t *wszPath, DISK_GEOMETRY *pdg)
 /**
  * Add the file to the list, keeping track of the total size
  */
-void process_raw::add_file(const std::string &fname)
+void process_raw::add_file(std::string fname)
 {
     int64_t fname_length = 0;
 
@@ -821,7 +841,7 @@ uint64_t process_raw::seek_block(image_process::iterator &it,uint64_t block) con
  * directories don't get page sizes or margins; the page size is the entire
  * file and the margin is 0.
  */
-process_dir::process_dir(const std::string &image_dir): image_process(image_dir,0,0)
+process_dir::process_dir(std::string image_dir): image_process(image_dir,0,0)
 {
     for (const auto& entry : std::filesystem::recursive_directory_iterator( image_dir )) {
         if (entry.is_regular_file()) {

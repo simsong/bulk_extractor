@@ -63,6 +63,15 @@ class image_process : public abstract_image_reader {
     const std::string image_fname_;			/* image filename */
 
 public:
+    /* These two functions are only used in WIN32 but are defined here so that they can be tested on all platforms */
+    std::string utf16to8(std::wstring fn16);
+    std::wstring utf8to16(std::string fn8);
+
+    static int64_t getSizeOfFile(std::string fname);
+    static bool fn_ends_with(std::string str,std::string suffix);
+    static bool is_multipart_file(std::string fn);
+    static std::string make_list_template(std::string fn,int *start);
+
     struct EndOfImage : public std::exception {
         EndOfImage(){};
         const char *what() const noexcept override {return "end of image.";}
@@ -120,16 +129,15 @@ public:
         void set_raw_offset(uint64_t anOffset){ raw_offset=anOffset;}
     };
 
-    image_process(const std::string &fn,size_t pagesize_,size_t margin_):
-        image_fname_(fn),pagesize(pagesize_),margin(margin_),report_read_errors(true){
-    }
-    virtual ~image_process(){};
+    image_process(std::string fn, size_t pagesize_, size_t margin_);
+    virtual ~image_process();
 
     /* image support */
     virtual int open()=0;				    /* open; return 0 if successful */
-    //virtual int pread(void *,size_t bytes,int64_t offset) const = 0 ;	    /* defined in super class */
+    /* pread defined in superclass */
+    //virtual int pread(void *,size_t bytes,int64_t offset) const = 0 ;
     virtual int64_t image_size() const=0;
-    virtual const std::string image_fname() const;
+    virtual std::string image_fname() const;
 
     /* iterator support; these virtual functions are called by iterator through (*myimage) */
     virtual image_process::iterator begin() const =0;
@@ -178,7 +186,9 @@ class process_ewf : public image_process {
     mutable libewf_handle_t *handle {};
 
  public:
-    process_ewf(const std::string &fname, size_t pagesize_, size_t margin_) : image_process(fname, pagesize_, margin_) {}
+    static void local_e01_glob(std::string fname,char ***libewf_filenames,int *amount_of_filenames);
+
+    process_ewf(std::string fname, size_t pagesize_, size_t margin_) : image_process(fname, pagesize_, margin_) {}
     virtual ~process_ewf();
     std::vector<std::string> getewfdetails() const;
     int open() override;
@@ -212,7 +222,7 @@ class process_raw : public image_process {
     };
     typedef std::vector<file_info> file_list_t ;
     file_list_t file_list {};
-    void        add_file(const std::string &fname);
+    void        add_file(std::string fname);
     class       file_info const *find_offset(uint64_t offset) const; /* finds which file this offset would map to */
     uint64_t    raw_filesize {};			/* sume of all the lengths */
     mutable std::filesystem::path current_file_name {};		/* which file is currently open */
@@ -222,7 +232,7 @@ class process_raw : public image_process {
     mutable int current_fd {};			/* currently open file */
 #endif
 public:
-    process_raw(const std::string &image_fname,size_t pagesize,size_t margin);
+    process_raw(std::string image_fname,size_t pagesize,size_t margin);
     virtual ~process_raw();
     virtual int open() override;
     virtual ssize_t pread(void *,size_t bytes,uint64_t offset) const override;	    /* read */
@@ -251,7 +261,7 @@ class process_dir : public image_process {
     std::vector<std::filesystem::path> files {};		/* all of the files */
 
  public:
-    process_dir(const std::string &image_dir);
+    process_dir(std::string image_dir);
     virtual ~process_dir();
 
     virtual int open() override;
