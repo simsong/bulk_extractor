@@ -13,13 +13,14 @@
 #define CATCH_CONFIG_CONSOLE_WIDTH 120
 
 #include "config.h"
+#include "be13_api/catch.hpp"
 
 #ifdef HAVE_MACH_O_DYLD_H
 #include "mach-o/dyld.h"         // Needed for _NSGetExecutablePath
 #endif
 
 #include "dfxml_cpp/src/dfxml_writer.h"
-#include "be13_api/catch.hpp"
+#include "be13_api/path_printer.h"
 #include "be13_api/scanner_set.h"
 #include "be13_api/utils.h"             // needs config.h
 
@@ -33,8 +34,8 @@
 #include "scan_aes.h"
 #include "scan_base64.h"
 #include "scan_email.h"
-#include "scan_net.h"
 #include "scan_msxml.h"
+#include "scan_net.h"
 #include "scan_pdf.h"
 #include "scan_vcard.h"
 #include "scan_wordlist.h"
@@ -814,4 +815,29 @@ TEST_CASE("image_process", "[phase1]") {
     }
     REQUIRE(times==1);
     delete p;
+}
+
+/****************************************************************
+ ** Test the path printer
+ **/
+TEST_CASE("path_printer", "[path_printer]") {
+    scanner_config sc;
+    sc.input_fname = test_dir() / "test_hello.512b.gz";
+    sc.scanner_commands = enable_all_scanners;
+    sc.allow_recurse = true;
+
+    scanner_set ss(sc, feature_recorder_set::flags_disabled(), nullptr);
+    ss.add_scanners(scanners_builtin);
+    ss.apply_scanner_commands();
+
+    auto reader = image_process::open( sc.input_fname, false, 65536, 65536 );
+    std::stringstream str;
+    class path_printer pp(&ss, reader, str);
+    pp.process_path("512-GZIP-0/h");    // create a hex dump
+
+    REQUIRE(str.str() == "0000: 6865 6c6c 6f40 776f 726c 642e 636f 6d0a hello@world.com.\n");
+    str.str("");
+
+    pp.process_path("512-GZIP-2/r");    // create a hex dump with a different path and the /r
+    REQUIRE(str.str() == "14\r\nllo@world.com\n");
 }

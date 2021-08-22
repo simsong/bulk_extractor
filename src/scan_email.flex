@@ -306,8 +306,6 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
 
 [a-zA-Z0-9]\0([a-zA-Z0-9._%\-+]\0){1,128}@\0([a-zA-Z0-9._%\-]\0){1,128}\.\0({U_TLD1}|{U_TLD2}|{U_TLD3}|{U_TLD4})/[^a-zA-Z]|([^][^\0])	{
     /* UTF-16 URL scanner */
-    std::cerr << "scan_email.flex: found1\n";
-
 
     email_scanner &s = * yyemail_get_extra(yyscanner);
     if (extra_validate_email(yytext)){
@@ -318,13 +316,10 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
         }
     }
     s.pos += yyleng;
-    std::cerr << "scan_email.flex===DONE1===\n";
 }
 
 h\0t\0t\0p\0(s\0)?:\0([a-zA-Z0-9_%/\-+@:=&\?#~.;]\0){1,128}/[^a-zA-Z0-9_%\/\-+@:=&\?#~.;]|([^][^\0])	{
     /* UTF-16 URL scanner */
-    std::cerr << "scan_email.flex: found2\n";
-
     email_scanner &s = * yyemail_get_extra(yyscanner);
     s.url_recorder.write_buf(SBUF,POS,yyleng);
     ssize_t domain_start = find_host_in_email(SBUF.slice(POS,yyleng));
@@ -332,7 +327,6 @@ h\0t\0t\0p\0(s\0)?:\0([a-zA-Z0-9_%/\-+@:=&\?#~.;]\0){1,128}/[^a-zA-Z0-9_%\/\-+@:
 	s.domain_recorder.write_buf(SBUF,POS+domain_start,yyleng-domain_start);
     }
     s.pos += yyleng;
-    std::cerr << "scan_email.flex===DONE2===\n";
 }
 
 .|\n {

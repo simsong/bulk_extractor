@@ -42,6 +42,7 @@
  */
 
 #include "be13_api/sbuf.h"
+#include "be13_api/abstract_image_reader.h"
 
 #include <filesystem>
 
@@ -51,8 +52,7 @@
 #  include <windowsx.h>
 #endif
 
-class image_process {
-private:
+class image_process : public abstract_image_reader {
     /******************************************************
      *** neither copying nor assignment is implemented. ***
      ******************************************************/
@@ -63,6 +63,15 @@ private:
     const std::string image_fname_;			/* image filename */
 
 public:
+    /* These two functions are only used in WIN32 but are defined here so that they can be tested on all platforms */
+    std::string utf16to8(std::wstring fn16);
+    std::wstring utf8to16(std::string fn8);
+
+    static int64_t getSizeOfFile(std::string fname);
+    static bool fn_ends_with(std::string str,std::string suffix);
+    static bool is_multipart_file(std::string fn);
+    static std::string make_list_template(std::string fn,int *start);
+
     struct EndOfImage : public std::exception {
         EndOfImage(){};
         const char *what() const noexcept override {return "end of image.";}
@@ -120,16 +129,15 @@ public:
         void set_raw_offset(uint64_t anOffset){ raw_offset=anOffset;}
     };
 
-    image_process(const std::string &fn,size_t pagesize_,size_t margin_):
-        image_fname_(fn),pagesize(pagesize_),margin(margin_),report_read_errors(true){
-    }
-    virtual ~image_process(){};
+    image_process(std::string fn, size_t pagesize_, size_t margin_);
+    virtual ~image_process();
 
     /* image support */
     virtual int open()=0;				    /* open; return 0 if successful */
-    virtual int pread(uint8_t *,size_t bytes,int64_t offset) const =0;	    /* read */
+    /* pread defined in superclass */
+    //virtual int pread(void *,size_t bytes,int64_t offset) const = 0 ;
     virtual int64_t image_size() const=0;
-    virtual const std::string &image_fname() const { return image_fname_;}
+    virtual std::string image_fname() const;
 
     /* iterator support; these virtual functions are called by iterator through (*myimage) */
     virtual image_process::iterator begin() const =0;
@@ -140,6 +148,7 @@ public:
     virtual double fraction_done(const class image_process::iterator &it) const = 0;
     virtual std::string str(const class image_process::iterator &it) const = 0; // returns a string representation of where we are
     virtual uint64_t max_blocks(const class image_process::iterator &it) const = 0;
+
     // seek_block modifies the iterator, but not the image!
     virtual uint64_t seek_block(class image_process::iterator &it,uint64_t block) const = 0; // returns -1 if failure
     virtual void set_report_read_errors(bool val){report_read_errors=val;}
@@ -177,23 +186,25 @@ class process_ewf : public image_process {
     mutable libewf_handle_t *handle {};
 
  public:
-    process_ewf(const std::string &fname, size_t pagesize_, size_t margin_) : image_process(fname, pagesize_, margin_) {}
+    static void local_e01_glob(std::string fname,char ***libewf_filenames,int *amount_of_filenames);
+
+    process_ewf(std::string fname, size_t pagesize_, size_t margin_) : image_process(fname, pagesize_, margin_) {}
     virtual ~process_ewf();
     std::vector<std::string> getewfdetails() const;
-    int open();
-    int pread(uint8_t *,size_t bytes,int64_t offset) const;	    /* read */
+    int open() override;
+    virtual ssize_t pread(void *,size_t bytes,uint64_t offset) const override;	    /* read */
 
     /* iterator support */
-    virtual image_process::iterator begin() const;
-    virtual image_process::iterator end() const;
-    virtual void    increment_iterator(class image_process::iterator &it) const;
-    virtual pos0_t  get_pos0(const class image_process::iterator &it) const;
-    virtual sbuf_t  *sbuf_alloc(class image_process::iterator &it) const;
-    virtual double  fraction_done(const class image_process::iterator &it) const;
-    virtual std::string str(const class image_process::iterator &it) const;
-    virtual int64_t  image_size() const;
-    virtual uint64_t max_blocks(const class image_process::iterator &it) const;
-    virtual uint64_t seek_block(class image_process::iterator &it,uint64_t block) const; // returns -1 if failue
+    virtual image_process::iterator begin() const override;
+    virtual image_process::iterator end() const override;
+    virtual void    increment_iterator(class image_process::iterator &it) const override;
+    virtual pos0_t  get_pos0(const class image_process::iterator &it) const override;
+    virtual sbuf_t  *sbuf_alloc(class image_process::iterator &it) const override;
+    virtual double  fraction_done(const class image_process::iterator &it) const override;
+    virtual std::string str(const class image_process::iterator &it) const override;
+    virtual int64_t  image_size() const override;
+    virtual uint64_t max_blocks(const class image_process::iterator &it) const override;
+    virtual uint64_t seek_block(class image_process::iterator &it,uint64_t block) const override; // returns -1 if failue
 };
 #endif
 
@@ -204,15 +215,15 @@ class process_ewf : public image_process {
 class process_raw : public image_process {
     class file_info {
     public:;
-        file_info(const std::filesystem::path name_,int64_t offset_,int64_t length_):name(name_),offset(offset_),length(length_){};
+        file_info(const std::filesystem::path name_,uint64_t offset_,uint64_t length_):name(name_),offset(offset_),length(length_){};
         std::filesystem::path name {};
-	int64_t offset   {};
-	int64_t length   {};
+	uint64_t offset   {};
+	uint64_t length   {};
     };
     typedef std::vector<file_info> file_list_t ;
     file_list_t file_list {};
-    void        add_file(const std::string &fname);
-    class       file_info const *find_offset(int64_t offset) const;
+    void        add_file(std::string fname);
+    class       file_info const *find_offset(uint64_t offset) const; /* finds which file this offset would map to */
     uint64_t    raw_filesize {};			/* sume of all the lengths */
     mutable std::filesystem::path current_file_name {};		/* which file is currently open */
 #ifdef WIN32
@@ -221,23 +232,23 @@ class process_raw : public image_process {
     mutable int current_fd {};			/* currently open file */
 #endif
 public:
-    process_raw(const std::string &image_fname,size_t pagesize,size_t margin);
+    process_raw(std::string image_fname,size_t pagesize,size_t margin);
     virtual ~process_raw();
-    virtual int open();
-    virtual int pread(uint8_t *,size_t bytes,int64_t offset) const;	    /* read */
+    virtual int open() override;
+    virtual ssize_t pread(void *,size_t bytes,uint64_t offset) const override;	    /* read */
 
     /* iterator support */
-    virtual image_process::iterator begin() const;
-    virtual image_process::iterator end() const;
-    virtual void     increment_iterator(class image_process::iterator &it) const;
+    virtual image_process::iterator begin() const override;
+    virtual image_process::iterator end() const override;
+    virtual void     increment_iterator(class image_process::iterator &it) const override;
 
-    virtual pos0_t   get_pos0(const class image_process::iterator &it) const;
-    virtual sbuf_t  *sbuf_alloc(class image_process::iterator &it) const;
-    virtual double   fraction_done(const class image_process::iterator &it) const;
-    virtual std::string str(const class image_process::iterator &it) const;
-    virtual int64_t  image_size() const;
-    virtual uint64_t max_blocks(const class image_process::iterator &it) const;
-    virtual uint64_t seek_block(class image_process::iterator &it,uint64_t block) const; // returns -1 if failue
+    virtual pos0_t   get_pos0(const class image_process::iterator &it) const override;
+    virtual sbuf_t  *sbuf_alloc(class image_process::iterator &it) const override;
+    virtual double   fraction_done(const class image_process::iterator &it) const override;
+    virtual std::string str(const class image_process::iterator &it) const override;
+    virtual int64_t  image_size() const override;
+    virtual uint64_t max_blocks(const class image_process::iterator &it) const override;
+    virtual uint64_t seek_block(class image_process::iterator &it,uint64_t block) const override; // returns -1 if failue
 };
 
 /****************************************************************
@@ -250,24 +261,24 @@ class process_dir : public image_process {
     std::vector<std::filesystem::path> files {};		/* all of the files */
 
  public:
-    process_dir(const std::string &image_dir);
+    process_dir(std::string image_dir);
     virtual ~process_dir();
 
-    virtual int open();
-    virtual int pread(uint8_t *,size_t bytes,int64_t offset) const __attribute__((__noreturn__));	 /* read */
+    virtual int open() override;
+    virtual ssize_t pread(void *,size_t bytes,uint64_t offset) const override __attribute__((__noreturn__));	 /* read */
 
     /* iterator support */
-    virtual image_process::iterator begin() const;
-    virtual image_process::iterator end() const;
-    virtual void increment_iterator(class image_process::iterator &it) const;
+    virtual image_process::iterator begin() const override;
+    virtual image_process::iterator end() const override;
+    virtual void increment_iterator(class image_process::iterator &it) const override;
 
-    virtual pos0_t   get_pos0(const class image_process::iterator &it)   const;
-    virtual sbuf_t  *sbuf_alloc(class image_process::iterator &it) const;   /* maps the next dir */
-    virtual double   fraction_done(const class image_process::iterator &it) const; /* number of dirs processed */
-    virtual std::string str(const class image_process::iterator &it) const;
-    virtual int64_t  image_size() const;				    /* total bytes */
-    virtual uint64_t max_blocks(const class image_process::iterator &it) const;
-    virtual uint64_t seek_block(class image_process::iterator &it,uint64_t block) const; // returns -1 if failu};
+    virtual pos0_t   get_pos0(const class image_process::iterator &it)   const override;
+    virtual sbuf_t  *sbuf_alloc(class image_process::iterator &it) const override;   /* maps the next dir */
+    virtual double   fraction_done(const class image_process::iterator &it) const override; /* number of dirs processed */
+    virtual std::string str(const class image_process::iterator &it) const override;
+    virtual int64_t  image_size() const override;				    /* total bytes */
+    virtual uint64_t max_blocks(const class image_process::iterator &it) const override;
+    virtual uint64_t seek_block(class image_process::iterator &it,uint64_t block) const override; // returns -1 if failu};
 };
 
 /****************************************************************

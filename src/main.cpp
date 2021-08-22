@@ -48,8 +48,8 @@ int _CRT_fmode = _O_BINARY;
 
 #include "findopts.h"
 #include "image_process.h"
-
 #include "phase1.h"
+#include "path_printer.h"
 
 /* Bring in the definitions  */
 #include "bulk_extractor_scanners.h"
@@ -167,33 +167,17 @@ static void usage(const char *progname, scanner_set &ss)
  */
 
 
-#if 0
-static int stat_callback(void *user,const std::string &name,uint64_t calls,double seconds)
-{
-    dfxml_writer *xreport = reinterpret_cast<dfxml_writer *>(user);
-
-    xreport->set_oneline(true);
-    xreport->push("path");
-    xreport->xmlout("name",name);
-    xreport->xmlout("calls",(int64_t)calls);
-    xreport->xmlout("seconds",seconds);
-    xreport->pop("path");
-    xreport->set_oneline(false);
-    return 0;
-}
-#endif
-
 /*
  * Make sure that the filename provided is sane.
  * That is, do not allow the analysis of a *.E02 file...
  */
 void validate_path(const std::filesystem::path fn)
 {
-    if(!std::filesystem::exists(fn)){
+    if (!std::filesystem::exists(fn)){
         std::cerr << "file does not exist: " << fn << "\n";
         throw std::runtime_error("file not found.");
     }
-    if(fn.extension()=="E02" || fn.extension()=="e02"){
+    if (fn.extension()=="E02" || fn.extension()=="e02"){
         std::cerr << "Error: invalid file name\n";
         std::cerr << "Do not use bulk_extractor to process individual EnCase files.\n";
         std::cerr << "Instead, just run bulk_extractor with FILENAME.E01\n";
@@ -205,295 +189,6 @@ void validate_path(const std::filesystem::path fn)
 
 
 
-/***************************************************************************************
- *** PATH PRINTER - Used by bulk_extractor for printing pages associated with a path ***
- ***************************************************************************************/
-
-/* Get the next token from the path. Tokens are separated by dashes.
- * NOTE: modifies argument
- */
-std::string get_and_remove_token(std::string &path)
-{
-    while(path[0]=='-'){
-	path = path.substr(1); // remove any leading dashes.
-    }
-    size_t dash = path.find('-');	// find next dash
-    if(dash==std::string::npos){		// no string; return the rest
-        std::string prefix = path;
-	path = "";
-	return prefix;
-    }
-    std::string prefix = path.substr(0,dash);
-    path = path.substr(dash+1);
-    return prefix;
-}
-
-/**
- * lowerstr - Turns an ASCII string into all lowercase case (should be UTF-8)
- */
-
-std::string lowerstr(const std::string str)
-{
-    std::string ret;
-    for(std::string::const_iterator i=str.begin();i!=str.end();i++){
-	ret.push_back(tolower(*i));
-    }
-    return ret;
-}
-
-class path_printer_finished: public std::exception {
-public:
-    virtual const char *what() const throw() {
-        return "path printer finished.";
-    }
-} printing_done;
-
-static std::string HTTP_EOL {"\r\n"};		// stdout is in binary form
-static std::string PRINT {"PRINT"};
-static std::string CONTENT_LENGTH {"Content-Length"};
-#if 0
-void process_path_printer(const scanner_params &sp)
-{
-    /* 1. Get next token
-     * 2. if prefix part is a number, skip forward that much in sbuf and repeat.
-     *    if the prefix is PRINT, print the buffer
-     *    if next part is a string, strip it and run that decoder.
-     *    if next part is a |, print
-     * 3. If we are print, throw an exception to prevent continued analysis of buffer.
-     */
-
-    std::string new_path = sp.sbuf->pos0.path;
-    std::string prefix = get_and_remove_token(new_path);
-
-    /* Time to print ?*/
-    if(prefix.size()==0 || prefix==PRINT){
-
-	uint64_t print_start = 0;
-	uint64_t print_len = 4096;
-
-	/* Check for options */
-	scanner_params::PrintOptions::iterator it = sp.print_options.find(CONTENT_LENGTH);
-
-	if(it!=sp.print_options.end()){
-	    print_len = stoi64(it->second);
-	}
-
-        scanner_params::PrintOptions::iterator it2 = sp.print_options.find("Range");
-	if(it2!=sp.print_options.end()){
-	    if(it2->second[5]=='='){
-		size_t dash = it2->second.find('-');
-                std::string v1 = it2->second.substr(6,dash-6);
-                std::string v2 = it2->second.substr(dash+1);
-		print_start = stoi64(v1);
-		print_len = stoi64(v2)-print_start+1;
-	    }
-	}
-
-	if(print_start>sp.sbuf.bufsize){
-	    print_len = 0;			// can't print anything
-	}
-
-	if(print_len>0 && print_start+print_len>sp.sbuf.bufsize){
-	    print_len = sp.sbuf.bufsize-print_start;
-	}
-
-	switch(scanner_params::getPrintMode(sp.print_options)){
-	case scanner_params::MODE_HTTP:
-	    std::cout << "Content-Length: "		<< print_len  << HTTP_EOL;
-	    std::cout << "Content-Range: bytes "	<< print_start << "-" << print_start+print_len-1 << HTTP_EOL;
-	    std::cout << "X-Range-Available: bytes " << 0 << "-" << sp.sbuf.bufsize-1 << HTTP_EOL;
-	    std::cout << HTTP_EOL;
-	    sp.sbuf.raw_dump(std::cout,print_start,print_len); // send to stdout as binary
-	    break;
-	case scanner_params::MODE_RAW:
-	    std::cout << print_len << HTTP_EOL;
-	    std::cout.flush();
-	    sp.sbuf.raw_dump(std::cout,print_start,print_len); // send to stdout as binary
-	    break;
-	case scanner_params::MODE_HEX:
-	    sp.sbuf.hex_dump(std::cout,print_start,print_len);
-	    break;
-	case scanner_params::MODE_NONE:
-	    break;
-	}
-        throw printing_done;
-	//return;			// our job is done
-    }
-    /* If we are in an offset block, process recursively with the offset */
-    if(isdigit(prefix[0])){
-	uint64_t offset = stoi64(prefix);
-	if(offset>sp.sbuf.bufsize){
-	    printf("Error: %s only has %u bytes; can't offset to %u\n",
-		   new_path.c_str(),(unsigned int)sp.sbuf.bufsize,(unsigned int)offset);
-	    return;
-	}
-	process_path_printer(scanner_params(scanner_params::PHASE_SCAN,
-					    sbuf_t(new_path,sp.sbuf+offset),
-					    sp.fs,sp.print_options));
-	return;
-    }
-    /* Find the scanner and use it */
-    scanner_set::scanner_t *s = plugin::find_scanner(lowerstr(prefix));
-    if(s){
-        (*s)(scanner_params(scanner_params::PHASE_SCAN,
-                            sbuf_t(new_path,sp.sbuf),
-                            sp.fs,sp.print_options),
-             recursion_control_block(process_path_printer,prefix));
-        return;
-    }
-    std::cerr << "Unknown name in path: " << prefix << "\n";
-}
-
-
-/**
- * process_path uses the scanners to decode the path for the purpose of
- * decoding the image data and extracting the information.
- */
-
-
-static void process_open_path(const image_process &p,std::string path,scanner_params::PrintOptions &po,
-                              const size_t process_path_bufsize)
-{
-    /* Check for "/r" in path which means print raw */
-    if(path.size()>2 && path.substr(path.size()-2,2)=="/r"){
-	path = path.substr(0,path.size()-2);
-    }
-
-    std::string  prefix = get_and_remove_token(path);
-    int64_t offset = stoi64(prefix);
-
-    /* Get the offset into the buffer process */
-    u_char *buf = (u_char *)calloc(process_path_bufsize,1);
-    if(!buf){
-        std::cerr << "Cannot allocate " << process_path_bufsize << " buffer\n";
-        return;
-    }
-    int count = p.pread(buf,process_path_bufsize,offset);
-    if(count<0){
-        std::cerr << p.image_fname() << ": " << strerror(errno) << " (Read Error)\n";
-	return;
-    }
-
-    /* make up a bogus feature recorder set and with a disabled feature recorder.
-     * Then we call the path printer, which throws an exception after the printing
-     * to prevent further printing.
-     *
-     * The printer is called when a PRINT token is found in the
-     * forensic path, so that has to be added.
-     */
-    feature_recorder_set fs(feature_recorder_set::SET_DISABLED,
-                            "md5",
-                            feature_recorder_set::NO_INPUT,
-                            feature_recorder_set::NO_OUTDIR);
-
-    pos0_t pos0(path+"-PRINT"); // insert the PRINT token
-    sbuf_t sbuf(pos0, buf, count, count, 0, true); // sbuf system will free
-    scanner_params sp(scanner_params::PHASE_SCAN,sbuf,fs,po);
-    try {
-        process_path_printer(sp);
-    }
-    catch (path_printer_finished &e) {
-    }
-}
-
-/**
- * process a path for a given filename.
- * Opens the image and calls the function above.
- * Also implements HTTP server with "-http" option.
- * Feature recorders disabled.
- */
-static void process_path(const char *fn,std::string path,size_t pagesize,size_t marginsize)
-{
-    image_process *pp = image_process::open(fn,0,pagesize,0);
-    if(pp==0){
-	if(path=="-http"){
-	    std::cout << "HTTP/1.1 502 Filename " << fn << " is invalid" << HTTP_EOL << HTTP_EOL;
-	} else {
-            std::cerr << "Filename " << fn << " is invalid\n";
-	}
-	exit(1);
-    }
-
-    if(path=="-"){
-	/* process path interactively */
-	printf("Path Interactive Mode:\n");
-	if(pp==0){
-            std::cerr << "Invalid file name: " << fn << "\n";
-	    exit(1);
-	}
-	do {
-	    getline(std::cin,path);
-	    if(path==".") break;
-	    scanner_params::PrintOptions po;
-	    scanner_params::setPrintMode(po,scanner_params::MODE_HEX);
-	    process_open_path(*pp,path,po,pagesize+marginsize);
-	} while(true);
-	return;
-    }
-    if(path=="-http"){
-	do {
-	    /* get the HTTP query */
-            std::string line;		// the specific query
-	    scanner_params::PrintOptions po;
-	    scanner_params::setPrintMode(po,scanner_params::MODE_HTTP);	// options for this query
-
-	    getline(std::cin,line);
-	    truncate_at(line,'\r');
-	    if(line.substr(0,4)!="GET "){
-		std::cout << "HTTP/1.1 501 Method not implemented" << HTTP_EOL << HTTP_EOL;
-		return;
-	    }
-	    size_t space = line.find(" HTTP/1.1");
-	    if(space==std::string::npos){
-		std::cout << "HTTP/1.1 501 Only HTTP/1.1 is implemented" << HTTP_EOL << HTTP_EOL;
-		return;
-	    }
-            std::string p2 = line.substr(4,space-4);
-
-	    /* Get the additional header options */
-	    do {
-		getline(std::cin,line);
-		truncate_at(line,'\r');
-		if(line.size()==0) break; // double new-line
-		size_t colon = line.find(":");
-		if(colon==std::string::npos){
-		    std::cout << "HTTP/1.1 502 Malformed HTTP request" << HTTP_EOL;
-		    return;
-		}
-                std::string name = line.substr(0,colon);
-                std::string val  = line.substr(colon+1);
-		while(val.size()>0 && (val[0]==' '||val[0]=='\t')) val = val.substr(1);
-		po[name]=val;
-	    } while(true);
-	    /* Process some specific URLs */
-	    if(p2=="/info"){
-		std::cout << "X-Image-Size: " << pp->image_size() << HTTP_EOL;
-		std::cout << "X-Image-Filename: " << pp->image_fname() << HTTP_EOL;
-		std::cout << "Content-Length: 0" << HTTP_EOL;
-		std::cout << HTTP_EOL;
-		continue;
-	    }
-
-	    /* Ready to go with path and options */
-	    process_open_path(*pp,p2,po,pagesize+marginsize);
-	} while(true);
-	return;
-    }
-    scanner_params::PrintOptions po;
-    scanner_params::print_mode_t mode = scanner_params::MODE_HEX;
-    if(path.size()>2 && path.substr(path.size()-2,2)=="/r"){
-	path = path.substr(0,path.size()-2);
-	mode = scanner_params::MODE_RAW;
-    }
-    if(path.size()>2 && path.substr(path.size()-2,2)=="/h"){
-	path = path.substr(0,path.size()-2);
-	mode = scanner_params::MODE_HEX;
-    }
-    scanner_params::setPrintMode(po,mode);
-    process_open_path(*pp,path,po,pagesize+marginsize);
-}
-#endif
-
 class bulk_extractor_restarter {
     std::stringstream cdata {};
     std::string thisElement {};
@@ -504,9 +199,9 @@ class bulk_extractor_restarter {
         class bulk_extractor_restarter &self = *(bulk_extractor_restarter *)userData;
         self.cdata.str("");
         self.thisElement = name_;
-        if(self.thisElement=="debug:work_start"){
+        if (self.thisElement=="debug:work_start"){
             for(int i=0;attrs[i] && attrs[i+1];i+=2){
-                if(strcmp(attrs[i],"pos0") == 0){
+                if (strcmp(attrs[i],"pos0") == 0){
                     self.seen_page_ids.insert(attrs[i+1]);
                 }
             }
@@ -514,7 +209,7 @@ class bulk_extractor_restarter {
     }
     static void endElement(void *userData,const char *name_){
         class bulk_extractor_restarter &self = *(bulk_extractor_restarter *)userData;
-        if(self.thisElement=="provided_filename") self.provided_filename = self.cdata.str();
+        if (self.thisElement=="provided_filename") self.provided_filename = self.cdata.str();
         self.cdata.str("");
     }
     static void characterDataHandler(void *userData,const XML_Char *s,int len){
@@ -528,7 +223,7 @@ public:;
                              const std::string &reportfilename,
                              const std::string &image_fname){
 #ifdef HAVE_LIBEXPAT
-        if(access(reportfilename.c_str(),R_OK)){
+        if (access(reportfilename.c_str(),R_OK)){
             std::cerr << opt_outdir << ": error\n";
             std::cerr << "report.xml file is missing or unreadable.\n";
             std::cerr << "Directory may not have been created by bulk_extractor.\n";
@@ -541,7 +236,7 @@ public:;
         XML_SetElementHandler(parser, startElement, endElement);
         XML_SetCharacterDataHandler(parser,characterDataHandler);
         std::fstream in(reportfilename.c_str());
-        if(!in.is_open()){
+        if (!in.is_open()){
             std::cout << "Cannot open " << reportfilename << ": " << strerror(errno) << "\n";
             exit(1);
         }
@@ -556,13 +251,13 @@ public:;
                     break;
                 }
             }
-            if(!error) XML_Parse(parser, "", 0, 1);    // clear the parser
+            if (!error) XML_Parse(parser, "", 0, 1);    // clear the parser
         }
         catch (const std::exception &e) {
             std::cout << "ERROR: " << e.what() << "\n";
         }
         XML_ParserFree(parser);
-        if(image_fname != provided_filename){
+        if (image_fname != provided_filename){
             std::cerr << "Error: \n" << image_fname << " != " << provided_filename << "\n";
             exit(1);
         }
@@ -617,7 +312,7 @@ int main(int argc,char **argv)
     Phase1::Config   cfg;  // config for the image_processing system
 
     /* Options */
-    const char *opt_path = 0;
+    std::string opt_path {};
     int         opt_recurse = 0;
     int         opt_zap = 0;
     int         opt_h = 0;
@@ -647,7 +342,7 @@ int main(int argc,char **argv)
     setmode(1,O_BINARY);		// make stdout binary
 #endif
 
-    if(argc==1) opt_h=1;                // generate help if no arguments provided
+    if (argc==1) opt_h=1;                // generate help if no arguments provided
 
     /* Process options */
     const std::string ALL { "all" };
@@ -662,24 +357,9 @@ int main(int argc,char **argv)
 	case 'C': sc.context_window_default = atoi(optarg);break;
 	case 'd':
 	{
-            if(strcmp(optarg,"h")==0) debug_help();
-	    int d = atoi(optarg);
-            /* Used to simulate low memory situations */
-	    switch(d){
-#if 0
-	    case DEBUG_ALLOCATE_512MiB:
-		if(calloc(1024*1024*512,1)){
-                    std::cerr << "-d1002 -- Allocating 512MB of RAM; may be repeated\n";
-		} else {
-                    std::cerr << "-d1002 -- CANNOT ALLOCATE MORE RAM\n";
-		}
-		break;
-#endif
-	    default:
-		cfg.debug  = d;
-		break;
-	    }
-            //plugin::set_scanner_debug(cfg.debug);
+            if (strcmp(optarg,"h")==0) debug_help();
+	    cfg.debug = atoi(optarg);
+            if (cfg.debug==0) cfg.debug=1;
 	}
 	break;
 	case 'E':            /* Enable all scanners */
@@ -706,7 +386,7 @@ int main(int argc,char **argv)
 	case 'p': opt_path = optarg; break;
         case 'q': cfg.opt_quiet = true; break;
 	case 'r':
-	    if(alert_list.readfile(optarg)){
+	    if (alert_list.readfile(optarg)){
                 throw_FileNotFoundError(optarg);
 	    }
 	    break;
@@ -714,7 +394,7 @@ int main(int argc,char **argv)
 	case 'S':
 	{
 	    std::vector<std::string> params = split(optarg,'=');
-	    if(params.size()!=2){
+	    if (params.size()!=2){
 		std::cerr << "Invalid paramter: " << optarg << "\n";
 		exit(1);
 	    }
@@ -729,7 +409,7 @@ int main(int argc,char **argv)
             fprintf(stderr,"-W has been deprecated. Specify with -S word_min=NN and -S word_max=NN\n");
             exit(1);
 	    break;
-	case 'w': if(stop_list.readfile(optarg)){
+	case 'w': if (stop_list.readfile(optarg)){
                 throw_FileNotFoundError(optarg);
 	    }
 	    break;
@@ -739,7 +419,7 @@ int main(int argc,char **argv)
 	case 'Y': {
 	    std::string optargs = optarg;
 	    size_t dash = optargs.find('-');
-	    if(dash==std::string::npos){
+	    if (dash==std::string::npos){
 		cfg.opt_offset_start = stoi64(optargs);
 	    } else {
 		cfg.opt_offset_start = scaled_stoi64(optargs.substr(0,dash));
@@ -777,7 +457,7 @@ int main(int argc,char **argv)
         sc.outdir = scanner_config::NO_OUTDIR; // don't create outdir if we are getting help.
     }
 
-    if(sc.outdir.empty()){
+    if (sc.outdir.empty()){
         std::cerr << "error: -o outdir must be specified\n";
         exit(1);
     }
@@ -785,7 +465,6 @@ int main(int argc,char **argv)
     struct feature_recorder_set::flags_t f;
     scanner_set ss(sc, f, nullptr);     // make a scanner_set but with no XML writer. We will create it below
     ss.add_scanners(scanners_builtin);
-
 
     /* Print usage if necessary. Requires scanner set, but not commands applied.
      * This would create the outdir if one was specified.
@@ -815,19 +494,13 @@ int main(int argc,char **argv)
      * but no scanner that uses the find list is enabled.
      */
 
-    if(!FindOpts::get().empty()) {
+    if (!FindOpts::get().empty()) {
         /* Look through the enabled scanners and make sure that
 	 * at least one of them is a FIND scanner
 	 */
-        if(!ss.is_find_scanner_enabled()){
+        if (!ss.is_find_scanner_enabled()){
             throw std::runtime_error("find words are specified with -F but no find scanner is enabled.\n");
         }
-    }
-
-    if(opt_path){
-	if(argc!=1) throw std::runtime_error("-p requires a single argument.");
-	//process_path(argv[0],opt_path,cfg.opt_pagesize,cfg.opt_marginsize);
-	exit(0);
     }
 
     /* The zap option wipes the contents of a directory, useful for debugging */
@@ -853,6 +526,23 @@ int main(int argc,char **argv)
         exit(1);
     }
     sc.input_fname = *argv;
+
+    /* are we supposed to run the path printer? */
+    if (opt_path.size() > 0){
+	if (argc!=1) throw std::runtime_error("-p requires a single argument.");
+        image_process *p = image_process::open( sc.input_fname, opt_recurse, cfg.opt_pagesize, cfg.opt_marginsize);
+        path_printer pp(&ss, p, std::cout);
+        if (opt_path=="-http" || opt_path=="--http"){
+            pp.process_http(std::cin);
+        } else if (opt_path=="-i" || opt_path=="-"){
+            pp.process_interactive(std::cin);
+        } else {
+            pp.process_path(opt_path);
+        }
+	exit(0);
+    }
+
+
 
     std::filesystem::path report_path = sc.outdir / "report.xml";
     dfxml_writer *xreport = new dfxml_writer(report_path, false); // do not make DTD
@@ -908,13 +598,13 @@ int main(int argc,char **argv)
     for(scanner_info::config_t::const_iterator it=sc.namevals.begin();it!=sc.namevals.end();it++){
         /* see if there is a <recorder>: */
         std::vector<std::string> params = split(it->first,':');
-        if(params.size()>=3 && params.at(0)=="fr"){
+        if (params.size()>=3 && params.at(0)=="fr"){
             feature_recorder &fr = fs.named_feature_recorder(params.at(1));
             const std::string &cmd = params.at(2);
-            if(fr){
-                if(cmd=="window")        fr->set_context_window(stoi64(it->second));
-                if(cmd=="window_before") fr->set_context_window_before(stoi64(it->second));
-                if(cmd=="window_after")  fr->set_context_window_after(stoi64(it->second));
+            if (fr){
+                if (cmd=="window")        fr->set_context_window(stoi64(it->second));
+                if (cmd=="window_before") fr->set_context_window_before(stoi64(it->second));
+                if (cmd=="window_after")  fr->set_context_window_after(stoi64(it->second));
             }
         }
         /* See if there is a scanner? */
@@ -927,7 +617,7 @@ int main(int argc,char **argv)
 #ifdef HAVE_GETHOSTNAME
         char hostname[1024];
         memset(hostname,0,sizeof(hostname));
-        if(gethostname(hostname,sizeof(hostname)-1)==0){
+        if (gethostname(hostname,sizeof(hostname)-1)==0){
             if (hostname[0]) std::cout << "Hostname: " << hostname << "\n";
         }
 #endif
@@ -959,7 +649,7 @@ int main(int argc,char **argv)
         fs.db_transaction_begin();
     }
 #endif
-    if(opt_sampling_params.size()>0){
+    if (opt_sampling_params.size()>0){
         cfg.set_sampling_parameters(opt_sampling_params);
     }
 
@@ -979,7 +669,7 @@ int main(int argc,char **argv)
 
     /* TODO: Load up phase1 seen_page_ideas if we are restarting */
 
-    //if(cfg.debug & DEBUG_PRINT_STEPS) std::cerr << "DEBUG: STARTING PHASE 1\n";
+    //if (cfg.debug & DEBUG_PRINT_STEPS) std::cerr << "DEBUG: STARTING PHASE 1\n";
 
     xreport->add_timestamp("phase1 start");
 
@@ -1011,23 +701,22 @@ int main(int argc,char **argv)
     xreport->xmlout("elapsed_seconds",timer.elapsed_seconds());
     xreport->xmlout("max_depth_seen",ss.get_max_depth_seen());
     xreport->xmlout("dup_bytes_encountered",ss.get_dup_bytes_encountered());
-    xreport->push("scanner_times");
+    ss.dump_scanner_stats();
     ss.dump_name_count_stats();
-    xreport->pop("scanner_times");                     // scanner_times
     xreport->pop("report");
 
     xreport->add_rusage();
     xreport->pop("dfxml");			// bulk_extractor
     xreport->close();
 
-    if(cfg.opt_quiet==0){
+    if (cfg.opt_quiet==0){
         float mb_per_sec = (phase1.total_bytes / 1000000.0) / timer.elapsed_seconds();
 
         std::cout.precision(4);
         std::cout << "Elapsed time: " << timer.elapsed_seconds() << " sec.\n"
                   << "Total MB processed: " << int(phase1.total_bytes / 1000000) << "\n"
                   << "Overall performance: " << mb_per_sec << " << MBytes/sec";
-        if(cfg.num_threads>0){
+        if (cfg.num_threads>0){
             std::cout << mb_per_sec/cfg.num_threads << " (MBytes/sec/thread)\n";
         }
         std::cout << "sbufs created:   " << sbuf_t::sbuf_total << "\n";
