@@ -362,7 +362,7 @@ size_t exif_scanner::process_possible_jpeg(const sbuf_t &sbuf,bool found_start)
         // Should we carve?
         if (res.how==jpeg_validator::COMPLETE || res.len > static_cast<ssize_t>(min_jpeg_size)) {
             if (exif_scanner_debug) fprintf(stderr,"CARVING1\n");
-            jpeg_recorder.carve(sbuf, ".jpg", 0);
+            jpeg_recorder.carve(sbuf.slice(0, res.len), ".jpg", 0);
             ret = res.len;
         }
 
@@ -382,11 +382,14 @@ size_t exif_scanner::process_possible_jpeg(const sbuf_t &sbuf,bool found_start)
 void exif_scanner::scan(const sbuf_t &sbuf)
 {
     // require at least this many bytes
-    if (sbuf.bufsize < jpeg_validator::MIN_JPEG_SIZE) return;
 
-    // determine stop byte
-    size_t limit = (sbuf.pagesize > sbuf.bufsize + jpeg_validator::MIN_JPEG_SIZE) ?
-        sbuf.bufsize : sbuf.pagesize - jpeg_validator::MIN_JPEG_SIZE;
+    // If the margin is smaller than jpeg_validator::MIN_JPEG_SIZE,
+    // end before the margin. Note that the sbuf is guarenteed to be larger than jpeg_validator::MIN_JPEG_SIZE.
+    size_t limit = sbuf.pagesize;
+    if (sbuf.bufsize - sbuf.pagesize < jpeg_validator::MIN_JPEG_SIZE) {
+        assert (sbuf.bufsize > jpeg_validator::MIN_JPEG_SIZE);
+        limit = sbuf.bufsize - jpeg_validator::MIN_JPEG_SIZE;
+    }
 
     for (size_t start=0; start < limit; start++) {
         // check for start of a JPEG
@@ -419,7 +422,7 @@ void exif_scanner::scan(const sbuf_t &sbuf)
             }
             // Try to process if it is exif or not
 
-            size_t skip = process_possible_jpeg( sbuf.slice(start),true);
+            size_t skip = process_possible_jpeg( sbuf.slice(start), true);
             if (skip>1) start += skip-1;
             if (exif_scanner_debug){
                 std::cerr << "scan_exif Done processing JPEG/Exif ffd8ff at "
@@ -494,6 +497,7 @@ void exif_scanner::scan(const sbuf_t &sbuf)
     }
 }
 
+exif_scanner *escan = nullptr;
 
 extern "C"
 void scan_exif (scanner_params &sp)
@@ -504,6 +508,7 @@ void scan_exif (scanner_params &sp)
 	sp.info->author          = "Bruce Allen";
 	sp.info->scanner_version = "1.1";
         sp.info->description     = "Search for EXIF sections in JPEG files";
+        sp.info->min_sbuf_size   = jpeg_validator::MIN_JPEG_SIZE;
         struct feature_recorder_def::flags_t xml_flag;
         xml_flag.xml = true;
 	sp.info->feature_defs.push_back( feature_recorder_def("exif", xml_flag));
@@ -512,8 +517,10 @@ void scan_exif (scanner_params &sp)
         sp.get_config("exif_debug",&exif_debug,"debug exif decoder");
 	return;
     }
+    if (sp.phase==scanner_params::PHASE_INIT2) {
+        escan = new exif_scanner(sp);
+    }
     if (sp.phase==scanner_params::PHASE_SCAN){
-        exif_scanner escan(sp);
-        escan.scan(*sp.sbuf);
+        escan->scan(*sp.sbuf);
     }
 }

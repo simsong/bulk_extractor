@@ -326,26 +326,26 @@ process_ewf::~process_ewf()
 
 int process_ewf::open()
 {
-    const char *fname = image_fname().c_str();
+    std::string fname = image_fname();
     char **libewf_filenames = NULL;
     int amount_of_filenames = 0;
 
 #ifdef HAVE_LIBEWF_HANDLE_CLOSE
     bool use_libewf_glob = true;
     libewf_error_t *error=0;
-    if(image_fname().find(".E01.")!=std::string::npos){
+    if(fname.find(".E01.")!=std::string::npos){
         use_libewf_glob = false;
     }
 
     if(use_libewf_glob){
-        if(libewf_glob(fname,strlen(fname),LIBEWF_FORMAT_UNKNOWN,
+        if(libewf_glob(fname.c_str(), strlen(fname.c_str()), LIBEWF_FORMAT_UNKNOWN,
                        &libewf_filenames,&amount_of_filenames,&error)<0){
             libewf_error_fprint(error,stdout);
             libewf_error_free(&error);
             throw std::invalid_argument("libewf_glob");
         }
     } else {
-        local_e01_glob(image_fname(),&libewf_filenames,&amount_of_filenames);
+        local_e01_glob(fname, &libewf_filenames,&amount_of_filenames);
         std::cerr << "amount of filenames=" << amount_of_filenames << "\n";
         for(int i=0;i<amount_of_filenames;i++){
             std::cerr << libewf_filenames[i] << "\n";
@@ -357,8 +357,11 @@ int process_ewf::open()
     }
     if(libewf_handle_open(handle,libewf_filenames,amount_of_filenames,
 			  LIBEWF_OPEN_READ,&error)<0){
-	if(error) libewf_error_fprint(error,stdout);
-	throw image_process::NoSuchFile( (Formatter() << "Cannot open: " << fname).str());
+	if (error) libewf_error_fprint(error,stdout);
+        for(size_t i = 0; libewf_filenames[i]; i++){
+            std::cerr << "filename " << i << " = " << libewf_filenames[i] << "\n";
+        }
+	throw image_process::NoSuchFile( (Formatter() << "Cannot open: " << fname).str() );
     }
     /* Free the allocated filenames */
     if(use_libewf_glob){
