@@ -1,0 +1,81 @@
+# BANNER FILE NOT PROVIDED (-b option)
+# BE13_API-Version: 2.0.0-dev1
+# Feature-Recorder: email
+# Filename: <NO-INPUT>
+# Feature-File-Version: 1.1
+848896-GZIP-0	email_in_gzip@gzipfile.com	email_in_gzip@gzipfile.com\012
+849920-GZIP-0-GZIP-0	email_in_gzip_gzip@gzipfile.com	email_in_gzip_gzip@gzipfile.com\012
+70727-PDF-0	plain_text_pdf@textedit.com	plain_text_pdf@textedit.com 
+81991-PDF-0	rtf_text_pdf@textedit.com	rtf_text_pdf@textedit.com 
+92231-PDF-0	plain_utf16_pdf@textedit.com	plain_utf16_pdf@textedit.com 
+130119-PDF-20	user_doc_pdf@microsoftword.com	 is a test  --- user_doc_pdf@microsoftword.com   Really.  
+181319-PDF-20	user_docx_pdf@microsoftword.com	 is a test  --- user_docx_pdf@microsoftword.com   Really.  
+155371-ZIP-402	user_docx@microsoftword.com	 Target="mailto:user_docx@microsoftword.com" TargetMode="Ex
+155996-ZIP-0-MSXML-22	user_docx@microsoftword.com	 is a test  --- user_docx@microsoftword.com   Really.\012
+155996-ZIP-1012	user_docx@microsoftword.com	"/></w:rPr><w:t>user_docx@microsoftword.com</w:t></w:r></w:
+227991-ZIP-0-MSXML-2	xlsx_cell@microsoft_excel.com	\015\012xlsx_cell@microsoft_excel.com
+227991-ZIP-161	xlsx_cell@microsoft_excel.com	ount="1"><si><t>xlsx_cell@microsoft_excel.com</t></si></sst>
+228216-ZIP-265	xlsx_cell@microsoft_excel.com	 Target="mailto:xlsx_cell@microsoft_excel.com" TargetMode="Ex
+232443-ZIP-0-MSXML-37	xlsx_comment@microsoft_excel.com	son Garfinkel:\015\012xlsx_comment@microsoft_excel.com\015\012
+232443-ZIP-433	xlsx_comment@microsoft_excel.com	ce="preserve">\015\012xlsx_comment@microsoft_excel.com\015\012</t></r></text
+284877-ZIP-0-MSXML-3130	iwork09.compages@iwork09.com	u.pages_comment@iwork09.compages@iwork09.com\012
+665889-ZIP-1380	docx_within_docx@document.com	\000\000\000\000\236\007\000\000>\001\000\000\210\000\000\000d\000o\000c\000x\000_\000w\000i\000t\000h\000i\000n\000_\000d\000o\000c\000x\000@\000d\000o\000c\000u\000m\000e\000n\000t\000.\000c\000o\000m\000\377\274\030\000\000\000\030\000\000\000\023\000\000\000\024\000
+666749-ZIP-1731-ZIP-925	docx_within_docx@document.com	 Target="mailto:docx_within_docx@document.com" TargetMode="Ex
+666749-ZIP-2355-ZIP-0-MSXML-12	docx_within_docx@document.com	\015\012This is a docx_within_docx@document.com\012
+666749-ZIP-2355-ZIP-889	docx_within_docx@document.com	"/></w:rPr><w:t>docx_within_docx@document.com</w:t></w:r></w:
+284877-ZIP-347110	pages_comment@iwork09.com	nk href="mailto:pages_comment@iwork09.com"><sf:span sf:st
+284877-ZIP-347178	pages_comment@iwork09.com	aracterStyle-7">pages_comment@iwork09.com</sf:span></sf:l
+284877-ZIP-349229	pages@iwork09.com	nk href="mailto:pages@iwork09.com"><sf:span sf:st
+284877-ZIP-349289	pages@iwork09.com	aracterStyle-7">pages@iwork09.com</sf:span></sf:l
+456536-ZIP-0-MSXML-9	iwork09.comkeynote_comment@iwork09.com	\012keynote@iwork09.comkeynote_comment@iwork09.com\012
+554081-ZIP-0-MSXML-17	iwork09.comnumbers@iwork09.com	numbers_comment@iwork09.comnumbers@iwork09.com\012
+740698-ZIP-265	ppt_within_doc@document.com	 Target="mailto:ppt_within_doc@document.com" TargetMode="Ex
+754980-ZIP-4640	pptx_within_docx@document.com	\000\000\000\000\377\377\377\377\377\377\377\377\210\000\000\000p\000p\000t\000x\000_\000w\000i\000t\000h\000i\000n\000_\000d\000o\000c\000x\000@\000d\000o\000c\000u\000m\000e\000n\000t\000.\000c\000o\000m\000\000\000#\000\000\000#\000\000\000\026\000\000\000\035\000
+756745-ZIP-1868-ZIP-265	pptx_within_docx@document.com	 Target="mailto:pptx_within_docx@document.com" TargetMode="Ex
+756745-ZIP-3418-ZIP-0-MSXML-12	pptx_within_docx@document.com	\015\012This is a pptx_within_docx@document.com Really!
+756745-ZIP-3418-ZIP-1154	pptx_within_docx@document.com	"/></a:rPr><a:t>pptx_within_docx@document.com</a:t></a:r><a:r
+831772-ZIP-1212	xlsx_within_docx@document.com	\000\000\000\000\377\377\377\377\377\377\377\377\210\000\000\000x\000l\000s\000x\000_\000w\000i\000t\000h\000i\000n\000_\000d\000o\000c\000x\000@\000d\000o\000c\000u\000m\000e\000n\000t\000.\000c\000o\000m\000I\000\007\000\000\000\004\000\000\000\006\000\000\000\007\000
+846848-ZIP-258	email_in_zip@zipfile1.com	is is a test. \012\012email_in_zip@zipfile1.com\012\012This is a test
+847941-ZIP-0	email_in_zip_zip@zipfile2.com	email_in_zip_zip@zipfile2.com\012
+832671-ZIP-4350-ZIP-265	xlsx_within_docx@document.com	 Target="mailto:xlsx_within_docx@document.com" TargetMode="Ex
+832671-ZIP-5292-ZIP-0-MSXML-2	xlsx_within_docx@document.com	\015\012xlsx_within_docx@document.com
+832671-ZIP-5292-ZIP-161	xlsx_within_docx@document.com	ount="1"><si><t>xlsx_within_docx@document.com</t></si></sst>
+554081-ZIP-731705	numbers_comment@iwork09.com	nk href="mailto:numbers_comment@iwork09.com"><sf:span sf:st
+554081-ZIP-731775	numbers_comment@iwork09.com	aracterStyle-1">numbers_comment@iwork09.com</sf:span></sf:l
+554081-ZIP-738454	numbers_09@apple.com	nk href="mailto:numbers_09@apple.com"><sf:span sf:st
+554081-ZIP-738517	numbers@iwork09.com	aracterStyle-1">numbers@iwork09.com</sf:span></sf:l
+456536-ZIP-1255117	keynote@iwork09.com	nk href="mailto:keynote@iwork09.com?subject="><sf:s
+456536-ZIP-1255189	keynote@iwork09.com	racterStyle-38">keynote@iwork09.com</sf:span></sf:l
+456536-ZIP-1258690	keynote_comment@iwork09.com	nk href="mailto:keynote_comment@iwork09.com"><sf:span sf:st
+456536-ZIP-1258761	keynote_comment@iwork09.com	racterStyle-38">keynote_comment@iwork09.com</sf:span></sf:l
+80896	plain_text@textedit.com	\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000plain_text@textedit.com\012\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000
+91449	rtf_text@textedit.com	\012\012\134f0\134fs24 \134cf0 rtf_text@textedit.com}\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000
+102402	plain_utf16@textedit.com	\000\000\000\000\000\000\000\000\000\000\000\000\000\000\377\376p\000l\000a\000i\000n\000_\000u\000t\000f\0001\0006\000@\000t\000e\000x\000t\000e\000d\000i\000t\000.\000c\000o\000m\000\012\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000
+106024	user_doc@microsoftword.com	PERLINK "mailto:user_doc@microsoftword.com" \001\024user_doc@mic
+106054	user_doc@microsoftword.com	softword.com" \001\024user_doc@microsoftword.com\025   Really.\015\015\000\000\000
+108129	user_doc@microsoftword.com	\000K\251\013\002\000\000\000\027\000\000\000\033\000\000\000u\000s\000e\000r\000_\000d\000o\000c\000@\000m\000i\000c\000r\000o\000s\000o\000f\000t\000w\000o\000r\000d\000.\000c\000o\000m\000\000\000\340\311\352y\371\272\316\021\214\202\000\252\000K
+108217	user_doc@microsoftword.com	\000\000m\000a\000i\000l\000t\000o\000:\000u\000s\000e\000r\000_\000d\000o\000c\000@\000m\000i\000c\000r\000o\000s\000o\000f\000t\000w\000o\000r\000d\000.\000c\000o\000m\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000
+123290	user_doc@microsoftword.com	\000\000m\000a\000i\000l\000t\000o\000:\000u\000s\000e\000r\000_\000d\000o\000c\000@\000m\000i\000c\000r\000o\000s\000o\000f\000t\000w\000o\000r\000d\000.\000c\000o\000m\000\000\000\037\000\000\000\001\000\000\000\000\000\260\201\000\000
+208315	xls_cell@microsoft_excel.com	\020\374\000'\000\001\000\000\000\001\000\000\000\034\000\000xls_cell@microsoft_excel.com\377\000\002\004\010\000\270\007\000\000\014\000\254\226\214\007
+216322	xls_comment@microsoft_excel.com	mson Garfinkel:\012xls_comment@microsoft_excel.com\012<\000\030\000\000\000\011\000[\000\014\000\021\000\010
+216526	xls_cell@microsoft_excel.com	\000K\251\013\002\000\000\000\027\000\000\000\035\000\000\000x\000l\000s\000_\000c\000e\000l\000l\000@\000m\000i\000c\000r\000o\000s\000o\000f\000t\000_\000e\000x\000c\000e\000l\000.\000c\000o\000m\000\000\000\340\311\352y\371\272\316\021\214\202\000\252\000K
+216618	xls_cell@microsoft_excel.com	\000\000m\000a\000i\000l\000t\000o\000:\000x\000l\000s\000_\000c\000e\000l\000l\000@\000m\000i\000c\000r\000o\000s\000o\000f\000t\000_\000e\000x\000c\000e\000l\000.\000c\000o\000m\000\000\000\012\000\000\000\000\000\000\000\000\000\000\000\000\000
+218018	xls_cell@microsoft_excel.com	\000\000m\000a\000i\000l\000t\000o\000:\000x\000l\000s\000_\000c\000e\000l\000l\000@\000m\000i\000c\000r\000o\000s\000o\000f\000t\000_\000e\000x\000c\000e\000l\000.\000c\000o\000m\000\000\000\037\000\000\000\001\000\000\000\000\000\200\242\000\000
+275753	pages@iwork09.com	9 0 obj\012(mailto:pages@iwork09.com)\012endobj\01211 0 ob
+644126	docx_within_docx@document.com	PERLINK "mailto:docx_within_docx@document.com" \024doc_within_do
+644158	doc_within_doc@document.com	@document.com" \024doc_within_doc@document.com\025\015\015\015\000\000\000\000\000\000\000\000\000\000\000\000
+650670	docx_within_docx@document.com	\000\000m\000a\000i\000l\000t\000o\000:\000d\000o\000c\000x\000_\000w\000i\000t\000h\000i\000n\000_\000d\000o\000c\000x\000@\000d\000o\000c\000u\000m\000e\000n\000t\000.\000c\000o\000m\000\000\000\000\000\037\000\000\000\001\000\000\000\000\000\361\006
+697012	ppt_within_doc@document.com	\000\000\000\000\377\377\377\377\377\377\377\377\204\000\000\000p\000p\000t\000_\000w\000i\000t\000h\000i\000n\000_\000d\000o\000c\000@\000d\000o\000c\000u\000m\000e\000n\000t\000.\000c\000o\000m\000\000\000#\000\000\000#\000\000\000\026\000\000\000!\000
+702056	ppt_within_doc@document.com	\004\000\000\000\005\000\000\000\000\000\272\0176\000\000\000p\000p\000t\000_\000w\000i\000t\000h\000i\000n\000_\000d\000o\000c\000@\000d\000o\000c\000u\000m\000e\000n\000t\000.\000c\000o\000m\000\020\000\272\017D\000\000\000m\000a\000i\000l\000
+702132	ppt_within_doc@document.com	\000\000m\000a\000i\000l\000t\000o\000:\000p\000p\000t\000_\000w\000i\000t\000h\000i\000n\000_\000d\000o\000c\000@\000d\000o\000c\000u\000m\000e\000n\000t\000.\000c\000o\000m\000\017\000\327\017\226\000\000\000\000\000\323\017\004\000\000\000
+702214	ppt_within_doc@document.com	\004\000\000\000\011\000\000\000\000\000\272\0176\000\000\000p\000p\000t\000_\000w\000i\000t\000h\000i\000n\000_\000d\000o\000c\000@\000d\000o\000c\000u\000m\000e\000n\000t\000.\000c\000o\000m\000\020\000\272\017D\000\000\000m\000a\000i\000l\000
+702290	ppt_within_doc@document.com	\000\000m\000a\000i\000l\000t\000o\000:\000p\000p\000t\000_\000w\000i\000t\000h\000i\000n\000_\000d\000o\000c\000@\000d\000o\000c\000u\000m\000e\000n\000t\000.\000c\000o\000m\000\017\000\362\003`\001\000\000/\000\310\017\014\000\000\000
+741403	ppt_within_doc@document.com	\250\017-\000\000\000This is a ppt_within_doc@document.com Really!\000\000\241\017\030\000\000\000
+742234	ppt_within_doc@document.com	\000\000m\000a\000i\000l\000t\000o\000:\000p\000p\000t\000_\000w\000i\000t\000h\000i\000n\000_\000d\000o\000c\000@\000d\000o\000c\000u\000m\000e\000n\000t\000.\000c\000o\000m\000\000\000\000\000\037\000\000\000\001\000\000\000\000\000\000\000
+742358	ppt_within_doc@document.com	\000\000m\000a\000i\000l\000t\000o\000:\000p\000p\000t\000_\000w\000i\000t\000h\000i\000n\000_\000d\000o\000c\000@\000d\000o\000c\000u\000m\000e\000n\000t\000.\000c\000o\000m\000\000\000\000\000\037\000\000\000\001\000\000\000\000\000\000\000
+803604	xls_within_doc@document.com	\000\000\000\000\377\377\377\377\377\377\377\377\204\000\000\000x\000l\000s\000_\000w\000i\000t\000h\000i\000n\000_\000d\000o\000c\000@\000d\000o\000c\000u\000m\000e\000n\000t\000.\000c\000o\000m\000\000\000\024\000\000\000\013\000\000\000\022\000\000\000\027\000
+817348	xls_within_doc@document.com	\000\374\000&\000\001\000\000\000\001\000\000\000\033\000\000xls_within_doc@document.com\377\000\012\000\010\000\301.\000\000\014\000\000\000c\010
+817862	xls_within_doc@document.com	\000K\251\013\002\000\000\000\027\000\000\000\034\000\000\000x\000l\000s\000_\000w\000i\000t\000h\000i\000n\000_\000d\000o\000c\000@\000d\000o\000c\000u\000m\000e\000n\000t\000.\000c\000o\000m\000\000\000\340\311\352y\371\272\316\021\214\202\000\252\000K
+817952	xls_within_doc@document.com	\000\000m\000a\000i\000l\000t\000o\000:\000x\000l\000s\000_\000w\000i\000t\000h\000i\000n\000_\000d\000o\000c\000@\000d\000o\000c\000u\000m\000e\000n\000t\000.\000c\000o\000m\000\000\000yX\201\364;\035H\257,\202]ą
+819422	xls_within_doc@document.com	\000\000m\000a\000i\000l\000t\000o\000:\000x\000l\000s\000_\000w\000i\000t\000h\000i\000n\000_\000d\000o\000c\000@\000d\000o\000c\000u\000m\000e\000n\000t\000.\000c\000o\000m\000\000\000\000\000\037\000\000\000\001\000\000\000\000\000\000\000
+819546	xls_within_doc@document.com	\000\000m\000a\000i\000l\000t\000o\000:\000x\000l\000s\000_\000w\000i\000t\000h\000i\000n\000_\000d\000o\000c\000@\000d\000o\000c\000u\000m\000e\000n\000t\000.\000c\000o\000m\000\000\000\000\000\037\000\000\000\001\000\000\000\000\000\000\000

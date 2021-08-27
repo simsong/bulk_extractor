@@ -23,9 +23,11 @@
  * - implements 2.0 mechanism, which uses a work unit for each sbuf/scanner combination.
  */
 
+#include "phase1.h"
+
 using namespace std::chrono_literals;
 
-Phase1::Phase1(Config config_, image_process &p_, scanner_set &ss_):
+Phase1::Phase1(Config &config_, image_process &p_, scanner_set &ss_):
     config(config_), p(p_), ss(ss_), xreport(*ss_.get_dfxml_writer())
 {
 }
@@ -314,6 +316,9 @@ void Phase1::dfxml_write_source()
 void Phase1::phase1_run()
 {
     assert(ss.get_current_phase() == scanner_params::PHASE_SCAN);
+    for (const auto &it :seen_page_ids) {
+        ss.record_work_start( it, 0, 0 );
+    }
     //ss.run_notify_thread();
     /* Create the threadpool and launch the workers */
     //p.set_report_read_errors(config.opt_report_read_errors);

@@ -116,3 +116,4 @@ out??/
 out?/
 *.xml
 *out*/
+*.gcda

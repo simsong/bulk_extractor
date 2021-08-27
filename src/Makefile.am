@@ -1,4 +1,4 @@
-bin_PROGRAMS   = bulk_extractor be_tests
+bin_PROGRAMS   = bulk_extractor test_be
 
 CLEANFILES     = scan_accts.cpp scan_base16.cpp scan_email.cpp scan_gps.cpp \
 	be13_api/config.h be13_api/dfxml/src/config.h config.h *.d *~
@@ -103,7 +103,6 @@ if LIGHTGREP_ENABLED
   scanners_builtin += $(lightgrep_scanners)
 endif
 
-
 if RAR_ENABLED
   scanners_builtin += $(RAR_SUPPORT)
 endif
@@ -111,6 +110,7 @@ endif
 bulk_extractor_parts = \
         $(TSK3INCS)  \
 	$(BE13_API_SRC) \
+	bulk_extractor_restarter.h \
 	bulk_extractor_scanners.h \
 	base64_forensic.cpp \
 	base64_forensic.h \

@@ -25,6 +25,7 @@
 #include "be13_api/utils.h"             // needs config.h
 
 #include "base64_forensic.h"
+#include "bulk_extractor_restarter.h"
 #include "bulk_extractor_scanners.h"
 #include "exif_reader.h"
 #include "image_process.h"
@@ -416,7 +417,7 @@ TEST_CASE("scan_vcard", "[scanners]") {
     auto outdir = test_scanner(scan_vcard, sbufp); // deletes sbuf2
 
     /* Read the output */
-    REQUIRE( std::filesystem::exists( outdir / "vcard/000/john_jakes.vcf􀀜-0.vcf") == true);
+    REQUIRE( std::filesystem::exists( outdir / "vcard/000/john_jakes.vcf____-0.vcf") == true);
 }
 
 TEST_CASE("scan_wordlist", "[scanners]") {
@@ -437,7 +438,7 @@ TEST_CASE("scan_zip", "[scanners]") {
     auto *sbufp = map_file( "testfilex.docx" );
     auto outdir = test_scanners( scanners, sbufp); // deletes sbuf2
     auto email_txt = getLines( outdir / "email.txt" );
-    REQUIRE( std::filesystem::exists( outdir / "zip/000/testfilex.docx􀀜-0-ZIP-0_[Content_Types].xml") == true);
+    REQUIRE( std::filesystem::exists( outdir / "zip/000/testfilex.docx____-0-ZIP-0_[Content_Types].xml") == true);
     REQUIRE( requireFeature(email_txt,"1771-ZIP-402\tuser_docx@microsoftword.com"));
     REQUIRE( requireFeature(email_txt,"2396-ZIP-1012\tuser_docx@microsoftword.com"));
 }
@@ -839,5 +840,32 @@ TEST_CASE("path_printer", "[path_printer]") {
     str.str("");
 
     pp.process_path("512-GZIP-2/r");    // create a hex dump with a different path and the /r
-    REQUIRE(str.str() == "14\r\nllo@world.com\n");
+    REQUIRE( str.str() == "14\r\nllo@world.com\n" );
+}
+
+
+/****************************************************************
+ ** Test restarter
+ **/
+
+TEST_CASE("restarter", "[restarter]") {
+    scanner_config   sc;   // config for be13_api
+    sc.input_fname = test_dir() / "1mb_fat32.dmg";
+    sc.outdir = NamedTemporaryDirectory();
+
+    std::filesystem::copy(test_dir() / "interrupted_report.xml",
+                          sc.outdir  / "report.xml");
+
+    Phase1::Config   cfg;  // config for the image_processing system
+    struct feature_recorder_set::flags_t f;
+    scanner_set ss(sc, f, nullptr);     // make a scanner_set but with no XML writer. We will create it below
+    image_process *p = image_process::open( sc.input_fname, cfg.opt_recurse, cfg.opt_pagesize, cfg.opt_marginsize);
+    Phase1 phase1(cfg, *p, ss);
+    bulk_extractor_restarter r(sc, phase1);
+
+    REQUIRE( std::filesystem::exists( sc.outdir / "report.xml") == true); // because it has not been renamed yet
+    r.restart();
+    REQUIRE( std::filesystem::exists( sc.outdir / "report.xml") == false); // because now it has been renamed
+    REQUIRE( phase1.seen_page_ids.find("369098752") != phase1.seen_page_ids.end() );
+    REQUIRE( phase1.seen_page_ids.find("369098752+") == phase1.seen_page_ids.end() );
 }
