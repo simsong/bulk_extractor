@@ -868,4 +868,5 @@ TEST_CASE("restarter", "[restarter]") {
     REQUIRE( std::filesystem::exists( sc.outdir / "report.xml") == false); // because now it has been renamed
     REQUIRE( phase1.seen_page_ids.find("369098752") != phase1.seen_page_ids.end() );
     REQUIRE( phase1.seen_page_ids.find("369098752+") == phase1.seen_page_ids.end() );
+    REQUIRE(str.str() == "14\r\nllo@world.com\n");
 }
