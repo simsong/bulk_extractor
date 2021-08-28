@@ -16,10 +16,6 @@
 #include <unistd.h>
 #include <cctype>
 
-#ifdef HAVE_EXPAT_H
-#include <expat.h>
-#endif
-
 #ifdef HAVE_MCHECK
 #include <mcheck.h>
 #else
@@ -53,6 +49,7 @@ int _CRT_fmode = _O_BINARY;
 
 /* Bring in the definitions  */
 #include "bulk_extractor_scanners.h"
+#include "bulk_extractor_restarter.h"
 
 /**
  * Output the #defines for our debug parameters. Used by the automake system.
@@ -187,86 +184,6 @@ void validate_path(const std::filesystem::path fn)
     }
 }
 
-
-
-class bulk_extractor_restarter {
-    std::stringstream cdata {};
-    std::string thisElement {};
-    std::string provided_filename {};
-    Phase1::seen_page_ids_t seen_page_ids {};
-#ifdef HAVE_LIBEXPAT
-    static void startElement(void *userData, const char *name_, const char **attrs) {
-        class bulk_extractor_restarter &self = *(bulk_extractor_restarter *)userData;
-        self.cdata.str("");
-        self.thisElement = name_;
-        if (self.thisElement=="debug:work_start"){
-            for(int i=0;attrs[i] && attrs[i+1];i+=2){
-                if (strcmp(attrs[i],"pos0") == 0){
-                    self.seen_page_ids.insert(attrs[i+1]);
-                }
-            }
-        }
-    }
-    static void endElement(void *userData,const char *name_){
-        class bulk_extractor_restarter &self = *(bulk_extractor_restarter *)userData;
-        if (self.thisElement=="provided_filename") self.provided_filename = self.cdata.str();
-        self.cdata.str("");
-    }
-    static void characterDataHandler(void *userData,const XML_Char *s,int len){
-        class bulk_extractor_restarter &self = *(bulk_extractor_restarter *)userData;
-        self.cdata.write(s,len);
-    }
-#endif
-
-public:;
-    bulk_extractor_restarter(const std::string &opt_outdir,
-                             const std::string &reportfilename,
-                             const std::string &image_fname){
-#ifdef HAVE_LIBEXPAT
-        if (access(reportfilename.c_str(),R_OK)){
-            std::cerr << opt_outdir << ": error\n";
-            std::cerr << "report.xml file is missing or unreadable.\n";
-            std::cerr << "Directory may not have been created by bulk_extractor.\n";
-            std::cerr << "Cannot continue.\n";
-            exit(1);
-        }
-
-        XML_Parser parser = XML_ParserCreate(NULL);
-        XML_SetUserData(parser, this);
-        XML_SetElementHandler(parser, startElement, endElement);
-        XML_SetCharacterDataHandler(parser,characterDataHandler);
-        std::fstream in(reportfilename.c_str());
-        if (!in.is_open()){
-            std::cout << "Cannot open " << reportfilename << ": " << strerror(errno) << "\n";
-            exit(1);
-        }
-        try {
-            bool error = false;
-            std::string line;
-            while(getline(in,line) && !error){
-                if (!XML_Parse(parser, line.c_str(), line.size(), 0)) {
-                    std::cout << "XML Error: " << XML_ErrorString(XML_GetErrorCode(parser))
-                              << " at line " << XML_GetCurrentLineNumber(parser) << "\n";
-                    error = true;
-                    break;
-                }
-            }
-            if (!error) XML_Parse(parser, "", 0, 1);    // clear the parser
-        }
-        catch (const std::exception &e) {
-            std::cout << "ERROR: " << e.what() << "\n";
-        }
-        XML_ParserFree(parser);
-        if (image_fname != provided_filename){
-            std::cerr << "Error: \n" << image_fname << " != " << provided_filename << "\n";
-            exit(1);
-        }
-#else
-        throw std::runtime_error("Compiled without libexpat; cannot restart.");
-#endif
-    }
-};
-
 /**
  * Create the dfxml output
  */
@@ -313,7 +230,6 @@ int main(int argc,char **argv)
 
     /* Options */
     std::string opt_path {};
-    int         opt_recurse = 0;
     int         opt_zap = 0;
     int         opt_h = 0;
     int         opt_H = 0;
@@ -390,7 +306,7 @@ int main(int argc,char **argv)
                 throw_FileNotFoundError(optarg);
 	    }
 	    break;
-	case 'R': opt_recurse = 1; break;
+	case 'R': cfg.opt_recurse = true; break;
 	case 'S':
 	{
 	    std::vector<std::string> params = split(optarg,'=');
@@ -518,10 +434,10 @@ int main(int argc,char **argv)
 
     /* Get image or directory */
     if (*argv == NULL) {
-        if (opt_recurse) {
-            fprintf(stderr,"filedir not provided\n");
+        if (cfg.opt_recurse) {
+            std::cerr << "filedir not provided\n";
         } else {
-            fprintf(stderr,"imagefile not provided\n");
+            std::cerr << "imagefile not provided\n";
         }
         exit(1);
     }
@@ -530,7 +446,7 @@ int main(int argc,char **argv)
     /* are we supposed to run the path printer? */
     if (opt_path.size() > 0){
 	if (argc!=1) throw std::runtime_error("-p requires a single argument.");
-        image_process *p = image_process::open( sc.input_fname, opt_recurse, cfg.opt_pagesize, cfg.opt_marginsize);
+        image_process *p = image_process::open( sc.input_fname, cfg.opt_recurse, cfg.opt_pagesize, cfg.opt_marginsize);
         path_printer pp(&ss, p, std::cout);
         if (opt_path=="-http" || opt_path=="--http"){
             pp.process_http(std::cin);
@@ -542,38 +458,43 @@ int main(int argc,char **argv)
 	exit(0);
     }
 
-
-
-    std::filesystem::path report_path = sc.outdir / "report.xml";
-    dfxml_writer *xreport = new dfxml_writer(report_path, false); // do not make DTD
-    ss.set_dfxml_writer( xreport );
+    std::filesystem::path report_path = sc.outdir / Phase1::REPORT_FILENAME;
+    /* Open the image file (or the device) now.
+     * We use *p because we don't know which subclass we will be getting.
+     */
+    image_process *p = image_process::open( sc.input_fname, cfg.opt_recurse, cfg.opt_pagesize, cfg.opt_marginsize);
+    Phase1 phase1(cfg, *p, ss);
 
     /* Determine if this is the first time through or if the program was restarted.
-     * Restart procedure: re-run the command in verbatim.
+     * Restart procedure: just press up-arrow and return to re-run the command in verbatim.
      */
     if (clean_start){
         /* First time running */
 	/* Validate the args */
 	if ( argc == 0 ) throw std::runtime_error("Clean start, but no disk image provided. Run with -h for help.");
         if ( argc > 1  ){
-            std::cerr << "argc=" << argc << "\n";
             throw std::runtime_error("Clean start, but too many arguments provided. Run with -h for help.");
         }
 	validate_path(sc.input_fname);
     } else {
 	/* Restarting */
-	std::cout << "Restarting from " << sc.outdir << "\n";
-        bulk_extractor_restarter r(sc.outdir, report_path, sc.input_fname);
+        bulk_extractor_restarter r(sc, phase1);
 
-        /* Rename the old report and create a new one */
-        std::filesystem::path old_report_path = report_path.string() + std::string(".") + std::to_string(time(0));
-        std::filesystem::rename(report_path, old_report_path);
+        try {
+            r.restart();
+        }
+        catch (bulk_extractor_restarter::CantRestart &e) {
+            std::cerr << "Cannot restart from " << sc.outdir << "\n";
+            exit(1);
+        }
     }
 
-    /* Open the image file (or the device) now.
-     * We use *p because we don't know which subclass we will be getting.
+    /* Create the DFXML file in the report directory.
+     * If we are restarting, the dfxml file was renamed.
      */
-    image_process *p = image_process::open( sc.input_fname, opt_recurse, cfg.opt_pagesize, cfg.opt_marginsize);
+
+    dfxml_writer *xreport = new dfxml_writer(report_path, false); // do not make DTD
+    ss.set_dfxml_writer( xreport );
 
     /* Determine the feature files that will be used from the scanners that were enabled */
     auto feature_file_names = ss.feature_file_list();
@@ -637,9 +558,6 @@ int main(int argc,char **argv)
         }
     }
 
-
-
-
     /*** PHASE 1 --- Run on the input image */
     new std::thread(&notify_thread, &ss);    // launch the notify thread
     ss.phase_scan();
@@ -662,8 +580,6 @@ int main(int argc,char **argv)
 
     }
 
-
-    Phase1 phase1(cfg, *p, ss);
     phase1.dfxml_write_create( original_argc, original_argv);
     xreport->xmlout("provided_filename", sc.input_fname); // save this information
 

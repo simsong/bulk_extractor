@@ -324,6 +324,7 @@ h\0t\0t\0p\0(s\0)?:\0([a-zA-Z0-9_%/\-+@:=&\?#~.;]\0){1,128}/[^a-zA-Z0-9_%\/\-+@:
     s.url_recorder.write_buf(SBUF,POS,yyleng);
     ssize_t domain_start = find_host_in_email(SBUF.slice(POS,yyleng));
     if (domain_start >= 0){
+        std::cerr << "POINT1\n";
 	s.domain_recorder.write_buf(SBUF,POS+domain_start,yyleng-domain_start);
     }
     s.pos += yyleng;

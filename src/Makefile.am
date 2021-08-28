@@ -1,10 +1,10 @@
-bin_PROGRAMS   = bulk_extractor be_tests
+bin_PROGRAMS   = bulk_extractor test_be
 
 CLEANFILES     = scan_accts.cpp scan_base16.cpp scan_email.cpp scan_gps.cpp \
 	be13_api/config.h be13_api/dfxml/src/config.h config.h *.d *~
 
-TESTS = be_tests
-check_PROGRAMS = be_tests
+TESTS = test_be
+check_PROGRAMS = test_be
 
 # So that relative imports from be13_api work
 AM_CPPFLAGS = -I${top_srcdir}/src/be13_api
@@ -103,7 +103,6 @@ if LIGHTGREP_ENABLED
   scanners_builtin += $(lightgrep_scanners)
 endif
 
-
 if RAR_ENABLED
   scanners_builtin += $(RAR_SUPPORT)
 endif
@@ -111,6 +110,7 @@ endif
 bulk_extractor_parts = \
         $(TSK3INCS)  \
 	$(BE13_API_SRC) \
+	bulk_extractor_restarter.h \
 	bulk_extractor_scanners.h \
 	base64_forensic.cpp \
 	base64_forensic.h \
@@ -125,7 +125,7 @@ bulk_extractor_parts = \
 
 
 bulk_extractor_SOURCES = $(bulk_extractor_parts) $(scanners_builtin) main.cpp
-be_tests_SOURCES = $(bulk_extractor_parts) $(scanners_builtin) be13_api/catch.hpp be_tests.cpp
+test_be_SOURCES = $(bulk_extractor_parts) $(scanners_builtin) be13_api/catch.hpp test_be.cpp
 
 
 #lib: libbulkextractor.so

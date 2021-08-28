@@ -36,6 +36,7 @@ class Phase1 {
     }
 
 public:
+    static inline std::string REPORT_FILENAME {"report.xml"};
     /* Configuration Control */
     struct Config {
         static const auto MiB = 1024*1024;
@@ -43,36 +44,41 @@ public:
         Config &operator=(const Config &that) = delete;        // assignment constructor - delete
 
         Config() { }
-        uint64_t debug {false};                 // debug
-        size_t   opt_pagesize {16 * MiB};
-        size_t   opt_marginsize { 4 * MiB};
-        uint32_t max_bad_alloc_errors {3}; // by default, 3 retries
-        bool     opt_info {false};
-        uint32_t opt_notify_rate {1};		// by default, notify every second
-        uint64_t opt_page_start {0};
+        uint64_t  debug {false};                 // debug
+        size_t    opt_pagesize {16 * MiB};
+        size_t    opt_marginsize { 4 * MiB};
+        uint32_t  max_bad_alloc_errors {3}; // by default, 3 retries
+        bool      opt_info {false};
+        uint32_t  opt_notify_rate {1};		// by default, notify every second
+        uint64_t  opt_page_start {0};
         uint64_t  opt_offset_start {0};
         uint64_t  opt_offset_end {0};
-        time_t   max_wait_time {3600};  // after an hour, terminate a scanner
-        int      opt_quiet {false};                  // -1 = no output
-        int      retry_seconds {60};
-        u_int      num_threads  { std::thread::hardware_concurrency() }; // default to # of cores; 0 for no threads
-        double   sampling_fraction {1.0};       // for random sampling
-        u_int    sampling_passes {1};
-        bool     opt_report_read_errors {true};
-        void     set_sampling_parameters(std::string p);
+        time_t    max_wait_time {3600};  // after an hour, terminate a scanner
+        int       opt_quiet {false};                  // -1 = no output
+        int       retry_seconds {60};
+        u_int     num_threads  { std::thread::hardware_concurrency() }; // default to # of cores; 0 for no threads
+        double    sampling_fraction {1.0};       // for random sampling
+        u_int     sampling_passes {1};
+        bool      opt_report_read_errors {true};
+        bool      opt_recurse {false};  // -r flag
+        void      set_sampling_parameters(std::string p);
     };
 
     typedef std::set<uint64_t> blocklist_t; // a list of blocks (for random sampling)
     static std::string minsec(time_t tsec);    // return "5 min 10 sec" string
     static void make_sorted_random_blocklist(blocklist_t *blocklist,uint64_t max_blocks,float frac);
 
-    typedef std::set<std::string> seen_page_ids_t;
-    /* Instance variables */
-    const Config  config;               // phase1 config passed in
-    u_int         notify_ctr  {0};      // for random sampling
-    uint64_t      total_bytes {0};      // processed
+    //typedef std::set<std::string> seen_page_ids_t;
+    // because seen_page_ids are added in order, we want to use an unordered set.
+    typedef std::unordered_set<std::string> seen_page_ids_t;
+
+    /* These instance variables reference variables in main.cpp */
+    const Config  &config;              // phase1 config passed in
     image_process &p;                   // image being processed
     scanner_set   &ss;                  // our scanner set
+
+    u_int         notify_ctr  {0};      // for random sampling
+    uint64_t      total_bytes {0};      // processed
     seen_page_ids_t seen_page_ids {};   // to avoid processing each twice
     dfxml::sha1_generator *sha1g {nullptr};        // the SHA1 of the image. Set to 0 if a gap is encountered
     uint64_t      sha1_next {0};        // next byte to hash, to detect gaps
@@ -84,7 +90,7 @@ public:
     sbuf_t *get_sbuf(image_process::iterator &it);
 
 
-    Phase1(Config config_, image_process &p_, scanner_set &ss_);
+    Phase1(Config &config_, image_process &p_, scanner_set &ss_);
     void dfxml_write_create(int argc, char * const *argv); // create the DFXML header
     void dfxml_write_source();                             // create the DFXML <source> block
     void read_process_sbufs(); // read and process the sbufs
