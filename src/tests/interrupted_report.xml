@@ -1,0 +1,147 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<dfxml xmloutputversion='1.0'>
+  <metadata
+  xmlns='http://afflib.org/bulk_extractor/'
+  xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
+  xmlns:dc='http://purl.org/dc/elements/1.1/'>
+    <dc:type>Feature Extraction</dc:type>
+  </metadata>
+  <creator version='1.0'>
+    <program>BULK_EXTRACTOR</program>
+    <version>2.0.0-dev</version>
+    <build_environment>
+      <compiler>4.2.1 (Apple LLVM 12.0.5 (clang-1205.0.22.11))</compiler>
+      <CPPFLAGS>-I/opt/local/include  -I/usr/local/include -I/opt/local/include -DUTC_OFFSET=+0000</CPPFLAGS>
+      <CFLAGS>-g -g -O3 -MD -Wpointer-arith -Wmissing-declarations -Wmissing-prototypes -Wshadow -Wwrite-strings -Wcast-align -Waggregate-return -Wbad-function-cast -Wcast-qual -Wundef -Wredundant-decls -Wdisabled-optimization -Wfloat-equal -Wmultichar -Wc++-compat -Wmissing-noreturn -Wall -Wstrict-prototypes -fPIC</CFLAGS>
+      <CXXFLAGS>-g -g -O3 -Wall -MD -Wpointer-arith -Wshadow -Wwrite-strings -Wcast-align -Wredundant-decls -Wdisabled-optimization -Wfloat-equal -Wmultichar -Wmissing-noreturn -Woverloaded-virtual -Wsign-promo -funit-at-a-time -Weffc++ -pthread -Wall -MD -Wpointer-arith -Wshadow -Wwrite-strings -Wcast-align -Wredundant-decls -Wdisabled-optimization -Wfloat-equal -Wmultichar -Wmissing-noreturn -Woverloaded-virtual -Wsign-promo -funit-at-a-time -Weffc++ -fPIC</CXXFLAGS>
+      <LDFLAGS>-L/opt/local/lib  -L/usr/local/lib -L/opt/local/lib</LDFLAGS>
+      <LIBS>-lewf -lstdc++ -lexpat -lz -ldl -lsqlite3 -lcrypto -lexpat </LIBS>
+      <compilation_date>2021-08-16T19:57:12</compilation_date>
+      <library name="boost" version="107600"/>
+      <library name="libewf" version="20171104"/>
+      <library name="sqlite" version="3.36.0" source_id="2021-06-18 18:36:39 5c9a6c06871cb9fe42814af9c039eb6da5427a6ec28f187af7ebfb62eafa66e5"/>
+      <git commit="85471cf-91-g6418bf8-dirty"/>
+    </build_environment>
+    <execution_environment>
+      <cpuid>
+        <identification>GenuineIntel</identification>
+        <family>0</family>
+        <model>1</model>
+        <stepping>6</stepping>
+        <efamily>0</efamily>
+        <emodel>0</emodel>
+        <brand>71</brand>
+        <clflush_size>808</clflush_size>
+        <nproc>110</nproc>
+        <apicid>117</apicid>
+        <L1_cache_size>262144</L1_cache_size>
+      </cpuid>
+      <os_sysname>Darwin</os_sysname>
+      <os_release>20.6.0</os_release>
+      <os_version>Darwin Kernel Version 20.6.0: Wed Jun 23 00:26:31 PDT 2021; root:xnu-7195.141.2~5/RELEASE_X86_64</os_version>
+      <host>nimi.local</host>
+      <arch>x86_64</arch>
+      <command_line>./bulk_extractor -o out-ubnist3 /Users/simsong/corp/nps-2009-ubnist1/ubnist1.gen3.raw</command_line>
+      <uid>501</uid>
+      <username>simsong</username>
+      <start_time>2021-08-17T00:30:27Z</start_time>
+    </execution_environment>
+  </creator>
+  <configuration>
+    <threads>6</threads>
+    <pagesize>16777216</pagesize>
+    <marginsize>4194304</marginsize>
+    <scanners>
+      <scanner>aes</scanner>
+      <scanner>base64</scanner>
+      <scanner>elf</scanner>
+      <scanner>evtx</scanner>
+      <scanner>exif</scanner>
+      <scanner>facebook</scanner>
+      <scanner>find</scanner>
+      <scanner>gzip</scanner>
+      <scanner>hiberfile</scanner>
+      <scanner>httplogs</scanner>
+      <scanner>json</scanner>
+      <scanner>kml</scanner>
+      <scanner>msxml</scanner>
+      <scanner>net</scanner>
+      <scanner>ntfsindx</scanner>
+      <scanner>ntfslogfile</scanner>
+      <scanner>ntfsmft</scanner>
+      <scanner>ntfsusn</scanner>
+      <scanner>pdf</scanner>
+      <scanner>rar</scanner>
+      <scanner>sqlite</scanner>
+      <scanner>utmp</scanner>
+      <scanner>vcard</scanner>
+      <scanner>windirs</scanner>
+      <scanner>winlnk</scanner>
+      <scanner>winpe</scanner>
+      <scanner>winprefetch</scanner>
+      <scanner>zip</scanner>
+      <scanner>accts</scanner>
+      <scanner>email</scanner>
+      <scanner>gps</scanner>
+    </scanners>
+  </configuration>
+  <provided_filename>/Users/simsong/corp/nps-2009-ubnist1/ubnist1.gen3.raw</provided_filename>
+  <timestamp name='phase1 start' delta='0.001831' total='0.001831'/>
+  <runtime xmlns:debug="http://www.github.com/simsong/bulk_extractor/issues">
+    <debug:work_start threadid='0x10dae6e00' pos0='0' pagesize='16777216' bufsize='20971520' t='1629160227519'/>
+    <debug:work_start threadid='0x10dae6e00' pos0='16777216' pagesize='16777216' bufsize='20971520' t='1629160227561'/>
+    <debug:work_start threadid='0x10dae6e00' pos0='33554432' pagesize='16777216' bufsize='20971520' t='1629160227601'/>
+    <debug:work_start threadid='0x10dae6e00' pos0='50331648' pagesize='16777216' bufsize='20971520' t='1629160227642'/>
+    <debug:work_start threadid='0x10dae6e00' pos0='67108864' pagesize='16777216' bufsize='20971520' t='1629160227683'/>
+    <debug:work_start threadid='0x10dae6e00' pos0='83886080' pagesize='16777216' bufsize='20971520' t='1629160227723'/>
+    <debug:work_start threadid='0x10dae6e00' pos0='100663296' pagesize='16777216' bufsize='20971520' t='1629160227768'/>
+    <debug:work_end threadid='0x70000f208000' pos0='16777216' t='1629160229205'/>
+    <debug:work_end threadid='0x70000f185000' pos0='33554432' t='1629160229253'/>
+    <debug:work_end threadid='0x70000f07f000' pos0='0' t='1629160229277'/>
+    <debug:work_end threadid='0x70000f28b000' pos0='50331648' t='1629160229355'/>
+    <debug:work_end threadid='0x70000effc000' pos0='67108864' t='1629160229374'/>
+    <debug:work_end threadid='0x70000f102000' pos0='83886080' t='1629160229800'/>
+    <debug:work_start threadid='0x10dae6e00' pos0='117440512' pagesize='16777216' bufsize='20971520' t='1629160229823'/>
+    <debug:work_start threadid='0x10dae6e00' pos0='134217728' pagesize='16777216' bufsize='20971520' t='1629160229864'/>
+    <debug:work_start threadid='0x10dae6e00' pos0='150994944' pagesize='16777216' bufsize='20971520' t='1629160229904'/>
+    <debug:work_start threadid='0x10dae6e00' pos0='167772160' pagesize='16777216' bufsize='20971520' t='1629160229944'/>
+    <debug:work_start threadid='0x10dae6e00' pos0='184549376' pagesize='16777216' bufsize='20971520' t='1629160229987'/>
+    <debug:work_start threadid='0x10dae6e00' pos0='201326592' pagesize='16777216' bufsize='20971520' t='1629160230030'/>
+    <debug:work_end threadid='0x70000f208000' pos0='100663296' t='1629160230854'/>
+    <debug:work_end threadid='0x70000f07f000' pos0='134217728' t='1629160231482'/>
+    <debug:work_end threadid='0x70000f28b000' pos0='150994944' t='1629160231530'/>
+    <debug:work_end threadid='0x70000f102000' pos0='167772160' t='1629160231574'/>
+    <debug:work_start threadid='0x10dae6e00' pos0='218103808' pagesize='16777216' bufsize='20971520' t='1629160232087'/>
+    <debug:work_end threadid='0x70000effc000' pos0='117440512' t='1629160232091'/>
+    <debug:work_start threadid='0x10dae6e00' pos0='234881024' pagesize='16777216' bufsize='20971520' t='1629160232127'/>
+    <debug:work_start threadid='0x10dae6e00' pos0='251658240' pagesize='16777216' bufsize='20971520' t='1629160232169'/>
+    <debug:work_start threadid='0x10dae6e00' pos0='268435456' pagesize='16777216' bufsize='20971520' t='1629160232216'/>
+    <debug:work_start threadid='0x10dae6e00' pos0='285212672' pagesize='16777216' bufsize='20971520' t='1629160232260'/>
+    <debug:work_end threadid='0x70000f185000' pos0='184549376' t='1629160232316'/>
+    <debug:work_end threadid='0x70000f208000' pos0='201326592' t='1629160232469'/>
+    <debug:work_end threadid='0x70000f07f000' pos0='218103808' t='1629160233663'/>
+    <debug:work_end threadid='0x70000effc000' pos0='234881024' t='1629160233704'/>
+    <debug:work_end threadid='0x70000f28b000' pos0='251658240' t='1629160233745'/>
+    <debug:work_end threadid='0x70000f102000' pos0='268435456' t='1629160233785'/>
+    <debug:work_end threadid='0x70000f185000' pos0='285212672' t='1629160233891'/>
+    <debug:work_start threadid='0x10dae6e00' pos0='301989888' pagesize='16777216' bufsize='20971520' t='1629160234320'/>
+    <debug:work_start threadid='0x10dae6e00' pos0='318767104' pagesize='16777216' bufsize='20971520' t='1629160234360'/>
+    <debug:work_start threadid='0x10dae6e00' pos0='335544320' pagesize='16777216' bufsize='20971520' t='1629160234401'/>
+    <debug:work_start threadid='0x10dae6e00' pos0='352321536' pagesize='16777216' bufsize='20971520' t='1629160234442'/>
+    <debug:work_start threadid='0x10dae6e00' pos0='369098752' pagesize='16777216' bufsize='20971520' t='1629160234504'/>
+    <debug:work_start threadid='0x10dae6e00' pos0='385875968' pagesize='16777216' bufsize='20971520' t='1629160234544'/>
+    <debug:work_start threadid='0x10dae6e00' pos0='402653184' pagesize='16777216' bufsize='20971520' t='1629160234586'/>
+    <debug:work_end threadid='0x70000f102000' pos0='301989888' t='1629160236022'/>
+    <debug:work_end threadid='0x70000f185000' pos0='352321536' t='1629160236047'/>
+    <debug:work_end threadid='0x70000f208000' pos0='369098752' t='1629160236112'/>
+    <debug:work_end threadid='0x70000f07f000' pos0='335544320' t='1629160236219'/>
+    <debug:work_end threadid='0x70000f28b000' pos0='385875968' t='1629160236522'/>
+    <debug:work_end threadid='0x70000effc000' pos0='318767104' t='1629160236637'/>
+    <debug:work_start threadid='0x10dae6e00' pos0='419430400' pagesize='16777216' bufsize='20971520' t='1629160236645'/>
+    <debug:work_start threadid='0x10dae6e00' pos0='436207616' pagesize='16777216' bufsize='20971520' t='1629160236686'/>
+    <debug:work_start threadid='0x10dae6e00' pos0='452984832' pagesize='16777216' bufsize='20971520' t='1629160236728'/>
+    <debug:work_start threadid='0x10dae6e00' pos0='469762048' pagesize='16777216' bufsize='20971520' t='1629160236768'/>
+    <debug:work_start threadid='0x10dae6e00' pos0='486539264' pagesize='16777216' bufsize='20971520' t='1629160236831'/>
+    <debug:work_start threadid='0x10dae6e00' pos0='503316480' pagesize='16777216' bufsize='20971520' t='1629160236874'/>
+    <debug:work_end threadid='0x70000f102000' pos0='402653184' t='1629160237694'/>
+    <debug:work_start threadid='0x10dae6e00' pos0='520093696' pagesize='16777216' bufsize='20971520' t='1629160238931'/>
