@@ -196,7 +196,7 @@ static void add_if_present(std::vector<std::string> &scanner_dirs,const std::str
     }
 }
 
-[[noreturn]] void notify_thread(scanner_set *ssp)
+[[noreturn]] void notify_thread(scanner_set *ssp, aftimer *master_timer)
 {
     while(true){
         if (ssp) {
@@ -204,6 +204,10 @@ static void add_if_present(std::vector<std::string> &scanner_dirs,const std::str
             struct tm *timeinfo = localtime (&rawtime);
             std::cerr << asctime(timeinfo) << "\n";
             std::map<std::string,std::string> stats = ssp->get_realtime_stats();
+
+            // get the times
+            master_timer->lap();
+            stats["elapsed_time"] = master_timer->elapsed_text();
             for(const auto &it : stats ){
                 std::cerr << it.first << ": " << it.second << "\n";
             }
@@ -224,6 +228,7 @@ int main(int argc,char **argv)
 
     word_and_context_list alert_list;		/* shold be flagged */
     word_and_context_list stop_list;		/* should be ignored */
+    aftimer master_timer;
 
     scanner_config   sc;   // config for be13_api
     Phase1::Config   cfg;  // config for the image_processing system
@@ -432,8 +437,7 @@ int main(int argc,char **argv)
     ss.set_dfxml_writer( xreport );
 
     /* Start the clock */
-    aftimer timer;
-    timer.start();
+    master_timer.start();
 
     /* Get image or directory */
     if (*argv == NULL) {
@@ -560,7 +564,7 @@ int main(int argc,char **argv)
     }
 
     /*** PHASE 1 --- Run on the input image */
-    new std::thread(&notify_thread, &ss);    // launch the notify thread
+    new std::thread(&notify_thread, &ss, &master_timer);    // launch the notify thread
     ss.phase_scan();
 
 #if 0
@@ -611,11 +615,12 @@ int main(int argc,char **argv)
     xreport->add_timestamp("phase2 start");
     ss.shutdown();
     xreport->add_timestamp("phase2 end");
+    master_timer.stop();
 
     /*** PHASE 3 ---  report and then print final usage information ***/
     xreport->push("report");
     xreport->xmlout("total_bytes",phase1.total_bytes);
-    xreport->xmlout("elapsed_seconds",timer.elapsed_seconds());
+    xreport->xmlout("elapsed_seconds",master_timer.elapsed_seconds());
     xreport->xmlout("max_depth_seen",ss.get_max_depth_seen());
     xreport->xmlout("dup_bytes_encountered",ss.get_dup_bytes_encountered());
     ss.dump_scanner_stats();
@@ -627,25 +632,25 @@ int main(int argc,char **argv)
     xreport->close();
 
     if (cfg.opt_quiet==0){
-        float mb_per_sec = (phase1.total_bytes / 1000000.0) / timer.elapsed_seconds();
+        float mb_per_sec = (phase1.total_bytes / 1000000.0) / master_timer.elapsed_seconds();
 
         std::cout.precision(4);
-        std::cout << "Elapsed time: " << timer.elapsed_seconds() << " sec.\n"
-                  << "Total MB processed: " << int(phase1.total_bytes / 1000000) << "\n"
-                  << "Overall performance: " << mb_per_sec << " << MBytes/sec";
+        std::cout << "Elapsed time: " << master_timer.elapsed_seconds() << " sec." << std::endl
+                  << "Total MB processed: " << int(phase1.total_bytes / 1000000) << std::endl
+                  << "Overall performance: " << mb_per_sec << " << MBytes/sec ";
         if (cfg.num_threads>0){
             std::cout << mb_per_sec/cfg.num_threads << " (MBytes/sec/thread)\n";
         }
-        std::cout << "sbufs created:   " << sbuf_t::sbuf_total << "\n";
-        std::cout << "sbufs remaining: " << sbuf_t::sbuf_count << "\n";
+        std::cout << "sbufs created:   " << sbuf_t::sbuf_total << std::endl;
+        std::cout << "sbufs remaining: " << sbuf_t::sbuf_count << std::endl;
     }
 
     try {
         feature_recorder &fr = ss.fs.named_feature_recorder("email");
-        std::cout << "Total " << fr.name << " features found: " << fr.features_written << "\n";
+        std::cout << "Total " << fr.name << " features found: " << fr.features_written << std::endl;
     }
     catch (const feature_recorder_set::NoSuchFeatureRecorder &e) {
-        std::cout << "Did not scan for email addresses.\n";
+        std::cout << "Did not scan for email addresses." << std::endl;
     }
 
     muntrace();
