@@ -1,23 +1,10 @@
-- [ ] BE_DEBUG = print_steps to print the steps
-- [ ] Make sure that process() and recurse() and anything else that's
-  going to free an sbuf always get an sbuf with no parent, becuase
-  otherwise the parent might be freed during the recursion, to allow
-  for asynchronouse recursion.
+- [ ] Legacy ETA display if stdout is a pipe (not a tty); switch
+between the two modes.
+- [ ] Python scanner.
+
 - [ ] Generic approach for setting the carve mode for a scanner.
-- [ ] remove the file iterator from the image iterator, run it separately.
-      Just put one file on the list, vs. many.
-      map the entire file but process it with pages and margins using overlapping sbufs. Free it when finished?
-
-- [ ] When carving tests/len6192.jpg, the JPEG should only be 6192 bytes.
-- [ ] When scanning tests/testfilex.docx, the JPEG should only be 6192 bytes
-- [ ] Automatically set carve mode for in the main.cpp abstractly for
-  every feature recorder based on name.
-
-# scan_net
-- [ ] test against v1.6 with IPv4 UDP
-- [ ] test against v1.6 with IPv4 TCP
-- [ ] test against v1.6 with IPv6 UDP
-- [ ] test against v1.6 with IPv6 TCP
+- [ ] Automatically set carve mode for in the main.cpp abstractly for every feature recorder based on name.
+- [ ] Use leaks to check for leaks in both BE1.6 and BE2.0
 
 # dfxml:
 build environment:
@@ -30,8 +17,5 @@ build environment:
 - [ ] <total_bytes> is larger than it should be.
 - [ ] instead of <ns>, perhaps print <seconds> ?
 
-- [ ] Histograms not sorted
-- [ ] utf16 in histograms not working properly
-- [ ] JPEGs too long
+- [ ] scan_find.
 - [ ] searches not working with regular expression to prune thme.
-- [ ] Don't carve IPv6 with bad checksum by default.

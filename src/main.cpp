@@ -428,6 +428,9 @@ int main(int argc,char **argv)
         clean_start = true;
     }
 
+    dfxml_writer *xreport = new dfxml_writer(sc.outdir / Phase1::REPORT_FILENAME, false); // do not make DTD
+    ss.set_dfxml_writer( xreport );
+
     /* Start the clock */
     aftimer timer;
     timer.start();
@@ -458,10 +461,10 @@ int main(int argc,char **argv)
 	exit(0);
     }
 
-    std::filesystem::path report_path = sc.outdir / Phase1::REPORT_FILENAME;
     /* Open the image file (or the device) now.
      * We use *p because we don't know which subclass we will be getting.
      */
+
     image_process *p = image_process::open( sc.input_fname, cfg.opt_recurse, cfg.opt_pagesize, cfg.opt_marginsize);
     Phase1 phase1(cfg, *p, ss);
 
@@ -493,8 +496,6 @@ int main(int argc,char **argv)
      * If we are restarting, the dfxml file was renamed.
      */
 
-    dfxml_writer *xreport = new dfxml_writer(report_path, false); // do not make DTD
-    ss.set_dfxml_writer( xreport );
 
     /* Determine the feature files that will be used from the scanners that were enabled */
     auto feature_file_names = ss.feature_file_list();
