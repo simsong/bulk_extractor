@@ -205,49 +205,17 @@ void Phase1::read_process_sbufs()
         if (sampling()){
             ++si;
         }
+
+        /* Finally, report back the fraction done if requested */
+        if (config.fraction_done) *config.fraction_done = p.fraction_done(it);
         ++it;
     }
 
+    if (config.fraction_done) *config.fraction_done = 1.0;
     if (!config.opt_quiet){
         std::cout << "All data are read; waiting for threads to finish...\n";
     }
 }
-
-#if 0
-TODO: Turn this into a real-time status thread.
-    /* Now wait for all of the threads to be free */
-    time_t wait_start = time(0);
-    for(int32_t counter = 0;;counter++){
-        //int num_remaining = config.num_threads - tp->get_free_count();
-        //if (num_remaining==0) break;
-
-        std::this_thread::sleep_for(100ms);
-        time_t time_waiting   = time(0) - wait_start;
-        time_t time_remaining = config.max_wait_time - time_waiting;
-
-        if (counter%60==0){
-            std::stringstream sstr;
-            sstr << "Time elapsed waiting for "
-                // << num_remaining
-                // << " thread" << (num_remaining>1 ? "s" : "")
-               << " to finish:\n    " << minsec(time_waiting)
-               << " (timeout in "     << minsec(time_remaining) << ".)\n";
-            if (config.opt_quiet==0){
-                std::cout << sstr.str();
-                if (counter>0) print_tp_status();
-            }
-            xreport.comment(sstr.str());
-        }
-        if (time_waiting>config.max_wait_time){
-            std::cout << "\n\n";
-            std::cout << " ... this shouldn't take more than an hour. Exiting ... \n";
-            std::cout << " ... Please report to the bulk_extractor maintainer ... \n";
-            break;
-        }
-    }
-    if (config.opt_quiet==0) std::cout << "All Threads Finished!\n";
-#endif
-
 
 void Phase1::dfxml_write_create(int argc, char * const *argv)
 {
@@ -291,24 +259,6 @@ void Phase1::dfxml_write_source()
     if (config.opt_quiet==0) {
         std::cout << "Average consumer time spent waiting: " << worker_wait_average << " sec.\n";
     }
-#if 0
-    if (worker_wait_average > tp->waiting.elapsed_seconds()*2
-       && worker_wait_average>10 && config.opt_quiet==0){
-        std::cout << "*******************************************\n";
-        std::cout << "** bulk_extractor is probably I/O bound. **\n";
-        std::cout << "**        Run with a faster drive        **\n";
-        std::cout << "**      to get better performance.       **\n";
-        std::cout << "*******************************************\n";
-    }
-    if (tp->waiting.elapsed_seconds() > worker_wait_average * 2
-       && tp->waiting.elapsed_seconds()>10 && config.opt_quiet==0){
-        std::cout << "*******************************************\n";
-        std::cout << "** bulk_extractor is probably CPU bound. **\n";
-        std::cout << "**    Run on a computer with more cores  **\n";
-        std::cout << "**      to get better performance.       **\n";
-        std::cout << "*******************************************\n";
-    }
-#endif
     /* end of phase 1 */
 }
 
@@ -319,9 +269,6 @@ void Phase1::phase1_run()
     for (const auto &it :seen_page_ids) {
         ss.record_work_start( it, 0, 0 );
     }
-    //ss.run_notify_thread();
-    /* Create the threadpool and launch the workers */
-    //p.set_report_read_errors(config.opt_report_read_errors);
     xreport.push("runtime","xmlns:debug=\"http://www.github.com/simsong/bulk_extractor/issues\"");
     read_process_sbufs();
     ss.join();

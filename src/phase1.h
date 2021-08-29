@@ -2,6 +2,7 @@
 #define PHASE1_H
 
 #include <thread>
+#include <atomic>
 
 #include "be13_api/scanner_set.h"
 #include "be13_api/dfxml_cpp/src/dfxml_writer.h"
@@ -62,6 +63,7 @@ public:
         bool      opt_report_read_errors {true};
         bool      opt_recurse {false};  // -r flag
         void      set_sampling_parameters(std::string p);
+        std::atomic<double>    *fraction_done {nullptr};
     };
 
     typedef std::set<uint64_t> blocklist_t; // a list of blocks (for random sampling)

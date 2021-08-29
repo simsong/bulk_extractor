@@ -196,18 +196,32 @@ static void add_if_present(std::vector<std::string> &scanner_dirs,const std::str
     }
 }
 
-[[noreturn]] void notify_thread(scanner_set *ssp, aftimer *master_timer)
+[[noreturn]] void notify_thread(scanner_set *ssp, aftimer *master_timer, std::atomic<double> *fraction_done)
 {
     while(true){
         if (ssp) {
             time_t rawtime = time (0);
-            struct tm *timeinfo = localtime (&rawtime);
-            std::cerr << asctime(timeinfo) << "\n";
+            struct tm timeinfo = *(localtime(&rawtime));
+            std::cerr << asctime(&timeinfo) << "\n";
             std::map<std::string,std::string> stats = ssp->get_realtime_stats();
 
             // get the times
             master_timer->lap();
             stats["elapsed_time"] = master_timer->elapsed_text();
+            if (fraction_done) {
+                stats["fraction_read"] = std::to_string(*fraction_done * 100) + std::string(" %");
+                stats["estimated_time_remaining"] = master_timer->eta_text(*fraction_done);
+                stats["estimated_time_completion"] = master_timer->eta_time(*fraction_done);
+
+                // print the legacy status
+                char buf1[64], buf2[64];
+                snprintf(buf1, sizeof(buf1), "%2d:%02d:%02d",timeinfo.tm_hour,timeinfo.tm_min,timeinfo.tm_sec);
+                snprintf(buf2, sizeof(buf2), "(%.2f%%)", *fraction_done * 100);
+                uint64_t max_offset = strtoll( stats[ scanner_set::MAX_OFFSET ].c_str() , nullptr, 10);
+                std::cout << buf1 << " Offset " << max_offset / (1000*1000) << "MB "
+                          << buf2 << " Done in " << stats["estimated_time_remaining"]
+                          << " at " << stats["estimated_time_completion"] << std::endl;
+            }
             for(const auto &it : stats ){
                 std::cerr << it.first << ": " << it.second << "\n";
             }
@@ -228,10 +242,13 @@ int main(int argc,char **argv)
 
     word_and_context_list alert_list;		/* shold be flagged */
     word_and_context_list stop_list;		/* should be ignored */
+    std::atomic<double>  fraction_done = 0;                  /* a callback of sorts */
     aftimer master_timer;
 
     scanner_config   sc;   // config for be13_api
     Phase1::Config   cfg;  // config for the image_processing system
+
+    cfg.fraction_done = &fraction_done;
 
     /* Options */
     std::string opt_path {};
@@ -426,9 +443,11 @@ int main(int argc,char **argv)
 
     /* The zap option wipes the contents of a directory, useful for debugging */
     if (opt_zap){
-        for (const auto &entry : std::filesystem::directory_iterator( sc.outdir ) ) {
-            std::cout << "erasing " << entry.path().string() << "\n";
-            std::filesystem::remove( entry );
+        for (const auto &entry : std::filesystem::recursive_directory_iterator( sc.outdir ) ) {
+            if (! std::filesystem::is_directory(entry.path())){
+                std::cout << "erasing " << entry.path().string() << "\n";
+                std::filesystem::remove( entry );
+            }
 	}
         clean_start = true;
     }
@@ -564,7 +583,7 @@ int main(int argc,char **argv)
     }
 
     /*** PHASE 1 --- Run on the input image */
-    new std::thread(&notify_thread, &ss, &master_timer);    // launch the notify thread
+    new std::thread(&notify_thread, &ss, &master_timer, &fraction_done);    // launch the notify thread
     ss.phase_scan();
 
 #if 0
@@ -595,7 +614,6 @@ int main(int argc,char **argv)
     xreport->add_timestamp("phase1 start");
 
     std::cerr << "Calling check_previously_processed at one\n";
-
 
     phase1.phase1_run();
     ss.join();                          // wait for threads to come together
@@ -656,3 +674,58 @@ int main(int argc,char **argv)
     muntrace();
     exit(0);
 }
+
+#if 0
+    if (worker_wait_average > tp->waiting.elapsed_seconds()*2
+       && worker_wait_average>10 && config.opt_quiet==0){
+        std::cout << "*******************************************\n";
+        std::cout << "** bulk_extractor is probably I/O bound. **\n";
+        std::cout << "**        Run with a faster drive        **\n";
+        std::cout << "**      to get better performance.       **\n";
+        std::cout << "*******************************************\n";
+    }
+    if (tp->waiting.elapsed_seconds() > worker_wait_average * 2
+       && tp->waiting.elapsed_seconds()>10 && config.opt_quiet==0){
+        std::cout << "*******************************************\n";
+        std::cout << "** bulk_extractor is probably CPU bound. **\n";
+        std::cout << "**    Run on a computer with more cores  **\n";
+        std::cout << "**      to get better performance.       **\n";
+        std::cout << "*******************************************\n";
+    }
+#endif
+
+
+#if 0
+TODO: Turn this into a real-time status thread.
+    /* Now wait for all of the threads to be free */
+    time_t wait_start = time(0);
+    for(int32_t counter = 0;;counter++){
+        //int num_remaining = config.num_threads - tp->get_free_count();
+        //if (num_remaining==0) break;
+
+        std::this_thread::sleep_for(100ms);
+        time_t time_waiting   = time(0) - wait_start;
+        time_t time_remaining = config.max_wait_time - time_waiting;
+
+        if (counter%60==0){
+            std::stringstream sstr;
+            sstr << "Time elapsed waiting for "
+                // << num_remaining
+                // << " thread" << (num_remaining>1 ? "s" : "")
+               << " to finish:\n    " << minsec(time_waiting)
+               << " (timeout in "     << minsec(time_remaining) << ".)\n";
+            if (config.opt_quiet==0){
+                std::cout << sstr.str();
+                if (counter>0) print_tp_status();
+            }
+            xreport.comment(sstr.str());
+        }
+        if (time_waiting>config.max_wait_time){
+            std::cout << "\n\n";
+            std::cout << " ... this shouldn't take more than an hour. Exiting ... \n";
+            std::cout << " ... Please report to the bulk_extractor maintainer ... \n";
+            break;
+        }
+    }
+    if (config.opt_quiet==0) std::cout << "All Threads Finished!\n";
+#endif
