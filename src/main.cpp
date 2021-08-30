@@ -98,6 +98,7 @@ static void usage(const char *progname, scanner_set &ss)
     std::cout << "                  results go into find.txt\n";
     std::cout << "   -q           - quiet - no status output (changed in v2.0).\n";
     std::cout << "   -s frac[:passes] - Set random sampling parameters\n";
+    std::cout << "   -1           - bulk_extractor v1.x legacy mode\n";
     std::cout << "\nTuning parameters:\n";
     //    std::cout << "   -C NN        - specifies the size of the context window (default " << feature_recorder::context_window_default << ")\n";
     std::cout << "   -S fr:<name>:window=NN   specifies context window for recorder to NN\n";
@@ -196,36 +197,46 @@ static void add_if_present(std::vector<std::string> &scanner_dirs,const std::str
     }
 }
 
-[[noreturn]] void notify_thread(scanner_set *ssp, aftimer *master_timer, std::atomic<double> *fraction_done)
+struct notify_opts {
+    scanner_set *ssp;
+    aftimer *master_timer;
+    std::atomic<double> *fraction_done;
+    bool opt_legacy;
+};
+[[noreturn]] void notify_thread(struct notify_opts *o)
 {
+    assert(o->ssp != nullptr);
     while(true){
-        if (ssp) {
-            time_t rawtime = time (0);
-            struct tm timeinfo = *(localtime(&rawtime));
-            std::cerr << asctime(&timeinfo) << "\n";
-            std::map<std::string,std::string> stats = ssp->get_realtime_stats();
+        time_t rawtime = time (0);
+        struct tm timeinfo = *(localtime(&rawtime));
+        std::map<std::string,std::string> stats = o->ssp->get_realtime_stats();
 
-            // get the times
-            master_timer->lap();
-            stats["elapsed_time"] = master_timer->elapsed_text();
-            if (fraction_done) {
-                stats["fraction_read"] = std::to_string(*fraction_done * 100) + std::string(" %");
-                stats["estimated_time_remaining"] = master_timer->eta_text(*fraction_done);
-                stats["estimated_time_completion"] = master_timer->eta_time(*fraction_done);
+        // get the times
+        o->master_timer->lap();
+        stats["elapsed_time"] = o->master_timer->elapsed_text();
+        if (o->fraction_done) {
+            double done = *o->fraction_done;
+            stats["fraction_read"] = std::to_string(done * 100) + std::string(" %");
+            stats["estimated_time_remaining"] = o->master_timer->eta_text(done);
+            stats["estimated_time_completion"] = o->master_timer->eta_time(done);
 
-                // print the legacy status
+            // print the legacy status
+            if(o->opt_legacy) {
                 char buf1[64], buf2[64];
                 snprintf(buf1, sizeof(buf1), "%2d:%02d:%02d",timeinfo.tm_hour,timeinfo.tm_min,timeinfo.tm_sec);
-                snprintf(buf2, sizeof(buf2), "(%.2f%%)", *fraction_done * 100);
+                snprintf(buf2, sizeof(buf2), "(%.2f%%)", done * 100);
                 uint64_t max_offset = strtoll( stats[ scanner_set::MAX_OFFSET ].c_str() , nullptr, 10);
                 std::cout << buf1 << " Offset " << max_offset / (1000*1000) << "MB "
                           << buf2 << " Done in " << stats["estimated_time_remaining"]
                           << " at " << stats["estimated_time_completion"] << std::endl;
             }
+        }
+        if (!o->opt_legacy) {
+            std::cout << asctime(&timeinfo) << "\n";
             for(const auto &it : stats ){
-                std::cerr << it.first << ": " << it.second << "\n";
+                std::cout << it.first << ": " << it.second << "\n";
             }
-            std::cerr << "================================================================\n";
+            std::cout << "================================================================\n";
         }
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
@@ -286,7 +297,7 @@ int main(int argc,char **argv)
     const std::string ALL { "all" };
     int ch;
     char *empty = strdup("");
-    while ((ch = getopt(argc, argv, "A:B:b:C:d:E:e:F:f:G:g:HhiJj:M:m:o:P:p:qRr:S:s:VW:w:x:Y:z:Z")) != -1) {
+    while ((ch = getopt(argc, argv, "A:B:b:C:d:E:e:F:f:G:g:HhiJj:M:m:o:P:p:qRr:S:s:VW:w:x:Y:z:Z1")) != -1) {
         if (optarg==nullptr) optarg=empty;
         std::string arg = optarg!=ALL ? optarg : scanner_config::scanner_command::ALL_SCANNERS;
 	switch (ch) {
@@ -367,6 +378,7 @@ int main(int argc,char **argv)
 	}
 	case 'z': cfg.opt_page_start = stoi64(optarg);break;
 	case 'Z': opt_zap=true;break;
+        case '1': cfg.opt_legacy = true; break;
 	case 'H':
             opt_H++;
             continue;
@@ -375,6 +387,13 @@ int main(int argc,char **argv)
             continue;
 	}
     }
+
+    /* Legacy mode if stdout is not a tty */
+#ifdef HAVE_ISATTY
+    if (!isatty(1)){
+        cfg.opt_legacy = true;
+    }
+#endif
 
     argc -= optind;
     argv += optind;
@@ -583,7 +602,12 @@ int main(int argc,char **argv)
     }
 
     /*** PHASE 1 --- Run on the input image */
-    new std::thread(&notify_thread, &ss, &master_timer, &fraction_done);    // launch the notify thread
+    struct notify_opts o;
+    o.ssp = &ss;
+    o.master_timer = &master_timer;
+    o.fraction_done = &fraction_done;
+    o.opt_legacy = cfg.opt_legacy;
+    new std::thread(&notify_thread, &o);    // launch the notify thread
     ss.phase_scan();
 
 #if 0
@@ -644,7 +668,6 @@ int main(int argc,char **argv)
     ss.dump_scanner_stats();
     ss.dump_name_count_stats();
     xreport->pop("report");
-
     xreport->add_rusage();
     xreport->pop("dfxml");			// bulk_extractor
     xreport->close();
@@ -652,6 +675,7 @@ int main(int argc,char **argv)
     if (cfg.opt_quiet==0){
         float mb_per_sec = (phase1.total_bytes / 1000000.0) / master_timer.elapsed_seconds();
 
+        std::cout << "All Threads Finished!\n";
         std::cout.precision(4);
         std::cout << "Elapsed time: " << master_timer.elapsed_seconds() << " sec." << std::endl
                   << "Total MB processed: " << int(phase1.total_bytes / 1000000) << std::endl
@@ -674,58 +698,3 @@ int main(int argc,char **argv)
     muntrace();
     exit(0);
 }
-
-#if 0
-    if (worker_wait_average > tp->waiting.elapsed_seconds()*2
-       && worker_wait_average>10 && config.opt_quiet==0){
-        std::cout << "*******************************************\n";
-        std::cout << "** bulk_extractor is probably I/O bound. **\n";
-        std::cout << "**        Run with a faster drive        **\n";
-        std::cout << "**      to get better performance.       **\n";
-        std::cout << "*******************************************\n";
-    }
-    if (tp->waiting.elapsed_seconds() > worker_wait_average * 2
-       && tp->waiting.elapsed_seconds()>10 && config.opt_quiet==0){
-        std::cout << "*******************************************\n";
-        std::cout << "** bulk_extractor is probably CPU bound. **\n";
-        std::cout << "**    Run on a computer with more cores  **\n";
-        std::cout << "**      to get better performance.       **\n";
-        std::cout << "*******************************************\n";
-    }
-#endif
-
-
-#if 0
-TODO: Turn this into a real-time status thread.
-    /* Now wait for all of the threads to be free */
-    time_t wait_start = time(0);
-    for(int32_t counter = 0;;counter++){
-        //int num_remaining = config.num_threads - tp->get_free_count();
-        //if (num_remaining==0) break;
-
-        std::this_thread::sleep_for(100ms);
-        time_t time_waiting   = time(0) - wait_start;
-        time_t time_remaining = config.max_wait_time - time_waiting;
-
-        if (counter%60==0){
-            std::stringstream sstr;
-            sstr << "Time elapsed waiting for "
-                // << num_remaining
-                // << " thread" << (num_remaining>1 ? "s" : "")
-               << " to finish:\n    " << minsec(time_waiting)
-               << " (timeout in "     << minsec(time_remaining) << ".)\n";
-            if (config.opt_quiet==0){
-                std::cout << sstr.str();
-                if (counter>0) print_tp_status();
-            }
-            xreport.comment(sstr.str());
-        }
-        if (time_waiting>config.max_wait_time){
-            std::cout << "\n\n";
-            std::cout << " ... this shouldn't take more than an hour. Exiting ... \n";
-            std::cout << " ... Please report to the bulk_extractor maintainer ... \n";
-            break;
-        }
-    }
-    if (config.opt_quiet==0) std::cout << "All Threads Finished!\n";
-#endif

@@ -64,6 +64,7 @@ public:
         bool      opt_recurse {false};  // -r flag
         void      set_sampling_parameters(std::string p);
         std::atomic<double>    *fraction_done {nullptr};
+        bool      opt_legacy {false};
     };
 
     typedef std::set<uint64_t> blocklist_t; // a list of blocks (for random sampling)
