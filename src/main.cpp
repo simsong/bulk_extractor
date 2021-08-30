@@ -15,6 +15,7 @@
 #include <queue>
 #include <unistd.h>
 #include <cctype>
+#include <cstdlib>
 
 #ifdef HAVE_MCHECK
 #include <mcheck.h>
@@ -25,6 +26,10 @@ void muntrace(){}
 
 #ifdef HAVE_SYS_RESOURCE_H
 #include <sys/resource.h>
+#endif
+
+#ifdef HAVE_TERMCAP_H
+#include <termcap.h>
 #endif
 
 // Open standard input in binary mode by default on Win32.
@@ -206,6 +211,20 @@ struct notify_opts {
 [[noreturn]] void notify_thread(struct notify_opts *o)
 {
     assert(o->ssp != nullptr);
+    std::string cl, ho;
+#ifdef HAVE_LIBTERMCAP
+    if (!o->opt_legacy) {
+        char buf[65536];
+        const char *str = ::getenv("TERM");
+        if (str){
+            tgetent(buf, str);
+            cl = tgetstr("cl", NULL);
+            ho = tgetstr("ho", NULL);
+        }
+        std::cerr << cl << std::endl;
+    }
+#endif
+
     while(true){
         time_t rawtime = time (0);
         struct tm timeinfo = *(localtime(&rawtime));
@@ -232,11 +251,17 @@ struct notify_opts {
             }
         }
         if (!o->opt_legacy) {
-            std::cout << asctime(&timeinfo) << "\n";
+            std::cout << ho << "bulk_extractor      " << asctime(&timeinfo) << "  " << std::endl;
             for(const auto &it : stats ){
-                std::cout << it.first << ": " << it.second << "\n";
+                int spaces = 40 - (it.first.size() + it.second.size());
+                std::cout << it.first << ": " << it.second;
+                // Space out to the 40 column to erase any junk
+                for(int i=0;i<spaces;i++){
+                    std::cout << " ";
+                }
+                std::cout << std::endl;
             }
-            std::cout << "================================================================\n";
+            std::cout << std::endl << std::endl;
         }
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
