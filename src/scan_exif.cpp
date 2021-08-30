@@ -387,7 +387,7 @@ void exif_scanner::scan(const sbuf_t &sbuf)
     // end before the margin. Note that the sbuf is guarenteed to be larger than jpeg_validator::MIN_JPEG_SIZE.
     size_t limit = sbuf.pagesize;
     if (sbuf.bufsize - sbuf.pagesize < jpeg_validator::MIN_JPEG_SIZE) {
-        assert (sbuf.bufsize > jpeg_validator::MIN_JPEG_SIZE);
+        assert (sbuf.bufsize >= jpeg_validator::MIN_JPEG_SIZE);
         limit = sbuf.bufsize - jpeg_validator::MIN_JPEG_SIZE;
     }
 
