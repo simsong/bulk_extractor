@@ -211,15 +211,16 @@ struct notify_opts {
 [[noreturn]] void notify_thread(struct notify_opts *o)
 {
     assert(o->ssp != nullptr);
-    std::string cl, ho;
+    std::string cl, ho, ce;
 #ifdef HAVE_LIBTERMCAP
     if (!o->opt_legacy) {
         char buf[65536];
         const char *str = ::getenv("TERM");
         if (str){
             tgetent(buf, str);
-            cl = tgetstr("cl", NULL);
-            ho = tgetstr("ho", NULL);
+            cl = tgetstr("cl", NULL);   // clear screen
+            ho = tgetstr("ho", NULL);   // home
+            ho = tgetstr("ce", NULL);   // clear to end of line
         }
         std::cerr << cl << std::endl;
     }
@@ -251,13 +252,19 @@ struct notify_opts {
             }
         }
         if (!o->opt_legacy) {
-            std::cout << ho << "bulk_extractor      " << asctime(&timeinfo) << "  " << std::endl;
+            // ho should work, but it didn't?
+            // perhaps we should move to curses.
+            std::cout << cl << "bulk_extractor      " << asctime(&timeinfo) << "  " << std::endl;
             for(const auto &it : stats ){
-                int spaces = 40 - (it.first.size() + it.second.size());
                 std::cout << it.first << ": " << it.second;
-                // Space out to the 40 column to erase any junk
-                for(int i=0;i<spaces;i++){
-                    std::cout << " ";
+                if (ce.size() > 0 ){
+                    std::cout << ce;
+                } else {
+                    // Space out to the 50 column to erase any junk
+                    int spaces = 50 - (it.first.size() + it.second.size());
+                    for(int i=0;i<spaces;i++){
+                        std::cout << " ";
+                    }
                 }
                 std::cout << std::endl;
             }

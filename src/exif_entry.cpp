@@ -20,6 +20,7 @@
 
 #include "utf8.h" // for reading UTF16 and UTF32
 #include "unicode_escape.h" // for validating or escaping UTF8
+#include "exif_entry.h"
 #include "exif_reader.h"
 
 static const uint32_t OPT_MAX_IFD_ENTRIES = 1000;	// don't parse more than this
@@ -68,10 +69,20 @@ static std::string get_exif_slong(tiff_handle_t &tiff_handle, uint32_t ifd_entry
 static std::string get_exif_srational(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset);
 
 exif_entry::exif_entry(uint16_t ifd_type_, const std::string &name_, const std::string &value_)
-    :ifd_type(ifd_type_), name(name_), value(value_) {
+    :ifd_type(ifd_type_), name(name_), value(value_)
+{
 }
 
-exif_entry::exif_entry(const exif_entry &that):ifd_type(that.ifd_type), name(that.name), value(that.value) {
+// copy
+exif_entry::exif_entry(const exif_entry &that):
+    ifd_type(that.ifd_type), name(that.name), value(that.value)
+{
+}
+
+// move and copy are the same
+exif_entry::exif_entry(const exif_entry &&that):
+    ifd_type(that.ifd_type), name(that.name), value(that.value)
+{
 }
 
 exif_entry::~exif_entry() {
@@ -99,10 +110,8 @@ const std::string exif_entry::get_full_name() const {
     case IFD1_INTEROPERABILITY:
         return "ifd1.interoperability." + name;
     default:
-        std::cerr << "Program state errror: Invalid ifd type " << ifd_type << "\n";
-        assert(0);
+        return "unknown." + name;
     }
-    return "ERROR";			// required to avoid compiler warning
 }
 
 /**
@@ -112,7 +121,8 @@ const std::string exif_entry::get_full_name() const {
  * @Throws exif_failure_exception_t
  */
 void entry_reader::parse_ifd_entries(ifd_type_t ifd_type, tiff_handle_t &tiff_handle,
-				     size_t ifd_offset, entry_list_t &entries) {
+				     size_t ifd_offset, entry_list_t &entries)
+{
     uint16_t num_entries = tiff_ifd_reader::get_num_entries(tiff_handle, ifd_offset);
 #ifdef DEBUG
     std::cout << "exif_entry.parse_ifd_entries ifd type " << (uint32_t)ifd_type << ", num entries: " << num_entries << " from offset " << ifd_offset << "\n";
@@ -1026,7 +1036,7 @@ static void add_entry(ifd_type_t ifd_type, const std::string &name, const std::s
     std::cout << "exif_entry.add_entry value: '" << value << "'\n";
 #endif
 
-    entries.push_back(new exif_entry(ifd_type, name, value));
+    entries.push_back(std::make_unique<exif_entry>(ifd_type, name, value));
 }
 
 inline static uint16_t get_entry_tag(tiff_handle_t &tiff_handle, uint32_t ifd_entry_offset) {

@@ -173,22 +173,25 @@ namespace psd_reader {
 /**
  * record exif data in well-formatted XML.
  */
-void exif_scanner::record_exif_data(const pos0_t &pos0, const std::string &hash_hex)
+void exif_scanner::record_exif_data(const pos0_t &pos0, std::string hash_hex)
 {
-    if (exif_debug) std::cerr << "scan_exif recording data for entry" << "\n";
-
     // do not record the exif feature if there are no entries
     if (entries.size() == 0) {
         return;
     }
 
     // compose xml from all entries
+    if (exif_debug) std::cerr << pos0 << " scan_exif recording data for entry" << std::endl;
+
     std::stringstream sts;
     sts << "<exif>";
-    for (entry_list_t::const_iterator it = entries.begin(); it!=entries.end(); it++) {
+    for (const auto &it: entries) {
 
         // prepare by escaping XML codes.
-        std::string prepared_value = dfxml_writer::xmlescape((*it)->value);
+        if (exif_debug) std::cerr << pos0 << " scan_exif fed before xmlescape: "
+                                  << it->name << ":" << it->value << std::endl;
+        std::string prepared_value = dfxml_writer::xmlescape( it->value );
+        if (exif_debug)  std::cerr << pos0 << " scan_exif fed after xmlescape: " << prepared_value << std::endl;
 
         // do not report entries that have empty values
         if (prepared_value.length() == 0) {
@@ -198,16 +201,15 @@ void exif_scanner::record_exif_data(const pos0_t &pos0, const std::string &hash_
         // validate against maximum entry size
         if (exif_debug) {
             if (prepared_value.size() > jpeg_validator::MAX_ENTRY_SIZE) {
-                std::cerr << "ERROR exif_entry: prepared_value.size()==" << prepared_value.size() << "\n" ;
+                std::cerr << "ERROR exif_entry: prepared_value.size()==" << prepared_value.size() << std::endl ;
                 assert(0);
             }
         }
 
-        if (exif_debug){
-            std::cout << "scan_exif fed before xmlescape: " << (*it)->value << "\n";
-            std::cout << "scan_exif fed after xmlescape: " << prepared_value << "\n";
-        }
-        sts << "<" << (*it)->get_full_name() << ">" << prepared_value << "</" << (*it)->get_full_name() << ">";
+
+        if (exif_debug)  std::cerr << pos0 << "  point3" << std::endl;
+        sts << "<" << it->get_full_name() << ">" << prepared_value << "</" << it->get_full_name() << ">";
+        if (exif_debug)  std::cerr << pos0 << "  point4" << std::endl;
     }
     sts << "</exif>";
 
@@ -220,7 +222,7 @@ void exif_scanner::record_exif_data(const pos0_t &pos0, const std::string &hash_
  * Note that GPS data is considered to be present when a GPS IFD entry is present
  * that is not just a time or date entry.
  */
-void exif_scanner::record_gps_data(const pos0_t &pos0, const std::string &hash_hex)
+void exif_scanner::record_gps_data(const pos0_t &pos0, std::string hash_hex)
 {
     // desired GPS strings
     std::string gps_time, gps_date, gps_lon_ref, gps_lon, gps_lat_ref;
@@ -233,11 +235,11 @@ void exif_scanner::record_gps_data(const pos0_t &pos0, const std::string &hash_h
     bool has_gps_date = false;
 
     // get the desired GPS strings from the entries
-    for (entry_list_t::const_iterator it = entries.begin(); it!=entries.end(); it++) {
+    for ( const auto &it: entries ) {
 
         // get timestamp from EXIF IFD just in case it is not available from GPS IFD
-        if ((*it)->name.compare("DateTimeOriginal") == 0) {
-            exif_time = (*it)->value;
+        if (it->name.compare("DateTimeOriginal") == 0) {
+            exif_time = it->value;
 
             if (exif_debug) std::cerr << "scan_exif.format_gps_data exif_time: " << exif_time << "\n";
 
@@ -270,12 +272,12 @@ void exif_scanner::record_gps_data(const pos0_t &pos0, const std::string &hash_h
             }
         }
 
-        if ((*it)->ifd_type == IFD0_GPS) {
+        if (it->ifd_type == IFD0_GPS) {
 
             // get GPS values from IFD0's GPS IFD
-            if ((*it)->name.compare("GPSTimeStamp") == 0) {
+            if (it->name.compare("GPSTimeStamp") == 0) {
                 has_gps_date = true;
-                gps_time = (*it)->value;
+                gps_time = it->value;
                 // reformat timestamp to standard ISO8601
                 // change "12 20 11" to "12:20:11"
                 if (gps_time.length() == 8) {
@@ -286,9 +288,9 @@ void exif_scanner::record_gps_data(const pos0_t &pos0, const std::string &hash_h
                         gps_time[7] = ':';
                     }
                 }
-            } else if ((*it)->name.compare("GPSDateStamp") == 0) {
+            } else if (it->name.compare("GPSDateStamp") == 0) {
                 has_gps_date = true;
-                gps_date = (*it)->value;
+                gps_date = it->value;
                 // reformat timestamp to standard ISO8601
                 // change "2011:06:25" to "2011-06-25"
                 if (gps_date.length() == 10) {
@@ -299,27 +301,27 @@ void exif_scanner::record_gps_data(const pos0_t &pos0, const std::string &hash_h
                         gps_date[7] = '-';
                     }
                 }
-            } else if ((*it)->name.compare("GPSLongitudeRef") == 0) {
+            } else if (it->name.compare("GPSLongitudeRef") == 0) {
                 has_gps = true;
-                gps_lon_ref = fix_gps_ref((*it)->value);
-            } else if ((*it)->name.compare("GPSLongitude") == 0) {
+                gps_lon_ref = fix_gps_ref(it->value);
+            } else if (it->name.compare("GPSLongitude") == 0) {
                 has_gps = true;
-                gps_lon = fix_gps((*it)->value);
-            } else if ((*it)->name.compare("GPSLatitudeRef") == 0) {
+                gps_lon = fix_gps(it->value);
+            } else if (it->name.compare("GPSLatitudeRef") == 0) {
                 has_gps = true;
-                gps_lat_ref = fix_gps_ref((*it)->value);
-            } else if ((*it)->name.compare("GPSLatitude") == 0) {
+                gps_lat_ref = fix_gps_ref(it->value);
+            } else if (it->name.compare("GPSLatitude") == 0) {
                 has_gps = true;
-                gps_lat = fix_gps((*it)->value);
-            } else if ((*it)->name.compare("GPSAltitude") == 0) {
+                gps_lat = fix_gps(it->value);
+            } else if (it->name.compare("GPSAltitude") == 0) {
                 has_gps = true;
-                gps_ele = std::to_string(rational((*it)->value));
-            } else if ((*it)->name.compare("GPSSpeed") == 0) {
+                gps_ele = std::to_string(rational(it->value));
+            } else if (it->name.compare("GPSSpeed") == 0) {
                 has_gps = true;
-                gps_speed = std::to_string(rational((*it)->value));
-            } else if ((*it)->name.compare("GPSTrack") == 0) {
+                gps_speed = std::to_string(rational(it->value));
+            } else if (it->name.compare("GPSTrack") == 0) {
                 has_gps = true;
-                gps_course = (*it)->value;
+                gps_course = it->value;
             }
         }
     }
@@ -347,11 +349,11 @@ void exif_scanner::record_gps_data(const pos0_t &pos0, const std::string &hash_h
     }
 }
 
-size_t exif_scanner::process_possible_jpeg(const sbuf_t &sbuf,bool found_start)
+size_t exif_scanner::process_possible_jpeg(const sbuf_t &sbuf, bool found_start)
 {
     // get hash for this exif
     size_t ret = 0;
-    std::string feature_text = "00000000000000000000000000000000";
+    std::string hex_hash {"00000000000000000000000000000000"};
     if (found_start){
         jpeg_validator::results_t res = jpeg_validator::validate_jpeg(sbuf);
         if (exif_scanner_debug) std::cerr << "res.len=" << res.len << " res.how=" << (int)(res.how) << "\n";
@@ -367,12 +369,13 @@ size_t exif_scanner::process_possible_jpeg(const sbuf_t &sbuf,bool found_start)
         }
 
         // Record the hash of the first 4K
-        feature_text = ss->hash(sbuf_t(sbuf,0,4096));
+        hex_hash = ss->hash(sbuf_t(sbuf,0,4096));
     }
+
     /* Record entries (if present) in the feature files */
-    record_exif_data(sbuf.pos0, feature_text);
-    record_gps_data(sbuf.pos0, feature_text);
-    clear_entries();		    // clear entries for next round
+    record_exif_data(sbuf.pos0, hex_hash);
+    record_gps_data(sbuf.pos0, hex_hash);
+    entries.clear();
     return ret;
 }
 
@@ -392,7 +395,7 @@ void exif_scanner::scan(const sbuf_t &sbuf)
     }
 
     for (size_t start=0; start < limit; start++) {
-        // check for start of a JPEG
+        // check for start of a JPEG.
         if (sbuf[start + 0] == 0xff && sbuf[start + 1] == 0xd8 &&
             sbuf[start + 2] == 0xff && (sbuf[start + 3] & 0xf0) == 0xe0) {
 
@@ -422,11 +425,10 @@ void exif_scanner::scan(const sbuf_t &sbuf)
             }
             // Try to process if it is exif or not
 
-            size_t skip = process_possible_jpeg( sbuf.slice(start), true);
-            if (skip>1) start += skip-1;
+            size_t skip_bytes = process_possible_jpeg( sbuf.slice(start), true);
+            if (skip_bytes>1) start += skip_bytes - 1; // (because the for loop will add 1)
             if (exif_scanner_debug){
-                std::cerr << "scan_exif Done processing JPEG/Exif ffd8ff at "
-                          << start << " len=" << skip << "\n";
+                std::cerr << "scan_exif Done processing JPEG/Exif ffd8ff at " << start << " len=" << skip_bytes << "\n";
             }
             continue;
         }
@@ -456,7 +458,7 @@ void exif_scanner::scan(const sbuf_t &sbuf)
                     std::cerr << "scan_exif Start processing validated Photoshop 8BPS at start "
                               << start << " tiff_offset " << tiff_offset << "\n";
                 }
-                size_t skip = process_possible_jpeg(sbuf.slice(start),true);
+                size_t skip = process_possible_jpeg(sbuf.slice(start), true);
                 // std::cerr << "2 skip=" << skip << "\n";
                 if (skip>1) start += skip-1;
                 if (exif_scanner_debug){
@@ -518,9 +520,10 @@ void scan_exif (scanner_params &sp)
 	return;
     }
     if (sp.phase==scanner_params::PHASE_INIT2) {
-        escan = new exif_scanner(sp);
+        /* Nothing to do here */
     }
     if (sp.phase==scanner_params::PHASE_SCAN){
+        escan = new exif_scanner(sp);
         escan->scan(*sp.sbuf);
     }
 }

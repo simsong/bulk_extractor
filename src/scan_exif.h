@@ -1,10 +1,10 @@
 #ifndef SCAN_EXIF_H
 #define SCAN_EXIF_H
 
-#include "exif_reader.h"
 #include "be13_api/sbuf.h"
 #include "be13_api/scanner_params.h"
 #include "be13_api/scanner_set.h"
+#include "exif_reader.h"                // provides entry_list_t
 #include "jpeg_validator.h"
 
 struct exif_scanner {
@@ -25,20 +25,13 @@ struct exif_scanner {
     feature_recorder &gps_recorder;
     feature_recorder &jpeg_recorder;
 
-    void clear_entries() {
-        for (entry_list_t::const_iterator it = entries.begin(); it!=entries.end(); it++) {
-            delete *it;
-        }
-        entries.clear();
-    }
-
     /* Verify a jpeg internal structure and return the length of the validated portion */
     // http://www.w3.org/Graphics/JPEG/itu-t81.pdf
     // http://stackoverflow.com/questions/1557071/the-size-of-a-jpegjfif-image
 
-    void record_exif_data(const pos0_t &pos0, const std::string &hash_hex);
+    void record_exif_data(const pos0_t &pos0, std::string hash_hex);
 
-    void record_gps_data(const pos0_t &pos0, const std::string &hash_hex);
+    void record_gps_data(const pos0_t &pos0, std::string hash_hex);
 
     /**
      * Process the JPEG, including - calculate its hash, carve it, record exif and gps data

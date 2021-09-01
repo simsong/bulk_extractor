@@ -330,6 +330,8 @@ int process_ewf::open()
     char **libewf_filenames = NULL;
     int amount_of_filenames = 0;
 
+    std::cout << "Opening " << image_fname() << "... ";
+    std::cout.flush();
 #ifdef HAVE_LIBEWF_HANDLE_CLOSE
     bool use_libewf_glob = true;
     libewf_error_t *error=0;
@@ -414,6 +416,7 @@ int process_ewf::open()
 	details.push_back(std::string("EXAMINER NAME: "+examinername));
     }
 #endif
+    std::cout << "\r                                                                      " << std::endl;
     return 0;
 }
 

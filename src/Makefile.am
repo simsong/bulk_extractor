@@ -21,9 +21,6 @@ include be13_api/Makefile.defs
 
 include rar/Makefile.defs
 
-#jpeg_dump_SOURCES = 	scan_exif.cpp scan_exif.h exif_reader.cpp exif_reader.h exif_entry.cpp\
-#	be13_api/sbuf.h be13_api/sbuf.cpp be13_api/unicode_escape.o jpeg_dump.cpp
-
 # TSK3INCS = \
 # 	tsk3/auto/tsk_auto.h\
 # 	tsk3/base/tsk_base.h\
@@ -66,7 +63,7 @@ scanners_builtin = \
 	scan_ccns2.cpp scan_ccns2.h \
 	scan_elf.cpp \
 	scan_evtx.cpp \
-	scan_exif.cpp scan_exif.h exif_reader.cpp exif_reader.h exif_entry.cpp jpeg_validator.h \
+	scan_exif.cpp scan_exif.h exif_reader.cpp exif_reader.h exif_entry.h exif_entry.cpp jpeg_validator.h \
 	scan_exiv2.cpp \
 	scan_facebook.cpp \
 	scan_find.cpp \

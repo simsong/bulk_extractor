@@ -16,16 +16,7 @@
 #ifndef EXIF_READER_H
 #define EXIF_READER_H
 
-#include <cstdlib>
-#include <cstring>
-#include <cstdio>
-
-#include <vector>
-#include <iostream>
-#include <iomanip>
-#include <cassert>
-#include <algorithm>
-
+#include "exif_entry.h"
 #include "be13_api/sbuf.h"
 
 /**
@@ -56,33 +47,6 @@ typedef enum {
     IFD1_GPS,
     IFD1_INTEROPERABILITY
 } ifd_type_t;
-
-/**
- * EXIF entry
- */
-class exif_entry {
-public:
-    const uint16_t ifd_type {};
-    const std::string name {};
-    const std::string value {};
-    exif_entry(uint16_t ifd_type_, const std::string &name_, const std::string &value_);
-
-    // copy
-    exif_entry(const exif_entry &that);
-    ~exif_entry();
-
-    // prefix name with IFD type
-    const std::string get_full_name() const;
-
-private:
-    // do not implement this operator
-    const exif_entry &operator=(const exif_entry &that);
-};
-
-/**
- * EXIF entries
- */
-typedef std::vector<exif_entry*> entry_list_t;
 
 /**
  * Raise an exif_failure_exception to discontinue processing exif when it is determined that
@@ -144,13 +108,13 @@ namespace entry_reader {
      * parse_ifd_entries() extracts entries from an offset given its type
      */
     void parse_ifd_entries(ifd_type_t ifd_type, tiff_handle_t &tiff_handle,
-                       size_t ifd_offset, entry_list_t &entries);
+                           size_t ifd_offset, entry_list_t &entries);
 
     /**
      * parse_entry() extracts entry and if entry add entry else IFD so parse its entries
      */
     void parse_entry(ifd_type_t ifd_type, tiff_handle_t &tiff_handle,
-                       size_t ifd_entry_offset, entry_list_t &entries);
+                     size_t ifd_entry_offset, entry_list_t &entries);
 }
 
 /**

@@ -52,6 +52,8 @@ static const u_int AES192_KEY_SCHEDULE_SIZE =      208; // Size of a 128-bit AES
 static const u_int AES256_KEY_SCHEDULE_SIZE =      240; // Size of a 128-bit AES key schedule, in bytes
 
 static const u_int REQUIRED_DISTINCT_COUNTS =	10; // number of unique  bytes to require in AES key
+static const u_int WINDOW_SIZE  = AES256_KEY_SCHEDULE_SIZE;
+
 
 
 // Determines whether or not data represents valid
@@ -371,8 +373,6 @@ static std::string key_to_string(const uint8_t * key, uint64_t sz)
     return ret;
 }
 
-#define WINDOW_SIZE  AES256_KEY_SCHEDULE_SIZE
-
 extern "C"
 void scan_aes(struct scanner_params &sp)
 {
@@ -382,6 +382,7 @@ void scan_aes(struct scanner_params &sp)
 	sp.info->description    = "Search for AES key schedules";
         sp.info->scanner_version = "1.1";
         sp.info->feature_defs.push_back( feature_recorder_def("aes_keys"));
+        sp.info->min_sbuf_size  = WINDOW_SIZE;
 	rcon_setup();
 	sbox_setup();
 	return;
@@ -390,13 +391,12 @@ void scan_aes(struct scanner_params &sp)
     /* We don't need to check for phase 2 of if sbuf isn't big enough to hold a KEY_SCHEDULE
      */
 
-    if(sp.phase==scanner_params::PHASE_SCAN && sp.sbuf->bufsize >= WINDOW_SIZE){
+    if(sp.phase==scanner_params::PHASE_SCAN){
 	auto &aes_recorder = sp.named_feature_recorder("aes_keys");
 
 	/* Simple mod: Keep a rolling window of the entropy and don't
-	 * we see fewer than 10 distinct characters in window. This will
-	 * eliminate checks on many kinds of bulk data that simply can't have a key
-	 * in the block.
+	 * scan if we see fewer than 10 distinct characters in window. This will
+	 * eliminate checks on many kinds of bulk data that are unlikely to have a key  in the block.
 	 */
 	uint32_t counts[256];
 	memset(counts,0,sizeof(counts));
@@ -410,9 +410,7 @@ void scan_aes(struct scanner_params &sp)
 		distinct_counts++;
 	    }
 	}
-	for (size_t pos = 0 ;
-	     pos < sp.sbuf->bufsize-WINDOW_SIZE && pos < sp.sbuf->pagesize;
-	     pos++){
+	for (size_t pos = 0 ; pos < sp.sbuf->bufsize-WINDOW_SIZE && pos < sp.sbuf->pagesize; pos++){
 
 	    /* add value at end of 128 bits to sliding window */
 	    {
