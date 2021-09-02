@@ -167,37 +167,35 @@ void Phase1::read_process_sbufs()
         }
 
         if (config.opt_page_start<=it.page_number && config.opt_offset_start<=it.raw_offset){
-            // Make sure we haven't done this page yet. This should never happen
-            if (config.seen_page_ids.find(it.get_pos0().str()) != config.seen_page_ids.end()){
-                std::cerr << "Phase 1 error: " << it.get_pos0().str() << " provided twice\n";
-                throw std::runtime_error("phase1 error - page provided twice");
-            }
-            try {
-                sbuf_t *sbufp = get_sbuf(it);
+            // Only process pages we haven't seen before
+            if (config.seen_page_ids.find(it.get_pos0().str()) == config.seen_page_ids.end()){
+                try {
+                    sbuf_t *sbufp = get_sbuf(it);
 
-                /* compute the sha1 hash */
-                if (sha1g){
-                    if (sbufp->pos0.offset==hash_next){
-                        // next byte follows logically, so continue to compute hash
-                        sha1g->update(sbufp->get_buf(), sbufp->pagesize);
-                        hash_next += sbufp->pagesize;
-                    } else {
-                        delete sha1g; // we had a logical gap; stop hashing
-                        sha1g = 0;
+                    /* compute the sha1 hash */
+                    if (sha1g){
+                        if (sbufp->pos0.offset==hash_next){
+                            // next byte follows logically, so continue to compute hash
+                            sha1g->update(sbufp->get_buf(), sbufp->pagesize);
+                            hash_next += sbufp->pagesize;
+                        } else {
+                            delete sha1g; // we had a logical gap; stop hashing
+                            sha1g = 0;
+                        }
                     }
+                    total_bytes += sbufp->pagesize;
+                    ss.schedule_sbuf(sbufp); // processes the sbuf, then deletes it
                 }
-                total_bytes += sbufp->pagesize;
-                ss.schedule_sbuf(sbufp); // processes the sbuf, then deletes it
-            }
-            catch (const std::exception &e) {
-                // report uncaught exceptions to both user and XML file
-                std::stringstream sstr;
-                sstr << "phase=1 name='" << e.what() << "' " << "pos0='" << it.get_pos0() << "' ";
+                catch (const std::exception &e) {
+                    // report uncaught exceptions to both user and XML file
+                    std::stringstream sstr;
+                    sstr << "phase=1 name='" << e.what() << "' " << "pos0='" << it.get_pos0() << "' ";
 
-                if (config.opt_report_read_errors) {
-                    std::cerr << "Phase 1 Exception " << e.what() << " skipping " << it.get_pos0() << "\n";
+                    if (config.opt_report_read_errors) {
+                        std::cerr << "Phase 1 Exception " << e.what() << " skipping " << it.get_pos0() << "\n";
+                    }
+                    xreport.xmlout("debug:exception", e.what(), sstr.str(), true);
                 }
-                xreport.xmlout("debug:exception", e.what(), sstr.str(), true);
             }
         }
 
