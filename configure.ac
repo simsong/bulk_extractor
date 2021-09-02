@@ -135,7 +135,7 @@ AC_SYS_POSIX_TERMIOS
 
 ## Check for headers used by bulk Extractor
 AC_CHECK_HEADERS([dlfcn.h fcntl.h inttypes.h libgen.h limits.h mmap.h pwd.h signal.h stdint.h sys/cdefs.h sys/disk.h sys/fcntl.h sys/ioctl.h sys/mman.h sys/mmap.h sys/mount.h sys/param.h sys/socket.h sys/stat.h sys/types.h sys/time.h sys/resource.h sys/sysctl.h sys/vmmeter.h termcap.h time.h unistd.h windows.h CoreServices/CoreServices.h mach-o/dyld.h])
-AC_CHECK_FUNCS([getuid getpwuid gethostname getrusage gmtime_r getprogname isxdigit ishexnumber le64toh localtime_r _lseeki64 inet_ntop isatty pread64 pread printf mmap munmap MD5 mkstemp mktemp sleep SleepEx strptime usleep vasprintf _NSGetExecutablePath])
+AC_CHECK_FUNCS([getuid getpwuid gethostname getrusage gmtime_r getprogname isxdigit ishexnumber le64toh localtime_r _lseeki64 inet_ntop ioctl isatty pread64 pread printf mmap munmap MD5 mkstemp mktemp sleep SleepEx strptime usleep vasprintf _NSGetExecutablePath])
 AC_CHECK_FUNCS([CreateProcess LoadLibrary IncrementAtomic InterlockedIncrement])
 
 ## v2.0 uses termcap! So modern
@@ -156,6 +156,8 @@ AC_CHECK_HEADERS([netinet/ip.h], [], [],
 #include <netinet/in.h>
 #endif
 ]])
+
+AC_CHECK_MEMBERS([struct winsize.ws_col], [], [], [[#include <sys/ioctl.h>]])
 
 AC_CHECK_MEMBER([struct sockaddr_in.sin_len],
 		[AC_DEFINE(HAVE_SOCKADDR_IN_SIN_LEN, 1, [Do we have sockaddr.sin_len?])],

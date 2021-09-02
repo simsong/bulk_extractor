@@ -29,7 +29,9 @@ void muntrace(){}
 #endif
 
 #ifdef HAVE_TERMCAP_H
-#include <termcap.h>
+//#include <termcap.h>
+#include <curses.h>
+#include <term.h>
 #endif
 
 // Open standard input in binary mode by default on Win32.
@@ -37,6 +39,11 @@ void muntrace(){}
 #ifdef WIN32
 int _CRT_fmode = _O_BINARY;
 #endif
+
+#ifdef HAVE_SYS_IOCTL_H
+#include <sys/ioctl.h>
+#endif
+
 
 #include "dfxml_cpp/src/dfxml_writer.h"
 #include "dfxml_cpp/src/hash_t.h"  // needs config.h
@@ -208,25 +215,52 @@ struct notify_opts {
     std::atomic<double> *fraction_done;
     bool opt_legacy;
 };
+
 [[noreturn]] void notify_thread(struct notify_opts *o)
 {
     assert(o->ssp != nullptr);
-    std::string cl, ho, ce;
+    const char *cl="";
+    const char *ho="";
+    const char *ce="";
+    const char *cd="";
+    int cols = 80;
 #ifdef HAVE_LIBTERMCAP
+    char buf[65536], *table=buf;
+    cols = tgetnum("co");
     if (!o->opt_legacy) {
-        char buf[65536];
         const char *str = ::getenv("TERM");
-        if (str){
-            tgetent(buf, str);
-            cl = tgetstr("cl", NULL);   // clear screen
-            ho = tgetstr("ho", NULL);   // home
-            ho = tgetstr("ce", NULL);   // clear to end of line
+        if (!str){
+            std::cerr << "Warning: TERM environment variable not set." << std::endl;
+        } else {
+            switch (tgetent(buf, str)) {
+            case 0:
+                std::cerr << "Warning: No terminal entry '" << str << "'. " << std::endl;
+                break;
+            case -1:
+                std::cerr << "Warning: terminfo database culd not be found." << std::endl;
+                break;
+            case 1: // success
+                ho = tgetstr("ho", &table);   // home
+                cl = tgetstr("cl", &table);   // clear screen
+                ce = tgetstr("ce", &table);   // clear to end of line
+                cd = tgetstr("cd", &table);   // clear to end of screen
+                break;
+            }
         }
-        std::cerr << cl << std::endl;
     }
 #endif
 
+    std::cout << cl;                    // clear screen
     while(true){
+
+        // get screen size change if we can!
+#if defined(HAVE_IOCTL) && defined(HAVE_STRUCT_WINSIZE_WS_COL)
+        struct winsize ws;
+        if (ioctl(STDIN_FILENO, TIOCGWINSZ, &ws)==0){
+            cols = ws.ws_col;
+        }
+#endif
+
         time_t rawtime = time (0);
         struct tm timeinfo = *(localtime(&rawtime));
         std::map<std::string,std::string> stats = o->ssp->get_realtime_stats();
@@ -252,12 +286,10 @@ struct notify_opts {
             }
         }
         if (!o->opt_legacy) {
-            // ho should work, but it didn't?
-            // perhaps we should move to curses.
-            std::cout << cl << "bulk_extractor      " << asctime(&timeinfo) << "  " << std::endl;
+            std::cout << ho << "bulk_extractor      " << asctime(&timeinfo) << "  " << std::endl;
             for(const auto &it : stats ){
                 std::cout << it.first << ": " << it.second;
-                if (ce.size() > 0 ){
+                if (ce[0] ){
                     std::cout << ce;
                 } else {
                     // Space out to the 50 column to erase any junk
@@ -268,7 +300,15 @@ struct notify_opts {
                 }
                 std::cout << std::endl;
             }
-            std::cout << std::endl << std::endl;
+            if( o->fraction_done ){
+                if (cols>10){
+                    double done = *o->fraction_done;
+                    int before = (cols - 3) * done;
+                    int after  = (cols - 3) * (1.0 - done);
+                    std::cout << std::string(before,'=') << '>' << std::string(after,'.') << '|' << ce << std::endl;
+                }
+            }
+            std::cout << cd << std::endl << std::endl;
         }
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
@@ -671,8 +711,15 @@ int main(int argc,char **argv)
 
     std::cerr << "Calling check_previously_processed at one\n";
 
-    phase1.phase1_run();
-    ss.join();                          // wait for threads to come together
+    try {
+        phase1.phase1_run();
+        ss.join();                          // wait for threads to come together
+    }
+    catch (const feature_recorder::DiskWriteError &e) {
+        std::cerr << "Disk write error during Phase 1 (scanning). Disk is probably full." << std::endl
+                  << "Remove extra files and restart bulk_extractor with the exact same command line to continue." << std::endl;
+        exit(1);
+    }
 
 #if 0
     if ( fs.flag_set(feature_recorder_set::ENABLE_SQLITE3_RECORDERS )) {
@@ -687,7 +734,15 @@ int main(int argc,char **argv)
     /*** PHASE 2 --- Shutdown ***/
     if (!cfg.opt_quiet) std::cout << "Phase 2. Shutting down scanners\n";
     xreport->add_timestamp("phase2 start");
-    ss.shutdown();
+    try {
+        ss.shutdown();
+    }
+    catch (const feature_recorder::DiskWriteError &e) {
+        std::cerr << "Disk write error during Phase 2 (histogram making). Disk is probably full." << std::endl
+                  << "Remove extra files and restart bulk_extractor with the exact same command line to continue." << std::endl;
+        exit(1);
+    }
+
     xreport->add_timestamp("phase2 end");
     master_timer.stop();
 
@@ -716,7 +771,7 @@ int main(int argc,char **argv)
             std::cout << mb_per_sec/cfg.num_threads << " (MBytes/sec/thread)\n";
         }
         std::cout << "sbufs created:   " << sbuf_t::sbuf_total << std::endl;
-        std::cout << "sbufs remaining: " << sbuf_t::sbuf_count << std::endl;
+        std::cout << "sbufs unaccounted: " << sbuf_t::sbuf_count << " (should be 0) " << std::endl;
     }
 
     try {
