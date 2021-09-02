@@ -857,15 +857,11 @@ TEST_CASE("restarter", "[restarter]") {
                           sc.outdir  / "report.xml");
 
     Phase1::Config   cfg;  // config for the image_processing system
-    struct feature_recorder_set::flags_t f;
-    scanner_set ss(sc, f, nullptr);     // make a scanner_set but with no XML writer. We will create it below
-    image_process *p = image_process::open( sc.input_fname, cfg.opt_recurse, cfg.opt_pagesize, cfg.opt_marginsize);
-    Phase1 phase1(cfg, *p, ss);
-    bulk_extractor_restarter r(sc, phase1);
+    bulk_extractor_restarter r(sc, cfg);
 
     REQUIRE( std::filesystem::exists( sc.outdir / "report.xml") == true); // because it has not been renamed yet
     r.restart();
     REQUIRE( std::filesystem::exists( sc.outdir / "report.xml") == false); // because now it has been renamed
-    REQUIRE( phase1.seen_page_ids.find("369098752") != phase1.seen_page_ids.end() );
-    REQUIRE( phase1.seen_page_ids.find("369098752+") == phase1.seen_page_ids.end() );
+    REQUIRE( cfg.seen_page_ids.find("369098752") != cfg.seen_page_ids.end() );
+    REQUIRE( cfg.seen_page_ids.find("369098752+") == cfg.seen_page_ids.end() );
 }

@@ -37,6 +37,8 @@ class Phase1 {
     }
 
 public:
+    // because seen_page_ids are added in order, we want to use an unordered set.
+    typedef std::unordered_set<std::string> seen_page_ids_t;
     static inline std::string REPORT_FILENAME {"report.xml"};
     /* Configuration Control */
     struct Config {
@@ -65,26 +67,22 @@ public:
         void      set_sampling_parameters(std::string p);
         std::atomic<double>    *fraction_done {nullptr};
         bool      opt_legacy {false};
+        seen_page_ids_t seen_page_ids;               // pages that were already seen
     };
 
     typedef std::set<uint64_t> blocklist_t; // a list of blocks (for random sampling)
     static std::string minsec(time_t tsec);    // return "5 min 10 sec" string
     static void make_sorted_random_blocklist(blocklist_t *blocklist,uint64_t max_blocks,float frac);
 
-    //typedef std::set<std::string> seen_page_ids_t;
-    // because seen_page_ids are added in order, we want to use an unordered set.
-    typedef std::unordered_set<std::string> seen_page_ids_t;
-
     /* These instance variables reference variables in main.cpp */
-    const Config  &config;              // phase1 config passed in
+    Config        &config;              // phase1 config passed in. Writable so seen can be updated.
     image_process &p;                   // image being processed
     scanner_set   &ss;                  // our scanner set
 
     u_int         notify_ctr  {0};      // for random sampling
     uint64_t      total_bytes {0};      // processed
-    seen_page_ids_t seen_page_ids {};   // to avoid processing each twice
     dfxml::sha1_generator *sha1g {nullptr};        // the SHA1 of the image. Set to 0 if a gap is encountered
-    uint64_t      sha1_next {0};        // next byte to hash, to detect gaps
+    uint64_t      hash_next {0};        // next byte to hash, to detect gaps
 
     std::string image_hash {};          // when hashed, the image hash
     dfxml_writer &xreport;              // we always write out the DFXML. Allows restart to be handled in phase1

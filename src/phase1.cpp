@@ -168,7 +168,7 @@ void Phase1::read_process_sbufs()
 
         if (config.opt_page_start<=it.page_number && config.opt_offset_start<=it.raw_offset){
             // Make sure we haven't done this page yet. This should never happen
-            if (seen_page_ids.find(it.get_pos0().str()) != seen_page_ids.end()){
+            if (config.seen_page_ids.find(it.get_pos0().str()) != config.seen_page_ids.end()){
                 std::cerr << "Phase 1 error: " << it.get_pos0().str() << " provided twice\n";
                 throw std::runtime_error("phase1 error - page provided twice");
             }
@@ -177,10 +177,10 @@ void Phase1::read_process_sbufs()
 
                 /* compute the sha1 hash */
                 if (sha1g){
-                    if (sbufp->pos0.offset==sha1_next){
+                    if (sbufp->pos0.offset==hash_next){
                         // next byte follows logically, so continue to compute hash
                         sha1g->update(sbufp->get_buf(), sbufp->pagesize);
-                        sha1_next += sbufp->pagesize;
+                        hash_next += sbufp->pagesize;
                     } else {
                         delete sha1g; // we had a logical gap; stop hashing
                         sha1g = 0;
@@ -266,7 +266,8 @@ void Phase1::dfxml_write_source()
 void Phase1::phase1_run()
 {
     assert(ss.get_current_phase() == scanner_params::PHASE_SCAN);
-    for (const auto &it :seen_page_ids) {
+    // save all of the pages we have seen in the DFXML file
+    for (const auto &it : config.seen_page_ids) {
         ss.record_work_start( it, 0, 0 );
     }
     xreport.push("runtime","xmlns:debug=\"http://www.github.com/simsong/bulk_extractor/issues\"");
