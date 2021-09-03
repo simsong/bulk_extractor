@@ -21,11 +21,11 @@ class bulk_extractor_restarter {
     std::stringstream       cdata {};
     std::string             thisElement {};
     std::string             provided_filename {};
-
     scanner_config          &sc;
-    Phase1                  &phase1;
+    Phase1::Config          &cfg;
 public:;
-    bulk_extractor_restarter(scanner_config &sc_,Phase1 &phase1_):sc(sc_),phase1(phase1_){};
+    bulk_extractor_restarter(scanner_config &sc_,
+                             Phase1::Config &cfg_):sc(sc_),cfg(cfg_){};
     class CantRestart : public std::exception {
         std::string m_error{};
     public:;
@@ -40,7 +40,7 @@ public:;
         if (self.thisElement=="debug:work_start"){
             for(int i=0;attrs[i] && attrs[i+1];i+=2){
                 if (strcmp(attrs[i],"pos0") == 0){
-                    self.phase1.seen_page_ids.insert(attrs[i+1]);
+                    self.cfg.seen_page_ids.insert(attrs[i+1]);
                 }
             }
         }

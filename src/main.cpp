@@ -543,11 +543,11 @@ int main(int argc,char **argv)
         clean_start = true;
     }
 
-    dfxml_writer *xreport = new dfxml_writer(sc.outdir / Phase1::REPORT_FILENAME, false); // do not make DTD
-    ss.set_dfxml_writer( xreport );
-
-    /* Start the clock */
-    master_timer.start();
+    if (clean_start==false){
+	/* Restarting */
+        bulk_extractor_restarter r(sc,cfg);
+        r.restart();                    // load the restart file and rename report.xml
+    }
 
     /* Get image or directory */
     if (*argv == NULL) {
@@ -560,10 +560,11 @@ int main(int argc,char **argv)
     }
     sc.input_fname = *argv;
 
+    image_process *p = image_process::open( sc.input_fname, cfg.opt_recurse, cfg.opt_pagesize, cfg.opt_marginsize);
+
     /* are we supposed to run the path printer? */
     if (opt_path.size() > 0){
 	if (argc!=1) throw std::runtime_error("-p requires a single argument.");
-        image_process *p = image_process::open( sc.input_fname, cfg.opt_recurse, cfg.opt_pagesize, cfg.opt_marginsize);
         path_printer pp(&ss, p, std::cout);
         if (opt_path=="-http" || opt_path=="--http"){
             pp.process_http(std::cin);
@@ -579,37 +580,23 @@ int main(int argc,char **argv)
      * We use *p because we don't know which subclass we will be getting.
      */
 
-    image_process *p = image_process::open( sc.input_fname, cfg.opt_recurse, cfg.opt_pagesize, cfg.opt_marginsize);
+    dfxml_writer *xreport = new dfxml_writer(sc.outdir / Phase1::REPORT_FILENAME, false); // do not make DTD
+    ss.set_dfxml_writer( xreport );
+    /* Start the clock */
+    master_timer.start();
+
     Phase1 phase1(cfg, *p, ss);
 
-    /* Determine if this is the first time through or if the program was restarted.
-     * Restart procedure: just press up-arrow and return to re-run the command in verbatim.
-     */
-    if (clean_start){
-        /* First time running */
-	/* Validate the args */
-	if ( argc == 0 ) throw std::runtime_error("Clean start, but no disk image provided. Run with -h for help.");
-        if ( argc > 1  ){
-            throw std::runtime_error("Clean start, but too many arguments provided. Run with -h for help.");
-        }
-	validate_path(sc.input_fname);
-    } else {
-	/* Restarting */
-        bulk_extractor_restarter r(sc, phase1);
-
-        try {
-            r.restart();
-        }
-        catch (bulk_extractor_restarter::CantRestart &e) {
-            std::cerr << "Cannot restart from " << sc.outdir << "\n";
-            exit(1);
-        }
+    /* Validate the args */
+    if ( argc == 0 ) throw std::runtime_error("No disk image provided. Run with -h for help.");
+    if ( argc > 1  ){
+            throw std::runtime_error("Too many arguments provided. Run with -h for help.");
     }
+    validate_path(sc.input_fname);
 
     /* Create the DFXML file in the report directory.
      * If we are restarting, the dfxml file was renamed.
      */
-
 
     /* Determine the feature files that will be used from the scanners that were enabled */
     auto feature_file_names = ss.feature_file_list();
@@ -619,44 +606,11 @@ int main(int argc,char **argv)
     if (opt_write_sqlite3)         flags |= feature_recorder_set::ENABLE_SQLITE3_RECORDERS;
     if (!opt_write_feature_files)  flags |= feature_recorder_set::DISABLE_FILE_RECORDERS;
 
-    /* Create the feature_recorder_set */
-    feature_recorder_set fs(flags, be_hash_name, sc.input_fname, sc.outdir);
-    fs.init( feature_file_names );      // TODO: this should be in the initializer
-
-    /* Enable histograms */
-    if (opt_enable_histograms) plugin::add_enabled_scanner_histograms_to_feature_recorder_set(fs); // TODO: This should be in initializer
-    plugin::scanners_init(fs);    // TODO: This should be in the initiazer
-
-    fs.set_stop_list(&stop_list);
-    fs.set_alert_list(&alert_list);
-
-    /* Look for commands that impact per-recorders */
-    for(scanner_info::config_t::const_iterator it=sc.namevals.begin();it!=sc.namevals.end();it++){
-        /* see if there is a <recorder>: */
-        std::vector<std::string> params = split(it->first,':');
-        if (params.size()>=3 && params.at(0)=="fr"){
-            feature_recorder &fr = fs.named_feature_recorder(params.at(1));
-            const std::string &cmd = params.at(2);
-            if (fr){
-                if (cmd=="window")        fr->set_context_window(stoi64(it->second));
-                if (cmd=="window_before") fr->set_context_window_before(stoi64(it->second));
-                if (cmd=="window_after")  fr->set_context_window_after(stoi64(it->second));
-            }
-        }
-        /* See if there is a scanner? */
-    }
 #endif
 
     /* provide documentation to the user; the DFXML information comes from elsewhere */
     if (!cfg.opt_quiet){
         std::cout << "bulk_extractor version: " << PACKAGE_VERSION << "\n";
-#ifdef HAVE_GETHOSTNAME
-        char hostname[1024];
-        memset(hostname,0,sizeof(hostname));
-        if (gethostname(hostname,sizeof(hostname)-1)==0){
-            if (hostname[0]) std::cout << "Hostname: " << hostname << "\n";
-        }
-#endif
         std::cout << "Input file: " << sc.input_fname << "\n";
         std::cout << "Output directory: " << sc.outdir << "\n";
         std::cout << "Disk Size: " << p->image_size() << "\n";
@@ -702,11 +656,6 @@ int main(int argc,char **argv)
 
     phase1.dfxml_write_create( original_argc, original_argv);
     xreport->xmlout("provided_filename", sc.input_fname); // save this information
-
-    /* TODO: Load up phase1 seen_page_ideas if we are restarting */
-
-    //if (cfg.debug & DEBUG_PRINT_STEPS) std::cerr << "DEBUG: STARTING PHASE 1\n";
-
     xreport->add_timestamp("phase1 start");
 
     std::cerr << "Calling check_previously_processed at one\n";
