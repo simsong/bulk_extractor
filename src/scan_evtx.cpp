@@ -5,6 +5,7 @@
  * Teru Yamazaki(@4n6ist) - https://github.com/4n6ist/bulk_extractor-rec
  **/
 
+#include "config.h"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -13,7 +14,6 @@
 #include <sstream>
 #include <vector>
 
-#include "config.h"
 
 #include "utf8.h"
 #include "be13_api/scanner_params.h"
@@ -145,7 +145,7 @@ void scan_evtx(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-        sp.info.set_name("evtx");
+        sp.info->set_name("evtx");
         sp.info->author          = "Teru Yamazaki";
         sp.info->description     = "Scans for EVTX Chunks and generates valid EVTX file";
         sp.info->scanner_version = "1.0";

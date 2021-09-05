@@ -32,12 +32,11 @@
  */
 
 
+#include "config.h"
 #include <string>
 #include <string.h>
 #include <inttypes.h>
 
-
-#include "config.h"
 #include "be13_api/scanner_params.h"
 #include "be13_api/scanner_set.h"
 
@@ -50,10 +49,6 @@ static const u_int AES256_KEY_SIZE  =               32; // Size of a 256-bit AES
 static const u_int AES128_KEY_SCHEDULE_SIZE =      176; // Size of a 128-bit AES key schedule, in bytes
 static const u_int AES192_KEY_SCHEDULE_SIZE =      208; // Size of a 128-bit AES key schedule, in bytes
 static const u_int AES256_KEY_SCHEDULE_SIZE =      240; // Size of a 128-bit AES key schedule, in bytes
-
-static const u_int REQUIRED_DISTINCT_COUNTS =	10; // number of unique  bytes to require in AES key
-static const u_int WINDOW_SIZE  = AES256_KEY_SCHEDULE_SIZE;
-
 
 
 // Determines whether or not data represents valid
@@ -377,80 +372,57 @@ int scan_aes_128 = 1;
 int scan_aes_192 = 0;
 int scan_aes_256 = 1;
 
+
+
 extern "C"
 void scan_aes(struct scanner_params &sp)
 {
     if(sp.phase==scanner_params::PHASE_INIT){
-        sp.info.set_name("aes");
+        sp.info->set_name("aes");
 	sp.info->author		= "Sam Trenholme, Jesse Kornblum and Simson Garfinkel";
 	sp.info->description    = "Search for AES key schedules";
         sp.info->scanner_version = "1.1";
         sp.info->feature_defs.push_back( feature_recorder_def("aes_keys"));
-        sp.info->min_sbuf_size  = WINDOW_SIZE;
-        sp.get_config("scan_aes_128", &scan_aes_128, "Scan for 128-bit AES keys; 0=No, 1=Yes");
-        sp.get_config("scan_aes_192", &scan_aes_192, "Scan for 192-bit AES keys; 0=No, 1=Yes");
-        sp.get_config("scan_aes_256", &scan_aes_256, "Scan for 256-bit AES keys; 0=No, 1=Yes");
+        sp.info->min_sbuf_size  = AES128_KEY_SIZE;
+        sp.get_scanner_config("scan_aes_128", &scan_aes_128, "Scan for 128-bit AES keys; 0=No, 1=Yes");
+        sp.get_scanner_config("scan_aes_192", &scan_aes_192, "Scan for 192-bit AES keys; 0=No, 1=Yes");
+        sp.get_scanner_config("scan_aes_256", &scan_aes_256, "Scan for 256-bit AES keys; 0=No, 1=Yes");
 	rcon_setup();
 	sbox_setup();
 	return;
     }
-
-    /* We don't need to check for phase 2 of if sbuf isn't big enough to hold a KEY_SCHEDULE
-     */
 
     if(sp.phase==scanner_params::PHASE_SCAN){
 	auto &aes_recorder = sp.named_feature_recorder("aes_keys");
 
 	/* Simple mod: Keep a rolling window of the entropy and don't
 	 * scan if we see fewer than 10 distinct characters in window. This will
-	 * eliminate checks on many kinds of bulk data that are unlikely to have a key  in the block.
+	 * eliminate checks on many kinds of bulk data that are unlikely to have a key in the block.
+         *
+         * Note that we now compute and re-compute the histogram many times, rather than just having a sliding window.
+         * This is less efficient than before, but the code is simpler, and now the code is correctly computing the histogram
+         * for the 128, 192 and 256-byte cases.
 	 */
-	uint32_t counts[256];
-	memset(counts,0,sizeof(counts));
-	uint32_t distinct_counts = 0;	// how many distinct counts do we have?
-
-	/* Initialize the sliding window */
-	for (size_t pos = 0; pos < WINDOW_SIZE ; pos++)	{
-	    const uint8_t val = (*sp.sbuf)[pos];
-	    counts[val]++;
-	    if (counts[val] == 1) {
-		distinct_counts++;
-	    }
-	}
-	for (size_t pos = 0 ; pos < sp.sbuf->bufsize-WINDOW_SIZE && pos < sp.sbuf->pagesize; pos++){
-	    /* add value at end of 128 bits to sliding window */
-	    {
-		const uint8_t val = (*sp.sbuf)[pos+AES256_KEY_SCHEDULE_SIZE];
-		counts[val]++;
-		if(counts[val]==1) {		// we have one more distinct count
-		    distinct_counts++;
-		}
-	    }
-
+	for (size_t pos = 0 ; pos < sp.sbuf->bufsize && pos < sp.sbuf->pagesize; pos++){
             /* TODO: Remove direct memory access with mediated access */
-	    if (distinct_counts > REQUIRED_DISTINCT_COUNTS){
-		const uint8_t *p2 = sp.sbuf->get_buf() + pos;
+            const uint8_t *p2 = sp.sbuf->get_buf() + pos;
+	    if (scan_aes_128 && sp.sbuf->distinct_characters( pos, AES128_KEY_SIZE) > AES128_KEY_SIZE/4){
 		if (valid_aes128_schedule(p2)) {
                     std::string key = key_to_string(p2, AES128_KEY_SIZE);
 		    aes_recorder.write(sp.sbuf->pos0+pos,key,std::string("AES128"));
 		}
+            }
+	    if (scan_aes_192 && sp.sbuf->distinct_characters( pos, AES192_KEY_SIZE) > AES192_KEY_SIZE/4){
 		if (valid_aes192_schedule(p2)) {
                     std::string key = key_to_string(p2, AES192_KEY_SIZE);
 		    aes_recorder.write(sp.sbuf->pos0+pos,key,std::string("AES192"));
 		}
+            }
+	    if (scan_aes_256 && sp.sbuf->distinct_characters( pos, AES256_KEY_SIZE) > AES256_KEY_SIZE/4){
 		if (valid_aes256_schedule(p2)) {
                     std::string key = key_to_string(p2, AES256_KEY_SIZE);
 		    aes_recorder.write(sp.sbuf->pos0+pos,key,std::string("AES256"));
 		}
-	    }
-	    /* remove current byte being analyzed */
-	    if(pos>WINDOW_SIZE){
-		const uint8_t val = (*sp.sbuf)[pos];
-		counts[val]--;
-		if(counts[val]==0){
-		    distinct_counts--;	// we have one fewer
-		}
-		assert(distinct_counts>0);	// we must have at least one distinct count...
 	    }
 	}
     }

@@ -143,7 +143,7 @@ void scan_base64(scanner_params &sp)
 
     sp.check_version();
     if ( sp.phase == scanner_params::PHASE_INIT){
-        sp.info.set_name("base64");
+        sp.info->set_name("base64");
         sp.info->author         = "Simson L. Garfinkel";
         sp.info->description    = "scans for Base64-encoded data";
         sp.info->scanner_version= "1.1";

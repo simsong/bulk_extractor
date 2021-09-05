@@ -1,12 +1,12 @@
+#include "config.h"
+
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <stdlib.h>
 #include <strings.h>
-//#include <cerrno>
 #include <sstream>
 
-#include "config.h"
 
 #include "be13_api/scanner_params.h"
 #include "be13_api/scanner_set.h"
@@ -52,7 +52,7 @@ void scan_facebook(scanner_params &sp)
 {
     sp.check_version();
     if (sp.phase==scanner_params::PHASE_INIT)        {
-        sp.info.set_name("facebook");
+        sp.info->set_name("facebook");
         sp.info->author = "";
         sp.info->description = "Searches for facebook html and json tags";
         sp.info->scanner_version = "2.0";

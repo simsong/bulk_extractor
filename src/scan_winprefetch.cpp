@@ -250,7 +250,7 @@ void scan_winprefetch(scanner_params &sp)
 {
     sp.check_version();
     if (sp.phase==scanner_params::PHASE_INIT){
-        sp.info.set_name("winprefetch");
+        sp.info->set_name("winprefetch");
         sp.info->name		= "winprefetch";
         sp.info->author		= "Bruce Allen";
         sp.info->description	= "Search for Windows Prefetch files";

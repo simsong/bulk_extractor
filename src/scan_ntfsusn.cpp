@@ -72,7 +72,7 @@ void scan_ntfsusn(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-        sp.info.set_name("ntfsusn");
+        sp.info->set_name("ntfsusn");
         sp.info->author          = "Teru Yamazaki";
         sp.info->description     = "Scans for USN_RECORD v2/v4 record";
         sp.info->scanner_version = "1.1";
