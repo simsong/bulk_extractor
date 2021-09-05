@@ -122,7 +122,7 @@ void scan_base16(struct scanner_params &sp)
     static const u_char *ignore_string = (const u_char *)"\r\n \t";
     sp.check_version();
     if (sp.phase==scanner_params::PHASE_INIT){
-        sp.info = std::make_unique<scanner_params::scanner_info>(scan_base16,"base16");
+        sp.info->set_name("base16");
         sp.info->scanner_flags.recurse = true;
         sp.info->scanner_flags.default_enabled = false;
         sp.info->author          = "Simson L. Garfinkel";

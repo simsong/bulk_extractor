@@ -19,6 +19,7 @@
 #define YY_SKIP_YYWRAP            /* Never wrap */
 #define YY_NO_INPUT
 
+#include "config.h"
 #include "be13_api/sbuf.h"
 #include "be13_api/scanner_params.h"
 #include "be13_api/scanner_set.h"

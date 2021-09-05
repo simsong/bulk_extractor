@@ -223,13 +223,13 @@ void scan_pdf(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-        sp.info = std::make_unique<scanner_params::scanner_info>( scan_pdf, "pdf" );
+        sp.info->set_name("pdf" );
         sp.info->author         = "Simson Garfinkel";
         sp.info->description    = "Extracts text from PDF files";
         sp.info->scanner_version= "1.0";
         sp.info->scanner_flags.recurse = true;
-        sp.get_config("pdf_dump_hex" , &pdf_extractor::pdf_dump_hex, "Dump the contents of PDF buffers as hex");
-        sp.get_config("pdf_dump_text", &pdf_extractor::pdf_dump_text, "Dump the contents of PDF buffers showing extracted text");
+        sp.get_scanner_config("pdf_dump_hex" , &pdf_extractor::pdf_dump_hex, "Dump the contents of PDF buffers as hex");
+        sp.get_scanner_config("pdf_dump_text", &pdf_extractor::pdf_dump_text, "Dump the contents of PDF buffers showing extracted text");
         if (getenv("DEBUG_PDF_DUMP_HEX")) pdf_extractor::pdf_dump_hex=true;
         if (getenv("DEBUG_PDF_DUMP_TEXT")) pdf_extractor::pdf_dump_text=true;
 	return;	/* No features recorded */

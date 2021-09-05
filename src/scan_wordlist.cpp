@@ -165,8 +165,8 @@ void Scan_Wordlist::shutdown(scanner_params &sp)
     }
 
     /* Read all of the words and uniquify them */
+    uint64_t outfilesize = 0;
     while(!f2.eof()){
-        /* Create the first file (of2==0) or roll-over if outfilesize>100M */
         std::string line;
         getline(f2,line);
         if (line[0]=='#') continue;	                // ignore comments
@@ -184,6 +184,12 @@ void Scan_Wordlist::shutdown(scanner_params &sp)
             std::cerr << er.what() << std::endl;
             std::cerr << "scan_wordlist:bad_alloc: Dumping current dataset; will then restart dedup." << std::endl;
             dump_seen_wordlist();
+            outfilesize = 0;
+        }
+
+        if (outfilesize > max_output_file_size ) {
+            dump_seen_wordlist();
+            outfilesize = 0;
         }
     }
     dump_seen_wordlist();
@@ -200,15 +206,18 @@ void scan_wordlist(scanner_params &sp)
     bool wordlist_use_flatfiles = true;
 
     if (sp.phase==scanner_params::PHASE_INIT){
+        uint32_t word_min = Scan_Wordlist::WORD_MIN_DEFAULT;
+        uint32_t word_max = Scan_Wordlist::WORD_MAX_DEFAULT;
+        uint64_t max_output_file_size = Scan_Wordlist::MAX_OUTPUT_FILE_SIZE;
         sp.check_version();
-        sp.info = std::make_unique<scanner_params::scanner_info>( scan_wordlist, "wordlist" );
+        sp.info->set_name("wordlist" );
         sp.info->scanner_flags.default_enabled = false; // = scanner_info::SCANNER_DISABLED;
-        //sp.get_config("word_min",&word_min,"Minimum word size");
-        //sp.get_config("word_max",&word_max,"Maximum word size");
-        //sp.get_config("max_word_outfile_size",&max_word_outfile_size, "Maximum size of the words output file");
-        sp.get_config("wordlist_use_flatfiles",&wordlist_use_flatfiles,"Use flatfiles for wordlist");
-        //sp.get_config("wordlist_use_sql",&wordlist_use_sql,"Use SQL DB for wordlist");
-        sp.get_config("strings",&wordlist_strings,"Scan for strings instead of words");
+        sp.get_scanner_config("word_min",&word_min,"Minimum word size");
+        sp.get_scanner_config("word_max",&word_max,"Maximum word size");
+        sp.get_scanner_config("max_output_file_size",&max_output_file_size, "Maximum size of the words output file");
+        //sp.get_scanner_config("wordlist_use_flatfiles",&wordlist_use_flatfiles,"Use flatfiles for wordlist");
+        //sp.get_scanner_config("wordlist_use_sql",&wordlist_use_sql,"Use SQL DB for wordlist");
+        sp.get_scanner_config("strings",&wordlist_strings,"Scan for strings instead of words");
 
         if (wordlist_use_flatfiles){
             auto def = feature_recorder_def(Scan_Wordlist::WORDLIST);
@@ -217,13 +226,14 @@ void scan_wordlist(scanner_params &sp)
             def.flags.no_alertlist = true;
             sp.info->feature_defs.push_back( def );
         }
-#if 0
         if (word_min > word_max){
             std::cerr << "ERROR: word_min (" << word_min << ") > word_max (" << word_max << ")\n";
             throw std::runtime_error("word_min > word_max");
         }
-#endif
         wordlist = new Scan_Wordlist(sp, wordlist_strings);
+        wordlist->word_min = word_min;
+        wordlist->word_max = word_max;
+        wordlist->max_output_file_size = max_output_file_size;
 
 #if 0
 #ifdef USE_SQLITE3

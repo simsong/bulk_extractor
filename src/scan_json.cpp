@@ -28,9 +28,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include <cstdlib>
-
 #include "config.h"
+
+#include <cstdlib>
 #include "be13_api/scanner_params.h"
 #include "be13_api/scanner_set.h"
 
@@ -436,7 +436,7 @@ void scan_json(struct scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-        sp.info = std::make_unique<scanner_params::scanner_info>(scan_json,"json");
+        sp.info->set_name("json");
         sp.info->author          = "Simson Garfinkel";
         sp.info->description     = "Scans for JSON-encoded data";
         sp.info->scanner_version = "1.1";

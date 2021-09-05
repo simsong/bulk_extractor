@@ -796,7 +796,7 @@ void scan_elf (scanner_params &sp)
     sp.check_version();
 
     if (sp.phase == scanner_params::PHASE_INIT){
-        sp.info = std::make_unique<scanner_params::scanner_info>(scan_elf,"elf");
+        sp.info->set_name("elf");
 	sp.info->author          = "Alex Eubanks";
         sp.info->scanner_version = "1.1";
         sp.info->feature_defs.push_back( feature_recorder_def("elf") );

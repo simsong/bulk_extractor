@@ -301,7 +301,7 @@ void scan_winlnk(scanner_params &sp)
 {
     sp.check_version();
     if (sp.phase==scanner_params::PHASE_INIT){
-        sp.info = std::make_unique<scanner_params::scanner_info>(scan_winlnk,"winlnk");
+        sp.info->set_name("winlnk");
         sp.info->author		= "Simson Garfinkel";
         sp.info->description	= "Search for Windows LNK files";
         sp.info->feature_defs.push_back( feature_recorder_def("winlnk"));

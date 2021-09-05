@@ -345,7 +345,7 @@ void scan_email(struct scanner_params &sp)
 {
     sp.check_version();
     if (sp.phase==scanner_params::PHASE_INIT){
-        sp.info = std::make_unique<scanner_params::scanner_info>(scan_email,"email");
+        sp.info->set_name("email");
         sp.info->author            = "Simson L. Garfinkel";
         sp.info->description       = "Scans for email addresses, domains, URLs, RFC822 headers, etc.";
         sp.info->scanner_version   = "1.1";

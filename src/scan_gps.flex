@@ -166,7 +166,7 @@ void scan_gps(scanner_params &sp)
 {
     sp.check_version();
     if (sp.phase==scanner_params::PHASE_INIT){
-        sp.info = std::make_unique<scanner_params::scanner_info>(scan_gps,"gps");
+        sp.info->set_name("gps");
         sp.info->author         = "Simson L. Garfinkel";
         sp.info->description    = "Garmin Trackpt XML info";
         sp.info->scanner_version= "1.1";

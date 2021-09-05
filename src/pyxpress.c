@@ -109,24 +109,30 @@ unsigned long Xpress_Decompress(const unsigned char *InputBuffer,
 				   | (InputBuffer[InputIndex + 1] <<  8)
 				   | InputBuffer[InputIndex]);
             InputIndex += sizeof(uint32_t);
-            IndicatorBit = 32; 
+            IndicatorBit = 32;
+            if (InputIndex >= InputSize) break;
         }
         IndicatorBit--;
 
-	//* check whether the bit specified by IndicatorBit is set or not 
-	//* set in Indicator. For example, if IndicatorBit has value 4 
-	//* check whether the 4th bit of the value in Indicator is set 
+	//* check whether the bit specified by IndicatorBit is set or not
+	//* set in Indicator. For example, if IndicatorBit has value 4
+	//* check whether the 4th bit of the value in Indicator is set
 
         if (((Indicator >> IndicatorBit) & 1) == 0) {
 	    if(OutputIndex>=OutputSize) return OutputIndex;
-            OutputBuffer[OutputIndex] = InputBuffer[InputIndex]; 
+            OutputBuffer[OutputIndex] = InputBuffer[InputIndex];
             InputIndex += sizeof(UCHAR);
             OutputIndex += sizeof(UCHAR);
+            if (InputIndex >= InputSize) break;
+            if (OutputIndex >= OutputSize) {
+                OutputIndex -= sizeof(UCHAR); /* undo the addition and return */
+                break;
+            }
         }
         else {
-	    if(InputIndex+1 >= InputSize) return OutputIndex;
+	    if (InputIndex+1 >= InputSize) return OutputIndex;
             Length = (unsigned)((InputBuffer[InputIndex + 1] << 8) | InputBuffer[InputIndex]);
-            
+
             /*
 	      if ((OutputIndex > 0xD0) && (OutputIndex < 0xF0))
 	      {
@@ -134,7 +140,9 @@ unsigned long Xpress_Decompress(const unsigned char *InputBuffer,
 	      }
             */
 
-            InputIndex += sizeof(USHORT); 
+            InputIndex += sizeof(USHORT);
+            if (InputIndex >= InputSize) break;
+
             Offset = Length / 8;
             Length = Length % 8;
 
@@ -142,10 +150,11 @@ unsigned long Xpress_Decompress(const unsigned char *InputBuffer,
             if (Length == 7) {
                 if (NibbleIndex == 0) {
                     NibbleIndex = InputIndex;
-		    if(InputIndex>=InputSize) return OutputIndex;
-                    Length = InputBuffer[InputIndex] % 16; 
+		    if (InputIndex>=InputSize) break;
+                    Length = InputBuffer[InputIndex] % 16;
                     //if ((OutputIndex > 0xD0) && (OutputIndex < 0xF0)) printf("--2 Len: %02X (%d)\n", Length, Length);
                     InputIndex += sizeof(UCHAR);
+                    if (InputIndex >= InputSize) break;
                 }
                 else {
                     Length = InputBuffer[NibbleIndex] / 16;
@@ -154,17 +163,19 @@ unsigned long Xpress_Decompress(const unsigned char *InputBuffer,
                 }
 
                 if (Length == 15) {
-		    if (InputIndex>=InputSize) return OutputIndex;
+		    if (InputIndex>=InputSize) break;
                     Length = InputBuffer[InputIndex];
                     //if ((OutputIndex > 0xD0) && (OutputIndex < 0xF0)) printf("--4 Len: %02X (%d)\n", Length, Length);
-                    InputIndex += sizeof(UCHAR); 
+                    InputIndex += sizeof(UCHAR);
+                    if (InputIndex>= InputSize) break;
 		    if (Length == 255) {
-			if(InputIndex+2>=InputSize) return OutputIndex;
+			if (InputIndex+2 >= InputSize) break;;
 			Length = (unsigned)((InputBuffer[InputIndex + 1] << 8)) | InputBuffer[InputIndex];
 			InputIndex += sizeof(USHORT);
-			Length -= (15 + 7); 
+                        if (InputIndex >= InputSize) break;
+			Length -= (15 + 7);
 		    }
-                    Length += 15; 
+                    Length += 15;
                     //if ((OutputIndex > 0xD0) && (OutputIndex < 0xF0)) printf("--5 Len: %02X (%d)\n", Length, Length);
                 }
                 Length += 7;
@@ -173,12 +184,13 @@ unsigned long Xpress_Decompress(const unsigned char *InputBuffer,
 
             Length += 3;
             //if ((OutputIndex > 0xD0) && (OutputIndex < 0xF0)) printf("--7 Len: %02X (%d)\n", Length, Length);
-            //if (Length > 280) printf("DECOMP DEBUG: [0x%08X]->[0x%08X] Len: %d Offset: %08X\n", 
+            //if (Length > 280) printf("DECOMP DEBUG: [0x%08X]->[0x%08X] Len: %d Offset: %08X\n",
             //    OutputIndex, InputIndex, Length, Offset);
             while (Length != 0) {
                 if ((OutputIndex >= OutputSize) || ((Offset + 1) >= OutputIndex)) break;
                 OutputBuffer[OutputIndex] = OutputBuffer[OutputIndex - Offset - 1];
                 OutputIndex += sizeof(UCHAR);
+                if (OutputIndex >= OutputSize) break;
                 Length -= sizeof(UCHAR);
             }
         }
@@ -208,7 +220,7 @@ static PyObject *xpress_decode(PyObject *self, PyObject *args) {
     outsize = Xpress_Decompress(inbuff, outbuff, outsize);
 
     // Truncate buffer back to outsize:
-    if(_PyString_Resize(&result, outsize) < 0) 
+    if(_PyString_Resize(&result, outsize) < 0)
 	return NULL;
 
     return result;

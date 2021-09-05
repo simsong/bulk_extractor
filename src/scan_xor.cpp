@@ -13,13 +13,13 @@ void scan_xor(scanner_params &sp)
 {
     sp.check_version();
     if (sp.phase==scanner_params::PHASE_INIT) {
-        sp.info = std::make_unique<scanner_params::scanner_info>( scan_xor, "xor" );
+        sp.info->set_name("xor" );
 	sp.info->author      = "Michael Shick";
 	sp.info->description = "optimistic XOR deobfuscator";
 	sp.info->scanner_flags.default_enabled = false;
         sp.info->scanner_flags.recurse = true;
         sp.info->scanner_flags.recurse_always = true;
-        sp.get_config("xor_mask",&xor_mask,"XOR mask value, in decimal");
+        sp.get_scanner_config("xor_mask",&xor_mask,"XOR mask value, in decimal");
 	return;
     }
     if (sp.phase==scanner_params::PHASE_SCAN) {

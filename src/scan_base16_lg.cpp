@@ -126,13 +126,13 @@ namespace base16 {
   void Scanner::startup(const scanner_params& sp) {
       sp.check_version();
 
-    sp.info->std::make_unique<scanner_params::scanner_info>(scan_base16_lg,"base16_lg")
-    sp.info->name             = "base16_lg";
-    sp.info->author           = "Simson L. Garfinkel";
-    sp.info->description      = "Base16 (hex) scanner";
-    sp.info->scanner_version  = "1.0";
-    sp.info->flags            = scanner_info::SCANNER_RECURSE;
-    sp.info->feature_names.insert("hex"); // notable hex values
+      sp.info.set_name("base16_lg");
+      sp.info->name             = "base16_lg";
+      sp.info->author           = "Simson L. Garfinkel";
+      sp.info->description      = "Base16 (hex) scanner";
+      sp.info->scanner_version  = "1.0";
+      sp.info->flags            = scanner_info::SCANNER_RECURSE;
+      sp.info->feature_names.insert("hex"); // notable hex values
   }
 
   void Scanner::init(const scanner_params& sp) {

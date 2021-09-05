@@ -38,7 +38,7 @@ void scan_hiberfile(scanner_params &sp)
 {
     sp.check_version();
     if (sp.phase==scanner_params::PHASE_INIT){
-        sp.info = std::make_unique<scanner_params::scanner_info>( scan_hiberfile, "hiberfile" );
+        sp.info->set_name("hiberfile" );
         sp.info->author         = "Simson Garfinkel and Matthieu Suiche";
         sp.info->description    = "Scans for Microsoft-XPress compressed data";
         sp.info->scanner_version= "1.0";

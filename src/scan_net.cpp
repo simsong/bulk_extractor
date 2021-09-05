@@ -1008,10 +1008,10 @@ void scan_net(scanner_params &sp)
     sp.check_version();
     if (sp.phase==scanner_params::PHASE_INIT){
 
-        sp.get_config("carve_net_memory",&opt_carve_net_memory,"Carve network  memory structures");
+        sp.get_scanner_config("carve_net_memory",&opt_carve_net_memory,"Carve network  memory structures");
 
 	assert(sizeof(struct be13::ip4)==20);	// we've had problems on some systems
-        sp.info = std::make_unique<scanner_params::scanner_info>(scan_net,"net");
+        sp.info->set_name("net");
         sp.info->author         = "Simson Garfinkel and Rob Beverly";
         sp.info->description    = "Scans for IP packets";
         sp.info->scanner_version= "1.0";
