@@ -16,7 +16,7 @@ void scan_gzip(scanner_params &sp)
 {
     sp.check_version();
     if (sp.phase==scanner_params::PHASE_INIT){
-        sp.info = std::make_unique<scanner_params::scanner_info>( scan_gzip, "gzip" );
+        sp.info.set_name("gzip" );
         sp.info->author         = "Simson Garfinkel";
         sp.info->description    = "Searches for GZIP-compressed data";
         sp.info->scanner_version= "1.1";

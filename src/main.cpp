@@ -472,12 +472,14 @@ int main(int argc,char **argv)
 
     /* Create a configuration that will be used to initialize the scanners */
     /* Make individual configuration options appear on the command line interface. */
+#if 0
     sc.get_config("debug_histogram_malloc_fail_frequency",&AtomicUnicodeHistogram::debug_histogram_malloc_fail_frequency,
                   "Set >0 to make histogram maker fail with memory allocations");
     sc.get_config("hash_alg",&be_hash_name,"Specifies hash algorithm to be used for all hash calculations");
     sc.get_config("write_feature_files",&opt_write_feature_files,"Write features to flat files");
     sc.get_config("write_feature_sqlite3",&opt_write_sqlite3,"Write feature files to report.sqlite3");
     sc.get_config("report_read_errors",&cfg.opt_report_read_errors,"Report read errors");
+#endif
 
     /* Load all the scanners and enable the ones we care about */
 

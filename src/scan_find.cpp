@@ -43,7 +43,7 @@ void scan_find(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT) {
-        sp.info = std::make_unique<scanner_params::scanner_info>(scan_find,"find");
+        sp.info.set_name("find");
         sp.info->name		= "find";
         sp.info->author         = "Simson Garfinkel";
         sp.info->description    = "Simple search for patterns";

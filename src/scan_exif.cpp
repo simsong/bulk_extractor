@@ -506,7 +506,7 @@ void scan_exif (scanner_params &sp)
 {
     sp.check_version();
     if (sp.phase==scanner_params::PHASE_INIT){
-        sp.info = std::make_unique<scanner_params::scanner_info>(scan_exif,"exif");
+        sp.info.set_name("exif");
 	sp.info->author          = "Bruce Allen";
 	sp.info->scanner_version = "1.1";
         sp.info->description     = "Search for EXIF sections in JPEG files";

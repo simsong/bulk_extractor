@@ -29,7 +29,7 @@ namespace { // local namespace hides these from other translation units
     };
 
     virtual void startup(const scanner_params& sp) {
-        sp.info->name            = std::make_unique<scanner_params::scanner_info>(scan_lightgrep, "scan_lightgrep");
+        sp.info.set_name("scan_lightgrep");
         sp.info->author          = "Jon Stewart";
         sp.info->description     = "Advanced search for patterns";
         sp.info->scanner_version = "0.2";

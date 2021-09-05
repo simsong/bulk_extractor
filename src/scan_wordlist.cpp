@@ -201,7 +201,7 @@ void scan_wordlist(scanner_params &sp)
 
     if (sp.phase==scanner_params::PHASE_INIT){
         sp.check_version();
-        sp.info = std::make_unique<scanner_params::scanner_info>( scan_wordlist, "wordlist" );
+        sp.info.set_name("wordlist" );
         sp.info->scanner_flags.default_enabled = false; // = scanner_info::SCANNER_DISABLED;
         //sp.get_config("word_min",&word_min,"Minimum word size");
         //sp.get_config("word_max",&word_max,"Maximum word size");

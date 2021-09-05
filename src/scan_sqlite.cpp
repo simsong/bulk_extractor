@@ -38,7 +38,7 @@ void scan_sqlite(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-        sp.info = std::make_unique<scanner_params::scanner_info>( scan_sqlite, "sqlite" );
+        sp.info.set_name("sqlite" );
         sp.info->author          = "Simson Garfinkel";
         sp.info->description     = "Scans for SQLITE3 data";
         sp.info->scanner_version = "1.1";

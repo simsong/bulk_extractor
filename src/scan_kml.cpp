@@ -28,7 +28,7 @@ void scan_kml(scanner_params &sp)
     std::string myString;
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-        sp.info = std::make_unique<scanner_params::scanner_info>(scan_kml,"kml");
+        sp.info.set_name("kml");
         sp.info->author         = "Simson Garfinkel ";
         sp.info->description    = "Scans for KML files";
         sp.info->scanner_version= "1.0";

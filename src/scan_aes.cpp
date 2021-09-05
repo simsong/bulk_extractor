@@ -373,16 +373,23 @@ static std::string key_to_string(const uint8_t * key, uint64_t sz)
     return ret;
 }
 
+int scan_aes_128 = 1;
+int scan_aes_192 = 0;
+int scan_aes_256 = 1;
+
 extern "C"
 void scan_aes(struct scanner_params &sp)
 {
     if(sp.phase==scanner_params::PHASE_INIT){
-        sp.info = std::make_unique<scanner_params::scanner_info>(scan_aes,"aes");
+        sp.info.set_name("aes");
 	sp.info->author		= "Sam Trenholme, Jesse Kornblum and Simson Garfinkel";
 	sp.info->description    = "Search for AES key schedules";
         sp.info->scanner_version = "1.1";
         sp.info->feature_defs.push_back( feature_recorder_def("aes_keys"));
         sp.info->min_sbuf_size  = WINDOW_SIZE;
+        sp.get_config("scan_aes_128", &scan_aes_128, "Scan for 128-bit AES keys; 0=No, 1=Yes");
+        sp.get_config("scan_aes_192", &scan_aes_192, "Scan for 192-bit AES keys; 0=No, 1=Yes");
+        sp.get_config("scan_aes_256", &scan_aes_256, "Scan for 256-bit AES keys; 0=No, 1=Yes");
 	rcon_setup();
 	sbox_setup();
 	return;
@@ -411,7 +418,6 @@ void scan_aes(struct scanner_params &sp)
 	    }
 	}
 	for (size_t pos = 0 ; pos < sp.sbuf->bufsize-WINDOW_SIZE && pos < sp.sbuf->pagesize; pos++){
-
 	    /* add value at end of 128 bits to sliding window */
 	    {
 		const uint8_t val = (*sp.sbuf)[pos+AES256_KEY_SCHEDULE_SIZE];

@@ -587,7 +587,7 @@ void scan_rar(scanner_params &sp)
 {
     sp.check_version();
     if (sp.phase==scanner_params::PHASE_INIT){
-        sp.info = std::make_unique<scanner_params::scanner_info>( scan_rar, "rar" );
+        sp.info.set_name("rar" );
 	sp.info->author = "Michael Shick";
         sp.info->scanner_version = "1.1";
         sp.info->scanner_flags.recurse = true;

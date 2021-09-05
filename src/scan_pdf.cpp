@@ -223,7 +223,7 @@ void scan_pdf(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-        sp.info = std::make_unique<scanner_params::scanner_info>( scan_pdf, "pdf" );
+        sp.info.set_name("pdf" );
         sp.info->author         = "Simson Garfinkel";
         sp.info->description    = "Extracts text from PDF files";
         sp.info->scanner_version= "1.0";

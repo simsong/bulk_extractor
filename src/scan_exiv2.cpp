@@ -106,7 +106,7 @@ void scan_exiv2(struct scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-        sp.info = std::make_unique<scanner_params::scanner_info>( scan_exiv2, "exiv2" );
+        sp.info.set_name("exiv2" );
         sp.info->author         = "Simson L. Garfinkel";
         sp.info->description    = "Searches for EXIF information using exiv2. Use exif scanner if this is not available or if this crashes.";
         sp.info->scanner_flags.default_enabled = false;

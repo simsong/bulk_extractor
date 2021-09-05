@@ -436,7 +436,7 @@ void scan_json(struct scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-        sp.info = std::make_unique<scanner_params::scanner_info>(scan_json,"json");
+        sp.info.set_name("json");
         sp.info->author          = "Simson Garfinkel";
         sp.info->description     = "Scans for JSON-encoded data";
         sp.info->scanner_version = "1.1";
