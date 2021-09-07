@@ -272,7 +272,7 @@ struct notify_opts {
             double done = *o->fraction_done;
             stats["fraction_read"] = std::to_string(done * 100) + std::string(" %");
             stats["estimated_time_remaining"] = o->master_timer->eta_text(done);
-            stats["estimated_time_completion"] = o->master_timer->eta_time(done);
+            stats["estimated_date_completion"] = o->master_timer->eta_date(done);
 
             // print the legacy status
             if(o->opt_legacy) {

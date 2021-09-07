@@ -383,7 +383,7 @@ void scan_aes(struct scanner_params &sp)
 	sp.info->description    = "Search for AES key schedules";
         sp.info->scanner_version = "1.1";
         sp.info->feature_defs.push_back( feature_recorder_def("aes_keys"));
-        sp.info->min_sbuf_size  = AES128_KEY_SIZE;
+        sp.info->min_sbuf_size  =  AES128_KEY_SCHEDULE_SIZE;
         sp.get_scanner_config("scan_aes_128", &scan_aes_128, "Scan for 128-bit AES keys; 0=No, 1=Yes");
         sp.get_scanner_config("scan_aes_192", &scan_aes_192, "Scan for 192-bit AES keys; 0=No, 1=Yes");
         sp.get_scanner_config("scan_aes_256", &scan_aes_256, "Scan for 256-bit AES keys; 0=No, 1=Yes");
