@@ -61,7 +61,7 @@ void scan_ntfsmft(scanner_params &sp)
 {
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-        sp.info.set_name("ntfsmft");
+        sp.info->set_name("ntfsmft");
         sp.info->author          = "Teru Yamazaki";
         sp.info->description     = "Scans for NTFS MFT record";
         sp.info->scanner_version = "1.0";

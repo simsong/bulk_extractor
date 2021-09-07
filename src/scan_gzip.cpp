@@ -16,12 +16,12 @@ void scan_gzip(scanner_params &sp)
 {
     sp.check_version();
     if (sp.phase==scanner_params::PHASE_INIT){
-        sp.info.set_name("gzip" );
+        sp.info->set_name("gzip" );
         sp.info->author         = "Simson Garfinkel";
         sp.info->description    = "Searches for GZIP-compressed data";
         sp.info->scanner_version= "1.1";
         sp.info->scanner_flags.recurse = true;
-        sp.get_config("gzip_max_uncompr_size",&gzip_max_uncompr_size,"maximum size for decompressing GZIP objects");
+        sp.get_scanner_config("gzip_max_uncompr_size",&gzip_max_uncompr_size,"maximum size for decompressing GZIP objects");
 	return ;		/* no features */
     }
     if (sp.phase==scanner_params::PHASE_SCAN){

@@ -42,10 +42,14 @@ public:;
     std::filesystem::path flat_wordlist_path {}; //
     feature_recorder *flat_wordlist = nullptr;
 
+    static const inline uint32_t WORD_MIN_DEFAULT = 6;
+    static const inline uint32_t WORD_MAX_DEFAULT = 16;
+    static const inline uint64_t MAX_OUTPUT_FILE_SIZE = 100*1000*1000;
+
     bool     strings {false};           // report all strings, not words. Do not uniquify
-    uint32_t word_min  {6};
-    uint32_t word_max {14};
-    uint64_t max_word_outfile_size {100 * 1000 * 1000};
+    uint32_t word_min  {WORD_MIN_DEFAULT};
+    uint32_t word_max {WORD_MAX_DEFAULT};
+    uint64_t max_output_file_size {MAX_OUTPUT_FILE_SIZE};
 
     /* wordlist support for SQL.  Note that the SQL-based wordlist is
      * faster than the file-based wordlist.

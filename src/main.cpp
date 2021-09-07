@@ -339,12 +339,11 @@ int main(int argc,char **argv)
     int         opt_h = 0;
     int         opt_H = 0;
     std::string opt_sampling_params;
-    bool        opt_write_feature_files = true;
-    bool        opt_write_sqlite3     = false;
+    //bool        opt_write_feature_files = true;
+    //bool        opt_write_sqlite3     = false;
 
     /* Startup */
     setvbuf(stdout,0,_IONBF,0);		// don't buffer stdout
-    //std::string command_line = dfxml_writer::make_command_line(argc,argv);
     std::vector<std::string> scanner_dirs; // where to look for scanners
 
     /* Add the default plugin_path */
@@ -472,14 +471,12 @@ int main(int argc,char **argv)
 
     /* Create a configuration that will be used to initialize the scanners */
     /* Make individual configuration options appear on the command line interface. */
-#if 0
-    sc.get_config("debug_histogram_malloc_fail_frequency",&AtomicUnicodeHistogram::debug_histogram_malloc_fail_frequency,
+    sc.get_global_config("debug_histogram_malloc_fail_frequency",&AtomicUnicodeHistogram::debug_histogram_malloc_fail_frequency,
                   "Set >0 to make histogram maker fail with memory allocations");
-    sc.get_config("hash_alg",&be_hash_name,"Specifies hash algorithm to be used for all hash calculations");
-    sc.get_config("write_feature_files",&opt_write_feature_files,"Write features to flat files");
-    sc.get_config("write_feature_sqlite3",&opt_write_sqlite3,"Write feature files to report.sqlite3");
-    sc.get_config("report_read_errors",&cfg.opt_report_read_errors,"Report read errors");
-#endif
+    sc.get_global_config("hash_alg",&be_hash_name,"Specifies hash algorithm to be used for all hash calculations");
+    sc.get_global_config("write_feature_files",&opt_write_feature_files,"Write features to flat files");
+    sc.get_global_config("write_feature_sqlite3",&opt_write_sqlite3,"Write feature files to report.sqlite3");
+    sc.get_global_config("report_read_errors",&cfg.opt_report_read_errors,"Report read errors");
 
     /* Load all the scanners and enable the ones we care about */
 

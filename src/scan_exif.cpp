@@ -7,6 +7,8 @@
  * 2011-dec-12 bda - Ported from file scan_exif.cpp.
  */
 
+#include "config.h"
+
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
@@ -15,7 +17,6 @@
 #include <cassert>
 #include <algorithm>
 
-#include "config.h"
 
 #include "scan_exif.h"
 #include "be13_api/scanner_params.h"
@@ -506,7 +507,7 @@ void scan_exif (scanner_params &sp)
 {
     sp.check_version();
     if (sp.phase==scanner_params::PHASE_INIT){
-        sp.info.set_name("exif");
+        sp.info->set_name("exif");
 	sp.info->author          = "Bruce Allen";
 	sp.info->scanner_version = "1.1";
         sp.info->description     = "Search for EXIF sections in JPEG files";
@@ -516,7 +517,7 @@ void scan_exif (scanner_params &sp)
 	sp.info->feature_defs.push_back( feature_recorder_def("exif", xml_flag));
 	sp.info->feature_defs.push_back( feature_recorder_def("gps"));
 	sp.info->feature_defs.push_back( feature_recorder_def("jpeg_carved"));
-        sp.get_config("exif_debug",&exif_debug,"debug exif decoder");
+        sp.get_scanner_config("exif_debug",&exif_debug,"debug exif decoder");
 	return;
     }
     if (sp.phase==scanner_params::PHASE_INIT2) {

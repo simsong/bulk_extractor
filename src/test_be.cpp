@@ -1,5 +1,7 @@
 // https://github.com/catchorg/Catch2/blob/master/docs/tutorial.md#top
 
+#include "config.h"
+
 #include <cstring>
 #include <iostream>
 #include <memory>
@@ -12,7 +14,6 @@
 #define CATCH_CONFIG_MAIN
 #define CATCH_CONFIG_CONSOLE_WIDTH 120
 
-#include "config.h"
 #include "be13_api/catch.hpp"
 
 #ifdef HAVE_MACH_O_DYLD_H

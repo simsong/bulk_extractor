@@ -14,7 +14,7 @@
  * http://en.wikipedia.org/wiki/List_of_Bank_Identification_Numbers
  */
 
-size_t min_phone_digits=7;
+uint8_t min_phone_digits=7;
 static int ssn_mode=0;
 
 class accts_scanner : public sbuf_scanner {
@@ -383,7 +383,7 @@ void scan_accts( struct scanner_params &sp )
     if(sp.phase==scanner_params::PHASE_INIT){
         //assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
         build_unbase58();
-        sp.info = std::make_unique<scanner_params::scanner_info>(scan_accts,"accts");
+        sp.info->set_name("accts");
 	sp.info->author		= "Simson L. Garfinkel, modified by Tim Walsh";
 	sp.info->description	= "scans for CCNs, track 2, PII (including SSN and Canadian SIN), and phone #s";
 	sp.info->scanner_version= "1.1";
@@ -406,8 +406,8 @@ void scan_accts( struct scanner_params &sp )
                                                                                       "", "teamviewer", flag_numeric));
 
         /* This modifies the scanner_config by adding informaton about the help strings, so scanner_config can't be const */
-        sp.get_config("ssn_mode", &ssn_mode,"0=Normal; 1=No `SSN' required; 2=No dashes required");
-        sp.get_config("min_phone_digits",&min_phone_digits,"Min. digits required in a phone");
+        sp.get_scanner_config("ssn_mode", &ssn_mode,"0=Normal; 1=No `SSN' required; 2=No dashes required");
+        sp.get_scanner_config("min_phone_digits",&min_phone_digits,"Min. digits required in a phone");
         //scan_ccns2_debug = sp.ss.sc.debug;           // get debug value
 	return;
     }

@@ -56,7 +56,7 @@ void scan_msxml(scanner_params &sp)
 {
     sp.check_version();
     if (sp.phase==scanner_params::PHASE_INIT){
-        sp.info.set_name("Simson Garfinkel";
+        sp.info->set_name("msxml");
         sp.info->description     = "Extracts text from Microsoft XML files";
         sp.info->scanner_version = "1.0";
         sp.info->scanner_flags.recurse = true;
