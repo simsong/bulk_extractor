@@ -216,7 +216,18 @@ TEST_CASE("scan_email8", "[support]") {
     }
 }
 
-TEST_CASE("scan_email16", "[support]") {
+TEST_CASE("sbuf_decompress_zlib_new", "[support]") {
+    auto *sbufp = map_file("test_hello.gz");
+    REQUIRE( sbuf_decompress::is_gzip_header( *sbufp, 0) == true);
+    REQUIRE( sbuf_decompress::is_gzip_header( *sbufp, 10) == false);
+    auto *decomp = sbuf_decompress::sbuf_new_decompress( *sbufp, 1024*1024, "GZIP", sbuf_decompress::mode_t::GZIP, 0 );
+    REQUIRE( decomp != nullptr);
+    REQUIRE( decomp->asString() == "hello@world.com\n");
+    delete decomp;
+    delete sbufp;
+}
+
+TEST_CASE("scan_email16", "[scanners]") {
     /* utf-16 tests */
     {
         uint8_t c[] {"h\000t\000t\000p\000:\000/\000/\000w\000w\000w\000.\000h\000h\000s\000.\000g\000o\000v\000/\000o\000"
@@ -229,17 +240,6 @@ TEST_CASE("scan_email16", "[support]") {
         auto url_histogram_txt = getLines( outdir / "url_histogram.txt" );
         REQUIRE( requireFeature(url_histogram_txt,"n=1\thttp://www.hhs.gov/ocr/hipaa/consumer_rights.pdf\t(utf16=1)"));
     }
-}
-
-TEST_CASE("sbuf_decompress_zlib_new", "[support]") {
-    auto *sbufp = map_file("test_hello.gz");
-    REQUIRE( sbuf_decompress::is_gzip_header( *sbufp, 0) == true);
-    REQUIRE( sbuf_decompress::is_gzip_header( *sbufp, 10) == false);
-    auto *decomp = sbuf_decompress::sbuf_new_decompress( *sbufp, 1024*1024, "GZIP", sbuf_decompress::mode_t::GZIP, 0 );
-    REQUIRE( decomp != nullptr);
-    REQUIRE( decomp->asString() == "hello@world.com\n");
-    delete decomp;
-    delete sbufp;
 }
 
 TEST_CASE("scan_exif", "[scanners]") {
@@ -257,20 +257,6 @@ TEST_CASE("scan_msxml","[scanners]") {
     REQUIRE( bufstr.find("A collection showing how easy it is to create 3-dimensional") != std::string::npos);
     delete sbufp;
 }
-
-TEST_CASE("scan_pdf", "[scanners]") {
-    auto *sbufp = map_file("pdf_words2.pdf");
-    pdf_extractor pe(*sbufp);
-    pe.find_streams();
-    REQUIRE( pe.streams.size() == 4 );
-    REQUIRE( pe.streams[1].stream_start == 2214);
-    REQUIRE( pe.streams[1].endstream_tag == 4827);
-    pe.decompress_streams_extract_text();
-    REQUIRE( pe.texts.size() == 1 );
-    REQUIRE( pe.texts[0].txt.substr(0,30) == "-rw-r--r--    1 simsong  staff");
-    delete sbufp;
-}
-
 
 TEST_CASE("scan_json1", "[scanners]") {
     /* Make a scanner set with a single scanner and a single command to enable all the scanners.
@@ -407,9 +393,21 @@ TEST_CASE("scan_net", "[scanners]") {
     /* Break the port and make sure that the header is no longer valid */
     buf[frame_offset + ETHERNET_FRAME_SIZE] += 0x10; // increment header length
     REQUIRE( scan_net_t::sanityCheckIP46Header( sbufip, 0 , &h) == false );
-
-
 }
+
+TEST_CASE("scan_pdf", "[scanners]") {
+    auto *sbufp = map_file("pdf_words2.pdf");
+    pdf_extractor pe(*sbufp);
+    pe.find_streams();
+    REQUIRE( pe.streams.size() == 4 );
+    REQUIRE( pe.streams[1].stream_start == 2214);
+    REQUIRE( pe.streams[1].endstream_tag == 4827);
+    pe.decompress_streams_extract_text();
+    REQUIRE( pe.texts.size() == 1 );
+    REQUIRE( pe.texts[0].txt.substr(0,30) == "-rw-r--r--    1 simsong  staff");
+    delete sbufp;
+}
+
 
 TEST_CASE("scan_vcard", "[scanners]") {
     /* Make a scanner set with a single scanner and a single command to enable all the scanners.
@@ -559,12 +557,16 @@ std::filesystem::path validate(std::string image_fname, std::vector<Check> &expe
                 if (ends_with(pos,"|0")) {
                     pos = pos.substr(0,pos.size()-2);
                 }
-                if (words.size()>=2 &&
-                    (words[0]==expected[i].feature.pos) &&
-                    (words[1]==expected[i].feature.feature) &&
-                    (words.size()==2 ||
-                     (words[2]==expected[i].feature.context || expected[i].feature.context.size()==0))) {
-                    found = true;
+                if (words.size()==2 && (words[0]==expected[i].feature.pos) && (words[1]==expected[i].feature.feature)){
+                    found=true;
+                    break;
+                }
+                if (words.size()==3
+                    && (words[0]==expected[i].feature.pos)
+                    && (words[1]==expected[i].feature.feature)
+                    && ((words[2]==expected[i].feature.context) ||
+                        starts_with(words[2],expected[i].feature.context))){
+                    found=true;
                     break;
                 }
             }
@@ -656,6 +658,14 @@ TEST_CASE("test_base16json", "[phase1]") {
 
     };
     validate("test_base16json.txt", ex2);
+}
+
+TEST_CASE("test_elf", "[phase1]") {
+    std::vector<Check> ex {
+        Check("elf.txt", Feature( "0", "9e218cee3b190e8f59ef323b27f4d339481516e9", "<ELF class=\"ELFCLASS64\" data=\"ELFDATA2LSB\" osabi=\"ELFOSABI_NONE\" abiversion=\"0\" >"))
+    };
+    validate("hello_elf", ex);
+
 }
 
 TEST_CASE("test_gzip", "[phase1]") {
