@@ -272,7 +272,7 @@ struct notify_opts {
             double done = *o->fraction_done;
             stats["fraction_read"] = std::to_string(done * 100) + std::string(" %");
             stats["estimated_time_remaining"] = o->master_timer->eta_text(done);
-            stats["estimated_time_completion"] = o->master_timer->eta_time(done);
+            stats["estimated_date_completion"] = o->master_timer->eta_date(done);
 
             // print the legacy status
             if(o->opt_legacy) {
@@ -471,14 +471,12 @@ int main(int argc,char **argv)
 
     /* Create a configuration that will be used to initialize the scanners */
     /* Make individual configuration options appear on the command line interface. */
-#if 0
     sc.get_global_config("debug_histogram_malloc_fail_frequency",&AtomicUnicodeHistogram::debug_histogram_malloc_fail_frequency,
                   "Set >0 to make histogram maker fail with memory allocations");
     sc.get_global_config("hash_alg",&be_hash_name,"Specifies hash algorithm to be used for all hash calculations");
-    sc.get_global_config("write_feature_files",&opt_write_feature_files,"Write features to flat files");
-    sc.get_global_config("write_feature_sqlite3",&opt_write_sqlite3,"Write feature files to report.sqlite3");
+    //sc.get_global_config("write_feature_files",&opt_write_feature_files,"Write features to flat files");
+    //sc.get_global_config("write_feature_sqlite3",&opt_write_sqlite3,"Write feature files to report.sqlite3");
     sc.get_global_config("report_read_errors",&cfg.opt_report_read_errors,"Report read errors");
-#endif
 
     /* Load all the scanners and enable the ones we care about */
 

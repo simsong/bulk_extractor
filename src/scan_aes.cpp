@@ -383,7 +383,7 @@ void scan_aes(struct scanner_params &sp)
 	sp.info->description    = "Search for AES key schedules";
         sp.info->scanner_version = "1.1";
         sp.info->feature_defs.push_back( feature_recorder_def("aes_keys"));
-        sp.info->min_sbuf_size  = AES128_KEY_SIZE;
+        sp.info->min_sbuf_size  =  AES128_KEY_SCHEDULE_SIZE;
         sp.get_scanner_config("scan_aes_128", &scan_aes_128, "Scan for 128-bit AES keys; 0=No, 1=Yes");
         sp.get_scanner_config("scan_aes_192", &scan_aes_192, "Scan for 192-bit AES keys; 0=No, 1=Yes");
         sp.get_scanner_config("scan_aes_256", &scan_aes_256, "Scan for 256-bit AES keys; 0=No, 1=Yes");
@@ -406,19 +406,22 @@ void scan_aes(struct scanner_params &sp)
 	for (size_t pos = 0 ; pos < sp.sbuf->bufsize && pos < sp.sbuf->pagesize; pos++){
             /* TODO: Remove direct memory access with mediated access */
             const uint8_t *p2 = sp.sbuf->get_buf() + pos;
-	    if (scan_aes_128 && sp.sbuf->distinct_characters( pos, AES128_KEY_SIZE) > AES128_KEY_SIZE/4){
+	    if (scan_aes_128 && (sp.sbuf->bufsize-pos >= AES128_KEY_SCHEDULE_SIZE) &&
+                (sp.sbuf->distinct_characters( pos, AES128_KEY_SIZE) > AES128_KEY_SIZE/4)){
 		if (valid_aes128_schedule(p2)) {
                     std::string key = key_to_string(p2, AES128_KEY_SIZE);
 		    aes_recorder.write(sp.sbuf->pos0+pos,key,std::string("AES128"));
 		}
             }
-	    if (scan_aes_192 && sp.sbuf->distinct_characters( pos, AES192_KEY_SIZE) > AES192_KEY_SIZE/4){
+	    if (scan_aes_192 && (sp.sbuf->bufsize-pos >= AES192_KEY_SCHEDULE_SIZE) &&
+                (sp.sbuf->distinct_characters( pos, AES192_KEY_SIZE) > AES192_KEY_SIZE/4)){
 		if (valid_aes192_schedule(p2)) {
                     std::string key = key_to_string(p2, AES192_KEY_SIZE);
 		    aes_recorder.write(sp.sbuf->pos0+pos,key,std::string("AES192"));
 		}
             }
-	    if (scan_aes_256 && sp.sbuf->distinct_characters( pos, AES256_KEY_SIZE) > AES256_KEY_SIZE/4){
+	    if (scan_aes_256 && (sp.sbuf->bufsize-pos >= AES256_KEY_SCHEDULE_SIZE) &&
+                (sp.sbuf->distinct_characters( pos, AES256_KEY_SIZE) > AES256_KEY_SIZE/4)){
 		if (valid_aes256_schedule(p2)) {
                     std::string key = key_to_string(p2, AES256_KEY_SIZE);
 		    aes_recorder.write(sp.sbuf->pos0+pos,key,std::string("AES256"));
