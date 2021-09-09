@@ -314,7 +314,6 @@ struct notify_opts {
     }
 }
 
-
 int main(int argc,char **argv)
 {
     mtrace();
@@ -469,10 +468,22 @@ int main(int argc,char **argv)
     argc -= optind;
     argv += optind;
 
+    /* Get image or directory */
+    if (argc==0 || *argv == nullptr) {
+        if (cfg.opt_recurse) {
+            std::cerr << "filedir not provided\n";
+        } else {
+            std::cerr << "imagefile not provided\n";
+        }
+        exit(1);
+    }
+    sc.input_fname = *argv;
+
     /* Create a configuration that will be used to initialize the scanners */
     /* Make individual configuration options appear on the command line interface. */
-    sc.get_global_config("debug_histogram_malloc_fail_frequency",&AtomicUnicodeHistogram::debug_histogram_malloc_fail_frequency,
-                  "Set >0 to make histogram maker fail with memory allocations");
+    sc.get_global_config("debug_histogram_malloc_fail_frequency",
+                         &AtomicUnicodeHistogram::debug_histogram_malloc_fail_frequency,
+                         "Set >0 to make histogram maker fail with memory allocations");
     sc.get_global_config("hash_alg",&be_hash_name,"Specifies hash algorithm to be used for all hash calculations");
     //sc.get_global_config("write_feature_files",&opt_write_feature_files,"Write features to flat files");
     //sc.get_global_config("write_feature_sqlite3",&opt_write_sqlite3,"Write feature files to report.sqlite3");
@@ -495,7 +506,6 @@ int main(int argc,char **argv)
     ss.add_scanners(scanners_builtin);
 
     /* Print usage if necessary. Requires scanner set, but not commands applied.
-     * This would create the outdir if one was specified.
      */
     if ( opt_h ) {
         usage(progname, ss);
@@ -506,8 +516,17 @@ int main(int argc,char **argv)
         exit(1);
     }
 
-    /* Remember if directory is clean or not */
-    bool clean_start = directory_empty(sc.outdir);
+    /* The zap option wipes the contents of a directory, useful for debugging */
+    if (opt_zap){
+        for (const auto &entry : std::filesystem::recursive_directory_iterator( sc.outdir ) ) {
+            if (! std::filesystem::is_directory(entry.path())){
+                std::cout << "erasing " << entry.path().string() << "\n";
+                std::filesystem::remove( entry );
+            }
+	}
+    }
+
+    bool clean_start = opt_zap || directory_empty(sc.outdir);
 
     /* Applying the scanner commands will create the alert recorder. */
     try {
@@ -531,33 +550,11 @@ int main(int argc,char **argv)
         }
     }
 
-    /* The zap option wipes the contents of a directory, useful for debugging */
-    if (opt_zap){
-        for (const auto &entry : std::filesystem::recursive_directory_iterator( sc.outdir ) ) {
-            if (! std::filesystem::is_directory(entry.path())){
-                std::cout << "erasing " << entry.path().string() << "\n";
-                std::filesystem::remove( entry );
-            }
-	}
-        clean_start = true;
-    }
-
     if (clean_start==false){
 	/* Restarting */
         bulk_extractor_restarter r(sc,cfg);
         r.restart();                    // load the restart file and rename report.xml
     }
-
-    /* Get image or directory */
-    if (*argv == NULL) {
-        if (cfg.opt_recurse) {
-            std::cerr << "filedir not provided\n";
-        } else {
-            std::cerr << "imagefile not provided\n";
-        }
-        exit(1);
-    }
-    sc.input_fname = *argv;
 
     image_process *p = image_process::open( sc.input_fname, cfg.opt_recurse, cfg.opt_pagesize, cfg.opt_marginsize);
 
