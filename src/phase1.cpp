@@ -54,6 +54,8 @@ void Phase1::Config::set_sampling_parameters(std::string param)
     }
     sampling_fraction = atof(params.at(0).c_str());
     if (sampling_fraction<=0 || sampling_fraction>=1){
+        std::cerr << "params.at(0): " << params.at(0) << std::endl;
+        std::cerr << "sampling_fraction: " << sampling_fraction << std::endl;
         throw std::runtime_error("error: sampling fraction f must be 0<f<=1");
     }
     if (params.size()==2){

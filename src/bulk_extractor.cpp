@@ -468,17 +468,6 @@ int bulk_extractor_main(int argc,char **argv)
     argc -= optind;
     argv += optind;
 
-    /* Get image or directory */
-    if (argc==0 || *argv == nullptr) {
-        if (cfg.opt_recurse) {
-            std::cerr << "filedir not provided\n";
-        } else {
-            std::cerr << "imagefile not provided\n";
-        }
-        exit(1);
-    }
-    sc.input_fname = *argv;
-
     /* Create a configuration that will be used to initialize the scanners */
     /* Make individual configuration options appear on the command line interface. */
     sc.get_global_config("debug_histogram_malloc_fail_frequency",
@@ -496,14 +485,27 @@ int bulk_extractor_main(int argc,char **argv)
         sc.outdir = scanner_config::NO_OUTDIR; // don't create outdir if we are getting help.
     }
 
-    if (sc.outdir.empty()){
-        std::cerr << "error: -o outdir must be specified\n";
-        exit(1);
-    }
-
     struct feature_recorder_set::flags_t f;
     scanner_set ss(sc, f, nullptr);     // make a scanner_set but with no XML writer. We will create it below
     ss.add_scanners(scanners_builtin);
+
+    /* Get image or directory */
+    if (argc==0 || *argv == nullptr) {
+        if (cfg.opt_recurse) {
+            std::cerr << "filedir not provided\n";
+        } else {
+            std::cerr << "imagefile not provided\n";
+        }
+        usage(progname, ss);
+        exit(1);
+    }
+    sc.input_fname = *argv;
+
+    if (sc.outdir.empty()){
+        std::cerr << "error: -o outdir must be specified\n";
+        usage(progname, ss);
+        exit(1);
+    }
 
     /* Print usage if necessary. Requires scanner set, but not commands applied.
      */

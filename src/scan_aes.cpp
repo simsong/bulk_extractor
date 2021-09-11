@@ -83,7 +83,7 @@ inline uint8_t gmul(uint8_t a, uint8_t b)
 /* The rcon function.
  * This function is now solely used to create the rcon table
  */
-inline uint8_t rcon_function(uint8_t in)
+uint8_t rcon_function(uint8_t in)
 {
     uint8_t c=1;
 
@@ -183,9 +183,8 @@ inline uint8_t gmul_inverse(uint8_t in)
 
 
 // sbox function is now used only to create the sbox table
-
-uint8_t sbox[256];
-inline uint8_t sbox_function(uint8_t in)
+// Previously this was inlined, but now we just use the precomputed sbox function sbox[i]
+uint8_t sbox_function(uint8_t in)
 {
     uint8_t c, s, x;
     s = x = gmul_inverse(in);
@@ -199,6 +198,8 @@ inline uint8_t sbox_function(uint8_t in)
     return x;
 }
 
+/* Precompute the sbox function */
+uint8_t sbox[256];
 void sbox_setup()
 {
     for(int i=0;i<256;i++){
@@ -332,7 +333,7 @@ bool valid_aes256_schedule(const uint8_t * in)
         // For 256-bit keys, we add an extra sbox to the calculation
         if (16 == pos % AES256_KEY_SIZE)    {
             for (uint8_t a = 0 ; a < 4 ; ++a)
-                t[a] = sbox_function(t[a]);
+                t[a] = sbox[t[a]];
         }
 
         for (uint8_t a = 0; a < 4 && pos<AES256_KEY_SCHEDULE_SIZE; a++)     {
@@ -382,6 +383,7 @@ void preload(distinct_character_counter &dcc, const uint8_t *buf, size_t keysize
     }
 }
 
+class feature_recorder *aes_recorderp = nullptr;
 extern "C"
 void scan_aes(struct scanner_params &sp)
 {
@@ -400,8 +402,13 @@ void scan_aes(struct scanner_params &sp)
 	return;
     }
 
+    if(sp.phase==scanner_params::PHASE_INIT2){
+        // look up once
+        aes_recorderp = &sp.named_feature_recorder("aes_keys");
+    }
+
     if(sp.phase==scanner_params::PHASE_SCAN){
-	auto &aes_recorder = sp.named_feature_recorder("aes_keys");
+	auto &aes_recorder = *aes_recorderp;
         distinct_character_counter distinct128,distinct192,distinct256;
 
 	/* Simple mod: Keep a rolling window of the entropy and don't
