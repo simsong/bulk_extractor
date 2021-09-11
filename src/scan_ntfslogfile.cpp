@@ -114,16 +114,16 @@ void scan_ntfslogfile(scanner_params &sp)
                     else
                         break;
                 }
-                ntfslogfile_recorder.carve( sbuf_t(sbuf,offset,total_record_size), "LogFile-RCRD");
+                ntfslogfile_recorder.carve( sbuf_t(sbuf,offset,total_record_size), ".LogFile-RCRD");
             }
             else if (result_type == 2) {
-                ntfslogfile_recorder.carve( sbuf_t(sbuf,offset,total_record_size), "LogFile-RCRD_corrupted");
+                ntfslogfile_recorder.carve( sbuf_t(sbuf,offset,total_record_size), ".LogFile-RCRD_corrupted");
             }
             else if (result_type == 3) {
-                ntfslogfile_recorder.carve( sbuf_t(sbuf,offset,total_record_size), "LogFile-RSTR");
+                ntfslogfile_recorder.carve( sbuf_t(sbuf,offset,total_record_size), ".LogFile-RSTR");
             }
             else if (result_type == 4) {
-                ntfslogfile_recorder.carve( sbuf_t(sbuf,offset,total_record_size),"LogFile-RSTR_corrupted");
+                ntfslogfile_recorder.carve( sbuf_t(sbuf,offset,total_record_size),".LogFile-RSTR_corrupted");
             }
             else { // result_type == 0 - not RCRD record
             }

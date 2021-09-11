@@ -98,16 +98,16 @@ void scan_ntfsusn(scanner_params &sp)
             if (record_size % 8 != 0) { // illegal size
                 uint8_t padding;
                 padding = 8 - (record_size % 8);
-                ntfsusn_recorder.carve( sbuf_t(sbuf,offset,record_size+padding), "UsnJrnl-J_corrupted");
+                ntfsusn_recorder.carve( sbuf_t(sbuf,offset,record_size+padding), ".UsnJrnl-J_corrupted");
                 offset += record_size+padding;
                 continue;
             }
             total_record_size = record_size;
             if (offset+total_record_size > stop) {
                 if(offset+total_record_size < sbuf.bufsize)
-                    ntfsusn_recorder.carve( sbuf_t(sbuf,offset,total_record_size), "UsnJrnl-J");
+                    ntfsusn_recorder.carve( sbuf_t(sbuf,offset,total_record_size), ".UsnJrnl-J");
                 else
-                    ntfsusn_recorder.carve( sbuf_t(sbuf,offset,total_record_size), "UsnJrnl-J_corrupted");
+                    ntfsusn_recorder.carve( sbuf_t(sbuf,offset,total_record_size), ".UsnJrnl-J_corrupted");
                 break;
             }
             // found one record then also checks following valid records and writes all at once
@@ -142,7 +142,7 @@ void scan_ntfsusn(scanner_params &sp)
                     }
                 }
             }
-            ntfsusn_recorder.carve(sbuf_t(sbuf,offset,total_record_size),"UsnJrnl-J");
+            ntfsusn_recorder.carve(sbuf_t(sbuf,offset,total_record_size),".UsnJrnl-J");
             offset += total_record_size;
         }
     }

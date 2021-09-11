@@ -121,17 +121,17 @@ void scan_ntfsindx(scanner_params &sp)
                         else
                             break;
                     }
-                    ntfsindx_recorder.carve(sbuf_t(sbuf,offset,total_record_size), "INDX");
+                    ntfsindx_recorder.carve(sbuf_t(sbuf,offset,total_record_size), ".INDX");
                 }
                 else if(record_type == 2) {
-                    ntfsindx_recorder.carve(sbuf_t(sbuf,offset,total_record_size),"INDX_ObjId-O");
+                    ntfsindx_recorder.carve(sbuf_t(sbuf,offset,total_record_size),".INDX_ObjId-O");
                 }
                 else { // 0 - Other INDX record (Secure-SDH, Secure-SII, etc.)
-                    ntfsindx_recorder.carve(sbuf_t(sbuf,offset,total_record_size),"INDX_Misc");
+                    ntfsindx_recorder.carve(sbuf_t(sbuf,offset,total_record_size),".INDX_Misc");
                 }
             }
             else if (result_type == 2) {
-                ntfsindx_recorder.carve(sbuf_t(sbuf,offset,total_record_size),"INDX_corrupted");
+                ntfsindx_recorder.carve(sbuf_t(sbuf,offset,total_record_size),".INDX_corrupted");
             }
             else { // result_type == 0
             }

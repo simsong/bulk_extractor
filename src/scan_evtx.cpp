@@ -246,7 +246,7 @@ void scan_evtx(scanner_params &sp)
                     int64_t result_record_size = check_evtxrecord_signature(offset+i, sbuf);
                     if (result_record_size > 0) {
                         sbuf_t data(sbuf,offset+i, result_record_size);
-                        evtx_recorder.carve(data, "evtx_orphan_record");
+                        evtx_recorder.carve(data, ".evtx_orphan_record");
                         i += result_record_size;
                     } else {
                         i += 8;

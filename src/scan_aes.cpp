@@ -376,13 +376,6 @@ int scan_aes_256 = 1;
 
 
 
-void preload(distinct_character_counter &dcc, const uint8_t *buf, size_t keysize)
-{
-    for (size_t i = 0; i<keysize-1; i++){
-        dcc.add(buf[i]);
-    }
-}
-
 class feature_recorder *aes_recorderp = nullptr;
 extern "C"
 void scan_aes(struct scanner_params &sp)
@@ -410,6 +403,7 @@ void scan_aes(struct scanner_params &sp)
     if(sp.phase==scanner_params::PHASE_SCAN){
 	auto &aes_recorder = *aes_recorderp;
         distinct_character_counter distinct128,distinct192,distinct256;
+        highbit_character_counter hbc;
 
 	/* Simple mod: Keep a rolling window of the entropy and don't
 	 * scan if we see fewer than 10 distinct characters in window. This will
@@ -420,30 +414,33 @@ void scan_aes(struct scanner_params &sp)
          * for the 128, 192 and 256-byte cases.
 	 */
 	for (size_t pos = 0 ; pos < sp.sbuf->bufsize && pos < sp.sbuf->pagesize; pos++){
-            /* TODO: Remove direct memory access with mediated access */
             const uint8_t *p2 = sp.sbuf->get_buf() + pos;
 	    if (scan_aes_128 && (sp.sbuf->bufsize-pos >= AES128_KEY_SCHEDULE_SIZE)){
-                if (pos==0) preload(distinct128, p2, AES128_KEY_SIZE);
+                if (pos==0) distinct128.preload(p2, AES128_KEY_SIZE-1);
+                if (pos==0) hbc.preload(p2, AES128_KEY_SCHEDULE_SIZE-1);
                 distinct128.add(p2[AES128_KEY_SIZE-1]);
-                if (distinct128.distinct_count > AES128_KEY_SIZE/4 && valid_aes128_schedule(p2)) {
+                hbc.add(p2[AES128_KEY_SCHEDULE_SIZE-1]);
+
+                if (distinct128.distinct_count > AES128_KEY_SIZE/4 && hbc.highbit_count>0 && valid_aes128_schedule(p2)) {
                     std::string key = key_to_string(p2, AES128_KEY_SIZE);
                     aes_recorder.write(sp.sbuf->pos0+pos,key,std::string("AES128"));
                 }
                 distinct128.remove(p2[0]);
+                hbc.remove(p2[0]);
             }
 	    if (scan_aes_192 && (sp.sbuf->bufsize-pos >= AES192_KEY_SCHEDULE_SIZE)) {
                 distinct192.add(p2[AES192_KEY_SIZE-1]);
-                if (pos==0) preload(distinct192, p2, AES192_KEY_SIZE);
-                if (distinct192.distinct_count > AES192_KEY_SIZE/4 && valid_aes192_schedule(p2)) {
+                if (pos==0) distinct192.preload(p2, AES192_KEY_SIZE-1);
+                if (distinct192.distinct_count > AES192_KEY_SIZE/4 && hbc.highbit_count>0 && valid_aes192_schedule(p2)) {
                     std::string key = key_to_string(p2, AES192_KEY_SIZE);
 		    aes_recorder.write(sp.sbuf->pos0+pos,key,std::string("AES192"));
 		}
                 distinct192.remove(p2[0]);
             }
 	    if (scan_aes_256 && (sp.sbuf->bufsize-pos >= AES256_KEY_SCHEDULE_SIZE)) {
-                if (pos==0) preload(distinct256, p2, AES256_KEY_SIZE);
+                if (pos==0) distinct256.preload(p2, AES256_KEY_SIZE-1);
                 distinct256.add(p2[AES256_KEY_SIZE-1]);
-                if (distinct256.distinct_count >  AES256_KEY_SIZE/4 && valid_aes256_schedule(p2)) {
+                if (distinct256.distinct_count >  AES256_KEY_SIZE/4 && hbc.highbit_count>0 && valid_aes256_schedule(p2)) {
                     std::string key = key_to_string(p2, AES256_KEY_SIZE);
 		    aes_recorder.write(sp.sbuf->pos0+pos,key,std::string("AES256"));
 		}
