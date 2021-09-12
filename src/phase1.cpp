@@ -7,6 +7,7 @@
 #include "phase1.h"
 #include "be13_api/utils.h"             // needs config.h
 #include "be13_api/aftimer.h"             // needs config.h
+#include "be13_api/dfxml_cpp/src/dfxml_writer.h"
 
 
 /**
@@ -90,8 +91,9 @@ sbuf_t *Phase1::get_sbuf(image_process::iterator &it)
                       << " (retry_count=" << retry_count
                       << " of " << config.max_bad_alloc_errors << ")\n";
 
+
             std::stringstream str;
-            str << "name='bad_alloc' " << "pos0='" << it.get_pos0() << "' " << "retry_count='"     << retry_count << "' ";
+            str << "name='bad_alloc' " << "pos0='" << dfxml_writer::xmlescape(it.get_pos0().str()) << "' " << "retry_count='"     << retry_count << "' ";
             xreport.xmlout("debug:exception", e.what(), str.str(), true);
         }
         if (retry_count < config.max_bad_alloc_errors+1){

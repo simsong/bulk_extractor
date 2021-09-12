@@ -8,8 +8,8 @@
 #include "config.h"
 #include "bulk_extractor.h"
 
-int main(int argc,char **argv)
+int main(int argc,char * const *argv)
 {
-    bulk_extractor_main(argc,argv);
+    bulk_extractor_main(argc, argv);
     exit(0);
 }

@@ -10,6 +10,6 @@
 void debug_help();
 void usage(const char *progname, scanner_set &ss);
 void validate_path(const std::filesystem::path fn);
-int bulk_extractor_main(int argc,char **argv);
+int bulk_extractor_main(int argc,char * const *argv);
 
 #endif

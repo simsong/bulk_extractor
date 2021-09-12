@@ -314,7 +314,7 @@ struct notify_opts {
     }
 }
 
-int bulk_extractor_main(int argc,char **argv)
+int bulk_extractor_main(int argc,char * const *argv)
 {
     mtrace();
 
@@ -730,5 +730,5 @@ int bulk_extractor_main(int argc,char **argv)
     }
 
     muntrace();
-    exit(0);
+    return(0);
 }

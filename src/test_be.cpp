@@ -25,6 +25,7 @@
 #include "be13_api/scanner_set.h"
 #include "be13_api/utils.h"             // needs config.h
 
+#include "bulk_extractor.h"
 #include "base64_forensic.h"
 #include "bulk_extractor_restarter.h"
 #include "bulk_extractor_scanners.h"
@@ -869,8 +870,8 @@ TEST_CASE("path_printer", "[path_printer]") {
 
 
 /****************************************************************
- ** Test restarter
- **/
+ * Test restarter
+ */
 
 TEST_CASE("restarter", "[restarter]") {
     scanner_config   sc;   // config for be13_api
@@ -888,4 +889,40 @@ TEST_CASE("restarter", "[restarter]") {
     REQUIRE( std::filesystem::exists( sc.outdir / "report.xml") == false); // because now it has been renamed
     REQUIRE( cfg.seen_page_ids.find("369098752") != cfg.seen_page_ids.end() );
     REQUIRE( cfg.seen_page_ids.find("369098752+") == cfg.seen_page_ids.end() );
+}
+
+
+/****************************************************************
+ * end-to-end tests
+ */
+
+TEST_CASE("e2ev1", "[end-to-end]") {
+    std::string inpath = test_dir() / "nps-2010-emails.100k.raw";
+    std::string outdir = NamedTemporaryDirectory();
+    const char *n_argv[] ={"bulk_extractor", "-1", "-o", outdir.c_str(), inpath.c_str(), nullptr};
+    char * const *argv = const_cast<char *const *>(n_argv);
+
+    std::cout << "testing with command line:" << std::endl;
+    int argc=0;
+    while(argv[argc]){
+        std::cout << argv[argc++] << " ";
+    }
+    std::cout << std::endl;
+
+    /* SBUF accounting is off from above; don't worry about unaccounted for sbufs.
+     * of course, if this runs multi-threaded, it will still be off.
+     */
+    //sbuf_t::sbuf_total = 0;
+    //sbuf_t::sbuf_count = 0;
+    std::cout << "starting bulk_extractor" << std::endl;
+
+    int ret = bulk_extractor_main(argc, argv);
+    std::cout << "ending bulk_extractor" << std::endl;
+    REQUIRE( ret==0 );
+
+    /* Validate the output dfxml file */
+    std::string validate = std::string("xmllint --noout ") + outdir + "/report.xml";
+    REQUIRE( system( validate.c_str()) == 0);
+
+    /* Look for output files */
 }
