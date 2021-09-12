@@ -922,7 +922,8 @@ TEST_CASE("e2ev1", "[end-to-end]") {
 
     /* Validate the output dfxml file */
     std::string validate = std::string("xmllint --noout ") + outdir + "/report.xml";
-    REQUIRE( system( validate.c_str()) == 0);
+    int code = system( validate.c_str());
+    REQUIRE( code == 0);
 
     /* Look for output files */
 }
