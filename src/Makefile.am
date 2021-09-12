@@ -111,6 +111,7 @@ bulk_extractor_parts = \
 	bulk_extractor_scanners.h \
 	base64_forensic.cpp \
 	base64_forensic.h \
+	bulk_extractor.cpp \
 	bulk_extractor.h \
 	findopts.h \
 	image_process.cpp \

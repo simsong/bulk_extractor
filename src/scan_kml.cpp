@@ -32,7 +32,9 @@ void scan_kml(scanner_params &sp)
         sp.info->author         = "Simson Garfinkel ";
         sp.info->description    = "Scans for KML files";
         sp.info->scanner_version= "1.0";
-        sp.info->feature_defs.push_back( feature_recorder_def("kml"));
+        struct feature_recorder_def::flags_t carve_flag;
+        carve_flag.carve = true;
+        sp.info->feature_defs.push_back( feature_recorder_def("kml", carve_flag));
 	return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN){

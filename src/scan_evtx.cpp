@@ -23,7 +23,8 @@
 #define CLUSTER_SIZE 4096
 #define ELFFILE_SIZE 4096
 #define ELFCHNK_SIZE 65536
-#define FEATURE_FILE_NAME "evtx_carved"
+
+const std::string FEATURE_FILE_NAME {"evtx_carved"};
 
 struct elffile {
     struct elffilepart {
@@ -149,7 +150,10 @@ void scan_evtx(scanner_params &sp)
         sp.info->author          = "Teru Yamazaki";
         sp.info->description     = "Scans for EVTX Chunks and generates valid EVTX file";
         sp.info->scanner_version = "1.0";
-        sp.info->feature_defs.push_back( feature_recorder_def(FEATURE_FILE_NAME));
+
+        struct feature_recorder_def::flags_t carve_flag;
+        carve_flag.carve = true;
+        sp.info->feature_defs.push_back( feature_recorder_def(FEATURE_FILE_NAME, carve_flag));
         return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
@@ -224,6 +228,7 @@ void scan_evtx(scanner_params &sp)
                 header.flags = 0;
                 uint32_t table[256];
                 crc32::generate_table(table);
+
                 // CRC32 of the first 120 bytes == header.part struct
                 header.crc32 = crc32::update(table, 0, &header.part, 120);
                 memset(header.unknown2,'\0', sizeof(header.unknown2));
@@ -233,12 +238,9 @@ void scan_evtx(scanner_params &sp)
                 // generate evtx header based on elfchnk information
                 // make an sbuf for the header that will free it automatically when we are finished
                 sbuf_t *sbuf_header = sbuf_t::sbuf_new(pos0_t(), header_buf, sizeof(header), sizeof(header));
-                //sbuf_t sbuf_header(pos0_t(), reinterpret_cast<unsigned char *>(&header), sizeof(header), sizeof(header), 0, false, false, false );
                 sbuf_t sbuf_records(sbuf, offset, total_size);
                 evtx_recorder.carve(*sbuf_header, sbuf_records, filename);
                 delete sbuf_header;
-                //evtx_recorder.write_data((unsigned char *)&header,sizeof(elffile),filename);
-                //evtx_recorder.carve(sbuf, offset, total_size, filename);
                 offset += total_size;
             } else { // scans orphan record
                 size_t i=0;
@@ -246,7 +248,7 @@ void scan_evtx(scanner_params &sp)
                     int64_t result_record_size = check_evtxrecord_signature(offset+i, sbuf);
                     if (result_record_size > 0) {
                         sbuf_t data(sbuf,offset+i, result_record_size);
-                        evtx_recorder.carve(data, "evtx_orphan_record");
+                        evtx_recorder.carve(data, ".evtx_orphan_record");
                         i += result_record_size;
                     } else {
                         i += 8;

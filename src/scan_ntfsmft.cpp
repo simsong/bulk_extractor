@@ -65,7 +65,10 @@ void scan_ntfsmft(scanner_params &sp)
         sp.info->author          = "Teru Yamazaki";
         sp.info->description     = "Scans for NTFS MFT record";
         sp.info->scanner_version = "1.0";
-        sp.info->feature_defs.push_back( feature_recorder_def(FEATURE_FILE_NAME));
+        struct feature_recorder_def::flags_t carve_flag;
+        carve_flag.carve = true;
+        sp.info->feature_defs.push_back( feature_recorder_def(FEATURE_FILE_NAME, carve_flag));
+        sp.info->scanner_flags.scanner_wants_filesystems = true;
         return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
@@ -97,10 +100,10 @@ void scan_ntfsmft(scanner_params &sp)
                     else
                         break;
                 }
-                ntfsmft_recorder.carve(sbuf_t(sbuf,offset,total_record_size),"MFT");
+                ntfsmft_recorder.carve(sbuf_t(sbuf,offset,total_record_size),".mft");
             }
             else if (result_type == 2) {
-                ntfsmft_recorder.carve(sbuf_t(sbuf,offset,total_record_size),"MFT_corrputed");
+                ntfsmft_recorder.carve(sbuf_t(sbuf,offset,total_record_size),".mft_corrputed");
             }
             else { // result_type == 0 - not MFT record
             }

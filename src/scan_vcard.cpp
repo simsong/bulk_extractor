@@ -83,7 +83,9 @@ void scan_vcard(scanner_params &sp)
         sp.info->author         = "Simson Garfinkel and Tony Melaragno";
         sp.info->description    = "Scans for VCARD data";
         sp.info->scanner_version= "1.1";
-        sp.info->feature_defs.push_back( feature_recorder_def("vcard"));
+        struct feature_recorder_def::flags_t carve_flag;
+        carve_flag.carve = true;
+        sp.info->feature_defs.push_back( feature_recorder_def("vcard", carve_flag));
 	return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN){

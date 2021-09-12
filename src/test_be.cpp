@@ -25,6 +25,7 @@
 #include "be13_api/scanner_set.h"
 #include "be13_api/utils.h"             // needs config.h
 
+#include "bulk_extractor.h"
 #include "base64_forensic.h"
 #include "bulk_extractor_restarter.h"
 #include "bulk_extractor_scanners.h"
@@ -127,11 +128,26 @@ std::filesystem::path test_scanners(const std::vector<scanner_t *> & scanners, s
     ss.apply_scanner_commands();
 
     REQUIRE (ss.get_enabled_scanners().size() == scanners.size()); // the one scanner
-    std::cerr << "\n## output in " << sc.outdir << " for " << ss.get_enabled_scanners()[0] << "\n";
+    if (ss.get_enabled_scanners().size()>0){
+        std::cerr << "\n## output in " << sc.outdir << " for " << ss.get_enabled_scanners()[0] << std::endl;
+    } else {
+        std::cerr << "\n## output in " << sc.outdir << " but no enabled scanner! " << std::endl;
+    }
     REQUIRE(sbuf->children == 0);
     ss.phase_scan();
     REQUIRE(sbuf->children == 0);
-    ss.schedule_sbuf(sbuf);
+    try {
+        ss.schedule_sbuf(sbuf);
+    } catch (sbuf_t::range_exception_t &e) {
+        std::cerr << "sbuf_t range exception: " << e.what() << std::endl;
+        throw std::runtime_error(e.what());
+    } catch (scanner_set::NoSuchScanner &e) {
+        std::cerr << "no such scanner: " << e.what() << std::endl;
+    } catch (std::exception &e) {
+        std::cerr << "unknown exception: " << e.what() << std::endl;
+        throw e;
+    }
+
     ss.shutdown();
     return sc.outdir;
 }
@@ -174,49 +190,58 @@ TEST_CASE("scan_base64_functions", "[support]" ){
 }
 
 /* scan_email.flex checks */
-TEST_CASE("scan_email8", "[support]") {
-    {
-        REQUIRE( extra_validate_email("this@that.com")==true);
-        REQUIRE( extra_validate_email("this@that..com")==false);
-        auto s1 = sbuf_t("this@that.com");
-        auto s2 = sbuf_t("this_that.com");
-        REQUIRE( find_host_in_email(s1) == 5);
-        REQUIRE( find_host_in_email(s2) == -1);
+TEST_CASE("scan_email1", "[support]") {
+    REQUIRE( extra_validate_email("this@that.com")==true);
+    REQUIRE( extra_validate_email("this@that..com")==false);
+    auto s1 = sbuf_t("this@that.com");
+    auto s2 = sbuf_t("this_that.com");
+    REQUIRE( find_host_in_email(s1) == 5);
+    REQUIRE( find_host_in_email(s2) == -1);
 
-        auto s3 = sbuf_t("https://domain.com/foobar");
-        size_t domain_len = 0;
-        REQUIRE( find_host_in_url(s3, &domain_len)==8);
-        REQUIRE( domain_len == 10);
-    }
-
-    {
-        /* This is text from a PDF, decompressed */
-        auto *sbufp = new sbuf_t("q Q q 72 300 460 420 re W n /Gs1 gs /Cs1 cs 1 sc 72 300 460 420re f 0 sc./Gs2 gs q 1 0 0 -1 72720 cm BT 10 0 0 -10 5 10 Tm /F1.0 1 Tf (plain_text_pdf@textedit.com).Tj ET Q Q");
-        auto outdir = test_scanner(scan_email, sbufp);
-        auto email_txt = getLines( outdir / "email.txt" );
-        REQUIRE( requireFeature(email_txt,"135\tplain_text_pdf@textedit.com"));
-    }
-
-    {
-        auto *sbufp = new sbuf_t("plain_text_pdf@textedit.com");
-        auto outdir = test_scanner(scan_email, sbufp);
-        auto email_txt = getLines( outdir / "email.txt" );
-        REQUIRE( requireFeature(email_txt,"0\tplain_text_pdf@textedit.com"));
-    }
-
-    {
-        std::vector<scanner_t *>scanners = {scan_email, scan_pdf };
-        auto *sbufp = map_file("nps-2010-emails.100k.raw");
-        auto outdir = test_scanners(scanners, sbufp);
-        auto email_txt = getLines( outdir / "email.txt" );
-        REQUIRE( requireFeature(email_txt,"80896\tplain_text@textedit.com"));
-        REQUIRE( requireFeature(email_txt,"70727-PDF-0\tplain_text_pdf@textedit.com\t"));
-        REQUIRE( requireFeature(email_txt,"81991-PDF-0\trtf_text_pdf@textedit.com\t"));
-        REQUIRE( requireFeature(email_txt,"92231-PDF-0\tplain_utf16_pdf@textedit.com\t"));
-    }
+    auto s3 = sbuf_t("https://domain.com/foobar");
+    size_t domain_len = 0;
+    REQUIRE( find_host_in_url(s3, &domain_len)==8);
+    REQUIRE( domain_len == 10);
 }
 
-TEST_CASE("scan_email16", "[support]") {
+TEST_CASE("scan_email2", "[support]") {
+    /* This is text from a PDF, decompressed */
+    auto *sbufp = new sbuf_t("q Q q 72 300 460 420 re W n /Gs1 gs /Cs1 cs 1 sc 72 300 460 420re f 0 sc./Gs2 gs q 1 0 0 -1 72720 cm BT 10 0 0 -10 5 10 Tm /F1.0 1 Tf (plain_text_pdf@textedit.com).Tj ET Q Q");
+    auto outdir = test_scanner(scan_email, sbufp);
+    auto email_txt = getLines( outdir / "email.txt" );
+    REQUIRE( requireFeature(email_txt,"135\tplain_text_pdf@textedit.com"));
+}
+
+TEST_CASE("scan_email3", "[support]") {
+    auto *sbufp = new sbuf_t("plain_text_pdf@textedit.com");
+    auto outdir = test_scanner(scan_email, sbufp);
+    auto email_txt = getLines( outdir / "email.txt" );
+    REQUIRE( requireFeature(email_txt,"0\tplain_text_pdf@textedit.com"));
+}
+
+TEST_CASE("scan_email4", "[support]") {
+    std::vector<scanner_t *>scanners = {scan_email, scan_pdf };
+    auto *sbufp = map_file("nps-2010-emails.100k.raw");
+    auto outdir = test_scanners(scanners, sbufp);
+    auto email_txt = getLines( outdir / "email.txt" );
+    REQUIRE( requireFeature(email_txt,"80896\tplain_text@textedit.com"));
+    REQUIRE( requireFeature(email_txt,"70727-PDF-0\tplain_text_pdf@textedit.com\t"));
+    REQUIRE( requireFeature(email_txt,"81991-PDF-0\trtf_text_pdf@textedit.com\t"));
+    REQUIRE( requireFeature(email_txt,"92231-PDF-0\tplain_utf16_pdf@textedit.com\t"));
+}
+
+TEST_CASE("sbuf_decompress_zlib_new", "[support]") {
+    auto *sbufp = map_file("test_hello.gz");
+    REQUIRE( sbuf_decompress::is_gzip_header( *sbufp, 0) == true);
+    REQUIRE( sbuf_decompress::is_gzip_header( *sbufp, 10) == false);
+    auto *decomp = sbuf_decompress::sbuf_new_decompress( *sbufp, 1024*1024, "GZIP", sbuf_decompress::mode_t::GZIP, 0 );
+    REQUIRE( decomp != nullptr);
+    REQUIRE( decomp->asString() == "hello@world.com\n");
+    delete decomp;
+    delete sbufp;
+}
+
+TEST_CASE("scan_email16", "[scanners]") {
     /* utf-16 tests */
     {
         uint8_t c[] {"h\000t\000t\000p\000:\000/\000/\000w\000w\000w\000.\000h\000h\000s\000.\000g\000o\000v\000/\000o\000"
@@ -229,17 +254,6 @@ TEST_CASE("scan_email16", "[support]") {
         auto url_histogram_txt = getLines( outdir / "url_histogram.txt" );
         REQUIRE( requireFeature(url_histogram_txt,"n=1\thttp://www.hhs.gov/ocr/hipaa/consumer_rights.pdf\t(utf16=1)"));
     }
-}
-
-TEST_CASE("sbuf_decompress_zlib_new", "[support]") {
-    auto *sbufp = map_file("test_hello.gz");
-    REQUIRE( sbuf_decompress::is_gzip_header( *sbufp, 0) == true);
-    REQUIRE( sbuf_decompress::is_gzip_header( *sbufp, 10) == false);
-    auto *decomp = sbuf_decompress::sbuf_new_decompress( *sbufp, 1024*1024, "GZIP", sbuf_decompress::mode_t::GZIP, 0 );
-    REQUIRE( decomp != nullptr);
-    REQUIRE( decomp->asString() == "hello@world.com\n");
-    delete decomp;
-    delete sbufp;
 }
 
 TEST_CASE("scan_exif", "[scanners]") {
@@ -257,20 +271,6 @@ TEST_CASE("scan_msxml","[scanners]") {
     REQUIRE( bufstr.find("A collection showing how easy it is to create 3-dimensional") != std::string::npos);
     delete sbufp;
 }
-
-TEST_CASE("scan_pdf", "[scanners]") {
-    auto *sbufp = map_file("pdf_words2.pdf");
-    pdf_extractor pe(*sbufp);
-    pe.find_streams();
-    REQUIRE( pe.streams.size() == 4 );
-    REQUIRE( pe.streams[1].stream_start == 2214);
-    REQUIRE( pe.streams[1].endstream_tag == 4827);
-    pe.decompress_streams_extract_text();
-    REQUIRE( pe.texts.size() == 1 );
-    REQUIRE( pe.texts[0].txt.substr(0,30) == "-rw-r--r--    1 simsong  staff");
-    delete sbufp;
-}
-
 
 TEST_CASE("scan_json1", "[scanners]") {
     /* Make a scanner set with a single scanner and a single command to enable all the scanners.
@@ -407,9 +407,21 @@ TEST_CASE("scan_net", "[scanners]") {
     /* Break the port and make sure that the header is no longer valid */
     buf[frame_offset + ETHERNET_FRAME_SIZE] += 0x10; // increment header length
     REQUIRE( scan_net_t::sanityCheckIP46Header( sbufip, 0 , &h) == false );
-
-
 }
+
+TEST_CASE("scan_pdf", "[scanners]") {
+    auto *sbufp = map_file("pdf_words2.pdf");
+    pdf_extractor pe(*sbufp);
+    pe.find_streams();
+    REQUIRE( pe.streams.size() == 4 );
+    REQUIRE( pe.streams[1].stream_start == 2214);
+    REQUIRE( pe.streams[1].endstream_tag == 4827);
+    pe.decompress_streams_extract_text();
+    REQUIRE( pe.texts.size() == 1 );
+    REQUIRE( pe.texts[0].txt.substr(0,30) == "-rw-r--r--    1 simsong  staff");
+    delete sbufp;
+}
+
 
 TEST_CASE("scan_vcard", "[scanners]") {
     /* Make a scanner set with a single scanner and a single command to enable all the scanners.
@@ -559,12 +571,16 @@ std::filesystem::path validate(std::string image_fname, std::vector<Check> &expe
                 if (ends_with(pos,"|0")) {
                     pos = pos.substr(0,pos.size()-2);
                 }
-                if (words.size()>=2 &&
-                    (words[0]==expected[i].feature.pos) &&
-                    (words[1]==expected[i].feature.feature) &&
-                    (words.size()==2 ||
-                     (words[2]==expected[i].feature.context || expected[i].feature.context.size()==0))) {
-                    found = true;
+                if (words.size()==2 && (words[0]==expected[i].feature.pos) && (words[1]==expected[i].feature.feature)){
+                    found=true;
+                    break;
+                }
+                if (words.size()==3
+                    && (words[0]==expected[i].feature.pos)
+                    && (words[1]==expected[i].feature.feature)
+                    && ((words[2]==expected[i].feature.context) ||
+                        starts_with(words[2],expected[i].feature.context))){
+                    found=true;
                     break;
                 }
             }
@@ -656,6 +672,14 @@ TEST_CASE("test_base16json", "[phase1]") {
 
     };
     validate("test_base16json.txt", ex2);
+}
+
+TEST_CASE("test_elf", "[phase1]") {
+    std::vector<Check> ex {
+        Check("elf.txt", Feature( "0", "9e218cee3b190e8f59ef323b27f4d339481516e9", "<ELF class=\"ELFCLASS64\" data=\"ELFDATA2LSB\" osabi=\"ELFOSABI_NONE\" abiversion=\"0\" >"))
+    };
+    validate("hello_elf", ex);
+
 }
 
 TEST_CASE("test_gzip", "[phase1]") {
@@ -846,8 +870,8 @@ TEST_CASE("path_printer", "[path_printer]") {
 
 
 /****************************************************************
- ** Test restarter
- **/
+ * Test restarter
+ */
 
 TEST_CASE("restarter", "[restarter]") {
     scanner_config   sc;   // config for be13_api
@@ -865,4 +889,41 @@ TEST_CASE("restarter", "[restarter]") {
     REQUIRE( std::filesystem::exists( sc.outdir / "report.xml") == false); // because now it has been renamed
     REQUIRE( cfg.seen_page_ids.find("369098752") != cfg.seen_page_ids.end() );
     REQUIRE( cfg.seen_page_ids.find("369098752+") == cfg.seen_page_ids.end() );
+}
+
+
+/****************************************************************
+ * end-to-end tests
+ */
+
+TEST_CASE("e2ev1", "[end-to-end]") {
+    std::string inpath = test_dir() / "nps-2010-emails.100k.raw";
+    std::string outdir = NamedTemporaryDirectory();
+    const char *n_argv[] ={"bulk_extractor", "-1", "-o", outdir.c_str(), inpath.c_str(), nullptr};
+    char * const *argv = const_cast<char *const *>(n_argv);
+
+    std::cout << "testing with command line:" << std::endl;
+    int argc=0;
+    while(argv[argc]){
+        std::cout << argv[argc++] << " ";
+    }
+    std::cout << std::endl;
+
+    /* SBUF accounting is off from above; don't worry about unaccounted for sbufs.
+     * of course, if this runs multi-threaded, it will still be off.
+     */
+    //sbuf_t::sbuf_total = 0;
+    //sbuf_t::sbuf_count = 0;
+    std::cout << "starting bulk_extractor" << std::endl;
+
+    int ret = bulk_extractor_main(argc, argv);
+    std::cout << "ending bulk_extractor" << std::endl;
+    REQUIRE( ret==0 );
+
+    /* Validate the output dfxml file */
+    std::string validate = std::string("xmllint --noout ") + outdir + "/report.xml";
+    int code = system( validate.c_str());
+    REQUIRE( code == 0);
+
+    /* Look for output files */
 }

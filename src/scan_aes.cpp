@@ -39,6 +39,7 @@
 
 #include "be13_api/scanner_params.h"
 #include "be13_api/scanner_set.h"
+#include "be13_api/distinct_character_counter.h"
 
 /* old aes.h file */
 
@@ -82,7 +83,7 @@ inline uint8_t gmul(uint8_t a, uint8_t b)
 /* The rcon function.
  * This function is now solely used to create the rcon table
  */
-inline uint8_t rcon_function(uint8_t in)
+uint8_t rcon_function(uint8_t in)
 {
     uint8_t c=1;
 
@@ -182,9 +183,8 @@ inline uint8_t gmul_inverse(uint8_t in)
 
 
 // sbox function is now used only to create the sbox table
-
-uint8_t sbox[256];
-inline uint8_t sbox_function(uint8_t in)
+// Previously this was inlined, but now we just use the precomputed sbox function sbox[i]
+uint8_t sbox_function(uint8_t in)
 {
     uint8_t c, s, x;
     s = x = gmul_inverse(in);
@@ -198,6 +198,8 @@ inline uint8_t sbox_function(uint8_t in)
     return x;
 }
 
+/* Precompute the sbox function */
+uint8_t sbox[256];
 void sbox_setup()
 {
     for(int i=0;i<256;i++){
@@ -331,7 +333,7 @@ bool valid_aes256_schedule(const uint8_t * in)
         // For 256-bit keys, we add an extra sbox to the calculation
         if (16 == pos % AES256_KEY_SIZE)    {
             for (uint8_t a = 0 ; a < 4 ; ++a)
-                t[a] = sbox_function(t[a]);
+                t[a] = sbox[t[a]];
         }
 
         for (uint8_t a = 0; a < 4 && pos<AES256_KEY_SCHEDULE_SIZE; a++)     {
@@ -374,6 +376,7 @@ int scan_aes_256 = 1;
 
 
 
+class feature_recorder *aes_recorderp = nullptr;
 extern "C"
 void scan_aes(struct scanner_params &sp)
 {
@@ -381,9 +384,10 @@ void scan_aes(struct scanner_params &sp)
         sp.info->set_name("aes");
 	sp.info->author		= "Sam Trenholme, Jesse Kornblum and Simson Garfinkel";
 	sp.info->description    = "Search for AES key schedules";
-        sp.info->scanner_version = "1.1";
+        sp.info->scanner_version = "1.2";
+        sp.info->scanner_flags.scanner_wants_memory = true;
         sp.info->feature_defs.push_back( feature_recorder_def("aes_keys"));
-        sp.info->min_sbuf_size  = AES128_KEY_SIZE;
+        sp.info->min_sbuf_size  =  AES128_KEY_SCHEDULE_SIZE;
         sp.get_scanner_config("scan_aes_128", &scan_aes_128, "Scan for 128-bit AES keys; 0=No, 1=Yes");
         sp.get_scanner_config("scan_aes_192", &scan_aes_192, "Scan for 192-bit AES keys; 0=No, 1=Yes");
         sp.get_scanner_config("scan_aes_256", &scan_aes_256, "Scan for 256-bit AES keys; 0=No, 1=Yes");
@@ -392,8 +396,16 @@ void scan_aes(struct scanner_params &sp)
 	return;
     }
 
+    if(sp.phase==scanner_params::PHASE_INIT2){
+        // look up once
+        aes_recorderp = &sp.named_feature_recorder("aes_keys");
+    }
+
     if(sp.phase==scanner_params::PHASE_SCAN){
-	auto &aes_recorder = sp.named_feature_recorder("aes_keys");
+        if (scan_aes_128==0 && scan_aes_192==0 && scan_aes_256==0) return;
+	auto &aes_recorder = *aes_recorderp;
+        distinct_character_counter distinct128,distinct192,distinct256;
+        highbit_character_counter hbc;
 
 	/* Simple mod: Keep a rolling window of the entropy and don't
 	 * scan if we see fewer than 10 distinct characters in window. This will
@@ -403,27 +415,41 @@ void scan_aes(struct scanner_params &sp)
          * This is less efficient than before, but the code is simpler, and now the code is correctly computing the histogram
          * for the 128, 192 and 256-byte cases.
 	 */
-	for (size_t pos = 0 ; pos < sp.sbuf->bufsize && pos < sp.sbuf->pagesize; pos++){
-            /* TODO: Remove direct memory access with mediated access */
-            const uint8_t *p2 = sp.sbuf->get_buf() + pos;
-	    if (scan_aes_128 && sp.sbuf->distinct_characters( pos, AES128_KEY_SIZE) > AES128_KEY_SIZE/4){
-		if (valid_aes128_schedule(p2)) {
+        assert(sp.sbuf->bufsize >= AES128_KEY_SCHEDULE_SIZE);
+        const uint8_t *buf = sp.sbuf->get_buf();
+	for (size_t pos = 0 ; pos < sp.sbuf->bufsize && pos < sp.sbuf->bufsize - AES128_KEY_SCHEDULE_SIZE; pos++){
+            const uint8_t *p2 = buf + pos;
+            if (pos==0) hbc.preload(p2, AES128_KEY_SCHEDULE_SIZE-1);
+            hbc.add(p2[AES128_KEY_SCHEDULE_SIZE-1]);
+
+	    if (scan_aes_128 && (sp.sbuf->bufsize-pos >= AES128_KEY_SCHEDULE_SIZE)){
+                if (pos==0) distinct128.preload(p2, AES128_KEY_SIZE-1);
+                distinct128.add(p2[AES128_KEY_SIZE-1]);
+                if (distinct128.distinct_count > AES128_KEY_SIZE/4 && hbc.highbit_count>0 && valid_aes128_schedule(p2)) {
                     std::string key = key_to_string(p2, AES128_KEY_SIZE);
-		    aes_recorder.write(sp.sbuf->pos0+pos,key,std::string("AES128"));
-		}
+                    aes_recorder.write(sp.sbuf->pos0+pos,key,std::string("AES128"));
+                }
+                distinct128.remove(p2[0]);
             }
-	    if (scan_aes_192 && sp.sbuf->distinct_characters( pos, AES192_KEY_SIZE) > AES192_KEY_SIZE/4){
-		if (valid_aes192_schedule(p2)) {
+	    if (scan_aes_192 && (sp.sbuf->bufsize-pos >= AES192_KEY_SCHEDULE_SIZE)) {
+                if (pos==0) distinct192.preload(p2, AES192_KEY_SIZE-1);
+                distinct192.add(p2[AES192_KEY_SIZE-1]);
+                if (distinct192.distinct_count > AES192_KEY_SIZE/4 && hbc.highbit_count>0 && valid_aes192_schedule(p2)) {
                     std::string key = key_to_string(p2, AES192_KEY_SIZE);
 		    aes_recorder.write(sp.sbuf->pos0+pos,key,std::string("AES192"));
 		}
+                distinct192.remove(p2[0]);
             }
-	    if (scan_aes_256 && sp.sbuf->distinct_characters( pos, AES256_KEY_SIZE) > AES256_KEY_SIZE/4){
-		if (valid_aes256_schedule(p2)) {
+	    if (scan_aes_256 && (sp.sbuf->bufsize-pos >= AES256_KEY_SCHEDULE_SIZE)) {
+                if (pos==0) distinct256.preload(p2, AES256_KEY_SIZE-1);
+                distinct256.add(p2[AES256_KEY_SIZE-1]);
+                if (distinct256.distinct_count >  AES256_KEY_SIZE/4 && hbc.highbit_count>0 && valid_aes256_schedule(p2)) {
                     std::string key = key_to_string(p2, AES256_KEY_SIZE);
 		    aes_recorder.write(sp.sbuf->pos0+pos,key,std::string("AES256"));
 		}
+                distinct256.remove(p2[0]);
 	    }
+            hbc.remove(p2[0]);
 	}
     }
 }

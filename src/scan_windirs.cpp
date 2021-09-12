@@ -490,6 +490,7 @@ void scan_windirs(scanner_params &sp)
         sp.info->set_name("windirs" );
         sp.info->author         = "Simson Garfinkel and Maxim Suhanov";
         sp.info->description    = "Scans Microsoft directory structures";
+        sp.info->scanner_flags.scanner_wants_filesystems = true;
 
         // should we look for compressed windows disk images? Gosh, I don't know...
         sp.info->scanner_flags.depth0_only = true; // don't look for compressed windows disk images becuase
