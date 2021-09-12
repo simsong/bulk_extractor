@@ -158,10 +158,12 @@ void scan_zip(scanner_params &sp)
     sp.check_version();
 
     if (sp.phase==scanner_params::PHASE_INIT){
-        feature_recorder_def::flags_t xml; xml.xml = true;
+        feature_recorder_def::flags_t flags;
+        flags.xml = true;
+        flags.carve = true;
         sp.info->set_name("zip" );
         sp.info->scanner_flags.recurse = true;
-	sp.info->feature_defs.push_back( feature_recorder_def(ZIP_RECORDER_NAME, xml ));
+	sp.info->feature_defs.push_back( feature_recorder_def(ZIP_RECORDER_NAME, flags ));
         sp.get_scanner_config("zip_min_uncompr_size",&zip_min_uncompr_size,"Minimum size of a ZIP uncompressed object");
         sp.get_scanner_config("zip_max_uncompr_size",&zip_max_uncompr_size,"Maximum size of a ZIP uncompressed object");
         sp.get_scanner_config("zip_name_len_max",&zip_name_len_max,"Maximum name of a ZIP component filename");

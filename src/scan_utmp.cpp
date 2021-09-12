@@ -85,7 +85,9 @@ void scan_utmp(scanner_params &sp)
         sp.info->author          = "Teru Yamazaki";
         sp.info->description     = "Scans for utmp record";
         sp.info->scanner_version = "1.1";
-        sp.info->feature_defs.push_back(feature_recorder_def(FEATURE_FILE_NAME));
+        struct feature_recorder_def::flags_t carve_flag;
+        carve_flag.carve = true;
+        sp.info->feature_defs.push_back(feature_recorder_def(FEATURE_FILE_NAME, carve_flag));
         return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN){

@@ -127,11 +127,26 @@ std::filesystem::path test_scanners(const std::vector<scanner_t *> & scanners, s
     ss.apply_scanner_commands();
 
     REQUIRE (ss.get_enabled_scanners().size() == scanners.size()); // the one scanner
-    std::cerr << "\n## output in " << sc.outdir << " for " << ss.get_enabled_scanners()[0] << "\n";
+    if (ss.get_enabled_scanners().size()>0){
+        std::cerr << "\n## output in " << sc.outdir << " for " << ss.get_enabled_scanners()[0] << std::endl;
+    } else {
+        std::cerr << "\n## output in " << sc.outdir << " but no enabled scanner! " << std::endl;
+    }
     REQUIRE(sbuf->children == 0);
     ss.phase_scan();
     REQUIRE(sbuf->children == 0);
-    ss.schedule_sbuf(sbuf);
+    try {
+        ss.schedule_sbuf(sbuf);
+    } catch (sbuf_t::range_exception_t &e) {
+        std::cerr << "sbuf_t range exception: " << e.what() << std::endl;
+        throw std::runtime_error(e.what());
+    } catch (scanner_set::NoSuchScanner &e) {
+        std::cerr << "no such scanner: " << e.what() << std::endl;
+    } catch (std::exception &e) {
+        std::cerr << "unknown exception: " << e.what() << std::endl;
+        throw e;
+    }
+
     ss.shutdown();
     return sc.outdir;
 }
@@ -174,46 +189,44 @@ TEST_CASE("scan_base64_functions", "[support]" ){
 }
 
 /* scan_email.flex checks */
-TEST_CASE("scan_email8", "[support]") {
-    {
-        REQUIRE( extra_validate_email("this@that.com")==true);
-        REQUIRE( extra_validate_email("this@that..com")==false);
-        auto s1 = sbuf_t("this@that.com");
-        auto s2 = sbuf_t("this_that.com");
-        REQUIRE( find_host_in_email(s1) == 5);
-        REQUIRE( find_host_in_email(s2) == -1);
+TEST_CASE("scan_email1", "[support]") {
+    REQUIRE( extra_validate_email("this@that.com")==true);
+    REQUIRE( extra_validate_email("this@that..com")==false);
+    auto s1 = sbuf_t("this@that.com");
+    auto s2 = sbuf_t("this_that.com");
+    REQUIRE( find_host_in_email(s1) == 5);
+    REQUIRE( find_host_in_email(s2) == -1);
 
-        auto s3 = sbuf_t("https://domain.com/foobar");
-        size_t domain_len = 0;
-        REQUIRE( find_host_in_url(s3, &domain_len)==8);
-        REQUIRE( domain_len == 10);
-    }
+    auto s3 = sbuf_t("https://domain.com/foobar");
+    size_t domain_len = 0;
+    REQUIRE( find_host_in_url(s3, &domain_len)==8);
+    REQUIRE( domain_len == 10);
+}
 
-    {
-        /* This is text from a PDF, decompressed */
-        auto *sbufp = new sbuf_t("q Q q 72 300 460 420 re W n /Gs1 gs /Cs1 cs 1 sc 72 300 460 420re f 0 sc./Gs2 gs q 1 0 0 -1 72720 cm BT 10 0 0 -10 5 10 Tm /F1.0 1 Tf (plain_text_pdf@textedit.com).Tj ET Q Q");
-        auto outdir = test_scanner(scan_email, sbufp);
-        auto email_txt = getLines( outdir / "email.txt" );
-        REQUIRE( requireFeature(email_txt,"135\tplain_text_pdf@textedit.com"));
-    }
+TEST_CASE("scan_email2", "[support]") {
+    /* This is text from a PDF, decompressed */
+    auto *sbufp = new sbuf_t("q Q q 72 300 460 420 re W n /Gs1 gs /Cs1 cs 1 sc 72 300 460 420re f 0 sc./Gs2 gs q 1 0 0 -1 72720 cm BT 10 0 0 -10 5 10 Tm /F1.0 1 Tf (plain_text_pdf@textedit.com).Tj ET Q Q");
+    auto outdir = test_scanner(scan_email, sbufp);
+    auto email_txt = getLines( outdir / "email.txt" );
+    REQUIRE( requireFeature(email_txt,"135\tplain_text_pdf@textedit.com"));
+}
 
-    {
-        auto *sbufp = new sbuf_t("plain_text_pdf@textedit.com");
-        auto outdir = test_scanner(scan_email, sbufp);
-        auto email_txt = getLines( outdir / "email.txt" );
-        REQUIRE( requireFeature(email_txt,"0\tplain_text_pdf@textedit.com"));
-    }
+TEST_CASE("scan_email3", "[support]") {
+    auto *sbufp = new sbuf_t("plain_text_pdf@textedit.com");
+    auto outdir = test_scanner(scan_email, sbufp);
+    auto email_txt = getLines( outdir / "email.txt" );
+    REQUIRE( requireFeature(email_txt,"0\tplain_text_pdf@textedit.com"));
+}
 
-    {
-        std::vector<scanner_t *>scanners = {scan_email, scan_pdf };
-        auto *sbufp = map_file("nps-2010-emails.100k.raw");
-        auto outdir = test_scanners(scanners, sbufp);
-        auto email_txt = getLines( outdir / "email.txt" );
-        REQUIRE( requireFeature(email_txt,"80896\tplain_text@textedit.com"));
-        REQUIRE( requireFeature(email_txt,"70727-PDF-0\tplain_text_pdf@textedit.com\t"));
-        REQUIRE( requireFeature(email_txt,"81991-PDF-0\trtf_text_pdf@textedit.com\t"));
-        REQUIRE( requireFeature(email_txt,"92231-PDF-0\tplain_utf16_pdf@textedit.com\t"));
-    }
+TEST_CASE("scan_email4", "[support]") {
+    std::vector<scanner_t *>scanners = {scan_email, scan_pdf };
+    auto *sbufp = map_file("nps-2010-emails.100k.raw");
+    auto outdir = test_scanners(scanners, sbufp);
+    auto email_txt = getLines( outdir / "email.txt" );
+    REQUIRE( requireFeature(email_txt,"80896\tplain_text@textedit.com"));
+    REQUIRE( requireFeature(email_txt,"70727-PDF-0\tplain_text_pdf@textedit.com\t"));
+    REQUIRE( requireFeature(email_txt,"81991-PDF-0\trtf_text_pdf@textedit.com\t"));
+    REQUIRE( requireFeature(email_txt,"92231-PDF-0\tplain_utf16_pdf@textedit.com\t"));
 }
 
 TEST_CASE("sbuf_decompress_zlib_new", "[support]") {

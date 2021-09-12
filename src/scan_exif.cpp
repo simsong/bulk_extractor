@@ -514,9 +514,11 @@ void scan_exif (scanner_params &sp)
         sp.info->min_sbuf_size   = jpeg_validator::MIN_JPEG_SIZE;
         struct feature_recorder_def::flags_t xml_flag;
         xml_flag.xml = true;
+        struct feature_recorder_def::flags_t carve_flag;
+        carve_flag.carve = true;
 	sp.info->feature_defs.push_back( feature_recorder_def("exif", xml_flag));
 	sp.info->feature_defs.push_back( feature_recorder_def("gps"));
-	sp.info->feature_defs.push_back( feature_recorder_def("jpeg_carved"));
+	sp.info->feature_defs.push_back( feature_recorder_def("jpeg_carved", carve_flag));
         sp.get_scanner_config("exif_debug",&exif_debug,"debug exif decoder");
 	return;
     }

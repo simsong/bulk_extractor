@@ -107,24 +107,6 @@ sbuf_t *decode_base64(const sbuf_t &sbuf, size_t start, size_t src_len)
     // could not decode
     delete sbufr;
     return nullptr;
-
-#if 0
-
-    // Make room for the destination.
-    size_t dst_len = src_len + 4; // it can only get smaller, but give some extra space
-    pos0_t pos0 = ;
-    uint8_t *dst = reinterpret_cast<uint8_t *>(malloc(dst_len));
-    if (dst==nullptr) {
-        throw std::bad_alloc();
-    }
-    // Perform the conversion
-    int conv_len = b64_pton_forensic(src, src_len, dst, dst_len);
-    if (conv_len>0){
-        return sbuf_t::sbuf_new(pos0, dst, conv_len, conv_len);
-    }
-    free(dst);
-    return nullptr;
-#endif
 }
 
 void process_base64(const scanner_params &sp, size_t start, size_t src_len)
