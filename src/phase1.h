@@ -67,6 +67,7 @@ public:
         void      set_sampling_parameters(std::string p);
         std::atomic<double>    *fraction_done {nullptr};
         bool      opt_legacy {false};
+        bool      opt_notification {true}; // run notification thread
         seen_page_ids_t seen_page_ids;               // pages that were already seen
     };
 

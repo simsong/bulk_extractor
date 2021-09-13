@@ -64,6 +64,8 @@ int _CRT_fmode = _O_BINARY;
 #include "bulk_extractor_scanners.h"
 #include "bulk_extractor_restarter.h"
 
+#include "ketopt.h"
+
 /**
  * Output the #defines for our debug parameters. Used by the automake system.
  */
@@ -111,6 +113,7 @@ void usage(const char *progname, scanner_set &ss)
     std::cout << "                  results go into find.txt\n";
     std::cout << "   -q           - quiet - no status output (changed in v2.0).\n";
     std::cout << "   -s frac[:passes] - Set random sampling parameters\n";
+    std::cout << "   -0           - Do not run notification thread\n";
     std::cout << "   -1           - bulk_extractor v1.x legacy mode\n";
     std::cout << "\nTuning parameters:\n";
     //    std::cout << "   -C NN        - specifies the size of the context window (default " << feature_recorder::context_window_default << ")\n";
@@ -314,20 +317,23 @@ struct notify_opts {
     }
 }
 
+void launch_notify_thread(struct notify_opts *o)
+{
+    new std::thread(&notify_thread, o);    // launch the notify thread
+}
+
 int bulk_extractor_main(int argc,char * const *argv)
 {
     mtrace();
-
-    const char *progname = argv[0];
+    const char *progname = oargv[0];
     const auto original_argc = argc;
-    const auto original_argv = argv;
+    const auto original_argv = oargv;
 
-    word_and_context_list alert_list;		/* shold be flagged */
-    word_and_context_list stop_list;		/* should be ignored */
-    std::atomic<double>  fraction_done = 0;                  /* a callback of sorts */
+    word_and_context_list alert_list;       /* should be flagged */
+    word_and_context_list stop_list;        /* should be ignored */
+    std::atomic<double>  fraction_done = 0; /* a shared memory space */
     aftimer master_timer;
 
-    scanner_config   sc;   // config for be13_api
     Phase1::Config   cfg;  // config for the image_processing system
 
     cfg.fraction_done = &fraction_done;
@@ -361,26 +367,41 @@ int bulk_extractor_main(int argc,char * const *argv)
     setmode(1,O_BINARY);		// make stdout binary
 #endif
 
-    if (argc==1) opt_h=1;                // generate help if no arguments provided
-
     /* Process options */
+    if (argc==1) opt_h=1;                // generate help if no arguments provided
     const std::string ALL { "all" };
-    int ch;
-    char *empty = strdup("");
-    while ((ch = getopt(argc, argv, "A:B:b:C:d:E:e:F:f:G:g:HhiJj:M:m:o:P:p:qRr:S:s:VW:w:x:Y:z:Z1")) != -1) {
-        if (optarg==nullptr) optarg=empty;
-        std::string arg = optarg!=ALL ? optarg : scanner_config::scanner_command::ALL_SCANNERS;
-	switch (ch) {
-	case 'A': sc.offset_add  = stoi64(optarg);break;
-	case 'b': sc.banner_file = optarg; break;
-	case 'C': sc.context_window_default = atoi(optarg);break;
+
+
+    /* 2021-09-13 - slg - option processing rewritten to use cxxopts */
+    scanner_config   sc;   // config for be13_api
+    cxxopts::Options options("bulk_extractor", "A high-performance flexible digital forensics program.");
+    options.add_options()
+        ("A,offset_add", "Offset added to feature locations", cxxopts::value<int64_t>()->default_value("0"))
+        ("b,banner_file", "Path of file whose contents are prepended to top of all feature files", cxxoptions::value<std::string>())
+	("C,context_window", "Size of context window reported in bytes",
+         cxxopts::value<int>()->default_value(std::to_string(sc.context_window_default)))
+
+        ;
+
+    auto result = options.parse(argc, argv);
+    if (result.count("help")) {
+        std::cout << options.help() << std::endl;
+        usage(progname, ss);
+        return 1;
+    }
+    if (result.count("info_scanners")) {
+        ss.info_scanners(std::cout, true, true, 'e', 'x');
+        return 2;
+    }
+
+#if 0
+
+sc.context_window_default = atoi(optarg);break;
 	case 'd':
-	{
             if (strcmp(optarg,"h")==0) debug_help();
 	    cfg.debug = atoi(optarg);
             if (cfg.debug==0) cfg.debug=1;
-	}
-	break;
+            break;
 	case 'E':            /* Enable all scanners */
             sc.push_scanner_command( scanner_config::scanner_command::ALL_SCANNERS, scanner_config::scanner_command::DISABLE);
             sc.push_scanner_command( arg, scanner_config::scanner_command::ENABLE);
@@ -411,24 +432,23 @@ int bulk_extractor_main(int argc,char * const *argv)
 	    break;
 	case 'R': cfg.opt_recurse = true; break;
 	case 'S':
-	{
-	    std::vector<std::string> params = split(optarg,'=');
-	    if (params.size()!=2){
-		std::cerr << "Invalid paramter: " << optarg << "\n";
-		exit(1);
-	    }
-	    sc.namevals[params[0]] = params[1];
-	    continue;
-	}
-	case 's':
-            opt_sampling_params = optarg;
-            break;
-	case 'V': std::cout << "bulk_extractor " << PACKAGE_VERSION << "\n"; exit (0);
-	case 'W':
-            fprintf(stderr,"-W has been deprecated. Specify with -S word_min=NN and -S word_max=NN\n");
-            exit(1);
+            if (strchr(optarg,'=')==nullptr){
+		std::cerr << "Invalid -S paramter: must be key=value format\n";
+                return 2;
+            } else {
+                std::vector<std::string> params = split(optarg,'=');
+                if (params.size()!=2){
+                    std::cerr << "Invalid paramter: " << optarg << "\n";
+                    return 2;
+                }
+                sc.namevals[params[0]] = params[1];
+            }
 	    break;
-	case 'w': if (stop_list.readfile(optarg)){
+	case 's': opt_sampling_params = optarg; break;
+	case 'V': std::cout << "bulk_extractor " << PACKAGE_VERSION << "\n"; return 0;
+	case 'W': fprintf(stderr,"-W has been deprecated. Specify with -S word_min=NN and -S word_max=NN\n"); return 1;
+	case 'w':
+            if (stop_list.readfile(optarg)){
                 throw_FileNotFoundError(optarg);
 	    }
 	    break;
@@ -448,15 +468,23 @@ int bulk_extractor_main(int argc,char * const *argv)
 	}
 	case 'z': cfg.opt_page_start = stoi64(optarg);break;
 	case 'Z': opt_zap=true;break;
+        case '0': cfg.opt_notification = false;
+            printf("SET cfg.opt_notification to false\n");
+            printf("****** cfg=%p\n",&cfg);
+            break;
         case '1': cfg.opt_legacy = true; break;
-	case 'H':
-            opt_H++;
-            continue;
-	case 'h':
-            opt_h++;
-            continue;
+	case 'H': opt_H++; break;
+	case 'h': opt_h++; break;
 	}
     }
+        std::string arg = optarg!=ALL ? optarg : scanner_config::scanner_command::ALL_SCANNERS;
+    argc -= optind;
+    argv += optind;
+    if (argc>0) {
+        sc.input_fname = argv[0];
+    }
+
+    printf("cfg.opt_notificaiton=%d  cfg=%p\n",cfg.opt_notification, &cfg);
 
     /* Legacy mode if stdout is not a tty */
 #ifdef HAVE_ISATTY
@@ -464,9 +492,6 @@ int bulk_extractor_main(int argc,char * const *argv)
         cfg.opt_legacy = true;
     }
 #endif
-
-    argc -= optind;
-    argv += optind;
 
     /* Create a configuration that will be used to initialize the scanners */
     /* Make individual configuration options appear on the command line interface. */
@@ -489,33 +514,32 @@ int bulk_extractor_main(int argc,char * const *argv)
     scanner_set ss(sc, f, nullptr);     // make a scanner_set but with no XML writer. We will create it below
     ss.add_scanners(scanners_builtin);
 
+    /* Print usage if necessary. Requires scanner set, but not commands applied.
+     */
+    if ( opt_h ) {
+        usage(progname, ss);
+        return 1;
+    }
+    if ( opt_H ) {
+        ss.info_scanners(std::cout, true, true, 'e', 'x');
+        return 1;
+    }
+
     /* Get image or directory */
-    if (argc==0 || *argv == nullptr) {
+    if (sc.input_fname=="") {
         if (cfg.opt_recurse) {
             std::cerr << "filedir not provided\n";
         } else {
             std::cerr << "imagefile not provided\n";
         }
         usage(progname, ss);
-        exit(1);
+        return 1;
     }
-    sc.input_fname = *argv;
 
-    if (sc.outdir.empty()){
+    if (sc.outdir.empty() || sc.outdir==scanner_config::NO_OUTDIR){
         std::cerr << "error: -o outdir must be specified\n";
         usage(progname, ss);
-        exit(1);
-    }
-
-    /* Print usage if necessary. Requires scanner set, but not commands applied.
-     */
-    if ( opt_h ) {
-        usage(progname, ss);
-        exit(1);
-    }
-    if ( opt_H ) {
-        ss.info_scanners(std::cout, true, true, 'e', 'x');
-        exit(1);
+        return 1;
     }
 
     /* The zap option wipes the contents of a directory, useful for debugging */
@@ -536,7 +560,7 @@ int bulk_extractor_main(int argc,char * const *argv)
     }
     catch (const scanner_set::NoSuchScanner &e) {
         std::cerr << "no such scanner: " << e.what() << "\n";
-        exit(1);
+        return 1;
     }
 
     /* Give an error if a find list was specified
@@ -571,7 +595,7 @@ int bulk_extractor_main(int argc,char * const *argv)
         } else {
             pp.process_path(opt_path);
         }
-	exit(0);
+	return 0;
     }
 
     /* Open the image file (or the device) now.
@@ -628,10 +652,20 @@ int bulk_extractor_main(int argc,char * const *argv)
     /*** PHASE 1 --- Run on the input image */
     struct notify_opts o;
     o.ssp = &ss;
-    o.master_timer = &master_timer;
+    o.master_timer  = &master_timer;
     o.fraction_done = &fraction_done;
-    o.opt_legacy = cfg.opt_legacy;
-    new std::thread(&notify_thread, &o);    // launch the notify thread
+    o.opt_legacy    = cfg.opt_legacy;
+
+    printf("cfg.opt_notificaiton=%d  cfg=%p\n",cfg.opt_notification, &cfg);
+
+    if (cfg.opt_notification) {
+        printf("****** OMG. IT IS STILL TRUE???  cfg=%p\n",&cfg);
+        for(int i=0;oargv[i];i++){
+            printf("oargv[%d]=%s\n",i,oargv[i]);
+        }
+        exit(1);
+        launch_notify_thread(&o);
+    }
     ss.phase_scan();
 
 #if 0
@@ -665,7 +699,7 @@ int bulk_extractor_main(int argc,char * const *argv)
     catch (const feature_recorder::DiskWriteError &e) {
         std::cerr << "Disk write error during Phase 1 (scanning). Disk is probably full." << std::endl
                   << "Remove extra files and restart bulk_extractor with the exact same command line to continue." << std::endl;
-        exit(1);
+        return 1;
     }
 
 #if 0
@@ -687,7 +721,7 @@ int bulk_extractor_main(int argc,char * const *argv)
     catch (const feature_recorder::DiskWriteError &e) {
         std::cerr << "Disk write error during Phase 2 (histogram making). Disk is probably full." << std::endl
                   << "Remove extra files and restart bulk_extractor with the exact same command line to continue." << std::endl;
-        exit(1);
+        return 1;
     }
 
     xreport->add_timestamp("phase2 end");
@@ -731,4 +765,4 @@ int bulk_extractor_main(int argc,char * const *argv)
 
     muntrace();
     return(0);
-}
+    }
