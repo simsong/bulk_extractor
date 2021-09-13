@@ -491,46 +491,48 @@ TEST_CASE("test_validate", "[phase1]" ) {
 bool feature_match(const Check &exp, const std::string &line)
 {
     auto words = split(line, '\t');
-    if (words.size() != 3) return false;
+    if (words.size() <2 || words.size() > 3) return false;
 
-    std::cerr << "words[0] = " << words[0] << " size=" << words.size() << "\n";
+    //std::cerr << "check line=" << line << "\n";
+
     std::string pos = exp.feature.pos.str();
-    if (pos.size() < 2 ){
+    if ( pos.size() > 2 ){
+        if (ends_with(pos,"-0")) {
+            pos.resize(pos.size()-2);
+        }
+        if (ends_with(pos,"|0")) {
+            pos.resize(pos.size()-2);
+        }
+    }
+
+    if ( words[0] != exp.feature.pos ){
+        //std::cerr << "  pos " << exp.feature.pos << " does not match\n";
         return false;
     }
-    if (ends_with(pos,"-0")) {
-        pos.resize(pos.size()-2);
-    }
-    if (ends_with(pos,"|0")) {
-        pos.resize(pos.size()-2);
-    }
-    std::cerr << "words[0] = " << words[0] << " words[1] = " << words[1] << "\n";
-    std::cerr << "  exp.feature.pos=" << exp.feature.pos << "\n";
-    std::cerr << "  exp.feature.feature=" << exp.feature.feature << std::endl;
-    std::cerr << "  exp.feature.context=" << exp.feature.context << std::endl;
 
-    if (words[0] != exp.feature.pos){
-        std::cerr << "  pos does not match\n";
+    if ( words[1] != exp.feature.feature ){
+        //std::cerr << "  feature '" << exp.feature.feature << "' does not match feature '" << words[1] << "'\n";
         return false;
     }
-    std::cerr << "  pos matches!\n";
 
-    if (words[1] != exp.feature.feature){
-        std::cerr << "  feature does not match\n";
-        return true;
-    }
-    std::cerr << "  feature matches!\n";
+    std::string ctx = exp.feature.context;
+    if (words.size()==2) return ctx=="";
 
-    if (exp.feature.context=="") return true;
-    if (words[2] == exp.feature.context) return true;
+    if ( (ctx=="") || (ctx==words[2]) )  return true;
 
-    if (ends_with(exp.feature.context, "*")) {
-        std::string ctx = exp.feature.context;
-        ctx.resize(ctx.size(), -1);
+    //std::cerr << "  context '" << ctx << "' (len=" << ctx.size() << ") "
+    //<< "does not match context '" << words[2] << "' (" << words[2].size() << ")\n";
+
+    if ( ends_with(ctx, "*") ) {
+        ctx.resize(ctx.size()-1 );
         if (starts_with(words[2], ctx )){
             return true;
         }
+        //std::cerr << "  context did not start with '" << ctx << "'\n";
+    } else {
+        //std::cerr << "  context does not end with *\n";
     }
+
     return false;
 }
 
@@ -610,8 +612,6 @@ std::filesystem::path validate(std::string image_fname, std::vector<Check> &expe
                 throw std::runtime_error("validate_scanners:[phase1] Could not open "+fname.string());
             }
             while (std::getline(inFile, line)) {
-                std::cerr << "pass=" << pass << "line=" << line << std::endl;
-
                 if (pass==1) {
                     std::cerr << fname << ":" << line << "\n"; // print the file the second time through
                 }
