@@ -286,6 +286,8 @@ TEST_CASE("scan_json1", "[scanners]") {
     REQUIRE(true);
 }
 
+
+
 /****************************************************************
  ** Network test cases
  */
@@ -458,9 +460,11 @@ TEST_CASE("scan_zip", "[scanners]") {
 
 
 struct Check {
+    Check(const Check &ck):fname(ck.fname),feature(ck.feature){};
+    Check &operator=(const Check &ck) = delete;
+
     Check(std::string fname_, Feature feature_):
-        fname(fname_),
-        feature(feature_) {};
+        fname(fname_), feature(feature_) {};
     std::string fname;
     Feature feature;                    // defined in be13_api/feature_recorder.h
 };
@@ -484,6 +488,54 @@ TEST_CASE("test_validate", "[phase1]" ) {
 }
 
 
+bool feature_match(const Check &exp, const std::string &line)
+{
+    auto words = split(line, '\t');
+    if (words.size() <2 || words.size() > 3) return false;
+
+    //std::cerr << "check line=" << line << "\n";
+
+    std::string pos = exp.feature.pos.str();
+    if ( pos.size() > 2 ){
+        if (ends_with(pos,"-0")) {
+            pos.resize(pos.size()-2);
+        }
+        if (ends_with(pos,"|0")) {
+            pos.resize(pos.size()-2);
+        }
+    }
+
+    if ( words[0] != exp.feature.pos ){
+        //std::cerr << "  pos " << exp.feature.pos << " does not match\n";
+        return false;
+    }
+
+    if ( words[1] != exp.feature.feature ){
+        //std::cerr << "  feature '" << exp.feature.feature << "' does not match feature '" << words[1] << "'\n";
+        return false;
+    }
+
+    std::string ctx = exp.feature.context;
+    if (words.size()==2) return ctx=="";
+
+    if ( (ctx=="") || (ctx==words[2]) )  return true;
+
+    //std::cerr << "  context '" << ctx << "' (len=" << ctx.size() << ") "
+    //<< "does not match context '" << words[2] << "' (" << words[2].size() << ")\n";
+
+    if ( ends_with(ctx, "*") ) {
+        ctx.resize(ctx.size()-1 );
+        if (starts_with(words[2], ctx )){
+            return true;
+        }
+        //std::cerr << "  context did not start with '" << ctx << "'\n";
+    } else {
+        //std::cerr << "  context does not end with *\n";
+    }
+
+    return false;
+}
+
 
 /*
  * Run all of the built-in scanners on a specific image, look for the given features, and return the directory.
@@ -491,12 +543,13 @@ TEST_CASE("test_validate", "[phase1]" ) {
 std::filesystem::path validate(std::string image_fname, std::vector<Check> &expected, bool recurse=true, size_t offset=0)
 {
     sbuf_t::debug_range_exception = true;
-    std::cerr << "================ validate  " << image_fname << " ================\n";
     scanner_config sc;
 
     sc.outdir           = NamedTemporaryDirectory();
     sc.scanner_commands = enable_all_scanners;
     sc.allow_recurse    = recurse;
+
+    std::cerr << "================ validate  " << image_fname << " (outdir: " << sc.outdir << ") ================\n";
 
     if (offset==0) {
         sc.input_fname = test_dir() / image_fname;
@@ -546,48 +599,31 @@ std::filesystem::path validate(std::string image_fname, std::vector<Check> &expe
     xreport->close();
     delete xreport;
 
-    for (size_t i=0; i<expected.size(); i++){
-        std::filesystem::path fname  = sc.outdir / expected[i].fname;
+    for (const auto &exp : expected ) {
+
+        std::filesystem::path fname  = sc.outdir / exp.fname;
         bool found = false;
         for (int pass=0 ; pass<2 && !found;pass++){
+
             std::string line;
             std::ifstream inFile;
-            if (pass==1) {
-                std::cerr << fname << ":\n";
-            }
             inFile.open(fname);
             if (!inFile.is_open()) {
                 throw std::runtime_error("validate_scanners:[phase1] Could not open "+fname.string());
             }
             while (std::getline(inFile, line)) {
                 if (pass==1) {
-                    std::cerr << line << "\n"; // print the file the second time through
+                    std::cerr << fname << ":" << line << "\n"; // print the file the second time through
                 }
-                auto words = split(line, '\t');
-                std::string pos = expected[i].feature.pos.str();
-                if (ends_with(pos,"-0")) {
-                    pos = pos.substr(0,pos.size()-2);
-                }
-                if (ends_with(pos,"|0")) {
-                    pos = pos.substr(0,pos.size()-2);
-                }
-                if (words.size()==2 && (words[0]==expected[i].feature.pos) && (words[1]==expected[i].feature.feature)){
-                    found=true;
-                    break;
-                }
-                if (words.size()==3
-                    && (words[0]==expected[i].feature.pos)
-                    && (words[1]==expected[i].feature.feature)
-                    && ((words[2]==expected[i].feature.context) ||
-                        starts_with(words[2],expected[i].feature.context))){
-                    found=true;
+                if (feature_match(exp, line)){
+                    found = true;
                     break;
                 }
             }
         }
         if (!found){
-            std::cerr << fname << " did not find " << expected[i].feature.pos
-                      << " " << expected[i].feature.feature << " " << expected[i].feature.context << "\t";
+            std::cerr << fname << " did not find " << exp.feature.pos
+                      << " " << exp.feature.feature << " " << exp.feature.context << "\t";
         }
         REQUIRE(found);
     }
@@ -676,7 +712,7 @@ TEST_CASE("test_base16json", "[phase1]") {
 
 TEST_CASE("test_elf", "[phase1]") {
     std::vector<Check> ex {
-        Check("elf.txt", Feature( "0", "9e218cee3b190e8f59ef323b27f4d339481516e9", "<ELF class=\"ELFCLASS64\" data=\"ELFDATA2LSB\" osabi=\"ELFOSABI_NONE\" abiversion=\"0\" >"))
+        Check("elf.txt", Feature( "0", "9e218cee3b190e8f59ef323b27f4d339481516e9", "<ELF class=\"ELFCLASS64\" data=\"ELFDATA2LSB\" osabi=\"ELFOSABI_NONE\" abiversion=\"0\" >*"))
     };
     validate("hello_elf", ex);
 
@@ -795,6 +831,19 @@ TEST_CASE("test_net80", "[phase1]") {
     };
     validate("ntlm80.pcap", ex2);
 }
+
+TEST_CASE("test_winpe", "[phase1]") {
+    std::vector<Check> ex2 {
+        Check("winpe.txt", Feature( "0",
+                                    "074b9b371de190a96fb0cb987326cd238142e9d1",
+                                    "<PE><FileHeader Machine=\"IMAGE_FILE_MACHINE_I386*"))
+    };
+    validate("hello_win64_exe", ex2);
+}
+
+/****************************************************************
+ ** test sbufs (which is this here?
+ */
 
 sbuf_t *make_sbuf()
 {
