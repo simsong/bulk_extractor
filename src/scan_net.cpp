@@ -32,6 +32,7 @@
 #include <ctype.h>
 
 #include "scan_net.h"
+#include "be13_api/formatter.h"
 
 /* mutex for writing packets.
  * This is not in the class because it will be accessed by multiple threads.
@@ -777,6 +778,9 @@ void pcap_writer::pcap_writepkt(const struct pcap_hdr &h, // packet header
     const std::lock_guard<std::mutex> lock(Mfcap);// lock the mutex
     if (fcap==0){
         fcap = fopen(outpath.c_str(),"wb"); // write the output
+        if (fcap==nullptr) {
+            throw std::runtime_error(Formatter() << "scan_net.cpp: cannot open " << outpath << " for  writing");
+        }
         pcap_write4(0xa1b2c3d4);
         pcap_write2(2);			// major version number
         pcap_write2(4);			// minor version number

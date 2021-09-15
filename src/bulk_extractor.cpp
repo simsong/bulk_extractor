@@ -86,11 +86,11 @@ int _CRT_fmode = _O_BINARY;
  *** Usage for the stand-alone program
  ****************************************************************/
 
-void usage(const char *progname, scanner_set &ss)
+#if 0
+void usage(scanner_set &ss)
 {
     Phase1::Config cfg;   // get a default config
 
-#if 0
     std::cout << "bulk_extractor version " PACKAGE_VERSION " " << /* svn_revision << */ "\n";
     std::cout << "Usage: " << progname << " [options] imagefile\n";
     std::cout << "  runs bulk extractor and outputs to stdout a summary of what was found where\n";
@@ -156,19 +156,8 @@ void usage(const char *progname, scanner_set &ss)
     std::cout << "              e.g.: '-E gzip -e facebook' runs only gzip and facebook\n";
     std::cout << "   -S name=value - sets a bulk extractor option name to be value\n";
     std::cout << "\n";
-#endif
-    ss.info_scanners(std::cerr, false, true, 'e', 'x');
-#ifdef HAVE_LIBEWF
-    std::cout << "                  HAS SUPPORT FOR E01 FILES\n";
-#endif
-#ifdef HAVE_EXIV2
-    std::cout << "                  EXIV2 ENABLED\n";
-#endif
-#ifdef HAVE_LIBLIGHTGREP
-    std::cout << "                  LIGHTGREP ENABLED\n";
-#endif
-    std::cout << "\n";
 }
+#endif
 
 [[noreturn]] void throw_FileNotFoundError(const std::string &fname)
 {
@@ -332,7 +321,6 @@ void launch_notify_thread(struct notify_opts *o)
 int bulk_extractor_main(int argc,char * const *argv)
 {
     mtrace();
-    const char *progname = argv[0];
     const auto original_argc = argc;
     const auto original_argv = argv;
 
@@ -373,14 +361,29 @@ int bulk_extractor_main(int argc,char * const *argv)
 
 
     /* 2021-09-13 - slg - option processing rewritten to use cxxopts */
+    std::string bulk_extractor_help("A high-performance flexible digital forensics program.");
+    std::string image_name_help("Name of image to scan (or directory if -r is provided)");
+#ifdef HAVE_LIBEWF
+    image_name_help += " (May be a E01 file)";
+#endif
+#ifdef HAVE_EXIV2
+    bulk_extractor_help += " (Includes EXVI2 Support)";
+#endif
+#ifdef HAVE_LIBLIGHTGREP
+    bulk_extractor_help += " (Includes LightGrep support)";
+#endif
+
+
+
     scanner_config   sc;   // config for be13_api
-    cxxopts::Options options("bulk_extractor", "A high-performance flexible digital forensics program.");
+    cxxopts::Options options("bulk_extractor", bulk_extractor_help.c_str());
     options.set_width( terminal_width( 80 ));
     options.add_options()
-        ("image_name", "Name of image to scan (or directory if -r is provided)", cxxopts::value<std::string>())
+    ("image_name", image_name_help.c_str(), cxxopts::value<std::string>())
         ("A,offset_add", "Offset added to feature locations", cxxopts::value<int64_t>()->default_value("0"))
         ("b,banner_file", "Path of file whose contents are prepended to top of all feature files",cxxopts::value<std::string>())
-	("C,context_window", "Size of context window reported in bytes", cxxopts::value<int>()->default_value(std::to_string(sc.context_window_default)))
+	("C,context_window", "Size of context window reported in bytes",
+         cxxopts::value<int>()->default_value(std::to_string(sc.context_window_default)))
         ("d,debug", "enable debugging", cxxopts::value<int>()->default_value("1"))
         ("D,debug_help", "help on debugging")
         ("E,enable_exclusive", "disable all scanners except the one specified", cxxopts::value<std::string>())
@@ -540,23 +543,6 @@ int bulk_extractor_main(int argc,char * const *argv)
     //sc.get_global_config("write_feature_sqlite3",&opt_write_sqlite3,"Write feature files to report.sqlite3");
     sc.get_global_config("report_read_errors",&cfg.opt_report_read_errors,"Report read errors");
 
-    /* Load all the scanners and enable the ones we care about */
-
-    struct feature_recorder_set::flags_t f;
-    scanner_set ss(sc, f, nullptr);     // make a scanner_set but with no XML writer. We will create it below
-    ss.add_scanners(scanners_builtin);
-
-    if (result.count("help")) {
-        std::cout << options.help() << std::endl;
-        ss.info_scanners(std::cerr, false, true, 'e', 'x');
-        //usage(progname, ss);
-        return 1;
-    }
-    if (result.count("info_scanners")) {
-        ss.info_scanners(std::cout, true, true, 'e', 'x');
-        return 2;
-    }
-
 
     try {
         sc.input_fname = result["image_name"].as<std::string>();
@@ -566,7 +552,7 @@ int bulk_extractor_main(int argc,char * const *argv)
         } else {
             std::cerr << "imagefile not provided\n";
         }
-        usage(progname, ss);
+        std::cout << options.help() << std::endl;
         return 3;
     }
 
@@ -575,7 +561,6 @@ int bulk_extractor_main(int argc,char * const *argv)
     } catch (cxxopts::option_has_no_value_exception &e) {
         std::cerr << "error: -o outdir must be specified\n";
         std::cout << options.help() << std::endl;
-        usage(progname, ss);
         return 4;
     }
 
@@ -588,8 +573,26 @@ int bulk_extractor_main(int argc,char * const *argv)
             }
 	}
     }
+    std::cout << "mkdir " << sc.outdir << "\n";
+    std::filesystem::create_directory(sc.outdir); // make sure directory exists
 
-    std::filesystem::create_directory(sc.outdir);
+    /* Load all the scanners and enable the ones we care about.
+     * This way the help messages can get the scanner help as well.
+     */
+
+    struct feature_recorder_set::flags_t f;
+    scanner_set ss(sc, f, nullptr);     // make a scanner_set but with no XML writer. We will create it below
+    ss.add_scanners(scanners_builtin);
+
+    if (result.count("help")) {
+        std::cout << options.help() << std::endl;
+        ss.info_scanners(std::cerr, false, true, 'e', 'x');
+        return 1;
+    }
+    if (result.count("info_scanners")) {
+        ss.info_scanners(std::cout, true, true, 'e', 'x');
+        return 2;
+    }
 
     //bool clean_start = directory_empty(sc.outdir);
 
@@ -615,7 +618,7 @@ int bulk_extractor_main(int argc,char * const *argv)
         }
     }
 
-    if (!directory_empty(sc.outdir)) {
+    if (std::filesystem::exists(sc.outdir/"report.xml")){
 	/* Restarting */
         bulk_extractor_restarter r(sc,cfg);
         r.restart();                    // load the restart file and rename report.xml
