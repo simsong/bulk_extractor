@@ -64,7 +64,7 @@ int _CRT_fmode = _O_BINARY;
 #include "bulk_extractor_scanners.h"
 #include "bulk_extractor_restarter.h"
 
-#include "ketopt.h"
+#include "cxxopts.hpp"
 
 /**
  * Output the #defines for our debug parameters. Used by the automake system.
@@ -90,6 +90,7 @@ void usage(const char *progname, scanner_set &ss)
 {
     Phase1::Config cfg;   // get a default config
 
+#if 0
     std::cout << "bulk_extractor version " PACKAGE_VERSION " " << /* svn_revision << */ "\n";
     std::cout << "Usage: " << progname << " [options] imagefile\n";
     std::cout << "  runs bulk extractor and outputs to stdout a summary of what was found where\n";
@@ -155,6 +156,7 @@ void usage(const char *progname, scanner_set &ss)
     std::cout << "              e.g.: '-E gzip -e facebook' runs only gzip and facebook\n";
     std::cout << "   -S name=value - sets a bulk extractor option name to be value\n";
     std::cout << "\n";
+#endif
     ss.info_scanners(std::cerr, false, true, 'e', 'x');
 #ifdef HAVE_LIBEWF
     std::cout << "                  HAS SUPPORT FOR E01 FILES\n";
@@ -198,6 +200,17 @@ void validate_path(const std::filesystem::path fn)
         std::cerr << "automatically.\n";
         throw std::runtime_error("run on E02.");
     }
+}
+
+int terminal_width(int w)
+{
+#if defined(HAVE_IOCTL) && defined(HAVE_STRUCT_WINSIZE_WS_COL)
+    struct winsize ws;
+    if (ioctl(STDIN_FILENO, TIOCGWINSZ, &ws)==0){
+        return  ws.ws_col;
+    }
+#endif
+    return w;
 }
 
 /**
@@ -257,13 +270,7 @@ struct notify_opts {
     while(true){
 
         // get screen size change if we can!
-#if defined(HAVE_IOCTL) && defined(HAVE_STRUCT_WINSIZE_WS_COL)
-        struct winsize ws;
-        if (ioctl(STDIN_FILENO, TIOCGWINSZ, &ws)==0){
-            cols = ws.ws_col;
-        }
-#endif
-
+        cols = terminal_width(cols);
         time_t rawtime = time (0);
         struct tm timeinfo = *(localtime(&rawtime));
         std::map<std::string,std::string> stats = o->ssp->get_realtime_stats();
@@ -325,9 +332,9 @@ void launch_notify_thread(struct notify_opts *o)
 int bulk_extractor_main(int argc,char * const *argv)
 {
     mtrace();
-    const char *progname = oargv[0];
+    const char *progname = argv[0];
     const auto original_argc = argc;
-    const auto original_argv = oargv;
+    const auto original_argv = argv;
 
     word_and_context_list alert_list;       /* should be flagged */
     word_and_context_list stop_list;        /* should be ignored */
@@ -338,12 +345,6 @@ int bulk_extractor_main(int argc,char * const *argv)
 
     cfg.fraction_done = &fraction_done;
 
-    /* Options */
-    std::string opt_path {};
-    int         opt_zap = 0;
-    int         opt_h = 0;
-    int         opt_H = 0;
-    std::string opt_sampling_params;
     //bool        opt_write_feature_files = true;
     //bool        opt_write_sqlite3     = false;
 
@@ -368,123 +369,159 @@ int bulk_extractor_main(int argc,char * const *argv)
 #endif
 
     /* Process options */
-    if (argc==1) opt_h=1;                // generate help if no arguments provided
     const std::string ALL { "all" };
 
 
     /* 2021-09-13 - slg - option processing rewritten to use cxxopts */
     scanner_config   sc;   // config for be13_api
     cxxopts::Options options("bulk_extractor", "A high-performance flexible digital forensics program.");
+    options.set_width( terminal_width( 80 ));
     options.add_options()
+        ("image_name", "Name of image to scan (or directory if -r is provided)", cxxopts::value<std::string>())
         ("A,offset_add", "Offset added to feature locations", cxxopts::value<int64_t>()->default_value("0"))
-        ("b,banner_file", "Path of file whose contents are prepended to top of all feature files", cxxoptions::value<std::string>())
-	("C,context_window", "Size of context window reported in bytes",
-         cxxopts::value<int>()->default_value(std::to_string(sc.context_window_default)))
-
+        ("b,banner_file", "Path of file whose contents are prepended to top of all feature files",cxxopts::value<std::string>())
+	("C,context_window", "Size of context window reported in bytes", cxxopts::value<int>()->default_value(std::to_string(sc.context_window_default)))
+        ("d,debug", "enable debugging", cxxopts::value<int>()->default_value("1"))
+        ("D,debug_help", "help on debugging")
+        ("E,enable_exclusive", "disable all scanners except the one specified", cxxopts::value<std::string>())
+        ("e,enable",   "enable a scanner", cxxopts::value<std::vector<std::string>>())
+        ("x,disable",  "disable a scanner", cxxopts::value<std::vector<std::string>>())
+        ("f,find",     "search for a pattern", cxxopts::value<std::vector<std::string>>())
+        ("F,find_file", "read patterns to search from a file", cxxopts::value<std::vector<std::string>>())
+        ("G,pagesize",   "page size in bytes", cxxopts::value<std::string>()->default_value(std::to_string(cfg.opt_pagesize)))
+        ("g,marginsize", "margin size in bytes", cxxopts::value<std::string>()->default_value(std::to_string(cfg.opt_pagesize)))
+        ("i,info",       "info mode")
+        ("j,threads",    "number of threads", cxxopts::value<int>()->default_value(std::to_string(cfg.num_threads)))
+        ("J,no_threads",  "read and process data in the primary thread")
+	("M,max_depth",   "max recursion depth", cxxopts::value<int>()->default_value(std::to_string(scanner_config::DEFAULT_MAX_DEPTH)))
+	("m,max_bad_alloc_errors", "max bad allocation errors", cxxopts::value<int>()->default_value(std::to_string(cfg.max_bad_alloc_errors)))
+	("max_minute_wait", "maximum number of minutes to wait until all data are read", cxxopts::value<int>()->default_value(std::to_string(60)))
+        ("o,outdir",        "output directory", cxxopts::value<std::string>())
+        ("P,scanner_dir",  "directories for scanner shared libraries", cxxopts::value<std::vector<std::string>>())
+        ("p,path",         "print the value of <path> with a given format", cxxopts::value<std::string>())
+        ("q,quit",         "no status output")
+        ("r,alert_list",   "file to read alert list from", cxxopts::value<std::string>())
+        ("R,recurse",      "treat image file as a directory to recursively explore")
+        ("S,set",          "set a name=value option", cxxopts::value<std::vector<std::string>>())
+        ("s,sampling",     "random sampling parameter frac[:passes]", cxxopts::value<std::string>())
+        ("V,version",      "Display PACKAGE_VERSION (currently) " PACKAGE_VERSION)
+        ("w,stop_list",    "file to read stop list from", cxxopts::value<std::string>())
+        ("Y,scan",         "specify start [-end] of area on disk to scan", cxxopts::value<std::string>())
+        ("z,page_start",   "specify a starting page number", cxxopts::value<int>())
+        ("Z,zap",          "wipe the output directory (recursively) before starting")
+        ("0,no_notify",    "disable real-time notification")
+        ("1,version1",    "version 1.0 notification (console-output)")
+        ("H,info_scanners", "report information about each scanner")
+        ("h,help",          "print help screen")
         ;
 
+    options.positional_help("image_name");
+    options.parse_positional("image_name");
     auto result = options.parse(argc, argv);
-    if (result.count("help")) {
-        std::cout << options.help() << std::endl;
-        usage(progname, ss);
-        return 1;
-    }
-    if (result.count("info_scanners")) {
-        ss.info_scanners(std::cout, true, true, 'e', 'x');
-        return 2;
+    if (result.count("debug_help")){ debug_help(); return 3;}
+
+    sc.offset_add  = result["offset_add"].as<int64_t>();
+    sc.context_window_default = result["context_window"].as<int>();
+    cfg.debug = result["debug"].as<int>();
+
+    try {
+        sc.banner_file = result["banner_file"].as<std::string>();
+    } catch (cxxopts::option_has_no_value_exception) { }
+
+    if (result.count("enable_exclusive")) {
+        sc.push_scanner_command( scanner_config::scanner_command::ALL_SCANNERS, scanner_config::scanner_command::DISABLE);
+        sc.push_scanner_command( result["enable_exclusive"].as<std::string>(), scanner_config::scanner_command::ENABLE);
     }
 
-#if 0
+    try {
+        for (const auto &name : result["enable"].as<std::vector<std::string>>() ) {
+            sc.push_scanner_command(name, scanner_config::scanner_command::ENABLE);
+        }
+    } catch (cxxopts::option_has_no_value_exception &e) { }
 
-sc.context_window_default = atoi(optarg);break;
-	case 'd':
-            if (strcmp(optarg,"h")==0) debug_help();
-	    cfg.debug = atoi(optarg);
-            if (cfg.debug==0) cfg.debug=1;
-            break;
-	case 'E':            /* Enable all scanners */
-            sc.push_scanner_command( scanner_config::scanner_command::ALL_SCANNERS, scanner_config::scanner_command::DISABLE);
-            sc.push_scanner_command( arg, scanner_config::scanner_command::ENABLE);
-	    break;
-	case 'e':           /* enable a spedcific scanner */
-            sc.push_scanner_command(arg, scanner_config::scanner_command::ENABLE);
-	    break;
-	case 'F': FindOpts::get().Files.push_back(optarg); break;
-	case 'f': FindOpts::get().Patterns.push_back(optarg); break;
-	case 'G': cfg.opt_pagesize = scaled_stoi64(optarg); break;
-	case 'g': cfg.opt_marginsize = scaled_stoi64(optarg); break;
-        case 'i':
-            std::cout << "info mode:\n";
-            cfg.opt_info = true;
-            break;
-	case 'j': cfg.num_threads = atoi(optarg); break;
-        case 'J': cfg.num_threads = 0; break;
-	case 'M': sc.max_depth = atoi(optarg); break;
-	case 'm': cfg.max_bad_alloc_errors = atoi(optarg); break;
-	case 'o': sc.outdir = optarg;break;
-	case 'P': scanner_dirs.push_back(optarg);break;
-	case 'p': opt_path = optarg; break;
-        case 'q': cfg.opt_quiet = true; break;
-	case 'r':
-	    if (alert_list.readfile(optarg)){
-                throw_FileNotFoundError(optarg);
-	    }
-	    break;
-	case 'R': cfg.opt_recurse = true; break;
-	case 'S':
-            if (strchr(optarg,'=')==nullptr){
-		std::cerr << "Invalid -S paramter: must be key=value format\n";
-                return 2;
-            } else {
-                std::vector<std::string> params = split(optarg,'=');
-                if (params.size()!=2){
-                    std::cerr << "Invalid paramter: " << optarg << "\n";
-                    return 2;
-                }
-                sc.namevals[params[0]] = params[1];
+
+    try {
+        for (const auto &name : result["disable"].as<std::vector<std::string>>() ) {
+            sc.push_scanner_command(name, scanner_config::scanner_command::DISABLE);
+        }
+    } catch (cxxopts::option_has_no_value_exception &e) { }
+
+    try {
+        for (const auto &it : result["find"].as<std::vector<std::string>>() ) {
+            FindOpts::get().Patterns.push_back(it);
+        }
+    } catch (cxxopts::option_has_no_value_exception &e) { }
+
+
+    try {
+        for (const auto &it : result["find_file"].as<std::vector<std::string>>() ) {
+            FindOpts::get().Files.push_back(it);
+        }
+    } catch (cxxopts::option_has_no_value_exception &e) { }
+
+    cfg.opt_pagesize   = scaled_stoi64(result["pagesize"].as<std::string>());
+    cfg.opt_marginsize = scaled_stoi64(result["marginsize"].as<std::string>());
+    cfg.opt_info       = result.count("info");
+
+    try {
+        cfg.num_threads    = result["threads"].as<int>();
+    }  catch (cxxopts::option_has_no_value_exception &e) {
+        cfg.num_threads = 0;
+    }
+
+    sc.max_depth             = result["max_depth"].as<int>();
+    cfg.max_bad_alloc_errors = result["max_bad_alloc_errors"].as<int>();
+
+    try {
+        for (const auto &it : result["scanner_dir"].as<std::vector<std::string>>() ) {
+            scanner_dirs.push_back(it);break;
+        }
+    } catch (cxxopts::option_has_no_value_exception &e) { }
+
+
+    cfg.opt_quiet = result.count("quiet");
+    try {
+        alert_list.readfile( result["alert_list"].as<std::string>() );
+    } catch (cxxopts::option_has_no_value_exception &e) { }
+
+    cfg.opt_recurse = result.count("recurse");
+
+    try {
+        for (const auto &it : result["set"].as<std::vector<std::string>>() ) {
+            std::vector<std::string> kv = split(it,'=');
+            if (kv.size()!=2) {
+                std::cerr << "Invalid -S paramter: '" << it << "' must be key=value format\n";
+                return -1;
             }
-	    break;
-	case 's': opt_sampling_params = optarg; break;
-	case 'V': std::cout << "bulk_extractor " << PACKAGE_VERSION << "\n"; return 0;
-	case 'W': fprintf(stderr,"-W has been deprecated. Specify with -S word_min=NN and -S word_max=NN\n"); return 1;
-	case 'w':
-            if (stop_list.readfile(optarg)){
-                throw_FileNotFoundError(optarg);
-	    }
-	    break;
-	case 'x':
-            sc.push_scanner_command( arg, scanner_config::scanner_command::DISABLE);
-	    break;
-	case 'Y': {
-	    std::string optargs = optarg;
-	    size_t dash = optargs.find('-');
-	    if (dash==std::string::npos){
-		cfg.opt_offset_start = stoi64(optargs);
-	    } else {
-		cfg.opt_offset_start = scaled_stoi64(optargs.substr(0,dash));
-		cfg.opt_offset_end   = scaled_stoi64(optargs.substr(dash+1));
-	    }
-	    break;
-	}
-	case 'z': cfg.opt_page_start = stoi64(optarg);break;
-	case 'Z': opt_zap=true;break;
-        case '0': cfg.opt_notification = false;
-            printf("SET cfg.opt_notification to false\n");
-            printf("****** cfg=%p\n",&cfg);
-            break;
-        case '1': cfg.opt_legacy = true; break;
-	case 'H': opt_H++; break;
-	case 'h': opt_h++; break;
-	}
-    }
-        std::string arg = optarg!=ALL ? optarg : scanner_config::scanner_command::ALL_SCANNERS;
-    argc -= optind;
-    argv += optind;
-    if (argc>0) {
-        sc.input_fname = argv[0];
-    }
+            sc.namevals[kv[0]] = kv[1];
+        }
+    } catch (cxxopts::option_has_no_value_exception &e) { }
 
-    printf("cfg.opt_notificaiton=%d  cfg=%p\n",cfg.opt_notification, &cfg);
+
+    try {
+        cfg.set_sampling_parameters(result["sampling"].as<std::string>());
+    } catch (cxxopts::option_has_no_value_exception &e) { }
+
+    if (result.count("version")) { std::cout << "bulk_extractor " << PACKAGE_VERSION << std::endl; return 0; }
+    if (result.count("stop_list")) stop_list.readfile(result["stop_list"].as<std::string>());
+    try {
+        std::string optargs = result["scan"].as<std::string>();
+        size_t dash = optargs.find('-');
+        if (dash==std::string::npos){
+            cfg.opt_scan_start = stoi64(optargs);
+        } else {
+            cfg.opt_scan_start = scaled_stoi64(optargs.substr(0,dash));
+            cfg.opt_scan_end   = scaled_stoi64(optargs.substr(dash+1));
+        }
+    } catch (cxxopts::option_has_no_value_exception &e) { }
+
+
+    try {
+        cfg.opt_page_start = result["page_start"].as<int>();
+    } catch (cxxopts::option_has_no_value_exception &e) { }
+
+    cfg.opt_notification = (result.count("no_notify")==0);
+    cfg.opt_legacy = result.count("version1");
 
     /* Legacy mode if stdout is not a tty */
 #ifdef HAVE_ISATTY
@@ -505,45 +542,45 @@ sc.context_window_default = atoi(optarg);break;
 
     /* Load all the scanners and enable the ones we care about */
 
-    //plugin::load_scanner_directories(scanner_dirs,sc);
-    if (opt_H || opt_h) {
-        sc.outdir = scanner_config::NO_OUTDIR; // don't create outdir if we are getting help.
-    }
-
     struct feature_recorder_set::flags_t f;
     scanner_set ss(sc, f, nullptr);     // make a scanner_set but with no XML writer. We will create it below
     ss.add_scanners(scanners_builtin);
 
-    /* Print usage if necessary. Requires scanner set, but not commands applied.
-     */
-    if ( opt_h ) {
-        usage(progname, ss);
+    if (result.count("help")) {
+        std::cout << options.help() << std::endl;
+        ss.info_scanners(std::cerr, false, true, 'e', 'x');
+        //usage(progname, ss);
         return 1;
     }
-    if ( opt_H ) {
+    if (result.count("info_scanners")) {
         ss.info_scanners(std::cout, true, true, 'e', 'x');
-        return 1;
+        return 2;
     }
 
-    /* Get image or directory */
-    if (sc.input_fname=="") {
+
+    try {
+        sc.input_fname = result["image_name"].as<std::string>();
+    } catch (cxxopts::option_has_no_value_exception &e ) {
         if (cfg.opt_recurse) {
             std::cerr << "filedir not provided\n";
         } else {
             std::cerr << "imagefile not provided\n";
         }
         usage(progname, ss);
-        return 1;
+        return 3;
     }
 
-    if (sc.outdir.empty() || sc.outdir==scanner_config::NO_OUTDIR){
+    try {
+        sc.outdir                = result["outdir"].as<std::string>();
+    } catch (cxxopts::option_has_no_value_exception &e) {
         std::cerr << "error: -o outdir must be specified\n";
+        std::cout << options.help() << std::endl;
         usage(progname, ss);
-        return 1;
+        return 4;
     }
 
     /* The zap option wipes the contents of a directory, useful for debugging */
-    if (opt_zap){
+    if (result.count("zap")) {
         for (const auto &entry : std::filesystem::recursive_directory_iterator( sc.outdir ) ) {
             if (! std::filesystem::is_directory(entry.path())){
                 std::cout << "erasing " << entry.path().string() << "\n";
@@ -552,7 +589,9 @@ sc.context_window_default = atoi(optarg);break;
 	}
     }
 
-    bool clean_start = opt_zap || directory_empty(sc.outdir);
+    std::filesystem::create_directory(sc.outdir);
+
+    //bool clean_start = directory_empty(sc.outdir);
 
     /* Applying the scanner commands will create the alert recorder. */
     try {
@@ -560,7 +599,7 @@ sc.context_window_default = atoi(optarg);break;
     }
     catch (const scanner_set::NoSuchScanner &e) {
         std::cerr << "no such scanner: " << e.what() << "\n";
-        return 1;
+        return 5;
     }
 
     /* Give an error if a find list was specified
@@ -576,7 +615,7 @@ sc.context_window_default = atoi(optarg);break;
         }
     }
 
-    if (clean_start==false){
+    if (!directory_empty(sc.outdir)) {
 	/* Restarting */
         bulk_extractor_restarter r(sc,cfg);
         r.restart();                    // load the restart file and rename report.xml
@@ -585,8 +624,8 @@ sc.context_window_default = atoi(optarg);break;
     image_process *p = image_process::open( sc.input_fname, cfg.opt_recurse, cfg.opt_pagesize, cfg.opt_marginsize);
 
     /* are we supposed to run the path printer? */
-    if (opt_path.size() > 0){
-	if (argc!=1) throw std::runtime_error("-p requires a single argument.");
+    try {
+        std::string opt_path = result["path"].as<std::string>();
         path_printer pp(&ss, p, std::cout);
         if (opt_path=="-http" || opt_path=="--http"){
             pp.process_http(std::cin);
@@ -596,6 +635,7 @@ sc.context_window_default = atoi(optarg);break;
             pp.process_path(opt_path);
         }
 	return 0;
+    } catch (cxxopts::option_has_no_value_exception &e) {
     }
 
     /* Open the image file (or the device) now.
@@ -610,10 +650,12 @@ sc.context_window_default = atoi(optarg);break;
     Phase1 phase1(cfg, *p, ss);
 
     /* Validate the args */
+#if 0
     if ( argc == 0 ) throw std::runtime_error("No disk image provided. Run with -h for help.");
     if ( argc > 1  ){
-            throw std::runtime_error("Too many arguments provided. Run with -h for help.");
+        throw std::runtime_error("Too many arguments provided. Run with -h for help.");
     }
+#endif
     validate_path(sc.input_fname);
 
     /* Create the DFXML file in the report directory.
@@ -659,11 +701,6 @@ sc.context_window_default = atoi(optarg);break;
     printf("cfg.opt_notificaiton=%d  cfg=%p\n",cfg.opt_notification, &cfg);
 
     if (cfg.opt_notification) {
-        printf("****** OMG. IT IS STILL TRUE???  cfg=%p\n",&cfg);
-        for(int i=0;oargv[i];i++){
-            printf("oargv[%d]=%s\n",i,oargv[i]);
-        }
-        exit(1);
         launch_notify_thread(&o);
     }
     ss.phase_scan();
@@ -673,9 +710,6 @@ sc.context_window_default = atoi(optarg);break;
         fs.db_transaction_begin();
     }
 #endif
-    if (opt_sampling_params.size()>0){
-        cfg.set_sampling_parameters(opt_sampling_params);
-    }
 
     /* Go multi-threaded if requested */
     if (cfg.num_threads > 0){
@@ -699,7 +733,7 @@ sc.context_window_default = atoi(optarg);break;
     catch (const feature_recorder::DiskWriteError &e) {
         std::cerr << "Disk write error during Phase 1 (scanning). Disk is probably full." << std::endl
                   << "Remove extra files and restart bulk_extractor with the exact same command line to continue." << std::endl;
-        return 1;
+        return 6;
     }
 
 #if 0
@@ -721,7 +755,7 @@ sc.context_window_default = atoi(optarg);break;
     catch (const feature_recorder::DiskWriteError &e) {
         std::cerr << "Disk write error during Phase 2 (histogram making). Disk is probably full." << std::endl
                   << "Remove extra files and restart bulk_extractor with the exact same command line to continue." << std::endl;
-        return 1;
+        return 7;
     }
 
     xreport->add_timestamp("phase2 end");
@@ -765,4 +799,4 @@ sc.context_window_default = atoi(optarg);break;
 
     muntrace();
     return(0);
-    }
+}
