@@ -221,7 +221,7 @@ void Phase1::read_process_sbufs()
 
 void Phase1::dfxml_write_create(int argc, char * const *argv)
 {
-    xreport.push("dfxml","xmloutputversion='1.0'");
+    xreport.push("dfxml","xmloutputversion='1.0' xmlns:debug='http://afflib.org/bulk_extractor/debug'");
     xreport.push("metadata",
 		 "\n  xmlns='http://afflib.org/bulk_extractor/' "
 		 "\n  xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' "

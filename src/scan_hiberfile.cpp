@@ -1,4 +1,3 @@
-
 #include <stdlib.h>
 #include <string.h>
 
@@ -25,13 +24,66 @@
 #include <iomanip>
 #include <cassert>
 
-static const uint32_t windows_page_size = 4096;
-static const uint32_t min_uncompr_size = 4096; // allow at least this much when uncompressing
+const uint32_t windows_page_size = 4096;
+const uint32_t min_uncompr_size = 4096; // allow at least this much when uncompressing
 
+const uint32_t MIN_COMPRESSED_SIZE = 512; // don't decompress something smaller than this. Really they are 4K blocks, but they are compressed and written to swap...
 /**
  * scan_hiberfile:
  * Look for elements of the hibernation file and decompress them.
  */
+
+void scan_hiberfile_scan(scanner_params &sp)
+{
+    const sbuf_t &sbuf = *(sp.sbuf);
+    for (size_t pos = 0 ; pos + MIN_COMPRESSED_SIZE < sbuf.bufsize; pos++) {
+
+        /**
+         * http://www.pyflag.net/pyflag/src/lib/pyxpress.c
+         * Decompress each block separetly
+         */
+        if(sbuf[pos+0]==0x81 && sbuf[pos+1]==0x81 && sbuf[pos+2]==0x78 && sbuf[pos+3]==0x70 &&
+           sbuf[pos+4]==0x72 && sbuf[pos+5]==0x65 && sbuf[pos+6]==0x73 && sbuf[pos+7]==0x73){
+
+            u_int compressed_length = (   (sbuf[pos+8]
+                                           + (sbuf[pos+9]<<8)
+                                           + (sbuf[pos+10] << 16)
+                                           + (sbuf[pos+11]<<24)) >> 10) + 1; // ref: Hibr2bin/MemoryBlocks.cpp
+
+            compressed_length = (compressed_length + 7) & ~7; // ref: Hibr2bin/MemoryBlocks.cpp
+            const u_char *compressed_buf = sbuf.get_buf() + pos + 32;		 // "the header contains 32 bytes"
+            u_int  remaining_size = sbuf.bufsize - (pos+32); // up to the end of the buffer
+            size_t compr_size = compressed_length < remaining_size ? compressed_length : remaining_size;
+            size_t max_uncompr_size = compr_size * 10; // hope that's good enough
+            if (max_uncompr_size < min_uncompr_size) {
+                max_uncompr_size = min_uncompr_size; // it should at least be this large!
+            }
+
+            auto *decomp_sbuf = sbuf_t::sbuf_malloc(sbuf.pos0 + "HIBERFILE", max_uncompr_size, max_uncompr_size);
+            u_char *decomp_buf = reinterpret_cast<u_char *>(decomp_sbuf->malloc_buf());
+
+
+            int decompress_size = Xpress_Decompress(compressed_buf, compr_size, decomp_buf, max_uncompr_size);
+
+            if (decompress_size<=0) {
+                delete decomp_sbuf;
+                return;
+            }
+            // shrink decomp_sbuf so that it is only as large as the amount that was actually decompressed.
+            decomp_sbuf = decomp_sbuf->realloc(decompress_size);
+
+            /* decomp is a buffer that may extend over multiple pages.
+             * Unfortunately the pages are not logically connected, because they are physical memory, and it is
+             * highly unlikely that adjacent logical pages will have adjacent physical pages.
+             * Previously we broke up this buffer into 4096 byte chunks and process each individually.
+             * This prevents scanners like the JPEG carver from inadvertantly reassembling objects that make no semantic sense.
+             * However, we need to copy the data into each one (a copy!) because they may be processed asynchronously.
+             * And this resulted in a lot of overhead, so now we just process it as a block, like regular swap space.
+             */
+            sp.recurse( decomp_sbuf );          // will delete the dbuf
+        }
+    }
+}
 
 extern "C"
 void scan_hiberfile(scanner_params &sp)
@@ -44,6 +96,7 @@ void scan_hiberfile(scanner_params &sp)
         sp.info->scanner_version= "1.0";
         sp.info->scanner_flags.recurse = true;
         sp.info->scanner_flags.scanner_produces_memory = true;
+        sp.info->min_sbuf_size = MIN_COMPRESSED_SIZE;
 	return; /* no features */
     }
     if (sp.phase==scanner_params::PHASE_SHUTDOWN) return;
@@ -54,57 +107,17 @@ void scan_hiberfile(scanner_params &sp)
 	 * Right now this is a hack; it should be done by the system with some kind of flag.
 	 */
 	const sbuf_t &sbuf = *(sp.sbuf);
-	const pos0_t &pos0 = sbuf.pos0;
 
-	if (pos0.path.find( SCANNER_NAME )!=std::string::npos){ // don't do recursively
+        // don't scan recursively, because it will keep going
+	if (sbuf.pos0.path.find( SCANNER_NAME )!=std::string::npos){
 	    return;
 	}
 
-
-	for (size_t pos = 0 ; pos < sbuf.bufsize; pos++) {
-
-	    /**
-	     * http://www.pyflag.net/pyflag/src/lib/pyxpress.c
-             * Decompress each block separetly
-	     */
-	    if(sbuf[pos+0]==0x81 && sbuf[pos+1]==0x81 && sbuf[pos+2]==0x78 && sbuf[pos+3]==0x70 &&
-	       sbuf[pos+4]==0x72 && sbuf[pos+5]==0x65 && sbuf[pos+6]==0x73 && sbuf[pos+7]==0x73){
-
-                u_int compressed_length = (   (sbuf[pos+8]
-                                            + (sbuf[pos+9]<<8)
-                                            + (sbuf[pos+10] << 16)
-                                            + (sbuf[pos+11]<<24)) >> 10) + 1; // ref: Hibr2bin/MemoryBlocks.cpp
-
-                compressed_length = (compressed_length + 7) & ~7; // ref: Hibr2bin/MemoryBlocks.cpp
-		const u_char *compressed_buf = sbuf.get_buf() + pos + 32;		 // "the header contains 32 bytes"
-		u_int  remaining_size = sbuf.bufsize - (pos+32); // up to the end of the buffer
-		size_t compr_size = compressed_length < remaining_size ? compressed_length : remaining_size;
-		size_t max_uncompr_size = compr_size * 10; // hope that's good enough
-		if (max_uncompr_size < min_uncompr_size) {
-                    max_uncompr_size = min_uncompr_size; // it should at least be this large!
-                }
-
-                auto *decomp_sbuf = sbuf_t::sbuf_malloc(sbuf.pos0 + "HIBERFILE", max_uncompr_size, max_uncompr_size);
-                u_char *decomp = reinterpret_cast<u_char *>(decomp_sbuf->malloc_buf());
-		int decompress_size = Xpress_Decompress(compressed_buf, compr_size, decomp, max_uncompr_size);
-
-                if (decompress_size<=0) {
-                    delete decomp;
-                    return;
-                }
-                /* decomp is a buffer that may extend over multiple pages.
-                 * Unfortunately the pages are not logically connected, because they are physical memory, and it is
-                 * highly unlikely that adjacent logical pages will have adjacent physical pages. Therefore we now
-                 * break up this buffer into 4096 byte chunks and process each individually.
-                 * This prevents scanners like the JPEG carver from inadvertantly reassembling objects that make no semantic sense.
-                 * However, we need to copy the data into each one (a copy!) because they may be processed asynchronously.
-                 */
-                for(ssize_t start = 0; start < decompress_size; start += windows_page_size){
-                    auto *dbuf = decomp_sbuf->new_slice_copy( start, windows_page_size);
-                    sp.recurse(dbuf);
-		}
-                delete decomp;
-	    }
+        try {
+            scan_hiberfile_scan(sp);
+        }
+        catch (const sbuf_t::range_exception_t &e) {
+            // oh well.
 	}
     }
 }

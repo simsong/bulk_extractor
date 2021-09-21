@@ -55,6 +55,7 @@ int _CRT_fmode = _O_BINARY;
 #include "be13_api/utils.h"             // needs config.h
 #include "be13_api/word_and_context_list.h"
 
+#include "bulk_extractor.h"
 #include "findopts.h"
 #include "image_process.h"
 #include "phase1.h"
@@ -71,15 +72,15 @@ int _CRT_fmode = _O_BINARY;
  */
 [[noreturn]] void debug_help()
 {
-    puts("#define DEBUG_PEDANTIC    0x0001	// check values more rigorously");
-    puts("#define DEBUG_PRINT_STEPS 0x0002      // prints as each scanner is started");
-    puts("#define DEBUG_SCANNER     0x0004	// dump all feature writes to stderr");
-    puts("#define DEBUG_NO_SCANNERS 0x0008      // do not run the scanners ");
-    puts("#define DEBUG_DUMP_DATA   0x0010	// dump data as it is seen ");
-    puts("#define DEBUG_INFO        0x0040	// print extra info");
-    puts("#define DEBUG_EXIT_EARLY  1000	// just print the size of the volume and exis ");
-    puts("#define DEBUG_ALLOCATE_512MiB 1002	// Allocate 512MiB, but don't set any flags ");
-    exit(1);
+    puts( "#define DEBUG_PEDANTIC    0x0001	// check values more rigorously" );
+    puts( "#define DEBUG_PRINT_STEPS 0x0002      // prints as each scanner is started" );
+    puts( "#define DEBUG_SCANNER     0x0004	// dump all feature writes to stderr" );
+    puts( "#define DEBUG_NO_SCANNERS 0x0008      // do not run the scanners " );
+    puts( "#define DEBUG_DUMP_DATA   0x0010	// dump data as it is seen " );
+    puts( "#define DEBUG_INFO        0x0040	// print extra info" );
+    puts( "#define DEBUG_EXIT_EARLY  1000	// just print the size of the volume and exis " );
+    puts( "#define DEBUG_ALLOCATE_512MiB 1002	// Allocate 512MiB, but don't set any flags " );
+    exit( 1);
 }
 
 /****************************************************************
@@ -87,7 +88,7 @@ int _CRT_fmode = _O_BINARY;
  ****************************************************************/
 
 #if 0
-void usage(scanner_set &ss)
+void usage( scanner_set &ss)
 {
     Phase1::Config cfg;   // get a default config
 
@@ -159,10 +160,10 @@ void usage(scanner_set &ss)
 }
 #endif
 
-[[noreturn]] void throw_FileNotFoundError(const std::string &fname)
+[[noreturn]] void throw_FileNotFoundError( const std::string &fname )
 {
     std::cerr << "Cannot open: " << fname << "\n";
-    throw std::runtime_error("Cannot open file");
+    throw std::runtime_error( "Cannot open file" );
 }
 
 /**
@@ -175,27 +176,27 @@ void usage(scanner_set &ss)
  * Make sure that the filename provided is sane.
  * That is, do not allow the analysis of a *.E02 file...
  */
-void validate_path(const std::filesystem::path fn)
+void validate_path( const std::filesystem::path fn)
 {
-    if (!std::filesystem::exists(fn)){
+    if ( !std::filesystem::exists( fn)){
         std::cerr << "file does not exist: " << fn << "\n";
-        throw std::runtime_error("file not found.");
+        throw std::runtime_error( "file not found." );
     }
-    if (fn.extension()=="E02" || fn.extension()=="e02"){
+    if ( fn.extension()=="E02" || fn.extension()=="e02" ){
         std::cerr << "Error: invalid file name\n";
         std::cerr << "Do not use bulk_extractor to process individual EnCase files.\n";
         std::cerr << "Instead, just run bulk_extractor with FILENAME.E01\n";
         std::cerr << "The other files in an EnCase multi-volume archive will be opened\n";
         std::cerr << "automatically.\n";
-        throw std::runtime_error("run on E02.");
+        throw std::runtime_error( "run on E02." );
     }
 }
 
-int terminal_width(int w)
+int terminal_width( int w)
 {
 #if defined(HAVE_IOCTL) && defined(HAVE_STRUCT_WINSIZE_WS_COL)
     struct winsize ws;
-    if (ioctl(STDIN_FILENO, TIOCGWINSZ, &ws)==0){
+    if ( ioctl( STDIN_FILENO, TIOCGWINSZ, &ws)==0){
         return  ws.ws_col;
     }
 #endif
@@ -207,23 +208,16 @@ int terminal_width(int w)
  */
 
 std::string be_hash_name {"sha1"};
-static void add_if_present(std::vector<std::string> &scanner_dirs,const std::string &dir)
+static void add_if_present( std::vector<std::string> &scanner_dirs,const std::string &dir)
 {
-    if (access(dir.c_str(),O_RDONLY) == 0){
-        scanner_dirs.push_back(dir);
+    if ( access( dir.c_str(),O_RDONLY) == 0){
+        scanner_dirs.push_back( dir);
     }
 }
 
-struct notify_opts {
-    scanner_set *ssp;
-    aftimer *master_timer;
-    std::atomic<double> *fraction_done;
-    bool opt_legacy;
-};
-
-[[noreturn]] void notify_thread(struct notify_opts *o)
+[[noreturn]] void notify_thread::notifier( struct notify_thread::notify_opts *o)
 {
-    assert(o->ssp != nullptr);
+    assert( o->ssp != nullptr);
     const char *cl="";
     const char *ho="";
     const char *ce="";
@@ -231,13 +225,13 @@ struct notify_opts {
     int cols = 80;
 #ifdef HAVE_LIBTERMCAP
     char buf[65536], *table=buf;
-    cols = tgetnum("co");
-    if (!o->opt_legacy) {
-        const char *str = ::getenv("TERM");
-        if (!str){
+    cols = tgetnum( "co" );
+    if ( !o->opt_legacy) {
+        const char *str = ::getenv( "TERM" );
+        if ( !str){
             std::cerr << "Warning: TERM environment variable not set." << std::endl;
         } else {
-            switch (tgetent(buf, str)) {
+            switch ( tgetent( buf, str)) {
             case 0:
                 std::cerr << "Warning: No terminal entry '" << str << "'. " << std::endl;
                 break;
@@ -245,10 +239,10 @@ struct notify_opts {
                 std::cerr << "Warning: terminfo database culd not be found." << std::endl;
                 break;
             case 1: // success
-                ho = tgetstr("ho", &table);   // home
-                cl = tgetstr("cl", &table);   // clear screen
-                ce = tgetstr("ce", &table);   // clear to end of line
-                cd = tgetstr("cd", &table);   // clear to end of screen
+                ho = tgetstr( "ho", &table );   // home
+                cl = tgetstr( "cl", &table );   // clear screen
+                ce = tgetstr( "ce", &table );   // clear to end of line
+                cd = tgetstr( "cd", &table );   // clear to end of screen
                 break;
             }
         }
@@ -256,69 +250,69 @@ struct notify_opts {
 #endif
 
     std::cout << cl;                    // clear screen
-    while(true){
+    while( true ){
 
         // get screen size change if we can!
-        cols = terminal_width(cols);
-        time_t rawtime = time (0);
-        struct tm timeinfo = *(localtime(&rawtime));
+        cols = terminal_width( cols);
+        time_t rawtime = time ( 0);
+        struct tm timeinfo = *( localtime( &rawtime ));
         std::map<std::string,std::string> stats = o->ssp->get_realtime_stats();
 
         // get the times
         o->master_timer->lap();
         stats["elapsed_time"] = o->master_timer->elapsed_text();
-        if (o->fraction_done) {
+        if ( o->fraction_done ) {
             double done = *o->fraction_done;
-            stats["fraction_read"] = std::to_string(done * 100) + std::string(" %");
-            stats["estimated_time_remaining"] = o->master_timer->eta_text(done);
-            stats["estimated_date_completion"] = o->master_timer->eta_date(done);
+            stats[FRACTION_READ] = std::to_string( done * 100) + std::string( " %" );
+            stats[ESTIMATED_TIME_REMAINING] = o->master_timer->eta_text( done );
+            stats[ESTIMATED_DATE_COMPLETION] = o->master_timer->eta_date( done );
 
             // print the legacy status
-            if(o->opt_legacy) {
+            if ( o->opt_legacy) {
                 char buf1[64], buf2[64];
-                snprintf(buf1, sizeof(buf1), "%2d:%02d:%02d",timeinfo.tm_hour,timeinfo.tm_min,timeinfo.tm_sec);
-                snprintf(buf2, sizeof(buf2), "(%.2f%%)", done * 100);
+                snprintf( buf1, sizeof( buf1), "%2d:%02d:%02d",timeinfo.tm_hour,timeinfo.tm_min,timeinfo.tm_sec);
+                snprintf( buf2, sizeof( buf2), "(%.2f%%)", done * 100);
                 uint64_t max_offset = strtoll( stats[ scanner_set::MAX_OFFSET ].c_str() , nullptr, 10);
-                std::cout << buf1 << " Offset " << max_offset / (1000*1000) << "MB "
-                          << buf2 << " Done in " << stats["estimated_time_remaining"]
-                          << " at " << stats["estimated_time_completion"] << std::endl;
+                std::cout << buf1 << " Offset " << max_offset / ( 1000*1000) << "MB "
+                          << buf2 << " Done in " << stats[ESTIMATED_TIME_REMAINING]
+                          << " at " << stats[ESTIMATED_DATE_COMPLETION] << std::endl;
             }
         }
-        if (!o->opt_legacy) {
-            std::cout << ho << "bulk_extractor      " << asctime(&timeinfo) << "  " << std::endl;
-            for(const auto &it : stats ){
+        if ( !o->opt_legacy) {
+            std::cout << ho << "bulk_extractor      " << asctime( &timeinfo) << "  " << std::endl;
+            for( const auto &it : stats ){
                 std::cout << it.first << ": " << it.second;
-                if (ce[0] ){
+                if ( ce[0] ){
                     std::cout << ce;
                 } else {
                     // Space out to the 50 column to erase any junk
-                    int spaces = 50 - (it.first.size() + it.second.size());
-                    for(int i=0;i<spaces;i++){
+                    int spaces = 50 - ( it.first.size() + it.second.size());
+                    for( int i=0;i<spaces;i++){
                         std::cout << " ";
                     }
                 }
                 std::cout << std::endl;
             }
-            if( o->fraction_done ){
-                if (cols>10){
+            if ( o->fraction_done ){
+                if ( cols>10){
                     double done = *o->fraction_done;
-                    int before = (cols - 3) * done;
-                    int after  = (cols - 3) * (1.0 - done);
-                    std::cout << std::string(before,'=') << '>' << std::string(after,'.') << '|' << ce << std::endl;
+                    int before = ( cols - 3) * done;
+                    int after  = ( cols - 3) * ( 1.0 - done );
+                    std::cout << std::string( before,'=') << '>' << std::string( after,'.') << '|' << ce << std::endl;
                 }
             }
             std::cout << cd << std::endl << std::endl;
         }
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for( std::chrono::seconds( 1));
     }
 }
 
-void launch_notify_thread(struct notify_opts *o)
+void notify_thread::launch_notify_thread( struct notify_thread::notify_opts *o)
 {
-    new std::thread(&notify_thread, o);    // launch the notify thread
+    new std::thread( &notifier, o);    // launch the notify thread
 }
 
-int bulk_extractor_main(int argc,char * const *argv)
+int bulk_extractor_main( int argc,char * const *argv)
 {
     mtrace();
     const auto original_argc = argc;
@@ -337,23 +331,23 @@ int bulk_extractor_main(int argc,char * const *argv)
     //bool        opt_write_sqlite3     = false;
 
     /* Startup */
-    setvbuf(stdout,0,_IONBF,0);		// don't buffer stdout
+    setvbuf( stdout,0,_IONBF,0);		// don't buffer stdout
     std::vector<std::string> scanner_dirs; // where to look for scanners
 
     /* Add the default plugin_path */
-    add_if_present(scanner_dirs,"/usr/local/lib/bulk_extractor");
-    add_if_present(scanner_dirs,"/usr/lib/bulk_extractor");
-    add_if_present(scanner_dirs,".");
+    add_if_present( scanner_dirs,"/usr/local/lib/bulk_extractor" );
+    add_if_present( scanner_dirs,"/usr/lib/bulk_extractor" );
+    add_if_present( scanner_dirs,"." );
 
-    if (getenv("BE_PATH")) {
-        std::vector<std::string> dirs = split(getenv("BE_PATH"),':');
-        for(std::vector<std::string>::const_iterator it = dirs.begin(); it!=dirs.end(); it++){
-            add_if_present(scanner_dirs,*it);
+    if ( getenv( "BE_PATH" )) {
+        std::vector<std::string> dirs = split( getenv( "BE_PATH" ),':');
+        for( std::vector<std::string>::const_iterator it = dirs.begin(); it!=dirs.end(); it++){
+            add_if_present( scanner_dirs,*it);
         }
     }
 
 #ifdef WIN32
-    setmode(1,O_BINARY);		// make stdout binary
+    setmode( 1,O_BINARY);		// make stdout binary
 #endif
 
     /* Process options */
@@ -361,10 +355,10 @@ int bulk_extractor_main(int argc,char * const *argv)
 
 
     /* 2021-09-13 - slg - option processing rewritten to use cxxopts */
-    std::string bulk_extractor_help("A high-performance flexible digital forensics program.");
-    std::string image_name_help("Name of image to scan (or directory if -r is provided)");
+    std::string bulk_extractor_help( "A high-performance flexible digital forensics program." );
+    std::string image_name_help( "Name of image to scan (or directory if -r is provided)" );
 #ifdef HAVE_LIBEWF
-    image_name_help += " (May be a E01 file)";
+    image_name_help += " (May be a E01 file )";
 #endif
 #ifdef HAVE_EXIV2
     bulk_extractor_help += " (Includes EXVI2 Support)";
@@ -376,7 +370,7 @@ int bulk_extractor_main(int argc,char * const *argv)
 
 
     scanner_config   sc;   // config for be13_api
-    cxxopts::Options options("bulk_extractor", bulk_extractor_help.c_str());
+    cxxopts::Options options( "bulk_extractor", bulk_extractor_help.c_str());
     options.set_width( terminal_width( 80 ));
     options.add_options()
     ("image_name", image_name_help.c_str(), cxxopts::value<std::string>())
@@ -391,8 +385,8 @@ int bulk_extractor_main(int argc,char * const *argv)
         ("x,disable",  "disable a scanner", cxxopts::value<std::vector<std::string>>())
         ("f,find",     "search for a pattern", cxxopts::value<std::vector<std::string>>())
         ("F,find_file", "read patterns to search from a file", cxxopts::value<std::vector<std::string>>())
-        ("G,pagesize",   "page size in bytes", cxxopts::value<std::string>()->default_value(std::to_string(cfg.opt_pagesize)))
-        ("g,marginsize", "margin size in bytes", cxxopts::value<std::string>()->default_value(std::to_string(cfg.opt_pagesize)))
+        ("G,pagesize",   "page size in bytes", cxxopts::value<std::string>()->default_value(std::to_string(cfg.opt_pagesize )))
+        ("g,marginsize", "margin size in bytes", cxxopts::value<std::string>()->default_value(std::to_string(cfg.opt_pagesize )))
         ("i,info",       "info mode")
         ("j,threads",    "number of threads", cxxopts::value<int>()->default_value(std::to_string(cfg.num_threads)))
         ("J,no_threads",  "read and process data in the primary thread")
@@ -418,10 +412,10 @@ int bulk_extractor_main(int argc,char * const *argv)
         ("h,help",          "print help screen")
         ;
 
-    options.positional_help("image_name");
-    options.parse_positional("image_name");
-    auto result = options.parse(argc, argv);
-    if (result.count("debug_help")){ debug_help(); return 3;}
+    options.positional_help( "image_name" );
+    options.parse_positional( "image_name" );
+    auto result = options.parse( argc, argv);
+    if ( result.count( "debug_help" )){ debug_help(); return 3;}
 
     sc.offset_add  = result["offset_add"].as<int64_t>();
     sc.context_window_default = result["context_window"].as<int>();
@@ -429,46 +423,46 @@ int bulk_extractor_main(int argc,char * const *argv)
 
     try {
         sc.banner_file = result["banner_file"].as<std::string>();
-    } catch (cxxopts::option_has_no_value_exception) { }
+    } catch ( cxxopts::option_has_no_value_exception &e ) { }
 
-    if (result.count("enable_exclusive")) {
+    if ( result.count( "enable_exclusive" )) {
         sc.push_scanner_command( scanner_config::scanner_command::ALL_SCANNERS, scanner_config::scanner_command::DISABLE);
         sc.push_scanner_command( result["enable_exclusive"].as<std::string>(), scanner_config::scanner_command::ENABLE);
     }
 
     try {
-        for (const auto &name : result["enable"].as<std::vector<std::string>>() ) {
-            sc.push_scanner_command(name, scanner_config::scanner_command::ENABLE);
+        for ( const auto &name : result["enable"].as<std::vector<std::string>>() ) {
+            sc.push_scanner_command( name, scanner_config::scanner_command::ENABLE);
         }
-    } catch (cxxopts::option_has_no_value_exception &e) { }
+    } catch ( cxxopts::option_has_no_value_exception &e ) { }
 
 
     try {
-        for (const auto &name : result["disable"].as<std::vector<std::string>>() ) {
-            sc.push_scanner_command(name, scanner_config::scanner_command::DISABLE);
+        for ( const auto &name : result["disable"].as<std::vector<std::string>>() ) {
+            sc.push_scanner_command( name, scanner_config::scanner_command::DISABLE);
         }
-    } catch (cxxopts::option_has_no_value_exception &e) { }
+    } catch ( cxxopts::option_has_no_value_exception &e ) { }
 
     try {
-        for (const auto &it : result["find"].as<std::vector<std::string>>() ) {
-            FindOpts::get().Patterns.push_back(it);
+        for ( const auto &it : result["find"].as<std::vector<std::string>>() ) {
+            FindOpts::get().Patterns.push_back( it);
         }
-    } catch (cxxopts::option_has_no_value_exception &e) { }
+    } catch ( cxxopts::option_has_no_value_exception &e ) { }
 
 
     try {
-        for (const auto &it : result["find_file"].as<std::vector<std::string>>() ) {
-            FindOpts::get().Files.push_back(it);
+        for ( const auto &it : result["find_file"].as<std::vector<std::string>>() ) {
+            FindOpts::get().Files.push_back( it);
         }
-    } catch (cxxopts::option_has_no_value_exception &e) { }
+    } catch ( cxxopts::option_has_no_value_exception &e ) { }
 
-    cfg.opt_pagesize   = scaled_stoi64(result["pagesize"].as<std::string>());
-    cfg.opt_marginsize = scaled_stoi64(result["marginsize"].as<std::string>());
-    cfg.opt_info       = result.count("info");
+    cfg.opt_pagesize   = scaled_stoi64( result["pagesize"].as<std::string>());
+    cfg.opt_marginsize = scaled_stoi64( result["marginsize"].as<std::string>());
+    cfg.opt_info       = result.count( "info" );
 
     try {
         cfg.num_threads    = result["threads"].as<int>();
-    }  catch (cxxopts::option_has_no_value_exception &e) {
+    }  catch ( cxxopts::option_has_no_value_exception &e ) {
         cfg.num_threads = 0;
     }
 
@@ -476,78 +470,93 @@ int bulk_extractor_main(int argc,char * const *argv)
     cfg.max_bad_alloc_errors = result["max_bad_alloc_errors"].as<int>();
 
     try {
-        for (const auto &it : result["scanner_dir"].as<std::vector<std::string>>() ) {
-            scanner_dirs.push_back(it);break;
+        for ( const auto &it : result["scanner_dir"].as<std::vector<std::string>>() ) {
+            scanner_dirs.push_back( it);break;
         }
-    } catch (cxxopts::option_has_no_value_exception &e) { }
+    } catch ( cxxopts::option_has_no_value_exception &e ) { }
 
 
-    cfg.opt_quiet = result.count("quiet");
+    cfg.opt_quiet = result.count( "quiet" );
     try {
         alert_list.readfile( result["alert_list"].as<std::string>() );
-    } catch (cxxopts::option_has_no_value_exception &e) { }
+    } catch ( cxxopts::option_has_no_value_exception &e ) { }
 
-    cfg.opt_recurse = result.count("recurse");
+    cfg.opt_recurse = result.count( "recurse" );
 
     try {
-        for (const auto &it : result["set"].as<std::vector<std::string>>() ) {
-            std::vector<std::string> kv = split(it,'=');
-            if (kv.size()!=2) {
+        for ( const auto &it : result["set"].as<std::vector<std::string>>() ) {
+            std::vector<std::string> kv = split( it,'=');
+            if ( kv.size()!=2) {
                 std::cerr << "Invalid -S paramter: '" << it << "' must be key=value format\n";
                 return -1;
             }
             sc.namevals[kv[0]] = kv[1];
         }
-    } catch (cxxopts::option_has_no_value_exception &e) { }
+    } catch ( cxxopts::option_has_no_value_exception &e ) { }
 
 
     try {
-        cfg.set_sampling_parameters(result["sampling"].as<std::string>());
-    } catch (cxxopts::option_has_no_value_exception &e) { }
+        cfg.set_sampling_parameters( result["sampling"].as<std::string>());
+    } catch ( cxxopts::option_has_no_value_exception &e ) { }
 
-    if (result.count("version")) { std::cout << "bulk_extractor " << PACKAGE_VERSION << std::endl; return 0; }
-    if (result.count("stop_list")) stop_list.readfile(result["stop_list"].as<std::string>());
+    if ( result.count( "version" )) { std::cout << "bulk_extractor " << PACKAGE_VERSION << std::endl; return 0; }
+    if ( result.count( "stop_list" )) stop_list.readfile( result["stop_list"].as<std::string>());
     try {
         std::string optargs = result["scan"].as<std::string>();
-        size_t dash = optargs.find('-');
-        if (dash==std::string::npos){
-            cfg.opt_scan_start = stoi64(optargs);
+        size_t dash = optargs.find( '-');
+        if ( dash==std::string::npos){
+            cfg.opt_scan_start = stoi64( optargs);
         } else {
-            cfg.opt_scan_start = scaled_stoi64(optargs.substr(0,dash));
-            cfg.opt_scan_end   = scaled_stoi64(optargs.substr(dash+1));
+            cfg.opt_scan_start = scaled_stoi64( optargs.substr( 0,dash));
+            cfg.opt_scan_end   = scaled_stoi64( optargs.substr( dash+1));
         }
-    } catch (cxxopts::option_has_no_value_exception &e) { }
+    } catch ( cxxopts::option_has_no_value_exception &e ) { }
 
 
     try {
         cfg.opt_page_start = result["page_start"].as<int>();
-    } catch (cxxopts::option_has_no_value_exception &e) { }
+    } catch ( cxxopts::option_has_no_value_exception &e ) { }
 
-    cfg.opt_notification = (result.count("no_notify")==0);
-    cfg.opt_legacy = result.count("version1");
+    cfg.opt_notification = ( result.count( "no_notify" )==0);
+    cfg.opt_legacy = result.count( "version1" );
 
     /* Legacy mode if stdout is not a tty */
 #ifdef HAVE_ISATTY
-    if (!isatty(1)){
+    if ( !isatty( 1)){
         cfg.opt_legacy = true;
     }
 #endif
 
     /* Create a configuration that will be used to initialize the scanners */
     /* Make individual configuration options appear on the command line interface. */
-    sc.get_global_config("debug_histogram_malloc_fail_frequency",
+    sc.get_global_config( "debug_histogram_malloc_fail_frequency",
                          &AtomicUnicodeHistogram::debug_histogram_malloc_fail_frequency,
-                         "Set >0 to make histogram maker fail with memory allocations");
-    sc.get_global_config("hash_alg",&be_hash_name,"Specifies hash algorithm to be used for all hash calculations");
-    //sc.get_global_config("write_feature_files",&opt_write_feature_files,"Write features to flat files");
-    //sc.get_global_config("write_feature_sqlite3",&opt_write_sqlite3,"Write feature files to report.sqlite3");
-    sc.get_global_config("report_read_errors",&cfg.opt_report_read_errors,"Report read errors");
+                         "Set >0 to make histogram maker fail with memory allocations" );
+    sc.get_global_config( "hash_alg",&be_hash_name,"Specifies hash algorithm to be used for all hash calculations" );
+    //sc.get_global_config( "write_feature_files",&opt_write_feature_files,"Write features to flat files" );
+    //sc.get_global_config( "write_feature_sqlite3",&opt_write_sqlite3,"Write feature files to report.sqlite3" );
+    sc.get_global_config( "report_read_errors",&cfg.opt_report_read_errors,"Report read errors" );
 
+    /* If we are getting help or info scanners, make a fake scanner set with new output directory */
+    if ( result.count( "help" ) || result.count( "info_scanners" )) {
+        struct feature_recorder_set::flags_t f;
+        scanner_set ss( sc, f, nullptr);     // make a scanner_set but with no XML writer. We will create it below
+        ss.add_scanners( scanners_builtin);
+
+        if ( result.count( "help" )) {     // -h
+            std::cout << options.help() << std::endl;
+            ss.info_scanners( std::cerr, false, true, 'e', 'x');
+            return 1;
+        } else {                        // -H
+            ss.info_scanners( std::cout, true, true, 'e', 'x');
+            return 2;
+        }
+    }
 
     try {
         sc.input_fname = result["image_name"].as<std::string>();
-    } catch (cxxopts::option_has_no_value_exception &e ) {
-        if (cfg.opt_recurse) {
+    } catch ( cxxopts::option_has_no_value_exception &e ) {
+        if ( cfg.opt_recurse ) {
             std::cerr << "filedir not provided\n";
         } else {
             std::cerr << "imagefile not provided\n";
@@ -558,49 +567,39 @@ int bulk_extractor_main(int argc,char * const *argv)
 
     try {
         sc.outdir                = result["outdir"].as<std::string>();
-    } catch (cxxopts::option_has_no_value_exception &e) {
+    } catch ( cxxopts::option_has_no_value_exception &e ) {
         std::cerr << "error: -o outdir must be specified\n";
         std::cout << options.help() << std::endl;
         return 4;
     }
 
     /* The zap option wipes the contents of a directory, useful for debugging */
-    if (result.count("zap")) {
-        for (const auto &entry : std::filesystem::recursive_directory_iterator( sc.outdir ) ) {
-            if (! std::filesystem::is_directory(entry.path())){
+    if ( result.count( "zap" ) && std::filesystem::is_directory( sc.outdir )) {
+        for ( const auto &entry : std::filesystem::recursive_directory_iterator( sc.outdir ) ) {
+            if ( ! std::filesystem::is_directory( entry.path())){
                 std::cout << "erasing " << entry.path().string() << "\n";
                 std::filesystem::remove( entry );
             }
 	}
     }
     std::cout << "mkdir " << sc.outdir << "\n";
-    std::filesystem::create_directory(sc.outdir); // make sure directory exists
+    std::filesystem::create_directory( sc.outdir); // make sure directory exists
 
     /* Load all the scanners and enable the ones we care about.
      * This way the help messages can get the scanner help as well.
      */
 
     struct feature_recorder_set::flags_t f;
-    scanner_set ss(sc, f, nullptr);     // make a scanner_set but with no XML writer. We will create it below
-    ss.add_scanners(scanners_builtin);
+    scanner_set ss( sc, f, nullptr);     // make a scanner_set but with no XML writer. We will create it below
+    ss.add_scanners( scanners_builtin);
 
-    if (result.count("help")) {
-        std::cout << options.help() << std::endl;
-        ss.info_scanners(std::cerr, false, true, 'e', 'x');
-        return 1;
-    }
-    if (result.count("info_scanners")) {
-        ss.info_scanners(std::cout, true, true, 'e', 'x');
-        return 2;
-    }
-
-    //bool clean_start = directory_empty(sc.outdir);
+    //bool clean_start = directory_empty( sc.outdir);
 
     /* Applying the scanner commands will create the alert recorder. */
     try {
         ss.apply_scanner_commands();
     }
-    catch (const scanner_set::NoSuchScanner &e) {
+    catch ( const scanner_set::NoSuchScanner &e ) {
         std::cerr << "no such scanner: " << e.what() << "\n";
         return 5;
     }
@@ -609,57 +608,57 @@ int bulk_extractor_main(int argc,char * const *argv)
      * but no scanner that uses the find list is enabled.
      */
 
-    if (!FindOpts::get().empty()) {
+    if ( !FindOpts::get().empty()) {
         /* Look through the enabled scanners and make sure that
 	 * at least one of them is a FIND scanner
 	 */
-        if (!ss.is_find_scanner_enabled()){
-            throw std::runtime_error("find words are specified with -F but no find scanner is enabled.\n");
+        if ( !ss.is_find_scanner_enabled()){
+            throw std::runtime_error( "find words are specified with -F but no find scanner is enabled.\n" );
         }
     }
 
-    if (std::filesystem::exists(sc.outdir/"report.xml")){
+    if ( std::filesystem::exists( sc.outdir/"report.xml" )){
 	/* Restarting */
-        bulk_extractor_restarter r(sc,cfg);
+        bulk_extractor_restarter r( sc,cfg);
         r.restart();                    // load the restart file and rename report.xml
     }
 
-    image_process *p = image_process::open( sc.input_fname, cfg.opt_recurse, cfg.opt_pagesize, cfg.opt_marginsize);
+    image_process *p = image_process::open( sc.input_fname, cfg.opt_recurse, cfg.opt_pagesize, cfg.opt_marginsize );
 
     /* are we supposed to run the path printer? */
     try {
         std::string opt_path = result["path"].as<std::string>();
-        path_printer pp(&ss, p, std::cout);
-        if (opt_path=="-http" || opt_path=="--http"){
-            pp.process_http(std::cin);
-        } else if (opt_path=="-i" || opt_path=="-"){
-            pp.process_interactive(std::cin);
+        path_printer pp( &ss, p, std::cout);
+        if ( opt_path=="-http" || opt_path=="--http" ){
+            pp.process_http( std::cin);
+        } else if ( opt_path=="-i" || opt_path=="-" ){
+            pp.process_interactive( std::cin);
         } else {
-            pp.process_path(opt_path);
+            pp.process_path( opt_path);
         }
 	return 0;
-    } catch (cxxopts::option_has_no_value_exception &e) {
+    } catch ( cxxopts::option_has_no_value_exception &e ) {
     }
 
-    /* Open the image file (or the device) now.
+    /* Open the image file ( or the device) now.
      * We use *p because we don't know which subclass we will be getting.
      */
 
-    dfxml_writer *xreport = new dfxml_writer(sc.outdir / Phase1::REPORT_FILENAME, false); // do not make DTD
+    dfxml_writer *xreport = new dfxml_writer( sc.outdir / Phase1::REPORT_FILENAME, false ); // do not make DTD
     ss.set_dfxml_writer( xreport );
     /* Start the clock */
     master_timer.start();
 
-    Phase1 phase1(cfg, *p, ss);
+    Phase1 phase1( cfg, *p, ss);
 
     /* Validate the args */
 #if 0
-    if ( argc == 0 ) throw std::runtime_error("No disk image provided. Run with -h for help.");
+    if ( argc == 0 ) throw std::runtime_error( "No disk image provided. Run with -h for help." );
     if ( argc > 1  ){
-        throw std::runtime_error("Too many arguments provided. Run with -h for help.");
+        throw std::runtime_error( "Too many arguments provided. Run with -h for help." );
     }
 #endif
-    validate_path(sc.input_fname);
+    validate_path( sc.input_fname );
 
     /* Create the DFXML file in the report directory.
      * If we are restarting, the dfxml file was renamed.
@@ -669,25 +668,25 @@ int bulk_extractor_main(int argc,char * const *argv)
     auto feature_file_names = ss.feature_file_list();
 #if 0
     uint32_t flags = 0;
-    if (stop_list.size()>0)        flags |= feature_recorder_set::CREATE_STOP_LIST_RECORDERS;
-    if (opt_write_sqlite3)         flags |= feature_recorder_set::ENABLE_SQLITE3_RECORDERS;
-    if (!opt_write_feature_files)  flags |= feature_recorder_set::DISABLE_FILE_RECORDERS;
+    if ( stop_list.size()>0)        flags |= feature_recorder_set::CREATE_STOP_LIST_RECORDERS;
+    if ( opt_write_sqlite3)         flags |= feature_recorder_set::ENABLE_SQLITE3_RECORDERS;
+    if ( !opt_write_feature_files)  flags |= feature_recorder_set::DISABLE_FILE_RECORDERS;
 
 #endif
 
     /* provide documentation to the user; the DFXML information comes from elsewhere */
-    if (!cfg.opt_quiet){
+    if ( !cfg.opt_quiet){
         std::cout << "bulk_extractor version: " << PACKAGE_VERSION << "\n";
         std::cout << "Input file: " << sc.input_fname << "\n";
         std::cout << "Output directory: " << sc.outdir << "\n";
         std::cout << "Disk Size: " << p->image_size() << "\n";
         std::cout << "Scanners: ";
-        for (auto const &it : ss.get_enabled_scanners()){
+        for ( auto const &it : ss.get_enabled_scanners()){
             std::cout << it << " ";
         }
         std::cout << "\n";
 
-        if (cfg.num_threads>0){
+        if ( cfg.num_threads>0){
             std::cout << "Threads: " << cfg.num_threads << "\n";
         } else {
             std::cout << "Threading Disabled\n";
@@ -695,37 +694,35 @@ int bulk_extractor_main(int argc,char * const *argv)
     }
 
     /*** PHASE 1 --- Run on the input image */
-    struct notify_opts o;
+    struct notify_thread::notify_opts o;
     o.ssp = &ss;
     o.master_timer  = &master_timer;
     o.fraction_done = &fraction_done;
     o.opt_legacy    = cfg.opt_legacy;
 
-    printf("cfg.opt_notificaiton=%d  cfg=%p\n",cfg.opt_notification, &cfg);
-
-    if (cfg.opt_notification) {
-        launch_notify_thread(&o);
+    if ( cfg.opt_notification) {
+        notify_thread::launch_notify_thread( &o);
     }
     ss.phase_scan();
 
 #if 0
-    if ( fs.flag_set(feature_recorder_set::ENABLE_SQLITE3_RECORDERS )) {
+    if ( fs.flag_set( feature_recorder_set::ENABLE_SQLITE3_RECORDERS )) {
         fs.db_transaction_begin();
     }
 #endif
 
     /* Go multi-threaded if requested */
-    if (cfg.num_threads > 0){
-        std::cout << "going multi-threaded...(" << cfg.num_threads << ")\n";
-        ss.launch_workers(cfg.num_threads);
+    if ( cfg.num_threads > 0){
+        std::cout << "going multi-threaded...( " << cfg.num_threads << " )\n";
+        ss.launch_workers( cfg.num_threads);
     } else {
         std::cout << "running single-threaded (DEBUG)...\n";
 
     }
 
     phase1.dfxml_write_create( original_argc, original_argv);
-    xreport->xmlout("provided_filename", sc.input_fname); // save this information
-    xreport->add_timestamp("phase1 start");
+    xreport->xmlout( "provided_filename", sc.input_fname ); // save this information
+    xreport->add_timestamp( "phase1 start" );
 
     std::cerr << "Calling check_previously_processed at one\n";
 
@@ -733,73 +730,73 @@ int bulk_extractor_main(int argc,char * const *argv)
         phase1.phase1_run();
         ss.join();                          // wait for threads to come together
     }
-    catch (const feature_recorder::DiskWriteError &e) {
-        std::cerr << "Disk write error during Phase 1 (scanning). Disk is probably full." << std::endl
+    catch ( const feature_recorder::DiskWriteError &e ) {
+        std::cerr << "Disk write error during Phase 1 ( scanning). Disk is probably full." << std::endl
                   << "Remove extra files and restart bulk_extractor with the exact same command line to continue." << std::endl;
         return 6;
     }
 
 #if 0
-    if ( fs.flag_set(feature_recorder_set::ENABLE_SQLITE3_RECORDERS )) {
+    if ( fs.flag_set( feature_recorder_set::ENABLE_SQLITE3_RECORDERS )) {
         fs.db_transaction_commit();
     }
 #endif
-    xreport->add_timestamp("phase1 end");
-    if (phase1.image_hash.size() > 0 ){
+    xreport->add_timestamp( "phase1 end" );
+    if ( phase1.image_hash.size() > 0 ){
         std::cout << "Hash of Disk Image: " << phase1.image_hash << "\n";
     }
 
     /*** PHASE 2 --- Shutdown ***/
-    if (!cfg.opt_quiet) std::cout << "Phase 2. Shutting down scanners\n";
-    xreport->add_timestamp("phase2 start");
+    if ( !cfg.opt_quiet) std::cout << "Phase 2. Shutting down scanners\n";
+    xreport->add_timestamp( "phase2 start" );
     try {
         ss.shutdown();
     }
-    catch (const feature_recorder::DiskWriteError &e) {
-        std::cerr << "Disk write error during Phase 2 (histogram making). Disk is probably full." << std::endl
+    catch ( const feature_recorder::DiskWriteError &e ) {
+        std::cerr << "Disk write error during Phase 2 ( histogram making). Disk is probably full." << std::endl
                   << "Remove extra files and restart bulk_extractor with the exact same command line to continue." << std::endl;
         return 7;
     }
 
-    xreport->add_timestamp("phase2 end");
+    xreport->add_timestamp( "phase2 end" );
     master_timer.stop();
 
     /*** PHASE 3 ---  report and then print final usage information ***/
-    xreport->push("report");
-    xreport->xmlout("total_bytes",phase1.total_bytes);
-    xreport->xmlout("elapsed_seconds",master_timer.elapsed_seconds());
-    xreport->xmlout("max_depth_seen",ss.get_max_depth_seen());
-    xreport->xmlout("dup_bytes_encountered",ss.get_dup_bytes_encountered());
+    xreport->push( "report" );
+    xreport->xmlout( "total_bytes",phase1.total_bytes);
+    xreport->xmlout( "elapsed_seconds",master_timer.elapsed_seconds());
+    xreport->xmlout( "max_depth_seen",ss.get_max_depth_seen());
+    xreport->xmlout( "dup_bytes_encountered",ss.get_dup_bytes_encountered());
     ss.dump_scanner_stats();
     ss.dump_name_count_stats();
-    xreport->pop("report");
+    xreport->pop( "report" );
     xreport->add_rusage();
-    xreport->pop("dfxml");			// bulk_extractor
+    xreport->pop( "dfxml" );			// bulk_extractor
     xreport->close();
 
-    if (cfg.opt_quiet==0){
-        float mb_per_sec = (phase1.total_bytes / 1000000.0) / master_timer.elapsed_seconds();
+    if ( cfg.opt_quiet==0){
+        float mb_per_sec = ( phase1.total_bytes / 1000000.0) / master_timer.elapsed_seconds();
 
         std::cout << "All Threads Finished!\n";
-        std::cout.precision(4);
+        std::cout.precision( 4);
         std::cout << "Elapsed time: " << master_timer.elapsed_seconds() << " sec." << std::endl
-                  << "Total MB processed: " << int(phase1.total_bytes / 1000000) << std::endl
+                  << "Total MB processed: " << int( phase1.total_bytes / 1000000) << std::endl
                   << "Overall performance: " << mb_per_sec << " << MBytes/sec ";
-        if (cfg.num_threads>0){
-            std::cout << mb_per_sec/cfg.num_threads << " (MBytes/sec/thread)\n";
+        if ( cfg.num_threads>0){
+            std::cout << mb_per_sec/cfg.num_threads << " ( MBytes/sec/thread)\n";
         }
         std::cout << "sbufs created:   " << sbuf_t::sbuf_total << std::endl;
-        std::cout << "sbufs unaccounted: " << sbuf_t::sbuf_count << " (should be 0) " << std::endl;
+        std::cout << "sbufs unaccounted: " << sbuf_t::sbuf_count << " ( should be 0) " << std::endl;
     }
 
     try {
-        feature_recorder &fr = ss.fs.named_feature_recorder("email");
+        feature_recorder &fr = ss.fs.named_feature_recorder( "email" );
         std::cout << "Total " << fr.name << " features found: " << fr.features_written << std::endl;
     }
-    catch (const feature_recorder_set::NoSuchFeatureRecorder &e) {
+    catch ( const feature_recorder_set::NoSuchFeatureRecorder &e ) {
         std::cout << "Did not scan for email addresses." << std::endl;
     }
 
     muntrace();
-    return(0);
+    return( 0 );
 }

@@ -68,7 +68,7 @@ public:
         std::atomic<double>    *fraction_done {nullptr};
         bool      opt_legacy {false};
         bool      opt_notification {true}; // run notification thread
-        seen_page_ids_t seen_page_ids;               // pages that were already seen
+        seen_page_ids_t seen_page_ids {};               // pages that were already seen
     };
 
     typedef std::set<uint64_t> blocklist_t; // a list of blocks (for random sampling)

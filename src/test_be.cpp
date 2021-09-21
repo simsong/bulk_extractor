@@ -964,7 +964,7 @@ TEST_CASE("e2e-h", "[end-to-end]") {
     /* Try the -h option */
     const char *argv[] = {"bulk_extractor", "-h", nullptr};
     int ret = bulk_extractor_main(2, const_cast<char * const *>(argv));
-    REQUIRE( ret==1 );                  // -h produces 1
+    REQUIRE( ret==1 );                  // -h now produces 1
 }
 
 TEST_CASE("e2e-H", "[end-to-end]") {
@@ -973,7 +973,15 @@ TEST_CASE("e2e-H", "[end-to-end]") {
     /* Try the -H option */
     const char *argv[] = {"bulk_extractor", "-H", nullptr};
     int ret = bulk_extractor_main(2, const_cast<char * const *>(argv));
-    REQUIRE( ret==1 );                  // -H produces 1
+    REQUIRE( ret==2 );                  // -H produces 2
+}
+
+TEST_CASE("e2e-no-imagefile", "[end-to-end]") {
+    std::string outdir = NamedTemporaryDirectory();
+    /* Try the -H option */
+    const char *argv[] = {"bulk_extractor", nullptr};
+    int ret = bulk_extractor_main(1, const_cast<char * const *>(argv));
+    REQUIRE( ret==3 );                  // produces 3
 }
 
 TEST_CASE("e2e-0", "[end-to-end]") {
