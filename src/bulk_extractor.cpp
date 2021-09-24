@@ -24,27 +24,11 @@ void mtrace(){}
 void muntrace(){}
 #endif
 
-#ifdef HAVE_SYS_RESOURCE_H
-#include <sys/resource.h>
-#endif
-
-#ifdef HAVE_CURSES_H
-#include <curses.h>
-#endif
-#ifdef HAVE_TERM_H
-#include <term.h>
-#endif
-
 // Open standard input in binary mode by default on Win32.
 // See http://gnuwin32.sourceforge.net/compile.html for more
 #ifdef WIN32
 int _CRT_fmode = _O_BINARY;
 #endif
-
-#ifdef HAVE_SYS_IOCTL_H
-#include <sys/ioctl.h>
-#endif
-
 
 #include "dfxml_cpp/src/dfxml_writer.h"
 #include "dfxml_cpp/src/hash_t.h"  // needs config.h
@@ -192,17 +176,6 @@ void validate_path( const std::filesystem::path fn)
     }
 }
 
-int terminal_width( int w)
-{
-#if defined(HAVE_IOCTL) && defined(HAVE_STRUCT_WINSIZE_WS_COL)
-    struct winsize ws;
-    if ( ioctl( STDIN_FILENO, TIOCGWINSZ, &ws)==0){
-        return  ws.ws_col;
-    }
-#endif
-    return w;
-}
-
 /**
  * Create the dfxml output
  */
@@ -213,103 +186,6 @@ static void add_if_present( std::vector<std::string> &scanner_dirs,const std::st
     if ( access( dir.c_str(),O_RDONLY) == 0){
         scanner_dirs.push_back( dir);
     }
-}
-
-[[noreturn]] void notify_thread::notifier( struct notify_thread::notify_opts *o)
-{
-    assert( o->ssp != nullptr);
-    const char *cl="";
-    const char *ho="";
-    const char *ce="";
-    const char *cd="";
-    int cols = 80;
-#ifdef HAVE_LIBTERMCAP
-    char buf[65536], *table=buf;
-    cols = tgetnum( "co" );
-    if ( !o->opt_legacy) {
-        const char *str = ::getenv( "TERM" );
-        if ( !str){
-            std::cerr << "Warning: TERM environment variable not set." << std::endl;
-        } else {
-            switch ( tgetent( buf, str)) {
-            case 0:
-                std::cerr << "Warning: No terminal entry '" << str << "'. " << std::endl;
-                break;
-            case -1:
-                std::cerr << "Warning: terminfo database culd not be found." << std::endl;
-                break;
-            case 1: // success
-                ho = tgetstr( "ho", &table );   // home
-                cl = tgetstr( "cl", &table );   // clear screen
-                ce = tgetstr( "ce", &table );   // clear to end of line
-                cd = tgetstr( "cd", &table );   // clear to end of screen
-                break;
-            }
-        }
-    }
-#endif
-
-    std::cout << cl;                    // clear screen
-    while( true ){
-
-        // get screen size change if we can!
-        cols = terminal_width( cols);
-        time_t rawtime = time ( 0);
-        struct tm timeinfo = *( localtime( &rawtime ));
-        std::map<std::string,std::string> stats = o->ssp->get_realtime_stats();
-
-        // get the times
-        o->master_timer->lap();
-        stats["elapsed_time"] = o->master_timer->elapsed_text();
-        if ( o->fraction_done ) {
-            double done = *o->fraction_done;
-            stats[FRACTION_READ] = std::to_string( done * 100) + std::string( " %" );
-            stats[ESTIMATED_TIME_REMAINING] = o->master_timer->eta_text( done );
-            stats[ESTIMATED_DATE_COMPLETION] = o->master_timer->eta_date( done );
-
-            // print the legacy status
-            if ( o->opt_legacy) {
-                char buf1[64], buf2[64];
-                snprintf( buf1, sizeof( buf1), "%2d:%02d:%02d",timeinfo.tm_hour,timeinfo.tm_min,timeinfo.tm_sec);
-                snprintf( buf2, sizeof( buf2), "(%.2f%%)", done * 100);
-                uint64_t max_offset = strtoll( stats[ scanner_set::MAX_OFFSET ].c_str() , nullptr, 10);
-                std::cout << buf1 << " Offset " << max_offset / ( 1000*1000) << "MB "
-                          << buf2 << " Done in " << stats[ESTIMATED_TIME_REMAINING]
-                          << " at " << stats[ESTIMATED_DATE_COMPLETION] << std::endl;
-            }
-        }
-        if ( !o->opt_legacy) {
-            std::cout << ho << "bulk_extractor      " << asctime( &timeinfo) << "  " << std::endl;
-            for( const auto &it : stats ){
-                std::cout << it.first << ": " << it.second;
-                if ( ce[0] ){
-                    std::cout << ce;
-                } else {
-                    // Space out to the 50 column to erase any junk
-                    int spaces = 50 - ( it.first.size() + it.second.size());
-                    for( int i=0;i<spaces;i++){
-                        std::cout << " ";
-                    }
-                }
-                std::cout << std::endl;
-            }
-            if ( o->fraction_done ){
-                if ( cols>10){
-                    double done = *o->fraction_done;
-                    int before = ( cols - 3) * done;
-                    int after  = ( cols - 3) * ( 1.0 - done );
-                    std::cout << std::string( before,'=') << '>' << std::string( after,'.') << '|' << ce << std::endl;
-                }
-            }
-            std::cout << cd << std::endl << std::endl;
-        }
-        std::this_thread::sleep_for( std::chrono::seconds( 1));
-    }
-}
-
-void notify_thread::launch_notify_thread( struct notify_thread::notify_opts *o)
-{
-    new std::thread( &notifier, o);    // launch the notify thread
 }
 
 int bulk_extractor_main( int argc,char * const *argv)
@@ -367,11 +243,9 @@ int bulk_extractor_main( int argc,char * const *argv)
     bulk_extractor_help += " (Includes LightGrep support)";
 #endif
 
-
-
     scanner_config   sc;   // config for be13_api
     cxxopts::Options options( "bulk_extractor", bulk_extractor_help.c_str());
-    options.set_width( terminal_width( 80 ));
+    options.set_width( notify_thread::terminal_width( 80 ));
     options.add_options()
     ("image_name", image_name_help.c_str(), cxxopts::value<std::string>())
         ("A,offset_add", "Offset added to feature locations", cxxopts::value<int64_t>()->default_value("0"))
@@ -529,6 +403,7 @@ int bulk_extractor_main( int argc,char * const *argv)
 
     /* Create a configuration that will be used to initialize the scanners */
     /* Make individual configuration options appear on the command line interface. */
+    sc.get_global_config( "notify_rate", &cfg.opt_notify_rate, "seconds between notificaiton update" );
     sc.get_global_config( "debug_histogram_malloc_fail_frequency",
                          &AtomicUnicodeHistogram::debug_histogram_malloc_fail_frequency,
                          "Set >0 to make histogram maker fail with memory allocations" );
@@ -545,7 +420,8 @@ int bulk_extractor_main( int argc,char * const *argv)
 
         if ( result.count( "help" )) {     // -h
             std::cout << options.help() << std::endl;
-            ss.info_scanners( std::cerr, false, true, 'e', 'x');
+            std::cout << "Global config options: " << std::endl << ss.sc.global_help_options << std::endl;
+            ss.info_scanners( std::cout, false, true, 'e', 'x');
             return 1;
         } else {                        // -H
             ss.info_scanners( std::cout, true, true, 'e', 'x');
@@ -652,12 +528,6 @@ int bulk_extractor_main( int argc,char * const *argv)
     Phase1 phase1( cfg, *p, ss);
 
     /* Validate the args */
-#if 0
-    if ( argc == 0 ) throw std::runtime_error( "No disk image provided. Run with -h for help." );
-    if ( argc > 1  ){
-        throw std::runtime_error( "Too many arguments provided. Run with -h for help." );
-    }
-#endif
     validate_path( sc.input_fname );
 
     /* Create the DFXML file in the report directory.
@@ -694,18 +564,17 @@ int bulk_extractor_main( int argc,char * const *argv)
     }
 
     /*** PHASE 1 --- Run on the input image */
-    struct notify_thread::notify_opts o;
+    struct notify_thread::notify_opts o(cfg);
     o.ssp = &ss;
     o.master_timer  = &master_timer;
     o.fraction_done = &fraction_done;
-    o.opt_legacy    = cfg.opt_legacy;
 
     if ( cfg.opt_notification) {
         notify_thread::launch_notify_thread( &o);
     }
     ss.phase_scan();
 
-#if 0
+#ifdef USE_SQLITE3
     if ( fs.flag_set( feature_recorder_set::ENABLE_SQLITE3_RECORDERS )) {
         fs.db_transaction_begin();
     }
@@ -724,8 +593,6 @@ int bulk_extractor_main( int argc,char * const *argv)
     xreport->xmlout( "provided_filename", sc.input_fname ); // save this information
     xreport->add_timestamp( "phase1 start" );
 
-    std::cerr << "Calling check_previously_processed at one\n";
-
     try {
         phase1.phase1_run();
         ss.join();                          // wait for threads to come together
@@ -736,7 +603,7 @@ int bulk_extractor_main( int argc,char * const *argv)
         return 6;
     }
 
-#if 0
+#ifdef USE_SQLITE3
     if ( fs.flag_set( feature_recorder_set::ENABLE_SQLITE3_RECORDERS )) {
         fs.db_transaction_commit();
     }

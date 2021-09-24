@@ -22,13 +22,8 @@
  * for. The scanner basically re-schedules the AES key and then it
  * sees if the memory matches a scheduled key.
  *
- * We use entropy detection to look for a key schedule. The theory
- * here is that the key scheduling process creates high-entropy
- * data. So there is no reason to examine low-entropy data for a
- * scheduled key, becuase you won't find it.
- *
- * 2021-aug-10  slg updated for BE2.0 and C++17
-
+ * 2021-aug-10 slg updated for BE2.0 and C++17
+ * 2021-sep-23 slg removed entropy detection.
  */
 
 
@@ -39,7 +34,6 @@
 
 #include "be13_api/scanner_params.h"
 #include "be13_api/scanner_set.h"
-#include "be13_api/distinct_character_counter.h"
 
 /* old aes.h file */
 
@@ -355,7 +349,6 @@ bool valid_aes256_schedule(const uint8_t * in)
 // This code is public domain.
 // Substantially modified by Simson Garfinkel
 
-
 static std::string key_to_string(const uint8_t * key, uint64_t sz)
 {
     std::string ret;
@@ -373,8 +366,6 @@ static std::string key_to_string(const uint8_t * key, uint64_t sz)
 int scan_aes_128 = 1;
 int scan_aes_192 = 0;
 int scan_aes_256 = 1;
-
-
 
 class feature_recorder *aes_recorderp = nullptr;
 extern "C"
@@ -404,52 +395,35 @@ void scan_aes(struct scanner_params &sp)
     if(sp.phase==scanner_params::PHASE_SCAN){
         if (scan_aes_128==0 && scan_aes_192==0 && scan_aes_256==0) return;
 	auto &aes_recorder = *aes_recorderp;
-        distinct_character_counter distinct128,distinct192,distinct256;
-        highbit_character_counter hbc;
 
-	/* Simple mod: Keep a rolling window of the entropy and don't
-	 * scan if we see fewer than 10 distinct characters in window. This will
-	 * eliminate checks on many kinds of bulk data that are unlikely to have a key in the block.
-         *
-         * Note that we now compute and re-compute the histogram many times, rather than just having a sliding window.
-         * This is less efficient than before, but the code is simpler, and now the code is correctly computing the histogram
-         * for the 128, 192 and 256-byte cases.
-	 */
+	/* Note: We tried keeping a rolling window of entropy and the
+         * number of distinct characters and this increased
+         * runtimes.
+         */
+
         assert(sp.sbuf->bufsize >= AES128_KEY_SCHEDULE_SIZE);
         const uint8_t *buf = sp.sbuf->get_buf();
 	for (size_t pos = 0 ; pos < sp.sbuf->bufsize && pos < sp.sbuf->bufsize - AES128_KEY_SCHEDULE_SIZE; pos++){
             const uint8_t *p2 = buf + pos;
-            if (pos==0) hbc.preload(p2, AES128_KEY_SCHEDULE_SIZE-1);
-            hbc.add(p2[AES128_KEY_SCHEDULE_SIZE-1]);
 
-	    if (scan_aes_128 && (sp.sbuf->bufsize-pos >= AES128_KEY_SCHEDULE_SIZE)){
-                if (pos==0) distinct128.preload(p2, AES128_KEY_SIZE-1);
-                distinct128.add(p2[AES128_KEY_SIZE-1]);
-                if (distinct128.distinct_count > AES128_KEY_SIZE/4 && hbc.highbit_count>0 && valid_aes128_schedule(p2)) {
-                    std::string key = key_to_string(p2, AES128_KEY_SIZE);
-                    aes_recorder.write(sp.sbuf->pos0+pos,key,std::string("AES128"));
-                }
-                distinct128.remove(p2[0]);
+	    if (scan_aes_128
+                && (sp.sbuf->bufsize-pos >= AES128_KEY_SCHEDULE_SIZE)
+                && valid_aes128_schedule(p2)) {
+                std::string key = key_to_string(p2, AES128_KEY_SIZE);
+                aes_recorder.write(sp.sbuf->pos0+pos,key,std::string("AES128"));
             }
-	    if (scan_aes_192 && (sp.sbuf->bufsize-pos >= AES192_KEY_SCHEDULE_SIZE)) {
-                if (pos==0) distinct192.preload(p2, AES192_KEY_SIZE-1);
-                distinct192.add(p2[AES192_KEY_SIZE-1]);
-                if (distinct192.distinct_count > AES192_KEY_SIZE/4 && hbc.highbit_count>0 && valid_aes192_schedule(p2)) {
-                    std::string key = key_to_string(p2, AES192_KEY_SIZE);
-		    aes_recorder.write(sp.sbuf->pos0+pos,key,std::string("AES192"));
-		}
-                distinct192.remove(p2[0]);
+	    if (scan_aes_192
+                && (sp.sbuf->bufsize-pos >= AES192_KEY_SCHEDULE_SIZE)
+                && valid_aes192_schedule(p2)) {
+                std::string key = key_to_string(p2, AES192_KEY_SIZE);
+                aes_recorder.write(sp.sbuf->pos0+pos,key,std::string("AES192"));
             }
-	    if (scan_aes_256 && (sp.sbuf->bufsize-pos >= AES256_KEY_SCHEDULE_SIZE)) {
-                if (pos==0) distinct256.preload(p2, AES256_KEY_SIZE-1);
-                distinct256.add(p2[AES256_KEY_SIZE-1]);
-                if (distinct256.distinct_count >  AES256_KEY_SIZE/4 && hbc.highbit_count>0 && valid_aes256_schedule(p2)) {
-                    std::string key = key_to_string(p2, AES256_KEY_SIZE);
-		    aes_recorder.write(sp.sbuf->pos0+pos,key,std::string("AES256"));
-		}
-                distinct256.remove(p2[0]);
-	    }
-            hbc.remove(p2[0]);
+	    if (scan_aes_256
+                && (sp.sbuf->bufsize-pos >= AES256_KEY_SCHEDULE_SIZE)
+                && valid_aes256_schedule(p2)) {
+                std::string key = key_to_string(p2, AES256_KEY_SIZE);
+                aes_recorder.write(sp.sbuf->pos0+pos,key,std::string("AES256"));
+            }
 	}
     }
 }

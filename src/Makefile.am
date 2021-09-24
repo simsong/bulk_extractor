@@ -117,6 +117,8 @@ bulk_extractor_parts = \
 	findopts.h \
 	image_process.cpp \
 	image_process.h \
+	notify_thread.cpp \
+	notify_thread.h \
 	phase1.h \
 	phase1.cpp \
 	sbuf_decompress.cpp \
