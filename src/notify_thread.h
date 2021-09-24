@@ -10,11 +10,11 @@
 
 struct notify_thread {
     struct notify_opts {
-        scanner_set *ssp;
-        aftimer *master_timer;
-        std::atomic<double> *fraction_done;
-        const Phase1::Config &cfg;
         notify_opts(const Phase1::Config &cfg_) : cfg(cfg_) {};
+        scanner_set *ssp {};
+        aftimer *master_timer {};
+        std::atomic<double> *fraction_done {};
+        const Phase1::Config &cfg;
     };
 
     static inline const std::string FRACTION_READ {"fraction_read"};
