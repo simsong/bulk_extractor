@@ -945,34 +945,61 @@ TEST_CASE("restarter", "[restarter]") {
  * end-to-end tests
  */
 
-TEST_CASE("e2ev1", "[end-to-end]") {
-    std::string inpath = test_dir() / "nps-2010-emails.100k.raw";
-    std::string outdir = NamedTemporaryDirectory();
-    const char *n_argv[] ={"bulk_extractor", "-1", "-o", outdir.c_str(), inpath.c_str(), nullptr};
-    char * const *argv = const_cast<char *const *>(n_argv);
-
+/* print and count the args */
+int arg_count(char * const *argv)
+{
     std::cout << "testing with command line:" << std::endl;
-    int argc=0;
+    int argc = 0;
     while(argv[argc]){
         std::cout << argv[argc++] << " ";
     }
     std::cout << std::endl;
+    std::cout << "argc=" << argc << "\n";
+    return argc;
+}
 
-    /* SBUF accounting is off from above; don't worry about unaccounted for sbufs.
-     * of course, if this runs multi-threaded, it will still be off.
-     */
-    //sbuf_t::sbuf_total = 0;
-    //sbuf_t::sbuf_count = 0;
-    std::cout << "starting bulk_extractor" << std::endl;
+TEST_CASE("e2e-h", "[end-to-end]") {
+    std::string inpath = test_dir() / "nps-2010-emails.100k.raw";
+    std::string outdir = NamedTemporaryDirectory();
+    /* Try the -h option */
+    const char *argv[] = {"bulk_extractor", "-h", nullptr};
+    int ret = bulk_extractor_main(2, const_cast<char * const *>(argv));
+    REQUIRE( ret==1 );                  // -h now produces 1
+}
 
-    int ret = bulk_extractor_main(argc, argv);
-    std::cout << "ending bulk_extractor" << std::endl;
+TEST_CASE("e2e-H", "[end-to-end]") {
+    std::string inpath = test_dir() / "nps-2010-emails.100k.raw";
+    std::string outdir = NamedTemporaryDirectory();
+    /* Try the -H option */
+    const char *argv[] = {"bulk_extractor", "-H", nullptr};
+    int ret = bulk_extractor_main(2, const_cast<char * const *>(argv));
+    REQUIRE( ret==2 );                  // -H produces 2
+}
+
+TEST_CASE("e2e-no-imagefile", "[end-to-end]") {
+    std::string outdir = NamedTemporaryDirectory();
+    /* Try the -H option */
+    const char *argv[] = {"bulk_extractor", nullptr};
+    int ret = bulk_extractor_main(1, const_cast<char * const *>(argv));
+    REQUIRE( ret==3 );                  // produces 3
+}
+
+TEST_CASE("e2e-0", "[end-to-end]") {
+    std::string inpath = test_dir() / "nps-2010-emails.100k.raw";
+    std::string outdir = NamedTemporaryDirectory();
+    /* Try to run twice. There seems to be a problem with the second time through.  */
+    const char *argv[] = {"bulk_extractor", "-0", "-o", outdir.c_str(), inpath.c_str(), nullptr};
+    std::cerr << "*******************************************************************\n";
+    std::cout << "*******************************************************************\n";
+    int ret = bulk_extractor_main(5, const_cast<char * const *>(argv));
+    REQUIRE( ret==0 );
+    std::cerr << "*******************************************************************\n";
+    std::cout << "*******************************************************************\n";
+    ret = bulk_extractor_main(5, const_cast<char * const *>(argv));
     REQUIRE( ret==0 );
 
     /* Validate the output dfxml file */
     std::string validate = std::string("xmllint --noout ") + outdir + "/report.xml";
     int code = system( validate.c_str());
     REQUIRE( code == 0);
-
-    /* Look for output files */
 }

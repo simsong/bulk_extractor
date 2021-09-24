@@ -113,9 +113,12 @@ bulk_extractor_parts = \
 	base64_forensic.h \
 	bulk_extractor.cpp \
 	bulk_extractor.h \
+	cxxopts.hpp \
 	findopts.h \
 	image_process.cpp \
 	image_process.h \
+	notify_thread.cpp \
+	notify_thread.h \
 	phase1.h \
 	phase1.cpp \
 	sbuf_decompress.cpp \

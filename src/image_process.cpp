@@ -284,8 +284,7 @@ void process_ewf::local_e01_glob(std::string fname,char ***libewf_filenames,int 
     WIN32_FIND_DATA FindFileData;
     HANDLE hFind = FindFirstFile(wbuf, &FindFileData);
     if(hFind == INVALID_HANDLE_VALUE){
-        std::cerr << "Invalid file pattern: " << utf16to8(wbufstring) << "\n";
-        exit(1);
+        throw std::runtime_error( Formatter() << "Invalid file pattern " << utf16to8(wbufstring) );
     }
     std::vector<std::string> files;
     files.push_back(dirname + utf16to8(FindFileData.cFileName));
@@ -992,8 +991,7 @@ image_process *image_process::open(std::string fn,bool opt_recurse, size_t pages
 #ifdef HAVE_LIBEWF
 	    ip = new process_ewf(fn,pagesize_,margin_);
 #else
-            std::cerr << "This program was compiled without E01 support\n";
-	    exit(1);
+	    throw NoSupport("This program was compiled without E01 support");
 #endif
 	}
 	if(!ip) ip = new process_raw(fn,pagesize_,margin_);

@@ -10,6 +10,5 @@
 
 int main(int argc,char * const *argv)
 {
-    bulk_extractor_main(argc, argv);
-    exit(0);
+    return bulk_extractor_main(argc, argv);
 }
