@@ -242,11 +242,7 @@ int bulk_extractor_main( int argc,char * const *argv)
          cxxopts::value<int>()->default_value(std::to_string(sc.context_window_default)))
         ("d,debug", "enable debugging", cxxopts::value<int>()->default_value("1"))
         ("D,debug_help", "help on debugging")
-<<<<<<< HEAD
         ("E,enable_exclusive", "disable all scanners except the one specified. Same as -x all -E scanner.", cxxopts::value<std::string>())
-=======
-        ("E,enable_exclusive", "disable all scanners except the one specified", cxxopts::value<std::string>())
->>>>>>> origin/main
         ("e,enable",   "enable a scanner", cxxopts::value<std::vector<std::string>>())
         ("x,disable",  "disable a scanner", cxxopts::value<std::vector<std::string>>())
         ("f,find",     "search for a pattern", cxxopts::value<std::vector<std::string>>())
@@ -260,11 +256,10 @@ int bulk_extractor_main( int argc,char * const *argv)
 	("m,max_bad_alloc_errors", "max bad allocation errors", cxxopts::value<int>()->default_value(std::to_string(cfg.max_bad_alloc_errors)))
 	("max_minute_wait", "maximum number of minutes to wait until all data are read", cxxopts::value<int>()->default_value(std::to_string(60)))
         ("o,outdir",        "output directory", cxxopts::value<std::string>())
-<<<<<<< HEAD
-        ("P,scanner_dir",  "directories for scanner shared libraries. Multiple directories can be specified. Default directories include /usr/local/lib/bulk_extractor, /usr/lib/bulk_extractor and any directories specified in the BE_PATH environment variable.", cxxopts::value<std::vector<std::string>>())
-=======
-        ("P,scanner_dir",  "directories for scanner shared libraries", cxxopts::value<std::vector<std::string>>())
->>>>>>> origin/main
+        ("P,scanner_dir",
+         "directories for scanner shared libraries. Multiple directories can be specified. "
+         "Default directories include /usr/local/lib/bulk_extractor, /usr/lib/bulk_extractor "
+         "and any directories specified in the BE_PATH environment variable.", cxxopts::value<std::vector<std::string>>())
         ("p,path",         "print the value of <path> with a given format", cxxopts::value<std::string>())
         ("q,quit",         "no status output")
         ("r,alert_list",   "file to read alert list from", cxxopts::value<std::string>())
