@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <string>
 #include <string_view>
+#include <sstream>
 
 #define CATCH_CONFIG_MAIN
 #define CATCH_CONFIG_CONSOLE_WIDTH 120
@@ -963,7 +964,7 @@ TEST_CASE("e2e-h", "[end-to-end]") {
     std::string outdir = NamedTemporaryDirectory();
     /* Try the -h option */
     const char *argv[] = {"bulk_extractor", "-h", nullptr};
-    int ret = bulk_extractor_main(2, const_cast<char * const *>(argv));
+    int ret = bulk_extractor_main(std::cout, std::cerr, 2, const_cast<char * const *>(argv));
     REQUIRE( ret==1 );                  // -h now produces 1
 }
 
@@ -972,7 +973,7 @@ TEST_CASE("e2e-H", "[end-to-end]") {
     std::string outdir = NamedTemporaryDirectory();
     /* Try the -H option */
     const char *argv[] = {"bulk_extractor", "-H", nullptr};
-    int ret = bulk_extractor_main(2, const_cast<char * const *>(argv));
+    int ret = bulk_extractor_main(std::cout, std::cerr, 2, const_cast<char * const *>(argv));
     REQUIRE( ret==2 );                  // -H produces 2
 }
 
@@ -980,7 +981,7 @@ TEST_CASE("e2e-no-imagefile", "[end-to-end]") {
     std::string outdir = NamedTemporaryDirectory();
     /* Try the -H option */
     const char *argv[] = {"bulk_extractor", nullptr};
-    int ret = bulk_extractor_main(1, const_cast<char * const *>(argv));
+    int ret = bulk_extractor_main(std::cout, std::cerr, 1, const_cast<char * const *>(argv));
     REQUIRE( ret==3 );                  // produces 3
 }
 
@@ -991,15 +992,27 @@ TEST_CASE("e2e-0", "[end-to-end]") {
     const char *argv[] = {"bulk_extractor", "-0", "-o", outdir.c_str(), inpath.c_str(), nullptr};
     std::cerr << "*******************************************************************\n";
     std::cout << "*******************************************************************\n";
-    int ret = bulk_extractor_main(5, const_cast<char * const *>(argv));
+    int ret = bulk_extractor_main(std::cout, std::cerr, 5, const_cast<char * const *>(argv));
     REQUIRE( ret==0 );
     std::cerr << "*******************************************************************\n";
     std::cout << "*******************************************************************\n";
-    ret = bulk_extractor_main(5, const_cast<char * const *>(argv));
+    ret = bulk_extractor_main(std::cout, std::cerr, 5, const_cast<char * const *>(argv));
     REQUIRE( ret==0 );
 
     /* Validate the output dfxml file */
     std::string validate = std::string("xmllint --noout ") + outdir + "/report.xml";
     int code = system( validate.c_str());
     REQUIRE( code == 0);
+}
+
+TEST_CASE("path-printer", "[end-to-end]") {
+    std::string inpath = test_dir() / "test_base64json.txt";
+    const char *argv[] = {"bulk_extractor","-p","0:64/h", inpath.c_str(), nullptr};
+    std::stringstream ss;
+    int ret = bulk_extractor_main(ss, std::cerr, 4, const_cast<char * const *>(argv));
+    std::string EXPECTED =
+        "0000: 5733 7369 4d53 4936 4943 4a76 626d 5641 596d 467a 5a54 5930 4c6d 4e76 6253 4a39 W3siMSI6ICJvbmVAYmFzZTY0LmNvbSJ9\n"
+        "0020: 4c43 4237 496a 4969 4f69 4169 6448 6476 5147 4a68 6332 5532 4e43 356a 6232 3069 LCB7IjIiOiAidHdvQGJhc2U2NC5jb20i\n";
+    REQUIRE( ret == 0);
+    REQUIRE( ss.str() == EXPECTED);
 }
