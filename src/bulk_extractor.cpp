@@ -38,12 +38,12 @@ int _CRT_fmode = _O_BINARY;
 #include "be13_api/scanner_set.h"
 #include "be13_api/utils.h"             // needs config.h
 #include "be13_api/word_and_context_list.h"
+#include "be13_api/path_printer.h"
 
 #include "bulk_extractor.h"
 #include "findopts.h"
 #include "image_process.h"
 #include "phase1.h"
-#include "path_printer.h"
 
 /* Bring in the definitions  */
 #include "bulk_extractor_scanners.h"
@@ -72,10 +72,7 @@ int _CRT_fmode = _O_BINARY;
  ****************************************************************/
 
 #if 0
-void usage( scanner_set &ss)
 {
-    Phase1::Config cfg;   // get a default config
-
     std::cout << "bulk_extractor version " PACKAGE_VERSION " " << /* svn_revision << */ "\n";
     std::cout << "Usage: " << progname << " [options] imagefile\n";
     std::cout << "  runs bulk extractor and outputs to stdout a summary of what was found where\n";
@@ -113,34 +110,6 @@ void usage( scanner_set &ss)
     std::cout << "   -M nn        - sets max recursion depth (default " << scanner_config::DEFAULT_MAX_DEPTH << ")\n";
     std::cout << "   -m <max>     - maximum number of minutes to wait after all data read\n";
     std::cout << "                  default is " << cfg.max_bad_alloc_errors << "\n";
-    std::cout << "\nPath Processing Mode:\n";
-    std::cout << "   -p <path>/f  - print the value of <path> with a given format.\n";
-    std::cout << "                  formats: r = raw; h = hex.\n";
-    std::cout << "                  Specify -p - for interactive mode.\n";
-    std::cout << "                  Specify -p -http for HTTP mode.\n";
-    std::cout << "\nParallelizing:\n";
-    std::cout << "   -Y <o1>      - Start processing at o1 (o1 may be 1, 1K, 1M or 1G)\n";
-    std::cout << "   -Y <o1>-<o2> - Process o1-o2\n";
-    std::cout << "   -A <off>     - Add <off> to all reported feature offsets\n";
-    std::cout << "\nDebugging:\n";
-    std::cout << "   -h           - print this message\n";
-    std::cout << "   -H           - print detailed info on the scanners\n";
-    std::cout << "   -V           - print version number\n";
-    std::cout << "   -z nn        - start on page nn\n";
-    std::cout << "   -dN          - debug mode (see source code)\n";
-    std::cout << "   -Z           - zap (erase) output directory\n";
-    std::cout << "\nControl of Scanners:\n";
-    std::cout << "   -P <dir>     - Specifies a plugin directory\n";
-    std::cout << "             Default dirs include /usr/local/lib/bulk_extractor /usr/lib/bulk_extractor and\n";
-    std::cout << "             BE_PATH environment variable\n";
-    std::cout << "   -e <scanner>  enables <scanner> -- -e all   enables all\n";
-    std::cout << "   -x <scanner>  disable <scanner> -- -x all   disables all\n";
-    std::cout << "   -E <scanner>    - turn off all scanners except <scanner>\n";
-    std::cout << "                     (Same as -x all -e <scanner>)\n";
-    std::cout << "          note: -e, -x and -E commands are executed in order\n";
-    std::cout << "              e.g.: '-E gzip -e facebook' runs only gzip and facebook\n";
-    std::cout << "   -S name=value - sets a bulk extractor option name to be value\n";
-    std::cout << "\n";
 }
 #endif
 
@@ -188,7 +157,7 @@ static void add_if_present( std::vector<std::string> &scanner_dirs,const std::st
     }
 }
 
-int bulk_extractor_main( int argc,char * const *argv)
+int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char * const *argv)
 {
     mtrace();
     const auto original_argc = argc;
@@ -203,8 +172,10 @@ int bulk_extractor_main( int argc,char * const *argv)
 
     cfg.fraction_done = &fraction_done;
 
-    //bool        opt_write_feature_files = true;
-    //bool        opt_write_sqlite3     = false;
+#ifdef USE_SQLITE
+    bool        opt_write_feature_files = true;
+    bool        opt_write_sqlite3     = false;
+#endif
 
     /* Startup */
     setvbuf( stdout,0,_IONBF,0);		// don't buffer stdout
@@ -248,13 +219,13 @@ int bulk_extractor_main( int argc,char * const *argv)
     options.set_width( notify_thread::terminal_width( 80 ));
     options.add_options()
     ("image_name", image_name_help.c_str(), cxxopts::value<std::string>())
-        ("A,offset_add", "Offset added to feature locations", cxxopts::value<int64_t>()->default_value("0"))
+        ("A,offset_add", "Offset added (in bytes) to feature locations", cxxopts::value<int64_t>()->default_value("0"))
         ("b,banner_file", "Path of file whose contents are prepended to top of all feature files",cxxopts::value<std::string>())
 	("C,context_window", "Size of context window reported in bytes",
          cxxopts::value<int>()->default_value(std::to_string(sc.context_window_default)))
         ("d,debug", "enable debugging", cxxopts::value<int>()->default_value("1"))
         ("D,debug_help", "help on debugging")
-        ("E,enable_exclusive", "disable all scanners except the one specified", cxxopts::value<std::string>())
+        ("E,enable_exclusive", "disable all scanners except the one specified. Same as -x all -E scanner.", cxxopts::value<std::string>())
         ("e,enable",   "enable a scanner", cxxopts::value<std::vector<std::string>>())
         ("x,disable",  "disable a scanner", cxxopts::value<std::vector<std::string>>())
         ("f,find",     "search for a pattern", cxxopts::value<std::vector<std::string>>())
@@ -268,8 +239,11 @@ int bulk_extractor_main( int argc,char * const *argv)
 	("m,max_bad_alloc_errors", "max bad allocation errors", cxxopts::value<int>()->default_value(std::to_string(cfg.max_bad_alloc_errors)))
 	("max_minute_wait", "maximum number of minutes to wait until all data are read", cxxopts::value<int>()->default_value(std::to_string(60)))
         ("o,outdir",        "output directory", cxxopts::value<std::string>())
-        ("P,scanner_dir",  "directories for scanner shared libraries", cxxopts::value<std::vector<std::string>>())
-        ("p,path",         "print the value of <path> with a given format", cxxopts::value<std::string>())
+        ("P,scanner_dir",
+         "directories for scanner shared libraries. Multiple directories can be specified. "
+         "Default directories include /usr/local/lib/bulk_extractor, /usr/lib/bulk_extractor "
+         "and any directories specified in the BE_PATH environment variable.", cxxopts::value<std::vector<std::string>>())
+        ("p,path",         "print the value of <path>[:length][/h][/r] with optional length, hex output, or raw output.", cxxopts::value<std::string>())
         ("q,quit",         "no status output")
         ("r,alert_list",   "file to read alert list from", cxxopts::value<std::string>())
         ("R,recurse",      "treat image file as a directory to recursively explore")
@@ -277,7 +251,7 @@ int bulk_extractor_main( int argc,char * const *argv)
         ("s,sampling",     "random sampling parameter frac[:passes]", cxxopts::value<std::string>())
         ("V,version",      "Display PACKAGE_VERSION (currently) " PACKAGE_VERSION)
         ("w,stop_list",    "file to read stop list from", cxxopts::value<std::string>())
-        ("Y,scan",         "specify start [-end] of area on disk to scan", cxxopts::value<std::string>())
+        ("Y,scan",         "specify <start>[-end] of area on disk to scan", cxxopts::value<std::string>())
         ("z,page_start",   "specify a starting page number", cxxopts::value<int>())
         ("Z,zap",          "wipe the output directory (recursively) before starting")
         ("0,no_notify",    "disable real-time notification")
@@ -361,7 +335,7 @@ int bulk_extractor_main( int argc,char * const *argv)
         for ( const auto &it : result["set"].as<std::vector<std::string>>() ) {
             std::vector<std::string> kv = split( it,'=');
             if ( kv.size()!=2) {
-                std::cerr << "Invalid -S paramter: '" << it << "' must be key=value format\n";
+                cerr << "Invalid -S paramter: '" << it << "' must be key=value format\n";
                 return -1;
             }
             sc.namevals[kv[0]] = kv[1];
@@ -373,7 +347,7 @@ int bulk_extractor_main( int argc,char * const *argv)
         cfg.set_sampling_parameters( result["sampling"].as<std::string>());
     } catch ( cxxopts::option_has_no_value_exception &e ) { }
 
-    if ( result.count( "version" )) { std::cout << "bulk_extractor " << PACKAGE_VERSION << std::endl; return 0; }
+    if ( result.count( "version" )) { cout << "bulk_extractor " << PACKAGE_VERSION << std::endl; return 0; }
     if ( result.count( "stop_list" )) stop_list.readfile( result["stop_list"].as<std::string>());
     try {
         std::string optargs = result["scan"].as<std::string>();
@@ -419,12 +393,12 @@ int bulk_extractor_main( int argc,char * const *argv)
         ss.add_scanners( scanners_builtin);
 
         if ( result.count( "help" )) {     // -h
-            std::cout << options.help() << std::endl;
-            std::cout << "Global config options: " << std::endl << ss.sc.global_help_options << std::endl;
-            ss.info_scanners( std::cout, false, true, 'e', 'x');
+            cout << options.help() << std::endl;
+            cout << "Global config options: " << std::endl << ss.sc.global_help_options << std::endl;
+            ss.info_scanners( cout, false, true, 'e', 'x');
             return 1;
         } else {                        // -H
-            ss.info_scanners( std::cout, true, true, 'e', 'x');
+            ss.info_scanners( cout, true, true, 'e', 'x');
             return 2;
         }
     }
@@ -433,78 +407,86 @@ int bulk_extractor_main( int argc,char * const *argv)
         sc.input_fname = result["image_name"].as<std::string>();
     } catch ( cxxopts::option_has_no_value_exception &e ) {
         if ( cfg.opt_recurse ) {
-            std::cerr << "filedir not provided\n";
+            cerr << "filedir not provided\n";
         } else {
-            std::cerr << "imagefile not provided\n";
+            cerr << "imagefile not provided\n";
         }
-        std::cout << options.help() << std::endl;
+        cout << options.help() << std::endl;
         return 3;
     }
 
-    try {
-        sc.outdir                = result["outdir"].as<std::string>();
-    } catch ( cxxopts::option_has_no_value_exception &e ) {
-        std::cerr << "error: -o outdir must be specified\n";
-        std::cout << options.help() << std::endl;
-        return 4;
-    }
 
-    /* The zap option wipes the contents of a directory, useful for debugging */
-    if ( result.count( "zap" ) && std::filesystem::is_directory( sc.outdir )) {
-        for ( const auto &entry : std::filesystem::recursive_directory_iterator( sc.outdir ) ) {
-            if ( ! std::filesystem::is_directory( entry.path())){
-                std::cout << "erasing " << entry.path().string() << "\n";
-                std::filesystem::remove( entry );
+    if ( result.count( "path" ) == 0 ){
+        /* Code that runs if we are not using the path printer */
+
+        try {
+            sc.outdir                = result["outdir"].as<std::string>();
+        } catch ( cxxopts::option_has_no_value_exception &e ) {
+            cerr << "error: -o outdir must be specified\n";
+            cout << options.help() << std::endl;
+            return 4;
+        }
+
+        /* The zap option wipes the contents of a directory, useful for debugging */
+        if ( result.count( "zap" ) && std::filesystem::is_directory( sc.outdir )) {
+            for ( const auto &entry : std::filesystem::recursive_directory_iterator( sc.outdir ) ) {
+                if ( ! std::filesystem::is_directory( entry.path())){
+                    cout << "erasing " << entry.path().string() << "\n";
+                    std::filesystem::remove( entry );
+                }
             }
-	}
+        }
+        cout << "mkdir " << sc.outdir << "\n";
+        std::filesystem::create_directory( sc.outdir); // make sure directory exists
     }
-    std::cout << "mkdir " << sc.outdir << "\n";
-    std::filesystem::create_directory( sc.outdir); // make sure directory exists
 
-    /* Load all the scanners and enable the ones we care about.
-     * This way the help messages can get the scanner help as well.
+    /* Load all the scanners and enable the ones we care about.  This
+     * happens because:
+     * - We need the scanners to generate the help message.
+     * - We need the scanners for path printing.
+     * - We need the scanners for scanning.
      */
 
     struct feature_recorder_set::flags_t f;
     scanner_set ss( sc, f, nullptr);     // make a scanner_set but with no XML writer. We will create it below
     ss.add_scanners( scanners_builtin);
 
-    //bool clean_start = directory_empty( sc.outdir);
-
     /* Applying the scanner commands will create the alert recorder. */
     try {
         ss.apply_scanner_commands();
     }
     catch ( const scanner_set::NoSuchScanner &e ) {
-        std::cerr << "no such scanner: " << e.what() << "\n";
+        cerr << "no such scanner: " << e.what() << "\n";
         return 5;
     }
 
-    /* Give an error if a find list was specified
-     * but no scanner that uses the find list is enabled.
-     */
+    if ( result.count( "path" ) == 0 ){
+        /* Give an error if a find list was specified
+         * but no scanner that uses the find list is enabled.
+         */
 
-    if ( !FindOpts::get().empty()) {
-        /* Look through the enabled scanners and make sure that
-	 * at least one of them is a FIND scanner
-	 */
-        if ( !ss.is_find_scanner_enabled()){
-            throw std::runtime_error( "find words are specified with -F but no find scanner is enabled.\n" );
+        if ( !FindOpts::get().empty()) {
+            /* Look through the enabled scanners and make sure that
+             * at least one of them is a FIND scanner
+             */
+            if ( !ss.is_find_scanner_enabled()){
+                throw std::runtime_error( "find words are specified with -F but no find scanner is enabled.\n" );
+            }
         }
-    }
 
-    if ( std::filesystem::exists( sc.outdir/"report.xml" )){
-	/* Restarting */
-        bulk_extractor_restarter r( sc,cfg);
-        r.restart();                    // load the restart file and rename report.xml
+        if ( std::filesystem::exists( sc.outdir/"report.xml" )){
+            /* Restarting */
+            bulk_extractor_restarter r( sc,cfg);
+            r.restart();                    // load the restart file and rename report.xml
+        }
     }
 
     image_process *p = image_process::open( sc.input_fname, cfg.opt_recurse, cfg.opt_pagesize, cfg.opt_marginsize );
 
     /* are we supposed to run the path printer? */
-    try {
+    if ( result.count( "path" ) ) {
         std::string opt_path = result["path"].as<std::string>();
-        path_printer pp( &ss, p, std::cout);
+        path_printer pp( &ss, p, cout);
         if ( opt_path=="-http" || opt_path=="--http" ){
             pp.process_http( std::cin);
         } else if ( opt_path=="-i" || opt_path=="-" ){
@@ -513,7 +495,6 @@ int bulk_extractor_main( int argc,char * const *argv)
             pp.process_path( opt_path);
         }
 	return 0;
-    } catch ( cxxopts::option_has_no_value_exception &e ) {
     }
 
     /* Open the image file ( or the device) now.
@@ -546,20 +527,20 @@ int bulk_extractor_main( int argc,char * const *argv)
 
     /* provide documentation to the user; the DFXML information comes from elsewhere */
     if ( !cfg.opt_quiet){
-        std::cout << "bulk_extractor version: " << PACKAGE_VERSION << "\n";
-        std::cout << "Input file: " << sc.input_fname << "\n";
-        std::cout << "Output directory: " << sc.outdir << "\n";
-        std::cout << "Disk Size: " << p->image_size() << "\n";
-        std::cout << "Scanners: ";
+        cout << "bulk_extractor version: " << PACKAGE_VERSION << "\n";
+        cout << "Input file: " << sc.input_fname << "\n";
+        cout << "Output directory: " << sc.outdir << "\n";
+        cout << "Disk Size: " << p->image_size() << "\n";
+        cout << "Scanners: ";
         for ( auto const &it : ss.get_enabled_scanners()){
-            std::cout << it << " ";
+            cout << it << " ";
         }
-        std::cout << "\n";
+        cout << "\n";
 
         if ( cfg.num_threads>0){
-            std::cout << "Threads: " << cfg.num_threads << "\n";
+            cout << "Threads: " << cfg.num_threads << "\n";
         } else {
-            std::cout << "Threading Disabled\n";
+            cout << "Threading Disabled\n";
         }
     }
 
@@ -582,10 +563,10 @@ int bulk_extractor_main( int argc,char * const *argv)
 
     /* Go multi-threaded if requested */
     if ( cfg.num_threads > 0){
-        std::cout << "going multi-threaded...( " << cfg.num_threads << " )\n";
+        cout << "going multi-threaded...( " << cfg.num_threads << " )\n";
         ss.launch_workers( cfg.num_threads);
     } else {
-        std::cout << "running single-threaded (DEBUG)...\n";
+        cout << "running single-threaded (DEBUG)...\n";
 
     }
 
@@ -598,7 +579,7 @@ int bulk_extractor_main( int argc,char * const *argv)
         ss.join();                          // wait for threads to come together
     }
     catch ( const feature_recorder::DiskWriteError &e ) {
-        std::cerr << "Disk write error during Phase 1 ( scanning). Disk is probably full." << std::endl
+        cerr << "Disk write error during Phase 1 ( scanning). Disk is probably full." << std::endl
                   << "Remove extra files and restart bulk_extractor with the exact same command line to continue." << std::endl;
         return 6;
     }
@@ -610,17 +591,17 @@ int bulk_extractor_main( int argc,char * const *argv)
 #endif
     xreport->add_timestamp( "phase1 end" );
     if ( phase1.image_hash.size() > 0 ){
-        std::cout << "Hash of Disk Image: " << phase1.image_hash << "\n";
+        cout << "Hash of Disk Image: " << phase1.image_hash << "\n";
     }
 
     /*** PHASE 2 --- Shutdown ***/
-    if ( !cfg.opt_quiet) std::cout << "Phase 2. Shutting down scanners\n";
+    if ( !cfg.opt_quiet) cout << "Phase 2. Shutting down scanners\n";
     xreport->add_timestamp( "phase2 start" );
     try {
         ss.shutdown();
     }
     catch ( const feature_recorder::DiskWriteError &e ) {
-        std::cerr << "Disk write error during Phase 2 ( histogram making). Disk is probably full." << std::endl
+        cerr << "Disk write error during Phase 2 ( histogram making). Disk is probably full." << std::endl
                   << "Remove extra files and restart bulk_extractor with the exact same command line to continue." << std::endl;
         return 7;
     }
@@ -644,24 +625,24 @@ int bulk_extractor_main( int argc,char * const *argv)
     if ( cfg.opt_quiet==0){
         float mb_per_sec = ( phase1.total_bytes / 1000000.0) / master_timer.elapsed_seconds();
 
-        std::cout << "All Threads Finished!\n";
-        std::cout.precision( 4);
-        std::cout << "Elapsed time: " << master_timer.elapsed_seconds() << " sec." << std::endl
+        cout << "All Threads Finished!\n";
+        cout.precision( 4);
+        cout << "Elapsed time: " << master_timer.elapsed_seconds() << " sec." << std::endl
                   << "Total MB processed: " << int( phase1.total_bytes / 1000000) << std::endl
                   << "Overall performance: " << mb_per_sec << " << MBytes/sec ";
         if ( cfg.num_threads>0){
-            std::cout << mb_per_sec/cfg.num_threads << " ( MBytes/sec/thread)\n";
+            cout << mb_per_sec/cfg.num_threads << " ( MBytes/sec/thread)\n";
         }
-        std::cout << "sbufs created:   " << sbuf_t::sbuf_total << std::endl;
-        std::cout << "sbufs unaccounted: " << sbuf_t::sbuf_count << " ( should be 0) " << std::endl;
+        cout << "sbufs created:   " << sbuf_t::sbuf_total << std::endl;
+        cout << "sbufs unaccounted: " << sbuf_t::sbuf_count << " ( should be 0) " << std::endl;
     }
 
     try {
         feature_recorder &fr = ss.fs.named_feature_recorder( "email" );
-        std::cout << "Total " << fr.name << " features found: " << fr.features_written << std::endl;
+        cout << "Total " << fr.name << " features found: " << fr.features_written << std::endl;
     }
     catch ( const feature_recorder_set::NoSuchFeatureRecorder &e ) {
-        std::cout << "Did not scan for email addresses." << std::endl;
+        cout << "Did not scan for email addresses." << std::endl;
     }
 
     muntrace();

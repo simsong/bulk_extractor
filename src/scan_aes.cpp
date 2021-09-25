@@ -412,13 +412,13 @@ void scan_aes(struct scanner_params &sp)
                 std::string key = key_to_string(p2, AES128_KEY_SIZE);
                 aes_recorder.write(sp.sbuf->pos0+pos,key,std::string("AES128"));
             }
-	    if (scan_aes_192
+            if (scan_aes_192
                 && (sp.sbuf->bufsize-pos >= AES192_KEY_SCHEDULE_SIZE)
                 && valid_aes192_schedule(p2)) {
                 std::string key = key_to_string(p2, AES192_KEY_SIZE);
                 aes_recorder.write(sp.sbuf->pos0+pos,key,std::string("AES192"));
             }
-	    if (scan_aes_256
+            if (scan_aes_256
                 && (sp.sbuf->bufsize-pos >= AES256_KEY_SCHEDULE_SIZE)
                 && valid_aes256_schedule(p2)) {
                 std::string key = key_to_string(p2, AES256_KEY_SIZE);
