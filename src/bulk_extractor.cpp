@@ -242,7 +242,11 @@ int bulk_extractor_main( int argc,char * const *argv)
          cxxopts::value<int>()->default_value(std::to_string(sc.context_window_default)))
         ("d,debug", "enable debugging", cxxopts::value<int>()->default_value("1"))
         ("D,debug_help", "help on debugging")
+<<<<<<< HEAD
         ("E,enable_exclusive", "disable all scanners except the one specified. Same as -x all -E scanner.", cxxopts::value<std::string>())
+=======
+        ("E,enable_exclusive", "disable all scanners except the one specified", cxxopts::value<std::string>())
+>>>>>>> origin/main
         ("e,enable",   "enable a scanner", cxxopts::value<std::vector<std::string>>())
         ("x,disable",  "disable a scanner", cxxopts::value<std::vector<std::string>>())
         ("f,find",     "search for a pattern", cxxopts::value<std::vector<std::string>>())
@@ -256,7 +260,11 @@ int bulk_extractor_main( int argc,char * const *argv)
 	("m,max_bad_alloc_errors", "max bad allocation errors", cxxopts::value<int>()->default_value(std::to_string(cfg.max_bad_alloc_errors)))
 	("max_minute_wait", "maximum number of minutes to wait until all data are read", cxxopts::value<int>()->default_value(std::to_string(60)))
         ("o,outdir",        "output directory", cxxopts::value<std::string>())
+<<<<<<< HEAD
         ("P,scanner_dir",  "directories for scanner shared libraries. Multiple directories can be specified. Default directories include /usr/local/lib/bulk_extractor, /usr/lib/bulk_extractor and any directories specified in the BE_PATH environment variable.", cxxopts::value<std::vector<std::string>>())
+=======
+        ("P,scanner_dir",  "directories for scanner shared libraries", cxxopts::value<std::vector<std::string>>())
+>>>>>>> origin/main
         ("p,path",         "print the value of <path> with a given format", cxxopts::value<std::string>())
         ("q,quit",         "no status output")
         ("r,alert_list",   "file to read alert list from", cxxopts::value<std::string>())
@@ -429,6 +437,7 @@ int bulk_extractor_main( int argc,char * const *argv)
         return 3;
     }
 
+<<<<<<< HEAD
     if ( result.count( "path" ) == 0 ){
         /* Code that runs if we are not using the path printer */
 
@@ -447,11 +456,29 @@ int bulk_extractor_main( int argc,char * const *argv)
                     std::cout << "erasing " << entry.path().string() << "\n";
                     std::filesystem::remove( entry );
                 }
+=======
+    try {
+        sc.outdir                = result["outdir"].as<std::string>();
+    } catch ( cxxopts::option_has_no_value_exception &e ) {
+        std::cerr << "error: -o outdir must be specified\n";
+        std::cout << options.help() << std::endl;
+        return 4;
+    }
+
+    /* The zap option wipes the contents of a directory, useful for debugging */
+    if ( result.count( "zap" ) && std::filesystem::is_directory( sc.outdir )) {
+        for ( const auto &entry : std::filesystem::recursive_directory_iterator( sc.outdir ) ) {
+            if ( ! std::filesystem::is_directory( entry.path())){
+                std::cout << "erasing " << entry.path().string() << "\n";
+                std::filesystem::remove( entry );
+>>>>>>> origin/main
             }
         }
         std::cout << "mkdir " << sc.outdir << "\n";
         std::filesystem::create_directory( sc.outdir); // make sure directory exists
     }
+    std::cout << "mkdir " << sc.outdir << "\n";
+    std::filesystem::create_directory( sc.outdir); // make sure directory exists
 
     /* Load all the scanners and enable the ones we care about.
      * This way the help messages can get the scanner help as well.
@@ -460,6 +487,18 @@ int bulk_extractor_main( int argc,char * const *argv)
     struct feature_recorder_set::flags_t f;
     scanner_set ss( sc, f, nullptr);     // make a scanner_set but with no XML writer. We will create it below
     ss.add_scanners( scanners_builtin);
+
+<<<<<<< HEAD
+    /* Load all the scanners and enable the ones we care about.
+     * This way the help messages can get the scanner help as well.
+     */
+
+    struct feature_recorder_set::flags_t f;
+    scanner_set ss( sc, f, nullptr);     // make a scanner_set but with no XML writer. We will create it below
+    ss.add_scanners( scanners_builtin);
+=======
+    //bool clean_start = directory_empty( sc.outdir);
+>>>>>>> origin/main
 
     /* Applying the scanner commands will create the alert recorder. */
     try {
@@ -475,6 +514,7 @@ int bulk_extractor_main( int argc,char * const *argv)
          * but no scanner that uses the find list is enabled.
          */
 
+<<<<<<< HEAD
         if ( !FindOpts::get().empty()) {
             /* Look through the enabled scanners and make sure that
              * at least one of them is a FIND scanner
@@ -482,19 +522,38 @@ int bulk_extractor_main( int argc,char * const *argv)
             if ( !ss.is_find_scanner_enabled()){
                 throw std::runtime_error( "find words are specified with -F but no find scanner is enabled.\n" );
             }
+=======
+    if ( !FindOpts::get().empty()) {
+        /* Look through the enabled scanners and make sure that
+	 * at least one of them is a FIND scanner
+	 */
+        if ( !ss.is_find_scanner_enabled()){
+            throw std::runtime_error( "find words are specified with -F but no find scanner is enabled.\n" );
+>>>>>>> origin/main
         }
 
+<<<<<<< HEAD
         if ( std::filesystem::exists( sc.outdir/"report.xml" )){
             /* Restarting */
             bulk_extractor_restarter r( sc,cfg);
             r.restart();                    // load the restart file and rename report.xml
         }
+=======
+    if ( std::filesystem::exists( sc.outdir/"report.xml" )){
+	/* Restarting */
+        bulk_extractor_restarter r( sc,cfg);
+        r.restart();                    // load the restart file and rename report.xml
+>>>>>>> origin/main
     }
 
     image_process *p = image_process::open( sc.input_fname, cfg.opt_recurse, cfg.opt_pagesize, cfg.opt_marginsize );
 
     /* are we supposed to run the path printer? */
+<<<<<<< HEAD
     if ( result.count( "path" ) ) {
+=======
+    try {
+>>>>>>> origin/main
         std::string opt_path = result["path"].as<std::string>();
         path_printer pp( &ss, p, std::cout);
         if ( opt_path=="-http" || opt_path=="--http" ){
@@ -505,6 +564,10 @@ int bulk_extractor_main( int argc,char * const *argv)
             pp.process_path( opt_path);
         }
 	return 0;
+<<<<<<< HEAD
+=======
+    } catch ( cxxopts::option_has_no_value_exception &e ) {
+>>>>>>> origin/main
     }
 
     /* Open the image file ( or the device) now.
