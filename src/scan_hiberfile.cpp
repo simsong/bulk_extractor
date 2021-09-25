@@ -103,8 +103,10 @@ void scan_hiberfile(scanner_params &sp)
         sp.info->author         = "Simson Garfinkel and Matthieu Suiche";
         sp.info->description    = "Scans for Microsoft-XPress compressed data";
         sp.info->scanner_version= "1.0";
-        sp.info->scanner_flags.recurse = true;
+	sp.info->scanner_flags.default_enabled = false; // see https://github.com/simsong/bulk_extractor/issues/253
+        sp.info->scanner_flags.depth0_only = true; // only run depth 0
         sp.info->scanner_flags.scanner_produces_memory = true;
+        sp.info->scanner_flags.recurse = true;
         sp.info->min_sbuf_size = MIN_COMPRESSED_SIZE;
 	return; /* no features */
     }

@@ -50,23 +50,21 @@ if [ $MAJOR_VERSION -lt 18 ]; then
 fi
 
 
-echo Will now try to install 
+echo Will now try to install
 
 # I use emacs. Installing it may install requiremnts
 sudo apt update -y
 sudo apt install -y emacs
-sudo apt autoremove -y autoremove
+sudo apt autoremove -y
 # Now install what is required
 
 echo apt install -y $MKPGS
-sudo apt install -y $MKPGS 
-exit 1
+sudo apt install -y $MKPGS
+
 if [ $? != 0 ]; then
   echo "Could not install some of the packages. Will not proceed."
   exit 1
 fi
-
-exit 0
 
 # ICU requires patching and a special build sequence
 #
@@ -107,7 +105,7 @@ else
   CC=gcc CXX=g++ CFLAGS=-O3 CXXFLAGS=-O3 CPPFLAGS="$ICU_DEFINES" ../icu/source/runConfigureICU Linux --enable-shared $ICU_FLAGS
   make VERBOSE=1
   popd
-  
+
   # build 64-bit ICU for MinGW
   echo
   echo icu mingw64

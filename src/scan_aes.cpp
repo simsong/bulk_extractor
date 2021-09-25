@@ -396,29 +396,27 @@ void scan_aes(struct scanner_params &sp)
         if (scan_aes_128==0 && scan_aes_192==0 && scan_aes_256==0) return;
 	auto &aes_recorder = *aes_recorderp;
 
-	/* Note: We tried keeping a rolling window of entropy and the
-         * number of distinct characters and this increased
-         * runtimes.
-         */
-
-        assert(sp.sbuf->bufsize >= AES128_KEY_SCHEDULE_SIZE);
+	/* Simple mod: Keep a rolling window of the entropy and don't
+	 * we see fewer than 10 distinct characters in window. This will
+	 * eliminate checks on many kinds of bulk data that simply can't have a key
+	 * in the block.
+	 */
         const uint8_t *buf = sp.sbuf->get_buf();
 	for (size_t pos = 0 ; pos < sp.sbuf->bufsize && pos < sp.sbuf->bufsize - AES128_KEY_SCHEDULE_SIZE; pos++){
             const uint8_t *p2 = buf + pos;
-
-	    if (scan_aes_128
+            if (scan_aes_128
                 && (sp.sbuf->bufsize-pos >= AES128_KEY_SCHEDULE_SIZE)
                 && valid_aes128_schedule(p2)) {
                 std::string key = key_to_string(p2, AES128_KEY_SIZE);
                 aes_recorder.write(sp.sbuf->pos0+pos,key,std::string("AES128"));
             }
-	    if (scan_aes_192
+            if (scan_aes_192
                 && (sp.sbuf->bufsize-pos >= AES192_KEY_SCHEDULE_SIZE)
                 && valid_aes192_schedule(p2)) {
                 std::string key = key_to_string(p2, AES192_KEY_SIZE);
                 aes_recorder.write(sp.sbuf->pos0+pos,key,std::string("AES192"));
             }
-	    if (scan_aes_256
+            if (scan_aes_256
                 && (sp.sbuf->bufsize-pos >= AES256_KEY_SCHEDULE_SIZE)
                 && valid_aes256_schedule(p2)) {
                 std::string key = key_to_string(p2, AES256_KEY_SIZE);
