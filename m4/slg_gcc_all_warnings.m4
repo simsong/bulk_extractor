@@ -82,7 +82,7 @@ if test x"${mingw}" != "xyes" ; then
   CXX_WARNINGS_TO_TEST="$CXX_WARNINGS_TO_TEST  -Weffc++"
 fi
 
-echo "C++ Warnings to test: $CXX_WARNINGS_TO_TEST"
+AC_MSG_NOTICE([C++ Warnings to test: $CXX_WARNINGS_TO_TEST])
 
 for option in $CXX_WARNINGS_TO_TEST
 do

@@ -6,68 +6,13 @@
  */
 
 #include "config.h"
+#include "bulk_extractor.h"
 
-#include <ctype.h>
-#include <fcntl.h>
-#include <set>
-#include <setjmp.h>
-#include <vector>
-#include <queue>
-#include <unistd.h>
-#include <cctype>
-#include <cstdlib>
+#include <ostream>
 
-#ifdef HAVE_MCHECK
-#include <mcheck.h>
-#else
-void mtrace(){}
-void muntrace(){}
-#endif
-
-#ifdef HAVE_SYS_RESOURCE_H
-#include <sys/resource.h>
-#endif
-
-#ifdef HAVE_TERMCAP_H
-//#include <termcap.h>
-#include <curses.h>
-#include <term.h>
-#endif
-
-// Open standard input in binary mode by default on Win32.
-// See http://gnuwin32.sourceforge.net/compile.html for more
-#ifdef WIN32
-int _CRT_fmode = _O_BINARY;
-#endif
-
-#ifdef HAVE_SYS_IOCTL_H
-#include <sys/ioctl.h>
-#endif
-
-
-#include "dfxml_cpp/src/dfxml_writer.h"
-#include "dfxml_cpp/src/hash_t.h"  // needs config.h
-
-#include "be13_api/aftimer.h"
-#include "be13_api/scanner_params.h"
-#include "be13_api/scanner_set.h"
-#include "be13_api/utils.h"             // needs config.h
-#include "be13_api/word_and_context_list.h"
-
-#include "findopts.h"
-#include "image_process.h"
-#include "phase1.h"
-#include "path_printer.h"
-
-/* Bring in the definitions  */
-#include "bulk_extractor_scanners.h"
-#include "bulk_extractor_restarter.h"
-
-/**
- * Output the #defines for our debug parameters. Used by the automake system.
- */
-[[noreturn]] void debug_help()
+int main(int argc,char * const *argv)
 {
+<<<<<<< HEAD
     puts("#define DEBUG_PEDANTIC    0x0001	// check values more rigorously");
     puts("#define DEBUG_PRINT_STEPS 0x0002      // prints as each scanner is started");
     puts("#define DEBUG_SCANNER     0x0004	// dump all feature writes to stderr");
@@ -732,4 +677,7 @@ int main(int argc,char **argv)
 
     muntrace();
     exit(0);
+=======
+    return bulk_extractor_main(std::cout, std::cerr, argc, argv);
+>>>>>>> 7f1dedf60ff31053ce24e981a3ff084db0ba2f49
 }

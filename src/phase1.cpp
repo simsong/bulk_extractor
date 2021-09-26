@@ -7,6 +7,7 @@
 #include "phase1.h"
 #include "be13_api/utils.h"             // needs config.h
 #include "be13_api/aftimer.h"             // needs config.h
+#include "be13_api/dfxml_cpp/src/dfxml_writer.h"
 
 
 /**
@@ -54,6 +55,8 @@ void Phase1::Config::set_sampling_parameters(std::string param)
     }
     sampling_fraction = atof(params.at(0).c_str());
     if (sampling_fraction<=0 || sampling_fraction>=1){
+        std::cerr << "params.at(0): " << params.at(0) << std::endl;
+        std::cerr << "sampling_fraction: " << sampling_fraction << std::endl;
         throw std::runtime_error("error: sampling fraction f must be 0<f<=1");
     }
     if (params.size()==2){
@@ -88,8 +91,9 @@ sbuf_t *Phase1::get_sbuf(image_process::iterator &it)
                       << " (retry_count=" << retry_count
                       << " of " << config.max_bad_alloc_errors << ")\n";
 
+
             std::stringstream str;
-            str << "name='bad_alloc' " << "pos0='" << it.get_pos0() << "' " << "retry_count='"     << retry_count << "' ";
+            str << "name='bad_alloc' " << "pos0='" << dfxml_writer::xmlescape(it.get_pos0().str()) << "' " << "retry_count='"     << retry_count << "' ";
             xreport.xmlout("debug:exception", e.what(), str.str(), true);
         }
         if (retry_count < config.max_bad_alloc_errors+1){
@@ -134,9 +138,9 @@ void Phase1::read_process_sbufs()
     blocklist_t::const_iterator si = blocks_to_sample.begin(); // sampling iterator
     image_process::iterator     it = p.begin(); // sequential iterator
 
-    if (config.opt_offset_start){
-        std::cout << "offset set to " << config.opt_offset_start << "\n";
-        it.set_raw_offset(config.opt_offset_start);
+    if (config.opt_scan_start){
+        std::cout << "offset set to " << config.opt_scan_start << "\n";
+        it.set_raw_offset(config.opt_scan_start);
     }
 
     if (sampling()){
@@ -155,7 +159,7 @@ void Phase1::read_process_sbufs()
             it.seek_block(*si);
         }
         /* If we have gone to far, break */
-        if (config.opt_offset_end!=0 && config.opt_offset_end <= it.raw_offset ){
+        if (config.opt_scan_end!=0 && config.opt_scan_end <= it.raw_offset ){
             break;                      // passed the offset
         }
 
@@ -166,7 +170,7 @@ void Phase1::read_process_sbufs()
             continue;
         }
 
-        if (config.opt_page_start<=it.page_number && config.opt_offset_start<=it.raw_offset){
+        if (config.opt_page_start<=it.page_number && config.opt_scan_start<=it.raw_offset){
             // Only process pages we haven't seen before
             if (config.seen_page_ids.find(it.get_pos0().str()) == config.seen_page_ids.end()){
                 try {
@@ -217,7 +221,7 @@ void Phase1::read_process_sbufs()
 
 void Phase1::dfxml_write_create(int argc, char * const *argv)
 {
-    xreport.push("dfxml","xmloutputversion='1.0'");
+    xreport.push("dfxml","xmloutputversion='1.0' xmlns:debug='http://afflib.org/bulk_extractor/debug'");
     xreport.push("metadata",
 		 "\n  xmlns='http://afflib.org/bulk_extractor/' "
 		 "\n  xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' "

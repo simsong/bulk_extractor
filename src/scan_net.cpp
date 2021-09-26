@@ -32,6 +32,7 @@
 #include <ctype.h>
 
 #include "scan_net.h"
+#include "be13_api/formatter.h"
 
 /* mutex for writing packets.
  * This is not in the class because it will be accessed by multiple threads.
@@ -63,7 +64,6 @@
 
 int opt_report_checksum_bad= 0;		// if true, report bad chksums
 int opt_report_packet_path = 0;         // if true, report packets to packets.txt
-static const char *default_filename = "packets.pcap";
 
 /* packetset is a set of the addresses of packets that have been written.
  * It prevents writing the packets that are carved from a pcap file and then
@@ -269,7 +269,7 @@ uint16_t scan_net_t::IPv6L3Chksum(const sbuf_t &sbuf, size_t pos, u_int chksum_b
 }
 
 /* determine if an integer is a power of two; used for the TTL */
-static bool isPowerOfTwo(const uint8_t val)
+bool scan_net_t::isPowerOfTwo(const uint8_t val)
 {
     switch(val){
     case 32:
@@ -282,7 +282,7 @@ static bool isPowerOfTwo(const uint8_t val)
 }
 
 /* test for obviously bogus Ethernet addresses (heuristic) */
-static bool invalidMAC(const be13::ether_addr *const e)
+bool scan_net_t::invalidMAC(const be13::ether_addr *const e)
 {
     int zero_octets = 0;
     int ff_octets = 0;
@@ -297,7 +297,7 @@ static bool invalidMAC(const be13::ether_addr *const e)
 /* test for obviously bogus IPv4 addresses (heuristics).
  * This could be tuned for better performance
  */
-static bool invalidIP4( const uint8_t *const cc)
+bool scan_net_t::invalidIP4( const uint8_t *const cc)
 {
     /* Leading zero or 0xff */
     if ( (cc[0] == 0) || (cc[0] == 255) ){
@@ -318,7 +318,7 @@ static bool invalidIP4( const uint8_t *const cc)
     return false;
 }
 
-static bool invalidIP6(const uint16_t addr[8])
+bool scan_net_t::invalidIP6(const uint16_t addr[8])
 {
     /* IANA Reserved http://www.iana.org/assignments/ipv6-address-space/ipv6-address-space.xml
      * We define valid addresses as IPv6 addresses of type Link Local Unicast (FE80::/10),
@@ -333,7 +333,8 @@ static bool invalidIP6(const uint16_t addr[8])
 }
 
 
-static bool invalidIP(const uint8_t addr[16], sa_family_t family) {
+bool scan_net_t::invalidIP(const uint8_t addr[16], sa_family_t family)
+{
     switch (family) {
     case AF_INET:
 	return invalidIP4(addr+12);
@@ -349,7 +350,7 @@ static bool invalidIP(const uint8_t addr[16], sa_family_t family) {
 #ifndef INET4_ADDRSTRLEN
 #define INET4_ADDRSTRLEN 64
 #endif
-static std::string ip2string(const struct be13::ip4_addr *const a)
+std::string scan_net_t::ip2string(const struct be13::ip4_addr *const a)
 {
     const uint8_t *b = (const uint8_t *)a;
 
@@ -370,7 +371,7 @@ const char *inet_ntop(int af, const void *src, char *dst, size_t size)
 #endif
 
 
-static std::string ip2string(const uint8_t *addr, sa_family_t family)
+std::string scan_net_t::ip2string(const uint8_t *addr, sa_family_t family)
 {
     char printstr[INET6_ADDRSTRLEN+1];
     switch (family) {
@@ -386,7 +387,7 @@ static std::string ip2string(const uint8_t *addr, sa_family_t family)
 #define MAC_ADDRSTRLEN 256
 #endif
 
-static std::string mac2string(const struct be13::ether_addr *const e)
+std::string scan_net_t::mac2string(const struct be13::ether_addr *const e)
 {
     char addr[MAC_ADDRSTRLEN];
     snprintf(addr,sizeof(addr),"%02X:%02X:%02X:%02X:%02X:%02X",
@@ -395,7 +396,10 @@ static std::string mac2string(const struct be13::ether_addr *const e)
     return std::string(addr);
 }
 
-static inline std::string i2str(const int i) { return std::to_string(i); }
+std::string scan_net_t::i2str(const int i)
+{
+    return std::to_string(i);
+}
 
 /** Sanity-check an IP packet header.
  * Return false if it looks insane, true if it looks sane
@@ -505,93 +509,6 @@ bool scan_net_t::sanityCheckIP46Header(const sbuf_t &sbuf, size_t pos, scan_net_
     }
     return false;			// right now we only do IPv4 and IPv6
 }
-
-/* pcap_writer:
- * Encapsulates the logic of writing pcap files.
- *
- * Currently this will not write out a truncated packet.
- * multi-threaded, supporting a single object for multiple threads that's used for the entire bulk_extractor run.
- *
- * Should probably be implemented as a stand-alone class, rather than a subclass of scan_net, to make it testable.
- */
-class pcap_writer: public scan_net_t {
-    pcap_writer(const pcap_writer &pc) = delete;
-    pcap_writer &operator=(const pcap_writer &that) = delete;
-    mutable std::mutex Mfcap {};              // mutex for fcap
-    mutable FILE *fcap = 0;		      // capture file, protected by M
-    std::filesystem::path outdir;
-
-    /*
-     * According to 'man pcap-savefile', you need to implement this file format,
-     * but there are no functions to do so.
-     *
-     * pcap_write_bytes writes bytes; pcap accomidates.
-     * pcap_write2 writes a 2-byte value in native byte order; pcap accomidates.
-     * pcap_write4 writes a 4-byte value in native byte order; pcap accomidates.
-     * pcap_writepkt writes a packet
-     */
-    void pcap_write_bytes(const uint8_t * const val, size_t num_bytes) const {
-        size_t count = fwrite(val,1,num_bytes,fcap);
-        if (count != num_bytes) {
-            std::cerr << "scanner scan_net is unable to write to file " << default_filename << "\n";
-            throw std::runtime_error("fwrite failed");
-        }
-    }
-    void pcap_write2(const uint16_t val) const {
-        size_t count = fwrite(&val,1,2,fcap);
-        if (count != 2) {
-            std::cerr << "scanner scan_net is unable to write to file " << default_filename << "\n";
-            throw std::runtime_error("fwrite failed");
-        }
-    }
-    void pcap_write4(const uint32_t val) const {
-        size_t count = fwrite(&val,1,4,fcap);
-        if (count != 4) {
-            std::cerr << "scanner scan_net is unable to write to file " << default_filename << "\n";
-            throw std::runtime_error("fwrite failed");
-        }
-    }
-
-public:
-    pcap_writer(const scanner_params &sp);
-    ~pcap_writer();
-
-    void flush() const override {
-	if (fcap){
-            const std::lock_guard<std::mutex> lock(Mfcap);
-            fflush(fcap);
-        }
-    }
-
-    /* write an IP packet to the output stream, optionally writing a pcap header.
-     * Length of packet is determined from IP header.
-     */
-    void pcap_writepkt(const struct pcap_hdr &h, // packet header
-		       const sbuf_t &sbuf,       // sbuf where packet is located
-                       const size_t pos,         // position within the sbuf
-                       const bool add_frame,     // whether or not to create a synthetic ethernet frame
-                       const uint16_t frame_type) const override;
-
-
-};
-
-pcap_writer::pcap_writer(const scanner_params &sp):
-    outdir(sp.sc.outdir)
-{
-    ip_recorder    = &sp.named_feature_recorder("ip");
-    tcp_recorder   = &sp.named_feature_recorder("tcp");
-    ether_recorder = &sp.named_feature_recorder("ether");
-}
-
-pcap_writer::~pcap_writer()
-{
-    if (fcap){
-        const std::lock_guard<std::mutex> lock(Mfcap);
-        fclose(fcap);
-        fcap = nullptr;
-    }
-}
-
 
 /* Test for a possible IP header. (see struct ip <netinet/ip.h> or struct ip6_hdr <netinet/ip6.h>)
  * These structures will be MEMORY STRUCTURES from swap files, hibernation files, or virtual machines
@@ -825,6 +742,28 @@ void scan_net_t::pcap_writepkt(const struct pcap_hdr &h, // packet header
                              const uint16_t frame_type) const
 {}
 
+
+/****************************************************************
+ ** pcap_writer code
+ **/
+
+pcap_writer::pcap_writer(const scanner_params &sp):
+    outpath(sp.sc.outdir / OUTPUT_FILENAME)
+{
+    ip_recorder    = &sp.named_feature_recorder("ip");
+    tcp_recorder   = &sp.named_feature_recorder("tcp");
+    ether_recorder = &sp.named_feature_recorder("ether");
+}
+
+pcap_writer::~pcap_writer()
+{
+    if (fcap){
+        const std::lock_guard<std::mutex> lock(Mfcap);
+        fclose(fcap);
+        fcap = nullptr;
+    }
+}
+
 /*
  * @param add_frame - should we add a frame?
  * @param frame_type - the ethernet frame type. Note that this could be combined with add_frame, with frame_type=0 for no add.
@@ -838,8 +777,10 @@ void pcap_writer::pcap_writepkt(const struct pcap_hdr &h, // packet header
     // Make sure that neither this packet nor an encapsulated version of this packet has been written
     const std::lock_guard<std::mutex> lock(Mfcap);// lock the mutex
     if (fcap==0){
-        std::filesystem::path ofn = outdir / default_filename;
-        fcap = fopen(ofn.c_str(),"wb"); // write the output
+        fcap = fopen(outpath.c_str(),"wb"); // write the output
+        if (fcap==nullptr) {
+            throw std::runtime_error(Formatter() << "scan_net.cpp: cannot open " << outpath << " for  writing");
+        }
         pcap_write4(0xa1b2c3d4);
         pcap_write2(2);			// major version number
         pcap_write2(4);			// minor version number

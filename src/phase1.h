@@ -54,8 +54,8 @@ public:
         bool      opt_info {false};
         uint32_t  opt_notify_rate {1};		// by default, notify every second
         uint64_t  opt_page_start {0};
-        uint64_t  opt_offset_start {0};
-        uint64_t  opt_offset_end {0};
+        uint64_t  opt_scan_start {0};   // byte where we should start scanning, if not 0
+        uint64_t  opt_scan_end {0}; // byte where we should end scanning, if not 0
         time_t    max_wait_time {3600};  // after an hour, terminate a scanner
         int       opt_quiet {false};                  // -1 = no output
         int       retry_seconds {60};
@@ -67,7 +67,8 @@ public:
         void      set_sampling_parameters(std::string p);
         std::atomic<double>    *fraction_done {nullptr};
         bool      opt_legacy {false};
-        seen_page_ids_t seen_page_ids;               // pages that were already seen
+        bool      opt_notification {true}; // run notification thread
+        seen_page_ids_t seen_page_ids {};               // pages that were already seen
     };
 
     typedef std::set<uint64_t> blocklist_t; // a list of blocks (for random sampling)

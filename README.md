@@ -1,6 +1,7 @@
-Welcome to bulk_extractor.
+[![codecov](https://codecov.io/gh/simsong/bulk_extractor/branch/main/graph/badge.svg?token=3w691sdgLu)](https://codecov.io/gh/simsong/bulk_extractor)
 
-Note: bulk_extractor version 2.0 is now under development. For information, please see [Release 2.0 roadmap in the release-2.0-dev branch](https://github.com/simsong/bulk_extractor/blob/release-2.0-dev/doc/ROADMAP_2.0.md).
+Welcome to `bulk_extractor` 2.0 development branch!  For information
+about the `bulk_extractor` update, please see [Release 2.0 roadmap](https://github.com/simsong/bulk_extractor/blob/main/doc/ROADMAP_2.0.md).
 
 To build bulk_extractor in Linux or Mac OS:
 
@@ -27,12 +28,12 @@ For more information on bulk_extractor, visit: https://forensicswiki.xyz/wiki/in
 
 Tested Configurations
 =====================
-This release of bulk_extractor has been tested to compile on the following platforms:
+This release of bulk_extractor requires C++17 and has been tested to compile on the following platforms:
 
 * Amazon Linux as of 2019-11-09
 * Fedora 32
-* Ubuntu 16.04LTS
-* Ubuntu 18.04LTS
+* Ubuntu 20.04LTS
+* MacOS 11.5.2
 
 To configure your operating system, please run the appropriate scripts in the [etc/](/etc) directory.
 
@@ -41,7 +42,7 @@ RECOMMENDED CITATION
 ====================
 If you are writing a scientific paper and using bulk_extractor, please cite it with:
 
-Garfinkel, Simson, Digital media triage with bulk data analysis and bulk_extractor. Computers and Security 32: 56-72 (2013) 
+Garfinkel, Simson, Digital media triage with bulk data analysis and bulk_extractor. Computers and Security 32: 56-72 (2013)
 * [Science Direct](https://www.sciencedirect.com/science/article/pii/S0167404812001472)
 * [Bibliometrics](https://plu.mx/plum/a/?doi=10.1016/j.cose.2012.09.011&theme=plum-sciencedirect-theme&hideUsage=true)
 * [Author's website](https://simson.net/clips/academic/2013.COSE.bulk_extractor.pdf)
@@ -66,10 +67,9 @@ keywords = {Digital forensics, Bulk data analysis, bulk_extractor, Stream-based 
 
 BULK_EXTRACTOR 2.0 STATUS REPORT
 ================================
-I continue to port bulk_extractor, tcpflow, be13_api and dfxml to modern C++. After surveying the standards I’ve decided to go with C++17 and not C++14, as support for 17 is now widespread. (I probably don’t need 20). I am sticking with autotools, although there seems a strong reason to move to CMake. I am keeping be13_api and dfxml as a modules that are included, python-style, rather than making them stand-alone libraries that are linked against. I’m not 100% sure that’s the correct decision, though.
+`bulk_extractor` 2.0 is now operational for development use. It
+requires C++17 to compile. I am keeping be13_api and dfxml as a modules that are included, python-style, rather than making them stand-alone libraries that are linked against.
 
-The project is taking longer than anticipated because I am also doing a general code refactoring. The main thing that is taking time is figuring out how to detangle all of the C++ objects having to do with parser options and configuration. 
-
-Given that tcpflow and bulk_extractor both use be13_api, my attention has shifted to using tcpflow to get be13_api operational, as it is a simpler program. I’m about three quarters of the way through now. I anticipate having something finished before the end of 2020.
-
---- Simson Garfinkel, October 18, 2020
+The project took longer than anticipated. In addition to updating to
+C++17, I used this as an opportunity for massive code refactoring and
+general increase in reliability.

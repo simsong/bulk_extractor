@@ -82,8 +82,12 @@ void scan_ntfslogfile(scanner_params &sp)
         sp.info->set_name("ntfslogfile");
         sp.info->author          = "Teru Yamazaki";
         sp.info->description     = "Scans for NTFS $LogFile RCRD record";
+        sp.info->scanner_flags.scanner_wants_filesystems = true;
         sp.info->scanner_version = "1.1";
-        sp.info->feature_defs.push_back( feature_recorder_def(FEATURE_FILE_NAME));
+        struct feature_recorder_def::flags_t carve_flag;
+        carve_flag.carve = true;
+
+        sp.info->feature_defs.push_back( feature_recorder_def(FEATURE_FILE_NAME, carve_flag));
         return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
@@ -114,16 +118,16 @@ void scan_ntfslogfile(scanner_params &sp)
                     else
                         break;
                 }
-                ntfslogfile_recorder.carve( sbuf_t(sbuf,offset,total_record_size), "LogFile-RCRD");
+                ntfslogfile_recorder.carve( sbuf_t(sbuf,offset,total_record_size), ".LogFile-RCRD");
             }
             else if (result_type == 2) {
-                ntfslogfile_recorder.carve( sbuf_t(sbuf,offset,total_record_size), "LogFile-RCRD_corrupted");
+                ntfslogfile_recorder.carve( sbuf_t(sbuf,offset,total_record_size), ".LogFile-RCRD_corrupted");
             }
             else if (result_type == 3) {
-                ntfslogfile_recorder.carve( sbuf_t(sbuf,offset,total_record_size), "LogFile-RSTR");
+                ntfslogfile_recorder.carve( sbuf_t(sbuf,offset,total_record_size), ".LogFile-RSTR");
             }
             else if (result_type == 4) {
-                ntfslogfile_recorder.carve( sbuf_t(sbuf,offset,total_record_size),"LogFile-RSTR_corrupted");
+                ntfslogfile_recorder.carve( sbuf_t(sbuf,offset,total_record_size),".LogFile-RSTR_corrupted");
             }
             else { // result_type == 0 - not RCRD record
             }

@@ -1018,8 +1018,10 @@ void scan_winpe (scanner_params &sp)
         sp.info->set_name("winpe" );
         sp.info->description     = "Scan for Windows PE headers";
         sp.info->scanner_version = "1.1.0";
+        struct feature_recorder_def::flags_t carve_flag;
+        carve_flag.carve = true;
         sp.info->feature_defs.push_back( feature_recorder_def("winpe"));
-        sp.info->feature_defs.push_back( feature_recorder_def("winpe_carved"));
+        sp.info->feature_defs.push_back( feature_recorder_def("winpe_carved", carve_flag));
         return;
     }
 

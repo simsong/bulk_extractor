@@ -7,7 +7,7 @@
 #include "be13_api/scanner_params.h"
 #include "be13_api/utils.h"
 
-static uint8_t xor_mask = 255;
+static int xor_mask = 255;
 extern "C"
 void scan_xor(scanner_params &sp)
 {
@@ -20,6 +20,9 @@ void scan_xor(scanner_params &sp)
         sp.info->scanner_flags.recurse = true;
         sp.info->scanner_flags.recurse_always = true;
         sp.get_scanner_config("xor_mask",&xor_mask,"XOR mask value, in decimal");
+        if (xor_mask<0 || xor_mask>255){
+            throw std::runtime_error("invalid xor_mask");
+        }
 	return;
     }
     if (sp.phase==scanner_params::PHASE_SCAN) {

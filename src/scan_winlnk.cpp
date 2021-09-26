@@ -305,6 +305,7 @@ void scan_winlnk(scanner_params &sp)
         sp.info->author		= "Simson Garfinkel";
         sp.info->description	= "Search for Windows LNK files";
         sp.info->feature_defs.push_back( feature_recorder_def("winlnk"));
+        sp.info->scanner_flags.scanner_wants_filesystems = true;
         sp.info->min_sbuf_size = SMALLEST_LNK_FILE;
         return;
     }

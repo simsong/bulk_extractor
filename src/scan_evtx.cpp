@@ -23,7 +23,8 @@
 #define CLUSTER_SIZE 4096
 #define ELFFILE_SIZE 4096
 #define ELFCHNK_SIZE 65536
-#define FEATURE_FILE_NAME "evtx_carved"
+
+const std::string FEATURE_FILE_NAME {"evtx_carved"};
 
 struct elffile {
     struct elffilepart {
@@ -43,6 +44,7 @@ struct elffile {
     char unknown2[3968];
 };
 
+// TODO: This is pretty gross. Make it a proper class?
 // https://gist.github.com/timepp/1f678e200d9e0f2a043a9ec6b3690635
 // usage: the following code generates crc for 2 pieces of data
 // uint32_t table[256];
@@ -139,6 +141,111 @@ int64_t check_evtxrecord_signature(size_t offset, const sbuf_t &sbuf) {
     return 0;
 }
 
+void scan_evtx(const sbuf_t &sbuf, feature_recorder &evtx_recorder)
+{
+    // search for EVTX chunk in the sbuf
+    size_t offset = 0;
+    size_t total_size=0;
+
+    while (offset < sbuf.pagesize) {
+        int64_t result_num_of_chunks = check_evtxheader_signature(offset, sbuf);
+        int64_t result_last_record_id = 0;
+        int64_t last_record_id;
+        // ElfFile
+        if (result_num_of_chunks > 0) {
+            total_size = ELFFILE_SIZE;
+            result_last_record_id = check_evtxchunk_signature(offset+total_size, sbuf);
+            // check if ElfChnk continues
+            if (result_last_record_id > 0) {
+                int32_t actual_num_of_chunk = 1;
+                total_size += ELFCHNK_SIZE;
+                result_last_record_id = check_evtxchunk_signature(offset+total_size, sbuf);
+                while (result_last_record_id > 0 && offset+total_size < sbuf.pagesize) {
+                    ++actual_num_of_chunk;
+                    total_size += ELFCHNK_SIZE;
+                    result_last_record_id = check_evtxchunk_signature(offset+total_size, sbuf);
+                }
+                std::string filename = (sbuf.pos0+offset).str() + "_valid_header_" +
+                    std::to_string(result_num_of_chunks) + "chunks_" +
+                    std::to_string(actual_num_of_chunk) + "actual.evtx";
+                sbuf_t data(sbuf, offset, total_size);
+                evtx_recorder.carve(data, filename);
+            } else if (result_last_record_id == -1) {
+                // If valid ElfChnk and invalid record then skip
+                total_size += ELFCHNK_SIZE;
+            }
+            offset += total_size;
+            continue;
+        }
+        result_last_record_id = check_evtxchunk_signature(offset, sbuf);
+        // ElfChnk
+        if (result_last_record_id > 0) {
+            int32_t last_chunk = 0;
+            last_record_id = result_last_record_id;
+            int64_t first_record_id = sbuf.get64i(offset + 24); // First Record ID
+            int64_t num_of_records = last_record_id - first_record_id +1;
+            total_size += ELFCHNK_SIZE;
+            result_last_record_id = check_evtxchunk_signature(offset+total_size, sbuf);
+            while (result_last_record_id > 0 && offset+total_size < sbuf.pagesize) {
+                first_record_id = sbuf.get64i(offset+ total_size + 24); // First Record ID
+                last_record_id = result_last_record_id;
+                num_of_records += last_record_id - first_record_id +1;
+                ++last_chunk;
+                total_size += ELFCHNK_SIZE;
+                result_last_record_id = check_evtxchunk_signature(offset+total_size, sbuf);
+            }
+            uint8_t *header_buf = static_cast<uint8_t *>(malloc(sizeof(struct elffile))); // allocate memory for header
+            struct elffile &header = *(reinterpret_cast<struct elffile *>(header_buf)); // make header. a reference to the buffer
+            // set header values for found ElfChnk records
+            strcpy(header.part.magic, "ElfFile");
+            header.part.first_chunk = 0;
+            header.part.last_chunk = last_chunk;
+            header.part.next_record = last_record_id;
+            header.part.header_size = 128;
+            header.part.minor_version = 1;
+            header.part.major_version = 3;
+            header.part.header_block_size = 4096;
+            header.part.number_of_chunks = last_chunk+1;
+            memset(header.part.unknown1,'\0', sizeof(header.part.unknown1));
+            header.flags = 0;
+
+            // todo: This CRC32 implementation is horrible.
+            // Replace it with one that uses proper encapsulation.
+            uint32_t table[256];
+            crc32::generate_table(table);
+
+            // CRC32 of the first 120 bytes == header.part struct
+            header.crc32 = crc32::update(table, 0, &header.part, 120);
+            memset(header.unknown2,'\0', sizeof(header.unknown2));
+            std::string filename = (sbuf.pos0+offset).str() + "_" +
+                std::to_string(header.part.number_of_chunks) + "chunks_" +
+                std::to_string(num_of_records) + "records.evtx";
+            // generate evtx header based on elfchnk information
+            // make an sbuf for the header that will free it automatically when we are finished
+            sbuf_t *sbuf_header = sbuf_t::sbuf_new(pos0_t(), header_buf, sizeof(header), sizeof(header));
+            sbuf_t sbuf_records(sbuf, offset, total_size);
+            evtx_recorder.carve(*sbuf_header, sbuf_records, filename);
+            delete sbuf_header;
+            offset += total_size;
+        } else { // scans orphan record
+            size_t i=0;
+            while (i < CLUSTER_SIZE) {
+                int64_t result_record_size = check_evtxrecord_signature(offset+i, sbuf);
+                if (result_record_size > 0) {
+                    sbuf_t data(sbuf,offset+i, result_record_size);
+                    evtx_recorder.carve(data, ".evtx_orphan_record");
+                    i += result_record_size;
+                } else {
+                    i += 8;
+                }
+
+            }
+            offset += CLUSTER_SIZE;
+        }
+    } // end while
+}
+
+
 extern "C"
 
 void scan_evtx(scanner_params &sp)
@@ -149,112 +256,18 @@ void scan_evtx(scanner_params &sp)
         sp.info->author          = "Teru Yamazaki";
         sp.info->description     = "Scans for EVTX Chunks and generates valid EVTX file";
         sp.info->scanner_version = "1.0";
-        sp.info->feature_defs.push_back( feature_recorder_def(FEATURE_FILE_NAME));
+
+        struct feature_recorder_def::flags_t carve_flag;
+        carve_flag.carve = true;
+        sp.info->feature_defs.push_back( feature_recorder_def(FEATURE_FILE_NAME, carve_flag));
         return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
-        const sbuf_t &sbuf = *(sp.sbuf);
-        feature_recorder &evtx_recorder = sp.named_feature_recorder(FEATURE_FILE_NAME);
+        /* Note: the original programmer's scanner runs off the end of the sbuf, so we have to catch the exception */
 
-        // search for EVTX chunk in the sbuf
-        size_t offset = 0;
-        size_t stop = sbuf.pagesize;
-        size_t total_size=0;
-
-        while (offset < stop) {
-            int64_t result_num_of_chunks = check_evtxheader_signature(offset, sbuf);
-            int64_t result_last_record_id = 0;
-            int64_t last_record_id;
-            // ElfFile
-            if (result_num_of_chunks > 0) {
-                total_size = ELFFILE_SIZE;
-                result_last_record_id = check_evtxchunk_signature(offset+total_size, sbuf);
-                // check if ElfChnk continues
-                if (result_last_record_id > 0) {
-                    int32_t actual_num_of_chunk = 1;
-                    total_size += ELFCHNK_SIZE;
-                    result_last_record_id = check_evtxchunk_signature(offset+total_size, sbuf);
-                    while (result_last_record_id > 0 && offset+total_size < stop) {
-                        ++actual_num_of_chunk;
-                        total_size += ELFCHNK_SIZE;
-                        result_last_record_id = check_evtxchunk_signature(offset+total_size, sbuf);
-                    }
-                    std::string filename = (sbuf.pos0+offset).str() + "_valid_header_" +
-                        std::to_string(result_num_of_chunks) + "chunks_" +
-                        std::to_string(actual_num_of_chunk) + "actual.evtx";
-                    sbuf_t data(sbuf, offset, total_size);
-                    evtx_recorder.carve(data, filename);
-                } else if (result_last_record_id == -1) {
-                    // If valid ElfChnk and invalid record then skip
-                    total_size += ELFCHNK_SIZE;
-                }
-                offset += total_size;
-                continue;
-            }
-            result_last_record_id = check_evtxchunk_signature(offset, sbuf);
-            // ElfChnk
-            if (result_last_record_id > 0) {
-                int32_t last_chunk = 0;
-                last_record_id = result_last_record_id;
-                int64_t first_record_id = sbuf.get64i(offset + 24); // First Record ID
-                int64_t num_of_records = last_record_id - first_record_id +1;
-                total_size += ELFCHNK_SIZE;
-                result_last_record_id = check_evtxchunk_signature(offset+total_size, sbuf);
-                while (result_last_record_id > 0 && offset+total_size < stop) {
-                    first_record_id = sbuf.get64i(offset+ total_size + 24); // First Record ID
-                    last_record_id = result_last_record_id;
-                    num_of_records += last_record_id - first_record_id +1;
-                    ++last_chunk;
-                    total_size += ELFCHNK_SIZE;
-                    result_last_record_id = check_evtxchunk_signature(offset+total_size, sbuf);
-                }
-                uint8_t *header_buf = static_cast<uint8_t *>(malloc(sizeof(struct elffile))); // allocate memory for header
-                struct elffile &header = *(reinterpret_cast<struct elffile *>(header_buf)); // make header. a reference to the buffer
-                // set header values for found ElfChnk records
-                strcpy(header.part.magic, "ElfFile");
-                header.part.first_chunk = 0;
-                header.part.last_chunk = last_chunk;
-                header.part.next_record = last_record_id;
-                header.part.header_size = 128;
-                header.part.minor_version = 1;
-                header.part.major_version = 3;
-                header.part.header_block_size = 4096;
-                header.part.number_of_chunks = last_chunk+1;
-                memset(header.part.unknown1,'\0', sizeof(header.part.unknown1));
-                header.flags = 0;
-                uint32_t table[256];
-                crc32::generate_table(table);
-                // CRC32 of the first 120 bytes == header.part struct
-                header.crc32 = crc32::update(table, 0, &header.part, 120);
-                memset(header.unknown2,'\0', sizeof(header.unknown2));
-                std::string filename = (sbuf.pos0+offset).str() + "_" +
-                    std::to_string(header.part.number_of_chunks) + "chunks_" +
-                    std::to_string(num_of_records) + "records.evtx";
-                // generate evtx header based on elfchnk information
-                // make an sbuf for the header that will free it automatically when we are finished
-                sbuf_t *sbuf_header = sbuf_t::sbuf_new(pos0_t(), header_buf, sizeof(header), sizeof(header));
-                //sbuf_t sbuf_header(pos0_t(), reinterpret_cast<unsigned char *>(&header), sizeof(header), sizeof(header), 0, false, false, false );
-                sbuf_t sbuf_records(sbuf, offset, total_size);
-                evtx_recorder.carve(*sbuf_header, sbuf_records, filename);
-                delete sbuf_header;
-                //evtx_recorder.write_data((unsigned char *)&header,sizeof(elffile),filename);
-                //evtx_recorder.carve(sbuf, offset, total_size, filename);
-                offset += total_size;
-            } else { // scans orphan record
-                size_t i=0;
-                while (i < CLUSTER_SIZE) {
-                    int64_t result_record_size = check_evtxrecord_signature(offset+i, sbuf);
-                    if (result_record_size > 0) {
-                        sbuf_t data(sbuf,offset+i, result_record_size);
-                        evtx_recorder.carve(data, "evtx_orphan_record");
-                        i += result_record_size;
-                    } else {
-                        i += 8;
-                    }
-
-                }
-                offset += CLUSTER_SIZE;
-	    }
-        } // end while
+        try {
+            scan_evtx( *(sp.sbuf), sp.named_feature_recorder(FEATURE_FILE_NAME));
+        } catch (const sbuf_t::range_exception_t &e) {
+        }
     } // end PHASE_SCAN
 }

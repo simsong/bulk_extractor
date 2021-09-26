@@ -595,6 +595,7 @@ void scan_rar(scanner_params &sp)
 	sp.info->description = "RAR volume locator and component decompresser";
         feature_recorder_def::flags_t flags;
         flags.xml = true;
+        flags.carve = true;
 
         auto rar_def = feature_recorder_def(RAR_RECORDER_NAME, flags);
         rar_def.default_carve_mode = feature_recorder_def::carve_mode_t::CARVE_ENCODED;
