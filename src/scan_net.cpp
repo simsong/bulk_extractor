@@ -592,7 +592,7 @@ size_t scan_net_t::carveIPFrame(const sbuf_t &sbuf, size_t pos) const
     uint8_t buf[PCAP_MAX_PKT_LEN+14];
     size_t ip_len         = h.nxthdr_offs + h.payload_len;
     if (ip_len + pos > sbuf.bufsize) ip_len = sbuf.bufsize-pos;
-    ssize_t packet_len = 14 + ip_len ;
+    size_t packet_len = 14 + ip_len ;
     if (packet_len > PCAP_MAX_PKT_LEN){
         packet_len = PCAP_MAX_PKT_LEN;
     }

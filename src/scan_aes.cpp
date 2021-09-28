@@ -368,6 +368,7 @@ int scan_aes_192 = 0;
 int scan_aes_256 = 1;
 
 class feature_recorder *aes_recorderp = nullptr;
+
 extern "C"
 void scan_aes(struct scanner_params &sp)
 {

@@ -158,15 +158,15 @@ int64_t image_process::getSizeOfFile(std::string fname)
                                     FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
 				     OPEN_EXISTING, 0, NULL);
     if(current_handle==INVALID_HANDLE_VALUE){
-        std::string err = std::string("getSizeOfFile: cannot open file '") + fname + "'";
-        throw image_process::NoSuchFile(err.c_str());
+        throw image_process::NoSuchFile( Formatter() << "getSizeOfFile: cannot open file '" << fname << "'");
     }
     int64_t fname_length = get_filesize(current_handle);
     ::CloseHandle(current_handle);
 #else
     int fd = ::open(fname.c_str(),O_RDONLY|O_BINARY);
     if(fd<0){
-        throw image_process::NoSuchFile(std::string("getSizeOfFile: cannot open file '") + fname + "'");
+        std::string str = Formatter() << "getSizeOfFile: cannot open file '" <<  fname << "'";
+        throw image_process::NoSuchFile( str );
     }
     int64_t fname_length = get_filesize(fd);
     ::close(fd);

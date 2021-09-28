@@ -549,6 +549,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     o.ssp = &ss;
     o.master_timer  = &master_timer;
     o.fraction_done = &fraction_done;
+    o.phase = 1;
 
     if ( cfg.opt_notification) {
         notify_thread::launch_notify_thread( &o);
@@ -595,6 +596,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     }
 
     /*** PHASE 2 --- Shutdown ***/
+    o.phase = 2;
     if ( !cfg.opt_quiet) cout << "Phase 2. Shutting down scanners\n";
     xreport->add_timestamp( "phase2 start" );
     try {
@@ -610,6 +612,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     master_timer.stop();
 
     /*** PHASE 3 ---  report and then print final usage information ***/
+    o.phase = 3;
     xreport->push( "report" );
     xreport->xmlout( "total_bytes",phase1.total_bytes);
     xreport->xmlout( "elapsed_seconds",master_timer.elapsed_seconds());
