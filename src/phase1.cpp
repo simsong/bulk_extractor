@@ -154,6 +154,16 @@ void Phase1::read_process_sbufs()
     }
     /* Loop over the blocks to sample */
     while(it != p.end()) {
+        /* If there is a disk write error, shut down */
+        if (ss.disk_write_errors > 0 ){
+            for(int i=0;i<5;i++){
+                std::cerr << std::endl;
+            }
+            std::cerr << "*** DISK WRITE ERROR ***" << std::endl;
+            std::cerr << "Disk is likely full. Clear space and restart (press up arrow) " << std::endl;
+            exit(1);
+        }
+
         if (sampling()){                // if sampling, seek the iterator
             if (si==blocks_to_sample.end()) break;
             it.seek_block(*si);
@@ -208,7 +218,7 @@ void Phase1::read_process_sbufs()
             ++si;
         }
 
-        /* Finally, report back the fraction done if requested */
+        /* Report back the fraction done if requested */
         if (config.fraction_done) *config.fraction_done = p.fraction_done(it);
         ++it;
     }

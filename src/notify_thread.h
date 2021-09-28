@@ -15,6 +15,7 @@ struct notify_thread {
         aftimer *master_timer {};
         std::atomic<double> *fraction_done {};
         const Phase1::Config &cfg;
+        std::atomic<int> phase {};
     };
 
     static inline const std::string FRACTION_READ {"fraction_read"};
@@ -23,7 +24,7 @@ struct notify_thread {
 
     static int terminal_width( int default_width );
 
-    [[noreturn]] static void notifier( struct notify_opts *o );
+    static void notifier( struct notify_opts *o );
     static void launch_notify_thread( struct notify_opts *o);
 };
 
