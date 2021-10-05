@@ -131,7 +131,7 @@ int _CRT_fmode = _O_BINARY;
  */
 void validate_path( const std::filesystem::path fn)
 {
-    if ( !std::filesystem::exists( fn)){
+    if ( !std::filesystem::exists( fn )){
         std::cerr << "file does not exist: " << fn << "\n";
         throw std::runtime_error( "file not found." );
     }

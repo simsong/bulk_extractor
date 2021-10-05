@@ -5,6 +5,7 @@
 #include <cstring>
 #include <iostream>
 #include <memory>
+#include <filesystem>
 #include <cstdio>
 #include <stdexcept>
 #include <unistd.h>
@@ -119,7 +120,7 @@ std::filesystem::path test_scanners(const std::vector<scanner_t *> & scanners, s
     feature_recorder_set::flags_t frs_flags;
     frs_flags.pedantic = true;          // for testing
     scanner_config sc;
-    sc.outdir           = NamedTemporaryDirectory();
+    sc.outdir           = std::filesystem::temp_directory_path();
     sc.scanner_commands = enable_all_scanners;
 
     scanner_set ss(sc, frs_flags, nullptr);
@@ -473,7 +474,7 @@ struct Check {
 TEST_CASE("test_validate", "[phase1]" ) {
     scanner_config sc;
 
-    sc.outdir = NamedTemporaryDirectory();
+    sc.outdir = std::filesystem::temp_directory_path();
     sc.scanner_commands = enable_all_scanners;
     feature_recorder_set::flags_t frs_flags;
     frs_flags.pedantic = true;          // for testing
@@ -546,7 +547,7 @@ std::filesystem::path validate(std::string image_fname, std::vector<Check> &expe
     sbuf_t::debug_range_exception = true;
     scanner_config sc;
 
-    sc.outdir           = NamedTemporaryDirectory();
+    sc.outdir           = std::filesystem::temp_directory_path();
     sc.scanner_commands = enable_all_scanners;
     sc.allow_recurse    = recurse;
 
@@ -926,7 +927,7 @@ TEST_CASE("path_printer", "[path_printer]") {
 TEST_CASE("restarter", "[restarter]") {
     scanner_config   sc;   // config for be13_api
     sc.input_fname = test_dir() / "1mb_fat32.dmg";
-    sc.outdir = NamedTemporaryDirectory();
+    sc.outdir = std::filesystem::temp_directory_path();
 
     std::filesystem::copy(test_dir() / "interrupted_report.xml",
                           sc.outdir  / "report.xml");
@@ -961,7 +962,7 @@ int arg_count(char * const *argv)
 
 TEST_CASE("e2e-h", "[end-to-end]") {
     std::string inpath = test_dir() / "nps-2010-emails.100k.raw";
-    std::string outdir = NamedTemporaryDirectory();
+    std::string outdir = std::filesystem::temp_directory_path();
     /* Try the -h option */
     const char *argv[] = {"bulk_extractor", "-h", nullptr};
     int ret = bulk_extractor_main(std::cout, std::cerr, 2, const_cast<char * const *>(argv));
@@ -970,7 +971,7 @@ TEST_CASE("e2e-h", "[end-to-end]") {
 
 TEST_CASE("e2e-H", "[end-to-end]") {
     std::string inpath = test_dir() / "nps-2010-emails.100k.raw";
-    std::string outdir = NamedTemporaryDirectory();
+    std::string outdir = std::filesystem::temp_directory_path();
     /* Try the -H option */
     const char *argv[] = {"bulk_extractor", "-H", nullptr};
     int ret = bulk_extractor_main(std::cout, std::cerr, 2, const_cast<char * const *>(argv));
@@ -978,7 +979,7 @@ TEST_CASE("e2e-H", "[end-to-end]") {
 }
 
 TEST_CASE("e2e-no-imagefile", "[end-to-end]") {
-    std::string outdir = NamedTemporaryDirectory();
+    std::string outdir = std::filesystem::temp_directory_path();
     /* Try the -H option */
     const char *argv[] = {"bulk_extractor", nullptr};
     int ret = bulk_extractor_main(std::cout, std::cerr, 1, const_cast<char * const *>(argv));
@@ -987,7 +988,7 @@ TEST_CASE("e2e-no-imagefile", "[end-to-end]") {
 
 TEST_CASE("e2e-0", "[end-to-end]") {
     std::string inpath = test_dir() / "nps-2010-emails.100k.raw";
-    std::string outdir = NamedTemporaryDirectory();
+    std::string outdir = std::filesystem::temp_directory_path();
     /* Try to run twice. There seems to be a problem with the second time through.  */
     const char *argv[] = {"bulk_extractor", "-0", "-o", outdir.c_str(), inpath.c_str(), nullptr};
     std::cerr << "*******************************************************************\n";
