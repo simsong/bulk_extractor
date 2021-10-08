@@ -26,7 +26,7 @@ void muntrace(){}
 
 // Open standard input in binary mode by default on Win32.
 // See http://gnuwin32.sourceforge.net/compile.html for more
-#ifdef WIN32
+#ifdef _WIN32
 int _CRT_fmode = _O_BINARY;
 #endif
 
@@ -193,7 +193,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         }
     }
 
-#ifdef WIN32
+#ifdef _WIN32
     setmode( 1,O_BINARY);		// make stdout binary
 #endif
 

@@ -46,7 +46,7 @@
 
 #include <filesystem>
 
-#if defined(WIN32)
+#if defined(_WIN32)
 #  include <winsock2.h>
 #  include <windows.h>
 #  include <windowsx.h>
@@ -60,17 +60,17 @@ class image_process : public abstract_image_reader {
     image_process &operator=(const image_process &)=delete;
 
     /****************************************************************/
-    const std::string image_fname_;			/* image filename */
+    const std::filesystem::path image_fname_;			/* image filename */
 
 public:
     /* These two functions are only used in WIN32 but are defined here so that they can be tested on all platforms */
-    std::string utf16to8(std::wstring fn16);
-    std::wstring utf8to16(std::string fn8);
+    static std::string filename_extension(std::filesystem::path fn); // returns extension
+    static std::string utf16to8(std::wstring fn16);
+    static std::wstring utf8to16(std::string fn8);
 
-    static int64_t getSizeOfFile(std::string fname);
-    static bool fn_ends_with(std::string str,std::string suffix);
-    static bool is_multipart_file(std::string fn);
-    static std::string make_list_template(std::string fn,int *start);
+    static bool fn_ends_with(std::filesystem::path str,std::string suffix);
+    static bool is_multipart_file(std::filesystem::path fn);
+    static std::string make_list_template(std::filesystem::path fn,int *start);
 
     struct EndOfImage : public std::exception {
         EndOfImage(){};
@@ -91,7 +91,7 @@ public:
      * open() figures out which child class to call, calls its open, then
      * returns an object.
      */
-    static image_process *open(std::string fn, bool recurse, size_t opt_pagesize, size_t opt_margin);
+    static image_process *open(std::filesystem::path fn, bool recurse, size_t opt_pagesize, size_t opt_margin);
     const size_t pagesize;                    // page size we are using
     const size_t margin;                      // margin size we are using
     bool  report_read_errors;
@@ -134,7 +134,7 @@ public:
         void set_raw_offset(uint64_t anOffset){ raw_offset=anOffset;}
     };
 
-    image_process(std::string fn, size_t pagesize_, size_t margin_);
+    image_process(std::filesystem::path fn, size_t pagesize_, size_t margin_);
     virtual ~image_process();
 
     /* image support */
@@ -142,7 +142,7 @@ public:
     /* pread defined in superclass */
     //virtual int pread(void *,size_t bytes,int64_t offset) const = 0 ;
     virtual int64_t image_size() const=0;
-    virtual std::string image_fname() const;
+    virtual std::filesystem::path image_fname() const;
 
     /* iterator support; these virtual functions are called by iterator through (*myimage) */
     virtual image_process::iterator begin() const =0;
@@ -191,9 +191,9 @@ class process_ewf : public image_process {
     mutable libewf_handle_t *handle {};
 
  public:
-    static void local_e01_glob(std::string fname,char ***libewf_filenames,int *amount_of_filenames);
+    static void local_e01_glob(std::filesystem::path fname,char ***libewf_filenames,int *amount_of_filenames);
 
-    process_ewf(std::string fname, size_t pagesize_, size_t margin_) : image_process(fname, pagesize_, margin_) {}
+    process_ewf(std::filesystem::path fname, size_t pagesize_, size_t margin_) : image_process(fname, pagesize_, margin_) {}
     virtual ~process_ewf();
     std::vector<std::string> getewfdetails() const;
     int open() override;
@@ -227,17 +227,17 @@ class process_raw : public image_process {
     };
     typedef std::vector<file_info> file_list_t ;
     file_list_t file_list {};
-    void        add_file(std::string fname);
+    void        add_file(std::filesystem::path fname);
     class       file_info const *find_offset(uint64_t offset) const; /* finds which file this offset would map to */
     uint64_t    raw_filesize {};			/* sume of all the lengths */
     mutable std::filesystem::path current_file_name {};		/* which file is currently open */
-#ifdef WIN32
+#ifdef _WIN32
     mutable HANDLE current_handle {};		/* currently open file */
 #else
     mutable int current_fd {};			/* currently open file */
 #endif
 public:
-    process_raw(std::string image_fname,size_t pagesize,size_t margin);
+    process_raw(std::filesystem::path image_fname,size_t pagesize,size_t margin);
     virtual ~process_raw();
     virtual int open() override;
     virtual ssize_t pread(void *,size_t bytes,uint64_t offset) const override;	    /* read */
@@ -266,7 +266,7 @@ class process_dir : public image_process {
     std::vector<std::filesystem::path> files {};		/* all of the files */
 
  public:
-    process_dir(std::string image_dir);
+    process_dir(std::filesystem::path image_dir);
     virtual ~process_dir();
 
     virtual int open() override;

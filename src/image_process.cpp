@@ -64,7 +64,7 @@
  * files and devices. This seems to work. It only requires a functioning pread64 or pread.
  */
 
-#ifdef WIN32
+#ifdef _WIN32
 int pread64(HANDLE current_handle,char *buf,size_t bytes,uint64_t offset)
 {
     DWORD bytes_read = 0;
@@ -91,7 +91,7 @@ static size_t pread64(int d,void *buf,size_t nbyte,int64_t offset)
 #endif
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 int64_t get_filesize(HANDLE fd)
 #else
 int64_t get_filesize(int fd)
@@ -115,7 +115,7 @@ int64_t get_filesize(int fd)
     }
 #endif
 
-#ifndef WIN32
+#ifndef _WIN32
     /* We can use fstat if sizeof(st_size)==8 and st_size>0 */
     struct stat st;
     memset(&st,0,sizeof(st));
@@ -150,29 +150,19 @@ int64_t get_filesize(int fd)
 }
 
 
+/****************************************************************
+ *** static functions
+ ****************************************************************/
 
-int64_t image_process::getSizeOfFile(std::string fname)
+std::string image_process::filename_extension(std::filesystem::path fn_)
 {
-#ifdef WIN32
-    HANDLE current_handle = CreateFileA(fname.c_str(), FILE_READ_DATA,
-                                    FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
-				     OPEN_EXISTING, 0, NULL);
-    if(current_handle==INVALID_HANDLE_VALUE){
-        throw image_process::NoSuchFile( Formatter() << "getSizeOfFile: cannot open file '" << fname << "'");
-    }
-    int64_t fname_length = get_filesize(current_handle);
-    ::CloseHandle(current_handle);
-#else
-    int fd = ::open(fname.c_str(),O_RDONLY|O_BINARY);
-    if(fd<0){
-        std::string str = Formatter() << "getSizeOfFile: cannot open file '" <<  fname << "'";
-        throw image_process::NoSuchFile( str );
-    }
-    int64_t fname_length = get_filesize(fd);
-    ::close(fd);
-#endif
-    return fname_length;
+    std::string fn(fn_.string());
+    size_t dotpos = fn.rfind('.');
+    if(dotpos==std::string::npos) return "";
+
+    return fn.substr(dotpos+1);
 }
+
 
 
 /* These are only used in WIN32 but are defined here so that they can be tested on all platforms */
@@ -190,7 +180,7 @@ std::wstring image_process::utf8to16(std::string fn8)
     return fn16;
 }
 
-image_process::image_process(std::string fn, size_t pagesize_, size_t margin_):
+image_process::image_process(std::filesystem::path fn, size_t pagesize_, size_t margin_):
     image_fname_(fn),pagesize(pagesize_),margin(margin_),report_read_errors(true)
 {
 }
@@ -200,20 +190,21 @@ image_process::~image_process()
 }
 
 
-std::string image_process::image_fname() const
+std::filesystem::path image_process::image_fname() const
 {
     return image_fname_;
 }
 
 
 
-bool image_process::fn_ends_with(std::string str,std::string suffix)
+bool image_process::fn_ends_with(std::filesystem::path path, std::string suffix)
 {
-    if(suffix.size() > str.size()) return false;
+    std::string str(path.string());
+    if (suffix.size() > str.size()) return false;
     return str.substr(str.size()-suffix.size())==suffix;
 }
 
-bool image_process::is_multipart_file(std::string fn)
+bool image_process::is_multipart_file(std::filesystem::path fn)
 {
     return fn_ends_with(fn,".000")
 	|| fn_ends_with(fn,".001")
@@ -221,16 +212,17 @@ bool image_process::is_multipart_file(std::string fn)
 }
 
 /* fn can't be & because it will get modified */
-std::string image_process::make_list_template(std::string fn,int *start)
+std::string image_process::make_list_template(std::filesystem::path path_,int *start)
 {
     /* First find where the digits are */
-    size_t p = fn.rfind("000");
-    if(p==std::string::npos) p = fn.rfind("001");
+    std::string path(path_.string());
+    size_t p = path.rfind("000");
+    if(p==std::string::npos) p = path.rfind("001");
     assert(p!=std::string::npos);
 
-    *start = atoi(fn.substr(p,3).c_str()) + 1;
-    fn.replace(p,3,"%03d");	// make it a format
-    return fn;
+    *start = atoi(path.substr(p,3).c_str()) + 1;
+    path.replace(p,3,"%03d");	// make it a format
+    return path;
 }
 
 
@@ -252,10 +244,10 @@ std::string image_process::make_list_template(std::string fn,int *start)
  ** process_ewf
  */
 
-void process_ewf::local_e01_glob(std::string fname,char ***libewf_filenames,int *amount_of_filenames)
+void process_ewf::local_e01_glob(std::filesystem::path fname,char ***libewf_filenames,int *amount_of_filenames)
 {
     std::cerr << "Experimental code for E01 names with MD5s appended\n";
-#ifdef WIN32
+#ifdef _WIN32
     /* Find the directory name */
     std::string dirname(fname);
     size_t pos = dirname.rfind("\\");                  // this this slash
@@ -286,7 +278,7 @@ void process_ewf::local_e01_glob(std::string fname,char ***libewf_filenames,int 
     if(hFind == INVALID_HANDLE_VALUE){
         throw std::runtime_error( Formatter() << "Invalid file pattern " << utf16to8(wbufstring) );
     }
-    std::vector<std::string> files;
+    std::vector<std::filesystem::path> files;
     files.push_back(dirname + utf16to8(FindFileData.cFileName));
     while(FindNextFile(hFind,&FindFileData)!=0){
         files.push_back(dirname + utf16to8(FindFileData.cFileName));
@@ -325,7 +317,7 @@ process_ewf::~process_ewf()
 
 int process_ewf::open()
 {
-    std::string fname = image_fname();
+    std::filesystem::path fname = image_fname();
     char **libewf_filenames = NULL;
     int amount_of_filenames = 0;
 
@@ -551,10 +543,10 @@ uint64_t process_ewf::seek_block(image_process::iterator &it,uint64_t block) con
  * process_raw
  */
 
-process_raw::process_raw(std::string fname, size_t pagesize_, size_t margin_)
+process_raw::process_raw(std::filesystem::path fname, size_t pagesize_, size_t margin_)
     :image_process(fname, pagesize_, margin_),
      file_list(),raw_filesize(0),current_file_name(),
-#ifdef WIN32
+#ifdef _WIN32
      current_handle(INVALID_HANDLE_VALUE)
 #else
      current_fd(-1)
@@ -564,14 +556,14 @@ process_raw::process_raw(std::string fname, size_t pagesize_, size_t margin_)
 
 process_raw::~process_raw()
 {
-#ifdef WIN32
+#ifdef _WIN32
     if(current_handle!=INVALID_HANDLE_VALUE) ::CloseHandle(current_handle);
 #else
     if(current_fd>0) ::close(current_fd);
 #endif
 }
 
-#ifdef WIN32
+#ifdef _WIN32
 BOOL GetDriveGeometry(const wchar_t *wszPath, DISK_GEOMETRY *pdg)
 {
     HANDLE hDevice = INVALID_HANDLE_VALUE;  // handle to the drive to be examined
@@ -608,26 +600,24 @@ BOOL GetDriveGeometry(const wchar_t *wszPath, DISK_GEOMETRY *pdg)
 /**
  * Add the file to the list, keeping track of the total size
  */
-void process_raw::add_file(std::string fname)
+void process_raw::add_file(std::filesystem::path fname)
 {
-    int64_t fname_length = 0;
+    int64_t fname_filesize = std::filesystem::file_size(fname);
 
-    /* Get the physical size of drive under Windows */
-    fname_length = getSizeOfFile(fname);
-#ifdef WIN32
-    if (fname_length==0){
+#ifdef _WIN32
+    if (fname_filesize==0){
         /* On Windows, see if we can use this */
         fprintf(stderr,"%s checking physical drive\n",fname.c_str());
         // http://msdn.microsoft.com/en-gb/library/windows/desktop/aa363147%28v=vs.85%29.aspx
         DISK_GEOMETRY pdg = { 0 }; // disk drive geometry structure
-        std::wstring wszDrive = safe_utf8to16(fname);
+        std::wstring wszDrive = utf8to16(fname.string());
         GetDriveGeometry(wszDrive.c_str(), &pdg);
-        fname_length = pdg.Cylinders.QuadPart * (ULONG)pdg.TracksPerCylinder *
+        fname_filesize = pdg.Cylinders.QuadPart * (ULONG)pdg.TracksPerCylinder *
             (ULONG)pdg.SectorsPerTrack * (ULONG)pdg.BytesPerSector;
     }
 #endif
-    file_list.push_back(file_info(fname,raw_filesize,fname_length));
-    raw_filesize += fname_length;
+    file_list.push_back(file_info(fname,raw_filesize,fname_filesize));
+    raw_filesize += fname_filesize;
 }
 
 const process_raw::file_info *process_raw::find_offset(uint64_t pos) const
@@ -655,7 +645,7 @@ int process_raw::open()
 	    char probename[PATH_MAX];
 	    snprintf(probename,sizeof(probename),templ.c_str(),num);
 	    if(access(probename,R_OK)!=0) break;	    // no more files
-	    add_file(std::string(probename)); // found another name
+	    add_file(std::filesystem::path(probename)); // found another name
 	}
     }
     return 0;
@@ -684,15 +674,16 @@ ssize_t process_raw::pread(void *buf, size_t bytes, uint64_t offset) const
      */
 
     if(fi->name != current_file_name){
-#ifdef WIN32
+#ifdef _WIN32
         if(current_handle!=INVALID_HANDLE_VALUE) ::CloseHandle(current_handle);
 #else
 	if(current_fd>=0) close(current_fd);
 #endif
 
 	current_file_name = fi->name;
-#ifdef WIN32
-        current_handle = CreateFileA(fi->name.c_str(), FILE_READ_DATA,
+#ifdef _WIN32
+        std::wstring path16 = utf8to16(fi->name.string());
+        current_handle = CreateFileA(reinterpret_cast<const char *>(path16.c_str()), FILE_READ_DATA,
                                     FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
 				     OPEN_EXISTING, 0, NULL);
         if(current_handle==INVALID_HANDLE_VALUE){
@@ -719,7 +710,7 @@ ssize_t process_raw::pread(void *buf, size_t bytes, uint64_t offset) const
 
     /* we have neither, so just hack it with lseek64 */
     assert(fi->offset <= offset);
-#ifdef WIN32
+#ifdef _WIN32
     DWORD bytes_read = 0;
     LARGE_INTEGER li;
     li.QuadPart = offset - fi->offset;
@@ -815,13 +806,6 @@ sbuf_t *process_raw::sbuf_alloc(image_process::iterator &it) const
     return sbuf;
 }
 
-static std::string filename_extension(std::string fn)
-{
-    size_t dotpos = fn.rfind('.');
-    if(dotpos==std::string::npos) return "";
-    return fn.substr(dotpos+1);
-}
-
 uint64_t process_raw::max_blocks(const image_process::iterator &it) const
 {
     return (this->raw_filesize+pagesize-1) / pagesize;
@@ -846,7 +830,7 @@ uint64_t process_raw::seek_block(image_process::iterator &it,uint64_t block) con
  * directories don't get page sizes or margins; the page size is the entire
  * file and the margin is 0.
  */
-process_dir::process_dir(std::string image_dir): image_process(image_dir,0,0)
+process_dir::process_dir(std::filesystem::path image_dir): image_process(image_dir,0,0)
 {
     for (const auto& entry : std::filesystem::recursive_directory_iterator( image_dir )) {
         if (entry.is_regular_file()) {
@@ -896,7 +880,7 @@ void process_dir::increment_iterator(image_process::iterator &it) const
 
 pos0_t process_dir::get_pos0(const image_process::iterator &it) const
 {
-    return pos0_t(files[it.file_number],0);
+    return pos0_t(files[it.file_number], 0);
 }
 
 /** Read from the iterator into a newly allocated sbuf
@@ -945,7 +929,7 @@ image_process *image_process::open(std::string fn,bool opt_recurse, size_t pages
     struct stat st;
     bool  is_windows_unc = false;
 
-#ifdef WIN32
+#ifdef _WIN32
     if(fn.size()>2 && fn[0]=='\\' && fn[1]=='\\') is_windows_unc=true;
 #endif
 
