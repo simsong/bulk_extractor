@@ -33,7 +33,7 @@ pcap_writer::~pcap_writer()
 void pcap_writer::pcap_write_bytes(const uint8_t * const val, size_t num_bytes)
 {
     fcap->write(reinterpret_cast<const char *>(val),num_bytes);
-    if (fcap->rdstate() & (std::ios::failbit||std::ios::badbit)){
+    if (fcap->rdstate() & (std::ios::failbit|std::ios::badbit)){
         throw std::runtime_error(Formatter() << "scanner pcap_writer is unable to write to file " << outpath);
     }
 }
@@ -45,7 +45,7 @@ void pcap_writer::pcap_write2(const uint16_t val)
     *fcap << ch;
     ch = val >> 8;
     *fcap << ch;
-    if (fcap->rdstate() & (std::ios::failbit||std::ios::badbit)){
+    if (fcap->rdstate() & (std::ios::failbit|std::ios::badbit)){
         throw std::runtime_error(Formatter() << "scanner scan_net is unable to write to file " << outpath);
     }
 }
@@ -53,7 +53,7 @@ void pcap_writer::pcap_write2(const uint16_t val)
 void pcap_writer::pcap_write4(const uint32_t val)
 {
     fcap->write(reinterpret_cast<const char *>(&val), 4);
-    if (fcap->rdstate() & (std::ios::failbit||std::ios::badbit)){
+    if (fcap->rdstate() & (std::ios::failbit|std::ios::badbit)){
         throw std::runtime_error(Formatter() << "scanner scan_net is unable to write to file " << outpath);
     }
 }

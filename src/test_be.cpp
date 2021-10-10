@@ -48,6 +48,8 @@
 const std::string JSON1 {"[{\"1\": \"one@company.com\"}, {\"2\": \"two@company.com\"}, {\"3\": \"two@company.com\"}]"};
 const std::string JSON2 {"[{\"1\": \"one@base64.com\"}, {\"2\": \"two@base64.com\"}, {\"3\": \"three@base64.com\"}]\n"};
 
+bool debug = false;
+
 std::filesystem::path test_dir()
 {
 #ifdef HAVE__NSGETEXECUTABLEPATH
@@ -495,7 +497,7 @@ bool feature_match(const Check &exp, const std::string &line)
     auto words = split(line, '\t');
     if (words.size() <2 || words.size() > 3) return false;
 
-    //std::cerr << "check line=" << line << "\n";
+    if(debug) std::cerr << "check line=" << line << "\n";
 
     std::string pos = exp.feature.pos.str();
     if ( pos.size() > 2 ){
@@ -507,13 +509,13 @@ bool feature_match(const Check &exp, const std::string &line)
         }
     }
 
-    if ( words[0] != exp.feature.pos.str() ){
-        //std::cerr << "  pos " << exp.feature.pos << " does not match\n";
+    if ( pos0_t(words[0]) != exp.feature.pos ){
+        if (debug) std::cerr << "  pos " << exp.feature.pos.str() << " does not match '" << words[0] << "'" << std::endl;
         return false;
     }
 
     if ( words[1] != exp.feature.feature ){
-        //std::cerr << "  feature '" << exp.feature.feature << "' does not match feature '" << words[1] << "'\n";
+        if (debug)std::cerr << "  feature '" << exp.feature.feature << "' does not match feature '" << words[1] << "'" << std::endl;
         return false;
     }
 
@@ -522,17 +524,17 @@ bool feature_match(const Check &exp, const std::string &line)
 
     if ( (ctx=="") || (ctx==words[2]) )  return true;
 
-    //std::cerr << "  context '" << ctx << "' (len=" << ctx.size() << ") "
-    //<< "does not match context '" << words[2] << "' (" << words[2].size() << ")\n";
+    if (debug) std::cerr << "  context '" << ctx << "' (len=" << ctx.size() << ") "
+                         << "does not match context '" << words[2] << "' (" << words[2].size() << ")\n";
 
     if ( ends_with(ctx, "*") ) {
         ctx.resize(ctx.size()-1 );
         if (starts_with(words[2], ctx )){
             return true;
         }
-        //std::cerr << "  context did not start with '" << ctx << "'\n";
+        if (debug) std::cerr << "  context did not start with '" << ctx << "'\n";
     } else {
-        //std::cerr << "  context does not end with *\n";
+        if (debug) std::cerr << "  context does not end with *\n";
     }
 
     return false;
@@ -544,6 +546,7 @@ bool feature_match(const Check &exp, const std::string &line)
  */
 std::filesystem::path validate(std::string image_fname, std::vector<Check> &expected, bool recurse=true, size_t offset=0)
 {
+    debug = getenv("DEBUG") ? true : false;
     sbuf_t::debug_range_exception = true;
     scanner_config sc;
 
@@ -606,26 +609,32 @@ std::filesystem::path validate(std::string image_fname, std::vector<Check> &expe
         std::filesystem::path fname  = sc.outdir / exp.fname;
         bool found = false;
         for (int pass=0 ; pass<2 && !found;pass++){
-
             std::string line;
             std::ifstream inFile;
             inFile.open(fname);
             if (!inFile.is_open()) {
                 throw std::runtime_error("validate_scanners:[phase1] Could not open "+fname.string());
             }
-            while (std::getline(inFile, line)) {
-                if (pass==1) {
+            while (std::getline(inFile, line) && !found) {
+                switch (pass) {
+                case 0:
+                    if (feature_match(exp, line)){
+                        found = true;
+                    }
+                    break;
+                case 1:
                     std::cerr << fname << ":" << line << "\n"; // print the file the second time through
-                }
-                if (feature_match(exp, line)){
-                    found = true;
                     break;
                 }
+
             }
         }
         if (!found){
-            std::cerr << fname << " did not find " << exp.feature.pos
-                      << " " << exp.feature.feature << " " << exp.feature.context << "\t";
+            std::cerr << fname << " did not find"
+                      << " pos=" << exp.feature.pos
+                      << " feature=" << exp.feature.feature
+                      << " context=" << exp.feature.context
+                      << std::endl;
         }
         REQUIRE(found);
     }
