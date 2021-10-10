@@ -18,36 +18,63 @@
 pcap_writer::pcap_writer(const scanner_params &sp):
     outpath(sp.sc.outdir / OUTPUT_FILENAME)
 {
-    ip_recorder    = &sp.named_feature_recorder("ip");
-    tcp_recorder   = &sp.named_feature_recorder("tcp");
-    ether_recorder = &sp.named_feature_recorder("ether");
 }
 
 pcap_writer::~pcap_writer()
 {
     if (fcap){
         const std::lock_guard<std::mutex> lock(Mfcap);
-        fclose(fcap);
+        fcap->close();
+        delete fcap;
         fcap = nullptr;
     }
 }
+
+void pcap_writer::pcap_write_bytes(const uint8_t * const val, size_t num_bytes)
+{
+    fcap->write(reinterpret_cast<const char *>(val),num_bytes);
+    if (fcap->rdstate() & (std::ios::failbit||std::ios::badbit)){
+        throw std::runtime_error(Formatter() << "scanner pcap_writer is unable to write to file " << outpath);
+    }
+}
+
+/* Write a 16-bit value, little end first */
+void pcap_writer::pcap_write2(const uint16_t val)
+{
+    char ch = val & 0xff;
+    *fcap << ch;
+    ch = val >> 8;
+    *fcap << ch;
+    if (fcap->rdstate() & (std::ios::failbit||std::ios::badbit)){
+        throw std::runtime_error(Formatter() << "scanner scan_net is unable to write to file " << outpath);
+    }
+}
+
+void pcap_writer::pcap_write4(const uint32_t val)
+{
+    fcap->write(reinterpret_cast<const char *>(&val), 4);
+    if (fcap->rdstate() & (std::ios::failbit||std::ios::badbit)){
+        throw std::runtime_error(Formatter() << "scanner scan_net is unable to write to file " << outpath);
+    }
+}
+
 
 /*
  * @param add_frame - should we add a frame?
  * @param frame_type - the ethernet frame type. Note that this could be combined with add_frame, with frame_type=0 for no add.
  */
-void pcap_writer::pcap_writepkt(const struct pcap_hdr &h, // packet header
+void pcap_writer::pcap_writepkt(const struct pcap_writer::pcap_hdr &h, // packet header
                                 const sbuf_t &sbuf,       // sbuf where packet is located
                                 const size_t pos,         // position within the sbuf
                                 const bool add_frame,     // whether or not to create a synthetic ethernet frame
-                                const uint16_t frame_type) const // if we add a frame, the frame type
+                                const uint16_t frame_type)  // if we add a frame, the frame type
 {
     // Make sure that neither this packet nor an encapsulated version of this packet has been written
-    const std::lock_guard<std::mutex> lock(Mfcap);// lock the mutex
+    const std::lock_guard<std::mutex> lock(Mfcap);  // lock the mutex
     if (fcap==0){
-        fcap = ::fopen(safe_utf8to16(outpath.string()).c_str(),"wb"); // write the output
-        if (fcap==nullptr) {
-            throw std::runtime_error(Formatter() << "scan_net.cpp: cannot open " << outpath << " for  writing");
+        fcap = new std::ofstream(outpath, std::ios::binary); // write the output
+        if (fcap->is_open()==false){
+            throw std::runtime_error(Formatter() << "pcap_writer.cpp: cannot open " << outpath << " for  writing");
         }
         pcap_write4(0xa1b2c3d4);
         pcap_write2(2);			// major version number
@@ -56,7 +83,7 @@ void pcap_writer::pcap_writepkt(const struct pcap_hdr &h, // packet header
         pcap_write4(0);			// accuracy of time stamps in the file; always 0
         pcap_write4(PCAP_MAX_PKT_LEN);	// snapshot length
         pcap_write4(DLT_EN10MB);	// link layer encapsulation
-        assert( ftello(fcap) == TCPDUMP_HEADER_SIZE );
+        assert( fcap->tellp() == TCPDUMP_HEADER_SIZE );
     }
 
     size_t forged_header_len = 0;
@@ -86,6 +113,13 @@ void pcap_writer::pcap_writepkt(const struct pcap_hdr &h, // packet header
     if (add_frame_and_safe) {
         pcap_write_bytes(forged_header, sizeof(forged_header));
     }
-    sbuf.write(fcap, pos, h.cap_len );	// the packet
+    sbuf.write(*fcap, pos, h.cap_len );	// the packet
+}
 
+void pcap_writer::flush()
+{
+    if (fcap){
+        const std::lock_guard<std::mutex> lock(Mfcap);
+        fcap->flush();
+    }
 }

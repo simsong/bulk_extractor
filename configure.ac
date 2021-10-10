@@ -288,8 +288,12 @@ m4_include([m4/slg_check_gcc_diagnostics.m4])
 ## If compiling on mingw, add another -lgdi32 to be safe
 ## This is required becuase some libraries reference functions in gdi32 and, for whatever reason,
 ## the linker is not smart enough to re-check the library
+##
+## Also add -municode per https://stackoverflow.com/questions/58324230/undefined-reference-to-winmain-c-mingw
+## but only for be_test
 if test x"$mingw" = x"yes" ; then
-  LIBS="$LIBS -lgdi32"
+  LIBS="$LIBS -lgdi32 "
+  test_be_LDADD = -municode
 else
   CFLAGS="$CFLAGS -fPIC"
   CXXFLAGS="$CXXFLAGS -fPIC"

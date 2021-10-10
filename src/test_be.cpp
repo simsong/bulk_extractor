@@ -120,7 +120,7 @@ std::filesystem::path test_scanners(const std::vector<scanner_t *> & scanners, s
     feature_recorder_set::flags_t frs_flags;
     frs_flags.pedantic = true;          // for testing
     scanner_config sc;
-    sc.outdir           = std::filesystem::temp_directory_path();
+    sc.outdir           = NamedTemporaryDirectory();
     sc.scanner_commands = enable_all_scanners;
 
     scanner_set ss(sc, frs_flags, nullptr);
@@ -474,7 +474,7 @@ struct Check {
 TEST_CASE("test_validate", "[phase1]" ) {
     scanner_config sc;
 
-    sc.outdir = std::filesystem::temp_directory_path();
+    sc.outdir = NamedTemporaryDirectory();
     sc.scanner_commands = enable_all_scanners;
     feature_recorder_set::flags_t frs_flags;
     frs_flags.pedantic = true;          // for testing
@@ -507,7 +507,7 @@ bool feature_match(const Check &exp, const std::string &line)
         }
     }
 
-    if ( words[0] != exp.feature.pos ){
+    if ( words[0] != exp.feature.pos.str() ){
         //std::cerr << "  pos " << exp.feature.pos << " does not match\n";
         return false;
     }
@@ -547,7 +547,7 @@ std::filesystem::path validate(std::string image_fname, std::vector<Check> &expe
     sbuf_t::debug_range_exception = true;
     scanner_config sc;
 
-    sc.outdir           = std::filesystem::temp_directory_path();
+    sc.outdir           = NamedTemporaryDirectory();
     sc.scanner_commands = enable_all_scanners;
     sc.allow_recurse    = recurse;
 
@@ -556,7 +556,7 @@ std::filesystem::path validate(std::string image_fname, std::vector<Check> &expe
     if (offset==0) {
         sc.input_fname = test_dir() / image_fname;
     } else {
-        std::string offset_name = sc.outdir / "offset_file";
+        std::filesystem::path offset_name = sc.outdir / "offset_file";
 
         std::ifstream in(  test_dir() / image_fname, std::ios::binary);
         std::ofstream out( offset_name );
@@ -927,7 +927,7 @@ TEST_CASE("path_printer", "[path_printer]") {
 TEST_CASE("restarter", "[restarter]") {
     scanner_config   sc;   // config for be13_api
     sc.input_fname = test_dir() / "1mb_fat32.dmg";
-    sc.outdir = std::filesystem::temp_directory_path();
+    sc.outdir = NamedTemporaryDirectory();
 
     std::filesystem::copy(test_dir() / "interrupted_report.xml",
                           sc.outdir  / "report.xml");
@@ -961,8 +961,8 @@ int arg_count(char * const *argv)
 }
 
 TEST_CASE("e2e-h", "[end-to-end]") {
-    std::string inpath = test_dir() / "nps-2010-emails.100k.raw";
-    std::string outdir = std::filesystem::temp_directory_path();
+    std::filesystem::path inpath = test_dir() / "nps-2010-emails.100k.raw";
+    std::filesystem::path outdir = NamedTemporaryDirectory();
     /* Try the -h option */
     const char *argv[] = {"bulk_extractor", "-h", nullptr};
     int ret = bulk_extractor_main(std::cout, std::cerr, 2, const_cast<char * const *>(argv));
@@ -970,8 +970,8 @@ TEST_CASE("e2e-h", "[end-to-end]") {
 }
 
 TEST_CASE("e2e-H", "[end-to-end]") {
-    std::string inpath = test_dir() / "nps-2010-emails.100k.raw";
-    std::string outdir = std::filesystem::temp_directory_path();
+    std::filesystem::path inpath = test_dir() / "nps-2010-emails.100k.raw";
+    std::filesystem::path outdir = NamedTemporaryDirectory();
     /* Try the -H option */
     const char *argv[] = {"bulk_extractor", "-H", nullptr};
     int ret = bulk_extractor_main(std::cout, std::cerr, 2, const_cast<char * const *>(argv));
@@ -979,7 +979,7 @@ TEST_CASE("e2e-H", "[end-to-end]") {
 }
 
 TEST_CASE("e2e-no-imagefile", "[end-to-end]") {
-    std::string outdir = std::filesystem::temp_directory_path();
+    std::filesystem::path outdir = NamedTemporaryDirectory();
     /* Try the -H option */
     const char *argv[] = {"bulk_extractor", nullptr};
     int ret = bulk_extractor_main(std::cout, std::cerr, 1, const_cast<char * const *>(argv));
@@ -987,10 +987,12 @@ TEST_CASE("e2e-no-imagefile", "[end-to-end]") {
 }
 
 TEST_CASE("e2e-0", "[end-to-end]") {
-    std::string inpath = test_dir() / "nps-2010-emails.100k.raw";
-    std::string outdir = std::filesystem::temp_directory_path();
+    std::filesystem::path inpath = test_dir() / "nps-2010-emails.100k.raw";
+    std::filesystem::path outdir = NamedTemporaryDirectory();
     /* Try to run twice. There seems to be a problem with the second time through.  */
-    const char *argv[] = {"bulk_extractor", "-0", "-o", outdir.c_str(), inpath.c_str(), nullptr};
+    std::string inpath_string = inpath.string();
+    std::string outdir_string = outdir.string();
+    const char *argv[] = {"bulk_extractor", "-0", "-o", outdir_string.c_str(), inpath_string.c_str(), nullptr};
     std::cerr << "*******************************************************************\n";
     std::cout << "*******************************************************************\n";
     int ret = bulk_extractor_main(std::cout, std::cerr, 5, const_cast<char * const *>(argv));
@@ -1001,14 +1003,15 @@ TEST_CASE("e2e-0", "[end-to-end]") {
     REQUIRE( ret==0 );
 
     /* Validate the output dfxml file */
-    std::string validate = std::string("xmllint --noout ") + outdir + "/report.xml";
+    std::string validate = std::string("xmllint --noout ") + outdir_string + "/report.xml";
     int code = system( validate.c_str());
     REQUIRE( code == 0);
 }
 
 TEST_CASE("path-printer", "[end-to-end]") {
-    std::string inpath = test_dir() / "test_base64json.txt";
-    const char *argv[] = {"bulk_extractor","-p","0:64/h", inpath.c_str(), nullptr};
+    std::filesystem::path inpath = test_dir() / "test_base64json.txt";
+    std::string inpath_string = inpath.string();
+    const char *argv[] = {"bulk_extractor","-p","0:64/h", inpath_string.c_str(), nullptr};
     std::stringstream ss;
     int ret = bulk_extractor_main(ss, std::cerr, 4, const_cast<char * const *>(argv));
     std::string EXPECTED =

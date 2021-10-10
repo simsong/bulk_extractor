@@ -45,6 +45,7 @@
 #endif
 
 #include "be13_api/utf8.h"
+#include "be13_api/utils.h"
 #include "be13_api/formatter.h"
 #include "image_process.h"
 
@@ -165,21 +166,6 @@ std::string image_process::filename_extension(std::filesystem::path fn_)
 
 
 
-/* These are only used in WIN32 but are defined here so that they can be tested on all platforms */
-std::string image_process::utf16to8(std::wstring fn16)
-{
-    std::string fn8;
-    utf8::utf16to8(fn16.begin(),fn16.end(),back_inserter(fn8));
-    return fn8;
-}
-
-std::wstring image_process::utf8to16(std::string fn8)
-{
-    std::wstring fn16;
-    utf8::utf8to16(fn8.begin(),fn8.end(),back_inserter(fn16));
-    return fn16;
-}
-
 image_process::image_process(std::filesystem::path fn, size_t pagesize_, size_t margin_):
     image_fname_(fn),pagesize(pagesize_),margin(margin_),report_read_errors(true)
 {
@@ -269,19 +255,19 @@ void process_ewf::local_e01_glob(std::filesystem::path fname,char ***libewf_file
     for(;*cc;cc++){
         if(*cc!='.') *cc='?';          // replace the E01 and the MD5s at the end with ?s
     }
-    std::wstring wbufstring = utf8to16(buf); // convert to utf16
+    std::wstring wbufstring = safe_utf8to16(buf); // convert to utf16
     const wchar_t *wbuf = wbufstring.c_str();
 
     /* Find the files */
     WIN32_FIND_DATA FindFileData;
     HANDLE hFind = FindFirstFile(wbuf, &FindFileData);
     if(hFind == INVALID_HANDLE_VALUE){
-        throw std::runtime_error( Formatter() << "Invalid file pattern " << utf16to8(wbufstring) );
+        throw std::runtime_error( Formatter() << "Invalid file pattern " << safe_utf16to8(wbufstring) );
     }
     std::vector<std::filesystem::path> files;
-    files.push_back(dirname + utf16to8(FindFileData.cFileName));
+    files.push_back(dirname + safe_utf16to8(FindFileData.cFileName));
     while(FindNextFile(hFind,&FindFileData)!=0){
-        files.push_back(dirname + utf16to8(FindFileData.cFileName));
+        files.push_back(dirname + safe_utf16to8(FindFileData.cFileName));
     }
 
     /* Sort the files */
@@ -318,6 +304,7 @@ process_ewf::~process_ewf()
 int process_ewf::open()
 {
     std::filesystem::path fname = image_fname();
+    std::string fname_string = fname.string();
     char **libewf_filenames = NULL;
     int amount_of_filenames = 0;
 
@@ -326,7 +313,8 @@ int process_ewf::open()
 #ifdef HAVE_LIBEWF_HANDLE_CLOSE
     bool use_libewf_glob = true;
     libewf_error_t *error=0;
-    if(fname.find(".E01.")!=std::string::npos){
+
+    if(fname_string.find(".E01")!=std::string::npos){
         use_libewf_glob = false;
     }
 
@@ -354,7 +342,7 @@ int process_ewf::open()
         for(size_t i = 0; libewf_filenames[i]; i++){
             std::cerr << "filename " << i << " = " << libewf_filenames[i] << "\n";
         }
-	throw image_process::NoSuchFile( (Formatter() << "Cannot open: " << fname).str() );
+	throw image_process::NoSuchFile( fname.string() );
     }
     /* Free the allocated filenames */
     if(use_libewf_glob){
@@ -610,7 +598,7 @@ void process_raw::add_file(std::filesystem::path fname)
         fprintf(stderr,"%s checking physical drive\n",fname.c_str());
         // http://msdn.microsoft.com/en-gb/library/windows/desktop/aa363147%28v=vs.85%29.aspx
         DISK_GEOMETRY pdg = { 0 }; // disk drive geometry structure
-        std::wstring wszDrive = utf8to16(fname.string());
+        std::wstring wszDrive = safe_utf8to16(fname.string());
         GetDriveGeometry(wszDrive.c_str(), &pdg);
         fname_filesize = pdg.Cylinders.QuadPart * (ULONG)pdg.TracksPerCylinder *
             (ULONG)pdg.SectorsPerTrack * (ULONG)pdg.BytesPerSector;
@@ -682,7 +670,7 @@ ssize_t process_raw::pread(void *buf, size_t bytes, uint64_t offset) const
 
 	current_file_name = fi->name;
 #ifdef _WIN32
-        std::wstring path16 = utf8to16(fi->name.string());
+        std::wstring path16 = safe_utf8to16(fi->name.string());
         current_handle = CreateFileA(reinterpret_cast<const char *>(path16.c_str()), FILE_READ_DATA,
                                     FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
 				     OPEN_EXISTING, 0, NULL);
@@ -878,17 +866,19 @@ void process_dir::increment_iterator(image_process::iterator &it) const
     if(it.file_number>files.size()) it.file_number=files.size();
 }
 
+#pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
 pos0_t process_dir::get_pos0(const image_process::iterator &it) const
 {
-    return pos0_t(files[it.file_number], 0);
+    return pos0_t(files[it.file_number].string(), 0);
 }
+#pragma GCC diagnostic warning "-Wsuggest-attribute=noreturn"
 
 /** Read from the iterator into a newly allocated sbuf
  * with mapped memory.
  */
 sbuf_t *process_dir::sbuf_alloc(image_process::iterator &it) const
 {
-    std::string fname = files[it.file_number];
+    std::filesystem::path fname = files[it.file_number];
     sbuf_t *sbuf = sbuf_t::map_file(fname);     // returns a new sbuf
     return sbuf;
 }
@@ -922,27 +912,28 @@ uint64_t process_dir::seek_block(class image_process::iterator &it,uint64_t bloc
  ****************************************************************/
 /* Static function */
 
-image_process *image_process::open(std::string fn,bool opt_recurse, size_t pagesize_, size_t margin_)
+image_process *image_process::open(std::filesystem::path fn, bool opt_recurse, size_t pagesize_, size_t margin_)
 {
     image_process *ip = 0;
     std::string ext = filename_extension(fn);
     struct stat st;
     bool  is_windows_unc = false;
+    std::string fname_string = fn.string();
 
 #ifdef _WIN32
-    if(fn.size()>2 && fn[0]=='\\' && fn[1]=='\\') is_windows_unc=true;
+    if(fname_string.size()>2 && fname_string[0]=='\\' && fname_string[1]=='\\') is_windows_unc=true;
 #endif
 
     memset(&st,0,sizeof(st));
-    if (stat(fn.c_str(),&st) && !is_windows_unc){
-	throw NoSuchFile(fn);
+    if (stat(fname_string.c_str(),&st) && !is_windows_unc){
+	throw NoSuchFile(fname_string);
     }
     if(S_ISDIR(st.st_mode)){
 	/* If this is a directory, process specially */
 	if(opt_recurse==0){
-	    std::cerr << "error: " << fn << " is a directory but -R (opt_recurse) not set\n";
+	    std::cerr << "error: " << fname_string << " is a directory but -R (opt_recurse) not set\n";
 	    errno = 0;
-	    throw NoSuchFile(fn);	// directory and cannot recurse
+	    throw NoSuchFile(fname_string);	// directory and cannot recurse
 	}
         /* Quickly scan the directory and see if it has a .E01, .000 or .001 file.
          * If so, give the user an error.
@@ -956,7 +947,7 @@ image_process *image_process::open(std::string fn,bool opt_recurse, size_t pages
                 std::cerr << "       or a directory of disk image parts. Please process these\n";
                 std::cerr << "       as a single disk image. If you need to process these files\n";
                 std::cerr << "       then place them in a sub directory of " << fn << "\n";
-                throw NoSuchFile(fn);
+                throw NoSuchFile( fname_string );
             }
         }
 	ip = new process_dir(fn);
@@ -971,7 +962,7 @@ image_process *image_process::open(std::string fn,bool opt_recurse, size_t pages
 
 	std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
-	if(ext=="e01" || fn.find(".E01.")!=std::string::npos){
+	if(ext=="e01" || fname_string.find(".E01.")!=std::string::npos){
 #ifdef HAVE_LIBEWF
 	    ip = new process_ewf(fn,pagesize_,margin_);
 #else
@@ -982,7 +973,7 @@ image_process *image_process::open(std::string fn,bool opt_recurse, size_t pages
     }
     /* Try to open it */
     if (ip->open()){
-        throw NoSuchFile(fn);
+        throw NoSuchFile(fname_string);
     }
     return ip;
 }

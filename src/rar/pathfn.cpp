@@ -120,7 +120,7 @@ wchar* ConvertPath(const wchar *SrcPath,wchar *DestPath)
   // Code above does not remove last "..", doing here.
   if (DestPtr[0]=='.' && DestPtr[1]=='.' && DestPtr[2]==0)
     DestPtr+=2;
-  
+
   if (DestPath!=NULL)
   {
     // SrcPath and DestPath can point to same memory area,
@@ -550,7 +550,7 @@ char* GetVolNumPart(char *ArcName)
   {
     if (IsDigit(*NumPtr))
     {
-      // Validate the first numeric part only if it has a dot somewhere 
+      // Validate the first numeric part only if it has a dot somewhere
       // before it.
       char *Dot=strchrd(PointToName(ArcName),'.');
       if (Dot!=NULL && Dot<NumPtr)
@@ -584,7 +584,7 @@ wchar* GetVolNumPart(wchar *ArcName)
   {
     if (IsDigit(*NumPtr))
     {
-      // Validate the first numeric part only if it has a dot somewhere 
+      // Validate the first numeric part only if it has a dot somewhere
       // before it.
       wchar *Dot=wcschr(PointToName(ArcName),'.');
       if (Dot!=NULL && Dot<NumPtr)
@@ -1120,11 +1120,11 @@ void GenerateArchiveName(char *ArcName,wchar *ArcNameW,size_t MaxSize,
   {
     strncpyz(NewName,NullToEmpty(ArcName),ASIZE(NewName));
     wcsncpyz(NewNameW,NullToEmpty(ArcNameW),ASIZE(NewNameW));
-    
+
     bool ArcNumPresent=false;
 
     GenArcName(NewName,NewNameW,GenerateMask,ArcNumber,ArcNumPresent);
-    
+
     if (!ArcNumPresent)
       break;
     if (!FileExist(NewName,NewNameW))
@@ -1253,7 +1253,7 @@ void GenArcName(char *ArcName,wchar *ArcNameW,char *GenerateMask,
   if (StartWeekDay%7>=4)
     CurWeek++;
 
-  char Field[10][6];
+  char Field[10][12];                   // make 12 to avoid warnings below
 
   sprintf(Field[0],"%04d",rlt.Year);
   sprintf(Field[1],"%02d",rlt.Month);

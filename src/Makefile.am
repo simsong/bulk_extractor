@@ -90,7 +90,9 @@ scanners_builtin = \
 	scan_winprefetch.cpp \
 	scan_wordlist.cpp \
 	scan_xor.cpp \
-	scan_zip.cpp
+	scan_zip.cpp \
+	pcap_writer.cpp \
+	pcap_writer.h
 
 if FLEXSCANNERS_ENABLED
   scanners_builtin += $(flex_scanners)

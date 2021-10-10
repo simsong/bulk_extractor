@@ -10,8 +10,8 @@
 #include "be13_api/scanner_params.h"
 
 /* tunable constants */
-u_int sht_null_counter_max = 10;
-u_int slt_max_name_size = 65535;
+size_t sht_null_counter_max = 10;
+size_t slt_max_name_size = 65535;
 
 /* constants from the ELF specification */
 
@@ -607,7 +607,7 @@ std::string scan_elf_verify (const sbuf_t & data)
 {
     std::stringstream xml;
     std::stringstream so_xml;		// collect shared object names
-    u_int sht_null_count=0;
+    size_t sht_null_count=0;
 
 
     xml << "<ELF";

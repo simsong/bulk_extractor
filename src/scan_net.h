@@ -27,11 +27,7 @@ typedef char sa_family_t;
 #include "be13_api/sbuf.h"
 #include "be13_api/packet_info.h"
 #include "be13_api/feature_recorder.h"
-
-/* Currently the packet writer is a subclass of scan_net_t.
- * That's really broken; the packet writer should be a separate class.
- * Oh well.
- */
+#include "pcap_writer.h"
 
 struct scan_net_t {
 
@@ -55,9 +51,6 @@ struct scan_net_t {
         uint8_t ipv;
     };
 
-
-
-
     /* testing functions */
     static bool isPowerOfTwo(const uint8_t val);
     static bool invalidMAC(const be13::ether_addr *const e);
@@ -70,19 +63,18 @@ struct scan_net_t {
     static inline std::string i2str(const int i);
     static bool sanityCheckIP46Header(const sbuf_t &sbuf, size_t pos, generic_iphdr_t *h);
 
-
     /* regular functions */
 
     scan_net_t(const scan_net_t &that) = delete;
     scan_net_t &operator=(const scan_net_t & that) = delete;
-
-    scan_net_t();
-    virtual ~scan_net_t();
+    scan_net_t(const scanner_params &sp);
     static inline const std::string CHKSUM_OK  {"cksum-ok"};
     static inline const std::string CHKSUM_BAD {"cksum-bad"};
-    feature_recorder *ip_recorder {nullptr};
-    feature_recorder *tcp_recorder {nullptr};
-    feature_recorder *ether_recorder {nullptr};
+    mutable pcap_writer    pwriter;
+    feature_recorder &ip_recorder;
+    feature_recorder &tcp_recorder;
+    feature_recorder &ether_recorder;
+
 
     static uint16_t ip4_cksum(const sbuf_t &sbuf, size_t pos, size_t len);
     static uint16_t IPv6L3Chksum(const sbuf_t &sbuf, size_t pos, u_int chksum_byteoffset);
@@ -97,20 +89,7 @@ struct scan_net_t {
     /* Header for each packet */
     constexpr static size_t PCAP_RECORD_HEADER_SIZE = 16;
 
-    /*
-     * Sanity check the header values
-     */
-    struct pcap_hdr {
-        pcap_hdr(uint32_t s,uint32_t u,uint32_t c,uint32_t l):seconds(s),useconds(u),cap_len(c),pkt_len(l){}
-        pcap_hdr():seconds(0),useconds(0),cap_len(0),pkt_len(0){}
-        uint32_t seconds;
-        uint32_t useconds;
-        uint32_t cap_len;
-        uint32_t pkt_len;
-    };
-
-
-    bool likely_valid_pcap_packet_header(const sbuf_t &sbuf, size_t pos, struct pcap_hdr &h) const {
+    bool likely_valid_pcap_packet_header(const sbuf_t &sbuf, size_t pos, struct pcap_writer::pcap_hdr &h) const {
         if (sbuf.bufsize < pos + PCAP_RECORD_HEADER_SIZE  ) return false; // no room
 
         h.seconds  = sbuf.get32u( pos+0 ); if (h.seconds==0) return false;
@@ -127,7 +106,6 @@ struct scan_net_t {
     };
 
     /* Hardcoded tunings */
-    const static inline size_t PCAP_MAX_PKT_LEN  = 65535;	// The longest a packet may be; longer values make wireshark refuse to load
     const static inline uint16_t sane_ports[] = {80, 443, 53, 25, 110, 143, 993, 587, 23, 22, 21, 20, 119, 123};
     constexpr static inline uint16_t sane_ports_len = sizeof(sane_ports) / sizeof(uint16_t);
 
@@ -140,9 +118,6 @@ struct scan_net_t {
     // TIME_MAX is the maximum time for a pcap that the system will carve.
     // set it to two years in the future from when the program is running.
     const uint32_t TIME_MAX {static_cast<uint32_t>(time(0)) + 2 * 365 * 24 * 60 * 60};
-    const static inline std::string TCPDUMP_FR_FEATURE {"0xd4,0xc3,0xb2,0xa1"};
-    const static inline std::string TCPDUMP_FR_CONTEXT {"TCPDUMP file"};
-    const static inline uint32_t TCPDUMP_HEADER_SIZE = 24;
 
     /* primitive port heuristics */
     bool sanePort(const uint16_t port) const {
@@ -152,15 +127,6 @@ struct scan_net_t {
         }
         return false;
     };
-    /* subclassed in pcap_writer.
-     * Write the packet to the packet stream, writing the pcap header first and optionally adding a synthetic ethernet frame.
-     */
-    virtual void flush() const {};
-    virtual void pcap_writepkt(const struct pcap_hdr &h, // packet header
-                               const sbuf_t &sbuf,       // sbuf where packet is located
-                               const size_t pos,         // position within the sbuf
-                               const bool add_frame,     // whether or not to create a synthetic ethernet frame
-                               const uint16_t frame_type) const;  // ethernet frame type
 
     /* Each of these carvers looks for a specific structure and if it finds the structure it returns the size in the sbuf */
     void documentIPFields(const sbuf_t &sbuf, size_t pos, const generic_iphdr_t &h) const;
@@ -170,78 +136,7 @@ struct scan_net_t {
     size_t carvePCAPPacket(const sbuf_t &sbuf, size_t pos) const;
     size_t carvePCAPFile(const sbuf_t &sbuf, size_t pos) const;
     size_t carveEther(const sbuf_t &sbuf, size_t pos) const;
-    void carve(const sbuf_t &sbuf) const;
-
-};
-
-/* pcap_writer:
- * Encapsulates the logic of writing pcap files.
- *
- * Currently this will not write out a truncated packet.
- * multi-threaded, supporting a single object for multiple threads that's used for the entire bulk_extractor run.
- *
- * Should probably be implemented as a stand-alone class, rather than a subclass of scan_net, to make it testable.
- */
-class pcap_writer: public scan_net_t {
-    static const inline std::string OUTPUT_FILENAME {"packets.pcap"};
-    pcap_writer(const pcap_writer &pc) = delete;
-    pcap_writer &operator=(const pcap_writer &that) = delete;
-    mutable std::mutex Mfcap {};              // mutex for fcap
-    mutable FILE *fcap = 0;		      // capture file, protected by M
-    std::filesystem::path outpath;            // where it gets written
-
-    /*
-     * According to 'man pcap-savefile', you need to implement this file format,
-     * but there are no functions to do so.
-     *
-     * pcap_write_bytes writes bytes; pcap accomidates.
-     * pcap_write2 writes a 2-byte value in native byte order; pcap accomidates.
-     * pcap_write4 writes a 4-byte value in native byte order; pcap accomidates.
-     * pcap_writepkt writes a packet
-     */
-    void pcap_write_bytes(const uint8_t * const val, size_t num_bytes) const {
-        size_t count = fwrite(val,1,num_bytes,fcap);
-        if (count != num_bytes) {
-            std::cerr << "scanner scan_net is unable to write to file " << outpath << "\n";
-            throw std::runtime_error("fwrite failed");
-        }
-    }
-    void pcap_write2(const uint16_t val) const {
-        size_t count = fwrite(&val,1,2,fcap);
-        if (count != 2) {
-            std::cerr << "scanner scan_net is unable to write to file " << outpath << "\n";
-            throw std::runtime_error("fwrite failed");
-        }
-    }
-    void pcap_write4(const uint32_t val) const {
-        size_t count = fwrite(&val,1,4,fcap);
-        if (count != 4) {
-            std::cerr << "scanner scan_net is unable to write to file " << outpath << "\n";
-            throw std::runtime_error("fwrite failed");
-        }
-    }
-
-public:
-    pcap_writer(const scanner_params &sp);
-    ~pcap_writer();
-
-    void flush() const override {
-	if (fcap){
-            const std::lock_guard<std::mutex> lock(Mfcap);
-            fflush(fcap);
-        }
-    }
-
-    /* write an IP packet to the output stream, optionally writing a pcap header.
-     * Length of packet is determined from IP header.
-     */
-    void pcap_writepkt(const struct pcap_hdr &h, // packet header
-		       const sbuf_t &sbuf,       // sbuf where packet is located
-                       const size_t pos,         // position within the sbuf
-                       const bool add_frame,     // whether or not to create a synthetic ethernet frame
-                       const uint16_t frame_type) const override;
-
-
+    void   carve(const sbuf_t &sbuf) const;
 };
 
 inline std::ostream& operator<<(std::ostream& os, const scan_net_t::generic_iphdr_t &h) {

@@ -65,8 +65,6 @@ class image_process : public abstract_image_reader {
 public:
     /* These two functions are only used in WIN32 but are defined here so that they can be tested on all platforms */
     static std::string filename_extension(std::filesystem::path fn); // returns extension
-    static std::string utf16to8(std::wstring fn16);
-    static std::wstring utf8to16(std::string fn8);
 
     static bool fn_ends_with(std::filesystem::path str,std::string suffix);
     static bool is_multipart_file(std::filesystem::path fn);

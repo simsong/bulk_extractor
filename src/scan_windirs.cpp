@@ -4,6 +4,13 @@
  * FAT32 directories always start on sector boundaries.
  */
 
+#include "config.h"
+
+#ifdef _WIN32
+#include <winsock2.h>
+#include <windows.h>
+#endif
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -13,8 +20,6 @@
 #include <cerrno>
 
 #include <sys/time.h>
-
-#include "config.h"
 
 #include "tsk3_fatdirs.h"
 #include "utf8.h"
