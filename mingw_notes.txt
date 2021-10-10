@@ -1,0 +1,26 @@
+echo ubuntu:
+apt install mingw-w64 g++-mingw-w64 libz-mingw-w64-dev libgcrypt-mingw-w64-dev
+sudo apt update
+sudo apt install software-properties-common
+echo download expat
+./configure --host=i686-w64-mingw32 --prefix=/usr/i686-w64-mingw32/
+download libewf
+wget https://github.com/libyal/libewf/releases/download/20201230/libewf-experimental-20201230.tar.gz
+tar xfvz libewf-experimental-20201230.tar.gz
+cd libewf-20201230
+./configure --host=i686-w64-mingw32 --prefix=/usr/i686-w64-mingw32/
+make && sudo make install
+
+
+https://stackoverflow.com/questions/14191566/c-mutex-in-namespace-std-does-not-name-a-type
+$ sudo update-alternatives --config i686-w64-mingw32-gcc
+<choose i686-w64-mingw32-gcc-posix from the list>
+
+$ sudo update-alternatives --config i686-w64-mingw32-g++
+<choose i686-w64-mingw32-g++-posix from the list>
+
+$ sudo update-alternatives --config x86_64-w64-mingw32-gcc
+<choose x86_64-w64-mingw32-gcc-posix from the list>
+
+$ sudo update-alternatives --config x86_64-w64-mingw32-g++
+<choose x86_64-w64-mingw32-g++-posix from the list>
