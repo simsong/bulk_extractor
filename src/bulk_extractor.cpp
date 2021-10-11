@@ -17,7 +17,7 @@
 #include <cctype>
 #include <cstdlib>
 
-#ifdef HAVE_MCHECK
+#if defined(HAVE_MCHECK) && defined(HAVE_MCHECK_H)
 #include <mcheck.h>
 #else
 void mtrace(){}

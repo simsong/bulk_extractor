@@ -302,6 +302,20 @@ fi
 m4_include([src/be13_api/m4/slg_address_sanitizer.m4])
 m4_include([src/be13_api/m4/slg_noopt.m4])
 
+################################################################
+## Check on two annoying warnings
+
+# https://stackoverflow.com/questions/47160617/more-robust-ac-compile-ifelse-feature-testing
+# MY_COMPILE_CLEAN_IFELSE(PROGRAM, [ACTION-IF-TRUE], [ACTION-IF-FALSE])
+# ---------------------------------------------------------------
+# Try to compile PROGRAM.
+AC_DEFUN([MY_COMPILE_CLEAN_IFELSE],
+[AC_REQUIRE([AC_PROG_EGREP])
+AC_COMPILE_IFELSE([$1],[retval=0
+if $EGREP -i -c -E 'fatal|error|unrecognized|not found|not exist' conftest.err >/dev/null; then retval=1; fi
+],[retval=1])
+AS_IF([test $retval = 0],[$2],[$3])])
+
 
 AC_MSG_NOTICE([*************************************])
 AC_MSG_NOTICE([*************************************])

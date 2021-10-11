@@ -1,4 +1,6 @@
 // https://github.com/catchorg/Catch2/blob/master/docs/tutorial.md#top
+#define CATCH_CONFIG_MAIN
+#define CATCH_CONFIG_CONSOLE_WIDTH 120
 
 #include "config.h"
 
@@ -12,9 +14,6 @@
 #include <string>
 #include <string_view>
 #include <sstream>
-
-#define CATCH_CONFIG_MAIN
-#define CATCH_CONFIG_CONSOLE_WIDTH 120
 
 #include "be13_api/catch.hpp"
 
@@ -50,6 +49,9 @@ const std::string JSON2 {"[{\"1\": \"one@base64.com\"}, {\"2\": \"two@base64.com
 
 bool debug = false;
 
+/* We assume that the tests are being run out of bulk_extractor/src/.
+ * This returns the directory of the test subdirectory.
+ */
 std::filesystem::path test_dir()
 {
 #ifdef HAVE__NSGETEXECUTABLEPATH
@@ -70,30 +72,6 @@ sbuf_t *map_file(std::filesystem::path p)
     return sbuf_t::map_file( test_dir() / p );
 }
 
-
-/* Read all of the lines of a file and return them as a vector */
-std::vector<std::string> getLines(const std::filesystem::path path)
-{
-    std::vector<std::string> lines;
-    std::string line;
-    std::ifstream inFile;
-    inFile.open( path );
-    if (!inFile.is_open()) {
-        std::cerr << "getLines: Cannot open file: " << path << "\n";
-        std::string cmd("ls -l " + path.parent_path().string());
-        std::cerr << cmd << "\n";
-        if (system( cmd.c_str())) {
-            std::cerr << "error\n";
-        }
-        throw std::runtime_error("test_be:getLines");
-    }
-    while (std::getline(inFile, line)){
-        if (line.size()>0){
-            lines.push_back(line);
-        }
-    }
-    return lines;
-}
 
 /* Requires that a feature in a set of lines */
 bool requireFeature(const std::vector<std::string> &lines, const std::string feature)
@@ -926,106 +904,4 @@ TEST_CASE("path_printer", "[path_printer]") {
 
     pp.process_path("512-GZIP-2/r");    // create a hex dump with a different path and the /r
     REQUIRE( str.str() == "14\r\nllo@world.com\n" );
-}
-
-
-/****************************************************************
- * Test restarter
- */
-
-TEST_CASE("restarter", "[restarter]") {
-    scanner_config   sc;   // config for be13_api
-    sc.input_fname = test_dir() / "1mb_fat32.dmg";
-    sc.outdir = NamedTemporaryDirectory();
-
-    std::filesystem::copy(test_dir() / "interrupted_report.xml",
-                          sc.outdir  / "report.xml");
-
-    Phase1::Config   cfg;  // config for the image_processing system
-    bulk_extractor_restarter r(sc, cfg);
-
-    REQUIRE( std::filesystem::exists( sc.outdir / "report.xml") == true); // because it has not been renamed yet
-    r.restart();
-    REQUIRE( std::filesystem::exists( sc.outdir / "report.xml") == false); // because now it has been renamed
-    REQUIRE( cfg.seen_page_ids.find("369098752") != cfg.seen_page_ids.end() );
-    REQUIRE( cfg.seen_page_ids.find("369098752+") == cfg.seen_page_ids.end() );
-}
-
-
-/****************************************************************
- * end-to-end tests
- */
-
-/* print and count the args */
-int arg_count(char * const *argv)
-{
-    std::cout << "testing with command line:" << std::endl;
-    int argc = 0;
-    while(argv[argc]){
-        std::cout << argv[argc++] << " ";
-    }
-    std::cout << std::endl;
-    std::cout << "argc=" << argc << "\n";
-    return argc;
-}
-
-TEST_CASE("e2e-h", "[end-to-end]") {
-    std::filesystem::path inpath = test_dir() / "nps-2010-emails.100k.raw";
-    std::filesystem::path outdir = NamedTemporaryDirectory();
-    /* Try the -h option */
-    const char *argv[] = {"bulk_extractor", "-h", nullptr};
-    int ret = bulk_extractor_main(std::cout, std::cerr, 2, const_cast<char * const *>(argv));
-    REQUIRE( ret==1 );                  // -h now produces 1
-}
-
-TEST_CASE("e2e-H", "[end-to-end]") {
-    std::filesystem::path inpath = test_dir() / "nps-2010-emails.100k.raw";
-    std::filesystem::path outdir = NamedTemporaryDirectory();
-    /* Try the -H option */
-    const char *argv[] = {"bulk_extractor", "-H", nullptr};
-    int ret = bulk_extractor_main(std::cout, std::cerr, 2, const_cast<char * const *>(argv));
-    REQUIRE( ret==2 );                  // -H produces 2
-}
-
-TEST_CASE("e2e-no-imagefile", "[end-to-end]") {
-    std::filesystem::path outdir = NamedTemporaryDirectory();
-    /* Try the -H option */
-    const char *argv[] = {"bulk_extractor", nullptr};
-    int ret = bulk_extractor_main(std::cout, std::cerr, 1, const_cast<char * const *>(argv));
-    REQUIRE( ret==3 );                  // produces 3
-}
-
-TEST_CASE("e2e-0", "[end-to-end]") {
-    std::filesystem::path inpath = test_dir() / "nps-2010-emails.100k.raw";
-    std::filesystem::path outdir = NamedTemporaryDirectory();
-    /* Try to run twice. There seems to be a problem with the second time through.  */
-    std::string inpath_string = inpath.string();
-    std::string outdir_string = outdir.string();
-    const char *argv[] = {"bulk_extractor", "-0", "-o", outdir_string.c_str(), inpath_string.c_str(), nullptr};
-    std::cerr << "*******************************************************************\n";
-    std::cout << "*******************************************************************\n";
-    int ret = bulk_extractor_main(std::cout, std::cerr, 5, const_cast<char * const *>(argv));
-    REQUIRE( ret==0 );
-    std::cerr << "*******************************************************************\n";
-    std::cout << "*******************************************************************\n";
-    ret = bulk_extractor_main(std::cout, std::cerr, 5, const_cast<char * const *>(argv));
-    REQUIRE( ret==0 );
-
-    /* Validate the output dfxml file */
-    std::string validate = std::string("xmllint --noout ") + outdir_string + "/report.xml";
-    int code = system( validate.c_str());
-    REQUIRE( code == 0);
-}
-
-TEST_CASE("path-printer", "[end-to-end]") {
-    std::filesystem::path inpath = test_dir() / "test_base64json.txt";
-    std::string inpath_string = inpath.string();
-    const char *argv[] = {"bulk_extractor","-p","0:64/h", inpath_string.c_str(), nullptr};
-    std::stringstream ss;
-    int ret = bulk_extractor_main(ss, std::cerr, 4, const_cast<char * const *>(argv));
-    std::string EXPECTED =
-        "0000: 5733 7369 4d53 4936 4943 4a76 626d 5641 596d 467a 5a54 5930 4c6d 4e76 6253 4a39 W3siMSI6ICJvbmVAYmFzZTY0LmNvbSJ9\n"
-        "0020: 4c43 4237 496a 4969 4f69 4169 6448 6476 5147 4a68 6332 5532 4e43 356a 6232 3069 LCB7IjIiOiAidHdvQGJhc2U2NC5jb20i\n";
-    REQUIRE( ret == 0);
-    REQUIRE( ss.str() == EXPECTED);
 }

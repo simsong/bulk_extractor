@@ -1,23 +1,13 @@
 /**
  * image_process.cpp:
  *
- * 64-bit file support.
- * Linux: See http://www.gnu.org/s/hello/manual/libc/Feature-Test-Macros.html
- *
- * MacOS & FreeBSD: Not needed; off_t is a 64-bit value.
+ * Implements:
+ *   - process_ewf (if libewf is installed)
+ *   - process_raw (using std::iostream's 64-bit support.
+ *   - process_dir (for scanning files in a directory
  */
 
-// Just for this module
-#define _FILE_OFFSET_BITS 64
-
 #include "config.h"
-
-#include <algorithm>
-#include <stdexcept>
-#include <functional>
-#include <locale>
-#include <string>
-#include <vector>
 
 #ifdef HAVE_SYS_STAT_H
 # include <sys/stat.h>
@@ -35,121 +25,21 @@
 #include <sys/fcntl.h>
 #endif
 
-
-#ifndef O_BINARY
-#define O_BINARY 0
-#endif
-
 #ifndef PATH_MAX
 #define PATH_MAX 65536
 #endif
+
+#include <algorithm>
+#include <stdexcept>
+#include <functional>
+#include <locale>
+#include <string>
+#include <vector>
 
 #include "be13_api/utf8.h"
 #include "be13_api/utils.h"
 #include "be13_api/formatter.h"
 #include "image_process.h"
-
-
-
-/****************************************************************
- ** patches for missing operating system calls.
- ****************************************************************/
-
-
-/****************************************************************
- *** get_filesize()
- ****************************************************************/
-
-/**
- * It's hard to figure out the filesize in an opearting system independent method that works with both
- * files and devices. This seems to work. It only requires a functioning pread64 or pread.
- */
-
-#ifdef _WIN32
-int pread64(HANDLE current_handle,char *buf,size_t bytes,uint64_t offset)
-{
-    DWORD bytes_read = 0;
-    LARGE_INTEGER li;
-    li.QuadPart = offset;
-    li.LowPart = SetFilePointer(current_handle, li.LowPart, &li.HighPart, FILE_BEGIN);
-    if(li.LowPart == INVALID_SET_FILE_POINTER){
-        throw std::runtime_error("pread64: INVALID_FILE_SET_POINTER");
-    }
-    if (FALSE == ReadFile(current_handle, buf, (DWORD) bytes, &bytes_read, NULL)){
-        throw std::runtime_error("pread64: ReadFile returned FALSE");
-    }
-    return bytes_read;
-}
-#else
-#if !defined(HAVE_PREAD64) && !defined(HAVE_PREAD) && defined(HAVE__LSEEKI64)
-static size_t pread64(int d,void *buf,size_t nbyte,int64_t offset)
-{
-    if(_lseeki64(d,offset,0)!=offset){
-        throw std::runtime_error("_lseeki64 did not return offset");
-    }
-    return read(d,buf,nbyte);
-}
-#endif
-#endif
-
-#ifdef _WIN32
-int64_t get_filesize(HANDLE fd)
-#else
-int64_t get_filesize(int fd)
-#endif
-{
-    char buf[64];
-    int64_t raw_filesize = 0;		/* needs to be signed for lseek */
-    int bits = 0;
-    int i =0;
-
-#if defined(HAVE_PREAD64)
-    /* If we have pread64, make sure it is defined */
-    extern size_t pread64(int fd,char *buf,size_t nbyte,off_t offset);
-#endif
-
-#if !defined(HAVE_PREAD64) && defined(HAVE_PREAD)
-    /* if we are not using pread64, make sure that off_t is 8 bytes in size */
-#define pread64(d,buf,nbyte,offset) pread(d,buf,nbyte,offset)
-    if(sizeof(off_t)!=8){
-	throw std::runtime_error("Compiled with off_t!=8 no pread64 support.");
-    }
-#endif
-
-#ifndef _WIN32
-    /* We can use fstat if sizeof(st_size)==8 and st_size>0 */
-    struct stat st;
-    memset(&st,0,sizeof(st));
-    if(sizeof(st.st_size)==8 && fstat(fd,&st)==0){
-	if(st.st_size>0){
-            return st.st_size;
-        }
-    }
-#endif
-
-    /* Phase 1; figure out how far we can seek... */
-    for(bits=0;bits<60;bits++){
-	raw_filesize = ((int64_t)1<<bits);
-	if(::pread64(fd,buf,1,raw_filesize)!=1){
-	    break;
-	}
-    }
-    if(bits==60) throw std::runtime_error("Partition detection not functional.\n");
-
-    /* Phase 2; blank bits as necessary */
-    for(i=bits;i>=0;i--){
-	int64_t test = (int64_t)1<<i;
-	int64_t test_filesize = raw_filesize | ((int64_t)1<<i);
-	if(::pread64(fd,buf,1,test_filesize)==1){
-	    raw_filesize |= test;
-	} else{
-	    raw_filesize &= ~test;
-	}
-    }
-    if(raw_filesize>0) raw_filesize+=1;	/* seems to be needed */
-    return raw_filesize;
-}
-
 
 /****************************************************************
  *** static functions
@@ -163,7 +53,6 @@ std::string image_process::filename_extension(std::filesystem::path fn_)
 
     return fn.substr(dotpos+1);
 }
-
 
 
 image_process::image_process(std::filesystem::path fn, size_t pagesize_, size_t margin_):
@@ -197,7 +86,7 @@ bool image_process::is_multipart_file(std::filesystem::path fn)
 	|| fn_ends_with(fn,"001.vmdk");
 }
 
-/* fn can't be & because it will get modified */
+/* Given a disk image name, if it contains 000 or 001 replace that with a %03d to make an snprintf template */
 std::string image_process::make_list_template(std::filesystem::path path_,int *start)
 {
     /* First find where the digits are */
@@ -218,7 +107,7 @@ std::string image_process::make_list_template(std::filesystem::path path_,int *s
  ****************************************************************/
 
 /**
- * Works with both new API and old API
+ * Works with both new libewf API ("experimental") and old libewf API
  */
 
 #ifdef HAVE_LIBEWF
@@ -230,10 +119,9 @@ std::string image_process::make_list_template(std::filesystem::path path_,int *s
  ** process_ewf
  */
 
+#ifdef _WIN32
 void process_ewf::local_e01_glob(std::filesystem::path fname,char ***libewf_filenames,int *amount_of_filenames)
 {
-    std::cerr << "Experimental code for E01 names with MD5s appended\n";
-#ifdef _WIN32
     /* Find the directory name */
     std::string dirname(fname);
     size_t pos = dirname.rfind("\\");                  // this this slash
@@ -280,10 +168,8 @@ void process_ewf::local_e01_glob(std::filesystem::path fname,char ***libewf_file
         (*libewf_filenames)[i] = strdup(files[i].c_str());
     }
     free((void *)buf);
-#else
-    std::cerr << "This code only runs on Windows.\n";
-#endif
 }
+#endif
 
 
 process_ewf::~process_ewf()
@@ -326,11 +212,14 @@ int process_ewf::open()
             throw std::invalid_argument("libewf_glob");
         }
     } else {
+#ifdef _WIN32
         local_e01_glob(fname, &libewf_filenames,&amount_of_filenames);
-        std::cerr << "amount of filenames=" << amount_of_filenames << "\n";
         for(int i=0;i<amount_of_filenames;i++){
             std::cerr << libewf_filenames[i] << "\n";
         }
+#else
+        throw std::runtime_error("process_ewf::open: cannot process ewf file.");
+#endif
     }
     handle = 0;
     if(libewf_handle_initialize(&handle,NULL)<0){
@@ -395,16 +284,17 @@ int process_ewf::open()
 	details.push_back(std::string("EXAMINER NAME: "+examinername));
     }
 #endif
-    std::cout << "\r                                                                      " << std::endl;
+    std::cout << "\r                                                                      "
+              << std::endl;
     return 0;
 }
 
-std::vector<std::string> process_ewf::getewfdetails() const{
+std::vector<std::string> process_ewf::getewfdetails() const
+{
     return(details);
 }
 
 
-//int process_ewf::debug = 0;
 ssize_t process_ewf::pread(void *buf,size_t bytes,uint64_t offset) const
 {
 #ifdef HAVE_LIBEWF_HANDLE_CLOSE
@@ -415,13 +305,13 @@ ssize_t process_ewf::pread(void *buf,size_t bytes,uint64_t offset) const
 #if defined(HAVE_LIBEWF_HANDLE_READ_BUFFER_AT_OFFSET) && !defined(HAVE_LIBEWF_HANDLE_READ_RANDOM)
     int ret = libewf_handle_read_buffer_at_offset(handle,buf,bytes,offset,&error);
 #endif
-    if(ret<0){
+    if (ret<0){
 	if (report_read_errors) libewf_error_fprint(error,stderr);
 	libewf_error_free(&error);
     }
     return ret;
 #else
-    if((int64_t)bytes+offset > (int64_t)ewf_filesize){
+    if ((int64_t)bytes+offset > (int64_t)ewf_filesize) {
 	bytes = ewf_filesize - offset;
     }
     return libewf_read_random(handle,buf,bytes,offset);
@@ -472,11 +362,11 @@ sbuf_t *process_ewf::sbuf_alloc(image_process::iterator &it) const
     auto sbuf = sbuf_t::sbuf_malloc(get_pos0(it), count, this_pagesize);
     unsigned char *buf = static_cast<unsigned char *>(sbuf->malloc_buf());
     int count_read = this->pread(buf, count, it.raw_offset);
-    if(count_read<0){
+    if (count_read<0){
         delete sbuf;
 	throw read_error();
     }
-    if(count==0){
+    if (count==0){
         delete sbuf;
 	it.eof = true;
 	return 0;
@@ -523,34 +413,18 @@ uint64_t process_ewf::seek_block(image_process::iterator &it,uint64_t block) con
  *** RAW
  ****************************************************************/
 
-/**
- * process a raw, with the appropriate threading.
- */
-
-/****************************************************************
- * process_raw
- */
-
 process_raw::process_raw(std::filesystem::path fname, size_t pagesize_, size_t margin_)
-    :image_process(fname, pagesize_, margin_),
-     file_list(),raw_filesize(0),current_file_name(),
-#ifdef _WIN32
-     current_handle(INVALID_HANDLE_VALUE)
-#else
-     current_fd(-1)
-#endif
+    :image_process(fname, pagesize_, margin_)
 {
 }
 
 process_raw::~process_raw()
 {
-#ifdef _WIN32
-    if(current_handle!=INVALID_HANDLE_VALUE) ::CloseHandle(current_handle);
-#else
-    if(current_fd>0) ::close(current_fd);
-#endif
+    current_fstream.close();
 }
 
+/* If we are running on WIN32 and we've been asked to process a raw device, get its "Drive Geometry" to figure out how big it is.
+ */
 #ifdef _WIN32
 BOOL GetDriveGeometry(const wchar_t *wszPath, DISK_GEOMETRY *pdg)
 {
@@ -579,39 +453,44 @@ BOOL GetDriveGeometry(const wchar_t *wszPath, DISK_GEOMETRY *pdg)
                               (LPOVERLAPPED) NULL);          // synchronous I/O
 
     CloseHandle(hDevice);
-
     return (bResult);
 }
-
 #endif
 
 /**
  * Add the file to the list, keeping track of the total size
+ * https://docs.microsoft.com/en-us/windows/win32/devio/calling-deviceiocontrol
  */
-void process_raw::add_file(std::filesystem::path fname)
+void process_raw::add_file(std::filesystem::path path)
 {
-    int64_t fname_filesize = std::filesystem::file_size(fname);
+    int64_t path_filesize = std::filesystem::file_size(path);
 
 #ifdef _WIN32
-    if (fname_filesize==0){
+    if (path_filesize==0){
         /* On Windows, see if we can use this */
-        fprintf(stderr,"%s checking physical drive\n",fname.c_str());
-        // http://msdn.microsoft.com/en-gb/library/windows/desktop/aa363147%28v=vs.85%29.aspx
+        std::stdout << path << " checking physical drive" << std::endl;
         DISK_GEOMETRY pdg = { 0 }; // disk drive geometry structure
-        std::wstring wszDrive = safe_utf8to16(fname.string());
+        std::wstring wszDrive = safe_utf8to16(path.string());
         GetDriveGeometry(wszDrive.c_str(), &pdg);
-        fname_filesize = pdg.Cylinders.QuadPart * (ULONG)pdg.TracksPerCylinder *
-            (ULONG)pdg.SectorsPerTrack * (ULONG)pdg.BytesPerSector;
+        path_filesize = pdg.Cylinders.QuadPart
+            * (ULONG)pdg.TracksPerCylinder
+            * (ULONG)pdg.SectorsPerTrack
+            * (ULONG)pdg.BytesPerSector;
     }
 #endif
-    file_list.push_back(file_info(fname,raw_filesize,fname_filesize));
-    raw_filesize += fname_filesize;
+    std::cout << "add " << path.string() << " (len=" << path_filesize << ")" << std::endl;
+    file_list.push_back(file_info(path, raw_filesize, path_filesize));
+    raw_filesize += path_filesize;
 }
 
+/*
+ * This currently performs a linear search through the file list. It is not efficient, but it is reliable.
+ * We could use a clever data structure, but then we would need to debug it.
+ */
 const process_raw::file_info *process_raw::find_offset(uint64_t pos) const
 {
     for(process_raw::file_list_t::const_iterator it = file_list.begin();it != file_list.end();it++){
-	if((*it).offset<=pos && pos< ((*it).offset+(*it).length)){
+	if ((*it).offset<=pos && pos< ((*it).offset+(*it).length)){
 	    return &(*it);
 	}
     }
@@ -626,19 +505,25 @@ int process_raw::open()
     add_file(image_fname());
 
     /* Get the list of the files if this is a split-raw file */
-    if(is_multipart_file(image_fname())){
+    if (is_multipart_file(image_fname())){
 	int num=0;
         std::string templ = make_list_template(image_fname(),&num);
 	for(;;num++){
 	    char probename[PATH_MAX];
-	    snprintf(probename,sizeof(probename),templ.c_str(),num);
-	    if(access(probename,R_OK)!=0) break;	    // no more files
-	    add_file(std::filesystem::path(probename)); // found another name
+	    snprintf(probename, sizeof(probename), templ.c_str(), num);
+            std::filesystem::path probe_path = probename;
+            // If the file exists, add it, otherwise break.
+            if (std::filesystem::exists( std::filesystem::path( probename ))) {
+                add_file(std::filesystem::path(probename));
+            } else {
+                break;
+            }
 	}
     }
     return 0;
 }
 
+/* Return the size of all the images */
 int64_t process_raw::image_size() const
 {
     return raw_filesize;
@@ -661,65 +546,36 @@ ssize_t process_raw::pread(void *buf, size_t bytes, uint64_t offset) const
      * If not, close the current one and open the new one.
      */
 
-    if(fi->name != current_file_name){
-#ifdef _WIN32
-        if(current_handle!=INVALID_HANDLE_VALUE) ::CloseHandle(current_handle);
-#else
-	if(current_fd>=0) close(current_fd);
-#endif
-
-	current_file_name = fi->name;
-#ifdef _WIN32
-        std::wstring path16 = safe_utf8to16(fi->name.string());
-        current_handle = CreateFileA(reinterpret_cast<const char *>(path16.c_str()), FILE_READ_DATA,
-                                    FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
-				     OPEN_EXISTING, 0, NULL);
-        if(current_handle==INVALID_HANDLE_VALUE){
-            throw image_process::NoSuchFile("pread: INVALID_HANDLE_VALUE");
-	}
-#else
-	current_fd = ::open(fi->name.c_str(),O_RDONLY|O_BINARY);
-	if(current_fd<=0){
-            std::cerr << "process_raw::pread: cannot open " << fi->name << "\n";
-            throw image_process::NoSuchFile("pread: Cannot ::open file");
+    if(fi->path != current_path){
+        if (current_fstream.is_open()) {
+            current_fstream.close();
         }
-#endif
+        current_fstream.open(fi->path, std::ios::in | std::ios::binary);
+        if (current_fstream.is_open()==false) {
+            throw image_process::NoSuchFile( fi->path.string() );
+        }
+	current_path = fi->path;
     }
-
-#if defined(HAVE_PREAD64)
-    /* If we have pread64, make sure it is defined */
-    extern size_t pread64(int fd,char *buf,size_t nbyte,off_t offset);
-#endif
-
-#if !defined(HAVE_PREAD64) && defined(HAVE_PREAD)
-    /* if we are not using pread64, make sure that off_t is 8 bytes in size */
-#define pread64(d,buf,nbyte,offset) pread(d,buf,nbyte,offset)
-#endif
-
-    /* we have neither, so just hack it with lseek64 */
-    assert(fi->offset <= offset);
-#ifdef _WIN32
-    DWORD bytes_read = 0;
-    LARGE_INTEGER li;
-    li.QuadPart = offset - fi->offset;
-    li.LowPart = SetFilePointer(current_handle, li.LowPart, &li.HighPart, FILE_BEGIN);
-    if(li.LowPart == INVALID_SET_FILE_POINTER) return -1;
-    if (FALSE == ReadFile(current_handle, buf, (DWORD) bytes, &bytes_read, NULL)){
-        throw image_process::NoSuchFile("pread: INVALID_FILE_SET_POINTER");
+    assert(fi->offset <= offset);       // make sure this is the correct segment
+    current_fstream.seekg( offset );
+    if (current_fstream.rdstate() & (std::ios::failbit|std::ios::badbit)){
+        throw SeekError();
     }
-#else
-    ssize_t bytes_read = ::pread64(current_fd,buf,bytes,offset - fi->offset);
-#endif
-    if(bytes_read<0){
-        throw image_process::NoSuchFile("pread64: READ LESS THAN 0 BYTES");
+    current_fstream.read(reinterpret_cast<char *>(buf), bytes);
+    if (current_fstream.rdstate() & (std::ios::failbit|std::ios::badbit)){
+        throw ReadError();
     }
-    if((size_t)bytes_read==bytes) return bytes_read; // read precisely the correct amount!
+    if (current_fstream.rdstate() & (std::ios::eofbit)){
+        throw EndOfImage();
+    }
+    size_t bytes_available = (fi->offset + fi->length) - offset;
+    size_t bytes_read = std::min( bytes_available, bytes);
+    if (bytes_read==bytes) return bytes_read; // read precisely the correct amount!
+    if (bytes_read==0) return 0;              // This might happen at the end of the image; it prevents infinite recursion
 
-    /* Need to recurse */
-    ssize_t bytes_read2 = this->pread(static_cast<char *>(buf)+bytes_read,bytes-bytes_read,offset+bytes_read);
-    if(bytes_read2<0) return -1;	// error on second read
-    if(bytes_read==0) return 0;		// kind of odd.
-
+    /* Need to recurse, which will cause the next segment to be loaded */
+    ssize_t bytes_read2 = this->pread(static_cast<char *>(buf)+bytes_read, bytes-bytes_read, offset+bytes_read);
+    if (bytes_read2<0) return -1;	// error on second read
     return bytes_read + bytes_read2;
 }
 
@@ -866,12 +722,16 @@ void process_dir::increment_iterator(image_process::iterator &it) const
     if(it.file_number>files.size()) it.file_number=files.size();
 }
 
-#pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
+//#ifdef HAVE_DIAGNOSTIC_SUGGEST_ATTRIBUTE_NORETURN
+//#pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
+//#endif
 pos0_t process_dir::get_pos0(const image_process::iterator &it) const
 {
     return pos0_t(files[it.file_number].string(), 0);
 }
-#pragma GCC diagnostic warning "-Wsuggest-attribute=noreturn"
+//#ifdef HAVE_DIAGNOSTIC_SUGGEST_ATTRIBUTE_NORETURN
+//#pragma GCC diagnostic warning "-Wsuggest-attribute=noreturn"
+//#endif
 
 /** Read from the iterator into a newly allocated sbuf
  * with mapped memory.

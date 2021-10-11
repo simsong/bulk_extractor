@@ -17,7 +17,7 @@
  * Conditional compilation assures that this compiles no matter which class libraries are installed.
  *
  * subclasses must implement these two methods for path printing:
- * pread()
+ * - pread()
  *
  * iterators are constant for all of the process subclasses. Each
  * subclass needs to implement these methods that operator on the
@@ -73,6 +73,14 @@ public:
     struct EndOfImage : public std::exception {
         EndOfImage(){};
         const char *what() const noexcept override {return "end of image.";}
+    };
+    struct SeekError : public std::exception {
+        SeekError(){};
+        const char *what() const noexcept override {return "seek error.";}
+    };
+    struct ReadError : public std::exception {
+        ReadError(){};
+        const char *what() const noexcept override {return "read error.";}
     };
     struct NoSuchFile : public std::exception {
         std::string m_error{};
@@ -213,27 +221,24 @@ class process_ewf : public image_process {
 
 /****************************************************************
  *** RAW
+ *** Read one or more raw files (to handle multipart disk images.
  ****************************************************************/
 
 class process_raw : public image_process {
     class file_info {
     public:;
-        file_info(const std::filesystem::path name_,uint64_t offset_,uint64_t length_):name(name_),offset(offset_),length(length_){};
-        std::filesystem::path name {};
-	uint64_t offset   {};
-	uint64_t length   {};
+        file_info(const std::filesystem::path path_,uint64_t offset_,uint64_t length_):path(path_),offset(offset_),length(length_){};
+        std::filesystem::path path {};  // the file name
+	uint64_t offset   {};           // where each file starts
+	uint64_t length   {};           // how long it is
     };
-    typedef std::vector<file_info> file_list_t ;
+    typedef std::vector<file_info> file_list_t;
     file_list_t file_list {};
     void        add_file(std::filesystem::path fname);
     class       file_info const *find_offset(uint64_t offset) const; /* finds which file this offset would map to */
     uint64_t    raw_filesize {};			/* sume of all the lengths */
-    mutable std::filesystem::path current_file_name {};		/* which file is currently open */
-#ifdef _WIN32
-    mutable HANDLE current_handle {};		/* currently open file */
-#else
-    mutable int current_fd {};			/* currently open file */
-#endif
+    mutable std::filesystem::path current_path {};
+    mutable std::ifstream current_fstream {};		/* which file is currently open */
 public:
     process_raw(std::filesystem::path image_fname,size_t pagesize,size_t margin);
     virtual ~process_raw();
@@ -268,7 +273,7 @@ class process_dir : public image_process {
     virtual ~process_dir();
 
     virtual int open() override;
-    virtual ssize_t pread(void *,size_t bytes,uint64_t offset) const override __attribute__((__noreturn__));	 /* read */
+    virtual ssize_t pread(void *,size_t bytes,uint64_t offset) const override ;
 
     /* iterator support */
     virtual image_process::iterator begin() const override;
