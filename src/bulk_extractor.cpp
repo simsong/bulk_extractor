@@ -17,7 +17,7 @@
 #include <cctype>
 #include <cstdlib>
 
-#ifdef HAVE_MCHECK
+#if defined(HAVE_MCHECK) && defined(HAVE_MCHECK_H)
 #include <mcheck.h>
 #else
 void mtrace(){}
@@ -26,7 +26,7 @@ void muntrace(){}
 
 // Open standard input in binary mode by default on Win32.
 // See http://gnuwin32.sourceforge.net/compile.html for more
-#ifdef WIN32
+#ifdef _WIN32
 int _CRT_fmode = _O_BINARY;
 #endif
 
@@ -131,7 +131,7 @@ int _CRT_fmode = _O_BINARY;
  */
 void validate_path( const std::filesystem::path fn)
 {
-    if ( !std::filesystem::exists( fn)){
+    if ( !std::filesystem::exists( fn )){
         std::cerr << "file does not exist: " << fn << "\n";
         throw std::runtime_error( "file not found." );
     }
@@ -193,7 +193,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         }
     }
 
-#ifdef WIN32
+#ifdef _WIN32
     setmode( 1,O_BINARY);		// make stdout binary
 #endif
 

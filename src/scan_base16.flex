@@ -119,7 +119,7 @@ UNICODE         ([[:print:][:space:]]+)
 extern "C"
 void scan_base16(struct scanner_params &sp)
 {
-    static const u_char *ignore_string = (const u_char *)"\r\n \t";
+    static const uint8_t *ignore_string = (const uint8_t *)"\r\n \t";
     sp.check_version();
     if (sp.phase==scanner_params::PHASE_INIT){
         sp.info->set_name("base16");
@@ -137,7 +137,7 @@ void scan_base16(struct scanner_params &sp)
         for (int i=0;i<256;i++){
             base16array[i] = BASE16_INVALID;
         }
-        for (const u_char *ch = ignore_string;*ch;ch++){
+        for (const uint8_t *ch = ignore_string;*ch;ch++){
             base16array[(int)*ch] = BASE16_IGNORE;
         }
         for (int ch='A';ch<='F';ch++){ base16array[ch] = ch-'A'+10; }

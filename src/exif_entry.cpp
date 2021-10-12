@@ -18,8 +18,9 @@
 #include <algorithm>
 #include "config.h"
 
-#include "utf8.h" // for reading UTF16 and UTF32
-#include "unicode_escape.h" // for validating or escaping UTF8
+#include "be13_api/utf8.h" // for reading UTF16 and UTF32
+#include "be13_api/utils.h"
+#include "be13_api/unicode_escape.h" // for validating or escaping UTF8
 #include "exif_entry.h"
 #include "exif_reader.h"
 
@@ -1195,10 +1196,6 @@ static std::string get_possible_utf8(const sbuf_t &sbuf, size_t count) {
     }
 }
 
-template <typename u16bit_iterator, typename octet_iterator>
-octet_iterator all_utf16to8 (u16bit_iterator start, u16bit_iterator end, octet_iterator result);
-std::string all_utf16to8 (std::wstring utf16_string);
-
 // read utf16 and return unvalidated utf8
 std::string get_possible_utf16(const sbuf_t sbuf, size_t count, sbuf_t::byte_order_t byte_order) {
 
@@ -1212,11 +1209,8 @@ std::string get_possible_utf16(const sbuf_t sbuf, size_t count, sbuf_t::byte_ord
     std::wstring wstr = sbuf.getUTF16(0, count, byte_order);
 
     // convert wstring to string
-    std::string utf8_string = all_utf16to8(wstr);
+    std::string utf8_string = safe_utf16to8(wstr);
 
-#ifdef DEBUG
-    std::cout << "exif_entry.get_possible_utf16 utf8_string (escaped): '" << validateOrEscapeUTF8(utf8_string, true, false) << "'\n";
-#endif
     return utf8_string;
 }
 
@@ -1254,48 +1248,6 @@ std::string get_possible_utf32(const sbuf_t &sbuf, size_t count, sbuf_t::byte_or
     return utf8_string;
 }
 
-// convert all possible utf16, along with any illegal values
-std::string all_utf16to8 (std::wstring utf16_string) {
-    std::string utf8_string;
-    std::back_insert_iterator<std::basic_string<char> > result = back_inserter(utf8_string);
-
-    std::wstring::const_iterator start = utf16_string.begin();
-    std::wstring::const_iterator end = utf16_string.end();
-
-//template <typename u16bit_iterator, typename octet_iterator>
-//octet_iterator all_utf16to8 (u16bit_iterator start, u16bit_iterator end, octet_iterator result)
-
-    while (start != end) {
-        uint32_t code_point = utf8::internal::mask16(*start++);
-        // Take care of surrogate pairs first
-        if (utf8::internal::is_lead_surrogate(code_point)) {
-            if (start != end) {
-                uint32_t trail_surrogate = utf8::internal::mask16(*start++);
-                if (utf8::internal::is_trail_surrogate(trail_surrogate)) {
-                    code_point = (code_point << 10) + trail_surrogate + utf8::internal::SURROGATE_OFFSET;
-                } else {
-                    // there was an error, but keep invalid code_point anyway rather than raise an exception
-                }
-            } else {
-                // there was an error, but keep invalid code_point anyway rather than raise an exception
-            }
-
-        }
-        // Lone trail surrogate
-        else if (utf8::internal::is_trail_surrogate(code_point)) {
-            // there was an error, but keep invalid code_point anyway rather than raise an exception
-        }
-
-        try {
-            result = utf8::append(code_point, result);
-        } catch (const utf8::invalid_code_point &) {
-            // invalid code point so put in unescaped byte values, disregarding endian convention
-            utf8_string += (uint8_t)code_point;
-            utf8_string += (uint8_t)code_point/0x100;
-        }
-    }
-    return utf8_string;
-}
 
 // ************************************************************
 // END This section provides interfaces get_possible_utf16, and get_possible_utf32.

@@ -90,7 +90,9 @@ scanners_builtin = \
 	scan_winprefetch.cpp \
 	scan_wordlist.cpp \
 	scan_xor.cpp \
-	scan_zip.cpp
+	scan_zip.cpp \
+	pcap_writer.cpp \
+	pcap_writer.h
 
 if FLEXSCANNERS_ENABLED
   scanners_builtin += $(flex_scanners)
@@ -126,7 +128,7 @@ bulk_extractor_parts = \
 
 
 bulk_extractor_SOURCES = $(bulk_extractor_parts) $(scanners_builtin) main.cpp
-test_be_SOURCES = $(bulk_extractor_parts) $(scanners_builtin) be13_api/catch.hpp test_be.cpp
+test_be_SOURCES = $(bulk_extractor_parts) $(scanners_builtin) be13_api/catch.hpp test_be.cpp test_be2.cpp
 
 
 #lib: libbulkextractor.so
@@ -145,7 +147,7 @@ test_be_SOURCES = $(bulk_extractor_parts) $(scanners_builtin) be13_api/catch.hpp
 
 SUFFIXES = .flex
 FLEX_CXXFLAGS=-Wno-shadow -Wno-effc++ -Wno-redundant-decls -Wno-missing-noreturn
-.flex.o: sbuf_flex_scanner.h
+.flex.o:
 	$(LEX) -R -t $<  | sed "s/register //" > `basename $@ .o`.cpp
 	$(CXX) $(CPPFLAGS) $(AM_CPPFLAGS) $(CXXFLAGS) $(FLEX_CXXFLAGS) \
 		-I${top_srcdir} -I${srcdir} -I.. -I../../_build -c `basename $@ .o`.cpp

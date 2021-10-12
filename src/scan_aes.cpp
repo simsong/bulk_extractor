@@ -37,13 +37,13 @@
 
 /* old aes.h file */
 
-static const u_int AES128_KEY_SIZE  =               16; //  Size of a 128-bit AES key, in bytes
-static const u_int AES192_KEY_SIZE  =               24; // Size of a 192-bit AES key, in bytes
-static const u_int AES256_KEY_SIZE  =               32; // Size of a 256-bit AES key, in bytes
+static const size_t AES128_KEY_SIZE  =               16; //  Size of a 128-bit AES key, in bytes
+static const size_t AES192_KEY_SIZE  =               24; // Size of a 192-bit AES key, in bytes
+static const size_t AES256_KEY_SIZE  =               32; // Size of a 256-bit AES key, in bytes
 
-static const u_int AES128_KEY_SCHEDULE_SIZE =      176; // Size of a 128-bit AES key schedule, in bytes
-static const u_int AES192_KEY_SCHEDULE_SIZE =      208; // Size of a 128-bit AES key schedule, in bytes
-static const u_int AES256_KEY_SCHEDULE_SIZE =      240; // Size of a 128-bit AES key schedule, in bytes
+static const size_t AES128_KEY_SCHEDULE_SIZE =      176; // Size of a 128-bit AES key schedule, in bytes
+static const size_t AES192_KEY_SCHEDULE_SIZE =      208; // Size of a 128-bit AES key schedule, in bytes
+static const size_t AES256_KEY_SCHEDULE_SIZE =      240; // Size of a 128-bit AES key schedule, in bytes
 
 
 // Determines whether or not data represents valid

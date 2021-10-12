@@ -17,7 +17,7 @@
  * Conditional compilation assures that this compiles no matter which class libraries are installed.
  *
  * subclasses must implement these two methods for path printing:
- * pread()
+ * - pread()
  *
  * iterators are constant for all of the process subclasses. Each
  * subclass needs to implement these methods that operator on the
@@ -46,7 +46,7 @@
 
 #include <filesystem>
 
-#if defined(WIN32)
+#if defined(_WIN32)
 #  include <winsock2.h>
 #  include <windows.h>
 #  include <windowsx.h>
@@ -60,21 +60,27 @@ class image_process : public abstract_image_reader {
     image_process &operator=(const image_process &)=delete;
 
     /****************************************************************/
-    const std::string image_fname_;			/* image filename */
+    const std::filesystem::path image_fname_;			/* image filename */
 
 public:
     /* These two functions are only used in WIN32 but are defined here so that they can be tested on all platforms */
-    std::string utf16to8(std::wstring fn16);
-    std::wstring utf8to16(std::string fn8);
+    static std::string filename_extension(std::filesystem::path fn); // returns extension
 
-    static int64_t getSizeOfFile(std::string fname);
-    static bool fn_ends_with(std::string str,std::string suffix);
-    static bool is_multipart_file(std::string fn);
-    static std::string make_list_template(std::string fn,int *start);
+    static bool fn_ends_with(std::filesystem::path str,std::string suffix);
+    static bool is_multipart_file(std::filesystem::path fn);
+    static std::string make_list_template(std::filesystem::path fn,int *start);
 
     struct EndOfImage : public std::exception {
         EndOfImage(){};
         const char *what() const noexcept override {return "end of image.";}
+    };
+    struct SeekError : public std::exception {
+        SeekError(){};
+        const char *what() const noexcept override {return "seek error.";}
+    };
+    struct ReadError : public std::exception {
+        ReadError(){};
+        const char *what() const noexcept override {return "read error.";}
     };
     struct NoSuchFile : public std::exception {
         std::string m_error{};
@@ -91,7 +97,7 @@ public:
      * open() figures out which child class to call, calls its open, then
      * returns an object.
      */
-    static image_process *open(std::string fn, bool recurse, size_t opt_pagesize, size_t opt_margin);
+    static image_process *open(std::filesystem::path fn, bool recurse, size_t opt_pagesize, size_t opt_margin);
     const size_t pagesize;                    // page size we are using
     const size_t margin;                      // margin size we are using
     bool  report_read_errors;
@@ -134,7 +140,7 @@ public:
         void set_raw_offset(uint64_t anOffset){ raw_offset=anOffset;}
     };
 
-    image_process(std::string fn, size_t pagesize_, size_t margin_);
+    image_process(std::filesystem::path fn, size_t pagesize_, size_t margin_);
     virtual ~image_process();
 
     /* image support */
@@ -142,7 +148,7 @@ public:
     /* pread defined in superclass */
     //virtual int pread(void *,size_t bytes,int64_t offset) const = 0 ;
     virtual int64_t image_size() const=0;
-    virtual std::string image_fname() const;
+    virtual std::filesystem::path image_fname() const;
 
     /* iterator support; these virtual functions are called by iterator through (*myimage) */
     virtual image_process::iterator begin() const =0;
@@ -191,9 +197,9 @@ class process_ewf : public image_process {
     mutable libewf_handle_t *handle {};
 
  public:
-    static void local_e01_glob(std::string fname,char ***libewf_filenames,int *amount_of_filenames);
+    static void local_e01_glob(std::filesystem::path fname,char ***libewf_filenames,int *amount_of_filenames);
 
-    process_ewf(std::string fname, size_t pagesize_, size_t margin_) : image_process(fname, pagesize_, margin_) {}
+    process_ewf(std::filesystem::path fname, size_t pagesize_, size_t margin_) : image_process(fname, pagesize_, margin_) {}
     virtual ~process_ewf();
     std::vector<std::string> getewfdetails() const;
     int open() override;
@@ -215,29 +221,26 @@ class process_ewf : public image_process {
 
 /****************************************************************
  *** RAW
+ *** Read one or more raw files (to handle multipart disk images.
  ****************************************************************/
 
 class process_raw : public image_process {
     class file_info {
     public:;
-        file_info(const std::filesystem::path name_,uint64_t offset_,uint64_t length_):name(name_),offset(offset_),length(length_){};
-        std::filesystem::path name {};
-	uint64_t offset   {};
-	uint64_t length   {};
+        file_info(const std::filesystem::path path_,uint64_t offset_,uint64_t length_):path(path_),offset(offset_),length(length_){};
+        std::filesystem::path path {};  // the file name
+	uint64_t offset   {};           // where each file starts
+	uint64_t length   {};           // how long it is
     };
-    typedef std::vector<file_info> file_list_t ;
+    typedef std::vector<file_info> file_list_t;
     file_list_t file_list {};
-    void        add_file(std::string fname);
+    void        add_file(std::filesystem::path fname);
     class       file_info const *find_offset(uint64_t offset) const; /* finds which file this offset would map to */
     uint64_t    raw_filesize {};			/* sume of all the lengths */
-    mutable std::filesystem::path current_file_name {};		/* which file is currently open */
-#ifdef WIN32
-    mutable HANDLE current_handle {};		/* currently open file */
-#else
-    mutable int current_fd {};			/* currently open file */
-#endif
+    mutable std::filesystem::path current_path {};
+    mutable std::ifstream current_fstream {};		/* which file is currently open */
 public:
-    process_raw(std::string image_fname,size_t pagesize,size_t margin);
+    process_raw(std::filesystem::path image_fname,size_t pagesize,size_t margin);
     virtual ~process_raw();
     virtual int open() override;
     virtual ssize_t pread(void *,size_t bytes,uint64_t offset) const override;	    /* read */
@@ -266,11 +269,11 @@ class process_dir : public image_process {
     std::vector<std::filesystem::path> files {};		/* all of the files */
 
  public:
-    process_dir(std::string image_dir);
+    process_dir(std::filesystem::path image_dir);
     virtual ~process_dir();
 
     virtual int open() override;
-    virtual ssize_t pread(void *,size_t bytes,uint64_t offset) const override __attribute__((__noreturn__));	 /* read */
+    virtual ssize_t pread(void *,size_t bytes,uint64_t offset) const override ;
 
     /* iterator support */
     virtual image_process::iterator begin() const override;
