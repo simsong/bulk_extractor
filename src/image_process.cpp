@@ -49,7 +49,7 @@ std::string image_process::filename_extension(std::filesystem::path fn_)
 {
     std::string fn(fn_.string());
     size_t dotpos = fn.rfind('.');
-    if(dotpos==std::string::npos) return "";
+    if (dotpos==std::string::npos) return "";
 
     return fn.substr(dotpos+1);
 }
@@ -92,7 +92,7 @@ std::string image_process::make_list_template(std::filesystem::path path_,int *s
     /* First find where the digits are */
     std::string path(path_.string());
     size_t p = path.rfind("000");
-    if(p==std::string::npos) p = path.rfind("001");
+    if (p==std::string::npos) p = path.rfind("001");
     assert(p!=std::string::npos);
 
     *start = atoi(path.substr(p,3).c_str()) + 1;
@@ -125,8 +125,8 @@ void process_ewf::local_e01_glob(std::filesystem::path fname,char ***libewf_file
     /* Find the directory name */
     std::string dirname(fname);
     size_t pos = dirname.rfind("\\");                  // this this slash
-    if(pos==std::string::npos) pos=dirname.rfind("/"); // try the other slash!
-    if(pos!=std::string::npos){
+    if (pos==std::string::npos) pos=dirname.rfind("/"); // try the other slash!
+    if (pos!=std::string::npos){
         dirname.resize(pos+1);          // remove what's after the
     } else {
         dirname = "";                   // no directory?
@@ -137,11 +137,11 @@ void process_ewf::local_e01_glob(std::filesystem::path fname,char ***libewf_file
     strcpy(buf,fname.c_str());
     /* Find the E01 */
     char *cc = strstr(buf,".E01.");
-    if(!cc){
+    if (!cc){
         throw image_process::NoSuchFile("Cannot find .E01. in filename");
     }
     for(;*cc;cc++){
-        if(*cc!='.') *cc='?';          // replace the E01 and the MD5s at the end with ?s
+        if (*cc!='.') *cc='?';          // replace the E01 and the MD5s at the end with ?s
     }
     std::wstring wbufstring = safe_utf8to16(buf); // convert to utf16
     const wchar_t *wbuf = wbufstring.c_str();
@@ -149,7 +149,7 @@ void process_ewf::local_e01_glob(std::filesystem::path fname,char ***libewf_file
     /* Find the files */
     WIN32_FIND_DATA FindFileData;
     HANDLE hFind = FindFirstFile(wbuf, &FindFileData);
-    if(hFind == INVALID_HANDLE_VALUE){
+    if (hFind == INVALID_HANDLE_VALUE){
         throw std::runtime_error( Formatter() << "Invalid file pattern " << safe_utf16to8(wbufstring) );
     }
     std::vector<std::filesystem::path> files;
@@ -175,12 +175,12 @@ void process_ewf::local_e01_glob(std::filesystem::path fname,char ***libewf_file
 process_ewf::~process_ewf()
 {
 #ifdef HAVE_LIBEWF_HANDLE_CLOSE
-    if(handle){
+    if (handle){
 	libewf_handle_close(handle,NULL);
 	libewf_handle_free(&handle,NULL);
     }
 #else
-    if(handle){
+    if (handle){
 	libewf_close(handle);
     }
 #endif
@@ -200,12 +200,12 @@ int process_ewf::open()
     bool use_libewf_glob = true;
     libewf_error_t *error=0;
 
-    if(fname_string.find(".E01")!=std::string::npos){
+    if (fname_string.find(".E01")!=std::string::npos){
         use_libewf_glob = false;
     }
 
-    if(use_libewf_glob){
-        if(libewf_glob(fname.c_str(), strlen(fname.c_str()), LIBEWF_FORMAT_UNKNOWN,
+    if (use_libewf_glob){
+        if (libewf_glob(fname.c_str(), strlen(fname.c_str()), LIBEWF_FORMAT_UNKNOWN,
                        &libewf_filenames,&amount_of_filenames,&error)<0){
             libewf_error_fprint(error,stdout);
             libewf_error_free(&error);
@@ -222,33 +222,34 @@ int process_ewf::open()
 #endif
     }
     handle = 0;
-    if(libewf_handle_initialize(&handle,NULL)<0){
+    if (libewf_handle_initialize(&handle,NULL)<0){
 	throw image_process::NoSuchFile("Cannot initialize EWF handle?");
     }
-    if(libewf_handle_open(handle,libewf_filenames,amount_of_filenames,
+    if (libewf_handle_open(handle,libewf_filenames,amount_of_filenames,
 			  LIBEWF_OPEN_READ,&error)<0){
-	if (error) libewf_error_fprint(error,stdout);
+	if (error) libewf_error_fprint(error, stderr);
+        fflush(stderr);
         for(size_t i = 0; libewf_filenames[i]; i++){
             std::cerr << "filename " << i << " = " << libewf_filenames[i] << "\n";
         }
 	throw image_process::NoSuchFile( fname.string() );
     }
     /* Free the allocated filenames */
-    if(use_libewf_glob){
-        if(libewf_glob_free(libewf_filenames,amount_of_filenames,&error)<0){
+    if (use_libewf_glob){
+        if (libewf_glob_free(libewf_filenames,amount_of_filenames,&error)<0){
             printf("libewf_glob_free failed\n");
-            if(error) libewf_error_fprint(error,stdout);
+            if (error) libewf_error_fprint(error,stdout);
             throw image_process::NoSuchFile("libewf_glob_free");
         }
     }
     libewf_handle_get_media_size(handle,(size64_t *)&ewf_filesize,NULL);
 #else
     amount_of_filenames = libewf_glob(fname,strlen(fname),LIBEWF_FORMAT_UNKNOWN,&libewf_filenames);
-    if(amount_of_filenames<0){
+    if (amount_of_filenames<0){
 	err(1,"libewf_glob");
     }
     handle = libewf_open(libewf_filenames,amount_of_filenames,LIBEWF_OPEN_READ);
-    if(handle==0){
+    if (handle==0){
 	fprintf(stderr,"amount_of_filenames:%d\n",amount_of_filenames);
 	for(int i=0;i<amount_of_filenames;i++){
 	    fprintf(stderr,"  %s\n",libewf_filenames[i]);
@@ -261,25 +262,25 @@ int process_ewf::open()
 #ifdef HAVE_LIBEWF_HANDLE_GET_UTF8_HEADER_VALUE_NOTES
     uint8_t ewfbuf[65536];
     int status= libewf_handle_get_utf8_header_value_notes(handle, ewfbuf, sizeof(ewfbuf)-1, &error);
-    if(status == 1 && strlen(ewfbuf)>0){
+    if (status == 1 && strlen(ewfbuf)>0){
 	std::string notes = reinterpret_cast<char *>(ewfbuf);
 	details.push_back(std::string("NOTES: ")+notes);
     }
 
     status = libewf_handle_get_utf8_header_value_case_number(handle, ewfbuf, sizeof(ewfbuf)-1, &error);
-    if(status == 1 && strlen(ewfbuf)>0){
+    if (status == 1 && strlen(ewfbuf)>0){
 	std::string case_number = reinterpret_cast<char *>(ewfbuf);
 	details.push_back(std::string("CASE NUMBER: ")+case_number);
     }
 
     status = libewf_handle_get_utf8_header_value_evidence_number(handle, ewfbuf, sizeof(ewfbuf)-1, &error);
-    if(status == 1 && strlen(ewfbuf)>0){
+    if (status == 1 && strlen(ewfbuf)>0){
 	std::string evidenceno = reinterpret_cast<char *>(ewfbuf);
 	details.push_back(std::string("EVIDENCE NUMBER: ")+evidenceno);
     }
 
     status = libewf_handle_get_utf8_header_value_examiner_name(handle, ewfbuf, sizeof(ewfbuf)-1, &error);
-    if(status == 1 && strlen(ewfbuf)>0){
+    if (status == 1 && strlen(ewfbuf)>0){
 	std::string examinername = reinterpret_cast<char *>(ewfbuf) ;
 	details.push_back(std::string("EXAMINER NAME: "+examinername));
     }
@@ -351,7 +352,7 @@ sbuf_t *process_ewf::sbuf_alloc(image_process::iterator &it) const
     size_t count = pagesize + margin;
     size_t this_pagesize = pagesize;
 
-    if(this->ewf_filesize < it.raw_offset + count){    /* See if that's more than I need */
+    if (this->ewf_filesize < it.raw_offset + count){    /* See if that's more than I need */
 	count = this->ewf_filesize - it.raw_offset;
     }
 
@@ -380,7 +381,7 @@ sbuf_t *process_ewf::sbuf_alloc(image_process::iterator &it) const
 void process_ewf::increment_iterator(image_process::iterator &it) const
 {
     it.raw_offset += pagesize;
-    if(it.raw_offset > this->ewf_filesize) it.raw_offset = this->ewf_filesize;
+    if (it.raw_offset > this->ewf_filesize) it.raw_offset = this->ewf_filesize;
 }
 
 double process_ewf::fraction_done(const image_process::iterator &it) const
@@ -540,29 +541,45 @@ int64_t process_raw::image_size() const
 ssize_t process_raw::pread(void *buf, size_t bytes, uint64_t offset) const
 {
     const file_info *fi = find_offset(offset);
-    if(fi==0) return 0;			// nothing to read.
+    std::cerr << "pread offset=" << offset << " fi=" << fi << std::endl;
+    if (fi==0) return 0;			// nothing to read.
 
     /* See if the file is the one that's currently opened.
      * If not, close the current one and open the new one.
      */
 
-    if(fi->path != current_path){
+    if (fi->path != current_path){
         if (current_fstream.is_open()) {
             current_fstream.close();
         }
+        std::cerr << "opening " << fi->path << std::endl;
         current_fstream.open(fi->path, std::ios::in | std::ios::binary);
         if (current_fstream.is_open()==false) {
             throw image_process::NoSuchFile( fi->path.string() );
         }
 	current_path = fi->path;
     }
-    assert(fi->offset <= offset);       // make sure this is the correct segment
-    current_fstream.seekg( offset );
+    assert(offset >= fi->offset);       // make sure this is the correct segment
+    uint64_t file_offset = offset - fi->offset;
+
+    assert(fi->length >= file_offset);  // make sure we aren't going too far
+    uint64_t available_bytes = fi->length - file_offset;
+
+    if (bytes > available_bytes) {
+        bytes = available_bytes;
+    }
+
+    current_fstream.seekg( file_offset );
     if (current_fstream.rdstate() & (std::ios::failbit|std::ios::badbit)){
         throw SeekError();
     }
     current_fstream.read(reinterpret_cast<char *>(buf), bytes);
-    if (current_fstream.rdstate() & (std::ios::failbit|std::ios::badbit)){
+    if (current_fstream.rdstate() & std::ios::failbit){
+        std::cerr << "read error  failbit bytes=" << bytes << std::endl;
+        throw ReadError();
+    }
+    if (current_fstream.rdstate() & std::ios::badbit){
+        std::cerr << "read error  badbit bytes=" << bytes << std::endl;
         throw ReadError();
     }
     if (current_fstream.rdstate() & (std::ios::eofbit)){
@@ -628,7 +645,7 @@ sbuf_t *process_raw::sbuf_alloc(image_process::iterator &it) const
     size_t count = pagesize + margin;
     size_t this_pagesize = pagesize;
 
-    if(this->raw_filesize < it.raw_offset + count){    /* See if that's more than I need */
+    if (this->raw_filesize < it.raw_offset + count){    /* See if that's more than I need */
 	count = this->raw_filesize - it.raw_offset;
     }
     if (this_pagesize > count ) {
@@ -643,7 +660,7 @@ sbuf_t *process_raw::sbuf_alloc(image_process::iterator &it) const
 	it.eof = true;
         throw EndOfImage();
     }
-    if(count_read<0){
+    if (count_read<0){
         delete sbuf;
 	throw read_error();
     }
@@ -657,7 +674,7 @@ uint64_t process_raw::max_blocks(const image_process::iterator &it) const
 
 uint64_t process_raw::seek_block(image_process::iterator &it,uint64_t block) const
 {
-    if(block * pagesize > (uint64_t)raw_filesize){
+    if (block * pagesize > (uint64_t)raw_filesize){
         block = raw_filesize / pagesize;
     }
 
@@ -719,7 +736,7 @@ image_process::iterator process_dir::end() const
 void process_dir::increment_iterator(image_process::iterator &it) const
 {
     it.file_number++;
-    if(it.file_number>files.size()) it.file_number=files.size();
+    if (it.file_number>files.size()) it.file_number=files.size();
 }
 
 //#ifdef HAVE_DIAGNOSTIC_SUGGEST_ATTRIBUTE_NORETURN
@@ -781,16 +798,16 @@ image_process *image_process::open(std::filesystem::path fn, bool opt_recurse, s
     std::string fname_string = fn.string();
 
 #ifdef _WIN32
-    if(fname_string.size()>2 && fname_string[0]=='\\' && fname_string[1]=='\\') is_windows_unc=true;
+    if (fname_string.size()>2 && fname_string[0]=='\\' && fname_string[1]=='\\') is_windows_unc=true;
 #endif
 
     memset(&st,0,sizeof(st));
     if (stat(fname_string.c_str(),&st) && !is_windows_unc){
 	throw NoSuchFile(fname_string);
     }
-    if(S_ISDIR(st.st_mode)){
+    if (S_ISDIR(st.st_mode)){
 	/* If this is a directory, process specially */
-	if(opt_recurse==0){
+	if (opt_recurse==0){
 	    std::cerr << "error: " << fname_string << " is a directory but -R (opt_recurse) not set\n";
 	    errno = 0;
 	    throw NoSuchFile(fname_string);	// directory and cannot recurse
@@ -822,14 +839,14 @@ image_process *image_process::open(std::filesystem::path fn, bool opt_recurse, s
 
 	std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
-	if(ext=="e01" || fname_string.find(".E01.")!=std::string::npos){
+	if (ext=="e01" || fname_string.find(".E01.")!=std::string::npos){
 #ifdef HAVE_LIBEWF
 	    ip = new process_ewf(fn,pagesize_,margin_);
 #else
 	    throw NoSupport("This program was compiled without E01 support");
 #endif
 	}
-	if(!ip) ip = new process_raw(fn,pagesize_,margin_);
+	if (!ip) ip = new process_raw(fn,pagesize_,margin_);
     }
     /* Try to open it */
     if (ip->open()){
