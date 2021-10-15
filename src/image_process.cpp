@@ -38,6 +38,7 @@
 
 #include "be13_api/utf8.h"
 #include "be13_api/utils.h"
+#include "be13_api/aftimer.h"
 #include "be13_api/formatter.h"
 #include "image_process.h"
 
@@ -184,8 +185,6 @@ int process_ewf::open()
     char **libewf_filenames = NULL;
     int amount_of_filenames = 0;
 
-    std::cout << "Opening " << image_fname() << "... ";
-    std::cout.flush();
 #ifdef HAVE_LIBEWF_HANDLE_CLOSE
     bool use_libewf_glob = true;
     libewf_error_t *error=0;
@@ -205,7 +204,7 @@ int process_ewf::open()
 #ifdef _WIN32
         local_e01_glob(fname, &libewf_filenames,&amount_of_filenames);
         for(int i=0;i<amount_of_filenames;i++){
-            std::cerr << libewf_filenames[i] << "\n";
+            std::cout << "opening " << libewf_filenames[i] << std::endl;
         }
 #else
         throw std::runtime_error("process_ewf::open: cannot process ewf file.");
@@ -220,7 +219,7 @@ int process_ewf::open()
 	if (error) libewf_error_fprint(error, stderr);
         fflush(stderr);
         for(size_t i = 0; libewf_filenames[i]; i++){
-            std::cerr << "filename " << i << " = " << libewf_filenames[i] << "\n";
+            std::cout << "opening " << libewf_filenames[i] << std::endl;
         }
 	throw image_process::NoSuchFile( fname.string() );
     }
@@ -411,7 +410,7 @@ process_raw::process_raw(std::filesystem::path fname, size_t pagesize_, size_t m
 
 process_raw::~process_raw()
 {
-    current_fstream.close();
+    file_list.empty();
 }
 
 /* If we are running on WIN32 and we've been asked to process a raw device, get its "Drive Geometry" to figure out how big it is.
@@ -469,8 +468,7 @@ void process_raw::add_file(std::filesystem::path path)
             * (ULONG)pdg.BytesPerSector;
     }
 #endif
-    std::cout << "add " << path.string() << " (len=" << path_filesize << ")" << std::endl;
-    file_list.push_back(file_info(path, raw_filesize, path_filesize));
+    file_list.push_back( std::shared_ptr<process_raw::file_info>(new file_info(path, raw_filesize, path_filesize)));
     raw_filesize += path_filesize;
 }
 
@@ -478,11 +476,11 @@ void process_raw::add_file(std::filesystem::path path)
  * This currently performs a linear search through the file list. It is not efficient, but it is reliable.
  * We could use a clever data structure, but then we would need to debug it.
  */
-const process_raw::file_info *process_raw::find_offset(uint64_t pos) const
+const std::shared_ptr<process_raw::file_info> process_raw::find_offset(uint64_t pos) const
 {
-    for(process_raw::file_list_t::const_iterator it = file_list.begin();it != file_list.end();it++){
-	if ((*it).offset<=pos && pos< ((*it).offset+(*it).length)){
-	    return &(*it);
+    for (const auto &it:file_list) {
+	if (it->offset<=pos && pos<it->offset + it->length) {
+	    return it;
 	}
     }
     return 0;
@@ -526,63 +524,55 @@ int64_t process_raw::image_size() const
  * 1. Determine which file to read and how many bytes from that file can be read.
  * 2. Perform the read.
  * 3. If there are additional files to read in the next file, recurse.
+ * NOTE: This code is single-threaded because we are seeking the fstreams.
  */
 
 ssize_t process_raw::pread(void *buf, size_t bytes, uint64_t offset) const
 {
-    const file_info *fi = find_offset(offset);
+    std::shared_ptr<file_info> fi = find_offset(offset);
     if (fi==0) return 0;			// nothing to read.
 
-    /* See if the file is the one that's currently opened.
-     * If not, close the current one and open the new one.
-     */
+    // make sure that the offset falls within the selection.
+    assert(offset >= fi->offset);
+    assert(offset <  fi->offset + fi->length);
 
-    if (fi->path != current_path){
-        if (current_fstream.is_open()) {
-            current_fstream.close();
-        }
-        //std::cerr << "opening " << fi->path << std::endl;
-        current_fstream.open(fi->path, std::ios::in | std::ios::binary);
-        if (current_fstream.is_open()==false) {
-            throw image_process::NoSuchFile( fi->path.string() );
-        }
-	current_path = fi->path;
-    }
-    assert(offset >= fi->offset);       // make sure this is the correct segment
+    // Determine the offset and available bytes in the segment
     uint64_t file_offset = offset - fi->offset;
-
-    assert(fi->length >= file_offset);  // make sure we aren't going too far
-
-    // Determine the available bytes in the segment
     uint64_t available_bytes = fi->length - file_offset;
-
-    // Seek to where we are reading in this file
-    current_fstream.seekg( file_offset );
-    if (current_fstream.rdstate() & (std::ios::failbit|std::ios::badbit)){
-        throw SeekError();
-    }
 
     size_t bytes_to_read = bytes;
     if (bytes_to_read > available_bytes) {
         bytes_to_read = available_bytes;
     }
+#ifdef _DEBUG_
     std::cerr << fi->path
               << " pread bytes=" << bytes
               << " offset=" << offset
               << " file_offset=" << file_offset
               << " available_bytes=" << available_bytes
               << " bytes_to_read=" << bytes_to_read << std::endl;
-    current_fstream.read(reinterpret_cast<char *>(buf), bytes_to_read);
+#endif
 
-    if (current_fstream.rdstate() & std::ios::failbit){
+
+    fi->stream.seekg( file_offset );
+    if (fi->stream.rdstate() & (std::ios::failbit|std::ios::badbit)){
+        throw SeekError();
+    }
+
+    aftimer t;
+    t.start();
+    fi->stream.read(reinterpret_cast<char *>(buf), bytes_to_read);
+    t.stop();
+
+    if (fi->stream.rdstate() & std::ios::failbit){
         std::cerr << "read error  failbit bytes=" << bytes << std::endl;
         throw ReadError();
     }
-    if (current_fstream.rdstate() & std::ios::badbit){
+    if (fi->stream.rdstate() & std::ios::badbit){
         std::cerr << "read error  badbit bytes=" << bytes << std::endl;
         throw ReadError();
     }
-    if (current_fstream.rdstate() & (std::ios::eofbit)){
+    if (fi->stream.rdstate() & (std::ios::eofbit)){
         std::cerr << "read error  eof bytes=" << bytes << std::endl;
         throw EndOfImage();
     }
@@ -592,8 +582,6 @@ ssize_t process_raw::pread(void *buf, size_t bytes, uint64_t offset) const
     /* Need to recurse, which will cause the next segment to be loaded */
     if (bytes_read==bytes) return bytes_read; // read precisely the correct amount!
     if (bytes_read==0) return 0;              // This might happen at the end of the image; it prevents infinite recursion
-
-    std::cerr << "*** RECURSIVE CALL ***.  bytes_read=" << bytes_read << " bytes=" << bytes << " offset=" << offset << "\n";
 
     ssize_t bytes_read2 = this->pread(static_cast<char *>(buf)+bytes_read, bytes-bytes_read, offset+bytes_read);
     if (bytes_read2<0) return -1;	// error on second read
@@ -672,8 +660,6 @@ sbuf_t *process_raw::sbuf_alloc(image_process::iterator &it) const
         delete sbuf;
 	throw read_error();
     }
-    //std::cerr << *sbuf << std::endl;
-
     return sbuf;
 }
 
@@ -811,7 +797,7 @@ image_process *image_process::open(std::filesystem::path fn, bool opt_recurse, s
     if (std::filesystem::is_directory(fn)){
 	/* If this is a directory, process specially */
 	if (opt_recurse==0){
-	    std::cerr << "error: " << fname_string << " is a directory but -R (opt_recurse) not set\n";
+	    std::cerr << "error: " << fname_string << " is a directory but -R (opt_recurse) not set" << std::endl;
 	    errno = 0;
 	    throw NoSuchFile(fname_string);	// directory and cannot recurse
 	}
