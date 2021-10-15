@@ -138,6 +138,12 @@ void Phase1::read_process_sbufs()
     blocklist_t::const_iterator si = blocks_to_sample.begin(); // sampling iterator
     image_process::iterator     it = p.begin(); // sequential iterator
 
+#define DEBUG_READER
+#ifdef DEBUG_READER
+    std::cerr << "open READER-OUTPUT.raw" << std::endl;
+    std::fstream debug_out("READER-OUTPUT.raw", std::ios::out | std::ios::binary | std::ios::trunc);
+#endif
+
     if (config.opt_scan_start){
         std::cout << "offset set to " << config.opt_scan_start << "\n";
         it.set_raw_offset(config.opt_scan_start);
@@ -190,8 +196,17 @@ void Phase1::read_process_sbufs()
                     if (sha1g){
                         if (sbufp->pos0.offset==hash_next){
                             // next byte follows logically, so continue to compute hash
+                            std::cerr << "hash offset=" << sbufp->pos0.offset << " bytes=" << sbufp->pagesize << std::endl;
                             sha1g->update(sbufp->get_buf(), sbufp->pagesize);
+#ifdef DEBUG_READER
+                            debug_out.write(reinterpret_cast<const char *>(sbufp->get_buf()), sbufp->pagesize);
+                            std::cerr << "write READER-OUTPUT.raw len=" << sbufp->pagesize << std::endl;
+                            std::cerr << "first 300 bytes:\n";
+                            std::cerr.write(reinterpret_cast<const char *>(sbufp->get_buf()), 300);
+                            std::cerr << std::endl;
+#endif
                             hash_next += sbufp->pagesize;
+
                         } else {
                             delete sha1g; // we had a logical gap; stop hashing
                             sha1g = 0;
@@ -213,6 +228,7 @@ void Phase1::read_process_sbufs()
             }
         }
 
+
         /* If we are random sampling, move to the next random sample. */
         if (sampling()){
             ++si;
@@ -223,6 +239,9 @@ void Phase1::read_process_sbufs()
         ++it;
     }
 
+#ifdef DEBUG_READER
+    debug_out.close();
+#endif
     if (config.fraction_done) *config.fraction_done = 1.0;
     if (!config.opt_quiet){
         std::cout << "All data are read; waiting for threads to finish...\n";

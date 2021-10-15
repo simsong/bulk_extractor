@@ -45,16 +45,6 @@
  *** static functions
  ****************************************************************/
 
-std::string image_process::filename_extension(std::filesystem::path fn_)
-{
-    std::string fn(fn_.string());
-    size_t dotpos = fn.rfind('.');
-    if (dotpos==std::string::npos) return "";
-
-    return fn.substr(dotpos+1);
-}
-
-
 image_process::image_process(std::filesystem::path fn, size_t pagesize_, size_t margin_):
     image_fname_(fn),pagesize(pagesize_),margin(margin_),report_read_errors(true)
 {
@@ -541,7 +531,6 @@ int64_t process_raw::image_size() const
 ssize_t process_raw::pread(void *buf, size_t bytes, uint64_t offset) const
 {
     const file_info *fi = find_offset(offset);
-    std::cerr << "pread offset=" << offset << " fi=" << fi << std::endl;
     if (fi==0) return 0;			// nothing to read.
 
     /* See if the file is the one that's currently opened.
@@ -552,7 +541,7 @@ ssize_t process_raw::pread(void *buf, size_t bytes, uint64_t offset) const
         if (current_fstream.is_open()) {
             current_fstream.close();
         }
-        std::cerr << "opening " << fi->path << std::endl;
+        //std::cerr << "opening " << fi->path << std::endl;
         current_fstream.open(fi->path, std::ios::in | std::ios::binary);
         if (current_fstream.is_open()==false) {
             throw image_process::NoSuchFile( fi->path.string() );
@@ -563,17 +552,28 @@ ssize_t process_raw::pread(void *buf, size_t bytes, uint64_t offset) const
     uint64_t file_offset = offset - fi->offset;
 
     assert(fi->length >= file_offset);  // make sure we aren't going too far
+
+    // Determine the available bytes in the segment
     uint64_t available_bytes = fi->length - file_offset;
 
-    if (bytes > available_bytes) {
-        bytes = available_bytes;
-    }
-
+    // Seek to where we are reading in this file
     current_fstream.seekg( file_offset );
     if (current_fstream.rdstate() & (std::ios::failbit|std::ios::badbit)){
         throw SeekError();
     }
-    current_fstream.read(reinterpret_cast<char *>(buf), bytes);
+
+    size_t bytes_to_read = bytes;
+    if (bytes_to_read > available_bytes) {
+        bytes_to_read = available_bytes;
+    }
+    std::cerr << fi->path
+              << " pread bytes=" << bytes
+              << " offset=" << offset
+              << " file_offset=" << file_offset
+              << " available_bytes=" << available_bytes
+              << " bytes_to_read=" << bytes_to_read << std::endl;
+    current_fstream.read(reinterpret_cast<char *>(buf), bytes_to_read);
+
     if (current_fstream.rdstate() & std::ios::failbit){
         std::cerr << "read error  failbit bytes=" << bytes << std::endl;
         throw ReadError();
@@ -583,14 +583,18 @@ ssize_t process_raw::pread(void *buf, size_t bytes, uint64_t offset) const
         throw ReadError();
     }
     if (current_fstream.rdstate() & (std::ios::eofbit)){
+        std::cerr << "read error  eof bytes=" << bytes << std::endl;
         throw EndOfImage();
     }
-    size_t bytes_available = (fi->offset + fi->length) - offset;
-    size_t bytes_read = std::min( bytes_available, bytes);
+
+    size_t bytes_read = bytes_to_read;  // guess we got the right amount
+
+    /* Need to recurse, which will cause the next segment to be loaded */
     if (bytes_read==bytes) return bytes_read; // read precisely the correct amount!
     if (bytes_read==0) return 0;              // This might happen at the end of the image; it prevents infinite recursion
 
-    /* Need to recurse, which will cause the next segment to be loaded */
+    std::cerr << "*** RECURSIVE CALL ***.  bytes_read=" << bytes_read << " bytes=" << bytes << " offset=" << offset << "\n";
+
     ssize_t bytes_read2 = this->pread(static_cast<char *>(buf)+bytes_read, bytes-bytes_read, offset+bytes_read);
     if (bytes_read2<0) return -1;	// error on second read
     return bytes_read + bytes_read2;
@@ -612,6 +616,10 @@ image_process::iterator process_raw::end() const
     it.eof = true;
     return it;
 }
+
+/****************************************************************
+ ** process_raw
+ ****************************************************************/
 
 void process_raw::increment_iterator(image_process::iterator &it) const
 {
@@ -664,6 +672,8 @@ sbuf_t *process_raw::sbuf_alloc(image_process::iterator &it) const
         delete sbuf;
 	throw read_error();
     }
+    //std::cerr << *sbuf << std::endl;
+
     return sbuf;
 }
 
@@ -684,8 +694,8 @@ uint64_t process_raw::seek_block(image_process::iterator &it,uint64_t block) con
 
 
 /****************************************************************
- *** Directory Recursion
- ****************************************************************/
+ ** process_dir
+ **/
 
 /**
  * directories don't get page sizes or margins; the page size is the entire
@@ -792,20 +802,13 @@ uint64_t process_dir::seek_block(class image_process::iterator &it,uint64_t bloc
 image_process *image_process::open(std::filesystem::path fn, bool opt_recurse, size_t pagesize_, size_t margin_)
 {
     image_process *ip = 0;
-    std::string ext = filename_extension(fn);
-    struct stat st;
-    bool  is_windows_unc = false;
     std::string fname_string = fn.string();
 
-#ifdef _WIN32
-    if (fname_string.size()>2 && fname_string[0]=='\\' && fname_string[1]=='\\') is_windows_unc=true;
-#endif
-
-    memset(&st,0,sizeof(st));
-    if (stat(fname_string.c_str(),&st) && !is_windows_unc){
+    if ( std::filesystem::exists(fn) == false ){
 	throw NoSuchFile(fname_string);
     }
-    if (S_ISDIR(st.st_mode)){
+
+    if (std::filesystem::is_directory(fn)){
 	/* If this is a directory, process specially */
 	if (opt_recurse==0){
 	    std::cerr << "error: " << fname_string << " is a directory but -R (opt_recurse) not set\n";
@@ -837,16 +840,18 @@ image_process *image_process::open(std::filesystem::path fn, bool opt_recurse, s
 	 * but it generates a compile-time error.
 	 */
 
+        std::string ext = fn.extension().string();
 	std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
-
-	if (ext=="e01" || fname_string.find(".E01.")!=std::string::npos){
+	if (ext=="e01" || fname_string.find(".E01")!=std::string::npos){
 #ifdef HAVE_LIBEWF
 	    ip = new process_ewf(fn,pagesize_,margin_);
 #else
 	    throw NoSupport("This program was compiled without E01 support");
 #endif
 	}
-	if (!ip) ip = new process_raw(fn,pagesize_,margin_);
+	if (ip==nullptr) {
+            ip = new process_raw(fn,pagesize_,margin_);
+        }
     }
     /* Try to open it */
     if (ip->open()){
