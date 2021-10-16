@@ -410,7 +410,7 @@ process_raw::process_raw(std::filesystem::path fname, size_t pagesize_, size_t m
 
 process_raw::~process_raw()
 {
-    file_list.empty();
+    file_list.clear();
 }
 
 /* If we are running on WIN32 and we've been asked to process a raw device, get its "Drive Geometry" to figure out how big it is.
@@ -707,7 +707,10 @@ int process_dir::open()
 
 ssize_t process_dir::pread(void *buf,size_t bytes,uint64_t offset) const
 {
-    throw std::runtime_error("process_dir does not support pread");
+    if (bytes>0) {
+        throw std::runtime_error("process_dir does not support pread");
+    }
+    return 0;
 }
 
 int64_t process_dir::image_size() const

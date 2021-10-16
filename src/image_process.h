@@ -242,7 +242,7 @@ class process_raw : public image_process {
         std::filesystem::path path {};  // the file name
 	uint64_t offset   {};           // where each file starts
 	uint64_t length   {};           // how long it is
-        std::ifstream     stream;       // where we are reading
+        std::ifstream     stream {};       // where we are reading
     };
     typedef std::vector<std::shared_ptr<file_info>> file_list_t;
     file_list_t file_list {};

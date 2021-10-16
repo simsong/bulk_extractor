@@ -128,7 +128,7 @@ TEST_CASE("5gb-flatfile","[end-to-end") {
         REQUIRE( of.is_open());
         char *spaces = new char[sz];
         memset(spaces,' ',sz);
-        for(int i=0;i<count;i++){
+        for (unsigned int i=0;i<count;i++){
             of.write(spaces,sz);
         }
         of << "email_one@company.com "; // 22 characters
@@ -164,10 +164,10 @@ TEST_CASE("30mb-segmented","[end-to-end") {
         if (!std::filesystem::exists( seg_path )) {
             std::ofstream of(seg_path, std::ios::out | std::ios::binary);
             REQUIRE( of.is_open());
-            for(int i=0;i<count;i++){
+            for (unsigned int i=0;i<count;i++){
                 of << "This is segment " << segment << " line " << i << " \n";
             }
-            if(segment == segments-1) {
+            if (segment == segments-1) {
                 of << "email_one@company.com "; // 22 characters
                 of << "email_two@company.com "; // 22 characters
             }
