@@ -9,3 +9,4 @@ out*/
 *.tmp
 test_be
 domexusers.raw*
+*.exe

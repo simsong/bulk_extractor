@@ -293,7 +293,8 @@ m4_include([m4/slg_check_gcc_diagnostics.m4])
 ## but only for be_test
 if test x"$mingw" = x"yes" ; then
   LIBS="$LIBS -lgdi32 "
-  test_be_LDADD = -municode
+  bulk_extractor_LDADD=-municode
+  test_be_LDADD=-municode
 else
   CFLAGS="$CFLAGS -fPIC"
   CXXFLAGS="$CXXFLAGS -fPIC"

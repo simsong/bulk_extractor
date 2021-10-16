@@ -138,7 +138,8 @@ TEST_CASE("5gb-flatfile","[end-to-end") {
     REQUIRE( std::filesystem::file_size( fgb_path ) == count * sz + 22 * 2);
     std::filesystem::path outdir = NamedTemporaryDirectory();
     std::string outdir_string = outdir.string();
-    const char *argv[] = {"bulk_extractor","-Eemail", "-1", "-o", outdir_string.c_str(), fgb_path.c_str(), nullptr};
+    std::string fgb_string = fgb_path.string();
+    const char *argv[] = {"bulk_extractor","-Eemail", "-1", "-o", outdir_string.c_str(), fgb_string.c_str(), nullptr};
     std::stringstream ss;
     int ret = bulk_extractor_main(ss, std::cerr,
                                   argv_count(const_cast<char * const *>(argv)),
@@ -176,7 +177,8 @@ TEST_CASE("30mb-segmented","[end-to-end") {
     }
     std::filesystem::path outdir = NamedTemporaryDirectory();
     std::string outdir_string = outdir.string();
-    const char *argv[] = {"bulk_extractor","-Eemail", "-1", "-o", outdir_string.c_str(), seg_base.c_str(), nullptr};
+    std::string seg_string = seg_base.string();
+    const char *argv[] = {"bulk_extractor","-Eemail", "-1", "-o", outdir_string.c_str(), seg_string.c_str(), nullptr};
     std::stringstream ss;
     int ret = bulk_extractor_main(ss, std::cerr,
                                   argv_count(const_cast<char * const *>(argv)),

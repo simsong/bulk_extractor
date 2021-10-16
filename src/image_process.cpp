@@ -458,7 +458,7 @@ void process_raw::add_file(std::filesystem::path path)
 #ifdef _WIN32
     if (path_filesize==0){
         /* On Windows, see if we can use this */
-        std::stdout << path << " checking physical drive" << std::endl;
+        std::cout << path << " checking physical drive" << std::endl;
         DISK_GEOMETRY pdg = { 0 }; // disk drive geometry structure
         std::wstring wszDrive = safe_utf8to16(path.string());
         GetDriveGeometry(wszDrive.c_str(), &pdg);
