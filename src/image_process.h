@@ -230,7 +230,6 @@ class process_raw : public image_process {
     public:;
         file_info(const std::filesystem::path path_,uint64_t offset_,uint64_t length_):
             path(path_),offset(offset_),length(length_){
-            std::cerr << "opening " << path << std::endl;
             stream.open(path, std::ios::binary);
             if (stream.is_open()==false){
                 throw image_process::NoSuchFile( path_.string() );

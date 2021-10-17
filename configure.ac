@@ -294,7 +294,6 @@ m4_include([m4/slg_check_gcc_diagnostics.m4])
 if test "${mingw}" == yes ; then
   AC_MSG_NOTICE([adding libraries for mingw])
   LIBS="$LIBS -lgdi32"
-  test_be_LDADD=-municode
 else
   CFLAGS="$CFLAGS -fPIC"
   CXXFLAGS="$CXXFLAGS -fPIC"

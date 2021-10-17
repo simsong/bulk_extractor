@@ -582,7 +582,6 @@ ssize_t process_raw::pread(void *buf, size_t bytes, uint64_t offset) const
     /* Need to recurse, which will cause the next segment to be loaded */
     if (bytes_read==bytes) return bytes_read; // read precisely the correct amount!
     if (bytes_read==0) return 0;              // This might happen at the end of the image; it prevents infinite recursion
-
     ssize_t bytes_read2 = this->pread(static_cast<char *>(buf)+bytes_read, bytes-bytes_read, offset+bytes_read);
     if (bytes_read2<0) return -1;	// error on second read
     return bytes_read + bytes_read2;
