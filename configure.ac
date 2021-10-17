@@ -242,7 +242,7 @@ AC_MSG_NOTICE([libewf is now $libewf])
 AC_ARG_ENABLE([exiv2],[AS_HELP_STRING([--enable-exiv2=true to check for exiv2; warning: exiv2 crashes])],
    exiv2=yes,
    exiv2=no)
-if test x"$exiv2" == x"yes" ; then
+if test "${exiv2}" == yes ; then
   AC_CHECK_LIB([iconv],[libiconv_open])
   if test "${mingw}" == yes ; then
     AC_MSG_WARN([exiv2 requires use of the DLL which must be present])
@@ -291,9 +291,9 @@ m4_include([m4/slg_check_gcc_diagnostics.m4])
 ##
 ## Also add -municode per https://stackoverflow.com/questions/58324230/undefined-reference-to-winmain-c-mingw
 ## but only for be_test
-if test x"$mingw" = x"yes" ; then
-  LIBS="$LIBS -lgdi32 "
-  test_be_LDADD = -municode
+if test "${mingw}" == yes ; then
+  AC_MSG_NOTICE([adding libraries for mingw])
+  LIBS="$LIBS -lgdi32"
 else
   CFLAGS="$CFLAGS -fPIC"
   CXXFLAGS="$CXXFLAGS -fPIC"

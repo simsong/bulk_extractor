@@ -1,6 +1,7 @@
 // https://github.com/catchorg/Catch2/blob/master/docs/tutorial.md#top
 #define CATCH_CONFIG_MAIN
 #define CATCH_CONFIG_CONSOLE_WIDTH 120
+#define DO_NOT_USE_WMAIN
 
 #include "config.h"
 
@@ -52,18 +53,32 @@ bool debug = false;
 /* We assume that the tests are being run out of bulk_extractor/src/.
  * This returns the directory of the test subdirectory.
  */
-std::filesystem::path test_dir()
+std::filesystem::path my_executable()
 {
-#ifdef HAVE__NSGETEXECUTABLEPATH
+#if defined(HAVE__NSGETEXECUTABLEPATH)
     char path[4096];
     uint32_t size = sizeof(path);
     if (_NSGetExecutablePath(path, &size) == 0){
-        return std::filesystem::path(path).parent_path() / "tests";
+        return std::filesystem::path(path);
     }
     throw std::runtime_error("_NSGetExecutablePath failed???\n");
-#else
-    return std::filesystem::canonical("/proc/self/exe").parent_path() / "tests";
 #endif
+#if defined(_WIN32)
+    char rawPathName[MAX_PATH];
+    GetModuleFileNameA(NULL, rawPathName, MAX_PATH);
+    return std::filesystem::path(rawPathName);
+#endif
+#if !defined(HAVE__NSGETEXECUTABLEPATH) && !defined(_WIN32)
+    return std::filesystem::canonical("/proc/self/exe");
+#endif
+}
+
+/* We assume that the tests are being run out of bulk_extractor/src/.
+ * This returns the directory of the test subdirectory.
+ */
+std::filesystem::path test_dir()
+{
+    return my_executable().parent_path() / "tests";
 }
 
 sbuf_t *map_file(std::filesystem::path p)
@@ -414,7 +429,11 @@ TEST_CASE("scan_vcard", "[scanners]") {
     auto outdir = test_scanner(scan_vcard, sbufp); // deletes sbuf2
 
     /* Read the output */
-    REQUIRE( std::filesystem::exists( outdir / "vcard/000/john_jakes.vcf____-0.vcf") == true);
+    std::string fname = "john_jakes.vcf____-0.vcf";
+#ifdef _WIN32
+    fname = "Z__home_user_bulk_extractor_src_tests_" + fname;
+#endif
+    REQUIRE( std::filesystem::exists( outdir / "vcard" / "000" / fname ) == true);
 }
 
 TEST_CASE("scan_wordlist", "[scanners]") {

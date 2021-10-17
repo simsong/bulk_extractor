@@ -192,6 +192,7 @@ void Phase1::read_process_sbufs()
                             // next byte follows logically, so continue to compute hash
                             sha1g->update(sbufp->get_buf(), sbufp->pagesize);
                             hash_next += sbufp->pagesize;
+
                         } else {
                             delete sha1g; // we had a logical gap; stop hashing
                             sha1g = 0;
@@ -212,6 +213,7 @@ void Phase1::read_process_sbufs()
                 }
             }
         }
+
 
         /* If we are random sampling, move to the next random sample. */
         if (sampling()){

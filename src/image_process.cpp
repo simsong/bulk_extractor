@@ -38,22 +38,13 @@
 
 #include "be13_api/utf8.h"
 #include "be13_api/utils.h"
+#include "be13_api/aftimer.h"
 #include "be13_api/formatter.h"
 #include "image_process.h"
 
 /****************************************************************
  *** static functions
  ****************************************************************/
-
-std::string image_process::filename_extension(std::filesystem::path fn_)
-{
-    std::string fn(fn_.string());
-    size_t dotpos = fn.rfind('.');
-    if (dotpos==std::string::npos) return "";
-
-    return fn.substr(dotpos+1);
-}
-
 
 image_process::image_process(std::filesystem::path fn, size_t pagesize_, size_t margin_):
     image_fname_(fn),pagesize(pagesize_),margin(margin_),report_read_errors(true)
@@ -194,8 +185,6 @@ int process_ewf::open()
     char **libewf_filenames = NULL;
     int amount_of_filenames = 0;
 
-    std::cout << "Opening " << image_fname() << "... ";
-    std::cout.flush();
 #ifdef HAVE_LIBEWF_HANDLE_CLOSE
     bool use_libewf_glob = true;
     libewf_error_t *error=0;
@@ -215,7 +204,7 @@ int process_ewf::open()
 #ifdef _WIN32
         local_e01_glob(fname, &libewf_filenames,&amount_of_filenames);
         for(int i=0;i<amount_of_filenames;i++){
-            std::cerr << libewf_filenames[i] << "\n";
+            std::cout << "opening " << libewf_filenames[i] << std::endl;
         }
 #else
         throw std::runtime_error("process_ewf::open: cannot process ewf file.");
@@ -230,7 +219,7 @@ int process_ewf::open()
 	if (error) libewf_error_fprint(error, stderr);
         fflush(stderr);
         for(size_t i = 0; libewf_filenames[i]; i++){
-            std::cerr << "filename " << i << " = " << libewf_filenames[i] << "\n";
+            std::cout << "opening " << libewf_filenames[i] << std::endl;
         }
 	throw image_process::NoSuchFile( fname.string() );
     }
@@ -421,7 +410,7 @@ process_raw::process_raw(std::filesystem::path fname, size_t pagesize_, size_t m
 
 process_raw::~process_raw()
 {
-    current_fstream.close();
+    file_list.clear();
 }
 
 /* If we are running on WIN32 and we've been asked to process a raw device, get its "Drive Geometry" to figure out how big it is.
@@ -469,7 +458,7 @@ void process_raw::add_file(std::filesystem::path path)
 #ifdef _WIN32
     if (path_filesize==0){
         /* On Windows, see if we can use this */
-        std::stdout << path << " checking physical drive" << std::endl;
+        std::cout << path << " checking physical drive" << std::endl;
         DISK_GEOMETRY pdg = { 0 }; // disk drive geometry structure
         std::wstring wszDrive = safe_utf8to16(path.string());
         GetDriveGeometry(wszDrive.c_str(), &pdg);
@@ -479,8 +468,7 @@ void process_raw::add_file(std::filesystem::path path)
             * (ULONG)pdg.BytesPerSector;
     }
 #endif
-    std::cout << "add " << path.string() << " (len=" << path_filesize << ")" << std::endl;
-    file_list.push_back(file_info(path, raw_filesize, path_filesize));
+    file_list.push_back( std::shared_ptr<process_raw::file_info>(new file_info(path, raw_filesize, path_filesize)));
     raw_filesize += path_filesize;
 }
 
@@ -488,11 +476,11 @@ void process_raw::add_file(std::filesystem::path path)
  * This currently performs a linear search through the file list. It is not efficient, but it is reliable.
  * We could use a clever data structure, but then we would need to debug it.
  */
-const process_raw::file_info *process_raw::find_offset(uint64_t pos) const
+const std::shared_ptr<process_raw::file_info> process_raw::find_offset(uint64_t pos) const
 {
-    for(process_raw::file_list_t::const_iterator it = file_list.begin();it != file_list.end();it++){
-	if ((*it).offset<=pos && pos< ((*it).offset+(*it).length)){
-	    return &(*it);
+    for (const auto &it:file_list) {
+	if (it->offset<=pos && pos<it->offset + it->length) {
+	    return it;
 	}
     }
     return 0;
@@ -536,61 +524,64 @@ int64_t process_raw::image_size() const
  * 1. Determine which file to read and how many bytes from that file can be read.
  * 2. Perform the read.
  * 3. If there are additional files to read in the next file, recurse.
+ * NOTE: This code is single-threaded because we are seeking the fstreams.
  */
 
 ssize_t process_raw::pread(void *buf, size_t bytes, uint64_t offset) const
 {
-    const file_info *fi = find_offset(offset);
-    std::cerr << "pread offset=" << offset << " fi=" << fi << std::endl;
+    std::shared_ptr<file_info> fi = find_offset(offset);
     if (fi==0) return 0;			// nothing to read.
 
-    /* See if the file is the one that's currently opened.
-     * If not, close the current one and open the new one.
-     */
+    // make sure that the offset falls within the selection.
+    assert(offset >= fi->offset);
+    assert(offset <  fi->offset + fi->length);
 
-    if (fi->path != current_path){
-        if (current_fstream.is_open()) {
-            current_fstream.close();
-        }
-        std::cerr << "opening " << fi->path << std::endl;
-        current_fstream.open(fi->path, std::ios::in | std::ios::binary);
-        if (current_fstream.is_open()==false) {
-            throw image_process::NoSuchFile( fi->path.string() );
-        }
-	current_path = fi->path;
-    }
-    assert(offset >= fi->offset);       // make sure this is the correct segment
+    // Determine the offset and available bytes in the segment
     uint64_t file_offset = offset - fi->offset;
-
-    assert(fi->length >= file_offset);  // make sure we aren't going too far
     uint64_t available_bytes = fi->length - file_offset;
 
-    if (bytes > available_bytes) {
-        bytes = available_bytes;
+    size_t bytes_to_read = bytes;
+    if (bytes_to_read > available_bytes) {
+        bytes_to_read = available_bytes;
     }
+#ifdef _DEBUG_
+    std::cerr << fi->path
+              << " pread bytes=" << bytes
+              << " offset=" << offset
+              << " file_offset=" << file_offset
+              << " available_bytes=" << available_bytes
+              << " bytes_to_read=" << bytes_to_read << std::endl;
+#endif
 
-    current_fstream.seekg( file_offset );
-    if (current_fstream.rdstate() & (std::ios::failbit|std::ios::badbit)){
+
+    fi->stream.seekg( file_offset );
+    if (fi->stream.rdstate() & (std::ios::failbit|std::ios::badbit)){
         throw SeekError();
     }
-    current_fstream.read(reinterpret_cast<char *>(buf), bytes);
-    if (current_fstream.rdstate() & std::ios::failbit){
+
+    aftimer t;
+    t.start();
+    fi->stream.read(reinterpret_cast<char *>(buf), bytes_to_read);
+    t.stop();
+
+    if (fi->stream.rdstate() & std::ios::failbit){
         std::cerr << "read error  failbit bytes=" << bytes << std::endl;
         throw ReadError();
     }
-    if (current_fstream.rdstate() & std::ios::badbit){
+    if (fi->stream.rdstate() & std::ios::badbit){
         std::cerr << "read error  badbit bytes=" << bytes << std::endl;
         throw ReadError();
     }
-    if (current_fstream.rdstate() & (std::ios::eofbit)){
+    if (fi->stream.rdstate() & (std::ios::eofbit)){
+        std::cerr << "read error  eof bytes=" << bytes << std::endl;
         throw EndOfImage();
     }
-    size_t bytes_available = (fi->offset + fi->length) - offset;
-    size_t bytes_read = std::min( bytes_available, bytes);
-    if (bytes_read==bytes) return bytes_read; // read precisely the correct amount!
-    if (bytes_read==0) return 0;              // This might happen at the end of the image; it prevents infinite recursion
+
+    size_t bytes_read = bytes_to_read;  // guess we got the right amount
 
     /* Need to recurse, which will cause the next segment to be loaded */
+    if (bytes_read==bytes) return bytes_read; // read precisely the correct amount!
+    if (bytes_read==0) return 0;              // This might happen at the end of the image; it prevents infinite recursion
     ssize_t bytes_read2 = this->pread(static_cast<char *>(buf)+bytes_read, bytes-bytes_read, offset+bytes_read);
     if (bytes_read2<0) return -1;	// error on second read
     return bytes_read + bytes_read2;
@@ -612,6 +603,10 @@ image_process::iterator process_raw::end() const
     it.eof = true;
     return it;
 }
+
+/****************************************************************
+ ** process_raw
+ ****************************************************************/
 
 void process_raw::increment_iterator(image_process::iterator &it) const
 {
@@ -684,8 +679,8 @@ uint64_t process_raw::seek_block(image_process::iterator &it,uint64_t block) con
 
 
 /****************************************************************
- *** Directory Recursion
- ****************************************************************/
+ ** process_dir
+ **/
 
 /**
  * directories don't get page sizes or margins; the page size is the entire
@@ -711,7 +706,10 @@ int process_dir::open()
 
 ssize_t process_dir::pread(void *buf,size_t bytes,uint64_t offset) const
 {
-    throw std::runtime_error("process_dir does not support pread");
+    if (bytes>0) {
+        throw std::runtime_error("process_dir does not support pread");
+    }
+    return 0;
 }
 
 int64_t process_dir::image_size() const
@@ -792,23 +790,16 @@ uint64_t process_dir::seek_block(class image_process::iterator &it,uint64_t bloc
 image_process *image_process::open(std::filesystem::path fn, bool opt_recurse, size_t pagesize_, size_t margin_)
 {
     image_process *ip = 0;
-    std::string ext = filename_extension(fn);
-    struct stat st;
-    bool  is_windows_unc = false;
     std::string fname_string = fn.string();
 
-#ifdef _WIN32
-    if (fname_string.size()>2 && fname_string[0]=='\\' && fname_string[1]=='\\') is_windows_unc=true;
-#endif
-
-    memset(&st,0,sizeof(st));
-    if (stat(fname_string.c_str(),&st) && !is_windows_unc){
+    if ( std::filesystem::exists(fn) == false ){
 	throw NoSuchFile(fname_string);
     }
-    if (S_ISDIR(st.st_mode)){
+
+    if (std::filesystem::is_directory(fn)){
 	/* If this is a directory, process specially */
 	if (opt_recurse==0){
-	    std::cerr << "error: " << fname_string << " is a directory but -R (opt_recurse) not set\n";
+	    std::cerr << "error: " << fname_string << " is a directory but -R (opt_recurse) not set" << std::endl;
 	    errno = 0;
 	    throw NoSuchFile(fname_string);	// directory and cannot recurse
 	}
@@ -837,16 +828,18 @@ image_process *image_process::open(std::filesystem::path fn, bool opt_recurse, s
 	 * but it generates a compile-time error.
 	 */
 
+        std::string ext = fn.extension().string();
 	std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
-
-	if (ext=="e01" || fname_string.find(".E01.")!=std::string::npos){
+	if (ext=="e01" || fname_string.find(".E01")!=std::string::npos){
 #ifdef HAVE_LIBEWF
 	    ip = new process_ewf(fn,pagesize_,margin_);
 #else
 	    throw NoSupport("This program was compiled without E01 support");
 #endif
 	}
-	if (!ip) ip = new process_raw(fn,pagesize_,margin_);
+	if (ip==nullptr) {
+            ip = new process_raw(fn,pagesize_,margin_);
+        }
     }
     /* Try to open it */
     if (ip->open()){
