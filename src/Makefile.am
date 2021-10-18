@@ -11,6 +11,8 @@ AM_CPPFLAGS = -I${top_srcdir}/src/be13_api
 
 AUTOMAKE_OPTIONS = subdir-objects
 
+EXTRA_DIST = .gitignore
+
 # bring in defs from two included projects
 # note: don't be clever and use the $variable on the Include line. it doesn't work
 

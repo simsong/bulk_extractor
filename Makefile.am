@@ -14,6 +14,7 @@ SUBDIRS = src man python specfiles tests
 # It's only for people who check out the git repo
 
 EXTRA_DIST = \
+	.gitignore \
 	licenses/LICENSE.Autoconf_exception \
 	licenses/LICENSE.CPL1 \
 	licenses/LICENSE.GPLv3 \
