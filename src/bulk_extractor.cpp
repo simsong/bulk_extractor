@@ -615,7 +615,6 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     master_timer.stop();
 
     /*** PHASE 3 ---  report and then print final usage information ***/
-    o.phase = 3;
     xreport->push( "report" );
     xreport->xmlout( "total_bytes",phase1.total_bytes);
     xreport->xmlout( "elapsed_seconds",master_timer.elapsed_seconds());

@@ -56,8 +56,8 @@ lightgrep_scanners = \
 
 scanners_builtin = \
 	bulk_extractor_scanners.cpp \
-	scan_aes.cpp \
-	scan_base64.cpp \
+	scan_aes.cpp scan_aes.h \
+	scan_base64.cpp scan_base64.h \
 	scan_ccns2.cpp scan_ccns2.h \
 	scan_elf.cpp \
 	scan_evtx.cpp \
@@ -70,8 +70,8 @@ scanners_builtin = \
 	scan_httplogs.cpp \
 	scan_json.cpp \
 	scan_kml.cpp \
-	scan_msxml.cpp \
-	scan_net.cpp \
+	scan_msxml.cpp scan_msxml.h \
+	scan_net.cpp scan_net.h \
 	scan_ntfsindx.cpp \
 	scan_ntfslogfile.cpp \
 	scan_ntfsmft.cpp \
@@ -81,12 +81,12 @@ scanners_builtin = \
 	scan_rar.cpp \
 	scan_sqlite.cpp \
 	scan_utmp.cpp \
-	scan_vcard.cpp \
+	scan_vcard.cpp scan_vcard.h \
 	scan_windirs.cpp \
 	scan_winlnk.cpp \
 	scan_winpe.cpp \
 	scan_winprefetch.cpp \
-	scan_wordlist.cpp \
+	scan_wordlist.cpp scan_wordlist.h \
 	scan_xor.cpp \
 	scan_zip.cpp \
 	pcap_writer.cpp \

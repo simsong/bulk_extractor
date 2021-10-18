@@ -21,15 +21,11 @@ m4_include([src/be13_api/dfxml_cpp/src/dfxml_configure.m4])
 m4_include([src/be13_api/be13_configure.m4])
 
 #
-# NOTE 1 - plugins/Makefile is referenced so that the plugins Makefile is created.
-# However, plugins is not listed as a SUBDIR for Makefile.am in this directory.
-# That prevents the plugins from automatically being built each time.
 #
-# NOTE 2 - src_win/Makefile is not automatically generated. This is necessary
+# NOTE - src_win/Makefile is not automatically generated. This is necessary
 # so that it can be run even after a 'make distclean' is done
 AC_CONFIG_FILES([Makefile src/Makefile \
 			  man/Makefile python/Makefile \
-                          plugins/Makefile \
 			  specfiles/Makefile specfiles/bulk_extractor.spec.m4 tests/Makefile ])
 AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE
