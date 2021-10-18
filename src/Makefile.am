@@ -107,6 +107,7 @@ endif
 bulk_extractor_parts = \
         $(TSK3INCS)  \
 	$(BE13_API_SRC) \
+	tsk3_fatdirs.h \
 	bulk_extractor_restarter.h \
 	bulk_extractor_scanners.h \
 	base64_forensic.cpp \
