@@ -8,7 +8,7 @@
 # Remember to update ocnfigure.ac when we re-enable doc
 #SUBDIRS = src man plugins python specfiles tests doc doc/latex_manuals $(BE_VIEWER_DIR)
 
-SUBDIRS = src man python specfiles tests
+SUBDIRS = src src/tests man python specfiles tests
 
 # don't include bootstrap. People run it, and they shoudln't
 # It's only for people who check out the git repo

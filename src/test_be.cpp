@@ -78,13 +78,29 @@ std::filesystem::path my_executable()
  */
 std::filesystem::path test_dir()
 {
+    // if srcdir is set, use that, otherwise use the directory of the executable
+    // srcdir is set when we run under autoconf 'make distcheck'
+    const char *srcdir = getenv("srcdir");
+    if (srcdir) {
+        return std::filesystem::path(srcdir) / "tests";
+    }
     return my_executable().parent_path() / "tests";
 }
 
 sbuf_t *map_file(std::filesystem::path p)
 {
+    std::filesystem::path dest = test_dir() / p;
+    if (std::filesystem::exists( dest )==false) {
+        std::cerr << "test_be.cpp:map_file - " << dest << " does not exist." << std::endl;
+        std::cerr << "Environment variables:" << std::endl;
+        extern char **environ;
+        for (char **env = environ; *env != 0; env++) {
+            std::cerr << (*env) << std::endl;
+        }
+    }
+    REQUIRE(std::filesystem::exists(dest)==true);
     sbuf_t::debug_range_exception = true;
-    return sbuf_t::map_file( test_dir() / p );
+    return sbuf_t::map_file( dest );
 }
 
 

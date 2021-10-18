@@ -121,15 +121,22 @@ TEST_CASE("5gb-flatfile","[end-to-end") {
     /* Make a 5GB file and try to read it. Make sure we get back the known content. */
     const uint64_t count = 5000;
     const uint64_t sz = 1000000;
-    std::filesystem::path fgb_path = test_dir() / "5gb-flatfile.raw";
+    std::filesystem::path fgb_path = std::filesystem::temp_directory_path() / "5gb-flatfile.raw";
     if (!std::filesystem::exists( fgb_path )) {
         std::cout << "Creating 5GB flatfile to test >4GiB file handling" << std::endl;
         std::ofstream of(fgb_path, std::ios::out | std::ios::binary);
-        REQUIRE( of.is_open());
+        if (! of.is_open()) {
+            std::cerr << "Cannot open " << std::filesystem::absolute(fgb_path) << " for writing: " << ::strerror(errno) << std::endl;
+        }
+        REQUIRE( of.is_open() );
         char *spaces = new char[sz];
         memset(spaces,' ',sz);
         for (unsigned int i=0;i<count;i++){
             of.write(spaces,sz);
+            if (of.rdstate() & (std::ios::badbit|std::ios::failbit|std::ios::eofbit)){
+                std::cerr << "write failed: " << ::strerror(errno) << std::endl;
+            }
+            REQUIRE( (of.rdstate() & (std::ios::badbit|std::ios::failbit|std::ios::eofbit)) == 0 );
         }
         of << "email_one@company.com "; // 22 characters
         of << "email_two@company.com "; // 22 characters
@@ -160,7 +167,7 @@ TEST_CASE("30mb-segmented","[end-to-end") {
     for (int segment = 0; segment < segments; segment++) {
         char fname[64];
         snprintf(fname,sizeof(fname),"30mb-segmented.00%d", segment);
-        std::filesystem::path seg_path = test_dir() / fname;
+        std::filesystem::path seg_path = std::filesystem::temp_directory_path() / fname;
         if (segment==0) seg_base = seg_path;
         if (!std::filesystem::exists( seg_path )) {
             std::ofstream of(seg_path, std::ios::out | std::ios::binary);
@@ -187,7 +194,7 @@ TEST_CASE("30mb-segmented","[end-to-end") {
 
     auto lines = getLines( outdir / "report.xml" );
     auto pos = std::find(lines.begin(), lines.end(),
-                         "    <hashdigest type='SHA1'>bf2a268075c68fa1f1f40660434965028b13537d</hashdigest>");
+                         "    <hashdigest type='SHA1'>d8a220406f4261335a78df2bd3778568677a6c36</hashdigest>");
     REQUIRE( pos != lines.end());
 }
 
@@ -213,15 +220,23 @@ TEST_CASE("restarter", "[restarter]") {
     sc.input_fname = test_dir() / "1mb_fat32.dmg";
     sc.outdir = NamedTemporaryDirectory();
 
-    std::filesystem::copy(test_dir() / "interrupted_report.xml",
-                          sc.outdir  / "report.xml");
+    std::filesystem::path ie_xml = test_dir() / "interrupted_report.xml";
+    std::filesystem::path out_xml = sc.outdir / "report.xml";
+
+    REQUIRE( std::filesystem::exists( ie_xml ));
+
+    std::filesystem::copy(ie_xml, out_xml);
+    REQUIRE( std::filesystem::exists( out_xml ));
+
+    /* make sure it is writable */
+    std::filesystem::permissions(out_xml, std::filesystem::perms::owner_all, std::filesystem::perm_options::add);
 
     Phase1::Config   cfg;  // config for the image_processing system
     bulk_extractor_restarter r(sc, cfg);
 
-    REQUIRE( std::filesystem::exists( sc.outdir / "report.xml") == true); // because it has not been renamed yet
+    REQUIRE( std::filesystem::exists( out_xml ) == true); // because it has not been renamed yet
     r.restart();
-    REQUIRE( std::filesystem::exists( sc.outdir / "report.xml") == false); // because now it has been renamed
+    REQUIRE( std::filesystem::exists( out_xml ) == false); // because now it has been renamed
     REQUIRE( cfg.seen_page_ids.find("369098752") != cfg.seen_page_ids.end() );
     REQUIRE( cfg.seen_page_ids.find("369098752+") == cfg.seen_page_ids.end() );
 }
