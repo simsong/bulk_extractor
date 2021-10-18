@@ -14,10 +14,8 @@ AUTOMAKE_OPTIONS = subdir-objects
 # bring in defs from two included projects
 # note: don't be clever and use the $variable on the Include line. it doesn't work
 
-
 BE13_API_DIR= be13_api
 include be13_api/Makefile.defs
-
 
 include rar/Makefile.defs
 

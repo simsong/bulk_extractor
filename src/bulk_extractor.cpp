@@ -522,7 +522,6 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     if ( stop_list.size()>0)        flags |= feature_recorder_set::CREATE_STOP_LIST_RECORDERS;
     if ( opt_write_sqlite3)         flags |= feature_recorder_set::ENABLE_SQLITE3_RECORDERS;
     if ( !opt_write_feature_files)  flags |= feature_recorder_set::DISABLE_FILE_RECORDERS;
-
 #endif
 
     /* provide documentation to the user; the DFXML information comes from elsewhere */
@@ -545,14 +544,14 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     }
 
     /*** PHASE 1 --- Run on the input image */
-    struct notify_thread::notify_opts o(cfg);
-    o.ssp = &ss;
-    o.master_timer  = &master_timer;
-    o.fraction_done = &fraction_done;
-    o.phase = 1;
+    struct notify_thread::notify_opts *o = new notify_thread::notify_opts(cfg);
+    o->ssp = &ss;
+    o->master_timer  = &master_timer;
+    o->fraction_done = &fraction_done;
+    o->phase = 1;
 
     if ( cfg.opt_notification) {
-        notify_thread::launch_notify_thread( &o);
+        notify_thread::launch_notify_thread( o);
     }
     ss.phase_scan();
 
@@ -596,10 +595,15 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     }
 
     /*** PHASE 2 --- Shutdown ***/
-    o.phase = 2;
+    {
+        std::unique_lock<std::mutex> lock(o->Mphase);
+        o->phase = 2;                        // will cause notify thread to shut down, and the notify thread will delete the object
+    }
+
     if ( !cfg.opt_quiet) cout << "Phase 2. Shutting down scanners\n";
     xreport->add_timestamp( "phase2 start" );
     try {
+        std::cout << "Computing final histograms and shutting down...\n";
         ss.shutdown();
     }
     catch ( const feature_recorder::DiskWriteError &e ) {
@@ -612,7 +616,6 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     master_timer.stop();
 
     /*** PHASE 3 ---  report and then print final usage information ***/
-    o.phase = 3;
     xreport->push( "report" );
     xreport->xmlout( "total_bytes",phase1.total_bytes);
     xreport->xmlout( "elapsed_seconds",master_timer.elapsed_seconds());
@@ -649,5 +652,6 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     }
 
     muntrace();
+    /* TODO: We could wait for the notify thread to actually exit, but then we would need to address the sleep, and end up putting in a condition varialbe, and it would be a pain. */
     return( 0 );
 }

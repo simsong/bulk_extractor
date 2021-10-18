@@ -187,7 +187,7 @@ TEST_CASE("30mb-segmented","[end-to-end") {
 
     auto lines = getLines( outdir / "report.xml" );
     auto pos = std::find(lines.begin(), lines.end(),
-                         "    <hashdigest type='SHA1'>d8a220406f4261335a78df2bd3778568677a6c36</hashdigest>");
+                         "    <hashdigest type='SHA1'>bf2a268075c68fa1f1f40660434965028b13537d</hashdigest>");
     REQUIRE( pos != lines.end());
 }
 
