@@ -19,19 +19,20 @@ include be13_api/Makefile.defs
 
 include rar/Makefile.defs
 
-# TSK3INCS = \
-# 	tsk3/auto/tsk_auto.h\
-# 	tsk3/base/tsk_base.h\
-# 	tsk3/base/tsk_os.h\
-# 	tsk3/fs/tsk_fatfs.h\
-# 	tsk3/fs/tsk_fs.h\
-# 	tsk3/fs/tsk_ntfs.h\
-# 	tsk3/hashdb/tsk_hashdb.h\
-# 	tsk3/img/tsk_img.h\
-# 	tsk3/libtsk.h\
-# 	tsk3/tsk_incs.h\
-# 	tsk3/vs/tsk_vs.h
-#
+TSK3INCS = \
+	tsk3_fatdirs.h\
+	tsk3/auto/tsk_auto.h\
+	tsk3/base/tsk_base.h\
+	tsk3/base/tsk_os.h\
+	tsk3/fs/tsk_fatfs.h\
+	tsk3/fs/tsk_fs.h\
+	tsk3/fs/tsk_ntfs.h\
+	tsk3/hashdb/tsk_hashdb.h\
+	tsk3/img/tsk_img.h\
+	tsk3/libtsk.h\
+	tsk3/tsk_incs.h\
+	tsk3/vs/tsk_vs.h
+
 
 
 # These scanners are based on GNUflex
@@ -107,7 +108,6 @@ endif
 bulk_extractor_parts = \
         $(TSK3INCS)  \
 	$(BE13_API_SRC) \
-	tsk3_fatdirs.h \
 	bulk_extractor_restarter.h \
 	bulk_extractor_scanners.h \
 	base64_forensic.cpp \
