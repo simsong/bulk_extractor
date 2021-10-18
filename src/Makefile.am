@@ -40,7 +40,7 @@ flex_scanners = \
 	sbuf_flex_scanner.h \
 	scan_base16.flex \
 	scan_accts.flex \
-	scan_email.flex \
+	scan_email.flex scan_email.h \
 	scan_gps.flex
 
 # These scanners are based on Lightbox Technology's lightgrep
