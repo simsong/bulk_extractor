@@ -72,6 +72,8 @@ void notify_thread::notifier( struct notify_thread::notify_opts *o)
             }
         }
 
+        if (o->phase>1) break;
+
         // get screen size change if we can!
         cols = terminal_width( cols);
         time_t rawtime = time ( 0 );
@@ -123,6 +125,11 @@ void notify_thread::notifier( struct notify_thread::notify_opts *o)
         }
         std::this_thread::sleep_for( std::chrono::seconds( o->cfg.opt_notify_rate ));
     }
+    for(int i=0;i<5;i++){
+        std::cout << std::endl;
+    }
+    std::cout << "Computing final histograms and shutting down...\n";
+    return;                             // end of notifier thread.
 }
 
 void notify_thread::launch_notify_thread( struct notify_thread::notify_opts *o)
