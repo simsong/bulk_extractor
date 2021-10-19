@@ -10,3 +10,4 @@ stand
 test_be
 test_bulkextractor
 x.cpp
+domexusers.raw*
