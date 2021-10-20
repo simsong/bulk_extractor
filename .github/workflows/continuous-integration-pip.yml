@@ -36,13 +36,13 @@ jobs:
       - name: Update autoconf on Ubuntu
         if: startsWith(matrix.os, 'ubuntu')
         run: |
-          wget https://ftpmirror.gnu.org/autoconf/autoconf-2.71.tar.gz
+          wget --no-check-certificate https://ftpmirror.gnu.org/autoconf/autoconf-2.71.tar.gz
           tar xfz autoconf-2.71.tar.gz && cd autoconf-2.71 && ./configure && make && sudo make install
 
       - name: Update automake on Ubuntu
         if: startsWith(matrix.os, 'ubuntu')
         run: |
-          wget https://ftpmirror.gnu.org/automake/automake-1.16.3.tar.gz
+          wget --no-check-certificate https://ftpmirror.gnu.org/automake/automake-1.16.3.tar.gz
           tar xfz automake-1.16.3.tar.gz && cd automake-1.16.3 && ./configure && make && sudo make install
 
       - name: Report automake and autoconf version
@@ -74,8 +74,12 @@ jobs:
           cd src
           make check
           gcov-9 -n -o . `find . -name '*cpp'`
-          bash <(curl -s https://codecov.io/bash)
+          curl -Os https://uploader.codecov.io/latest/linux/codecov
+          chmod +x codecov
+          ./codecov -t ${CODECOV_TOKEN}
           make distclean
+          # Todo - add GPG verification - see https://about.codecov.io/blog/introducing-codecovs-new-uploader/
+
 
       - name: regresion test
         if: startsWith(matrix.os, 'disabled')

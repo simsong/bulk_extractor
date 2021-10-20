@@ -8,7 +8,7 @@
 # and http://www.bioinf.uni-freiburg.de/~mmann/HowTo/automake.html
 
 AC_PREREQ([2.69])
-AC_INIT([BULK_EXTRACTOR],[2.0.0-dev],[bugs@digitalcorpora.org])
+AC_INIT([BULK_EXTRACTOR],[2.0.0-beta1],[bugs@digitalcorpora.org])
 AC_CONFIG_MACRO_DIR(m4)
 AC_CONFIG_AUX_DIR([build-aux])
 ################################################################
@@ -21,16 +21,16 @@ m4_include([src/be13_api/dfxml_cpp/src/dfxml_configure.m4])
 m4_include([src/be13_api/be13_configure.m4])
 
 #
-# NOTE 1 - plugins/Makefile is referenced so that the plugins Makefile is created.
-# However, plugins is not listed as a SUBDIR for Makefile.am in this directory.
-# That prevents the plugins from automatically being built each time.
 #
-# NOTE 2 - src_win/Makefile is not automatically generated. This is necessary
+# NOTE - src_win/Makefile is not automatically generated. This is necessary
 # so that it can be run even after a 'make distclean' is done
-AC_CONFIG_FILES([Makefile src/Makefile \
-			  man/Makefile python/Makefile \
-                          plugins/Makefile \
-			  specfiles/Makefile specfiles/bulk_extractor.spec.m4 tests/Makefile ])
+AC_CONFIG_FILES([Makefile
+                 src/Makefile src/tests/Makefile
+                 man/Makefile
+                 python/Makefile
+                 specfiles/Makefile specfiles/bulk_extractor.spec.m4
+                 tests/Makefile ])
+
 AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
@@ -242,7 +242,7 @@ AC_MSG_NOTICE([libewf is now $libewf])
 AC_ARG_ENABLE([exiv2],[AS_HELP_STRING([--enable-exiv2=true to check for exiv2; warning: exiv2 crashes])],
    exiv2=yes,
    exiv2=no)
-if test x"$exiv2" == x"yes" ; then
+if test "${exiv2}" == yes ; then
   AC_CHECK_LIB([iconv],[libiconv_open])
   if test "${mingw}" == yes ; then
     AC_MSG_WARN([exiv2 requires use of the DLL which must be present])
@@ -288,7 +288,11 @@ m4_include([m4/slg_check_gcc_diagnostics.m4])
 ## If compiling on mingw, add another -lgdi32 to be safe
 ## This is required becuase some libraries reference functions in gdi32 and, for whatever reason,
 ## the linker is not smart enough to re-check the library
-if test x"$mingw" = x"yes" ; then
+##
+## Also add -municode per https://stackoverflow.com/questions/58324230/undefined-reference-to-winmain-c-mingw
+## but only for be_test
+if test "${mingw}" == yes ; then
+  AC_MSG_NOTICE([adding libraries for mingw])
   LIBS="$LIBS -lgdi32"
 else
   CFLAGS="$CFLAGS -fPIC"
@@ -297,6 +301,20 @@ fi
 
 m4_include([src/be13_api/m4/slg_address_sanitizer.m4])
 m4_include([src/be13_api/m4/slg_noopt.m4])
+
+################################################################
+## Check on two annoying warnings
+
+# https://stackoverflow.com/questions/47160617/more-robust-ac-compile-ifelse-feature-testing
+# MY_COMPILE_CLEAN_IFELSE(PROGRAM, [ACTION-IF-TRUE], [ACTION-IF-FALSE])
+# ---------------------------------------------------------------
+# Try to compile PROGRAM.
+AC_DEFUN([MY_COMPILE_CLEAN_IFELSE],
+[AC_REQUIRE([AC_PROG_EGREP])
+AC_COMPILE_IFELSE([$1],[retval=0
+if $EGREP -i -c -E 'fatal|error|unrecognized|not found|not exist' conftest.err >/dev/null; then retval=1; fi
+],[retval=1])
+AS_IF([test $retval = 0],[$2],[$3])])
 
 
 AC_MSG_NOTICE([*************************************])

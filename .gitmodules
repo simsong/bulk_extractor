@@ -1,3 +1,6 @@
 [submodule "src/be13_api"]
 	path = src/be13_api
 	url = https://github.com/simsong/be13_api.git
+[submodule "dfxml_schema"]
+	path = dfxml_schema
+	url = https://github.com/dfxml-working-group/dfxml_schema.git

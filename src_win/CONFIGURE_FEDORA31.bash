@@ -1,4 +1,20 @@
 #!/bin/bash
+OS_NAME=fedora
+OS_VERSION=34
+if [ ! -r /etc/os-release ]; then
+  echo This requires /etc/os-release
+  exit 1
+fi
+. /etc/os-release
+if [ $ID != 'fedora' ]; then
+    echo This requires $OS_NAME Linux. You have $ID.
+    exit 1
+fi
+
+if [ $VERSION_ID -ne $OS_VERSION ]; then
+    echo This requires $OS_NAME version $OS_VERSION. You have $ID $VERSION_ID.
+    exit 1
+fi
 cat <<EOF
 *******************************************************************
         Configuring Fedora for cross-compiling multi-threaded
@@ -14,7 +30,7 @@ mingw64.  Please perform the following steps:
    1a - download the ISO for the 64-bit DVD (not the live media) from:
         http://fedoraproject.org/en/get-fedora-options#formats
    1b - Create a new VM using this ISO as the boot.
-       
+
 2. Plese put this CONFIGURE_F20.bash script in you home directory.
 
 3. Run this script to configure the system to cross-compile bulk_extractor.
@@ -52,23 +68,7 @@ MPKGS+="expat-devel "
 MPKGS+="mingw64-gcc mingw64-gcc-c++ "
 MPKGS+="mingw32-nsis "
 
-if [ ! -r /etc/redhat-release ]; then
-  echo This requires Fedora Linux
-  exit 1
-fi
-
-. /etc/os-release
-if [ $ID != 'fedora' ]; then
-    echo This requires Fedora Linux. You have $ID.
-    exit 1
-fi
-
-if [ $VERSION_ID -ne 31 ]; then
-    echo This requires version 31 of $ID. You have $VERSION_ID. 
-    exit 1
-fi
-
-echo Will now try to install 
+echo Will now try to install
 
 sudo yum install -y $MPKGS --skip-broken 2>&1 | grep -v "is already installed"
 if [ $? != 0 ]; then
@@ -88,7 +88,7 @@ for lib in zlib gettext boost cairo pixman freetype fontconfig \
 done
 sudo yum -y install $INST 2>&1 | grep -v "is already installed"
 
-echo 
+echo
 echo "Now performing a yum update to update system packages"
 sudo yum -y update  2>&1 | grep -v "is already installed"
 
@@ -104,12 +104,12 @@ function is_installed {
   if [ -r /usr/x86_64-w64-mingw32/sys-root/mingw/lib/$LIB.a ];
   then
     return 0
-  else 
+  else
     return 1
   fi
 }
-    
-# usage: build_mingw <name> <download-URL> 
+
+# usage: build_mingw <name> <download-URL>
 function build_mingw {
     LIB=$1
     URL=$2
@@ -145,8 +145,8 @@ function build_mingw {
     fi
 }
 
-build_mingw libtre   http://laurikari.net/tre/tre-0.8.0.tar.gz   
-build_mingw libewf   https://github.com/libyal/libewf/releases/download/20171104/libewf-experimental-20171104.tar.gz 
+build_mingw libtre   http://laurikari.net/tre/tre-0.8.0.tar.gz
+build_mingw libewf   https://github.com/libyal/libewf/releases/download/20171104/libewf-experimental-20171104.tar.gz
 
 #
 # ICU requires patching and a special build sequence
@@ -188,7 +188,7 @@ else
   CC=gcc CXX=g++ CFLAGS=-O3 CXXFLAGS=-O3 CPPFLAGS="$ICU_DEFINES" ../icu/source/runConfigureICU Linux --enable-shared $ICU_FLAGS
   make VERBOSE=1
   popd
-  
+
   # build 64-bit ICU for MinGW
   echo
   echo icu mingw64

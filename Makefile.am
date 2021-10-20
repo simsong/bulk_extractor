@@ -6,14 +6,14 @@
 # https://www.gnu.org/licenses/lgpl-3.0.en.html
 
 # Remember to update ocnfigure.ac when we re-enable doc
-#SUBDIRS = src man plugins python specfiles tests doc doc/latex_manuals $(BE_VIEWER_DIR)
 
-SUBDIRS = src man plugins python specfiles tests
+SUBDIRS = src src/tests man python specfiles tests
 
 # don't include bootstrap. People run it, and they shoudln't
 # It's only for people who check out the git repo
 
 EXTRA_DIST = \
+	.gitignore \
 	licenses/LICENSE.Autoconf_exception \
 	licenses/LICENSE.CPL1 \
 	licenses/LICENSE.GPLv3 \

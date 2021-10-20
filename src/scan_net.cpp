@@ -31,36 +31,20 @@
 #include <mutex>
 #include <ctype.h>
 
-#include "scan_net.h"
 #include "be13_api/formatter.h"
+#include "be13_api/utils.h"
 
-/* mutex for writing packets.
- * This is not in the class because it will be accessed by multiple threads.
- */
-/****************************************************************/
+#include "pcap_writer.h"
+#include "scan_net.h"
+
+/* singleton option */
+bool opt_carve_net_memory = false;
 
 #ifdef HAVE_PCAP_PCAP_H
 #ifdef HAVE_DIAGNOSTIC_REDUNDANT_DECLS
 #  pragma GCC diagnostic ignored "-Wredundant-decls"
 #endif
 #endif
-
-#ifndef DLT_EN10MB
-#define DLT_EN10MB	1	/* Ethernet (10Mb) */
-#endif
-
-#ifndef ETHER_ADDR_LEN
-#define ETHER_ADDR_LEN      6
-#endif
-
-#ifndef ETHER_HEAD_LEN
-#define ETHER_HEAD_LEN      14
-#endif
-
-#define ETHERTYPE_IP        0x0800	/* IP protocol */
-#define	ETHERTYPE_VLAN	    0x8100	/* IEEE 802.1Q VLAN tagging */
-#define	ETHERTYPE_IPV6	    0x86dd	/* IP protocol version 6 */
-
 
 int opt_report_checksum_bad= 0;		// if true, report bad chksums
 int opt_report_packet_path = 0;         // if true, report packets to packets.txt
@@ -141,7 +125,6 @@ struct tcpt_object {
     uint16_t src_port;
 };
 
-
 /* create a bulk_extractor specific tcp structure to avoid
    FAVOR_BSD type differences among systems */
 struct be_tcphdr {
@@ -164,14 +147,18 @@ struct be_udphdr {
 };
 
 
-/* For virtual functions */
-scan_net_t::scan_net_t() {}
-scan_net_t::~scan_net_t() {}
-
-
 #  ifdef HAVE_DIAGNOSTIC_CAST_ALIGN
 #    pragma GCC diagnostic ignored "-Wcast-align"
 #  endif
+
+scan_net_t::scan_net_t(const scanner_params &sp):
+    pwriter(sp),
+    ip_recorder(sp.named_feature_recorder("ip")),
+    tcp_recorder(sp.named_feature_recorder("tcp")),
+    ether_recorder(sp.named_feature_recorder("ether"))
+{
+}
+
 
 /* compute an Internet-style checksum, from Stevens.
  * The ipchecksum is stored 10 bytes in, so do not include it.
@@ -537,13 +524,13 @@ void scan_net_t::documentIPFields(const sbuf_t &sbuf, size_t pos, const generic_
 
     /* Record the IP addresses */
     const std::string name = (h.family==AF_INET) ? "ip " : "ip6_hdr ";
-    ip_recorder->write(pos0, ip2string(h.src, h.family), "struct " + name + src + " (src) " + chksum_status);
-    ip_recorder->write(pos0, ip2string(h.dst, h.family), "struct " + name + dst + " (dst) " + chksum_status);
+    ip_recorder.write(pos0, ip2string(h.src, h.family), "struct " + name + src + " (src) " + chksum_status);
+    ip_recorder.write(pos0, ip2string(h.dst, h.family), "struct " + name + dst + " (dst) " + chksum_status);
 
     /* Now report TCP, UDP and/or IPv6 contents if it is one of those */
     if (h.nxthdr==IPPROTO_TCP){
         const struct be_tcphdr *tcp = sbuf.get_struct_ptr<struct be_tcphdr>(pos+h.nxthdr_offs);
-        if (tcp) tcp_recorder->write(pos0,
+        if (tcp) tcp_recorder.write(pos0,
                                      ip2string(h.src, h.family) + ":" + i2str(ntohs(tcp->th_sport)) + " -> " +
                                      ip2string(h.dst, h.family) + ":" + i2str(ntohs(tcp->th_dport)) + " (TCP)",
                                      " Size: " + i2str(h.payload_len+h.nxthdr_offs)
@@ -551,7 +538,7 @@ void scan_net_t::documentIPFields(const sbuf_t &sbuf, size_t pos, const generic_
     }
     if (h.nxthdr==IPPROTO_UDP){
         const struct be_udphdr *udp = sbuf.get_struct_ptr<struct be_udphdr>(pos+h.nxthdr_offs);
-        if (udp) tcp_recorder->write(pos0,
+        if (udp) tcp_recorder.write(pos0,
                                      ip2string(h.src, h.family) + ":" + i2str(ntohs(udp->uh_sport)) + " -> " +
                                      ip2string(h.dst, h.family) + ":" + i2str(ntohs(udp->uh_dport)) + " (UDP)",
                                      " Size: " + i2str(h.payload_len+h.nxthdr_offs)
@@ -559,7 +546,7 @@ void scan_net_t::documentIPFields(const sbuf_t &sbuf, size_t pos, const generic_
     }
     if (h.nxthdr==IPPROTO_ICMPV6){
         const struct icmp6_hdr *icmp6 = sbuf.get_struct_ptr<struct icmp6_hdr>(pos+h.nxthdr_offs);
-        if (icmp6) tcp_recorder->write(pos0,
+        if (icmp6) tcp_recorder.write(pos0,
                                        ip2string(h.src, h.family) + " -> " +
                                        ip2string(h.dst, h.family) + " (ICMPv6)",
                                        " Type: " + i2str(icmp6->icmp6_type) + " Code: " + i2str(icmp6->icmp6_code)
@@ -589,12 +576,12 @@ size_t scan_net_t::carveIPFrame(const sbuf_t &sbuf, size_t pos) const
     if (h.checksum_valid==false && opt_report_checksum_bad==false) return 0; // user does not want invalid checksums
 
     /* A valid IPframe but not proceeded by an Ethernet or a pcap header. */
-    uint8_t buf[PCAP_MAX_PKT_LEN+14];
+    uint8_t buf[pcap_writer::PCAP_MAX_PKT_LEN+14];
     size_t ip_len         = h.nxthdr_offs + h.payload_len;
     if (ip_len + pos > sbuf.bufsize) ip_len = sbuf.bufsize-pos;
     size_t packet_len = 14 + ip_len ;
-    if (packet_len > PCAP_MAX_PKT_LEN){
-        packet_len = PCAP_MAX_PKT_LEN;
+    if (packet_len > pcap_writer::PCAP_MAX_PKT_LEN){
+        packet_len = pcap_writer::PCAP_MAX_PKT_LEN;
     }
     if (packet_len < 14) return 0;	// this should never happen
 
@@ -611,9 +598,9 @@ size_t scan_net_t::carveIPFrame(const sbuf_t &sbuf, size_t pos) const
 
     /* make an sbuf to write */
     sbuf_t sb3(pos0_t(), buf, packet_len);
-    struct pcap_hdr ph(0, 0, packet_len, packet_len);  // make a fake header
+    struct pcap_writer::pcap_hdr ph(0, 0, packet_len, packet_len);  // make a fake header
     documentIPFields(sb3, 0, h);
-    pcap_writepkt(ph, sb3, 0, false, 0x0000);	   // write the packet
+    pwriter.pcap_writepkt(ph, sb3, 0, false, 0x0000);	   // write the packet
     return ip_len;                                     // return that we processed this much
 }
 
@@ -644,10 +631,10 @@ size_t scan_net_t::carveEther(const sbuf_t &sbuf, size_t pos) const
 
         if (sanityCheckIP46Header(sbuf, pos + data_offset, &h) && h.checksum_valid) {
             if (!invalidMAC(&(er->ether_dhost))){
-                ether_recorder->write(sbuf.pos0 + pos, mac2string(&(er->ether_dhost)), " (ether_dhost) ");
+                ether_recorder.write(sbuf.pos0 + pos, mac2string(&(er->ether_dhost)), " (ether_dhost) ");
             }
             if (!invalidMAC(&(er->ether_shost))){
-                ether_recorder->write(sbuf.pos0 + pos, mac2string(&(er->ether_shost)), " (ether_shost) ");
+                ether_recorder.write(sbuf.pos0 + pos, mac2string(&(er->ether_shost)), " (ether_shost) ");
             }
             documentIPFields(sbuf, pos+data_offset, h);
         }
@@ -664,8 +651,8 @@ size_t scan_net_t::carveEther(const sbuf_t &sbuf, size_t pos) const
             ssize_t packet_len     = 14 + h.nxthdr_offs + h.payload_len; // ether size + ip size + ip data
             if (packet_len + pos > sbuf.bufsize) packet_len = sbuf.bufsize - pos;
             if (packet_len > 0 ){
-                struct pcap_hdr hz(0, 0, packet_len, packet_len);
-                pcap_writepkt(hz, sbuf, pos, false, 0x0000);
+                struct pcap_writer::pcap_hdr hz(0, 0, packet_len, packet_len);
+                pwriter.pcap_writepkt(hz, sbuf, pos, false, 0x0000);
                 return packet_len;
             }
         }
@@ -706,7 +693,7 @@ size_t scan_net_t::carveSockAddrIn(const sbuf_t &sbuf, size_t pos) const
     /* Only use candidate with ports we believe most likely */
     if (!sanePort(in->sin_port)) return 0;
 
-    ip_recorder->write(sbuf.pos0 + pos, ip2string((const be13::ip4_addr *)&(in->sin_addr)), "sockaddr_in");
+    ip_recorder.write(sbuf.pos0 + pos, ip2string((const be13::ip4_addr *)&(in->sin_addr)), "sockaddr_in");
     return sizeof(struct sockaddr_in);
 }
 
@@ -721,9 +708,9 @@ size_t scan_net_t::carveTCPTOBJ(const sbuf_t &sbuf, size_t pos) const
     /* 0x54455054 == "TCPT" */
     if ( (to->sig == htonl(0x54435054)) && (to->pool_size == htons(0x330A)) ) {
         pos0_t p = sbuf.pos0 + pos;
-        ip_recorder->write(  p, ip2string(&(to->src)), "tcpt");
-        ip_recorder->write(  p, ip2string(&(to->dst)), "tcpt");
-        tcp_recorder->write( p, ip2string(&(to->src)) + ":" + i2str(ntohs(to->src_port)) + " -> " +
+        ip_recorder.write(  p, ip2string(&(to->src)), "tcpt");
+        ip_recorder.write(  p, ip2string(&(to->dst)), "tcpt");
+        tcp_recorder.write( p, ip2string(&(to->src)) + ":" + i2str(ntohs(to->src_port)) + " -> " +
                              ip2string(&(to->dst)) + ":" + i2str(ntohs(to->dst_port)),  "TCPT");
         return sizeof(struct tcpt_object);
     }
@@ -732,103 +719,13 @@ size_t scan_net_t::carveTCPTOBJ(const sbuf_t &sbuf, size_t pos) const
 
 
 
-/* write an IP packet to the output stream, optionally writing a pcap header.
- * Length of packet is determined from IP header.
- */
-void scan_net_t::pcap_writepkt(const struct pcap_hdr &h, // packet header
-                             const sbuf_t &sbuf,       // sbuf where packet is located
-                             const size_t pos,         // position within the sbuf
-                             const bool add_frame,     // whether or not to create a synthetic ethernet frame
-                             const uint16_t frame_type) const
-{}
-
-
-/****************************************************************
- ** pcap_writer code
- **/
-
-pcap_writer::pcap_writer(const scanner_params &sp):
-    outpath(sp.sc.outdir / OUTPUT_FILENAME)
-{
-    ip_recorder    = &sp.named_feature_recorder("ip");
-    tcp_recorder   = &sp.named_feature_recorder("tcp");
-    ether_recorder = &sp.named_feature_recorder("ether");
-}
-
-pcap_writer::~pcap_writer()
-{
-    if (fcap){
-        const std::lock_guard<std::mutex> lock(Mfcap);
-        fclose(fcap);
-        fcap = nullptr;
-    }
-}
-
-/*
- * @param add_frame - should we add a frame?
- * @param frame_type - the ethernet frame type. Note that this could be combined with add_frame, with frame_type=0 for no add.
- */
-void pcap_writer::pcap_writepkt(const struct pcap_hdr &h, // packet header
-                                const sbuf_t &sbuf,       // sbuf where packet is located
-                                const size_t pos,         // position within the sbuf
-                                const bool add_frame,     // whether or not to create a synthetic ethernet frame
-                                const uint16_t frame_type) const // if we add a frame, the frame type
-{
-    // Make sure that neither this packet nor an encapsulated version of this packet has been written
-    const std::lock_guard<std::mutex> lock(Mfcap);// lock the mutex
-    if (fcap==0){
-        fcap = fopen(outpath.c_str(),"wb"); // write the output
-        if (fcap==nullptr) {
-            throw std::runtime_error(Formatter() << "scan_net.cpp: cannot open " << outpath << " for  writing");
-        }
-        pcap_write4(0xa1b2c3d4);
-        pcap_write2(2);			// major version number
-        pcap_write2(4);			// minor version number
-        pcap_write4(0);			// time zone offset; always 0
-        pcap_write4(0);			// accuracy of time stamps in the file; always 0
-        pcap_write4(PCAP_MAX_PKT_LEN);	// snapshot length
-        pcap_write4(DLT_EN10MB);	// link layer encapsulation
-        assert( ftello(fcap) == TCPDUMP_HEADER_SIZE );
-    }
-
-    size_t forged_header_len = 0;
-    uint8_t forged_header[ETHER_HEAD_LEN];
-    /*
-     * if requested, forge an Ethernet II header and prepend it to the packet so raw packets can
-     * coexist happily in an ethernet pcap file.  Don't do this if the resulting packet length
-     * make the packet larger than the largest allowable packet in a pcap file.
-     */
-    bool add_frame_and_safe = add_frame && h.cap_len + ETHER_HEAD_LEN <= PCAP_MAX_PKT_LEN;
-    if (add_frame_and_safe) {
-        forged_header_len = sizeof(forged_header);
-
-        // forge Ethernet II header
-        //   - source and destination addrs are all zeroes, ethernet type is supplied by function caller
-        memset(forged_header, 0x00, sizeof(forged_header));
-        // final two bytes of header hold the type value
-        forged_header[sizeof(forged_header)-2] = (uint8_t) (frame_type >> 8);
-        forged_header[sizeof(forged_header)-1] = (uint8_t) frame_type;
-    }
-
-    /* Write a packet */
-    pcap_write4(h.seconds);		// time stamp, seconds avalue
-    pcap_write4(h.useconds);		// time stamp, microseconds
-    pcap_write4(h.cap_len + forged_header_len);
-    pcap_write4(h.pkt_len + forged_header_len);
-    if (add_frame_and_safe) {
-        pcap_write_bytes(forged_header, sizeof(forged_header));
-    }
-    sbuf.write(fcap, pos, h.cap_len );	// the packet
-
-}
-
 /**
  * Validate and write a pcap packet. Return the number of bytes written.
  * Called on every byte, so it mus be fast.
  */
 size_t scan_net_t::carvePCAPPacket(const sbuf_t &sbuf, size_t pos) const
 {
-    struct pcap_hdr h;
+    struct pcap_writer::pcap_hdr h;
     if (likely_valid_pcap_packet_header(sbuf, pos, h)==false){
         return 0;
     }
@@ -839,7 +736,7 @@ size_t scan_net_t::carvePCAPPacket(const sbuf_t &sbuf, size_t pos) const
     /* If buffer is the size of the record,
      * or if the next header looks good, then carve the packet.
      */
-    struct pcap_hdr h2 {};
+    struct pcap_writer::pcap_hdr h2 {};
     bool packet_at_end_of_sbuf   = ( pos + h.cap_len+PCAP_RECORD_HEADER_SIZE == sbuf.bufsize);
     bool next_packet_looks_valid = likely_valid_pcap_packet_header(sbuf, pos+PCAP_RECORD_HEADER_SIZE+h.cap_len, h2);
 
@@ -860,7 +757,7 @@ size_t scan_net_t::carvePCAPPacket(const sbuf_t &sbuf, size_t pos) const
 
         /* We are at the end of the file, or the next slot is also a packet */
         documentIPFields(sbuf, pos+PCAP_RECORD_HEADER_SIZE, header_info);
-        pcap_writepkt(h, sbuf, pos+PCAP_RECORD_HEADER_SIZE, is_raw_ip,pseudo_frame_ethertype);
+        pwriter.pcap_writepkt(h, sbuf, pos+PCAP_RECORD_HEADER_SIZE, is_raw_ip,pseudo_frame_ethertype);
         return PCAP_RECORD_HEADER_SIZE + h.cap_len;    // what is hard-coded 16?
     }
     return 0;                       // not written
@@ -884,10 +781,10 @@ size_t scan_net_t::carvePCAPFile(const sbuf_t &sbuf, size_t pos) const
         return 0;
     }
 
-    ip_recorder->write(sbuf.pos0+pos, TCPDUMP_FR_FEATURE, TCPDUMP_FR_CONTEXT);
+    ip_recorder.write(sbuf.pos0+pos, pcap_writer::TCPDUMP_FR_FEATURE, pcap_writer::TCPDUMP_FR_CONTEXT);
 
-    size_t bytes = TCPDUMP_HEADER_SIZE;
-    pos += TCPDUMP_HEADER_SIZE;
+    size_t bytes = pcap_writer::TCPDUMP_HEADER_SIZE;
+    pos += pcap_writer::TCPDUMP_HEADER_SIZE;
 
     /* now scan for packets */
     while (pos < sbuf.pagesize ) {
@@ -937,15 +834,13 @@ void scan_net_t::carve(const sbuf_t &sbuf) const
         }
         pos += (carved>0 ? carved : 1);	// advance the pointer
     }
-    flush();
+    pwriter.flush();
 };
-
-pcap_writer *pwriter = nullptr;
-bool opt_carve_net_memory = false;
 
 extern "C"
 void scan_net(scanner_params &sp)
 {
+    static scan_net_t *scanner = nullptr;
     sp.check_version();
     if (sp.phase==scanner_params::PHASE_INIT){
 
@@ -958,7 +853,6 @@ void scan_net(scanner_params &sp)
         sp.info->scanner_version= "1.0";
         sp.info->min_sbuf_size  = 16;
 
-
 	sp.info->feature_defs.push_back( feature_recorder_def("ip"));
 	sp.info->feature_defs.push_back( feature_recorder_def("ether"));
 
@@ -969,7 +863,7 @@ void scan_net(scanner_params &sp)
         histogram_def::flags_t f;
         f.require_context = true;
         f.require_feature = false;
-	sp.info->histogram_defs.push_back( histogram_def("ip",  "ip",      "", pcap_writer::CHKSUM_OK, "histogram", f));
+	sp.info->histogram_defs.push_back( histogram_def("ip",  "ip",      "", scan_net_t::CHKSUM_OK, "histogram", f));
         sp.info->histogram_defs.push_back( histogram_def("ether","ether", "([^\(]+)","", "histogram", histogram_def::flags_t()));
 
         sp.info->feature_defs.push_back( feature_recorder_def("tcp"));
@@ -978,12 +872,12 @@ void scan_net(scanner_params &sp)
         return;
     }
     if (sp.phase==scanner_params::PHASE_INIT2){
-        pwriter = new pcap_writer(sp);
-        pwriter->carve_net_memory = opt_carve_net_memory;
+        scanner = new scan_net_t(sp);
+        scanner->carve_net_memory = opt_carve_net_memory;
     }
     if (sp.phase==scanner_params::PHASE_SCAN){
         try {
-            pwriter->carve(*sp.sbuf);
+            scanner->carve(*sp.sbuf);
         }
         catch (const sbuf_t::range_exception_t &e ) {
             /*
@@ -994,8 +888,9 @@ void scan_net(scanner_params &sp)
         }
     }
     if (sp.phase==scanner_params::PHASE_SHUTDOWN){
-        if (pwriter) {
-            delete pwriter;
+        if (scanner){
+            delete scanner;
+            scanner = nullptr;
         }
 	return;
     }

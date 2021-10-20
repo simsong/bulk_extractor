@@ -1,9 +1,13 @@
+2021-10-18 Simson Garfinkel
+	* Removed plugins directory
+	* Updated to 2.0.0-beta1
+
 2020-06-20 simson garfinkel
 	* Removed Java GUI
-	
+
 2020-06-14  fedora Cloud User  <fedora@ip-172-30-4-244.ec2.internal>
 
-	* src/threadpool.cpp: numCPU() now simply calls std::thread::hardware_concurrency(). Perhaps more should be replaced over time, but it would be super-exciting to see the threadpool be able to spin of threads onto other servers, which was the original intent. 
+	* src/threadpool.cpp: numCPU() now simply calls std::thread::hardware_concurrency(). Perhaps more should be replaced over time, but it would be super-exciting to see the threadpool be able to spin of threads onto other servers, which was the original intent.
 
 2020-06-13  Simson Garfinkel <simsong@acm.org>
 	* updated license to MIT License, copyright Simson L. Garfinkel, consistent with the fact that this is no longer an official US Government work product.
@@ -83,7 +87,7 @@
 
 2014-01-10  Basic  <simsong@t193-251.demo.tuwien.ac.at>
 
-	* src/be13_api/feature_recorder.cpp (feature_recorder::dump_histogram): moved regex into histogram_def so that it could be run in write(), rather than in post-processing. 
+	* src/be13_api/feature_recorder.cpp (feature_recorder::dump_histogram): moved regex into histogram_def so that it could be run in write(), rather than in post-processing.
 
 2014-01-07  Basic  <simsong@Dance.local>
 
@@ -335,7 +339,7 @@
 	* src/be13_api/plugin.cpp: max_depth changed to 7
 2013-05-11    <simsong@ncr.nps.edu>
 
-	* src/scan_winpe.cpp (scan_winpe_verify): added verification of section names and DLL names to reject false positives. 
+	* src/scan_winpe.cpp (scan_winpe_verify): added verification of section names and DLL names to reject false positives.
 
 2013-05-09    <simsong@ncr.nps.edu>
 
@@ -404,7 +408,7 @@
 
 	* src/be13_api/feature_recorder_set.h (class feature_recorder_set): changed constructor so that ALERT_RECORDER is now created in bulk_extractor.cpp and not in the constructor. This improves code reuse in other programs
 
-	* src/feature_recorder_set.cpp (feature_recorder_set::get_alert_recorder): changed ALERT_RECORDER to ALERT_RECORDER_NAME. 
+	* src/feature_recorder_set.cpp (feature_recorder_set::get_alert_recorder): changed ALERT_RECORDER to ALERT_RECORDER_NAME.
 
 2012-10-27  Simson Garfinkel  <simsong@npsair.local>
 
@@ -430,7 +434,7 @@
 
 2012-09-29  Simson Garfinkel  <simsong@air2.local>
 
-	* java_gui/BEViewer: added #!/bin/sh 
+	* java_gui/BEViewer: added #!/bin/sh
 
 2012-09-20  Simson Garfinkel  <simsong@air2.local>
 
@@ -452,7 +456,7 @@
 
 2012-09-13  Simson Garfinkel  <simsong@mncrnpsedu.local>
 
-	* src/feature_recorder.cpp (feature_recorder::write_tag): #ifdef'ed out write_tag debug point 
+	* src/feature_recorder.cpp (feature_recorder::write_tag): #ifdef'ed out write_tag debug point
 
 2012-09-12  Simson Garfinkel  <simsong@air2.local>
 
@@ -516,7 +520,7 @@
 
 	* src/Makefile.am (bulk_extractor_SOURCES): removed regex_list.h; it's now in beregex.h
 
-	* src/beregex.h: myregex.h renamed to beregex.h. 
+	* src/beregex.h: myregex.h renamed to beregex.h.
 	(class beregex): bulk_extractor regular expressions are now pure regular expressions, and not globs
 
 2012-08-11  Simson Garfinkel  <simsong@FC17>
@@ -525,7 +529,7 @@
 
 2012-08-08  Simson Garfinkel  <simsong@imac3.local>
 
-	* src/scan_bulk.cpp (sd_autocorrelation_cosine_variance): removed alloca, since it is bad. 
+	* src/scan_bulk.cpp (sd_autocorrelation_cosine_variance): removed alloca, since it is bad.
 
 2012-08-05  Simson Garfinkel  <simsong@Mucha.local>
 
@@ -749,7 +753,7 @@
 
 2012-03-27  Simson Garfinkel  <simsong@imac3.home>
 
-	* src/cppmutex.h: added stdlib.h 
+	* src/cppmutex.h: added stdlib.h
 
 	* src/scan_headers.flex: updated scanner for years in 201x
 
@@ -1002,7 +1006,7 @@
 
 2011-11-03  Simson Garfinkel  <simsong@imac3.home>
 
-	* src/bulk_extractor.cpp: added HTTP_EOL which is \r\n in Unix and Mac and 
+	* src/bulk_extractor.cpp: added HTTP_EOL which is \r\n in Unix and Mac and
 
 2011-10-19  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
 
@@ -1070,7 +1074,7 @@
 
 	* src/scan_email.flex: removed #include utils.h; now uses private ISHEXNUMBER implementation. All to avoid including config.h
 
-	* src/Makefile.am (EXTRA_DIST): removed flexpp.pl 
+	* src/Makefile.am (EXTRA_DIST): removed flexpp.pl
 	(bulk_extractor_SOURCES): broke feature_recorder_set into its own file
 
 	* configure.ac: config header renamed from config.h to src/config.h to deal with flex compile issue
@@ -1263,7 +1267,7 @@
 	* src/image_process.cpp (process_dir::process_dir): fts is incompatiable with -D_FILE_OFFSET_BITS==64 on some systems.
 	(process_raw::pread): removed lseek; now only uses ::pread.
 
-	* configure.ac: fixed -DUTC_OFFSET bug 
+	* configure.ac: fixed -DUTC_OFFSET bug
 
 2011-05-04  Simson L. Garfinkel  <simsong@ps14412.dreamhostps.com>
 
@@ -1353,7 +1357,7 @@
 2011-02-26  Simson Garfinkel  <simsong@imac3.home>
 
 	* src/scan_zip.cpp (scan_zip): no longer carves zero-length names or with compr_size or uncompr_size less than 0.
-	(scan_zip): 
+	(scan_zip):
 
 2011-02-26  Simson Garfinkel  <simsong@imac3.local>
 
@@ -1433,9 +1437,9 @@
 2011-01-31  Simson Garfinkel  <simsong@imac3.local>
 
 	* configure.ac: version increased to 0.7.9
-	
+
 	* configure.ac: added python tools to distribution
-	
+
 
 2011-01-27  Simson Garfinkel  <simsong@Silver-Surfer.local>
 
@@ -1481,8 +1485,8 @@
 
 	* src/image_process.cpp (open): opening up invalid AFF files now produces error
 
-	* src/scan_hiberfile.cpp (scan_hiberfile): modified so it won't call itself recursively. 
-	(scan_hiberfile): 
+	* src/scan_hiberfile.cpp (scan_hiberfile): modified so it won't call itself recursively.
+	(scan_hiberfile):
 
 2011-01-16  simsong  <simsong@domex.nps.edu>
 
@@ -1633,10 +1637,10 @@
 	* src/bulk_extractor.cpp: added /c to the feature files we wanted
 	to histogram because they were all the context-enabled feature
 	files.
-	
+
 	* src/bulk_extractor.cpp: re-enabled histogram files
 
-	
+
 
 2010-12-13  Simson Garfinkel  <simsong@Silver-Surfer.local>
 
@@ -1713,7 +1717,7 @@
 
 2010-12-04  Simson L. Garfinkel  <simsong@ps14412.dreamhostps.com>
 
-	* src/utils.c (get_filesize): updated for Linux. 
+	* src/utils.c (get_filesize): updated for Linux.
 
 	* src/bulk_extractor.cpp: updated resource limits to work properly on Linux.
 
@@ -1777,7 +1781,7 @@
 	from u_int to int in an attempt to fix the crashing problem.  I
 	suspect that they are being caused by improper sign extension
 	under Windows.
-	
+
 	* (scan_zip): fixed bug where a name extending beyond the end of the
 	zip region might cause a crash.
 
@@ -1900,11 +1904,11 @@
 
 2010-06-26  Simson Garfinkel  <simsong@Silver-Surfer.local>
 
-	* src/image_process.cpp (process): created with code from bulk_extractor.cpp. 
+	* src/image_process.cpp (process): created with code from bulk_extractor.cpp.
 
 	* src/image_process.h (image_process_): created with code from bulk_extractor.cpp
 
-	* src/bulk_extractor.cpp (main): now using nsrl_print_usage print_usage into 
+	* src/bulk_extractor.cpp (main): now using nsrl_print_usage print_usage into
 
 2010-06-22  Simson Garfinkel  <simsong@Silver-Surfer.local>
 
@@ -1980,7 +1984,7 @@
 	* src/bulk_extractor.cpp (main): removed verbose flag.
 	* Added explicit support for E01 files.
 	* implemented two-phase process with lots of easy-to-use temp files.
-	
+
 2009-10-05  Simson Garfinkel  <simsong@Silver-Surver.local>
 
 	* configure.ac: version counter bumped to 0.0.13
@@ -2008,5 +2012,3 @@
 	* src/bulk_extractor.cpp (main): added -s option to specify starting page number.
 
 	Will no longer overwrite existing output files.
-	
-

@@ -28,7 +28,7 @@ int notify_thread::terminal_width( int default_width )
 
 
 
-[[noreturn]] void notify_thread::notifier( struct notify_thread::notify_opts *o)
+void notify_thread::notifier( struct notify_thread::notify_opts *o)
 {
     assert( o->ssp != nullptr);
     const char *cl="";
@@ -64,15 +64,22 @@ int notify_thread::terminal_width( int default_width )
 
     std::cout << cl;                    // clear screen
     while( true ){
+        {
+            std::lock_guard<std::mutex> lock(o->Mphase);
+            if (o->phase > 1) {
+                delete o;               // deletes object we were given
+                return;                 // exits thread
+            }
+        }
+
+        if (o->phase>1) break;
 
         // get screen size change if we can!
         cols = terminal_width( cols);
-        time_t rawtime = time ( 0);
+        time_t rawtime = time ( 0 );
         struct tm timeinfo = *( localtime( &rawtime ));
         std::map<std::string,std::string> stats = o->ssp->get_realtime_stats();
 
-        // get the times
-        o->master_timer->lap();
         stats["elapsed_time"] = o->master_timer->elapsed_text();
         if ( o->fraction_done ) {
             double done = *o->fraction_done;
@@ -118,6 +125,11 @@ int notify_thread::terminal_width( int default_width )
         }
         std::this_thread::sleep_for( std::chrono::seconds( o->cfg.opt_notify_rate ));
     }
+    for(int i=0;i<5;i++){
+        std::cout << std::endl;
+    }
+    std::cout << "Computing final histograms and shutting down...\n";
+    return;                             // end of notifier thread.
 }
 
 void notify_thread::launch_notify_thread( struct notify_thread::notify_opts *o)

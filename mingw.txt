@@ -1,0 +1,131 @@
+Sorting...
+Full Text Search...
+binutils-mingw-w64/focal,focal 2.34-5ubuntu1+8.8 all
+  Cross-binutils for Win32 and Win64 using MinGW-w64
+
+binutils-mingw-w64-i686/focal,now 2.34-5ubuntu1+8.8 amd64 [installed,automatic]
+  Cross-binutils for Win32 (x86) using MinGW-w64
+
+binutils-mingw-w64-x86-64/focal,now 2.34-5ubuntu1+8.8 amd64 [installed,automatic]
+  Cross-binutils for Win64 (x64) using MinGW-w64
+
+g++-mingw-w64/focal,focal,now 9.3.0-7ubuntu1+22~exp1ubuntu4 all [installed,automatic]
+  GNU C++ compiler for MinGW-w64
+
+g++-mingw-w64-i686/focal,now 9.3.0-7ubuntu1+22~exp1ubuntu4 amd64 [installed,automatic]
+  GNU C++ compiler for MinGW-w64 targeting Win32
+
+g++-mingw-w64-x86-64/focal,now 9.3.0-7ubuntu1+22~exp1ubuntu4 amd64 [installed,automatic]
+  GNU C++ compiler for MinGW-w64 targeting Win64
+
+gcc-mingw-w64/focal,focal,now 9.3.0-7ubuntu1+22~exp1ubuntu4 all [installed,automatic]
+  GNU C compiler for MinGW-w64
+
+gcc-mingw-w64-base/focal,now 9.3.0-7ubuntu1+22~exp1ubuntu4 amd64 [installed,automatic]
+  GNU Compiler Collection for MinGW-w64 (base package)
+
+gcc-mingw-w64-i686/focal,now 9.3.0-7ubuntu1+22~exp1ubuntu4 amd64 [installed,automatic]
+  GNU C compiler for MinGW-w64 targeting Win32
+
+gcc-mingw-w64-x86-64/focal,now 9.3.0-7ubuntu1+22~exp1ubuntu4 amd64 [installed,automatic]
+  GNU C compiler for MinGW-w64 targeting Win64
+
+gdb-mingw-w64/focal 9.1-0ubuntu1+10.9build1 amd64
+  Cross-debugger for Win32 and Win64 using MinGW-w64
+
+gdb-mingw-w64-target/focal,focal 9.1-0ubuntu1+10.9build1 all
+  Cross-debugger server for Win32 and Win64 using MinGW-w64
+
+gfortran-mingw-w64/focal,focal 9.3.0-7ubuntu1+22~exp1ubuntu4 all
+  GNU Fortran compiler for MinGW-w64
+
+gfortran-mingw-w64-i686/focal 9.3.0-7ubuntu1+22~exp1ubuntu4 amd64
+  GNU Fortran compiler for MinGW-w64 targeting Win32
+
+gfortran-mingw-w64-x86-64/focal 9.3.0-7ubuntu1+22~exp1ubuntu4 amd64
+  GNU Fortran compiler for MinGW-w64 targeting Win64
+
+gnat-mingw-w64/focal,focal 9.3.0-7ubuntu1+22~exp1ubuntu4 all
+  GNU Ada compiler for MinGW-w64
+
+gnat-mingw-w64-i686/focal 9.3.0-7ubuntu1+22~exp1ubuntu4 amd64
+  GNU Ada compiler for MinGW-w64 targeting Win32
+
+gnat-mingw-w64-x86-64/focal 9.3.0-7ubuntu1+22~exp1ubuntu4 amd64
+  GNU Ada compiler for MinGW-w64 targeting Win64
+
+gobjc++-mingw-w64/focal,focal 9.3.0-7ubuntu1+22~exp1ubuntu4 all
+  GNU Objective-C++ compiler for MinGW-w64
+
+gobjc++-mingw-w64-i686/focal 9.3.0-7ubuntu1+22~exp1ubuntu4 amd64
+  GNU Objective-C++ compiler for MinGW-w64 targeting Win32
+
+gobjc++-mingw-w64-x86-64/focal 9.3.0-7ubuntu1+22~exp1ubuntu4 amd64
+  GNU Objective-C++ compiler for MinGW-w64 targeting Win64
+
+gobjc-mingw-w64/focal,focal 9.3.0-7ubuntu1+22~exp1ubuntu4 all
+  GNU Objective-C compiler for MinGW-w64
+
+gobjc-mingw-w64-i686/focal 9.3.0-7ubuntu1+22~exp1ubuntu4 amd64
+  GNU Objective-C compiler for MinGW-w64 targeting Win32
+
+gobjc-mingw-w64-x86-64/focal 9.3.0-7ubuntu1+22~exp1ubuntu4 amd64
+  GNU Objective-C compiler for MinGW-w64 targeting Win64
+
+golang-github-siddontang-go-dev/focal,focal 0.0~git20170517.0.cb568a3-4 all
+  Collection of siddontang libraries for Go
+
+libassuan-mingw-w64-dev/focal,focal 2.5.3-7ubuntu2 all
+  IPC library for the GnuPG components -- Windows port
+
+libconfig++-dev/focal 1.5-0.4build1 amd64
+  parsing/manipulation of structured config files (C++ development)
+
+libconfig++9v5/focal 1.5-0.4build1 amd64
+  parsing/manipulation of structured configuration files (C++ binding)
+
+libconfig-dev/focal 1.5-0.4build1 amd64
+  parsing/manipulation of structured config files (development)
+
+libconfig-doc/focal,focal 1.5-0.4build1 all
+  parsing/manipulation of structured config files (Documentation)
+
+libconfig9/focal 1.5-0.4build1 amd64
+  parsing/manipulation of structured configuration files
+
+libgcrypt-mingw-w64-dev/focal-updates,focal-updates,focal-security,focal-security 1.8.5-5ubuntu1.1 all
+  LGPL Crypto library - Windows development
+
+libgpg-error-mingw-w64-dev/focal,focal 1.37-1 all
+  library of error values and messages in GnuPG (Windows development)
+
+libksba-mingw-w64-dev/focal,focal 1.3.5-2 all
+  X.509 and CMS support library (Windows development)
+
+libnpth-mingw-w64-dev/focal,focal 1.6-1 all
+  replacement for GNU Pth using system threads (Windows dev)
+
+libz-mingw-w64/focal,focal,now 1.2.11+dfsg-2 all [installed,automatic]
+  compression library - Windows runtime
+
+libz-mingw-w64-dev/focal,focal,now 1.2.11+dfsg-2 all [installed]
+  compression library - Windows development files
+
+mingw-w64/focal,focal,now 7.0.0-2 all [installed]
+  Development environment targeting 32- and 64-bit Windows
+
+mingw-w64-common/focal,focal,now 7.0.0-2 all [installed]
+  Common files for Mingw-w64
+
+mingw-w64-i686-dev/focal,focal,now 7.0.0-2 all [installed]
+  Development files for MinGW-w64 targeting Win32
+
+mingw-w64-tools/focal,now 7.0.0-2 amd64 [installed]
+  Development tools for 32- and 64-bit Windows
+
+mingw-w64-x86-64-dev/focal,focal,now 7.0.0-2 all [installed,automatic]
+  Development files for MinGW-w64 targeting Win64
+
+win-iconv-mingw-w64-dev/focal,focal 0.0.8-3 all
+  iconv implementation using Windows API (for cross-building)
+

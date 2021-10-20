@@ -4,6 +4,9 @@
 #include "config.h"
 
 #include <string>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 #include "be13_api/aftimer.h"
 #include "be13_api/scanner_set.h"
 #include "phase1.h"
@@ -15,6 +18,8 @@ struct notify_thread {
         aftimer *master_timer {};
         std::atomic<double> *fraction_done {};
         const Phase1::Config &cfg;
+        std::atomic<int> phase {};
+        std::mutex Mphase;              // mutex for phase
     };
 
     static inline const std::string FRACTION_READ {"fraction_read"};
@@ -23,7 +28,7 @@ struct notify_thread {
 
     static int terminal_width( int default_width );
 
-    [[noreturn]] static void notifier( struct notify_opts *o );
+    static void notifier( struct notify_opts *o );
     static void launch_notify_thread( struct notify_opts *o);
 };
 

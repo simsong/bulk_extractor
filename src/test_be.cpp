@@ -1,19 +1,20 @@
 // https://github.com/catchorg/Catch2/blob/master/docs/tutorial.md#top
+#define CATCH_CONFIG_MAIN
+#define CATCH_CONFIG_CONSOLE_WIDTH 120
+#define DO_NOT_USE_WMAIN
 
 #include "config.h"
 
 #include <cstring>
 #include <iostream>
 #include <memory>
+#include <filesystem>
 #include <cstdio>
 #include <stdexcept>
 #include <unistd.h>
 #include <string>
 #include <string_view>
 #include <sstream>
-
-#define CATCH_CONFIG_MAIN
-#define CATCH_CONFIG_CONSOLE_WIDTH 120
 
 #include "be13_api/catch.hpp"
 
@@ -47,50 +48,61 @@
 const std::string JSON1 {"[{\"1\": \"one@company.com\"}, {\"2\": \"two@company.com\"}, {\"3\": \"two@company.com\"}]"};
 const std::string JSON2 {"[{\"1\": \"one@base64.com\"}, {\"2\": \"two@base64.com\"}, {\"3\": \"three@base64.com\"}]\n"};
 
-std::filesystem::path test_dir()
+bool debug = false;
+
+/* We assume that the tests are being run out of bulk_extractor/src/.
+ * This returns the directory of the test subdirectory.
+ */
+std::filesystem::path my_executable()
 {
-#ifdef HAVE__NSGETEXECUTABLEPATH
+#if defined(HAVE__NSGETEXECUTABLEPATH)
     char path[4096];
     uint32_t size = sizeof(path);
     if (_NSGetExecutablePath(path, &size) == 0){
-        return std::filesystem::path(path).parent_path() / "tests";
+        return std::filesystem::path(path);
     }
     throw std::runtime_error("_NSGetExecutablePath failed???\n");
-#else
-    return std::filesystem::canonical("/proc/self/exe").parent_path() / "tests";
 #endif
+#if defined(_WIN32)
+    char rawPathName[MAX_PATH];
+    GetModuleFileNameA(NULL, rawPathName, MAX_PATH);
+    return std::filesystem::path(rawPathName);
+#endif
+#if !defined(HAVE__NSGETEXECUTABLEPATH) && !defined(_WIN32)
+    return std::filesystem::canonical("/proc/self/exe");
+#endif
+}
+
+/* We assume that the tests are being run out of bulk_extractor/src/.
+ * This returns the directory of the test subdirectory.
+ */
+std::filesystem::path test_dir()
+{
+    // if srcdir is set, use that, otherwise use the directory of the executable
+    // srcdir is set when we run under autoconf 'make distcheck'
+    const char *srcdir = getenv("srcdir");
+    if (srcdir) {
+        return std::filesystem::path(srcdir) / "tests";
+    }
+    return my_executable().parent_path() / "tests";
 }
 
 sbuf_t *map_file(std::filesystem::path p)
 {
+    std::filesystem::path dest = test_dir() / p;
+    if (std::filesystem::exists( dest )==false) {
+        std::cerr << "test_be.cpp:map_file - " << dest << " does not exist." << std::endl;
+        std::cerr << "Environment variables:" << std::endl;
+        extern char **environ;
+        for (char **env = environ; *env != 0; env++) {
+            std::cerr << (*env) << std::endl;
+        }
+    }
+    REQUIRE(std::filesystem::exists(dest)==true);
     sbuf_t::debug_range_exception = true;
-    return sbuf_t::map_file( test_dir() / p );
+    return sbuf_t::map_file( dest );
 }
 
-
-/* Read all of the lines of a file and return them as a vector */
-std::vector<std::string> getLines(const std::filesystem::path path)
-{
-    std::vector<std::string> lines;
-    std::string line;
-    std::ifstream inFile;
-    inFile.open( path );
-    if (!inFile.is_open()) {
-        std::cerr << "getLines: Cannot open file: " << path << "\n";
-        std::string cmd("ls -l " + path.parent_path().string());
-        std::cerr << cmd << "\n";
-        if (system( cmd.c_str())) {
-            std::cerr << "error\n";
-        }
-        throw std::runtime_error("test_be:getLines");
-    }
-    while (std::getline(inFile, line)){
-        if (line.size()>0){
-            lines.push_back(line);
-        }
-    }
-    return lines;
-}
 
 /* Requires that a feature in a set of lines */
 bool requireFeature(const std::vector<std::string> &lines, const std::string feature)
@@ -433,7 +445,11 @@ TEST_CASE("scan_vcard", "[scanners]") {
     auto outdir = test_scanner(scan_vcard, sbufp); // deletes sbuf2
 
     /* Read the output */
-    REQUIRE( std::filesystem::exists( outdir / "vcard/000/john_jakes.vcf____-0.vcf") == true);
+    std::string fname = "john_jakes.vcf____-0.vcf";
+#ifdef _WIN32
+    fname = "Z__home_user_bulk_extractor_src_tests_" + fname;
+#endif
+    REQUIRE( std::filesystem::exists( outdir / "vcard" / "000" / fname ) == true);
 }
 
 TEST_CASE("scan_wordlist", "[scanners]") {
@@ -494,7 +510,7 @@ bool feature_match(const Check &exp, const std::string &line)
     auto words = split(line, '\t');
     if (words.size() <2 || words.size() > 3) return false;
 
-    //std::cerr << "check line=" << line << "\n";
+    if(debug) std::cerr << "check line=" << line << "\n";
 
     std::string pos = exp.feature.pos.str();
     if ( pos.size() > 2 ){
@@ -506,13 +522,13 @@ bool feature_match(const Check &exp, const std::string &line)
         }
     }
 
-    if ( words[0] != exp.feature.pos ){
-        //std::cerr << "  pos " << exp.feature.pos << " does not match\n";
+    if ( pos0_t(words[0]) != exp.feature.pos ){
+        if (debug) std::cerr << "  pos " << exp.feature.pos.str() << " does not match '" << words[0] << "'" << std::endl;
         return false;
     }
 
     if ( words[1] != exp.feature.feature ){
-        //std::cerr << "  feature '" << exp.feature.feature << "' does not match feature '" << words[1] << "'\n";
+        if (debug)std::cerr << "  feature '" << exp.feature.feature << "' does not match feature '" << words[1] << "'" << std::endl;
         return false;
     }
 
@@ -521,17 +537,17 @@ bool feature_match(const Check &exp, const std::string &line)
 
     if ( (ctx=="") || (ctx==words[2]) )  return true;
 
-    //std::cerr << "  context '" << ctx << "' (len=" << ctx.size() << ") "
-    //<< "does not match context '" << words[2] << "' (" << words[2].size() << ")\n";
+    if (debug) std::cerr << "  context '" << ctx << "' (len=" << ctx.size() << ") "
+                         << "does not match context '" << words[2] << "' (" << words[2].size() << ")\n";
 
     if ( ends_with(ctx, "*") ) {
         ctx.resize(ctx.size()-1 );
         if (starts_with(words[2], ctx )){
             return true;
         }
-        //std::cerr << "  context did not start with '" << ctx << "'\n";
+        if (debug) std::cerr << "  context did not start with '" << ctx << "'\n";
     } else {
-        //std::cerr << "  context does not end with *\n";
+        if (debug) std::cerr << "  context does not end with *\n";
     }
 
     return false;
@@ -543,6 +559,7 @@ bool feature_match(const Check &exp, const std::string &line)
  */
 std::filesystem::path validate(std::string image_fname, std::vector<Check> &expected, bool recurse=true, size_t offset=0)
 {
+    debug = getenv("DEBUG") ? true : false;
     sbuf_t::debug_range_exception = true;
     scanner_config sc;
 
@@ -555,7 +572,7 @@ std::filesystem::path validate(std::string image_fname, std::vector<Check> &expe
     if (offset==0) {
         sc.input_fname = test_dir() / image_fname;
     } else {
-        std::string offset_name = sc.outdir / "offset_file";
+        std::filesystem::path offset_name = sc.outdir / "offset_file";
 
         std::ifstream in(  test_dir() / image_fname, std::ios::binary);
         std::ofstream out( offset_name );
@@ -605,26 +622,32 @@ std::filesystem::path validate(std::string image_fname, std::vector<Check> &expe
         std::filesystem::path fname  = sc.outdir / exp.fname;
         bool found = false;
         for (int pass=0 ; pass<2 && !found;pass++){
-
             std::string line;
             std::ifstream inFile;
             inFile.open(fname);
             if (!inFile.is_open()) {
                 throw std::runtime_error("validate_scanners:[phase1] Could not open "+fname.string());
             }
-            while (std::getline(inFile, line)) {
-                if (pass==1) {
+            while (std::getline(inFile, line) && !found) {
+                switch (pass) {
+                case 0:
+                    if (feature_match(exp, line)){
+                        found = true;
+                    }
+                    break;
+                case 1:
                     std::cerr << fname << ":" << line << "\n"; // print the file the second time through
-                }
-                if (feature_match(exp, line)){
-                    found = true;
                     break;
                 }
+
             }
         }
         if (!found){
-            std::cerr << fname << " did not find " << exp.feature.pos
-                      << " " << exp.feature.feature << " " << exp.feature.context << "\t";
+            std::cerr << fname << " did not find"
+                      << " pos=" << exp.feature.pos
+                      << " feature=" << exp.feature.feature
+                      << " context=" << exp.feature.context
+                      << std::endl;
         }
         REQUIRE(found);
     }
@@ -916,103 +939,4 @@ TEST_CASE("path_printer", "[path_printer]") {
 
     pp.process_path("512-GZIP-2/r");    // create a hex dump with a different path and the /r
     REQUIRE( str.str() == "14\r\nllo@world.com\n" );
-}
-
-
-/****************************************************************
- * Test restarter
- */
-
-TEST_CASE("restarter", "[restarter]") {
-    scanner_config   sc;   // config for be13_api
-    sc.input_fname = test_dir() / "1mb_fat32.dmg";
-    sc.outdir = NamedTemporaryDirectory();
-
-    std::filesystem::copy(test_dir() / "interrupted_report.xml",
-                          sc.outdir  / "report.xml");
-
-    Phase1::Config   cfg;  // config for the image_processing system
-    bulk_extractor_restarter r(sc, cfg);
-
-    REQUIRE( std::filesystem::exists( sc.outdir / "report.xml") == true); // because it has not been renamed yet
-    r.restart();
-    REQUIRE( std::filesystem::exists( sc.outdir / "report.xml") == false); // because now it has been renamed
-    REQUIRE( cfg.seen_page_ids.find("369098752") != cfg.seen_page_ids.end() );
-    REQUIRE( cfg.seen_page_ids.find("369098752+") == cfg.seen_page_ids.end() );
-}
-
-
-/****************************************************************
- * end-to-end tests
- */
-
-/* print and count the args */
-int arg_count(char * const *argv)
-{
-    std::cout << "testing with command line:" << std::endl;
-    int argc = 0;
-    while(argv[argc]){
-        std::cout << argv[argc++] << " ";
-    }
-    std::cout << std::endl;
-    std::cout << "argc=" << argc << "\n";
-    return argc;
-}
-
-TEST_CASE("e2e-h", "[end-to-end]") {
-    std::string inpath = test_dir() / "nps-2010-emails.100k.raw";
-    std::string outdir = NamedTemporaryDirectory();
-    /* Try the -h option */
-    const char *argv[] = {"bulk_extractor", "-h", nullptr};
-    int ret = bulk_extractor_main(std::cout, std::cerr, 2, const_cast<char * const *>(argv));
-    REQUIRE( ret==1 );                  // -h now produces 1
-}
-
-TEST_CASE("e2e-H", "[end-to-end]") {
-    std::string inpath = test_dir() / "nps-2010-emails.100k.raw";
-    std::string outdir = NamedTemporaryDirectory();
-    /* Try the -H option */
-    const char *argv[] = {"bulk_extractor", "-H", nullptr};
-    int ret = bulk_extractor_main(std::cout, std::cerr, 2, const_cast<char * const *>(argv));
-    REQUIRE( ret==2 );                  // -H produces 2
-}
-
-TEST_CASE("e2e-no-imagefile", "[end-to-end]") {
-    std::string outdir = NamedTemporaryDirectory();
-    /* Try the -H option */
-    const char *argv[] = {"bulk_extractor", nullptr};
-    int ret = bulk_extractor_main(std::cout, std::cerr, 1, const_cast<char * const *>(argv));
-    REQUIRE( ret==3 );                  // produces 3
-}
-
-TEST_CASE("e2e-0", "[end-to-end]") {
-    std::string inpath = test_dir() / "nps-2010-emails.100k.raw";
-    std::string outdir = NamedTemporaryDirectory();
-    /* Try to run twice. There seems to be a problem with the second time through.  */
-    const char *argv[] = {"bulk_extractor", "-0", "-o", outdir.c_str(), inpath.c_str(), nullptr};
-    std::cerr << "*******************************************************************\n";
-    std::cout << "*******************************************************************\n";
-    int ret = bulk_extractor_main(std::cout, std::cerr, 5, const_cast<char * const *>(argv));
-    REQUIRE( ret==0 );
-    std::cerr << "*******************************************************************\n";
-    std::cout << "*******************************************************************\n";
-    ret = bulk_extractor_main(std::cout, std::cerr, 5, const_cast<char * const *>(argv));
-    REQUIRE( ret==0 );
-
-    /* Validate the output dfxml file */
-    std::string validate = std::string("xmllint --noout ") + outdir + "/report.xml";
-    int code = system( validate.c_str());
-    REQUIRE( code == 0);
-}
-
-TEST_CASE("path-printer", "[end-to-end]") {
-    std::string inpath = test_dir() / "test_base64json.txt";
-    const char *argv[] = {"bulk_extractor","-p","0:64/h", inpath.c_str(), nullptr};
-    std::stringstream ss;
-    int ret = bulk_extractor_main(ss, std::cerr, 4, const_cast<char * const *>(argv));
-    std::string EXPECTED =
-        "0000: 5733 7369 4d53 4936 4943 4a76 626d 5641 596d 467a 5a54 5930 4c6d 4e76 6253 4a39 W3siMSI6ICJvbmVAYmFzZTY0LmNvbSJ9\n"
-        "0020: 4c43 4237 496a 4969 4f69 4169 6448 6476 5147 4a68 6332 5532 4e43 356a 6232 3069 LCB7IjIiOiAidHdvQGJhc2U2NC5jb20i\n";
-    REQUIRE( ret == 0);
-    REQUIRE( ss.str() == EXPECTED);
 }
