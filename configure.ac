@@ -20,7 +20,7 @@ m4_include([m4/slg_gcc_all_warnings.m4])
 m4_include([src/be13_api/dfxml_cpp/src/dfxml_configure.m4])
 m4_include([src/be13_api/be13_configure.m4])
 
-<<<<<<< HEAD
+
 #
 #
 # NOTE - src_win/Makefile is not automatically generated. This is necessary
@@ -31,13 +31,7 @@ AC_CONFIG_FILES([Makefile
                  python/Makefile
                  specfiles/Makefile specfiles/bulk_extractor.spec.m4
                  tests/Makefile ])
-=======
-# NOTE - src_win/Makefile is not automatically generated. This is necessary
-# so that it can be run even after a 'make distclean' is done
-AC_CONFIG_FILES([Makefile src/Makefile \
-			  man/Makefile python/Makefile \
-			  specfiles/Makefile specfiles/bulk_extractor.spec.m4 tests/Makefile ])
->>>>>>> 6070ad1439013e0d97d6bdedfc014a4503371df2
+
 AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
