@@ -30,6 +30,7 @@ AC_CONFIG_FILES([Makefile
                  python/Makefile
                  specfiles/Makefile specfiles/bulk_extractor.spec.m4
                  tests/Makefile ])
+
 AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
