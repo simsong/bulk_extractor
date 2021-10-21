@@ -74,8 +74,12 @@ jobs:
           cd src
           make check
           gcov-9 -n -o . `find . -name '*cpp'`
-          bash <(curl -s https://codecov.io/bash)
+          curl -Os https://uploader.codecov.io/latest/linux/codecov
+          chmod +x codecov
+          ./codecov -t ${CODECOV_TOKEN}
           make distclean
+          # Todo - add GPG verification - see https://about.codecov.io/blog/introducing-codecovs-new-uploader/
+
 
       - name: regresion test
         if: startsWith(matrix.os, 'disabled')
