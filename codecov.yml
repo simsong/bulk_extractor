@@ -1,0 +1,11 @@
+coverage:
+  range: 40..60
+  round: nearest
+  precision: 2
+
+
+
+ignore:
+  - "src/be13_api/catch.hpp"
+  - "src/be13_api/utf8.h"
+  - "src/be13_api/utf8/*"
