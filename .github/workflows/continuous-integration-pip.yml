@@ -33,33 +33,28 @@ jobs:
         run: |
           echo "" | bash etc/CONFIGURE_UBUNTU20LTS.bash
 
-      - name: make
+      - name: Run C++ checks without codecov
+        if: startsWith(matrix.os, 'macos')
         run: |
           bash bootstrap.sh
-          ./configure
-          cd src
-          make
+          ./configure -q && make && (cd src; make check || cat test-suite.log; exit 1)
 
-      - name: make check
-        run: |
-          cd src
-          make check || (echo ==error== ; cat test-suite.log; exit 1)
-
-      - uses: ammaraskar/gcc-problem-matcher@0.1
-        name: GCC Problem Matcher
-
-      - name: codecov report
+      - name: Run C++ checks with codecov
         if: startsWith(matrix.os, 'ubuntu')
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         run: |
-          ./configure CFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' CXXFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' LIBS='-lgcov'
+          bash bootstrap.sh
+          ./configure -q --with-no_optimize --enable-silent-rules \
+                 CFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' \
+                 CXXFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' \
+                 LIBS='-lgcov'
           cd src
-          make check
+          make check || (echo ==error== ; cat test-suite.log; exit 1)
           gcov-9 -n -o . `find . -name '*cpp'`
 
           #
-          # set up codecov
+          # set up and run codecov
           #
           sudo yum install gpg
           curl https://keybase.io/codecovsecurity/pgp_keys.asc | \
@@ -71,8 +66,6 @@ jobs:
           shasum -a 256 -c codecov.SHA256SUM
           chmod +x codecov && ./codecov -t ${CODECOV_TOKEN}
           make distclean
-      - name: regresion test
-        if: startsWith(matrix.os, 'disabled')
-        run: |
-          cd tests
-          python3 regress.py --datacheck
+
+      - uses: ammaraskar/gcc-problem-matcher@0.1
+        name: GCC Problem Matcher
