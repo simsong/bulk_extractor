@@ -37,7 +37,8 @@ jobs:
         if: startsWith(matrix.os, 'macos')
         run: |
           bash bootstrap.sh
-          ./configure -q && make && (cd src; make check || cat test-suite.log; exit 1)
+          ./configure -q --with-no_optimize --enable-silent-rules \
+          && make && (cd src; make check || cat test-suite.log; exit 1)
 
       - name: Run C++ checks with codecov
         if: startsWith(matrix.os, 'ubuntu')
