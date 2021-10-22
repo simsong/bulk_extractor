@@ -57,6 +57,7 @@ jobs:
           cd src
           make check
           gcov-9 -n -o . `find . -name '*cpp'`
+
           #
           # set up codecov
           #
@@ -70,8 +71,6 @@ jobs:
           shasum -a 256 -c codecov.SHA256SUM
           chmod +x codecov && ./codecov -t ${CODECOV_TOKEN}
           make distclean
-
-
       - name: regresion test
         if: startsWith(matrix.os, 'disabled')
         run: |
