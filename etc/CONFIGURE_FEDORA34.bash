@@ -61,7 +61,7 @@ LIBEWF_FNAME=$(basename $LIBEWF_URL)
 LIBEWF_DIR=$( echo $LIBEWF_FNAME | sed s/-experimental// | sed s/.tar.gz//)
 echo
 echo "Now installing libewf into $LIBEWF_DIR"
-wget $LIBEWF_URL || (echo could not download $LIBEWF_URL. Stop; exit 1)
+wget -nv $LIBEWF_URL || (echo could not download $LIBEWF_URL. Stop; exit 1)
 tar xfz $LIBEWF_FNAME || (echo could not untar $LIBEWF_FNAME. Stop; exit 1)
 (cd $LIBEWF_DIR  \
      && ./configure --quiet --enable-silent-rules --prefix=/usr/local \

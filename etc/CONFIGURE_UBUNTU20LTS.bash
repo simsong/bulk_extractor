@@ -4,7 +4,7 @@ LIBEWF_DIST=https://github.com/libyal/libewf-legacy/releases/download/20140812/l
 AUTOCONF_DIST=https://ftpmirror.gnu.org/autoconf/autoconf-2.71.tar.gz
 AUTOMAKE_DIST=https://ftpmirror.gnu.org/automake/automake-1.16.3.tar.gz
 MKPGS="libtool autoconf automake libssl-dev pkg-config libxml2-utils"
-WGET="wget --no-check-certificate"
+WGET="wget -nv --no-check-certificate"
 cat <<EOF
 *******************************************************************
         Configuring Ubuntu $RELEASE.04 LTS to compile bulk_extractor.
