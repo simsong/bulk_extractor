@@ -58,6 +58,8 @@ CONFIGURE="./configure -q --enable-silent-rules"
 echo manually installing a modern libewf
 $WGET $LIBEWF_DIST || (echo could not download $LIBEWF_DIST; exit 1)
 tar xfz libewf*gz   && (cd libewf*/   && $CONFIGURE && make && sudo make install)
+ls -l /etc/ld.so.conf.d/
+sudo ldconfig
 
 echo updating autoconf
 $WGET $AUTOCONF_DIST || (echo could not download $AUTOCONF_DIST; exit 1)
