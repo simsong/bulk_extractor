@@ -193,9 +193,9 @@ class process_ewf : public image_process {
     process_ewf &operator=(const process_ewf &);
     /****************************************************************/
 
-    uint64_t ewf_filesize {};
+    uint64_t ewf_filesize {0};
     std::vector<std::string> details {};
-    mutable libewf_handle_t *handle {};
+    mutable libewf_handle_t *handle { nullptr };
 
  public:
     static void local_e01_glob(std::filesystem::path fname,char ***libewf_filenames,int *amount_of_filenames);
