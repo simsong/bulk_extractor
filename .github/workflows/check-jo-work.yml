@@ -1,0 +1,32 @@
+name: Check Jo Work
+on:
+  release:
+    types: [published, created, edited]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # https://github.com/actions/checkout
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: configure and install bulk_extractor
+        run: |
+          echo "" | bash etc/CONFIGURE_UBUNTU20LTS.bash
+          bash bootstrap.sh
+          ./configure -q --enable-silent-rules
+          cd src
+          make check || (echo ==error== ; cat test-suite.log; exit 1)
+          sudo make install
+
+      - name: download Jo
+        run: |
+          sudo apt install wget libewf
+          wget https://digitalcorpora.s3.amazonaws.com/corpora/scenarios/2009-m57-patents/usb/jo-work-usb-2009-12-11.E01
+          ewfinfo jo-work-usb-2009-12-11.E01
+          bulk_extractor -o beout jo-work-usb-2009-12-11.E01
+          ls -l beout
