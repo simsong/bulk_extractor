@@ -70,3 +70,6 @@ echo updating automake
 $WGET $AUTOMAKE_DIST || (echo could not download $AUTOMAKE_DIST; exit 1)
 tar xfz automake*gz && (cd automake*/ && $CONFIGURE && make && sudo make install)
 automake --version
+
+echo xmllint:
+ls -l /usr/bin/xmllint
