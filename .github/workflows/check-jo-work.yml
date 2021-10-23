@@ -1,7 +1,7 @@
 name: Check Jo Work
-on:
-  release:
-    types: [published, created, edited]
+on: [push]
+#  release:
+#    types: [published, created, edited]
 
 jobs:
   build:
