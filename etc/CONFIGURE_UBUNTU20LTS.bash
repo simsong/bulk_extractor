@@ -3,7 +3,7 @@ RELEASE=20
 LIBEWF_DIST=https://github.com/libyal/libewf-legacy/releases/download/20140812/libewf-20140812.tar.gz
 AUTOCONF_DIST=https://ftpmirror.gnu.org/autoconf/autoconf-2.71.tar.gz
 AUTOMAKE_DIST=https://ftpmirror.gnu.org/automake/automake-1.16.3.tar.gz
-MKPGS="autoconf automake build-essentials libexpat1-dev libssl-dev libtool libxml2-utils pkg-config"
+MKPGS="autoconf automake libexpat1-dev libssl-dev libtool libxml2-utils pkg-config"
 WGET="wget -nv --no-check-certificate"
 cat <<EOF
 *******************************************************************
