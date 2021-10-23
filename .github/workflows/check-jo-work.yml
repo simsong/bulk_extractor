@@ -25,7 +25,7 @@ jobs:
 
       - name: download Jo
         run: |
-          sudo apt install wget libewf
+          sudo apt install wget
           wget https://digitalcorpora.s3.amazonaws.com/corpora/scenarios/2009-m57-patents/usb/jo-work-usb-2009-12-11.E01
           ewfinfo jo-work-usb-2009-12-11.E01
           bulk_extractor -o beout jo-work-usb-2009-12-11.E01
