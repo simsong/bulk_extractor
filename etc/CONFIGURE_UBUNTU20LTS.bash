@@ -57,18 +57,18 @@ sudo apt install -y $MKPGS
 CONFIGURE="./configure -q --enable-silent-rules"
 echo manually installing a modern libewf
 $WGET $LIBEWF_DIST || (echo could not download $LIBEWF_DIST; exit 1)
-tar xfz libewf*gz   && (cd libewf*/   && $CONFIGURE && make && sudo make install)
+tar xfz libewf*gz   && (ls -l ; cd libewf*/   && $CONFIGURE && make && sudo make install)
 ls -l /etc/ld.so.conf.d/
 sudo ldconfig
 
 echo updating autoconf
 $WGET $AUTOCONF_DIST || (echo could not download $AUTOCONF_DIST; exit 1)
-tar xfz autoconf*gz && (cd autoconf*/ && $CONFIGURE && make && sudo make install)
+tar xfz autoconf*gz && (ls -l; cd autoconf*/ && $CONFIGURE && make && sudo make install)
 autoconf --version
 
 echo updating automake
 $WGET $AUTOMAKE_DIST || (echo could not download $AUTOMAKE_DIST; exit 1)
-tar xfz automake*gz && (cd automake*/ && $CONFIGURE && make && sudo make install)
+tar xfz automake*gz && (ls -l ; cd automake*/ && $CONFIGURE && make && sudo make install)
 automake --version
 
 echo xmllint:
