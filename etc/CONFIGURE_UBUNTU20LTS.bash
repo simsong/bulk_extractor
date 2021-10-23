@@ -73,3 +73,4 @@ automake --version
 
 echo xmllint:
 ls -l /usr/bin/xmllint
+which xmllint
