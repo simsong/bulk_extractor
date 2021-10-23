@@ -1,17 +1,17 @@
 ## Copyright/Non-Copyright Statements
 
 **bulk_extractor** was originally developed by Simson Garfinkel while at
-the Naval Postgraduate School. As a work of the US Government that
+the Naval Postgraduate School. As a work of the US Government this
 work is not subject to copyright law.
 
 Simson Garfinkel left the Naval Postgraduate School in January 2015
 and continued to work on **bulk_extractor** in his personal
-capacity. Those modifications are covered under the MIT license (below). Other
-components are licensed as noted.
+capacity. Those modifications are covered under the MIT license (below).
+Other components are licensed as noted.
 
 ## MIT License
 
-Copyright (C) 2020, Simson L. Garfinkel
+Copyright (C) 2020, Simson L. Garfinkel {{ organization }}
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -74,16 +74,12 @@ Licensed under the MIT License
 
 * src/old_scanners/scan_ascii85.cpp is Copyright (C) 2011 Remy Oukaour
 
-
-Licensed under the JSON License
-
-* src/scan_json.cpp is Copyright (C) 2005 JSON.org
+* src/scan_json.cpp is Copyright (C) 2021 Simson L. Garfinkel and Jan Gruber
 
 
 Licensed under General Public License version 3 and later
 
 * src/pyxpress.c is Copyright 2008 (C) Matthieu Suiche. <msuiche[at]gmail.com>
-
 
 Licensed under Lesser General Public License version 2.1
 
@@ -115,3 +111,7 @@ Licensed under General Public License version 3 with the Autoconf exception:
 * m4/ac_prog_javac_works.m4 is Copyright (C) 2000 Stephane Bortzmeyer <bortzmeyer@pasteur.fr>
 
 * m4/ac_check_classpath.m4 is Copyright (C) 2000 Stephane Bortzmeyer <bortzmeyer@pasteur.fr>
+
+Licensed under OpenSSL License
+
+Because of the fact, that the GPL (including version 3) is incompatible with some terms of the OpenSSL license, the author hereby explicitly states a license exception, which permits the linking of bulk_extractor with OpenSSL.

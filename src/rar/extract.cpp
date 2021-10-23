@@ -56,7 +56,7 @@ CmdExtract::~CmdExtract()
 }
 
 
-void CmdExtract::DoExtract(CommandData *Cmd, byte* ptrlocation, int64 ptrlength, std::string& xml)
+void CmdExtract::DoExtract(CommandData *Cmd, unsigned char* ptrlocation, int64 ptrlength, std::string& xml)
 {
   PasswordCancelled=false;
   DataIO.SetCurrentCommand(*Cmd->Command);
@@ -142,7 +142,7 @@ void CmdExtract::ExtractArchiveInit(CommandData *Cmd,Archive &Arc)
 }
 
 
-EXTRACT_ARC_CODE CmdExtract::ExtractArchive(CommandData *Cmd, byte *ptrlocation, int64 ptrlength, std::string& xml)
+EXTRACT_ARC_CODE CmdExtract::ExtractArchive(CommandData *Cmd, unsigned char *ptrlocation, int64 ptrlength, std::string& xml)
 {
   Archive Arc(Cmd);
   Arc.InitArc(ptrlocation, ptrlength); //initialize the pointer location
@@ -900,7 +900,7 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,size_t HeaderS
 
 void CmdExtract::UnstoreFile(ComprDataIO &DataIO,int64 DestUnpSize)
 {
-  Array<byte> Buffer(0x10000);
+  Array<unsigned char> Buffer(0x10000);
   while (1)
   {
     uint Code=DataIO.UnpRead(&Buffer[0],Buffer.Size());

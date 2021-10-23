@@ -111,7 +111,12 @@ const std::string exif_entry::get_full_name() const {
     case IFD1_INTEROPERABILITY:
         return "ifd1.interoperability." + name;
     default:
+<<<<<<< HEAD
         return "unknown." + name;
+=======
+        std::cerr << "Program state error: Invalid ifd type " << ifd_type << "\n";
+        assert(0);
+>>>>>>> origin/master
     }
 }
 

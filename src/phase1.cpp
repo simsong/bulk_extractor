@@ -91,10 +91,17 @@ sbuf_t *Phase1::get_sbuf(image_process::iterator &it)
                       << " (retry_count=" << retry_count
                       << " of " << config.max_bad_alloc_errors << ")\n";
 
+<<<<<<< HEAD
 
             std::stringstream str;
             str << "name='bad_alloc' " << "pos0='" << dfxml_writer::xmlescape(it.get_pos0().str()) << "' " << "retry_count='"     << retry_count << "' ";
             xreport.xmlout("debug:exception", e.what(), str.str(), true);
+=======
+            std::stringstream ss;
+            ss << "name='bad_alloc' " << "pos0='" << it.get_pos0() << "' "
+               << "retry_count='"     << retry_count << "' ";
+            xreport.xmlout("debug:exception", e.what(), ss.str(), true);
+>>>>>>> origin/master
         }
         if (retry_count < config.max_bad_alloc_errors+1){
             std::cerr << "will wait for " << config.retry_seconds << " seconds and try again...\n";
@@ -126,6 +133,20 @@ void Phase1::make_sorted_random_blocklist(blocklist_t *blocklist,uint64_t max_bl
 
 void Phase1::read_process_sbufs()
 {
+<<<<<<< HEAD
+=======
+    p.set_report_read_errors(config.opt_report_read_errors);
+    md5g = new dfxml::md5_generator();		// keep track of MD5
+    uint64_t md5_next = 0;              // next byte to hash
+
+    if(config.debug & DEBUG_PRINT_STEPS) std::cout << "DEBUG: CREATING THREAD POOL\n";
+
+    tp = new threadpool(config.num_threads,fs,xreport);
+
+    uint64_t page_ctr=0;
+    xreport.push("runtime","xmlns:debug=\"http://www.github.com/simsong/bulk_extractor/issues\"");
+
+>>>>>>> origin/master
     /* A single loop with two iterators.
      *
      * it -- the regular image_iterator; it knows how to read blocks.
@@ -164,12 +185,16 @@ void Phase1::read_process_sbufs()
             exit(1);
         }
 
+<<<<<<< HEAD
         if (sampling()){                // if sampling, seek the iterator
             if (si==blocks_to_sample.end()) break;
             it.seek_block(*si);
         }
         /* If we have gone to far, break */
         if (config.opt_scan_end!=0 && config.opt_scan_end <= it.raw_offset ){
+=======
+        if(config.opt_offset_end!=0 && config.opt_offset_end <= it.raw_offset ){
+>>>>>>> origin/master
             break;                      // passed the offset
         }
 
@@ -184,11 +209,21 @@ void Phase1::read_process_sbufs()
             // Only process pages we haven't seen before
             if (config.seen_page_ids.find(it.get_pos0().str()) == config.seen_page_ids.end()){
                 try {
+<<<<<<< HEAD
                     sbuf_t *sbufp = get_sbuf(it);
 
                     /* compute the sha1 hash */
                     if (sha1g){
                         if (sbufp->pos0.offset==hash_next){
+=======
+                    sbuf_t *sbuf = get_sbuf(it);
+                    if(sbuf==0) break;	// eof?
+                    sbuf->page_number = page_ctr;
+
+                    /* compute the md5 hash */
+                    if(md5g){
+                        if(sbuf->pos0.offset==md5_next){
+>>>>>>> origin/master
                             // next byte follows logically, so continue to compute hash
                             sha1g->update(sbufp->get_buf(), sbufp->pagesize);
                             hash_next += sbufp->pagesize;
@@ -198,8 +233,19 @@ void Phase1::read_process_sbufs()
                             sha1g = 0;
                         }
                     }
+<<<<<<< HEAD
                     total_bytes += sbufp->pagesize;
                     ss.schedule_sbuf(sbufp); // processes the sbuf, then deletes it
+=======
+                    total_bytes += sbuf->pagesize;
+
+                    /***************************
+                     **** SCHEDULE THE WORK ****
+                     ***************************/
+
+                    tp->schedule_work(sbuf);
+                    if(!config.opt_quiet) notify_user(it);
+>>>>>>> origin/master
                 }
                 catch (const std::exception &e) {
                     // report uncaught exceptions to both user and XML file
@@ -225,14 +271,19 @@ void Phase1::read_process_sbufs()
         ++it;
     }
 
+<<<<<<< HEAD
     if (config.fraction_done) *config.fraction_done = 1.0;
     if (!config.opt_quiet){
+=======
+    if(!config.opt_quiet){
+>>>>>>> origin/master
         std::cout << "All data are read; waiting for threads to finish...\n";
     }
 }
 
 void Phase1::dfxml_write_create(int argc, char * const *argv)
 {
+<<<<<<< HEAD
     xreport.push("dfxml","xmloutputversion='1.0' xmlns:debug='http://afflib.org/bulk_extractor/debug'");
     xreport.push("metadata",
 		 "\n  xmlns='http://afflib.org/bulk_extractor/' "
@@ -254,21 +305,70 @@ void Phase1::dfxml_write_create(int argc, char * const *argv)
 
 void Phase1::dfxml_write_source()
 {
+=======
+    /* Now wait for all of the threads to be free */
+    tp->mode = 1;			// waiting for workers to finish
+    time_t wait_start = time(0);
+    for(int32_t counter = 0;;counter++){
+        int num_remaining = config.num_threads - tp->get_free_count();
+        if(num_remaining==0) break;
+
+        msleep(100);
+        time_t time_waiting   = time(0) - wait_start;
+        time_t time_remaining = config.max_wait_time - time_waiting;
+
+        if(counter%60==0){
+            std::stringstream ss;
+            ss << "Time elapsed waiting for " << num_remaining
+               << " thread" << (num_remaining>1 ? "s" : "")
+               << " to finish:\n    " << minsec(time_waiting)
+               << " (timeout in "     << minsec(time_remaining) << ".)\n";
+            if(config.opt_quiet==0){
+                std::cout << ss.str();
+                if(counter>0) print_tp_status();
+            }
+            xreport.comment(ss.str());
+        }
+        if(time_waiting>config.max_wait_time){
+            std::cout << "\n\n";
+            std::cout << " ... this shouldn't take more than an hour. Exiting ... \n";
+            std::cout << " ... Please report to the bulk_extractor maintainer ... \n";
+            break;
+        }
+    }
+    if(config.opt_quiet==0) std::cout << "All Threads Finished!\n";
+
+    xreport.pop();			// pop runtime
+>>>>>>> origin/master
     /* We can write out the source info now, since we (might) know the hash */
     xreport.push("source");
     xreport.xmlout("image_filename",p.image_fname());
     xreport.xmlout("image_size",p.image_size());
+<<<<<<< HEAD
     if (sha1g){
         dfxml::sha1_t sha1 = sha1g->digest();
         xreport.xmlout("hashdigest",sha1.hexdigest(),"type='SHA1'",false);
         delete sha1g;
+=======
+    if(md5g){
+        auto md5 = md5g->digest();
+        if(md5_string) *md5_string = md5.hexdigest();
+        xreport.xmlout("hashdigest",md5.hexdigest(),"type='MD5'",false);
+        delete md5g;
+>>>>>>> origin/master
     }
     xreport.pop("source");			// source
     xreport.flush();
 
     //if (config.opt_quiet==0) std::cout << "Producer time spent waiting: " << tp->waiting.elapsed_seconds() << " sec.\n";
 
+<<<<<<< HEAD
     //xreport.xmlout("thread_wait",dtos(tp->waiting.elapsed_seconds()),"thread='0'",false);
+=======
+    if(config.opt_quiet==0) std::cout << "Producer time spent waiting: " << tp->waiting.elapsed_seconds() << " sec.\n";
+
+    xreport.xmlout("thread_wait",dtos(tp->waiting.elapsed_seconds()),"thread='0'",false);
+>>>>>>> origin/master
     double worker_wait_average = 0;
     if (config.opt_quiet==0) {
         std::cout << "Average consumer time spent waiting: " << worker_wait_average << " sec.\n";

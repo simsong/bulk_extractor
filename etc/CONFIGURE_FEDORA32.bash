@@ -1,11 +1,12 @@
 #!/bin/bash
 LIBEWF_URL=https://github.com/libyal/libewf/releases/download/20171104/libewf-experimental-20171104.tar.gz
+FEDORA_VERSION=32
 cat <<EOF
 *******************************************************************
         Configuring Amazon Linux for compiling bulk_extractor
 *******************************************************************
 
-This script will configure a fresh Amazon Linux system to compile
+This script will configure a fresh Amazon Linux system to compile 
 bulk_extractor.  Please perform the following steps:
 
 1. Start a VM
@@ -30,7 +31,7 @@ else
 fi
 cd $DIR
 
-MPKGS="autoconf automake flex gcc gcc-c++ git libtool "
+MPKGS="autoconf automake make flex gcc gcc-c++ git libtool "
 MPKGS+="md5deep wget bison zlib-devel "
 MPKGS+="libewf libewf-devel java-1.8.0-openjdk-devel "
 MPKGS+="libxml2-devel libxml2-static openssl-devel "
@@ -38,22 +39,22 @@ MPKGS+="sqlite-devel expat-devel "
 MPKGS+="libjson-c-devel "
 
 if [ ! -r /etc/os-release ]; then
-  echo This requires Amazon Linux
+  echo This requires Fedora Linux
   exit 1
 fi
 
 . /etc/os-release
-if [ $ID != 'centos' ]; then
-    echo This requires Centos Linux. You have $ID.
+if [ $ID != 'fedora' ]; then
+    echo This requires Fedora Linux. You have $ID.
     exit 1
 fi
 
-if [ $VERSION_ID -ne 7 ]; then
-    echo This requires version 7 of Centos. You have $VERSION_ID.
+if [ $VERSION_ID -ne $FEDORA_VERSION ]; then
+    echo This requires version $FEDORA_VERSION of $ID. You have $VERSION_ID. 
     exit 1
 fi
 
-echo Will now try to install
+echo Will now try to install 
 
 sudo yum install -y $MPKGS --skip-broken
 if [ $? != 0 ]; then
@@ -68,9 +69,9 @@ sudo yum -y update
 
 LIBEWF_FNAME=`echo $LIBEWF_URL| sed s:.*/::`
 LIBEWF_DIR=`echo $LIBEWF_FNAME | sed s/-experimental// | sed s/.tar.gz//`
-echo
+echo 
 echo "Now installing libewf"
-wget -nv https://github.com/libyal/libewf/releases/download/20171104/libewf-experimental-20171104.tar.gz
+wget https://github.com/libyal/libewf/releases/download/20171104/libewf-experimental-20171104.tar.gz
 tar xfvz $LIBEWF_FNAME
 pushd $LIBEWF_DIR
 ./configure && make

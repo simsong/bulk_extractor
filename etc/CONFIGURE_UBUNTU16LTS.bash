@@ -1,16 +1,18 @@
 #!/bin/bash
 cat <<EOF
 *******************************************************************
-        Configuring Debian 9 to compile bulk_extractor.
+        Configuring Ubuntu 16.04 LTS to compile bulk_extractor.
 *******************************************************************
 
-1. Install Debian 9.
+Install Ubuntu 16.04 LTS and follow these commands:
 
-2. # apt-get install git
-
-3. # git clone git@github.com:simsong/bulk_extractor.git
-
-3. # bash bulk_extractor/src_win/CONFIGURE_DEBIAN9.bash
+# apt-get install git
+# git clone --recursive https://github.com/simsong/bulk_extractor.git
+# cd bulk_extractor
+# bash etc/CONFIGURE_UBUNTU16LTS.bash
+# bash bootstrap.sh
+# ./configure
+# make && sudo make install
 
 press any key to continue...
 EOF
@@ -26,8 +28,9 @@ else
 fi
 cd $DIR
 
-MPKGS="autoconf automake flex gcc git libtool "
-MPKGS+="md5deep openssl patch wget bison g[+][+] libssl-dev zlib1g-dev libxml2-dev libjson-c-dev"
+#MPKGS="autoconf automake flex gcc git libtool "
+#MPKGS+="openssl patch wget bison g++ libssl-dev zlib1g-dev libxml2-dev"
+MKPGS="autoconf automake flex gcc g++ libssl-dev zlib1g-dev libxml2-dev dpkg-dev openssl patch wget bison libjson-c-dev"
 
 if [ ! -r /etc/os-release ]; then
     echo This requires Debian Linux.
@@ -36,20 +39,27 @@ fi
 
 source /etc/os-release
 
-if [ x$ID != xdebian ]; then
-    echo This really requires Debian Linux. You have $ID
+if [ x$ID != xubuntu ]; then
+    echo This really requires ubuntu. You have $ID
+    exit 1
+fi
+MAJOR_VERSION=`echo $VERSION_ID|sed s/[.].*//`
+if [ $MAJOR_VERSION -ne 16 ]; then
+    echo This requires Ubuntu 16 LTS Linux.
     exit 1
 fi
 
-if [ $VERSION_ID -lt  9 ]; then
-    echo This requires at least Debian 9 Linux.
-    exit 1
-fi
 
+echo Will now try to install 
 
-echo Will now try to install
+# I use emacs. Installing it may install requiremnts
+sudo apt update -y
+sudo apt install -y emacs
+sudo apt autoremove -y autoremove
+# Now install what is required
 
-sudo apt-get install -y $MPKGS
+echo apt install -y $MKPGS
+sudo apt install -y $MKPGS 
 exit 1
 if [ $? != 0 ]; then
   echo "Could not install some of the packages. Will not proceed."
@@ -72,7 +82,7 @@ then
   echo ICU is already installed
 else
   if [ ! -r $ICUFILE ]; then
-    wget -nv $ICUURL
+    wget $ICUURL
   fi
   tar xf $ICUFILE
 
@@ -97,7 +107,7 @@ else
   CC=gcc CXX=g++ CFLAGS=-O3 CXXFLAGS=-O3 CPPFLAGS="$ICU_DEFINES" ../icu/source/runConfigureICU Linux --enable-shared $ICU_FLAGS
   make VERBOSE=1
   popd
-
+  
   # build 64-bit ICU for MinGW
   echo
   echo icu mingw64
