@@ -226,9 +226,7 @@ void Phase1::read_process_sbufs()
     }
 
     if (config.fraction_done) *config.fraction_done = 1.0;
-    if (!config.opt_quiet){
-        std::cout << "All data are read; waiting for threads to finish...\n";
-    }
+    if (!config.opt_quiet) std::cout << "All data read; waiting for threads to finish..." << std::endl;
 }
 
 void Phase1::dfxml_write_create(int argc, char * const *argv)
@@ -270,8 +268,8 @@ void Phase1::dfxml_write_source()
 
     //xreport.xmlout("thread_wait",dtos(tp->waiting.elapsed_seconds()),"thread='0'",false);
     double worker_wait_average = 0;
-    if (config.opt_quiet==0) {
-        std::cout << "Average consumer time spent waiting: " << worker_wait_average << " sec.\n";
+    if (!config.opt_quiet && worker_wait_average>0) {
+        std::cout << "Average consumer time spent waiting: " << worker_wait_average << " sec." << std::endl;
     }
     /* end of phase 1 */
 }

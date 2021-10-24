@@ -186,52 +186,35 @@ int process_ewf::open()
     int amount_of_filenames = 0;
 
 #ifdef HAVE_LIBEWF_HANDLE_CLOSE
-    bool use_libewf_glob = true;
     libewf_error_t *error=0;
 
-    if (fname_string.find(".E01")!=std::string::npos){
-        use_libewf_glob = false;
+    if (libewf_glob(fname.c_str(), strlen(fname.c_str()), LIBEWF_FORMAT_UNKNOWN,
+                    &libewf_filenames,&amount_of_filenames,&error)<0){
+        libewf_error_fprint(error,stdout);
+        libewf_error_free(&error);
+        throw std::invalid_argument("libewf_glob");
+    }
+    for(int i=0;i<amount_of_filenames;i++){
+        std::cout << "opening " << libewf_filenames[i] << std::endl;
     }
 
-    if (use_libewf_glob){
-        if (libewf_glob(fname.c_str(), strlen(fname.c_str()), LIBEWF_FORMAT_UNKNOWN,
-                       &libewf_filenames,&amount_of_filenames,&error)<0){
-            libewf_error_fprint(error,stdout);
-            libewf_error_free(&error);
-            throw std::invalid_argument("libewf_glob");
-        }
-    } else {
-#ifdef _WIN32
-        local_e01_glob(fname, &libewf_filenames,&amount_of_filenames);
-        for(int i=0;i<amount_of_filenames;i++){
-            std::cout << "opening " << libewf_filenames[i] << std::endl;
-        }
-#else
-        throw std::runtime_error("process_ewf::open: cannot process ewf file.");
-#endif
-    }
-    handle = 0;
-    if (libewf_handle_initialize(&handle,NULL)<0){
+    if (libewf_handle_initialize(&handle, nullptr) <0 ){
 	throw image_process::NoSuchFile("Cannot initialize EWF handle?");
     }
-    if (libewf_handle_open(handle,libewf_filenames,amount_of_filenames,
-			  LIBEWF_OPEN_READ,&error)<0){
+
+    if (libewf_handle_open(handle, libewf_filenames, amount_of_filenames,
+                           LIBEWF_OPEN_READ,&error) <0 ){
 	if (error) libewf_error_fprint(error, stderr);
         fflush(stderr);
-        for(size_t i = 0; libewf_filenames[i]; i++){
-            std::cout << "opening " << libewf_filenames[i] << std::endl;
-        }
 	throw image_process::NoSuchFile( fname.string() );
     }
+
     /* Free the allocated filenames */
-    if (use_libewf_glob){
-        if (libewf_glob_free(libewf_filenames,amount_of_filenames,&error)<0){
-            printf("libewf_glob_free failed\n");
-            if (error) libewf_error_fprint(error,stdout);
-            throw image_process::NoSuchFile("libewf_glob_free");
-        }
+    if (libewf_glob_free(libewf_filenames,amount_of_filenames,&error)<0){
+        if (error) libewf_error_fprint(error,stdout);
+        throw image_process::NoSuchFile("libewf_glob_free");
     }
-    libewf_handle_get_media_size(handle,(size64_t *)&ewf_filesize,NULL);
+    libewf_handle_get_media_size(handle,static_cast<size64_t *>(&ewf_filesize), NULL);
 #else
     amount_of_filenames = libewf_glob(fname,strlen(fname),LIBEWF_FORMAT_UNKNOWN,&libewf_filenames);
     if (amount_of_filenames<0){

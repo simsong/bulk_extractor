@@ -1,10 +1,13 @@
 #!/bin/bash
 RELEASE=20
+CONFIGURE="./configure -q --enable-silent-rules"
 LIBEWF_DIST=https://github.com/libyal/libewf-legacy/releases/download/20140812/libewf-20140812.tar.gz
 AUTOCONF_DIST=https://ftpmirror.gnu.org/autoconf/autoconf-2.71.tar.gz
 AUTOMAKE_DIST=https://ftpmirror.gnu.org/automake/automake-1.16.3.tar.gz
-MKPGS="autoconf automake build-essentials libexpat1-dev libssl-dev libtool libxml2-utils pkg-config"
+MKPGS="autoconf automake libexpat1-dev libssl-dev libtool libxml2-utils pkg-config"
 WGET="wget -nv --no-check-certificate"
+CONFIGURE="./configure -q --enable-silent-rules"
+MAKE="make -j4"
 cat <<EOF
 *******************************************************************
         Configuring Ubuntu $RELEASE.04 LTS to compile bulk_extractor.
@@ -54,19 +57,18 @@ echo Will now try to install
 sudo apt update -y
 sudo apt install -y $MKPGS
 
-CONFIGURE="./configure -q --enable-silent-rules"
 echo manually installing a modern libewf
 $WGET $LIBEWF_DIST || (echo could not download $LIBEWF_DIST; exit 1)
-tar xfz libewf*gz   && (cd libewf*/   && $CONFIGURE && make && sudo make install)
+tar xfz libewf*gz   && (cd libewf*/   && $CONFIGURE && $MAKE >/dev/null && sudo make install)
 ls -l /etc/ld.so.conf.d/
 sudo ldconfig
 
 echo updating autoconf
 $WGET $AUTOCONF_DIST || (echo could not download $AUTOCONF_DIST; exit 1)
-tar xfz autoconf*gz && (cd autoconf*/ && $CONFIGURE && make && sudo make install)
+tar xfz autoconf*gz && (cd autoconf*/ && $CONFIGURE && $MAKE >/dev/null && sudo make install)
 autoconf --version
 
 echo updating automake
 $WGET $AUTOMAKE_DIST || (echo could not download $AUTOMAKE_DIST; exit 1)
-tar xfz automake*gz && (cd automake*/ && $CONFIGURE && make && sudo make install)
+tar xfz automake*gz && (cd automake*/ && $CONFIGURE && $MAKE >/dev/null && sudo make install)
 automake --version

@@ -1,7 +1,7 @@
 name: Check Jo Work
-on:
-  release:
-    types: [published, created, edited]
+on: [push]
+#  release:
+#    types: [published, created, edited]
 
 jobs:
   build:
@@ -25,8 +25,8 @@ jobs:
 
       - name: download Jo
         run: |
-          sudo apt install wget libewf
-          wget https://digitalcorpora.s3.amazonaws.com/corpora/scenarios/2009-m57-patents/usb/jo-work-usb-2009-12-11.E01
+          sudo apt install wget
+          wget -nv https://digitalcorpora.s3.amazonaws.com/corpora/scenarios/2009-m57-patents/usb/jo-work-usb-2009-12-11.E01
           ewfinfo jo-work-usb-2009-12-11.E01
           bulk_extractor -o beout jo-work-usb-2009-12-11.E01
           ls -l beout
