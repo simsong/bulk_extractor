@@ -598,7 +598,8 @@ std::filesystem::path validate(std::string image_fname, std::vector<Check> &expe
     if (image_fname != "" ) {
         try {
             auto p = image_process::open( sc.input_fname, false, 65536, 65536);
-            Phase1::Config cfg;  // config for the image_processing system
+            Phase1::Config cfg; // config for the image_processing system
+            cfg.opt_quiet = true;       // do not need status reports
             Phase1 phase1(cfg, *p, ss);
             phase1.dfxml_write_create( 0, nullptr);
 

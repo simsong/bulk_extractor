@@ -8,7 +8,7 @@
 # and http://www.bioinf.uni-freiburg.de/~mmann/HowTo/automake.html
 
 AC_PREREQ([2.69])
-AC_INIT([BULK_EXTRACTOR],[2.0.0-beta1],[bugs@digitalcorpora.org])
+AC_INIT([BULK_EXTRACTOR],[2.0.0-dev],[bugs@digitalcorpora.org])
 AC_CONFIG_MACRO_DIR(m4)
 AC_CONFIG_AUX_DIR([build-aux])
 ################################################################
@@ -21,9 +21,13 @@ m4_include([src/be13_api/dfxml_cpp/src/dfxml_configure.m4])
 m4_include([src/be13_api/be13_configure.m4])
 
 #
+# NOTE 1 - plugins/Makefile is referenced so that the plugins Makefile is created.
+# However, plugins is not listed as a SUBDIR for Makefile.am in this directory.
+# That prevents the plugins from automatically being built each time.
 #
-# NOTE - src_win/Makefile is not automatically generated. This is necessary
+# NOTE 2 - src_win/Makefile is not automatically generated. This is necessary
 # so that it can be run even after a 'make distclean' is done
+
 AC_CONFIG_FILES([Makefile
                  src/Makefile src/tests/Makefile
                  man/Makefile

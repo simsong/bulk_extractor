@@ -19,7 +19,7 @@ struct notify_thread {
         std::atomic<double> *fraction_done {};
         const Phase1::Config &cfg;
         std::atomic<int> phase {};
-        std::mutex Mphase;              // mutex for phase
+        std::mutex Mphase {};           // mutex for phase
     };
 
     static inline const std::string FRACTION_READ {"fraction_read"};

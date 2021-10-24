@@ -1,0 +1,15 @@
+{
+    "firstName": "Konrad",
+    "lastName": "Zuse",
+    "gender": "man",
+    "age": 85,
+    "address": {
+        "streetAddress": "Straße des 17. Juni 135",
+        "city": "Berlin",
+        "country": "Germany",
+        "postalCode": "10623"
+    },
+    "inventions": [
+        { "type": "computer", "model": "Zuse Z1" }
+    ]
+}

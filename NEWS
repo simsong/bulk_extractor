@@ -33,7 +33,7 @@ bulk_extractor 0.7.0 is released. Significant new features include:
   how many cores your CPU has.
 
 * Improved extraction of ZIP files.
-  
+
 bulk_extractor is nearly feature complete. When it is we'll push the
 revision number to 1.0.0 and and put the system in maintenance mode
 while we work on the GUI and some post-processing scripts.
@@ -59,20 +59,19 @@ bulk_extractor 0.6.0 is released. Signifiacnt new features include:
   and proper utilization of multiple threads. (ie: bulk_extractor will
   no longer schedule threads that are not needed.)
 
-  >>> POSIX threading is recommended for MacOS but has not been thoroughly 
-      tested under Linux. It will not work under Windows.
+  - POSIX threading is recommended for MacOS but has not been thoroughly tested under Linux. It will not work under Windows.
 
 * -p option that allows you to view any forensic "path" that where a
   feature is found this allows you to view the contents of compressed
   files, for example.
 
-* -f option allows you to search for arbitrary regular expressions. 
+* -f option allows you to search for arbitrary regular expressions.
    BE CAREFUL! This can dramatically impact performance.
 
 * -c "Crash Protection" option sets a signal handler that will cause
   bulk_extractor to automatically restart from some crashes.  By
   default this is diabled, but it will be enabled by default in the
-  future. 
+  future.
 
 * Directly handles multi-volume VMDK files.
 
@@ -198,7 +197,7 @@ which is derrived from the following operating systems:
    win7-utl-64
    winXP-32bit-sp3
    winXP-64bit
-      
+
 You can download version 1.0 of the stoplist.
 
 Be sure to decompress the list first!  We are distributing it in ZIP
@@ -262,7 +261,7 @@ exif.txt - this file contains information on all of the carved EXIFs
 	   offset of the JPEG or MPEG that contains the EXIF, the MD5
 	   of the first 4096 bytes of the file, and an XML structure
 	   containing all of the extractable fields less than 10,000
-	   bytes in length.  
+	   bytes in length.
 
 	   The program post_process_exif.py, also included with the
 	   distribution, will turn exif.txt into a comma-separated
@@ -287,7 +286,7 @@ stoplist - bulk_extractor now includes a default stoplist that
 	   Ubuntu 10.10 (32 bit)
 
 	   The stoplist is enabled automatically, but you can disable
-	   it with the "-s" flag. 
+	   it with the "-s" flag.
 
 	   You can dump the stoplist with the "-S" flag.  The 0.4.0
 	   release is 155,476 terms in the stoplist, from
@@ -320,7 +319,7 @@ New Features:
 * url_services.txt - a histogram of all URLs by domain.
 * url_searches.txt - a histogram of all search terms, including
                      Google, Yahoo, Bing, and any other search service
-		     with "search" in the domain and "q=" or "p=" in 
+		     with "search" in the domain and "q=" or "p=" in
 		     the URL.
 * ccn.txt - this file now reports Federal Express account numbers,
             SSNs (if properly formatted or prefixed), DOBs, and other info.
@@ -412,9 +411,9 @@ that can be used to crack password-based cryptography.
 
 2. Two-phase design
 
-bulk_extractor has been redesigned to have a two-pass process. 
+bulk_extractor has been redesigned to have a two-pass process.
 
-phase 1 - the hard drive image is analyzed and "extracted feature files" are created. 
+phase 1 - the hard drive image is analyzed and "extracted feature files" are created.
 
   phase 1 is the time-intensive part which requires scanning the entire
   input hard drive. This redeisgn allows phase 1 to run in constant
@@ -434,12 +433,12 @@ bulk_extractor now creates an output directory that has the following layout:
   ccns.txt     - credit card numbers intermediate file
   wordlist.txt - wordlist
 
-  
+
 3. Direct support for EnCase E01 files
 
 bulk_extractor now has direct support for E01 files. It turns out that
 this is much faster than going through the AFFLIB virtual file
-system. 
+system.
 
 4. ETA when doing large extractions.
 
@@ -452,7 +451,7 @@ released shortly.
 
 ================================================================
 Release version 0.0.10.
- - Removed -a switch for "all". Now the default is "all." 
+ - Removed -a switch for "all". Now the default is "all."
    For low memory situations, use the "-m" flag (which uses a bloom filter to suppress items that only appear once.)
 
  - Added support for ASCII Unicode extraction.

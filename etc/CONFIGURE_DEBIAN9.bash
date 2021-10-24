@@ -27,7 +27,7 @@ fi
 cd $DIR
 
 MPKGS="autoconf automake flex gcc git libtool "
-MPKGS+="md5deep openssl patch wget bison g[+][+] libssl-dev zlib1g-dev libxml2-dev"
+MPKGS+="md5deep openssl patch wget bison g[+][+] libssl-dev zlib1g-dev libxml2-dev libjson-c-dev"
 
 if [ ! -r /etc/os-release ]; then
     echo This requires Debian Linux.
@@ -47,9 +47,9 @@ if [ $VERSION_ID -lt  9 ]; then
 fi
 
 
-echo Will now try to install 
+echo Will now try to install
 
-sudo apt-get install -y $MPKGS 
+sudo apt-get install -y $MPKGS
 exit 1
 if [ $? != 0 ]; then
   echo "Could not install some of the packages. Will not proceed."
@@ -72,7 +72,7 @@ then
   echo ICU is already installed
 else
   if [ ! -r $ICUFILE ]; then
-    wget $ICUURL
+    wget -nv $ICUURL
   fi
   tar xf $ICUFILE
 
@@ -97,7 +97,7 @@ else
   CC=gcc CXX=g++ CFLAGS=-O3 CXXFLAGS=-O3 CPPFLAGS="$ICU_DEFINES" ../icu/source/runConfigureICU Linux --enable-shared $ICU_FLAGS
   make VERBOSE=1
   popd
-  
+
   # build 64-bit ICU for MinGW
   echo
   echo icu mingw64

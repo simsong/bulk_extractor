@@ -20,6 +20,7 @@
 #include "config.h"
 #include "be13_api/utils.h"
 #include "be13_api/scanner_params.h"
+#include "be13_api/scanner_set.h"
 #include "scan_wordlist.h"
 
 #if defined(HAVE_LIBSQLITE3) && defined(HAVE_SQLITE3_H)
@@ -151,10 +152,10 @@ void Scan_Wordlist::dump_seen_wordlist()
 
 void Scan_Wordlist::shutdown(scanner_params &sp)
 {
-    if (strings){
+    // if `strings` is set, report all strings, not words, so no shutdown.
+    if (strings) {
         return;
     }
-    std::cout << "Phase 3. Uniquifying and recombining wordlist\n";
     flat_wordlist = &sp.named_feature_recorder("wordlist");
 
     flat_wordlist->flush();
