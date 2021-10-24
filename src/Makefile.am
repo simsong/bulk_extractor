@@ -149,6 +149,7 @@ test_be_SOURCES = $(bulk_extractor_parts) $(scanners_builtin) be13_api/catch.hpp
 SUFFIXES = .flex
 FLEX_CXXFLAGS=-Wno-shadow -Wno-effc++ -Wno-redundant-decls -Wno-missing-noreturn
 .flex.o:
-	$(LEX) -R -t $<  | sed "s/register //" > `basename $@ .o`.cpp
-	$(CXX) $(CPPFLAGS) $(AM_CPPFLAGS) $(CXXFLAGS) $(FLEX_CXXFLAGS) \
+	@echo LEX-CXX $@
+	@$(LEX) -R -t $<  | sed "s/register //" > `basename $@ .o`.cpp
+	@$(CXX) $(CPPFLAGS) $(AM_CPPFLAGS) $(CXXFLAGS) $(FLEX_CXXFLAGS) \
 		-I${top_srcdir} -I${srcdir} -I.. -I../../_build -c `basename $@ .o`.cpp
