@@ -16,11 +16,7 @@
 #   The second argument, if specified, indicates whether you insist on an
 #   extended mode (e.g. -std=gnu++11) or a strict conformance mode (e.g.
 #   -std=c++11).  If neither is specified, you get whatever works, with
-<<<<<<< HEAD
-#   preference for an extended mode.
-=======
 #   preference for no added switch, and then for an extended mode.
->>>>>>> origin/master
 #
 #   The third argument, if specified 'mandatory' or if left unspecified,
 #   indicates that baseline support for the specified C++ standard is
@@ -39,21 +35,14 @@
 #   Copyright (c) 2015 Moritz Klammler <moritz@klammler.eu>
 #   Copyright (c) 2016, 2018 Krzesimir Nowak <qdlacz@gmail.com>
 #   Copyright (c) 2019 Enji Cooper <yaneurabeya@gmail.com>
-<<<<<<< HEAD
-=======
 #   Copyright (c) 2020 Jason Merrill <jason@redhat.com>
->>>>>>> origin/master
 #
 #   Copying and distribution of this file, with or without modification, are
 #   permitted in any medium without royalty provided the copyright notice
 #   and this notice are preserved.  This file is offered as-is, without any
 #   warranty.
 
-<<<<<<< HEAD
-#serial 11
-=======
 #serial 12
->>>>>>> origin/master
 
 dnl  This macro is based on the code from the AX_CXX_COMPILE_STDCXX_11 macro
 dnl  (serial version number 13).
@@ -74,8 +63,6 @@ AC_DEFUN([AX_CXX_COMPILE_STDCXX], [dnl
   AC_LANG_PUSH([C++])dnl
   ac_success=no
 
-<<<<<<< HEAD
-=======
   m4_if([$2], [], [dnl
     AC_CACHE_CHECK(whether $CXX supports C++$1 features by default,
 		   ax_cv_cxx_compile_cxx$1,
@@ -86,7 +73,6 @@ AC_DEFUN([AX_CXX_COMPILE_STDCXX], [dnl
       ac_success=yes
     fi])
 
->>>>>>> origin/master
   m4_if([$2], [noext], [], [dnl
   if test x$ac_success = xno; then
     for alternative in ${ax_cxx_compile_alternatives}; do

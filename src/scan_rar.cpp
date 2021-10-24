@@ -532,7 +532,7 @@ static void unpack_buf(const uint8_t* input, size_t input_len, uint8_t* output, 
 
     CmdExtract extract; //from the extract.cpp file; allows the extraction to occur
 
-    unsigned char *startingaddress = (unsigned char*) input;
+    byte *startingaddress = (byte*) input;
 
     ComprDataIO mydataio;
     mydataio.SetSkipUnpCRC(true); //skip checking the CRC to allow more processing to occur
@@ -579,21 +579,8 @@ static inline bool is_mark_block(const sbuf_t &sbuf, size_t pos)
 }
 #endif
 
-<<<<<<< HEAD
 feature_recorder *rar_recorder   = nullptr;
 feature_recorder *unrar_recorder = nullptr;
-=======
-#if 0
-// Old code vor validating a specific RAR that we were searching for
-// assume that we are decompressing "15 Feet of Time.pdf" while fixing warnings for rapid testing
-//25 50 44 46 2D
-//25 25 45 4F 46
-size_t sz = component.uncompressed_size;
-assert(dbuf.buf[0] == 0x25); assert(dbuf.buf[1] == 0x50); assert(dbuf.buf[2] == 0x44); assert(dbuf.buf[3] == 0x46); assert(dbuf.buf[4] == 0x2D);
-assert(dbuf.buf[sz-5] == 0x25); assert(dbuf.buf[sz-4] == 0x25); assert(dbuf.buf[sz-3] == 0x45); assert(dbuf.buf[sz-2] == 0x4F); assert(dbuf.buf[sz-1] == 0x46);
-#endif
-
->>>>>>> origin/master
 
 extern "C"
 void scan_rar(scanner_params &sp)

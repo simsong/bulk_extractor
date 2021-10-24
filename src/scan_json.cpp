@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 /*
  *
  * 2021-05-09 - updated for bulk_extractor 2.0
@@ -29,8 +28,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-=======
->>>>>>> origin/master
 #include "config.h"
 
 #include <cstdlib>
@@ -38,11 +35,100 @@ SOFTWARE.
 #include "be13_api/scanner_set.h"
 
 
-#ifdef HAVE_JSON_C
-#include <json-c/json.h>
+class json_checker {
+    static const int stacksize=256;	// max stack
+    uint8_t state;
+    int maxtop;			// how far did we get
+    int top;
+    uint8_t stack[stacksize];
+    bool reject;			// in reject mode
+    int push(uint8_t mode);
+    int pop(uint8_t mode);
+public:
+    uint32_t comma_count;		// number of commas, a measure of complexity
+    json_checker();
+    virtual ~json_checker(){};
+    int check_char(int next_char);
+    int done();
+    bool check_if_done();
+};
+
+
+#define __   -1     /* the universal error code */
+
+/*
+    Characters are mapped into these 31 character classes. This allows for
+    a significant reduction in the size of the state transition table.
+*/
+
+enum classes {
+    C_SPACE,  /* space */
+    C_WHITE,  /* other whitespace */
+    C_LCURB,  /* {  */
+    C_RCURB,  /* } */
+    C_LSQRB,  /* [ */
+    C_RSQRB,  /* ] */
+    C_COLON,  /* : */
+    C_COMMA,  /* , */
+    C_QUOTE,  /* " */
+    C_BACKS,  /* \ */
+    C_SLASH,  /* / */
+    C_PLUS,   /* + */
+    C_MINUS,  /* - */
+    C_POINT,  /* . */
+    C_ZERO ,  /* 0 */
+    C_DIGIT,  /* 123456789 */
+    C_LOW_A,  /* a */
+    C_LOW_B,  /* b */
+    C_LOW_C,  /* c */
+    C_LOW_D,  /* d */
+    C_LOW_E,  /* e */
+    C_LOW_F,  /* f */
+    C_LOW_L,  /* l */
+    C_LOW_N,  /* n */
+    C_LOW_R,  /* r */
+    C_LOW_S,  /* s */
+    C_LOW_T,  /* t */
+    C_LOW_U,  /* u */
+    C_ABCDF,  /* ABCDF */
+    C_E,      /* E */
+    C_ETC,    /* everything else */
+    NR_CLASSES
+};
+
+static int ascii_class[128] = {
+/*
+    This array maps the 128 ASCII characters into character classes.
+    The remaining Unicode characters should be mapped to C_ETC.
+    Non-whitespace control characters are errors.
+*/
+    __,      __,      __,      __,      __,      __,      __,      __,
+    __,      C_WHITE, C_WHITE, __,      __,      C_WHITE, __,      __,
+    __,      __,      __,      __,      __,      __,      __,      __,
+    __,      __,      __,      __,      __,      __,      __,      __,
+
+    C_SPACE, C_ETC,   C_QUOTE, C_ETC,   C_ETC,   C_ETC,   C_ETC,   C_ETC,
+    C_ETC,   C_ETC,   C_ETC,   C_PLUS,  C_COMMA, C_MINUS, C_POINT, C_SLASH,
+    C_ZERO,  C_DIGIT, C_DIGIT, C_DIGIT, C_DIGIT, C_DIGIT, C_DIGIT, C_DIGIT,
+    C_DIGIT, C_DIGIT, C_COLON, C_ETC,   C_ETC,   C_ETC,   C_ETC,   C_ETC,
+
+    C_ETC,   C_ABCDF, C_ABCDF, C_ABCDF, C_ABCDF, C_E,     C_ABCDF, C_ETC,
+    C_ETC,   C_ETC,   C_ETC,   C_ETC,   C_ETC,   C_ETC,   C_ETC,   C_ETC,
+    C_ETC,   C_ETC,   C_ETC,   C_ETC,   C_ETC,   C_ETC,   C_ETC,   C_ETC,
+    C_ETC,   C_ETC,   C_ETC,   C_LSQRB, C_BACKS, C_RSQRB, C_ETC,   C_ETC,
+
+    C_ETC,   C_LOW_A, C_LOW_B, C_LOW_C, C_LOW_D, C_LOW_E, C_LOW_F, C_ETC,
+    C_ETC,   C_ETC,   C_ETC,   C_ETC,   C_LOW_L, C_ETC,   C_LOW_N, C_ETC,
+    C_ETC,   C_ETC,   C_LOW_R, C_LOW_S, C_LOW_T, C_LOW_U, C_ETC,   C_ETC,
+    C_ETC,   C_ETC,   C_ETC,   C_LCURB, C_ETC,   C_RCURB, C_ETC,   C_ETC
+};
+
+
+/* Strangely , IN is defined on mingw */
+#ifdef IN
+#undef IN
 #endif
 
-<<<<<<< HEAD
 /*
     The state codes.
 */
@@ -345,18 +431,9 @@ int json_checker::check_char(int next_char)
 
 static const char *json_second_chars = "0123456789.-{[ \t\n\r\""; // valid second chars in a JSON block
 static bool is_json_second_char[256];   // fast lookup to determine if a second char is in JSON or not.
-=======
-#define MIN_SIZE 16
-#define IS_STRICT 1
-
-static bool is_json_second_char[256]; /* shared between all threads */
-
-static const char *json_second_chars = "0123456789.-{[ \t\n\r\"";
->>>>>>> origin/master
 extern "C"
 void scan_json(struct scanner_params &sp)
 {
-<<<<<<< HEAD
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
         sp.info->set_name("json");
@@ -366,26 +443,12 @@ void scan_json(struct scanner_params &sp)
         feature_recorder_def frd("json");
         frd.flags.xml = true;
         sp.info->feature_defs.push_back( frd );
-=======
-    assert(sp.sp_version==scanner_params::CURRENT_SP_VERSION);
-    if(sp.phase==scanner_params::PHASE_STARTUP){
-        assert(sp.info->si_version==scanner_info::CURRENT_SI_VERSION);
-	sp.info->name		= "json";
-        sp.info->author         = "Simson Garfinkel & Jan Gruber";
-#ifndef HAVE_JSON_C
-        sp.info->description    = "(disabled; json-c not installed)";
-#else
-        sp.info->description    = "Scans for JSON-encoded data";
-        sp.info->scanner_version= "1.1";
-        sp.info->feature_names.insert("json");
->>>>>>> origin/master
 
 	/* Create a fast map of the valid json characters.*/
 	memset(is_json_second_char,0,sizeof(is_json_second_char));
 	for(int i=0;json_second_chars[i];i++){
 	    is_json_second_char[(uint8_t)json_second_chars[i]] = true;
 	}
-<<<<<<< HEAD
         return;
     }
 
@@ -414,79 +477,7 @@ void scan_json(struct scanner_params &sp)
 			break;
 		    }
 		}
-=======
-#endif
-	return;
-    }
-#ifdef HAVE_JSON_C
-    const sbuf_t &sbuf = sp.sbuf;
-    feature_recorder *fr = sp.fs.get_name("json");
-
-    if(sp.phase==scanner_params::PHASE_INIT){
-        fr->set_flag(feature_recorder::FLAG_XML);
-        return;
-    }
-
-    if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;
-
-    if(sp.phase==scanner_params::PHASE_SCAN){
-
-      json_object *jo = NULL;
-      json_tokener* jt = NULL;
-      char* js = NULL;
-      size_t end = 0;
-      enum json_tokener_error je;
-
-      for(size_t pos = 0;pos+1<sbuf.pagesize;pos++){
-
-	/* Find the beginning of a json object. This will improve later... */
-	if(sbuf[pos]=='{' || sbuf[pos]=='['){
-
-	  /* Setup parser */
-	  jt = json_tokener_new();
-	  if (IS_STRICT)
-	    json_tokener_set_flags(jt, JSON_TOKENER_STRICT);
-
-	  /* Try to parse string */
-	  const char* c = (const char*) &sbuf.buf[pos]; /* Solution for 1.6 */
-	  jo = json_tokener_parse_ex(jt, c, strlen(c));
-	  je = json_tokener_get_error(jt);
-
-	  /* String was a valid JSON object */
-	  if (je == json_tokener_success && jo){
-	    /* Change this to `json_tokener_get_parse_end(jt);` for libjson-c > 0.15 */
-	    end = jt->char_offset;
-	    js = (char*) json_object_to_json_string_ext(jo, JSON_C_TO_STRING_PLAIN);
-
-	    /* Discard very short matches */
-	    if (strlen(js) > MIN_SIZE){
-
-	      /* Constructs output buffer */
-	      sbuf_t jbuf(sbuf, pos, end+1);
-	      std::string json_hash = (*fr->fs.hasher.func)(jbuf.buf, jbuf.bufsize);
-
-	      /* Stores result */
-	      fr->write(sbuf.pos0 + pos, jbuf.asString(), json_hash);
-	      pos += end + 1;
->>>>>>> origin/master
 	    }
-	  }
-	  /* Clean up */
-	  json_tokener_free(jt);
-
-	  if(jo){
-	    free(jo);
-	    jo = NULL;
-	  }
-
-	  if(js){
-	    free(js);
-	    js = NULL;
-	  }
-
 	}
-      }
-
     }
-#endif
 }
