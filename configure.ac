@@ -16,7 +16,6 @@ AC_CONFIG_AUX_DIR([build-aux])
 
 m4_include([m4/slg_mingw_support.m4])
 m4_include([m4/slg_searchdirs.m4])
-m4_include([m4/slg_gcc_all_warnings.m4])
 m4_include([src/be13_api/dfxml_cpp/src/dfxml_configure.m4])
 m4_include([src/be13_api/be13_configure.m4])
 
