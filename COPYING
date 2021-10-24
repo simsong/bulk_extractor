@@ -6,8 +6,8 @@ work is not subject to copyright law.
 
 Simson Garfinkel left the Naval Postgraduate School in January 2015
 and continued to work on **bulk_extractor** in his personal
-capacity. Those modifications are covered under the MIT license (below). Other
-components are licensed as noted.
+capacity. Those modifications are covered under the MIT license (below).
+Other components are licensed as noted.
 
 ## MIT License
 
@@ -63,9 +63,7 @@ Licensed under the Common Public License 1.0
 
 * src/tsk3 includes SleuthKit 3 include files that are party of
 SleuthKit 3. These files are  Copyright (C) 2010 Brian Carrier
-
-
-Licensed under the MIT License
+  - Licensed under the MIT License
 
 * src/base64_forensic.cpp is Copyright (C) 1996-1999 by Internet Software Consortium, with
  portions Copyright (C) 1995 by International Business Machines, Inc.
@@ -74,30 +72,19 @@ Licensed under the MIT License
 
 * src/old_scanners/scan_ascii85.cpp is Copyright (C) 2011 Remy Oukaour
 
-
-Licensed under the JSON License
-
-* src/scan_json.cpp is Copyright (C) 2005 JSON.org
-
-
-Licensed under General Public License version 3 and later
+* src/scan_json.cpp is Copyright (C) 2021 Simson L. Garfinkel and Jan Gruber
+  - Licensed under General Public License version 3 and later
 
 * src/pyxpress.c is Copyright 2008 (C) Matthieu Suiche. <msuiche[at]gmail.com>
-
-
-Licensed under Lesser General Public License version 2.1
+  - Licensed under Lesser General Public License version 2.1
 
 * src/scan_elf.cpp
-
-
-Licensed under Lesser General Public License version 3 and later
+  - Licensed under Lesser General Public License version 3 and later
 
 * src/dfxml is Copyright 2012 (C) Simson L. Garfinkel
 
 * src/scan_outlook.h is Copyright (C) 2008-2014, Joachim Metz <joachim.metz@gmail.com>
-
-
-Licensed under General Public License version 3 with the Autoconf exception:
+  - Licensed under General Public License version 3 with the Autoconf exception:
 
 * m4/ac_prog_java.m4 is Copyright (C) 2000 Stephane Bortzmeyer <bortzmeyer@pasteur.fr>
 
@@ -105,8 +92,7 @@ Licensed under General Public License version 3 with the Autoconf exception:
 
 * m4/ac_check_rqrd_class.m4 is Copyright (C) 2000 Stephane Bortzmeyer <bortzmeyer@pasteur.fr>
 
-* m4/ax_pthread.m4 is Copyright (C) 2008 Steven G. Johnson <stevenj@alum.mit.edu>,
- 2011 Daniel Richard G. <skunk@iSKUNK.ORG>
+* m4/ax_pthread.m4 is Copyright (C) 2008 Steven G. Johnson <stevenj@alum.mit.edu>, 2011 Daniel Richard G. <skunk@iSKUNK.ORG>
 
 * m4/ac_prog_java_cc.m4 is Copyright (C) 2002 Nic Ferrier <nferrier@tapsellferrier.co.uk>
 
@@ -115,3 +101,5 @@ Licensed under General Public License version 3 with the Autoconf exception:
 * m4/ac_prog_javac_works.m4 is Copyright (C) 2000 Stephane Bortzmeyer <bortzmeyer@pasteur.fr>
 
 * m4/ac_check_classpath.m4 is Copyright (C) 2000 Stephane Bortzmeyer <bortzmeyer@pasteur.fr>
+  - Licensed under OpenSSL License
+  - NOTE: Because of the fact that the GPL (including version 3) is incompatible with some terms of the OpenSSL license, the author hereby explicitly states a license exception, which permits the linking of bulk_extractor with OpenSSL.

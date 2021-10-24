@@ -115,7 +115,7 @@ int _CRT_fmode = _O_BINARY;
 
 [[noreturn]] void throw_FileNotFoundError( const std::string &fname )
 {
-    std::cerr << "Cannot open: " << fname << "\n";
+    std::cerr << "Cannot open: " << fname << std::endl ;
     throw std::runtime_error( "Cannot open file" );
 }
 
@@ -132,15 +132,15 @@ int _CRT_fmode = _O_BINARY;
 void validate_path( const std::filesystem::path fn)
 {
     if ( !std::filesystem::exists( fn )){
-        std::cerr << "file does not exist: " << fn << "\n";
+        std::cerr << "file does not exist: " << fn << std::endl ;
         throw std::runtime_error( "file not found." );
     }
     if ( fn.extension()=="E02" || fn.extension()=="e02" ){
-        std::cerr << "Error: invalid file name\n";
-        std::cerr << "Do not use bulk_extractor to process individual EnCase files.\n";
-        std::cerr << "Instead, just run bulk_extractor with FILENAME.E01\n";
-        std::cerr << "The other files in an EnCase multi-volume archive will be opened\n";
-        std::cerr << "automatically.\n";
+        std::cerr << "Error: invalid file name" << std::endl ;
+        std::cerr << "Do not use bulk_extractor to process individual EnCase files." << std::endl ;
+        std::cerr << "Instead, just run bulk_extractor with FILENAME.E01" << std::endl ;
+        std::cerr << "The other files in an EnCase multi-volume archive will be opened" << std::endl ;
+        std::cerr << "automatically." << std::endl ;
         throw std::runtime_error( "run on E02." );
     }
 }
@@ -335,7 +335,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         for ( const auto &it : result["set"].as<std::vector<std::string>>() ) {
             std::vector<std::string> kv = split( it,'=');
             if ( kv.size()!=2) {
-                cerr << "Invalid -S paramter: '" << it << "' must be key=value format\n";
+                cerr << "Invalid -S paramter: '" << it << "' must be key=value format" << std::endl ;
                 return -1;
             }
             sc.namevals[kv[0]] = kv[1];
@@ -407,9 +407,9 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         sc.input_fname = result["image_name"].as<std::string>();
     } catch ( cxxopts::option_has_no_value_exception &e ) {
         if ( cfg.opt_recurse ) {
-            cerr << "filedir not provided\n";
+            cerr << "filedir not provided" << std::endl ;
         } else {
-            cerr << "imagefile not provided\n";
+            cerr << "imagefile not provided" << std::endl ;
         }
         cout << options.help() << std::endl;
         return 3;
@@ -422,7 +422,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         try {
             sc.outdir                = result["outdir"].as<std::string>();
         } catch ( cxxopts::option_has_no_value_exception &e ) {
-            cerr << "error: -o outdir must be specified\n";
+            cerr << "error: -o outdir must be specified" << std::endl ;
             cout << options.help() << std::endl;
             return 4;
         }
@@ -431,12 +431,12 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         if ( result.count( "zap" ) && std::filesystem::is_directory( sc.outdir )) {
             for ( const auto &entry : std::filesystem::recursive_directory_iterator( sc.outdir ) ) {
                 if ( ! std::filesystem::is_directory( entry.path())){
-                    cout << "erasing " << entry.path().string() << "\n";
+                    cout << "erasing " << entry.path().string() << std::endl ;
                     std::filesystem::remove( entry );
                 }
             }
         }
-        cout << "mkdir " << sc.outdir << "\n";
+        cout << "mkdir " << sc.outdir << std::endl ;
         std::filesystem::create_directory( sc.outdir); // make sure directory exists
     }
 
@@ -456,7 +456,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         ss.apply_scanner_commands();
     }
     catch ( const scanner_set::NoSuchScanner &e ) {
-        cerr << "no such scanner: " << e.what() << "\n";
+        cerr << "no such scanner: " << e.what() << std::endl ;
         return 5;
     }
 
@@ -470,7 +470,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
              * at least one of them is a FIND scanner
              */
             if ( !ss.is_find_scanner_enabled()){
-                throw std::runtime_error( "find words are specified with -F but no find scanner is enabled.\n" );
+                throw std::runtime_error( "find words are specified with -F but no find scanner is enabled.");
             }
         }
 
@@ -522,37 +522,36 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     if ( stop_list.size()>0)        flags |= feature_recorder_set::CREATE_STOP_LIST_RECORDERS;
     if ( opt_write_sqlite3)         flags |= feature_recorder_set::ENABLE_SQLITE3_RECORDERS;
     if ( !opt_write_feature_files)  flags |= feature_recorder_set::DISABLE_FILE_RECORDERS;
-
 #endif
 
     /* provide documentation to the user; the DFXML information comes from elsewhere */
     if ( !cfg.opt_quiet){
-        cout << "bulk_extractor version: " << PACKAGE_VERSION << "\n";
-        cout << "Input file: " << sc.input_fname << "\n";
-        cout << "Output directory: " << sc.outdir << "\n";
-        cout << "Disk Size: " << p->image_size() << "\n";
+        cout << "bulk_extractor version: " << PACKAGE_VERSION << std::endl ;
+        cout << "Input file: " << sc.input_fname << std::endl ;
+        cout << "Output directory: " << sc.outdir << std::endl ;
+        cout << "Disk Size: " << p->image_size() << std::endl ;
         cout << "Scanners: ";
         for ( auto const &it : ss.get_enabled_scanners()){
             cout << it << " ";
         }
-        cout << "\n";
+        cout << std::endl ;
 
         if ( cfg.num_threads>0){
-            cout << "Threads: " << cfg.num_threads << "\n";
+            cout << "Threads: " << cfg.num_threads << std::endl ;
         } else {
-            cout << "Threading Disabled\n";
+            cout << "Threading Disabled" << std::endl ;
         }
     }
 
     /*** PHASE 1 --- Run on the input image */
-    struct notify_thread::notify_opts o(cfg);
-    o.ssp = &ss;
-    o.master_timer  = &master_timer;
-    o.fraction_done = &fraction_done;
-    o.phase = 1;
+    struct notify_thread::notify_opts *o = new notify_thread::notify_opts(cfg);
+    o->ssp = &ss;
+    o->master_timer  = &master_timer;
+    o->fraction_done = &fraction_done;
+    o->phase = 1;
 
     if ( cfg.opt_notification) {
-        notify_thread::launch_notify_thread( &o);
+        notify_thread::launch_notify_thread( o);
     }
     ss.phase_scan();
 
@@ -564,10 +563,10 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
 
     /* Go multi-threaded if requested */
     if ( cfg.num_threads > 0){
-        cout << "going multi-threaded...( " << cfg.num_threads << " )\n";
+        cout << "going multi-threaded...( " << cfg.num_threads << " )" << std::endl ;
         ss.launch_workers( cfg.num_threads);
     } else {
-        cout << "running single-threaded (DEBUG)...\n";
+        cout << "running single-threaded (DEBUG)..." << std::endl ;
 
     }
 
@@ -592,14 +591,18 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
 #endif
     xreport->add_timestamp( "phase1 end" );
     if ( phase1.image_hash.size() > 0 ){
-        cout << "Hash of Disk Image: " << phase1.image_hash << "\n";
+        cout << "Hash of Disk Image: " << phase1.image_hash << std::endl ;
     }
 
     /*** PHASE 2 --- Shutdown ***/
-    o.phase = 2;
-    if ( !cfg.opt_quiet) cout << "Phase 2. Shutting down scanners\n";
+    {
+        std::unique_lock<std::mutex> lock(o->Mphase);
+        o->phase = 2;                        // will cause notify thread to shut down, and the notify thread will delete the object
+    }
+    if ( !cfg.opt_quiet) cout << "Phase 2. Shutting down scanners" << std::endl ;
     xreport->add_timestamp( "phase2 start" );
     try {
+        std::cout << "Computing final histograms and shutting down..." << std::endl ;
         ss.shutdown();
     }
     catch ( const feature_recorder::DiskWriteError &e ) {
@@ -612,7 +615,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     master_timer.stop();
 
     /*** PHASE 3 ---  report and then print final usage information ***/
-    o.phase = 3;
+    if ( !cfg.opt_quiet) cout << "Phase 3. Generating stats and printing final usage information" << std::endl;
     xreport->push( "report" );
     xreport->xmlout( "total_bytes",phase1.total_bytes);
     xreport->xmlout( "elapsed_seconds",master_timer.elapsed_seconds());
@@ -628,13 +631,13 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     if ( cfg.opt_quiet==0){
         float mb_per_sec = ( phase1.total_bytes / 1000000.0) / master_timer.elapsed_seconds();
 
-        cout << "All Threads Finished!\n";
+        cout << "All Threads Finished!" << std::endl ;
         cout.precision( 4);
         cout << "Elapsed time: " << master_timer.elapsed_seconds() << " sec." << std::endl
                   << "Total MB processed: " << int( phase1.total_bytes / 1000000) << std::endl
                   << "Overall performance: " << mb_per_sec << " << MBytes/sec ";
         if ( cfg.num_threads>0){
-            cout << mb_per_sec/cfg.num_threads << " ( MBytes/sec/thread)\n";
+            cout << mb_per_sec/cfg.num_threads << " ( MBytes/sec/thread)" << std::endl ;
         }
         cout << "sbufs created:   " << sbuf_t::sbuf_total << std::endl;
         cout << "sbufs unaccounted: " << sbuf_t::sbuf_count << " ( should be 0) " << std::endl;
@@ -649,5 +652,6 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     }
 
     muntrace();
+    /* TODO: We could wait for the notify thread to actually exit, but then we would need to address the sleep, and end up putting in a condition varialbe, and it would be a pain. */
     return( 0 );
 }

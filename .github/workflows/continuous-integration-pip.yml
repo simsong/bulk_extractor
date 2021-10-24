@@ -26,59 +26,47 @@ jobs:
       - name: Install C++ dependencies on MacOS
         if: startsWith(matrix.os, 'macos')
         run: |
-          brew install autoconf automake libtool libxml2
+          brew install autoconf automake libtool libxml2 libewf json-c
 
-      - name: Install C++ dependencies on Ubuntu
+      - name: run CONFIGURE_UBUNTU20LTS.bash
         if: startsWith(matrix.os, 'ubuntu')
         run: |
-          sudo apt install -y libtool autoconf automake libssl-dev pkg-config libxml2-utils
+          echo "" | bash etc/CONFIGURE_UBUNTU20LTS.bash
 
-      - name: Update autoconf on Ubuntu
-        if: startsWith(matrix.os, 'ubuntu')
-        run: |
-          wget --no-check-certificate https://ftpmirror.gnu.org/autoconf/autoconf-2.71.tar.gz
-          tar xfz autoconf-2.71.tar.gz && cd autoconf-2.71 && ./configure && make && sudo make install
-
-      - name: Update automake on Ubuntu
-        if: startsWith(matrix.os, 'ubuntu')
-        run: |
-          wget --no-check-certificate https://ftpmirror.gnu.org/automake/automake-1.16.3.tar.gz
-          tar xfz automake-1.16.3.tar.gz && cd automake-1.16.3 && ./configure && make && sudo make install
-
-      - name: Report automake and autoconf version
-        run: |
-          automake --version
-          autoconf --version
-
-      - name: make
+      - name: Run C++ checks without codecov
+        if: startsWith(matrix.os, 'macos')
         run: |
           bash bootstrap.sh
-          ./configure
-          cd src
-          make
+          ./configure -q --disable-opt --enable-silent-rules \
+          && make && (cd src; make check || (cat test-suite.log; exit 1))
 
-      - name: make check
-        run: |
-          cd src
-          make check || (echo ==error== ; cat test-suite.log; exit 1)
-
-      - uses: ammaraskar/gcc-problem-matcher@0.1
-        name: GCC Problem Matcher
-
-      - name: codecov report
+      - name: Run C++ checks with codecov
         if: startsWith(matrix.os, 'ubuntu')
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         run: |
-          ./configure CFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' CXXFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' LIBS='-lgcov'
+          bash bootstrap.sh
+          ./configure -q --disable-opt --enable-silent-rules \
+                 CFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' \
+                 CXXFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' \
+                 LIBS='-lgcov'
           cd src
-          make check
+          make check || (echo ==error== ; cat test-suite.log; exit 1)
           gcov-9 -n -o . `find . -name '*cpp'`
-          bash <(curl -s https://codecov.io/bash)
+
+          #
+          # set up and run codecov
+          #
+          sudo apt install -y gpg
+          curl https://keybase.io/codecovsecurity/pgp_keys.asc | \
+          gpg --no-default-keyring --keyring trustedkeys.gpg --import
+          curl -Os https://uploader.codecov.io/latest/linux/codecov
+          curl -Os https://uploader.codecov.io/latest/linux/codecov.SHA256SUM
+          curl -Os https://uploader.codecov.io/latest/linux/codecov.SHA256SUM.sig
+          gpgv codecov.SHA256SUM.sig codecov.SHA256SUM
+          shasum -a 256 -c codecov.SHA256SUM
+          chmod +x codecov && ./codecov -t ${CODECOV_TOKEN}
           make distclean
 
-      - name: regresion test
-        if: startsWith(matrix.os, 'disabled')
-        run: |
-          cd tests
-          python3 regress.py --datacheck
+      - uses: ammaraskar/gcc-problem-matcher@0.1
+        name: GCC Problem Matcher

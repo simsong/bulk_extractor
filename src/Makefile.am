@@ -11,29 +11,30 @@ AM_CPPFLAGS = -I${top_srcdir}/src/be13_api
 
 AUTOMAKE_OPTIONS = subdir-objects
 
+EXTRA_DIST = .gitignore
+
 # bring in defs from two included projects
 # note: don't be clever and use the $variable on the Include line. it doesn't work
-
 
 BE13_API_DIR= be13_api
 include be13_api/Makefile.defs
 
-
 include rar/Makefile.defs
 
-# TSK3INCS = \
-# 	tsk3/auto/tsk_auto.h\
-# 	tsk3/base/tsk_base.h\
-# 	tsk3/base/tsk_os.h\
-# 	tsk3/fs/tsk_fatfs.h\
-# 	tsk3/fs/tsk_fs.h\
-# 	tsk3/fs/tsk_ntfs.h\
-# 	tsk3/hashdb/tsk_hashdb.h\
-# 	tsk3/img/tsk_img.h\
-# 	tsk3/libtsk.h\
-# 	tsk3/tsk_incs.h\
-# 	tsk3/vs/tsk_vs.h
-#
+TSK3INCS = \
+	tsk3_fatdirs.h\
+	tsk3/auto/tsk_auto.h\
+	tsk3/base/tsk_base.h\
+	tsk3/base/tsk_os.h\
+	tsk3/fs/tsk_fatfs.h\
+	tsk3/fs/tsk_fs.h\
+	tsk3/fs/tsk_ntfs.h\
+	tsk3/hashdb/tsk_hashdb.h\
+	tsk3/img/tsk_img.h\
+	tsk3/libtsk.h\
+	tsk3/tsk_incs.h\
+	tsk3/vs/tsk_vs.h
+
 
 
 # These scanners are based on GNUflex
@@ -41,7 +42,7 @@ flex_scanners = \
 	sbuf_flex_scanner.h \
 	scan_base16.flex \
 	scan_accts.flex \
-	scan_email.flex \
+	scan_email.flex scan_email.h \
 	scan_gps.flex
 
 # These scanners are based on Lightbox Technology's lightgrep
@@ -58,8 +59,8 @@ lightgrep_scanners = \
 
 scanners_builtin = \
 	bulk_extractor_scanners.cpp \
-	scan_aes.cpp \
-	scan_base64.cpp \
+	scan_aes.cpp scan_aes.h \
+	scan_base64.cpp scan_base64.h \
 	scan_ccns2.cpp scan_ccns2.h \
 	scan_elf.cpp \
 	scan_evtx.cpp \
@@ -72,8 +73,8 @@ scanners_builtin = \
 	scan_httplogs.cpp \
 	scan_json.cpp \
 	scan_kml.cpp \
-	scan_msxml.cpp \
-	scan_net.cpp \
+	scan_msxml.cpp scan_msxml.h \
+	scan_net.cpp scan_net.h \
 	scan_ntfsindx.cpp \
 	scan_ntfslogfile.cpp \
 	scan_ntfsmft.cpp \
@@ -83,12 +84,12 @@ scanners_builtin = \
 	scan_rar.cpp \
 	scan_sqlite.cpp \
 	scan_utmp.cpp \
-	scan_vcard.cpp \
+	scan_vcard.cpp scan_vcard.h \
 	scan_windirs.cpp \
 	scan_winlnk.cpp \
 	scan_winpe.cpp \
 	scan_winprefetch.cpp \
-	scan_wordlist.cpp \
+	scan_wordlist.cpp scan_wordlist.h \
 	scan_xor.cpp \
 	scan_zip.cpp \
 	pcap_writer.cpp \
@@ -128,7 +129,7 @@ bulk_extractor_parts = \
 
 
 bulk_extractor_SOURCES = $(bulk_extractor_parts) $(scanners_builtin) main.cpp
-test_be_SOURCES = $(bulk_extractor_parts) $(scanners_builtin) be13_api/catch.hpp test_be.cpp test_be2.cpp
+test_be_SOURCES = $(bulk_extractor_parts) $(scanners_builtin) be13_api/catch.hpp test_be.cpp test_be.h test_be2.cpp
 
 
 #lib: libbulkextractor.so

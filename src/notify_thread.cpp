@@ -64,12 +64,19 @@ void notify_thread::notifier( struct notify_thread::notify_opts *o)
 
     std::cout << cl;                    // clear screen
     while( true ){
+        {
+            std::lock_guard<std::mutex> lock(o->Mphase);
+            if (o->phase > 1) {
+                delete o;               // deletes object we were given
+                return;                 // exits thread
+            }
+        }
 
         if (o->phase>1) break;
 
         // get screen size change if we can!
         cols = terminal_width( cols);
-        time_t rawtime = time ( 0);
+        time_t rawtime = time ( 0 );
         struct tm timeinfo = *( localtime( &rawtime ));
         std::map<std::string,std::string> stats = o->ssp->get_realtime_stats();
 

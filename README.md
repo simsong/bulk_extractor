@@ -1,8 +1,25 @@
 [![codecov](https://codecov.io/gh/simsong/bulk_extractor/branch/main/graph/badge.svg?token=3w691sdgLu)](https://codecov.io/gh/simsong/bulk_extractor)
 
-Welcome to `bulk_extractor` 2.0 development branch!  For information
+`bulk_extractor` is a high-performance C++ program that scans a disk
+image, a file, or a directory of files and extracts information such
+as email addresses, JPEGs and JSON snippets without parsing the file
+system or file system structures. The results are stored in feature
+files or carved into stand-alone files that can be easily inspected,
+parsed, or processed with automated tools. bulk_extractor also creates
+histograms of features that it finds, as features that are more common
+tend to be more important.
+
+`bulk_extractor` probes every block of data to see if it contains
+bytes that can be decompressed or otherwise decoded. If so, the
+decoded data are recursively re-examined. As a result,
+`bulk_extractor` can find things like BASE64-encoded JPEGs and
+compressed JSON objects that traditional carving tools miss.
+
+This is the `bulk_extractor` 2.0 development branch!  For information
 about the `bulk_extractor` update, please see [Release 2.0 roadmap](https://github.com/simsong/bulk_extractor/blob/main/doc/ROADMAP_2.0.md).
 
+Building `bulk_extractor`
+=========================
 To build bulk_extractor in Linux or Mac OS:
 
 1. Make sure required packages have been installed. **You can do this by going into the etc/ directory and looking for a script that installs the necessary packages for your platform.**
@@ -18,10 +35,7 @@ make install
 For detailed instructions on installing packages and building bulk_extractor, read the wiki page here:
 https://github.com/simsong/bulk_extractor/wiki/Installing-bulk_extractor
 
-The Windows version of bulk_extractor must be built on Fedora.
-
-To download the Windows installer and/or other releases of bulk_extractor, visit the downloads page here:
-http://digitalcorpora.org/downloads/bulk_extractor
+The Windows version of bulk_extractor must be built on Fedora using mingw.
 
 For more information on bulk_extractor, visit: https://forensicswiki.xyz/wiki/index.php?title=Bulk_extractor
 
