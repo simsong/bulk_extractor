@@ -10,7 +10,12 @@ EXTRA_DIST = \
 	.gitignore \
 	1.jpg \
 	1mb_fat32.dmg \
+	CFReDS001.E01 \
 	KML_Samples.kml \
+	email_test.E01 \
+	email_test.E02 \
+	email_test.E03 \
+	email_test.E04 \
 	hello.c \
 	hello_elf \
 	hello_mach-o \

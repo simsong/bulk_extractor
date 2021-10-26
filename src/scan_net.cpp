@@ -503,9 +503,10 @@ bool scan_net_t::sanityCheckIP46Header(const sbuf_t &sbuf, size_t pos, scan_net_
  * so it needs to be as fast as possible.
  */
 /** Write the ethernet addresses and the TCP info into the appropriate feature files.
+ * Return true if we should write the packet
  */
 
-void scan_net_t::documentIPFields(const sbuf_t &sbuf, size_t pos, const generic_iphdr_t &h) const
+bool scan_net_t::documentIPFields(const sbuf_t &sbuf, size_t pos, const generic_iphdr_t &h) const
 {
     pos0_t pos0 = sbuf.pos0 + pos;
 
@@ -528,7 +529,8 @@ void scan_net_t::documentIPFields(const sbuf_t &sbuf, size_t pos, const generic_
     ip_recorder.write(pos0, ip2string(h.dst, h.family), "struct " + name + dst + " (dst) " + chksum_status);
 
     /* Now report TCP, UDP and/or IPv6 contents if it is one of those */
-    if (h.nxthdr==IPPROTO_TCP){
+    bool is_v4_or_v6 = ((h.family == AF_INET) || (h.family == AF_INET6));
+    if (is_v4_or_v6 && h.nxthdr==IPPROTO_TCP){
         const struct be_tcphdr *tcp = sbuf.get_struct_ptr<struct be_tcphdr>(pos+h.nxthdr_offs);
         if (tcp) tcp_recorder.write(pos0,
                                      ip2string(h.src, h.family) + ":" + i2str(ntohs(tcp->th_sport)) + " -> " +
@@ -536,7 +538,7 @@ void scan_net_t::documentIPFields(const sbuf_t &sbuf, size_t pos, const generic_
                                      " Size: " + i2str(h.payload_len+h.nxthdr_offs)
             );
     }
-    if (h.nxthdr==IPPROTO_UDP){
+    if (is_v4_or_v6 && h.nxthdr==IPPROTO_UDP){
         const struct be_udphdr *udp = sbuf.get_struct_ptr<struct be_udphdr>(pos+h.nxthdr_offs);
         if (udp) tcp_recorder.write(pos0,
                                      ip2string(h.src, h.family) + ":" + i2str(ntohs(udp->uh_sport)) + " -> " +
@@ -544,7 +546,7 @@ void scan_net_t::documentIPFields(const sbuf_t &sbuf, size_t pos, const generic_
                                      " Size: " + i2str(h.payload_len+h.nxthdr_offs)
             );
     }
-    if (h.nxthdr==IPPROTO_ICMPV6){
+    if (is_v4_or_v6 && h.nxthdr==IPPROTO_ICMPV6){
         const struct icmp6_hdr *icmp6 = sbuf.get_struct_ptr<struct icmp6_hdr>(pos+h.nxthdr_offs);
         if (icmp6) tcp_recorder.write(pos0,
                                        ip2string(h.src, h.family) + " -> " +
@@ -552,6 +554,8 @@ void scan_net_t::documentIPFields(const sbuf_t &sbuf, size_t pos, const generic_
                                        " Type: " + i2str(icmp6->icmp6_type) + " Code: " + i2str(icmp6->icmp6_code)
             );
     }
+
+    return is_v4_or_v6;
 }
 
 size_t scan_net_t::carveIPFrame(const sbuf_t &sbuf, size_t pos) const
@@ -599,8 +603,10 @@ size_t scan_net_t::carveIPFrame(const sbuf_t &sbuf, size_t pos) const
     /* make an sbuf to write */
     sbuf_t sb3(pos0_t(), buf, packet_len);
     struct pcap_writer::pcap_hdr ph(0, 0, packet_len, packet_len);  // make a fake header
-    documentIPFields(sb3, 0, h);
-    pwriter.pcap_writepkt(ph, sb3, 0, false, 0x0000);	   // write the packet
+    bool shouldWriteIP = documentIPFields(sb3, 0, h);
+    if (shouldWriteIP) {
+        pwriter.pcap_writepkt(ph, sb3, 0, false, 0x0000);	   // write the packet
+    }
     return ip_len;                                     // return that we processed this much
 }
 
@@ -756,8 +762,10 @@ size_t scan_net_t::carvePCAPPacket(const sbuf_t &sbuf, size_t pos) const
         }
 
         /* We are at the end of the file, or the next slot is also a packet */
-        documentIPFields(sbuf, pos+PCAP_RECORD_HEADER_SIZE, header_info);
-        pwriter.pcap_writepkt(h, sbuf, pos+PCAP_RECORD_HEADER_SIZE, is_raw_ip,pseudo_frame_ethertype);
+        bool shouldWriteIP = documentIPFields(sbuf, pos+PCAP_RECORD_HEADER_SIZE, header_info);
+        if (shouldWriteIP) {
+            pwriter.pcap_writepkt(h, sbuf, pos+PCAP_RECORD_HEADER_SIZE, is_raw_ip,pseudo_frame_ethertype);
+        }
         return PCAP_RECORD_HEADER_SIZE + h.cap_len;    // what is hard-coded 16?
     }
     return 0;                       // not written
