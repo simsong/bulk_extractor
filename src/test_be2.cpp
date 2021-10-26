@@ -58,9 +58,14 @@ int argv_count(char * const *argv)
     return argc;
 }
 
+TEST_CASE("e2e-no-args", "[end-to-end]") {
+    const char *argv[] = {"bulk_extractor", nullptr};
+    std::stringstream ss;
+    int ret = bulk_extractor_main(ss, ss, 1, const_cast<char * const *>(argv));
+    REQUIRE( ret==3 );                  // produces 3
+}
+
 TEST_CASE("e2e-h", "[end-to-end]") {
-    std::filesystem::path inpath = test_dir() / "nps-2010-emails.100k.raw";
-    std::filesystem::path outdir = NamedTemporaryDirectory();
     /* Try the -h option */
     const char *argv[] = {"bulk_extractor", "-h", nullptr};
     std::stringstream ss;
@@ -69,22 +74,11 @@ TEST_CASE("e2e-h", "[end-to-end]") {
 }
 
 TEST_CASE("e2e-H", "[end-to-end]") {
-    std::filesystem::path inpath = test_dir() / "nps-2010-emails.100k.raw";
-    std::filesystem::path outdir = NamedTemporaryDirectory();
     /* Try the -H option */
     const char *argv[] = {"bulk_extractor", "-H", nullptr};
     std::stringstream ss;
     int ret = bulk_extractor_main(ss, ss, 2, const_cast<char * const *>(argv));
     REQUIRE( ret==2 );                  // -H produces 2
-}
-
-TEST_CASE("e2e-no-imagefile", "[end-to-end]") {
-    std::filesystem::path outdir = NamedTemporaryDirectory();
-    /* Try the -H option */
-    const char *argv[] = {"bulk_extractor", nullptr};
-    std::stringstream ss;
-    int ret = bulk_extractor_main(ss, ss, 1, const_cast<char * const *>(argv));
-    REQUIRE( ret==3 );                  // produces 3
 }
 
 TEST_CASE("e2e-0", "[end-to-end]") {
@@ -107,7 +101,8 @@ TEST_CASE("e2e-0", "[end-to-end]") {
 
     ret = bulk_extractor_main(cout, cerr, 5, const_cast<char * const *>(argv));
     if (ret!=0) {
-        std::cerr << "STDOUT:" << std::endl << cout.str() << std::endl << std::endl << "STDERR:" << std::endl << cerr.str() << std::endl;
+        std::cerr << "STDOUT:" << std::endl << cout.str() << std::endl << std::endl
+                  << "STDERR:" << std::endl << cerr.str() << std::endl;
         REQUIRE( ret==0 );
     }
 
@@ -117,7 +112,7 @@ TEST_CASE("e2e-0", "[end-to-end]") {
     REQUIRE( code==0 );
 }
 
-TEST_CASE("5gb-flatfile","[end-to-end") {
+TEST_CASE("5gb-flatfile", "[end-to-end]") {
     /* Make a 5GB file and try to read it. Make sure we get back the known content. */
     const uint64_t count = 5000;
     const uint64_t sz = 1000000;
@@ -159,7 +154,7 @@ TEST_CASE("5gb-flatfile","[end-to-end") {
     REQUIRE( pos != lines.end());
 }
 
-TEST_CASE("30mb-segmented","[end-to-end") {
+TEST_CASE("30mb-segmented", "[end-to-end]") {
     /* make a segmented file, but this time with 20MB segments */
     const uint64_t count = 1000 * 1000;
     const int segments = 5;
@@ -210,6 +205,59 @@ TEST_CASE("path-printer", "[end-to-end]") {
     REQUIRE( ret == 0);
     REQUIRE( ss.str() == EXPECTED);
 }
+
+TEST_CASE("e2e-CFReDS001", "[end-to-end]") {
+    std::filesystem::path inpath = test_dir() / "CFReDS001.E01";
+    std::string inpath_string = inpath.string();
+    std::filesystem::path outdir = NamedTemporaryDirectory();
+    std::string outdir_string = outdir.string();
+    std::stringstream ss;
+    const char *argv[] = {"bulk_extractor","-1o",outdir_string.c_str(), inpath_string.c_str(), nullptr};
+    int ret = bulk_extractor_main(ss, std::cerr,
+                                  argv_count(const_cast<char * const *>(argv)),
+                                  const_cast<char * const *>(argv));
+    REQUIRE( ret==0 );
+}
+
+TEST_CASE("e2e-email_test", "[end-to-end]") {
+    std::filesystem::path inpath = test_dir() / "email_test.E01";
+    std::string inpath_string = inpath.string();
+    std::filesystem::path outdir = NamedTemporaryDirectory();
+    std::string outdir_string = outdir.string();
+    std::stringstream ss;
+    const char *argv[] = {"bulk_extractor","-1o",outdir_string.c_str(), inpath_string.c_str(), nullptr};
+    int ret = bulk_extractor_main(ss, std::cerr,
+                                  argv_count(const_cast<char * const *>(argv)),
+                                  const_cast<char * const *>(argv));
+    REQUIRE( ret==0 );
+
+    /* Verify that every email address is found from user0@company.com through user49993@company.com.
+     * This will check the margins and the reading of multi-segment E01 files - sometimes the email address
+     * is split across E01 chunks. Remember, the email addresses may not be sorted.
+     */
+
+    std::filesystem::path email_feature_file = outdir / "email.txt";
+    std::ifstream inFile( email_feature_file );
+    std::string line;
+    std::unordered_set<std::string> seen;
+    while (std::getline(inFile, line)) {
+        if (line[0]!='#') {
+            auto words = split(line, '\t');
+            REQUIRE( words.size() == 3);
+            REQUIRE( starts_with(words[1], "user") );
+            seen.insert(words[1]);
+        }
+    }
+    for ( int i=0;i<=49993; i++) {
+        std::string email = std::string("user") + std::to_string(i) + std::string("@company.com");
+        if ( seen.find(email) == seen.end()) {
+            std::cerr << "not in " << email_feature_file << ": "  << email << std::endl;
+            REQUIRE( seen.find(email) != seen.end());
+        }
+    }
+}
+
+
 
 /****************************************************************
  * Test restarter
