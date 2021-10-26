@@ -532,7 +532,7 @@ static void unpack_buf(const uint8_t* input, size_t input_len, uint8_t* output, 
 
     CmdExtract extract; //from the extract.cpp file; allows the extraction to occur
 
-    byte *startingaddress = (byte*) input;
+    uint8_t *startingaddress = const_cast<uint8_t*>(input);
 
     ComprDataIO mydataio;
     mydataio.SetSkipUnpCRC(true); //skip checking the CRC to allow more processing to occur
