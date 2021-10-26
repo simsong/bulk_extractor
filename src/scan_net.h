@@ -129,7 +129,7 @@ struct scan_net_t {
     };
 
     /* Each of these carvers looks for a specific structure and if it finds the structure it returns the size in the sbuf */
-    void documentIPFields(const sbuf_t &sbuf, size_t pos, const generic_iphdr_t &h) const;
+    bool documentIPFields(const sbuf_t &sbuf, size_t pos, const generic_iphdr_t &h) const; // return true if packet should be written
     size_t carveIPFrame(const sbuf_t &sbuf, size_t pos) const;
     size_t carveTCPTOBJ(const sbuf_t &sbuf, size_t pos) const;
     size_t carveSockAddrIn(const sbuf_t &sbuf, size_t pos) const;

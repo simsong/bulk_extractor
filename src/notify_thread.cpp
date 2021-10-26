@@ -38,7 +38,7 @@ void notify_thread::notifier( struct notify_thread::notify_opts *o)
     int cols = 80;
 #ifdef HAVE_LIBTERMCAP
     char buf[65536], *table=buf;
-    cols = tgetnum( "co" );
+    cols = tgetnum( const_cast<char *>("co") );
     if ( !o->cfg.opt_legacy) {
         const char *str = ::getenv( "TERM" );
         if ( !str){
@@ -52,10 +52,10 @@ void notify_thread::notifier( struct notify_thread::notify_opts *o)
                 std::cerr << "Warning: terminfo database culd not be found." << std::endl;
                 break;
             case 1: // success
-                ho = tgetstr( "ho", &table );   // home
-                cl = tgetstr( "cl", &table );   // clear screen
-                ce = tgetstr( "ce", &table );   // clear to end of line
-                cd = tgetstr( "cd", &table );   // clear to end of screen
+                ho = tgetstr( const_cast<char *>("ho"), &table );   // home
+                cl = tgetstr( const_cast<char *>("cl"), &table );   // clear screen
+                ce = tgetstr( const_cast<char *>("ce"), &table );   // clear to end of line
+                cd = tgetstr( const_cast<char *>("cd"), &table );   // clear to end of screen
                 break;
             }
         }

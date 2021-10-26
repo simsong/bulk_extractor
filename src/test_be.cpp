@@ -510,7 +510,7 @@ bool feature_match(const Check &exp, const std::string &line)
     auto words = split(line, '\t');
     if (words.size() <2 || words.size() > 3) return false;
 
-    if(debug) std::cerr << "check line=" << line << "\n";
+    if (debug) std::cerr << "check line=" << line << "\n";
 
     std::string pos = exp.feature.pos.str();
     if ( pos.size() > 2 ){
