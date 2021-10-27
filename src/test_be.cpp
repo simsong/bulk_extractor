@@ -112,7 +112,7 @@ bool requireFeature(const std::vector<std::string> &lines, const std::string fea
     }
     std::cerr << "feature not found: " << feature << "\nfeatures found (perhaps one of these is the feature you are looking for?):\n";
     for (const auto &it : lines) {
-        std::cerr << "  " << it << "\n";
+        std::cerr << "  " << it << std::endl;
     }
     return false;
 }
@@ -142,9 +142,9 @@ std::filesystem::path test_scanners(const std::vector<scanner_t *> & scanners, s
 
     REQUIRE (ss.get_enabled_scanners().size() == scanners.size()); // the one scanner
     if (ss.get_enabled_scanners().size()>0){
-        std::cerr << "\n## output in " << sc.outdir << " for " << ss.get_enabled_scanners()[0] << std::endl;
+        std::cerr << "## output in " << sc.outdir << " for " << ss.get_enabled_scanners()[0] << std::endl;
     } else {
-        std::cerr << "\n## output in " << sc.outdir << " but no enabled scanner! " << std::endl;
+        std::cerr << "## output in " << sc.outdir << " but no enabled scanner! " << std::endl;
     }
     REQUIRE(sbuf->children == 0);
     ss.phase_scan();
@@ -510,7 +510,7 @@ bool feature_match(const Check &exp, const std::string &line)
     auto words = split(line, '\t');
     if (words.size() <2 || words.size() > 3) return false;
 
-    if (debug) std::cerr << "check line=" << line << "\n";
+    if (debug) std::cerr << "check line=" << line << std::endl;
 
     std::string pos = exp.feature.pos.str();
     if ( pos.size() > 2 ){
@@ -567,7 +567,7 @@ std::filesystem::path validate(std::string image_fname, std::vector<Check> &expe
     sc.scanner_commands = enable_all_scanners;
     sc.allow_recurse    = recurse;
 
-    std::cerr << "================ validate  " << image_fname << " (outdir: " << sc.outdir << ") ================\n";
+    std::cerr << "## image_fname: " << image_fname << " outdir: " << sc.outdir << std::endl;
 
     if (offset==0) {
         sc.input_fname = test_dir() / image_fname;
@@ -607,7 +607,7 @@ std::filesystem::path validate(std::string image_fname, std::vector<Check> &expe
             phase1.phase1_run();
             delete p;
         } catch (image_process::NoSuchFile &e) {
-            std::cerr << "sc.input_fname=" << sc.input_fname << " no such file: " << e.what() << "\n";
+            std::cerr << "sc.input_fname=" << sc.input_fname << " no such file: " << e.what() << std::endl;
             bool file_found=false;
             REQUIRE(file_found);
         }
@@ -637,7 +637,7 @@ std::filesystem::path validate(std::string image_fname, std::vector<Check> &expe
                     }
                     break;
                 case 1:
-                    std::cerr << fname << ":" << line << "\n"; // print the file the second time through
+                    std::cerr << fname << ":" << line << std::endl; // print the file the second time through
                     break;
                 }
 
@@ -669,10 +669,10 @@ bool validate_files(const std::filesystem::path &fn0, const std::filesystem::pat
         in1 >> ch1;
         if (ch0 != ch1 ){
             if (errors==0) {
-                std::cerr << "file 0 " << fn0 << "\n";
-                std::cerr << "file 1 " << fn1 << "\n";
+                std::cerr << "file 0 " << fn0 << std::endl;
+                std::cerr << "file 1 " << fn1 << std::endl;
             }
-            std::cerr << "i=" << i << "  ch0=" << static_cast<u_int>(ch0) << " ch1=" << static_cast<u_int>(ch1) << "\n";
+            std::cerr << "i=" << i << "  ch0=" << static_cast<u_int>(ch0) << " ch1=" << static_cast<u_int>(ch1) << std::endl;
             errors += 1;
         }
         if (in0.eof() || in1.eof()) break;
