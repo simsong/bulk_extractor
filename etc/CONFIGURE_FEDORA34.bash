@@ -40,7 +40,7 @@ fi
 # cd to the directory where the script is
 cd "$( dirname "${BASH_SOURCE[0]}" )"
 
-MPKGS="autoconf automake make flex gcc gcc-c++ git libtool wget bison zlib-devel "
+MPKGS="autoconf automake make flex gcc gcc-c++ git libtool wget zlib-devel "
 MPKGS+="java-1.8.0-openjdk-devel libxml2-devel libxml2-static openssl-devel "
 MPKGS+="sqlite-devel expat-devel "
 
