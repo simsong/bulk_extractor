@@ -1,7 +1,16 @@
 /**
  * scan_pdf:
  * Extracts text from PDF files by decompressing streams and extracting text between parentheses.
- * Currently this is dead-simple. It should be rewritten to position the text on an (x,y) grid and find the words.
+ * Currently this is dead-simple.
+ * It should be rewritten to position the text on an (x,y) grid and find the words.
+ *
+ * Other ideas for exploring PDF streams:
+ * https://stackoverflow.com/questions/15058207/pdftk-will-not-decompress-data-streams
+ * https://superuser.com/questions/264695/how-can-i-deflate-compressed-streams-inside-a-pdf
+ *
+ * Originally developed by Simson Garfinkel, 2012-2014.
+ * (C) 2021 Simson L. Garfinkel.
+ * MIT License, see ../LICENSE.md
  */
 
 #include <cstdlib>

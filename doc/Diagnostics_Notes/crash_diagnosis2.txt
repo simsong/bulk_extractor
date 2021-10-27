@@ -1,18 +1,6 @@
-Eamonn,
-
-Thanks for reporting the bug. I added the instrumentation that we discussed to devtree of bulk_extractor and was able to find an important bug in the pdf scanner. It has been corrected. I also was able to make a significant performance improvement. Thanks again. 
-
-Below is the document I have written that describes how I fixed the bug. Please look it over and let me know what you think. If it is clear, I will post it to the user's list and put on the website.
-
-Thanks again.
-
-Simson
-
-+++
-
 A user reported that disk #0005.aff was taking a surprising amount of time to complete processing---more than 50 minutes. We ran bulk_extractor on the disk:
 
-$ src/bulk_extractor -o test5 0005.aff 
+$ src/bulk_extractor -o test5 0005.aff
 Hostname: t
 Input file: 0005.aff
 Output directory: test5
@@ -31,8 +19,8 @@ All Data is Read; waiting for threads to finish...
 
 Time elapsed waiting for 1 thread to finish: 60 min 1 sec  (wait at least 50 min))
 
- ... this shouldn't take more than an hour. Exiting ... 
- ... Please report to the bulk_extractor maintainer ... 
+ ... this shouldn't take more than an hour. Exiting ...
+ ... Please report to the bulk_extractor maintainer ...
 All Threads Finished!
 Phase 2. Shutting down scanners
 Phase 3. Creating Histograms
@@ -202,7 +190,7 @@ As can be seen, the scanner PDF is only called 7 times, not 8. That's because th
 
 To verify that scan_pdf was the problem, we ran bulk_extractor on the test disk with the PDF scanner disabled:
 
-simsong@t:~/domex/src/bulk_extractor$ src/bulk_extractor -xpdf -o test6 0005.aff 
+simsong@t:~/domex/src/bulk_extractor$ src/bulk_extractor -xpdf -o test6 0005.aff
 Hostname: t
 Input file: 0005.aff
 Output directory: test6
@@ -236,7 +224,7 @@ Phase 3. Creating Histograms
 0: make_histogram(://[-_a-z0-9.]+facebook.com/.*(id=[0-9]+),facebook-id) -> test6/url_facebook-id.txt
 0: make_histogram(search.*[?&/;fF][pq]=([^&/]+),searches) -> test6/url_searches.txt
 # elapsed time: 52.9 seconds
-simsong@t:~/domex/src/bulk_extractor$ src/bulk_extractor -Epdf -o test7 0005.aff 
+simsong@t:~/domex/src/bulk_extractor$ src/bulk_extractor -Epdf -o test7 0005.aff
 
 
 Now the program finished in 52.9 seconds.
@@ -269,7 +257,7 @@ Phase 1.
 18:31:53 Page 6 (75.00%) Completed. Done in  0:00:05
 18:31:53 Page 7 (87.50%) Completed. Done in  0:00:02
 All Data is Read; waiting for threads to finish...
-Time elapsed waiting for 1 thread to finish: 24 min 48 sec  (wait at least 50 min)  
+Time elapsed waiting for 1 thread to finish: 24 min 48 sec  (wait at least 50 min)
 
 At this point we interrupt and use GDB to figure out which thread is having problems:
 
@@ -305,9 +293,8 @@ Program received signal SIGINT, Interrupt.
 #5  0x00007ffff5ecfd8c in start_thread () from /lib/x86_64-linux-gnu/libpthread.so.0
 #6  0x00007ffff5c1b04d in clone () from /lib/x86_64-linux-gnu/libc.so.6
 #7  0x0000000000000000 in ?? ()
-(gdb) 
+(gdb)
 
 As expected, the problem is in scan_pdf.cpp (at line 83, in fact).
 
 At this point we were able to identify the bug in scan_pdf that was causing an infinite loop and eliminate the problem.
-

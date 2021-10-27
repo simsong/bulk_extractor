@@ -2,13 +2,12 @@ Manual checklist for release.
 
 This document should be *printed* and hand-checked.
 
-[ ] Compiles and executes "make check" on clean install of Fedora ____.
+- [ ] Compiles and executes "make distcheck" on clean install of MacOS ___.
 
-[ ] Compiles and executes "make check" on clean install of Ubuntu ___.
+- [ ] Compiles and executes "make distcheck" on clean install of Ubuntu ___.
 
-[ ] Compiles and executes "make check" on clean install of MacOS ___.
+- [ ] Compiles and executes "make distcheck" on clean install of Fedora ____.
 
-[ ] Included bulk_extractor32.exe and bulk_extractor64.exe both work.
+- [ ] On Fedora, compile bulk_extractor.exe and test_be.exe with mingw64-configure, validate test_be.exe under Wine, and then run bulk_extractor.exe on a windows system.
 
-[ ] Restart Checked: Running program on ubnist1, type control-C, then up-arrow, and restart works.
-
+- [ ] Restart Checked: Running program on ubnist1, type control-C, then up-arrow, and restart works.
