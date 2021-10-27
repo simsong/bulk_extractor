@@ -31,7 +31,7 @@ fi
 cd $DIR
 
 MPKGS="autoconf automake flex gcc gcc-c++ git libtool "
-MPKGS+="md5deep wget bison zlib-devel "
+MPKGS+="md5deep wget zlib-devel "
 MPKGS+="libewf libewf-devel java-1.8.0-openjdk-devel "
 MPKGS+="libxml2-devel libxml2-static openssl-devel "
 MPKGS+="sqlite-devel expat-devel "
