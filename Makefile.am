@@ -5,8 +5,6 @@
 # (C) 2020 Simson L. Garfinkel
 # https://www.gnu.org/licenses/lgpl-3.0.en.html
 
-# Remember to update ocnfigure.ac when we re-enable doc
-
 SUBDIRS = doc doc/latex_manuals man src src/tests python specfiles tests
 
 # don't include bootstrap. People run it, and they shoudln't
@@ -35,6 +33,7 @@ EXTRA_DIST = \
 	m4/ac_try_run_javac.m4 \
 	m4/ax_pthread.m4 \
 	bootstrap.sh \
+	README.md \
 	$(SRC_WIN_DIST)
 
 ACLOCAL_AMFLAGS = -I m4

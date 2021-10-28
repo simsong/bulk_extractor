@@ -8,9 +8,7 @@ check_PROGRAMS = test_be
 
 # So that relative imports from be13_api work
 AM_CPPFLAGS = -I${top_srcdir}/src/be13_api
-
 AUTOMAKE_OPTIONS = subdir-objects
-
 EXTRA_DIST = .gitignore
 
 # bring in defs from two included projects
