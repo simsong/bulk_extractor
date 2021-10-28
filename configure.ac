@@ -26,13 +26,8 @@ m4_include([src/be13_api/be13_configure.m4])
 #
 # NOTE 2 - src_win/Makefile is not automatically generated. This is necessary
 # so that it can be run even after a 'make distclean' is done
-AC_CONFIG_FILES([Makefile
-                 doc/Makefile doc/latex_manuals/Makefile
-                 src/Makefile src/tests/Makefile
-                 man/Makefile
-                 python/Makefile
-                 specfiles/Makefile specfiles/bulk_extractor.spec.m4
-                 tests/Makefile ])
+AC_CONFIG_FILES([Makefile doc/Makefile doc/latex_manuals/Makefile src/Makefile src/tests/Makefile man/Makefile \
+                 python/Makefile specfiles/Makefile specfiles/bulk_extractor.spec.m4 tests/Makefile ])
 
 AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE
