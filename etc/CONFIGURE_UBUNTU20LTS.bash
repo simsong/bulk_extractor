@@ -15,11 +15,10 @@ cat <<EOF
 
 Install Ubuntu $RELEASE.04 and follow these commands:
 
-# apt-get install git
+# sudo apt-get install git
 # git clone --recursive https://github.com/simsong/bulk_extractor.git
-# cd bulk_extractor
-# bash etc/CONFIGURE_UBUNTU$RELEASE.bash
-# ./ bootstrap.sh  && ./configure && make && make check && sudo make install
+# bash bulk_extractor/etc/CONFIGURE_UBUNTU20LTS.bash
+# (cd bulk_extractor; sudo make install)
 
 press any key to continue...
 EOF
@@ -72,3 +71,7 @@ echo updating automake
 $WGET $AUTOMAKE_DIST || (echo could not download $AUTOMAKE_DIST; exit 1)
 tar xfz automake*gz && (cd automake*/ && $CONFIGURE && $MAKE >/dev/null && sudo make install)
 automake --version
+
+cd ..
+(bash bootstrap.sh  && ./configure -q --enable-silent-rules && make && make check) || (echo make check failed;exit 1)
+
