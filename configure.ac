@@ -19,13 +19,6 @@ m4_include([m4/slg_searchdirs.m4])
 m4_include([src/be13_api/dfxml_cpp/src/dfxml_configure.m4])
 m4_include([src/be13_api/be13_configure.m4])
 
-#
-# NOTE 1 - plugins/Makefile is referenced so that the plugins Makefile is created.
-# However, plugins is not listed as a SUBDIR for Makefile.am in this directory.
-# That prevents the plugins from automatically being built each time.
-#
-# NOTE 2 - src_win/Makefile is not automatically generated. This is necessary
-# so that it can be run even after a 'make distclean' is done
 AC_CONFIG_FILES([Makefile doc/Makefile doc/latex_manuals/Makefile src/Makefile src/tests/Makefile man/Makefile \
                  python/Makefile specfiles/Makefile specfiles/bulk_extractor.spec.m4 tests/Makefile ])
 
@@ -43,11 +36,15 @@ AC_PROG_LEX([noyywrap])
 # LT_INIT([disable-shared])
 
 # Must use C++17 mode.
+# Validate that we have <filesystem>
 
 m4_include([m4/ax_cxx_compile_stdcxx.m4])
 AC_LANG_PUSH(C++)
 AX_CXX_COMPILE_STDCXX([17], [noext], [mandatory])
+AC_CHECK_HEADER([filesystem], [], AC_MSG_ERROR([<filesystem> header not installed; bulk_extractor requires a C++ compiler with a full C++17 implementation]))
 AC_LANG_POP()
+
+
 
 # Turn on all warnings
 m4_include([src/be13_api/m4/slg_gcc_all_warnings.m4])
@@ -130,6 +127,8 @@ AC_ARG_ENABLE([mcheck],
 AC_TYPE_INT64_T
 AC_SYS_LARGEFILE
 AC_SYS_POSIX_TERMIOS
+
+## Make sure C++ is operational
 
 ## Check for headers used by bulk Extractor
 AC_CHECK_HEADERS([dlfcn.h fcntl.h inttypes.h libgen.h limits.h mmap.h pwd.h signal.h stdint.h sys/cdefs.h curses.h sys/disk.h sys/fcntl.h sys/ioctl.h sys/mman.h sys/mmap.h sys/mount.h sys/param.h sys/socket.h sys/stat.h sys/types.h sys/time.h sys/resource.h sys/sysctl.h sys/vmmeter.h term.h time.h unistd.h windows.h CoreServices/CoreServices.h mach-o/dyld.h])

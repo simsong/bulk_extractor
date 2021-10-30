@@ -1,7 +1,8 @@
 #!/bin/bash
 
-
 RELEASE=20
+REQUIRED_ID='amzn'
+REQUIRED_VERSION=2
 CONFIGURE="./configure -q --enable-silent-rules"
 LIBEWF_DIST=https://github.com/libyal/libewf-legacy/releases/download/20140812/libewf-20140812.tar.gz
 AUTOCONF_DIST=https://ftpmirror.gnu.org/autoconf/autoconf-2.71.tar.gz
@@ -10,9 +11,10 @@ MKPGS="autoconf automake libexpat1-dev libssl-dev libtool libxml2-utils pkg-conf
 WGET="wget -nv --no-check-certificate"
 CONFIGURE="./configure -q --enable-silent-rules"
 MAKE="make -j4"
+NAME='AWS Linux'
 cat <<EOF
 *******************************************************************
-        Configuring Amazon Linux for compiling bulk_extractor
+Configuring, compile and check this bulk_extractor release for $NAME
 *******************************************************************
 
 Install AWS Linux and follow these commands:
@@ -20,7 +22,7 @@ Install AWS Linux and follow these commands:
 #
 # sudo yum -y update && sudo yum -y install git && git clone --recursive https://github.com/simsong/bulk_extractor.git 
 # bash bulk_extractor/etc/CONFIGURE_AMAZON_LINUX.bash
-# cd bulk_extractor && sh bootstrap.sh && ./configure && make && sudo make install
+# cd bulk_extractor && sh bootstrap.sh && ./configure -q enable-silent-rules && make && sudo make install
 
 press any key to continue...
 EOF
@@ -38,12 +40,17 @@ if [ ! -r /etc/os-release ]; then
 fi
 
 . /etc/os-release
-if [ $ID != 'amzn' ]; then
-  echo This requires Amazon Linux
+if [ $ID != $REQUIRED_ID ]; then
+  echo This requires operating system ID $REQUIRED_ID
   exit 1
 fi
 
-MPKGS="autoconf automake flex gcc gcc-c++ git libtool md5deep wget zlib-devel "
+if [ $VERSION != $REQUIRED_VERSION ]; then
+    echo This requires operating system VERSION $REQUIRED_VERSION
+    exit 1
+fi
+
+MPKGS="autoconf automake flex gcc10-c++ git libtool md5deep wget zlib-devel "
 MPKGS+="libewf libewf-devel java-1.8.0-openjdk-devel "
 MPKGS+="libxml2-devel libxml2-static openssl-devel "
 MPKGS+="sqlite-devel expat-devel "
@@ -76,3 +83,10 @@ echo updating automake
 $WGET $AUTOMAKE_DIST || (echo could not download $AUTOMAKE_DIST; exit 1)
 tar xfz automake*gz && (cd automake*/ && $CONFIGURE && $MAKE >/dev/null && sudo make install)
 automake --version
+
+# AWS Linux doesn't set this up by default
+echo /usr/local/lib > /etc/ld.so.conf.d/libewf.conf
+sudo ldconfig
+
+cd $DIR
+CC=gcc10-gcc CXX=gcc10-c++ ./configure && make check
