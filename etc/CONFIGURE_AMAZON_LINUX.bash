@@ -1,5 +1,4 @@
 #!/bin/bash
-
 RELEASE=20
 REQUIRED_ID='amzn'
 REQUIRED_VERSION=2

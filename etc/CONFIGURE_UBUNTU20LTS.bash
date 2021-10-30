@@ -27,8 +27,8 @@ EOF
 read IGNORE
 
 function fail() {
-	echo FAIL: $@
-	kill -s TERM $TOP_PID
+    echo FAIL: $@
+    kill -s TERM $TOP_PID
 }
 
 # cd to the directory where the script is
