@@ -1,27 +1,32 @@
 #!/bin/bash
-#
-# 1. Start a AWS VM and ssh into it.
-# 2. sudo yum -y update && sudo yum -y install git && git clone --recursive https://github.com/simsong/bulk_extractor.git 
-# 3. bash bulk_extractor/etc/CONFIGURE_AMAZON_LINUX.bash
-# 4. cd bulk_extractor && sh bootstrap.sh && ./configure && make && sudo make install
 
-LIBEWF_URL=https://github.com/libyal/libewf/releases/download/20171104/libewf-experimental-20171104.tar.gz
+RELEASE=20
+REQUIRED_ID='amzn'
+REQUIRED_VERSION=2
+CONFIGURE="./configure -q --enable-silent-rules"
+LIBEWF_DIST=https://github.com/libyal/libewf-legacy/releases/download/20140812/libewf-20140812.tar.gz
+AUTOCONF_DIST=https://ftpmirror.gnu.org/autoconf/autoconf-2.71.tar.gz
+AUTOMAKE_DIST=https://ftpmirror.gnu.org/automake/automake-1.16.3.tar.gz
+MKPGS="autoconf automake libexpat1-dev libssl-dev libtool libxml2-utils pkg-config"
+WGET="wget -nv --no-check-certificate"
+CONFIGURE="./configure -q --enable-silent-rules"
+MAKE="make -j4"
+NAME='AWS Linux'
 cat <<EOF
 *******************************************************************
-        Configuring Amazon Linux for compiling bulk_extractor
+Configuring, compile and check this bulk_extractor release for $NAME
 *******************************************************************
+
+Install AWS Linux and follow these commands:
+
+#
+# sudo yum -y update && sudo yum -y install git && git clone --recursive https://github.com/simsong/bulk_extractor.git 
+# bash bulk_extractor/etc/CONFIGURE_AMAZON_LINUX.bash
+# cd bulk_extractor && sh bootstrap.sh && ./configure -q enable-silent-rules && make && sudo make install
+
+press any key to continue...
 EOF
-
-if [ ! -r /etc/os-release ]; then
-  echo This requires Amazon Linux
-  exit 1
-fi
-
-. /etc/os-release
-if [ $ID != 'amzn' ]; then
-  echo This requires Amazon Linux
-  exit 1
-fi
+read IGNORE
 
 # cd to the directory where the script is becuase we will do downloads into tmp
 # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
@@ -29,7 +34,23 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 mkdir -p $DIR/tmp
 cd $DIR/tmp
 
-MPKGS="autoconf automake flex gcc gcc-c++ git libtool md5deep wget zlib-devel "
+if [ ! -r /etc/os-release ]; then
+  echo This requires Amazon Linux
+  exit 1
+fi
+
+. /etc/os-release
+if [ $ID != $REQUIRED_ID ]; then
+  echo This requires operating system ID $REQUIRED_ID
+  exit 1
+fi
+
+if [ $VERSION != $REQUIRED_VERSION ]; then
+    echo This requires operating system VERSION $REQUIRED_VERSION
+    exit 1
+fi
+
+MPKGS="autoconf automake flex gcc10-c++ git libtool md5deep wget zlib-devel "
 MPKGS+="libewf libewf-devel java-1.8.0-openjdk-devel "
 MPKGS+="libxml2-devel libxml2-static openssl-devel "
 MPKGS+="sqlite-devel expat-devel "
@@ -47,35 +68,25 @@ echo
 echo "Now performing a yum update to update system packages"
 sudo yum -y update
 
-LIBEWF_FNAME=`echo $LIBEWF_URL| sed s:.*/::`
-LIBEWF_DIR=`echo $LIBEWF_FNAME | sed s/-experimental// | sed s/.tar.gz//`
-echo
-echo "Now installing libewf"
-wget -nv https://github.com/libyal/libewf/releases/download/20171104/libewf-experimental-20171104.tar.gz
-tar xfvz $LIBEWF_FNAME
-pushd $LIBEWF_DIR
-./configure && make
-sudo make install
-popd
-
-# Make sure that /usr/local/lib is in ldconfig
-sudo /bin/rm -f /tmp/local.conf
-echo /usr/local/lib > /tmp/local.conf
-sudo mv /tmp/local.conf /etc/ld.so.conf.d/local.conf
+echo manually installing a modern libewf
+$WGET $LIBEWF_DIST || (echo could not download $LIBEWF_DIST; exit 1)
+tar xfz libewf*gz   && (cd libewf*/   && $CONFIGURE && $MAKE >/dev/null && sudo make install)
+ls -l /etc/ld.so.conf.d/
 sudo ldconfig
 
-#
-#
-#
+echo updating autoconf
+$WGET $AUTOCONF_DIST || (echo could not download $AUTOCONF_DIST; exit 1)
+tar xfz autoconf*gz && (cd autoconf*/ && $CONFIGURE && $MAKE >/dev/null && sudo make install)
+autoconf --version
 
-echo ...
-echo 'Now running ../bootstrap.sh and configure'
-pushd ..
-sh bootstrap.sh
-sh configure
-popd
-echo ================================================================
-echo ================================================================
-echo 'You are now ready to compile bulk_extractor for Linux.'
-echo 'To compile, type make'
-echo 'To make a distribution, type make release'
+echo updating automake
+$WGET $AUTOMAKE_DIST || (echo could not download $AUTOMAKE_DIST; exit 1)
+tar xfz automake*gz && (cd automake*/ && $CONFIGURE && $MAKE >/dev/null && sudo make install)
+automake --version
+
+# AWS Linux doesn't set this up by default
+echo /usr/local/lib > /etc/ld.so.conf.d/libewf.conf
+sudo ldconfig
+
+cd $DIR
+CC=gcc10-gcc CXX=gcc10-c++ ./configure && make check

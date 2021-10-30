@@ -116,10 +116,13 @@ TEST_CASE("5gb-flatfile", "[end-to-end]") {
     /* Make a 5GB file and try to read it. Make sure we get back the known content. */
     const uint64_t count = 5000;
     const uint64_t sz = 1000000;
-    std::filesystem::path fgb_path = std::filesystem::temp_directory_path() / "5gb-flatfile.raw";
+    std::filesystem::path fgb_path     = std::filesystem::temp_directory_path() / "5gb-flatfile.raw";
+    std::filesystem::path fgb_path_tmp = std::filesystem::temp_directory_path() / "5gb-flatfile.raw.tmp";
+
     if (!std::filesystem::exists( fgb_path )) {
         std::cout << "Creating 5GB flatfile to test >4GiB file handling" << std::endl;
-        std::ofstream of(fgb_path, std::ios::out | std::ios::binary);
+	// This takes a while, so we write to a tmp file in case we are interrupted. 
+        std::ofstream of(fgb_path_tmp, std::ios::out | std::ios::binary);
         if (! of.is_open()) {
             std::cerr << "Cannot open " << std::filesystem::absolute(fgb_path) << " for writing: " << ::strerror(errno) << std::endl;
         }
@@ -136,6 +139,7 @@ TEST_CASE("5gb-flatfile", "[end-to-end]") {
         of << "email_one@company.com "; // 22 characters
         of << "email_two@company.com "; // 22 characters
         of.close();
+	std::filesystem::rename( fgb_path_tmp, fgb_path );
     }
     REQUIRE( std::filesystem::file_size( fgb_path ) == count * sz + 22 * 2);
     std::filesystem::path outdir = NamedTemporaryDirectory();
