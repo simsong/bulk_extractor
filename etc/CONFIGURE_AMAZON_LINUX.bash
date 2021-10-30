@@ -22,7 +22,7 @@ Install AWS Linux and follow these commands:
 #
 # sudo yum -y update && sudo yum -y install git && git clone --recursive https://github.com/simsong/bulk_extractor.git 
 # bash bulk_extractor/etc/CONFIGURE_AMAZON_LINUX.bash
-# cd bulk_extractor && sh bootstrap.sh && ./configure -q enable-silent-rules && make && sudo make install
+# cd bulk_extractor && make && sudo make install
 
 press any key to continue...
 EOF
