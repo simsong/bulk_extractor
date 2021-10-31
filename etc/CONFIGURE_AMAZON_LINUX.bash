@@ -1,5 +1,4 @@
 #!/bin/bash
-
 RELEASE=20
 REQUIRED_ID='amzn'
 REQUIRED_VERSION=2
@@ -50,8 +49,8 @@ if [ $VERSION != $REQUIRED_VERSION ]; then
     exit 1
 fi
 
-MPKGS="autoconf automake flex gcc10-c++ git libtool md5deep wget zlib-devel "
-MPKGS+="libewf libewf-devel java-1.8.0-openjdk-devel "
+MPKGS="autoconf automake flex gcc10-c++ git libtool wget zlib-devel "
+MPKGS+="java-1.8.0-openjdk-devel "
 MPKGS+="libxml2-devel libxml2-static openssl-devel "
 MPKGS+="sqlite-devel expat-devel "
 MPKGS+="libjson-c-devel "
@@ -70,23 +69,30 @@ sudo yum -y update
 
 echo manually installing a modern libewf
 $WGET $LIBEWF_DIST || (echo could not download $LIBEWF_DIST; exit 1)
-tar xfz libewf*gz   && (cd libewf*/   && $CONFIGURE && $MAKE >/dev/null && sudo make install)
+tar xfz libewf*gz  && (cd libewf*/   && $CONFIGURE && $MAKE >/dev/null && sudo make install)
 ls -l /etc/ld.so.conf.d/
 sudo ldconfig
+ewinfo -h > /dev/null || (echo libewf not installed;exit 1)
+
+exit 0
+
 
 echo updating autoconf
 $WGET $AUTOCONF_DIST || (echo could not download $AUTOCONF_DIST; exit 1)
 tar xfz autoconf*gz && (cd autoconf*/ && $CONFIGURE && $MAKE >/dev/null && sudo make install)
-autoconf --version
+autoconf --version || (echo autoconf failed; exit 1)
 
 echo updating automake
 $WGET $AUTOMAKE_DIST || (echo could not download $AUTOMAKE_DIST; exit 1)
 tar xfz automake*gz && (cd automake*/ && $CONFIGURE && $MAKE >/dev/null && sudo make install)
-automake --version
+automake --version || (echo automake failed; exit 1)
 
 # AWS Linux doesn't set this up by default
-echo /usr/local/lib > /etc/ld.so.conf.d/libewf.conf
-sudo ldconfig
+echo /usr/local/lib | sudo cp /dev/stdin /etc/ld.so.conf.d/libewf.conf
+sudo ldconfig || (echo ldconfig failed; exit 1)
 
-cd $DIR
-CC=gcc10-gcc CXX=gcc10-c++ ./configure && make check
+echo cd $(dirname $DIR)
+cd $(dirname $DIR)
+ls -l
+sh bootstrap.sh
+CC=gcc10-gcc CXX=gcc10-c++ ./configure -q --enable-silent-rules && make check
