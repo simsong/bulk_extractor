@@ -1,18 +1,18 @@
 [![codecov](https://codecov.io/gh/simsong/bulk_extractor/branch/main/graph/badge.svg?token=3w691sdgLu)](https://codecov.io/gh/simsong/bulk_extractor)
 
-`bulk_extractor` is a high-performance C++ program that scans a disk
-image, a file, or a directory of files and extracts information such
-as email addresses, JPEGs and JSON snippets without parsing the file
-system or file system structures. The results are stored in feature
-files or carved into stand-alone files that can be easily inspected,
-parsed, or processed with automated tools. bulk_extractor also creates
-histograms of features that it finds, as features that are more common
-tend to be more important.
+`bulk_extractor` is a high-performance digital forensics exploitation tool.
+It is a "get evidence" button that rapidly 
+scans any kind of input (disk images, files, directories of files, etc) 
+and extracts structured information such as email addresses, credit card numbers,
+JPEGs and JSON snippets without parsing the file
+system or file system structures. The results are stored in text files that are easily 
+inspected, searched, or used as inputs for other forensic processing. bulk_extractor also creates
+histograms of certain kinds of features that it finds, such as Google search terms and email addresses, 
+as previous research has shown that such histograms are especially useful in investigative and law enforcement applications.
 
-`bulk_extractor` probes every block of data to see if it contains
-bytes that can be decompressed or otherwise decoded. If so, the
-decoded data are recursively re-examined. As a result,
-`bulk_extractor` can find things like BASE64-encoded JPEGs and
+Unlike other digital forensics tools, `bulk_extractor` probes every byte of data to see if it is the start of a 
+sequence that can be decompressed or otherwise decoded. If so, the
+decoded data are recursively re-examined. As a result, `bulk_extractor` can find things like BASE64-encoded JPEGs and
 compressed JSON objects that traditional carving tools miss.
 
 This is the `bulk_extractor` 2.0 development branch!  For information
