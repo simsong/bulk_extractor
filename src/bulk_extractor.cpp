@@ -338,7 +338,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
                 cerr << "Invalid -S paramter: '" << it << "' must be key=value format" << std::endl ;
                 return -1;
             }
-            sc.namevals[kv[0]] = kv[1];
+            sc.set_config(kv[0], kv[1]);
         }
     } catch ( cxxopts::option_has_no_value_exception &e ) { }
 
@@ -394,7 +394,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
 
         if ( result.count( "help" )) {     // -h
             cout << options.help() << std::endl;
-            cout << "Global config options: " << std::endl << ss.sc.global_help_options << std::endl;
+            cout << "Global config options: " << std::endl << ss.get_help() << std::endl;
             ss.info_scanners( cout, false, true, 'e', 'x');
             return 1;
         } else {                        // -H
@@ -644,7 +644,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     }
 
     try {
-        feature_recorder &fr = ss.fs.named_feature_recorder( "email" );
+        feature_recorder &fr = ss.named_feature_recorder( "email" );
         cout << "Total " << fr.name << " features found: " << fr.features_written << std::endl;
     }
     catch ( const feature_recorder_set::NoSuchFeatureRecorder &e ) {

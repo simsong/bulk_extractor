@@ -120,8 +120,8 @@ TEST_CASE("5gb-flatfile", "[end-to-end]") {
     std::filesystem::path fgb_path_tmp = std::filesystem::temp_directory_path() / "5gb-flatfile.raw.tmp";
 
     if (!std::filesystem::exists( fgb_path )) {
-        std::cout << "Creating 5GB flatfile to test >4GiB file handling" << std::endl;
-	// This takes a while, so we write to a tmp file in case we are interrupted. 
+        std::cout << "Creating 5GB flatfile " << fgb_path << " to test >4GiB file handling" << std::endl;
+	// This takes a while, so we write to a tmp file in case we are interrupted.
         std::ofstream of(fgb_path_tmp, std::ios::out | std::ios::binary);
         if (! of.is_open()) {
             std::cerr << "Cannot open " << std::filesystem::absolute(fgb_path) << " for writing: " << ::strerror(errno) << std::endl;
