@@ -114,8 +114,15 @@ TEST_CASE("e2e-0", "[end-to-end]") {
 
 TEST_CASE("5gb-flatfile", "[end-to-end]") {
     /* Make a 5GB file and try to read it. Make sure we get back the known content. */
+    if (std::getenv("DEBUG_NO_5G")){
+        std::cerr << "DEBUG_NO_5G set; skipping 5G test" << std::endl;
+        return;
+    } else {
+        std::cerr << "DEBUG_NO_5G not set; starting 5G test" << std::endl;
+    }
+
     const uint64_t count = 5000;
-    const uint64_t sz = 1000000;
+    const uint64_t sz    = 1000000;
     std::filesystem::path fgb_path     = std::filesystem::temp_directory_path() / "5gb-flatfile.raw";
     std::filesystem::path fgb_path_tmp = std::filesystem::temp_directory_path() / "5gb-flatfile.raw.tmp";
 

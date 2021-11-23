@@ -157,6 +157,15 @@ static void add_if_present( std::vector<std::string> &scanner_dirs,const std::st
     }
 }
 
+std::string ns_to_sec(uint64_t ns)
+{
+    uint64_t sec100     = ns / (1000*1000*1000 / 100);
+    uint64_t hundredths = sec100 % 10;
+    uint64_t tens       = (sec100 % 100) / 10;
+
+    return std::to_string(sec100/100) + std::string(".") +std::to_string(tens) + std::to_string(hundredths);
+}
+
 int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char * const *argv)
 {
     mtrace();
@@ -633,14 +642,30 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
 
         cout << "All Threads Finished!" << std::endl ;
         cout.precision( 4);
-        cout << "Elapsed time: " << master_timer.elapsed_seconds() << " sec." << std::endl
-                  << "Total MB processed: " << int( phase1.total_bytes / 1000000) << std::endl
-                  << "Overall performance: " << mb_per_sec << " << MBytes/sec ";
+        cout << "Elapsed time: "        << master_timer.elapsed_seconds()     << " sec." << std::endl
+             << "Total MB processed: "  << int( phase1.total_bytes / 1000000) << std::endl
+             << "Overall performance: " << mb_per_sec << " MBytes/sec ";
         if ( cfg.num_threads>0){
-            cout << mb_per_sec/cfg.num_threads << " ( MBytes/sec/thread)" << std::endl ;
+            cout << mb_per_sec/cfg.num_threads << " (MBytes/sec/thread)" << std::endl ;
         }
         cout << "sbufs created:   " << sbuf_t::sbuf_total << std::endl;
-        cout << "sbufs unaccounted: " << sbuf_t::sbuf_count << " ( should be 0) " << std::endl;
+        cout << "sbufs unaccounted: " << sbuf_t::sbuf_count;
+        if (sbuf_t::sbuf_count != 0 ) {
+            cout << " ( should be 0) ";
+        }
+        cout << std::endl;
+        cout << "Time producer spent waiting for scanners to process data:        " << ss.producer_timer().elapsed_text()
+             << " (" << ns_to_sec(ss.producer_wait_ns()) << " seconds)" << std::endl;
+        cout << "Time consumer scanners spent waiting for data from producer:     " << aftimer::hms_ns_str(ss.consumer_wait_ns())
+             << " (" << ns_to_sec(ss.consumer_wait_ns()) << " seconds)" << std::endl;
+        cout << "Average time each consumer spent waiting for data from producer: " << aftimer::hms_ns_str(ss.consumer_wait_ns_per_worker())
+             << " (" << ns_to_sec(ss.consumer_wait_ns_per_worker()) << " seconds)" << std::endl;
+
+        if (ss.producer_wait_ns() > ss.consumer_wait_ns_per_worker()){
+            std::cout << "*** More time spent waiting for workers. You need faster CPU or more cores." << std::endl;
+        } else {
+            std::cout << "*** More time spent waiting for scanners. You need faster I/O." << std::endl;
+        }
     }
 
     try {
