@@ -15,12 +15,19 @@ jobs:
       matrix:
         os: ['macos-10.15', 'ubuntu-20.04']
 
+    env:
+      DEBUG_NO_5G: TRUE
+
     steps:
       # https://github.com/actions/checkout
       - name: Checkout
         uses: actions/checkout@v2
         with:
           submodules: recursive
+
+      - name: Disable 5GB check
+        run: |
+          export DEBUG_NO_5G=1
 
       - name: Install C++ dependencies on MacOS
         if: startsWith(matrix.os, 'macos')

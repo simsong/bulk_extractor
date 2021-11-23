@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # coding=UTF-8
-# 
+#
 # bulk_extractor_reader.py:
 # A module for working with bulk_extractor
 
@@ -31,6 +31,11 @@ property_re = re.compile("# ([a-z0-9\-_]+):(.*)",re.I)
 MIN_FIELDS_PER_FEATURE_FILE_LINE = 3
 MAX_FIELDS_PER_FEATURE_FILE_LINE = 11
 
+import xml.dom.minidom
+import xml.parsers.expat
+import os.path,glob
+
+
 def be_version(exe):
     """Returns the version number for a bulk_extractor executable"""
     from subprocess import Popen,PIPE
@@ -55,8 +60,8 @@ def decode_feature(ffmt):
     except UnicodeDecodeError:
         pass
     return tbin
-    
-    
+
+
 def is_comment_line(line):
     if len(line)==0: return False
     if line[0:4]==b'\xef\xbb\xbf#': return True
@@ -92,9 +97,9 @@ def parse_feature_line(line):
     if line[0]==b'#': return None # can't parse a comment
     if line[-1:]==b'\r': line=line[:-1] # remove \r if it is present (running on Windows?)
     ary = line.split(b"\t")
-    
+
     # Should have betwen 3 fields (standard feature file)
-    # and no more than 
+    # and no more than
 
     if len(ary)<MIN_FIELDS_PER_FEATURE_FILE_LINE or len(ary)>MAX_FIELDS_PER_FEATURE_FILE_LINE:
         # Don't know
@@ -137,36 +142,38 @@ class BulkReport:
     b.image_filename() - Returns the name of the image file
     b.read_histogram(fn) - Reads a histogram and returns the histogram
     b.histogram_files()     - Set of histogram names
-    b.feature_files()   
+    b.feature_files()
     b.files   - Set of all files
     b.get_features(fname)   - just get the features
-"""    
+"""
 
     def __init__(self,fn,do_validate=True):
         self.commonprefix=''
         def validate():
             """Validates the XML and finds the histograms and feature files"""
-            import xml.dom.minidom
-            import xml.parsers.expat
             try:
                 self.xmldoc = xml.dom.minidom.parse(self.open("report.xml"))
             except xml.parsers.expat.ExpatError as e:
-                raise IOError("Invalid or missing report.xml file. specify do_validate=False to avoid validation")
+                raise IOError(f"Invalid or missing report.xml file attempting to read dname={self.dname} specify do_validate=False to avoid validation")
             return True
 
-        import os.path,glob
+        if fn.endswith(".xml"):
+            # we were given the .xml file; get the containing directory.
+            fn = os.path.dirname(os.path.abspath(fn))
+
         self.name  = fn
         if os.path.isdir(fn):
             self.zipfile = None
             self.dname = fn
             self.all_files = set([os.path.basename(x) for x in glob.glob(os.path.join(fn,"*"))])
             self.files = set([os.path.basename(x) for x in glob.glob(os.path.join(fn,"*.txt"))])
-            if do_validate: validate()
+            if do_validate:
+                validate()
             return
 
         if fn.endswith(".zip") and os.path.isfile(fn):
             self.zipfile = zipfile.ZipFile(fn)
-            
+
             # If there is a common prefix, we'll ignore it in is_feature_file()
             self.commonprefix = os.path.commonprefix(self.zipfile.namelist())
             while len(self.commonprefix)>0 and self.commonprefix[-1]!='/':
@@ -188,16 +195,23 @@ class BulkReport:
                     short_fn = fn.replace(report_name_prefix,"")
                 self.files.add(short_fn)
                 self.map[short_fn] = fn
-            if do_validate: validate()
+            if do_validate:
+                validate()
             return
         if fn.endswith(".txt"):
             import sys
             print("***\n*** {} ends with .txt\n*** BulkReader wants the report directory, not the individual feature file\n***".format(fn))
+
+
         raise RuntimeError("Cannot process " + fn)
 
     def image_filename(self):
         """Returns the file name of the disk image that was used."""
         return self.xmldoc.getElementsByTagName("image_filename")[0].firstChild.wholeText
+
+    def image_size(self):
+        """Returns the image size of the disk."""
+        return int(self.xmldoc.getElementsByTagName("image_size")[0].firstChild.wholeText)
 
     def version(self):
         """Returns the version of bulk_extractor that made the file."""
@@ -239,7 +253,7 @@ class BulkReport:
         else:
             mode = mode.replace("b","")+"b"
             fn = os.path.join(self.dname,fname)
-            f = open(fn,mode=mode)
+            f = open(fn, mode=mode)
         return f
 
     def count_lines(self,fname):
@@ -248,7 +262,7 @@ class BulkReport:
             if not is_comment_line(line):
                 count += 1
         return count
-        
+
     def is_histogram_file(self,fn):
         if is_histogram_filename(fn)==True: return True
         for line in self.open(fn,'r'):
@@ -270,7 +284,7 @@ class BulkReport:
             if is_comment_line(line): continue
             return is_feature_line(line)
         return False
-        
+
     def histogram_files(self):
         """Returns a list of the histograms, by name"""
         return filter(lambda fn:self.is_histogram_file(fn),self.files)
@@ -295,7 +309,6 @@ class BulkReport:
                 if p>0: k = k[0:p]
                 yield (k,int(m.group(1)))
 
-
     def read_histogram(self,fn):
         """Read a histogram file and return a dictonary of the histogram. Removes \t(utf16=...) """
         ret = {}
@@ -310,8 +323,8 @@ class BulkReport:
             r = parse_feature_line(line)
             if r:
                 yield r
-        
-        
+
+
 if(__name__=='__main__'):
     from optparse import OptionParser
     global options
@@ -336,7 +349,7 @@ if(__name__=='__main__'):
             global counter
             nfn = fntemp % counter
             counter += 1
-            print("Switching to file %s" % nfn) 
+            print("Switching to file %s" % nfn)
             return open(nfn,"w")
 
         f = next_file()
