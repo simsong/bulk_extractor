@@ -37,13 +37,13 @@
 
 /* old aes.h file */
 
-static const size_t AES128_KEY_SIZE  =               16; //  Size of a 128-bit AES key, in bytes
-static const size_t AES192_KEY_SIZE  =               24; // Size of a 192-bit AES key, in bytes
-static const size_t AES256_KEY_SIZE  =               32; // Size of a 256-bit AES key, in bytes
+const size_t AES128_KEY_SIZE  =               16; //  Size of a 128-bit AES key, in bytes
+const size_t AES192_KEY_SIZE  =               24; // Size of a 192-bit AES key, in bytes
+const size_t AES256_KEY_SIZE  =               32; // Size of a 256-bit AES key, in bytes
 
-static const size_t AES128_KEY_SCHEDULE_SIZE =      176; // Size of a 128-bit AES key schedule, in bytes
-static const size_t AES192_KEY_SCHEDULE_SIZE =      208; // Size of a 128-bit AES key schedule, in bytes
-static const size_t AES256_KEY_SCHEDULE_SIZE =      240; // Size of a 128-bit AES key schedule, in bytes
+const size_t AES128_KEY_SCHEDULE_SIZE =      176; // Size of a 128-bit AES key schedule, in bytes
+const size_t AES192_KEY_SCHEDULE_SIZE =      208; // Size of a 128-bit AES key schedule, in bytes
+const size_t AES256_KEY_SCHEDULE_SIZE =      240; // Size of a 128-bit AES key schedule, in bytes
 
 
 // Determines whether or not data represents valid
@@ -258,6 +258,41 @@ bool valid_aes128_schedule(const uint8_t * in)
 }
 
 
+// Similar to above:
+// compute an AES128 schedule, largely for testing
+void create_aes128_schedule(const uint8_t * key, uint8_t computed[AES128_KEY_SCHEDULE_SIZE])
+{
+    uint8_t t[4];
+
+    // c is 16 because the first sub-key is the user-supplied key
+    uint8_t pos = AES128_KEY_SIZE;
+    uint8_t i = 1;
+
+    memcpy(computed, key, AES128_KEY_SIZE);
+
+    // We need 11 sets of sixteen bytes each for 128-bit mode
+    while (pos < AES128_KEY_SCHEDULE_SIZE) {
+        // Copy the temporary variable over from the last 4-byte block
+        if(pos==AES128_KEY_SIZE) {
+            memcpy(t, key + AES128_KEY_SCHEDULE_SIZE - 4, 4);
+        } else {
+            memcpy(t, computed+pos-4, 4);
+        }
+
+        // Every four blocks (of four bytes), do a complex calculation
+        if (pos % AES128_KEY_SIZE == 0) {
+            schedule_core(t,i);
+            i++;
+        }
+
+        for (uint8_t a = 0; a < 4 && pos<AES128_KEY_SCHEDULE_SIZE; a++) {
+            computed[pos] = computed[pos - AES128_KEY_SIZE] ^ t[a];
+            pos++;
+        }
+    }
+}
+
+
 // Returns TRUE if the buffer in contains a valid AES-192 key
 // schedule, otherwise, FALSE.
 bool valid_aes192_schedule(const uint8_t * in)
@@ -297,8 +332,6 @@ bool valid_aes192_schedule(const uint8_t * in)
 
     return true;
 }
-
-
 
 // Returns TRUE if the buffer in contains a valid AES-256 key
 // schedule, otherwise, FALSE.
@@ -349,7 +382,7 @@ bool valid_aes256_schedule(const uint8_t * in)
 // This code is public domain.
 // Substantially modified by Simson Garfinkel
 
-static std::string key_to_string(const uint8_t * key, uint64_t sz)
+std::string key_to_string(const uint8_t * key, uint64_t sz)
 {
     std::string ret;
     for(size_t pos=0;pos<sz;pos++){

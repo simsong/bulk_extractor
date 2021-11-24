@@ -717,6 +717,31 @@ TEST_CASE("test_aes", "[phase1]") {
 }
 
 
+/* print the key schedules for several AES keys and then test them */
+void validate_aes128_key(uint8_t key[16])
+{
+    const size_t AES128_KEY_SCHEDULE_SIZE = 176;
+    uint8_t schedule[AES128_KEY_SCHEDULE_SIZE];
+    create_aes128_schedule(key, schedule);
+    for(int i=0; i<AES128_KEY_SCHEDULE_SIZE;i++){
+        printf("%02x ",schedule[i]);
+    }
+    printf("\n");
+    printf("valid schedule: %d",valid_aes128_schedule(schedule));
+    sbuf_t *keybuf = sbuf_t::sbuf_new(pos0_t(), schedule, sizeof(schedule), sizeof(schedule));
+    printf("histogram count: %zu\n",keybuf->get_histogram_count());
+    delete keybuf;
+}
+
+TEST_CASE("schedule_aes", "[phase1]") {
+    uint8_t key1[16] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}; // all zeros is not a valid AES key
+    validate_aes128_key(key1);
+    uint8_t key2[16] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}; // all zeros is not a valid AES key
+    validate_aes128_key(key2);
+    uint8_t key3[16] {0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3}; // all zeros is not a valid AES key
+    validate_aes128_key(key3);
+}
+
 TEST_CASE("test_base16json", "[phase1]") {
     std::vector<Check> ex2 {
         Check("json.txt",
