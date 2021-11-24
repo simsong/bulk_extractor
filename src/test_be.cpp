@@ -729,7 +729,7 @@ void validate_aes128_key(uint8_t key[16])
     printf("\n");
     printf("valid schedule: %d",valid_aes128_schedule(schedule));
     sbuf_t *keybuf = sbuf_t::sbuf_new(pos0_t(), schedule, sizeof(schedule), sizeof(schedule));
-    printf("histogram count: %zu\n",keybuf->get_histogram_count());
+    printf("histogram count: %zu\n",keybuf->get_distinct_character_count());
     delete keybuf;
 }
 
