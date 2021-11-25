@@ -280,7 +280,7 @@ void Phase1::phase1_run()
     assert(ss.get_current_phase() == scanner_params::PHASE_SCAN);
     // save all of the pages we have seen in the DFXML file
     for (const auto &it : config.seen_page_ids) {
-        ss.record_work_start( it, 0, 0 );
+        ss.record_work_start_pos0str( it );
     }
     xreport.push("runtime","xmlns:debug=\"http://www.github.com/simsong/bulk_extractor/issues\"");
     read_process_sbufs();

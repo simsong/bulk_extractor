@@ -117,13 +117,6 @@ bool requireFeature(const std::vector<std::string> &lines, const std::string fea
     return false;
 }
 
-/* Setup and run a scanner. Return the output directory */
-void enable_all_scanners(scanner_config &sc)
-{
-    sc.push_scanner_command(scanner_config::scanner_command::ALL_SCANNERS, scanner_config::scanner_command::ENABLE);
-}
-
-
 std::filesystem::path test_scanners(const std::vector<scanner_t *> & scanners, sbuf_t *sbuf)
 {
     REQUIRE(sbuf->children == 0);
@@ -132,7 +125,7 @@ std::filesystem::path test_scanners(const std::vector<scanner_t *> & scanners, s
     frs_flags.pedantic = true;          // for testing
     scanner_config sc;
     sc.outdir           = NamedTemporaryDirectory();
-    enable_all_scanners(sc);
+    sc.enable_all_scanners();
 
     scanner_set ss(sc, frs_flags, nullptr);
     for (auto const &it : scanners ){
@@ -490,7 +483,7 @@ TEST_CASE("test_validate", "[phase1]" ) {
     scanner_config sc;
 
     sc.outdir = NamedTemporaryDirectory();
-    enable_all_scanners(sc);
+    sc.enable_all_scanners();
     feature_recorder_set::flags_t frs_flags;
     frs_flags.pedantic = true;          // for testing
 
@@ -564,7 +557,7 @@ std::filesystem::path validate(std::string image_fname, std::vector<Check> &expe
     scanner_config sc;
 
     sc.outdir           = NamedTemporaryDirectory();
-    enable_all_scanners(sc);
+    sc.enable_all_scanners();
     sc.allow_recurse    = recurse;
 
     std::cerr << "## image_fname: " << image_fname << " outdir: " << sc.outdir << std::endl;
@@ -948,7 +941,7 @@ TEST_CASE("image_process", "[phase1]") {
 TEST_CASE("path_printer", "[path_printer]") {
     scanner_config sc;
     sc.input_fname = test_dir() / "test_hello.512b.gz";
-    enable_all_scanners(sc);
+    sc.enable_all_scanners();
     sc.allow_recurse = true;
 
     scanner_set ss(sc, feature_recorder_set::flags_disabled(), nullptr);
