@@ -205,7 +205,7 @@ def rfc822Tdatetime(s):
 ###
 
 class byte_run:
-    """The internal representation for a byte run. 
+    """The internal representation for a byte run.
 
     byte_runs have the following attributes:
     .img_offset  = offset of the byte run from the image start, in bytes
@@ -215,7 +215,7 @@ class byte_run:
     Originally this was an array,
     which is faster than an attributed object. But this approach is more expandable,
     and it's only 70% the speed of an array under Python3.0.
-        
+
     Note that Python 3 removed the __cmp__ class method:
         <http://docs.python.org/release/3.0.1/whatsnew/3.0.html#ordering-comparisons>
     """
@@ -227,7 +227,7 @@ class byte_run:
         self.file_offset = file_offset
         self.len = len
         self.sector_size = 512          # default
-        self.hashdigest  = dict()       # 
+        self.hashdigest  = dict()       #
 
     def __lt__(self,other):
         if self.img_offset is not None and other.img_offset is not None:
@@ -236,7 +236,7 @@ class byte_run:
             return self.file_offset < other.file_offset
         else:
             raise ValueError("Byte run objects are incomparable")
-    
+
     def __eq__(self,other):
         if self.img_offset is not None and other.img_offset is not None:
             return self.img_offset == other.img_offset
@@ -262,7 +262,7 @@ class byte_run:
                 self.file_offset,self.uncompressed_len)
         except AttributeError:
             return "byte_run"+str(dir(self))
-    
+
     def start_sector(self):
         return self.img_offset // self.sector_size
 
@@ -280,7 +280,7 @@ class byte_run:
         except AttributeError:
             # Doesn't have necessary attributes to answer true.
             # Usually this happens with runs of a constant value
-            return False       
+            return False
 
     def extra_len(self):
         return self.len % self.sector_size
@@ -292,19 +292,19 @@ class byte_run:
             except ValueError:
                 setattr(self,key,value)
 
-        
+
     def decode_sax_attributes(self,attr):
         for (key,value) in attr.items():
-            if key=='bytes': key=='len' # tag changed name; provide backwards compatiability 
+            if key=='bytes': key=='len' # tag changed name; provide backwards compatiability
             try:
                 setattr(self,key,int(value))
             except ValueError:
                 setattr(self,key,value)
-        
+
 class ComparableMixin(object):
     """
     Comparator "Abstract" class.  Classes inheriting this must define a _cmpkey() method.
-    
+
     Credit to Lennart Regebro for the total implementation of this class, found equivalently from:
     http://regebro.wordpress.com/2010/12/13/python-implementing-rich-comparison-the-correct-way/
     http://stackoverflow.com/questions/6907323/comparable-classes-in-python-3/6913420#6913420
@@ -340,16 +340,20 @@ class dftime(ComparableMixin):
     results as necessary.."""
     UTC = GMTMIN(0)
 
+    def toordinal(self):
+        return self.timestamp()
+
     def ts2datetime(self,ts):
         import datetime
         return datetime.datetime.utcfromtimestamp(ts).replace(tzinfo=dftime.UTC)
 
-    def __init__(self,val):
+    def __init__(self, val=None):
         #'unicode' is not a type in Python 3; 'basestring' is not a type in Python 2.
         if sys.version_info >= (3,0):
             _basestring = str
         else:
             _basestring = basestring
+
         if isinstance(val, str) or isinstance(val,_basestring):
             #
             #Test for ISO 8601 format - "YYYY-MM-DD" should have hyphen at val[4]
@@ -389,7 +393,7 @@ class dftime(ComparableMixin):
     def _cmpkey(self):
         """Provide a key to use for comparisons; for use with ComparableMixin parent class."""
         return self.timestamp()
-    
+
     def __eq__(self,b):
         if b == None:
             #This will always be False - if self were None, we wouldn't be in this __eq__ method.
@@ -403,7 +407,7 @@ class dftime(ComparableMixin):
             return self.iso8601_
         except AttributeError:
             pass
-        
+
         # Do we have a datetime representation?
         try:
             self.iso8601_ = self.datetime_.isoformat()
@@ -412,7 +416,7 @@ class dftime(ComparableMixin):
             # We better have a Unix timestamp representation?
             self.iso8601_ = time.strftime("%Y-%m-%dT%H:%M:%SZ",time.gmtime(self.timestamp_))
             return self.iso8601_
-    
+
     def timestamp(self):
         import time
         # Do we have a cached representation?
@@ -429,7 +433,7 @@ class dftime(ComparableMixin):
             self.datetime_ = iso8601Tdatetime(self.iso8601_)
             self.timestamp_ = time.mktime(self.datetime_.timetuple())
             return self.timestamp_
-        
+
     def datetime(self):
         import datetime
         # return the datetime from parsing either iso8601 or from parsing timestamp
@@ -445,7 +449,7 @@ class registry_object:
     def __init__(self):
         self.object_index = {}
         self._mtime = None
-        
+
         """Keep handy a handle on the registry object"""
         self.registry_handle = self
 
@@ -468,7 +472,7 @@ class registry_cell_object:
 
         """Keep handy a handle on the registry object"""
         self.registry_handle = None
-        
+
         """Name the cell type, for str() and repr()."""
         self._cell_type = "(undefined cell object type)"
 
@@ -548,7 +552,7 @@ class registry_value_object(registry_cell_object):
         self.value_data  = None
 
         self._cell_type = "registry_value_object"
-        
+
         #TODO Replace to be in line with fileobjects: fileobject.hashdigest is a dictionary
         self._hashcache = dict()
 
@@ -609,7 +613,7 @@ class fileobject:
     def __init__(self,imagefile=None):
         self.imagefile  = imagefile
         self.hashdigest = dict()
-        
+
     def __str__(self):
         try:
             fn = self.filename()
@@ -660,25 +664,25 @@ class fileobject:
         t = self.tag("ctime")
         if t: return dftime(t)
         return None
-        
+
     def atime(self):
         """Access time, as number of seconds since January 1, 1970 (Unix time)"""
         t = self.tag("atime")
         if t: return dftime(t)
         return None
-        
+
     def crtime(self):
         """CR time, as number of seconds since January 1, 1970 (Unix time)"""
         t = self.tag("crtime")
         if t: return dftime(t)
         return None
-        
+
     def mtime(self):
         """Modify time, as number of seconds since January 1, 1970 (Unix time)"""
         t = self.tag("mtime")
         if t: return dftime(t)
         return None
-        
+
     def dtime(self):
         """ext2 dtime"""
         t = self.tag("dtime")
@@ -810,7 +814,7 @@ class fileobject:
         if self.encrypted()      : raise ValueError("Cannot generate content for encrypted files")
         if self.compressed() or imagefile.name.endswith(".aff") or imagefile.name.endswith(".E01"):
             if icat_fallback:
-                # 
+                #
                 # For now, compressed files rely on icat rather than python interface
                 #
                 offset     = safeInt(self.volume.offset)
@@ -864,7 +868,7 @@ class fileobject:
                 count -= xfer_len
         tf.flush()
         return tf
-        
+
     def savefile(self,filename=None):
         """Saves the file."""
         with open(filename,"wb") as f:
@@ -872,7 +876,7 @@ class fileobject:
                 self.imagefile.seek(run.img_offset)
                 count = run.len
                 while count>0:
-                    xfer_len = min(count,1024*1024)        # transfer up to a megabyte at a time 
+                    xfer_len = min(count,1024*1024)        # transfer up to a megabyte at a time
                     buf = self.imagefile.read(xfer_len)
                     if len(buf)==0: break
                     f.write(buf)
@@ -887,7 +891,7 @@ class fileobject:
 
 class fileobject_dom(fileobject):
     """file objects created through the DOM. Each object has the XML document
-    stored in the .doc attribute."""    
+    stored in the .doc attribute."""
     def __init__(self,xmldoc,imagefile=None):
         fileobject.__init__(self,imagefile=imagefile)
         self.doc = xmldoc
@@ -982,7 +986,7 @@ register_sax_tag(volumeobject_sax,'ftype_str')
 register_sax_tag(volumeobject_sax,'block_count')
 register_sax_tag(volumeobject_sax,'first_block')
 register_sax_tag(volumeobject_sax,'last_block')
-    
+
 class imageobject_sax(saxobject):
     """A class that represents the disk image"""
 register_sax_tag(imageobject_sax,'imagesize')
@@ -1023,7 +1027,7 @@ class xml_reader:
     def __init__(self):
         self.cdata = None
         self.tagstack = ['xml']
-    
+
     def _char_data(self, data):
         """Handles XML data"""
         if self.cdata != None:
@@ -1039,7 +1043,7 @@ class xml_reader:
         p.StartElementHandler  = self._start_element
         p.EndElementHandler    = self._end_element
         p.CharacterDataHandler = self._char_data
-        p.ParseFile(xml_stream)    
+        p.ParseFile(xml_stream)
 
 class regxml_reader(xml_reader):
     def __init__(self,flags=None):
@@ -1064,7 +1068,7 @@ class regxml_reader(xml_reader):
             self.registry_object = new_object
         elif name in ["key","node"]:
             new_object = registry_key_object()
-            
+
             #Note these two tests for root and parent _are_ supposed to be independent tests.
             if attrs.get("root",None) == "1":
                 new_object._type = "root"
@@ -1107,7 +1111,7 @@ class regxml_reader(xml_reader):
 
             if new_object.type() == "string-list":
                 new_object.strings = []
-            
+
             #Store decoded name
             if attrs.get("default",None) == "1":
                 new_object._name = "Default"
@@ -1149,7 +1153,7 @@ class regxml_reader(xml_reader):
         value_data = attrs.get("value",None)
         if value_data:
             # TODO adjust hivexml to not use a plain "encoding" attribute
-            value_encoding = attrs.get("encoding", attrs.get("value_encoding")) 
+            value_encoding = attrs.get("encoding", attrs.get("value_encoding"))
             if value_encoding == "base64":
                 if sys.version_info.major>2:
                     value_data = bytes(value_data,encoding='ascii')
@@ -1216,7 +1220,7 @@ class fileobject_reader(xml_reader):
 
         Type: None, or dfxml.fileobject.  Type enforced by the setter method.
         """
-        return self._sax_fi_pointer_ 
+        return self._sax_fi_pointer_
     @_sax_fi_pointer.setter
     def _sax_fi_pointer(self, val):
         if val is None:
@@ -1224,7 +1228,7 @@ class fileobject_reader(xml_reader):
         else:
             assert isinstance(val, fileobject)
             self._sax_fi_pointer_ = val
-        
+
     def _start_element(self, name, attrs):
         """ Handles the start of an element for the XPAT scanner"""
         _logger.debug("fileobject_reader._start_element: name = %r" % name)
@@ -1235,7 +1239,7 @@ class fileobject_reader(xml_reader):
             self.volumeobject.block_size = 512 # reasonable default
             self.volumeobject.image      = self.imageobject
             if "offset" in attrs:
-                self.volumeobject.offset = int(attrs["offset"]) 
+                self.volumeobject.offset = int(attrs["offset"])
             return
         if name=="block_size":
             pass
@@ -1250,7 +1254,7 @@ class fileobject_reader(xml_reader):
             self._sax_fi_pointer = self.fileobject.original_fileobject
             return
         if name=='hashdigest':
-            self.hashdigest_type = attrs['type'] 
+            self.hashdigest_type = attrs['type']
         if self.fileobject and (name=="run" or name=="byte_run"):
             b = byte_run()
             b.decode_sax_attributes(attrs)
@@ -1264,8 +1268,8 @@ class fileobject_reader(xml_reader):
         if name=="volume":
             self.volumeobject = None
             return
-        if name=="block_size" and len(self.tagstack) > 1 : 
-            if self.tagstack[-1] == "volume" : 
+        if name=="block_size" and len(self.tagstack) > 1 :
+            if self.tagstack[-1] == "volume" :
                 self.volumeobject.block_size = int(self.cdata)
                 self.cdata=None
             return
@@ -1395,18 +1399,18 @@ class extentdb:
         self.db = []                    # the database of runs
         self.sectorsize = 512
         pass
-    
+
     def report(self,f):
         """Print information about the database"""
         f.write("sectorsize: %d\n" % self.sectorsize)
         for run in sorted(self.db):
             f.write("   [@%8d ; %8d]\n" % (run.img_offset,run.len))
         f.write("total entries in database: %d\n\n" % len(r))
-    
+
     def sectors_for_bytes(self,count):
         """Returns the number of sectors necessary to hold COUNT bytes"""
         return (count+self.sectorsize-1)//self.sectorsize
-    
+
     def sectors_for_run(self,run):
         """Returns an array of the sectors for a given run"""
         start_sector = run.img_offset/self.sectorsize
@@ -1489,7 +1493,7 @@ def read_dfxml(xmlfile=None,imagefile=None,flags=0,callback=None,preserve_fis=Fa
 
 def iter_dfxml(xmlfile, preserve_elements=False, imagefile=None):
     """Returns an interator that yields fileobjects from a DFXML file.
-    
+
     @param preserve_elements
     Yielded fileobjects can also retain the xml.etree.ElementTree.Element,
     the fileobject's source XML as a manipulable object.
@@ -1497,8 +1501,8 @@ def iter_dfxml(xmlfile, preserve_elements=False, imagefile=None):
     NOTE: Retaining Elements is quite memory-intensive.  Creating a MAC
     timeline from DFXML of the "CFREDS Hacking" image (a 34MB XML file)
     using demo_mac_timeline_iter.py maxed at 65MB of RAM without
-    preserve_elements, and about 650MB with.  
-    
+    preserve_elements, and about 650MB with.
+
     This function might be extended in the future to call Fiwalk (and
     thus become what fileobjects_iter was supposed to be).
 
@@ -1616,7 +1620,7 @@ def volumeobjects_sax(xmlfile=None,imagefile=None,flags=0):
     r = volumeobject_reader()
     r.process_xml_stream(xmlfile,imagefile=None,callback=lambda vo:ret.append(vo))
     return ret
-    
+
 def creatorobjects_sax(xmlfile=None,flags=0):
     r = creatorobject_reader()
     ret = []
@@ -1625,7 +1629,7 @@ def creatorobjects_sax(xmlfile=None,flags=0):
     except FinishedReadingCreator as e:
         pass
     return ret
-        
+
 ################################################################
 if __name__=="__main__":
     from optparse import OptionParser
@@ -1641,7 +1645,7 @@ if __name__=="__main__":
         if result != want:
             warn = " (!)"
         print("a=%s b=%s want=%s equal=%s%s" % (da,db,want,result,warn))
-    
+
     def check_greater(a,b,want=None):
         da = dftime(a)
         db = dftime(b)

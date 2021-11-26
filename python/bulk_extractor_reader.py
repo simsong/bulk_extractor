@@ -12,6 +12,8 @@ b.histogram_files()    = List of histograms
 b.read_histogram() = Returns a dictionary of the histogram
 b.open(fname)     = Opens a feature file in the report
 BulkReport.is_comment_line(line) - returns true if line is a commont line
+b.cpu_track() - List of (cpu%, time) tuples
+b.rusage() - a dictionary with 'utime', 'stime,' 'maxrss, 'majflt', 'nswap', 'inblocks', 'outblocks', 'clocktime'
 
 Note: files are always opened in binary mode and converted line-by-line
 to text mode. The confusion is that ZIP files are always opened as binary
@@ -33,7 +35,10 @@ MAX_FIELDS_PER_FEATURE_FILE_LINE = 11
 
 import xml.dom.minidom
 import xml.parsers.expat
-import os.path,glob
+import os.path
+import glob
+import dfxml
+import datetime
 
 
 def be_version(exe):
@@ -202,7 +207,6 @@ class BulkReport:
             import sys
             print("***\n*** {} ends with .txt\n*** BulkReader wants the report directory, not the individual feature file\n***".format(fn))
 
-
         raise RuntimeError("Cannot process " + fn)
 
     def image_filename(self):
@@ -241,6 +245,13 @@ class BulkReport:
         """Returns the maximum memory allocated for this run."""
         return int((self.xmldoc.getElementsByTagName("rusage")[0]
                 .getElementsByTagName("maxrss")[0].firstChild.wholeText))
+
+    def cpu_track(self):
+        """Returns a list of (date,cpu) values """
+        return sorted([
+            ( datetime.datetime.fromtimestamp(int(e.getAttribute('t'))/1000.0),
+              float(e.getAttribute('cpu_percent')))
+            for e in self.xmldoc.getElementsByTagName("runtime")[0].getElementsByTagName("debug:work_end")])
 
     def open(self,fname,mode='r'):
         """Opens a named file in the bulk report. Default is text mode.

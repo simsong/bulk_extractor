@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 """
 Reads multiple dfxml files and prepares a graph!
+X and Y axis are independently specified.
+Can specify multiple 'groups' which can be a single line, or multiple lines.
 """
 
 import argparse
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
+import math
 from bulk_extractor_reader import BulkReport
 
 def make_plot(datasets, x_var, y_vars, group_var, filename):
@@ -17,16 +21,16 @@ def make_plot(datasets, x_var, y_vars, group_var, filename):
     exemplar = max(datasets, key=len)
     x_values = tuple((str(x_var.of(report)) for report in exemplar))
     # list of lists of y values
-    y_valueses = tuple()
+    all_y_values = tuple()
 
     minima = tuple()
     maxima = tuple()
     plot_labels = tuple()
 
     for dataset in datasets:
-        y_valueses += (tuple((y_var.of(report) for report in dataset)),)
-        minima += (min(y_valueses[-1]),)
-        maxima += (max(y_valueses[-1]),)
+        all_y_values += (tuple((y_var.of(report) for report in dataset)),)
+        minima += (min(all_y_values[-1]),)
+        maxima += (max(all_y_values[-1]),)
         plot_labels += (group_var.name + " " + str(group_var.of(dataset[0])),)
 
     y_min = min(minima)
@@ -50,7 +54,7 @@ def make_plot(datasets, x_var, y_vars, group_var, filename):
     ax.set_xticks(np.arange(len(exemplar)))
     ax.set_xticklabels(x_values)
 
-    for y_values, plot_label in zip(y_valueses, plot_labels):
+    for y_values, plot_label in zip(all_y_values, plot_labels):
         plt.plot(y_values, label=plot_label)
 
     plt.title("bulk_extractor Benchmark")
@@ -59,6 +63,43 @@ def make_plot(datasets, x_var, y_vars, group_var, filename):
     if group_var.name != "none":
         plt.legend()
 
+    plt.savefig(filename, format='pdf')
+
+def plot_cpu(*, reports, filename):
+    """Read reports and plot the CPU"""
+
+    fig = plt.figure()
+    ax = fig.add_axes((0.1, 0.2, 0.8, 0.7))
+    ax.set_ylabel("% of CPU utilized")
+    ax.set_xlabel("Seconds from start of run")
+    ax.spines['right'].set_color('none')
+    ax.spines['top'].set_color('none')
+    ax.xaxis.set_ticks_position('bottom')
+    ax.yaxis.set_ticks_position('left')
+    ax.set_ylim(ymin=0,ymax=400)
+
+    ymax = 100
+    lines = []
+    legends = []
+    for report in reports:
+        r = BulkReport(report)
+        xyvals = r.cpu_track()
+
+        # Extract timestamps and convert to seconds from beginning of run
+        xvals = [xy[0] for xy in xyvals]
+        xmin = min(xvals)
+        xvals = [ (x-xmin).total_seconds() for x in xvals]
+
+        # Extract CPU% and find max val
+        yvals = [xy[1] for xy in xyvals]
+        ymax  = max([ymax] + yvals)
+
+        # Plot and retain handle
+        line, = plt.plot( xvals, yvals, label='report')
+        lines.append(line)
+
+    ax.legend( handles=lines )        # draw legends
+    ax.set_ylim(ymin=0, ymax=math.ceil(ymax/100)*100)   # set ymax
     plt.savefig(filename, format='pdf')
 
 class AxisVar:
@@ -96,20 +137,21 @@ class AxisVar:
         print("self.label=",self.label)
 
 if __name__ == "__main__":
-    arg_parser = argparse.ArgumentParser(
+    parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description="produce a performance data graph from various bulk_extractor outputs")
-    arg_parser.add_argument("reports", metavar="report", nargs="+",
+    parser.add_argument("reports", metavar="report", nargs="+",
                             help="bulk_extractor report directory or DFXML file or zip file to graph")
-    arg_parser.add_argument("-x", dest="x_var", default="version", type=AxisVar,
+    parser.add_argument("-x", "--x_var", default="version", type=AxisVar,
                             help="x axis variable (version, threads, page_size, image_size or margin_size)")
-    arg_parser.add_argument("-g", "--grouping", dest="group_var", type=AxisVar, help="variable to group results by")
-    arg_parser.add_argument("-o", dest="output_filename", default="be_graph.pdf")
-    arg_parser.add_argument("--memory", dest="show_memory", action="store_true",
-                            help="plot bulk_extractor runs agains their peak memory usage")
-    arg_parser.add_argument("--xdups_ok", help="It is okay to have dups on the X axis", action='store_true')
+    parser.add_argument("-g", "--grouping", dest="group_var", type=AxisVar, help="variable to group results by")
+    parser.add_argument("-o", "--output_filename", default="be_graph.pdf")
+    parser.add_argument("--memory", "--show_memory", action="store_true",
+                        help="plot bulk_extractor runs agains their peak memory usage")
+    parser.add_argument("--cpu", action="store_true", help="plot bulk_extractor cpu vs. time")
+    parser.add_argument("--xdups_ok", help="It is okay to have dups on the X axis", action='store_true')
 
-    args = arg_parser.parse_args()
+    args = parser.parse_args()
     if args.group_var:
         group_var = AxisVar(args.group_var)
         print("group_var 1", group_var)
@@ -118,9 +160,15 @@ if __name__ == "__main__":
         print("group_var 2")
         print(group_var)
 
+    if args.cpu:
+        plot_cpu( reports=args.reports, filename=args.output_filename )
+        exit(0)
+
     y_vars = []
     if args.show_memory:
         y_vars.append(AxisVar("peak_memory"))
+    elif args.cpu:
+        y_vars.append(AxisVar("cpu"))
     else:
         y_vars.append(AxisVar("clocktime"))
 
