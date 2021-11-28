@@ -716,13 +716,15 @@ void validate_aes128_key(uint8_t key[16])
     const size_t AES128_KEY_SCHEDULE_SIZE = 176;
     uint8_t schedule[AES128_KEY_SCHEDULE_SIZE];
     create_aes128_schedule(key, schedule);
+#if 0
     for(int i=0; i<AES128_KEY_SCHEDULE_SIZE;i++){
         printf("%02x ",schedule[i]);
     }
     printf("\n");
-    printf("valid schedule: %d",valid_aes128_schedule(schedule));
+#endif
+    printf("valid schedule: %d\n",valid_aes128_schedule(schedule));
     sbuf_t *keybuf = sbuf_t::sbuf_new(pos0_t(), schedule, sizeof(schedule), sizeof(schedule));
-    printf("histogram count: %zu\n",keybuf->get_distinct_character_count());
+    printf("histogram count: %zu (out of %zu characters)\n",keybuf->get_distinct_character_count(),sizeof(schedule));
     delete keybuf;
 }
 

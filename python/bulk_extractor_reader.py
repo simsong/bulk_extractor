@@ -251,7 +251,7 @@ class BulkReport:
         return sorted([
             ( datetime.datetime.fromtimestamp(int(e.getAttribute('t'))/1000.0),
               float(e.getAttribute('cpu_percent')))
-            for e in self.xmldoc.getElementsByTagName("runtime")[0].getElementsByTagName("debug:work_end")])
+            for e in self.xmldoc.getElementsByTagName("runtime")[0].getElementsByTagName("debug:cpu_benchmark")])
 
     def open(self,fname,mode='r'):
         """Opens a named file in the bulk report. Default is text mode.

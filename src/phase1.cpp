@@ -174,7 +174,7 @@ void Phase1::read_process_sbufs()
         }
 
         /* If there are too many in the queue, wait... */
-        if (ss.depth0_sbufs_in_queue > ss.get_thread_count()) {
+        if (ss.depth0_sbufs_in_queue > ss.get_worker_count()) {
             using namespace std::chrono_literals;
             std::this_thread::sleep_for(2000ms);
             continue;

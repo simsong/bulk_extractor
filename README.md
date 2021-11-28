@@ -1,16 +1,16 @@
 [![codecov](https://codecov.io/gh/simsong/bulk_extractor/branch/main/graph/badge.svg?token=3w691sdgLu)](https://codecov.io/gh/simsong/bulk_extractor)
 
 `bulk_extractor` is a high-performance digital forensics exploitation tool.
-It is a "get evidence" button that rapidly 
-scans any kind of input (disk images, files, directories of files, etc) 
+It is a "get evidence" button that rapidly
+scans any kind of input (disk images, files, directories of files, etc)
 and extracts structured information such as email addresses, credit card numbers,
 JPEGs and JSON snippets without parsing the file
-system or file system structures. The results are stored in text files that are easily 
+system or file system structures. The results are stored in text files that are easily
 inspected, searched, or used as inputs for other forensic processing. bulk_extractor also creates
-histograms of certain kinds of features that it finds, such as Google search terms and email addresses, 
+histograms of certain kinds of features that it finds, such as Google search terms and email addresses,
 as previous research has shown that such histograms are especially useful in investigative and law enforcement applications.
 
-Unlike other digital forensics tools, `bulk_extractor` probes every byte of data to see if it is the start of a 
+Unlike other digital forensics tools, `bulk_extractor` probes every byte of data to see if it is the start of a
 sequence that can be decompressed or otherwise decoded. If so, the
 decoded data are recursively re-examined. As a result, `bulk_extractor` can find things like BASE64-encoded JPEGs and
 compressed JSON objects that traditional carving tools miss.
@@ -38,7 +38,6 @@ https://github.com/simsong/bulk_extractor/wiki/Installing-bulk_extractor
 The Windows version of bulk_extractor must be built on Fedora using mingw.
 
 For more information on bulk_extractor, visit: https://forensicswiki.xyz/wiki/index.php?title=Bulk_extractor
-
 
 Tested Configurations
 =====================
@@ -79,11 +78,33 @@ keywords = {Digital forensics, Bulk data analysis, bulk_extractor, Stream-based 
 }
 ```
 
+ENVIRONMENT VARIABLES
+=====================
+The following environment variables can be set to change the operation of `bulk_extractor`:
+
+|Variable|Behavior|
+|--------|--------|
+|`DEBUG_BENCHMARK_CPU`|Include CPU benchmark information in `report.xml` file|
+|`DEBUG_NO_SCANNER_BYPASS`|Disables scanner bypass logic that bypasses some scanners if an sbuf contains ngrams or does not have a high distinct character count.|
+|`DEBUG_HISTOGRAMS`|Print debugging information on file-based histograms.|
+|`DEBUG_HISTOGRAMS_NO_INCREMENTAL`|Do not use incremental, memory-based histograms.|
+|`DEBUG_PRINT_STEPS`|Prints to stdout when each scanner is called for each sbuf|
+|`DEBUG_DUMP_DATA`|Hex-dump each sbuf that is to be scanned.|
+|`DEBUG_SCANNERS_IGNORE`|A comma-separated list of scanners to ignore (not load). Useful for debugging unit tests.|
+
+Other hints for debugging:
+
+* Run -xall to run without any scanners.
+* Run with a random sampling of 0.001% to debug reading image size and a few quick seeks.
+
+
+
+
 BULK_EXTRACTOR 2.0 STATUS REPORT
 ================================
-`bulk_extractor` 2.0 is now operational for development use. It
-requires C++17 to compile. I am keeping be13_api and dfxml as a modules that are included, python-style, rather than making them stand-alone libraries that are linked against.
+`bulk_extractor` 2.0 (BE2) is now operational for development use and testing. However, it has not yet been validated.
+
+BE2  requires C++17 to compile. It requires `https://github.com/simsong/be13_api.git` as a sub-module, which in turn requires `dfxml` as a sub-module.
 
 The project took longer than anticipated. In addition to updating to
-C++17, I used this as an opportunity for massive code refactoring and
-general increase in reliability.
+C++17, It was used as an opportunity for massive code refactoring and general increase in code quality, testability and reliability.

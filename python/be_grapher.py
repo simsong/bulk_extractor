@@ -133,8 +133,6 @@ class AxisVar:
             self.label = "Nothing"
         else:
             raise ValueError("unknown variable name " + str(var_name))
-        print("self.of=",self.of)
-        print("self.label=",self.label)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -154,11 +152,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.group_var:
         group_var = AxisVar(args.group_var)
-        print("group_var 1", group_var)
     else:
         group_var = AxisVar("none")
-        print("group_var 2")
-        print(group_var)
 
     if args.cpu:
         plot_cpu( reports=args.reports, filename=args.output_filename )
@@ -175,8 +170,7 @@ if __name__ == "__main__":
     try:
         reports = sorted((BulkReport(x) for x in args.reports), key=group_var.of)
     except RuntimeError as e:
-        print("failed to open reports: ", str(e), file=sys.stderr)
-        exit(1)
+        raise RuntimeError(f"failed to open reports: {e}")
 
     # group related data into datasets
     datasets = []
