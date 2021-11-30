@@ -25,7 +25,7 @@ jobs:
         with:
           submodules: recursive
 
-      - name: "MacOS" Install C++ dependencies"
+      - name: "MacOS: Install C++ dependencies"
         if: startsWith(matrix.os, 'macos')
         run: |
           brew install autoconf automake libtool libxml2 libewf json-c
