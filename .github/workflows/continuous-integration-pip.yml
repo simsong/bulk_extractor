@@ -25,28 +25,34 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Disable 5GB check
-        run: |
-          export DEBUG_NO_5G=1
-
-      - name: Install C++ dependencies on MacOS
+      - name: MacOS: Install C++ dependencies
         if: startsWith(matrix.os, 'macos')
         run: |
           brew install autoconf automake libtool libxml2 libewf json-c
 
-      - name: run CONFIGURE_UBUNTU20LTS.bash
+      - name: Ubuntu: run CONFIGURE_UBUNTU20LTS.bash
         if: startsWith(matrix.os, 'ubuntu')
         run: |
           echo "" | bash etc/CONFIGURE_UBUNTU20LTS.bash
 
-      - name: Run C++ checks without codecov
+      - name: C++ checks with address-sanitizer
         if: startsWith(matrix.os, 'macos')
         run: |
           bash bootstrap.sh
-          ./configure -q --disable-opt --enable-silent-rules \
+          ./configure -q --disable-opt --enable-silent-rules --enable-address-sanitizer \
           && make && (cd src; make check || (cat test-suite.log; exit 1))
 
-      - name: Run C++ checks with codecov
+      - uses: ammaraskar/gcc-problem-matcher@0.1
+        name: GCC Problem Matcher
+
+      - name: C++ checks with thread-sanitizer
+        if: startsWith(matrix.os, 'macos')
+        run: |
+          bash bootstrap.sh
+          ./configure -q --disable-opt --enable-silent-rules --enable-thread-sanitizer \
+          && make && (cd src; make check || (cat test-suite.log; exit 1))
+
+      - name: C++ checks with codecov
         if: startsWith(matrix.os, 'ubuntu')
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -76,7 +82,3 @@ jobs:
       - name: distcheck
         run: |
           make clean && make distcheck
-
-
-      - uses: ammaraskar/gcc-problem-matcher@0.1
-        name: GCC Problem Matcher
