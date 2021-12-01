@@ -29,7 +29,6 @@ jobs:
         if: startsWith(matrix.os, 'macos')
         run: |
           brew install autoconf automake libtool libxml2 libewf json-c
-          brew install llvm --with-asan
 
       - name: "Ubuntu: run CONFIGURE_UBUNTU20LTS.bash"
         if: startsWith(matrix.os, 'ubuntu')
@@ -47,7 +46,7 @@ jobs:
         name: GCC Problem Matcher
 
       - name: C++ checks with thread-sanitizer
-        if: startsWith(matrix.os, 'macos')
+        if: startsWith(matrix.os, 'ubuntu')
         run: |
           bash bootstrap.sh
           ./configure -q --disable-opt --enable-silent-rules --enable-thread-sanitizer \
