@@ -29,7 +29,7 @@ jobs:
         if: startsWith(matrix.os, 'macos')
         run: |
           brew install autoconf automake libtool libxml2 libewf json-c
-          brew install llvm --with-clang --with-asan
+          brew install llvm --with-asan
 
       - name: "Ubuntu: run CONFIGURE_UBUNTU20LTS.bash"
         if: startsWith(matrix.os, 'ubuntu')
