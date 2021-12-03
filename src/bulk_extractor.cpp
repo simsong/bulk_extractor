@@ -559,31 +559,30 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     o->fraction_done = &fraction_done;
     o->phase = 1;
 
-    if ( cfg.opt_notification) {
-        notify_thread::launch_notify_thread( o);
-    }
-    ss.phase_scan();
 
 #ifdef USE_SQLITE3
     if ( fs.flag_set( feature_recorder_set::ENABLE_SQLITE3_RECORDERS )) {
         fs.db_transaction_begin();
     }
 #endif
-
     /* Go multi-threaded if requested */
     if ( cfg.num_threads > 0){
         cout << "going multi-threaded...( " << cfg.num_threads << " )" << std::endl ;
         ss.launch_workers( cfg.num_threads);
     } else {
         cout << "running single-threaded (DEBUG)..." << std::endl ;
-
     }
 
     phase1.dfxml_write_create( original_argc, original_argv);
     xreport->xmlout( "provided_filename", sc.input_fname ); // save this information
     xreport->add_timestamp( "phase1 start" );
 
+    if ( cfg.opt_notification) {
+        notify_thread::launch_notify_thread( o );
+    }
+
     try {
+        ss.phase_scan();
         phase1.phase1_run();
         ss.join();                          // wait for threads to come together
     }
@@ -677,6 +676,10 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     }
 
     muntrace();
-    /* TODO: We could wait for the notify thread to actually exit, but then we would need to address the sleep, and end up putting in a condition varialbe, and it would be a pain. */
+
+    /* TODO: Create a condition variable to tell the notify thread to terminate early. */
+    if ( cfg.opt_notification) {
+        notify_thread::launch_notify_thread( o );
+    }
     return( 0 );
 }

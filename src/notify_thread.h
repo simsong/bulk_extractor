@@ -30,6 +30,8 @@ struct notify_thread {
 
     static void notifier( struct notify_opts *o );
     static void launch_notify_thread( struct notify_opts *o);
+    static std::thread *the_notify_thread;
+    static void join_notify_thread();
 };
 
 #endif

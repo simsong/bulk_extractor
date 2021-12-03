@@ -15,6 +15,8 @@
 #include <term.h>
 #endif
 
+std::thread *notify_thread::the_notify_thread = nullptr;
+
 int notify_thread::terminal_width( int default_width )
 {
 #if defined(HAVE_IOCTL) && defined(HAVE_STRUCT_WINSIZE_WS_COL)
@@ -67,12 +69,9 @@ void notify_thread::notifier( struct notify_thread::notify_opts *o)
         {
             std::lock_guard<std::mutex> lock(o->Mphase);
             if (o->phase > 1) {
-                delete o;               // deletes object we were given
-                return;                 // exits thread
+                break;
             }
         }
-
-        if (o->phase>1) break;
 
         // get screen size change if we can!
         cols = terminal_width( cols);
@@ -125,14 +124,20 @@ void notify_thread::notifier( struct notify_thread::notify_opts *o)
         }
         std::this_thread::sleep_for( std::chrono::seconds( o->cfg.opt_notify_rate ));
     }
-    for(int i=0;i<5;i++){
-        std::cout << std::endl;
-    }
-    std::cout << "Computing final histograms and shutting down...\n";
-    return;                             // end of notifier thread.
+    delete o;
+    return;
 }
 
 void notify_thread::launch_notify_thread( struct notify_thread::notify_opts *o)
 {
-    new std::thread( &notifier, o);    // launch the notify thread
+    the_notify_thread = new std::thread( &notifier, o);    // launch the notify thread
+}
+
+void notify_thread::join_notify_thread()
+{
+    if (the_notify_thread != nullptr) {
+        the_notify_thread->join();
+        delete the_notify_thread;
+        the_notify_thread = nullptr;
+    }
 }
