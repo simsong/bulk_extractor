@@ -46,7 +46,7 @@ jobs:
         name: GCC Problem Matcher
 
       - name: C++ checks with thread-sanitizer
-        if: startsWith(matrix.os, 'ubuntu')
+        if: startsWith(matrix.os, 'ubuntu-DISABLE')
         run: |
           bash bootstrap.sh
           ./configure -q --disable-opt --enable-silent-rules --enable-thread-sanitizer \
