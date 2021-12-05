@@ -11,27 +11,27 @@
 #include "be13_api/scanner_set.h"
 #include "phase1.h"
 
-struct notify_thread {
-    struct notify_opts {
-        notify_opts(const Phase1::Config &cfg_) : cfg(cfg_) {};
-        scanner_set *ssp {};
-        aftimer *master_timer {};
-        std::atomic<double> *fraction_done {};
-        const Phase1::Config &cfg;
-        std::atomic<int> phase {};
-        std::mutex Mphase {};           // mutex for phase
-    };
-
+class notify_thread {
+    notify_thread() = delete;
+    std::thread *the_notify_thread {nullptr};
+    void *run();
+public:
+    notify_thread(scanner_set &ss_, const Phase1::Config &cfg_, aftimer &master_timer_, std::atomic<double> *fraction_done_):
+        ss(ss_), cfg(cfg_), master_timer(master_timer_),fraction_done(fraction_done_) {};
+    ~notify_thread();
+    static int terminal_width( int default_width );
+    scanner_set &ss;
+    const Phase1::Config &cfg;
+    aftimer &master_timer;
+    std::atomic<double> *fraction_done {};
+    std::atomic<int> phase {};
+    std::mutex Mphase {};           // mutex for phase
     static inline const std::string FRACTION_READ {"fraction_read"};
     static inline const std::string ESTIMATED_TIME_REMAINING {"estimated_time_remaining"};
     static inline const std::string ESTIMATED_DATE_COMPLETION {"estimated_date_completion"};
 
-    static int terminal_width( int default_width );
-
-    static void notifier( struct notify_opts *o );
-    static void launch_notify_thread( struct notify_opts *o);
-    static std::thread *the_notify_thread;
-    static void join_notify_thread();
+    void start_notify_thread( );
+    void join();
 };
 
 #endif

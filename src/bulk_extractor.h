@@ -11,6 +11,10 @@
 
 #include <ostream>
 
+#define BE_PHASE_1 1 // reading input
+#define BE_PHASE_2 2 // cleaning up
+#define BE_PHASE_3 3 // shutdown
+
 [[noreturn]] void debug_help();
 void validate_path(const std::filesystem::path fn);
 int bulk_extractor_main(std::ostream &cout, std::ostream &cerr, int argc,char * const *argv);
