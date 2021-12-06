@@ -117,13 +117,6 @@ bool requireFeature(const std::vector<std::string> &lines, const std::string fea
     return false;
 }
 
-/* Setup and run a scanner. Return the output directory */
-std::vector<scanner_config::scanner_command> enable_all_scanners = {
-    scanner_config::scanner_command(scanner_config::scanner_command::ALL_SCANNERS,
-                                    scanner_config::scanner_command::ENABLE)
-};
-
-
 std::filesystem::path test_scanners(const std::vector<scanner_t *> & scanners, sbuf_t *sbuf)
 {
     REQUIRE(sbuf->children == 0);
@@ -132,7 +125,7 @@ std::filesystem::path test_scanners(const std::vector<scanner_t *> & scanners, s
     frs_flags.pedantic = true;          // for testing
     scanner_config sc;
     sc.outdir           = NamedTemporaryDirectory();
-    sc.scanner_commands = enable_all_scanners;
+    sc.enable_all_scanners();
 
     scanner_set ss(sc, frs_flags, nullptr);
     for (auto const &it : scanners ){
@@ -490,7 +483,7 @@ TEST_CASE("test_validate", "[phase1]" ) {
     scanner_config sc;
 
     sc.outdir = NamedTemporaryDirectory();
-    sc.scanner_commands = enable_all_scanners;
+    sc.enable_all_scanners();
     feature_recorder_set::flags_t frs_flags;
     frs_flags.pedantic = true;          // for testing
 
@@ -564,7 +557,7 @@ std::filesystem::path validate(std::string image_fname, std::vector<Check> &expe
     scanner_config sc;
 
     sc.outdir           = NamedTemporaryDirectory();
-    sc.scanner_commands = enable_all_scanners;
+    sc.enable_all_scanners();
     sc.allow_recurse    = recurse;
 
     std::cerr << "## image_fname: " << image_fname << " outdir: " << sc.outdir << std::endl;
@@ -716,6 +709,33 @@ TEST_CASE("test_aes", "[phase1]") {
     validate("ram_2pages.bin", ex3);
 }
 
+
+/* print the key schedules for several AES keys and then test them */
+void validate_aes128_key(uint8_t key[16])
+{
+    const size_t AES128_KEY_SCHEDULE_SIZE = 176;
+    uint8_t schedule[AES128_KEY_SCHEDULE_SIZE];
+    create_aes128_schedule(key, schedule);
+#if 0
+    for(int i=0; i<AES128_KEY_SCHEDULE_SIZE;i++){
+        printf("%02x ",schedule[i]);
+    }
+    printf("\n");
+#endif
+    printf("valid schedule: %d\n",valid_aes128_schedule(schedule));
+    sbuf_t *keybuf = sbuf_t::sbuf_new(pos0_t(), schedule, sizeof(schedule), sizeof(schedule));
+    printf("histogram count: %zu (out of %zu characters)\n",keybuf->get_distinct_character_count(),sizeof(schedule));
+    delete keybuf;
+}
+
+TEST_CASE("schedule_aes", "[phase1]") {
+    uint8_t key1[16] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}; // all zeros is not a valid AES key
+    validate_aes128_key(key1);
+    uint8_t key2[16] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}; // all zeros is not a valid AES key
+    validate_aes128_key(key2);
+    uint8_t key3[16] {0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3}; // all zeros is not a valid AES key
+    validate_aes128_key(key3);
+}
 
 TEST_CASE("test_base16json", "[phase1]") {
     std::vector<Check> ex2 {
@@ -923,7 +943,7 @@ TEST_CASE("image_process", "[phase1]") {
 TEST_CASE("path_printer", "[path_printer]") {
     scanner_config sc;
     sc.input_fname = test_dir() / "test_hello.512b.gz";
-    sc.scanner_commands = enable_all_scanners;
+    sc.enable_all_scanners();
     sc.allow_recurse = true;
 
     scanner_set ss(sc, feature_recorder_set::flags_disabled(), nullptr);

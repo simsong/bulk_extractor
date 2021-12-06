@@ -3,6 +3,8 @@
 bool valid_aes128_schedule(const uint8_t * in);
 bool valid_aes192_schedule(const uint8_t * in);
 bool valid_aes256_schedule(const uint8_t * in);
+void create_aes128_schedule(const uint8_t * key, uint8_t computed[176]);
+std::string key_to_string(const uint8_t * key, uint64_t sz);
 
 // https://tinyurl.com/u9p944uu
 // Try this one day...

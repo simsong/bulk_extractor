@@ -174,7 +174,7 @@ void Phase1::read_process_sbufs()
         }
 
         /* If there are too many in the queue, wait... */
-        if (ss.depth0_sbufs_in_queue > ss.get_thread_count()) {
+        if (ss.depth0_sbufs_in_queue > ss.get_worker_count()) {
             using namespace std::chrono_literals;
             std::this_thread::sleep_for(2000ms);
             continue;
@@ -280,7 +280,7 @@ void Phase1::phase1_run()
     assert(ss.get_current_phase() == scanner_params::PHASE_SCAN);
     // save all of the pages we have seen in the DFXML file
     for (const auto &it : config.seen_page_ids) {
-        ss.record_work_start( it, 0, 0 );
+        ss.record_work_start_pos0str( it );
     }
     xreport.push("runtime","xmlns:debug=\"http://www.github.com/simsong/bulk_extractor/issues\"");
     read_process_sbufs();

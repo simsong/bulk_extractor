@@ -68,6 +68,7 @@ public:
         std::atomic<double>    *fraction_done {nullptr};
         bool      opt_legacy {false};
         bool      opt_notification {true}; // run notification thread
+        bool      opt_notify_main_thread {false}; // display notificaitons in the main thread when phase1 is finished
         seen_page_ids_t seen_page_ids {};               // pages that were already seen
     };
 

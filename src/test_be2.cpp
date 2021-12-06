@@ -46,6 +46,16 @@
 #include "scan_vcard.h"
 #include "scan_wordlist.h"
 
+/* return --notify_async or --notify_main_thread depending on if DEBUG_THREAD_SANITIZER is set or not */
+const char *notify()
+{
+    if (getenv("DEBUG_THREAD_SANITIZER")){
+        return "--notify_main_thread";
+    } else {
+        return "--notify_async";
+    }
+}
+
 /* print and count the args */
 int argv_count(char * const *argv)
 {
@@ -114,14 +124,21 @@ TEST_CASE("e2e-0", "[end-to-end]") {
 
 TEST_CASE("5gb-flatfile", "[end-to-end]") {
     /* Make a 5GB file and try to read it. Make sure we get back the known content. */
+    if (std::getenv("DEBUG_NO_5G")){
+        std::cerr << "DEBUG_NO_5G set; skipping 5G test" << std::endl;
+        return;
+    } else {
+        std::cerr << "DEBUG_NO_5G not set; starting 5G test" << std::endl;
+    }
+
     const uint64_t count = 5000;
-    const uint64_t sz = 1000000;
+    const uint64_t sz    = 1000000;
     std::filesystem::path fgb_path     = std::filesystem::temp_directory_path() / "5gb-flatfile.raw";
     std::filesystem::path fgb_path_tmp = std::filesystem::temp_directory_path() / "5gb-flatfile.raw.tmp";
 
     if (!std::filesystem::exists( fgb_path )) {
-        std::cout << "Creating 5GB flatfile to test >4GiB file handling" << std::endl;
-	// This takes a while, so we write to a tmp file in case we are interrupted. 
+        std::cout << "Creating 5GB flatfile " << fgb_path << " to test >4GiB file handling" << std::endl;
+	// This takes a while, so we write to a tmp file in case we are interrupted.
         std::ofstream of(fgb_path_tmp, std::ios::out | std::ios::binary);
         if (! of.is_open()) {
             std::cerr << "Cannot open " << std::filesystem::absolute(fgb_path) << " for writing: " << ::strerror(errno) << std::endl;
@@ -145,7 +162,7 @@ TEST_CASE("5gb-flatfile", "[end-to-end]") {
     std::filesystem::path outdir = NamedTemporaryDirectory();
     std::string outdir_string = outdir.string();
     std::string fgb_string = fgb_path.string();
-    const char *argv[] = {"bulk_extractor","-Eemail", "-1", "-o", outdir_string.c_str(), fgb_string.c_str(), nullptr};
+    const char *argv[] = {"bulk_extractor","-Eemail", notify(), "-1", "-o", outdir_string.c_str(), fgb_string.c_str(), nullptr};
     std::stringstream ss;
     int ret = bulk_extractor_main(ss, std::cerr,
                                   argv_count(const_cast<char * const *>(argv)),
@@ -184,7 +201,7 @@ TEST_CASE("30mb-segmented", "[end-to-end]") {
     std::filesystem::path outdir = NamedTemporaryDirectory();
     std::string outdir_string = outdir.string();
     std::string seg_string = seg_base.string();
-    const char *argv[] = {"bulk_extractor","-Eemail", "-1", "-o", outdir_string.c_str(), seg_string.c_str(), nullptr};
+    const char *argv[] = {"bulk_extractor","-Eemail", notify(), "-1", "-o", outdir_string.c_str(), seg_string.c_str(), nullptr};
     std::stringstream ss;
     int ret = bulk_extractor_main(ss, std::cerr,
                                   argv_count(const_cast<char * const *>(argv)),
@@ -216,7 +233,7 @@ TEST_CASE("e2e-CFReDS001", "[end-to-end]") {
     std::filesystem::path outdir = NamedTemporaryDirectory();
     std::string outdir_string = outdir.string();
     std::stringstream ss;
-    const char *argv[] = {"bulk_extractor","-1o",outdir_string.c_str(), inpath_string.c_str(), nullptr};
+    const char *argv[] = {"bulk_extractor",notify(), "-1o",outdir_string.c_str(), inpath_string.c_str(), nullptr};
     int ret = bulk_extractor_main(ss, std::cerr,
                                   argv_count(const_cast<char * const *>(argv)),
                                   const_cast<char * const *>(argv));
@@ -229,7 +246,7 @@ TEST_CASE("e2e-email_test", "[end-to-end]") {
     std::filesystem::path outdir = NamedTemporaryDirectory();
     std::string outdir_string = outdir.string();
     std::stringstream ss;
-    const char *argv[] = {"bulk_extractor","-1o",outdir_string.c_str(), inpath_string.c_str(), nullptr};
+    const char *argv[] = {"bulk_extractor", notify(), "-1o",outdir_string.c_str(), inpath_string.c_str(), nullptr};
     int ret = bulk_extractor_main(ss, std::cerr,
                                   argv_count(const_cast<char * const *>(argv)),
                                   const_cast<char * const *>(argv));

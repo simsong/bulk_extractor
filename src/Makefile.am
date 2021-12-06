@@ -6,18 +6,17 @@ CLEANFILES     = scan_accts.cpp scan_base16.cpp scan_email.cpp scan_gps.cpp \
 TESTS = test_be
 check_PROGRAMS = test_be
 
-# So that relative imports from be13_api work
-AM_CPPFLAGS = -I${top_srcdir}/src/be13_api
-AUTOMAKE_OPTIONS = subdir-objects
-EXTRA_DIST = .gitignore
-
 # bring in defs from two included projects
 # note: don't be clever and use the $variable on the Include line. it doesn't work
 
 BE13_API_DIR= be13_api
 include be13_api/Makefile.defs
-
 include rar/Makefile.defs
+
+# So that relative imports from be13_api work
+AM_CPPFLAGS = -I${top_srcdir}/src/be13_api
+AUTOMAKE_OPTIONS = subdir-objects
+EXTRA_DIST = .gitignore $(BE13_API_EXTRA_DIST)
 
 TSK3INCS = \
 	tsk3_fatdirs.h\

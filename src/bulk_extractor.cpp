@@ -157,6 +157,15 @@ static void add_if_present( std::vector<std::string> &scanner_dirs,const std::st
     }
 }
 
+std::string ns_to_sec(uint64_t ns)
+{
+    uint64_t sec100     = ns / (1000*1000*1000 / 100);
+    uint64_t hundredths = sec100 % 10;
+    uint64_t tens       = (sec100 % 100) / 10;
+
+    return std::to_string(sec100/100) + std::string(".") +std::to_string(tens) + std::to_string(hundredths);
+}
+
 int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char * const *argv)
 {
     mtrace();
@@ -238,6 +247,8 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
 	("M,max_depth",   "max recursion depth", cxxopts::value<int>()->default_value(std::to_string(scanner_config::DEFAULT_MAX_DEPTH)))
 	("m,max_bad_alloc_errors", "max bad allocation errors", cxxopts::value<int>()->default_value(std::to_string(cfg.max_bad_alloc_errors)))
 	("max_minute_wait", "maximum number of minutes to wait until all data are read", cxxopts::value<int>()->default_value(std::to_string(60)))
+        ("notify_main_thread", "Display notifications in the main thread after phase1 completes. Useful for running with ThreadSanitizer")
+        ("notify_async", "Display notificaitons asynchronously (default)")
         ("o,outdir",        "output directory", cxxopts::value<std::string>())
         ("P,scanner_dir",
          "directories for scanner shared libraries. Multiple directories can be specified. "
@@ -245,17 +256,17 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
          "and any directories specified in the BE_PATH environment variable.", cxxopts::value<std::vector<std::string>>())
         ("p,path",         "print the value of <path>[:length][/h][/r] with optional length, hex output, or raw output.", cxxopts::value<std::string>())
         ("q,quit",         "no status output")
-        ("r,alert_list",   "file to read alert list from", cxxopts::value<std::string>())
-        ("R,recurse",      "treat image file as a directory to recursively explore")
-        ("S,set",          "set a name=value option", cxxopts::value<std::vector<std::string>>())
-        ("s,sampling",     "random sampling parameter frac[:passes]", cxxopts::value<std::string>())
-        ("V,version",      "Display PACKAGE_VERSION (currently) " PACKAGE_VERSION)
-        ("w,stop_list",    "file to read stop list from", cxxopts::value<std::string>())
-        ("Y,scan",         "specify <start>[-end] of area on disk to scan", cxxopts::value<std::string>())
-        ("z,page_start",   "specify a starting page number", cxxopts::value<int>())
-        ("Z,zap",          "wipe the output directory (recursively) before starting")
-        ("0,no_notify",    "disable real-time notification")
-        ("1,version1",    "version 1.0 notification (console-output)")
+        ("r,alert_list",    "file to read alert list from", cxxopts::value<std::string>())
+        ("R,recurse",       "treat image file as a directory to recursively explore")
+        ("S,set",           "set a name=value option", cxxopts::value<std::vector<std::string>>())
+        ("s,sampling",      "random sampling parameter frac[:passes]", cxxopts::value<std::string>())
+        ("V,version",       "Display PACKAGE_VERSION (currently) " PACKAGE_VERSION)
+        ("w,stop_list",     "file to read stop list from", cxxopts::value<std::string>())
+        ("Y,scan",          "specify <start>[-end] of area on disk to scan", cxxopts::value<std::string>())
+        ("z,page_start",    "specify a starting page number", cxxopts::value<int>())
+        ("Z,zap",           "wipe the output directory (recursively) before starting")
+        ("0,no_notify",     "disable real-time notification")
+        ("1,version1",      "version 1.0 notification (console-output)")
         ("H,info_scanners", "report information about each scanner")
         ("h,help",          "print help screen")
         ;
@@ -338,7 +349,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
                 cerr << "Invalid -S paramter: '" << it << "' must be key=value format" << std::endl ;
                 return -1;
             }
-            sc.namevals[kv[0]] = kv[1];
+            sc.set_config(kv[0], kv[1]);
         }
     } catch ( cxxopts::option_has_no_value_exception &e ) { }
 
@@ -365,8 +376,13 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         cfg.opt_page_start = result["page_start"].as<int>();
     } catch ( cxxopts::option_has_no_value_exception &e ) { }
 
-    cfg.opt_notification = ( result.count( "no_notify" )==0);
-    cfg.opt_legacy = result.count( "version1" );
+    cfg.opt_notify_main_thread = result.count( "notify_main_thread" );
+    cfg.opt_notification       = ( result.count( "no_notify" )==0);
+    cfg.opt_legacy             = result.count( "version1" );
+
+    if (cfg.opt_notify_main_thread && (result.count("notify_async")>0)){
+        throw std::runtime_error("--notify_main_thread and --notify_async conflict");
+    }
 
     /* Legacy mode if stdout is not a tty */
 #ifdef HAVE_ISATTY
@@ -394,7 +410,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
 
         if ( result.count( "help" )) {     // -h
             cout << options.help() << std::endl;
-            cout << "Global config options: " << std::endl << ss.sc.global_help_options << std::endl;
+            cout << "Global config options: " << std::endl << ss.get_help() << std::endl;
             ss.info_scanners( cout, false, true, 'e', 'x');
             return 1;
         } else {                        // -H
@@ -483,7 +499,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
 
     image_process *p = image_process::open( sc.input_fname, cfg.opt_recurse, cfg.opt_pagesize, cfg.opt_marginsize );
 
-    /* are we supposed to run the path printer? */
+    /* are we supposed to run the path printer? If so, we can use cout_, since the notify stream won't be running. */
     if ( result.count( "path" ) ) {
         std::string opt_path = result["path"].as<std::string>();
         path_printer pp( &ss, p, cout);
@@ -544,43 +560,39 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     }
 
     /*** PHASE 1 --- Run on the input image */
-    struct notify_thread::notify_opts *o = new notify_thread::notify_opts(cfg);
-    o->ssp = &ss;
-    o->master_timer  = &master_timer;
-    o->fraction_done = &fraction_done;
-    o->phase = 1;
-
-    if ( cfg.opt_notification) {
-        notify_thread::launch_notify_thread( o);
-    }
-    ss.phase_scan();
+    std::stringstream notify_stream;
+    notify_thread notify(cfg.opt_notify_main_thread ? notify_stream : cout, ss, cfg, master_timer, &fraction_done);
+    notify.phase = BE_PHASE_1;
 
 #ifdef USE_SQLITE3
     if ( fs.flag_set( feature_recorder_set::ENABLE_SQLITE3_RECORDERS )) {
         fs.db_transaction_begin();
     }
 #endif
-
     /* Go multi-threaded if requested */
     if ( cfg.num_threads > 0){
         cout << "going multi-threaded...( " << cfg.num_threads << " )" << std::endl ;
         ss.launch_workers( cfg.num_threads);
     } else {
         cout << "running single-threaded (DEBUG)..." << std::endl ;
-
     }
 
     phase1.dfxml_write_create( original_argc, original_argv);
     xreport->xmlout( "provided_filename", sc.input_fname ); // save this information
     xreport->add_timestamp( "phase1 start" );
 
+    if ( cfg.opt_notification) {
+        notify.start_notify_thread();
+    }
+
     try {
+        ss.phase_scan();
         phase1.phase1_run();
         ss.join();                          // wait for threads to come together
     }
     catch ( const feature_recorder::DiskWriteError &e ) {
         cerr << "Disk write error during Phase 1 ( scanning). Disk is probably full." << std::endl
-                  << "Remove extra files and restart bulk_extractor with the exact same command line to continue." << std::endl;
+             << "Remove extra files and restart bulk_extractor with the exact same command line to continue." << std::endl;
         return 6;
     }
 
@@ -595,9 +607,10 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     }
 
     /*** PHASE 2 --- Shutdown ***/
-    {
-        std::unique_lock<std::mutex> lock(o->Mphase);
-        o->phase = 2;                        // will cause notify thread to shut down, and the notify thread will delete the object
+    notify.phase = BE_PHASE_2;
+    notify.join();
+    if ( cfg.opt_notify_main_thread) {
+        cout << notify_stream.str();
     }
     if ( !cfg.opt_quiet) cout << "Phase 2. Shutting down scanners" << std::endl ;
     xreport->add_timestamp( "phase2 start" );
@@ -632,19 +645,41 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         float mb_per_sec = ( phase1.total_bytes / 1000000.0) / master_timer.elapsed_seconds();
 
         cout << "All Threads Finished!" << std::endl ;
-        cout.precision( 4);
-        cout << "Elapsed time: " << master_timer.elapsed_seconds() << " sec." << std::endl
-                  << "Total MB processed: " << int( phase1.total_bytes / 1000000) << std::endl
-                  << "Overall performance: " << mb_per_sec << " << MBytes/sec ";
+        cout.precision( 4 );
+        cout << "Elapsed time: "        << master_timer.elapsed_seconds()     << " sec." << std::endl
+             << "Total MB processed: "  << int( phase1.total_bytes / 1000000) << std::endl
+             << "Overall performance: " << mb_per_sec << " MBytes/sec ";
         if ( cfg.num_threads>0){
-            cout << mb_per_sec/cfg.num_threads << " ( MBytes/sec/thread)" << std::endl ;
+            cout << mb_per_sec/cfg.num_threads << " (MBytes/sec/thread)" << std::endl ;
         }
         cout << "sbufs created:   " << sbuf_t::sbuf_total << std::endl;
-        cout << "sbufs unaccounted: " << sbuf_t::sbuf_count << " ( should be 0) " << std::endl;
+        cout << "sbufs unaccounted: " << sbuf_t::sbuf_count;
+        if (sbuf_t::sbuf_count != 0 ) {
+            cout << " ( should be 0) ";
+        }
+        cout << std::endl;
+        cout << "Time producer spent waiting for scanners to process data:        "
+             << ss.producer_timer().elapsed_text()
+             << " (" << ns_to_sec(ss.producer_wait_ns()) << " seconds)"
+             << std::endl;
+        cout << "Time consumer scanners spent waiting for data from producer:     "
+             << aftimer::hms_ns_str(ss.consumer_wait_ns())
+             << " (" << ns_to_sec(ss.consumer_wait_ns()) << " seconds)"
+             << std::endl;
+        cout << "Average time each consumer spent waiting for data from producer: "
+             << aftimer::hms_ns_str(ss.consumer_wait_ns_per_worker())
+             << " (" << ns_to_sec(ss.consumer_wait_ns_per_worker()) << " seconds)"
+             << std::endl;
+
+        if (ss.producer_wait_ns() > ss.consumer_wait_ns_per_worker()){
+            std::cout << "*** More time spent waiting for workers. You need faster CPU or more cores for improved performance." << std::endl;
+        } else {
+            std::cout << "*** More time spent waiting for scanners. You need faster I/O for improved performance." << std::endl;
+        }
     }
 
     try {
-        feature_recorder &fr = ss.fs.named_feature_recorder( "email" );
+        feature_recorder &fr = ss.named_feature_recorder( "email" );
         cout << "Total " << fr.name << " features found: " << fr.features_written << std::endl;
     }
     catch ( const feature_recorder_set::NoSuchFeatureRecorder &e ) {
@@ -652,6 +687,5 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     }
 
     muntrace();
-    /* TODO: We could wait for the notify thread to actually exit, but then we would need to address the sleep, and end up putting in a condition varialbe, and it would be a pain. */
     return( 0 );
 }
