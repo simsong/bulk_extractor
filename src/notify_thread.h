@@ -9,6 +9,7 @@
 #include <condition_variable>
 #include "be13_api/aftimer.h"
 #include "be13_api/scanner_set.h"
+
 #include "phase1.h"
 
 class notify_thread {
@@ -16,10 +17,11 @@ class notify_thread {
     std::thread *the_notify_thread {nullptr};
     void *run();
 public:
-    notify_thread(scanner_set &ss_, const Phase1::Config &cfg_, aftimer &master_timer_, std::atomic<double> *fraction_done_):
-        ss(ss_), cfg(cfg_), master_timer(master_timer_),fraction_done(fraction_done_) {};
+    notify_thread(std::ostream &os_, scanner_set &ss_, const Phase1::Config &cfg_, aftimer &master_timer_, std::atomic<double> *fraction_done_):
+        os(os_), ss(ss_), cfg(cfg_), master_timer(master_timer_),fraction_done(fraction_done_) {};
     ~notify_thread();
     static int terminal_width( int default_width );
+    std::ostream &os;
     scanner_set &ss;
     const Phase1::Config &cfg;
     aftimer &master_timer;

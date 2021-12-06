@@ -46,6 +46,16 @@
 #include "scan_vcard.h"
 #include "scan_wordlist.h"
 
+/* return --notify_async or --notify_main_thread depending on if DEBUG_THREAD_SANITIZER is set or not */
+const char *notify()
+{
+    if (getenv("DEBUG_THREAD_SANITIZER")){
+        return "--notify_main_thread";
+    } else {
+        return "--notify_async";
+    }
+}
+
 /* print and count the args */
 int argv_count(char * const *argv)
 {
@@ -152,7 +162,7 @@ TEST_CASE("5gb-flatfile", "[end-to-end]") {
     std::filesystem::path outdir = NamedTemporaryDirectory();
     std::string outdir_string = outdir.string();
     std::string fgb_string = fgb_path.string();
-    const char *argv[] = {"bulk_extractor","-Eemail", "-1", "-o", outdir_string.c_str(), fgb_string.c_str(), nullptr};
+    const char *argv[] = {"bulk_extractor","-Eemail", notify(), "-1", "-o", outdir_string.c_str(), fgb_string.c_str(), nullptr};
     std::stringstream ss;
     int ret = bulk_extractor_main(ss, std::cerr,
                                   argv_count(const_cast<char * const *>(argv)),
@@ -191,7 +201,7 @@ TEST_CASE("30mb-segmented", "[end-to-end]") {
     std::filesystem::path outdir = NamedTemporaryDirectory();
     std::string outdir_string = outdir.string();
     std::string seg_string = seg_base.string();
-    const char *argv[] = {"bulk_extractor","-Eemail", "-1", "-o", outdir_string.c_str(), seg_string.c_str(), nullptr};
+    const char *argv[] = {"bulk_extractor","-Eemail", notify(), "-1", "-o", outdir_string.c_str(), seg_string.c_str(), nullptr};
     std::stringstream ss;
     int ret = bulk_extractor_main(ss, std::cerr,
                                   argv_count(const_cast<char * const *>(argv)),
@@ -223,7 +233,7 @@ TEST_CASE("e2e-CFReDS001", "[end-to-end]") {
     std::filesystem::path outdir = NamedTemporaryDirectory();
     std::string outdir_string = outdir.string();
     std::stringstream ss;
-    const char *argv[] = {"bulk_extractor","-1o",outdir_string.c_str(), inpath_string.c_str(), nullptr};
+    const char *argv[] = {"bulk_extractor",notify(), "-1o",outdir_string.c_str(), inpath_string.c_str(), nullptr};
     int ret = bulk_extractor_main(ss, std::cerr,
                                   argv_count(const_cast<char * const *>(argv)),
                                   const_cast<char * const *>(argv));
@@ -236,7 +246,7 @@ TEST_CASE("e2e-email_test", "[end-to-end]") {
     std::filesystem::path outdir = NamedTemporaryDirectory();
     std::string outdir_string = outdir.string();
     std::stringstream ss;
-    const char *argv[] = {"bulk_extractor","-1o",outdir_string.c_str(), inpath_string.c_str(), nullptr};
+    const char *argv[] = {"bulk_extractor", notify(), "-1o",outdir_string.c_str(), inpath_string.c_str(), nullptr};
     int ret = bulk_extractor_main(ss, std::cerr,
                                   argv_count(const_cast<char * const *>(argv)),
                                   const_cast<char * const *>(argv));

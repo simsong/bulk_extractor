@@ -18,4 +18,5 @@
 [[noreturn]] void debug_help();
 void validate_path(const std::filesystem::path fn);
 int bulk_extractor_main(std::ostream &cout, std::ostream &cerr, int argc,char * const *argv);
+
 #endif

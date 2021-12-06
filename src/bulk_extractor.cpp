@@ -247,6 +247,8 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
 	("M,max_depth",   "max recursion depth", cxxopts::value<int>()->default_value(std::to_string(scanner_config::DEFAULT_MAX_DEPTH)))
 	("m,max_bad_alloc_errors", "max bad allocation errors", cxxopts::value<int>()->default_value(std::to_string(cfg.max_bad_alloc_errors)))
 	("max_minute_wait", "maximum number of minutes to wait until all data are read", cxxopts::value<int>()->default_value(std::to_string(60)))
+        ("notify_main_thread", "Display notifications in the main thread after phase1 completes. Useful for running with ThreadSanitizer")
+        ("notify_async", "Display notificaitons asynchronously (default)")
         ("o,outdir",        "output directory", cxxopts::value<std::string>())
         ("P,scanner_dir",
          "directories for scanner shared libraries. Multiple directories can be specified. "
@@ -254,17 +256,17 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
          "and any directories specified in the BE_PATH environment variable.", cxxopts::value<std::vector<std::string>>())
         ("p,path",         "print the value of <path>[:length][/h][/r] with optional length, hex output, or raw output.", cxxopts::value<std::string>())
         ("q,quit",         "no status output")
-        ("r,alert_list",   "file to read alert list from", cxxopts::value<std::string>())
-        ("R,recurse",      "treat image file as a directory to recursively explore")
-        ("S,set",          "set a name=value option", cxxopts::value<std::vector<std::string>>())
-        ("s,sampling",     "random sampling parameter frac[:passes]", cxxopts::value<std::string>())
-        ("V,version",      "Display PACKAGE_VERSION (currently) " PACKAGE_VERSION)
-        ("w,stop_list",    "file to read stop list from", cxxopts::value<std::string>())
-        ("Y,scan",         "specify <start>[-end] of area on disk to scan", cxxopts::value<std::string>())
-        ("z,page_start",   "specify a starting page number", cxxopts::value<int>())
-        ("Z,zap",          "wipe the output directory (recursively) before starting")
-        ("0,no_notify",    "disable real-time notification")
-        ("1,version1",    "version 1.0 notification (console-output)")
+        ("r,alert_list",    "file to read alert list from", cxxopts::value<std::string>())
+        ("R,recurse",       "treat image file as a directory to recursively explore")
+        ("S,set",           "set a name=value option", cxxopts::value<std::vector<std::string>>())
+        ("s,sampling",      "random sampling parameter frac[:passes]", cxxopts::value<std::string>())
+        ("V,version",       "Display PACKAGE_VERSION (currently) " PACKAGE_VERSION)
+        ("w,stop_list",     "file to read stop list from", cxxopts::value<std::string>())
+        ("Y,scan",          "specify <start>[-end] of area on disk to scan", cxxopts::value<std::string>())
+        ("z,page_start",    "specify a starting page number", cxxopts::value<int>())
+        ("Z,zap",           "wipe the output directory (recursively) before starting")
+        ("0,no_notify",     "disable real-time notification")
+        ("1,version1",      "version 1.0 notification (console-output)")
         ("H,info_scanners", "report information about each scanner")
         ("h,help",          "print help screen")
         ;
@@ -374,8 +376,13 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         cfg.opt_page_start = result["page_start"].as<int>();
     } catch ( cxxopts::option_has_no_value_exception &e ) { }
 
-    cfg.opt_notification = ( result.count( "no_notify" )==0);
-    cfg.opt_legacy = result.count( "version1" );
+    cfg.opt_notify_main_thread = result.count( "notify_main_thread" );
+    cfg.opt_notification       = ( result.count( "no_notify" )==0);
+    cfg.opt_legacy             = result.count( "version1" );
+
+    if (cfg.opt_notify_main_thread && (result.count("notify_async")>0)){
+        throw std::runtime_error("--notify_main_thread and --notify_async conflict");
+    }
 
     /* Legacy mode if stdout is not a tty */
 #ifdef HAVE_ISATTY
@@ -492,7 +499,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
 
     image_process *p = image_process::open( sc.input_fname, cfg.opt_recurse, cfg.opt_pagesize, cfg.opt_marginsize );
 
-    /* are we supposed to run the path printer? */
+    /* are we supposed to run the path printer? If so, we can use cout_, since the notify stream won't be running. */
     if ( result.count( "path" ) ) {
         std::string opt_path = result["path"].as<std::string>();
         path_printer pp( &ss, p, cout);
@@ -553,8 +560,9 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     }
 
     /*** PHASE 1 --- Run on the input image */
-    notify_thread notify(ss, cfg, master_timer, &fraction_done);
-    notify.phase = 1;
+    std::stringstream notify_stream;
+    notify_thread notify(cfg.opt_notify_main_thread ? notify_stream : cout, ss, cfg, master_timer, &fraction_done);
+    notify.phase = BE_PHASE_1;
 
 #ifdef USE_SQLITE3
     if ( fs.flag_set( feature_recorder_set::ENABLE_SQLITE3_RECORDERS )) {
@@ -601,6 +609,9 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     /*** PHASE 2 --- Shutdown ***/
     notify.phase = BE_PHASE_2;
     notify.join();
+    if ( cfg.opt_notify_main_thread) {
+        cout << notify_stream.str();
+    }
     if ( !cfg.opt_quiet) cout << "Phase 2. Shutting down scanners" << std::endl ;
     xreport->add_timestamp( "phase2 start" );
     try {
@@ -634,7 +645,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         float mb_per_sec = ( phase1.total_bytes / 1000000.0) / master_timer.elapsed_seconds();
 
         cout << "All Threads Finished!" << std::endl ;
-        cout.precision( 4);
+        cout.precision( 4 );
         cout << "Elapsed time: "        << master_timer.elapsed_seconds()     << " sec." << std::endl
              << "Total MB processed: "  << int( phase1.total_bytes / 1000000) << std::endl
              << "Overall performance: " << mb_per_sec << " MBytes/sec ";

@@ -500,8 +500,6 @@ void exif_scanner::scan(const sbuf_t &sbuf)
     }
 }
 
-exif_scanner *escan = nullptr;
-
 extern "C"
 void scan_exif (scanner_params &sp)
 {
@@ -523,10 +521,11 @@ void scan_exif (scanner_params &sp)
 	return;
     }
     if (sp.phase==scanner_params::PHASE_INIT2) {
-        /* Nothing to do here */
     }
     if (sp.phase==scanner_params::PHASE_SCAN){
-        escan = new exif_scanner(sp);
+        /* Note: this is expensive (creating and deleting the exif scanner each time) */
+        exif_scanner *escan = new exif_scanner(sp);
         escan->scan(*sp.sbuf);
+        delete escan;
     }
 }

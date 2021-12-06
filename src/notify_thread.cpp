@@ -66,8 +66,9 @@ void *notify_thread::run()
         }
     }
 #endif
-
-    std::cout << cl;                    // clear screen
+    if ( !cfg.opt_legacy) {
+        os << cl;                    // clear screen
+    }
     while( phase == BE_PHASE_1 ){
         // get screen size change if we can!
         cols = terminal_width( cols);
@@ -88,35 +89,36 @@ void *notify_thread::run()
                 snprintf( buf1, sizeof( buf1), "%2d:%02d:%02d",timeinfo.tm_hour,timeinfo.tm_min,timeinfo.tm_sec);
                 snprintf( buf2, sizeof( buf2), "(%.2f%%)", done * 100);
                 uint64_t max_offset = strtoll( stats[ scanner_set::MAX_OFFSET ].c_str() , nullptr, 10);
-                std::cout << buf1 << " Offset " << max_offset / ( 1000*1000) << "MB "
+
+                os  << buf1 << " Offset " << max_offset / ( 1000*1000) << "MB "
                           << buf2 << " Done in " << stats[ESTIMATED_TIME_REMAINING]
                           << " at " << stats[ESTIMATED_DATE_COMPLETION] << std::endl;
             }
         }
         if ( !cfg.opt_legacy) {
-            std::cout << ho << "bulk_extractor      " << asctime( &timeinfo) << "  " << std::endl;
+            os << ho << "bulk_extractor      " << asctime( &timeinfo) << "  " << std::endl;
             for( const auto &it : stats ){
-                std::cout << it.first << ": " << it.second;
+                os << it.first << ": " << it.second;
                 if ( ce[0] ){
-                    std::cout << ce;
+                    os << ce;
                 } else {
                     // Space out to the 50 column to erase any junk
                     int spaces = 50 - ( it.first.size() + it.second.size());
                     for( int i=0;i<spaces;i++){
-                        std::cout << " ";
+                        os << " ";
                     }
                 }
-                std::cout << std::endl;
+                os << std::endl;
             }
             if ( fraction_done ){
                 if ( cols>10){
                     double done = *fraction_done;
                     int before = ( cols - 3) * done;
                     int after  = ( cols - 3) * ( 1.0 - done );
-                    std::cout << std::string( before,'=') << '>' << std::string( after,'.') << '|' << ce << std::endl;
+                    os << std::string( before,'=') << '>' << std::string( after,'.') << '|' << ce << std::endl;
                 }
             }
-            std::cout << cd << std::endl << std::endl;
+            os << cd << std::endl << std::endl;
         }
         std::this_thread::sleep_for( std::chrono::seconds( cfg.opt_notify_rate ));
     }
