@@ -624,6 +624,11 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         return 7;
     }
 
+    if (ss.get_tasks_queued() != 0) {
+        cerr << "ss.get_tasks_queued() = " << ss.get_tasks_queued() << std::endl;
+        throw std::runtime_error("ss.shutdown() returned but tasks are still queued.");
+    }
+
     xreport->add_timestamp( "phase2 end" );
     master_timer.stop();
 
