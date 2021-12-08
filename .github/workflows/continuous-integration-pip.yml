@@ -39,18 +39,18 @@ jobs:
         if: startsWith(matrix.os, 'macos')
         run: |
           bash bootstrap.sh
-          ./configure -q --disable-opt --enable-silent-rules --enable-address-sanitizer \
-          && make && (cd src; make check || (cat test-suite.log; exit 1))
+          ./configure -q --disable-opt --enable-silent-rules --enable-address-sanitizer
+          make && (cd src; make check || (cat test-suite.log; exit 1))
 
       - uses: ammaraskar/gcc-problem-matcher@0.1
         name: GCC Problem Matcher
 
       - name: C++ checks with thread-sanitizer
-        if: startsWith(matrix.os, 'ubuntu-DISABLE')
+        if: startsWith(matrix.os, 'ubuntu')
         run: |
           bash bootstrap.sh
-          ./configure -q --disable-opt --enable-silent-rules --enable-thread-sanitizer \
-          && make && (cd src; make check || (cat test-suite.log; exit 1))
+          ./configure -q --disable-opt --enable-silent-rules --enable-thread-sanitizer
+          make && (cd src; make check || (cat test-suite.log; exit 1))
 
       - name: C++ checks with codecov
         if: startsWith(matrix.os, 'ubuntu')

@@ -14,6 +14,8 @@
 
 class notify_thread {
     notify_thread() = delete;
+    notify_thread(const notify_thread &that) = delete;
+    notify_thread &operator=(const notify_thread &that) = delete;
     std::thread *the_notify_thread {nullptr};
     void *run();
 public:
