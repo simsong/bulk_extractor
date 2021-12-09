@@ -25,10 +25,10 @@ jobs:
         with:
           submodules: recursive
 
-      - name: "MacOS: Install C++ dependencies"
+      - name: "MacOS: run CONFIGURE_MACOS.bash"
         if: startsWith(matrix.os, 'macos')
         run: |
-          brew install autoconf automake libtool libxml2 libewf json-c
+          echo "" | bash etc/CONFIGURE_MACOS.bash
 
       - name: "Ubuntu: run CONFIGURE_UBUNTU20LTS.bash"
         if: startsWith(matrix.os, 'ubuntu')

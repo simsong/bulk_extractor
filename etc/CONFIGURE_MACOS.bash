@@ -19,7 +19,7 @@ read
 
 # Note: openssl no longer required
 # Apple's provided flex is 2.6.4, which is the same that is provided by brew
-PKGS+="wget libtool autoconf automake"
+PKGS+="wget libtool autoconf automake libtool libxml2 libewf json-c"
 
 $WHICH install $PKGS || (echo installation install failed; exit 1)
 exit 0
