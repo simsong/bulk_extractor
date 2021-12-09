@@ -36,7 +36,6 @@ jobs:
           echo "" | bash etc/CONFIGURE_UBUNTU20LTS.bash
 
       - name: C++ checks with address-sanitizer
-        if: startsWith(matrix.os, 'macos')
         run: |
           bash bootstrap.sh
           ./configure -q --disable-opt --enable-silent-rules --enable-address-sanitizer
