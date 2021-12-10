@@ -57,7 +57,7 @@ const char *notify()
 }
 
 /* print and count the args */
-int argv_count(char * const *argv)
+int argv_count(const char **argv)
 {
     std::cout << "testing with command line:" << std::endl;
     int argc = 0;
@@ -122,6 +122,27 @@ TEST_CASE("e2e-0", "[end-to-end]") {
     REQUIRE( code==0 );
 }
 
+TEST_CASE("scan_find", "[end-to-end]") {
+    std::filesystem::path inpath = test_dir() / "pdf_words2.pdf";
+    std::filesystem::path outdir = NamedTemporaryDirectory();
+    std::string inpath_string = inpath.string();
+    std::string outdir_string = outdir.string();
+    const char *argv[] = {"bulk_extractor", "-0", "-f", "simsong", "-o", outdir_string.c_str(), inpath_string.c_str(), nullptr};
+
+    std::stringstream cout, cerr;
+    int ret = bulk_extractor_main(cout, cerr, argv_count(argv), const_cast<char * const *>(argv));
+    if (ret!=0) {
+        std::cerr << "STDOUT:" << std::endl << cout.str() << std::endl << std::endl << "STDERR:" << std::endl << cerr.str() << std::endl;
+        REQUIRE( ret==0 );
+    }
+
+    /* Look for "simsong" in output */
+    std::cerr << "outdir: " << outdir << std::endl;
+    auto lines = getLines( outdir / "find.txt" );
+    REQUIRE( lines.size() > 0 );
+    std::cerr << "lines.size() = " << lines.size() << std::endl;
+}
+
 TEST_CASE("5gb-flatfile", "[end-to-end]") {
     /* Make a 5GB file and try to read it. Make sure we get back the known content. */
     if (std::getenv("DEBUG_NO_5G")){
@@ -165,7 +186,7 @@ TEST_CASE("5gb-flatfile", "[end-to-end]") {
     const char *argv[] = {"bulk_extractor","-Eemail", notify(), "-1", "-o", outdir_string.c_str(), fgb_string.c_str(), nullptr};
     std::stringstream ss;
     int ret = bulk_extractor_main(ss, std::cerr,
-                                  argv_count(const_cast<char * const *>(argv)),
+                                  argv_count(argv),
                                   const_cast<char * const *>(argv));
     REQUIRE( ret==0 );
     /* Look for the output line */
@@ -204,7 +225,7 @@ TEST_CASE("30mb-segmented", "[end-to-end]") {
     const char *argv[] = {"bulk_extractor","-Eemail", notify(), "-1", "-o", outdir_string.c_str(), seg_string.c_str(), nullptr};
     std::stringstream ss;
     int ret = bulk_extractor_main(ss, std::cerr,
-                                  argv_count(const_cast<char * const *>(argv)),
+                                  argv_count(argv),
                                   const_cast<char * const *>(argv));
     REQUIRE( ret==0 );
 
@@ -235,7 +256,7 @@ TEST_CASE("e2e-CFReDS001", "[end-to-end]") {
     std::stringstream ss;
     const char *argv[] = {"bulk_extractor",notify(), "-1o",outdir_string.c_str(), inpath_string.c_str(), nullptr};
     int ret = bulk_extractor_main(ss, std::cerr,
-                                  argv_count(const_cast<char * const *>(argv)),
+                                  argv_count(argv),
                                   const_cast<char * const *>(argv));
     REQUIRE( ret==0 );
 }
@@ -248,7 +269,7 @@ TEST_CASE("e2e-email_test", "[end-to-end]") {
     std::stringstream ss;
     const char *argv[] = {"bulk_extractor", notify(), "-1o",outdir_string.c_str(), inpath_string.c_str(), nullptr};
     int ret = bulk_extractor_main(ss, std::cerr,
-                                  argv_count(const_cast<char * const *>(argv)),
+                                  argv_count(argv),
                                   const_cast<char * const *>(argv));
     REQUIRE( ret==0 );
 

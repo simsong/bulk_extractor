@@ -8,6 +8,7 @@
 #include "be13_api/scanner_set.h"
 #include "be13_api/regex_vector.h"
 #include "be13_api/utils.h" // needs config.h
+#include "be13_api/dfxml_cpp/src/dfxml_writer.h"
 #include "findopts.h"
 
 // anonymous namespace hides symbols from other cpp files (like "static" applied to functions)
@@ -18,13 +19,17 @@ namespace {
         find_list.push_back("(" + pat + ")"); // make a group
     }
 
-    void process_find_file(const char *findfile) {
+    void process_find_file(scanner_params &sp, const char *findfile) {
         std::ifstream in;
 
         in.open(findfile,std::ifstream::in);
         if(!in.good()) {
             std::cerr << "Cannot open " << findfile << "\n";
             throw std::runtime_error(findfile);
+        }
+        if (sp.ss->writer) {
+            std::string attribute = std::string("path='") + std::string(findfile) + std::string("'");
+            sp.ss->writer->push("process_find_file", attribute);
         }
         while(!in.eof()){
             std::string line;
@@ -33,8 +38,10 @@ namespace {
             if(line.size()>0) {
                 if(line[0]=='#') continue;  // ignore lines that begin with a comment character
                 add_find_pattern(line);
+                if (sp.ss->writer) { sp.ss->writer->xmlout("find_pattern", line); }
             }
         }
+        if (sp.ss->writer) sp.ss->writer->pop("process_find_file");
     }
 }
 
@@ -56,12 +63,13 @@ void scan_find(scanner_params &sp)
     }
     if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;
 
-    if (scanner_params::PHASE_INIT == sp.phase) {
+    if (scanner_params::PHASE_INIT2 == sp.phase) {
         for (const auto &it : FindOpts::get().Patterns) {
             add_find_pattern(it);
+            if (sp.ss->writer) { sp.ss->writer->xmlout("find_pattern", it); }
         }
         for (const auto &it : FindOpts::get().Files) {
-            process_find_file(it.c_str());
+            process_find_file(sp, it.c_str());
         }
     }
 
