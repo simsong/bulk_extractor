@@ -9,7 +9,6 @@
 #include "be13_api/regex_vector.h"
 #include "be13_api/utils.h" // needs config.h
 #include "be13_api/dfxml_cpp/src/dfxml_writer.h"
-#include "findopts.h"
 
 // anonymous namespace hides symbols from other cpp files (like "static" applied to functions)
 // TODO: make this not a global variable
@@ -64,11 +63,11 @@ void scan_find(scanner_params &sp)
     if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;
 
     if (scanner_params::PHASE_INIT2 == sp.phase) {
-        for (const auto &it : FindOpts::get().Patterns) {
+        for (const auto &it : sp.ss->find_patterns()) {
             add_find_pattern(it);
             if (sp.ss->writer) { sp.ss->writer->xmlout("find_pattern", it); }
         }
-        for (const auto &it : FindOpts::get().Files) {
+        for (const auto &it : sp.ss->find_files()) {
             process_find_file(sp, it.c_str());
         }
     }

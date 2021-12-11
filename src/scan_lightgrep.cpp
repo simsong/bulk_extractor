@@ -73,7 +73,7 @@ void scan_lightgrep(struct scanner_params &sp) {
     {
       Scanner.init(sp);
       LightgrepController& lg(LightgrepController::Get());
-      lg.addUserPatterns(Scanner, &ProcessHit, FindOpts::get());
+      lg.addUserPatterns(Scanner, &ProcessHit, sp.ss->sc); // note: FindOpts now passed in ScannerConfig
       lg.regcomp();
       break;
     }

@@ -41,7 +41,6 @@ int _CRT_fmode = _O_BINARY;
 #include "be13_api/path_printer.h"
 
 #include "bulk_extractor.h"
-#include "findopts.h"
 #include "image_process.h"
 #include "phase1.h"
 
@@ -302,19 +301,6 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         }
     } catch ( cxxopts::option_has_no_value_exception &e ) { }
 
-    try {
-        for ( const auto &it : result["find"].as<std::vector<std::string>>() ) {
-            FindOpts::get().Patterns.push_back( it);
-        }
-    } catch ( cxxopts::option_has_no_value_exception &e ) { }
-
-
-    try {
-        for ( const auto &it : result["find_file"].as<std::vector<std::string>>() ) {
-            FindOpts::get().Files.push_back( it);
-        }
-    } catch ( cxxopts::option_has_no_value_exception &e ) { }
-
     cfg.opt_pagesize   = scaled_stoi64( result["pagesize"].as<std::string>());
     cfg.opt_marginsize = scaled_stoi64( result["marginsize"].as<std::string>());
     cfg.opt_info       = result.count( "info" );
@@ -432,6 +418,20 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     }
 
 
+    /* Add the find patterns to the scanner set */
+    try {
+        for ( const auto &it : result["find"].as<std::vector<std::string>>() ) {
+            sc.add_find_pattern( it );
+        }
+    } catch ( cxxopts::option_has_no_value_exception &e ) { }
+
+    try {
+        for ( const auto &it : result["find_file"].as<std::vector<std::string>>() ) {
+            sc.add_find_path( it );
+        }
+    } catch ( cxxopts::option_has_no_value_exception &e ) { }
+
+
     if ( result.count( "path" ) == 0 ){
         /* Code that runs if we are not using the path printer */
 
@@ -476,22 +476,21 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         return 5;
     }
 
-    if ( result.count( "path" ) == 0 ){
-        /* Give an error if a find list was specified
-         * but no scanner that uses the find list is enabled.
-         */
 
-        if ( !FindOpts::get().empty()) {
-            /* Look through the enabled scanners and make sure that
-             * at least one of them is a FIND scanner
-             */
-            if ( !ss.is_find_scanner_enabled()){
-                throw std::runtime_error( "find words are specified with -F but no find scanner is enabled.");
-            }
-        }
+    /* Give an error if a find list was specified
+     * but no scanner that uses the find list is enabled.
+     */
+
+    if ( sc.find_opts_empty() == false
+         && ss.is_find_scanner_enabled() == false ) {
+        throw std::runtime_error( "find words are specified with -F but no find scanner is enabled.");
+    }
+
+    if ( result.count( "path" ) == 0 ){
+        /* We are not running the path printer. See if we are restarting. */
 
         if ( std::filesystem::exists( sc.outdir/"report.xml" )){
-            /* Restarting */
+            /* We are restarting! */
             bulk_extractor_restarter r( sc,cfg);
             r.restart();                    // load the restart file and rename report.xml
         }

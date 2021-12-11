@@ -101,6 +101,7 @@ bool LightgrepController::addScanner(PatternScanner& scanner) {
   return true;
 }
 
+/* note: findopts is now part of scanner_set.scanner_config, you need to pass that in here. */
 bool LightgrepController::addUserPatterns(PatternScanner& scanner, CallbackFnType* callbackPtr, const FindOpts& user) {
   // Add patterns specified as keywords by the user
   // Similar to above, but does not have a handler per pattern
