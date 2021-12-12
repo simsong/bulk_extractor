@@ -114,7 +114,6 @@ bulk_extractor_parts = \
 	bulk_extractor.cpp \
 	bulk_extractor.h \
 	cxxopts.hpp \
-	findopts.h \
 	image_process.cpp \
 	image_process.h \
 	notify_thread.cpp \
