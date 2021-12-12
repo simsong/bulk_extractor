@@ -37,15 +37,14 @@ jobs:
 
       - name: C++ checks with address-sanitizer
         # Temporarily, just on MacOS
-        # if: startsWith(matrix.os, 'macos')
+        if: startsWith(matrix.os, 'macos')
         run: |
           bash bootstrap.sh
           ./configure -q --disable-opt --enable-silent-rules --enable-address-sanitizer
           make && (cd src; make check || (cat test-suite.log; exit 1))
 
       - name: C++ checks with thread-sanitizer
-        # Just run on ubuntu
-        # Temporarily, disable
+        # Temporarily, just on ubuntu
         if: startsWith(matrix.os, 'ubuntu')
         run: |
           bash bootstrap.sh

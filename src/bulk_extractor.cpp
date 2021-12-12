@@ -439,7 +439,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
 
     struct feature_recorder_set::flags_t f;
     scanner_set ss( sc, f, nullptr);     // make a scanner_set but with no XML writer. We will create it below
-    ss.add_scanners( scanners_builtin);
+    ss.add_scanners( scanners_builtin );
 
     /* Applying the scanner commands will create the alert recorder. */
     try {
@@ -447,6 +447,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     }
     catch ( const scanner_set::NoSuchScanner &e ) {
         cerr << "no such scanner: " << e.what() << std::endl ;
+        ss.shutdown();
         return 5;
     }
 
@@ -483,6 +484,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         } else {
             pp.process_path( opt_path);
         }
+        ss.shutdown();
 	return 0;
     }
 
@@ -566,6 +568,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     catch ( const feature_recorder::DiskWriteError &e ) {
         cerr << "Disk write error during Phase 1 ( scanning). Disk is probably full." << std::endl
              << "Remove extra files and restart bulk_extractor with the exact same command line to continue." << std::endl;
+        // do not call ss.shutdown() to avoid writing out histograms
         return 6;
     }
 
