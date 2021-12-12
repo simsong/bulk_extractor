@@ -71,42 +71,10 @@ int _CRT_fmode = _O_BINARY;
  ****************************************************************/
 
 #if 0
-{
-    std::cout << "bulk_extractor version " PACKAGE_VERSION " " << /* svn_revision << */ "\n";
-    std::cout << "Usage: " << progname << " [options] imagefile\n";
-    std::cout << "  runs bulk extractor and outputs to stdout a summary of what was found where\n";
-    std::cout << "\n";
-    std::cout << "Required parameters:\n";
-    std::cout << "   imagefile     - the file to extract\n";
-    std::cout << " or  -R filedir  - recurse through a directory of files\n";
-    std::cout << "   -o outdir    - specifies output directory. Must not exist.\n";
-    std::cout << "                  bulk_extractor creates this directory.\n";
-    std::cout << "Options:\n";
-    std::cout << "   -i           - INFO mode. Do a quick random sample and print a report.\n";
-    std::cout << "   -b banner.txt- Add banner.txt contents to the top of every output file.\n";
-    std::cout << "   -r alert_list.txt  - a file containing the alert list of features to alert\n";
-    std::cout << "                       (can be a feature file or a list of globs)\n";
-    std::cout << "                       (can be repeated.)\n";
-    std::cout << "   -w stop_list.txt   - a file containing the stop list of features (white list\n";
-    std::cout << "                       (can be a feature file or a list of globs)s\n";
-    std::cout << "                       (can be repeated.)\n";
-    std::cout << "   -F <rfile>   - Read a list of regular expressions from <rfile> to find\n";
-    std::cout << "   -f <regex>   - find occurrences of <regex>; may be repeated.\n";
-    std::cout << "                  results go into find.txt\n";
-    std::cout << "   -q           - quiet - no status output (changed in v2.0).\n";
-    std::cout << "   -s frac[:passes] - Set random sampling parameters\n";
-    std::cout << "   -0           - Do not run notification thread\n";
-    std::cout << "   -1           - bulk_extractor v1.x legacy mode\n";
     std::cout << "\nTuning parameters:\n";
-    //    std::cout << "   -C NN        - specifies the size of the context window (default " << feature_recorder::context_window_default << ")\n";
     std::cout << "   -S fr:<name>:window=NN   specifies context window for recorder to NN\n";
     std::cout << "   -S fr:<name>:window_before=NN  specifies context window before to NN for recorder\n";
     std::cout << "   -S fr:<name>:window_after=NN   specifies context window after to NN for recorder\n";
-    std::cout << "   -G NN        - specify the page size (default " << cfg.opt_pagesize << ")\n";
-    std::cout << "   -g NN        - specify margin (default " <<cfg.opt_marginsize << ")\n";
-    std::cout << "   -j NN        - Number of analysis threads to run (default " << std::thread::hardware_concurrency() << ")\n";
-    std::cout << "   -J           - no threading: read and process data in the primary thread.\n";
-    std::cout << "   -M nn        - sets max recursion depth (default " << scanner_config::DEFAULT_MAX_DEPTH << ")\n";
     std::cout << "   -m <max>     - maximum number of minutes to wait after all data read\n";
     std::cout << "                  default is " << cfg.max_bad_alloc_errors << "\n";
 }
@@ -167,6 +135,14 @@ std::string ns_to_sec(uint64_t ns)
 
 int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char * const *argv)
 {
+    sbuf_t::debug_range_exception = getenv_debug("DEBUG_SBUF_RANGE_EXCEPTION");
+    sbuf_t::debug_alloc           = getenv_debug("DEBUG_SBUF_ALLOC");
+    sbuf_t::debug_leak            = getenv_debug("DEBUG_SBUF_LEAK");
+    int64_t sbuf_count = sbuf_t::sbuf_count;
+    if (sbuf_count!=0) {
+        std::cerr << "sbuf_count=" << sbuf_count << " at start of execution." << std::endl;
+    }
+
     mtrace();
     const auto original_argc = argc;
     const auto original_argv = argv;
@@ -210,7 +186,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
 
 
     /* 2021-09-13 - slg - option processing rewritten to use cxxopts */
-    std::string bulk_extractor_help( "A high-performance flexible digital forensics program." );
+    std::string bulk_extractor_help( "bulk_extractor version " PACKAGE_VERSION ": A high-performance flexible digital forensics program." );
     std::string image_name_help( "Name of image to scan (or directory if -r is provided)" );
 #ifdef HAVE_LIBEWF
     image_name_help += " (May be a E01 file )";
@@ -234,30 +210,29 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         ("d,debug", "enable debugging", cxxopts::value<int>()->default_value("1"))
         ("D,debug_help", "help on debugging")
         ("E,enable_exclusive", "disable all scanners except the one specified. Same as -x all -E scanner.", cxxopts::value<std::string>())
-        ("e,enable",   "enable a scanner", cxxopts::value<std::vector<std::string>>())
-        ("x,disable",  "disable a scanner", cxxopts::value<std::vector<std::string>>())
-        ("f,find",     "search for a pattern", cxxopts::value<std::vector<std::string>>())
-        ("F,find_file", "read patterns to search from a file", cxxopts::value<std::vector<std::string>>())
+        ("e,enable",   "enable a scanner (can be repeated)", cxxopts::value<std::vector<std::string>>())
+        ("x,disable",  "disable a scanner (can be repeated)", cxxopts::value<std::vector<std::string>>())
+        ("f,find",     "search for a pattern (can be repeated)", cxxopts::value<std::vector<std::string>>())
+        ("F,find_file", "read patterns to search from a file (can be repeated)", cxxopts::value<std::vector<std::string>>())
         ("G,pagesize",   "page size in bytes", cxxopts::value<std::string>()->default_value(std::to_string(cfg.opt_pagesize )))
         ("g,marginsize", "margin size in bytes", cxxopts::value<std::string>()->default_value(std::to_string(cfg.opt_pagesize )))
-        ("i,info",       "info mode")
         ("j,threads",    "number of threads", cxxopts::value<int>()->default_value(std::to_string(cfg.num_threads)))
         ("J,no_threads",  "read and process data in the primary thread")
 	("M,max_depth",   "max recursion depth", cxxopts::value<int>()->default_value(std::to_string(scanner_config::DEFAULT_MAX_DEPTH)))
-	("m,max_bad_alloc_errors", "max bad allocation errors", cxxopts::value<int>()->default_value(std::to_string(cfg.max_bad_alloc_errors)))
+	("max_bad_alloc_errors", "max bad allocation errors", cxxopts::value<int>()->default_value(std::to_string(cfg.max_bad_alloc_errors)))
 	("max_minute_wait", "maximum number of minutes to wait until all data are read", cxxopts::value<int>()->default_value(std::to_string(60)))
         ("notify_main_thread", "Display notifications in the main thread after phase1 completes. Useful for running with ThreadSanitizer")
         ("notify_async", "Display notificaitons asynchronously (default)")
-        ("o,outdir",        "output directory", cxxopts::value<std::string>())
+        ("o,outdir",        "output directory [REQUIRED]", cxxopts::value<std::string>())
         ("P,scanner_dir",
-         "directories for scanner shared libraries. Multiple directories can be specified. "
+         "directories for scanner shared libraries (can be repeated). "
          "Default directories include /usr/local/lib/bulk_extractor, /usr/lib/bulk_extractor "
          "and any directories specified in the BE_PATH environment variable.", cxxopts::value<std::vector<std::string>>())
         ("p,path",         "print the value of <path>[:length][/h][/r] with optional length, hex output, or raw output.", cxxopts::value<std::string>())
         ("q,quit",         "no status output")
         ("r,alert_list",    "file to read alert list from", cxxopts::value<std::string>())
         ("R,recurse",       "treat image file as a directory to recursively explore")
-        ("S,set",           "set a name=value option", cxxopts::value<std::vector<std::string>>())
+        ("S,set",           "set a name=value option (can be repeated)", cxxopts::value<std::vector<std::string>>())
         ("s,sampling",      "random sampling parameter frac[:passes]", cxxopts::value<std::string>())
         ("V,version",       "Display PACKAGE_VERSION (currently) " PACKAGE_VERSION)
         ("w,stop_list",     "file to read stop list from", cxxopts::value<std::string>())
@@ -303,7 +278,6 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
 
     cfg.opt_pagesize   = scaled_stoi64( result["pagesize"].as<std::string>());
     cfg.opt_marginsize = scaled_stoi64( result["marginsize"].as<std::string>());
-    cfg.opt_info       = result.count( "info" );
 
     try {
         cfg.num_threads    = result["threads"].as<int>();
@@ -678,7 +652,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         if (ss.producer_wait_ns() > ss.consumer_wait_ns_per_worker()){
             std::cout << "*** More time spent waiting for workers. You need faster CPU or more cores for improved performance." << std::endl;
         } else {
-            std::cout << "*** More time spent waiting for scanners. You need faster I/O for improved performance." << std::endl;
+            std::cout << "*** More time spent waiting for reader. You need faster I/O for improved performance." << std::endl;
         }
     }
 
@@ -688,6 +662,19 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     }
     catch ( const feature_recorder_set::NoSuchFeatureRecorder &e ) {
         cout << "Did not scan for email addresses." << std::endl;
+    }
+
+    if (sbuf_count != sbuf_t::sbuf_count) {
+        std::cerr << "Initial sbuf_t.sbuf_total=" << sbuf_count << "  end sbuf_count=" << sbuf_t::sbuf_count << std::endl;
+        if (sbuf_t::debug_leak) {
+            for (auto const &it : sbuf_t::sbuf_alloced) {
+                std::cerr << it << std::endl;
+                std::cerr << "   " << *it << std::endl;
+            }
+        } else {
+            std::cerr << "Leaked sbuf. set DEBUG_SBUF_ALLOC=1 or DEBUG_SBUF_LEAK=1 to diagnose" << std::endl;
+        }
+        throw std::runtime_error("leaked sbuf");
     }
 
     muntrace();

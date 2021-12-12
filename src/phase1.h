@@ -51,7 +51,6 @@ public:
         size_t    opt_pagesize {16 * MiB};
         size_t    opt_marginsize { 4 * MiB};
         uint32_t  max_bad_alloc_errors {3}; // by default, 3 retries
-        bool      opt_info {false};
         uint32_t  opt_notify_rate {1};		// by default, notify every second
         uint64_t  opt_page_start {0};
         uint64_t  opt_scan_start {0};   // byte where we should start scanning, if not 0
