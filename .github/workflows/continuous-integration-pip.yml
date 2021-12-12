@@ -37,7 +37,7 @@ jobs:
 
       - name: C++ checks with address-sanitizer
         # Temporarily, just on MacOS
-        if: startsWith(matrix.os, 'macos')
+        # if: startsWith(matrix.os, 'macos')
         run: |
           bash bootstrap.sh
           ./configure -q --disable-opt --enable-silent-rules --enable-address-sanitizer
@@ -46,7 +46,7 @@ jobs:
       - name: C++ checks with thread-sanitizer
         # Just run on ubuntu
         # Temporarily, disable
-        if: startsWith(matrix.os, 'ubuntu-DISABLED')
+        if: startsWith(matrix.os, 'ubuntu')
         run: |
           bash bootstrap.sh
           ./configure -q --disable-opt --enable-silent-rules --enable-thread-sanitizer
