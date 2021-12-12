@@ -79,7 +79,3 @@ echo updating automake
 $WGET $AUTOMAKE_DIST || (echo could not download $AUTOMAKE_DIST; exit 1)
 tar xfz automake*gz && (cd automake*/ && $CONFIGURE && $MAKE >/dev/null && sudo make install)
 automake --version
-
-cd $DIR/..
-(bash bootstrap.sh  && $CONFIGURE && make && make check) || (echo make check failed;exit 1)
-

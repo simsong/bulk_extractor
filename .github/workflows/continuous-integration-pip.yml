@@ -25,10 +25,10 @@ jobs:
         with:
           submodules: recursive
 
-      - name: "MacOS: Install C++ dependencies"
+      - name: "MacOS: run CONFIGURE_MACOS.bash"
         if: startsWith(matrix.os, 'macos')
         run: |
-          brew install autoconf automake libtool libxml2 libewf json-c
+          echo "" | bash etc/CONFIGURE_MACOS.bash
 
       - name: "Ubuntu: run CONFIGURE_UBUNTU20LTS.bash"
         if: startsWith(matrix.os, 'ubuntu')
@@ -36,17 +36,17 @@ jobs:
           echo "" | bash etc/CONFIGURE_UBUNTU20LTS.bash
 
       - name: C++ checks with address-sanitizer
+        # Temporarily, just on MacOS
         if: startsWith(matrix.os, 'macos')
         run: |
           bash bootstrap.sh
           ./configure -q --disable-opt --enable-silent-rules --enable-address-sanitizer
           make && (cd src; make check || (cat test-suite.log; exit 1))
 
-      - uses: ammaraskar/gcc-problem-matcher@0.1
-        name: GCC Problem Matcher
-
       - name: C++ checks with thread-sanitizer
-        if: startsWith(matrix.os, 'ubuntu')
+        # Just run on ubuntu
+        # Temporarily, disable
+        if: startsWith(matrix.os, 'ubuntu-DISABLED')
         run: |
           bash bootstrap.sh
           ./configure -q --disable-opt --enable-silent-rules --enable-thread-sanitizer
@@ -78,6 +78,9 @@ jobs:
           gpgv codecov.SHA256SUM.sig codecov.SHA256SUM
           shasum -a 256 -c codecov.SHA256SUM
           chmod +x codecov && ./codecov -t ${CODECOV_TOKEN}
+
+      - uses: ammaraskar/gcc-problem-matcher@0.1
+        name: GCC Problem Matcher
 
       - name: distcheck
         run: |

@@ -10,7 +10,6 @@
 
 #include <lightgrep/api.h>
 
-#include "findopts.h"
 #include "be13/plugin.h"
 
 using namespace std;
