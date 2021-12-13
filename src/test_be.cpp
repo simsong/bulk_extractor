@@ -549,11 +549,13 @@ bool feature_match(const Check &exp, const std::string &line)
 
 /*
  * Run all of the built-in scanners on a specific image, look for the given features, and return the directory.
+ * These are run single-threading for ease of debugging.
  */
 std::filesystem::path validate(std::string image_fname, std::vector<Check> &expected, bool recurse=true, size_t offset=0)
 {
-    debug = getenv("DEBUG") ? true : false;
-    sbuf_t::debug_range_exception = true;
+    debug = getenv_debug("DEBUG");
+    bulk_extractor_set_debug();           // Set from getenv
+    sbuf_t::debug_range_exception = true; // make sure this is explicitly set
     scanner_config sc;
 
     sc.outdir           = NamedTemporaryDirectory();
@@ -585,6 +587,7 @@ std::filesystem::path validate(std::string image_fname, std::vector<Check> &expe
     frs_flags.pedantic = true;          // for testing
     auto *xreport = new dfxml_writer(sc.outdir / "report.xml", false);
     scanner_set ss(sc, frs_flags, xreport);
+    //ss.debug_flags.debug_scanners_same_thread = true; // run everything in the same thread
     ss.add_scanners(scanners_builtin);
     ss.apply_scanner_commands();
 
@@ -596,6 +599,7 @@ std::filesystem::path validate(std::string image_fname, std::vector<Check> &expe
             Phase1 phase1(cfg, *p, ss);
             phase1.dfxml_write_create( 0, nullptr);
 
+            assert (ss.get_threading() == false);
             ss.phase_scan();
             phase1.phase1_run();
             delete p;
@@ -606,6 +610,10 @@ std::filesystem::path validate(std::string image_fname, std::vector<Check> &expe
         }
     }
     ss.shutdown();
+
+    /* There should be nothing in the work queue */
+    assert( ss.sbufs_in_queue == 0);
+    assert( ss.bytes_in_queue == 0);
 
     xreport->pop("dfxml");
     xreport->close();

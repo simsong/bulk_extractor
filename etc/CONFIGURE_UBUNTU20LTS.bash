@@ -60,7 +60,7 @@ fi
 
 echo Will now try to install
 
-sudo apt update -y || fail could not apt update
+sudo apt upgrade -y || fail could not apt upgrade
 sudo apt install -y $MKPGS || fail could not apt install $MKPGS
 
 echo manually installing a modern libewf

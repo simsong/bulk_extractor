@@ -115,7 +115,6 @@ void scan_exiv2(struct scanner_params &sp)
 	sp.info->feature_defs.push_back( feature_recorder_def("gps"));
 	return;
     }
-    if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;
     if(sp.phase==scanner_params::PHASE_SCAN){
 
 	const sbuf_t &sbuf = sp.sbuf;

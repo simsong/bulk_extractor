@@ -133,11 +133,16 @@ std::string ns_to_sec(uint64_t ns)
     return std::to_string(sec100/100) + std::string(".") +std::to_string(tens) + std::to_string(hundredths);
 }
 
-int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char * const *argv)
+void bulk_extractor_set_debug()
 {
     sbuf_t::debug_range_exception = getenv_debug("DEBUG_SBUF_RANGE_EXCEPTION");
     sbuf_t::debug_alloc           = getenv_debug("DEBUG_SBUF_ALLOC");
     sbuf_t::debug_leak            = getenv_debug("DEBUG_SBUF_LEAK");
+}
+
+int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char * const *argv)
+{
+    bulk_extractor_set_debug();
     int64_t sbuf_count = sbuf_t::sbuf_count;
     if (sbuf_count!=0) {
         std::cerr << "sbuf_count=" << sbuf_count << " at start of execution." << std::endl;
@@ -447,7 +452,6 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     }
     catch ( const scanner_set::NoSuchScanner &e ) {
         cerr << "no such scanner: " << e.what() << std::endl ;
-        ss.shutdown();
         return 5;
     }
 
@@ -484,7 +488,6 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         } else {
             pp.process_path( opt_path);
         }
-        ss.shutdown();
 	return 0;
     }
 

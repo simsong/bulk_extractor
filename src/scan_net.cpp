@@ -895,7 +895,7 @@ void scan_net(scanner_params &sp)
              */
         }
     }
-    if (sp.phase==scanner_params::PHASE_SHUTDOWN){
+    if (sp.phase==scanner_params::PHASE_CLEANUP){
         if (scanner){
             delete scanner;
             scanner = nullptr;

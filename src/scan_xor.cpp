@@ -6,6 +6,7 @@
 #include "config.h"
 #include "be13_api/scanner_params.h"
 #include "be13_api/utils.h"
+#include "be13_api/formatter.h"
 
 static int xor_mask = 255;
 extern "C"
@@ -48,9 +49,7 @@ void scan_xor(scanner_params &sp)
             }
         }
 
-        std::stringstream ss;
-        ss << "XOR(" << uint32_t(xor_mask) << ")";
-        const pos0_t pos0_xor = pos0 + ss.str();
+        const pos0_t pos0_xor = pos0 + (Formatter() << "XOR(" << uint32_t(xor_mask) << ")");
 
         // managed_malloc throws an exception if allocation fails.
         auto *dbuf = sbuf_t::sbuf_malloc(pos0_xor, sbuf.bufsize, sbuf.pagesize);
