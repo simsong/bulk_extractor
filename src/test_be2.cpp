@@ -206,7 +206,8 @@ TEST_CASE("30mb-segmented", "[end-to-end]") {
         snprintf(fname,sizeof(fname),"30mb-segmented.00%d", segment);
         std::filesystem::path seg_path = std::filesystem::temp_directory_path() / fname;
         if (segment==0) seg_base = seg_path;
-        if (!std::filesystem::exists( seg_path )) {
+        if (!std::filesystem::exists( seg_path ) ||
+            std::filesystem::file_size( seg_path ) < 30000000) {
             std::ofstream of(seg_path, std::ios::out | std::ios::binary);
             REQUIRE( of.is_open());
             for (unsigned int i=0;i<count;i++){
