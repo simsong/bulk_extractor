@@ -301,76 +301,76 @@ TEST_CASE("scan_json1", "[scanners]") {
 /*
  * First packet of a wget from http://www.google.com/ over ipv4:
 
-# ifconfig en0
-en0: flags=8863<UP,BROADCAST,SMART,RUNNING,SIMPLEX,MULTICAST> mtu 1500
-	options=400<CHANNEL_IO>
-	ether 2c:f0:a2:f3:a8:ee
-	inet6 fe80::1896:319a:43fa:a6fe%en0 prefixlen 64 secured scopeid 0x4
-	inet 172.20.0.185 netmask 0xfffff000 broadcast 172.20.15.255
-	nd6 options=201<PERFORMNUD,DAD>
-	media: autoselect
-	status: active
-# tcpdump -r packet1.pcap -vvvv -x
-reading from file packet1.pcap, link-type EN10MB (Ethernet)
-08:39:26.039111 IP (tos 0x0, ttl 64, id 0, offset 0, flags [DF], proto TCP (6), length 64)
-    172.20.0.185.59910 > lax30s03-in-f4.1e100.net.http: Flags [SEW], cksum 0x8efd (correct), seq 2878109014, win 65535, options [mss 1460,nop,wscale 6,nop,nop,TS val 1914841783 ecr 0,sackOK,eol], length 0
-	0x0000:  4500 0040 0000 4000 4006 3b8d ac14 00b9
-	0x0010:  acd9 a584 ea06 0050 ab8c 7556 0000 0000
-	0x0020:  b0c2 ffff 8efd 0000 0204 05b4 0103 0306
-	0x0030:  0101 080a 7222 2ab7 0000 0000 0402 0000
-bash-3.2# xxd packet1.pcap
-00000000: d4c3 b2a1 0200 0400 0000 0000 0000 0000  ................
-00000010: 0000 0400 0100 0000 fe7e 0e61 c798 0000  .........~.a....
-00000020: 4e00 0000 4e00 0000 0050 e804 774b 2cf0  N...N....P..wK,.
-00000030: a2f3 a8ee 0800 4500 0040 0000 4000 4006  ......E..@..@.@.
-00000040: 3b8d ac14 00b9 acd9 a584 ea06 0050 ab8c  ;............P..
-00000050: 7556 0000 0000 b0c2 ffff 8efd 0000 0204  uV..............
-00000060: 05b4 0103 0306 0101 080a 7222 2ab7 0000  ..........r"*...
-00000070: 0000 0402 0000                           ......
+ # ifconfig en0
+ en0: flags=8863<UP,BROADCAST,SMART,RUNNING,SIMPLEX,MULTICAST> mtu 1500
+ options=400<CHANNEL_IO>
+ ether 2c:f0:a2:f3:a8:ee
+ inet6 fe80::1896:319a:43fa:a6fe%en0 prefixlen 64 secured scopeid 0x4
+ inet 172.20.0.185 netmask 0xfffff000 broadcast 172.20.15.255
+ nd6 options=201<PERFORMNUD,DAD>
+ media: autoselect
+ status: active
+ # tcpdump -r packet1.pcap -vvvv -x
+ reading from file packet1.pcap, link-type EN10MB (Ethernet)
+ 08:39:26.039111 IP (tos 0x0, ttl 64, id 0, offset 0, flags [DF], proto TCP (6), length 64)
+ 172.20.0.185.59910 > lax30s03-in-f4.1e100.net.http: Flags [SEW], cksum 0x8efd (correct), seq 2878109014, win 65535, options [mss 1460,nop,wscale 6,nop,nop,TS val 1914841783 ecr 0,sackOK,eol], length 0
+ 0x0000:  4500 0040 0000 4000 4006 3b8d ac14 00b9
+ 0x0010:  acd9 a584 ea06 0050 ab8c 7556 0000 0000
+ 0x0020:  b0c2 ffff 8efd 0000 0204 05b4 0103 0306
+ 0x0030:  0101 080a 7222 2ab7 0000 0000 0402 0000
+ bash-3.2# xxd packet1.pcap
+ 00000000: d4c3 b2a1 0200 0400 0000 0000 0000 0000  ................
+ 00000010: 0000 0400 0100 0000 fe7e 0e61 c798 0000  .........~.a....
+ 00000020: 4e00 0000 4e00 0000 0050 e804 774b 2cf0  N...N....P..wK,.
+ 00000030: a2f3 a8ee 0800 4500 0040 0000 4000 4006  ......E..@..@.@.
+ 00000040: 3b8d ac14 00b9 acd9 a584 ea06 0050 ab8c  ;............P..
+ 00000050: 7556 0000 0000 b0c2 ffff 8efd 0000 0204  uV..............
+ 00000060: 05b4 0103 0306 0101 080a 7222 2ab7 0000  ..........r"*...
+ 00000070: 0000 0402 0000                           ......
 */
 
 /* ethernet frame for packet above. Note that it starts 6 bytes before the source ethernet mac address.
  * validated with packet decoder at https://hpd.gasmi.net/.
  172.20.0.185 → 172.217.165.132 TCP 59910 → 80 [SYN, ECN, CWR]
-Ethernet II
-Destination: Nomadix_04:77:4b (00:50:e8:04:77:4b)
-Source: Apple_f3:a8:ee (2c:f0:a2:f3:a8:ee)
-Type: IPv4 (0x0800)
-Internet Protocol Version 4
-0100 .... = Version: 4
-.... 0101 = Header Length: 20 bytes (5)
-Differentiated Services Field: 0x00 (DSCP: CS0, ECN: Not-ECT)
-Total Length: 64
-Identification: 0x0000 (0)
-Flags: 0x40, Don't fragment
-Fragment Offset: 0
-Time to Live: 64
-Protocol: TCP (6)
-Header Checksum: 0x3b8d   (15245)
-Header checksum status: Unverified
-Source Address: 172.20.0.185
-Destination Address: 172.217.165.132
-Transmission Control Protocol
-Source Port: 59910
-Destination Port: 80
-Stream index: 0
-TCP Segment Len: 0
-Sequence Number: 0
-Sequence Number (raw): 2878109014
-Next Sequence Number: 1
-Acknowledgment Number: 0
-Acknowledgment number (raw): 0
-1011 .... = Header Length: 44 bytes (11)
-Flags: 0x0c2 (SYN, ECN, CWR)
-Window: 65535
-Calculated window size: 65535
-Checksum: 0x8efd
-Checksum Status: Unverified
-Urgent Pointer: 0
-Options: (24 bytes), Maximum segment size, No-Operation (NOP), Window scale, No-Operation (NOP), No-Operation (NOP), Timestamps, SACK permitted, End of Option List (EOL)
-Timestamps
+ Ethernet II
+ Destination: Nomadix_04:77:4b (00:50:e8:04:77:4b)
+ Source: Apple_f3:a8:ee (2c:f0:a2:f3:a8:ee)
+ Type: IPv4 (0x0800)
+ Internet Protocol Version 4
+ 0100 .... = Version: 4
+ .... 0101 = Header Length: 20 bytes (5)
+ Differentiated Services Field: 0x00 (DSCP: CS0, ECN: Not-ECT)
+ Total Length: 64
+ Identification: 0x0000 (0)
+ Flags: 0x40, Don't fragment
+ Fragment Offset: 0
+ Time to Live: 64
+ Protocol: TCP (6)
+ Header Checksum: 0x3b8d   (15245)
+ Header checksum status: Unverified
+ Source Address: 172.20.0.185
+ Destination Address: 172.217.165.132
+ Transmission Control Protocol
+ Source Port: 59910
+ Destination Port: 80
+ Stream index: 0
+ TCP Segment Len: 0
+ Sequence Number: 0
+ Sequence Number (raw): 2878109014
+ Next Sequence Number: 1
+ Acknowledgment Number: 0
+ Acknowledgment number (raw): 0
+ 1011 .... = Header Length: 44 bytes (11)
+ Flags: 0x0c2 (SYN, ECN, CWR)
+ Window: 65535
+ Calculated window size: 65535
+ Checksum: 0x8efd
+ Checksum Status: Unverified
+ Urgent Pointer: 0
+ Options: (24 bytes), Maximum segment size, No-Operation (NOP), Window scale, No-Operation (NOP), No-Operation (NOP), Timestamps, SACK permitted, End of Option List (EOL)
+ Timestamps
 
- */
+*/
 uint8_t packet1[] = {
     0x00, 0x50, 0xe8, 0x04, 0x77, 0x4b, 0x2c, 0xf0,
     0xa2, 0xf3, 0xa8, 0xee, 0x08, 0x00, 0x45, 0x00, 0x00, 0x40, 0x00, 0x00, 0x40, 0x00, 0x40, 0x06,
@@ -553,6 +553,8 @@ bool feature_match(const Check &exp, const std::string &line)
  */
 std::filesystem::path validate(std::string image_fname, std::vector<Check> &expected, bool recurse=true, size_t offset=0)
 {
+    int start_sbuf_count = sbuf_t::sbuf_count;
+
     debug = getenv_debug("DEBUG");
     bulk_extractor_set_debug();           // Set from getenv
     sbuf_t::debug_range_exception = true; // make sure this is explicitly set
@@ -594,9 +596,10 @@ std::filesystem::path validate(std::string image_fname, std::vector<Check> &expe
     if (image_fname != "" ) {
         try {
             auto p = image_process::open( sc.input_fname, false, 65536, 65536);
+            std::stringstream strs;
             Phase1::Config cfg; // config for the image_processing system
             cfg.opt_quiet = true;       // do not need status reports
-            Phase1 phase1(cfg, *p, ss);
+            Phase1 phase1(cfg, *p, ss, strs);
             phase1.dfxml_write_create( 0, nullptr);
 
             assert (ss.get_threading() == false);
@@ -653,6 +656,7 @@ std::filesystem::path validate(std::string image_fname, std::vector<Check> &expe
         }
         REQUIRE(found);
     }
+    REQUIRE(start_sbuf_count == sbuf_t::sbuf_count);
     return sc.outdir;
 }
 
@@ -948,7 +952,7 @@ TEST_CASE("image_process", "[phase1]") {
 /****************************************************************
  ** Test the path printer
  **/
-TEST_CASE("path_printer", "[path_printer]") {
+TEST_CASE("path-printer1", "[path_printer]") {
     scanner_config sc;
     sc.input_fname = test_dir() / "test_hello.512b.gz";
     sc.enable_all_scanners();
@@ -958,9 +962,9 @@ TEST_CASE("path_printer", "[path_printer]") {
     ss.add_scanners(scanners_builtin);
     ss.apply_scanner_commands();
 
-    auto reader = image_process::open( sc.input_fname, false, 65536, 65536 );
+    image_process *reader = image_process::open( sc.input_fname, false, 65536, 65536 );
     std::stringstream str;
-    class path_printer pp(&ss, reader, str);
+    class path_printer pp(ss, reader, str);
     pp.process_path("512-GZIP-0/h");    // create a hex dump
 
     REQUIRE(str.str() == "0000: 6865 6c6c 6f40 776f 726c 642e 636f 6d0a hello@world.com.\n");
@@ -968,4 +972,5 @@ TEST_CASE("path_printer", "[path_printer]") {
 
     pp.process_path("512-GZIP-2/r");    // create a hex dump with a different path and the /r
     REQUIRE( str.str() == "14\r\nllo@world.com\n" );
+    delete reader;
 }
