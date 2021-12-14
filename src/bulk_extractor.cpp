@@ -133,14 +133,19 @@ std::string ns_to_sec(uint64_t ns)
     return std::to_string(sec100/100) + std::string(".") +std::to_string(tens) + std::to_string(hundredths);
 }
 
-int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char * const *argv)
+void bulk_extractor_set_debug()
 {
     sbuf_t::debug_range_exception = getenv_debug("DEBUG_SBUF_RANGE_EXCEPTION");
     sbuf_t::debug_alloc           = getenv_debug("DEBUG_SBUF_ALLOC");
     sbuf_t::debug_leak            = getenv_debug("DEBUG_SBUF_LEAK");
-    int64_t sbuf_count = sbuf_t::sbuf_count;
-    if (sbuf_count!=0) {
-        std::cerr << "sbuf_count=" << sbuf_count << " at start of execution." << std::endl;
+}
+
+int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char * const *argv)
+{
+    bulk_extractor_set_debug();
+    int64_t start_sbuf_count = sbuf_t::sbuf_count;
+    if (start_sbuf_count!=0) {
+        cerr << "start_sbuf_count=" << start_sbuf_count << " at start of execution." << std::endl;
     }
 
     mtrace();
@@ -228,8 +233,8 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
          "directories for scanner shared libraries (can be repeated). "
          "Default directories include /usr/local/lib/bulk_extractor, /usr/lib/bulk_extractor "
          "and any directories specified in the BE_PATH environment variable.", cxxopts::value<std::vector<std::string>>())
-        ("p,path",         "print the value of <path>[:length][/h][/r] with optional length, hex output, or raw output.", cxxopts::value<std::string>())
-        ("q,quit",         "no status output")
+        ("p,path",          "print the value of <path>[:length][/h][/r] with optional length, hex output, or raw output.", cxxopts::value<std::string>())
+        ("q,quit",          "no status or performance output")
         ("r,alert_list",    "file to read alert list from", cxxopts::value<std::string>())
         ("R,recurse",       "treat image file as a directory to recursively explore")
         ("S,set",           "set a name=value option (can be repeated)", cxxopts::value<std::vector<std::string>>())
@@ -439,7 +444,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
 
     struct feature_recorder_set::flags_t f;
     scanner_set ss( sc, f, nullptr);     // make a scanner_set but with no XML writer. We will create it below
-    ss.add_scanners( scanners_builtin);
+    ss.add_scanners( scanners_builtin );
 
     /* Applying the scanner commands will create the alert recorder. */
     try {
@@ -475,7 +480,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     /* are we supposed to run the path printer? If so, we can use cout_, since the notify stream won't be running. */
     if ( result.count( "path" ) ) {
         std::string opt_path = result["path"].as<std::string>();
-        path_printer pp( &ss, p, cout);
+        path_printer pp( ss, p, cout);
         if ( opt_path=="-http" || opt_path=="--http" ){
             pp.process_http( std::cin);
         } else if ( opt_path=="-i" || opt_path=="-" ){
@@ -483,6 +488,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         } else {
             pp.process_path( opt_path);
         }
+        delete p;
 	return 0;
     }
 
@@ -490,12 +496,13 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
      * We use *p because we don't know which subclass we will be getting.
      */
 
+    /* Strangely, if we make xreport a stack variable, we fail */
     dfxml_writer *xreport = new dfxml_writer( sc.outdir / Phase1::REPORT_FILENAME, false ); // do not make DTD
     ss.set_dfxml_writer( xreport );
     /* Start the clock */
     master_timer.start();
 
-    Phase1 phase1( cfg, *p, ss);
+    Phase1 phase1( cfg, *p, ss, cout);
 
     /* Validate the args */
     validate_path( sc.input_fname );
@@ -566,6 +573,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     catch ( const feature_recorder::DiskWriteError &e ) {
         cerr << "Disk write error during Phase 1 ( scanning). Disk is probably full." << std::endl
              << "Remove extra files and restart bulk_extractor with the exact same command line to continue." << std::endl;
+        // do not call ss.shutdown() to avoid writing out histograms
         return 6;
     }
 
@@ -588,7 +596,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     if ( !cfg.opt_quiet) cout << "Phase 2. Shutting down scanners" << std::endl ;
     xreport->add_timestamp( "phase2 start" );
     try {
-        std::cout << "Computing final histograms and shutting down..." << std::endl ;
+        cout << "Computing final histograms and shutting down..." << std::endl ;
         ss.shutdown();
     }
     catch ( const feature_recorder::DiskWriteError &e ) {
@@ -650,9 +658,9 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
              << std::endl;
 
         if (ss.producer_wait_ns() > ss.consumer_wait_ns_per_worker()){
-            std::cout << "*** More time spent waiting for workers. You need faster CPU or more cores for improved performance." << std::endl;
+            cout << "*** More time spent waiting for workers. You need faster CPU or more cores for improved performance." << std::endl;
         } else {
-            std::cout << "*** More time spent waiting for reader. You need faster I/O for improved performance." << std::endl;
+            cout << "*** More time spent waiting for reader. You need faster I/O for improved performance." << std::endl;
         }
     }
 
@@ -664,18 +672,25 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         cout << "Did not scan for email addresses." << std::endl;
     }
 
-    if (sbuf_count != sbuf_t::sbuf_count) {
-        std::cerr << "Initial sbuf_t.sbuf_total=" << sbuf_count << "  end sbuf_count=" << sbuf_t::sbuf_count << std::endl;
+    if (start_sbuf_count != sbuf_t::sbuf_count) {
+        cerr << "sbuf_t leak detected. Initial sbuf_t.sbuf_total=" << start_sbuf_count << "  end sbuf_count=" << sbuf_t::sbuf_count << std::endl;
         if (sbuf_t::debug_leak) {
             for (auto const &it : sbuf_t::sbuf_alloced) {
-                std::cerr << it << std::endl;
-                std::cerr << "   " << *it << std::endl;
+                cerr << it << std::endl;
+                cerr << "   " << *it << std::endl;
             }
         } else {
-            std::cerr << "Leaked sbuf. set DEBUG_SBUF_ALLOC=1 or DEBUG_SBUF_LEAK=1 to diagnose" << std::endl;
+            cerr << "Leaked sbuf. set DEBUG_SBUF_ALLOC=1 or DEBUG_SBUF_LEAK=1 to diagnose" << std::endl;
         }
         throw std::runtime_error("leaked sbuf");
     }
+
+    /* Cleanup */
+
+    delete xreport;                     // no longer needed
+    xreport=nullptr;                    // and zero it out.
+    delete p;
+    p = nullptr;
 
     muntrace();
     return( 0 );

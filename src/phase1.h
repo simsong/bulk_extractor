@@ -3,6 +3,7 @@
 
 #include <thread>
 #include <atomic>
+#include <ostream>
 
 #include "be13_api/scanner_set.h"
 #include "be13_api/dfxml_cpp/src/dfxml_writer.h"
@@ -79,6 +80,7 @@ public:
     Config        &config;              // phase1 config passed in. Writable so seen can be updated.
     image_process &p;                   // image being processed
     scanner_set   &ss;                  // our scanner set
+    std::ostream  &cout;
 
     u_int         notify_ctr  {0};      // for random sampling
     uint64_t      total_bytes {0};      // processed
@@ -92,7 +94,7 @@ public:
     sbuf_t *get_sbuf(image_process::iterator &it);
 
 
-    Phase1(Config &config_, image_process &p_, scanner_set &ss_);
+    Phase1(Config &config_, image_process &p_, scanner_set &ss_, std::ostream &cout_);
     void dfxml_write_create(int argc, char * const *argv); // create the DFXML header
     void dfxml_write_source();                             // create the DFXML <source> block
     void read_process_sbufs(); // read and process the sbufs

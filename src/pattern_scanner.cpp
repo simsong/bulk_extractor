@@ -295,6 +295,8 @@ void scan_lg(PatternScanner& scanner, class scanner_params &sp) {
   case scanner_params::PHASE_SHUTDOWN:
     scanner.shutdown(sp);
     break;
+  case scanner_params::PHASE_CLEANUP:
+      TODO - to something here.
   default:
     break;
   }

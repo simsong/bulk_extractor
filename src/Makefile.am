@@ -114,7 +114,6 @@ bulk_extractor_parts = \
 	bulk_extractor.cpp \
 	bulk_extractor.h \
 	cxxopts.hpp \
-	findopts.h \
 	image_process.cpp \
 	image_process.h \
 	notify_thread.cpp \
@@ -128,6 +127,9 @@ bulk_extractor_parts = \
 bulk_extractor_SOURCES = $(bulk_extractor_parts) $(scanners_builtin) main.cpp
 test_be_SOURCES = $(bulk_extractor_parts) $(scanners_builtin) be13_api/catch.hpp test_be.cpp test_be.h test_be2.cpp
 
+
+runs.txt: test_be tests/run_each.sh
+	bash tests/run_each.sh > runs.txt 2>&1
 
 #lib: libbulkextractor.so
 

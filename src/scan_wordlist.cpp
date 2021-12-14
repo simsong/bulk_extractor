@@ -249,13 +249,19 @@ void scan_wordlist(scanner_params &sp)
     }
 
     if (sp.phase==scanner_params::PHASE_SCAN){
+        assert (wordlist!=nullptr);
         wordlist->process_sbuf(sp);
     }
 
     if (sp.phase==scanner_params::PHASE_SHUTDOWN){
+        assert (wordlist!=nullptr);
         wordlist->shutdown(sp);
-        delete wordlist;
-        wordlist = nullptr;
+    }
+    if (sp.phase==scanner_params::PHASE_CLEANUP){
+        if (wordlist) {
+            delete wordlist;
+            wordlist = nullptr;
+        }
     }
 }
 

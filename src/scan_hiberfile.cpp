@@ -110,7 +110,6 @@ void scan_hiberfile(scanner_params &sp)
         sp.info->min_sbuf_size         = MIN_COMPRESSED_SIZE;
 	return; /* no features */
     }
-    if (sp.phase==scanner_params::PHASE_SHUTDOWN) return;
     if (sp.phase==scanner_params::PHASE_SCAN){
 
 	/* Do not scan for hibernation decompression if we are already

@@ -60,9 +60,7 @@ void scan_find(scanner_params &sp)
       	sp.info->histogram_defs.push_back( histogram_def("find", "find", "", "","histogram", lowercase));
         return;
     }
-    if(sp.phase==scanner_params::PHASE_SHUTDOWN) return;
-
-    if (scanner_params::PHASE_INIT2 == sp.phase) {
+    if (sp.phase == scanner_params::PHASE_INIT2 ) {
         for (const auto &it : sp.ss->find_patterns()) {
             add_find_pattern(it);
             if (sp.ss->writer) { sp.ss->writer->xmlout("find_pattern", it); }

@@ -517,7 +517,6 @@ void scan_windirs(scanner_params &sp)
         //debug = sp.info->config->debug;
 	return;
     }
-    if (sp.phase==scanner_params::PHASE_SHUTDOWN) return;		// no shutdown
     if (sp.phase==scanner_params::PHASE_SCAN){
 	feature_recorder &wrecorder = sp.named_feature_recorder("windirs");
 	scan_fatdirs(*sp.sbuf, wrecorder);

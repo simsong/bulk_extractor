@@ -28,8 +28,8 @@
 
 using namespace std::chrono_literals;
 
-Phase1::Phase1(Config &config_, image_process &p_, scanner_set &ss_):
-    config(config_), p(p_), ss(ss_), xreport(*ss_.get_dfxml_writer())
+Phase1::Phase1(Config &config_, image_process &p_, scanner_set &ss_, std::ostream &cout_):
+    config(config_), p(p_), ss(ss_), cout(cout_), xreport(*ss_.get_dfxml_writer())
 {
 }
 
@@ -226,7 +226,6 @@ void Phase1::read_process_sbufs()
     }
 
     if (config.fraction_done) *config.fraction_done = 1.0;
-    if (!config.opt_quiet) std::cout << "All data read; waiting for threads to finish..." << std::endl;
 }
 
 void Phase1::dfxml_write_create(int argc, char * const *argv)
@@ -284,6 +283,7 @@ void Phase1::phase1_run()
     }
     xreport.push("runtime","xmlns:debug=\"http://www.github.com/simsong/bulk_extractor/issues\"");
     read_process_sbufs();
+    if (!config.opt_quiet) cout << "All data read; waiting for threads to finish..." << std::endl;
     ss.join();
     xreport.pop("runtime");
     dfxml_write_source();               // written here so it may also include hash

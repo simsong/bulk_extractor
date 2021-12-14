@@ -331,7 +331,7 @@ AC_MSG_NOTICE([  LDFLAGS:          $LDFLAGS])
 #
 
 if test x"${libewf}" != "xyes" ; then
-  AC_MSG_WARN([libewf-devel must be installed for E01 support.])
+  AC_MSG_WARN([libewf not install. Please install libewf-devel for E01 support. See the etc/ directory for details.])
 fi
 
 AC_OUTPUT
