@@ -39,14 +39,18 @@ jobs:
         run: |
           bash bootstrap.sh
           ./configure -q --disable-opt --enable-silent-rules --enable-address-sanitizer
-          make && (cd src; make check || (cat test-suite.log; exit 1))
+          make
+          (cd src; make check || (cat test-suite.log; exit 1))
+          make distclean
 
       - name: C++ checks with thread-sanitizer (disabled)
         if: startsWith(matrix.os, 'ubuntu-DISABLED')
         run: |
           bash bootstrap.sh
           ./configure -q --disable-opt --enable-silent-rules --enable-thread-sanitizer
-          make && (cd src; make check || (cat test-suite.log; exit 1))
+          make
+          (cd src; make check || (cat test-suite.log; exit 1))
+          make distclean
 
       - name: C++ checks with codecov
         if: startsWith(matrix.os, 'ubuntu')
@@ -80,4 +84,6 @@ jobs:
 
       - name: distcheck
         run: |
-          make clean && make distcheck
+          ./configure -q
+          make clean
+          make distcheck
