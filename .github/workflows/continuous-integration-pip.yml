@@ -35,17 +35,14 @@ jobs:
         run: |
           echo "" | bash etc/CONFIGURE_UBUNTU20LTS.bash
 
-      - name: C++ checks with address-sanitizer
-        # Temporarily, just on MacOS
-        if: startsWith(matrix.os, 'macos')
+      - name: C++ checks with address-sanitizer (Mac and Linux)
         run: |
           bash bootstrap.sh
           ./configure -q --disable-opt --enable-silent-rules --enable-address-sanitizer
           make && (cd src; make check || (cat test-suite.log; exit 1))
 
-      - name: C++ checks with thread-sanitizer
-        # Temporarily, just on ubuntu
-        if: startsWith(matrix.os, 'ubuntu')
+      - name: C++ checks with thread-sanitizer (disabled)
+        if: startsWith(matrix.os, 'ubuntu-DISABLED')
         run: |
           bash bootstrap.sh
           ./configure -q --disable-opt --enable-silent-rules --enable-thread-sanitizer
