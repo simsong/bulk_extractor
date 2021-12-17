@@ -3,7 +3,7 @@ RELEASE=20
 REQUIRED_ID='amzn'
 REQUIRED_VERSION=2
 CONFIGURE="./configure -q --enable-silent-rules"
-nLIBEWF_DIST=https://github.com/libyal/libewf-legacy/releases/download/20140812/libewf-20140812.tar.gz
+LIBEWF_DIST=https://github.com/libyal/libewf-legacy/releases/download/20140812/libewf-20140812.tar.gz
 AUTOCONF_DIST=https://ftpmirror.gnu.org/autoconf/autoconf-2.71.tar.gz
 AUTOMAKE_DIST=https://ftpmirror.gnu.org/automake/automake-1.16.3.tar.gz
 MKPGS="autoconf automake libexpat1-dev libssl-dev libtool libxml2-utils pkg-config"
@@ -64,8 +64,13 @@ if [ $? != 0 ]; then
   exit 1
 fi
 
-sudo alternatives --install /usr/bin/gcc gcc /usr/bin/gcc10-gcc 100 || (echo alternatives failed; exit 1)
-sudo alternatives --install /usr/bin/g++ g++ /usr/bin/gcc10-g++ 100 || (echo alternatives failed; exit 1)
+# if gcc is in place, move it out of the way
+if [ -r /usr/bin/gcc ]; then sudo mv /usr/bin/gcc /usr/bin/gcc.old.$$ ; fi
+if [ -r /usr/bin/g++ ]; then sudo mv /usr/bin/g++ /usr/bin/g++.old.$$ ; fi
+
+# set up the alternatives
+sudo alternatives --install /usr/bin/gcc gcc /usr/bin/gcc10-gcc 100 
+sudo alternatives --install /usr/bin/g++ g++ /usr/bin/gcc10-g++ 100 
 
 
 echo
@@ -74,30 +79,34 @@ sudo yum -y update
 
 echo manually installing a modern libewf
 cd /tmp/
-$WGET $LIBEWF_DIST || (echo could not download $LIBEWF_DIST; exit 1)
-tar xfz libewf*gz  && (cd libewf*/   && $CONFIGURE && $MAKE >/dev/null && sudo make install)
-ls -l /etc/ld.so.conf.d/
-sudo ldconfig
-ewfinfo -h > /dev/null || echo libewf not installed
-ewfinfo -h > /dev/null || exit 1
 
+LIBEWF=$(basename $LIBEWF_DIST)
 
-echo updating autoconf
-$WGET $AUTOCONF_DIST || (echo could not download $AUTOCONF_DIST; exit 1)
-tar xfz autoconf*gz && (cd autoconf*/ && $CONFIGURE && $MAKE >/dev/null && sudo make install)
-autoconf --version || (echo autoconf failed; exit 1)
+if [ ! -r $LIBEWF ]; then
+    echo downloading $LIBEWF from $LIBEWF_DIST
+    $WGET $LIBEWF_DIST || (echo could not download $LIBEWF_DIST; exit 1)
+fi
 
-echo updating automake
-$WGET $AUTOMAKE_DIST || (echo could not download $AUTOMAKE_DIST; exit 1)
-tar xfz automake*gz && (cd automake*/ && $CONFIGURE && $MAKE >/dev/null && sudo make install)
-automake --version || (echo automake failed; exit 1)
+tar xfz $LIBEWF && (cd libewf*/ && $CONFIGURE && $MAKE >/dev/null && sudo make install)
 
 # AWS Linux doesn't set this up by default
 echo /usr/local/lib | sudo cp /dev/stdin /etc/ld.so.conf.d/libewf.conf
 sudo ldconfig || (echo ldconfig failed; exit 1)
 
-echo cd $(dirname $DIR)
-cd $(dirname $DIR)
-ls -l
-sh bootstrap.sh
-CC=gcc10-gcc CXX=gcc10-c++ ./configure -q --enable-silent-rules && make check
+# verify ewfinfo works
+ewfinfo -h > /dev/null      || echo libewf not installed
+ewfinfo -h > /dev/null 2>&1 || exit 1
+
+## echo updating autoconf 
+## $WGET $AUTOCONF_DIST || (echo could not download $AUTOCONF_DIST; exit 1)
+## tar xfz autoconf*gz && (cd autoconf*/ && $CONFIGURE && $MAKE >/dev/null && sudo make install)
+## autoconf --version || (echo autoconf failed; exit 1)
+
+## echo updating automake
+## $WGET $AUTOMAKE_DIST || (echo could not download $AUTOMAKE_DIST; exit 1)
+## tar xfz automake*gz && (cd automake*/ && $CONFIGURE && $MAKE >/dev/null && sudo make install)
+## automake --version || (echo automake failed; exit 1)
+
+## this shouldn't be needed anymore
+## sh bootstrap.sh
+## CC=gcc10-gcc CXX=gcc10-c++ ./configure -q --enable-silent-rules && make check
