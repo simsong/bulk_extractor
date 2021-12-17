@@ -63,6 +63,10 @@ if [ $? != 0 ]; then
   exit 1
 fi
 
+sudo alternatives --install /usr/bin/gcc gcc /usr/bin/gcc10-gcc 100 || (echo alternatives failed; exit 1)
+sudo alternatives --install /usr/bin/g++ g++ /usr/bin/gcc10-g++ 100 || (echo alternatives failed; exit 1)
+
+
 echo
 echo "Now performing a yum update to update system packages"
 sudo yum -y update
@@ -72,7 +76,7 @@ $WGET $LIBEWF_DIST || (echo could not download $LIBEWF_DIST; exit 1)
 tar xfz libewf*gz  && (cd libewf*/   && $CONFIGURE && $MAKE >/dev/null && sudo make install)
 ls -l /etc/ld.so.conf.d/
 sudo ldconfig
-ewinfo -h > /dev/null || (echo libewf not installed;exit 1)
+ewfinfo -h > /dev/null || (echo libewf not installed;exit 1)
 
 exit 0
 
