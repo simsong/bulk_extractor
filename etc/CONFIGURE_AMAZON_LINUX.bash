@@ -97,16 +97,17 @@ sudo ldconfig || (echo ldconfig failed; exit 1)
 ewfinfo -h > /dev/null      || echo libewf not installed
 ewfinfo -h > /dev/null 2>&1 || exit 1
 
-## echo updating autoconf 
-## $WGET $AUTOCONF_DIST || (echo could not download $AUTOCONF_DIST; exit 1)
-## tar xfz autoconf*gz && (cd autoconf*/ && $CONFIGURE && $MAKE >/dev/null && sudo make install)
-## autoconf --version || (echo autoconf failed; exit 1)
+## we need the new autoconf and automake for AWS linux as of 2021-12-17
+echo updating autoconf 
+$WGET $AUTOCONF_DIST || (echo could not download $AUTOCONF_DIST; exit 1)
+tar xfz autoconf*gz && (cd autoconf*/ && $CONFIGURE && $MAKE >/dev/null && sudo make install)
+autoconf --version || (echo autoconf failed; exit 1)
 
-## echo updating automake
-## $WGET $AUTOMAKE_DIST || (echo could not download $AUTOMAKE_DIST; exit 1)
-## tar xfz automake*gz && (cd automake*/ && $CONFIGURE && $MAKE >/dev/null && sudo make install)
-## automake --version || (echo automake failed; exit 1)
+echo updating automake
+$WGET $AUTOMAKE_DIST || (echo could not download $AUTOMAKE_DIST; exit 1)
+tar xfz automake*gz && (cd automake*/ && $CONFIGURE && $MAKE >/dev/null && sudo make install)
+automake --version || (echo automake failed; exit 1)
 
-## this shouldn't be needed anymore
+## This isn't needed anymore because gcc is now gcc10
 ## sh bootstrap.sh
 ## CC=gcc10-gcc CXX=gcc10-c++ ./configure -q --enable-silent-rules && make check
