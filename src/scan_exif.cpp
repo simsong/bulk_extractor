@@ -20,7 +20,8 @@
 
 #include "scan_exif.h"
 #include "be13_api/scanner_params.h"
-#include "be13_api/utils.h"// needs config.h
+#include "be13_api/utils.h"
+#include "be13_api/formatter.h"
 
 #include "dfxml_cpp/src/dfxml_writer.h"
 
@@ -202,8 +203,9 @@ void exif_scanner::record_exif_data(const pos0_t &pos0, std::string hash_hex)
         // validate against maximum entry size
         if (exif_debug) {
             if (prepared_value.size() > jpeg_validator::MAX_ENTRY_SIZE) {
-                std::cerr << "ERROR exif_entry: prepared_value.size()==" << prepared_value.size() << std::endl ;
-                assert(0);
+                throw std::runtime_error(Formatter()
+                                    << "exif_scanner::record_exif_data prepared_value.size()=="
+                                    << prepared_value.size());
             }
         }
 

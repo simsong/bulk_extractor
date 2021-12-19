@@ -9,8 +9,11 @@ AUTOMAKE_DIST=https://ftpmirror.gnu.org/automake/automake-1.16.3.tar.gz
 MKPGS="autoconf automake libexpat1-dev libssl-dev libtool libxml2-utils pkg-config"
 WGET="wget -nv --no-check-certificate"
 CONFIGURE="./configure -q --enable-silent-rules"
-MAKE="make -j4"
+cpus=$(lscpu | grep '^CPU.s.:'| awk '{print $2;}')
 NAME='AWS Linux'
+export DEBUG_NO_5G=TRUE
+export MAKEOPTS="-j$cpus"
+MAKE="make $MAKEOPTS"
 cat <<EOF
 *******************************************************************
 Configuring, compile and check this bulk_extractor release for $NAME
@@ -19,7 +22,7 @@ Configuring, compile and check this bulk_extractor release for $NAME
 Install AWS Linux and follow these commands:
 
 #
-# sudo yum -y update && sudo yum -y install git && git clone --recursive https://github.com/simsong/bulk_extractor.git 
+# sudo yum -y update && sudo yum -y install git && git clone --recursive https://github.com/simsong/bulk_extractor.git
 # bash bulk_extractor/etc/CONFIGURE_AMAZON_LINUX.bash
 # cd bulk_extractor && make && sudo make install
 
@@ -74,9 +77,6 @@ ls -l /etc/ld.so.conf.d/
 sudo ldconfig
 ewinfo -h > /dev/null || (echo libewf not installed;exit 1)
 
-exit 0
-
-
 echo updating autoconf
 $WGET $AUTOCONF_DIST || (echo could not download $AUTOCONF_DIST; exit 1)
 tar xfz autoconf*gz && (cd autoconf*/ && $CONFIGURE && $MAKE >/dev/null && sudo make install)
@@ -95,4 +95,4 @@ echo cd $(dirname $DIR)
 cd $(dirname $DIR)
 ls -l
 sh bootstrap.sh
-CC=gcc10-gcc CXX=gcc10-c++ ./configure -q --enable-silent-rules && make check
+CC=gcc10-gcc CXX=gcc10-c++ ./configure -q --enable-silent-rules && $MAKE check

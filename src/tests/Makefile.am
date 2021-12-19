@@ -16,6 +16,7 @@ EXTRA_DIST = \
 	email_test.E02 \
 	email_test.E03 \
 	email_test.E04 \
+	exif_demo.jpg \
 	hello.c \
 	hello_elf \
 	hello_mach-o \

@@ -42,11 +42,6 @@ namespace exif_reader {
         // find APP1 jpeg marker 0xe1, skipping other 0xffeX markers
         size_t next_offset = 2;
         while (true) {
-//cout << "exif_reader.get_tiff_offset_from_exif next_offset: " << next_offset << "\n";
-//cout << "exif_reader.get_tiff_offset_from_exif seeking, next 4: "
-//                << (int)exif_sbuf[next_offset] << " " << (int)exif_sbuf[next_offset+1] << " "
-//                << (int)exif_sbuf[next_offset+ 2] << " " << (int)exif_sbuf[next_offset+3] << "\n";
-            // abort if EOF
             if (exif_sbuf.pagesize < next_offset + 2 + 2 + 6) {
                 return 0;
             }
@@ -76,8 +71,6 @@ namespace exif_reader {
             // try the next marker at the next offset
             next_offset += (exif_sbuf[next_offset + 2]<<8 | exif_sbuf[next_offset + 3]) + 2;
         }
-
-        //cout << "exif_reader.get_tiff_offset_from_exif: APP1 found at " << next_offset << "\n";
 
         // APP1 marker is after next header
         size_t app1_offset = next_offset + 4;
