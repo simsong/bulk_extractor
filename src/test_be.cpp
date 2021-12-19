@@ -265,7 +265,7 @@ TEST_CASE("scan_email16", "[scanners]") {
     }
 }
 
-TEST_CASE("scan_exif", "[scanners]") {
+TEST_CASE("scan_exif0", "[scanners]") {
     auto *sbufp = map_file("1.jpg");
     REQUIRE( sbufp->bufsize == 7323 );
     auto res = jpeg_validator::validate_jpeg(*sbufp);
@@ -273,8 +273,8 @@ TEST_CASE("scan_exif", "[scanners]") {
     delete sbufp;
 }
 
-TEST_CASE("scan_exif2", "[scanners]") {
-    auto *sbufp = map_file("exif_demo.jpg");
+TEST_CASE("scan_exif1", "[scanners]") {
+    auto *sbufp = map_file("exif_demo1.jpg");
     auto outdir = test_scanner(scan_exif, sbufp); // deletes sbufp
     auto exif_txt = getLines( outdir / "exif.txt" );
     auto last     = getLast(exif_txt);
@@ -335,7 +335,7 @@ TEST_CASE("scan_exif2", "[scanners]") {
 }
 
 // exif_demo2.tiff from https://github.com/ianare/exif-samples.git
-TEST_CASE("scan_exif3", "[scanners]") {
+TEST_CASE("scan_exif2", "[scanners]") {
     auto *sbufp = map_file("exif_demo2.tiff");
     auto outdir = test_scanner(scan_exif, sbufp); // deletes sbufp
     auto exif_txt = getLines( outdir / "exif.txt" );
@@ -355,6 +355,46 @@ TEST_CASE("scan_exif3", "[scanners]") {
     REQUIRE( has(last, "<ifd0.tiff.Software>Mac OS X 10.5.8 (9L31a)</ifd0.tiff.Software>"));
     REQUIRE( has(last, "<ifd0.tiff.DateTime>2012:01:09 22:52:11</ifd0.tiff.DateTime>"));
     REQUIRE( has(last, "<ifd0.tiff.Artist>Jean Cornillon</ifd0.tiff.Artist>"));
+}
+
+
+// exif_demo2.tiff from https://github.com/ianare/exif-samples.git
+TEST_CASE("scan_exif3", "[scanners]") {
+    auto *sbufp = map_file("exif_demo3.psd");
+    auto outdir = test_scanner(scan_exif, sbufp); // deletes sbufp
+    auto exif_txt = getLines( outdir / "exif.txt" );
+    auto last     = getLast(exif_txt);
+
+    REQUIRE( has(last, "<ifd0.tiff.Orientation>1</ifd0.tiff.Orientation>"));
+    REQUIRE( has(last, "<ifd0.tiff.XResolution>3000000/10000</ifd0.tiff.XResolution>"));
+    REQUIRE( has(last, "<ifd0.tiff.YResolution>3000000/10000</ifd0.tiff.YResolution>"));
+    REQUIRE( has(last, "<ifd0.tiff.ResolutionUnit>2</ifd0.tiff.ResolutionUnit>"));
+    REQUIRE( has(last, "<ifd0.tiff.Software>Adobe Photoshop 23.1 (Macintosh)</ifd0.tiff.Software>"));
+    REQUIRE( has(last, "<ifd0.tiff.DateTime>2021:12:19 17:32:57</ifd0.tiff.DateTime>"));
+    REQUIRE( has(last, "<ifd0.exif.ColorSpace>1</ifd0.exif.ColorSpace>"));
+    REQUIRE( has(last, "<ifd0.exif.PixelXDimension>300</ifd0.exif.PixelXDimension>"));
+    REQUIRE( has(last, "<ifd0.exif.PixelYDimension>300</ifd0.exif.PixelYDimension>"));
+    REQUIRE( has(last, "<ifd1.tiff.Compression>6</ifd1.tiff.Compression>"));
+    REQUIRE( has(last, "<ifd1.tiff.XResolution>72/1</ifd1.tiff.XResolution>"));
+    REQUIRE( has(last, "<ifd1.tiff.YResolution>72/1</ifd1.tiff.YResolution>"));
+    REQUIRE( has(last, "<ifd1.tiff.ResolutionUnit>2</ifd1.tiff.ResolutionUnit>"));
+    REQUIRE( has(last, "<ifd1.tiff.JPEGInterchangeFormat>306</ifd1.tiff.JPEGInterchangeFormat>"));
+    REQUIRE( has(last, "<ifd1.tiff.JPEGInterchangeFormatLength>0</ifd1.tiff.JPEGInterchangeFormatLength>"));
+    REQUIRE( has(last, "<ifd0.tiff.Orientation>1</ifd0.tiff.Orientation>"));
+    REQUIRE( has(last, "<ifd0.tiff.XResolution>3000000/10000</ifd0.tiff.XResolution>"));
+    REQUIRE( has(last, "<ifd0.tiff.YResolution>3000000/10000</ifd0.tiff.YResolution>"));
+    REQUIRE( has(last, "<ifd0.tiff.ResolutionUnit>2</ifd0.tiff.ResolutionUnit>"));
+    REQUIRE( has(last, "<ifd0.tiff.Software>Adobe Photoshop 23.1 (Macintosh)</ifd0.tiff.Software>"));
+    REQUIRE( has(last, "<ifd0.tiff.DateTime>2021:12:19 17:32:57</ifd0.tiff.DateTime>"));
+    REQUIRE( has(last, "<ifd0.exif.ColorSpace>1</ifd0.exif.ColorSpace>"));
+    REQUIRE( has(last, "<ifd0.exif.PixelXDimension>300</ifd0.exif.PixelXDimension>"));
+    REQUIRE( has(last, "<ifd0.exif.PixelYDimension>300</ifd0.exif.PixelYDimension>"));
+    REQUIRE( has(last, "<ifd1.tiff.Compression>6</ifd1.tiff.Compression>"));
+    REQUIRE( has(last, "<ifd1.tiff.XResolution>72/1</ifd1.tiff.XResolution>"));
+    REQUIRE( has(last, "<ifd1.tiff.YResolution>72/1</ifd1.tiff.YResolution>"));
+    REQUIRE( has(last, "<ifd1.tiff.ResolutionUnit>2</ifd1.tiff.ResolutionUnit>"));
+    REQUIRE( has(last, "<ifd1.tiff.JPEGInterchangeFormat>306</ifd1.tiff.JPEGInterchangeFormat>"));
+    REQUIRE( has(last, "<ifd1.tiff.JPEGInterchangeFormatLength>0</ifd1.tiff.JPEGInterchangeFormatLength>"));
 }
 
 
