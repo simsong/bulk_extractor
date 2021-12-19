@@ -43,8 +43,8 @@ jobs:
           (cd src; make check || (cat test-suite.log; exit 1))
           make distclean
 
-      - name: C++ checks with thread-sanitizer (disabled)
-        if: startsWith(matrix.os, 'ubuntu-DISABLED')
+      - name: C++ checks with thread-sanitizer on ubuntu
+        if: startsWith(matrix.os, 'ubuntu')
         run: |
           bash bootstrap.sh
           ./configure -q --disable-opt --enable-silent-rules --enable-thread-sanitizer
@@ -54,30 +54,32 @@ jobs:
 
       - name: C++ checks with codecov
         if: startsWith(matrix.os, 'ubuntu')
+        run: |
+          bash bootstrap.sh
+          ./configure -q --disable-opt --enable-address-sanitizer --enable-silent-rules CFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' CXXFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' LIBS='-lgcov'
+          cd src
+          make check || (echo ==error== ; cat test-suite.log; exit 1)
+
+      - name: upload codecov report
+        if: startsWith(matrix.os, 'ubuntu')
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         run: |
-          bash bootstrap.sh
-          ./configure -q --disable-opt --enable-silent-rules \
-                 CFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' \
-                 CXXFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' \
-                 LIBS='-lgcov'
-          cd src
-          make check || (echo ==error== ; cat test-suite.log; exit 1)
-          gcov-9 -n -o . `find . -name '*cpp'`
+          gcov-9 -o . `find . -name '*cpp'`
+          bash <(curl -s https://codecov.io/bash)
 
           #
           # set up and run codecov
           #
-          sudo apt install -y gpg
-          curl https://keybase.io/codecovsecurity/pgp_keys.asc | \
-          gpg --no-default-keyring --keyring trustedkeys.gpg --import
-          curl -Os https://uploader.codecov.io/latest/linux/codecov
-          curl -Os https://uploader.codecov.io/latest/linux/codecov.SHA256SUM
-          curl -Os https://uploader.codecov.io/latest/linux/codecov.SHA256SUM.sig
-          gpgv codecov.SHA256SUM.sig codecov.SHA256SUM
-          shasum -a 256 -c codecov.SHA256SUM
-          chmod +x codecov && ./codecov -t ${CODECOV_TOKEN}
+          ## sudo apt install -y gpg
+          ## curl https://keybase.io/codecovsecurity/pgp_keys.asc | \
+          ## gpg --no-default-keyring --keyring trustedkeys.gpg --import
+          ## curl -Os https://uploader.codecov.io/latest/linux/codecov
+          ## curl -Os https://uploader.codecov.io/latest/linux/codecov.SHA256SUM
+          ## curl -Os https://uploader.codecov.io/latest/linux/codecov.SHA256SUM.sig
+          ## gpgv codecov.SHA256SUM.sig codecov.SHA256SUM
+          ## shasum -a 256 -c codecov.SHA256SUM
+          ## chmod +x codecov && ./codecov -t ${CODECOV_TOKEN}
 
       - uses: ammaraskar/gcc-problem-matcher@0.1
         name: GCC Problem Matcher
