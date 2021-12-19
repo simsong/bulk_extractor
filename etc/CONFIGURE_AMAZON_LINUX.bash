@@ -3,7 +3,7 @@ RELEASE=20
 REQUIRED_ID='amzn'
 REQUIRED_VERSION=2
 CONFIGURE="./configure -q --enable-silent-rules"
-LIBEWF_DIST=https://github.com/libyal/libewf-legacy/releases/download/20140812/libewf-20140812.tar.gz
+nLIBEWF_DIST=https://github.com/libyal/libewf-legacy/releases/download/20140812/libewf-20140812.tar.gz
 AUTOCONF_DIST=https://ftpmirror.gnu.org/autoconf/autoconf-2.71.tar.gz
 AUTOMAKE_DIST=https://ftpmirror.gnu.org/automake/automake-1.16.3.tar.gz
 MKPGS="autoconf automake libexpat1-dev libssl-dev libtool libxml2-utils pkg-config"
@@ -24,7 +24,8 @@ Install AWS Linux and follow these commands:
 #
 # sudo yum -y update && sudo yum -y install git && git clone --recursive https://github.com/simsong/bulk_extractor.git
 # bash bulk_extractor/etc/CONFIGURE_AMAZON_LINUX.bash
-# cd bulk_extractor && make && sudo make install
+#
+# NOTE: on AWS linux we also install a modern autoconf and automake
 
 press any key to continue...
 EOF
@@ -66,6 +67,10 @@ if [ $? != 0 ]; then
   exit 1
 fi
 
+sudo alternatives --install /usr/bin/gcc gcc /usr/bin/gcc10-gcc 100 || (echo alternatives failed; exit 1)
+sudo alternatives --install /usr/bin/g++ g++ /usr/bin/gcc10-g++ 100 || (echo alternatives failed; exit 1)
+
+
 echo
 echo "Now performing a yum update to update system packages"
 sudo yum -y update
@@ -75,7 +80,7 @@ $WGET $LIBEWF_DIST || (echo could not download $LIBEWF_DIST; exit 1)
 tar xfz libewf*gz  && (cd libewf*/   && $CONFIGURE && $MAKE >/dev/null && sudo make install)
 ls -l /etc/ld.so.conf.d/
 sudo ldconfig
-ewinfo -h > /dev/null || (echo libewf not installed;exit 1)
+ewfinfo -h > /dev/null || (echo libewf not installed;exit 1)
 
 echo updating autoconf
 $WGET $AUTOCONF_DIST || (echo could not download $AUTOCONF_DIST; exit 1)
