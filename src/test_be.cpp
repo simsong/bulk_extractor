@@ -334,6 +334,30 @@ TEST_CASE("scan_exif2", "[scanners]") {
     REQUIRE( has(last, "<ifd0.gps.GPSHPositioningError>36467/969</ifd0.gps.GPSHPositioningError>" ));
 }
 
+// exif_demo2.tiff from https://github.com/ianare/exif-samples.git
+TEST_CASE("scan_exif3", "[scanners]") {
+    auto *sbufp = map_file("exif_demo2.tiff");
+    auto outdir = test_scanner(scan_exif, sbufp); // deletes sbufp
+    auto exif_txt = getLines( outdir / "exif.txt" );
+    auto last     = getLast(exif_txt);
+    REQUIRE( has(last, "<ifd0.tiff.ImageWidth>199</ifd0.tiff.ImageWidth>"));
+    REQUIRE( has(last, "<ifd0.tiff.Compression>5</ifd0.tiff.Compression>"));
+    REQUIRE( has(last, "<ifd0.tiff.PhotometricInterpreation>2</ifd0.tiff.PhotometricInterpreation>"));
+    REQUIRE( has(last, "<ifd0.tiff.StripOffsets>8</ifd0.tiff.StripOffsets>"));
+    REQUIRE( has(last, "<ifd0.tiff.Orientation>1</ifd0.tiff.Orientation>"));
+    REQUIRE( has(last, "<ifd0.tiff.SamplesPerPixel>4</ifd0.tiff.SamplesPerPixel>"));
+    REQUIRE( has(last, "<ifd0.tiff.RowsPerStrip>47</ifd0.tiff.RowsPerStrip>"));
+    REQUIRE( has(last, "<ifd0.tiff.StripByteCounts>6205</ifd0.tiff.StripByteCounts>"));
+    REQUIRE( has(last, "<ifd0.tiff.XResolution>1207959552/16777216</ifd0.tiff.XResolution>"));
+    REQUIRE( has(last, "<ifd0.tiff.YResolution>1207959552/16777216</ifd0.tiff.YResolution>"));
+    REQUIRE( has(last, "<ifd0.tiff.PlanarConfiguration>1</ifd0.tiff.PlanarConfiguration>"));
+    REQUIRE( has(last, "<ifd0.tiff.ResolutionUnit>2</ifd0.tiff.ResolutionUnit>"));
+    REQUIRE( has(last, "<ifd0.tiff.Software>Mac OS X 10.5.8 (9L31a)</ifd0.tiff.Software>"));
+    REQUIRE( has(last, "<ifd0.tiff.DateTime>2012:01:09 22:52:11</ifd0.tiff.DateTime>"));
+    REQUIRE( has(last, "<ifd0.tiff.Artist>Jean Cornillon</ifd0.tiff.Artist>"));
+}
+
+
 TEST_CASE("scan_msxml","[scanners]") {
     auto *sbufp = map_file("KML_Samples.kml");
     std::string bufstr = msxml_extract_text(*sbufp);
