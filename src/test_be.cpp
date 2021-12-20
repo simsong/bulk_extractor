@@ -896,6 +896,14 @@ TEST_CASE("test_base16json", "[phase1]") {
     validate("test_base16json.txt", ex2);
 }
 
+TEST_CASE("test_ccn", "[phase1]") {
+    auto *sbufp = map_file( "ccns.txt" );
+    auto outdir = test_scanner( scan_accts, sbufp); // deletes sbufp
+    auto ccns_txt = getLines( outdir / "ccn.txt" );
+    REQUIRE( requireFeature(ccns_txt,"371449635398431"));
+    REQUIRE( requireFeature(ccns_txt,"378282246310005"));
+}
+
 TEST_CASE("test_elf", "[phase1]") {
     std::vector<Check> ex {
         Check("elf.txt", Feature( "0", "9e218cee3b190e8f59ef323b27f4d339481516e9", "<ELF class=\"ELFCLASS64\" data=\"ELFDATA2LSB\" osabi=\"ELFOSABI_NONE\" abiversion=\"0\" >*"))

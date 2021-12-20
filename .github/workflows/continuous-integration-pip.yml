@@ -17,7 +17,7 @@ jobs:
 
     env:
       DEBUG_NO_5G: TRUE
-      DEBUG_FAST: TRUE
+      DEBUG_FAST: FALSE
 
     steps:
       # https://github.com/actions/checkout
