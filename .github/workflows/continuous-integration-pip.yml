@@ -43,8 +43,8 @@ jobs:
           (cd src; make check || (cat test-suite.log; exit 1))
           make distclean
 
-      - name: C++ checks with thread-sanitizer on ubuntu
-        if: startsWith(matrix.os, 'ubuntu')
+      - name: C++ checks with thread-sanitizer on ubuntu are disabled
+        if: startsWith(matrix.os, 'ubuntu-DISABLED')
         run: |
           bash bootstrap.sh
           ./configure -q --disable-opt --enable-silent-rules --enable-thread-sanitizer
