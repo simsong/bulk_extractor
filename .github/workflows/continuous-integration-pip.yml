@@ -17,7 +17,7 @@ jobs:
 
     env:
       DEBUG_NO_5G: TRUE
-      DEBUG_FAST: FALSE
+      DEBUG_FAST: TRUE
 
     steps:
       # https://github.com/actions/checkout
@@ -71,7 +71,7 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         run: |
           cd src
-          gcov-9 -o . `find . -name '*cpp'`
+          gcov-9 -o . *.cpp be13_api/*.cpp
           bash <(curl -s https://codecov.io/bash)
 
           #
