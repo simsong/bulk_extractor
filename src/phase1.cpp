@@ -159,8 +159,9 @@ void Phase1::read_process_sbufs()
             for(int i=0;i<5;i++){
                 std::cerr << std::endl;
             }
-            std::cerr << "*** DISK WRITE ERROR ***" << std::endl;
+            std::cerr << "*** DISK WRITE ERRORS (" << ss.disk_write_errors << ") ***" << std::endl;
             std::cerr << "Disk is likely full. Clear space and restart (press up arrow) " << std::endl;
+	    std::cerr << "Check alerts.txt for further info" << std::endl;
             exit(1);
         }
 
