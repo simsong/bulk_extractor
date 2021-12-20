@@ -12,6 +12,7 @@ EXTRA_DIST = \
 	1mb_fat32.dmg \
 	CFReDS001.E01 \
 	KML_Samples.kml \
+	ccns.txt \
 	email_test.E01 \
 	email_test.E02 \
 	email_test.E03 \
