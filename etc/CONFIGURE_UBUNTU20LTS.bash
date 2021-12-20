@@ -34,11 +34,10 @@ function fail() {
 # cd to the directory where the script is
 # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
 DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}"))"
-cd $DIR
-mkdir -p tmp
-/bin/rm -rf tmp
-mkdir -p tmp
-cd tmp
+cd /tmp
+/bin/rm -rf src
+mkdir src
+cd src
 
 if [ ! -r /etc/os-release ]; then
     echo This requires an /etc/os-release file.

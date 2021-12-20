@@ -17,6 +17,7 @@ jobs:
 
     env:
       DEBUG_NO_5G: TRUE
+      DEBUG_FAST: TRUE
 
     steps:
       # https://github.com/actions/checkout
@@ -39,7 +40,8 @@ jobs:
         run: |
           bash bootstrap.sh
           ./configure -q --disable-opt --enable-silent-rules --enable-address-sanitizer
-          make
+          make clean
+          make all
           (cd src; make check || (cat test-suite.log; exit 1))
           make distclean
 
@@ -48,7 +50,8 @@ jobs:
         run: |
           bash bootstrap.sh
           ./configure -q --disable-opt --enable-silent-rules --enable-thread-sanitizer
-          make
+          make clean
+          make all
           (cd src; make check || (cat test-suite.log; exit 1))
           make distclean
 
@@ -57,6 +60,8 @@ jobs:
         run: |
           bash bootstrap.sh
           ./configure -q --disable-opt --enable-address-sanitizer --enable-silent-rules CFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' CXXFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' LIBS='-lgcov'
+          make clean
+          make all
           cd src
           make check || (echo ==error== ; cat test-suite.log; exit 1)
 
@@ -65,6 +70,7 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         run: |
+          cd src
           gcov-9 -o . `find . -name '*cpp'`
           bash <(curl -s https://codecov.io/bash)
 
