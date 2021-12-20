@@ -9,3 +9,4 @@ ignore:
   - "src/be13_api/catch.hpp"
   - "src/be13_api/utf8.h"
   - "src/be13_api/utf8/*"
+  - "src/rar/*"
