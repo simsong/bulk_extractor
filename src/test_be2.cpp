@@ -68,9 +68,20 @@ int argv_count(const char **argv)
     return argc;
 }
 
+int run_be(std::ostream &cout, std::ostream &cerr, const char **argv)
+{
+    auto t0 = time(0);
+    int ret = bulk_extractor_main(cout, cerr, argv_count(argv), const_cast<char * const *>(argv));
+    auto t  = time(0) - t0;
+    if (t>10) {
+        std::cout << "elapsed time: " << time(0) - t0 << "s" << std::endl;
+    }
+    return ret;
+}
+
 int run_be(std::ostream &ss, const char **argv)
 {
-    return bulk_extractor_main(ss, ss, argv_count(argv), const_cast<char * const *>(argv));
+    return run_be(ss, ss, argv);
 }
 
 TEST_CASE("e2e-no-args", "[end-to-end]") {
@@ -102,10 +113,9 @@ TEST_CASE("e2e-0", "[end-to-end]") {
     /* Try to run twice. There seems to be a problem with the second time through.  */
     std::string inpath_string = inpath.string();
     std::string outdir_string = outdir.string();
-    const char *argv[] = {"bulk_extractor", "-0q", "-o", outdir_string.c_str(), inpath_string.c_str(), nullptr};
-
     std::stringstream cout, cerr;
-    int ret = bulk_extractor_main(cout, cerr, argv_count(argv), const_cast<char * const *>(argv));
+    const char *argv[] = {"bulk_extractor", "-0q", "-o", outdir_string.c_str(), inpath_string.c_str(), nullptr};
+    int ret = run_be(cout, cerr, argv);
     if (ret!=0) {
         std::cerr << "STDOUT:" << std::endl << cout.str() << std::endl << std::endl << "STDERR:" << std::endl << cerr.str() << std::endl;
         REQUIRE( ret==0 );
@@ -114,7 +124,7 @@ TEST_CASE("e2e-0", "[end-to-end]") {
     std::stringstream().swap(cout);
     std::stringstream().swap(cerr);
 
-    ret = bulk_extractor_main(cout, cerr, argv_count(argv), const_cast<char * const *>(argv));
+    ret = run_be(cout, cerr, argv);
     if (ret!=0) {
         std::cerr << "STDOUT:" << std::endl << cout.str() << std::endl << std::endl
                   << "STDERR:" << std::endl << cerr.str() << std::endl;
@@ -132,10 +142,9 @@ TEST_CASE("scan_find", "[end-to-end]") {
     std::filesystem::path outdir = NamedTemporaryDirectory();
     std::string inpath_string = inpath.string();
     std::string outdir_string = outdir.string();
-    const char *argv[] = {"bulk_extractor", "-0q", "-f", "simsong", "-o", outdir_string.c_str(), inpath_string.c_str(), nullptr};
-
     std::stringstream cout, cerr;
-    int ret = bulk_extractor_main(cout, cerr, argv_count(argv), const_cast<char * const *>(argv));
+    const char *argv[] = {"bulk_extractor", "-0q", "-f", "simsong", "-o", outdir_string.c_str(), inpath_string.c_str(), nullptr};
+    int ret = run_be(cout, cerr, argv);
     if (ret!=0) {
         std::cerr << "STDOUT:" << std::endl << cout.str() << std::endl << std::endl << "STDERR:" << std::endl << cerr.str() << std::endl;
         REQUIRE( ret==0 );
@@ -150,12 +159,15 @@ TEST_CASE("scan_find", "[end-to-end]") {
 
 TEST_CASE("5gb-flatfile", "[end-to-end]") {
     /* Make a 5GB file and try to read it. Make sure we get back the known content. */
-    if (std::getenv("DEBUG_NO_5G")){
-        std::cerr << "DEBUG_NO_5G set; skipping 5G test" << std::endl;
+    if (getenv_debug("DEBUG_NO_5G")){
+        std::cerr << "DEBUG_NO_5G set; skipping 5gb-flatfile test" << std::endl;
         return;
-    } else {
-        std::cerr << "DEBUG_NO_5G not set; starting 5G test" << std::endl;
     }
+    if (getenv_debug("DEBUG_FAST")){
+        std::cerr << "DEBUG_FAST set; skipping 5gb-flatfile test" << std::endl;
+        return;
+    }
+    std::cerr << "DEBUG_NO_5G not set; starting 5G test" << std::endl;
 
     const uint64_t count = 5000;
     const uint64_t sz    = 1000000;
@@ -190,7 +202,7 @@ TEST_CASE("5gb-flatfile", "[end-to-end]") {
     std::string fgb_string = fgb_path.string();
     std::stringstream ss;
     const char *argv[] = {"bulk_extractor","-Eemail", notify(), "-1q", "-o", outdir_string.c_str(), fgb_string.c_str(), nullptr};
-    int ret = bulk_extractor_main(ss, std::cerr, argv_count(argv), const_cast<char * const *>(argv));
+    int ret = run_be(ss, std::cerr, argv);
     REQUIRE( ret==0 );
     /* Look for the output line */
     auto lines = getLines( outdir / "report.xml" );
@@ -200,6 +212,11 @@ TEST_CASE("5gb-flatfile", "[end-to-end]") {
 }
 
 TEST_CASE("30mb-segmented", "[end-to-end]") {
+    if (getenv_debug("DEBUG_FAST")){
+        std::cerr << "DEBUG_FAST set; 30mb-segmented test" << std::endl;
+        return;
+    }
+
     /* make a segmented file, but this time with 20MB segments */
     const uint64_t count = 1000 * 1000;
     const int segments = 5;
@@ -226,9 +243,9 @@ TEST_CASE("30mb-segmented", "[end-to-end]") {
     std::filesystem::path outdir = NamedTemporaryDirectory();
     std::string outdir_string = outdir.string();
     std::string seg_string = seg_base.string();
-    const char *argv[] = {"bulk_extractor","-Eemail", notify(), "-1q", "-o", outdir_string.c_str(), seg_string.c_str(), nullptr};
     std::stringstream ss;
-    int ret = bulk_extractor_main(ss, std::cerr, argv_count(argv), const_cast<char * const *>(argv));
+    const char *argv[] = {"bulk_extractor","-Eemail", notify(), "-1q", "-o", outdir_string.c_str(), seg_string.c_str(), nullptr};
+    int ret = run_be(ss, std::cerr, argv);
     REQUIRE( ret==0 );
 
     auto lines = getLines( outdir / "report.xml" );
@@ -242,7 +259,7 @@ TEST_CASE("path-printer2", "[end-to-end]") {
     std::string inpath_string = inpath.string();
     const char *argv[] = {"bulk_extractor", "-p","0:64/h", inpath_string.c_str(), nullptr};
     std::stringstream ss;
-    int ret = bulk_extractor_main(ss, std::cerr, 4, const_cast<char * const *>(argv));
+    int ret = run_be(ss, std::cerr, argv);
     std::string EXPECTED =
         "0000: 5733 7369 4d53 4936 4943 4a76 626d 5641 596d 467a 5a54 5930 4c6d 4e76 6253 4a39 W3siMSI6ICJvbmVAYmFzZTY0LmNvbSJ9\n"
         "0020: 4c43 4237 496a 4969 4f69 4169 6448 6476 5147 4a68 6332 5532 4e43 356a 6232 3069 LCB7IjIiOiAidHdvQGJhc2U2NC5jb20i\n";
@@ -252,6 +269,11 @@ TEST_CASE("path-printer2", "[end-to-end]") {
 }
 
 TEST_CASE("e2e-CFReDS001", "[end-to-end]") {
+    if (getenv_debug("DEBUG_FAST")){
+        std::cerr << "DEBUG_FAST set; e2e-CFReDS001" << std::endl;
+        return;
+    }
+
     std::filesystem::path inpath = test_dir() / "CFReDS001.E01";
     std::string inpath_string = inpath.string();
     std::filesystem::path outdir = NamedTemporaryDirectory();
@@ -263,15 +285,18 @@ TEST_CASE("e2e-CFReDS001", "[end-to-end]") {
 }
 
 TEST_CASE("e2e-email_test", "[end-to-end]") {
+    if (getenv_debug("DEBUG_FAST")){
+        std::cerr << "DEBUG_FAST set; skipping e2e-email_test" << std::endl;
+        return;
+    }
+
     std::filesystem::path inpath = test_dir() / "email_test.E01";
     std::string inpath_string = inpath.string();
     std::filesystem::path outdir = NamedTemporaryDirectory();
     std::string outdir_string = outdir.string();
     std::stringstream ss;
     const char *argv[] = {"bulk_extractor", notify(), "-1qo",outdir_string.c_str(), inpath_string.c_str(), nullptr};
-    int ret = bulk_extractor_main(ss, std::cerr,
-                                  argv_count(argv),
-                                  const_cast<char * const *>(argv));
+    int ret = run_be(ss, std::cerr,argv);
     REQUIRE( ret==0 );
 
     /* Verify that every email address is found from user0@company.com through user49993@company.com.
