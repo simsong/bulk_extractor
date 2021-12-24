@@ -115,8 +115,8 @@ automake --version || (echo automake failed; exit 1)
 echo /usr/local/lib | sudo cp /dev/stdin /etc/ld.so.conf.d/libewf.conf
 sudo ldconfig || (echo ldconfig failed; exit 1)
 
-echo cd $(dirname $DIR)
-cd $(dirname $DIR)
+echo cd $(dirname $MYDIR)
+cd $(dirname $MYDIR)
 ls -l
 sh bootstrap.sh
 CC=gcc10-gcc CXX=gcc10-c++ ./configure -q --enable-silent-rules && $MAKE check
