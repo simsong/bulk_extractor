@@ -4,8 +4,8 @@ coverage:
   precision: 2
 
 
-
 ignore:
-  - "src/be13_api/catch.hpp"
-  - "src/be13_api/utf8.h"
-  - "src/be13_api/utf8/*"
+  - "be13_api/catch.hpp"
+  - "be13_api/utf8.h"
+  - "be13_api/utf8/*"
+  - "rar/*"

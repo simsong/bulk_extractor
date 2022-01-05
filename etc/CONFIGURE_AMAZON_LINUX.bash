@@ -9,8 +9,11 @@ AUTOMAKE_DIST=https://ftpmirror.gnu.org/automake/automake-1.16.3.tar.gz
 MKPGS="autoconf automake libexpat1-dev libssl-dev libtool libxml2-utils pkg-config"
 WGET="wget -nv --no-check-certificate"
 CONFIGURE="./configure -q --enable-silent-rules"
-MAKE="make -j4"
+cpus=$(lscpu | grep '^CPU.s.:'| awk '{print $2;}')
 NAME='AWS Linux'
+export DEBUG_NO_5G=TRUE
+export MAKEOPTS="-j$cpus"
+MAKE="make $MAKEOPTS"
 cat <<EOF
 *******************************************************************
 Configuring, compile and check this bulk_extractor release for $NAME
@@ -19,9 +22,10 @@ Configuring, compile and check this bulk_extractor release for $NAME
 Install AWS Linux and follow these commands:
 
 #
-# sudo yum -y update && sudo yum -y install git && git clone --recursive https://github.com/simsong/bulk_extractor.git 
+# sudo yum -y update && sudo yum -y install git && git clone --recursive https://github.com/simsong/bulk_extractor.git
 # bash bulk_extractor/etc/CONFIGURE_AMAZON_LINUX.bash
-# cd bulk_extractor && make && sudo make install
+#
+# NOTE: on AWS linux we also install a modern autoconf and automake
 
 press any key to continue...
 EOF
@@ -29,9 +33,9 @@ read IGNORE
 
 # cd to the directory where the script is becuase we will do downloads into tmp
 # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-mkdir -p $DIR/tmp
-cd $DIR/tmp
+MYDIR=$(dirname $(readlink -f $0))
+BE_ROOT=$(dirname $MYDIR)
+echo BE_ROOT: $BE_ROOT
 
 if [ ! -r /etc/os-release ]; then
   echo This requires Amazon Linux
@@ -63,20 +67,40 @@ if [ $? != 0 ]; then
   exit 1
 fi
 
+# if gcc is in place, move it out of the way
+if [ -r /usr/bin/gcc ]; then sudo mv /usr/bin/gcc /usr/bin/gcc.old.$$ ; fi
+if [ -r /usr/bin/g++ ]; then sudo mv /usr/bin/g++ /usr/bin/g++.old.$$ ; fi
+
+# set up the alternatives
+sudo alternatives --install /usr/bin/gcc gcc /usr/bin/gcc10-gcc 100
+sudo alternatives --install /usr/bin/g++ g++ /usr/bin/gcc10-g++ 100
+
+
 echo
 echo "Now performing a yum update to update system packages"
 sudo yum -y update
 
 echo manually installing a modern libewf
-$WGET $LIBEWF_DIST || (echo could not download $LIBEWF_DIST; exit 1)
-tar xfz libewf*gz  && (cd libewf*/   && $CONFIGURE && $MAKE >/dev/null && sudo make install)
-ls -l /etc/ld.so.conf.d/
-sudo ldconfig
-ewinfo -h > /dev/null || (echo libewf not installed;exit 1)
+cd /tmp/
 
-exit 0
+LIBEWF=$(basename $LIBEWF_DIST)
 
+if [ ! -r $LIBEWF ]; then
+    echo downloading $LIBEWF from $LIBEWF_DIST
+    $WGET $LIBEWF_DIST || (echo could not download $LIBEWF_DIST; exit 1)
+fi
 
+tar xfz $LIBEWF && (cd libewf*/ && $CONFIGURE && $MAKE >/dev/null && sudo make install)
+
+# AWS Linux doesn't set this up by default
+echo /usr/local/lib | sudo cp /dev/stdin /etc/ld.so.conf.d/libewf.conf
+sudo ldconfig || (echo ldconfig failed; exit 1)
+
+# verify ewfinfo works
+ewfinfo -h > /dev/null      || echo libewf not installed
+ewfinfo -h > /dev/null 2>&1 || exit 1
+
+## we need the new autoconf and automake for AWS linux as of 2021-12-17
 echo updating autoconf
 $WGET $AUTOCONF_DIST || (echo could not download $AUTOCONF_DIST; exit 1)
 tar xfz autoconf*gz && (cd autoconf*/ && $CONFIGURE && $MAKE >/dev/null && sudo make install)
@@ -95,4 +119,4 @@ echo cd $(dirname $DIR)
 cd $(dirname $DIR)
 ls -l
 sh bootstrap.sh
-CC=gcc10-gcc CXX=gcc10-c++ ./configure -q --enable-silent-rules && make check
+CC=gcc10-gcc CXX=gcc10-c++ ./configure -q --enable-silent-rules && $MAKE check

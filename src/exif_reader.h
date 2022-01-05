@@ -60,13 +60,6 @@ public:
 };
 
 /**
- * Version, which encompasses Exif and PSD headers and the underlying TIFF tag code
- */
-namespace exif {
-  const char* version();
-}
-
-/**
  * Exif reader
  */
 namespace exif_reader {

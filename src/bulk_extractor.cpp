@@ -431,8 +431,10 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
                 }
             }
         }
-        cout << "mkdir " << sc.outdir << std::endl ;
-        std::filesystem::create_directory( sc.outdir); // make sure directory exists
+	if (std::filesystem::exists( sc.outdir ) == false ){
+	  cout << "mkdir " << sc.outdir << std::endl ;
+	  std::filesystem::create_directory( sc.outdir); 
+	}
     }
 
     /* Load all the scanners and enable the ones we care about.  This

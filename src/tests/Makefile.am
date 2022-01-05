@@ -12,10 +12,14 @@ EXTRA_DIST = \
 	1mb_fat32.dmg \
 	CFReDS001.E01 \
 	KML_Samples.kml \
+	ccns.txt \
 	email_test.E01 \
 	email_test.E02 \
 	email_test.E03 \
 	email_test.E04 \
+	exif_demo1.jpg \
+	exif_demo2.tiff \
+	exif_demo3.psd \
 	hello.c \
 	hello_elf \
 	hello_mach-o \

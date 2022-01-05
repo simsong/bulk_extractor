@@ -50,6 +50,11 @@ const std::string JSON2 {"[{\"1\": \"one@base64.com\"}, {\"2\": \"two@base64.com
 
 bool debug = false;
 
+bool has(std::string line, std::string substr)
+{
+    return line.find(substr) != std::string::npos;
+}
+
 /* We assume that the tests are being run out of bulk_extractor/src/.
  * This returns the directory of the test subdirectory.
  */
@@ -108,7 +113,7 @@ sbuf_t *map_file(std::filesystem::path p)
 bool requireFeature(const std::vector<std::string> &lines, const std::string feature)
 {
     for (const auto &it : lines) {
-        if ( it.find(feature) != std::string::npos) return true;
+        if ( has(it, feature)) return true;
     }
     std::cerr << "feature not found: " << feature << "\nfeatures found (perhaps one of these is the feature you are looking for?):\n";
     for (const auto &it : lines) {
@@ -119,8 +124,9 @@ bool requireFeature(const std::vector<std::string> &lines, const std::string fea
 
 std::filesystem::path test_scanners(const std::vector<scanner_t *> & scanners, sbuf_t *sbuf)
 {
-    REQUIRE(sbuf->children == 0);
+    debug = getenv_debug("DEBUG");
 
+    REQUIRE(sbuf->children == 0);
     feature_recorder_set::flags_t frs_flags;
     frs_flags.pedantic = true;          // for testing
     scanner_config sc;
@@ -132,16 +138,14 @@ std::filesystem::path test_scanners(const std::vector<scanner_t *> & scanners, s
         ss.add_scanner( it );
     }
     ss.apply_scanner_commands();
+    REQUIRE (ss.get_enabled_scanners().size() == scanners.size());
 
-    REQUIRE (ss.get_enabled_scanners().size() == scanners.size()); // the one scanner
     if (ss.get_enabled_scanners().size()>0){
         std::cerr << "## output in " << sc.outdir << " for " << ss.get_enabled_scanners()[0] << std::endl;
     } else {
         std::cerr << "## output in " << sc.outdir << " but no enabled scanner! " << std::endl;
     }
-    REQUIRE(sbuf->children == 0);
     ss.phase_scan();
-    REQUIRE(sbuf->children == 0);
     try {
         ss.schedule_sbuf(sbuf);
     } catch (sbuf_t::range_exception_t &e) {
@@ -153,7 +157,6 @@ std::filesystem::path test_scanners(const std::vector<scanner_t *> & scanners, s
         std::cerr << "unknown exception: " << e.what() << std::endl;
         throw e;
     }
-
     ss.shutdown();
     return sc.outdir;
 }
@@ -262,13 +265,138 @@ TEST_CASE("scan_email16", "[scanners]") {
     }
 }
 
-TEST_CASE("scan_exif", "[scanners]") {
+TEST_CASE("scan_exif0", "[scanners]") {
     auto *sbufp = map_file("1.jpg");
     REQUIRE( sbufp->bufsize == 7323 );
     auto res = jpeg_validator::validate_jpeg(*sbufp);
     REQUIRE( res.how == jpeg_validator::COMPLETE );
     delete sbufp;
 }
+
+TEST_CASE("scan_exif1", "[scanners]") {
+    auto *sbufp = map_file("exif_demo1.jpg");
+    auto outdir = test_scanner(scan_exif, sbufp); // deletes sbufp
+    auto exif_txt = getLines( outdir / "exif.txt" );
+    auto last     = getLast(exif_txt);
+    REQUIRE( has(last, "<ifd0.tiff.Make>Apple</ifd0.tiff.Make>"));
+    REQUIRE( has(last, "<ifd0.tiff.Model>iPhone SE (2nd generation)</ifd0.tiff.Model>"));
+    REQUIRE( has(last, "<ifd0.tiff.Orientation>1</ifd0.tiff.Orientation>" ));
+    REQUIRE( has(last, "<ifd0.tiff.XResolution>72/1</ifd0.tiff.XResolution>" ));
+    REQUIRE( has(last, "<ifd0.tiff.YResolution>72/1</ifd0.tiff.YResolution>" ));
+    REQUIRE( has(last, "<ifd0.tiff.ResolutionUnit>2</ifd0.tiff.ResolutionUnit>" ));
+    REQUIRE( has(last, "<ifd0.tiff.Software>15.2</ifd0.tiff.Software>" ));
+    REQUIRE( has(last, "<ifd0.tiff.DateTime>2021:12:19 12:04:36</ifd0.tiff.DateTime>" ));
+    REQUIRE( has(last, "<ifd0.tiff.YCbCrPositioning>1</ifd0.tiff.YCbCrPositioning>" ));
+    REQUIRE( has(last, "<ifd0.exif.ExposureTime>1/1000</ifd0.exif.ExposureTime>" ));
+    REQUIRE( has(last, "<ifd0.exif.FNumber>9/5</ifd0.exif.FNumber>" ));
+    REQUIRE( has(last, "<ifd0.exif.ExposureProgram>2</ifd0.exif.ExposureProgram>" ));
+    REQUIRE( has(last, "<ifd0.exif.PhotographicSensitivity>20</ifd0.exif.PhotographicSensitivity>" ));
+    REQUIRE( has(last, "<ifd0.exif.ExifVersion>0232</ifd0.exif.ExifVersion>" ));
+    REQUIRE( has(last, "<ifd0.exif.DateTimeOriginal>2021:12:19 12:04:36</ifd0.exif.DateTimeOriginal>" ));
+    REQUIRE( has(last, "<ifd0.exif.DateTimeDigitized>2021:12:19 12:04:36</ifd0.exif.DateTimeDigitized>" ));
+    REQUIRE( has(last, "<ifd0.exif.ComponentsConfiguration>\\001\\002\\003%00</ifd0.exif.ComponentsConfiguration>" ));
+    REQUIRE( has(last, "<ifd0.exif.ShutterSpeedValue>70777/7102</ifd0.exif.ShutterSpeedValue>" ));
+    REQUIRE( has(last, "<ifd0.exif.ApertureValue>54823/32325</ifd0.exif.ApertureValue>" ));
+    REQUIRE( has(last, "<ifd0.exif.BrightnessValue>38857/4398</ifd0.exif.BrightnessValue>" ));
+    REQUIRE( has(last, "<ifd0.exif.ExposureBiasValue>0/1</ifd0.exif.ExposureBiasValue>" ));
+    REQUIRE( has(last, "<ifd0.exif.MeteringMode>5</ifd0.exif.MeteringMode>" ));
+    REQUIRE( has(last, "<ifd0.exif.Flash>16</ifd0.exif.Flash>" ));
+    REQUIRE( has(last, "<ifd0.exif.FocalLength>399/100</ifd0.exif.FocalLength>" ));
+    REQUIRE( has(last, "<ifd0.exif.SubjectArea>ߝקࢩԲ</ifd0.exif.SubjectArea>" ));
+    REQUIRE( has(last, "<ifd0.exif.SubSecTime>912</ifd0.exif.SubSecTime>" ));
+    REQUIRE( has(last, "<ifd0.exif.SubSecTimeOriginal>912</ifd0.exif.SubSecTimeOriginal>" ));
+    REQUIRE( has(last, "<ifd0.exif.SubSecTimeDigitized>912</ifd0.exif.SubSecTimeDigitized>" ));
+    REQUIRE( has(last, "<ifd0.exif.FlashpixVersion>0100</ifd0.exif.FlashpixVersion>" ));
+    REQUIRE( has(last, "<ifd0.exif.ColorSpace>65535</ifd0.exif.ColorSpace>" ));
+    REQUIRE( has(last, "<ifd0.exif.PixelXDimension>4032</ifd0.exif.PixelXDimension>" ));
+    REQUIRE( has(last, "<ifd0.exif.PixelYDimension>3024</ifd0.exif.PixelYDimension>" ));
+    REQUIRE( has(last, "<ifd0.exif.SensingMethod>2</ifd0.exif.SensingMethod>" ));
+    REQUIRE( has(last, "<ifd0.exif.SceneType>1</ifd0.exif.SceneType>" ));
+    REQUIRE( has(last, "<ifd0.exif.ExposureMode>0</ifd0.exif.ExposureMode>" ));
+    REQUIRE( has(last, "<ifd0.exif.WhiteBalance>0</ifd0.exif.WhiteBalance>" ));
+    REQUIRE( has(last, "<ifd0.exif.FocalLengthIn35mmFilm>28</ifd0.exif.FocalLengthIn35mmFilm>" ));
+    REQUIRE( has(last, "<ifd0.exif.SceneCaptureType>0</ifd0.exif.SceneCaptureType>" ));
+    REQUIRE( has(last, "<ifd0.exif.LensSpecification>4183519/1048501 4183519/1048501 9/5 9/5</ifd0.exif.LensSpecification>" ));
+    REQUIRE( has(last, "<ifd0.exif.LensMake>Apple</ifd0.exif.LensMake>" ));
+    REQUIRE( has(last, "<ifd0.exif.LensModel>iPhone SE (2nd generation) back camera 3.99mm f/1.8</ifd0.exif.LensModel>" ));
+    REQUIRE( has(last, "<ifd0.gps.GPSLatitudeRef>N</ifd0.gps.GPSLatitudeRef>" ));
+    REQUIRE( has(last, "<ifd0.gps.GPSLatitude>41/1 28/1 58/100</ifd0.gps.GPSLatitude>" ));
+    REQUIRE( has(last, "<ifd0.gps.GPSLongitudeRef>W</ifd0.gps.GPSLongitudeRef>" ));
+    REQUIRE( has(last, "<ifd0.gps.GPSLongitude>70/1 37/1 2168/100</ifd0.gps.GPSLongitude>" ));
+    REQUIRE( has(last, "<ifd0.gps.GPSAltitudeRef>0</ifd0.gps.GPSAltitudeRef>" ));
+    REQUIRE( has(last, "<ifd0.gps.GPSAltitude>11909/2217</ifd0.gps.GPSAltitude>" ));
+    REQUIRE( has(last, "<ifd0.gps.GPSSpeedRef>K</ifd0.gps.GPSSpeedRef>" ));
+    REQUIRE( has(last, "<ifd0.gps.GPSSpeed>18195/40397</ifd0.gps.GPSSpeed>" ));
+    REQUIRE( has(last, "<ifd0.gps.GPSImgDirectionRef>T</ifd0.gps.GPSImgDirectionRef>" ));
+    REQUIRE( has(last, "<ifd0.gps.GPSImgDirection>211471/740</ifd0.gps.GPSImgDirection>" ));
+    REQUIRE( has(last, "<ifd0.gps.GPSDestBearingRef>T</ifd0.gps.GPSDestBearingRef>" ));
+    REQUIRE( has(last, "<ifd0.gps.GPSDestBearing>211471/740</ifd0.gps.GPSDestBearing>" ));
+    REQUIRE( has(last, "<ifd0.gps.GPSHPositioningError>36467/969</ifd0.gps.GPSHPositioningError>" ));
+}
+
+// exif_demo2.tiff from https://github.com/ianare/exif-samples.git
+TEST_CASE("scan_exif2", "[scanners]") {
+    auto *sbufp = map_file("exif_demo2.tiff");
+    auto outdir = test_scanner(scan_exif, sbufp); // deletes sbufp
+    auto exif_txt = getLines( outdir / "exif.txt" );
+    auto last     = getLast(exif_txt);
+    REQUIRE( has(last, "<ifd0.tiff.ImageWidth>199</ifd0.tiff.ImageWidth>"));
+    REQUIRE( has(last, "<ifd0.tiff.Compression>5</ifd0.tiff.Compression>"));
+    REQUIRE( has(last, "<ifd0.tiff.PhotometricInterpreation>2</ifd0.tiff.PhotometricInterpreation>"));
+    REQUIRE( has(last, "<ifd0.tiff.StripOffsets>8</ifd0.tiff.StripOffsets>"));
+    REQUIRE( has(last, "<ifd0.tiff.Orientation>1</ifd0.tiff.Orientation>"));
+    REQUIRE( has(last, "<ifd0.tiff.SamplesPerPixel>4</ifd0.tiff.SamplesPerPixel>"));
+    REQUIRE( has(last, "<ifd0.tiff.RowsPerStrip>47</ifd0.tiff.RowsPerStrip>"));
+    REQUIRE( has(last, "<ifd0.tiff.StripByteCounts>6205</ifd0.tiff.StripByteCounts>"));
+    REQUIRE( has(last, "<ifd0.tiff.XResolution>1207959552/16777216</ifd0.tiff.XResolution>"));
+    REQUIRE( has(last, "<ifd0.tiff.YResolution>1207959552/16777216</ifd0.tiff.YResolution>"));
+    REQUIRE( has(last, "<ifd0.tiff.PlanarConfiguration>1</ifd0.tiff.PlanarConfiguration>"));
+    REQUIRE( has(last, "<ifd0.tiff.ResolutionUnit>2</ifd0.tiff.ResolutionUnit>"));
+    REQUIRE( has(last, "<ifd0.tiff.Software>Mac OS X 10.5.8 (9L31a)</ifd0.tiff.Software>"));
+    REQUIRE( has(last, "<ifd0.tiff.DateTime>2012:01:09 22:52:11</ifd0.tiff.DateTime>"));
+    REQUIRE( has(last, "<ifd0.tiff.Artist>Jean Cornillon</ifd0.tiff.Artist>"));
+}
+
+
+// exif_demo2.tiff from https://github.com/ianare/exif-samples.git
+TEST_CASE("scan_exif3", "[scanners]") {
+    auto *sbufp = map_file("exif_demo3.psd");
+    auto outdir = test_scanner(scan_exif, sbufp); // deletes sbufp
+    auto exif_txt = getLines( outdir / "exif.txt" );
+    auto last     = getLast(exif_txt);
+
+    REQUIRE( has(last, "<ifd0.tiff.Orientation>1</ifd0.tiff.Orientation>"));
+    REQUIRE( has(last, "<ifd0.tiff.XResolution>3000000/10000</ifd0.tiff.XResolution>"));
+    REQUIRE( has(last, "<ifd0.tiff.YResolution>3000000/10000</ifd0.tiff.YResolution>"));
+    REQUIRE( has(last, "<ifd0.tiff.ResolutionUnit>2</ifd0.tiff.ResolutionUnit>"));
+    REQUIRE( has(last, "<ifd0.tiff.Software>Adobe Photoshop 23.1 (Macintosh)</ifd0.tiff.Software>"));
+    REQUIRE( has(last, "<ifd0.tiff.DateTime>2021:12:19 17:32:57</ifd0.tiff.DateTime>"));
+    REQUIRE( has(last, "<ifd0.exif.ColorSpace>1</ifd0.exif.ColorSpace>"));
+    REQUIRE( has(last, "<ifd0.exif.PixelXDimension>300</ifd0.exif.PixelXDimension>"));
+    REQUIRE( has(last, "<ifd0.exif.PixelYDimension>300</ifd0.exif.PixelYDimension>"));
+    REQUIRE( has(last, "<ifd1.tiff.Compression>6</ifd1.tiff.Compression>"));
+    REQUIRE( has(last, "<ifd1.tiff.XResolution>72/1</ifd1.tiff.XResolution>"));
+    REQUIRE( has(last, "<ifd1.tiff.YResolution>72/1</ifd1.tiff.YResolution>"));
+    REQUIRE( has(last, "<ifd1.tiff.ResolutionUnit>2</ifd1.tiff.ResolutionUnit>"));
+    REQUIRE( has(last, "<ifd1.tiff.JPEGInterchangeFormat>306</ifd1.tiff.JPEGInterchangeFormat>"));
+    REQUIRE( has(last, "<ifd1.tiff.JPEGInterchangeFormatLength>0</ifd1.tiff.JPEGInterchangeFormatLength>"));
+    REQUIRE( has(last, "<ifd0.tiff.Orientation>1</ifd0.tiff.Orientation>"));
+    REQUIRE( has(last, "<ifd0.tiff.XResolution>3000000/10000</ifd0.tiff.XResolution>"));
+    REQUIRE( has(last, "<ifd0.tiff.YResolution>3000000/10000</ifd0.tiff.YResolution>"));
+    REQUIRE( has(last, "<ifd0.tiff.ResolutionUnit>2</ifd0.tiff.ResolutionUnit>"));
+    REQUIRE( has(last, "<ifd0.tiff.Software>Adobe Photoshop 23.1 (Macintosh)</ifd0.tiff.Software>"));
+    REQUIRE( has(last, "<ifd0.tiff.DateTime>2021:12:19 17:32:57</ifd0.tiff.DateTime>"));
+    REQUIRE( has(last, "<ifd0.exif.ColorSpace>1</ifd0.exif.ColorSpace>"));
+    REQUIRE( has(last, "<ifd0.exif.PixelXDimension>300</ifd0.exif.PixelXDimension>"));
+    REQUIRE( has(last, "<ifd0.exif.PixelYDimension>300</ifd0.exif.PixelYDimension>"));
+    REQUIRE( has(last, "<ifd1.tiff.Compression>6</ifd1.tiff.Compression>"));
+    REQUIRE( has(last, "<ifd1.tiff.XResolution>72/1</ifd1.tiff.XResolution>"));
+    REQUIRE( has(last, "<ifd1.tiff.YResolution>72/1</ifd1.tiff.YResolution>"));
+    REQUIRE( has(last, "<ifd1.tiff.ResolutionUnit>2</ifd1.tiff.ResolutionUnit>"));
+    REQUIRE( has(last, "<ifd1.tiff.JPEGInterchangeFormat>306</ifd1.tiff.JPEGInterchangeFormat>"));
+    REQUIRE( has(last, "<ifd1.tiff.JPEGInterchangeFormatLength>0</ifd1.tiff.JPEGInterchangeFormatLength>"));
+}
+
 
 TEST_CASE("scan_msxml","[scanners]") {
     auto *sbufp = map_file("KML_Samples.kml");
@@ -282,12 +410,13 @@ TEST_CASE("scan_json1", "[scanners]") {
     /* Make a scanner set with a single scanner and a single command to enable all the scanners.
      */
     auto *sbufp = new sbuf_t("hello {\"hello\": 10, \"world\": 20, \"another\": 30, \"language\": 40} world");
-    auto outdir = test_scanner(scan_json, sbufp); // delete sbufp
+    auto outdir = test_scanner(scan_json, sbufp); // deletes sbufp
 
     /* Read the output */
     auto json_txt = getLines( outdir / "json.txt" );
-    auto last = json_txt[json_txt.size()-1];
+    auto last = getLast(json_txt);
 
+    REQUIRE(last.size() > 40);
     REQUIRE(last.substr( last.size() - 40) == "6ee8c369e2f111caa9610afc99d7fae877e616c9");
     REQUIRE(true);
 }
@@ -765,6 +894,14 @@ TEST_CASE("test_base16json", "[phase1]") {
 
     };
     validate("test_base16json.txt", ex2);
+}
+
+TEST_CASE("test_ccn", "[phase1]") {
+    auto *sbufp = map_file( "ccns.txt" );
+    auto outdir = test_scanner( scan_accts, sbufp); // deletes sbufp
+    auto ccns_txt = getLines( outdir / "ccn.txt" );
+    REQUIRE( requireFeature(ccns_txt,"371449635398431"));
+    REQUIRE( requireFeature(ccns_txt,"378282246310005"));
 }
 
 TEST_CASE("test_elf", "[phase1]") {
