@@ -620,6 +620,11 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     xreport->xmlout( "elapsed_seconds",master_timer.elapsed_seconds());
     xreport->xmlout( "max_depth_seen",ss.get_max_depth_seen());
     xreport->xmlout( "dup_bytes_encountered",ss.get_dup_bytes_encountered());
+    xreport->xmlout( "sbufs_created", sbuf_t::sbuf_total);
+    xreport->xmlout( "sbufs_unaccounted", sbuf_t::sbuf_count);
+    xreport->xmlout( "producer_timer_ns", ss.producer_wait_ns() );
+    xreport->xmlout( "consumer_wait_ns", ss.consumer_wait_ns() );
+    xreport->xmlout( "consumer_wait_ns_per_worker", ss.consumer_wait_ns_per_worker() );
     ss.dump_scanner_stats();
     ss.dump_name_count_stats();
     xreport->pop( "report" );
@@ -658,7 +663,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
              << std::endl;
 
         if (ss.producer_wait_ns() > ss.consumer_wait_ns_per_worker()){
-            cout << "*** More time spent waiting for workers. You need faster CPU or more cores for improved performance." << std::endl;
+            cout << "*** More time spent waiting for workers. You need a faster CPU or more cores for improved performance." << std::endl;
         } else {
             cout << "*** More time spent waiting for reader. You need faster I/O for improved performance." << std::endl;
         }

@@ -430,30 +430,61 @@ void scan_aes(struct scanner_params &sp)
         if (scan_aes_128==0 && scan_aes_192==0 && scan_aes_256==0) return;
 	auto &aes_recorder = *aes_recorderp;
 
-	/* Note: We tried keeping a rolling window of entropy and the
-         * number of distinct characters and this increased
-         * runtimes.
-         */
+        if (sp.sbuf->pagesize < AES128_KEY_SCHEDULE_SIZE) return;
 
-        assert(sp.sbuf->bufsize >= AES128_KEY_SCHEDULE_SIZE);
+        const size_t end   = sp.sbuf->pagesize - AES128_KEY_SCHEDULE_SIZE;
         const uint8_t *buf = sp.sbuf->get_buf();
-	for (size_t pos = 0 ; pos < sp.sbuf->bufsize && pos < sp.sbuf->bufsize - AES128_KEY_SCHEDULE_SIZE; pos++){
+
+#define USE_ROLLING_WINDOW
+#ifdef USE_ROLLING_WINDOW
+        /* Simple mod: Keep a rolling window of the entropy and don't
+         * we see fewer than 10 distinct characters in window. This will
+         * eliminate checks on many kinds of bulk data that simply can't have a key
+         * in the block. This could be moved to a C++ class...
+         */
+        uint32_t counts[256];
+        memset(counts,0,sizeof(counts));
+        int32_t distinct_counts = 0;    // how many distinct counts do we have?
+
+        /* Initialize the sliding window */
+        for (size_t pos = 0; pos < AES128_KEY_SCHEDULE_SIZE ; pos++) {
+            const u_char val = buf[pos];
+            counts[val]++;
+            if (counts[val] == 1) {
+                distinct_counts++;
+            }
+        }
+#endif
+
+	for (size_t pos = 0 ; pos < end; pos++){
             const uint8_t *p2 = buf + pos;
 
+#ifdef USE_ROLLING_WINDOW
+            /* add value at end of 128 bits to sliding window */
+            {
+                const u_char val = buf[pos+AES128_KEY_SCHEDULE_SIZE];
+                counts[val]++;
+                if(counts[val]==1) {            // we have one more distinct count
+                    distinct_counts++;
+                }
+                if (distinct_counts < 11) continue;
+            }
+#endif
+
 	    if (scan_aes_128
-                && (sp.sbuf->bufsize-pos >= AES128_KEY_SCHEDULE_SIZE)
+                && (sp.sbuf->bufsize - pos >= AES128_KEY_SCHEDULE_SIZE)
                 && valid_aes128_schedule(p2)) {
                 std::string key = key_to_string(p2, AES128_KEY_SIZE);
                 aes_recorder.write(sp.sbuf->pos0+pos,key,std::string("AES128"));
             }
             if (scan_aes_192
-                && (sp.sbuf->bufsize-pos >= AES192_KEY_SCHEDULE_SIZE)
+                && (sp.sbuf->bufsize - pos >= AES192_KEY_SCHEDULE_SIZE)
                 && valid_aes192_schedule(p2)) {
                 std::string key = key_to_string(p2, AES192_KEY_SIZE);
                 aes_recorder.write(sp.sbuf->pos0+pos,key,std::string("AES192"));
             }
             if (scan_aes_256
-                && (sp.sbuf->bufsize-pos >= AES256_KEY_SCHEDULE_SIZE)
+                && (sp.sbuf->bufsize - pos >= AES256_KEY_SCHEDULE_SIZE)
                 && valid_aes256_schedule(p2)) {
                 std::string key = key_to_string(p2, AES256_KEY_SIZE);
                 aes_recorder.write(sp.sbuf->pos0+pos,key,std::string("AES256"));
