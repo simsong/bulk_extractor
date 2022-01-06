@@ -345,9 +345,24 @@ TEST_CASE("process_dir", "[process_dir]") {
     int ret = run_be(ss, ss, argv);
     REQUIRE( ret==6 );
 
-
     /* This should return the jpegs */
-    image_process *p = image_process::open( test_dir() / "jpegs", true, 65536, 65536);
+    image_process *p = nullptr;
+    try {
+        p = image_process::open( test_dir() / "jpegs", true, 65536, 65536);
+    }
+    catch (image_process::FoundDiskImage &e) {
+        std::cerr << "FoundDiskImage: " << e.what() << std::endl;
+        exit(1);
+    }
+    catch (image_process::IsADirectory &e) {
+        std::cerr << "IsAdirectory: " << e.what() << std::endl;
+        exit(1);
+    }
+    catch (image_process::NoSuchFile &e) {
+        std::cerr << "NoSuchFile: " << e.what() << std::endl;
+        std::cerr << "Current Directory: " << std::filesystem::current_path() << std::endl;
+        exit(1);
+    }
 
     int count = 0;
     for( image_process::iterator it = p->begin(); it != p->end(); ++it ){

@@ -85,11 +85,20 @@ std::filesystem::path test_dir()
 {
     // if srcdir is set, use that, otherwise use the directory of the executable
     // srcdir is set when we run under autoconf 'make distcheck'
+    std::filesystem::path check;
     const char *srcdir = getenv("srcdir");
     if (srcdir) {
-        return std::filesystem::path(srcdir) / "tests";
+        check = std::filesystem::path(srcdir) / "tests";
+        if (std::filesystem::exists( check )) return check;
     }
-    return my_executable().parent_path() / "tests";
+    check = my_executable().parent_path() / "tests";
+    if (std::filesystem::exists( check )) return check;
+
+    check = my_executable().parent_path().parent_path().parent_path() / "tests";
+    if (std::filesystem::exists( check )) return check;
+
+    std::cerr << "Cannot find tests directory.  my_executable:" << my_executable() << std::endl;
+    exit(1);
 }
 
 sbuf_t *map_file(std::filesystem::path p)
