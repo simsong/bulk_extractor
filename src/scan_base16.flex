@@ -152,9 +152,7 @@ void scan_base16(struct scanner_params &sp)
         yybase16_lex_init(&scanner);
         base16_scanner lexer(sp);
         yybase16_set_extra(&lexer,scanner);
-        try {
-            yybase16_lex(scanner);
-        }
+        yybase16_lex(scanner);
         yybase16_lex_destroy(scanner);
     }
 }
