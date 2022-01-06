@@ -36,9 +36,19 @@ public:
             return m_error.c_str();
         }
     };
-    explicit sbuf_scanner(const sbuf_t &sbuf_): sbuf(sbuf_){}
+    class margin_reached: public std::exception {
+    public:
+        margin_reached(){}
+        const char* what() const noexcept {
+            return "Reached margin.";
+        }
+    };
+    explicit sbuf_scanner(const sbuf_t &sbuf_): sbuf(sbuf_){
+        sbuf_buf = sbuf.get_buf();      // unsafe but fast
+    }
     virtual ~sbuf_scanner(){}
     const sbuf_t &sbuf;
+    const uint8_t *sbuf_buf {nullptr};
     // pos & point may be redundent.
     // pos counts the number of bytes into the buffer and is incremented by the flex rules
     // point counts the point where we are removing characters
@@ -59,7 +69,7 @@ public:
         }
 
         while ((max_size > 0) && (point < sbuf.bufsize) ){
-            *buf++ = sbuf[point++];
+            *buf++ = sbuf_buf[point++];
             max_size--;
             count++;
         }
@@ -72,6 +82,13 @@ public:
         }
         return count;
     };
+
+    void check_margin() {
+        if (pos >= sbuf.pagesize ) {
+            throw margin_reached();
+        }
+    }
+
 };
 
 #define YY_INPUT(buf,result,max_size) result = get_extra(yyscanner)->get_input(buf,max_size);

@@ -151,6 +151,7 @@ U_TLD4		(Q\0A\0|R\0E\0|R\0O\0|R\0S\0|R\0U\0|R\0W\0|S\0A\0|S\0B\0|S\0C\0|S\0D\0|S
 
 {DAYOFWEEK},[ \t\x0A\x0D]+[0-9]{1,2}[ \t\x0A\x0D]+{MONTH}[ \t\x0A\x0D]+{YEAR}[ \t\x0A\x0D]+[0-2][0-9]:[0-5][0-9]:[0-5][0-9][ \t\x0A\x0D]+([+-][0-2][0-9][0314][05]|{ABBREV}) {
     email_scanner &s = * yyemail_get_extra(yyscanner);
+    s.check_margin();
     s.rfc822_recorder.write_buf(SBUF,POS,yyleng);
     s.pos += yyleng;
 
@@ -164,30 +165,35 @@ U_TLD4		(Q\0A\0|R\0E\0|R\0O\0|R\0S\0|R\0U\0|R\0W\0|S\0A\0|S\0B\0|S\0C\0|S\0D\0|S
 
 Message-ID:([ \t\x0A]|\x0D\x0A)?<{PC}{1,80}> {
     email_scanner &s = * yyemail_get_extra(yyscanner);
+    s.check_margin();
     s.rfc822_recorder.write_buf(SBUF,POS,yyleng);
     s.pos += yyleng;
 }
 
 Subject:[ \t]?({PC}{1,80}) {
     email_scanner &s = * yyemail_get_extra(yyscanner);
+    s.check_margin();
     s.rfc822_recorder.write_buf(SBUF,POS,yyleng);
     s.pos += yyleng;
 }
 
 Cookie:[ \t]?({PC}{1,80}) {
     email_scanner &s = * yyemail_get_extra(yyscanner);
+    s.check_margin();
     s.rfc822_recorder.write_buf(SBUF,POS,yyleng);
     s.pos += yyleng;
 }
 
 Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
     email_scanner &s = * yyemail_get_extra(yyscanner);
+    s.check_margin();
     s.rfc822_recorder.write_buf(SBUF,POS,yyleng);
     s.pos += yyleng;
 }
 
 {EMAIL}/[^a-zA-Z]	{
     email_scanner &s = * yyemail_get_extra(yyscanner);
+    s.check_margin();
     if (extra_validate_email(yytext)){
         s.email_recorder.write_buf(SBUF,POS,yyleng);
 	ssize_t domain_start = find_host_in_email(SBUF.slice(POS,yyleng));
@@ -203,6 +209,7 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
     /* Not an IP address, but could generate a false positive */
     // printf("IP Address False Positive at 1 '%s'\n",yytext);
     email_scanner &s = * yyemail_get_extra(yyscanner);
+    s.check_margin();
     s.pos += yyleng;
 }
 
@@ -210,6 +217,7 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
     /* Also not an IP address, but could generate a false positive */
     // printf("IP Address False Positive at 2 '%s'\n",yytext);
     email_scanner &s = * yyemail_get_extra(yyscanner);
+    s.check_margin();
     s.pos += yyleng;
 }
 
@@ -218,6 +226,7 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
     // UTF-8 IPv4 address canner
     /* Numeric IP addresses. Get the context before and throw away some things */
     email_scanner &s = * yyemail_get_extra(yyscanner);
+    s.check_margin();
     int ignore=0;
 
     /* Get 8 characters of left context, right-justified */
@@ -273,6 +282,7 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
     // UTF-8 Ethernet scanner
     /* found a possible ethernet address! */
     email_scanner &s = * yyemail_get_extra(yyscanner);
+    s.check_margin();
     if (s.valid_ether_addr(POS+1)){
        s.ether_recorder.write_buf(SBUF,POS+1,yyleng-1);
     }
@@ -285,6 +295,7 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
     // in them followed by numbers. So this counts the number of slashes and if it is only 2
     // the size is pruned until the last character is a letter
     email_scanner &s = * yyemail_get_extra(yyscanner);
+    s.check_margin();
     int slash_count = 0;
     int feature_len = yyleng;
     for (unsigned int i=0;i<(unsigned int)yyleng;i++){
@@ -306,8 +317,8 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
 
 [a-zA-Z0-9]\0([a-zA-Z0-9._%\-+]\0){1,128}@\0([a-zA-Z0-9._%\-]\0){1,128}\.\0({U_TLD1}|{U_TLD2}|{U_TLD3}|{U_TLD4})/[^a-zA-Z]|([^][^\0])	{
     /* UTF-16 URL scanner */
-
     email_scanner &s = * yyemail_get_extra(yyscanner);
+    s.check_margin();
     if (extra_validate_email(yytext)){
         s.email_recorder.write_buf(SBUF,POS,yyleng);
         ssize_t domain_start = find_host_in_email(SBUF.slice(POS,yyleng)) + 1;
@@ -321,6 +332,7 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
 h\0t\0t\0p\0(s\0)?:\0([a-zA-Z0-9_%/\-+@:=&\?#~.;]\0){1,128}/[^a-zA-Z0-9_%\/\-+@:=&\?#~.;]|([^][^\0])	{
     /* UTF-16 URL scanner */
     email_scanner &s = * yyemail_get_extra(yyscanner);
+    s.check_margin();
     s.url_recorder.write_buf(SBUF,POS,yyleng);
     ssize_t domain_start = find_host_in_email(SBUF.slice(POS,yyleng));
     if (domain_start >= 0){
@@ -330,12 +342,13 @@ h\0t\0t\0p\0(s\0)?:\0([a-zA-Z0-9_%/\-+@:=&\?#~.;]\0){1,128}/[^a-zA-Z0-9_%\/\-+@:
 }
 
 .|\n {
-     /**
-      * The no-match rule. VERY IMPORTANT!
-      * If we are beyond the end of the margin, call it quits.
-      */
-     email_scanner &s = *yyemail_get_extra(yyscanner);
-     s.pos++;
+    /**
+     * The no-match rule. VERY IMPORTANT!
+     * If we are beyond the end of the margin, call it quits.
+     */
+    email_scanner &s = *yyemail_get_extra(yyscanner);
+    s.check_margin();
+    s.pos++;
 }
 %%
 
@@ -375,16 +388,18 @@ void scan_email(struct scanner_params &sp)
     }
     if (sp.phase==scanner_params::PHASE_SCAN){
 	/* Set up the buffer. Scan it. Exit */
+        email_scanner lexer(sp);
 	yyscan_t scanner;
         yyemail_lex_init(&scanner);
-
-        email_scanner lexer(sp);
         yyemail_set_extra(&lexer, scanner);
         try {
             yyemail_lex(scanner);
         }
         catch (sbuf_scanner::sbuf_scanner_exception &e ) {
             std::cerr << "Scanner " << SCANNER << "Exception " << e.what() << " processing " << sp.sbuf->pos0 << "\n";
+        }
+        catch (sbuf_scanner::margin_reached &e ) {
+            /* not an error condition */
         }
         yyemail_lex(scanner);           // cleanup at end
         yyemail_lex_destroy(scanner);
