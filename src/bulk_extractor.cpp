@@ -220,7 +220,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         ("f,find",     "search for a pattern (can be repeated)", cxxopts::value<std::vector<std::string>>())
         ("F,find_file", "read patterns to search from a file (can be repeated)", cxxopts::value<std::vector<std::string>>())
         ("G,pagesize",   "page size in bytes", cxxopts::value<std::string>()->default_value(std::to_string(cfg.opt_pagesize )))
-        ("g,marginsize", "margin size in bytes", cxxopts::value<std::string>()->default_value(std::to_string(cfg.opt_pagesize )))
+        ("g,marginsize", "margin size in bytes", cxxopts::value<std::string>()->default_value(std::to_string(cfg.opt_marginsize )))
         ("j,threads",    "number of threads", cxxopts::value<int>()->default_value(std::to_string(cfg.num_threads)))
         ("J,no_threads",  "read and process data in the primary thread")
 	("M,max_depth",   "max recursion depth", cxxopts::value<int>()->default_value(std::to_string(scanner_config::DEFAULT_MAX_DEPTH)))
@@ -433,7 +433,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         }
 	if (std::filesystem::exists( sc.outdir ) == false ){
 	  cout << "mkdir " << sc.outdir << std::endl ;
-	  std::filesystem::create_directory( sc.outdir); 
+	  std::filesystem::create_directory( sc.outdir);
 	}
     }
 

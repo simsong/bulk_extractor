@@ -23,7 +23,6 @@ public:
     }
 
     const struct scanner_params &sp;
-    //const struct recursion_control_block &rcb;
     class feature_recorder &hex_recorder;
     void  decode(const sbuf_t &osbuf);
 };
@@ -99,16 +98,18 @@ UNICODE         ([[:print:][:space:]]+)
      * {6,65536}  means 6-65536 characters
      */
     base16_scanner &s = *yybase16_get_extra(yyscanner);
+    s.check_margin();
     s.decode(sbuf_t(SBUF, POS, yyleng));
     s.pos += yyleng;
 }
 
 .|\n {
-     /**
-      * The no-match rule.
-      * If we are beyond the end of the margin, call it quits.
-      */
+    /**
+     * The no-match rule.
+     * If we are beyond the end of the margin, call it quits.
+     */
     sbuf_scanner &s = *yybase16_get_extra(yyscanner);
+    s.check_margin();
     s.pos++;
 }
 %%
@@ -151,7 +152,12 @@ void scan_base16(struct scanner_params &sp)
         yybase16_lex_init(&scanner);
         base16_scanner lexer(sp);
         yybase16_set_extra(&lexer,scanner);
-        yybase16_lex(scanner);
+        try {
+            yybase16_lex(scanner);
+        }
+        catch (sbuf_scanner::margin_reached &e ) {
+            /* not an error condition */
+        }
         yybase16_lex_destroy(scanner);
     }
 }

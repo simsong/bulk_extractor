@@ -387,6 +387,7 @@ void scan_email(struct scanner_params &sp)
 	return;
     }
     if (sp.phase==scanner_params::PHASE_SCAN){
+
 	/* Set up the buffer. Scan it. Exit */
         email_scanner lexer(sp);
 	yyscan_t scanner;

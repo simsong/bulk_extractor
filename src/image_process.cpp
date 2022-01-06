@@ -520,7 +520,7 @@ ssize_t process_raw::pread(void *buf, size_t bytes, uint64_t offset) const
     assert(offset <  fi->offset + fi->length);
 
     // Determine the offset and available bytes in the segment
-    uint64_t file_offset = offset - fi->offset;
+    uint64_t file_offset     = offset - fi->offset;
     uint64_t available_bytes = fi->length - file_offset;
 
     size_t bytes_to_read = bytes;
@@ -687,7 +687,7 @@ int process_dir::open()
     return 0;				// always successful
 }
 
-ssize_t process_dir::pread(void *buf,size_t bytes,uint64_t offset) const
+ssize_t process_dir::pread(void *buf, size_t bytes, uint64_t offset) const
 {
     if (bytes>0) {
         throw std::runtime_error("process_dir does not support pread");
@@ -815,13 +815,13 @@ image_process *image_process::open(std::filesystem::path fn, bool opt_recurse, s
 	std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 	if (ext=="e01" || fname_string.find(".E01")!=std::string::npos){
 #ifdef HAVE_LIBEWF
-	    ip = new process_ewf(fn,pagesize_,margin_);
+	    ip = new process_ewf(fn, pagesize_, margin_);
 #else
 	    throw NoSupport("This program was compiled without E01 support");
 #endif
 	}
 	if (ip==nullptr) {
-            ip = new process_raw(fn,pagesize_,margin_);
+            ip = new process_raw(fn, pagesize_, margin_);
         }
     }
     /* Try to open it */

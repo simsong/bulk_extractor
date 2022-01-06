@@ -58,6 +58,7 @@ public:
 
     size_t get_input(char *buf, size_t max_size){
         if ((int)max_size < 0) return 0;
+        if (point > sbuf.bufsize) return 0;
         int count=0;
 
         /* Provide a leading space the first time through */
@@ -85,7 +86,8 @@ public:
 
     void check_margin() {
         if (pos >= sbuf.pagesize ) {
-            throw margin_reached();
+            // throw margin_reached();
+            point = sbuf.bufsize+1;
         }
     }
 
