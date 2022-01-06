@@ -449,9 +449,6 @@ void scan_accts( struct scanner_params &sp )
         catch (sbuf_scanner::sbuf_scanner_exception &e ) {
             std::cerr << "Scanner " << SCANNER << "Exception " << e.what() << " processing " << sp.sbuf->pos0 << "\n";
         }
-        catch (sbuf_scanner::margin_reached &e ) {
-            /* not an error condition */
-        }
         yyaccts_lex_destroy(scanner);
     }
     if(sp.phase==scanner_params::PHASE_INIT){                 // avoids defined but not used

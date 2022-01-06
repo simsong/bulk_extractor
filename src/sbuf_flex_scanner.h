@@ -36,13 +36,6 @@ public:
             return m_error.c_str();
         }
     };
-    class margin_reached: public std::exception {
-    public:
-        margin_reached(){}
-        const char* what() const noexcept {
-            return "Reached margin.";
-        }
-    };
     explicit sbuf_scanner(const sbuf_t &sbuf_): sbuf(sbuf_){
         sbuf_buf = sbuf.get_buf();      // unsafe but fast
     }

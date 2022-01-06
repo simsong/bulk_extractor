@@ -155,9 +155,6 @@ void scan_base16(struct scanner_params &sp)
         try {
             yybase16_lex(scanner);
         }
-        catch (sbuf_scanner::margin_reached &e ) {
-            /* not an error condition */
-        }
         yybase16_lex_destroy(scanner);
     }
 }
