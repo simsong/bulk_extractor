@@ -159,23 +159,15 @@ TEST_CASE("scan_find", "[end-to-end]") {
 
 TEST_CASE("5gb-flatfile", "[end-to-end]") {
     /* Make a 5GB file and try to read it. Make sure we get back the known content. */
-<<<<<<< HEAD
     if (!std::getenv("DEBUG_5G")){
         std::cerr << "DEBUG_5G not set; skipping 5G test" << std::endl;
         return;
-    } else {
-        std::cerr << "DEBUG_5G set; starting 5G test" << std::endl;
-=======
-    if (getenv_debug("DEBUG_NO_5G")){
-        std::cerr << "DEBUG_NO_5G set; skipping 5gb-flatfile test" << std::endl;
-        return;
->>>>>>> origin/main
     }
     if (getenv_debug("DEBUG_FAST")){
         std::cerr << "DEBUG_FAST set; skipping 5gb-flatfile test" << std::endl;
         return;
     }
-    std::cerr << "DEBUG_NO_5G not set; starting 5G test" << std::endl;
+    std::cerr << "DEBUG_5G set; starting 5G test" << std::endl;
 
     const uint64_t count = 5000;
     const uint64_t sz    = 1000000;
