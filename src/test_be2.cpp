@@ -328,6 +328,38 @@ TEST_CASE("e2e-email_test", "[end-to-end]") {
 
 
 /****************************************************************
+ * Test process_dir
+ */
+TEST_CASE("process_dir", "[process_dir]") {
+
+    /* This should throw NoSuchFile because there is is an E01 file */
+    REQUIRE_THROWS_AS(image_process::open( test_dir(), true, 65536, 65536), image_process::FoundDiskImage);
+
+    /* Get the right return code */
+    std::filesystem::path inpath = test_dir();
+    std::string inpath_string = inpath.string();
+    std::filesystem::path outdir = NamedTemporaryDirectory();
+    std::string outdir_string = outdir.string();
+    std::stringstream ss;
+    const char *argv[] = {"bulk_extractor", notify(), "-Ro", outdir_string.c_str(), inpath_string.c_str(), nullptr};
+    int ret = run_be(ss, ss, argv);
+    REQUIRE( ret==6 );
+
+
+    /* This should return the jpegs */
+    image_process *p = image_process::open( test_dir() / "jpegs", true, 65536, 65536);
+
+    int count = 0;
+    for( image_process::iterator it = p->begin(); it != p->end(); ++it ){
+        count++;
+        pos0_t pos0 = it.get_pos0();
+        REQUIRE( pos0.str().find(".jpg") != std::string::npos );
+    }
+    delete p;
+}
+
+
+/****************************************************************
  * Test restarter
  */
 

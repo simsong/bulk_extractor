@@ -477,7 +477,22 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         }
     }
 
-    image_process *p = image_process::open( sc.input_fname, cfg.opt_recurse, cfg.opt_pagesize, cfg.opt_marginsize );
+    image_process *p = nullptr;
+    try {
+        p = image_process::open( sc.input_fname, cfg.opt_recurse, cfg.opt_pagesize, cfg.opt_marginsize );
+    }
+    catch (image_process::FoundDiskImage &e) {
+        cerr << "error: file " << e.what() << " is in directory " << sc.input_fname << std::endl;
+        cerr << "       The -R option is not for reading a directory of EnCase files" << std::endl;
+        cerr << "       or a directory of disk image parts. Please process these" << std::endl;
+        cerr << "       as a single disk image. If you need to process these files" << std::endl;
+        cerr << "       then place them in a sub directory of " << sc.input_fname << std::endl;
+        return 6;
+    }
+    catch (image_process::IsADirectory &e) {
+        std::cerr << "error: " << e.what() << " is a directory but -R (opt_recurse) not set" << std::endl;
+        return 7;
+    };
 
     /* are we supposed to run the path printer? If so, we can use cout_, since the notify stream won't be running. */
     if ( result.count( "path" ) ) {
