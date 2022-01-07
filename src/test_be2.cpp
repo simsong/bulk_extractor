@@ -159,15 +159,15 @@ TEST_CASE("scan_find", "[end-to-end]") {
 
 TEST_CASE("5gb-flatfile", "[end-to-end]") {
     /* Make a 5GB file and try to read it. Make sure we get back the known content. */
-    if (getenv_debug("DEBUG_NO_5G")){
-        std::cerr << "DEBUG_NO_5G set; skipping 5gb-flatfile test" << std::endl;
+    if (!std::getenv("DEBUG_5G")){
+        std::cerr << "DEBUG_5G not set; skipping 5G test" << std::endl;
         return;
     }
     if (getenv_debug("DEBUG_FAST")){
         std::cerr << "DEBUG_FAST set; skipping 5gb-flatfile test" << std::endl;
         return;
     }
-    std::cerr << "DEBUG_NO_5G not set; starting 5G test" << std::endl;
+    std::cerr << "DEBUG_5G set; starting 5G test" << std::endl;
 
     const uint64_t count = 5000;
     const uint64_t sz    = 1000000;
@@ -325,6 +325,53 @@ TEST_CASE("e2e-email_test", "[end-to-end]") {
     }
 }
 
+
+
+/****************************************************************
+ * Test process_dir
+ */
+TEST_CASE("process_dir", "[process_dir]") {
+
+    /* This should throw NoSuchFile because there is is an E01 file */
+    REQUIRE_THROWS_AS(image_process::open( test_dir(), true, 65536, 65536), image_process::FoundDiskImage);
+
+    /* Get the right return code */
+    std::filesystem::path inpath = test_dir();
+    std::string inpath_string = inpath.string();
+    std::filesystem::path outdir = NamedTemporaryDirectory();
+    std::string outdir_string = outdir.string();
+    std::stringstream ss;
+    const char *argv[] = {"bulk_extractor", notify(), "-Ro", outdir_string.c_str(), inpath_string.c_str(), nullptr};
+    int ret = run_be(ss, ss, argv);
+    REQUIRE( ret==6 );
+
+    /* This should return the jpegs */
+    image_process *p = nullptr;
+    try {
+        p = image_process::open( test_dir() / "jpegs", true, 65536, 65536);
+    }
+    catch (image_process::FoundDiskImage &e) {
+        std::cerr << "FoundDiskImage: " << e.what() << std::endl;
+        exit(1);
+    }
+    catch (image_process::IsADirectory &e) {
+        std::cerr << "IsAdirectory: " << e.what() << std::endl;
+        exit(1);
+    }
+    catch (image_process::NoSuchFile &e) {
+        std::cerr << "NoSuchFile: " << e.what() << std::endl;
+        std::cerr << "Current Directory: " << std::filesystem::current_path() << std::endl;
+        exit(1);
+    }
+
+    int count = 0;
+    for( image_process::iterator it = p->begin(); it != p->end(); ++it ){
+        count++;
+        pos0_t pos0 = it.get_pos0();
+        REQUIRE( pos0.str().find(".jpg") != std::string::npos );
+    }
+    delete p;
+}
 
 
 /****************************************************************

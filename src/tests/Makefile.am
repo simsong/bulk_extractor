@@ -28,6 +28,9 @@ EXTRA_DIST = \
 	iwork_09.pages \
 	john_jakes.vcf \
 	jpegs.rar \
+	jpegs/2.jpg \
+	jpegs/3.jpg \
+	jpegs/4.jpg \
 	len6192.jpg \
 	nps-2010-emails.100k.raw \
 	nps-email.txt \

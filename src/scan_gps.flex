@@ -107,42 +107,48 @@ ELEV    (-?[0-9]{1,6}[.][0-9]{0,3})
 %%
 
 [<]trkpt\ lat=\"{LATLON}\"\ lon=\"{LATLON}\"  {
-        gps_scanner &s = *yygps_get_extra(yyscanner);
-        s.clear();
-        s.lat = gps_scanner::get_quoted_attrib(yytext,"lat");
-        s.lon = gps_scanner::get_quoted_attrib(yytext,"lon");
-        s.pos += yyleng;
+    gps_scanner &s = *yygps_get_extra(yyscanner);
+    s.check_margin();
+    s.clear();
+    s.lat = gps_scanner::get_quoted_attrib(yytext,"lat");
+    s.lon = gps_scanner::get_quoted_attrib(yytext,"lon");
+    s.pos += yyleng;
 }
 
 
 [<]/trkpt[>] {
-        gps_scanner &s = *yygps_get_extra(yyscanner);
-        s.clear();
-        s.pos += yyleng;
+    gps_scanner &s = *yygps_get_extra(yyscanner);
+    s.check_margin();
+    s.clear();
+    s.pos += yyleng;
 }
 
 [<]ele[>]{ELEV}[<][/]ele[>] {
-        gps_scanner &s = *yygps_get_extra(yyscanner);
-        s.ele = gps_scanner::get_cdata(yytext);
-        s.pos += yyleng;
+    gps_scanner &s = *yygps_get_extra(yyscanner);
+    s.check_margin();
+    s.ele = gps_scanner::get_cdata(yytext);
+    s.pos += yyleng;
 }
 
 [<]time[>][0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9][ T][0-9][0-9]:[0-9][0-9]:[0-9][0-9](Z|([-+][0-9.]))[<][/]time[>] {
-        gps_scanner &s = *yygps_get_extra(yyscanner);
-        s.time = gps_scanner::get_cdata(yytext);
-        s.pos += yyleng;
+    gps_scanner &s = *yygps_get_extra(yyscanner);
+    s.check_margin();
+    s.time = gps_scanner::get_cdata(yytext);
+    s.pos += yyleng;
 }
 
 [<]gpxtpx:speed[>]{ELEV}[<][/]gpxtpx:speed[>] {
-        gps_scanner &s = *yygps_get_extra(yyscanner);
-        s.speed = gps_scanner::get_cdata(yytext);
-        s.pos += yyleng;
+    gps_scanner &s = *yygps_get_extra(yyscanner);
+    s.check_margin();
+    s.speed = gps_scanner::get_cdata(yytext);
+    s.pos += yyleng;
 }
 
 [<]gpxtpx:course[>]{ELEV}[<][/]gpxtpx:course[>] {
-        gps_scanner &s = *yygps_get_extra(yyscanner);
-        s.course = gps_scanner::get_cdata(yytext);
-        s.pos += yyleng;
+    gps_scanner &s = *yygps_get_extra(yyscanner);
+    s.check_margin();
+    s.course = gps_scanner::get_cdata(yytext);
+    s.pos += yyleng;
 }
 
 .|\n {
@@ -154,6 +160,7 @@ ELEV    (-?[0-9]{1,6}[.][0-9]{0,3})
 
     /* If we have an invalid character, then we are out of this XML block. Clear */
     gps_scanner &s = *yygps_get_extra(yyscanner);
+    s.check_margin();
     if (yytext[0] & 0x80){
         s.clear();
     }

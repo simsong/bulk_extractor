@@ -8,7 +8,7 @@
 # and http://www.bioinf.uni-freiburg.de/~mmann/HowTo/automake.html
 
 AC_PREREQ([2.69])
-AC_INIT([BULK_EXTRACTOR],[2.0.0-beta3],[bugs@digitalcorpora.org])
+AC_INIT([BULK_EXTRACTOR],[2.0.0-beta4],[bugs@digitalcorpora.org])
 AC_CONFIG_MACRO_DIR(m4)
 AC_CONFIG_AUX_DIR([build-aux])
 ################################################################
@@ -298,6 +298,8 @@ fi
 
 m4_include([src/be13_api/m4/slg_address_sanitizer.m4])
 m4_include([src/be13_api/m4/slg_noopt.m4])
+
+
 
 ################################################################
 ## Check on two annoying warnings

@@ -10,7 +10,7 @@ b.feature_files() = List of feature files
 b.carved_files()  = List of carved files
 b.histogram_files()    = List of histograms
 b.read_histogram() = Returns a dictionary of the histogram
-b.open(fname)     = Opens a feature file in the report
+b.open(fname)      = Opens a file in the report directory or zipfile
 BulkReport.is_comment_line(line) - returns true if line is a commont line
 b.cpu_track() - List of (cpu%, time) tuples
 b.rusage() - a dictionary with 'utime', 'stime,' 'maxrss, 'majflt', 'nswap', 'inblocks', 'outblocks', 'clocktime'
@@ -142,7 +142,7 @@ def is_feature_filename(fname):
 class BulkReport:
     """Creates an object from a bulk_extractor report. The report can be a directory or a ZIP of a directory.
     Methods that you may find useful:
-    f = b.open(fname,mode) - opens the file f and returns a file handle. mode defaults to 'r'
+    f = b.open(fname,mode)     - opens the file f and returns a file handle. mode defaults to 'r'
     b.is_histogram_file(fname) - returns if fname is a histogram file or not
     b.image_filename() - Returns the name of the image file
     b.read_histogram(fn) - Reads a histogram and returns the histogram
@@ -152,33 +152,38 @@ class BulkReport:
     b.get_features(fname)   - just get the features
 """
 
-    def __init__(self,fn,do_validate=True):
+
+    def __init__(self, name, ):
+        """Validates the XML and sets the xmldoc
+        @param name - a directory name of a directory containing a report.xml file.
+                    - a filename of the report.xml
+                    - an XML name without the report directory.
+        """
         self.commonprefix=''
-        def validate():
-            """Validates the XML and finds the histograms and feature files"""
-            try:
-                self.xmldoc = xml.dom.minidom.parse(self.open("report.xml"))
-            except xml.parsers.expat.ExpatError as e:
-                raise IOError(f"Invalid or missing report.xml file attempting to read dname={self.dname} specify do_validate=False to avoid validation")
-            return True
+        self.dirname = None     # report directory
+        self.fname = None       # xml filename
+        self.zipfile = None
 
-        if fn.endswith(".xml"):
-            # we were given the .xml file; get the containing directory.
-            fn = os.path.dirname(os.path.abspath(fn))
+        if os.path.basename(name) == "report.xml":
+            self.fname   = os.path.abspath( name )
+            self.dirname = os.path.dirname( name )
+        elif name.endswith(".xml"):
+            self.fname   = os.path.abspath( name )
+            self.dirname = None
+        elif name.endswith(".zip"):
+            self.zipfile = zipfile.ZipFile( name )
+            self.fname   = None
+            self.dirname = None
+        elif os.path.isdir(name):
+            self.dirname = os.path.abspath( name )
+            self.fname   = os.path.join(name, "report.xml")
+        else:
+            raise RuntimeError(f"Cannot decode: {name}")
 
-        self.name  = fn
-        if os.path.isdir(fn):
-            self.zipfile = None
-            self.dname = fn
-            self.all_files = set([os.path.basename(x) for x in glob.glob(os.path.join(fn,"*"))])
-            self.files = set([os.path.basename(x) for x in glob.glob(os.path.join(fn,"*.txt"))])
-            if do_validate:
-                validate()
-            return
-
-        if fn.endswith(".zip") and os.path.isfile(fn):
-            self.zipfile = zipfile.ZipFile(fn)
-
+        if self.dirname:
+            self.all_files = glob.glob(os.path.join(self.dirname,"*"))
+            self.files     = glob.glob(os.path.join(self.dirname,"*.txt"))
+        elif self.zipfile:
             # If there is a common prefix, we'll ignore it in is_feature_file()
             self.commonprefix = os.path.commonprefix(self.zipfile.namelist())
             while len(self.commonprefix)>0 and self.commonprefix[-1]!='/':
@@ -200,14 +205,15 @@ class BulkReport:
                     short_fn = fn.replace(report_name_prefix,"")
                 self.files.add(short_fn)
                 self.map[short_fn] = fn
-            if do_validate:
-                validate()
-            return
-        if fn.endswith(".txt"):
-            import sys
-            print("***\n*** {} ends with .txt\n*** BulkReader wants the report directory, not the individual feature file\n***".format(fn))
 
-        raise RuntimeError("Cannot process " + fn)
+        if self.fname:
+            self.docfile = open(self.fname)
+        elif self.zipfile:
+            self.docfile = self.open("report.xml")
+        else:
+            raise RuntimeError("No report.xml to analyze")
+
+        self.xmldoc = xml.dom.minidom.parse( self.docfile )
 
     def image_filename(self):
         """Returns the file name of the disk image that was used."""
@@ -237,13 +243,13 @@ class BulkReport:
                 .getElementsByTagName("marginsize")[0].firstChild.wholeText))
 
     def clocktime(self):
-        """Returns the total real time elapsed for this run.  Values are truncated to the second."""
-        return int(float((self.xmldoc.getElementsByTagName("rusage")[0]
-                .getElementsByTagName("clocktime")[0].firstChild.wholeText)))
+        """Returns the total real time elapsed for this run.  Values are in seconds."""
+        return float((self.xmldoc.getElementsByTagName("rusage")[0]
+                .getElementsByTagName("clocktime")[0].firstChild.wholeText))
 
     def peak_memory(self):
-        """Returns the maximum memory allocated for this run."""
-        return int((self.xmldoc.getElementsByTagName("rusage")[0]
+        """Returns the maximum memory allocated for this run in bytes."""
+        return 1024 * int((self.xmldoc.getElementsByTagName("rusage")[0]
                 .getElementsByTagName("maxrss")[0].firstChild.wholeText))
 
     def cpu_track(self):
@@ -263,7 +269,7 @@ class BulkReport:
             f = self.zipfile.open(self.map[fname],mode=mode)
         else:
             mode = mode.replace("b","")+"b"
-            fn = os.path.join(self.dname,fname)
+            fn = os.path.join(self.ri,fname)
             f = open(fn, mode=mode)
         return f
 
@@ -334,46 +340,3 @@ class BulkReport:
             r = parse_feature_line(line)
             if r:
                 yield r
-
-
-if(__name__=='__main__'):
-    from optparse import OptionParser
-    global options
-    import os
-
-    parser = OptionParser()
-    parser.add_option("--wordlist",help="split a wordlist.txt file")
-    (options,args) = parser.parse_args()
-
-    if options.wordlist:
-        global counter
-        fn = options.wordlist
-        if not os.path.exists(fn):
-            print("%s does not exist" % fn)
-            exit(1)
-        print("Splitting wordlist file %s" % fn)
-        fntemp = fn.replace(".txt","_%03d.txt")
-        counter = 0
-        seen = set()
-
-        def next_file():
-            global counter
-            nfn = fntemp % counter
-            counter += 1
-            print("Switching to file %s" % nfn)
-            return open(nfn,"w")
-
-        f = next_file()
-        size = 0
-        max_size = 1000*1000*10
-        for line in open(fn,"r"):
-            word = line.split("\t")[1]
-            if word not in seen:
-                f.write(word)
-                if word[-1]!='\n': f.write("\n")
-                seen.add(word)
-                size += len(word)+1
-                if size>max_size:
-                    f.close()
-                    f = next_file()
-                    size = 0

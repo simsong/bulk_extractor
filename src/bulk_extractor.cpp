@@ -220,7 +220,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         ("f,find",     "search for a pattern (can be repeated)", cxxopts::value<std::vector<std::string>>())
         ("F,find_file", "read patterns to search from a file (can be repeated)", cxxopts::value<std::vector<std::string>>())
         ("G,pagesize",   "page size in bytes", cxxopts::value<std::string>()->default_value(std::to_string(cfg.opt_pagesize )))
-        ("g,marginsize", "margin size in bytes", cxxopts::value<std::string>()->default_value(std::to_string(cfg.opt_pagesize )))
+        ("g,marginsize", "margin size in bytes", cxxopts::value<std::string>()->default_value(std::to_string(cfg.opt_marginsize )))
         ("j,threads",    "number of threads", cxxopts::value<int>()->default_value(std::to_string(cfg.num_threads)))
         ("J,no_threads",  "read and process data in the primary thread")
 	("M,max_depth",   "max recursion depth", cxxopts::value<int>()->default_value(std::to_string(scanner_config::DEFAULT_MAX_DEPTH)))
@@ -433,7 +433,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         }
 	if (std::filesystem::exists( sc.outdir ) == false ){
 	  cout << "mkdir " << sc.outdir << std::endl ;
-	  std::filesystem::create_directory( sc.outdir); 
+	  std::filesystem::create_directory( sc.outdir);
 	}
     }
 
@@ -477,7 +477,22 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         }
     }
 
-    image_process *p = image_process::open( sc.input_fname, cfg.opt_recurse, cfg.opt_pagesize, cfg.opt_marginsize );
+    image_process *p = nullptr;
+    try {
+        p = image_process::open( sc.input_fname, cfg.opt_recurse, cfg.opt_pagesize, cfg.opt_marginsize );
+    }
+    catch (image_process::FoundDiskImage &e) {
+        cerr << "error: file " << e.what() << " is in directory " << sc.input_fname << std::endl;
+        cerr << "       The -R option is not for reading a directory of EnCase files" << std::endl;
+        cerr << "       or a directory of disk image parts. Please process these" << std::endl;
+        cerr << "       as a single disk image. If you need to process these files" << std::endl;
+        cerr << "       then place them in a sub directory of " << sc.input_fname << std::endl;
+        return 6;
+    }
+    catch (image_process::IsADirectory &e) {
+        std::cerr << "error: " << e.what() << " is a directory but -R (opt_recurse) not set" << std::endl;
+        return 7;
+    };
 
     /* are we supposed to run the path printer? If so, we can use cout_, since the notify stream won't be running. */
     if ( result.count( "path" ) ) {
@@ -622,6 +637,11 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     xreport->xmlout( "elapsed_seconds",master_timer.elapsed_seconds());
     xreport->xmlout( "max_depth_seen",ss.get_max_depth_seen());
     xreport->xmlout( "dup_bytes_encountered",ss.get_dup_bytes_encountered());
+    xreport->xmlout( "sbufs_created", sbuf_t::sbuf_total);
+    xreport->xmlout( "sbufs_unaccounted", sbuf_t::sbuf_count);
+    xreport->xmlout( "producer_timer_ns", ss.producer_wait_ns() );
+    xreport->xmlout( "consumer_wait_ns", ss.consumer_wait_ns() );
+    xreport->xmlout( "consumer_wait_ns_per_worker", ss.consumer_wait_ns_per_worker() );
     ss.dump_scanner_stats();
     ss.dump_name_count_stats();
     xreport->pop( "report" );
@@ -660,7 +680,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
              << std::endl;
 
         if (ss.producer_wait_ns() > ss.consumer_wait_ns_per_worker()){
-            cout << "*** More time spent waiting for workers. You need faster CPU or more cores for improved performance." << std::endl;
+            cout << "*** More time spent waiting for workers. You need a faster CPU or more cores for improved performance." << std::endl;
         } else {
             cout << "*** More time spent waiting for reader. You need faster I/O for improved performance." << std::endl;
         }

@@ -520,7 +520,7 @@ ssize_t process_raw::pread(void *buf, size_t bytes, uint64_t offset) const
     assert(offset <  fi->offset + fi->length);
 
     // Determine the offset and available bytes in the segment
-    uint64_t file_offset = offset - fi->offset;
+    uint64_t file_offset     = offset - fi->offset;
     uint64_t available_bytes = fi->length - file_offset;
 
     size_t bytes_to_read = bytes;
@@ -687,7 +687,7 @@ int process_dir::open()
     return 0;				// always successful
 }
 
-ssize_t process_dir::pread(void *buf,size_t bytes,uint64_t offset) const
+ssize_t process_dir::pread(void *buf, size_t bytes, uint64_t offset) const
 {
     if (bytes>0) {
         throw std::runtime_error("process_dir does not support pread");
@@ -782,9 +782,8 @@ image_process *image_process::open(std::filesystem::path fn, bool opt_recurse, s
     if (std::filesystem::is_directory(fn)){
 	/* If this is a directory, process specially */
 	if (opt_recurse==0){
-	    std::cerr << "error: " << fname_string << " is a directory but -R (opt_recurse) not set" << std::endl;
 	    errno = 0;
-	    throw NoSuchFile(fname_string);	// directory and cannot recurse
+	    throw IsADirectory(fname_string);	// directory and cannot recurse
 	}
         /* Quickly scan the directory and see if it has a .E01, .000 or .001 file.
          * If so, give the user an error.
@@ -793,12 +792,7 @@ image_process *image_process::open(std::filesystem::path fn, bool opt_recurse, s
             if ( p.path().extension()==".E01" ||
                  p.path().extension()==".000" ||
                  p.path().extension()==".001") {
-                std::cerr << "error: file " << p.path() << " is in directory " << fn << "\n";
-                std::cerr << "       The -R option is not for reading a directory of EnCase files\n";
-                std::cerr << "       or a directory of disk image parts. Please process these\n";
-                std::cerr << "       as a single disk image. If you need to process these files\n";
-                std::cerr << "       then place them in a sub directory of " << fn << "\n";
-                throw NoSuchFile( fname_string );
+                throw FoundDiskImage( fname_string );
             }
         }
 	ip = new process_dir(fn);
@@ -815,13 +809,13 @@ image_process *image_process::open(std::filesystem::path fn, bool opt_recurse, s
 	std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 	if (ext=="e01" || fname_string.find(".E01")!=std::string::npos){
 #ifdef HAVE_LIBEWF
-	    ip = new process_ewf(fn,pagesize_,margin_);
+	    ip = new process_ewf(fn, pagesize_, margin_);
 #else
 	    throw NoSupport("This program was compiled without E01 support");
 #endif
 	}
 	if (ip==nullptr) {
-            ip = new process_raw(fn,pagesize_,margin_);
+            ip = new process_raw(fn, pagesize_, margin_);
         }
     }
     /* Try to open it */

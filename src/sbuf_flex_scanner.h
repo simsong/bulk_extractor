@@ -36,9 +36,12 @@ public:
             return m_error.c_str();
         }
     };
-    explicit sbuf_scanner(const sbuf_t &sbuf_): sbuf(sbuf_){}
+    explicit sbuf_scanner(const sbuf_t &sbuf_): sbuf(sbuf_){
+        sbuf_buf = sbuf.get_buf();      // unsafe but fast
+    }
     virtual ~sbuf_scanner(){}
     const sbuf_t &sbuf;
+    const uint8_t *sbuf_buf {nullptr};
     // pos & point may be redundent.
     // pos counts the number of bytes into the buffer and is incremented by the flex rules
     // point counts the point where we are removing characters
@@ -48,6 +51,7 @@ public:
 
     size_t get_input(char *buf, size_t max_size){
         if ((int)max_size < 0) return 0;
+        if (point > sbuf.bufsize) return 0;
         int count=0;
 
         /* Provide a leading space the first time through */
@@ -59,7 +63,7 @@ public:
         }
 
         while ((max_size > 0) && (point < sbuf.bufsize) ){
-            *buf++ = sbuf[point++];
+            *buf++ = sbuf_buf[point++];
             max_size--;
             count++;
         }
@@ -72,6 +76,14 @@ public:
         }
         return count;
     };
+
+    void check_margin() {
+        if (pos >= sbuf.pagesize ) {
+            // throw margin_reached();
+            point = sbuf.bufsize+1;
+        }
+    }
+
 };
 
 #define YY_INPUT(buf,result,max_size) result = get_extra(yyscanner)->get_input(buf,max_size);
