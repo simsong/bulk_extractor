@@ -12,3 +12,4 @@ test_bulkextractor
 x.cpp
 domexusers.raw*
 be_graph.pdf
+*.Tpo

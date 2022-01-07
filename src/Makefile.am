@@ -125,7 +125,7 @@ bulk_extractor_parts = \
 
 
 bulk_extractor_SOURCES = $(bulk_extractor_parts) $(scanners_builtin) main.cpp
-test_be_SOURCES = $(bulk_extractor_parts) $(scanners_builtin) be13_api/catch.hpp test_be.cpp test_be.h test_be2.cpp
+test_be_SOURCES = $(bulk_extractor_parts) $(scanners_builtin) be13_api/catch.hpp test_be.h test_be1.cpp test_be2.cpp test_be3.cpp
 
 
 runs.txt: test_be tests/run_each.sh
