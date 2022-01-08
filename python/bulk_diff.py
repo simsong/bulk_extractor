@@ -31,6 +31,26 @@ class BulkDiff:
             return (self.b1, self.b2)
         return (self.b2, self.b1)
 
+    def summary(self):
+        (a,b) = self.getab()
+        t = ttable.ttable()
+        t.append_head(['file',a.name,b.name])
+        all_files = a.files.union(b.files)
+        for fn in sorted(all_files):
+            if fn in a.files:
+                adata = len(list(a.read_features(fn)))
+            else:
+                adata = 'n/a'
+
+            if fn in b.files:
+                bdata = len(list(b.read_features(fn)))
+            else:
+                bdata = 'n/a'
+            if adata != bdata:
+                t.append_data([fn, adata, bdata])
+        self.out.write(t.typeset(mode=self.mode))
+
+
     def compare_files(self):
         out = self.out
         if self.both:
@@ -152,18 +172,24 @@ if __name__=="__main__":
     parser.add_argument("--both", help="Notify of feature files that are the same", action='store_true')
     parser.add_argument("--perf", help="Analyze clock-time performance differences", action='store_true')
     parser.add_argument("--feature", help="Only look at this feature")
+    parser.add_argument("--summary", help="Only print summary information", action='store_true')
     parser.add_argument("file1", help="First bulk_extractor report (directory or zip file)")
     parser.add_argument("file2", help="Second bulk_extractor report (directory or zip file)")
 
     args = parser.parse_args()
+    out = sys.stdout
     if args.html:
         out = open(args.html,"w")
+
+    bd = BulkDiff(args.file1, args.file2, out=out, both=args.both, mode='html' if args.html else 'text')
+    if args.html:
         out.write(html_header)
         out.write('<html><head>\n')
         out.write('<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>\n')
         out.write("</head><body>\n")
-
-    bd = BulkDiff(args.file1, args.file2, out=sys.stdout, both=args.both, mode='html' if args.html else 'text')
+    if args.summary:
+        bd.summary()
+        exit(0)
     if args.feature:
         bd.only_feature(args.feature)
     bd.compare_files()

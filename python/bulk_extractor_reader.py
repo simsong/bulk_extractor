@@ -148,7 +148,7 @@ class BulkReport:
     b.read_histogram(fn) - Reads a histogram and returns the histogram
     b.histogram_files()     - Set of histogram names
     b.feature_files()
-    b.files   - Set of all files
+    b.files                  - Set of all files
     b.get_features(fname)   - just get the features
 """
 
@@ -159,6 +159,7 @@ class BulkReport:
                     - a filename of the report.xml
                     - an XML name without the report directory.
         """
+        self.name       = name  # as provided
         self.commonprefix=''
         self.dirname = None     # report directory
         self.fname = None       # xml filename
@@ -181,8 +182,8 @@ class BulkReport:
             raise RuntimeError(f"Cannot decode: {name}")
 
         if self.dirname:
-            self.all_files = glob.glob(os.path.join(self.dirname,"*"))
-            self.files     = glob.glob(os.path.join(self.dirname,"*.txt"))
+            self.all_files = set([os.path.basename(fn) for fn in glob.glob(os.path.join(self.dirname,"*"))])
+            self.files     = set([os.path.basename(fn) for fn in glob.glob(os.path.join(self.dirname,"*.txt"))])
         elif self.zipfile:
             # If there is a common prefix, we'll ignore it in is_feature_file()
             self.commonprefix = os.path.commonprefix(self.zipfile.namelist())
@@ -269,7 +270,7 @@ class BulkReport:
             f = self.zipfile.open(self.map[fname],mode=mode)
         else:
             mode = mode.replace("b","")+"b"
-            fn = os.path.join(self.ri,fname)
+            fn = os.path.join(self.dirname,fname)
             f = open(fn, mode=mode)
         return f
 
