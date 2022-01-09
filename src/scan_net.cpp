@@ -397,7 +397,7 @@ std::string scan_net_t::i2str(const int i)
  * http://answers.yahoo.com/question/index?qid=20080529062909AAAYN3X
  * http://en.wikipedia.org/wiki/Transmission_Control_Protocol#TCP_checksum_for_IPv6
  */
-bool scan_net_t::sanityCheckIP46Header(const sbuf_t &sbuf, size_t pos, scan_net_t::generic_iphdr_t *h, std::unordered_set<size_t> &sanityCache)
+bool scan_net_t::sanityCheckIP46Header(const sbuf_t &sbuf, size_t pos, scan_net_t::generic_iphdr_t *h)
 {
     const struct be13::ip4 *ip = sbuf.get_struct_ptr<struct be13::ip4>( pos );
     if (!ip) return false;		// not enough space
@@ -411,9 +411,6 @@ bool scan_net_t::sanityCheckIP46Header(const sbuf_t &sbuf, size_t pos, scan_net_
 	/* reject anything larger than a jumbo gram or smaller than min-size IP */
 	if ( (ntohs(ip->ip_len) > 8192) || (ntohs(ip->ip_len) < 28) ) return false;
 
-
-        // now it is faster to check the cache, before doing the checksum check
-        if (sanityCache.find(pos) != sanityCache.end()) return true; // already checked and its here
 
         /* Validate the checksum */
     	h->checksum_valid = (ip->ip_sum == ip4_cksum(sbuf, pos, ip->ip_hl * 4 ));
@@ -433,7 +430,6 @@ bool scan_net_t::sanityCheckIP46Header(const sbuf_t &sbuf, size_t pos, scan_net_
 	h->nxthdr_offs = (ip->ip_hl * 4);
 	h->payload_len = (ntohs(ip->ip_len) - (ip->ip_hl * 4));
 
-        sanityCache.insert(pos);
 	return true;
     }
 
@@ -458,8 +454,6 @@ bool scan_net_t::sanityCheckIP46Header(const sbuf_t &sbuf, size_t pos, scan_net_
 	    return false;
 
         // now it is faster to check the cache, before doing the checksum check
-        if (sanityCache.find(pos) != sanityCache.end()) return true; // already checked and its here
-
 	switch (ip6->ip6_nxt) {
 	default:
 	case IPPROTO_TCP:
@@ -498,7 +492,6 @@ bool scan_net_t::sanityCheckIP46Header(const sbuf_t &sbuf, size_t pos, scan_net_
 	h->nxthdr = ip6->ip6_nxt;
 	h->nxthdr_offs = 40; 	/* ipv6 headers are a fixed length of 40 bytes */
 	h->payload_len = ntohs(ip6->ip6_plen);
-        sanityCache.insert(pos);
 	return true;
     }
     return false;			// right now we only do IPv4 and IPv6
@@ -568,7 +561,7 @@ bool scan_net_t::documentIPFields(const sbuf_t &sbuf, size_t pos, const generic_
     return true;
 }
 
-size_t scan_net_t::carveIPFrame(const sbuf_t &sbuf, size_t pos, std::unordered_set<size_t> &sanityCache) const
+size_t scan_net_t::carveIPFrame(const sbuf_t &sbuf, size_t pos) const
 {
     generic_iphdr_t h {};
 
@@ -577,7 +570,7 @@ size_t scan_net_t::carveIPFrame(const sbuf_t &sbuf, size_t pos, std::unordered_s
      * Unfortunately the sanity checks are not highly discriminatory.
      * The call below sets the 'h' structure as necessary
      */
-    if (!sanityCheckIP46Header(sbuf, pos, &h, sanityCache)) return 0;
+    if (!sanityCheckIP46Header(sbuf, pos, &h)) return 0;
     if (invalidIP(h.src,h.family) || invalidIP(h.dst,h.family)) return 0;
     if (h.family!=AF_INET && h.family!=AF_INET6) return 0; // only care about IPv4 and IPv6
 
@@ -624,7 +617,7 @@ size_t scan_net_t::carveIPFrame(const sbuf_t &sbuf, size_t pos, std::unordered_s
  * Returns the size of the object carved
  */
 
-size_t scan_net_t::carveEther(const sbuf_t &sbuf, size_t pos, std::unordered_set<size_t> &sanityCache) const
+size_t scan_net_t::carveEther(const sbuf_t &sbuf, size_t pos) const
 {
     const struct macip *er = sbuf.get_struct_ptr<struct macip>(0);
     if (er){
@@ -645,7 +638,7 @@ size_t scan_net_t::carveEther(const sbuf_t &sbuf, size_t pos, std::unordered_set
     if (data_offset + pos < sbuf.bufsize){
         generic_iphdr_t h;
 
-        if (sanityCheckIP46Header(sbuf, pos + data_offset, &h, sanityCache) && h.checksum_valid) {
+        if (sanityCheckIP46Header(sbuf, pos + data_offset, &h) && h.checksum_valid) {
             if (!invalidMAC(&(er->ether_dhost))){
                 ether_recorder.write(sbuf.pos0 + pos, mac2string(&(er->ether_dhost)), " (ether_dhost) ");
             }
@@ -662,7 +655,7 @@ size_t scan_net_t::carveEther(const sbuf_t &sbuf, size_t pos, std::unordered_set
      */
     generic_iphdr_t h;
     /* the IP pkt starts after the Ethernet header, 14 byte offset */
-    if (sanityCheckIP46Header(sbuf, pos+14,  &h, sanityCache)){
+    if (sanityCheckIP46Header(sbuf, pos+14,  &h)){
         if (h.checksum_valid){
             ssize_t packet_len     = 14 + h.nxthdr_offs + h.payload_len; // ether size + ip size + ip data
             if (packet_len + pos > sbuf.bufsize) packet_len = sbuf.bufsize - pos;
@@ -762,7 +755,7 @@ size_t scan_net_t::carvePCAPFileHeader(const sbuf_t &sbuf, size_t pos) const
  * Validate and write a pcap packet. Return the number of bytes written.
  * Called on every byte, so it must be fast.
  */
-size_t scan_net_t::carvePCAPPackets(const sbuf_t &sbuf, size_t pos, std::unordered_set<size_t> &sanityCache) const
+size_t scan_net_t::carvePCAPPackets(const sbuf_t &sbuf, size_t pos) const
 {
     struct pcap_writer::pcap_hdr h {};
     if (likely_valid_pcap_packet_header(sbuf, pos, h)==false){
@@ -788,12 +781,12 @@ size_t scan_net_t::carvePCAPPackets(const sbuf_t &sbuf, size_t pos, std::unorder
         // We tell that its a raw ip because what follows is a valid IP header, not an ethernet header.
 
         generic_iphdr_t header_info;
-        bool is_raw_ip = sanityCheckIP46Header(sbuf, pos+PCAP_RECORD_HEADER_SIZE, &header_info, sanityCache);
+        bool is_raw_ip = sanityCheckIP46Header(sbuf, pos+PCAP_RECORD_HEADER_SIZE, &header_info);
         uint16_t pseudo_frame_ethertype = 0;
         if (is_raw_ip) {
             pseudo_frame_ethertype = (header_info.family == AF_INET6) ? ETHERTYPE_IPV6 : ETHERTYPE_IP;
         } else {
-            sanityCheckIP46Header(sbuf, pos+PCAP_RECORD_HEADER_SIZE+ETHER_HEAD_LEN, &header_info, sanityCache);
+            sanityCheckIP46Header(sbuf, pos+PCAP_RECORD_HEADER_SIZE+ETHER_HEAD_LEN, &header_info);
         }
 
         /* We are at the end of the file, or the next slot is also a packet */
@@ -815,7 +808,6 @@ void scan_net_t::carve(const sbuf_t &sbuf) const
      *
      * Please remember that this is called for every byte, so it needs to be fast.
      */
-    std::unordered_set<size_t> sanityCache; // the cache we will use. Kept on stack for this search through the sbuf
     size_t pos = 0;
     while (pos + sizeof(PCAP_FILE_HEADER) < sbuf.pagesize) {
         /* Look for a PCAPFile header */
@@ -825,7 +817,7 @@ void scan_net_t::carve(const sbuf_t &sbuf) const
             continue;
         }
         /* Look for a PCAP Packet without a PCAP File header. Could just be floating in space. Or it could be following a header.*/
-        size_t packet_bytes = carvePCAPPackets( sbuf, pos, sanityCache );
+        size_t packet_bytes = carvePCAPPackets( sbuf, pos );
         if (packet_bytes > 0) {
             pos += packet_bytes;
             continue;
@@ -833,12 +825,12 @@ void scan_net_t::carve(const sbuf_t &sbuf) const
 
         /* Look for another recognizable structure. If we find it, advance as far as a the biggest one */
         // carve either caused the problems!
-        size_t carved_bytes = carveEther( sbuf, pos, sanityCache ); // look for an ethernet packet; true causes the packet to be carved if found
+        size_t carved_bytes = carveEther( sbuf, pos ); // look for an ethernet packet; true causes the packet to be carved if found
         if (carved_bytes > 0 ){
             pos += carved_bytes;
             continue;
         }
-        carved_bytes = carveIPFrame( sbuf, pos, sanityCache ); // look for an IP packet
+        carved_bytes = carveIPFrame( sbuf, pos ); // look for an IP packet
         if (carved_bytes > 0) {
             pos += carved_bytes;
             continue;

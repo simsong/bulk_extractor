@@ -64,7 +64,7 @@ struct scan_net_t {
     static std::string ip2string(const uint8_t *addr, sa_family_t family);
     static std::string mac2string(const struct be13::ether_addr *const e);
     static inline std::string i2str(const int i);
-    static bool sanityCheckIP46Header(const sbuf_t &sbuf, size_t pos, generic_iphdr_t *h, std::unordered_set<size_t> &sanityCache);
+    static bool sanityCheckIP46Header(const sbuf_t &sbuf, size_t pos, generic_iphdr_t *h);
 
     /* regular functions */
 
@@ -134,12 +134,12 @@ struct scan_net_t {
 
     /* Each of these carvers looks for a specific structure and if it finds the structure it returns the size in the sbuf */
     bool documentIPFields(const sbuf_t &sbuf, size_t pos, const generic_iphdr_t &h) const; // return true if packet should be written
-    size_t carveIPFrame(const sbuf_t &sbuf, size_t pos, std::unordered_set<size_t> &sanityCache) const;
+    size_t carveIPFrame(const sbuf_t &sbuf, size_t pos) const;
     size_t carveTCPTOBJ(const sbuf_t &sbuf, size_t pos) const;
     size_t carveSockAddrIn(const sbuf_t &sbuf, size_t pos) const;
     size_t carvePCAPFileHeader(const sbuf_t &sbuf, size_t pos) const;
-    size_t carvePCAPPackets(const sbuf_t &sbuf, size_t pos, std::unordered_set<size_t> &sanityCache) const;
-    size_t carveEther(const sbuf_t &sbuf, size_t pos, std::unordered_set<size_t> &sanityCache) const;
+    size_t carvePCAPPackets(const sbuf_t &sbuf, size_t pos) const;
+    size_t carveEther(const sbuf_t &sbuf, size_t pos) const;
     void   carve(const sbuf_t &sbuf) const;
 };
 
