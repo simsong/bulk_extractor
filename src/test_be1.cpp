@@ -550,21 +550,26 @@ TEST_CASE("scan_net", "[scanners]") {
 
     scan_net_t::generic_iphdr_t h;
 
-    REQUIRE( scan_net_t::sanityCheckIP46Header( sbufip, 0 , &h) == true );
+    std::unordered_set<size_t> sanityCache;
+    REQUIRE( sanityCache.find(0) == sanityCache.end());
+    REQUIRE( scan_net_t::sanityCheckIP46Header( sbufip, 0 , &h, sanityCache) == true );
+    REQUIRE( sanityCache.find(0) != sanityCache.end());
     REQUIRE( h.checksum_valid == true );
 
     /* Now try with the offset */
-    REQUIRE( scan_net_t::sanityCheckIP46Header( sbuf, frame_offset + ETHERNET_FRAME_SIZE, &h) == true );
+    REQUIRE( scan_net_t::sanityCheckIP46Header( sbuf, frame_offset + ETHERNET_FRAME_SIZE, &h, sanityCache) == true );
     REQUIRE( h.checksum_valid == true );
 
     /* Change the IP address and make sure that the header is valid but the checksum is not */
     buf[frame_offset + ETHERNET_FRAME_SIZE + 14]++; // increment destination address
-    REQUIRE( scan_net_t::sanityCheckIP46Header( sbufip, 0 , &h) == true );
+    sanityCache.clear();
+    REQUIRE( scan_net_t::sanityCheckIP46Header( sbufip, 0 , &h, sanityCache) == true );
     REQUIRE( h.checksum_valid == false );
 
     /* Break the port and make sure that the header is no longer valid */
     buf[frame_offset + ETHERNET_FRAME_SIZE] += 0x10; // increment header length
-    REQUIRE( scan_net_t::sanityCheckIP46Header( sbufip, 0 , &h) == false );
+    sanityCache.clear();
+    REQUIRE( scan_net_t::sanityCheckIP46Header( sbufip, 0 , &h, sanityCache) == false );
 }
 
 TEST_CASE("scan_pdf", "[scanners]") {

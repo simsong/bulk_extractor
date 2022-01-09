@@ -6,10 +6,7 @@
 
 #include "be13_api/formatter.h"
 #include "be13_api/utils.h"
-
 #include "pcap_writer.h"
-
-
 
 /****************************************************************
  ** pcap_writer code
@@ -22,8 +19,8 @@ pcap_writer::pcap_writer(const scanner_params &sp):
 
 pcap_writer::~pcap_writer()
 {
+    const std::lock_guard<std::mutex> lock(Mfcap);
     if (fcap){
-        const std::lock_guard<std::mutex> lock(Mfcap);
         fcap->close();
         delete fcap;
         fcap = nullptr;
@@ -118,8 +115,8 @@ void pcap_writer::pcap_writepkt(const struct pcap_writer::pcap_hdr &h, // packet
 
 void pcap_writer::flush()
 {
+    const std::lock_guard<std::mutex> lock(Mfcap);
     if (fcap){
-        const std::lock_guard<std::mutex> lock(Mfcap);
         fcap->flush();
     }
 }

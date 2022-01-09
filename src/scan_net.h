@@ -31,6 +31,9 @@ typedef char sa_family_t;
 
 struct scan_net_t {
 
+    /* State variables go here */
+    bool carve_net_memory { false };      // should we carve for network memory?
+
     /* generic ip header for IPv4 and IPv6 packets */
     typedef struct generic_iphdr {
         sa_family_t family {};		/* AF_INET or AF_INET6 */
@@ -61,7 +64,7 @@ struct scan_net_t {
     static std::string ip2string(const uint8_t *addr, sa_family_t family);
     static std::string mac2string(const struct be13::ether_addr *const e);
     static inline std::string i2str(const int i);
-    static bool sanityCheckIP46Header(const sbuf_t &sbuf, size_t pos, generic_iphdr_t *h);
+    static bool sanityCheckIP46Header(const sbuf_t &sbuf, size_t pos, generic_iphdr_t *h, std::unordered_set<size_t> &sanityCache);
 
     /* regular functions */
 
@@ -75,32 +78,33 @@ struct scan_net_t {
     feature_recorder &tcp_recorder;
     feature_recorder &ether_recorder;
 
-
     static uint16_t ip4_cksum(const sbuf_t &sbuf, size_t pos, size_t len);
     static uint16_t IPv6L3Chksum(const sbuf_t &sbuf, size_t pos, u_int chksum_byteoffset);
 
-    bool carve_net_memory {false};      // should we carve for network memory?
-
     /* Header for the PCAP file */
-    constexpr static uint8_t PCAP_HEADER[] {
+    constexpr static uint8_t PCAP_FILE_HEADER[] {
         0xd4, 0xc3, 0xb2, 0xa1, // magic
         0x02, 0x00, 0x04, 0x00  // version_major, version_minor
             };
     /* Header for each packet */
     constexpr static size_t PCAP_RECORD_HEADER_SIZE = 16;
 
+    /** Check the fields at sbuf+pos and as we decode them fill in h */
     bool likely_valid_pcap_packet_header(const sbuf_t &sbuf, size_t pos, struct pcap_writer::pcap_hdr &h) const {
         if (sbuf.bufsize < pos + PCAP_RECORD_HEADER_SIZE  ) return false; // no room
 
-        h.seconds  = sbuf.get32u( pos+0 ); if (h.seconds==0) return false;
-        h.useconds = sbuf.get32u( pos+4 ); if (h.useconds>1000000) return false;
-        h.cap_len  = sbuf.get32u( pos+8 ); if (h.cap_len<min_packet_size) return false;
-        h.pkt_len  = sbuf.get32u( pos+12); if (h.pkt_len<min_packet_size) return false;
+        h.seconds  = sbuf.get32u_unsafe( pos+0 );
+        if (h.seconds==0 || h.seconds < TIME_MIN || h.seconds > TIME_MAX) return false;
 
-        if (h.seconds < TIME_MIN || h.seconds > TIME_MAX) return false;
+        h.useconds = sbuf.get32u_unsafe( pos+4 );
+        if (h.useconds>1000000) return false;
 
+        h.cap_len  = sbuf.get32u_unsafe( pos+8 );
         if (h.cap_len<min_packet_size || h.cap_len>max_packet_len) return false;
+
+        h.pkt_len  = sbuf.get32u_unsafe( pos+12);
         if (h.pkt_len<min_packet_size || h.pkt_len>max_packet_len) return false;
+
         if (h.cap_len > h.pkt_len) return false;
         return true;
     };
@@ -130,12 +134,12 @@ struct scan_net_t {
 
     /* Each of these carvers looks for a specific structure and if it finds the structure it returns the size in the sbuf */
     bool documentIPFields(const sbuf_t &sbuf, size_t pos, const generic_iphdr_t &h) const; // return true if packet should be written
-    size_t carveIPFrame(const sbuf_t &sbuf, size_t pos) const;
+    size_t carveIPFrame(const sbuf_t &sbuf, size_t pos, std::unordered_set<size_t> &sanityCache) const;
     size_t carveTCPTOBJ(const sbuf_t &sbuf, size_t pos) const;
     size_t carveSockAddrIn(const sbuf_t &sbuf, size_t pos) const;
-    size_t carvePCAPPacket(const sbuf_t &sbuf, size_t pos) const;
-    size_t carvePCAPFile(const sbuf_t &sbuf, size_t pos) const;
-    size_t carveEther(const sbuf_t &sbuf, size_t pos) const;
+    size_t carvePCAPFileHeader(const sbuf_t &sbuf, size_t pos) const;
+    size_t carvePCAPPackets(const sbuf_t &sbuf, size_t pos, std::unordered_set<size_t> &sanityCache) const;
+    size_t carveEther(const sbuf_t &sbuf, size_t pos, std::unordered_set<size_t> &sanityCache) const;
     void   carve(const sbuf_t &sbuf) const;
 };
 
