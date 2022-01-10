@@ -638,27 +638,16 @@ size_t scan_net_t::carveIPFrame(const sbuf_t &sbuf, size_t pos, sanityCache_t *s
     return ip_len;                                     // return that we processed this much
 }
 
+
+
 /* Test for Ethernet link-layer MACs
  * Returns the size of the object carved
  */
 
 size_t scan_net_t::carveEther(const sbuf_t &sbuf, size_t pos, sanityCache_t *sc) const
 {
-    const struct macip *er = sbuf.get_struct_ptr_unsafe<struct macip>(0);
-    /* Only carve ether type ETHERTYPE_IP or ETHERTYPE_IPv6.
-     * Run htons() on constants to compute at compile time
-     */
-
-    constexpr uint16_t ip6  = htons(ETHERTYPE_IP);
-    constexpr uint16_t ipv6 = htons(ETHERTYPE_IPV6);
-
-    if ( (er->ether_type != ip6) &&   // 0x0800
-         (er->ether_type != ipv6) ){  // 0x86dd
-        return 0;
-    }
-    if ( (er->ipv != 0x45) && ((er->ipv & 0xF0) != 0x60) ){ // ipv4 and ipv6
-        return 0;
-    }
+    const struct macip *er = validateEther(sbuf, pos);
+    if (er == nullptr) return 0;
 
     size_t data_offset = (2*ETHER_ADDR_LEN)+sizeof(uint16_t);
 
@@ -670,10 +659,10 @@ size_t scan_net_t::carveEther(const sbuf_t &sbuf, size_t pos, sanityCache_t *sc)
 
         if (sanityCheckIP46Header(sbuf, pos + data_offset, &h, sc) && h.checksum_valid) {
             if (!invalidMAC(&(er->ether_dhost))){
-                ether_recorder.write(sbuf.pos0 + pos, mac2string(&(er->ether_dhost)), " (ether_dhost) ");
+                ether_recorder.write(sbuf.pos0 + pos, mac2string(&(er->ether_dhost)), "(ether_dhost)");
             }
             if (!invalidMAC(&(er->ether_shost))){
-                ether_recorder.write(sbuf.pos0 + pos, mac2string(&(er->ether_shost)), " (ether_shost) ");
+                ether_recorder.write(sbuf.pos0 + pos, mac2string(&(er->ether_shost)), "(ether_shost)");
             }
             try {
                 documentIPFields(sbuf, pos+data_offset, h);

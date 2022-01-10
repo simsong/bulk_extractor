@@ -63,7 +63,7 @@ struct scan_net_t {
         be13::ether_addr ether_dhost;
         be13::ether_addr ether_shost;
         uint16_t ether_type;
-        uint8_t ipv;
+        uint8_t ip_version;                    // ip header typically follows (4|header_len) or (6|traffic_class top 4 bits)
     };
 
     /* testing functions */
@@ -147,6 +147,23 @@ struct scan_net_t {
     size_t carveSockAddrIn(const sbuf_t &sbuf, size_t pos) const;
     size_t carvePCAPFileHeader(const sbuf_t &sbuf, size_t pos) const;
     size_t carvePCAPPackets(const sbuf_t &sbuf, size_t pos, sanityCache_t *sc) const;
+    static const struct macip *validateEther(const sbuf_t &sbuf, size_t pos) {
+        const struct macip *er = sbuf.get_struct_ptr_unsafe<struct macip>(pos);
+        /* Only carve ether type ETHERTYPE_IP or ETHERTYPE_IPv6.
+         * Run htons() on constants to compute at compile time
+         */
+
+        constexpr uint16_t ip4_ether  = htons(ETHERTYPE_IP);
+        constexpr uint16_t ip6_ether  = htons(ETHERTYPE_IPV6);
+        if (er->ether_type == ip4_ether && er->ip_version == 0x45) {
+            return er;                  // ipv4
+        }
+        if (er->ether_type == ip6_ether && ((er->ip_version & 0xF0) == 0x60)) {
+            return er;                  // ipv6
+        }
+        return nullptr;                 // couldn't find anything
+    }
+
     size_t carveEther(const sbuf_t &sbuf, size_t pos, sanityCache_t *sc) const;
     void   carve(const sbuf_t &sbuf) const;
 };

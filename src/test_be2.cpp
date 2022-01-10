@@ -225,7 +225,7 @@ std::filesystem::path validate(std::string image_fname, std::vector<Check> &expe
             }
         }
         if (!found){
-            std::cerr << fname << " did not find"
+            std::cerr << "**** did not find"
                       << " pos=" << exp.feature.pos
                       << " feature=" << exp.feature.feature
                       << " context=" << exp.feature.context
@@ -475,6 +475,15 @@ TEST_CASE("test_net80", "[phase1]") {
 }
 
 TEST_CASE("test_net-domexusers", "[phase1]") {
+    auto *sbufp = map_file( "domexusers-2435863310-2435928846.raw" );
+    REQUIRE( scan_net_t::validateEther(*sbufp, 0) == nullptr);
+    REQUIRE( scan_net_t::validateEther(*sbufp, 241) == nullptr);
+    REQUIRE( scan_net_t::validateEther(*sbufp, 242) != nullptr);
+    REQUIRE( scan_net_t::validateEther(*sbufp, 243) == nullptr);
+    REQUIRE( scan_net_t::validateEther(*sbufp, 1777) == nullptr);
+    REQUIRE( scan_net_t::validateEther(*sbufp, 1778) != nullptr);
+    REQUIRE( scan_net_t::validateEther(*sbufp, 1779) == nullptr);
+
     std::vector<Check> ex2 {
         Check("ether.txt", Feature( "242","00:0C:29:26:BB:CD", "(ether_dhost)")),
         Check("ether.txt", Feature( "242","00:50:56:E0:FE:24", "(ether_shost)")),
