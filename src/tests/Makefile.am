@@ -13,6 +13,7 @@ EXTRA_DIST = \
 	CFReDS001.E01 \
 	KML_Samples.kml \
 	ccns.txt \
+	domexusers-2435863310-2435928846.raw \
 	email_test.E01 \
 	email_test.E02 \
 	email_test.E03 \

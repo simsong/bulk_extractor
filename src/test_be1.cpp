@@ -576,7 +576,7 @@ Options: (24 bytes), Maximum segment size, No-Operation (NOP), Window scale, No-
 Timestamps
 */
 
-TEST_CASE("scan_net", "[scanners]") {
+TEST_CASE("scan_net1", "[scanners]") {
     /* We did a rather involved rewrite of scan_net for BE2 so we want to check all of the methods with the
      * data a few bytes into the sbuf.
      */

@@ -474,6 +474,17 @@ TEST_CASE("test_net80", "[phase1]") {
     validate("ntlm80.pcap", ex2);
 }
 
+TEST_CASE("test_net-domexusers", "[phase1]") {
+    std::vector<Check> ex2 {
+        Check("ether.txt", Feature( "242","00:0C:29:26:BB:CD", "(ether_dhost)")),
+        Check("ether.txt", Feature( "242","00:50:56:E0:FE:24", "(ether_shost)")),
+        Check("ether.txt", Feature( "1778","00:0C:29:26:BB:CD", "(ether_dhost)")),
+        Check("ether.txt", Feature( "1778","00:50:56:E0:FE:24", "(ether_shost)")),
+    };
+    validate("domexusers-2435863310-2435928846.raw", ex2);
+}
+
+
 TEST_CASE("test_winpe", "[phase1]") {
     std::vector<Check> ex2 {
         Check("winpe.txt", Feature( "0",
