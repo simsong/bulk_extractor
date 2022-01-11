@@ -934,7 +934,7 @@ void scan_net(scanner_params &sp)
     if (sp.phase==scanner_params::PHASE_INIT2){
         scanner = new scan_net_t(sp);
 
-        if (opt_min_carve_packet_bytes < scan_net_t::MIN_PACKET_BYTES ){
+        if (uint32_t(opt_min_carve_packet_bytes) < scan_net_t::MIN_PACKET_BYTES ){
             throw std::runtime_error("min_carve_packet_bytes too small");
         }
 

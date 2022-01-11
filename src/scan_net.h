@@ -153,8 +153,8 @@ struct scan_net_t {
          * Run htons() on constants to compute at compile time
          */
 
-        constexpr uint16_t ip4_ether  = htons(ETHERTYPE_IP);
-        constexpr uint16_t ip6_ether  = htons(ETHERTYPE_IPV6);
+        const uint16_t ip4_ether  = htons(ETHERTYPE_IP); // constexpr gives error on ubuntu20!
+        const uint16_t ip6_ether  = htons(ETHERTYPE_IPV6);
         if (er->ether_type == ip4_ether && er->ip_version == 0x45) {
             return er;                  // ipv4
         }
