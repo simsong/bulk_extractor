@@ -52,6 +52,13 @@
 /* print and count the args */
 int argv_count(const char **argv)
 {
+#ifdef HAVE_ADDRESS_SANITIZER
+    std::cout << "[asan] ";
+#endif
+#ifdef HAVE_THREAD_SANITIZER
+    std::cout << "[tsan] ";
+#endif
+
     std::cout << "$ ";                  // show that we are testing with this command line
     int argc = 0;
     while(argv[argc]){
@@ -63,6 +70,7 @@ int argv_count(const char **argv)
 
 int run_be(std::ostream &cout, std::ostream &cerr, const char **argv)
 {
+    setenv("RUNNING_UNDER_CATCH","1",1);
     auto t0 = time(0);
     int ret = bulk_extractor_main(cout, cerr, argv_count(argv), const_cast<char * const *>(argv));
     auto t  = time(0) - t0;
@@ -146,9 +154,7 @@ TEST_CASE("scan_find", "[end-to-end]") {
 
     /* Look for "simsong" in output */
     std::cerr << "outdir: " << outdir << std::endl;
-    auto lines = getLines( outdir / "find.txt" );
-    REQUIRE( lines.size() > 0 );
-    std::cerr << "lines.size() = " << lines.size() << std::endl;
+    grep( Feature(pos0_t("70-PDF-366"), "simsong", ""), outdir / "find.txt" );
 }
 
 TEST_CASE("5gb-flatfile", "[end-to-end]") {
@@ -252,7 +258,6 @@ TEST_CASE("path-printer2", "[end-to-end]") {
     std::string EXPECTED =
         "0000: 5733 7369 4d53 4936 4943 4a76 626d 5641 596d 467a 5a54 5930 4c6d 4e76 6253 4a39 W3siMSI6ICJvbmVAYmFzZTY0LmNvbSJ9\n"
         "0020: 4c43 4237 496a 4969 4f69 4169 6448 6476 5147 4a68 6332 5532 4e43 356a 6232 3069 LCB7IjIiOiAidHdvQGJhc2U2NC5jb20i\n";
-    std::cerr << "ss: " << std::endl << ss.str() << std::endl;
     REQUIRE( ret == 0);
     REQUIRE( ss.str() == EXPECTED);
 }
