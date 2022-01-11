@@ -47,8 +47,6 @@
 int opt_report_checksum_bad= 0;		// if true, report bad chksums
 int opt_report_packet_path = 0;         // if true, report packets to packets.txt
 
-std::atomic<uint64_t> ctr1 = 0;
-std::atomic<uint64_t> ctr2 = 0;
 
 /* packetset is a set of the addresses of packets that have been written.
  * It prevents writing the packets that are carved from a pcap file and then
@@ -411,7 +409,6 @@ bool scan_net_t::sanityCheckIP46Header(const sbuf_t &sbuf, size_t pos, scan_net_
 {
     if (sbuf.get8u_unsafe(pos)==69) {           // v4 20 bytes
         const struct be13::ip4 *ip = sbuf.get_struct_ptr_unsafe<struct be13::ip4>( pos );
-        //ctr1 += 1;
         if (ip->ip_v == 4){                     // ipv4 packet
             if (ip->ip_hl != 5) return false;	// IPv4 header length is 20 bytes (5 quads) (ignores options)
             //if (sc && sc->find(pos)!=sc->end()) return true; // it's ipv4 and in the cache
@@ -449,7 +446,6 @@ bool scan_net_t::sanityCheckIP46Header(const sbuf_t &sbuf, size_t pos, scan_net_
         }
     }
 
-    //ctr2 += 1;
     /* ipv6 attempt */
     const struct be13::ip6_hdr *ip6 = sbuf.get_struct_ptr_unsafe<struct be13::ip6_hdr>( pos );
     if ((ip6->ip6_vfc & 0xF0) == 0x60){
@@ -626,7 +622,6 @@ size_t scan_net_t::carveIPFrame(const sbuf_t &sbuf, size_t pos, sanityCache_t *s
     sbuf_t sb3(sbuf.pos0 + pos, buf, packet_len);
     struct pcap_writer::pcap_hdr ph(0, 0, packet_len, packet_len);  // make a fake header
     if (h.is_4or6()){
-        std::cout << "1. sb3=" << sb3 << std::endl;
         try {
             documentIPFields(sb3, 0, h);
             pwriter.pcap_writepkt(ph, sb3, 0, false, 0x0000);	   // write the packet
@@ -666,7 +661,6 @@ size_t scan_net_t::carveEther(const sbuf_t &sbuf, size_t pos, sanityCache_t *sc)
             }
             try {
                 documentIPFields(sbuf, pos+data_offset, h);
-                std::cout << "2. sbuf="<<sbuf<<" pos=" << pos << " data_offset=" << data_offset << std::endl;
             }
             catch (port0_exception &e) {
                 return 0;
@@ -825,7 +819,6 @@ size_t scan_net_t::carvePCAPPackets(const sbuf_t &sbuf, size_t pos, sanityCache_
             try {
                 documentIPFields(sbuf, pos+PCAP_RECORD_HEADER_SIZE, h2);
                 pwriter.pcap_writepkt(pch, sbuf, pos+PCAP_RECORD_HEADER_SIZE, is_raw_ip, pseudo_frame_ethertype);
-                std::cout << "3. sbuf=" << sbuf << " pos=" << pos << std::endl;
             }
             catch (port0_exception &e) {
                 return 0;
@@ -944,7 +937,6 @@ void scan_net(scanner_params &sp)
     if (sp.phase==scanner_params::PHASE_SCAN){
         try {
             scanner->carve(*sp.sbuf);
-            //std::cout << "ctr1=" << ctr1 << " ctr2=" << ctr2 << std::endl;
         }
         catch (const sbuf_t::range_exception_t &e ) {
             /*
