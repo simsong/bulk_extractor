@@ -846,48 +846,42 @@ void scan_net_t::carve(const sbuf_t &sbuf) const
      * Please remember that this is called for every byte, so it needs to be fast.
      * min_packet_bytes in this loop allows all memory operations to be unsafe.
      *
-     * TODO:
-     * - search for PCAPFileHeader using BM search? Move it into sbuf?
-     * - Search for the IPv4/IPv6 headers, and then look backwards to see if there is an ethernet header and then, before that, a PCAP header.
+     * - First we check to see if this is the start of a PCAP eader followed by a frame. If so, we carve and write to the pcap file. We got the time/date stamp!
+     * - Second, we check to see if this is the start of an ethernet header. If it is, we carve the packet and advance the pointer.
+     * - Third, just check to see if it is an IP packet.
+     * - Next, check to see if it is a recognized memory structure.
+     * - if it is none of those things, advance a byte and try again.
+     * - stop when there is not enough space left for a packet.
      */
     size_t pos = 0;
     sanityCache_t sc {};
     while (pos + min_packet_bytes < sbuf.pagesize) {
         /* Look for a PCAPFile header */
-#if 1
         size_t file_header_bytes = carvePCAPFileHeader( sbuf, pos);
         if (file_header_bytes > 0) {
             pos += file_header_bytes;
             continue;
         }
-#endif
 
-#if 1
         /* Look for a PCAP Packet without a PCAP File header. Could just be floating in space. Or it could be following a header.*/
         size_t packet_bytes = carvePCAPPackets( sbuf, pos, &sc );
         if (packet_bytes > 0) {
             pos += packet_bytes;
             continue;
         }
-#endif
 
         /* Look for another recognizable structure. If we find it, advance as far as a the biggest one */
         // carve either caused the problems!
-#if 1
         size_t carved_ether_bytes = carveEther( sbuf, pos, &sc ); // look for an ethernet packet; true causes the packet to be carved if found
         if (carved_ether_bytes > 0 ){
             pos += carved_ether_bytes;
             continue;
         }
-#endif
-#if 1
         size_t carved_ip_bytes = carveIPFrame( sbuf, pos, &sc ); // look for an IP packet
         if (carved_ip_bytes > 0) {
             pos += carved_ip_bytes;
             continue;
         }
-#endif
-#if 1
         if (carve_net_memory){
             /* If we can't carve a packet, look for these two memory structures */
             size_t carved_memory_bytes = std::max(carveSockAddrIn( sbuf, pos ), carveTCPTOBJ( sbuf, pos ));
@@ -896,7 +890,6 @@ void scan_net_t::carve(const sbuf_t &sbuf) const
                 continue;
             }
         }
-#endif
         pos += 1;
     }
     pwriter.flush();
