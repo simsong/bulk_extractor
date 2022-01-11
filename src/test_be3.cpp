@@ -52,7 +52,7 @@
 /* print and count the args */
 int argv_count(const char **argv)
 {
-    std::cout << "testing with command line:" << std::endl;
+    std::cout << "$ ";                  // show that we are testing with this command line
     int argc = 0;
     while(argv[argc]){
         std::cout << argv[argc++] << " ";
