@@ -521,7 +521,7 @@ TEST_CASE("scan_json1", "[scanners]") {
  Timestamps
 
 */
-uint8_t packet1[] = {
+const uint8_t packet1[] = {
     0x00, 0x50, 0xe8, 0x04, 0x77, 0x4b, 0x2c, 0xf0,
     0xa2, 0xf3, 0xa8, 0xee, 0x08, 0x00, 0x45, 0x00, 0x00, 0x40, 0x00, 0x00, 0x40, 0x00, 0x40, 0x06,
     0x3b, 0x8d, 0xac, 0x14, 0x00, 0xb9, 0xac, 0xd9, 0xa5, 0x84, 0xea, 0x06, 0x00, 0x50, 0xab, 0x8c,
@@ -530,7 +530,53 @@ uint8_t packet1[] = {
     0x00, 0x00, 0x04, 0x02, 0x00, 0x00
 };
 
-TEST_CASE("scan_net", "[scanners]") {
+const uint16_t addr1[] = { 0x2603, 0x3003, 0x0127, 0x1000, 0x9440, 0x31dd, 0xdd50, 0xe403 };
+const uint16_t addr2[] = { 0xffff, 0xffff, 0xffff, 0xffff, 0x6eee, 0xe608, 0x1111, 0x1187 };
+
+
+/* First packet of a wget from google over IPv6 */
+/*
+(base) simsong@nimi ~ % tcpdump -r out1.pcap -x
+reading from file out1.pcap, link-type EN10MB (Ethernet)
+14:33:29.327826 IP6 2603:3003:127:1000:9440:31dd:dd50:e403.49478 > iad30s43-in-x04.1e100.net.http: Flags [S], seq 3310600832, win 65535, options [mss 1440,nop,wscale 6,nop,nop,TS val 1142909182 ecr 0,sackOK,eol], length 0
+	0x0000:  6005 0500 002c 0640 2603 3003 0127 1000
+	0x0010:  9440 31dd dd50 e403 2607 f8b0 4004 082f
+	0x0020:  0000 0000 0000 2004 c146 0050 c553 c280
+	0x0030:  0000 0000 b002 ffff 75c1 0000 0204 05a0
+	0x0040:  0103 0306 0101 080a 441f 68fe 0000 0000
+	0x0050:  0402 0000
+
+Internet Protocol Version 6
+0110 .... = Version: 6
+.... 0000 0000 .... .... .... .... .... = Traffic Class: 0x00 (DSCP: CS0, ECN: Not-ECT)
+.... .... .... 0101 0000 0101 0000 0000 = Flow Label: 0x50500
+Payload Length: 44
+Next Header: TCP (6)
+Hop Limit: 64
+Source Address: 2603:3003:127:1000:9440:31dd:dd50:e403
+Destination Address: 2607:f8b0:4004:82f::2004
+Transmission Control Protocol
+Source Port: 49478
+Destination Port: 80
+Stream index: 0
+TCP Segment Len: 0
+Sequence Number: 0
+Sequence Number (raw): 3310600832
+Next Sequence Number: 1
+Acknowledgment Number: 0
+Acknowledgment number (raw): 0
+1011 .... = Header Length: 44 bytes (11)
+Flags: 0x002 (SYN)
+Window: 65535
+Calculated window size: 65535
+Checksum: 0x75c1
+Checksum Status: Unverified
+Urgent Pointer: 0
+Options: (24 bytes), Maximum segment size, No-Operation (NOP), Window scale, No-Operation (NOP), No-Operation (NOP), Timestamps, SACK permitted, End of Option List (EOL)
+Timestamps
+*/
+
+TEST_CASE("scan_net1", "[scanners]") {
     /* We did a rather involved rewrite of scan_net for BE2 so we want to check all of the methods with the
      * data a few bytes into the sbuf.
      */
@@ -548,23 +594,32 @@ TEST_CASE("scan_net", "[scanners]") {
     /* Make an sbuf with just the packet, for initial testing */
     sbuf_t sbufip = sbuf.slice(frame_offset + ETHERNET_FRAME_SIZE);
 
-    scan_net_t::generic_iphdr_t h;
+    scan_net_t::generic_iphdr_t h {} ;
 
-    REQUIRE( scan_net_t::sanityCheckIP46Header( sbufip, 0 , &h) == true );
+    REQUIRE( scan_net_t::sanityCheckIP46Header( sbufip, 0 , &h, nullptr) == true );
     REQUIRE( h.checksum_valid == true );
 
     /* Now try with the offset */
-    REQUIRE( scan_net_t::sanityCheckIP46Header( sbuf, frame_offset + ETHERNET_FRAME_SIZE, &h) == true );
+    REQUIRE( scan_net_t::sanityCheckIP46Header( sbuf, frame_offset + ETHERNET_FRAME_SIZE, &h, nullptr) == true );
     REQUIRE( h.checksum_valid == true );
 
     /* Change the IP address and make sure that the header is valid but the checksum is not */
     buf[frame_offset + ETHERNET_FRAME_SIZE + 14]++; // increment destination address
-    REQUIRE( scan_net_t::sanityCheckIP46Header( sbufip, 0 , &h) == true );
+    REQUIRE( scan_net_t::sanityCheckIP46Header( sbufip, 0 , &h, nullptr) == true );
     REQUIRE( h.checksum_valid == false );
 
     /* Break the port and make sure that the header is no longer valid */
     buf[frame_offset + ETHERNET_FRAME_SIZE] += 0x10; // increment header length
-    REQUIRE( scan_net_t::sanityCheckIP46Header( sbufip, 0 , &h) == false );
+    REQUIRE( scan_net_t::sanityCheckIP46Header( sbufip, 0 , &h, nullptr) == false );
+
+    /* Try some IP addresses to make sure they check or do not check */
+    REQUIRE( sizeof(addr1) == 16 );
+    REQUIRE( sizeof(addr2) == 16 );
+
+    /* Put the addresses into network order and check */
+    uint16_t addr[8];
+    for(int i=0;i<8;i++) addr[i] = htons(addr1[i]);     REQUIRE( scan_net_t::invalidIP6(addr) == false );
+    for(int i=0;i<8;i++) addr[i] = htons(addr2[i]);     REQUIRE( scan_net_t::invalidIP6(addr) == true );
 }
 
 TEST_CASE("scan_pdf", "[scanners]") {

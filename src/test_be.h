@@ -12,6 +12,7 @@ extern bool debug;
 // return file the test directory mapped to an sbuf
 sbuf_t *map_file(std::filesystem::path p);
 
+void grep(const Feature &exp, std::filesystem::path fname );
 std::filesystem::path test_scanners(const std::vector<scanner_t *> & scanners, sbuf_t *sbuf);
 std::filesystem::path test_scanner(scanner_t scanner, sbuf_t *sbuf);
 bool requireFeature(const std::vector<std::string> &lines, const std::string feature);

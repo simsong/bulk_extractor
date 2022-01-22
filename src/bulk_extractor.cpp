@@ -144,13 +144,21 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
 {
     bulk_extractor_set_debug();
     int64_t start_sbuf_count = sbuf_t::sbuf_count;
-    if (start_sbuf_count!=0) {
-        cerr << "start_sbuf_count=" << start_sbuf_count << " at start of execution." << std::endl;
-    }
 
     mtrace();
     const auto original_argc = argc;
     const auto original_argv = argv;
+
+    // Only print these warnings if not running under catch
+    if (getenv("RUNNING_UNDER_CATCH")==nullptr){
+#ifdef HAVE_ADDRESS_SANITIZER
+        cerr << "*** compiled with address sanitizer" << std::endl;
+#endif
+#ifdef HAVE_THREAD_SANITIZER
+        cerr << "*** compiled with thread sanitizer" << std::endl;
+#endif
+    }
+
 
     word_and_context_list alert_list;       /* should be flagged */
     word_and_context_list stop_list;        /* should be ignored */
@@ -695,7 +703,8 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     }
 
     if (start_sbuf_count != sbuf_t::sbuf_count) {
-        cerr << "sbuf_t leak detected. Initial sbuf_t.sbuf_total=" << start_sbuf_count << "  end sbuf_count=" << sbuf_t::sbuf_count << std::endl;
+        cerr << "sbuf_t leak detected. Initial sbuf_t.sbuf_total="
+             << start_sbuf_count << "  end sbuf_count=" << sbuf_t::sbuf_count << std::endl;
         if (sbuf_t::debug_leak) {
             for (auto const &it : sbuf_t::sbuf_alloced) {
                 cerr << it << std::endl;
