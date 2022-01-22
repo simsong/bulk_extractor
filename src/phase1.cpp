@@ -174,11 +174,15 @@ void Phase1::read_process_sbufs()
         }
 
         /* If there are too many in the queue, wait... */
+#if 0
         if (ss.depth0_sbufs_in_queue > ss.get_worker_count()) {
             using namespace std::chrono_literals;
-            std::this_thread::sleep_for(2000ms);
+            std::cerr << "*** depth0 sleep *** " << std::endl;
+            std::this_thread::sleep_for(20ms);
+            depth0_sleep += 1;
             continue;
         }
+#endif
 
         if (config.opt_page_start<=it.page_number && config.opt_scan_start<=it.raw_offset){
             // Only process pages we haven't seen before
@@ -199,6 +203,10 @@ void Phase1::read_process_sbufs()
                         }
                     }
                     total_bytes += sbufp->pagesize;
+                    /*
+                     * schedule_sbuf() will eventually call thread_pool::push_task(sbuf, nullptr) which will not return until there are free threads.
+                     * This prevents the reader from getting too far ahead of the workers, but it limits the ability to read ahead.
+                     */
                     ss.schedule_sbuf(sbufp); // processes the sbuf, then deletes it
                 }
                 catch (const std::exception &e) {
@@ -226,6 +234,11 @@ void Phase1::read_process_sbufs()
     }
 
     if (config.fraction_done) *config.fraction_done = 1.0;
+#if 0
+    if (depth0_sleep>0){
+        std::cerr << "depth0_sleep: " << depth0_sleep << std::endl;
+    }
+#endif
 }
 
 void Phase1::dfxml_write_create(int argc, char * const *argv)
