@@ -67,7 +67,7 @@ void scan_json(const class scanner_params &sp,const recursion_control_block &rcb
 
 	  /* Try to parse string */
 	  const char* c = (const char*) &sbuf.buf[pos]; /* Solution for 1.6 */
-	  jo = json_tokener_parse_ex(jt, c, strlen(c));
+	  jo = json_tokener_parse_ex(jt, c, strnlen(c, sbuf.bufsize - pos));
 	  je = json_tokener_get_error(jt);
 
 	  /* String was a valid JSON object */
