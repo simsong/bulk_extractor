@@ -88,7 +88,7 @@ public:
     uint64_t      hash_next {0};        // next byte to hash, to detect gaps
     std::string   image_hash {};          // when hashed, the image hash
     dfxml_writer &xreport;              // we always write out the DFXML. Allows restart to be handled in phase1
-    //uint64_t      depth0_sleep {0};     // how many times did we sleep because we were too deep
+    uint64_t      depth0_sleep {0};     // how many times did we sleep because we were too deep
 
     /* Get the sbuf from current image iterator location, with retries */
     sbuf_t *get_sbuf(image_process::iterator &it);
