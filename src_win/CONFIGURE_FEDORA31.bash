@@ -146,7 +146,7 @@ function build_mingw {
 }
 
 build_mingw libtre   http://laurikari.net/tre/tre-0.8.0.tar.gz
-build_mingw libewf   https://github.com/libyal/libewf/releases/download/20171104/libewf-experimental-20171104.tar.gz
+build_mingw libewf   https://github.com/libyal/libewf/releases/download/20201230/libewf-experimental-20201230.tar.gz
 
 #
 # ICU requires patching and a special build sequence
