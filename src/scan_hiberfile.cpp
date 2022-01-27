@@ -60,7 +60,7 @@ void scan_hiberfile_scan(scanner_params &sp)
                                        + (sbuf[pos+11]<<24)) >> 10) + 1; // ref: Hibr2bin/MemoryBlocks.cpp
 
         compressed_length = (compressed_length + 7) & ~7; // ref: Hibr2bin/MemoryBlocks.cpp
-        const u_char *compressed_buf = sbuf.get_buf() + pos + 32;		 // "the header contains 32 bytes"
+        const unsigned char *compressed_buf = sbuf.get_buf() + pos + 32;		 // "the header contains 32 bytes"
         u_int  remaining_size = sbuf.bufsize - (pos+32); // up to the end of the buffer
         size_t compr_size = compressed_length < remaining_size ? compressed_length : remaining_size;
         size_t max_uncompr_size = compr_size * 10; // hope that's good enough
@@ -69,7 +69,7 @@ void scan_hiberfile_scan(scanner_params &sp)
         }
 
         auto *decomp_sbuf = sbuf_t::sbuf_malloc(sbuf.pos0 + pos + "HIBERFILE", max_uncompr_size, max_uncompr_size);
-        u_char *decomp_buf = reinterpret_cast<u_char *>(decomp_sbuf->malloc_buf());
+        unsigned char *decomp_buf = reinterpret_cast<unsigned char *>(decomp_sbuf->malloc_buf());
 
 
         int decompress_size = Xpress_Decompress(compressed_buf, compr_size, decomp_buf, max_uncompr_size);

@@ -448,7 +448,7 @@ void scan_aes(struct scanner_params &sp)
 
         /* Initialize the sliding window */
         for (size_t pos = 0; pos < AES128_KEY_SCHEDULE_SIZE ; pos++) {
-            const u_char val = buf[pos];
+            const unsigned char val = buf[pos];
             counts[val]++;
             if (counts[val] == 1) {
                 distinct_counts++;
@@ -462,7 +462,7 @@ void scan_aes(struct scanner_params &sp)
 #ifdef USE_ROLLING_WINDOW
             /* add value at end of 128 bits to sliding window */
             {
-                const u_char val = buf[pos+AES128_KEY_SCHEDULE_SIZE];
+                const unsigned char val = buf[pos+AES128_KEY_SCHEDULE_SIZE];
                 counts[val]++;
                 if(counts[val]==1) {            // we have one more distinct count
                     distinct_counts++;

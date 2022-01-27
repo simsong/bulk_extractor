@@ -363,7 +363,7 @@ void build_unbase58()
 {
     memset(base58_vals,-1,sizeof(base58_vals));
     for(size_t i=0;base58_chars[i];i++){
-        base58_vals[(u_char)(base58_chars[i])] = i;
+        base58_vals[(unsigned char)(base58_chars[i])] = i;
     }
     unbase58_built = true;
 }
@@ -373,7 +373,7 @@ bool unbase58(const char *s,uint8_t *out,size_t len)
     assert(unbase58_built==true);
     memset(out,0,25);
     for(size_t i=0;s[i] && i<len;i++){
-        int c = base58_vals[(u_char)(s[i])];
+        int c = base58_vals[(unsigned char)(s[i])];
         if (c==-1) return false; // invalid character
         for (int j = 25; j--; ) {
             c += 58 * out[j];
