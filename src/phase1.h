@@ -86,19 +86,21 @@ public:
     uint64_t      total_bytes {0};      // processed
     dfxml::sha1_generator *sha1g {nullptr};        // the SHA1 of the image. Set to 0 if a gap is encountered
     uint64_t      hash_next {0};        // next byte to hash, to detect gaps
-
-    std::string image_hash {};          // when hashed, the image hash
+    std::string   image_hash {};          // when hashed, the image hash
     dfxml_writer &xreport;              // we always write out the DFXML. Allows restart to be handled in phase1
+    uint64_t      depth0_sleep {0};     // how many times did we sleep because we were too deep
 
     /* Get the sbuf from current image iterator location, with retries */
     sbuf_t *get_sbuf(image_process::iterator &it);
-
 
     Phase1(Config &config_, image_process &p_, scanner_set &ss_, std::ostream &cout_);
     void dfxml_write_create(int argc, char * const *argv); // create the DFXML header
     void dfxml_write_source();                             // create the DFXML <source> block
     void read_process_sbufs(); // read and process the sbufs
     void phase1_run();         // run phase1
+
+
+
 };
 
 #endif

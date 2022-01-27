@@ -75,14 +75,14 @@ TEST_CASE("test_validate", "[phase1]" ) {
 }
 
 
-bool feature_match(const Check &exp, const std::string &line)
+bool feature_match(const Feature &feature, const std::string &line)
 {
     auto words = split(line, '\t');
     if (words.size() <2 || words.size() > 3) return false;
 
     if (debug) std::cerr << "check line=" << line << std::endl;
 
-    std::string pos = exp.feature.pos.str();
+    std::string pos = feature.pos.str();
     if ( pos.size() > 2 ){
         if (ends_with(pos,"-0")) {
             pos.resize(pos.size()-2);
@@ -92,17 +92,17 @@ bool feature_match(const Check &exp, const std::string &line)
         }
     }
 
-    if ( pos0_t(words[0]) != exp.feature.pos ){
-        if (debug) std::cerr << "  pos " << exp.feature.pos.str() << " does not match '" << words[0] << "'" << std::endl;
+    if ( pos0_t(words[0]) != feature.pos ){
+        if (debug) std::cerr << "  pos " << feature.pos.str() << " does not match '" << words[0] << "'" << std::endl;
         return false;
     }
 
-    if ( words[1] != exp.feature.feature ){
-        if (debug)std::cerr << "  feature '" << exp.feature.feature << "' does not match feature '" << words[1] << "'" << std::endl;
+    if ( words[1] != feature.feature ){
+        if (debug)std::cerr << "  feature '" << feature.feature << "' does not match feature '" << words[1] << "'" << std::endl;
         return false;
     }
 
-    std::string ctx = exp.feature.context;
+    std::string ctx = feature.context;
     if (words.size()==2) return ctx=="";
 
     if ( (ctx=="") || (ctx==words[2]) )  return true;
@@ -123,6 +123,38 @@ bool feature_match(const Check &exp, const std::string &line)
     return false;
 }
 
+
+/* Look for a line in a file and print an error if not found */
+void grep(const Feature &feature, std::filesystem::path fname )
+{
+    for (int pass=0 ; pass<2 ; pass++){
+        std::string line;
+        std::ifstream inFile;
+        inFile.open(fname);
+        if (!inFile.is_open()) {
+            std::cerr << "could not open: " << fname << std::endl;
+            throw std::runtime_error("Could not open: "+fname.string());
+        }
+        while (std::getline(inFile, line)) {
+            switch (pass) {
+            case 0:
+                if (feature_match(feature, line)){
+                    return;             // found!
+                }
+                break;
+            case 1:
+                std::cerr << fname << ":" << line << std::endl; // print the file the second time through
+                break;
+            }
+        }
+    }
+    std::cerr << "**** did not find"
+              << " pos=" << feature.pos
+              << " feature=" << feature.feature
+              << " context=" << feature.context
+              << std::endl;
+    REQUIRE(false);
+}
 
 /*
  * Run all of the built-in scanners on a specific image, look for the given features, and return the directory.
@@ -200,38 +232,7 @@ std::filesystem::path validate(std::string image_fname, std::vector<Check> &expe
     delete xreport;
 
     for (const auto &exp : expected ) {
-
-        std::filesystem::path fname  = sc.outdir / exp.fname;
-        bool found = false;
-        for (int pass=0 ; pass<2 && !found;pass++){
-            std::string line;
-            std::ifstream inFile;
-            inFile.open(fname);
-            if (!inFile.is_open()) {
-                throw std::runtime_error("validate_scanners:[phase1] Could not open "+fname.string());
-            }
-            while (std::getline(inFile, line) && !found) {
-                switch (pass) {
-                case 0:
-                    if (feature_match(exp, line)){
-                        found = true;
-                    }
-                    break;
-                case 1:
-                    std::cerr << fname << ":" << line << std::endl; // print the file the second time through
-                    break;
-                }
-
-            }
-        }
-        if (!found){
-            std::cerr << fname << " did not find"
-                      << " pos=" << exp.feature.pos
-                      << " feature=" << exp.feature.feature
-                      << " context=" << exp.feature.context
-                      << std::endl;
-        }
-        REQUIRE(found);
+        grep( exp.feature, sc.outdir / exp.fname );
     }
     REQUIRE(start_sbuf_count == sbuf_t::sbuf_count);
     return sc.outdir;
@@ -311,9 +312,11 @@ void validate_aes128_key(uint8_t key[16])
     }
     printf("\n");
 #endif
-    printf("valid schedule: %d\n",valid_aes128_schedule(schedule));
+    int valid = valid_aes128_schedule(schedule);
+    if (debug) printf("valid schedule: %d\n",valid);
+    // REQUIRE(valid==0);            shouldn't a schedule that we created ve valid?
     sbuf_t *keybuf = sbuf_t::sbuf_new(pos0_t(), schedule, sizeof(schedule), sizeof(schedule));
-    printf("histogram count: %zu (out of %zu characters)\n",keybuf->get_distinct_character_count(),sizeof(schedule));
+    if (debug) printf("histogram count: %zu (out of %zu characters)\n",keybuf->get_distinct_character_count(),sizeof(schedule));
     delete keybuf;
 }
 
@@ -473,6 +476,27 @@ TEST_CASE("test_net80", "[phase1]") {
     };
     validate("ntlm80.pcap", ex2);
 }
+
+TEST_CASE("test_net-domexusers", "[phase1]") {
+    auto *sbufp = map_file( "domexusers-2435863310-2435928846.raw" );
+    REQUIRE( scan_net_t::validateEther(*sbufp, 0) == nullptr);
+    REQUIRE( scan_net_t::validateEther(*sbufp, 241) == nullptr);
+    REQUIRE( scan_net_t::validateEther(*sbufp, 242) != nullptr);
+    REQUIRE( scan_net_t::validateEther(*sbufp, 243) == nullptr);
+    REQUIRE( scan_net_t::validateEther(*sbufp, 1777) == nullptr);
+    REQUIRE( scan_net_t::validateEther(*sbufp, 1778) != nullptr);
+    REQUIRE( scan_net_t::validateEther(*sbufp, 1779) == nullptr);
+
+    std::vector<Check> ex2 {
+        Check("ether.txt", Feature( "242","00:0C:29:26:BB:CD", "(ether_dhost)")),
+        Check("ether.txt", Feature( "242","00:50:56:E0:FE:24", "(ether_shost)")),
+        Check("ether.txt", Feature( "1778","00:0C:29:26:BB:CD", "(ether_dhost)")),
+        Check("ether.txt", Feature( "1778","00:50:56:E0:FE:24", "(ether_shost)")),
+    };
+    validate("domexusers-2435863310-2435928846.raw", ex2);
+    delete sbufp;
+}
+
 
 TEST_CASE("test_winpe", "[phase1]") {
     std::vector<Check> ex2 {

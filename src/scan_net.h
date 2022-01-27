@@ -31,6 +31,20 @@ typedef char sa_family_t;
 
 struct scan_net_t {
 
+    /* Hardcoded tunings */
+    const static inline uint16_t sane_ports[] = {80, 443, 53, 25, 110, 143, 993, 587, 23, 22, 21, 20, 119, 123};
+    constexpr static inline uint16_t sane_ports_len = sizeof(sane_ports) / sizeof(uint16_t);
+
+    const static inline uint32_t JAN1_1990 = 631152000;   // we won't get packets before this date.
+    const static inline uint32_t TIME_MIN = JAN1_1990;
+    const static inline uint32_t MAX_PACKET_BYTES = 65535;
+    const static inline uint32_t DEFAULT_MIN_PACKET_BYTES = 40;
+    const static inline uint32_t MIN_PACKET_BYTES = 40; // safety logic fails space beyond pos is smaller than this.
+
+    /* State variables go here */
+    bool carve_net_memory { false };      // should we carve for network memory?
+    size_t min_packet_bytes { DEFAULT_MIN_PACKET_BYTES };
+
     /* generic ip header for IPv4 and IPv6 packets */
     typedef struct generic_iphdr {
         sa_family_t family {};		/* AF_INET or AF_INET6 */
@@ -41,6 +55,7 @@ struct scan_net_t {
         uint8_t nxthdr_offs {};	/* nxt hdr offset, also IP hdr len */
         uint16_t payload_len {}; 	/* IP total len - IP hdr */
         bool checksum_valid {false};  // if computed checksum was valid
+        bool is_4or6() const { return family==AF_INET || family==AF_INET6;};
     } generic_iphdr_t;
 
     /* pseudo-header of our making */
@@ -48,7 +63,7 @@ struct scan_net_t {
         be13::ether_addr ether_dhost;
         be13::ether_addr ether_shost;
         uint16_t ether_type;
-        uint8_t ipv;
+        uint8_t ip_version;                    // ip header typically follows (4|header_len) or (6|traffic_class top 4 bits)
     };
 
     /* testing functions */
@@ -61,7 +76,8 @@ struct scan_net_t {
     static std::string ip2string(const uint8_t *addr, sa_family_t family);
     static std::string mac2string(const struct be13::ether_addr *const e);
     static inline std::string i2str(const int i);
-    static bool sanityCheckIP46Header(const sbuf_t &sbuf, size_t pos, generic_iphdr_t *h);
+    typedef std::unordered_set<size_t> sanityCache_t;
+    static bool sanityCheckIP46Header(const sbuf_t &sbuf, size_t pos, generic_iphdr_t *h, sanityCache_t *sc);
 
     /* regular functions */
 
@@ -75,45 +91,36 @@ struct scan_net_t {
     feature_recorder &tcp_recorder;
     feature_recorder &ether_recorder;
 
-
     static uint16_t ip4_cksum(const sbuf_t &sbuf, size_t pos, size_t len);
     static uint16_t IPv6L3Chksum(const sbuf_t &sbuf, size_t pos, u_int chksum_byteoffset);
 
-    bool carve_net_memory {false};      // should we carve for network memory?
-
     /* Header for the PCAP file */
-    constexpr static uint8_t PCAP_HEADER[] {
+    constexpr static uint8_t PCAP_FILE_HEADER[] {
         0xd4, 0xc3, 0xb2, 0xa1, // magic
         0x02, 0x00, 0x04, 0x00  // version_major, version_minor
             };
     /* Header for each packet */
     constexpr static size_t PCAP_RECORD_HEADER_SIZE = 16;
 
-    bool likely_valid_pcap_packet_header(const sbuf_t &sbuf, size_t pos, struct pcap_writer::pcap_hdr &h) const {
+    /** Check the fields at sbuf+pos and as we decode them fill in h */
+    bool likely_valid_pcap_packet_header(const sbuf_t &sbuf, size_t pos, struct pcap_writer::pcap_hdr *h) const {
         if (sbuf.bufsize < pos + PCAP_RECORD_HEADER_SIZE  ) return false; // no room
 
-        h.seconds  = sbuf.get32u( pos+0 ); if (h.seconds==0) return false;
-        h.useconds = sbuf.get32u( pos+4 ); if (h.useconds>1000000) return false;
-        h.cap_len  = sbuf.get32u( pos+8 ); if (h.cap_len<min_packet_size) return false;
-        h.pkt_len  = sbuf.get32u( pos+12); if (h.pkt_len<min_packet_size) return false;
+        h->seconds  = sbuf.get32u_unsafe( pos+0 );
+        if (h->seconds==0 || h->seconds < TIME_MIN || h->seconds > TIME_MAX) return false;
 
-        if (h.seconds < TIME_MIN || h.seconds > TIME_MAX) return false;
+        h->useconds = sbuf.get32u_unsafe( pos+4 );
+        if (h->useconds>1000000) return false;
 
-        if (h.cap_len<min_packet_size || h.cap_len>max_packet_len) return false;
-        if (h.pkt_len<min_packet_size || h.pkt_len>max_packet_len) return false;
-        if (h.cap_len > h.pkt_len) return false;
+        h->cap_len  = sbuf.get32u_unsafe( pos+8 );
+        if (h->cap_len<MIN_PACKET_BYTES || h->cap_len>MAX_PACKET_BYTES) return false;
+
+        h->pkt_len  = sbuf.get32u_unsafe( pos+12);
+        if (h->pkt_len<MIN_PACKET_BYTES || h->pkt_len>MAX_PACKET_BYTES) return false;
+
+        if (h->cap_len > h->pkt_len) return false;
         return true;
     };
-
-    /* Hardcoded tunings */
-    const static inline uint16_t sane_ports[] = {80, 443, 53, 25, 110, 143, 993, 587, 23, 22, 21, 20, 119, 123};
-    constexpr static inline uint16_t sane_ports_len = sizeof(sane_ports) / sizeof(uint16_t);
-
-    const static inline uint32_t JAN1_1990 = 631152000;   // we won't get packets before this date.
-    const static inline uint32_t TIME_MIN = JAN1_1990;
-    const static inline uint32_t max_packet_len = 65535;
-    const static inline uint32_t min_packet_size = 20;		// don't bother with ethernet packets smaller than this
-    const static inline uint32_t MIN_SBUF_SIZE = 16; // min structure size
 
     // TIME_MAX is the maximum time for a pcap that the system will carve.
     // set it to two years in the future from when the program is running.
@@ -128,14 +135,36 @@ struct scan_net_t {
         return false;
     };
 
+    class port0_exception : public std::exception {
+    public:
+        port0_exception(){};
+    };
+
     /* Each of these carvers looks for a specific structure and if it finds the structure it returns the size in the sbuf */
-    bool documentIPFields(const sbuf_t &sbuf, size_t pos, const generic_iphdr_t &h) const; // return true if packet should be written
-    size_t carveIPFrame(const sbuf_t &sbuf, size_t pos) const;
+    void   documentIPFields(const sbuf_t &sbuf, size_t pos, const generic_iphdr_t &h) const; // write ip fields to ip_recorder and possibly tcp_recorder
+    size_t carveIPFrame(const sbuf_t &sbuf, size_t pos, sanityCache_t *sc) const;
     size_t carveTCPTOBJ(const sbuf_t &sbuf, size_t pos) const;
     size_t carveSockAddrIn(const sbuf_t &sbuf, size_t pos) const;
-    size_t carvePCAPPacket(const sbuf_t &sbuf, size_t pos) const;
-    size_t carvePCAPFile(const sbuf_t &sbuf, size_t pos) const;
-    size_t carveEther(const sbuf_t &sbuf, size_t pos) const;
+    size_t carvePCAPFileHeader(const sbuf_t &sbuf, size_t pos) const;
+    size_t carvePCAPPackets(const sbuf_t &sbuf, size_t pos, sanityCache_t *sc) const;
+    static const struct macip *validateEther(const sbuf_t &sbuf, size_t pos) {
+        const struct macip *er = sbuf.get_struct_ptr_unsafe<struct macip>(pos);
+        /* Only carve ether type ETHERTYPE_IP or ETHERTYPE_IPv6.
+         * Run htons() on constants to compute at compile time
+         */
+
+        const uint16_t ip4_ether  = htons(ETHERTYPE_IP); // constexpr gives error on ubuntu20!
+        const uint16_t ip6_ether  = htons(ETHERTYPE_IPV6);
+        if (er->ether_type == ip4_ether && er->ip_version == 0x45) {
+            return er;                  // ipv4
+        }
+        if (er->ether_type == ip6_ether && ((er->ip_version & 0xF0) == 0x60)) {
+            return er;                  // ipv6
+        }
+        return nullptr;                 // couldn't find anything
+    }
+
+    size_t carveEther(const sbuf_t &sbuf, size_t pos, sanityCache_t *sc) const;
     void   carve(const sbuf_t &sbuf) const;
 };
 

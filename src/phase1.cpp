@@ -175,10 +175,11 @@ void Phase1::read_process_sbufs()
 
         /* If there are too many in the queue, wait... */
         if (ss.depth0_sbufs_in_queue > ss.get_worker_count()) {
-            using namespace std::chrono_literals;
-            std::this_thread::sleep_for(2000ms);
+            ss.main_thread_wait();
+            depth0_sleep += 1;
             continue;
         }
+
 
         if (config.opt_page_start<=it.page_number && config.opt_scan_start<=it.raw_offset){
             // Only process pages we haven't seen before
@@ -186,7 +187,7 @@ void Phase1::read_process_sbufs()
                 try {
                     sbuf_t *sbufp = get_sbuf(it);
 
-                    /* compute the sha1 hash */
+                    /* compute the sha1 hash of the media. Sadly, this needs to be serliazed, it is the nature of SHA1. */
                     if (sha1g){
                         if (sbufp->pos0.offset==hash_next){
                             // next byte follows logically, so continue to compute hash
@@ -199,6 +200,10 @@ void Phase1::read_process_sbufs()
                         }
                     }
                     total_bytes += sbufp->pagesize;
+                    /*
+                     * schedule_sbuf() will eventually call thread_pool::push_task(sbuf, nullptr) which will not return until there are free threads.
+                     * This prevents the reader from getting too far ahead of the workers, but it limits the ability to read ahead.
+                     */
                     ss.schedule_sbuf(sbufp); // processes the sbuf, then deletes it
                 }
                 catch (const std::exception &e) {
