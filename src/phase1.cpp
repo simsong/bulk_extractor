@@ -187,7 +187,7 @@ void Phase1::read_process_sbufs()
                 try {
                     sbuf_t *sbufp = get_sbuf(it);
 
-                    /* compute the sha1 hash */
+                    /* compute the sha1 hash of the media. Sadly, this needs to be serliazed, it is the nature of SHA1. */
                     if (sha1g){
                         if (sbufp->pos0.offset==hash_next){
                             // next byte follows logically, so continue to compute hash
