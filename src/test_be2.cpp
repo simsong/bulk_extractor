@@ -379,10 +379,10 @@ TEST_CASE("test_json", "[phase1]") {
 
 TEST_CASE("KML_Samples.kml","[phase1]"){
     std::vector<Check> ex4 {
-        Check("kml.txt",
+        Check("kml_carved.txt",
               Feature( "0",
-                       "kml/000/0.kml",
-                       "<fileobject><filename>kml/000/0.kml</filename><filesize>35919</filesize><hashdigest type='sha1'>"
+                       "kml_carved/000/0.kml",
+                       "<fileobject><filename>kml_carved/000/0.kml</filename><filesize>35919</filesize><hashdigest type='sha1'>"
                        "cffc78e27ac32414b33d595a0fefcb971eaadaa3</hashdigest></fileobject>"))
     };
     validate("KML_Samples.kml", ex4);
