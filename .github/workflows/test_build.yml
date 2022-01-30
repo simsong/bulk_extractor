@@ -1,0 +1,18 @@
+# Tests the src_win/CONFIGURE_FEDORA31.bash build script in
+# a Fedora Linux Docker container.
+name: test_build
+on: [push]
+jobs:
+  test_fedora:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        version: ['34']
+    container:
+      image: registry.fedoraproject.org/fedora:${{ matrix.version }}
+    steps:
+    - name: Checkout source
+      uses: actions/checkout@v2
+    - name: Run build script
+      run: |
+        echo "" | bash src_win/CONFIGURE_FEDORA31.bash

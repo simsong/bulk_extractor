@@ -1,39 +1,46 @@
 #!/bin/bash
-OS_NAME=fedora
-OS_VERSION=34
+#
+# Script to cross-compile bulk_extractor and dependencies on Fedora Linux 34.
+
+FEDORA_VERSION=34
+
 if [ ! -r /etc/os-release ]; then
   echo This requires /etc/os-release
   exit 1
 fi
+
 . /etc/os-release
+
 if [ $ID != 'fedora' ]; then
-    echo This requires $OS_NAME Linux. You have $ID.
+    echo This requires Fedora Linux. You have $ID.
     exit 1
 fi
 
-if [ $VERSION_ID -ne $OS_VERSION ]; then
-    echo This requires $OS_NAME version $OS_VERSION. You have $ID $VERSION_ID.
+if [ $VERSION_ID -ne $FEDORA_VERSION ]; then
+    echo This requires Fedora Linux version $FEDORA_VERSION. You have $ID $VERSION_ID.
     exit 1
 fi
+
 cat <<EOF
 *******************************************************************
         Configuring Fedora for cross-compiling multi-threaded
 		 64-bit Windows programs with mingw.
 *******************************************************************
 
-This script will configure a fresh Fedora system to compile with
+This script will configure a fresh Fedora Linux system to compile with
 mingw64.  Please perform the following steps:
 
-1. Install FEDORA31 or newer, running with you as an administrator.
+1. Install Fedora Linux 34 or newer, running with you as an administrator.
    For a VM:
 
    1a - download the ISO for the 64-bit DVD (not the live media) from:
         http://fedoraproject.org/en/get-fedora-options#formats
    1b - Create a new VM using this ISO as the boot.
 
-2. Plese put this CONFIGURE_F20.bash script in you home directory.
+2. Put the CONFIGURE_FEDORA31.bash build script in the bulk_extractor main
+   source directory.
 
-3. Run this script to configure the system to cross-compile bulk_extractor.
+3. Run the build script to configure the system to cross-compile bulk_extractor.
    Parts of this script will be run as root using "sudo".
 
 press any key to continue...
@@ -41,6 +48,7 @@ EOF
 read
 
 MAKE_CONCURRENCY=-j4
+
 # cd to the directory where the script is
 # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -70,7 +78,7 @@ MPKGS+="mingw32-nsis "
 
 echo Will now try to install
 
-sudo yum install -y $MPKGS --skip-broken 2>&1 | grep -v "is already installed"
+sudo dnf install -y $MPKGS --skip-broken 2>&1 | grep -v "is already installed"
 if [ $? != 0 ]; then
   echo "Could not install some of the packages. Will not proceed."
   exit 1
@@ -86,11 +94,13 @@ for lib in zlib gettext boost cairo pixman freetype fontconfig \
     bzip2 expat winpthreads libgnurx libxml2 iconv openssl sqlite ; do
   INST+=" mingw64-${lib} mingw64-${lib}-static"
 done
-sudo yum -y install $INST 2>&1 | grep -v "is already installed"
+
+sudo dnf -y install $INST 2>&1 | grep -v "is already installed"
 
 echo
-echo "Now performing a yum update to update system packages"
-sudo yum -y update  2>&1 | grep -v "is already installed"
+echo "Now performing a dnf update to update system packages"
+
+sudo dnf -y update  2>&1 | grep -v "is already installed"
 
 MINGW64=x86_64-w64-mingw32
 
@@ -145,8 +155,24 @@ function build_mingw {
     fi
 }
 
+# usage: get_latest_tag <git-url>
+#
+# returns a string with the latest git tag
+function get_latest_tag {
+	local $GIT_URL=$1
+
+	GIT_TAG=`git -c 'versionsort.suffix=-' ls-remote --tags --sort='v:refname' ${GIT_URL} | tail -n1 | cut -d'/' -f3`
+
+	echo ${GIT_TAG}
+}
+
+LIBEWF_VERSION=$( get_latest_tag https://github.com/libyal/libewf-legacy.git )
+if [ -z ${LIBEWF_VERSION} ]; then
+	LIBEWF_VERSION="20140812"
+fi
+
 build_mingw libtre   http://laurikari.net/tre/tre-0.8.0.tar.gz
-build_mingw libewf   https://github.com/libyal/libewf/releases/download/20201230/libewf-experimental-20201230.tar.gz
+build_mingw libewf   https://github.com/libyal/libewf-legacy/releases/download/${LIBEWF_VERSION}/libewf-${LIBEWF_VERSION}.tar.gz
 
 #
 # ICU requires patching and a special build sequence
@@ -218,10 +244,10 @@ fi
 #
 
 echo ...
-echo 'Now running ../bootstrap.sh and configure'
+echo 'Now running bootstrap.sh and configure'
 pushd ..
-sh bootstrap.sh
-sh configure
+./bootstrap.sh
+./configure
 popd
 echo ================================================================
 echo ================================================================
