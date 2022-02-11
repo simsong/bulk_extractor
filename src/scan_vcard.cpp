@@ -32,7 +32,7 @@
 
 
 #include "config.h"
-#include "be13_api/scanner_params.h"
+#include "be20_api/scanner_params.h"
 #include "scan_vcard.h"
 
 #include "utf8.h"

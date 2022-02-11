@@ -16,16 +16,16 @@
 #include <string_view>
 #include <sstream>
 
-#include "be13_api/catch.hpp"
+#include "be20_api/catch.hpp"
 
 #ifdef HAVE_MACH_O_DYLD_H
 #include "mach-o/dyld.h"         // Needed for _NSGetExecutablePath
 #endif
 
 #include "dfxml_cpp/src/dfxml_writer.h"
-#include "be13_api/path_printer.h"
-#include "be13_api/scanner_set.h"
-#include "be13_api/utils.h"             // needs config.h
+#include "be20_api/path_printer.h"
+#include "be20_api/scanner_set.h"
+#include "be20_api/utils.h"             // needs config.h
 
 #include "bulk_extractor.h"
 #include "base64_forensic.h"

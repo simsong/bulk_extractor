@@ -14,7 +14,7 @@
 
 #include "config.h"
 #include "sbuf_flex_scanner.h"
-#include "be13_api/utils.h"
+#include "be20_api/utils.h"
 #include "scan_email.h"
 
 class email_scanner : public sbuf_scanner {

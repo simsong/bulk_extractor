@@ -32,9 +32,9 @@
 
 #include "config.h"
 #include "utf8.h"
-#include "be13_api/utils.h"             // for safe_utf16to8, requires config.h
-#include "be13_api/scanner_params.h"
-#include "be13_api/sbuf_stream.h"
+#include "be20_api/utils.h"             // for safe_utf16to8, requires config.h
+#include "be20_api/scanner_params.h"
+#include "be20_api/sbuf_stream.h"
 #include "dfxml_cpp/src/dfxml_writer.h"     // requires config.h
 
 /**

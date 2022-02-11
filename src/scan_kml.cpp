@@ -9,7 +9,7 @@
  */
 
 #include "config.h"
-#include "be13_api/scanner_params.h"
+#include "be20_api/scanner_params.h"
 
 #include <iostream>
 #include <fstream>

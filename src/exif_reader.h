@@ -17,7 +17,7 @@
 #define EXIF_READER_H
 
 #include "exif_entry.h"
-#include "be13_api/sbuf.h"
+#include "be20_api/sbuf.h"
 
 /**
  * Handle to the beginning of the tiff structure.

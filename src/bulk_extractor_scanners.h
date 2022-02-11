@@ -8,7 +8,7 @@
 
 #ifndef BULK_EXTRACTOR_SCANNERS_H_FIRST_INCLUDE
 #define BULK_EXTRACTOR_SCANNERS_H_FIRST_INCLUDE
-#include "be13_api/scanner_set.h"
+#include "be20_api/scanner_set.h"
 extern "C" scanner_t *scanners_builtin[];
 #endif
 

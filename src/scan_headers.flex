@@ -7,7 +7,7 @@
  */
 
 #include "config.h"
-#include "be13_api/bulk_extractor_i.h"
+#include "be20_api/bulk_extractor_i.h"
 
 #include <stdlib.h>
 #include <string.h>

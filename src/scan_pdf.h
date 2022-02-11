@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <memory>
-#include "be13_api/scanner_params.h"
+#include "be20_api/scanner_params.h"
 
 /*
  * The revised PDF extractor is designed to be testable outside of the bulk_extractor framework.

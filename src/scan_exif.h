@@ -1,9 +1,9 @@
 #ifndef SCAN_EXIF_H
 #define SCAN_EXIF_H
 
-#include "be13_api/sbuf.h"
-#include "be13_api/scanner_params.h"
-#include "be13_api/scanner_set.h"
+#include "be20_api/sbuf.h"
+#include "be20_api/scanner_params.h"
+#include "be20_api/scanner_set.h"
 #include "exif_reader.h"                // provides entry_list_t
 #include "jpeg_validator.h"
 

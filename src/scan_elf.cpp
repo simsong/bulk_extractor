@@ -7,7 +7,7 @@
 
 #include "config.h"
 
-#include "be13_api/scanner_params.h"
+#include "be20_api/scanner_params.h"
 
 /* tunable constants */
 size_t sht_null_counter_max = 10;

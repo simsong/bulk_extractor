@@ -5,8 +5,8 @@
 #ifndef _BULK_EXTRACTOR_H_
 #define _BULK_EXTRACTOR_H_
 
-#include "be13_api/scanner_set.h"
-#include "be13_api/aftimer.h"
+#include "be20_api/scanner_set.h"
+#include "be20_api/aftimer.h"
 #include "notify_thread.h"
 
 #include <ostream>

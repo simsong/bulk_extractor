@@ -19,9 +19,9 @@
 
 
 #include "scan_exif.h"
-#include "be13_api/scanner_params.h"
-#include "be13_api/utils.h"
-#include "be13_api/formatter.h"
+#include "be20_api/scanner_params.h"
+#include "be20_api/utils.h"
+#include "be20_api/formatter.h"
 
 #include "dfxml_cpp/src/dfxml_writer.h"
 
