@@ -637,8 +637,6 @@ TEST_CASE("scan_pdf", "[scanners]") {
 
 
 TEST_CASE("scan_vcard", "[scanners]") {
-    /* Make a scanner set with a single scanner and a single command to enable all the scanners.
-     */
     auto *sbufp = map_file( "john_jakes.vcf" );
     auto outdir = test_scanner(scan_vcard, sbufp); // deletes sbuf2
 
@@ -651,8 +649,6 @@ TEST_CASE("scan_vcard", "[scanners]") {
 }
 
 TEST_CASE("scan_wordlist", "[scanners]") {
-    /* Make a scanner set with a single scanner and a single command to enable all the scanners.
-     */
     auto *sbufp = map_file( "john_jakes.vcf" );
     auto outdir = test_scanner(scan_wordlist, sbufp); // deletes sbufp
 
@@ -661,6 +657,14 @@ TEST_CASE("scan_wordlist", "[scanners]") {
     REQUIRE( wordlist_txt[0] == "States" );
     REQUIRE( wordlist_txt[1] == "America" );
     REQUIRE( wordlist_txt[2] == "Company" );
+}
+
+TEST_CASE("scan_winprefetch", "[scanners]") {
+    auto *sbufp = map_file( "test_winprefetch.raw" );
+    auto outdir = test_scanner(scan_winprefetch, sbufp); // deletes sbufp
+
+    auto prefetch_txt = getLines( outdir / "winprefetch.txt");
+    REQUIRE( requireFeature(prefetch_txt, "3584\tRUNDLL32.EXE" ));
 }
 
 TEST_CASE("scan_zip", "[scanners]") {

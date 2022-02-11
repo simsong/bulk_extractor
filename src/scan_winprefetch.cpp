@@ -128,7 +128,6 @@ bool prefetch_record_t::validate(const sbuf_t &sbuf)
         uint32_t section_c_length = sbuf.get32u(0x68);
         sbuf_stream filename_stream( sbuf.slice(section_c_offset));
         while (filename_stream.tell() < section_c_length) {
-            std::cerr << "section_c_offset=" << section_c_offset << " section_c_length=" << section_c_length << " filename_stream.tell()=" << filename_stream.tell() << " sbuf=" << sbuf << "\n";
             std::wstring utf16_filename = filename_stream.getUTF16();
             std::string filename = safe_utf16to8(utf16_filename);
             if (!valid_full_path_name(filename)) return isvalid;
@@ -252,7 +251,7 @@ void scan_winprefetch(scanner_params &sp)
     if (sp.phase==scanner_params::PHASE_INIT){
         sp.info->set_name("winprefetch");
         sp.info->name		= "winprefetch";
-        sp.info->author		= "Bruce Allen";
+        sp.info->author		= "Luis E. Garcia II and Bruce D. Allen";
         sp.info->description	= "Search for Windows Prefetch files";
         sp.info->feature_defs.push_back( feature_recorder_def("winprefetch"));
         sp.info->min_sbuf_size = 64;
@@ -269,7 +268,6 @@ void scan_winprefetch(scanner_params &sp)
 	size_t stop = (sbuf.pagesize > sbuf.bufsize + 8) ? sbuf.bufsize : sbuf.pagesize - 8;
 
 	// iterate through sbuf searching for winprefetch features
-        prefetch_record_t prefetch_record;
 	for (size_t start=0; start < stop; start++) {
 
 	    // check for probable WindowsXP or Windows7 header
@@ -283,7 +281,8 @@ void scan_winprefetch(scanner_params &sp)
 		&& sbuf[start + 7] == 0x41) {
 
 		// create the populated prefetch record and see if it validates
-                if (prefetch_record.validate(sbuf)) {
+                prefetch_record_t prefetch_record;
+                if (prefetch_record.validate(sbuf.slice(start))) {
                     // record the winprefetch entry
                     winprefetch_recorder->write(sbuf.pos0+start, prefetch_record.execution_filename, prefetch_record.to_xml());
                     /* Should really skip to the end of the record we just
