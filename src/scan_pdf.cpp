@@ -23,7 +23,7 @@
 
 #include "scan_pdf.h"
 #include "sbuf_decompress.h"
-#include "be13_api/scanner_params.h"
+#include "be20_api/scanner_params.h"
 #include "image_process.h"
 
 

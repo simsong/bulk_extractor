@@ -5,9 +5,9 @@
 #include <atomic>
 #include <ostream>
 
-#include "be13_api/scanner_set.h"
-#include "be13_api/dfxml_cpp/src/dfxml_writer.h"
-#include "be13_api/dfxml_cpp/src/hash_t.h"
+#include "be20_api/scanner_set.h"
+#include "be20_api/dfxml_cpp/src/dfxml_writer.h"
+#include "be20_api/dfxml_cpp/src/hash_t.h"
 
 #include "image_process.h"
 

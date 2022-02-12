@@ -4,11 +4,11 @@
 
 #include "config.h"
 
-#include "be13_api/scanner_params.h"
-#include "be13_api/scanner_set.h"
-#include "be13_api/regex_vector.h"
-#include "be13_api/utils.h" // needs config.h
-#include "be13_api/dfxml_cpp/src/dfxml_writer.h"
+#include "be20_api/scanner_params.h"
+#include "be20_api/scanner_set.h"
+#include "be20_api/regex_vector.h"
+#include "be20_api/utils.h" // needs config.h
+#include "be20_api/dfxml_cpp/src/dfxml_writer.h"
 
 // anonymous namespace hides symbols from other cpp files (like "static" applied to functions)
 // TODO: make this not a global variable

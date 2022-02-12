@@ -31,8 +31,8 @@
 #include <mutex>
 #include <ctype.h>
 
-#include "be13_api/formatter.h"
-#include "be13_api/utils.h"
+#include "be20_api/formatter.h"
+#include "be20_api/utils.h"
 
 #include "pcap_writer.h"
 #include "scan_net.h"
@@ -118,8 +118,8 @@ struct tcpt_object {
     uint32_t t1;
     uint32_t t2;
     uint32_t t3;
-    struct be13::ip4_addr dst;
-    struct be13::ip4_addr src;
+    struct be20::ip4_addr dst;
+    struct be20::ip4_addr src;
     uint16_t dst_port;
     uint16_t src_port;
 };
@@ -267,7 +267,7 @@ bool scan_net_t::isPowerOfTwo(const uint8_t val)
 }
 
 /* test for obviously bogus Ethernet addresses (heuristic) */
-bool scan_net_t::invalidMAC(const be13::ether_addr *const e)
+bool scan_net_t::invalidMAC(const be20::ether_addr *const e)
 {
     int zero_octets = 0;
     int ff_octets = 0;
@@ -343,7 +343,7 @@ bool scan_net_t::invalidIP(const uint8_t addr[16], sa_family_t family)
 #ifndef INET4_ADDRSTRLEN
 #define INET4_ADDRSTRLEN 64
 #endif
-std::string scan_net_t::ip2string(const struct be13::ip4_addr *const a)
+std::string scan_net_t::ip2string(const struct be20::ip4_addr *const a)
 {
     const uint8_t *b = (const uint8_t *)a;
 
@@ -380,7 +380,7 @@ std::string scan_net_t::ip2string(const uint8_t *addr, sa_family_t family)
 #define MAC_ADDRSTRLEN 256
 #endif
 
-std::string scan_net_t::mac2string(const struct be13::ether_addr *const e)
+std::string scan_net_t::mac2string(const struct be20::ether_addr *const e)
 {
     char addr[MAC_ADDRSTRLEN];
     snprintf(addr,sizeof(addr),"%02X:%02X:%02X:%02X:%02X:%02X",
@@ -408,7 +408,7 @@ std::string scan_net_t::i2str(const int i)
 bool scan_net_t::sanityCheckIP46Header(const sbuf_t &sbuf, size_t pos, scan_net_t::generic_iphdr_t *h, sanityCache_t *sc)
 {
     if (sbuf.get8u_unsafe(pos)==69) {           // v4 20 bytes
-        const struct be13::ip4 *ip = sbuf.get_struct_ptr_unsafe<struct be13::ip4>( pos );
+        const struct be20::ip4 *ip = sbuf.get_struct_ptr_unsafe<struct be20::ip4>( pos );
         if (ip->ip_v == 4){                     // ipv4 packet
             if (ip->ip_hl != 5) return false;	// IPv4 header length is 20 bytes (5 quads) (ignores options)
             //if (sc && sc->find(pos)!=sc->end()) return true; // it's ipv4 and in the cache
@@ -447,7 +447,7 @@ bool scan_net_t::sanityCheckIP46Header(const sbuf_t &sbuf, size_t pos, scan_net_
     }
 
     /* ipv6 attempt */
-    const struct be13::ip6_hdr *ip6 = sbuf.get_struct_ptr_unsafe<struct be13::ip6_hdr>( pos );
+    const struct be20::ip6_hdr *ip6 = sbuf.get_struct_ptr_unsafe<struct be20::ip6_hdr>( pos );
     if ((ip6->ip6_vfc & 0xF0) == 0x60){
 	//only do TCP, UDP and ICMPv6
 	if ( (ip6->ip6_nxt != IPPROTO_TCP) &&
@@ -722,7 +722,7 @@ size_t scan_net_t::carveSockAddrIn(const sbuf_t &sbuf, size_t pos) const
     /* Only use candidate with ports we believe most likely */
     if (!sanePort(in->sin_port)) return 0;
 
-    ip_recorder.write(sbuf.pos0 + pos, ip2string((const be13::ip4_addr *)&(in->sin_addr)), "sockaddr_in");
+    ip_recorder.write(sbuf.pos0 + pos, ip2string((const be20::ip4_addr *)&(in->sin_addr)), "sockaddr_in");
     return sizeof(struct sockaddr_in);
 }
 
@@ -900,7 +900,7 @@ void scan_net(scanner_params &sp)
         sp.get_scanner_config("carve_net_memory",&opt_carve_net_memory,"Carve network  memory structures");
         sp.get_scanner_config("min_carve_packet_bytes",&opt_min_carve_packet_bytes,"Smallest network packet to carve");
 
-	assert(sizeof(struct be13::ip4)==20);	// we've had problems on some systems
+	assert(sizeof(struct be20::ip4)==20);	// we've had problems on some systems
         sp.info->set_name("net");
         sp.info->author         = "Simson Garfinkel and Rob Beverly";
         sp.info->description    = "Scans for IP packets";

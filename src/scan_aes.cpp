@@ -32,8 +32,8 @@
 #include <string.h>
 #include <inttypes.h>
 
-#include "be13_api/scanner_params.h"
-#include "be13_api/scanner_set.h"
+#include "be20_api/scanner_params.h"
+#include "be20_api/scanner_set.h"
 
 /* old aes.h file */
 

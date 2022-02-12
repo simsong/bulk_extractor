@@ -5,7 +5,7 @@
 #include <filesystem>
 #include <iostream>
 
-#include "be13_api/scanner_params.h"
+#include "be20_api/scanner_params.h"
 
 /* pcap_writer:
  * Encapsulates the logic of writing pcap files.

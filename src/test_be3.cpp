@@ -20,12 +20,12 @@
 #include <string_view>
 #include <sstream>
 
-#include "be13_api/catch.hpp"
+#include "be20_api/catch.hpp"
 
 #include "dfxml_cpp/src/dfxml_writer.h"
-#include "be13_api/path_printer.h"
-#include "be13_api/scanner_set.h"
-#include "be13_api/utils.h"             // needs config.h
+#include "be20_api/path_printer.h"
+#include "be20_api/scanner_set.h"
+#include "be20_api/utils.h"             // needs config.h
 
 #include "test_be.h"
 
@@ -326,7 +326,7 @@ TEST_CASE("e2e-email_test", "[end-to-end]") {
  */
 
 TEST_CASE("restarter", "[restarter]") {
-    scanner_config   sc;   // config for be13_api
+    scanner_config   sc;   // config for be20_api
     sc.input_fname = test_dir() / "1mb_fat32.dmg";
     sc.outdir = NamedTemporaryDirectory();
 

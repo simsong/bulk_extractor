@@ -5,7 +5,7 @@ coverage:
 
 
 ignore:
-  - "be13_api/catch.hpp"
-  - "be13_api/utf8.h"
-  - "be13_api/utf8/*"
+  - "be20_api/catch.hpp"
+  - "be20_api/utf8.h"
+  - "be20_api/utf8/*"
   - "rar/*"

@@ -41,8 +41,8 @@
  * seek_block(block_number) - seeks to a block number n where 0 <= n < max_blocks()
  */
 
-#include "be13_api/sbuf.h"
-#include "be13_api/abstract_image_reader.h"
+#include "be20_api/sbuf.h"
+#include "be20_api/abstract_image_reader.h"
 
 #include <filesystem>
 #include <memory>

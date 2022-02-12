@@ -1,7 +1,7 @@
 bin_PROGRAMS   = bulk_extractor test_be
 
 CLEANFILES     = scan_accts.cpp scan_base16.cpp scan_email.cpp scan_gps.cpp \
-	be13_api/config.h be13_api/dfxml/src/config.h config.h *.d *~
+	be20_api/config.h be20_api/dfxml/src/config.h config.h *.d *~
 
 TESTS = test_be
 check_PROGRAMS = test_be
@@ -9,14 +9,14 @@ check_PROGRAMS = test_be
 # bring in defs from two included projects
 # note: don't be clever and use the $variable on the Include line. it doesn't work
 
-BE13_API_DIR= be13_api
-include be13_api/Makefile.defs
+BE20_API_DIR= be20_api
+include be20_api/Makefile.defs
 include rar/Makefile.defs
 
-# So that relative imports from be13_api work
-AM_CPPFLAGS = -I${top_srcdir}/src/be13_api
+# So that relative imports from be20_api work
+AM_CPPFLAGS = -I${top_srcdir}/src/be20_api
 AUTOMAKE_OPTIONS = subdir-objects
-EXTRA_DIST = .gitignore $(BE13_API_EXTRA_DIST)
+EXTRA_DIST = .gitignore $(BE20_API_EXTRA_DIST)
 
 TSK3INCS = \
 	tsk3_fatdirs.h\
@@ -106,7 +106,7 @@ endif
 
 bulk_extractor_parts = \
         $(TSK3INCS)  \
-	$(BE13_API_SRC) \
+	$(BE20_API_SRC) \
 	bulk_extractor_restarter.h \
 	bulk_extractor_scanners.h \
 	base64_forensic.cpp \
@@ -125,7 +125,7 @@ bulk_extractor_parts = \
 
 
 bulk_extractor_SOURCES = $(bulk_extractor_parts) $(scanners_builtin) main.cpp
-test_be_SOURCES = $(bulk_extractor_parts) $(scanners_builtin) be13_api/catch.hpp test_be.h test_be1.cpp test_be2.cpp test_be3.cpp
+test_be_SOURCES = $(bulk_extractor_parts) $(scanners_builtin) be20_api/catch.hpp test_be.h test_be1.cpp test_be2.cpp test_be3.cpp
 
 
 runs.txt: test_be tests/run_each.sh

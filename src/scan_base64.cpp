@@ -7,7 +7,7 @@
 #include <cstring>
 
 #include "config.h"
-#include "be13_api/scanner_params.h"
+#include "be20_api/scanner_params.h"
 
 #include "base64_forensic.h"
 #include "scan_base64.h"

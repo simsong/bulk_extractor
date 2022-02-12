@@ -16,8 +16,8 @@
 
 
 #include "utf8.h"
-#include "be13_api/scanner_params.h"
-#include "be13_api/scanner_set.h"
+#include "be20_api/scanner_params.h"
+#include "be20_api/scanner_set.h"
 
 #define SECTOR_SIZE 512
 #define CLUSTER_SIZE 4096

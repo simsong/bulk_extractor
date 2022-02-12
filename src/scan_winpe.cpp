@@ -22,8 +22,8 @@
 
 
 #include "config.h"
-#include "be13_api/utils.h"  // needs config.h
-#include "be13_api/scanner_params.h"
+#include "be20_api/utils.h"  // needs config.h
+#include "be20_api/scanner_params.h"
 
 /**
  * XML_SPEC

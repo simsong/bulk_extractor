@@ -9,15 +9,16 @@
  */
 
 #include "config.h"
-#include "be13_api/scanner_params.h"
+#include "be20_api/scanner_params.h"
 
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <stdlib.h>
 #include <strings.h>
-//#include <cerrno>
 #include <sstream>
+
+#define FEATURE_FILE_NAME "kml_carved"
 
 
 #include "utf8.h"
@@ -28,18 +29,18 @@ void scan_kml(scanner_params &sp)
     std::string myString;
     sp.check_version();
     if(sp.phase==scanner_params::PHASE_INIT){
-        sp.info->set_name("kml");
+        sp.info->set_name( FEATURE_FILE_NAME );
         sp.info->author         = "Simson Garfinkel ";
         sp.info->description    = "Scans for KML files";
         sp.info->scanner_version= "1.0";
         struct feature_recorder_def::flags_t carve_flag;
         carve_flag.carve = true;
-        sp.info->feature_defs.push_back( feature_recorder_def("kml", carve_flag));
+        sp.info->feature_defs.push_back( feature_recorder_def( FEATURE_FILE_NAME , carve_flag));
 	return;
     }
     if(sp.phase==scanner_params::PHASE_SCAN){
 	const sbuf_t &sbuf = *(sp.sbuf);
-	feature_recorder &kml_recorder = sp.named_feature_recorder("kml");
+	feature_recorder &kml_recorder = sp.named_feature_recorder( FEATURE_FILE_NAME );
 
 	// Search for <xml BEGIN:VCARD\r in the sbuf
 	// we could do this with a loop, or with

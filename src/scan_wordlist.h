@@ -2,8 +2,8 @@
 #define SCAN_WORDLIST_H
 
 #include <filesystem>
-#include "be13_api/scanner_params.h"
-#include "be13_api/atomic_set.h"
+#include "be20_api/scanner_params.h"
+#include "be20_api/atomic_set.h"
 
 
 /* NOTE: Wordlist is a singleton!

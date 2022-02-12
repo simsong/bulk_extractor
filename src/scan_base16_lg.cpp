@@ -5,7 +5,7 @@
 
 #include <string>
 
-#include "be13_api/scanner_params.h"
+#include "be20_api/scanner_params.h"
 #include "histogram.h"
 #include "pattern_scanner.h"
 

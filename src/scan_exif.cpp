@@ -19,9 +19,9 @@
 
 
 #include "scan_exif.h"
-#include "be13_api/scanner_params.h"
-#include "be13_api/utils.h"
-#include "be13_api/formatter.h"
+#include "be20_api/scanner_params.h"
+#include "be20_api/utils.h"
+#include "be20_api/formatter.h"
 
 #include "dfxml_cpp/src/dfxml_writer.h"
 
@@ -506,13 +506,19 @@ void scan_exif ( scanner_params &sp )
 	sp.info->scanner_version = "1.1";
         sp.info->description     = "Search for EXIF sections in JPEG files";
         sp.info->min_sbuf_size   = jpeg_validator::MIN_JPEG_SIZE;
+
         struct feature_recorder_def::flags_t xml_flag;
         xml_flag.xml = true;
+	sp.info->feature_defs.push_back( feature_recorder_def( "exif", xml_flag ) );
+
+	sp.info->feature_defs.push_back( feature_recorder_def( "gps" ) );
+
         struct feature_recorder_def::flags_t carve_flag;
         carve_flag.carve = true;
-	sp.info->feature_defs.push_back( feature_recorder_def( "exif", xml_flag ) );
-	sp.info->feature_defs.push_back( feature_recorder_def( "gps" ) );
-	sp.info->feature_defs.push_back( feature_recorder_def( "jpeg_carved", carve_flag ) );
+        auto jpeg_def = feature_recorder_def("jpeg_carved", carve_flag);
+
+        jpeg_def.default_carve_mode = feature_recorder_def::carve_mode_t::CARVE_ENCODED;
+	sp.info->feature_defs.push_back( jpeg_def );
         sp.get_scanner_config( "exif_debug",&exif_debug,"debug exif decoder" );
 	return;
     }

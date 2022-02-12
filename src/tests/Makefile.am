@@ -48,5 +48,6 @@ EXTRA_DIST = \
 	test_hello.512b.gz \
 	test_hello.gz \
 	test_json.txt \
+	test_winprefetch.raw \
 	testfilex.docx \
 	utf16_urls.bin

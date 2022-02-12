@@ -8,9 +8,9 @@
 #include <iterator>
 #include <numeric>
 
-#include "be13_api/scanner_params.h"
+#include "be20_api/scanner_params.h"
 
-//#include "be13_api/beregex.h"
+//#include "be20_api/beregex.h"
 #include "histogram.h"
 #include "pattern_scanner.h"
 

@@ -11,7 +11,7 @@
 #include <cassert>
 
 #include "config.h"
-#include "be13_api/scanner_params.h"
+#include "be20_api/scanner_params.h"
 
 #include "image_process.h"
 #include "scan_msxml.h"

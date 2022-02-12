@@ -31,8 +31,8 @@ SOFTWARE.
 #include "config.h"
 
 #include <cstdlib>
-#include "be13_api/scanner_params.h"
-#include "be13_api/scanner_set.h"
+#include "be20_api/scanner_params.h"
+#include "be20_api/scanner_set.h"
 
 
 class json_checker {

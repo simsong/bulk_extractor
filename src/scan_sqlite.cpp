@@ -9,12 +9,11 @@
 #include <string>
 #include <stdlib.h>
 #include <strings.h>
-//#include <cerrno>
 #include <sstream>
 
 
 #include "config.h"
-#include "be13_api/scanner_params.h"
+#include "be20_api/scanner_params.h"
 
 
 /**

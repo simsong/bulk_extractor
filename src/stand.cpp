@@ -21,8 +21,8 @@
 #include <sstream>
 #include <vector>
 
-#include "be13_api/scanner_set.h"
-#include "be13_api/utils.h"
+#include "be20_api/scanner_set.h"
+#include "be20_api/utils.h"
 
 /**
  * Stand alone tester.

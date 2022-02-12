@@ -33,12 +33,12 @@ int _CRT_fmode = _O_BINARY;
 #include "dfxml_cpp/src/dfxml_writer.h"
 #include "dfxml_cpp/src/hash_t.h"  // needs config.h
 
-#include "be13_api/aftimer.h"
-#include "be13_api/scanner_params.h"
-#include "be13_api/scanner_set.h"
-#include "be13_api/utils.h"             // needs config.h
-#include "be13_api/word_and_context_list.h"
-#include "be13_api/path_printer.h"
+#include "be20_api/aftimer.h"
+#include "be20_api/scanner_params.h"
+#include "be20_api/scanner_set.h"
+#include "be20_api/utils.h"             // needs config.h
+#include "be20_api/word_and_context_list.h"
+#include "be20_api/path_printer.h"
 
 #include "bulk_extractor.h"
 #include "image_process.h"
@@ -211,7 +211,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     bulk_extractor_help += " (Includes LightGrep support)";
 #endif
 
-    scanner_config   sc;   // config for be13_api
+    scanner_config   sc;   // config for be20_api
     cxxopts::Options options( "bulk_extractor", bulk_extractor_help.c_str());
     options.set_width( notify_thread::terminal_width( 80 ));
     options.add_options()

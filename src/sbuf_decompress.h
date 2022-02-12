@@ -8,7 +8,7 @@
 #ifndef SBUF_DECOMPRESS_H
 #define SBUF_DECOMPRESS_H
 
-#include "be13_api/sbuf.h"
+#include "be20_api/sbuf.h"
 
 struct sbuf_decompress {
 
