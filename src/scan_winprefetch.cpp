@@ -126,12 +126,15 @@ bool prefetch_record_t::validate(const sbuf_t &sbuf)
         // get the list of files from Section C
         uint32_t section_c_offset = sbuf.get32u(0x64);
         uint32_t section_c_length = sbuf.get32u(0x68);
-        sbuf_stream filename_stream( sbuf.slice(section_c_offset));
-        while (filename_stream.tell() < section_c_length) {
-            std::wstring utf16_filename = filename_stream.getUTF16();
-            std::string filename = safe_utf16to8(utf16_filename);
-            if (!valid_full_path_name(filename)) return isvalid;
-            files.push_back(filename);
+        {
+            auto section = sbuf.slice(section_c_offset);
+            sbuf_stream filename_stream( section  );
+            while (filename_stream.tell() < section_c_length) {
+                std::wstring utf16_filename = filename_stream.getUTF16();
+                std::string filename = safe_utf16to8(utf16_filename);
+                if (!valid_full_path_name(filename)) return isvalid;
+                files.push_back(filename);
+            }
         }
 
         // Process Section D
@@ -154,7 +157,8 @@ bool prefetch_record_t::validate(const sbuf_t &sbuf)
         } else {
             // calculate a rough maximum number of bytes for directory entries
             size_t      upper_max = prefetch_file_length - directory_offset;
-            sbuf_stream directory_stream = sbuf_stream( sbuf.slice(directory_offset));
+            auto directory = sbuf.slice(directory_offset);
+            sbuf_stream directory_stream = sbuf_stream( directory );
 
             for (uint32_t i=0; i<num_directory_entries; i++) {
                 // break if obviously out of range
@@ -282,7 +286,8 @@ void scan_winprefetch(scanner_params &sp)
 
 		// create the populated prefetch record and see if it validates
                 prefetch_record_t prefetch_record;
-                if (prefetch_record.validate(sbuf.slice(start))) {
+                auto prefetch_sbuf = sbuf.slice(start);
+                if (prefetch_record.validate( prefetch_sbuf )) {
                     // record the winprefetch entry
                     winprefetch_recorder->write(sbuf.pos0+start, prefetch_record.execution_filename, prefetch_record.to_xml());
                     /* Should really skip to the end of the record we just
