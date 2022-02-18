@@ -1,5 +1,4 @@
 #!/bin/bash
-LIBEWF_URL=https://github.com/libyal/libewf/releases/download/20171104/libewf-experimental-20171104.tar.gz
 cat <<EOF
 *******************************************************************
         Configuring Amazon Linux for compiling bulk_extractor
@@ -29,6 +28,7 @@ else
     changed_dir="false"
 fi
 cd $DIR
+source paths.bash
 
 MPKGS="autoconf automake flex gcc gcc-c++ git libtool "
 MPKGS+="md5deep wget zlib-devel "

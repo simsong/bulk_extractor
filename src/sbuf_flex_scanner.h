@@ -20,9 +20,9 @@
 #define YY_NO_INPUT
 
 #include "config.h"
-#include "be13_api/sbuf.h"
-#include "be13_api/scanner_params.h"
-#include "be13_api/scanner_set.h"
+#include "be20_api/sbuf.h"
+#include "be20_api/scanner_params.h"
+#include "be20_api/scanner_set.h"
 
 /* should this become a template? */
 class sbuf_scanner {

@@ -4,9 +4,9 @@
  * created:  2013-03-18
  */
 #include "config.h"
-#include "be13_api/scanner_params.h"
-#include "be13_api/utils.h"
-#include "be13_api/formatter.h"
+#include "be20_api/scanner_params.h"
+#include "be20_api/utils.h"
+#include "be20_api/formatter.h"
 
 static int xor_mask = 255;
 extern "C"

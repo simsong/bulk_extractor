@@ -7,7 +7,7 @@
 #include "config.h"
 
 #include "sbuf_decompress.h"
-#include "be13_api/scanner_params.h"
+#include "be20_api/scanner_params.h"
 
 uint32_t   gzip_max_uncompr_size = 256*1024*1024; // don't decompress objects larger than this
 

@@ -7,7 +7,7 @@
 #ifndef JPEG_VALIDTOR_H
 #define JPEG_VALIDTOR_H
 
-#include "be13_api/sbuf.h"
+#include "be20_api/sbuf.h"
 
 extern bool exif_debug;
 

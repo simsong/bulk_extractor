@@ -24,8 +24,8 @@
 #include "tsk3_fatdirs.h"
 #include "utf8.h"
 #include "dfxml_cpp/src/dfxml_writer.h"     // requires config.h
-#include "be13_api/utils.h" // for microsoftDateToISODate, requires config.h
-#include "be13_api/scanner_params.h"
+#include "be20_api/utils.h" // for microsoftDateToISODate, requires config.h
+#include "be20_api/scanner_params.h"
 
 
 /* fat32 tuning parameters for weirdness. Each of these define something weird. If too much is weird, it's probably not a FAT32 directory entry.. */

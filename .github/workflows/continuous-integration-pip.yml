@@ -4,6 +4,7 @@
 # 2020-06-27 - slg - expanded to G++ for MacOS
 # 2020-07-03 - slg - ported to be13_api; removed python (be13_api doesn't use python)
 # 2021-05-07 - slg - Started work again
+# 2022-02-10 - slg - renamed be20_api. Our work here is done.
 
 name: BE2 CI (c++17)
 on: [push]
@@ -71,7 +72,7 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         run: |
           cd src
-          gcov-9 -o . *.cpp be13_api/*.cpp
+          gcov-9 -o . *.cpp be20_api/*.cpp
           bash <(curl -s https://codecov.io/bash)
 
           #

@@ -10,10 +10,10 @@
 #include "config.h"
 #include "scan_ccns2.h"
 
-#include "be13_api/utils.h"
+#include "be20_api/utils.h"
 #include "dfxml_cpp/src/hash_t.h"
 
-#include "be13_api/scanner_params.h"
+#include "be20_api/scanner_params.h"
 
 int scan_ccns2_debug=0;
 

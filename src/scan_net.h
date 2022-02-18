@@ -22,11 +22,11 @@
 typedef char sa_family_t;
 #endif
 
-#include "be13_api/utils.h" // needs config.h
-#include "be13_api/scanner_params.h"
-#include "be13_api/sbuf.h"
-#include "be13_api/packet_info.h"
-#include "be13_api/feature_recorder.h"
+#include "be20_api/utils.h" // needs config.h
+#include "be20_api/scanner_params.h"
+#include "be20_api/sbuf.h"
+#include "be20_api/packet_info.h"
+#include "be20_api/feature_recorder.h"
 #include "pcap_writer.h"
 
 struct scan_net_t {
@@ -60,21 +60,21 @@ struct scan_net_t {
 
     /* pseudo-header of our making */
     struct macip {
-        be13::ether_addr ether_dhost;
-        be13::ether_addr ether_shost;
+        be20::ether_addr ether_dhost;
+        be20::ether_addr ether_shost;
         uint16_t ether_type;
         uint8_t ip_version;                    // ip header typically follows (4|header_len) or (6|traffic_class top 4 bits)
     };
 
     /* testing functions */
     static bool isPowerOfTwo(const uint8_t val);
-    static bool invalidMAC(const be13::ether_addr *const e);
+    static bool invalidMAC(const be20::ether_addr *const e);
     static bool invalidIP4( const uint8_t *const cc);
     static bool invalidIP6(const uint16_t addr[8]);
     static bool invalidIP(const uint8_t addr[16], sa_family_t family);
-    static std::string ip2string(const struct be13::ip4_addr *const a);
+    static std::string ip2string(const struct be20::ip4_addr *const a);
     static std::string ip2string(const uint8_t *addr, sa_family_t family);
-    static std::string mac2string(const struct be13::ether_addr *const e);
+    static std::string mac2string(const struct be20::ether_addr *const e);
     static inline std::string i2str(const int i);
     typedef std::unordered_set<size_t> sanityCache_t;
     static bool sanityCheckIP46Header(const sbuf_t &sbuf, size_t pos, generic_iphdr_t *h, sanityCache_t *sc);

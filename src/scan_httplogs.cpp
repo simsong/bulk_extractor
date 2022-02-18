@@ -9,7 +9,7 @@
 
 #include "config.h"
 
-#include "be13_api/scanner_params.h"
+#include "be20_api/scanner_params.h"
 
 /* We accept printable ASCII characters and \n, \r only */
 bool isok(const char chr)

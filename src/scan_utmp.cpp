@@ -10,12 +10,11 @@
 #include <string>
 #include <stdlib.h>
 #include <strings.h>
-//#include <cerrno>
 #include <sstream>
 #include <vector>
 
 #include "config.h"
-#include "be13_api/scanner_params.h"
+#include "be20_api/scanner_params.h"
 
 #include "utf8.h"
 

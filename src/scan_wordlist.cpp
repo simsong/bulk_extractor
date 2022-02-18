@@ -18,9 +18,9 @@
 
 
 #include "config.h"
-#include "be13_api/utils.h"
-#include "be13_api/scanner_params.h"
-#include "be13_api/scanner_set.h"
+#include "be20_api/utils.h"
+#include "be20_api/scanner_params.h"
+#include "be20_api/scanner_set.h"
 #include "scan_wordlist.h"
 
 #if defined(HAVE_LIBSQLITE3) && defined(HAVE_SQLITE3_H)

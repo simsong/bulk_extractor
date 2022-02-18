@@ -1,7 +1,7 @@
 #ifndef SCAN_CCNS2_H
 #define SCAN_CCNS2_H
 
-#include "be13_api/sbuf.h"
+#include "be20_api/sbuf.h"
 
 /* scan_ccns2.cpp --- here because it's used in both scan_accts.flex and scan_ccns2.cpp
  */
