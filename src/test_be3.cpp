@@ -70,7 +70,7 @@ int argv_count(const char **argv)
 
 int run_be(std::ostream &cout, std::ostream &cerr, const char **argv)
 {
-    setenv("RUNNING_UNDER_CATCH","1",1);
+    RUNNING_UNDER_CATCH=true;
     auto t0 = time(0);
     int ret = bulk_extractor_main(cout, cerr, argv_count(argv), const_cast<char * const *>(argv));
     auto t  = time(0) - t0;

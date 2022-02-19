@@ -18,17 +18,16 @@ namespace {
         find_list.push_back("(" + pat + ")"); // make a group
     }
 
-    void process_find_file(scanner_params &sp, const char *findfile) {
+    void process_find_file(scanner_params &sp, std::filesystem::path findfile) {
         std::ifstream in;
 
-        in.open(findfile,std::ifstream::in);
+        in.open(findfile, std::ifstream::in);
         if(!in.good()) {
             std::cerr << "Cannot open " << findfile << "\n";
-            throw std::runtime_error(findfile);
+            throw std::runtime_error(Formatter() << findfile);
         }
         if (sp.ss->writer) {
-            std::string attribute = std::string("path='") + std::string(findfile) + std::string("'");
-            sp.ss->writer->push("process_find_file", attribute);
+            sp.ss->writer->push("process_find_file", Formatter() << findfile);
         }
         while(!in.eof()){
             std::string line;
@@ -66,7 +65,7 @@ void scan_find(scanner_params &sp)
             if (sp.ss->writer) { sp.ss->writer->xmlout("find_pattern", it); }
         }
         for (const auto &it : sp.ss->find_files()) {
-            process_find_file(sp, it.c_str());
+            process_find_file(sp, it);
         }
     }
 

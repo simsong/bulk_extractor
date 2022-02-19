@@ -140,6 +140,7 @@ void bulk_extractor_set_debug()
     sbuf_t::debug_leak            = getenv_debug("DEBUG_SBUF_LEAK");
 }
 
+bool RUNNING_UNDER_CATCH = false;
 int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char * const *argv)
 {
     bulk_extractor_set_debug();
@@ -150,7 +151,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     const auto original_argv = argv;
 
     // Only print these warnings if not running under catch
-    if (getenv("RUNNING_UNDER_CATCH")==nullptr){
+    if (RUNNING_UNDER_CATCH == false ){
 #ifdef HAVE_ADDRESS_SANITIZER
         cerr << "*** compiled with address sanitizer" << std::endl;
 #endif
@@ -413,6 +414,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     } catch ( cxxopts::option_has_no_value_exception &e ) { }
 
     try {
+        /* For each 'find_file' option, add its path to the scanner config */
         for ( const auto &it : result["find_file"].as<std::vector<std::string>>() ) {
             sc.add_find_path( it );
         }
