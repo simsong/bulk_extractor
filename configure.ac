@@ -8,7 +8,7 @@
 # and http://www.bioinf.uni-freiburg.de/~mmann/HowTo/automake.html
 
 AC_PREREQ([2.69])
-AC_INIT([BULK_EXTRACTOR],[2.0.0],[bugs@digitalcorpora.org])
+AC_INIT([BULK_EXTRACTOR],[2.0.1],[bugs@digitalcorpora.org])
 AC_CONFIG_MACRO_DIR(m4)
 AC_CONFIG_AUX_DIR([build-aux])
 ################################################################
@@ -16,8 +16,8 @@ AC_CONFIG_AUX_DIR([build-aux])
 
 m4_include([m4/slg_mingw_support.m4])
 m4_include([m4/slg_searchdirs.m4])
-m4_include([src/be20_api/dfxml_cpp/src/dfxml_configure.m4])
 m4_include([src/be20_api/be20_configure.m4])
+m4_include([src/be20_api/dfxml_cpp/src/dfxml_configure.m4])
 
 AC_CONFIG_FILES([Makefile doc/Makefile doc/latex_manuals/Makefile src/Makefile src/tests/Makefile man/Makefile \
                  python/Makefile specfiles/Makefile specfiles/bulk_extractor.spec.m4 tests/Makefile ])
@@ -43,8 +43,6 @@ AC_LANG_PUSH(C++)
 AX_CXX_COMPILE_STDCXX([17], [noext], [mandatory])
 AC_CHECK_HEADER([filesystem], [], AC_MSG_ERROR([<filesystem> header not installed; bulk_extractor requires a C++ compiler with a full C++17 implementation]))
 AC_LANG_POP()
-
-
 
 # Turn on all warnings
 m4_include([src/be20_api/m4/slg_gcc_all_warnings.m4])

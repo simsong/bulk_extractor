@@ -18,6 +18,7 @@
 [[noreturn]] void debug_help();
 void validate_path(const std::filesystem::path fn);
 void bulk_extractor_set_debug();
+extern bool RUNNING_UNDER_CATCH;
 int bulk_extractor_main(std::ostream &cout, std::ostream &cerr, int argc,char * const *argv);
 
 #endif
