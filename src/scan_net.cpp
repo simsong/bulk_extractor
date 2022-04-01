@@ -595,7 +595,7 @@ size_t scan_net_t::carveIPFrame(const sbuf_t &sbuf, size_t pos, sanityCache_t *s
      */
 
     /* IPv4 has a checksum; use it if we can */
-    if (h.checksum_valid==false && opt_report_checksum_bad==false) return 0; // user does not want invalid checksums
+    if (h.family==AF_INET && h.checksum_valid==false && opt_report_checksum_bad==false) return 0; // user does not want invalid checksums
 
     /* A valid IPframe but not proceeded by an Ethernet or a pcap header. */
     uint8_t buf[pcap_writer::PCAP_MAX_PKT_LEN+14];
