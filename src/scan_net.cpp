@@ -127,7 +127,7 @@ struct tcpt_object {
 /* create a bulk_extractor specific tcp structure to avoid
    FAVOR_BSD type differences among systems */
 struct be_tcphdr {
-    uint16_t th_sport;
+    uint16_t th_sport;                  // network order; use ntohs() to read
     uint16_t th_dport;
     uint32_t th_seq;
     uint32_t th_ack;
@@ -139,7 +139,7 @@ struct be_tcphdr {
 };
 
 struct be_udphdr {
-    uint16_t uh_sport;
+    uint16_t uh_sport;                  // network order; use ntohs() to read
     uint16_t uh_dport;
     uint16_t uh_ulen;
     uint16_t uh_sum;
@@ -486,6 +486,7 @@ bool scan_net_t::sanityCheckIP46Header(const sbuf_t &sbuf, size_t pos, scan_net_
                 const struct be_udphdr *udp = sbuf.get_struct_ptr_unsafe<struct be_udphdr>( pos+40 );
 
                 /* udp chksum is at byte offset 6 from udp hdr + 40 w/ pseudo hdr */
+                std::cerr << "checksum: " << scan_net_t::IPv6L3Chksum(sbuf, pos, 46) << " udp->uh_sum: " << udp->uh_sum << "\n";
                 h->checksum_valid = (udp->uh_sum == scan_net_t::IPv6L3Chksum(sbuf, pos, 46));
             }
             break;
@@ -595,7 +596,7 @@ size_t scan_net_t::carveIPFrame(const sbuf_t &sbuf, size_t pos, sanityCache_t *s
      */
 
     /* IPv4 has a checksum; use it if we can */
-    if (h.family==AF_INET && h.checksum_valid==false && opt_report_checksum_bad==false) return 0; // user does not want invalid checksums
+    if (h.checksum_valid==false && opt_report_checksum_bad==false) return 0; // user does not want invalid checksums
 
     /* A valid IPframe but not proceeded by an Ethernet or a pcap header. */
     uint8_t buf[pcap_writer::PCAP_MAX_PKT_LEN+14];
