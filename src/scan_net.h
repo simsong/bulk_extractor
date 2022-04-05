@@ -94,7 +94,7 @@ struct scan_net_t {
     feature_recorder &ether_recorder;
 
     static uint16_t ip4_cksum(const sbuf_t &sbuf, size_t pos, size_t len);
-    static uint16_t ip6_cksum(const sbuf_t &sbuf, size_t pos);
+    static bool ip6_cksum_valid(const sbuf_t &sbuf, size_t pos); // works for UDP
     static uint16_t IPv6L3Chksum(const sbuf_t &sbuf, size_t pos, u_int chksum_byteoffset);
 
     /* Header for the PCAP file */

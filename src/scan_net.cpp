@@ -198,16 +198,12 @@ uint16_t scan_net_t::ip4_cksum(const sbuf_t &sbuf, size_t pos, size_t len)
     return ~sum;
 }
 
-//TODO: Create a 1s complement counter.
-//Eliminate the loop. Just add things in.
-
-
 /* Simson's easy-to-understand ipv6 checksum algorithm.
  * Designed for correctness, not for speed
  * ipv6 header starts at sbuf+pos
  *
  */
-uint16_t scan_net_t::ip6_cksum(const sbuf_t &sbuf, size_t pos)
+bool scan_net_t::ip6_cksum_valid(const sbuf_t &sbuf, size_t pos)
 {
     if (sbuf.bufsize < pos + 46) return 0;             // packet to small; should not have been called
     const struct be20::ip6_hdr *ip6 = sbuf.get_struct_ptr_unsafe<struct be20::ip6_hdr>( pos );
@@ -215,6 +211,7 @@ uint16_t scan_net_t::ip6_cksum(const sbuf_t &sbuf, size_t pos)
     if (sbuf.bufsize < pos + ip_payload_len) return 0; // don't have enough of the packet
 
     if (ip6->ip6_nxt() == IPPROTO_UDP) {
+        if (sbuf.bufsize < pos + 48) return 0;   // not enough room for udp header
         class be20::adder1 sum;
         for (size_t offset = 8; offset < 40; offset += 2 ){
             sum.add( sbuf.get16uBE_unsafe( pos + offset )); // first get the source and destinations
@@ -231,7 +228,7 @@ uint16_t scan_net_t::ip6_cksum(const sbuf_t &sbuf, size_t pos)
         if (ip_payload_len & 0x0001) {
             sum.add( sbuf[pos + ip_payload_len - 1] );
         }
-        return sum.chksum();
+        return sum.chksum() == sbuf.get16uBE_unsafe( pos + 46);
     }
     return (0);
 }
