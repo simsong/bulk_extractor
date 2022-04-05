@@ -56,6 +56,8 @@ struct scan_net_t {
         uint16_t payload_len {}; 	/* IP total len - IP hdr */
         bool checksum_valid {false};  // if computed checksum was valid
         bool is_4or6() const { return family==AF_INET || family==AF_INET6;};
+        bool is_4() const { return family==AF_INET;};
+        bool is_6() const { return family==AF_INET6;};
     } generic_iphdr_t;
 
     /* pseudo-header of our making */
@@ -92,6 +94,7 @@ struct scan_net_t {
     feature_recorder &ether_recorder;
 
     static uint16_t ip4_cksum(const sbuf_t &sbuf, size_t pos, size_t len);
+    static uint16_t ip6_cksum(const sbuf_t &sbuf, size_t pos);
     static uint16_t IPv6L3Chksum(const sbuf_t &sbuf, size_t pos, u_int chksum_byteoffset);
 
     /* Header for the PCAP file */
