@@ -86,9 +86,6 @@ void scan_lightgrep(struct scanner_params &sp) {
           // lg.regcomp();
             break;
         }
-    case scanner_params::PHASE_ENABLED:
-        std::cerr << "scan_lightgrep Enabled called\n";
-        break;
     case scanner_params::PHASE_SCAN:
         std::cerr << "scan_lightgrep Scan called on " << sp.sbuf->pos0 << "\n";
         // LightgrepController::Get().scan(sp);
