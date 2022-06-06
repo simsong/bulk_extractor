@@ -33,6 +33,7 @@ TSK3INCS = \
 	tsk3/vs/tsk_vs.h
 
 lightgrep_scanners = \
+	lightgrep_controller.cpp \
 	scan_lightgrep.cpp
 
 

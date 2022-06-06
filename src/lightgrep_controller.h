@@ -3,10 +3,10 @@
 
 class LightgrepController {
 public:
-    LightgrepController() {}
+    LightgrepController();
 
-    void setup() {}
-    void teardown() {}
+    void setup();
+    void teardown();
 };
 
 #endif
