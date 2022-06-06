@@ -64,9 +64,18 @@ extern "C"
 void scan_lightgrep(struct scanner_params &sp) {
     switch (sp.phase) {
     case scanner_params::PHASE_INIT:
-        // Scanner.startup(sp);
-        // ProcessHit = static_cast<CallbackFnType>(&FindScanner::processHit);
-        break;
+        {
+            sp.info->set_name("lightgrep");
+            sp.info->name       = "lightgrep";
+            sp.info->author         = "Jon Stewart";
+            sp.info->description    = "Search for multiple regular expressions in different encodings";
+            sp.info->scanner_version= "1.1";
+            sp.info->scanner_flags.find_scanner = true; // this is a find scanner
+            sp.info->feature_defs.push_back( feature_recorder_def("lightgrep"));
+            auto lowercase = histogram_def::flags_t(); lowercase.lowercase = true;
+            sp.info->histogram_defs.push_back( histogram_def("lightgrep", "lightgrep", "", "","histogram", lowercase));
+            break;
+        }
     case scanner_params::PHASE_INIT2:
         {
           // Scanner.init(sp);

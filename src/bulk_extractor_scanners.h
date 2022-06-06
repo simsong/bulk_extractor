@@ -68,5 +68,5 @@ SCANNER(zip)
 //SCANNER(base16_lg)
 //SCANNER(email_lg)
 //SCANNER(gps_lg)
-//SCANNER(lightgrep)
+SCANNER(lightgrep)
 #endif
