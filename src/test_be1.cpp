@@ -33,6 +33,7 @@
 #include "bulk_extractor_scanners.h"
 #include "exif_reader.h"
 #include "image_process.h"
+#include "lightgrep_controller.h"
 #include "jpeg_validator.h"
 #include "phase1.h"
 #include "sbuf_decompress.h"
@@ -675,4 +676,13 @@ TEST_CASE("scan_zip", "[scanners]") {
     REQUIRE( std::filesystem::exists( outdir / "zip/000/testfilex.docx____-0-ZIP-0__Content_Types_.xml") == true);
     REQUIRE( requireFeature(email_txt,"1771-ZIP-402\tuser_docx@microsoftword.com"));
     REQUIRE( requireFeature(email_txt,"2396-ZIP-1012\tuser_docx@microsoftword.com"));
+}
+
+TEST_CASE("lightgrep_is_setup") {
+    LightgrepController lg;
+    REQUIRE(!lg.is_setup());
+    lg.setup();
+    REQUIRE(lg.is_setup());
+    lg.teardown();
+    REQUIRE(!lg.is_setup());
 }

@@ -2,6 +2,14 @@
 
 LightgrepController::LightgrepController() {}
 
-void LightgrepController::setup() {}
+void LightgrepController::setup() {
+	IsSetup = true;
+}
 
-void LightgrepController::teardown() {}
+void LightgrepController::teardown() {
+	IsSetup = false;
+}
+
+bool LightgrepController::is_setup() const {
+	return IsSetup;
+}
