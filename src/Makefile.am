@@ -32,6 +32,8 @@ TSK3INCS = \
 	tsk3/tsk_incs.h\
 	tsk3/vs/tsk_vs.h
 
+lightgrep_scanners = \
+	scan_lightgrep.cpp
 
 
 # These scanners are based on GNUflex
@@ -84,6 +86,10 @@ scanners_builtin = \
 
 if FLEXSCANNERS_ENABLED
   scanners_builtin += $(flex_scanners)
+endif
+
+if LIGHTGREP_ENABLED
+  scanners_builtin += $(lightgrep_scanners)
 endif
 
 if RAR_ENABLED
