@@ -12,16 +12,10 @@
 
 //#include "be20_api/beregex.h"
 
-#include <lightgrep/api.h>
+#include "lightgrep_controller.h"
+// #include <lightgrep/api.h>
 
 namespace {
-    class LightgrepController {
-    public:
-        LightgrepController() {}
-
-        void setup() {}
-        void teardown() {}
-    };
 }
 
 extern "C"
