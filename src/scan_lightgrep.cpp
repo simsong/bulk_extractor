@@ -62,28 +62,28 @@
 
 extern "C"
 void scan_lightgrep(struct scanner_params &sp) {
-  switch (sp.phase) {
-  case scanner_params::PHASE_INIT:
-    // Scanner.startup(sp);
-    // ProcessHit = static_cast<CallbackFnType>(&FindScanner::processHit);
-    break;
-  case scanner_params::PHASE_INIT2:
-    {
-      // Scanner.init(sp);
-      // LightgrepController& lg(LightgrepController::Get());
-      // lg.addUserPatterns(Scanner, &ProcessHit, sp.ss->sc); // note: FindOpts now passed in ScannerConfig
-      // lg.regcomp();
-      break;
+    switch (sp.phase) {
+    case scanner_params::PHASE_INIT:
+        // Scanner.startup(sp);
+        // ProcessHit = static_cast<CallbackFnType>(&FindScanner::processHit);
+        break;
+    case scanner_params::PHASE_INIT2:
+        {
+          // Scanner.init(sp);
+          // LightgrepController& lg(LightgrepController::Get());
+          // lg.addUserPatterns(Scanner, &ProcessHit, sp.ss->sc); // note: FindOpts now passed in ScannerConfig
+          // lg.regcomp();
+          break;
+        }
+    case scanner_params::PHASE_SCAN:
+        // LightgrepController::Get().scan(sp);
+        break;
+    case scanner_params::PHASE_SHUTDOWN:
+        // Scanner.shutdown(sp);
+        break;
+    default:
+        break;
     }
-  case scanner_params::PHASE_SCAN:
-    // LightgrepController::Get().scan(sp);
-    break;
-  case scanner_params::PHASE_SHUTDOWN:
-    // Scanner.shutdown(sp);
-    break;
-  default:
-    break;
-  }
 }
 
 #endif // HAVE_LIBLIGHTGREP
