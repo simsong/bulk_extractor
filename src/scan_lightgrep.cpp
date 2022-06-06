@@ -64,6 +64,7 @@ extern "C"
 void scan_lightgrep(struct scanner_params &sp) {
     switch (sp.phase) {
     case scanner_params::PHASE_INIT:
+        std::cerr << "scan_lightgrep Init called\n";
         {
             sp.info->set_name("lightgrep");
             sp.info->name       = "lightgrep";
@@ -78,16 +79,22 @@ void scan_lightgrep(struct scanner_params &sp) {
         }
     case scanner_params::PHASE_INIT2:
         {
+            std::cerr << "scan_lightgrep Init2 called\n";
           // Scanner.init(sp);
           // LightgrepController& lg(LightgrepController::Get());
           // lg.addUserPatterns(Scanner, &ProcessHit, sp.ss->sc); // note: FindOpts now passed in ScannerConfig
           // lg.regcomp();
-          break;
+            break;
         }
+    case scanner_params::PHASE_ENABLED:
+        std::cerr << "scan_lightgrep Enabled called\n";
+        break;
     case scanner_params::PHASE_SCAN:
+        std::cerr << "scan_lightgrep Scan called on " << sp.sbuf->pos0 << "\n";
         // LightgrepController::Get().scan(sp);
         break;
     case scanner_params::PHASE_SHUTDOWN:
+        std::cerr << "scan_lightgrep Shutdown called\n";
         // Scanner.shutdown(sp);
         break;
     default:
