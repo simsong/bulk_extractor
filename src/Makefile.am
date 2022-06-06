@@ -42,16 +42,6 @@ flex_scanners = \
 	scan_email.flex scan_email.h \
 	scan_gps.flex
 
-# These scanners are based on Lightbox Technology's lightgrep
-lightgrep_scanners = \
-	pattern_scanner.cpp pattern_scanner.h \
-	pattern_scanner_utils.cpp pattern_scanner_utils.h \
-	scan_lightgrep.cpp \
-	scan_accts_lg.cpp \
-	scan_base16_lg.cpp \
-	scan_email_lg.cpp \
-	scan_gps_lg.cpp
-
 # scanners_builtin are the scanners that are compiled into the binary
 
 scanners_builtin = \
@@ -94,10 +84,6 @@ scanners_builtin = \
 
 if FLEXSCANNERS_ENABLED
   scanners_builtin += $(flex_scanners)
-endif
-
-if LIGHTGREP_ENABLED
-  scanners_builtin += $(lightgrep_scanners)
 endif
 
 if RAR_ENABLED
