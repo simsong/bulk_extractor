@@ -27,6 +27,7 @@ To build bulk_extractor in Linux or Mac OS:
 2. Then run these commands:
 
 ```
+./bootstrap.sh
 ./configure
 make
 make install
