@@ -618,8 +618,15 @@ TEST_CASE("scan_net1", "[scanners]") {
 
     /* Put the addresses into network order and check */
     uint16_t addr[8];
-    for(int i=0;i<8;i++) addr[i] = htons(addr1[i]);     REQUIRE( scan_net_t::invalidIP6(addr) == false );
-    for(int i=0;i<8;i++) addr[i] = htons(addr2[i]);     REQUIRE( scan_net_t::invalidIP6(addr) == true );
+    for (int i=0;i<8;i++){
+      addr[i] = htons(addr1[i]);
+    }
+    REQUIRE( scan_net_t::invalidIP6(addr) == false );
+
+    for (int i=0;i<8;i++){
+      addr[i] = htons(addr2[i]);
+    }
+    REQUIRE( scan_net_t::invalidIP6(addr) == true );
 }
 
 TEST_CASE("scan_pdf", "[scanners]") {
