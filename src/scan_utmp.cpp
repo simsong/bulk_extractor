@@ -24,14 +24,15 @@
 #define FEATURE_FILE_NAME "utmp_carved"
 
 bool check_utmprecord_signature(size_t offset, const sbuf_t &sbuf) {
-    int ut_type; // defined as short at man page but I have seen 4 byte type on real system
-    char line, user, host;
-
-    ut_type = sbuf.get32i(offset);
+    uint16_t ut_type = sbuf.get16i(offset);
     if(ut_type < 1 || ut_type > 8) // not search for ut_type 0 'UT_UNKNOWN' and 9 "ACCOUNTING"
         return false;
 
-    line = sbuf[offset+8];
+    /* ut_pid per man page, but it is unused here.
+     * uint16_t ut_pid  = sbuf.get16i(offset+2);
+     */
+
+    uint8_t line = sbuf[offset+8];
     if (line != 0 && (line < 32 || line > 126))
         return false;
     for (int i=0; i<32; i++)
@@ -40,7 +41,7 @@ bool check_utmprecord_signature(size_t offset, const sbuf_t &sbuf) {
                 if (sbuf[offset+8+i+j] != 0)
                     return false;
 
-    user = sbuf[offset+44];
+    uint8_t user = sbuf[offset+44];
     if (user != 0 && (user < 32 || user > 126))
         return false;
     for (int i=0; i<32; i++)
@@ -49,7 +50,7 @@ bool check_utmprecord_signature(size_t offset, const sbuf_t &sbuf) {
                 if (sbuf[offset+44+i+j] != 0)
                     return false;
 
-    host = sbuf[offset+76];
+    uint8_t host = sbuf[offset+76];
     if (host != 0 && (host < 35 || host > 126)
         && host != 33 && host != 37 && host != 60 && host != 62 && host != 92
         && host != 94 && host != 123 && host != 124 && host != 125) // use RFC3986 for soft restriction
