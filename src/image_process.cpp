@@ -430,16 +430,84 @@ BOOL GetDriveGeometry(const wchar_t *wszPath, DISK_GEOMETRY *pdg)
 }
 #endif
 
+#if !defined(HAVE_PREAD64) && !defined(HAVE_PREAD) && defined(HAVE__LSEEKI64)
+static size_t pread64(int d,void *buf,size_t nbyte,int64_t offset)
+{
+    if(_lseeki64(d,offset,0)!=offset) return -1;
+    return read(d,buf,nbyte);
+}
+#endif
+
+int64_t process_raw::get_filesize(int fd)
+{
+    char buf[64];
+    int64_t filesize = 0;		/* needs to be signed for lseek */
+    int bits = 0;
+    int i =0;
+
+#if defined(HAVE_PREAD64)
+    /* If we have pread64, make sure it is defined */
+    extern size_t pread64(int fd,char *buf,size_t nbyte,off_t offset);
+#endif
+
+#if !defined(HAVE_PREAD64) && defined(HAVE_PREAD)
+    /* if we are not using pread64, make sure that off_t is 8 bytes in size */
+#define pread64(d,buf,nbyte,offset) pread(d,buf,nbyte,offset)
+    if(sizeof(off_t)!=8){
+        std::cerr << "Compiled with off_t==" << sizeof(off_t) << " and no pread64 support.";
+    }
+#endif
+
+    /* We can use fstat if sizeof(st_size)==8 and st_size>0 */
+    struct stat st;
+    memset(&st,0,sizeof(st));
+    if(sizeof(st.st_size)==8 && fstat(fd,&st)==0){
+	    if(st.st_size>0) return st.st_size;
+    }
+
+    /* Phase 1; figure out how far we can seek... */
+    for(bits=0;bits<60;bits++){
+        filesize = ((int64_t)1<<bits);
+        if(::pread64(fd,buf,1,filesize)!=1){
+            break;
+        }
+    }
+    if(bits==60){
+        std::cerr << "Partition detection not functional.\n";
+        throw SeekError();
+    }
+
+    /* Phase 2; blank bits as necessary */
+    for(i=bits;i>=0;i--){
+        int64_t test = (int64_t)1<<i;
+        int64_t test_filesize = filesize | ((int64_t)1<<i);
+        if(::pread64(fd,buf,1,test_filesize)==1){
+            filesize |= test;
+        } else{
+            filesize &= ~test;
+        }
+    }
+    if(filesize>0) filesize+=1;	/* seems to be needed */
+    return filesize;
+}
+
+#ifndef O_BINARY
+#define O_BINARY 0
+#endif
+
 /**
  * Add the file to the list, keeping track of the total size
  * https://docs.microsoft.com/en-us/windows/win32/devio/calling-deviceiocontrol
  */
 void process_raw::add_file(std::filesystem::path path)
 {
-    int64_t path_filesize = std::filesystem::file_size(path);
+    int64_t path_filesize;
+    bool is_block_file = std::filesystem::is_block_file(path);
 
+    if (!is_block_file){
+        path_filesize = std::filesystem::file_size(path);
+    } else {
 #ifdef _WIN32
-    if (path_filesize==0){
         /* On Windows, see if we can use this */
         std::cout << path << " checking physical drive" << std::endl;
         DISK_GEOMETRY pdg = { 0 }; // disk drive geometry structure
@@ -449,7 +517,18 @@ void process_raw::add_file(std::filesystem::path path)
             * (ULONG)pdg.TracksPerCylinder
             * (ULONG)pdg.SectorsPerTrack
             * (ULONG)pdg.BytesPerSector;
+#else
+        int fd = ::open(path.c_str(),O_RDONLY|O_BINARY);
+        if(fd<0){
+            std::cerr << "*** unix add_file: Cannot open " << path.string() << ": " << strerror(errno) << "\n";
+            throw ReadError();
+        }
+        path_filesize = get_filesize(fd);
+        ::close(fd);
+#endif
     }
+#ifdef _DEBUG_
+    std::cerr << path.string() << " filesize: " << path_filesize << "\n";
 #endif
     file_list.push_back( std::shared_ptr<process_raw::file_info>(new file_info(path, raw_filesize, path_filesize)));
     raw_filesize += path_filesize;
