@@ -7,7 +7,7 @@
 # 2022-02-10 - slg - renamed be20_api. Our work here is done.
 
 name: BE2 CI (c++17)
-on: [push]
+on: [push, pull_request]
 
 jobs:
   build:
