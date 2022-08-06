@@ -4,7 +4,8 @@ CONFIGURE="./configure -q --enable-silent-rules"
 LIBEWF_DIST=https://github.com/libyal/libewf-legacy/releases/download/20140812/libewf-20140812.tar.gz
 AUTOCONF_DIST=https://ftp.gnu.org/gnu/autoconf/autoconf-2.71.tar.gz
 AUTOMAKE_DIST=https://ftp.gnu.org/gnu/automake/automake-1.16.3.tar.gz
-MKPGS="build-essential flex libexpat1-dev libssl-dev libtool libxml2-utils make pkg-config zlib1g-dev"
+MKPGS="build-essential flex libexpat1-dev libssl-dev libtool make pkg-config zlib1g-dev"
+# removed: libxml2-utils
 WGET="wget -nv --no-check-certificate"
 CONFIGURE="./configure -q --enable-silent-rules"
 MAKE="make -j4"
@@ -57,9 +58,12 @@ if [ $MAJOR_VERSION -lt $RELEASE ]; then
     exit 1
 fi
 
-echo == Will now try to install
-
+echo == Will now try apt upgrade
 sudo apt upgrade -y || fail could not apt upgrade
+
+echo == Will now try to install
+echo == MKPGS: $MKPGS
+
 sudo apt install -y $MKPGS || fail could not apt install $MKPGS
 
 echo == manually installing a modern libewf
