@@ -4,7 +4,7 @@ CONFIGURE="./configure -q --enable-silent-rules"
 LIBEWF_DIST=https://github.com/libyal/libewf-legacy/releases/download/20140812/libewf-20140812.tar.gz
 AUTOCONF_DIST=https://ftp.gnu.org/gnu/autoconf/autoconf-2.71.tar.gz
 AUTOMAKE_DIST=https://ftp.gnu.org/gnu/automake/automake-1.16.3.tar.gz
-MKPGS="autoconf automake build-essential flex libexpat1-dev libssl-dev libtool libxml2-utils make pkg-config zlib1g-dev"
+MKPGS="build-essential flex libexpat1-dev libssl-dev libtool libxml2-utils make pkg-config zlib1g-dev"
 WGET="wget -nv --no-check-certificate"
 CONFIGURE="./configure -q --enable-silent-rules"
 MAKE="make -j4"
@@ -40,41 +40,41 @@ mkdir src
 cd src
 
 if [ ! -r /etc/os-release ]; then
-    echo This requires an /etc/os-release file.
+    echo == This requires an /etc/os-release file.
     exit 1
 fi
 
 source /etc/os-release
 
 if [ x$ID != xubuntu ]; then
-    echo This really requires ubuntu. You have $ID
+    echo == This really requires ubuntu. You have $ID
     exit 1
 fi
 
 MAJOR_VERSION=`echo $VERSION_ID|sed s/[.].*//`
 if [ $MAJOR_VERSION -lt $RELEASE ]; then
-    echo This requires at least Ubuntu $RELEASE Linux.
+    echo == This requires at least Ubuntu $RELEASE Linux.
     exit 1
 fi
 
-echo Will now try to install
+echo == Will now try to install
 
 sudo apt upgrade -y || fail could not apt upgrade
 sudo apt install -y $MKPGS || fail could not apt install $MKPGS
 
-echo manually installing a modern libewf
+echo == manually installing a modern libewf
 $WGET $LIBEWF_DIST || (echo could not download $LIBEWF_DIST; exit 1)
 tar xfz libewf*gz   && (cd libewf*/   && $CONFIGURE && $MAKE >/dev/null && sudo make install)
 ls -l /etc/ld.so.conf.d/
 sudo ldconfig
 ewfinfo -h >/dev/null || (echo could not install libewf; exit 1)
 
-echo updating autoconf
+echo == updating autoconf
 $WGET $AUTOCONF_DIST || (echo could not download $AUTOCONF_DIST; exit 1)
 tar xfz autoconf*gz && (cd autoconf*/ && $CONFIGURE && $MAKE >/dev/null && sudo make install)
 autoconf --version
 
-echo updating automake
+echo == updating automake
 $WGET $AUTOMAKE_DIST || (echo could not download $AUTOMAKE_DIST; exit 1)
 tar xfz automake*gz && (cd automake*/ && $CONFIGURE && $MAKE >/dev/null && sudo make install)
 automake --version
