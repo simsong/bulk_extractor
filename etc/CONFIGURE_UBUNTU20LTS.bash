@@ -58,8 +58,8 @@ if [ $MAJOR_VERSION -lt $RELEASE ]; then
     exit 1
 fi
 
-echo == Will now try apt upgrade
-sudo apt upgrade -y || fail could not apt upgrade
+echo == Will now try apt update
+sudo apt update --fix-missing -y || fail could not apt update
 
 echo == Will now try to install
 echo == MKPGS: $MKPGS
