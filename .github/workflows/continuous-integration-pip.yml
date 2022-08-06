@@ -1,5 +1,7 @@
 # This file based on https://gist.github.com/mwouts/9842452d020c08faf9e84a3bba38a66f
 # See: https://help.github.com/en/actions/reference/software-installed-on-github-hosted-runners
+# 2022-08-06 - slg - Updated os to be 'macos-latest', 'ubuntu-20.04', 'ubuntu-22.04'
+#                    See https://github.com/actions/virtual-environments for details.
 # 2020-06-22 - slg - customized
 # 2020-06-27 - slg - expanded to G++ for MacOS
 # 2020-07-03 - slg - ported to be13_api; removed python (be13_api doesn't use python)
@@ -14,7 +16,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: ['macos-10.15', 'ubuntu-20.04']
+        os: ['macos-latest', 'ubuntu-20.04', 'ubuntu-22.04']
 
     env:
       DEBUG_5G: FALSE
