@@ -1,6 +1,6 @@
 name: Create tarball including submodules
 
-on: ["push"]
+on: [workflow_dispatch]
 
 jobs:
   release:
