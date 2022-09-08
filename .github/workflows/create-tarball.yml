@@ -1,0 +1,48 @@
+name: Create tarball including submodules
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Bump Version
+        default: v2.0.0
+        required: true
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository and init submodules recursively
+      uses: actions/checkout@v2
+      with:
+        submodules: recursive
+
+    - name: Get context
+      id: ctx
+      run: |
+        echo "::set-output name=date::$(date +'%Y%m%d')"
+        echo "::set-output name=sha::$(git rev-parse --short HEAD)"
+    - name: cleanup
+      run: rm -rf ./.git
+
+    - name: Compress action step
+      uses: a7ul/tar-action@v1.1.0
+      id: compress
+      with:
+        command: c
+        files: |
+          ./
+        outPath: |
+          ${{ inputs.version }}-git${{ steps.ctx.outputs.date }}.${{ steps.ctx.outputs.sha }}.tar.gz
+
+    - name: Upload binaries to release
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: ${{ inputs.version }}-git${{ steps.ctx.outputs.date }}.${{ steps.ctx.outputs.sha }}.tar.gz
+        asset_name: ${{ inputs.version }}-git${{ steps.ctx.outputs.date }}/${{ steps.ctx.outputs.sha }}.tar.gz
+        tag: ${{ github.ref }}
+        release_name: "Release ${{ inputs.version }} of bulk_extractor including subdirectories"
+        overwrite: true
+        body: "Release ${{ inputs.version }} of bulk_extractor including subdirectories"
