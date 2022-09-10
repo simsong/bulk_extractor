@@ -2,6 +2,22 @@ name: Create tarball including submodules
 
 on: [workflow_dispatch]
 
+permissions:
+  actions: read
+  checks: none
+  contents: write
+  deployments: none
+  id-token: none
+  issues: none
+  discussions: none
+  packages: none
+  pages: none
+  pull-requests: none
+  repository-projects: none
+  security-events: none
+  statuses: none
+
+
 jobs:
   release:
     runs-on: ubuntu-latest
