@@ -608,7 +608,7 @@ void scan_rar(scanner_params &sp)
         sp.get_scanner_config("rar_find_volumes",&record_volumes,"Search for RAR volumes");
 #else
         sp.info->description = "(disabled in configure)";
-        sp.info->flags.default_enabled = false;
+        sp.info->scanner_flags.default_enabled = false;
 #endif
 	return;
     }
