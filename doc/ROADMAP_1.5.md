@@ -212,7 +212,7 @@ Bulk Extractor 2.0.   Sometime in 2016?
 	http://www.woanware.co.uk/?page_id=173
 
   - Ability to detect and analyze SuperFetch files
-	https://forensicswiki.xyz/wiki/index.php?title=SuperFetch
+	https://forensics.wiki/superfetch
 
 - scan_plist
  - create. Give it the ability to find and decode Mac plist files (binary and XML)
