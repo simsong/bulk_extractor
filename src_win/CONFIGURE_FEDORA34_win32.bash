@@ -1,6 +1,7 @@
 #!/bin/bash
 OS_NAME=fedora
 OS_VERSION=34
+LIBEWF_URL=https://github.com/libyal/libewf/releases/download/20230212/libewf-experimental-20230212.tar.gz
 if [ ! -r /etc/os-release ]; then
   echo This requires /etc/os-release
   exit 1
@@ -40,7 +41,7 @@ press any key to continue...
 EOF
 read
 
-MAKE_CONCURRENCY=-j4
+MAKE_CONCURRENCY=-j2
 # cd to the directory where the script is
 # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -62,7 +63,7 @@ done
 
 MPKGS="autoconf automake make flex gcc gcc-c++ git libtool "
 MPKGS+="md5deep osslsigncode patch wine wget bison zlib-devel "
-MPKGS+="libewf libewf-devel java-1.8.0-openjdk-devel "
+MPKGS+="java-1.8.0-openjdk-devel "
 MPKGS+="libxml2-devel libxml2-static openssl-devel "
 MPKGS+="expat-devel "
 MPKGS+="mingw64-gcc mingw64-gcc-c++ "
@@ -146,7 +147,7 @@ function build_mingw {
 }
 
 build_mingw libtre   http://laurikari.net/tre/tre-0.8.0.tar.gz
-build_mingw libewf   https://github.com/libyal/libewf/releases/download/20201230/libewf-experimental-20201230.tar.gz
+build_mingw libewf   $LIBEWF_URL
 
 #
 # ICU requires patching and a special build sequence

@@ -1,0 +1,1 @@
+../src_win/CONFIGURE_UBUNTU20_win32.bash

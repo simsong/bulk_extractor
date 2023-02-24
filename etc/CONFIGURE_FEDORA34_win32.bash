@@ -1,0 +1,1 @@
+../src_win/CONFIGURE_FEDORA34_win32.bash
