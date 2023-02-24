@@ -1,7 +1,7 @@
 #!/bin/bash
 OS_NAME=fedora
 OS_VERSION=34
-LIBEWF_URL=https://github.com/libyal/libewf/releases/download/20230212/libewf-experimental-20230212.tar.gz
+LIBEWF_URL=https://github.com/libyal/libewf-legacy/releases/tag/20140814
 if [ ! -r /etc/os-release ]; then
   echo This requires /etc/os-release
   exit 1

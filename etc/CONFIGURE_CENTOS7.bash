@@ -1,4 +1,5 @@
 #!/bin/bash
+LIBEWF_URL=https://github.com/libyal/libewf-legacy/releases/tag/20140814
 cat <<EOF
 *******************************************************************
         Configuring Amazon Linux for compiling bulk_extractor
@@ -32,7 +33,7 @@ source paths.bash
 
 MPKGS="autoconf automake flex gcc gcc-c++ git libtool "
 MPKGS+="md5deep wget zlib-devel "
-MPKGS+="libewf libewf-devel java-1.8.0-openjdk-devel "
+MPKGS+="java-1.8.0-openjdk-devel "
 MPKGS+="libxml2-devel libxml2-static openssl-devel "
 MPKGS+="sqlite-devel expat-devel "
 MPKGS+="libjson-c-devel "
@@ -66,11 +67,11 @@ echo "Now performing a yum update to update system packages"
 sudo yum -y update
 
 
-LIBEWF_FNAME=`echo $LIBEWF_URL| sed s:.*/::`
-LIBEWF_DIR=`echo $LIBEWF_FNAME | sed s/-experimental// | sed s/.tar.gz//`
+LIBEWF_FNAME=$(basename $LIBEWF_URL)
+LIBEWF_DIR=$( echo $LIBEWF_FNAME | sed s/-experimental// | sed s/.tar.gz//)
 echo
 echo "Now installing libewf"
-wget -nv https://github.com/libyal/libewf/releases/download/20171104/libewf-experimental-20171104.tar.gz
+wget -nv $LIBEWF_URL
 tar xfvz $LIBEWF_FNAME
 pushd $LIBEWF_DIR
 ./configure && make

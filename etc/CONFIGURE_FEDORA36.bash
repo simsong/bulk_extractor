@@ -1,5 +1,5 @@
 #!/bin/bash
-LIBEWF_URL=https://github.com/libyal/libewf/releases/download/20201230/libewf-experimental-20201230.tar.gz
+LIBEWF_URL=https://github.com/libyal/libewf-legacy/releases/tag/20140814
 OS_NAME=fedora
 OS_VERSION=36
 if [ ! -r /etc/os-release ]; then
@@ -41,7 +41,7 @@ fi
 cd "$( dirname "${BASH_SOURCE[0]}" )"
 
 MPKGS="autoconf automake make flex gcc gcc-c++ git libtool wget zlib-devel "
-MPKGS+="java-1.8.0-openjdk-devel libxml2-devel libxml2-static openssl-devel libewf libewf-devel "
+MPKGS+="java-1.8.0-openjdk-devel libxml2-devel libxml2-static openssl-devel "
 MPKGS+="sqlite-devel expat-devel "
 
 echo Will now try to install
