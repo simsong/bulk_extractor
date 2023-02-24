@@ -7,6 +7,6 @@ contents of the directory. You can perform the download with this
 command:
 
 
-git clone --recursive git@github.com:simsong/bulk_extractor.git
+git clone --recursive https://github.com/simsong/bulk_extractor.git
 
 

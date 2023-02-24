@@ -1,0 +1,57 @@
+name: Create tarball including submodules
+
+on: [workflow_dispatch]
+
+permissions:
+  actions: read
+  checks: none
+  contents: write
+  deployments: none
+  id-token: none
+  issues: none
+  discussions: none
+  packages: none
+  pages: none
+  pull-requests: none
+  repository-projects: none
+  security-events: none
+  statuses: none
+
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository and init submodules recursively
+      uses: actions/checkout@v2
+      with:
+        submodules: recursive
+
+    - name: Get context
+      id: ctx
+      run: |
+        echo "::set-output name=version::$(grep 'AC_INIT(\[BULK_EXTRACTOR\]' configure.ac| cut -d',' -f2 | tr -d "[]")" 
+
+    - name: Setup
+      run: |
+        chmod +x etc/install_autotools.sh
+        bash ./etc/install_autotools.sh
+        chmod +x && bootstrap.sh
+        ./bootstrap.sh
+        ./configure -q
+    
+    - name: Create release tarball
+      run: |
+        make dist
+        
+    - name: Upload binaries to release
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: bulk_extractor-${{ steps.ctx.outputs.version }}.tar.gz
+        asset_name: bulk_extractor-${{ steps.ctx.outputs.version }}.tar.gz
+        tag: ${{ github.ref }}
+        release_name: "Release ${{ steps.ctx.outputs.version  }} of bulk_extractor including subdirectories"
+        overwrite: true
+        body: "Release ${{ steps.ctx.outputs.version }} of bulk_extractor including subdirectories"

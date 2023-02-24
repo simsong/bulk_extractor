@@ -255,6 +255,7 @@ class process_raw : public image_process {
     };
     typedef std::vector<std::shared_ptr<file_info>> file_list_t;
     file_list_t file_list {};
+    int64_t     get_filesize(int fd);
     void        add_file(std::filesystem::path fname);
     const class std::shared_ptr<process_raw::file_info> find_offset(uint64_t offset) const; /* finds which file this offset would map to */
     uint64_t    raw_filesize {};			/* sume of all the lengths */
