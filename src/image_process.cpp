@@ -110,19 +110,19 @@ std::string image_process::make_list_template(std::filesystem::path path_,int *s
  ** process_ewf
  */
 
-#ifdef WINVER
+#if defined( LIBEWF_HAVE_WIDE_CHARACTER_TYPE )
 #define LIBEWF_GLOB      libewf_glob_wide
 #define LIBEWF_OPEN      libewf_open_wide
-#define LIBEWF_GLOB_FREE libewf_glob_free_wide
+#define LIBEWF_GLOB_FREE libewf_glob_wide_free
 #define LIBEWF_HANDLE_OPEN libewf_handle_open_wide
-#define CHAR      wchar
+#define LIBEWF_CHAR      wchar_t
 #define STRLEN    wcslen
 #else
 #define LIBEWF_GLOB      libewf_glob
 #define LIBEWF_OPEN      libewf_open
 #define LIBEWF_GLOB_FREE libewf_glob_free
 #define LIBEWF_HANDLE_OPEN libewf_handle_open
-#define CHAR      char
+#define LIBEWF_CHAR      char
 #define STRLEN    strlen
 #endif
 
@@ -145,10 +145,8 @@ process_ewf::~process_ewf()
 int process_ewf::open()
 {
     std::filesystem::path fname = image_fname();
-    CHAR **libewf_filenames = NULL;
+    LIBEWF_CHAR **libewf_filenames = NULL;
     int amount_of_filenames = 0;
-
-
 
 #ifdef HAVE_LIBEWF_HANDLE_CLOSE
     libewf_error_t *error=0;
