@@ -7,7 +7,7 @@
 
 SUBDIRS = doc doc/latex_manuals man src src/tests python specfiles tests
 
-# don't include bootstrap. People run it, and they shoudln't
+# Don't include bootstrap. People run it, and they shouldn't
 # It's only for people who check out the git repo
 
 EXTRA_DIST = \
