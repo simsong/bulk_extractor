@@ -1,7 +1,7 @@
 #!/bin/bash
+source paths.bash
 RELEASE=20
 CONFIGURE="./configure -q --enable-silent-rules"
-LIBEWF_URL=https://github.com/libyal/libewf-legacy/releases/download/20140814/libewf-20140814.tar.gz
 AUTOCONF_DIST=https://ftp.gnu.org/gnu/autoconf/autoconf-2.71.tar.gz
 AUTOMAKE_DIST=https://ftp.gnu.org/gnu/automake/automake-1.16.3.tar.gz
 MKPGS="build-essential flex libexpat1-dev libxml2-utils libssl-dev libtool make pkg-config zlib1g-dev"

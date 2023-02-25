@@ -1,5 +1,5 @@
 #!/bin/bash
-LIBEWF_URL=https://github.com/libyal/libewf-legacy/releases/download/20140814/libewf-20140814.tar.gz
+source paths.bash
 OS_NAME=fedora
 OS_VERSION=36
 if [ ! -r /etc/os-release ]; then

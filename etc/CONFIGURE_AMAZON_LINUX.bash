@@ -1,9 +1,9 @@
 #!/bin/bash
+source paths.bash
 RELEASE=20
 REQUIRED_ID='amzn'
 REQUIRED_VERSION=2
 CONFIGURE="./configure -q --enable-silent-rules"
-LIBEWF_DIST= https://github.com/libyal/libewf-legacy/releases/tag/20140814
 AUTOCONF_DIST=https://ftpmirror.gnu.org/autoconf/autoconf-2.71.tar.gz
 AUTOMAKE_DIST=https://ftpmirror.gnu.org/automake/automake-1.16.3.tar.gz
 MKPGS="autoconf automake libexpat1-dev libssl-dev libtool libxml2-utils pkg-config"
@@ -83,11 +83,11 @@ sudo yum -y update
 echo manually installing a modern libewf
 cd /tmp/
 
-LIBEWF=$(basename $LIBEWF_DIST)
+LIBEWF=$(basename $LIBEWF_URL)
 
 if [ ! -r $LIBEWF ]; then
-    echo downloading $LIBEWF from $LIBEWF_DIST
-    $WGET $LIBEWF_DIST || (echo could not download $LIBEWF_DIST; exit 1)
+    echo downloading $LIBEWF from $LIBEWF_URL
+    $WGET $LIBEWF_URL || (echo could not download $LIBEWF_URL; exit 1)
 fi
 
 tar xfz $LIBEWF && (cd libewf*/ && $CONFIGURE && $MAKE >/dev/null && sudo make install)
@@ -102,12 +102,12 @@ ewfinfo -h > /dev/null 2>&1 || exit 1
 
 ## we need the new autoconf and automake for AWS linux as of 2021-12-17
 echo updating autoconf
-$WGET $AUTOCONF_DIST || (echo could not download $AUTOCONF_DIST; exit 1)
+$WGET $AUTOCONF_URL || (echo could not download $AUTOCONF_URL; exit 1)
 tar xfz autoconf*gz && (cd autoconf*/ && $CONFIGURE && $MAKE >/dev/null && sudo make install)
 autoconf --version || (echo autoconf failed; exit 1)
 
 echo updating automake
-$WGET $AUTOMAKE_DIST || (echo could not download $AUTOMAKE_DIST; exit 1)
+$WGET $AUTOMAKE_URL || (echo could not download $AUTOMAKE_URL; exit 1)
 tar xfz automake*gz && (cd automake*/ && $CONFIGURE && $MAKE >/dev/null && sudo make install)
 automake --version || (echo automake failed; exit 1)
 

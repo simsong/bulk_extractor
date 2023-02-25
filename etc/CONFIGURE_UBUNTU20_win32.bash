@@ -1,1 +1,5 @@
-../src_win/CONFIGURE_UBUNTU20_win32.bash
+sudo apt-get update -y
+sudo apt-get install -y mingw-w64
+sudo apt-get install -y wine
+sudo apt install libz-mingw-w64-dev
+sudo apt install libgcrypt-mingw-w64-dev

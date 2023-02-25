@@ -1,7 +1,7 @@
 #!/bin/bash
+source paths.bash
 OS_NAME=fedora
 OS_VERSION=36
-LIBEWF_URL=https://github.com/libyal/libewf-legacy/releases/download/20140814/libewf-20140814.tar.gz
 USE_ICU=0
 MAKE_CONCURRENCY=-j2
 
@@ -93,7 +93,7 @@ if [ $USE_ICU == "YES" ]; then
 	fi
 	tar xf $ICUFILE
 
-	
+
 	# patch ICU for MinGW cross-compilation
 	pushd icu
 	patch -p0 <../icu4c-53_1-simpler-crossbuild.patch
