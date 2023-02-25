@@ -110,56 +110,20 @@ std::string image_process::make_list_template(std::filesystem::path path_,int *s
  ** process_ewf
  */
 
-#ifdef _WIN32
-void process_ewf::local_e01_glob(std::filesystem::path fname,char ***libewf_filenames,int *amount_of_filenames)
-{
-    /* Find the directory name */
-    std::string dirname(fname);
-    size_t pos = dirname.rfind("\\");                  // this this slash
-    if (pos==std::string::npos) pos=dirname.rfind("/"); // try the other slash!
-    if (pos!=std::string::npos){
-        dirname.resize(pos+1);          // remove what's after the
-    } else {
-        dirname = "";                   // no directory?
-    }
-
-    /* Make the directory search template */
-    char *buf = (char *)malloc(fname.size()+16);
-    strcpy(buf,fname.c_str());
-    /* Find the E01 */
-    char *cc = strstr(buf,".E01.");
-    if (!cc){
-        throw image_process::NoSuchFile("Cannot find .E01. in filename");
-    }
-    for(;*cc;cc++){
-        if (*cc!='.') *cc='?';          // replace the E01 and the MD5s at the end with ?s
-    }
-    std::wstring wbufstring = safe_utf8to16(buf); // convert to utf16
-    const wchar_t *wbuf = wbufstring.c_str();
-
-    /* Find the files */
-    WIN32_FIND_DATA FindFileData;
-    HANDLE hFind = FindFirstFile(wbuf, &FindFileData);
-    if (hFind == INVALID_HANDLE_VALUE){
-        throw std::runtime_error( Formatter() << "Invalid file pattern " << safe_utf16to8(wbufstring) );
-    }
-    std::vector<std::filesystem::path> files;
-    files.push_back(dirname + safe_utf16to8(FindFileData.cFileName));
-    while(FindNextFile(hFind,&FindFileData)!=0){
-        files.push_back(dirname + safe_utf16to8(FindFileData.cFileName));
-    }
-
-    /* Sort the files */
-    sort(files.begin(),files.end());
-
-    /* Make the array */
-    *amount_of_filenames = files.size();
-    *libewf_filenames = (char **)calloc(sizeof(char *),files.size());
-    for(size_t i=0;i<files.size();i++){
-        (*libewf_filenames)[i] = strdup(files[i].c_str());
-    }
-    free((void *)buf);
-}
+#ifdef WINVER
+#define LIBEWF_GLOB      libewf_glob_wide
+#define LIBEWF_OPEN      libewf_open_wide
+#define LIBEWF_GLOB_FREE libewf_glob_free_wide
+#define LIBEWF_HANDLE_OPEN libewf_handle_open_wide
+#define CHAR      wchar
+#define STRLEN    wcslen
+#else
+#define LIBEWF_GLOB      libewf_glob
+#define LIBEWF_OPEN      libewf_open
+#define LIBEWF_GLOB_FREE libewf_glob_free
+#define LIBEWF_HANDLE_OPEN libewf_handle_open
+#define CHAR      char
+#define STRLEN    strlen
 #endif
 
 
@@ -181,15 +145,16 @@ process_ewf::~process_ewf()
 int process_ewf::open()
 {
     std::filesystem::path fname = image_fname();
-    std::string fname_string = fname.string();
-    char **libewf_filenames = NULL;
+    CHAR **libewf_filenames = NULL;
     int amount_of_filenames = 0;
+
+
 
 #ifdef HAVE_LIBEWF_HANDLE_CLOSE
     libewf_error_t *error=0;
 
-    if (libewf_glob(fname.c_str(), strlen(fname.c_str()), LIBEWF_FORMAT_UNKNOWN,
-                    &libewf_filenames,&amount_of_filenames,&error)<0){
+    if (LIBEWF_GLOB(fname.c_str(), STRLEN(fname.c_str()), LIBEWF_FORMAT_UNKNOWN,
+                    &libewf_filenames, &amount_of_filenames, &error)<0){
         libewf_error_fprint(error,stdout);
         libewf_error_free(&error);
         throw std::invalid_argument("libewf_glob");
@@ -198,11 +163,11 @@ int process_ewf::open()
         std::cout << "opening " << libewf_filenames[i] << std::endl;
     }
 
-    if (libewf_handle_initialize(&handle, nullptr) <0 ){
+    if (libewf_handle_initialize( &handle, nullptr) <0 ){
 	throw image_process::NoSuchFile("Cannot initialize EWF handle?");
     }
 
-    if (libewf_handle_open(handle, libewf_filenames, amount_of_filenames,
+    if (LIBEWF_HANDLE_OPEN( handle, libewf_filenames, amount_of_filenames,
                            LIBEWF_OPEN_READ,&error) <0 ){
 	if (error) libewf_error_fprint(error, stderr);
         fflush(stderr);
@@ -210,7 +175,7 @@ int process_ewf::open()
     }
 
     /* Free the allocated filenames */
-    if (libewf_glob_free(libewf_filenames,amount_of_filenames,&error)<0){
+    if (LIBEWF_GLOB_FREE( libewf_filenames,amount_of_filenames,&error)<0){
         if (error) libewf_error_fprint(error,stdout);
         throw image_process::NoSuchFile("libewf_glob_free");
     }
@@ -220,7 +185,7 @@ int process_ewf::open()
     if (amount_of_filenames<0){
 	err(1,"libewf_glob");
     }
-    handle = libewf_open(libewf_filenames,amount_of_filenames,LIBEWF_OPEN_READ);
+    handle = LIBEWF_OPEN( libewf_filenames, amount_of_filenames, LIBEWF_OPEN_READ);
     if (handle==0){
 	fprintf(stderr,"amount_of_filenames:%d\n",amount_of_filenames);
 	for(int i=0;i<amount_of_filenames;i++){
