@@ -16,7 +16,7 @@ jobs:
 
       - name: configure and install bulk_extractor
         run: |
-          echo "" | bash etc/CONFIGURE_UBUNTU20LTS.bash
+          echo "" | (cd etc;bash CONFIGURE_UBUNTU20LTS.bash)
           bash bootstrap.sh
           ./configure -q --enable-silent-rules
           cd src
