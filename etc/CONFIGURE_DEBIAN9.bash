@@ -1,4 +1,5 @@
 #!/bin/bash
+source paths.bash
 cat <<EOF
 *******************************************************************
         Configuring Debian 9 to compile bulk_extractor.

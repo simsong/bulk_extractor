@@ -208,8 +208,6 @@ class process_ewf : public image_process {
     mutable libewf_handle_t *handle { nullptr };
 
  public:
-    static void local_e01_glob(std::filesystem::path fname,char ***libewf_filenames,int *amount_of_filenames);
-
     process_ewf(std::filesystem::path fname, size_t pagesize_, size_t margin_) : image_process(fname, pagesize_, margin_) {}
     virtual ~process_ewf();
     std::vector<std::string> getewfdetails() const;
