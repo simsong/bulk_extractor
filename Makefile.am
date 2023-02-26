@@ -55,22 +55,8 @@ exels:
 execlean:
 	/bin/rm -f */*exe
 
-.PHONY: win32
-win32: win32/bulk_extractor32.exe
-
 .PHONY: win64
 win64: win64/bulk_extractor64.exe
-
-win32/bulk_extractor32.exe:
-	@echo '****************************************************'
-	@echo '*** making win32 with mingw32-configure and make ***'
-	@echo '****************************************************'
-	if [ -r Makefile ]; then $(MAKE) distclean ; fi
-	if [ ! -d win32  ]; then mkdir win32 ; fi
-	if [ ! -r win32/Makefile ]; then (cd win32;mingw32-configure) ; fi
-	(cd win32;$(MAKE))
-	(cp win32/src/bulk_extractor.exe win32/bulk_extractor32.exe)
-	ls -l win32/bulk_extractor32.exe
 
 win64/bulk_extractor64.exe:
 	@echo '****************************************************'
@@ -84,13 +70,10 @@ win64/bulk_extractor64.exe:
 	ls -l win64/bulk_extractor64.exe
 
 winlibs:
-	@echo '*****************************************'
-	@echo '*** making win32 and win64 libraries  ***'
-	@echo '*****************************************'
+	@echo '*****************************'
+	@echo '*** making win64 library  ***'
+	@echo '*****************************'
 	if [ -r Makefile ]; then $(MAKE) distclean ; fi
-	if [ ! -d win32  ]; then mkdir win32 ; fi
-	if [ ! -r win32/Makefile ]; then (cd win32;mingw32-configure --disable-libewf --disable-afflib) ; fi
-	(cd win32/src;$(MAKE) lib;mv libbulkextractor.so ../../libbulkextractor32.DLL)
 	if [ ! -d win64  ]; then mkdir win64 ; fi
 	if [ ! -r win64/Makefile ]; then (cd win64;mingw64-configure --disable-libewf --disable-afflib) ; fi
 	(cd win64/src;$(MAKE) lib;mv libbulkextractor.so ../../libbulkextractor64.DLL)
