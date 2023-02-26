@@ -17,7 +17,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: ['macos-latest', 'ubuntu-20.04', 'ubuntu-22.04']
+        os: ['macos-latest', 'ubuntu-latest']
     outputs:
       should_skip: ${{ steps.skip_check.outputs.should_skip }}
     steps:
@@ -29,7 +29,6 @@ jobs:
           skip_after_successful_duplicate: 'true'
           paths_ignore: '["**/README.md", "**/docs/**"]'
           do_not_skip: '["pull_request", "workflow_dispatch", "schedule"]'
-
 
   main_job:
     needs: pre_job
