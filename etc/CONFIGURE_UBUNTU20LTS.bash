@@ -1,7 +1,7 @@
 #!/bin/bash
+source paths.bash
 RELEASE=20
 CONFIGURE="./configure -q --enable-silent-rules"
-LIBEWF_DIST=https://github.com/libyal/libewf-legacy/releases/download/20140812/libewf-20140812.tar.gz
 AUTOCONF_DIST=https://ftp.gnu.org/gnu/autoconf/autoconf-2.71.tar.gz
 AUTOMAKE_DIST=https://ftp.gnu.org/gnu/automake/automake-1.16.3.tar.gz
 MKPGS="build-essential flex libexpat1-dev libxml2-utils libssl-dev libtool make pkg-config zlib1g-dev"
@@ -67,7 +67,7 @@ echo == MKPGS: $MKPGS
 sudo apt install -y $MKPGS || fail could not apt install $MKPGS
 
 echo == manually installing a modern libewf
-$WGET $LIBEWF_DIST || (echo could not download $LIBEWF_DIST; exit 1)
+$WGET $LIBEWF_URL || (echo could not download $LIBEWF_URL; exit 1)
 tar xfz libewf*gz   && (cd libewf*/   && $CONFIGURE && $MAKE >/dev/null && sudo make install)
 ls -l /etc/ld.so.conf.d/
 sudo ldconfig

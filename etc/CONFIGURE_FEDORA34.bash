@@ -1,7 +1,8 @@
 #!/bin/bash
-LIBEWF_URL=https://github.com/libyal/libewf/releases/download/20201230/libewf-experimental-20201230.tar.gz
+source paths.bash
 OS_NAME=fedora
 OS_VERSION=34
+LIBEWF_URL=https://github.com/libyal/libewf-legacy/releases/download/20140814/libewf-20140814.tar.gz
 if [ ! -r /etc/os-release ]; then
   echo This requires /etc/os-release
   exit 1
@@ -65,7 +66,7 @@ wget -nv $LIBEWF_URL || (echo could not download $LIBEWF_URL. Stop; exit 1)
 tar xfz $LIBEWF_FNAME || (echo could not untar $LIBEWF_FNAME. Stop; exit 1)
 (cd $LIBEWF_DIR  \
      && ./configure --quiet --enable-silent-rules --prefix=/usr/local \
-     && make \
+     && make lib \
      && sudo make install) || (echo could not build libewf. Stop; exit 1)
 echo Cleaning up $LIBEWF_FNAME and $LIBEWF_DIR
 /bin/rm -rf $LIBEWF_FNAME $LIBEWF_DIR || (echo could not clean up. Stop; exit 1)
