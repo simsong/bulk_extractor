@@ -42,6 +42,12 @@ flex_scanners = \
 	scan_email.flex scan_email.h \
 	scan_gps.flex
 
+# This is gross. Sorry!
+scan_base16.o: sbuf_flex_scanner.h
+scan_accts.o: sbuf_flex_scanner.h
+scan_email.o: sbuf_flex_scanner.h
+scan_gps.o: sbuf_flex_scanner.h
+
 # These scanners are based on Lightbox Technology's lightgrep
 lightgrep_scanners = \
 	pattern_scanner.cpp pattern_scanner.h \
