@@ -103,7 +103,7 @@ void scan_ntfsmft(scanner_params &sp)
                 ntfsmft_recorder.carve(sbuf_t(sbuf,offset,total_record_size),".mft");
             }
             else if (result_type == 2) {
-                ntfsmft_recorder.carve(sbuf_t(sbuf,offset,total_record_size),".mft_corrputed");
+                ntfsmft_recorder.carve(sbuf_t(sbuf,offset,total_record_size),".mft_corrupted");
             }
             else { // result_type == 0 - not MFT record
             }

@@ -1,4 +1,5 @@
 #!/bin/bash
+source paths.bash
 cat <<EOF
 *******************************************************************
         Configuring Debian 9 to compile bulk_extractor.
@@ -8,7 +9,7 @@ cat <<EOF
 
 2. # apt-get install git
 
-3. # git clone git@github.com:simsong/bulk_extractor.git
+3. # git clone https://github.com/simsong/bulk_extractor.git
 
 3. # bash bulk_extractor/src_win/CONFIGURE_DEBIAN9.bash
 

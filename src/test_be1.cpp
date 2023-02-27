@@ -90,24 +90,46 @@ std::filesystem::path my_executable()
 #endif
 }
 
+std::filesystem::path check;
+bool check_set = false;
+
+bool check_test_dir(std::filesystem::path test)
+{
+    std::cout << "check " << test << std::endl;
+    if (std::filesystem::exists( test ) &&
+        std::filesystem::exists( test / "CFReDS001.E01")) {
+        std::cout << "Test directory: " << test << std::endl;
+        check = test;
+        check_set = true;
+        return true;
+    }
+    return false;
+}
+
 /* We assume that the tests are being run out of bulk_extractor/src/.
  * This returns the directory of the test subdirectory.
  */
 std::filesystem::path test_dir()
 {
+    if (check_set) return check;
+    // We will set check to a variety of things and then test to see if the subdirectory jpegs exists.
+    // If it does, we found the right location
+
     // if srcdir is set, use that, otherwise use the directory of the executable
     // srcdir is set when we run under autoconf 'make distcheck'
-    std::filesystem::path check;
     const char *srcdir = getenv("srcdir");
     if (srcdir) {
         check = std::filesystem::path(srcdir) / "tests";
-        if (std::filesystem::exists( check )) return check;
+        if (check_test_dir(check)) return check;
     }
     check = my_executable().parent_path() / "tests";
-    if (std::filesystem::exists( check )) return check;
+    if (check_test_dir(check)) return check;
 
     check = my_executable().parent_path().parent_path().parent_path() / "tests";
-    if (std::filesystem::exists( check )) return check;
+    if (check_test_dir(check)) return check;
+
+    check = my_executable().parent_path().parent_path().parent_path() / "src" / "tests";
+    if (check_test_dir(check)) return check;
 
     std::cerr << "Cannot find tests directory.  my_executable:" << my_executable() << std::endl;
     exit(1);
@@ -701,8 +723,15 @@ TEST_CASE("scan_net1", "[scanners]") {
 
     /* Put the addresses into network order and check */
     uint16_t addr[8];
-    for(int i=0;i<8;i++) addr[i] = htons(addr1[i]);     REQUIRE( scan_net_t::invalidIP6(addr) == false );
-    for(int i=0;i<8;i++) addr[i] = htons(addr2[i]);     REQUIRE( scan_net_t::invalidIP6(addr) == true );
+    for (int i=0;i<8;i++){
+      addr[i] = htons(addr1[i]);
+    }
+    REQUIRE( scan_net_t::invalidIP6(addr) == false );
+
+    for (int i=0;i<8;i++){
+      addr[i] = htons(addr2[i]);
+    }
+    REQUIRE( scan_net_t::invalidIP6(addr) == true );
 }
 
 /* Validate checksum computation from

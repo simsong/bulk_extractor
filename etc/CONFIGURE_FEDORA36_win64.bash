@@ -1,6 +1,10 @@
 #!/bin/bash
+source paths.bash
 OS_NAME=fedora
-OS_VERSION=34
+OS_VERSION=36
+USE_ICU=0
+MAKE_CONCURRENCY=-j2
+
 if [ ! -r /etc/os-release ]; then
   echo This requires /etc/os-release
   exit 1
@@ -24,14 +28,14 @@ cat <<EOF
 This script will configure a fresh Fedora system to compile with
 mingw64.  Please perform the following steps:
 
-1. Install FEDORA31 or newer, running with you as an administrator.
+1. Install FEDORA$OS_VERSION, running with you as an administrator.
    For a VM:
 
    1a - download the ISO for the 64-bit DVD (not the live media) from:
         http://fedoraproject.org/en/get-fedora-options#formats
    1b - Create a new VM using this ISO as the boot.
 
-2. Plese put this CONFIGURE_F20.bash script in you home directory.
+2. Run this script
 
 3. Run this script to configure the system to cross-compile bulk_extractor.
    Parts of this script will be run as root using "sudo".
@@ -40,7 +44,16 @@ press any key to continue...
 EOF
 read
 
-MAKE_CONCURRENCY=-j4
+MPKGS="autoconf automake make flex gcc gcc-c++ git libtool "
+MPKGS+="md5deep osslsigncode patch wine wget bison zlib-devel "
+MPKGS+="java-1.8.0-openjdk-devel "
+MPKGS+="libxml2-devel libxml2-static openssl-devel "
+MPKGS+="expat-devel "
+MPKGS+="mingw64-gcc mingw64-gcc-c++ "
+MPKGS+="mingw32-nsis "
+
+
+
 # cd to the directory where the script is
 # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -51,22 +64,76 @@ else
 fi
 cd $DIR
 
-NEEDED_FILES="icu4c-53_1-mingw-w64-mkdir-compatibility.patch"
-NEEDED_FILES+=" icu4c-53_1-simpler-crossbuild.patch"
-for i in $NEEDED_FILES ; do
-  if [ ! -r $i ]; then
-    echo This script requires the file $i which is distributed with $0
-    exit 1
-  fi
-done
+if [ $USE_ICU == "YES" ]; then
+    NEEDED_FILES="icu4c-53_1-mingw-w64-mkdir-compatibility.patch"
+    NEEDED_FILES+=" icu4c-53_1-simpler-crossbuild.patch"
+    for i in $NEEDED_FILES ; do
+	if [ ! -r $i ]; then
+	    echo This script requires the file $i which is distributed with $0
+	    exit 1
+	fi
+    done
 
-MPKGS="autoconf automake make flex gcc gcc-c++ git libtool "
-MPKGS+="md5deep osslsigncode patch wine wget bison zlib-devel "
-MPKGS+="libewf libewf-devel java-1.8.0-openjdk-devel "
-MPKGS+="libxml2-devel libxml2-static openssl-devel "
-MPKGS+="expat-devel "
-MPKGS+="mingw64-gcc mingw64-gcc-c++ "
-MPKGS+="mingw32-nsis "
+    #
+    # ICU requires patching and a special build sequence
+    #
+
+    echo "Building and installing ICU for mingw"
+    ICUVER=53_1
+    ICUFILE=icu4c-$ICUVER-src.tgz
+    ICUDIR=icu
+    ICUURL=http://download.icu-project.org/files/icu4c/53.1/$ICUFILE
+
+    if is_installed libicuuc
+    then
+	echo ICU is already installed
+    else
+	if [ ! -r $ICUFILE ]; then
+	    wget $ICUURL
+	fi
+	tar xf $ICUFILE
+
+
+	# patch ICU for MinGW cross-compilation
+	pushd icu
+	patch -p0 <../icu4c-53_1-simpler-crossbuild.patch
+	patch -p0 <../icu4c-53_1-mingw-w64-mkdir-compatibility.patch
+	popd
+
+	ICUDIR=`tar tf $ICUFILE|head -1`
+
+	ICU_DEFINES="-DU_USING_ICU_NAMESPACE=0 -DU_CHARSET_IS_UTF8=1 -DUNISTR_FROM_CHAR_EXPLICIT=explicit -DUNSTR_FROM_STRING_EXPLICIT=explicit"
+
+	ICU_FLAGS="--disable-extras --disable-icuio --disable-layout --disable-samples --disable-tests"
+
+	# build ICU for Linux to get packaging tools used by MinGW builds
+	echo
+	echo icu linux
+	rm -rf icu-linux
+	mkdir icu-linux
+	pushd icu-linux
+	CC=gcc CXX=g++ CFLAGS=-O3 CXXFLAGS=-O3 CPPFLAGS="$ICU_DEFINES" ../icu/source/runConfigureICU Linux --enable-shared $ICU_FLAGS
+	make VERBOSE=1
+	popd
+
+	# build 64-bit ICU for MinGW
+	echo
+	echo icu mingw64
+	rm -rf icu-mingw64
+	mkdir icu-mingw64
+	pushd icu-mingw64
+	eval MINGW=\$MINGW64
+	eval MINGW_DIR=\$MINGW64_DIR
+	../icu/source/configure CC=$MINGW-gcc CXX=$MINGW-g++ CFLAGS=-O3 CXXFLAGS=-O3 CPPFLAGS="$ICU_DEFINES" --enable-static --disable-shared --prefix=$MINGW_DIR --host=$MINGW --with-cross-build=`realpath ../icu-linux` $ICU_FLAGS --disable-tools --disable-dyload --with-data-packaging=static
+	make VERBOSE=1
+	sudo make install
+	make clean
+	popd
+	rm -rf icu-mingw64
+	rm -rf $ICUDIR icu-linux
+	echo "ICU mingw installation complete."
+    fi
+fi
 
 echo Will now try to install
 
@@ -146,66 +213,8 @@ function build_mingw {
 }
 
 build_mingw libtre   http://laurikari.net/tre/tre-0.8.0.tar.gz
-build_mingw libewf   https://github.com/libyal/libewf/releases/download/20201230/libewf-experimental-20201230.tar.gz
+build_mingw libewf   $LIBEWF_URL
 
-#
-# ICU requires patching and a special build sequence
-#
-
-echo "Building and installing ICU for mingw"
-ICUVER=53_1
-ICUFILE=icu4c-$ICUVER-src.tgz
-ICUDIR=icu
-ICUURL=http://download.icu-project.org/files/icu4c/53.1/$ICUFILE
-
-if is_installed libicuuc
-then
-  echo ICU is already installed
-else
-  if [ ! -r $ICUFILE ]; then
-    wget $ICUURL
-  fi
-  tar xf $ICUFILE
-
-  # patch ICU for MinGW cross-compilation
-  pushd icu
-  patch -p0 <../icu4c-53_1-simpler-crossbuild.patch
-  patch -p0 <../icu4c-53_1-mingw-w64-mkdir-compatibility.patch
-  popd
-
-  ICUDIR=`tar tf $ICUFILE|head -1`
-
-  ICU_DEFINES="-DU_USING_ICU_NAMESPACE=0 -DU_CHARSET_IS_UTF8=1 -DUNISTR_FROM_CHAR_EXPLICIT=explicit -DUNSTR_FROM_STRING_EXPLICIT=explicit"
-
-  ICU_FLAGS="--disable-extras --disable-icuio --disable-layout --disable-samples --disable-tests"
-
-  # build ICU for Linux to get packaging tools used by MinGW builds
-  echo
-  echo icu linux
-  rm -rf icu-linux
-  mkdir icu-linux
-  pushd icu-linux
-  CC=gcc CXX=g++ CFLAGS=-O3 CXXFLAGS=-O3 CPPFLAGS="$ICU_DEFINES" ../icu/source/runConfigureICU Linux --enable-shared $ICU_FLAGS
-  make VERBOSE=1
-  popd
-
-  # build 64-bit ICU for MinGW
-  echo
-  echo icu mingw64
-  rm -rf icu-mingw64
-  mkdir icu-mingw64
-  pushd icu-mingw64
-  eval MINGW=\$MINGW64
-  eval MINGW_DIR=\$MINGW64_DIR
-  ../icu/source/configure CC=$MINGW-gcc CXX=$MINGW-g++ CFLAGS=-O3 CXXFLAGS=-O3 CPPFLAGS="$ICU_DEFINES" --enable-static --disable-shared --prefix=$MINGW_DIR --host=$MINGW --with-cross-build=`realpath ../icu-linux` $ICU_FLAGS --disable-tools --disable-dyload --with-data-packaging=static
-  make VERBOSE=1
-  sudo make install
-  make clean
-  popd
-  rm -rf icu-mingw64
-  rm -rf $ICUDIR icu-linux
-  echo "ICU mingw installation complete."
-fi
 
 #
 # build liblightgrep

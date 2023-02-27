@@ -27,6 +27,7 @@ To build bulk_extractor in Linux or Mac OS:
 2. Then run these commands:
 
 ```
+./bootstrap.sh
 ./configure
 make
 make install
@@ -37,7 +38,7 @@ https://github.com/simsong/bulk_extractor/wiki/Installing-bulk_extractor
 
 The Windows version of bulk_extractor must be built on Fedora using mingw.
 
-For more information on bulk_extractor, visit: https://forensicswiki.xyz/wiki/index.php?title=Bulk_extractor
+For more information on bulk_extractor, visit: https://forensics.wiki/bulk_extractor
 
 Tested Configurations
 =====================

@@ -208,8 +208,6 @@ class process_ewf : public image_process {
     mutable libewf_handle_t *handle { nullptr };
 
  public:
-    static void local_e01_glob(std::filesystem::path fname,char ***libewf_filenames,int *amount_of_filenames);
-
     process_ewf(std::filesystem::path fname, size_t pagesize_, size_t margin_) : image_process(fname, pagesize_, margin_) {}
     virtual ~process_ewf();
     std::vector<std::string> getewfdetails() const;
@@ -255,6 +253,7 @@ class process_raw : public image_process {
     };
     typedef std::vector<std::shared_ptr<file_info>> file_list_t;
     file_list_t file_list {};
+    int64_t     get_filesize(int fd);
     void        add_file(std::filesystem::path fname);
     const class std::shared_ptr<process_raw::file_info> find_offset(uint64_t offset) const; /* finds which file this offset would map to */
     uint64_t    raw_filesize {};			/* sume of all the lengths */

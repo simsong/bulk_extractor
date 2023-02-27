@@ -1,5 +1,7 @@
 # This file based on https://gist.github.com/mwouts/9842452d020c08faf9e84a3bba38a66f
 # See: https://help.github.com/en/actions/reference/software-installed-on-github-hosted-runners
+# 2022-08-06 - slg - Updated os to be 'macos-latest', 'ubuntu-20.04', 'ubuntu-22.04'
+#                    See https://github.com/actions/virtual-environments for details.
 # 2020-06-22 - slg - customized
 # 2020-06-27 - slg - expanded to G++ for MacOS
 # 2020-07-03 - slg - ported to be13_api; removed python (be13_api doesn't use python)
@@ -7,15 +9,34 @@
 # 2022-02-10 - slg - renamed be20_api. Our work here is done.
 
 name: BE2 CI (c++17)
-on: [push]
+on: [push, pull_request]
 
 jobs:
-  build:
+  # https://github.com/marketplace/actions/skip-duplicate-actions
+  pre_job:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: ['macos-10.15', 'ubuntu-20.04']
+        os: ['macos-latest', 'ubuntu-latest']
+    outputs:
+      should_skip: ${{ steps.skip_check.outputs.should_skip }}
+    steps:
+      - id: skip_check
+        uses: fkirc/skip-duplicate-actions@v4
+        with:
+          # All of these options are optional, so you can remove them if you are happy with the defaults
+          concurrent_skipping: 'never'
+          skip_after_successful_duplicate: 'true'
+          paths_ignore: '["**/README.md", "**/docs/**"]'
+          do_not_skip: '["pull_request", "workflow_dispatch", "schedule"]'
 
+  main_job:
+    needs: pre_job
+    if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: ['macos-latest', 'ubuntu-20.04', 'ubuntu-22.04']
     env:
       DEBUG_5G: FALSE
       DEBUG_FAST: TRUE

@@ -1,4 +1,5 @@
 #!/bin/bash
+source paths.bash
 if [ -r /usr/local/bin/brew ]; then
     WHICH=/usr/local/bin/brew
 elif [ -r /opt/homebrew/bin/brew ]; then

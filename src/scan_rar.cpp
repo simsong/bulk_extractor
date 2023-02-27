@@ -80,7 +80,7 @@ time_t decode_iso8601(const std::string mtime_iso8601)
 
 #define OS_DOS 0x00
 #define OS_OS2 0x01
-#define OS_WINDOWS 0x02
+#define OS_WINDOWS_ 0x02
 #define OS_UNIX 0x03
 #define OS_MAC 0x04
 #define OS_BEOS 0x05
@@ -275,7 +275,7 @@ std::string RarComponentInfo::host_os_label() const
             return "DOS";
         case OS_OS2:
             return "OS/2";
-        case OS_WINDOWS:
+        case OS_WINDOWS_:
             return "Windows";
         case OS_UNIX:
             return "Unix";
@@ -608,7 +608,7 @@ void scan_rar(scanner_params &sp)
         sp.get_scanner_config("rar_find_volumes",&record_volumes,"Search for RAR volumes");
 #else
         sp.info->description = "(disabled in configure)";
-        sp.info->flags.default_enabled = false;
+        sp.info->scanner_flags.default_enabled = false;
 #endif
 	return;
     }
