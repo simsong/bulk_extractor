@@ -1,26 +1,21 @@
 #!/bin/bash
 # cd to the directory where the script is
 # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-if [ "$PWD" != "$DIR" ]; then
-    changed_dir="true"
-else
-    changed_dir="false"
-fi
-cd $DIR
-
-source paths.bash
-OS_NAME=fedora
-OS_VERSION=36
-USE_ICU=NO
+OS_NAME=ubuntu
+OS_VERSION=22
 MAKE_CONCURRENCY=-j2
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd $SCRIPT_DIR
+
+. ./paths.bash
+
 
 if [ ! -r /etc/os-release ]; then
   echo This requires /etc/os-release
   exit 1
 fi
 . /etc/os-release
-if [ $ID != 'fedora' ]; then
+if [ $ID != $OS_NAME ]; then
     echo This requires $OS_NAME Linux. You have $ID.
     exit 1
 fi
@@ -39,7 +34,7 @@ press any key to continue...
 EOF
 read
 
-MPKGS="autoconf automake make flex gcc gcc-c++ git libtool mingw-w64 wine  libz-mingw-w64-dev libgcrypt-mingw-w64-dev"
+MPKGS="autoconf automake make flex gcc g++ git libtool mingw-w64 wine  libz-mingw-w64-dev libgcrypt-mingw-w64-dev"
 
 sudo apt update -y
 sudo apt install -y $MPKGS
@@ -47,6 +42,8 @@ if [ $? != 0 ]; then
   echo "Could not install some of the packages. Will not proceed."
   exit 1
 fi
+
+exit 0
 
 echo Attempting to install both DLL and static version of all mingw libraries
 echo needed for bulk_extractor.
