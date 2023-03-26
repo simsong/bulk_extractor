@@ -28,7 +28,9 @@ To build bulk_extractor in Linux or Mac OS:
 
 ```
 $ git clone --recurse-submodules https://github.com/simsong/bulk_extractor.git 
-$ bash etc/CONFIGURE_FEDORA36.bash
+$ cd bulk_extractor/etc
+$ bash CONFIGURE_FEDORA36.bash
+$ cd ..
 $ ./bootstrap.sh
 $ ./configure
 $ make
@@ -39,7 +41,7 @@ $ sudo make install
 
 ```
 $ git clone --recurse-submodules https://github.com/simsong/bulk_extractor.git 
-$ cd etc
+$ cd bulk_extractor/etc
 $ bash CONFIGURE_FEDORA36_win64.bash
 $ cd ..
 $ make win64
