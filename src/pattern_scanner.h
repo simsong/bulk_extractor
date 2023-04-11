@@ -10,32 +10,32 @@
 
 #include <lightgrep/api.h>
 
-#include "be13/plugin.h"
+#include "be20_api/scanner_params.h"
 
 using namespace std;
 
 class PatternScanner;
 
-/**
- * the function prototype for a handler callback
- * LG_SearchHit            - LightGrep Search Hit.
- * scanner_params          - the parameters available to the scanner.
- * recursion_control_clock - information about where we are in the recursive analysis.
- */
+// /**
+//  * the function prototype for a handler callback
+//  * LG_SearchHit            - LightGrep Search Hit.
+//  * scanner_params          - the parameters available to the scanner.
+//  * recursion_control_clock - information about where we are in the recursive analysis.
+//  */
 
-typedef void (PatternScanner::*CallbackFnType)(const LG_SearchHit&,
-                                               const scanner_params& sp,
-                                               const recursion_control_block& rcb);
+// typedef void (PatternScanner::*CallbackFnType)(const LG_SearchHit&,
+//                                                const scanner_params& sp,
+//                                                const recursion_control_block& rcb);
 
-/*********************************************************/
+// /*********************************************************/
 
-struct Handler;
+// struct Handler;
 
-// Inherit from this to create your own Lightgrep-based scanners
-// clone(), startup(), init(), and initScan() must be overridden
+// // Inherit from this to create your own Lightgrep-based scanners
+// // clone(), startup(), init(), and initScan() must be overridden
 class PatternScanner {
 public:
-  PatternScanner(const string& n): Name(n), Handlers(), PatternRange(0, 0) {}
+  PatternScanner(const string& n): Name(n) {} //Handlers(), PatternRange(0, 0) {}
   virtual ~PatternScanner() {}
 
   virtual PatternScanner* clone() const = 0;
@@ -53,91 +53,91 @@ public:
 
   // return bool indicates whether scanner addition should be continued
   // default is to print message to stderr and quit parsing scanner patterns
-  virtual bool handleParseError(const Handler& h, LG_Error* err) const;
+  // virtual bool handleParseError(const Handler& h, LG_Error* err) const;
 
-  virtual void addHandler(const Handler* h) {
-    Handlers.push_back(h);
-  }
+  // virtual void addHandler(const Handler* h) {
+  //   Handlers.push_back(h);
+  // }
 
-  virtual const vector<const Handler*>& handlers() const { return Handlers; }
+  // virtual const vector<const Handler*>& handlers() const { return Handlers; }
 
-  pair<unsigned int, unsigned int>& patternRange() { return PatternRange; }
-  const pair<unsigned int, unsigned int>& patternRange() const { return PatternRange; }
+  // pair<unsigned int, unsigned int>& patternRange() { return PatternRange; }
+  // const pair<unsigned int, unsigned int>& patternRange() const { return PatternRange; }
 
 protected:
   PatternScanner(const PatternScanner& s):
-    Name(s.Name), Handlers(s.Handlers), PatternRange(s.PatternRange) {}
+    Name(s.Name) {} //, Handlers(s.Handlers), PatternRange(s.PatternRange) {}
 
   string                 Name;
-  vector<const Handler*> Handlers;
+  // vector<const Handler*> Handlers;
 
-  pair<unsigned int, unsigned int> PatternRange; // knows the label range of its associated patterns
+  // pair<unsigned int, unsigned int> PatternRange; // knows the label range of its associated patterns
 };
 
-/*********************************************************/
+// /*********************************************************/
 
-struct Handler {
-  // Agglomeration of the scanner, pattern, encodings, parse options, and callback
-  template <typename Fn>
-  Handler(
-    PatternScanner& scanner,
-    const string& re,
-    const vector<string>& encs,
-    const LG_KeyOptions& opts,
-    Fn fn
-  ):
-    RE(re),
-    Encodings(encs),
-    Options(opts),
-    Callback(static_cast<CallbackFnType>(fn))
-  {
-    scanner.addHandler(this);
-  }
+// struct Handler {
+//   // Agglomeration of the scanner, pattern, encodings, parse options, and callback
+//   template <typename Fn>
+//   Handler(
+//     PatternScanner& scanner,
+//     const string& re,
+//     const vector<string>& encs,
+//     const LG_KeyOptions& opts,
+//     Fn fn
+//   ):
+//     RE(re),
+//     Encodings(encs),
+//     Options(opts),
+//     Callback(static_cast<CallbackFnType>(fn))
+//   {
+//     scanner.addHandler(this);
+//   }
 
-  string RE;
+//   string RE;
 
-  vector<string> Encodings;
+//   vector<string> Encodings;
 
-  LG_KeyOptions Options;
+//   LG_KeyOptions Options;
 
-  CallbackFnType Callback;
-};
+//   CallbackFnType Callback;
+// };
 
-/*********************************************************/
+// /*********************************************************/
 
-class LightgrepController { // Centralized search facility amongst PatternScanners
-public:
+// class LightgrepController { // Centralized search facility amongst PatternScanners
+// public:
 
-  static LightgrepController& Get(); // singleton instance
+//   static LightgrepController& Get(); // singleton instance
 
-  bool addScanner(PatternScanner& scanner);
-  bool addUserPatterns(PatternScanner& scanner, CallbackFnType* callbackPtr, const FindOpts& userPatterns);
+//   bool addScanner(PatternScanner& scanner);
+//   bool addUserPatterns(PatternScanner& scanner, CallbackFnType* callbackPtr, const FindOpts& userPatterns);
 
-  void regcomp();
-  void scan(const scanner_params& sp, const recursion_control_block& rcb);
-  void processHit(const vector<PatternScanner*>& sTbl, const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
+//   void regcomp();
+//   void scan(const scanner_params& sp, const recursion_control_block& rcb);
+//   void processHit(const vector<PatternScanner*>& sTbl, const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb);
 
-  unsigned int numPatterns() const;
+//   unsigned int numPatterns() const;
 
-private:
-  LightgrepController();
-  LightgrepController(const LightgrepController&);
-  ~LightgrepController();
+// private:
+//   LightgrepController();
+//   LightgrepController(const LightgrepController&);
+//   ~LightgrepController();
 
-  LightgrepController& operator=(const LightgrepController&);
+//   LightgrepController& operator=(const LightgrepController&);
 
-  LG_HPATTERN     ParsedPattern;
-  LG_HFSM         Fsm;
-  LG_HPATTERNMAP  PatternInfo;
-  LG_HPROGRAM     Prog;
+//   LG_HPATTERN     ParsedPattern;
+//   LG_HFSM         Fsm;
+//   LG_HPATTERNMAP  PatternInfo;
+//   LG_HPROGRAM     Prog;
 
-  vector<PatternScanner*> Scanners;
-};
+//   vector<PatternScanner*> Scanners;
+// };
 
-/*********************************************************/
+// /*********************************************************/
 
-// Utility function. Makes your scan function a one-liner, given a PatternScanner instance
-void scan_lg(PatternScanner& scanner, struct scanner_params &sp;
+// // Utility function. Makes your scan function a one-liner, given a PatternScanner instance
+// void scan_lg(PatternScanner& scanner, struct scanner_params &sp;
 
 #endif
 #endif /* PATTERN_SCANNER_H */
