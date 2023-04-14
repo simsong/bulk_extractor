@@ -22,21 +22,33 @@ Building `bulk_extractor`
 =========================
 To build bulk_extractor in Linux or Mac OS:
 
-1. Make sure required packages have been installed. **You can do this by going into the etc/ directory and looking for a script that installs the necessary packages for your platform.**
+1. Start with a clean virtual machine. We recommend the current version of Fedora, as it can build both the Linux and the Windows executables. The Windows executable currently does not build under Ubuntu because of deficiencies in the mingw compiler libraries on that platform.
 
 2. Then run these commands:
 
 ```
-./bootstrap.sh
-./configure
-make
-make install
+$ git clone --recurse-submodules https://github.com/simsong/bulk_extractor.git 
+$ cd bulk_extractor/etc
+$ bash CONFIGURE_FEDORA36.bash
+$ cd ..
+$ ./bootstrap.sh
+$ ./configure
+$ make
+$ sudo make install
+```
+
+3. To compile the Windows executable, try:
+
+```
+$ git clone --recurse-submodules https://github.com/simsong/bulk_extractor.git 
+$ cd bulk_extractor/etc
+$ bash CONFIGURE_FEDORA36_win64.bash
+$ cd ..
+$ make win64
 ```
 
 For detailed instructions on installing packages and building bulk_extractor, read the wiki page here:
 https://github.com/simsong/bulk_extractor/wiki/Installing-bulk_extractor
-
-The Windows version of bulk_extractor must be built on Fedora using mingw.
 
 For more information on bulk_extractor, visit: https://forensics.wiki/bulk_extractor
 
@@ -44,12 +56,12 @@ Tested Configurations
 =====================
 This release of bulk_extractor requires C++17 and has been tested to compile on the following platforms:
 
-* Amazon Linux as of 2019-11-09
-* Fedora 32
-* Ubuntu 20.04LTS
-* MacOS 11.5.2
+* Amazon Linux as of 2023-05-25
+* Fedora 36 (most recently)
+* Ubuntu 20.04LTS 
+* MacOS 13.2.1
 
-To configure your operating system, please run the appropriate scripts in the [etc/](/etc) directory.
+You should *always* start with a fresh VM and prepare the system using the appropriate prep script in the `etc/` directory.
 
 
 RECOMMENDED CITATION
@@ -99,13 +111,10 @@ Other hints for debugging:
 * Run with a random sampling of 0.001% to debug reading image size and a few quick seeks.
 
 
-
-
 BULK_EXTRACTOR 2.0 STATUS REPORT
 ================================
-`bulk_extractor` 2.0 (BE2) is now operational for development use and testing. However, it has not yet been validated.
+`bulk_extractor` 2.0 (BE2) is now operational. Although it works with the Java-based viewer, we do not currently have an installer that runs under Windows.
 
 BE2  requires C++17 to compile. It requires `https://github.com/simsong/be13_api.git` as a sub-module, which in turn requires `dfxml` as a sub-module.
 
-The project took longer than anticipated. In addition to updating to
-C++17, It was used as an opportunity for massive code refactoring and general increase in code quality, testability and reliability.
+The project took longer than anticipated. In addition to updating to C++17, It was used as an opportunity for massive code refactoring and general increase in code quality, testability and reliability. An article about the experiment will appear in a forthcoming issue of [ACM Queue](https://queue.acm.org/)
