@@ -734,6 +734,8 @@ TEST_CASE("scan_net1", "[scanners]") {
     REQUIRE( scan_net_t::invalidIP6(addr) == true );
 }
 
+#ifdef TEST_IPV6
+
 /* Validate checksum computation from
  * https://stackoverflow.com/questions/30858973/udp-checksum-calculation-for-ipv6-packet
  */
@@ -816,6 +818,7 @@ TEST_CASE("scan_net2", "[scanners]") {
     REQUIRE( h.is_4or6() == true);
     REQUIRE( h.checksum_valid == true);
 }
+#endif
 
 TEST_CASE("scan_pdf", "[scanners]") {
     auto *sbufp = map_file("pdf_words2.pdf");
