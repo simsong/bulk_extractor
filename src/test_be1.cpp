@@ -544,9 +544,15 @@ TEST_CASE("scan_json1", "[scanners]") {
 
 */
 const uint8_t packet1[] = {
-    0x00, 0x50, 0xe8, 0x04, 0x77, 0x4b, 0x2c, 0xf0,
-    0xa2, 0xf3, 0xa8, 0xee, 0x08, 0x00, 0x45, 0x00, 0x00, 0x40, 0x00, 0x00, 0x40, 0x00, 0x40, 0x06,
-    0x3b, 0x8d, 0xac, 0x14, 0x00, 0xb9, 0xac, 0xd9, 0xa5, 0x84, 0xea, 0x06, 0x00, 0x50, 0xab, 0x8c,
+    0x00, 0x50, 0xe8, 0x04, // ethernet header
+    0x77, 0x4b, 0x2c, 0xf0,
+    0xa2, 0xf3, 0xa8, 0xee,
+    0x08, 0x00,
+    0x45, 0x00, 0x00, 0x40, // ipv4 header
+    0x00, 0x00, 0x40, 0x00, 0x40, 0x06,
+    0x3b, 0x8d, 0xac, 0x14,
+    0x00, 0xb9, 0xac, 0xd9,
+    0xa5, 0x84, 0xea, 0x06, 0x00, 0x50, 0xab, 0x8c,
     0x75, 0x56, 0x00, 0x00, 0x00, 0x00, 0xb0, 0xc2, 0xff, 0xff, 0x8e, 0xfd, 0x00, 0x00, 0x02, 0x04,
     0x05, 0xb4, 0x01, 0x03, 0x03, 0x06, 0x01, 0x01, 0x08, 0x0a, 0x72, 0x22, 0x2a, 0xb7, 0x00, 0x00,
     0x00, 0x00, 0x04, 0x02, 0x00, 0x00
@@ -556,6 +562,80 @@ const uint16_t addr1[] = { 0x2603, 0x3003, 0x0127, 0x1000, 0x9440, 0x31dd, 0xdd5
 const uint16_t addr2[] = { 0xffff, 0xffff, 0xffff, 0xffff, 0x6eee, 0xe608, 0x1111, 0x1187 };
 
 
+/****************************************************************/
+/*
+
+    Internet Protocol Version 6
+        0110 .... = Version: 6
+        .... 0000 0000 .... .... .... .... .... = Traffic Class: 0x00 (DSCP: CS0, ECN: Not-ECT)
+            .... 0000 00.. .... .... .... .... .... = Differentiated Services Codepoint: Default (0)
+            .... .... ..00 .... .... .... .... .... = Explicit Congestion Notification: Not ECN-Capable Transport (0)
+        .... .... .... 0000 0000 0000 0000 0000 = Flow Label: 0x00000
+        Payload Length: 36
+        Next Header: UDP (17)
+        Hop Limit: 1
+        Source Address: fe80::c46b:e4:d55:62b1
+        Destination Address: ff02::1:3
+    User Datagram Protocol
+        Source Port: 63902
+        Destination Port: 5355
+        Length: 36
+        Checksum: 0x21dc
+        Checksum Status: Unverified
+        Stream index: 0
+        Timestamps
+            Time since first frame: 0.000000000 seconds
+            Time since previous frame: 0.000000000 seconds
+        UDP payload (28 bytes)
+    Link-local Multicast Name Resolution (query)
+        Transaction ID: 0x7e2a
+        Flags: 0x0000 Standard query
+            0... .... .... .... = Response: Message is a query
+            .000 0... .... .... = Opcode: Standard query (0)
+            .... .0.. .... .... = Conflict: None
+            .... ..0. .... .... = Truncated: Message is not truncated
+            .... ...0 .... .... = Tentative: Not tentative
+        Questions: 1
+        Answer RRs: 0
+        Authority RRs: 0
+        Additional RRs: 0
+        Queries
+            xzignbnfvi: type A, class IN
+                Name: xzignbnfvi
+                Name Length: 10
+                Label Count: 1
+                Type: A (Host Address) (1)
+                Class: IN (0x0001)
+*/
+
+
+/* DNS ipv6 packet, sans ethernet header */
+const uint8_t packet2[] = {
+    0x60, 0x00, 0x00, 0x00,        // version, traffic | flow label
+    0x00, 0x24, 0x11, 0x01,        // payload length   | next header | hop limit
+    0xfe, 0x80, 0x00, 0x00,        // source address
+    0x00, 0x00, 0x00, 0x00,
+    0xc4, 0x6b, 0x00, 0xe4,
+    0x0d, 0x55, 0x62, 0xb1,
+    0xff, 0x02, 0x00, 0x00,  // destination address
+    0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00,
+    0x00, 0x01, 0x00, 0x03,
+    0xf9, 0x9e, 0x14, 0xeb, // udp source port | destination port
+    0x00, 0x24, 0x21, 0xdc, // udp length | checksum
+    0x7e, 0x2a, 0x00, 0x00, // udp data
+    0x00, 0x01, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00,
+    0x0a, 0x78, 0x7a, 0x69,
+    0x67, 0x6e, 0x62, 0x6e,
+    0x66, 0x76, 0x69, 0x00,
+    0x00, 0x01, 0x00, 0x01,
+    0xa6, 0xca, 0xb2, 0x70,
+    0xf8, 0x67, 0x2f, 0x3f
+};
+
+
+/****************************************************************/
 /* First packet of a wget from google over IPv6 */
 /*
 (base) simsong@nimi ~ % tcpdump -r out1.pcap -x
@@ -623,6 +703,9 @@ TEST_CASE("scan_net1", "[scanners]") {
 
     /* Now try with the offset */
     REQUIRE( scan_net_t::sanityCheckIP46Header( sbuf, frame_offset + ETHERNET_FRAME_SIZE, &h, nullptr) == true );
+    REQUIRE( h.is_4() == true);
+    REQUIRE( h.is_6() == false);
+    REQUIRE( h.is_4or6() == true);
     REQUIRE( h.checksum_valid == true );
 
     /* Change the IP address and make sure that the header is valid but the checksum is not */
@@ -650,6 +733,92 @@ TEST_CASE("scan_net1", "[scanners]") {
     }
     REQUIRE( scan_net_t::invalidIP6(addr) == true );
 }
+
+#ifdef TEST_IPV6
+
+/* Validate checksum computation from
+ * https://stackoverflow.com/questions/30858973/udp-checksum-calculation-for-ipv6-packet
+ */
+const uint8_t packet6_udp[] = {
+    0x60, 0x00, 0x00, 0x00, // version, traffic | flow label
+    0x00, 0x34, 0x11, 0x01, // payload length   | next header | hop limit
+    0x21, 0x00, 0x00, 0x00, // source
+    0x00, 0x00, 0x00, 0x01,
+    0xAB, 0xCD, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x01,
+    0xFD, 0x00, 0x00, 0x00, // destination address
+    0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x01, 0x60,
+    0x26, 0x92, 0x26, 0x92, // udp source | udp destination
+    0x00, 0x0C, 0x7E, 0xD5, // udp length | udp checksum
+    0x12, 0x34, 0x56, 0x78  // udp data
+};
+TEST_CASE("ipv6_checksum_UDP", "[scanners]") {
+    /* Try packet2 */
+    sbuf_t sbuf2(pos0_t(), packet2, sizeof(packet2));
+    std::cerr << "sbuf2: " << sbuf2 << std::endl;
+    REQUIRE( scan_net_t::ip6_cksum_valid( sbuf2, 0) == true );
+
+
+    /* Try packet6 */
+    sbuf_t sbuf6(pos0_t(), packet6_udp, sizeof(packet6_udp));
+    REQUIRE( sbuf6.bufsize==52 );
+    REQUIRE( scan_net_t::ip6_cksum_valid( sbuf6, 0) == true );
+
+    /* Make a 1 byte change to packet6 and make sure it fails */
+    uint8_t buf[1024];
+    memcpy(buf, packet6_udp, sizeof(packet6_udp));
+    buf[16]++;
+    sbuf_t sbuf6_bad(pos0_t(), buf, sizeof(packet6_udp));
+    REQUIRE( sbuf6_bad.bufsize==52 );
+    REQUIRE( scan_net_t::ip6_cksum_valid( sbuf6_bad, 0) == false );
+
+};
+
+TEST_CASE("ipv6_checksum_TCP", "[scanners]") {
+    sbuf_t sbuf(pos0_t(), packet6_udp, sizeof(packet6_udp));
+    REQUIRE( sbuf.bufsize==52 );
+    REQUIRE( scan_net_t::ip6_cksum_valid( sbuf, 0) == true );
+
+    /* Make a 1 byte change to the payload */
+    uint8_t buf[1024];
+    memcpy(buf, packet6_udp, sizeof(packet6_udp));
+    buf[16]++;
+    sbuf_t sbuf2(pos0_t(), buf, sizeof(packet6_udp));
+    REQUIRE( sbuf2.bufsize==52 );
+    REQUIRE( scan_net_t::ip6_cksum_valid( sbuf2, 0) == false );
+
+};
+
+TEST_CASE("scan_net2", "[scanners]") {
+    /* This checks specifically for a valid IPv6 packet that we know is valid. */
+    constexpr size_t frame_offset = 15;           // where we put the packet. Make sure that it is not byte-aligned!
+    uint8_t buf[1024];
+    scan_net_t::generic_iphdr_t h {} ;
+
+    memset(buf,0xee,sizeof(buf));       // arbitrary data
+    memcpy(buf + frame_offset, packet2, sizeof(packet1)); // copy it to an offset that is not byte-aligned
+    sbuf_t sbuf(pos0_t(), buf, sizeof(buf));
+
+    constexpr size_t packet2_ip_len = sizeof(packet2); // 14 bytes for ethernet header
+
+    REQUIRE( packet2_ip_len == 84); // from above
+
+    /*
+    const struct ip6_hdr *ip6 = sbuf.get_struct_ptr_unsafe<struct ip6_hdr>( buf+frame_offset );
+    REQUIRE( ip6->is_ipv6() == true);
+    REQUIRE( buf[40+frame_offset] == 0x00);
+    REQUIRE( buf[41+frame_offset] == 0x11);
+    */
+
+    REQUIRE( scan_net_t::sanityCheckIP46Header( sbuf, frame_offset , &h, nullptr) == true );
+    REQUIRE( h.is_4() == false);
+    REQUIRE( h.is_6() == true);
+    REQUIRE( h.is_4or6() == true);
+    REQUIRE( h.checksum_valid == true);
+}
+#endif
 
 TEST_CASE("scan_pdf", "[scanners]") {
     auto *sbufp = map_file("pdf_words2.pdf");
