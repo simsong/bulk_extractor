@@ -1,8 +1,19 @@
 #!/bin/bash
+
+# cd to the directory where the script is
+# http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+if [ "$PWD" != "$DIR" ]; then
+    changed_dir="true"
+else
+    changed_dir="false"
+fi
+cd $DIR
+
 source paths.bash
 OS_NAME=fedora
 OS_VERSION=36
-USE_ICU=0
+USE_ICU=NO
 MAKE_CONCURRENCY=-j2
 
 if [ ! -r /etc/os-release ]; then
@@ -51,18 +62,6 @@ MPKGS+="libxml2-devel libxml2-static openssl-devel "
 MPKGS+="expat-devel "
 MPKGS+="mingw64-gcc mingw64-gcc-c++ "
 MPKGS+="mingw32-nsis "
-
-
-
-# cd to the directory where the script is
-# http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-if [ "$PWD" != "$DIR" ]; then
-    changed_dir="true"
-else
-    changed_dir="false"
-fi
-cd $DIR
 
 if [ $USE_ICU == "YES" ]; then
     NEEDED_FILES="icu4c-53_1-mingw-w64-mkdir-compatibility.patch"
