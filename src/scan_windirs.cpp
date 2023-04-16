@@ -303,7 +303,7 @@ void scan_ntfsdirs(const sbuf_t &sbuf,feature_recorder &wrecorder)
 
 		    // Now look at every attribute for the ones that we care about
 
-		    int found_attrs = 0;
+		    //int found_attrs = 0;
 		    while(attr_off+sizeof(ntfs_attr) < n.bufsize){
 
 			uint32_t attr_type = n.get32u(attr_off+0);
@@ -340,12 +340,12 @@ void scan_ntfsdirs(const sbuf_t &sbuf,feature_recorder &wrecorder)
 			}
 
 			if (attr_type==NTFS_ATYPE_ATTRLIST){
-			    found_attrs++;
+			    //found_attrs++;
 			    if (debug & DEBUG_INFO) std::cerr << "NTFS_ATTRLIST ignored\n";
 			}
 
 			if (attr_type==NTFS_ATYPE_FNAME ){
-			    found_attrs++;
+			    //found_attrs++;
 			    if (debug & DEBUG_INFO) std::cerr << "NTFS_ATYPE_FNAME\n";
 
 			    // Decode a resident FNAME fields
@@ -398,7 +398,7 @@ void scan_ntfsdirs(const sbuf_t &sbuf,feature_recorder &wrecorder)
 			}
 
 			if (attr_type==NTFS_ATYPE_SI){
-			    found_attrs++;
+			    //found_attrs++;
 			    if (debug & DEBUG_INFO) std::cerr << "NTFS_ATYPE_SI\n";
 
 			    size_t soff         = n.get16u(attr_off+20);
@@ -410,7 +410,7 @@ void scan_ntfsdirs(const sbuf_t &sbuf,feature_recorder &wrecorder)
 			}
 
                         if (attr_type==NTFS_ATYPE_OBJID){
-                            found_attrs++;
+                            //found_attrs++;
                             if (debug & DEBUG_INFO) std::cerr << "NTFS_ATYPE_OBJID\n";
 
                             size_t slen         = n.get32u(attr_off+16);

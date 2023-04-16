@@ -184,10 +184,10 @@ std::filesystem::path validate(std::string image_fname, std::vector<Check> &expe
         std::ofstream out( offset_name );
         in.seekg(offset);
         char ch;
-        size_t written = 0;
+        //size_t written = 0;
         while (in.get(ch)) {
             out << ch;
-            written ++;
+            //written ++;
         }
         in.close();
         out.close();
@@ -544,9 +544,9 @@ TEST_CASE("process_dir", "[process_dir]") {
         exit(1);
     }
 
-    int count = 0;
+    //int count = 0;
     for( image_process::iterator it = p->begin(); it != p->end(); ++it ){
-        count++;
+        //count++;
         pos0_t pos0 = it.get_pos0();
         REQUIRE( pos0.str().find(".jpg") != std::string::npos );
     }

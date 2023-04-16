@@ -609,6 +609,64 @@ const uint16_t addr2[] = { 0xffff, 0xffff, 0xffff, 0xffff, 0x6eee, 0xe608, 0x111
 */
 
 
+TEST_CASE("scan_net1", "[scanners]") {
+    /* We did a rather involved rewrite of scan_net for BE2 so we want to check all of the methods with the
+     * data a few bytes into the sbuf.
+     */
+    constexpr size_t frame_offset = 15;           // where we put the packet. Make sure that it is not byte-aligned!
+    constexpr size_t ETHERNET_FRAME_SIZE = 14;
+    uint8_t buf[1024];
+    memset(buf,0xee,sizeof(buf));       // arbitrary data
+    memcpy(buf + frame_offset, packet1, sizeof(packet1)); // copy it to an offset that is not byte-aligned
+    sbuf_t sbuf(pos0_t(), buf, sizeof(buf));
+
+    constexpr size_t packet1_ip_len = sizeof(packet1) - ETHERNET_FRAME_SIZE; // 14 bytes for ethernet header
+
+    REQUIRE( packet1_ip_len == 64); // from above
+
+    /* Make an sbuf with just the packet, for initial testing */
+    sbuf_t sbufip = sbuf.slice(frame_offset + ETHERNET_FRAME_SIZE);
+
+    scan_net_t::generic_iphdr_t h {} ;
+
+    REQUIRE( scan_net_t::sanityCheckIP46Header( sbufip, 0 , &h, nullptr) == true );
+    REQUIRE( h.checksum_valid == true );
+
+    /* Now try with the offset */
+    REQUIRE( scan_net_t::sanityCheckIP46Header( sbuf, frame_offset + ETHERNET_FRAME_SIZE, &h, nullptr) == true );
+    REQUIRE( h.is_4() == true);
+    REQUIRE( h.is_6() == false);
+    REQUIRE( h.is_4or6() == true);
+    REQUIRE( h.checksum_valid == true );
+
+    /* Change the IP address and make sure that the header is valid but the checksum is not */
+    buf[frame_offset + ETHERNET_FRAME_SIZE + 14]++; // increment destination address
+    REQUIRE( scan_net_t::sanityCheckIP46Header( sbufip, 0 , &h, nullptr) == true );
+    REQUIRE( h.checksum_valid == false );
+
+    /* Break the port and make sure that the header is no longer valid */
+    buf[frame_offset + ETHERNET_FRAME_SIZE] += 0x10; // increment header length
+    REQUIRE( scan_net_t::sanityCheckIP46Header( sbufip, 0 , &h, nullptr) == false );
+
+    /* Try some IP addresses to make sure they check or do not check */
+    REQUIRE( sizeof(addr1) == 16 );
+    REQUIRE( sizeof(addr2) == 16 );
+
+    /* Put the addresses into network order and check */
+    uint16_t addr[8];
+    for (int i=0;i<8;i++){
+      addr[i] = htons(addr1[i]);
+    }
+    REQUIRE( scan_net_t::invalidIP6(addr) == false );
+
+    for (int i=0;i<8;i++){
+      addr[i] = htons(addr2[i]);
+    }
+    REQUIRE( scan_net_t::invalidIP6(addr) == true );
+}
+
+#ifdef TEST_IPV6
+
 /* DNS ipv6 packet, sans ethernet header */
 const uint8_t packet2[] = {
     0x60, 0x00, 0x00, 0x00,        // version, traffic | flow label
@@ -677,64 +735,6 @@ Urgent Pointer: 0
 Options: (24 bytes), Maximum segment size, No-Operation (NOP), Window scale, No-Operation (NOP), No-Operation (NOP), Timestamps, SACK permitted, End of Option List (EOL)
 Timestamps
 */
-
-TEST_CASE("scan_net1", "[scanners]") {
-    /* We did a rather involved rewrite of scan_net for BE2 so we want to check all of the methods with the
-     * data a few bytes into the sbuf.
-     */
-    constexpr size_t frame_offset = 15;           // where we put the packet. Make sure that it is not byte-aligned!
-    constexpr size_t ETHERNET_FRAME_SIZE = 14;
-    uint8_t buf[1024];
-    memset(buf,0xee,sizeof(buf));       // arbitrary data
-    memcpy(buf + frame_offset, packet1, sizeof(packet1)); // copy it to an offset that is not byte-aligned
-    sbuf_t sbuf(pos0_t(), buf, sizeof(buf));
-
-    constexpr size_t packet1_ip_len = sizeof(packet1) - ETHERNET_FRAME_SIZE; // 14 bytes for ethernet header
-
-    REQUIRE( packet1_ip_len == 64); // from above
-
-    /* Make an sbuf with just the packet, for initial testing */
-    sbuf_t sbufip = sbuf.slice(frame_offset + ETHERNET_FRAME_SIZE);
-
-    scan_net_t::generic_iphdr_t h {} ;
-
-    REQUIRE( scan_net_t::sanityCheckIP46Header( sbufip, 0 , &h, nullptr) == true );
-    REQUIRE( h.checksum_valid == true );
-
-    /* Now try with the offset */
-    REQUIRE( scan_net_t::sanityCheckIP46Header( sbuf, frame_offset + ETHERNET_FRAME_SIZE, &h, nullptr) == true );
-    REQUIRE( h.is_4() == true);
-    REQUIRE( h.is_6() == false);
-    REQUIRE( h.is_4or6() == true);
-    REQUIRE( h.checksum_valid == true );
-
-    /* Change the IP address and make sure that the header is valid but the checksum is not */
-    buf[frame_offset + ETHERNET_FRAME_SIZE + 14]++; // increment destination address
-    REQUIRE( scan_net_t::sanityCheckIP46Header( sbufip, 0 , &h, nullptr) == true );
-    REQUIRE( h.checksum_valid == false );
-
-    /* Break the port and make sure that the header is no longer valid */
-    buf[frame_offset + ETHERNET_FRAME_SIZE] += 0x10; // increment header length
-    REQUIRE( scan_net_t::sanityCheckIP46Header( sbufip, 0 , &h, nullptr) == false );
-
-    /* Try some IP addresses to make sure they check or do not check */
-    REQUIRE( sizeof(addr1) == 16 );
-    REQUIRE( sizeof(addr2) == 16 );
-
-    /* Put the addresses into network order and check */
-    uint16_t addr[8];
-    for (int i=0;i<8;i++){
-      addr[i] = htons(addr1[i]);
-    }
-    REQUIRE( scan_net_t::invalidIP6(addr) == false );
-
-    for (int i=0;i<8;i++){
-      addr[i] = htons(addr2[i]);
-    }
-    REQUIRE( scan_net_t::invalidIP6(addr) == true );
-}
-
-#ifdef TEST_IPV6
 
 /* Validate checksum computation from
  * https://stackoverflow.com/questions/30858973/udp-checksum-calculation-for-ipv6-packet

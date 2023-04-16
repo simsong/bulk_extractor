@@ -18,7 +18,6 @@
 #include <algorithm>
 #include "config.h"
 
-#include "be20_api/utf8.h" // for reading UTF16 and UTF32
 #include "be20_api/utils.h"
 #include "be20_api/unicode_escape.h" // for validating or escaping UTF8
 #include "exif_entry.h"
