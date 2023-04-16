@@ -14,7 +14,7 @@ include be20_api/Makefile.defs
 include rar/Makefile.defs
 
 # So that relative imports from be20_api work
-AM_CPPFLAGS = -I${top_srcdir}/src/be20_api
+AM_CPPFLAGS = -I$(top_srcdir)/src/be20_api -I$(top_srcdir)/src/be20_api/utfcpp/source
 AUTOMAKE_OPTIONS = subdir-objects
 EXTRA_DIST = .gitignore $(BE20_API_EXTRA_DIST)
 
