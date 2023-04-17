@@ -2,6 +2,11 @@
 #define CATCH_CONFIG_CONSOLE_WIDTH 120
 #define DO_NOT_USE_WMAIN
 
+/****************************************************************
+ * test_be2.cpp:
+ * - Test cases that require the use of a scanner_set (with phases)
+ ****************************************************************/
+
 #include "config.h"
 
 #include <cstring>
@@ -264,6 +269,15 @@ bool validate_files(const std::filesystem::path &fn0, const std::filesystem::pat
 }
 
 
+/**
+ * These test cases run the scanners in a scanner_set with a specified disk image, and then check for all of the results.
+ */
+
+
+/****************************************************************
+ * scan_aes
+ ****************************************************************/
+
 TEST_CASE("test_aes", "[phase1]") {
     /* Test rotation with various sign extension snaffu */
     uint8_t in[4];
@@ -329,6 +343,10 @@ TEST_CASE("schedule_aes", "[phase1]") {
     validate_aes128_key(key3);
 }
 
+/****************************************************************
+ * scan_base64 and scan_json
+ ****************************************************************/
+
 TEST_CASE("test_base16json", "[phase1]") {
     std::vector<Check> ex2 {
         Check("json.txt",
@@ -347,6 +365,11 @@ TEST_CASE("test_base16json", "[phase1]") {
     validate("test_base16json.txt", ex2);
 }
 
+/****************************************************************
+ * scan_accts.flex
+ ****************************************************************/
+
+
 TEST_CASE("test_ccn", "[phase1]") {
     auto *sbufp = map_file( "ccns.txt" );
     auto outdir = test_scanner( scan_accts, sbufp); // deletes sbufp
@@ -354,6 +377,10 @@ TEST_CASE("test_ccn", "[phase1]") {
     REQUIRE( requireFeature(ccns_txt,"371449635398431"));
     REQUIRE( requireFeature(ccns_txt,"378282246310005"));
 }
+
+/****************************************************************
+ * scan_elf
+ ****************************************************************/
 
 TEST_CASE("test_elf", "[phase1]") {
     std::vector<Check> ex {
@@ -363,6 +390,10 @@ TEST_CASE("test_elf", "[phase1]") {
 
 }
 
+/****************************************************************
+ * scan_gzip
+ ****************************************************************/
+
 TEST_CASE("test_gzip", "[phase1]") {
     std::vector<Check> ex3 {
         Check("email.txt", Feature( "0-GZIP-0", "hello@world.com", "hello@world.com\\012"))
@@ -370,12 +401,34 @@ TEST_CASE("test_gzip", "[phase1]") {
     validate("test_hello.gz", ex3);
 }
 
+/****************************************************************
+ * scan_json
+ ****************************************************************/
+
 TEST_CASE("test_json", "[phase1]") {
     std::vector<Check> ex1 {
         Check("json.txt", Feature( "0", JSON1, "ef2b5d7ee21e14eeebb5623784f73724218ee5dd")),
     };
     validate("test_json.txt", ex1);
 }
+
+
+/****************************************************************
+ * san_jpeg & scan_rar
+ ****************************************************************/
+
+TEST_CASE("test_jpeg_rar", "[phase1]") {
+    std::vector<Check> ex2 {
+        Check("jpeg_carved.txt",
+              Feature( "13259-RAR-0", "jpeg_carved/000/13259-RAR-0.jpg"))
+
+    };
+    validate("jpegs.rar", ex2);
+}
+
+/****************************************************************
+ * scan_kml
+ ****************************************************************/
 
 TEST_CASE("KML_Samples.kml","[phase1]"){
     std::vector<Check> ex4 {
@@ -388,14 +441,9 @@ TEST_CASE("KML_Samples.kml","[phase1]"){
     validate("KML_Samples.kml", ex4);
 }
 
-TEST_CASE("test_jpeg_rar", "[phase1]") {
-    std::vector<Check> ex2 {
-        Check("jpeg_carved.txt",
-              Feature( "13259-RAR-0", "jpeg_carved/000/13259-RAR-0.jpg"))
-
-    };
-    validate("jpegs.rar", ex2);
-}
+/****************************************************************
+ * scan_net
+ ****************************************************************/
 
 TEST_CASE("test_net1", "[phase1]") {
     std::vector<Check> ex2 {
@@ -498,6 +546,10 @@ TEST_CASE("test_net-domexusers", "[phase1]") {
 }
 
 
+/****************************************************************
+ * scan_winpe
+ ****************************************************************/
+
 TEST_CASE("test_winpe", "[phase1]") {
     std::vector<Check> ex2 {
         Check("winpe.txt", Feature( "0",
@@ -505,129 +557,4 @@ TEST_CASE("test_winpe", "[phase1]") {
                                     "<PE><FileHeader Machine=\"IMAGE_FILE_MACHINE_I386*"))
     };
     validate("hello_win64_exe", ex2);
-}
-
-/****************************************************************
- * Test process_dir
- */
-TEST_CASE("process_dir", "[process_dir]") {
-
-    /* This should throw NoSuchFile because there is is an E01 file */
-    REQUIRE_THROWS_AS(image_process::open( test_dir(), true, 65536, 65536), image_process::FoundDiskImage);
-
-    /* Get the right return code */
-    std::filesystem::path inpath = test_dir();
-    std::string inpath_string = inpath.string();
-    std::filesystem::path outdir = NamedTemporaryDirectory();
-    std::string outdir_string = outdir.string();
-    std::stringstream ss;
-    const char *argv[] = {"bulk_extractor", notify(), "-Ro", outdir_string.c_str(), inpath_string.c_str(), nullptr};
-    int ret = run_be(ss, ss, argv);
-    REQUIRE( ret==6 );
-
-    /* This should return the jpegs */
-    image_process *p = nullptr;
-    try {
-        p = image_process::open( test_dir() / "jpegs", true, 65536, 65536);
-    }
-    catch (image_process::FoundDiskImage &e) {
-        std::cerr << "FoundDiskImage: " << e.what() << std::endl;
-        exit(1);
-    }
-    catch (image_process::IsADirectory &e) {
-        std::cerr << "IsAdirectory: " << e.what() << std::endl;
-        exit(1);
-    }
-    catch (image_process::NoSuchFile &e) {
-        std::cerr << "NoSuchFile: " << e.what() << std::endl;
-        std::cerr << "Current Directory: " << std::filesystem::current_path() << std::endl;
-        exit(1);
-    }
-
-    //int count = 0;
-    for( image_process::iterator it = p->begin(); it != p->end(); ++it ){
-        //count++;
-        pos0_t pos0 = it.get_pos0();
-        REQUIRE( pos0.str().find(".jpg") != std::string::npos );
-    }
-    delete p;
-}
-
-
-/****************************************************************
- * Test restarter
- ** test sbufs (which is this here?
- */
-
-sbuf_t *make_sbuf()
-{
-    auto sbuf = new sbuf_t("Hello World!");
-    return sbuf;
-}
-
-/* Test that sbuf data  are not copied when moved to a child.*/
-std::atomic<int> counter{0};
-const uint8_t *sbuf_buf_loc = nullptr;
-void test_process_sbuf(sbuf_t *sbuf)
-{
-    if (sbuf_buf_loc != nullptr) {
-        REQUIRE( sbuf_buf_loc == sbuf->get_buf() );
-    }
-    delete sbuf;
-}
-
-TEST_CASE("sbuf_no_copy", "[threads]") {
-    for(int i=0;i<100;i++){
-        auto sbuf = make_sbuf();
-        sbuf_buf_loc = sbuf->get_buf();
-        test_process_sbuf(sbuf);
-    }
-}
-
-/****************************************************************/
-TEST_CASE("image_process", "[phase1]") {
-    image_process *p = nullptr;
-    REQUIRE_THROWS_AS( p = image_process::open( "no-such-file", false, 65536, 65536), image_process::NoSuchFile);
-    REQUIRE_THROWS_AS( p = image_process::open( "no-such-file", false, 65536, 65536), image_process::NoSuchFile);
-    p = image_process::open( test_dir() / "test_json.txt", false, 65536, 65536);
-    REQUIRE( p != nullptr );
-    int times = 0;
-
-    for(auto it = p->begin(); it!=p->end(); ++it){
-        REQUIRE( times==0 );
-        sbuf_t *sbufp = it.sbuf_alloc();
-
-        REQUIRE( sbufp->bufsize == 79 );
-        REQUIRE( sbufp->pagesize == 79 );
-        delete sbufp;
-        times += 1;
-    }
-    REQUIRE(times==1);
-    delete p;
-}
-
-/****************************************************************
- ** Test the path printer
- **/
-TEST_CASE("path-printer1", "[path_printer]") {
-    scanner_config sc;
-    sc.input_fname = test_dir() / "test_hello.512b.gz";
-    sc.enable_all_scanners();
-    sc.allow_recurse = true;
-
-    scanner_set ss(sc, feature_recorder_set::flags_disabled(), nullptr);
-    ss.add_scanners(scanners_builtin);
-    ss.apply_scanner_commands();
-
-    image_process *reader = image_process::open( sc.input_fname, false, 65536, 65536 );
-    std::stringstream str;
-    class path_printer pp(ss, reader, str);
-    pp.process_path("512-GZIP-0/h");    // create a hex dump
-
-    REQUIRE(str.str() == "0000: 6865 6c6c 6f40 776f 726c 642e 636f 6d0a hello@world.com.\n");
-    str.str("");
-
-    pp.process_path("512-GZIP-2/r");    // create a hex dump with a different path and the /r
-    REQUIRE( str.str() == "14\r\nllo@world.com\n" );
-    delete reader;
 }

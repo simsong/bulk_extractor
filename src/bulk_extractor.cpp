@@ -293,11 +293,22 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     cfg.opt_pagesize   = scaled_stoi64( result["pagesize"].as<std::string>());
     cfg.opt_marginsize = scaled_stoi64( result["marginsize"].as<std::string>());
 
+    /*** SET THREADING OPTIONS ***/
+    if ( result.count("threads")>0 && result.count("no_threads") >0) {
+        throw std::runtime_error("--threads and --no_threads conflict");
+    }
+
     try {
         cfg.num_threads    = result["threads"].as<int>();
     }  catch ( cxxopts::option_has_no_value_exception &e ) {
         cfg.num_threads = 0;
     }
+
+    if ( result.count("no_threads")) {
+        cfg.num_threads = 0;
+    }
+    /***/
+
 
     sc.max_depth             = result["max_depth"].as<int>();
     cfg.max_bad_alloc_errors = result["max_bad_alloc_errors"].as<int>();
