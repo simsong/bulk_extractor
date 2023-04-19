@@ -78,18 +78,21 @@ void scan_lightgrep(struct scanner_params &sp) {
     //   break;
     // }
     break;
-  case scanner_params::PHASE_ENABLED:
-    break;
+  // PHASE_ENABLED is never current phase when this func is called
+  // case scanner_params::PHASE_ENABLED:
+  //   break;
   case scanner_params::PHASE_SCAN:
     // LightgrepController::Get().scan(sp);
     break;
   case scanner_params::PHASE_SHUTDOWN:
     // Scanner.shutdown(sp);
     break;
-  case scanner_params::PHASE_CLEANUP:
-    break;
-  case scanner_params::PHASE_CLEANED:
-    break;
+  // no cleanup needs to happen because lightgrep controller handles dealloc
+  // case scanner_params::PHASE_CLEANUP:
+  //   break;
+  // PHASE_CLEANED is never current phase when this func is called, used for internal bookkeeping
+  // case scanner_params::PHASE_CLEANED:
+  //   break;
   default:
     break;
   }
