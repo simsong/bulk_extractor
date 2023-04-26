@@ -70,13 +70,13 @@ void scan_lightgrep(struct scanner_params &sp) {
     // ProcessHit = static_cast<CallbackFnType>(&FindScanner::processHit);
     break;
   case scanner_params::PHASE_INIT2:
-    // {
-    //   Scanner.init(sp);
-    //   LightgrepController& lg(LightgrepController::Get());
-    //   lg.addUserPatterns(Scanner, &ProcessHit, sp.ss->sc); // note: FindOpts now passed in ScannerConfig
+    {
+      Scanner.init(sp);
+      LightgrepController& lg(LightgrepController::Get());
+      // lg.addUserPatterns(Scanner, &ProcessHit, sp.ss->sc); // note: FindOpts now passed in ScannerConfig
     //   lg.regcomp();
     //   break;
-    // }
+    }
     break;
   // PHASE_ENABLED is never current phase when this func is called
   // case scanner_params::PHASE_ENABLED:

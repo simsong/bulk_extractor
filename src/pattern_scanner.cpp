@@ -7,7 +7,7 @@
 // #include "be20_api/histogram_def.h"
 #include "pattern_scanner.h"
 
-// #include <lightgrep/api.h>
+#include <lightgrep/api.h>
 
 // #include <iostream>
 // #include <algorithm>
@@ -38,26 +38,26 @@ void PatternScanner::shutdown(const scanner_params&) {
 }
 // /*********************************************************/
 
-// LightgrepController::LightgrepController()
-// : ParsedPattern(lg_create_pattern()),       // Reuse the parsed pattern data structure for efficiency
-//   Fsm(lg_create_fsm(1 << 20)),              // Reserve space for 1M states in the automaton--will grow if needed
-//   PatternInfo(lg_create_pattern_map(1000)), // Reserve space for 1000 patterns in the pattern map
-//   Prog(0),
-//   Scanners()
-// {
-// }
+LightgrepController::LightgrepController()
+: ParsedPattern(lg_create_pattern()),       // Reuse the parsed pattern data structure for efficiency
+  Fsm(lg_create_fsm(1000, 1 << 20)),              // Reserve space for 1M states in the automaton--will grow if needed
+  // PatternInfo(lg_create_pattern_map(1000)), // Reserve space for 1000 patterns in the pattern map
+  Prog(0),
+  Scanners()
+{
+}
 
-// LightgrepController::~LightgrepController() {
-//   lg_destroy_pattern(ParsedPattern);
-//   lg_destroy_pattern_map(PatternInfo);
-//   lg_destroy_program(Prog);
-// }
+LightgrepController::~LightgrepController() {
+  lg_destroy_pattern(ParsedPattern);
+  // lg_destroy_pattern_map(PatternInfo);
+  lg_destroy_program(Prog);
+}
 
-// LightgrepController& LightgrepController::Get() {
-//   // Meyers Singleton. c.f. Effective C++ by Scott Meyers
-//   static LightgrepController controller;
-//   return controller;
-// }
+LightgrepController& LightgrepController::Get() {
+  // Meyers Singleton. c.f. Effective C++ by Scott Meyers
+  static LightgrepController controller;
+  return controller;
+}
 
 // bool LightgrepController::addScanner(PatternScanner& scanner) {
 //   // Add patterns and handlers from a Scanner to the centralized automaton

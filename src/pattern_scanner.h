@@ -105,10 +105,10 @@ protected:
 
 // /*********************************************************/
 
-// class LightgrepController { // Centralized search facility amongst PatternScanners
-// public:
+class LightgrepController { // Centralized search facility amongst PatternScanners
+public:
 
-//   static LightgrepController& Get(); // singleton instance
+  static LightgrepController& Get(); // singleton instance
 
 //   bool addScanner(PatternScanner& scanner);
 //   bool addUserPatterns(PatternScanner& scanner, CallbackFnType* callbackPtr, const FindOpts& userPatterns);
@@ -119,20 +119,20 @@ protected:
 
 //   unsigned int numPatterns() const;
 
-// private:
-//   LightgrepController();
-//   LightgrepController(const LightgrepController&);
-//   ~LightgrepController();
+private:
+  LightgrepController();
+  LightgrepController(const LightgrepController&);
+  ~LightgrepController();
 
 //   LightgrepController& operator=(const LightgrepController&);
 
-//   LG_HPATTERN     ParsedPattern;
-//   LG_HFSM         Fsm;
-//   LG_HPATTERNMAP  PatternInfo;
-//   LG_HPROGRAM     Prog;
+  LG_HPATTERN     ParsedPattern;
+  LG_HFSM         Fsm;
+  // LG_HPATTERNMAP  PatternInfo;
+  LG_HPROGRAM     Prog;
 
-//   vector<PatternScanner*> Scanners;
-// };
+  vector<PatternScanner*> Scanners;
+};
 
 // /*********************************************************/
 
