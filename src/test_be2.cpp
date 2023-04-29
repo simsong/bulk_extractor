@@ -307,6 +307,7 @@ void validate_aes128_key(uint8_t key[16])
     uint8_t schedule[AES128_KEY_SCHEDULE_SIZE];
     create_aes128_schedule(key, schedule);
 #if 0
+    printf("validate_aes128_key: ");
     for(int i=0; i<AES128_KEY_SCHEDULE_SIZE;i++){
         printf("%02x ",schedule[i]);
     }
@@ -323,9 +324,9 @@ void validate_aes128_key(uint8_t key[16])
 TEST_CASE("schedule_aes", "[phase1]") {
     uint8_t key1[16] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}; // all zeros is not a valid AES key
     validate_aes128_key(key1);
-    uint8_t key2[16] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}; // all zeros is not a valid AES key
+    uint8_t key2[16] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}; // 0..15 is probably not a valid AES key
     validate_aes128_key(key2);
-    uint8_t key3[16] {0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3}; // all zeros is not a valid AES key
+    uint8_t key3[16] {0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3}; // repeating digits is probably not a valid aes key
     validate_aes128_key(key3);
 }
 
