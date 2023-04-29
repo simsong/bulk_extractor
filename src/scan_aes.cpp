@@ -273,7 +273,7 @@ void create_aes128_schedule(const uint8_t * key, uint8_t computed[AES128_KEY_SCH
     // We need 11 sets of sixteen bytes each for 128-bit mode
     while (pos < AES128_KEY_SCHEDULE_SIZE) {
         // Copy the temporary variable over from the last 4-byte block
-        if(pos==AES128_KEY_SIZE) {
+        if(pos==AES128_KEY_SCHEDULE_SIZE) {
             memcpy(t, key + AES128_KEY_SCHEDULE_SIZE - 4, 4);
         } else {
             memcpy(t, computed+pos-4, 4);
