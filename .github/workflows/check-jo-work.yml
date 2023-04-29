@@ -1,4 +1,4 @@
-name: Check Jo Work
+name: Validate with JO-WORK-USB-2009-12-11.E01
 on: [push]
 #  release:
 #    types: [published, created, edited]
