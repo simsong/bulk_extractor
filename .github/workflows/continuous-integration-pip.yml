@@ -60,8 +60,19 @@ jobs:
 
       - name: C++ checks with address-sanitizer (Mac and Linux)
         run: |
+          echo GCC VERSION:
+          gcc --version
+          echo G++ VERSION:
+          g++ --version
           bash bootstrap.sh
-          ./configure -q --disable-opt --enable-silent-rules --enable-address-sanitizer
+          echo === Try Address Sanitizer Without Optimization ===
+          ./configure -q --disable-opt --enable-address-sanitizer
+          make clean
+          make all
+          (cd src; make check || (cat test-suite.log; exit 1))
+          make distclean
+          echo === Try Address Sanitizer Optimization ===
+          ./configure -q --enable-address-sanitizer
           make clean
           make all
           (cd src; make check || (cat test-suite.log; exit 1))
@@ -71,7 +82,7 @@ jobs:
         if: startsWith(matrix.os, 'ubuntu-DISABLED')
         run: |
           bash bootstrap.sh
-          ./configure -q --disable-opt --enable-silent-rules --enable-thread-sanitizer
+          ./configure -q --enable-silent-rules --enable-thread-sanitizer
           make clean
           make all
           (cd src; make check || (cat test-suite.log; exit 1))
@@ -81,7 +92,7 @@ jobs:
         if: startsWith(matrix.os, 'ubuntu')
         run: |
           bash bootstrap.sh
-          ./configure -q --disable-opt --enable-address-sanitizer --enable-silent-rules CFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' CXXFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' LIBS='-lgcov'
+          ./configure -q --disable-opt --enable-silent-rules CFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' CXXFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' LIBS='-lgcov'
           make clean
           make all
           cd src
@@ -109,7 +120,7 @@ jobs:
           ## shasum -a 256 -c codecov.SHA256SUM
           ## chmod +x codecov && ./codecov -t ${CODECOV_TOKEN}
 
-      - uses: ammaraskar/gcc-problem-matcher@0.1
+      - uses: ammaraskar/gcc-problem-matcher@0.2.0
         name: GCC Problem Matcher
 
       - name: distcheck
