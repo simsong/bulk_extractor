@@ -269,9 +269,9 @@ void LightgrepController::scan(const scanner_params& sp) {
 //   ((*sTbl[hit.KeywordIndex]).*(*cbPtr))(hit, sp, rcb); // ...yep...
 // }
 
-// unsigned int LightgrepController::numPatterns() const {
-//   return lg_pattern_map_size(PatternInfo);
-// }
+unsigned int LightgrepController::numPatterns() const {
+  return Prog ? lg_prog_pattern_count(Prog) : 0; //lg_pattern_map_size(PatternInfo);
+}
 
 // /*********************************************************/
 
