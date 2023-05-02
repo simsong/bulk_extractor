@@ -53,11 +53,11 @@ LightgrepController::~LightgrepController() {
   lg_destroy_program(Prog);
 }
 
-LightgrepController& LightgrepController::Get() {
-  // Meyers Singleton. c.f. Effective C++ by Scott Meyers
-  static LightgrepController controller;
-  return controller;
-}
+// LightgrepController& LightgrepController::Get() {
+//   // Meyers Singleton. c.f. Effective C++ by Scott Meyers
+//   static LightgrepController controller;
+//   return controller;
+// }
 
 // bool LightgrepController::addScanner(PatternScanner& scanner) {
 //   // Add patterns and handlers from a Scanner to the centralized automaton

@@ -64,6 +64,7 @@ namespace { // local namespace hides these from other translation units
 
 extern "C"
 void scan_lightgrep(struct scanner_params &sp) {
+  static std::unique_ptr<LightgrepController> lg_ptr;
   switch (sp.phase) {
   case scanner_params::PHASE_INIT:
     Scanner.startup(sp);
@@ -72,9 +73,9 @@ void scan_lightgrep(struct scanner_params &sp) {
   case scanner_params::PHASE_INIT2:
     {
       Scanner.init(sp);
-      LightgrepController& lg(LightgrepController::Get());
-      // lg.addUserPatterns(Scanner, &ProcessHit, sp.ss->sc); // note: FindOpts now passed in ScannerConfig
-    //   lg.regcomp();
+      lg_ptr.reset(new LightgrepController);
+      lg_ptr->addUserPatterns(Scanner/*,  sp.ss->sc*/); // &ProcessHit, sp.ss->sc); // note: FindOpts now passed in ScannerConfig
+      lg_ptr->regcomp();
     //   break;
     }
     break;
@@ -82,7 +83,7 @@ void scan_lightgrep(struct scanner_params &sp) {
   // case scanner_params::PHASE_ENABLED:
   //   break;
   case scanner_params::PHASE_SCAN:
-    // LightgrepController::Get().scan(sp);
+    lg_ptr->scan(sp);
     break;
   case scanner_params::PHASE_SHUTDOWN:
     // Scanner.shutdown(sp);
