@@ -101,133 +101,88 @@ LightgrepController::~LightgrepController() {
 //   return true;
 // }
 
-// /* note: findopts is now part of scanner_set.scanner_config, you need to pass that in here. */
-// bool LightgrepController::addUserPatterns(PatternScanner& scanner, CallbackFnType* callbackPtr, const FindOpts& user) {
-//   // Add patterns specified as keywords by the user
-//   // Similar to above, but does not have a handler per pattern
-//   unsigned int patBegin = lg_pattern_map_size(PatternInfo),
-//                patEnd = 0;
+/* note: findopts is now part of scanner_set.scanner_config, you need to pass that in here. */
+bool LightgrepController::addUserPatterns(PatternScanner& scanner /* const FindOpts& user*/ ) { // CallbackFnType* callbackPtr, const FindOpts& user) {
 
-//   LG_KeyOptions opts;
-//   opts.FixedString = 0;
-//   opts.CaseInsensitive = 0;
+  LG_Error *err = 0;
 
-//   LG_Error *err = 0;
+  LG_KeyOptions opts;
+  opts.FixedString = 0;
+  opts.CaseInsensitive = 0;
 
-//   // Add patterns from files
-//   for (vector<string>::const_iterator itr(user.Files.begin()); itr != user.Files.end(); ++itr) {
-//     ifstream file(itr->c_str(), ios::in);
-//     if (!file.is_open()) {
-//       cerr << "Could not open pattern file '" << *itr << "'." << endl;
-//       return false;
-//     }
-//     string contents = string(istreambuf_iterator<char>(file), istreambuf_iterator<char>());
+  int result = lg_parse_pattern(ParsedPattern, "julia", &opts, &err);
 
-//     const char* contentsCStr = contents.c_str();
-//     // Add all the patterns from the files in one fell swoop
-//     if (lg_add_pattern_list(Fsm, PatternInfo, contentsCStr, itr->c_str(), DefaultEncodingsCStrings, 2, &opts, &err) < 0) {
-//       vector<string> lines;
-//       istringstream input(contents);
-//       string line;
-//       while (input) {
-//         getline(input, line);
-//         lines.push_back(line);
-//       }
-//       LG_Error* cur(err);
-//       while (cur) {
-//         cerr << "Error in " << *itr << ", line " << cur->Index+1 << ", pattern '" << lines[cur->Index]
-//           << "': " << cur->Message << endl;
-//         cur = cur->Next;
-//       }
-//       lg_free_error(err);
-//       return false;
-//     }
-//   }
-//   // add patterns from single command-line arguments
-//   for (vector<string>::const_iterator itr(user.Patterns.begin()); itr != user.Patterns.end(); ++itr) {
-//     bool good = false;
-//     if (lg_parse_pattern(ParsedPattern, itr->c_str(), &opts, &err)) {
-//       for (unsigned int i = 0; i < NumDefaultEncodings; ++i) {
-//         if (lg_add_pattern(Fsm, PatternInfo, ParsedPattern, DefaultEncodingsCStrings[i], &err) >= 0) {
-//           good = true;
-//         }
-//       }
-//     }
-//     if (!good) {
-//       cerr << "Error on '" << *itr << "': " << err->Message << endl;
-//       lg_free_error(err);
-//       return false;
-//     }
-//   }
-//   patEnd = lg_pattern_map_size(PatternInfo);
-//   for (unsigned int i = patBegin; i < patEnd; ++i) {
-//     lg_pattern_info(PatternInfo, i)->UserData = const_cast<void*>(static_cast<const void*>(callbackPtr));
-//   }
-//   scanner.patternRange() = make_pair(patBegin, patEnd);
-//   Scanners.push_back(&scanner);
-//   return true;
-// }
+  if (result == 0) {
+    int index = lg_add_pattern(Fsm, ParsedPattern, "US-ASCII", 0, &err);
+    if (index >= 0) {
+      return true;
+    }
+  }
 
-// void LightgrepController::regcomp() {
-//   LG_ProgramOptions progOpts;
-//   progOpts.Determinize = 1;
-//   // Create an optimized, immutable form of the accumulated automaton
-//   Prog = lg_create_program(Fsm, &progOpts);
-//   lg_destroy_fsm(Fsm);
+  // // Add patterns specified as keywords by the user
+  // // Similar to above, but does not have a handler per pattern
+  // unsigned int patBegin = lg_pattern_map_size(PatternInfo),
+  //              patEnd = 0;
 
-//   cerr << lg_pattern_map_size(PatternInfo) << " lightgrep patterns, logic size is " << lg_program_size(Prog) << " bytes, " << Scanners.size() << " active scanners" << std::endl;
-//   #ifdef LGBENCHMARK
-//   cerr << "timer second ratio " << chrono::high_resolution_clock::period::num << "/" <<
-//     chrono::high_resolution_clock::period::den << endl;
-//   #endif
-// }
+  // LG_KeyOptions opts;
+  // opts.FixedString = 0;
+  // opts.CaseInsensitive = 0;
 
-// struct HitData {
-//   // Everything we need for processing a hit
-//   LightgrepController* lgc;
-//   const vector<PatternScanner*>* scannerTable;
-//   const scanner_params* sp;
-//     //const recursion_control_block* rcb;
-// };
+  // LG_Error *err = 0;
 
-// void gotHit(void* userData, const LG_SearchHit* hit) {
-//   #ifdef LGBENCHMARK
-//   // no callback, just increment hit counter
-//   ++(*static_cast<uint64_t*>(userData));
-//   #else
-//   // trampoline back into LightgrepController::processHit() from the void* userData
-//   HitData* hd(static_cast<HitData*>(userData));
-//   hd->lgc->processHit(*hd->scannerTable, *hit, *hd->sp, *hd->rcb);
-//   #endif
-// }
+  // // Add patterns from files
+  // for (vector<string>::const_iterator itr(user.Files.begin()); itr != user.Files.end(); ++itr) {
+  //   ifstream file(itr->c_str(), ios::in);
+  //   if (!file.is_open()) {
+  //     cerr << "Could not open pattern file '" << *itr << "'." << endl;
+  //     return false;
+  //   }
+  //   string contents = string(istreambuf_iterator<char>(file), istreambuf_iterator<char>());
 
-// void LightgrepController::scan(const scanner_params& sp, const recursion_control_block &rcb) {
-//   // Scan the sbuf for pattern hits, invoking various scanners' handlers as hits are encountered
-//   if (!Prog) {
-//     // we had no valid patterns, do nothing
-//     return;
-//   }
-//   // First, clone all the scanners so that there's no shared data between threads
-//   vector<PatternScanner*> scannerTable(lg_pattern_map_size(PatternInfo)); // [Keyword Index -> scanner], no ownership
-//   vector<PatternScanner*> scannerList;                                    // ownership list
-//   for (vector<PatternScanner*>::const_iterator itr(Scanners.begin()); itr != Scanners.end(); ++itr) {
-//     PatternScanner *s = (*itr)->clone();
-//     scannerList.push_back(s);
-//     for (unsigned int i = s->patternRange().first; i < s->patternRange().second; ++i) {
-//       scannerTable[i] = s;
-//     }
-//     s->initScan(sp); // let the scanner know we're about to scan an sbuf
-//   }
-//   LG_ContextOptions ctxOpts;
-//   ctxOpts.TraceBegin = 0xffffffffffffffff;
-//   ctxOpts.TraceEnd   = 0;
-
-//   LG_HCONTEXT ctx = lg_create_context(Prog, &ctxOpts); // create a search context; cannot be shared, so local to scan
-
-//   const sbuf_t &sbuf = sp.sbuf;
-
-//   HitData callbackInfo = { this, &scannerTable, &sp, &rcb };
-//   void*   userData = &callbackInfo;
+  //   const char* contentsCStr = contents.c_str();
+  //   // Add all the patterns from the files in one fell swoop
+  //   if (lg_add_pattern_list(Fsm, PatternInfo, contentsCStr, itr->c_str(), DefaultEncodingsCStrings, 2, &opts, &err) < 0) {
+  //     vector<string> lines;
+  //     istringstream input(contents);
+  //     string line;
+  //     while (input) {
+  //       getline(input, line);
+  //       lines.push_back(line);
+  //     }
+  //     LG_Error* cur(err);
+  //     while (cur) {
+  //       cerr << "Error in " << *itr << ", line " << cur->Index+1 << ", pattern '" << lines[cur->Index]
+  //         << "': " << cur->Message << endl;
+  //       cur = cur->Next;
+  //     }
+  //     lg_free_error(err);
+  //     return false;
+  //   }
+  // }
+  // // add patterns from single command-line arguments
+  // for (vector<string>::const_iterator itr(user.Patterns.begin()); itr != user.Patterns.end(); ++itr) {
+  //   bool good = false;
+  //   if (lg_parse_pattern(ParsedPattern, itr->c_str(), &opts, &err)) {
+  //     for (unsigned int i = 0; i < NumDefaultEncodings; ++i) {
+  //       if (lg_add_pattern(Fsm, PatternInfo, ParsedPattern, DefaultEncodingsCStrings[i], &err) >= 0) {
+  //         good = true;
+  //       }
+  //     }
+  //   }
+  //   if (!good) {
+  //     cerr << "Error on '" << *itr << "': " << err->Message << endl;
+  //     lg_free_error(err);
+  //     return false;
+  //   }
+  // }
+  // patEnd = lg_pattern_map_size(PatternInfo);
+  // for (unsigned int i = patBegin; i < patEnd; ++i) {
+  //   lg_pattern_info(PatternInfo, i)->UserData = const_cast<void*>(static_cast<const void*>(callbackPtr));
+  // }
+  // scanner.patternRange() = make_pair(patBegin, patEnd);
+  // Scanners.push_back(&scanner);
+  return false;
+}
 
 //   #ifdef LGBENCHMARK // perform timings of lightgrep search functions only -- no callbacks
 //   uint64_t hitCount = 0;
