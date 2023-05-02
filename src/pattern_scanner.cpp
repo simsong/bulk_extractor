@@ -184,42 +184,84 @@ bool LightgrepController::addUserPatterns(PatternScanner& scanner /* const FindO
   return false;
 }
 
-//   #ifdef LGBENCHMARK // perform timings of lightgrep search functions only -- no callbacks
-//   uint64_t hitCount = 0;
-//   userData = &hitCount; // switch things out for a counter
+void LightgrepController::regcomp() {
+  LG_ProgramOptions progOpts;
+  progOpts.DeterminizeDepth = 10;
+  // Create an optimized, immutable form of the accumulated automaton
+  Prog = lg_create_program(Fsm, &progOpts);
+  lg_destroy_fsm(Fsm);
+  Fsm = 0;
 
-//   auto startClock = std::chrono::high_resolution_clock::now();
-//   // std::cout << "Starting block " << sbuf.pos0.str() << std::endl;
-//   #endif
+  // cerr << lg_pattern_map_size(PatternInfo) << " lightgrep patterns, logic size is " << lg_program_size(Prog) << " bytes, " << Scanners.size() << " active scanners" << std::endl;
+  #ifdef LGBENCHMARK
+  cerr << "timer second ratio " << chrono::high_resolution_clock::period::num << "/" <<
+    chrono::high_resolution_clock::period::den << endl;
+  #endif
+}
 
-//   // search the sbuf in one go
-//   // the gotHit() function will be invoked for each pattern hit
-//   if (lg_search(ctx, (const char*)sbuf.buf, (const char*)sbuf.buf + sbuf.pagesize, 0, userData, gotHit) < numeric_limits<uint64_t>::max()) {
-//     // resolve potential hits that want data into the sbuf margin, without beginning any new hits
-//     lg_search_resolve(ctx, (const char*)sbuf.buf + sbuf.pagesize, (const char*)sbuf.buf + sbuf.bufsize, sbuf.pagesize, userData, gotHit);
-//   }
-//   // flush any remaining hits; there's no more data
-//   lg_closeout_search(ctx, userData, gotHit);
+struct HitData {
+  feature_recorder &recorder;
+  const sbuf_t &sbuf;
+};
 
-//   #ifdef LGBENCHMARK
-//   auto endClock = std::chrono::high_resolution_clock::now();
-//   auto t = endClock - startClock;
-//   double seconds = double(t.count() * chrono::high_resolution_clock::period::num) / chrono::high_resolution_clock::period::den;
-//   double bw = double(sbuf.pagesize) / (seconds * 1024 * 1024);
-//   std::stringstream buf;
-//   buf << " ** Time: " << sbuf.pos0.str() << '\t' << sbuf.pagesize << '\t' << t.count() << '\t' << seconds<< '\t' << hitCount << '\t' << bw << std::endl;
-//   std::cout << buf.str();
-// //  std::cout.flush();
-//   #endif
+void gotHit(void* userData, const LG_SearchHit* hit) {
+  #ifdef LGBENCHMARK
+  // no callback, just increment hit counter
+  ++(*static_cast<uint64_t*>(userData));
+  #else
+  // trampoline back into LightgrepController::processHit() from the void* userData
+  HitData* data(reinterpret_cast<HitData*>(userData));
+  // data->recorder.write_buf(sbuf, pos+offset, len);
+  #endif
+}
 
-//   lg_destroy_context(ctx);
+void LightgrepController::scan(const scanner_params& sp) {
+  // Scan the sbuf for pattern hits, invoking various scanners' handlers as hits are encountered
+  if (!Prog) {
+    // we had no valid patterns, do nothing
+    return;
+  }
 
-//   // don't call PatternScanner::shutdown() on these! that only happens on prototypes
-//   for (vector<PatternScanner*>::const_iterator itr(scannerList.begin()); itr != scannerList.end(); ++itr) {
-//     (*itr)->finishScan(sp); // let the scanner know we're done with the sbuf
-//     delete *itr;
-//   }
-// }
+  LG_ContextOptions ctxOpts;
+  ctxOpts.TraceBegin = 0xffffffffffffffff;
+  ctxOpts.TraceEnd   = 0;
+
+  LG_HCONTEXT ctx = lg_create_context(Prog, &ctxOpts); // create a search context; cannot be shared, so local to scan
+
+  const sbuf_t &sbuf = *sp.sbuf;
+  HitData callbackInfo = { sp.named_feature_recorder("lightgrep"), *sp.sbuf };
+  void*   userData = &callbackInfo;
+
+  #ifdef LGBENCHMARK // perform timings of lightgrep search functions only -- no callbacks
+  uint64_t hitCount = 0;
+  userData = &hitCount; // switch things out for a counter
+
+  auto startClock = std::chrono::high_resolution_clock::now();
+  // std::cout << "Starting block " << sbuf.pos0.str() << std::endl;
+  #endif
+
+  // search the sbuf in one go
+  // the gotHit() function will be invoked for each pattern hit
+  if (lg_search(ctx, (const char*)sbuf.get_buf(), (const char*)sbuf.get_buf() + sbuf.pagesize, 0, userData, nullptr/*gotHit*/) < numeric_limits<uint64_t>::max()) {
+    // resolve potential hits that want data into the sbuf margin, without beginning any new hits
+    lg_search_resolve(ctx, (const char*)sbuf.get_buf() + sbuf.pagesize, (const char*)sbuf.get_buf() + sbuf.bufsize, sbuf.pagesize, userData, nullptr/*gotHit*/);
+  }
+  // flush any remaining hits; there's no more data
+  lg_closeout_search(ctx, userData, nullptr/*gotHit*/);
+
+  #ifdef LGBENCHMARK
+  auto endClock = std::chrono::high_resolution_clock::now();
+  auto t = endClock - startClock;
+  double seconds = double(t.count() * chrono::high_resolution_clock::period::num) / chrono::high_resolution_clock::period::den;
+  double bw = double(sbuf.pagesize) / (seconds * 1024 * 1024);
+  std::stringstream buf;
+  buf << " ** Time: " << sbuf.pos0.str() << '\t' << sbuf.pagesize << '\t' << t.count() << '\t' << seconds<< '\t' << hitCount << '\t' << bw << std::endl;
+  std::cout << buf.str();
+//  std::cout.flush();
+  #endif
+
+  lg_destroy_context(ctx);
+}
 
 // void LightgrepController::processHit(const vector<PatternScanner*>& sTbl, const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
 //   // lookup the handler's callback functor in the pattern map, then invoke it
