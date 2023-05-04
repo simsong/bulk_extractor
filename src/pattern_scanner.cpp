@@ -110,9 +110,9 @@ bool LightgrepController::addUserPatterns(PatternScanner& scanner /* const FindO
   opts.FixedString = 0;
   opts.CaseInsensitive = 0;
 
-  int result = lg_parse_pattern(ParsedPattern, "julia", &opts, &err);
+  int result = lg_parse_pattern(ParsedPattern, "patricia", &opts, &err);
 
-  if (result == 0) {
+  if (result > 0) {
     int index = lg_add_pattern(Fsm, ParsedPattern, "US-ASCII", 0, &err);
     if (index >= 0) {
       return true;
@@ -242,12 +242,12 @@ void LightgrepController::scan(const scanner_params& sp) {
 
   // search the sbuf in one go
   // the gotHit() function will be invoked for each pattern hit
-  if (lg_search(ctx, (const char*)sbuf.get_buf(), (const char*)sbuf.get_buf() + sbuf.pagesize, 0, userData, nullptr/*gotHit*/) < numeric_limits<uint64_t>::max()) {
+  if (lg_search(ctx, (const char*)sbuf.get_buf(), (const char*)sbuf.get_buf() + sbuf.pagesize, 0, userData, gotHit) < numeric_limits<uint64_t>::max()) {
     // resolve potential hits that want data into the sbuf margin, without beginning any new hits
-    lg_search_resolve(ctx, (const char*)sbuf.get_buf() + sbuf.pagesize, (const char*)sbuf.get_buf() + sbuf.bufsize, sbuf.pagesize, userData, nullptr/*gotHit*/);
+    lg_search_resolve(ctx, (const char*)sbuf.get_buf() + sbuf.pagesize, (const char*)sbuf.get_buf() + sbuf.bufsize, sbuf.pagesize, userData, gotHit);
   }
   // flush any remaining hits; there's no more data
-  lg_closeout_search(ctx, userData, nullptr/*gotHit*/);
+  lg_closeout_search(ctx, userData, gotHit);
 
   #ifdef LGBENCHMARK
   auto endClock = std::chrono::high_resolution_clock::now();
