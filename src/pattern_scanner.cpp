@@ -211,7 +211,7 @@ void gotHit(void* userData, const LG_SearchHit* hit) {
   #else
   // trampoline back into LightgrepController::processHit() from the void* userData
   HitData* data(reinterpret_cast<HitData*>(userData));
-  // data->recorder.write_buf(sbuf, pos+offset, len);
+  data->recorder.write_buf(data->sbuf, hit->Start, hit->End - hit->Start);
   #endif
 }
 
