@@ -114,7 +114,7 @@ public:
   // static LightgrepController& Get(); // singleton instance
 
 //   bool addScanner(PatternScanner& scanner);
-  bool addUserPatterns(PatternScanner& scanner, const vector<string>& cli_patterns);
+  bool addUserPatterns(PatternScanner& scanner, const vector<string>& cli_patterns, const vector<filesystem::path>& user_files);
 
   void regcomp();
   void scan(const scanner_params& sp);

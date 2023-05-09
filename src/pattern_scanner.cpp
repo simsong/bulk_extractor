@@ -103,7 +103,10 @@ LightgrepController::~LightgrepController() {
 // }
 
 /* note: findopts is now part of scanner_set.scanner_config, you need to pass that in here. */
-bool LightgrepController::addUserPatterns(PatternScanner& scanner, const vector<string>& cli_patterns ) { // CallbackFnType* callbackPtr, const FindOpts& user) {
+bool LightgrepController::addUserPatterns(
+  PatternScanner& scanner, 
+  const vector<string>& cli_patterns, 
+  const vector<filesystem::path>& user_files) { // CallbackFnType* callbackPtr, const FindOpts& user) {
 
   LG_Error *err = 0;
 
@@ -114,7 +117,7 @@ bool LightgrepController::addUserPatterns(PatternScanner& scanner, const vector<
   bool good = true;
 
   // add patterns from single command-line arguments
-  for (const auto& itr: cli_patterns) {
+  for (const auto& itr : cli_patterns) {
     if (lg_parse_pattern(ParsedPattern, itr.c_str(), &opts, &err)) {
       for (unsigned int i = 0; i < NumDefaultEncodings; ++i) {
         if (lg_add_pattern(Fsm, ParsedPattern, DefaultEncodingsCStrings[i], 0, &err) < 0) {
@@ -131,17 +134,6 @@ bool LightgrepController::addUserPatterns(PatternScanner& scanner, const vector<
       return false;
     }
   }
-
-  // // Add patterns specified as keywords by the user
-  // // Similar to above, but does not have a handler per pattern
-  // unsigned int patBegin = lg_pattern_map_size(PatternInfo),
-  //              patEnd = 0;
-
-  // LG_KeyOptions opts;
-  // opts.FixedString = 0;
-  // opts.CaseInsensitive = 0;
-
-  // LG_Error *err = 0;
 
   // // Add patterns from files
   // for (vector<string>::const_iterator itr(user.Files.begin()); itr != user.Files.end(); ++itr) {
@@ -171,26 +163,6 @@ bool LightgrepController::addUserPatterns(PatternScanner& scanner, const vector<
   //     lg_free_error(err);
   //     return false;
   //   }
-  // }
-  // // add patterns from single command-line arguments
-  // for (vector<string>::const_iterator itr(user.Patterns.begin()); itr != user.Patterns.end(); ++itr) {
-  //   bool good = false;
-  //   if (lg_parse_pattern(ParsedPattern, itr->c_str(), &opts, &err)) {
-  //     for (unsigned int i = 0; i < NumDefaultEncodings; ++i) {
-  //       if (lg_add_pattern(Fsm, PatternInfo, ParsedPattern, DefaultEncodingsCStrings[i], &err) >= 0) {
-  //         good = true;
-  //       }
-  //     }
-  //   }
-  //   if (!good) {
-  //     cerr << "Error on '" << *itr << "': " << err->Message << endl;
-  //     lg_free_error(err);
-  //     return false;
-  //   }
-  // }
-  // patEnd = lg_pattern_map_size(PatternInfo);
-  // for (unsigned int i = patBegin; i < patEnd; ++i) {
-  //   lg_pattern_info(PatternInfo, i)->UserData = const_cast<void*>(static_cast<const void*>(callbackPtr));
   // }
   // scanner.patternRange() = make_pair(patBegin, patEnd);
   // Scanners.push_back(&scanner);

@@ -76,7 +76,7 @@ void scan_lightgrep(struct scanner_params &sp) {
     {
       Scanner.init(sp);
       lg_ptr.reset(new LightgrepController);
-      lg_ptr->addUserPatterns(Scanner, sp.ss->find_patterns());
+      lg_ptr->addUserPatterns(Scanner, sp.ss->find_patterns(), sp.ss->find_files());
       lg_ptr->regcomp();
     //   break;
     }
