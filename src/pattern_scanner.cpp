@@ -26,6 +26,7 @@ namespace {
   const unsigned int NumDefaultEncodings = 2;
 }
 
+
 // bool PatternScanner::handleParseError(const Handler& h, LG_Error* err) const {
 //   cerr << "Parse error on '" << h.RE << "' in " << Name
 //        << ": " << err->Message << endl;
@@ -135,37 +136,36 @@ bool LightgrepController::addUserPatterns(
     }
   }
 
-  // // Add patterns from files
-  // for (vector<string>::const_iterator itr(user.Files.begin()); itr != user.Files.end(); ++itr) {
-  //   ifstream file(itr->c_str(), ios::in);
-  //   if (!file.is_open()) {
-  //     cerr << "Could not open pattern file '" << *itr << "'." << endl;
-  //     return false;
-  //   }
-  //   string contents = string(istreambuf_iterator<char>(file), istreambuf_iterator<char>());
+  // Add patterns from files
+  for (const auto& itr : user_files) {
+    ifstream file(itr.c_str(), ios::in);
+    if (!file.is_open()) {
+      cerr << "Could not open pattern file '" << itr.c_str() << "'." << endl;
+      return false;
+    }
+    string contents = string(istreambuf_iterator<char>(file), istreambuf_iterator<char>());
 
-  //   const char* contentsCStr = contents.c_str();
-  //   // Add all the patterns from the files in one fell swoop
-  //   if (lg_add_pattern_list(Fsm, PatternInfo, contentsCStr, itr->c_str(), DefaultEncodingsCStrings, 2, &opts, &err) < 0) {
-  //     vector<string> lines;
-  //     istringstream input(contents);
-  //     string line;
-  //     while (input) {
-  //       getline(input, line);
-  //       lines.push_back(line);
-  //     }
-  //     LG_Error* cur(err);
-  //     while (cur) {
-  //       cerr << "Error in " << *itr << ", line " << cur->Index+1 << ", pattern '" << lines[cur->Index]
-  //         << "': " << cur->Message << endl;
-  //       cur = cur->Next;
-  //     }
-  //     lg_free_error(err);
-  //     return false;
-  //   }
-  // }
-  // scanner.patternRange() = make_pair(patBegin, patEnd);
-  // Scanners.push_back(&scanner);
+    const char* contentsCStr = contents.c_str();
+    // Add all the patterns from the files in one fell swoop
+    if (lg_add_pattern_list(Fsm, contentsCStr, itr.c_str(), DefaultEncodingsCStrings, NumDefaultEncodings, &opts, &err) < 0) {
+      vector<string> lines;
+      istringstream input(contents);
+      string line;
+      while (input) {
+        getline(input, line);
+        lines.push_back(line);
+      }
+      LG_Error* cur(err);
+      while (cur) {
+        cerr << "Error in " << itr.c_str() << ", line " << cur->Index+1 << ", pattern '" << lines[cur->Index]
+          << "': " << cur->Message << endl;
+        cur = cur->Next;
+      }
+      lg_free_error(err);
+      return false;
+    }
+  }
+
   return true;
 }
 
