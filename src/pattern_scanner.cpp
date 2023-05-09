@@ -1,37 +1,21 @@
 #include "config.h"
 
-// // if liblightgrep isn't present, compiles to nothing
+// if liblightgrep isn't present, compiles to nothing
 #ifdef HAVE_LIBLIGHTGREP
 
-// // #include "beregex.h"
-// #include "be20_api/histogram_def.h"
 #include "pattern_scanner.h"
 #include "scanner_set.h"
 
 #include <lightgrep/api.h>
 
-// #include <iostream>
-// #include <algorithm>
-// #include <limits>
-// #include <fstream>
-
-// #include <iostream>
-
-// #ifdef LGBENCHMARK
-// #include <chrono>
-// #endif
+#ifdef LGBENCHMARK
+#include <chrono>
+#endif
 
 namespace {
   const char* DefaultEncodingsCStrings[] = {"UTF-8", "UTF-16LE"};
   const unsigned int NumDefaultEncodings = 2;
 }
-
-
-// bool PatternScanner::handleParseError(const Handler& h, LG_Error* err) const {
-//   cerr << "Parse error on '" << h.RE << "' in " << Name
-//        << ": " << err->Message << endl;
-//   return false;
-// }
 
 void PatternScanner::shutdown(const scanner_params&) {
   // for (vector<const Handler*>::iterator itr(Handlers.begin()); itr != Handlers.end(); ++itr) {
@@ -55,55 +39,6 @@ LightgrepController::~LightgrepController() {
   lg_destroy_program(Prog);
 }
 
-// LightgrepController& LightgrepController::Get() {
-//   // Meyers Singleton. c.f. Effective C++ by Scott Meyers
-//   static LightgrepController controller;
-//   return controller;
-// }
-
-// bool LightgrepController::addScanner(PatternScanner& scanner) {
-//   // Add patterns and handlers from a Scanner to the centralized automaton
-//   LG_Error* lgErr = 0;
-
-//   unsigned int patBegin = numeric_limits<unsigned int>::max(),
-//                patEnd = 0;
-
-//   int idx = -1;
-
-//   // iterate all the scanner's handlers
-//   for (vector<const Handler*>::const_iterator h(scanner.handlers().begin()); h != scanner.handlers().end(); ++h) {
-//     bool good = false;
-//     if (lg_parse_pattern(ParsedPattern, (*h)->RE.c_str(), &(*h)->Options, &lgErr)) { // parse the pattern
-//       for (vector<string>::const_iterator enc((*h)->Encodings.begin()); enc != (*h)->Encodings.end(); ++enc) {
-//         idx = lg_add_pattern(Fsm, PatternInfo, ParsedPattern, enc->c_str(), &lgErr); // add the pattern for each given encoding
-//         if (idx >= 0) {
-//           // add the handler callback to the pattern map, associated with the pattern index
-//           lg_pattern_info(PatternInfo, idx)->UserData = const_cast<void*>(static_cast<const void*>(&((*h)->Callback)));
-//           patBegin = std::min(patBegin, static_cast<unsigned int>(idx));
-//           good = true;
-//         }
-//       }
-
-// //      std::cerr << '\t' << (int)((*h)->Options.FixedString) << '\t' << (int)((*h)->Options.CaseInsensitive) << std::endl;
-//     }
-//     if (!good) {
-//       if (scanner.handleParseError(**h, lgErr)) {
-//         lg_free_error(lgErr);
-//         lgErr = 0;
-//       }
-//       else {
-//         return false;
-//       }
-//     }
-//   }
-//   patEnd = lg_pattern_map_size(PatternInfo);
-//   // record the range of this scanner's patterns in the central pattern map
-//   scanner.patternRange() = make_pair(patBegin, patEnd);
-//   Scanners.push_back(&scanner);
-//   return true;
-// }
-
-/* note: findopts is now part of scanner_set.scanner_config, you need to pass that in here. */
 bool LightgrepController::addUserPatterns(
   PatternScanner& scanner, 
   const vector<string>& cli_patterns, 
@@ -247,12 +182,6 @@ void LightgrepController::scan(const scanner_params& sp) {
 
   lg_destroy_context(ctx);
 }
-
-// void LightgrepController::processHit(const vector<PatternScanner*>& sTbl, const LG_SearchHit& hit, const scanner_params& sp, const recursion_control_block& rcb) {
-//   // lookup the handler's callback functor in the pattern map, then invoke it
-//   CallbackFnType* cbPtr(static_cast<CallbackFnType*>(lg_pattern_info(PatternInfo, hit.KeywordIndex)->UserData));
-//   ((*sTbl[hit.KeywordIndex]).*(*cbPtr))(hit, sp, rcb); // ...yep...
-// }
 
 unsigned int LightgrepController::numPatterns() const {
   return Prog ? lg_prog_pattern_count(Prog) : 0; //lg_pattern_map_size(PatternInfo);
