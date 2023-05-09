@@ -114,7 +114,7 @@ public:
   // static LightgrepController& Get(); // singleton instance
 
 //   bool addScanner(PatternScanner& scanner);
-  bool addUserPatterns(PatternScanner& scanner/*, const FindOpts& userPatterns*/); // CallbackFnType* callbackPtr, const FindOpts& userPatterns);
+  bool addUserPatterns(PatternScanner& scanner, const vector<string>& cli_patterns);
 
   void regcomp();
   void scan(const scanner_params& sp);

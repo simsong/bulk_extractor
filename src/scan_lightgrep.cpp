@@ -9,6 +9,7 @@
 #include <numeric>
 
 #include "be20_api/scanner_params.h"
+#include "be20_api/scanner_set.h"
 
 //#include "be20_api/beregex.h"
 #include "be20_api/histogram_def.h"
@@ -75,7 +76,7 @@ void scan_lightgrep(struct scanner_params &sp) {
     {
       Scanner.init(sp);
       lg_ptr.reset(new LightgrepController);
-      lg_ptr->addUserPatterns(Scanner/*,  sp.ss->sc*/); // &ProcessHit, sp.ss->sc); // note: FindOpts now passed in ScannerConfig
+      lg_ptr->addUserPatterns(Scanner, sp.ss->find_patterns());
       lg_ptr->regcomp();
     //   break;
     }

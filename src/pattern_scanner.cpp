@@ -6,6 +6,7 @@
 // // #include "beregex.h"
 // #include "be20_api/histogram_def.h"
 #include "pattern_scanner.h"
+#include "scanner_set.h"
 
 #include <lightgrep/api.h>
 
@@ -20,10 +21,10 @@
 // #include <chrono>
 // #endif
 
-// namespace {
-//   const char* DefaultEncodingsCStrings[] = {"UTF-8", "UTF-16LE"};
-//   const unsigned int NumDefaultEncodings = 2;
-// }
+namespace {
+  const char* DefaultEncodingsCStrings[] = {"UTF-8", "UTF-16LE"};
+  const unsigned int NumDefaultEncodings = 2;
+}
 
 // bool PatternScanner::handleParseError(const Handler& h, LG_Error* err) const {
 //   cerr << "Parse error on '" << h.RE << "' in " << Name
@@ -102,7 +103,7 @@ LightgrepController::~LightgrepController() {
 // }
 
 /* note: findopts is now part of scanner_set.scanner_config, you need to pass that in here. */
-bool LightgrepController::addUserPatterns(PatternScanner& scanner /* const FindOpts& user*/ ) { // CallbackFnType* callbackPtr, const FindOpts& user) {
+bool LightgrepController::addUserPatterns(PatternScanner& scanner, const vector<string>& cli_patterns ) { // CallbackFnType* callbackPtr, const FindOpts& user) {
 
   LG_Error *err = 0;
 
@@ -110,12 +111,24 @@ bool LightgrepController::addUserPatterns(PatternScanner& scanner /* const FindO
   opts.FixedString = 0;
   opts.CaseInsensitive = 0;
 
-  int result = lg_parse_pattern(ParsedPattern, "patricia", &opts, &err);
+  bool good = true;
 
-  if (result > 0) {
-    int index = lg_add_pattern(Fsm, ParsedPattern, "US-ASCII", 0, &err);
-    if (index >= 0) {
-      return true;
+  // add patterns from single command-line arguments
+  for (const auto& itr: cli_patterns) {
+    if (lg_parse_pattern(ParsedPattern, itr.c_str(), &opts, &err)) {
+      for (unsigned int i = 0; i < NumDefaultEncodings; ++i) {
+        if (lg_add_pattern(Fsm, ParsedPattern, DefaultEncodingsCStrings[i], 0, &err) < 0) {
+          good = false;
+          break;
+        }
+      }
+    } else {
+      good = false;
+    }
+    if (!good) {
+      cerr << "Error on '" << itr.c_str() << "': " << err->Message << endl;
+      lg_free_error(err);
+      return false;
     }
   }
 
@@ -181,7 +194,7 @@ bool LightgrepController::addUserPatterns(PatternScanner& scanner /* const FindO
   // }
   // scanner.patternRange() = make_pair(patBegin, patEnd);
   // Scanners.push_back(&scanner);
-  return false;
+  return true;
 }
 
 void LightgrepController::regcomp() {
