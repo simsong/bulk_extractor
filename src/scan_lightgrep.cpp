@@ -35,7 +35,7 @@ namespace { // local namespace hides these from other translation units
         sp.info->description     = "Advanced search for patterns";
         sp.info->scanner_version = "1.0";
         sp.info->feature_defs.push_back( feature_recorder_def("lightgrep"));
-        // sp.info->flags           = scanner_info::SCANNER_FIND_SCANNER | scanner_info::SCANNER_FAST_FIND;
+        sp.info->scanner_flags.find_scanner = true;
         // sp.info->feature_names.insert(name());
         // sp.info->histogram_defs.insert(histogram_def( name(), "", "histogram", HistogramMaker::FLAG_LOWERCASE));
     }
