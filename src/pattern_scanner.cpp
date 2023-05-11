@@ -62,7 +62,7 @@ bool LightgrepController::addUserPatterns(
       good = false;
     }
     if (!good) {
-      cerr << "Error on '" << itr.c_str() << "': " << err->Message << endl;
+      cerr << "Lightgrep error parsing '" << itr.c_str() << "': " << err->Message << endl;
       lg_free_error(err);
       return false;
     }
@@ -72,7 +72,7 @@ bool LightgrepController::addUserPatterns(
   for (const auto& itr : user_files) {
     ifstream file(itr.c_str(), ios::in);
     if (!file.is_open()) {
-      cerr << "Could not open pattern file '" << itr.c_str() << "'." << endl;
+      cerr << "Lightgrep scanner could not open pattern file '" << itr.c_str() << "'." << endl;
       return false;
     }
     string contents = string(istreambuf_iterator<char>(file), istreambuf_iterator<char>());
@@ -89,7 +89,7 @@ bool LightgrepController::addUserPatterns(
       }
       LG_Error* cur(err);
       while (cur) {
-        cerr << "Error in " << itr.c_str() << ", line " << cur->Index+1 << ", pattern '" << lines[cur->Index]
+        cerr << "Lightgrep parsing error in " << itr.c_str() << ", on line " << cur->Index+1 << ", on pattern '" << lines[cur->Index]
           << "': " << cur->Message << endl;
         cur = cur->Next;
       }
