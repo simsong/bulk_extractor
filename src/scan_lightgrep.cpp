@@ -10,8 +10,6 @@
 
 #include "be20_api/scanner_params.h"
 #include "be20_api/scanner_set.h"
-
-//#include "be20_api/beregex.h"
 #include "be20_api/histogram_def.h"
 #include "pattern_scanner.h"
 
