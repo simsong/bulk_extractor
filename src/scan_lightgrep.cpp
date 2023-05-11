@@ -36,8 +36,9 @@ namespace { // local namespace hides these from other translation units
         sp.info->scanner_version = "1.0";
         sp.info->feature_defs.push_back( feature_recorder_def("lightgrep"));
         sp.info->scanner_flags.find_scanner = true;
-        // sp.info->feature_names.insert(name());
-        // sp.info->histogram_defs.insert(histogram_def( name(), "", "histogram", HistogramMaker::FLAG_LOWERCASE));
+        auto lowercase = histogram_def::flags_t(); 
+        lowercase.lowercase = true;
+        sp.info->histogram_defs.insert(histogram_def(name(), name(), "", "", "histogram", lowercase));
     }
 
     virtual void init(const scanner_params& sp) {
