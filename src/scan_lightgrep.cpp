@@ -64,7 +64,9 @@ void scan_lightgrep(struct scanner_params &sp) {
     {
       lg_findscanner_ptr->init(sp);
       lg_ptr.reset(new LightgrepController);
-      lg_ptr->addUserPatterns(*lg_findscanner_ptr, sp.ss->find_patterns(), sp.ss->find_files());
+      if (!lg_ptr->addUserPatterns(*lg_findscanner_ptr, sp.ss->find_patterns(), sp.ss->find_files())) {
+        throw std::runtime_error("There was an error parsing the lightgrep scanner's patterns.");
+      }
       lg_ptr->regcomp();
     }
     break;
