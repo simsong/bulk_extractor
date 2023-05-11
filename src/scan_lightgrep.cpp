@@ -44,15 +44,7 @@ namespace { // local namespace hides these from other translation units
     virtual void init(const scanner_params& sp) {
     }
 
-    virtual void initScan(const scanner_params& sp) {
-      // LgRec = &sp.named_feature_recorder(name());
-    }
-
     feature_recorder* LgRec;
-
-    void processHit(const LG_SearchHit& hit, const scanner_params& sp) {
-      // LgRec->write_buf(sp.sbuf, hit.Start, hit.End - hit.Start);
-    }
 
   private:
     FindScanner(const FindScanner& x): PatternScanner(x), LgRec(x.LgRec) {}
@@ -61,8 +53,6 @@ namespace { // local namespace hides these from other translation units
   };
 
   FindScanner Scanner;
-
-  // CallbackFnType ProcessHit;
 }
 
 extern "C"
@@ -71,7 +61,6 @@ void scan_lightgrep(struct scanner_params &sp) {
   switch (sp.phase) {
   case scanner_params::PHASE_INIT:
     Scanner.startup(sp);
-    // ProcessHit = static_cast<CallbackFnType>(&FindScanner::processHit);
     break;
   case scanner_params::PHASE_INIT2:
     {
@@ -82,21 +71,12 @@ void scan_lightgrep(struct scanner_params &sp) {
     //   break;
     }
     break;
-  // PHASE_ENABLED is never current phase when this func is called
-  // case scanner_params::PHASE_ENABLED:
-  //   break;
   case scanner_params::PHASE_SCAN:
     lg_ptr->scan(sp);
     break;
   case scanner_params::PHASE_SHUTDOWN:
     // Scanner.shutdown(sp);
     break;
-  // no cleanup needs to happen because lightgrep controller handles dealloc
-  // case scanner_params::PHASE_CLEANUP:
-  //   break;
-  // PHASE_CLEANED is never current phase when this func is called, used for internal bookkeeping
-  // case scanner_params::PHASE_CLEANED:
-  //   break;
   default:
     break;
   }

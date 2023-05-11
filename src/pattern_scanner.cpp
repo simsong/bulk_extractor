@@ -18,16 +18,11 @@ namespace {
 }
 
 void PatternScanner::shutdown(const scanner_params&) {
-  // for (vector<const Handler*>::iterator itr(Handlers.begin()); itr != Handlers.end(); ++itr) {
-  //   delete *itr;
-  // }
 }
-// /*********************************************************/
 
 LightgrepController::LightgrepController()
 : ParsedPattern(lg_create_pattern()),       // Reuse the parsed pattern data structure for efficiency
   Fsm(lg_create_fsm(1000, 1 << 20)),              // Reserve space for 1M states in the automaton--will grow if needed
-  // PatternInfo(lg_create_pattern_map(1000)), // Reserve space for 1000 patterns in the pattern map
   Prog(0),
   Scanners()
 {
@@ -35,17 +30,15 @@ LightgrepController::LightgrepController()
 
 LightgrepController::~LightgrepController() {
   lg_destroy_pattern(ParsedPattern);
-  // lg_destroy_pattern_map(PatternInfo);
   lg_destroy_program(Prog);
 }
 
 bool LightgrepController::addUserPatterns(
   PatternScanner& scanner, 
   const vector<string>& cli_patterns, 
-  const vector<filesystem::path>& user_files) { // CallbackFnType* callbackPtr, const FindOpts& user) {
+  const vector<filesystem::path>& user_files) {
 
   LG_Error *err = 0;
-
   LG_KeyOptions opts;
   opts.FixedString = 0;
   opts.CaseInsensitive = 0;
@@ -112,7 +105,6 @@ void LightgrepController::regcomp() {
   lg_destroy_fsm(Fsm);
   Fsm = 0;
 
-  // cerr << lg_pattern_map_size(PatternInfo) << " lightgrep patterns, logic size is " << lg_program_size(Prog) << " bytes, " << Scanners.size() << " active scanners" << std::endl;
   #ifdef LGBENCHMARK
   cerr << "timer second ratio " << chrono::high_resolution_clock::period::num << "/" <<
     chrono::high_resolution_clock::period::den << endl;
@@ -129,14 +121,13 @@ void gotHit(void* userData, const LG_SearchHit* hit) {
   // no callback, just increment hit counter
   ++(*static_cast<uint64_t*>(userData));
   #else
-  // trampoline back into LightgrepController::processHit() from the void* userData
   HitData* data(reinterpret_cast<HitData*>(userData));
   data->recorder.write_buf(data->sbuf, hit->Start, hit->End - hit->Start);
   #endif
 }
 
 void LightgrepController::scan(const scanner_params& sp) {
-  // Scan the sbuf for pattern hits, invoking various scanners' handlers as hits are encountered
+  // Scan the sbuf for pattern hits
   if (!Prog) {
     // we had no valid patterns, do nothing
     return;
@@ -177,42 +168,13 @@ void LightgrepController::scan(const scanner_params& sp) {
   std::stringstream buf;
   buf << " ** Time: " << sbuf.pos0.str() << '\t' << sbuf.pagesize << '\t' << t.count() << '\t' << seconds<< '\t' << hitCount << '\t' << bw << std::endl;
   std::cout << buf.str();
-//  std::cout.flush();
   #endif
 
   lg_destroy_context(ctx);
 }
 
 unsigned int LightgrepController::numPatterns() const {
-  return Prog ? lg_prog_pattern_count(Prog) : 0; //lg_pattern_map_size(PatternInfo);
+  return Prog ? lg_prog_pattern_count(Prog) : 0;
 }
-
-// /*********************************************************/
-
-// void scan_lg(PatternScanner& scanner, class scanner_params &sp) {
-//   // utility implementation of the normal scan function for a PatternScanner instance
-//   switch (sp.phase) {
-//   case scanner_params::PHASE_STARTUP:
-//     scanner.startup(sp);
-//     break;
-//   case scanner_params::PHASE_INIT:
-//     scanner.init(sp);
-//     if (!LightgrepController::Get().addScanner(scanner)) {
-//       // It's fine for user patterns not to parse, but there's no excuse for a scanner so exit.
-//       cerr << "Aborting. Fix pattern or disable scanner to continue." << endl;
-//       exit(EXIT_FAILURE);
-//     }
-//     break;
-//   case scanner_params::PHASE_SHUTDOWN:
-//     scanner.shutdown(sp);
-//     break;
-//   case scanner_params::PHASE_CLEANUP:
-//       TODO - to something here.
-//   default:
-//     break;
-//   }
-// }
-
-// /*********************************************************/
 
 #endif // HAVE_LIBLIGHTGREP
