@@ -38,7 +38,7 @@ namespace { // local namespace hides these from other translation units
         sp.info->scanner_flags.find_scanner = true;
         auto lowercase = histogram_def::flags_t(); 
         lowercase.lowercase = true;
-        sp.info->histogram_defs.insert(histogram_def(name(), name(), "", "", "histogram", lowercase));
+        sp.info->histogram_defs.push_back(histogram_def(name(), name(), "", "", "histogram", lowercase));
     }
 
     virtual void init(const scanner_params& sp) {
@@ -51,31 +51,31 @@ namespace { // local namespace hides these from other translation units
 
     FindScanner& operator=(const FindScanner&);
   };
-
-  FindScanner Scanner;
 }
 
 extern "C"
 void scan_lightgrep(struct scanner_params &sp) {
+  static std::unique_ptr<FindScanner> lg_findscanner_ptr;
   static std::unique_ptr<LightgrepController> lg_ptr;
   switch (sp.phase) {
   case scanner_params::PHASE_INIT:
-    Scanner.startup(sp);
+    lg_findscanner_ptr.reset(new FindScanner);
+    lg_findscanner_ptr->startup(sp);
     break;
   case scanner_params::PHASE_INIT2:
     {
-      Scanner.init(sp);
+      lg_findscanner_ptr->init(sp);
       lg_ptr.reset(new LightgrepController);
-      lg_ptr->addUserPatterns(Scanner, sp.ss->find_patterns(), sp.ss->find_files());
+      lg_ptr->addUserPatterns(*lg_findscanner_ptr, sp.ss->find_patterns(), sp.ss->find_files());
       lg_ptr->regcomp();
-    //   break;
     }
     break;
   case scanner_params::PHASE_SCAN:
     lg_ptr->scan(sp);
     break;
   case scanner_params::PHASE_SHUTDOWN:
-    // Scanner.shutdown(sp);
+    lg_findscanner_ptr.reset();
+    lg_ptr.reset();
     break;
   default:
     break;
