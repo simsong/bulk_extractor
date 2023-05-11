@@ -31,6 +31,10 @@ LightgrepController::LightgrepController()
 LightgrepController::~LightgrepController() {
   lg_destroy_pattern(ParsedPattern);
   lg_destroy_program(Prog);
+  if (Fsm) {
+    lg_destroy_fsm(Fsm);
+    Fsm = 0;
+  }
 }
 
 bool LightgrepController::addUserPatterns(
