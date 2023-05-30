@@ -28,10 +28,10 @@ namespace { // local namespace hides these from other translation units
     };
 
     virtual void startup(const scanner_params& sp) {
-        sp.info->set_name("scan_lightgrep");
+        sp.info->set_name("lightgrep");
         sp.info->author          = "Jon Stewart";
         sp.info->description     = "Advanced search for patterns";
-        sp.info->scanner_version = "1.0";
+        sp.info->scanner_version = "2.0";
         sp.info->feature_defs.push_back( feature_recorder_def("lightgrep"));
         sp.info->scanner_flags.find_scanner = true;
         auto lowercase = histogram_def::flags_t(); 
