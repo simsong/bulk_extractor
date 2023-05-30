@@ -20,14 +20,6 @@ namespace {
 void PatternScanner::shutdown(const scanner_params&) {
 }
 
-struct LgContextHolder {
-  LG_HCONTEXT Ctx;
-
-  LgContextHolder(LG_HPROGRAM Prog, LG_ContextOptions* ctxOpts) {Ctx = lg_create_context(Prog, ctxOpts);}
-  ~LgContextHolder() {lg_destroy_context(Ctx);}
-
-};
-
 LightgrepController::LightgrepController()
 : ParsedPattern(lg_create_pattern()),       // Reuse the parsed pattern data structure for efficiency
   Fsm(lg_create_fsm(1000, 1 << 20)),              // Reserve space for 1M states in the automaton--will grow if needed
@@ -148,9 +140,8 @@ void LightgrepController::scan(const scanner_params& sp) {
   LG_ContextOptions ctxOpts;
   ctxOpts.TraceBegin = 0xffffffffffffffff;
   ctxOpts.TraceEnd   = 0;
-  thread_local LgContextHolder ctx(Prog, &ctxOpts);
-  lg_reset_context(ctx.Ctx);
-  //LG_HCONTEXT ctx = lg_create_context(Prog, &ctxOpts); // create a search context; cannot be shared, so local to scan
+
+  LG_HCONTEXT ctx = lg_create_context(Prog, &ctxOpts); // create a search context; cannot be shared, so local to scan
 
   const sbuf_t &sbuf = *sp.sbuf;
   HitData callbackInfo = { sp.named_feature_recorder("lightgrep"), *sp.sbuf };
@@ -166,12 +157,12 @@ void LightgrepController::scan(const scanner_params& sp) {
 
   // search the sbuf in one go
   // the gotHit() function will be invoked for each pattern hit
-  if (lg_search(ctx.Ctx, (const char*)sbuf.get_buf(), (const char*)sbuf.get_buf() + sbuf.pagesize, 0, userData, gotHit) < numeric_limits<uint64_t>::max()) {
+  if (lg_search(ctx, (const char*)sbuf.get_buf(), (const char*)sbuf.get_buf() + sbuf.pagesize, 0, userData, gotHit) < numeric_limits<uint64_t>::max()) {
     // resolve potential hits that want data into the sbuf margin, without beginning any new hits
-    lg_search_resolve(ctx.Ctx, (const char*)sbuf.get_buf() + sbuf.pagesize, (const char*)sbuf.get_buf() + sbuf.bufsize, sbuf.pagesize, userData, gotHit);
+    lg_search_resolve(ctx, (const char*)sbuf.get_buf() + sbuf.pagesize, (const char*)sbuf.get_buf() + sbuf.bufsize, sbuf.pagesize, userData, gotHit);
   }
   // flush any remaining hits; there's no more data
-  lg_closeout_search(ctx.Ctx, userData, gotHit);
+  lg_closeout_search(ctx, userData, gotHit);
 
   #ifdef LGBENCHMARK
   auto endClock = std::chrono::high_resolution_clock::now();
@@ -183,7 +174,7 @@ void LightgrepController::scan(const scanner_params& sp) {
   std::cout << buf.str();
   #endif
 
-  //lg_destroy_context(ctx);
+  lg_destroy_context(ctx);
 }
 
 unsigned int LightgrepController::numPatterns() const {
