@@ -17,7 +17,7 @@ using namespace std;
 class PatternScanner;
 
 // // Inherit from this to create your own Lightgrep-based scanners
-// // clone(), startup(), init(), and initScan() must be overridden
+// // clone(), startup(), and init() must be overridden
 class PatternScanner {
 public:
   PatternScanner(const string& n): Name(n) {}
@@ -39,7 +39,7 @@ protected:
   PatternScanner(const PatternScanner& s):
     Name(s.Name) {}
 
-  string                 Name;
+  string Name;
 };
 
 
