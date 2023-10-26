@@ -63,6 +63,9 @@ This release of bulk_extractor requires C++17 and has been tested to compile on 
 
 You should *always* start with a fresh VM and prepare the system using the appropriate prep script in the `etc/` directory.
 
+Tested Configurations Which bulk_extractor Does Not Work
+========================================================
+* Debian 10 (is not supported for native builds))
 
 RECOMMENDED CITATION
 ====================
