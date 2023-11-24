@@ -272,6 +272,12 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         sc.banner_file = result["banner_file"].as<std::string>();
     } catch ( cxxopts::option_has_no_value_exception &e ) { }
 
+    try {
+        for ( const auto &name : result["disable"].as<std::vector<std::string>>() ) {
+            sc.push_scanner_command( name, scanner_config::scanner_command::DISABLE);
+        }
+    } catch ( cxxopts::option_has_no_value_exception &e ) { }
+
     if ( result.count( "enable_exclusive" )) {
         sc.push_scanner_command( scanner_config::scanner_command::ALL_SCANNERS, scanner_config::scanner_command::DISABLE);
         sc.push_scanner_command( result["enable_exclusive"].as<std::string>(), scanner_config::scanner_command::ENABLE);
@@ -280,13 +286,6 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     try {
         for ( const auto &name : result["enable"].as<std::vector<std::string>>() ) {
             sc.push_scanner_command( name, scanner_config::scanner_command::ENABLE);
-        }
-    } catch ( cxxopts::option_has_no_value_exception &e ) { }
-
-
-    try {
-        for ( const auto &name : result["disable"].as<std::vector<std::string>>() ) {
-            sc.push_scanner_command( name, scanner_config::scanner_command::DISABLE);
         }
     } catch ( cxxopts::option_has_no_value_exception &e ) { }
 
