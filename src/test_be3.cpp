@@ -138,6 +138,22 @@ TEST_CASE("e2e-0", "[end-to-end]") {
     REQUIRE( code==0 );
 }
 
+TEST_CASE("select_scanners", "[end-to-end]") {
+    std::filesystem::path inpath = test_dir() / "pdf_words2.pdf";
+    std::filesystem::path outdir = NamedTemporaryDirectory();
+    std::string inpath_string = inpath.string();
+    std::string outdir_string = outdir.string();
+    std::stringstream ss;
+    const char *argv[] = {"bulk_extractor", "-0q", "-x", "all", "-e", "wordlist", "-o", outdir_string.c_str(), inpath_string.c_str(), nullptr};
+    int ret = run_be(ss, std::cerr, argv);
+    REQUIRE( ret==0 );
+
+    auto lines = getLines( outdir / "report.xml" );
+    auto startpos = std::find(lines.begin(), lines.end(), "    <scanners>");
+    auto endpos = std::find(lines.begin(), lines.end(), "    </scanners>");
+    REQUIRE( startpos != lines.end());
+    REQUIRE( endpos != startpos + 1);
+}
 
 TEST_CASE("scan_find", "[end-to-end]") {
     std::filesystem::path inpath = test_dir() / "pdf_words2.pdf";
