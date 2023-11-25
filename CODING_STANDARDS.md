@@ -1,7 +1,7 @@
 # Coding Standards and Guide
 
 ## Coding Standards
-Unless otherwise specified, we follow the (Google C++ Coding Standards)[https://google.github.io/styleguide/cppguide.html] and the (LLVM Coding Standards)[https://llvm.org/docs/CodingStandards.html].
+Unless otherwise specified, we follow the [Google C++ Coding Standards](https://google.github.io/styleguide/cppguide.html) and the [LLVM Coding Standards](https://llvm.org/docs/CodingStandards.html).
 
 Here are the exceptions:
 
