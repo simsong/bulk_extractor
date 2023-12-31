@@ -1,4 +1,4 @@
-bin_PROGRAMS   = bulk_extractor test_be
+bin_PROGRAMS   = bulk_extractor
 
 CLEANFILES     = scan_accts.cpp scan_base16.cpp scan_email.cpp scan_gps.cpp \
 	be20_api/config.h be20_api/dfxml/src/config.h config.h *.d *~
