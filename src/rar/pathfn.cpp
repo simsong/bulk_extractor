@@ -975,6 +975,7 @@ bool IsDiskLetter(const wchar *Path)
 }
 
 
+#ifdef REMOVE_TEST_1
 void GetPathRoot(const char *Path,char *Root)
 {
   *Root=0;
@@ -1002,6 +1003,7 @@ void GetPathRoot(const wchar *Path,wchar *Root)
 {
   *Root=0;
 }
+#endif
 
 
 int ParseVersionFileName(char *Name,wchar *NameW,bool Truncate)
@@ -1253,18 +1255,19 @@ void GenArcName(char *ArcName,wchar *ArcNameW,char *GenerateMask,
   if (StartWeekDay%7>=4)
     CurWeek++;
 
-  char Field[10][12];                   // make 12 to avoid warnings below
+  const size_t flen=12;
+  char Field[10][flen];                   // make 12 to avoid warnings below
 
-  sprintf(Field[0],"%04d",rlt.Year);
-  sprintf(Field[1],"%02d",rlt.Month);
-  sprintf(Field[2],"%02d",rlt.Day);
-  sprintf(Field[3],"%02d",rlt.Hour);
-  sprintf(Field[4],"%02d",rlt.Minute);
-  sprintf(Field[5],"%02d",rlt.Second);
-  sprintf(Field[6],"%02d",CurWeek);
-  sprintf(Field[7],"%d",WeekDay+1);
-  sprintf(Field[8],"%03d",rlt.yDay+1);
-  sprintf(Field[9],"%05d",ArcNumber);
+  snprintf(Field[0],flen,"%04d",rlt.Year);
+  snprintf(Field[1],flen,"%02d",rlt.Month);
+  snprintf(Field[2],flen,"%02d",rlt.Day);
+  snprintf(Field[3],flen,"%02d",rlt.Hour);
+  snprintf(Field[4],flen,"%02d",rlt.Minute);
+  snprintf(Field[5],flen,"%02d",rlt.Second);
+  snprintf(Field[6],flen,"%02d",CurWeek);
+  snprintf(Field[7],flen,"%d",WeekDay+1);
+  snprintf(Field[8],flen,"%03d",rlt.yDay+1);
+  snprintf(Field[9],flen,"%05d",ArcNumber);
 
   const char *MaskChars="YMDHISWAEN";
 

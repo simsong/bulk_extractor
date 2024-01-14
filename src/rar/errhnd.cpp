@@ -152,10 +152,11 @@ void ErrorHandler::Exit(int ExitCode_)
 #ifndef GUI
 void ErrorHandler::ErrMsg(const char *ArcName,const char *fmt,...)
 {
-  safebuf char Msg[NM+1024];
+    const size_t buflen=NM+1024;
+  safebuf char Msg[buflen];
   va_list argptr;
   va_start(argptr,fmt);
-  vsprintf(Msg,fmt,argptr);
+  vsnprintf(Msg,buflen,fmt,argptr);
   va_end(argptr);
   if (*Msg)
   {
@@ -241,7 +242,3 @@ void ErrorHandler::SysErrMsg()
 
 #endif
 }
-
-
-
-
