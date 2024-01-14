@@ -88,7 +88,7 @@ public:;
         std::filesystem::rename(report_path, report_path_bak);
     }
 #else
-    void restart(Phase1::Config &cfg, scanner_config &sc) {
+    void restart() {
         throw std::runtime_error("Compiled without libexpat; cannot restart.");
     }
 #endif
