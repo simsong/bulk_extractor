@@ -125,6 +125,7 @@ void ErrorHandler::CheckLongPathErrMsg(const char *FileName,const wchar *FileNam
 }
 
 
+#ifdef REMOVE_ME
 void ErrorHandler::ReadErrorMsg(const char *ArcName,const wchar *ArcNameW,const char *FileName,const wchar *FileNameW)
 {
 #ifndef SILENT
@@ -141,6 +142,7 @@ void ErrorHandler::WriteErrorMsg(const char *ArcName,const wchar *ArcNameW,const
   SysErrMsg();
 #endif
 }
+#endif
 
 
 void ErrorHandler::Exit(int ExitCode_)
@@ -149,18 +151,21 @@ void ErrorHandler::Exit(int ExitCode_)
 }
 
 
+#ifdef REMOVE_ME
 #ifndef GUI
 void ErrorHandler::ErrMsg(const char *ArcName,const char *fmt,...)
 {
-  safebuf char Msg[NM+1024];
+    const size_t buflen=NM+1024;
+  safebuf char Msg[buflen];
   va_list argptr;
   va_start(argptr,fmt);
-  vsprintf(Msg,fmt,argptr);
+  vsnprintf(Msg,buflen,fmt,argptr);
   va_end(argptr);
   if (*Msg)
   {
   }
 }
+#endif
 #endif
 
 
@@ -241,7 +246,3 @@ void ErrorHandler::SysErrMsg()
 
 #endif
 }
-
-
-
-

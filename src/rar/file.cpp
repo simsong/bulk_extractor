@@ -84,7 +84,7 @@ void File::InitFile(void* ptr, int64 length)
 	initptrlocation = (byte*)ptr; //initialize the initial pointer location
 	ptrlocation = (byte*)ptr; //initialize the current pointer location
 	ptrlength = length; //set the length of the file
-	return; 
+	return;
 }
 
 /**
@@ -106,7 +106,7 @@ const File& File::operator=(const File &SrcFile)
 
 
 bool File::Open(const char *Name,const wchar *NameW,bool OpenShared_,bool Update)
-{ //This function does nothing. It simply complies with the File class. 
+{ //This function does nothing. It simply complies with the File class.
   //This class should utilize the Init(void* ptr) function to open a file.
 	//hFile = hNewFile;
 	return true;
@@ -288,7 +288,7 @@ bool File::WCreate(const char *Name,const wchar *NameW,bool ShareRead)
 This function does nothing. It simply complies with the File class.
 */
 bool File::Close()
-{ 
+{
 	ptrlocation = initptrlocation; //reset Pointer location to the initial spot
 	return true;
   /*bool Success=true;
@@ -336,7 +336,7 @@ void File::Flush()
 This is not called in bulk_extractor.
 */
 bool File::Delete()
-{ 
+{
 if (HandleType!=FILE_HANDLENORMAL)
     return(false);
   if (hFile!=BAD_HANDLE)
@@ -350,7 +350,7 @@ if (HandleType!=FILE_HANDLENORMAL)
 This function should never be called since the file name should never be changed
 */
 bool File::Rename(const char *NewName,const wchar *NewNameW)
-{ 
+{
   // we do not need to rename if names are already same
   bool Success=strcmp(FileName,NewName)==0;
   if (Success && *FileNameW!=0 && *NullToEmpty(NewNameW)!=0)
@@ -372,7 +372,7 @@ bool File::Rename(const char *NewName,const wchar *NewNameW)
 This is not called in bulk_extractor
 */
 void File::Write(const void *Data,size_t Size)
-{ //This is not called in bulk_extractor 
+{ //This is not called in bulk_extractor
   if (Size==0)
     return;
 #ifndef _WIN_CE
@@ -447,7 +447,7 @@ void File::Write(const void *Data,size_t Size)
 
 /**
 Read data from memory of size <code>Size</code>. Calls the <code>DirectRead(Data,Size)</code> function.
-@param Data - a pointer to the memory location of the RAR file to be extracted 
+@param Data - a pointer to the memory location of the RAR file to be extracted
 @param Size - the length, in bytes, of the <code>Data</code> variable
 @return the size that was read from the memory location
 */
@@ -456,7 +456,7 @@ int File::Read(void *Data,size_t Size)
 
 	//call directRead
 	int readsize = DirectRead(Data, Size);
-	
+
 	return readsize;
 
 /*int64 FilePos=0; // Initialized only to suppress some compilers warning.
@@ -496,7 +496,7 @@ int File::Read(void *Data,size_t Size)
 
 /**
 Read data from memory of size <code>Size</code>. Calls the <code>DirectRead(Data,Size)</code> function.
-@param Data - a pointer to the memory location of the RAR file to be extracted 
+@param Data - a pointer to the memory location of the RAR file to be extracted
 @param Size - the length, in bytes, of the <code>Data</code> variable
 @return the size that was read from the memory location
 */
@@ -508,7 +508,7 @@ int File::DirectRead(void *Data,size_t Size)
 
 /**
 Read data from memory of size <code>Size</code>. Calls the <code>DirectRead(Data,Size)</code> function.
-@param Data - a pointer to the memory location of the RAR file to be extracted 
+@param Data - a pointer to the memory location of the RAR file to be extracted
 @param Size - the length, in bytes, of the <code>Data</code> variable
 @return the size that was read from the memory location. If a '-1' is returned, an error has occurred.
 */
@@ -525,10 +525,10 @@ int File::DirectRead(byte *Data,size_t Size)
 	{ //verifies that we will be in bounds
 		result = Size;
 		memcpy(Data, ptrlocation, Size);
-		
-		
+
+
 		ptrlocation += Size; //adjust the pointer location
-		
+
 		//Tell(); //for debugging purposes
 		/*for(int i = 0; i < result; i++)
 		{
@@ -569,7 +569,7 @@ int File::DirectRead(byte *Data,size_t Size)
   }
   return(Read);
 #else
-  if (LastWrite)no 
+  if (LastWrite)no
   {
     fflush(hFile);
     LastWrite=false;
@@ -585,7 +585,7 @@ int File::DirectRead(byte *Data,size_t Size)
 /**
 Moves the pointer in the file to a specified location. Calls the <code>RawSeek</code> function.
 @param Offset - the length from the current position
-@param Method - the method to move the pointer. 
+@param Method - the method to move the pointer.
 If <code>SEEK_SET</code>, move the pointer <code>Offset</code> number of bytes to the new location in memory.
 If <code>SEEK_END</code>, move the pointer to the end of the file (NOT IMPLEMENTED)
 If <code>SEEK_CUR</code>, move the pointer (NOT IMPLEMENTED).
@@ -600,7 +600,7 @@ void File::Seek(int64 Offset,int Method)
 /**
 Moves the pointer in the file to a specified location
 @param Offset - the length from the current position
-@param Method - the method to move the pointer. 
+@param Method - the method to move the pointer.
 If <code>SEEK_SET</code>, move the pointer <code>Offset</code> number of bytes to the new location in memory.
 If <code>SEEK_END</code>, move the pointer to the end of the file (NOT IMPLEMENTED)
 If <code>SEEK_CUR</code>, move the pointer (NOT IMPLEMENTED).
@@ -610,7 +610,7 @@ bool File::RawSeek(int64 Offset,int Method)
  /* if (hFile==BAD_HANDLE)
     return(true);*/  //we will assume all is well if we have gone this far.
 
-	
+
 	if(Method == SEEK_SET)
 	{
 		/*if(&ptrlocation + Offset > &initptrlocation + ptrlength)
@@ -745,7 +745,7 @@ int64 File::Tell()
 this is not needed for bulk_extractor
 */
 void File::Prealloc(int64 Size)
-{ 
+{
 #ifdef _WIN_ALL
   if (RawSeek(Size,SEEK_SET))
   {
@@ -873,7 +873,7 @@ void File::GetOpenFileTime(RarTime *ft)
 int64 File::FileLength()
 { //returns length of file
   return ptrlength;
-	
+
 /*  SaveFilePos SavePos(*this);
   Seek(0,SEEK_END);
   return(Tell());*/
@@ -905,6 +905,7 @@ bool File::IsDevice()
 }
 
 
+#ifdef DELETE_ME
 #ifndef SFX_MODULE
 /**
 this is not needed for bulk_extractor
@@ -913,8 +914,9 @@ void File::fprintf(const char *fmt,...)
 { //This function is not called in bulk_extractor
   va_list argptr;
   va_start(argptr,fmt);
-  safebuf char Msg[2*NM+1024],OutMsg[2*NM+1024];
-  vsprintf(Msg,fmt,argptr);
+  const size_t buflen = 2*NM+1024;
+  safebuf char Msg[buflen],OutMsg[buflen];
+  vsnprintf(Msg,buflen,fmt,argptr);
 #ifdef _WIN_ALL
   for (int Src=0,Dest=0;;Src++)
   {
@@ -932,16 +934,15 @@ void File::fprintf(const char *fmt,...)
   va_end(argptr);
 }
 #endif
+#endif
 
-/**
-this is not needed for bulk_extractor
-*/
 bool File::RemoveCreated()
 { //This file is not called in bulk_extractor
     return false;
 }
 
 
+#ifdef DELETE_ME
 #ifndef SFX_MODULE
 /**
 this is not needed for bulk_extractor
@@ -966,6 +967,7 @@ int64 File::Copy(File &Dest,int64 Length)
   }
   return(CopySize);
 }
+#endif
 
 /**
 @return the current pointer location as a <code>void*</code> type pointer

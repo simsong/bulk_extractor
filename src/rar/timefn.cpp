@@ -232,6 +232,7 @@ void RarTime::SetDos(uint DosTime)
 }
 
 
+#ifdef REMOVED_FOR_SAFETY
 #if !defined(GUI) || !defined(SFX_MODULE)
 void RarTime::GetText(char *DateStr,bool FullYear)
 {
@@ -240,6 +241,7 @@ void RarTime::GetText(char *DateStr,bool FullYear)
   else
     sprintf(DateStr,"%02u-%02u-%02u %02u:%02u",rlt.Day,rlt.Month,rlt.Year%100,rlt.Hour,rlt.Minute);
 }
+#endif
 #endif
 
 
@@ -256,7 +258,7 @@ std::string RarTime::GetLocalTimeXML()
 	<< "</Reminder>\n<wDay>" << rlt.wDay
 	<< "</wDay>\n<yDay>" << rlt.yDay
 	<< "</yDay>\n";
-	
+
 	return oss.str();
 }
 
