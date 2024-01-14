@@ -905,6 +905,7 @@ bool File::IsDevice()
 }
 
 
+#ifdef DELETE_ME
 #ifndef SFX_MODULE
 /**
 this is not needed for bulk_extractor
@@ -933,16 +934,15 @@ void File::fprintf(const char *fmt,...)
   va_end(argptr);
 }
 #endif
+#endif
 
-/**
-this is not needed for bulk_extractor
-*/
 bool File::RemoveCreated()
 { //This file is not called in bulk_extractor
     return false;
 }
 
 
+#ifdef DELETE_ME
 #ifndef SFX_MODULE
 /**
 this is not needed for bulk_extractor
@@ -967,6 +967,7 @@ int64 File::Copy(File &Dest,int64 Length)
   }
   return(CopySize);
 }
+#endif
 
 /**
 @return the current pointer location as a <code>void*</code> type pointer

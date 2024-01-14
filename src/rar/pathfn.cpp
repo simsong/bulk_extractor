@@ -1103,6 +1103,7 @@ wchar* VolNameToFirstName(const wchar *VolName,wchar *FirstName,bool NewNumberin
 #endif
 
 
+#ifdef DELETE_ME_NOT_NEEDED_WITH_BULK_EXTRACTOR
 #ifndef SFX_MODULE
 static void GenArcName(char *ArcName,wchar *ArcNameW,char *GenerateMask,
                        uint ArcNumber,bool &ArcNumPresent);
@@ -1356,6 +1357,7 @@ void GenArcName(char *ArcName,wchar *ArcNameW,char *GenerateMask,
   if (ArcNameW!=NULL && *ArcNameW!=0)
     wcscat(ArcNameW,ExtW);
 }
+#endif
 #endif
 
 
