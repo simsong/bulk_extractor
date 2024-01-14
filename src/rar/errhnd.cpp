@@ -125,6 +125,7 @@ void ErrorHandler::CheckLongPathErrMsg(const char *FileName,const wchar *FileNam
 }
 
 
+#ifdef REMOVE_ME
 void ErrorHandler::ReadErrorMsg(const char *ArcName,const wchar *ArcNameW,const char *FileName,const wchar *FileNameW)
 {
 #ifndef SILENT
@@ -141,6 +142,7 @@ void ErrorHandler::WriteErrorMsg(const char *ArcName,const wchar *ArcNameW,const
   SysErrMsg();
 #endif
 }
+#endif
 
 
 void ErrorHandler::Exit(int ExitCode_)
@@ -149,6 +151,7 @@ void ErrorHandler::Exit(int ExitCode_)
 }
 
 
+#ifdef REMOVE_ME
 #ifndef GUI
 void ErrorHandler::ErrMsg(const char *ArcName,const char *fmt,...)
 {
@@ -162,6 +165,7 @@ void ErrorHandler::ErrMsg(const char *ArcName,const char *fmt,...)
   {
   }
 }
+#endif
 #endif
 
 
