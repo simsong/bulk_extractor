@@ -298,6 +298,10 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         cfg.num_threads = 0;
     }
 
+    if ( result.count( "no_threads" )) {
+        cfg.num_threads = 0;
+    }
+
     sc.max_depth             = result["max_depth"].as<int>();
     cfg.max_bad_alloc_errors = result["max_bad_alloc_errors"].as<int>();
 
