@@ -285,7 +285,7 @@ void Phase1::phase1_run()
 
     // save all of the pages we had previously seen (through restarting) in the DFXML file
     for (const auto &it : config.seen_page_ids) {
-        ss.record_work_start_pos0str( it );
+        ss.record_work_start_stop_pos0str( it );
     }
 
     // now start the new run

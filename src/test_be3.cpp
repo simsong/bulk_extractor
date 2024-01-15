@@ -155,6 +155,10 @@ TEST_CASE("e2e-0", "[end-to-end]") {
                   << "STDERR:" << std::endl << cerr.str() << std::endl;
         REQUIRE( ret==0 );
     }
+
+    /* make sure that both tags ended up in the second XML file (the one created from restarting) */
+    grep( "debug:work_start", xml_file);
+    grep( "debug:work_stop", xml_file);
 }
 
 /*
