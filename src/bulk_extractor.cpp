@@ -300,6 +300,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
 
     if ( result.count( "no_threads" )) {
         cfg.num_threads = 0;
+        std::cerr << "** WILL NOT GO MULTITHREADED **\n ";
     }
 
     sc.max_depth             = result["max_depth"].as<int>();

@@ -80,6 +80,10 @@ int run_be(std::ostream &cout, std::ostream &cerr, const char **argv)
     return ret;
 }
 
+/*
+ * Run BE and capture the output
+ */
+
 int run_be(std::ostream &ss, const char **argv)
 {
     return run_be(ss, ss, argv);
@@ -92,6 +96,7 @@ TEST_CASE("e2e-no-args", "[end-to-end]") {
     REQUIRE( ret==3 );                  // produces 3
 }
 
+/* Test -h */
 TEST_CASE("e2e-h", "[end-to-end]") {
     /* Try the -h option */
     const char *argv[] = {"bulk_extractor", "-h", nullptr};
@@ -100,6 +105,7 @@ TEST_CASE("e2e-h", "[end-to-end]") {
     REQUIRE( ret==1 );                  // -h now produces 1
 }
 
+/* Test -H */
 TEST_CASE("e2e-H", "[end-to-end]") {
     /* Try the -H option */
     const char *argv[] = {"bulk_extractor", "-H", nullptr};
@@ -108,9 +114,13 @@ TEST_CASE("e2e-H", "[end-to-end]") {
     REQUIRE( ret==2 );                  // -H produces 2
 }
 
+/* Run on the first 100k of the emails dataset
+ * bulk_extractor -0q -o [outdir] nps-2010-emails.100k.raw
+ */
 TEST_CASE("e2e-0", "[end-to-end]") {
     std::filesystem::path inpath = test_dir() / "nps-2010-emails.100k.raw";
     std::filesystem::path outdir = NamedTemporaryDirectory();
+
     /* Try to run twice. There seems to be a problem with the second time through.  */
     std::string inpath_string = inpath.string();
     std::string outdir_string = outdir.string();
@@ -132,12 +142,21 @@ TEST_CASE("e2e-0", "[end-to-end]") {
         REQUIRE( ret==0 );
     }
 
-    /* Validate the output dfxml file */
-    std::string validate = std::string("xmllint --noout ") + outdir_string + "/report.xml";
+    /* make sure that there are both debug:work_start and debug:work_stop tags in the output */
+    auto xml_file = outdir_string + "/report.xml";
+    grep( "debug:work_start", xml_file);
+    printf("************** CALLING CHECK FOR work_stop ********\n");
+    grep( "debug:work_stop", xml_file);
+
+    /* Validate the dfxml file is valid dfxml*/
+    std::string validate = std::string("xmllint --noout ") + xml_file;
     int code = system( validate.c_str());
     REQUIRE( code==0 );
 }
 
+/*
+ * -x all -e wordlist
+ */
 TEST_CASE("select_scanners", "[end-to-end]") {
     std::filesystem::path inpath = test_dir() / "pdf_words2.pdf";
     std::filesystem::path outdir = NamedTemporaryDirectory();
@@ -155,6 +174,8 @@ TEST_CASE("select_scanners", "[end-to-end]") {
     REQUIRE( endpos != startpos + 1);
 }
 
+/* -f simsong
+ */
 TEST_CASE("scan_find", "[end-to-end]") {
     std::filesystem::path inpath = test_dir() / "pdf_words2.pdf";
     std::filesystem::path outdir = NamedTemporaryDirectory();
@@ -172,6 +193,10 @@ TEST_CASE("scan_find", "[end-to-end]") {
     std::cerr << "outdir: " << outdir << std::endl;
     grep( Feature(pos0_t("70-PDF-366"), "simsong", ""), outdir / "find.txt" );
 }
+
+/*
+ * Test the 5gb flat file if it is present and if the DEBUG_5G environment variable is set.
+ */
 
 TEST_CASE("5gb-flatfile", "[end-to-end]") {
     /* Make a 5GB file and try to read it. Make sure we get back the known content. */
