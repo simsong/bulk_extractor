@@ -116,6 +116,7 @@ TEST_CASE("e2e-H", "[end-to-end]") {
 
 /* Run on the first 100k of the emails dataset
  * bulk_extractor -0q -o [outdir] nps-2010-emails.100k.raw
+ * Runs twice, so that we can also test the restarting logic
  */
 TEST_CASE("e2e-0", "[end-to-end]") {
     std::filesystem::path inpath = test_dir() / "nps-2010-emails.100k.raw";
@@ -131,27 +132,29 @@ TEST_CASE("e2e-0", "[end-to-end]") {
         std::cerr << "STDOUT:" << std::endl << cout.str() << std::endl << std::endl << "STDERR:" << std::endl << cerr.str() << std::endl;
         REQUIRE( ret==0 );
     }
-    // https://stackoverflow.com/questions/20731/how-do-you-clear-a-stringstream-variable
-    std::stringstream().swap(cout);
-    std::stringstream().swap(cerr);
-
-    ret = run_be(cout, cerr, argv);
-    if (ret!=0) {
-        std::cerr << "STDOUT:" << std::endl << cout.str() << std::endl << std::endl
-                  << "STDERR:" << std::endl << cerr.str() << std::endl;
-        REQUIRE( ret==0 );
-    }
 
     /* make sure that there are both debug:work_start and debug:work_stop tags in the output */
     auto xml_file = outdir_string + "/report.xml";
     grep( "debug:work_start", xml_file);
-    printf("************** CALLING CHECK FOR work_stop ********\n");
     grep( "debug:work_stop", xml_file);
 
     /* Validate the dfxml file is valid dfxml*/
     std::string validate = std::string("xmllint --noout ") + xml_file;
     int code = system( validate.c_str());
     REQUIRE( code==0 );
+
+    // This is the second time through - clear cout and cerr first
+    // https://stackoverflow.com/questions/20731/how-do-you-clear-a-stringstream-variable
+    std::stringstream().swap(cout);
+    std::stringstream().swap(cerr);
+
+    // Re-run to make sure that works
+    ret = run_be(cout, cerr, argv);
+    if (ret!=0) {
+        std::cerr << "STDOUT:" << std::endl << cout.str() << std::endl << std::endl
+                  << "STDERR:" << std::endl << cerr.str() << std::endl;
+        REQUIRE( ret==0 );
+    }
 }
 
 /*
