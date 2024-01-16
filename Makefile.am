@@ -36,7 +36,7 @@ EXTRA_DIST = \
 	README.md \
 	$(SRC_WIN_DIST)
 
-ACLOCAL_AMFLAGS = -I m4
+ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
 
 distclean2:
 	@echo Deleting:
