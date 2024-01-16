@@ -84,7 +84,7 @@ void scan_find(scanner_params &sp)
 
         auto *tbuf = sbuf_t::sbuf_malloc(sp.sbuf->pos0, sp.sbuf->bufsize+1, sp.sbuf->bufsize+1);
         memcpy(tbuf->malloc_buf(), sp.sbuf->get_buf(), sp.sbuf->bufsize);
-        const char *base = static_cast<const char *>(tbuf->malloc_buf());
+        const char *tbase = static_cast<const char *>(tbuf->malloc_buf());
         tbuf->wbuf(sp.sbuf->bufsize, 0); // null terminate
 
         /* Now see if we can find a string */
@@ -92,18 +92,22 @@ void scan_find(scanner_params &sp)
             std::string found;
             size_t offset=0;
             size_t len = 0;
-            if ( find_list.search_all( base+pos, &found, &offset, &len)) {
-                if(len == 0) {
-                    len+=1;
+
+            if ( find_list.search_all( tbase+pos, &found, &offset, &len)) {
+                if (len == 0) {
+                    pos += 1;
                     continue;
                 }
                 f.write_buf( *sp.sbuf, pos+offset, len);
                 pos += offset+len;
             } else {
                 /* nothing was found; skip past the first \0 and repeat. */
-                const char *eos = static_cast<const char *>(memchr( base+pos, '\000', sp.sbuf->bufsize-pos));
-                if (eos) pos=(eos-base)+1;		// skip 1 past the \0
-                else     pos=sp.sbuf->bufsize;	// skip to the end of the buffer
+                const char *eos = static_cast<const char *>(memchr( tbase+pos, '\000', sp.sbuf->bufsize-pos));
+                if (eos){
+                    pos = (eos - tbase) + 1;		// skip 1 past the \0
+                } else {
+                    break;
+                }
             }
         }
         delete tbuf;
