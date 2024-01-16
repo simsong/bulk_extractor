@@ -125,6 +125,34 @@ bool feature_match(const Feature &feature, const std::string &line)
 
 
 /* Look for a line in a file and print an error if not found */
+void grep(const std::string str, std::filesystem::path fname )
+{
+    for (int pass=0 ; pass<2 ; pass++){
+        std::string line;
+        std::ifstream inFile;
+        inFile.open(fname);
+        if (!inFile.is_open()) {
+            std::cerr << "could not open: " << fname << std::endl;
+            throw std::runtime_error("Could not open: "+fname.string());
+        }
+        while (std::getline(inFile, line)) {
+            switch (pass) {
+            case 0:
+                if (line.find(str) != std::string::npos){
+                    return;             // found!
+                }
+                break;
+            case 1:
+                std::cerr << fname << ":" << line << std::endl; // print the entire file the second time through
+                break;
+            }
+        }
+    }
+    std::cerr << "**** did not find: " << str << std::endl;
+    REQUIRE(false);
+}
+
+/* Look for a line in a file and print an error if not found */
 void grep(const Feature &feature, std::filesystem::path fname )
 {
     for (int pass=0 ; pass<2 ; pass++){

@@ -282,12 +282,18 @@ void Phase1::dfxml_write_source()
 void Phase1::phase1_run()
 {
     assert(ss.get_current_phase() == scanner_params::PHASE_SCAN);
-    // save all of the pages we have seen in the DFXML file
+
+    // save all of the pages we had previously seen (through restarting) in the DFXML file
     for (const auto &it : config.seen_page_ids) {
-        ss.record_work_start_pos0str( it );
+        ss.record_work_start_stop_pos0str( it );
     }
+
+    // now start the new run
     xreport.push("runtime","xmlns:debug=\"http://www.github.com/simsong/bulk_extractor/issues\"");
+
+    // process all of the sbufs
     read_process_sbufs();
+
     if (!config.opt_quiet) cout << "All data read; waiting for threads to finish..." << std::endl;
     ss.join();
     xreport.pop("runtime");
