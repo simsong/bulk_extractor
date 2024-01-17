@@ -40,22 +40,30 @@ jobs:
           echo "" | bash etc/CONFIGURE_UBUNTU22LTS.bash
 
 
-      - name: C++ checks with address-sanitizer (Mac and Linux)
+      - name: Make configure script
         run: |
-          echo GCC VERSION:
+          autoconf --version
+          automake --version
+          aclocal --version
           gcc --version
-          echo G++ VERSION:
           g++ --version
           bash bootstrap.sh
-          echo === Try Address Sanitizer Without Optimization ===
+
+      - name: Dump configure script
+        run: |
+          cat configure
+
+      - name: C++ checks not optimizaiton with address-sanitizer (Mac and Linux)
+        run: |
           ./configure -q --disable-opt --enable-address-sanitizer
-          make clean
           make all
           (cd src; make check || (cat test-suite.log; exit 1))
           make distclean
+
+      - name: C++ checks optimization with address-sanitizer (Mac and Linux)
+        run: |
           echo === Try Address Sanitizer Optimization ===
           ./configure -q --enable-address-sanitizer
-          make clean
           make all
           (cd src; make check || (cat test-suite.log; exit 1))
           make distclean
@@ -88,19 +96,6 @@ jobs:
           cd src
           gcov-9 -o . *.cpp be20_api/*.cpp
           bash <(curl -s https://codecov.io/bash)
-
-          #
-          # set up and run codecov
-          #
-          ## sudo apt install -y gpg
-          ## curl https://keybase.io/codecovsecurity/pgp_keys.asc | \
-          ## gpg --no-default-keyring --keyring trustedkeys.gpg --import
-          ## curl -Os https://uploader.codecov.io/latest/linux/codecov
-          ## curl -Os https://uploader.codecov.io/latest/linux/codecov.SHA256SUM
-          ## curl -Os https://uploader.codecov.io/latest/linux/codecov.SHA256SUM.sig
-          ## gpgv codecov.SHA256SUM.sig codecov.SHA256SUM
-          ## shasum -a 256 -c codecov.SHA256SUM
-          ## chmod +x codecov && ./codecov -t ${CODECOV_TOKEN}
 
       - uses: ammaraskar/gcc-problem-matcher@0.2.0
         name: GCC Problem Matcher
