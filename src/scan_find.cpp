@@ -11,7 +11,7 @@
 #include "be20_api/dfxml_cpp/src/dfxml_writer.h"
 
 // We need the defaults for page scan and margin. We really should get the current ones...
-#import "phase1.h"
+#include "phase1.h"
 
 // anonymous namespace hides symbols from other cpp files (like "static" applied to functions)
 // TODO: make this not a global variable

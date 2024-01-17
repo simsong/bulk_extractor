@@ -1,11 +1,10 @@
 #!/bin/bash
 source paths.bash
-RELEASE=20
+RELEASE=22
 CONFIGURE="./configure -q --enable-silent-rules"
 AUTOCONF_DIST=https://ftp.gnu.org/gnu/autoconf/autoconf-2.71.tar.gz
 AUTOMAKE_DIST=https://ftp.gnu.org/gnu/automake/automake-1.16.3.tar.gz
 MKPGS="build-essential flex libabsl-dev libexpat1-dev libre2-dev libssl-dev libtool libxml2-utils make pkg-config zlib1g-dev"
-# libxml2-utils needed for xmllint
 WGET="wget -nv --no-check-certificate"
 CONFIGURE="./configure -q --enable-silent-rules"
 MAKE="make -j4"

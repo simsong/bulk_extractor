@@ -5,22 +5,23 @@ OS_NAME=ubuntu
 OS_VERSION=22
 MAKE_CONCURRENCY=-j2
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+MPKGS="autoconf automake flex g++ gcc git libtool libabsl-dev libre2-dev libxml2-utils libz-mingw-w64-dev libgcrypt-mingw-w64-dev libsqlite3-dev make mingw-w64 wine  "
 cd $SCRIPT_DIR
 
 . ./paths.bash
 
 
-if [ ! -r /etc/os-release ]; then
+if [[ ! -r /etc/os-release ]]; then
   echo This requires /etc/os-release
   exit 1
 fi
 . /etc/os-release
-if [ $ID != $OS_NAME ]; then
+if [[ $ID != $OS_NAME ]]; then
     echo This requires $OS_NAME Linux. You have $ID.
     exit 1
 fi
 
-if [ $VERSION_ID -ne $OS_VERSION ]; then
+if [[ $VERSION_ID != $OS_VERSION ]]; then
     echo This requires $OS_NAME version $OS_VERSION. You have $ID $VERSION_ID.
     exit 1
 fi
@@ -34,7 +35,6 @@ press any key to continue...
 EOF
 read
 
-MPKGS="autoconf automake flex g++ gcc git libtool libabsl-dev libre2-dev libxml2-utils libz-mingw-w64-dev libgcrypt-mingw-w64-dev libsqlite3-dev make mingw-w64 wine  "
 
 sudo apt update -y
 sudo apt install -y $MPKGS

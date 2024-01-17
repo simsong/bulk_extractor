@@ -36,7 +36,7 @@ jobs:
       - name: "Ubuntu: run CONFIGURE_UBUNTU22_win64.bash"
         if: startsWith(matrix.os, 'ubuntu')
         run: |
-          echo "" | bash etc/CONFIGURE_UBUNTU22_win64.bash
+          echo "" | bash etc/CONFIGURE_UBUNTU22LTS.bash
 
       - name: C++ checks with address-sanitizer (Mac and Linux)
         run: |
@@ -72,7 +72,7 @@ jobs:
         if: startsWith(matrix.os, 'ubuntu')
         run: |
           bash bootstrap.sh
-          ./configure -q --disable-opt --enable-silent-rules CFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' CXXFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' LIBS='-lgcov'
+          ./configure --disable-opt CFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' CXXFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' LIBS='-lgcov -lre2'
           make clean
           make all
           cd src
