@@ -17,7 +17,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: ['macos-latest', 'ubuntu-latest']
+        os: ['macos-13', 'macos-13-arm64', 'ubuntu-22.04']
     outputs:
       should_skip: ${{ steps.skip_check.outputs.should_skip }}
     steps:
@@ -36,7 +36,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: ['macos-latest', 'ubuntu-latest']
+        os: ['macos-13', 'macos-13-arm64', 'ubuntu-22.04']
     env:
       DEBUG_5G: FALSE
       DEBUG_FAST: TRUE
@@ -53,10 +53,10 @@ jobs:
         run: |
           echo "" | bash etc/CONFIGURE_MACOS.bash
 
-      - name: "Ubuntu: run CONFIGURE_UBUNTU20LTS.bash"
+      - name: "Ubuntu: run CONFIGURE_UBUNTU22_win64.bash"
         if: startsWith(matrix.os, 'ubuntu')
         run: |
-          echo "" | bash etc/CONFIGURE_UBUNTU20LTS.bash
+          echo "" | bash etc/CONFIGURE_UBUNTU22_win64.bash
 
       - name: C++ checks with address-sanitizer (Mac and Linux)
         run: |
