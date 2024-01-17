@@ -21,6 +21,7 @@ jobs:
     env:
       DEBUG_5G: FALSE
       DEBUG_FAST: TRUE
+      MAKE_OPTS: -j2
 
     steps:
       # https://github.com/actions/checkout
@@ -56,9 +57,9 @@ jobs:
       - name: C++ checks not optimizaiton with address-sanitizer (Mac and Linux)
         run: |
           ./configure --disable-opt --enable-address-sanitizer
-          make all
+          make ${{MAKE_OPTS}} all
           cd src
-          make bulk_extractor
+          make ${{MAKE_OPTS}} bulk_extractor
           make check || (cat test-suite.log; exit 1)
           cd ..
           make distclean
@@ -67,9 +68,9 @@ jobs:
         run: |
           echo === Try Address Sanitizer Optimization ===
           ./configure --enable-address-sanitizer
-          make all
+          make ${{ MAKE_OPTS }} all
           cd src
-          make bulk_extractor
+          make ${{ MAKE_OPTS }} bulk_extractor
           make check || (cat test-suite.log; exit 1)
           cd ..
           make distclean
@@ -80,9 +81,9 @@ jobs:
           bash bootstrap.sh
           ./configure --enable-silent-rules --enable-thread-sanitizer
           make clean
-          make all
+          make ${{ MAKE_OPTS }}  all
           cd src
-          make bulk_extractor
+          make ${{ MAKE_OPTS }}  bulk_extractor
           make check || (cat test-suite.log; exit 1)
           cd ..
           make distclean
@@ -93,9 +94,9 @@ jobs:
           bash bootstrap.sh
           ./configure --disable-opt CFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' CXXFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' LIBS='-lgcov -lre2'
           make clean
-          make all
+          make ${{ MAKE_OPTS }}  all
           cd src
-          make check || (echo ==error== ; cat test-suite.log; exit 1)
+          make ${{ MAKE_OPTS }}  check || (echo ==error== ; cat test-suite.log; exit 1)
 
       - name: upload codecov report
         if: startsWith(matrix.os, 'ubuntu')
@@ -112,11 +113,11 @@ jobs:
       - name: distcheck
         run: |
           ./configure
-          make clean
+          make ${{ MAKE_OPTS }}  clean
           #make distcheck
-          make dist
+          make ${{ MAKE_OPTS }}  dist
           ls -l
           tar xfvz *.tar.gz
           cd $(basename *gz .tar.gz)
           ./configure
-          make check
+          make ${{ MAKE_OPTS }} check

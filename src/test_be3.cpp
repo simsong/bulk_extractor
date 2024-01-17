@@ -1,4 +1,5 @@
 /****************************************************************
+ * test_be3.cpp:
  * end-to-end tests
  */
 
@@ -88,6 +89,53 @@ int run_be(std::ostream &ss, const char **argv)
 {
     return run_be(ss, ss, argv);
 }
+
+/****************************************************************
+ * Test process_dir
+ */
+TEST_CASE("process_dir", "[process_dir]") {
+
+    /* This should throw NoSuchFile because there is is an E01 file */
+    REQUIRE_THROWS_AS(image_process::open( test_dir(), true, 65536, 65536), image_process::FoundDiskImage);
+
+    /* Get the right return code */
+    std::filesystem::path inpath = test_dir();
+    std::string inpath_string = inpath.string();
+    std::filesystem::path outdir = NamedTemporaryDirectory();
+    std::string outdir_string = outdir.string();
+    std::stringstream ss;
+    const char *argv[] = {"bulk_extractor", notify(), "-Ro", outdir_string.c_str(), inpath_string.c_str(), nullptr};
+    int ret = run_be(ss, ss, argv);
+    REQUIRE( ret==6 );
+
+    /* This should return the jpegs */
+    image_process *p = nullptr;
+    try {
+        p = image_process::open( test_dir() / "jpegs", true, 65536, 65536);
+    }
+    catch (image_process::FoundDiskImage &e) {
+        std::cerr << "FoundDiskImage: " << e.what() << std::endl;
+        exit(1);
+    }
+    catch (image_process::IsADirectory &e) {
+        std::cerr << "IsAdirectory: " << e.what() << std::endl;
+        exit(1);
+    }
+    catch (image_process::NoSuchFile &e) {
+        std::cerr << "NoSuchFile: " << e.what() << std::endl;
+        std::cerr << "Current Directory: " << std::filesystem::current_path() << std::endl;
+        exit(1);
+    }
+
+    //int count = 0;
+    for( image_process::iterator it = p->begin(); it != p->end(); ++it ){
+        //count++;
+        pos0_t pos0 = it.get_pos0();
+        REQUIRE( pos0.str().find(".jpg") != std::string::npos );
+    }
+    delete p;
+}
+
 
 TEST_CASE("e2e-no-args", "[end-to-end]") {
     const char *argv[] = {"bulk_extractor", nullptr};
@@ -397,4 +445,58 @@ TEST_CASE("restarter", "[restarter]") {
     REQUIRE( std::filesystem::exists( out_xml ) == false); // because now it has been renamed
     REQUIRE( cfg.seen_page_ids.find("369098752") != cfg.seen_page_ids.end() );
     REQUIRE( cfg.seen_page_ids.find("369098752+") == cfg.seen_page_ids.end() );
+}
+
+
+/****************************************************************
+ * Test restarter
+ ** test sbufs (which is this here?
+ */
+
+/****************************************************************/
+TEST_CASE("image_process", "[phase1]") {
+    image_process *p = nullptr;
+    REQUIRE_THROWS_AS( p = image_process::open( "no-such-file", false, 65536, 65536), image_process::NoSuchFile);
+    REQUIRE_THROWS_AS( p = image_process::open( "no-such-file", false, 65536, 65536), image_process::NoSuchFile);
+    p = image_process::open( test_dir() / "test_json.txt", false, 65536, 65536);
+    REQUIRE( p != nullptr );
+    int times = 0;
+
+    for(auto it = p->begin(); it!=p->end(); ++it){
+        REQUIRE( times==0 );
+        sbuf_t *sbufp = it.sbuf_alloc();
+
+        REQUIRE( sbufp->bufsize == 79 );
+        REQUIRE( sbufp->pagesize == 79 );
+        delete sbufp;
+        times += 1;
+    }
+    REQUIRE(times==1);
+    delete p;
+}
+
+/****************************************************************
+ ** Test the path printer
+ **/
+TEST_CASE("path-printer1", "[path_printer]") {
+    scanner_config sc;
+    sc.input_fname = test_dir() / "test_hello.512b.gz";
+    sc.enable_all_scanners();
+    sc.allow_recurse = true;
+
+    scanner_set ss(sc, feature_recorder_set::flags_disabled(), nullptr);
+    ss.add_scanners(scanners_builtin);
+    ss.apply_scanner_commands();
+
+    image_process *reader = image_process::open( sc.input_fname, false, 65536, 65536 );
+    std::stringstream str;
+    class path_printer pp(ss, reader, str);
+    pp.process_path("512-GZIP-0/h");    // create a hex dump
+
+    REQUIRE(str.str() == "0000: 6865 6c6c 6f40 776f 726c 642e 636f 6d0a hello@world.com.\n");
+    str.str("");
+
+    pp.process_path("512-GZIP-2/r");    // create a hex dump with a different path and the /r
+    REQUIRE( str.str() == "14\r\nllo@world.com\n" );
+    delete reader;
 }
