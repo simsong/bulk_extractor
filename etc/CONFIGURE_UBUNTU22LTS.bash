@@ -7,7 +7,7 @@ AUTOMAKE_DIST=https://ftp.gnu.org/gnu/automake/automake-1.16.3.tar.gz
 MKPGS="build-essential flex libabsl-dev libexpat1-dev libre2-dev libssl-dev libtool libxml2-utils make pkg-config zlib1g-dev"
 WGET="wget -nv --no-check-certificate"
 CONFIGURE="./configure -q --enable-silent-rules"
-MAKE="make -j4"
+MAKE="make -j2"
 trap "exit 1" TERM
 export TOP_PID=$$
 cat <<EOF

@@ -33,10 +33,12 @@ jobs:
         run: |
           echo "" | bash etc/CONFIGURE_MACOS.bash
 
-      - name: "Ubuntu: run CONFIGURE_UBUNTU22_win64.bash"
+      - name: "Ubuntu: run CONFIGURE_UBUNTU22LTS.bash"
         if: startsWith(matrix.os, 'ubuntu')
         run: |
+          cd etc
           echo "" | bash etc/CONFIGURE_UBUNTU22LTS.bash
+          cd ..
 
       - name: C++ checks with address-sanitizer (Mac and Linux)
         run: |
