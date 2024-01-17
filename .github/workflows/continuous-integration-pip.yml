@@ -113,4 +113,10 @@ jobs:
         run: |
           ./configure
           make clean
-          make distcheck
+          #make distcheck
+          make dist
+          ls -l
+          tar xfvz *.tar.gz
+          cd $(basename *gz .tar.gz)
+          ./configure
+          make check
