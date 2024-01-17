@@ -34,7 +34,7 @@ press any key to continue...
 EOF
 read
 
-MPKGS="autoconf automake flex g++ gcc git libtool libabsl-dev libre2-dev libz-mingw-w64-dev libgcrypt-mingw-w64-dev libsqlite3-dev make mingw-w64 wine  "
+MPKGS="autoconf automake flex g++ gcc git libtool libabsl-dev libre2-dev libxml2-utils libz-mingw-w64-dev libgcrypt-mingw-w64-dev libsqlite3-dev make mingw-w64 wine  "
 
 sudo apt update -y
 sudo apt install -y $MPKGS
