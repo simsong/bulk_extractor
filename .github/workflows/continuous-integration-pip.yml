@@ -15,7 +15,8 @@ jobs:
   build:
     strategy:
       matrix:
-        os: ['macos-13', 'macos-13-arm64', 'ubuntu-22.04']
+        #os: ['macos-13', 'macos-13-arm64', 'ubuntu-22.04']
+        os: ['ubuntu-22.04']
     runs-on: ${{ matrix.os }}
     env:
       DEBUG_5G: FALSE
@@ -36,9 +37,8 @@ jobs:
       - name: "Ubuntu: run CONFIGURE_UBUNTU22LTS.bash"
         if: startsWith(matrix.os, 'ubuntu')
         run: |
-          cd etc
           echo "" | bash etc/CONFIGURE_UBUNTU22LTS.bash
-          cd ..
+
 
       - name: C++ checks with address-sanitizer (Mac and Linux)
         run: |

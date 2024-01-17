@@ -8,7 +8,7 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 MPKGS="autoconf automake flex g++ gcc git libtool libabsl-dev libre2-dev libxml2-utils libz-mingw-w64-dev libgcrypt-mingw-w64-dev libsqlite3-dev make mingw-w64 wine  "
 cd $SCRIPT_DIR
 
-. ./paths.bash
+. /paths.bash
 
 
 if [[ ! -r /etc/os-release ]]; then
