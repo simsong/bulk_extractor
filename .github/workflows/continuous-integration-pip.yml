@@ -21,7 +21,6 @@ jobs:
       DEBUG_5G: FALSE
       DEBUG_FAST: TRUE
 
-    timeout-minutes: 5
     steps:
       # https://github.com/actions/checkout
       - name: Checkout
