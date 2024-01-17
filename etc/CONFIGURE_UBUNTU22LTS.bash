@@ -24,7 +24,7 @@ press any key to continue...
 EOF
 read IGNORE
 
-. ./paths.bash
+source $SCRIPT_DIR/paths.bash
 
 function fail() {
     echo FAIL: $@

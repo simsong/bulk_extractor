@@ -1,6 +1,10 @@
+echo paths.bash
+
 LIBEWF_URL=https://github.com/libyal/libewf-legacy/releases/download/20140814/libewf-20140814.tar.gz
 LIBEWF_FNAME=$(basename $LIBEWF_URL)
 LIBEWF_DIR=$( echo $LIBEWF_FNAME | sed s/-experimental// | sed s/.tar.gz//)
+
+echo LIBEWF_URL=$LIBEWF_URL
 
 function make_libewf {
     echo
@@ -13,7 +17,7 @@ function make_libewf {
 	 && sudo make install) || (echo could not build libewf. Stop; exit 1)
     echo Cleaning up $LIBEWF_FNAME and $LIBEWF_DIR
     /bin/rm -rf $LIBEWF_FNAME $LIBEWF_DIR || (echo could not clean up. Stop; exit 1)
-    
+
     # Make sure that /usr/local/lib is in ldconfig
     sudo /bin/rm -f /tmp/local.conf
     echo /usr/local/lib > /tmp/local.conf
