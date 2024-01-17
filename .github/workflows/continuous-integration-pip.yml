@@ -12,35 +12,16 @@ name: BE2 Unit Tests on MacOS and Ubuntu (c++17)
 on: [push, pull_request]
 
 jobs:
-  # https://github.com/marketplace/actions/skip-duplicate-actions
-  pre_job:
-    runs-on: ${{ matrix.os }}
+  build:
     strategy:
       matrix:
         os: ['macos-13', 'macos-13-arm64', 'ubuntu-22.04']
-    outputs:
-      should_skip: ${{ steps.skip_check.outputs.should_skip }}
-    steps:
-      - id: skip_check
-        uses: fkirc/skip-duplicate-actions@v5.3.0
-        with:
-          # All of these options are optional, so you can remove them if you are happy with the defaults
-          concurrent_skipping: 'never'
-          skip_after_successful_duplicate: 'true'
-          paths_ignore: '["**/README.md", "**/docs/**"]'
-          do_not_skip: '["pull_request", "workflow_dispatch", "schedule"]'
-
-  main_job:
-    needs: pre_job
-    if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
     runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: ['macos-13', 'macos-13-arm64', 'ubuntu-22.04']
     env:
       DEBUG_5G: FALSE
       DEBUG_FAST: TRUE
 
+    timeout-minutes: 5
     steps:
       # https://github.com/actions/checkout
       - name: Checkout
