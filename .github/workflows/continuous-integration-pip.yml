@@ -103,11 +103,11 @@ jobs:
           pushd src
           gcov-9 $(find . -name '*.o' -or '*.cpp' -or '*.c')
           bash <(curl -s https://codecov.io/bash)
-	  popd
+          popd
 
       - uses: ammaraskar/gcc-problem-matcher@0.2.0
         name: GCC Problem Matcher
 
       - name: distcheck
         run: |
-	  make distcheck
+          make distcheck
