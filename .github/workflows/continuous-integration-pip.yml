@@ -15,8 +15,7 @@ jobs:
   build:
     strategy:
       matrix:
-        #os: ['macos-13', 'macos-13-arm64', 'ubuntu-22.04']
-        os: ['ubuntu-22.04']
+        os: ['macos-13', 'macos-13-arm64', 'ubuntu-22.04']
     runs-on: ${{ matrix.os }}
     env:
       DEBUG_5G: FALSE
@@ -57,22 +56,22 @@ jobs:
       - name: C++ checks not optimizaiton with address-sanitizer (Mac and Linux)
         run: |
           ./configure --disable-opt --enable-address-sanitizer
-          make ${{MAKE_OPTS}} all
-          cd src
-          make ${{MAKE_OPTS}} bulk_extractor
+          make $MAKE_OPTS all
+          pushd src
+          make $MAKE_OPTS bulk_extractor
           make check || (cat test-suite.log; exit 1)
-          cd ..
+          popd
           make distclean
 
       - name: C++ checks optimization with address-sanitizer (Mac and Linux)
         run: |
           echo === Try Address Sanitizer Optimization ===
           ./configure --enable-address-sanitizer
-          make ${{ MAKE_OPTS }} all
-          cd src
-          make ${{ MAKE_OPTS }} bulk_extractor
+          make $MAKE_OPTS all
+          pushd src
+          make $MAKE_OPTS bulk_extractor
           make check || (cat test-suite.log; exit 1)
-          cd ..
+          popd
           make distclean
 
       - name: C++ checks with thread-sanitizer on ubuntu are disabled
@@ -81,11 +80,11 @@ jobs:
           bash bootstrap.sh
           ./configure --enable-silent-rules --enable-thread-sanitizer
           make clean
-          make ${{ MAKE_OPTS }}  all
-          cd src
-          make ${{ MAKE_OPTS }}  bulk_extractor
+          make $MAKE_OPTS  all
+          pushd src
+          make $MAKE_OPTS  bulk_extractor
           make check || (cat test-suite.log; exit 1)
-          cd ..
+          popd
           make distclean
 
       - name: C++ checks with codecov
@@ -94,30 +93,33 @@ jobs:
           bash bootstrap.sh
           ./configure --disable-opt CFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' CXXFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' LIBS='-lgcov -lre2'
           make clean
-          make ${{ MAKE_OPTS }}  all
-          cd src
-          make ${{ MAKE_OPTS }}  check || (echo ==error== ; cat test-suite.log; exit 1)
+          make $MAKE_OPTS  check || (echo ==error== ; cat test-suite.log; exit 1)
 
       - name: upload codecov report
         if: startsWith(matrix.os, 'ubuntu')
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         run: |
-          cd src
-          gcov-9 -o . *.cpp be20_api/*.cpp
+          pushd src
+          gcov-9 *.o *.cpp rar/*.cpp rar/*.hpp
           bash <(curl -s https://codecov.io/bash)
+          popd
 
       - uses: ammaraskar/gcc-problem-matcher@0.2.0
         name: GCC Problem Matcher
 
       - name: distcheck
         run: |
+          echo we are doing this because 'make distcheck' makes the source read-only and builds in a _build directory and currently that is broken
+          bash bootstrap.sh
           ./configure
-          make ${{ MAKE_OPTS }}  clean
-          #make distcheck
-          make ${{ MAKE_OPTS }}  dist
+          make clean
+          make dist
+          mv bulk_extractor*.tar.gz /tmp
+          pushd /tmp
+          tar xfvz bulk_extractor*.tar.gz
+          pushd $(basename bulk_extractor*.tar.gz .tar.gz)
           ls -l
-          tar xfvz *.tar.gz
-          cd $(basename *gz .tar.gz)
           ./configure
-          make ${{ MAKE_OPTS }} check
+          make check
+          popd

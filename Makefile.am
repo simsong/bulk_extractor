@@ -5,39 +5,31 @@
 # (C) 2020 Simson L. Garfinkel
 # https://www.gnu.org/licenses/lgpl-3.0.en.html
 
+# We need to list *all* of the subdirs here that have Makefiles in them that are executed by
+# doing a chdir into the directory and typing 'make'. So we do not need src/be20_api
 SUBDIRS = doc doc/latex_manuals man src src/tests python specfiles tests
 
+# Include things explicitly
+# Note - autoconf seems to automatically include the m4 rules that are used by configure.ac - no need to list them heren
+#
 # Don't include bootstrap. People run it, and they shouldn't
 # It's only for people who check out the git repo
+#
+# note - we are allowed to use wildcards below! Who knew.
+# and using $wildcard prevents it from running on mac, which doesn't use gnu make
 
 EXTRA_DIST = \
-	.gitignore \
-	licenses/LICENSE.Autoconf_exception \
-	licenses/LICENSE.CPL1 \
-	licenses/LICENSE.GPLv3 \
-	licenses/LICENSE.LGPLv2.1 \
-	licenses/LICENSE.LGPLv3 \
-	m4/ac_check_classpath.m4 \
-	m4/ac_check_junit.m4 \
-	m4/ac_check_rqrd_class.m4 \
-	m4/ac_java_options.m4 \
-	m4/ac_prog_jar.m4 \
-	m4/ac_prog_java.m4 \
-	m4/ac_prog_java_cc.m4 \
-	m4/ac_prog_java_works.m4 \
-	m4/ac_prog_javac.m4 \
-	m4/ac_prog_javac_works.m4 \
-	m4/ac_prog_javadoc.m4 \
-	m4/ac_prog_javah.m4 \
-	m4/ac_try_compile_java.m4 \
-	m4/ac_try_run_javac.m4 \
-	m4/ax_cxx_compile_stdcxx.m4 \
-	m4/ax_cxx_compile_stdcxx_17.m4 \
-	bootstrap.sh \
-	README.md \
-	$(SRC_WIN_DIST)
+	$(SRC_WIN_DIST) \
+	$(srcdir)/*.md \
+	$(srcdir)/.gitignore \
+	$(srcdir)/bootstrap.sh \
+	$(srcdir)/etc/*.bash \
+	$(srcdir)/licenses/LICENSE.* \
+	$(srcdir)/*.txt \
+	$(srcdir)/src/be20_api/dfxml_cpp/src/Makefile.defs
 
-ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
+
+# ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
 
 distclean2:
 	@echo Deleting:
