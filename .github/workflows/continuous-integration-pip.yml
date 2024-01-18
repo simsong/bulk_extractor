@@ -67,9 +67,9 @@ jobs:
         run: |
           echo === Try Address Sanitizer Optimization ===
           ./configure --enable-address-sanitizer
-          make ${{ MAKE_OPTS }} all
+          make $MAKE_OPTS all
           cd src
-          make ${{ MAKE_OPTS }} bulk_extractor
+          make $MAKE_OPTS bulk_extractor
           make check || (cat test-suite.log; exit 1)
           cd ..
           make distclean
@@ -80,9 +80,9 @@ jobs:
           bash bootstrap.sh
           ./configure --enable-silent-rules --enable-thread-sanitizer
           make clean
-          make ${{ MAKE_OPTS }}  all
+          make $MAKE_OPTS  all
           cd src
-          make ${{ MAKE_OPTS }}  bulk_extractor
+          make $MAKE_OPTS  bulk_extractor
           make check || (cat test-suite.log; exit 1)
           cd ..
           make distclean
@@ -93,9 +93,9 @@ jobs:
           bash bootstrap.sh
           ./configure --disable-opt CFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' CXXFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' LIBS='-lgcov -lre2'
           make clean
-          make ${{ MAKE_OPTS }}  all
+          make $MAKE_OPTS  all
           cd src
-          make ${{ MAKE_OPTS }}  check || (echo ==error== ; cat test-suite.log; exit 1)
+          make $MAKE_OPTS  check || (echo ==error== ; cat test-suite.log; exit 1)
 
       - name: upload codecov report
         if: startsWith(matrix.os, 'ubuntu')
@@ -112,11 +112,11 @@ jobs:
       - name: distcheck
         run: |
           ./configure
-          make ${{ MAKE_OPTS }}  clean
+          make $MAKE_OPTS  clean
           #make distcheck
-          make ${{ MAKE_OPTS }}  dist
+          make $MAKE_OPTS  dist
           ls -l
           tar xfvz *.tar.gz
           cd $(basename *gz .tar.gz)
           ./configure
-          make ${{ MAKE_OPTS }} check
+          make $MAKE_OPTS check
