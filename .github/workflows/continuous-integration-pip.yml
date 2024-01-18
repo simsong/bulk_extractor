@@ -57,10 +57,10 @@ jobs:
         run: |
           ./configure --disable-opt --enable-address-sanitizer
           make $MAKE_OPTS all
-          cd src
+          pushd src
           make $MAKE_OPTS bulk_extractor
           make check || (cat test-suite.log; exit 1)
-          cd ..
+          popd
           make distclean
 
       - name: C++ checks optimization with address-sanitizer (Mac and Linux)
@@ -68,10 +68,10 @@ jobs:
           echo === Try Address Sanitizer Optimization ===
           ./configure --enable-address-sanitizer
           make $MAKE_OPTS all
-          cd src
+          pushd src
           make $MAKE_OPTS bulk_extractor
           make check || (cat test-suite.log; exit 1)
-          cd ..
+          popd
           make distclean
 
       - name: C++ checks with thread-sanitizer on ubuntu are disabled
@@ -81,10 +81,10 @@ jobs:
           ./configure --enable-silent-rules --enable-thread-sanitizer
           make clean
           make $MAKE_OPTS  all
-          cd src
+          pushd src
           make $MAKE_OPTS  bulk_extractor
           make check || (cat test-suite.log; exit 1)
-          cd ..
+          popd
           make distclean
 
       - name: C++ checks with codecov
@@ -93,8 +93,6 @@ jobs:
           bash bootstrap.sh
           ./configure --disable-opt CFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' CXXFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' LIBS='-lgcov -lre2'
           make clean
-          make $MAKE_OPTS  all
-          cd src
           make $MAKE_OPTS  check || (echo ==error== ; cat test-suite.log; exit 1)
 
       - name: upload codecov report
@@ -102,21 +100,14 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         run: |
-          cd src
-          gcov-9 -o . *.cpp be20_api/*.cpp
+          pushd src
+          gcov-9 $(find . -name '*.o' -or '*.cpp' -or '*.c')
           bash <(curl -s https://codecov.io/bash)
+	  popd
 
       - uses: ammaraskar/gcc-problem-matcher@0.2.0
         name: GCC Problem Matcher
 
       - name: distcheck
         run: |
-          ./configure
-          make $MAKE_OPTS  clean
-          #make distcheck
-          make $MAKE_OPTS  dist
-          ls -l
-          tar xfvz *.tar.gz
-          cd $(basename *gz .tar.gz)
-          ./configure
-          make $MAKE_OPTS check
+	  make distcheck
