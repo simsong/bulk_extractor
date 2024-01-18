@@ -1,23 +1,33 @@
-bin_PROGRAMS   = bulk_extractor
-
-CLEANFILES     = scan_accts.cpp scan_base16.cpp scan_email.cpp scan_gps.cpp \
-	be20_api/config.h be20_api/dfxml/src/config.h config.h *.d *~
-
-TESTS = test_be
-check_PROGRAMS = test_be
-
-# bring in defs from two included projects
-# note: don't be clever and use the $variable on the Include line. it doesn't work
-
 BE20_API_DIR= be20_api
 include be20_api/Makefile.defs
 include rar/Makefile.defs
 
+DFXML_SRC_DIR=be20_api/dfxml_cpp/src/
+include $(DFXML_SRC_DIR)Makefile.defs
+
+EXTRA_DIST = .gitignore $(BE20_API_EXTRA_DIST)
+
+ETAGS = etags-emacs
+ACLOCAL_AMFLAGS = -I m4
+
 # So that relative imports from be20_api work
 AM_CPPFLAGS = @RE2_CFLAGS@ -I$(top_srcdir)/src/be20_api -I$(top_srcdir)/src/be20_api/utfcpp/source
-AM_LDFLAGS  = @RE2_LIBS@
+
+bulk_extractor_LDADD = @RE2_LIBS@
+test_be_LDADD = @RE2_LIBS@
+
 AUTOMAKE_OPTIONS = subdir-objects
-EXTRA_DIST = .gitignore $(BE20_API_EXTRA_DIST)
+
+bin_PROGRAMS   = bulk_extractor
+check_PROGRAMS = test_be
+TESTS = $(check_PROGRAMS)
+
+CLEANFILES     = scan_accts.cpp scan_base16.cpp scan_email.cpp scan_gps.cpp \
+	be20_api/config.h be20_api/dfxml/src/config.h config.h *.d *~
+
+
+# bring in defs from two included projects
+# note: don't be clever and use the $variable on the Include line. it doesn't work
 
 TSK3INCS = \
 	tsk3_fatdirs.h\
@@ -32,8 +42,6 @@ TSK3INCS = \
 	tsk3/libtsk.h\
 	tsk3/tsk_incs.h\
 	tsk3/vs/tsk_vs.h
-
-
 
 # These scanners are based on GNUflex
 flex_scanners = \
@@ -130,11 +138,9 @@ bulk_extractor_parts = \
 	sbuf_decompress.cpp \
 	sbuf_decompress.h
 
-
 bulk_extractor_SOURCES = $(bulk_extractor_parts) $(scanners_builtin) main.cpp
 test_be_SOURCES = $(bulk_extractor_parts) $(scanners_builtin) \
 	be20_api/catch.hpp test_be.h test_be1.cpp test_be2.cpp test_be3.cpp
-
 
 runs.txt: test_be tests/run_each.sh
 	bash tests/run_each.sh > runs.txt 2>&1
