@@ -5,7 +5,7 @@ include rar/Makefile.defs
 DFXML_SRC_DIR=be20_api/dfxml_cpp/src/
 include $(DFXML_SRC_DIR)Makefile.defs
 
-EXTRA_DIST = .gitignore $(BE20_API_EXTRA_DIST)
+EXTRA_DIST = .gitignore $(BE20_API_EXTRA_DIST) scan_headers.flex scan_httpheader_lg.cpp
 
 ETAGS = etags-emacs
 ACLOCAL_AMFLAGS = -I m4
@@ -20,11 +20,10 @@ AUTOMAKE_OPTIONS = subdir-objects
 
 bin_PROGRAMS   = bulk_extractor
 check_PROGRAMS = test_be
-TESTS = $(check_PROGRAMS)
+TESTS = test_be
 
 CLEANFILES     = scan_accts.cpp scan_base16.cpp scan_email.cpp scan_gps.cpp \
 	be20_api/config.h be20_api/dfxml/src/config.h config.h *.d *~
-
 
 # bring in defs from two included projects
 # note: don't be clever and use the $variable on the Include line. it doesn't work

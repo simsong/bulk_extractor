@@ -13,7 +13,7 @@ AC_COMPILE_IFELSE(
         [define 1 if GCC supports -Wcast-qual ])], [])
 
 AC_COMPILE_IFELSE(
-  [AC_LANG_PROGRAM([#pragma GCC diagnostic ignored "-Weffcpp"],[return 0;])],
+  [AC_LANG_PROGRAM([#pragma GCC diagnostic ignored "-Weffc++"],[return 0;])],
   [AC_DEFINE(HAVE_DIAGNOSTIC_EFFCPP,1,
         [define 1 if GCC supports -Weffc++ ])], [])
 
@@ -23,6 +23,6 @@ AC_COMPILE_IFELSE(
         [define 1 if GCC supports -Wsuggest-attribute=noreturn])], [])
 
 AC_COMPILE_IFELSE(
-  [AC_LANG_PROGRAM([#pragma GCC diagnostic ignored "-Wdeprecated-register"],[return 0;])],
+  [AC_LANG_PROGRAM([#pragma GCC diagnostic ignored "-Wdeprecated-copy-dtor"],[return 0;])],
   [AC_DEFINE(HAVE_DIAGNOSTIC_DEPRECATED_REGISTER,1,
-        [define 1 if GCC supports -Wdeprecated-register])], [])
+        [define 1 if GCC supports -Wdeprecated-copy-dtor])], [])

@@ -7,22 +7,12 @@ DOXYGEN_FILES = doxygen/Doxyfile doxygen/Makefile doxygen/programmer_manual.doxy
 	doxygen/images/BEViewer_blank.eps doxygen/images/BEViewer_blank.png
 
 EXTRA_DIST = \
-	1page.txt \
-	2011.NPS.slides.pdf \
-	2013.COSE.bulk_extractor.pdf \
-	2018.OSDFCON.Yamazaki.pdf \
-	ROADMAP_1.4.md \
-	ROADMAP_1.5.md \
-	ROADMAP_1.6.md \
-	ROADMAP_2.0.md \
-	announce/announce_1.2.txt \
-	announce/announce_1.3.1.txt \
-	announce/announce_1.3.txt \
-	announce/announce_1.4.1.txt \
-	announce/announce_1.4.txt \
-	announce/announce_1.5.2.md \
-	announce/announce_1.5.md \
-	announce/announce_1.6.0.md \
+	*.txt \
+	*.pdf \
+	*.md \
+	latex_manuals/viewerPics/*.png \
+	announce/*.txt \
+	announce/*.md \
 	bulk_extractor.html \
 	Diagnostic_Notes/be_crash_diagnostics.md \
 	Diagnostic_Notes/bulk_extractor.md

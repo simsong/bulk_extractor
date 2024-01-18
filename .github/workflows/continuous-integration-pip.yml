@@ -114,6 +114,8 @@ jobs:
           ./configure
           make clean
           make dist
+          mv *gz /tmp
+          pushd /tmp
           tar xfvz *gz
           pushd $(basename *gz .tar.gz)
           ./configure
