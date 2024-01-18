@@ -6,9 +6,6 @@ on: [push]
 jobs:
   build:
     runs-on: ubuntu-latest
-
-    if: false                   # disabled
-
     steps:
       # https://github.com/actions/checkout
       - name: Checkout
