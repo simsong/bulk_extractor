@@ -110,13 +110,13 @@ jobs:
 
       - name: distcheck
         run: |
-	  bash bootstrap.sh
-	  ./configure
-	  make clean
-	  make dist
-	  tar xfvz *gz
-	  pushd $(basename *gz .tar.gz)
-	  ./configure
-	  make check
-	  popd
-	  
+`         bash bootstrap.sh
+          ./configure
+          make clean
+          make dist
+          tar xfvz *gz
+          pushd $(basename *gz .tar.gz)
+          ./configure
+          make check
+          popd
+          
