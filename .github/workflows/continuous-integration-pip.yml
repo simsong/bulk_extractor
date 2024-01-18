@@ -110,6 +110,7 @@ jobs:
 
       - name: distcheck
         run: |
+          echo we are doing this because 'make distcheck' makes the source read-only and builds in a _build directory and currently that is broken
           bash bootstrap.sh
           ./configure
           make clean
