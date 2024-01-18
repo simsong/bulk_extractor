@@ -110,7 +110,7 @@ jobs:
 
       - name: distcheck
         run: |
-`         bash bootstrap.sh
+          bash bootstrap.sh
           ./configure
           make clean
           make dist
@@ -119,4 +119,3 @@ jobs:
           ./configure
           make check
           popd
-          
