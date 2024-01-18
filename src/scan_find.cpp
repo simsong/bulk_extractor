@@ -10,6 +10,9 @@
 #include "be20_api/utils.h" // needs config.h
 #include "be20_api/dfxml_cpp/src/dfxml_writer.h"
 
+// We need the defaults for page scan and margin. We really should get the current ones...
+#include "phase1.h"
+
 // anonymous namespace hides symbols from other cpp files (like "static" applied to functions)
 // TODO: make this not a global variable
 namespace {
@@ -41,6 +44,41 @@ namespace {
         }
         if (sp.ss->writer) sp.ss->writer->pop("process_find_file");
     }
+}
+
+void scan_find_sbuf(scanner_params &sp, sbuf_t &sbuf)
+{
+    feature_recorder &f = sp.named_feature_recorder("find");
+
+    auto *tbuf = sbuf_t::sbuf_malloc(sp.sbuf->pos0, sp.sbuf->bufsize+1, sp.sbuf->bufsize+1);
+    memcpy(tbuf->malloc_buf(), sp.sbuf->get_buf(), sp.sbuf->bufsize);
+    const char *tbase = static_cast<const char *>(tbuf->malloc_buf());
+    tbuf->wbuf(sp.sbuf->bufsize, 0); // null terminate
+
+    /* Now see if we can find a string */
+    for (size_t pos = 0; pos < sp.sbuf->pagesize && pos < sp.sbuf->bufsize;) {
+        std::string found;
+        size_t offset=0;
+        size_t len = 0;
+
+        if ( find_list.search_all( tbase+pos, &found, &offset, &len)) {
+            if (len == 0) {
+                pos += 1;
+                continue;
+            }
+            f.write_buf( *sp.sbuf, pos+offset, len);
+            pos += offset+len;
+        } else {
+            /* nothing was found; skip past the first \0 and repeat. */
+            const char *eos = static_cast<const char *>(memchr( tbase+pos, '\000', sp.sbuf->bufsize-pos));
+            if (eos){
+                pos = (eos - tbase) + 1;		// skip 1 past the \0
+            } else {
+                break;
+            }
+        }
+    }
+    delete tbuf;
 }
 
 extern "C"
@@ -79,33 +117,16 @@ void scan_find(scanner_params &sp)
         /* The current regex library treats \0 as the end of a string.
          * So we make a copy of the current buffer to search that's one bigger, and the copy has a \0 at the end.
          * This is super-wasteful. Does Lightgrep have this problem?
+         *
+         * We also want to not scan more than a full 'page' if we were scanning an image. Because a memory-mapped
+         * file will have an sbuf the size of the whole file, we split it up and scan scan_find_sbuf()
          */
-        feature_recorder &f = sp.named_feature_recorder("find");
 
-        auto *tbuf = sbuf_t::sbuf_malloc(sp.sbuf->pos0, sp.sbuf->bufsize+1, sp.sbuf->bufsize+1);
-        memcpy(tbuf->malloc_buf(), sp.sbuf->get_buf(), sp.sbuf->bufsize);
-        const char *base = static_cast<const char *>(tbuf->malloc_buf());
-        tbuf->wbuf(sp.sbuf->bufsize, 0); // null terminate
+        Phase1::Config local_cfg;
 
-        /* Now see if we can find a string */
-        for (size_t pos = 0; pos < sp.sbuf->pagesize && pos < sp.sbuf->bufsize;) {
-            std::string found;
-            size_t offset=0;
-            size_t len = 0;
-            if ( find_list.search_all( base+pos, &found, &offset, &len)) {
-                if(len == 0) {
-                    len+=1;
-                    continue;
-                }
-                f.write_buf( *sp.sbuf, pos+offset, len);
-                pos += offset+len;
-            } else {
-                /* nothing was found; skip past the first \0 and repeat. */
-                const char *eos = static_cast<const char *>(memchr( base+pos, '\000', sp.sbuf->bufsize-pos));
-                if (eos) pos=(eos-base)+1;		// skip 1 past the \0
-                else     pos=sp.sbuf->bufsize;	// skip to the end of the buffer
-            }
+        for(size_t pos = 0; pos < sp.sbuf->pagesize && pos < sp.sbuf->bufsize; pos+=local_cfg.opt_pagesize){
+            sbuf_t sbuf(*sp.sbuf, pos, pos+local_cfg.opt_pagesize + local_cfg.opt_marginsize);
+            scan_find_sbuf(sp, sbuf);
         }
-        delete tbuf;
     }
 }

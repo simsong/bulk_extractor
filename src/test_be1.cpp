@@ -3,6 +3,15 @@
 #define CATCH_CONFIG_CONSOLE_WIDTH 120
 #define DO_NOT_USE_WMAIN
 
+/****************************************************************
+ * test_be1.cpp:
+ * - Support functions for C++ self test
+ * - Test cases for individual scanners (in alphabetical order)
+ ****************************************************************/
+
+/* Copyright (C) 2021-2023 Simson L. Garfinkel */
+
+
 #include "config.h"
 
 #include <cstring>
@@ -66,6 +75,38 @@ const char *notify()
         return "--notify_async";
     }
 }
+
+/****************************************************************
+ * sbuf tests
+ ****************************************************************/
+sbuf_t *make_sbuf()
+{
+    auto sbuf = new sbuf_t("Hello World!");
+    return sbuf;
+}
+
+/* Test that sbuf data  are not copied when moved to a child.*/
+std::atomic<int> counter{0};
+const uint8_t *sbuf_buf_loc = nullptr;
+void test_process_sbuf(sbuf_t *sbuf)
+{
+    if (sbuf_buf_loc != nullptr) {
+        REQUIRE( sbuf_buf_loc == sbuf->get_buf() );
+    }
+    delete sbuf;
+}
+
+TEST_CASE("sbuf_no_copy", "[threads]") {
+    for(int i=0;i<100;i++){
+        auto sbuf = make_sbuf();
+        sbuf_buf_loc = sbuf->get_buf();
+        test_process_sbuf(sbuf);
+    }
+}
+
+/****************************************************************/
+
+
 
 /* We assume that the tests are being run out of bulk_extractor/src/.
  * This returns the directory of the test subdirectory.

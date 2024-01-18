@@ -1,4 +1,5 @@
 /****************************************************************
+ * test_be3.cpp:
  * end-to-end tests
  */
 
@@ -80,10 +81,61 @@ int run_be(std::ostream &cout, std::ostream &cerr, const char **argv)
     return ret;
 }
 
+/*
+ * Run BE and capture the output
+ */
+
 int run_be(std::ostream &ss, const char **argv)
 {
     return run_be(ss, ss, argv);
 }
+
+/****************************************************************
+ * Test process_dir
+ */
+TEST_CASE("process_dir", "[process_dir]") {
+
+    /* This should throw NoSuchFile because there is is an E01 file */
+    REQUIRE_THROWS_AS(image_process::open( test_dir(), true, 65536, 65536), image_process::FoundDiskImage);
+
+    /* Get the right return code */
+    std::filesystem::path inpath = test_dir();
+    std::string inpath_string = inpath.string();
+    std::filesystem::path outdir = NamedTemporaryDirectory();
+    std::string outdir_string = outdir.string();
+    std::stringstream ss;
+    const char *argv[] = {"bulk_extractor", notify(), "-Ro", outdir_string.c_str(), inpath_string.c_str(), nullptr};
+    int ret = run_be(ss, ss, argv);
+    REQUIRE( ret==6 );
+
+    /* This should return the jpegs */
+    image_process *p = nullptr;
+    try {
+        p = image_process::open( test_dir() / "jpegs", true, 65536, 65536);
+    }
+    catch (image_process::FoundDiskImage &e) {
+        std::cerr << "FoundDiskImage: " << e.what() << std::endl;
+        exit(1);
+    }
+    catch (image_process::IsADirectory &e) {
+        std::cerr << "IsAdirectory: " << e.what() << std::endl;
+        exit(1);
+    }
+    catch (image_process::NoSuchFile &e) {
+        std::cerr << "NoSuchFile: " << e.what() << std::endl;
+        std::cerr << "Current Directory: " << std::filesystem::current_path() << std::endl;
+        exit(1);
+    }
+
+    //int count = 0;
+    for( image_process::iterator it = p->begin(); it != p->end(); ++it ){
+        //count++;
+        pos0_t pos0 = it.get_pos0();
+        REQUIRE( pos0.str().find(".jpg") != std::string::npos );
+    }
+    delete p;
+}
+
 
 TEST_CASE("e2e-no-args", "[end-to-end]") {
     const char *argv[] = {"bulk_extractor", nullptr};
@@ -92,6 +144,7 @@ TEST_CASE("e2e-no-args", "[end-to-end]") {
     REQUIRE( ret==3 );                  // produces 3
 }
 
+/* Test -h */
 TEST_CASE("e2e-h", "[end-to-end]") {
     /* Try the -h option */
     const char *argv[] = {"bulk_extractor", "-h", nullptr};
@@ -100,6 +153,7 @@ TEST_CASE("e2e-h", "[end-to-end]") {
     REQUIRE( ret==1 );                  // -h now produces 1
 }
 
+/* Test -H */
 TEST_CASE("e2e-H", "[end-to-end]") {
     /* Try the -H option */
     const char *argv[] = {"bulk_extractor", "-H", nullptr};
@@ -108,9 +162,14 @@ TEST_CASE("e2e-H", "[end-to-end]") {
     REQUIRE( ret==2 );                  // -H produces 2
 }
 
+/* Run on the first 100k of the emails dataset
+ * bulk_extractor -0q -o [outdir] nps-2010-emails.100k.raw
+ * Runs twice, so that we can also test the restarting logic
+ */
 TEST_CASE("e2e-0", "[end-to-end]") {
     std::filesystem::path inpath = test_dir() / "nps-2010-emails.100k.raw";
     std::filesystem::path outdir = NamedTemporaryDirectory();
+
     /* Try to run twice. There seems to be a problem with the second time through.  */
     std::string inpath_string = inpath.string();
     std::string outdir_string = outdir.string();
@@ -121,10 +180,23 @@ TEST_CASE("e2e-0", "[end-to-end]") {
         std::cerr << "STDOUT:" << std::endl << cout.str() << std::endl << std::endl << "STDERR:" << std::endl << cerr.str() << std::endl;
         REQUIRE( ret==0 );
     }
+
+    /* make sure that there are both debug:work_start and debug:work_stop tags in the output */
+    auto xml_file = outdir_string + "/report.xml";
+    grep( "debug:work_start", xml_file);
+    grep( "debug:work_stop", xml_file);
+
+    /* Validate the dfxml file is valid dfxml*/
+    std::string validate = std::string("xmllint --noout ") + xml_file;
+    int code = system( validate.c_str());
+    REQUIRE( code==0 );
+
+    // This is the second time through - clear cout and cerr first
     // https://stackoverflow.com/questions/20731/how-do-you-clear-a-stringstream-variable
     std::stringstream().swap(cout);
     std::stringstream().swap(cerr);
 
+    // Re-run to make sure that works
     ret = run_be(cout, cerr, argv);
     if (ret!=0) {
         std::cerr << "STDOUT:" << std::endl << cout.str() << std::endl << std::endl
@@ -132,12 +204,14 @@ TEST_CASE("e2e-0", "[end-to-end]") {
         REQUIRE( ret==0 );
     }
 
-    /* Validate the output dfxml file */
-    std::string validate = std::string("xmllint --noout ") + outdir_string + "/report.xml";
-    int code = system( validate.c_str());
-    REQUIRE( code==0 );
+    /* make sure that both tags ended up in the second XML file (the one created from restarting) */
+    grep( "debug:work_start", xml_file);
+    grep( "debug:work_stop", xml_file);
 }
 
+/*
+ * -x all -e wordlist
+ */
 TEST_CASE("select_scanners", "[end-to-end]") {
     std::filesystem::path inpath = test_dir() / "pdf_words2.pdf";
     std::filesystem::path outdir = NamedTemporaryDirectory();
@@ -155,6 +229,8 @@ TEST_CASE("select_scanners", "[end-to-end]") {
     REQUIRE( endpos != startpos + 1);
 }
 
+/* -f simsong
+ */
 TEST_CASE("scan_find", "[end-to-end]") {
     std::filesystem::path inpath = test_dir() / "pdf_words2.pdf";
     std::filesystem::path outdir = NamedTemporaryDirectory();
@@ -172,6 +248,10 @@ TEST_CASE("scan_find", "[end-to-end]") {
     std::cerr << "outdir: " << outdir << std::endl;
     grep( Feature(pos0_t("70-PDF-366"), "simsong", ""), outdir / "find.txt" );
 }
+
+/*
+ * Test the 5gb flat file if it is present and if the DEBUG_5G environment variable is set.
+ */
 
 TEST_CASE("5gb-flatfile", "[end-to-end]") {
     /* Make a 5GB file and try to read it. Make sure we get back the known content. */
@@ -365,4 +445,58 @@ TEST_CASE("restarter", "[restarter]") {
     REQUIRE( std::filesystem::exists( out_xml ) == false); // because now it has been renamed
     REQUIRE( cfg.seen_page_ids.find("369098752") != cfg.seen_page_ids.end() );
     REQUIRE( cfg.seen_page_ids.find("369098752+") == cfg.seen_page_ids.end() );
+}
+
+
+/****************************************************************
+ * Test restarter
+ ** test sbufs (which is this here?
+ */
+
+/****************************************************************/
+TEST_CASE("image_process", "[phase1]") {
+    image_process *p = nullptr;
+    REQUIRE_THROWS_AS( p = image_process::open( "no-such-file", false, 65536, 65536), image_process::NoSuchFile);
+    REQUIRE_THROWS_AS( p = image_process::open( "no-such-file", false, 65536, 65536), image_process::NoSuchFile);
+    p = image_process::open( test_dir() / "test_json.txt", false, 65536, 65536);
+    REQUIRE( p != nullptr );
+    int times = 0;
+
+    for(auto it = p->begin(); it!=p->end(); ++it){
+        REQUIRE( times==0 );
+        sbuf_t *sbufp = it.sbuf_alloc();
+
+        REQUIRE( sbufp->bufsize == 79 );
+        REQUIRE( sbufp->pagesize == 79 );
+        delete sbufp;
+        times += 1;
+    }
+    REQUIRE(times==1);
+    delete p;
+}
+
+/****************************************************************
+ ** Test the path printer
+ **/
+TEST_CASE("path-printer1", "[path_printer]") {
+    scanner_config sc;
+    sc.input_fname = test_dir() / "test_hello.512b.gz";
+    sc.enable_all_scanners();
+    sc.allow_recurse = true;
+
+    scanner_set ss(sc, feature_recorder_set::flags_disabled(), nullptr);
+    ss.add_scanners(scanners_builtin);
+    ss.apply_scanner_commands();
+
+    image_process *reader = image_process::open( sc.input_fname, false, 65536, 65536 );
+    std::stringstream str;
+    class path_printer pp(ss, reader, str);
+    pp.process_path("512-GZIP-0/h");    // create a hex dump
+
+    REQUIRE(str.str() == "0000: 6865 6c6c 6f40 776f 726c 642e 636f 6d0a hello@world.com.\n");
+    str.str("");
+
+    pp.process_path("512-GZIP-2/r");    // create a hex dump with a different path and the /r
+    REQUIRE( str.str() == "14\r\nllo@world.com\n" );
+    delete reader;
 }

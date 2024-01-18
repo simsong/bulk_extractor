@@ -56,13 +56,16 @@ int _CRT_fmode = _O_BINARY;
 [[noreturn]] void debug_help()
 {
     puts( "#define DEBUG_PEDANTIC    0x0001	// check values more rigorously" );
-    puts( "#define DEBUG_PRINT_STEPS 0x0002      // prints as each scanner is started" );
+    puts( "#define DEBUG_PRINT_STEPS 0x0002     // prints as each scanner is started" );
     puts( "#define DEBUG_SCANNER     0x0004	// dump all feature writes to stderr" );
-    puts( "#define DEBUG_NO_SCANNERS 0x0008      // do not run the scanners " );
+    puts( "#define DEBUG_NO_SCANNERS 0x0008     // do not run the scanners " );
     puts( "#define DEBUG_DUMP_DATA   0x0010	// dump data as it is seen " );
     puts( "#define DEBUG_INFO        0x0040	// print extra info" );
     puts( "#define DEBUG_EXIT_EARLY  1000	// just print the size of the volume and exis " );
     puts( "#define DEBUG_ALLOCATE_512MiB 1002	// Allocate 512MiB, but don't set any flags " );
+    puts( "// any debug can also be enabled by setting the corresponding environment variables");
+    puts( "// e.g. DEBUG_PRINT_STEPS=1 ./bulk_extractor ...");
+
     exit( 1);
 }
 
@@ -292,15 +295,21 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     cfg.opt_pagesize   = scaled_stoi64( result["pagesize"].as<std::string>());
     cfg.opt_marginsize = scaled_stoi64( result["marginsize"].as<std::string>());
 
+    /*** SET THREADING OPTIONS ***/
+    if ( result.count("threads")>0 && result.count("no_threads") >0) {
+        throw std::runtime_error("--threads and --no_threads conflict");
+    }
+
     try {
         cfg.num_threads    = result["threads"].as<int>();
     }  catch ( cxxopts::option_has_no_value_exception &e ) {
         cfg.num_threads = 0;
     }
 
-    if ( result.count( "no_threads" )) {
+    if ( result.count("no_threads")) {
         cfg.num_threads = 0;
     }
+    /***/
 
     sc.max_depth             = result["max_depth"].as<int>();
     cfg.max_bad_alloc_errors = result["max_bad_alloc_errors"].as<int>();

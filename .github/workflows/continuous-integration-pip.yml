@@ -12,34 +12,16 @@ name: BE2 Unit Tests on MacOS and Ubuntu (c++17)
 on: [push, pull_request]
 
 jobs:
-  # https://github.com/marketplace/actions/skip-duplicate-actions
-  pre_job:
-    runs-on: ${{ matrix.os }}
+  build:
     strategy:
       matrix:
-        os: ['macos-latest', 'ubuntu-latest']
-    outputs:
-      should_skip: ${{ steps.skip_check.outputs.should_skip }}
-    steps:
-      - id: skip_check
-        uses: fkirc/skip-duplicate-actions@v5.3.0
-        with:
-          # All of these options are optional, so you can remove them if you are happy with the defaults
-          concurrent_skipping: 'never'
-          skip_after_successful_duplicate: 'true'
-          paths_ignore: '["**/README.md", "**/docs/**"]'
-          do_not_skip: '["pull_request", "workflow_dispatch", "schedule"]'
-
-  main_job:
-    needs: pre_job
-    if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
+        #os: ['macos-13', 'macos-13-arm64', 'ubuntu-22.04']
+        os: ['ubuntu-22.04']
     runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: ['macos-latest', 'ubuntu-latest']
     env:
       DEBUG_5G: FALSE
       DEBUG_FAST: TRUE
+      MAKE_OPTS: -j2
 
     steps:
       # https://github.com/actions/checkout
@@ -53,50 +35,68 @@ jobs:
         run: |
           echo "" | bash etc/CONFIGURE_MACOS.bash
 
-      - name: "Ubuntu: run CONFIGURE_UBUNTU20LTS.bash"
+      - name: "Ubuntu: run CONFIGURE_UBUNTU22LTS.bash"
         if: startsWith(matrix.os, 'ubuntu')
         run: |
-          echo "" | bash etc/CONFIGURE_UBUNTU20LTS.bash
+          echo "" | bash etc/CONFIGURE_UBUNTU22LTS.bash
 
-      - name: C++ checks with address-sanitizer (Mac and Linux)
+
+      - name: Make configure script
         run: |
-          echo GCC VERSION:
+          autoconf --version
+          automake --version
+          aclocal --version
           gcc --version
-          echo G++ VERSION:
           g++ --version
           bash bootstrap.sh
-          echo === Try Address Sanitizer Without Optimization ===
-          ./configure -q --disable-opt --enable-address-sanitizer
-          make clean
-          make all
-          (cd src; make check || (cat test-suite.log; exit 1))
+
+      - name: Dump configure script
+        run: |
+          cat configure
+
+      - name: C++ checks not optimizaiton with address-sanitizer (Mac and Linux)
+        run: |
+          ./configure --disable-opt --enable-address-sanitizer
+          make ${{MAKE_OPTS}} all
+          cd src
+          make ${{MAKE_OPTS}} bulk_extractor
+          make check || (cat test-suite.log; exit 1)
+          cd ..
           make distclean
+
+      - name: C++ checks optimization with address-sanitizer (Mac and Linux)
+        run: |
           echo === Try Address Sanitizer Optimization ===
-          ./configure -q --enable-address-sanitizer
-          make clean
-          make all
-          (cd src; make check || (cat test-suite.log; exit 1))
+          ./configure --enable-address-sanitizer
+          make ${{ MAKE_OPTS }} all
+          cd src
+          make ${{ MAKE_OPTS }} bulk_extractor
+          make check || (cat test-suite.log; exit 1)
+          cd ..
           make distclean
 
       - name: C++ checks with thread-sanitizer on ubuntu are disabled
         if: startsWith(matrix.os, 'ubuntu-DISABLED')
         run: |
           bash bootstrap.sh
-          ./configure -q --enable-silent-rules --enable-thread-sanitizer
+          ./configure --enable-silent-rules --enable-thread-sanitizer
           make clean
-          make all
-          (cd src; make check || (cat test-suite.log; exit 1))
+          make ${{ MAKE_OPTS }}  all
+          cd src
+          make ${{ MAKE_OPTS }}  bulk_extractor
+          make check || (cat test-suite.log; exit 1)
+          cd ..
           make distclean
 
       - name: C++ checks with codecov
         if: startsWith(matrix.os, 'ubuntu')
         run: |
           bash bootstrap.sh
-          ./configure -q --disable-opt --enable-silent-rules CFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' CXXFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' LIBS='-lgcov'
+          ./configure --disable-opt CFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' CXXFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' LIBS='-lgcov -lre2'
           make clean
-          make all
+          make ${{ MAKE_OPTS }}  all
           cd src
-          make check || (echo ==error== ; cat test-suite.log; exit 1)
+          make ${{ MAKE_OPTS }}  check || (echo ==error== ; cat test-suite.log; exit 1)
 
       - name: upload codecov report
         if: startsWith(matrix.os, 'ubuntu')
@@ -107,24 +107,17 @@ jobs:
           gcov-9 -o . *.cpp be20_api/*.cpp
           bash <(curl -s https://codecov.io/bash)
 
-          #
-          # set up and run codecov
-          #
-          ## sudo apt install -y gpg
-          ## curl https://keybase.io/codecovsecurity/pgp_keys.asc | \
-          ## gpg --no-default-keyring --keyring trustedkeys.gpg --import
-          ## curl -Os https://uploader.codecov.io/latest/linux/codecov
-          ## curl -Os https://uploader.codecov.io/latest/linux/codecov.SHA256SUM
-          ## curl -Os https://uploader.codecov.io/latest/linux/codecov.SHA256SUM.sig
-          ## gpgv codecov.SHA256SUM.sig codecov.SHA256SUM
-          ## shasum -a 256 -c codecov.SHA256SUM
-          ## chmod +x codecov && ./codecov -t ${CODECOV_TOKEN}
-
       - uses: ammaraskar/gcc-problem-matcher@0.2.0
         name: GCC Problem Matcher
 
       - name: distcheck
         run: |
-          ./configure -q
-          make clean
-          make distcheck
+          ./configure
+          make ${{ MAKE_OPTS }}  clean
+          #make distcheck
+          make ${{ MAKE_OPTS }}  dist
+          ls -l
+          tar xfvz *.tar.gz
+          cd $(basename *gz .tar.gz)
+          ./configure
+          make ${{ MAKE_OPTS }} check
