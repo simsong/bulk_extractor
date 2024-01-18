@@ -101,7 +101,7 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         run: |
           pushd src
-          gcov-9 $(find . -name '*.o' -or '*.cpp' -or '*.c')
+          gcov-9 *.o *.cpp rar/*.cpp rar/*.hpp
           bash <(curl -s https://codecov.io/bash)
           popd
 
