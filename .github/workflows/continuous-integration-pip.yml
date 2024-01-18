@@ -56,9 +56,9 @@ jobs:
       - name: C++ checks not optimizaiton with address-sanitizer (Mac and Linux)
         run: |
           ./configure --disable-opt --enable-address-sanitizer
-          make ${{MAKE_OPTS}} all
+          make $MAKE_OPTS all
           cd src
-          make ${{MAKE_OPTS}} bulk_extractor
+          make $MAKE_OPTS bulk_extractor
           make check || (cat test-suite.log; exit 1)
           cd ..
           make distclean
