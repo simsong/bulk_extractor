@@ -2,13 +2,13 @@
 # cd to the directory where the script is
 # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
 OS_NAME=ubuntu
-OS_VERSION=22
+OS_VERSION=22.04
 MAKE_CONCURRENCY=-j2
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 MPKGS="autoconf automake flex g++ gcc git libtool libabsl-dev libre2-dev libxml2-utils libz-mingw-w64-dev libgcrypt-mingw-w64-dev libsqlite3-dev make mingw-w64 wine  "
 cd $SCRIPT_DIR
 
-. /paths.bash
+. $SCRIPT_DIR/etc/paths.bash
 
 
 if [[ ! -r /etc/os-release ]]; then
