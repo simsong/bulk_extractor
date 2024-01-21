@@ -9,7 +9,14 @@
 # 2022-02-10 - slg - renamed be20_api. Our work here is done.
 
 name: BE2 Unit Tests on MacOS and Ubuntu (c++17)
-on: [push, pull_request]
+
+on:
+  push:
+    branches:
+      - '**' # This will trigger the action for all branches
+  pull_request:
+    branches:
+      - main # Specify the branches for which pull_request events should trigger the action
 
 jobs:
   build:
@@ -17,6 +24,7 @@ jobs:
       matrix:
         os: ['macos-13', 'macos-13-arm64', 'ubuntu-22.04']
     runs-on: ${{ matrix.os }}
+
     env:
       DEBUG_5G: FALSE
       DEBUG_FAST: TRUE
@@ -29,6 +37,16 @@ jobs:
         with:
           submodules: recursive
 
+      # Conditional step for push events
+      - name: Run on push
+        if: github.event_name == 'push'
+        run: echo "This runs on a push to any branch"
+
+      # Conditional step for pull_request events
+      - name: Run on pull request
+        if: github.event_name == 'pull_request'
+        run: echo "This runs on a pull request to the main branch"
+
       - name: "MacOS: run CONFIGURE_MACOS.bash"
         if: startsWith(matrix.os, 'macos')
         run: |
@@ -38,7 +56,6 @@ jobs:
         if: startsWith(matrix.os, 'ubuntu')
         run: |
           echo "" | bash etc/CONFIGURE_UBUNTU22LTS.bash
-
 
       - name: Make configure script
         run: |
