@@ -22,7 +22,8 @@ jobs:
   build:
     strategy:
       matrix:
-        os: ['macos-13', 'macos-13-arm64', 'ubuntu-22.04']
+        os: [macos-latest, ubuntu-22.04]
+        platform: [x64, arm64]
     runs-on: ${{ matrix.os }}
 
     env:
