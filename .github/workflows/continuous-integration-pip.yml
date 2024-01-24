@@ -47,6 +47,7 @@ jobs:
           aclocal --version
           gcc --version
           g++ --version
+          find . -name Makefile.in -print | sort
           bash bootstrap.sh
 
       - name: Dump configure script
