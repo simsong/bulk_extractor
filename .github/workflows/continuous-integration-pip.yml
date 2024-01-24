@@ -50,7 +50,7 @@ jobs:
 
       - name: Files
         run: |
-          find . --print
+          find . -print
 
       - name: Make configure script
         run: |
