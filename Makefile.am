@@ -7,7 +7,7 @@
 
 # We need to list *all* of the subdirs here that have Makefiles in them that are executed by
 # doing a chdir into the directory and typing 'make'. So we do not need src/be20_api
-SUBDIRS = doc doc/latex_manuals man src src/tests python specfiles tests
+SUBDIRS = doc doc/latex_manuals man src src/tests specfiles tests
 
 # Include things explicitly
 # Note - autoconf seems to automatically include the m4 rules that are used by configure.ac - no need to list them heren

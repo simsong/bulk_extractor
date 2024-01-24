@@ -5,6 +5,17 @@ import fnmatch
 import os.path
 
 
+config_root = {
+    'root':'.',
+    'outfile':'Makefile.auto_defs',
+    'rules':[['doc', 'AUTO_DOC_FILES', ['*.pdf',  '*.html', '*.txt', '*.md', '*.tex', '*.gitignore']],
+             ['etc', 'AUTO_ETC_FILES', ['*.bash', '*.py', '*.gitignore']],
+             ['python', 'AUTO_PYTHON_FILES', ['*.py']],
+             ['licenses', 'AUTO_LICENSES', ['*']]],
+    'ignore_fnames':[],
+    'ignore_paths':[]
+    }
+
 config_src = {
     'root':'src',
     'outfile':'Makefile.auto_defs',
@@ -26,16 +37,6 @@ config_src = {
                     'be20_api/utfcpp/samples',
                     'be20_api/tests',
                     'be20_api/demos'])}
-
-config_root = {
-    'root':'.',
-    'outfile':'Makefile.auto_defs',
-    'rules':[['doc', 'AUTO_DOC_FILES', ['*.pdf',  '*.html', '*.txt', '*.md', '*.tex', '*.gitignore']],
-             ['etc', 'AUTO_ETC_FILES', ['*.bash', '*.py', '*.gitignore']],
-             ['licenses', 'AUTO_LICENSES', ['*']]],
-    'ignore_fnames':[],
-    'ignore_paths':[]
-    }
 
 def build(config):
     cwd = os.getcwd()
