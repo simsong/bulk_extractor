@@ -1,11 +1,12 @@
 BE20_API_DIR= be20_api
-include be20_api/Makefile.defs
-include rar/Makefile.defs
+include Makefile.auto_defs
+#include be20_api/Makefile.defs
+#include rar/Makefile.defs
+#DFXML_SRC_DIR=be20_api/dfxml_cpp/src/
+#include $(DFXML_SRC_DIR)Makefile.defs
 
-DFXML_SRC_DIR=be20_api/dfxml_cpp/src/
-include $(DFXML_SRC_DIR)Makefile.defs
-
-EXTRA_DIST = .gitignore $(BE20_API_EXTRA_DIST) scan_headers.flex scan_httpheader_lg.cpp
+# $(BE20_API_EXTRA_DIST)
+EXTRA_DIST = .gitignore scan_headers.flex scan_httpheader_lg.cpp $(AUTO_EXTRA_DIST) $(AUTO_TESTS_DIST)
 
 ETAGS = etags-emacs
 ACLOCAL_AMFLAGS = -I m4
@@ -120,7 +121,8 @@ endif
 
 bulk_extractor_parts = \
         $(TSK3INCS)  \
-	$(BE20_API_SRC) \
+	$(AUTO_CPP_FILES) \
+	$(AUTO_H_FILES) \
 	bulk_extractor_restarter.h \
 	bulk_extractor_scanners.h \
 	base64_forensic.cpp \

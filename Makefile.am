@@ -20,13 +20,15 @@ SUBDIRS = doc doc/latex_manuals man src src/tests python specfiles tests
 
 EXTRA_DIST = \
 	$(SRC_WIN_DIST) \
-	$(srcdir)/*.md \
 	$(srcdir)/.gitignore \
-	$(srcdir)/bootstrap.sh \
-	$(srcdir)/etc/*.bash \
-	$(srcdir)/licenses/LICENSE.* \
+	$(srcdir)/*.md \
+	$(srcdir)/*/.gitignore \
+	$(srcdir)/*/*.md \
 	$(srcdir)/*.txt \
-	$(srcdir)/src/be20_api/dfxml_cpp/src/Makefile.defs
+	$(srcdir)/bootstrap.sh \
+	$(srcdir)/doc/* \
+	$(srcdir)/etc/* \
+	$(srcdir)/licenses/LICENSE.*
 
 
 # ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
