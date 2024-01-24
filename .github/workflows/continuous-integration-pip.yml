@@ -47,7 +47,10 @@ jobs:
           aclocal --version
           gcc --version
           g++ --version
-          find . -name Makefile.in -print | sort
+
+      - name: Files
+        run: |
+          find . --print
 
       - name: Make configure script
         run: |
