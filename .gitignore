@@ -101,3 +101,7 @@ tests/Makefile
 win32
 win64
 README
+*.auto_defs
+*.so*
+*.pdf
+*.zip

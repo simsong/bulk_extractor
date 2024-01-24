@@ -116,7 +116,7 @@ if LIGHTGREP_ENABLED
 endif
 
 if RAR_ENABLED
-  scanners_builtin += $(RAR_SUPPORT)
+  scanners_builtin += $(AUTO_RAR_FILES)
 endif
 
 bulk_extractor_parts = \

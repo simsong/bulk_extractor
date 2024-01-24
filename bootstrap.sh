@@ -13,7 +13,7 @@ do
 done
 
 # Makesure files are in src/Makefile.auto_defs
-(cd src;python3 ../etc/makefile_builder.py)
+python3 etc/makefile_builder.py
 
 # have automake do an initial population if necessary
 autoheader -f

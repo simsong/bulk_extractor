@@ -18,17 +18,13 @@ SUBDIRS = doc doc/latex_manuals man src src/tests python specfiles tests
 # note - we are allowed to use wildcards below! Who knew.
 # and using $wildcard prevents it from running on mac, which doesn't use gnu make
 
-EXTRA_DIST = \
-	$(SRC_WIN_DIST) \
+include Makefile.auto_defs
+
+EXTRA_DIST = $(SRC_WIN_DIST) $(AUTO_DOC_FILES) $(AUTO_ETC_FILES) $(AUTO_LICENSES) \
 	$(srcdir)/.gitignore \
-	$(srcdir)/*.md \
-	$(srcdir)/*/.gitignore \
-	$(srcdir)/*/*.md \
-	$(srcdir)/*.txt \
-	$(srcdir)/bootstrap.sh \
-	$(srcdir)/doc/* \
-	$(srcdir)/etc/* \
-	$(srcdir)/licenses/LICENSE.*
+	$(srcdir)/CODING_STANDARDS.md \
+	$(srcdir)/LICENSE.md \
+	$(srcdir)/README.md
 
 
 # ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
