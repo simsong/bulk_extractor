@@ -1,5 +1,8 @@
 #!/bin/bash
-source paths.bash
+
+MYDIR=$(dirname $(readlink -f $0))
+
+source $MYDIR/paths.bash
 if [ -r /usr/local/bin/brew ]; then
     WHICH=/usr/local/bin/brew
 elif [ -r /opt/homebrew/bin/brew ]; then

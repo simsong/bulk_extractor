@@ -1,46 +1,32 @@
 [![codecov](https://codecov.io/gh/simsong/bulk_extractor/branch/main/graph/badge.svg?token=3w691sdgLu)](https://codecov.io/gh/simsong/bulk_extractor)
 
-`bulk_extractor` is a high-performance digital forensics exploitation tool.
-It is a "get evidence" button that rapidly
-scans any kind of input (disk images, files, directories of files, etc)
-and extracts structured information such as email addresses, credit card numbers,
-JPEGs and JSON snippets without parsing the file
-system or file system structures. The results are stored in text files that are easily
-inspected, searched, or used as inputs for other forensic processing. bulk_extractor also creates
-histograms of certain kinds of features that it finds, such as Google search terms and email addresses,
-as previous research has shown that such histograms are especially useful in investigative and law enforcement applications.
+`bulk_extractor` is a high-performance digital forensics exploitation
+tool.  It is a "get evidence" button that rapidly scans any kind of
+input (disk images, files, directories of files, etc) and extracts
+structured information such as email addresses, credit card numbers,
+JPEGs and JSON snippets without parsing the file system or file system
+structures. The results are stored in text files that are easily
+inspected, searched, or used as inputs for other forensic
+processing. bulk_extractor also creates histograms of certain kinds of
+features that it finds, such as Google search terms and email
+addresses, as previous research has shown that such histograms are
+especially useful in investigative and law enforcement applications.
 
 Unlike other digital forensics tools, `bulk_extractor` probes every byte of data to see if it is the start of a
 sequence that can be decompressed or otherwise decoded. If so, the
 decoded data are recursively re-examined. As a result, `bulk_extractor` can find things like BASE64-encoded JPEGs and
 compressed JSON objects that traditional carving tools miss.
 
-This is the `bulk_extractor` 2.0 development branch!  For information
-about the `bulk_extractor` update, please see [Release 2.0 roadmap](https://github.com/simsong/bulk_extractor/blob/main/doc/ROADMAP_2.0.md).
+This is the `bulk_extractor` 2.1 development branch! It is reliable, but if you want to have a well-tested production quality release, download a release from https://github.com/simsong/bulk_extractor/releases.
 
 Building `bulk_extractor`
 =========================
-To build bulk_extractor in Linux or Mac OS:
+We recommend building from sources. We provide a number of `bash` scripts in the `etc/` directory that will configure a clean virtual machine.
 
-1. Start with a clean virtual machine. We recommend the current version of Fedora, as it can build both the Linux and the Windows executables. The Windows executable currently does not build under Ubuntu because of deficiencies in the mingw compiler libraries on that platform.
-
-2. Then run these commands:
+If you wish to build for Windows, you should cross-compile from a Fedora system. Start with a clean VM and use these commands:
 
 ```
-$ git clone --recurse-submodules https://github.com/simsong/bulk_extractor.git 
-$ cd bulk_extractor/etc
-$ bash CONFIGURE_FEDORA36.bash
-$ cd ..
-$ ./bootstrap.sh
-$ ./configure
-$ make
-$ sudo make install
-```
-
-3. To compile the Windows executable, try:
-
-```
-$ git clone --recurse-submodules https://github.com/simsong/bulk_extractor.git 
+$ git clone --recurse-submodules https://github.com/simsong/bulk_extractor.git
 $ cd bulk_extractor/etc
 $ bash CONFIGURE_FEDORA36_win64.bash
 $ cd ..
@@ -58,7 +44,7 @@ This release of bulk_extractor requires C++17 and has been tested to compile on 
 
 * Amazon Linux as of 2023-05-25
 * Fedora 36 (most recently)
-* Ubuntu 20.04LTS 
+* Ubuntu 20.04LTS
 * MacOS 13.2.1
 
 You should *always* start with a fresh VM and prepare the system using the appropriate prep script in the `etc/` directory.

@@ -58,13 +58,20 @@ jobs:
         run: |
           echo "" | bash etc/CONFIGURE_UBUNTU22LTS.bash
 
-      - name: Make configure script
+      - name: Version Numbers
         run: |
           autoconf --version
           automake --version
           aclocal --version
           gcc --version
           g++ --version
+
+      - name: Files
+        run: |
+          find . -print
+
+      - name: Make configure script
+        run: |
           bash bootstrap.sh
 
       - name: Dump configure script
@@ -84,7 +91,7 @@ jobs:
       - name: C++ checks optimization with address-sanitizer (Mac and Linux)
         run: |
           echo === Try Address Sanitizer Optimization ===
-          ./configure --enable-address-sanitizer
+          ./configure --enable-address-sanitizer --enable-silent-rules --quiet
           make $MAKE_OPTS all
           pushd src
           make $MAKE_OPTS bulk_extractor
@@ -96,7 +103,7 @@ jobs:
         if: startsWith(matrix.os, 'ubuntu-DISABLED')
         run: |
           bash bootstrap.sh
-          ./configure --enable-silent-rules --enable-thread-sanitizer
+          ./configure --enable-thread-sanitizer --enable-silent-rules  --quiet
           make clean
           make $MAKE_OPTS  all
           pushd src
@@ -109,7 +116,7 @@ jobs:
         if: startsWith(matrix.os, 'ubuntu')
         run: |
           bash bootstrap.sh
-          ./configure --disable-opt CFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' CXXFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' LIBS='-lgcov -lre2'
+          ./configure --disable-opt CFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' CXXFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' --enable-silent-rules --quiet
           make clean
           make $MAKE_OPTS  check || (echo ==error== ; cat test-suite.log; exit 1)
 
@@ -123,21 +130,11 @@ jobs:
           bash <(curl -s https://codecov.io/bash)
           popd
 
-      - uses: ammaraskar/gcc-problem-matcher@0.2.0
-        name: GCC Problem Matcher
-
       - name: distcheck
         run: |
-          echo we are doing this because 'make distcheck' makes the source read-only and builds in a _build directory and currently that is broken
           bash bootstrap.sh
-          ./configure
-          make clean
-          make dist
-          mv bulk_extractor*.tar.gz /tmp
-          pushd /tmp
-          tar xfvz bulk_extractor*.tar.gz
-          pushd $(basename bulk_extractor*.tar.gz .tar.gz)
-          ls -l
-          ./configure
-          make check
-          popd
+          ./configure -q
+          make distcheck
+
+      - uses: ammaraskar/gcc-problem-matcher@0.2.0
+        name: GCC Problem Matcher

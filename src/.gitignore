@@ -13,3 +13,4 @@ x.cpp
 domexusers.raw*
 be_graph.pdf
 *.Tpo
+Makefile.auto_defs

@@ -7,7 +7,7 @@
 
 # We need to list *all* of the subdirs here that have Makefiles in them that are executed by
 # doing a chdir into the directory and typing 'make'. So we do not need src/be20_api
-SUBDIRS = doc doc/latex_manuals man src src/tests python specfiles tests
+SUBDIRS = doc doc/latex_manuals man src src/tests specfiles tests
 
 # Include things explicitly
 # Note - autoconf seems to automatically include the m4 rules that are used by configure.ac - no need to list them heren
@@ -18,15 +18,13 @@ SUBDIRS = doc doc/latex_manuals man src src/tests python specfiles tests
 # note - we are allowed to use wildcards below! Who knew.
 # and using $wildcard prevents it from running on mac, which doesn't use gnu make
 
-EXTRA_DIST = \
-	$(SRC_WIN_DIST) \
-	$(srcdir)/*.md \
+include Makefile.auto_defs
+
+EXTRA_DIST = $(SRC_WIN_DIST) $(AUTO_DOC_FILES) $(AUTO_ETC_FILES) $(AUTO_LICENSES) \
 	$(srcdir)/.gitignore \
-	$(srcdir)/bootstrap.sh \
-	$(srcdir)/etc/*.bash \
-	$(srcdir)/licenses/LICENSE.* \
-	$(srcdir)/*.txt \
-	$(srcdir)/src/be20_api/dfxml_cpp/src/Makefile.defs
+	$(srcdir)/CODING_STANDARDS.md \
+	$(srcdir)/LICENSE.md \
+	$(srcdir)/README.md
 
 
 # ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
