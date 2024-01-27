@@ -8,7 +8,7 @@ for sub in be20_api be20_api/dfxml_cpp
 do
   if [ ! -r src/$sub/.git ] ;  then
       echo submodule $sub is not present.
-      echo When you did your original \'git pull\', did you remember to include the --recursive flag\?
+      echo 'When you did your original "git pull", did you remember to include the --recursive flag?'
     exit 1
   fi
 done
