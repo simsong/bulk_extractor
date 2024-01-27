@@ -325,8 +325,8 @@ CPPFLAGS=$(echo $CPPFLAGS | tr ' ' '\n' | sort -u | tr '\n' ' ')
 CXXFLAGS=$(echo $CXXFLAGS | tr ' ' '\n' | sort -u | tr '\n' ' ')
 
 # Remove -std=gnu++11, which was causing problems
-CXX=$(echo $CXX | tr ' ' '\n' | grep -v 'gnu[+][+]11' | tr '\n' ' ')
-CXXFLAGS=$(echo $CXXFLAGS | tr ' ' '\n' | grep -v 'gnu[+][+]11' | tr '\n' ' ')
+CXX=$(echo $CXX | tr ' ' '\n' | grep -v '(gnu|std)[+][+]11' | tr '\n' ' ')
+CXXFLAGS=$(echo $CXXFLAGS | tr ' ' '\n' | grep -v '(gnu|std)[+][+]11' | tr '\n' ' ')
 
 ################################################################
 AC_MSG_NOTICE([CFLAGS are now $CFLAGS])
