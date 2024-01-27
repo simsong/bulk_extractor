@@ -34,9 +34,8 @@ AC_PROG_INSTALL
 AC_PROG_LEX([noyywrap])
 
 # Must use C++17 mode.
-m4_include([m4/ax_cxx_compile_stdcxx.m4])
 AC_LANG_PUSH(C++)
-AX_CXX_COMPILE_STDCXX([17], [noext], [mandatory])
+AX_CXX_COMPILE_STDCXX([17], [ext], [mandatory])
 AC_LANG_POP()
 
 # Turn on all warnings
@@ -324,6 +323,10 @@ AS_IF([test $retval = 0],[$2],[$3])])
 CFLAGS=$(echo $CFLAGS | tr ' ' '\n' | sort -u | tr '\n' ' ')
 CPPFLAGS=$(echo $CPPFLAGS | tr ' ' '\n' | sort -u | tr '\n' ' ')
 CXXFLAGS=$(echo $CXXFLAGS | tr ' ' '\n' | sort -u | tr '\n' ' ')
+
+# Remove -std=gnu++11, which was causing problems
+CXX=$(echo $CXX | tr ' ' '\n' | grep -v '(gnu|std)[+][+]11' | tr '\n' ' ')
+CXXFLAGS=$(echo $CXXFLAGS | tr ' ' '\n' | grep -v '(gnu|std)[+][+]11' | tr '\n' ' ')
 
 ################################################################
 AC_MSG_NOTICE([CFLAGS are now $CFLAGS])

@@ -34,9 +34,10 @@ config_src = {
                          'test_be20_threadpool.cpp'
                          ]),
     'ignore_paths':set(['be20_api/utfcpp/tests',
-                    'be20_api/utfcpp/samples',
-                    'be20_api/tests',
-                    'be20_api/demos'])}
+                        'be20_api/utfcpp/extern/ftest',
+                        'be20_api/utfcpp/samples',
+                        'be20_api/tests',
+                        'be20_api/demos'])}
 
 def build(config):
     cwd = os.getcwd()
