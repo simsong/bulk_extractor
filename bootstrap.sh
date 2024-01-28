@@ -1,14 +1,19 @@
 #!/bin/sh
-# Make sure it was checked out with git clone --recursive ...
-# If not, update the submodules
 
 mkdir -p build-aux
 
-for sub in be20_api be20_api/dfxml_cpp
+# Make sure it was checked out with git clone --recursive ...
+# If not, try to fix it. dfxml_schema is there twice to verify that the checkout worked
+
+for sub in dfxml_schema dfxml_schema src/be20_api src/be20_api/dfxml_cpp src/be20_api/utfcpp src/be20_api/utfcpp/extern/ftest
 do
-  if [ ! -r src/$sub/.git ] ;  then
-    echo submodule $sub is not present.
-    exit 1
+  if [ ! -r $sub/.git ] ;  then
+      echo submodule $sub is not present.
+      echo 'When you did your original "git pull", you likely did not include the --recursive flag.'
+      echo 'Attempting to fix...'
+      git submodule init
+      git submodule update
+      git submodule foreach --recursive 'git submodule init;git submodule update'
   fi
 done
 
