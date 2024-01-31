@@ -57,28 +57,3 @@ jobs:
         if: startsWith(matrix.os, 'macos')
         run: |
           echo "" | bash etc/CONFIGURE_MACOS.bash
-
-      - name: "Ubuntu: run CONFIGURE_UBUNTU22LTS.bash"
-        if: startsWith(matrix.os, 'ubuntu')
-        run: |
-          echo "" | bash etc/CONFIGURE_UBUNTU22LTS.bash
-
-      - name: Version Numbers
-        run: |
-          autoconf --version
-          automake --version
-          aclocal --version
-          gcc --version
-          g++ --version
-
-      - name: Files
-        run: |
-          find . -print
-
-      - name: Make configure script
-        run: |
-          bash bootstrap.sh
-
-      - name: Dump configure script
-        run: |
-          cat configure
