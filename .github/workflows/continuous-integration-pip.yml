@@ -42,8 +42,3 @@ jobs:
       id: extract_version
       run: |
         echo "::set-output name=version::$(grep 'AC_INIT(\[BULK_EXTRACTOR\]' configure.ac| cut -d',' -f2 | tr -d "[]")"
-
-      # Conditional step for push events
-      - name: Run on push
-        if: github.event_name == 'push'
-        run: echo "This runs on a push to any branch"
