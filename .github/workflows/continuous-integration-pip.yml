@@ -38,7 +38,7 @@ jobs:
         with:
           submodules: recursive
 
-    - name: Extract Version from configure.ac
-      id: extract_version
+    - name: Get context
+      id: ctx
       run: |
         echo "::set-output name=version::$(grep 'AC_INIT(\[BULK_EXTRACTOR\]' configure.ac| cut -d',' -f2 | tr -d "[]")"
