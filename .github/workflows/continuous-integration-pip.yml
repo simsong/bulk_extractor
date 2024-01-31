@@ -38,7 +38,9 @@ jobs:
         with:
           submodules: recursive
 
-    - name: Get context
-      id: ctx
+    - name: Extract Version from configure.ac
+      id: extract_version
       run: |
-        echo "::set-output name=version::$(grep 'AC_INIT(\[BULK_EXTRACTOR\]' configure.ac| cut -d',' -f2 | tr -d "[]")"
+        VERSION=$(grep 'AC_INIT' configure.ac | sed -n 's/.*AC_INIT.*\[\(.*\)\], \[\(.*\)\].*/\2/p')
+        echo "Version: $VERSION"
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
