@@ -21,16 +21,14 @@ This is the `bulk_extractor` 2.1 development branch! It is reliable, but if you 
 
 Building `bulk_extractor`
 =========================
-We recommend building from sources. We provide a number of `bash` scripts in the `etc/` directory that will configure a clean virtual machine.
-
-If you wish to build for Windows, you should cross-compile from a Fedora system. Start with a clean VM and use these commands:
+We recommend building from sources. We provide a number of `bash` scripts in the `etc/` directory that will configure a clean virtual machine:
 
 ```
-$ git clone --recurse-submodules https://github.com/simsong/bulk_extractor.git
-$ cd bulk_extractor/etc
-$ bash CONFIGURE_FEDORA36_win64.bash
-$ cd ..
-$ make win64
+git clone --recurse-submodules https://github.com/simsong/bulk_extractor.git
+./bootstrap.sh
+./configure
+make
+make install
 ```
 
 For detailed instructions on installing packages and building bulk_extractor, read the wiki page here:
