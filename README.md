@@ -97,6 +97,22 @@ Other hints for debugging:
 * Run -xall to run without any scanners.
 * Run with a random sampling of 0.001% to debug reading image size and a few quick seeks.
 
+BUILDING ON WINDOWS
+===================
+Note: Currenlty bulk_extractor 2.1 does not build on windows, but 2.0 does.
+
+If you wish to build for Windows, you should cross-compile from a Fedora system. Start with a clean VM and use these commands:
+
+```
+$ git clone --recurse-submodules https://github.com/simsong/bulk_extractor.git
+$ cd bulk_extractor/etc
+$ bash CONFIGURE_FEDORA36_win64.bash
+$ cd ..
+$ make win64
+```
+
+
+
 
 BULK_EXTRACTOR 2.0 STATUS REPORT
 ================================
