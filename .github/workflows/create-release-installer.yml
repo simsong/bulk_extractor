@@ -28,10 +28,12 @@ jobs:
       with:
         submodules: recursive
 
-    - name: Get context
-      id: ctx
+    - name: Extract Version from configure.ac
+      id: extract_version
       run: |
-        echo "::set-output name=version::$(grep 'AC_INIT(\[BULK_EXTRACTOR\]' configure.ac| cut -d',' -f2 | tr -d "[]")" 
+        VERSION=$(grep 'AC_INIT' configure.ac | sed -n 's/.*AC_INIT.*\[\(.*\)\], \[\(.*\)\].*/\2/p')
+        echo "Version: $VERSION"
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
 
     - name: Setup
       run: |
@@ -40,18 +42,23 @@ jobs:
         chmod +x && bootstrap.sh
         ./bootstrap.sh
         ./configure -q
-    
+
     - name: Create release tarball
       run: |
         make dist
-        
-    - name: Upload binaries to release
-      uses: svenstaro/upload-release-action@v2
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v2
       with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: bulk_extractor-${{ steps.ctx.outputs.version }}.tar.gz
-        asset_name: bulk_extractor-${{ steps.ctx.outputs.version }}.tar.gz
-        tag: ${{ github.ref }}
-        release_name: "Release ${{ steps.ctx.outputs.version  }} of bulk_extractor including subdirectories"
-        overwrite: true
-        body: "Release ${{ steps.ctx.outputs.version }} of bulk_extractor including subdirectories"
+        name: bulk_extractor-${VERSION}.tar.gz
+        path: bulk_extractor-${VERSION}.tar.gz
+
+    - name: Upload binaries to release
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: bulk_extractor-${VERSION}.tar.gz
+        asset_name: bulk_extractor-${VERSION}.tar.gz
+        asset_content_type: application/gzip

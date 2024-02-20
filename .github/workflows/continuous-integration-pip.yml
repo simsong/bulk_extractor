@@ -38,6 +38,11 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Extract Version from configure.ac
+        id: extract_version
+        run: |
+          echo "::set-output name=version::$(grep 'AC_INIT(\[BULK_EXTRACTOR\]' configure.ac| cut -d',' -f2 | tr -d "[]")"
+
       # Conditional step for push events
       - name: Run on push
         if: github.event_name == 'push'
@@ -135,6 +140,13 @@ jobs:
           bash bootstrap.sh
           ./configure -q
           make distcheck
+
+      - name: Upload installer as artifact
+        if: startsWith(matrix.os, 'ubuntu')
+        uses: actions/upload-artifact@v2
+        with:
+          name: bulk_extractor-${{ steps.ctx.outputs.version }}.tar.gz
+          path: bulk_extractor-${{ steps.ctx.outputs.version }}.tar.gz
 
       - uses: ammaraskar/gcc-problem-matcher@0.2.0
         name: GCC Problem Matcher
