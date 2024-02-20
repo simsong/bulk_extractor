@@ -21,7 +21,7 @@ jobs:
     if: github.repository == 'simsong/bulk_extractor'
     runs-on: ubuntu-latest
     env:
-      COVERITY_PROJECT_NAME: bulk_extractor
+      COVERITY_PROJECT_NAME: simsong/bulk_extractor
     steps:
     - uses: actions/checkout@main
     - name: Download and extract the Coverity Build Tool
