@@ -1,4 +1,6 @@
 [![codecov](https://codecov.io/gh/simsong/bulk_extractor/branch/main/graph/badge.svg?token=3w691sdgLu)](https://codecov.io/gh/simsong/bulk_extractor)
+<a href="https://scan.coverity.com/projects/simsong-bulk_extractor">
+  <img alt="Coverity Scan Build Status" src="https://scan.coverity.com/projects/29726/badge.svg"/></a>
 
 `bulk_extractor` is a high-performance digital forensics exploitation
 tool.  It is a "get evidence" button that rapidly scans any kind of
