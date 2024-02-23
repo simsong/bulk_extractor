@@ -37,7 +37,10 @@ jobs:
       run: ./configure
     - name: Build with cov-build
       run: cov-analysis-linux64/bin/cov-build --dir cov-int make
+    - name: Get count of commits in the last 24 hours
+      run: echo "NEW_COMMIT_COUNT=$(git log --oneline --since '24 hours ago' | wc -l)" >> $GITHUB_ENV
     - name: Upload the result
+      if: ${{ env.NEW_COMMIT_COUNT > 0 }}
       run: |
           tar czvf cov-int.tgz cov-int
           curl \
