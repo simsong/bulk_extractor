@@ -142,6 +142,9 @@ AC_CHECK_HEADERS([dlfcn.h fcntl.h inttypes.h libgen.h limits.h mmap.h pwd.h sign
 AC_CHECK_FUNCS([getuid getpwuid gethostname getrusage gmtime_r getprogname isxdigit ishexnumber le64toh localtime_r _lseeki64 inet_ntop ioctl isatty pread64 pread printf mmap munmap MD5 mkstemp mktemp sleep SleepEx strptime usleep vasprintf _NSGetExecutablePath])
 AC_CHECK_FUNCS([CreateProcess LoadLibrary IncrementAtomic InterlockedIncrement])
 
+## pcre lib support
+AC_CHECK_LIB([pcre])
+
 ## v2.0 uses termcap! So modern
 AC_CHECK_LIB([termcap], [tgetstr])
 
