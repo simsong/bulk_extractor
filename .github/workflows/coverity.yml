@@ -12,7 +12,7 @@ on:
   # Up to 21 builds per week, with a maximum of 3 builds per day, for projects with 100K to 500K lines of code
   # Up to 14 builds per week, with a maximum of 2 build per day, for projects with 500K to 1 million lines of code
   # Up to 7 builds per week, with a maximum of 1 build per day, for projects with more than 1 million lines of code
-  - cron: '0 0 * * *'
+  - cron: '0 0 1 * *'
   # Support manual execution
   workflow_dispatch:
 jobs:
