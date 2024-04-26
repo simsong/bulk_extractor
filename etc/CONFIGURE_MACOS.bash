@@ -33,10 +33,9 @@ echo ================
 echo Updating .profile
 echo 'PATH="/opt/homebrew/opt/libtool/libexec/gnubin:$PATH"' >> .bash_profile
 echo 'export PATH="/opt/homebrew/opt/libxml2/bin:$PATH"' >> .bash_profile
-echo 'export LDFLAGS="-L/opt/homebrew/opt/libxml2/lib $LDFLAGS" ' >> .bash_profile
-echo 'export CPPFLAGS="-I/opt/homebrew/opt/libxml2/include $CPPFLAGS" ' >> .bash_profile
+echo 'export LDFLAGS="-L/opt/homebrew/lib -L/opt/homebrew/opt/libxml2/lib $LDFLAGS" ' >> .bash_profile
+echo 'export CPPFLAGS="-I/opt/homebrew/include -I/opt/homebrew/opt/libxml2/include $CPPFLAGS" ' >> .bash_profile
 echo 'export PKG_CONFIG_PATH="/opt/homebrew/opt/libxml2/lib/pkgconfig:$PKG_CONFIG_PATH"' >> .bash_profile
-
 echo ================
 source .bash_profile
 printenv
