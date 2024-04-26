@@ -71,6 +71,10 @@ jobs:
           gcc --version
           g++ --version
 
+      - name: printenv FLAGS
+        run: |
+          printenv | grep FLAGS
+
       - name: Files
         run: |
           find . -print
@@ -86,6 +90,9 @@ jobs:
       - name: C++ checks not optimizaiton with address-sanitizer (Mac and Linux)
         run: |
           ./configure --disable-opt --enable-address-sanitizer
+          echo == config.h ==
+          cat config.h
+          echo ==============
           make $MAKE_OPTS all
           pushd src
           make $MAKE_OPTS bulk_extractor
