@@ -31,7 +31,7 @@ $WHICH install $PKGS || (echo installation install failed; exit 1)
 
 echo ================
 echo Updating .profile
-cat >> $HOME/.profile <<
+cat >> $HOME/.profile <<EOF
 for PREFIX in /opt/local /opt/homebrew ; do
     if [ -x $PREFIX/include ]; then
         export CPPFLAGS="-I$PREFIX/include/ $CPPFLAGS"
@@ -41,5 +41,4 @@ for PREFIX in /opt/local /opt/homebrew ; do
     fi
 done
 EOF
-
 exit 0
