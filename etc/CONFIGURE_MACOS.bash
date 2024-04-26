@@ -29,8 +29,17 @@ PKGS+="wget libtool autoconf automake libtool libxml2 libewf json-c re2 abseil p
 
 $WHICH install $PKGS || (echo installation install failed; exit 1)
 
-# Validate installation
-ls -l /opt/homebrew/lib/pkgconfig
-echo == re2 ==
-cat /opt/homebrew/lib/pkgconfig/re2.pc
+echo ================
+echo Updating .profile
+cat >> $HOME/.profile <<
+for PREFIX in /opt/local /opt/homebrew ; do
+    if [ -x $PREFIX/include ]; then
+        export CPPFLAGS="-I$PREFIX/include/ $CPPFLAGS"
+    fi
+    if [ -x $PREFIX/lib ]; then
+        export LDFLAGS="-L$PREFIX/lib/ $LDFLAGS"
+    fi
+done
+EOF
+
 exit 0

@@ -71,10 +71,6 @@ jobs:
           gcc --version
           g++ --version
 
-      - name: setenv
-        run: |
-          export ENV_TEST_ONE=1
-
       - name: printenv
         run: |
           printenv
