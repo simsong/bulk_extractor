@@ -116,8 +116,14 @@ $ make win64
 
 
 
-BULK_EXTRACTOR 2.0 STATUS REPORT
+BULK_EXTRACTOR 2.0 RELEASE NOTES
 ================================
+
+## Release 2.1.1 (April 26, 2024)
+Renamed jpeg_carved feature recorder to jpeg, so that the jpeg carve mode can be set with -S jpeg_carve_mode=2, rather than -S jpeg_carved_carve_mode=2, which was confusing.
+
+
+## Release 2.0
 `bulk_extractor` 2.0 (BE2) is now operational. Although it works with the Java-based viewer, we do not currently have an installer that runs under Windows.
 
 BE2  requires C++17 to compile. It requires `https://github.com/simsong/be13_api.git` as a sub-module, which in turn requires `dfxml` as a sub-module.

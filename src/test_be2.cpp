@@ -448,8 +448,8 @@ TEST_CASE("test_json", "[phase1]") {
 
 TEST_CASE("test_jpeg_rar", "[phase1]") {
     std::vector<Check> ex2 {
-        Check("jpeg_carved.txt",
-              Feature( "13259-RAR-0", "jpeg_carved/000/13259-RAR-0.jpg"))
+        Check("jpeg.txt",
+              Feature( "13259-RAR-0", "jpeg/000/13259-RAR-0.jpg"))
 
     };
     validate("jpegs.rar", ex2);

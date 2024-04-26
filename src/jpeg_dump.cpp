@@ -5,8 +5,6 @@ int debug=1;
 int main(int argc,char **argv)
 {
     exif_debug = debug;
-    (void)jpeg_carve_mode;
-    (void)min_jpeg_size;
     argc--;argv++;
     while(*argv){
         sbuf_t *sbuf = sbuf_t::map_file(*argv, pos0_t(*argv) );

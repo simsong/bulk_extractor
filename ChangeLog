@@ -1,3 +1,5 @@
+2024-04-26 Simson Garfinkel <simsong@acm.org>
+	* renamed jpeg_carved feature recorder to jpeg, so that the jpeg carve mode can be set with -S jpeg_carve_mode=2, rather than -S jpeg_carved_carve_mode=2, which was confusing.
 
 2023-04-15 Simson Garfinkel <simsong@acm.org>
 	* fixed typo in src/scan_aes.cpp that caused buffer overrun error

@@ -380,7 +380,7 @@ TEST_CASE("e2e-jpeg", "[end-to-end]") {
     std::filesystem::path outdir = NamedTemporaryDirectory();
     std::string outdir_string = outdir.string();
     std::stringstream ss;
-    const char *argv[] = {"bulk_extractor",notify(), "-1qo","-S","jpeg_carve_mode=2",outdir_string.c_str(), inpath_string.c_str(), nullptr};
+    const char *argv[] = {"bulk_extractor",notify(), "-S","jpeg_carve_mode=2","-1q","-o",outdir_string.c_str(), inpath_string.c_str(), nullptr};
     int ret = run_be(ss, argv);
     REQUIRE( ret==0 );
     auto lines = getLines( outdir / "report.xml" );

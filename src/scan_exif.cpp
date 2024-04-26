@@ -502,9 +502,9 @@ void scan_exif( scanner_params &sp )
     sp.check_version();
     if ( sp.phase==scanner_params::PHASE_INIT ){
         sp.info->set_name( "exif" );
-	sp.info->author          = "Bruce Allen";
-	sp.info->scanner_version = "1.1";
-        sp.info->description     = "Search for EXIF sections in JPEG files";
+	sp.info->author          = "Bruce Allen and Simson Garfinkel";
+	sp.info->scanner_version = "1.2";
+        sp.info->description     = "Search for EXIF sections in JPEG files. Also carves JPEG files. Must be enabled for JPEG carving.";
         sp.info->min_sbuf_size   = jpeg_validator::MIN_JPEG_SIZE;
 
         struct feature_recorder_def::flags_t xml_flag;
@@ -513,9 +513,10 @@ void scan_exif( scanner_params &sp )
 
 	sp.info->feature_defs.push_back( feature_recorder_def( "gps" ) );
 
+        // Set up JPEG carving
         struct feature_recorder_def::flags_t carve_flag;
-        carve_flag.carve = true;
-        auto jpeg_def = feature_recorder_def("jpeg_carved", carve_flag);
+        carve_flag.carve = true;        // indicate we are carving
+        auto jpeg_def = feature_recorder_def("jpeg", carve_flag); // set carve mode with  -S jpeg_carve_mode=2
 
         jpeg_def.default_carve_mode = feature_recorder_def::carve_mode_t::CARVE_ENCODED;
 	sp.info->feature_defs.push_back( jpeg_def );
