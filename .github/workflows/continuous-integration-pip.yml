@@ -71,9 +71,9 @@ jobs:
           gcc --version
           g++ --version
 
-      - name: printenv FLAGS
+      - name: printenv
         run: |
-          printenv | grep FLAGS
+          printenv
 
       - name: Files
         run: |
