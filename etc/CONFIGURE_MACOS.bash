@@ -28,4 +28,9 @@ read
 PKGS+="wget libtool autoconf automake libtool libxml2 libewf json-c re2 abseil pkg-config"
 
 $WHICH install $PKGS || (echo installation install failed; exit 1)
+
+# Validate installation
+ls -l /opt/homebrew/lib/pkgconfig
+echo == re2 ==
+cat /opt/homebrew/lib/pkgconfig/re2.pc
 exit 0
