@@ -105,3 +105,4 @@ README
 *.so*
 *.pdf
 *.zip
+etc/Docker*/
