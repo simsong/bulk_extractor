@@ -324,6 +324,7 @@ AS_IF([test $retval = 0],[$2],[$3])])
 CFLAGS=$(echo $CFLAGS | tr ' ' '\n' | sort -u | tr '\n' ' ')
 CPPFLAGS=$(echo $CPPFLAGS | tr ' ' '\n' | sort -u | tr '\n' ' ')
 CXXFLAGS=$(echo $CXXFLAGS | tr ' ' '\n' | sort -u | tr '\n' ' ')
+LDFLAGS=$(echo $LDFLAGS | tr ' ' '\n' | sort -u | tr '\n' ' ')
 
 ################################################################
 AC_MSG_NOTICE([CFLAGS are now $CFLAGS])

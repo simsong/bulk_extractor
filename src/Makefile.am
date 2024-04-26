@@ -12,10 +12,7 @@ ETAGS = etags-emacs
 ACLOCAL_AMFLAGS = -I m4
 
 # So that relative imports from be20_api work
-AM_CPPFLAGS = @RE2_CFLAGS@ -I$(top_srcdir)/src/be20_api -I$(top_srcdir)/src/be20_api/utfcpp/source
-
-bulk_extractor_LDADD = @RE2_LIBS@
-test_be_LDADD = @RE2_LIBS@
+AM_CPPFLAGS = -I$(top_srcdir)/src/be20_api -I$(top_srcdir)/src/be20_api/utfcpp/source
 
 AUTOMAKE_OPTIONS = subdir-objects
 

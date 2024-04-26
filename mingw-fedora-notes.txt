@@ -1,0 +1,9 @@
+# Install abseil
+wget https://github.com/abseil/abseil-cpp/releases/download/20240116.0/abseil-cpp-20240116.0.tar.gz
+tar xfvz abseil-cpp-20240116.0.tar.gz
+cd abseil-cpp-20240116.0
+CPPFLAGS=-DHAVE_LOCAL_LIBEWF mingw64-configure --enable-static --disable-shared
+
+################################################################
+
+yum install cmake

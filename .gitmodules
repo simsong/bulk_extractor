@@ -4,3 +4,9 @@
 [submodule "dfxml_schema"]
 	path = dfxml_schema
 	url = https://github.com/dfxml-working-group/dfxml_schema.git
+[submodule "src/re2"]
+	path = src/re2
+	url = https://github.com/google/re2.git
+[submodule "src/abseil-cpp"]
+	path = src/abseil-cpp
+	url = https://github.com/abseil/abseil-cpp.git

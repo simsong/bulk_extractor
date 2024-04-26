@@ -1,67 +1,18 @@
 #!/bin/bash
 
-# cd to the directory where the script is
-# http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-if [ "$PWD" != "$DIR" ]; then
-    changed_dir="true"
-else
-    changed_dir="false"
-fi
-cd $DIR
-
-source paths.bash
 OS_NAME=fedora
-OS_VERSION=36
+OS_VERSION=39
 USE_ICU=NO
 MAKE_CONCURRENCY=-j2
+MPKGS="bison osslsigncode patch wine mingw64-gcc mingw64-gcc-c++ mingw32-nsis "
+MINGW_PKGS="zlib gettext boost cairo pixman freetype fontconfig bzip2 expat winpthreads libgnurx libxml2 iconv openssl sqlite"
 
-if [ ! -r /etc/os-release ]; then
-  echo This requires /etc/os-release
-  exit 1
-fi
-. /etc/os-release
-if [ $ID != 'fedora' ]; then
-    echo This requires $OS_NAME Linux. You have $ID.
-    exit 1
-fi
+# cd to the directory where the script is
+# http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
 
-if [ $VERSION_ID -ne $OS_VERSION ]; then
-    echo This requires $OS_NAME version $OS_VERSION. You have $ID $VERSION_ID.
-    exit 1
-fi
-cat <<EOF
-*******************************************************************
-        Configuring Fedora for cross-compiling multi-threaded
-		 64-bit Windows programs with mingw.
-*******************************************************************
-
-This script will configure a fresh Fedora system to compile with
-mingw64.  Please perform the following steps:
-
-1. Install FEDORA$OS_VERSION, running with you as an administrator.
-   For a VM:
-
-   1a - download the ISO for the 64-bit DVD (not the live media) from:
-        http://fedoraproject.org/en/get-fedora-options#formats
-   1b - Create a new VM using this ISO as the boot.
-
-2. Run this script
-
-3. Run this script to configure the system to cross-compile bulk_extractor.
-   Parts of this script will be run as root using "sudo".
-
-press any key to continue...
-EOF
-read
-
-MPKGS="autoconf automake make flex gcc gcc-c++ git libtool "
-MPKGS+="md5deep osslsigncode patch wine wget bison zlib-devel "
-MPKGS+="java-1.8.0-openjdk-devel "
-MPKGS+="libxml2-devel libxml2-static openssl-devel "
-MPKGS+="expat-devel "
-MPKGS+="mingw64-gcc mingw64-gcc-c++ "
-MPKGS+="mingw32-nsis "
+MYDIR=$(dirname $(readlink -f $0))
+source $MYDIR/paths.bash
+bash $MYDIR/CONFIGURE_FEDORA${OS_VERSION}.bash
 
 if [ $USE_ICU == "YES" ]; then
     NEEDED_FILES="icu4c-53_1-mingw-w64-mkdir-compatibility.patch"
@@ -148,8 +99,7 @@ echo At this point we will keep going even if there is an error...
 INST=""
 # For these install both DLL and static
 # note that liblightgrep needs boost
-for lib in zlib gettext boost cairo pixman freetype fontconfig \
-    bzip2 expat winpthreads libgnurx libxml2 iconv openssl sqlite ; do
+for lib in $MINGW_PKGS ; do
   INST+=" mingw64-${lib} mingw64-${lib}-static"
 done
 sudo yum -y install $INST 2>&1 | grep -v "is already installed"
@@ -159,7 +109,6 @@ echo "Now performing a yum update to update system packages"
 sudo yum -y update  2>&1 | grep -v "is already installed"
 
 MINGW64=x86_64-w64-mingw32
-
 MINGW64_DIR=/usr/$MINGW64/sys-root/mingw
 
 # from here on, exit if any command fails
