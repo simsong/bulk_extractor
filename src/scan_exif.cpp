@@ -497,7 +497,7 @@ void exif_scanner::scan( const sbuf_t &sbuf )
 }
 
 extern "C"
-void scan_exif ( scanner_params &sp )
+void scan_exif( scanner_params &sp )
 {
     sp.check_version();
     if ( sp.phase==scanner_params::PHASE_INIT ){
