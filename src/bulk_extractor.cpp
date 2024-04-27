@@ -388,11 +388,14 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     //sc.get_global_config( "write_feature_sqlite3",&opt_write_sqlite3,"Write feature files to report.sqlite3" );
     sc.get_global_config( "report_read_errors",&cfg.opt_report_read_errors,"Report read errors" );
 
-    /* If we are getting help or info scanners, make a fake scanner set with new output directory */
+    /* If we are getting help or info scanners, make a fake scanner set with new output directory,
+     * then apply the scanner commands so we can get the feature recorders created...
+     */
     if ( result.count( "help" ) || result.count( "info_scanners" )) {
         struct feature_recorder_set::flags_t f;
         scanner_set ss( sc, f, nullptr);     // make a scanner_set but with no XML writer. We will create it below
         ss.add_scanners( scanners_builtin);
+        ss.apply_scanner_commands();
 
         if ( result.count( "help" )) {     // -h
             cout << options.help() << std::endl;
