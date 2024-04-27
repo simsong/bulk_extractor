@@ -16,7 +16,7 @@ struct exif_scanner {
         ss(sp.ss),
         exif_recorder(sp.named_feature_recorder("exif")),
         gps_recorder(sp.named_feature_recorder("gps")),
-        jpeg_recorder(sp.named_feature_recorder("jpeg_carved")) {
+        jpeg_recorder(sp.named_feature_recorder("jpeg")) {
     }
 
     entry_list_t entries {};

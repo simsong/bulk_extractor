@@ -28,4 +28,15 @@ read
 PKGS+="wget libtool autoconf automake libtool libxml2 libewf json-c re2 abseil pkg-config"
 
 $WHICH install $PKGS || (echo installation install failed; exit 1)
+
+echo ================
+echo Updating .bashrc
+echo 'PATH="/opt/homebrew/opt/libtool/libexec/gnubin:$PATH"' >> $HOME/.bashrc
+echo 'export PATH="/opt/homebrew/opt/libxml2/bin:$PATH"' >> $HOME/.bashrc
+echo 'export LDFLAGS="-L/opt/homebrew/lib -L/opt/homebrew/opt/libxml2/lib $LDFLAGS" ' >> $HOME/.bashrc
+echo 'export CPPFLAGS="-I/opt/homebrew/include -I/opt/homebrew/opt/libxml2/include $CPPFLAGS" ' >> $HOME/.bashrc
+echo 'export PKG_CONFIG_PATH="/opt/homebrew/opt/libxml2/lib/pkgconfig:$PKG_CONFIG_PATH"' >> $HOME/.bashrc
+echo ================
+source $HOME/.bashrc
+printenv
 exit 0

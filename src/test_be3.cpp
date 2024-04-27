@@ -374,6 +374,23 @@ TEST_CASE("e2e-CFReDS001", "[end-to-end]") {
     REQUIRE( ret==0 );
 }
 
+TEST_CASE("e2e-jpeg", "[end-to-end]") {
+    std::filesystem::path inpath = test_dir() / "len6192.jpg";
+    std::string inpath_string = inpath.string();
+    std::filesystem::path outdir = NamedTemporaryDirectory();
+    std::string outdir_string = outdir.string();
+    std::stringstream ss;
+    const char *argv[] = {"bulk_extractor",notify(), "-S","jpeg_carve_mode=2","-1q","-o",outdir_string.c_str(), inpath_string.c_str(), nullptr};
+    int ret = run_be(ss, argv);
+    REQUIRE( ret==0 );
+    auto lines = getLines( outdir / "report.xml" );
+    auto pos = std::find(lines.begin(), lines.end(),
+                         "    <hashdigest type='SHA1'>69cee372e6cd7e8e3181aebdb03fc53e18124bff</hashdigest>");
+    REQUIRE( pos != lines.end());
+}
+
+
+
 TEST_CASE("e2e-email_test", "[end-to-end]") {
     if (getenv_debug("DEBUG_FAST")){
         std::cerr << "DEBUG_FAST set; skipping e2e-email_test" << std::endl;
