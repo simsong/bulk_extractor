@@ -56,6 +56,7 @@ jobs:
       - name: "MacOS: run CONFIGURE_MACOS.bash"
         if: startsWith(matrix.os, 'macos')
         run: |
+          source $HOME/.bashrc
           echo "" | bash etc/CONFIGURE_MACOS.bash
 
       - name: "Ubuntu: run CONFIGURE_UBUNTU22LTS.bash"
