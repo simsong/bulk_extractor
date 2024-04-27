@@ -66,6 +66,7 @@ jobs:
 
       - name: Version Numbers
         run: |
+          source $HOME/.bashrc
           autoconf --version
           automake --version
           aclocal --version
@@ -90,6 +91,7 @@ jobs:
 
       - name: C++ checks not optimizaiton with address-sanitizer (Mac and Linux)
         run: |
+          source $HOME/.bashrc
           ./configure --disable-opt --enable-address-sanitizer
           echo == config.h ==
           cat config.h
@@ -104,6 +106,7 @@ jobs:
       - name: C++ checks optimization with address-sanitizer (Mac and Linux)
         run: |
           echo === Try Address Sanitizer Optimization ===
+          source $HOME/.bashrc
           ./configure --enable-address-sanitizer --enable-silent-rules --quiet
           make $MAKE_OPTS all
           pushd src
@@ -115,6 +118,7 @@ jobs:
       - name: C++ checks with thread-sanitizer on ubuntu are disabled
         if: startsWith(matrix.os, 'ubuntu-DISABLED')
         run: |
+          source $HOME/.bashrc
           bash bootstrap.sh
           ./configure --enable-thread-sanitizer --enable-silent-rules  --quiet
           make clean
@@ -128,6 +132,7 @@ jobs:
       - name: C++ checks with codecov
         if: startsWith(matrix.os, 'ubuntu')
         run: |
+          source $HOME/.bashrc
           bash bootstrap.sh
           ./configure --disable-opt CFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' CXXFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' --enable-silent-rules --quiet
           make clean
@@ -145,6 +150,7 @@ jobs:
 
       - name: distcheck
         run: |
+          source $HOME/.bashrc
           bash bootstrap.sh
           ./configure -q
           make distcheck
