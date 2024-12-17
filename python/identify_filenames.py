@@ -11,8 +11,8 @@ examined for every byte run, or a database of byte runs, which is
 examined for every feature.
 """
 
-import platform
-if platform.python_version_tuple() < ('3','2','0'):
+import sys
+if sys.version_info < (3,2):
     raise RuntimeError('This script now requires Python 3.2 or above')
 
 try:
