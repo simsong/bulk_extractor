@@ -157,7 +157,7 @@ jobs:
 
       - name: Upload installer as artifact
         if: startsWith(matrix.os, 'ubuntu')
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: bulk_extractor-${{ steps.ctx.outputs.version }}.tar.gz
           path: bulk_extractor-${{ steps.ctx.outputs.version }}.tar.gz
