@@ -9,9 +9,8 @@
 #include <numeric>
 
 #include "be20_api/scanner_params.h"
-
-//#include "be20_api/beregex.h"
-#include "histogram.h"
+#include "be20_api/scanner_set.h"
+#include "be20_api/histogram_def.h"
 #include "pattern_scanner.h"
 
 #include <lightgrep/api.h>
@@ -29,59 +28,54 @@ namespace { // local namespace hides these from other translation units
     };
 
     virtual void startup(const scanner_params& sp) {
-        sp.info.set_name("scan_lightgrep");
+        sp.info->set_name("lightgrep");
         sp.info->author          = "Jon Stewart";
         sp.info->description     = "Advanced search for patterns";
-        sp.info->scanner_version = "0.2";
-        sp.info->flags           = scanner_info::SCANNER_FIND_SCANNER | scanner_info::SCANNER_FAST_FIND;
-        sp.info->feature_names.insert(name());
-        sp.info->histogram_defs.insert(histogram_def( name(), "", "histogram", HistogramMaker::FLAG_LOWERCASE));
+        sp.info->scanner_version = "2.0";
+        sp.info->feature_defs.push_back(feature_recorder_def("lightgrep"));
+        sp.info->scanner_flags.find_scanner = true;
+        auto lowercase = histogram_def::flags_t(); 
+        lowercase.lowercase = true;
+        sp.info->histogram_defs.push_back(histogram_def(name(), name(), "", "", "histogram", lowercase));
     }
 
     virtual void init(const scanner_params& sp) {
     }
 
-    virtual void initScan(const scanner_params& sp) {
-      LgRec = &sp.named_feature_recorder(name());
-    }
-
     feature_recorder* LgRec;
-
-    void processHit(const LG_SearchHit& hit, const scanner_params& sp) {
-      LgRec->write_buf(sp.sbuf, hit.Start, hit.End - hit.Start);
-    }
 
   private:
     FindScanner(const FindScanner& x): PatternScanner(x), LgRec(x.LgRec) {}
 
     FindScanner& operator=(const FindScanner&);
   };
-
-  FindScanner Scanner;
-
-  CallbackFnType ProcessHit;
 }
 
 extern "C"
 void scan_lightgrep(struct scanner_params &sp) {
+  static std::unique_ptr<FindScanner> lg_findscanner_ptr;
+  static std::unique_ptr<LightgrepController> lg_ptr;
   switch (sp.phase) {
   case scanner_params::PHASE_INIT:
-    Scanner.startup(sp);
-    ProcessHit = static_cast<CallbackFnType>(&FindScanner::processHit);
+    lg_findscanner_ptr.reset(new FindScanner);
+    lg_findscanner_ptr->startup(sp);
     break;
-  case scanner_params::PHASE_INIT:
+  case scanner_params::PHASE_INIT2:
     {
-      Scanner.init(sp);
-      LightgrepController& lg(LightgrepController::Get());
-      lg.addUserPatterns(Scanner, &ProcessHit, sp.ss->sc); // note: FindOpts now passed in ScannerConfig
-      lg.regcomp();
-      break;
+      lg_findscanner_ptr->init(sp);
+      lg_ptr.reset(new LightgrepController);
+      if (!lg_ptr->addUserPatterns(*lg_findscanner_ptr, sp.ss->find_patterns(), sp.ss->find_files())) {
+        throw std::runtime_error("There was an error parsing the lightgrep scanner's patterns.");
+      }
+      lg_ptr->regcomp();
     }
+    break;
   case scanner_params::PHASE_SCAN:
-    LightgrepController::Get().scan(sp);
+    lg_ptr->scan(sp);
     break;
   case scanner_params::PHASE_SHUTDOWN:
-    Scanner.shutdown(sp);
+    lg_findscanner_ptr.reset();
+    lg_ptr.reset();
     break;
   default:
     break;
