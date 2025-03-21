@@ -60,6 +60,9 @@ SCANNER(winpe)
 SCANNER(winprefetch)
 SCANNER(wordlist)
 SCANNER(xor)
+#ifdef HAVE_YARAX
+SCANNER(yarax)
+#endif
 SCANNER(zip)
 
 

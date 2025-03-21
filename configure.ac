@@ -242,7 +242,7 @@ if test x"$yara" == x"yes"; then
   m4_ifdef([PKG_CHECK_MODULES],
            [PKG_CHECK_MODULES([yara], [yara_x_capi])])
 
-  AC_DEFINE([HAVE_LIBYARA_X_CAPI], 1, [Define to 1 if you have libyara_x_capi.])
+  AC_DEFINE([HAVE_YARAX], 1, [Define to 1 if you have libyara_x_capi.])
 
   CPPFLAGS="$CPPFLAGS $yara_CFLAGS"
   LIBS="$LIBS `$PKG_CONFIG --libs-only-l yara_x_capi`"
