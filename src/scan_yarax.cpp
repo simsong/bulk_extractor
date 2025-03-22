@@ -19,7 +19,7 @@ void scan_yarax(scanner_params &sp);
 auto YARA_RULE = R"(
 rule test_rule {
   strings:
-    $a = "asdfoiqweofiuxkbjvlkjdlksdjflaisjflkvlkfvnbzkdfjasoei;lzkxcvnkaslfkjqlkj"
+    $a = "test"
   condition:
     $a
 }
@@ -32,7 +32,12 @@ rules_ptr& getYaraRules() {
   return rules;
 }
 
-void yara_callback(const YRX_RULE* rule, void*) {
+struct YaraCallbackData {
+  feature_recorder &Recorder;
+  pos0_t Pos;
+};
+
+void yara_callback(const YRX_RULE* rule, void* userData) {
   const uint8_t* ruleID = nullptr;
   size_t   idLen = 0;
   if (yrx_rule_identifier(rule, &ruleID, &idLen) != SUCCESS) {
@@ -40,7 +45,8 @@ void yara_callback(const YRX_RULE* rule, void*) {
     return;
   }
   std::string_view ruleIDView(reinterpret_cast<const char*>(ruleID), idLen);
-  std::cout << "Matched rule: " << ruleIDView << std::endl;
+  const YaraCallbackData* data = static_cast<YaraCallbackData*>(userData);
+  data->Recorder.write(data->Pos, std::string(ruleIDView), "");
 }
 
 void scan_yarax(scanner_params &sp) {
@@ -50,6 +56,7 @@ void scan_yarax(scanner_params &sp) {
     sp.info->author          = "Jon Stewart";
     sp.info->description     = "Scans for yara-x rule matches in raw pages";
     sp.info->scanner_version = "1.0";
+    sp.info->feature_defs.push_back(feature_recorder_def("yara-x"));
     return;
   }
   else if (sp.phase == scanner_params::PHASE_INIT2) {
@@ -76,7 +83,9 @@ void scan_yarax(scanner_params &sp) {
     }
     std::unique_ptr<YRX_SCANNER, decltype(&yrx_scanner_destroy)> scanner(scannerRawPtr, yrx_scanner_destroy);
 
-    result = yrx_scanner_on_matching_rule(scanner.get(), yara_callback, nullptr);
+    YaraCallbackData callbackData{sp.named_feature_recorder("yara-x"), sp.sbuf->pos0};
+
+    result = yrx_scanner_on_matching_rule(scanner.get(), yara_callback, &callbackData);
     if (result != SUCCESS) {
       std::cerr << "Failed to set yara-x callback: " << yrx_last_error() << std::endl;
       return;
