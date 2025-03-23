@@ -34,7 +34,8 @@ rules_ptr& getYaraRules() {
 
 struct YaraCallbackData {
   feature_recorder &Recorder;
-  pos0_t Pos;
+  pos0_t PagePos;
+  size_t Offset;
 };
 
 void yara_callback(const YRX_RULE* rule, void* userData) {
@@ -46,7 +47,7 @@ void yara_callback(const YRX_RULE* rule, void* userData) {
   }
   std::string_view ruleIDView(reinterpret_cast<const char*>(ruleID), idLen);
   const YaraCallbackData* data = static_cast<YaraCallbackData*>(userData);
-  data->Recorder.write(data->Pos, std::string(ruleIDView), "");
+  data->Recorder.write(data->PagePos.shift(data->Offset), std::string(ruleIDView), "");
 }
 
 void scan_yarax(scanner_params &sp) {
@@ -83,7 +84,7 @@ void scan_yarax(scanner_params &sp) {
     }
     std::unique_ptr<YRX_SCANNER, decltype(&yrx_scanner_destroy)> scanner(scannerRawPtr, yrx_scanner_destroy);
 
-    YaraCallbackData callbackData{sp.named_feature_recorder("yara-x"), sp.sbuf->pos0};
+    YaraCallbackData callbackData{sp.named_feature_recorder("yara-x"), sp.sbuf->pos0, 0};
 
     result = yrx_scanner_on_matching_rule(scanner.get(), yara_callback, &callbackData);
     if (result != SUCCESS) {
@@ -104,6 +105,7 @@ void scan_yarax(scanner_params &sp) {
         return;
       }
       curBlock += len;
+      callbackData.Offset += len;
     }
   }
 }
