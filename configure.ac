@@ -217,6 +217,39 @@ if test x"$lightgrep" == x"yes"; then
 fi
 
 ################################################################
+## yara-x support
+##
+AC_ARG_ENABLE([yara],
+              AS_HELP_STRING([--disable-yara], [Disable YARA scanning]),
+              [],
+              [AC_DEFINE(USE_YARA, 1, [Use YARA scanning]) yara="yes"])
+if test x"$yara" == x"yes"; then
+  m4_ifndef([PKG_CHECK_MODULES],
+            [AC_MSG_ERROR([pkg-config autoconf macros are missing; try installing pkgconfig])])
+
+  if test x"$mingw" == x"yes" ; then
+    # get static flags when cross-compiling with mingw
+    PKG_CONFIG="$PKG_CONFIG --static"
+  else
+    # pkg-config doesn't look in /usr/local/lib on some systems
+    if test x"$PKG_CONFIG_PATH" != x; then
+      export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig
+    else
+      export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+    fi
+  fi
+
+  m4_ifdef([PKG_CHECK_MODULES],
+           [PKG_CHECK_MODULES([yara], [yara_x_capi])])
+
+  AC_DEFINE([HAVE_YARAX], 1, [Define to 1 if you have libyara_x_capi.])
+
+  CPPFLAGS="$CPPFLAGS $yara_CFLAGS"
+  LIBS="$LIBS `$PKG_CONFIG --libs-only-l yara_x_capi`"
+  LDFLAGS="$LDFLAGS `$PKG_CONFIG --libs-only-L --libs-only-other yara_x_capi`"
+fi
+
+################################################################
 ## LIBEWF support
 
 AC_ARG_ENABLE([libewf],
