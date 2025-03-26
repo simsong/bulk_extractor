@@ -5,6 +5,7 @@
  **/
 
 #include <iostream>
+#include <fstream>
 
 #include "config.h"
 #include "be20_api/scanner_params.h"
@@ -25,7 +26,14 @@ rule test_rule {
 }
 )";
 
+std::string readFile(const std::string &filename) {
+  std::ifstream infile(filename, std::ios::binary | std::ios::in);
+
+  return std::string(std::istreambuf_iterator<char>(infile), std::istreambuf_iterator<char>());
+}
+
 using rules_ptr = std::unique_ptr<YRX_RULES, decltype(&yrx_rules_destroy)>;
+using compiler_ptr = std::unique_ptr<YRX_COMPILER, decltype(&yrx_compiler_destroy)>;
 
 rules_ptr& getYaraRules() {
   static rules_ptr rules(nullptr, yrx_rules_destroy);
@@ -37,6 +45,48 @@ struct YaraCallbackData {
   pos0_t PagePos;
   size_t Offset;
 };
+
+void addYaraFile(const std::string &filename, YRX_COMPILER* compiler) {
+  std::string rule = readFile(filename);
+  YRX_RESULT result = yrx_compiler_add_source(compiler, rule.c_str());
+  if (result != SUCCESS) {
+    std::cerr << "Failed to add yara-x file " << filename << ": " << yrx_last_error() << std::endl;
+  }
+  else {
+    // std::cerr << "Added yara-x file " << filename << std::endl;
+  }
+}
+
+compiler_ptr gatherRules(const std::filesystem::path& rulesPath) {
+  compiler_ptr compiler(nullptr, yrx_compiler_destroy);
+
+  YRX_COMPILER* compilerRawPtr = nullptr;
+  YRX_RESULT result = yrx_compiler_create(0, &compilerRawPtr);
+  if (result != SUCCESS) {
+    std::cerr << "Failed to create yara-x compiler: " << yrx_last_error() << std::endl;
+    return compiler;
+  }
+  compiler.reset(compilerRawPtr);
+
+  size_t numFiles = 0;
+
+  if (std::filesystem::is_regular_file(rulesPath) && rulesPath.extension() == ".yar") {
+    addYaraFile(rulesPath, compiler.get());
+    ++numFiles;
+  }
+  else if (std::filesystem::is_directory(rulesPath)) {
+    // std::cerr << "Scanning directory " << rulesPath << " for .yar files" << std::endl;
+    for (const auto& entry : std::filesystem::recursive_directory_iterator(rulesPath)) {
+      // std::cerr << "Found " << entry.path() << " with extension " << entry.path().extension() << std::endl;
+      if (entry.is_regular_file() && entry.path().extension() == ".yar") {
+        addYaraFile(entry.path().string(), compiler.get());
+        ++numFiles;
+      }
+    }
+  }
+  // std::cerr << "Added " << numFiles << " .yar files" << std::endl;
+  return compiler;
+}
 
 void yara_callback(const YRX_RULE* rule, void* userData) {
   const uint8_t* ruleID = nullptr;
@@ -61,9 +111,9 @@ void scan_yarax(scanner_params &sp) {
     return;
   }
   else if (sp.phase == scanner_params::PHASE_INIT2) {
-    YRX_RULES* rules = nullptr;
-    YRX_RESULT result = yrx_compile(YARA_RULE, &rules);
-    if (result != SUCCESS) {
+    compiler_ptr compiler = gatherRules(std::filesystem::path(sp.sc.yara_x_rules_path));
+    YRX_RULES* rules = yrx_compiler_build(compiler.get());
+    if (rules == nullptr) {
       std::cerr << "Failed to compile yara-x rule: " << yrx_last_error() << std::endl;
       return;
     }
@@ -106,6 +156,11 @@ void scan_yarax(scanner_params &sp) {
       }
       curBlock += len;
       callbackData.Offset += len;
+    }
+    result = yrx_scanner_scan(scanner.get(), sbuf->get_buf(), sbuf->bufsize);
+    if (result != SUCCESS) {
+      std::cerr << "Failed to scan yara-x on whole sbuf: " << yrx_last_error() << std::endl;
+      return;
     }
   }
 }

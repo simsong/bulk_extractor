@@ -254,6 +254,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         ("V,version",       "Display PACKAGE_VERSION (currently) " PACKAGE_VERSION)
         ("w,stop_list",     "file to read stop list from", cxxopts::value<std::string>())
         ("Y,scan",          "specify <start>[-end] of area on disk to scan", cxxopts::value<std::string>())
+        ("yara_x_rules",    "directory containing yara-x rules", cxxopts::value<std::string>())
         ("z,page_start",    "specify a starting page number", cxxopts::value<int>())
         ("Z,zap",           "wipe the output directory (recursively) before starting")
         ("0,no_notify",     "disable real-time notification")
@@ -327,6 +328,10 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     } catch ( cxxopts::option_has_no_value_exception &e ) { }
 
     cfg.opt_recurse = result.count( "recurse" );
+
+    try {
+        sc.yara_x_rules_path = result["yara_x_rules"].as<std::string>();
+    } catch ( cxxopts::option_has_no_value_exception &e ) { }
 
     try {
         for ( const auto &it : result["set"].as<std::vector<std::string>>() ) {
