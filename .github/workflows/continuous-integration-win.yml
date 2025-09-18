@@ -1,8 +1,3 @@
-# This file based on https://gist.github.com/mwouts/9842452d020c08faf9e84a3bba38a66f
-# See: https://help.github.com/en/actions/reference/software-installed-on-github-hosted-runners
-# 2025-09-16 - ryeates - split *nix and windows out
-
-
 name: BE2 Build/Test/Package on Windows using msys (c++17)
 
 on:
@@ -28,9 +23,6 @@ jobs:
         with:
           submodules: recursive
 
-      # ----------------------------
-      # Windows ( mSYS2 UCRT64)
-      # ----------------------------
       - name: Setup MSYS2
         uses: msys2/setup-msys2@v2
         with:
@@ -44,26 +36,65 @@ jobs:
         run: |
           echo "::set-output name=version::$(grep 'AC_INIT(\[BULK_EXTRACTOR\]' configure.ac| cut -d',' -f2 | tr -d "[]")"
 
-      # Conditional step for push events
-      - name: Run on push
-        if: github.event_name == 'push'
-        run: echo "This runs on a push to any branch"
-
-      # Conditional step for pull_request events
-      - name: Run on pull request
-        if: github.event_name == 'pull_request'
-        run: echo "This runs on a pull request to the main branch"
-
-      - name: "Windows: run CONFIGURE_WINDOWS.bash"
+      - name: Install MSYS2 packages + libewf
         shell: msys2 {0}
         run: |
-          source $HOME/.bashrc
-          echo "" | bash etc/CONFIGURE_WINDOWS.bash
+          set -euo pipefail
+
+          echo "== Install required MSYS2 packages =="
+          pacman -Syu --noconfirm
+          pacman -S --needed --noconfirm \
+            base-devel automake autoconf libtool pkgconf \
+            mingw-w64-ucrt-x86_64-gcc \
+            mingw-w64-ucrt-x86_64-make \
+            mingw-w64-ucrt-x86_64-re2 \
+            mingw-w64-ucrt-x86_64-abseil-cpp \
+            mingw-w64-ucrt-x86_64-sqlite3 \
+            mingw-w64-ucrt-x86_64-openssl \
+            mingw-w64-ucrt-x86_64-expat \
+            mingw-w64-ucrt-x86_64-ncurses
+          
+          ln -s /ucrt64/bin/pkgconf.exe /ucrt64/bin/pkg-config.exe
+          
+          echo "== Build libewf from source =="
+          LIBEWF_URL="https://github.com/libyal/libewf/releases/download/20240506/libewf-experimental-20240506.tar.gz"
+          
+          if [[ -f "$SCRIPT_DIR/paths.bash" ]]; then
+            source "$SCRIPT_DIR/paths.bash"
+            LIBEWF_URL="${LIBEWF_URL:-$DEFAULT_LIBEWF_URL}"
+          else
+            LIBEWF_URL="$DEFAULT_LIBEWF_URL"
+          fi
+          
+          echo "Installing libewf from source..."
+          echo "Using URL: $LIBEWF_URL"
+          curl -LO "$LIBEWF_URL" || { echo "could not download $LIBEWF_URL"; exit 1; }
+          
+          tar xfz libewf-*.tar.gz
+          # Pick the first matching extracted directory
+          for d in libewf-*/; do
+            LIBEWF_DIR="$d"
+            break
+          done
+          
+          cd "$LIBEWF_DIR" || { echo "libewf source dir missing"; exit 1; }
+
+          ./configure --prefix=/ucrt64 
+          make -j"$(nproc)"
+          make install
+          cd ..
+
+          if command -v ewfinfo >/dev/null 2>&1; then
+            ewfinfo -h >/dev/null
+            echo "libewf successfully installed."
+          else
+            echo "ERROR: libewf installation failed."
+            exit 1
+          fi
 
       - name: Version Numbers
         shell: msys2 {0}
         run: |
-          source $HOME/.bashrc
           autoconf --version
           automake --version
           aclocal --version
@@ -90,11 +121,10 @@ jobs:
         run: |
           cat configure
 
-      - name: C++ checks not optimization with address-sanitizer (Mac and Linux)
+      - name: C++ checks not optimization with address-sanitizer
         shell: msys2 {0}
         run: |
-          source $HOME/.bashrc
-          ./configure --disable-opt --enable-address-sanitizer
+          ./configure --disable-opt --enable-address-sanitizer 
           echo == config.h ==
           cat config.h
           echo ==============
@@ -105,12 +135,10 @@ jobs:
           popd
           make distclean
 
-      - name: C++ checks optimization with address-sanitizer (Mac and Linux)
+      - name: C++ checks optimization with address-sanitizer
         shell: msys2 {0}
         run: |
-          echo === Try Address Sanitizer Optimization ===
-          source $HOME/.bashrc
-          ./configure --enable-address-sanitizer --enable-silent-rules --quiet
+          ./configure --enable-address-sanitizer --enable-silent-rules --quiet 
           make $MAKE_OPTS all
           pushd src
           make $MAKE_OPTS bulk_extractor
@@ -118,16 +146,15 @@ jobs:
           popd
           make distclean
 
-      - name: C++ checks with thread-sanitizer on ubuntu are disabled
+      - name: C++ checks with thread-sanitizer
         shell: msys2 {0}
         run: |
-          source $HOME/.bashrc
           bash bootstrap.sh
-          ./configure --enable-thread-sanitizer --enable-silent-rules  --quiet
+          ./configure --enable-thread-sanitizer --enable-silent-rules --quiet 
           make clean
-          make $MAKE_OPTS  all
+          make $MAKE_OPTS all
           pushd src
-          make $MAKE_OPTS  bulk_extractor
+          make $MAKE_OPTS bulk_extractor
           make check || (cat test-suite.log; exit 1)
           popd
           make distclean
@@ -135,11 +162,10 @@ jobs:
       - name: C++ checks with codecov
         shell: msys2 {0}
         run: |
-          source $HOME/.bashrc
           bash bootstrap.sh
           ./configure --disable-opt CFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' CXXFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' --enable-silent-rules --quiet
           make clean
-          make $MAKE_OPTS  check || (echo ==error== ; cat test-suite.log; exit 1)
+          make $MAKE_OPTS check || (echo ==error== ; cat test-suite.log; exit 1)
 
       - name: upload codecov report
         shell: msys2 {0}
@@ -154,16 +180,15 @@ jobs:
       - name: distcheck
         shell: msys2 {0}
         run: |
-          source $HOME/.bashrc
           bash bootstrap.sh
-          ./configure -q
+          ./configure -q 
           make distcheck
 
       - name: Upload installer as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: bulk_extractor-${{ steps.ctx.outputs.version }}.tar.gz
-          path: bulk_extractor-${{ steps.ctx.outputs.version }}.tar.gz
+          name: bulk_extractor-${{ steps.extract_version.outputs.version }}.tar.gz
+          path: bulk_extractor-${{ steps.extract_version.outputs.version }}.tar.gz
 
       - uses: ammaraskar/gcc-problem-matcher@0.2.0
         name: GCC Problem Matcher
