@@ -18,6 +18,24 @@ else
 fi
 
 # ------------------------------------------------------------
+# Setup required MSYS2 packages
+# ------------------------------------------------------------
+
+pacman -Syu --noconfirm
+
+PKGS+="base-devel automake autoconf libtool pkgconf
+         mingw-w64-ucrt-x86_64-gcc
+         mingw-w64-ucrt-x86_64-make
+         mingw-w64-ucrt-x86_64-re2
+         mingw-w64-ucrt-x86_64-abseil-cpp
+         mingw-w64-ucrt-x86_64-sqlite3
+         mingw-w64-ucrt-x86_64-openssl
+         mingw-w64-ucrt-x86_64-expat
+         mingw-w64-ucrt-x86_64-ncurses"
+
+pacman -S --needed --noconfirm $PKGS || (echo msys package install failed; exit 1)
+
+# ------------------------------------------------------------
 # Setup libewf
 # ------------------------------------------------------------
 
@@ -51,7 +69,7 @@ echo "Using libewf source directory: $LIBEWF_DIR"
 cd "$LIBEWF_DIR" || { echo "libewf source dir missing"; exit 1; }
 
 # Runs locally without issue - just force the check
-./configure --prefix=/ucrt64 ac_cv_func_swprintf=yes
+./configure --prefix=/ucrt64
 make -j"$(nproc)"
 make install
 cd ..
@@ -64,24 +82,6 @@ else
   echo "ERROR: libewf installation failed."
   exit 1
 fi
-
-# ------------------------------------------------------------
-# Setup required MSYS2 packages
-# ------------------------------------------------------------
-
-pacman -Syu --noconfirm
-
-PKGS+="base-devel automake autoconf pkgconf
-         mingw-w64-ucrt-x86_64-gcc
-         mingw-w64-ucrt-x86_64-make
-         mingw-w64-ucrt-x86_64-re2
-         mingw-w64-ucrt-x86_64-abseil-cpp
-         mingw-w64-ucrt-x86_64-sqlite3
-         mingw-w64-ucrt-x86_64-openssl
-         mingw-w64-ucrt-x86_64-expat
-         mingw-w64-ucrt-x86_64-ncurses"
-
-pacman -S --needed --noconfirm $PKGS || (echo msys package install failed; exit 1)
 
 echo "============================================================"
 echo " Setup complete"
