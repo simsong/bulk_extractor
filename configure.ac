@@ -243,12 +243,26 @@ AC_MSG_NOTICE([libewf is $libewf])
 if test x"$libewf" == x"yes" ; then
   AC_CHECK_HEADER([libewf.h],
 	[AC_DEFINE(HAVE_LIBEWF_H,1,[Do we have libewf.h?])]
-	[AC_CHECK_LIB([ewf],[libewf_get_version],,
-		[AC_MSG_WARN([libewf not found; no E01 support])]
-		[libewf=no])],
-	[AC_MSG_WARN([libewf.h not found; no E01 support])]
-	[libewf=no])
-  AC_CHECK_FUNCS([libewf_handle_get_utf8_header_value_notes libewf_error_backtrace_fprint libewf_handle_close libewf_handle_free libewf_handle_read_buffer_at_offset libewf_handle_read_random])
+    [AC_CHECK_LIB([ewf],[libewf_get_version],,
+ 		[AC_MSG_WARN([libewf not found; no E01 support])]
+ 		[libewf=no])],
+ 	[AC_MSG_WARN([libewf.h not found; no E01 support])]
+ 	[libewf=no])
+
+   # Explicitly check for transitive libewf dependencies
+   AC_CHECK_LIB([gcrypt], [gcry_md_open],
+     [LIBS="$LIBS -lgcrypt"],
+     [AC_MSG_WARN([libgcrypt not found; libewf may fail])])
+
+   AC_CHECK_LIB([gpg-error], [gpg_strerror],
+     [LIBS="$LIBS -lgpg-error"],
+     [AC_MSG_WARN([libgpg-error not found; libewf may fail])])
+
+   AC_CHECK_LIB([dl], [dlopen],
+     [LIBS="$LIBS -ldl"],
+     [AC_MSG_WARN([libdl not found; dynamic loading may fail])])
+
+   AC_CHECK_FUNCS([libewf_handle_get_utf8_header_value_notes libewf_error_backtrace_fprint libewf_handle_close libewf_handle_free libewf_handle_read_buffer_at_offset libewf_handle_read_random])
 fi
 AC_MSG_NOTICE([libewf is now $libewf])
 
