@@ -54,7 +54,10 @@ jobs:
             mingw-w64-ucrt-x86_64-sqlite3 \
             mingw-w64-ucrt-x86_64-openssl \
             mingw-w64-ucrt-x86_64-expat \
-            mingw-w64-ucrt-x86_64-ncurses
+            mingw-w64-ucrt-x86_64-ncurses \
+            mingw-w64-ucrt-x86_64-libgcrypt \
+            mingw-w64-ucrt-x86_64-libgpg-error
+          
           
           echo "== Build libewf from source =="
           LIBEWF_URL="https://github.com/libyal/libewf/releases/download/20240506/libewf-experimental-20240506.tar.gz"
@@ -121,11 +124,26 @@ jobs:
       - name: C++ checks not optimization with address-sanitizer
         shell: msys2 {0}
         run: |
+          echo "=== Before injection ==="
+          echo "LIBS:    $LIBS"
+          echo "LDFLAGS: $LDFLAGS"
+          echo "CPPFLAGS: $CPPFLAGS"
+          
+          echo "=== pkgconf check (libewf) ==="
+          pkgconf --print-errors --cflags libewf || echo "no cflags from pkgconf"
+          pkgconf --print-errors --libs libewf || echo "no libs from pkgconf"
+          pkgconf --print-errors --static --libs libewf || echo "no static libs from pkgconf"
+  
           # Expand libewf deps to match Ubuntu build and inject manually
           EXTRA_LIBS="$(pkgconf --static --libs libewf) -lgcrypt -lgpg-error"
           export LIBS="$EXTRA_LIBS $LIBS"
-          export LDFLAGS="-L/ucrt64/lib $LDFLAGS"
-          export CPPFLAGS="$(pkgconf --cflags libewf) $CPPFLAGS"
+          export LDFLAGS="$LDFLAGS -L/ucrt64/lib"
+          
+          echo "=== After injection ==="
+          echo "EXTRA_LIBS: $EXTRA_LIBS"
+          echo "LIBS:       $LIBS"
+          echo "LDFLAGS:    $LDFLAGS"
+          echo "CPPFLAGS:   $CPPFLAGS"
           
           ./configure --disable-opt --enable-address-sanitizer 
           echo == config.h ==
