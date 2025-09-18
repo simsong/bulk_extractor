@@ -125,7 +125,7 @@ jobs:
           echo == config.h ==
           cat config.h
           echo ==============
-          make $MAKE_OPTS all
+          make
           pushd src
           make $MAKE_OPTS bulk_extractor
           make check || (cat test-suite.log; exit 1)
