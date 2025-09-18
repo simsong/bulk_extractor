@@ -124,6 +124,9 @@ jobs:
       - name: C++ checks not optimization with address-sanitizer
         shell: msys2 {0}
         run: |
+       # Path seperator issues in 2025
+          export MSYS2_ARG_CONV_EXCL="*"
+          
           echo "=== Before injection ==="
           echo "LIBS:    $LIBS"
           echo "LDFLAGS: $LDFLAGS"
