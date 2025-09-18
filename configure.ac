@@ -16,7 +16,7 @@ AC_MSG_NOTICE([at start CPPFLAGS are $CPPFLAGS])
 ## Includes
 
 AC_CONFIG_FILES([Makefile doc/Makefile doc/latex_manuals/Makefile src/Makefile src/tests/Makefile man/Makefile \
-                 specfiles/Makefile specfiles/bulk_extractor.spec.m4 tests/Makefile ])
+                 specfiles/Makefile specfiles/bulk_extractor.spec.m4:specfiles/bulk_extractor.spec.m4.in tests/Makefile ])
 
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_AUX_DIR([build-aux])
