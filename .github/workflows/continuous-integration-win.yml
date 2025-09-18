@@ -85,6 +85,9 @@ jobs:
             echo "ERROR: libewf installation failed."
             exit 1
           fi
+          
+          pkgconf --libs libewf
+          pkgconf --cflags libewf
 
       - name: Version Numbers
         shell: msys2 {0}
