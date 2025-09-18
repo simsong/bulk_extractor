@@ -13,10 +13,10 @@ AC_CONFIG_MACRO_DIR(m4)
 
 AC_MSG_NOTICE([at start CPPFLAGS are $CPPFLAGS])
 ################################################################
-## Includes (output files, not m4)
+## Includes
 
 AC_CONFIG_FILES([Makefile doc/Makefile doc/latex_manuals/Makefile src/Makefile src/tests/Makefile man/Makefile \
-                 specfiles/Makefile specfiles/bulk_extractor.spec tests/Makefile ])
+                 specfiles/Makefile specfiles/bulk_extractor.spec.m4 tests/Makefile ])
 
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_AUX_DIR([build-aux])
