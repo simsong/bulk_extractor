@@ -133,6 +133,12 @@ jobs:
           pkgconf --print-errors --cflags libewf || echo "no cflags from pkgconf"
           pkgconf --print-errors --libs libewf || echo "no libs from pkgconf"
           pkgconf --print-errors --static --libs libewf || echo "no static libs from pkgconf"
+          
+          echo "=== Compiler check ==="
+          which gcc || echo "gcc not found"
+          which g++ || echo "g++ not found"
+          gcc -v || echo "gcc -v failed"
+          g++ -v || echo "g++ -v failed"
   
           # Expand libewf deps to match Ubuntu build and inject manually
           EXTRA_LIBS="$(pkgconf --static --libs libewf) -lgcrypt -lgpg-error"
@@ -155,6 +161,14 @@ jobs:
           make check || (cat test-suite.log; exit 1)
           popd
           make distclean
+
+      - name: Dump config.log on failure
+        if: failure()   # only runs if previous step failed
+        shell: msys2 {0}
+        run: |
+          echo "=== BEGIN config.log ==="
+          cat config.log || echo "no config.log found"
+          echo "=== END config.log ==="
 
       - name: C++ checks optimization with address-sanitizer
         shell: msys2 {0}
