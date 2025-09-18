@@ -35,7 +35,7 @@ jobs:
         uses: msys2/setup-msys2@v2
         with:
           update: true
-          msystem: ucrt64
+          msystem: UCRT64
           path-type: inherit
 
       - name: Extract Version from configure.ac
