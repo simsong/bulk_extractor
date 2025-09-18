@@ -35,6 +35,11 @@ PKGS+="base-devel automake autoconf libtool pkgconf
 
 pacman -S --needed --noconfirm $PKGS || (echo msys package install failed; exit 1)
 
+# Make sure Autotools uses pkgconf instead of missing pkgconfig
+export PKG_CONFIG=pkgconf
+# Ensure it can see UCRT64 .pc files
+export PKG_CONFIG_PATH="/ucrt64/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+
 # ------------------------------------------------------------
 # Setup libewf
 # ------------------------------------------------------------
@@ -68,7 +73,6 @@ echo "Using libewf source directory: $LIBEWF_DIR"
 
 cd "$LIBEWF_DIR" || { echo "libewf source dir missing"; exit 1; }
 
-# Runs locally without issue - just force the check
 ./configure --prefix=/ucrt64
 make -j"$(nproc)"
 make install
