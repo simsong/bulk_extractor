@@ -50,7 +50,8 @@ echo "Using libewf source directory: $LIBEWF_DIR"
 
 cd "$LIBEWF_DIR" || { echo "libewf source dir missing"; exit 1; }
 
-./configure --prefix=/ucrt64
+# Runs locally without issue - just force the check
+./configure --prefix=/ucrt64 ac_cv_func_swprintf=yes
 make -j"$(nproc)"
 make install
 cd ..
