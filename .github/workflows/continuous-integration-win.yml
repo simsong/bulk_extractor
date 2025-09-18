@@ -58,19 +58,13 @@ jobs:
           
           echo "== Build libewf from source =="
           LIBEWF_URL="https://github.com/libyal/libewf/releases/download/20240506/libewf-experimental-20240506.tar.gz"
-          
-          if [[ -f "$SCRIPT_DIR/paths.bash" ]]; then
-            source "$SCRIPT_DIR/paths.bash"
-            LIBEWF_URL="${LIBEWF_URL:-$DEFAULT_LIBEWF_URL}"
-          else
-            LIBEWF_URL="$DEFAULT_LIBEWF_URL"
-          fi
-          
           echo "Installing libewf from source..."
           echo "Using URL: $LIBEWF_URL"
+          
           curl -LO "$LIBEWF_URL" || { echo "could not download $LIBEWF_URL"; exit 1; }
           
           tar xfz libewf-*.tar.gz
+          
           # Pick the first matching extracted directory
           for d in libewf-*/; do
             LIBEWF_DIR="$d"
