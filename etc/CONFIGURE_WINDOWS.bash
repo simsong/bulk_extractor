@@ -27,7 +27,17 @@ echo "Using URL: $LIBEWF_URL"
 
 curl -LO "$LIBEWF_URL" || { echo "could not download $LIBEWF_URL"; exit 1; }
 
-LIBEWF_DIR=$(tar tzf libewf-*.tar.gz | head -1 | cut -f1 -d"/")
+echo "Extracting libewf..."
+tar xfz libewf-*.tar.gz
+
+# Pick the first matching extracted directory
+for d in libewf-*/; do
+  LIBEWF_DIR="$d"
+  break
+done
+
+echo "Using libewf source directory: $LIBEWF_DIR"
+
 cd "$LIBEWF_DIR" || { echo "libewf source dir missing"; exit 1; }
 
 ./configure --prefix=/ucrt64
