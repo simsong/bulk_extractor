@@ -16,6 +16,8 @@ jobs:
       DEBUG_5G: FALSE
       DEBUG_FAST: TRUE
       MAKE_OPTS: -j2
+      PKG_CONFIG: pkgconf
+      PKG_CONFIG_PATH: /ucrt64/lib/pkgconfig
 
     steps:
       - name: Checkout
@@ -53,8 +55,6 @@ jobs:
             mingw-w64-ucrt-x86_64-openssl \
             mingw-w64-ucrt-x86_64-expat \
             mingw-w64-ucrt-x86_64-ncurses
-          
-          ln -s /ucrt64/bin/pkgconf.exe /ucrt64/bin/pkg-config.exe
           
           echo "== Build libewf from source =="
           LIBEWF_URL="https://github.com/libyal/libewf/releases/download/20240506/libewf-experimental-20240506.tar.gz"
