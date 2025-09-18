@@ -162,13 +162,16 @@ jobs:
           popd
           make distclean
 
-      - name: Dump config.log on failure
+      - name: Dump config on failure
         if: failure()   # only runs if previous step failed
         shell: msys2 {0}
         run: |
           echo "=== BEGIN config.log ==="
           cat config.log || echo "no config.log found"
           echo "=== END config.log ==="
+          echo "=== BEGIN config.status ==="
+          cat config.status || echo "no config.status found"
+          echo "=== END config.status ==="  
 
       - name: C++ checks optimization with address-sanitizer
         shell: msys2 {0}
