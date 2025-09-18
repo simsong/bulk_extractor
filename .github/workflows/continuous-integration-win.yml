@@ -121,6 +121,12 @@ jobs:
       - name: C++ checks not optimization with address-sanitizer
         shell: msys2 {0}
         run: |
+          # Expand libewf deps to match Ubuntu build and inject manually
+          EXTRA_LIBS="$(pkgconf --static --libs libewf) -lgcrypt -lgpg-error"
+          export LIBS="$EXTRA_LIBS $LIBS"
+          export LDFLAGS="-L/ucrt64/lib $LDFLAGS"
+          export CPPFLAGS="$(pkgconf --cflags libewf) $CPPFLAGS"
+          
           ./configure --disable-opt --enable-address-sanitizer 
           echo == config.h ==
           cat config.h
