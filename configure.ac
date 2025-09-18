@@ -2,7 +2,7 @@
 # bulk_extractor configure.ac
 #
 # Process this file with autoconf to produce a configure script.
-# Order is largely irrevellant, although it must start with AC_INIT and end with AC_OUTPUT
+# Order is largely irrelevant, although it must start with AC_INIT and end with AC_OUTPUT
 # See http://autotoolset.sourceforge.net/tutorial.html
 # and http://www.openismus.com/documents/linux/automake/automake.shtml
 # and http://www.bioinf.uni-freiburg.de/~mmann/HowTo/automake.html
@@ -13,10 +13,10 @@ AC_CONFIG_MACRO_DIR(m4)
 
 AC_MSG_NOTICE([at start CPPFLAGS are $CPPFLAGS])
 ################################################################
-## Includes
+## Includes (output files, not m4)
 
 AC_CONFIG_FILES([Makefile doc/Makefile doc/latex_manuals/Makefile src/Makefile src/tests/Makefile man/Makefile \
-                 specfiles/Makefile specfiles/bulk_extractor.spec.m4 tests/Makefile ])
+                 specfiles/Makefile specfiles/bulk_extractor.spec tests/Makefile ])
 
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_AUX_DIR([build-aux])
@@ -54,6 +54,7 @@ m4_include([src/be20_api/m4/slg_address_sanitizer.m4])
 m4_include([src/be20_api/m4/slg_noopt.m4])
 m4_include([src/be20_api/be20_configure.m4])
 
+#TODO check if this is adding value - setting up some win2k stuff is a little dubious
 m4_include([m4/slg_mingw_support.m4])
 m4_include([m4/slg_searchdirs.m4])
 
@@ -143,22 +144,21 @@ AC_CHECK_FUNCS([getuid getpwuid gethostname getrusage gmtime_r getprogname isxdi
 AC_CHECK_FUNCS([CreateProcess LoadLibrary IncrementAtomic InterlockedIncrement])
 
 ################################################################
-## Termcap / terminfo support
+## terminfo support
 ##
 # Prefer ncurses/terminfo over ancient termcap for tgetent/tgetnum/tgetstr.
-AC_SEARCH_LIBS([tgetent], [ncurses tinfo termcap],
-  [
-    AC_DEFINE([HAVE_LIBTERMCAP], [1],
-      [Define if termcap/terminfo functions (tgetent, tgetnum, tgetstr) are available])
-    AC_MSG_NOTICE([Found termcap/terminfo library: $ac_cv_search_tgetent])
-  ],
-  [
-    AC_MSG_WARN([No termcap/terminfo library found; disabling fancy terminal support])
-  ])
+AC_SEARCH_LIBS([tgetent], [ncurses tinfo],
+  [LIBS="$LIBS $ac_cv_search_tgetent"
+   AC_MSG_NOTICE([Found terminfo library: $ac_cv_search_tgetent])],
+  [AC_MSG_WARN([No terminfo library found; disabling fancy terminal support])])
 
-## Winsock2 needed on MinGW for htons/ntohs/htonl
+################################################################
+## Winsock support
+##
+# Winsock2 needed on MinGW for htons/ntohs/htonl
 AC_CHECK_LIB([ws2_32], [ntohs],
-  [AC_MSG_NOTICE([Using Winsock2 library for ntohs/htons/htonl])],
+  [LIBS="$LIBS -lws2_32"
+   AC_MSG_NOTICE([Using Winsock2 library for ntohs/htons/htonl])],
   [AC_MSG_WARN([Winsock2 not found; network checksum functions may fail])])
 
 ## dlopen is now itself in a different library
