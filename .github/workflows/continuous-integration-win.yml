@@ -55,11 +55,13 @@ jobs:
         run: echo "This runs on a pull request to the main branch"
 
       - name: "Windows: run CONFIGURE_WINDOWS.bash"
+        shell: msys2 {0}
         run: |
           source $HOME/.bashrc
           echo "" | bash etc/CONFIGURE_WINDOWS.bash
 
       - name: Version Numbers
+        shell: msys2 {0}
         run: |
           source $HOME/.bashrc
           autoconf --version
@@ -69,10 +71,12 @@ jobs:
           g++ --version
 
       - name: printenv
+        shell: msys2 {0}
         run: |
           printenv
 
       - name: Files
+        shell: msys2 {0}
         run: |
           find . -print
 
