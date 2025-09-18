@@ -142,8 +142,24 @@ AC_CHECK_HEADERS([dlfcn.h fcntl.h inttypes.h libgen.h limits.h mmap.h pwd.h sign
 AC_CHECK_FUNCS([getuid getpwuid gethostname getrusage gmtime_r getprogname isxdigit ishexnumber le64toh localtime_r _lseeki64 inet_ntop ioctl isatty pread64 pread printf mmap munmap MD5 mkstemp mktemp sleep SleepEx strptime usleep vasprintf _NSGetExecutablePath])
 AC_CHECK_FUNCS([CreateProcess LoadLibrary IncrementAtomic InterlockedIncrement])
 
-## v2.0 uses termcap! So modern
-AC_CHECK_LIB([termcap], [tgetstr])
+################################################################
+## Termcap / terminfo support
+##
+# Prefer ncurses/terminfo over ancient termcap for tgetent/tgetnum/tgetstr.
+AC_SEARCH_LIBS([tgetent], [ncurses tinfo termcap],
+  [
+    AC_DEFINE([HAVE_LIBTERMCAP], [1],
+      [Define if termcap/terminfo functions (tgetent, tgetnum, tgetstr) are available])
+    AC_MSG_NOTICE([Found termcap/terminfo library: $ac_cv_search_tgetent])
+  ],
+  [
+    AC_MSG_WARN([No termcap/terminfo library found; disabling fancy terminal support])
+  ])
+
+## Winsock2 needed on MinGW for htons/ntohs/htonl
+AC_CHECK_LIB([ws2_32], [ntohs],
+  [AC_MSG_NOTICE([Using Winsock2 library for ntohs/htons/htonl])],
+  [AC_MSG_WARN([Winsock2 not found; network checksum functions may fail])])
 
 ## dlopen is now itself in a different library
 ## Explicitly check for dlopen library before checking for dlopen

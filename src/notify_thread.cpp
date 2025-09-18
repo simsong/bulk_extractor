@@ -10,11 +10,33 @@
 #include <sys/resource.h>
 #endif
 
+// Force ncurses to expose termcap-style functions (tgetent, tgetnum, tgetstr)
+// on MSYS2/MinGW. Must be defined *before* including <curses.h> or <term.h>.
+#ifndef NCURSES_OSPEED_T
+#define NCURSES_OSPEED_T short
+#endif
+
+#ifndef NCURSES_TERM_H
+#define NCURSES_TERM_H 1
+#endif
+
 #ifdef HAVE_CURSES_H
 #include <curses.h>
 #endif
 #ifdef HAVE_TERM_H
 #include <term.h>
+#endif
+
+
+// MSYS2/MinGW ncurses does not always declare the old termcap-style
+// functions (tgetent, tgetnum, tgetstr). Provide forward declarations
+// so the compiler sees them; linker will still resolve from ncurses.
+#ifdef _WIN32
+extern "C" {
+    int tgetent(char *bp, const char *name);
+    int tgetnum(const char *id);
+    char *tgetstr(const char *id, char **area);
+}
 #endif
 
 int notify_thread::terminal_width( int default_width )

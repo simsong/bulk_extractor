@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <memory>
-
+#include <cstdint>  // for uint16_t, uint32_t, etc.
 
 
 /**

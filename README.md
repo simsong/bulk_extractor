@@ -46,6 +46,7 @@ This release of bulk_extractor requires C++17 and has been tested to compile on 
 * Fedora 36 (most recently)
 * Ubuntu 20.04LTS
 * MacOS 13.2.1
+* Windows 10 with msys2-x86_64-20250830.exe
 
 You should *always* start with a fresh VM and prepare the system using the appropriate prep script in the `etc/` directory.
 
@@ -101,17 +102,43 @@ Other hints for debugging:
 
 BUILDING ON WINDOWS
 ===================
-Note: Currenlty bulk_extractor 2.1 does not build on windows, but 2.0 does.
+Currently bulk_extractor 2.1 builds on windows.
 
-If you wish to build for Windows, you should cross-compile from a Fedora system. Start with a clean VM and use these commands:
+There are a few more steps to take care of before running `make install`.
 
+> **IMPORTANT -** Ensure that Be_API sub-module link is pointing at a commit after `https://github.com/simsong/be20_api/pull/118` is merged!    
+
+> Toolchain setup is described in be20_api\README_WIN.md
+
+1. Follow the toolchain setup instructions then open a shell using `ucrt64.exe`
+2. `git clone --recurse-submodules https://github.com/simsong/bulk_extractor.git`
+3. or `git submodule update --init --recursive` for an existing clone
+
+`libewf` is required for `E01` support and is not prebuilt like `RE2` - https://packages.msys2.org/base/mingw-w64-re2 and `abseil` https://packages.msys2.org/packages/mingw-w64-x86_64-abseil-cpp 
+
+4. In the ucrt64 shell run the following commands
+
+```shell 
+wget https://github.com/libyal/libewf/releases/download/20240506/libewf-experimental-20240506.tar.gz
+tar xvf libewf-experimental-20240506.tar.gz
+cd libewf-20240506
+./configure --prefix=/ucrt64
+make
+make install
 ```
-$ git clone --recurse-submodules https://github.com/simsong/bulk_extractor.git
-$ cd bulk_extractor/etc
-$ bash CONFIGURE_FEDORA36_win64.bash
-$ cd ..
-$ make win64
+This will end up here - `libewf-3.dll => /ucrt64/bin/libewf-3.dll` which BE will pickup
+
+5. Then in the ucrt shell
+```shell
+./bootstrap.sh
+./configure
+make
+make install
 ```
+6. Now we have `src/bulk_extractor.exe`, to make it portable and runnable from a Windows cmd run `src/copy-deps-win.sh` which will populate `src/dist` with all the required `.dll` files. The dist folder can be used to launch BE directly or can be zipped and run anywhere on Windows.
+
+7. Run `bulk_extractor.exe -V` in `cmd` to confirm.
+
 
 
 

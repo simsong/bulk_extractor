@@ -1,15 +1,9 @@
 # This file based on https://gist.github.com/mwouts/9842452d020c08faf9e84a3bba38a66f
 # See: https://help.github.com/en/actions/reference/software-installed-on-github-hosted-runners
 # 2025-09-16 - ryeates - split *nix and windows out
-# 2022-08-06 - slg - Updated os to be 'macos-latest', 'ubuntu-20.04', 'ubuntu-22.04'
-#                    See https://github.com/actions/virtual-environments for details.
-# 2020-06-22 - slg - customized
-# 2020-06-27 - slg - expanded to G++ for MacOS
-# 2020-07-03 - slg - ported to be13_api; removed python (be13_api doesn't use python)
-# 2021-05-07 - slg - Started work again
-# 2022-02-10 - slg - renamed be20_api. Our work here is done.
 
-name: BE2 Build/Test/Package on MacOS and Ubuntu (c++17)
+
+name: BE2 Build/Test/Package on Windows using msys (c++17)
 
 on:
   push:
@@ -17,15 +11,11 @@ on:
       - '**' # This will trigger the action for all branches
   pull_request:
     branches:
-      - main # Specify the branches for which pull_request events should trigger the action
+      - main
 
 jobs:
   build:
-    strategy:
-      matrix:
-        os: [macos-latest, ubuntu-22.04]
-        platform: [x64, arm64]
-    runs-on: ${{ matrix.os }}
+    runs-on: 'windows-latest'
 
     env:
       DEBUG_5G: FALSE
@@ -33,13 +23,23 @@ jobs:
       MAKE_OPTS: -j2
 
     steps:
-      # https://github.com/actions/checkout
       - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
+      # ----------------------------
+      # Windows ( mSYS2 UCRT64)
+      # ----------------------------
+      - name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          update: true
+          msystem: ucrt64
+          path-type: inherit
+
       - name: Extract Version from configure.ac
+        shell: msys2 {0}
         id: extract_version
         run: |
           echo "::set-output name=version::$(grep 'AC_INIT(\[BULK_EXTRACTOR\]' configure.ac| cut -d',' -f2 | tr -d "[]")"
@@ -54,16 +54,10 @@ jobs:
         if: github.event_name == 'pull_request'
         run: echo "This runs on a pull request to the main branch"
 
-      - name: "MacOS: run CONFIGURE_MACOS.bash"
-        if: startsWith(matrix.os, 'macos')
+      - name: "Windows: run CONFIGURE_WINDOWS.bash"
         run: |
           source $HOME/.bashrc
-          echo "" | bash etc/CONFIGURE_MACOS.bash
-
-      - name: "Ubuntu: run CONFIGURE_UBUNTU22LTS.bash"
-        if: startsWith(matrix.os, 'ubuntu')
-        run: |
-          echo "" | bash etc/CONFIGURE_UBUNTU22LTS.bash
+          echo "" | bash etc/CONFIGURE_WINDOWS.bash
 
       - name: Version Numbers
         run: |
@@ -83,14 +77,17 @@ jobs:
           find . -print
 
       - name: Make configure script
+        shell: msys2 {0}
         run: |
           bash bootstrap.sh
 
       - name: Dump configure script
+        shell: msys2 {0}
         run: |
           cat configure
 
-      - name: C++ checks not optimizaiton with address-sanitizer (Mac and Linux)
+      - name: C++ checks not optimization with address-sanitizer (Mac and Linux)
+        shell: msys2 {0}
         run: |
           source $HOME/.bashrc
           ./configure --disable-opt --enable-address-sanitizer
@@ -105,6 +102,7 @@ jobs:
           make distclean
 
       - name: C++ checks optimization with address-sanitizer (Mac and Linux)
+        shell: msys2 {0}
         run: |
           echo === Try Address Sanitizer Optimization ===
           source $HOME/.bashrc
@@ -117,7 +115,7 @@ jobs:
           make distclean
 
       - name: C++ checks with thread-sanitizer on ubuntu are disabled
-        if: startsWith(matrix.os, 'ubuntu-DISABLED')
+        shell: msys2 {0}
         run: |
           source $HOME/.bashrc
           bash bootstrap.sh
@@ -131,7 +129,7 @@ jobs:
           make distclean
 
       - name: C++ checks with codecov
-        if: startsWith(matrix.os, 'ubuntu')
+        shell: msys2 {0}
         run: |
           source $HOME/.bashrc
           bash bootstrap.sh
@@ -140,16 +138,17 @@ jobs:
           make $MAKE_OPTS  check || (echo ==error== ; cat test-suite.log; exit 1)
 
       - name: upload codecov report
-        if: startsWith(matrix.os, 'ubuntu')
+        shell: msys2 {0}
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         run: |
           pushd src
-          gcov-9 *.o *.cpp rar/*.cpp rar/*.hpp
+          gcov *.o *.cpp rar/*.cpp rar/*.hpp
           bash <(curl -s https://codecov.io/bash)
           popd
 
       - name: distcheck
+        shell: msys2 {0}
         run: |
           source $HOME/.bashrc
           bash bootstrap.sh
@@ -157,7 +156,6 @@ jobs:
           make distcheck
 
       - name: Upload installer as artifact
-        if: startsWith(matrix.os, 'ubuntu')
         uses: actions/upload-artifact@v4
         with:
           name: bulk_extractor-${{ steps.ctx.outputs.version }}.tar.gz
