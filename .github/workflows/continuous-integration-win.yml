@@ -63,7 +63,8 @@ jobs:
             mingw-w64-ucrt-x86_64-libgcrypt \
             mingw-w64-ucrt-x86_64-libgpg-error \
             mingw-w64-ucrt-x86_64-python \
-            mingw-w64-x86_64-libxml2
+            mingw-w64-x86_64-libxml2 \
+            libxml2
           
           echo "== Build libewf from source =="
           LIBEWF_URL="https://github.com/libyal/libewf/releases/download/20240506/libewf-experimental-20240506.tar.gz"
@@ -94,6 +95,18 @@ jobs:
             echo "ERROR: libewf installation failed."
             exit 1
           fi
+          
+          echo "== pacman query: check for libxml2 packages =="
+          pacman -Q | grep -i xml || echo "no xml-related packages found"
+
+          echo "== explicit check =="
+          pacman -Q libxml2 || echo "MSYS libxml2 not installed"
+          pacman -Q mingw-w64-ucrt-x86_64-libxml2 || echo "MinGW UCRT libxml2 not installed"
+          
+          echo "== Check XMLLINT SETUP =="
+          export PATH="/ucrt64/bin:$PATH"
+          which xmllint || echo "xmllint not found"
+          xmllint --version || echo "xmllint failed"
           
           pkgconf --libs libewf
           pkgconf --cflags libewf
@@ -163,6 +176,13 @@ jobs:
           echo "SHELL=$SHELL"
           echo "OSTYPE=$OSTYPE"
           
+          echo "== pacman query: check for libxml2 packages =="
+          pacman -Q | grep -i xml || echo "no xml-related packages found"
+
+          echo "== explicit check =="
+          pacman -Q libxml2 || echo "MSYS libxml2 not installed"
+          pacman -Q mingw-w64-ucrt-x86_64-libxml2 || echo "MinGW UCRT libxml2 not installed"
+    
           echo "== Check XMLLINT SETUP =="
           export PATH="/ucrt64/bin:$PATH"
           which xmllint || echo "xmllint not found"
