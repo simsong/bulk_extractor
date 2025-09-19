@@ -61,7 +61,9 @@ jobs:
             mingw-w64-ucrt-x86_64-expat \
             mingw-w64-ucrt-x86_64-ncurses \
             mingw-w64-ucrt-x86_64-libgcrypt \
-            mingw-w64-ucrt-x86_64-libgpg-error
+            mingw-w64-ucrt-x86_64-libgpg-error \
+            mingw-w64-ucrt-x86_64-python
+          
           
           
           echo "== Build libewf from source =="
@@ -119,7 +121,7 @@ jobs:
       - name: Make configure script
         shell: msys2 {0}
         run: |
-          bash bootstrap.sh
+          bootstrap.sh
 
       - name: Dump configure script
         shell: msys2 {0}
