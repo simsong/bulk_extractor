@@ -881,9 +881,9 @@ TEST_CASE("scan_vcard", "[scanners]") {
 
     /* Read the output */
     std::string fname = "john_jakes.vcf____-0.vcf";
-#ifdef _WIN32
-    fname = "Z__home_user_bulk_extractor_src_tests_" + fname;
-#endif
+//#ifdef _WIN32
+//    fname = "Z__home_user_bulk_extractor_src_tests_" + fname; TODO Looks MING specific
+//#endif
     REQUIRE( std::filesystem::exists( outdir / "vcard" / "000" / fname ) == true);
 }
 
@@ -911,6 +911,10 @@ TEST_CASE("scan_zip", "[scanners]") {
     auto *sbufp = map_file( "testfilex.docx" );
     auto outdir = test_scanners( scanners, sbufp); // deletes sbuf2
     auto email_txt = getLines( outdir / "email.txt" );
+
+    std::cerr << "==== ZIP outdir listing ====" << std::endl;//TODO remove once we've checked path seps.
+    system((std::string("ls -R ") + outdir.string()).c_str());
+
     REQUIRE( std::filesystem::exists( outdir / "zip/000/testfilex.docx____-0-ZIP-0__Content_Types_.xml") == true);
     REQUIRE( requireFeature(email_txt,"1771-ZIP-402\tuser_docx@microsoftword.com"));
     REQUIRE( requireFeature(email_txt,"2396-ZIP-1012\tuser_docx@microsoftword.com"));
