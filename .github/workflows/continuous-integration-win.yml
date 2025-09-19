@@ -45,7 +45,6 @@ jobs:
           
           echo "== Check MSYS SETUP =="
           echo "MSYSTEM=$MSYSTEM"
-          echo "MSYS2_ARG_CONV_EXCL=$MSYS2_ARG_CONV_EXCL"
           echo "SHELL=$SHELL"
           echo "OSTYPE=$OSTYPE"
           
@@ -159,7 +158,6 @@ jobs:
           
           echo "== Check MSYS SETUP =="
           echo "MSYSTEM=$MSYSTEM"
-          echo "MSYS2_ARG_CONV_EXCL=$MSYS2_ARG_CONV_EXCL"
           echo "SHELL=$SHELL"
           echo "OSTYPE=$OSTYPE"
           
