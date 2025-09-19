@@ -590,14 +590,6 @@ void  scan_net_t::documentIPFields(const sbuf_t &sbuf, size_t pos, const generic
 {
     pos0_t pos0 = sbuf.pos0 + pos;
 
-    // Normalize offsets so this behaves the same on Linux and Windows.
-    // Always record relative to the start of the actual IP header, not the enclosing buffer.
-   size_t ip_header_pos = pos;
-    if (h.family == AF_INET || h.family == AF_INET6) {
-        ip_header_pos = pos; // ensure we only use the real header offset
-    }
-    pos0_t pos0 = sbuf.pos0 + ip_header_pos;
-
     /* Report the IP address */
     /* based on the TTL, infer whether remote or local */
     const std::string &chksum_status = h.checksum_valid ? scan_net_t::CHKSUM_OK : scan_net_t::CHKSUM_BAD;
@@ -708,7 +700,9 @@ size_t scan_net_t::carveIPFrame(const sbuf_t &sbuf, size_t pos, sanityCache_t *s
     struct pcap_writer::pcap_hdr ph(0, 0, packet_len, packet_len);  // make a fake header
     if (h.is_4or6()){
         try {
-            documentIPFields(sb3, 0, h);
+            // sb3 starts with a 14-byte fake Ethernet header.
+            // For feature recording, point to the real IP header for consistency on Win/Linux
+            documentIPFields(sb3, 14, h);
             pwriter.pcap_writepkt(ph, sb3, 0, false, 0x0000);	   // write the packet
         }
         catch (port0_exception &e) {
