@@ -2,8 +2,10 @@
  * nework scanner for bulk_extractor.
  * "ip carving".
  * Developed by Rob Beverly, based on a suggestion by Simson Garfinkel.
+ * 2025-sept - ryeates - add win32 support for inet_ntop via InetNtopA
  * 2011-sep-13 - slg - modified to add packet carving
  * 2021-aug-13 - slg - refactored to separate the pcap writing from the carving.
+ *
  */
 
 /**
@@ -42,6 +44,11 @@
 #ifdef HAVE_DIAGNOSTIC_REDUNDANT_DECLS
 #  pragma GCC diagnostic ignored "-Wredundant-decls"
 #endif
+#endif
+
+#ifdef _WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
 #endif
 
 int opt_report_checksum_bad= 0;		// if true, report bad chksums
@@ -409,7 +416,11 @@ std::string scan_net_t::ip2string(const struct be20::ip4_addr *const a)
 #ifdef _WIN32
 const char *inet_ntop(int af, const void *src, char *dst, size_t size)
 {
-    return("inet_ntop win32");
+    if (InetNtopA(af, const_cast<void*>(src), dst, static_cast<DWORD>(size)) == nullptr) {
+        snprintf(dst, size, "[inet_ntop error]");
+        return nullptr;
+    }
+    return dst;
 }
 #endif
 
