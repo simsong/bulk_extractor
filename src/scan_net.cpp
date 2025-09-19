@@ -590,6 +590,17 @@ void  scan_net_t::documentIPFields(const sbuf_t &sbuf, size_t pos, const generic
 {
     pos0_t pos0 = sbuf.pos0 + pos;
 
+    // Debug print to compare Linux vs Windows offsets (TODO remove on green)
+    std::cerr << "[DEBUG documentIPFields] "
+              << "sbuf.pos0=" << sbuf.pos0
+              << " raw pos=" << pos
+              << " final pos0=" << pos0
+              << " ttl=" << (int)h.ttl
+              << " family=" << (h.family==AF_INET ? "AF_INET" :
+                                h.family==AF_INET6 ? "AF_INET6" : "OTHER")
+              << " checksum_valid=" << (h.checksum_valid ? "ok" : "bad")
+              << std::endl;
+
     /* Report the IP address */
     /* based on the TTL, infer whether remote or local */
     const std::string &chksum_status = h.checksum_valid ? scan_net_t::CHKSUM_OK : scan_net_t::CHKSUM_BAD;
@@ -652,6 +663,15 @@ size_t scan_net_t::carveIPFrame(const sbuf_t &sbuf, size_t pos, sanityCache_t *s
      */
 
     if (!sanityCheckIP46Header(sbuf, pos, &h, sc)) return 0;
+
+    // Debug print before calling documentIPFields
+    std::cerr << "[DEBUG carveIPFrame] pos=" << pos
+              << " sbuf.pos0=" << sbuf.pos0
+              << " family=" << (h.family==AF_INET ? "AF_INET" :
+                                h.family==AF_INET6 ? "AF_INET6" : "OTHER")
+              << " checksum_valid=" << (h.checksum_valid ? "ok" : "bad")
+              << std::endl;
+
     if (h.family!=AF_INET && h.family!=AF_INET6) return 0; // only care about IPv4 and IPv6
     if (invalidIP(h.src, h.family) || invalidIP(h.dst, h.family)) return 0;
 
