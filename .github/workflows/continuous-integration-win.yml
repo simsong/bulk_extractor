@@ -18,6 +18,8 @@ jobs:
       MAKE_OPTS: -j2
       PKG_CONFIG: pkgconf
       PKG_CONFIG_PATH: /ucrt64/lib/pkgconfig
+      MSYSTEM: UCRT64
+      MSYS2_ARG_CONV_EXCL: '*'
 
     steps:
       - name: Checkout
@@ -123,9 +125,10 @@ jobs:
 
       - name: C++ checks not optimization with address-sanitizer
         shell: msys2 {0}
+        env:
+          MSYSTEM: UCRT64
+          MSYS2_ARG_CONV_EXCL: '*'
         run: |
-          export MSYS2_ARG_CONV_EXCL="*"
-          
           echo "=== Before injection ==="
           echo "LIBS:    $LIBS"
           echo "LDFLAGS: $LDFLAGS"
@@ -157,7 +160,7 @@ jobs:
           echo == config.h ==
           cat config.h
           echo ==============
-          make
+          make $MAKE_OPTS all
           pushd src
           make $MAKE_OPTS bulk_extractor
           make check || (cat test-suite.log; exit 1)
