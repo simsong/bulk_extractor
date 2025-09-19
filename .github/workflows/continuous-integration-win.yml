@@ -64,8 +64,6 @@ jobs:
             mingw-w64-ucrt-x86_64-libgpg-error \
             mingw-w64-ucrt-x86_64-python
           
-          
-          
           echo "== Build libewf from source =="
           LIBEWF_URL="https://github.com/libyal/libewf/releases/download/20240506/libewf-experimental-20240506.tar.gz"
           echo "Installing libewf from source..."
@@ -128,7 +126,14 @@ jobs:
         run: |
           cat configure
 
-      - name: C++ checks not optimization with address-sanitizer
+      : # GCC-based toolchains for MinGW do not support sanitizers
+      : # https://github.com/msys2/MINGW-packages/issues/3163
+
+      : # name: C++ checks not optimization with address-sanitizer
+      : # name: C++ checks optimization with address-sanitizer
+      : # name: C++ checks with thread-sanitizer
+
+      - name: C++ checks with codecov
         shell: msys2 {0}
         run: |
           echo "=== Before injection ==="
@@ -141,12 +146,6 @@ jobs:
           pkgconf --print-errors --libs libewf || echo "no libs from pkgconf"
           pkgconf --print-errors --static --libs libewf || echo "no static libs from pkgconf"
           
-          echo "=== Compiler check ==="
-          which gcc || echo "gcc not found"
-          which g++ || echo "g++ not found"
-          gcc -v || echo "gcc -v failed"
-          g++ -v || echo "g++ -v failed"
-  
           # Expand libewf deps to match Ubuntu build and inject manually
           EXTRA_LIBS="$(pkgconf --static --libs libewf) -lgcrypt -lgpg-error"
           export LIBS="$EXTRA_LIBS $LIBS"
@@ -163,16 +162,10 @@ jobs:
           echo "SHELL=$SHELL"
           echo "OSTYPE=$OSTYPE"
           
-          ./configure --disable-opt --enable-address-sanitizer 
-          echo == config.h ==
-          cat config.h
-          echo ==============
-          make $MAKE_OPTS all
-          pushd src
-          make $MAKE_OPTS bulk_extractor
-          make check || (cat test-suite.log; exit 1)
-          popd
-          make distclean
+          ./bootstrap.sh
+          ./configure --disable-opt CFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' CXXFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' --enable-silent-rules --quiet
+          make clean
+          make $MAKE_OPTS check || (echo ==error== ; cat test-suite.log; exit 1)
 
       - name: Dump config on failure
         if: failure()   # only runs if previous step failed
@@ -184,38 +177,6 @@ jobs:
           echo "=== BEGIN config.status ==="
           cat config.status || echo "no config.status found"
           echo "=== END config.status ==="  
-
-      - name: C++ checks optimization with address-sanitizer
-        shell: msys2 {0}
-        run: |
-          ./configure --enable-address-sanitizer --enable-silent-rules --quiet 
-          make $MAKE_OPTS all
-          pushd src
-          make $MAKE_OPTS bulk_extractor
-          make check || (cat test-suite.log; exit 1)
-          popd
-          make distclean
-
-      - name: C++ checks with thread-sanitizer
-        shell: msys2 {0}
-        run: |
-          bash bootstrap.sh
-          ./configure --enable-thread-sanitizer --enable-silent-rules --quiet 
-          make clean
-          make $MAKE_OPTS all
-          pushd src
-          make $MAKE_OPTS bulk_extractor
-          make check || (cat test-suite.log; exit 1)
-          popd
-          make distclean
-
-      - name: C++ checks with codecov
-        shell: msys2 {0}
-        run: |
-          bash bootstrap.sh
-          ./configure --disable-opt CFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' CXXFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' --enable-silent-rules --quiet
-          make clean
-          make $MAKE_OPTS check || (echo ==error== ; cat test-suite.log; exit 1)
 
       - name: upload codecov report
         shell: msys2 {0}
@@ -230,7 +191,7 @@ jobs:
       - name: distcheck
         shell: msys2 {0}
         run: |
-          bash bootstrap.sh
+          ./bootstrap.sh
           ./configure -q 
           make distcheck
 
