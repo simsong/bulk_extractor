@@ -121,7 +121,7 @@ jobs:
       - name: Make configure script
         shell: msys2 {0}
         run: |
-          bootstrap.sh
+          ./bootstrap.sh
 
       - name: Dump configure script
         shell: msys2 {0}
