@@ -588,8 +588,23 @@ bool scan_net_t::sanityCheckIP46Header(const sbuf_t &sbuf, size_t pos, scan_net_
 
 void  scan_net_t::documentIPFields(const sbuf_t &sbuf, size_t pos, const generic_iphdr_t &h) const
 {
-    pos0_t pos0 = sbuf.pos0 + pos;
 
+    // Normalize offsets so Linux and Windows report the same values.
+    // On Windows, carveIPFrame and carveEther may prepend a 14-byte
+    // synthetic Ethernet header before the real IP header.
+    size_t adjusted_pos = pos;
+    if (pos >= 14) {
+        // If the caller passed the start of an IP header after a
+        // synthetic Ethernet shim, strip it out.
+        adjusted_pos = pos - 14;
+    }
+
+    pos0_t pos0 = sbuf.pos0 + adjusted_pos;
+
+    // Debugging: confirm normalization
+    std::cerr << "[DEBUG documentIPFields] pos=" << pos << " family="
+              << (h.family==AF_INET ? "AF_INET" : h.family==AF_INET6 ? "AF_INET6" : "OTHER")
+              << " checksum=" << (h.checksum_valid ? "ok" : "bad") << std::endl
     /* Report the IP address */
     /* based on the TTL, infer whether remote or local */
     const std::string &chksum_status = h.checksum_valid ? scan_net_t::CHKSUM_OK : scan_net_t::CHKSUM_BAD;
