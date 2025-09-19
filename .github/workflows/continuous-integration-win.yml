@@ -126,12 +126,12 @@ jobs:
         run: |
           cat configure
 
-      : # GCC-based toolchains for MinGW do not support sanitizers
-      : # https://github.com/msys2/MINGW-packages/issues/3163
+        # GCC-based toolchains for MinGW do not support sanitizers
+        # https://github.com/msys2/MINGW-packages/issues/3163
 
-      : # name: C++ checks not optimization with address-sanitizer
-      : # name: C++ checks optimization with address-sanitizer
-      : # name: C++ checks with thread-sanitizer
+        # name: C++ checks not optimization with address-sanitizer
+        # name: C++ checks optimization with address-sanitizer
+        # name: C++ checks with thread-sanitizer
 
       - name: C++ checks with codecov
         shell: msys2 {0}
