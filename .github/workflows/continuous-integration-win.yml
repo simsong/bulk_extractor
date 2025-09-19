@@ -18,8 +18,6 @@ jobs:
       MAKE_OPTS: -j2
       PKG_CONFIG: pkgconf
       PKG_CONFIG_PATH: /ucrt64/lib/pkgconfig
-      MSYSTEM: UCRT64
-      MSYS2_ARG_CONV_EXCL: '*'
 
     steps:
       - name: Checkout
@@ -32,7 +30,7 @@ jobs:
         with:
           update: true
           msystem: UCRT64
-          path-type: inherit
+          path-type: strict
 
       - name: Extract Version from configure.ac
         shell: msys2 {0}
@@ -44,7 +42,13 @@ jobs:
         shell: msys2 {0}
         run: |
           set -euo pipefail
-
+          
+          echo "== Check MSYS SETUP =="
+          echo "MSYSTEM=$MSYSTEM"
+          echo "MSYS2_ARG_CONV_EXCL=$MSYS2_ARG_CONV_EXCL"
+          echo "SHELL=$SHELL"
+          echo "OSTYPE=$OSTYPE"
+          
           echo "== Install required MSYS2 packages =="
           pacman -Syu --noconfirm
           pacman -S --needed --noconfirm \
@@ -125,9 +129,6 @@ jobs:
 
       - name: C++ checks not optimization with address-sanitizer
         shell: msys2 {0}
-        env:
-          MSYSTEM: UCRT64
-          MSYS2_ARG_CONV_EXCL: '*'
         run: |
           echo "=== Before injection ==="
           echo "LIBS:    $LIBS"
@@ -155,6 +156,12 @@ jobs:
           echo "LIBS:       $LIBS"
           echo "LDFLAGS:    $LDFLAGS"
           echo "CPPFLAGS:   $CPPFLAGS"
+          
+          echo "== Check MSYS SETUP =="
+          echo "MSYSTEM=$MSYSTEM"
+          echo "MSYS2_ARG_CONV_EXCL=$MSYS2_ARG_CONV_EXCL"
+          echo "SHELL=$SHELL"
+          echo "OSTYPE=$OSTYPE"
           
           ./configure --disable-opt --enable-address-sanitizer 
           echo == config.h ==
