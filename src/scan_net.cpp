@@ -985,6 +985,13 @@ void scan_net(scanner_params &sp)
     sp.check_version();
     if (sp.phase==scanner_params::PHASE_INIT){
 
+        // Debug: print struct sizes so we can compare Linux vs Windows builds
+        std::cerr << "[DEBUG] sizeof(be20::ip4)     = " << sizeof(struct be20::ip4) << std::endl;
+        std::cerr << "[DEBUG] sizeof(be20::ip6_hdr) = " << sizeof(struct be20::ip6_hdr) << std::endl;
+        std::cerr << "[DEBUG] sizeof(be_tcphdr)     = " << sizeof(struct be_tcphdr) << std::endl;
+        std::cerr << "[DEBUG] sizeof(be_udphdr)     = " << sizeof(struct be_udphdr) << std::endl;
+        std::cerr << "[DEBUG] sizeof(tcpt_object)   = " << sizeof(struct tcpt_object) << std::endl;
+
         sp.get_scanner_config("carve_net_memory",&opt_carve_net_memory,"Carve network  memory structures");
         sp.get_scanner_config("min_carve_packet_bytes",&opt_min_carve_packet_bytes,"Smallest network packet to carve");
 
