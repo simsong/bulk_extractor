@@ -167,16 +167,13 @@ jobs:
           make clean
           make $MAKE_OPTS check || (echo ==error== ; cat test-suite.log; exit 1)
 
-      - name: Dump config on failure
+      - name: Dump logs on failure
         if: failure()   # only runs if previous step failed
         shell: msys2 {0}
         run: |
-          echo "=== BEGIN config.log ==="
-          cat config.log || echo "no config.log found"
-          echo "=== END config.log ==="
-          echo "=== BEGIN config.status ==="
-          cat config.status || echo "no config.status found"
-          echo "=== END config.status ==="  
+          echo "=== BEGIN src/test-suite.log ==="
+          cat src/test-suite.log || echo "no src/test-suite.log found"
+          echo "=== END src/test-suite.log ==="  
 
       - name: upload codecov report
         shell: msys2 {0}
