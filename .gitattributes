@@ -1,0 +1,2 @@
+# Force LF endings for test fixtures
+src/tests/** text eol=lf

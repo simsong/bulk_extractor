@@ -62,7 +62,8 @@ jobs:
             mingw-w64-ucrt-x86_64-ncurses \
             mingw-w64-ucrt-x86_64-libgcrypt \
             mingw-w64-ucrt-x86_64-libgpg-error \
-            mingw-w64-ucrt-x86_64-python
+            mingw-w64-ucrt-x86_64-python \
+            mingw-w64-x86_64-libxml2
           
           echo "== Build libewf from source =="
           LIBEWF_URL="https://github.com/libyal/libewf/releases/download/20240506/libewf-experimental-20240506.tar.gz"
