@@ -881,6 +881,8 @@ TEST_CASE("scan_vcard", "[scanners]") {
 
     /* Read the output */
     std::string fname = "john_jakes.vcf____-0.vcf";
+    std::cerr << "==== ZIP outdir listing ====" << std::endl;//TODO remove once we've checked path seps.
+    system((std::string("ls -R ") + outdir.string()).c_str());
 //#ifdef _WIN32
 //    fname = "Z__home_user_bulk_extractor_src_tests_" + fname; TODO Looks MING specific
 //#endif

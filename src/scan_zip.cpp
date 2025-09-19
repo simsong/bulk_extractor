@@ -146,6 +146,10 @@ inline void scan_zip_component(scanner_params &sp, feature_recorder &zip_recorde
             // recurse. Remember that recurse will free the sbuf
             sp.recurse( decomp );
         } else {
+            std::cerr << "[DEBUG scan_zip] decompress failed for name=" << name
+                          << " compr_size=" << compr_size
+                          << " uncompr_size=" << uncompr_size
+                          << " at pos=" << pos << std::endl;
             xmlstream << "<disposition>decompress-failed</disposition></zipinfo>";
             zip_recorder.write(pos0+pos,name,xmlstream.str());
         }
