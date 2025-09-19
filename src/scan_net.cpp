@@ -46,11 +46,6 @@
 #endif
 #endif
 
-#ifdef _WIN32
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#endif
-
 int opt_report_checksum_bad= 0;		// if true, report bad chksums
 int opt_report_packet_path = 0;         // if true, report packets to packets.txt
 
@@ -414,15 +409,22 @@ std::string scan_net_t::ip2string(const struct be20::ip4_addr *const a)
 #endif
 
 #ifdef _WIN32
-const char *inet_ntop(int af, const void *src, char *dst, size_t size)
-{
+#include <winsock2.h>
+#include <ws2tcpip.h>
+
+#ifndef HAVE_INET_NTOP   // only define our shim if MinGW doesn't provide it
+#define HAVE_INET_NTOP
+static inline const char *my_inet_ntop(int af, const void *src, char *dst, size_t size) {
     if (InetNtopA(af, const_cast<void*>(src), dst, static_cast<DWORD>(size)) == nullptr) {
         snprintf(dst, size, "[inet_ntop error]");
         return nullptr;
     }
     return dst;
 }
+#define inet_ntop my_inet_ntop
 #endif
+
+#endif // _WIN32
 
 
 std::string scan_net_t::ip2string(const uint8_t *addr, sa_family_t family)
