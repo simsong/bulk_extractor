@@ -163,6 +163,12 @@ jobs:
           echo "SHELL=$SHELL"
           echo "OSTYPE=$OSTYPE"
           
+          echo "== Check XMLLINT SETUP =="
+          export PATH="/ucrt64/bin:$PATH"
+          which xmllint || echo "xmllint not found"
+          xmllint --version || echo "xmllint failed"
+          
+          echo "== Build & Test =="
           ./bootstrap.sh
           ./configure --disable-opt CFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' CXXFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' --enable-silent-rules --quiet
           make clean
