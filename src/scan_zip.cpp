@@ -144,7 +144,7 @@ inline void scan_zip_component(scanner_params &sp, feature_recorder &zip_recorde
             zip_recorder.carve(*decomp, carve_name, mtime);
 
             std::cerr << "[DEBUG scan_zip] wrote carve: outdir="
-                        << zip_recorder.outdir()
+                        << zip_recorder.get_outdir()
                         << " carve_name=" << carve_name
                         << " mtime=" << mtime
                         << std::endl;
