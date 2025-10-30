@@ -1,0 +1,57 @@
+Valid and Invalid VIN Test Data
+===============================
+
+Test values in this file have been indepedently checked with:
+https://vpic.nhtsa.dot.gov/decoder/Decoder
+
+Valid
+=====
+
+Test 1: Honda Accord
+VIN: 1HGBH41JXMN109186
+
+Test 2: 1992 Acura Integra
+Chassis number: JH4DB1561NS000565
+
+Test 3: 2003 Saturn Vue
+Frame #5GZCZ43D13S812715
+
+Test 4: Standalone VIN with delimiters, valid but does not in NHTSA database
+The VIN (1HGBH41JXMN109186) was found in the database.
+
+Test 5: Multiple VINs in text
+We have several vehicles: JH4DB1561NS000565 and 5GZCZ43D13S812715 are in stock.
+
+Test 6: Chevrolet (valid check digit)
+VIN# 1G1ZT53826F109149
+
+Test 7: Infiniti with context  
+Make: Infiniti
+Model: Q50
+VIN: JN1AV7AR4EM700084
+Year: 2014
+
+Test 8: BMW in open text (2012 BMW 328i)
+The car in question was a BMW with all the manufacturer identifiers removed. Only
+later was a plate found with the sequence WBA3A5C57CFJ89971.
+
+Test 9: Valid, no preceeding context terms:
+1G1ZC5EB1AF319310
+
+Invalid
+=======
+
+Test 10: Should NOT match (2012 Ford Focus, invalid check digit)
+Vehicle identification number: 1FAHP3K2XCL277509
+
+Test 11: Should NOT match (2011 Infiniti G37, invalid check digit)
+Vehicle ID: JN1CV6AP8BM550167
+
+Test 12: Should NOT match (invalid check digit)
+VIN: 1FTFW1ET5DFC10312
+
+Test 13: Should NOT match (invalid character present, invalid check digit)
+VIN: 1FAHP3Q2XCL277509
+
+Test 14: Should NOT match (hex dump context)
+FFFFFFFF1HGBH41JXMN109186FFFFFFFF

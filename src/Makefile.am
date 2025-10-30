@@ -23,7 +23,7 @@ bin_PROGRAMS   = bulk_extractor
 check_PROGRAMS = test_be
 TESTS = test_be
 
-CLEANFILES     = scan_accts.cpp scan_base16.cpp scan_email.cpp scan_gps.cpp \
+CLEANFILES     = scan_accts.cpp scan_base16.cpp scan_email.cpp scan_gps.cpp scan_vehicle.cpp \
 	be20_api/config.h be20_api/dfxml/src/config.h config.h *.d *~
 
 # bring in defs from two included projects
@@ -49,13 +49,15 @@ flex_scanners = \
 	scan_base16.flex \
 	scan_accts.flex \
 	scan_email.flex scan_email.h \
-	scan_gps.flex
+	scan_gps.flex \
+	scan_vehicle.flex
 
 # This is gross. Sorry!
 scan_base16.o: sbuf_flex_scanner.h
 scan_accts.o: sbuf_flex_scanner.h
 scan_email.o: sbuf_flex_scanner.h
 scan_gps.o: sbuf_flex_scanner.h
+scan_vehicle.o: sbuf_flex_scanner.h
 
 # These scanners are based on Lightbox Technology's lightgrep
 lightgrep_scanners = \
@@ -97,6 +99,7 @@ scanners_builtin = \
 	scan_sqlite.cpp \
 	scan_utmp.cpp \
 	scan_vcard.cpp scan_vcard.h \
+	scan_vin.cpp scan_vin.h \
 	scan_windirs.cpp \
 	scan_winlnk.cpp \
 	scan_winpe.cpp \
