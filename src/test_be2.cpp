@@ -574,6 +574,77 @@ TEST_CASE("test_net-domexusers", "[phase1]") {
     delete sbufp;
 }
 
+/****************************************************************
+ * scan_vehicle (VIN scanner)
+ ****************************************************************/
+
+TEST_CASE("test_vin", "[phase1]") {
+    // Test with test_vin.txt from tests/ directory
+    auto *sbufp = map_file("test_vin.txt");
+    auto outdir = test_scanner(scan_vehicle, sbufp); // deletes sbufp
+    auto vin_txt = getLines(outdir / "vin.txt");
+    
+    // Check for valid VINs that should be found
+    REQUIRE(requireFeature(vin_txt, "1HGBH41JXMN109186")); 
+    REQUIRE(requireFeature(vin_txt, "JH4DB1561NS000565"));
+    REQUIRE(requireFeature(vin_txt, "5GZCZ43D13S812715"));
+    REQUIRE(requireFeature(vin_txt, "1G1ZT53826F109149"));
+    REQUIRE(requireFeature(vin_txt, "JN1AV7AR4EM700084"));
+    REQUIRE(requireFeature(vin_txt, "WBA3A5C57CFJ89971"));
+    REQUIRE(requireFeature(vin_txt, "1G1ZC5EB1AF319310"));
+}
+
+TEST_CASE("test_vin_json", "[phase1]") {
+    // Test with JSON file containing valid VINs
+    auto *sbufp = map_file("test_synthetic_vin.json");
+    auto outdir = test_scanner(scan_vehicle, sbufp); // deletes sbufp
+    auto vin_txt = getLines(outdir / "vin.txt");
+    
+    // All 20 valid VINs should be found
+    REQUIRE(requireFeature(vin_txt, "JHM4VC8C44W771260"));
+    REQUIRE(requireFeature(vin_txt, "1FTXXM8B8F8155443"));
+    REQUIRE(requireFeature(vin_txt, "1VW5YT94XT7786050"));
+    REQUIRE(requireFeature(vin_txt, "WDDDZE8T2FE673778"));
+    REQUIRE(requireFeature(vin_txt, "2HGD3M0VXA2309150"));
+    REQUIRE(requireFeature(vin_txt, "JT2BLVDC935818618"));
+    REQUIRE(requireFeature(vin_txt, "JM17BYNMXEB546612"));
+    REQUIRE(requireFeature(vin_txt, "1VWCED9V6AF123706"));
+    REQUIRE(requireFeature(vin_txt, "1FA9E8VK9SM011548"));
+    REQUIRE(requireFeature(vin_txt, "3N16HT7Y2XA633577"));
+    REQUIRE(requireFeature(vin_txt, "JHM6AHXD7GG787155"));
+    REQUIRE(requireFeature(vin_txt, "WDDGRT383SR187648"));
+    REQUIRE(requireFeature(vin_txt, "1J41ZET65FF647808"));
+    REQUIRE(requireFeature(vin_txt, "JTE4Z6FX8XB289122"));
+    REQUIRE(requireFeature(vin_txt, "SALKM6WA2L1744044"));
+    REQUIRE(requireFeature(vin_txt, "1J4ME0YM8GA394565"));
+    REQUIRE(requireFeature(vin_txt, "2C340F138HJ566120"));
+    REQUIRE(requireFeature(vin_txt, "2HG87252178986876"));
+    REQUIRE(requireFeature(vin_txt, "5GZCZ43D13S812715"));
+    REQUIRE(requireFeature(vin_txt, "JTE7U4XT3NZ811901"));
+}
+
+TEST_CASE("test_vin_odt", "[phase1]") {
+    // Test with Open Document Text file containing VINs in a table
+    // Extraction of VINs from structured documents (needs zip decompression)
+    std::vector<Check> ex {
+        Check("vin.txt", Feature("3263-ZIP-7230", "JHM4VC8C44W771260", "style-name=\"P5\">JHM4VC8C44W771260</text:p></table")),
+        Check("vin.txt", Feature("3263-ZIP-7687", "1FTXXM8B8F8155443", "style-name=\"P5\">1FTXXM8B8F8155443</text:p></table")),
+        Check("vin.txt", Feature("3263-ZIP-8142", "1VW5YT94XT7786050", "style-name=\"P5\">1VW5YT94XT7786050</text:p></table")),
+        Check("vin.txt", Feature("3263-ZIP-8598", "WDDDZE8T2FE673778", "style-name=\"P5\">WDDDZE8T2FE673778</text:p></table")),
+        Check("vin.txt", Feature("3263-ZIP-9053", "2HGD3M0VXA2309150", "style-name=\"P5\">2HGD3M0VXA2309150</text:p></table")),
+        Check("vin.txt", Feature("3263-ZIP-9510", "JT2BLVDC935818618", "style-name=\"P5\">JT2BLVDC935818618</text:p></table")),
+        Check("vin.txt", Feature("3263-ZIP-9967", "JM17BYNMXEB546612", "style-name=\"P5\">JM17BYNMXEB546612</text:p></table")),
+        Check("vin.txt", Feature("3263-ZIP-10423", "1VWCED9V6AF123706", "style-name=\"P5\">1VWCED9V6AF123706</text:p></table")),
+        Check("vin.txt", Feature("3263-ZIP-10879", "1FA9E8VK9SM011548", "style-name=\"P5\">1FA9E8VK9SM011548</text:p></table")),
+        Check("vin.txt", Feature("3263-ZIP-11335", "3N16HT7Y2XA633577", "style-name=\"P5\">3N16HT7Y2XA633577</text:p></table")),
+        Check("vin.txt", Feature("3263-ZIP-11790", "JHM6AHXD7GG787155", "style-name=\"P5\">JHM6AHXD7GG787155</text:p></table")),
+        Check("vin.txt", Feature("3263-ZIP-12245", "WDDGRT383SR187648", "style-name=\"P5\">WDDGRT383SR187648</text:p></table")),
+        Check("vin.txt", Feature("3263-ZIP-12701", "1J41ZET65FF647808", "style-name=\"P5\">1J41ZET65FF647808</text:p></table")),
+        Check("vin.txt", Feature("3263-ZIP-13158", "2C340F138HJ566120", "style-name=\"P5\">2C340F138HJ566120</text:p></table")),
+        Check("vin.txt", Feature("3263-ZIP-13614", "2HG87252178986876", "style-name=\"P5\">2HG87252178986876</text:p></table"))
+    };
+    validate("test_vin_doc.odt", ex);
+}
 
 /****************************************************************
  * scan_winpe
