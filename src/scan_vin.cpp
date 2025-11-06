@@ -116,7 +116,7 @@ static int wmi_test(const char *vin) {
     // J-R: Asia
     // S-Z: Europe
     
-    if (strchr("0", first)) return -1;  // 0 is not used as first character
+    if (first == '0') return -1;  // 0 is not used as first character
     
     // Additional validation could check against known manufacturer codes
     // For now, we just ensure it's in valid range

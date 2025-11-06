@@ -110,7 +110,6 @@ static bool has_automotive_context(const sbuf_t &sbuf, size_t pos, int range = 1
 
 /* Valid VIN characters: 0-9, A-H, J-N, P, R-Z (excludes I, O, Q) */
 VINCHAR    [0-9A-HJ-NPR-Z]
-NOTVIN     [^0-9A-HJ-NP-Z]
 
 /* Common delimiters around VINs */
 VINDELIM   ([ \t\r\n:,;|"'(){}[\]<>#.!?])
@@ -273,8 +272,8 @@ void scan_vehicle(struct scanner_params &sp)
         yyvin_lex_destroy(scanner);
     }
     
-    if (sp.phase == scanner_params::PHASE_INIT) { // avoids defined but not used
-        (void)yyunput;
-        (void)yy_fatal_error;
-    }
+    // Suppress unused warnings for flex-generated functions
+
+    (void)yyunput;
+    (void)yy_fatal_error;
 }

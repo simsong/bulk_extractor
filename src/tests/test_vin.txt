@@ -1,7 +1,7 @@
 Valid and Invalid VIN Test Data
 ===============================
 
-Test values in this file have been indepedently checked with:
+Test values in this file have been independently checked with:
 https://vpic.nhtsa.dot.gov/decoder/Decoder
 
 Valid

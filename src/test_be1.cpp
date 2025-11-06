@@ -922,7 +922,7 @@ TEST_CASE("scan_vin_validation", "[scanners]") {
 }
 
 TEST_CASE("scan_vin1", "[scanners]") {
-    /* Test VIN scanner with VINs in labaled context */
+    /* Test VIN scanner with VINs in labeled context */
     auto *sbufp = new sbuf_t("VIN: 1HGBH41JXMN109186\nChassis number: JH4DB1561NS000565\nFrame #5GZCZ43D13S812715");
     auto outdir = test_scanner(scan_vehicle, sbufp); // deletes sbufp
     
