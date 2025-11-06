@@ -6,7 +6,7 @@ on: [push, pull_request]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     env:
       DEBUG_5G: FALSE
@@ -19,10 +19,10 @@ jobs:
         with:
           submodules: recursive
 
-      - name: "MacOS: run CONFIGURE_MACOS.bash"
+      - name: "MacOS: run CONFIGURE_UBUNTU22LTS.bash"
         run: |
           source $HOME/.bashrc
-          echo "" | bash etc/CONFIGURE_MACOS.bash
+          echo "" | bash etc/CONFIGURE_UBUNTU22LTS.bash
 
       - name: Make configure script
         run: |
