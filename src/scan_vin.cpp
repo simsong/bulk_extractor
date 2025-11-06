@@ -238,29 +238,6 @@ bool valid_vin(const char *buf, int buflen) {
     return true;
 }
 
-/**
- * Validate VIN with position information in sbuf_t
- * Similar to valid_phone function in ccns
- */
-bool valid_vin_sbuf(const sbuf_t &sbuf, size_t pos, size_t len) {
-    if (len != 17) return false;
-    
-    // Check if we have enough buffer space
-    if (pos + len > sbuf.bufsize) return false;
-   
-    // Extract the potential VIN using sbuf's array process
-    char vin_candidate[18];
-    memset(vin_candidate, 0, sizeof(vin_candidate));
-
-    // Use sbuf's public interface instead of direct buffer access
-    for (size_t i = 0; i < len; i++) {
-        vin_candidate[i] = sbuf[pos + i];
-    }
-    
-    // Validate the VIN
-    return valid_vin(vin_candidate, len);
-}
-
 #ifdef DEBUG
 static int validate_vin_debug(const char *buf, int buflen) {
     char vin[18];
