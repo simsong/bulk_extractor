@@ -237,16 +237,6 @@ void scan_vehicle(struct scanner_params &sp)
             histogram_def("vin", "vin", "", "", "histogram", nf)
         );
         
-        // Histogram of manufacturer codes (first 3 characters)
-        sp.info->histogram_defs.push_back(
-            histogram_def("vin", "vin", "^(...)", "", "manufacturer", nf)
-        );
-        
-        // Histogram of year codes (10th character)
-        sp.info->histogram_defs.push_back(
-            histogram_def("vin", "vin", "^.{9}(.)", "", "year", nf)
-        );
-        
         // Debug configuration
         int vin_debug = 0;
         sp.get_scanner_config("vin_debug", &vin_debug, "Enable VIN scanner debugging");
