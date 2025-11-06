@@ -137,16 +137,17 @@ jobs:
           ./configure --disable-opt CFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' CXXFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' --enable-silent-rules --quiet
           make clean
           make $MAKE_OPTS  check || (echo ==error== ; cat test-suite.log; exit 1)
+          lcov --capture --directory . --output-file linux-coverage.info
+          lcov --list linux-coverage.info
 
-      - name: upload codecov report
-        if: startsWith(matrix.os, 'ubuntu')
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-        run: |
-          pushd src
-          gcov-9 *.o *.cpp rar/*.cpp rar/*.hpp
-          bash <(curl -s https://codecov.io/bash)
-          popd
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+          files: linux-coverage.info
+          flags: unittests
+          name: bulk_extractor-codecov
 
       - name: distcheck
         run: |
