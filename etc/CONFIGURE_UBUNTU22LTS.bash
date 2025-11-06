@@ -2,7 +2,7 @@
 SCRIPT_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}"))"
 RELEASE=22
 CONFIGURE="./configure -q --enable-silent-rules"
-MKPGS="autoconf automake g++ flex libabsl-dev libexpat1-dev libre2-dev libssl-dev libtool libssl-dev libxml2-utils make pkg-config zlib1g-dev"
+MKPGS="autoconf automake g++ flex lcov libabsl-dev libexpat1-dev libre2-dev libssl-dev libtool libssl-dev libxml2-utils make pkg-config zlib1g-dev"
 WGET="wget -nv --no-check-certificate"
 CONFIGURE="./configure -q --enable-silent-rules"
 MAKE="make -j2"
