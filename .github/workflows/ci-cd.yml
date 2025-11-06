@@ -10,20 +10,13 @@
 
 name: BE2 Unit Tests on MacOS and Ubuntu (c++17)
 
-on:
-  push:
-    branches:
-      - '**' # This will trigger the action for all branches
-  pull_request:
-    branches:
-      - main # Specify the branches for which pull_request events should trigger the action
+on: [push,pull_request]
 
 jobs:
   build:
     strategy:
       matrix:
         os: [macos-latest, ubuntu-22.04]
-        platform: [x64, arm64]
     runs-on: ${{ matrix.os }}
 
     env:
@@ -128,26 +121,6 @@ jobs:
           make check || (cat test-suite.log; exit 1)
           popd
           make distclean
-
-      - name: C++ checks with codecov
-        if: startsWith(matrix.os, 'ubuntu')
-        run: |
-          source $HOME/.bashrc
-          bash bootstrap.sh
-          ./configure --disable-opt CFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' CXXFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' --enable-silent-rules --quiet
-          make clean
-          make $MAKE_OPTS  check || (echo ==error== ; cat test-suite.log; exit 1)
-          lcov --capture --directory . --output-file linux-coverage.info
-          lcov --list linux-coverage.info
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          fail_ci_if_error: false
-          files: linux-coverage.info
-          flags: unittests
-          name: bulk_extractor-codecov
 
       - name: distcheck
         run: |
