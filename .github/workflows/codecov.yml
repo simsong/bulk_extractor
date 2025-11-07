@@ -1,0 +1,52 @@
+# Just run for codecov
+
+name: Codecov
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    env:
+      DEBUG_5G: FALSE
+      DEBUG_FAST: TRUE
+      MAKE_OPTS: -j2
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: "MacOS: run CONFIGURE_UBUNTU22LTS.bash"
+        run: |
+          source $HOME/.bashrc
+          echo "" | bash etc/CONFIGURE_UBUNTU22LTS.bash
+
+      - name: Make configure script
+        run: |
+          bash bootstrap.sh
+
+      - name: C++ checks with codecov
+        run: |
+          source $HOME/.bashrc
+          bash bootstrap.sh
+          ./configure --disable-opt --enable-silent-rules --quiet \
+                CFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' \
+                CXXFLAGS='-g -O0 -fprofile-arcs -ftest-coverage'
+          make $MAKE_OPTS  check
+          lcov --capture --directory . --output-file linux-coverage.info
+          lcov --list linux-coverage.info
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+          files: linux-coverage.info
+          flags: unittests
+          name: bulk_extractor-codecov
+
+      - uses: ammaraskar/gcc-problem-matcher@0.2.0
+        name: GCC Problem Matcher
