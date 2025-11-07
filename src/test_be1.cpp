@@ -52,6 +52,7 @@
 #include "scan_net.h"
 #include "scan_pdf.h"
 #include "scan_vcard.h"
+#include "scan_vin.h"
 #include "scan_wordlist.h"
 
 #include "test_be.h"
@@ -885,6 +886,145 @@ TEST_CASE("scan_vcard", "[scanners]") {
     fname = "Z__home_user_bulk_extractor_src_tests_" + fname;
 #endif
     REQUIRE( std::filesystem::exists( outdir / "vcard" / "000" / fname ) == true);
+}
+
+TEST_CASE("scan_vin_validation", "[scanners]") {
+    /* Test VIN validation with various valid VINs */
+    const char* valid_vins[] = {
+        "1HGBH41JXMN109186",  // Honda Accord
+        "JH4DB1561NS000565",  // Acura Integra
+        "5GZCZ43D13S812715",  // Saturn Vue
+        "WBA3A5C57CFJ89971",  // BMW 328i
+        "3N16HT7Y2XA633577",  // Year code X
+        "JTE4Z6FX8XB289122",  // Year code X
+        NULL
+    };
+    
+    for (int i = 0; valid_vins[i] != NULL; i++) {
+        REQUIRE(valid_vin(valid_vins[i], 17) == true);
+    }
+    
+    /* Test invalid VINs */
+    const char* invalid_vins[] = {
+        "1FAHP3K2XCL277509",  // Invalid check digit
+        "1FAHP3Q2XCL277509",  // Contains Q
+        "12345678901234567",  // All numeric
+        "1HGBH41JxMN109186",  // Contains lowercase
+        "1HGBH41JXUN109186",  // Invalid year code U (position 10)
+        "1HGBH41JXZN109186",  // Invalid year code Z (position 10)
+        "1HGBH41JX0N109186",  // Invalid year code 0 (position 10)
+        NULL
+    };
+    
+    for (int i = 0; invalid_vins[i] != NULL; i++) {
+        REQUIRE(valid_vin(invalid_vins[i], strlen(invalid_vins[i])) == false);
+    }
+}
+
+TEST_CASE("scan_vin1", "[scanners]") {
+    /* Test VIN scanner with VINs in labeled context */
+    auto *sbufp = new sbuf_t("VIN: 1HGBH41JXMN109186\nChassis number: JH4DB1561NS000565\nFrame #5GZCZ43D13S812715");
+    auto outdir = test_scanner(scan_vehicle, sbufp); // deletes sbufp
+    
+    auto vin_txt = getLines( outdir / "vin.txt" );
+    
+    REQUIRE( requireFeature(vin_txt, "1HGBH41JXMN109186") );
+    REQUIRE( requireFeature(vin_txt, "JH4DB1561NS000565") );
+    REQUIRE( requireFeature(vin_txt, "5GZCZ43D13S812715") );
+}
+
+TEST_CASE("scan_vin2", "[scanners]") {
+    /* Test VIN scanner with standalone VINs in sentences */
+    auto *sbufp = new sbuf_t("The vehicle WBA3A5C57CFJ89971 was found at the scene. "
+                             "Additional inventory includes: 1G1ZT53826F109149, JN1AV7AR4EM700084.");
+    auto outdir = test_scanner(scan_vehicle, sbufp); // deletes sbufp
+    
+    auto vin_txt = getLines( outdir / "vin.txt" );
+    
+    REQUIRE( requireFeature(vin_txt, "WBA3A5C57CFJ89971") );
+    REQUIRE( requireFeature(vin_txt, "1G1ZT53826F109149") );
+    REQUIRE( requireFeature(vin_txt, "JN1AV7AR4EM700084") );
+}
+
+TEST_CASE("scan_vin3", "[scanners]") {
+    /* Test that invalid VINs are not captured */
+    auto *sbufp = new sbuf_t("Invalid VIN: 1FAHP3K2XCL277509\n"  // wrong check digit
+                             "Contains Q: 1FAHP3Q2XCL277509\n"     // invalid character
+                             "All numeric: 12345678901234567\n"   // all digits
+                             "Lowercase: 1HGBH41JxMN109186");      // has lowercase
+    auto outdir = test_scanner(scan_vehicle, sbufp); // deletes sbufp
+    
+    auto vin_txt = getLines( outdir / "vin.txt" );
+    
+    // Check that these invalid VINs are NOT in the output
+    // Check each line rather than using requireFeature which expects to find things
+    for (const auto &line : vin_txt) {
+        REQUIRE( !has(line, "1FAHP3K2XCL277509") );
+        REQUIRE( !has(line, "1FAHP3Q2XCL277509") );
+        REQUIRE( !has(line, "12345678901234567") );
+        REQUIRE( !has(line, "1HGBH41JxMN109186") );
+    }
+}
+
+TEST_CASE("scan_vin_json", "[scanners]") {
+    /* Test VIN scanner with JSON file containing VINs */
+    auto *sbufp = map_file("test_synthetic_vin.json");
+    auto outdir = test_scanner(scan_vehicle, sbufp); // deletes sbufp
+    
+    auto vin_txt = getLines( outdir / "vin.txt" );
+    
+    // Sample of valid VINs that should be found
+    REQUIRE( requireFeature(vin_txt, "JHM4VC8C44W771260") );
+    REQUIRE( requireFeature(vin_txt, "1FTXXM8B8F8155443") );
+    REQUIRE( requireFeature(vin_txt, "3N16HT7Y2XA633577") );
+    REQUIRE( requireFeature(vin_txt, "JTE4Z6FX8XB289122") );
+    
+    // Invalid VINs that should NOT be found. Check manually
+    bool found_invalid1 = false;
+    bool found_invalid2 = false;
+    
+    for (const auto &line : vin_txt) {
+        if (has(line, "1FAHP3K2XCL277509")) found_invalid1 = true;
+        if (has(line, "WBSR9ZMN9VX8391I3")) found_invalid2 = true;
+    }
+    
+    REQUIRE( !found_invalid1 );  // Should NOT find invalid check digit
+    REQUIRE( !found_invalid2 );  // Should NOT find VIN with 'I'
+}
+
+TEST_CASE("scan_vin_year_codes", "[scanners]") {
+    /* Test valid VINs with various year codes */
+    auto *sbufp = new sbuf_t("Year X (2029): 3N16HT7Y2XA633577\n"
+                             "Year W (2028): JHM4VC8C44W771260\n"
+                             "Year 5 (2005): 5GZCZ43D13S812715");
+    auto outdir = test_scanner(scan_vehicle, sbufp); // deletes sbufp
+    
+    auto vin_txt = getLines( outdir / "vin.txt" );
+    
+    REQUIRE( requireFeature(vin_txt, "3N16HT7Y2XA633577") );
+    REQUIRE( requireFeature(vin_txt, "JHM4VC8C44W771260") );
+    REQUIRE( requireFeature(vin_txt, "5GZCZ43D13S812715") );
+}
+
+TEST_CASE("scan_vin_context", "[scanners]") {
+    /* Test that VINs in hex dump context are rejected */
+    auto *sbufp = new sbuf_t("FFFFFFFF1HGBH41JXMN109186FFFFFFFF\n"
+                             "Normal context: WBA3A5C57CFJ89971 is valid.");
+    auto outdir = test_scanner(scan_vehicle, sbufp); // deletes sbufp
+    
+    auto vin_txt = getLines( outdir / "vin.txt" );
+    
+    // The hex dump VIN should be filtered out. Check it's NOT there.
+    bool found_hex_vin = false;
+    bool found_normal_vin = false;
+    
+    for (const auto &line : vin_txt) {
+        if (has(line, "1HGBH41JXMN109186")) found_hex_vin = true;
+        if (has(line, "WBA3A5C57CFJ89971")) found_normal_vin = true;
+    }
+    
+    REQUIRE( !found_hex_vin );   // Should NOT find the hex context VIN
+    REQUIRE( found_normal_vin ); // Should find the normal context VIN
 }
 
 TEST_CASE("scan_wordlist", "[scanners]") {

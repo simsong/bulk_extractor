@@ -1,0 +1,53 @@
+{
+  "valid": [
+    "JHM4VC8C44W771260",
+    "1FTXXM8B8F8155443",
+    "1VW5YT94XT7786050",
+    "WDDDZE8T2FE673778",
+    "2HGD3M0VXA2309150",
+    "JT2BLVDC935818618",
+    "JM17BYNMXEB546612",
+    "1VWCED9V6AF123706",
+    "1FA9E8VK9SM011548",
+    "3N16HT7Y2XA633577",
+    "JHM6AHXD7GG787155",
+    "WDDGRT383SR187648",
+    "1J41ZET65FF647808",
+    "JTE4Z6FX8XB289122",
+    "SALKM6WA2L1744044",
+    "1J4ME0YM8GA394565",
+    "2C340F138HJ566120",
+    "2HG87252178986876",
+    "5GZCZ43D13S812715",
+    "JTE7U4XT3NZ811901"
+  ],
+  "invalid": [
+    "WBSR9ZMN9VX8391I3",
+    "ZZZ5KBSXX6V435766",
+    "1VW4EMMW7YK1",
+    "2HG9L7UU6HZ902350",
+    "2G18V7CK7DU421644",
+    "KNATEXWRX7X676I22",
+    "5TDMR0WO597612056",
+    "1HCE13BW21P72O486",
+    "JT25L5E826E061961",
+    "JTEBHZS94DF53690",
+    "2HGMK1DC8FC738304",
+    "3N1WVSLS8J8506291",
+    "3FAKSP1W8KH053333M34",
+    "WDBR4OS08G7964670",
+    "WVWE6KEN7T5",
+    "ZZZARHH4XDJ192750",
+    "1HGBH41JXMN109187",
+    "1G6X2O3L26M289028",
+    "3N112YHB49N687963TGA",
+    "2IG76XXM57J789955"
+  ],
+  "notes": {
+    "test structure": "This test does not use any contextual terms identified by the scanner",
+    "valid_description": "These use real NHTSA-recognized WMI codes and have correctly calculated check digits at position 9",
+    "invalid_description": "These are invalid due to: wrong check digits, invalid characters (I, O, Q), incorrect length, or fake WMI codes",
+    "check_digit_info": "The check digit is calculated using weighted position values and modulo 11. If result is 10, check digit is 'X'",
+    "wmi_info": "WMI (World Manufacturer Identifier) codes in valid VINs are from real manufacturers."
+  }
+}

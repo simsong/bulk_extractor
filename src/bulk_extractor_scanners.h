@@ -22,6 +22,7 @@ SCANNER(base16)
 SCANNER(email)
 SCANNER(accts)
 SCANNER(gps)
+SCANNER(vehicle)
 
 /* Regular scanners */
 
