@@ -59,15 +59,11 @@ scan_email.o: sbuf_flex_scanner.h
 scan_gps.o: sbuf_flex_scanner.h
 scan_vehicle.o: sbuf_flex_scanner.h
 
-# These scanners are based on Lightbox Technology's lightgrep
+# These scanners are based on Stroz Friedberg's lightgrep
 lightgrep_scanners = \
 	pattern_scanner.cpp pattern_scanner.h \
 	pattern_scanner_utils.cpp pattern_scanner_utils.h \
-	scan_lightgrep.cpp \
-	scan_accts_lg.cpp \
-	scan_base16_lg.cpp \
-	scan_email_lg.cpp \
-	scan_gps_lg.cpp
+	scan_lightgrep.cpp
 
 # scanners_builtin are the scanners that are compiled into the binary
 
