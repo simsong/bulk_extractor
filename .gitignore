@@ -78,6 +78,7 @@ src/scan_accts.cpp
 src/scan_base16.cpp
 src/scan_email.cpp
 src/scan_gps.cpp
+src/scan_vehicle.cpp
 src/tags
 src/x.cpp
 src_win/*.exe
