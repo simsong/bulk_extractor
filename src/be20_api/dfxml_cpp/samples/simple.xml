@@ -1,0 +1,78 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<dfxml xmloutputversion='1.0'>
+  <metadata 
+  xmlns='http://md5deep.sourceforge.net/md5deep/' 
+  xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' 
+  xmlns:dc='http://purl.org/dc/elements/1.1/'>
+    <dc:type>Hash List</dc:type>
+  </metadata>
+  <creator version='1.0'>
+    <program>MD5DEEP</program>
+    <version>4.0.0_beta2-002</version>
+    <build_environment>
+      <compiler>GCC 4.2</compiler>
+    </build_environment>
+    <execution_environment>
+      <os_sysname>Darwin</os_sysname>
+      <os_release>11.3.0</os_release>
+      <os_version>Darwin Kernel Version 11.3.0: Thu Jan 12 18:47:41 PST 2012; root:xnu-1699.24.23~1/RELEASE_X86_64</os_version>
+      <host>Mucha.local</host>
+      <arch>x86_64</arch>
+      <command_line>md5deep -dp512 /Users/simsong/uploads/einstein template.jpg /Users/simsong/uploads/image1.jpg /Users/simsong/uploads/image2.jpg /Users/simsong/uploads/image3.jpg</command_line>
+      <uid>502</uid>
+      <start_time>2012-02-23T16:35:11Z</start_time>
+    </execution_environment>
+  </creator>
+  <configuration>
+    <algorithms>
+      <algorithm name='md5' enabled='1'/>
+      <algorithm name='sha1' enabled='0'/>
+      <algorithm name='sha256' enabled='0'/>
+      <algorithm name='tiger' enabled='0'/>
+      <algorithm name='whirlpool' enabled='0'/>
+    </algorithms>
+  </configuration>
+  <fileobject>
+    <filename>/Users/simsong/uploads/image2.jpg</filename>
+    <filesize>12833</filesize>
+    <mtime>2012-02-22T03:53:05Z</mtime>
+    <ctime>2012-02-22T03:53:05Z</ctime>
+    <atime>2012-02-23T16:34:27Z</atime>
+    <hashdigest type='MD5'>d7ced55e7d7f5b9995fc3cbac7942155</hashdigest>
+  </fileobject>
+  <fileobject>
+    <filename>/Users/simsong/uploads/image1.jpg</filename>
+    <filesize>12551</filesize>
+    <mtime>2012-02-22T03:53:54Z</mtime>
+    <ctime>2012-02-22T03:53:54Z</ctime>
+    <atime>2012-02-23T16:34:27Z</atime>
+    <hashdigest type='MD5'>3bb144b5abc65312099f79caa69ff94f</hashdigest>
+  </fileobject>
+  <fileobject>
+    <filename>/Users/simsong/uploads/image3.jpg</filename>
+    <filesize>12545</filesize>
+    <mtime>2012-02-22T03:55:38Z</mtime>
+    <ctime>2012-02-22T03:55:38Z</ctime>
+    <atime>2012-02-23T16:34:27Z</atime>
+    <hashdigest type='MD5'>6377d89ab3165a3fe24b390b513f47d7</hashdigest>
+  </fileobject>
+  <fileobject>
+    <filename>/Users/simsong/uploads/einstein template.jpg</filename>
+    <filesize>43819</filesize>
+    <mtime>2012-02-22T03:54:19Z</mtime>
+    <ctime>2012-02-22T03:54:19Z</ctime>
+    <atime>2012-02-23T16:34:27Z</atime>
+    <hashdigest type='MD5'>702da00183448a42f5a861c95973f4f3</hashdigest>
+  </fileobject>
+  <rusage>
+    <utime>0.008982</utime>
+    <stime>0.003041</stime>
+    <maxrss>1069056</maxrss>
+    <minflt>391</minflt>
+    <majflt>0</majflt>
+    <nswap>0</nswap>
+    <inblock>0</inblock>
+    <oublock>0</oublock>
+    <clocktime>0.006578</clocktime>
+  </rusage>
+</dfxml>

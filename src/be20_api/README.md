@@ -8,7 +8,7 @@ The component provides:
 - scanner registration, lifecycle, scheduling, and recursive processing;
 - feature recorders, histograms, and output coordination;
 - path printing, packet adapters, regular expressions, Unicode helpers, and utilities; and
-- the pinned dfxml_cpp and utfcpp dependency submodules.
+- the integrated dfxml_cpp and utfcpp dependencies.
 
 ## Build integration
 
@@ -17,17 +17,13 @@ The component provides:
 Build and run all tests from the bulk_extractor repository root:
 
 ```sh
-git submodule update --init
 ./bootstrap.sh
 ./configure
 make
 make check
 ```
 
-The `test_be20_api` executable is a parent Automake test target. The former
-standalone be20_api configure, bootstrap, and CI workflows are intentionally
-unsupported. The parent repository owns the direct dfxml_cpp and utfcpp
-submodule pins.
+The `test_be20_api` executable is a parent Automake test target. The former standalone configure, bootstrap, CI, and submodule workflows are intentionally unsupported.
 
 ## API status
 

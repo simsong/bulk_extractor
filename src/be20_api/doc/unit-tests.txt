@@ -7,7 +7,6 @@ bundled Catch header and link the same libbe20.a target as bulk_extractor.
 From the bulk_extractor repository root, configure and run the complete test
 suite through the Makefile:
 
-    git submodule update --init
     ./bootstrap.sh
     ./configure
     make check

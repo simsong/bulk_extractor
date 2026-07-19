@@ -1,11 +1,7 @@
 ## Building on Windows
 
-be20_api is built as part of bulk_extractor. Initialize the parent repository's
-dfxml_cpp and utfcpp dependency submodules before building:
-
-```sh
-git submodule update --init
-```
+be20_api is built as part of bulk_extractor. It has no separate checkout or
+submodule initialization step.
 
 Under MSYS2, install the UCRT64 toolchain and dependencies:
 

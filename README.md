@@ -27,8 +27,6 @@ We recommend building from sources. We provide a number of `bash` scripts in the
 
 ```
 git clone https://github.com/simsong/bulk_extractor.git
-cd bulk_extractor
-git submodule update --init
 ./bootstrap.sh
 ./configure
 make
@@ -130,8 +128,6 @@ Renamed jpeg_carved feature recorder to jpeg, so that the jpeg carve mode can be
 ## Release 2.0
 `bulk_extractor` 2.0 (BE2) is now operational. Although it works with the Java-based viewer, we do not currently have an installer that runs under Windows.
 
-BE2 requires C++17 to compile. The be20 scanner API is maintained directly in
-this repository. Its dfxml_cpp and utfcpp dependencies, plus the DFXML schema,
-remain independently versioned repositories pinned as direct submodules.
+BE2 requires C++17 to compile. The be20 scanner API, dfxml_cpp, utfcpp, and DFXML schema sources are maintained directly in this repository; no recursive submodule checkout is required.
 
 The project took longer than anticipated. In addition to updating to C++17, It was used as an opportunity for massive code refactoring and general increase in code quality, testability and reliability. An article about the experiment will appear in a forthcoming issue of [ACM Queue](https://queue.acm.org/)

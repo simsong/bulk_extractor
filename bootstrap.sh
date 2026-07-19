@@ -4,22 +4,6 @@ set -eu
 
 mkdir -p build-aux
 
-missing_submodule=no
-for required in \
-  dfxml_schema/dfxml.xsd \
-  src/be20_api/dfxml_cpp/src/dfxml_writer.h \
-  src/be20_api/utfcpp/source/utf8.h
-do
-  if [ ! -f "$required" ]; then
-    echo "Missing dependency submodule file: $required" >&2
-    missing_submodule=yes
-  fi
-done
-if [ "$missing_submodule" = yes ]; then
-  echo "Run: git submodule update --init" >&2
-  exit 1
-fi
-
 # Make sure generated distribution and RAR manifests are current.
 python3 etc/makefile_builder.py
 
