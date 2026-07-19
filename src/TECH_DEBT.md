@@ -681,6 +681,30 @@ The repository move is complete and reduces the cost of maintaining these
 fixes. It does not change their runtime priority or substitute for focused
 regression tests.
 
+## Open issue reconciliation
+
+Issue [#497](https://github.com/simsong/bulk_extractor/issues/497) is the
+parent tracker for the P0 and P1 source findings above. Its sub-issues are
+[#501](https://github.com/simsong/bulk_extractor/issues/501) through
+[#510](https://github.com/simsong/bulk_extractor/issues/510), with one issue
+per independently reviewable finding group. Issue
+[#500](https://github.com/simsong/bulk_extractor/issues/500) separately tracks
+the E01 chunk-level performance investigation: determine whether libewf can
+prove that a chunk contains only zero bytes and skip its decompression without
+changing logical offsets, margins, hashing, checksums, or output.
+
+The open tracker also contains older issues that are clearly technical debt.
+They remain useful supporting or narrower work items and are labeled
+`tech debt`; the audit findings above take precedence where descriptions
+overlap.
+
+| Area | Existing open issues |
+|---|---|
+| Build, dependencies, and portability | [#471](https://github.com/simsong/bulk_extractor/issues/471), [#464](https://github.com/simsong/bulk_extractor/issues/464), [#444](https://github.com/simsong/bulk_extractor/issues/444), [#398](https://github.com/simsong/bulk_extractor/issues/398), [#376](https://github.com/simsong/bulk_extractor/issues/376), [#159](https://github.com/simsong/bulk_extractor/issues/159) |
+| CI and test infrastructure | [#490](https://github.com/simsong/bulk_extractor/issues/490), [#420](https://github.com/simsong/bulk_extractor/issues/420), [#419](https://github.com/simsong/bulk_extractor/issues/419), [#394](https://github.com/simsong/bulk_extractor/issues/394), [#308](https://github.com/simsong/bulk_extractor/issues/308), [#259](https://github.com/simsong/bulk_extractor/issues/259), [#238](https://github.com/simsong/bulk_extractor/issues/238), [#237](https://github.com/simsong/bulk_extractor/issues/237), [#204](https://github.com/simsong/bulk_extractor/issues/204), [#202](https://github.com/simsong/bulk_extractor/issues/202), [#201](https://github.com/simsong/bulk_extractor/issues/201), [#186](https://github.com/simsong/bulk_extractor/issues/186), [#185](https://github.com/simsong/bulk_extractor/issues/185), [#94](https://github.com/simsong/bulk_extractor/issues/94) |
+| Code and runtime maintenance | [#488](https://github.com/simsong/bulk_extractor/issues/488), [#485](https://github.com/simsong/bulk_extractor/issues/485), [#404](https://github.com/simsong/bulk_extractor/issues/404), [#395](https://github.com/simsong/bulk_extractor/issues/395), [#249](https://github.com/simsong/bulk_extractor/issues/249), [#246](https://github.com/simsong/bulk_extractor/issues/246), [#240](https://github.com/simsong/bulk_extractor/issues/240), [#225](https://github.com/simsong/bulk_extractor/issues/225), [#162](https://github.com/simsong/bulk_extractor/issues/162) |
+| Documentation and repository scope | [#476](https://github.com/simsong/bulk_extractor/issues/476), [#424](https://github.com/simsong/bulk_extractor/issues/424), [#264](https://github.com/simsong/bulk_extractor/issues/264), [#139](https://github.com/simsong/bulk_extractor/issues/139) |
+
 ## Remediation checklist
 
 Each unchecked line below identifies one independently reviewable defect or
@@ -691,15 +715,15 @@ appropriate validation.
 
 - [ ] Reject PCAP records whose `caplen` exceeds the buffer allocated from `snaplen`.
 - [ ] Impose a defensible upper bound on input-controlled PCAP `snaplen` allocations.
-- [ ] Make `sbuf_t::memcmp` compare byte zero instead of beginning at byte one.
-- [ ] Make zero-length `sbuf_t::memcmp` return equality without underflowing its length.
-- [ ] Make `sbuf_t::wbuf` reject the one-past-end index `i == bufsize`.
-- [ ] Remove the ineffective negative-index test on unsigned `sbuf_t::wbuf` indexes.
-- [ ] Correct `sbuf_t` slice primary-page arithmetic so an in-page offset reduces `pagesize`.
-- [ ] Make `sbuf_t` slices beginning in the margin have a zero primary-page size instead of an underflowed size.
-- [ ] Prevent `sbuf_t` child constructors from forming pointers beyond the source buffer when an offset is out of range.
-- [ ] Replace overflow-prone `i + width > bufsize` checks in `sbuf_t` integer readers with subtraction-based checked ranges.
-- [ ] Cast bytes to unsigned destination widths before shifting in `sbuf_t` integer readers.
+- [x] Make `sbuf_t::memcmp` compare byte zero instead of beginning at byte one (#502).
+- [x] Make zero-length `sbuf_t::memcmp` return equality without underflowing its length (#502).
+- [x] Make `sbuf_t::wbuf` reject the one-past-end index `i == bufsize` (#502).
+- [x] Remove the ineffective negative-index test on unsigned `sbuf_t::wbuf` indexes (#502).
+- [x] Correct `sbuf_t` slice primary-page arithmetic so an in-page offset reduces `pagesize` (#502).
+- [x] Make `sbuf_t` slices beginning in the margin have a zero primary-page size instead of an underflowed size (#502).
+- [x] Prevent `sbuf_t` child constructors from forming pointers beyond the source buffer when an offset is out of range (#502).
+- [x] Replace overflow-prone `i + width > bufsize` checks in `sbuf_t` integer readers with subtraction-based checked ranges (#502).
+- [x] Cast bytes to unsigned destination widths before shifting in `sbuf_t` integer readers (#502).
 - [ ] Ensure every phase-1 `DiskWriteError` path stops and joins the notification thread without asserting or hanging.
 
 ### P1: ownership, input handling, and advertised features
@@ -749,6 +773,7 @@ appropriate validation.
 - [ ] Replace phase-1 disk-error `exit(1)` calls with structured shutdown and consistent return semantics.
 - [ ] Assign and report `Config::max_wait_time`, or remove the unused `max_minute_wait` option.
 - [ ] Assign `Phase1::image_hash` so the console image-hash result is reachable, or remove the dead output branch.
+- [ ] Investigate chunk-level EWF reads that can skip provably all-zero chunks without decompression while preserving offsets, margins, hashes, checksums, and output (#500).
 - [ ] Add malformed-corpus and fuzz coverage for recursive Base64, gzip, hiberfile, PDF, RAR, XOR, and ZIP decoders.
 - [ ] Replace hostile-input native-structure casts incrementally in ELF, EVTX, EXIF, network, NTFS, Outlook, SQLite, UTMP, WinLNK, WinPE, and WinPrefetch scanners.
 - [ ] Free or transfer ownership of every synthetic EVTX header allocation.

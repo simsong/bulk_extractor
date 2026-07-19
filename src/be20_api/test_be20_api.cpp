@@ -28,6 +28,7 @@
 #include <filesystem>
 #include <functional>
 #include <iostream>
+#include <memory>
 #include <random>
 #include <string>
 #include <csignal>
@@ -540,6 +541,83 @@ TEST_CASE("range_exception", "[sbuf]") {
     catch (const sbuf_t::range_exception_t &e) {
         REQUIRE( std::string("[sbuf_t::range_exception_t: Read past end of sbuf off=100 len=1]") == e.what());
     }
+}
+
+TEST_CASE("sbuf boundary contract", "[sbuf]") {
+    const std::array<uint8_t, 8> bytes{{0x80, 0x01, 0x02, 0xff, 0x04, 0x05, 0x06, 0x87}};
+    const std::array<uint8_t, 8> same = bytes;
+    auto first_diff = bytes;
+    first_diff[0] = 0x81;
+
+    std::unique_ptr<sbuf_t> sbuf(sbuf_t::sbuf_new(pos0_t("bounds"), bytes.data(), bytes.size(), 4));
+
+    SECTION("memcmp checks byte zero and accepts valid empty ranges") {
+        REQUIRE(sbuf->memcmp(same.data(), 0, same.size()) == 0);
+        REQUIRE(sbuf->memcmp(first_diff.data(), 0, first_diff.size()) != 0);
+        REQUIRE(sbuf->memcmp(same.data(), 0, 0) == 0);
+        REQUIRE(sbuf->memcmp(same.data(), sbuf->size(), 0) == 0);
+        REQUIRE_THROWS_AS(sbuf->memcmp(same.data(), sbuf->size() + 1, 0), sbuf_t::range_exception_t);
+        REQUIRE_THROWS_AS(sbuf->memcmp(same.data(), std::numeric_limits<size_t>::max(), 0), sbuf_t::range_exception_t);
+        REQUIRE_THROWS_AS(sbuf->memcmp(same.data(), sbuf->size() - 1, 2), sbuf_t::range_exception_t);
+    }
+
+    SECTION("integer readers reject overflowed and one-past-end ranges") {
+        REQUIRE(sbuf->get16u(6) == 0x8706);
+        REQUIRE(sbuf->get16uBE(6) == 0x0687);
+        REQUIRE(sbuf->get32u(0) == 0xff020180);
+        REQUIRE(sbuf->get32uBE(0) == 0x800102ff);
+        REQUIRE(sbuf->get64u(0) == 0x87060504ff020180ULL);
+        REQUIRE(sbuf->get64uBE(0) == 0x800102ff04050687ULL);
+
+        REQUIRE_THROWS_AS(sbuf->get8u(sbuf->size()), sbuf_t::range_exception_t);
+        REQUIRE_THROWS_AS(sbuf->get16u(sbuf->size() - 1), sbuf_t::range_exception_t);
+        REQUIRE_THROWS_AS(sbuf->get32u(sbuf->size() - 3), sbuf_t::range_exception_t);
+        REQUIRE_THROWS_AS(sbuf->get64u(1), sbuf_t::range_exception_t);
+        REQUIRE_THROWS_AS(sbuf->get32u(std::numeric_limits<size_t>::max()), sbuf_t::range_exception_t);
+        REQUIRE_THROWS_AS(sbuf->get32uBE(std::numeric_limits<size_t>::max()), sbuf_t::range_exception_t);
+    }
+
+    SECTION("slice page sizes distinguish primary bytes from margins") {
+        auto primary = sbuf->slice(1, 5);
+        REQUIRE(primary.bufsize == 5);
+        REQUIRE(primary.pagesize == 3);
+        REQUIRE(primary.get_buf() == bytes.data() + 1);
+
+        auto margin = sbuf->slice(4, 3);
+        REQUIRE(margin.bufsize == 3);
+        REQUIRE(margin.pagesize == 0);
+        REQUIRE(margin.get_buf() == bytes.data() + 4);
+
+        auto end = sbuf->slice(sbuf->size(), 0);
+        REQUIRE(end.bufsize == 0);
+        REQUIRE(end.pagesize == 0);
+        REQUIRE(end.get_buf() == bytes.data() + bytes.size());
+
+        REQUIRE_THROWS_AS(sbuf->slice(sbuf->size() + 1, 0), sbuf_t::range_exception_t);
+        REQUIRE_THROWS_AS(sbuf->slice(1, std::numeric_limits<size_t>::max()), sbuf_t::range_exception_t);
+        REQUIRE_THROWS_AS(sbuf->slice(std::numeric_limits<size_t>::max(), 0), sbuf_t::range_exception_t);
+    }
+
+    SECTION("clamping constructors never advance beyond the source") {
+        sbuf_t child(*sbuf, std::numeric_limits<size_t>::max());
+        REQUIRE(child.bufsize == 0);
+        REQUIRE(child.pagesize == 0);
+        REQUIRE(child.get_buf() == bytes.data() + bytes.size());
+
+        sbuf_t bounded(*sbuf, std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max());
+        REQUIRE(bounded.bufsize == 0);
+        REQUIRE(bounded.pagesize == 0);
+        REQUIRE(bounded.get_buf() == bytes.data() + bytes.size());
+    }
+}
+
+TEST_CASE("sbuf writable boundary", "[sbuf]") {
+    std::unique_ptr<sbuf_t> sbuf(sbuf_t::sbuf_malloc(pos0_t("writable"), 2, 2));
+    sbuf->wbuf(0, 0x12);
+    sbuf->wbuf(1, 0x34);
+    REQUIRE(sbuf->get16u(0) == 0x3412);
+    REQUIRE_THROWS_AS(sbuf->wbuf(2, 0x56), std::runtime_error);
+    REQUIRE_THROWS_AS(sbuf->wbuf(std::numeric_limits<size_t>::max(), 0x56), std::runtime_error);
 }
 
 void validate_file(std::filesystem::path path, std::string contents)
