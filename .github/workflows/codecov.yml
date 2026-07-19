@@ -22,10 +22,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Enable GCC problem matching
-        uses: ammaraskar/gcc-problem-matcher@0.2.0
+        uses: actions/checkout@v5
 
       - name: Install Ubuntu dependencies
         run: |

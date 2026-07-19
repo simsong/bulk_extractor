@@ -152,11 +152,11 @@ This checklist is derived from `TECH_DEBT.md`. Each unchecked line identifies on
 - [x] Consolidate the substantially duplicated `ci-cd.yml` and `continuous-integration-pip.yml` workflows.
 - [x] Replace deprecated GitHub Actions `::set-output` usage.
 - [x] Replace nonexistent `steps.ctx.outputs.version` references with the actual version-step output.
-- [ ] Fix the operand-less `chmod +x` command in `create-release-installer.yml`.
-- [ ] Update obsolete action versions in the release workflow.
-- [ ] Add the missing release-creation step or remove its nonexistent `upload_url` reference.
+- [x] Fix the operand-less `chmod +x` command in `create-release-installer.yml`.
+- [x] Update obsolete action versions in the release workflow.
+- [x] Add the missing release-creation step or remove its nonexistent `upload_url` reference.
 - [x] Remove Coverity's need for recursive submodule checkout by integrating the required source.
-- [ ] Stop pinning third-party actions to mutable `master` branches.
+- [x] Stop pinning third-party actions to mutable `master` branches.
 - [x] Remove obsolete PCRE installation from the former be20_api macOS workflow.
 - [x] Rename the former be20_api Codecov artifact from the unrelated `sleuthkit-codecov` name.
 - [ ] Add a lightweight workflow syntax and reference validation gate.

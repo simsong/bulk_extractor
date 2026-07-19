@@ -1,62 +1,42 @@
-name: Create release tarball
+name: Create source distribution
 
 on: [workflow_dispatch]
 
 permissions:
-  actions: read
-  checks: none
-  contents: write
-  deployments: none
-  id-token: none
-  issues: none
-  discussions: none
-  packages: none
-  pages: none
-  pull-requests: none
-  repository-projects: none
-  security-events: none
-  statuses: none
-
+  contents: read
 
 jobs:
   release:
     runs-on: ubuntu-latest
+    env:
+      DEBUG_5G: FALSE
+      DEBUG_FAST: FALSE
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v5
 
-    - name: Extract Version from configure.ac
-      id: extract_version
-      run: |
-        VERSION=$(grep 'AC_INIT' configure.ac | sed -n 's/.*AC_INIT.*\[\(.*\)\], \[\(.*\)\].*/\2/p')
-        echo "Version: $VERSION"
-        echo "VERSION=$VERSION" >> $GITHUB_ENV
+      - name: Extract version
+        id: extract_version
+        run: |
+          version=$(grep 'AC_INIT(\[BULK_EXTRACTOR\]' configure.ac | cut -d',' -f2 | tr -d '[]')
+          echo "version=$version" >> "$GITHUB_OUTPUT"
 
-    - name: Setup
-      run: |
-        chmod +x etc/install_autotools.sh
-        bash ./etc/install_autotools.sh
-        chmod +x bootstrap.sh
-        ./bootstrap.sh
-        ./configure -q
+      - name: Install Ubuntu dependencies
+        run: echo "" | bash etc/CONFIGURE_UBUNTU22LTS.bash
 
-    - name: Create release tarball
-      run: |
-        make dist
+      - name: Bootstrap
+        run: bash bootstrap.sh
 
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: bulk_extractor-${VERSION}.tar.gz
-        path: bulk_extractor-${VERSION}.tar.gz
+      - name: Configure
+        run: ./configure --quiet
 
-    - name: Upload binaries to release
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: bulk_extractor-${VERSION}.tar.gz
-        asset_name: bulk_extractor-${VERSION}.tar.gz
-        asset_content_type: application/gzip
+      - name: Build and validate source distribution
+        run: make distcheck
+
+      - name: Upload source distribution
+        uses: actions/upload-artifact@v4
+        with:
+          name: bulk_extractor-${{ steps.extract_version.outputs.version }}
+          path: bulk_extractor-${{ steps.extract_version.outputs.version }}.tar.gz
+          if-no-files-found: error

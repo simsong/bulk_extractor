@@ -182,8 +182,10 @@ An explicit source list prevents test programs, demos, broken prototypes, or
 new upstream files from silently entering production builds.
 
 The default macOS build, all three parent-managed tests, and `make distcheck`
-pass. Optional ASan/UBSan, no-libpcap, Lightgrep, Linux, and Windows matrices
-remain follow-up validation work rather than blockers to the repository move.
+pass. Required CI covers debug and optimized AddressSanitizer builds on current
+macOS, Ubuntu 22.04, and current Ubuntu. UBSan, no-libpcap, Lightgrep, and
+Windows matrices remain follow-up validation work rather than blockers to the
+repository move.
 
 ## Significant source-code debt
 
@@ -460,9 +462,9 @@ count:
   four workers, joins them, and verifies worker, queue, and recorder results.
   It no longer contains an unconditional 60-second watchdog delay. Cancellation,
   backpressure, and exception propagation still need focused tests.
-- Parent CI sets `DEBUG_FAST=TRUE`; several expensive image/scanner tests return
-  early under that setting. The default gate therefore omits important
-  segmented-image and E01/regression behavior.
+- Resolved in the integration: required parent CI sets `DEBUG_FAST=FALSE`, so
+  the segmented-image, E01, email, scanner, and other non-fast paths run in the
+  platform matrix.
 - Many registered scanners lack focused tests named for their parser or edge
   cases, especially EVTX, the NTFS group, Outlook, SQLite, UTMP, WinLNK,
   WinDirs, and optional scanners.
@@ -546,19 +548,13 @@ and schema READMEs also identify their vendored in-tree status. Historical
 The build and coverage workflows now provide one three-platform build matrix
 and one coverage job. They avoid duplicate push and pull-request runs, use the
 current GitHub output mechanism, and name uploaded distributions from the
-actual version-step output. Several release-oriented workflows remain
-known-invalid:
+actual version-step output. The manual source-distribution workflow uses the
+same supported dependency setup and `make distcheck`; Coverity and the required
+workflows use maintained checkout action releases. The obsolete standalone
+be20_api workflows were removed during integration.
 
-- `create-release-installer.yml` runs `chmod +x && bootstrap.sh` (missing the
-  chmod operand), uses old action versions, and references
-  `steps.create_release.outputs.upload_url` without a `create_release` step.
-- Coverity still checks out `actions/checkout@main`; mutable action references
-  should be pinned even though recursive checkout is no longer required.
-- Some third-party actions are pinned to mutable `master` branches.
-- The obsolete standalone be20_api workflows were removed during integration.
-
-Repair and test the release workflow. Pin actions to maintained major versions
-or commit SHAs and add a lightweight workflow syntax/reference check.
+Pin third-party actions to reviewed commit SHAs and add a lightweight workflow
+syntax/reference check.
 
 ## Explanation of the former submodule update error
 
