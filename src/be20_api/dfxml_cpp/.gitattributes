@@ -1,0 +1,3 @@
+# Set the default behavior, in case people don't have core.autocrlf set.
+# NOTE: At the time this rule was written, all files tracked in this repository were known to be text files.  From documentation on this file at git-scm.com, it seems possible this might trip up commiting a binary file in the future.
+* text=auto

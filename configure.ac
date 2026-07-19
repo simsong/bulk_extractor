@@ -39,7 +39,7 @@ AX_CXX_COMPILE_STDCXX([17], [ext], [mandatory])
 AC_LANG_POP()
 
 # Turn on all warnings
-m4_include([src/be20_api/m4/slg_gcc_all_warnings.m4])
+m4_include([m4/slg_gcc_all_warnings.m4])
 
 ################################################################
 # Specify our headers
@@ -49,10 +49,10 @@ m4_include([src/be20_api/m4/slg_gcc_all_warnings.m4])
 #
 # Check dfxml and be20_api headers
 
-m4_include([src/be20_api/dfxml_cpp/src/dfxml_configure.m4])
-m4_include([src/be20_api/m4/slg_address_sanitizer.m4])
-m4_include([src/be20_api/m4/slg_noopt.m4])
-m4_include([src/be20_api/be20_configure.m4])
+m4_include([m4/dfxml_configure.m4])
+m4_include([m4/slg_address_sanitizer.m4])
+m4_include([m4/slg_noopt.m4])
+m4_include([m4/be20_configure.m4])
 
 m4_include([m4/slg_mingw_support.m4])
 m4_include([m4/slg_searchdirs.m4])

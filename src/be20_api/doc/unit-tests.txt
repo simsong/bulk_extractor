@@ -1,0 +1,16 @@
+be20_api unit tests
+===================
+
+be20_api is tested as an internal bulk_extractor component. The tests use the
+bundled Catch header and link the same libbe20.a target as bulk_extractor.
+
+From the bulk_extractor repository root, configure and run the complete test
+suite through the Makefile:
+
+    ./bootstrap.sh
+    ./configure
+    make check
+
+The component test executable is src/test_be20_api. Do not build or run it as
+a separate be20_api project; the parent configuration supplies its dependency
+and feature settings.

@@ -79,14 +79,14 @@ This checklist is derived from `TECH_DEBT.md`. Each unchecked line identifies on
 
 ## Build and dependency debt
 
-- [ ] Replace recursive be20_api source discovery with an explicit reviewed production source manifest.
-- [ ] Remove test-only `test_image_reader.cpp` and `scan_sha1_test.cpp` from the production executable source set unless they are intentional runtime features.
-- [ ] Stop generated `config.h` files from entering source/distribution manifests.
+- [x] Replace recursive be20_api source discovery with an explicit reviewed production source manifest.
+- [x] Remove test-only `test_image_reader.cpp` and `scan_sha1_test.cpp` from the production executable source set unless they are intentional runtime features.
+- [x] Stop generated `config.h` files from entering source/distribution manifests.
 - [ ] Prevent generated Autotools files from retaining absolute package-manager Cellar paths.
-- [ ] Correct be20_api's C++20 comment or actually require C++20 instead of C++17.
-- [ ] Make missing RE2 a configure error because production headers require it.
-- [ ] Remove the duplicate `HAVE_RE2` definition.
-- [ ] Stop sorting compiler and linker flags where ordering is semantically significant.
+- [x] Correct be20_api's C++20 comment or actually require C++20 instead of C++17.
+- [x] Make missing RE2 a configure error because production headers require it.
+- [x] Remove the duplicate `HAVE_RE2` definition.
+- [x] Stop sorting compiler and linker flags where ordering is semantically significant.
 - [ ] Remove dead shared-library and Python 2.7 installation logic from the top-level Makefile.
 - [ ] Replace mutable platform-provisioning scripts with reproducible dependency declarations.
 - [ ] Remove hard-coded Homebrew prefixes and repeated shell-startup edits from the macOS setup script.
@@ -117,13 +117,13 @@ This checklist is derived from `TECH_DEBT.md`. Each unchecked line identifies on
 
 ## Documentation debt
 
-- [ ] Update `README.md` from “2.1 development” to the actual 2.1.1 version/status.
-- [ ] Refresh the README's supported-platform information beyond its 2023 snapshot.
-- [ ] Correct README debug-variable names to `DEBUG_BENCHMARK` and `DEBUG_SCANNER_DUMP_DATA`.
-- [ ] Correct the README's comma-separated scanner-ignore claim to match substring behavior, or fix the implementation.
-- [ ] Replace stale `be13_api` names in release and build documentation.
-- [ ] Tie Windows support claims to an active parent CI build or qualify them.
-- [ ] Correct the stale `src/be13_api` submodule key in `.gitmodules` while the submodule exists.
+- [x] Update `README.md` from “2.1 development” to the actual 2.1.1 version/status.
+- [x] Refresh the README's supported-platform information beyond its 2023 snapshot.
+- [x] Correct README debug-variable names to `DEBUG_BENCHMARK` and `DEBUG_SCANNER_DUMP_DATA`.
+- [x] Correct the README's comma-separated scanner-ignore claim to match substring behavior, or fix the implementation.
+- [x] Replace stale `be13_api` names in release and build documentation.
+- [x] Tie Windows support claims to an active parent CI build or qualify them.
+- [x] Correct the stale `src/be13_api` submodule key in `.gitmodules` while the submodule exists.
 - [ ] Consolidate `src/DEBUG.md` and README debug settings into one accurate table.
 - [ ] Generate or maintain `src/scanners.md` from actual scanner registration metadata.
 - [ ] Rewrite `tests/README.md` for 2.1.1, `make check`, current fixtures, and `DEBUG_FAST` behavior.
@@ -132,19 +132,19 @@ This checklist is derived from `TECH_DEBT.md`. Each unchecked line identifies on
 - [ ] Regenerate or archive the version-1.5 help captured in `doc/latex_manuals/BEUsage.txt`.
 - [ ] Port or archive the programmer manual's obsolete two-argument scanner ABI and plug-in instructions.
 - [ ] Port or archive the 1.4/1.5 user manuals and worked examples.
-- [ ] Remove the obsolete `src/be13_api` include path from `doc/Makefile.am`.
+- [x] Remove the obsolete `src/be13_api` include path from `doc/Makefile.am`.
 - [ ] Mark the 1.4, 1.5, and 1.6 roadmaps as historical.
 - [ ] Mark or replace `ROADMAP_2.0.md`, which mixes obsolete plans and completed work.
 - [ ] Convert root and be20_api TODO/status work logs into a current owned backlog or archive them.
 - [ ] Reconcile root and be20_api NEWS/ChangeLog histories into a coherent release history.
-- [ ] Rewrite the be20_api README so it does not claim an unchanged 1.3-era API.
-- [ ] Remove the be20_api README claim that runtime DLL/shared-library scanners work like built-ins.
-- [ ] Remove the be20_api README claim that its build produces `be20_api.a`, or add the library target.
-- [ ] Replace be20_api README references to the `master` branch with the actual supported branch.
-- [ ] Correct the `tcplow` typo and unfinished be20_api README text.
-- [ ] Define the supported be20_api public-header and versioning policy.
-- [ ] Point the be20_api coverage badge at the correct repository/branch.
-- [ ] Replace the obsolete libcester claim in `src/be20_api/doc/unit-tests.txt` with the actual Catch/Makefile test path.
+- [x] Rewrite the be20_api README so it does not claim an unchanged 1.3-era API.
+- [x] Remove the be20_api README claim that runtime DLL/shared-library scanners work like built-ins.
+- [x] Remove the be20_api README claim that its build produces `be20_api.a`, or add the library target.
+- [x] Replace be20_api README references to the `master` branch with the actual supported branch.
+- [x] Correct the `tcplow` typo and unfinished be20_api README text.
+- [x] Define the supported be20_api public-header and versioning policy.
+- [x] Point the be20_api coverage badge at the correct repository/branch.
+- [x] Replace the obsolete libcester claim in `src/be20_api/doc/unit-tests.txt` with the actual Catch/Makefile test path.
 - [ ] Consolidate stale be20_api INSTALL, TODO, and status notes into an accurate component guide.
 
 ## CI and release-workflow debt
@@ -163,11 +163,11 @@ This checklist is derived from `TECH_DEBT.md`. Each unchecked line identifies on
 
 ## Repository integration debt
 
-- [ ] Eliminate the `src/be20_api` Git-link boundary now that no independent be20_api consumer remains.
-- [ ] Preserve be20_api source provenance and license history when importing it into bulk_extractor.
-- [ ] Resolve the non-`main` `625f5b3` be20_api revision intentionally during import.
-- [ ] Eliminate or deliberately top-level the nested dfxml_cpp and utfcpp Git links.
-- [ ] Build be20_api as an explicit internal component rather than compiling recursively discovered files into every target.
-- [ ] Make bulk_extractor and component tests consume the same explicit be20 source target.
-- [ ] Remove obsolete standalone be20_api bootstrap/configure/CI files after integration.
-- [ ] Verify whether the root `dfxml_schema` Git link is needed and vendor or remove it for a genuinely single-module checkout.
+- [x] Eliminate the `src/be20_api` Git-link boundary now that no independent be20_api consumer remains.
+- [x] Preserve be20_api source provenance and license history when importing it into bulk_extractor.
+- [x] Resolve the non-`main` `625f5b3` be20_api revision intentionally during import.
+- [x] Eliminate or deliberately top-level the nested dfxml_cpp and utfcpp Git links.
+- [x] Build be20_api as an explicit internal component rather than compiling recursively discovered files into every target.
+- [x] Make bulk_extractor and component tests consume the same explicit be20 source target.
+- [x] Remove obsolete standalone be20_api bootstrap/configure/CI files after integration.
+- [x] Verify whether the root `dfxml_schema` Git link is needed and vendor or remove it for a genuinely single-module checkout.

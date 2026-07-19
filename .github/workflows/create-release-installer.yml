@@ -1,4 +1,4 @@
-name: Create tarball including submodules
+name: Create release tarball
 
 on: [workflow_dispatch]
 
@@ -23,10 +23,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository and init submodules recursively
-      uses: actions/checkout@v2
-      with:
-        submodules: recursive
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
     - name: Extract Version from configure.ac
       id: extract_version
@@ -39,7 +37,7 @@ jobs:
       run: |
         chmod +x etc/install_autotools.sh
         bash ./etc/install_autotools.sh
-        chmod +x && bootstrap.sh
+        chmod +x bootstrap.sh
         ./bootstrap.sh
         ./configure -q
 

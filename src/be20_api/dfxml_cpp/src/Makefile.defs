@@ -1,0 +1,10 @@
+# (C) 2020 Simson L. Garfinkel
+# https://www.gnu.org/licenses/lgpl-3.0.en.html
+#
+# Do not delete this file!
+# It is used by programs that wish to include the DFXML_WRITER or the DFXML_READER
+#
+
+DFXML_WRITER = $(DFXML_SRC_DIR)dfxml_writer.h $(DFXML_SRC_DIR)hash_t.h $(DFXML_SRC_DIR)cpuid.h
+DFXML_READER = $(DFXML_SRC_DIR)dfxml_reader.h $(DFXML_SRC_DIR)hash_t.h
+DFXML_EXTRA_DIST = $(DFXML_SRC_DIR)Makefile.defs

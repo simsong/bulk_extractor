@@ -19,17 +19,18 @@ sequence that can be decompressed or otherwise decoded. If so, the
 decoded data are recursively re-examined. As a result, `bulk_extractor` can find things like BASE64-encoded JPEGs and
 compressed JSON objects that traditional carving tools miss.
 
-This is the `bulk_extractor` 2.1 development branch! It is reliable, but if you want to have a well-tested production quality release, download a release from https://github.com/simsong/bulk_extractor/releases.
+This source tree builds bulk_extractor 2.1.1. For production use, prefer a tested release from https://github.com/simsong/bulk_extractor/releases.
 
 Building `bulk_extractor`
 =========================
 We recommend building from sources. We provide a number of `bash` scripts in the `etc/` directory that will configure a clean virtual machine:
 
 ```
-git clone --recurse-submodules https://github.com/simsong/bulk_extractor.git
+git clone https://github.com/simsong/bulk_extractor.git
 ./bootstrap.sh
 ./configure
 make
+make check
 make install
 ```
 
@@ -40,18 +41,17 @@ For more information on bulk_extractor, visit: https://forensics.wiki/bulk_extra
 
 Tested Configurations
 =====================
-This release of bulk_extractor requires C++17 and has been tested to compile on the following platforms:
+This release of bulk_extractor requires C++17. Current validation covers:
 
-* Amazon Linux as of 2023-05-25
-* Fedora 36 (most recently)
-* Ubuntu 20.04LTS
-* MacOS 13.2.1
+* Apple Silicon macOS (local build and `make distcheck`, 2026-07-19)
+* Ubuntu 22.04 and current macOS GitHub Actions runners
 
-You should *always* start with a fresh VM and prepare the system using the appropriate prep script in the `etc/` directory.
+Older platform preparation scripts under `etc/` are not equivalent to current
+CI support and may require maintenance.
 
 Tested Configurations Which bulk_extractor Does Not Work
 ========================================================
-* Debian 10 (is not supported for native builds))
+* Debian 10 (not supported for native builds)
 
 RECOMMENDED CITATION
 ====================
@@ -86,13 +86,13 @@ The following environment variables can be set to change the operation of `bulk_
 
 |Variable|Behavior|
 |--------|--------|
-|`DEBUG_BENCHMARK_CPU`|Include CPU benchmark information in `report.xml` file|
+|`DEBUG_BENCHMARK`|Include CPU benchmark information in `report.xml` file|
 |`DEBUG_NO_SCANNER_BYPASS`|Disables scanner bypass logic that bypasses some scanners if an sbuf contains ngrams or does not have a high distinct character count.|
 |`DEBUG_HISTOGRAMS`|Print debugging information on file-based histograms.|
 |`DEBUG_HISTOGRAMS_NO_INCREMENTAL`|Do not use incremental, memory-based histograms.|
 |`DEBUG_PRINT_STEPS`|Prints to stdout when each scanner is called for each sbuf|
-|`DEBUG_DUMP_DATA`|Hex-dump each sbuf that is to be scanned.|
-|`DEBUG_SCANNERS_IGNORE`|A comma-separated list of scanners to ignore (not load). Useful for debugging unit tests.|
+|`DEBUG_SCANNER_DUMP_DATA`|Hex-dump each sbuf that is to be scanned.|
+|`DEBUG_SCANNERS_IGNORE`|A substring used to identify scanners to ignore. Useful for debugging unit tests.|
 
 Other hints for debugging:
 
@@ -101,12 +101,14 @@ Other hints for debugging:
 
 BUILDING ON WINDOWS
 ===================
-Note: Currenlty bulk_extractor 2.1 does not build on windows, but 2.0 does.
+Native Windows builds of bulk_extractor 2.1 are not currently supported.
 
-If you wish to build for Windows, you should cross-compile from a Fedora system. Start with a clean VM and use these commands:
+Windows is not currently validated by a required parent CI job. The maintained
+repository path is cross-compilation from Fedora; start with a clean VM and use
+these commands:
 
 ```
-$ git clone --recurse-submodules https://github.com/simsong/bulk_extractor.git
+$ git clone https://github.com/simsong/bulk_extractor.git
 $ cd bulk_extractor/etc
 $ bash CONFIGURE_FEDORA36_win64.bash
 $ cd ..
@@ -116,8 +118,8 @@ $ make win64
 
 
 
-BULK_EXTRACTOR 2.0 RELEASE NOTES
-================================
+BULK_EXTRACTOR RELEASE NOTES
+============================
 
 ## Release 2.1.1 (April 26, 2024)
 Renamed jpeg_carved feature recorder to jpeg, so that the jpeg carve mode can be set with -S jpeg_carve_mode=2, rather than -S jpeg_carved_carve_mode=2, which was confusing.
@@ -126,6 +128,6 @@ Renamed jpeg_carved feature recorder to jpeg, so that the jpeg carve mode can be
 ## Release 2.0
 `bulk_extractor` 2.0 (BE2) is now operational. Although it works with the Java-based viewer, we do not currently have an installer that runs under Windows.
 
-BE2  requires C++17 to compile. It requires `https://github.com/simsong/be13_api.git` as a sub-module, which in turn requires `dfxml` as a sub-module.
+BE2 requires C++17 to compile. The be20 scanner API, dfxml_cpp, utfcpp, and DFXML schema sources are maintained directly in this repository; no recursive submodule checkout is required.
 
 The project took longer than anticipated. In addition to updating to C++17, It was used as an opportunity for massive code refactoring and general increase in code quality, testability and reliability. An article about the experiment will appear in a forthcoming issue of [ACM Queue](https://queue.acm.org/)

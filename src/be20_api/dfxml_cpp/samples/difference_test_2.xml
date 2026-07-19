@@ -1,0 +1,180 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<dfxml
+  xmlns='http://www.forensicswiki.org/wiki/Category:Digital_Forensics_XML'
+  xmlns:dc='http://purl.org/dc/elements/1.1/'
+  version='1.1.1'>
+  <metadata>
+    <dc:type>Sample</dc:type>
+  </metadata>
+  <creator>
+    <program>vi</program>
+    <version>8.0</version>
+    <build_environment>
+      <compiler>GCC 4.6</compiler>
+    </build_environment>
+    <execution_environment>
+      <command_line>vi difference_test_2.xml</command_line>
+    </execution_environment>
+  </creator>
+  <source>
+    <image_filename>/dev/null</image_filename>
+  </source>
+  <volume offset="1048576"><!--1MiB-->
+    <partition_offset>1048576</partition_offset>
+    <sector_size>512</sector_size>
+    <block_size>4096</block_size>
+    <ftype_str>FAT16</ftype_str>
+    <fileobject>
+      <filename>CHANGE___move_from_P1M_to_P3G</filename>
+      <partition>1</partition>
+      <filesize>4097</filesize>
+      <inode>3</inode>
+      <mtime>2007-08-09T12:34:56Z</mtime>
+      <atime>2007-08-09T12:34:56Z</atime>
+      <crtime>2007-08-09T12:34:56Z</crtime>
+      <hashdigest type='sha1'>0000000000000000000000000000000000000000</hashdigest>
+    </fileobject>
+    <fileobject>
+      <filename>CHANGE___move_from_P1M_to_P3G___change_name</filename>
+      <partition>1</partition>
+      <filesize>4097</filesize>
+      <inode>4</inode>
+      <mtime>2007-08-09T12:34:56Z</mtime>
+      <atime>2007-08-09T12:34:56Z</atime>
+      <crtime>2007-08-09T12:34:56Z</crtime>
+      <hashdigest type='sha1'>1000000000000000000000000000000000000000</hashdigest>
+    </fileobject>
+    <fileobject>
+      <filename>CHANGE___move_from_P1M_to_P3G___change_content___change_mtime</filename>
+      <partition>1</partition>
+      <filesize>4097</filesize>
+      <inode>5</inode>
+      <mtime>2007-08-09T12:34:56Z</mtime>
+      <atime>2007-08-09T12:34:56Z</atime>
+      <crtime>2007-08-09T12:34:56Z</crtime>
+      <hashdigest type='sha1'>2000000000000000000000000000000000000000</hashdigest>
+    </fileobject>
+  </volume>
+  <volume offset="1073741824"><!--1GiB-->
+    <partition_offset>1073741824</partition_offset>
+    <sector_size>512</sector_size>
+    <block_size>4096</block_size>
+    <ftype_str>FAT32</ftype_str>
+    <fileobject>
+      <filename>NO_CHANGE</filename>
+      <partition>2</partition>
+      <filesize>4097</filesize>
+      <inode>3</inode>
+      <mtime>2007-08-09T12:34:56Z</mtime>
+      <atime>2007-08-09T12:34:56Z</atime>
+      <crtime>2007-08-09T12:34:56Z</crtime>
+      <hashdigest type='sha1'>3000000000000000000000000000000000000000</hashdigest>
+    </fileobject>
+    <fileobject>
+      <filename>CHANGE___erased</filename>
+      <partition>2</partition>
+      <filesize>4097</filesize>
+      <inode>4</inode>
+      <mtime>2007-08-09T12:34:56Z</mtime>
+      <atime>2007-08-09T12:34:56Z</atime>
+      <crtime>2007-08-09T12:34:56Z</crtime>
+      <hashdigest type='sha1'>4000000000000000000000000000000000000000</hashdigest>
+    </fileobject>
+    <fileobject>
+      <filename>CHANGE___move_from_P1G_to_P2G</filename>
+      <partition>2</partition>
+      <filesize>4097</filesize>
+      <inode>5</inode>
+      <mtime>2007-08-09T12:34:56Z</mtime>
+      <atime>2007-08-09T12:34:56Z</atime>
+      <crtime>2007-08-09T12:34:56Z</crtime>
+      <hashdigest type='sha1'>5000000000000000000000000000000000000000</hashdigest>
+    </fileobject>
+    <fileobject>
+      <filename>CHANGE___timestamp_changes_format_only</filename>
+      <partition>2</partition>
+      <filesize>4097</filesize>
+      <inode>6</inode>
+      <mtime>2007-08-09T12:34:56Z</mtime>
+      <atime>2007-08-09T12:34:56Z</atime>
+      <crtime>2007-08-09T12:34:56Z</crtime>
+      <hashdigest type='sha1'>6000000000000000000000000000000000000000</hashdigest>
+    </fileobject>
+    <fileobject>
+      <filename>CHANGE___erased___replaced_by_sibling</filename>
+      <partition>2</partition>
+      <filesize>4097</filesize>
+      <inode>7</inode>
+      <mtime>2007-08-09T12:34:56Z</mtime>
+      <atime>2007-08-09T12:34:56Z</atime>
+      <crtime>2007-08-09T12:34:56Z</crtime>
+      <hashdigest type='sha1'>A000000000000000000000000000000000000000</hashdigest>
+    </fileobject>
+    <fileobject>
+      <filename>CHANGE___renamed_to_erased_sibling___change_checksum_and_mtime</filename>
+      <partition>2</partition>
+      <filesize>4097</filesize>
+      <inode>8</inode>
+      <mtime>2007-08-09T12:34:56Z</mtime>
+      <atime>2007-08-09T12:34:56Z</atime>
+      <crtime>2007-08-09T12:34:56Z</crtime>
+      <hashdigest type='sha1'>B000000000000000000000000000000000000000</hashdigest>
+    </fileobject>
+    <fileobject>
+      <filename>CHANGE___erased___replaced_by_other_partition_file</filename>
+      <partition>2</partition>
+      <filesize>4097</filesize>
+      <inode>9</inode>
+      <mtime>2007-08-09T12:34:56Z</mtime>
+      <atime>2007-08-09T12:34:56Z</atime>
+      <crtime>2007-08-09T12:34:56Z</crtime>
+      <hashdigest type='sha1'>C000000000000000000000000000000000000000</hashdigest>
+    </fileobject>
+    <fileobject>
+      <filename>CHANGE___renamed</filename>
+      <partition>2</partition>
+      <filesize>4097</filesize>
+      <inode>9</inode>
+      <mtime>2007-08-09T12:34:56Z</mtime>
+      <atime>2007-08-09T12:34:56Z</atime>
+      <crtime>2007-08-09T12:34:56Z</crtime>
+      <hashdigest type='sha1'>E000000000000000000000000000000000000000</hashdigest>
+    </fileobject>
+  </volume>
+  <volume offset="2147483648"><!--2GiB-->
+    <partition_offset>2147483648</partition_offset>
+    <sector_size>512</sector_size>
+    <block_size>4096</block_size>
+    <ftype_str>FAT32</ftype_str>
+    <fileobject>
+      <filename>CHANGE___content_and_mtime</filename>
+      <partition>3</partition>
+      <filesize>4097</filesize>
+      <inode>3</inode>
+      <mtime>2007-08-09T12:34:56Z</mtime>
+      <atime>2007-08-09T12:34:56Z</atime>
+      <crtime>2007-08-09T12:34:56Z</crtime>
+      <hashdigest type='sha1'>7000000000000000000000000000000000000000</hashdigest>
+    </fileobject>
+    <fileobject>
+      <filename>CHANGE___unallocated</filename>
+      <partition>3</partition>
+      <filesize>4097</filesize>
+      <inode>4</inode>
+      <mtime>2007-08-09T12:34:56Z</mtime>
+      <atime>2007-08-09T12:34:56Z</atime>
+      <crtime>2007-08-09T12:34:56Z</crtime>
+      <hashdigest type='sha1'>8000000000000000000000000000000000000000</hashdigest>
+    </fileobject>
+    <fileobject>
+      <filename>CHANGE___moved_to_erased_P1G_file</filename>
+      <partition>3</partition>
+      <filesize>4097</filesize>
+      <inode>5</inode>
+      <mtime>2007-08-09T12:34:56Z</mtime>
+      <atime>2007-08-09T12:34:56Z</atime>
+      <crtime>2007-08-09T12:34:56Z</crtime>
+      <hashdigest type='sha1'>D000000000000000000000000000000000000000</hashdigest>
+    </fileobject>
+  </volume>
+</dfxml>

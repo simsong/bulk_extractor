@@ -4,23 +4,7 @@ set -eu
 
 mkdir -p build-aux
 
-# Make sure the current submodule layout was checked out recursively. Update
-# once if anything is missing; do not probe removed historical submodules.
-missing_submodule=no
-for sub in dfxml_schema src/be20_api src/be20_api/dfxml_cpp src/be20_api/utfcpp
-do
-  if [ ! -e "$sub/.git" ]; then
-    echo "submodule $sub is not present."
-    missing_submodule=yes
-  fi
-done
-
-if [ "$missing_submodule" = yes ]; then
-  echo 'Attempting recursive submodule initialization...'
-  git submodule update --init --recursive
-fi
-
-# Makesure files are in src/Makefile.auto_defs
+# Make sure generated distribution and RAR manifests are current.
 python3 etc/makefile_builder.py
 
 # Regenerate a consistent Autotools set with the installed tool versions.

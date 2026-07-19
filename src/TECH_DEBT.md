@@ -1,24 +1,22 @@
 # bulk_extractor and be20_api source and technical-debt audit
 
-Date: 2026-07-18
+Date: 2026-07-19
 
 ## Executive conclusions
 
-This audit recommends bringing `src/be20_api` back into the
+This audit recommended bringing `src/be20_api` back into the
 `bulk_extractor` repository while retaining it as a distinct internal
-component. The present submodule boundary provides little isolation:
-`bulk_extractor` includes be20_api's Autoconf macros and private headers and
-compiles be20_api's `.cpp` files directly into both `bulk_extractor` and
-`test_be`. It does not consume a released or installed be20_api library. The
-boundary therefore adds nested-submodule, version-skew, CI, and developer
-workflow costs without enforcing a binary or source API.
+component. That integration is now implemented: be20_api, dfxml_cpp, utfcpp,
+and the DFXML schemas are ordinary tracked source; `libbe20.a` is the explicit
+internal component; and the parent and component tests consume that target.
+There are no remaining Git links or recursive-submodule build steps.
 
-The desirability of reintegration is **high** and its mechanical feasibility
-is **high**. Overall migration risk is **moderate** because the repositories
-have separate histories, be20_api has two nested submodules, the parent pins a
-non-`main` be20_api commit, and be20_api may have consumers outside this
-checkout. The correct target is an in-tree library or object-library component,
-not an undifferentiated copy of the files.
+The desirability and feasibility of reintegration were both **high**. The
+migration retained the exact parent-pinned revisions and records their commit
+IDs and upstream URLs in `src/be20_api/VENDORED.md` and
+`dfxml_schema/VENDORED.md`. The user confirmed that no supported independent
+be20_api consumer remains; tcpflow uses the abandoned be14 API. The result is
+an in-tree library component rather than an undifferentiated source glob.
 
 The most urgent source issues are independent of that restructuring:
 
@@ -60,7 +58,7 @@ files. The following were inventoried and analyzed:
 - bundled RAR, TSK header, `cxxopts`, Catch, thread-pool, utfcpp, and dfxml_cpp
   code for integration, versioning, build, and license risk, rather than as new
   line-by-line audits of their upstream implementations; and
-- parent and nested submodule state, source-list generation, configure-time
+- the former parent and nested submodule state, source-list generation, configure-time
   composition, test entry points, and workflows.
 
 “Complete” here means that no tracked source area was excluded. It does not
@@ -69,16 +67,15 @@ fuzz, Windows, Lightgrep, and no-libpcap coverage was unavailable in this
 checkout, as described under **Validation status**. The default EWF path was
 built and exercised by the E01 test fixture.
 
-The parent was inspected at its current `main` checkout. At the start of the
+The parent was initially inspected at its `main` checkout. At the start of the
 audit, its gitlink recorded be20_api commit
 `625f5b3ddd9d6baf4aaa7c10a6cefb5e2bfb1a8b`, while the be20_api worktree was
 at clean `main` commit
 `00f03b21b9f3da8c613828c6fb5ab05b8f661a79`. That mismatch is material:
 `625f5b3` is three commits beyond `00f03b2` on the separate `fix-noreturn`
 branch and includes RE2-related build fixes. Findings were checked against the
-files present there. The build repair subsequently reconciled the checkout to
-the parent's recorded `625f5b3`; reintegration should use that commit unless a
-separate dependency-update decision selects another revision.
+files present there. The build repair reconciled the checkout to the parent's
+recorded `625f5b3`, and the integration imported that exact revision.
 
 ## Current architecture and actual dependency boundary
 
@@ -112,105 +109,81 @@ The first-party be20_api source falls into these cohesive areas:
 - standalone tests plus bundled Catch/thread-pool and nested dfxml_cpp/utfcpp
   dependencies.
 
-### The boundary is already porous
+### Former dependency boundary
 
-The following facts make be20_api an in-tree implementation dependency in all
-but Git layout:
+Before integration, these facts made be20_api an in-tree implementation
+dependency in all but Git layout:
 
-- `configure.ac` directly `m4_include`s be20_api and dfxml_cpp macros.
-- `src/Makefile.am` adds be20_api and utfcpp private include directories.
-- `etc/makefile_builder.py` walks `src/be20_api` and emits all of its `.cpp` and
+- `configure.ac` directly `m4_include`d be20_api and dfxml_cpp macros.
+- `src/Makefile.am` added be20_api and utfcpp private include directories.
+- `etc/makefile_builder.py` walked `src/be20_api` and emitted all of its `.cpp` and
   `.h` files into the parent's generated `src/Makefile.auto_defs`.
-- `bulk_extractor` and `test_be` compile those files directly. There is no
+- `bulk_extractor` and `test_be` compiled those files directly. There was no
   be20_api link dependency.
-- The standalone be20_api `Makefile.am` builds `test_be20_api`, not the
+- The standalone be20_api `Makefile.am` built `test_be20_api`, not the
   `be20_api.a` promised by its README.
-- Parent code directly names be20_api types throughout its public and private
+- Parent code directly named be20_api types throughout its public and private
   implementation.
 
-This coupling means a submodule update can change the parent's source set and
-configure behavior without a versioned interface, while a parent checkout can
-simultaneously pin a be20_api revision that is not on be20_api `main`.
+The integration removes that mismatch. `src/be20_api/Makefile.defs` now lists
+the reviewed production sources explicitly, `src/Makefile.am` builds them once
+as `libbe20.a`, and both executables and component tests use that library.
+Test-only sources have their own manifest. Root `m4/` owns the Autoconf macros.
 
-## Reintegration assessment
+## Reintegration assessment and result
 
-### Desirability: high
+### Desirability: high; completed
 
-Reintegration would:
+Reintegration now provides these results:
 
-- make a parent commit self-contained and remove the current gitlink/worktree
+- makes a parent commit self-contained and removes the former gitlink/worktree
   skew;
-- eliminate the most failure-prone nested checkout and bootstrap sequence;
-- let source, tests, CI, API documentation, and versioning change atomically;
-- replace filesystem discovery of implementation files with an explicit source
+- eliminates the most failure-prone nested checkout and bootstrap sequence;
+- lets source, tests, CI, API documentation, and versioning change atomically;
+- replaces filesystem discovery of implementation files with an explicit source
   manifest and component target;
-- expose optional configurations to the same CI matrix as the executable;
-- make ownership and deprecation decisions visible in one issue tracker; and
-- remove misleading independence: today be20_api has neither an installed
+- exposes optional configurations to the same CI matrix as the executable;
+- makes ownership and deprecation decisions visible in one issue tracker; and
+- removes misleading independence: today be20_api has neither an installed
   artifact nor a compatibility gate.
 
-The strongest argument against reintegration would be an active independent
-consumer that tracks be20_api releases. This checkout provides claims that
-tcpflow can consume it, but no consumer manifest, packaged headers, install
-target, semantic-version policy, or compatibility tests. That claim must be
-verified against the actual external repositories before deleting the separate
-repository.
+The strongest argument against reintegration would have been an active
+independent consumer. The user confirmed there is none: tcpflow remains on the
+abandoned be14 API. be20_api had no package, installed-header set,
+semantic-version policy, or compatibility test that the move could preserve.
 
-### Feasibility: high, with moderate migration risk
+### Feasibility: high; migration completed
 
-The code is already compiled in the desired physical arrangement, so moving it
-does not require an ABI conversion. The risks are repository and product risks:
+The code was already compiled in the desired physical arrangement, so moving
+it required no ABI conversion. The identified risks were handled as follows:
 
-- The parent wants `625f5b3` but be20_api `main` is `00f03b2`. Importing the
-  worktree blindly would discard fixes expected by the parent.
-- be20_api contains nested dfxml_cpp and utfcpp gitlinks. Their canonical
-  versions and future update mechanism must be chosen explicitly.
-- Separate history should be retained for blame, license provenance, and
-  bisectability.
+- The exact parent-pinned be20_api commit `625f5b3` was imported, not the older
+  `00f03b2` `main` tip.
+- The pinned dfxml_cpp, utfcpp, and DFXML schema revisions were imported as
+  ordinary source, eliminating hidden nested Git links.
+- Provenance documents retain the upstream URLs and exact commit IDs; imported
+  histories and license files remain in the source tree.
 - Root and be20_api license texts are broadly compatible (US-government/public
   domain material plus MIT and separately identified third-party code), but
   both manifests contain stale paths and descriptions. Third-party notices must
   be normalized during the move, not lost.
-- Any real external consumer needs either a maintained standalone release or a
-  supported extraction mechanism.
+- There is no supported external consumer requiring a standalone release.
 
-### Recommended target
+### Implemented target
 
-Import the canonical be20_api history under a stable path such as
-`src/be20/`. Define one explicit `libbe20` convenience/static target (or an
-Automake object library) with a reviewed public-header list. Link
-`bulk_extractor`, its tests, and any scanner test harness against that target.
-Keep the namespace/component boundary, but remove the Git submodule boundary.
+The stable path remains `src/be20_api/` to avoid an unnecessary include churn.
+Automake builds one explicit `libbe20.a` convenience library from a reviewed
+manifest. `bulk_extractor`, `test_be`, and `test_be20_api` link that target;
+`test_dfxml` is a separate parent-managed component test. The namespace and
+component boundary remain, while the Git submodule boundary is gone.
 
 Do not continue generating the source list by recursively walking the tree.
 An explicit source list prevents test programs, demos, broken prototypes, or
 new upstream files from silently entering production builds.
 
-If an external consumer is confirmed, the preferred monorepo outcome is still
-possible: install the documented public headers and library, run a small
-consumer build in CI, and optionally publish a read-only split of `src/be20`.
-Keeping a writable submodule is not required to preserve reuse.
-
-### Migration sequence
-
-1. Reconcile `00f03b2`, `625f5b3`, and be20_api remote branches. Make the
-   intended source state build and test standalone before importing it.
-2. Identify actual consumers. Record which headers and behaviors are public;
-   treat everything else as private.
-3. Import be20_api history with a prefix-preserving history operation. Avoid a
-   one-time untraceable file copy.
-4. Resolve dfxml_cpp and utfcpp deliberately: vendor pinned source with notices,
-   use one top-level submodule each, or use a package dependency. Do not retain
-   hidden nested gitlinks.
-5. Add the explicit `libbe20` target and make both parent and be20 tests link it.
-   Remove recursive source discovery.
-6. Make required and optional configurations green: default, ASan/UBSan,
-   no-libpcap, EWF, SQLite, Exiv2, RAR, Lightgrep (or delete Lightgrep), macOS,
-   Linux, and Windows where supported.
-7. Merge READMEs, versioning, release notes, CI, and issue tracking. Mark legacy
-   manuals and roadmaps archival.
-8. In one final parent commit, replace the gitlink, remove the misleading
-   `src/be13_api` submodule name, and document the new update/release process.
+The default macOS build, all three parent-managed tests, and `make distcheck`
+pass. Optional ASan/UBSan, no-libpcap, Lightgrep, Linux, and Windows matrices
+remain follow-up validation work rather than blockers to the repository move.
 
 ## Significant source-code debt
 
@@ -459,26 +432,19 @@ highest-risk recursive and binary parsers.
 
 #### Build-system debt
 
-- The generated source manifest recursively includes every be20_api `.cpp` and
-  `.h`. Production membership changes implicitly when a file is added. The
-  current production list even contains `test_image_reader.cpp`,
-  `scan_sha1_test.cpp`, and a generated `config.h`.
+- Resolved by the integration: `src/be20_api/Makefile.defs` explicitly separates
+  production and test-only sources. Adding a file no longer changes production
+  membership implicitly, and generated `config.h` files are not imported.
 - Generated and ignored Autotools state can silently retain absolute package
   manager paths. The initial checkout demonstrated this with stale RE2 and
   Abseil paths; clean regeneration removed them from the active build.
-- be20_api `configure.ac` says “Enforce C++20” but requests C++17.
-- `be20_configure.m4` detects missing RE2 only with a notice, although
-  `regex_vector.h` includes RE2 unconditionally; it also defines `HAVE_RE2`
-  twice.
-- Configure scripts sort and de-duplicate compiler/linker flags. Flag order can
-  be semantically significant, especially for libraries and paired options.
+- Resolved by the integration: the parent consistently requires C++17, missing
+  RE2 is fatal, `HAVE_RE2` is defined once, and the imported macro no longer
+  sorts RE2 compiler or linker flags.
 - Top-level `Makefile.am` retains commented/dead shared-library and Python 2.7
   install logic.
-- Until the build repair accompanying this review, `bootstrap.sh` checked
-  duplicate paths and the obsolete/nonexistent nested `utfcpp/extern/ftest`
-  path, retried submodule updates from inside its loop, and could continue
-  after a failed generator command. It now validates the actual submodule
-  layout once, fails fast, and delegates regeneration to `autoreconf`.
+- `bootstrap.sh` no longer performs any Git or submodule mutation. It regenerates
+  the remaining manifests and delegates Autotools regeneration to `autoreconf`.
 - Platform setup scripts are mutable machine provisioning scripts rather than
   reproducible dependency declarations. The macOS script hard-codes Homebrew
   paths and edits shell startup state; older Fedora/CentOS scripts remain
@@ -490,10 +456,10 @@ The existing Catch tests contain valuable sbuf, utility, scanner, and end-to-end
 logic checks. The debt is coverage selection and configuration, not simply test
 count:
 
-- The be20 thread-pool test launches an empty pool, joins it, and then waits for
-  a watchdog that always sleeps 60 seconds. It does not schedule or verify work,
-  cancellation, backpressure, or exception propagation. Replace it with
-  deterministic substantive concurrency tests.
+- Resolved in the integration: the be20 thread-pool test queues six buffers on
+  four workers, joins them, and verifies worker, queue, and recorder results.
+  It no longer contains an unconditional 60-second watchdog delay. Cancellation,
+  backpressure, and exception propagation still need focused tests.
 - Parent CI sets `DEBUG_FAST=TRUE`; several expensive image/scanner tests return
   early under that setting. The default gate therefore omits important
   segmented-image and E01/regression behavior.
@@ -532,7 +498,6 @@ Move unsupported Python/Java artifacts to a clearly labeled archive.
 | Document | Conflict with current source | Required action |
 |---|---|---|
 | `README.md` | Calls this the 2.1 development branch although `configure.ac` is 2.1.1; tested platforms stop in 2023; names `DEBUG_BENCHMARK_CPU` and `DEBUG_DUMP_DATA`, while code reads `DEBUG_BENCHMARK` and `DEBUG_SCANNER_DUMP_DATA`; describes comma-separated scanner ignores although implementation uses substring matching; release notes name `be13_api`; Windows status is not tied to an active parent CI job. | Make it the concise canonical build/use/status page generated or checked against current help and CI. |
-| `.gitmodules` | The key is `src/be13_api` while the path and repository are be20_api. | Rename during reintegration or immediately when the gitlink is next changed. |
 | `src/DEBUG.md` | Lists only a subset of variables and uses names different from the root README. | Derive a single table from named constants/access sites and document separators/precedence. |
 | `src/scanners.md` | Contains only an unchecked list, omits status and some source distinctions, and is not synchronized with `bulk_extractor_scanners.h`. | Generate scanner status/help from registration metadata or delete the checklist. |
 | `tests/README.md` | Examples and output are for 1.5.3 and include removed SQLite flags and old corpus paths; claims do not describe the current Catch/Automake gate. | Rewrite around `make check`, required fixtures, `DEBUG_FAST`, and supported regression modes. |
@@ -547,7 +512,6 @@ Move unsupported Python/Java artifacts to a clearly labeled archive.
 | `doc/writing_pattern_scanners.md` | Describes the old Lightgrep/recursion-control API, old registration locations, and scanners that are now commented out or uncompilable. |
 | `doc/programmer_manual/BEProgrammersManual.tex` | Documents the former two-argument scanner ABI, old plug-in loading, and old source organization. |
 | `doc/latex_manuals/BEUsersManual.tex`, `BEUsage.txt`, and worked examples | Explicitly describe versions 1.4/1.5, old installers, Python 2.7, old options, old scanner output, and obsolete distribution URLs. |
-| `doc/Makefile.am` | Still adds a `src/be13_api` include path. |
 
 These should not remain adjacent to current docs without a banner. Either port
 them and add a CI build/link check, or move them under `doc/archive/1.x/` with a
@@ -572,24 +536,10 @@ move live work to tracked issues or a dated, owned roadmap.
 
 ### be20_api documentation conflicts
 
-`src/be20_api/README.md` has the highest concentration of contradictions:
-
-- It says be20_api was developed for bulk_extractor 1.3 and used unchanged
-  through 2.0, while the same file says BE13_API was renamed and the source has
-  a 2.x scanner lifecycle.
-- It says runtime shared-library/DLL scanners are equivalent to built-ins; the
-  loader always throws.
-- It says the build makes `be20_api.a`; `Makefile.am` only builds the test
-  executable.
-- It directs users to pull `master`; the checkout uses `main`.
-- It names `tcplow`, has an unfinished sentence, and gives no supported public
-  header/version policy.
-- Its `main` coverage badge points at `slg-dev`.
-
-`src/be20_api/doc/unit-tests.txt` says libcester is in use, while the tests use
-the bundled Catch header. `INSTALL`, `TODO.md`, and the status report are stale
-development notes. Replace these with one accurate component README covering
-scope, public headers, build integration, ownership, and test commands.
+`src/be20_api/README.md`, `README_WIN.md`, and `doc/unit-tests.txt` now describe
+the internal `libbe20.a`, parent build, and Catch/Makefile test path. The DFXML
+and schema READMEs also identify their vendored in-tree status. Historical
+`TODO.md`, NEWS, ChangeLog, and status notes remain archival documentation debt.
 
 ### CI as executable documentation
 
@@ -603,17 +553,16 @@ known-invalid:
 - `create-release-installer.yml` runs `chmod +x && bootstrap.sh` (missing the
   chmod operand), uses old action versions, and references
   `steps.create_release.outputs.upload_url` without a `create_release` step.
-- Coverity checks out `actions/checkout@main` and does not request recursive
-  submodules.
+- Coverity still checks out `actions/checkout@main`; mutable action references
+  should be pinned even though recursive checkout is no longer required.
 - Some third-party actions are pinned to mutable `master` branches.
-- be20_api's macOS workflow still installs PCRE although its NEWS says RE2
-  replaced PCRE, and its Codecov upload is named `sleuthkit-codecov`.
+- The obsolete standalone be20_api workflows were removed during integration.
 
 Consolidate to one required build matrix, one coverage workflow if needed, and
 one tested release workflow. Pin actions to maintained major versions or commit
 SHAs and add a lightweight workflow syntax/reference check.
 
-## Explanation of the submodule update error
+## Explanation of the former submodule update error
 
 The reported messages:
 
@@ -632,9 +581,8 @@ occurs with `git submodule update --merge`, or after a checkout has modified a
 tracked file without committing/stashing it. “Not uptodate” refers to the
 submodule's own index/worktree, not to the GitHub Actions run status.
 
-The obstruction is not present in the current worktree: the workflow file and
-the be20_api index are clean. At the start of the audit, the parent and
-worktree differed:
+Before the integration, the obstruction was cleared and the parent and
+worktree mismatch was reconciled. At the start of the audit they differed:
 
 ```text
 parent gitlink:             625f5b3ddd9d6baf4aaa7c10a6cefb5e2bfb1a8b
@@ -645,10 +593,14 @@ That was why the parent reported `M src/be20_api` and `git submodule status`
 prefixed it with `+`: the parent expected the `fix-noreturn` descendant rather
 than the checked-out be20_api `main` tip. Running
 `git submodule update --init --recursive` after confirming the workflow file
-was clean detached be20_api at `625f5b3`, as recorded by the parent. The parent
-and all nested submodules now have clean, unprefixed status.
+was clean detached be20_api at `625f5b3`, as recorded by the parent.
 
-Before retrying, inspect all three states:
+This recovery procedure is now historical: `.gitmodules` and every Git-link
+entry have been removed. `src/be20_api`, dfxml_cpp, utfcpp, and `dfxml_schema`
+are ordinary files, so this class of checkout/update failure can no longer
+occur in bulk_extractor.
+
+For an older checkout that still predates integration, inspect all three states:
 
 ```sh
 git -C src/be20_api status --short
@@ -672,7 +624,7 @@ git -C src/be20_api restore -- .github/workflows/build-ubuntu-macos.yml
 git submodule update --init --recursive
 ```
 
-The final command should detach `src/be20_api` at `625f5b3`, which is normal for
+The final command detaches `src/be20_api` at `625f5b3`, which is normal for
 a submodule. Do not fix this by merely running `git pull` on be20_api `main`:
 that keeps the submodule at a commit different from the one the parent records.
 If the parent should instead follow `00f03b2`, that is a deliberate dependency
@@ -688,16 +640,22 @@ dylib. After updating Homebrew, reconciling submodules, running
 Apple Silicon macOS:
 
 - Homebrew dependencies are present and `brew missing` reports no broken
-  dependencies. The directly relevant versions include RE2 2025-11-05,
+  dependencies. The directly relevant versions at validation time include RE2 2025-11-05,
   Abseil 20260107.1, Automake 1.18.1_1, Autoconf 2.73, libtool 2.6.2,
   libxml2 2.15.3, libewf 20140816, json-c 0.19, expat 2.8.2, and Exiv2 0.28.8.
-- `./bootstrap.sh`, `./configure`, and `make -j4` complete successfully.
-- `make check` passes its one registered test program (`test_be`: 1 pass, no
-  skips or failures). With `DEBUG_FAST` unset, the segmented 30 MB image, E01,
-  email, scanner, and other non-fast paths execute.
+- `./bootstrap.sh`, `./configure`, and `make -j4` complete successfully without
+  the former duplicate Automake directory rules.
+- `make check -j4` passes all three registered programs: `test_be`,
+  `test_be20_api`, and `test_dfxml` (3 passes, no skips or failures). With
+  `DEBUG_FAST` unset, the segmented 30 MB image, E01, email, scanner, and other
+  non-fast paths execute. The DFXML CPUID test checks the supported x86
+  contract without falsely requiring an x86 vendor on Apple Silicon.
 - `make distcheck` passes the clean archive configure/build/test,
   install/uninstall, and redistribution checks and produces
-  `bulk_extractor-2.1.1.tar.gz`.
+  `bulk_extractor-2.1.1.tar.gz`, including the vendored sources, licenses,
+  provenance records, schemas, component tests, and fixtures.
+- The Git index contains no mode-160000 entries, `.gitmodules` is removed, and
+  the build and workflows do not initialize submodules.
 - `src/bulk_extractor` links the installed RE2, Abseil, libewf, and other
   current Homebrew libraries rather than the stale Cellar versions.
 
@@ -709,22 +667,20 @@ optional/sanitizer configurations recommended in this document.
 
 1. **Contain P0 risk:** fix and test PCAP length validation, all sbuf boundary
    primitives, and disk-error thread shutdown. Add ASan/UBSan gates.
-2. **Preserve the restored build baseline:** keep be20_api at an intentional
-   parent-recorded commit, prevent generated dependency paths from entering
-   source control, and retain `make check` plus `make distcheck` as release
-   gates.
+2. **Preserve the integrated build baseline:** update vendored dependencies
+   intentionally with provenance records, prevent generated dependency paths
+   from entering source control, and retain `make check` plus `make distcheck`
+   as release gates.
 3. **Resolve false features:** either implement or remove plug-ins and
    Lightgrep. Correct the CLI and docs in the same changes.
 4. **Repair input/ownership paths:** short reads, E01 detection, split filename
    construction, file mapping, packet accessors, histogram fallback, and EVTX
    ownership.
-5. **Reintegrate be20_api:** preserve history, add an explicit component target,
-   flatten dependency management, and delete recursive source discovery.
-6. **Consolidate tests and CI:** exercise real optional configurations and
+5. **Consolidate tests and CI:** exercise real optional configurations and
    malformed corpora; remove duplicate/broken workflows and pro-forma tests.
-7. **Rebuild documentation:** one current README/man page/component guide;
+6. **Rebuild documentation:** one current README/man page/component guide;
    archive 1.x manuals and historical roadmaps with prominent version banners.
 
-This ordering deliberately separates urgent runtime correctness from the
-repository move. Reintegration will reduce the cost of maintaining the fixes,
-but it should not delay them or obscure their review history.
+The repository move is complete and reduces the cost of maintaining these
+fixes. It does not change their runtime priority or substitute for focused
+regression tests.

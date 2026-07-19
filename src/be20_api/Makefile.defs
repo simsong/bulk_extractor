@@ -1,0 +1,81 @@
+# including be20_api/Makefile.defs
+BE20_API_SRC= \
+	$(BE20_API_DIR)/aftimer.h \
+	$(BE20_API_DIR)/abstract_image_reader.h \
+	$(BE20_API_DIR)/abstract_image_reader.cpp \
+	$(BE20_API_DIR)/atomic_map.h \
+	$(BE20_API_DIR)/atomic_set.h \
+	$(BE20_API_DIR)/atomic_unicode_histogram.cpp \
+	$(BE20_API_DIR)/atomic_unicode_histogram.h \
+	$(BE20_API_DIR)/char_class.h \
+	$(BE20_API_DIR)/feature_recorder.cpp \
+	$(BE20_API_DIR)/feature_recorder.h \
+	$(BE20_API_DIR)/feature_recorder_file.cpp \
+	$(BE20_API_DIR)/feature_recorder_file.h \
+	$(BE20_API_DIR)/feature_recorder_set.cpp \
+	$(BE20_API_DIR)/feature_recorder_set.h \
+	$(BE20_API_DIR)/feature_recorder_sql.cpp \
+	$(BE20_API_DIR)/feature_recorder_sql.h \
+	$(BE20_API_DIR)/formatter.h \
+	$(BE20_API_DIR)/histogram_def.cpp \
+	$(BE20_API_DIR)/histogram_def.h  \
+	$(BE20_API_DIR)/machine_stats.h  \
+	$(BE20_API_DIR)/net_ethernet.h \
+	$(BE20_API_DIR)/packet_info.h \
+	$(BE20_API_DIR)/path_printer.h \
+	$(BE20_API_DIR)/path_printer.cpp \
+	$(BE20_API_DIR)/pcap_fake.cpp \
+	$(BE20_API_DIR)/pcap_fake.h \
+	$(BE20_API_DIR)/pos0.cpp \
+	$(BE20_API_DIR)/pos0.h \
+	$(BE20_API_DIR)/regex_vector.cpp \
+	$(BE20_API_DIR)/regex_vector.h \
+	$(BE20_API_DIR)/sbuf.cpp \
+	$(BE20_API_DIR)/sbuf.h \
+	$(BE20_API_DIR)/sbuf_stream.h \
+	$(BE20_API_DIR)/sbuf_stream.cpp \
+	$(BE20_API_DIR)/scanner_config.cpp \
+	$(BE20_API_DIR)/scanner_config.h \
+	$(BE20_API_DIR)/scanner_params.cpp \
+	$(BE20_API_DIR)/scanner_params.h \
+	$(BE20_API_DIR)/scanner_set.cpp \
+	$(BE20_API_DIR)/scanner_set.h \
+        $(BE20_API_DIR)/thread-pool/thread_pool.hpp \
+        $(BE20_API_DIR)/threadpool.h \
+        $(BE20_API_DIR)/threadpool.cpp \
+	$(BE20_API_DIR)/unicode_escape.cpp \
+	$(BE20_API_DIR)/unicode_escape.h \
+	$(BE20_API_DIR)/utfcpp/source/utf8.h \
+	$(BE20_API_DIR)/utfcpp/source/utf8/checked.h \
+	$(BE20_API_DIR)/utfcpp/source/utf8/core.h \
+	$(BE20_API_DIR)/utfcpp/source/utf8/cpp11.h \
+	$(BE20_API_DIR)/utfcpp/source/utf8/cpp17.h \
+	$(BE20_API_DIR)/utfcpp/source/utf8/unchecked.h \
+	$(BE20_API_DIR)/utils.cpp \
+	$(BE20_API_DIR)/utils.h \
+	$(BE20_API_DIR)/word_and_context_list.cpp \
+	$(BE20_API_DIR)/word_and_context_list.h \
+        $(BE20_API_DIR)/dfxml_cpp/src/dfxml_writer.h \
+        $(BE20_API_DIR)/dfxml_cpp/src/hash_t.h \
+        $(BE20_API_DIR)/dfxml_cpp/src/cpuid.h
+
+BE20_API_TEST_SRC= \
+	$(BE20_API_DIR)/scan_sha1_test.cpp \
+	$(BE20_API_DIR)/scan_sha1_test.h \
+	$(BE20_API_DIR)/test_image_reader.cpp \
+	$(BE20_API_DIR)/test_image_reader.h
+
+BE20_API_EXTRA_DIST=\
+        $(BE20_API_DIR)/Makefile.defs \
+        $(BE20_API_DIR)/dfxml_cpp/src/Makefile.defs \
+        $(BE20_API_DIR)/README.md \
+	$(BE20_API_DIR)/README_WIN.md \
+	$(BE20_API_DIR)/VENDORED.md \
+	$(BE20_API_DIR)/LICENSE.md \
+	$(BE20_API_DIR)/dfxml_cpp/LICENSE.md \
+	$(BE20_API_DIR)/dfxml_cpp/README.md \
+	$(BE20_API_DIR)/dfxml_cpp/src/COPYING.md \
+	$(BE20_API_DIR)/dfxml_cpp/src/README.md \
+	$(BE20_API_DIR)/doc/unit-tests.txt \
+	$(BE20_API_DIR)/utfcpp/LICENSE \
+	$(BE20_API_DIR)/utfcpp/README.md

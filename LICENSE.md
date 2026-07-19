@@ -70,7 +70,7 @@ Licensed under the MIT License
 * src/base64_forensic.cpp is Copyright (C) 1996-1999 by Internet Software Consortium, with
  portions Copyright (C) 1995 by International Business Machines, Inc.
 
-* src/be13_api/utf8.h is Copyright 2006 Nemanja Trifunovic
+* src/be20_api/utfcpp/source/utf8.h is Copyright 2006 Nemanja Trifunovic
 
 * src/old_scanners/scan_ascii85.cpp is Copyright (C) 2011 Remy Oukaour
 

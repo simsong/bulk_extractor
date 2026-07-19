@@ -1,0 +1,22 @@
+2020-07-10  Simson Garfinkel  <simsong@nimi.local>
+
+	* removed main_thread detection.
+
+2020-06-13  Simson Garfinkel <simsong@acm.org>
+	* updated license to MIT License, copyright Simson L. Garfinkel, consistent with the fact that this is no longer an official US Government work product.
+
+2019-11-11  Simson Garfinkel  <simsong@acm.org>
+
+	* Tagged v1.6.0
+
+2019-11-10  user  <user@localhost.localdomain>
+
+	* bulk_extractor_i.h (safe_utf16to8): fixed catching of polymorphic type value value. Exceptions need to be caught by reference.
+	(safe_utf8to16): fixed catching of polymorphic type value value. Exceptions need to be caught by reference.
+
+2019-11-10  Simson Garfinkel  <simsong@nimi.local>
+
+	* sbuf.h (class sbuf_t): Really want to make *buf private, but it's still used too many places.
+
+2021-06-01 Simson Garfinkel  <simsong@nimi.local>
+	* Complete rewrite for 2.0

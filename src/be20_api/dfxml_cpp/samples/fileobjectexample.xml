@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fileobject xmlns="http://www.forensicswiki.org/wiki/Category:Digital_Forensics_XML" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://raw.githubusercontent.com/dfxml-working-group/dfxml_schema/master/dfxml.xsd">
+<hashdigest type="md5"></hashdigest>
+<hashdigest type="sha1"></hashdigest>
+<hashdigest type="sha256"></hashdigest>
+</fileobject>

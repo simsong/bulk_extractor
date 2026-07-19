@@ -1,12 +1,14 @@
 BE20_API_DIR= be20_api
 include Makefile.auto_defs
-#include be20_api/Makefile.defs
-#include rar/Makefile.defs
-#DFXML_SRC_DIR=be20_api/dfxml_cpp/src/
-#include $(DFXML_SRC_DIR)Makefile.defs
+include be20_api/Makefile.defs
+DFXML_SRC_DIR=be20_api/dfxml_cpp/src/
+include be20_api/dfxml_cpp/src/Makefile.defs
 
 # $(BE20_API_EXTRA_DIST)
-EXTRA_DIST = .gitignore scan_headers.flex scan_httpheader_lg.cpp $(AUTO_EXTRA_DIST) $(AUTO_TESTS_DIST)
+EXTRA_DIST = .gitignore scan_headers.flex scan_httpheader_lg.cpp $(AUTO_EXTRA_DIST) $(AUTO_TESTS_DIST) \
+	$(BE20_API_EXTRA_DIST) \
+	be20_api/tests/unilang.htm \
+	be20_api/tests/unilang8.htm
 
 ETAGS = etags-emacs
 ACLOCAL_AMFLAGS = -I m4
@@ -14,17 +16,21 @@ ACLOCAL_AMFLAGS = -I m4
 # So that relative imports from be20_api work
 AM_CPPFLAGS = @RE2_CFLAGS@ -I$(top_srcdir)/src/be20_api -I$(top_srcdir)/src/be20_api/utfcpp/source
 
-bulk_extractor_LDADD = @RE2_LIBS@
-test_be_LDADD = @RE2_LIBS@
+noinst_LIBRARIES = libbe20.a
+libbe20_a_SOURCES = $(BE20_API_SRC) $(DFXML_READER) $(DFXML_WRITER)
+
+bulk_extractor_LDADD = libbe20.a @RE2_LIBS@
+test_be_LDADD = libbe20.a @RE2_LIBS@
+test_be20_api_LDADD = libbe20.a @RE2_LIBS@
 
 AUTOMAKE_OPTIONS = subdir-objects
 
 bin_PROGRAMS   = bulk_extractor
-check_PROGRAMS = test_be
-TESTS = test_be
+check_PROGRAMS = test_be test_be20_api test_dfxml
+TESTS = $(check_PROGRAMS)
 
 CLEANFILES     = scan_accts.cpp scan_base16.cpp scan_email.cpp scan_gps.cpp scan_vehicle.cpp \
-	be20_api/config.h be20_api/dfxml/src/config.h config.h *.d *~
+	config.h *.d *~
 
 # bring in defs from two included projects
 # note: don't be clever and use the $variable on the Include line. it doesn't work
@@ -124,8 +130,6 @@ endif
 
 bulk_extractor_parts = \
         $(TSK3INCS)  \
-	$(AUTO_CPP_FILES) \
-	$(AUTO_H_FILES) \
 	bulk_extractor_restarter.h \
 	bulk_extractor_scanners.h \
 	base64_forensic.cpp \
@@ -144,7 +148,19 @@ bulk_extractor_parts = \
 
 bulk_extractor_SOURCES = $(bulk_extractor_parts) $(scanners_builtin) main.cpp
 test_be_SOURCES = $(bulk_extractor_parts) $(scanners_builtin) \
-	be20_api/catch.hpp test_be.h test_be1.cpp test_be2.cpp test_be3.cpp
+	$(BE20_API_DIR)/catch.hpp test_be.h test_be1.cpp test_be2.cpp test_be3.cpp
+
+test_be20_api_SOURCES = \
+	$(BE20_API_DIR)/catch.hpp \
+	$(BE20_API_DIR)/test_be20_api.cpp \
+	$(BE20_API_DIR)/test_be20_threadpool.cpp \
+	$(BE20_API_TEST_SRC)
+
+test_dfxml_SOURCES = \
+	$(BE20_API_DIR)/dfxml_cpp/src/test_dfxml.cpp \
+	$(BE20_API_DIR)/dfxml_cpp/src/tests/catch.hpp \
+	$(DFXML_READER) \
+	$(DFXML_WRITER)
 
 runs.txt: test_be tests/run_each.sh
 	bash tests/run_each.sh > runs.txt 2>&1

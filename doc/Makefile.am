@@ -1,5 +1,5 @@
-# So that relative imports from be13_api work
-AM_CPPFLAGS = -I${top_srcdir}/src/be13_api
+# Documentation examples use headers from the integrated be20 component.
+AM_CPPFLAGS = -I${top_srcdir}/src/be20_api
 AUTOMAKE_OPTIONS = subdir-objects
 
 

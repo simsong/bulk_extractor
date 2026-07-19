@@ -19,9 +19,7 @@ config_root = {
 config_src = {
     'root':'src',
     'outfile':'Makefile.auto_defs',
-    'rules':[['be20_api/', 'AUTO_CPP_FILES', ['*.cpp']],
-             ['be20_api/', 'AUTO_H_FILES', ['*.h']],
-             ['tests/',    'AUTO_TESTS_DIST', ['*']],
+    'rules':[['tests/',    'AUTO_TESTS_DIST', ['*']],
              ['rar/',      'AUTO_RAR_FILES', ['*.cpp','*.hpp']],
              ['.',          'AUTO_EXTRA_DIST', ['*.md','*.am','*.txt','*.py','*.bash','.gitignore']]],
     'ignore_fnames':set(['Makefile.am','Makefile.in',

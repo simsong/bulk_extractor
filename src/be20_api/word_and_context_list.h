@@ -1,0 +1,125 @@
+#ifndef WORD_AND_CONTEXT_LIST_H
+#define WORD_AND_CONTEXT_LIST_H
+
+/**
+ * \addtogroup internal_interfaces
+ * @{
+ * \file
+ * word_and_context_list:
+ *
+ * A re-implementation of the basic stop list, regular expression
+ * stop_list, and context-sensitive stop list.
+ *
+ * Method:
+ * Each entry in the stop list can be represented as:
+ * - a feature that is stopped, with optional context.
+ * - a regular expression
+ *
+ * Context is represented as a std::string before the feature and a std::string after.
+ *
+ * The stop list contains is a map of features that are stopped.
+ * For each feature, there may be no context or a list of context.
+ * If there is no context and the feature is in the list,
+ */
+
+/*
+ * context is a class that records the feature, the text before, and the text after.
+ * Typically this is used for stop lists and alert lists.
+ */
+
+#include <algorithm>
+#include <iostream>
+#include <map> // brings in map and multimap
+#include <set>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <filesystem>
+
+#include "regex_vector.h"
+
+class context {
+public:
+    static void extract_before_after(const std::string& feature, const std::string& ctx, std::string& before,
+                                     std::string& after) {
+        if (feature.size() <= ctx.size()) {
+            /* The most simple algorithm is a sliding window */
+            for (size_t i = 0; i < ctx.size() - feature.size(); i++) {
+                if (ctx.substr(i, feature.size()) == feature) {
+                    before = ctx.substr(0, i);
+                    after = ctx.substr(i + feature.size());
+                    return;
+                }
+            }
+        }
+        before.clear(); // can't be done
+        after.clear();
+    }
+
+    // constructors to make a context with nothing before or after, with just a context, or with all three
+    context(const std::string& f) : feature(f), before(), after() {}
+    context(const std::string& f, const std::string& c) : feature(f), before(), after() {
+        extract_before_after(f, c, before, after);
+    }
+    context(const std::string& f, const std::string& b, const std::string& a) : feature(f), before(b), after(a) {}
+    std::string feature;
+    std::string before;
+    std::string after;
+};
+
+inline std::ostream& operator<<(std::ostream& os, const class context& c) {
+    os << "context[" << c.before << "|" << c.feature << "|" << c.after << "]";
+    return os;
+}
+inline bool operator==(const class context& a, const class context& b) {
+    return (a.feature == b.feature) && (a.before == b.before) && (a.after == b.after);
+}
+
+/**
+ * the object that holds the word and context list
+ * They aren't atomic, but they are read-only.
+ */
+class word_and_context_list {
+private:
+    typedef std::unordered_multimap<std::string, context> stopmap_t;
+    stopmap_t fcmap; // maps features to contexts; for finding them
+
+    typedef std::unordered_set<std::string> stopset_t;
+    stopset_t context_set; // presence of a pair in fcmap
+
+    regex_vector patterns;
+
+public:
+    /**
+     * rstrcmp is like strcmp, except it compares std::strings right-aligned
+     * and only compares the minimum sized std::string of the two.
+     */
+    static int rstrcmp(const std::string& a, const std::string& b);
+
+    word_and_context_list() : fcmap(), context_set(), patterns() {}
+    size_t size() { return fcmap.size() + patterns.size(); }
+    void add_regex(const std::string& pat);                  // not threadsafe
+    bool add_fc(const std::string& f, const std::string& c); // not threadsafe
+    int readfile(const std::filesystem::path path, std::ostream& os = std::cout); // readfile with stats to os
+
+    // return true if the probe with context is in the list or in the stopmap
+    bool check(const std::string& probe, const std::string& before, const std::string& after) const; // threadsafe
+    bool check_feature_context(const std::string& probe, const std::string& context) const;          // threadsafe
+    void dump(std::ostream &os = std::cout);
+};
+
+/* like strcmp, but runs in reverse */
+inline int word_and_context_list::rstrcmp(const std::string& a, const std::string& b) {
+    size_t alen = a.size();
+    size_t blen = b.size();
+    size_t len = alen < blen ? alen : blen;
+    for (size_t i = 0; i < len; i++) {
+        size_t apos = alen - len + i;
+        size_t bpos = blen - len + i;
+        if (a[apos] < b[bpos]) return -1;
+        if (a[apos] > b[bpos]) return 1;
+    }
+    return 0;
+}
+
+#endif
