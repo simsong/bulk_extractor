@@ -8,7 +8,7 @@
 # and http://www.bioinf.uni-freiburg.de/~mmann/HowTo/automake.html
 
 AC_PREREQ([2.69])
-AC_INIT([BULK_EXTRACTOR],[2.1.1],[bugs@digitalcorpora.org])
+AC_INIT([BULK_EXTRACTOR],[2.2.0],[bugs@digitalcorpora.org])
 AC_CONFIG_MACRO_DIR(m4)
 
 AC_MSG_NOTICE([at start CPPFLAGS are $CPPFLAGS])
@@ -39,7 +39,7 @@ AX_CXX_COMPILE_STDCXX([17], [ext], [mandatory])
 AC_LANG_POP()
 
 # Turn on all warnings
-m4_include([src/be20_api/m4/slg_gcc_all_warnings.m4])
+m4_include([m4/slg_gcc_all_warnings.m4])
 
 ################################################################
 # Specify our headers
@@ -49,10 +49,10 @@ m4_include([src/be20_api/m4/slg_gcc_all_warnings.m4])
 #
 # Check dfxml and be20_api headers
 
-m4_include([src/be20_api/dfxml_cpp/src/dfxml_configure.m4])
-m4_include([src/be20_api/m4/slg_address_sanitizer.m4])
-m4_include([src/be20_api/m4/slg_noopt.m4])
-m4_include([src/be20_api/be20_configure.m4])
+m4_include([m4/dfxml_configure.m4])
+m4_include([m4/slg_address_sanitizer.m4])
+m4_include([m4/slg_noopt.m4])
+m4_include([m4/be20_configure.m4])
 
 m4_include([m4/slg_mingw_support.m4])
 m4_include([m4/slg_searchdirs.m4])

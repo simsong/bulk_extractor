@@ -6,7 +6,7 @@
 name: Coverity Scan
 on:
   schedule:
-  # Run once daily, bulk_extractor is at ~175k LOC
+  # Run once monthly, bulk_extractor is at ~175k LOC
   # Scan frequency limits from https://scan.coverity.com/faq#frequency :
   # Up to 28 builds per week, with a maximum of 4 builds per day, for projects with fewer than 100K lines of code
   # Up to 21 builds per week, with a maximum of 3 builds per day, for projects with 100K to 500K lines of code
@@ -23,24 +23,21 @@ jobs:
     env:
       COVERITY_PROJECT_NAME: simsong/bulk_extractor
     steps:
-    - uses: actions/checkout@main
+    - uses: actions/checkout@v5
     - name: Download and extract the Coverity Build Tool
       run: |
           wget -q https://scan.coverity.com/download/cxx/linux64 --post-data "token=${{ secrets.COVERITY_SCAN_TOKEN }}&project=${{ env.COVERITY_PROJECT_NAME  }}" -O cov-analysis-linux64.tar.gz
           mkdir cov-analysis-linux64
           tar xzf cov-analysis-linux64.tar.gz --strip 1 -C cov-analysis-linux64
     - name: Install dependencies
-      run: sudo ./etc/CONFIGURE_UBUNTU22LTS.bash  < /dev/null
+      run: ./etc/CONFIGURE_UBUNTU22LTS.bash < /dev/null
     - name: Bootstrap
       run: ./bootstrap.sh
     - name: Configure
       run: ./configure
     - name: Build with cov-build
       run: cov-analysis-linux64/bin/cov-build --dir cov-int make
-    - name: Get count of commits in the last 24 hours
-      run: echo "NEW_COMMIT_COUNT=$(git log --oneline --since '24 hours ago' | wc -l)" >> $GITHUB_ENV
     - name: Upload the result
-      if: ${{ env.NEW_COMMIT_COUNT > 0 }}
       run: |
           tar czvf cov-int.tgz cov-int
           curl \

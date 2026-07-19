@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<dfxml
+  xmlns='http://www.forensicswiki.org/wiki/Category:Digital_Forensics_XML'
+  xmlns:dc='http://purl.org/dc/elements/1.1/'
+  xmlns:tcpflow='http://www.forensicswiki.org/wiki/Category:Digital_Forensics_XML#tcpflow'
+  version='1.1.1'>
+  <metadata>
+    <dc:type>Sample</dc:type>
+  </metadata>
+  <creator>
+    <program>vi</program>
+    <version>8.0</version>
+    <execution_environment>
+      <command_line>vi tcpflow_zip_generic_header.xml</command_line>
+    </execution_environment>
+  </creator>
+  <source>
+    <image_filename>../../tcpflow/tests/airsnort-linux-browser_page_load.pcap</image_filename>
+  </source>
+  <fileobject>
+    <tcpflow:scanner_result name="zip_generic_header_detector" type="Python">
+      <byte_runs>
+        <byte_run img_offset="1234" len="30" />
+        <byte_run img_offset="2345" len="30" />
+      </byte_runs>
+    </tcpflow:scanner_result>
+
+    <filename>205.134.188.162.00080-008.030.072.112.38568</filename>
+    <filesize>4135</filesize>
+    <!--This element isn't in the DFXML schema.  Should be namespaced and re-named.
+    <tcpflow startime='2013-05-15T10:21:07.936300Z' endtime='2013-05-15T10:21:07.957313Z' src_ipn='205.134.188.162' dst_ipn='8.30.72.112' mac_daddr='58:94:6b:7c:37:8c' mac_saddr='b4:14:89:61:fe:c0' packets='5' srcport='80' dstport='38568' family='2' />
+    -->
+  </fileobject>
+</dfxml>

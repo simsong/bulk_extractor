@@ -1,0 +1,13 @@
+*.lo
+*.log
+*.o
+*~
+.DS_Store
+.cache
+.deps
+.dirstamp
+_deps
+_deps
+schema
+stamp-h
+stamp-h1

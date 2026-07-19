@@ -5,7 +5,11 @@ coverage:
 
 
 ignore:
-  - "be20_api/catch.hpp"
-  - "be20_api/utf8.h"
-  - "be20_api/utf8/*"
-  - "rar/*"
+  - "dfxml_schema/**"
+  - "src/be20_api/catch.hpp"
+  - "src/be20_api/cxxopts.hpp"
+  - "src/be20_api/dfxml_cpp/**"
+  - "src/be20_api/dfxml_schema/**"
+  - "src/be20_api/thread-pool/**"
+  - "src/be20_api/utfcpp/**"
+  - "src/rar/**"

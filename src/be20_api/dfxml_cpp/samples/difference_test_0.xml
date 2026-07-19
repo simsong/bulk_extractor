@@ -1,0 +1,63 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<dfxml
+  xmlns='http://www.forensicswiki.org/wiki/Category:Digital_Forensics_XML'
+  xmlns:dc='http://purl.org/dc/elements/1.1/'
+  xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
+  version='1.1.1'>
+  <metadata>
+    <dc:type>Sample</dc:type>
+  </metadata>
+  <creator>
+    <program>vi</program>
+    <version>8.0</version>
+    <execution_environment>
+      <command_line>vi pre.xml</command_line>
+    </execution_environment>
+  </creator>
+  <source/>
+  <fileobject>
+    <filename>i_will_be_deleted.txt</filename>
+    <name_type>r</name_type>
+    <filesize>20</filesize>
+    <inode>123456</inode>
+    <mtime>2013-01-01T00:00:00Z</mtime>
+    <ctime>2013-01-01T00:00:00Z</ctime>
+    <atime>2013-01-01T00:00:00Z</atime>
+    <byte_runs>
+      <byte_run file_offset='0' img_offset='1234512' len='20'/>
+    </byte_runs>
+    <hashdigest type='md5'>e834b5c2f64759832fb33ec53c8b5028</hashdigest>
+    <hashdigest type='sha1'>9125cb87b8f0035c22d3efad2b0473367cc456ca</hashdigest>
+    <hashdigest type='sha256'>c75d73927a6ca221ccc71c4f4dee9286fce2b5cf7122950c73157cbf821af07f</hashdigest>
+  </fileobject>
+  <fileobject>
+    <filename>i_will_be_modified.txt</filename>
+    <name_type>r</name_type>
+    <filesize>22</filesize>
+    <inode>123457</inode>
+    <mtime>2013-01-01T00:00:00Z</mtime>
+    <ctime>2013-01-01T00:00:00Z</ctime>
+    <atime>2013-01-01T00:00:00Z</atime>
+    <byte_runs>
+      <byte_run file_offset='0' img_offset='234512' len='22'/>
+    </byte_runs>
+    <hashdigest type='md5'>e91577092351461d7800ef7b870a2bcf</hashdigest>
+    <hashdigest type='sha1'>44e426344f15bd7621ca2f9ffea70d29752dccda</hashdigest>
+    <hashdigest type='sha256'>1a13a4bb62ab8549fa4836cc5ae37803217ab10c3fba4c1204b216485dcf1357</hashdigest>
+  </fileobject>
+  <fileobject>
+    <filename>i_will_be_accessed.txt</filename>
+    <name_type>r</name_type>
+    <filesize>12</filesize>
+    <inode>123458</inode>
+    <mtime>2013-01-01T00:00:00Z</mtime>
+    <ctime>2013-01-01T00:00:00Z</ctime>
+    <atime>2013-01-01T00:00:00Z</atime>
+    <byte_runs>
+      <byte_run file_offset='0' img_offset='34512' len='12'/>
+    </byte_runs>
+    <hashdigest type='md5'>f3a8f17b47f1fe899805c25b8f5a26b0</hashdigest>
+    <hashdigest type='sha1'>b439e832cb243e18f6bfc21ca0150de3ef4c6f27</hashdigest>
+    <hashdigest type='sha256'>3c4ace963a2a069a92d8abaa7c77d88e118758eff65c5180fed6534e75889bf3</hashdigest>
+  </fileobject>
+</dfxml>

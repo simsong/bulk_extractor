@@ -1,0 +1,6 @@
+dfxml_schema/** linguist-vendored
+src/be20_api/catch.hpp linguist-vendored
+src/be20_api/cxxopts.hpp linguist-vendored
+src/be20_api/dfxml_cpp/** linguist-vendored
+src/be20_api/thread-pool/** linguist-vendored
+src/be20_api/utfcpp/** linguist-vendored

@@ -2,7 +2,14 @@
 
 name: Codecov
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   build:
@@ -15,13 +22,11 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
+        uses: actions/checkout@v5
 
-      - name: "MacOS: run CONFIGURE_UBUNTU22LTS.bash"
+      - name: Install Ubuntu dependencies
         run: |
-          source $HOME/.bashrc
+          source "$HOME/.bashrc"
           echo "" | bash etc/CONFIGURE_UBUNTU22LTS.bash
 
       - name: Make configure script
@@ -30,23 +35,23 @@ jobs:
 
       - name: C++ checks with codecov
         run: |
-          source $HOME/.bashrc
-          bash bootstrap.sh
+          source "$HOME/.bashrc"
           ./configure --disable-opt --enable-silent-rules --quiet \
                 CFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' \
                 CXXFLAGS='-g -O0 -fprofile-arcs -ftest-coverage'
-          make $MAKE_OPTS  check
+          make $MAKE_OPTS check
           lcov --capture --directory . --output-file linux-coverage.info
-          lcov --list linux-coverage.info
+          lcov --remove linux-coverage.info '/usr/*' \
+                --output-file linux-coverage.filtered.info
+          lcov --list linux-coverage.filtered.info
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          fail_ci_if_error: false
-          files: linux-coverage.info
+          disable_search: true
+          fail_ci_if_error: true
+          files: linux-coverage.filtered.info
           flags: unittests
           name: bulk_extractor-codecov
-
-      - uses: ammaraskar/gcc-problem-matcher@0.2.0
-        name: GCC Problem Matcher
+          override_pr: ${{ github.event.pull_request.number }}

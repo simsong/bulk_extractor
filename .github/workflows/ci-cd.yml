@@ -1,140 +1,77 @@
-# This file based on https://gist.github.com/mwouts/9842452d020c08faf9e84a3bba38a66f
-# See: https://help.github.com/en/actions/reference/software-installed-on-github-hosted-runners
-# 2022-08-06 - slg - Updated os to be 'macos-latest', 'ubuntu-20.04', 'ubuntu-22.04'
-#                    See https://github.com/actions/virtual-environments for details.
-# 2020-06-22 - slg - customized
-# 2020-06-27 - slg - expanded to G++ for MacOS
-# 2020-07-03 - slg - ported to be13_api; removed python (be13_api doesn't use python)
-# 2021-05-07 - slg - Started work again
-# 2022-02-10 - slg - renamed be20_api. Our work here is done.
+name: bulk_extractor build and test
 
-name: BE2 Unit Tests on MacOS and Ubuntu (c++17)
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
 
-on: [push,pull_request]
+permissions:
+  contents: read
 
 jobs:
   build:
     strategy:
+      fail-fast: false
       matrix:
-        os: [macos-latest, ubuntu-22.04]
+        os: [macos-latest, ubuntu-22.04, ubuntu-latest]
     runs-on: ${{ matrix.os }}
 
     env:
       DEBUG_5G: FALSE
-      DEBUG_FAST: TRUE
+      DEBUG_FAST: FALSE
       MAKE_OPTS: -j2
 
     steps:
-      # https://github.com/actions/checkout
       - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
+        uses: actions/checkout@v5
 
-      - name: Extract Version from configure.ac
+      - name: Extract version
         id: extract_version
         run: |
-          echo "::set-output name=version::$(grep 'AC_INIT(\[BULK_EXTRACTOR\]' configure.ac| cut -d',' -f2 | tr -d "[]")"
+          version=$(grep 'AC_INIT(\[BULK_EXTRACTOR\]' configure.ac | cut -d',' -f2 | tr -d '[]')
+          echo "version=$version" >> "$GITHUB_OUTPUT"
 
-      # Conditional step for push events
-      - name: Run on push
-        if: github.event_name == 'push'
-        run: echo "This runs on a push to any branch"
-
-      # Conditional step for pull_request events
-      - name: Run on pull request
-        if: github.event_name == 'pull_request'
-        run: echo "This runs on a pull request to the main branch"
-
-      - name: "MacOS: run CONFIGURE_MACOS.bash"
+      - name: Install macOS dependencies
         if: startsWith(matrix.os, 'macos')
         run: |
-          source $HOME/.bashrc
+          source "$HOME/.bashrc"
           echo "" | bash etc/CONFIGURE_MACOS.bash
 
-      - name: "Ubuntu: run CONFIGURE_UBUNTU22LTS.bash"
+      - name: Install Ubuntu dependencies
         if: startsWith(matrix.os, 'ubuntu')
-        run: |
-          echo "" | bash etc/CONFIGURE_UBUNTU22LTS.bash
+        run: echo "" | bash etc/CONFIGURE_UBUNTU22LTS.bash
 
-      - name: Version Numbers
-        run: |
-          source $HOME/.bashrc
-          autoconf --version
-          automake --version
-          aclocal --version
-          gcc --version
-          g++ --version
+      - name: Bootstrap
+        run: bash bootstrap.sh
 
-      - name: printenv
+      - name: AddressSanitizer debug build and tests
         run: |
-          printenv
-
-      - name: Files
-        run: |
-          find . -print
-
-      - name: Make configure script
-        run: |
-          bash bootstrap.sh
-
-      - name: Dump configure script
-        run: |
-          cat configure
-
-      - name: C++ checks not optimizaiton with address-sanitizer (Mac and Linux)
-        run: |
-          source $HOME/.bashrc
+          source "$HOME/.bashrc"
           ./configure --disable-opt --enable-address-sanitizer
-          echo == config.h ==
-          cat config.h
-          echo ==============
           make $MAKE_OPTS all
-          pushd src
-          make $MAKE_OPTS bulk_extractor
-          make check || (cat test-suite.log; exit 1)
-          popd
+          make -C src $MAKE_OPTS bulk_extractor
+          make -C src check || (cat src/test-suite.log; exit 1)
           make distclean
 
-      - name: C++ checks optimization with address-sanitizer (Mac and Linux)
+      - name: AddressSanitizer optimized build and tests
         run: |
-          echo === Try Address Sanitizer Optimization ===
-          source $HOME/.bashrc
+          source "$HOME/.bashrc"
           ./configure --enable-address-sanitizer --enable-silent-rules --quiet
           make $MAKE_OPTS all
-          pushd src
-          make $MAKE_OPTS bulk_extractor
-          make check || (cat test-suite.log; exit 1)
-          popd
+          make -C src $MAKE_OPTS bulk_extractor
+          make -C src check || (cat src/test-suite.log; exit 1)
           make distclean
 
-      - name: C++ checks with thread-sanitizer on ubuntu are disabled
-        if: startsWith(matrix.os, 'ubuntu-DISABLED')
+      - name: Distribution check
         run: |
-          source $HOME/.bashrc
-          bash bootstrap.sh
-          ./configure --enable-thread-sanitizer --enable-silent-rules  --quiet
-          make clean
-          make $MAKE_OPTS  all
-          pushd src
-          make $MAKE_OPTS  bulk_extractor
-          make check || (cat test-suite.log; exit 1)
-          popd
-          make distclean
-
-      - name: distcheck
-        run: |
-          source $HOME/.bashrc
-          bash bootstrap.sh
-          ./configure -q
+          source "$HOME/.bashrc"
+          ./configure --quiet
           make distcheck
 
-      - name: Upload installer as artifact
+      - name: Upload source distribution
         if: startsWith(matrix.os, 'ubuntu')
         uses: actions/upload-artifact@v4
         with:
-          name: bulk_extractor-${{ steps.ctx.outputs.version }}.tar.gz
-          path: bulk_extractor-${{ steps.ctx.outputs.version }}.tar.gz
-
-      - uses: ammaraskar/gcc-problem-matcher@0.2.0
-        name: GCC Problem Matcher
+          name: bulk_extractor-${{ steps.extract_version.outputs.version }}-${{ matrix.os }}
+          path: bulk_extractor-${{ steps.extract_version.outputs.version }}.tar.gz
