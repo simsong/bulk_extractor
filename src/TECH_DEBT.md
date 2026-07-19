@@ -550,7 +550,9 @@ and one coverage job. They avoid duplicate push and pull-request runs, use the
 current GitHub output mechanism, and name uploaded distributions from the
 actual version-step output. The manual source-distribution workflow uses the
 same supported dependency setup and `make distcheck`; Coverity and the required
-workflows use maintained checkout action releases. The obsolete standalone
+workflows use maintained checkout action releases. Coverage uploads explicitly
+identify the triggering pull request, contain only the filtered LCOV report,
+and exclude system headers and imported dependencies. The obsolete standalone
 be20_api workflows were removed during integration.
 
 Pin third-party actions to reviewed commit SHAs and add a lightweight workflow

@@ -159,6 +159,8 @@ This checklist is derived from `TECH_DEBT.md`. Each unchecked line identifies on
 - [x] Stop pinning third-party actions to mutable `master` branches.
 - [x] Remove obsolete PCRE installation from the former be20_api macOS workflow.
 - [x] Rename the former be20_api Codecov artifact from the unrelated `sleuthkit-codecov` name.
+- [x] Bind same-repository Codecov uploads to the triggering pull request.
+- [x] Limit Codecov input to the filtered LCOV report and exclude imported dependencies.
 - [ ] Add a lightweight workflow syntax and reference validation gate.
 
 ## Repository integration debt

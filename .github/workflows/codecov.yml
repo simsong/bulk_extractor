@@ -41,13 +41,17 @@ jobs:
                 CXXFLAGS='-g -O0 -fprofile-arcs -ftest-coverage'
           make $MAKE_OPTS check
           lcov --capture --directory . --output-file linux-coverage.info
-          lcov --list linux-coverage.info
+          lcov --remove linux-coverage.info '/usr/*' \
+                --output-file linux-coverage.filtered.info
+          lcov --list linux-coverage.filtered.info
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          disable_search: true
           fail_ci_if_error: true
-          files: linux-coverage.info
+          files: linux-coverage.filtered.info
           flags: unittests
           name: bulk_extractor-codecov
+          override_pr: ${{ github.event.pull_request.number }}
