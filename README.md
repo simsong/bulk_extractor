@@ -19,7 +19,7 @@ sequence that can be decompressed or otherwise decoded. If so, the
 decoded data are recursively re-examined. As a result, `bulk_extractor` can find things like BASE64-encoded JPEGs and
 compressed JSON objects that traditional carving tools miss.
 
-This source tree builds bulk_extractor 2.1.1. For production use, prefer a tested release from https://github.com/simsong/bulk_extractor/releases.
+This source tree builds bulk_extractor 2.2.0. For production use, prefer a tested release from https://github.com/simsong/bulk_extractor/releases.
 
 Building `bulk_extractor`
 =========================
@@ -120,6 +120,13 @@ $ make win64
 
 BULK_EXTRACTOR RELEASE NOTES
 ============================
+
+## Release 2.2.0 (July 19, 2026)
+
+Integrated the be20 API and its source dependencies into the bulk_extractor
+source tree, eliminating recursive submodule setup. The unified build now
+validates bulk_extractor, be20, and DFXML together and fixes thread-pool
+shutdown defects found by full-image testing and AddressSanitizer.
 
 ## Release 2.1.1 (April 26, 2024)
 Renamed jpeg_carved feature recorder to jpeg, so that the jpeg carve mode can be set with -S jpeg_carve_mode=2, rather than -S jpeg_carved_carve_mode=2, which was confusing.
