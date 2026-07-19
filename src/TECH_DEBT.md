@@ -543,13 +543,12 @@ and schema READMEs also identify their vendored in-tree status. Historical
 
 ### CI as executable documentation
 
-The workflows make claims about supported builds and releases, but several are
+The build and coverage workflows now provide one three-platform build matrix
+and one coverage job. They avoid duplicate push and pull-request runs, use the
+current GitHub output mechanism, and name uploaded distributions from the
+actual version-step output. Several release-oriented workflows remain
 known-invalid:
 
-- `ci-cd.yml` and `continuous-integration-pip.yml` substantially duplicate one
-  another.
-- Both use deprecated `::set-output`, then upload an artifact using nonexistent
-  `steps.ctx.outputs.version` instead of `steps.extract_version.outputs.version`.
 - `create-release-installer.yml` runs `chmod +x && bootstrap.sh` (missing the
   chmod operand), uses old action versions, and references
   `steps.create_release.outputs.upload_url` without a `create_release` step.
@@ -558,9 +557,8 @@ known-invalid:
 - Some third-party actions are pinned to mutable `master` branches.
 - The obsolete standalone be20_api workflows were removed during integration.
 
-Consolidate to one required build matrix, one coverage workflow if needed, and
-one tested release workflow. Pin actions to maintained major versions or commit
-SHAs and add a lightweight workflow syntax/reference check.
+Repair and test the release workflow. Pin actions to maintained major versions
+or commit SHAs and add a lightweight workflow syntax/reference check.
 
 ## Explanation of the former submodule update error
 

@@ -95,10 +95,10 @@ This checklist is derived from `TECH_DEBT.md`. Each unchecked line identifies on
 ## Test debt
 
 - [ ] Replace the empty thread-pool test and unconditional 60-second watchdog sleep with substantive deterministic work, cancellation, and exception tests.
-- [ ] Stop setting `DEBUG_FAST=TRUE` in the only required parent CI gate, or add a required full test gate.
+- [x] Stop setting `DEBUG_FAST=TRUE` in the only required parent CI gate, or add a required full test gate.
 - [ ] Add focused parser and boundary tests for EVTX, NTFS, Outlook, SQLite, UTMP, WinLNK, WinDirs, and optional scanners.
 - [ ] Connect supported Python tests to a maintained Makefile test target.
-- [ ] Fix or remove the ThreadSanitizer workflow step whose condition can never match.
+- [x] Fix or remove the ThreadSanitizer workflow step whose condition can never match.
 - [ ] Add required no-libpcap, malformed-PCAP, and fallback packet-reader tests.
 - [ ] Add required supported Lightgrep tests or delete Lightgrep support.
 - [ ] Add a supported Windows parent-build test.
@@ -149,16 +149,16 @@ This checklist is derived from `TECH_DEBT.md`. Each unchecked line identifies on
 
 ## CI and release-workflow debt
 
-- [ ] Consolidate the substantially duplicated `ci-cd.yml` and `continuous-integration-pip.yml` workflows.
-- [ ] Replace deprecated GitHub Actions `::set-output` usage.
-- [ ] Replace nonexistent `steps.ctx.outputs.version` references with the actual version-step output.
+- [x] Consolidate the substantially duplicated `ci-cd.yml` and `continuous-integration-pip.yml` workflows.
+- [x] Replace deprecated GitHub Actions `::set-output` usage.
+- [x] Replace nonexistent `steps.ctx.outputs.version` references with the actual version-step output.
 - [ ] Fix the operand-less `chmod +x` command in `create-release-installer.yml`.
 - [ ] Update obsolete action versions in the release workflow.
 - [ ] Add the missing release-creation step or remove its nonexistent `upload_url` reference.
-- [ ] Make Coverity checkout submodules recursively while submodules remain.
+- [x] Remove Coverity's need for recursive submodule checkout by integrating the required source.
 - [ ] Stop pinning third-party actions to mutable `master` branches.
-- [ ] Remove obsolete PCRE installation from the be20_api macOS workflow.
-- [ ] Rename the be20_api Codecov artifact from the unrelated `sleuthkit-codecov` name.
+- [x] Remove obsolete PCRE installation from the former be20_api macOS workflow.
+- [x] Rename the former be20_api Codecov artifact from the unrelated `sleuthkit-codecov` name.
 - [ ] Add a lightweight workflow syntax and reference validation gate.
 
 ## Repository integration debt
