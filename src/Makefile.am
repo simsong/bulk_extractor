@@ -157,8 +157,8 @@ test_be20_api_SOURCES = \
 	$(BE20_API_TEST_SRC)
 
 test_dfxml_SOURCES = \
-	$(BE20_API_DIR)/dfxml_cpp/src/test_dfxml.cpp \
-	$(BE20_API_DIR)/dfxml_cpp/src/tests/catch.hpp \
+	test_dfxml.cpp \
+	$(BE20_API_DIR)/catch.hpp \
 	$(DFXML_READER) \
 	$(DFXML_WRITER)
 

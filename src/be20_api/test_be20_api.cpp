@@ -1013,6 +1013,7 @@ TEST_CASE("scanner_config", "[scanner]") {
     sc.get_global_config("age", &ival, "age in years");
     REQUIRE(ival == 5);
     REQUIRE(sc.get_help() == help_expected);
+    REQUIRE_THROWS_AS(sc.get_global_config<int>("invalid", nullptr, "invalid"), std::invalid_argument);
 
     sc.push_scanner_command("scanner1", scanner_config::scanner_command::ENABLE);
     sc.push_scanner_command("scanner2", scanner_config::scanner_command::DISABLE);
@@ -1024,7 +1025,11 @@ TEST_CASE("scanner_config", "[scanner]") {
  * The interface used by scanners.
  */
 #include "scanner_params.h"
-TEST_CASE("scanner", "[scanner]") { /* check that scanner params made from an existing scanner params are deeper */ }
+TEST_CASE("scanner", "[scanner]") {
+    scanner_config sc;
+    scanner_params sp(sc, nullptr, nullptr, scanner_params::PHASE_INIT, nullptr);
+    REQUIRE_THROWS_AS(sp.get_scanner_config<int>("invalid", nullptr, "invalid"), std::invalid_argument);
+}
 
 /****************************************************************
  * scanner_set.h:

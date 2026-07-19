@@ -20,6 +20,7 @@
 #include <filesystem>
 #include <map>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -67,12 +68,15 @@ public:
     std::string get_help() const { return global_help_options;}
 
     template <typename T> void get_global_config(const std::string& name, T* val, const std::string& help) {
+        if (val == nullptr) {
+            throw std::invalid_argument("get_global_config requires a value");
+        }
         std::stringstream s;
         s << "   -S " << name << "=" << *val << "    " << help << " (" << name << ")\n";
         global_help_options += s.str(); // add the help in
 
         auto it = namevals.find(name);
-        if (it != namevals.end() && val) {
+        if (it != namevals.end()) {
             set_from_string(val, it->second);
         }
     }

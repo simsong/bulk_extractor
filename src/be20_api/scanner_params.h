@@ -15,6 +15,7 @@
 #include <ostream>
 #include <set>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <algorithm>
 #include <cctype>
@@ -196,15 +197,16 @@ struct scanner_params {
      * - Second, if an option was specified, then set it as requested.
      */
     template <typename T> void get_scanner_config(const std::string& name, T* val, const std::string& help) const {
+        if (val == nullptr) {
+            throw std::invalid_argument("get_scanner_config requires a value");
+        }
         std::stringstream s;
         s << "     -S " << name << "=" << *val << "    " << help << std::endl;
         info->help_options += s.str(); // add the help in
 
-        if (val) {
-            std::string v = sc.get_nameval(name);
-            if (v.size()) {
-                set_from_string(val, v);
-            }
+        std::string v = sc.get_nameval(name);
+        if (v.size()) {
+            set_from_string(val, v);
         }
     }
     std::string help() const { return info->help_options;}
