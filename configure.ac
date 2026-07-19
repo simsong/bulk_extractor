@@ -49,7 +49,7 @@ m4_include([m4/slg_gcc_all_warnings.m4])
 #
 # Check dfxml and be20_api headers
 
-m4_include([m4/dfxml_configure.m4])
+m4_include([src/be20_api/dfxml_cpp/src/dfxml_configure.m4])
 m4_include([m4/slg_address_sanitizer.m4])
 m4_include([m4/slg_noopt.m4])
 m4_include([m4/be20_configure.m4])

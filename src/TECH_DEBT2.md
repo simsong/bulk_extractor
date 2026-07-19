@@ -155,7 +155,7 @@ This checklist is derived from `TECH_DEBT.md`. Each unchecked line identifies on
 - [ ] Fix the operand-less `chmod +x` command in `create-release-installer.yml`.
 - [ ] Update obsolete action versions in the release workflow.
 - [ ] Add the missing release-creation step or remove its nonexistent `upload_url` reference.
-- [ ] Make Coverity checkout submodules recursively while submodules remain.
+- [x] Make Coverity checkout the direct dependency submodules while submodules remain.
 - [ ] Stop pinning third-party actions to mutable `master` branches.
 - [ ] Remove obsolete PCRE installation from the be20_api macOS workflow.
 - [ ] Rename the be20_api Codecov artifact from the unrelated `sleuthkit-codecov` name.
@@ -170,4 +170,4 @@ This checklist is derived from `TECH_DEBT.md`. Each unchecked line identifies on
 - [x] Build be20_api as an explicit internal component rather than compiling recursively discovered files into every target.
 - [x] Make bulk_extractor and component tests consume the same explicit be20 source target.
 - [x] Remove obsolete standalone be20_api bootstrap/configure/CI files after integration.
-- [x] Verify whether the root `dfxml_schema` Git link is needed and vendor or remove it for a genuinely single-module checkout.
+- [x] Keep the independently maintained root `dfxml_schema` repository as an intentional direct parent submodule.

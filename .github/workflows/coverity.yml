@@ -24,6 +24,8 @@ jobs:
       COVERITY_PROJECT_NAME: simsong/bulk_extractor
     steps:
     - uses: actions/checkout@main
+      with:
+        submodules: true
     - name: Download and extract the Coverity Build Tool
       run: |
           wget -q https://scan.coverity.com/download/cxx/linux64 --post-data "token=${{ secrets.COVERITY_SCAN_TOKEN }}&project=${{ env.COVERITY_PROJECT_NAME  }}" -O cov-analysis-linux64.tar.gz

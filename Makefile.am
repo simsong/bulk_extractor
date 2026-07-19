@@ -27,7 +27,6 @@ EXTRA_DIST = $(SRC_WIN_DIST) $(AUTO_DOC_FILES) $(AUTO_ETC_FILES) $(AUTO_LICENSES
 	$(srcdir)/README.md \
 	$(srcdir)/dfxml_schema/LICENSE.md \
 	$(srcdir)/dfxml_schema/README.md \
-	$(srcdir)/dfxml_schema/VENDORED.md \
 	$(srcdir)/dfxml_schema/dfxml.xsd \
 	$(srcdir)/dfxml_schema/ref/dc.xsd \
 	$(srcdir)/dfxml_schema/ref/xml.xsd

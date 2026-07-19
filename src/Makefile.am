@@ -7,6 +7,8 @@ include be20_api/dfxml_cpp/src/Makefile.defs
 # $(BE20_API_EXTRA_DIST)
 EXTRA_DIST = .gitignore scan_headers.flex scan_httpheader_lg.cpp $(AUTO_EXTRA_DIST) $(AUTO_TESTS_DIST) \
 	$(BE20_API_EXTRA_DIST) \
+	$(DFXML_EXTRA_DIST) \
+	be20_api/dfxml_cpp/src/dfxml_configure.m4 \
 	be20_api/tests/unilang.htm \
 	be20_api/tests/unilang8.htm
 
@@ -157,8 +159,8 @@ test_be20_api_SOURCES = \
 	$(BE20_API_TEST_SRC)
 
 test_dfxml_SOURCES = \
-	$(BE20_API_DIR)/dfxml_cpp/src/test_dfxml.cpp \
-	$(BE20_API_DIR)/dfxml_cpp/src/tests/catch.hpp \
+	test_dfxml.cpp \
+	$(BE20_API_DIR)/catch.hpp \
 	$(DFXML_READER) \
 	$(DFXML_WRITER)
 

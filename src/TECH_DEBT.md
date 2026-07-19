@@ -6,15 +6,16 @@ Date: 2026-07-19
 
 This audit recommended bringing `src/be20_api` back into the
 `bulk_extractor` repository while retaining it as a distinct internal
-component. That integration is now implemented: be20_api, dfxml_cpp, utfcpp,
-and the DFXML schemas are ordinary tracked source; `libbe20.a` is the explicit
-internal component; and the parent and component tests consume that target.
-There are no remaining Git links or recursive-submodule build steps.
+component. That integration is now implemented for be20_api itself:
+`libbe20.a` is the explicit internal component, and the parent and component
+tests consume that target. The independently maintained dfxml_cpp, utfcpp, and
+DFXML schema repositories remain direct parent submodules rather than hidden
+nested dependencies.
 
 The desirability and feasibility of reintegration were both **high**. The
-migration retained the exact parent-pinned revisions and records their commit
-IDs and upstream URLs in `src/be20_api/VENDORED.md` and
-`dfxml_schema/VENDORED.md`. The user confirmed that no supported independent
+migration retained the exact revisions. `src/be20_api/VENDORED.md` records the
+imported be20_api commit and URL; `.gitmodules` plus the Git links record the
+three independent dependency repositories. The user confirmed that no supported independent
 be20_api consumer remains; tcpflow uses the abandoned be14 API. The result is
 an in-tree library component rather than an undifferentiated source glob.
 
@@ -159,10 +160,11 @@ it required no ABI conversion. The identified risks were handled as follows:
 
 - The exact parent-pinned be20_api commit `625f5b3` was imported, not the older
   `00f03b2` `main` tip.
-- The pinned dfxml_cpp, utfcpp, and DFXML schema revisions were imported as
-  ordinary source, eliminating hidden nested Git links.
-- Provenance documents retain the upstream URLs and exact commit IDs; imported
-  histories and license files remain in the source tree.
+- The pinned dfxml_cpp, utfcpp, and DFXML schema revisions were promoted to
+  direct parent submodules, eliminating hidden nested Git links without
+  vendoring independently maintained projects.
+- The be20_api provenance document and dependency Git links retain the upstream
+  URLs and exact commit IDs; license files remain with their source projects.
 - Root and be20_api license texts are broadly compatible (US-government/public
   domain material plus MIT and separately identified third-party code), but
   both manifests contain stale paths and descriptions. Third-party notices must
@@ -174,8 +176,9 @@ it required no ABI conversion. The identified risks were handled as follows:
 The stable path remains `src/be20_api/` to avoid an unnecessary include churn.
 Automake builds one explicit `libbe20.a` convenience library from a reviewed
 manifest. `bulk_extractor`, `test_be`, and `test_be20_api` link that target;
-`test_dfxml` is a separate parent-managed component test. The namespace and
-component boundary remain, while the Git submodule boundary is gone.
+`test_dfxml` is a separate parent-owned integration test. The namespace and
+component boundary remain, while only independently maintained dependencies
+retain Git submodule boundaries.
 
 Do not continue generating the source list by recursively walking the tree.
 An explicit source list prevents test programs, demos, broken prototypes, or
@@ -443,8 +446,9 @@ highest-risk recursive and binary parsers.
   sorts RE2 compiler or linker flags.
 - Top-level `Makefile.am` retains commented/dead shared-library and Python 2.7
   install logic.
-- `bootstrap.sh` no longer performs any Git or submodule mutation. It regenerates
-  the remaining manifests and delegates Autotools regeneration to `autoreconf`.
+- `bootstrap.sh` does not mutate Git state. It verifies that the three direct
+  dependency submodules are initialized, emits the recovery command when they
+  are absent, regenerates the remaining manifests, and runs `autoreconf`.
 - Platform setup scripts are mutable machine provisioning scripts rather than
   reproducible dependency declarations. The macOS script hard-codes Homebrew
   paths and edits shell startup state; older Fedora/CentOS scripts remain
@@ -537,8 +541,8 @@ move live work to tracked issues or a dated, owned roadmap.
 ### be20_api documentation conflicts
 
 `src/be20_api/README.md`, `README_WIN.md`, and `doc/unit-tests.txt` now describe
-the internal `libbe20.a`, parent build, and Catch/Makefile test path. The DFXML
-and schema READMEs also identify their vendored in-tree status. Historical
+the internal `libbe20.a`, parent build, direct dependency submodules, and
+Catch/Makefile test path. Historical
 `TODO.md`, NEWS, ChangeLog, and status notes remain archival documentation debt.
 
 ### CI as executable documentation
@@ -595,10 +599,10 @@ than the checked-out be20_api `main` tip. Running
 `git submodule update --init --recursive` after confirming the workflow file
 was clean detached be20_api at `625f5b3`, as recorded by the parent.
 
-This recovery procedure is now historical: `.gitmodules` and every Git-link
-entry have been removed. `src/be20_api`, dfxml_cpp, utfcpp, and `dfxml_schema`
-are ordinary files, so this class of checkout/update failure can no longer
-occur in bulk_extractor.
+This specific recovery procedure is now historical because `src/be20_api` is
+ordinary parent source rather than a Git link. The three remaining Git links
+are independent dependencies owned directly by the parent; none contains a
+nested be20_api worktree.
 
 For an older checkout that still predates integration, inspect all three states:
 
@@ -652,10 +656,11 @@ Apple Silicon macOS:
   contract without falsely requiring an x86 vendor on Apple Silicon.
 - `make distcheck` passes the clean archive configure/build/test,
   install/uninstall, and redistribution checks and produces
-  `bulk_extractor-2.1.1.tar.gz`, including the vendored sources, licenses,
-  provenance records, schemas, component tests, and fixtures.
-- The Git index contains no mode-160000 entries, `.gitmodules` is removed, and
-  the build and workflows do not initialize submodules.
+  `bulk_extractor-2.1.1.tar.gz`, including be20_api, dependency sources and
+  licenses, schemas, component tests, and fixtures.
+- The Git index contains exactly three direct mode-160000 dependency entries:
+  dfxml_cpp, utfcpp, and `dfxml_schema`. Workflows initialize those direct
+  submodules; be20_api itself is ordinary source.
 - `src/bulk_extractor` links the installed RE2, Abseil, libewf, and other
   current Homebrew libraries rather than the stale Cellar versions.
 
@@ -667,8 +672,8 @@ optional/sanitizer configurations recommended in this document.
 
 1. **Contain P0 risk:** fix and test PCAP length validation, all sbuf boundary
    primitives, and disk-error thread shutdown. Add ASan/UBSan gates.
-2. **Preserve the integrated build baseline:** update vendored dependencies
-   intentionally with provenance records, prevent generated dependency paths
+2. **Preserve the integrated build baseline:** update dependency Git links
+   intentionally, prevent generated dependency paths
    from entering source control, and retain `make check` plus `make distcheck`
    as release gates.
 3. **Resolve false features:** either implement or remove plug-ins and

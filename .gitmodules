@@ -1,0 +1,9 @@
+[submodule "dfxml_schema"]
+	path = dfxml_schema
+	url = https://github.com/dfxml-working-group/dfxml_schema.git
+[submodule "src/be20_api/dfxml_cpp"]
+	path = src/be20_api/dfxml_cpp
+	url = https://github.com/dfxml-working-group/dfxml_cpp.git
+[submodule "src/be20_api/utfcpp"]
+	path = src/be20_api/utfcpp
+	url = https://github.com/nemtrif/utfcpp.git

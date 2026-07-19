@@ -1,6 +1,0 @@
-autoconf
-automake
-gcc
-g++
-expat1-dev
-

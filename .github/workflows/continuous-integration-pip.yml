@@ -34,6 +34,8 @@ jobs:
       # https://github.com/actions/checkout
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: true
 
       - name: Extract Version from configure.ac
         id: extract_version
