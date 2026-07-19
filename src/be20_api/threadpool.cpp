@@ -178,8 +178,6 @@ void *worker::run()
             }
             if (tp.mode == 2 && tp.work_queue.empty()) {
                 tp.freethreads--;
-                tp.workers.erase(this);
-                tp.TO_MAIN.notify_all();
                 break;
             }
             worker_wait_timer.stop();   // no longer waiting
@@ -215,5 +213,10 @@ void *worker::run()
     if (tp.debug) std::cerr << std::this_thread::get_id() << " exiting "<< std::endl;
     tp.total_worker_wait_ns += worker_wait_timer.running_nanoseconds();
     tp.ss.thread_set_status("exited");
+    {
+        std::lock_guard<std::mutex> lock(tp.M);
+        tp.workers.erase(this);
+        tp.TO_MAIN.notify_all();
+    }
     return nullptr;
 }
