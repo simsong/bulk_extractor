@@ -32,7 +32,6 @@ TEST_CASE("scanner_set_mt", "[thread_pool]") {
 
     ss.phase_scan();
     ss.launch_workers(4);
-    ss.set_spin_poll_time(1);
     for (const char *text : {"alpha", "bravo", "charlie", "delta", "echo", "foxtrot"}) {
         ss.schedule_sbuf(new sbuf_t(text));
     }
@@ -40,5 +39,22 @@ TEST_CASE("scanner_set_mt", "[thread_pool]") {
     REQUIRE(ss.get_worker_count() == 0);
     REQUIRE(ss.get_tasks_queued() == 0);
     REQUIRE(recorder.features_written == 6);
+    ss.shutdown();
+}
+
+TEST_CASE("idle_workers_shutdown", "[thread_pool]") {
+    scanner_config sc;
+    sc.outdir = get_tempdir() / "idle_workers_shutdown";
+    std::filesystem::create_directory(sc.outdir);
+
+    feature_recorder_set::flags_t f;
+    scanner_set ss(sc, f, nullptr);
+    ss.apply_scanner_commands();
+    ss.phase_scan();
+    ss.launch_workers(32);
+    ss.join();
+
+    REQUIRE(ss.get_worker_count() == 0);
+    REQUIRE(ss.get_tasks_queued() == 0);
     ss.shutdown();
 }

@@ -51,20 +51,10 @@ void thread_pool::wait_for_tasks()
 void thread_pool::join()
 {
     wait_for_tasks();    /* Wait until there are no messages in the work queue */
-    /* Next, send a kill message to each active thread. */
-    size_t num_threads = get_worker_count(); // get the count with lock
-    for(size_t i=0;i < num_threads;i++){
-        if (debug) std::cerr << "thread_pool::join: pushing null task #" << i << std::endl;
-        push_task(nullptr);             // tell a thread to die
-    }
-
-    // This is a spin lock until there are no more workers. Gross, but it works.
-    while (get_worker_count()>0){
-        std::this_thread::sleep_for( std::chrono::milliseconds( shutdown_spin_lock_poll_ms ));
-        if (debug) {
-            debug_pool(std::cerr);
-        }
-    }
+    std::unique_lock<std::mutex> lock(M);
+    mode = 2;
+    TO_WORKER.notify_all();
+    TO_MAIN.wait(lock, [this] { return workers.empty(); });
 }
 
 void thread_pool::main_thread_wait()
@@ -164,7 +154,10 @@ void * worker::start_worker(void *arg)
 void *worker::run()
 {
     if (tp.debug) std::cerr << "worker " << std::this_thread::get_id() << " starting " << std::endl;
-    tp.freethreads++;           // this thread is free
+    {
+        std::lock_guard<std::mutex> lock(tp.M);
+        tp.freethreads++;       // this thread is free
+    }
     while(true){
 	/* Get the lock, then wait for the queue to be empty.
 	 * If it is not empty, wait for the lock again.
@@ -174,14 +167,20 @@ void *worker::run()
             std::unique_lock<std::mutex> lock( tp.M );
             if (tp.debug) std::cerr << "worker " << std::this_thread::get_id() << " has lock " << std::endl;
             worker_wait_timer.start();  // waiting for work
-            while ( tp.work_queue.size()==0 ){   // wait until something is in the task queue
+            while (tp.work_queue.empty() && tp.mode != 2) {
                 if (tp.debug) std::cerr << "worker " << std::this_thread::get_id() << " waiting " << std::endl;
                 /* I didn't get any work; go to sleep */
                 //std::cerr << std::this_thread::get_id() << " #1 tp.tasks.size()=" << tp.tasks.size() << std::endl;
                 tp.ss.thread_set_status("waiting");
                 tp.TO_MAIN.notify_one(); // if main is sleeping, wake it up
-                tp.TO_WORKER.wait( lock );
+                tp.TO_WORKER.wait_for(lock, std::chrono::seconds(1));
                 //std::cerr << std::this_thread::get_id() << " #2 tp.tasks.size()=" << tp.tasks.size() << std::endl;
+            }
+            if (tp.mode == 2 && tp.work_queue.empty()) {
+                tp.freethreads--;
+                tp.workers.erase(this);
+                tp.TO_MAIN.notify_all();
+                break;
             }
             worker_wait_timer.stop();   // no longer waiting
             tp.ss.thread_set_status("working");
@@ -193,11 +192,6 @@ void *worker::run()
             delete wup;
             tp.freethreads--;           // no longer free
             tp.working_workers++;       // a worker is working
-        }
-	if (wu.sbuf==nullptr) {                  // special code to exit thread
-            //tp.TO_MAIN.notify_one();          // tell the master that one is gone
-            if (tp.debug) std::cerr << std::this_thread::get_id() << "got wu.sbuf=nullptr" << std::endl;
-            break;
         }
         /* dispatch the work unit.
          * if wu.scanner is not set, process_sbuf will run all scanners in sequence, or schedule each.
@@ -219,11 +213,6 @@ void *worker::run()
     }
     tp.ss.thread_set_status("exiting");
     if (tp.debug) std::cerr << std::this_thread::get_id() << " exiting "<< std::endl;
-    {
-        std::unique_lock<std::mutex> lock(tp.M);
-        tp.workers.erase(this);
-        tp.working_workers--;       // a worker is working
-    }
     tp.total_worker_wait_ns += worker_wait_timer.running_nanoseconds();
     tp.ss.thread_set_status("exited");
     return nullptr;

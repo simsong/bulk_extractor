@@ -27,7 +27,6 @@
  *         while freethreads == 0:
  *             cond-wait TO_MAIN, M
  *         put work item in queue
- *         decrement freethreads
  *         cond-signal TO_WORKER
  *         release M
  *
@@ -82,14 +81,13 @@ public:
     std::condition_variable	        TO_WORKER {};
     std::atomic<int>                    working_workers {0};
     std::atomic<int>                    freethreads {0};
-    std::atomic<int>                    shutdown_spin_lock_poll_ms {100};
 
     // bulk_extractor specialiations
     class scanner_set &ss;		// one for all the threads; fs and fr are threadsafe
     std::queue<struct work_unit *> work_queue  {};	// work to be done - here it is just a list of sbufs.
     aftimer		       main_wait_timer {};	// time spend waiting
     std::atomic<uint64_t>      total_worker_wait_ns {0};
-    int                        mode {0}; // 0=running; 1 = waiting for workers to finish; 2=workers should die
+    int                        mode {0}; // protected by M; 0=running, 2=stop workers
     std::atomic<bool>          debug {false}; // display debug messages?
 
     thread_pool(scanner_set &ss_);
