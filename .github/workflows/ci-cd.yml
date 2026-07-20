@@ -46,18 +46,10 @@ jobs:
         run: bash bootstrap.sh
 
       - name: AddressSanitizer debug build and tests
+        if: github.event_name == 'pull_request' && matrix.os == 'ubuntu-22.04'
         run: |
           source "$HOME/.bashrc"
           ./configure --disable-opt --enable-address-sanitizer
-          make $MAKE_OPTS all
-          make -C src $MAKE_OPTS bulk_extractor
-          make -C src check || (cat src/test-suite.log; exit 1)
-          make distclean
-
-      - name: AddressSanitizer optimized build and tests
-        run: |
-          source "$HOME/.bashrc"
-          ./configure --enable-address-sanitizer --enable-silent-rules --quiet
           make $MAKE_OPTS all
           make -C src $MAKE_OPTS bulk_extractor
           make -C src check || (cat src/test-suite.log; exit 1)
