@@ -149,7 +149,7 @@ void Phase1::read_process_sbufs()
         si = blocks_to_sample.begin();    // get the new beginning
     } else {
         /* Not sampling */
-        sha1g = new dfxml::sha1_generator();
+        sha1g = std::make_unique<dfxml::sha1_generator>();
     }
     /* Loop over the blocks to sample */
     while(it != p.end()) {
@@ -190,8 +190,7 @@ void Phase1::read_process_sbufs()
                             hash_next += sbufp->pagesize;
 
                         } else {
-                            delete sha1g; // we had a logical gap; stop hashing
-                            sha1g = 0;
+                            sha1g.reset(); // we had a logical gap; stop hashing
                         }
                     }
                     total_bytes += sbufp->pagesize;
@@ -258,7 +257,7 @@ void Phase1::dfxml_write_source()
     if (sha1g){
         dfxml::sha1_t sha1 = sha1g->digest();
         xreport.xmlout("hashdigest",sha1.hexdigest(),"type='SHA1'",false);
-        delete sha1g;
+        sha1g.reset();
     }
     xreport.pop("source");			// source
     xreport.flush();

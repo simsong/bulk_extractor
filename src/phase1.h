@@ -3,6 +3,7 @@
 
 #include <thread>
 #include <atomic>
+#include <memory>
 #include <ostream>
 
 #include "be20_api/scanner_set.h"
@@ -84,7 +85,7 @@ public:
 
     u_int         notify_ctr  {0};      // for random sampling
     uint64_t      total_bytes {0};      // processed
-    dfxml::sha1_generator *sha1g {nullptr};        // the SHA1 of the image. Set to 0 if a gap is encountered
+    std::unique_ptr<dfxml::sha1_generator> sha1g;  // the SHA1 of the image. Reset if a gap is encountered
     uint64_t      hash_next {0};        // next byte to hash, to detect gaps
     std::string   image_hash {};          // when hashed, the image hash
     dfxml_writer &xreport;              // we always write out the DFXML. Allows restart to be handled in phase1
