@@ -4,11 +4,7 @@
  * bulk_extractor backend stuff, used for both standalone executable and bulk_extractor.
  */
 
-/* needed loading shared libraries and getting free memory*/
 #include "config.h"
-
-#include <sys/types.h>
-
 
 #include <cstdio>
 #include <algorithm>
@@ -21,10 +17,6 @@
 
 #ifdef HAVE_LINUX_SYSCTL_H
 #include <linux/sysctl.h>
-#endif
-
-#ifdef HAVE_DLFCN_H
-#include <dlfcn.h>
 #endif
 
 #include "machine_stats.h"
@@ -42,12 +34,10 @@
 #include "path_printer.h"
 
 /****************************************************************
- *** SCANNER SET IMPLEMENTATION (previously the PLUG-IN SYSTEM)
+ *** SCANNER SET IMPLEMENTATION
  ****************************************************************/
 
-/* BE2 revision:
- * In BE1, the active scanners were maintained by the plugin system's global state.
- * In BE2, there is no global state. Instead, scanners are grouped into scanner set, which
+/* In BE2, there is no global state. Scanners are grouped into scanner set, which
  *        in turn has a feature_recorder_set, which in turn has multiple feature recorders.
  *        The scanner set can then be asked to process a sbuf.
  *        All of the global variables go away.
@@ -331,88 +321,6 @@ void scanner_set::add_scanner(scanner_t scanner) {
 void scanner_set::add_scanners(scanner_t* const* scanners)
 {
     for (int i = 0; scanners[i]; i++) { add_scanner(scanners[i]); }
-}
-
-/* Add a scanner from a file (it's in the file as a shared library) */
-void scanner_set::add_scanner_file(std::string fn)
-{
-    if(time(0)>10) {                    // prevents compiler warning
-        throw std::runtime_error("scanner_set::add_scanner_file: not implemented yet.");
-    }
-#if 0
-    /* Figure out the function name */
-    size_t extloc = fn.rfind('.');
-    if(extloc==std::string::npos){
-        fprintf(stderr,"Cannot find '.' in %s",fn.c_str());
-        exit(1);
-    }
-    std::string func_name = fn.substr(0,extloc);
-    size_t slashloc = func_name.rfind('/');
-    if(slashloc!=std::string::npos) func_name = func_name.substr(slashloc+1);
-    slashloc = func_name.rfind('\\');
-    if(slashloc!=std::string::npos) func_name = func_name.substr(slashloc+1);
-
-    if(debug) std::cout << "Loading: " << fn << " (" << func_name << ")\n";
-    scanner_t *scanner = 0;
-#if defined(HAVE_DLOPEN)
-    void *lib=dlopen(fn.c_str(), RTLD_LAZY);
-
-    if(lib==0){
-        fprintf(stderr,"dlopen: %s\n",dlerror());
-        exit(1);
-    }
-
-    /* Resolve the symbol */
-    scanner = (scanner_t *)dlsym(lib, func_name.c_str());
-
-    if(scanner==0){
-        fprintf(stderr,"dlsym: %s\n",dlerror());
-        exit(1);
-    }
-#elif defined(HAVE_LOADLIBRARY)
-    /* Use Win32 LoadLibrary function */
-    /* See http://msdn.microsoft.com/en-us/library/ms686944(v=vs.85).aspx */
-    HINSTANCE hinstLib = LoadLibrary(TEXT(fn.c_str()));
-    if(hinstLib==0){
-        fprintf(stderr,"LoadLibrary(%s) failed",fn.c_str());
-        exit(1);
-    }
-    scanner = (scanner_t *)GetProcAddress(hinstLib,func_name.c_str());
-    if(scanner==0){
-        fprintf(stderr,"GetProcAddress(%s) failed",func_name.c_str());
-        exit(1);
-    }
-#else
-    std::cout << "  ERROR: Support for loadable libraries not enabled\n";
-    return;
-#endif
-    load_scanner(*scanner,sc);
-#endif
-}
-
-/* Add all of the scanners in a directory */
-void scanner_set::add_scanner_directory(const std::string &dirname)
-{
-    if(time(0)>10) {                    // prevents compiler warning
-        throw std::runtime_error("scanner_set::add_scanner_directory: not implemented yet.");
-    }
-#if 0
-TODO: Re-implement using C++17 directory reading.
-
-
-        if(fname.substr(0,5)=="scan_" || fname.substr(0,5)=="SCAN_"){
-            size_t extloc = fname.rfind('.');
-            if(extloc==std::string::npos) continue; // no '.'
-            std::string ext = fname.substr(extloc+1);
-#ifdef _WIN32
-            if(ext!="DLL") continue;    // not a DLL
-#else
-            if(ext!="so") continue;     // not a shared library
-#endif
-            load_scanner_file(dirname+"/"+fname,sc );
-        }
-    }
-#endif
 }
 
 /* This interface creates if we are in init phase, doesn't if we are in scan phase */

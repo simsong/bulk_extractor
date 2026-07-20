@@ -29,8 +29,6 @@ The `test_be20_api` executable is a parent Automake test target. The former stan
 
 The API is internal. There is no installed library, public-header compatibility promise, or runtime scanner plug-in ABI. Scanners compiled into bulk_extractor use `scanner_params`, `scanner_set`, `feature_recorder`, and `sbuf_t` directly.
 
-Runtime scanner-loading methods remain in the source for compatibility but are not implemented; callers must not rely on shared-library or DLL scanner loading until that debt is resolved.
-
 ## Path printing
 
 Path printing uses scanners to decode a forensic path:

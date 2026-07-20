@@ -120,12 +120,6 @@ void validate_path( const std::filesystem::path fn)
  */
 
 std::string be_hash_name {"sha1"};
-static void add_if_present( std::vector<std::string> &scanner_dirs,const std::string &dir)
-{
-    if ( access( dir.c_str(),O_RDONLY) == 0){
-        scanner_dirs.push_back( dir);
-    }
-}
 
 std::string ns_to_sec(uint64_t ns)
 {
@@ -178,21 +172,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     bool        opt_write_sqlite3     = false;
 #endif
 
-    /* Startup */
     setvbuf( stdout,0,_IONBF,0);		// don't buffer stdout
-    std::vector<std::string> scanner_dirs; // where to look for scanners
-
-    /* Add the default plugin_path */
-    add_if_present( scanner_dirs,"/usr/local/lib/bulk_extractor" );
-    add_if_present( scanner_dirs,"/usr/lib/bulk_extractor" );
-    add_if_present( scanner_dirs,"." );
-
-    if ( getenv( "BE_PATH" )) {
-        std::vector<std::string> dirs = split( getenv( "BE_PATH" ),':');
-        for( std::vector<std::string>::const_iterator it = dirs.begin(); it!=dirs.end(); it++){
-            add_if_present( scanner_dirs,*it);
-        }
-    }
 
 #ifdef _WIN32
     setmode( 1,O_BINARY);		// make stdout binary
@@ -241,10 +221,6 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         ("notify_main_thread", "Display notifications in the main thread after phase1 completes. Useful for running with ThreadSanitizer")
         ("notify_async", "Display notificaitons asynchronously (default)")
         ("o,outdir",        "output directory [REQUIRED]", cxxopts::value<std::string>())
-        ("P,scanner_dir",
-         "directories for scanner shared libraries (can be repeated). "
-         "Default directories include /usr/local/lib/bulk_extractor, /usr/lib/bulk_extractor "
-         "and any directories specified in the BE_PATH environment variable.", cxxopts::value<std::vector<std::string>>())
         ("p,path",          "print the value of <path>[:length][/h][/r] with optional length, hex output, or raw output.", cxxopts::value<std::string>())
         ("q,quit",          "no status or performance output")
         ("r,alert_list",    "file to read alert list from", cxxopts::value<std::string>())
@@ -313,13 +289,6 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
 
     sc.max_depth             = result["max_depth"].as<int>();
     cfg.max_bad_alloc_errors = result["max_bad_alloc_errors"].as<int>();
-
-    try {
-        for ( const auto &it : result["scanner_dir"].as<std::vector<std::string>>() ) {
-            scanner_dirs.push_back( it);break;
-        }
-    } catch ( cxxopts::option_has_no_value_exception &e ) { }
-
 
     cfg.opt_quiet = result.count( "quiet" );
     try {

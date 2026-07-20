@@ -10,12 +10,7 @@
 
 #include "config.h"
 
-/************************
- *** SCANNER PLUG-INS ***
- ************************/
-
-/* scanner_def is the class that is used internally to track all of the plug-in scanners.
- * Some scanners are compiled-in; others can be loaded at run-time.
+/* scanner_def is the class that is used internally to track built-in scanners.
  * Scanners can have multiple feature recorders. Multiple scanners can record to the
  * same feature recorder.
  */

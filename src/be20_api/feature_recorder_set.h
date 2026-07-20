@@ -27,7 +27,7 @@
  * It also has the factory method for new feature_recorders. Therefore if you want a different feature_recorder,
  * this set should be subclassed as well.
  *
- * NOTE: plugins can only call virtual functions!
+ * NOTE: scanners access this through scanner_params.
  *
  */
 
@@ -155,7 +155,7 @@ public:
 
     /* support for creating and finding feature recorders
      * Previously called create_name().
-     * functions must be virtual so they can be called by plug-in.
+     * functions are virtual for specialized recorder-set implementations.
      * All return a reference to the named (or created) feature recorder, or else throw exception indicated
      */
     class NoSuchFeatureRecorder : public std::exception {

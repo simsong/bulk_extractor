@@ -30,9 +30,9 @@ The most urgent source issues are independent of that restructuring:
    arithmetic underflows, and several offset checks can wrap.
 3. Returning after a phase-1 `DiskWriteError` leaves the notification thread in
    phase 1. Its destructor then asserts or waits forever.
-4. Runtime scanner loading is advertised in user and API documentation, and
-   the CLI collects plug-in directories, but both loader entry points always
-   throw and the directories are never consumed.
+4. Runtime scanner loading was advertised in user and API documentation, but
+   had no implementation. It was removed in #505; scanners are compiled into
+   the executable.
 5. The optional Lightgrep scanner sources have not been migrated to the current
    API. Enabling Lightgrep exposes duplicate `switch` cases, invalid member
    access, and references to the removed `recursion_control_block`.
@@ -282,23 +282,14 @@ instance in debug leak tracking. `range_exception_t::what()` uses a shared
 static buffer and races between scanner threads. These should be corrected as
 part of the same ownership rewrite.
 
-#### Runtime plug-ins do not exist despite the interface and CLI
+#### Runtime plug-in interface removed
 
-`scanner_set::add_scanner_file()` and `add_scanner_directory()` immediately
-throw; their implementations are inside `#if 0`. `bulk_extractor.cpp` builds a
-default search path, reads `BE_PATH`, and accepts `-P`, but never calls either
-loader. The option loop also stops after the first supplied `-P` value. The root
-manual, 2.0 roadmap, scanner comments, and be20_api README all describe dynamic
-scanner loading as operational.
-
-Choose one product decision:
-
-- implement a versioned, tested plug-in ABI and exercise a real shared-library
-  scanner on each supported platform; or
-- remove the loader methods, `-P`, `BE_PATH`, and all plug-in claims.
-
-Leaving security-sensitive dynamic-loading code disabled but advertised is the
-worst of both choices.
+The advertised runtime scanner loader was never implemented: its entry points
+always threw and `-P`/`BE_PATH` collected directories that no code consumed.
+Issue #505 removes that dead interface, its command-line/environment surface,
+and current documentation claims. Scanners are compiled into the executable.
+Historical 1.x documentation is marked accordingly; it remains a separate
+documentation-porting task.
 
 #### Optional Lightgrep configuration is source-broken
 
@@ -667,8 +658,7 @@ optional/sanitizer configurations recommended in this document.
    intentionally with provenance records, prevent generated dependency paths
    from entering source control, and retain `make check` plus `make distcheck`
    as release gates.
-3. **Resolve false features:** either implement or remove plug-ins and
-   Lightgrep. Correct the CLI and docs in the same changes.
+3. **Resolve false features:** Lightgrep remains to be corrected or removed.
 4. **Repair input/ownership paths:** short reads, E01 detection, split filename
    construction, file mapping, packet accessors, histogram fallback, and EVTX
    ownership.
@@ -737,12 +727,9 @@ appropriate validation.
 - [ ] Replace discarded `std::runtime_error` temporaries in the `sbuf_t` destructor with enforceable invariants or diagnostics.
 - [ ] Insert rather than erase non-owning `sbuf_t` instances in debug leak tracking.
 - [ ] Make `range_exception_t::what()` thread-safe instead of returning a shared mutable static buffer.
-- [ ] Either implement `scanner_set::add_scanner_file` or remove the nonfunctional API.
-- [ ] Either implement `scanner_set::add_scanner_directory` or remove the nonfunctional API.
-- [ ] Remove or implement the unused `BE_PATH` scanner search path.
-- [ ] Remove or implement the unused `-P` scanner-directory option.
-- [ ] Process every supplied `-P` value instead of stopping after the first.
-- [ ] Remove plug-in claims from user/API documentation unless a versioned, tested plug-in ABI is implemented.
+- [x] Remove the nonfunctional runtime scanner-loader API (#505).
+- [x] Remove the unused `BE_PATH` scanner search path and `-P` option (#505).
+- [x] Remove current plug-in claims; label historical 1.x documentation (#505).
 - [ ] Remove the duplicate `PHASE_INIT` case in `scan_lightgrep.cpp`.
 - [ ] Correct the inconsistent pointer/member access in `scan_lightgrep.cpp`.
 - [ ] Remove references to the deleted recursion-control interface from Lightgrep scanner sources.

@@ -1,7 +1,7 @@
 /**
  *
  * scan_sha1:
- * plug-in demonstration that shows how to write a simple plug-in scanner that calculates
+ * Test scanner that calculates
  * the SHA1 of each sbuf. The hash is written to both the XML file and to the sha1 feature file.
  *
  * Don't use this in production systems! It has a histogram that isn't useful for most applications.

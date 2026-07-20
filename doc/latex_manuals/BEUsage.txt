@@ -1,3 +1,5 @@
+Historical bulk_extractor 1.5.0 help text. It does not describe 2.x; in particular, 2.x has no runtime scanner plug-in loader.
+
 bulk_extractor version 1.5.0
 Usage: bulk_extractor [options] imagefile
   runs bulk extractor and outputs to stdout a summary of what was found where
@@ -55,9 +57,6 @@ Debugging:
    -Z           - zap (erase) output directory
 
 Control of Scanners:
-   -P <dir>     - Specifies a plugin directory
-             Default dirs include /usr/local/lib/bulk_extractor /usr/lib/bulk_extractor and
-             BE_PATH environment variable
    -e <scanner>  enables <scanner> -- -e all   enables all
    -x <scanner>  disable <scanner> -- -x all   disables all
    -E <scanner>    - turn off all scanners except <scanner>

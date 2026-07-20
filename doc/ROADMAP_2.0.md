@@ -1,3 +1,5 @@
+> Historical planning document (2022). It does not describe the current 2.x implementation. In particular, bulk_extractor has no runtime scanner plug-in system; scanners are compiled into the executable.
+
 Bulk Extractor 2.0.   Planned Release: January 1, 2022
 =========================================================
 
@@ -321,4 +323,3 @@ See Also
 ========
 
 https://github.com/simsong/bulk_extractor/issues
-

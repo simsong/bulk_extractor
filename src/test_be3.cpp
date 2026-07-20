@@ -40,6 +40,7 @@
 
 #include "bulk_extractor.h"
 #include "base64_forensic.h"
+#include "cxxopts.hpp"
 #include "bulk_extractor_restarter.h"
 #include "bulk_extractor_scanners.h"
 #include "exif_reader.h"
@@ -191,6 +192,12 @@ TEST_CASE("e2e-h", "[end-to-end]") {
     std::stringstream ss;
     int ret = run_be(ss, argv);
     REQUIRE( ret==1 );                  // -h now produces 1
+}
+
+TEST_CASE("e2e-no-runtime-scanner-loader", "[end-to-end]") {
+    const char *argv[] = {"bulk_extractor", "-P", "scanners", nullptr};
+    std::stringstream ss;
+    REQUIRE_THROWS_AS(run_be(ss, argv), cxxopts::option_not_exists_exception);
 }
 
 /* Test -H */

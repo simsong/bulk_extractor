@@ -141,7 +141,7 @@ struct scanner_params {
 
     };
 
-    const int SCANNER_PARAMS_VERSION {20211201}; // allow loadable scanners to validate version number
+    const int SCANNER_PARAMS_VERSION {20211201}; // detect mismatched scanner parameters
     int scanner_params_version {SCANNER_PARAMS_VERSION};
     void check_version() { assert(this->scanner_params_version == SCANNER_PARAMS_VERSION); }
 
@@ -190,7 +190,7 @@ struct scanner_params {
     virtual bool check_previously_processed(const sbuf_t &sbuf) const;
     std::filesystem::path const get_input_fname() const {return sc.input_fname;}; // not sure why this is needed?
 
-    // These methods are implemented in the plugin system for the scanner to get config information.
+    // These methods provide scanner configuration.
     // The get_scanner_config methods should be called on the si object during PHASE_STARTUP (or when help is printed)
     /* When we are asked to get the config:
      * - first build the help string

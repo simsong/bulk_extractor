@@ -28,13 +28,13 @@
  * \file
  * bulk_extractor scanner architecture.
  *
- * The scanner_set class implements loadable scanners from files and
- * keeps track of which are enabled and which are not.
+ * The scanner_set class manages scanners compiled into the process and keeps
+ * track of which are enabled and which are not.
  *
  * Sequence of operations:
  * 1. scanner_config is loaded with any name=value configurations.
  * 2. scanner_set() is created with the config. The scanner_set:
- *     - Loads any scanners from specified directories.
+ *     - Receives the built-in scanners from its caller.
        - Processes all enable/disable commands to determine which scanners are enabled and disabled.
  * 3. Scanners are queried to determine which feature files they write to, and which histograms they created.
  * 4. Data is processed.
@@ -246,10 +246,8 @@ public:
 
 
     /* PHASE_INIT SUPPORT */
-    void add_scanner(scanner_t scanner);                    // load a specific scanner in memory
-    void add_scanners(scanner_t* const* scanners_builtin);  // load a nullptr array of scanners.
-    void add_scanner_file(std::string fn);                  // load a scanner from a shared library file
-    void add_scanner_directory(const std::string& dirname); // load all scanners in the directory
+    void add_scanner(scanner_t scanner);                    // add a specific in-memory scanner
+    void add_scanners(scanner_t* const* scanners_builtin);  // add a nullptr array of scanners
     void info_scanners(std::ostream &out, bool detailed_info, bool detailed_settings,
                        const char enable_opt, const char disable_opt);
     void apply_scanner_commands(); // applies all of the enable/disable commands and create the feature recorders
