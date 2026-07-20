@@ -60,10 +60,10 @@ sbuf_t::sbuf_t()
 
 /* from an offset */
 sbuf_t::sbuf_t(const sbuf_t &src, size_t offset):
-    pos0(src.pos0 + (offset < src.bufsize ? offset : src.bufsize)),
-    bufsize( offset < src.bufsize ? src.bufsize - offset : 0),
-    pagesize( offset < src.pagesize ? src.pagesize - offset : 0),
-    parent(&src), buf(src.buf+offset)
+    pos0(src.pos0 + std::min(offset, src.bufsize)),
+    bufsize(offset < src.bufsize ? src.bufsize - offset : 0),
+    pagesize(offset < src.pagesize ? src.pagesize - offset : 0),
+    parent(&src), buf(offset_ptr(src.buf, std::min(offset, src.bufsize)))
 {
     parent->add_child(*this);
     sbuf_total += 1;
@@ -80,10 +80,10 @@ sbuf_t::sbuf_t(const sbuf_t &src, size_t offset):
 
 // start at offset for a given len
 sbuf_t::sbuf_t(const sbuf_t &src, size_t offset, size_t len):
-    pos0(src.pos0 + (offset < src.bufsize ? offset : src.bufsize)),
-    bufsize( offset + len < src.bufsize ? len : (offset > src.bufsize ? 0 : src.bufsize - offset)),
-    pagesize( offset + len < src.pagesize ? len : (offset > src.pagesize ? 0 : src.pagesize - offset)),
-    parent(&src), buf(src.buf+offset)
+    pos0(src.pos0 + std::min(offset, src.bufsize)),
+    bufsize(offset <= src.bufsize ? std::min(len, src.bufsize - offset) : 0),
+    pagesize(offset <= src.pagesize ? std::min(len, src.pagesize - offset) : 0),
+    parent(&src), buf(offset_ptr(src.buf, std::min(offset, src.bufsize)))
 {
     parent->add_child(*this);
     sbuf_total += 1;
@@ -299,24 +299,17 @@ sbuf_t *sbuf_t::realloc(size_t newsize)
  */
 sbuf_t *sbuf_t::new_slice(pos0_t new_pos0, size_t off, size_t len) const
 {
-    if (off > bufsize)     throw range_exception_t(off, len); // check to make sure off is in the buffer
-    if (off+len > bufsize) throw range_exception_t(off, len); // check to make sure off+len is in the buffer
-
-    size_t new_pagesize = pagesize;
-    if (off > pagesize) {
-        new_pagesize -= off;            // we only have this much left
-    }
-    if (new_pagesize > len) {
-        new_pagesize = len;             // we only have this much left
-    }
+    require_range(off, len);
+    const size_t new_pagesize = off < pagesize ? std::min(len, pagesize - off) : 0;
 
     return new sbuf_t(new_pos0, highest_parent(),
-                      buf + off, len, new_pagesize,
+                      offset_ptr(buf, off), len, new_pagesize,
                       NO_FD);
 }
 
 sbuf_t *sbuf_t::new_slice(size_t off, size_t len) const
 {
+    require_range(off, len);
     return new_slice(pos0+off, off, len);
 }
 
@@ -335,29 +328,23 @@ sbuf_t *sbuf_t::new_slice_copy(size_t off, size_t len) const
 
 sbuf_t sbuf_t::slice(size_t off, size_t len) const
 {
-    if (off > bufsize)     throw range_exception_t(off, len); // check to make sure off is in the buffer
-    if (off+len > bufsize) throw range_exception_t(off, len); // check to make sure off+len is in the buffer
-
-    size_t new_pagesize = pagesize;
-    if (off > pagesize) {
-        new_pagesize -= off;            // we only have this much left
-    }
-    if (new_pagesize > len) {
-        new_pagesize = len;             // we only have this much left
-    }
+    require_range(off, len);
+    const size_t new_pagesize = off < pagesize ? std::min(len, pagesize - off) : 0;
 
     return sbuf_t(pos0 + off, highest_parent(),
-                      buf + off, len, new_pagesize,
+                      offset_ptr(buf, off), len, new_pagesize,
                       NO_FD);
 }
 
 sbuf_t *sbuf_t::new_slice(size_t off) const
 {
+    require_range(off, 0);
     return new_slice(off, bufsize - off);
 }
 
 sbuf_t sbuf_t::slice(size_t off) const
 {
+    require_range(off, 0);
     return slice(off, bufsize - off);
 }
 
@@ -433,11 +420,8 @@ void sbuf_t::wbuf(size_t i, uint8_t val)
     if ( buf_writable==nullptr) {
         throw std::runtime_error("Attempt to write to unwritable sbuf");
     }
-    if ( i<0 ){
-        throw std::runtime_error("Attempt to write sbuf i<0");
-    }
-    if ( i>bufsize ){
-        throw std::runtime_error("Attempt to write sbuf i>bufsize");
+    if (i >= bufsize) {
+        throw std::runtime_error("Attempt to write outside sbuf");
     }
     buf_writable[i] = val;
 }

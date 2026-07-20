@@ -31,6 +31,7 @@
  * can move. Added reference_count garbage collection
  */
 
+#include <algorithm>
 #include <atomic>
 #include <cassert>
 #include <cstring>
@@ -292,10 +293,11 @@ public:;
 
     /* Search functions --- memcmp at a particular location */
     int memcmp_unsafe(const uint8_t* cbuf, size_t at, size_t len) const {
-        return ::memcmp(this->buf + at + 1, cbuf + 1 , len - 1);
+        if (len == 0) return 0;
+        return ::memcmp(this->buf + at, cbuf, len);
     }
     int memcmp(const uint8_t* cbuf, size_t at, size_t len) const {
-        if (left(at) < len) throw sbuf_t::range_exception_t(at, len);
+        require_range(at, len);
         return memcmp_unsafe(cbuf, at, len);
     }
 
@@ -312,35 +314,39 @@ public:;
     }
 
     uint8_t get8u(size_t i) const {
-        if (i + 1 > bufsize) throw sbuf_t::range_exception_t(i, 1);
+        require_range(i, 1);
         return get8u_unsafe(i);
     }
 
     uint16_t get16u_unsafe(size_t i) const {
-        return (uint16_t)(this->buf[i + 0] <<  0) | (uint16_t)(this->buf[i + 1] << 8);
+        return static_cast<uint16_t>(this->buf[i]) |
+               static_cast<uint16_t>(static_cast<uint16_t>(this->buf[i + 1]) << 8);
     }
 
     uint16_t get16uBE_unsafe(size_t i) const {
-        return (uint16_t)(this->buf[i + 1] <<  0) | (uint16_t)(this->buf[i + 0] << 8);
+        return static_cast<uint16_t>(this->buf[i + 1]) |
+               static_cast<uint16_t>(static_cast<uint16_t>(this->buf[i]) << 8);
     }
 
     uint16_t get16u(size_t i) const {
-        if (i + 2 > bufsize) throw sbuf_t::range_exception_t(i, 2);
+        require_range(i, 2);
         return get16u_unsafe(i);
     }
 
     uint32_t get32u_unsafe(size_t i) const {
-        return (uint32_t)(this->buf[i + 0] <<  0) | (uint32_t)(this->buf[i + 1] << 8) |
-               (uint32_t)(this->buf[i + 2] << 16) | (uint32_t)(this->buf[i + 3] << 24);
+        return static_cast<uint32_t>(this->buf[i]) |
+               (static_cast<uint32_t>(this->buf[i + 1]) << 8) |
+               (static_cast<uint32_t>(this->buf[i + 2]) << 16) |
+               (static_cast<uint32_t>(this->buf[i + 3]) << 24);
     }
 
     uint32_t get32u(size_t i) const {
-        if (i + 4 > bufsize) throw sbuf_t::range_exception_t(i, 4);
+        require_range(i, 4);
         return get32u_unsafe(i);
     }
 
     uint64_t get64u(size_t i) const {
-        if (i + 8 > bufsize) throw sbuf_t::range_exception_t(i, 8);
+        require_range(i, 8);
         return ((uint64_t)(this->buf[i + 0]) <<  0) | ((uint64_t)(this->buf[i + 1]) <<  8) |
                ((uint64_t)(this->buf[i + 2]) << 16) | ((uint64_t)(this->buf[i + 3]) << 24) |
                ((uint64_t)(this->buf[i + 4]) << 32) | ((uint64_t)(this->buf[i + 5]) << 40) |
@@ -365,23 +371,25 @@ public:;
      * sbuf_range_exception if out of range.
      */
     uint8_t get8uBE(size_t i) const {
-        if (i + 1 > bufsize) throw sbuf_t::range_exception_t(i, 1);
+        require_range(i, 1);
         return this->buf[i];
     }
 
     uint16_t get16uBE(size_t i) const {
-        if (i + 2 > bufsize) throw sbuf_t::range_exception_t(i, 2);
-        return 0 | (uint16_t)(this->buf[i + 1] << 0) | (uint16_t)(this->buf[i + 0] << 8);
+        require_range(i, 2);
+        return get16uBE_unsafe(i);
     }
 
     uint32_t get32uBE(size_t i) const {
-        if (i + 4 > bufsize) throw sbuf_t::range_exception_t(i, 4);
-        return (uint32_t)(this->buf[i + 3] <<  0) | (uint32_t)(this->buf[i + 2] <<  8) |
-               (uint32_t)(this->buf[i + 1] << 16) | (uint32_t)(this->buf[i + 0] << 24);
+        require_range(i, 4);
+        return static_cast<uint32_t>(this->buf[i + 3]) |
+               (static_cast<uint32_t>(this->buf[i + 2]) << 8) |
+               (static_cast<uint32_t>(this->buf[i + 1]) << 16) |
+               (static_cast<uint32_t>(this->buf[i]) << 24);
     }
 
     uint64_t get64uBE(size_t i) const {
-        if (i + 8 > bufsize) throw sbuf_t::range_exception_t(i, 8);
+        require_range(i, 8);
         return ((uint64_t)(this->buf[i + 7]) <<  0) | ((uint64_t)(this->buf[i + 6]) <<  8) |
                ((uint64_t)(this->buf[i + 5]) << 16) | ((uint64_t)(this->buf[i + 4]) << 24) |
                ((uint64_t)(this->buf[i + 3]) << 32) | ((uint64_t)(this->buf[i + 2]) << 40) |
@@ -517,7 +525,7 @@ public:;
     }
 
     template <class TYPE> const TYPE* get_struct_ptr(uint32_t pos) const {
-        if (pos + sizeof(TYPE) <= bufsize) {
+        if (has_range(pos, sizeof(TYPE))) {
             return get_struct_ptr_unsafe<TYPE>(pos);
         }
         return NULL;
@@ -572,6 +580,18 @@ public:;
     mutable std::atomic<uint64_t>    reference_count {0}; // when goes to zero, automatically free
 
 private:
+    bool has_range(size_t off, size_t len) const noexcept {
+        return off <= bufsize && len <= bufsize - off;
+    }
+
+    void require_range(size_t off, size_t len) const {
+        if (!has_range(off, len)) throw range_exception_t(off, len);
+    }
+
+    static const uint8_t* offset_ptr(const uint8_t* ptr, size_t off) noexcept {
+        return off == 0 ? ptr : ptr + off;
+    }
+
     // explicit allocation is only allowed in internal implementation
     explicit sbuf_t(pos0_t pos0_, const sbuf_t *parent_,
                     const uint8_t* buf_, size_t bufsize_, size_t pagesize_,
