@@ -264,23 +264,17 @@ using a recorder that produces a real write failure; do not mock the thread.
 
 #### File mapping and ownership failures
 
-`be20_api/sbuf.cpp:373-405` does not validate `open()` or `mmap()` failure,
-treats descriptor zero as “not owned” because the destructor only handles
-`fd > 0`, and does not define a safe zero-length mapping path. In the no-`mmap`
-branch, the allocated buffer is passed to the non-owning constructor and never
-stored in `malloced`, leaking every mapped file. `sbuf_malloc` also constructs
-an object after an unchecked `malloc` result.
+Issue #504 makes mapping and allocation ownership explicit: failures from
+`open`, `fstat`, and `mmap` are checked; descriptor zero is owned; empty files
+do not reach `mmap`; copied-file buffers are retained for deletion; and failed
+nonzero allocations throw before object construction. The destructor now
+enforces its no-live-children invariant, non-owning sbufs participate in debug
+leak tracking, and each range exception owns its message.
 
-Use RAII handles and an owning factory with explicit mapping/allocation
-variants. Test empty files, fd 0, open denial, truncated reads, `MAP_FAILED`, and
-the no-`mmap` build.
-
-The destructor's `std::runtime_error(...)` expressions at lines 151-166 merely
-construct and discard exceptions; they do not enforce the live-child or
-platform invariants. The non-owning constructor erases rather than inserts its
-instance in debug leak tracking. `range_exception_t::what()` uses a shared
-static buffer and races between scanner threads. These should be corrected as
-part of the same ownership rewrite.
+The regression tests cover empty and missing files, descriptor zero ownership,
+independent exception messages, and the no-`mmap` configuration. `MAP_FAILED`
+and allocation exhaustion remain system-specific validation targets because
+they cannot be reached safely without test hooks or mocks.
 
 #### Runtime plug-ins do not exist despite the interface and CLI
 
@@ -728,15 +722,10 @@ appropriate validation.
 
 ### P1: ownership, input handling, and advertised features
 
-- [ ] Check `open()` failure before attempting to map a file in `sbuf_t::map_file`.
-- [ ] Check `mmap()` for `MAP_FAILED` before constructing a mapped `sbuf_t`.
-- [ ] Treat file descriptor zero as an owned descriptor that must be closed.
-- [ ] Define a safe, portable zero-length file mapping path.
-- [ ] Retain and free the allocated buffer in the no-`mmap` `map_file` implementation.
-- [ ] Check allocation failure before constructing an `sbuf_t` in `sbuf_malloc`.
-- [ ] Replace discarded `std::runtime_error` temporaries in the `sbuf_t` destructor with enforceable invariants or diagnostics.
-- [ ] Insert rather than erase non-owning `sbuf_t` instances in debug leak tracking.
-- [ ] Make `range_exception_t::what()` thread-safe instead of returning a shared mutable static buffer.
+- [x] Check `open()`/`fstat()`/`mmap()` failures before constructing a mapped `sbuf_t` (#504).
+- [x] Treat descriptor zero as owned and define a safe zero-length mapping path (#504).
+- [x] Retain copied-file buffers and check `sbuf_malloc` allocation failures (#504).
+- [x] Enforce sbuf child ownership, correct debug tracking, and make range-exception text instance-owned (#504).
 - [ ] Either implement `scanner_set::add_scanner_file` or remove the nonfunctional API.
 - [ ] Either implement `scanner_set::add_scanner_directory` or remove the nonfunctional API.
 - [ ] Remove or implement the unused `BE_PATH` scanner search path.

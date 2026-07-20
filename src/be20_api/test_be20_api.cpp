@@ -32,6 +32,11 @@
 #include <random>
 #include <string>
 #include <csignal>
+#include <system_error>
+
+#if !defined(_WIN32)
+#include <unistd.h>
+#endif
 
 #include "stdlib.h"
 
@@ -78,6 +83,24 @@ std::filesystem::path get_tempdir() {
     }
     return tempdir;
 }
+
+#if defined(HAVE_MMAP) && !defined(_WIN32)
+class saved_file_descriptor {
+    int fd;
+public:
+    explicit saved_file_descriptor(int original) : fd(::dup(original)) {
+        if (fd < 0) {
+            throw std::system_error(errno, std::generic_category(), "dup");
+        }
+    }
+    ~saved_file_descriptor() {
+        if (fd >= 0) {
+            ::dup2(fd, STDIN_FILENO);
+            ::close(fd);
+        }
+    }
+};
+#endif
 
 #ifdef HAVE_MACH_O_DYLD_H
 #include <mach-o/dyld.h>
@@ -611,6 +634,11 @@ TEST_CASE("range_exception", "[sbuf]") {
     catch (const sbuf_t::range_exception_t &e) {
         REQUIRE( std::string("[sbuf_t::range_exception_t: Read past end of sbuf off=100 len=1]") == e.what());
     }
+
+    const sbuf_t::range_exception_t first(1, 2);
+    const sbuf_t::range_exception_t second(3, 4);
+    REQUIRE(std::string(first.what()) == "[sbuf_t::range_exception_t: Read past end of sbuf off=1 len=2]");
+    REQUIRE(std::string(second.what()) == "[sbuf_t::range_exception_t: Read past end of sbuf off=3 len=4]");
 }
 
 TEST_CASE("sbuf boundary contract", "[sbuf]") {
@@ -1132,6 +1160,35 @@ TEST_CASE("map_file", "[sbuf]") {
     REQUIRE(sb1[1000] == '\000');
     delete sb1p;
 }
+
+TEST_CASE("map_file empty", "[sbuf]") {
+    const auto fname = get_tempdir() / "empty.bin";
+    std::ofstream(fname).close();
+
+    std::unique_ptr<sbuf_t> sbuf(sbuf_t::map_file(fname));
+    REQUIRE(sbuf->bufsize == 0);
+    REQUIRE(sbuf->pagesize == 0);
+}
+
+TEST_CASE("map_file missing", "[sbuf]") {
+    REQUIRE_THROWS_AS(sbuf_t::map_file(get_tempdir() / "missing.bin"), std::exception);
+}
+
+#if defined(HAVE_MMAP) && !defined(_WIN32)
+TEST_CASE("map_file closes descriptor zero", "[sbuf]") {
+    const auto fname = get_tempdir() / "fd-zero.bin";
+    std::ofstream(fname) << "fd zero";
+
+    saved_file_descriptor saved_stdin(STDIN_FILENO);
+    REQUIRE(::close(STDIN_FILENO) == 0);
+    {
+        std::unique_ptr<sbuf_t> sbuf(sbuf_t::map_file(fname));
+        REQUIRE(sbuf->bufsize == 7);
+    }
+    REQUIRE(::fcntl(STDIN_FILENO, F_GETFD) == -1);
+    REQUIRE(errno == EBADF);
+}
+#endif
 
 /****************************************************************
  * scanner_config.h:
