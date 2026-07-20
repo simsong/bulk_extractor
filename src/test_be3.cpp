@@ -27,6 +27,7 @@
 #include <string>
 #include <string_view>
 #include <sstream>
+#include <vector>
 
 #include "be20_api/catch.hpp"
 
@@ -591,6 +592,37 @@ TEST_CASE("image_process short raw read", "[phase1]") {
     REQUIRE(sbuf->bufsize == short_size);
     REQUIRE(sbuf->pagesize == page_size);
     REQUIRE(sbuf->asString() == std::string(short_size, 'a'));
+}
+#endif
+
+#ifdef HAVE_LIBEWF
+TEST_CASE("image_process short EWF read", "[phase1]") {
+    class partial_ewf_reader final : public process_ewf {
+    public:
+        using process_ewf::process_ewf;
+
+        ssize_t pread(void *buf, size_t bytes, uint64_t offset) const override {
+            return process_ewf::pread(buf, std::min(bytes, size_t(2048)), offset);
+        }
+    };
+
+    constexpr size_t page_size = 4096;
+    constexpr size_t short_size = 2048;
+    partial_ewf_reader reader(test_dir() / "CFReDS001.E01", page_size, page_size);
+    REQUIRE(reader.open() == 0);
+
+    std::vector<uint8_t> expected(short_size);
+    REQUIRE(reader.process_ewf::pread(expected.data(), expected.size(), 0) == short_size);
+
+    auto it = reader.begin();
+    std::unique_ptr<sbuf_t> sbuf(it.sbuf_alloc());
+    REQUIRE(sbuf->bufsize == short_size);
+    REQUIRE(sbuf->pagesize == short_size);
+    REQUIRE(sbuf->asString() == std::string(expected.begin(), expected.end()));
+
+    auto end = reader.end();
+    REQUIRE(end.sbuf_alloc() == nullptr);
+    REQUIRE(end.eof);
 }
 #endif
 
