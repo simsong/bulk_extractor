@@ -262,6 +262,7 @@ namespace be20 {
         const size_t ip_datalen;            // length of ip data
 
         static uint16_t nshort(const uint8_t* buf, size_t pos); // return a network byte order short at offset pos
+        size_t ip4_header_len() const;
         int ip_version() const;                               // returns 4, 6 or 0
         uint16_t ether_type() const;                           // returns 0 if not IEEE802, otherwise returns ether_type
         int vlan() const;                                     // returns NO_VLAN if not IEEE802 or not VLAN, othererwise VID
@@ -274,15 +275,16 @@ namespace be20 {
         bool is_ip4_tcp() const;
         bool is_ip6_tcp() const;
         // packet extraction
-        // IPv4 - return pointers to fields or throws frame_too_short exception
-        const struct in_addr* get_ip4_src() const;
-        const struct in_addr* get_ip4_dst() const;
+        // IPv4 - return byte pointers to fields or throws frame_too_short exception.
+        // Returning bytes avoids exposing an unaligned network-header field as a typed pointer.
+        const uint8_t* get_ip4_src() const;
+        const uint8_t* get_ip4_dst() const;
         uint8_t get_ip4_proto() const;
         // IPv6
         uint8_t get_ip6_nxt_hdr() const;
         uint16_t get_ip6_plen() const;
-        const struct ip6_addr* get_ip6_src() const;
-        const struct ip6_addr* get_ip6_dst() const;
+        const uint8_t* get_ip6_src() const;
+        const uint8_t* get_ip6_dst() const;
         // TCP
         uint16_t get_ip4_tcp_sport() const;
         uint16_t get_ip4_tcp_dport() const;
@@ -292,10 +294,9 @@ namespace be20 {
 
 #ifdef DLT_IEEE802
     inline uint16_t packet_info::ether_type() const {
-
-        if (pcap_dlt == DLT_IEEE802 || pcap_dlt == DLT_EN10MB) {
-            const struct ether_header* eth_header = (struct ether_header*)pcap_data;
-            return ntohs(eth_header->ether_type);
+        if ((pcap_dlt == DLT_IEEE802 || pcap_dlt == DLT_EN10MB) && pcap_hdr != nullptr && pcap_data != nullptr) {
+            if (pcap_hdr->caplen < sizeof(struct ether_header)) { return 0; }
+            return nshort(pcap_data, 12);
         }
         return 0;
     }
@@ -349,20 +350,26 @@ namespace be20 {
     inline uint16_t packet_info::nshort(const uint8_t* buf, size_t pos) { return (buf[pos] << 8) | (buf[pos + 1]); }
 
     inline int packet_info::vlan() const {
-        if (ether_type() == ETHERTYPE_VLAN) { return nshort(pcap_data, sizeof(struct ether_header)); }
+        if (ether_type() == ETHERTYPE_VLAN) {
+            if (pcap_hdr->caplen < sizeof(struct ether_header) + 4) { throw frame_too_short(); }
+            return nshort(pcap_data, sizeof(struct ether_header));
+        }
         return -1;
     }
 
     inline int packet_info::ip_version() const {
-        /* This takes advantage of the fact that ip4 and ip6 put the version number in the same place */
-        if (ip_datalen >= sizeof(struct ip4)) {
-            const struct ip4* ip_header = (struct ip4*)ip_data;
-            switch (ip_header->ip_v) {
-            case 4: return 4;
-            case 6: return 6;
-            }
+        if (ip_data == nullptr || ip_datalen == 0) { return 0; }
+        switch (ip_data[0] >> 4) {
+        case 4: return ip4_header_len() == 0 ? 0 : 4;
+        case 6: return ip_datalen >= sizeof(struct ip6_hdr) ? 6 : 0;
         }
         return 0;
+    }
+
+    inline size_t packet_info::ip4_header_len() const {
+        if (ip_data == nullptr || ip_datalen < sizeof(struct ip4) || (ip_data[0] >> 4) != 4) { return 0; }
+        const size_t header_len = static_cast<size_t>(ip_data[0] & 0x0f) * 4;
+        return header_len >= sizeof(struct ip4) && header_len <= ip_datalen ? header_len : 0;
     }
 
 // packet typing
@@ -372,14 +379,14 @@ namespace be20 {
     inline bool packet_info::is_ip6() const { return ip_version() == 6; }
 
     inline bool packet_info::is_ip4_tcp() const {
-        if (ip_datalen < sizeof(struct ip4) + sizeof(struct tcphdr)) { return false; }
-        return *((uint8_t*)(ip_data + ip4_proto_off)) == IPPROTO_TCP;
-        return false;
+        const size_t header_len = ip4_header_len();
+        if (header_len == 0 || ip_datalen < header_len + sizeof(struct tcphdr)) { return false; }
+        return ip_data[ip4_proto_off] == IPPROTO_TCP;
     }
 
     inline bool packet_info::is_ip6_tcp() const {
-        if (ip_datalen < sizeof(struct ip6_hdr) + sizeof(struct tcphdr)) { return false; }
-        return *((uint8_t*)(ip_data + ip6_nxt_hdr_off)) == IPPROTO_TCP;
+        if (ip_version() != 6 || ip_datalen < sizeof(struct ip6_hdr) + sizeof(struct tcphdr)) { return false; }
+        return ip_data[ip6_nxt_hdr_off] == IPPROTO_TCP;
     }
 
 // packet extraction
@@ -388,69 +395,56 @@ namespace be20 {
 
 // Get ether addresses; should this handle vlan and such?
     inline const uint8_t* packet_info::get_ether_dhost() const {
-        if (pcap_hdr->caplen < sizeof(struct ether_addr)) { throw frame_too_short(); }
-        return ((const struct ether_header*)pcap_data)->ether_dhost;
+        if (pcap_hdr == nullptr || pcap_data == nullptr || pcap_hdr->caplen < sizeof(struct ether_header)) { throw frame_too_short(); }
+        return pcap_data;
     }
 
     inline const uint8_t* packet_info::get_ether_shost() const {
-        if (pcap_hdr->caplen < sizeof(struct ether_addr)) { throw frame_too_short(); }
-        return ((const struct ether_header*)pcap_data)->ether_shost;
+        if (pcap_hdr == nullptr || pcap_data == nullptr || pcap_hdr->caplen < sizeof(struct ether_header)) { throw frame_too_short(); }
+        return pcap_data + ETH_ALEN;
     }
 
 // IPv4
-#ifdef HAVE_DIAGNOSTIC_CAST_ALIGN
-#pragma GCC diagnostic ignored "-Wcast-align"
-#endif
-    inline const struct in_addr* packet_info::get_ip4_src() const {
-        if (ip_datalen < sizeof(struct ip4)) { throw frame_too_short(); }
-        return (const struct in_addr*)ip_data + ip4_src_off;
+    inline const uint8_t* packet_info::get_ip4_src() const {
+        if (ip_version() != 4 || ip_datalen < sizeof(struct ip4)) { throw frame_too_short(); }
+        return ip_data + ip4_src_off;
     }
-    inline const struct in_addr* packet_info::get_ip4_dst() const {
-        if (ip_datalen < sizeof(struct ip4)) { throw frame_too_short(); }
-        return (const struct in_addr*)ip_data + ip4_dst_off;
+    inline const uint8_t* packet_info::get_ip4_dst() const {
+        if (ip_version() != 4 || ip_datalen < sizeof(struct ip4)) { throw frame_too_short(); }
+        return ip_data + ip4_dst_off;
     }
-#ifdef HAVE_DIAGNOSTIC_CAST_ALIGN
-#pragma GCC diagnostic warning "-Wcast-align"
-#endif
     inline uint8_t packet_info::get_ip4_proto() const {
-        if (ip_datalen < sizeof(struct ip4)) { throw frame_too_short(); }
-        return *((uint8_t*)(ip_data + ip4_proto_off));
+        if (ip_version() != 4 || ip_datalen < sizeof(struct ip4)) { throw frame_too_short(); }
+        return ip_data[ip4_proto_off];
     }
 // IPv6
     inline uint8_t packet_info::get_ip6_nxt_hdr() const {
-        if (ip_datalen < sizeof(struct ip6_hdr)) { throw frame_too_short(); }
-        return *((uint8_t*)(ip_data + ip6_nxt_hdr_off));
+        if (ip_version() != 6 || ip_datalen < sizeof(struct ip6_hdr)) { throw frame_too_short(); }
+        return ip_data[ip6_nxt_hdr_off];
     }
     inline uint16_t packet_info::get_ip6_plen() const {
-        if (ip_datalen < sizeof(struct ip6_hdr)) { throw frame_too_short(); }
-        // return ntohs(*((uint16_t *) (ip_data + ip6_plen_off)));
+        if (ip_version() != 6 || ip_datalen < sizeof(struct ip6_hdr)) { throw frame_too_short(); }
         return nshort(ip_data, ip6_plen_off);
     }
-#ifdef HAVE_DIAGNOSTIC_CAST_ALIGN
-#pragma GCC diagnostic ignored "-Wcast-align"
-#endif
-    inline const struct ip6_addr* packet_info::get_ip6_src() const {
-        if (ip_datalen < sizeof(struct ip6_hdr)) { throw frame_too_short(); }
-        return (const struct ip6_addr*)ip_data + ip6_src_off;
+    inline const uint8_t* packet_info::get_ip6_src() const {
+        if (ip_version() != 6 || ip_datalen < sizeof(struct ip6_hdr)) { throw frame_too_short(); }
+        return ip_data + ip6_src_off;
     }
-    inline const struct ip6_addr* packet_info::get_ip6_dst() const {
-        if (ip_datalen < sizeof(struct ip6_hdr)) { throw frame_too_short(); }
-        return (const struct ip6_addr*)ip_data + ip6_dst_off;
+    inline const uint8_t* packet_info::get_ip6_dst() const {
+        if (ip_version() != 6 || ip_datalen < sizeof(struct ip6_hdr)) { throw frame_too_short(); }
+        return ip_data + ip6_dst_off;
     }
-#ifdef HAVE_DIAGNOSTIC_CAST_ALIGN
-#pragma GCC diagnostic warning "-Wcast-align"
-#endif
 
 // TCP
     inline uint16_t packet_info::get_ip4_tcp_sport() const {
-        if (ip_datalen < sizeof(struct tcphdr) + sizeof(struct ip4)) { throw frame_too_short(); }
-        // return ntohs(*((uint16_t *) (ip_data + sizeof(struct ip4) + tcp_sport_off)));
-        return nshort(ip_data, sizeof(struct ip4) + tcp_sport_off);
+        const size_t header_len = ip4_header_len();
+        if (header_len == 0 || ip_datalen < header_len + sizeof(struct tcphdr)) { throw frame_too_short(); }
+        return nshort(ip_data, header_len + tcp_sport_off);
     }
     inline uint16_t packet_info::get_ip4_tcp_dport() const {
-        if (ip_datalen < sizeof(struct tcphdr) + sizeof(struct ip4)) { throw frame_too_short(); }
-        // return ntohs(*((uint16_t *) (ip_data + sizeof(struct ip4) + tcp_dport_off)));
-        return nshort(ip_data, sizeof(struct ip4) + tcp_dport_off); //
+        const size_t header_len = ip4_header_len();
+        if (header_len == 0 || ip_datalen < header_len + sizeof(struct tcphdr)) { throw frame_too_short(); }
+        return nshort(ip_data, header_len + tcp_dport_off);
     }
     inline uint16_t packet_info::get_ip6_tcp_sport() const {
         if (ip_datalen < sizeof(struct tcphdr) + sizeof(struct ip6_hdr)) { throw frame_too_short(); }

@@ -37,6 +37,7 @@
 
 //#include "astream.h"
 #include "atomic_unicode_histogram.h"
+#include "packet_info.h"
 #include "sbuf.h"
 #include "sbuf_stream.h"
 #include "utils.h"
@@ -183,6 +184,75 @@ TEST_CASE("atomic_map", "[atomic]") {
     REQUIRE(am["two"].b == 0);
     REQUIRE(am["three"].b == 30);
 #endif
+}
+
+/****************************************************************
+ * packet_info.h
+ */
+TEST_CASE("packet_info parses unaligned Ethernet IP frames", "[packet_info]") {
+    std::array<uint8_t, 14 + 24 + 20 + 1> ipv4_storage {};
+    uint8_t* const ipv4 = ipv4_storage.data() + 1; // Deliberately unaligned.
+    const uint8_t ether_dst[] {0, 1, 2, 3, 4, 5};
+    const uint8_t ether_src[] {6, 7, 8, 9, 10, 11};
+    const uint8_t ip4_src[] {192, 0, 2, 1};
+    const uint8_t ip4_dst[] {198, 51, 100, 2};
+    std::memcpy(ipv4, ether_dst, sizeof(ether_dst));
+    std::memcpy(ipv4 + 6, ether_src, sizeof(ether_src));
+    ipv4[12] = 0x08;
+    ipv4[13] = 0x00;
+    uint8_t* const ip4 = ipv4 + 14;
+    ip4[0] = 0x46; // Four bytes of IPv4 options precede the TCP header.
+    ip4[9] = IPPROTO_TCP;
+    std::memcpy(ip4 + 12, ip4_src, sizeof(ip4_src));
+    std::memcpy(ip4 + 16, ip4_dst, sizeof(ip4_dst));
+    ip4[24] = 0x12;
+    ip4[25] = 0x34;
+    ip4[26] = 0x56;
+    ip4[27] = 0x78;
+
+    struct pcap_pkthdr ip4_hdr {};
+    ip4_hdr.caplen = ip4_hdr.len = ipv4_storage.size() - 1;
+    be20::packet_info ip4_packet(DLT_EN10MB, &ip4_hdr, ipv4, ip4_hdr.ts, ip4, ip4_hdr.caplen - 14);
+    REQUIRE(ip4_packet.ether_type() == ETHERTYPE_IP);
+    REQUIRE(std::memcmp(ip4_packet.get_ether_dhost(), ether_dst, sizeof(ether_dst)) == 0);
+    REQUIRE(std::memcmp(ip4_packet.get_ether_shost(), ether_src, sizeof(ether_src)) == 0);
+    REQUIRE(ip4_packet.is_ip4());
+    REQUIRE(ip4_packet.is_ip4_tcp());
+    REQUIRE(ip4_packet.get_ip4_src() == ip4 + 12);
+    REQUIRE(ip4_packet.get_ip4_dst() == ip4 + 16);
+    REQUIRE(std::memcmp(ip4_packet.get_ip4_src(), ip4_src, sizeof(ip4_src)) == 0);
+    REQUIRE(std::memcmp(ip4_packet.get_ip4_dst(), ip4_dst, sizeof(ip4_dst)) == 0);
+    REQUIRE(ip4_packet.get_ip4_tcp_sport() == 0x1234);
+    REQUIRE(ip4_packet.get_ip4_tcp_dport() == 0x5678);
+
+    std::array<uint8_t, 14 + 40 + 20 + 1> ipv6_storage {};
+    uint8_t* const ipv6 = ipv6_storage.data() + 1; // Deliberately unaligned.
+    ipv6[12] = 0x86;
+    ipv6[13] = 0xdd;
+    uint8_t* const ip6 = ipv6 + 14;
+    const uint8_t ip6_src[] {0x20, 0x01, 0x0d, 0xb8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
+    const uint8_t ip6_dst[] {0x20, 0x01, 0x0d, 0xb8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2};
+    ip6[0] = 0x60;
+    ip6[4] = 0;
+    ip6[5] = 20;
+    ip6[6] = IPPROTO_TCP;
+    std::memcpy(ip6 + 8, ip6_src, sizeof(ip6_src));
+    std::memcpy(ip6 + 24, ip6_dst, sizeof(ip6_dst));
+
+    struct pcap_pkthdr ip6_hdr {};
+    ip6_hdr.caplen = ip6_hdr.len = ipv6_storage.size() - 1;
+    be20::packet_info ip6_packet(DLT_EN10MB, &ip6_hdr, ipv6, ip6_hdr.ts, ip6, ip6_hdr.caplen - 14);
+    REQUIRE(ip6_packet.ether_type() == ETHERTYPE_IPV6);
+    REQUIRE(ip6_packet.is_ip6());
+    REQUIRE(ip6_packet.is_ip6_tcp());
+    REQUIRE(ip6_packet.get_ip6_src() == ip6 + 8);
+    REQUIRE(ip6_packet.get_ip6_dst() == ip6 + 24);
+    REQUIRE(std::memcmp(ip6_packet.get_ip6_src(), ip6_src, sizeof(ip6_src)) == 0);
+    REQUIRE(std::memcmp(ip6_packet.get_ip6_dst(), ip6_dst, sizeof(ip6_dst)) == 0);
+
+    ip4_hdr.caplen = sizeof(be20::ether_addr);
+    REQUIRE(ip4_packet.ether_type() == 0);
+    REQUIRE_THROWS_AS(ip4_packet.get_ether_dhost(), be20::packet_info::frame_too_short);
 }
 
 /****************************************************************
