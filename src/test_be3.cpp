@@ -598,17 +598,22 @@ TEST_CASE("image_process short raw read", "[phase1]") {
 #ifdef HAVE_LIBEWF
 TEST_CASE("image_process short EWF read", "[phase1]") {
     class partial_ewf_reader final : public process_ewf {
+        size_t max_read;
+
     public:
-        using process_ewf::process_ewf;
+        partial_ewf_reader(std::filesystem::path image, size_t page_size, size_t margin, size_t max_read_)
+            : process_ewf(image, page_size, margin), max_read(max_read_) {}
 
         ssize_t pread(void *buf, size_t bytes, uint64_t offset) const override {
-            return process_ewf::pread(buf, std::min(bytes, size_t(2048)), offset);
+            if (max_read == 0) return 0;
+            return process_ewf::pread(buf, std::min(bytes, max_read), offset);
         }
     };
 
     constexpr size_t page_size = 4096;
     constexpr size_t short_size = 2048;
-    partial_ewf_reader reader(test_dir() / "CFReDS001.E01", page_size, page_size);
+    const auto image = test_dir() / "CFReDS001.E01";
+    partial_ewf_reader reader(image, page_size, page_size, short_size);
     REQUIRE(reader.open() == 0);
 
     std::vector<uint8_t> expected(short_size);
@@ -623,6 +628,12 @@ TEST_CASE("image_process short EWF read", "[phase1]") {
     auto end = reader.end();
     REQUIRE(end.sbuf_alloc() == nullptr);
     REQUIRE(end.eof);
+
+    partial_ewf_reader eof_reader(image, page_size, page_size, 0);
+    REQUIRE(eof_reader.open() == 0);
+    auto eof = eof_reader.begin();
+    REQUIRE(eof.sbuf_alloc() == nullptr);
+    REQUIRE(eof.eof);
 }
 #endif
 
