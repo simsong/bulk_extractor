@@ -77,18 +77,25 @@ bool image_process::is_multipart_file(std::filesystem::path fn)
 	|| fn_ends_with(fn,"001.vmdk");
 }
 
-/* Given a disk image name, if it contains 000 or 001 replace that with a %03d to make an snprintf template */
-std::string image_process::make_list_template(std::filesystem::path path_,int *start)
+int image_process::multipart_number(const std::filesystem::path &path)
 {
-    /* First find where the digits are */
-    std::string path(path_.string());
-    size_t p = path.rfind("000");
-    if (p==std::string::npos) p = path.rfind("001");
+    const std::string name = path.filename().string();
+    size_t p = name.rfind("000");
+    if (p == std::string::npos) p = name.rfind("001");
     assert(p!=std::string::npos);
+    return std::stoi(name.substr(p, 3));
+}
 
-    *start = atoi(path.substr(p,3).c_str()) + 1;
-    path.replace(p,3,"%03d");	// make it a format
-    return path;
+std::filesystem::path image_process::multipart_filename(const std::filesystem::path &path, int number)
+{
+    std::string name = path.filename().string();
+    size_t p = name.rfind("000");
+    if (p == std::string::npos) p = name.rfind("001");
+    assert(p != std::string::npos);
+    std::string segment = std::to_string(number);
+    if (segment.size() < 3) { segment.insert(0, 3 - segment.size(), '0'); }
+    name.replace(p, 3, segment);
+    return path.parent_path() / name;
 }
 
 
@@ -520,15 +527,11 @@ int process_raw::open()
 
     /* Get the list of the files if this is a split-raw file */
     if (is_multipart_file(image_fname())){
-	int num=0;
-        std::string templ = make_list_template(image_fname(),&num);
-	for(;;num++){
-	    char probename[PATH_MAX];
-	    snprintf(probename, sizeof(probename), templ.c_str(), num);
-            std::filesystem::path probe_path = probename;
+	for(int num = multipart_number(image_fname()) + 1;;num++){
+            const std::filesystem::path probe_path = multipart_filename(image_fname(), num);
             // If the file exists, add it, otherwise break.
-            if (std::filesystem::exists( std::filesystem::path( probename ))) {
-                add_file(std::filesystem::path(probename));
+            if (std::filesystem::exists(probe_path)) {
+                add_file(probe_path);
             } else {
                 break;
             }
@@ -812,9 +815,9 @@ uint64_t process_dir::seek_block(class image_process::iterator &it,uint64_t bloc
  ****************************************************************/
 /* Static function */
 
-image_process *image_process::open(std::filesystem::path fn, bool opt_recurse, size_t pagesize_, size_t margin_)
+std::unique_ptr<image_process> image_process::open(std::filesystem::path fn, bool opt_recurse, size_t pagesize_, size_t margin_)
 {
-    image_process *ip = 0;
+    std::unique_ptr<image_process> ip;
     std::string fname_string = fn.string();
 
     if ( std::filesystem::exists(fn) == false ){
@@ -831,13 +834,15 @@ image_process *image_process::open(std::filesystem::path fn, bool opt_recurse, s
          * If so, give the user an error.
          */
         for( const auto &p : std::filesystem::directory_iterator( fn )){
-            if ( p.path().extension()==".E01" ||
+            std::string ext = p.path().extension().string();
+            std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char ch) { return std::tolower(ch); });
+            if ( ext==".e01" ||
                  p.path().extension()==".000" ||
                  p.path().extension()==".001") {
                 throw FoundDiskImage( fname_string );
             }
         }
-	ip = new process_dir(fn);
+	ip = std::make_unique<process_dir>(fn);
     }
     else {
 	/* Otherwise open a file by checking extension.
@@ -848,16 +853,16 @@ image_process *image_process::open(std::filesystem::path fn, bool opt_recurse, s
 	 */
 
         std::string ext = fn.extension().string();
-	std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
-	if (ext=="e01" || fname_string.find(".E01")!=std::string::npos){
+        std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char ch) { return std::tolower(ch); });
+	if (ext==".e01"){
 #ifdef HAVE_LIBEWF
-	    ip = new process_ewf(fn, pagesize_, margin_);
+	    ip = std::make_unique<process_ewf>(fn, pagesize_, margin_);
 #else
 	    throw NoSupport("This program was compiled without E01 support");
 #endif
-	}
+        }
 	if (ip==nullptr) {
-            ip = new process_raw(fn, pagesize_, margin_);
+            ip = std::make_unique<process_raw>(fn, pagesize_, margin_);
         }
     }
     /* Try to open it */

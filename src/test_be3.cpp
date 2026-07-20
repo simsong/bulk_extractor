@@ -148,7 +148,7 @@ TEST_CASE("process_dir", "[process_dir]") {
     REQUIRE( ret==6 );
 
     /* This should return the jpegs */
-    image_process *p = nullptr;
+    std::unique_ptr<image_process> p;
     try {
         p = image_process::open( test_dir() / "jpegs", true, 65536, 65536);
     }
@@ -172,7 +172,6 @@ TEST_CASE("process_dir", "[process_dir]") {
         pos0_t pos0 = it.get_pos0();
         REQUIRE( pos0.str().find(".jpg") != std::string::npos );
     }
-    delete p;
 }
 
 
@@ -531,7 +530,7 @@ TEST_CASE("restarter", "[restarter]") {
 
 /****************************************************************/
 TEST_CASE("image_process", "[phase1]") {
-    image_process *p = nullptr;
+    std::unique_ptr<image_process> p;
     REQUIRE_THROWS_AS( p = image_process::open( "no-such-file", false, 65536, 65536), image_process::NoSuchFile);
     REQUIRE_THROWS_AS( p = image_process::open( "no-such-file", false, 65536, 65536), image_process::NoSuchFile);
     p = image_process::open( test_dir() / "test_json.txt", false, 65536, 65536);
@@ -548,7 +547,23 @@ TEST_CASE("image_process", "[phase1]") {
         times += 1;
     }
     REQUIRE(times==1);
-    delete p;
+
+    const std::filesystem::path split_dir = NamedTemporaryDirectory();
+    const std::filesystem::path split0 = split_dir / "split%image.000";
+    const std::filesystem::path split1 = split_dir / "split%image.001";
+    {
+        std::ofstream(split0, std::ios::binary) << "a";
+        std::ofstream(split1, std::ios::binary) << "bc";
+    }
+    auto split = image_process::open(split0, false, 65536, 65536);
+    REQUIRE(split->image_size() == 3);
+
+    const std::filesystem::path e01_dir = NamedTemporaryDirectory();
+    const std::filesystem::path lower_e01 = e01_dir / "CFReDS001.e01";
+    std::filesystem::copy_file(test_dir() / "CFReDS001.E01", lower_e01);
+    auto e01 = image_process::open(lower_e01, false, 65536, 65536);
+    REQUIRE(e01 != nullptr);
+    REQUIRE_THROWS_AS(image_process::open(e01_dir, true, 65536, 65536), image_process::FoundDiskImage);
 }
 
 /****************************************************************
@@ -564,9 +579,9 @@ TEST_CASE("path-printer1", "[path_printer]") {
     ss.add_scanners(scanners_builtin);
     ss.apply_scanner_commands();
 
-    image_process *reader = image_process::open( sc.input_fname, false, 65536, 65536 );
+    auto reader = image_process::open( sc.input_fname, false, 65536, 65536 );
     std::stringstream str;
-    class path_printer pp(ss, reader, str);
+    class path_printer pp(ss, reader.get(), str);
     pp.process_path("512-GZIP-0/h");    // create a hex dump
 
     REQUIRE(str.str() == "0000: 6865 6c6c 6f40 776f 726c 642e 636f 6d0a hello@world.com.\n");
@@ -574,5 +589,4 @@ TEST_CASE("path-printer1", "[path_printer]") {
 
     pp.process_path("512-GZIP-2/r");    // create a hex dump with a different path and the /r
     REQUIRE( str.str() == "14\r\nllo@world.com\n" );
-    delete reader;
 }

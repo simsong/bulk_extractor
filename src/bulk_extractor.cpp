@@ -502,7 +502,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         }
     }
 
-    image_process *p = nullptr;
+    std::unique_ptr<image_process> p;
     try {
         p = image_process::open( sc.input_fname, cfg.opt_recurse, cfg.opt_pagesize, cfg.opt_marginsize );
     }
@@ -522,7 +522,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     /* are we supposed to run the path printer? If so, we can use cout_, since the notify stream won't be running. */
     if ( result.count( "path" ) ) {
         std::string opt_path = result["path"].as<std::string>();
-        path_printer pp( ss, p, cout);
+        path_printer pp( ss, p.get(), cout);
         if ( opt_path=="-http" || opt_path=="--http" ){
             pp.process_http( std::cin);
         } else if ( opt_path=="-i" || opt_path=="-" ){
@@ -530,7 +530,6 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         } else {
             pp.process_path( opt_path);
         }
-        delete p;
 	return 0;
     }
 
@@ -742,8 +741,6 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
 
     delete xreport;                     // no longer needed
     xreport=nullptr;                    // and zero it out.
-    delete p;
-    p = nullptr;
 
     muntrace();
     return( 0 );

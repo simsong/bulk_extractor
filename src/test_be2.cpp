@@ -247,7 +247,6 @@ std::filesystem::path validate(std::string image_fname, std::vector<Check> &expe
             assert (ss.get_threading() == false);
             ss.phase_scan();
             phase1.phase1_run();
-            delete p;
         } catch (image_process::NoSuchFile &e) {
             std::cerr << "sc.input_fname=" << sc.input_fname << " no such file: " << e.what() << std::endl;
             bool file_found=false;

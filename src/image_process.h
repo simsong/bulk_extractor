@@ -69,7 +69,8 @@ public:
 
     static bool fn_ends_with(std::filesystem::path str,std::string suffix);
     static bool is_multipart_file(std::filesystem::path fn);
-    static std::string make_list_template(std::filesystem::path fn,int *start);
+    static int multipart_number(const std::filesystem::path &fn);
+    static std::filesystem::path multipart_filename(const std::filesystem::path &fn, int number);
 
     struct EndOfImage : public std::exception {
         EndOfImage(){};
@@ -108,7 +109,7 @@ public:
      * open() figures out which child class to call, calls its open, then
      * returns an object.
      */
-    static image_process *open(std::filesystem::path fn, bool recurse, size_t opt_pagesize, size_t opt_margin);
+    static std::unique_ptr<image_process> open(std::filesystem::path fn, bool recurse, size_t opt_pagesize, size_t opt_margin);
     const size_t pagesize;                    // page size we are using
     const size_t margin;                      // margin size we are using
     bool  report_read_errors;
