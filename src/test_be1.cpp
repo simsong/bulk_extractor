@@ -44,6 +44,7 @@
 #include "image_process.h"
 #include "jpeg_validator.h"
 #include "phase1.h"
+#include "notify_thread.h"
 #include "sbuf_decompress.h"
 #include "scan_aes.h"
 #include "scan_base64.h"

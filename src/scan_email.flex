@@ -399,6 +399,10 @@ void scan_email(struct scanner_params &sp)
         catch (sbuf_scanner::sbuf_scanner_exception &e ) {
             std::cerr << "Scanner " << SCANNER << "Exception " << e.what() << " processing " << sp.sbuf->pos0 << "\n";
         }
+        catch (...) {
+            yyemail_lex_destroy(scanner);
+            throw;
+        }
         yyemail_lex(scanner);           // cleanup at end
         yyemail_lex_destroy(scanner);
 	(void)yyunput;			// avoids defined but not used

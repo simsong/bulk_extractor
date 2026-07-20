@@ -149,19 +149,14 @@ void Phase1::read_process_sbufs()
         si = blocks_to_sample.begin();    // get the new beginning
     } else {
         /* Not sampling */
-        sha1g = new dfxml::sha1_generator();
+        sha1g = std::make_unique<dfxml::sha1_generator>();
     }
     /* Loop over the blocks to sample */
     while(it != p.end()) {
-        /* If there is a disk write error, shut down */
+        /* A worker recorded a disk-write error. Let the caller stop the notifier. */
         if (ss.disk_write_errors > 0 ){
-            for(int i=0;i<5;i++){
-                std::cerr << std::endl;
-            }
-            std::cerr << "*** DISK WRITE ERRORS (" << ss.disk_write_errors << ") ***" << std::endl;
-            std::cerr << "Disk is likely full. Clear space and restart (press up arrow) " << std::endl;
-	    std::cerr << "Check alerts.txt for further info" << std::endl;
-            exit(1);
+            ss.join();
+            throw feature_recorder::DiskWriteError("while scanning input");
         }
 
         if (sampling()){                // if sampling, seek the iterator
@@ -195,8 +190,7 @@ void Phase1::read_process_sbufs()
                             hash_next += sbufp->pagesize;
 
                         } else {
-                            delete sha1g; // we had a logical gap; stop hashing
-                            sha1g = 0;
+                            sha1g.reset(); // we had a logical gap; stop hashing
                         }
                     }
                     total_bytes += sbufp->pagesize;
@@ -263,7 +257,7 @@ void Phase1::dfxml_write_source()
     if (sha1g){
         dfxml::sha1_t sha1 = sha1g->digest();
         xreport.xmlout("hashdigest",sha1.hexdigest(),"type='SHA1'",false);
-        delete sha1g;
+        sha1g.reset();
     }
     xreport.pop("source");			// source
     xreport.flush();
@@ -296,6 +290,9 @@ void Phase1::phase1_run()
 
     if (!config.opt_quiet) cout << "All data read; waiting for threads to finish..." << std::endl;
     ss.join();
+    if (ss.disk_write_errors > 0) {
+        throw feature_recorder::DiskWriteError("while scanning input");
+    }
     xreport.pop("runtime");
     dfxml_write_source();               // written here so it may also include hash
 }

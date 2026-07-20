@@ -899,7 +899,7 @@ void scanner_set::process_sbuf(const sbuf_t* sbufp, scanner_t *scanner)
             ar.write(sbuf.pos0, "scanner=" + name, Formatter() << "<exception>" << e.what() << "</exception>");
             ar.flush();
         }
-        catch (feature_recorder_set::NoSuchFeatureRecorder& e2) {
+        catch (...) {
         }
     }
 
