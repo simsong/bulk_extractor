@@ -35,6 +35,7 @@ public:
     static inline const std::string ESTIMATED_DATE_COMPLETION {"estimated_date_completion"};
 
     void start_notify_thread( );
+    void stop();
     void join();
 };
 

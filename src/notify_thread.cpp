@@ -31,6 +31,7 @@ int notify_thread::terminal_width( int default_width )
 
 notify_thread::~notify_thread()
 {
+    stop();
     join();
 }
 
@@ -132,10 +133,14 @@ void notify_thread::start_notify_thread( )
 
 void notify_thread::join()
 {
-    assert( phase!= BE_PHASE_1 );
     if (the_notify_thread != nullptr) {
         the_notify_thread->join();
         delete the_notify_thread;
         the_notify_thread = nullptr;
     }
+}
+
+void notify_thread::stop()
+{
+    phase = BE_PHASE_2;
 }

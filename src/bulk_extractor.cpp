@@ -630,7 +630,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     }
 
     /*** PHASE 2 --- Shutdown ***/
-    notify.phase = BE_PHASE_2;
+    notify.stop();
     notify.join();
     if ( cfg.opt_notify_main_thread) {
         cout << notify_stream.str();
