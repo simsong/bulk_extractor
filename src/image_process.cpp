@@ -46,6 +46,14 @@
  *** static functions
  ****************************************************************/
 
+static sbuf_t *shrink_sbuf(sbuf_t *sbuf, const pos0_t &pos0, size_t pagesize, size_t bytes_read)
+{
+    auto *short_sbuf = sbuf_t::sbuf_malloc(pos0, bytes_read, std::min(pagesize, bytes_read));
+    memcpy(short_sbuf->malloc_buf(), sbuf->malloc_buf(), bytes_read);
+    delete sbuf;
+    return short_sbuf;
+}
+
 image_process::image_process(std::filesystem::path fn, size_t pagesize_, size_t margin_):
     image_fname_(fn),pagesize(pagesize_),margin(margin_),report_read_errors(true)
 {
@@ -302,6 +310,11 @@ sbuf_t *process_ewf::sbuf_alloc(image_process::iterator &it) const
         this_pagesize = count;
     }
 
+    if (count==0){
+        it.eof = true;
+        return nullptr;
+    }
+
     auto sbuf = sbuf_t::sbuf_malloc(get_pos0(it), count, this_pagesize);
     unsigned char *buf = static_cast<unsigned char *>(sbuf->malloc_buf());
     int count_read = this->pread(buf, count, it.raw_offset);
@@ -309,10 +322,13 @@ sbuf_t *process_ewf::sbuf_alloc(image_process::iterator &it) const
         delete sbuf;
 	throw read_error();
     }
-    if (count==0){
+    if (count_read==0){
         delete sbuf;
 	it.eof = true;
-	return 0;
+	return nullptr;
+    }
+    if (static_cast<size_t>(count_read) < count){
+        return shrink_sbuf(sbuf, get_pos0(it), this_pagesize, count_read);
     }
     return sbuf;
 }
@@ -582,6 +598,7 @@ ssize_t process_raw::pread(void *buf, size_t bytes, uint64_t offset) const
 #endif
 
 
+    fi->stream.clear();
     fi->stream.seekg( file_offset );
     if (fi->stream.rdstate() & (std::ios::failbit|std::ios::badbit)){
         throw SeekError();
@@ -592,23 +609,23 @@ ssize_t process_raw::pread(void *buf, size_t bytes, uint64_t offset) const
     fi->stream.read(reinterpret_cast<char *>(buf), bytes_to_read);
     t.stop();
 
-    if (fi->stream.rdstate() & std::ios::failbit){
-        std::cerr << "read error  failbit bytes=" << bytes << std::endl;
-        throw ReadError();
-    }
+    const auto state = fi->stream.rdstate();
+    const auto bytes_read = fi->stream.gcount();
     if (fi->stream.rdstate() & std::ios::badbit){
         std::cerr << "read error  badbit bytes=" << bytes << std::endl;
         throw ReadError();
     }
-    if (fi->stream.rdstate() & (std::ios::eofbit)){
-        std::cerr << "read error  eof bytes=" << bytes << std::endl;
-        throw EndOfImage();
+    if (bytes_read < static_cast<std::streamsize>(bytes_to_read)){
+        if (!(state & std::ios::eofbit)){
+            std::cerr << "read error  short read bytes=" << bytes << std::endl;
+            throw ReadError();
+        }
+        fi->stream.clear();
+        return bytes_read;
     }
 
-    size_t bytes_read = bytes_to_read;  // guess we got the right amount
-
     /* Need to recurse, which will cause the next segment to be loaded */
-    if (bytes_read==bytes) return bytes_read; // read precisely the correct amount!
+    if (static_cast<size_t>(bytes_read)==bytes) return bytes_read; // read precisely the correct amount!
     if (bytes_read==0) return 0;              // This might happen at the end of the image; it prevents infinite recursion
     ssize_t bytes_read2 = this->pread(static_cast<char *>(buf)+bytes_read, bytes-bytes_read, offset+bytes_read);
     if (bytes_read2<0) return -1;	// error on second read
@@ -686,6 +703,9 @@ sbuf_t *process_raw::sbuf_alloc(image_process::iterator &it) const
     if (count_read<0){
         delete sbuf;
 	throw read_error();
+    }
+    if (static_cast<size_t>(count_read) < count){
+        return shrink_sbuf(sbuf, get_pos0(it), this_pagesize, count_read);
     }
     return sbuf;
 }

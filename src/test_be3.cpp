@@ -11,6 +11,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <fstream>
 #include <iostream>
 #include <memory>
 #include <filesystem>
@@ -26,6 +27,7 @@
 #include <string>
 #include <string_view>
 #include <sstream>
+#include <vector>
 
 #include "be20_api/catch.hpp"
 
@@ -565,6 +567,75 @@ TEST_CASE("image_process", "[phase1]") {
     REQUIRE(e01 != nullptr);
     REQUIRE_THROWS_AS(image_process::open(e01_dir, true, 65536, 65536), image_process::FoundDiskImage);
 }
+
+#if defined(__linux__)
+// Linux makes truncation visible to an already-open descriptor.  APFS retains
+// the old view, so this real short-read test cannot run on macOS.
+TEST_CASE("image_process short raw read", "[phase1]") {
+    constexpr size_t page_size = 128 * 1024;
+    constexpr size_t image_size = 4 * page_size;
+    constexpr size_t short_size = page_size + page_size / 2;
+    const auto dir = NamedTemporaryDirectory();
+    const auto image = dir / "short.raw";
+    {
+        std::ofstream out(image, std::ios::binary);
+        out << std::string(image_size, 'a');
+    }
+
+    process_raw reader(image, page_size, page_size);
+    REQUIRE(reader.open() == 0);
+    std::filesystem::resize_file(image, short_size);
+    REQUIRE(std::filesystem::file_size(image) == short_size);
+
+    auto it = reader.begin();
+    std::unique_ptr<sbuf_t> sbuf(it.sbuf_alloc());
+    REQUIRE(sbuf->bufsize == short_size);
+    REQUIRE(sbuf->pagesize == page_size);
+    REQUIRE(sbuf->asString() == std::string(short_size, 'a'));
+}
+#endif
+
+#ifdef HAVE_LIBEWF
+TEST_CASE("image_process short EWF read", "[phase1]") {
+    class partial_ewf_reader final : public process_ewf {
+        size_t max_read;
+
+    public:
+        partial_ewf_reader(std::filesystem::path image, size_t page_size, size_t margin, size_t max_read_)
+            : process_ewf(image, page_size, margin), max_read(max_read_) {}
+
+        ssize_t pread(void *buf, size_t bytes, uint64_t offset) const override {
+            if (max_read == 0) return 0;
+            return process_ewf::pread(buf, std::min(bytes, max_read), offset);
+        }
+    };
+
+    constexpr size_t page_size = 4096;
+    constexpr size_t short_size = 2048;
+    const auto image = test_dir() / "CFReDS001.E01";
+    partial_ewf_reader reader(image, page_size, page_size, short_size);
+    REQUIRE(reader.open() == 0);
+
+    std::vector<uint8_t> expected(short_size);
+    REQUIRE(reader.process_ewf::pread(expected.data(), expected.size(), 0) == short_size);
+
+    auto it = reader.begin();
+    std::unique_ptr<sbuf_t> sbuf(it.sbuf_alloc());
+    REQUIRE(sbuf->bufsize == short_size);
+    REQUIRE(sbuf->pagesize == short_size);
+    REQUIRE(sbuf->asString() == std::string(expected.begin(), expected.end()));
+
+    auto end = reader.end();
+    REQUIRE(end.sbuf_alloc() == nullptr);
+    REQUIRE(end.eof);
+
+    partial_ewf_reader eof_reader(image, page_size, page_size, 0);
+    REQUIRE(eof_reader.open() == 0);
+    auto eof = eof_reader.begin();
+    REQUIRE(eof.sbuf_alloc() == nullptr);
+    REQUIRE(eof.eof);
+}
+#endif
 
 /****************************************************************
  ** Test the path printer
