@@ -11,6 +11,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <fstream>
 #include <iostream>
 #include <memory>
 #include <filesystem>
@@ -565,6 +566,33 @@ TEST_CASE("image_process", "[phase1]") {
     REQUIRE(e01 != nullptr);
     REQUIRE_THROWS_AS(image_process::open(e01_dir, true, 65536, 65536), image_process::FoundDiskImage);
 }
+
+#if defined(__linux__)
+// Linux makes truncation visible to an already-open descriptor.  APFS retains
+// the old view, so this real short-read test cannot run on macOS.
+TEST_CASE("image_process short raw read", "[phase1]") {
+    constexpr size_t page_size = 128 * 1024;
+    constexpr size_t image_size = 4 * page_size;
+    constexpr size_t short_size = page_size + page_size / 2;
+    const auto dir = NamedTemporaryDirectory();
+    const auto image = dir / "short.raw";
+    {
+        std::ofstream out(image, std::ios::binary);
+        out << std::string(image_size, 'a');
+    }
+
+    process_raw reader(image, page_size, page_size);
+    REQUIRE(reader.open() == 0);
+    std::filesystem::resize_file(image, short_size);
+    REQUIRE(std::filesystem::file_size(image) == short_size);
+
+    auto it = reader.begin();
+    std::unique_ptr<sbuf_t> sbuf(it.sbuf_alloc());
+    REQUIRE(sbuf->bufsize == short_size);
+    REQUIRE(sbuf->pagesize == page_size);
+    REQUIRE(sbuf->asString() == std::string(short_size, 'a'));
+}
+#endif
 
 /****************************************************************
  ** Test the path printer
