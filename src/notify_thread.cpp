@@ -121,26 +121,31 @@ void *notify_thread::run()
             }
             os << cd << std::endl << std::endl;
         }
-        std::this_thread::sleep_for( std::chrono::seconds( cfg.opt_notify_rate ));
+        std::unique_lock<std::mutex> lock(Mphase);
+        phase_changed.wait_for(lock, std::chrono::seconds(cfg.opt_notify_rate), [this] {
+            return phase != BE_PHASE_1;
+        });
     }
     return nullptr;
 }
 
 void notify_thread::start_notify_thread( )
 {
-    the_notify_thread = new std::thread( &notify_thread::run, this);    // launch the notify thread
+    if (the_notify_thread.joinable()) {
+        throw std::logic_error("notification thread already started");
+    }
+    the_notify_thread = std::thread(&notify_thread::run, this);
 }
 
 void notify_thread::join()
 {
-    if (the_notify_thread != nullptr) {
-        the_notify_thread->join();
-        delete the_notify_thread;
-        the_notify_thread = nullptr;
+    if (the_notify_thread.joinable()) {
+        the_notify_thread.join();
     }
 }
 
 void notify_thread::stop()
 {
     phase = BE_PHASE_2;
+    phase_changed.notify_all();
 }

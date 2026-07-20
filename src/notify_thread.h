@@ -16,7 +16,7 @@ class notify_thread {
     notify_thread() = delete;
     notify_thread(const notify_thread &that) = delete;
     notify_thread &operator=(const notify_thread &that) = delete;
-    std::thread *the_notify_thread {nullptr};
+    std::thread the_notify_thread;
     void *run();
 public:
     notify_thread(std::ostream &os_, scanner_set &ss_, const Phase1::Config &cfg_, aftimer &master_timer_, std::atomic<double> *fraction_done_):
@@ -29,7 +29,8 @@ public:
     aftimer &master_timer;
     std::atomic<double> *fraction_done {};
     std::atomic<int> phase {};
-    std::mutex Mphase {};           // mutex for phase
+    std::mutex Mphase {};
+    std::condition_variable phase_changed;
     static inline const std::string FRACTION_READ {"fraction_read"};
     static inline const std::string ESTIMATED_TIME_REMAINING {"estimated_time_remaining"};
     static inline const std::string ESTIMATED_DATE_COMPLETION {"estimated_date_completion"};

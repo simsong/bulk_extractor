@@ -153,15 +153,10 @@ void Phase1::read_process_sbufs()
     }
     /* Loop over the blocks to sample */
     while(it != p.end()) {
-        /* If there is a disk write error, shut down */
+        /* A worker recorded a disk-write error. Let the caller stop the notifier. */
         if (ss.disk_write_errors > 0 ){
-            for(int i=0;i<5;i++){
-                std::cerr << std::endl;
-            }
-            std::cerr << "*** DISK WRITE ERRORS (" << ss.disk_write_errors << ") ***" << std::endl;
-            std::cerr << "Disk is likely full. Clear space and restart (press up arrow) " << std::endl;
-	    std::cerr << "Check alerts.txt for further info" << std::endl;
-            exit(1);
+            ss.join();
+            throw feature_recorder::DiskWriteError("while scanning input");
         }
 
         if (sampling()){                // if sampling, seek the iterator
@@ -296,6 +291,9 @@ void Phase1::phase1_run()
 
     if (!config.opt_quiet) cout << "All data read; waiting for threads to finish..." << std::endl;
     ss.join();
+    if (ss.disk_write_errors > 0) {
+        throw feature_recorder::DiskWriteError("while scanning input");
+    }
     xreport.pop("runtime");
     dfxml_write_source();               // written here so it may also include hash
 }

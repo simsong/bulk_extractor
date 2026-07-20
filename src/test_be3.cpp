@@ -16,6 +16,12 @@
 #include <filesystem>
 #include <cstdio>
 #include <stdexcept>
+#ifdef HAVE_SYS_RESOURCE_H
+#include <sys/resource.h>
+#endif
+#ifdef HAVE_SIGNAL_H
+#include <signal.h>
+#endif
 #include <unistd.h>
 #include <string>
 #include <string_view>
@@ -89,6 +95,39 @@ int run_be(std::ostream &ss, const char **argv)
 {
     return run_be(ss, ss, argv);
 }
+
+#if defined(HAVE_SYS_RESOURCE_H) && defined(HAVE_SIGNAL_H)
+class file_size_limit {
+    struct rlimit old_limit {};
+    struct sigaction old_action {};
+public:
+    file_size_limit()
+    {
+        if (getrlimit(RLIMIT_FSIZE, &old_limit) != 0) {
+            throw std::runtime_error("getrlimit(RLIMIT_FSIZE) failed");
+        }
+        struct sigaction action {};
+        action.sa_handler = SIG_IGN;
+        sigemptyset(&action.sa_mask);
+        if (sigaction(SIGXFSZ, &action, &old_action) != 0) {
+            throw std::runtime_error("sigaction(SIGXFSZ) failed");
+        }
+
+        struct rlimit limit = old_limit;
+        limit.rlim_cur = 0;
+        if (setrlimit(RLIMIT_FSIZE, &limit) != 0) {
+            sigaction(SIGXFSZ, &old_action, nullptr);
+            throw std::runtime_error("setrlimit(RLIMIT_FSIZE) failed");
+        }
+    }
+
+    ~file_size_limit()
+    {
+        setrlimit(RLIMIT_FSIZE, &old_limit);
+        sigaction(SIGXFSZ, &old_action, nullptr);
+    }
+};
+#endif
 
 /****************************************************************
  * Test process_dir
@@ -207,6 +246,26 @@ TEST_CASE("e2e-0", "[end-to-end]") {
     /* make sure that both tags ended up in the second XML file (the one created from restarting) */
     grep( "debug:work_start", xml_file);
     grep( "debug:work_stop", xml_file);
+}
+
+TEST_CASE("e2e-disk-write-error-stops-notifier", "[end-to-end]") {
+#if defined(HAVE_SYS_RESOURCE_H) && defined(HAVE_SIGNAL_H)
+    std::filesystem::path inpath = test_dir() / "nps-2010-emails.100k.raw";
+    std::filesystem::path outdir = NamedTemporaryDirectory();
+    std::string inpath_string = inpath.string();
+    std::string outdir_string = outdir.string();
+    std::stringstream cout, cerr;
+
+    {
+        file_size_limit disk_full;
+        const char *argv[] = {"bulk_extractor", "--notify_async", "-0q", "-x", "all", "-e", "email",
+                              "-o", outdir_string.c_str(), inpath_string.c_str(), nullptr};
+        REQUIRE(run_be(cout, cerr, argv) == 6);
+    }
+    REQUIRE(cerr.str().find("Disk write error during Phase 1") != std::string::npos);
+#else
+    SUCCEED("This platform has no file-size resource limit.");
+#endif
 }
 
 /*

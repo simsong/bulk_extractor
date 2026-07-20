@@ -106,26 +106,6 @@ TEST_CASE("sbuf_no_copy", "[threads]") {
     }
 }
 
-TEST_CASE("notify_thread_stops_during_phase_one", "[threads]")
-{
-    feature_recorder_set::flags_t flags;
-    scanner_config sc;
-    sc.outdir = NamedTemporaryDirectory();
-    auto report = std::make_unique<dfxml_writer>(sc.outdir / "report.xml", false);
-    scanner_set ss(sc, flags, report.get());
-    Phase1::Config cfg;
-    cfg.opt_legacy = true;
-    aftimer timer;
-    std::atomic<double> fraction_done {0.0};
-    std::ostringstream output;
-
-    notify_thread notify(output, ss, cfg, timer, &fraction_done);
-    notify.phase = BE_PHASE_1;
-    notify.start_notify_thread();
-    notify.stop();
-    notify.join();
-}
-
 /****************************************************************/
 
 

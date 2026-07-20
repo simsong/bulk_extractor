@@ -613,6 +613,8 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         ss.join();                          // wait for threads to come together
     }
     catch ( const feature_recorder::DiskWriteError &e ) {
+        notify.stop();
+        notify.join();
         cerr << "Disk write error during Phase 1 ( scanning). Disk is probably full." << std::endl
              << "Remove extra files and restart bulk_extractor with the exact same command line to continue." << std::endl;
         // do not call ss.shutdown() to avoid writing out histograms
