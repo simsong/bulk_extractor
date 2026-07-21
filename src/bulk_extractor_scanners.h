@@ -65,9 +65,5 @@ SCANNER(zip)
 
 
 #ifdef HAVE_LIBLIGHTGREP
-//SCANNER(accts_lg)
-//SCANNER(base16_lg)
-//SCANNER(email_lg)
-//SCANNER(gps_lg)
-//SCANNER(lightgrep)
+SCANNER(lightgrep)
 #endif
