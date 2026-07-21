@@ -330,20 +330,19 @@ void feature_recorder_file::histogram_write_from_file(AtomicUnicodeHistogram& h)
         if(line[0]=='#') continue;   // comment line
         truncate_at(line,'\r');      // truncate at a \r if there is one.
 
-            std::string feature;
-            std::string context;
-            if (extract_feature_context(line, feature, context)) {
-                /* if the feature is in the context, feature is in utf8, otherwise it was utf16 and converted */
-                bool found_utf16 = (context.find(feature) == std::string::npos);
-                try {
-                    h.add0( feature, context, found_utf16 );
-                }
-                catch (const std::bad_alloc &e) {
-                    std::cerr << "MEMORY OVERFLOW GENERATING HISTOGRAM  "
-                              << name << ". Dumping Histogram " << histogram_counter << std::endl;
-                    histogram_write_from_memory(h);
-                    h.add0(feature, context, found_utf16);
-                }
+        std::string feature;
+        std::string context;
+        if (extract_feature_context(line, feature, context)) {
+            /* if the feature is in the context, feature is in utf8, otherwise it was utf16 and converted */
+            bool found_utf16 = (context.find(feature) == std::string::npos);
+            try {
+                h.add0(feature, context, found_utf16);
+            }
+            catch (const std::bad_alloc &) {
+                std::cerr << "MEMORY OVERFLOW GENERATING HISTOGRAM "
+                          << name << ". Dumping Histogram" << std::endl;
+                histogram_write_from_memory(h);
+                h.add0(feature, context, found_utf16);
             }
         }
     }
