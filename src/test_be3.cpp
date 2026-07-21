@@ -467,6 +467,18 @@ TEST_CASE("e2e-jpeg", "[end-to-end]") {
     REQUIRE( pos != lines.end());
 }
 
+TEST_CASE("e2e-jpeg-carving-disabled", "[end-to-end]") {
+    std::filesystem::path inpath = test_dir() / "len6192.jpg";
+    std::string inpath_string = inpath.string();
+    std::filesystem::path outdir = NamedTemporaryDirectory();
+    std::string outdir_string = outdir.string();
+    std::stringstream ss;
+    const char *argv[] = {"bulk_extractor", notify(), "-S", "jpeg_carve_mode=0", "-1q", "-o", outdir_string.c_str(), inpath_string.c_str(), nullptr};
+    int ret = run_be(ss, argv);
+    REQUIRE( ret == 0 );
+    REQUIRE_FALSE( std::filesystem::exists(outdir / "jpeg_carved") );
+}
+
 
 
 TEST_CASE("e2e-email_test", "[end-to-end]") {
