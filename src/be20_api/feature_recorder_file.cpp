@@ -144,9 +144,7 @@ void feature_recorder_file::banner_stamp(std::ostream& os, const std::string& he
         if (i.is_open()) {
             std::string line;
             while (getline(i, line)) {
-                if (line.size() > 0 && ((*line.end() == '\r') || (*line.end() == '\n'))) {
-                    line.erase(line.end()); /* remove the last character while it is a \n or \r */
-                }
+                if (!line.empty() && line.back() == '\r') { line.pop_back(); }
                 os << "# " << line << std::endl;
                 banner_lines++;
             }
@@ -268,12 +266,6 @@ size_t feature_recorder_file::histogram_count()
     return histograms.size();
 }
 
-bool feature_recorder_file::histograms_write_largest()
-{
-    std::cerr << "TODO: Implement histograms_write_largest\n";
-    return false;                       // need to implement
-}
-
 /* Write all of the histograms associated with this feature recorder. */
 void feature_recorder_file::histograms_write_all()
 {
@@ -332,26 +324,24 @@ void feature_recorder_file::histogram_write_from_file(AtomicUnicodeHistogram& h)
         std::cerr << "Cannot open histogram input file: " << ifname << std::endl;
         return;
     }
-    for (int histogram_counter = 0 ; histogram_counter<MAX_HISTOGRAM_FILES; histogram_counter++){
-        std::string line;
-        while(getline(f,line)){
-            if(line.size()==0) continue; // empty line
-            if(line[0]=='#') continue;   // comment line
-            truncate_at(line,'\r');      // truncate at a \r if there is one.
+    std::string line;
+    while(getline(f,line)){
+        if(line.size()==0) continue; // empty line
+        if(line[0]=='#') continue;   // comment line
+        truncate_at(line,'\r');      // truncate at a \r if there is one.
 
-            std::string feature;
-            std::string context;
-            if (extract_feature_context(line, feature, context)) {
-                /* if the feature is in the context, feature is in utf8, otherwise it was utf16 and converted */
-                bool found_utf16 = (context.find(feature) == std::string::npos);
-                try {
-                    h.add0( feature, context, found_utf16 );
-                }
-                catch (const std::bad_alloc &e) {
-                    std::cerr << "MEMORY OVERFLOW GENERATING HISTOGRAM  "
-                              << name << ". Dumping Histogram " << histogram_counter << std::endl;
-                    histogram_write_from_memory(h);
-                }
+        std::string feature;
+        std::string context;
+        if (extract_feature_context(line, feature, context)) {
+            /* if the feature is in the context, feature is in utf8, otherwise it was utf16 and converted */
+            bool found_utf16 = (context.find(feature) == std::string::npos);
+            try {
+                h.add0( feature, context, found_utf16 );
+            }
+            catch (const std::bad_alloc &e) {
+                std::cerr << "MEMORY OVERFLOW GENERATING HISTOGRAM  "
+                          << name << ". Dumping Histogram" << std::endl;
+                histogram_write_from_memory(h);
             }
         }
     }
