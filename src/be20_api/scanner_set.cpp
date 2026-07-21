@@ -14,7 +14,9 @@
 #include <algorithm>
 #include <cassert>
 #include <cstdlib>
+#include <filesystem>
 #include <fstream>
+#include <sstream>
 #include <string>
 #include <thread>
 #include <vector>
@@ -25,6 +27,10 @@
 
 #ifdef HAVE_DLFCN_H
 #include <dlfcn.h>
+#endif
+
+#ifdef _WIN32
+#include <windows.h>
 #endif
 
 #include "machine_stats.h"
@@ -92,6 +98,14 @@ scanner_set::~scanner_set()
         it.second = nullptr;
     }
     scanner_info_db.clear();
+
+    for (void *handle : plugin_handles) {
+#ifdef _WIN32
+        FreeLibrary(static_cast<HMODULE>(handle));
+#elif defined(HAVE_DLFCN_H)
+        dlclose(handle);
+#endif
+    }
 }
 
 void scanner_set::set_dfxml_writer(class dfxml_writer *writer_)
@@ -255,18 +269,6 @@ void scanner_set::add_scanner_stat(scanner_t *scanner, const struct scanner_set:
 }
 
 
-#if 0
-/****************************************************************
- *** per-path stats
- ****************************************************************/
-
-void scanner_set::add_path_stat(std::string path, const struct scanner_set::stats &n)
-{
-    path_stats[path] += n;
-}
-#endif
-
-
 /****************************************************************
  *** Feature recorders
  ****************************************************************/
@@ -336,83 +338,70 @@ void scanner_set::add_scanners(scanner_t* const* scanners)
 /* Add a scanner from a file (it's in the file as a shared library) */
 void scanner_set::add_scanner_file(std::string fn)
 {
-    if(time(0)>10) {                    // prevents compiler warning
-        throw std::runtime_error("scanner_set::add_scanner_file: not implemented yet.");
-    }
-#if 0
-    /* Figure out the function name */
-    size_t extloc = fn.rfind('.');
-    if(extloc==std::string::npos){
-        fprintf(stderr,"Cannot find '.' in %s",fn.c_str());
-        exit(1);
-    }
-    std::string func_name = fn.substr(0,extloc);
-    size_t slashloc = func_name.rfind('/');
-    if(slashloc!=std::string::npos) func_name = func_name.substr(slashloc+1);
-    slashloc = func_name.rfind('\\');
-    if(slashloc!=std::string::npos) func_name = func_name.substr(slashloc+1);
-
-    if(debug) std::cout << "Loading: " << fn << " (" << func_name << ")\n";
-    scanner_t *scanner = 0;
-#if defined(HAVE_DLOPEN)
-    void *lib=dlopen(fn.c_str(), RTLD_LAZY);
-
-    if(lib==0){
-        fprintf(stderr,"dlopen: %s\n",dlerror());
-        exit(1);
-    }
-
-    /* Resolve the symbol */
-    scanner = (scanner_t *)dlsym(lib, func_name.c_str());
-
-    if(scanner==0){
-        fprintf(stderr,"dlsym: %s\n",dlerror());
-        exit(1);
-    }
-#elif defined(HAVE_LOADLIBRARY)
-    /* Use Win32 LoadLibrary function */
-    /* See http://msdn.microsoft.com/en-us/library/ms686944(v=vs.85).aspx */
-    HINSTANCE hinstLib = LoadLibrary(TEXT(fn.c_str()));
-    if(hinstLib==0){
-        fprintf(stderr,"LoadLibrary(%s) failed",fn.c_str());
-        exit(1);
-    }
-    scanner = (scanner_t *)GetProcAddress(hinstLib,func_name.c_str());
-    if(scanner==0){
-        fprintf(stderr,"GetProcAddress(%s) failed",func_name.c_str());
-        exit(1);
-    }
+    void *handle = nullptr;
+    scanner_plugin_factory_t factory = nullptr;
+#ifdef _WIN32
+    handle = LoadLibraryA(fn.c_str());
+    if (handle) factory = reinterpret_cast<scanner_plugin_factory_t>(GetProcAddress(static_cast<HMODULE>(handle), SCANNER_PLUGIN_FACTORY_V1));
+#elif defined(HAVE_DLFCN_H)
+    handle = dlopen(fn.c_str(), RTLD_NOW | RTLD_LOCAL);
+    if (handle) factory = reinterpret_cast<scanner_plugin_factory_t>(dlsym(handle, SCANNER_PLUGIN_FACTORY_V1));
 #else
-    std::cout << "  ERROR: Support for loadable libraries not enabled\n";
-    return;
+    throw std::runtime_error("runtime scanner loading is unsupported on this platform");
 #endif
-    load_scanner(*scanner,sc);
+    if (!handle || !factory) {
+        std::ostringstream message;
+        message << "cannot load scanner plugin " << fn << ": ";
+#ifdef _WIN32
+        message << "missing " << SCANNER_PLUGIN_FACTORY_V1;
+        if (handle) FreeLibrary(static_cast<HMODULE>(handle));
+#else
+        message << (handle ? "missing " + std::string(SCANNER_PLUGIN_FACTORY_V1) : dlerror());
+        if (handle) dlclose(handle);
 #endif
+        throw std::runtime_error(message.str());
+    }
+    scanner_t *scanner = factory();
+    if (!scanner) {
+#ifdef _WIN32
+        FreeLibrary(static_cast<HMODULE>(handle));
+#else
+        dlclose(handle);
+#endif
+        throw std::runtime_error("scanner plugin " + fn + " returned no scanner");
+    }
+    try {
+        add_scanner(*scanner);
+        plugin_handles.push_back(handle);
+    } catch (...) {
+#ifdef _WIN32
+        FreeLibrary(static_cast<HMODULE>(handle));
+#else
+        dlclose(handle);
+#endif
+        throw;
+    }
 }
 
 /* Add all of the scanners in a directory */
 void scanner_set::add_scanner_directory(const std::string &dirname)
 {
-    if(time(0)>10) {                    // prevents compiler warning
-        throw std::runtime_error("scanner_set::add_scanner_directory: not implemented yet.");
-    }
-#if 0
-TODO: Re-implement using C++17 directory reading.
-
-
-        if(fname.substr(0,5)=="scan_" || fname.substr(0,5)=="SCAN_"){
-            size_t extloc = fname.rfind('.');
-            if(extloc==std::string::npos) continue; // no '.'
-            std::string ext = fname.substr(extloc+1);
+    std::vector<std::filesystem::path> plugins;
+    for (const auto &entry : std::filesystem::directory_iterator(dirname)) {
+        if (!entry.is_regular_file()) continue;
+        const auto filename = entry.path().filename().string();
+        if (filename.rfind("scan_", 0) != 0) continue;
+        const auto extension = entry.path().extension().string();
 #ifdef _WIN32
-            if(ext!="DLL") continue;    // not a DLL
+        if (extension == ".dll" || extension == ".DLL") plugins.push_back(entry.path());
+#elif defined(__APPLE__)
+        if (extension == ".dylib" || extension == ".so") plugins.push_back(entry.path());
 #else
-            if(ext!="so") continue;     // not a shared library
+        if (extension == ".so") plugins.push_back(entry.path());
 #endif
-            load_scanner_file(dirname+"/"+fname,sc );
-        }
     }
-#endif
+    std::sort(plugins.begin(), plugins.end());
+    for (const auto &plugin : plugins) add_scanner_file(plugin.string());
 }
 
 /* This interface creates if we are in init phase, doesn't if we are in scan phase */
@@ -1115,7 +1104,6 @@ void scanner_set::cleanup()
         current_phase = scanner_params::PHASE_CLEANED;
     }
 }
-
 /*
  * uses hash to determine if a block was prevously seen.
  * Hopefully sbuf.buf() is zero-copy.
@@ -1129,46 +1117,3 @@ uint64_t scanner_set::previously_processed_count(const sbuf_t& sbuf) {
     std::string hash = sbuf.hash();
     return previously_processed_counter[ hash ]++;
 }
-
-
-/****************************************************************
- *** packet handling
- ****************************************************************/
-
-
-/**
- * Process a pcap packet.
- * Designed to be very efficient because we have so many packets.
- */
-#if 0
-void scanner_set::process_packet(const be20::packet_info &pi)
-{
-    for (packet_plugin_info_vector_t::iterator it = packet_handlers.begin(); it != packet_handlers.end(); it++){
-        (*(*it).callback)((*it).user,pi);
-    }
-}
-#endif
-
-
-#if 0
-/* Vector of callbacks */
-typedef std::vector<packet_plugin_info> packet_plugin_info_vector_t;
-//packet_plugin_info_vector_t  packet_handlers;   // pcap callback handlers
-/* object for keeping track of packet callbacks */
-class packet_plugin_info {
-public:
-    packet_plugin_info(void *user_,be20::packet_callback_t *callback_):user(user_),callback(callback_){};
-    void *user;
-    be20::packet_callback_t *callback;
-};
-void scanner_set::load_scanner_packet_handlers()
-{
-    for (const auto &it: enabled_scanners){
-        const scanner_def *sd = (*it);
-            if(sd->info.packet_cb){
-                packet_handlers.push_back(packet_plugin_info(sd->info.packet_user,sd->info.packet_cb));
-            }
-        }
-    }
-}
-#endif

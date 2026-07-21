@@ -39,6 +39,9 @@
 /** A scanner is a function that takes a reference to scanner params and a recrusion control block */
 typedef void scanner_t(struct scanner_params& sp);
 
+inline constexpr const char *SCANNER_PLUGIN_FACTORY_V1 = "bulk_extractor_scanner_v1";
+using scanner_plugin_factory_t = scanner_t *(*)();
+
 /**
  * \class scanner_params
  * The scanner params class is the primary way that the bulk_extractor framework
