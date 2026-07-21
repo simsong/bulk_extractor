@@ -80,5 +80,5 @@ jobs:
         run: |
           bash bootstrap.sh
           ./configure --enable-exiv2 --quiet
-          make check
+          make check || { cat src/test-suite.log; exit 1; }
           ldd src/bulk_extractor | grep -q 'libexiv2'
