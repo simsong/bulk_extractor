@@ -539,6 +539,48 @@ TEST_CASE("feature_recorder_tests", "[feature_recorder]") {
 
 }
 
+TEST_CASE("feature recorder banner removes CR from CRLF input", "[feature_recorder]") {
+    feature_recorder_set::flags_t flags;
+    flags.no_alert = true;
+    scanner_config sc;
+    sc.outdir = NamedTemporaryDirectory();
+    const auto banner = sc.outdir / "banner.txt";
+    {
+        std::ofstream out(banner);
+        out << "banner line\r\n";
+    }
+
+    feature_recorder_set frs(flags, sc);
+    frs.banner_filename = banner;
+    auto& fr = frs.create_feature_recorder("test");
+    fr.write_buf(sbuf_t("x"), 0, 1);
+    fr.flush();
+
+    const auto lines = getLines(sc.outdir / "test.txt");
+    REQUIRE(lines.at(0) == "# banner line");
+}
+
+TEST_CASE("file-backed histograms consume feature files once", "[feature_recorder]") {
+    feature_recorder_set::flags_t flags;
+    flags.no_alert = true;
+    scanner_config sc;
+    sc.outdir = NamedTemporaryDirectory();
+    feature_recorder_set frs(flags, sc);
+    auto& fr = frs.create_feature_recorder("test");
+    fr.disable_incremental_histograms = true;
+    frs.histogram_add(histogram_def("test", "test", "", "", "histogram", histogram_def::flags_t()));
+
+    fr.write(pos0_t(), "one", "one context");
+    fr.write(pos0_t("", 1), "one", "one context");
+    fr.write(pos0_t("", 2), "two", "two context");
+    fr.flush();
+    frs.histograms_generate();
+
+    const auto lines = getLines(sc.outdir / "test_histogram.txt");
+    REQUIRE(std::find(lines.begin(), lines.end(), "n=2\tone") != lines.end());
+    REQUIRE(std::find(lines.begin(), lines.end(), "n=1\ttwo") != lines.end());
+}
+
 /** feature_recorder_file functions */
 TEST_CASE("file_support","[feature_recorder_file]") {
     std::string line {"one\ttwo\tthree\\133"};
