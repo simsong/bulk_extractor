@@ -67,3 +67,18 @@ jobs:
         with:
           name: bulk_extractor-${{ steps.extract_version.outputs.version }}-${{ matrix.os }}
           path: bulk_extractor-${{ steps.extract_version.outputs.version }}.tar.gz
+
+  exiv2:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Exiv2
+        run: sudo apt-get update && sudo apt-get install -y libexiv2-dev
+
+      - name: Build and test with Exiv2
+        run: |
+          bash bootstrap.sh
+          ./configure --enable-exiv2 --quiet
+          make check
+          ldd src/bulk_extractor | grep -q 'libexiv2'
