@@ -22,11 +22,12 @@ libbe20_a_SOURCES = $(BE20_API_SRC) $(DFXML_READER) $(DFXML_WRITER)
 bulk_extractor_LDADD = libbe20.a @RE2_LIBS@
 test_be_LDADD = libbe20.a @RE2_LIBS@
 test_be20_api_LDADD = libbe20.a @RE2_LIBS@
+test_pcap_fake_CPPFLAGS = $(AM_CPPFLAGS) -DPCAP_FAKE_TEST
 
 AUTOMAKE_OPTIONS = subdir-objects
 
 bin_PROGRAMS   = bulk_extractor
-check_PROGRAMS = test_be test_be20_api test_dfxml
+check_PROGRAMS = test_be test_be20_api test_dfxml test_pcap_fake
 TESTS = $(check_PROGRAMS)
 
 CLEANFILES     = scan_accts.cpp scan_base16.cpp scan_email.cpp scan_gps.cpp scan_vehicle.cpp \
@@ -161,6 +162,10 @@ test_dfxml_SOURCES = \
 	$(BE20_API_DIR)/catch.hpp \
 	$(DFXML_READER) \
 	$(DFXML_WRITER)
+
+test_pcap_fake_SOURCES = \
+	$(BE20_API_DIR)/test_pcap_fake.cpp \
+	$(BE20_API_DIR)/pcap_fake.cpp
 
 runs.txt: test_be tests/run_each.sh
 	bash tests/run_each.sh > runs.txt 2>&1
