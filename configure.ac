@@ -244,9 +244,9 @@ AC_MSG_NOTICE([libewf is now $libewf])
 ## On mingw we also need libiconv
 ## We should probably test to make sure that exiv2 works too
 
-AC_ARG_ENABLE([exiv2],[AS_HELP_STRING([--enable-exiv2=true to check for exiv2; warning: exiv2 crashes])],
-   exiv2=yes,
-   exiv2=no)
+AC_ARG_ENABLE([exiv2],[AS_HELP_STRING([--enable-exiv2], [enable the optional, crash-prone exiv2 scanner])],
+   [exiv2=$enableval],
+   [exiv2=no])
 if test "${exiv2}" == yes ; then
   AC_CHECK_LIB([iconv],[libiconv_open])
   if test "${mingw}" == yes ; then

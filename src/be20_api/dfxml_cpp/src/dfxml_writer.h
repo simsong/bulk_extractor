@@ -43,6 +43,10 @@
 #include <string>
 #include <stdexcept>
 
+#ifdef HAVE_EXIV2
+#include <exiv2/exiv2.hpp>
+#endif
+
 #include <sys/time.h>
 
 // Windows-specific
