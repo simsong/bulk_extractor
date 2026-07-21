@@ -19,6 +19,89 @@ PHASE_INIT is the only phase that may modify sp.info. Feature-recorder
 definitions in sp.info->feature_defs and histogram definitions in
 sp.info->histogram_defs are read by the framework before PHASE_INIT2.
 
+## Call diagrams
+
+The diagrams show one scanner. `INIT` always occurs when the scanner is
+loaded; `CLEANUP` always occurs when the scanner set is destroyed.
+
+### Help (`-h`)
+
+```mermaid
+sequenceDiagram
+    participant F as framework (main thread)
+    participant S as scanner
+    F->>S: PHASE_INIT
+    F->>F: apply -e/-x options
+    F->>S: PHASE_INIT2 (if enabled)
+    F->>F: print help and scanner options
+    F->>S: PHASE_CLEANUP
+```
+
+Help does not call `PHASE_SCAN` or `PHASE_SHUTDOWN`.
+
+### Disabled scanner
+
+```mermaid
+sequenceDiagram
+    participant F as framework (main thread)
+    participant S as scanner
+    F->>S: PHASE_INIT
+    F->>F: disable scanner (-x or default)
+    Note over F,S: no INIT2, SCAN, or SHUTDOWN
+    F->>S: PHASE_CLEANUP
+```
+
+### Enabled scanner with two worker threads
+
+```mermaid
+sequenceDiagram
+    participant F as framework (main thread)
+    participant T0 as worker thread 0
+    participant T1 as worker thread 1
+    participant S as scanner
+    F->>S: PHASE_INIT
+    F->>S: PHASE_INIT2
+    par thread 0
+        T0->>S: PHASE_SCAN (sbuf 0)
+        T0->>S: PHASE_SCAN (sbuf 1)
+    and thread 1
+        T1->>S: PHASE_SCAN (sbuf 0)
+        T1->>S: PHASE_SCAN (sbuf 1)
+    end
+    F->>S: PHASE_SHUTDOWN (after workers finish)
+    F->>S: PHASE_CLEANUP
+```
+
+The calls in the `par` block can overlap, including calls to the same scanner.
+
+### Exception while processing thread 0's second sbuf
+
+```mermaid
+sequenceDiagram
+    participant F as framework (main thread)
+    participant T0 as worker thread 0
+    participant T1 as worker thread 1
+    participant S as scanner
+    participant A as alert recorder
+    F->>S: PHASE_INIT
+    F->>S: PHASE_INIT2
+    par thread 0
+        T0->>S: PHASE_SCAN (sbuf 0)
+        T0->>S: PHASE_SCAN (sbuf 1)
+        S-->>T0: throws exception
+        T0->>A: record scanner exception
+    and thread 1
+        T1->>S: PHASE_SCAN (sbuf 0)
+        T1->>S: PHASE_SCAN (sbuf 1)
+    end
+    F->>S: PHASE_SHUTDOWN (after workers finish)
+    F->>S: PHASE_CLEANUP
+```
+
+`scanner_set::process_sbuf()` catches scanner exceptions. The failed call ends,
+but it does not disable the scanner or cancel other worker calls; it records an
+alert when available, then the normal shutdown and cleanup sequence follows.
+
 ## State and concurrency
 
 A scanner function has no object instance, so scanner-owned state normally
