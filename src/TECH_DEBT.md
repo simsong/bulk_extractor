@@ -351,19 +351,6 @@ Packet dispatch is currently disabled in `scanner_set`, which limits immediate
 reachability but also means tests do not protect this code. Either repair and
 test the packet API using byte-wise parsing, or remove the dormant subsystem.
 
-#### Feature-recorder undefined behavior and incomplete low-memory path
-
-`feature_recorder_file::banner_stamp()` dereferences `line.end()` while trying
-to trim a line ending. Dereferencing the end iterator is undefined; `getline`
-already removes `\n`. Use `line.back()` after an emptiness check if `\r` must be
-removed.
-
-`histograms_write_largest()` is explicitly unimplemented even though the
-interface identifies it as the low-memory relief mechanism. The file-based
-histogram loop reaches EOF and then repeats up to ten times without clearing or
-rewinding the stream. Specify and test a bounded spill/merge algorithm or
-remove the nonfunctional fallback.
-
 ### P2: correctness and maintainability
 
 #### Phase-1 sampling and error semantics
@@ -748,10 +735,6 @@ appropriate validation.
 - [ ] Fix IPv6 packet address accessors that apply byte offsets as `ip6_addr` element offsets.
 - [ ] Replace potentially unaligned Ethernet/IP structure casts with checked byte-wise parsing.
 - [ ] Validate enough Ethernet bytes for the complete structure actually accessed.
-- [ ] Stop dereferencing `line.end()` in `feature_recorder_file::banner_stamp`.
-- [ ] Implement or remove the advertised `histograms_write_largest` low-memory mechanism.
-- [ ] Clear and rewind file-based histogram streams before retrying after EOF.
-
 ### P2: phase processing and scanner correctness
 
 - [ ] Make random sampling choose only valid block indexes below `max_blocks`.
