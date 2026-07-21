@@ -266,23 +266,19 @@ public:;
     public:
         size_t off {0};
         size_t len {0};
-        std::string message() const {
-            return Formatter() << "[sbuf_t::range_exception_t: Read past end of sbuf off=" << off << " len=" << len << "]";
-        }
-        range_exception_t(size_t off_, size_t len_):off(off_), len(len_){
+        range_exception_t(size_t off_, size_t len_)
+            : off(off_), len(len_), what_message(Formatter() << "[sbuf_t::range_exception_t: Read past end of sbuf off=" << off_ << " len=" << len_ << "]") {
             if (debug_range_exception){
                 std::cerr << __func__ ;
                 std::cerr << message() << " ";
                 std::cerr << "\n";
             }
         };
-        virtual const char* what() const throw() {
-            static char lbuf[80];        // big enough to hold a single error
-            std::string str = message();
-            strncpy(lbuf, str.c_str(), sizeof(lbuf)-1);
-            lbuf[sizeof(lbuf)-1] = '\000'; // safety
-            return lbuf;
-        }
+        std::string message() const { return what_message; }
+        const char* what() const noexcept override { return what_message.c_str(); }
+
+    private:
+        std::string what_message;
     };
 
     /****************************************************************
@@ -598,7 +594,7 @@ private:
                     int fd_);
 
     /* The private structures keep track of memory management */
-    int fd{0};                     // if fd>0, unmap(buf) and close(fd) when sbuf is deleted.
+    int fd{NO_FD};                 // if owned, unmap(buf) and close(fd) when sbuf is deleted.
     const sbuf_t        *parent {nullptr}; // parent sbuf references data in another.
     mutable std::mutex  Mhash{};    // mutext for hashing
     inline static std::string NO_HASH {""};
@@ -619,7 +615,7 @@ private:
     sbuf_t(const sbuf_t& that) = delete;            // default copy is not implemented
     sbuf_t& operator=(const sbuf_t& that) = delete; // default assignment not implemented
 
-    inline static const int NO_FD=0;
+    inline static const int NO_FD=-1;
     friend std::ostream& operator<<(std::ostream& os, const sbuf_t& t);
 };
 

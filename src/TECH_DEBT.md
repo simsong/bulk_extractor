@@ -264,23 +264,17 @@ using a recorder that produces a real write failure; do not mock the thread.
 
 #### File mapping and ownership failures
 
-`be20_api/sbuf.cpp:373-405` does not validate `open()` or `mmap()` failure,
-treats descriptor zero as “not owned” because the destructor only handles
-`fd > 0`, and does not define a safe zero-length mapping path. In the no-`mmap`
-branch, the allocated buffer is passed to the non-owning constructor and never
-stored in `malloced`, leaking every mapped file. `sbuf_malloc` also constructs
-an object after an unchecked `malloc` result.
+Issue #504 makes mapping and allocation ownership explicit: failures from
+`open`, `fstat`, and `mmap` are checked; descriptor zero is owned; empty files
+do not reach `mmap`; copied-file buffers are retained for deletion; and failed
+nonzero allocations throw before object construction. The destructor now
+enforces its no-live-children invariant, non-owning sbufs participate in debug
+leak tracking, and each range exception owns its message.
 
-Use RAII handles and an owning factory with explicit mapping/allocation
-variants. Test empty files, fd 0, open denial, truncated reads, `MAP_FAILED`, and
-the no-`mmap` build.
-
-The destructor's `std::runtime_error(...)` expressions at lines 151-166 merely
-construct and discard exceptions; they do not enforce the live-child or
-platform invariants. The non-owning constructor erases rather than inserts its
-instance in debug leak tracking. `range_exception_t::what()` uses a shared
-static buffer and races between scanner threads. These should be corrected as
-part of the same ownership rewrite.
+The regression tests cover empty and missing files, descriptor zero ownership,
+independent exception messages, and the no-`mmap` configuration. `MAP_FAILED`
+and allocation exhaustion remain system-specific validation targets because
+they cannot be reached safely without test hooks or mocks.
 
 #### Runtime plug-ins do not exist despite the interface and CLI
 
@@ -701,7 +695,7 @@ overlap.
 | Area | Existing open issues |
 |---|---|
 | Build, dependencies, and portability | [#471](https://github.com/simsong/bulk_extractor/issues/471), [#464](https://github.com/simsong/bulk_extractor/issues/464), [#444](https://github.com/simsong/bulk_extractor/issues/444), [#398](https://github.com/simsong/bulk_extractor/issues/398), [#376](https://github.com/simsong/bulk_extractor/issues/376), [#159](https://github.com/simsong/bulk_extractor/issues/159) |
-| CI and test infrastructure | [#490](https://github.com/simsong/bulk_extractor/issues/490), [#420](https://github.com/simsong/bulk_extractor/issues/420), [#419](https://github.com/simsong/bulk_extractor/issues/419), [#394](https://github.com/simsong/bulk_extractor/issues/394), [#308](https://github.com/simsong/bulk_extractor/issues/308), [#259](https://github.com/simsong/bulk_extractor/issues/259), [#238](https://github.com/simsong/bulk_extractor/issues/238), [#237](https://github.com/simsong/bulk_extractor/issues/237), [#204](https://github.com/simsong/bulk_extractor/issues/204), [#202](https://github.com/simsong/bulk_extractor/issues/202), [#201](https://github.com/simsong/bulk_extractor/issues/201), [#186](https://github.com/simsong/bulk_extractor/issues/186), [#185](https://github.com/simsong/bulk_extractor/issues/185), [#94](https://github.com/simsong/bulk_extractor/issues/94) |
+| CI and test infrastructure | [#490](https://github.com/simsong/bulk_extractor/issues/490), [#419](https://github.com/simsong/bulk_extractor/issues/419), [#394](https://github.com/simsong/bulk_extractor/issues/394), [#308](https://github.com/simsong/bulk_extractor/issues/308), [#259](https://github.com/simsong/bulk_extractor/issues/259), [#238](https://github.com/simsong/bulk_extractor/issues/238), [#237](https://github.com/simsong/bulk_extractor/issues/237), [#204](https://github.com/simsong/bulk_extractor/issues/204), [#202](https://github.com/simsong/bulk_extractor/issues/202), [#201](https://github.com/simsong/bulk_extractor/issues/201), [#186](https://github.com/simsong/bulk_extractor/issues/186), [#185](https://github.com/simsong/bulk_extractor/issues/185), [#94](https://github.com/simsong/bulk_extractor/issues/94) |
 | Code and runtime maintenance | [#488](https://github.com/simsong/bulk_extractor/issues/488), [#485](https://github.com/simsong/bulk_extractor/issues/485), [#404](https://github.com/simsong/bulk_extractor/issues/404), [#395](https://github.com/simsong/bulk_extractor/issues/395), [#249](https://github.com/simsong/bulk_extractor/issues/249), [#246](https://github.com/simsong/bulk_extractor/issues/246), [#240](https://github.com/simsong/bulk_extractor/issues/240), [#225](https://github.com/simsong/bulk_extractor/issues/225), [#162](https://github.com/simsong/bulk_extractor/issues/162) |
 | Documentation and repository scope | [#476](https://github.com/simsong/bulk_extractor/issues/476), [#424](https://github.com/simsong/bulk_extractor/issues/424), [#264](https://github.com/simsong/bulk_extractor/issues/264), [#139](https://github.com/simsong/bulk_extractor/issues/139) |
 
@@ -728,15 +722,10 @@ appropriate validation.
 
 ### P1: ownership, input handling, and advertised features
 
-- [ ] Check `open()` failure before attempting to map a file in `sbuf_t::map_file`.
-- [ ] Check `mmap()` for `MAP_FAILED` before constructing a mapped `sbuf_t`.
-- [ ] Treat file descriptor zero as an owned descriptor that must be closed.
-- [ ] Define a safe, portable zero-length file mapping path.
-- [ ] Retain and free the allocated buffer in the no-`mmap` `map_file` implementation.
-- [ ] Check allocation failure before constructing an `sbuf_t` in `sbuf_malloc`.
-- [ ] Replace discarded `std::runtime_error` temporaries in the `sbuf_t` destructor with enforceable invariants or diagnostics.
-- [ ] Insert rather than erase non-owning `sbuf_t` instances in debug leak tracking.
-- [ ] Make `range_exception_t::what()` thread-safe instead of returning a shared mutable static buffer.
+- [x] Check `open()`/`fstat()`/`mmap()` failures before constructing a mapped `sbuf_t` (#504).
+- [x] Treat descriptor zero as owned and define a safe zero-length mapping path (#504).
+- [x] Retain copied-file buffers and check `sbuf_malloc` allocation failures (#504).
+- [x] Enforce sbuf child ownership, correct debug tracking, and make range-exception text instance-owned (#504).
 - [ ] Either implement `scanner_set::add_scanner_file` or remove the nonfunctional API.
 - [ ] Either implement `scanner_set::add_scanner_directory` or remove the nonfunctional API.
 - [ ] Remove or implement the unused `BE_PATH` scanner search path.

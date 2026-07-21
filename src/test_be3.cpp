@@ -289,6 +289,24 @@ TEST_CASE("select_scanners", "[end-to-end]") {
     REQUIRE( endpos != startpos + 1);
 }
 
+TEST_CASE("select_disabled_scanner", "[end-to-end]") {
+    std::filesystem::path inpath = test_dir() / "pdf_words2.pdf";
+    std::filesystem::path outdir = NamedTemporaryDirectory();
+    std::string inpath_string = inpath.string();
+    std::string outdir_string = outdir.string();
+    std::stringstream ss;
+    const char *argv[] = {"bulk_extractor", "-0q", "-x", "all", "-e", "outlook", "-o", outdir_string.c_str(), inpath_string.c_str(), nullptr};
+    REQUIRE( run_be(ss, std::cerr, argv) == 0 );
+
+    auto lines = getLines( outdir / "report.xml" );
+    auto startpos = std::find(lines.begin(), lines.end(), "    <scanners>");
+    auto endpos = std::find(lines.begin(), lines.end(), "    </scanners>");
+    REQUIRE( startpos != lines.end() );
+    REQUIRE( endpos != lines.end() );
+    REQUIRE( std::count(startpos, endpos, "      <scanner>outlook</scanner>") == 1 );
+    REQUIRE( std::count_if(startpos, endpos, [](const std::string& line) { return line.find("<scanner>") != std::string::npos; }) == 1 );
+}
+
 /* -f simsong
  */
 TEST_CASE("scan_find", "[end-to-end]") {
@@ -447,6 +465,18 @@ TEST_CASE("e2e-jpeg", "[end-to-end]") {
     auto pos = std::find(lines.begin(), lines.end(),
                          "    <hashdigest type='SHA1'>69cee372e6cd7e8e3181aebdb03fc53e18124bff</hashdigest>");
     REQUIRE( pos != lines.end());
+}
+
+TEST_CASE("e2e-jpeg-carving-disabled", "[end-to-end]") {
+    std::filesystem::path inpath = test_dir() / "len6192.jpg";
+    std::string inpath_string = inpath.string();
+    std::filesystem::path outdir = NamedTemporaryDirectory();
+    std::string outdir_string = outdir.string();
+    std::stringstream ss;
+    const char *argv[] = {"bulk_extractor", notify(), "-S", "jpeg_carve_mode=0", "-1q", "-o", outdir_string.c_str(), inpath_string.c_str(), nullptr};
+    int ret = run_be(ss, argv);
+    REQUIRE( ret == 0 );
+    REQUIRE_FALSE( std::filesystem::exists(outdir / "jpeg_carved") );
 }
 
 

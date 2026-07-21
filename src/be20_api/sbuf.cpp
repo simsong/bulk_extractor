@@ -7,12 +7,17 @@
 #include <sys/stat.h>
 
 #include <algorithm>
+#include <cerrno>
 #include <cctype>
 #include <cstdio>
+#include <cstring>
 #include <filesystem>
 #include <algorithm>
 #include <iostream>
 #include <ios>
+#include <limits>
+#include <memory>
+#include <system_error>
 
 #include "sbuf.h"
 #include "dfxml_cpp/src/hash_t.h"
@@ -107,7 +112,7 @@ sbuf_t::sbuf_t(pos0_t pos0_, const uint8_t *buf_, size_t bufsize_):
 
     if (debug_leak) {
         const std::lock_guard<std::mutex> lock(sbuf_allocedM); // protect this function
-        sbuf_alloced.erase( this );
+        sbuf_alloced.insert( this );
     }
     if (debug_alloc) {
         const std::lock_guard<std::mutex> lock(sbuf_allocedM); // protect this function
@@ -149,7 +154,8 @@ sbuf_t::~sbuf_t()
         std::cerr << "sbuf_t::~sbuf_t() " << this << " " << *this << std::endl;
     }
     if (children != 0) {
-        std::runtime_error(Formatter() << "sbuf.cpp: error: sbuf children=" << children);
+        std::cerr << "sbuf.cpp: destroying sbuf with children=" << children << std::endl;
+        std::terminate();
     }
     {
         const std::lock_guard<std::mutex> lock(Mhistogram); // protect this function
@@ -159,11 +165,14 @@ sbuf_t::~sbuf_t()
         }
     }
     if (parent) parent->del_child(*this);
-    if (fd>0) {
+    if (fd != NO_FD) {
 #ifdef HAVE_MMAP
-        munmap((void*)buf, bufsize);
+        if (bufsize != 0 && munmap((void*)buf, bufsize) != 0) {
+            std::cerr << "sbuf.cpp: munmap failed: " << std::strerror(errno) << std::endl;
+            std::terminate();
+        }
 #else
-        std::runtime_error(Formatter() << "sbuf.cpp: fd>0 and HAVE_MMAP is not defined");
+        std::terminate();
 #endif
         ::close(fd);
     }
@@ -227,7 +236,9 @@ sbuf_t* sbuf_t::sbuf_new(pos0_t pos0_, const uint8_t* buf_, size_t bufsize_, siz
 sbuf_t* sbuf_t::sbuf_malloc(pos0_t pos0, const std::string &str)
 {
     sbuf_t *ret = sbuf_t::sbuf_malloc(pos0,  str.size(), str.size());
-    memcpy( ret->malloc_buf(), str.c_str(), str.size());
+    if (!str.empty()) {
+        memcpy(ret->malloc_buf(), str.c_str(), str.size());
+    }
     return ret;
 }
 
@@ -358,13 +369,70 @@ sbuf_t sbuf_t::slice(size_t off) const
  */
 
 sbuf_t* sbuf_t::map_file(const std::filesystem::path fname) {
-    int mfd = NO_FD;
-    std::uintmax_t bytes = std::filesystem::file_size( fname );
 #ifdef HAVE_MMAP
-    mfd = ::open(fname.c_str(), O_RDONLY);
-    uint8_t* mbuf = (uint8_t*)mmap(0, bytes, PROT_READ, MAP_FILE | MAP_SHARED, mfd, 0);
+    struct mapped_file {
+        int fd;
+        void* address {MAP_FAILED};
+        size_t bytes {0};
+
+        ~mapped_file() {
+            if (address != MAP_FAILED) {
+                munmap(address, bytes);
+            }
+            if (fd != NO_FD) {
+                ::close(fd);
+            }
+        }
+        void release() {
+            fd = NO_FD;
+            address = MAP_FAILED;
+        }
+    };
+
+    const int mfd = ::open(fname.c_str(), O_RDONLY | O_BINARY);
+    if (mfd == NO_FD) {
+        throw std::system_error(errno, std::generic_category(), "open " + fname.string());
+    }
+    mapped_file mapped_file{mfd};
+
+    struct stat st {};
+    if (fstat(mfd, &st) != 0) {
+        throw std::system_error(errno, std::generic_category(), "fstat " + fname.string());
+    }
+    if (!S_ISREG(st.st_mode)) {
+        throw std::runtime_error(Formatter() << "Not a regular file: " << fname);
+    }
+    if (st.st_size < 0 || static_cast<std::uintmax_t>(st.st_size) > std::numeric_limits<size_t>::max()) {
+        throw std::runtime_error(Formatter() << "Unsupported file size: " << fname);
+    }
+
+    const size_t bytes = static_cast<size_t>(st.st_size);
+    if (bytes == 0) {
+        return new sbuf_t(pos0_t(fname.string() + pos0_t::map_file_delimiter), nullptr,
+                          nullptr, 0, 0, NO_FD);
+    }
+
+    mapped_file.address = mmap(nullptr, bytes, PROT_READ, MAP_FILE | MAP_SHARED, mfd, 0);
+    mapped_file.bytes = bytes;
+    if (mapped_file.address == MAP_FAILED) {
+        throw std::system_error(errno, std::generic_category(), "mmap " + fname.string());
+    }
+    auto* ret = new sbuf_t(pos0_t(fname.string() + pos0_t::map_file_delimiter), nullptr,
+                           static_cast<uint8_t*>(mapped_file.address), bytes, bytes, mfd);
+    mapped_file.release();
+    return ret;
 #else
-    uint8_t *mbuf = static_cast<uint8_t*>(malloc(bytes));
+    const std::uintmax_t file_size = std::filesystem::file_size(fname);
+    if (file_size > std::numeric_limits<size_t>::max()) {
+        throw std::runtime_error(Formatter() << "Unsupported file size: " << fname);
+    }
+    const size_t bytes = static_cast<size_t>(file_size);
+    if (bytes == 0) {
+        return new sbuf_t(pos0_t(fname.string() + pos0_t::map_file_delimiter), nullptr,
+                          nullptr, 0, 0, NO_FD);
+    }
+    using owned_buffer = std::unique_ptr<uint8_t, decltype(&std::free)>;
+    owned_buffer mbuf(static_cast<uint8_t*>(malloc(bytes)), &std::free);
     if (mbuf == nullptr) {
         throw std::bad_alloc();
     }
@@ -372,24 +440,18 @@ sbuf_t* sbuf_t::map_file(const std::filesystem::path fname) {
     if (!infile.is_open()){
         throw std::runtime_error(Formatter() << "Cannot open " << fname);
     }
-    infile.read( reinterpret_cast<char *>(mbuf), bytes);
-    if (infile.rdstate() & std::ios::eofbit) {
-        free(mbuf); /* read failed */
-        throw std::runtime_error(Formatter() << "End of file: " << fname);
+    if (bytes > static_cast<size_t>(std::numeric_limits<std::streamsize>::max())) {
+        throw std::runtime_error(Formatter() << "Unsupported file size: " << fname);
     }
-    if (infile.rdstate() & std::ios::failbit) {
-        free(mbuf); /* read failed */
-        throw std::runtime_error(Formatter() << "Fail file: " << fname);
+    infile.read(reinterpret_cast<char *>(mbuf.get()), static_cast<std::streamsize>(bytes));
+    if (infile.gcount() != static_cast<std::streamsize>(bytes)) {
+        throw std::runtime_error(Formatter() << "Short read: " << fname);
     }
-    if (infile.rdstate() & std::ios::badbit) {
-        free(mbuf); /* read failed */
-        throw std::runtime_error(Formatter() << "Bad file: " << fname);
-    }
-    infile.close();
+    auto* ret = new sbuf_t(pos0_t(fname.string() + pos0_t::map_file_delimiter), nullptr,
+                           mbuf.get(), bytes, bytes, NO_FD);
+    ret->malloced = mbuf.release();
+    return ret;
 #endif
-    return new sbuf_t(pos0_t(fname.string() + pos0_t::map_file_delimiter), nullptr,
-                      mbuf, bytes, bytes,
-                      mfd);
 }
 
 
@@ -401,7 +463,10 @@ sbuf_t* sbuf_t::map_file(const std::filesystem::path fname) {
 sbuf_t* sbuf_t::sbuf_malloc(pos0_t pos0_, size_t bufsize_, size_t pagesize_)
 {
     assert( bufsize_ >= pagesize_ );
-    uint8_t *new_malloced = static_cast<uint8_t *>(malloc(bufsize_));
+    uint8_t *new_malloced = bufsize_ == 0 ? nullptr : static_cast<uint8_t *>(malloc(bufsize_));
+    if (bufsize_ != 0 && new_malloced == nullptr) {
+        throw std::bad_alloc();
+    }
     sbuf_t *ret = new sbuf_t(pos0_, nullptr,
                              new_malloced, bufsize_, pagesize_,
                              NO_FD);

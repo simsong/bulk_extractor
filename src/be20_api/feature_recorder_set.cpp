@@ -194,7 +194,7 @@ void feature_recorder_set::set_carve_defaults()
 {
     for (const auto &name : frm.keys()){
         int carve_mode = sc.get_carve_mode(name);
-        if (carve_mode>0) {
+        if (carve_mode>=0) {
             feature_recorder &fr = frm.get(name);
             std::cerr << "setting carve mode " << carve_mode << " for feature recorder " << name << "\n";
             fr.carve_mode = feature_recorder_def::carve_mode_t( carve_mode );
