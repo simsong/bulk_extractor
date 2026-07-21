@@ -336,12 +336,13 @@ void feature_recorder_file::histogram_write_from_file(AtomicUnicodeHistogram& h)
             /* if the feature is in the context, feature is in utf8, otherwise it was utf16 and converted */
             bool found_utf16 = (context.find(feature) == std::string::npos);
             try {
-                h.add0( feature, context, found_utf16 );
+                h.add0(feature, context, found_utf16);
             }
-            catch (const std::bad_alloc &e) {
-                std::cerr << "MEMORY OVERFLOW GENERATING HISTOGRAM  "
+            catch (const std::bad_alloc &) {
+                std::cerr << "MEMORY OVERFLOW GENERATING HISTOGRAM "
                           << name << ". Dumping Histogram" << std::endl;
                 histogram_write_from_memory(h);
+                h.add0(feature, context, found_utf16);
             }
         }
     }
