@@ -185,7 +185,6 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     /* Add the default plugin_path */
     add_if_present( scanner_dirs,"/usr/local/lib/bulk_extractor" );
     add_if_present( scanner_dirs,"/usr/lib/bulk_extractor" );
-    add_if_present( scanner_dirs,"." );
 
     if ( getenv( "BE_PATH" )) {
         std::vector<std::string> dirs = split( getenv( "BE_PATH" ),':');
@@ -316,7 +315,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
 
     try {
         for ( const auto &it : result["scanner_dir"].as<std::vector<std::string>>() ) {
-            scanner_dirs.push_back( it);break;
+            scanner_dirs.push_back( it);
         }
     } catch ( cxxopts::option_has_no_value_exception &e ) { }
 
@@ -395,6 +394,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         struct feature_recorder_set::flags_t f;
         scanner_set ss( sc, f, nullptr);     // make a scanner_set but with no XML writer. We will create it below
         ss.add_scanners( scanners_builtin);
+        for (const auto &scanner_dir : scanner_dirs) ss.add_scanner_directory(scanner_dir);
         ss.apply_scanner_commands();
 
         if ( result.count( "help" )) {     // -h
@@ -472,6 +472,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     struct feature_recorder_set::flags_t f;
     scanner_set ss( sc, f, nullptr);     // make a scanner_set but with no XML writer. We will create it below
     ss.add_scanners( scanners_builtin );
+    for (const auto &scanner_dir : scanner_dirs) ss.add_scanner_directory(scanner_dir);
 
     /* Applying the scanner commands will create the alert recorder. */
     try {

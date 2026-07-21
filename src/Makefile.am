@@ -19,8 +19,13 @@ AM_CPPFLAGS = @RE2_CFLAGS@ -I$(top_srcdir)/src/be20_api -I$(top_srcdir)/src/be20
 noinst_LIBRARIES = libbe20.a
 libbe20_a_SOURCES = $(BE20_API_SRC) $(DFXML_READER) $(DFXML_WRITER)
 
+check_LTLIBRARIES = scan_test_plugin.la
+scan_test_plugin_la_SOURCES = test_plugin.cpp
+scan_test_plugin_la_LDFLAGS = -module -avoid-version -rpath $(abs_builddir)/.libs
+
 bulk_extractor_LDADD = libbe20.a @RE2_LIBS@
 test_be_LDADD = libbe20.a @RE2_LIBS@
+test_be_CPPFLAGS = $(AM_CPPFLAGS) -DTEST_PLUGIN_DIR=\"$(abs_builddir)/.libs\"
 test_be20_api_LDADD = libbe20.a @RE2_LIBS@
 test_pcap_fake_CPPFLAGS = $(AM_CPPFLAGS) -DPCAP_FAKE_TEST
 

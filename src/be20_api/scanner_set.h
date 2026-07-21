@@ -110,6 +110,7 @@ class scanner_set {
     std::map<scanner_t*, struct scanner_params::scanner_info *> scanner_info_db {}; // scanner to info db; master list of scanners
     std::map<std::string, scanner_t *> scanner_names {}; // scanner name to scanner
     std::set<scanner_t*> enabled_scanners {};            //
+    std::vector<void *> plugin_handles {};
 
     class thread_pool pool;
     std::atomic<bool> threading {false};       // are we threading?
@@ -272,10 +273,6 @@ public:
      * PHASE_ENABLE
      * Various scanners are enabled and their histograms are created
      */
-    // void    load_scanner_packet_handlers(); // after all scanners are loaded, this sets up the packet handlers.
-
-
-
     /* PHASE SCAN */
 public:;
     void phase_scan();               // start the scan phase
@@ -298,8 +295,6 @@ public:;
     uint64_t previously_processed_count(const sbuf_t& sbuf);
     bool allow_recurse() const { return sc.allow_recurse; };
 
-
-    // void     process_packet(const be20::packet_info &pi);
 
     /* PHASE_SHUTDOWN */
     // explicit shutdown, called automatically on delete if it hasn't be called

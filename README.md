@@ -99,6 +99,19 @@ Other hints for debugging:
 * Run -xall to run without any scanners.
 * Run with a random sampling of 0.001% to debug reading image size and a few quick seeks.
 
+LOADABLE SCANNERS
+=================
+bulk_extractor loads scanner modules named scan_*.so (or scan_*.dylib on
+macOS and scan_*.dll on Windows) from the directories supplied with -P or in
+BE_PATH. A module exports this C-linkage factory:
+
+    extern "C" scanner_t *bulk_extractor_scanner_v1();
+
+The factory returns a normal scanner_t function. Build modules against the
+same bulk_extractor source version as the executable; the scanner's PHASE_INIT
+handler must call sp.check_version(). Modules remain loaded until scanner
+cleanup completes.
+
 BUILDING ON WINDOWS
 ===================
 Native Windows builds of bulk_extractor 2.1 are not currently supported.

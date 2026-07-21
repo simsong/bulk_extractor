@@ -323,6 +323,33 @@ TEST_CASE("select_disabled_scanner", "[end-to-end]") {
     REQUIRE( std::count_if(startpos, endpos, [](const std::string& line) { return line.find("<scanner>") != std::string::npos; }) == 1 );
 }
 
+TEST_CASE("load_scanner_plugin", "[end-to-end]") {
+    std::filesystem::path inpath = test_dir() / "pdf_words2.pdf";
+    std::filesystem::path outdir = NamedTemporaryDirectory();
+    std::string inpath_string = inpath.string();
+    std::string outdir_string = outdir.string();
+    std::stringstream ss;
+    const char *argv[] = {"bulk_extractor", "-0q", "-x", "all", "-P", TEST_PLUGIN_DIR, "-e", "test_plugin", "-o", outdir_string.c_str(), inpath_string.c_str(), nullptr};
+    REQUIRE(run_be(ss, std::cerr, argv) == 0);
+
+    auto lines = getLines(outdir / "report.xml");
+    REQUIRE(std::count(lines.begin(), lines.end(), "      <scanner>test_plugin</scanner>") == 1);
+}
+
+TEST_CASE("missing plugin is rejected", "[end-to-end]") {
+    scanner_config sc;
+    sc.outdir = NamedTemporaryDirectory();
+    feature_recorder_set::flags_t flags;
+    scanner_set ss(sc, flags, nullptr);
+
+    try {
+        ss.add_scanner_file((sc.outdir / "missing_plugin").string());
+        FAIL("missing plugin was accepted");
+    } catch (const std::runtime_error& e) {
+        REQUIRE(std::string(e.what()).find("cannot load scanner plugin") != std::string::npos);
+    }
+}
+
 /* -f simsong
  */
 TEST_CASE("scan_find", "[end-to-end]") {

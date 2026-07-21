@@ -29,6 +29,7 @@ AC_PREFIX_PROGRAM(bulk_extractor) dnl build for same location
 # Programs we will be using
 AC_PROG_CC
 AC_PROG_CXX
+LT_INIT([dlopen])
 AM_PROG_CC_C_O                    dnl allow per-produce flags
 AC_PROG_INSTALL
 AC_PROG_LEX([noyywrap])
