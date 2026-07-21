@@ -53,11 +53,8 @@
  * a second feature_recorder.
  *
  * Histogram - New in BE2.0, the histograms are built on-the-fly as features are recorded.
- * If memory runs below the LOW_MEMORY_THRESHOLD defined in the feature_recorder_sert,
- * the largest feature recorder is written to disk and a new feature_recorder histogram is started.
- *
- * When the feature_recorder_set shuts down, all remaining histograms are written to the disk.
- * Then, if there is any case where multiple histogram files were written, a merge-sort is performed.
+ * Histograms are written when the feature_recorder_set shuts down. When incremental
+ * histograms are disabled, they are generated from the feature files instead.
  */
 
 struct feature_recorder_def {
@@ -346,7 +343,6 @@ public:
     // set up the histogram
     virtual void histogram_add(const histogram_def &h) = 0;                // add a new histogram definition
     virtual size_t histogram_count() = 0;            // how many histograms this feature recorder has
-    virtual bool histograms_write_largest() = 0;      // flushes largest histogram. returns false if no histogram could be flushed. For low memory.
     virtual void histograms_write_all() = 0;
 
     // Called after each feature and context are processed, to support incremental histograms.
