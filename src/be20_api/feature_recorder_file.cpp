@@ -351,6 +351,7 @@ void feature_recorder_file::histogram_write_from_file(AtomicUnicodeHistogram& h)
                     std::cerr << "MEMORY OVERFLOW GENERATING HISTOGRAM  "
                               << name << ". Dumping Histogram " << histogram_counter << std::endl;
                     histogram_write_from_memory(h);
+                    h.add0(feature, context, found_utf16);
                 }
             }
         }
