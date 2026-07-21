@@ -66,8 +66,6 @@ public:
     /* histogram support.
     * The file based feature recorder can store the histogram incrementally in memory or it can make it at the end in a second pass.
     */
-    static const inline int MAX_HISTOGRAM_FILES = 10; // don't make more than 10 files in low-memory conditions
-
     // the histograms are made in memory with the AtomicUnicodeHistogram object.
     // Each one contains the histogram_def.
     std::vector<std::unique_ptr<AtomicUnicodeHistogram>> histograms{};
@@ -81,7 +79,6 @@ public:
     virtual void histogram_write_from_file(AtomicUnicodeHistogram& h); // actually write this histogram
     virtual void histogram_write(AtomicUnicodeHistogram& h); // write this histogram
     virtual void histograms_incremental_add_feature_context(const std::string& feature, const std::string& context) override;
-    virtual bool histograms_write_largest() override;
     virtual void histograms_write_all() override;
 };
 

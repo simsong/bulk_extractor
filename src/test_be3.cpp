@@ -249,6 +249,22 @@ TEST_CASE("e2e-0", "[end-to-end]") {
     grep( "debug:work_stop", xml_file);
 }
 
+TEST_CASE("e2e banner file", "[end-to-end]") {
+    const std::filesystem::path inpath = test_dir() / "nps-2010-emails.100k.raw";
+    const std::filesystem::path outdir = NamedTemporaryDirectory();
+    const std::filesystem::path banner = outdir / "banner.txt";
+    std::ofstream(banner) << "test banner\nsecond line\n";
+    const std::string inpath_string = inpath.string();
+    const std::string outdir_string = outdir.string();
+    const std::string banner_string = banner.string();
+    std::stringstream cout, cerr;
+    const char *argv[] = {"bulk_extractor", "-0q", "-b", banner_string.c_str(), "-o", outdir_string.c_str(), inpath_string.c_str(), nullptr};
+
+    REQUIRE(run_be(cout, cerr, argv) == 0);
+    grep("# test banner", outdir / "email.txt");
+    grep("# second line", outdir / "email.txt");
+}
+
 TEST_CASE("e2e-disk-write-error-stops-notifier", "[end-to-end]") {
 #if defined(HAVE_SYS_RESOURCE_H) && defined(HAVE_SIGNAL_H)
     std::filesystem::path inpath = test_dir() / "nps-2010-emails.100k.raw";
