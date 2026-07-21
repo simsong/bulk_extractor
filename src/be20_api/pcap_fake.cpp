@@ -8,7 +8,7 @@
 // config.h is needed solely to find out if we need pcap_fake.h or not.
 #include "config.h"
 
-#ifndef HAVE_LIBPCAP
+#if !defined(HAVE_LIBPCAP) || defined(PCAP_FAKE_TEST)
 #include "pcap_fake.h"
 
 #include <fcntl.h>
@@ -34,10 +34,10 @@ struct pcap {
     bool must_close;
     char err_buf[128];
     uint8_t* pktbuf;
+    uint32_t snaplen;
 };
 
 char* pcap_geterr(pcap_t* p) {
-    snprintf(p->err_buf, sizeof(p->err_buf), "not implemented in pcap_fake");
     return p->err_buf;
 }
 
@@ -102,6 +102,10 @@ pcap_t* pcap_fopen_offline(FILE* fp, char* errbuf) {
                  header.version_minor);
         return 0;
     }
+    if (header.snaplen == 0 || header.snaplen > PCAP_MAX_SNAPLEN) {
+        snprintf(errbuf, PCAP_ERRBUF_SIZE, "Invalid pcap snaplen %u", header.snaplen);
+        return 0;
+    }
 
     pcap_t* ret = (pcap_t*)calloc(1, sizeof(pcap_t));
     if (ret == 0) {
@@ -125,6 +129,7 @@ pcap_t* pcap_fopen_offline(FILE* fp, char* errbuf) {
     ret->fp = fp;
     ret->swapped = swapped;
     ret->linktype = header.linktype;
+    ret->snaplen = header.snaplen;
     return ret;
 }
 
@@ -173,8 +178,18 @@ int pcap_loop(pcap_t* p, int cnt, pcap_handler callback, uint8_t* user) {
             hdr.len = swap4(hdr.len);
         }
 
+        if (hdr.caplen > p->snaplen) {
+            p->error = true;
+            snprintf(p->err_buf, sizeof(p->err_buf), "Packet caplen %u exceeds snaplen %u", hdr.caplen, p->snaplen);
+            return -1;
+        }
+
         /* Read the packet */
-        if (fread(p->pktbuf, hdr.caplen, 1, p->fp) != 1) break; // no more to read
+        if (fread(p->pktbuf, hdr.caplen, 1, p->fp) != 1) {
+            p->error = true;
+            snprintf(p->err_buf, sizeof(p->err_buf), "Truncated packet data");
+            return -1;
+        }
 
         // DEBUG(100) ("pcap_fake: read tv_sec.tv_usec=%d.%06d  caplen=%d  len=%d",
         // (int)hdr.ts.tv_sec,(int)hdr.ts.tv_usec,hdr.caplen,hdr.len);

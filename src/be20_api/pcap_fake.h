@@ -22,6 +22,8 @@ __BEGIN_DECLS
 #define PCAP_VERSION_MINOR 4
 #define PCAP_ERRBUF_SIZE 256
 
+constexpr uint32_t PCAP_MAX_SNAPLEN = 262144;
+
 struct pcap_file_header {
     uint32_t magic;         // d4 c3 b2 a1
     uint16_t version_major; // 02 00
