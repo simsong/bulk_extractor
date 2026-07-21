@@ -21,6 +21,7 @@ SUBDIRS = doc doc/latex_manuals man src src/tests specfiles tests
 include Makefile.auto_defs
 
 EXTRA_DIST = $(SRC_WIN_DIST) $(AUTO_DOC_FILES) $(AUTO_ETC_FILES) $(AUTO_LICENSES) \
+	$(srcdir)/AGENTS.md \
 	$(srcdir)/.gitignore \
 	$(srcdir)/CODING_STANDARDS.md \
 	$(srcdir)/LICENSE.md \
