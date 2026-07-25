@@ -66,6 +66,9 @@ void scan_msxml(scanner_params &sp)
 	const sbuf_t &sbuf = *(sp.sbuf);
         if (sbuf.substr(0,6)=="<?xml "){
             std::string bufstr = msxml_extract_text(sbuf);
+            if (bufstr.empty()) {
+                return;
+            }
             auto *dbuf = sbuf_t::sbuf_malloc(sbuf.pos0+"MSXML", bufstr.size(), bufstr.size());
             memcpy(dbuf->malloc_buf(), bufstr.c_str(), bufstr.size());
             sp.recurse(dbuf);           // will delete dbuf
