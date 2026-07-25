@@ -118,7 +118,7 @@ scanners_builtin = \
 	scan_winprefetch.cpp \
 	scan_wordlist.cpp scan_wordlist.h \
 	scan_xor.cpp \
-	scan_zip.cpp \
+	scan_zip.cpp scan_zip.h \
 	pcap_writer.cpp \
 	pcap_writer.h
 
