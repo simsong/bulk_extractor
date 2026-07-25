@@ -15,6 +15,7 @@
 #include "config.h"
 
 #include <cstring>
+#include <fstream>
 #include <iostream>
 #include <memory>
 #include <filesystem>
@@ -66,6 +67,22 @@ const std::string JSON1 {"[{\"1\": \"one@company.com\"}, {\"2\": \"two@company.c
 const std::string JSON2 {"[{\"1\": \"one@base64.com\"}, {\"2\": \"two@base64.com\"}, {\"3\": \"three@base64.com\"}]\n"};
 
 bool debug = false;
+
+TEST_CASE("directory_scan_skips_symlinks", "[image_process]")
+{
+    const auto root = NamedTemporaryDirectory();
+    std::filesystem::create_directory(root / "nested");
+    std::ofstream(root / "nested" / "first.txt") << "first";
+    std::ofstream(root / "second.txt") << "second";
+    std::filesystem::create_symlink(root / "nested" / "first.txt", root / "duplicate.txt");
+    std::filesystem::create_directory_symlink(root, root / "nested" / "cycle");
+
+    const auto image = image_process::open(root, true, 0, 0);
+    REQUIRE(image->image_size() == 2);
+    REQUIRE(image->get_pos0(image->begin()).str() == (root / "nested" / "first.txt").string());
+
+    std::filesystem::remove_all(root);
+}
 
 bool has(std::string line, std::string substr)
 {
