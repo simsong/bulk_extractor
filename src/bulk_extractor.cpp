@@ -675,8 +675,6 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     ss.dump_name_count_stats();
     xreport->pop( "report" );
     xreport->add_rusage();
-    xreport->pop( "dfxml" );			// bulk_extractor
-    xreport->close();
 
     if ( cfg.opt_quiet==0){
         float mb_per_sec = ( phase1.total_bytes / 1000000.0) / master_timer.elapsed_seconds();
@@ -724,8 +722,10 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     }
 
     if (start_sbuf_count != sbuf_t::sbuf_count) {
-        cerr << "sbuf_t leak detected. Initial sbuf_t.sbuf_total="
+        cerr << "WARNING: sbuf_t leak detected. Initial sbuf_t.sbuf_count="
              << start_sbuf_count << "  end sbuf_count=" << sbuf_t::sbuf_count << std::endl;
+        ss.log( Formatter() << "WARNING: sbuf_t leak detected: initial count="
+                << start_sbuf_count << " final count=" << sbuf_t::sbuf_count );
         if (sbuf_t::debug_leak) {
             for (auto const &it : sbuf_t::sbuf_alloced) {
                 cerr << it << std::endl;
@@ -734,8 +734,10 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         } else {
             cerr << "Leaked sbuf. set DEBUG_SBUF_ALLOC=1 or DEBUG_SBUF_LEAK=1 to diagnose" << std::endl;
         }
-        throw std::runtime_error("leaked sbuf");
     }
+
+    xreport->pop( "dfxml" );			// bulk_extractor
+    xreport->close();
 
     /* Cleanup */
 

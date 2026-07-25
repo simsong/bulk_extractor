@@ -505,6 +505,12 @@ TEST_CASE("scan_msxml","[scanners]") {
     delete sbufp;
 }
 
+TEST_CASE("scan_msxml_empty_text", "[scanners]") {
+    const auto initial_sbuf_count = sbuf_t::sbuf_count.load();
+    test_scanner(scan_msxml, sbuf_t::sbuf_malloc(pos0_t(), "<?xml version='1.0'?><document/>"));
+    REQUIRE(sbuf_t::sbuf_count == initial_sbuf_count);
+}
+
 TEST_CASE("scan_json1", "[scanners]") {
     /* Make a scanner set with a single scanner and a single command to enable all the scanners.
      */
