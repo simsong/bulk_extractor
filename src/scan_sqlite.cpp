@@ -67,7 +67,7 @@ void scan_sqlite(scanner_params &sp)
                 (pagesize == 32768) || (pagesize == 65536)) {
 
                 uint32_t dbsize_in_pages = sbuf.get32uBE(begin+28);
-                size_t   dbsize = pagesize * dbsize_in_pages;
+                size_t   dbsize = static_cast<size_t>(pagesize) * dbsize_in_pages;
 
                 if (dbsize>0 && dbsize_in_pages>=1){
 
