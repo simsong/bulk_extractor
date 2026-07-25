@@ -231,6 +231,11 @@ void scanner_set::join()
     }
 }
 
+bool scanner_set::join(std::chrono::seconds maximum_wait)
+{
+    return !threading || pool.join(maximum_wait);
+}
+
 /****************************************************************
  *** cpu benchmark thread
  ****************************************************************/

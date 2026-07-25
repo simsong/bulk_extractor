@@ -289,7 +289,9 @@ void Phase1::phase1_run()
     read_process_sbufs();
 
     if (!config.opt_quiet) cout << "All data read; waiting for threads to finish..." << std::endl;
-    ss.join();
+    if (!ss.join(std::chrono::seconds(config.max_wait_time))) {
+        throw ThreadWaitTimeout(config.max_wait_time);
+    }
     if (ss.disk_write_errors > 0) {
         throw feature_recorder::DiskWriteError("while scanning input");
     }

@@ -57,6 +57,21 @@ void thread_pool::join()
     TO_MAIN.wait(lock, [this] { return workers.empty(); });
 }
 
+bool thread_pool::join(std::chrono::seconds maximum_wait)
+{
+    const auto deadline = std::chrono::steady_clock::now() + maximum_wait;
+    std::unique_lock<std::mutex> lock(M);
+    while (work_queue.size() > 0 || working_workers > 0) {
+        TO_WORKER.notify_one();
+        if (TO_MAIN.wait_until(lock, deadline) == std::cv_status::timeout) {
+            return work_queue.empty() && working_workers == 0;
+        }
+    }
+    mode = 2;
+    TO_WORKER.notify_all();
+    return TO_MAIN.wait_until(lock, deadline, [this] { return workers.empty(); });
+}
+
 void thread_pool::main_thread_wait()
 {
     std::unique_lock<std::mutex> lock(M);

@@ -269,6 +269,11 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     sc.offset_add  = result["offset_add"].as<int64_t>();
     sc.context_window_default = result["context_window"].as<int>();
     cfg.debug = result["debug"].as<int>();
+    const int max_minute_wait = result["max_minute_wait"].as<int>();
+    if (max_minute_wait <= 0) {
+        throw std::runtime_error("--max_minute_wait must be positive");
+    }
+    cfg.max_wait_time = static_cast<time_t>(max_minute_wait) * 60;
 
     try {
         sc.banner_file = result["banner_file"].as<std::string>();
@@ -621,6 +626,20 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
              << "Remove extra files and restart bulk_extractor with the exact same command line to continue." << std::endl;
         // do not call ss.shutdown() to avoid writing out histograms
         return 6;
+    }
+    catch (const Phase1::ThreadWaitTimeout &e) {
+        notify.stop();
+        try {
+            xreport->xmlout("debug:exception", e.what(),
+                            Formatter() << "name='thread_wait_timeout' maximum_wait_seconds='"
+                                        << e.maximum_wait << "'", true);
+        }
+        catch (const std::exception &) {
+        }
+        cerr << "Timed out after " << e.maximum_wait / 60
+             << " minute(s) waiting for scanner threads; terminating." << std::endl;
+        cerr.flush();
+        std::_Exit(8);
     }
 
 #ifdef USE_SQLITE3

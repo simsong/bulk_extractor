@@ -39,6 +39,13 @@ class Phase1 {
     }
 
 public:
+    class ThreadWaitTimeout : public std::runtime_error {
+    public:
+        explicit ThreadWaitTimeout(time_t maximum_wait):
+            std::runtime_error("timed out waiting for scanner threads"), maximum_wait(maximum_wait) {}
+        const time_t maximum_wait;
+    };
+
     // because seen_page_ids are added in order, we want to use an unordered set.
     typedef std::unordered_set<std::string> seen_page_ids_t;
     static inline std::string REPORT_FILENAME {"report.xml"};
