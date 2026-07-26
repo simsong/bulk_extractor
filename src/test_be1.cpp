@@ -15,6 +15,7 @@
 #include "config.h"
 
 #include <cstring>
+#include <fstream>
 #include <iostream>
 #include <memory>
 #include <filesystem>
@@ -52,6 +53,7 @@
 #include "scan_msxml.h"
 #include "scan_net.h"
 #include "scan_pdf.h"
+#include "scan_zip.h"
 #include "scan_vcard.h"
 #include "scan_vin.h"
 #include "scan_wordlist.h"
@@ -66,6 +68,23 @@ const std::string JSON1 {"[{\"1\": \"one@company.com\"}, {\"2\": \"two@company.c
 const std::string JSON2 {"[{\"1\": \"one@base64.com\"}, {\"2\": \"two@base64.com\"}, {\"3\": \"three@base64.com\"}]\n"};
 
 bool debug = false;
+
+TEST_CASE("directory_scan_skips_symlinks", "[image_process]")
+{
+    const auto root = NamedTemporaryDirectory();
+    std::filesystem::create_directory(root / "nested");
+    std::ofstream(root / "nested" / "first.txt") << "first";
+    std::ofstream(root / "second.txt") << "second";
+    std::filesystem::create_symlink(root / "nested" / "first.txt", root / "duplicate.txt");
+    std::filesystem::create_directory_symlink(root, root / "nested" / "cycle");
+
+    const auto image = image_process::open(root, true, 0, 0);
+    REQUIRE(image->image_size() == 2);
+    const auto pos0 = image->get_pos0(image->begin());
+    REQUIRE(pos0.path == (root / "nested" / "first.txt").string());
+    REQUIRE(pos0.offset == 0);
+    std::filesystem::remove_all(root);
+}
 
 bool has(std::string line, std::string substr)
 {
@@ -1074,4 +1093,12 @@ TEST_CASE("scan_zip", "[scanners]") {
     REQUIRE( std::filesystem::exists( outdir / "zip/000/testfilex.docx____-0-ZIP-0__Content_Types_.xml") == true);
     REQUIRE( requireFeature(email_txt,"1771-ZIP-402\tuser_docx@microsoftword.com"));
     REQUIRE( requireFeature(email_txt,"2396-ZIP-1012\tuser_docx@microsoftword.com"));
+}
+
+TEST_CASE("zip_carve_filename_limit", "[scanners]") {
+    const std::string name(100, 'a');
+    const auto carved = zip_carve_filename(name);
+    REQUIRE(carved.size() == 64);
+    REQUIRE(carved.front() == '_');
+    REQUIRE(zip_carve_filename("dir\\file") == "_dir_file");
 }

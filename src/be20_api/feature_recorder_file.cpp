@@ -139,8 +139,8 @@ feature_recorder_file::~feature_recorder_file()
 
 void feature_recorder_file::banner_stamp(std::ostream& os, const std::string& header) const {
     int banner_lines = 0;
-    if (fs.banner_filename.size() > 0) {
-        std::ifstream i(fs.banner_filename.c_str());
+    if (!fs.banner_filename.empty()) {
+        std::ifstream i(fs.banner_filename);
         if (i.is_open()) {
             std::string line;
             while (getline(i, line)) {
