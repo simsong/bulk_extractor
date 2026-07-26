@@ -74,10 +74,12 @@ jobs:
           x86_64-w64-mingw32-objdump -p "$exe" \
             | sed -n 's/^[[:space:]]*DLL Name: //p' \
             | sort -u | tee dll-imports.txt
-          if grep -Eivq \
+          grep -Eiv \
             '^(ADVAPI32|DBGHELP|GDI32|KERNEL32|msvcrt|PSAPI|SHELL32|USER32|WS2_32)\.dll$' \
-            dll-imports.txt; then
-            echo "The executable imports a DLL outside the Windows system allowlist." >&2
+            dll-imports.txt > non-system-dll-imports.txt || true
+          if [[ -s non-system-dll-imports.txt ]]; then
+            echo "DLLs outside the Windows system allowlist:" >&2
+            sed 's/^/  /' non-system-dll-imports.txt >&2
             exit 1
           fi
           cp "$exe" bulk_extractor64.exe
