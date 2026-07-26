@@ -114,11 +114,18 @@ cleanup completes.
 
 BUILDING ON WINDOWS
 ===================
-Native Windows builds of bulk_extractor 2.1 are not currently supported.
+Native Windows builds of bulk_extractor are not currently supported.
 
-Windows is not currently validated by a required parent CI job. The maintained
-repository path is cross-compilation from Fedora; start with a clean VM and use
-these commands:
+The `Windows MinGW build` GitHub Actions workflow cross-compiles the executable
+on Ubuntu for every pull request and uploads `bulk_extractor64.exe` in the
+`bulk_extractor-windows-x86_64` artifact. The workflow verifies that the PE
+executable does not import the MinGW, RE2, Abseil, Expat, zlib, or GNU crypto
+runtime DLLs. It does not use Wine or run the resulting Windows executable.
+The CI artifact is currently built without libewf, so it does not include E01
+support.
+
+The traditional repository path is cross-compilation from Fedora; start with a
+clean VM and use these commands:
 
 ```
 $ git clone https://github.com/simsong/bulk_extractor.git
