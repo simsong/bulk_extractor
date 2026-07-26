@@ -80,8 +80,9 @@ TEST_CASE("directory_scan_skips_symlinks", "[image_process]")
 
     const auto image = image_process::open(root, true, 0, 0);
     REQUIRE(image->image_size() == 2);
-    REQUIRE(image->get_pos0(image->begin()).str() == (root / "nested" / "first.txt").string());
-
+    const auto pos0 = image->get_pos0(image->begin());
+    REQUIRE(pos0.path == (root / "nested" / "first.txt").string());
+    REQUIRE(pos0.offset == 0);
     std::filesystem::remove_all(root);
 }
 
