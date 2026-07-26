@@ -60,7 +60,7 @@ jobs:
           CPPFLAGS="-I$target_root/include" \
           LDFLAGS="-L$target_root/lib" \
             ../configure --host=x86_64-w64-mingw32 --disable-libewf --quiet
-          make -j2
+          make -j2 LDFLAGS="-L$target_root/lib -all-static"
 
       - name: Verify standalone Windows executable
         run: |
