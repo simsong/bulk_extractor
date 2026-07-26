@@ -5,6 +5,7 @@
 #include <atomic>
 #include <memory>
 #include <ostream>
+#include <stdexcept>
 
 #include "be20_api/scanner_set.h"
 #include "be20_api/dfxml_cpp/src/dfxml_writer.h"

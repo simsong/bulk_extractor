@@ -64,7 +64,7 @@ bool thread_pool::join(std::chrono::seconds maximum_wait)
     while (work_queue.size() > 0 || working_workers > 0) {
         TO_WORKER.notify_one();
         if (TO_MAIN.wait_until(lock, deadline) == std::cv_status::timeout) {
-            return work_queue.empty() && working_workers == 0;
+            return false;
         }
     }
     mode = 2;
