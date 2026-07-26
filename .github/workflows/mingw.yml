@@ -65,6 +65,9 @@ jobs:
       - name: Verify standalone Windows executable
         run: |
           exe=build-mingw/src/.libs/bulk_extractor.exe
+          if [[ ! -s "$exe" ]]; then
+            exe=build-mingw/src/bulk_extractor.exe
+          fi
           test -s "$exe"
           test "$(stat -c %s "$exe")" -gt 1000000
           file "$exe" | grep -q 'PE32+ executable'
