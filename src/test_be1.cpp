@@ -53,6 +53,7 @@
 #include "scan_msxml.h"
 #include "scan_net.h"
 #include "scan_pdf.h"
+#include "scan_zip.h"
 #include "scan_vcard.h"
 #include "scan_vin.h"
 #include "scan_wordlist.h"
@@ -1091,4 +1092,12 @@ TEST_CASE("scan_zip", "[scanners]") {
     REQUIRE( std::filesystem::exists( outdir / "zip/000/testfilex.docx____-0-ZIP-0__Content_Types_.xml") == true);
     REQUIRE( requireFeature(email_txt,"1771-ZIP-402\tuser_docx@microsoftword.com"));
     REQUIRE( requireFeature(email_txt,"2396-ZIP-1012\tuser_docx@microsoftword.com"));
+}
+
+TEST_CASE("zip_carve_filename_limit", "[scanners]") {
+    const std::string name(100, 'a');
+    const auto carved = zip_carve_filename(name);
+    REQUIRE(carved.size() == 64);
+    REQUIRE(carved.front() == '_');
+    REQUIRE(zip_carve_filename("dir\\file") == "_dir_file");
 }
