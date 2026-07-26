@@ -1,0 +1,86 @@
+name: Windows MinGW build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  VCPKG_COMMIT: 40f3c709db80acf154ac4b17a1f83c564ebd022e
+  VCPKG_ROOT: ${{ github.workspace }}/.vcpkg
+
+jobs:
+  mingw:
+    name: Ubuntu MinGW executable
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install Ubuntu cross-build tools and libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            autoconf automake binutils-mingw-w64-x86-64 cmake curl file flex g++ \
+            g++-mingw-w64-x86-64-posix gcc-mingw-w64-x86-64-posix \
+            git libgcrypt-mingw-w64-dev libgpg-error-mingw-w64-dev \
+            libtool libz-mingw-w64-dev make ninja-build pkg-config python3 \
+            unzip zip
+          sudo update-alternatives --set x86_64-w64-mingw32-gcc \
+            /usr/bin/x86_64-w64-mingw32-gcc-posix
+          sudo update-alternatives --set x86_64-w64-mingw32-g++ \
+            /usr/bin/x86_64-w64-mingw32-g++-posix
+
+      - name: Build static RE2, Abseil, and Expat
+        run: |
+          git init "$VCPKG_ROOT"
+          git -C "$VCPKG_ROOT" remote add origin https://github.com/microsoft/vcpkg.git
+          git -C "$VCPKG_ROOT" fetch --depth 1 origin "$VCPKG_COMMIT"
+          git -C "$VCPKG_ROOT" checkout --detach FETCH_HEAD
+          "$VCPKG_ROOT/bootstrap-vcpkg.sh" -disableMetrics
+          "$VCPKG_ROOT/vcpkg" install \
+            expat:x64-mingw-static \
+            re2:x64-mingw-static \
+            --host-triplet=x64-linux \
+            --clean-after-build
+
+      - name: Cross-compile bulk_extractor
+        run: |
+          bash bootstrap.sh
+          mkdir build-mingw
+          cd build-mingw
+          target_root="$VCPKG_ROOT/installed/x64-mingw-static"
+          PKG_CONFIG="pkg-config --static" \
+          PKG_CONFIG_LIBDIR="$target_root/lib/pkgconfig" \
+          CPPFLAGS="-I$target_root/include" \
+          LDFLAGS="-L$target_root/lib" \
+            ../configure --host=x86_64-w64-mingw32 --disable-libewf --quiet
+          make -j2
+
+      - name: Verify standalone Windows executable
+        run: |
+          exe=build-mingw/src/bulk_extractor.exe
+          test -s "$exe"
+          file "$exe" | grep -q 'PE32+ executable'
+          x86_64-w64-mingw32-objdump -p "$exe" \
+            | sed -n 's/^[[:space:]]*DLL Name: //p' \
+            | sort -u | tee dll-imports.txt
+          if grep -Eivq \
+            '^(ADVAPI32|DBGHELP|GDI32|KERNEL32|msvcrt|PSAPI|SHELL32|USER32|WS2_32)\.dll$' \
+            dll-imports.txt; then
+            echo "The executable imports a DLL outside the Windows system allowlist." >&2
+            exit 1
+          fi
+          cp "$exe" bulk_extractor64.exe
+
+      - name: Upload Windows executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: bulk_extractor-windows-x86_64
+          path: bulk_extractor64.exe
+          if-no-files-found: error

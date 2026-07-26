@@ -138,8 +138,8 @@ public:
     /* feature_recorder_set flags */
     /* Flags are now implemented as booleans per stroustrup 2013 */
 
-    int64_t offset_add{0};         // added to every reported offset, for use with hadoop
-    std::string banner_filename{}; // banner for top of every file
+    int64_t offset_add{0};                    // added to every reported offset, for use with hadoop
+    std::filesystem::path banner_filename{}; // banner for top of every file
 
     /* histogram support */
     void histogram_add(const histogram_def& def); // adds it to a local set or to the specific feature recorder
