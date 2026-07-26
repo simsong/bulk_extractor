@@ -1,0 +1,231 @@
+# bulk_extractor release notes
+
+This file consolidates release highlights that were previously spread among
+`ChangeLog`, version roadmaps, Git tags, and announcements in
+[`doc/announce`](announce/). The older sections are summaries of those sources,
+not exhaustive changelogs. Some legacy announcement dates disagree with tag
+dates; the version history below therefore uses dates only where the repository
+history is clear.
+
+## 2.2.0 (draft)
+
+**Status:** Unreleased. The source version is currently
+`2.2.0-DEVELOP`.
+
+### Release theme
+
+Version 2.2.0 is a reliability and maintainability release. A concentrated
+source, build, CI, documentation, and test audit found defects in core buffer
+handling, hostile-input parsing, shutdown, scanner selection, and feature
+recording. The resulting fixes substantially improve reliability, although they
+do not establish that every malformed-input defect has been found.
+
+Much of this reliability campaign was performed with Codex: Codex analyzed the
+codebase, converted findings into tracked changes, implemented focused tests and
+fixes, and prepared documentation. The changes were reviewed and validated
+through the project's normal pull-request and CI process.
+
+### Highlights
+
+- A standalone 64-bit Windows `.exe` is planned to return as a simple download.
+  It is cross-compiled with MinGW on Ubuntu and is checked to ensure that it
+  imports no non-system Windows DLLs. This remains a release item until
+  [PR #543](https://github.com/simsong/bulk_extractor/pull/543) is merged and the
+  resulting executable is attached to the 2.2.0 release.
+- The source tree is self-contained: `be20_api`, DFXML, schemas, and UTF support
+  are now versioned in this repository instead of being supplied through fragile
+  Git submodules
+  ([PR #498](https://github.com/simsong/bulk_extractor/pull/498)).
+- The new VIN scanner extracts and validates vehicle identification numbers
+  ([PR #494](https://github.com/simsong/bulk_extractor/pull/494)).
+- Runtime scanner plug-ins are supported again through a versioned factory
+  interface, `-P`, and `BE_PATH`, with an end-to-end integration test
+  ([PR #528](https://github.com/simsong/bulk_extractor/pull/528)).
+
+### Reliability and correctness
+
+- Hardened `sbuf` bounds, arithmetic, and ownership behavior, including
+  zero-length and one-past-end cases
+  ([PR #511](https://github.com/simsong/bulk_extractor/pull/511)).
+- Corrected packet address and bounds parsing and bounded fallback PCAP reads for
+  malformed or truncated packets
+  ([PR #516](https://github.com/simsong/bulk_extractor/pull/516),
+  [PR #530](https://github.com/simsong/bulk_extractor/pull/530)).
+- Made E01 and split-image selection safe for literal percent characters,
+  lowercase segment names, and exceptional paths; raw and EWF short reads no
+  longer expose unread buffer tails to scanners
+  ([PR #517](https://github.com/simsong/bulk_extractor/pull/517),
+  [PR #518](https://github.com/simsong/bulk_extractor/pull/518)).
+- Made mapped-file and disk-error cleanup exception-safe
+  ([PR #519](https://github.com/simsong/bulk_extractor/pull/519),
+  [PR #524](https://github.com/simsong/bulk_extractor/pull/524)).
+- Fixed notifier and disk-write error shutdown so worker failures are reported
+  and cleaned up instead of hanging or terminating incorrectly
+  ([PR #513](https://github.com/simsong/bulk_extractor/pull/513)).
+- Fixed scanner controls: `jpeg_carve_mode=0` now disables JPEG carving, and
+  `-x all -e outlook` enables Outlook as requested
+  ([PR #525](https://github.com/simsong/bulk_extractor/pull/525),
+  [PR #527](https://github.com/simsong/bulk_extractor/pull/527)).
+- Preserved recorder banners and triggering features across CRLF input,
+  histogram setup, and allocation-failure paths
+  ([PR #531](https://github.com/simsong/bulk_extractor/pull/531),
+  [PR #533](https://github.com/simsong/bulk_extractor/pull/533),
+  [PR #535](https://github.com/simsong/bulk_extractor/pull/535)).
+- Bounded and normalized derived ZIP-carving filenames while retaining source
+  metadata ([PR #539](https://github.com/simsong/bulk_extractor/pull/539)).
+- Prevented empty MSXML extraction from causing recursion and changed residual
+  `sbuf` diagnostics from an abort to a DFXML warning
+  ([PR #537](https://github.com/simsong/bulk_extractor/pull/537)).
+
+### Build, configuration, and testing
+
+- AddressSanitizer now runs on every pull request while redundant workflow
+  execution has been reduced
+  ([PR #514](https://github.com/simsong/bulk_extractor/pull/514)).
+- Optional Exiv2 configuration is honored, tested, and disabled by default; its
+  version is recorded in DFXML when enabled
+  ([PR #532](https://github.com/simsong/bulk_extractor/pull/532)).
+- Scanner lifecycle rules and a loadable-scanner template are now documented
+  ([PR #529](https://github.com/simsong/bulk_extractor/pull/529)).
+- Focused regression tests now cover the repaired buffer, packet, short-read,
+  shutdown, scanner-selection, plug-in, banner, and histogram contracts.
+- The planned Windows workflow builds with MinGW on Ubuntu, builds static RE2
+  and its dependencies, verifies DLL imports, and publishes
+  `bulk_extractor64.exe` as a GitHub Actions artifact
+  ([PR #543](https://github.com/simsong/bulk_extractor/pull/543)).
+
+### Known limitations and release work
+
+- Merge and keep the standalone Windows artifact workflow green, then attach its
+  `.exe` to the 2.2.0 GitHub release. The current proposed Windows build disables
+  libewf, so the `.exe` does not read E01 images directly.
+- Lightgrep remains an unsupported, source-broken optional configuration and
+  should not be represented as a working 2.2.0 feature.
+- BEViewer is not bundled with bulk_extractor 2.
+- The built-in RAR implementation supports RAR versions 1 through 3 and does not
+  reliably handle every archive or every UTF-8 component name.
+- The focused repairs and current corpus do not prove safety for every hostile
+  or malformed input. Additional malformed-corpus, fuzz, and scanner-specific
+  boundary testing remains useful.
+- Replace this draft status with the final date, tag, commit, and release
+  artifact/check summary when 2.2.0 is published.
+
+For the detailed July 2026 audit and delivery record, see
+[`doc/RECENT_WORK_REPORT.md`](RECENT_WORK_REPORT.md).
+
+## 2.1.1 (2024-04-27)
+
+This maintenance release repaired JPEG carving help and test behavior, removed
+obsolete C++11 compiler flags, and maintained CI and Coverity configuration.
+
+## 2.1.0 (2024-01-24)
+
+This was the first bulk_extractor 2 release recommended for general use. The
+major user-visible correction was replacing the C++ standard-library regular
+expression engine with Google's RE2. RE2 avoids catastrophic backtracking, so
+open-ended `-F` expressions such as `[a-z]*@company.com` no longer hang.
+
+Version 2 also delivered substantially better multicore performance and
+portability than version 1. BEViewer was not bundled; the Outlook and hibernation
+scanners were disabled by default pending stronger tests; and 192-bit AES-key
+scanning was no longer enabled by default.
+
+See the original [2.1.0 announcement](announce/announce_2.1.0.md).
+
+## 2.0 series (2022–2024, reconstructed)
+
+### 2.0.0
+
+Version 2 was a significant rewrite begun in 2016 to modernize the program for
+current C++, improve multicore performance, make ownership and exception
+handling safer, and establish continuous integration and focused unit testing.
+It narrowed the distribution to the command-line program: BEViewer was no
+longer bundled, AFF/AFF4 support and research-oriented scanners were removed,
+and production-oriented defaults replaced the broader experimental posture of
+version 1.
+
+The rewrite also reorganized scanner and feature-recorder APIs, improved DFXML
+reporting and testability, and introduced the initial version-2 E01 path. See
+the contemporary [2.0 roadmap](ROADMAP_2.0.md) for the design goals; it is a
+planning record rather than a final release announcement.
+
+### Maintenance through 2.0.3
+
+The early maintenance releases restored and expanded MinGW Windows
+cross-compilation on Fedora, corrected Unix block-device sizing and `utmp`
+parsing, repaired `--disable-rar`, documented bootstrap builds, and fixed source
+distribution packaging involving submodules. CI permissions and dependencies,
+including Flex, were also made more explicit.
+
+### Maintenance after 2.0.3 through 2.0.6
+
+These releases fixed an AES scanner buffer overrun, AddressSanitizer and CI
+failures, scanner-selection ordering, ignored command-line controls, and build
+artifact generation. They also improved Gentoo and libewf build support and
+continued the Ubuntu MinGW build work.
+
+The version-2 maintenance history is preserved in the repository
+[`ChangeLog`](../ChangeLog) and the Git history for tags `v2.0.0` through
+`v2.0.6`.
+
+## Legacy 1.x releases (reconstructed)
+
+### 1.6.0
+
+The 1.6 line added and improved scanners for Windows forensic artifacts,
+including EVTX, NTFS MFT, NTFS log file and index records, `utmp`, PE carving,
+DLL-name extraction, and remote Windows shortcut fields. It also fixed a
+wordlist scanner state-machine crash and improved BEViewer navigation, report
+refresh, copying, hashdb context, and display-page size. Windows installer
+placement for the 64-bit executable was corrected.
+
+The surviving [1.6.0 announcement](announce/announce_1.6.0.md) is explicitly a
+pre-release draft. This summary combines it with the repository `ChangeLog` and
+tagged source rather than treating that draft as a final historical record.
+
+### 1.5.x
+
+Version 1.5 added optional SQLite feature output, an embeddable shared library
+with a Python module, and in-memory histograms. New scanners covered Base64,
+Facebook HTML, hashdb, HTTP logs, Outlook compressible encryption, Sceadan,
+SQLite, Windows shortcuts, and optional Lightgrep variants.
+
+Carving support was expanded and corrected for encoded JPEG, ZIP, RAR, and
+SQLite content, including duplicate suppression. Scanner controls reduced
+network-carving and other common false positives, while Base64 recovery and PII
+recognition were expanded. Version 1.5.2 corrected Outlook Compressible
+Encryption, added RFC 4648 Base64 handling, and introduced the MSXML scanner for
+Microsoft Office Open XML documents.
+
+See the original [1.5 announcement](announce/announce_1.5.md) and
+[1.5.2 notes](announce/announce_1.5.2.md).
+
+### 1.4.x
+
+Version 1.4 introduced RAR archive/component processing, JPEG carving, ZIP
+component carving, Lightgrep searching, block-hash scanning, XOR searching,
+variable context windows, and random sampling. It improved performance by
+letting scanners limit when and on which buffers they ran.
+
+The release significantly reduced false positives in Windows directory,
+network, ELF, PE, and Ethernet-address detection; increased recursive scan depth
+from five to seven; improved PDF extraction; and standardized ZIP timestamps.
+Carved files were split into bounded directories for manageability.
+
+Command-line compatibility changed: block size and word-size controls moved from
+`-B` and `-W` to `-S` parameters. The plug-in system was also substantially
+refactored.
+
+See the original [1.4 announcement](announce/announce_1.4.txt) and
+[1.4.1 notes](announce/announce_1.4.1.txt).
+
+## Historical source map
+
+- [`ChangeLog`](../ChangeLog) records selected changes from the version-1 and
+  version-2 development periods.
+- [`doc/announce`](announce/) contains announcements for 1.2, 1.3, 1.3.1, 1.4,
+  1.4.1, 1.5, 1.5.2, 1.6.0, and 2.1.0.
+- [`doc/ROADMAP_2.0.md`](ROADMAP_2.0.md) records the goals and migration plan for
+  the version-2 rewrite.
+- Git tags and their trees remain the authoritative source for the exact code in
+  each release.
