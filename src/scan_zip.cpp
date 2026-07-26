@@ -7,6 +7,7 @@
 
 #include "config.h"
 #include "sbuf_decompress.h"
+#include "scan_zip.h"
 #include "be20_api/scanner_params.h"
 #include "dfxml_cpp/src/dfxml_writer.h"
 #include "utf8.h"
@@ -18,6 +19,17 @@ static const std::string  ZIP_RECORDER_NAME {"zip"};
 static uint32_t  zip_max_uncompr_size = 256*1024*1024; // don't decompress objects larger than this
 static uint32_t  zip_min_uncompr_size = 6;	// don't bother with objects smaller than this
 static uint32_t  zip_name_len_max = 1024;
+static const size_t ZIP_CARVE_FILENAME_MAX = 64;
+
+std::string zip_carve_filename(const std::string &name)
+{
+    std::string carve_name("_");
+    for (const auto ch : name) {
+        if (carve_name.size() == ZIP_CARVE_FILENAME_MAX) break;
+        carve_name.push_back((ch == '/' || ch == '\\') ? '_' : ch);
+    }
+    return carve_name;
+}
 
 /* These are to eliminate compiler warnings */
 #define ZLIB_CONST
@@ -137,11 +149,7 @@ inline void scan_zip_component(scanner_params &sp, feature_recorder &zip_recorde
             xmlstream << "<disposition bytes='" << decomp->bufsize << "'>decompressed</disposition></zipinfo>";
             zip_recorder.write(pos0+pos,name,xmlstream.str());
 
-            std::string carve_name("_"); // begin with a _
-            for(auto const &it : name ){
-                carve_name.push_back((it=='/' || it=='\\') ? '_' : it);
-            }
-            zip_recorder.carve(*decomp, carve_name, mtime);
+            zip_recorder.carve(*decomp, zip_carve_filename(name), mtime);
 
             // recurse. Remember that recurse will free the sbuf
             sp.recurse( decomp );
