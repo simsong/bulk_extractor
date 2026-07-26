@@ -79,7 +79,7 @@ jobs:
           cp "$exe" bulk_extractor64.exe
 
       - name: Upload Windows executable
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: bulk_extractor-windows-x86_64
           path: bulk_extractor64.exe
