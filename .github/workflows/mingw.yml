@@ -64,8 +64,9 @@ jobs:
 
       - name: Verify standalone Windows executable
         run: |
-          exe=build-mingw/src/bulk_extractor.exe
+          exe=build-mingw/src/.libs/bulk_extractor.exe
           test -s "$exe"
+          test "$(stat -c %s "$exe")" -gt 1000000
           file "$exe" | grep -q 'PE32+ executable'
           x86_64-w64-mingw32-objdump -p "$exe" \
             | sed -n 's/^[[:space:]]*DLL Name: //p' \
