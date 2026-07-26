@@ -72,7 +72,7 @@ void scan_sqlite(scanner_params &sp)
                 if (dbsize>0 && dbsize_in_pages>=1){
 
                     /* Write it out! */
-                    sqlite_recorder.carve(sbuf_t(sbuf,begin,begin+dbsize),".sqlite3");
+                    sqlite_recorder.carve(sbuf_t(sbuf,begin,dbsize),".sqlite3");
 
                     /* Worry about overflow */
                     if (( i+begin+dbsize-1) <= i) return; // would send us backwards or avoid movement

@@ -58,6 +58,8 @@
 
 #include "test_be.h"
 
+extern "C" void scan_sqlite(scanner_params& sp);
+
 #ifdef HAVE_EXIV2
 extern "C" void scan_exiv2(scanner_params& sp);
 #endif
@@ -503,6 +505,30 @@ TEST_CASE("scan_msxml","[scanners]") {
     REQUIRE( bufstr.find("http://maps.google.com/mapfiles/kml/pal3/icon19.png") != std::string::npos);
     REQUIRE( bufstr.find("A collection showing how easy it is to create 3-dimensional") != std::string::npos);
     delete sbufp;
+}
+
+TEST_CASE("scan_sqlite_carve_length", "[scanners]") {
+    constexpr size_t prefix_size = 64;
+    constexpr size_t page_size = 512;
+    constexpr size_t trailer_size = 64;
+    std::string data(prefix_size + page_size + trailer_size, '\x7f');
+    data.replace(prefix_size, 16, std::string("SQLite format 3\0", 16));
+    data[prefix_size + 16] = 0x02; // 512-byte page size, big-endian
+    data[prefix_size + 17] = 0x00;
+    data[prefix_size + 28] = 0x00; // one database page, big-endian
+    data[prefix_size + 29] = 0x00;
+    data[prefix_size + 30] = 0x00;
+    data[prefix_size + 31] = 0x01;
+
+    auto outdir = test_scanner(scan_sqlite, sbuf_t::sbuf_malloc(pos0_t(), data));
+    std::vector<std::filesystem::path> carved_files;
+    for (const auto& entry : std::filesystem::recursive_directory_iterator(outdir / "sqlite_carved")) {
+        if (entry.is_regular_file()) {
+            carved_files.push_back(entry.path());
+        }
+    }
+    REQUIRE(carved_files.size() == 1);
+    REQUIRE(std::filesystem::file_size(carved_files.front()) == page_size);
 }
 
 TEST_CASE("scan_json1", "[scanners]") {
