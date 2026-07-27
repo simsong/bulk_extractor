@@ -789,8 +789,6 @@ TEST_CASE("scan_net1", "[scanners]") {
     REQUIRE( scan_net_t::invalidIP6(addr) == true );
 }
 
-#ifdef TEST_IPV6
-
 /* DNS ipv6 packet, sans ethernet header */
 const uint8_t packet2[] = {
     0x60, 0x00, 0x00, 0x00,        // version, traffic | flow label
@@ -811,9 +809,7 @@ const uint8_t packet2[] = {
     0x0a, 0x78, 0x7a, 0x69,
     0x67, 0x6e, 0x62, 0x6e,
     0x66, 0x76, 0x69, 0x00,
-    0x00, 0x01, 0x00, 0x01,
-    0xa6, 0xca, 0xb2, 0x70,
-    0xf8, 0x67, 0x2f, 0x3f
+    0x00, 0x01, 0x00, 0x01
 };
 
 
@@ -865,7 +861,7 @@ Timestamps
  */
 const uint8_t packet6_udp[] = {
     0x60, 0x00, 0x00, 0x00, // version, traffic | flow label
-    0x00, 0x34, 0x11, 0x01, // payload length   | next header | hop limit
+    0x00, 0x0c, 0x11, 0x01, // payload length   | next header | hop limit
     0x21, 0x00, 0x00, 0x00, // source
     0x00, 0x00, 0x00, 0x01,
     0xAB, 0xCD, 0x00, 0x00,
@@ -878,6 +874,19 @@ const uint8_t packet6_udp[] = {
     0x00, 0x0C, 0x7E, 0xD5, // udp length | udp checksum
     0x12, 0x34, 0x56, 0x78  // udp data
 };
+
+const uint8_t packet6_tcp[] = {
+    0x60, 0x00, 0x00, 0x00, 0x00, 0x20, 0x06, 0x80,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
+    0xc0, 0x4c, 0x00, 0x50, 0x31, 0xfb, 0x04, 0x61,
+    0x00, 0x00, 0x00, 0x00, 0x80, 0x02, 0x20, 0x00,
+    0x5e, 0x0c, 0x00, 0x00, 0x02, 0x04, 0xff, 0xc3,
+    0x01, 0x03, 0x03, 0x02, 0x01, 0x01, 0x04, 0x02
+};
+
 TEST_CASE("ipv6_checksum_UDP", "[scanners]") {
     /* Try packet2 */
     sbuf_t sbuf2(pos0_t(), packet2, sizeof(packet2));
@@ -901,18 +910,16 @@ TEST_CASE("ipv6_checksum_UDP", "[scanners]") {
 };
 
 TEST_CASE("ipv6_checksum_TCP", "[scanners]") {
-    sbuf_t sbuf(pos0_t(), packet6_udp, sizeof(packet6_udp));
-    REQUIRE( sbuf.bufsize==52 );
+    sbuf_t sbuf(pos0_t(), packet6_tcp, sizeof(packet6_tcp));
+    REQUIRE( sbuf.bufsize == 72 );
     REQUIRE( scan_net_t::ip6_cksum_valid( sbuf, 0) == true );
 
-    /* Make a 1 byte change to the payload */
-    uint8_t buf[1024];
-    memcpy(buf, packet6_udp, sizeof(packet6_udp));
-    buf[16]++;
-    sbuf_t sbuf2(pos0_t(), buf, sizeof(packet6_udp));
-    REQUIRE( sbuf2.bufsize==52 );
+    /* Make a one-byte change to the TCP options. */
+    uint8_t buf[sizeof(packet6_tcp)];
+    memcpy(buf, packet6_tcp, sizeof(packet6_tcp));
+    buf[65]++;
+    sbuf_t sbuf2(pos0_t(), buf, sizeof(buf));
     REQUIRE( scan_net_t::ip6_cksum_valid( sbuf2, 0) == false );
-
 };
 
 TEST_CASE("scan_net2", "[scanners]") {
@@ -922,12 +929,12 @@ TEST_CASE("scan_net2", "[scanners]") {
     scan_net_t::generic_iphdr_t h {} ;
 
     memset(buf,0xee,sizeof(buf));       // arbitrary data
-    memcpy(buf + frame_offset, packet2, sizeof(packet1)); // copy it to an offset that is not byte-aligned
+    memcpy(buf + frame_offset, packet2, sizeof(packet2)); // copy it to an offset that is not byte-aligned
     sbuf_t sbuf(pos0_t(), buf, sizeof(buf));
 
     constexpr size_t packet2_ip_len = sizeof(packet2); // 14 bytes for ethernet header
 
-    REQUIRE( packet2_ip_len == 84); // from above
+    REQUIRE( packet2_ip_len == 76); // from above
 
     /*
     const struct ip6_hdr *ip6 = sbuf.get_struct_ptr_unsafe<struct ip6_hdr>( buf+frame_offset );
@@ -942,7 +949,17 @@ TEST_CASE("scan_net2", "[scanners]") {
     REQUIRE( h.is_4or6() == true);
     REQUIRE( h.checksum_valid == true);
 }
-#endif
+
+TEST_CASE("scan_net_ipv6_carve", "[scanners]")
+{
+    auto *sbuf = new sbuf_t(pos0_t(), packet2, sizeof(packet2));
+    const auto outdir = test_scanner(scan_net, sbuf);
+
+    const auto ip = getLines(outdir / "ip.txt");
+    REQUIRE(requireFeature(ip, "fe80::c46b:e4:d55:62b1"));
+    REQUIRE(requireFeature(ip, "ff02::1:3"));
+    REQUIRE(std::filesystem::file_size(outdir / "packets.pcap") > pcap_writer::TCPDUMP_HEADER_SIZE);
+}
 
 TEST_CASE("scan_pdf", "[scanners]") {
     auto *sbufp = map_file("pdf_words2.pdf");
