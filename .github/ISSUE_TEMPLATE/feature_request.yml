@@ -1,0 +1,38 @@
+name: Feature or enhancement
+description: Propose a bounded improvement to bulk_extractor.
+title: "proposal: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or forensic use case
+      description: Describe the concrete workflow or limitation this would address. Do not include sensitive case data.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe the user-visible behavior, constraints, and acceptance criteria.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Include existing tools, command-line options, or approaches that do not meet the need.
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation approach
+      description: Explain how correctness, false positives/negatives, portability, and performance could be evaluated.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues and Discussions.
+          required: true
+        - label: I am willing to help test or implement this change if requested.
+          required: false
