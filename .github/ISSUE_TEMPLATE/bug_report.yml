@@ -1,0 +1,49 @@
+name: Bug report
+description: Report reproducible incorrect behavior, a crash, or a build failure.
+title: "bug: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please do not attach forensic images, personal data, credentials, or other material you cannot publish. Use a minimized synthetic reproducer or arrange private contact with a maintainer.
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: State the observed result and the result you expected.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction steps
+      description: Include the complete command line and the smallest safe input or steps needed to reproduce it.
+      placeholder: |
+        1. ...
+        2. ...
+        Command: bulk_extractor ...
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include bulk_extractor version or commit, OS, architecture, compiler, and relevant dependency versions.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Safe diagnostic output
+      description: Paste relevant logs, configure output, stack traces, hashes, or redacted output. Explain how expected forensic results were independently verified, if applicable.
+      render: text
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues and Discussions.
+          required: true
+        - label: I removed or replaced sensitive evidence with a safe reproducer or redacted diagnostics.
+          required: true
