@@ -134,7 +134,7 @@ TEST_CASE("e2e-alert-list", "[end-to-end]")
     const auto input = root / "input.raw";
     const auto alert_list = root / "alert-list.txt";
     const auto outdir = root / "output";
-    std::ofstream(input) << "ordinary@example.com alert@example.com\n";
+    std::ofstream(input) << "ordinary@example.com C:\\temp alert@example.com\n";
     std::ofstream(alert_list) << "alert@example.com\n";
 
     const std::string input_string = input.string();
@@ -152,6 +152,15 @@ TEST_CASE("e2e-alert-list", "[end-to-end]")
     REQUIRE(requireFeature(email, "alert@example.com"));
     const auto alerts = getLines(outdir / "ALERTS_found.txt");
     REQUIRE(requireFeature(alerts, "alert@example.com"));
+    const auto email_match = std::find_if(email.begin(), email.end(), [](const auto &line) {
+        return line.find("alert@example.com") != std::string::npos;
+    });
+    const auto alert_match = std::find_if(alerts.begin(), alerts.end(), [](const auto &line) {
+        return line.find("alert@example.com") != std::string::npos;
+    });
+    REQUIRE(email_match != email.end());
+    REQUIRE(alert_match != alerts.end());
+    REQUIRE(*alert_match == *email_match);
 
     std::filesystem::remove_all(root);
 }

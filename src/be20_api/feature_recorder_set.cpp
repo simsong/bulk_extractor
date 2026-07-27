@@ -129,10 +129,10 @@ void feature_recorder_set::create_alert_list_recorder()
         return;
     }
 
-    feature_recorder_def::flags_t flags;
-    flags.no_stoplist = true;
-    flags.no_alertlist = true;
-    create_feature_recorder(feature_recorder_def(ALERT_LIST_RECORDER_NAME, flags));
+    feature_recorder_def::flags_t recorder_flags;
+    recorder_flags.no_stoplist = true;
+    recorder_flags.no_alertlist = true;
+    create_feature_recorder(feature_recorder_def(ALERT_LIST_RECORDER_NAME, recorder_flags));
 }
 
 void feature_recorder_set::create_stop_list_recorders()

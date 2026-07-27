@@ -172,9 +172,10 @@ void feature_recorder::write(const pos0_t& pos0, const std::string &original_fea
     /* Alert-list matches are recorded separately and remain in their normal feature file. */
     if (def.flags.no_alertlist == false
         && fs.alert_list
+        && fs.alert_list->size() > 0
         && fs.alert_list->check_feature_context(feature_utf8, context)) {
         fs.named_feature_recorder(feature_recorder_set::ALERT_LIST_RECORDER_NAME)
-            .write(pos0, feature_utf8, context);
+            .write0(pos0, feature_utf8, context);
     }
 
     /* Write out the feature and the context */

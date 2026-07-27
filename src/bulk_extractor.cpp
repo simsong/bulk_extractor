@@ -476,7 +476,9 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
 
     struct feature_recorder_set::flags_t f;
     scanner_set ss( sc, f, nullptr);     // make a scanner_set but with no XML writer. We will create it below
-    ss.set_alert_list(&alert_list);
+    if (alert_list.size() > 0) {
+        ss.set_alert_list(&alert_list);
+    }
     ss.set_stop_list(&stop_list);
     ss.add_scanners( scanners_builtin );
     for (const auto &scanner_dir : scanner_dirs) ss.add_scanner_directory(scanner_dir);
