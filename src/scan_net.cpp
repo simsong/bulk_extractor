@@ -198,39 +198,32 @@ uint16_t scan_net_t::ip4_cksum(const sbuf_t &sbuf, size_t pos, size_t len)
     return ~sum;
 }
 
-/* Simson's easy-to-understand ipv6 checksum algorithm.
- * Designed for correctness, not for speed
- * ipv6 header starts at sbuf+pos
- *
- */
 bool scan_net_t::ip6_cksum_valid(const sbuf_t &sbuf, size_t pos)
 {
-    if (sbuf.bufsize < pos + 46) return 0;             // packet to small; should not have been called
-    const struct be20::ip6_hdr *ip6 = sbuf.get_struct_ptr_unsafe<struct be20::ip6_hdr>( pos );
-    uint16_t ip_payload_len         = ntohs(ip6->ip6_plen());
-    if (sbuf.bufsize < pos + ip_payload_len) return 0; // don't have enough of the packet
+    if (pos > sbuf.bufsize || sbuf.bufsize - pos < sizeof(be20::ip6_hdr)) return false;
+    const auto *ip6 = sbuf.get_struct_ptr_unsafe<be20::ip6_hdr>(pos);
+    const size_t payload_len = ntohs(ip6->ip6_plen());
+    if (payload_len > sbuf.bufsize - pos - sizeof(be20::ip6_hdr)) return false;
 
-    if (ip6->ip6_nxt() == IPPROTO_UDP) {
-        if (sbuf.bufsize < pos + 48) return 0;   // not enough room for udp header
-        class be20::adder1 sum;
-        for (size_t offset = 8; offset < 40; offset += 2 ){
-            sum.add( sbuf.get16uBE_unsafe( pos + offset )); // first get the source and destinations
-        }
-        sum.add( 0x0011 );                       // pseudo header protocol 00 11
-        sum.add( sbuf.get16uBE_unsafe( pos + 44)); // Length of (UDP Header + Body), from UDP datagram header
-        sum.add( sbuf.get16uBE_unsafe( pos + 40)); // UDP source port
-        sum.add( sbuf.get16uBE_unsafe( pos + 42)); // UDP destination port
-        sum.add( sbuf.get16uBE_unsafe( pos + 44)); // UDP datagram header length
-        for (size_t offset = 48 ; offset < ip_payload_len ; offset += 2 ){
-            sum.add( sbuf.get16uBE_unsafe( pos + offset )); // get the UDP data
-        }
-        /* Get the last byte if it is present */
-        if (ip_payload_len & 0x0001) {
-            sum.add( sbuf[pos + ip_payload_len - 1] );
-        }
-        return sum.chksum() == sbuf.get16uBE_unsafe( pos + 46);
+    size_t checksum_offset;
+    switch (ip6->ip6_nxt()) {
+    case IPPROTO_TCP:
+        if (payload_len < sizeof(be_tcphdr)) return false;
+        checksum_offset = 56;
+        break;
+    case IPPROTO_UDP:
+        if (payload_len < sizeof(be_udphdr)) return false;
+        checksum_offset = 46;
+        break;
+    case IPPROTO_ICMPV6:
+        if (payload_len < 4) return false;
+        checksum_offset = 42;
+        break;
+    default:
+        return false;
     }
-    return (0);
+    return sbuf.get16uBE_unsafe(pos + checksum_offset) ==
+        IPv6L3Chksum(sbuf, pos, checksum_offset);
 }
 
 
@@ -243,7 +236,7 @@ bool scan_net_t::ip6_cksum_valid(const sbuf_t &sbuf, size_t pos)
  * the listed order:
  *	- Source address (16 octets)
  * 	- Destination address (16 octets)
- * 	- TCP Length (4 octets)
+ * 	- Upper-layer packet length (4 octets)
  *	- 24 zero bits (3 octets)
  *	- Next Header (1 octet)
  * Total: 40 octets
@@ -255,51 +248,42 @@ bool scan_net_t::ip6_cksum_valid(const sbuf_t &sbuf, size_t pos)
  * See:
  * https://stackoverflow.com/questions/30858973/udp-checksum-calculation-for-ipv6-packet
  */
-uint16_t scan_net_t::IPv6L3Chksum(const sbuf_t &sbuf, size_t pos, u_int chksum_byteoffset)
+uint16_t scan_net_t::IPv6L3Chksum(const sbuf_t &sbuf, size_t pos, size_t chksum_byteoffset)
 {
-    const struct be20::ip6_hdr *ip6 = sbuf.get_struct_ptr_unsafe<struct be20::ip6_hdr>(pos);
+    const auto *ip6 = sbuf.get_struct_ptr_unsafe<be20::ip6_hdr>(pos);
+    const size_t payload_len = ntohs(ip6->ip6_plen());
+    uint32_t sum = 0;
 
-    int len      = ntohs(ip6->ip6_plen()) + 40;/* payload len + size of pseudo hdr */
-    uint32_t sum = 0;			//
-    u_int octets_processed = 0;
+    const auto add_word = [&sum](uint16_t word) {
+        sum += word;
+        sum = (sum & 0xffff) + (sum >> 16);
+    };
 
-    /** We start counting at offset 8, which is the source address
-     *  which is followed by the ipv6 dst addr field and then the tcp
-     * payload
-     */
-    for(size_t i=pos+8 ; pos+i+1 < sbuf.bufsize && len > 0 ; i+=2 ){
-	if (i==40){			// reached the end of ipv6 header
-	    sum += ip6->ip6_plen();
-	    if (sum & 0x80000000){   /* if high order bit set, fold */
-		sum = (sum & 0xFFFF) + (sum >> 16);
-	    }
-
-	    /* putting the nxt pseudo header field in network-byte order via SHL(8) */
-	    sum += (uint16_t)(ip6->ip6_nxt() << 8);
-	    if (sum & 0x80000000){   /* if high order bit set, fold */
-		sum = (sum & 0xFFFF) + (sum >> 16);
-	    }
-	    len -= 8; 	    /* we've processed 8 octets in the pseudo header */
-	    octets_processed += 8;
-	} else {
-	    /* check if we are at the offset of the L3 chksum field*/
-	    if ((octets_processed != chksum_byteoffset)) {
-		sum += sbuf.get16u_unsafe(i);
-		if (sum & 0x80000000){   /* if high order bit set, fold */
-		    sum = (sum & 0xFFFF) + (sum >> 16);
-		}
-	    }
-
-	    /* update len and octets_processed */
-	    len -= 2;
-	    octets_processed += 2;
-	}
-    }
-    while( (sum & 0xFFFF0000) > 0 ){
-	sum = (sum & 0xFFFF) + (sum >> 16);
+    /* Source and destination addresses. */
+    for (size_t offset = 8; offset < 40; offset += 2) {
+        add_word(sbuf.get16uBE_unsafe(pos + offset));
     }
 
-    return ~sum;			// return the complement of the checksum
+    /* 32-bit upper-layer length, 24 zero bits, and the next-header byte. */
+    add_word(static_cast<uint16_t>(payload_len >> 16));
+    add_word(static_cast<uint16_t>(payload_len));
+    add_word(0);
+    add_word(ip6->ip6_nxt());
+
+    /* Upper-layer header and data, with the checksum word treated as zero. */
+    for (size_t offset = 0; offset + 1 < payload_len; offset += 2) {
+        if (40 + offset != chksum_byteoffset) {
+            add_word(sbuf.get16uBE_unsafe(pos + 40 + offset));
+        }
+    }
+    if (payload_len % 2 != 0) {
+        add_word(static_cast<uint16_t>(sbuf[pos + 40 + payload_len - 1]) << 8);
+    }
+
+    while (sum >> 16) {
+        sum = (sum & 0xffff) + (sum >> 16);
+    }
+    return static_cast<uint16_t>(~sum);
 }
 
 /* determine if an integer is a power of two; used for the TTL */
@@ -497,6 +481,7 @@ bool scan_net_t::sanityCheckIP46Header(const sbuf_t &sbuf, size_t pos, scan_net_
     }
 
     /* ipv6 attempt */
+    if (pos > sbuf.bufsize || sbuf.bufsize - pos < sizeof(be20::ip6_hdr)) return false;
     const struct be20::ip6_hdr *ip6 = sbuf.get_struct_ptr_unsafe<struct be20::ip6_hdr>( pos );
     if ((ip6->is_ipv6())){ // ipv6
 	//only do TCP, UDP and ICMPv6
@@ -508,7 +493,7 @@ bool scan_net_t::sanityCheckIP46Header(const sbuf_t &sbuf, size_t pos, scan_net_
 	uint16_t ip_payload_len = ntohs(ip6->ip6_plen());
 
         /* Make sure there is sufficient room in the sbuf */
-        if (pos + ip_payload_len > sbuf.bufsize) return false;
+        if (ip_payload_len > sbuf.bufsize - pos - sizeof(be20::ip6_hdr)) return false;
 
 	/* Reject anything larger than a jumbo gram or smaller than the
 	 * minimum size TCP, UDP or ICMPv6 packet (i.e. just header, no payload
@@ -520,34 +505,7 @@ bool scan_net_t::sanityCheckIP46Header(const sbuf_t &sbuf, size_t pos, scan_net_
 	    return false;
 
 
-	switch (ip6->ip6_nxt()) {
-	default:
-	case IPPROTO_TCP:
-            if (pos+56 < sbuf.bufsize) {
-                const struct be_tcphdr *tcp = sbuf.get_struct_ptr_unsafe<struct be_tcphdr>( pos+40 );
-                /* tcp chksum is at byte offset 16 from tcp hdr + 40 w/ pseudo hdr */
-                h->checksum_valid = (tcp->th_sum == scan_net_t::IPv6L3Chksum(sbuf, pos, 56));
-            }
-            break;
-
-	case IPPROTO_UDP:
-            if (pos+46 < sbuf.bufsize) {
-                const struct be_udphdr *udp = sbuf.get_struct_ptr_unsafe<struct be_udphdr>( pos+40 );
-
-                /* udp chksum is at byte offset 6 from udp hdr + 40 w/ pseudo hdr */
-                h->checksum_valid = (udp->uh_sum == scan_net_t::IPv6L3Chksum(sbuf, pos, 46));
-            }
-            break;
-	case IPPROTO_ICMPV6:
-            if (pos+42 < sbuf.bufsize ) {
-                const struct be20::icmp6_hdr *icmp6 = sbuf.get_struct_ptr_unsafe<struct be20::icmp6_hdr>( pos+40 );
-                if (!icmp6) return false;	// not sufficient room
-
-                /* icmpv6 chksum is at byte offset 2 from icmpv6 hdr + 40 w/ pseudo hdr */
-                h->checksum_valid = (icmp6->icmp6_cksum == scan_net_t::IPv6L3Chksum(sbuf, pos, 42));
-            }
-            break;
-        }
+        h->checksum_valid = ip6_cksum_valid(sbuf, pos);
 
 	/* create a generic_iphdr_t, similar to tcpip.c from tcpflow code */
 	h->family = AF_INET6;
@@ -668,7 +626,7 @@ size_t scan_net_t::carveIPFrame(const sbuf_t &sbuf, size_t pos, sanityCache_t *s
     }
     switch(h.family){
     case AF_INET:  buf[12] = 0x08; buf[13] = 0x00; break;
-    case AF_INET6: buf[12] = 0xdd; buf[13] = 0x86; break;
+    case AF_INET6: buf[12] = 0x86; buf[13] = 0xdd; break;
     default:       buf[12] = 0xff; buf[13] = 0xff; break; // shouldn't happen
     }
     memcpy(buf+14,sbuf.get_buf(),packet_len-14);       // copy the packet data
@@ -678,7 +636,7 @@ size_t scan_net_t::carveIPFrame(const sbuf_t &sbuf, size_t pos, sanityCache_t *s
     struct pcap_writer::pcap_hdr ph(0, 0, packet_len, packet_len);  // make a fake header
     if (h.is_4or6()){
         try {
-            documentIPFields(sb3, 0, h);
+            documentIPFields(sbuf, pos, h);
             pwriter.pcap_writepkt(ph, sb3, 0, false, 0x0000);	   // write the packet
         }
         catch (port0_exception &e) {
