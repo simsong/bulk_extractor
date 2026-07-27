@@ -100,18 +100,22 @@ int run_be(std::ostream &ss, const char **argv)
 
 TEST_CASE("e2e-stop-list", "[end-to-end]")
 {
+    const std::string bitlocker_key =
+        "016357-554983-017490-229515-355432-139370-173008-116281";
     const auto root = NamedTemporaryDirectory();
     const auto input = root / "input.raw";
     const auto stop_list = root / "stop-list.txt";
     const auto outdir = root / "output";
-    std::ofstream(input) << "keep@example.com stop@example.com\n";
-    std::ofstream(stop_list) << "stop@example.com\n";
+    std::ofstream(input) << "keep@example.com stop@example.com\n"
+                         << bitlocker_key << "\n";
+    std::ofstream(stop_list) << "stop@example.com\n" << bitlocker_key << "\n";
 
     const std::string input_string = input.string();
     const std::string stop_list_string = stop_list.string();
     const std::string outdir_string = outdir.string();
     const char *argv[] = {
-        "bulk_extractor", "-0q", "-Eemail", "-w", stop_list_string.c_str(),
+        "bulk_extractor", "-0q", "-x", "all", "-e", "email", "-e", "accts",
+        "-w", stop_list_string.c_str(),
         "-o", outdir_string.c_str(), input_string.c_str(), nullptr
     };
     std::stringstream output;
@@ -124,6 +128,8 @@ TEST_CASE("e2e-stop-list", "[end-to-end]")
     }));
     const auto stopped = getLines(outdir / "email_stopped.txt");
     REQUIRE(requireFeature(stopped, "stop@example.com"));
+    const auto alerts = getLines(outdir / "alerts.txt");
+    REQUIRE(requireFeature(alerts, bitlocker_key));
 
     std::filesystem::remove_all(root);
 }
