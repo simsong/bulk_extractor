@@ -2,6 +2,14 @@
 
 Date: 2026-07-19
 
+> **Historical audit:** This document preserves the code-specific evidence and
+> remediation analysis from the July 2026 source audit. The live, collaborative
+> priority scoreboard is
+> [Discussion #545](https://github.com/simsong/bulk_extractor/discussions/545);
+> individual work and status are tracked in
+> [issues labeled `tech debt`](https://github.com/simsong/bulk_extractor/issues?q=is%3Aissue%20state%3Aopen%20label%3A%22tech%20debt%22).
+> Do not use the snapshot checkboxes below as the current backlog.
+
 ## Executive conclusions
 
 This audit recommended bringing `src/be20_api` back into the
@@ -640,7 +648,7 @@ This establishes a reproducible default build baseline. It does not invalidate
 the static defects above; those still require focused regression tests and the
 optional/sanitizer configurations recommended in this document.
 
-## Recommended order of work
+## Original recommended order of work
 
 1. **Contain P0 risk:** fix and test PCAP length validation, all sbuf boundary
    primitives, and disk-error thread shutdown. Add ASan/UBSan gates.
@@ -662,35 +670,19 @@ The repository move is complete and reduces the cost of maintaining these
 fixes. It does not change their runtime priority or substitute for focused
 regression tests.
 
-## Open issue reconciliation
+## Current tracking
 
-Issue [#497](https://github.com/simsong/bulk_extractor/issues/497) is the
-parent tracker for the P0 and P1 source findings above. Its sub-issues are
-[#501](https://github.com/simsong/bulk_extractor/issues/501) through
-[#510](https://github.com/simsong/bulk_extractor/issues/510), with one issue
-per independently reviewable finding group. Issue
-[#500](https://github.com/simsong/bulk_extractor/issues/500) separately tracks
-the E01 chunk-level performance investigation: determine whether libewf can
-prove that a chunk contains only zero bytes and skip its decompression without
-changing logical offsets, margins, hashing, checksums, or output.
+Issue [#497](https://github.com/simsong/bulk_extractor/issues/497) tracks the
+P0/P1 children created directly from this audit. The broader, current
+priorities and issue-query links are maintained in
+[Discussion #545](https://github.com/simsong/bulk_extractor/discussions/545).
 
-The open tracker also contains older issues that are clearly technical debt.
-They remain useful supporting or narrower work items and are labeled
-`tech debt`; the audit findings above take precedence where descriptions
-overlap.
-
-| Area | Existing open issues |
-|---|---|
-| Build, dependencies, and portability | [#471](https://github.com/simsong/bulk_extractor/issues/471), [#464](https://github.com/simsong/bulk_extractor/issues/464), [#444](https://github.com/simsong/bulk_extractor/issues/444), [#398](https://github.com/simsong/bulk_extractor/issues/398), [#376](https://github.com/simsong/bulk_extractor/issues/376), [#159](https://github.com/simsong/bulk_extractor/issues/159) |
-| CI and test infrastructure | [#490](https://github.com/simsong/bulk_extractor/issues/490), [#419](https://github.com/simsong/bulk_extractor/issues/419), [#394](https://github.com/simsong/bulk_extractor/issues/394), [#308](https://github.com/simsong/bulk_extractor/issues/308), [#259](https://github.com/simsong/bulk_extractor/issues/259), [#238](https://github.com/simsong/bulk_extractor/issues/238), [#237](https://github.com/simsong/bulk_extractor/issues/237), [#204](https://github.com/simsong/bulk_extractor/issues/204), [#202](https://github.com/simsong/bulk_extractor/issues/202), [#201](https://github.com/simsong/bulk_extractor/issues/201), [#186](https://github.com/simsong/bulk_extractor/issues/186), [#185](https://github.com/simsong/bulk_extractor/issues/185), [#94](https://github.com/simsong/bulk_extractor/issues/94) |
-| Code and runtime maintenance | [#488](https://github.com/simsong/bulk_extractor/issues/488), [#485](https://github.com/simsong/bulk_extractor/issues/485), [#404](https://github.com/simsong/bulk_extractor/issues/404), [#395](https://github.com/simsong/bulk_extractor/issues/395), [#249](https://github.com/simsong/bulk_extractor/issues/249), [#246](https://github.com/simsong/bulk_extractor/issues/246), [#240](https://github.com/simsong/bulk_extractor/issues/240), [#225](https://github.com/simsong/bulk_extractor/issues/225), [#162](https://github.com/simsong/bulk_extractor/issues/162) |
-| Documentation and repository scope | [#476](https://github.com/simsong/bulk_extractor/issues/476), [#424](https://github.com/simsong/bulk_extractor/issues/424), [#264](https://github.com/simsong/bulk_extractor/issues/264), [#139](https://github.com/simsong/bulk_extractor/issues/139) |
-
-## Remediation checklist
+## Historical remediation checklist
 
 Each unchecked line below identifies one independently reviewable defect or
-debt item from this audit. Closing an item requires a substantive fix and
-appropriate validation.
+debt item as it was recorded during this audit. It is retained as evidence, not
+as the current scoreboard. Closing work requires a substantive fix and
+appropriate validation in its GitHub issue.
 
 ### P0: memory safety and termination
 
