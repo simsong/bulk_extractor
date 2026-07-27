@@ -119,7 +119,9 @@ feature_recorder_set::~feature_recorder_set() {
 void feature_recorder_set::create_alert_recorder() {
     /* Create an alert recorder if necessary */
     if (!flags.no_alert) {
-        create_feature_recorder(feature_recorder_set::ALERT_RECORDER_NAME); // make the alert recorder
+        feature_recorder_def::flags_t alert_flags;
+        alert_flags.no_stoplist = true;
+        create_feature_recorder(feature_recorder_def(ALERT_RECORDER_NAME, alert_flags));
     }
 }
 
