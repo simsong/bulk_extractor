@@ -1,0 +1,72 @@
+name: Build and publish LaTeX documentation
+
+on:
+  pull_request:
+    paths:
+      - 'doc/**/*.tex'
+      - '.github/workflows/latex-docs.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'doc/**/*.tex'
+      - '.github/workflows/latex-docs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install LaTeX
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes latexmk texlive-bibtex-extra texlive-fonts-recommended texlive-latex-extra texlive-publishers
+
+      - name: Build manuals
+        run: make -C doc -f Makefile.am pdfs
+
+      - name: Assemble documentation site
+        run: |
+          mkdir -p _site
+          cp doc/latex_manuals/*.pdf doc/programmer_manual/*.pdf _site/
+          cp doc/latex_manuals/index.html _site/index.html
+
+      - name: Upload pull-request PDFs
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: bulk-extractor-latex-manuals
+          path: _site
+
+      - name: Configure GitHub Pages
+        if: github.ref == 'refs/heads/main'
+        uses: actions/configure-pages@v5
+
+      - name: Upload GitHub Pages artifact
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

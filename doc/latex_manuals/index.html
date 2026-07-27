@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Documentation and resources for bulk_extractor, a high-performance digital forensics tool.">
+  <title>bulk_extractor — digital forensics documentation</title>
+  <style>
+    :root {
+      --ink: #172033;
+      --muted: #58627a;
+      --paper: #f7f8fc;
+      --card: #ffffff;
+      --line: #dfe4ee;
+      --accent: #0c6e8a;
+      --accent-dark: #084f65;
+      --signal: #f2b84b;
+      --shadow: 0 18px 45px rgba(23, 32, 51, .10);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font: 16px/1.6 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    a { color: var(--accent-dark); }
+    a:hover { color: var(--accent); }
+    .wrap { width: min(1120px, calc(100% - 2.5rem)); margin: auto; }
+    .hero {
+      overflow: hidden;
+      color: white;
+      background:
+        radial-gradient(circle at 79% 16%, rgba(63, 185, 210, .30), transparent 23rem),
+        linear-gradient(135deg, #10223c, #0b536b 72%, #0b6e8a);
+    }
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1.25rem 0;
+    }
+    .brand { color: white; font-weight: 800; letter-spacing: -.025em; text-decoration: none; }
+    .brand span { color: #9fe7f4; }
+    .nav-link { color: #d8f4f8; font-size: .92rem; text-decoration: none; }
+    .hero-grid { display: grid; grid-template-columns: 1.25fr .75fr; gap: 3rem; padding: 5rem 0 5.5rem; }
+    .eyebrow { color: #a9e7f1; font-size: .78rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+    h1 { max-width: 13ch; margin: .5rem 0 1.25rem; font-size: clamp(2.7rem, 7vw, 5rem); line-height: 1.03; letter-spacing: -.055em; }
+    .lead { max-width: 42rem; color: #d9e7ec; font-size: 1.17rem; }
+    .actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 2rem; }
+    .button { display: inline-block; padding: .7rem 1rem; border: 1px solid transparent; border-radius: .45rem; font-weight: 750; text-decoration: none; }
+    .button.primary { color: #10223c; background: var(--signal); }
+    .button.secondary { color: white; border-color: rgba(255, 255, 255, .45); }
+    .signal-card { align-self: center; padding: 1.6rem; border: 1px solid rgba(185, 235, 243, .28); border-radius: 1rem; background: rgba(9, 29, 51, .30); box-shadow: 0 24px 55px rgba(0, 0, 0, .18); }
+    .signal-card svg { display: block; width: 100%; max-width: 230px; margin: 0 auto 1.25rem; }
+    .signal-card strong { display: block; font-size: 1.12rem; }
+    .signal-card p { margin-bottom: 0; color: #c7e4e9; font-size: .93rem; }
+    main { padding: 4.5rem 0; }
+    .section-heading { max-width: 44rem; margin-bottom: 1.7rem; }
+    h2 { margin: 0 0 .4rem; font-size: clamp(1.8rem, 4vw, 2.5rem); letter-spacing: -.04em; }
+    .section-heading p, .card p { color: var(--muted); }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.1rem; }
+    .card { padding: 1.5rem; border: 1px solid var(--line); border-radius: .8rem; background: var(--card); box-shadow: 0 4px 12px rgba(23, 32, 51, .035); }
+    .card h3 { margin: .55rem 0 .25rem; font-size: 1.15rem; }
+    .card p { margin: 0 0 1rem; }
+    .label { color: var(--accent); font-size: .72rem; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; }
+    .card a { font-weight: 750; text-decoration-thickness: .1em; text-underline-offset: .18em; }
+    .band { margin-top: 4.5rem; padding: 2rem; border-radius: 1rem; background: #e8f4f6; }
+    .band-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+    .band h2 { font-size: 1.7rem; }
+    .link-list { margin: .75rem 0 0; padding: 0; list-style: none; }
+    .link-list li { padding: .45rem 0; border-bottom: 1px solid rgba(12, 110, 138, .15); }
+    .link-list li:last-child { border-bottom: 0; }
+    footer { padding: 2rem 0 3rem; color: var(--muted); font-size: .9rem; }
+    footer p { margin: 0; }
+    @media (max-width: 760px) {
+      .hero-grid, .band-grid { grid-template-columns: 1fr; gap: 2rem; }
+      .hero-grid { padding: 3.5rem 0 4rem; }
+      .grid { grid-template-columns: 1fr; }
+      .signal-card { max-width: 25rem; }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap">
+      <nav aria-label="Primary navigation">
+        <a class="brand" href="https://github.com/simsong/bulk_extractor">bulk<span>_</span>extractor</a>
+        <a class="nav-link" href="https://github.com/simsong/bulk_extractor">View source on GitHub ↗</a>
+      </nav>
+      <div class="hero-grid">
+        <div>
+          <div class="eyebrow">Digital forensics, at scale</div>
+          <h1>Find evidence in every byte.</h1>
+          <p class="lead">bulk_extractor rapidly scans disk images, files, and directories for structured forensic evidence—without relying on file-system structure.</p>
+          <div class="actions">
+            <a class="button primary" href="#manuals">Read the manuals</a>
+            <a class="button secondary" href="https://github.com/simsong/bulk_extractor/releases">Get a release ↗</a>
+          </div>
+        </div>
+        <aside class="signal-card" aria-label="What bulk_extractor does">
+          <svg viewBox="0 0 240 160" role="img" aria-label="Abstract scan pattern">
+            <path d="M20 80h57l17-36 22 77 22-52 14 24h68" fill="none" stroke="#9fe7f4" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+            <circle cx="20" cy="80" r="8" fill="#f2b84b"/><circle cx="220" cy="93" r="8" fill="#f2b84b"/>
+          </svg>
+          <strong>Evidence-first analysis</strong>
+          <p>Extract email addresses, payment-card data, URLs, JPEGs, JSON, and more—even from compressed or encoded content.</p>
+        </aside>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section id="manuals" aria-labelledby="manuals-heading">
+      <div class="section-heading">
+        <h2 id="manuals-heading">Documentation</h2>
+        <p>Start with the operating guide for practical use, then use the developer manual when extending or maintaining the project.</p>
+      </div>
+      <div class="grid">
+        <article class="card">
+          <div class="label">PDF manual</div>
+          <h3>Current Operating Guide</h3>
+          <p>Build, configure, and run bulk_extractor for forensic investigation workflows.</p>
+          <a href="BECurrentGuide.pdf">Open operating guide (PDF)</a>
+        </article>
+        <article class="card">
+          <div class="label">PDF manual</div>
+          <h3>Developer Manual</h3>
+          <p>Architecture and implementation guidance for contributors and maintainers.</p>
+          <a href="BEProgrammersManual.pdf">Open developer manual (PDF)</a>
+        </article>
+        <article class="card">
+          <div class="label">Reference</div>
+          <h3>Scanner API</h3>
+          <p>Authoritative guidance for developing a scanner or loadable scanner plug-in.</p>
+          <a href="https://github.com/simsong/bulk_extractor/blob/main/doc/scanner_api.md">Read the Scanner API ↗</a>
+        </article>
+      </div>
+    </section>
+
+    <section class="band" aria-labelledby="explore-heading">
+      <div class="band-grid">
+        <div>
+          <h2 id="explore-heading">Explore the project</h2>
+          <p>bulk_extractor is open source, actively tested on current macOS and Ubuntu environments, and designed to make extracted evidence easy to inspect and use in downstream analysis.</p>
+        </div>
+        <ul class="link-list">
+          <li><a href="https://github.com/simsong/bulk_extractor/blob/main/README.md">README and build instructions ↗</a></li>
+          <li><a href="https://github.com/simsong/bulk_extractor/releases">Releases and source archives ↗</a></li>
+          <li><a href="https://github.com/simsong/bulk_extractor/issues">Issues and project discussion ↗</a></li>
+          <li><a href="https://github.com/simsong/bulk_extractor/wiki/Installing-bulk_extractor">Installation guide ↗</a></li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer class="wrap">
+    <p>Documentation is built from the <a href="https://github.com/simsong/bulk_extractor">bulk_extractor</a> main branch with GitHub Actions.</p>
+  </footer>
+</body>
+</html>
