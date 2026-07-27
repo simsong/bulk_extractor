@@ -98,6 +98,36 @@ int run_be(std::ostream &ss, const char **argv)
     return run_be(ss, ss, argv);
 }
 
+TEST_CASE("e2e-stop-list", "[end-to-end]")
+{
+    const auto root = NamedTemporaryDirectory();
+    const auto input = root / "input.raw";
+    const auto stop_list = root / "stop-list.txt";
+    const auto outdir = root / "output";
+    std::ofstream(input) << "keep@example.com stop@example.com\n";
+    std::ofstream(stop_list) << "stop@example.com\n";
+
+    const std::string input_string = input.string();
+    const std::string stop_list_string = stop_list.string();
+    const std::string outdir_string = outdir.string();
+    const char *argv[] = {
+        "bulk_extractor", "-0q", "-Eemail", "-w", stop_list_string.c_str(),
+        "-o", outdir_string.c_str(), input_string.c_str(), nullptr
+    };
+    std::stringstream output;
+    REQUIRE(run_be(output, argv) == 0);
+
+    const auto email = getLines(outdir / "email.txt");
+    REQUIRE(requireFeature(email, "keep@example.com"));
+    REQUIRE(std::none_of(email.begin(), email.end(), [](const auto &line) {
+        return line.find("stop@example.com") != std::string::npos;
+    }));
+    const auto stopped = getLines(outdir / "email_stopped.txt");
+    REQUIRE(requireFeature(stopped, "stop@example.com"));
+
+    std::filesystem::remove_all(root);
+}
+
 #if defined(HAVE_SYS_RESOURCE_H) && defined(HAVE_SIGNAL_H)
 class file_size_limit {
     struct rlimit old_limit {};

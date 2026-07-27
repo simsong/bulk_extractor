@@ -38,7 +38,9 @@ int word_and_context_list::readfile(const std::filesystem::path path, std::ostre
         line_counter++;
         if (line.size() == 0) continue;
         if (line[0] == '#') continue; // it's a comment
-        if ((*line.end()) == '\r') { line.erase(line.end()); /* remove the last character if it is a \r */ }
+        if (!line.empty() && line.back() == '\r') {
+            line.pop_back();
+        }
         if (line.size() == 0) continue; // no line content
         ++features_read;
 

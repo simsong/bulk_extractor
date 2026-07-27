@@ -57,7 +57,6 @@ private:
      */
     feature_recorder_map_t frm{};
     bool frm_frozen {false};            // once the frm is frozen, it is read-only.
-    feature_recorder* stop_list_recorder{nullptr}; // where stopped features get written (if there is one)
 #if defined(HAVE_SQLITE3_H) and defined(HAVE_LIBSQLITE3)
     /* If we are compiled with SQLite3, this is the handle to the open database */
     sqlite3* db3{};
@@ -74,7 +73,6 @@ public:
         bool pedantic{false};                   // make sure that all features written are valid utf-8
         bool no_alert{false};                   // no alert recorder
         bool only_alert{false};                 //  always return the alert recorder
-        bool create_stop_list_recorders{false}; // static const uint32_t CREATE_STOP_LIST_RECORDERS= 0x04;  //
         bool debug{false};                      // enable debug printing
         bool record_files{true};                // record to files
         bool record_sql{false};                 // record to SQL
@@ -127,6 +125,7 @@ public:
 
     void set_stop_list(const word_and_context_list* alist) { stop_list = alist; }
     void set_alert_list(const word_and_context_list* alist) { alert_list = alist; }
+    void create_stop_list_recorders();
 
     /** Initialize a feature_recorder_set. Previously this was a constructor, but it turns out that
      * virtual functions for the create_name_factory aren't honored in constructors.

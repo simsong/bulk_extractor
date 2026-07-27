@@ -161,15 +161,11 @@ void feature_recorder::write(const pos0_t& pos0, const std::string &original_fea
         return;
     }
 
-    /* First check to see if the feature is on the stop list.
-     * Only do this if we have a stop_list_recorder (the stop list recorder itself
-     * does not have a stop list recorder. If it did we would infinitely recurse.
-     */
+    /* First check to see if the feature is on the stop list. */
     if (def.flags.no_stoplist == false
         && fs.stop_list
-        && fs.stop_list_recorder
         && fs.stop_list->check_feature_context(feature_utf8, context)) {
-        fs.stop_list_recorder->write(pos0, feature_utf8, context);
+        fs.named_feature_recorder(name + "_stopped").write(pos0, feature_utf8, context);
         return;
     }
 

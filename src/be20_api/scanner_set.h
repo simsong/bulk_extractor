@@ -150,6 +150,7 @@ public:
     class dfxml_writer* writer {nullptr};          // if provided, a dfxml writer. Mutext locking done by dfxml_writer.h
     void set_dfxml_writer(class dfxml_writer *writer_);
     class dfxml_writer *get_dfxml_writer() const;
+    void set_stop_list(const word_and_context_list *list) { fs.set_stop_list(list); }
 
     // timing info
     aftimer & producer_timer()   { return pool.main_wait_timer; }
