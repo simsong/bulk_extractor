@@ -6,6 +6,7 @@
 #include "feature_recorder_set.h"
 #include "feature_recorder_sql.h"
 #include "scanner_config.h"
+#include "word_and_context_list.h"
 
 #include "dfxml_cpp/src/dfxml_writer.h"
 #include "dfxml_cpp/src/hash_t.h"
@@ -24,6 +25,7 @@
  */
 
 const std::string feature_recorder_set::ALERT_RECORDER_NAME = "alerts";
+const std::string feature_recorder_set::ALERT_LIST_RECORDER_NAME = "ALERTS_found";
 // const std::string feature_recorder_set::DISABLED_RECORDER_NAME = "disabled";
 
 /* be_hash. Currently this just returns the MD5 of the sbuf,
@@ -117,7 +119,40 @@ feature_recorder_set::~feature_recorder_set() {
 void feature_recorder_set::create_alert_recorder() {
     /* Create an alert recorder if necessary */
     if (!flags.no_alert) {
-        create_feature_recorder(feature_recorder_set::ALERT_RECORDER_NAME); // make the alert recorder
+        feature_recorder_def::flags_t alert_flags;
+        alert_flags.no_stoplist = true;
+        create_feature_recorder(feature_recorder_def(ALERT_RECORDER_NAME, alert_flags));
+    }
+}
+
+void feature_recorder_set::create_alert_list_recorder()
+{
+    if (alert_list == nullptr || alert_list->size() == 0) {
+        return;
+    }
+
+    feature_recorder_def::flags_t recorder_flags;
+    recorder_flags.no_stoplist = true;
+    recorder_flags.no_alertlist = true;
+    create_feature_recorder(feature_recorder_def(ALERT_LIST_RECORDER_NAME, recorder_flags));
+}
+
+void feature_recorder_set::create_stop_list_recorders()
+{
+    if (stop_list == nullptr || stop_list->size() == 0) {
+        return;
+    }
+
+    const auto names = frm.keys();
+    for (const auto &name : names) {
+        const auto &source = frm.get(name);
+        if (name == ALERT_RECORDER_NAME || source.def.flags.no_stoplist) {
+            continue;
+        }
+        feature_recorder_def::flags_t stopped_flags;
+        stopped_flags.no_stoplist = true;
+        stopped_flags.no_alertlist = true;
+        create_feature_recorder(feature_recorder_def(name + "_stopped", stopped_flags));
     }
 }
 

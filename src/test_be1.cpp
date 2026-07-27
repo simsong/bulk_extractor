@@ -792,160 +792,41 @@ TEST_CASE("scan_net1", "[scanners]") {
     REQUIRE( scan_net_t::invalidIP6(addr) == true );
 }
 
-#ifdef TEST_IPV6
+TEST_CASE("ipv6_checksum_captured_packets", "[scanners]") {
+    constexpr size_t pcap_file_header_size = 24;
+    constexpr size_t pcap_record_header_size = 16;
+    constexpr size_t ethernet_header_size = 14;
+    constexpr uint8_t next_headers[] = {IPPROTO_TCP, IPPROTO_UDP, IPPROTO_ICMPV6};
 
-/* DNS ipv6 packet, sans ethernet header */
-const uint8_t packet2[] = {
-    0x60, 0x00, 0x00, 0x00,        // version, traffic | flow label
-    0x00, 0x24, 0x11, 0x01,        // payload length   | next header | hop limit
-    0xfe, 0x80, 0x00, 0x00,        // source address
-    0x00, 0x00, 0x00, 0x00,
-    0xc4, 0x6b, 0x00, 0xe4,
-    0x0d, 0x55, 0x62, 0xb1,
-    0xff, 0x02, 0x00, 0x00,  // destination address
-    0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00,
-    0x00, 0x01, 0x00, 0x03,
-    0xf9, 0x9e, 0x14, 0xeb, // udp source port | destination port
-    0x00, 0x24, 0x21, 0xdc, // udp length | checksum
-    0x7e, 0x2a, 0x00, 0x00, // udp data
-    0x00, 0x01, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00,
-    0x0a, 0x78, 0x7a, 0x69,
-    0x67, 0x6e, 0x62, 0x6e,
-    0x66, 0x76, 0x69, 0x00,
-    0x00, 0x01, 0x00, 0x01,
-    0xa6, 0xca, 0xb2, 0x70,
-    0xf8, 0x67, 0x2f, 0x3f
-};
+    std::unique_ptr<sbuf_t> pcap(map_file("ipv6_checksum_paths.pcap"));
+    size_t record = pcap_file_header_size;
+    for (const uint8_t next_header : next_headers) {
+        const size_t captured_length = pcap->get32u(record + 8);
+        const size_t frame = record + pcap_record_header_size;
+        REQUIRE(pcap->get16uBE(frame + 12) == ETHERTYPE_IPV6);
+        const sbuf_t ip6 = pcap->slice(frame + ethernet_header_size, captured_length - ethernet_header_size);
+        scan_net_t::generic_iphdr_t h {};
 
-
-/****************************************************************/
-/* First packet of a wget from google over IPv6 */
-/*
-(base) simsong@nimi ~ % tcpdump -r out1.pcap -x
-reading from file out1.pcap, link-type EN10MB (Ethernet)
-14:33:29.327826 IP6 2603:3003:127:1000:9440:31dd:dd50:e403.49478 > iad30s43-in-x04.1e100.net.http: Flags [S], seq 3310600832, win 65535, options [mss 1440,nop,wscale 6,nop,nop,TS val 1142909182 ecr 0,sackOK,eol], length 0
-	0x0000:  6005 0500 002c 0640 2603 3003 0127 1000
-	0x0010:  9440 31dd dd50 e403 2607 f8b0 4004 082f
-	0x0020:  0000 0000 0000 2004 c146 0050 c553 c280
-	0x0030:  0000 0000 b002 ffff 75c1 0000 0204 05a0
-	0x0040:  0103 0306 0101 080a 441f 68fe 0000 0000
-	0x0050:  0402 0000
-
-Internet Protocol Version 6
-0110 .... = Version: 6
-.... 0000 0000 .... .... .... .... .... = Traffic Class: 0x00 (DSCP: CS0, ECN: Not-ECT)
-.... .... .... 0101 0000 0101 0000 0000 = Flow Label: 0x50500
-Payload Length: 44
-Next Header: TCP (6)
-Hop Limit: 64
-Source Address: 2603:3003:127:1000:9440:31dd:dd50:e403
-Destination Address: 2607:f8b0:4004:82f::2004
-Transmission Control Protocol
-Source Port: 49478
-Destination Port: 80
-Stream index: 0
-TCP Segment Len: 0
-Sequence Number: 0
-Sequence Number (raw): 3310600832
-Next Sequence Number: 1
-Acknowledgment Number: 0
-Acknowledgment number (raw): 0
-1011 .... = Header Length: 44 bytes (11)
-Flags: 0x002 (SYN)
-Window: 65535
-Calculated window size: 65535
-Checksum: 0x75c1
-Checksum Status: Unverified
-Urgent Pointer: 0
-Options: (24 bytes), Maximum segment size, No-Operation (NOP), Window scale, No-Operation (NOP), No-Operation (NOP), Timestamps, SACK permitted, End of Option List (EOL)
-Timestamps
-*/
-
-/* Validate checksum computation from
- * https://stackoverflow.com/questions/30858973/udp-checksum-calculation-for-ipv6-packet
- */
-const uint8_t packet6_udp[] = {
-    0x60, 0x00, 0x00, 0x00, // version, traffic | flow label
-    0x00, 0x34, 0x11, 0x01, // payload length   | next header | hop limit
-    0x21, 0x00, 0x00, 0x00, // source
-    0x00, 0x00, 0x00, 0x01,
-    0xAB, 0xCD, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x01,
-    0xFD, 0x00, 0x00, 0x00, // destination address
-    0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x01, 0x60,
-    0x26, 0x92, 0x26, 0x92, // udp source | udp destination
-    0x00, 0x0C, 0x7E, 0xD5, // udp length | udp checksum
-    0x12, 0x34, 0x56, 0x78  // udp data
-};
-TEST_CASE("ipv6_checksum_UDP", "[scanners]") {
-    /* Try packet2 */
-    sbuf_t sbuf2(pos0_t(), packet2, sizeof(packet2));
-    std::cerr << "sbuf2: " << sbuf2 << std::endl;
-    REQUIRE( scan_net_t::ip6_cksum_valid( sbuf2, 0) == true );
-
-
-    /* Try packet6 */
-    sbuf_t sbuf6(pos0_t(), packet6_udp, sizeof(packet6_udp));
-    REQUIRE( sbuf6.bufsize==52 );
-    REQUIRE( scan_net_t::ip6_cksum_valid( sbuf6, 0) == true );
-
-    /* Make a 1 byte change to packet6 and make sure it fails */
-    uint8_t buf[1024];
-    memcpy(buf, packet6_udp, sizeof(packet6_udp));
-    buf[16]++;
-    sbuf_t sbuf6_bad(pos0_t(), buf, sizeof(packet6_udp));
-    REQUIRE( sbuf6_bad.bufsize==52 );
-    REQUIRE( scan_net_t::ip6_cksum_valid( sbuf6_bad, 0) == false );
-
-};
-
-TEST_CASE("ipv6_checksum_TCP", "[scanners]") {
-    sbuf_t sbuf(pos0_t(), packet6_udp, sizeof(packet6_udp));
-    REQUIRE( sbuf.bufsize==52 );
-    REQUIRE( scan_net_t::ip6_cksum_valid( sbuf, 0) == true );
-
-    /* Make a 1 byte change to the payload */
-    uint8_t buf[1024];
-    memcpy(buf, packet6_udp, sizeof(packet6_udp));
-    buf[16]++;
-    sbuf_t sbuf2(pos0_t(), buf, sizeof(packet6_udp));
-    REQUIRE( sbuf2.bufsize==52 );
-    REQUIRE( scan_net_t::ip6_cksum_valid( sbuf2, 0) == false );
-
-};
-
-TEST_CASE("scan_net2", "[scanners]") {
-    /* This checks specifically for a valid IPv6 packet that we know is valid. */
-    constexpr size_t frame_offset = 15;           // where we put the packet. Make sure that it is not byte-aligned!
-    uint8_t buf[1024];
-    scan_net_t::generic_iphdr_t h {} ;
-
-    memset(buf,0xee,sizeof(buf));       // arbitrary data
-    memcpy(buf + frame_offset, packet2, sizeof(packet1)); // copy it to an offset that is not byte-aligned
-    sbuf_t sbuf(pos0_t(), buf, sizeof(buf));
-
-    constexpr size_t packet2_ip_len = sizeof(packet2); // 14 bytes for ethernet header
-
-    REQUIRE( packet2_ip_len == 84); // from above
-
-    /*
-    const struct ip6_hdr *ip6 = sbuf.get_struct_ptr_unsafe<struct ip6_hdr>( buf+frame_offset );
-    REQUIRE( ip6->is_ipv6() == true);
-    REQUIRE( buf[40+frame_offset] == 0x00);
-    REQUIRE( buf[41+frame_offset] == 0x11);
-    */
-
-    REQUIRE( scan_net_t::sanityCheckIP46Header( sbuf, frame_offset , &h, nullptr) == true );
-    REQUIRE( h.is_4() == false);
-    REQUIRE( h.is_6() == true);
-    REQUIRE( h.is_4or6() == true);
-    REQUIRE( h.checksum_valid == true);
+        REQUIRE(ip6.get8u(6) == next_header);
+        REQUIRE(scan_net_t::ip6_cksum_valid(ip6, 0));
+        REQUIRE(scan_net_t::sanityCheckIP46Header(ip6, 0, &h, nullptr));
+        REQUIRE(h.is_6());
+        REQUIRE(h.checksum_valid);
+        record = frame + captured_length;
+    }
+    REQUIRE(record == pcap->bufsize);
 }
-#endif
+
+TEST_CASE("scan_net_ipv6_carve", "[scanners]")
+{
+    const auto outdir = test_scanner(scan_net, map_file("ipv6_checksum_paths.pcap"));
+
+    const auto ip = getLines(outdir / "ip.txt");
+    REQUIRE(requireFeature(ip, "3ffe:507:0:1:200:86ff:fe05:80da"));
+    REQUIRE(requireFeature(ip, "3ffe:501:4819::42"));
+    REQUIRE(requireFeature(ip, "fe80::260:97ff:fe07:69ea"));
+    REQUIRE(std::filesystem::file_size(outdir / "packets.pcap") > pcap_writer::TCPDUMP_HEADER_SIZE);
+}
 
 TEST_CASE("scan_pdf", "[scanners]") {
     auto *sbufp = map_file("pdf_words2.pdf");
