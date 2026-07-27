@@ -20,11 +20,13 @@
 #include <memory>
 #include <filesystem>
 #include <cstdio>
+#include <iterator>
 #include <stdexcept>
 #include <unistd.h>
 #include <string>
 #include <string_view>
 #include <sstream>
+#include <vector>
 
 #include "be20_api/catch.hpp"
 
@@ -957,6 +959,44 @@ TEST_CASE("scan_pdf", "[scanners]") {
     delete sbufp;
 }
 
+TEST_CASE("scan_rtti_image8", "[scanners]")
+{
+    const std::vector<uint8_t> image = {
+        'x', 'I', 'm', 'a', 'g', 'e', '8', '\n',
+        2, 0, 0, 0, 1, 0, 0, 0,
+        255, 0, 0, 0, 255, 0
+    };
+    auto outdir = test_scanner(
+        scan_rtti, new sbuf_t(pos0_t(), image.data(), image.size()));
+
+    std::vector<std::filesystem::path> carved;
+    for (const auto &entry :
+         std::filesystem::recursive_directory_iterator(outdir / "rtti")) {
+        if (entry.is_regular_file()) {
+            carved.push_back(entry.path());
+        }
+    }
+    REQUIRE(carved.size() == 1);
+
+    std::ifstream input(carved.front(), std::ios::binary);
+    const std::string actual((std::istreambuf_iterator<char>(input)),
+                             std::istreambuf_iterator<char>());
+    std::string expected = "P6\n2 1\n255\n";
+    expected.append("\xff\x00\x00\x00\xff\x00", 6);
+    REQUIRE(actual == expected);
+}
+
+TEST_CASE("scan_rtti_rejects_truncated_image8", "[scanners]")
+{
+    const std::vector<uint8_t> truncated = {
+        'I', 'm', 'a', 'g', 'e', '8', '\n',
+        2, 0, 0, 0, 2, 0, 0, 0,
+        255, 0, 0
+    };
+    auto outdir = test_scanner(
+        scan_rtti, new sbuf_t(pos0_t(), truncated.data(), truncated.size()));
+    REQUIRE_FALSE(std::filesystem::exists(outdir / "rtti"));
+}
 
 TEST_CASE("scan_vcard", "[scanners]") {
     auto *sbufp = map_file( "john_jakes.vcf" );
