@@ -90,3 +90,42 @@ jobs:
           name: bulk_extractor-windows-x86_64
           path: bulk_extractor64.exe
           if-no-files-found: error
+
+  windows-unicode:
+    name: Windows Unicode filename test
+    needs: mingw
+    runs-on: windows-latest
+
+    steps:
+      - name: Download Windows executable
+        uses: actions/download-artifact@v8
+        with:
+          name: bulk_extractor-windows-x86_64
+          path: dist
+
+      - name: Scan a directory containing a Unicode filename
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          New-Item -ItemType Directory -Path input | Out-Null
+          $filename = Join-Path $PWD "input\©_test.txt"
+          [IO.File]::WriteAllText(
+            $filename,
+            "unicode-path@example.com`n",
+            [Text.UTF8Encoding]::new($false))
+
+          & "$PWD\dist\bulk_extractor64.exe" -R -o output input 2>&1 |
+            Tee-Object -FilePath run.log
+          if ($LASTEXITCODE -ne 0) {
+            throw "bulk_extractor exited with status $LASTEXITCODE"
+          }
+          if (Select-String -Path run.log -SimpleMatch "read error" -Quiet) {
+            throw "bulk_extractor reported a read error for the Unicode filename"
+          }
+          if (-not (Test-Path output\email.txt)) {
+            throw "bulk_extractor did not create email.txt"
+          }
+          if (-not (Select-String -Path output\email.txt `
+                -SimpleMatch "unicode-path@example.com" -Quiet)) {
+            throw "bulk_extractor did not scan the Unicode-named file"
+          }

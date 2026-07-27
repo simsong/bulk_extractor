@@ -88,6 +88,23 @@ TEST_CASE("directory_scan_skips_symlinks", "[image_process]")
     std::filesystem::remove_all(root);
 }
 
+TEST_CASE("directory_scan_reads_unicode_filename", "[image_process]")
+{
+    const auto root = NamedTemporaryDirectory();
+    const auto path = root / std::filesystem::u8path(u8"\u00a9_test.txt");
+    const std::string contents = "unicode-path@example.com\n";
+    std::ofstream(path, std::ios::binary) << contents;
+
+    const auto image = image_process::open(root, true, 0, 0);
+    REQUIRE(image->image_size() == 1);
+    auto it = image->begin();
+    std::unique_ptr<sbuf_t> sbuf(image->sbuf_alloc(it));
+    REQUIRE(sbuf->asString() == contents);
+    REQUIRE(image->get_pos0(it).path == path.string());
+
+    std::filesystem::remove_all(root);
+}
+
 bool has(std::string line, std::string substr)
 {
     return line.find(substr) != std::string::npos;
