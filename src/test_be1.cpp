@@ -14,17 +14,20 @@
 
 #include "config.h"
 
+#include <cstdint>
 #include <cstring>
 #include <fstream>
 #include <iostream>
 #include <memory>
 #include <filesystem>
 #include <cstdio>
+#include <iterator>
 #include <stdexcept>
 #include <unistd.h>
 #include <string>
 #include <string_view>
 #include <sstream>
+#include <vector>
 
 #include "be20_api/catch.hpp"
 
@@ -957,6 +960,76 @@ TEST_CASE("scan_pdf", "[scanners]") {
     delete sbufp;
 }
 
+TEST_CASE("scan_rtti_image8", "[scanners]")
+{
+    // A 1x1 PPM image followed by an embedded RTTI Image8 record.
+    std::ifstream fixture(test_dir() / "rtti_image8.hex");
+    REQUIRE(fixture.is_open());
+    std::vector<uint8_t> image;
+    unsigned int byte;
+    while (fixture >> std::hex >> byte) {
+        REQUIRE(byte <= UINT8_MAX);
+        image.push_back(static_cast<uint8_t>(byte));
+    }
+    REQUIRE(image.size() == 35);
+    REQUIRE(std::string_view(reinterpret_cast<const char *>(image.data()), 11) == "P6\n1 1\n255\n");
+    REQUIRE(std::string_view(reinterpret_cast<const char *>(image.data() + 14), 7) == "Image8\n");
+
+    auto outdir = test_scanner(
+        scan_rtti, new sbuf_t(pos0_t(), image.data(), image.size()));
+
+    std::vector<std::filesystem::path> carved;
+    for (const auto &entry :
+         std::filesystem::recursive_directory_iterator(outdir / "rtti")) {
+        if (entry.is_regular_file()) {
+            carved.push_back(entry.path());
+        }
+    }
+    REQUIRE(carved.size() == 1);
+
+    std::ifstream input(carved.front(), std::ios::binary);
+    const std::string actual((std::istreambuf_iterator<char>(input)),
+                             std::istreambuf_iterator<char>());
+    std::string expected = "P6\n2 1\n255\n";
+    expected.append("\xff\x00\x00\x00\xff\x00", 6);
+    REQUIRE(actual == expected);
+}
+
+TEST_CASE("scan_rtti_rejects_truncated_image8", "[scanners]")
+{
+    const std::vector<uint8_t> truncated = {
+        'I', 'm', 'a', 'g', 'e', '8', '\n',
+        2, 0, 0, 0, 2, 0, 0, 0,
+        255, 0, 0
+    };
+    auto outdir = test_scanner(
+        scan_rtti, new sbuf_t(pos0_t(), truncated.data(), truncated.size()));
+    REQUIRE_FALSE(std::filesystem::exists(outdir / "rtti"));
+}
+
+TEST_CASE("scan_rtti_accepts_documented_portrait_dimensions", "[scanners]")
+{
+    constexpr size_t width = 640;
+    constexpr size_t height = 800;
+    std::vector<uint8_t> image = {
+        'I', 'm', 'a', 'g', 'e', '8', '\n',
+        0x80, 0x02, 0, 0, 0x20, 0x03, 0, 0
+    };
+    image.resize(image.size() + width * height * 3);
+
+    const auto outdir = test_scanner(
+        scan_rtti, new sbuf_t(pos0_t(), image.data(), image.size()));
+    size_t carved_files = 0;
+    for (const auto &entry :
+         std::filesystem::recursive_directory_iterator(outdir / "rtti")) {
+        if (entry.is_regular_file()) {
+            carved_files++;
+            REQUIRE(entry.file_size() ==
+                    std::string("P6\n640 800\n255\n").size() + width * height * 3);
+        }
+    }
+    REQUIRE(carved_files == 1);
+}
 
 TEST_CASE("scan_vcard", "[scanners]") {
     auto *sbufp = map_file( "john_jakes.vcf" );

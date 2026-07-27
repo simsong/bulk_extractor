@@ -108,6 +108,7 @@ scanners_builtin = \
 	scan_outlook.cpp scan_outlook.h \
 	scan_pdf.cpp scan_pdf.h \
 	scan_rar.cpp \
+	scan_rtti.cpp \
 	scan_sqlite.cpp \
 	scan_utmp.cpp \
 	scan_vcard.cpp scan_vcard.h \
