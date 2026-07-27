@@ -4,7 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Documentation and resources for bulk_extractor, a high-performance digital forensics tool.">
-  <title>bulk_extractor — digital forensics documentation</title>
+  <link rel="icon" href="assets/bulk-extractor-icon.svg" type="image/svg+xml">
+  <title>bulk_extractor: digital forensics documentation</title>
   <style>
     :root {
       --ink: #172033;
@@ -54,7 +55,7 @@
     .button.primary { color: #10223c; background: var(--signal); }
     .button.secondary { color: white; border-color: rgba(255, 255, 255, .45); }
     .signal-card { align-self: center; padding: 1.6rem; border: 1px solid rgba(185, 235, 243, .28); border-radius: 1rem; background: rgba(9, 29, 51, .30); box-shadow: 0 24px 55px rgba(0, 0, 0, .18); }
-    .signal-card svg { display: block; width: 100%; max-width: 230px; margin: 0 auto 1.25rem; }
+    .signal-card svg, .signal-card img { display: block; width: 100%; max-width: 230px; margin: 0 auto 1.25rem; }
     .signal-card strong { display: block; font-size: 1.12rem; }
     .signal-card p { margin-bottom: 0; color: #c7e4e9; font-size: .93rem; }
     main { padding: 4.5rem 0; }
@@ -94,19 +95,16 @@
         <div>
           <div class="eyebrow">Digital forensics, at scale</div>
           <h1>Find evidence in every byte.</h1>
-          <p class="lead">bulk_extractor rapidly scans disk images, files, and directories for structured forensic evidence—without relying on file-system structure.</p>
+          <p class="lead">bulk_extractor rapidly scans disk images, files, and directories for structured forensic evidence without relying on file-system structure.</p>
           <div class="actions">
             <a class="button primary" href="#manuals">Read the manuals</a>
             <a class="button secondary" href="https://github.com/simsong/bulk_extractor/releases">Get a release ↗</a>
           </div>
         </div>
         <aside class="signal-card" aria-label="What bulk_extractor does">
-          <svg viewBox="0 0 240 160" role="img" aria-label="Abstract scan pattern">
-            <path d="M20 80h57l17-36 22 77 22-52 14 24h68" fill="none" stroke="#9fe7f4" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
-            <circle cx="20" cy="80" r="8" fill="#f2b84b"/><circle cx="220" cy="93" r="8" fill="#f2b84b"/>
-          </svg>
+          <img src="assets/bulk-extractor-icon.svg" alt="Three parallel scan paths converge on extracted evidence at the left.">
           <strong>Evidence-first analysis</strong>
-          <p>Extract email addresses, payment-card data, URLs, JPEGs, JSON, and more—even from compressed or encoded content.</p>
+          <p>Extract email addresses, payment-card data, URLs, JPEGs, JSON, and more, even from compressed or encoded content.</p>
         </aside>
       </div>
     </div>
