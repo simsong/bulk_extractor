@@ -4,6 +4,8 @@
 #include <mutex>
 #include <filesystem>
 #include <iostream>
+#include <map>
+#include <memory>
 
 #include "be20_api/scanner_params.h"
 
@@ -17,6 +19,10 @@
 
 #ifndef DLT_EN10MB
 #define DLT_EN10MB	1	/* Ethernet (10Mb) */
+#endif
+
+#ifndef DLT_IEEE802_11
+#define DLT_IEEE802_11 105 /* IEEE 802.11 wireless */
 #endif
 
 #ifndef ETHER_ADDR_LEN
@@ -43,9 +49,13 @@ class pcap_writer {
     static const inline std::string OUTPUT_FILENAME {"packets.pcap"};
     pcap_writer(const pcap_writer &pc) = delete;
     pcap_writer &operator=(const pcap_writer &that) = delete;
-    std::mutex Mfcap {};              // mutex for fcap
-    std::ofstream *fcap = nullptr;		      // capture file, protected by M
-    std::filesystem::path outpath;            // where it gets written
+    struct stream_t {
+        std::filesystem::path outpath;
+        std::unique_ptr<std::ofstream> fcap;
+    };
+    std::mutex Mfcap {};
+    std::filesystem::path outdir;
+    std::map<uint32_t, stream_t> streams;
 
     /*
      * According to 'man pcap-savefile', you need to implement this file format,
@@ -56,9 +66,10 @@ class pcap_writer {
      * pcap_write4 writes a 4-byte value in native byte order; pcap accomidates.
      * pcap_writepkt writes a packet
      */
-    void pcap_write_bytes(const uint8_t * const val, size_t num_bytes);
-    void pcap_write2(const uint16_t val);
-    void pcap_write4(const uint32_t val);
+    void pcap_write_bytes(std::ofstream &fcap, const uint8_t *val, size_t num_bytes) const;
+    void pcap_write2(std::ofstream &fcap, uint16_t val) const;
+    void pcap_write4(std::ofstream &fcap, uint32_t val) const;
+    std::ofstream &pcap_stream(uint32_t link_type);
 
 public:
     const static inline size_t PCAP_MAX_PKT_LEN  = 65535;	// The longest a packet may be; longer values make wireshark refuse to load
@@ -83,14 +94,13 @@ public:
 
     void flush();
 
-    /* write an IP packet to the output stream, optionally writing a pcap header.
-     * Length of packet is determined from IP header.
-     */
+    /* Write a packet to the PCAP stream for its link type. */
     void pcap_writepkt(const struct pcap_hdr &h, // packet header
 		       const sbuf_t &sbuf,       // sbuf where packet is located
                        const size_t pos,         // position within the sbuf
                        const bool add_frame,     // whether or not to create a synthetic ethernet frame
-                       const uint16_t frame_type);
+                       const uint16_t frame_type,
+                       const uint32_t link_type = DLT_EN10MB);
 
 
 };
