@@ -1581,6 +1581,9 @@ TEST_CASE("word_and_context_list", "[feature_recorder]") {
     REQUIRE(wcl.readfile(bogus_txt) == -1);
     REQUIRE(wcl.readfile(words_txt) == 0);
     REQUIRE(wcl.size() == 4);
+    REQUIRE(wcl.check_feature_context("word1", "prefix word1 suffix"));
+    REQUIRE(wcl.check_feature_context("letter", "prefix letter suffix"));
+    REQUIRE_FALSE(wcl.check_feature_context("word4", "prefix word4 suffix"));
 
     std::filesystem::remove(words_txt);
     std::filesystem::remove_all(tmpdir);

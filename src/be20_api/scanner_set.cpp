@@ -555,6 +555,9 @@ void scanner_set::apply_scanner_commands() {
     scanner_params sp(sc, this, nullptr, scanner_params::PHASE_INIT2, nullptr);
     for (const auto &it : enabled_scanners) { (*it)(sp); }
 
+    fs.create_alert_list_recorder();
+    fs.create_stop_list_recorders();
+
     /* set the carve defaults from the command line (-S jpeg_carve_mode=...) or the scanner definitions if one is not provided*/
     fs.set_carve_defaults();
 
