@@ -214,6 +214,7 @@ public:
     void update_queue_stats(const sbuf_t *sbufp, int dir);   // either +1 increment or -1 decrement
     void thread_set_status(const std::string &status); // designed to be overridden
     void join();                                       // join the threads
+    bool join(std::chrono::seconds maximum_wait);      // false if the threads do not finish in time
     void add_scanner_stat(scanner_t *, const struct stats &st);
     void debug_pool(std::ostream &os) const { pool.debug_pool(os);}
 
