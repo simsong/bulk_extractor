@@ -1,11 +1,9 @@
 LATEXMK ?= latexmk
-PDFS = BECurrentGuide.pdf
+PDFS = BEProgrammersManual.pdf
 
-.PHONY: all doc pdfs clean
+.PHONY: all pdfs clean
 
-all:
-	@echo "Run make pdfs to build the LaTeX manuals."
-doc pdfs: $(PDFS)
+all pdfs: $(PDFS)
 
 %.pdf: %.tex
 	$(LATEXMK) -pdf -halt-on-error -file-line-error $<

@@ -1,11 +1,11 @@
-PARTS=BEProgrammersManual.tex title.tex structure.tex 
+LATEXMK ?= latexmk
 
-BEProgrammersManual.pdf: $(PARTS) Makefile references.bib
-	pdflatex BEProgrammersManual
-	bibtex BEProgrammersManual
-	pdflatex BEProgrammersManual
-	pdflatex BEProgrammersManual
+.PHONY: all clean
+
+all: BEProgrammersManual.pdf
+
+BEProgrammersManual.pdf: BEProgrammersManual.tex
+	$(LATEXMK) -pdf -halt-on-error -file-line-error $<
 
 clean:
-	rm -f *.{aux,bbl,blg,log,out,toc} *~
-	rm -f BEProgrammersManual.pdf
+	$(LATEXMK) -C BEProgrammersManual

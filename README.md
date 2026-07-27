@@ -39,6 +39,14 @@ https://github.com/simsong/bulk_extractor/wiki/Installing-bulk_extractor
 
 For more information on bulk_extractor, visit: https://forensics.wiki/bulk_extractor
 
+Documentation
+=============
+
+The generated PDF manuals are published at
+https://simsong.github.io/bulk_extractor/ after changes merge to `main`.
+It contains the 2.2 operating and developer manuals. Pull requests receive the
+same PDFs as a workflow artifact.
+
 Tested Configurations
 =====================
 This release of bulk_extractor requires C++17. Current validation covers:
@@ -120,20 +128,13 @@ The `Windows MinGW build` GitHub Actions workflow cross-compiles the executable
 on Ubuntu for every pull request and uploads `bulk_extractor64.exe` in the
 `bulk_extractor-windows-x86_64` artifact. The workflow verifies that the PE
 executable does not import the MinGW, RE2, Abseil, Expat, zlib, or GNU crypto
-runtime DLLs. It does not use Wine or run the resulting Windows executable.
+runtime DLLs. A Windows runner downloads and runs that exact artifact against
+a directory with a Unicode filename. The workflow uses the x86_64 MinGW-w64
+POSIX toolchain and static Expat, RE2, and Abseil from a pinned vcpkg checkout.
 The CI artifact is currently built without libewf, so it does not include E01
-support.
-
-The traditional repository path is cross-compilation from Fedora; start with a
-clean VM and use these commands:
-
-```
-$ git clone https://github.com/simsong/bulk_extractor.git
-$ cd bulk_extractor/etc
-$ bash CONFIGURE_FEDORA36_win64.bash
-$ cd ..
-$ make win64
-```
+support, is not signed, and is not a release installer. The workflow file and
+its maintained build notes are `.github/workflows/mingw.yml` and
+`doc/mingw_notes.txt`.
 
 
 

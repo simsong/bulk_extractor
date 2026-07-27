@@ -499,14 +499,11 @@ Move unsupported Python/Java artifacts to a clearly labeled archive.
 
 | Document | Stale content |
 |---|---|
-| `doc/latex_manuals/BEUsage.txt` | Captured help for version 1.5.0; advertises obsolete options including `-q nn`, `-m`, and `-P`. It should be regenerated from current `--help` plus maintained prose. |
 | `doc/writing_pattern_scanners.md` | Describes the old Lightgrep/recursion-control API, old registration locations, and scanners that are now commented out or uncompilable. |
-| `doc/programmer_manual/BEProgrammersManual.tex` | Documents the former two-argument scanner ABI, old plug-in loading, and old source organization. |
-| `doc/latex_manuals/BEUsersManual.tex`, `BEUsage.txt`, and worked examples | Explicitly describe versions 1.4/1.5, old installers, Python 2.7, old options, old scanner output, and obsolete distribution URLs. |
 
-These should not remain adjacent to current docs without a banner. Either port
-them and add a CI build/link check, or move them under `doc/archive/1.x/` with a
-clear statement that they are historical and may be incorrect for 2.x.
+The current LaTeX manuals are built in CI and describe the 2.x command-line,
+scanner, and Windows-artifact workflows. Old 1.x LaTeX manuals were removed
+rather than retained beside current material.
 
 ### Historical planning/status documents
 
@@ -803,9 +800,8 @@ appropriate validation in its GitHub issue.
 - [ ] Rewrite `tests/README.md` for 2.2.0, `make check`, current fixtures, and `DEBUG_FAST` behavior.
 - [ ] Rewrite `python/README.txt` after supported Python tools are selected.
 - [ ] Re-inventory stale first- and third-party paths and notices in `LICENSE.md`.
-- [ ] Regenerate or archive the version-1.5 help captured in `doc/latex_manuals/BEUsage.txt`.
-- [ ] Port or archive the programmer manual's obsolete two-argument scanner ABI and plug-in instructions.
-- [ ] Port or archive the 1.4/1.5 user manuals and worked examples.
+- [x] Replace the obsolete programmer manual with the 2.x scanner and build manual.
+- [x] Remove the version-1.x user manuals, worked examples, and captured help.
 - [x] Remove the obsolete `src/be13_api` include path from `doc/Makefile.am`.
 - [ ] Mark the 1.4, 1.5, and 1.6 roadmaps as historical.
 - [ ] Mark or replace `ROADMAP_2.0.md`, which mixes obsolete plans and completed work.
