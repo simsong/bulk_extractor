@@ -9,7 +9,6 @@
 #include "config.h"
 
 #include <cstdint>
-#include <limits>
 #include <memory>
 #include <string>
 
@@ -21,10 +20,7 @@ constexpr char IMAGE8_SIGNATURE[] = "Image8\n";
 constexpr size_t SIGNATURE_SIZE = sizeof(IMAGE8_SIGNATURE) - 1;
 constexpr size_t IMAGE8_HEADER_SIZE = SIGNATURE_SIZE + sizeof(uint32_t) * 2;
 constexpr size_t RGB_CHANNELS = 3;
-constexpr uint32_t DEFAULT_MAX_THUMBNAIL_WIDTH = 800;
-constexpr uint32_t DEFAULT_MAX_THUMBNAIL_HEIGHT = 250;
-uint32_t max_thumbnail_width = DEFAULT_MAX_THUMBNAIL_WIDTH;
-uint32_t max_thumbnail_height = DEFAULT_MAX_THUMBNAIL_HEIGHT;
+constexpr size_t MAX_PIXEL_BYTES = 16 * 1024 * 1024;
 
 void carve_image8(const sbuf_t &sbuf, feature_recorder &recorder)
 {
@@ -43,9 +39,8 @@ void carve_image8(const sbuf_t &sbuf, feature_recorder &recorder)
 
         const uint32_t width = sbuf.get32u(start + SIGNATURE_SIZE);
         const uint32_t height = sbuf.get32u(start + SIGNATURE_SIZE + sizeof(width));
-        if (width == 0 || height == 0 || width > max_thumbnail_width ||
-            height > max_thumbnail_height ||
-            height > std::numeric_limits<size_t>::max() / RGB_CHANNELS / width) {
+        if (width == 0 || height == 0 ||
+            height > MAX_PIXEL_BYTES / RGB_CHANNELS / width) {
             continue;
         }
 
@@ -77,14 +72,6 @@ void scan_rtti(scanner_params &sp)
         sp.info->description = "Carves 8-bit RawTherapee thumbnail images";
         sp.info->scanner_version = "1.0";
         sp.info->min_sbuf_size = IMAGE8_HEADER_SIZE;
-        max_thumbnail_width = DEFAULT_MAX_THUMBNAIL_WIDTH;
-        max_thumbnail_height = DEFAULT_MAX_THUMBNAIL_HEIGHT;
-        sp.get_scanner_config(
-            "rtti_max_thumbnail_width", &max_thumbnail_width,
-            "Maximum RTTI Image8 width (default: 800)");
-        sp.get_scanner_config(
-            "rtti_max_thumbnail_height", &max_thumbnail_height,
-            "Maximum RTTI Image8 height (default: 250)");
 
         feature_recorder_def::flags_t flags;
         flags.carve = true;

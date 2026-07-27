@@ -253,9 +253,7 @@ bool requireFeature(const std::vector<std::string> &lines, const std::string fea
     return false;
 }
 
-std::filesystem::path test_scanners_with_config(
-    const std::vector<scanner_t *> &scanners, sbuf_t *sbuf,
-    const std::vector<std::pair<std::string, std::string>> &config)
+std::filesystem::path test_scanners(const std::vector<scanner_t *> & scanners, sbuf_t *sbuf)
 {
     debug = getenv_debug("DEBUG");
 
@@ -265,9 +263,6 @@ std::filesystem::path test_scanners_with_config(
     scanner_config sc;
     sc.outdir           = NamedTemporaryDirectory();
     sc.enable_all_scanners();
-    for (const auto &[name, value] : config) {
-        sc.set_config(name, value);
-    }
 
     scanner_set ss(sc, frs_flags, nullptr);
     for (auto const &it : scanners ){
@@ -297,24 +292,11 @@ std::filesystem::path test_scanners_with_config(
     return sc.outdir;
 }
 
-std::filesystem::path test_scanners(const std::vector<scanner_t *> &scanners, sbuf_t *sbuf)
-{
-    return test_scanners_with_config(scanners, sbuf, {});
-}
-
 std::filesystem::path test_scanner(scanner_t scanner, sbuf_t *sbuf)
 {
     // I couldn't figure out how to pass a vector of scanner_t objects...
     std::vector<scanner_t *>scanners = {scanner };
     return test_scanners(scanners, sbuf);
-}
-
-std::filesystem::path test_scanner_with_config(
-    scanner_t scanner, sbuf_t *sbuf,
-    const std::vector<std::pair<std::string, std::string>> &config)
-{
-    std::vector<scanner_t *>scanners = {scanner };
-    return test_scanners_with_config(scanners, sbuf, config);
 }
 
 
@@ -1025,37 +1007,28 @@ TEST_CASE("scan_rtti_rejects_truncated_image8", "[scanners]")
     REQUIRE_FALSE(std::filesystem::exists(outdir / "rtti"));
 }
 
-TEST_CASE("scan_rtti_limits_thumbnail_dimensions", "[scanners]")
+TEST_CASE("scan_rtti_accepts_documented_portrait_dimensions", "[scanners]")
 {
-    std::vector<uint8_t> too_wide = {
+    constexpr size_t width = 640;
+    constexpr size_t height = 800;
+    std::vector<uint8_t> image = {
         'I', 'm', 'a', 'g', 'e', '8', '\n',
-        0x21, 0x03, 0, 0, 1, 0, 0, 0
+        0x80, 0x02, 0, 0, 0x20, 0x03, 0, 0
     };
-    too_wide.resize(too_wide.size() + 801 * 3);
+    image.resize(image.size() + width * height * 3);
 
-    auto outdir = test_scanner(
-        scan_rtti, new sbuf_t(pos0_t(), too_wide.data(), too_wide.size()));
-    REQUIRE_FALSE(std::filesystem::exists(outdir / "rtti"));
-
-    outdir = test_scanner_with_config(
-        scan_rtti, new sbuf_t(pos0_t(), too_wide.data(), too_wide.size()),
-        {{"rtti_max_thumbnail_width", "801"}});
-    REQUIRE(std::filesystem::exists(outdir / "rtti"));
-
-    std::vector<uint8_t> too_tall = {
-        'I', 'm', 'a', 'g', 'e', '8', '\n',
-        1, 0, 0, 0, 0xfb, 0, 0, 0
-    };
-    too_tall.resize(too_tall.size() + 251 * 3);
-
-    outdir = test_scanner(
-        scan_rtti, new sbuf_t(pos0_t(), too_tall.data(), too_tall.size()));
-    REQUIRE_FALSE(std::filesystem::exists(outdir / "rtti"));
-
-    outdir = test_scanner_with_config(
-        scan_rtti, new sbuf_t(pos0_t(), too_tall.data(), too_tall.size()),
-        {{"rtti_max_thumbnail_height", "251"}});
-    REQUIRE(std::filesystem::exists(outdir / "rtti"));
+    const auto outdir = test_scanner(
+        scan_rtti, new sbuf_t(pos0_t(), image.data(), image.size()));
+    size_t carved_files = 0;
+    for (const auto &entry :
+         std::filesystem::recursive_directory_iterator(outdir / "rtti")) {
+        if (entry.is_regular_file()) {
+            carved_files++;
+            REQUIRE(entry.file_size() ==
+                    std::string("P6\n640 800\n255\n").size() + width * height * 3);
+        }
+    }
+    REQUIRE(carved_files == 1);
 }
 
 TEST_CASE("scan_vcard", "[scanners]") {
