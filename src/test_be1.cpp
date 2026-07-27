@@ -962,6 +962,7 @@ TEST_CASE("scan_pdf", "[scanners]") {
 
 TEST_CASE("scan_rtti_image8", "[scanners]")
 {
+    // A 1x1 PPM image followed by an embedded RTTI Image8 record.
     std::ifstream fixture(test_dir() / "rtti_image8.hex");
     REQUIRE(fixture.is_open());
     std::vector<uint8_t> image;
@@ -970,7 +971,9 @@ TEST_CASE("scan_rtti_image8", "[scanners]")
         REQUIRE(byte <= UINT8_MAX);
         image.push_back(static_cast<uint8_t>(byte));
     }
-    REQUIRE_FALSE(image.empty());
+    REQUIRE(image.size() == 35);
+    REQUIRE(std::string_view(reinterpret_cast<const char *>(image.data()), 11) == "P6\n1 1\n255\n");
+    REQUIRE(std::string_view(reinterpret_cast<const char *>(image.data() + 14), 7) == "Image8\n");
 
     auto outdir = test_scanner(
         scan_rtti, new sbuf_t(pos0_t(), image.data(), image.size()));
