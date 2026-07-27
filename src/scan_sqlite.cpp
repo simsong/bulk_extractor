@@ -67,12 +67,12 @@ void scan_sqlite(scanner_params &sp)
                 (pagesize == 32768) || (pagesize == 65536)) {
 
                 uint32_t dbsize_in_pages = sbuf.get32uBE(begin+28);
-                size_t   dbsize = pagesize * dbsize_in_pages;
+                size_t   dbsize = static_cast<size_t>(pagesize) * dbsize_in_pages;
 
                 if (dbsize>0 && dbsize_in_pages>=1){
 
                     /* Write it out! */
-                    sqlite_recorder.carve(sbuf_t(sbuf,begin,begin+dbsize),".sqlite3");
+                    sqlite_recorder.carve(sbuf_t(sbuf,begin,dbsize),".sqlite3");
 
                     /* Worry about overflow */
                     if (( i+begin+dbsize-1) <= i) return; // would send us backwards or avoid movement
