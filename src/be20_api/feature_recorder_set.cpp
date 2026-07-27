@@ -25,6 +25,7 @@
  */
 
 const std::string feature_recorder_set::ALERT_RECORDER_NAME = "alerts";
+const std::string feature_recorder_set::ALERT_LIST_RECORDER_NAME = "ALERTS_found";
 // const std::string feature_recorder_set::DISABLED_RECORDER_NAME = "disabled";
 
 /* be_hash. Currently this just returns the MD5 of the sbuf,
@@ -120,6 +121,18 @@ void feature_recorder_set::create_alert_recorder() {
     if (!flags.no_alert) {
         create_feature_recorder(feature_recorder_set::ALERT_RECORDER_NAME); // make the alert recorder
     }
+}
+
+void feature_recorder_set::create_alert_list_recorder()
+{
+    if (alert_list == nullptr || alert_list->size() == 0) {
+        return;
+    }
+
+    feature_recorder_def::flags_t flags;
+    flags.no_stoplist = true;
+    flags.no_alertlist = true;
+    create_feature_recorder(feature_recorder_def(ALERT_LIST_RECORDER_NAME, flags));
 }
 
 void feature_recorder_set::create_stop_list_recorders()

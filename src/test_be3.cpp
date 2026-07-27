@@ -128,6 +128,34 @@ TEST_CASE("e2e-stop-list", "[end-to-end]")
     std::filesystem::remove_all(root);
 }
 
+TEST_CASE("e2e-alert-list", "[end-to-end]")
+{
+    const auto root = NamedTemporaryDirectory();
+    const auto input = root / "input.raw";
+    const auto alert_list = root / "alert-list.txt";
+    const auto outdir = root / "output";
+    std::ofstream(input) << "ordinary@example.com alert@example.com\n";
+    std::ofstream(alert_list) << "alert@example.com\n";
+
+    const std::string input_string = input.string();
+    const std::string alert_list_string = alert_list.string();
+    const std::string outdir_string = outdir.string();
+    const char *argv[] = {
+        "bulk_extractor", "-0q", "-Eemail", "-r", alert_list_string.c_str(),
+        "-o", outdir_string.c_str(), input_string.c_str(), nullptr
+    };
+    std::stringstream output;
+    REQUIRE(run_be(output, argv) == 0);
+
+    const auto email = getLines(outdir / "email.txt");
+    REQUIRE(requireFeature(email, "ordinary@example.com"));
+    REQUIRE(requireFeature(email, "alert@example.com"));
+    const auto alerts = getLines(outdir / "ALERTS_found.txt");
+    REQUIRE(requireFeature(alerts, "alert@example.com"));
+
+    std::filesystem::remove_all(root);
+}
+
 #if defined(HAVE_SYS_RESOURCE_H) && defined(HAVE_SIGNAL_H)
 class file_size_limit {
     struct rlimit old_limit {};
