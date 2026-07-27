@@ -14,6 +14,7 @@
 
 #include "config.h"
 
+#include <cstdint>
 #include <cstring>
 #include <fstream>
 #include <iostream>
@@ -961,11 +962,16 @@ TEST_CASE("scan_pdf", "[scanners]") {
 
 TEST_CASE("scan_rtti_image8", "[scanners]")
 {
-    const std::vector<uint8_t> image = {
-        'x', 'I', 'm', 'a', 'g', 'e', '8', '\n',
-        2, 0, 0, 0, 1, 0, 0, 0,
-        255, 0, 0, 0, 255, 0
-    };
+    std::ifstream fixture(test_dir() / "rtti_image8.hex");
+    REQUIRE(fixture.is_open());
+    std::vector<uint8_t> image;
+    unsigned int byte;
+    while (fixture >> std::hex >> byte) {
+        REQUIRE(byte <= UINT8_MAX);
+        image.push_back(static_cast<uint8_t>(byte));
+    }
+    REQUIRE_FALSE(image.empty());
+
     auto outdir = test_scanner(
         scan_rtti, new sbuf_t(pos0_t(), image.data(), image.size()));
 
