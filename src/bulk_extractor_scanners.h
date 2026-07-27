@@ -52,6 +52,7 @@ SCANNER(ntfsusn)
 SCANNER(outlook)
 SCANNER(pdf)
 SCANNER(rar)
+SCANNER(rtti)
 SCANNER(sqlite)
 SCANNER(utmp)        // scanner provided by 4n6ist:
 SCANNER(vcard)
