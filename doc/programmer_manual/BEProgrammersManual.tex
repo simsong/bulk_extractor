@@ -2,84 +2,396 @@
 \usepackage[margin=1in]{geometry}
 \usepackage[hidelinks]{hyperref}
 \usepackage{fancyvrb}
-\title{bulk\_extractor 2.2 Developer Manual}
+\usepackage{graphicx}
+\usepackage{longtable}
+\newcommand{\bulk}{\textit{bulk\_extractor}}
+\newcommand{\code}[1]{\texttt{#1}}
+\title{bulk\_extractor 2.x Developer Manual}
 \author{bulk\_extractor project}
 \date{July 2026}
 
 \begin{document}
 \maketitle
+\tableofcontents
+\newpage
 
-\section*{Scope}
-This manual describes the 2.x source tree, Autotools build, and scanner API.
-The repository's \texttt{README.md} and \texttt{doc/scanner\_api.md} are the
-authoritative references and are updated with the source.
+\section{Purpose and status of this manual}
 
-\section*{Build and test}
-For a Git checkout, install the dependencies listed in the README, then run:
+This manual is for developers who add, maintain, test, or debug
+\bulk scanners. It is intentionally different from the Current Operating
+Guide: that guide explains how to run an investigation; this guide explains
+how the scanner framework turns bytes into reproducible forensic output.
+
+The 1.x programmer manual supplied the architecture diagrams and development
+focus preserved here. Its build directions, scanner phases, plug-in callbacks,
+and submodule assumptions no longer match the 2.x source tree. This manual
+updates those topics for the current scanner contract. For exact declarations,
+treat \code{doc/scanner\_api.md}, \code{doc/scanner\_template.cpp}, and the
+headers in \code{src/be20\_api/} as authoritative.
+
+\section{Build a development checkout}
+
+Use a Git checkout when changing a scanner. The integrated \code{be20\_api}
+and DFXML sources are already part of the tree; do not initialize recursive
+submodules. Build and test through the Makefiles:
+
 \begin{Verbatim}
+git clone https://github.com/simsong/bulk_extractor.git
+cd bulk_extractor
 bash bootstrap.sh
 ./configure
 make
 make check
 \end{Verbatim}
-Release archives already contain \texttt{configure}, so they do not require
-\texttt{bootstrap.sh}. Use \texttt{make distcheck} before a release or when
-changing the build/distribution manifests. The source tree includes the be20
-API and DFXML dependencies; do not initialize recursive submodules.
 
-\section*{Source layout}
+Release archives already contain \code{configure}, so they do not require
+\code{bootstrap.sh}. Before changing a scanner, read the scanner API reference
+in \code{doc/scanner\_api.md}. Begin a new loadable scanner from
+\code{doc/scanner\_template.cpp}. For a source-distribution or build-manifest
+change, run \code{make distcheck} as well.
+
+\section{The scanner model}
+
+\bulk divides input into \code{sbuf\_t} objects and sends eligible buffers to
+enabled scanners. An sbuf carries bytes, a page/margin boundary, and a
+forensic path identifying where derived data originated. Scanner output is
+written through feature recorders, which provide synchronized feature-file
+writes and can drive histograms. Recursive scanners may expose decoded data
+to the scanner set for another pass.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=.76\linewidth]{system_diagram.pdf}
+\caption{Historical architecture diagram retained from the 1.x developer
+manual. In 2.x, the same high-level data flow remains, while the scanner
+lifecycle and APIs below are the current contract.}
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=.72\linewidth]{margindepiction.pdf}
+\caption{Pages overlap by a margin so scanners can report features that cross
+a page boundary. A scanner should report only according to the sbuf and
+feature-recorder rules; it must not invent its own cross-page ownership rule.}
+\end{figure}
+
+\subsection{Feature files, histograms, and forensic paths}
+
+A feature recorder writes a finding with its forensic position, feature text,
+and context. Several scanners may write to the same recorder. A histogram is
+declared during initialization and is maintained by the feature-recording
+system; a scanner does not hand-roll histogram files while scanning.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=.78\linewidth]{scannersextractfeatures.pdf}
+\caption{A scanner can produce more than one feature type. The names and
+definitions are declared before scanning begins.}
+\end{figure}
+
+The forensic path records transformations as well as offsets. For example, a
+path containing \code{GZIP} or \code{PDF} identifies data derived from that
+operation. Preserve the supplied \code{pos0}; feature recorders use it to keep
+findings traceable to the original evidence.
+
+\section{Lifecycle: the 2.x contract}
+
+Every scanner is a \code{scanner\_t} function receiving a mutable
+\code{scanner\_params\&}. The framework invokes it in phases. The phase is
+not a suggestion: data availability, ownership, and concurrency depend on it.
+
+\begin{longtable}{|p{.20\linewidth}|p{.24\linewidth}|p{.46\linewidth}|}
+\hline
+\textbf{Phase} & \textbf{Where it runs} & \textbf{Scanner responsibility} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Phase} & \textbf{Where it runs} & \textbf{Scanner responsibility} \\
+\hline
+\endhead
+\code{PHASE\_INIT} & Main thread; every loaded scanner & Call
+\code{sp.check\_version()}, set metadata with \code{sp.info}, and declare
+feature recorders, histograms, flags, limits, and \code{-S} help. Do not write
+output or keep \code{sp}. \\
+\hline
+\code{PHASE\_INIT2} & Main thread; enabled scanners only & Recorders now
+exist. Obtain them with \code{sp.named\_feature\_recorder()} and initialize
+scanner-owned state needed during scanning. Do not add definitions. \\
+\hline
+\code{PHASE\_SCAN} & Worker threads; enabled scanners only & Read
+\code{*sp.sbuf}, write findings, and recurse only for intentional derived
+data. Calls to the same scanner may overlap. \\
+\hline
+\code{PHASE\_SHUTDOWN} & Main thread; enabled scanners only & Finish
+scanner-owned output that must precede recorder shutdown. No sbuf is supplied. \\
+\hline
+\code{PHASE\_CLEANUP} & Main thread; every loaded scanner & Release state.
+This must work even when a scanner was disabled and never received INIT2, SCAN,
+or SHUTDOWN. \\
+\hline
+\end{longtable}
+
+The framework applies \code{-e} and \code{-x} between INIT and INIT2. Help
+and disabled-scanner paths therefore reach INIT and CLEANUP but may never
+reach SCAN. Exceptions thrown by one scan callback are recorded by the
+framework; they do not disable the scanner or stop other worker calls.
+
+\subsection{The 1.x to 2.x migration}
+
+Do not copy a 1.x scanner unchanged. These are the important updates:
+
 \begin{itemize}
-\item \texttt{src/} contains the executable, built-in scanners, and the
-  integrated \texttt{be20\_api} component.
-\item \texttt{doc/scanner\_api.md} defines the scanner contract and
-  \texttt{doc/scanner\_template.cpp} is the loadable-scanner starting point.
-\item \texttt{tests/} and the project Makefiles contain regression and
-  integration tests. Run them through \texttt{make check}.
-\item \texttt{.github/workflows/} contains the supported CI builds, including
-  the MinGW Windows artifact build.
+\item \code{PHASE\_STARTUP} became \code{PHASE\_INIT}; use
+  \code{sp.info->set\_name()} and \code{sp.check\_version()} there.
+\item \code{PHASE\_THREAD\_BEFORE\_SCAN} is not a 2.x lifecycle phase.
+  Initialize shared state before concurrent scans, normally in INIT2.
+\item The old recursion control block and callback are replaced by
+  \code{sp.recurse(const sbuf\_t *)}.
+\item The old \code{sp.fs.get\_name()} pattern is obsolete. Use the 2.x
+  named-feature-recorder lookup after recorder creation in INIT2.
+\item The source tree now contains the API dependencies. Build against the
+  same source version as the executable; do not rely on a separately cloned
+  1.x API submodule.
 \end{itemize}
 
-\section*{Scanner lifecycle}
-A scanner is a \texttt{scanner\_t} function that switches on
-\texttt{scanner\_params::phase}. In \texttt{PHASE\_INIT}, call
-\texttt{sp.check\_version()}, name the scanner, and declare feature recorders,
-histograms, flags, and scanner options. In \texttt{PHASE\_INIT2}, retrieve
-declared recorders. \texttt{PHASE\_SCAN} may run concurrently on multiple
-worker threads, including concurrent calls to the same scanner. Treat
-\texttt{sp.sbuf} as read-only and valid only during that callback. Finish
-scanner-owned output in \texttt{PHASE\_SHUTDOWN} and release state in
-\texttt{PHASE\_CLEANUP}; cleanup also runs for disabled scanners.
+\section{Write a scanner}
 
-Declare feature recorders only in \texttt{PHASE\_INIT}; retrieve them in
-\texttt{PHASE\_INIT2}; write findings during \texttt{PHASE\_SCAN}. Recorder
-writes are safe concurrently, but other shared scanner state needs appropriate
-locking or atomics. A scanner can be bypassed for ineligible buffers, so it
-must not assume it sees every input buffer.
+\subsection{Start from the template}
 
-\section*{Loadable scanners}
-Copy \texttt{doc/scanner\_template.cpp}, rename its scanner and metadata, and
-build it against the same bulk\_extractor source version as the executable. A
-module named \texttt{scan\_*} exports:
+Copy \code{doc/scanner\_template.cpp}. Rename the scanner function, the name
+passed to \code{set\_name()}, and the factory only as required by the current
+template. A loadable module must be named \code{scan\_*} and export this
+C-linkage factory:
+
 \begin{Verbatim}
 extern "C" scanner_t *bulk_extractor_scanner_v1();
 \end{Verbatim}
-Use \texttt{-P} to load a development module from an explicit directory. The
-loader also searches \texttt{BE\_PATH}. Keep all factory and lifecycle rules
-from \texttt{doc/scanner\_api.md}; do not retain \texttt{scanner\_params} or
-pointers into an \texttt{sbuf} after a callback returns.
 
-\section*{Windows executable}
-The project does not support a native Windows build or an installer. The
-\texttt{Windows MinGW build} workflow cross-compiles a 64-bit executable on
-Ubuntu using the x86\_64 MinGW-w64 POSIX toolchain. It builds static Expat,
-RE2, and Abseil through a pinned vcpkg checkout, configures with
-\texttt{--host=x86\_64-w64-mingw32 --disable-libewf}, and links the executable
-with \texttt{-all-static}. The workflow uploads a Windows artifact containing
-\texttt{bulk\_extractor64.exe}.
+The factory returns the scanner function. The loader searches directories
+given with \code{-P} and the \code{BE\_PATH} environment variable. Use an
+explicit \code{-P} directory while developing, not the current working
+directory.
 
-The CI job rejects unexpected non-system DLL imports. A Windows runner then
-downloads and executes that same artifact against an input directory with a
-Unicode filename. The artifact does not include libewf, so it cannot read E01
-images. Treat it as a CI artifact, not a signed release package.
+\subsection{A recorder-owning scanner skeleton}
+
+The following skeleton demonstrates the correct phase boundaries. It omits a
+matching algorithm deliberately: the algorithm belongs in the SCAN case and
+must be covered by a focused regression test.
+
+\begin{Verbatim}
+#include "config.h"
+#include "scanner_params.h"
+
+namespace {
+feature_recorder *keyword_recorder = nullptr;
+
+void scan_keyword(scanner_params &sp)
+{
+    switch (sp.phase) {
+    case scanner_params::PHASE_INIT:
+        sp.check_version();
+        sp.info->set_name("keyword");
+        sp.info->author = "Your Name";
+        sp.info->description = "Extracts a documented keyword format.";
+        sp.info->scanner_version = "1.0";
+        sp.info->feature_defs.emplace_back("keyword");
+        return;
+
+    case scanner_params::PHASE_INIT2:
+        keyword_recorder = &sp.named_feature_recorder("keyword");
+        return;
+
+    case scanner_params::PHASE_SCAN:
+        // Read *sp.sbuf only here. Write real findings through keyword_recorder.
+        return;
+
+    case scanner_params::PHASE_CLEANUP:
+        keyword_recorder = nullptr;
+        return;
+
+    default:
+        return;
+    }
+}
+}
+
+extern "C" scanner_t *bulk_extractor_scanner_v1()
+{
+    return scan_keyword;
+}
+\end{Verbatim}
+
+Declare all feature-recorder and histogram definitions in INIT. Retrieve a
+recorder only in INIT2, then use \code{write()}, \code{write\_buf()}, or
+\code{carve()} during SCAN as appropriate. Recorder writes are safe for
+concurrent scanner calls. Other shared state is the scanner's responsibility:
+prefer immutable data, stack-local state, atomics, or narrowly scoped locks.
+
+\subsection{Sbuf ownership and recursion}
+
+\code{sp.sbuf} is read-only and is valid only for the current SCAN callback.
+Never save \code{sp}, \code{sp.sbuf}, or a pointer into its bytes for a later
+callback. A scanner can be bypassed for duplicate buffers, small buffers,
+ngrams, depth limits, or scanner flags; it must not assume it observes every
+input buffer.
+
+To expose validated decoded data, allocate or construct a child sbuf with the
+appropriate forensic path and pass ownership to \code{sp.recurse()}. Limit
+recursion deliberately and avoid transformations that can re-create the same
+input indefinitely. The historical data-flow diagram below remains useful,
+but the current recursion entry point is \code{sp.recurse()}, not a callback
+in a recursion control block.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=.70\linewidth]{extractinformationreprocess.pdf}
+\caption{Decoded data is returned to the scanner framework for another pass.
+The 2.x API expresses that operation through \code{sp.recurse()}.}
+\end{figure}
+
+\section{Build and load a development plug-in}
+
+The in-tree \code{src/test\_plugin.cpp} and its \code{scan\_test\_plugin.la}
+target in \code{src/Makefile.am} are the maintained example of a Libtool
+module. Copy that integration pattern for an in-tree proof of concept rather
+than guessing platform-specific shared-library flags. Keep a production
+plug-in in its own project if it has an independent release cycle, but compile
+it against the same \bulk headers and ABI as the executable.
+
+After building a module named, for example, \code{scan\_keyword.so}, run it
+from an explicit directory:
+
+\begin{Verbatim}
+./src/bulk_extractor -P /absolute/path/to/plugins -xall -e keyword \
+    -o output evidence.img
+\end{Verbatim}
+
+On macOS the module extension is normally \code{.dylib}; on Windows it is
+\code{.dll}. The factory name and scanner-parameter version check are the
+portable contract, not an assumed extension or loader search path.
+
+\section{Debug a scanner systematically}
+
+\subsection{Start small and isolate the scanner}
+
+Use a tiny, redistributable fixture that demonstrates the expected finding,
+a boundary condition, and malformed input where relevant. Start with all
+scanners disabled, then enable only the scanner under investigation:
+
+\begin{Verbatim}
+./src/bulk_extractor -xall -e keyword -o output fixture.bin
+\end{Verbatim}
+
+The project provides these useful diagnostic controls:
+
+\begin{itemize}
+\item \code{DEBUG\_PRINT\_STEPS=1} reports scanner calls and helps verify
+  lifecycle and selection behavior.
+\item \code{DEBUG\_SCANNER\_DUMP\_DATA=1} hex-dumps sbufs presented to
+  scanners. Use it only with non-sensitive test data.
+\item \code{DEBUG\_SCANNERS\_IGNORE} accepts a scanner-name substring and is
+  useful when narrowing an in-tree test.
+\item \code{-xall} followed by \code{-e name} verifies that a result belongs
+  to the scanner being debugged rather than another enabled scanner.
+\end{itemize}
+
+Feature output should be inspected with its forensic path and context, not
+only the feature string. For a recursive scanner, test both the derived
+finding and the path that proves how it was reached.
+
+\subsection{Test the actual contract}
+
+Add a regression that invokes the normal scanner set or a focused scanner
+test; do not test a private helper while leaving lifecycle and recorder wiring
+untested. Run the relevant Makefile target, then the complete suite before
+publication:
+
+\begin{Verbatim}
+make -C src check TESTS=test_be
+make check
+\end{Verbatim}
+
+For a loadable scanner, include a test that loads the module through \code{-P}
+or the scanner-set loading path. The existing \code{scan\_test\_plugin.la}
+test is the reference for this boundary. Confirm all of the following:
+
+\begin{itemize}
+\item INIT declares every recorder and histogram before INIT2.
+\item A disabled scanner survives CLEANUP without assuming INIT2 ran.
+\item SCAN is safe when concurrent calls reach the same scanner.
+\item A result at a page boundary is reported once, with the correct
+  forensic path.
+\item Recursive input terminates, preserves provenance, and does not retain
+  an sbuf beyond the callback.
+\end{itemize}
+
+\subsection{Common failures}
+
+\begin{longtable}{|p{.30\linewidth}|p{.60\linewidth}|}
+\hline
+\textbf{Symptom} & \textbf{Likely cause and correction} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Symptom} & \textbf{Likely cause and correction} \\
+\hline
+\endhead
+No output file & The recorder was not declared in INIT, the scanner was not
+enabled, or the scan path was bypassed. Check selection with \code{-xall -e}
+and inspect DEBUG\_PRINT\_STEPS output. \\
+\hline
+Crash only with threads & Shared mutable state is unsynchronized or a pointer
+into an sbuf outlived SCAN. Move transient state onto the stack and protect
+the minimum necessary shared state. \\
+\hline
+Module will not load & Check the \code{scan\_*} filename, the C-linkage
+factory name, the \code{-P} path, and that the module was built for the same
+source/API version. \\
+\hline
+Duplicate or missing boundary finding & Verify the reported offset and use the
+provided sbuf/page semantics. Do not independently scan ownership margins. \\
+\hline
+Unbounded work or repeated paths & Bound recursive transformation and avoid
+feeding equivalent decoded data back into the scanner set. \\
+\hline
+\end{longtable}
+
+\clearpage
+\section{Further reading and release checklist}
+
+\begin{itemize}
+\item \code{doc/scanner\_api.md}: normative lifecycle and concurrency
+  contract.
+\item \code{doc/scanner\_template.cpp}: minimal loadable scanner starting
+  point.
+\item \code{src/test\_plugin.cpp}: loadable-scanner integration example.
+\item \code{src/scan\_pdf.cpp}, \code{src/scan\_outlook.cpp}: current
+  recursion examples.
+\item \code{src/be20\_api/scan\_sha1\_test.cpp}: recorder and histogram
+  example used by tests.
+\end{itemize}
+
+Before publishing a scanner change, re-read the scanner API contract, run the
+focused Makefile test and \code{make check}, inspect a small fixture's feature
+output and forensic paths, and confirm that the change does not alter scanner
+selection or recursive behavior unintentionally. For a loadable scanner, also
+test the real shared module through \code{-P}; compiling a source file is not
+proof that the loader, version check, and lifecycle wiring work together.
+
+\subsection{Scanner review checklist}
+
+Before requesting review, answer these questions from the code and its test:
+
+\begin{itemize}
+\item Is every \code{scanner\_info} definition complete before INIT2?
+\item Does the scanner avoid retaining \code{scanner\_params}, \code{sbuf},
+  or raw buffer pointers after SCAN returns?
+\item Is all scanner-owned mutable state safe for overlapping SCAN calls?
+\item Does every recursive path have a validation and termination argument?
+\item Does the regression assert emitted evidence, forensic path, and the
+  negative case rather than only reaching a helper function?
+\item Does a disabled scanner clean up safely without assuming it initialized
+  a recorder or processed an sbuf?
+\end{itemize}
 
 \end{document}
