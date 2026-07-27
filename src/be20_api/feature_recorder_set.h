@@ -121,10 +121,12 @@ public:
     const hash_def hasher; // name and function that perform hashing; set by allocator
 
     static const std::string ALERT_RECORDER_NAME; // the name of the alert recorder
+    static const std::string ALERT_LIST_RECORDER_NAME; // features matched by the user alert list
     // static const std::string   DISABLED_RECORDER_NAME; // the fake disabled feature recorder
 
     void set_stop_list(const word_and_context_list* alist) { stop_list = alist; }
     void set_alert_list(const word_and_context_list* alist) { alert_list = alist; }
+    void create_alert_list_recorder();
     void create_stop_list_recorders();
 
     /** Initialize a feature_recorder_set. Previously this was a constructor, but it turns out that

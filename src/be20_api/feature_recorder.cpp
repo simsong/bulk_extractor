@@ -169,21 +169,14 @@ void feature_recorder::write(const pos0_t& pos0, const std::string &original_fea
         return;
     }
 
-    /* The alert list is a special features that are called out.
-     * If we have one of those, write it to the redlist.
-     */
-#if 0
-    if (flags.no_alertlist==false
+    /* Alert-list matches are recorded separately and remain in their normal feature file. */
+    if (def.flags.no_alertlist == false
         && fs.alert_list
-        && fs.alert_list->check_feature_context(*feature_utf8,context)) {
-        std::filesystem::path alert_fn = fs.get_outdir() + "/ALERTS_found.txt";
-        const std::lock_guard<std::mutex> lock(Mr);                // notice we are locking the alert list
-        std::ofstream rf(alert_fn.c_str(),std::ios_base::app);
-        if(rf.is_open()){
-            rf << pos0.shift(fs.offset_add).str() << '\t' << feature << '\t' << "\n";
-        }
+        && fs.alert_list->size() > 0
+        && fs.alert_list->check_feature_context(feature_utf8, context)) {
+        fs.named_feature_recorder(feature_recorder_set::ALERT_LIST_RECORDER_NAME)
+            .write0(pos0, feature_utf8, context);
     }
-#endif
 
     /* Write out the feature and the context */
     this->write0(pos0, feature_utf8, context);
