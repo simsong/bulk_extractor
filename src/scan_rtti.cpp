@@ -1,9 +1,9 @@
 /**
  * Carves 8-bit RawTherapee thumbnail images.
  *
- * RTTI Image8 records contain "Image8\n", native little-endian width and
- * height values, and contiguous RGB bytes. A PPM header makes the pixels
- * directly viewable without copying or transforming the image data.
+ * RTTI Image8 records contain "Image8\n", little-endian width and height
+ * values, and contiguous RGB bytes. A PPM header makes the pixels directly
+ * viewable without copying or transforming the image data.
  */
 
 #include "config.h"
@@ -52,10 +52,10 @@ void carve_image8(const sbuf_t &sbuf, feature_recorder &recorder)
 
         const std::string ppm_header = "P6\n" + std::to_string(width) + " " +
                                        std::to_string(height) + "\n255\n";
-        const sbuf_t header(ppm_header.c_str());
+        std::unique_ptr<sbuf_t> header(sbuf_t::sbuf_malloc(pos0_t(), ppm_header));
         std::unique_ptr<sbuf_t> pixels(
             sbuf.new_slice(sbuf.pos0 + start, pixel_offset, pixel_bytes));
-        recorder.carve(header, *pixels, ".ppm");
+        recorder.carve(*header, *pixels, ".ppm");
         search_offset = pixel_offset + pixel_bytes;
     }
 }
