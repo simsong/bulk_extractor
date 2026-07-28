@@ -378,6 +378,28 @@ TEST_CASE("select_scanners", "[end-to-end]") {
     REQUIRE( endpos != startpos + 1);
 }
 
+TEST_CASE("enable_all_scanners", "[end-to-end]") {
+    const std::filesystem::path inpath = test_dir() / "pdf_words2.pdf";
+    const std::filesystem::path outdir = NamedTemporaryDirectory();
+    const std::string inpath_string = inpath.string();
+    const std::string outdir_string = outdir.string();
+    std::stringstream ss;
+    const char *argv[] = {"bulk_extractor", "-0q", "-x", "all", "-e", "all",
+                          "-o", outdir_string.c_str(), inpath_string.c_str(), nullptr};
+    REQUIRE(run_be(ss, std::cerr, argv) == 0);
+
+    const auto lines = getLines(outdir / "report.xml");
+    const auto startpos = std::find(lines.begin(), lines.end(), "    <scanners>");
+    const auto endpos = std::find(lines.begin(), lines.end(), "    </scanners>");
+    REQUIRE(startpos != lines.end());
+    REQUIRE(endpos != lines.end());
+    REQUIRE(std::count(startpos, endpos, "      <scanner>email</scanner>") == 1);
+    REQUIRE(std::count(startpos, endpos, "      <scanner>accts</scanner>") == 1);
+    REQUIRE(std::count_if(startpos, endpos, [](const std::string& line) {
+        return line.find("<scanner>") != std::string::npos;
+    }) > 10);
+}
+
 TEST_CASE("select_disabled_scanner", "[end-to-end]") {
     std::filesystem::path inpath = test_dir() / "pdf_words2.pdf";
     std::filesystem::path outdir = NamedTemporaryDirectory();
