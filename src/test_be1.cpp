@@ -63,8 +63,6 @@
 
 #include "test_be.h"
 
-extern "C" void scan_sqlite(scanner_params& sp);
-
 #ifdef HAVE_EXIV2
 extern "C" void scan_exiv2(scanner_params& sp);
 #endif

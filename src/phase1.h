@@ -42,8 +42,8 @@ class Phase1 {
 public:
     class ThreadWaitTimeout : public std::runtime_error {
     public:
-        explicit ThreadWaitTimeout(time_t maximum_wait):
-            std::runtime_error("timed out waiting for scanner threads"), maximum_wait(maximum_wait) {}
+        explicit ThreadWaitTimeout(time_t wait_timeout):
+            std::runtime_error("timed out waiting for scanner threads"), maximum_wait(wait_timeout) {}
         const time_t maximum_wait;
     };
 

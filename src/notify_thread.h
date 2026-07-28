@@ -20,7 +20,8 @@ class notify_thread {
     void *run();
 public:
     notify_thread(std::ostream &os_, scanner_set &ss_, const Phase1::Config &cfg_, aftimer &master_timer_, std::atomic<double> *fraction_done_):
-        os(os_), ss(ss_), cfg(cfg_), master_timer(master_timer_),fraction_done(fraction_done_) {};
+        the_notify_thread(), os(os_), ss(ss_), cfg(cfg_), master_timer(master_timer_), fraction_done(fraction_done_),
+        phase_changed() {};
     ~notify_thread();
     static int terminal_width( int default_width );
     std::ostream &os;

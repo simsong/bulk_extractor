@@ -24,6 +24,7 @@
 #include <signal.h>
 #endif
 #include <unistd.h>
+#include <sys/wait.h>
 #include <string>
 #include <string_view>
 #include <sstream>
@@ -302,7 +303,10 @@ TEST_CASE("e2e-0", "[end-to-end]") {
     /* Validate the dfxml file is valid dfxml*/
     std::string validate = std::string("xmllint --noout ") + xml_file;
     int code = system( validate.c_str());
-    REQUIRE( code==0 );
+    /* WEXITSTATUS(127) means the shell could not find xmllint; skip validation */
+    if (WIFEXITED(code) && WEXITSTATUS(code) != 127) {
+        REQUIRE( code==0 );
+    }
 
     // This is the second time through - clear cout and cerr first
     // https://stackoverflow.com/questions/20731/how-do-you-clear-a-stringstream-variable
@@ -579,6 +583,10 @@ TEST_CASE("e2e-CFReDS001", "[end-to-end]") {
         std::cerr << "DEBUG_FAST set; e2e-CFReDS001" << std::endl;
         return;
     }
+#ifndef HAVE_LIBEWF
+    std::cerr << "Skipping e2e-CFReDS001: compiled without E01 support" << std::endl;
+    return;
+#endif
 
     std::filesystem::path inpath = test_dir() / "CFReDS001.E01";
     std::string inpath_string = inpath.string();
@@ -624,6 +632,10 @@ TEST_CASE("e2e-email_test", "[end-to-end]") {
         std::cerr << "DEBUG_FAST set; skipping e2e-email_test" << std::endl;
         return;
     }
+#ifndef HAVE_LIBEWF
+    std::cerr << "Skipping e2e-email_test: compiled without E01 support" << std::endl;
+    return;
+#endif
 
     std::filesystem::path inpath = test_dir() / "email_test.E01";
     std::string inpath_string = inpath.string();
@@ -728,12 +740,14 @@ TEST_CASE("image_process", "[phase1]") {
     auto split = image_process::open(split0, false, 65536, 65536);
     REQUIRE(split->image_size() == 3);
 
+#ifdef HAVE_LIBEWF
     const std::filesystem::path e01_dir = NamedTemporaryDirectory();
     const std::filesystem::path lower_e01 = e01_dir / "CFReDS001.e01";
     std::filesystem::copy_file(test_dir() / "CFReDS001.E01", lower_e01);
     auto e01 = image_process::open(lower_e01, false, 65536, 65536);
     REQUIRE(e01 != nullptr);
     REQUIRE_THROWS_AS(image_process::open(e01_dir, true, 65536, 65536), image_process::FoundDiskImage);
+#endif
 }
 
 #if defined(__linux__)
