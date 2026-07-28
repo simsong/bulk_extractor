@@ -2,7 +2,16 @@
 AM_CPPFLAGS = -I${top_srcdir}/src/be20_api
 AUTOMAKE_OPTIONS = subdir-objects
 
-EXTRA_DIST = scanner_api.md scanner_template.cpp
+EXTRA_DIST = scanner_api.md scanner_template.cpp \
+    programmer_manual/BEProgrammersManual.tex \
+    programmer_manual/Makefile.am \
+    programmer_manual/extractinformationreprocess.pdf \
+    programmer_manual/histogramprocessing.pdf \
+    programmer_manual/margindepiction.pdf \
+    programmer_manual/scannerloop.pdf \
+    programmer_manual/scannersextractfeatures.pdf \
+    programmer_manual/system_diagram.pdf \
+    programmer_manual/writetoemail.pdf
 
 .PHONY: pdfs
 pdfs:
