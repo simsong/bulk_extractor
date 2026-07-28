@@ -10,6 +10,35 @@ permissions:
   contents: read
 
 jobs:
+  debian:
+    name: Debian Bookworm build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout recursively
+        uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - name: Bootstrap and build in Debian
+        run: |
+          docker run --rm \
+            --mount type=bind,source="$GITHUB_WORKSPACE",target=/src \
+            --workdir /src \
+            debian:bookworm \
+            bash -ec '
+              export DEBIAN_FRONTEND=noninteractive
+              apt-get update
+              apt-get install -y --no-install-recommends \
+                autoconf automake build-essential flex git libabsl-dev \
+                libexpat1-dev libgcrypt20-dev libgpg-error-dev libre2-dev \
+                libssl-dev libtool make pkg-config procps python3 zlib1g-dev
+              git config --global --add safe.directory /src
+              bash bootstrap.sh
+              ./configure --disable-libewf --enable-silent-rules --quiet
+              make -j2
+            '
+
   build:
     strategy:
       fail-fast: false

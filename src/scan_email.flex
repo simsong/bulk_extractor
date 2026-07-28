@@ -301,6 +301,11 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
     for (unsigned int i=0;i<(unsigned int)yyleng;i++){
         if (SBUF[POS+i]=='/') slash_count++;
     }
+    const std::string html_quote = "&quot;";
+    if (feature_len >= static_cast<int>(html_quote.size()) &&
+        std::string(reinterpret_cast<const char *>(SBUF.get_buf() + POS + feature_len - html_quote.size()), html_quote.size()) == html_quote) {
+        feature_len -= html_quote.size();
+    }
     if (slash_count==2){
        while(feature_len>0 && !isalpha(SBUF[POS+feature_len-1])){
          feature_len--;

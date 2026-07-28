@@ -404,6 +404,28 @@ TEST_CASE("scan_utmp_big_endian", "[scanners]") {
     }) == 100 );
 }
 
+
+TEST_CASE("scan_email_excludes_html_quote_entity", "[scanners]") {
+    const auto has_url_feature = [](const std::vector<std::string> &lines, const std::string &feature) {
+        for (const auto &line : lines) {
+            if (has(line, "\t" + feature + "\t")) return true;
+        }
+        return false;
+    };
+
+    auto *sbufp = new sbuf_t("http://www.icra.org/ratingsv02.html&quot;");
+    auto outdir = test_scanner(scan_email, sbufp);
+    auto url_txt = getLines(outdir / "url.txt");
+    REQUIRE( requireFeature(url_txt, "0\thttp://www.icra.org/ratingsv02.html\t") );
+    REQUIRE_FALSE( has_url_feature(url_txt, "http://www.icra.org/ratingsv02.html&quot;") );
+
+    auto *host_sbufp = new sbuf_t("http://www.msn.com&quot;");
+    auto host_outdir = test_scanner(scan_email, host_sbufp);
+    auto host_url_txt = getLines(host_outdir / "url.txt");
+    REQUIRE( requireFeature(host_url_txt, "0\thttp://www.msn.com\t") );
+    REQUIRE_FALSE( has_url_feature(host_url_txt, "http://www.msn.com&quot;") );
+}
+
 TEST_CASE("scan_exif0", "[scanners]") {
     auto *sbufp = map_file("1.jpg");
     REQUIRE( sbufp->bufsize == 7323 );
