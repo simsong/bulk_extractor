@@ -30,6 +30,8 @@
 #include <set>
 #include <mutex>
 #include <ctype.h>
+#include <iomanip>
+#include <sstream>
 
 #include "be20_api/formatter.h"
 #include "be20_api/utils.h"
@@ -46,6 +48,31 @@
 
 int opt_report_checksum_bad= 0;		// if true, report bad chksums
 int opt_report_packet_path = 0;         // if true, report packets to packets.txt
+
+namespace {
+constexpr size_t IEEE80211_BASE_HEADER_LEN = 24;
+constexpr size_t IEEE80211_LLC_SNAP_LEN = 8;
+
+size_t ieee80211_payload_offset(const sbuf_t &sbuf, size_t pos, size_t packet_len)
+{
+    if (packet_len < IEEE80211_BASE_HEADER_LEN) return 0;
+    const uint16_t frame_control = sbuf.get16u_unsafe(pos);
+    if (((frame_control >> 2) & 0x3) != 2 || (frame_control & 0x4000)) return 0;
+
+    size_t header_len = IEEE80211_BASE_HEADER_LEN;
+    if ((frame_control & 0x0300) == 0x0300) header_len += 6;
+    if (((frame_control >> 4) & 0x8) != 0) header_len += 2;
+    if ((frame_control & 0x8000) != 0) header_len += 4;
+    if (header_len + IEEE80211_LLC_SNAP_LEN > packet_len) return 0;
+
+    const uint8_t *llc = sbuf.get_buf() + pos + header_len;
+    if (llc[0] != 0xaa || llc[1] != 0xaa || llc[2] != 0x03 ||
+        llc[3] != 0 || llc[4] != 0 || llc[5] != 0) return 0;
+    const uint16_t ether_type = static_cast<uint16_t>(llc[6]) << 8 | llc[7];
+    if (ether_type != ETHERTYPE_IP && ether_type != ETHERTYPE_IPV6) return 0;
+    return header_len + IEEE80211_LLC_SNAP_LEN;
+}
+}
 
 
 /* packetset is a set of the addresses of packets that have been written.
@@ -164,7 +191,8 @@ scan_net_t::scan_net_t(const scanner_params &sp):
     pwriter(sp),
     ip_recorder(sp.named_feature_recorder("ip")),
     tcp_recorder(sp.named_feature_recorder("tcp")),
-    ether_recorder(sp.named_feature_recorder("ether"))
+    ether_recorder(sp.named_feature_recorder("ether")),
+    wifi_recorder(sp.named_feature_recorder("wifi"))
 {
 }
 
@@ -582,6 +610,56 @@ void  scan_net_t::documentIPFields(const sbuf_t &sbuf, size_t pos, const generic
     }
 }
 
+void scan_net_t::recordWifiFrame(const sbuf_t &sbuf, size_t pos, size_t packet_len,
+                                 const pcap_writer::pcap_hdr &pch) const
+{
+    if (packet_len < 2) return;
+    const uint16_t frame_control = sbuf.get16u_unsafe(pos);
+    const uint8_t type = (frame_control >> 2) & 0x3;
+    const uint8_t subtype = (frame_control >> 4) & 0xf;
+    const char *kind = type == 0 ? "management" : type == 1 ? "control" :
+        type == 2 ? "data" : "reserved";
+    const char *detail = "";
+    if (type == 0) {
+        static const char *management_subtypes[] = {
+            "association-request", "association-response", "reassociation-request", "reassociation-response",
+            "probe-request", "probe-response", "timing-advertisement", "reserved",
+            "beacon", "atim", "disassociation", "authentication", "deauthentication", "action", "action-no-ack", "reserved"
+        };
+        detail = management_subtypes[subtype];
+    } else if (type == 2) {
+        detail = subtype == 0 ? "data" : subtype == 4 ? "null" : subtype == 8 ? "qos-data" :
+            subtype == 12 ? "qos-null" : "data-subtype";
+    }
+
+    const size_t ip_offset = ieee80211_payload_offset(sbuf, pos, packet_len);
+    std::ostringstream context;
+    context << "type=" << kind << " subtype=" << detail
+            << " to_ds=" << ((frame_control & 0x0100) ? "yes" : "no")
+            << " from_ds=" << ((frame_control & 0x0200) ? "yes" : "no")
+            << " protected=" << ((frame_control & 0x4000) ? "yes" : "no");
+    if (ip_offset != 0) {
+        context << " network=" << (sbuf.get8u_unsafe(pos + ip_offset) >> 4 == 6 ? "IPv6" : "IPv4");
+    }
+    context << " timestamp=" << pch.seconds << '.' << pch.useconds;
+    if (packet_len >= IEEE80211_BASE_HEADER_LEN && type != 1) {
+        const auto mac = [](const uint8_t *address) {
+            std::ostringstream text;
+            text << std::hex << std::setfill('0');
+            for (size_t i = 0; i < ETHER_ADDR_LEN; i++) {
+                if (i != 0) text << ':';
+                text << std::setw(2) << static_cast<unsigned>(address[i]);
+            }
+            return text.str();
+        };
+        const uint8_t *frame = sbuf.get_buf() + pos;
+        context << " receiver=" << mac(frame + 4)
+                << " transmitter=" << mac(frame + 10)
+                << " address3=" << mac(frame + 16);
+    }
+    wifi_recorder.write(sbuf.pos0 + pos, kind, context.str());
+}
+
 /* Validate if sbuf+pos contains an IPv4 or IPv6 frame */
 
 
@@ -789,7 +867,7 @@ size_t scan_net_t::carvePCAPFileHeader(const sbuf_t &sbuf, size_t pos) const
  * Validate and write a pcap packet. Return the number of bytes written.
  * Called on every byte, so it must be fast.
  */
-size_t scan_net_t::carvePCAPPackets(const sbuf_t &sbuf, size_t pos, sanityCache_t *sc) const
+size_t scan_net_t::carvePCAPPackets(const sbuf_t &sbuf, size_t pos, sanityCache_t *sc, uint32_t link_type) const
 {
     struct pcap_writer::pcap_hdr pch {};
     if (likely_valid_pcap_packet_header(sbuf, pos, &pch)==false){
@@ -811,6 +889,25 @@ size_t scan_net_t::carvePCAPPackets(const sbuf_t &sbuf, size_t pos, sanityCache_
     bool next_pcap_header_looks_valid = likely_valid_pcap_packet_header(sbuf, pos+PCAP_RECORD_HEADER_SIZE+pch.cap_len, &h_next);
 
     if ( pcap_at_end_of_sbuf || next_pcap_header_looks_valid ){
+        const size_t packet_pos = pos + PCAP_RECORD_HEADER_SIZE;
+        if (link_type == DLT_IEEE802_11) {
+            recordWifiFrame(sbuf, packet_pos, pch.cap_len, pch);
+            const size_t ip_offset = ieee80211_payload_offset(sbuf, packet_pos, pch.cap_len);
+            if (ip_offset != 0) {
+                generic_iphdr_t h2;
+                if (sanityCheckIP46Header(sbuf, packet_pos + ip_offset, &h2, sc) && h2.is_4or6()) {
+                    try {
+                        documentIPFields(sbuf, packet_pos + ip_offset, h2);
+                    }
+                    catch (port0_exception &) {
+                        return 0;
+                    }
+                }
+            }
+            ip_recorder.write(sbuf.pos0 + packet_pos, "802.11", "PCAP IEEE 802.11 frame");
+            pwriter.pcap_writepkt(pch, sbuf, packet_pos, false, 0, link_type);
+            return PCAP_RECORD_HEADER_SIZE + pch.cap_len;
+        }
 
         // If we got here, then carve the packet.
         // pcap files can contain either raw IP or ethernet followed by IP.
@@ -818,20 +915,20 @@ size_t scan_net_t::carvePCAPPackets(const sbuf_t &sbuf, size_t pos, sanityCache_
 
         generic_iphdr_t h2;
         uint16_t pseudo_frame_ethertype = 0;
-        bool is_raw_ip = sanityCheckIP46Header(sbuf, pos+PCAP_RECORD_HEADER_SIZE, &h2, sc);
+        bool is_raw_ip = sanityCheckIP46Header(sbuf, packet_pos, &h2, sc);
         if (is_raw_ip) {
             // It's raw IP if the IP46 header validated. So make a fake header. We've already learned the IPv46 header.
             pseudo_frame_ethertype = (h2.family == AF_INET6) ? ETHERTYPE_IPV6 : ETHERTYPE_IP;
         } else {
             // Otherwise, learn the IPv46 header
-            sanityCheckIP46Header(sbuf, pos+PCAP_RECORD_HEADER_SIZE+ETHER_HEAD_LEN, &h2, sc);
+            sanityCheckIP46Header(sbuf, packet_pos+ETHER_HEAD_LEN, &h2, sc);
         }
 
         /* If this is a IPv4 or IPv6 (from the learned header), write it out.*/
         if (h2.is_4or6()) {
             try {
-                documentIPFields(sbuf, pos+PCAP_RECORD_HEADER_SIZE, h2);
-                pwriter.pcap_writepkt(pch, sbuf, pos+PCAP_RECORD_HEADER_SIZE, is_raw_ip, pseudo_frame_ethertype);
+                documentIPFields(sbuf, packet_pos, h2);
+                pwriter.pcap_writepkt(pch, sbuf, packet_pos, is_raw_ip, pseudo_frame_ethertype, link_type);
             }
             catch (port0_exception &e) {
                 return 0;
@@ -861,16 +958,18 @@ void scan_net_t::carve(const sbuf_t &sbuf) const
      */
     size_t pos = 0;
     sanityCache_t sc {};
+    uint32_t pcap_link_type = DLT_EN10MB;
     while (pos + min_packet_bytes < sbuf.pagesize) {
         /* Look for a PCAPFile header */
         size_t file_header_bytes = carvePCAPFileHeader( sbuf, pos);
         if (file_header_bytes > 0) {
+            pcap_link_type = sbuf.get32u_unsafe(pos + 20);
             pos += file_header_bytes;
             continue;
         }
 
         /* Look for a PCAP Packet without a PCAP File header. Could just be floating in space. Or it could be following a header.*/
-        size_t packet_bytes = carvePCAPPackets( sbuf, pos, &sc );
+        size_t packet_bytes = carvePCAPPackets( sbuf, pos, &sc, pcap_link_type );
         if (packet_bytes > 0) {
             pos += packet_bytes;
             continue;
@@ -922,6 +1021,7 @@ void scan_net(scanner_params &sp)
 
 	sp.info->feature_defs.push_back( feature_recorder_def("ip"));
 	sp.info->feature_defs.push_back( feature_recorder_def("ether"));
+	sp.info->feature_defs.push_back( feature_recorder_def("wifi"));
 
 	/* changed the pattern to be the entire feature,
 	 * since histogram was not being created with previous pattern

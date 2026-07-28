@@ -1,0 +1,24 @@
+wifi_management.pcap contains one IEEE 802.11 beacon frame copied with
+tcpdump -c 1 from Network_Join_Nokia_Mobile.pcap, published by the
+Wireshark project as a sample capture:
+
+https://wiki.wireshark.org/uploads/__moin_import__/attachments/SampleCaptures/Network_Join_Nokia_Mobile.pcap
+
+The upstream Wireshark source tree is GPL-2.0-or-later; this 164-byte
+derivative is included under this project's GPL-2.0-or-later license.
+
+wifi_management_pair.pcap contains the first two frames from the same source
+and verifies that the global DLT_IEEE802_11 link type is retained for every
+record in a multi-packet capture.
+
+wifi_ipv4.pcap contains the first packet of http_PPI.cap, another Wireshark
+sample capture. Its 84-byte PPI metadata header was removed; the original
+IEEE 802.11 QoS data frame, LLC/SNAP header, IPv4 packet, timestamp, and
+packet lengths are unchanged:
+
+https://wiki.wireshark.org/uploads/e8cebabd278b76e3bc9edbd484c4d293/http_PPI.cap
+
+wifi_ipv6.pcap combines the same public 802.11 QoS data header with the
+project's ipv6_packet.pkt payload, using LLC/SNAP EtherType 0x86dd. It
+exercises preservation of an IPv6 802.11 data frame without inventing an IP
+packet.
