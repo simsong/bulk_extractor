@@ -23,8 +23,10 @@
 #define UTMP_RECORD 384
 #define FEATURE_FILE_NAME "utmp_carved"
 
-bool check_utmprecord_signature(size_t offset, const sbuf_t &sbuf) {
-    uint16_t ut_type = sbuf.get16i(offset);
+static feature_recorder *utmp_recorder;
+
+static bool check_utmprecord_signature(size_t offset, const sbuf_t &sbuf, sbuf_t::byte_order_t byte_order) {
+    uint16_t ut_type = sbuf.get16i(offset, byte_order);
     if(ut_type < 1 || ut_type > 8) // not search for ut_type 0 'UT_UNKNOWN' and 9 "ACCOUNTING"
         return false;
 
@@ -61,10 +63,10 @@ bool check_utmprecord_signature(size_t offset, const sbuf_t &sbuf) {
                 if (sbuf[offset+76+i+j] != 0)
                     return false;
 
-    if (sbuf.get32i(offset+340) <= 0) //tv_sec
+    if (sbuf.get32i(offset+340, byte_order) <= 0) //tv_sec
         return false;
 
-    if (sbuf.get32i(offset+344) < 0 || sbuf.get32i(offset+344) >= 1000000) //tv_usec
+    if (sbuf.get32i(offset+344, byte_order) < 0 || sbuf.get32i(offset+344, byte_order) >= 1000000) //tv_usec
         return false;
 
     for (int i=0; i<20; i++) {
@@ -75,6 +77,11 @@ bool check_utmprecord_signature(size_t offset, const sbuf_t &sbuf) {
     return true;
 }
 
+bool check_utmprecord_signature(size_t offset, const sbuf_t &sbuf) {
+    return check_utmprecord_signature(offset, sbuf, sbuf_t::BO_LITTLE_ENDIAN) ||
+           check_utmprecord_signature(offset, sbuf, sbuf_t::BO_BIG_ENDIAN);
+}
+
 extern "C"
 
 void scan_utmp(scanner_params &sp)
@@ -83,17 +90,19 @@ void scan_utmp(scanner_params &sp)
     if(sp.phase==scanner_params::PHASE_INIT){
         sp.info->set_name("utmp" );
         sp.info->author          = "Teru Yamazaki";
-        sp.info->description     = "Scans for utmp record";
-        sp.info->scanner_version = "1.1";
+        sp.info->description     = "Scans for utmp and wtmp records";
+        sp.info->scanner_version = "1.2";
         struct feature_recorder_def::flags_t carve_flag;
         carve_flag.carve = true;
         sp.info->feature_defs.push_back(feature_recorder_def(FEATURE_FILE_NAME, carve_flag));
         return;
     }
+    if(sp.phase==scanner_params::PHASE_INIT2){
+        utmp_recorder = &sp.named_feature_recorder(FEATURE_FILE_NAME);
+        return;
+    }
     if(sp.phase==scanner_params::PHASE_SCAN){
         const sbuf_t &sbuf = *(sp.sbuf);
-        //feature_recorder_set &fs = sp.fs;
-        feature_recorder &utmp_recorder = sp.named_feature_recorder(FEATURE_FILE_NAME);
 
         size_t offset = 0;
         size_t stop = sbuf.pagesize;
@@ -102,13 +111,16 @@ void scan_utmp(scanner_params &sp)
             return;
 
         // search for utmp record in the sbuf
-        while (offset < stop-UTMP_RECORD) {
+        while (offset <= stop-UTMP_RECORD) {
             if (check_utmprecord_signature(offset, sbuf)) {
-                utmp_recorder.carve(sbuf_t(sbuf,offset,UTMP_RECORD),"utmp");
+                utmp_recorder->carve(sbuf_t(sbuf,offset,UTMP_RECORD),"utmp");
                 offset += UTMP_RECORD;
             } else {
                 offset += 8;
             }
         }
+    }
+    if(sp.phase==scanner_params::PHASE_CLEANUP){
+        utmp_recorder = nullptr;
     }
 }
