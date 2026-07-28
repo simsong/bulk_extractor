@@ -27,11 +27,11 @@ through the project's normal pull-request and CI process.
 
 ### Highlights
 
-- A standalone 64-bit Windows `.exe` is planned to return as a simple download.
-  It is cross-compiled with MinGW on Ubuntu and is checked to ensure that it
-  imports no non-system Windows DLLs. This remains a release item until
-  [PR #543](https://github.com/simsong/bulk_extractor/pull/543) is merged and the
-  resulting executable is attached to the 2.2.0 release.
+- A standalone 64-bit Windows `.exe` is built with MinGW on Ubuntu and is
+  checked to ensure that it imports no non-system Windows DLLs. GitHub Actions
+  publishes it as a downloadable artifact; attaching it to the 2.2.0 release
+  remains a release task
+  ([PR #543](https://github.com/simsong/bulk_extractor/pull/543)).
 - The source tree is self-contained: `be20_api`, DFXML, schemas, and UTF support
   are now versioned in this repository instead of being supplied through fragile
   Git submodules
@@ -76,6 +76,24 @@ through the project's normal pull-request and CI process.
 - Prevented empty MSXML extraction from causing recursion and changed residual
   `sbuf` diagnostics from an abort to a DFXML warning
   ([PR #537](https://github.com/simsong/bulk_extractor/pull/537)).
+- Applied `--max_minute_wait` to phase-1 work and shutdown, reporting timeout
+  failures instead of blocking indefinitely
+  ([PR #540](https://github.com/simsong/bulk_extractor/pull/540)).
+- Made recursive input traversal deterministic and safe around symlinks and
+  permission-denied paths, and proved the Windows path through the original
+  Unicode-filename regression case
+  ([PR #541](https://github.com/simsong/bulk_extractor/pull/541),
+  [PR #549](https://github.com/simsong/bulk_extractor/pull/549)).
+- Restored stop-list and alert-list processing, including the normal and
+  diverted feature outputs, with CLI-level regression tests
+  ([PR #552](https://github.com/simsong/bulk_extractor/pull/552),
+  [PR #553](https://github.com/simsong/bulk_extractor/pull/553)).
+- Added carving for validated RawTherapee `Image8` RGB thumbnail records,
+  writing PPM output without an image-sized intermediate copy
+  ([PR #556](https://github.com/simsong/bulk_extractor/pull/556)).
+- Fixed a SQLite-size arithmetic overflow and reduced the scheduled Coverity
+  workflow token to read-only repository contents
+  ([PR #538](https://github.com/simsong/bulk_extractor/pull/538)).
 
 ### Build, configuration, and testing
 
@@ -94,11 +112,24 @@ through the project's normal pull-request and CI process.
   `bulk_extractor64.exe` as a GitHub Actions artifact
   ([PR #543](https://github.com/simsong/bulk_extractor/pull/543)).
 
+### Documentation and project maintenance
+
+- Consolidated release history and this 2.2.0 draft in one versioned document
+  ([PR #544](https://github.com/simsong/bulk_extractor/pull/544)).
+- Moved the living technical-debt scoreboard to
+  [Discussion #545](https://github.com/simsong/bulk_extractor/discussions/545),
+  with GitHub issues remaining the actionable work records
+  ([PR #546](https://github.com/simsong/bulk_extractor/pull/546)).
+- Added code-of-conduct, contribution, issue, and pull-request guidance, and
+  documented the required Codex GitHub identity
+  ([PR #551](https://github.com/simsong/bulk_extractor/pull/551),
+  [PR #542](https://github.com/simsong/bulk_extractor/pull/542)).
+
 ### Known limitations and release work
 
-- Merge and keep the standalone Windows artifact workflow green, then attach its
-  `.exe` to the 2.2.0 GitHub release. The current proposed Windows build disables
-  libewf, so the `.exe` does not read E01 images directly.
+- Keep the Windows artifact workflow green and attach its `.exe` to the 2.2.0
+  GitHub release. The current build disables libewf, so the `.exe` does not
+  read E01 images directly.
 - Lightgrep remains an unsupported, source-broken optional configuration and
   should not be represented as a working 2.2.0 feature.
 - BEViewer is not bundled with bulk_extractor 2.
