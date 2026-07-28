@@ -396,6 +396,15 @@ TEST_CASE("scan_email16", "[scanners]") {
     }
 }
 
+TEST_CASE("scan_utmp_big_endian", "[scanners]") {
+    auto outdir = test_scanner(scan_utmp, map_file("wtmp-sparc-be"));
+    const auto carved = getLines(outdir / "utmp_carved.txt");
+    REQUIRE( std::count_if(carved.begin(), carved.end(), [](const std::string &line) {
+        return line.find("\tutmp_carved/") != std::string::npos;
+    }) == 100 );
+}
+
+
 TEST_CASE("scan_email_excludes_html_quote_entity", "[scanners]") {
     const auto has_url_feature = [](const std::vector<std::string> &lines, const std::string &feature) {
         for (const auto &line : lines) {
