@@ -34,6 +34,7 @@ jobs:
                 libexpat1-dev libgcrypt20-dev libgpg-error-dev libre2-dev \
                 libssl-dev libtool libxml2-utils make pkg-config procps python3 zlib1g-dev
               git config --global --add safe.directory /src
+              make distclean || true
               bash bootstrap.sh
               ./configure --disable-libewf --enable-silent-rules --quiet
               make -j2
@@ -79,6 +80,7 @@ jobs:
         if: github.event_name == 'pull_request' && matrix.os == 'ubuntu-22.04'
         run: |
           source "$HOME/.bashrc"
+          make distclean || true
           ./configure --disable-opt --enable-address-sanitizer
           make $MAKE_OPTS all
           make -C src $MAKE_OPTS bulk_extractor
