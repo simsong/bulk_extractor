@@ -10,7 +10,9 @@
 #include "config.h"
 
 #include <cstring>
+#include <array>
 #include <iostream>
+#include <iterator>
 #include <memory>
 #include <filesystem>
 #include <cstdio>
@@ -295,6 +297,22 @@ bool validate_files(const std::filesystem::path &fn0, const std::filesystem::pat
     return errors == 0;
 }
 
+bool validate_pcap_packet(const std::filesystem::path &fn0, const std::filesystem::path &fn1, uint32_t link_type)
+{
+    std::ifstream in0(fn0, std::ios::binary);
+    std::ifstream in1(fn1, std::ios::binary);
+    std::array<uint8_t, 24> header0, header1;
+    REQUIRE(in0.read(reinterpret_cast<char *>(header0.data()), header0.size()));
+    REQUIRE(in1.read(reinterpret_cast<char *>(header1.data()), header1.size()));
+    REQUIRE(header1[0] == 0xd4);
+    REQUIRE(header1[1] == 0xc3);
+    REQUIRE(header1[2] == 0xb2);
+    REQUIRE(header1[3] == 0xa1);
+    REQUIRE(header1[20] == (link_type & 0xff));
+    REQUIRE(header1[21] == ((link_type >> 8) & 0xff));
+    return std::equal(std::istreambuf_iterator<char>(in0), {}, std::istreambuf_iterator<char>(in1));
+}
+
 
 /**
  * These test cases run the scanners in a scanner_set with a specified disk image, and then check for all of the results.
@@ -496,6 +514,44 @@ TEST_CASE("test_net2", "[phase1]") {
     };
     auto outdir = validate("ntlm2.pcap", ex2);
     REQUIRE(validate_files(test_dir() / "ntlm2.pcap", outdir / "packets.pcap"));
+}
+
+TEST_CASE("test_net_80211_management", "[phase1]") {
+    std::vector<Check> ex2 {
+        Check("ip.txt", Feature("40", "802.11", "PCAP IEEE 802.11 frame")),
+        Check("wifi.txt", Feature("40", "management", "type=management subtype=beacon to_ds=no from_ds=no protected=no timestamp=*"))
+    };
+    auto outdir = validate("wifi_management.pcap", ex2, false);
+    REQUIRE(validate_pcap_packet(test_dir() / "wifi_management.pcap", outdir / "packets_80211.pcap", DLT_IEEE802_11));
+}
+
+TEST_CASE("test_net_80211_management_pair", "[phase1]") {
+    std::vector<Check> ex2 {
+        Check("wifi.txt", Feature("40", "management", "type=management subtype=beacon to_ds=no from_ds=no protected=no timestamp=*")),
+        Check("wifi.txt", Feature("166", "management", "type=management subtype=beacon to_ds=no from_ds=no protected=no timestamp=*"))
+    };
+    auto outdir = validate("wifi_management_pair.pcap", ex2, false);
+    REQUIRE(validate_pcap_packet(test_dir() / "wifi_management_pair.pcap", outdir / "packets_80211.pcap", DLT_IEEE802_11));
+}
+
+TEST_CASE("test_net_80211_ipv4", "[phase1]") {
+    std::vector<Check> ex2 {
+        Check("ip.txt", Feature("74", "192.168.1.132", "struct ip L (src) cksum-ok")),
+        Check("ip.txt", Feature("74", "192.168.1.1", "struct ip R (dst) cksum-ok")),
+        Check("ip.txt", Feature("40", "802.11", "PCAP IEEE 802.11 frame")),
+        Check("wifi.txt", Feature("40", "data", "type=data subtype=qos-data to_ds=yes from_ds=no protected=no network=IPv4 timestamp=*"))
+    };
+    auto outdir = validate("wifi_ipv4.pcap", ex2, false);
+    REQUIRE(validate_files(test_dir() / "wifi_ipv4.pcap", outdir / "packets_80211.pcap"));
+}
+
+TEST_CASE("test_net_80211_ipv6", "[phase1]") {
+    std::vector<Check> ex2 {
+        Check("ip.txt", Feature("40", "802.11", "PCAP IEEE 802.11 frame")),
+        Check("wifi.txt", Feature("40", "data", "type=data subtype=qos-data to_ds=yes from_ds=no protected=no network=IPv6 timestamp=*"))
+    };
+    auto outdir = validate("wifi_ipv6.pcap", ex2, false);
+    REQUIRE(validate_files(test_dir() / "wifi_ipv6.pcap", outdir / "packets_80211.pcap"));
 }
 
 /* Look at a file with three packets */

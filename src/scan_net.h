@@ -92,6 +92,7 @@ struct scan_net_t {
     feature_recorder &ip_recorder;
     feature_recorder &tcp_recorder;
     feature_recorder &ether_recorder;
+    feature_recorder &wifi_recorder;
 
     static uint16_t ip4_cksum(const sbuf_t &sbuf, size_t pos, size_t len);
     static bool ip6_cksum_valid(const sbuf_t &sbuf, size_t pos);
@@ -145,11 +146,12 @@ struct scan_net_t {
 
     /* Each of these carvers looks for a specific structure and if it finds the structure it returns the size in the sbuf */
     void   documentIPFields(const sbuf_t &sbuf, size_t pos, const generic_iphdr_t &h) const; // write ip fields to ip_recorder and possibly tcp_recorder
+    void   recordWifiFrame(const sbuf_t &sbuf, size_t pos, size_t packet_len, const pcap_writer::pcap_hdr &pch) const;
     size_t carveIPFrame(const sbuf_t &sbuf, size_t pos, sanityCache_t *sc) const;
     size_t carveTCPTOBJ(const sbuf_t &sbuf, size_t pos) const;
     size_t carveSockAddrIn(const sbuf_t &sbuf, size_t pos) const;
     size_t carvePCAPFileHeader(const sbuf_t &sbuf, size_t pos) const;
-    size_t carvePCAPPackets(const sbuf_t &sbuf, size_t pos, sanityCache_t *sc) const;
+    size_t carvePCAPPackets(const sbuf_t &sbuf, size_t pos, sanityCache_t *sc, uint32_t link_type) const;
     static const struct macip *validateEther(const sbuf_t &sbuf, size_t pos) {
         const struct macip *er = sbuf.get_struct_ptr_unsafe<struct macip>(pos);
         /* Only carve ether type ETHERTYPE_IP or ETHERTYPE_IPv6.
