@@ -299,10 +299,10 @@ TEST_CASE("e2e-0", "[end-to-end]") {
     grep( "debug:work_start", xml_file);
     grep( "debug:work_stop", xml_file);
 
-    /* Validate the dfxml file is valid dfxml*/
-    std::string validate = std::string("xmllint --noout ") + xml_file;
-    int code = system( validate.c_str());
-    REQUIRE( code==0 );
+    if (system("command -v xmllint >/dev/null 2>&1") == 0) {
+        std::string validate = std::string("xmllint --noout ") + xml_file;
+        REQUIRE(system(validate.c_str()) == 0);
+    }
 
     // This is the second time through - clear cout and cerr first
     // https://stackoverflow.com/questions/20731/how-do-you-clear-a-stringstream-variable
@@ -575,6 +575,10 @@ TEST_CASE("path-printer2", "[end-to-end]") {
 }
 
 TEST_CASE("e2e-CFReDS001", "[end-to-end]") {
+#ifndef HAVE_LIBEWF
+    SUCCEED("libewf not available; skipping E01 end-to-end test");
+    return;
+#endif
     if (getenv_debug("DEBUG_FAST")){
         std::cerr << "DEBUG_FAST set; e2e-CFReDS001" << std::endl;
         return;
@@ -620,6 +624,10 @@ TEST_CASE("e2e-jpeg-carving-disabled", "[end-to-end]") {
 
 
 TEST_CASE("e2e-email_test", "[end-to-end]") {
+#ifndef HAVE_LIBEWF
+    SUCCEED("libewf not available; skipping E01 end-to-end test");
+    return;
+#endif
     if (getenv_debug("DEBUG_FAST")){
         std::cerr << "DEBUG_FAST set; skipping e2e-email_test" << std::endl;
         return;
@@ -728,12 +736,14 @@ TEST_CASE("image_process", "[phase1]") {
     auto split = image_process::open(split0, false, 65536, 65536);
     REQUIRE(split->image_size() == 3);
 
+#ifdef HAVE_LIBEWF
     const std::filesystem::path e01_dir = NamedTemporaryDirectory();
     const std::filesystem::path lower_e01 = e01_dir / "CFReDS001.e01";
     std::filesystem::copy_file(test_dir() / "CFReDS001.E01", lower_e01);
     auto e01 = image_process::open(lower_e01, false, 65536, 65536);
     REQUIRE(e01 != nullptr);
     REQUIRE_THROWS_AS(image_process::open(e01_dir, true, 65536, 65536), image_process::FoundDiskImage);
+#endif
 }
 
 #if defined(__linux__)
