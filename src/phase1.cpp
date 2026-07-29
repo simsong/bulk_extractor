@@ -29,7 +29,7 @@
 using namespace std::chrono_literals;
 
 Phase1::Phase1(Config &config_, image_process &p_, scanner_set &ss_, std::ostream &cout_):
-    config(config_), p(p_), ss(ss_), cout(cout_), xreport(*ss_.get_dfxml_writer())
+    config(config_), p(p_), ss(ss_), cout(cout_), sha1g(), xreport(*ss_.get_dfxml_writer())
 {
 }
 
