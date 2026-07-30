@@ -134,7 +134,7 @@ through the project's normal pull-request and CI process.
   [PR #567](https://github.com/simsong/bulk_extractor/pull/567),
   [PR #572](https://github.com/simsong/bulk_extractor/pull/572),
   [PR #577](https://github.com/simsong/bulk_extractor/pull/577)).
-- Builds configured without the project O3 optimization now say so at startup
+- Builds configured without the project `-O3` optimization now say so at startup
   ([PR #564](https://github.com/simsong/bulk_extractor/pull/564)).
 
 ### Documentation and project maintenance
