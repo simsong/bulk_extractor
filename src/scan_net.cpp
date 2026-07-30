@@ -33,6 +33,11 @@
 #include <iomanip>
 #include <sstream>
 
+#ifdef _WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#endif
+
 #include "be20_api/formatter.h"
 #include "be20_api/utils.h"
 
@@ -418,24 +423,43 @@ std::string scan_net_t::ip2string(const struct be20::ip4_addr *const a)
 #define INET6_ADDRSTRLEN 256
 #endif
 
-#ifdef _WIN32
-const char *inet_ntop(int af, const void *src, char *dst, size_t size)
-{
-    return("inet_ntop win32");
-}
-#endif
-
-
 std::string scan_net_t::ip2string(const uint8_t *addr, sa_family_t family)
 {
     char printstr[INET6_ADDRSTRLEN+1];
+    const void *source = nullptr;
     switch (family) {
     case AF_INET:
-	return std::string(inet_ntop(family,reinterpret_cast<const struct in_addr *>(addr+12), printstr, sizeof(printstr)));
+	source = reinterpret_cast<const struct in_addr *>(addr+12);
+	break;
     case AF_INET6:
-	return std::string(inet_ntop(family, addr, printstr, sizeof(printstr)));
+	source = addr;
+	break;
+    default:
+	return "INVALID family";
     }
-    return std::string("INVALID family ");
+#ifdef _WIN32
+    sockaddr_storage socket_address{};
+    int socket_address_length;
+    if (family == AF_INET) {
+        auto *const address4 = reinterpret_cast<sockaddr_in *>(&socket_address);
+        address4->sin_family = AF_INET;
+        memcpy(&address4->sin_addr, source, sizeof(address4->sin_addr));
+        socket_address_length = sizeof(*address4);
+    } else {
+        auto *const address6 = reinterpret_cast<sockaddr_in6 *>(&socket_address);
+        address6->sin6_family = AF_INET6;
+        memcpy(&address6->sin6_addr, source, sizeof(address6->sin6_addr));
+        socket_address_length = sizeof(*address6);
+    }
+    DWORD printstr_length = sizeof(printstr);
+    const int result = WSAAddressToStringA(
+        reinterpret_cast<LPSOCKADDR>(&socket_address), socket_address_length,
+        nullptr, printstr, &printstr_length);
+    return result == 0 ? std::string(printstr) : "INVALID address";
+#else
+    const char *result = inet_ntop(family, source, printstr, sizeof(printstr));
+    return result ? std::string(result) : "INVALID address";
+#endif
 }
 
 #ifndef MAC_ADDRSTRLEN
@@ -1006,8 +1030,19 @@ void scan_net(scanner_params &sp)
     static scan_net_t *scanner = nullptr;
     static bool opt_carve_net_memory = false;
     static int  opt_min_carve_packet_bytes = scan_net_t::DEFAULT_MIN_PACKET_BYTES;
+#ifdef _WIN32
+    static bool winsock_started = false;
+#endif
     sp.check_version();
     if (sp.phase==scanner_params::PHASE_INIT){
+
+#ifdef _WIN32
+        WSADATA winsock_data {};
+        if (WSAStartup(MAKEWORD(2, 2), &winsock_data) != 0) {
+            throw std::runtime_error("WSAStartup failed");
+        }
+        winsock_started = true;
+#endif
 
         sp.get_scanner_config("carve_net_memory",&opt_carve_net_memory,"Carve network  memory structures");
         sp.get_scanner_config("min_carve_packet_bytes",&opt_min_carve_packet_bytes,"Smallest network packet to carve");
@@ -1065,6 +1100,12 @@ void scan_net(scanner_params &sp)
             delete scanner;
             scanner = nullptr;
         }
+#ifdef _WIN32
+        if (winsock_started) {
+            WSACleanup();
+            winsock_started = false;
+        }
+#endif
 	return;
     }
 }

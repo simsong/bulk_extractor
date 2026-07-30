@@ -92,11 +92,14 @@ jobs:
           if-no-files-found: error
 
   windows-unicode:
-    name: Windows Unicode filename test
+    name: Windows runtime tests
     needs: mingw
     runs-on: windows-latest
 
     steps:
+      - name: Checkout test fixtures
+        uses: actions/checkout@v5
+
       - name: Download Windows executable
         uses: actions/download-artifact@v8
         with:
@@ -128,4 +131,21 @@ jobs:
           if (-not (Select-String -Path output\email.txt `
                 -SimpleMatch "unicode-path@example.com" -Quiet)) {
             throw "bulk_extractor did not scan the Unicode-named file"
+          }
+
+      - name: Scan the IP fixture
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          & "$PWD\dist\bulk_extractor64.exe" -0q -J -G 65536 `
+            -o net-output "$PWD\src\tests\ntlm1.pcap"
+          if ($LASTEXITCODE -ne 0) {
+            throw "bulk_extractor exited with status $LASTEXITCODE"
+          }
+          $ipFile = "net-output\ip.txt"
+          if (-not (Test-Path $ipFile)) {
+            throw "bulk_extractor did not create ip.txt"
+          }
+          if (-not (Select-String -Path $ipFile -SimpleMatch "192.168.0.91" -Quiet)) {
+            throw "bulk_extractor did not report the fixture's IPv4 address"
           }
