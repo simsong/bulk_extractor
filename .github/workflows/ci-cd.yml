@@ -22,6 +22,8 @@ jobs:
 
       - name: Bootstrap and build in Debian
         run: |
+          # This is a compile-only compatibility job.  The full test suite runs
+          # in the platform build jobs below, so do not add `make check` here.
           docker run --rm \
             --mount type=bind,source="$GITHUB_WORKSPACE",target=/src \
             --workdir /src \
