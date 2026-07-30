@@ -1,6 +1,10 @@
 *.exe
+*.a
+*.la
+*.lo
 *.tmp
 *.trs
+.libs/
 *out*/
 be_tests
 domexusers.raw*
@@ -8,6 +12,9 @@ out*/
 rebuild
 stand
 test_be
+test_be20_api
+test_dfxml
+test_pcap_fake
 test_bulkextractor
 x.cpp
 domexusers.raw*
