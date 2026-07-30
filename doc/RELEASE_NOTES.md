@@ -68,6 +68,8 @@ through the project's normal pull-request and CI process.
 - Fixed notifier and disk-write error shutdown so worker failures are reported
   and cleaned up instead of hanging or terminating incorrectly
   ([PR #513](https://github.com/simsong/bulk_extractor/pull/513)).
+- `-Z` now removes stale nested output directories as well as files before a
+  new run ([#239](https://github.com/simsong/bulk_extractor/issues/239)).
 - Fixed scanner controls: `jpeg_carve_mode=0` now disables JPEG carving, and
   `-x all -e outlook` enables Outlook as requested
   ([PR #525](https://github.com/simsong/bulk_extractor/pull/525),
