@@ -7,3 +7,8 @@ Before changing a scanner or writing a scanner plug-in, read
 [doc/scanner_template.cpp](doc/scanner_template.cpp), and preserve its phase
 and concurrency rules unless the API documentation is updated in the same
 change.
+
+Update [doc/RELEASE_NOTES.md](doc/RELEASE_NOTES.md) in the same pull request
+for every user-visible behavior, build or platform-support, packaging, or
+documentation change. Do not add release-note entries for test-only or purely
+internal refactors.

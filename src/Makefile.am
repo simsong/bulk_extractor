@@ -7,6 +7,7 @@ include be20_api/dfxml_cpp/src/Makefile.defs
 # $(BE20_API_EXTRA_DIST)
 EXTRA_DIST = .gitignore scan_headers.flex scan_httpheader_lg.cpp $(AUTO_EXTRA_DIST) $(AUTO_TESTS_DIST) \
 	$(BE20_API_EXTRA_DIST) \
+	third_party/spdlog \
 	be20_api/tests/unilang.htm \
 	be20_api/tests/unilang8.htm
 
@@ -14,10 +15,10 @@ ETAGS = etags-emacs
 ACLOCAL_AMFLAGS = -I m4
 
 # So that relative imports from be20_api work
-AM_CPPFLAGS = @RE2_CFLAGS@ -I$(top_srcdir)/src/be20_api -I$(top_srcdir)/src/be20_api/utfcpp/source
+AM_CPPFLAGS = @RE2_CFLAGS@ -I$(top_srcdir)/src/be20_api -I$(top_srcdir)/src/be20_api/utfcpp/source -I$(top_srcdir)/src/third_party/spdlog
 
 noinst_LIBRARIES = libbe20.a
-libbe20_a_SOURCES = $(BE20_API_SRC) $(DFXML_READER) $(DFXML_WRITER)
+libbe20_a_SOURCES = $(BE20_API_SRC) $(DFXML_READER) $(DFXML_WRITER) bulk_extractor_logging.cpp bulk_extractor_logging.h
 
 check_LTLIBRARIES = scan_test_plugin.la
 scan_test_plugin_la_SOURCES = test_plugin.cpp

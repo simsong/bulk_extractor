@@ -39,6 +39,7 @@
 #include "test_be.h"
 
 #include "bulk_extractor.h"
+#include "bulk_extractor_logging.h"
 #include "base64_forensic.h"
 #include "bulk_extractor_restarter.h"
 #include "bulk_extractor_scanners.h"
@@ -96,6 +97,71 @@ int run_be(std::ostream &cout, std::ostream &cerr, const char **argv)
 int run_be(std::ostream &ss, const char **argv)
 {
     return run_be(ss, ss, argv);
+}
+
+TEST_CASE("diagnostic log level precedence", "[logging]")
+{
+    using bulk_extractor::logging::level;
+    using bulk_extractor::logging::resolve_level;
+    REQUIRE(resolve_level(std::nullopt, nullptr, false) == level::info);
+    REQUIRE(resolve_level(std::nullopt, nullptr, true) == level::debug);
+    REQUIRE(resolve_level(std::nullopt, "warning", true) == level::warning);
+    REQUIRE(resolve_level(std::string("error"), "warning", true) == level::error);
+    REQUIRE(resolve_level(std::string("TRACE"), nullptr, false) == level::trace);
+    REQUIRE_THROWS_AS(resolve_level(std::string("verbose"), nullptr, false), std::invalid_argument);
+}
+
+TEST_CASE("diagnostic log paths and records", "[logging]")
+{
+    using bulk_extractor::logging::initialize;
+    using bulk_extractor::logging::level;
+    using bulk_extractor::logging::shutdown;
+    using bulk_extractor::logging::write;
+
+    const auto root = NamedTemporaryDirectory();
+    const auto default_path = root / "bulk_extractor.log";
+    initialize(root, std::nullopt, level::info);
+    write(level::warning, "test", "default diagnostic record");
+    shutdown();
+    REQUIRE(std::filesystem::exists(default_path));
+    const auto default_lines = getLines(default_path);
+    REQUIRE(requireFeature(default_lines, "default diagnostic record"));
+
+    const auto explicit_path = root / "diagnostics.txt";
+    initialize(root, explicit_path, level::debug);
+    write(level::debug, "test", "explicit diagnostic record");
+    shutdown();
+    REQUIRE(std::filesystem::exists(explicit_path));
+    const auto explicit_lines = getLines(explicit_path);
+    REQUIRE(requireFeature(explicit_lines, "[test] explicit diagnostic record"));
+
+    const auto non_directory = root / "not-a-directory";
+    std::ofstream(non_directory) << "file";
+    REQUIRE_THROWS_AS(initialize(root, non_directory / "diagnostics.log", level::info),
+                      std::runtime_error);
+}
+
+TEST_CASE("diagnostic command-line configuration", "[logging]")
+{
+    const auto root = NamedTemporaryDirectory();
+    const auto input = root / "input.raw";
+    const auto outdir = root / "output";
+    const auto log_path = root / "explicit.log";
+    std::ofstream(input) << "logging@example.com\n";
+
+    const std::string input_string = input.string();
+    const std::string outdir_string = outdir.string();
+    const std::string log_path_string = log_path.string();
+    const char *argv[] = {
+        "bulk_extractor", "-0q", "-J", "-x", "all", "-e", "email",
+        "-d", "--log-file", log_path_string.c_str(),
+        "-o", outdir_string.c_str(), input_string.c_str(), nullptr
+    };
+    std::stringstream output;
+    REQUIRE(run_be(output, argv) == 0);
+    REQUIRE(std::filesystem::exists(log_path));
+    REQUIRE(requireFeature(getLines(log_path), "diagnostic logging initialized"));
+    REQUIRE(requireFeature(getLines(log_path), "diagnostic level is debug"));
 }
 
 static std::string shell_quote(std::string_view value)
@@ -162,6 +228,59 @@ TEST_CASE("e2e-stop-list", "[end-to-end]")
     std::filesystem::remove_all(root);
 }
 
+TEST_CASE("e2e-context-sensitive-stop-list", "[end-to-end]")
+{
+    const auto root = NamedTemporaryDirectory();
+    const auto input = root / "input.raw";
+    const auto baseline_outdir = root / "baseline";
+    const auto stop_list = root / "stop-list.txt";
+    const auto outdir = root / "output";
+    std::ofstream(input) << "alpha before same@example.com alpha after\n"
+                         << std::string(256, 'x') << "\n"
+                         << "beta before same@example.com beta after\n";
+
+    const std::string input_string = input.string();
+    const std::string baseline_outdir_string = baseline_outdir.string();
+    const char *baseline_argv[] = {
+        "bulk_extractor", "-0q", "-x", "all", "-e", "email",
+        "-o", baseline_outdir_string.c_str(), input_string.c_str(), nullptr
+    };
+    std::stringstream output;
+    REQUIRE(run_be(output, baseline_argv) == 0);
+    const auto baseline = getLines(baseline_outdir / "email.txt");
+    const auto alpha = std::find_if(baseline.begin(), baseline.end(), [](const auto &line) {
+        return line.find("same@example.com") != std::string::npos
+            && line.find("alpha before") != std::string::npos;
+    });
+    REQUIRE(alpha != baseline.end());
+    REQUIRE(std::count_if(baseline.begin(), baseline.end(), [](const auto &line) {
+        return line.find("same@example.com") != std::string::npos;
+    }) == 2);
+    std::ofstream(stop_list) << *alpha << "\n";
+
+    const std::string stop_list_string = stop_list.string();
+    const std::string outdir_string = outdir.string();
+    const char *argv[] = {
+        "bulk_extractor", "-0q", "-x", "all", "-e", "email",
+        "-w", stop_list_string.c_str(),
+        "-o", outdir_string.c_str(), input_string.c_str(), nullptr
+    };
+    REQUIRE(run_be(output, argv) == 0);
+
+    const auto email = getLines(outdir / "email.txt");
+    const auto stopped = getLines(outdir / "email_stopped.txt");
+    REQUIRE(std::count_if(email.begin(), email.end(), [](const auto &line) {
+        return line.find("same@example.com") != std::string::npos;
+    }) == 1);
+    REQUIRE(requireFeature(email, "beta before"));
+    REQUIRE(std::count_if(stopped.begin(), stopped.end(), [](const auto &line) {
+        return line.find("same@example.com") != std::string::npos;
+    }) == 1);
+    REQUIRE(requireFeature(stopped, "alpha before"));
+
+    std::filesystem::remove_all(root);
+}
+
 TEST_CASE("e2e-alert-list", "[end-to-end]")
 {
     const auto root = NamedTemporaryDirectory();
@@ -195,6 +314,33 @@ TEST_CASE("e2e-alert-list", "[end-to-end]")
     REQUIRE(email_match != email.end());
     REQUIRE(alert_match != alerts.end());
     REQUIRE(*alert_match == *email_match);
+
+    std::filesystem::remove_all(root);
+}
+
+TEST_CASE("e2e-zap-removes-nested-output", "[end-to-end]")
+{
+    const auto root = NamedTemporaryDirectory();
+    const auto input = root / "input.raw";
+    const auto outdir = root / "output";
+    const auto nested = outdir / "nested" / "deeper";
+    std::ofstream(input) << "input\n";
+    std::filesystem::create_directories(nested);
+    std::ofstream(outdir / "stale.txt") << "stale\n";
+    std::ofstream(nested / "stale.txt") << "stale\n";
+
+    const std::string input_string = input.string();
+    const std::string outdir_string = outdir.string();
+    const char *argv[] = {
+        "bulk_extractor", "-0q", "-x", "all", "-Z", "-o", outdir_string.c_str(),
+        input_string.c_str(), nullptr
+    };
+    std::stringstream output;
+    REQUIRE(run_be(output, argv) == 0);
+    REQUIRE(std::filesystem::is_directory(outdir));
+    REQUIRE_FALSE(std::filesystem::exists(outdir / "stale.txt"));
+    REQUIRE_FALSE(std::filesystem::exists(nested));
+    REQUIRE(std::filesystem::exists(outdir / "report.xml"));
 
     std::filesystem::remove_all(root);
 }

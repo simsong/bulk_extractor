@@ -19,6 +19,7 @@
 #include "catch.hpp"
 
 #include <algorithm>
+#include <atomic>
 #include <array>
 #include <chrono>
 #include <thread>
@@ -1312,6 +1313,30 @@ TEST_CASE("scanner", "[scanner]") {
 #include "scanner_set.h"
 #include "machine_stats.h"
 
+namespace {
+std::atomic<uint64_t> duplicate_bypass_scans {0};
+std::atomic<uint64_t> duplicate_opt_in_scans {0};
+
+void scan_duplicate_bypass_test(scanner_params& sp) {
+    if (sp.phase == scanner_params::PHASE_INIT) {
+        sp.info->set_name("duplicate_bypass_test");
+        sp.info->min_sbuf_size = 1;
+    } else if (sp.phase == scanner_params::PHASE_SCAN) {
+        duplicate_bypass_scans++;
+    }
+}
+
+void scan_duplicate_opt_in_test(scanner_params& sp) {
+    if (sp.phase == scanner_params::PHASE_INIT) {
+        sp.info->set_name("duplicate_opt_in_test");
+        sp.info->min_sbuf_size = 1;
+        sp.info->scanner_flags.scan_seen_before = true;
+    } else if (sp.phase == scanner_params::PHASE_SCAN) {
+        duplicate_opt_in_scans++;
+    }
+}
+}
+
 #ifdef _WIN32
 TEST_CASE("machine_stats", "[!mayfail][machine_stats]") {
     WARN("machine_stats not implemented on Windows (ps and /proc/ don't exist)");
@@ -1354,18 +1379,50 @@ TEST_CASE("previously_processed", "[scanner_set]") {
     REQUIRE(ss.previously_processed_count(slg) == 2);
 }
 
-#if 0
-TEST_CASE("mt_previously_processed", "[scanner_set]") {
+TEST_CASE("duplicate sbufs bypass scanner fan-out unless requested", "[scanner_set]") {
     scanner_config sc;
-    feature_recorder_set::flags_t f;
-    scanner_set ss(sc, f, nullptr);
-    sbuf_t slg("Simson");
-    ss.info();
-    REQUIRE(ss.previously_processed_count(slg) == 0);
-    REQUIRE(ss.previously_processed_count(slg) == 1);
-    REQUIRE(ss.previously_processed_count(slg) == 2);
+    sc.outdir = get_tempdir();
+    sc.enable_all_scanners();
+    const auto dfxml_file = get_tempdir() / "duplicate_bypass.xml";
+    dfxml_writer writer(dfxml_file, false);
+    duplicate_bypass_scans = 0;
+    scanner_set ss(sc, feature_recorder_set::flags_t(), &writer);
+    ss.debug_flags.debug_benchmark = true;
+    ss.add_scanner(scan_duplicate_bypass_test);
+    ss.apply_scanner_commands();
+    ss.phase_scan();
+    ss.schedule_sbuf(sbuf_t::sbuf_malloc(pos0_t("a&b"), "duplicate"));
+    ss.schedule_sbuf(sbuf_t::sbuf_malloc(pos0_t("a&b"), "duplicate"));
+    REQUIRE(duplicate_bypass_scans == 1);
+    REQUIRE(ss.get_dup_bytes_encountered() == 9);
+    REQUIRE(ss.get_duplicate_sbufs_bypassed() == 1);
+    ss.shutdown();
+    writer.close();
+    const auto lines = getLines(dfxml_file);
+    REQUIRE(std::any_of(lines.begin(), lines.end(),
+                        [](const auto& line) { return line.find("sbuf='a&amp;b-0'") != std::string::npos; }));
 }
-#endif
+
+TEST_CASE("duplicate sbufs reach scanners that opt in", "[scanner_set]") {
+    scanner_config sc;
+    sc.outdir = get_tempdir();
+    sc.enable_all_scanners();
+    duplicate_bypass_scans = 0;
+    duplicate_opt_in_scans = 0;
+    scanner_set ss(sc, feature_recorder_set::flags_t(), nullptr);
+    ss.add_scanner(scan_duplicate_bypass_test);
+    ss.add_scanner(scan_duplicate_opt_in_test);
+    ss.apply_scanner_commands();
+    ss.phase_scan();
+    ss.schedule_sbuf(new sbuf_t("duplicate"));
+    ss.schedule_sbuf(new sbuf_t("duplicate"));
+    REQUIRE(duplicate_bypass_scans == 1);
+    REQUIRE(duplicate_opt_in_scans == 2);
+    REQUIRE(ss.get_duplicate_sbufs_bypassed() == 0);
+    ss.shutdown();
+}
+
+
 
 TEST_CASE("enable/disable", "[scanner_set]") {
     scanner_config sc;

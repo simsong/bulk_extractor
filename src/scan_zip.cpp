@@ -13,7 +13,7 @@
 #include "utf8.h"
 
 
-static const std::string  ZIP_RECORDER_NAME {"zip"};
+static const std::string  ZIP_RECORDER_NAME {"zip_carved"};
 
 // these are not tunable
 static uint32_t  zip_max_uncompr_size = 256*1024*1024; // don't decompress objects larger than this

@@ -13,3 +13,4 @@ ignore:
   - "src/be20_api/thread-pool/**"
   - "src/be20_api/utfcpp/**"
   - "src/rar/**"
+  - "src/third_party/**"

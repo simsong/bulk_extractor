@@ -41,6 +41,7 @@ int _CRT_fmode = _O_BINARY;
 #include "be20_api/path_printer.h"
 
 #include "bulk_extractor.h"
+#include "bulk_extractor_logging.h"
 #include "image_process.h"
 #include "phase1.h"
 
@@ -87,6 +88,12 @@ int _CRT_fmode = _O_BINARY;
 {
     std::cerr << "Cannot open: " << fname << std::endl ;
     throw std::runtime_error( "Cannot open file" );
+}
+
+namespace {
+struct logging_shutdown {
+    ~logging_shutdown() { bulk_extractor::logging::shutdown(); }
+};
 }
 
 /**
@@ -223,7 +230,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         ("b,banner_file", "Path of file whose contents are prepended to top of all feature files",cxxopts::value<std::string>())
 	("C,context_window", "Size of context window reported in bytes",
          cxxopts::value<int>()->default_value(std::to_string(sc.context_window_default)))
-        ("d,debug", "enable debugging", cxxopts::value<int>()->default_value("1"))
+        ("d,debug", "enable debugging", cxxopts::value<int>()->implicit_value("1")->default_value("0"))
         ("D,debug_help", "help on debugging")
         ("E,enable_exclusive", "disable all scanners except the one specified. Same as -x all -E scanner.", cxxopts::value<std::string>())
         ("e,enable",   "enable a scanner (can be repeated)", cxxopts::value<std::vector<std::string>>())
@@ -237,6 +244,8 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
 	("M,max_depth",   "max recursion depth", cxxopts::value<int>()->default_value(std::to_string(scanner_config::DEFAULT_MAX_DEPTH)))
 	("max_bad_alloc_errors", "max bad allocation errors", cxxopts::value<int>()->default_value(std::to_string(cfg.max_bad_alloc_errors)))
 	("max_minute_wait", "maximum number of minutes to wait until all data are read", cxxopts::value<int>()->default_value(std::to_string(60)))
+	("log-level", "diagnostic log level: trace, debug, info, warning, error, critical, or off", cxxopts::value<std::string>())
+	("log-file", "diagnostic log file (default: <outdir>/bulk_extractor.log)", cxxopts::value<std::string>())
         ("notify_main_thread", "Display notifications in the main thread after phase1 completes. Useful for running with ThreadSanitizer")
         ("notify_async", "Display notificaitons asynchronously (default)")
         ("o,outdir",        "output directory [REQUIRED]", cxxopts::value<std::string>())
@@ -265,6 +274,10 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     options.parse_positional( "image_name" );
     auto result = options.parse( argc, argv);
     if ( result.count( "debug_help" )){ debug_help(); return 3;}
+    const bool debug_requested = std::any_of(argv, argv + argc, [](const char *argument) {
+        const std::string_view value(argument);
+        return value == "-d" || value == "--debug" || value.rfind("--debug=", 0) == 0;
+    });
 
     sc.offset_add  = result["offset_add"].as<int64_t>();
     sc.context_window_default = result["context_window"].as<int>();
@@ -454,18 +467,38 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
 
         /* The zap option wipes the contents of a directory, useful for debugging */
         if ( result.count( "zap" ) && std::filesystem::is_directory( sc.outdir )) {
-            for ( const auto &entry : std::filesystem::recursive_directory_iterator( sc.outdir ) ) {
-                if ( ! std::filesystem::is_directory( entry.path())){
-                    cout << "erasing " << entry.path().string() << std::endl ;
-                    std::filesystem::remove( entry );
-                }
+            for (const auto &entry : std::filesystem::directory_iterator(sc.outdir)) {
+                cout << "erasing " << entry.path().string() << std::endl;
+                std::filesystem::remove_all(entry.path());
             }
         }
 	if (std::filesystem::exists( sc.outdir ) == false ){
 	  cout << "mkdir " << sc.outdir << std::endl ;
 	  std::filesystem::create_directory( sc.outdir);
 	}
+
+        std::optional<std::string> command_line_log_level;
+        std::optional<std::filesystem::path> command_line_log_file;
+        try {
+            command_line_log_level = result["log-level"].as<std::string>();
+        } catch (const cxxopts::option_has_no_value_exception &) { }
+        try {
+            command_line_log_file = result["log-file"].as<std::string>();
+        } catch (const cxxopts::option_has_no_value_exception &) { }
+        try {
+            const auto log_level = bulk_extractor::logging::resolve_level(
+                command_line_log_level, std::getenv("LOG_LEVEL"), debug_requested);
+            bulk_extractor::logging::initialize(sc.outdir, command_line_log_file, log_level);
+            bulk_extractor::logging::write(bulk_extractor::logging::level::info, "main",
+                                           "diagnostic logging initialized");
+            bulk_extractor::logging::write(bulk_extractor::logging::level::debug, "main",
+                                           "diagnostic level is " + std::string(bulk_extractor::logging::level_name(log_level)));
+        } catch (const std::exception &error) {
+            cerr << "error: " << error.what() << std::endl;
+            return 8;
+        }
     }
+    logging_shutdown logging_cleanup;
 
     /* Load all the scanners and enable the ones we care about.  This
      * happens because:
@@ -575,7 +608,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     if ( !cfg.opt_quiet){
         cout << "bulk_extractor version: " << PACKAGE_VERSION << std::endl ;
 #ifndef HAVE_OPTIMIZATION_O3
-        cout << "WARNING: built without -O3 optimization; performance may be reduced." << std::endl;
+        cerr << "WARNING: built without -O3 optimization; performance may be reduced." << std::endl;
 #endif
         cout << "Input file: " << sc.input_fname << std::endl ;
         cout << "Output directory: " << sc.outdir << std::endl ;
@@ -692,6 +725,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     xreport->xmlout( "elapsed_seconds",master_timer.elapsed_seconds());
     xreport->xmlout( "max_depth_seen",ss.get_max_depth_seen());
     xreport->xmlout( "dup_bytes_encountered",ss.get_dup_bytes_encountered());
+    xreport->xmlout( "duplicate_sbufs_bypassed",ss.get_duplicate_sbufs_bypassed());
     xreport->xmlout( "sbufs_created", sbuf_t::sbuf_total);
     xreport->xmlout( "sbufs_unaccounted", sbuf_t::sbuf_count);
     xreport->xmlout( "producer_timer_ns", ss.producer_wait_ns() );
