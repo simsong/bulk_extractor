@@ -32,7 +32,7 @@ bool regex_vector::has_metachars(const std::string& str) {
 
 void regex_vector::push_back(const std::string& val) {
     RE2::Options options;
-    options.set_case_sensitive(false);
+    options.set_case_sensitive(case_sensitive);
     if (engine_enabled("RE2")){
         regex_strings.push_back(val);
         RE2 *re = new RE2(std::string("(") + val + std::string(")"), options);

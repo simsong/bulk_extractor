@@ -999,6 +999,12 @@ TEST_CASE("test regex_vector", "[regex]") {
     REQUIRE(regex_vector::has_metachars("this[1234].*foo") == true);
     REQUIRE(regex_vector::has_metachars("this1234foo") == false);
 
+    regex_vector case_sensitive(true);
+    case_sensitive.push_back("CaseSensitive");
+    std::string found;
+    REQUIRE_FALSE(case_sensitive.search_all("casesensitive", &found));
+    REQUIRE(case_sensitive.search_all("CaseSensitive", &found));
+
     for(int pass=0;pass<1;pass++){
         if (pass==0) {
             strncpy(disable,"RE_ENGINE=RE2",sizeof(disable));
