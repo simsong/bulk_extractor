@@ -161,7 +161,7 @@ jobs:
           select vdisk file="$vhd"
           attach vdisk
           create partition primary
-          format fs=fat32 quick label=BE_RAW_DEVICE
+          format fs=fat32 quick label=BERAWDEV
           assign
           exit
           "@ | Set-Content -Path $diskpart -NoNewline
