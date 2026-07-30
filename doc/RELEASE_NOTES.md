@@ -41,6 +41,9 @@ through the project's normal pull-request and CI process.
 - Runtime scanner plug-ins are supported again through a versioned factory
   interface, `-P`, and `BE_PATH`, with an end-to-end integration test
   ([PR #528](https://github.com/simsong/bulk_extractor/pull/528)).
+- Network captures now preserve IEEE 802.11 records with their correct PCAP
+  link type and report WiFi frame metadata in `wifi.txt`
+  ([PR #559](https://github.com/simsong/bulk_extractor/pull/559)).
 
 ### Reliability and correctness
 
@@ -51,6 +54,9 @@ through the project's normal pull-request and CI process.
   malformed or truncated packets
   ([PR #516](https://github.com/simsong/bulk_extractor/pull/516),
   [PR #530](https://github.com/simsong/bulk_extractor/pull/530)).
+- Restored IPv6 TCP, UDP, and ICMPv6 checksum validation, safe IPv6 packet
+  bounds handling, and correct raw-IP carving
+  ([PR #554](https://github.com/simsong/bulk_extractor/pull/554)).
 - Made E01 and split-image selection safe for literal percent characters,
   lowercase segment names, and exceptional paths; raw and EWF short reads no
   longer expose unread buffer tails to scanners
@@ -91,6 +97,14 @@ through the project's normal pull-request and CI process.
 - Added carving for validated RawTherapee `Image8` RGB thumbnail records,
   writing PPM output without an image-sized intermediate copy
   ([PR #556](https://github.com/simsong/bulk_extractor/pull/556)).
+- URL feature extraction no longer includes surrounding HTML `&quot;` markup, and
+  the utmp scanner recognizes both little- and big-endian Linux records
+  ([PR #568](https://github.com/simsong/bulk_extractor/pull/568),
+  [PR #563](https://github.com/simsong/bulk_extractor/pull/563)).
+- Windows IP feature formatting now uses a Windows socket-address formatter and
+  is exercised against the NTLM PCAP fixture in the Windows runtime workflow
+  ([PR #573](https://github.com/simsong/bulk_extractor/pull/573),
+  [PR #574](https://github.com/simsong/bulk_extractor/pull/574)).
 - Fixed a SQLite-size arithmetic overflow and reduced the scheduled Coverity
   workflow token to read-only repository contents
   ([PR #538](https://github.com/simsong/bulk_extractor/pull/538)).
@@ -111,6 +125,15 @@ through the project's normal pull-request and CI process.
   and its dependencies, verifies DLL imports, and publishes
   `bulk_extractor64.exe` as a GitHub Actions artifact
   ([PR #543](https://github.com/simsong/bulk_extractor/pull/543)).
+- Debian Bookworm now has an explicit compatibility build; optional-dependency
+  tests correctly skip unavailable libewf and `xmllint` paths, while full test
+  suites remain the responsibility of platform build jobs
+  ([PR #565](https://github.com/simsong/bulk_extractor/pull/565),
+  [PR #567](https://github.com/simsong/bulk_extractor/pull/567),
+  [PR #572](https://github.com/simsong/bulk_extractor/pull/572),
+  [PR #577](https://github.com/simsong/bulk_extractor/pull/577)).
+- Builds configured without the project O3 optimization now say so at startup
+  ([PR #564](https://github.com/simsong/bulk_extractor/pull/564)).
 
 ### Documentation and project maintenance
 
@@ -124,6 +147,12 @@ through the project's normal pull-request and CI process.
   documented the required Codex GitHub identity
   ([PR #551](https://github.com/simsong/bulk_extractor/pull/551),
   [PR #542](https://github.com/simsong/bulk_extractor/pull/542)).
+- Replaced the generic Autotools `INSTALL` template with project-specific
+  release-archive and Git-checkout instructions, and expanded/published the
+  current scanner-development manuals
+  ([PR #561](https://github.com/simsong/bulk_extractor/pull/561),
+  [PR #558](https://github.com/simsong/bulk_extractor/pull/558),
+  [PR #557](https://github.com/simsong/bulk_extractor/pull/557)).
 
 ### Known limitations and release work
 
