@@ -45,6 +45,8 @@
 #include "formatter.h"
 #include "scanner_config.h"
 #include "scanner_set.h"
+
+#include "bulk_extractor_logging.h"
 #include "path_printer.h"
 
 /****************************************************************
@@ -1063,6 +1065,7 @@ void scanner_set::process_sbuf(const sbuf_t* sbufp)
 
 void scanner_set::log(const std::string message)
 {
+    bulk_extractor::logging::write(bulk_extractor::logging::level::info, "scanner_set", message);
     if (writer){
         writer->xmlout("log", message, aftimer::now_str("t='","'"), false);
         writer->flush();
