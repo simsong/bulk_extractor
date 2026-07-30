@@ -98,6 +98,19 @@ int run_be(std::ostream &ss, const char **argv)
     return run_be(ss, ss, argv);
 }
 
+static std::string shell_quote(std::string_view value)
+{
+    std::string quoted{"'"};
+    for (const char c : value) {
+        if (c == '\'') {
+            quoted += "'\\''";
+        } else {
+            quoted += c;
+        }
+    }
+    return quoted + "'";
+}
+
 TEST_CASE("e2e-stop-list", "[end-to-end]")
 {
     const std::string bitlocker_key =
@@ -281,7 +294,7 @@ TEST_CASE("e2e-H", "[end-to-end]") {
  */
 TEST_CASE("e2e-0", "[end-to-end]") {
     std::filesystem::path inpath = test_dir() / "nps-2010-emails.100k.raw";
-    std::filesystem::path outdir = NamedTemporaryDirectory();
+    std::filesystem::path outdir = NamedTemporaryDirectory() / "output with spaces";
 
     /* Try to run twice. There seems to be a problem with the second time through.  */
     std::string inpath_string = inpath.string();
@@ -300,7 +313,7 @@ TEST_CASE("e2e-0", "[end-to-end]") {
     grep( "debug:work_stop", xml_file);
 
     if (system("command -v xmllint >/dev/null 2>&1") == 0) {
-        std::string validate = std::string("xmllint --noout ") + xml_file;
+        std::string validate = std::string("xmllint --noout ") + shell_quote(xml_file);
         REQUIRE(system(validate.c_str()) == 0);
     }
 
