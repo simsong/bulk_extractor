@@ -157,7 +157,7 @@ jobs:
           $vhd = Join-Path $PWD "raw-device-test.vhd"
           $diskpart = Join-Path $PWD "raw-device-test.diskpart"
           @"
-          create vdisk file="$vhd" maximum=16 type=expandable
+          create vdisk file="$vhd" maximum=64 type=expandable
           select vdisk file="$vhd"
           attach vdisk
           create partition primary
