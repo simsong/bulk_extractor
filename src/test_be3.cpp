@@ -147,6 +147,59 @@ TEST_CASE("e2e-stop-list", "[end-to-end]")
     std::filesystem::remove_all(root);
 }
 
+TEST_CASE("e2e-context-sensitive-stop-list", "[end-to-end]")
+{
+    const auto root = NamedTemporaryDirectory();
+    const auto input = root / "input.raw";
+    const auto baseline_outdir = root / "baseline";
+    const auto stop_list = root / "stop-list.txt";
+    const auto outdir = root / "output";
+    std::ofstream(input) << "alpha before same@example.com alpha after\n"
+                         << std::string(256, 'x') << "\n"
+                         << "beta before same@example.com beta after\n";
+
+    const std::string input_string = input.string();
+    const std::string baseline_outdir_string = baseline_outdir.string();
+    const char *baseline_argv[] = {
+        "bulk_extractor", "-0q", "-x", "all", "-e", "email",
+        "-o", baseline_outdir_string.c_str(), input_string.c_str(), nullptr
+    };
+    std::stringstream output;
+    REQUIRE(run_be(output, baseline_argv) == 0);
+    const auto baseline = getLines(baseline_outdir / "email.txt");
+    const auto alpha = std::find_if(baseline.begin(), baseline.end(), [](const auto &line) {
+        return line.find("same@example.com") != std::string::npos
+            && line.find("alpha before") != std::string::npos;
+    });
+    REQUIRE(alpha != baseline.end());
+    REQUIRE(std::count_if(baseline.begin(), baseline.end(), [](const auto &line) {
+        return line.find("same@example.com") != std::string::npos;
+    }) == 2);
+    std::ofstream(stop_list) << *alpha << "\n";
+
+    const std::string stop_list_string = stop_list.string();
+    const std::string outdir_string = outdir.string();
+    const char *argv[] = {
+        "bulk_extractor", "-0q", "-x", "all", "-e", "email",
+        "-w", stop_list_string.c_str(),
+        "-o", outdir_string.c_str(), input_string.c_str(), nullptr
+    };
+    REQUIRE(run_be(output, argv) == 0);
+
+    const auto email = getLines(outdir / "email.txt");
+    const auto stopped = getLines(outdir / "email_stopped.txt");
+    REQUIRE(std::count_if(email.begin(), email.end(), [](const auto &line) {
+        return line.find("same@example.com") != std::string::npos;
+    }) == 1);
+    REQUIRE(requireFeature(email, "beta before"));
+    REQUIRE(std::count_if(stopped.begin(), stopped.end(), [](const auto &line) {
+        return line.find("same@example.com") != std::string::npos;
+    }) == 1);
+    REQUIRE(requireFeature(stopped, "alpha before"));
+
+    std::filesystem::remove_all(root);
+}
+
 TEST_CASE("e2e-alert-list", "[end-to-end]")
 {
     const auto root = NamedTemporaryDirectory();
