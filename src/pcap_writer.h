@@ -50,6 +50,7 @@ class pcap_writer {
     pcap_writer(const pcap_writer &pc) = delete;
     pcap_writer &operator=(const pcap_writer &that) = delete;
     struct stream_t {
+        stream_t() : outpath(), fcap() {}
         std::filesystem::path outpath;
         std::unique_ptr<std::ofstream> fcap;
     };
