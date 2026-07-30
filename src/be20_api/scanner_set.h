@@ -110,6 +110,7 @@ class scanner_set {
     std::map<scanner_t*, struct scanner_params::scanner_info *> scanner_info_db {}; // scanner to info db; master list of scanners
     std::map<std::string, scanner_t *> scanner_names {}; // scanner name to scanner
     std::set<scanner_t*> enabled_scanners {};            //
+    bool scan_seen_before_enabled {false};
     std::vector<void *> plugin_handles {};
 
     class thread_pool pool;
@@ -126,6 +127,7 @@ class scanner_set {
     bool record_call_stats {true};     // by default, record the call stats
     std::atomic<uint64_t> sbuf_seen {0}; // number of seen sbufs.
     std::atomic<uint64_t> dup_bytes_encountered{0}; // amount of dup data encountered
+    std::atomic<uint64_t> duplicate_sbufs_bypassed{0};
     std::map<scanner_t* , struct stats> scanner_stats{}; // maps scanner name to performance stats
     mutable std::mutex Mscanner_stats {};                        // mutex for scanner_stats
 
@@ -221,6 +223,7 @@ public:
     void debug_pool(std::ostream &os) const { pool.debug_pool(os);}
 
     uint64_t get_dup_bytes_encountered()  const  { return dup_bytes_encountered; }
+    uint64_t get_duplicate_sbufs_bypassed() const { return duplicate_sbufs_bypassed; }
     uint32_t get_max_depth_seen() const          { return max_depth_seen;} ; // max seen during scan
 
     // Feature recorders. Functions below are virtual so they can be called by loaded scanners.

@@ -610,7 +610,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     if ( !cfg.opt_quiet){
         cout << "bulk_extractor version: " << PACKAGE_VERSION << std::endl ;
 #ifndef HAVE_OPTIMIZATION_O3
-        cout << "WARNING: built without -O3 optimization; performance may be reduced." << std::endl;
+        cerr << "WARNING: built without -O3 optimization; performance may be reduced." << std::endl;
 #endif
         cout << "Input file: " << sc.input_fname << std::endl ;
         cout << "Output directory: " << sc.outdir << std::endl ;
@@ -727,6 +727,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     xreport->xmlout( "elapsed_seconds",master_timer.elapsed_seconds());
     xreport->xmlout( "max_depth_seen",ss.get_max_depth_seen());
     xreport->xmlout( "dup_bytes_encountered",ss.get_dup_bytes_encountered());
+    xreport->xmlout( "duplicate_sbufs_bypassed",ss.get_duplicate_sbufs_bypassed());
     xreport->xmlout( "sbufs_created", sbuf_t::sbuf_total);
     xreport->xmlout( "sbufs_unaccounted", sbuf_t::sbuf_count);
     xreport->xmlout( "producer_timer_ns", ss.producer_wait_ns() );
