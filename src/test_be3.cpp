@@ -111,6 +111,21 @@ static std::string shell_quote(std::string_view value)
     return quoted + "'";
 }
 
+TEST_CASE("Windows raw-device paths are recognized narrowly", "[image_process]")
+{
+    REQUIRE(process_raw::is_windows_raw_device_path(R"(\\.\PhysicalDrive0)"));
+    REQUIRE(process_raw::is_windows_raw_device_path(R"(\\.\physicaldrive12)"));
+    REQUIRE(process_raw::is_windows_raw_device_path(R"(\\.\C:)"));
+    REQUIRE(process_raw::is_windows_raw_device_path(R"(\\?\Volume{01234567-89ab-cdef-0123-456789abcdef})"));
+
+    REQUIRE_FALSE(process_raw::is_windows_raw_device_path(R"(\\.\PhysicalDrive)"));
+    REQUIRE_FALSE(process_raw::is_windows_raw_device_path(R"(\\.\PhysicalDrive0\partition1)"));
+    REQUIRE_FALSE(process_raw::is_windows_raw_device_path(R"(\\.\C:\)"));
+    REQUIRE_FALSE(process_raw::is_windows_raw_device_path(R"(\\.\COM1)"));
+    REQUIRE_FALSE(process_raw::is_windows_raw_device_path(R"(\\?\Volume{not-a-guid})"));
+    REQUIRE_FALSE(process_raw::is_windows_raw_device_path("disk.raw"));
+}
+
 TEST_CASE("e2e-stop-list", "[end-to-end]")
 {
     const std::string bitlocker_key =
