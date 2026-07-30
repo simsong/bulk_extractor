@@ -162,6 +162,8 @@ TEST_CASE("diagnostic command-line configuration", "[logging]")
     REQUIRE(std::filesystem::exists(log_path));
     REQUIRE(requireFeature(getLines(log_path), "diagnostic logging initialized"));
     REQUIRE(requireFeature(getLines(log_path), "diagnostic level is debug"));
+}
+
 static std::string shell_quote(std::string_view value)
 {
     std::string quoted{"'"};
