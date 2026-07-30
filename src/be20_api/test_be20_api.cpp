@@ -19,6 +19,7 @@
 #include "catch.hpp"
 
 #include <algorithm>
+#include <atomic>
 #include <array>
 #include <chrono>
 #include <thread>
@@ -1313,8 +1314,8 @@ TEST_CASE("scanner", "[scanner]") {
 #include "machine_stats.h"
 
 namespace {
-uint64_t duplicate_bypass_scans {0};
-uint64_t duplicate_opt_in_scans {0};
+std::atomic<uint64_t> duplicate_bypass_scans {0};
+std::atomic<uint64_t> duplicate_opt_in_scans {0};
 
 void scan_duplicate_bypass_test(scanner_params& sp) {
     if (sp.phase == scanner_params::PHASE_INIT) {
