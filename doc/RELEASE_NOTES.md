@@ -79,7 +79,7 @@ through the project's normal pull-request and CI process.
   [PR #535](https://github.com/simsong/bulk_extractor/pull/535)).
 - Bounded and normalized derived ZIP-carving filenames while retaining source
   metadata ([PR #539](https://github.com/simsong/bulk_extractor/pull/539)).
-- ZIP component carvings now use the `zip_carved/` output directory, matching
+- ZIP component carvings now use the `zip_carved/` output directory and `zip_carved.txt` feature file, matching
   the convention used by other carvers ([#336](https://github.com/simsong/bulk_extractor/issues/336)).
 - Prevented empty MSXML extraction from causing recursion and changed residual
   `sbuf` diagnostics from an abort to a DFXML warning
