@@ -1354,19 +1354,6 @@ TEST_CASE("previously_processed", "[scanner_set]") {
     REQUIRE(ss.previously_processed_count(slg) == 2);
 }
 
-#if 0
-TEST_CASE("mt_previously_processed", "[scanner_set]") {
-    scanner_config sc;
-    feature_recorder_set::flags_t f;
-    scanner_set ss(sc, f, nullptr);
-    sbuf_t slg("Simson");
-    ss.info();
-    REQUIRE(ss.previously_processed_count(slg) == 0);
-    REQUIRE(ss.previously_processed_count(slg) == 1);
-    REQUIRE(ss.previously_processed_count(slg) == 2);
-}
-#endif
-
 TEST_CASE("enable/disable", "[scanner_set]") {
     scanner_config sc;
     sc.outdir = get_tempdir();
