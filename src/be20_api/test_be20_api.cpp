@@ -19,6 +19,7 @@
 #include "catch.hpp"
 
 #include <algorithm>
+#include <atomic>
 #include <array>
 #include <chrono>
 #include <thread>
@@ -1313,8 +1314,8 @@ TEST_CASE("scanner", "[scanner]") {
 #include "machine_stats.h"
 
 namespace {
-uint64_t duplicate_bypass_scans {0};
-uint64_t duplicate_opt_in_scans {0};
+std::atomic<uint64_t> duplicate_bypass_scans {0};
+std::atomic<uint64_t> duplicate_opt_in_scans {0};
 
 void scan_duplicate_bypass_test(scanner_params& sp) {
     if (sp.phase == scanner_params::PHASE_INIT) {
@@ -1382,17 +1383,24 @@ TEST_CASE("duplicate sbufs bypass scanner fan-out unless requested", "[scanner_s
     scanner_config sc;
     sc.outdir = get_tempdir();
     sc.enable_all_scanners();
+    const auto dfxml_file = get_tempdir() / "duplicate_bypass.xml";
+    dfxml_writer writer(dfxml_file, false);
     duplicate_bypass_scans = 0;
-    scanner_set ss(sc, feature_recorder_set::flags_t(), nullptr);
+    scanner_set ss(sc, feature_recorder_set::flags_t(), &writer);
+    ss.debug_flags.debug_benchmark = true;
     ss.add_scanner(scan_duplicate_bypass_test);
     ss.apply_scanner_commands();
     ss.phase_scan();
-    ss.schedule_sbuf(new sbuf_t("duplicate"));
-    ss.schedule_sbuf(new sbuf_t("duplicate"));
+    ss.schedule_sbuf(sbuf_t::sbuf_malloc(pos0_t("a&b"), "duplicate"));
+    ss.schedule_sbuf(sbuf_t::sbuf_malloc(pos0_t("a&b"), "duplicate"));
     REQUIRE(duplicate_bypass_scans == 1);
     REQUIRE(ss.get_dup_bytes_encountered() == 9);
     REQUIRE(ss.get_duplicate_sbufs_bypassed() == 1);
     ss.shutdown();
+    writer.close();
+    const auto lines = getLines(dfxml_file);
+    REQUIRE(std::any_of(lines.begin(), lines.end(),
+                        [](const auto& line) { return line.find("sbuf='a&amp;b-0'") != std::string::npos; }));
 }
 
 TEST_CASE("duplicate sbufs reach scanners that opt in", "[scanner_set]") {

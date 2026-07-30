@@ -989,7 +989,7 @@ void scanner_set::process_sbuf(const sbuf_t* sbufp)
             if (debug_flags.debug_benchmark && writer) {
                 writer->xmlout("debug:bypass", "",
                                Formatter()
-                               << "sbuf='" << sbuf.pos0.str() << "' "
+                               << "sbuf='" << dfxml_writer::xmlescape(sbuf.pos0.str()) << "' "
                                << "bufsize='" << sbuf.bufsize << "' "
                                << "scanner='all' reason='seen_before'", true);
             }
