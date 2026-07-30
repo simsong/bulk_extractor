@@ -529,6 +529,13 @@ void scanner_set::apply_scanner_commands() {
             }
         }
     }
+    scan_seen_before_enabled = false;
+    for (const auto &scanner : enabled_scanners) {
+        if (scanner_info_db[scanner]->scanner_flags.scan_seen_before) {
+            scan_seen_before_enabled = true;
+            break;
+        }
+    }
 
     /* Create feature recorders for each enabled scanner.
      * Multiple scanners may request the same feature recorder without generating an error.
@@ -975,6 +982,18 @@ void scanner_set::process_sbuf(const sbuf_t* sbufp)
     sbufp->seen_before = previously_processed_count(sbuf) > 0; // abstraction violation
     if (sbufp->seen_before) {
         dup_bytes_encountered += sbuf.bufsize;
+        if (!scan_seen_before_enabled) {
+            duplicate_sbufs_bypassed++;
+            if (debug_flags.debug_benchmark && writer) {
+                writer->xmlout("debug:bypass", "",
+                               Formatter()
+                               << "sbuf='" << sbuf.pos0.str() << "' "
+                               << "bufsize='" << sbuf.bufsize << "' "
+                               << "scanner='all' reason='seen_before'", true);
+            }
+            thread_set_status("IDLE");
+            return;
+        }
     }
 
     /*
