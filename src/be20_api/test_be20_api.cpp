@@ -1414,18 +1414,7 @@ TEST_CASE("duplicate sbufs reach scanners that opt in", "[scanner_set]") {
     ss.shutdown();
 }
 
-#if 0
-TEST_CASE("mt_previously_processed", "[scanner_set]") {
-    scanner_config sc;
-    feature_recorder_set::flags_t f;
-    scanner_set ss(sc, f, nullptr);
-    sbuf_t slg("Simson");
-    ss.info();
-    REQUIRE(ss.previously_processed_count(slg) == 0);
-    REQUIRE(ss.previously_processed_count(slg) == 1);
-    REQUIRE(ss.previously_processed_count(slg) == 2);
-}
-#endif
+
 
 TEST_CASE("enable/disable", "[scanner_set]") {
     scanner_config sc;
