@@ -108,7 +108,12 @@ struct logging_shutdown {
  */
 void validate_path( const std::filesystem::path fn)
 {
-    if ( !std::filesystem::exists( fn )){
+#ifdef _WIN32
+    const bool raw_device = process_raw::is_windows_raw_device_path(fn.string());
+#else
+    const bool raw_device = false;
+#endif
+    if (!raw_device && !std::filesystem::exists(fn)) {
         std::cerr << "file does not exist: " << fn << std::endl ;
         throw std::runtime_error( "file not found." );
     }
