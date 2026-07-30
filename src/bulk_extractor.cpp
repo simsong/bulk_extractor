@@ -575,7 +575,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     if ( !cfg.opt_quiet){
         cout << "bulk_extractor version: " << PACKAGE_VERSION << std::endl ;
 #ifndef HAVE_OPTIMIZATION_O3
-        cout << "WARNING: built without -O3 optimization; performance may be reduced." << std::endl;
+        cerr << "WARNING: built without -O3 optimization; performance may be reduced." << std::endl;
 #endif
         cout << "Input file: " << sc.input_fname << std::endl ;
         cout << "Output directory: " << sc.outdir << std::endl ;
