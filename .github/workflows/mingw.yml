@@ -171,7 +171,7 @@ jobs:
             if ($LASTEXITCODE -ne 0) {
               throw "diskpart failed to create the FAT32 test volume"
             }
-            $volume = Get-Volume -FileSystemLabel BE_RAW_DEVICE
+            $volume = Get-DiskImage -ImagePath $vhd | Get-Disk | Get-Partition | Get-Volume
             if ($null -eq $volume.DriveLetter) {
               throw "Windows did not assign a drive letter to the FAT32 test volume"
             }

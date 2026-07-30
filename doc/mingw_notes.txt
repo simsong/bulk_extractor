@@ -42,8 +42,9 @@ boundaries or span disks. Windows may require `FSCTL_ALLOW_EXTENDED_DASD_IO` to
 read the final sectors of a volume. bulk_extractor does not issue that control
 code, so a short read at that boundary is reported rather than bypassed.
 
-The Windows Actions job verifies the cross-compiled executable with ordinary
-files. It does not attach or scan a real disk, because the hosted runner has no
-disposable raw device. Before a release, validate the three device forms on an
-elevated Windows system using a disposable virtual disk of known size and
-known bytes near both ends.
+The Windows Actions job creates a disposable FAT32 VHD, attaches it, and scans
+its assigned drive letter as a raw device. It contains the checked-in FAT32
+fixture and a known email address, so the job proves both device reading and
+feature extraction. Before a release, also validate physical-drive and
+volume-GUID forms on an elevated Windows system using disposable media of
+known size and known bytes near both ends.
