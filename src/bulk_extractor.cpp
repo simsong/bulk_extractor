@@ -454,11 +454,9 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
 
         /* The zap option wipes the contents of a directory, useful for debugging */
         if ( result.count( "zap" ) && std::filesystem::is_directory( sc.outdir )) {
-            for ( const auto &entry : std::filesystem::recursive_directory_iterator( sc.outdir ) ) {
-                if ( ! std::filesystem::is_directory( entry.path())){
-                    cout << "erasing " << entry.path().string() << std::endl ;
-                    std::filesystem::remove( entry );
-                }
+            for (const auto &entry : std::filesystem::directory_iterator(sc.outdir)) {
+                cout << "erasing " << entry.path().string() << std::endl;
+                std::filesystem::remove_all(entry.path());
             }
         }
 	if (std::filesystem::exists( sc.outdir ) == false ){

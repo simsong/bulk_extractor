@@ -184,6 +184,33 @@ TEST_CASE("e2e-alert-list", "[end-to-end]")
     std::filesystem::remove_all(root);
 }
 
+TEST_CASE("e2e-zap-removes-nested-output", "[end-to-end]")
+{
+    const auto root = NamedTemporaryDirectory();
+    const auto input = root / "input.raw";
+    const auto outdir = root / "output";
+    const auto nested = outdir / "nested" / "deeper";
+    std::ofstream(input) << "input\n";
+    std::filesystem::create_directories(nested);
+    std::ofstream(outdir / "stale.txt") << "stale\n";
+    std::ofstream(nested / "stale.txt") << "stale\n";
+
+    const std::string input_string = input.string();
+    const std::string outdir_string = outdir.string();
+    const char *argv[] = {
+        "bulk_extractor", "-0q", "-x", "all", "-Z", "-o", outdir_string.c_str(),
+        input_string.c_str(), nullptr
+    };
+    std::stringstream output;
+    REQUIRE(run_be(output, argv) == 0);
+    REQUIRE(std::filesystem::is_directory(outdir));
+    REQUIRE_FALSE(std::filesystem::exists(outdir / "stale.txt"));
+    REQUIRE_FALSE(std::filesystem::exists(nested));
+    REQUIRE(std::filesystem::exists(outdir / "report.xml"));
+
+    std::filesystem::remove_all(root);
+}
+
 #if defined(HAVE_SYS_RESOURCE_H) && defined(HAVE_SIGNAL_H)
 class file_size_limit {
     struct rlimit old_limit {};
