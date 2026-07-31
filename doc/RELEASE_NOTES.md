@@ -74,6 +74,9 @@ through the project's normal pull-request and CI process.
   `-x all -e outlook` enables Outlook as requested
   ([PR #525](https://github.com/simsong/bulk_extractor/pull/525),
   [PR #527](https://github.com/simsong/bulk_extractor/pull/527)).
+- JPEG carving now observes the recorder's configured minimum and maximum
+  carve sizes; `jpeg_min_carve_size` and `jpeg_max_carve_size` provide
+  scanner-specific overrides ([#242](https://github.com/simsong/bulk_extractor/issues/242)).
 - Preserved recorder banners and triggering features across CRLF input,
   histogram setup, and allocation-failure paths
   ([PR #531](https://github.com/simsong/bulk_extractor/pull/531),
