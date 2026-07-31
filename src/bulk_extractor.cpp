@@ -456,11 +456,12 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     }
 
 #ifdef _WIN32
-    if (!cfg.opt_recurse && is_windows_drive_root(sc.input_fname)) {
+    const std::string input_name = sc.input_fname.string();
+    if (!cfg.opt_recurse && is_windows_drive_root(input_name)) {
         cerr << "error: " << sc.input_fname << " is a drive root; specify the scan type explicitly:" << std::endl;
         cerr << "       files:      bulk_extractor -R -o output " << sc.input_fname << std::endl;
-        cerr << "       raw volume: bulk_extractor -o output " << sc.input_fname.substr(0, 2)
-             << " (or \\\\.\\" << sc.input_fname.substr(0, 2) << ")" << std::endl;
+        cerr << "       raw volume: bulk_extractor -o output " << input_name.substr(0, 2)
+             << " (or \\\\.\\" << input_name.substr(0, 2) << ")" << std::endl;
         cerr << "       physical disk: bulk_extractor -o output \\\\.\\PhysicalDriveN" << std::endl;
         return 7;
     }
