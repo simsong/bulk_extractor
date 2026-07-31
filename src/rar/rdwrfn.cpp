@@ -151,12 +151,10 @@ void ComprDataIO::UnpWrite(byte *Addr,size_t Count)
   UnpWrSize=Count;
   if (UnpackToMemory)
   {
-    if (Count <= UnpackToMemorySize)
-    {
-      memcpy(UnpackToMemoryAddr,Addr,Count);
-      UnpackToMemoryAddr+=Count;
-      UnpackToMemorySize-=Count;
-    }
+    const size_t write_size=Min(Count,UnpackToMemorySize);
+    memcpy(UnpackToMemoryAddr,Addr,write_size);
+    UnpackToMemoryAddr+=write_size;
+    UnpackToMemorySize-=write_size;
   }
   else
     if (!TestMode)
@@ -266,5 +264,3 @@ void ComprDataIO::SetUnpackToMemory(byte *Addr,uint Size)
     UnpackFromMemorySize  = Size;
     UnpackFromMemoryAddr = (byte*)Addr;
 }*/
-
-

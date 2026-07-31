@@ -47,6 +47,8 @@ through the project's normal pull-request and CI process.
 
 ### Reliability and correctness
 
+- RAR extraction now preserves full seek offsets and bounded in-memory writes,
+  recovering every member of a multi-file RAR fixture ([#212](https://github.com/simsong/bulk_extractor/issues/212)).
 - Hardened `sbuf` bounds, arithmetic, and ownership behavior, including
   zero-length and one-past-end cases
   ([PR #511](https://github.com/simsong/bulk_extractor/pull/511)).

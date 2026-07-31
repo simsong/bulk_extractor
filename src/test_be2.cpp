@@ -465,6 +465,18 @@ TEST_CASE("test_json", "[phase1]") {
 
 TEST_CASE("test_jpeg_rar", "[phase1]") {
     std::vector<Check> ex2 {
+        Check("unrar_carved.txt",
+              Feature("20-RAR-0", "unrar_carved/000/20-RAR-0_jpegs_1.jpg",
+                      "<fileobject><filename>unrar_carved/000/20-RAR-0_jpegs_1.jpg</filename><filesize>7323</filesize><hashdigest type='sha1'>0be21db1315246d1617092e8ed92530c85a66e9c</hashdigest></fileobject>")),
+        Check("unrar_carved.txt",
+              Feature("4340-RAR-0", "unrar_carved/000/4340-RAR-0_jpegs_2.jpg",
+                      "<fileobject><filename>unrar_carved/000/4340-RAR-0_jpegs_2.jpg</filename><filesize>7331</filesize><hashdigest type='sha1'>e8beb3c26d976fc30200d52d526c88553e09feac</hashdigest></fileobject>")),
+        Check("unrar_carved.txt",
+              Feature("8708-RAR-0", "unrar_carved/000/8708-RAR-0_jpegs_3.jpg",
+                      "<fileobject><filename>unrar_carved/000/8708-RAR-0_jpegs_3.jpg</filename><filesize>7509</filesize><hashdigest type='sha1'>d77611b716c9bb5f17ffa35b294ed775724b6839</hashdigest></fileobject>")),
+        Check("unrar_carved.txt",
+              Feature("13259-RAR-0", "unrar_carved/000/13259-RAR-0_jpegs_4.jpg",
+                      "<fileobject><filename>unrar_carved/000/13259-RAR-0_jpegs_4.jpg</filename><filesize>7599</filesize><hashdigest type='sha1'>65a1b15956227d3968d5b460c9512c54c46d80bb</hashdigest></fileobject>")),
         Check("jpeg.txt",
               Feature( "13259-RAR-0", "jpeg/000/13259-RAR-0.jpg"))
 
