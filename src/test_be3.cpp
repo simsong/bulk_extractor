@@ -796,6 +796,21 @@ TEST_CASE("e2e-jpeg-carving-disabled", "[end-to-end]") {
     REQUIRE_FALSE( std::filesystem::exists(outdir / "jpeg_carved") );
 }
 
+TEST_CASE("e2e-jpeg-carving-respects-recorder-size-limits", "[end-to-end]") {
+    const std::filesystem::path inpath = test_dir() / "len6192.jpg";
+    const std::string inpath_string = inpath.string();
+
+    for (const char* limit : {"jpeg_min_carve_size=7000", "jpeg_max_carve_size=6000"}) {
+        const std::filesystem::path outdir = NamedTemporaryDirectory();
+        const std::string outdir_string = outdir.string();
+        std::stringstream output;
+        const char* argv[] = {"bulk_extractor", notify(), "-S", "jpeg_carve_mode=2", "-S", limit,
+                              "-1q", "-o", outdir_string.c_str(), inpath_string.c_str(), nullptr};
+        REQUIRE(run_be(output, argv) == 0);
+        REQUIRE_FALSE(std::filesystem::exists(outdir / "jpeg_carved"));
+    }
+}
+
 
 
 TEST_CASE("e2e-email_test", "[end-to-end]") {

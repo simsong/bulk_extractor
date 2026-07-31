@@ -28,9 +28,6 @@
 #include "exif_reader.h"
 #include "unicode_escape.h"
 
-// these are tunable
-static size_t min_jpeg_size = 1000; // don't carve smaller than this
-
 /****************************************************************
  *** formatting code
  ****************************************************************/
@@ -365,7 +362,8 @@ size_t exif_scanner::process_possible_jpeg( const sbuf_t &sbuf, bool found_start
         if ( res.len <= 0 ) return 0;
 
         // Should we carve?
-        if ( res.how==jpeg_validator::COMPLETE || res.len > static_cast<ssize_t>( min_jpeg_size ) ) {
+        const size_t jpeg_size = static_cast<size_t>(res.len);
+        if (jpeg_size >= jpeg_recorder.min_carve_size && jpeg_size <= jpeg_recorder.max_carve_size) {
             if ( exif_scanner_debug ) fprintf( stderr,"CARVING1\n" );
             jpeg_recorder.carve( sbuf.slice( 0, res.len ), ".jpg", 0 );
             ret = res.len;
@@ -519,6 +517,15 @@ void scan_exif( scanner_params &sp )
         auto jpeg_def = feature_recorder_def("jpeg", carve_flag); // set carve mode with  -S jpeg_carve_mode=2
 
         jpeg_def.default_carve_mode = feature_recorder_def::carve_mode_t::CARVE_ENCODED;
+
+        uint64_t min_carve_size = jpeg_def.min_carve_size;
+        uint64_t max_carve_size = jpeg_def.max_carve_size;
+        sp.get_scanner_config("jpeg_min_carve_size", &min_carve_size,
+                              "Minimum JPEG size to carve");
+        sp.get_scanner_config("jpeg_max_carve_size", &max_carve_size,
+                              "Maximum JPEG size to carve");
+        jpeg_def.min_carve_size = static_cast<size_t>(min_carve_size);
+        jpeg_def.max_carve_size = static_cast<size_t>(max_carve_size);
 	sp.info->feature_defs.push_back( jpeg_def );
         sp.get_scanner_config( "exif_debug",&exif_debug,"debug exif decoder" );
 	return;

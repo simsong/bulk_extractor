@@ -1,0 +1,6 @@
+# All changes require approval from the human repository owner.
+* @simsong
+
+# Documentation-only changes do not require code-owner approval.
+*.md
+*.txt
