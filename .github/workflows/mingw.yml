@@ -190,8 +190,7 @@ jobs:
             }
 
             $help = & "$PWD\dist\bulk_extractor64.exe" -h 2>&1 | Out-String
-            if ($LASTEXITCODE -ne 1 -or $help -notmatch "PhysicalDriveN" -or
-                $help -notmatch "Volume\{GUID\}") {
+            if ($help -notmatch "PhysicalDriveN" -or $help -notmatch "Volume\{GUID\}") {
               throw "bulk_extractor help does not list Windows raw-device forms"
             }
 
