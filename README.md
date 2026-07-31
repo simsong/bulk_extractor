@@ -136,6 +136,24 @@ support, is not signed, and is not a release installer. The workflow file and
 its maintained build notes are `.github/workflows/mingw.yml` and
 `doc/mingw_notes.txt`.
 
+WINDOWS RAW DEVICES
+===================
+On Windows, the executable can scan a raw physical disk, volume, or named
+volume by passing its DOS device path as the input. Supported forms are
+`C:` (a shorthand for `\\.\C:`), `\\.\PhysicalDriveN`, `\\.\X:`, and
+`\\?\Volume{GUID}` (without the trailing
+backslash used for a mounted-volume directory). For example:
+
+    bulk_extractor64.exe -o output \\.\PhysicalDrive0
+
+Run from an elevated command prompt and use a separate output directory. The
+input is opened read-only with shared read/write access; bulk_extractor does
+not lock, mount, alter, or write the device. It obtains the exact length with
+the Windows disk-length control code and reads through Win32 handles rather
+than treating a device as a C++ regular file. A volume path is not equivalent
+to its containing physical disk and may be subject to Windows volume-boundary
+rules near its final sectors. See `doc/mingw_notes.txt` for operational limits.
+
 
 
 

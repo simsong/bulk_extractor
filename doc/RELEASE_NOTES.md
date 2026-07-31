@@ -32,6 +32,10 @@ through the project's normal pull-request and CI process.
   publishes it as a downloadable artifact; attaching it to the 2.2.0 release
   remains a release task
   ([PR #543](https://github.com/simsong/bulk_extractor/pull/543)).
+- Windows raw-device input now uses explicit Win32 device handles and
+  `IOCTL_DISK_GET_LENGTH_INFO` for physical disks, volumes, and named volumes,
+  rather than relying on C++ filesystem metadata or calculated disk geometry
+  ([issue #258](https://github.com/simsong/bulk_extractor/issues/258)).
 - The source tree is self-contained: `be20_api`, DFXML, schemas, and UTF support
   are now versioned in this repository instead of being supplied through fragile
   Git submodules
@@ -49,6 +53,9 @@ through the project's normal pull-request and CI process.
 
 - RAR extraction now preserves full seek offsets and bounded in-memory writes,
   recovering every member of a multi-file RAR fixture ([#212](https://github.com/simsong/bulk_extractor/issues/212)).
+- Email extraction now enforces independent 64-octet local-part and 253-octet
+  domain limits for ASCII and UTF-16 input, avoiding truncated suffix features
+  from overlong addresses ([#585](https://github.com/simsong/bulk_extractor/issues/585)).
 - Hardened `sbuf` bounds, arithmetic, and ownership behavior, including
   zero-length and one-past-end cases
   ([PR #511](https://github.com/simsong/bulk_extractor/pull/511)).
