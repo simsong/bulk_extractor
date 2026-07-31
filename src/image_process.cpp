@@ -691,7 +691,7 @@ ssize_t process_raw::pread(void *buf, size_t bytes, uint64_t offset) const
             throw std::system_error(GetLastError(), std::system_category(), "ReadFile " + fi->path.string());
         }
         if (bytes_read == 0) return 0;
-        if (bytes_read == bytes) return bytes_read;
+        if (bytes_read == bytes_to_read) return bytes_read;
         const ssize_t rest = pread(static_cast<char *>(buf) + bytes_read, bytes - bytes_read,
                                    offset + bytes_read);
         return rest < 0 ? -1 : bytes_read + rest;
