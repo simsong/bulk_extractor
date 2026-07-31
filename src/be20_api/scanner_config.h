@@ -85,6 +85,7 @@ public:
     struct {
         std::vector<std::filesystem::path> files {};     // accumulates pattern files
         std::vector<std::string> patterns {};            // accumulates cmdline patterns
+        bool case_sensitive {false};
     } FindOpts {};
 
     bool find_opts_empty() const {
@@ -94,8 +95,10 @@ public:
     // Find interface
     const std::vector<std::string> &find_patterns() const        { return FindOpts.patterns; }
     const std::vector<std::filesystem::path> &find_files() const { return FindOpts.files; }
+    bool find_case_sensitive() const                             { return FindOpts.case_sensitive; }
     void add_find_pattern(std::string pattern)                   { FindOpts.patterns.push_back(pattern);}
     void add_find_path(std::filesystem::path path)               { FindOpts.files.push_back(path);}
+    void set_find_case_sensitive(bool value)                     { FindOpts.case_sensitive = value; }
 
 
     size_t context_window_default{16}; // global option

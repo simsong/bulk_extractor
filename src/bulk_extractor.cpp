@@ -237,6 +237,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         ("x,disable",  "disable a scanner (can be repeated)", cxxopts::value<std::vector<std::string>>())
         ("f,find",     "search for a pattern (can be repeated)", cxxopts::value<std::vector<std::string>>())
         ("F,find_file", "read patterns to search from a file (can be repeated)", cxxopts::value<std::vector<std::string>>())
+        ("find-case-sensitive", "make -f and -F patterns case-sensitive")
         ("G,pagesize",   "page size in bytes", cxxopts::value<std::string>()->default_value(std::to_string(cfg.opt_pagesize )))
         ("g,marginsize", "margin size in bytes", cxxopts::value<std::string>()->default_value(std::to_string(cfg.opt_marginsize )))
         ("j,threads",    "number of threads", cxxopts::value<int>()->default_value(std::to_string(cfg.num_threads)))
@@ -291,6 +292,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     try {
         sc.banner_file = result["banner_file"].as<std::string>();
     } catch ( cxxopts::option_has_no_value_exception &e ) { }
+    sc.set_find_case_sensitive(result.count("find-case-sensitive") != 0);
 
     try {
         for ( const auto &name : result["disable"].as<std::vector<std::string>>() ) {

@@ -98,6 +98,8 @@ void scan_find(scanner_params &sp)
         return;
     }
     if (sp.phase == scanner_params::PHASE_INIT2 ) {
+        find_list.clear();
+        find_list.set_case_sensitive(sp.ss->find_case_sensitive());
         for (const auto &it : sp.ss->find_patterns()) {
             add_find_pattern(it);
             if (sp.ss->writer) { sp.ss->writer->xmlout("find_pattern", it); }
