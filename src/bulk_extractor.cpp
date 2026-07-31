@@ -434,6 +434,9 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
 
         if ( result.count( "help" )) {     // -h
             cout << options.help() << std::endl;
+#ifdef _WIN32
+            cout << "Windows raw devices: C:, \\\\.\\PhysicalDriveN, \\\\.\\X:, \\\\?\\Volume{GUID}" << std::endl;
+#endif
             cout << "Global config options: " << std::endl << ss.get_help() << std::endl;
             ss.info_scanners( cout, false, true, 'e', 'x');
             return 1;
