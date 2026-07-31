@@ -429,14 +429,14 @@ static HANDLE open_raw_device(const std::filesystem::path &path)
 {
     std::string device_path = path.string();
     if (device_path.size() == 2 && std::isalpha(static_cast<unsigned char>(device_path[0])) && device_path[1] == ':') {
-        device_path = "\\\\\\\\.\\\\" + device_path;
+        device_path = "\\\\.\\" + device_path;
     }
     const std::wstring wide_path = safe_utf8to16(device_path);
     HANDLE handle = CreateFileW(wide_path.c_str(), GENERIC_READ,
                                 FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING,
                                 FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED, nullptr);
     if (handle == INVALID_HANDLE_VALUE) {
-        throw std::system_error(GetLastError(), std::system_category(), "CreateFileW " + path.string());
+        throw std::system_error(GetLastError(), std::system_category(), "CreateFileW " + device_path);
     }
     return handle;
 }
