@@ -1296,6 +1296,15 @@ TEST_CASE("scanner_config", "[scanner]") {
     sc.push_scanner_command("scanner1", scanner_config::scanner_command::ENABLE);
     sc.push_scanner_command("scanner2", scanner_config::scanner_command::DISABLE);
     REQUIRE(sc.get_scanner_commands().size() == 2);
+
+    sc.add_find_pattern("first-pattern");
+    sc.add_find_path("first-patterns.txt");
+    scanner_config other;
+    other.add_find_pattern("second-pattern");
+    REQUIRE(sc.find_patterns() == std::vector<std::string>{"first-pattern"});
+    REQUIRE(sc.find_files() == std::vector<std::filesystem::path>{"first-patterns.txt"});
+    REQUIRE(other.find_patterns() == std::vector<std::string>{"second-pattern"});
+    REQUIRE(other.find_files().empty());
 }
 
 /****************************************************************
