@@ -67,7 +67,39 @@ inline class email_scanner *get_extra(yyscan_t yyscanner) {return yyemail_get_ex
 bool extra_validate_email(const char *email)
 {
     if (strstr(email,"..")) return false;
-    return true;
+    const char *at = strchr(email, '@');
+    if (at == nullptr || strchr(at + 1, '@') != nullptr) return false;
+    const size_t local_length = static_cast<size_t>(at - email);
+    const size_t domain_length = strlen(at + 1);
+    return local_length <= 64 && domain_length <= 253;
+}
+
+bool extra_validate_email_utf16(const char *email, size_t length)
+{
+    if (length % 2 != 0) return false;
+    std::string ascii;
+    ascii.reserve(length / 2);
+    for (size_t i = 0; i < length; i += 2) {
+        if (email[i + 1] != '\0') return false;
+        ascii.push_back(email[i]);
+    }
+    return extra_validate_email(ascii.c_str());
+}
+
+bool email_has_left_boundary(const sbuf_t &sbuf, size_t pos)
+{
+    if (pos == 0) return true;
+    const unsigned char previous = sbuf[pos - 1];
+    return !std::isalnum(previous) && previous != '.' && previous != '_' &&
+           previous != '%' && previous != '+' && previous != '-';
+}
+
+bool email_has_left_boundary_utf16(const sbuf_t &sbuf, size_t pos)
+{
+    if (pos < 2) return true;
+    const unsigned char previous = sbuf[pos - 2];
+    return !std::isalnum(previous) && previous != '.' && previous != '_' &&
+           previous != '%' && previous != '+' && previous != '-';
 }
 
 
@@ -134,7 +166,7 @@ LOCALPART	{WORD}([.]{WORD})*
 ADDRSPEC	{LOCALPART}@{DOMAIN}
 MAILBOX		{ADDRSPEC}
 
-EMAIL	{ALNUM}[a-zA-Z0-9._%\-+]{1,128}{ALNUM}@{ALNUM}[a-zA-Z0-9._%\-]{1,128}\.{TLD}
+EMAIL	{ALNUM}[a-zA-Z0-9._%\-+]{1,62}{ALNUM}@{ALNUM}[a-zA-Z0-9._%\-]{1,250}\.{TLD}
 YEAR		((19[6-9][0-9])|(20[0-1][0-9]))
 DAYOFWEEK	(Mon|Tue|Wed|Thu|Fri|Sat|Sun)
 MONTH		(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)
@@ -191,10 +223,10 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
     s.pos += yyleng;
 }
 
-{EMAIL}/[^a-zA-Z]	{
+{EMAIL}/[^a-zA-Z0-9._%\-]	{
     email_scanner &s = * yyemail_get_extra(yyscanner);
     s.check_margin();
-    if (extra_validate_email(yytext)){
+    if (email_has_left_boundary(SBUF, POS) && extra_validate_email(yytext)){
         s.email_recorder.write_buf(SBUF,POS,yyleng);
 	ssize_t domain_start = find_host_in_email(SBUF.slice(POS,yyleng));
         if (domain_start>0){
@@ -320,11 +352,11 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
     s.pos += yyleng;
 }
 
-[a-zA-Z0-9]\0([a-zA-Z0-9._%\-+]\0){1,128}@\0([a-zA-Z0-9._%\-]\0){1,128}\.\0({U_TLD1}|{U_TLD2}|{U_TLD3}|{U_TLD4})/[^a-zA-Z]|([^][^\0])	{
+[a-zA-Z0-9]\0([a-zA-Z0-9._%\-+]\0){1,62}[a-zA-Z0-9]\0@\0([a-zA-Z0-9._%\-]\0){1,250}\.\0({U_TLD1}|{U_TLD2}|{U_TLD3}|{U_TLD4})/[^a-zA-Z0-9._%\-]\0	{
     /* UTF-16 URL scanner */
     email_scanner &s = * yyemail_get_extra(yyscanner);
     s.check_margin();
-    if (extra_validate_email(yytext)){
+    if (email_has_left_boundary_utf16(SBUF, POS) && extra_validate_email_utf16(yytext, yyleng)){
         s.email_recorder.write_buf(SBUF,POS,yyleng);
         ssize_t domain_start = find_host_in_email(SBUF.slice(POS,yyleng)) + 1;
         if (domain_start >= 0){
