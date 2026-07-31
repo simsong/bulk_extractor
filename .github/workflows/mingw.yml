@@ -203,3 +203,5 @@ jobs:
               Dismount-DiskImage -ImagePath $vhd -ErrorAction SilentlyContinue
             }
           }
+          # The assertions above deliberately exercise nonzero exit codes.
+          exit 0
