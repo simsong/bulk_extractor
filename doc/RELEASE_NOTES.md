@@ -47,6 +47,9 @@ through the project's normal pull-request and CI process.
 
 ### Reliability and correctness
 
+- Email extraction now enforces independent 64-octet local-part and 253-octet
+  domain limits for ASCII and UTF-16 input, avoiding truncated suffix features
+  from overlong addresses ([#585](https://github.com/simsong/bulk_extractor/issues/585)).
 - Hardened `sbuf` bounds, arithmetic, and ownership behavior, including
   zero-length and one-past-end cases
   ([PR #511](https://github.com/simsong/bulk_extractor/pull/511)).

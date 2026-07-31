@@ -15,6 +15,7 @@
 #include "config.h"
 
 #include <cstdint>
+#include <algorithm>
 #include <cstring>
 #include <fstream>
 #include <iostream>
@@ -355,6 +356,70 @@ TEST_CASE("scan_email3", "[support]") {
     auto outdir = test_scanner(scan_email, sbufp);
     auto email_txt = getLines( outdir / "email.txt" );
     REQUIRE( requireFeature(email_txt,"0\tplain_text_pdf@textedit.com"));
+}
+
+static std::string valid_email_domain(size_t length)
+{
+    REQUIRE(length >= 5);
+    std::string domain;
+    size_t remaining = length - 4; // the final ".com"
+    while (remaining > 0) {
+        const size_t label_length = std::min<size_t>(63, remaining);
+        domain.append(label_length, 'd');
+        remaining -= label_length;
+        if (remaining == 0) break;
+        domain.push_back('.');
+        --remaining;
+    }
+    return domain + ".com";
+}
+
+static std::vector<uint8_t> utf16le(const std::string &text)
+{
+    std::vector<uint8_t> bytes;
+    bytes.reserve(text.size() * 2);
+    for (const unsigned char ch : text) {
+        bytes.push_back(ch);
+        bytes.push_back(0);
+    }
+    return bytes;
+}
+
+TEST_CASE("scan_email_length_limits", "[support]") {
+    const auto scan = [](const std::string &email) {
+        const std::string input = email + " ";
+        auto outdir = test_scanner(scan_email, new sbuf_t(input.c_str()));
+        return getLines(outdir / "email.txt");
+    };
+
+    for (const size_t length : {63U, 64U}) {
+        const std::string email(length, 'l');
+        const auto lines = scan(email + "@example.com");
+        REQUIRE(requireFeature(lines, "0\t" + email + "@example.com"));
+    }
+    REQUIRE(scan(std::string(65, 'l') + "@example.com").empty());
+
+    const std::string local = "loc";
+    for (const size_t length : {252U, 253U}) {
+        const std::string email = local + "@" + valid_email_domain(length);
+        const auto lines = scan(email);
+        REQUIRE(requireFeature(lines, "0\t" + email));
+    }
+    REQUIRE(scan(local + "@" + valid_email_domain(254)).empty());
+}
+
+TEST_CASE("scan_email_utf16_length_limits", "[support]") {
+    const auto scan = [](const std::string &email) {
+        const auto bytes = utf16le(email + " ");
+        auto outdir = test_scanner(scan_email, new sbuf_t(pos0_t(), bytes.data(), bytes.size()));
+        return getLines(outdir / "email.txt");
+    };
+
+    const std::string local(64, 'l');
+    REQUIRE_FALSE(scan(local + "@example.com").empty());
+    REQUIRE(scan(std::string(65, 'l') + "@example.com").empty());
+    REQUIRE_FALSE(scan("loc@" + valid_email_domain(253)).empty());
+    REQUIRE(scan("loc@" + valid_email_domain(254)).empty());
 }
 
 TEST_CASE("scan_email4", "[support]") {
