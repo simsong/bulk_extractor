@@ -13,6 +13,7 @@
 #include <setjmp.h>
 #include <vector>
 #include <queue>
+#include <string_view>
 #include <unistd.h>
 #include <cctype>
 #include <cstdlib>
@@ -127,6 +128,14 @@ void validate_path( const std::filesystem::path fn)
     }
 }
 
+#ifdef _WIN32
+static bool is_windows_drive_root(std::string_view path)
+{
+    return path.size() == 3 && std::isalpha(static_cast<unsigned char>(path[0])) &&
+        path[1] == ':' && (path[2] == '\\' || path[2] == '/');
+}
+#endif
+
 /**
  * Create the dfxml output
  */
@@ -215,7 +224,10 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
 
     /* 2021-09-13 - slg - option processing rewritten to use cxxopts */
     std::string bulk_extractor_help( "bulk_extractor version " PACKAGE_VERSION ": A high-performance flexible digital forensics program." );
-    std::string image_name_help( "Name of image to scan (or directory if -r is provided)" );
+    std::string image_name_help( "Name of image to scan (or directory if -R is provided)" );
+#ifdef _WIN32
+    image_name_help += " (raw devices: C:, \\\\.\\PhysicalDriveN, \\\\.\\X:, \\\\?\\Volume{GUID})";
+#endif
 #ifdef HAVE_LIBEWF
     image_name_help += " (May be a E01 file )";
 #endif
@@ -442,6 +454,17 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         cout << options.help() << std::endl;
         return 3;
     }
+
+#ifdef _WIN32
+    if (!cfg.opt_recurse && is_windows_drive_root(sc.input_fname)) {
+        cerr << "error: " << sc.input_fname << " is a drive root; specify the scan type explicitly:" << std::endl;
+        cerr << "       files:      bulk_extractor -R -o output " << sc.input_fname << std::endl;
+        cerr << "       raw volume: bulk_extractor -o output " << sc.input_fname.substr(0, 2)
+             << " (or \\\\.\\" << sc.input_fname.substr(0, 2) << ")" << std::endl;
+        cerr << "       physical disk: bulk_extractor -o output \\\\.\\PhysicalDriveN" << std::endl;
+        return 7;
+    }
+#endif
 
 
     /* Add the find patterns to the scanner set */

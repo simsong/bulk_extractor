@@ -181,6 +181,7 @@ TEST_CASE("Windows raw-device paths are recognized narrowly", "[image_process]")
 {
     REQUIRE(process_raw::is_windows_raw_device_path(R"(\\.\PhysicalDrive0)"));
     REQUIRE(process_raw::is_windows_raw_device_path(R"(\\.\physicaldrive12)"));
+    REQUIRE(process_raw::is_windows_raw_device_path("C:"));
     REQUIRE(process_raw::is_windows_raw_device_path(R"(\\.\C:)"));
     REQUIRE(process_raw::is_windows_raw_device_path(R"(\\?\Volume{01234567-89ab-cdef-0123-456789abcdef})"));
 

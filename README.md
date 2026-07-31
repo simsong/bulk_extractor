@@ -140,7 +140,8 @@ WINDOWS RAW DEVICES
 ===================
 On Windows, the executable can scan a raw physical disk, volume, or named
 volume by passing its DOS device path as the input. Supported forms are
-`\\.\PhysicalDriveN`, `\\.\X:`, and `\\?\Volume{GUID}` (without the trailing
+`C:` (a shorthand for `\\.\C:`), `\\.\PhysicalDriveN`, `\\.\X:`, and
+`\\?\Volume{GUID}` (without the trailing
 backslash used for a mounted-volume directory). For example:
 
     bulk_extractor64.exe -o output \\.\PhysicalDrive0

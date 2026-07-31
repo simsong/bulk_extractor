@@ -180,13 +180,24 @@ jobs:
             [IO.File]::WriteAllText("$drive\raw-device.txt", "raw-device@example.com`n",
               [Text.UTF8Encoding]::new($false))
 
-            & "$PWD\dist\bulk_extractor64.exe" -0q -G 65536 -o raw-device-output "\\.\$drive"
+            & "$PWD\dist\bulk_extractor64.exe" -0q -G 65536 -o raw-device-output $drive
             if ($LASTEXITCODE -ne 0) {
               throw "bulk_extractor could not scan the attached raw device"
             }
             if (-not (Select-String -Path raw-device-output\email.txt `
                   -SimpleMatch "raw-device@example.com" -Quiet)) {
               throw "bulk_extractor did not read the mounted FAT32 raw device"
+            }
+
+            $help = & "$PWD\dist\bulk_extractor64.exe" -h 2>&1 | Out-String
+            if ($LASTEXITCODE -ne 1 -or $help -notmatch "PhysicalDriveN" -or
+                $help -notmatch "Volume\{GUID\}") {
+              throw "bulk_extractor help does not list Windows raw-device forms"
+            }
+
+            $rootOutput = & "$PWD\dist\bulk_extractor64.exe" -0q -o raw-device-root-output "$drive\" 2>&1 | Out-String
+            if ($LASTEXITCODE -ne 7 -or $rootOutput -notmatch "specify the scan type explicitly") {
+              throw "bulk_extractor did not reject an ambiguous drive root"
             }
           } finally {
             if (Test-Path $vhd) {

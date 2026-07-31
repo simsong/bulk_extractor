@@ -26,6 +26,7 @@ Raw-device input
 
 The Windows executable accepts these raw-device input forms:
 
+* `C:` as a shorthand for `\\.\C:`;
 * `\\.\PhysicalDriveN` for a physical disk;
 * `\\.\X:` for a drive-letter volume; and
 * `\\?\Volume{GUID}` for a named volume (omit the trailing backslash).

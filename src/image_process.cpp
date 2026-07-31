@@ -398,6 +398,9 @@ bool process_raw::is_windows_raw_device_path(std::string_view path)
     constexpr std::string_view drive_volume{"\\\\.\\"};
     constexpr std::string_view volume_guid{"\\\\?\\Volume{"};
 
+    if (path.size() == 2 && std::isalpha(static_cast<unsigned char>(path[0])) && path[1] == ':') {
+        return true;
+    }
     if (starts_with(physical_drive)) {
         const std::string_view number = path.substr(physical_drive.size());
         return !number.empty() && std::all_of(number.begin(), number.end(), [](char c) {
@@ -424,7 +427,11 @@ bool process_raw::is_windows_raw_device_path(std::string_view path)
 #ifdef _WIN32
 static HANDLE open_raw_device(const std::filesystem::path &path)
 {
-    const std::wstring wide_path = safe_utf8to16(path.string());
+    std::string device_path = path.string();
+    if (device_path.size() == 2 && std::isalpha(static_cast<unsigned char>(device_path[0])) && device_path[1] == ':') {
+        device_path = "\\\\\\\\.\\\\" + device_path;
+    }
+    const std::wstring wide_path = safe_utf8to16(device_path);
     HANDLE handle = CreateFileW(wide_path.c_str(), GENERIC_READ,
                                 FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING,
                                 FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED, nullptr);
