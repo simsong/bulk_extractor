@@ -753,6 +753,26 @@ TEST_CASE("e2e-CFReDS001", "[end-to-end]") {
     REQUIRE( ret==0 );
 }
 
+// Public NPS corpus fixture: https://digitalcorpora.org/corpora/disk-images/nps-2010-emails/
+TEST_CASE("e2e-nps-2010-email-word-pdfs", "[end-to-end]") {
+#ifndef HAVE_LIBEWF
+    SUCCEED("libewf not available; skipping E01 end-to-end test");
+    return;
+#endif
+    const std::filesystem::path inpath = test_dir() / "nps-2010-emails.E01";
+    const std::filesystem::path outdir = NamedTemporaryDirectory();
+    const std::string inpath_string = inpath.string();
+    const std::string outdir_string = outdir.string();
+    std::stringstream output;
+    const char *argv[] = {"bulk_extractor", "-0q", "-x", "all", "-e", "email", "-e", "pdf",
+                          "-o", outdir_string.c_str(), inpath_string.c_str(), nullptr};
+
+    REQUIRE(run_be(output, argv) == 0);
+    const auto email = getLines(outdir / "email.txt");
+    REQUIRE(requireFeature(email, "user_doc_pdf@microsoftword.com"));
+    REQUIRE(requireFeature(email, "user_docx_pdf@microsoftword.com"));
+}
+
 TEST_CASE("e2e-jpeg", "[end-to-end]") {
     std::filesystem::path inpath = test_dir() / "len6192.jpg";
     std::string inpath_string = inpath.string();
