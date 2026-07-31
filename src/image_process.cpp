@@ -30,10 +30,13 @@
 #endif
 
 #include <algorithm>
+#include <cctype>
 #include <stdexcept>
 #include <functional>
 #include <locale>
+#include <limits>
 #include <string>
+#include <system_error>
 #include <vector>
 
 #include "be20_api/unicode_escape.h"
@@ -382,39 +385,106 @@ process_raw::~process_raw()
     file_list.clear();
 }
 
-/* If we are running on WIN32 and we've been asked to process a raw device, get its "Drive Geometry" to figure out how big it is.
- */
-#ifdef _WIN32
-BOOL GetDriveGeometry(const wchar_t *wszPath, DISK_GEOMETRY *pdg)
+bool process_raw::is_windows_raw_device_path(std::string_view path)
 {
-    HANDLE hDevice = INVALID_HANDLE_VALUE;  // handle to the drive to be examined
-    BOOL bResult   = FALSE;                 // results flag
-    DWORD junk     = 0;                     // discard results
+    const auto starts_with = [path](std::string_view prefix) {
+        if (path.size() < prefix.size()) return false;
+        return std::equal(prefix.begin(), prefix.end(), path.begin(), [](char lhs, char rhs) {
+            return std::tolower(static_cast<unsigned char>(lhs)) ==
+                   std::tolower(static_cast<unsigned char>(rhs));
+        });
+    };
+    constexpr std::string_view physical_drive{"\\\\.\\PhysicalDrive"};
+    constexpr std::string_view drive_volume{"\\\\.\\"};
+    constexpr std::string_view volume_guid{"\\\\?\\Volume{"};
 
-    hDevice = CreateFileW(wszPath,          // drive to open
-                          0,                // no access to the drive
-                          FILE_SHARE_READ | // share mode
-                          FILE_SHARE_WRITE,
-                          NULL,             // default security attributes
-                          OPEN_EXISTING,    // disposition
-                          0,                // file attributes
-                          NULL);            // do not copy file attributes
-
-    if (hDevice == INVALID_HANDLE_VALUE){    // cannot open the drive
-        throw image_process::NoSuchFile("GetDriveGeometry: Cannot open drive");
+    if (path.size() == 2 && std::isalpha(static_cast<unsigned char>(path[0])) && path[1] == ':') {
+        return true;
     }
+    if (starts_with(physical_drive)) {
+        const std::string_view number = path.substr(physical_drive.size());
+        return !number.empty() && std::all_of(number.begin(), number.end(), [](char c) {
+            return c >= '0' && c <= '9';
+        });
+    }
+    if (path.size() == drive_volume.size() + 2 && starts_with(drive_volume)) {
+        return std::isalpha(static_cast<unsigned char>(path[drive_volume.size()])) &&
+               path.back() == ':';
+    }
+    if (!starts_with(volume_guid) || path.back() != '}') return false;
+    const std::string_view guid = path.substr(volume_guid.size(), path.size() - volume_guid.size() - 1);
+    if (guid.size() != 36) return false;
+    for (size_t i = 0; i < guid.size(); ++i) {
+        if (i == 8 || i == 13 || i == 18 || i == 23) {
+            if (guid[i] != '-') return false;
+        } else if (!std::isxdigit(static_cast<unsigned char>(guid[i]))) {
+            return false;
+        }
+    }
+    return true;
+}
 
-    bResult = DeviceIoControl(hDevice,                       // device to be queried
-                              IOCTL_DISK_GET_DRIVE_GEOMETRY, // operation to perform
-                              NULL, 0,                       // no input buffer
-                              pdg, sizeof(*pdg),            // output buffer
-                              &junk,                         // # bytes returned
-                              (LPOVERLAPPED) NULL);          // synchronous I/O
+#ifdef _WIN32
+static HANDLE open_raw_device(const std::filesystem::path &path)
+{
+    std::string device_path = path.string();
+    if (device_path.size() == 2 && std::isalpha(static_cast<unsigned char>(device_path[0])) && device_path[1] == ':') {
+        device_path = "\\\\.\\" + device_path;
+    }
+    const std::wstring wide_path = safe_utf8to16(device_path);
+    HANDLE handle = CreateFileW(wide_path.c_str(), GENERIC_READ,
+                                FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING,
+                                FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED, nullptr);
+    if (handle == INVALID_HANDLE_VALUE) {
+        throw std::system_error(GetLastError(), std::system_category(), "CreateFileW " + device_path);
+    }
+    return handle;
+}
 
-    CloseHandle(hDevice);
-    return (bResult);
+static uint64_t raw_device_length(HANDLE handle, const std::filesystem::path &path)
+{
+    GET_LENGTH_INFORMATION length{};
+    DWORD bytes_returned{};
+    OVERLAPPED overlapped{};
+    if (!DeviceIoControl(handle, IOCTL_DISK_GET_LENGTH_INFO, nullptr, 0, &length, sizeof(length),
+                         &bytes_returned, &overlapped)) {
+        const DWORD error = GetLastError();
+        if (error != ERROR_IO_PENDING ||
+            !GetOverlappedResult(handle, &overlapped, &bytes_returned, TRUE)) {
+            throw std::system_error(error == ERROR_IO_PENDING ? GetLastError() : error,
+                                    std::system_category(),
+                                    "IOCTL_DISK_GET_LENGTH_INFO " + path.string());
+        }
+    } else if (!GetOverlappedResult(handle, &overlapped, &bytes_returned, FALSE)) {
+        throw std::system_error(GetLastError(), std::system_category(),
+                                "IOCTL_DISK_GET_LENGTH_INFO " + path.string());
+    }
+    if (length.Length.QuadPart < 0) {
+        throw std::runtime_error("Invalid raw-device length: " + path.string());
+    }
+    return static_cast<uint64_t>(length.Length.QuadPart);
 }
 #endif
+
+process_raw::file_info::file_info(const std::filesystem::path path_, uint64_t offset_, uint64_t length_)
+    : path(path_), offset(offset_), length(length_)
+{
+#ifdef _WIN32
+    if (process_raw::is_windows_raw_device_path(path.string())) {
+        handle = open_raw_device(path);
+        try {
+            length = raw_device_length(handle, path);
+        } catch (...) {
+            CloseHandle(handle);
+            handle = INVALID_HANDLE_VALUE;
+            throw;
+        }
+        return;
+    }
+#endif
+    stream.open(path, std::ios::binary);
+    if (!stream.is_open()) throw image_process::NoSuchFile(path.string());
+}
 
 #if !defined(HAVE_PREAD64) && !defined(HAVE_PREAD) && defined(HAVE__LSEEKI64)
 static size_t pread64(int d,void *buf,size_t nbyte,int64_t offset)
@@ -487,23 +557,21 @@ int64_t process_raw::get_filesize(int fd)
  */
 void process_raw::add_file(std::filesystem::path path)
 {
+#ifdef _WIN32
+    if (is_windows_raw_device_path(path.string())) {
+        auto file = std::make_shared<file_info>(path, raw_filesize, 0);
+        raw_filesize += file->length;
+        file_list.push_back(std::move(file));
+        return;
+    }
+#endif
     int64_t path_filesize;
     bool is_block_file = std::filesystem::is_block_file(path);
 
     if (!is_block_file){
         path_filesize = std::filesystem::file_size(path);
     } else {
-#ifdef _WIN32
-        /* On Windows, see if we can use this */
-        std::cout << path << " checking physical drive" << std::endl;
-        DISK_GEOMETRY pdg = { 0 }; // disk drive geometry structure
-        std::wstring wszDrive = safe_utf8to16(path.string());
-        GetDriveGeometry(wszDrive.c_str(), &pdg);
-        path_filesize = pdg.Cylinders.QuadPart
-            * (ULONG)pdg.TracksPerCylinder
-            * (ULONG)pdg.SectorsPerTrack
-            * (ULONG)pdg.BytesPerSector;
-#else
+#ifndef _WIN32
         int fd = ::open(path.c_str(),O_RDONLY|O_BINARY);
         if(fd<0){
             std::cerr << "*** unix add_file: Cannot open " << path.string() << ": " << strerror(errno) << "\n";
@@ -511,6 +579,8 @@ void process_raw::add_file(std::filesystem::path path)
         }
         path_filesize = get_filesize(fd);
         ::close(fd);
+#else
+        throw std::runtime_error("Unsupported Windows block device: " + path.string());
 #endif
     }
 #ifdef _DEBUG_
@@ -595,6 +665,37 @@ ssize_t process_raw::pread(void *buf, size_t bytes, uint64_t offset) const
               << " file_offset=" << file_offset
               << " available_bytes=" << available_bytes
               << " bytes_to_read=" << bytes_to_read << std::endl;
+#endif
+
+#ifdef _WIN32
+    if (fi->handle != INVALID_HANDLE_VALUE) {
+        const DWORD request = static_cast<DWORD>(std::min(bytes_to_read,
+            static_cast<size_t>(std::numeric_limits<DWORD>::max())));
+        OVERLAPPED overlapped{};
+        overlapped.Offset = static_cast<DWORD>(file_offset);
+        overlapped.OffsetHigh = static_cast<DWORD>(file_offset >> 32);
+        DWORD bytes_read{};
+        if (!ReadFile(fi->handle, buf, request, nullptr, &overlapped)) {
+            const DWORD error = GetLastError();
+            if (error == ERROR_IO_PENDING) {
+                if (!GetOverlappedResult(fi->handle, &overlapped, &bytes_read, TRUE)) {
+                    throw std::system_error(GetLastError(), std::system_category(),
+                                            "ReadFile " + fi->path.string());
+                }
+            } else if (error == ERROR_HANDLE_EOF) {
+                return 0;
+            } else {
+                throw std::system_error(error, std::system_category(), "ReadFile " + fi->path.string());
+            }
+        } else if (!GetOverlappedResult(fi->handle, &overlapped, &bytes_read, FALSE)) {
+            throw std::system_error(GetLastError(), std::system_category(), "ReadFile " + fi->path.string());
+        }
+        if (bytes_read == 0) return 0;
+        if (bytes_read == bytes_to_read) return bytes_read;
+        const ssize_t rest = pread(static_cast<char *>(buf) + bytes_read, bytes - bytes_read,
+                                   offset + bytes_read);
+        return rest < 0 ? -1 : bytes_read + rest;
+    }
 #endif
 
 
@@ -848,11 +949,17 @@ std::unique_ptr<image_process> image_process::open(std::filesystem::path fn, boo
     std::unique_ptr<image_process> ip;
     std::string fname_string = fn.string();
 
-    if ( std::filesystem::exists(fn) == false ){
+#ifdef _WIN32
+    const bool raw_device = process_raw::is_windows_raw_device_path(fname_string);
+#else
+    const bool raw_device = false;
+#endif
+
+    if (!raw_device && std::filesystem::exists(fn) == false ){
 	throw NoSuchFile(fname_string);
     }
 
-    if (std::filesystem::is_directory(fn)){
+    if (!raw_device && std::filesystem::is_directory(fn)){
 	/* If this is a directory, process specially */
 	if (opt_recurse==0){
 	    errno = 0;

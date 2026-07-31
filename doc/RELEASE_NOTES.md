@@ -32,6 +32,10 @@ through the project's normal pull-request and CI process.
   publishes it as a downloadable artifact; attaching it to the 2.2.0 release
   remains a release task
   ([PR #543](https://github.com/simsong/bulk_extractor/pull/543)).
+- Windows raw-device input now uses explicit Win32 device handles and
+  `IOCTL_DISK_GET_LENGTH_INFO` for physical disks, volumes, and named volumes,
+  rather than relying on C++ filesystem metadata or calculated disk geometry
+  ([issue #258](https://github.com/simsong/bulk_extractor/issues/258)).
 - The source tree is self-contained: `be20_api`, DFXML, schemas, and UTF support
   are now versioned in this repository instead of being supplied through fragile
   Git submodules
