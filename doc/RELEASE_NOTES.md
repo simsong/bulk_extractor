@@ -48,6 +48,8 @@ through the project's normal pull-request and CI process.
 - Network captures now preserve IEEE 802.11 records with their correct PCAP
   link type and report WiFi frame metadata in `wifi.txt`
   ([PR #559](https://github.com/simsong/bulk_extractor/pull/559)).
+- The carving guide documents recorder-specific `-S <recorder>_carve_mode=`
+  settings, defaults, and feature-file behavior ([#264](https://github.com/simsong/bulk_extractor/issues/264)).
 
 ### Reliability and correctness
 
