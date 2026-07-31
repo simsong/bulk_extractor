@@ -116,6 +116,9 @@ through the project's normal pull-request and CI process.
   is exercised against the NTLM PCAP fixture in the Windows runtime workflow
   ([PR #573](https://github.com/simsong/bulk_extractor/pull/573),
   [PR #574](https://github.com/simsong/bulk_extractor/pull/574)).
+- `--find-case-sensitive` makes `-f` and `-F` RE2 patterns case-sensitive;
+  their historical case-insensitive matching remains the default
+  ([#483](https://github.com/simsong/bulk_extractor/issues/483)).
 - Fixed a SQLite-size arithmetic overflow and reduced the scheduled Coverity
   workflow token to read-only repository contents
   ([PR #538](https://github.com/simsong/bulk_extractor/pull/538)).

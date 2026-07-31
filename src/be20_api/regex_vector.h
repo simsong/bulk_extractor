@@ -17,6 +17,7 @@
 #include <fstream>
 #include <iostream>
 #include <set>
+#include <stdexcept>
 #include <string>
 #include <vector>
 #include <cstdlib>
@@ -34,6 +35,7 @@
 class regex_vector {
     std::vector<std::string> regex_strings; // the original regex strings
     std::vector<RE2 *> re2_regex_comps;     // the compiled regular expressions
+    bool case_sensitive {false};
     regex_vector(const regex_vector&) = delete;
     regex_vector& operator=(const regex_vector&) = delete;
     static const std::string RE_ENGINE;
@@ -44,7 +46,7 @@ public:
         return std::getenv(RE_ENGINE.c_str()) == nullptr ||
             std::getenv(RE_ENGINE.c_str())==engine;
     }
-    regex_vector() : regex_strings() , re2_regex_comps() {};
+    explicit regex_vector(bool case_sensitive_ = false) : case_sensitive(case_sensitive_) {};
     ~regex_vector();
 
     // is this a regular expression with meta characters?
@@ -53,6 +55,10 @@ public:
 
     /* Add a string */
     void push_back(const std::string& val);
+    void set_case_sensitive(bool value) {
+        if (!re2_regex_comps.empty()) throw std::logic_error("cannot change regex case mode after compilation");
+        case_sensitive = value;
+    }
     // Empty the vectors. For the compiled, be sure to delete them
     void clear();
     size_t size() const;        // the number of regular expressions in the vector

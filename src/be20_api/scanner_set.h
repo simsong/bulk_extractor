@@ -247,6 +247,7 @@ public:
     // Find interface
     const std::vector<std::string> &find_patterns() const           { return sc.find_patterns(); }
     const std::vector<std::filesystem::path> &find_files()    const { return sc.find_files(); }
+    bool find_case_sensitive() const                                { return sc.find_case_sensitive(); }
 
     // Scanning
     scanner_params::phase_t get_current_phase() const { return current_phase; };

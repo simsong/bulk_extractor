@@ -640,6 +640,28 @@ TEST_CASE("scan_find", "[end-to-end]") {
     grep( Feature(pos0_t("70-PDF-366"), "simsong", ""), outdir / "find.txt" );
 }
 
+TEST_CASE("scan_find case-sensitive option", "[end-to-end]") {
+    const auto root = NamedTemporaryDirectory();
+    const auto input = root / "input.raw";
+    std::ofstream(input) << "CaseSensitive\n" << std::string(65536, 'x');
+    const std::string input_string = input.string();
+
+    const auto default_outdir = root / "default";
+    const std::string default_outdir_string = default_outdir.string();
+    const char *default_argv[] = {"bulk_extractor", "-0q", "-f", "casesensitive",
+                                  "-o", default_outdir_string.c_str(), input_string.c_str(), nullptr};
+    std::stringstream output;
+    REQUIRE(run_be(output, default_argv) == 0);
+    REQUIRE(requireFeature(getLines(default_outdir / "find.txt"), "CaseSensitive"));
+
+    const auto sensitive_outdir = root / "sensitive";
+    const std::string sensitive_outdir_string = sensitive_outdir.string();
+    const char *sensitive_argv[] = {"bulk_extractor", "-0q", "--find-case-sensitive", "-f", "casesensitive",
+                                    "-o", sensitive_outdir_string.c_str(), input_string.c_str(), nullptr};
+    REQUIRE(run_be(output, sensitive_argv) == 0);
+    REQUIRE_FALSE(requireFeature(getLines(sensitive_outdir / "find.txt"), "CaseSensitive"));
+}
+
 /*
  * Test the 5gb flat file if it is present and if the DEBUG_5G environment variable is set.
  */
