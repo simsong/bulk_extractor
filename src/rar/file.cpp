@@ -1,4 +1,5 @@
 #include <iostream>
+#include <climits>
 #include <pthread.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -510,7 +511,7 @@ int File::DirectRead(void *Data,size_t Size)
 Read data from memory of size <code>Size</code>. Calls the <code>DirectRead(Data,Size)</code> function.
 @param Data - a pointer to the memory location of the RAR file to be extracted
 @param Size - the length, in bytes, of the <code>Data</code> variable
-@return the size that was read from the memory location. If a '-1' is returned, an error has occurred.
+@return the size read from memory, or zero if the requested range is invalid.
 */
 int File::DirectRead(byte *Data,size_t Size)
 { //Reads from memory the size as spcified by 'Size'
@@ -520,26 +521,14 @@ int File::DirectRead(byte *Data,size_t Size)
 	//send off results
 
 	//int result = -1;
-	int result = 0;
-	if(Tell(ptrlocation + Size) <= ptrlength)
-	{ //verifies that we will be in bounds
-		result = Size;
-		memcpy(Data, ptrlocation, Size);
-
-
-		ptrlocation += Size; //adjust the pointer location
-
-		//Tell(); //for debugging purposes
-		/*for(int i = 0; i < result; i++)
-		{
-			Data = ptrlocation;
-			Data++;
-			ptrlocation++;
-		}*/
+	const int64 position = Tell();
+	if (position < 0 || position > ptrlength || Size > INT_MAX ||
+	    Size > static_cast<size_t>(ptrlength - position)) {
+		return 0;
 	}
-
-
-	return result;
+	memcpy(Data, ptrlocation, Size);
+	ptrlocation += Size;
+	return static_cast<int>(Size);
 
 	/*
 #ifdef _WIN_ALL
@@ -587,8 +576,8 @@ Moves the pointer in the file to a specified location. Calls the <code>RawSeek</
 @param Offset - the length from the current position
 @param Method - the method to move the pointer.
 If <code>SEEK_SET</code>, move the pointer <code>Offset</code> number of bytes to the new location in memory.
-If <code>SEEK_END</code>, move the pointer to the end of the file (NOT IMPLEMENTED)
-If <code>SEEK_CUR</code>, move the pointer (NOT IMPLEMENTED).
+If <code>SEEK_END</code>, move the pointer relative to the end of the file.
+If <code>SEEK_CUR</code>, move the pointer relative to the current position.
 */
 void File::Seek(int64 Offset,int Method)
 { //Calls RawSeek function
@@ -611,68 +600,26 @@ bool File::RawSeek(int64 Offset,int Method)
     return(true);*/  //we will assume all is well if we have gone this far.
 
 
-	if(Method == SEEK_SET)
-	{
-		/*if(&ptrlocation + Offset > &initptrlocation + ptrlength)
-			return(false); //we have overun the bounds
-
-		if(&ptrlocation + Offset < &initptrlocation)
-			return(false); //we have overrun the bounds*/
-
-		//ptrlocation = (byte*)Offset;
-
-		bool result = true;
-		byte * tempptrlocation = ptrlocation;
-
-		if(Offset > Tell())
-		{
-			byte newdiff = (byte)Offset - Tell();
-			tempptrlocation += newdiff;
-			//int64 telldebugging = Tell();
-			//int64 telldebugging2 = Tell(tempptrlocation);
-			//ptrlocation += newdiff;
-			if(Tell(tempptrlocation)  > ptrlength )
-			{//the new pointer length is farther than the length of the RAR file
-				result = false;
-			}
-			else
-			{// the new pointer length is within range of the length of the RAR file
-				ptrlocation += newdiff;
-				result = true;
-			}
-		}
-		else if(Offset < Tell())
-		{
-			byte newdiff = Tell() - (byte)Offset;
-			tempptrlocation -= newdiff;
-
-			//ptrlocation -= newdiff;
-			if(Tell(tempptrlocation)  < Tell(initptrlocation))
-			{//the new pointer length is before the range of the RAR file
-				result = false;
-			}
-			else{//the new pointer is within range of the length of the file
-				ptrlocation -= newdiff;
-				result = true;
-			}
-
-		}
-
-		//Tell(); //debugging function
-		return(result);
+	if (Method == SEEK_SET) {
+		if (Offset < 0 || Offset > ptrlength) return false;
+		ptrlocation = initptrlocation + Offset;
+		return true;
 	}
 
 	else if(Method == SEEK_END)
 	{
-		//we should go to the end of the file
-		ptrlocation = initptrlocation; 	//reset the pointer location to the beginning of the RAR file
-		ptrlocation += ptrlength;	//set the pointer to the end of the RAR file
+		if (Offset < -ptrlength || Offset > 0) return false;
+		ptrlocation = initptrlocation + ptrlength + Offset;
 		return true;
 	}
 	else if(Method == SEEK_CUR)
 	{
-		//we should do something else
-		return false;
+        const int64 position = Tell();
+        if ((Offset > 0 && position > ptrlength - Offset) ||
+            (Offset < 0 && Offset < -position)) {
+            return false;
+        }
+        return RawSeek(position + Offset, SEEK_SET);
 	}
 
 	else

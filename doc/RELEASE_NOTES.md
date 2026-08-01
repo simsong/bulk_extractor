@@ -51,6 +51,11 @@ through the project's normal pull-request and CI process.
 
 ### Reliability and correctness
 
+- RAR extraction now preserves full seek offsets and bounded in-memory writes,
+  recovering every member of a multi-file RAR fixture ([#212](https://github.com/simsong/bulk_extractor/issues/212)).
+- Progress displays now adapt to Windows console-width changes, matching the
+  periodic terminal-width refresh already used on Unix-like systems
+  ([#311](https://github.com/simsong/bulk_extractor/issues/311)).
 - Email extraction now enforces independent 64-octet local-part and 253-octet
   domain limits for ASCII and UTF-16 input, avoiding truncated suffix features
   from overlong addresses ([#585](https://github.com/simsong/bulk_extractor/issues/585)).

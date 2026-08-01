@@ -2,6 +2,10 @@
 #include "bulk_extractor.h"
 #include "notify_thread.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
 #endif
@@ -19,6 +23,12 @@
 
 int notify_thread::terminal_width( int default_width )
 {
+#ifdef _WIN32
+    CONSOLE_SCREEN_BUFFER_INFO info;
+    if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &info)) {
+        return info.srWindow.Right - info.srWindow.Left + 1;
+    }
+#endif
 #if defined(HAVE_IOCTL) && defined(HAVE_STRUCT_WINSIZE_WS_COL)
     struct winsize ws;
     if ( ioctl( STDIN_FILENO, TIOCGWINSZ, &ws)==0){
