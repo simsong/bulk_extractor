@@ -51,10 +51,10 @@ We would appreciate acknowledgement if the software is used.
   <xs:element name="dfxml">
     <xs:complexType>
       <xs:sequence>
-        <xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
         <xs:element ref="dfxml:metadata" minOccurs="1" maxOccurs="1"/>
         <xs:element ref="dfxml:creator" minOccurs="0" maxOccurs="1"/>
         <xs:element ref="dfxml:source" minOccurs="0" maxOccurs="1"/>
+        <!-- XML Schema 1.0 permits one unambiguous extension point here. -->
         <xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
         <xs:element ref="dfxml:diskimageobject" minOccurs="0" maxOccurs="unbounded"/>
         <xs:element ref="dfxml:partitionsystemobject" minOccurs="0" maxOccurs="unbounded"/>
@@ -62,7 +62,6 @@ We would appreciate acknowledgement if the software is used.
         <xs:element ref="dfxml:volume" minOccurs="0" maxOccurs="unbounded"/>
         <xs:element ref="dfxml:fileobject" minOccurs="0" maxOccurs="unbounded"/>
         <xs:element ref="dfxml:rusage" minOccurs="0" maxOccurs="1"/>
-        <xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
       </xs:sequence>
       <xs:attribute name="catalogDesignDate" type="xs:date"/>
       <xs:attribute name="version" type="xs:string" use="required">
@@ -284,7 +283,6 @@ We would appreciate acknowledgement if the software is used.
   <!--The fileobject type is separated from the element definition so external schemas can reference it.-->
   <xs:complexType name="fileobject_type">
     <xs:sequence>
-      <xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
       <xs:element ref="dfxml:parent_object" minOccurs="0" maxOccurs="1"/>
       <xs:element ref="dfxml:filename" minOccurs="0" maxOccurs="unbounded"/>
       <xs:element ref="dfxml:error" minOccurs="0" maxOccurs="1"/>
@@ -315,9 +313,9 @@ We would appreciate acknowledgement if the software is used.
       <xs:element ref="dfxml:bkup_time" minOccurs="0" maxOccurs="1"/>
       <xs:element ref="dfxml:link_target" minOccurs="0" maxOccurs="1"/>
       <xs:element ref="dfxml:libmagic" minOccurs="0" maxOccurs="1"/>
-      <xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
       <xs:element ref="dfxml:byte_runs" minOccurs="0"/>
       <xs:element ref="dfxml:hashdigest" minOccurs="0" maxOccurs="unbounded"/>
+      <!-- Extensions follow the standard fileobject fields. -->
       <xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
     </xs:sequence>
     <xs:anyAttribute namespace="##other" processContents="lax"/>
@@ -437,8 +435,6 @@ We would appreciate acknowledgement if the software is used.
     </xs:annotation>
     <xs:complexType>
       <xs:sequence>
-        <xs:any namespace="##any" minOccurs="0" maxOccurs="unbounded" processContents="lax" />
-        <xs:any namespace="http://purl.org/dc/elements/1.1/" minOccurs="0" maxOccurs="unbounded"/>
         <xs:any namespace="##any" minOccurs="0" maxOccurs="unbounded" processContents="lax" />
       </xs:sequence>
     </xs:complexType>
@@ -729,7 +725,6 @@ We would appreciate acknowledgement if the software is used.
     </xs:annotation>
     <xs:complexType>
       <xs:sequence>
-        <xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
         <xs:element ref="dfxml:byte_runs" minOccurs="0" maxOccurs="unbounded"/>
         <xs:element ref="dfxml:partition_offset" minOccurs="0" maxOccurs="1"/>
         <xs:element ref="dfxml:sector_size" minOccurs="0" maxOccurs="1"/>
@@ -740,11 +735,11 @@ We would appreciate acknowledgement if the software is used.
         <xs:element ref="dfxml:first_block" minOccurs="0" maxOccurs="1"/>
         <xs:element ref="dfxml:last_block" minOccurs="0" maxOccurs="1"/>
         <xs:element ref="dfxml:allocated_only" minOccurs="0" maxOccurs="1"/>
-        <xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
         <xs:element ref="dfxml:diskimageobject" minOccurs="0" maxOccurs="unbounded"/>
         <xs:element ref="dfxml:volume" minOccurs="0" maxOccurs="1"/>
         <xs:element ref="dfxml:fileobject" minOccurs="0" maxOccurs="unbounded"/>
         <xs:element ref="dfxml:error" minOccurs="0" maxOccurs="1"/>
+        <!-- Extensions follow the standard volume fields. -->
         <xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
       </xs:sequence>
       <xs:attribute name="offset" type="xs:nonNegativeInteger"/>

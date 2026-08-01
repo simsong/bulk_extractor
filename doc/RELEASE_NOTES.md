@@ -125,7 +125,8 @@ through the project's normal pull-request and CI process.
 - Fixed a SQLite-size arithmetic overflow and reduced the scheduled Coverity
   workflow token to read-only repository contents
   ([PR #538](https://github.com/simsong/bulk_extractor/pull/538)).
-- `report.xml` now declares and conforms to the bundled DFXML 1.2.0 schema;
+- `report.xml` now declares and conforms to the bundled DFXML 1.2.0 schema,
+  whose XML Schema 1.0 content models are deterministic for current validators;
   bulk_extractor-specific runtime, configuration, source-detail, and final
   report data are preserved in a separate extension namespace and covered by
   an `xmllint --schema` regression test ([#244](https://github.com/simsong/bulk_extractor/issues/244)).
