@@ -12,8 +12,9 @@ Carving is configured per feature recorder, not globally. Run
 ```
 
 For example, `-S jpeg_carve_mode=2` writes every JPEG accepted by the JPEG
-validator. Carving recorders include `jpeg`, `zip`, `rar`, `unrar`, and
-`sqlite` when their scanners are enabled in the build.
+validator. Carving recorders include `jpeg`, `zip_carved`, `rar`,
+`unrar_carved`, and `sqlite_carved` when their scanners are enabled in the
+build.
 
 | Mode | Effect |
 | --- | --- |
@@ -21,10 +22,10 @@ validator. Carving recorders include `jpeg`, `zip`, `rar`, `unrar`, and
 | `1` | Write only objects reached through an encoded or derived input path, such as decompressed or Base64-decoded data. A bare object found directly in the input is not carved. |
 | `2` | Write every object passed to that recorder's carver, subject to validation, deduplication, and its minimum and maximum carve sizes. |
 
-Mode `1` is the usual default for JPEG, ZIP, and RAR recorders. It focuses on
-objects that ordinary file carvers are less likely to recover while avoiding a
-second copy of bare objects from the original image. `sqlite` defaults to mode
-`2`.
+Mode `1` is the default for JPEG and RAR recorders (`rar` and
+`unrar_carved`). It focuses on objects that ordinary file carvers are less
+likely to recover while avoiding a second copy of bare objects from the
+original image. `zip_carved` and `sqlite_carved` default to mode `2`.
 
 The carving feature file records files actually carved (or a cached duplicate),
 not every object that a different mode could have carved. Some scanners also
