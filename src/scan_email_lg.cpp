@@ -41,7 +41,7 @@ namespace email {
 
   const string PC("[\\x20-\\x7E]");
 
-  const string TLD("([A-Z]{2,63})");
+  const string TLD("([A-Z0-9][A-Z0-9-]{0,61}[A-Z0-9])");
 
   const string YEAR("(19[6-9][0-9]|20[0-1][0-9])");
   const string DAYOFWEEK("(Mon|Tue|Wed|Thu|Fri|Sat|Sun)");

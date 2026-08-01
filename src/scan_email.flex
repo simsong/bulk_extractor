@@ -153,7 +153,7 @@ HEX		([0-9a-f])
 XPC		[ !#$%&'()*+,\-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ\[\\\]^_`abcdefghijklmnopqrstuvwxyz{|}~]
 PC		[ !#$%&'()*+,\-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ\[\\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"]
 ALNUM		[a-zA-Z0-9]
-TLD		([A-Z]{2,63})
+TLD		([A-Z0-9][A-Z0-9-]{0,61}[A-Z0-9])
 
 
 DOMAINREF	{ATOM}
@@ -352,7 +352,7 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
     s.pos += yyleng;
 }
 
-[a-zA-Z0-9]\0([a-zA-Z0-9._%\-+]\0){1,62}[a-zA-Z0-9]\0@\0([a-zA-Z0-9._%\-]\0){1,250}\.\0([a-zA-Z]\0){2,63}/[^a-zA-Z0-9._%\-]\0	{
+[a-zA-Z0-9]\0([a-zA-Z0-9._%\-+]\0){1,62}[a-zA-Z0-9]\0@\0([a-zA-Z0-9._%\-]\0){1,250}\.\0[a-zA-Z0-9]\0([a-zA-Z0-9-]\0){0,61}[a-zA-Z0-9]\0/[^a-zA-Z0-9._%\-]\0	{
     /* UTF-16 URL scanner */
     email_scanner &s = * yyemail_get_extra(yyscanner);
     s.check_margin();

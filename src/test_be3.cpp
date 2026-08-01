@@ -230,7 +230,8 @@ TEST_CASE("e2e-email accepts current TLDs", "[end-to-end]")
     const auto root = NamedTemporaryDirectory();
     const auto input = root / "input.raw";
     const auto outdir = root / "output";
-    std::ofstream(input) << "modern@wordcount.solutions bare.wordcount.solutions\n";
+    std::ofstream(input) << "modern@wordcount.solutions punycode@example.xn--p1ai "
+                            "bare.wordcount.solutions\n";
 
     const std::string input_string = input.string();
     const std::string outdir_string = outdir.string();
@@ -243,6 +244,7 @@ TEST_CASE("e2e-email accepts current TLDs", "[end-to-end]")
 
     const auto email = getLines(outdir / "email.txt");
     REQUIRE(requireFeature(email, "modern@wordcount.solutions"));
+    REQUIRE(requireFeature(email, "punycode@example.xn--p1ai"));
     REQUIRE_FALSE(requireFeature(email, "bare.wordcount.solutions"));
 }
 
