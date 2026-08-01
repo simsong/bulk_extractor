@@ -57,6 +57,10 @@ through the project's normal pull-request and CI process.
   pages that were in progress at the crash, avoiding repeated data-dependent
   crashes; the behavior is covered by a controlled-crash regression test
   ([#202](https://github.com/simsong/bulk_extractor/issues/202)).
+- Removed the obsolete numeric debug mask and its misleading scanner-control
+  documentation. `-d`/`--debug` now explicitly enables debug-level diagnostic
+  logging; scanner selection remains controlled by `-x` and `-e`
+  ([#403](https://github.com/simsong/bulk_extractor/issues/403)).
 - RAR extraction now preserves full seek offsets and bounded in-memory writes,
   recovering every member of a multi-file RAR fixture ([#212](https://github.com/simsong/bulk_extractor/issues/212)).
 - Progress displays now adapt to Windows console-width changes, matching the
