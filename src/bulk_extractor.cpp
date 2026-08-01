@@ -721,6 +721,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         fs.db_transaction_commit();
     }
 #endif
+    xreport->push("report", "xmlns='https://github.com/simsong/bulk_extractor'");
     xreport->add_timestamp( "phase1 end" );
     if ( phase1.image_hash.size() > 0 ){
         cout << "Hash of Disk Image: " << phase1.image_hash << std::endl ;
@@ -754,7 +755,6 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
 
     /*** PHASE 3 ---  report and then print final usage information ***/
     if ( !cfg.opt_quiet) cout << "Phase 3. Generating stats and printing final usage information" << std::endl;
-    xreport->push( "report" );
     xreport->xmlout( "total_bytes",phase1.total_bytes);
     xreport->xmlout( "elapsed_seconds",master_timer.elapsed_seconds());
     xreport->xmlout( "max_depth_seen",ss.get_max_depth_seen());
