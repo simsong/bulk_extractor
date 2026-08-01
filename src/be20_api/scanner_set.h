@@ -128,6 +128,7 @@ class scanner_set {
     std::atomic<uint64_t> sbuf_seen {0}; // number of seen sbufs.
     std::atomic<uint64_t> dup_bytes_encountered{0}; // amount of dup data encountered
     std::atomic<uint64_t> duplicate_sbufs_bypassed{0};
+    std::atomic<uint64_t> test_crash_after_work_start {0};
     std::map<scanner_t* , struct stats> scanner_stats{}; // maps scanner name to performance stats
     mutable std::mutex Mscanner_stats {};                        // mutex for scanner_stats
 
@@ -290,6 +291,9 @@ public:;
     void record_work_start(const sbuf_t *sbuf);
     void record_work_start_stop_pos0str(const std::string pos0str);
     void record_work_end(const sbuf_t *sbuf);
+
+    // Test-only hook for validating restart after an abrupt process exit.
+    bool should_test_crash_after_work_start();
 
 
     // These are for garbage collection:

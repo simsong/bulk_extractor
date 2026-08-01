@@ -51,6 +51,9 @@ through the project's normal pull-request and CI process.
 
 ### Reliability and correctness
 
+- Restart now retries work interrupted after `debug:work_start` rather than
+  skipping it, while retaining completed work from current and legacy reports
+  ([#202](https://github.com/simsong/bulk_extractor/issues/202)).
 - Email extraction now enforces independent 64-octet local-part and 253-octet
   domain limits for ASCII and UTF-16 input, avoiding truncated suffix features
   from overlong addresses ([#585](https://github.com/simsong/bulk_extractor/issues/585)).
