@@ -37,9 +37,10 @@ public:;
         class bulk_extractor_restarter &self = *(bulk_extractor_restarter *)userData;
         self.cdata.str("");
         self.thisElement = name_;
-        // Older reports use work_end; current reports use work_stop.
-        // Only a completed page is safe to skip after restarting.
-        if (self.thisElement=="debug:work_stop" || self.thisElement=="debug:work_end"){
+        if (self.thisElement=="debug:work_start"){
+            // Deliberately skip work that was in progress at the crash. Such
+            // crashes are often data-dependent; retrying the same page on every
+            // restart can trap the user in an unacceptable restart loop.
             for(int i=0;attrs[i] && attrs[i+1];i+=2){
                 if (strcmp(attrs[i],"pos0") == 0){
                     self.cfg.seen_page_ids.insert(attrs[i+1]);

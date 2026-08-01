@@ -395,7 +395,7 @@ TEST_CASE("e2e-restart-after-controlled-crash", "[end-to-end]")
     REQUIRE(run_be(output, argv) == 0);
     grep("debug:work_start", report);
     grep("debug:work_stop", report);
-    REQUIRE(requireFeature(getLines(outdir / "email.txt"), "before@example.com"));
+    REQUIRE_FALSE(requireFeature(getLines(outdir / "email.txt"), "before@example.com"));
     REQUIRE(requireFeature(getLines(outdir / "email.txt"), "after@example.com"));
 
     const std::string old_report_prefix = "report.xml.";
