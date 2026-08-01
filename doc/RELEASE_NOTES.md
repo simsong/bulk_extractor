@@ -148,6 +148,10 @@ through the project's normal pull-request and CI process.
 
 ### Build, configuration, and testing
 
+- A multi-stage Debian Bookworm container image provides a reproducible,
+  unprivileged environment for scanning regular image files. It documents its
+  libewf and Lightgrep limitations and supplements native platform CI rather
+  than replacing it ([#159](https://github.com/simsong/bulk_extractor/issues/159)).
 - AddressSanitizer now runs on every pull request while redundant workflow
   execution has been reduced
   ([PR #514](https://github.com/simsong/bulk_extractor/pull/514)).
