@@ -55,25 +55,31 @@
 #include "rar/rar.hpp"
 
 #ifdef USE_RAR
-#include "rar/rar.hpp"
-
 class RarUnpackTest {
   public:
     static void copy_across_window_boundary()
     {
-        std::vector<byte> window(MAXWINSIZE, 0);
+        constexpr byte canary = 0x5a;
+        constexpr unsigned int length = MAX_LZ_MATCH + 30;
+        constexpr size_t canary_size = length;
+        std::vector<byte> window(MAXWINSIZE + canary_size, canary);
         ComprDataIO io;
         Unpack unpack(&io);
         unpack.Init(window.data());
 
-        constexpr unsigned int length = MAX_LZ_MATCH + 30;
         unpack.UnpPtr = MAXWINSIZE - MAX_LZ_MATCH - 1;
         window[unpack.UnpPtr - 1] = 0xa5;
         unpack.CopyString(length, 1);
 
-        REQUIRE(unpack.UnpPtr == length - MAX_LZ_MATCH - 1);
-        for (unsigned int pos = 0; pos < unpack.UnpPtr; pos++)
+        const unsigned int tail_start = MAXWINSIZE - MAX_LZ_MATCH - 1;
+        const unsigned int wrapped = length - (MAXWINSIZE - tail_start);
+        REQUIRE(unpack.UnpPtr == wrapped);
+        for (unsigned int pos = tail_start; pos < MAXWINSIZE; pos++)
             REQUIRE(window[pos] == 0xa5);
+        for (unsigned int pos = 0; pos < wrapped; pos++)
+            REQUIRE(window[pos] == 0xa5);
+        for (size_t pos = MAXWINSIZE; pos < window.size(); pos++)
+            REQUIRE(window[pos] == canary);
     }
 };
 #endif

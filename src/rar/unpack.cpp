@@ -190,7 +190,7 @@ inline void Unpack::InsertLastMatch(unsigned int Length,unsigned int Distance)
 }
 
 
-_forceinline void Unpack::CopyString(uint Length,uint Distance)
+void Unpack::CopyString(uint Length,uint Distance)
 {
   uint SrcPtr=UnpPtr-Distance;
   if (Length<=MAXWINSIZE && SrcPtr<=MAXWINSIZE-Length && UnpPtr<=MAXWINSIZE-Length)

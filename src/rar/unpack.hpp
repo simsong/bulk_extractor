@@ -78,7 +78,9 @@ struct AudioVariables // For RAR 2.0 archives only.
 class Unpack:private BitInput
 {
   private:
+#ifdef TEST_RAR_UNPACK
     friend class RarUnpackTest;
+#endif
     friend class Pack;
 
     void Unpack29(bool Solid);
