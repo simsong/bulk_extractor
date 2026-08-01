@@ -13,6 +13,7 @@
 #include <array>
 #include <iostream>
 #include <iterator>
+#include <limits>
 #include <memory>
 #include <filesystem>
 #include <cstdio>
@@ -50,6 +51,7 @@
 #include "scan_pdf.h"
 #include "scan_vcard.h"
 #include "scan_wordlist.h"
+#include "rar/rar.hpp"
 
 #include "test_be.h"
 
@@ -482,6 +484,20 @@ TEST_CASE("test_jpeg_rar", "[phase1]") {
 
     };
     validate("jpegs.rar", ex2);
+}
+
+TEST_CASE("RAR in-memory relative seeks are bounded", "[rar]") {
+    std::array<unsigned char, 8> data{};
+    File file;
+    file.InitFile(data.data(), static_cast<int64>(data.size()));
+
+    REQUIRE(file.RawSeek(4, SEEK_SET));
+    REQUIRE_FALSE(file.RawSeek(std::numeric_limits<int64>::max(), SEEK_CUR));
+    REQUIRE(file.Tell() == 4);
+    REQUIRE_FALSE(file.RawSeek(std::numeric_limits<int64>::min(), SEEK_CUR));
+    REQUIRE(file.Tell() == 4);
+    REQUIRE(file.RawSeek(-4, SEEK_CUR));
+    REQUIRE(file.Tell() == 0);
 }
 
 /****************************************************************

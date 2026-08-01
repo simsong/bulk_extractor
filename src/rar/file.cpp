@@ -614,7 +614,12 @@ bool File::RawSeek(int64 Offset,int Method)
 	}
 	else if(Method == SEEK_CUR)
 	{
-		return RawSeek(Tell() + Offset, SEEK_SET);
+        const int64 position = Tell();
+        if ((Offset > 0 && position > ptrlength - Offset) ||
+            (Offset < 0 && Offset < -position)) {
+            return false;
+        }
+        return RawSeek(position + Offset, SEEK_SET);
 	}
 
 	else
