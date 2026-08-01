@@ -56,7 +56,7 @@ through the project's normal pull-request and CI process.
   from overlong addresses ([#585](https://github.com/simsong/bulk_extractor/issues/585)).
 - Hardened the bundled RAR PPM decoder's dictionary-copy boundary handling,
   preventing a malformed archive from writing past its ring buffer
-  ([#601](https://github.com/simsong/bulk_extractor/issues/601)).
+  (fixes CVE-2026-24857; [#601](https://github.com/simsong/bulk_extractor/issues/601)).
 - Hardened `sbuf` bounds, arithmetic, and ownership behavior, including
   zero-length and one-past-end cases
   ([PR #511](https://github.com/simsong/bulk_extractor/pull/511)).
