@@ -8,9 +8,17 @@
 #include "config.h"
 #include "bulk_extractor.h"
 
+#include <exception>
 #include <ostream>
 
 int main(int argc,char * const *argv)
 {
-    return bulk_extractor_main(std::cout, std::cerr, argc, argv);
+    try {
+        return bulk_extractor_main(std::cout, std::cerr, argc, argv);
+    } catch (const std::exception &error) {
+        std::cerr << "bulk_extractor: " << error.what() << '\n';
+    } catch (...) {
+        std::cerr << "bulk_extractor: unexpected exception\n";
+    }
+    return 1;
 }

@@ -54,14 +54,14 @@ void scan_hiberfile_scan(scanner_params &sp)
         if (npos==-1) break;             // header not found
 
         pos = npos;
-        u_int compressed_length = (   (sbuf[pos+8]
-                                       + (sbuf[pos+9]<<8)
-                                       + (sbuf[pos+10] << 16)
-                                       + (sbuf[pos+11]<<24)) >> 10) + 1; // ref: Hibr2bin/MemoryBlocks.cpp
+        uint32_t compressed_length = ((static_cast<uint32_t>(sbuf[pos + 8])
+                                       | (static_cast<uint32_t>(sbuf[pos + 9]) << 8)
+                                       | (static_cast<uint32_t>(sbuf[pos + 10]) << 16)
+                                       | (static_cast<uint32_t>(sbuf[pos + 11]) << 24)) >> 10) + 1;
 
         compressed_length = (compressed_length + 7) & ~7; // ref: Hibr2bin/MemoryBlocks.cpp
         const unsigned char *compressed_buf = sbuf.get_buf() + pos + 32;		 // "the header contains 32 bytes"
-        u_int  remaining_size = sbuf.bufsize - (pos+32); // up to the end of the buffer
+        size_t remaining_size = sbuf.bufsize - (pos+32); // up to the end of the buffer
         size_t compr_size = compressed_length < remaining_size ? compressed_length : remaining_size;
         size_t max_uncompr_size = compr_size * 10; // hope that's good enough
         if (max_uncompr_size < min_uncompr_size) {
