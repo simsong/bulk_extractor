@@ -325,7 +325,7 @@ int atoiw(const wchar *s)
 #ifdef DBCS_SUPPORTED
 SupportDBCS gdbcs;
 
-SupportDBCS::SupportDBCS()
+SupportDBCS::SupportDBCS() : DBCSMode(false)
 {
   Init();
 }
