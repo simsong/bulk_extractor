@@ -53,6 +53,10 @@ through the project's normal pull-request and CI process.
 
 ### Reliability and correctness
 
+- Restart records the start of each page so a resumed run deliberately skips
+  pages that were in progress at the crash, avoiding repeated data-dependent
+  crashes; the behavior is covered by a controlled-crash regression test
+  ([#202](https://github.com/simsong/bulk_extractor/issues/202)).
 - Removed the obsolete numeric debug mask and its misleading scanner-control
   documentation. `-d`/`--debug` now explicitly enables debug-level diagnostic
   logging; scanner selection remains controlled by `-x` and `-e`
