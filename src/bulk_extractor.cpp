@@ -270,7 +270,32 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
 
     options.positional_help( "image_name" );
     options.parse_positional( "image_name" );
-    auto result = options.parse( argc, argv);
+    const auto is_numeric_debug_mask = [](std::string_view argument) {
+        std::string_view value;
+        if (argument.rfind("-d", 0) == 0 && argument.size() > 2) {
+            value = argument.substr(2);
+        } else if (argument.rfind("--debug=", 0) == 0) {
+            value = argument.substr(std::string_view("--debug=").size());
+        }
+        return !value.empty() && value.find_first_not_of("0123456789") == std::string_view::npos;
+    };
+    for (int arg = 1; arg < argc; arg++) {
+        const std::string_view argument(argv[arg]);
+        if (is_numeric_debug_mask(argument) || argument == "-D") {
+            cerr << "error: numeric debug masks and -D have been retired; "
+                 << "use -d for debug logging and -x/-e for scanner selection.\n\n"
+                 << options.help() << std::endl;
+            return 1;
+        }
+    }
+
+    cxxopts::ParseResult result;
+    try {
+        result = options.parse( argc, argv);
+    } catch (const cxxopts::OptionException &e) {
+        cerr << "error: " << e.what() << "\n\n" << options.help() << std::endl;
+        return 1;
+    }
     const bool debug_requested = result.count("debug") != 0;
 
     sc.offset_add  = result["offset_add"].as<int64_t>();
