@@ -57,7 +57,6 @@ public:
         Config &operator=(const Config &that) = delete;        // assignment constructor - delete
 
         Config() { }
-        uint64_t  debug {false};                 // debug
         size_t    opt_pagesize {16 * MiB};
         size_t    opt_marginsize { 4 * MiB};
         uint32_t  max_bad_alloc_errors {3}; // by default, 3 retries

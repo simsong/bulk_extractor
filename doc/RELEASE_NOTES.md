@@ -51,6 +51,11 @@ through the project's normal pull-request and CI process.
 
 ### Reliability and correctness
 
+- Removed the obsolete numeric debug mask and its misleading scanner-control
+  documentation. `-d`/`--debug` now explicitly enables debug-level diagnostic
+  logging; scanner selection remains controlled by `-x` and `-e`
+  ([#403](https://github.com/simsong/bulk_extractor/issues/403)).
+
 - Email extraction now enforces independent 64-octet local-part and 253-octet
   domain limits for ASCII and UTF-16 input, avoiding truncated suffix features
   from overlong addresses ([#585](https://github.com/simsong/bulk_extractor/issues/585)).
