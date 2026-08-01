@@ -14,6 +14,7 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <filesystem>
 #include <cstdio>
 #include <cstdlib>
@@ -23,6 +24,9 @@
 #endif
 #ifdef HAVE_SIGNAL_H
 #include <signal.h>
+#endif
+#ifndef _WIN32
+#include <sys/wait.h>
 #endif
 #include <unistd.h>
 #include <string>
@@ -346,6 +350,110 @@ TEST_CASE("e2e-alert-list", "[end-to-end]")
 
     std::filesystem::remove_all(root);
 }
+
+#ifndef _WIN32
+class scoped_environment {
+    std::string name;
+    std::optional<std::string> previous_value;
+public:
+    scoped_environment(const char *name_, const char *value) : name(name_)
+    {
+        if (const char *previous = getenv(name.c_str())) {
+            previous_value = previous;
+        }
+        setenv(name.c_str(), value, 1);
+    }
+    ~scoped_environment()
+    {
+        if (previous_value) {
+            setenv(name.c_str(), previous_value->c_str(), 1);
+        } else {
+            unsetenv(name.c_str());
+        }
+    }
+};
+
+TEST_CASE("restart crash hook count", "[end-to-end]")
+{
+    feature_recorder_set::flags_t flags;
+    scanner_config sc;
+    {
+        scoped_environment outer("BE_TEST_CRASH_AFTER_WORK_START", "2");
+        {
+            scoped_environment inner("BE_TEST_CRASH_AFTER_WORK_START", "1");
+            REQUIRE(std::string(getenv("BE_TEST_CRASH_AFTER_WORK_START")) == "1");
+        }
+        REQUIRE(std::string(getenv("BE_TEST_CRASH_AFTER_WORK_START")) == "2");
+    }
+    {
+        scoped_environment hook("BE_TEST_CRASH_AFTER_WORK_START", "2");
+        scanner_set ss(sc, flags, nullptr);
+        REQUIRE_FALSE(ss.should_test_crash_after_work_start());
+        REQUIRE(ss.should_test_crash_after_work_start());
+        REQUIRE_FALSE(ss.should_test_crash_after_work_start());
+    }
+    {
+        scoped_environment hook("BE_TEST_CRASH_AFTER_WORK_START", "0");
+        REQUIRE_THROWS_AS(scanner_set(sc, flags, nullptr), std::invalid_argument);
+    }
+    {
+        scoped_environment hook("BE_TEST_CRASH_AFTER_WORK_START", "1");
+        scanner_set ss(sc, flags, nullptr);
+        REQUIRE(ss.should_test_crash_after_work_start());
+    }
+    for (const char *value : {"invalid", "1x"}) {
+        scoped_environment hook("BE_TEST_CRASH_AFTER_WORK_START", value);
+        REQUIRE_THROWS_AS(scanner_set(sc, flags, nullptr), std::invalid_argument);
+    }
+}
+
+TEST_CASE("e2e-restart-after-controlled-crash", "[end-to-end]")
+{
+    const auto root = NamedTemporaryDirectory();
+    const auto input = root / "input.raw";
+    const auto outdir = root / "output";
+    std::ofstream(input) << "before@example.com\n" << std::string(16384, 'x')
+                         << "\nafter@example.com\n";
+
+    const std::string input_string = input.string();
+    const std::string outdir_string = outdir.string();
+    const char *argv[] = {"bulk_extractor", "-0q", "-J", "-G", "4096", "-Eemail",
+                          "-o", outdir_string.c_str(), input_string.c_str(), nullptr};
+
+    const pid_t child = fork();
+    REQUIRE(child >= 0);
+    if (child == 0) {
+        setenv("BE_TEST_CRASH_AFTER_WORK_START", "1", 1);
+        std::stringstream output;
+        run_be(output, argv);
+        std::_Exit(99);
+    }
+
+    int status = 0;
+    REQUIRE(waitpid(child, &status, 0) == child);
+    REQUIRE(WIFEXITED(status));
+    REQUIRE(WEXITSTATUS(status) == 86);
+
+    const auto report = outdir / "report.xml";
+    REQUIRE(std::filesystem::exists(report));
+    grep("debug:work_start", report);
+    REQUIRE_FALSE(requireFeature(getLines(report), "debug:work_stop"));
+
+    std::stringstream output;
+    REQUIRE(run_be(output, argv) == 0);
+    grep("debug:work_start", report);
+    grep("debug:work_stop", report);
+    REQUIRE_FALSE(requireFeature(getLines(outdir / "email.txt"), "before@example.com"));
+    REQUIRE(requireFeature(getLines(outdir / "email.txt"), "after@example.com"));
+
+    const std::string old_report_prefix = "report.xml.";
+    REQUIRE(std::any_of(std::filesystem::directory_iterator(outdir),
+                        std::filesystem::directory_iterator(), [&](const auto &entry) {
+                            return entry.path().filename().string().rfind(old_report_prefix, 0) == 0;
+                        }));
+    std::filesystem::remove_all(root);
+}
+#endif
 
 TEST_CASE("e2e-zap-removes-nested-output", "[end-to-end]")
 {

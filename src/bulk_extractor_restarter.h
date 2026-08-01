@@ -38,6 +38,9 @@ public:;
         self.cdata.str("");
         self.thisElement = name_;
         if (self.thisElement=="debug:work_start"){
+            // Deliberately skip work that was in progress at the crash. Such
+            // crashes are often data-dependent; retrying the same page on every
+            // restart can trap the user in an unacceptable restart loop.
             for(int i=0;attrs[i] && attrs[i+1];i+=2){
                 if (strcmp(attrs[i],"pos0") == 0){
                     self.cfg.seen_page_ids.insert(attrs[i+1]);
