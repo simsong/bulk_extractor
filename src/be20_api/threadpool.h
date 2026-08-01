@@ -100,6 +100,8 @@ public:
     void main_thread_wait();
     void push_task(const sbuf_t *sbuf, scanner_t *scanner);
     void push_task(const sbuf_t *sbuf);
+    uint64_t producer_wait_ns() const;
+    std::string producer_wait_text() const;
 
     // Status for callers
     size_t get_worker_count() const;

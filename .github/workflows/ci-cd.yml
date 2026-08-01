@@ -86,6 +86,14 @@ jobs:
           make -C src check || (cat src/test-suite.log; exit 1)
           make distclean
 
+      - name: ThreadSanitizer thread-safety test
+        if: github.event_name == 'pull_request' && matrix.os == 'ubuntu-22.04'
+        run: |
+          source "$HOME/.bashrc"
+          ./configure --disable-opt --enable-thread-sanitizer
+          make -C src $MAKE_OPTS check-tsan-thread-safety
+          make distclean
+
       - name: Distribution check with Exiv2
         run: |
           source "$HOME/.bashrc"

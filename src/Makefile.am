@@ -28,12 +28,16 @@ bulk_extractor_LDADD = libbe20.a @RE2_LIBS@
 test_be_LDADD = libbe20.a @RE2_LIBS@
 test_be_CPPFLAGS = $(AM_CPPFLAGS) -DTEST_PLUGIN_DIR=\"$(abs_builddir)/.libs\" -DTEST_TOP_SRCDIR=\"$(abs_top_srcdir)\"
 test_be20_api_LDADD = libbe20.a @RE2_LIBS@
+test_thread_safety_LDADD = libbe20.a @RE2_LIBS@
 test_pcap_fake_CPPFLAGS = $(AM_CPPFLAGS) -DPCAP_FAKE_TEST
 
 AUTOMAKE_OPTIONS = subdir-objects
 
 bin_PROGRAMS   = bulk_extractor
 check_PROGRAMS = test_be test_be20_api test_dfxml test_pcap_fake
+if THREAD_SANITIZER_ENABLED
+noinst_PROGRAMS = test_thread_safety
+endif
 TESTS = $(check_PROGRAMS)
 
 CLEANFILES     = scan_accts.cpp scan_base16.cpp scan_email.cpp scan_gps.cpp scan_vehicle.cpp \
@@ -163,6 +167,13 @@ test_be20_api_SOURCES = \
 	$(BE20_API_DIR)/test_be20_api.cpp \
 	$(BE20_API_DIR)/test_be20_threadpool.cpp \
 	$(BE20_API_TEST_SRC)
+
+test_thread_safety_SOURCES = \
+	$(BE20_API_DIR)/catch.hpp \
+	$(BE20_API_DIR)/test_thread_safety.cpp
+
+check-tsan-thread-safety: test_thread_safety
+	./test_thread_safety
 
 test_dfxml_SOURCES = \
 	test_dfxml.cpp \
