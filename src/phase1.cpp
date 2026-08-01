@@ -229,37 +229,43 @@ void Phase1::read_process_sbufs()
 
 void Phase1::dfxml_write_create(int argc, char * const *argv)
 {
-    xreport.push("dfxml","xmloutputversion='1.0' xmlns:debug='http://afflib.org/bulk_extractor/debug'");
-    xreport.push("metadata",
-		 "\n  xmlns='http://afflib.org/bulk_extractor/' "
-		 "\n  xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' "
-		 "\n  xmlns:dc='http://purl.org/dc/elements/1.1/'" );
+    xreport.push("dfxml",
+                 "version='1.2.0' "
+                 "xmlns='http://www.forensicswiki.org/wiki/Category:Digital_Forensics_XML' "
+                 "xmlns:debug='https://github.com/simsong/bulk_extractor/debug'");
+    xreport.push("metadata", "xmlns:dc='http://purl.org/dc/elements/1.1/'");
     xreport.xmlout("dc:type","Feature Extraction","",false);
     xreport.pop();
     if (argc && argv){
         xreport.add_DFXML_creator(PACKAGE_NAME, PACKAGE_VERSION, "", argc, argv);
     }
-    xreport.push("configuration");
-    xreport.xmlout("threads",config.num_threads);
-    xreport.xmlout("pagesize",config.opt_pagesize);
-    xreport.xmlout("marginsize",config.opt_marginsize);
-    ss.dump_enabled_scanner_config();
-    xreport.pop("configuration");	// configuration
+    xreport.push("source");
+    xreport.xmlout("image_filename",p.image_fname());
+    xreport.pop("source");
+
+    /* The schema permits extension records after source. */
+    xreport.push("runtime", "xmlns='https://github.com/simsong/bulk_extractor'");
     xreport.flush();                    // get it to the disk
 }
 
 void Phase1::dfxml_write_source()
 {
     /* We can write out the source info now, since we (might) know the hash */
-    xreport.push("source");
-    xreport.xmlout("image_filename",p.image_fname());
+    xreport.push("source_info", "xmlns='https://github.com/simsong/bulk_extractor'");
     xreport.xmlout("image_size",p.image_size());
     if (sha1g){
         dfxml::sha1_t sha1 = sha1g->digest();
         xreport.xmlout("hashdigest",sha1.hexdigest(),"type='SHA1'",false);
         sha1g.reset();
     }
-    xreport.pop("source");			// source
+    xreport.pop("source_info");
+
+    xreport.push("configuration", "xmlns='https://github.com/simsong/bulk_extractor'");
+    xreport.xmlout("threads",config.num_threads);
+    xreport.xmlout("pagesize",config.opt_pagesize);
+    xreport.xmlout("marginsize",config.opt_marginsize);
+    ss.dump_enabled_scanner_config();
+    xreport.pop("configuration");
     xreport.flush();
 
     //if (config.opt_quiet==0) std::cout << "Producer time spent waiting: " << tp->waiting.elapsed_seconds() << " sec.\n";
@@ -281,9 +287,6 @@ void Phase1::phase1_run()
     for (const auto &it : config.seen_page_ids) {
         ss.record_work_start_stop_pos0str( it );
     }
-
-    // now start the new run
-    xreport.push("runtime","xmlns:debug=\"http://www.github.com/simsong/bulk_extractor/issues\"");
 
     // process all of the sbufs
     read_process_sbufs();

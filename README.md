@@ -170,6 +170,9 @@ shutdown defects found by full-image testing and AddressSanitizer.
 ## Release 2.1.1 (April 26, 2024)
 Renamed jpeg_carved feature recorder to jpeg, so that the jpeg carve mode can be set with -S jpeg_carve_mode=2, rather than -S jpeg_carved_carve_mode=2, which was confusing.
 
+See [Carving](doc/carving.md) for the current per-recorder carve-mode settings
+and their effects.
+
 
 ## Release 2.0
 `bulk_extractor` 2.0 (BE2) is now operational. Although it works with the Java-based viewer, we do not currently have an installer that runs under Windows.

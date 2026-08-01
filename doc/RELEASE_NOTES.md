@@ -48,9 +48,15 @@ through the project's normal pull-request and CI process.
 - Network captures now preserve IEEE 802.11 records with their correct PCAP
   link type and report WiFi frame metadata in `wifi.txt`
   ([PR #559](https://github.com/simsong/bulk_extractor/pull/559)).
+- The carving guide documents recorder-specific `-S <recorder>_carve_mode=`
+  settings, defaults, and feature-file behavior ([#264](https://github.com/simsong/bulk_extractor/issues/264)).
 
 ### Reliability and correctness
 
+- Removed the obsolete numeric debug mask and its misleading scanner-control
+  documentation. `-d`/`--debug` now explicitly enables debug-level diagnostic
+  logging; scanner selection remains controlled by `-x` and `-e`
+  ([#403](https://github.com/simsong/bulk_extractor/issues/403)).
 - RAR extraction now preserves full seek offsets and bounded in-memory writes,
   recovering every member of a multi-file RAR fixture ([#212](https://github.com/simsong/bulk_extractor/issues/212)).
 - Progress displays now adapt to Windows console-width changes, matching the
@@ -133,6 +139,11 @@ through the project's normal pull-request and CI process.
 - Fixed a SQLite-size arithmetic overflow and reduced the scheduled Coverity
   workflow token to read-only repository contents
   ([PR #538](https://github.com/simsong/bulk_extractor/pull/538)).
+- `report.xml` now declares and conforms to the bundled DFXML 1.2.0 schema,
+  whose XML Schema 1.0 content models are deterministic for current validators;
+  bulk_extractor-specific runtime, configuration, source-detail, and final
+  report data are preserved in a separate extension namespace and covered by
+  an `xmllint --schema` regression test ([#244](https://github.com/simsong/bulk_extractor/issues/244)).
 
 ### Build, configuration, and testing
 

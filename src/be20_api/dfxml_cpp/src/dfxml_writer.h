@@ -149,7 +149,7 @@ public:
         push("creator","version='1.0'");
         xmlout("program",program);
         xmlout("version",version);
-        if (git_commit.size()>0) xmlout("commit",git_commit);
+        (void)git_commit;
         add_DFXML_build_environment();
         add_DFXML_execution_environment(command_line);
         pop();                  // creator
@@ -460,21 +460,6 @@ public:
         // See http://gcc.gnu.org/onlinedocs/cpp/Common-Predefined-Macros.html
         xmlprintf("compiler","","%d.%d.%d (%s)",__GNUC__, __GNUC_MINOR__,__GNUC_PATCHLEVEL__,__VERSION__);
 #endif
-#ifdef CPPFLAGS
-        xmlout("CPPFLAGS",CPPFLAGS,"",true);
-#endif
-#ifdef CFLAGS
-        xmlout("CFLAGS",CFLAGS,"",true);
-#endif
-#ifdef CXXFLAGS
-        xmlout("CXXFLAGS",CXXFLAGS,"",true);
-#endif
-#ifdef LDFLAGS
-        xmlout("LDFLAGS",LDFLAGS,"",true);
-#endif
-#ifdef LIBS
-        xmlout("LIBS",LIBS,"",true);
-#endif
 #if defined(__DATE__) && defined(__TIME__) && defined(HAVE_STRPTIME)
         if (strptime(__DATE__,"%b %d %Y",&tm)){
             char buf[64];
@@ -502,23 +487,16 @@ public:
         xmlout("library", "", std::string("name=\"hashdb\" version=\"") + hashdb_version() + "\"",false);
 #endif
 #ifdef SQLITE_VERSION
-        xmlout("library", "", "name=\"sqlite\" version=\"" SQLITE_VERSION "\" source_id=\"" SQLITE_SOURCE_ID "\"",false);
+        xmlout("library", "", "name=\"sqlite\" version=\"" SQLITE_VERSION "\"",false);
 #endif
 #ifdef HAVE_GNUEXIF
         // gnuexif does not have a programmatically obtainable version.
         xmlout("library","","name=\"gnuexif\" version=\"?\"",false);
 #endif
-#ifdef GIT_COMMIT
-        xmlout("git", "", "commit=\"" GIT_COMMIT "\"",false);
-#endif
         pop();
     }
     void add_DFXML_execution_environment(const std::string &command_line) {
         push("execution_environment");
-#if defined(HAVE_ASM_CPUID)
-        add_cpuid();
-#endif
-
 #ifdef HAVE_SYS_UTSNAME_H
         struct utsname name;
         if (uname(&name)==0){

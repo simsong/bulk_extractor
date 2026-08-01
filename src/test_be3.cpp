@@ -16,6 +16,7 @@
 #include <memory>
 #include <filesystem>
 #include <cstdio>
+#include <cstdlib>
 #include <stdexcept>
 #ifdef HAVE_SYS_RESOURCE_H
 #include <sys/resource.h>
@@ -175,6 +176,33 @@ static std::string shell_quote(std::string_view value)
         }
     }
     return quoted + "'";
+}
+
+TEST_CASE("report DFXML validates against the bundled schema", "[end-to-end]")
+{
+    if (std::system("command -v xmllint >/dev/null 2>&1") != 0) {
+        return;
+    }
+
+    const auto root = NamedTemporaryDirectory();
+    const auto input = root / "input.raw";
+    const auto outdir = root / "output";
+    std::ofstream(input) << "schema@example.com\n";
+
+    const std::string input_string = input.string();
+    const std::string outdir_string = outdir.string();
+    const char *argv[] = {
+        "bulk_extractor", "-0q", "-x", "all", "-e", "email",
+        "-o", outdir_string.c_str(), input_string.c_str(), nullptr
+    };
+    std::stringstream output;
+    REQUIRE(run_be(output, argv) == 0);
+
+    const auto schema = std::filesystem::path(TEST_TOP_SRCDIR) / "dfxml_schema" / "dfxml.xsd";
+    const auto report = outdir / "report.xml";
+    const auto command = "xmllint --noout --schema " + shell_quote(schema.string()) + " "
+        + shell_quote(report.string());
+    REQUIRE(std::system(command.c_str()) == 0);
 }
 
 TEST_CASE("Windows raw-device paths are recognized narrowly", "[image_process]")
@@ -448,6 +476,26 @@ TEST_CASE("e2e-H", "[end-to-end]") {
     std::stringstream ss;
     int ret = run_be(ss, argv);
     REQUIRE( ret==2 );                  // -H produces 2
+}
+
+TEST_CASE("retired numeric debug options report help", "[end-to-end]")
+{
+    const char *short_mask[] = {"bulk_extractor", "-d8", nullptr};
+    const char *long_mask[] = {"bulk_extractor", "--debug=1", nullptr};
+    const char *debug_help[] = {"bulk_extractor", "-D", nullptr};
+
+    for (const auto argv : {short_mask, long_mask, debug_help}) {
+        std::stringstream cout, cerr;
+        REQUIRE(run_be(cout, cerr, argv) == 1);
+        REQUIRE(cerr.str().find("have been retired") != std::string::npos);
+        REQUIRE(cerr.str().find("Usage:") != std::string::npos);
+    }
+
+    const char *invalid[] = {"bulk_extractor", "--not-a-real-option", nullptr};
+    std::stringstream cout, cerr;
+    REQUIRE(run_be(cout, cerr, invalid) == 1);
+    REQUIRE(cerr.str().find("error:") != std::string::npos);
+    REQUIRE(cerr.str().find("Usage:") != std::string::npos);
 }
 
 /* Run on the first 100k of the emails dataset
