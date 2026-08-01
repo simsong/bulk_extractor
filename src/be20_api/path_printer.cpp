@@ -145,7 +145,7 @@ void path_printer::process_sp(const scanner_params &sp) const
     }
     /* If we are in an offset block, process recursively with the offset */
     if (isdigit(prefix[0])){
-	size_t offset = stoi64(prefix);
+	size_t offset = stoi64(std::move(prefix));
 	if ( offset > sp.sbuf->bufsize ){
             throw std::runtime_error(Formatter() << "Error: " << new_path << " only has "
                                      << sp.sbuf->bufsize << " bytes; can't offset to " << offset);
