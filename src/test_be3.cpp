@@ -14,6 +14,7 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <filesystem>
 #include <cstdio>
 #include <stdexcept>
@@ -325,18 +326,37 @@ TEST_CASE("e2e-alert-list", "[end-to-end]")
 #ifndef _WIN32
 class scoped_environment {
     std::string name;
+    std::optional<std::string> previous_value;
 public:
     scoped_environment(const char *name_, const char *value) : name(name_)
     {
+        if (const char *previous = getenv(name.c_str())) {
+            previous_value = previous;
+        }
         setenv(name.c_str(), value, 1);
     }
-    ~scoped_environment() { unsetenv(name.c_str()); }
+    ~scoped_environment()
+    {
+        if (previous_value) {
+            setenv(name.c_str(), previous_value->c_str(), 1);
+        } else {
+            unsetenv(name.c_str());
+        }
+    }
 };
 
 TEST_CASE("restart crash hook count", "[end-to-end]")
 {
     feature_recorder_set::flags_t flags;
     scanner_config sc;
+    {
+        scoped_environment outer("BE_TEST_CRASH_AFTER_WORK_START", "2");
+        {
+            scoped_environment inner("BE_TEST_CRASH_AFTER_WORK_START", "1");
+            REQUIRE(std::string(getenv("BE_TEST_CRASH_AFTER_WORK_START")) == "1");
+        }
+        REQUIRE(std::string(getenv("BE_TEST_CRASH_AFTER_WORK_START")) == "2");
+    }
     {
         scoped_environment hook("BE_TEST_CRASH_AFTER_WORK_START", "2");
         scanner_set ss(sc, flags, nullptr);

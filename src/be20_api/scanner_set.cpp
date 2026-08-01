@@ -124,8 +124,13 @@ scanner_set::~scanner_set()
 
 bool scanner_set::should_test_crash_after_work_start()
 {
-    const uint64_t remaining = test_crash_after_work_start.load();
-    return remaining != 0 && test_crash_after_work_start.fetch_sub(1) == 1;
+    uint64_t remaining = test_crash_after_work_start.load();
+    while (remaining != 0) {
+        if (test_crash_after_work_start.compare_exchange_weak(remaining, remaining - 1)) {
+            return remaining == 1;
+        }
+    }
+    return false;
 }
 
 void scanner_set::set_dfxml_writer(class dfxml_writer *writer_)
