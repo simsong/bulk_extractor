@@ -125,9 +125,17 @@ uint64_t scaled_stoi64(const std::string &str)
     std::stringstream ss(str);
     uint64_t val;
     ss >> val;
-    if(str.find('k')!=std::string::npos  || str.find('K')!=std::string::npos) val *= 1024LL;
-    if(str.find('m')!=std::string::npos  || str.find('m')!=std::string::npos) val *= 1024LL * 1024LL;
-    if(str.find('g')!=std::string::npos  || str.find('g')!=std::string::npos) val *= 1024LL * 1024LL * 1024LL;
-    if(str.find('t')!=std::string::npos  || str.find('T')!=std::string::npos) val *= 1024LL * 1024LL * 1024LL * 1024LL;
+    if (!ss) throw std::invalid_argument("Invalid size: " + str);
+
+    const auto multiply = [&val, &str](uint64_t multiplier) {
+        if (val > std::numeric_limits<uint64_t>::max() / multiplier) {
+            throw std::out_of_range("Size is too large: " + str);
+        }
+        val *= multiplier;
+    };
+    if(str.find('k')!=std::string::npos  || str.find('K')!=std::string::npos) multiply(1024);
+    if(str.find('m')!=std::string::npos  || str.find('M')!=std::string::npos) multiply(1024LL * 1024LL);
+    if(str.find('g')!=std::string::npos  || str.find('G')!=std::string::npos) multiply(1024LL * 1024LL * 1024LL);
+    if(str.find('t')!=std::string::npos  || str.find('T')!=std::string::npos) multiply(1024LL * 1024LL * 1024LL * 1024LL);
     return val;
 }

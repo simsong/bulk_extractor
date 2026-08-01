@@ -287,7 +287,9 @@ TEST_CASE("scale_stoi64","[utils]") {
     REQUIRE(scaled_stoi64("10") == 10);
     REQUIRE(scaled_stoi64("2k") == 2048);
     REQUIRE(scaled_stoi64("4m") == 4194304);
+    REQUIRE(scaled_stoi64("4M") == 4194304);
     REQUIRE(scaled_stoi64("1g") == 1073741824);
+    REQUIRE_THROWS_AS(scaled_stoi64("18446744073709551615k"), std::out_of_range);
 }
 
 /*** BE-specific tests continue ***/
