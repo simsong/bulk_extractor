@@ -478,6 +478,26 @@ TEST_CASE("e2e-H", "[end-to-end]") {
     REQUIRE( ret==2 );                  // -H produces 2
 }
 
+TEST_CASE("retired numeric debug options report help", "[end-to-end]")
+{
+    const char *short_mask[] = {"bulk_extractor", "-d8", nullptr};
+    const char *long_mask[] = {"bulk_extractor", "--debug=1", nullptr};
+    const char *debug_help[] = {"bulk_extractor", "-D", nullptr};
+
+    for (const auto argv : {short_mask, long_mask, debug_help}) {
+        std::stringstream cout, cerr;
+        REQUIRE(run_be(cout, cerr, argv) == 1);
+        REQUIRE(cerr.str().find("have been retired") != std::string::npos);
+        REQUIRE(cerr.str().find("Usage:") != std::string::npos);
+    }
+
+    const char *invalid[] = {"bulk_extractor", "--not-a-real-option", nullptr};
+    std::stringstream cout, cerr;
+    REQUIRE(run_be(cout, cerr, invalid) == 1);
+    REQUIRE(cerr.str().find("error:") != std::string::npos);
+    REQUIRE(cerr.str().find("Usage:") != std::string::npos);
+}
+
 /* Run on the first 100k of the emails dataset
  * bulk_extractor -0q -o [outdir] nps-2010-emails.100k.raw
  * Runs twice, so that we can also test the restarting logic
