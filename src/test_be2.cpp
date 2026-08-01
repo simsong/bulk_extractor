@@ -82,6 +82,12 @@ class RarUnpackTest {
             REQUIRE(window[pos] == canary);
     }
 };
+
+TEST_CASE("RAR filename decoding accepts an empty destination", "[rar]")
+{
+    EncodeFileName decoder;
+    decoder.Decode(nullptr, nullptr, 0, nullptr, 0);
+}
 #endif
 
 #include "test_be.h"

@@ -15,6 +15,8 @@ EncodeFileName::EncodeFileName() :
 void EncodeFileName::Decode(char *Name,byte *EncName_,size_t EncSize,wchar *NameW,
                             size_t MaxDecSize)
 {
+  if (MaxDecSize == 0)
+    return;
   size_t EncPos=0,DecPos=0;
   byte HighByte=EncName_[EncPos++];
   while (EncPos<EncSize && DecPos<MaxDecSize)
