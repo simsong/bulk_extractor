@@ -15,7 +15,7 @@ ETAGS = etags-emacs
 ACLOCAL_AMFLAGS = -I m4
 
 # So that relative imports from be20_api work
-AM_CPPFLAGS = @RE2_CFLAGS@ -I$(top_srcdir)/src/be20_api -I$(top_srcdir)/src/be20_api/utfcpp/source -I$(top_srcdir)/src/third_party/spdlog
+AM_CPPFLAGS = @RE2_CFLAGS@ -I$(top_srcdir)/src/be20_api -I$(top_srcdir)/src/be20_api/utfcpp/source -isystem $(top_srcdir)/src/third_party/spdlog
 
 noinst_LIBRARIES = libbe20.a
 libbe20_a_SOURCES = $(BE20_API_SRC) $(DFXML_READER) $(DFXML_WRITER) bulk_extractor_logging.cpp bulk_extractor_logging.h
@@ -192,7 +192,7 @@ runs.txt: test_be tests/run_each.sh
 #
 
 SUFFIXES = .flex
-FLEX_CXXFLAGS=-Wno-shadow -Wno-effc++ -Wno-redundant-decls -Wno-missing-noreturn
+FLEX_CXXFLAGS=-Wno-shadow -Wno-effc++ -Wno-redundant-decls -Wno-missing-noreturn -Wno-misleading-indentation
 .flex.o:
 	@echo "  FLEX-CXX" $@
 	@$(LEX) -R -t $<  | sed "s/register //" > `basename $@ .o`.cpp

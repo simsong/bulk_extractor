@@ -1059,8 +1059,8 @@ TEST_CASE("image_process short EWF read", "[phase1]") {
         size_t max_read;
 
     public:
-        partial_ewf_reader(std::filesystem::path image, size_t page_size, size_t margin, size_t max_read_)
-            : process_ewf(image, page_size, margin), max_read(max_read_) {}
+        partial_ewf_reader(std::filesystem::path image, size_t page_size, size_t margin_, size_t max_read_)
+            : process_ewf(image, page_size, margin_), max_read(max_read_) {}
 
         ssize_t pread(void *buf, size_t bytes, uint64_t offset) const override {
             if (max_read == 0) return 0;
