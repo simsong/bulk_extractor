@@ -193,10 +193,11 @@ inline void Unpack::InsertLastMatch(unsigned int Length,unsigned int Distance)
 _forceinline void Unpack::CopyString(uint Length,uint Distance)
 {
   uint SrcPtr=UnpPtr-Distance;
-  if (SrcPtr<MAXWINSIZE-MAX_LZ_MATCH && UnpPtr<MAXWINSIZE-MAX_LZ_MATCH)
+  if (Length<=MAXWINSIZE && SrcPtr<=MAXWINSIZE-Length && UnpPtr<=MAXWINSIZE-Length)
   {
-    // If we are not close to end of window, we do not need to waste time
-    // to "& MAXWINMASK" pointer protection.
+    // If the entire copy fits before the end of the window, we do not need
+    // to waste time on "& MAXWINMASK" pointer protection. PPM LZ commands
+    // can be longer than MAX_LZ_MATCH, so use the requested length here.
 
     byte *Src=Window+SrcPtr;
     byte *Dest=Window+UnpPtr;

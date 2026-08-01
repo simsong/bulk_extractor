@@ -78,6 +78,7 @@ struct AudioVariables // For RAR 2.0 archives only.
 class Unpack:private BitInput
 {
   private:
+    friend class RarUnpackTest;
     friend class Pack;
 
     void Unpack29(bool Solid);
@@ -93,7 +94,7 @@ class Unpack:private BitInput
     inline void InsertOldDist(unsigned int Distance);
     inline void InsertLastMatch(unsigned int Length,unsigned int Distance);
     void UnpInitData(int Solid);
-    _forceinline void CopyString(uint Length,uint Distance);
+    void CopyString(uint Length,uint Distance);
     bool ReadEndOfBlock();
     bool ReadVMCode();
     bool ReadVMCodePPM();

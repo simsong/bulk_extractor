@@ -21,6 +21,7 @@
 #include <string>
 #include <string_view>
 #include <sstream>
+#include <vector>
 
 #include "be20_api/catch.hpp"
 
@@ -50,6 +51,30 @@
 #include "scan_pdf.h"
 #include "scan_vcard.h"
 #include "scan_wordlist.h"
+
+#ifdef USE_RAR
+#include "rar/rar.hpp"
+
+class RarUnpackTest {
+  public:
+    static void copy_across_window_boundary()
+    {
+        std::vector<byte> window(MAXWINSIZE, 0);
+        ComprDataIO io;
+        Unpack unpack(&io);
+        unpack.Init(window.data());
+
+        constexpr unsigned int length = MAX_LZ_MATCH + 30;
+        unpack.UnpPtr = MAXWINSIZE - MAX_LZ_MATCH - 1;
+        window[unpack.UnpPtr - 1] = 0xa5;
+        unpack.CopyString(length, 1);
+
+        REQUIRE(unpack.UnpPtr == length - MAX_LZ_MATCH - 1);
+        for (unsigned int pos = 0; pos < unpack.UnpPtr; pos++)
+            REQUIRE(window[pos] == 0xa5);
+    }
+};
+#endif
 
 #include "test_be.h"
 
@@ -471,6 +496,12 @@ TEST_CASE("test_jpeg_rar", "[phase1]") {
     };
     validate("jpegs.rar", ex2);
 }
+
+#ifdef USE_RAR
+TEST_CASE("RAR PPM copies wrap at the dictionary boundary", "[rar]") {
+    RarUnpackTest::copy_across_window_boundary();
+}
+#endif
 
 /****************************************************************
  * scan_kml
