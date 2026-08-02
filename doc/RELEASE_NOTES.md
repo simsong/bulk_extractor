@@ -69,6 +69,10 @@ through the project's normal pull-request and CI process.
 - Email extraction now enforces independent 64-octet local-part and 253-octet
   domain limits for ASCII and UTF-16 input, avoiding truncated suffix features
   from overlong addresses ([#585](https://github.com/simsong/bulk_extractor/issues/585)).
+- Parser hardening now rejects truncated hibernation-file block headers before
+  reading their length fields, and unexpected top-level exceptions are reported
+  as diagnostics with a nonzero exit status
+  ([PR #605](https://github.com/simsong/bulk_extractor/pull/605)).
 - Hardened `sbuf` bounds, arithmetic, and ownership behavior, including
   zero-length and one-past-end cases
   ([PR #511](https://github.com/simsong/bulk_extractor/pull/511)).
