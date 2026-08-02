@@ -212,6 +212,12 @@ through the project's normal pull-request and CI process.
   ([PR #561](https://github.com/simsong/bulk_extractor/pull/561),
   [PR #558](https://github.com/simsong/bulk_extractor/pull/558),
   [PR #557](https://github.com/simsong/bulk_extractor/pull/557)).
+- Documented a controlled release procedure and release-issue template, with
+  isolated artifact assembly, macOS and container `distcheck` gates, and
+  source-level downstream submission paths for Debian/Kali and
+  Fedora/openSUSE ([#621](https://github.com/simsong/bulk_extractor/issues/621),
+  [#622](https://github.com/simsong/bulk_extractor/issues/622),
+  [#623](https://github.com/simsong/bulk_extractor/issues/623)).
 
 ### Known limitations and release work
 

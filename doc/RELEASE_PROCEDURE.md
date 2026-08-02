@@ -131,8 +131,8 @@ The staged set must contain:
 | --- | --- | --- |
 | Source archive | `make distcheck` | Version and source-tag match |
 | Windows `.exe` | MinGW workflow | Exact artifact passed Windows test |
-| Debian `.deb` | [#622][deb-issue] | Clean package build and installed-package smoke test |
-| RPM/SRPM | [#623][rpm-issue] | Clean RPM build and installed-package smoke test |
+| Debian `.deb` | [#622][deb-issue] | Clean package build and installed-package smoke test; direct-download artifact only |
+| RPM/SRPM | [#623][rpm-issue] | Clean RPM build and installed-package smoke test; direct-download artifact only |
 | AWS summary | [#624][aws-issue] | Redacted large-image build/scan result and cleanup evidence |
 | `SHA256SUMS` | `make release` | Checksums verified before upload |
 
@@ -144,15 +144,30 @@ is a release failure.
 
 1. Attach the staged artifacts and `SHA256SUMS` to the draft GitHub Release.
 2. Check the release notes, tag, commit, asset names, checksums, and links.
-3. Submit signed Debian artifacts to the selected Debian repository and record
-   the resulting URL. The reproducible build and repository choice are tracked
-   in [#622][deb-issue].
-4. Submit signed RPM artifacts to the selected RPM repository and record the
-   resulting URL. The reproducible build and repository choice are tracked in
-   [#623][rpm-issue].
-5. Publish the GitHub Release only after a release manager has reviewed every
+3. Publish the signed upstream source archive and its checksums. Distribution
+   archives build their own binaries: do not submit a prebuilt `.deb` or RPM to
+   Debian, Kali, Fedora, or openSUSE as an archive update.
+4. Submit the Debian *source package* through an authorized Debian maintainer
+   or sponsor and record the accepted source-package URL. Kali normally imports
+   from Debian; when it carries packaging changes, submit a version-bump request
+   or merge request against Kali's packaging repository using the same tagged
+   upstream source. The reproducible build and downstream tracking are in
+   [#622][deb-issue].
+5. Submit source-level RPM packaging changes: use the Fedora package-review or
+   dist-git workflow as applicable, and fork the openSUSE package repository to
+   submit a Gitea pull request containing the updated spec, source reference,
+   and changelog. Let the distribution build service build and archive the RPMs;
+   record the accepted request URL. The reproducible build and downstream
+   tracking are in [#623][rpm-issue].
+6. Publish the GitHub Release only after a release manager has reviewed every
    required gate and external package publication is either complete or clearly
    disclosed in the release notes.
+
+The release may attach locally built `.deb`, RPM, and SRPM files to GitHub for
+download and installation testing. Those files are not substitutes for the
+source-package submissions above. Distribution archives apply their own signing
+and build policies; keep any contributor or maintainer credentials outside this
+repository and outside `make release`.
 
 ## Automation roadmap
 
@@ -160,8 +175,10 @@ The following release-engineering issues close the remaining automation gaps:
 
 - [#621][github-release-issue]: tag-driven draft GitHub Release creation,
   Windows artifact assembly, and checksums.
-- [#622][deb-issue]: reproducible Debian builds, signing, and publication.
-- [#623][rpm-issue]: reproducible RPM builds, signing, and publication.
+- [#622][deb-issue]: reproducible Debian source/binary builds and Debian/Kali
+  source-package submissions.
+- [#623][rpm-issue]: reproducible RPM builds and Fedora/openSUSE source-level
+  packaging submissions.
 - [#624][aws-issue]: budget-capped AWS large-image validation and secure
   reporting.
 
