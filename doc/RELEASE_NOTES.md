@@ -75,6 +75,9 @@ through the project's normal pull-request and CI process.
 - Email extraction now enforces independent 64-octet local-part and 253-octet
   domain limits for ASCII and UTF-16 input, avoiding truncated suffix features
   from overlong addresses ([#585](https://github.com/simsong/bulk_extractor/issues/585)).
+- Hardened the bundled RAR PPM decoder's dictionary-copy boundary handling,
+  preventing a malformed archive from writing past its ring buffer
+  (fixes CVE-2026-24857; [#601](https://github.com/simsong/bulk_extractor/issues/601)).
 - Email extraction now accepts syntactically valid two-to-63-character TLDs,
   including current TLDs such as `.solutions`, without requiring a stale
   scanner-specific allow-list ([#586](https://github.com/simsong/bulk_extractor/issues/586)).

@@ -64,10 +64,6 @@
 
 #include "test_be.h"
 
-#ifdef HAVE_EXIV2
-extern "C" void scan_exiv2(scanner_params& sp);
-#endif
-
 const std::string JSON1 {"[{\"1\": \"one@company.com\"}, {\"2\": \"two@company.com\"}, {\"3\": \"two@company.com\"}]"};
 const std::string JSON2 {"[{\"1\": \"one@base64.com\"}, {\"2\": \"two@base64.com\"}, {\"3\": \"three@base64.com\"}]\n"};
 
