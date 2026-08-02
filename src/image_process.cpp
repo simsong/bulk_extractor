@@ -74,14 +74,14 @@ std::filesystem::path image_process::image_fname() const
 
 
 
-bool image_process::fn_ends_with(std::filesystem::path path, std::string suffix)
+bool image_process::fn_ends_with(const std::filesystem::path &path, const std::string &suffix)
 {
     std::string str(path.string());
     if (suffix.size() > str.size()) return false;
     return str.substr(str.size()-suffix.size())==suffix;
 }
 
-bool image_process::is_multipart_file(std::filesystem::path fn)
+bool image_process::is_multipart_file(const std::filesystem::path &fn)
 {
     return fn_ends_with(fn,".000")
 	|| fn_ends_with(fn,".001")

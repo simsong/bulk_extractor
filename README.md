@@ -120,6 +120,15 @@ same bulk_extractor source version as the executable; the scanner's PHASE_INIT
 handler must call sp.check_version(). Modules remain loaded until scanner
 cleanup completes.
 
+CONTAINER IMAGE
+===============
+
+The source tree includes a multi-stage Debian Bookworm `Dockerfile` for
+reproducible Linux scans of regular image files. Build and run it with an
+input mounted read-only and an output directory mounted read-write. The image
+runs unprivileged and intentionally omits libewf and Lightgrep; it is not a
+privileged raw-device appliance. See [doc/docker.md](doc/docker.md).
+
 BUILDING ON WINDOWS
 ===================
 Native Windows builds of bulk_extractor are not currently supported.

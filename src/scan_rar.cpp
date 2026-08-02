@@ -599,11 +599,11 @@ void scan_rar(scanner_params &sp)
 
         auto rar_def = feature_recorder_def(RAR_RECORDER_NAME, flags);
         rar_def.default_carve_mode = feature_recorder_def::carve_mode_t::CARVE_ENCODED;
-	sp.info->feature_defs.push_back( rar_def );
+	sp.info->feature_defs.push_back(std::move(rar_def));
 
         auto unrar_def = feature_recorder_def(UNRAR_RECORDER_NAME, flags);
         unrar_def.default_carve_mode = feature_recorder_def::carve_mode_t::CARVE_ENCODED;
-	sp.info->feature_defs.push_back( unrar_def );
+	sp.info->feature_defs.push_back(std::move(unrar_def));
         sp.get_scanner_config("rar_find_components",&record_components,"Search for RAR components");
         sp.get_scanner_config("rar_find_volumes",&record_volumes,"Search for RAR volumes");
 #else
