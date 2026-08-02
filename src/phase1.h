@@ -42,8 +42,8 @@ class Phase1 {
 public:
     class ThreadWaitTimeout : public std::runtime_error {
     public:
-        explicit ThreadWaitTimeout(time_t maximum_wait):
-            std::runtime_error("timed out waiting for scanner threads"), maximum_wait(maximum_wait) {}
+        explicit ThreadWaitTimeout(time_t wait_timeout):
+            std::runtime_error("timed out waiting for scanner threads"), maximum_wait(wait_timeout) {}
         const time_t maximum_wait;
     };
 
@@ -57,7 +57,6 @@ public:
         Config &operator=(const Config &that) = delete;        // assignment constructor - delete
 
         Config() { }
-        uint64_t  debug {false};                 // debug
         size_t    opt_pagesize {16 * MiB};
         size_t    opt_marginsize { 4 * MiB};
         uint32_t  max_bad_alloc_errors {3}; // by default, 3 retries

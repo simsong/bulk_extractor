@@ -32,6 +32,10 @@ through the project's normal pull-request and CI process.
   publishes it as a downloadable artifact; attaching it to the 2.2.0 release
   remains a release task
   ([PR #543](https://github.com/simsong/bulk_extractor/pull/543)).
+- Windows raw-device input now uses explicit Win32 device handles and
+  `IOCTL_DISK_GET_LENGTH_INFO` for physical disks, volumes, and named volumes,
+  rather than relying on C++ filesystem metadata or calculated disk geometry
+  ([issue #258](https://github.com/simsong/bulk_extractor/issues/258)).
 - The source tree is self-contained: `be20_api`, DFXML, schemas, and UTF support
   are now versioned in this repository instead of being supplied through fragile
   Git submodules
@@ -41,9 +45,46 @@ through the project's normal pull-request and CI process.
 - Runtime scanner plug-ins are supported again through a versioned factory
   interface, `-P`, and `BE_PATH`, with an end-to-end integration test
   ([PR #528](https://github.com/simsong/bulk_extractor/pull/528)).
+- Network captures now preserve IEEE 802.11 records with their correct PCAP
+  link type and report WiFi frame metadata in `wifi.txt`
+  ([PR #559](https://github.com/simsong/bulk_extractor/pull/559)).
+- The carving guide documents recorder-specific `-S <recorder>_carve_mode=`
+  settings, defaults, and feature-file behavior ([#264](https://github.com/simsong/bulk_extractor/issues/264)).
 
 ### Reliability and correctness
 
+- Restart records the start of each page so a resumed run deliberately skips
+  pages that were in progress at the crash, avoiding repeated data-dependent
+  crashes; the behavior is covered by a controlled-crash regression test
+  ([#202](https://github.com/simsong/bulk_extractor/issues/202)).
+- Restart now reports the number of deliberately skipped pages and the archived
+  interrupted report path when it resumes a non-quiet run
+  ([#319](https://github.com/simsong/bulk_extractor/issues/319)).
+- Removed the obsolete numeric debug mask and its misleading scanner-control
+  documentation. `-d`/`--debug` now explicitly enables debug-level diagnostic
+  logging; scanner selection remains controlled by `-x` and `-e`
+  ([#403](https://github.com/simsong/bulk_extractor/issues/403)).
+- Removed the unregistered, API-stale Lightgrep Base16 implementation; the
+  maintained Flex Base16 scanner remains the supported opt-in implementation
+  ([#246](https://github.com/simsong/bulk_extractor/issues/246)).
+- RAR extraction now preserves full seek offsets and bounded in-memory writes,
+  recovering every member of a multi-file RAR fixture ([#212](https://github.com/simsong/bulk_extractor/issues/212)).
+- Progress displays now adapt to Windows console-width changes, matching the
+  periodic terminal-width refresh already used on Unix-like systems
+  ([#311](https://github.com/simsong/bulk_extractor/issues/311)).
+- Email extraction now enforces independent 64-octet local-part and 253-octet
+  domain limits for ASCII and UTF-16 input, avoiding truncated suffix features
+  from overlong addresses ([#585](https://github.com/simsong/bulk_extractor/issues/585)).
+- Hardened the bundled RAR PPM decoder's dictionary-copy boundary handling,
+  preventing a malformed archive from writing past its ring buffer
+  (fixes CVE-2026-24857; [#601](https://github.com/simsong/bulk_extractor/issues/601)).
+- Email extraction now accepts syntactically valid two-to-63-character TLDs,
+  including current TLDs such as `.solutions`, without requiring a stale
+  scanner-specific allow-list ([#586](https://github.com/simsong/bulk_extractor/issues/586)).
+- Parser hardening now rejects truncated hibernation-file block headers before
+  reading their length fields, and unexpected top-level exceptions are reported
+  as diagnostics with a nonzero exit status
+  ([PR #605](https://github.com/simsong/bulk_extractor/pull/605)).
 - Hardened `sbuf` bounds, arithmetic, and ownership behavior, including
   zero-length and one-past-end cases
   ([PR #511](https://github.com/simsong/bulk_extractor/pull/511)).
@@ -51,6 +92,9 @@ through the project's normal pull-request and CI process.
   malformed or truncated packets
   ([PR #516](https://github.com/simsong/bulk_extractor/pull/516),
   [PR #530](https://github.com/simsong/bulk_extractor/pull/530)).
+- Restored IPv6 TCP, UDP, and ICMPv6 checksum validation, safe IPv6 packet
+  bounds handling, and correct raw-IP carving
+  ([PR #554](https://github.com/simsong/bulk_extractor/pull/554)).
 - Made E01 and split-image selection safe for literal percent characters,
   lowercase segment names, and exceptional paths; raw and EWF short reads no
   longer expose unread buffer tails to scanners
@@ -62,10 +106,15 @@ through the project's normal pull-request and CI process.
 - Fixed notifier and disk-write error shutdown so worker failures are reported
   and cleaned up instead of hanging or terminating incorrectly
   ([PR #513](https://github.com/simsong/bulk_extractor/pull/513)).
+- `-Z` now removes stale nested output directories as well as files before a
+  new run ([#239](https://github.com/simsong/bulk_extractor/issues/239)).
 - Fixed scanner controls: `jpeg_carve_mode=0` now disables JPEG carving, and
   `-x all -e outlook` enables Outlook as requested
   ([PR #525](https://github.com/simsong/bulk_extractor/pull/525),
   [PR #527](https://github.com/simsong/bulk_extractor/pull/527)).
+- JPEG carving now observes the recorder's configured minimum and maximum
+  carve sizes; `jpeg_min_carve_size` and `jpeg_max_carve_size` provide
+  scanner-specific overrides ([#242](https://github.com/simsong/bulk_extractor/issues/242)).
 - Preserved recorder banners and triggering features across CRLF input,
   histogram setup, and allocation-failure paths
   ([PR #531](https://github.com/simsong/bulk_extractor/pull/531),
@@ -73,6 +122,8 @@ through the project's normal pull-request and CI process.
   [PR #535](https://github.com/simsong/bulk_extractor/pull/535)).
 - Bounded and normalized derived ZIP-carving filenames while retaining source
   metadata ([PR #539](https://github.com/simsong/bulk_extractor/pull/539)).
+- ZIP component carvings now use the `zip_carved/` output directory and `zip_carved.txt` feature file, matching
+  the convention used by other carvers ([#336](https://github.com/simsong/bulk_extractor/issues/336)).
 - Prevented empty MSXML extraction from causing recursion and changed residual
   `sbuf` diagnostics from an abort to a DFXML warning
   ([PR #537](https://github.com/simsong/bulk_extractor/pull/537)).
@@ -91,12 +142,32 @@ through the project's normal pull-request and CI process.
 - Added carving for validated RawTherapee `Image8` RGB thumbnail records,
   writing PPM output without an image-sized intermediate copy
   ([PR #556](https://github.com/simsong/bulk_extractor/pull/556)).
+- URL feature extraction no longer includes surrounding HTML `&quot;` markup, and
+  the utmp scanner recognizes both little- and big-endian Linux records
+  ([PR #568](https://github.com/simsong/bulk_extractor/pull/568),
+  [PR #563](https://github.com/simsong/bulk_extractor/pull/563)).
+- Windows IP feature formatting now uses a Windows socket-address formatter and
+  is exercised against the NTLM PCAP fixture in the Windows runtime workflow
+  ([PR #573](https://github.com/simsong/bulk_extractor/pull/573),
+  [PR #574](https://github.com/simsong/bulk_extractor/pull/574)).
+- `--find-case-sensitive` makes `-f` and `-F` RE2 patterns case-sensitive;
+  their historical case-insensitive matching remains the default
+  ([#483](https://github.com/simsong/bulk_extractor/issues/483)).
 - Fixed a SQLite-size arithmetic overflow and reduced the scheduled Coverity
   workflow token to read-only repository contents
   ([PR #538](https://github.com/simsong/bulk_extractor/pull/538)).
+- `report.xml` now declares and conforms to the bundled DFXML 1.2.0 schema,
+  whose XML Schema 1.0 content models are deterministic for current validators;
+  bulk_extractor-specific runtime, configuration, source-detail, and final
+  report data are preserved in a separate extension namespace and covered by
+  an `xmllint --schema` regression test ([#244](https://github.com/simsong/bulk_extractor/issues/244)).
 
 ### Build, configuration, and testing
 
+- A multi-stage Debian Bookworm container image provides a reproducible,
+  unprivileged environment for scanning regular image files. It documents its
+  libewf and Lightgrep limitations and supplements native platform CI rather
+  than replacing it ([#159](https://github.com/simsong/bulk_extractor/issues/159)).
 - AddressSanitizer now runs on every pull request while redundant workflow
   execution has been reduced
   ([PR #514](https://github.com/simsong/bulk_extractor/pull/514)).
@@ -111,6 +182,15 @@ through the project's normal pull-request and CI process.
   and its dependencies, verifies DLL imports, and publishes
   `bulk_extractor64.exe` as a GitHub Actions artifact
   ([PR #543](https://github.com/simsong/bulk_extractor/pull/543)).
+- Debian Bookworm now has an explicit compatibility build; optional-dependency
+  tests correctly skip unavailable libewf and `xmllint` paths, while full test
+  suites remain the responsibility of platform build jobs
+  ([PR #565](https://github.com/simsong/bulk_extractor/pull/565),
+  [PR #567](https://github.com/simsong/bulk_extractor/pull/567),
+  [PR #572](https://github.com/simsong/bulk_extractor/pull/572),
+  [PR #577](https://github.com/simsong/bulk_extractor/pull/577)).
+- Builds configured without the project `-O3` optimization now say so at startup
+  ([PR #564](https://github.com/simsong/bulk_extractor/pull/564)).
 
 ### Documentation and project maintenance
 
@@ -124,6 +204,12 @@ through the project's normal pull-request and CI process.
   documented the required Codex GitHub identity
   ([PR #551](https://github.com/simsong/bulk_extractor/pull/551),
   [PR #542](https://github.com/simsong/bulk_extractor/pull/542)).
+- Replaced the generic Autotools `INSTALL` template with project-specific
+  release-archive and Git-checkout instructions, and expanded/published the
+  current scanner-development manuals
+  ([PR #561](https://github.com/simsong/bulk_extractor/pull/561),
+  [PR #558](https://github.com/simsong/bulk_extractor/pull/558),
+  [PR #557](https://github.com/simsong/bulk_extractor/pull/557)).
 
 ### Known limitations and release work
 

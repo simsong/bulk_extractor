@@ -120,6 +120,15 @@ same bulk_extractor source version as the executable; the scanner's PHASE_INIT
 handler must call sp.check_version(). Modules remain loaded until scanner
 cleanup completes.
 
+CONTAINER IMAGE
+===============
+
+The source tree includes a multi-stage Debian Bookworm `Dockerfile` for
+reproducible Linux scans of regular image files. Build and run it with an
+input mounted read-only and an output directory mounted read-write. The image
+runs unprivileged and intentionally omits libewf and Lightgrep; it is not a
+privileged raw-device appliance. See [doc/docker.md](doc/docker.md).
+
 BUILDING ON WINDOWS
 ===================
 Native Windows builds of bulk_extractor are not currently supported.
@@ -136,6 +145,24 @@ support, is not signed, and is not a release installer. The workflow file and
 its maintained build notes are `.github/workflows/mingw.yml` and
 `doc/mingw_notes.txt`.
 
+WINDOWS RAW DEVICES
+===================
+On Windows, the executable can scan a raw physical disk, volume, or named
+volume by passing its DOS device path as the input. Supported forms are
+`C:` (a shorthand for `\\.\C:`), `\\.\PhysicalDriveN`, `\\.\X:`, and
+`\\?\Volume{GUID}` (without the trailing
+backslash used for a mounted-volume directory). For example:
+
+    bulk_extractor64.exe -o output \\.\PhysicalDrive0
+
+Run from an elevated command prompt and use a separate output directory. The
+input is opened read-only with shared read/write access; bulk_extractor does
+not lock, mount, alter, or write the device. It obtains the exact length with
+the Windows disk-length control code and reads through Win32 handles rather
+than treating a device as a C++ regular file. A volume path is not equivalent
+to its containing physical disk and may be subject to Windows volume-boundary
+rules near its final sectors. See `doc/mingw_notes.txt` for operational limits.
+
 
 
 
@@ -151,6 +178,9 @@ shutdown defects found by full-image testing and AddressSanitizer.
 
 ## Release 2.1.1 (April 26, 2024)
 Renamed jpeg_carved feature recorder to jpeg, so that the jpeg carve mode can be set with -S jpeg_carve_mode=2, rather than -S jpeg_carved_carve_mode=2, which was confusing.
+
+See [Carving](doc/carving.md) for the current per-recorder carve-mode settings
+and their effects.
 
 
 ## Release 2.0

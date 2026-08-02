@@ -42,7 +42,7 @@ jobs:
         run: |
           mkdir -p _site
           cp doc/latex_manuals/*.pdf doc/programmer_manual/*.pdf _site/
-          cp doc/latex_manuals/index.html _site/index.html
+          cp -R doc/latex_manuals/assets doc/latex_manuals/index.html _site/
 
       - name: Upload pull-request PDFs
         if: github.event_name == 'pull_request'

@@ -15,6 +15,7 @@
 #include "config.h"
 
 #include <cstdint>
+#include <algorithm>
 #include <cstring>
 #include <fstream>
 #include <iostream>
@@ -62,12 +63,6 @@
 #include "scan_wordlist.h"
 
 #include "test_be.h"
-
-extern "C" void scan_sqlite(scanner_params& sp);
-
-#ifdef HAVE_EXIV2
-extern "C" void scan_exiv2(scanner_params& sp);
-#endif
 
 const std::string JSON1 {"[{\"1\": \"one@company.com\"}, {\"2\": \"two@company.com\"}, {\"3\": \"two@company.com\"}]"};
 const std::string JSON2 {"[{\"1\": \"one@base64.com\"}, {\"2\": \"two@base64.com\"}, {\"3\": \"three@base64.com\"}]\n"};
@@ -359,6 +354,70 @@ TEST_CASE("scan_email3", "[support]") {
     REQUIRE( requireFeature(email_txt,"0\tplain_text_pdf@textedit.com"));
 }
 
+static std::string valid_email_domain(size_t length)
+{
+    REQUIRE(length >= 5);
+    std::string domain;
+    size_t remaining = length - 4; // the final ".com"
+    while (remaining > 0) {
+        const size_t label_length = std::min<size_t>(63, remaining);
+        domain.append(label_length, 'd');
+        remaining -= label_length;
+        if (remaining == 0) break;
+        domain.push_back('.');
+        --remaining;
+    }
+    return domain + ".com";
+}
+
+static std::vector<uint8_t> utf16le(const std::string &text)
+{
+    std::vector<uint8_t> bytes;
+    bytes.reserve(text.size() * 2);
+    for (const unsigned char ch : text) {
+        bytes.push_back(ch);
+        bytes.push_back(0);
+    }
+    return bytes;
+}
+
+TEST_CASE("scan_email_length_limits", "[support]") {
+    const auto scan = [](const std::string &email) {
+        const std::string input = email + " ";
+        auto outdir = test_scanner(scan_email, new sbuf_t(input.c_str()));
+        return getLines(outdir / "email.txt");
+    };
+
+    for (const size_t length : {63U, 64U}) {
+        const std::string email(length, 'l');
+        const auto lines = scan(email + "@example.com");
+        REQUIRE(requireFeature(lines, "0\t" + email + "@example.com"));
+    }
+    REQUIRE(scan(std::string(65, 'l') + "@example.com").empty());
+
+    const std::string local = "loc";
+    for (const size_t length : {252U, 253U}) {
+        const std::string email = local + "@" + valid_email_domain(length);
+        const auto lines = scan(email);
+        REQUIRE(requireFeature(lines, "0\t" + email));
+    }
+    REQUIRE(scan(local + "@" + valid_email_domain(254)).empty());
+}
+
+TEST_CASE("scan_email_utf16_length_limits", "[support]") {
+    const auto scan = [](const std::string &email) {
+        const auto bytes = utf16le(email + " ");
+        auto outdir = test_scanner(scan_email, new sbuf_t(pos0_t(), bytes.data(), bytes.size()));
+        return getLines(outdir / "email.txt");
+    };
+
+    const std::string local(64, 'l');
+    REQUIRE_FALSE(scan(local + "@example.com").empty());
+    REQUIRE(scan(std::string(65, 'l') + "@example.com").empty());
+    REQUIRE_FALSE(scan("loc@" + valid_email_domain(253)).empty());
+    REQUIRE(scan("loc@" + valid_email_domain(254)).empty());
+}
+
 TEST_CASE("scan_email4", "[support]") {
     std::vector<scanner_t *>scanners = {scan_email, scan_pdf };
     auto *sbufp = map_file("nps-2010-emails.100k.raw");
@@ -394,6 +453,36 @@ TEST_CASE("scan_email16", "[scanners]") {
         auto url_histogram_txt = getLines( outdir / "url_histogram.txt" );
         REQUIRE( requireFeature(url_histogram_txt,"n=1\thttp://www.hhs.gov/ocr/hipaa/consumer_rights.pdf\t(utf16=1)"));
     }
+}
+
+TEST_CASE("scan_utmp_big_endian", "[scanners]") {
+    auto outdir = test_scanner(scan_utmp, map_file("wtmp-sparc-be"));
+    const auto carved = getLines(outdir / "utmp_carved.txt");
+    REQUIRE( std::count_if(carved.begin(), carved.end(), [](const std::string &line) {
+        return line.find("\tutmp_carved/") != std::string::npos;
+    }) == 100 );
+}
+
+
+TEST_CASE("scan_email_excludes_html_quote_entity", "[scanners]") {
+    const auto has_url_feature = [](const std::vector<std::string> &lines, const std::string &feature) {
+        for (const auto &line : lines) {
+            if (has(line, "\t" + feature + "\t")) return true;
+        }
+        return false;
+    };
+
+    auto *sbufp = new sbuf_t("http://www.icra.org/ratingsv02.html&quot;");
+    auto outdir = test_scanner(scan_email, sbufp);
+    auto url_txt = getLines(outdir / "url.txt");
+    REQUIRE( requireFeature(url_txt, "0\thttp://www.icra.org/ratingsv02.html\t") );
+    REQUIRE_FALSE( has_url_feature(url_txt, "http://www.icra.org/ratingsv02.html&quot;") );
+
+    auto *host_sbufp = new sbuf_t("http://www.msn.com&quot;");
+    auto host_outdir = test_scanner(scan_email, host_sbufp);
+    auto host_url_txt = getLines(host_outdir / "url.txt");
+    REQUIRE( requireFeature(host_url_txt, "0\thttp://www.msn.com\t") );
+    REQUIRE_FALSE( has_url_feature(host_url_txt, "http://www.msn.com&quot;") );
 }
 
 TEST_CASE("scan_exif0", "[scanners]") {
@@ -1087,7 +1176,7 @@ TEST_CASE("scan_zip", "[scanners]") {
     auto *sbufp = map_file( "testfilex.docx" );
     auto outdir = test_scanners( scanners, sbufp); // deletes sbuf2
     auto email_txt = getLines( outdir / "email.txt" );
-    REQUIRE( std::filesystem::exists( outdir / "zip/000/testfilex.docx____-0-ZIP-0__Content_Types_.xml") == true);
+    REQUIRE( std::filesystem::exists( outdir / "zip_carved/000/testfilex.docx____-0-ZIP-0__Content_Types_.xml") == true);
     REQUIRE( requireFeature(email_txt,"1771-ZIP-402\tuser_docx@microsoftword.com"));
     REQUIRE( requireFeature(email_txt,"2396-ZIP-1012\tuser_docx@microsoftword.com"));
 }

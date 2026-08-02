@@ -94,11 +94,14 @@ jobs:
           if-no-files-found: error
 
   windows-unicode:
-    name: Windows Unicode filename test
+    name: Windows runtime tests
     needs: mingw
     runs-on: windows-latest
 
     steps:
+      - name: Checkout test fixtures
+        uses: actions/checkout@v5
+
       - name: Download Windows executable
         uses: actions/download-artifact@v8
         with:
@@ -131,3 +134,76 @@ jobs:
                 -SimpleMatch "unicode-path@example.com" -Quiet)) {
             throw "bulk_extractor did not scan the Unicode-named file"
           }
+
+      - name: Scan the IP fixture
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          & "$PWD\dist\bulk_extractor64.exe" -0q -J -G 65536 `
+            -o net-output "$PWD\src\tests\ntlm1.pcap"
+          if ($LASTEXITCODE -ne 0) {
+            throw "bulk_extractor exited with status $LASTEXITCODE"
+          }
+          $ipFile = "net-output\ip.txt"
+          if (-not (Test-Path $ipFile)) {
+            throw "bulk_extractor did not create ip.txt"
+          }
+          if (-not (Select-String -Path $ipFile -Pattern '(^|\s)192\.168\.0\.91(\s|$)' -Quiet)) {
+            throw "bulk_extractor did not report the fixture's IPv4 address"
+          }
+
+      - name: Scan an attached FAT32 volume as a raw device
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $vhd = Join-Path $PWD "raw-device-test.vhd"
+          $diskpart = Join-Path $PWD "raw-device-test.diskpart"
+          @"
+          create vdisk file="$vhd" maximum=64 type=expandable
+          select vdisk file="$vhd"
+          attach vdisk
+          create partition primary
+          format fs=fat32 quick label=BERAWDEV
+          assign
+          exit
+          "@ | Set-Content -Path $diskpart -NoNewline
+
+          try {
+            & diskpart /s $diskpart
+            if ($LASTEXITCODE -ne 0) {
+              throw "diskpart failed to create the FAT32 test volume"
+            }
+            $volume = Get-DiskImage -ImagePath $vhd | Get-Disk | Get-Partition | Get-Volume
+            if ($null -eq $volume.DriveLetter) {
+              throw "Windows did not assign a drive letter to the FAT32 test volume"
+            }
+            $drive = "$($volume.DriveLetter):"
+            Copy-Item "$PWD\src\tests\1mb_fat32.dmg" "$drive\1mb_fat32.dmg"
+            [IO.File]::WriteAllText("$drive\raw-device.txt", "raw-device@example.com`n",
+              [Text.UTF8Encoding]::new($false))
+
+            & "$PWD\dist\bulk_extractor64.exe" -0q -G 65536 -o raw-device-output $drive
+            if ($LASTEXITCODE -ne 0) {
+              throw "bulk_extractor could not scan the attached raw device"
+            }
+            if (-not (Select-String -Path raw-device-output\email.txt `
+                  -SimpleMatch "raw-device@example.com" -Quiet)) {
+              throw "bulk_extractor did not read the mounted FAT32 raw device"
+            }
+
+            $help = & "$PWD\dist\bulk_extractor64.exe" -h 2>&1 | Out-String
+            if ($help -notmatch "PhysicalDriveN" -or $help -notmatch "Volume\{GUID\}") {
+              throw "bulk_extractor help does not list Windows raw-device forms"
+            }
+
+            $rootOutput = & "$PWD\dist\bulk_extractor64.exe" -0q -o raw-device-root-output "$drive\" 2>&1 | Out-String
+            if ($LASTEXITCODE -ne 7 -or $rootOutput -notmatch "specify the scan type explicitly") {
+              throw "bulk_extractor did not reject an ambiguous drive root"
+            }
+          } finally {
+            if (Test-Path $vhd) {
+              Dismount-DiskImage -ImagePath $vhd -ErrorAction SilentlyContinue
+            }
+          }
+          # The assertions above deliberately exercise nonzero exit codes.
+          exit 0

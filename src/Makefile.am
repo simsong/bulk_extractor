@@ -7,6 +7,7 @@ include be20_api/dfxml_cpp/src/Makefile.defs
 # $(BE20_API_EXTRA_DIST)
 EXTRA_DIST = .gitignore scan_headers.flex scan_httpheader_lg.cpp $(AUTO_EXTRA_DIST) $(AUTO_TESTS_DIST) \
 	$(BE20_API_EXTRA_DIST) \
+	third_party/spdlog \
 	be20_api/tests/unilang.htm \
 	be20_api/tests/unilang8.htm
 
@@ -14,10 +15,10 @@ ETAGS = etags-emacs
 ACLOCAL_AMFLAGS = -I m4
 
 # So that relative imports from be20_api work
-AM_CPPFLAGS = @RE2_CFLAGS@ -I$(top_srcdir)/src/be20_api -I$(top_srcdir)/src/be20_api/utfcpp/source
+AM_CPPFLAGS = @RE2_CFLAGS@ -I$(top_srcdir)/src/be20_api -I$(top_srcdir)/src/be20_api/utfcpp/source -isystem $(top_srcdir)/src/third_party/spdlog
 
 noinst_LIBRARIES = libbe20.a
-libbe20_a_SOURCES = $(BE20_API_SRC) $(DFXML_READER) $(DFXML_WRITER)
+libbe20_a_SOURCES = $(BE20_API_SRC) $(DFXML_READER) $(DFXML_WRITER) bulk_extractor_logging.cpp bulk_extractor_logging.h
 
 check_LTLIBRARIES = scan_test_plugin.la
 scan_test_plugin_la_SOURCES = test_plugin.cpp
@@ -25,7 +26,7 @@ scan_test_plugin_la_LDFLAGS = -module -avoid-version -rpath $(abs_builddir)/.lib
 
 bulk_extractor_LDADD = libbe20.a @RE2_LIBS@
 test_be_LDADD = libbe20.a @RE2_LIBS@
-test_be_CPPFLAGS = $(AM_CPPFLAGS) -DTEST_PLUGIN_DIR=\"$(abs_builddir)/.libs\"
+test_be_CPPFLAGS = $(AM_CPPFLAGS) -DTEST_PLUGIN_DIR=\"$(abs_builddir)/.libs\" -DTEST_RAR_UNPACK -DTEST_TOP_SRCDIR=\"$(abs_top_srcdir)\"
 test_be20_api_LDADD = libbe20.a @RE2_LIBS@
 test_pcap_fake_CPPFLAGS = $(AM_CPPFLAGS) -DPCAP_FAKE_TEST
 
@@ -77,7 +78,6 @@ lightgrep_scanners = \
 	pattern_scanner_utils.cpp pattern_scanner_utils.h \
 	scan_lightgrep.cpp \
 	scan_accts_lg.cpp \
-	scan_base16_lg.cpp \
 	scan_email_lg.cpp \
 	scan_gps_lg.cpp
 
@@ -191,7 +191,7 @@ runs.txt: test_be tests/run_each.sh
 #
 
 SUFFIXES = .flex
-FLEX_CXXFLAGS=-Wno-shadow -Wno-effc++ -Wno-redundant-decls -Wno-missing-noreturn
+FLEX_CXXFLAGS=-Wno-shadow -Wno-effc++ -Wno-redundant-decls -Wno-missing-noreturn -Wno-misleading-indentation
 .flex.o:
 	@echo "  FLEX-CXX" $@
 	@$(LEX) -R -t $<  | sed "s/register //" > `basename $@ .o`.cpp

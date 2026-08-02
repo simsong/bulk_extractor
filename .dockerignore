@@ -1,7 +1,10 @@
 .git
+.github
+.libs
 autom4te.cache
 build-aux
 config.h
+config.log
 config.status
 configure
 Makefile
@@ -13,8 +16,13 @@ specfiles/bulk_extractor.fedora.spec
 specfiles/bulk_extractor.opensuse.spec
 specfiles/bulk_extractor.spec.m4
 src/.libs
+src/.deps
 src/Makefile
+src/*.o
+src/bulk_extractor
+src/test_*
 src/tests/Makefile
 tests/Makefile
 bulk_extractor-*
 release-artifacts
+win64

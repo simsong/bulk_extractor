@@ -13,7 +13,7 @@
  **/
 
 pcap_writer::pcap_writer(const scanner_params &sp):
-    outdir(sp.sc.outdir)
+    outdir(sp.sc.outdir), streams()
 {
 }
 

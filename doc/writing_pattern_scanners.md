@@ -5,7 +5,7 @@ Writing New Pattern Scanners
 
 This guide is for C++ developers who wish to develop new bulk_extractor scanners that use one or more regular expression patterns to search for potentially relevant data and then invoke custom procedures to handle the identified data.
 
-bulk_extractor links with the [Lightgrep search library](https://github.com/LightboxTech/liblightgrep) to provide for multi-pattern, multi-encoding searches, and it powers the [Accts](../src/scan_accts_lg.cpp), [Base16](../src/scan_base16_lg.cpp), [Email](../src/scan_email_lg.cpp), and [GPS](../src/scan_gps_lg.cpp) scanners in addition to searching for user-specified patterns. Lightgrep aggregates all of the search patterns and conducts the search over a single pass of the data, and then dispatches to registered handlers when there are matches on any of the patterns.
+bulk_extractor links with the [Lightgrep search library](https://github.com/LightboxTech/liblightgrep) to provide for multi-pattern, multi-encoding searches, and it powers the [Accts](../src/scan_accts_lg.cpp), [Email](../src/scan_email_lg.cpp), and [GPS](../src/scan_gps_lg.cpp) scanners in addition to searching for user-specified patterns. Lightgrep aggregates all of the search patterns and conducts the search over a single pass of the data, and then dispatches to registered handlers when there are matches on any of the patterns.
 
 There are three classes that work together to provide this functionality: LightgrepController, PatternScanner, and Handler. All three are declared in [pattern_scanner.h](../src/pattern_scanner.h).
 
@@ -99,7 +99,6 @@ Once you've created your custom PatternScanner as above, you must register the s
     ...
     #ifdef HAVE_LIBLIGHTGREP
     extern "C" scanner_t scan_accts_lg;
-    extern "C" scanner_t scan_base16_lg;
     extern "C" scanner_t scan_email_lg;
     extern "C" scanner_t scan_gps_lg;
 
@@ -115,7 +114,6 @@ And then add a pointer to your scan function to the `scanners_builtin` array in 
     scanner_t *scanners_builtin[] = {
     #ifdef HAVE_LIBLIGHTGREP
         scan_accts_lg,
-        scan_base16_lg,
         scan_email_lg,
         scan_gps_lg,
 

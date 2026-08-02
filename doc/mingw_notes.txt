@@ -20,3 +20,32 @@ name. The artifact intentionally omits libewf, so E01 support is unavailable.
 It is a CI artifact, not a signed installer or a release promise. Change this
 workflow when changing the Windows build; keep its import check and the Windows
 execution test in the same pull request.
+
+Raw-device input
+================
+
+The Windows executable accepts these raw-device input forms:
+
+* `C:` as a shorthand for `\\.\C:`;
+* `\\.\PhysicalDriveN` for a physical disk;
+* `\\.\X:` for a drive-letter volume; and
+* `\\?\Volume{GUID}` for a named volume (omit the trailing backslash).
+
+Run it from an elevated command prompt. bulk_extractor opens the device
+read-only with shared read/write access. It does not lock, mount, modify, or
+write the device. The reader uses `CreateFileW`, asks
+`IOCTL_DISK_GET_LENGTH_INFO` for the exact length, and uses offset-based
+`ReadFile` calls; it does not use `std::filesystem::file_size` or geometry
+multiplication for a raw device.
+
+A volume is not interchangeable with its physical disk: it can have distinct
+boundaries or span disks. Windows may require `FSCTL_ALLOW_EXTENDED_DASD_IO` to
+read the final sectors of a volume. bulk_extractor does not issue that control
+code, so a short read at that boundary is reported rather than bypassed.
+
+The Windows Actions job creates a disposable FAT32 VHD, attaches it, and scans
+its assigned drive letter as a raw device. It contains the checked-in FAT32
+fixture and a known email address, so the job proves both device reading and
+feature extraction. Before a release, also validate physical-drive and
+volume-GUID forms on an elevated Windows system using disposable media of
+known size and known bytes near both ends.

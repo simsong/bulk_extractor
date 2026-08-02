@@ -15,7 +15,6 @@
 #define BE_PHASE_2 2 // cleaning up
 #define BE_PHASE_3 3 // shutdown
 
-[[noreturn]] void debug_help();
 void validate_path(const std::filesystem::path fn);
 void bulk_extractor_set_debug();
 extern bool RUNNING_UNDER_CATCH;

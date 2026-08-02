@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">bulk_extractor icon</title>
+  <desc id="desc">Three parallel scan paths converge on extracted evidence at the left.</desc>
+  <rect width="512" height="512" rx="112" fill="#10223c"/>
+  <g fill="none" stroke="#9fe7f4" stroke-linejoin="miter" stroke-width="52">
+    <path d="M432 112H278L144 246"/>
+    <path d="M432 256H144"/>
+    <path d="M432 400H278L144 266"/>
+  </g>
+  <path fill="#f2b84b" d="m59 224 32 32-32 32-32-32z"/>
+</svg>

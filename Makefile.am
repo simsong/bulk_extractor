@@ -30,6 +30,8 @@ EXTRA_DIST = $(SRC_WIN_DIST) $(AUTO_DOC_FILES) $(AUTO_ETC_FILES) $(AUTO_LICENSES
 	$(srcdir)/CODING_STANDARDS.md \
 	$(srcdir)/LICENSE.md \
 	$(srcdir)/README.md \
+	$(srcdir)/Dockerfile \
+	$(srcdir)/.dockerignore \
 	$(srcdir)/dfxml_schema/LICENSE.md \
 	$(srcdir)/dfxml_schema/README.md \
 	$(srcdir)/dfxml_schema/VENDORED.md \

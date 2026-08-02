@@ -89,6 +89,8 @@ STEP FIVE: CAPTURE A TRACE
 
 bulk_extractor is multi-threaded, which means that multiple threads of execution run at the same time within the program. In standard use bulk_extractor creates one thread to read all of the pages from the disk. Between 1 and NN threads are then created to process the pages. Pages are not processed roughly in order, although different different pages take different amounts of time to process, so it is likely that some pages will start processing before other pages finish.
 
-You can have bulk_extractor print every time it starts and exits a scanner with the "-d1" option. It's not clear that this will actually help you debug the problem you encounter, but it might.
+Use -d to enable debug-level diagnostic logging. The log is written to
+<outdir>/bulk_extractor.log by default; use --log-file PATH to select a
+different location. Scanner selection is independent of logging: use -x all
+followed by -e NAME to run only selected scanners.
 
- 

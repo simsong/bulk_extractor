@@ -8,7 +8,14 @@ mkdir -p build-aux
 python3 etc/makefile_builder.py
 
 # Regenerate a consistent Autotools set with the installed tool versions.
+# autoreconf force-installs Automake's generic INSTALL template; retain the
+# project-specific installation guide that is maintained in the repository.
+install_backup=$(mktemp ./INSTALL.XXXXXX)
+cp -p INSTALL "$install_backup"
+trap 'rm -f "$install_backup"' EXIT HUP INT TERM
 autoreconf --force --install
+mv -f "$install_backup" INSTALL
+trap - EXIT HUP INT TERM
 
 # We were very excited about AddressSanitizer.
 # This is how to enable it...

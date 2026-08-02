@@ -14,14 +14,19 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <filesystem>
 #include <cstdio>
+#include <cstdlib>
 #include <stdexcept>
 #ifdef HAVE_SYS_RESOURCE_H
 #include <sys/resource.h>
 #endif
 #ifdef HAVE_SIGNAL_H
 #include <signal.h>
+#endif
+#ifndef _WIN32
+#include <sys/wait.h>
 #endif
 #include <unistd.h>
 #include <string>
@@ -39,6 +44,7 @@
 #include "test_be.h"
 
 #include "bulk_extractor.h"
+#include "bulk_extractor_logging.h"
 #include "base64_forensic.h"
 #include "bulk_extractor_restarter.h"
 #include "bulk_extractor_scanners.h"
@@ -98,6 +104,150 @@ int run_be(std::ostream &ss, const char **argv)
     return run_be(ss, ss, argv);
 }
 
+TEST_CASE("diagnostic log level precedence", "[logging]")
+{
+    using bulk_extractor::logging::level;
+    using bulk_extractor::logging::resolve_level;
+    REQUIRE(resolve_level(std::nullopt, nullptr, false) == level::info);
+    REQUIRE(resolve_level(std::nullopt, nullptr, true) == level::debug);
+    REQUIRE(resolve_level(std::nullopt, "warning", true) == level::warning);
+    REQUIRE(resolve_level(std::string("error"), "warning", true) == level::error);
+    REQUIRE(resolve_level(std::string("TRACE"), nullptr, false) == level::trace);
+    REQUIRE_THROWS_AS(resolve_level(std::string("verbose"), nullptr, false), std::invalid_argument);
+}
+
+TEST_CASE("diagnostic log paths and records", "[logging]")
+{
+    using bulk_extractor::logging::initialize;
+    using bulk_extractor::logging::level;
+    using bulk_extractor::logging::shutdown;
+    using bulk_extractor::logging::write;
+
+    const auto root = NamedTemporaryDirectory();
+    const auto default_path = root / "bulk_extractor.log";
+    initialize(root, std::nullopt, level::info);
+    write(level::warning, "test", "default diagnostic record");
+    shutdown();
+    REQUIRE(std::filesystem::exists(default_path));
+    const auto default_lines = getLines(default_path);
+    REQUIRE(requireFeature(default_lines, "default diagnostic record"));
+
+    const auto explicit_path = root / "diagnostics.txt";
+    initialize(root, explicit_path, level::debug);
+    write(level::debug, "test", "explicit diagnostic record");
+    shutdown();
+    REQUIRE(std::filesystem::exists(explicit_path));
+    const auto explicit_lines = getLines(explicit_path);
+    REQUIRE(requireFeature(explicit_lines, "[test] explicit diagnostic record"));
+
+    const auto non_directory = root / "not-a-directory";
+    std::ofstream(non_directory) << "file";
+    REQUIRE_THROWS_AS(initialize(root, non_directory / "diagnostics.log", level::info),
+                      std::runtime_error);
+}
+
+TEST_CASE("diagnostic command-line configuration", "[logging]")
+{
+    const auto root = NamedTemporaryDirectory();
+    const auto input = root / "input.raw";
+    const auto outdir = root / "output";
+    const auto log_path = root / "explicit.log";
+    std::ofstream(input) << "logging@example.com\n";
+
+    const std::string input_string = input.string();
+    const std::string outdir_string = outdir.string();
+    const std::string log_path_string = log_path.string();
+    const char *argv[] = {
+        "bulk_extractor", "-0q", "-J", "-x", "all", "-e", "email",
+        "-d", "--log-file", log_path_string.c_str(),
+        "-o", outdir_string.c_str(), input_string.c_str(), nullptr
+    };
+    std::stringstream output;
+    REQUIRE(run_be(output, argv) == 0);
+    REQUIRE(std::filesystem::exists(log_path));
+    REQUIRE(requireFeature(getLines(log_path), "diagnostic logging initialized"));
+    REQUIRE(requireFeature(getLines(log_path), "diagnostic level is debug"));
+}
+
+static std::string shell_quote(std::string_view value)
+{
+    std::string quoted{"'"};
+    for (const char c : value) {
+        if (c == '\'') {
+            quoted += "'\\''";
+        } else {
+            quoted += c;
+        }
+    }
+    return quoted + "'";
+}
+
+TEST_CASE("report DFXML validates against the bundled schema", "[end-to-end]")
+{
+    if (std::system("command -v xmllint >/dev/null 2>&1") != 0) {
+        return;
+    }
+
+    const auto root = NamedTemporaryDirectory();
+    const auto input = root / "input.raw";
+    const auto outdir = root / "output";
+    std::ofstream(input) << "schema@example.com\n";
+
+    const std::string input_string = input.string();
+    const std::string outdir_string = outdir.string();
+    const char *argv[] = {
+        "bulk_extractor", "-0q", "-x", "all", "-e", "email",
+        "-o", outdir_string.c_str(), input_string.c_str(), nullptr
+    };
+    std::stringstream output;
+    REQUIRE(run_be(output, argv) == 0);
+
+    const auto schema = std::filesystem::path(TEST_TOP_SRCDIR) / "dfxml_schema" / "dfxml.xsd";
+    const auto report = outdir / "report.xml";
+    const auto command = "xmllint --noout --schema " + shell_quote(schema.string()) + " "
+        + shell_quote(report.string());
+    REQUIRE(std::system(command.c_str()) == 0);
+}
+
+TEST_CASE("Windows raw-device paths are recognized narrowly", "[image_process]")
+{
+    REQUIRE(process_raw::is_windows_raw_device_path(R"(\\.\PhysicalDrive0)"));
+    REQUIRE(process_raw::is_windows_raw_device_path(R"(\\.\physicaldrive12)"));
+    REQUIRE(process_raw::is_windows_raw_device_path("C:"));
+    REQUIRE(process_raw::is_windows_raw_device_path(R"(\\.\C:)"));
+    REQUIRE(process_raw::is_windows_raw_device_path(R"(\\?\Volume{01234567-89ab-cdef-0123-456789abcdef})"));
+
+    REQUIRE_FALSE(process_raw::is_windows_raw_device_path(R"(\\.\PhysicalDrive)"));
+    REQUIRE_FALSE(process_raw::is_windows_raw_device_path(R"(\\.\PhysicalDrive0\partition1)"));
+    REQUIRE_FALSE(process_raw::is_windows_raw_device_path(R"(\\.\C:\)"));
+    REQUIRE_FALSE(process_raw::is_windows_raw_device_path(R"(\\.\COM1)"));
+    REQUIRE_FALSE(process_raw::is_windows_raw_device_path(R"(\\?\Volume{not-a-guid})"));
+    REQUIRE_FALSE(process_raw::is_windows_raw_device_path("disk.raw"));
+}
+
+TEST_CASE("e2e-email accepts current TLDs", "[end-to-end]")
+{
+    const auto root = NamedTemporaryDirectory();
+    const auto input = root / "input.raw";
+    const auto outdir = root / "output";
+    std::ofstream(input) << "modern@wordcount.solutions punycode@example.xn--p1ai "
+                            "bare.wordcount.solutions\n";
+
+    const std::string input_string = input.string();
+    const std::string outdir_string = outdir.string();
+    const char *argv[] = {
+        "bulk_extractor", "-0q", "-x", "all", "-e", "email",
+        "-o", outdir_string.c_str(), input_string.c_str(), nullptr
+    };
+    std::stringstream output;
+    REQUIRE(run_be(output, argv) == 0);
+
+    const auto email = getLines(outdir / "email.txt");
+    REQUIRE(requireFeature(email, "modern@wordcount.solutions"));
+    REQUIRE(requireFeature(email, "punycode@example.xn--p1ai"));
+    REQUIRE_FALSE(requireFeature(email, "bare.wordcount.solutions"));
+}
+
 TEST_CASE("e2e-stop-list", "[end-to-end]")
 {
     const std::string bitlocker_key =
@@ -130,6 +280,59 @@ TEST_CASE("e2e-stop-list", "[end-to-end]")
     REQUIRE(requireFeature(stopped, "stop@example.com"));
     const auto alerts = getLines(outdir / "alerts.txt");
     REQUIRE(requireFeature(alerts, bitlocker_key));
+
+    std::filesystem::remove_all(root);
+}
+
+TEST_CASE("e2e-context-sensitive-stop-list", "[end-to-end]")
+{
+    const auto root = NamedTemporaryDirectory();
+    const auto input = root / "input.raw";
+    const auto baseline_outdir = root / "baseline";
+    const auto stop_list = root / "stop-list.txt";
+    const auto outdir = root / "output";
+    std::ofstream(input) << "alpha before same@example.com alpha after\n"
+                         << std::string(256, 'x') << "\n"
+                         << "beta before same@example.com beta after\n";
+
+    const std::string input_string = input.string();
+    const std::string baseline_outdir_string = baseline_outdir.string();
+    const char *baseline_argv[] = {
+        "bulk_extractor", "-0q", "-x", "all", "-e", "email",
+        "-o", baseline_outdir_string.c_str(), input_string.c_str(), nullptr
+    };
+    std::stringstream output;
+    REQUIRE(run_be(output, baseline_argv) == 0);
+    const auto baseline = getLines(baseline_outdir / "email.txt");
+    const auto alpha = std::find_if(baseline.begin(), baseline.end(), [](const auto &line) {
+        return line.find("same@example.com") != std::string::npos
+            && line.find("alpha before") != std::string::npos;
+    });
+    REQUIRE(alpha != baseline.end());
+    REQUIRE(std::count_if(baseline.begin(), baseline.end(), [](const auto &line) {
+        return line.find("same@example.com") != std::string::npos;
+    }) == 2);
+    std::ofstream(stop_list) << *alpha << "\n";
+
+    const std::string stop_list_string = stop_list.string();
+    const std::string outdir_string = outdir.string();
+    const char *argv[] = {
+        "bulk_extractor", "-0q", "-x", "all", "-e", "email",
+        "-w", stop_list_string.c_str(),
+        "-o", outdir_string.c_str(), input_string.c_str(), nullptr
+    };
+    REQUIRE(run_be(output, argv) == 0);
+
+    const auto email = getLines(outdir / "email.txt");
+    const auto stopped = getLines(outdir / "email_stopped.txt");
+    REQUIRE(std::count_if(email.begin(), email.end(), [](const auto &line) {
+        return line.find("same@example.com") != std::string::npos;
+    }) == 1);
+    REQUIRE(requireFeature(email, "beta before"));
+    REQUIRE(std::count_if(stopped.begin(), stopped.end(), [](const auto &line) {
+        return line.find("same@example.com") != std::string::npos;
+    }) == 1);
+    REQUIRE(requireFeature(stopped, "alpha before"));
 
     std::filesystem::remove_all(root);
 }
@@ -167,6 +370,137 @@ TEST_CASE("e2e-alert-list", "[end-to-end]")
     REQUIRE(email_match != email.end());
     REQUIRE(alert_match != alerts.end());
     REQUIRE(*alert_match == *email_match);
+
+    std::filesystem::remove_all(root);
+}
+
+#ifndef _WIN32
+class scoped_environment {
+    std::string name;
+    std::optional<std::string> previous_value;
+public:
+    scoped_environment(const char *name_, const char *value) : name(name_), previous_value()
+    {
+        if (const char *previous = getenv(name.c_str())) {
+            previous_value = previous;
+        }
+        setenv(name.c_str(), value, 1);
+    }
+    ~scoped_environment()
+    {
+        if (previous_value) {
+            setenv(name.c_str(), previous_value->c_str(), 1);
+        } else {
+            unsetenv(name.c_str());
+        }
+    }
+};
+
+TEST_CASE("restart crash hook count", "[end-to-end]")
+{
+    feature_recorder_set::flags_t flags;
+    scanner_config sc;
+    {
+        scoped_environment outer("BE_TEST_CRASH_AFTER_WORK_START", "2");
+        {
+            scoped_environment inner("BE_TEST_CRASH_AFTER_WORK_START", "1");
+            REQUIRE(std::string(getenv("BE_TEST_CRASH_AFTER_WORK_START")) == "1");
+        }
+        REQUIRE(std::string(getenv("BE_TEST_CRASH_AFTER_WORK_START")) == "2");
+    }
+    {
+        scoped_environment hook("BE_TEST_CRASH_AFTER_WORK_START", "2");
+        scanner_set ss(sc, flags, nullptr);
+        REQUIRE_FALSE(ss.should_test_crash_after_work_start());
+        REQUIRE(ss.should_test_crash_after_work_start());
+        REQUIRE_FALSE(ss.should_test_crash_after_work_start());
+    }
+    {
+        scoped_environment hook("BE_TEST_CRASH_AFTER_WORK_START", "0");
+        REQUIRE_THROWS_AS(scanner_set(sc, flags, nullptr), std::invalid_argument);
+    }
+    {
+        scoped_environment hook("BE_TEST_CRASH_AFTER_WORK_START", "1");
+        scanner_set ss(sc, flags, nullptr);
+        REQUIRE(ss.should_test_crash_after_work_start());
+    }
+    for (const char *value : {"invalid", "1x"}) {
+        scoped_environment hook("BE_TEST_CRASH_AFTER_WORK_START", value);
+        REQUIRE_THROWS_AS(scanner_set(sc, flags, nullptr), std::invalid_argument);
+    }
+}
+
+TEST_CASE("e2e-restart-after-controlled-crash", "[end-to-end]")
+{
+    const auto root = NamedTemporaryDirectory();
+    const auto input = root / "input.raw";
+    const auto outdir = root / "output";
+    std::ofstream(input) << "before@example.com\n" << std::string(16384, 'x')
+                         << "\nafter@example.com\n";
+
+    const std::string input_string = input.string();
+    const std::string outdir_string = outdir.string();
+    const char *argv[] = {"bulk_extractor", "-0q", "-J", "-G", "4096", "-Eemail",
+                          "-o", outdir_string.c_str(), input_string.c_str(), nullptr};
+
+    const pid_t child = fork();
+    REQUIRE(child >= 0);
+    if (child == 0) {
+        setenv("BE_TEST_CRASH_AFTER_WORK_START", "1", 1);
+        std::stringstream output;
+        run_be(output, argv);
+        std::_Exit(99);
+    }
+
+    int status = 0;
+    REQUIRE(waitpid(child, &status, 0) == child);
+    REQUIRE(WIFEXITED(status));
+    REQUIRE(WEXITSTATUS(status) == 86);
+
+    const auto report = outdir / "report.xml";
+    REQUIRE(std::filesystem::exists(report));
+    grep("debug:work_start", report);
+    REQUIRE_FALSE(requireFeature(getLines(report), "debug:work_stop"));
+
+    std::stringstream output;
+    REQUIRE(run_be(output, argv) == 0);
+    grep("debug:work_start", report);
+    grep("debug:work_stop", report);
+    REQUIRE_FALSE(requireFeature(getLines(outdir / "email.txt"), "before@example.com"));
+    REQUIRE(requireFeature(getLines(outdir / "email.txt"), "after@example.com"));
+
+    const std::string old_report_prefix = "report.xml.";
+    REQUIRE(std::any_of(std::filesystem::directory_iterator(outdir),
+                        std::filesystem::directory_iterator(), [&](const auto &entry) {
+                            return entry.path().filename().string().rfind(old_report_prefix, 0) == 0;
+                        }));
+    std::filesystem::remove_all(root);
+}
+#endif
+
+TEST_CASE("e2e-zap-removes-nested-output", "[end-to-end]")
+{
+    const auto root = NamedTemporaryDirectory();
+    const auto input = root / "input.raw";
+    const auto outdir = root / "output";
+    const auto nested = outdir / "nested" / "deeper";
+    std::ofstream(input) << "input\n";
+    std::filesystem::create_directories(nested);
+    std::ofstream(outdir / "stale.txt") << "stale\n";
+    std::ofstream(nested / "stale.txt") << "stale\n";
+
+    const std::string input_string = input.string();
+    const std::string outdir_string = outdir.string();
+    const char *argv[] = {
+        "bulk_extractor", "-0q", "-x", "all", "-Z", "-o", outdir_string.c_str(),
+        input_string.c_str(), nullptr
+    };
+    std::stringstream output;
+    REQUIRE(run_be(output, argv) == 0);
+    REQUIRE(std::filesystem::is_directory(outdir));
+    REQUIRE_FALSE(std::filesystem::exists(outdir / "stale.txt"));
+    REQUIRE_FALSE(std::filesystem::exists(nested));
+    REQUIRE(std::filesystem::exists(outdir / "report.xml"));
 
     std::filesystem::remove_all(root);
 }
@@ -275,13 +609,33 @@ TEST_CASE("e2e-H", "[end-to-end]") {
     REQUIRE( ret==2 );                  // -H produces 2
 }
 
+TEST_CASE("retired numeric debug options report help", "[end-to-end]")
+{
+    const char *short_mask[] = {"bulk_extractor", "-d8", nullptr};
+    const char *long_mask[] = {"bulk_extractor", "--debug=1", nullptr};
+    const char *debug_help[] = {"bulk_extractor", "-D", nullptr};
+
+    for (const auto argv : {short_mask, long_mask, debug_help}) {
+        std::stringstream cout, cerr;
+        REQUIRE(run_be(cout, cerr, argv) == 1);
+        REQUIRE(cerr.str().find("have been retired") != std::string::npos);
+        REQUIRE(cerr.str().find("Usage:") != std::string::npos);
+    }
+
+    const char *invalid[] = {"bulk_extractor", "--not-a-real-option", nullptr};
+    std::stringstream cout, cerr;
+    REQUIRE(run_be(cout, cerr, invalid) == 1);
+    REQUIRE(cerr.str().find("error:") != std::string::npos);
+    REQUIRE(cerr.str().find("Usage:") != std::string::npos);
+}
+
 /* Run on the first 100k of the emails dataset
  * bulk_extractor -0q -o [outdir] nps-2010-emails.100k.raw
  * Runs twice, so that we can also test the restarting logic
  */
 TEST_CASE("e2e-0", "[end-to-end]") {
     std::filesystem::path inpath = test_dir() / "nps-2010-emails.100k.raw";
-    std::filesystem::path outdir = NamedTemporaryDirectory();
+    std::filesystem::path outdir = NamedTemporaryDirectory() / "output with spaces";
 
     /* Try to run twice. There seems to be a problem with the second time through.  */
     std::string inpath_string = inpath.string();
@@ -299,10 +653,10 @@ TEST_CASE("e2e-0", "[end-to-end]") {
     grep( "debug:work_start", xml_file);
     grep( "debug:work_stop", xml_file);
 
-    /* Validate the dfxml file is valid dfxml*/
-    std::string validate = std::string("xmllint --noout ") + xml_file;
-    int code = system( validate.c_str());
-    REQUIRE( code==0 );
+    if (system("command -v xmllint >/dev/null 2>&1") == 0) {
+        std::string validate = std::string("xmllint --noout ") + shell_quote(xml_file);
+        REQUIRE(system(validate.c_str()) == 0);
+    }
 
     // This is the second time through - clear cout and cerr first
     // https://stackoverflow.com/questions/20731/how-do-you-clear-a-stringstream-variable
@@ -378,6 +732,28 @@ TEST_CASE("select_scanners", "[end-to-end]") {
     REQUIRE( endpos != startpos + 1);
 }
 
+TEST_CASE("enable_all_scanners", "[end-to-end]") {
+    const std::filesystem::path inpath = test_dir() / "pdf_words2.pdf";
+    const std::filesystem::path outdir = NamedTemporaryDirectory();
+    const std::string inpath_string = inpath.string();
+    const std::string outdir_string = outdir.string();
+    std::stringstream ss;
+    const char *argv[] = {"bulk_extractor", "-0q", "-x", "all", "-e", "all",
+                          "-o", outdir_string.c_str(), inpath_string.c_str(), nullptr};
+    REQUIRE(run_be(ss, std::cerr, argv) == 0);
+
+    const auto lines = getLines(outdir / "report.xml");
+    const auto startpos = std::find(lines.begin(), lines.end(), "    <scanners>");
+    const auto endpos = std::find(lines.begin(), lines.end(), "    </scanners>");
+    REQUIRE(startpos != lines.end());
+    REQUIRE(endpos != lines.end());
+    REQUIRE(std::count(startpos, endpos, "      <scanner>email</scanner>") == 1);
+    REQUIRE(std::count(startpos, endpos, "      <scanner>accts</scanner>") == 1);
+    REQUIRE(std::count_if(startpos, endpos, [](const std::string& line) {
+        return line.find("<scanner>") != std::string::npos;
+    }) > 10);
+}
+
 TEST_CASE("select_disabled_scanner", "[end-to-end]") {
     std::filesystem::path inpath = test_dir() / "pdf_words2.pdf";
     std::filesystem::path outdir = NamedTemporaryDirectory();
@@ -441,6 +817,28 @@ TEST_CASE("scan_find", "[end-to-end]") {
     /* Look for "simsong" in output */
     std::cerr << "outdir: " << outdir << std::endl;
     grep( Feature(pos0_t("70-PDF-366"), "simsong", ""), outdir / "find.txt" );
+}
+
+TEST_CASE("scan_find case-sensitive option", "[end-to-end]") {
+    const auto root = NamedTemporaryDirectory();
+    const auto input = root / "input.raw";
+    std::ofstream(input) << "CaseSensitive\n" << std::string(65536, 'x');
+    const std::string input_string = input.string();
+
+    const auto default_outdir = root / "default";
+    const std::string default_outdir_string = default_outdir.string();
+    const char *default_argv[] = {"bulk_extractor", "-0q", "-f", "casesensitive",
+                                  "-o", default_outdir_string.c_str(), input_string.c_str(), nullptr};
+    std::stringstream output;
+    REQUIRE(run_be(output, default_argv) == 0);
+    REQUIRE(requireFeature(getLines(default_outdir / "find.txt"), "CaseSensitive"));
+
+    const auto sensitive_outdir = root / "sensitive";
+    const std::string sensitive_outdir_string = sensitive_outdir.string();
+    const char *sensitive_argv[] = {"bulk_extractor", "-0q", "--find-case-sensitive", "-f", "casesensitive",
+                                    "-o", sensitive_outdir_string.c_str(), input_string.c_str(), nullptr};
+    REQUIRE(run_be(output, sensitive_argv) == 0);
+    REQUIRE_FALSE(requireFeature(getLines(sensitive_outdir / "find.txt"), "CaseSensitive"));
 }
 
 /*
@@ -553,6 +951,10 @@ TEST_CASE("path-printer2", "[end-to-end]") {
 }
 
 TEST_CASE("e2e-CFReDS001", "[end-to-end]") {
+#ifndef HAVE_LIBEWF
+    SUCCEED("libewf not available; skipping E01 end-to-end test");
+    return;
+#endif
     if (getenv_debug("DEBUG_FAST")){
         std::cerr << "DEBUG_FAST set; e2e-CFReDS001" << std::endl;
         return;
@@ -566,6 +968,26 @@ TEST_CASE("e2e-CFReDS001", "[end-to-end]") {
     const char *argv[] = {"bulk_extractor",notify(), "-1qo",outdir_string.c_str(), inpath_string.c_str(), nullptr};
     int ret = run_be(ss, argv);
     REQUIRE( ret==0 );
+}
+
+// Public NPS corpus fixture: https://digitalcorpora.org/corpora/disk-images/nps-2010-emails/
+TEST_CASE("e2e-nps-2010-email-word-pdfs", "[end-to-end]") {
+#ifndef HAVE_LIBEWF
+    SUCCEED("libewf not available; skipping E01 end-to-end test");
+    return;
+#endif
+    const std::filesystem::path inpath = test_dir() / "nps-2010-emails.E01";
+    const std::filesystem::path outdir = NamedTemporaryDirectory();
+    const std::string inpath_string = inpath.string();
+    const std::string outdir_string = outdir.string();
+    std::stringstream output;
+    const char *argv[] = {"bulk_extractor", "-0q", "-x", "all", "-e", "email", "-e", "pdf",
+                          "-o", outdir_string.c_str(), inpath_string.c_str(), nullptr};
+
+    REQUIRE(run_be(output, argv) == 0);
+    const auto email = getLines(outdir / "email.txt");
+    REQUIRE(requireFeature(email, "user_doc_pdf@microsoftword.com"));
+    REQUIRE(requireFeature(email, "user_docx_pdf@microsoftword.com"));
 }
 
 TEST_CASE("e2e-jpeg", "[end-to-end]") {
@@ -595,9 +1017,28 @@ TEST_CASE("e2e-jpeg-carving-disabled", "[end-to-end]") {
     REQUIRE_FALSE( std::filesystem::exists(outdir / "jpeg_carved") );
 }
 
+TEST_CASE("e2e-jpeg-carving-respects-recorder-size-limits", "[end-to-end]") {
+    const std::filesystem::path inpath = test_dir() / "len6192.jpg";
+    const std::string inpath_string = inpath.string();
+
+    for (const char* limit : {"jpeg_min_carve_size=7000", "jpeg_max_carve_size=6000"}) {
+        const std::filesystem::path outdir = NamedTemporaryDirectory();
+        const std::string outdir_string = outdir.string();
+        std::stringstream output;
+        const char* argv[] = {"bulk_extractor", notify(), "-S", "jpeg_carve_mode=2", "-S", limit,
+                              "-1q", "-o", outdir_string.c_str(), inpath_string.c_str(), nullptr};
+        REQUIRE(run_be(output, argv) == 0);
+        REQUIRE_FALSE(std::filesystem::exists(outdir / "jpeg_carved"));
+    }
+}
+
 
 
 TEST_CASE("e2e-email_test", "[end-to-end]") {
+#ifndef HAVE_LIBEWF
+    SUCCEED("libewf not available; skipping E01 end-to-end test");
+    return;
+#endif
     if (getenv_debug("DEBUG_FAST")){
         std::cerr << "DEBUG_FAST set; skipping e2e-email_test" << std::endl;
         return;
@@ -664,8 +1105,12 @@ TEST_CASE("restarter", "[restarter]") {
     bulk_extractor_restarter r(sc, cfg);
 
     REQUIRE( std::filesystem::exists( out_xml ) == true); // because it has not been renamed yet
-    r.restart();
+    const auto restart = r.restart();
     REQUIRE( std::filesystem::exists( out_xml ) == false); // because now it has been renamed
+    REQUIRE(restart.archived_report.parent_path() == sc.outdir);
+    REQUIRE(restart.archived_report.filename().string().rfind("report.xml.", 0) == 0);
+    REQUIRE(restart.skipped_pages == cfg.seen_page_ids.size());
+    REQUIRE(restart.skipped_pages > 0);
     REQUIRE( cfg.seen_page_ids.find("369098752") != cfg.seen_page_ids.end() );
     REQUIRE( cfg.seen_page_ids.find("369098752+") == cfg.seen_page_ids.end() );
 }
@@ -706,12 +1151,14 @@ TEST_CASE("image_process", "[phase1]") {
     auto split = image_process::open(split0, false, 65536, 65536);
     REQUIRE(split->image_size() == 3);
 
+#ifdef HAVE_LIBEWF
     const std::filesystem::path e01_dir = NamedTemporaryDirectory();
     const std::filesystem::path lower_e01 = e01_dir / "CFReDS001.e01";
     std::filesystem::copy_file(test_dir() / "CFReDS001.E01", lower_e01);
     auto e01 = image_process::open(lower_e01, false, 65536, 65536);
     REQUIRE(e01 != nullptr);
     REQUIRE_THROWS_AS(image_process::open(e01_dir, true, 65536, 65536), image_process::FoundDiskImage);
+#endif
 }
 
 #if defined(__linux__)
@@ -747,8 +1194,8 @@ TEST_CASE("image_process short EWF read", "[phase1]") {
         size_t max_read;
 
     public:
-        partial_ewf_reader(std::filesystem::path image, size_t page_size, size_t margin, size_t max_read_)
-            : process_ewf(image, page_size, margin), max_read(max_read_) {}
+        partial_ewf_reader(std::filesystem::path image, size_t page_size, size_t margin_, size_t max_read_)
+            : process_ewf(image, page_size, margin_), max_read(max_read_) {}
 
         ssize_t pread(void *buf, size_t bytes, uint64_t offset) const override {
             if (max_read == 0) return 0;

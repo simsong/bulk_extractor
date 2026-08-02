@@ -19,6 +19,7 @@
 #include "catch.hpp"
 
 #include <algorithm>
+#include <atomic>
 #include <array>
 #include <chrono>
 #include <thread>
@@ -998,6 +999,12 @@ TEST_CASE("test regex_vector", "[regex]") {
     REQUIRE(regex_vector::has_metachars("this[1234].*foo") == true);
     REQUIRE(regex_vector::has_metachars("this1234foo") == false);
 
+    regex_vector case_sensitive(true);
+    case_sensitive.push_back("CaseSensitive");
+    std::string found;
+    REQUIRE_FALSE(case_sensitive.search_all("casesensitive", &found));
+    REQUIRE(case_sensitive.search_all("CaseSensitive", &found));
+
     for(int pass=0;pass<1;pass++){
         if (pass==0) {
             strncpy(disable,"RE_ENGINE=RE2",sizeof(disable));
@@ -1020,13 +1027,13 @@ TEST_CASE("test regex_vector", "[regex]") {
 
         REQUIRE(rv.size() == 3);
 
-        std::string found;
-        REQUIRE(rv.search_all("hello1", &found) == false);
-        REQUIRE(rv.search_all("check1", &found) == true);
-        REQUIRE(found == "check1");
+        std::string match;
+        REQUIRE(rv.search_all("hello1", &match) == false);
+        REQUIRE(rv.search_all("check1", &match) == true);
+        REQUIRE(match == "check1");
 
-        REQUIRE(rv.search_all("before check2 after", &found) == true);
-        REQUIRE(found == "check2");
+        REQUIRE(rv.search_all("before check2 after", &match) == true);
+        REQUIRE(match == "check2");
 
         rv.clear();
         rv.push_back("[a-z]*@company.com");
@@ -1039,7 +1046,7 @@ TEST_CASE("test regex_vector", "[regex]") {
         std::string bigstring = std::string(bytes,'a')
             + " user@company.com "
             + std::string(1024*1024*2,'b');
-        found="";
+        match="";
         size_t offset = 0;
         size_t len = 0;
         aftimer t;
@@ -1049,13 +1056,13 @@ TEST_CASE("test regex_vector", "[regex]") {
             std::cerr << "Timeout hit!" << std::endl;
             REQUIRE(false);  // Tell catch that we failed.
         }).detach();
-        REQUIRE(rv.search_all(bigstring, &found, &offset, &len) == true);
+        REQUIRE(rv.search_all(bigstring, &match, &offset, &len) == true);
 #ifndef _WIN32
 alarm(0);
 #endif
         t.stop();
         std::cout << "time=" << t.elapsed_seconds() << "\n";
-        REQUIRE(found == "user@company.com");
+        REQUIRE(match == "user@company.com");
         REQUIRE(offset == bytes+1);
         REQUIRE(len == 16 );
     }
@@ -1289,6 +1296,15 @@ TEST_CASE("scanner_config", "[scanner]") {
     sc.push_scanner_command("scanner1", scanner_config::scanner_command::ENABLE);
     sc.push_scanner_command("scanner2", scanner_config::scanner_command::DISABLE);
     REQUIRE(sc.get_scanner_commands().size() == 2);
+
+    sc.add_find_pattern("first-pattern");
+    sc.add_find_path("first-patterns.txt");
+    scanner_config other;
+    other.add_find_pattern("second-pattern");
+    REQUIRE(sc.find_patterns() == std::vector<std::string>{"first-pattern"});
+    REQUIRE(sc.find_files() == std::vector<std::filesystem::path>{"first-patterns.txt"});
+    REQUIRE(other.find_patterns() == std::vector<std::string>{"second-pattern"});
+    REQUIRE(other.find_files().empty());
 }
 
 /****************************************************************
@@ -1311,6 +1327,30 @@ TEST_CASE("scanner", "[scanner]") {
 #include "scan_sha1_test.h"
 #include "scanner_set.h"
 #include "machine_stats.h"
+
+namespace {
+std::atomic<uint64_t> duplicate_bypass_scans {0};
+std::atomic<uint64_t> duplicate_opt_in_scans {0};
+
+void scan_duplicate_bypass_test(scanner_params& sp) {
+    if (sp.phase == scanner_params::PHASE_INIT) {
+        sp.info->set_name("duplicate_bypass_test");
+        sp.info->min_sbuf_size = 1;
+    } else if (sp.phase == scanner_params::PHASE_SCAN) {
+        duplicate_bypass_scans++;
+    }
+}
+
+void scan_duplicate_opt_in_test(scanner_params& sp) {
+    if (sp.phase == scanner_params::PHASE_INIT) {
+        sp.info->set_name("duplicate_opt_in_test");
+        sp.info->min_sbuf_size = 1;
+        sp.info->scanner_flags.scan_seen_before = true;
+    } else if (sp.phase == scanner_params::PHASE_SCAN) {
+        duplicate_opt_in_scans++;
+    }
+}
+}
 
 #ifdef _WIN32
 TEST_CASE("machine_stats", "[!mayfail][machine_stats]") {
@@ -1354,18 +1394,50 @@ TEST_CASE("previously_processed", "[scanner_set]") {
     REQUIRE(ss.previously_processed_count(slg) == 2);
 }
 
-#if 0
-TEST_CASE("mt_previously_processed", "[scanner_set]") {
+TEST_CASE("duplicate sbufs bypass scanner fan-out unless requested", "[scanner_set]") {
     scanner_config sc;
-    feature_recorder_set::flags_t f;
-    scanner_set ss(sc, f, nullptr);
-    sbuf_t slg("Simson");
-    ss.info();
-    REQUIRE(ss.previously_processed_count(slg) == 0);
-    REQUIRE(ss.previously_processed_count(slg) == 1);
-    REQUIRE(ss.previously_processed_count(slg) == 2);
+    sc.outdir = get_tempdir();
+    sc.enable_all_scanners();
+    const auto dfxml_file = get_tempdir() / "duplicate_bypass.xml";
+    dfxml_writer writer(dfxml_file, false);
+    duplicate_bypass_scans = 0;
+    scanner_set ss(sc, feature_recorder_set::flags_t(), &writer);
+    ss.debug_flags.debug_benchmark = true;
+    ss.add_scanner(scan_duplicate_bypass_test);
+    ss.apply_scanner_commands();
+    ss.phase_scan();
+    ss.schedule_sbuf(sbuf_t::sbuf_malloc(pos0_t("a&b"), "duplicate"));
+    ss.schedule_sbuf(sbuf_t::sbuf_malloc(pos0_t("a&b"), "duplicate"));
+    REQUIRE(duplicate_bypass_scans == 1);
+    REQUIRE(ss.get_dup_bytes_encountered() == 9);
+    REQUIRE(ss.get_duplicate_sbufs_bypassed() == 1);
+    ss.shutdown();
+    writer.close();
+    const auto lines = getLines(dfxml_file);
+    REQUIRE(std::any_of(lines.begin(), lines.end(),
+                        [](const auto& line) { return line.find("sbuf='a&amp;b-0'") != std::string::npos; }));
 }
-#endif
+
+TEST_CASE("duplicate sbufs reach scanners that opt in", "[scanner_set]") {
+    scanner_config sc;
+    sc.outdir = get_tempdir();
+    sc.enable_all_scanners();
+    duplicate_bypass_scans = 0;
+    duplicate_opt_in_scans = 0;
+    scanner_set ss(sc, feature_recorder_set::flags_t(), nullptr);
+    ss.add_scanner(scan_duplicate_bypass_test);
+    ss.add_scanner(scan_duplicate_opt_in_test);
+    ss.apply_scanner_commands();
+    ss.phase_scan();
+    ss.schedule_sbuf(new sbuf_t("duplicate"));
+    ss.schedule_sbuf(new sbuf_t("duplicate"));
+    REQUIRE(duplicate_bypass_scans == 1);
+    REQUIRE(duplicate_opt_in_scans == 2);
+    REQUIRE(ss.get_duplicate_sbufs_bypassed() == 0);
+    ss.shutdown();
+}
+
+
 
 TEST_CASE("enable/disable", "[scanner_set]") {
     scanner_config sc;
