@@ -218,6 +218,8 @@ through the project's normal pull-request and CI process.
   [PR #557](https://github.com/simsong/bulk_extractor/pull/557)).
 - Removed the unmaintained standalone HTML overview; the current LaTeX guide
   and published documentation site are the supported user documentation.
+- Removed the unmaintained version-1 performance notebook with obsolete
+  benchmarks, platforms, and SQL tuning guidance.
 - Documented a controlled release procedure and release-issue template, with
   isolated artifact assembly, macOS and container `distcheck` gates, and
   source-level downstream submission paths for Debian/Kali and
