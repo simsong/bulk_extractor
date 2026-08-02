@@ -501,9 +501,22 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
 
         /* The zap option wipes the contents of a directory, useful for debugging */
         if ( result.count( "zap" ) && std::filesystem::is_directory( sc.outdir )) {
-            for (const auto &entry : std::filesystem::directory_iterator(sc.outdir)) {
-                cout << "erasing " << entry.path().string() << std::endl;
-                std::filesystem::remove_all(entry.path());
+            std::error_code error;
+            std::vector<std::filesystem::path> entries;
+            for (std::filesystem::directory_iterator it(sc.outdir, error), end; it != end; it.increment(error)) {
+                if (error) {
+                    cerr << "error reading " << sc.outdir << ": " << error.message() << std::endl;
+                    return 7;
+                }
+                entries.push_back(it->path());
+            }
+            for (const auto &entry : entries) {
+                cout << "erasing " << entry.string() << std::endl;
+                std::filesystem::remove_all(entry, error);
+                if (error) {
+                    cerr << "error erasing " << entry << ": " << error.message() << std::endl;
+                    return 7;
+                }
             }
         }
 	if (std::filesystem::exists( sc.outdir ) == false ){
@@ -746,6 +759,13 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         ss.shutdown();
     }
     catch ( const feature_recorder::DiskWriteError &e ) {
+        try {
+            xreport->pop("report");
+            xreport->pop("dfxml");
+            xreport->close();
+        }
+        catch (const std::exception &) {
+        }
         cerr << "Disk write error during Phase 2 ( histogram making). Disk is probably full." << std::endl
                   << "Remove extra files and restart bulk_extractor with the exact same command line to continue." << std::endl;
         return 7;
@@ -794,7 +814,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         }
         cout << std::endl;
         cout << "Time producer spent waiting for scanners to process data:        "
-             << ss.producer_timer().elapsed_text()
+             << ss.producer_wait_text()
              << " (" << ns_to_sec(ss.producer_wait_ns()) << " seconds)"
              << std::endl;
         cout << "Time consumer scanners spent waiting for data from producer:     "

@@ -168,6 +168,8 @@ through the project's normal pull-request and CI process.
   unprivileged environment for scanning regular image files. It documents its
   libewf and Lightgrep limitations and supplements native platform CI rather
   than replacing it ([#159](https://github.com/simsong/bulk_extractor/issues/159)).
+- Builds now enable basic compiler stack-canary protection (`-fstack-protector`)
+  when both selected C and C++ compilers support it ([#376](https://github.com/simsong/bulk_extractor/issues/376)).
 - AddressSanitizer now runs on every pull request while redundant workflow
   execution has been reduced
   ([PR #514](https://github.com/simsong/bulk_extractor/pull/514)).

@@ -5,6 +5,13 @@ on:
     branches: [main]
   pull_request:
     types: [opened, reopened, synchronize, ready_for_review]
+    paths-ignore:
+      - '**.md'
+      - 'AGENTS.md'
+      - 'doc/**'
+      - '.github/CODEOWNERS'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/pull_request_template.md'
   workflow_dispatch:
 
 permissions:
