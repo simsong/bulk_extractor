@@ -24,6 +24,7 @@ EXTRA_DIST = $(SRC_WIN_DIST) $(AUTO_DOC_FILES) $(AUTO_ETC_FILES) $(AUTO_LICENSES
 	$(srcdir)/.dockerignore \
 	$(srcdir)/etc/Dockerfile.fedora-distcheck \
 	$(srcdir)/etc/Dockerfile.ubuntu-distcheck \
+	$(srcdir)/scripts/release.sh \
 	$(srcdir)/AGENTS.md \
 	$(srcdir)/.gitignore \
 	$(srcdir)/CODING_STANDARDS.md \
@@ -90,25 +91,14 @@ libinstall:
 	install -D python/module/bulkextractor.py $(prefix)/lib/python2.7/dist-packages/bulkextractor.py
 	if [ -r /sbin/ldconfig ]; /sbin/ldconfig -v ; fi
 
-# Release assembly is deliberately fail-closed. Artifact producers are
-# independently validated release jobs; this target stages their outputs and
-# the source distribution only when each required input is present.
+# Release orchestration is deliberately fail-closed and isolated from the
+# active checkout. See scripts/release.sh and doc/RELEASE_PROCEDURE.md.
 RELEASE_ARTIFACT_DIR ?= $(abs_builddir)/release-artifacts
+RELEASE_SCRIPT = $(abs_srcdir)/scripts/release.sh
 
-.PHONY: release release-source release-linux-distcheck release-windows release-deb release-rpm release-aws-result release-checksums
+.PHONY: release
 release:
-	$(MAKE) release-source
-	$(MAKE) release-linux-distcheck
-	$(MAKE) release-windows
-	$(MAKE) release-deb
-	$(MAKE) release-rpm
-	$(MAKE) release-aws-result
-	$(MAKE) release-checksums
-
-release-source:
-	$(MAKE) distcheck
-	mkdir -p $(RELEASE_ARTIFACT_DIR)
-	cp $(PACKAGE)-$(VERSION).tar.gz $(RELEASE_ARTIFACT_DIR)/
+	RELEASE_ARTIFACT_DIR="$(RELEASE_ARTIFACT_DIR)" RELEASE_SOURCE_DIR="$(abs_srcdir)" "$(RELEASE_SCRIPT)"
 
 # Each Finch build copies a clean source context and runs the real distcheck
 # inside it. Finch selects native arm64 and emulated amd64 on Apple Silicon.
@@ -129,30 +119,3 @@ distcheck-fedora-container:
 	done
 
 distcheck-containers: distcheck-ubuntu-container distcheck-fedora-container
-
-release-linux-distcheck:
-	$(MAKE) distcheck-containers
-
-release-windows:
-	test -n "$(RELEASE_WINDOWS_EXE)" && test -s "$(RELEASE_WINDOWS_EXE)"
-	mkdir -p $(RELEASE_ARTIFACT_DIR)
-	cp "$(RELEASE_WINDOWS_EXE)" $(RELEASE_ARTIFACT_DIR)/bulk_extractor64.exe
-
-release-deb:
-	test -n "$(RELEASE_DEB)" && test -s "$(RELEASE_DEB)"
-	mkdir -p $(RELEASE_ARTIFACT_DIR)
-	cp "$(RELEASE_DEB)" $(RELEASE_ARTIFACT_DIR)/
-
-release-rpm:
-	test -n "$(RELEASE_RPM)" && test -s "$(RELEASE_RPM)"
-	mkdir -p $(RELEASE_ARTIFACT_DIR)
-	cp "$(RELEASE_RPM)" $(RELEASE_ARTIFACT_DIR)/
-
-release-aws-result:
-	test -n "$(RELEASE_AWS_RESULT)" && test -s "$(RELEASE_AWS_RESULT)"
-	mkdir -p $(RELEASE_ARTIFACT_DIR)
-	cp "$(RELEASE_AWS_RESULT)" $(RELEASE_ARTIFACT_DIR)/
-
-release-checksums:
-	rm -f $(RELEASE_ARTIFACT_DIR)/SHA256SUMS
-	cd $(RELEASE_ARTIFACT_DIR) && shasum -a 256 * > SHA256SUMS

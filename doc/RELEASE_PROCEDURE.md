@@ -90,9 +90,14 @@ before marking the gate complete.
 ## Artifact assembly
 
 `make release` is deliberately an assembly gate, not a credential-bearing
-publisher. It runs `make distcheck`, stages the source archive plus validated
-inputs in `release-artifacts/`, and writes `SHA256SUMS`. It refuses to proceed
-when an input is absent.
+publisher. It invokes `scripts/release.sh`, which preflights every required
+input, creates a detached temporary Git worktree at `HEAD`, and runs bootstrap,
+macOS `make distcheck`, and container gates there. It captures logs and source
+provenance, stages the source archive and validated inputs in
+`release-artifacts/`, writes `SHA256SUMS`, then removes the worktree. It refuses
+to run from a checkout with tracked or staged changes, to overwrite an existing
+artifact directory, or to proceed when an input is absent. The active checkout
+is not built, configured, or cleaned by the release process.
 
 `make release` also runs `make distcheck-containers`, so Finch is a release
 prerequisite on macOS. On Apple Silicon, `arm64` runs natively and `amd64` uses
@@ -116,6 +121,9 @@ make release \
   RELEASE_RPM=/path/to/bulk_extractor-VERSION-RELEASE.ARCH.rpm \
   RELEASE_AWS_RESULT=/path/to/aws-large-image-summary.txt
 ```
+
+To use a different empty staging directory, pass
+`RELEASE_ARTIFACT_DIR=/absolute/path` to `make release`.
 
 The staged set must contain:
 
