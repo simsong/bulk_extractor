@@ -1,0 +1,17 @@
+.git
+.github
+.libs
+autom4te.cache
+build-aux
+config.h
+config.log
+config.status
+configure
+Makefile
+src/.deps
+src/.libs
+src/Makefile
+src/*.o
+src/bulk_extractor
+src/test_*
+win64

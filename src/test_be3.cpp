@@ -379,7 +379,7 @@ class scoped_environment {
     std::string name;
     std::optional<std::string> previous_value;
 public:
-    scoped_environment(const char *name_, const char *value) : name(name_)
+    scoped_environment(const char *name_, const char *value) : name(name_), previous_value{}
     {
         if (const char *previous = getenv(name.c_str())) {
             previous_value = previous;
