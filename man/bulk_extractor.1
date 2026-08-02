@@ -35,12 +35,12 @@ ended are deliberately skipped so that a data-dependent failure is not repeated.
 Use a new output directory for an independent scan, or
 .B -Z
 to remove an existing directory's contents before starting.
-.SH REQUIRED ARGUMENTS
+.SH OUTPUT DIRECTORY
 .TP
 .B -o, --outdir \fIOUTDIR\fR
 Write results to
 .IR OUTDIR .
-This option is required, including when using
+This option is required for normal scans, but not when using
 .BR -p .
 .SH INPUT AND OUTPUT OPTIONS
 .TP
@@ -69,8 +69,12 @@ for hexadecimal or
 .B /r
 for raw output.  Use
 .B -p -
-for interactive input or
+or
+.B -p -i
+for interactive input, or
 .B -p -http
+or
+.B -p --http
 for HTTP input.
 .TP
 .B -A, --offset_add \fIBYTES\fR
