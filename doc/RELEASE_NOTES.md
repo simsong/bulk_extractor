@@ -7,6 +7,10 @@ not exhaustive changelogs. Some legacy announcement dates disagree with tag
 dates; the version history below therefore uses dates only where the repository
 history is clear.
 
+The historical roadmaps were planning documents, not release records. Their
+relevant context is incorporated below; preserved, commit-specific copies are
+linked from the [historical source map](#historical-source-map).
+
 ## 2.2.0 (draft)
 
 **Status:** Unreleased. The source version is currently
@@ -212,7 +216,9 @@ through the project's normal pull-request and CI process.
   ([PR #561](https://github.com/simsong/bulk_extractor/pull/561),
   [PR #558](https://github.com/simsong/bulk_extractor/pull/558),
   [PR #557](https://github.com/simsong/bulk_extractor/pull/557)).
-- Removed an unmaintained version-1 performance notebook with obsolete
+- Removed the unmaintained standalone HTML overview; the current LaTeX guide
+  and published documentation site are the supported user documentation.
+- Removed the unmaintained version-1 performance notebook with obsolete
   benchmarks, platforms, and SQL tuning guidance.
 - Documented a controlled release procedure and release-issue template, with
   isolated artifact assembly, macOS and container `distcheck` gates, and
@@ -273,9 +279,10 @@ and production-oriented defaults replaced the broader experimental posture of
 version 1.
 
 The rewrite also reorganized scanner and feature-recorder APIs, improved DFXML
-reporting and testability, and introduced the initial version-2 E01 path. See
-the contemporary [2.0 roadmap](ROADMAP_2.0.md) for the design goals; it is a
-planning record rather than a final release announcement.
+reporting and testability, and introduced the initial version-2 E01 path. Its
+planning record proposed C++14, continuous integration, systematic unit and
+end-to-end tests, and a narrower command-line distribution. It also identified
+future scanner and carving work that was not a release commitment.
 
 ### Maintenance through 2.0.3
 
@@ -310,6 +317,8 @@ placement for the 64-bit executable was corrected.
 The surviving [1.6.0 announcement](announce/announce_1.6.0.md) is explicitly a
 pre-release draft. This summary combines it with the repository `ChangeLog` and
 tagged source rather than treating that draft as a final historical record.
+The contemporary roadmap also recorded longer-term work on scanner development,
+carving, testing, and BEViewer; those proposals were not commitments for 1.6.0.
 
 ### 1.5.x
 
@@ -326,7 +335,9 @@ Encryption, added RFC 4648 Base64 handling, and introduced the MSXML scanner for
 Microsoft Office Open XML documents.
 
 See the original [1.5 announcement](announce/announce_1.5.md) and
-[1.5.2 notes](announce/announce_1.5.2.md).
+[1.5.2 notes](announce/announce_1.5.2.md). The associated roadmap carried
+forward proposals for future scanners, carvers, testing, and user-interface
+work; it does not define the shipped 1.5.x scope.
 
 ### 1.4.x
 
@@ -345,7 +356,9 @@ Command-line compatibility changed: block size and word-size controls moved from
 refactored.
 
 See the original [1.4 announcement](announce/announce_1.4.txt) and
-[1.4.1 notes](announce/announce_1.4.1.txt).
+[1.4.1 notes](announce/announce_1.4.1.txt). The associated roadmap recorded
+planned scanner, raw-device, restart, and validation work, including proposals
+deferred to later releases.
 
 ## Historical source map
 
@@ -353,7 +366,10 @@ See the original [1.4 announcement](announce/announce_1.4.txt) and
   version-2 development periods.
 - [`doc/announce`](announce/) contains announcements for 1.2, 1.3, 1.3.1, 1.4,
   1.4.1, 1.5, 1.5.2, 1.6.0, and 2.1.0.
-- [`doc/ROADMAP_2.0.md`](ROADMAP_2.0.md) records the goals and migration plan for
-  the version-2 rewrite.
+- The original planning records are preserved at the commit that last contained
+  them: [1.4 roadmap](https://github.com/simsong/bulk_extractor/blob/d79d91bfee1a601189045a3dfa873b9c3086b493/doc/ROADMAP_1.4.md),
+  [1.5 roadmap](https://github.com/simsong/bulk_extractor/blob/d79d91bfee1a601189045a3dfa873b9c3086b493/doc/ROADMAP_1.5.md),
+  [1.6 roadmap](https://github.com/simsong/bulk_extractor/blob/d79d91bfee1a601189045a3dfa873b9c3086b493/doc/ROADMAP_1.6.md),
+  and [2.0 roadmap](https://github.com/simsong/bulk_extractor/blob/d79d91bfee1a601189045a3dfa873b9c3086b493/doc/ROADMAP_2.0.md).
 - Git tags and their trees remain the authoritative source for the exact code in
   each release.
