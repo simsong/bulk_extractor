@@ -574,8 +574,14 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
 
         if ( std::filesystem::exists( sc.outdir/"report.xml" )){
             /* We are restarting! */
-            bulk_extractor_restarter r( sc,cfg);
-            r.restart();                    // load the restart file and rename report.xml
+            bulk_extractor_restarter r(sc, cfg);
+            const auto restart = r.restart();
+            if (!cfg.opt_quiet) {
+                cerr << "Restarting: skipped " << restart.skipped_pages
+                     << " page" << (restart.skipped_pages == 1 ? "" : "s")
+                     << " recorded before the crash; archived report as "
+                     << restart.archived_report << std::endl;
+            }
         }
     }
 

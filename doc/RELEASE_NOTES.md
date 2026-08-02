@@ -57,6 +57,9 @@ through the project's normal pull-request and CI process.
   pages that were in progress at the crash, avoiding repeated data-dependent
   crashes; the behavior is covered by a controlled-crash regression test
   ([#202](https://github.com/simsong/bulk_extractor/issues/202)).
+- Restart now reports the number of deliberately skipped pages and the archived
+  interrupted report path when it resumes a non-quiet run
+  ([#319](https://github.com/simsong/bulk_extractor/issues/319)).
 - Removed the obsolete numeric debug mask and its misleading scanner-control
   documentation. `-d`/`--debug` now explicitly enables debug-level diagnostic
   logging; scanner selection remains controlled by `-x` and `-e`

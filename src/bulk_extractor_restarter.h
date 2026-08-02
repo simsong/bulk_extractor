@@ -18,12 +18,20 @@
 #include "phase1.h"
 
 class bulk_extractor_restarter {
+public:
+    struct restart_summary {
+        std::filesystem::path archived_report {};
+        size_t skipped_pages {0};
+    };
+
+private:
     std::stringstream       cdata {};
     std::string             thisElement {};
     std::string             provided_filename {};
     scanner_config          &sc;
     Phase1::Config          &cfg;
-public:;
+
+public:
     bulk_extractor_restarter(scanner_config &sc_,
                              Phase1::Config &cfg_):sc(sc_),cfg(cfg_){};
     class CantRestart : public std::exception {
@@ -57,7 +65,7 @@ public:;
         class bulk_extractor_restarter &self = *(bulk_extractor_restarter *)userData;
         self.cdata.write(s,len);
     }
-    void restart() {
+    restart_summary restart() {
         std::filesystem::path report_path = sc.outdir / Phase1::REPORT_FILENAME;
 
         XML_Parser parser = XML_ParserCreate(NULL);
@@ -87,11 +95,12 @@ public:;
         XML_ParserFree(parser);
         in.close();
         /* Now rename the report filename */
-        std::filesystem::path report_path_bak = report_path.string() + "." + std::to_string(time( nullptr));
+        std::filesystem::path report_path_bak = report_path.string() + "." + std::to_string(time(nullptr));
         std::filesystem::rename(report_path, report_path_bak);
+        return {report_path_bak, cfg.seen_page_ids.size()};
     }
 #else
-    void restart() {
+    restart_summary restart() {
         throw std::runtime_error("Compiled without libexpat; cannot restart.");
     }
 #endif

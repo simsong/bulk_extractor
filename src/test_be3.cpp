@@ -1105,8 +1105,12 @@ TEST_CASE("restarter", "[restarter]") {
     bulk_extractor_restarter r(sc, cfg);
 
     REQUIRE( std::filesystem::exists( out_xml ) == true); // because it has not been renamed yet
-    r.restart();
+    const auto restart = r.restart();
     REQUIRE( std::filesystem::exists( out_xml ) == false); // because now it has been renamed
+    REQUIRE(restart.archived_report.parent_path() == sc.outdir);
+    REQUIRE(restart.archived_report.filename().string().rfind("report.xml.", 0) == 0);
+    REQUIRE(restart.skipped_pages == cfg.seen_page_ids.size());
+    REQUIRE(restart.skipped_pages > 0);
     REQUIRE( cfg.seen_page_ids.find("369098752") != cfg.seen_page_ids.end() );
     REQUIRE( cfg.seen_page_ids.find("369098752+") == cfg.seen_page_ids.end() );
 }
