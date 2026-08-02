@@ -224,7 +224,7 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
     s.pos += yyleng;
 }
 
-{EMAIL}/[^a-zA-Z0-9._%\-]	{
+{EMAIL}/[^a-zA-Z]	{
     email_scanner &s = * yyemail_get_extra(yyscanner);
     s.check_margin();
     if (email_has_left_boundary(SBUF, POS) && extra_validate_email(yytext)){
