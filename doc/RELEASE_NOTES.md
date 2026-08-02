@@ -27,6 +27,11 @@ through the project's normal pull-request and CI process.
 
 ### Highlights
 
+- The project license statement now clearly identifies post-January-2015
+  development as GPL-3.0-or-later. Original NPS works retain their distinct
+  U.S.-Government status; bulk_extractor must not be described as a
+  public-domain project. RPM package metadata now reports the complete SPDX
+  license expression for the distributed project and third-party materials.
 - A standalone 64-bit Windows `.exe` is built with MinGW on Ubuntu and is
   checked to ensure that it imports no non-system Windows DLLs. GitHub Actions
   publishes it as a downloadable artifact; attaching it to the 2.2.0 release
