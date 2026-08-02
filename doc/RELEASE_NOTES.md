@@ -81,6 +81,15 @@ through the project's normal pull-request and CI process.
 - Email extraction now accepts syntactically valid two-to-63-character TLDs,
   including current TLDs such as `.solutions`, without requiring a stale
   scanner-specific allow-list ([#586](https://github.com/simsong/bulk_extractor/issues/586)).
+- Restored the email trailing-context boundary so that emails immediately
+  before sentence-ending punctuation (e.g. `user@example.com.`) are no
+  longer silently dropped; the correct `[^a-zA-Z]` boundary was inadvertently
+  narrowed in 2.2.0 ([#593](https://github.com/simsong/bulk_extractor/pull/593)).
+- The UTF-16 email left-boundary guard now correctly treats any preceding
+  non-ASCII UTF-16 code unit (high byte ≠ 0) as a word boundary, preventing
+  false boundary suppression from non-BMP characters whose low byte happens
+  to be an ASCII alphanumeric
+  ([#593](https://github.com/simsong/bulk_extractor/pull/593)).
 - Parser hardening now rejects truncated hibernation-file block headers before
   reading their length fields, and unexpected top-level exceptions are reported
   as diagnostics with a nonzero exit status
