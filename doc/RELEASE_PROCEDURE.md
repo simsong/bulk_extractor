@@ -91,10 +91,12 @@ before marking the gate complete.
 
 `make release` is deliberately an assembly gate, not a credential-bearing
 publisher. It invokes `scripts/release.sh`, which preflights every required
-input, creates a detached temporary Git worktree at `HEAD`, and runs bootstrap,
+input, requires `RELEASE_SOURCE_DIR` to name a Git worktree, creates a detached
+temporary worktree at `HEAD`, and runs bootstrap,
 macOS `make distcheck`, and container gates there. It captures logs and source
-provenance, stages the source archive and validated inputs in
-`release-artifacts/`, writes `SHA256SUMS`, then removes the worktree. It refuses
+provenance, stages the source archive and supplied artifact inputs in
+`release-artifacts/`, writes `SHA256SUMS` with `shasum` or `sha256sum`, then
+removes the worktree. It refuses
 to run from a checkout with tracked or staged changes, to overwrite an existing
 artifact directory, or to proceed when an input is absent. The active checkout
 is not built, configured, or cleaned by the release process.
@@ -151,7 +153,10 @@ is a release failure.
    or sponsor and record the accepted source-package URL. Kali normally imports
    from Debian; when it carries packaging changes, submit a version-bump request
    or merge request against Kali's packaging repository using the same tagged
-   upstream source. The reproducible build and downstream tracking are in
+   upstream source. Ubuntu normally imports Debian packages into Universe before
+   its Debian Import Freeze; after that point, record the required Launchpad
+   sync request. Do not pursue Ubuntu's default third-party-source list for this
+   free-software tool. The reproducible build and downstream tracking are in
    [#622][deb-issue].
 5. Submit source-level RPM packaging changes: use the Fedora package-review or
    dist-git workflow as applicable, and fork the openSUSE package repository to
@@ -181,6 +186,8 @@ The following release-engineering issues close the remaining automation gaps:
   packaging submissions.
 - [#624][aws-issue]: budget-capped AWS large-image validation and secure
   reporting.
+- [#626][snap-issue]: optional project-owned Snap Store publication for Ubuntu
+  users; it does not replace the Debian-to-Ubuntu path.
 
 Once these are complete, a release manager should be able to direct Codex to
 prepare a release PR, validate the tag, trigger the protected workflow, and
@@ -190,3 +197,4 @@ review the resulting draft release without handling package or cloud secrets.
 [deb-issue]: https://github.com/simsong/bulk_extractor/issues/622
 [rpm-issue]: https://github.com/simsong/bulk_extractor/issues/623
 [aws-issue]: https://github.com/simsong/bulk_extractor/issues/624
+[snap-issue]: https://github.com/simsong/bulk_extractor/issues/626

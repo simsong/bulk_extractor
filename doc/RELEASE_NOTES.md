@@ -217,7 +217,8 @@ through the project's normal pull-request and CI process.
   source-level downstream submission paths for Debian/Kali and
   Fedora/openSUSE ([#621](https://github.com/simsong/bulk_extractor/issues/621),
   [#622](https://github.com/simsong/bulk_extractor/issues/622),
-  [#623](https://github.com/simsong/bulk_extractor/issues/623)).
+  [#623](https://github.com/simsong/bulk_extractor/issues/623),
+  [#626](https://github.com/simsong/bulk_extractor/issues/626)).
 
 ### Known limitations and release work
 

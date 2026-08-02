@@ -6,10 +6,15 @@ source_dir=${RELEASE_SOURCE_DIR:?make release must set RELEASE_SOURCE_DIR}
 artifact_dir=${RELEASE_ARTIFACT_DIR:?make release must set RELEASE_ARTIFACT_DIR}
 required_artifacts=(RELEASE_WINDOWS_EXE RELEASE_DEB RELEASE_RPM RELEASE_AWS_RESULT)
 
+if [[ $(git -C "$source_dir" rev-parse --is-inside-work-tree 2>/dev/null || true) != true ]]; then
+    printf 'ERROR: RELEASE_SOURCE_DIR must name a Git worktree: %s\n' "$source_dir" >&2
+    exit 2
+fi
+
 for variable in "${required_artifacts[@]}"; do
     value=${!variable:-}
     if [[ -z $value || ! -s $value ]]; then
-        printf 'ERROR: %s must name a non-empty validated artifact\n' "$variable" >&2
+        printf 'ERROR: %s must name a non-empty artifact\n' "$variable" >&2
         exit 2
     fi
 done
@@ -71,7 +76,16 @@ cp "$RELEASE_AWS_RESULT" "$artifact_dir/"
     printf 'artifact_directory=%s\n' "$artifact_dir"
 } > "$artifact_dir/RELEASE_METADATA.txt"
 
-(cd "$artifact_dir" && shasum -a 256 \
+if command -v shasum >/dev/null 2>&1; then
+    checksum_command=(shasum -a 256)
+elif command -v sha256sum >/dev/null 2>&1; then
+    checksum_command=(sha256sum)
+else
+    printf 'ERROR: neither shasum nor sha256sum is available\n' >&2
+    exit 2
+fi
+
+(cd "$artifact_dir" && "${checksum_command[@]}" \
     "$(basename "$archive")" bulk_extractor64.exe \
     "$(basename "$RELEASE_DEB")" "$(basename "$RELEASE_RPM")" \
     "$(basename "$RELEASE_AWS_RESULT")" RELEASE_METADATA.txt > SHA256SUMS)
