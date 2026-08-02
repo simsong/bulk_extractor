@@ -212,6 +212,8 @@ through the project's normal pull-request and CI process.
   ([PR #561](https://github.com/simsong/bulk_extractor/pull/561),
   [PR #558](https://github.com/simsong/bulk_extractor/pull/558),
   [PR #557](https://github.com/simsong/bulk_extractor/pull/557)).
+- Removed an unmaintained version-1 performance notebook with obsolete
+  benchmarks, platforms, and SQL tuning guidance.
 - Documented a controlled release procedure and release-issue template, with
   isolated artifact assembly, macOS and container `distcheck` gates, and
   source-level downstream submission paths for Debian/Kali and
