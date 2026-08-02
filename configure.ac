@@ -307,7 +307,7 @@ fi
 AC_LANG_PUSH(C)
 saved_CFLAGS="$CFLAGS"
 CFLAGS="$CFLAGS -fstack-protector"
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[char stack_buffer[8]; return stack_buffer[0];]])],
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[return 0;]])],
                   [have_c_stack_protector=yes],
                   [have_c_stack_protector=no])
 CFLAGS="$saved_CFLAGS"
@@ -316,7 +316,7 @@ AC_LANG_POP(C)
 AC_LANG_PUSH(C++)
 saved_CXXFLAGS="$CXXFLAGS"
 CXXFLAGS="$CXXFLAGS -fstack-protector"
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[char stack_buffer[8]; return stack_buffer[0];]])],
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[return 0;]])],
                   [have_cxx_stack_protector=yes],
                   [have_cxx_stack_protector=no])
 CXXFLAGS="$saved_CXXFLAGS"
