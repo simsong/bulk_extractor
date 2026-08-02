@@ -321,6 +321,7 @@ TEST_CASE("e2e-context-sensitive-stop-list", "[end-to-end]")
         "-w", stop_list_string.c_str(),
         "-o", outdir_string.c_str(), input_string.c_str(), nullptr
     };
+    std::stringstream().swap(output);
     REQUIRE(run_be(output, argv) == 0);
 
     const auto email = getLines(outdir / "email.txt");
@@ -744,7 +745,7 @@ TEST_CASE("enable_all_scanners", "[end-to-end]") {
 
     const auto lines = getLines(outdir / "report.xml");
     const auto startpos = std::find(lines.begin(), lines.end(), "    <scanners>");
-    const auto endpos = std::find(lines.begin(), lines.end(), "    </scanners>");
+    const auto endpos = std::find(startpos, lines.end(), "    </scanners>");
     REQUIRE(startpos != lines.end());
     REQUIRE(endpos != lines.end());
     REQUIRE(std::count(startpos, endpos, "      <scanner>email</scanner>") == 1);
