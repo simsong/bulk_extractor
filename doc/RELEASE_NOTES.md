@@ -72,6 +72,10 @@ through the project's normal pull-request and CI process.
 - Hardened the bundled RAR PPM decoder's dictionary-copy boundary handling,
   preventing a malformed archive from writing past its ring buffer
   (fixes CVE-2026-24857; [#601](https://github.com/simsong/bulk_extractor/issues/601)).
+- Parser hardening now rejects truncated hibernation-file block headers before
+  reading their length fields, and unexpected top-level exceptions are reported
+  as diagnostics with a nonzero exit status
+  ([PR #605](https://github.com/simsong/bulk_extractor/pull/605)).
 - Hardened `sbuf` bounds, arithmetic, and ownership behavior, including
   zero-length and one-past-end cases
   ([PR #511](https://github.com/simsong/bulk_extractor/pull/511)).
@@ -151,6 +155,10 @@ through the project's normal pull-request and CI process.
 
 ### Build, configuration, and testing
 
+- A multi-stage Debian Bookworm container image provides a reproducible,
+  unprivileged environment for scanning regular image files. It documents its
+  libewf and Lightgrep limitations and supplements native platform CI rather
+  than replacing it ([#159](https://github.com/simsong/bulk_extractor/issues/159)).
 - AddressSanitizer now runs on every pull request while redundant workflow
   execution has been reduced
   ([PR #514](https://github.com/simsong/bulk_extractor/pull/514)).
