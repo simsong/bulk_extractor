@@ -6,19 +6,16 @@
 
 #include <atomic>
 #include <chrono>
-#include <condition_variable>
 #include <filesystem>
-#include <mutex>
+#include <future>
 #include <thread>
 
 #include "scanner_set.h"
 #include "utils.h"
 
 namespace {
-std::mutex scanner_mutex;
-std::condition_variable scanner_cv;
-bool scanner_started {false};
-bool release_scanner {false};
+std::promise<void> scanner_started;
+std::shared_future<void> release_scanner;
 
 void blocking_scanner(scanner_params &sp)
 {
@@ -28,10 +25,8 @@ void blocking_scanner(scanner_params &sp)
         return;
     }
     if (sp.phase == scanner_params::PHASE_SCAN) {
-        std::unique_lock<std::mutex> lock(scanner_mutex);
-        scanner_started = true;
-        scanner_cv.notify_all();
-        scanner_cv.wait(lock, [] { return release_scanner; });
+        scanner_started.set_value();
+        release_scanner.wait();
     }
 }
 }
@@ -48,16 +43,11 @@ TEST_CASE("producer wait snapshots are safe while workers run", "[thread_safety]
     ss.phase_scan();
     ss.launch_workers(1);
 
-    {
-        std::lock_guard<std::mutex> lock(scanner_mutex);
-        scanner_started = false;
-        release_scanner = false;
-    }
+    auto scanner_started_future = scanner_started.get_future();
+    std::promise<void> release;
+    release_scanner = release.get_future().share();
     ss.schedule_sbuf(new sbuf_t("first"));
-    {
-        std::unique_lock<std::mutex> lock(scanner_mutex);
-        REQUIRE(scanner_cv.wait_for(lock, std::chrono::seconds(5), [] { return scanner_started; }));
-    }
+    REQUIRE(scanner_started_future.wait_for(std::chrono::seconds(5)) == std::future_status::ready);
 
     std::atomic<bool> read_snapshots {true};
     std::atomic<bool> observed_wait {false};
@@ -69,11 +59,7 @@ TEST_CASE("producer wait snapshots are safe while workers run", "[thread_safety]
     std::thread producer([&] { ss.main_thread_wait(); });
 
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
-    {
-        std::lock_guard<std::mutex> lock(scanner_mutex);
-        release_scanner = true;
-    }
-    scanner_cv.notify_all();
+    release.set_value();
     producer.join();
     read_snapshots = false;
     reader.join();

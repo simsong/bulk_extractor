@@ -9,7 +9,6 @@ thread_pool::thread_pool(scanner_set &ss_): ss(ss_)
 void thread_pool::launch_workers(size_t num_workers)
 {
     for (size_t i=0; i < num_workers; i++){
-        std::unique_lock<std::mutex> lock(M);
         class worker *w = new worker(*this,i);
         workers.insert(w);
         threads.insert(new std::thread( &worker::start_worker, static_cast<void *>(w) ));
