@@ -349,7 +349,10 @@ bool validate_pcap_packet(const std::filesystem::path &fn0, const std::filesyste
     REQUIRE(header1[3] == 0xa1);
     REQUIRE(header1[20] == (link_type & 0xff));
     REQUIRE(header1[21] == ((link_type >> 8) & 0xff));
-    return std::equal(std::istreambuf_iterator<char>(in0), {}, std::istreambuf_iterator<char>(in1));
+    REQUIRE(header1[22] == ((link_type >> 16) & 0xff));
+    REQUIRE(header1[23] == ((link_type >> 24) & 0xff));
+    return std::equal(std::istreambuf_iterator<char>(in0), {}, std::istreambuf_iterator<char>(in1)) &&
+           in1.peek() == std::char_traits<char>::eof();
 }
 
 

@@ -844,7 +844,7 @@ void scanner_set::process_sbuf(const sbuf_t* sbufp, scanner_t *scanner)
         if (debug_flags.debug_benchmark && writer) {
             writer->xmlout("debug:bypass", "",
                            Formatter()
-                           << "sbuf='" << sbuf.pos0.str() << "' "
+                           << "sbuf='" << dfxml_writer::xmlescape(sbuf.pos0.str()) << "' "
                            << "bufsize='" << sbuf.bufsize << "' "
                            << "scanner='" << get_scanner_name(scanner) << "' "
                            << "reason='seen_before'", true);
@@ -856,7 +856,7 @@ void scanner_set::process_sbuf(const sbuf_t* sbufp, scanner_t *scanner)
     if (ngram_size > 0 && flags.scan_ngram_buffer == false) {
         if (debug_flags.debug_benchmark && writer) {
             writer->xmlout("debug:bypass", "",
-                           Formatter() << "sbuf='" << sbuf.pos0.str() << "' ngram_size='" << ngram_size << "'", true);
+                           Formatter() << "sbuf='" << dfxml_writer::xmlescape(sbuf.pos0.str()) << "' ngram_size='" << ngram_size << "'", true);
         }
         return;
     }
@@ -865,7 +865,7 @@ void scanner_set::process_sbuf(const sbuf_t* sbufp, scanner_t *scanner)
     if (info->min_distinct_chars > distinct_chars) {
         if (debug_flags.debug_benchmark && writer) {
             writer->xmlout("debug:bypass", "",
-                           Formatter() << "sbuf='" << sbuf.pos0.str() << "' min_distinct_chars='" << distinct_chars << "'", true);
+                           Formatter() << "sbuf='" << dfxml_writer::xmlescape(sbuf.pos0.str()) << "' min_distinct_chars='" << distinct_chars << "'", true);
         }
         return;
     }

@@ -45,15 +45,17 @@
 #include "be20_api/formatter.h"
 #include "image_process.h"
 
+#include <memory>
+
 /****************************************************************
  *** static functions
  ****************************************************************/
 
 static sbuf_t *shrink_sbuf(sbuf_t *sbuf, const pos0_t &pos0, size_t pagesize, size_t bytes_read)
 {
+    std::unique_ptr<sbuf_t> original{sbuf};
     auto *short_sbuf = sbuf_t::sbuf_malloc(pos0, bytes_read, std::min(pagesize, bytes_read));
-    memcpy(short_sbuf->malloc_buf(), sbuf->malloc_buf(), bytes_read);
-    delete sbuf;
+    memcpy(short_sbuf->malloc_buf(), original->malloc_buf(), bytes_read);
     return short_sbuf;
 }
 
