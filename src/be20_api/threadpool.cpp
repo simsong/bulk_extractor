@@ -10,7 +10,7 @@ void thread_pool::launch_workers(size_t num_workers)
 {
     for (size_t i=0; i < num_workers; i++){
         class worker *w = new worker(*this,i);
-        workers.insert(w);
+        workers_running.fetch_add(1, std::memory_order_relaxed);
         threads.insert(new std::thread( &worker::start_worker, static_cast<void *>(w) ));
     }
 }
@@ -55,7 +55,6 @@ void thread_pool::join()
     std::unique_lock<std::mutex> lock(M);
     mode = 2;
     TO_WORKER.notify_all();
-    TO_MAIN.wait(lock, [this] { return workers.empty(); });
     lock.unlock();
     for (auto *thread : threads) {
         if (thread->joinable()) {
@@ -88,7 +87,9 @@ bool thread_pool::join(std::chrono::seconds maximum_wait)
     }
     mode = 2;
     TO_WORKER.notify_all();
-    if (!TO_MAIN.wait_until(lock, deadline, [this] { return workers.empty(); })) {
+    if (!TO_MAIN.wait_until(lock, deadline, [this] {
+            return workers_running.load(std::memory_order_relaxed) == 0;
+        })) {
         return false;
     }
     lock.unlock();
@@ -160,8 +161,7 @@ int thread_pool::get_free_count() const
 
 size_t thread_pool::get_worker_count() const
 {
-    std::lock_guard<std::mutex> lock(M);
-    return workers.size();
+    return workers_running.load(std::memory_order_relaxed);
 }
 
 size_t thread_pool::get_tasks_queued() const
@@ -256,10 +256,7 @@ void *worker::run()
     if (tp.debug) std::cerr << std::this_thread::get_id() << " exiting "<< std::endl;
     tp.total_worker_wait_ns.fetch_add(worker_wait_timer.running_nanoseconds(), std::memory_order_relaxed);
     tp.ss.thread_set_status("exited");
-    {
-        std::lock_guard<std::mutex> lock(tp.M);
-        tp.workers.erase(this);
-        tp.TO_MAIN.notify_all();
-    }
+    tp.workers_running.fetch_sub(1, std::memory_order_relaxed);
+    tp.TO_MAIN.notify_all();
     return nullptr;
 }

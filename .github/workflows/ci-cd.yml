@@ -42,6 +42,7 @@ jobs:
             '
 
   build:
+    name: build and test (${{ matrix.os }})
     strategy:
       fail-fast: false
       matrix:
@@ -87,7 +88,7 @@ jobs:
           make distclean
 
       - name: ThreadSanitizer thread-safety test
-        if: github.event_name == 'pull_request' && matrix.os == 'ubuntu-22.04'
+        if: github.event_name == 'pull_request' && matrix.os == 'ubuntu-latest'
         run: |
           source "$HOME/.bashrc"
           ./configure --disable-opt --enable-thread-sanitizer

@@ -74,14 +74,13 @@ public:
         scanner_t *scanner {nullptr};        // if set, use only this scanner, otherwise use all.
     };
 
-    typedef std::set<class worker *> worker_set_t;
-    worker_set_t                        workers {};
     std::set<std::thread *>             threads {};
     mutable std::mutex                  M {};
     std::condition_variable	        TO_MAIN {};
     std::condition_variable	        TO_WORKER {};
     std::atomic<int>                    working_workers {0};
     std::atomic<int>                    freethreads {0};
+    std::atomic<size_t>                 workers_running {0};
 
     // bulk_extractor specialiations
     class scanner_set &ss;		// one for all the threads; fs and fr are threadsafe
