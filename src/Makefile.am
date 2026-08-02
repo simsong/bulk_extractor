@@ -172,8 +172,14 @@ test_thread_safety_SOURCES = \
 	$(BE20_API_DIR)/catch.hpp \
 	$(BE20_API_DIR)/test_thread_safety.cpp
 
+if THREAD_SANITIZER_ENABLED
 check-tsan-thread-safety: test_thread_safety
 	./test_thread_safety
+else
+check-tsan-thread-safety:
+	@echo "ThreadSanitizer is disabled; configure with --enable-thread-sanitizer."
+	@false
+endif
 
 test_dfxml_SOURCES = \
 	test_dfxml.cpp \
