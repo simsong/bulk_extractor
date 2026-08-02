@@ -69,6 +69,9 @@ through the project's normal pull-request and CI process.
 - Email extraction now enforces independent 64-octet local-part and 253-octet
   domain limits for ASCII and UTF-16 input, avoiding truncated suffix features
   from overlong addresses ([#585](https://github.com/simsong/bulk_extractor/issues/585)).
+- Email extraction now accepts syntactically valid two-to-63-character TLDs,
+  including current TLDs such as `.solutions`, without requiring a stale
+  scanner-specific allow-list ([#586](https://github.com/simsong/bulk_extractor/issues/586)).
 - Parser hardening now rejects truncated hibernation-file block headers before
   reading their length fields, and unexpected top-level exceptions are reported
   as diagnostics with a nonzero exit status
