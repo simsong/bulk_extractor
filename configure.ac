@@ -304,6 +304,32 @@ else
   CXXFLAGS="$CXXFLAGS -fPIC"
 fi
 
+AC_LANG_PUSH(C)
+saved_CFLAGS="$CFLAGS"
+CFLAGS="$CFLAGS -fstack-protector"
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[char stack_buffer[8]; return stack_buffer[0];]])],
+                  [have_c_stack_protector=yes],
+                  [have_c_stack_protector=no])
+CFLAGS="$saved_CFLAGS"
+AC_LANG_POP(C)
+
+AC_LANG_PUSH(C++)
+saved_CXXFLAGS="$CXXFLAGS"
+CXXFLAGS="$CXXFLAGS -fstack-protector"
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[char stack_buffer[8]; return stack_buffer[0];]])],
+                  [have_cxx_stack_protector=yes],
+                  [have_cxx_stack_protector=no])
+CXXFLAGS="$saved_CXXFLAGS"
+AC_LANG_POP(C++)
+
+if test "$have_c_stack_protector" = yes && test "$have_cxx_stack_protector" = yes ; then
+  CFLAGS="$CFLAGS -fstack-protector"
+  CXXFLAGS="$CXXFLAGS -fstack-protector"
+  AC_MSG_NOTICE([enabling -fstack-protector])
+else
+  AC_MSG_WARN([compiler does not support -fstack-protector for both C and C++; stack protection is disabled])
+fi
+
 
 ################################################################
 ## Check on two annoying warnings
