@@ -78,7 +78,6 @@ lightgrep_scanners = \
 	pattern_scanner_utils.cpp pattern_scanner_utils.h \
 	scan_lightgrep.cpp \
 	scan_accts_lg.cpp \
-	scan_base16_lg.cpp \
 	scan_email_lg.cpp \
 	scan_gps_lg.cpp
 

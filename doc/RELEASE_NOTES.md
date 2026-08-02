@@ -61,6 +61,9 @@ through the project's normal pull-request and CI process.
   documentation. `-d`/`--debug` now explicitly enables debug-level diagnostic
   logging; scanner selection remains controlled by `-x` and `-e`
   ([#403](https://github.com/simsong/bulk_extractor/issues/403)).
+- Removed the unregistered, API-stale Lightgrep Base16 implementation; the
+  maintained Flex Base16 scanner remains the supported opt-in implementation
+  ([#246](https://github.com/simsong/bulk_extractor/issues/246)).
 - RAR extraction now preserves full seek offsets and bounded in-memory writes,
   recovering every member of a multi-file RAR fixture ([#212](https://github.com/simsong/bulk_extractor/issues/212)).
 - Progress displays now adapt to Windows console-width changes, matching the
