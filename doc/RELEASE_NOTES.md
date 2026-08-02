@@ -57,10 +57,16 @@ through the project's normal pull-request and CI process.
   pages that were in progress at the crash, avoiding repeated data-dependent
   crashes; the behavior is covered by a controlled-crash regression test
   ([#202](https://github.com/simsong/bulk_extractor/issues/202)).
+- Restart now reports the number of deliberately skipped pages and the archived
+  interrupted report path when it resumes a non-quiet run
+  ([#319](https://github.com/simsong/bulk_extractor/issues/319)).
 - Removed the obsolete numeric debug mask and its misleading scanner-control
   documentation. `-d`/`--debug` now explicitly enables debug-level diagnostic
   logging; scanner selection remains controlled by `-x` and `-e`
   ([#403](https://github.com/simsong/bulk_extractor/issues/403)).
+- Removed the unregistered, API-stale Lightgrep Base16 implementation; the
+  maintained Flex Base16 scanner remains the supported opt-in implementation
+  ([#246](https://github.com/simsong/bulk_extractor/issues/246)).
 - RAR extraction now preserves full seek offsets and bounded in-memory writes,
   recovering every member of a multi-file RAR fixture ([#212](https://github.com/simsong/bulk_extractor/issues/212)).
 - Progress displays now adapt to Windows console-width changes, matching the
@@ -72,6 +78,9 @@ through the project's normal pull-request and CI process.
 - Hardened the bundled RAR PPM decoder's dictionary-copy boundary handling,
   preventing a malformed archive from writing past its ring buffer
   (fixes CVE-2026-24857; [#601](https://github.com/simsong/bulk_extractor/issues/601)).
+- Email extraction now accepts syntactically valid two-to-63-character TLDs,
+  including current TLDs such as `.solutions`, without requiring a stale
+  scanner-specific allow-list ([#586](https://github.com/simsong/bulk_extractor/issues/586)).
 - Parser hardening now rejects truncated hibernation-file block headers before
   reading their length fields, and unexpected top-level exceptions are reported
   as diagnostics with a nonzero exit status

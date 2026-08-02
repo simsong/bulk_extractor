@@ -225,6 +225,29 @@ TEST_CASE("Windows raw-device paths are recognized narrowly", "[image_process]")
     REQUIRE_FALSE(process_raw::is_windows_raw_device_path("disk.raw"));
 }
 
+TEST_CASE("e2e-email accepts current TLDs", "[end-to-end]")
+{
+    const auto root = NamedTemporaryDirectory();
+    const auto input = root / "input.raw";
+    const auto outdir = root / "output";
+    std::ofstream(input) << "modern@wordcount.solutions punycode@example.xn--p1ai "
+                            "bare.wordcount.solutions\n";
+
+    const std::string input_string = input.string();
+    const std::string outdir_string = outdir.string();
+    const char *argv[] = {
+        "bulk_extractor", "-0q", "-x", "all", "-e", "email",
+        "-o", outdir_string.c_str(), input_string.c_str(), nullptr
+    };
+    std::stringstream output;
+    REQUIRE(run_be(output, argv) == 0);
+
+    const auto email = getLines(outdir / "email.txt");
+    REQUIRE(requireFeature(email, "modern@wordcount.solutions"));
+    REQUIRE(requireFeature(email, "punycode@example.xn--p1ai"));
+    REQUIRE_FALSE(requireFeature(email, "bare.wordcount.solutions"));
+}
+
 TEST_CASE("e2e-stop-list", "[end-to-end]")
 {
     const std::string bitlocker_key =
@@ -1082,8 +1105,12 @@ TEST_CASE("restarter", "[restarter]") {
     bulk_extractor_restarter r(sc, cfg);
 
     REQUIRE( std::filesystem::exists( out_xml ) == true); // because it has not been renamed yet
-    r.restart();
+    const auto restart = r.restart();
     REQUIRE( std::filesystem::exists( out_xml ) == false); // because now it has been renamed
+    REQUIRE(restart.archived_report.parent_path() == sc.outdir);
+    REQUIRE(restart.archived_report.filename().string().rfind("report.xml.", 0) == 0);
+    REQUIRE(restart.skipped_pages == cfg.seen_page_ids.size());
+    REQUIRE(restart.skipped_pages > 0);
     REQUIRE( cfg.seen_page_ids.find("369098752") != cfg.seen_page_ids.end() );
     REQUIRE( cfg.seen_page_ids.find("369098752+") == cfg.seen_page_ids.end() );
 }
