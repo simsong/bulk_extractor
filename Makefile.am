@@ -21,6 +21,9 @@ SUBDIRS = doc doc/latex_manuals man src src/tests specfiles tests
 include Makefile.auto_defs
 
 EXTRA_DIST = $(SRC_WIN_DIST) $(AUTO_DOC_FILES) $(AUTO_ETC_FILES) $(AUTO_LICENSES) \
+	$(srcdir)/.dockerignore \
+	$(srcdir)/etc/Dockerfile.fedora-distcheck \
+	$(srcdir)/etc/Dockerfile.ubuntu-distcheck \
 	$(srcdir)/AGENTS.md \
 	$(srcdir)/.gitignore \
 	$(srcdir)/CODING_STANDARDS.md \
@@ -86,3 +89,70 @@ libinstall:
 	install -D src/libbulkextractor.so $(prefix)/lib/libbulkextractor.so
 	install -D python/module/bulkextractor.py $(prefix)/lib/python2.7/dist-packages/bulkextractor.py
 	if [ -r /sbin/ldconfig ]; /sbin/ldconfig -v ; fi
+
+# Release assembly is deliberately fail-closed. Artifact producers are
+# independently validated release jobs; this target stages their outputs and
+# the source distribution only when each required input is present.
+RELEASE_ARTIFACT_DIR ?= $(abs_builddir)/release-artifacts
+
+.PHONY: release release-source release-linux-distcheck release-windows release-deb release-rpm release-aws-result release-checksums
+release:
+	$(MAKE) release-source
+	$(MAKE) release-linux-distcheck
+	$(MAKE) release-windows
+	$(MAKE) release-deb
+	$(MAKE) release-rpm
+	$(MAKE) release-aws-result
+	$(MAKE) release-checksums
+
+release-source:
+	$(MAKE) distcheck
+	mkdir -p $(RELEASE_ARTIFACT_DIR)
+	cp $(PACKAGE)-$(VERSION).tar.gz $(RELEASE_ARTIFACT_DIR)/
+
+# Each Finch build copies a clean source context and runs the real distcheck
+# inside it. Finch selects native arm64 and emulated amd64 on Apple Silicon.
+CONTAINER_ENGINE ?= finch
+CONTAINER_PLATFORMS ?= arm64 amd64
+
+.PHONY: distcheck-ubuntu-container distcheck-fedora-container distcheck-containers
+distcheck-ubuntu-container:
+	@set -e; for platform in $(CONTAINER_PLATFORMS); do \
+		$(CONTAINER_ENGINE) build --platform "$$platform" --progress=plain \
+			--file etc/Dockerfile.ubuntu-distcheck .; \
+	done
+
+distcheck-fedora-container:
+	@set -e; for platform in $(CONTAINER_PLATFORMS); do \
+		$(CONTAINER_ENGINE) build --platform "$$platform" --progress=plain \
+			--file etc/Dockerfile.fedora-distcheck .; \
+	done
+
+distcheck-containers: distcheck-ubuntu-container distcheck-fedora-container
+
+release-linux-distcheck:
+	$(MAKE) distcheck-containers
+
+release-windows:
+	test -n "$(RELEASE_WINDOWS_EXE)" && test -s "$(RELEASE_WINDOWS_EXE)"
+	mkdir -p $(RELEASE_ARTIFACT_DIR)
+	cp "$(RELEASE_WINDOWS_EXE)" $(RELEASE_ARTIFACT_DIR)/bulk_extractor64.exe
+
+release-deb:
+	test -n "$(RELEASE_DEB)" && test -s "$(RELEASE_DEB)"
+	mkdir -p $(RELEASE_ARTIFACT_DIR)
+	cp "$(RELEASE_DEB)" $(RELEASE_ARTIFACT_DIR)/
+
+release-rpm:
+	test -n "$(RELEASE_RPM)" && test -s "$(RELEASE_RPM)"
+	mkdir -p $(RELEASE_ARTIFACT_DIR)
+	cp "$(RELEASE_RPM)" $(RELEASE_ARTIFACT_DIR)/
+
+release-aws-result:
+	test -n "$(RELEASE_AWS_RESULT)" && test -s "$(RELEASE_AWS_RESULT)"
+	mkdir -p $(RELEASE_ARTIFACT_DIR)
+	cp "$(RELEASE_AWS_RESULT)" $(RELEASE_ARTIFACT_DIR)/
+
+release-checksums:
+	rm -f $(RELEASE_ARTIFACT_DIR)/SHA256SUMS
+	cd $(RELEASE_ARTIFACT_DIR) && shasum -a 256 * > SHA256SUMS
