@@ -794,7 +794,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         }
         cout << std::endl;
         cout << "Time producer spent waiting for scanners to process data:        "
-             << ss.producer_timer().elapsed_text()
+             << ss.producer_wait_text()
              << " (" << ns_to_sec(ss.producer_wait_ns()) << " seconds)"
              << std::endl;
         cout << "Time consumer scanners spent waiting for data from producer:     "

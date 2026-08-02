@@ -13,6 +13,7 @@ permissions:
 
 jobs:
   build:
+    name: build and test
     runs-on: ubuntu-22.04
 
     env:
