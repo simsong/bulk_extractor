@@ -1,57 +1,21 @@
-## Copyright/Non-Copyright Statements
+## Project license and copyright status
 
-**bulk_extractor** was originally developed by Simson Garfinkel while at
-the Naval Postgraduate School. As a work of the US Government that
-work is not subject to copyright law.
+Simson Garfinkel originally developed **bulk_extractor** while at the Naval
+Postgraduate School (NPS). Original works created in that U.S. Government
+employment are not subject to U.S. copyright protection under 17 U.S.C. § 105.
+That status applies only to the original NPS material.
 
-Simson Garfinkel left the Naval Postgraduate School in January 2015
-and continued to work on **bulk_extractor** in his personal
-capacity. Those modifications are covered under the MIT license (below). Other
-components are licensed as noted.
+Simson Garfinkel left NPS in January 2015. All bulk_extractor code and
+documentation developed or modified after that date in his personal capacity
+are licensed under the **GNU General Public License, version 3 or later
+(GPL-3.0-or-later)**. The GPLv3 text is in
+[`licenses/LICENSE.GPLv3`](licenses/LICENSE.GPLv3). Distributions of the
+program must therefore comply with the GPL and provide the corresponding
+source as required by that license.
 
-## MIT License
-
-Copyright (C) 2020-2024, Simson L. Garfinkel
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
-OR OTHER DEALINGS IN THE SOFTWARE.
-
-## CC0 Original Summary
-
-Except as otherwise noted, bulk_extractor source code files are public domain
-software.
-
-That software provided here is released by the Naval Postgraduate
-School, an agency of the U.S. Department of Navy.  The software bears
-no warranty, either expressed or implied. NPS does not assume legal
-liability nor responsibility for a User's use of the software or the
-results of such use.
-
-Please note that within the United States, copyright protection, under
-Section 105 of the United States Code, Title 17, is not available for
-any work of the United States Government and/or for any works created
-by United States Government employees.
-
-However, because some bulk_extractor source modules (e.g. pyxpress.c)
-are covered under the GNU Public License, the compiled bulk_extractor
-executable is covered under the GPL copyright. This means that binary
-distributions of bulk_extractor must include the full source code (or
-have the source code be made easily available.)
+This GPL statement supersedes the prior statement that post-NPS modifications
+were under the MIT License. Do not describe bulk_extractor as a public-domain
+project: only the identified original NPS material has that status.
 
 ## Other materials
 
