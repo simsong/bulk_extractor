@@ -53,7 +53,8 @@ void scan_hiberfile_scan(scanner_params &sp)
         ssize_t npos = sbuf.findbin(PYEXPRESS_HEADER, sizeof(PYEXPRESS_HEADER), pos);
         if (npos==-1) break;             // header not found
 
-        pos = npos;
+        pos = static_cast<size_t>(npos);
+        if (pos > sbuf.bufsize || sbuf.bufsize - pos < 32) break;
         uint32_t compressed_length = ((static_cast<uint32_t>(sbuf[pos + 8])
                                        | (static_cast<uint32_t>(sbuf[pos + 9]) << 8)
                                        | (static_cast<uint32_t>(sbuf[pos + 10]) << 16)

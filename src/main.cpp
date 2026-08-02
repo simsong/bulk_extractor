@@ -9,7 +9,7 @@
 #include "bulk_extractor.h"
 
 #include <exception>
-#include <ostream>
+#include <iostream>
 
 int main(int argc,char * const *argv)
 {
