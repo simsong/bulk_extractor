@@ -96,8 +96,6 @@ libinstall:
 # active checkout. See scripts/release.sh and doc/RELEASE_PROCEDURE.md.
 RELEASE_ARTIFACT_DIR ?= $(abs_builddir)/release-artifacts
 RELEASE_SCRIPT = $(abs_srcdir)/scripts/release.sh
-DEBIAN_PACKAGE_SCRIPT = $(abs_srcdir)/scripts/prepare_debian_package.py
-
 .PHONY: release
 release:
 	RELEASE_ARTIFACT_DIR="$(RELEASE_ARTIFACT_DIR)" RELEASE_SOURCE_DIR="$(abs_srcdir)" "$(RELEASE_SCRIPT)"
