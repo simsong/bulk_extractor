@@ -222,7 +222,8 @@ through the project's normal pull-request and CI process.
   [PR #558](https://github.com/simsong/bulk_extractor/pull/558),
   [PR #557](https://github.com/simsong/bulk_extractor/pull/557)).
 - Rewrote the installed `bulk_extractor(1)` manual for the 2.2 command-line
-  interface, current logging, scanner controls, and supported documentation.
+  interface, including current logging, scanner controls, path-printer aliases,
+  output-directory requirements, and supported documentation.
 - Removed the unmaintained standalone HTML overview; the current LaTeX guide
   and published documentation site are the supported user documentation.
 - Removed the unmaintained version-1 performance notebook with obsolete
