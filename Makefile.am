@@ -21,6 +21,9 @@ SUBDIRS = doc doc/latex_manuals man src src/tests specfiles tests
 include Makefile.auto_defs
 
 EXTRA_DIST = $(SRC_WIN_DIST) $(AUTO_DOC_FILES) $(AUTO_ETC_FILES) $(AUTO_LICENSES) \
+	$(srcdir)/etc/Dockerfile.fedora-distcheck \
+	$(srcdir)/etc/Dockerfile.ubuntu-distcheck \
+	$(srcdir)/scripts/release.sh \
 	$(srcdir)/AGENTS.md \
 	$(srcdir)/.gitignore \
 	$(srcdir)/CODING_STANDARDS.md \
@@ -88,3 +91,32 @@ libinstall:
 	install -D src/libbulkextractor.so $(prefix)/lib/libbulkextractor.so
 	install -D python/module/bulkextractor.py $(prefix)/lib/python2.7/dist-packages/bulkextractor.py
 	if [ -r /sbin/ldconfig ]; /sbin/ldconfig -v ; fi
+
+# Release orchestration is deliberately fail-closed and isolated from the
+# active checkout. See scripts/release.sh and doc/RELEASE_PROCEDURE.md.
+RELEASE_ARTIFACT_DIR ?= $(abs_builddir)/release-artifacts
+RELEASE_SCRIPT = $(abs_srcdir)/scripts/release.sh
+
+.PHONY: release
+release:
+	RELEASE_ARTIFACT_DIR="$(RELEASE_ARTIFACT_DIR)" RELEASE_SOURCE_DIR="$(abs_srcdir)" "$(RELEASE_SCRIPT)"
+
+# Each Finch build copies a clean source context and runs the real distcheck
+# inside it. Finch selects native arm64 and emulated amd64 on Apple Silicon.
+CONTAINER_ENGINE ?= finch
+CONTAINER_PLATFORMS ?= arm64 amd64
+
+.PHONY: distcheck-ubuntu-container distcheck-fedora-container distcheck-containers
+distcheck-ubuntu-container:
+	@set -e; for platform in $(CONTAINER_PLATFORMS); do \
+		$(CONTAINER_ENGINE) build --platform "$$platform" --progress=plain \
+			--file etc/Dockerfile.ubuntu-distcheck .; \
+	done
+
+distcheck-fedora-container:
+	@set -e; for platform in $(CONTAINER_PLATFORMS); do \
+		$(CONTAINER_ENGINE) build --platform "$$platform" --progress=plain \
+			--file etc/Dockerfile.fedora-distcheck .; \
+	done
+
+distcheck-containers: distcheck-ubuntu-container distcheck-fedora-container

@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
     paths-ignore:
       - '**.md'
       - 'AGENTS.md'
@@ -22,6 +23,7 @@ env:
 
 jobs:
   mingw:
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     name: Ubuntu MinGW executable
     runs-on: ubuntu-24.04
 
