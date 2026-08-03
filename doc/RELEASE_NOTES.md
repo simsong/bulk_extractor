@@ -244,6 +244,8 @@ through the project's normal pull-request and CI process.
   `make release-deb` build and installed-package smoke test. Debian package
   versioning is derived from `configure.ac`; archive submission and signing
   remain maintainer-controlled ([#622](https://github.com/simsong/bulk_extractor/issues/622)).
+  `make release-deb` now copies the generated `.deb`, `.dsc`, and `.changes`
+  artifacts from the container to `$(RELEASE_ARTIFACT_DIR)` on the host.
 
 ### Known limitations and release work
 

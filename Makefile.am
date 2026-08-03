@@ -102,7 +102,12 @@ release:
 
 .PHONY: release-deb
 release-deb:
-	$(CONTAINER_ENGINE) build --progress=plain --file etc/Dockerfile.debian-package .
+	mkdir -p "$(RELEASE_ARTIFACT_DIR)"
+	$(CONTAINER_ENGINE) build --progress=plain --file etc/Dockerfile.debian-package --tag bulk-extractor-deb-build .
+	cid=$$($(CONTAINER_ENGINE) create bulk-extractor-deb-build); \
+	  $(CONTAINER_ENGINE) cp "$$cid":/ - | tar -xf - --wildcards --strip-components=1 \
+	    -C "$(RELEASE_ARTIFACT_DIR)" 'bulk-extractor_*'; \
+	  $(CONTAINER_ENGINE) rm "$$cid"
 
 # Each Finch build copies a clean source context and runs the real distcheck
 # inside it. Finch selects native arm64 and emulated amd64 on Apple Silicon.
