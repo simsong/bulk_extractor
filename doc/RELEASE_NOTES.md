@@ -228,6 +228,11 @@ through the project's normal pull-request and CI process.
   and published documentation site are the supported user documentation.
 - Removed the unmaintained version-1 performance notebook with obsolete
   benchmarks, platforms, and SQL tuning guidance.
+- Moved the historical source and technical-debt audit to
+  [`doc/RELEASE_2.2.0_PLANNING.md`](RELEASE_2.2.0_PLANNING.md) as the 2.2.0
+  release-planning record; the live technical-debt backlog remains in
+  [Discussion #545](https://github.com/simsong/bulk_extractor/discussions/545)
+  and its linked issues.
 - Documented a controlled release procedure and release-issue template, with
   isolated artifact assembly, macOS and container `distcheck` gates, and
   source-level downstream submission paths for Debian/Kali and

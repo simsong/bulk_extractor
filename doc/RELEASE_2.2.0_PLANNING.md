@@ -1,4 +1,4 @@
-# bulk_extractor and be20_api source and technical-debt audit
+# bulk_extractor 2.2.0 release planning and technical-debt audit
 
 Date: 2026-07-19
 
