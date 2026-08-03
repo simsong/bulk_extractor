@@ -96,10 +96,15 @@ libinstall:
 # active checkout. See scripts/release.sh and doc/RELEASE_PROCEDURE.md.
 RELEASE_ARTIFACT_DIR ?= $(abs_builddir)/release-artifacts
 RELEASE_SCRIPT = $(abs_srcdir)/scripts/release.sh
+DEBIAN_PACKAGE_SCRIPT = $(abs_srcdir)/scripts/prepare_debian_package.py
 
 .PHONY: release
 release:
 	RELEASE_ARTIFACT_DIR="$(RELEASE_ARTIFACT_DIR)" RELEASE_SOURCE_DIR="$(abs_srcdir)" "$(RELEASE_SCRIPT)"
+
+.PHONY: release-deb
+release-deb:
+	$(CONTAINER_ENGINE) build --progress=plain --file etc/Dockerfile.debian-package .
 
 # Each Finch build copies a clean source context and runs the real distcheck
 # inside it. Finch selects native arm64 and emulated amd64 on Apple Silicon.

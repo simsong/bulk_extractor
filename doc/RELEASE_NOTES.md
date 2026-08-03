@@ -229,6 +229,10 @@ through the project's normal pull-request and CI process.
   [#622](https://github.com/simsong/bulk_extractor/issues/622),
   [#623](https://github.com/simsong/bulk_extractor/issues/623),
   [#626](https://github.com/simsong/bulk_extractor/issues/626)).
+- Added Debian source and binary package metadata plus a clean Bookworm
+  `make release-deb` build and installed-package smoke test. Debian package
+  versioning is derived from `configure.ac`; archive submission and signing
+  remain maintainer-controlled ([#622](https://github.com/simsong/bulk_extractor/issues/622)).
 
 ### Known limitations and release work
 
