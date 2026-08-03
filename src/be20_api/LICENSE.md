@@ -9,9 +9,11 @@ Simson Garfinkel left NPS in January 2015. All post-NPS, project-authored
 bulk_extractor code and documentation developed or modified in his personal
 capacity are licensed under the GNU General Public License, version 3 or later
 (GPL-3.0-or-later). Third-party components retain their original license terms
-as identified in [Other materials](#other-materials). See the top-level
-`LICENSE.md` and `licenses/LICENSE.GPLv3`. Do not describe the post-NPS project
-as public domain.
+as stated in their source headers and applicable license files; the
+[Other materials](#other-materials) list is non-authoritative. See the
+[top-level LICENSE](../../LICENSE.md) and
+[GPLv3 text](../../licenses/LICENSE.GPLv3). Do not describe the post-NPS
+project as public domain.
 
 ## Original NPS material
 
