@@ -31,6 +31,11 @@ through the project's normal pull-request and CI process.
 
 ### Highlights
 
+- The project license statement now clearly identifies post-January-2015
+  development as GPL-3.0-or-later. Original NPS works retain their distinct
+  U.S.-Government status; bulk_extractor must not be described as a
+  public-domain project. RPM package metadata now includes the documented SPDX
+  license identifiers, including the Autoconf exception used by bundled macros.
 - A standalone 64-bit Windows `.exe` is built with MinGW on Ubuntu and is
   checked to ensure that it imports no non-system Windows DLLs. GitHub Actions
   publishes it as a downloadable artifact; attaching it to the 2.2.0 release
@@ -217,11 +222,17 @@ through the project's normal pull-request and CI process.
   [PR #558](https://github.com/simsong/bulk_extractor/pull/558),
   [PR #557](https://github.com/simsong/bulk_extractor/pull/557)).
 - Rewrote the installed `bulk_extractor(1)` manual for the 2.2 command-line
-  interface, current logging, scanner controls, and supported documentation.
+  interface, including current logging, scanner controls, path-printer aliases,
+  output-directory requirements, and supported documentation.
 - Removed the unmaintained standalone HTML overview; the current LaTeX guide
   and published documentation site are the supported user documentation.
 - Removed the unmaintained version-1 performance notebook with obsolete
   benchmarks, platforms, and SQL tuning guidance.
+- Moved the historical source and technical-debt audit to
+  [`doc/RELEASE_2.2.0_PLANNING.md`](RELEASE_2.2.0_PLANNING.md) as the 2.2.0
+  release-planning record; the live technical-debt backlog remains in
+  [Discussion #545](https://github.com/simsong/bulk_extractor/discussions/545)
+  and its linked issues.
 - Documented a controlled release procedure and release-issue template, with
   isolated artifact assembly, macOS and container `distcheck` gates, and
   source-level downstream submission paths for Debian/Kali and
