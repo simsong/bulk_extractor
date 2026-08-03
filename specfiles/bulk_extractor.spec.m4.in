@@ -8,7 +8,7 @@ ifdef([OPENSUSE],[# Please submit bugfixes or comments via http://bugs.opensuse.
 Name:           bulk_extractor
 Version:        @VERSION@
 Release:        1
-License:        GPL-3.0-or-later AND LGPL-2.1-or-later AND LGPL-3.0-or-later AND MIT AND CPL-1.0
+License:        GPL-3.0-or-later WITH Autoconf-exception-3.0 AND LGPL-2.1-or-later AND LGPL-3.0-or-later AND MIT AND CPL-1.0
 Summary:        Forensics tool for extracting email addresses and URLs from bulk data.
 Url:            http://digitalcorpora.org/downloads/bulk_extractor/bulk_extractor-@VERSION@.tar.gz
 Group:          Productivity/File utilities
