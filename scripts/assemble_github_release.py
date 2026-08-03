@@ -161,6 +161,8 @@ def main() -> int:
         parser.error("--dry-run and --publish are mutually exclusive")
     if (args.source_archive is None) != (args.windows_executable is None):
         parser.error("provide both local artifact paths or neither")
+    if args.publish and args.repo is None:
+        parser.error("--repo is required with --publish")
     if args.source_archive is None and args.repo is None:
         parser.error("--repo is required when artifacts are not supplied locally")
     identity = release_identity(args.source_dir, args.tag, args.publish or args.source_archive is None)
