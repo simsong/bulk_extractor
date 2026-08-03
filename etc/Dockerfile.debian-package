@@ -6,5 +6,5 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
 WORKDIR /src
 COPY . /src
 RUN python3 scripts/prepare_debian_package.py && dpkg-buildpackage -us -uc -S && dpkg-buildpackage -us -uc -b
-RUN dpkg -i ../bulk-extractor_*_*.deb || apt-get -fy install
+RUN dpkg -i ../bulk-extractor_*_*.deb || (apt-get update && apt-get -fy install)
 RUN bulk_extractor -h >/dev/null
