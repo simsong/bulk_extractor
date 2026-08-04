@@ -52,7 +52,9 @@
 #include "scan_pdf.h"
 #include "scan_vcard.h"
 #include "scan_wordlist.h"
+#ifdef USE_RAR
 #include "rar/rar.hpp"
+#endif
 
 #ifdef USE_RAR
 class RarUnpackTest {
@@ -505,6 +507,7 @@ TEST_CASE("test_json", "[phase1]") {
  * san_jpeg & scan_rar
  ****************************************************************/
 
+#ifdef USE_RAR
 TEST_CASE("test_jpeg_rar", "[phase1]") {
     std::vector<Check> ex2 {
         Check("unrar_carved.txt",
@@ -545,6 +548,7 @@ TEST_CASE("RAR in-memory relative seeks are bounded", "[rar]") {
     REQUIRE(file.RawSeek(-4, SEEK_CUR));
     REQUIRE(file.Tell() == 0);
 }
+#endif
 
 /****************************************************************
  * scan_kml
