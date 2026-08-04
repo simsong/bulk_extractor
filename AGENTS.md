@@ -11,7 +11,8 @@ to verify the resulting commit before pushing. When correcting existing
 commits, use `git commit --amend --reset-author -S` rather than only amending
 the signature.
 
-For every Codex-authored pull request, follow this lifecycle in order:
+For every Codex-authored pull request, follow the **Copilot-to-Ready
+lifecycle** in order. The user may invoke this procedure by name:
 
 1. Push the branch and open the pull request as a draft.
 2. Request the Copilot bot with the exact GitHub API reviewer value
@@ -29,6 +30,12 @@ For every Codex-authored pull request, follow this lifecycle in order:
    the thread; if GitHub resolves it automatically, report that fact.
 5. After Copilot is feedback-free and all required CI checks are green, mark
    the pull request ready for review and assign it to `@simsong`.
+
+The lifecycle is not complete at a pushed fix, a thread reply, or a successful
+Copilot request. It completes only after the current head's Copilot review and
+required CI are clear, the pull request has been marked ready for review, and
+`@simsong` has been assigned. If validation or feedback remains, retain draft
+status and report the exact blocker.
 
 Do not approve or merge a pull request unless explicitly asked.
 
