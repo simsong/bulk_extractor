@@ -1,0 +1,13 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: bulk_extractor
+Source: https://github.com/simsong/bulk_extractor
+
+Files: *
+Copyright: Naval Postgraduate School; Simson L. Garfinkel and contributors
+License: GPL-3.0-or-later
+ The project includes original U.S. Government material and third-party files
+ under their own terms. See LICENSE.md and per-file license notices.
+
+License: GPL-3.0-or-later
+ On Debian systems, the complete text is available at
+ /usr/share/common-licenses/GPL-3.
