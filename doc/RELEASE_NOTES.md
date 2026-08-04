@@ -246,6 +246,11 @@ through the project's normal pull-request and CI process.
   remain maintainer-controlled ([#622](https://github.com/simsong/bulk_extractor/issues/622)).
   `make release-deb` now copies the generated `.deb`, `.dsc`, and `.changes`
   artifacts from the container to `$(RELEASE_ARTIFACT_DIR)` on the host.
+- Added tag-driven draft-release assembly for the source archive and tested
+  Windows executable. The Python driver derives the version from `configure.ac`,
+  can assemble and checksum supplied artifacts with `--dry-run`, and never
+  publishes a GitHub Release without a release-manager action
+  ([#621](https://github.com/simsong/bulk_extractor/issues/621)).
 
 ### Known limitations and release work
 
