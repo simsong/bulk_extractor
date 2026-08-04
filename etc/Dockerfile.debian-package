@@ -15,6 +15,7 @@ RUN python3 scripts/prepare_debian_package.py \
     && tar -C /build -czf /build/bulk-extractor_"$package_version".orig.tar.gz bulk-extractor-"$package_version" \
     && cp -a debian /build/bulk-extractor-"$package_version"/ \
     && cd /build/bulk-extractor-"$package_version" \
-    && dpkg-buildpackage -us -uc
-RUN dpkg -i ../bulk-extractor_*_*.deb || (apt-get update && apt-get -fy install)
+    && dpkg-buildpackage -us -uc \
+    && cp /build/bulk-extractor_* /
+RUN dpkg -i /bulk-extractor_*_*.deb || (apt-get update && apt-get -fy install)
 RUN bulk_extractor -h >/dev/null
