@@ -37,6 +37,18 @@ required CI are clear, the pull request has been marked ready for review, and
 `@simsong` has been assigned. If validation or feedback remains, retain draft
 status and report the exact blocker.
 
+### Periodic Copilot-to-Ready timer
+
+When the Copilot-to-Ready timer is active, wake every 20 minutes and reconcile
+live GitHub state. For the current release milestone, scan its open issues
+assigned to `@simsong-codex`, then resume the highest-priority unblocked work
+or its pending pull-request review/CI follow-through. Verify milestone,
+assignment, PR head, Copilot state, and checks live; do not rely on an earlier
+heartbeat. Do not change issue assignments or milestones, approve, merge, or
+close anything without explicit user instruction. If there is no in-scope work
+or nothing has changed, return a quiet heartbeat; otherwise report the exact
+next action or blocker.
+
 Do not approve or merge a pull request unless explicitly asked.
 
 Delete a local branch once it has merged into `main`. First verify that it is an ancestor of the current `main`; preserve unmerged branches and local files in linked worktrees.
