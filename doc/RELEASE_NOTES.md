@@ -246,8 +246,9 @@ through the project's normal pull-request and CI process.
   remain maintainer-controlled ([#622](https://github.com/simsong/bulk_extractor/issues/622)).
   `make release-deb` creates Debian 3.0 (quilt) source packages from the
   `make dist` archive, requires an annotated release tag at `HEAD` and a clean
-  checkout, and copies generated `.deb`, `.dsc`, and `.changes` artifacts to
-  `$(RELEASE_ARTIFACT_DIR)` on the host.
+  checkout, and copies generated `.deb`, `.dsc`, `.changes`, `.buildinfo`,
+  `.orig.tar.gz`, and `.debian.tar.*` artifacts to `$(RELEASE_ARTIFACT_DIR)`
+  on the host.
 - Added tag-driven draft-release assembly for the source archive and tested
   Windows executable. The Python driver derives the version from `configure.ac`,
   can assemble and checksum supplied artifacts with `--dry-run`, and never
