@@ -18,11 +18,19 @@ records a skipped workflow run; Actions cannot filter `pull_request` events on
 the draft field before a workflow starts. Pushes to `dev-release` do not run the
 main-branch push workflows.
 
+`configure.ac` is the sole authoritative version source. In the release PR,
+change the version in `AC_INIT([BULK_EXTRACTOR], [X.Y.Z], ...)`; package
+metadata and source-archive names derive from it. Do not duplicate that value
+in a workflow or release script.
+
 After the release PR is merged and all required checks are green, create a
 signed annotated tag named `vX.Y.Z` at the reviewed commit. The tag is the
-immutable release identity; never move or reuse it. A protected tag-triggered
-workflow should create a *draft* GitHub Release. The release manager reviews
-the evidence below and explicitly publishes the draft.
+immutable release identity; never move or reuse it. The tag must exactly match
+the `configure.ac` version. Tag pushes run the existing source-distribution and
+MinGW workflows plus `.github/workflows/release.yml`. The latter waits for the
+successful artifacts from that same tag, invokes
+`scripts/assemble_github_release.py`, and creates a *draft* GitHub Release.
+The release manager reviews the evidence below and explicitly publishes it.
 
 Use a `release/X.Y` branch only when maintaining an established release line
 while `main` continues with new development. Do not create a release branch for
@@ -126,6 +134,34 @@ make release \
 
 To use a different empty staging directory, pass
 `RELEASE_ARTIFACT_DIR=/absolute/path` to `make release`.
+
+### GitHub source and Windows assembly
+
+`scripts/assemble_github_release.py` is the testable assembly path for the
+GitHub source archive and tested MinGW executable. It reads the version only
+from `configure.ac`, verifies that the source archive embeds that same version,
+and writes these files to an empty output directory:
+
+- `bulk_extractor-X.Y.Z.tar.gz`
+- `bulk_extractor64.exe`
+- `SHA256SUMS`
+
+To test assembly without a tag, GitHub credentials, or a release mutation,
+provide artifacts created by the existing workflows (or equivalent local test
+inputs) and use `--dry-run`:
+
+```sh
+python3 scripts/assemble_github_release.py \
+  --source-archive /path/to/bulk_extractor-X.Y.Z.tar.gz \
+  --windows-executable /path/to/bulk_extractor64.exe \
+  --output-dir /tmp/bulk-extractor-release-test \
+  --dry-run
+```
+
+For a tag-triggered release, the GitHub workflow supplies the repository and
+tag. The script waits for the current source and MinGW workflow runs, downloads
+their artifacts, verifies their names and version, and creates only a draft
+release. It never publishes that release.
 
 The staged set must contain:
 
