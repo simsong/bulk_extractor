@@ -82,8 +82,13 @@ fi
 ## rar support
 AC_ARG_ENABLE([rar],
               AS_HELP_STRING([--disable-rar], [Disable RAR decompression]),
-              [],
-	      [AC_DEFINE(USE_RAR, 1, [Use RAR decompression]) rar="yes"])
+              [rar="$enableval"],
+              [rar="yes"])
+case "$rar" in
+  yes) AC_DEFINE(USE_RAR, 1, [Use RAR decompression]) ;;
+  no) ;;
+  *) AC_MSG_ERROR([--enable-rar accepts only yes or no]) ;;
+esac
 if test "x$rar" != "xyes"; then
   AC_MSG_WARN([RAR support is disabled; RAR tests will not be built or run])
 fi
