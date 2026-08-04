@@ -8,7 +8,7 @@ COPY . /src
 RUN python3 scripts/prepare_debian_package.py \
     && bash bootstrap.sh && ./configure --quiet && make dist \
     && version=$(sed -n 's/^AC_INIT(\[BULK_EXTRACTOR\],\[\([^]]*\)\].*/\1/p' configure.ac) \
-    && package_version=${version/-DEVELOP/~develop} \
+    && package_version=$(printf '%s\n' "$version" | sed 's/-DEVELOP$/~develop/') \
     && mkdir /build \
     && tar -C /build -xzf bulk_extractor-"$version".tar.gz \
     && mv /build/bulk_extractor-"$version" /build/bulk-extractor-"$package_version" \

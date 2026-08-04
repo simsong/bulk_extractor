@@ -105,10 +105,11 @@ release:
 .PHONY: release-deb
 release-deb:
 	test -n "$(RELEASE_TAG)"
-	test "$$(git cat-file -t refs/tags/$(RELEASE_TAG))" = tag
-	test "$$(git rev-parse $(RELEASE_TAG)^{commit})" = "$$(git rev-parse HEAD)"
+	test "$$(git cat-file -t "refs/tags/$(RELEASE_TAG)")" = tag
+	test "$$(git rev-parse "$(RELEASE_TAG)^{commit}")" = "$$(git rev-parse HEAD)"
 	git diff --quiet
 	git diff --cached --quiet
+	test -z "$$(git ls-files --others --exclude-standard)"
 	mkdir -p "$(RELEASE_ARTIFACT_DIR)"
 	$(CONTAINER_ENGINE) build --progress=plain --file etc/Dockerfile.debian-package --tag bulk-extractor-deb-build .
 	cid=$$($(CONTAINER_ENGINE) create bulk-extractor-deb-build); \
