@@ -97,12 +97,18 @@ libinstall:
 # active checkout. See scripts/release.sh and doc/RELEASE_PROCEDURE.md.
 RELEASE_ARTIFACT_DIR ?= $(abs_builddir)/release-artifacts
 RELEASE_SCRIPT = $(abs_srcdir)/scripts/release.sh
+RELEASE_TAG ?=
 .PHONY: release
 release:
 	RELEASE_ARTIFACT_DIR="$(RELEASE_ARTIFACT_DIR)" RELEASE_SOURCE_DIR="$(abs_srcdir)" "$(RELEASE_SCRIPT)"
 
 .PHONY: release-deb
 release-deb:
+	test -n "$(RELEASE_TAG)"
+	test "$$(git cat-file -t refs/tags/$(RELEASE_TAG))" = tag
+	test "$$(git rev-parse $(RELEASE_TAG)^{commit})" = "$$(git rev-parse HEAD)"
+	git diff --quiet
+	git diff --cached --quiet
 	mkdir -p "$(RELEASE_ARTIFACT_DIR)"
 	$(CONTAINER_ENGINE) build --progress=plain --file etc/Dockerfile.debian-package --tag bulk-extractor-deb-build .
 	cid=$$($(CONTAINER_ENGINE) create bulk-extractor-deb-build); \
