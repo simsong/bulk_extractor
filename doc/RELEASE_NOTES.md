@@ -263,6 +263,10 @@ through the project's normal pull-request and CI process.
   release tags, protected release-manager credentials, and a project-owned
   publisher account; raw-device access remains an explicitly connected,
   Store-reviewed interface ([#626](https://github.com/simsong/bulk_extractor/issues/626)).
+- Added a tagged, clean-checkout `make release-rpm` gate that builds and smoke
+  tests binary RPMs and SRPMs in pinned Fedora and openSUSE environments for
+  GitHub download testing; distribution archives continue to build submitted
+  source packages themselves ([#623](https://github.com/simsong/bulk_extractor/issues/623)).
 
 ### Known limitations and release work
 
