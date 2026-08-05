@@ -4,8 +4,20 @@
 \usepackage{fancyvrb}
 \usepackage{graphicx}
 \usepackage{longtable}
+\usepackage{placeins}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning}
 \newcommand{\bulk}{\textit{bulk\_extractor}}
 \newcommand{\code}[1]{\texttt{#1}}
+\tikzset{
+  phase/.style={draw, rounded corners, align=center, minimum width=34mm,
+    minimum height=7mm, font=\small},
+  action/.style={draw, align=center, minimum width=34mm, minimum height=7mm,
+    font=\small},
+  scan/.style={draw, rounded corners, fill=black!5, align=center,
+    minimum width=38mm, minimum height=10mm, font=\small},
+  flow/.style={-{Latex[length=2mm]}, thick}
+}
 \title{bulk\_extractor 2.2 Programmer's Manual}
 \author{Jessica R. Bradley, Simson L. Garfinkel, and the bulk\_extractor project}
 \date{August 2026}
@@ -135,6 +147,106 @@ The framework applies \code{-e} and \code{-x} between INIT and INIT2. Help
 and disabled-scanner paths therefore reach INIT and CLEANUP but may never
 reach SCAN. Exceptions thrown by one scan callback are recorded by the
 framework; they do not disable the scanner or stop other worker calls.
+
+\subsection{Lifecycle illustrations}
+
+The following figures summarize the call diagrams in
+\href{https://github.com/simsong/bulk_extractor/blob/main/doc/scanner_api.md}
+{\code{doc/scanner\_api.md}}. They show one scanner and intentionally omit
+implementation detail. The Markdown scanner API is the maintained, normative
+contract; consult it before changing a built-in scanner or creating a loadable
+one.
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}[t]{.47\linewidth}
+\centering
+\textbf{Help path}\par\medskip
+\begin{tikzpicture}[node distance=4mm]
+\node[phase] (init) {scanner: \code{PHASE\_INIT}};
+\node[action, below=of init] (select) {framework applies\\\code{-e}/\code{-x}};
+\node[phase, below=of select] (init2) {scanner: \code{PHASE\_INIT2}\\if enabled};
+\node[action, below=of init2] (help) {framework prints help\\and scanner options};
+\node[phase, below=of help] (cleanup) {scanner: \code{PHASE\_CLEANUP}};
+\draw[flow] (init) -- (select);
+\draw[flow] (select) -- (init2);
+\draw[flow] (init2) -- (help);
+\draw[flow] (help) -- (cleanup);
+\end{tikzpicture}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.47\linewidth}
+\centering
+\textbf{Disabled scanner}\par\medskip
+\begin{tikzpicture}[node distance=5mm]
+\node[phase] (init) {scanner: \code{PHASE\_INIT}};
+\node[action, below=of init] (disable) {framework disables scanner\\by default or \code{-x}};
+\node[action, below=of disable] (skip) {no INIT2, SCAN,\\or SHUTDOWN};
+\node[phase, below=of skip] (cleanup) {scanner: \code{PHASE\_CLEANUP}};
+\draw[flow] (init) -- (disable);
+\draw[flow] (disable) -- (skip);
+\draw[flow] (skip) -- (cleanup);
+\end{tikzpicture}
+\end{minipage}
+\caption{Help and disabled-scanner paths. INIT and CLEANUP occur for every
+loaded scanner, so CLEANUP must tolerate a scanner that never initialized
+recorders or processed an sbuf. Help does not call SCAN or SHUTDOWN.}
+\label{fig:scanner-help-disabled}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[node distance=5mm]
+\node[phase] (init) {main thread: \code{PHASE\_INIT}};
+\node[phase, below=of init] (init2) {main thread: \code{PHASE\_INIT2}};
+\node[scan, below left=8mm and 4mm of init2] (t0) {worker 0\\\code{PHASE\_SCAN}\\sbuf 0, sbuf 1};
+\node[scan, below right=8mm and 4mm of init2] (t1) {worker 1\\\code{PHASE\_SCAN}\\sbuf 0, sbuf 1};
+\node[phase, below=31mm of init2] (shutdown) {main thread: \code{PHASE\_SHUTDOWN}};
+\node[phase, below=of shutdown] (cleanup) {main thread: \code{PHASE\_CLEANUP}};
+\draw[flow] (init) -- (init2);
+\draw[flow] (init2) -- (t0);
+\draw[flow] (init2) -- (t1);
+\draw[flow] (t0) -- (shutdown);
+\draw[flow] (t1) -- (shutdown);
+\draw[flow] (shutdown) -- (cleanup);
+\node[font=\small\itshape, below=2mm of init2] {calls may overlap};
+\end{tikzpicture}
+\caption{Enabled scanner with two workers. Calls to the same scanner can
+overlap, so file-static and global state used during SCAN must be immutable,
+atomic, or protected with appropriately scoped synchronization.}
+\label{fig:scanner-concurrent}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[node distance=5mm]
+\node[phase] (init) {main thread: INIT, then INIT2};
+\node[scan, below left=8mm and 4mm of init] (t0) {worker 0\\SCAN sbuf 0\\SCAN sbuf 1 throws};
+\node[scan, below right=8mm and 4mm of init] (t1) {worker 1\\SCAN sbuf 0\\SCAN sbuf 1 continues};
+\node[action, below=5mm of t0] (alert) {framework catches exception\\and records an alert};
+\node[phase, below=35mm of init] (shutdown) {main thread: SHUTDOWN, then CLEANUP};
+\draw[flow] (init) -- (t0);
+\draw[flow] (init) -- (t1);
+\draw[flow] (t0) -- (alert);
+\draw[flow] (alert) -- (shutdown);
+\draw[flow] (t1) -- (shutdown);
+\end{tikzpicture}
+\caption{Exception during one SCAN callback. The framework ends the failed
+call and records the exception when an alert recorder is available; it does
+not disable the scanner or cancel other workers. Normal shutdown and cleanup
+still follow.}
+\label{fig:scanner-exception}
+\end{figure}
+
+\FloatBarrier
+
+These paths imply three high-level rules. Declare metadata, recorder
+definitions, histograms, limits, and \code{-S} help only in INIT. Retrieve
+recorders only in INIT2. Treat \code{sp.sbuf} as read-only callback-scoped data
+during SCAN, and release scanner-owned state in CLEANUP even when no scan
+occurred. The state, recorder, and loadable-module sections below explain the
+programming consequences; \code{doc/scanner\_api.md} remains the concise
+checklist against which code should be reviewed.
 
 \subsection{The 1.x to 2.x migration}
 

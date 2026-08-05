@@ -233,6 +233,11 @@ through the project's normal pull-request and CI process.
   guidance, development examples, and coding practices. The historical
   BEViewer workflow is retained in an appendix, clearly marked as unavailable
   in 2.2 and as requirements for its planned return in the 2.x series.
+- Added a user-facing migration guide covering the observable differences from
+  version 1.x to version 2 and from version 2.1 to 2.2. Expanded the programmer
+  manual's high-level scanner lifecycle coverage with illustrated help,
+  disabled-scanner, concurrent-scan, and exception paths, while retaining
+  `doc/scanner_api.md` as the normative scanner contract.
 - LaTeX documentation CI now builds draft pull requests and runs for every
   change under `doc/`, so manual-source and supporting-file errors are caught
   before a pull request is marked ready for review. For pull requests, the
