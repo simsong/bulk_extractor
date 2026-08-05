@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Run inside the disposable release-validation instance. Do not export scan output.
-set -uo pipefail
+set -euo pipefail
 
 result_file=${RESULT_FILE:?}
 scratch_directory=${SCRATCH_DIRECTORY:?}
@@ -40,6 +40,10 @@ input_encryption=$(aws s3api head-object --bucket "$INPUT_BUCKET" --key "$INPUT_
 [[ $input_encryption == AES256 ]] || fail input_must_use_s3_managed_encryption
 
 aws s3 cp "s3://$INPUT_BUCKET/$INPUT_KEY" "$scratch_directory/input.img" --only-show-errors || fail input_download_failed
+if ! actual_input_sha256=$(sha256sum "$scratch_directory/input.img" | awk '{print $1}'); then
+    fail input_checksum_unavailable
+fi
+[[ ${actual_input_sha256,,} == ${INPUT_SHA256,,} ]] || fail input_checksum_mismatch
 cd "$source_directory" || fail source_directory_missing
 ./configure --quiet --disable-libewf || fail configure_failed
 make -j2 || fail build_failed

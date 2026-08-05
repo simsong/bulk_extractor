@@ -113,7 +113,7 @@ jobs:
           script: |
             const fs = require('fs');
             const issue = Number(process.env.RELEASE_ISSUE);
-            if (!Number.isSafeInteger(issue) || issue < 1) core.setFailed('release_issue must be a positive issue number');
+            if (!Number.isSafeInteger(issue) || issue < 1) throw new Error('release_issue must be a positive issue number');
             const summary = fs.readFileSync(process.env.SUMMARY_PATH, 'utf8');
             await github.rest.issues.createComment({
               owner: context.repo.owner,

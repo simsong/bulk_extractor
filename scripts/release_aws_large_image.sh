@@ -34,6 +34,7 @@ done
 [[ $AWS_LARGE_IMAGE_INPUT_SHA256 =~ ^[[:xdigit:]]{64}$ ]] || { echo "ERROR: input checksum must be SHA-256" >&2; exit 2; }
 [[ $AWS_LARGE_IMAGE_SOURCE_SHA256 =~ ^[[:xdigit:]]{64}$ ]] || { echo "ERROR: source checksum must be SHA-256" >&2; exit 2; }
 [[ $AWS_LARGE_IMAGE_SOURCE_URL == https://* ]] || { echo "ERROR: source URL must use HTTPS" >&2; exit 2; }
+[[ ${#stack} -le 55 ]] || { echo "ERROR: stack name must be at most 55 characters because the derived IAM role name adds -instance" >&2; exit 2; }
 if aws cloudformation describe-stacks --stack-name "$stack" >/dev/null 2>&1; then
     echo "ERROR: refusing to reuse existing stack $stack" >&2
     exit 2
