@@ -258,6 +258,10 @@ through the project's normal pull-request and CI process.
   ([#621](https://github.com/simsong/bulk_extractor/issues/621)).
 - The release workflow now assembles and verifies artifacts in a read-only job;
   only its separate draft-publishing job receives repository write permission.
+- Added a tagged, clean-checkout `make release-rpm` gate that builds and smoke
+  tests binary RPMs and SRPMs in pinned Fedora and openSUSE environments for
+  GitHub download testing; distribution archives continue to build submitted
+  source packages themselves ([#623](https://github.com/simsong/bulk_extractor/issues/623)).
 
 ### Known limitations and release work
 
