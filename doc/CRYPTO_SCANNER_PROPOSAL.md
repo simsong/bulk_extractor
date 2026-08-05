@@ -55,3 +55,33 @@ tests/Data/crypto-public-key-samples.pem contains deliberately generated secp256
 
 The encrypted fixtures exist only to test classification as encrypted_wallet. No normal scan test may decrypt them.
 
+### Fixture provenance
+
+The two key pairs were generated locally for this repository solely as test
+material. The following commands document the generation procedure; key
+generation is random, so rerunning them produces different valid fixtures.
+Run them only in a disposable directory. The plaintext files are intermediate
+material and must not be committed.
+
+```sh
+# Generate a secp256k1 pair, export its public key, then encrypt the private key.
+openssl genpkey -algorithm EC -pkeyopt ec_paramgen_curve:secp256k1 \
+  -out secp256k1-private.pem
+openssl pkey -in secp256k1-private.pem -pubout \
+  -out secp256k1-public.pem
+openssl pkey -in secp256k1-private.pem -aes-256-cbc \
+  -passout pass:password -out secp256k1-encrypted-private.pem
+
+# Generate an Ed25519 pair and produce the equivalent two fixtures.
+openssl genpkey -algorithm ED25519 -out ed25519-private.pem
+openssl pkey -in ed25519-private.pem -pubout -out ed25519-public.pem
+openssl pkey -in ed25519-private.pem -aes-256-cbc \
+  -passout pass:password -out ed25519-encrypted-private.pem
+```
+
+The PEM bodies in `crypto-public-key-samples.pem` are the concatenated public
+outputs. The PEM bodies in `crypto-encrypted-test-keys.pem` are the concatenated
+encrypted-private-key outputs. The password `password` is intentionally weak
+because these values are generated test fixtures with no funds or production
+use. Delete the two plaintext `*-private.pem` intermediate files immediately
+after producing a fixture set.
