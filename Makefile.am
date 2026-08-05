@@ -129,12 +129,17 @@ release-rpm:
 	test ! -e "$(RELEASE_RPM_ARTIFACT_DIR)"
 	mkdir -p "$(RELEASE_RPM_ARTIFACT_DIR)"
 	@set -e; for distribution in fedora opensuse; do \
-	  image=bulk-extractor-rpm-$$distribution-build; \
-	  $(CONTAINER_ENGINE) build --progress=plain --file "$(abs_srcdir)/etc/Dockerfile.$$distribution-rpm-package" --tag "$$image" "$(abs_srcdir)"; \
-	  cid=$$($(CONTAINER_ENGINE) create "$$image"); \
-	  mkdir -p "$(RELEASE_RPM_ARTIFACT_DIR)/$$distribution"; \
-	  $(CONTAINER_ENGINE) cp "$$cid":/artifacts/. "$(RELEASE_RPM_ARTIFACT_DIR)/$$distribution"; \
-	  $(CONTAINER_ENGINE) rm "$$cid"; \
+	  ( set -e; \
+	    cid=; \
+	    cleanup() { test -z "$$cid" || $(CONTAINER_ENGINE) rm -f "$$cid" >/dev/null 2>&1 || :; }; \
+	    trap cleanup EXIT; \
+	    trap 'cleanup; exit 1' HUP INT TERM; \
+	    image=bulk-extractor-rpm-$$distribution-build; \
+	    $(CONTAINER_ENGINE) build --progress=plain --file "$(abs_srcdir)/etc/Dockerfile.$$distribution-rpm-package" --tag "$$image" "$(abs_srcdir)"; \
+	    cid=$$($(CONTAINER_ENGINE) create "$$image"); \
+	    mkdir -p "$(RELEASE_RPM_ARTIFACT_DIR)/$$distribution"; \
+	    $(CONTAINER_ENGINE) cp "$$cid":/artifacts/. "$(RELEASE_RPM_ARTIFACT_DIR)/$$distribution"; \
+	  ); \
 	done
 
 # Each Finch build copies a clean source context and runs the real distcheck

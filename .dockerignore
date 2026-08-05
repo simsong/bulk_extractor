@@ -20,6 +20,9 @@ src/.deps
 src/Makefile
 src/*.o
 src/bulk_extractor
+src/test_*
+!src/test_*.cpp
+!src/test_*.h
 src/tests/Makefile
 tests/Makefile
 bulk_extractor-*

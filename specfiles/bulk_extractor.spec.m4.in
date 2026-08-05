@@ -17,6 +17,8 @@ Group:          Productivity/File utilities
 AutoReqProv:    on
 Source:         bulk_extractor-@VERSION@.tar.gz
 BuildRequires:  zlib-devel
+BuildRequires:  libgcrypt-devel
+BuildRequires:  libgpg-error-devel
 ifdef([OPENSUSE],[BuildRequires:  libexiv2-devel])
 ifdef([FEDORA],[BuildRequires:  exiv2-devel])
 ifdef([OPENSUSE],[BuildRequires:  gcc13-c++])
