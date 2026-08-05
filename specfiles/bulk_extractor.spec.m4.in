@@ -3,6 +3,8 @@ changequote([,])dnl
 # spec file for package bulk_extractor
 #
 ifdef([OPENSUSE],[# Please submit bugfixes or comments via http://bugs.opensuse.org/])
+ifdef([FEDORA],[# Flex-generated scanners define incompatible yyguts_t types; disable Fedora's LTO until they are isolated.])
+ifdef([FEDORA],[%global _lto_cflags %{nil}])
 #
 
 Name:           bulk_extractor
@@ -15,12 +17,14 @@ Group:          Productivity/File utilities
 AutoReqProv:    on
 Source:         bulk_extractor-@VERSION@.tar.gz
 BuildRequires:  zlib-devel
-BuildRequires:  libewf-devel
 ifdef([OPENSUSE],[BuildRequires:  libexiv2-devel])
 ifdef([FEDORA],[BuildRequires:  exiv2-devel])
-ifdef([FEDORA],[BuildRequires:  librx-devel])
-BuildRequires:  gcc-c++
+ifdef([OPENSUSE],[BuildRequires:  gcc13-c++])
+ifdef([FEDORA],[BuildRequires:  gcc-c++])
 BuildRequires:  flex
+BuildRequires:  make
+BuildRequires:  pkgconfig(re2)
+BuildRequires:  pkgconfig(expat)
 
 %description
 bulk_extractor is a C++ program that scans a disk image, a file, or a
@@ -39,7 +43,8 @@ as features that are more common tend to be more important.
 %setup -q
 
 %build
-%configure
+ifdef([OPENSUSE],[export CC=gcc-13 CXX=g++-13])
+%configure --disable-libewf
 make %{?_smp_mflags}
 
 %install
@@ -47,7 +52,7 @@ make %{?_smp_mflags}
 
 %files
 %defattr(-,root,root)
-%doc ChangeLog README COPYING
+%doc ChangeLog README.md COPYING
 %doc %{_mandir}/man1/bulk_extractor.1.gz
 %{_bindir}/bulk_extractor
 
