@@ -62,19 +62,30 @@ jobs:
 
   publish-stable:
     name: Publish signed-tag snaps to stable
-    if: >-
-      github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') &&
-      secrets.SNAPCRAFT_STORE_CREDENTIALS != ''
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     needs: build-and-test
     runs-on: ubuntu-24.04
     environment: snap-store
+    env:
+      SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
 
     steps:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
+      - name: Determine whether protected Store credentials are available
+        id: store
+        run: |
+          if [ -z "$SNAPCRAFT_STORE_CREDENTIALS" ]; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            echo "Snap Store credentials are not configured; leaving this tagged build unpublished."
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Verify the signed release tag
+        if: steps.store.outputs.publish == 'true'
         run: |
           set -euo pipefail
           tag=${GITHUB_REF_NAME}
@@ -83,12 +94,14 @@ jobs:
           test "$(git cat-file -t "refs/tags/$tag")" = tag
 
       - uses: actions/download-artifact@v4
+        if: steps.store.outputs.publish == 'true'
         with:
           pattern: bulk-extractor-snap-*
           path: snaps
           merge-multiple: true
 
       - name: Select architecture-specific packages
+        if: steps.store.outputs.publish == 'true'
         id: snap-files
         run: |
           set -euo pipefail
@@ -99,17 +112,15 @@ jobs:
           printf 'amd64=%s\narm64=%s\n' "$amd64" "$arm64" >> "$GITHUB_OUTPUT"
 
       - name: Publish amd64 snap
+        if: steps.store.outputs.publish == 'true'
         uses: canonical/action-publish@v1
-        env:
-          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
         with:
           snap: ${{ steps.snap-files.outputs.amd64 }}
           release: stable
 
       - name: Publish arm64 snap
+        if: steps.store.outputs.publish == 'true'
         uses: canonical/action-publish@v1
-        env:
-          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
         with:
           snap: ${{ steps.snap-files.outputs.arm64 }}
           release: stable
