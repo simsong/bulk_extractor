@@ -21,13 +21,13 @@ such as accented characters (\`{e} ), funny symbols
 (\charpicture{otherPics/U+2234}) and the occasional Chinese
 character (\charpicture{otherPics/U+611B}) that may show up in the
 files are legitimate. Glyphs from language, for example, Cyrillic
-(\charpicture{otherPics/U+0428}) or Arabic (\charpicture{otherPics/U+062D}) may show up in features files as all
+(\charpicture{otherPics/U+0428}) or Arabic (\charpicture{otherPics/U+062D}) may show up in feature files as all
 foreign languages can be coded in UTF-8 format. It is perfectly
 appropriate and typical to open up a feature file and see characters
 that the user may not recognize.\\
 
 \section{2009-M57 Patents Scenario}
-The 2009-M57-Patents scenario tracks the first four weeks of corporate history of the (fictional) M57 Patents company. The company started operation on Friday, November 13th, 2009, and ceased operation on Saturday, December 12, 2009. This specific scenario was built to be used as a teaching tool both as a disk forensics exercise and as a network forensics exercise. The scenario data is also useful for computer forensics research because the hard drive of each computer and each computers memory were imaged every day. In this example, we are not particularly interested in the exercises related to illegal activity, exfiltration and eavesdropping; they do however provide interesting components for us to examine in the example data\cite{m57scenario}.
+The 2009-M57-Patents scenario tracks the first four weeks of corporate history of the (fictional) M57 Patents company. The company started operation on Friday, November 13th, 2009, and ceased operation on Saturday, December 12, 2009. This specific scenario was built to be used as a teaching tool both as a disk forensics exercise and as a network forensics exercise. The scenario data is also useful for computer forensics research because the hard drive of each computer and each computer's memory were imaged every day. In this example, we are not particularly interested in the exercises related to illegal activity, exfiltration and eavesdropping; they do however provide interesting components for us to examine in the example data\cite{m57scenario}.
 
 \subsection{Run \bulk with the Data}
 For this example, we downloaded and utilized one of the disk images from the 2009-M57-Patents Scenario. Those images are available at \url{http://digitalcorpora.org/corp/nps/scenarios/2009-m57-patents/drives-redacted/}. The file used throughout this example is called \texttt{charlie-2009-12-11.E01}. Running \bulk on the command line produces the following output (text input by the user is bold):\\
@@ -724,7 +724,7 @@ PointerToLinenumbers="0" ><Characteristics><IMAGE_SCN_CNT_INITIALIZED_DATA />
 \end{lstlisting}
 The first number is the offset and tells you where to find the file. Most executables are not fragmented. The second is the MD5 hash of the first 4k of the file that can be used to deduplicate and look up the file in the hash database. Finally, the bulk of the information is contained in the <PE> XML block that breaks out all of the Windows PE header information. It contains information about the File header, the characteristics of the file, Windows header information and section header information.\\
 
-The file \texttt{winprefetch.txt} contains the information from carved files Windows Prefetch that were discovered anywhere on the drive. \bulk will carve the Prefetch files from unallocated space. This extremely useful because Prefetch files are frequently deleted. A single line in the prefetch output file is also very long. The following is only the beginning of one line from the file:
+The file \texttt{winprefetch.txt} contains information from carved Windows Prefetch files that were discovered anywhere on the drive. \bulk will carve Prefetch files from unallocated space. This is extremely useful because Prefetch files are frequently deleted. A single line in the prefetch output file is also very long. The following is only the beginning of one line from the file:
 \lstset{style=customfile}
 \begin{lstlisting}
 55758336	MSIEXEC.EXE	<prefetch><os>Windows
