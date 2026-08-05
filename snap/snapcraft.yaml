@@ -45,7 +45,7 @@ parts:
       - pkg-config
       - zlib1g-dev
     stage-packages:
-      - libabsl20220623
+      - libabsl20210324
       - libexpat1
       - libgcrypt20
       - libgpg-error0
