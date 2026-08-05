@@ -97,14 +97,21 @@ libinstall:
 # active checkout. See scripts/release.sh and doc/RELEASE_PROCEDURE.md.
 RELEASE_ARTIFACT_DIR ?= $(abs_builddir)/release-artifacts
 RELEASE_SCRIPT = $(abs_srcdir)/scripts/release.sh
+RELEASE_TAG ?=
 .PHONY: release
 release:
 	RELEASE_ARTIFACT_DIR="$(RELEASE_ARTIFACT_DIR)" RELEASE_SOURCE_DIR="$(abs_srcdir)" "$(RELEASE_SCRIPT)"
 
 .PHONY: release-deb
 release-deb:
+	test -n "$(RELEASE_TAG)"
+	test "$$(git -C "$(abs_srcdir)" cat-file -t "refs/tags/$(RELEASE_TAG)")" = tag
+	test "$$(git -C "$(abs_srcdir)" rev-parse "$(RELEASE_TAG)^{commit}")" = "$$(git -C "$(abs_srcdir)" rev-parse HEAD)"
+	git -C "$(abs_srcdir)" diff --quiet
+	git -C "$(abs_srcdir)" diff --cached --quiet
+	test -z "$$(git -C "$(abs_srcdir)" ls-files --others --exclude-standard)"
 	mkdir -p "$(RELEASE_ARTIFACT_DIR)"
-	$(CONTAINER_ENGINE) build --progress=plain --file etc/Dockerfile.debian-package --tag bulk-extractor-deb-build .
+	$(CONTAINER_ENGINE) build --progress=plain --file "$(abs_srcdir)/etc/Dockerfile.debian-package" --tag bulk-extractor-deb-build "$(abs_srcdir)"
 	cid=$$($(CONTAINER_ENGINE) create bulk-extractor-deb-build); \
 	  $(CONTAINER_ENGINE) cp "$$cid":/ - | tar -xf - --wildcards --strip-components=1 \
 	    -C "$(RELEASE_ARTIFACT_DIR)" 'bulk-extractor_*'; \
