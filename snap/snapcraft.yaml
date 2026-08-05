@@ -59,6 +59,6 @@ parts:
       craftctl set version="$version"
     override-build: |
       bash bootstrap.sh
-      ./configure --prefix=/usr --disable-libewf --disable-lightgrep --quiet
+      ./configure --prefix=/usr --disable-libewf --quiet
       make -j"$(nproc)"
       make install DESTDIR="$CRAFT_PART_INSTALL"
