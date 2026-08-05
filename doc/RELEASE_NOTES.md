@@ -251,6 +251,8 @@ through the project's normal pull-request and CI process.
   can assemble and checksum supplied artifacts with `--dry-run`, and never
   publishes a GitHub Release without a release-manager action
   ([#621](https://github.com/simsong/bulk_extractor/issues/621)).
+- The release workflow now assembles and verifies artifacts in a read-only job;
+  only its separate draft-publishing job receives repository write permission.
 
 ### Known limitations and release work
 
