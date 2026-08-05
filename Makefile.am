@@ -100,6 +100,7 @@ libinstall:
 RELEASE_ARTIFACT_DIR ?= $(abs_builddir)/release-artifacts
 RELEASE_SCRIPT = $(abs_srcdir)/scripts/release.sh
 RELEASE_TAG ?=
+RELEASE_RPM_ARTIFACT_DIR ?= $(abs_builddir)/release-rpm-artifacts
 .PHONY: release
 release:
 	RELEASE_ARTIFACT_DIR="$(RELEASE_ARTIFACT_DIR)" RELEASE_SOURCE_DIR="$(abs_srcdir)" "$(RELEASE_SCRIPT)"
@@ -122,6 +123,30 @@ release-deb:
 	  $(CONTAINER_ENGINE) cp "$$cid":/ - | tar -xf - --wildcards --strip-components=1 \
 	    -C "$(RELEASE_ARTIFACT_DIR)" 'bulk-extractor_*'; \
 	  $(CONTAINER_ENGINE) rm "$$cid"
+
+.PHONY: release-rpm
+release-rpm:
+	test -n "$(RELEASE_TAG)"
+	test "$$(git -C "$(abs_srcdir)" cat-file -t "refs/tags/$(RELEASE_TAG)")" = tag
+	test "$$(git -C "$(abs_srcdir)" rev-parse "$(RELEASE_TAG)^{commit}")" = "$$(git -C "$(abs_srcdir)" rev-parse HEAD)"
+	git -C "$(abs_srcdir)" diff --quiet
+	git -C "$(abs_srcdir)" diff --cached --quiet
+	test -z "$$(git -C "$(abs_srcdir)" ls-files --others --exclude-standard)"
+	test ! -e "$(RELEASE_RPM_ARTIFACT_DIR)"
+	mkdir -p "$(RELEASE_RPM_ARTIFACT_DIR)"
+	@set -e; for distribution in fedora opensuse; do \
+	  ( set -e; \
+	    cid=; \
+	    cleanup() { test -z "$$cid" || $(CONTAINER_ENGINE) rm -f "$$cid" >/dev/null 2>&1 || :; }; \
+	    trap cleanup EXIT; \
+	    trap 'cleanup; exit 1' HUP INT TERM; \
+	    image=bulk-extractor-rpm-$$distribution-build; \
+	    $(CONTAINER_ENGINE) build --progress=plain --file "$(abs_srcdir)/etc/Dockerfile.$$distribution-rpm-package" --tag "$$image" "$(abs_srcdir)"; \
+	    cid=$$($(CONTAINER_ENGINE) create "$$image"); \
+	    mkdir -p "$(RELEASE_RPM_ARTIFACT_DIR)/$$distribution"; \
+	    $(CONTAINER_ENGINE) cp "$$cid":/artifacts/. "$(RELEASE_RPM_ARTIFACT_DIR)/$$distribution"; \
+	  ); \
+	done
 
 # Each Finch build copies a clean source context and runs the real distcheck
 # inside it. Finch selects native arm64 and emulated amd64 on Apple Silicon.
