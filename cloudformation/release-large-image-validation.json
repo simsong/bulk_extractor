@@ -1,0 +1,100 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Disposable, cost-bounded bulk_extractor large-image release validation.",
+  "Parameters": {
+    "InputBucket": { "Type": "String", "AllowedPattern": "^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$" },
+    "InputKey": { "Type": "String", "MinLength": "1" },
+    "InputSha256": { "Type": "String", "AllowedPattern": "^[A-Fa-f0-9]{64}$" },
+    "AvailabilityZone": { "Type": "AWS::EC2::AvailabilityZone::Name" },
+    "SubnetId": { "Type": "AWS::EC2::Subnet::Id" },
+    "VpcId": { "Type": "AWS::EC2::VPC::Id" },
+    "SourceArchiveUrl": { "Type": "String", "AllowedPattern": "^https://.+" },
+    "SourceArchiveSha256": { "Type": "String", "AllowedPattern": "^[A-Fa-f0-9]{64}$" },
+    "BudgetAlertEmail": { "Type": "String", "AllowedPattern": "^.+@.+$" },
+    "ScratchVolumeGiB": { "Type": "Number", "Default": "4096", "AllowedValues": [100, 500, 1024, 2048, 4096] },
+    "MaxRuntimeMinutes": { "Type": "Number", "Default": "480", "AllowedValues": [60, 120, 240, 480] }
+  },
+  "Resources": {
+    "ResultBucket": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "BucketEncryption": { "ServerSideEncryptionConfiguration": [{ "ServerSideEncryptionByDefault": { "SSEAlgorithm": "AES256" } }] },
+        "PublicAccessBlockConfiguration": { "BlockPublicAcls": true, "BlockPublicPolicy": true, "IgnorePublicAcls": true, "RestrictPublicBuckets": true },
+        "LifecycleConfiguration": { "Rules": [{ "Id": "expire-redacted-summary", "Status": "Enabled", "ExpirationInDays": 1 }] }
+      }
+    },
+    "ResultBucketPolicy": {
+      "Type": "AWS::S3::BucketPolicy",
+      "Properties": {
+        "Bucket": { "Ref": "ResultBucket" },
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [{ "Effect": "Deny", "Principal": "*", "Action": "s3:*", "Resource": [{ "Fn::GetAtt": ["ResultBucket", "Arn"] }, { "Fn::Sub": "${ResultBucket.Arn}/*" }], "Condition": { "Bool": { "aws:SecureTransport": "false" } } }]
+        }
+      }
+    },
+    "ValidationLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": { "LogGroupName": { "Fn::Sub": "/bulk-extractor/release-validation/${AWS::StackName}" }, "RetentionInDays": 1 }
+    },
+    "ValidationRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": { "Fn::Sub": "${AWS::StackName}-instance" },
+        "AssumeRolePolicyDocument": { "Version": "2012-10-17", "Statement": [{ "Effect": "Allow", "Principal": { "Service": "ec2.amazonaws.com" }, "Action": "sts:AssumeRole" }] },
+        "Policies": [{
+          "PolicyName": "release-validation",
+          "PolicyDocument": {
+            "Version": "2012-10-17",
+            "Statement": [
+              { "Effect": "Allow", "Action": ["s3:GetObject", "s3:GetObjectAttributes"], "Resource": { "Fn::Sub": "arn:${AWS::Partition}:s3:::${InputBucket}/${InputKey}" } },
+              { "Effect": "Allow", "Action": ["s3:PutObject", "s3:AbortMultipartUpload"], "Resource": { "Fn::Sub": "${ResultBucket.Arn}/*" } },
+              { "Effect": "Allow", "Action": ["ec2:DescribeVolumes"], "Resource": "*" },
+              { "Effect": "Allow", "Action": ["logs:CreateLogStream", "logs:PutLogEvents"], "Resource": { "Fn::GetAtt": ["ValidationLogGroup", "Arn"] } }
+            ]
+          }
+        }]
+      }
+    },
+    "ValidationInstanceProfile": { "Type": "AWS::IAM::InstanceProfile", "Properties": { "Roles": [{ "Ref": "ValidationRole" }] } },
+    "ValidationWaitHandle": { "Type": "AWS::CloudFormation::WaitConditionHandle" },
+    "ValidationWaitCondition": { "Type": "AWS::CloudFormation::WaitCondition", "DependsOn": "ValidationInstance", "Properties": { "Handle": { "Ref": "ValidationWaitHandle" }, "Timeout": "28800", "Count": 1 } },
+    "ValidationInstance": {
+      "Type": "AWS::EC2::Instance",
+      "Properties": {
+        "ImageId": { "Fn::Sub": "{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64}}" },
+        "AvailabilityZone": { "Ref": "AvailabilityZone" },
+        "InstanceType": "c6i.2xlarge",
+        "IamInstanceProfile": { "Ref": "ValidationInstanceProfile" },
+        "InstanceInitiatedShutdownBehavior": "terminate",
+        "MetadataOptions": { "HttpTokens": "required", "HttpEndpoint": "enabled" },
+        "SecurityGroupIds": [{ "Fn::GetAtt": ["ValidationSecurityGroup", "GroupId"] }],
+        "SubnetId": { "Ref": "SubnetId" },
+        "Tags": [{ "Key": "Name", "Value": { "Fn::Sub": "${AWS::StackName}-validation" } }, { "Key": "bulk-extractor-release-validation", "Value": "true" }],
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Sub": "#!/bin/bash\nset -uo pipefail\nexec > >(tee /var/log/bulk-extractor-release-validation.log | logger -t bulk-extractor-release-validation) 2>&1\nwait_url='${ValidationWaitHandle}'\nresult_bucket='${ResultBucket}'\nresult_key='${AWS::StackName}/summary.txt'\nscratch_volume_id='${ScratchVolume}'\nmax_runtime_minutes='${MaxRuntimeMinutes}'\nsource_url='${SourceArchiveUrl}'\nsource_sha256='${SourceArchiveSha256}'\ninput_bucket='${InputBucket}'\ninput_key='${InputKey}'\ninput_sha256='${InputSha256}'\nsend_signal() { curl -fsS -X PUT -H 'Content-Type:' --data-binary \"{\\\"Status\\\":\\\"SUCCESS\\\",\\\"Reason\\\":\\\"validation finished\\\",\\\"UniqueId\\\":\\\"$HOSTNAME\\\",\\\"Data\\\":\\\"summary written\\\"}\" \"$wait_url\"; }\nfinish() { send_signal || true; shutdown -h now; }\ntrap finish EXIT\ndnf install -y awscli gcc gcc-c++ make autoconf automake libtool pkgconf-pkg-config expat-devel libgcrypt-devel openssl-devel re2-devel zlib-devel xfsprogs\nsystemd-run --unit=bulk-extractor-release-timeout --on-active=$max_runtime_minutes\"m\" /sbin/shutdown -h now\nvolume_serial=$(echo \"$scratch_volume_id\" | tr -d '-')\nscratch_device=''\nfor attempt in $(seq 1 60); do\n  for candidate in /dev/nvme*n1 /dev/xvd?; do\n    [ -b \"$candidate\" ] || continue\n    if lsblk -ndo SERIAL \"$candidate\" 2>/dev/null | tr -d '-' | grep -qx \"$volume_serial\"; then scratch_device=\"$candidate\"; break; fi\n  done\n  [ -n \"$scratch_device\" ] && break\n  sleep 10\ndone\n[ -n \"$scratch_device\" ] || exit 1\nblkid \"$scratch_device\" >/dev/null 2>&1 || mkfs.xfs -f \"$scratch_device\"\nmkdir -p /mnt/bulk-extractor-release\nmount \"$scratch_device\" /mnt/bulk-extractor-release\ncurl --fail --location --silent --show-error \"$source_url\" -o /tmp/source.tar.gz\necho \"$source_sha256  /tmp/source.tar.gz\" | sha256sum -c -\ntar -xzf /tmp/source.tar.gz -C /mnt/bulk-extractor-release\nsource_directory=$(find /mnt/bulk-extractor-release -mindepth 1 -maxdepth 1 -type d -name 'bulk_extractor-*' -print -quit)\nRESULT_FILE=/tmp/summary.txt SCRATCH_DIRECTORY=/mnt/bulk-extractor-release SOURCE_DIRECTORY=\"$source_directory\" INPUT_BUCKET=\"$input_bucket\" INPUT_KEY=\"$input_key\" INPUT_SHA256=\"$input_sha256\" SOURCE_ARCHIVE_SHA256=\"$source_sha256\" MAX_RUNTIME_MINUTES=\"$max_runtime_minutes\" \"$source_directory/scripts/aws_large_image_worker.sh\nworker_status=$?\naws s3 cp /tmp/summary.txt \"s3://$result_bucket/$result_key\" --sse AES256 --only-show-errors\nexit $worker_status\n"
+          }
+        }
+      }
+    },
+    "ValidationSecurityGroup": { "Type": "AWS::EC2::SecurityGroup", "Properties": { "GroupDescription": "No inbound access for bulk_extractor release validation", "VpcId": { "Ref": "VpcId" }, "SecurityGroupEgress": [{ "IpProtocol": "-1", "CidrIp": "0.0.0.0/0" }] } },
+    "ScratchVolume": {
+      "Type": "AWS::EC2::Volume",
+      "Properties": { "AvailabilityZone": { "Ref": "AvailabilityZone" }, "Encrypted": true, "Size": { "Ref": "ScratchVolumeGiB" }, "VolumeType": "gp3", "Tags": [{ "Key": "bulk-extractor-release-validation", "Value": "true" }] }
+    },
+    "ScratchAttachment": { "Type": "AWS::EC2::VolumeAttachment", "Properties": { "Device": "/dev/sdf", "InstanceId": { "Ref": "ValidationInstance" }, "VolumeId": { "Ref": "ScratchVolume" } } },
+    "ComputeBudget": {
+      "Type": "AWS::Budgets::Budget",
+      "Properties": {
+        "Budget": { "BudgetName": { "Fn::Sub": "${AWS::StackName}-compute" }, "BudgetLimit": { "Amount": "10", "Unit": "USD" }, "TimeUnit": "DAILY", "BudgetType": "COST", "CostFilters": { "Service": ["Amazon Elastic Compute Cloud - Compute"] } },
+        "NotificationsWithSubscribers": [{ "Notification": { "NotificationType": "ACTUAL", "ComparisonOperator": "GREATER_THAN", "Threshold": 80 }, "Subscribers": [{ "SubscriptionType": "EMAIL", "Address": { "Ref": "BudgetAlertEmail" } }] }]
+      }
+    }
+  },
+  "Outputs": {
+    "ResultBucket": { "Value": { "Ref": "ResultBucket" } },
+    "SummaryKey": { "Value": { "Fn::Sub": "${AWS::StackName}/summary.txt" } },
+    "RuntimeCap": { "Value": "480 minutes; c6i.2xlarge compute is capped below the approximately $10 CPU budget." }
+  }
+}

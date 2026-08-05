@@ -1,0 +1,123 @@
+name: Validate release large image on AWS
+
+on:
+  workflow_dispatch:
+    inputs:
+      aws_role_arn:
+        description: Trusted GitHub OIDC role ARN; never use stored AWS keys.
+        required: true
+        type: string
+      aws_region:
+        description: AWS Region for the disposable validation stack.
+        required: true
+        default: us-east-1
+        type: string
+      stack_name:
+        description: New stack name for this one validation run.
+        required: true
+        type: string
+      availability_zone:
+        description: Availability Zone shared by the approved subnet and scratch volume.
+        required: true
+        type: string
+      subnet_id:
+        description: Private subnet for the no-inbound validation instance.
+        required: true
+        type: string
+      vpc_id:
+        description: VPC containing the approved subnet.
+        required: true
+        type: string
+      input_bucket:
+        description: Approved encrypted input bucket name.
+        required: true
+        type: string
+      input_key:
+        description: Approved encrypted input object key.
+        required: true
+        type: string
+      input_sha256:
+        description: Approved input SHA-256.
+        required: true
+        type: string
+      source_archive_url:
+        description: HTTPS URL for the reviewed source archive.
+        required: true
+        type: string
+      source_archive_sha256:
+        description: Source archive SHA-256.
+        required: true
+        type: string
+      budget_alert_email:
+        description: Release-manager email for the AWS Budget alert.
+        required: true
+        type: string
+      release_issue:
+        description: Release issue number for redacted status only.
+        required: true
+        type: string
+
+permissions:
+  attestations: write
+  contents: read
+  id-token: write
+  issues: write
+
+jobs:
+  validate:
+    name: Build and scan approved large image
+    runs-on: ubuntu-latest
+    timeout-minutes: 510
+    environment: release
+    steps:
+      - uses: actions/checkout@v5
+      - name: Configure AWS through GitHub OIDC
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ inputs.aws_role_arn }}
+          aws-region: ${{ inputs.aws_region }}
+      - name: Validate template safety properties
+        run: |
+          make release-aws-large-image-template-check
+          make release-aws-large-image-cloudformation-check
+      - name: Run disposable validation
+        env:
+          AWS_LARGE_IMAGE_STACK: ${{ inputs.stack_name }}
+          AWS_LARGE_IMAGE_RESULT: ${{ runner.temp }}/aws-large-image-summary.txt
+          AWS_LARGE_IMAGE_AVAILABILITY_ZONE: ${{ inputs.availability_zone }}
+          AWS_LARGE_IMAGE_SUBNET_ID: ${{ inputs.subnet_id }}
+          AWS_LARGE_IMAGE_VPC_ID: ${{ inputs.vpc_id }}
+          AWS_LARGE_IMAGE_INPUT_BUCKET: ${{ inputs.input_bucket }}
+          AWS_LARGE_IMAGE_INPUT_KEY: ${{ inputs.input_key }}
+          AWS_LARGE_IMAGE_INPUT_SHA256: ${{ inputs.input_sha256 }}
+          AWS_LARGE_IMAGE_SOURCE_URL: ${{ inputs.source_archive_url }}
+          AWS_LARGE_IMAGE_SOURCE_SHA256: ${{ inputs.source_archive_sha256 }}
+          AWS_LARGE_IMAGE_BUDGET_EMAIL: ${{ inputs.budget_alert_email }}
+        run: make release-aws-large-image
+      - name: Attest redacted summary
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: ${{ runner.temp }}/aws-large-image-summary.txt
+      - name: Upload redacted summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: aws-large-image-summary
+          path: ${{ runner.temp }}/aws-large-image-summary.txt
+          if-no-files-found: error
+      - name: Post attested result
+        uses: actions/github-script@v8
+        env:
+          RELEASE_ISSUE: ${{ inputs.release_issue }}
+          SUMMARY_PATH: ${{ runner.temp }}/aws-large-image-summary.txt
+        with:
+          script: |
+            const fs = require('fs');
+            const issue = Number(process.env.RELEASE_ISSUE);
+            if (!Number.isSafeInteger(issue) || issue < 1) core.setFailed('release_issue must be a positive issue number');
+            const summary = fs.readFileSync(process.env.SUMMARY_PATH, 'utf8');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue,
+              body: `AWS large-image validation completed with an attested, redacted summary.\n\n\`\`\`text\n${summary}\`\`\``
+            });

@@ -23,7 +23,11 @@ include Makefile.auto_defs
 EXTRA_DIST = $(SRC_WIN_DIST) $(AUTO_DOC_FILES) $(AUTO_ETC_FILES) $(AUTO_LICENSES) \
 	$(srcdir)/etc/Dockerfile.fedora-distcheck \
 	$(srcdir)/etc/Dockerfile.ubuntu-distcheck \
+	$(srcdir)/cloudformation/release-large-image-validation.json \
 	$(srcdir)/scripts/assemble_github_release.py \
+	$(srcdir)/scripts/check_aws_large_image_template.py \
+	$(srcdir)/scripts/release_aws_large_image.sh \
+	$(srcdir)/scripts/aws_large_image_worker.sh \
 	$(srcdir)/scripts/release.sh \
 	$(srcdir)/AGENTS.md \
 	$(srcdir)/.gitignore \
@@ -98,9 +102,21 @@ libinstall:
 RELEASE_ARTIFACT_DIR ?= $(abs_builddir)/release-artifacts
 RELEASE_SCRIPT = $(abs_srcdir)/scripts/release.sh
 RELEASE_TAG ?=
+AWS_LARGE_IMAGE_TEMPLATE = $(abs_srcdir)/cloudformation/release-large-image-validation.json
+AWS_LARGE_IMAGE_SCRIPT = $(abs_srcdir)/scripts/release_aws_large_image.sh
 .PHONY: release
 release:
 	RELEASE_ARTIFACT_DIR="$(RELEASE_ARTIFACT_DIR)" RELEASE_SOURCE_DIR="$(abs_srcdir)" "$(RELEASE_SCRIPT)"
+
+.PHONY: release-aws-large-image release-aws-large-image-template-check release-aws-large-image-cloudformation-check
+release-aws-large-image:
+	AWS_LARGE_IMAGE_TEMPLATE="$(AWS_LARGE_IMAGE_TEMPLATE)" "$(AWS_LARGE_IMAGE_SCRIPT)"
+
+release-aws-large-image-template-check:
+	python3 "$(abs_srcdir)/scripts/check_aws_large_image_template.py" "$(AWS_LARGE_IMAGE_TEMPLATE)"
+
+release-aws-large-image-cloudformation-check:
+	aws cloudformation validate-template --template-body "file://$(AWS_LARGE_IMAGE_TEMPLATE)" >/dev/null
 
 .PHONY: release-deb
 release-deb:
