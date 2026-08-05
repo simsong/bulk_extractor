@@ -106,7 +106,7 @@ release:
 
 .PHONY: snap
 snap:
-	snapcraft pack
+	cd "$(abs_srcdir)" && snapcraft pack
 
 .PHONY: release-deb
 release-deb:

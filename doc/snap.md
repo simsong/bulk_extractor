@@ -12,7 +12,7 @@ ordinary image files stored in a user's non-hidden home directory:
 ```sh
 sudo snap install bulk-extractor
 sudo snap connect bulk-extractor:home :home
-bulk-extractor.bulk-extractor -o ~/bulk-extractor-output ~/image.dd
+bulk-extractor -o ~/bulk-extractor-output ~/image.dd
 ```
 
 For image files stored on mounted removable media, explicitly connect
@@ -20,7 +20,7 @@ For image files stored on mounted removable media, explicitly connect
 
 ```sh
 sudo snap connect bulk-extractor:removable-media :removable-media
-bulk-extractor.bulk-extractor -o ~/bulk-extractor-output /mnt/image.dd
+bulk-extractor -o ~/bulk-extractor-output /mnt/image.dd
 ```
 
 ## Raw devices
@@ -32,7 +32,7 @@ an administrator must explicitly connect the interface:
 
 ```sh
 sudo snap connect bulk-extractor:block-devices :block-devices
-sudo bulk-extractor.bulk-extractor -o /mnt/bulk-extractor-output /dev/sdb
+sudo snap run bulk-extractor -o /mnt/bulk-extractor-output /dev/sdb
 ```
 
 `block-devices` is requested with `allow-partitions: true`, so both disks and

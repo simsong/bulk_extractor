@@ -61,7 +61,7 @@ jobs:
           if-no-files-found: error
 
   publish-stable:
-    name: Publish signed-tag snaps to stable
+    name: Publish annotated-tag snaps to stable
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     needs: build-and-test
     runs-on: ubuntu-24.04
@@ -84,7 +84,7 @@ jobs:
             echo "publish=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Verify the signed release tag
+      - name: Verify the annotated release tag and version
         if: steps.store.outputs.publish == 'true'
         run: |
           set -euo pipefail

@@ -225,7 +225,7 @@ The following release-engineering issues close the remaining automation gaps:
 - [#626][snap-issue]: optional project-owned Snap Store publication for Ubuntu
   users; it does not replace the Debian-to-Ubuntu path. The strict-confinement
   interface model, local `make snap` entry point, amd64/arm64 install-test
-  workflow, and protected signed-tag stable publication are documented in
+  workflow, and protected annotated-tag stable publication are documented in
   [doc/snap.md](snap.md).
 
 Once these are complete, a release manager should be able to direct Codex to
