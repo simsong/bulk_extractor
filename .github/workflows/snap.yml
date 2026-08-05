@@ -1,0 +1,115 @@
+name: Snap build and test
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/snap.yml'
+      - 'snap/**'
+      - 'configure.ac'
+      - 'Makefile.am'
+      - 'src/**'
+  push:
+    branches: [main]
+    tags: ['v*']
+    paths:
+      - '.github/workflows/snap.yml'
+      - 'snap/**'
+      - 'configure.ac'
+      - 'Makefile.am'
+      - 'src/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Snap build and test (${{ matrix.arch }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Build snap
+        id: snap
+        uses: canonical/action-build@v1
+
+      - name: Install and run the strictly confined snap
+        run: |
+          set -euo pipefail
+          sudo snap install --dangerous "${{ steps.snap.outputs.snap }}"
+          sudo snap connect bulk-extractor:home :home
+          image="$HOME/bulk_extractor-fat32.dmg"
+          output="$HOME/bulk_extractor-snap-output"
+          cp src/tests/1mb_fat32.dmg "$image"
+          bulk-extractor.bulk-extractor -0q -o "$output" "$image"
+          test -s "$output/report.xml"
+
+      - name: Upload snap
+        uses: actions/upload-artifact@v4
+        with:
+          name: bulk-extractor-snap-${{ matrix.arch }}
+          path: ${{ steps.snap.outputs.snap }}
+          if-no-files-found: error
+
+  publish-stable:
+    name: Publish signed-tag snaps to stable
+    if: >-
+      github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') &&
+      secrets.SNAPCRAFT_STORE_CREDENTIALS != ''
+    needs: build-and-test
+    runs-on: ubuntu-24.04
+    environment: snap-store
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Verify the signed release tag
+        run: |
+          set -euo pipefail
+          tag=${GITHUB_REF_NAME}
+          version=$(sed -n 's/^AC_INIT(\[BULK_EXTRACTOR\],\[\([^]]*\)\].*/\1/p' configure.ac)
+          test "$tag" = "v$version"
+          test "$(git cat-file -t "refs/tags/$tag")" = tag
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: bulk-extractor-snap-*
+          path: snaps
+          merge-multiple: true
+
+      - name: Select architecture-specific packages
+        id: snap-files
+        run: |
+          set -euo pipefail
+          amd64=$(find snaps -name '*_amd64.snap' -type f -print -quit)
+          arm64=$(find snaps -name '*_arm64.snap' -type f -print -quit)
+          test -n "$amd64"
+          test -n "$arm64"
+          printf 'amd64=%s\narm64=%s\n' "$amd64" "$arm64" >> "$GITHUB_OUTPUT"
+
+      - name: Publish amd64 snap
+        uses: canonical/action-publish@v1
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
+        with:
+          snap: ${{ steps.snap-files.outputs.amd64 }}
+          release: stable
+
+      - name: Publish arm64 snap
+        uses: canonical/action-publish@v1
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
+        with:
+          snap: ${{ steps.snap-files.outputs.arm64 }}
+          release: stable
