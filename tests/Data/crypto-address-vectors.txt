@@ -1,0 +1,12 @@
+# Public address candidates for issue #651. No private keys or recovery words.
+# Family|network|value|expected|notes
+BTC|mainnet|1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62i|address|Base58Check P2PKH
+BTC|mainnet|1111111111111111111114oLvT2|address|Base58Check P2PKH
+BTC|mainnet|1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62X|invalid|Checksum changed
+ETH|unknown-chain|0x52908400098527886E0F7030069857D2E4169EE7|address|EIP-55 checksum example
+ETH|unknown-chain|0xde709f2102306220921060314715629080e2fb77|ambiguous|All-lower EVM form; context needed
+XRP|mainnet|rPEPPER7kfTD9w2To4CQk6UCfuHM9c6GDY|address|Classic XRPL address
+SOL|mainnet|Vote111111111111111111111111111111111111111|public_key|Valid program public key, not a wallet
+XLM|mainnet|GBRPYHIL2CI3NFZRMFIQZ2BJKBNQYH3LYU2U5CKLLNTQSEPK4VST6LJX|address|StrKey public address
+EVM|unknown-chain|0x0123456789abcdef0123456789abcdef01234567|ambiguous|Shape only; no checksum/context
+
