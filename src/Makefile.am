@@ -137,6 +137,9 @@ endif
 
 if RAR_ENABLED
   scanners_builtin += $(AUTO_RAR_FILES)
+else
+check-local:
+	@echo "WARNING: RAR support is disabled; RAR tests were not built or run."
 endif
 
 bulk_extractor_parts = \

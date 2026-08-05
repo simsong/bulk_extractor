@@ -173,6 +173,8 @@ through the project's normal pull-request and CI process.
 
 ### Build, configuration, and testing
 
+- A build configured with `--disable-rar` now omits RAR-only tests without
+  breaking `make check`, and explicitly warns that RAR coverage was not run.
 - A multi-stage Debian Bookworm container image provides a reproducible,
   unprivileged environment for scanning regular image files. It documents its
   libewf and Lightgrep limitations and supplements native platform CI rather
