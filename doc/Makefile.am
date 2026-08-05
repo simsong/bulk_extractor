@@ -4,6 +4,7 @@ AUTOMAKE_OPTIONS = subdir-objects
 
 EXTRA_DIST = carving.md docker.md logging.md scanner_api.md scanner_template.cpp testing.md \
     programmer_manual/BEProgrammersManual.tex \
+    programmer_manual/references.bib \
     programmer_manual/Makefile.am \
     programmer_manual/extractinformationreprocess.pdf \
     programmer_manual/histogramprocessing.pdf \

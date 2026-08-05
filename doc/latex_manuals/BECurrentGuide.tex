@@ -1,50 +1,711 @@
 \documentclass[11pt]{article}
 \usepackage[margin=1in]{geometry}
-\usepackage[hidelinks]{hyperref}
+\usepackage[T1]{fontenc}
+\usepackage{booktabs}
 \usepackage{fancyvrb}
-\title{bulk\_extractor 2.2 Current Operating Guide}
-\author{bulk\_extractor project}
-\date{July 2026}
+\usepackage{graphicx}
+\usepackage{xurl}
+\usepackage[hidelinks]{hyperref}
+\usepackage{longtable}
+\usepackage{listings}
+\usepackage{xspace}
+
+\newcommand{\bulk}{\textit{bulk\_extractor}\xspace}
+\newcommand{\viewer}{\textit{Bulk Extractor Viewer}\xspace}
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\verbbf}[1]{\textbf{#1}}
+\lstdefinestyle{customfile}{basicstyle=\footnotesize\ttfamily,
+  breaklines=true, frame=single}
+
+\title{bulk\_extractor 2.2 User Manual}
+\author{Jessica R. Bradley, Simson L. Garfinkel, and the bulk\_extractor project}
+\date{August 2026}
 
 \begin{document}
 \maketitle
 
-\section*{Scope}
-This guide describes the supported 2.2 command-line workflow.
+\begin{abstract}
+\bulk extracts forensic features from images, devices, files, and directories
+without relying on file-system metadata. This manual restores the operational
+explanations, investigative guidance, worked examples, and historical context
+of the version 1 manuals and updates them for release 2.2. The command-line
+help produced by the installed executable remains authoritative for the exact
+scanners and options in a particular build.
+\end{abstract}
 
-\section*{Build from source}
-Clone the repository or download a release from
-\url{https://github.com/simsong/bulk_extractor/releases}. Install the platform
-dependencies described by the repository README, then run:
+\tableofcontents
+\clearpage
+
+\section{Quick start}
+
+Obtain a disk image or other input that you are authorized to examine. Public
+test images are available from \url{https://digitalcorpora.org/}. Choose a new
+output directory and run:
+
 \begin{Verbatim}
+bulk_extractor -o output mydisk.raw
+\end{Verbatim}
+
+The output directory contains feature files, histograms where enabled, carved
+objects where applicable, a diagnostic log, and \code{report.xml}. Read the
+most frequent features first, but always inspect the feature, its context, and
+its forensic path before drawing a conclusion.
+
+For a directory of ordinary files, add \code{-R}:
+
+\begin{Verbatim}
+bulk_extractor -R -o output evidence-directory
+\end{Verbatim}
+
+Do not use \code{-R} for a directory containing the segments of one E01 or
+split-raw image. Supply the first image segment instead. Run
+\code{bulk\_extractor -H} to see the scanners, defaults, and scanner-specific
+settings compiled into the executable, and \code{bulk\_extractor -h} for the
+current option summary.
+
+\section{Introduction}
+
+\subsection{What bulk\_extractor does}
+
+\bulk extracts email addresses, URLs, domains, telephone numbers, credit-card
+numbers, network information, executable metadata, image metadata, and other
+structured features. It operates on raw or split-raw images, E01 images when
+the build includes libewf, regular files, directories of files, memory images,
+packet captures, and supported raw devices. It does not parse a file system to
+decide which bytes deserve examination.
+
+The program is useful for triage, malware and intrusion investigations,
+identity investigations, cyber investigations, imagery analysis, and the
+creation of word lists for password recovery. Its unusual capabilities
+include:
+
+\begin{itemize}
+\item optimistic decoding and recursive examination of recognized compressed
+  or encoded data, including incomplete data when the decoder can recover it;
+\item parallel processing of independent input pages and concurrent scanners;
+\item tab-delimited feature files suitable for inspection or automated
+  processing;
+\item histograms that bring frequent email addresses, domains, URLs, search
+  terms, and other features to an examiner's attention; and
+\item carving of validated objects, including objects recovered from derived
+  or compressed data.
+\end{itemize}
+
+\subsection{Origins and an early success}
+
+The original requirements came from interviews with law-enforcement examiners
+between 2005 and 2008. They wanted a highly automated tool that could find
+identifiers and investigative leads, process many media formats at storage
+speed, exploit multiple processors, and continue making progress on damaged or
+unusual evidence. That requirement still explains the program's emphasis on
+stream processing, forensic provenance, and simple output.
+
+An early deployment by the City of San Luis Obispo Police Department
+illustrated the value of rapid triage. An examiner received a 250 GB drive the
+day before a preliminary hearing. In roughly two and a half hours the program
+identified more than 10,000 candidate credit-card numbers, the dominant email
+address, search queries concerning credit-card fraud and bank-identification
+numbers, and geographically relevant web activity. Those observations did not
+replace forensic validation; they rapidly directed the examiner to evidence
+that warranted closer review.
+
+\subsection{Scope and conventions}
+
+This manual is for new, intermediate, and experienced users. Program names and
+literal commands appear in fixed-width type. Scanner availability and defaults
+are build-dependent. Examples from the original version 1 manual are retained
+because their investigative method remains useful; captured output and file
+lists in those examples are historical and will not exactly match a 2.2 run.
+
+BEViewer is not bundled with version 2.2. Its version 1 workflow has been moved
+to Appendix~\ref{sec:viewer-history}, both as historical documentation and as
+requirements for the viewer planned for restoration in the 2.x series.
+
+\section{How bulk\_extractor works}
+
+\subsection{Pages, scanners, and recursion}
+
+The input is divided into overlapping pages. Every eligible page is presented
+to the enabled scanners. The overlap, called the \emph{margin}, allows a
+scanner to recognize a feature that begins near the end of one page and
+continues into the next.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=.70\linewidth]{archPics/margindepiction.pdf}
+\caption{Adjacent input pages overlap by a margin.}
+\end{figure}
+
+Scanners receive bounds-checked safe buffers, or \code{sbuf}s. A recursive
+scanner can decode a validated region and return the derived buffer to the
+framework for another pass. This permits, for example, the email scanner to
+find an address in text extracted from a PDF or decompressed from a GZIP
+stream. Depth limits, duplicate detection, buffer characteristics, and scanner
+flags prevent or limit inappropriate recursion.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=.72\linewidth]{archPics/howitworks.pdf}
+\caption{Extraction, feature recording, and post-processing.}
+\end{figure}
+
+\subsection{Feature files}
+
+A feature recorder receives findings from one or more scanners and writes the
+corresponding feature file. A normal row has three tab-separated fields: a
+forensic path, the feature, and surrounding context. A simplified excerpt is:
+
+\begin{Verbatim}[fontsize=\small]
+48198832  domexuser2@gmail.com  <name>domexuser2@gmail.com</name>
+48200361  domexuser2@live.com   <name>domexuser2@live.com</name>
+\end{Verbatim}
+
+The context helps an examiner distinguish a useful feature from a false
+positive. Feature files are UTF-8 text, but individual scanners may use their
+fields to report scanner-specific metadata. Empty feature files are normal:
+they show that a recorder was active but accepted no findings.
+
+\subsection{Histograms}
+
+Histograms summarize selected feature files. Each line begins with the number
+of occurrences, followed by the normalized feature. They are sorted with the
+most frequent feature first:
+
+\begin{Verbatim}[fontsize=\small]
+n=875  mozilla@example.org
+n=651  charlie@m57.biz
+n=186  pat@m57.biz
+\end{Verbatim}
+
+Frequency can reveal a system's principal user, organization, correspondents,
+services, and search interests. A common feature is not necessarily probative,
+and a rare feature is not necessarily irrelevant. Confirm the underlying rows
+and their contexts.
+
+\subsection{Forensic paths}
+
+A byte offset alone cannot describe a feature recovered from transformed
+data. A forensic path records the original location and the transformations
+used to reach the feature. For example:
+
+\begin{Verbatim}[fontsize=\small]
+11052168704-GZIP-3437  live.com  domexuser@live.com
+\end{Verbatim}
+
+This means the feature was found at offset 3437 within data decompressed from a
+GZIP object beginning at source offset 11052168704. Paths may contain several
+transformations. Preserve the entire path when recording or citing a finding;
+the path is the link back to the source evidence.
+
+\section{Installing bulk\_extractor 2.2}
+
+\subsection{Release archive or Git checkout}
+
+Prefer a tested release from
+\url{https://github.com/simsong/bulk_extractor/releases}. A release archive
+already contains \code{configure}:
+
+\begin{Verbatim}
+./configure
+make
+make check
+sudo make install
+\end{Verbatim}
+
+A Git checkout requires the bootstrap step:
+
+\begin{Verbatim}
+git clone https://github.com/simsong/bulk_extractor.git
+cd bulk_extractor
 bash bootstrap.sh
 ./configure
 make
 make check
 sudo make install
 \end{Verbatim}
-The README is the canonical build and platform-support reference. Native
-Windows builds are not supported. The repository's Windows MinGW workflow
-cross-compiles a standalone \texttt{bulk\_extractor64.exe} on Ubuntu for each
-pull request. Download it from the Windows workflow artifact; it is not a
-signed installer or release distribution. The workflow verifies the PE imports
-and runs the executable on a Windows runner against a Unicode-named input file.
 
-\section*{Run a scan}
-Choose a new output directory and an input image or file:
+The README and installation wiki are the maintained dependency references.
+Release 2.2 requires C++17. Optional libraries affect available input formats
+and scanners; read the final \code{configure} summary and check \code{-H} on
+the resulting executable.
+
+\subsection{Windows}
+
+Native Windows builds and the old signed installer are not supported in 2.2.
+The project's Windows MinGW workflow cross-compiles a standalone
+\code{bulk\_extractor64.exe} on Ubuntu and validates it on a Windows runner.
+The workflow artifact is not a signed installer or release distribution, and
+the current artifact is built without E01 support. A release manager may
+attach the validated executable to the 2.2 release.
+
+\section{Running a scan}
+
+\subsection{Input data}
+
+Supply one image, file, device, or directory. Raw and split-raw images are
+supported. E01 support is present when the executable was built with libewf.
+Memory images and packet captures can be scanned directly; a protocol-aware
+tool such as \code{tcpflow} may provide more complete reconstruction of
+application streams before those reconstructed files are scanned.
+
+With \code{-R}, ordinary files below a directory are visited recursively in a
+deterministic order. Symlinks are not followed as directories, and paths that
+cannot be read are diagnosed and skipped. Do not use \code{-R} on a directory
+that represents the segments of one image.
+
+On Windows, supported raw-device forms include \code{C:},
+\verb|\\.\PhysicalDriveN|, \verb|\\.\X:|, and a named volume path
+without its trailing mounted-directory backslash. Raw devices normally require
+an elevated command prompt. They are opened read-only; the examiner remains
+responsible for appropriate evidence-handling procedures and write protection.
+
+\subsection{Output and resuming}
+
+The \code{-o} option is always required. A new scan normally uses a new output
+directory. If an existing output directory contains \code{report.xml}, 2.2
+resumes the interrupted scan. Pages recorded as in progress are deliberately
+skipped so that a repeatable data-dependent crash is not immediately repeated.
+The interrupted report is archived and the program reports how many pages were
+skipped.
+
+Use \code{-Z} only when you intend to remove the existing output contents and
+start over. It removes nested files and directories beneath the selected
+output directory. A completed output normally contains:
+
+\begin{itemize}
+\item feature files such as \code{email.txt}, \code{url.txt}, or
+  \code{winpe.txt};
+\item histogram files declared by enabled scanners;
+\item \code{report.xml}, containing DFXML provenance, configuration, timing,
+  scanner, and source information;
+\item \code{bulk\_extractor.log}, unless another log destination was chosen;
+\item \code{alerts.txt} when an alert list matches; and
+\item carving directories and their corresponding feature files when carving
+  is enabled and validated objects are found.
+\end{itemize}
+
+\subsection{Scanner selection and settings}
+
+Run \code{bulk\_extractor -H} to list the actual scanners and their settings.
+Scanners can cooperate: disabling a decoder can prevent another scanner from
+seeing features inside the decoded data.
+
 \begin{Verbatim}
-bulk_extractor -o output mydisk.raw
+bulk_extractor -e wordlist -o output image.raw
+bulk_extractor -x accts -o output image.raw
+bulk_extractor -E aes -o output image.raw
+bulk_extractor -x all -e aes -o output image.raw
+bulk_extractor -S name=value -o output image.raw
 \end{Verbatim}
-Use \texttt{bulk\_extractor --help} on the installed binary as the authoritative
-reference for options and scanner settings. A scan produces feature files,
-histograms where enabled, carved content where applicable, and DFXML run
-metadata in the output directory.
 
-\section*{Develop scanners}
-The maintained scanner contract is
-\url{https://github.com/simsong/bulk_extractor/blob/main/doc/scanner_api.md}.
-Read it before changing a built-in scanner or starting a loadable scanner, and
-begin from \texttt{doc/scanner\_template.cpp}. It documents the 2.x lifecycle,
-concurrency requirements, feature-recorder rules, and module factory.
+\code{-e} enables a scanner, \code{-x} disables one, and \code{-E} selects
+one scanner exclusively. Options may be repeated. The \code{-S} names are not
+a stable global list; they are declared by the scanners and feature recorders
+in a specific build. Use \code{-H}, not the version 1 settable-options file,
+as the 2.2 authority.
+
+Common scanner families include account and identifier scanners; email,
+domain, URL, and RFC822 scanners; network scanners; executable and Windows
+artifact scanners; image and metadata scanners; structured-data scanners; and
+decoders for compressed or encoded input. The word-list scanner remains
+disabled by default because of its output volume and cost. Outlook and
+hibernation processing may also be disabled by default pending stronger tests.
+
+\subsection{Searching for investigator-supplied patterns}
+
+Use \code{-f} for one RE2 pattern or \code{-F} for a file of patterns. Pattern
+matching is case-insensitive unless \code{--find-case-sensitive} is supplied:
+
+\begin{Verbatim}
+bulk_extractor -F findlist.txt -o output image.raw
+bulk_extractor --find-case-sensitive -f 'Project[ -]?Name' \
+  -o output image.raw
+\end{Verbatim}
+
+The old Lightgrep-specific workflow is not supported in 2.2. Lightgrep remains
+an optional, source-broken configuration and must not be assumed present.
+
+\subsection{Carving}
+
+Carving is configured per feature recorder:
+
+\begin{Verbatim}
+bulk_extractor -S jpeg_carve_mode=2 -o output image.raw
+\end{Verbatim}
+
+Mode 0 disables carving, mode 1 carves objects reached through an encoded or
+derived path, and mode 2 carves every object accepted by that recorder, subject
+to validation, deduplication, and size limits. JPEG and RAR recorders default
+to mode 1; \code{zip\_carved} and \code{sqlite\_carved} default to mode 2.
+There is no global carve-mode switch. Consult \code{doc/carving.md} and
+\code{-H} for current recorder names, defaults, and size settings.
+
+Carving does not reconstruct a file system. It writes byte sequences accepted
+by a scanner's validator. Treat carved extensions and filenames as analytical
+conveniences, not proof of the original filename or allocation state.
+
+\section{Reducing noise and highlighting evidence}
+
+\subsection{Stop lists}
+
+Operating systems, applications, and sample data contain many common email
+addresses, domains, and other features that are irrelevant to a particular
+case. A stop list supplied with \code{-w} diverts matching features out of the
+normal feature file. Stopped results are retained in the corresponding
+\code{\_stopped.txt} file so the examiner can audit what was suppressed.
+
+Each non-comment line may be a literal feature or a context-sensitive record.
+Use feature-file-format input when context matters, and test a new list against
+known data before relying on it. A stop list improves review efficiency; it
+does not prove that the suppressed item is harmless.
+
+\begin{Verbatim}
+bulk_extractor -w stoplist.txt -o output image.raw
+\end{Verbatim}
+
+\subsection{Alert lists and banners}
+
+An alert list supplied with \code{-r} identifies words or features that should
+also be recorded in \code{alerts.txt}. Context-sensitive entries can limit an
+alert to the specified surrounding evidence. An alert is an investigative
+lead, not a conclusion.
+
+\begin{Verbatim}
+bulk_extractor -r alertlist.txt -o output image.raw
+\end{Verbatim}
+
+In classified or otherwise specialized environments, \code{-b banner.txt}
+prepends a required banner to feature files. The banner is preserved in normal,
+stopped, alert, and histogram-related output paths.
+
+\section{Why compressed and encoded data matter}
+
+Unallocated space and damaged media often contain fragments of compressed or
+encoded objects. A file-system-oriented tool may not associate those fragments
+with a live file. \bulk probes the byte stream for supported signatures and
+attempts to decode recoverable data. Derived buffers are recursively examined
+by the scanner set, which can reveal features unavailable in the original byte
+representation.
+
+ZIP, GZIP, PDF text streams, Base16, Base64, RAR versions 1 through 3, and
+Microsoft XPress hibernation data are examples of supported or scanner-specific
+transformations. Availability and default enablement vary. The RAR decoder does
+not handle every archive or UTF-8 component name. Recursive depth, decoded-size
+limits, duplicate suppression, and allocation-failure limits protect against
+unbounded expansion and decompression bombs.
+
+\section{Investigation-oriented use cases}
+
+\subsection{Digital-media triage}
+
+Begin with histograms and the feature files most closely related to the case.
+Look for dominant identities, organizations, services, and communication
+patterns. Validate high-value rows in context, then use their forensic paths to
+locate the source. Triage prioritizes examination; it does not replace a
+complete forensic process when one is required.
+
+\subsection{Malware and intrusion investigations}
+
+Useful outputs may include Windows PE and ELF metadata, URLs and domains,
+network addresses and packets, JSON, Windows directory records, link and
+prefetch data, and AES key schedules. Carved executables or structured objects
+should be validated with format-aware tools. Network feature files contain
+false positives, particularly when arbitrary memory resembles packet data;
+checksum and context information are important.
+
+\subsection{Cyber and network investigations}
+
+The network scanner can report Ethernet, WiFi, IP, and TCP information and may
+carve PCAP data. Release 2.2 preserves IEEE 802.11 link types and reports WiFi
+metadata in \code{wifi.txt}. Features recovered from memory or unstructured
+data may be incomplete. Correlate them with packet captures, logs, timestamps,
+and other evidence.
+
+\subsection{Identity investigations}
+
+Email addresses, domains, URLs, telephone numbers, credit-card candidates,
+personal identifiers, vCards, GPS information, and investigator-supplied search
+patterns can help identify a person and their associates. Credit-card and
+telephone patterns produce false positives; checksums reduce but do not
+eliminate them. Histograms are particularly useful for distinguishing repeated
+identifiers from isolated byte patterns.
+
+\subsection{Password recovery}
+
+The word-list scanner extracts words within its configured length limits from
+ordinary and recursively decoded data. Enable it explicitly:
+
+\begin{Verbatim}
+bulk_extractor -e wordlist -o output image.raw
+\end{Verbatim}
+
+The resulting lists can seed authorized password-recovery tools. Expect large
+outputs and increased processing time. Review \code{-H} for the current minimum
+and maximum word lengths and related settings.
+
+\subsection{Imagery and geolocation}
+
+The EXIF scanner recognizes JPEG metadata, reports EXIF and GPS features, and
+can carve validated JPEGs. A finding can survive even when part of the image is
+damaged. Carving mode 1 is designed to emphasize images reached through a
+derived path; mode 2 requests all validated images. The optional Exiv2 scanner
+is disabled unless the build was configured with its dependency.
+
+\section{Tuning and specialized operation}
+
+The defaults are appropriate for most examinations. \bulk normally chooses a
+worker count based on the host. Use \code{-j N} to limit workers or \code{-J}
+to process without worker threads. More threads help only while CPU and storage
+can supply useful work; benchmark the actual image and scanner set before
+changing a production procedure.
+
+\code{-G} changes the primary page size, and \code{-g} changes the margin.
+The margin must be large enough for scanners to recognize boundary-spanning
+features. \code{-M} limits recursive depth. \code{-s} performs random
+sampling, \code{-Y} selects an offset range, and \code{-z} begins at a page.
+Sampling is useful for research and rapid characterization but cannot establish
+that an unsampled feature is absent.
+
+\code{--max\_minute\_wait} bounds phase-one completion and shutdown.
+\code{--max\_bad\_alloc\_errors} controls tolerated allocation failures.
+Use \code{-q} for quiet operation. \code{-d} enables debug-level logging; the
+old numeric debug mask no longer exists. \code{--log-level} and
+\code{--log-file} provide explicit diagnostic control.
+
+\section{Post-processing}
+
+The \code{python/} directory contains scripts that consume reports and feature
+files. They are useful project tools, but they do not receive the same release
+and compatibility guarantees as the primary executable.
+
+\subsection{Comparing two runs}
+
+\code{bulk\_diff.py} compares two output directories and reports differences
+in their feature files. This can show what appeared or disappeared between two
+acquisitions:
+
+\begin{Verbatim}
+python3 python/bulk_diff.py pre-output post-output
+\end{Verbatim}
+
+Differences can result from evidence changes, scanner configuration, software
+version, or build dependencies. Record all of these before attributing a
+difference to user activity.
+
+\subsection{Associating features with filenames}
+
+\code{identify\_filenames.py} combines feature locations with file-system
+information, normally produced by \code{fiwalk}, to identify the containing
+file where possible:
+
+\begin{Verbatim}
+python3 python/identify_filenames.py --all bulk-output identified-output
+\end{Verbatim}
+
+A feature in unallocated space, compressed data, or a damaged structure may
+have no recoverable filename. The forensic path remains the primary provenance
+record.
+
+\section{Worked investigations}
+\label{sec:worked-examples}
+
+The following version 1 case studies are retained because the analytical
+questions, feature interpretation, false-positive cautions, and use of
+histograms remain applicable. Their captured console output, exact runtime,
+scanner inventory, and directory listings are historical. Run the 2.2 commands
+described earlier in this manual and expect the current executable to produce a
+different set of files and status messages.
+
+\begingroup
+\sloppy
+\input{BEWorkedExamples.tex}
+\endgroup
+
+\section{Troubleshooting}
+
+\subsection{A scan stops or crashes}
+
+Re-run the same command against the same output directory to use 2.2 resume
+behavior. The framework skips pages that were in progress when the previous
+run ended, records the restart, and continues with later pages. Do not use
+\code{-Z} if the existing partial results and restart record must be preserved.
+
+Check \code{bulk\_extractor.log}, terminal diagnostics, free disk space,
+\code{report.xml}, and the archived interrupted report. If the failure follows
+one scanner, isolate it with \code{-x all -e scanner}. A reproducible report
+should include the exact version, build configuration, command, scanner,
+forensic path or byte range, exit status, and the smallest redistributable
+fixture that demonstrates the problem. Do not submit sensitive evidence.
+
+\subsection{The output disk fills}
+
+Feature files, word lists, histograms, decoded data, and carved objects can be
+large. A write failure stops normal shutdown and histogram completion so the
+program does not report a clean run after losing output. Preserve the log and
+partial report, choose storage with adequate free space, and start an
+independent scan in a new output directory.
+
+\subsection{Unexpected, missing, or duplicate findings}
+
+Confirm the scanner is present and enabled with \code{-H}. Check stop lists,
+carve modes, recursive depth, page and margin settings, input-format support,
+and whether the feature came from a derived path. Isolate the scanner on a
+small fixture. A feature at a page boundary should be reported according to the
+framework's margin rules; changing page or margin sizes can expose scanner
+defects and should be mentioned in a bug report.
+
+\subsection{Getting help and reporting defects}
+
+Use the GitHub issue tracker at
+\url{https://github.com/simsong/bulk_extractor/issues}. Search existing issues
+first. Include enough non-sensitive evidence to reproduce the behavior and
+distinguish a source defect from a missing optional dependency or unsupported
+platform.
+
+\appendix
+\clearpage
+\section{BEViewer in version 1 and planned restoration}
+\label{sec:viewer-history}
+
+\textbf{Historical status.} The Java-based BEViewer described in this appendix
+worked with the version 1 product. It is not bundled, built, tested, or
+supported by the 2.2 release. The project intends to restore viewer capability
+in the 2.x series. This appendix preserves the former workflow and the user
+capabilities that a restored viewer should provide; it is not an instruction
+to install the old viewer with 2.2.
+
+\subsection{Version 1 installation and startup}
+
+The version 1 Windows installer installed both the command-line executable and
+BEViewer and required Java 6 or later. Linux and macOS source distributions
+contained a \code{java\_gui} directory and launched the viewer with
+\code{./BEViewer}. Windows launched a 32- or 64-bit viewer entry from the Start
+menu. These installers and launch paths do not exist in 2.2.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=.82\linewidth]{viewerPics/startup.png}
+\caption{Historical BEViewer start window.}
+\end{figure}
+
+\subsection{Launching a scan}
+
+The version 1 viewer exposed the command-line workflow through a gear-and-arrow
+control. The examiner selected an image and a new output feature directory,
+optionally adjusted scanner or tuning options, and pressed ``Start
+bulk\_extractor.'' A status window displayed progress and completion.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=.76\linewidth]{viewerPics/runBulk.png}
+\caption{Historical scan configuration window.}
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=.76\linewidth]{viewerPics/selectOutputDirectory.png}
+\caption{Historical image and output-directory selection.}
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=.70\linewidth]{viewerPics/runCompleteStatus.png}
+\caption{Historical scan-progress window.}
+\end{figure}
+
+\subsection{Browsing reports, features, and histograms}
+
+After completion, the viewer added the report to a report tree. Expanding the
+report displayed feature and histogram files. Selecting a feature displayed
+its context; selecting a histogram entry connected the frequency summary to
+the underlying feature rows and their contexts. This linked navigation was a
+central usability feature and should be preserved in a 2.x replacement.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=.72\linewidth]{viewerPics/listOfOutput.png}
+\caption{Historical report and output-file tree.}
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=.82\linewidth]{viewerPics/emailFeatureFile.png}
+\caption{Historical feature and context view.}
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=.82\linewidth]{viewerPics/emailHistogramView.png}
+\caption{Historical histogram linked to feature context.}
+\end{figure}
+
+A restored viewer should at minimum open an existing 2.x report, enumerate its
+feature, stopped, alert, histogram, and carving outputs, preserve forensic
+paths, show feature context safely, link histograms to underlying features,
+launch the installed executable without hiding its exact command, display logs
+and progress, and represent resume behavior and scanner settings accurately.
+
+\section{Command-line reference}
+
+This appendix groups the 2.2 options so the information formerly printed in
+the manual is available in the PDF. \code{bulk\_extractor -h}, \code{-H}, and
+the installed \code{bulk\_extractor(1)} manual are authoritative.
+
+\begin{longtable}{p{.29\linewidth}p{.65\linewidth}}
+\toprule
+\textbf{Option} & \textbf{Purpose} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Option} & \textbf{Purpose} \\
+\midrule
+\endhead
+\code{-o DIR} & Required output directory. \\
+\code{-R} & Recursively scan ordinary files below a directory. \\
+\code{-Z} & Remove existing output contents before scanning. \\
+\code{-Y START[-END]} & Scan a byte-offset range. \\
+\code{-z PAGE} & Begin at a page number. \\
+\code{-p PATH} & Print data selected by a forensic-path expression. \\
+\code{-A BYTES} & Add a value to reported feature locations. \\
+\code{-b FILE} & Prepend a banner to feature files. \\
+\code{-r FILE} & Read an alert list. \\
+\code{-w FILE} & Read a stop list. \\
+\code{-e NAME} & Enable a scanner. \\
+\code{-x NAME} & Disable a scanner; \code{-x all} disables all scanners. \\
+\code{-E NAME} & Disable all scanners except one. \\
+\code{-P DIR} & Add a loadable-scanner directory. \\
+\code{-S NAME=VALUE} & Set a scanner or recorder option reported by \code{-H}. \\
+\code{-f PATTERN} & Search for one RE2 pattern. \\
+\code{-F FILE} & Read search patterns from a file. \\
+\code{--find-case-sensitive} & Make \code{-f} and \code{-F} patterns case-sensitive. \\
+\code{-j N} & Use N worker threads. \\
+\code{-J} & Process without worker threads. \\
+\code{-G BYTES} & Set the primary page size. \\
+\code{-g BYTES} & Set the page margin. \\
+\code{-M N} & Set maximum recursive depth. \\
+\code{-s FRACTION[:PASSES]} & Randomly sample the input. \\
+\code{--max\_minute\_wait N} & Bound processing and shutdown wait time. \\
+\code{--max\_bad\_alloc\_errors N} & Set tolerated allocation failures. \\
+\code{-d} & Enable debug-level diagnostics. \\
+\code{--log-level LEVEL} & Set diagnostic severity to trace, debug, info, warning, error, critical, or off. \\
+\code{--log-file FILE} & Select the diagnostic log file. \\
+\code{-q} & Suppress status and performance output. \\
+\code{-0} & Disable real-time notifications. \\
+\code{-1} & Use version-1-style console notifications. \\
+\code{-H} & Report scanners and their \code{-S} settings. \\
+\code{-V} & Print the version. \\
+\code{-h} & Print command-line help. \\
+\bottomrule
+\end{longtable}
+
+\section{Related reading}
+
+The project README, \code{doc/carving.md}, \code{doc/logging.md}, release
+notes, scanner API, and Digital Corpora test images supplement this manual.
+Research on bulk data analysis, forensic paths, DFXML, decompression, and
+digital-media triage provides the design and evidentiary context for the tool.
+
+\bibliographystyle{plain}
+\bibliography{references}
 
 \end{document}
