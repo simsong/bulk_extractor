@@ -199,8 +199,8 @@ recorders or processed an sbuf. Help does not call SCAN or SHUTDOWN.}
 \begin{tikzpicture}[node distance=5mm]
 \node[phase] (init) {main thread: \code{PHASE\_INIT}};
 \node[phase, below=of init] (init2) {main thread: \code{PHASE\_INIT2}};
-\node[scan, below left=8mm and 4mm of init2] (t0) {worker 0\\\code{PHASE\_SCAN}\\sbuf 0, sbuf 1};
-\node[scan, below right=8mm and 4mm of init2] (t1) {worker 1\\\code{PHASE\_SCAN}\\sbuf 0, sbuf 1};
+\node[scan, below left=8mm and 4mm of init2] (t0) {worker 0\\\code{PHASE\_SCAN}\\sbuf A, sbuf B};
+\node[scan, below right=8mm and 4mm of init2] (t1) {worker 1\\\code{PHASE\_SCAN}\\sbuf C, sbuf D};
 \node[phase, below=31mm of init2] (shutdown) {main thread: \code{PHASE\_SHUTDOWN}};
 \node[phase, below=of shutdown] (cleanup) {main thread: \code{PHASE\_CLEANUP}};
 \draw[flow] (init) -- (init2);
@@ -221,9 +221,9 @@ atomic, or protected with appropriately scoped synchronization.}
 \centering
 \begin{tikzpicture}[node distance=5mm]
 \node[phase] (init) {main thread: INIT, then INIT2};
-\node[scan, below left=8mm and 4mm of init] (t0) {worker 0\\SCAN sbuf 0\\SCAN sbuf 1 throws};
-\node[scan, below right=8mm and 4mm of init] (t1) {worker 1\\SCAN sbuf 0\\SCAN sbuf 1 continues};
-\node[action, below=5mm of t0] (alert) {framework catches exception\\and records an alert};
+\node[scan, below left=8mm and 4mm of init] (t0) {worker 0\\SCAN sbuf A\\SCAN sbuf B throws};
+\node[scan, below right=8mm and 4mm of init] (t1) {worker 1\\SCAN sbuf C\\SCAN sbuf D continues};
+\node[action, below=5mm of t0] (alert) {framework catches exception\\and records an alert if available};
 \node[phase, below=35mm of init] (shutdown) {main thread: SHUTDOWN, then CLEANUP};
 \draw[flow] (init) -- (t0);
 \draw[flow] (init) -- (t1);
