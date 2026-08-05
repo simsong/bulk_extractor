@@ -287,7 +287,7 @@ uspto.gov/patft/index.html"><img src="/net
 175198500	http://www.uspto.gov/patft/help/help.htm e></a>\x0A<AHREF="http://www.
 uspto.gov/patft/help/help.htm"><IMG BORDER="0
 \end{lstlisting}
-The file \texttt{url\_histogram.txt} provides the histogram of the potential urls. In that file, UTF-16 formatted text is converted to UTF-8. Note that not all URLs contained in the histogram file are accurate. The are actually URLs that were typed into a web browser. The following are lines taken from that file:
+The file \texttt{url\_histogram.txt} provides the histogram of the potential URLs. In that file, UTF-16 formatted text is converted to UTF-8. Note that not all URLs contained in the histogram file are accurate. They are actually URLs that were typed into a web browser. The following are lines taken from that file:
 \lstset{style=customfile}
 \begin{lstlisting}
 n=3922	http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul	(utf16=2609)
@@ -298,7 +298,7 @@ n=2	http://math.nist.gov/~MDonahue/pubs/nan.ps.gz
 n=2	http://math.nist.gov/~RBoisvert/publications/ADL95.ps.gz
 n=2	http://math.nist.gov/~RBoisvert/publications/IMACS97.ps.gz
 \end{lstlisting}
-Because the histogram file converts the UT-16 formatted text to UTF-8, the histogram file is more human readable than the \texttt{url.txt} file alone. The files \texttt{url\_facebook.txt}, \texttt{url\_microsoft-live}, \texttt{url\_services} and \texttt{url\_searches} all extract specific types of information from URLs. The most useful for digital media triage is likely the file \texttt{url\_searches.txt} because it shows histogram of searches from the disk image. Searches frequently convey intent. The following is an excerpt from that file:
+Because the histogram file converts the UTF-16 formatted text to UTF-8, the histogram file is more human readable than the \texttt{url.txt} file alone. The files \texttt{url\_facebook.txt}, \texttt{url\_microsoft-live}, \texttt{url\_services} and \texttt{url\_searches} all extract specific types of information from URLs. The most useful for digital media triage is likely the file \texttt{url\_searches.txt} because it shows histogram of searches from the disk image. Searches frequently convey intent. The following is an excerpt from that file:
 \lstset{style=customfile}
 \begin{lstlisting}
 n=60	1
