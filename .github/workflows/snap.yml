@@ -50,7 +50,7 @@ jobs:
           image="$HOME/bulk_extractor-fat32.dmg"
           output="$HOME/bulk_extractor-snap-output"
           cp src/tests/1mb_fat32.dmg "$image"
-          bulk-extractor.bulk-extractor -0q -o "$output" "$image"
+          snap run bulk-extractor -0q -o "$output" "$image"
           test -s "$output/report.xml"
 
       - name: Upload snap
