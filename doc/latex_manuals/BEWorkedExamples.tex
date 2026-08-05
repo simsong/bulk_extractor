@@ -136,13 +136,13 @@ In this example, we look at the \texttt{charlie-2009-12-11.E01} image to quickly
 \begin{itemize}
 \item Who are the users of the drive?
 \item Who is this person communicating with?
-\item What kinds of websites have they have been visiting most often?
+\item What kinds of websites have they been visiting most often?
 \item What search terms are used?
 \end{itemize}
 
-To answer many of these questions, we look at the identify information on the drive including email addresses, credit card information, search terms, Facebook IDs, domain names and vCard data. The output files created by \bulk contain all of this type of information that was found on the disk image. \\
+To answer many of these questions, we look at the identity information on the drive including email addresses, credit card information, search terms, Facebook IDs, domain names and vCard data. The output files created by \bulk contain all of this type of information that was found on the disk image. \\
 
-The scenario setup leads us to believe that Charlie is the user of the this drive (based on the name of the disk image). First, we look at \texttt{email.txt} to find information about the email addresses contained on the disk. The first two lines of the email features found are the following (each block of text represents one long line of offset, feature and context):
+The scenario setup leads us to believe that Charlie is the user of this drive (based on the name of the disk image). First, we look at \texttt{email.txt} to find information about the email addresses contained on the disk. The first two lines of the email features found are the following (each block of text represents one long line of offset, feature and context):
 \lstset{style=customfile}
 \begin{lstlisting}
 50395384	n\x00o\x00m\x00b\x00r\x00e\x00_\x001\x002\x003\x00@\x00h\x00o\x00t
@@ -734,7 +734,7 @@ XP</os><filename>MSIEXEC.EXE</filename><header_size>152</header_size>
 </file><file>\x5CDEVICE\x5CHARDDISKVOLUME1\x5CWINDOWS\x5CSYSTEM32\x5CKERNEL32.DLL
 ...
 \end{lstlisting}
-Printing the line out here would cover almost two pages. It includes a lot of information about the Prefetch file including the name of the executable, the name of the DLLs, the directory of DLLs, the atime, the number of runs, the serial number, and the ctime. The Prefetch file is searchable and useable by investigators searching for EXEs or DLLs related to a malware investigation.\\
+Printing the line out here would cover almost two pages. It includes a lot of information about the Prefetch file including the name of the executable, the name of the DLLs, the directory of DLLs, the atime, the number of runs, the serial number, and the ctime. The Prefetch file is searchable and usable by investigators searching for EXEs or DLLs related to a malware investigation.\\
 
 JSON is the JavaScript Object Notation (used in Facebook, etc). The file \texttt{json.txt}  provides the offset, JSON and MD5 hash of the JSON information found on the disk image. \bulk is great at finding JSON in compressed streams and HIBER files. The following are a few lines from the JSON file:
 \lstset{style=customfile}
