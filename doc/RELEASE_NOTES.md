@@ -235,10 +235,10 @@ through the project's normal pull-request and CI process.
   in 2.2 and as requirements for its planned return in the 2.x series.
 - LaTeX documentation CI now builds draft pull requests and runs for every
   change under `doc/`, so manual-source and supporting-file errors are caught
-  before a pull request is marked ready for review. The code, coverage, and
-  Windows workflows ignore changes limited to documentation and this LaTeX
-  workflow. The user-manual build uses an explicit, portable asset manifest
-  rather than a GNU `make`-specific wildcard.
+  before a pull request is marked ready for review. For pull requests, the
+  code, coverage, and Windows workflows ignore changes limited to
+  documentation and this LaTeX workflow. The user-manual build uses an
+  explicit, portable asset manifest rather than a GNU `make`-specific wildcard.
 - Removed the unmaintained standalone HTML overview; the current LaTeX guide
   and published documentation site are the supported user documentation.
 - Removed the unmaintained version-1 performance notebook with obsolete
