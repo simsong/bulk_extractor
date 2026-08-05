@@ -1,6 +1,6 @@
 LATEXMK ?= latexmk
 PDFS = BECurrentGuide.pdf
-USER_MANUAL_DEPS = BEWorkedExamples.tex references.bib \
+USER_MANUAL_DEPS = BECurrentGuide.tex BEWorkedExamples.tex references.bib \
 	$(wildcard archPics/*.pdf installPics/* otherPics/* viewerPics/*) \
 	carvedJPEG.jpg charlieRunOutput.png
 

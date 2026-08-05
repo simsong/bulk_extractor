@@ -582,7 +582,7 @@ domain_histogram.txt:
 295	3,157		2,862		www.google.com
 0	2,537		2,537		l.yimg.com
 \end{lstlisting}
-The output specifically shows the differences in the histograms between the two runs across all of the histogram files that were created. The excerpt above shows that "charlie" (the disk user) visited the domain "patft.uspto.gov" frequently between the time the two images were recorder. It was found 4,069 more times in the later disk image than in the one taken earlier. It also shows that the domain "l.yimg.com" was not found on the earlier disk image but was found 2,537 times on the later disk image. The results are sorted by the amount of the difference. This means that features that are most different appear first. This can be very helpful because those features generally give the most insight into the disk users activity over that period of time.
+The output specifically shows the differences in the histograms between the two runs across all of the histogram files that were created. The excerpt above shows that "charlie" (the disk user) visited the domain "patft.uspto.gov" frequently between the time the two images were recorded. It was found 4,069 more times in the later disk image than in the one taken earlier. It also shows that the domain "l.yimg.com" was not found on the earlier disk image but was found 2,537 times on the later disk image. The results are sorted by the amount of the difference. This means that features that are most different appear first. This can be very helpful because those features generally give the most insight into the disk user's activity over that period of time.
 
 \section{NPS DOMEX Users Image}
 NPS Test Disk Images are a set of disk images that have been created for testing computer forensic tools. These images are free of non-public Personally Identifiable Information (PII) and are approved for release to the general public. The NPS-created data in the images is public domain and free of any copyright restriction; the images may contain some copyrighted data that was made available by the copyright holder. These copyrights, where known, are noted in the files themselves\cite{npsdiskimages}. \\
@@ -722,7 +722,7 @@ PointerToLinenumbers="0" ><Characteristics><IMAGE_SCN_CNT_INITIALIZED_DATA />
 <IMAGE_SCN_MEM_DISCARDABLE /><IMAGE_SCN_MEM_READ /></Characteristics>
 </SectionHeader></Sections></PE>
 \end{lstlisting}
-The first number is the offset and tells you were to find the file. Most executables are not fragmented. The second is the MD5 has of the first 4k of the file that can be used to deduplicate and look up the file in the hash database. Finally, the bulk of the information is contained in the <PE> XML block that breaks out all of the Windows PE header information. It contains information about the File header, the characteristics of the file, Windows header information and section header information.\\
+The first number is the offset and tells you where to find the file. Most executables are not fragmented. The second is the MD5 hash of the first 4k of the file that can be used to deduplicate and look up the file in the hash database. Finally, the bulk of the information is contained in the <PE> XML block that breaks out all of the Windows PE header information. It contains information about the File header, the characteristics of the file, Windows header information and section header information.\\
 
 The file \texttt{winprefetch.txt} contains the information from carved files Windows Prefetch that were discovered anywhere on the drive. \bulk will carve the Prefetch files from unallocated space. This extremely useful because Prefetch files are frequently deleted. A single line in the prefetch output file is also very long. The following is only the beginning of one line from the file:
 \lstset{style=customfile}
@@ -776,7 +776,7 @@ AES encryption implementation system sometimes leaves keys in memory and \bulk f
 33 35 f1 54 9a 79 36 e7 1c 94 02 28 78 	AES256
 \end{lstlisting}
 
-The file \texttt{hex.txt} contains extracted hexidecimal strings of a special length. The block sizes cotained within it are either 128 or 256 due to the fact that those are the sizes used for encryption keys and hash values. The disk image used in this example does not have any of those and the file is blank.\\
+The file \texttt{hex.txt} contains extracted hexadecimal strings of a special length. The block sizes contained within it are either 128 or 256 due to the fact that those are the sizes used for encryption keys and hash values. The disk image used in this example does not have any of those and the file is blank.\\
 
 \bulk produces network information including PCAP files, Ethernet addresses, and TCP/IP connections. The files \texttt{ether.txt} and \texttt{ether\_histogram.txt} provide a list of ethernet  addresses from packets and ASCII. These are the addresses found on the disk and located in \texttt{ether.txt}:
 \lstset{style=customfile}
@@ -787,7 +787,7 @@ The file \texttt{hex.txt} contains extracted hexidecimal strings of a special le
 2435865088	00:50:56:E0:FE:24	 (ether_shost)
 22637986225	00:80:C7:8F:6C:96	 apter.\x0AExample: 00:80:C7:8F:6C:96\x00\x00
 \end{lstlisting}
-The file {ether\_histogram.txt} groups these ethernet addresses in a histogram:
+The file \texttt{ether\_histogram.txt} groups these ethernet addresses in a histogram:
 \lstset{style=customfile}
 \begin{lstlisting}
 n=2	00:0C:29:26:BB:CD
@@ -818,7 +818,7 @@ n=2	209.85.147.109
 n=2	65.55.15.242
 \end{lstlisting}
 
-The file \texttt{packets.pcap} is a pcap file made from carved packet. To view that file, use any packet analysis tool you like (such as \textbf{tcpdump}). Only packets carved from a PCAP  file will have the correct packet time stamp; others will given a time in 1970.\\
+The file \texttt{packets.pcap} is a pcap file made from carved packets. To view that file, use any packet analysis tool you like (such as \textbf{tcpdump}). Only packets carved from a PCAP file will have the correct packet time stamp; others will be given a time in 1970.\\
 
 Finally, the file \texttt{tcp.txt} contains details about TCP (and UDP) network flows. It contains more detail than \texttt{ip.txt} but investigators should be careful of false positives, as there are often many in this file. The following are the two lines found in that file:
 \lstset{style=customfile}

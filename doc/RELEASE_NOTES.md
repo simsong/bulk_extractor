@@ -233,6 +233,9 @@ through the project's normal pull-request and CI process.
   guidance, development examples, and coding practices. The historical
   BEViewer workflow is retained in an appendix, clearly marked as unavailable
   in 2.2 and as requirements for its planned return in the 2.x series.
+- LaTeX documentation CI now builds draft pull requests and runs for every
+  change under `doc/`, so manual-source and supporting-file errors are caught
+  before a pull request is marked ready for review.
 - Removed the unmaintained standalone HTML overview; the current LaTeX guide
   and published documentation site are the supported user documentation.
 - Removed the unmaintained version-1 performance notebook with obsolete
