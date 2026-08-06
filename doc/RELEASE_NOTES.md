@@ -276,6 +276,11 @@ through the project's normal pull-request and CI process.
   ([#621](https://github.com/simsong/bulk_extractor/issues/621)).
 - The release workflow now assembles and verifies artifacts in a read-only job;
   only its separate draft-publishing job receives repository write permission.
+- Added a strict-confinement Snap package and native amd64/arm64 build and
+  install-test workflow. Stable Snap Store publication is limited to annotated
+  release tags, protected release-manager credentials, and a project-owned
+  publisher account; raw-device access remains an explicitly connected,
+  Store-reviewed interface ([#626](https://github.com/simsong/bulk_extractor/issues/626)).
 - Added a tagged, clean-checkout `make release-rpm` gate that builds and smoke
   tests binary RPMs and SRPMs in pinned Fedora and openSUSE environments for
   GitHub download testing; distribution archives continue to build submitted

@@ -25,6 +25,8 @@ EXTRA_DIST = $(SRC_WIN_DIST) $(AUTO_DOC_FILES) $(AUTO_ETC_FILES) $(AUTO_LICENSES
 	$(srcdir)/etc/Dockerfile.ubuntu-distcheck \
 	$(srcdir)/scripts/assemble_github_release.py \
 	$(srcdir)/scripts/release.sh \
+	$(srcdir)/snap/snapcraft.yaml \
+	$(srcdir)/doc/snap.md \
 	$(srcdir)/AGENTS.md \
 	$(srcdir)/.gitignore \
 	$(srcdir)/CODING_STANDARDS.md \
@@ -102,6 +104,10 @@ RELEASE_RPM_ARTIFACT_DIR ?= $(abs_builddir)/release-rpm-artifacts
 .PHONY: release
 release:
 	RELEASE_ARTIFACT_DIR="$(RELEASE_ARTIFACT_DIR)" RELEASE_SOURCE_DIR="$(abs_srcdir)" "$(RELEASE_SCRIPT)"
+
+.PHONY: snap
+snap:
+	cd "$(abs_srcdir)" && snapcraft pack
 
 .PHONY: release-deb
 release-deb:
