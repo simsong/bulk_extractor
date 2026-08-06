@@ -9,6 +9,7 @@ on:
       - '**.md'
       - 'AGENTS.md'
       - 'doc/**'
+      - '.github/workflows/latex-docs.yml'
       - '.github/CODEOWNERS'
       - '.github/ISSUE_TEMPLATE/**'
       - '.github/pull_request_template.md'

@@ -201,13 +201,24 @@ is a release failure.
    sync request. Do not pursue Ubuntu's default third-party-source list for this
    free-software tool. The reproducible build and downstream tracking are in
    [#622][deb-issue].
-5. Submit source-level RPM packaging changes: use the Fedora package-review or
-   dist-git workflow as applicable, and fork the openSUSE package repository to
-   submit a Gitea pull request containing the updated spec, source reference,
-   and changelog. Let the distribution build service build and archive the RPMs;
-   record the accepted request URL. The reproducible build and downstream
-   tracking are in [#623][rpm-issue].
-6. Publish the GitHub Release only after a release manager has reviewed every
+5. Run `make release-rpm RELEASE_TAG=vVERSION`. It requires an annotated tag
+   at `HEAD` and a completely clean checkout, then builds the tagged source in
+   version-pinned Fedora and openSUSE Leap environments. It writes each
+   distribution's binary RPM and SRPM to its subdirectory under
+   `release-rpm-artifacts/` and verifies the installed binary in the same
+   clean environment. These are GitHub
+   direct-download/test artifacts only.
+6. Submit source-level RPM packaging changes: for Fedora, determine whether a
+   package already exists; otherwise file a new-package review at
+   <https://bugzilla.redhat.com/enter_bug.cgi?product=Fedora&component=Package%20Review>.
+   For an existing Fedora package, use its dist-git update workflow. For
+   openSUSE, identify the live package repository and maintainer in
+   <https://build.opensuse.org/>, fork that repository in openSUSE Gitea, and
+   submit a pull request updating the spec, source reference, and changelog.
+   Let the distribution build service build and archive the RPMs; record each
+   accepted request URL and downstream build result in the release issue. The
+   reproducible build and downstream tracking are in [#623][rpm-issue].
+7. Publish the GitHub Release only after a release manager has reviewed every
    required gate and external package publication is either complete or clearly
    disclosed in the release notes.
 

@@ -1,0 +1,18 @@
+FROM fedora:44
+RUN dnf -y install abseil-cpp-devel autoconf automake exiv2-devel expat-devel \
+    flex gcc-c++ libgcrypt-devel libtool make pkgconf-pkg-config python3 re2-devel \
+    redhat-rpm-config rpm-build zlib-devel && dnf clean all
+WORKDIR /src
+COPY . /src
+RUN sed -i 's/-DEVELOP//' configure.ac \
+    && bash bootstrap.sh \
+    && ./configure --quiet --disable-libewf \
+    && make -C specfiles bulk_extractor.fedora.spec \
+    && make dist \
+    && mkdir -p /build/SOURCES /build/SPECS /artifacts \
+    && cp bulk_extractor-*.tar.gz /build/SOURCES/ \
+    && cp specfiles/bulk_extractor.fedora.spec /build/SPECS/bulk_extractor.spec \
+    && rpmbuild --define '_topdir /build' -ba /build/SPECS/bulk_extractor.spec \
+    && cp /build/RPMS/*/bulk_extractor-*.rpm /build/SRPMS/bulk_extractor-*.src.rpm /artifacts/
+RUN dnf -y install /artifacts/bulk_extractor-*.rpm \
+    && bulk_extractor -V >/dev/null
