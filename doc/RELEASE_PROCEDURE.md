@@ -89,7 +89,7 @@ Supply a bucket, public subnet, SSH-enabled security group, and EC2 key pair:
 
 ```sh
 make release-aws-large-image RESULT_BUCKET=be-release-results \
-  SUBNET_ID=subnet-... SECURITY_GROUP_ID=sg-... SSH_KEY_NAME=be-release \
+  SECURITY_GROUP_ID=sg-... SSH_KEY_NAME=be-release \
   SSH_PRIVATE_KEY=/secure/path/be-release.pem INSTANCE_PROFILE=be-release-runner
 ```
 
@@ -99,6 +99,8 @@ uploads `BE{version}-{instance-type}-{image}-{utc-time}.zip` plus its matching
 `.txt` report to the bucket. It then shuts down. The local launcher uses SSH to
 tail each instance log and redraw a terminal progress table; when every
 instance is stopped it prints the uploaded status and elapsed time for each.
+Unless `SUBNET_ID` is supplied, the launcher selects a default subnet in the
+account's default VPC.
 The operator is responsible for an instance profile that permits only the
 needed bucket writes and for terminating the stopped instances when retained
 evidence is no longer needed.

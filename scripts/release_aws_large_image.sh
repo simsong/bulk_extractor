@@ -24,7 +24,7 @@ LOG_PATH=/var/log/bulk-extractor-release.log
 usage() {
     cat <<'EOF'
 Usage: make release-aws-large-image RESULT_BUCKET=example-results \
-  SUBNET_ID=subnet-... SECURITY_GROUP_ID=sg-... SSH_KEY_NAME=my-key \
+  SECURITY_GROUP_ID=sg-... SSH_KEY_NAME=my-key \
   SSH_PRIVATE_KEY=/path/to/my-key.pem INSTANCE_PROFILE=be-release-runner
 
 Launches every INSTANCE_TYPES x IMAGE_URLS combination. Defaults are
@@ -32,10 +32,11 @@ m7i.xlarge (4 vCPUs), m7i.4xlarge (16 vCPUs), and the public ubnist1 and
 domexusers Digital Corpora images. Override the whitespace-separated lists,
 AWS_REGION, RESULT_BUCKET, BE_VERSION, BE_RELEASE_URL, or AMI_ID as needed.
 
-The selected subnet must assign public IPv4 addresses and the security group
-must permit SSH from this operator. The caller's IAM policy must allow EC2
-launch/describe and S3 writes to RESULT_BUCKET; INSTANCE_PROFILE must grant
-the instances S3 PutObject permission on that bucket. This script leaves
+Without SUBNET_ID, the script chooses a default subnet in the account's default
+VPC; it must assign public IPv4 addresses. The security group must permit SSH
+from this operator. The caller's IAM policy must allow EC2 launch/describe and
+S3 writes to RESULT_BUCKET; INSTANCE_PROFILE must grant the instances S3
+PutObject permission on that bucket. This script leaves
 instances stopped after completion; terminate them when their evidence is no
 longer needed.
 EOF
@@ -43,10 +44,19 @@ EOF
 
 [[ ${1:-} != --help ]] || { usage; exit 0; }
 for command in aws ssh tput; do command -v "$command" >/dev/null || { echo "ERROR: $command is required" >&2; exit 2; }; done
-for value in RESULT_BUCKET SUBNET_ID SECURITY_GROUP_ID SSH_KEY_NAME SSH_PRIVATE_KEY INSTANCE_PROFILE; do
+for value in RESULT_BUCKET SECURITY_GROUP_ID SSH_KEY_NAME SSH_PRIVATE_KEY INSTANCE_PROFILE; do
     [[ -n ${!value} ]] || { echo "ERROR: $value is required; see --help" >&2; exit 2; }
 done
 [[ -r $SSH_PRIVATE_KEY ]] || { echo "ERROR: SSH_PRIVATE_KEY is not readable: $SSH_PRIVATE_KEY" >&2; exit 2; }
+if [[ -z $SUBNET_ID ]]; then
+    default_vpc=$(aws ec2 describe-vpcs --region "$AWS_REGION" --filters Name=is-default,Values=true \
+        --query 'Vpcs[0].VpcId' --output text)
+    [[ $default_vpc != None ]] || { echo "ERROR: no default VPC; set SUBNET_ID" >&2; exit 2; }
+    SUBNET_ID=$(aws ec2 describe-subnets --region "$AWS_REGION" --filters "Name=vpc-id,Values=$default_vpc" \
+        Name=default-for-az,Values=true --query 'Subnets[0].SubnetId' --output text)
+    [[ $SUBNET_ID != None ]] || { echo "ERROR: default VPC has no default subnet; set SUBNET_ID" >&2; exit 2; }
+    echo "Using default subnet $SUBNET_ID in $default_vpc"
+fi
 aws ec2 describe-subnets --region "$AWS_REGION" --subnet-ids "$SUBNET_ID" >/dev/null
 aws s3api head-bucket --bucket "$RESULT_BUCKET" >/dev/null
 if [[ -z $AMI_ID ]]; then
