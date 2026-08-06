@@ -121,6 +121,165 @@ BEViewer is not bundled with version 2.2. Its version 1 workflow has been moved
 to Appendix~\ref{sec:viewer-history}, both as historical documentation and as
 requirements for the viewer planned for restoration in the 2.x series.
 
+\section{Moving from earlier releases}
+\label{sec:moving-from-earlier-releases}
+
+This section summarizes differences that an examiner, operator, or deployment
+maintainer is likely to notice. It is a migration guide, not an exhaustive
+change log. Consult \code{doc/RELEASE\_NOTES.md}, the installed manual page, and
+\code{bulk\_extractor -H} for the exact behavior of a particular build.
+
+\subsection{From version 1.x to version 2}
+
+Version 2 is a substantial C++17 rewrite rather than an incremental update to
+the version 1 implementation. It retains the stream-oriented examination
+model, feature files, histograms, forensic paths, recursive decoding, and
+scanner architecture, but changes the supported distribution and several
+defaults.
+
+\begin{longtable}{p{.25\linewidth}p{.69\linewidth}}
+\toprule
+\textbf{Area} & \textbf{User-visible difference} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Area} & \textbf{User-visible difference} \\
+\midrule
+\endhead
+Performance and portability & Version 2 was rewritten to improve multicore
+performance, portability, ownership, exception handling, and testability.
+Performance still depends on the image, storage, scanner set, and recursive
+workload; remeasure local procedures rather than carrying forward a version 1
+timing estimate. \\
+
+User interface & Version 1 distributions included the Java BEViewer and, on
+Windows, an installer that launched it. Version 2.2 distributes the
+command-line program without BEViewer or the old installer. The former viewer
+workflow is preserved in Appendix~\ref{sec:viewer-history}. \\
+
+Build requirements & Version 2 requires a C++17 compiler. The 2.2 source tree
+contains the scanner API, DFXML, schemas, and UTF support that earlier version
+2 development checkouts obtained through separate submodules. \\
+
+Input formats & Raw and split-raw images remain supported, and E01 support is
+available when the executable is built with libewf. AFF and AFF4 support from
+version 1 is not part of version 2. Convert unsupported evidence into a
+validated supported representation before scanning it. \\
+
+Scanner inventory & Version 2 removed several research-oriented scanners and
+changed some defaults. In the stable 2.1 baseline, the Outlook and hibernation
+scanners became disabled by default, and 192-bit AES-key-schedule searching
+was disabled by default. These choices remain visible in 2.2. Never assume a
+version 1 scanner list: use \code{-H}, then explicitly record any \code{-e},
+\code{-x}, and \code{-S} choices in the examination procedure. \\
+
+Pattern searching & Version 2.1 replaced the C++ regular-expression engine
+with RE2. Investigator patterns supplied with \code{-f} and \code{-F} do not
+use Lightgrep and cannot use constructs unsupported by RE2. RE2 avoids the
+catastrophic backtracking that could hang version 2.0 on open-ended patterns. \\
+
+Reports and provenance & Feature files remain tab-delimited and forensic
+paths still identify transformations and offsets. Version 2 reorganized the
+scanner and feature-recorder implementations and expanded DFXML provenance;
+automation should validate current filenames and XML namespaces instead of
+assuming byte-for-byte version 1 output. \\
+
+Plug-ins & A version 1 binary or source plug-in is not compatible with the
+version 2 scanner contract. Version 2.2 again supports loadable scanners, but
+they must be rebuilt and ported to the 2.x API and loaded with \code{-P} or
+\code{BE\_PATH}. \\
+\bottomrule
+\end{longtable}
+
+The practical migration rule is to preserve the investigative question, not
+the old command line. Run \code{-h} and \code{-H}, select the intended scanner
+set explicitly, test the procedure on known data, and archive \code{report.xml}
+with the feature output.
+
+\subsection{From version 2.1 to version 2.2}
+
+Version 2.2 is primarily a reliability, maintainability, and documentation
+release, but it also contains changes that affect commands, outputs, and
+deployment procedures.
+
+\begin{longtable}{p{.25\linewidth}p{.69\linewidth}}
+\toprule
+\textbf{Area} & \textbf{Change in 2.2} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Area} & \textbf{Change in 2.2} \\
+\midrule
+\endhead
+Windows distribution & GitHub Actions cross-compiles and tests a standalone
+64-bit Windows executable. It is not the old installer, is not signed, and is
+built without libewf. Native Windows compilation remains unsupported. The
+Windows executable can read supported physical-disk, volume, and named-volume
+paths through read-only Win32 handles. \\
+
+Scanner capabilities & Version 2.2 adds a validated VIN scanner and restores
+runtime loadable scanners through the versioned factory interface, \code{-P},
+and \code{BE\_PATH}. The exact built-in and loadable scanner set remains
+build-dependent. \\
+
+Restart behavior & A resumed scan deliberately skips pages that were active
+when the interrupted run recorded its restart state, reducing the risk of
+repeating a data-dependent crash. A non-quiet run reports the number of skipped
+pages and the archived interrupted-report location. Treat the skipped-page
+count as an examination limitation. \\
+
+Input handling & E01 and split-image selection now handle literal percent
+characters, lowercase segment names, exceptional paths, and short reads more
+safely. Recursive directory traversal is deterministic and handles symlinks
+and permission failures more deliberately. \\
+
+Scanner selection and logging & Scanner ordering now honors combinations such
+as \code{-x all -e outlook}. The obsolete numeric debug mask was removed;
+\code{-d} enables debug-level logging, while \code{--log-level} and
+\code{--log-file} provide explicit control. \\
+
+Investigator patterns & \code{--find-case-sensitive} makes \code{-f} and
+\code{-F} RE2 patterns case-sensitive. Historical case-insensitive matching
+remains the default. \\
+
+Network evidence & Network carving and parsing received bounds and checksum
+repairs. PCAP output preserves the IEEE 802.11 link type, and WiFi metadata is
+reported in \code{wifi.txt}. As before, candidates recovered from arbitrary
+memory require corroboration. \\
+
+Carving & Carving settings are recorder-specific. The JPEG recorder uses
+\code{jpeg\_carve\_mode}; minimum and maximum JPEG sizes are enforced. ZIP
+component carvings use \code{zip\_carved/} and \code{zip\_carved.txt}.
+Validated RawTherapee \code{Image8} thumbnails can be carved as PPM. Consult
+\code{doc/carving.md} and \code{-H} rather than carrying forward older setting
+or output names. \\
+
+Stop and alert lists & Stop-list and alert-list processing is restored and
+tested for normal and diverted outputs. Recorder banners are preserved across
+normal, stopped, alert, and histogram-related output paths. \\
+
+Feature accuracy & Email, URL, Windows directory, \code{utmp}, packet, RAR,
+hibernation, ZIP, and several other parsers received correctness and hostile-
+input repairs. These changes can alter feature counts relative to 2.1; a
+difference is not by itself evidence of a regression. \\
+
+Report XML & \code{report.xml} now declares the bundled DFXML 1.2.0 schema.
+bulk\_extractor-specific runtime and configuration data use a separate
+extension namespace. XML consumers written for 2.1 should be tested against a
+2.2 report. \\
+
+Output replacement & \code{-Z} now removes stale nested output directories as
+well as files before starting a new run. Verify the selected output directory
+carefully because the option is intentionally destructive. \\
+\bottomrule
+\end{longtable}
+
+Several limitations did not disappear in 2.2: BEViewer is still not bundled;
+Lightgrep remains unsupported; the Windows artifact lacks E01 support; Outlook
+and hibernation decoding remain opt-in; and the built-in RAR implementation is
+limited to versions 1 through 3 and does not reliably handle every archive or
+UTF-8 component name.
+
 \section{How bulk\_extractor works}
 
 \subsection{Pages, scanners, and recursion}
