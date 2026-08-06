@@ -59,6 +59,9 @@ through the project's normal pull-request and CI process.
   ([PR #559](https://github.com/simsong/bulk_extractor/pull/559)).
 - The carving guide documents recorder-specific `-S <recorder>_carve_mode=`
   settings, defaults, and feature-file behavior ([#264](https://github.com/simsong/bulk_extractor/issues/264)).
+- Release managers can run the AWS large-image matrix from one interactive
+  Bash launcher, with live SSH log progress and S3 result archives; it does not
+  require CloudFormation or a GitHub Actions workflow ([#624](https://github.com/simsong/bulk_extractor/issues/624)).
 
 ### Reliability and correctness
 

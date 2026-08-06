@@ -72,35 +72,36 @@ Complete and record each gate before artifact publication.
    test against the exact `bulk_extractor64.exe` artifact. The current build
    uses `--disable-libewf`; it is neither signed nor E01-capable unless the
    workflow and its evidence are changed accordingly.
-6. Run the AWS large-image validation described below, then preserve only its
-   redacted result summary, checksums, and pass/fail evidence.
+6. Run the AWS large-image validation described below, retaining its result
+   archives, per-run text reports, and pass/fail evidence in the selected S3
+   bucket.
 
 ## AWS large-image validation
 
-`make release-aws-large-image` provisions the disposable CloudFormation stack
-in [`cloudformation/release-large-image-validation.json`][aws-template]. It
-uses a fixed `c6i.2xlarge` instance and a hard eight-hour wait-condition and
-shutdown cap. At current on-demand compute pricing that cap is well below the
-approximately $10 CPU allowance; attached storage, S3 requests, and transfer
-are separate charges. The target refuses to reuse an existing stack, retrieves
-only the redacted summary, and removes the stack, volume, result object, bucket,
-and logs through its exit trap.
+`make release-aws-large-image` runs the interactive Bash launcher in
+[`scripts/release_aws_large_image.sh`](../scripts/release_aws_large_image.sh).
+It has no CloudFormation template or GitHub Actions workflow. The launcher
+starts every combination of its `INSTANCE_TYPES` and `IMAGE_URLS` variables;
+the defaults are 4-vCPU `m7i.xlarge` and 16-vCPU `m7i.4xlarge` against the
+public ubnist1 and domexusers Digital Corpora downloads.
 
-The input must be an already approved S3-managed (`AES256`) encrypted object.
-The instance role
-can read exactly that object and can write only to the stack-created encrypted
-result bucket. It rejects unencrypted input, does not export scan results, and
-reports only status, source and approved-input checksums, duration, and output
-file count. The one-day S3 lifecycle is a backup cleanup guard, not a release
-record.
+Supply a bucket, public subnet, SSH-enabled security group, and EC2 key pair:
 
-Use the manually dispatched
-[`release-aws-large-image.yml`][aws-workflow] workflow with a GitHub OIDC role;
-do not configure long-lived AWS credentials in the repository. It validates the
-template, runs the Make target, attests the redacted summary, uploads that
-summary as an artifact, and posts it to the named release issue. AWS Budgets are
-alerts, not instantaneous hard spending caps, so the runtime guardrail remains
-the enforceable CPU-cost limit.
+```sh
+make release-aws-large-image RESULT_BUCKET=be-release-results \
+  SUBNET_ID=subnet-... SECURITY_GROUP_ID=sg-... SSH_KEY_NAME=be-release \
+  SSH_PRIVATE_KEY=/secure/path/be-release.pem INSTANCE_PROFILE=be-release-runner
+```
+
+Each Ubuntu instance installs build prerequisites, downloads and builds the
+selected source release, downloads its assigned disk image, scans it, and
+uploads `BE{version}-{instance-type}-{image}-{utc-time}.zip` plus its matching
+`.txt` report to the bucket. It then shuts down. The local launcher uses SSH to
+tail each instance log and redraw a terminal progress table; when every
+instance is stopped it prints the uploaded status and elapsed time for each.
+The operator is responsible for an instance profile that permits only the
+needed bucket writes and for terminating the stopped instances when retained
+evidence is no longer needed.
 
 ## Artifact assembly
 
@@ -251,6 +252,4 @@ review the resulting draft release without handling package or cloud secrets.
 [deb-issue]: https://github.com/simsong/bulk_extractor/issues/622
 [rpm-issue]: https://github.com/simsong/bulk_extractor/issues/623
 [aws-issue]: https://github.com/simsong/bulk_extractor/issues/624
-[aws-template]: ../cloudformation/release-large-image-validation.json
-[aws-workflow]: ../.github/workflows/release-aws-large-image.yml
 [snap-issue]: https://github.com/simsong/bulk_extractor/issues/626
