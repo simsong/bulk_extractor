@@ -31,6 +31,10 @@ through the project's normal pull-request and CI process.
 
 ### Highlights
 
+- Began migrating the historical GitHub wiki into source-controlled
+  documentation. The new [installation guide](installation.md) is the
+  maintained build reference; wiki pages now direct readers to the applicable
+  source-tree documentation.
 - The project license statement now clearly identifies post-January-2015
   development as GPL-3.0-or-later. Original NPS works retain their distinct
   U.S.-Government status; bulk_extractor must not be described as a
