@@ -244,7 +244,10 @@ The following release-engineering issues close the remaining automation gaps:
 - [#624][aws-issue]: budget-capped AWS large-image validation and secure
   reporting.
 - [#626][snap-issue]: optional project-owned Snap Store publication for Ubuntu
-  users; it does not replace the Debian-to-Ubuntu path.
+  users; it does not replace the Debian-to-Ubuntu path. The strict-confinement
+  interface model, local `make snap` entry point, amd64/arm64 install-test
+  workflow, and protected annotated-tag stable publication are documented in
+  [doc/snap.md](snap.md).
 
 Once these are complete, a release manager should be able to direct Codex to
 prepare a release PR, validate the tag, trigger the protected workflow, and

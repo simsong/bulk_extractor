@@ -31,6 +31,10 @@ through the project's normal pull-request and CI process.
 
 ### Highlights
 
+- Began migrating the historical GitHub wiki into source-controlled
+  documentation. The new [installation guide](installation.md) is the
+  maintained build reference; wiki pages now direct readers to the applicable
+  source-tree documentation.
 - The project license statement now clearly identifies post-January-2015
   development as GPL-3.0-or-later. Original NPS works retain their distinct
   U.S.-Government status; bulk_extractor must not be described as a
@@ -284,6 +288,11 @@ through the project's normal pull-request and CI process.
   storage, least-privilege input/output access, cleanup, and an attested,
   redacted result summary. AWS Budget alerts supplement, but do not replace,
   the runtime cap ([#624](https://github.com/simsong/bulk_extractor/issues/624)).
+- Added a strict-confinement Snap package and native amd64/arm64 build and
+  install-test workflow. Stable Snap Store publication is limited to annotated
+  release tags, protected release-manager credentials, and a project-owned
+  publisher account; raw-device access remains an explicitly connected,
+  Store-reviewed interface ([#626](https://github.com/simsong/bulk_extractor/issues/626)).
 - Added a tagged, clean-checkout `make release-rpm` gate that builds and smoke
   tests binary RPMs and SRPMs in pinned Fedora and openSUSE environments for
   GitHub download testing; distribution archives continue to build submitted

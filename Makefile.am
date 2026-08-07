@@ -26,6 +26,8 @@ EXTRA_DIST = $(SRC_WIN_DIST) $(AUTO_DOC_FILES) $(AUTO_ETC_FILES) $(AUTO_LICENSES
 	$(srcdir)/scripts/assemble_github_release.py \
 	$(srcdir)/scripts/release_aws_large_image.sh \
 	$(srcdir)/scripts/release.sh \
+	$(srcdir)/snap/snapcraft.yaml \
+	$(srcdir)/doc/snap.md \
 	$(srcdir)/AGENTS.md \
 	$(srcdir)/.gitignore \
 	$(srcdir)/CODING_STANDARDS.md \
@@ -109,6 +111,9 @@ release:
 .PHONY: release-aws-large-image
 release-aws-large-image:
 	"$(AWS_LARGE_IMAGE_SCRIPT)" $(RELEASE_AWS_ARGS)
+.PHONY: snap
+snap:
+	cd "$(abs_srcdir)" && snapcraft pack
 
 .PHONY: release-deb
 release-deb:
