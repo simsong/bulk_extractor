@@ -41,6 +41,9 @@ through the project's normal pull-request and CI process.
 - Runtime scanner plug-ins are supported again through a versioned factory
   interface, `-P`, and `BE_PATH`, with an end-to-end integration test
   ([PR #528](https://github.com/simsong/bulk_extractor/pull/528)).
+- The source and release archives now provide project-specific installation
+  instructions, including the distinct bootstrap workflow for Git checkouts
+  ([#424](https://github.com/simsong/bulk_extractor/issues/424)).
 
 ### Reliability and correctness
 
