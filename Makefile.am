@@ -24,6 +24,7 @@ EXTRA_DIST = $(SRC_WIN_DIST) $(AUTO_DOC_FILES) $(AUTO_ETC_FILES) $(AUTO_LICENSES
 	$(srcdir)/etc/Dockerfile.fedora-distcheck \
 	$(srcdir)/etc/Dockerfile.ubuntu-distcheck \
 	$(srcdir)/scripts/assemble_github_release.py \
+	$(srcdir)/scripts/release_aws_large_image.sh \
 	$(srcdir)/scripts/release.sh \
 	$(srcdir)/snap/snapcraft.yaml \
 	$(srcdir)/doc/snap.md \
@@ -97,14 +98,19 @@ libinstall:
 
 # Release orchestration is deliberately fail-closed and isolated from the
 # active checkout. See scripts/release.sh and doc/RELEASE_PROCEDURE.md.
-RELEASE_ARTIFACT_DIR ?= $(abs_builddir)/release-artifacts
-RELEASE_SCRIPT = $(abs_srcdir)/scripts/release.sh
 RELEASE_TAG ?=
+RELEASE_ARTIFACT_DIR ?= $(abs_builddir)/release-artifacts
 RELEASE_RPM_ARTIFACT_DIR ?= $(abs_builddir)/release-rpm-artifacts
+RELEASE_SCRIPT = $(abs_srcdir)/scripts/release.sh
+AWS_LARGE_IMAGE_SCRIPT = $(abs_srcdir)/scripts/release_aws_large_image.sh
+RELEASE_AWS_ARGS ?=
 .PHONY: release
 release:
 	RELEASE_ARTIFACT_DIR="$(RELEASE_ARTIFACT_DIR)" RELEASE_SOURCE_DIR="$(abs_srcdir)" "$(RELEASE_SCRIPT)"
 
+.PHONY: release-aws-large-image
+release-aws-large-image:
+	"$(AWS_LARGE_IMAGE_SCRIPT)" $(RELEASE_AWS_ARGS)
 .PHONY: snap
 snap:
 	cd "$(abs_srcdir)" && snapcraft pack

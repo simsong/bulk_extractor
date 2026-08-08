@@ -31,6 +31,10 @@ through the project's normal pull-request and CI process.
 
 ### Highlights
 
+- Began migrating the historical GitHub wiki into source-controlled
+  documentation. The new [installation guide](installation.md) is the
+  maintained build reference; wiki pages now direct readers to the applicable
+  source-tree documentation.
 - The project license statement now clearly identifies post-January-2015
   development as GPL-3.0-or-later. Original NPS works retain their distinct
   U.S.-Government status; bulk_extractor must not be described as a
@@ -38,9 +42,11 @@ through the project's normal pull-request and CI process.
   license identifiers, including the Autoconf exception used by bundled macros.
 - A standalone 64-bit Windows `.exe` is built with MinGW on Ubuntu and is
   checked to ensure that it imports no non-system Windows DLLs. GitHub Actions
-  publishes it as a downloadable artifact; attaching it to the 2.2.0 release
-  remains a release task
-  ([PR #543](https://github.com/simsong/bulk_extractor/pull/543)).
+  publishes it as a downloadable artifact. The executable includes static
+  libewf support and its Windows runtime workflow scans an E01 fixture;
+  attaching it to the 2.2.0 release remains a release task
+  ([PR #543](https://github.com/simsong/bulk_extractor/pull/543),
+  [#655](https://github.com/simsong/bulk_extractor/issues/655)).
 - Windows raw-device input now uses explicit Win32 device handles and
   `IOCTL_DISK_GET_LENGTH_INFO` for physical disks, volumes, and named volumes,
   rather than relying on C++ filesystem metadata or calculated disk geometry
@@ -59,6 +65,9 @@ through the project's normal pull-request and CI process.
   ([PR #559](https://github.com/simsong/bulk_extractor/pull/559)).
 - The carving guide documents recorder-specific `-S <recorder>_carve_mode=`
   settings, defaults, and feature-file behavior ([#264](https://github.com/simsong/bulk_extractor/issues/264)).
+- Release managers can run the AWS large-image matrix from one interactive
+  Bash launcher, with live SSH log progress and S3 result archives; it does not
+  require CloudFormation or a GitHub Actions workflow ([#624](https://github.com/simsong/bulk_extractor/issues/624)).
 
 ### Reliability and correctness
 
@@ -279,6 +288,11 @@ through the project's normal pull-request and CI process.
   ([#621](https://github.com/simsong/bulk_extractor/issues/621)).
 - The release workflow now assembles and verifies artifacts in a read-only job;
   only its separate draft-publishing job receives repository write permission.
+- Release managers can run an AWS OIDC large-image gate that uses a disposable,
+  fixed-size instance with an eight-hour shutdown cap, encrypted temporary
+  storage, least-privilege input/output access, cleanup, and an attested,
+  redacted result summary. AWS Budget alerts supplement, but do not replace,
+  the runtime cap ([#624](https://github.com/simsong/bulk_extractor/issues/624)).
 - Added a strict-confinement Snap package and native amd64/arm64 build and
   install-test workflow. Stable Snap Store publication is limited to annotated
   release tags, protected release-manager credentials, and a project-owned
@@ -292,8 +306,7 @@ through the project's normal pull-request and CI process.
 ### Known limitations and release work
 
 - Keep the Windows artifact workflow green and attach its `.exe` to the 2.2.0
-  GitHub release. The current build disables libewf, so the `.exe` does not
-  read E01 images directly.
+  GitHub release.
 - Lightgrep remains an unsupported, source-broken optional configuration and
   should not be represented as a working 2.2.0 feature.
 - BEViewer is not bundled with bulk_extractor 2.

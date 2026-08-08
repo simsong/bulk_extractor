@@ -34,8 +34,8 @@ make check
 make install
 ```
 
-For detailed instructions on installing packages and building bulk_extractor, read the wiki page here:
-https://github.com/simsong/bulk_extractor/wiki/Installing-bulk_extractor
+For detailed instructions on installing packages and building bulk_extractor,
+read [the source-controlled installation guide](doc/installation.md).
 
 For more information on bulk_extractor, visit: https://forensics.wiki/bulk_extractor
 
