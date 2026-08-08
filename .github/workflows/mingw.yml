@@ -71,6 +71,9 @@ jobs:
           target_root="$VCPKG_ROOT/installed/x64-mingw-static"
           ./configure --host=x86_64-w64-mingw32 --prefix="$target_root" \
             --enable-static --disable-shared --disable-nls
+          # The legacy `library` target omits libcthreads even though libewf
+          # links against it. Build that prerequisite explicitly.
+          make -j2 -C libcthreads
           make -j2 library
           make -C libewf install-libLTLIBRARIES
           make -C include install-data
