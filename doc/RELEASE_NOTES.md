@@ -81,6 +81,8 @@ through the project's normal pull-request and CI process.
 - Progress displays now adapt to Windows console-width changes, matching the
   periodic terminal-width refresh already used on Unix-like systems
   ([#311](https://github.com/simsong/bulk_extractor/issues/311)).
+- The progress display now labels available memory in bytes and renders all
+  byte-valued status metrics in MiB ([#240](https://github.com/simsong/bulk_extractor/issues/240)).
 - Email extraction now enforces independent 64-octet local-part and 253-octet
   domain limits for ASCII and UTF-16 input, avoiding truncated suffix features
   from overlong addresses ([#585](https://github.com/simsong/bulk_extractor/issues/585)).
