@@ -1,0 +1,8 @@
+# Big-endian SPARC wtmp fixture
+
+This 38,400-byte fixture contains 100 Linux `utmp`/`wtmp` records from a
+SPARC system, whose native byte order is big-endian. It was attached publicly
+to [bulk_extractor issue #363](https://github.com/simsong/bulk_extractor/issues/363)
+as `wtmp.zip` by the reporter.
+
+SHA-256: `3169ea9eb8f604cd5ec060bb2c3b0e8a0125bb2318d51369087885b39ceaeee2`

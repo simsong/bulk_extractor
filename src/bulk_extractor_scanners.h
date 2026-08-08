@@ -52,6 +52,7 @@ SCANNER(ntfsusn)
 SCANNER(outlook)
 SCANNER(pdf)
 SCANNER(rar)
+SCANNER(rtti)
 SCANNER(sqlite)
 SCANNER(utmp)        // scanner provided by 4n6ist:
 SCANNER(vcard)
@@ -66,7 +67,6 @@ SCANNER(zip)
 
 #ifdef HAVE_LIBLIGHTGREP
 //SCANNER(accts_lg)
-//SCANNER(base16_lg)
 //SCANNER(email_lg)
 //SCANNER(gps_lg)
 //SCANNER(lightgrep)

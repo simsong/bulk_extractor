@@ -51,6 +51,7 @@
 #include <condition_variable>
 #include <mutex>
 #include <atomic>
+#include <chrono>
 #include <future>      // std::future, std::promise
 
 #include "aftimer.h"
@@ -73,14 +74,13 @@ public:
         scanner_t *scanner {nullptr};        // if set, use only this scanner, otherwise use all.
     };
 
-    typedef std::set<class worker *> worker_set_t;
-    worker_set_t                        workers {};
     std::set<std::thread *>             threads {};
     mutable std::mutex                  M {};
     std::condition_variable	        TO_MAIN {};
     std::condition_variable	        TO_WORKER {};
     std::atomic<int>                    working_workers {0};
     std::atomic<int>                    freethreads {0};
+    std::atomic<size_t>                 workers_running {0};
 
     // bulk_extractor specialiations
     class scanner_set &ss;		// one for all the threads; fs and fr are threadsafe
@@ -95,9 +95,12 @@ public:
     void launch_workers(size_t num_workers);
     void wait_for_tasks();              // wait until there are no tasks in work queue
     void join();                        // wait_for_tasks() and kill the workers
+    bool join(std::chrono::seconds maximum_wait); // false if workers do not finish in time
     void main_thread_wait();
     void push_task(const sbuf_t *sbuf, scanner_t *scanner);
     void push_task(const sbuf_t *sbuf);
+    uint64_t producer_wait_ns() const;
+    std::string producer_wait_text() const;
 
     // Status for callers
     size_t get_worker_count() const;

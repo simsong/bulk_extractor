@@ -10,7 +10,10 @@
 #include "config.h"
 
 #include <cstring>
+#include <array>
 #include <iostream>
+#include <iterator>
+#include <limits>
 #include <memory>
 #include <filesystem>
 #include <cstdio>
@@ -19,6 +22,7 @@
 #include <string>
 #include <string_view>
 #include <sstream>
+#include <vector>
 
 #include "be20_api/catch.hpp"
 
@@ -48,6 +52,45 @@
 #include "scan_pdf.h"
 #include "scan_vcard.h"
 #include "scan_wordlist.h"
+#ifdef USE_RAR
+#include "rar/rar.hpp"
+#endif
+
+#ifdef USE_RAR
+class RarUnpackTest {
+  public:
+    static void copy_across_window_boundary()
+    {
+        constexpr byte canary = 0x5a;
+        constexpr unsigned int length = MAX_LZ_MATCH + 30;
+        constexpr size_t canary_size = length;
+        std::vector<byte> window(MAXWINSIZE + canary_size, canary);
+        ComprDataIO io;
+        Unpack unpack(&io);
+        unpack.Init(window.data());
+
+        unpack.UnpPtr = MAXWINSIZE - MAX_LZ_MATCH - 1;
+        window[unpack.UnpPtr - 1] = 0xa5;
+        unpack.CopyString(length, 1);
+
+        const unsigned int tail_start = MAXWINSIZE - MAX_LZ_MATCH - 1;
+        const unsigned int wrapped = length - (MAXWINSIZE - tail_start);
+        REQUIRE(unpack.UnpPtr == wrapped);
+        for (unsigned int pos = tail_start; pos < MAXWINSIZE; pos++)
+            REQUIRE(window[pos] == 0xa5);
+        for (unsigned int pos = 0; pos < wrapped; pos++)
+            REQUIRE(window[pos] == 0xa5);
+        for (size_t pos = MAXWINSIZE; pos < window.size(); pos++)
+            REQUIRE(window[pos] == canary);
+    }
+};
+
+TEST_CASE("RAR filename decoding accepts an empty destination", "[rar]")
+{
+    EncodeFileName decoder;
+    decoder.Decode(nullptr, nullptr, 0, nullptr, 0);
+}
+#endif
 
 #include "test_be.h"
 
@@ -295,6 +338,25 @@ bool validate_files(const std::filesystem::path &fn0, const std::filesystem::pat
     return errors == 0;
 }
 
+bool validate_pcap_packet(const std::filesystem::path &fn0, const std::filesystem::path &fn1, uint32_t link_type)
+{
+    std::ifstream in0(fn0, std::ios::binary);
+    std::ifstream in1(fn1, std::ios::binary);
+    std::array<uint8_t, 24> header0, header1;
+    REQUIRE(in0.read(reinterpret_cast<char *>(header0.data()), header0.size()));
+    REQUIRE(in1.read(reinterpret_cast<char *>(header1.data()), header1.size()));
+    REQUIRE(header1[0] == 0xd4);
+    REQUIRE(header1[1] == 0xc3);
+    REQUIRE(header1[2] == 0xb2);
+    REQUIRE(header1[3] == 0xa1);
+    REQUIRE(header1[20] == (link_type & 0xff));
+    REQUIRE(header1[21] == ((link_type >> 8) & 0xff));
+    REQUIRE(header1[22] == ((link_type >> 16) & 0xff));
+    REQUIRE(header1[23] == ((link_type >> 24) & 0xff));
+    return std::equal(std::istreambuf_iterator<char>(in0), {}, std::istreambuf_iterator<char>(in1)) &&
+           in1.peek() == std::char_traits<char>::eof();
+}
+
 
 /**
  * These test cases run the scanners in a scanner_set with a specified disk image, and then check for all of the results.
@@ -445,14 +507,48 @@ TEST_CASE("test_json", "[phase1]") {
  * san_jpeg & scan_rar
  ****************************************************************/
 
+#ifdef USE_RAR
 TEST_CASE("test_jpeg_rar", "[phase1]") {
     std::vector<Check> ex2 {
+        Check("unrar_carved.txt",
+              Feature("20-RAR-0", "unrar_carved/000/20-RAR-0_jpegs_1.jpg",
+                      "<fileobject><filename>unrar_carved/000/20-RAR-0_jpegs_1.jpg</filename><filesize>7323</filesize><hashdigest type='sha1'>0be21db1315246d1617092e8ed92530c85a66e9c</hashdigest></fileobject>")),
+        Check("unrar_carved.txt",
+              Feature("4340-RAR-0", "unrar_carved/000/4340-RAR-0_jpegs_2.jpg",
+                      "<fileobject><filename>unrar_carved/000/4340-RAR-0_jpegs_2.jpg</filename><filesize>7331</filesize><hashdigest type='sha1'>e8beb3c26d976fc30200d52d526c88553e09feac</hashdigest></fileobject>")),
+        Check("unrar_carved.txt",
+              Feature("8708-RAR-0", "unrar_carved/000/8708-RAR-0_jpegs_3.jpg",
+                      "<fileobject><filename>unrar_carved/000/8708-RAR-0_jpegs_3.jpg</filename><filesize>7509</filesize><hashdigest type='sha1'>d77611b716c9bb5f17ffa35b294ed775724b6839</hashdigest></fileobject>")),
+        Check("unrar_carved.txt",
+              Feature("13259-RAR-0", "unrar_carved/000/13259-RAR-0_jpegs_4.jpg",
+                      "<fileobject><filename>unrar_carved/000/13259-RAR-0_jpegs_4.jpg</filename><filesize>7599</filesize><hashdigest type='sha1'>65a1b15956227d3968d5b460c9512c54c46d80bb</hashdigest></fileobject>")),
         Check("jpeg.txt",
               Feature( "13259-RAR-0", "jpeg/000/13259-RAR-0.jpg"))
 
     };
     validate("jpegs.rar", ex2);
 }
+
+#ifdef USE_RAR
+TEST_CASE("RAR PPM copies wrap at the dictionary boundary", "[rar]") {
+    RarUnpackTest::copy_across_window_boundary();
+}
+#endif
+
+TEST_CASE("RAR in-memory relative seeks are bounded", "[rar]") {
+    std::array<unsigned char, 8> data{};
+    File file;
+    file.InitFile(data.data(), static_cast<int64>(data.size()));
+
+    REQUIRE(file.RawSeek(4, SEEK_SET));
+    REQUIRE_FALSE(file.RawSeek(std::numeric_limits<int64>::max(), SEEK_CUR));
+    REQUIRE(file.Tell() == 4);
+    REQUIRE_FALSE(file.RawSeek(std::numeric_limits<int64>::min(), SEEK_CUR));
+    REQUIRE(file.Tell() == 4);
+    REQUIRE(file.RawSeek(-4, SEEK_CUR));
+    REQUIRE(file.Tell() == 0);
+}
+#endif
 
 /****************************************************************
  * scan_kml
@@ -496,6 +592,44 @@ TEST_CASE("test_net2", "[phase1]") {
     };
     auto outdir = validate("ntlm2.pcap", ex2);
     REQUIRE(validate_files(test_dir() / "ntlm2.pcap", outdir / "packets.pcap"));
+}
+
+TEST_CASE("test_net_80211_management", "[phase1]") {
+    std::vector<Check> ex2 {
+        Check("ip.txt", Feature("40", "802.11", "PCAP IEEE 802.11 frame")),
+        Check("wifi.txt", Feature("40", "management", "type=management subtype=beacon to_ds=no from_ds=no protected=no timestamp=*"))
+    };
+    auto outdir = validate("wifi_management.pcap", ex2, false);
+    REQUIRE(validate_pcap_packet(test_dir() / "wifi_management.pcap", outdir / "packets_80211.pcap", DLT_IEEE802_11));
+}
+
+TEST_CASE("test_net_80211_management_pair", "[phase1]") {
+    std::vector<Check> ex2 {
+        Check("wifi.txt", Feature("40", "management", "type=management subtype=beacon to_ds=no from_ds=no protected=no timestamp=*")),
+        Check("wifi.txt", Feature("166", "management", "type=management subtype=beacon to_ds=no from_ds=no protected=no timestamp=*"))
+    };
+    auto outdir = validate("wifi_management_pair.pcap", ex2, false);
+    REQUIRE(validate_pcap_packet(test_dir() / "wifi_management_pair.pcap", outdir / "packets_80211.pcap", DLT_IEEE802_11));
+}
+
+TEST_CASE("test_net_80211_ipv4", "[phase1]") {
+    std::vector<Check> ex2 {
+        Check("ip.txt", Feature("74", "192.168.1.132", "struct ip L (src) cksum-ok")),
+        Check("ip.txt", Feature("74", "192.168.1.1", "struct ip R (dst) cksum-ok")),
+        Check("ip.txt", Feature("40", "802.11", "PCAP IEEE 802.11 frame")),
+        Check("wifi.txt", Feature("40", "data", "type=data subtype=qos-data to_ds=yes from_ds=no protected=no network=IPv4 timestamp=*"))
+    };
+    auto outdir = validate("wifi_ipv4.pcap", ex2, false);
+    REQUIRE(validate_files(test_dir() / "wifi_ipv4.pcap", outdir / "packets_80211.pcap"));
+}
+
+TEST_CASE("test_net_80211_ipv6", "[phase1]") {
+    std::vector<Check> ex2 {
+        Check("ip.txt", Feature("40", "802.11", "PCAP IEEE 802.11 frame")),
+        Check("wifi.txt", Feature("40", "data", "type=data subtype=qos-data to_ds=yes from_ds=no protected=no network=IPv6 timestamp=*"))
+    };
+    auto outdir = validate("wifi_ipv6.pcap", ex2, false);
+    REQUIRE(validate_files(test_dir() / "wifi_ipv6.pcap", outdir / "packets_80211.pcap"));
 }
 
 /* Look at a file with three packets */

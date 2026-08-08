@@ -2,7 +2,22 @@
 AM_CPPFLAGS = -I${top_srcdir}/src/be20_api
 AUTOMAKE_OPTIONS = subdir-objects
 
-EXTRA_DIST = scanner_api.md scanner_template.cpp
+EXTRA_DIST = carving.md docker.md logging.md scanner_api.md scanner_template.cpp testing.md \
+    programmer_manual/BEProgrammersManual.tex \
+    programmer_manual/references.bib \
+    programmer_manual/Makefile.am \
+    programmer_manual/extractinformationreprocess.pdf \
+    programmer_manual/histogramprocessing.pdf \
+    programmer_manual/margindepiction.pdf \
+    programmer_manual/scannerloop.pdf \
+    programmer_manual/scannersextractfeatures.pdf \
+    programmer_manual/system_diagram.pdf \
+    programmer_manual/writetoemail.pdf
+
+.PHONY: pdfs
+pdfs:
+	$(MAKE) -C latex_manuals -f Makefile.am pdfs
+	$(MAKE) -C programmer_manual -f Makefile.am pdfs
 
 
 DOXYGEN_FILES = doxygen/Doxyfile doxygen/Makefile doxygen/programmer_manual.doxygen doxygen/README \

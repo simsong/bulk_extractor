@@ -110,6 +110,7 @@ class scanner_set {
     std::map<scanner_t*, struct scanner_params::scanner_info *> scanner_info_db {}; // scanner to info db; master list of scanners
     std::map<std::string, scanner_t *> scanner_names {}; // scanner name to scanner
     std::set<scanner_t*> enabled_scanners {};            //
+    std::atomic<bool> scan_seen_before_enabled {false};
     std::vector<void *> plugin_handles {};
 
     class thread_pool pool;
@@ -126,6 +127,8 @@ class scanner_set {
     bool record_call_stats {true};     // by default, record the call stats
     std::atomic<uint64_t> sbuf_seen {0}; // number of seen sbufs.
     std::atomic<uint64_t> dup_bytes_encountered{0}; // amount of dup data encountered
+    std::atomic<uint64_t> duplicate_sbufs_bypassed{0};
+    std::atomic<uint64_t> test_crash_after_work_start {0};
     std::map<scanner_t* , struct stats> scanner_stats{}; // maps scanner name to performance stats
     mutable std::mutex Mscanner_stats {};                        // mutex for scanner_stats
 
@@ -150,12 +153,16 @@ public:
     class dfxml_writer* writer {nullptr};          // if provided, a dfxml writer. Mutext locking done by dfxml_writer.h
     void set_dfxml_writer(class dfxml_writer *writer_);
     class dfxml_writer *get_dfxml_writer() const;
+    void set_alert_list(const word_and_context_list *list) { fs.set_alert_list(list); }
+    void set_stop_list(const word_and_context_list *list) { fs.set_stop_list(list); }
 
     // timing info
-    aftimer & producer_timer()   { return pool.main_wait_timer; }
-    uint64_t  producer_wait_ns() { return pool.main_wait_timer.elapsed_nanoseconds();}
-    uint64_t  consumer_wait_ns() { return pool.total_worker_wait_ns;}
-    uint64_t  consumer_wait_ns_per_worker() { return worker_count > 0 ? pool.total_worker_wait_ns / worker_count : 0;}
+    std::string producer_wait_text() const { return pool.producer_wait_text(); }
+    uint64_t  producer_wait_ns() const { return pool.producer_wait_ns(); }
+    uint64_t  consumer_wait_ns() const { return pool.total_worker_wait_ns.load(std::memory_order_relaxed);}
+    uint64_t  consumer_wait_ns_per_worker() const {
+        return worker_count > 0 ? consumer_wait_ns() / worker_count : 0;
+    }
 
     void main_thread_wait()      { return pool.main_thread_wait(); }
     /* They throw a ScannerNotFound exception if no scanner exists */
@@ -214,10 +221,12 @@ public:
     void update_queue_stats(const sbuf_t *sbufp, int dir);   // either +1 increment or -1 decrement
     void thread_set_status(const std::string &status); // designed to be overridden
     void join();                                       // join the threads
+    bool join(std::chrono::seconds maximum_wait);      // false if the threads do not finish in time
     void add_scanner_stat(scanner_t *, const struct stats &st);
     void debug_pool(std::ostream &os) const { pool.debug_pool(os);}
 
     uint64_t get_dup_bytes_encountered()  const  { return dup_bytes_encountered; }
+    uint64_t get_duplicate_sbufs_bypassed() const { return duplicate_sbufs_bypassed; }
     uint32_t get_max_depth_seen() const          { return max_depth_seen;} ; // max seen during scan
 
     // Feature recorders. Functions below are virtual so they can be called by loaded scanners.
@@ -241,6 +250,7 @@ public:
     // Find interface
     const std::vector<std::string> &find_patterns() const           { return sc.find_patterns(); }
     const std::vector<std::filesystem::path> &find_files()    const { return sc.find_files(); }
+    bool find_case_sensitive() const                                { return sc.find_case_sensitive(); }
 
     // Scanning
     scanner_params::phase_t get_current_phase() const { return current_phase; };
@@ -283,6 +293,9 @@ public:;
     void record_work_start(const sbuf_t *sbuf);
     void record_work_start_stop_pos0str(const std::string pos0str);
     void record_work_end(const sbuf_t *sbuf);
+
+    // Test-only hook for validating restart after an abrupt process exit.
+    bool should_test_crash_after_work_start();
 
 
     // These are for garbage collection:

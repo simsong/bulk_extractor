@@ -5,6 +5,7 @@
 #include <atomic>
 #include <memory>
 #include <ostream>
+#include <stdexcept>
 
 #include "be20_api/scanner_set.h"
 #include "be20_api/dfxml_cpp/src/dfxml_writer.h"
@@ -39,6 +40,13 @@ class Phase1 {
     }
 
 public:
+    class ThreadWaitTimeout : public std::runtime_error {
+    public:
+        explicit ThreadWaitTimeout(time_t wait_timeout):
+            std::runtime_error("timed out waiting for scanner threads"), maximum_wait(wait_timeout) {}
+        const time_t maximum_wait;
+    };
+
     // because seen_page_ids are added in order, we want to use an unordered set.
     typedef std::unordered_set<std::string> seen_page_ids_t;
     static inline std::string REPORT_FILENAME {"report.xml"};
@@ -49,7 +57,6 @@ public:
         Config &operator=(const Config &that) = delete;        // assignment constructor - delete
 
         Config() { }
-        uint64_t  debug {false};                 // debug
         size_t    opt_pagesize {16 * MiB};
         size_t    opt_marginsize { 4 * MiB};
         uint32_t  max_bad_alloc_errors {3}; // by default, 3 retries

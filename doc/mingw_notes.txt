@@ -1,26 +1,51 @@
-echo ubuntu:
-apt install mingw-w64 g++-mingw-w64 libz-mingw-w64-dev libgcrypt-mingw-w64-dev
-sudo apt update
-sudo apt install software-properties-common
-echo download expat
-./configure --host=i686-w64-mingw32 --prefix=/usr/i686-w64-mingw32/
-download libewf
-wget https://github.com/libyal/libewf/releases/download/20201230/libewf-experimental-20201230.tar.gz
-tar xfvz libewf-experimental-20201230.tar.gz
-cd libewf-20201230
-./configure --host=i686-w64-mingw32 --prefix=/usr/i686-w64-mingw32/
-make && sudo make install
+Windows executable build
+========================
 
+The supported Windows artifact is built by `.github/workflows/mingw.yml`, not
+by a native Windows developer build or an installer. On Ubuntu 24.04 the
+workflow installs the x86_64 MinGW-w64 POSIX toolchain, pins vcpkg, and builds
+static Expat, RE2, and Abseil. It then runs an out-of-tree Autotools configure:
 
-https://stackoverflow.com/questions/14191566/c-mutex-in-namespace-std-does-not-name-a-type
-$ sudo update-alternatives --config i686-w64-mingw32-gcc
-<choose i686-w64-mingw32-gcc-posix from the list>
+  bash bootstrap.sh
+  mkdir build-mingw && cd build-mingw
+  ../configure --host=x86_64-w64-mingw32 --disable-libewf --quiet
+  make -j2 LDFLAGS="-L$target_root/lib -all-static"
 
-$ sudo update-alternatives --config i686-w64-mingw32-g++
-<choose i686-w64-mingw32-g++-posix from the list>
+The resulting PE executable is copied to `bulk_extractor64.exe` and uploaded as
+the `bulk_extractor-windows-x86_64` artifact on pull requests and `main`.
+The workflow rejects unexpected non-system DLL imports. A Windows runner then
+downloads that exact artifact and scans a directory containing a Unicode file
+name. The artifact intentionally omits libewf, so E01 support is unavailable.
 
-$ sudo update-alternatives --config x86_64-w64-mingw32-gcc
-<choose x86_64-w64-mingw32-gcc-posix from the list>
+It is a CI artifact, not a signed installer or a release promise. Change this
+workflow when changing the Windows build; keep its import check and the Windows
+execution test in the same pull request.
 
-$ sudo update-alternatives --config x86_64-w64-mingw32-g++
-<choose x86_64-w64-mingw32-g++-posix from the list>
+Raw-device input
+================
+
+The Windows executable accepts these raw-device input forms:
+
+* `C:` as a shorthand for `\\.\C:`;
+* `\\.\PhysicalDriveN` for a physical disk;
+* `\\.\X:` for a drive-letter volume; and
+* `\\?\Volume{GUID}` for a named volume (omit the trailing backslash).
+
+Run it from an elevated command prompt. bulk_extractor opens the device
+read-only with shared read/write access. It does not lock, mount, modify, or
+write the device. The reader uses `CreateFileW`, asks
+`IOCTL_DISK_GET_LENGTH_INFO` for the exact length, and uses offset-based
+`ReadFile` calls; it does not use `std::filesystem::file_size` or geometry
+multiplication for a raw device.
+
+A volume is not interchangeable with its physical disk: it can have distinct
+boundaries or span disks. Windows may require `FSCTL_ALLOW_EXTENDED_DASD_IO` to
+read the final sectors of a volume. bulk_extractor does not issue that control
+code, so a short read at that boundary is reported rather than bypassed.
+
+The Windows Actions job creates a disposable FAT32 VHD, attaches it, and scans
+its assigned drive letter as a raw device. It contains the checked-in FAT32
+fixture and a known email address, so the job proves both device reading and
+feature extraction. Before a release, also validate physical-drive and
+volume-GUID forms on an elevated Windows system using disposable media of
+known size and known bytes near both ends.

@@ -25,5 +25,7 @@ else
 
       CXXFLAGS=`echo -g "$CXXFLAGS" | sed 's/-O[123]//'`
       CXXFLAGS="$CXXFLAGS -O3"
+      AC_DEFINE([HAVE_OPTIMIZATION_O3], [1],
+                [Define to 1 when bulk_extractor is built with -O3])
   fi
 fi

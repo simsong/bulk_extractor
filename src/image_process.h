@@ -46,6 +46,7 @@
 
 #include <filesystem>
 #include <memory>
+#include <string_view>
 
 #if defined(_WIN32)
 #  include <winsock2.h>
@@ -67,8 +68,8 @@ public:
     /* These two functions are only used in WIN32 but are defined here so that they can be tested on all platforms */
     static std::string filename_extension(std::filesystem::path fn); // returns extension
 
-    static bool fn_ends_with(std::filesystem::path str,std::string suffix);
-    static bool is_multipart_file(std::filesystem::path fn);
+    static bool fn_ends_with(const std::filesystem::path &str, const std::string &suffix);
+    static bool is_multipart_file(const std::filesystem::path &fn);
     static int multipart_number(const std::filesystem::path &fn);
     static std::filesystem::path multipart_filename(const std::filesystem::path &fn, int number);
 
@@ -237,20 +238,22 @@ class process_ewf : public image_process {
 class process_raw : public image_process {
     class file_info {
     public:;
-        file_info(const std::filesystem::path path_,uint64_t offset_,uint64_t length_):
-            path(path_),offset(offset_),length(length_){
-            stream.open(path, std::ios::binary);
-            if (stream.is_open()==false){
-                throw image_process::NoSuchFile( path_.string() );
-            }
-        };
+        file_info(const std::filesystem::path path_, uint64_t offset_, uint64_t length_);
+        file_info(const file_info&) = delete;
+        file_info& operator=(const file_info&) = delete;
         ~file_info() {
+#ifdef _WIN32
+            if (handle != INVALID_HANDLE_VALUE) CloseHandle(handle);
+#endif
             stream.close();
         }
         std::filesystem::path path {};  // the file name
 	uint64_t offset   {};           // where each file starts
 	uint64_t length   {};           // how long it is
         std::ifstream     stream {};       // where we are reading
+#ifdef _WIN32
+        HANDLE handle {INVALID_HANDLE_VALUE};
+#endif
     };
     typedef std::vector<std::shared_ptr<file_info>> file_list_t;
     file_list_t file_list {};
@@ -259,6 +262,7 @@ class process_raw : public image_process {
     const class std::shared_ptr<process_raw::file_info> find_offset(uint64_t offset) const; /* finds which file this offset would map to */
     uint64_t    raw_filesize {};			/* sume of all the lengths */
 public:
+    static bool is_windows_raw_device_path(std::string_view path);
     process_raw(std::filesystem::path image_fname,size_t pagesize,size_t margin);
     virtual ~process_raw();
     virtual int open() override;

@@ -1,0 +1,24 @@
+FROM ubuntu:22.04
+
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        autoconf automake ca-certificates flex g++ libabsl-dev libexiv2-dev \
+        libexpat1-dev libgcrypt20-dev libre2-dev libssl-dev libtool \
+        libxml2-utils make pkg-config wget zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+ARG LIBEWF_URL=https://github.com/libyal/libewf-legacy/releases/download/20140814/libewf-20140814.tar.gz
+RUN wget -q "$LIBEWF_URL" -O /tmp/libewf.tar.gz \
+    && tar -C /tmp -xzf /tmp/libewf.tar.gz \
+    && cd /tmp/libewf-* \
+    && ./configure --quiet --enable-silent-rules --prefix=/usr/local \
+    && make -j"$(nproc)" \
+    && make install \
+    && ldconfig \
+    && rm -rf /tmp/libewf /tmp/libewf-* /tmp/libewf.tar.gz
+
+WORKDIR /src
+COPY . /src
+RUN bash bootstrap.sh && ./configure --quiet && make distcheck

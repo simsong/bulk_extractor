@@ -97,7 +97,7 @@ public:
     static int rstrcmp(const std::string& a, const std::string& b);
 
     word_and_context_list() : fcmap(), context_set(), patterns() {}
-    size_t size() { return fcmap.size() + patterns.size(); }
+    size_t size() const { return fcmap.size() + patterns.size(); }
     void add_regex(const std::string& pat);                  // not threadsafe
     bool add_fc(const std::string& f, const std::string& c); // not threadsafe
     int readfile(const std::filesystem::path path, std::ostream& os = std::cout); // readfile with stats to os

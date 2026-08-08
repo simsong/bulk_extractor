@@ -14,17 +14,21 @@
 
 #include "config.h"
 
+#include <cstdint>
+#include <algorithm>
 #include <cstring>
 #include <fstream>
 #include <iostream>
 #include <memory>
 #include <filesystem>
 #include <cstdio>
+#include <iterator>
 #include <stdexcept>
 #include <unistd.h>
 #include <string>
 #include <string_view>
 #include <sstream>
+#include <vector>
 
 #include "be20_api/catch.hpp"
 
@@ -60,10 +64,6 @@
 
 #include "test_be.h"
 
-#ifdef HAVE_EXIV2
-extern "C" void scan_exiv2(scanner_params& sp);
-#endif
-
 const std::string JSON1 {"[{\"1\": \"one@company.com\"}, {\"2\": \"two@company.com\"}, {\"3\": \"two@company.com\"}]"};
 const std::string JSON2 {"[{\"1\": \"one@base64.com\"}, {\"2\": \"two@base64.com\"}, {\"3\": \"three@base64.com\"}]\n"};
 
@@ -83,6 +83,23 @@ TEST_CASE("directory_scan_skips_symlinks", "[image_process]")
     const auto pos0 = image->get_pos0(image->begin());
     REQUIRE(pos0.path == (root / "nested" / "first.txt").string());
     REQUIRE(pos0.offset == 0);
+    std::filesystem::remove_all(root);
+}
+
+TEST_CASE("directory_scan_reads_unicode_filename", "[image_process]")
+{
+    const auto root = NamedTemporaryDirectory();
+    const auto path = root / std::filesystem::u8path(u8"\u00a9_test.txt");
+    const std::string contents = "unicode-path@example.com\n";
+    std::ofstream(path, std::ios::binary) << contents;
+
+    const auto image = image_process::open(root, true, 0, 0);
+    REQUIRE(image->image_size() == 1);
+    auto it = image->begin();
+    std::unique_ptr<sbuf_t> sbuf(image->sbuf_alloc(it));
+    REQUIRE(sbuf->asString() == contents);
+    REQUIRE(image->get_pos0(it).path == path.string());
+
     std::filesystem::remove_all(root);
 }
 
@@ -337,6 +354,70 @@ TEST_CASE("scan_email3", "[support]") {
     REQUIRE( requireFeature(email_txt,"0\tplain_text_pdf@textedit.com"));
 }
 
+static std::string valid_email_domain(size_t length)
+{
+    REQUIRE(length >= 5);
+    std::string domain;
+    size_t remaining = length - 4; // the final ".com"
+    while (remaining > 0) {
+        const size_t label_length = std::min<size_t>(63, remaining);
+        domain.append(label_length, 'd');
+        remaining -= label_length;
+        if (remaining == 0) break;
+        domain.push_back('.');
+        --remaining;
+    }
+    return domain + ".com";
+}
+
+static std::vector<uint8_t> utf16le(const std::string &text)
+{
+    std::vector<uint8_t> bytes;
+    bytes.reserve(text.size() * 2);
+    for (const unsigned char ch : text) {
+        bytes.push_back(ch);
+        bytes.push_back(0);
+    }
+    return bytes;
+}
+
+TEST_CASE("scan_email_length_limits", "[support]") {
+    const auto scan = [](const std::string &email) {
+        const std::string input = email + " ";
+        auto outdir = test_scanner(scan_email, new sbuf_t(input.c_str()));
+        return getLines(outdir / "email.txt");
+    };
+
+    for (const size_t length : {63U, 64U}) {
+        const std::string email(length, 'l');
+        const auto lines = scan(email + "@example.com");
+        REQUIRE(requireFeature(lines, "0\t" + email + "@example.com"));
+    }
+    REQUIRE(scan(std::string(65, 'l') + "@example.com").empty());
+
+    const std::string local = "loc";
+    for (const size_t length : {252U, 253U}) {
+        const std::string email = local + "@" + valid_email_domain(length);
+        const auto lines = scan(email);
+        REQUIRE(requireFeature(lines, "0\t" + email));
+    }
+    REQUIRE(scan(local + "@" + valid_email_domain(254)).empty());
+}
+
+TEST_CASE("scan_email_utf16_length_limits", "[support]") {
+    const auto scan = [](const std::string &email) {
+        const auto bytes = utf16le(email + " ");
+        auto outdir = test_scanner(scan_email, new sbuf_t(pos0_t(), bytes.data(), bytes.size()));
+        return getLines(outdir / "email.txt");
+    };
+
+    const std::string local(64, 'l');
+    REQUIRE_FALSE(scan(local + "@example.com").empty());
+    REQUIRE(scan(std::string(65, 'l') + "@example.com").empty());
+    REQUIRE_FALSE(scan("loc@" + valid_email_domain(253)).empty());
+    REQUIRE(scan("loc@" + valid_email_domain(254)).empty());
+}
+
 TEST_CASE("scan_email4", "[support]") {
     std::vector<scanner_t *>scanners = {scan_email, scan_pdf };
     auto *sbufp = map_file("nps-2010-emails.100k.raw");
@@ -372,6 +453,36 @@ TEST_CASE("scan_email16", "[scanners]") {
         auto url_histogram_txt = getLines( outdir / "url_histogram.txt" );
         REQUIRE( requireFeature(url_histogram_txt,"n=1\thttp://www.hhs.gov/ocr/hipaa/consumer_rights.pdf\t(utf16=1)"));
     }
+}
+
+TEST_CASE("scan_utmp_big_endian", "[scanners]") {
+    auto outdir = test_scanner(scan_utmp, map_file("wtmp-sparc-be"));
+    const auto carved = getLines(outdir / "utmp_carved.txt");
+    REQUIRE( std::count_if(carved.begin(), carved.end(), [](const std::string &line) {
+        return line.find("\tutmp_carved/") != std::string::npos;
+    }) == 100 );
+}
+
+
+TEST_CASE("scan_email_excludes_html_quote_entity", "[scanners]") {
+    const auto has_url_feature = [](const std::vector<std::string> &lines, const std::string &feature) {
+        for (const auto &line : lines) {
+            if (has(line, "\t" + feature + "\t")) return true;
+        }
+        return false;
+    };
+
+    auto *sbufp = new sbuf_t("http://www.icra.org/ratingsv02.html&quot;");
+    auto outdir = test_scanner(scan_email, sbufp);
+    auto url_txt = getLines(outdir / "url.txt");
+    REQUIRE( requireFeature(url_txt, "0\thttp://www.icra.org/ratingsv02.html\t") );
+    REQUIRE_FALSE( has_url_feature(url_txt, "http://www.icra.org/ratingsv02.html&quot;") );
+
+    auto *host_sbufp = new sbuf_t("http://www.msn.com&quot;");
+    auto host_outdir = test_scanner(scan_email, host_sbufp);
+    auto host_url_txt = getLines(host_outdir / "url.txt");
+    REQUIRE( requireFeature(host_url_txt, "0\thttp://www.msn.com\t") );
+    REQUIRE_FALSE( has_url_feature(host_url_txt, "http://www.msn.com&quot;") );
 }
 
 TEST_CASE("scan_exif0", "[scanners]") {
@@ -522,6 +633,30 @@ TEST_CASE("scan_msxml","[scanners]") {
     REQUIRE( bufstr.find("http://maps.google.com/mapfiles/kml/pal3/icon19.png") != std::string::npos);
     REQUIRE( bufstr.find("A collection showing how easy it is to create 3-dimensional") != std::string::npos);
     delete sbufp;
+}
+
+TEST_CASE("scan_sqlite_carve_length", "[scanners]") {
+    constexpr size_t prefix_size = 64;
+    constexpr size_t page_size = 512;
+    constexpr size_t trailer_size = 64;
+    std::string data(prefix_size + page_size + trailer_size, '\x7f');
+    data.replace(prefix_size, 16, std::string("SQLite format 3\0", 16));
+    data[prefix_size + 16] = 0x02; // 512-byte page size, big-endian
+    data[prefix_size + 17] = 0x00;
+    data[prefix_size + 28] = 0x00; // one database page, big-endian
+    data[prefix_size + 29] = 0x00;
+    data[prefix_size + 30] = 0x00;
+    data[prefix_size + 31] = 0x01;
+
+    auto outdir = test_scanner(scan_sqlite, sbuf_t::sbuf_malloc(pos0_t(), data));
+    std::vector<std::filesystem::path> carved_files;
+    for (const auto& entry : std::filesystem::recursive_directory_iterator(outdir / "sqlite_carved")) {
+        if (entry.is_regular_file()) {
+            carved_files.push_back(entry.path());
+        }
+    }
+    REQUIRE(carved_files.size() == 1);
+    REQUIRE(std::filesystem::file_size(carved_files.front()) == page_size);
 }
 
 TEST_CASE("scan_msxml_empty_text", "[scanners]") {
@@ -746,160 +881,41 @@ TEST_CASE("scan_net1", "[scanners]") {
     REQUIRE( scan_net_t::invalidIP6(addr) == true );
 }
 
-#ifdef TEST_IPV6
+TEST_CASE("ipv6_checksum_captured_packets", "[scanners]") {
+    constexpr size_t pcap_file_header_size = 24;
+    constexpr size_t pcap_record_header_size = 16;
+    constexpr size_t ethernet_header_size = 14;
+    constexpr uint8_t next_headers[] = {IPPROTO_TCP, IPPROTO_UDP, IPPROTO_ICMPV6};
 
-/* DNS ipv6 packet, sans ethernet header */
-const uint8_t packet2[] = {
-    0x60, 0x00, 0x00, 0x00,        // version, traffic | flow label
-    0x00, 0x24, 0x11, 0x01,        // payload length   | next header | hop limit
-    0xfe, 0x80, 0x00, 0x00,        // source address
-    0x00, 0x00, 0x00, 0x00,
-    0xc4, 0x6b, 0x00, 0xe4,
-    0x0d, 0x55, 0x62, 0xb1,
-    0xff, 0x02, 0x00, 0x00,  // destination address
-    0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00,
-    0x00, 0x01, 0x00, 0x03,
-    0xf9, 0x9e, 0x14, 0xeb, // udp source port | destination port
-    0x00, 0x24, 0x21, 0xdc, // udp length | checksum
-    0x7e, 0x2a, 0x00, 0x00, // udp data
-    0x00, 0x01, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00,
-    0x0a, 0x78, 0x7a, 0x69,
-    0x67, 0x6e, 0x62, 0x6e,
-    0x66, 0x76, 0x69, 0x00,
-    0x00, 0x01, 0x00, 0x01,
-    0xa6, 0xca, 0xb2, 0x70,
-    0xf8, 0x67, 0x2f, 0x3f
-};
+    std::unique_ptr<sbuf_t> pcap(map_file("ipv6_checksum_paths.pcap"));
+    size_t record = pcap_file_header_size;
+    for (const uint8_t next_header : next_headers) {
+        const size_t captured_length = pcap->get32u(record + 8);
+        const size_t frame = record + pcap_record_header_size;
+        REQUIRE(pcap->get16uBE(frame + 12) == ETHERTYPE_IPV6);
+        const sbuf_t ip6 = pcap->slice(frame + ethernet_header_size, captured_length - ethernet_header_size);
+        scan_net_t::generic_iphdr_t h {};
 
-
-/****************************************************************/
-/* First packet of a wget from google over IPv6 */
-/*
-(base) simsong@nimi ~ % tcpdump -r out1.pcap -x
-reading from file out1.pcap, link-type EN10MB (Ethernet)
-14:33:29.327826 IP6 2603:3003:127:1000:9440:31dd:dd50:e403.49478 > iad30s43-in-x04.1e100.net.http: Flags [S], seq 3310600832, win 65535, options [mss 1440,nop,wscale 6,nop,nop,TS val 1142909182 ecr 0,sackOK,eol], length 0
-	0x0000:  6005 0500 002c 0640 2603 3003 0127 1000
-	0x0010:  9440 31dd dd50 e403 2607 f8b0 4004 082f
-	0x0020:  0000 0000 0000 2004 c146 0050 c553 c280
-	0x0030:  0000 0000 b002 ffff 75c1 0000 0204 05a0
-	0x0040:  0103 0306 0101 080a 441f 68fe 0000 0000
-	0x0050:  0402 0000
-
-Internet Protocol Version 6
-0110 .... = Version: 6
-.... 0000 0000 .... .... .... .... .... = Traffic Class: 0x00 (DSCP: CS0, ECN: Not-ECT)
-.... .... .... 0101 0000 0101 0000 0000 = Flow Label: 0x50500
-Payload Length: 44
-Next Header: TCP (6)
-Hop Limit: 64
-Source Address: 2603:3003:127:1000:9440:31dd:dd50:e403
-Destination Address: 2607:f8b0:4004:82f::2004
-Transmission Control Protocol
-Source Port: 49478
-Destination Port: 80
-Stream index: 0
-TCP Segment Len: 0
-Sequence Number: 0
-Sequence Number (raw): 3310600832
-Next Sequence Number: 1
-Acknowledgment Number: 0
-Acknowledgment number (raw): 0
-1011 .... = Header Length: 44 bytes (11)
-Flags: 0x002 (SYN)
-Window: 65535
-Calculated window size: 65535
-Checksum: 0x75c1
-Checksum Status: Unverified
-Urgent Pointer: 0
-Options: (24 bytes), Maximum segment size, No-Operation (NOP), Window scale, No-Operation (NOP), No-Operation (NOP), Timestamps, SACK permitted, End of Option List (EOL)
-Timestamps
-*/
-
-/* Validate checksum computation from
- * https://stackoverflow.com/questions/30858973/udp-checksum-calculation-for-ipv6-packet
- */
-const uint8_t packet6_udp[] = {
-    0x60, 0x00, 0x00, 0x00, // version, traffic | flow label
-    0x00, 0x34, 0x11, 0x01, // payload length   | next header | hop limit
-    0x21, 0x00, 0x00, 0x00, // source
-    0x00, 0x00, 0x00, 0x01,
-    0xAB, 0xCD, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x01,
-    0xFD, 0x00, 0x00, 0x00, // destination address
-    0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x01, 0x60,
-    0x26, 0x92, 0x26, 0x92, // udp source | udp destination
-    0x00, 0x0C, 0x7E, 0xD5, // udp length | udp checksum
-    0x12, 0x34, 0x56, 0x78  // udp data
-};
-TEST_CASE("ipv6_checksum_UDP", "[scanners]") {
-    /* Try packet2 */
-    sbuf_t sbuf2(pos0_t(), packet2, sizeof(packet2));
-    std::cerr << "sbuf2: " << sbuf2 << std::endl;
-    REQUIRE( scan_net_t::ip6_cksum_valid( sbuf2, 0) == true );
-
-
-    /* Try packet6 */
-    sbuf_t sbuf6(pos0_t(), packet6_udp, sizeof(packet6_udp));
-    REQUIRE( sbuf6.bufsize==52 );
-    REQUIRE( scan_net_t::ip6_cksum_valid( sbuf6, 0) == true );
-
-    /* Make a 1 byte change to packet6 and make sure it fails */
-    uint8_t buf[1024];
-    memcpy(buf, packet6_udp, sizeof(packet6_udp));
-    buf[16]++;
-    sbuf_t sbuf6_bad(pos0_t(), buf, sizeof(packet6_udp));
-    REQUIRE( sbuf6_bad.bufsize==52 );
-    REQUIRE( scan_net_t::ip6_cksum_valid( sbuf6_bad, 0) == false );
-
-};
-
-TEST_CASE("ipv6_checksum_TCP", "[scanners]") {
-    sbuf_t sbuf(pos0_t(), packet6_udp, sizeof(packet6_udp));
-    REQUIRE( sbuf.bufsize==52 );
-    REQUIRE( scan_net_t::ip6_cksum_valid( sbuf, 0) == true );
-
-    /* Make a 1 byte change to the payload */
-    uint8_t buf[1024];
-    memcpy(buf, packet6_udp, sizeof(packet6_udp));
-    buf[16]++;
-    sbuf_t sbuf2(pos0_t(), buf, sizeof(packet6_udp));
-    REQUIRE( sbuf2.bufsize==52 );
-    REQUIRE( scan_net_t::ip6_cksum_valid( sbuf2, 0) == false );
-
-};
-
-TEST_CASE("scan_net2", "[scanners]") {
-    /* This checks specifically for a valid IPv6 packet that we know is valid. */
-    constexpr size_t frame_offset = 15;           // where we put the packet. Make sure that it is not byte-aligned!
-    uint8_t buf[1024];
-    scan_net_t::generic_iphdr_t h {} ;
-
-    memset(buf,0xee,sizeof(buf));       // arbitrary data
-    memcpy(buf + frame_offset, packet2, sizeof(packet1)); // copy it to an offset that is not byte-aligned
-    sbuf_t sbuf(pos0_t(), buf, sizeof(buf));
-
-    constexpr size_t packet2_ip_len = sizeof(packet2); // 14 bytes for ethernet header
-
-    REQUIRE( packet2_ip_len == 84); // from above
-
-    /*
-    const struct ip6_hdr *ip6 = sbuf.get_struct_ptr_unsafe<struct ip6_hdr>( buf+frame_offset );
-    REQUIRE( ip6->is_ipv6() == true);
-    REQUIRE( buf[40+frame_offset] == 0x00);
-    REQUIRE( buf[41+frame_offset] == 0x11);
-    */
-
-    REQUIRE( scan_net_t::sanityCheckIP46Header( sbuf, frame_offset , &h, nullptr) == true );
-    REQUIRE( h.is_4() == false);
-    REQUIRE( h.is_6() == true);
-    REQUIRE( h.is_4or6() == true);
-    REQUIRE( h.checksum_valid == true);
+        REQUIRE(ip6.get8u(6) == next_header);
+        REQUIRE(scan_net_t::ip6_cksum_valid(ip6, 0));
+        REQUIRE(scan_net_t::sanityCheckIP46Header(ip6, 0, &h, nullptr));
+        REQUIRE(h.is_6());
+        REQUIRE(h.checksum_valid);
+        record = frame + captured_length;
+    }
+    REQUIRE(record == pcap->bufsize);
 }
-#endif
+
+TEST_CASE("scan_net_ipv6_carve", "[scanners]")
+{
+    const auto outdir = test_scanner(scan_net, map_file("ipv6_checksum_paths.pcap"));
+
+    const auto ip = getLines(outdir / "ip.txt");
+    REQUIRE(requireFeature(ip, "3ffe:507:0:1:200:86ff:fe05:80da"));
+    REQUIRE(requireFeature(ip, "3ffe:501:4819::42"));
+    REQUIRE(requireFeature(ip, "fe80::260:97ff:fe07:69ea"));
+    REQUIRE(std::filesystem::file_size(outdir / "packets.pcap") > pcap_writer::TCPDUMP_HEADER_SIZE);
+}
 
 TEST_CASE("scan_pdf", "[scanners]") {
     auto *sbufp = map_file("pdf_words2.pdf");
@@ -914,6 +930,76 @@ TEST_CASE("scan_pdf", "[scanners]") {
     delete sbufp;
 }
 
+TEST_CASE("scan_rtti_image8", "[scanners]")
+{
+    // A 1x1 PPM image followed by an embedded RTTI Image8 record.
+    std::ifstream fixture(test_dir() / "rtti_image8.hex");
+    REQUIRE(fixture.is_open());
+    std::vector<uint8_t> image;
+    unsigned int byte;
+    while (fixture >> std::hex >> byte) {
+        REQUIRE(byte <= UINT8_MAX);
+        image.push_back(static_cast<uint8_t>(byte));
+    }
+    REQUIRE(image.size() == 35);
+    REQUIRE(std::string_view(reinterpret_cast<const char *>(image.data()), 11) == "P6\n1 1\n255\n");
+    REQUIRE(std::string_view(reinterpret_cast<const char *>(image.data() + 14), 7) == "Image8\n");
+
+    auto outdir = test_scanner(
+        scan_rtti, new sbuf_t(pos0_t(), image.data(), image.size()));
+
+    std::vector<std::filesystem::path> carved;
+    for (const auto &entry :
+         std::filesystem::recursive_directory_iterator(outdir / "rtti")) {
+        if (entry.is_regular_file()) {
+            carved.push_back(entry.path());
+        }
+    }
+    REQUIRE(carved.size() == 1);
+
+    std::ifstream input(carved.front(), std::ios::binary);
+    const std::string actual((std::istreambuf_iterator<char>(input)),
+                             std::istreambuf_iterator<char>());
+    std::string expected = "P6\n2 1\n255\n";
+    expected.append("\xff\x00\x00\x00\xff\x00", 6);
+    REQUIRE(actual == expected);
+}
+
+TEST_CASE("scan_rtti_rejects_truncated_image8", "[scanners]")
+{
+    const std::vector<uint8_t> truncated = {
+        'I', 'm', 'a', 'g', 'e', '8', '\n',
+        2, 0, 0, 0, 2, 0, 0, 0,
+        255, 0, 0
+    };
+    auto outdir = test_scanner(
+        scan_rtti, new sbuf_t(pos0_t(), truncated.data(), truncated.size()));
+    REQUIRE_FALSE(std::filesystem::exists(outdir / "rtti"));
+}
+
+TEST_CASE("scan_rtti_accepts_documented_portrait_dimensions", "[scanners]")
+{
+    constexpr size_t width = 640;
+    constexpr size_t height = 800;
+    std::vector<uint8_t> image = {
+        'I', 'm', 'a', 'g', 'e', '8', '\n',
+        0x80, 0x02, 0, 0, 0x20, 0x03, 0, 0
+    };
+    image.resize(image.size() + width * height * 3);
+
+    const auto outdir = test_scanner(
+        scan_rtti, new sbuf_t(pos0_t(), image.data(), image.size()));
+    size_t carved_files = 0;
+    for (const auto &entry :
+         std::filesystem::recursive_directory_iterator(outdir / "rtti")) {
+        if (entry.is_regular_file()) {
+            carved_files++;
+            REQUIRE(entry.file_size() ==
+                    std::string("P6\n640 800\n255\n").size() + width * height * 3);
+        }
+    }
+    REQUIRE(carved_files == 1);
+}
 
 TEST_CASE("scan_vcard", "[scanners]") {
     auto *sbufp = map_file( "john_jakes.vcf" );
@@ -1090,7 +1176,7 @@ TEST_CASE("scan_zip", "[scanners]") {
     auto *sbufp = map_file( "testfilex.docx" );
     auto outdir = test_scanners( scanners, sbufp); // deletes sbuf2
     auto email_txt = getLines( outdir / "email.txt" );
-    REQUIRE( std::filesystem::exists( outdir / "zip/000/testfilex.docx____-0-ZIP-0__Content_Types_.xml") == true);
+    REQUIRE( std::filesystem::exists( outdir / "zip_carved/000/testfilex.docx____-0-ZIP-0__Content_Types_.xml") == true);
     REQUIRE( requireFeature(email_txt,"1771-ZIP-402\tuser_docx@microsoftword.com"));
     REQUIRE( requireFeature(email_txt,"2396-ZIP-1012\tuser_docx@microsoftword.com"));
 }

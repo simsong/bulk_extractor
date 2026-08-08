@@ -4,6 +4,8 @@
 # COVERITY_SCAN_TOKEN, with the token from the Coverity project page (e.g., https://scan.coverity.com/projects/moshekaplan-duckdb?tab=project_settings )
 # Also, ensure that the 'github.repository' comparison and 'COVERITY_PROJECT_NAME' values below are accurate
 name: Coverity Scan
+permissions:
+  contents: read
 on:
   schedule:
   # Run once monthly, bulk_extractor is at ~175k LOC

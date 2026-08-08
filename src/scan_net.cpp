@@ -30,6 +30,13 @@
 #include <set>
 #include <mutex>
 #include <ctype.h>
+#include <iomanip>
+#include <sstream>
+
+#ifdef _WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#endif
 
 #include "be20_api/formatter.h"
 #include "be20_api/utils.h"
@@ -46,6 +53,31 @@
 
 int opt_report_checksum_bad= 0;		// if true, report bad chksums
 int opt_report_packet_path = 0;         // if true, report packets to packets.txt
+
+namespace {
+constexpr size_t IEEE80211_BASE_HEADER_LEN = 24;
+constexpr size_t IEEE80211_LLC_SNAP_LEN = 8;
+
+size_t ieee80211_payload_offset(const sbuf_t &sbuf, size_t pos, size_t packet_len)
+{
+    if (packet_len < IEEE80211_BASE_HEADER_LEN) return 0;
+    const uint16_t frame_control = sbuf.get16u_unsafe(pos);
+    if (((frame_control >> 2) & 0x3) != 2 || (frame_control & 0x4000)) return 0;
+
+    size_t header_len = IEEE80211_BASE_HEADER_LEN;
+    if ((frame_control & 0x0300) == 0x0300) header_len += 6;
+    if (((frame_control >> 4) & 0x8) != 0) header_len += 2;
+    if ((frame_control & 0x8000) != 0) header_len += 4;
+    if (header_len + IEEE80211_LLC_SNAP_LEN > packet_len) return 0;
+
+    const uint8_t *llc = sbuf.get_buf() + pos + header_len;
+    if (llc[0] != 0xaa || llc[1] != 0xaa || llc[2] != 0x03 ||
+        llc[3] != 0 || llc[4] != 0 || llc[5] != 0) return 0;
+    const uint16_t ether_type = static_cast<uint16_t>(llc[6]) << 8 | llc[7];
+    if (ether_type != ETHERTYPE_IP && ether_type != ETHERTYPE_IPV6) return 0;
+    return header_len + IEEE80211_LLC_SNAP_LEN;
+}
+}
 
 
 /* packetset is a set of the addresses of packets that have been written.
@@ -164,7 +196,8 @@ scan_net_t::scan_net_t(const scanner_params &sp):
     pwriter(sp),
     ip_recorder(sp.named_feature_recorder("ip")),
     tcp_recorder(sp.named_feature_recorder("tcp")),
-    ether_recorder(sp.named_feature_recorder("ether"))
+    ether_recorder(sp.named_feature_recorder("ether")),
+    wifi_recorder(sp.named_feature_recorder("wifi"))
 {
 }
 
@@ -198,39 +231,32 @@ uint16_t scan_net_t::ip4_cksum(const sbuf_t &sbuf, size_t pos, size_t len)
     return ~sum;
 }
 
-/* Simson's easy-to-understand ipv6 checksum algorithm.
- * Designed for correctness, not for speed
- * ipv6 header starts at sbuf+pos
- *
- */
 bool scan_net_t::ip6_cksum_valid(const sbuf_t &sbuf, size_t pos)
 {
-    if (sbuf.bufsize < pos + 46) return 0;             // packet to small; should not have been called
-    const struct be20::ip6_hdr *ip6 = sbuf.get_struct_ptr_unsafe<struct be20::ip6_hdr>( pos );
-    uint16_t ip_payload_len         = ntohs(ip6->ip6_plen());
-    if (sbuf.bufsize < pos + ip_payload_len) return 0; // don't have enough of the packet
+    if (pos > sbuf.bufsize || sbuf.bufsize - pos < sizeof(be20::ip6_hdr)) return false;
+    const auto *ip6 = sbuf.get_struct_ptr_unsafe<be20::ip6_hdr>(pos);
+    const size_t payload_len = ntohs(ip6->ip6_plen());
+    if (payload_len > sbuf.bufsize - pos - sizeof(be20::ip6_hdr)) return false;
 
-    if (ip6->ip6_nxt() == IPPROTO_UDP) {
-        if (sbuf.bufsize < pos + 48) return 0;   // not enough room for udp header
-        class be20::adder1 sum;
-        for (size_t offset = 8; offset < 40; offset += 2 ){
-            sum.add( sbuf.get16uBE_unsafe( pos + offset )); // first get the source and destinations
-        }
-        sum.add( 0x0011 );                       // pseudo header protocol 00 11
-        sum.add( sbuf.get16uBE_unsafe( pos + 44)); // Length of (UDP Header + Body), from UDP datagram header
-        sum.add( sbuf.get16uBE_unsafe( pos + 40)); // UDP source port
-        sum.add( sbuf.get16uBE_unsafe( pos + 42)); // UDP destination port
-        sum.add( sbuf.get16uBE_unsafe( pos + 44)); // UDP datagram header length
-        for (size_t offset = 48 ; offset < ip_payload_len ; offset += 2 ){
-            sum.add( sbuf.get16uBE_unsafe( pos + offset )); // get the UDP data
-        }
-        /* Get the last byte if it is present */
-        if (ip_payload_len & 0x0001) {
-            sum.add( sbuf[pos + ip_payload_len - 1] );
-        }
-        return sum.chksum() == sbuf.get16uBE_unsafe( pos + 46);
+    size_t checksum_offset;
+    switch (ip6->ip6_nxt()) {
+    case IPPROTO_TCP:
+        if (payload_len < sizeof(be_tcphdr)) return false;
+        checksum_offset = 56;
+        break;
+    case IPPROTO_UDP:
+        if (payload_len < sizeof(be_udphdr)) return false;
+        checksum_offset = 46;
+        break;
+    case IPPROTO_ICMPV6:
+        if (payload_len < 4) return false;
+        checksum_offset = 42;
+        break;
+    default:
+        return false;
     }
-    return (0);
+    return sbuf.get16uBE_unsafe(pos + checksum_offset) ==
+        IPv6L3Chksum(sbuf, pos, checksum_offset);
 }
 
 
@@ -243,7 +269,7 @@ bool scan_net_t::ip6_cksum_valid(const sbuf_t &sbuf, size_t pos)
  * the listed order:
  *	- Source address (16 octets)
  * 	- Destination address (16 octets)
- * 	- TCP Length (4 octets)
+ * 	- Upper-layer packet length (4 octets)
  *	- 24 zero bits (3 octets)
  *	- Next Header (1 octet)
  * Total: 40 octets
@@ -255,51 +281,42 @@ bool scan_net_t::ip6_cksum_valid(const sbuf_t &sbuf, size_t pos)
  * See:
  * https://stackoverflow.com/questions/30858973/udp-checksum-calculation-for-ipv6-packet
  */
-uint16_t scan_net_t::IPv6L3Chksum(const sbuf_t &sbuf, size_t pos, u_int chksum_byteoffset)
+uint16_t scan_net_t::IPv6L3Chksum(const sbuf_t &sbuf, size_t pos, size_t chksum_byteoffset)
 {
-    const struct be20::ip6_hdr *ip6 = sbuf.get_struct_ptr_unsafe<struct be20::ip6_hdr>(pos);
+    const auto *ip6 = sbuf.get_struct_ptr_unsafe<be20::ip6_hdr>(pos);
+    const size_t payload_len = ntohs(ip6->ip6_plen());
+    uint32_t sum = 0;
 
-    int len      = ntohs(ip6->ip6_plen()) + 40;/* payload len + size of pseudo hdr */
-    uint32_t sum = 0;			//
-    u_int octets_processed = 0;
+    const auto add_word = [&sum](uint16_t word) {
+        sum += word;
+        sum = (sum & 0xffff) + (sum >> 16);
+    };
 
-    /** We start counting at offset 8, which is the source address
-     *  which is followed by the ipv6 dst addr field and then the tcp
-     * payload
-     */
-    for(size_t i=pos+8 ; pos+i+1 < sbuf.bufsize && len > 0 ; i+=2 ){
-	if (i==40){			// reached the end of ipv6 header
-	    sum += ip6->ip6_plen();
-	    if (sum & 0x80000000){   /* if high order bit set, fold */
-		sum = (sum & 0xFFFF) + (sum >> 16);
-	    }
-
-	    /* putting the nxt pseudo header field in network-byte order via SHL(8) */
-	    sum += (uint16_t)(ip6->ip6_nxt() << 8);
-	    if (sum & 0x80000000){   /* if high order bit set, fold */
-		sum = (sum & 0xFFFF) + (sum >> 16);
-	    }
-	    len -= 8; 	    /* we've processed 8 octets in the pseudo header */
-	    octets_processed += 8;
-	} else {
-	    /* check if we are at the offset of the L3 chksum field*/
-	    if ((octets_processed != chksum_byteoffset)) {
-		sum += sbuf.get16u_unsafe(i);
-		if (sum & 0x80000000){   /* if high order bit set, fold */
-		    sum = (sum & 0xFFFF) + (sum >> 16);
-		}
-	    }
-
-	    /* update len and octets_processed */
-	    len -= 2;
-	    octets_processed += 2;
-	}
-    }
-    while( (sum & 0xFFFF0000) > 0 ){
-	sum = (sum & 0xFFFF) + (sum >> 16);
+    /* Source and destination addresses. */
+    for (size_t offset = 8; offset < 40; offset += 2) {
+        add_word(sbuf.get16uBE_unsafe(pos + offset));
     }
 
-    return ~sum;			// return the complement of the checksum
+    /* 32-bit upper-layer length, 24 zero bits, and the next-header byte. */
+    add_word(static_cast<uint16_t>(payload_len >> 16));
+    add_word(static_cast<uint16_t>(payload_len));
+    add_word(0);
+    add_word(ip6->ip6_nxt());
+
+    /* Upper-layer header and data, with the checksum word treated as zero. */
+    for (size_t offset = 0; offset + 1 < payload_len; offset += 2) {
+        if (40 + offset != chksum_byteoffset) {
+            add_word(sbuf.get16uBE_unsafe(pos + 40 + offset));
+        }
+    }
+    if (payload_len % 2 != 0) {
+        add_word(static_cast<uint16_t>(sbuf[pos + 40 + payload_len - 1]) << 8);
+    }
+
+    while (sum >> 16) {
+        sum = (sum & 0xffff) + (sum >> 16);
+    }
+    return static_cast<uint16_t>(~sum);
 }
 
 /* determine if an integer is a power of two; used for the TTL */
@@ -406,24 +423,43 @@ std::string scan_net_t::ip2string(const struct be20::ip4_addr *const a)
 #define INET6_ADDRSTRLEN 256
 #endif
 
-#ifdef _WIN32
-const char *inet_ntop(int af, const void *src, char *dst, size_t size)
-{
-    return("inet_ntop win32");
-}
-#endif
-
-
 std::string scan_net_t::ip2string(const uint8_t *addr, sa_family_t family)
 {
     char printstr[INET6_ADDRSTRLEN+1];
+    const void *source = nullptr;
     switch (family) {
     case AF_INET:
-	return std::string(inet_ntop(family,reinterpret_cast<const struct in_addr *>(addr+12), printstr, sizeof(printstr)));
+	source = reinterpret_cast<const struct in_addr *>(addr+12);
+	break;
     case AF_INET6:
-	return std::string(inet_ntop(family, addr, printstr, sizeof(printstr)));
+	source = addr;
+	break;
+    default:
+	return "INVALID family";
     }
-    return std::string("INVALID family ");
+#ifdef _WIN32
+    sockaddr_storage socket_address{};
+    int socket_address_length;
+    if (family == AF_INET) {
+        auto *const address4 = reinterpret_cast<sockaddr_in *>(&socket_address);
+        address4->sin_family = AF_INET;
+        memcpy(&address4->sin_addr, source, sizeof(address4->sin_addr));
+        socket_address_length = sizeof(*address4);
+    } else {
+        auto *const address6 = reinterpret_cast<sockaddr_in6 *>(&socket_address);
+        address6->sin6_family = AF_INET6;
+        memcpy(&address6->sin6_addr, source, sizeof(address6->sin6_addr));
+        socket_address_length = sizeof(*address6);
+    }
+    DWORD printstr_length = sizeof(printstr);
+    const int result = WSAAddressToStringA(
+        reinterpret_cast<LPSOCKADDR>(&socket_address), socket_address_length,
+        nullptr, printstr, &printstr_length);
+    return result == 0 ? std::string(printstr) : "INVALID address";
+#else
+    const char *result = inet_ntop(family, source, printstr, sizeof(printstr));
+    return result ? std::string(result) : "INVALID address";
+#endif
 }
 
 #ifndef MAC_ADDRSTRLEN
@@ -497,6 +533,7 @@ bool scan_net_t::sanityCheckIP46Header(const sbuf_t &sbuf, size_t pos, scan_net_
     }
 
     /* ipv6 attempt */
+    if (pos > sbuf.bufsize || sbuf.bufsize - pos < sizeof(be20::ip6_hdr)) return false;
     const struct be20::ip6_hdr *ip6 = sbuf.get_struct_ptr_unsafe<struct be20::ip6_hdr>( pos );
     if ((ip6->is_ipv6())){ // ipv6
 	//only do TCP, UDP and ICMPv6
@@ -508,7 +545,7 @@ bool scan_net_t::sanityCheckIP46Header(const sbuf_t &sbuf, size_t pos, scan_net_
 	uint16_t ip_payload_len = ntohs(ip6->ip6_plen());
 
         /* Make sure there is sufficient room in the sbuf */
-        if (pos + ip_payload_len > sbuf.bufsize) return false;
+        if (ip_payload_len > sbuf.bufsize - pos - sizeof(be20::ip6_hdr)) return false;
 
 	/* Reject anything larger than a jumbo gram or smaller than the
 	 * minimum size TCP, UDP or ICMPv6 packet (i.e. just header, no payload
@@ -520,34 +557,7 @@ bool scan_net_t::sanityCheckIP46Header(const sbuf_t &sbuf, size_t pos, scan_net_
 	    return false;
 
 
-	switch (ip6->ip6_nxt()) {
-	default:
-	case IPPROTO_TCP:
-            if (pos+56 < sbuf.bufsize) {
-                const struct be_tcphdr *tcp = sbuf.get_struct_ptr_unsafe<struct be_tcphdr>( pos+40 );
-                /* tcp chksum is at byte offset 16 from tcp hdr + 40 w/ pseudo hdr */
-                h->checksum_valid = (tcp->th_sum == scan_net_t::IPv6L3Chksum(sbuf, pos, 56));
-            }
-            break;
-
-	case IPPROTO_UDP:
-            if (pos+46 < sbuf.bufsize) {
-                const struct be_udphdr *udp = sbuf.get_struct_ptr_unsafe<struct be_udphdr>( pos+40 );
-
-                /* udp chksum is at byte offset 6 from udp hdr + 40 w/ pseudo hdr */
-                h->checksum_valid = (udp->uh_sum == scan_net_t::IPv6L3Chksum(sbuf, pos, 46));
-            }
-            break;
-	case IPPROTO_ICMPV6:
-            if (pos+42 < sbuf.bufsize ) {
-                const struct be20::icmp6_hdr *icmp6 = sbuf.get_struct_ptr_unsafe<struct be20::icmp6_hdr>( pos+40 );
-                if (!icmp6) return false;	// not sufficient room
-
-                /* icmpv6 chksum is at byte offset 2 from icmpv6 hdr + 40 w/ pseudo hdr */
-                h->checksum_valid = (icmp6->icmp6_cksum == scan_net_t::IPv6L3Chksum(sbuf, pos, 42));
-            }
-            break;
-        }
+        h->checksum_valid = ip6_cksum_valid(sbuf, pos);
 
 	/* create a generic_iphdr_t, similar to tcpip.c from tcpflow code */
 	h->family = AF_INET6;
@@ -624,6 +634,56 @@ void  scan_net_t::documentIPFields(const sbuf_t &sbuf, size_t pos, const generic
     }
 }
 
+void scan_net_t::recordWifiFrame(const sbuf_t &sbuf, size_t pos, size_t packet_len,
+                                 const pcap_writer::pcap_hdr &pch) const
+{
+    if (packet_len < 2) return;
+    const uint16_t frame_control = sbuf.get16u_unsafe(pos);
+    const uint8_t type = (frame_control >> 2) & 0x3;
+    const uint8_t subtype = (frame_control >> 4) & 0xf;
+    const char *kind = type == 0 ? "management" : type == 1 ? "control" :
+        type == 2 ? "data" : "reserved";
+    const char *detail = "";
+    if (type == 0) {
+        static const char *management_subtypes[] = {
+            "association-request", "association-response", "reassociation-request", "reassociation-response",
+            "probe-request", "probe-response", "timing-advertisement", "reserved",
+            "beacon", "atim", "disassociation", "authentication", "deauthentication", "action", "action-no-ack", "reserved"
+        };
+        detail = management_subtypes[subtype];
+    } else if (type == 2) {
+        detail = subtype == 0 ? "data" : subtype == 4 ? "null" : subtype == 8 ? "qos-data" :
+            subtype == 12 ? "qos-null" : "data-subtype";
+    }
+
+    const size_t ip_offset = ieee80211_payload_offset(sbuf, pos, packet_len);
+    std::ostringstream context;
+    context << "type=" << kind << " subtype=" << detail
+            << " to_ds=" << ((frame_control & 0x0100) ? "yes" : "no")
+            << " from_ds=" << ((frame_control & 0x0200) ? "yes" : "no")
+            << " protected=" << ((frame_control & 0x4000) ? "yes" : "no");
+    if (ip_offset != 0) {
+        context << " network=" << (sbuf.get8u_unsafe(pos + ip_offset) >> 4 == 6 ? "IPv6" : "IPv4");
+    }
+    context << " timestamp=" << pch.seconds << '.' << pch.useconds;
+    if (packet_len >= IEEE80211_BASE_HEADER_LEN && type != 1) {
+        const auto mac = [](const uint8_t *address) {
+            std::ostringstream text;
+            text << std::hex << std::setfill('0');
+            for (size_t i = 0; i < ETHER_ADDR_LEN; i++) {
+                if (i != 0) text << ':';
+                text << std::setw(2) << static_cast<unsigned>(address[i]);
+            }
+            return text.str();
+        };
+        const uint8_t *frame = sbuf.get_buf() + pos;
+        context << " receiver=" << mac(frame + 4)
+                << " transmitter=" << mac(frame + 10)
+                << " address3=" << mac(frame + 16);
+    }
+    wifi_recorder.write(sbuf.pos0 + pos, kind, context.str());
+}
+
 /* Validate if sbuf+pos contains an IPv4 or IPv6 frame */
 
 
@@ -668,7 +728,7 @@ size_t scan_net_t::carveIPFrame(const sbuf_t &sbuf, size_t pos, sanityCache_t *s
     }
     switch(h.family){
     case AF_INET:  buf[12] = 0x08; buf[13] = 0x00; break;
-    case AF_INET6: buf[12] = 0xdd; buf[13] = 0x86; break;
+    case AF_INET6: buf[12] = 0x86; buf[13] = 0xdd; break;
     default:       buf[12] = 0xff; buf[13] = 0xff; break; // shouldn't happen
     }
     memcpy(buf+14,sbuf.get_buf(),packet_len-14);       // copy the packet data
@@ -678,7 +738,7 @@ size_t scan_net_t::carveIPFrame(const sbuf_t &sbuf, size_t pos, sanityCache_t *s
     struct pcap_writer::pcap_hdr ph(0, 0, packet_len, packet_len);  // make a fake header
     if (h.is_4or6()){
         try {
-            documentIPFields(sb3, 0, h);
+            documentIPFields(sbuf, pos, h);
             pwriter.pcap_writepkt(ph, sb3, 0, false, 0x0000);	   // write the packet
         }
         catch (port0_exception &e) {
@@ -831,7 +891,7 @@ size_t scan_net_t::carvePCAPFileHeader(const sbuf_t &sbuf, size_t pos) const
  * Validate and write a pcap packet. Return the number of bytes written.
  * Called on every byte, so it must be fast.
  */
-size_t scan_net_t::carvePCAPPackets(const sbuf_t &sbuf, size_t pos, sanityCache_t *sc) const
+size_t scan_net_t::carvePCAPPackets(const sbuf_t &sbuf, size_t pos, sanityCache_t *sc, uint32_t link_type) const
 {
     struct pcap_writer::pcap_hdr pch {};
     if (likely_valid_pcap_packet_header(sbuf, pos, &pch)==false){
@@ -853,6 +913,25 @@ size_t scan_net_t::carvePCAPPackets(const sbuf_t &sbuf, size_t pos, sanityCache_
     bool next_pcap_header_looks_valid = likely_valid_pcap_packet_header(sbuf, pos+PCAP_RECORD_HEADER_SIZE+pch.cap_len, &h_next);
 
     if ( pcap_at_end_of_sbuf || next_pcap_header_looks_valid ){
+        const size_t packet_pos = pos + PCAP_RECORD_HEADER_SIZE;
+        if (link_type == DLT_IEEE802_11) {
+            recordWifiFrame(sbuf, packet_pos, pch.cap_len, pch);
+            const size_t ip_offset = ieee80211_payload_offset(sbuf, packet_pos, pch.cap_len);
+            if (ip_offset != 0) {
+                generic_iphdr_t h2;
+                if (sanityCheckIP46Header(sbuf, packet_pos + ip_offset, &h2, sc) && h2.is_4or6()) {
+                    try {
+                        documentIPFields(sbuf, packet_pos + ip_offset, h2);
+                    }
+                    catch (port0_exception &) {
+                        return 0;
+                    }
+                }
+            }
+            ip_recorder.write(sbuf.pos0 + packet_pos, "802.11", "PCAP IEEE 802.11 frame");
+            pwriter.pcap_writepkt(pch, sbuf, packet_pos, false, 0, link_type);
+            return PCAP_RECORD_HEADER_SIZE + pch.cap_len;
+        }
 
         // If we got here, then carve the packet.
         // pcap files can contain either raw IP or ethernet followed by IP.
@@ -860,20 +939,20 @@ size_t scan_net_t::carvePCAPPackets(const sbuf_t &sbuf, size_t pos, sanityCache_
 
         generic_iphdr_t h2;
         uint16_t pseudo_frame_ethertype = 0;
-        bool is_raw_ip = sanityCheckIP46Header(sbuf, pos+PCAP_RECORD_HEADER_SIZE, &h2, sc);
+        bool is_raw_ip = sanityCheckIP46Header(sbuf, packet_pos, &h2, sc);
         if (is_raw_ip) {
             // It's raw IP if the IP46 header validated. So make a fake header. We've already learned the IPv46 header.
             pseudo_frame_ethertype = (h2.family == AF_INET6) ? ETHERTYPE_IPV6 : ETHERTYPE_IP;
         } else {
             // Otherwise, learn the IPv46 header
-            sanityCheckIP46Header(sbuf, pos+PCAP_RECORD_HEADER_SIZE+ETHER_HEAD_LEN, &h2, sc);
+            sanityCheckIP46Header(sbuf, packet_pos+ETHER_HEAD_LEN, &h2, sc);
         }
 
         /* If this is a IPv4 or IPv6 (from the learned header), write it out.*/
         if (h2.is_4or6()) {
             try {
-                documentIPFields(sbuf, pos+PCAP_RECORD_HEADER_SIZE, h2);
-                pwriter.pcap_writepkt(pch, sbuf, pos+PCAP_RECORD_HEADER_SIZE, is_raw_ip, pseudo_frame_ethertype);
+                documentIPFields(sbuf, packet_pos, h2);
+                pwriter.pcap_writepkt(pch, sbuf, packet_pos, is_raw_ip, pseudo_frame_ethertype, link_type);
             }
             catch (port0_exception &e) {
                 return 0;
@@ -903,16 +982,18 @@ void scan_net_t::carve(const sbuf_t &sbuf) const
      */
     size_t pos = 0;
     sanityCache_t sc {};
+    uint32_t pcap_link_type = DLT_EN10MB;
     while (pos + min_packet_bytes < sbuf.pagesize) {
         /* Look for a PCAPFile header */
         size_t file_header_bytes = carvePCAPFileHeader( sbuf, pos);
         if (file_header_bytes > 0) {
+            pcap_link_type = sbuf.get32u_unsafe(pos + 20);
             pos += file_header_bytes;
             continue;
         }
 
         /* Look for a PCAP Packet without a PCAP File header. Could just be floating in space. Or it could be following a header.*/
-        size_t packet_bytes = carvePCAPPackets( sbuf, pos, &sc );
+        size_t packet_bytes = carvePCAPPackets( sbuf, pos, &sc, pcap_link_type );
         if (packet_bytes > 0) {
             pos += packet_bytes;
             continue;
@@ -949,8 +1030,19 @@ void scan_net(scanner_params &sp)
     static scan_net_t *scanner = nullptr;
     static bool opt_carve_net_memory = false;
     static int  opt_min_carve_packet_bytes = scan_net_t::DEFAULT_MIN_PACKET_BYTES;
+#ifdef _WIN32
+    static bool winsock_started = false;
+#endif
     sp.check_version();
     if (sp.phase==scanner_params::PHASE_INIT){
+
+#ifdef _WIN32
+        WSADATA winsock_data {};
+        if (WSAStartup(MAKEWORD(2, 2), &winsock_data) != 0) {
+            throw std::runtime_error("WSAStartup failed");
+        }
+        winsock_started = true;
+#endif
 
         sp.get_scanner_config("carve_net_memory",&opt_carve_net_memory,"Carve network  memory structures");
         sp.get_scanner_config("min_carve_packet_bytes",&opt_min_carve_packet_bytes,"Smallest network packet to carve");
@@ -964,6 +1056,7 @@ void scan_net(scanner_params &sp)
 
 	sp.info->feature_defs.push_back( feature_recorder_def("ip"));
 	sp.info->feature_defs.push_back( feature_recorder_def("ether"));
+	sp.info->feature_defs.push_back( feature_recorder_def("wifi"));
 
 	/* changed the pattern to be the entire feature,
 	 * since histogram was not being created with previous pattern
@@ -1007,6 +1100,12 @@ void scan_net(scanner_params &sp)
             delete scanner;
             scanner = nullptr;
         }
+#ifdef _WIN32
+        if (winsock_started) {
+            WSACleanup();
+            winsock_started = false;
+        }
+#endif
 	return;
     }
 }

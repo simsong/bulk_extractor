@@ -1,4 +1,9 @@
-The worked examples provided are intended to further illustrate how to use \bulk to answer specific questions and conduct investigatons. Each example uses a different, publicly available dataset and can be replicated by readers of this manual. 
+The worked examples illustrate how to use \bulk output to answer specific
+questions and conduct investigations. Each uses a public dataset that readers
+can obtain from Digital Corpora. The screen captures, scanner inventories,
+runtime measurements, and output listings were produced by version 1.4 and are
+preserved as historical evidence. Re-run the examples with the 2.2 commands in
+the main text; do not expect byte-for-byte identical output.
 
 \subsection {Encoding}
 \newcommand\charpicture[1]{\raisebox{-2pt}[0pt][0pt]{\includegraphics[height=11pt]{#1}}}
@@ -16,13 +21,13 @@ such as accented characters (\`{e} ), funny symbols
 (\charpicture{otherPics/U+2234}) and the occasional Chinese
 character (\charpicture{otherPics/U+611B}) that may show up in the
 files are legitimate. Glyphs from language, for example, Cyrillic
-(\charpicture{otherPics/U+0428}) or Arabic (\charpicture{otherPics/U+062D}) may show up in features files as all
+(\charpicture{otherPics/U+0428}) or Arabic (\charpicture{otherPics/U+062D}) may show up in feature files as all
 foreign languages can be coded in UTF-8 format. It is perfectly
 appropriate and typical to open up a feature file and see characters
 that the user may not recognize.\\
 
 \section{2009-M57 Patents Scenario}
-The 2009-M57-Patents scenario tracks the first four weeks of corporate history of the (fictional) M57 Patents company. The company started operation on Friday, November 13th, 2009, and ceased operation on Saturday, December 12, 2009. This specific scenario was built to be used as a teaching tool both as a disk forensics exercise and as a network forensics exercise. The scenario data is also useful for computer forensics research because the hard drive of each computer and each computers memory were imaged every day. In this example, we are not particularly interested in the exercises related to illegal activity, exfiltration and eavesdropping; they do however provide interesting components for us to examine in the example data\cite{m57scenario}.
+The 2009-M57-Patents scenario tracks the first four weeks of corporate history of the (fictional) M57 Patents company. The company started operation on Friday, November 13th, 2009, and ceased operation on Saturday, December 12, 2009. This specific scenario was built to be used as a teaching tool both as a disk forensics exercise and as a network forensics exercise. The scenario data is also useful for computer forensics research because the hard drive of each computer and each computer's memory were imaged every day. In this example, we are not particularly interested in the exercises related to illegal activity, exfiltration and eavesdropping; they do however provide interesting components for us to examine in the example data\cite{m57scenario}.
 
 \subsection{Run \bulk with the Data}
 For this example, we downloaded and utilized one of the disk images from the 2009-M57-Patents Scenario. Those images are available at \url{http://digitalcorpora.org/corp/nps/scenarios/2009-m57-patents/drives-redacted/}. The file used throughout this example is called \texttt{charlie-2009-12-11.E01}. Running \bulk on the command line produces the following output (text input by the user is bold):\\
@@ -131,13 +136,13 @@ In this example, we look at the \texttt{charlie-2009-12-11.E01} image to quickly
 \begin{itemize}
 \item Who are the users of the drive?
 \item Who is this person communicating with?
-\item What kinds of websites have they have been visiting most often?
+\item What kinds of websites have they been visiting most often?
 \item What search terms are used?
 \end{itemize}
 
-To answer many of these questions, we look at the identify information on the drive including email addresses, credit card information, search terms, Facebook IDs, domain names and vCard data. The output files created by \bulk contain all of this type of information that was found on the disk image. \\
+To answer many of these questions, we look at the identity information on the drive including email addresses, credit card information, search terms, Facebook IDs, domain names and vCard data. The output files created by \bulk contain all of this type of information that was found on the disk image. \\
 
-The scenario setup leads us to believe that Charlie is the user of the this drive (based on the name of the disk image). First, we look at \texttt{email.txt} to find information about the email addresses contained on the disk. The first two lines of the email features found are the following (each block of text represents one long line of offset, feature and context):
+The scenario setup leads us to believe that Charlie is the user of this drive (based on the name of the disk image). First, we look at \texttt{email.txt} to find information about the email addresses contained on the disk. The first two lines of the email features found are the following (each block of text represents one long line of offset, feature and context):
 \lstset{style=customfile}
 \begin{lstlisting}
 50395384	n\x00o\x00m\x00b\x00r\x00e\x00_\x001\x002\x003\x00@\x00h\x00o\x00t
@@ -156,7 +161,7 @@ It is important to note that UTF-16 formatted text is escaped with \textbackslas
 Further down in the feature file, we find the following:
 \lstset{style=customfile}
 \begin{lstlisting}
-9263459	charlie@m57.biz	21)(88=Charlie <charlie@m57.biz>)(89\x0D\x0A    =Pat 
+9263459	charlie@m57.biz	21)(88=Charlie <charlie@m57.biz>)(89\x0D\x0A    =Pat
 9263497	pat@m57.biz	    =Pat McGoo <pat@m57.biz>)(8B=WELCOME TO
 \end{lstlisting}
 
@@ -198,27 +203,27 @@ n=4952	www.microsoft.com
 n=4470	patft.uspto.gov
 \end{lstlisting}
 
-Many of these domains are part of the operating system, such as openoffice.org, but some are not, such as www.uspto.gov. The histogram file provides insight into the users activity on the machine and which sites they were most frequently visiting. \\
+Many of these domains are part of the operating system, such as openoffice.org, but some are not, such as www.uspto.gov. The histogram file provides insight into the user's activity on the machine and which sites they were most frequently visiting. \\
 
-The file \texttt{rfc822.txt} primarily provides email headers and HTTP headers both of which are in a format specified by RFC822, the Internet Message Standard. It can be useful to see the subject of emails that have been sent and information form HTTP requests. The following is an excerpt from the text file:
+The file \texttt{rfc822.txt} primarily provides email headers and HTTP headers both of which are in a format specified by RFC822, the Internet Message Standard. It can be useful to see the subject of emails that have been sent and information from HTTP requests. The following is an excerpt from the text file:
 \lstset{style=customfile}
 \begin{lstlisting}
 114074196 SUBJECT:softabs	ll|micro)\x5CW?cap\x00SUBJECT:softabs\x00SUBJECT:Caili
 114074212 SUBJECT:Cailis	SUBJECT:softabs\x00SUBJECT:Cailis\x00\x00SUBJECT:st0ck
-114074228 SUBJECT:st0ck	SUBJECT:Cailis\x00\x00SUBJECT:st0ck\x00\x00\x00SUBJECT:Your 
+114074228 SUBJECT:st0ck	SUBJECT:Cailis\x00\x00SUBJECT:st0ck\x00\x00\x00SUBJECT:Your
 114074244 SUBJECT:Your Personal Quarantine Folder
 SUBJECT:st0ck\x00\x00\x00SUBJECT:Your Personal Quarantine Folder\x00SUBJECT:rolex\x00
 114074284	SUBJECT:rolex arantine Folder\x00SUBJECT:rolex\x00\x00\x00SUBJECT:(bro
 \end{lstlisting}
 Much of what is found in the file shown above are spam messages.\\
 
-Telephone numbers found on the disk image are stored in \texttt{telephone.txt}. This following numbers found in the file are clearly for technical support (found within installed software):
+Telephone numbers found on the disk image are stored in \texttt{telephone.txt}. The following numbers found in the file are clearly for technical support (found within installed software):
 \lstset{style=customfile}
 \begin{lstlisting}
 88850883 (800) 563-9048 rmation centre: (800) 563-9048\x0D\x0A<BR><b><i>Tech
 88850995 (905) 568-4494 indows&nbsp;95: (905) 568-4494\x0D\x0A<BR> Microsoft
 88851056 (905) 568-2294 ice components: (905) 568-2294\x0D\x0A<BR> Other sta
-88851111 (905) 568-3503 hnical support: (905) 568-3503\x0D\x0A<BR> Priority 
+88851111 (905) 568-3503 hnical support: (905) 568-3503\x0D\x0A<BR> Priority
 88851162 (800) 668-7975 rt information: (800) 668-7975\x0D\x0A<BR> Text Tele
 \end{lstlisting}
 The next set of "telephone" numbers are clearly bogus numbers:
@@ -253,7 +258,7 @@ Investigators looking for specific information about the user of a disk image or
 
 Finally, in performing digital media triage on the disk image, investigators would like to know what specific URLs have been visited and what search terms the user has been using. The set of URL files provided as output provide insight into this information. First, \texttt{url.txt} contains the URLs found on the disk. The following is an excerpt from that file (note that the UTF-16 formatted information is escaped):
 \lstset{style=customfile}
-\begin{lstlisting} 
+\begin{lstlisting}
 175165385 http://www.unicode.org/reports/tr25/#_TocDelimiters E and U+23DF:\x0A#
 http://www.unicode.org/reports/tr25/#_TocDelimiters\x0A\x5Cu23DE = \x5CuE13B
 
@@ -282,7 +287,7 @@ uspto.gov/patft/index.html"><img src="/net
 175198500	http://www.uspto.gov/patft/help/help.htm e></a>\x0A<AHREF="http://www.
 uspto.gov/patft/help/help.htm"><IMG BORDER="0
 \end{lstlisting}
-The file \texttt{url\_histogram.txt} provides the histogram of the potential urls. In that file, UTF-16 formatted text is converted to UTF-8. Note that not all URLs contained in the histogram file are accurate. The are actually URLs that were typed into a web browser. The following are lines taken from that file:
+The file \texttt{url\_histogram.txt} provides the histogram of the potential URLs. In that file, UTF-16 formatted text is converted to UTF-8. Note that not all URLs contained in the histogram file are accurate. They are actually URLs that were typed into a web browser. The following are lines taken from that file:
 \lstset{style=customfile}
 \begin{lstlisting}
 n=3922	http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul	(utf16=2609)
@@ -293,7 +298,7 @@ n=2	http://math.nist.gov/~MDonahue/pubs/nan.ps.gz
 n=2	http://math.nist.gov/~RBoisvert/publications/ADL95.ps.gz
 n=2	http://math.nist.gov/~RBoisvert/publications/IMACS97.ps.gz
 \end{lstlisting}
-Because the histogram file converts the UT-16 formatted text to UTF-8, the histogram file is more human readable than the \texttt{url.txt} file alone. The files \texttt{url\_facebook.txt}, \texttt{url\_microsoft-live}, \texttt{url\_services} and \texttt{url\_searches} all extract specific types of information from URLs. The most useful for digital media triage is likely the file \texttt{url\_searches.txt} because it shows histogram of searches from the disk image. Searches frequently convey intent. The following is an excerpt from that file:
+Because the histogram file converts the UTF-16 formatted text to UTF-8, the histogram file is more human readable than the \texttt{url.txt} file alone. The files \texttt{url\_facebook.txt}, \texttt{url\_microsoft-live}, \texttt{url\_services} and \texttt{url\_searches} all extract specific types of information from URLs. The most useful for digital media triage is likely the file \texttt{url\_searches.txt} because it shows histogram of searches from the disk image. Searches frequently convey intent. The following is an excerpt from that file:
 \lstset{style=customfile}
 \begin{lstlisting}
 n=60	1
@@ -316,26 +321,26 @@ The file \texttt{ccn.txt} provides credit card numbers that have been found on t
 \begin{lstlisting}
 88284672-GZIP-177427 5273347458642687 734B55CD5\x0A5273347458642687\x0AC0841BAFA1B4C28
 4814857216-GZIP-793 4015751530102097 ebO.d=0;ebO.rnd=4015751530102097;ebO.title="";eb
-4909069775 6543210123456788	\x0Addadd7540 add '6543210123456788' 0.499999999   
+4909069775 6543210123456788	\x0Addadd7540 add '6543210123456788' 0.499999999
 4909069811 6543210123456788 499999999   -> '6543210123456788' Inexact Rounde
-4909069861 6543210123456788 \x0Addadd7541 add '6543210123456788' 0.5           
+4909069861 6543210123456788 \x0Addadd7541 add '6543210123456788' 0.5
 4909069897 6543210123456788 5           -> '6543210123456788' Inexact Rounde
-4909069947 6543210123456788 \x0Addadd7542 add '6543210123456788' 0.500000001   
+4909069947 6543210123456788 \x0Addadd7542 add '6543210123456788' 0.500000001
 5304221350 5678901234560000 +4   -> 5678901234560000\x0D\x0Addshi052 shift
-5612375618 6543210123456788 \x0D\x0Aaddx6240 add '6543210123456788' 0.499999999   
+5612375618 6543210123456788 \x0D\x0Aaddx6240 add '6543210123456788' 0.499999999
 5612375654 6543210123456788 499999999   -> '6543210123456788' Inexact Rounde
-5612375703 6543210123456788 \x0D\x0Aaddx6241 add '6543210123456788' 0.5           
+5612375703 6543210123456788 \x0D\x0Aaddx6241 add '6543210123456788' 0.5
 5612375739 6543210123456788 5 -> '6543210123456788' Inexact Rounde
-5612375788 6543210123456788 \x0D\x0Aaddx6242 add '6543210123456788' 0.500000001   
+5612375788 6543210123456788 \x0D\x0Aaddx6242 add '6543210123456788' 0.500000001
 5612715901 5700122152274696 div4036 divide  5700122152274696   5700122152251
 \end{lstlisting}
-In the above example, `525273347458642687' looks like it could be a valid credit card number from the context (\textbackslash x0A is a new line). The number `4015751530102097' looks like a random number in a piece of Java Script. Note that both of those numbers were compressed; the offset indicates they were found in GZIP streams (shown as a number followed by `-GZIP'). The numbers whose context include ``Inexact Rounde'' are actually from Python source code and not credit card numbers at all. Again, the \texttt{ccn.txt} tends to alert on a lot of false positives. \\ 
+In the above example, `525273347458642687' looks like it could be a valid credit card number from the context (\textbackslash x0A is a new line). The number `4015751530102097' looks like a random number in a piece of Java Script. Note that both of those numbers were compressed; the offset indicates they were found in GZIP streams (shown as a number followed by `-GZIP'). The numbers whose context include ``Inexact Rounde'' are actually from Python source code and not credit card numbers at all. Again, the \texttt{ccn.txt} tends to alert on a lot of false positives. \\
 
 The \texttt{ccn\_track2.txt} file did not find any information in this disk image but is also useful for credit card fraud and identity theft investigations. It will contain credit card track 2 information found on the disk image.\\
 
-Using the files produced by \bulk described above, an investigator can quickly review a disk image for important information that is relevant to an investigation and find actionable intelligence quickly. 
+Using the files produced by \bulk described above, an investigator can quickly review a disk image for important information that is relevant to an investigation and find actionable intelligence quickly.
 
-\subsection{Analyzing Imagery} 
+\subsection{Analyzing Imagery}
 The scenario described in the M57 Patents data is not necessarily relevant to an imagery investigation. However, there is imagery information on the disk. We use that information here to demonstrate how imagery information can be analyzed by an investigator using \bulk.\\
 
 The file in the output directory, \texttt{jpeg.txt}, lists all JPEGs that were found on the disk whether they were carved or not. \bulk was run with default values meaning that only encoded JPEGs were carved. The following excerpt from the JPEG file shows information about JPEGs found on the disk image:
@@ -360,7 +365,7 @@ The JPEG described above was carved and can be found in the \textit{/jpeg} outpu
 
 \begingroup
 \footnotesize
-\begin{Verbatim} 
+\begin{Verbatim}
 10037939712-GZIP-0.jpg  5324841013-ZIP-0.jpg
 10117679783-ZIP-0.jpg   6039195136-GZIP-0.jpg
 3761630720-GZIP-0.jpg   6039215616-GZIP-0.jpg
@@ -388,7 +393,13 @@ All of these JPEG files can be viewed and used by investigators. The filename is
 \end{figure}
 
 \subsection{Password Cracking}
-The \textbf{\textit{wordlist}} generates a list of all the words found on the disk that are between 6 and 14 characters long. The word list that is generated by the scanner can be very useful in determining combinations of words to use for password cracking. The scanner is enabled by default because it slows down the \bulk run significantly.  To show the word list in this example, \bulk was run again on the M57 Patents scenario data with the \textbf{\textit{wordlist}} scanner enabled. Running \bulk on the command line with it enabled produces the following output:
+The \textbf{\textit{wordlist}} generates a list of words found on the disk
+within its configured length range. The word list can be useful in determining
+combinations to use for authorized password recovery. The scanner is disabled
+by default because it can produce substantial output and increase run time. To
+show the word list in this example, \bulk was run again on the M57 Patents
+scenario data with the scanner enabled. The version 1 run produced the
+following historical output:
 
 
 \begingroup
@@ -465,7 +476,8 @@ Note that it took 3991.71 seconds to run \bulk without the \textbf{\textit{wordl
 \end{lstlisting}
 The wordlist contains ALL words found on the disk between 6 and 14 characters long. Automated programs can be used to generate passwords from combinations of these words. The \textbf{\textit{wordlist}} scanner also generates a split wordlist containing the same words found in the \texttt{wordlist.txt} file with all words deduplicated, sorted by size and alphabetized. The following is an excerpt from the file \texttt{wordlist\_split\_000.txt} generated from the disk image:
 \lstset{style=customfile}
-\begin{lstlisting}!!!!!!
+\begin{lstlisting}
+!!!!!!
 concluded|1
 concluder/2
 concluder/M
@@ -484,7 +496,7 @@ The programs \textbf{identify\_filenames.py} and \textbf{bulk\_diff.py} can prov
 
 \begingroup
 \footnotesize
-\texttt{C:\textbackslash be\textbackslash \textgreater \textbf{identify\_filenames.py --all charlie-2009-12-11 charlieAnnotatedOutput}}
+\texttt{C:\textbackslash be\textbackslash \textgreater \textbf{python3 python/identify\_filenames.py --all charlie-2009-12-11 charlieAnnotatedOutput}}
 \endgroup
 \begingroup
 \footnotesize
@@ -523,7 +535,7 @@ Note, in this example that \textbf{fiwalk} is installed on the computer running 
 
 \begingroup
 \footnotesize
-\begin{Verbatim} 
+\begin{Verbatim}
 annotated_aes_keys.txt        annotated_rar.txt
 annotated_ccn.txt        annotated_rfc822.txt
 annotated_domain.txt        annotated_telephone.txt
@@ -539,8 +551,8 @@ annotated_json.txt
 The annotated files display the feature with the file in which the feature was found (where it was identified by the program). The following is an excerpt from the \texttt{annotated\_email.txt} file:
 \lstset{style=customfile}
 \begin{lstlisting}
-27767966 pat@m57.biz	m: "Pat McGoo" <pat@m57.biz>\x0D\x0ATo: <charlie@ Documents 
-and Settings/Charlie/Application Data/Thunderbird/Profiles/4zy34x9h.default/Mail/Local 
+27767966 pat@m57.biz	m: "Pat McGoo" <pat@m57.biz>\x0D\x0ATo: <charlie@ Documents
+and Settings/Charlie/Application Data/Thunderbird/Profiles/4zy34x9h.default/Mail/Local
 Folders/Inbox dcb794e350bd198c4279614eae6c8b76
 
 27767985 charlie@m57.biz @m57.biz>\x0D\x0ATo: <charlie@m57.biz>,\x0D\x0A\x09<jo@m
@@ -551,26 +563,26 @@ default/Mail/Local Folders/Inbox dcb794e350bd198c4279614eae6c8b76
 Su Documents and Settings/Charlie/Application Data/Thunderbird/Profiles/4zy34x9h.def
 ault/Mail/Local Folders/Inbox dcb794e350bd198c4279614eae6c8b76
 \end{lstlisting}
-The email address "pat@m57biz" was found in the file \texttt{Documents and Settings/Charlie/}\newline\texttt{Application Data/Thunderbird/Profiles/4zy34x9h.default/Mail/Local Folders/Inbox} and investigators can refer to that location on the disk image to view the full text.\\
+The email address "pat@m57.biz" was found in the file \texttt{Documents and Settings/Charlie/}\newline\texttt{Application Data/Thunderbird/Profiles/4zy34x9h.default/Mail/Local Folders/Inbox} and investigators can refer to that location on the disk image to view the full text.\\
 
 The program \textbf{bulk\_diff.py} shows the difference between two \bulk runs. In this case, we used a disk image from the same user ("charlie") taken almost a month before the disk image that has been used throughout this example. The disk image we have been using throughout this example is dated December 11, 2009. The older disk image we downloaded for comparison is dated November 17, 2009.  The earlier disk image data is stored in a file named \texttt{charlie-2009-11-17.E01} and can be downloaded from \url{http://digitalcorpora.org/corp/nps/scenarios/2009-m57-patents/drives-redacted/}.\\
 
 After running \bulk using the earlier disk image, we ran the program \textbf{bulk\_diff.py} on the output of that disk image and on the output of the \texttt{charlie-2009-12-11.E01} run. To run, we typed the following, piping the output of the program to a file called \texttt{bulkdiffoutput.txt}:
 \begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{bulk\_diff.py /charlie-2009-11-17 /charlie-2009-12-11 > bulkdiffoutput.txt}
-\end{Verbatim} 
-The output shows the features differences on the disk image. The following is an excerpt of that output:
+\verbbf{python3 python/bulk\_diff.py /charlie-2009-11-17 /charlie-2009-12-11 > bulkdiffoutput.txt}
+\end{Verbatim}
+The output shows the feature differences on the disk image. The following is an excerpt of that output:
 \lstset{style=customfile}
 \begin{lstlisting}
 domain_histogram.txt:
 	#in PRE		#in POST	Value
-------------------------------------------------------------------------------------
+--------------------------------------------------------------------------
 401	4,470		4,069		patft.uspto.gov
 181	3,151		2,970		www.wipo.int
 295	3,157		2,862		www.google.com
 0	2,537		2,537		l.yimg.com
 \end{lstlisting}
-The output specifically shows the differences in the histograms between the two runs across all of the histogram files that were created. The excerpt above shows that "charlie" (the disk user) visited the domain "patft.uspto.gov" frequently between the time the two images were recorder. It was found 4,069 more times in the later disk image than in the one taken earlier. It also shows that the domain "l.yimg.com" was not found on the earlier disk image but was found 2,537 times on the later disk image. The results are sorted by the amount of the difference. This means that features that are most different appear first. This can be very helpful because those features generally give the most insight into the disk users activity over that period of time.
+The output specifically shows the differences in the histograms between the two runs across all of the histogram files that were created. The excerpt above shows that "charlie" (the disk user) visited the domain "patft.uspto.gov" frequently between the time the two images were recorded. It was found 4,069 more times in the later disk image than in the one taken earlier. It also shows that the domain "l.yimg.com" was not found on the earlier disk image but was found 2,537 times on the later disk image. The results are sorted by the amount of the difference. This means that features that are most different appear first. This can be very helpful because those features generally give the most insight into the disk user's activity over that period of time.
 
 \section{NPS DOMEX Users Image}
 NPS Test Disk Images are a set of disk images that have been created for testing computer forensic tools. These images are free of non-public Personally Identifiable Information (PII) and are approved for release to the general public. The NPS-created data in the images is public domain and free of any copyright restriction; the images may contain some copyrighted data that was made available by the copyright holder. These copyrights, where known, are noted in the files themselves\cite{npsdiskimages}. \\
@@ -654,7 +666,7 @@ All of the results from the \bulk run are stored in the output directory \textit
    20 jpeg/                     26516 winpe.txt
   380 jpeg.txt                   1312 winprefetch.txt
   316 json.txt                   1956 zip.txt
-\end{Verbatim} 
+\end{Verbatim}
 \endgroup
 For this example, we will focus on the files that are most important to malware investigations and cyber investigations, showing how those files can be interpreted and used by investigators.
 
@@ -683,36 +695,36 @@ For investigations on Windows disk images, such as the \texttt{nps-2009-domexuse
 <Characteristics><IMAGE_FILE_EXECUTABLE_IMAGE />
 <IMAGE_FILE_LINE_NUMS_STRIPPED /><IMAGE_FILE_LOCAL_SYMS_STRIPPED />
 <IMAGE_FILE_32BIT_MACHINE/><IMAGE_FILE_DLL /></Characteristics>
-</FileHeader><OptionalHeaderStandard Magic="PE32" MajorLinkerVersion="7" 
-MinorLinkerVersion="10" SizeOfCode="512" SizeOfInitializedData="1536" 
+</FileHeader><OptionalHeaderStandard Magic="PE32" MajorLinkerVersion="7"
+MinorLinkerVersion="10" SizeOfCode="512" SizeOfInitializedData="1536"
 SizeOfUninitializedData="0" AddressOfEntryPoint="0x1046" BaseOfCode=
 "0x1000" /><OptionalHeaderWindows ImageBase="0x6c6c0000" SectionAlignment
-="1000" FileAlignment="200"MajorOperatingSystemVersion="5" 
-MinorOperatingSystemVersion="1" MajorImageVersion="5" 
-MinorImageVersion="1" MajorSubsystemVersion="4" MinorSubsystemVersion="0" 
+="1000" FileAlignment="200"MajorOperatingSystemVersion="5"
+MinorOperatingSystemVersion="1" MajorImageVersion="5"
+MinorImageVersion="1" MajorSubsystemVersion="4" MinorSubsystemVersion="0"
 Win32VersionValue="0" SizeOfImage="4000" SizeOfHeaders="400" CheckSum="
 0x7485" SubSystem="" SizeOfStackReserve="40000"SizeOfStackCommit="1000"
 SizeOfHeapReserve="100000" SizeOfHeapCommit="1000" LoaderFlags="0"
 NumberOfRvaAndSizes="10"><DllCharacteristics>
 <IMAGE_DLL_CHARACTERISTICS_NO_SEH /></DllCharacteristics>
 </OptionalHeaderWindows><Sections><SectionHeader Name=".text" VirtualSize
-="be" VirtualAddress="1000" SizeOfRawData="200" PointerToRawData="400" 
+="be" VirtualAddress="1000" SizeOfRawData="200" PointerToRawData="400"
 PointerToRelocations="0" PointerToLinenumbers="0" ><Characteristics>
 <IMAGE_SCN_CNT_CODE /><IMAGE_SCN_MEM_EXECUTE />
-<IMAGE_SCN_MEM_READ /></Characteristics></SectionHeader><SectionHeader 
-Name=".rsrc" VirtualSize="400" VirtualAddress="2000" SizeOfRawData="400" 
+<IMAGE_SCN_MEM_READ /></Characteristics></SectionHeader><SectionHeader
+Name=".rsrc" VirtualSize="400" VirtualAddress="2000" SizeOfRawData="400"
 PointerToRawData="600" PointerToRelocations="0" PointerToLinenumbers="0"
 ><Characteristics><IMAGE_SCN_CNT_INITIALIZED_DATA />
 <IMAGE_SCN_MEM_READ /></Characteristics></SectionHeader>
-<SectionHeader Name=".reloc" VirtualSize="8" VirtualAddress="3000" 
-SizeOfRawData="200" PointerToRawData="a00" PointerToRelocations="0" 
+<SectionHeader Name=".reloc" VirtualSize="8" VirtualAddress="3000"
+SizeOfRawData="200" PointerToRawData="a00" PointerToRelocations="0"
 PointerToLinenumbers="0" ><Characteristics><IMAGE_SCN_CNT_INITIALIZED_DATA />
 <IMAGE_SCN_MEM_DISCARDABLE /><IMAGE_SCN_MEM_READ /></Characteristics>
 </SectionHeader></Sections></PE>
 \end{lstlisting}
-The first number is the offset and tells you were to find the file. Most executables are not fragmented. The second is the MD5 has of the first 4k of the file that can be used to deduplicate and look up the file in the hash database. Finally, the bulk of the information is contained in the <PE> XML block that breaks out all of the Windows PE header information. It contains information about the File header, the characteristics of the file, Windows header information and section header information.\\
+The first number is the offset and tells you where to find the file. Most executables are not fragmented. The second is the MD5 hash of the first 4k of the file that can be used to deduplicate and look up the file in the hash database. Finally, the bulk of the information is contained in the <PE> XML block that breaks out all of the Windows PE header information. It contains information about the File header, the characteristics of the file, Windows header information and section header information.\\
 
-The file \texttt{winprefetch.txt} contains the information from carved files Windows Prefetch that were discovered anywhere on the drive. \bulk will carve the Prefetch files from unallocated space. This extremely useful because Prefetch files are frequently deleted. A single line in the prefetch output file is also very long. The following is only the beginning of one line from the file:
+The file \texttt{winprefetch.txt} contains information from carved Windows Prefetch files that were discovered anywhere on the drive. \bulk will carve Prefetch files from unallocated space. This is extremely useful because Prefetch files are frequently deleted. A single line in the prefetch output file is also very long. The following is only the beginning of one line from the file:
 \lstset{style=customfile}
 \begin{lstlisting}
 55758336	MSIEXEC.EXE	<prefetch><os>Windows
@@ -722,7 +734,7 @@ XP</os><filename>MSIEXEC.EXE</filename><header_size>152</header_size>
 </file><file>\x5CDEVICE\x5CHARDDISKVOLUME1\x5CWINDOWS\x5CSYSTEM32\x5CKERNEL32.DLL
 ...
 \end{lstlisting}
-Printing the line out here would cover almost two pages. It includes a lot of information about the Prefetch file including the name of the executable, the name of the DLLs, the directory of DLLs, the atime, the number of runs, the serial number, and the ctime. The Prefetch file is searchable and useable by investigators searching for EXEs or DLLs related to a malware investigation.\\
+Printing the line out here would cover almost two pages. It includes a lot of information about the Prefetch file including the name of the executable, the name of the DLLs, the directory of DLLs, the atime, the number of runs, the serial number, and the ctime. The Prefetch file is searchable and usable by investigators searching for EXEs or DLLs related to a malware investigation.\\
 
 JSON is the JavaScript Object Notation (used in Facebook, etc). The file \texttt{json.txt}  provides the offset, JSON and MD5 hash of the JSON information found on the disk image. \bulk is great at finding JSON in compressed streams and HIBER files. The following are a few lines from the JSON file:
 \lstset{style=customfile}
@@ -734,11 +746,11 @@ JSON is the JavaScript Object Notation (used in Facebook, etc). The file \texttt
 "slashdot":["Slashdot"],"stumbleupon":["StumbleUpon","su"],"stylehive":["Stylehive"],
 "tailrank":["Tailrank","tailrank2"],"technorati":["Technorati"],"thisnext":
 ["ThisNext"],"twitter":["Twitter"],"ballhype":["BallHype"],"yardbarker":
-["Yardbarker"],"kaboodle":["Kaboodle"],"more":["More ..."]}	
+["Yardbarker"],"kaboodle":["Kaboodle"],"more":["More ..."]}
 26d3b8c5010f4d39250dab3a1c1b839e
 
 62842797 ["6jb4","3j1d","v1me","gu83","uefc","fq1j","r5l7","ftho","gdq9","717h",
-"24b7","d0en","ads7","m9b4","n0lq","42c3","p5mp","7hbi","f0g6","7v98","mv86", 
+"24b7","d0en","ads7","m9b4","n0lq","42c3","p5mp","7hbi","f0g6","7v98","mv86",
 "d0ns","9a8a","64gg","jogl","cehp","mu2r","6h7h","sntb","94ds","n1fv","3a2i",
 "3end","l42s","a9j","q3dj","s150","di3s","3nu5","sk74","e39d","mkvj","482d","kfej",
 "nlcv","eroi","m6ee","rvaa","9nis","ef6b","g00q","b4hp","kbpq","bm4l","f7iu",
@@ -760,22 +772,22 @@ Cyber investigations cover a wide variety of areas. However, most involve lookin
 AES encryption implementation system sometimes leaves keys in memory and \bulk finds those keys, usually in RAM, Swap or hibernation files. The keys can sometimes be used to decrypt AES encrypted material. The file \texttt{aes.txt} contains the keys that are found. There was only one AES key found on the \texttt{nps-2009-domexusers} disk image. The following is the line that describes it from the keys file including the offset, key and key size descriptor (AES256):
 \lstset{style=customfile}
 \begin{lstlisting}
-1608580652	28 90 90 5e f7 ce b4 a7 2b 7d d9 45 d8 b0 56 99 97 f4 42 
+1608580652	28 90 90 5e f7 ce b4 a7 2b 7d d9 45 d8 b0 56 99 97 f4 42
 33 35 f1 54 9a 79 36 e7 1c 94 02 28 78 	AES256
 \end{lstlisting}
 
-The file \texttt{hex.txt} contains extracted hexidecimal strings of a special length. The block sizes cotained within it are either 128 or 256 due to the fact that those are the sizes used for encryption keys and hash values. The disk image used in this example does not have any of those and the file is blank.\\
+The file \texttt{hex.txt} contains extracted hexadecimal strings of a special length. The block sizes contained within it are either 128 or 256 due to the fact that those are the sizes used for encryption keys and hash values. The disk image used in this example does not have any of those and the file is blank.\\
 
 \bulk produces network information including PCAP files, Ethernet addresses, and TCP/IP connections. The files \texttt{ether.txt} and \texttt{ether\_histogram.txt} provide a list of ethernet  addresses from packets and ASCII. These are the addresses found on the disk and located in \texttt{ether.txt}:
 \lstset{style=customfile}
 \begin{lstlisting}
-2435863552	00:0C:29:26:BB:CD	 (ether_dhost) 
-2435863552	00:50:56:E0:FE:24	 (ether_shost) 
-2435865088	00:0C:29:26:BB:CD	 (ether_dhost) 
-2435865088	00:50:56:E0:FE:24	 (ether_shost) 
+2435863552	00:0C:29:26:BB:CD	 (ether_dhost)
+2435863552	00:50:56:E0:FE:24	 (ether_shost)
+2435865088	00:0C:29:26:BB:CD	 (ether_dhost)
+2435865088	00:50:56:E0:FE:24	 (ether_shost)
 22637986225	00:80:C7:8F:6C:96	 apter.\x0AExample: 00:80:C7:8F:6C:96\x00\x00
 \end{lstlisting}
-The file {ether\_histogram.txt} groups these ethernet addresses in a histogram:
+The file \texttt{ether\_histogram.txt} groups these ethernet addresses in a histogram:
 \lstset{style=customfile}
 \begin{lstlisting}
 n=2	00:0C:29:26:BB:CD
@@ -806,7 +818,7 @@ n=2	209.85.147.109
 n=2	65.55.15.242
 \end{lstlisting}
 
-The file \texttt{packets.pcap} is a pcap file made from carved packet. To view that file, use any packet analysis tool you like (such as \textbf{tcpdump}). Only packets carved from a PCAP  file will have the correct packet time stamp; others will given a time in 1970.\\
+The file \texttt{packets.pcap} is a pcap file made from carved packets. To view that file, use any packet analysis tool you like (such as \textbf{tcpdump}). Only packets carved from a PCAP file will have the correct packet time stamp; others will be given a time in 1970.\\
 
 Finally, the file \texttt{tcp.txt} contains details about TCP (and UDP) network flows. It contains more detail than \texttt{ip.txt} but investigators should be careful of false positives, as there are often many in this file. The following are the two lines found in that file:
 \lstset{style=customfile}
@@ -815,4 +827,3 @@ Finally, the file \texttt{tcp.txt} contains details about TCP (and UDP) network 
 2435865102	inet_ntop win32:80 -> inet_ntop win32:1034 (TCP)	 Size: 1252
 \end{lstlisting}
 The file \texttt{tcp\_histogram.txt} often provides further insight into the tcp information found on the disk image. In this case, it does not because there were only two features found. It is important to note that the histogram file still contains a lot of false positives.
-

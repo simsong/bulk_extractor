@@ -82,8 +82,16 @@ fi
 ## rar support
 AC_ARG_ENABLE([rar],
               AS_HELP_STRING([--disable-rar], [Disable RAR decompression]),
-              [],
-	      [AC_DEFINE(USE_RAR, 1, [Use RAR decompression]) rar="yes"])
+              [rar="$enableval"],
+              [rar="yes"])
+case "$rar" in
+  yes) AC_DEFINE(USE_RAR, 1, [Use RAR decompression]) ;;
+  no) ;;
+  *) AC_MSG_ERROR([--enable-rar accepts only yes or no]) ;;
+esac
+if test "x$rar" != "xyes"; then
+  AC_MSG_WARN([RAR support is disabled; RAR tests will not be built or run])
+fi
 AM_CONDITIONAL([RAR_ENABLED], [test "yes" = "$rar"])
 
 
@@ -302,6 +310,32 @@ if test "${mingw}" == yes ; then
 else
   CFLAGS="$CFLAGS -fPIC"
   CXXFLAGS="$CXXFLAGS -fPIC"
+fi
+
+AC_LANG_PUSH(C)
+saved_CFLAGS="$CFLAGS"
+CFLAGS="$CFLAGS -fstack-protector"
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[return 0;]])],
+                  [have_c_stack_protector=yes],
+                  [have_c_stack_protector=no])
+CFLAGS="$saved_CFLAGS"
+AC_LANG_POP(C)
+
+AC_LANG_PUSH(C++)
+saved_CXXFLAGS="$CXXFLAGS"
+CXXFLAGS="$CXXFLAGS -fstack-protector"
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[return 0;]])],
+                  [have_cxx_stack_protector=yes],
+                  [have_cxx_stack_protector=no])
+CXXFLAGS="$saved_CXXFLAGS"
+AC_LANG_POP(C++)
+
+if test "$have_c_stack_protector" = yes && test "$have_cxx_stack_protector" = yes ; then
+  CFLAGS="$CFLAGS -fstack-protector"
+  CXXFLAGS="$CXXFLAGS -fstack-protector"
+  AC_MSG_NOTICE([enabling -fstack-protector])
+else
+  AC_MSG_WARN([compiler does not support -fstack-protector for both C and C++; stack protection is disabled])
 fi
 
 

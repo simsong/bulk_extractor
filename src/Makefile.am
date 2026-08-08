@@ -7,6 +7,7 @@ include be20_api/dfxml_cpp/src/Makefile.defs
 # $(BE20_API_EXTRA_DIST)
 EXTRA_DIST = .gitignore scan_headers.flex scan_httpheader_lg.cpp $(AUTO_EXTRA_DIST) $(AUTO_TESTS_DIST) \
 	$(BE20_API_EXTRA_DIST) \
+	third_party/spdlog \
 	be20_api/tests/unilang.htm \
 	be20_api/tests/unilang8.htm
 
@@ -14,10 +15,10 @@ ETAGS = etags-emacs
 ACLOCAL_AMFLAGS = -I m4
 
 # So that relative imports from be20_api work
-AM_CPPFLAGS = @RE2_CFLAGS@ -I$(top_srcdir)/src/be20_api -I$(top_srcdir)/src/be20_api/utfcpp/source
+AM_CPPFLAGS = @RE2_CFLAGS@ -I$(top_srcdir)/src/be20_api -I$(top_srcdir)/src/be20_api/utfcpp/source -isystem $(top_srcdir)/src/third_party/spdlog
 
 noinst_LIBRARIES = libbe20.a
-libbe20_a_SOURCES = $(BE20_API_SRC) $(DFXML_READER) $(DFXML_WRITER)
+libbe20_a_SOURCES = $(BE20_API_SRC) $(DFXML_READER) $(DFXML_WRITER) bulk_extractor_logging.cpp bulk_extractor_logging.h
 
 check_LTLIBRARIES = scan_test_plugin.la
 scan_test_plugin_la_SOURCES = test_plugin.cpp
@@ -25,14 +26,18 @@ scan_test_plugin_la_LDFLAGS = -module -avoid-version -rpath $(abs_builddir)/.lib
 
 bulk_extractor_LDADD = libbe20.a @RE2_LIBS@
 test_be_LDADD = libbe20.a @RE2_LIBS@
-test_be_CPPFLAGS = $(AM_CPPFLAGS) -DTEST_PLUGIN_DIR=\"$(abs_builddir)/.libs\"
+test_be_CPPFLAGS = $(AM_CPPFLAGS) -DTEST_PLUGIN_DIR=\"$(abs_builddir)/.libs\" -DTEST_RAR_UNPACK -DTEST_TOP_SRCDIR=\"$(abs_top_srcdir)\"
 test_be20_api_LDADD = libbe20.a @RE2_LIBS@
+test_thread_safety_LDADD = libbe20.a @RE2_LIBS@
 test_pcap_fake_CPPFLAGS = $(AM_CPPFLAGS) -DPCAP_FAKE_TEST
 
 AUTOMAKE_OPTIONS = subdir-objects
 
 bin_PROGRAMS   = bulk_extractor
 check_PROGRAMS = test_be test_be20_api test_dfxml test_pcap_fake
+if THREAD_SANITIZER_ENABLED
+noinst_PROGRAMS = test_thread_safety
+endif
 TESTS = $(check_PROGRAMS)
 
 CLEANFILES     = scan_accts.cpp scan_base16.cpp scan_email.cpp scan_gps.cpp scan_vehicle.cpp \
@@ -77,7 +82,6 @@ lightgrep_scanners = \
 	pattern_scanner_utils.cpp pattern_scanner_utils.h \
 	scan_lightgrep.cpp \
 	scan_accts_lg.cpp \
-	scan_base16_lg.cpp \
 	scan_email_lg.cpp \
 	scan_gps_lg.cpp
 
@@ -108,6 +112,7 @@ scanners_builtin = \
 	scan_outlook.cpp scan_outlook.h \
 	scan_pdf.cpp scan_pdf.h \
 	scan_rar.cpp \
+	scan_rtti.cpp \
 	scan_sqlite.cpp \
 	scan_utmp.cpp \
 	scan_vcard.cpp scan_vcard.h \
@@ -132,6 +137,9 @@ endif
 
 if RAR_ENABLED
   scanners_builtin += $(AUTO_RAR_FILES)
+else
+check-local:
+	@echo "WARNING: RAR support is disabled; RAR tests were not built or run."
 endif
 
 bulk_extractor_parts = \
@@ -162,6 +170,13 @@ test_be20_api_SOURCES = \
 	$(BE20_API_DIR)/test_be20_threadpool.cpp \
 	$(BE20_API_TEST_SRC)
 
+test_thread_safety_SOURCES = \
+	$(BE20_API_DIR)/catch.hpp \
+	$(BE20_API_DIR)/test_thread_safety.cpp
+
+check-tsan-thread-safety: test_thread_safety
+	./test_thread_safety
+
 test_dfxml_SOURCES = \
 	test_dfxml.cpp \
 	$(BE20_API_DIR)/catch.hpp \
@@ -190,7 +205,7 @@ runs.txt: test_be tests/run_each.sh
 #
 
 SUFFIXES = .flex
-FLEX_CXXFLAGS=-Wno-shadow -Wno-effc++ -Wno-redundant-decls -Wno-missing-noreturn
+FLEX_CXXFLAGS=-Wno-shadow -Wno-effc++ -Wno-redundant-decls -Wno-missing-noreturn -Wno-misleading-indentation
 .flex.o:
 	@echo "  FLEX-CXX" $@
 	@$(LEX) -R -t $<  | sed "s/register //" > `basename $@ .o`.cpp

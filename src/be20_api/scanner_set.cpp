@@ -13,6 +13,7 @@
 #include <cstdio>
 #include <algorithm>
 #include <cassert>
+#include <cerrno>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
@@ -30,6 +31,7 @@
 #endif
 
 #ifdef _WIN32
+#include <winsock2.h>
 #include <windows.h>
 #endif
 
@@ -45,6 +47,8 @@
 #include "formatter.h"
 #include "scanner_config.h"
 #include "scanner_set.h"
+
+#include "bulk_extractor_logging.h"
 #include "path_printer.h"
 
 /****************************************************************
@@ -77,6 +81,16 @@ scanner_set::scanner_set(scanner_config& sc_, const feature_recorder_set::flags_
 
     const char *dsi = std::getenv("DEBUG_SCANNERS_IGNORE");
     if (dsi!=nullptr) debug_flags.debug_scanners_ignore=dsi;
+
+    if (const char *value = std::getenv("BE_TEST_CRASH_AFTER_WORK_START")) {
+        char *end = nullptr;
+        errno = 0;
+        const unsigned long long count = std::strtoull(value, &end, 10);
+        if (errno != 0 || end == value || *end != '\0' || count == 0) {
+            throw std::invalid_argument("BE_TEST_CRASH_AFTER_WORK_START must be a positive integer");
+        }
+        test_crash_after_work_start = count;
+    }
 }
 
 scanner_set::~scanner_set()
@@ -107,6 +121,17 @@ scanner_set::~scanner_set()
         dlclose(handle);
 #endif
     }
+}
+
+bool scanner_set::should_test_crash_after_work_start()
+{
+    uint64_t remaining = test_crash_after_work_start.load();
+    while (remaining != 0) {
+        if (test_crash_after_work_start.compare_exchange_weak(remaining, remaining - 1)) {
+            return remaining == 1;
+        }
+    }
+    return false;
 }
 
 void scanner_set::set_dfxml_writer(class dfxml_writer *writer_)
@@ -229,6 +254,11 @@ void scanner_set::join()
     if (threading) {
         pool.join();
     }
+}
+
+bool scanner_set::join(std::chrono::seconds maximum_wait)
+{
+    return !threading || pool.join(maximum_wait);
 }
 
 /****************************************************************
@@ -524,6 +554,13 @@ void scanner_set::apply_scanner_commands() {
             }
         }
     }
+    scan_seen_before_enabled = false;
+    for (const auto &scanner : enabled_scanners) {
+        if (scanner_info_db[scanner]->scanner_flags.scan_seen_before) {
+            scan_seen_before_enabled = true;
+            break;
+        }
+    }
 
     /* Create feature recorders for each enabled scanner.
      * Multiple scanners may request the same feature recorder without generating an error.
@@ -549,6 +586,9 @@ void scanner_set::apply_scanner_commands() {
     current_phase = scanner_params::PHASE_INIT2;
     scanner_params sp(sc, this, nullptr, scanner_params::PHASE_INIT2, nullptr);
     for (const auto &it : enabled_scanners) { (*it)(sp); }
+
+    fs.create_alert_list_recorder();
+    fs.create_stop_list_recorders();
 
     /* set the carve defaults from the command line (-S jpeg_carve_mode=...) or the scanner definitions if one is not provided*/
     fs.set_carve_defaults();
@@ -804,7 +844,7 @@ void scanner_set::process_sbuf(const sbuf_t* sbufp, scanner_t *scanner)
         if (debug_flags.debug_benchmark && writer) {
             writer->xmlout("debug:bypass", "",
                            Formatter()
-                           << "sbuf='" << sbuf.pos0.str() << "' "
+                           << "sbuf='" << dfxml_writer::xmlescape(sbuf.pos0.str()) << "' "
                            << "bufsize='" << sbuf.bufsize << "' "
                            << "scanner='" << get_scanner_name(scanner) << "' "
                            << "reason='seen_before'", true);
@@ -816,7 +856,7 @@ void scanner_set::process_sbuf(const sbuf_t* sbufp, scanner_t *scanner)
     if (ngram_size > 0 && flags.scan_ngram_buffer == false) {
         if (debug_flags.debug_benchmark && writer) {
             writer->xmlout("debug:bypass", "",
-                           Formatter() << "sbuf='" << sbuf.pos0.str() << "' ngram_size='" << ngram_size << "'", true);
+                           Formatter() << "sbuf='" << dfxml_writer::xmlescape(sbuf.pos0.str()) << "' ngram_size='" << ngram_size << "'", true);
         }
         return;
     }
@@ -825,7 +865,7 @@ void scanner_set::process_sbuf(const sbuf_t* sbufp, scanner_t *scanner)
     if (info->min_distinct_chars > distinct_chars) {
         if (debug_flags.debug_benchmark && writer) {
             writer->xmlout("debug:bypass", "",
-                           Formatter() << "sbuf='" << sbuf.pos0.str() << "' min_distinct_chars='" << distinct_chars << "'", true);
+                           Formatter() << "sbuf='" << dfxml_writer::xmlescape(sbuf.pos0.str()) << "' min_distinct_chars='" << distinct_chars << "'", true);
         }
         return;
     }
@@ -944,6 +984,9 @@ void scanner_set::process_sbuf(const sbuf_t* sbufp)
      ** Record that we are starting to work on the sbuf for statistics purposes.
      **/
     record_work_start( sbufp );
+    if (should_test_crash_after_work_start()) {
+        std::_Exit(86);
+    }
     thread_set_status( sbufp->pos0.str() + " process_sbuf (" + std::to_string(sbufp->bufsize) + ")" );
 
     const class sbuf_t& sbuf = *sbufp;  // read-only reference
@@ -967,6 +1010,18 @@ void scanner_set::process_sbuf(const sbuf_t* sbufp)
     sbufp->seen_before = previously_processed_count(sbuf) > 0; // abstraction violation
     if (sbufp->seen_before) {
         dup_bytes_encountered += sbuf.bufsize;
+        if (!scan_seen_before_enabled) {
+            duplicate_sbufs_bypassed++;
+            if (debug_flags.debug_benchmark && writer) {
+                writer->xmlout("debug:bypass", "",
+                               Formatter()
+                               << "sbuf='" << dfxml_writer::xmlescape(sbuf.pos0.str()) << "' "
+                               << "bufsize='" << sbuf.bufsize << "' "
+                               << "scanner='all' reason='seen_before'", true);
+            }
+            thread_set_status("IDLE");
+            return;
+        }
     }
 
     /*
@@ -1036,6 +1091,7 @@ void scanner_set::process_sbuf(const sbuf_t* sbufp)
 
 void scanner_set::log(const std::string message)
 {
+    bulk_extractor::logging::write(bulk_extractor::logging::level::info, "scanner_set", message);
     if (writer){
         writer->xmlout("log", message, aftimer::now_str("t='","'"), false);
         writer->flush();

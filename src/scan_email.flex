@@ -67,7 +67,39 @@ inline class email_scanner *get_extra(yyscan_t yyscanner) {return yyemail_get_ex
 bool extra_validate_email(const char *email)
 {
     if (strstr(email,"..")) return false;
-    return true;
+    const char *at = strchr(email, '@');
+    if (at == nullptr || strchr(at + 1, '@') != nullptr) return false;
+    const size_t local_length = static_cast<size_t>(at - email);
+    const size_t domain_length = strlen(at + 1);
+    return local_length <= 64 && domain_length <= 253;
+}
+
+bool extra_validate_email_utf16(const char *email, size_t length)
+{
+    if (length % 2 != 0) return false;
+    std::string ascii;
+    ascii.reserve(length / 2);
+    for (size_t i = 0; i < length; i += 2) {
+        if (email[i + 1] != '\0') return false;
+        ascii.push_back(email[i]);
+    }
+    return extra_validate_email(ascii.c_str());
+}
+
+bool email_has_left_boundary(const sbuf_t &sbuf, size_t pos)
+{
+    if (pos == 0) return true;
+    const unsigned char previous = sbuf[pos - 1];
+    return !std::isalnum(previous) && previous != '.' && previous != '_' &&
+           previous != '%' && previous != '+' && previous != '-';
+}
+
+bool email_has_left_boundary_utf16(const sbuf_t &sbuf, size_t pos)
+{
+    if (pos < 2) return true;
+    const unsigned char previous = sbuf[pos - 2];
+    return !std::isalnum(previous) && previous != '.' && previous != '_' &&
+           previous != '%' && previous != '+' && previous != '-';
 }
 
 
@@ -121,7 +153,7 @@ HEX		([0-9a-f])
 XPC		[ !#$%&'()*+,\-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ\[\\\]^_`abcdefghijklmnopqrstuvwxyz{|}~]
 PC		[ !#$%&'()*+,\-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ\[\\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"]
 ALNUM		[a-zA-Z0-9]
-TLD		(AC|AD|AE|AERO|AF|AG|AI|AL|AM|AN|AO|AQ|AR|ARPA|AS|ASIA|AT|AU|AW|AX|AZ|BA|BB|BD|BE|BF|BG|BH|BI|BIZ|BJ|BL|BM|BN|BO|BR|BS|BT|BV|BW|BY|BZ|CA|CAT|CC|CD|CF|CG|CH|CI|CK|CL|CM|CN|CO|COM|COOP|CR|CU|CV|CX|CY|CZ|DE|DJ|DK|DM|DO|DZ|EC|EDU|EE|EG|EH|ER|ES|ET|EU|FI|FJ|FK|FM|FO|FR|GA|GB|GD|GE|GF|GG|GH|GI|GL|GM|GN|GOV|GP|GQ|GR|GS|GT|GU|GW|GY|HK|HM|HN|HR|HT|HU|ID|IE|IL|IM|IN|INFO|INT|IO|IQ|IR|IS|IT|JE|JM|JO|JOBS|JP|KE|KG|KH|KI|KM|KN|KP|KR|KW|KY|KZ|LA|LB|LC|LI|LK|LR|LS|LT|LU|LV|LY|MA|MC|MD|ME|MF|MG|MH|MIL|MK|ML|MM|MN|MO|MOBI|MP|MQ|MR|MS|MT|MU|MUSEUM|MV|MW|MX|MY|MZ|NA|NAME|NC|NE|NET|NF|NG|NI|NL|NO|NP|NR|NU|NZ|OM|ORG|PA|PE|PF|PG|PH|PK|PL|PM|PN|PR|PRO|PS|PT|PW|PY|QA|RE|RO|RS|RU|RW|SA|SB|SC|SD|SE|SG|SH|SI|SJ|SK|SL|SM|SN|SO|SR|ST|SU|SV|SY|SZ|TC|TD|TEL|TF|TG|TH|TJ|TK|TL|TM|TN|TO|TP|TR|TRAVEL|TT|TV|TW|TZ|UA|UG|UK|UM|US|UY|UZ|VA|VC|VE|VG|VI|VN|VU|WF|WS|YE|YT|YU|ZA|ZM|ZW)
+TLD		([A-Z0-9][A-Z0-9-]{0,61}[A-Z0-9])
 
 
 DOMAINREF	{ATOM}
@@ -134,7 +166,7 @@ LOCALPART	{WORD}([.]{WORD})*
 ADDRSPEC	{LOCALPART}@{DOMAIN}
 MAILBOX		{ADDRSPEC}
 
-EMAIL	{ALNUM}[a-zA-Z0-9._%\-+]{1,128}{ALNUM}@{ALNUM}[a-zA-Z0-9._%\-]{1,128}\.{TLD}
+EMAIL	{ALNUM}[a-zA-Z0-9._%\-+]{1,62}{ALNUM}@{ALNUM}[a-zA-Z0-9._%\-]{1,250}\.{TLD}
 YEAR		((19[6-9][0-9])|(20[0-1][0-9]))
 DAYOFWEEK	(Mon|Tue|Wed|Thu|Fri|Sat|Sun)
 MONTH		(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)
@@ -191,10 +223,10 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
     s.pos += yyleng;
 }
 
-{EMAIL}/[^a-zA-Z]	{
+{EMAIL}/[^a-zA-Z0-9._%\-]	{
     email_scanner &s = * yyemail_get_extra(yyscanner);
     s.check_margin();
-    if (extra_validate_email(yytext)){
+    if (email_has_left_boundary(SBUF, POS) && extra_validate_email(yytext)){
         s.email_recorder.write_buf(SBUF,POS,yyleng);
 	ssize_t domain_start = find_host_in_email(SBUF.slice(POS,yyleng));
         if (domain_start>0){
@@ -301,6 +333,11 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
     for (unsigned int i=0;i<(unsigned int)yyleng;i++){
         if (SBUF[POS+i]=='/') slash_count++;
     }
+    const std::string html_quote = "&quot;";
+    if (feature_len >= static_cast<int>(html_quote.size()) &&
+        std::string(reinterpret_cast<const char *>(SBUF.get_buf() + POS + feature_len - html_quote.size()), html_quote.size()) == html_quote) {
+        feature_len -= html_quote.size();
+    }
     if (slash_count==2){
        while(feature_len>0 && !isalpha(SBUF[POS+feature_len-1])){
          feature_len--;
@@ -315,11 +352,11 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
     s.pos += yyleng;
 }
 
-[a-zA-Z0-9]\0([a-zA-Z0-9._%\-+]\0){1,128}@\0([a-zA-Z0-9._%\-]\0){1,128}\.\0({U_TLD1}|{U_TLD2}|{U_TLD3}|{U_TLD4})/[^a-zA-Z]|([^][^\0])	{
+[a-zA-Z0-9]\0([a-zA-Z0-9._%\-+]\0){1,62}[a-zA-Z0-9]\0@\0([a-zA-Z0-9._%\-]\0){1,250}\.\0[a-zA-Z0-9]\0([a-zA-Z0-9-]\0){0,61}[a-zA-Z0-9]\0/[^a-zA-Z0-9._%\-]\0	{
     /* UTF-16 URL scanner */
     email_scanner &s = * yyemail_get_extra(yyscanner);
     s.check_margin();
-    if (extra_validate_email(yytext)){
+    if (email_has_left_boundary_utf16(SBUF, POS) && extra_validate_email_utf16(yytext, yyleng)){
         s.email_recorder.write_buf(SBUF,POS,yyleng);
         ssize_t domain_start = find_host_in_email(SBUF.slice(POS,yyleng)) + 1;
         if (domain_start >= 0){

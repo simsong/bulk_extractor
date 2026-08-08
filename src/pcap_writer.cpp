@@ -13,46 +13,70 @@
  **/
 
 pcap_writer::pcap_writer(const scanner_params &sp):
-    outpath(sp.sc.outdir / OUTPUT_FILENAME)
+    outdir(sp.sc.outdir), streams()
 {
 }
 
 pcap_writer::~pcap_writer()
 {
     const std::lock_guard<std::mutex> lock(Mfcap);
-    if (fcap){
-        fcap->close();
-        delete fcap;
-        fcap = nullptr;
+    for (auto &[link_type, stream] : streams){
+        if (stream.fcap){
+            stream.fcap->close();
+        }
     }
 }
 
-void pcap_writer::pcap_write_bytes(const uint8_t * const val, size_t num_bytes)
+void pcap_writer::pcap_write_bytes(std::ofstream &fcap, const uint8_t *val, size_t num_bytes) const
 {
-    fcap->write(reinterpret_cast<const char *>(val),num_bytes);
-    if (fcap->rdstate() & (std::ios::failbit|std::ios::badbit)){
-        throw std::runtime_error(Formatter() << "scanner pcap_writer is unable to write to file " << outpath);
+    fcap.write(reinterpret_cast<const char *>(val),num_bytes);
+    if (fcap.rdstate() & (std::ios::failbit|std::ios::badbit)){
+        throw std::runtime_error("scanner pcap_writer is unable to write packet data");
     }
 }
 
 /* Write a 16-bit value, little end first */
-void pcap_writer::pcap_write2(const uint16_t val)
+void pcap_writer::pcap_write2(std::ofstream &fcap, const uint16_t val) const
 {
     char ch = val & 0xff;
-    *fcap << ch;
+    fcap << ch;
     ch = val >> 8;
-    *fcap << ch;
-    if (fcap->rdstate() & (std::ios::failbit|std::ios::badbit)){
-        throw std::runtime_error(Formatter() << "scanner scan_net is unable to write to file " << outpath);
+    fcap << ch;
+    if (fcap.rdstate() & (std::ios::failbit|std::ios::badbit)){
+        throw std::runtime_error("scanner pcap_writer is unable to write packet data");
     }
 }
 
-void pcap_writer::pcap_write4(const uint32_t val)
+void pcap_writer::pcap_write4(std::ofstream &fcap, const uint32_t val) const
 {
-    fcap->write(reinterpret_cast<const char *>(&val), 4);
-    if (fcap->rdstate() & (std::ios::failbit|std::ios::badbit)){
-        throw std::runtime_error(Formatter() << "scanner scan_net is unable to write to file " << outpath);
+    pcap_write2(fcap, static_cast<uint16_t>(val));
+    pcap_write2(fcap, static_cast<uint16_t>(val >> 16));
+}
+
+std::ofstream &pcap_writer::pcap_stream(uint32_t link_type)
+{
+    auto result = streams.try_emplace(link_type);
+    stream_t &stream = result.first->second;
+    if (stream.fcap) return *stream.fcap;
+
+    const std::string filename = link_type == DLT_EN10MB ? OUTPUT_FILENAME :
+        link_type == DLT_IEEE802_11 ? "packets_80211.pcap" :
+        "packets_linktype_" + std::to_string(link_type) + ".pcap";
+    stream.outpath = outdir / filename;
+    stream.fcap = std::make_unique<std::ofstream>(stream.outpath, std::ios::binary);
+    if (!stream.fcap->is_open()){
+        throw std::runtime_error(Formatter() << "pcap_writer.cpp: cannot open " << stream.outpath << " for writing");
     }
+    auto &fcap = *stream.fcap;
+    pcap_write4(fcap, 0xa1b2c3d4);
+    pcap_write2(fcap, 2);
+    pcap_write2(fcap, 4);
+    pcap_write4(fcap, 0);
+    pcap_write4(fcap, 0);
+    pcap_write4(fcap, PCAP_MAX_PKT_LEN);
+    pcap_write4(fcap, link_type);
+    assert(fcap.tellp() == TCPDUMP_HEADER_SIZE);
+    return fcap;
 }
 
 
@@ -64,24 +88,13 @@ void pcap_writer::pcap_writepkt(const struct pcap_writer::pcap_hdr &h, // packet
                                 const sbuf_t &sbuf,       // sbuf where packet is located
                                 const size_t pos,         // position within the sbuf
                                 const bool add_frame,     // whether or not to create a synthetic ethernet frame
-                                const uint16_t frame_type)  // if we add a frame, the frame type
+                                const uint16_t frame_type,
+                                const uint32_t link_type)
 {
     // Make sure that neither this packet nor an encapsulated version of this packet has been written
     const std::lock_guard<std::mutex> lock(Mfcap);  // lock the mutex
-    if (fcap==0){
-        fcap = new std::ofstream(outpath, std::ios::binary); // write the output
-        if (fcap->is_open()==false){
-            throw std::runtime_error(Formatter() << "pcap_writer.cpp: cannot open " << outpath << " for  writing");
-        }
-        pcap_write4(0xa1b2c3d4);
-        pcap_write2(2);			// major version number
-        pcap_write2(4);			// minor version number
-        pcap_write4(0);			// time zone offset; always 0
-        pcap_write4(0);			// accuracy of time stamps in the file; always 0
-        pcap_write4(PCAP_MAX_PKT_LEN);	// snapshot length
-        pcap_write4(DLT_EN10MB);	// link layer encapsulation
-        assert( fcap->tellp() == TCPDUMP_HEADER_SIZE );
-    }
+    const uint32_t output_link_type = add_frame ? DLT_EN10MB : link_type;
+    std::ofstream &fcap = pcap_stream(output_link_type);
 
     size_t forged_header_len = 0;
     uint8_t forged_header[ETHER_HEAD_LEN];
@@ -103,20 +116,22 @@ void pcap_writer::pcap_writepkt(const struct pcap_writer::pcap_hdr &h, // packet
     }
 
     /* Write a packet */
-    pcap_write4(h.seconds);		// time stamp, seconds avalue
-    pcap_write4(h.useconds);		// time stamp, microseconds
-    pcap_write4(h.cap_len + forged_header_len);
-    pcap_write4(h.pkt_len + forged_header_len);
+    pcap_write4(fcap, h.seconds);
+    pcap_write4(fcap, h.useconds);
+    pcap_write4(fcap, h.cap_len + forged_header_len);
+    pcap_write4(fcap, h.pkt_len + forged_header_len);
     if (add_frame_and_safe) {
-        pcap_write_bytes(forged_header, sizeof(forged_header));
+        pcap_write_bytes(fcap, forged_header, sizeof(forged_header));
     }
-    sbuf.write(*fcap, pos, h.cap_len );	// the packet
+    sbuf.write(fcap, pos, h.cap_len );
 }
 
 void pcap_writer::flush()
 {
     const std::lock_guard<std::mutex> lock(Mfcap);
-    if (fcap){
-        fcap->flush();
+    for (auto &[link_type, stream] : streams){
+        if (stream.fcap){
+            stream.fcap->flush();
+        }
     }
 }

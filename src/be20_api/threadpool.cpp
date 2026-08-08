@@ -9,9 +9,8 @@ thread_pool::thread_pool(scanner_set &ss_): ss(ss_)
 void thread_pool::launch_workers(size_t num_workers)
 {
     for (size_t i=0; i < num_workers; i++){
-        std::unique_lock<std::mutex> lock(M);
         class worker *w = new worker(*this,i);
-        workers.insert(w);
+        workers_running.fetch_add(1, std::memory_order_relaxed);
         threads.insert(new std::thread( &worker::start_worker, static_cast<void *>(w) ));
     }
 }
@@ -25,7 +24,9 @@ thread_pool::~thread_pool()
      * the main process will die soon enough.
      */
     for (auto &it : threads ){
-        it->join();
+        if (it->joinable()) {
+            it->join();
+        }
         delete it;
     }
 }
@@ -35,8 +36,8 @@ thread_pool::~thread_pool()
  */
 void thread_pool::wait_for_tasks()
 {
-    if(debug) std::cerr << "thread_pool::wait_for_tasks  work_queue.size()=" << work_queue.size() << std::endl;
     std::unique_lock<std::mutex> lock(M);
+    if(debug) std::cerr << "thread_pool::wait_for_tasks  work_queue.size()=" << work_queue.size() << std::endl;
     if(debug) std::cerr << "thread_pool::wait_for_tasks  got lock work_queue.size()=" << work_queue.size() << " working_workers=" << working_workers << std::endl;
     // wait until a thread is free (doesn't matter which)
     while (work_queue.size() > 0 || working_workers>0){
@@ -54,7 +55,50 @@ void thread_pool::join()
     std::unique_lock<std::mutex> lock(M);
     mode = 2;
     TO_WORKER.notify_all();
-    TO_MAIN.wait(lock, [this] { return workers.empty(); });
+    lock.unlock();
+    for (auto *thread : threads) {
+        if (thread->joinable()) {
+            thread->join();
+        }
+    }
+}
+
+uint64_t thread_pool::producer_wait_ns() const
+{
+    std::lock_guard<std::mutex> lock(M);
+    return main_wait_timer.elapsed_nanoseconds();
+}
+
+std::string thread_pool::producer_wait_text() const
+{
+    std::lock_guard<std::mutex> lock(M);
+    return main_wait_timer.elapsed_text();
+}
+
+bool thread_pool::join(std::chrono::seconds maximum_wait)
+{
+    const auto deadline = std::chrono::steady_clock::now() + maximum_wait;
+    std::unique_lock<std::mutex> lock(M);
+    while (work_queue.size() > 0 || working_workers > 0) {
+        TO_WORKER.notify_one();
+        if (TO_MAIN.wait_until(lock, deadline) == std::cv_status::timeout) {
+            return false;
+        }
+    }
+    mode = 2;
+    TO_WORKER.notify_all();
+    if (!TO_MAIN.wait_until(lock, deadline, [this] {
+            return workers_running.load(std::memory_order_relaxed) == 0;
+        })) {
+        return false;
+    }
+    lock.unlock();
+    for (auto *thread : threads) {
+        if (thread->joinable()) {
+            thread->join();
+        }
+    }
+    return true;
 }
 
 void thread_pool::main_thread_wait()
@@ -117,8 +161,7 @@ int thread_pool::get_free_count() const
 
 size_t thread_pool::get_worker_count() const
 {
-    std::lock_guard<std::mutex> lock(M);
-    return workers.size();
+    return workers_running.load(std::memory_order_relaxed);
 }
 
 size_t thread_pool::get_tasks_queued() const
@@ -211,12 +254,9 @@ void *worker::run()
     }
     tp.ss.thread_set_status("exiting");
     if (tp.debug) std::cerr << std::this_thread::get_id() << " exiting "<< std::endl;
-    tp.total_worker_wait_ns += worker_wait_timer.running_nanoseconds();
+    tp.total_worker_wait_ns.fetch_add(worker_wait_timer.running_nanoseconds(), std::memory_order_relaxed);
     tp.ss.thread_set_status("exited");
-    {
-        std::lock_guard<std::mutex> lock(tp.M);
-        tp.workers.erase(this);
-        tp.TO_MAIN.notify_all();
-    }
+    tp.workers_running.fetch_sub(1, std::memory_order_relaxed);
+    tp.TO_MAIN.notify_all();
     return nullptr;
 }
