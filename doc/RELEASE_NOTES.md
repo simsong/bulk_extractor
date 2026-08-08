@@ -42,9 +42,11 @@ through the project's normal pull-request and CI process.
   license identifiers, including the Autoconf exception used by bundled macros.
 - A standalone 64-bit Windows `.exe` is built with MinGW on Ubuntu and is
   checked to ensure that it imports no non-system Windows DLLs. GitHub Actions
-  publishes it as a downloadable artifact; attaching it to the 2.2.0 release
-  remains a release task
-  ([PR #543](https://github.com/simsong/bulk_extractor/pull/543)).
+  publishes it as a downloadable artifact. The executable includes static
+  libewf support and its Windows runtime workflow scans an E01 fixture;
+  attaching it to the 2.2.0 release remains a release task
+  ([PR #543](https://github.com/simsong/bulk_extractor/pull/543),
+  [#655](https://github.com/simsong/bulk_extractor/issues/655)).
 - Windows raw-device input now uses explicit Win32 device handles and
   `IOCTL_DISK_GET_LENGTH_INFO` for physical disks, volumes, and named volumes,
   rather than relying on C++ filesystem metadata or calculated disk geometry
@@ -301,8 +303,7 @@ through the project's normal pull-request and CI process.
 ### Known limitations and release work
 
 - Keep the Windows artifact workflow green and attach its `.exe` to the 2.2.0
-  GitHub release. The current build disables libewf, so the `.exe` does not
-  read E01 images directly.
+  GitHub release.
 - Lightgrep remains an unsupported, source-broken optional configuration and
   should not be represented as a working 2.2.0 feature.
 - BEViewer is not bundled with bulk_extractor 2.
