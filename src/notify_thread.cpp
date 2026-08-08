@@ -40,7 +40,11 @@ int notify_thread::terminal_width( int default_width )
 
 std::string notify_thread::format_stat_value(const std::string &name, const std::string &value)
 {
-    if (name.find("bytes") == std::string::npos) {
+    if (name != scanner_set::AVAILABLE_MEMORY_STR &&
+        name != scanner_set::AVAILABLE_MEMORY_LEGACY_STR &&
+        name != scanner_set::DEPTH0_BYTES_QUEUED_STR &&
+        name != scanner_set::BYTES_QUEUED_STR &&
+        name != scanner_set::MAX_OFFSET) {
         return value;
     }
     return std::to_string(std::stoull(value) / (1024 * 1024)) + " MiB";

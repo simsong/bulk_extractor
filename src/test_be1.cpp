@@ -111,6 +111,9 @@ bool has(std::string line, std::string substr)
 TEST_CASE("notify_thread formats byte statistics as MiB", "[notify]")
 {
     REQUIRE(notify_thread::format_stat_value("available_memory_bytes", "10485760") == "10 MiB");
+    REQUIRE(notify_thread::format_stat_value("available_memory", "1048576") == "1 MiB");
+    REQUIRE(notify_thread::format_stat_value("max_offset", "2097152") == "2 MiB");
+    REQUIRE(notify_thread::format_stat_value("bytes_queued", "1048575") == "0 MiB");
     REQUIRE(notify_thread::format_stat_value("tasks_queued", "12") == "12");
 }
 
