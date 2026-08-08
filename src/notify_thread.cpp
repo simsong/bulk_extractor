@@ -38,6 +38,14 @@ int notify_thread::terminal_width( int default_width )
     return default_width;
 }
 
+std::string notify_thread::format_stat_value(const std::string &name, const std::string &value)
+{
+    if (name.find("bytes") == std::string::npos) {
+        return value;
+    }
+    return std::to_string(std::stoull(value) / (1024 * 1024)) + " MiB";
+}
+
 
 notify_thread::~notify_thread()
 {
@@ -109,12 +117,13 @@ void *notify_thread::run()
         if ( !cfg.opt_legacy) {
             os << ho << "bulk_extractor      " << asctime( &timeinfo) << "  " << std::endl;
             for( const auto &it : stats ){
-                os << it.first << ": " << it.second;
+                const std::string value = format_stat_value(it.first, it.second);
+                os << it.first << ": " << value;
                 if ( ce[0] ){
                     os << ce;
                 } else {
                     // Space out to the 50 column to erase any junk
-                    int spaces = 50 - ( it.first.size() + it.second.size());
+                    int spaces = 50 - ( it.first.size() + value.size());
                     for( int i=0;i<spaces;i++){
                         os << " ";
                     }

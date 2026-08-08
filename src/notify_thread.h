@@ -24,6 +24,7 @@ public:
         phase_changed() {};
     ~notify_thread();
     static int terminal_width( int default_width );
+    static std::string format_stat_value(const std::string &name, const std::string &value);
     std::ostream &os;
     scanner_set &ss;
     const Phase1::Config &cfg;
