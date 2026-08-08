@@ -11,6 +11,19 @@ The historical roadmaps were planning documents, not release records. Their
 relevant context is incorporated below; preserved, commit-specific copies are
 linked from the [historical source map](#historical-source-map).
 
+## 2.3.0 (draft)
+
+**Status:** Planned.
+
+### Documentation and test corpus
+
+- Added an offline-first cryptocurrency-scanner proposal and deliberately
+  generated public-key/address and wallet test fixtures, including
+  fixture-generation provenance. The [crypto-scanning design](Crypto.md)
+  keeps secret-bearing evidence separate from public addresses and never makes
+  network requests during image scanning
+  ([#651](https://github.com/simsong/bulk_extractor/issues/651)).
+
 ## 2.2.0 (draft)
 
 **Status:** Unreleased. The source version is currently

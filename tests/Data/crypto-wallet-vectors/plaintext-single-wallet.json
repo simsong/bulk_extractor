@@ -1,0 +1,13 @@
+{
+  "format": "be-wallet-test-v1",
+  "wallet_id": "plaintext-single",
+  "currency_scope": "single",
+  "accounts": [
+    {
+      "family": "bitcoin",
+      "network": "mainnet",
+      "private_key_hex": "201f447777b4d26111e6d95e66389196af6ab3e9b124b5d406e6d24f6719eb67"
+    }
+  ]
+}
+
