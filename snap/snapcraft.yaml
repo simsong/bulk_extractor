@@ -1,0 +1,64 @@
+name: bulk-extractor
+base: core22
+adopt-info: bulk-extractor
+summary: High-performance bulk data analysis for digital forensics
+description: |
+  bulk_extractor scans disk images, files, and other byte streams for forensic
+  features without requiring a filesystem. This strictly confined package
+  supports ordinary image-file scans and can optionally be connected to raw
+  block devices by an administrator.
+license: GPL-3.0-or-later
+contact: https://github.com/simsong/bulk_extractor/issues
+website: https://github.com/simsong/bulk_extractor
+source-code: https://github.com/simsong/bulk_extractor
+grade: stable
+confinement: strict
+
+apps:
+  bulk-extractor:
+    command: usr/bin/bulk_extractor
+    plugs:
+      - home
+      - removable-media
+      - block-devices
+
+plugs:
+  block-devices:
+    allow-partitions: true
+
+parts:
+  bulk-extractor:
+    plugin: nil
+    source: .
+    build-packages:
+      - autoconf
+      - automake
+      - build-essential
+      - flex
+      - libabsl-dev
+      - libexpat1-dev
+      - libgcrypt20-dev
+      - libgpg-error-dev
+      - libre2-dev
+      - libssl-dev
+      - libtool
+      - pkg-config
+      - zlib1g-dev
+    stage-packages:
+      - libabsl20210324
+      - libexpat1
+      - libgcrypt20
+      - libgpg-error0
+      - libre2-9
+      - libssl3
+      - zlib1g
+    override-pull: |
+      craftctl default
+      version=$(sed -n 's/^AC_INIT(\[BULK_EXTRACTOR\],\[\([^]]*\)\].*/\1/p' configure.ac)
+      test -n "$version"
+      craftctl set version="$version"
+    override-build: |
+      bash bootstrap.sh
+      ./configure --prefix=/usr --disable-libewf --quiet
+      make -j"$(nproc)"
+      make install DESTDIR="$CRAFT_PART_INSTALL"
