@@ -72,28 +72,38 @@ Complete and record each gate before artifact publication.
    test against the exact `bulk_extractor64.exe` artifact. The current build
    uses `--disable-libewf`; it is neither signed nor E01-capable unless the
    workflow and its evidence are changed accordingly.
-6. Run the AWS large-image validation described below, then preserve only its
-   redacted result summary, checksums, and pass/fail evidence.
+6. Run the AWS large-image validation described below, retaining its result
+   archives, per-run text reports, and pass/fail evidence in the selected S3
+   bucket.
 
 ## AWS large-image validation
 
-The AWS validation infrastructure is tracked in [#624][aws-issue]. Until that
-work exists, this gate is manual and must not be represented as automated.
+`make release-aws-large-image` runs the interactive Bash launcher in
+[`scripts/release_aws_large_image.sh`](../scripts/release_aws_large_image.sh).
+It has no CloudFormation template or GitHub Actions workflow. The launcher
+starts every combination of its `INSTANCE_TYPES` and `IMAGE_URLS` variables;
+the defaults are 4-vCPU `m7i.xlarge` and 16-vCPU `m7i.4xlarge` against the
+public ubnist1 and domexusers Digital Corpora downloads.
 
-The eventual CloudFormation or SAM implementation must:
+Supply a bucket, public subnet, SSH-enabled security group, and EC2 key pair:
 
-- use a fixed instance type, maximum runtime, and automatic instance/volume
-  cleanup;
-- use encrypted S3, scoped IAM roles, and GitHub OIDC or presigned URLs rather
-  than long-lived repository credentials;
-- redact image and output data; post only an attested summary, logs, checksums,
-  and pass/fail status to GitHub;
-- have AWS Budget alerts and a separate runtime/cost guardrail. Budgets are
-  alerts, not instantaneous hard spending caps, so the runtime guardrail is
-  required to keep expected CPU costs at or below $10.
+```sh
+make release-aws-large-image RESULT_BUCKET=be-release-results \
+  SECURITY_GROUP_ID=sg-... SSH_KEY_NAME=be-release \
+  SSH_PRIVATE_KEY=/secure/path/be-release.pem INSTANCE_PROFILE=be-release-runner
+```
 
-Confirm that the instance, volumes, and temporary S3 objects have been removed
-before marking the gate complete.
+Each Ubuntu instance installs build prerequisites, downloads and builds the
+selected source release, downloads its assigned disk image, scans it, and
+uploads `BE{version}-{instance-type}-{image}-{utc-time}.zip` plus its matching
+`.txt` report to the bucket. It then shuts down. The local launcher uses SSH to
+tail each instance log and redraw a terminal progress table; when every
+instance is stopped it prints the uploaded status and elapsed time for each.
+Unless `SUBNET_ID` is supplied, the launcher selects a default subnet in the
+account's default VPC.
+The operator is responsible for an instance profile that permits only the
+needed bucket writes and for terminating the stopped instances when retained
+evidence is no longer needed.
 
 ## Artifact assembly
 

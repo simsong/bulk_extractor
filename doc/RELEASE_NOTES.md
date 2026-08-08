@@ -31,6 +31,10 @@ through the project's normal pull-request and CI process.
 
 ### Highlights
 
+- Began migrating the historical GitHub wiki into source-controlled
+  documentation. The new [installation guide](installation.md) is the
+  maintained build reference; wiki pages now direct readers to the applicable
+  source-tree documentation.
 - The project license statement now clearly identifies post-January-2015
   development as GPL-3.0-or-later. Original NPS works retain their distinct
   U.S.-Government status; bulk_extractor must not be described as a
@@ -61,6 +65,9 @@ through the project's normal pull-request and CI process.
   ([PR #559](https://github.com/simsong/bulk_extractor/pull/559)).
 - The carving guide documents recorder-specific `-S <recorder>_carve_mode=`
   settings, defaults, and feature-file behavior ([#264](https://github.com/simsong/bulk_extractor/issues/264)).
+- Release managers can run the AWS large-image matrix from one interactive
+  Bash launcher, with live SSH log progress and S3 result archives; it does not
+  require CloudFormation or a GitHub Actions workflow ([#624](https://github.com/simsong/bulk_extractor/issues/624)).
 
 ### Reliability and correctness
 
@@ -278,6 +285,11 @@ through the project's normal pull-request and CI process.
   ([#621](https://github.com/simsong/bulk_extractor/issues/621)).
 - The release workflow now assembles and verifies artifacts in a read-only job;
   only its separate draft-publishing job receives repository write permission.
+- Release managers can run an AWS OIDC large-image gate that uses a disposable,
+  fixed-size instance with an eight-hour shutdown cap, encrypted temporary
+  storage, least-privilege input/output access, cleanup, and an attested,
+  redacted result summary. AWS Budget alerts supplement, but do not replace,
+  the runtime cap ([#624](https://github.com/simsong/bulk_extractor/issues/624)).
 - Added a strict-confinement Snap package and native amd64/arm64 build and
   install-test workflow. Stable Snap Store publication is limited to annotated
   release tags, protected release-manager credentials, and a project-owned
