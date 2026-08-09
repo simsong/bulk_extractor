@@ -110,7 +110,7 @@ class scanner_set {
     std::map<scanner_t*, struct scanner_params::scanner_info *> scanner_info_db {}; // scanner to info db; master list of scanners
     std::map<std::string, scanner_t *> scanner_names {}; // scanner name to scanner
     std::set<scanner_t*> enabled_scanners {};            //
-    bool scan_seen_before_enabled {false};
+    std::atomic<bool> scan_seen_before_enabled {false};
     std::vector<void *> plugin_handles {};
 
     class thread_pool pool;
@@ -157,10 +157,12 @@ public:
     void set_stop_list(const word_and_context_list *list) { fs.set_stop_list(list); }
 
     // timing info
-    aftimer & producer_timer()   { return pool.main_wait_timer; }
-    uint64_t  producer_wait_ns() { return pool.main_wait_timer.elapsed_nanoseconds();}
-    uint64_t  consumer_wait_ns() { return pool.total_worker_wait_ns;}
-    uint64_t  consumer_wait_ns_per_worker() { return worker_count > 0 ? pool.total_worker_wait_ns / worker_count : 0;}
+    std::string producer_wait_text() const { return pool.producer_wait_text(); }
+    uint64_t  producer_wait_ns() const { return pool.producer_wait_ns(); }
+    uint64_t  consumer_wait_ns() const { return pool.total_worker_wait_ns.load(std::memory_order_relaxed);}
+    uint64_t  consumer_wait_ns_per_worker() const {
+        return worker_count > 0 ? consumer_wait_ns() / worker_count : 0;
+    }
 
     void main_thread_wait()      { return pool.main_thread_wait(); }
     /* They throw a ScannerNotFound exception if no scanner exists */
@@ -195,7 +197,8 @@ public:
     static const inline std::string DEPTH0_BYTES_QUEUED_STR {"depth0_bytes_queued"};
     static const inline std::string SBUFS_QUEUED_STR {"sbufs_queued"};
     static const inline std::string BYTES_QUEUED_STR {"bytes_queued"};
-    static const inline std::string AVAILABLE_MEMORY_STR {"available_memory"};
+    static const inline std::string AVAILABLE_MEMORY_STR {"available_memory_bytes"};
+    static const inline std::string AVAILABLE_MEMORY_LEGACY_STR {"available_memory"};
     static const inline std::string SBUFS_CREATED_STR {"sbufs_created"};
     static const inline std::string SBUFS_REMAINING_STR {"sbufs_remaining"};
     static const inline std::string MAX_OFFSET {"max_offset"};

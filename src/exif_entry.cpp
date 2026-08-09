@@ -1302,6 +1302,8 @@ static std::string get_exif_ascii(tiff_handle_t &tiff_handle, uint32_t ifd_entry
     tiff_handle.bytes_read += count; // exif standard: 1 exif ascii value is 1 byte long
     if (count >= 0x10000 || tiff_handle.bytes_read >= 0x10000) throw exif_failure_exception_t();
 
+    if (count > tiff_handle.sbuf->left(offset)) throw exif_failure_exception_t();
+
     // strip off "\0" allowing up to 2 \0 markers because tiff terminates with \0 using byte pairs
     try {
         if (count > 0 && tiff_handle.sbuf->get8u(offset + count - 1) == 0) {

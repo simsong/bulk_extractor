@@ -64,10 +64,6 @@
 
 #include "test_be.h"
 
-#ifdef HAVE_EXIV2
-extern "C" void scan_exiv2(scanner_params& sp);
-#endif
-
 const std::string JSON1 {"[{\"1\": \"one@company.com\"}, {\"2\": \"two@company.com\"}, {\"3\": \"two@company.com\"}]"};
 const std::string JSON2 {"[{\"1\": \"one@base64.com\"}, {\"2\": \"two@base64.com\"}, {\"3\": \"three@base64.com\"}]\n"};
 
@@ -110,6 +106,15 @@ TEST_CASE("directory_scan_reads_unicode_filename", "[image_process]")
 bool has(std::string line, std::string substr)
 {
     return line.find(substr) != std::string::npos;
+}
+
+TEST_CASE("notify_thread formats byte statistics as MiB", "[notify]")
+{
+    REQUIRE(notify_thread::format_stat_value("available_memory_bytes", "10485760") == "10 MiB");
+    REQUIRE(notify_thread::format_stat_value("available_memory", "1048576") == "1 MiB");
+    REQUIRE(notify_thread::format_stat_value("max_offset", "2097152") == "2 MiB");
+    REQUIRE(notify_thread::format_stat_value("bytes_queued", "1048575") == "0 MiB");
+    REQUIRE(notify_thread::format_stat_value("tasks_queued", "12") == "12");
 }
 
 /* return --notify_async or --notify_main_thread depending on if DEBUG_THREAD_SANITIZER is set or not */

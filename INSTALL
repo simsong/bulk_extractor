@@ -5,10 +5,8 @@ For production use, download a tested release from:
 
 https://github.com/simsong/bulk_extractor/releases
 
-Build prerequisites and platform-specific package-installation instructions are
-maintained in the project wiki:
-
-https://github.com/simsong/bulk_extractor/wiki/Installing-bulk_extractor
+Build prerequisites, supported platforms, and platform-specific guidance are
+maintained in [doc/installation.md](doc/installation.md).
 
 Release archive
 ---------------

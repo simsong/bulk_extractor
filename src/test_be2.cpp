@@ -22,6 +22,7 @@
 #include <string>
 #include <string_view>
 #include <sstream>
+#include <vector>
 
 #include "be20_api/catch.hpp"
 
@@ -51,7 +52,45 @@
 #include "scan_pdf.h"
 #include "scan_vcard.h"
 #include "scan_wordlist.h"
+#ifdef USE_RAR
 #include "rar/rar.hpp"
+#endif
+
+#ifdef USE_RAR
+class RarUnpackTest {
+  public:
+    static void copy_across_window_boundary()
+    {
+        constexpr byte canary = 0x5a;
+        constexpr unsigned int length = MAX_LZ_MATCH + 30;
+        constexpr size_t canary_size = length;
+        std::vector<byte> window(MAXWINSIZE + canary_size, canary);
+        ComprDataIO io;
+        Unpack unpack(&io);
+        unpack.Init(window.data());
+
+        unpack.UnpPtr = MAXWINSIZE - MAX_LZ_MATCH - 1;
+        window[unpack.UnpPtr - 1] = 0xa5;
+        unpack.CopyString(length, 1);
+
+        const unsigned int tail_start = MAXWINSIZE - MAX_LZ_MATCH - 1;
+        const unsigned int wrapped = length - (MAXWINSIZE - tail_start);
+        REQUIRE(unpack.UnpPtr == wrapped);
+        for (unsigned int pos = tail_start; pos < MAXWINSIZE; pos++)
+            REQUIRE(window[pos] == 0xa5);
+        for (unsigned int pos = 0; pos < wrapped; pos++)
+            REQUIRE(window[pos] == 0xa5);
+        for (size_t pos = MAXWINSIZE; pos < window.size(); pos++)
+            REQUIRE(window[pos] == canary);
+    }
+};
+
+TEST_CASE("RAR filename decoding accepts an empty destination", "[rar]")
+{
+    EncodeFileName decoder;
+    decoder.Decode(nullptr, nullptr, 0, nullptr, 0);
+}
+#endif
 
 #include "test_be.h"
 
@@ -312,7 +351,10 @@ bool validate_pcap_packet(const std::filesystem::path &fn0, const std::filesyste
     REQUIRE(header1[3] == 0xa1);
     REQUIRE(header1[20] == (link_type & 0xff));
     REQUIRE(header1[21] == ((link_type >> 8) & 0xff));
-    return std::equal(std::istreambuf_iterator<char>(in0), {}, std::istreambuf_iterator<char>(in1));
+    REQUIRE(header1[22] == ((link_type >> 16) & 0xff));
+    REQUIRE(header1[23] == ((link_type >> 24) & 0xff));
+    return std::equal(std::istreambuf_iterator<char>(in0), {}, std::istreambuf_iterator<char>(in1)) &&
+           in1.peek() == std::char_traits<char>::eof();
 }
 
 
@@ -465,6 +507,7 @@ TEST_CASE("test_json", "[phase1]") {
  * san_jpeg & scan_rar
  ****************************************************************/
 
+#ifdef USE_RAR
 TEST_CASE("test_jpeg_rar", "[phase1]") {
     std::vector<Check> ex2 {
         Check("unrar_carved.txt",
@@ -486,6 +529,12 @@ TEST_CASE("test_jpeg_rar", "[phase1]") {
     validate("jpegs.rar", ex2);
 }
 
+#ifdef USE_RAR
+TEST_CASE("RAR PPM copies wrap at the dictionary boundary", "[rar]") {
+    RarUnpackTest::copy_across_window_boundary();
+}
+#endif
+
 TEST_CASE("RAR in-memory relative seeks are bounded", "[rar]") {
     std::array<unsigned char, 8> data{};
     File file;
@@ -499,6 +548,7 @@ TEST_CASE("RAR in-memory relative seeks are bounded", "[rar]") {
     REQUIRE(file.RawSeek(-4, SEEK_CUR));
     REQUIRE(file.Tell() == 0);
 }
+#endif
 
 /****************************************************************
  * scan_kml
