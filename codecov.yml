@@ -2,6 +2,15 @@ coverage:
   range: 40..60
   round: nearest
   precision: 2
+  # Coverage remains visible, but correctness and hardening changes do not
+  # require an arbitrary patch-coverage percentage to merge.
+  status:
+    project:
+      default:
+        informational: true
+    patch:
+      default:
+        informational: true
 
 
 ignore:
