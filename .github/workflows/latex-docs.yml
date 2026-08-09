@@ -2,13 +2,14 @@ name: Build and publish LaTeX documentation
 
 on:
   pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
     paths:
-      - 'doc/**/*.tex'
+      - 'doc/**'
       - '.github/workflows/latex-docs.yml'
   push:
     branches: [main]
     paths:
-      - 'doc/**/*.tex'
+      - 'doc/**'
       - '.github/workflows/latex-docs.yml'
   workflow_dispatch:
 

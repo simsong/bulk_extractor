@@ -2,8 +2,9 @@
 AM_CPPFLAGS = -I${top_srcdir}/src/be20_api
 AUTOMAKE_OPTIONS = subdir-objects
 
-EXTRA_DIST = carving.md logging.md scanner_api.md scanner_template.cpp \
+EXTRA_DIST = carving.md docker.md logging.md scanner_api.md scanner_template.cpp testing.md \
     programmer_manual/BEProgrammersManual.tex \
+    programmer_manual/references.bib \
     programmer_manual/Makefile.am \
     programmer_manual/extractinformationreprocess.pdf \
     programmer_manual/histogramprocessing.pdf \

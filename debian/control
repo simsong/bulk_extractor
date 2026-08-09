@@ -1,0 +1,14 @@
+Source: bulk-extractor
+Section: utils
+Priority: optional
+Maintainer: bulk_extractor maintainers <bugs@digitalcorpora.org>
+Build-Depends: debhelper-compat (= 13), autoconf, automake, flex, g++, libabsl-dev, libexpat1-dev, libgcrypt20-dev, libgpg-error-dev, libre2-dev, libssl-dev, libtool, make, pkg-config, zlib1g-dev
+Standards-Version: 4.7.0
+Rules-Requires-Root: no
+
+Package: bulk-extractor
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Description: extract forensic features from disk images and files
+ bulk_extractor scans disk images, files, and directories for useful forensic
+ features without requiring a file-system parser.

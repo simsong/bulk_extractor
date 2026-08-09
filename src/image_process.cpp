@@ -45,15 +45,17 @@
 #include "be20_api/formatter.h"
 #include "image_process.h"
 
+#include <memory>
+
 /****************************************************************
  *** static functions
  ****************************************************************/
 
 static sbuf_t *shrink_sbuf(sbuf_t *sbuf, const pos0_t &pos0, size_t pagesize, size_t bytes_read)
 {
+    std::unique_ptr<sbuf_t> original{sbuf};
     auto *short_sbuf = sbuf_t::sbuf_malloc(pos0, bytes_read, std::min(pagesize, bytes_read));
-    memcpy(short_sbuf->malloc_buf(), sbuf->malloc_buf(), bytes_read);
-    delete sbuf;
+    memcpy(short_sbuf->malloc_buf(), original->malloc_buf(), bytes_read);
     return short_sbuf;
 }
 
@@ -74,14 +76,14 @@ std::filesystem::path image_process::image_fname() const
 
 
 
-bool image_process::fn_ends_with(std::filesystem::path path, std::string suffix)
+bool image_process::fn_ends_with(const std::filesystem::path &path, const std::string &suffix)
 {
     std::string str(path.string());
     if (suffix.size() > str.size()) return false;
     return str.substr(str.size()-suffix.size())==suffix;
 }
 
-bool image_process::is_multipart_file(std::filesystem::path fn)
+bool image_process::is_multipart_file(const std::filesystem::path &fn)
 {
     return fn_ends_with(fn,".000")
 	|| fn_ends_with(fn,".001")

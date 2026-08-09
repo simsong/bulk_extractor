@@ -4,6 +4,15 @@ on:
   push:
     branches: [main]
   pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths-ignore:
+      - '**.md'
+      - 'AGENTS.md'
+      - 'doc/**'
+      - '.github/workflows/latex-docs.yml'
+      - '.github/CODEOWNERS'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/pull_request_template.md'
   workflow_dispatch:
 
 permissions:
@@ -11,6 +20,7 @@ permissions:
 
 jobs:
   debian:
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     name: Debian Bookworm build
     runs-on: ubuntu-latest
 
@@ -42,6 +52,8 @@ jobs:
             '
 
   build:
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
+    name: build and test (${{ matrix.os }})
     strategy:
       fail-fast: false
       matrix:
@@ -84,6 +96,14 @@ jobs:
           make $MAKE_OPTS all
           make -C src $MAKE_OPTS bulk_extractor
           make -C src check || (cat src/test-suite.log; exit 1)
+          make distclean
+
+      - name: ThreadSanitizer thread-safety test
+        if: github.event_name == 'pull_request' && matrix.os == 'ubuntu-latest'
+        run: |
+          source "$HOME/.bashrc"
+          ./configure --disable-opt --enable-thread-sanitizer
+          make -C src $MAKE_OPTS check-tsan-thread-safety
           make distclean
 
       - name: Distribution check with Exiv2

@@ -20,6 +20,7 @@ AC_ARG_ENABLE([thread-sanitizer],
               CXXFLAGS="$CXXFLAGS -fsanitize=thread "
               ],
               [])
+AM_CONDITIONAL([THREAD_SANITIZER_ENABLED], [test "x$thread_sanitizer" = xyes])
 
 AC_ARG_ENABLE([undefined-sanitizer],
               [AS_HELP_STRING([--enable-undefined-sanitizer],

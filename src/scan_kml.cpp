@@ -51,17 +51,19 @@ void scan_kml(scanner_params &sp)
 	    if(kml_loc==-1) return;
 	    ssize_t ekml_loc = sbuf.find("</kml>",kml_loc);
 	    if(ekml_loc==-1) return;
-	    ssize_t kml_len = (ekml_loc-xml_loc)+6;
+	    const size_t xml_offset = static_cast<size_t>(xml_loc);
+	    const size_t end_offset = static_cast<size_t>(ekml_loc);
+	    const size_t kml_len = end_offset - xml_offset + 6;
 
 	    /* verify the utf-8 */
-	    std::string possible_kml = sbuf.substr(xml_loc, kml_len);
+	    std::string possible_kml = sbuf.substr(xml_offset, kml_len);
 	    if(utf8::find_invalid(possible_kml.begin(),possible_kml.end()) == possible_kml.end()){
 		/* No invalid UTF-8 */
-		kml_recorder.carve(sbuf.slice(xml_loc, kml_len), ".kml", 0);
-		i = ekml_loc + 6;	// skip past end of </kml>
+		kml_recorder.carve(sbuf.slice(xml_offset, kml_len), ".kml", 0);
+		i = end_offset + 6;	// skip past end of </kml>
 	    }
 	    else {
-		i = xml_loc + 6;	// skip past <?xml ; there may be another with no errors
+		i = xml_offset + 6;	// skip past <?xml ; there may be another with no errors
 	    }
 	}
     }

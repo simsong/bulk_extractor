@@ -4,11 +4,23 @@
 \usepackage{fancyvrb}
 \usepackage{graphicx}
 \usepackage{longtable}
+\usepackage{placeins}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning}
 \newcommand{\bulk}{\textit{bulk\_extractor}}
 \newcommand{\code}[1]{\texttt{#1}}
-\title{bulk\_extractor 2.x Developer Manual}
-\author{bulk\_extractor project}
-\date{July 2026}
+\tikzset{
+  phase/.style={draw, rounded corners, align=center, minimum width=34mm,
+    minimum height=7mm, font=\small},
+  action/.style={draw, align=center, minimum width=34mm, minimum height=7mm,
+    font=\small},
+  scan/.style={draw, rounded corners, fill=black!5, align=center,
+    minimum width=38mm, minimum height=10mm, font=\small},
+  flow/.style={-{Latex[length=2mm]}, thick}
+}
+\title{bulk\_extractor 2.2 Programmer's Manual}
+\author{Jessica R. Bradley, Simson L. Garfinkel, and the bulk\_extractor project}
+\date{August 2026}
 
 \begin{document}
 \maketitle
@@ -135,6 +147,106 @@ The framework applies \code{-e} and \code{-x} between INIT and INIT2. Help
 and disabled-scanner paths therefore reach INIT and CLEANUP but may never
 reach SCAN. Exceptions thrown by one scan callback are recorded by the
 framework; they do not disable the scanner or stop other worker calls.
+
+\subsection{Lifecycle illustrations}
+
+The following figures summarize the call diagrams in
+\href{https://github.com/simsong/bulk_extractor/blob/main/doc/scanner_api.md}
+{\code{doc/scanner\_api.md}}. They show one scanner and intentionally omit
+implementation detail. The Markdown scanner API is the maintained, normative
+contract; consult it before changing a built-in scanner or creating a loadable
+one.
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}[t]{.47\linewidth}
+\centering
+\textbf{Help path}\par\medskip
+\begin{tikzpicture}[node distance=4mm]
+\node[phase] (init) {scanner: \code{PHASE\_INIT}};
+\node[action, below=of init] (select) {framework applies\\\code{-e}/\code{-x}};
+\node[phase, below=of select] (init2) {scanner: \code{PHASE\_INIT2}\\if enabled};
+\node[action, below=of init2] (help) {framework prints help\\and scanner options};
+\node[phase, below=of help] (cleanup) {scanner: \code{PHASE\_CLEANUP}};
+\draw[flow] (init) -- (select);
+\draw[flow] (select) -- (init2);
+\draw[flow] (init2) -- (help);
+\draw[flow] (help) -- (cleanup);
+\end{tikzpicture}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.47\linewidth}
+\centering
+\textbf{Disabled scanner}\par\medskip
+\begin{tikzpicture}[node distance=5mm]
+\node[phase] (init) {scanner: \code{PHASE\_INIT}};
+\node[action, below=of init] (disable) {framework disables scanner\\by default or \code{-x}};
+\node[action, below=of disable] (skip) {no INIT2, SCAN,\\or SHUTDOWN};
+\node[phase, below=of skip] (cleanup) {scanner: \code{PHASE\_CLEANUP}};
+\draw[flow] (init) -- (disable);
+\draw[flow] (disable) -- (skip);
+\draw[flow] (skip) -- (cleanup);
+\end{tikzpicture}
+\end{minipage}
+\caption{Help and disabled-scanner paths. INIT and CLEANUP occur for every
+loaded scanner, so CLEANUP must tolerate a scanner that never initialized
+recorders or processed an sbuf. Help does not call SCAN or SHUTDOWN.}
+\label{fig:scanner-help-disabled}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[node distance=5mm]
+\node[phase] (init) {main thread: \code{PHASE\_INIT}};
+\node[phase, below=of init] (init2) {main thread: \code{PHASE\_INIT2}};
+\node[scan, below left=8mm and 4mm of init2] (t0) {worker 0\\\code{PHASE\_SCAN}\\sbuf A, sbuf B};
+\node[scan, below right=8mm and 4mm of init2] (t1) {worker 1\\\code{PHASE\_SCAN}\\sbuf C, sbuf D};
+\node[phase, below=31mm of init2] (shutdown) {main thread: \code{PHASE\_SHUTDOWN}};
+\node[phase, below=of shutdown] (cleanup) {main thread: \code{PHASE\_CLEANUP}};
+\draw[flow] (init) -- (init2);
+\draw[flow] (init2) -- (t0);
+\draw[flow] (init2) -- (t1);
+\draw[flow] (t0) -- (shutdown);
+\draw[flow] (t1) -- (shutdown);
+\draw[flow] (shutdown) -- (cleanup);
+\node[font=\small\itshape, below=2mm of init2] {calls may overlap};
+\end{tikzpicture}
+\caption{Enabled scanner with two workers. Calls to the same scanner can
+overlap, so file-static and global state used during SCAN must be immutable,
+atomic, or protected with appropriately scoped synchronization.}
+\label{fig:scanner-concurrent}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[node distance=5mm]
+\node[phase] (init) {main thread: INIT, then INIT2};
+\node[scan, below left=8mm and 4mm of init] (t0) {worker 0\\SCAN sbuf A\\SCAN sbuf B throws};
+\node[scan, below right=8mm and 4mm of init] (t1) {worker 1\\SCAN sbuf C\\SCAN sbuf D continues};
+\node[action, below=5mm of t0] (alert) {framework catches exception\\and records an alert if available};
+\node[phase, below=35mm of init] (shutdown) {main thread: SHUTDOWN, then CLEANUP};
+\draw[flow] (init) -- (t0);
+\draw[flow] (init) -- (t1);
+\draw[flow] (t0) -- (alert);
+\draw[flow] (alert) -- (shutdown);
+\draw[flow] (t1) -- (shutdown);
+\end{tikzpicture}
+\caption{Exception during one SCAN callback. The framework ends the failed
+call and records the exception when an alert recorder is available; it does
+not disable the scanner or cancel other workers. Normal shutdown and cleanup
+still follow.}
+\label{fig:scanner-exception}
+\end{figure}
+
+\FloatBarrier
+
+These paths imply three high-level rules. Declare metadata, recorder
+definitions, histograms, limits, and \code{-S} help only in INIT. Retrieve
+recorders only in INIT2. Treat \code{sp.sbuf} as read-only callback-scoped data
+during SCAN, and release scanner-owned state in CLEANUP even when no scan
+occurred. The state, recorder, and loadable-module sections below explain the
+programming consequences; \code{doc/scanner\_api.md} remains the concise
+checklist against which code should be reviewed.
 
 \subsection{The 1.x to 2.x migration}
 
@@ -357,6 +469,457 @@ feeding equivalent decoded data back into the scanner set. \\
 \end{longtable}
 
 \clearpage
+\section{Architecture in detail}
+
+The version 1 manual described \bulk as an integrated but compact pipeline.
+That description remains useful in 2.x even though the concrete classes and
+callbacks changed. The principal components are:
+
+\begin{itemize}
+\item an image-processing layer that opens a raw, split-raw, EWF, mapped-file,
+  directory, or supported raw-device source and produces primary sbufs;
+\item a scanner set that discovers built-in and loadable scanners, runs INIT,
+  applies scanner selection, creates feature recorders, and runs INIT2;
+\item a work queue that presents eligible sbufs to enabled scanners on worker
+  threads;
+\item recursive processing that returns validated derived sbufs to the scanner
+  set while preserving their forensic paths;
+\item feature recorders that serialize findings, apply stop and alert lists,
+  update histograms, and perform configured carving; and
+\item DFXML reporting that records source, configuration, provenance,
+  diagnostics, timing, and completion state in \code{report.xml}.
+\end{itemize}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[height=.68\textheight,keepaspectratio]{scannerloop.pdf}
+\caption{Historical scanner-loop diagram. In 2.x the scanner set and work
+queue implement the loop, and one scanner function may be entered concurrently.}
+\end{figure}
+
+The framework owns sequencing between these components. A scanner should not
+open the report directory directly for ordinary findings, build its own
+histogram in SCAN, invent a parallel work queue, or bypass the recursion API.
+Doing so loses stop-list, alert-list, quoting, provenance, shutdown, and
+write-error behavior that the framework supplies.
+
+\subsection{Input pages and margins}
+
+A primary sbuf contains \code{pagesize} bytes owned by the current page and may
+contain additional bytes up to \code{bufsize} as a margin. A scanner normally
+starts a finding only in the page and may read into the margin to finish it.
+This convention prevents a feature that spans two pages from being missed or
+reported twice. A scanner that performs its own boundary ownership rule risks
+both errors.
+
+Derived sbufs also carry a page size. Preserve intentional page and margin
+semantics when creating a derived buffer. Tests for a scanner that can match a
+long feature must place the start immediately before a page boundary and
+assert one correctly positioned output record.
+
+\subsection{Scanner discovery and selection}
+
+Built-in scanners are registered by the executable. Loadable scanners are
+discovered in each \code{-P} and \code{BE\_PATH} directory. Discovery calls
+INIT so the framework can learn a scanner's name, metadata, flags, recorder
+definitions, histogram definitions, limits, and settings. Selection commands
+are then applied. Only enabled scanners receive INIT2, SCAN, and SHUTDOWN, but
+every loaded scanner receives CLEANUP.
+
+Scanner names are user-visible interfaces. Changing a name changes \code{-e},
+\code{-x}, logs, tests, and saved procedures. Recorder names likewise determine
+feature filenames and recorder-specific \code{-S} names such as
+\code{jpeg\_carve\_mode}. Treat both as compatibility-sensitive.
+
+\section{The safer-buffer API}
+
+\code{sbuf\_t} associates immutable bytes with a \code{pos0\_t}, a buffer size,
+and a page size. Its checked accessors throw on invalid reads. Important
+properties and operations include:
+
+\begin{longtable}{p{.29\linewidth}p{.65\linewidth}}
+\hline
+\textbf{Member or operation} & \textbf{Meaning} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Member or operation} & \textbf{Meaning} \\
+\hline
+\endhead
+\code{pos0} & Forensic position of byte zero, including transformations. \\
+\code{bufsize} & Total readable bytes, including any margin. \\
+\code{pagesize} & Bytes owned by this page; never greater than bufsize. \\
+\code{operator[]} & Bounds-checked byte access. \\
+\code{substr()} & A checked string copy of a byte range. \\
+\code{slice()} & A non-owning child view that must not outlive its parent. \\
+\code{new\_slice\_copy()} & An independently owned copy of a range. \\
+\code{sbuf\_malloc()} & A writable, owned buffer used for derived data. \\
+\code{depth()} & Transformation depth encoded by the forensic path. \\
+\hline
+\end{longtable}
+
+Use an integer reader with the correct byte order for structured fields and
+check that the complete structure is present before interpreting dependent
+lengths or offsets. Do not prove that two bytes are readable and then trust a
+length that requires a third or fourth byte. Compute sizes with overflow-aware
+arithmetic before slicing or allocating.
+
+The raw pointer returned by \code{get\_buf()} is an explicit abstraction
+escape. Prefer checked accessors. If a third-party API requires a pointer, first
+validate the entire range, pass the minimum range, and do not retain it. Neither
+\code{scanner\_params}, \code{sp.sbuf}, a slice, nor a pointer into an sbuf may
+outlive the SCAN callback unless the data have been copied into scanner-owned
+storage with an explicit lifetime.
+
+\subsection{Forensic positions}
+
+Adding an ordinary byte offset to \code{sbuf.pos0} produces the position of a
+feature in the current buffer. A decoder appends a named transformation when it
+creates derived data. Names such as \code{GZIP}, \code{PDF}, or
+\code{XOR(255)} explain how to reproduce the feature from its source.
+
+Do not replace a supplied path with a bare integer, and do not use a display
+filename as provenance. Forensic paths may refer to bytes that no file-system
+parser can associate with an allocated file. If a transformation has its own
+internal offset, append that offset consistently so feature recorders can add
+the feature's local position.
+
+\section{Feature recorders and forensic output}
+
+One feature recorder normally corresponds to one feature file. Multiple
+scanners may share it. A scanner declares a \code{feature\_recorder\_def} in
+INIT and retrieves the recorder by name in INIT2. In SCAN it normally uses one
+of these interfaces:
+
+\begin{itemize}
+\item \code{write(pos, feature, context)} when all fields are already
+  available;
+\item \code{write\_buf(sbuf, offset, length)} to record bytes and obtain
+  standard context without unsafe pointer arithmetic; and
+\item \code{carve(sbuf, extension)} for a recorder declared with carving
+  support.
+\end{itemize}
+
+Record the smallest meaningful feature and enough bounded context to validate
+it. Recorders quote non-UTF-8 bytes, enforce maximum feature and context sizes,
+serialize concurrent writes, and propagate disk-write failures. XML recorders
+use a distinct quoting mode; declaring arbitrary text as XML can create invalid
+output.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=.70\linewidth,height=.36\textheight,keepaspectratio]{writetoemail.pdf}
+\caption{Historical example of multiple discoveries reaching an email feature
+recorder. The recorder remains the synchronization and policy boundary in 2.x.}
+\end{figure}
+
+\subsection{Stop lists, alert lists, and banners}
+
+The recorder set applies the global stop and alert lists. A stopped feature is
+diverted to the corresponding stopped recorder; an alerting feature is copied
+to the alert recorder. Scanner code should not reimplement these lists. Flags
+exist for special recorders that must not honor one of them, but the exception
+must be justified by the output contract.
+
+Feature-file banners are also handled by the recorder layer. Writing directly
+to a file in the report directory can omit the banner and produce output that
+appears authoritative but is outside the normal evidence-handling path.
+
+\subsection{Histograms}
+
+A \code{histogram\_def} declares the source recorder, optional extraction
+pattern, output suffix, and normalization flags. Histograms are normally
+updated incrementally as features are recorded and written at shutdown. A
+scanner declares the histogram in INIT and writes ordinary features; it does
+not increment a separate global map in SCAN.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=.62\linewidth,height=.48\textheight,keepaspectratio]{histogramprocessing.pdf}
+\caption{Features feed histogram processing through the recorder system.}
+\end{figure}
+
+Choose normalization deliberately. Lowercasing is appropriate for domains and
+many email comparisons but not for every identifier. A histogram regular
+expression should have a focused test that proves the captured value, ignored
+input, and handling of malformed or unexpectedly large features.
+
+\subsection{Carving}
+
+A carving recorder declares the carve flag, default mode, and minimum and
+maximum sizes. The framework implements mode 0 (none), mode 1 (derived or
+encoded paths), mode 2 (all accepted objects), hashing, deduplication, safe
+filenames, and the carving feature record. The scanner remains responsible for
+validating that the candidate is a real object and for passing its correct
+extent. A signature alone is rarely sufficient validation.
+
+\section{DFXML and run provenance}
+
+DFXML represents forensic processing, sources, hashes, files, timestamps, and
+tool metadata in a form that independent programs can exchange
+\cite{dfxmlpaper}. \bulk writes a DFXML 1.2.0 \code{report.xml} and places
+program-specific configuration, runtime, source-detail, and final-report data
+in its extension namespace.
+
+Scanners usually contribute findings through feature recorders rather than
+writing XML into \code{report.xml}. A scanner that has scanner-owned summary
+output to finish does so in SHUTDOWN before recorder shutdown. Diagnostics and
+exceptions should flow through framework facilities so the final report and
+exit status do not claim success after a failed write or unexpected exception.
+
+Do not assume \code{report.xml} is complete while a scan is running. It is also
+the restart record: the input pages in progress at interruption are deliberately
+skipped on resume to avoid repeating a data-dependent failure. Code that
+changes page reporting or shutdown ordering must preserve this contract and
+the schema-validation test.
+
+\section{Developing robust scanner logic}
+
+\subsection{Acceptance criteria and false positives}
+
+A scanner should state what byte sequence constitutes a candidate, what
+additional fields validate it, what corruption is tolerated, and what evidence
+is reported when validation is partial. The more common a magic sequence is,
+the stronger the structural validation must be.
+
+For example, a JPEG/EXIF candidate is stronger after validating byte order,
+the TIFF marker, application-marker lengths, and the bounds of referenced
+fields than after matching only \code{Exif}. Checksums, reserved bits, internal
+length consistency, plausible timestamps, and expected terminators are common
+validation tools. Apply each only when the format specification supports it;
+an over-strict validator can hide damaged but valuable evidence.
+
+Tests should include a valid object, a near miss, truncated data at each length
+boundary, a candidate spanning the primary-page boundary, and hostile values
+that would overflow size or offset calculations. Use a public or generated
+fixture small enough to inspect. Avoid mocking the scanner framework when the
+real scanner set and recorder path can exercise the contract.
+
+\subsection{Concurrency rules}
+
+INIT, INIT2, SHUTDOWN, and CLEANUP are serialized on the main thread, but SCAN
+may be entered simultaneously on several worker threads. Local variables are
+the simplest safe state. Immutable tables initialized before SCAN are safe.
+Shared counters may use atomics; larger state requires a narrowly scoped mutex
+or a data structure with a documented concurrency contract.
+
+Thread-local state is not initialized by the removed
+\code{PHASE\_THREAD\_BEFORE\_SCAN}. Use C++ \code{thread\_local} with care or
+redesign the dependency. Never assume that a particular worker will call the
+scanner again or that shutdown executes on a worker that owns its state.
+
+Do not hold a scanner mutex while calling a recorder or recursion entry point
+unless the lock ordering is explicit and proven safe. Those calls can allocate,
+write, or invoke substantial framework work. Copy the minimum state under the
+lock, release it, then call the framework.
+
+\subsection{Recursion rules}
+
+Recurse only when a decoder has produced intentional derived data. Append a
+specific transformation to the path, preserve the source offset, set an
+appropriate page size, and transfer ownership exactly once with
+\code{sp.recurse()}. The scanner must not use the child afterward.
+
+Every recursive scanner needs a termination argument. It may reject a path
+already ending in its own transformation, impose a format-specific size or
+depth limit, require the transformation to change the data, or combine these.
+Test both successful recursion and an input that would repeat indefinitely
+without the guard.
+
+\section{Two scanner examples}
+
+The version 1 manual taught the API through an ASCII-sequence scanner and an
+XOR decoder. The examples below retain their lessons using the 2.x contract.
+They are pedagogical; production code should start from
+\code{doc/scanner\_template.cpp} and use the project's maintained parsers and
+tests.
+
+\subsection{ASCII-sequence feature scanner}
+
+This fragment records printable ASCII runs of at least six bytes. INIT declares
+the recorder, INIT2 retrieves it, and SCAN starts runs only before the page
+margin. It uses \code{write\_buf()} so position and context come from the sbuf.
+
+\begin{Verbatim}[fontsize=\small]
+namespace {
+feature_recorder *ascii = nullptr;
+
+void scan_ascii_sequence(scanner_params &sp)
+{
+    switch (sp.phase) {
+    case scanner_params::PHASE_INIT:
+        sp.check_version();
+        sp.info->set_name("ascii_sequence");
+        sp.info->author = "Example";
+        sp.info->description = "Records printable ASCII runs.";
+        sp.info->scanner_version = "1";
+        sp.info->feature_defs.emplace_back("ascii_sequence");
+        return;
+
+    case scanner_params::PHASE_INIT2:
+        ascii = &sp.named_feature_recorder("ascii_sequence");
+        return;
+
+    case scanner_params::PHASE_SCAN: {
+        const sbuf_t &sbuf = *sp.sbuf;
+        for (size_t start = 0; start < sbuf.pagesize; ) {
+            while (start < sbuf.pagesize &&
+                   (sbuf[start] < 0x20 || sbuf[start] > 0x7e)) {
+                ++start;
+            }
+            size_t end = start;
+            while (end < sbuf.bufsize &&
+                   sbuf[end] >= 0x20 && sbuf[end] <= 0x7e) {
+                ++end;
+            }
+            if (end - start >= 6) {
+                ascii->write_buf(sbuf, start, end - start);
+            }
+            start = end == start ? start + 1 : end;
+        }
+        return;
+    }
+
+    case scanner_params::PHASE_CLEANUP:
+        ascii = nullptr;
+        return;
+    default:
+        return;
+    }
+}
+}
+\end{Verbatim}
+
+The focused test should assert a normal run, a five-byte near miss, non-ASCII
+separation, one run crossing the page boundary, and correct forensic position.
+It must run through a real recorder; testing only a private printable-byte
+predicate proves little about scanner integration.
+
+\subsection{Recursive XOR decoder}
+
+The maintained \code{src/scan\_xor.cpp} demonstrates a decoder. It declares
+itself recursive and disabled by default, validates an \code{xor\_mask}
+setting, rejects a zero mask, and refuses paths that show it would repeat an
+equivalent transformation. During SCAN it allocates an owned sbuf with a path
+component such as \code{XOR(255)}, XORs every byte, and transfers the child to
+\code{sp.recurse()}.
+
+The important lesson is not the XOR loop; it is the ownership and termination
+contract. A test must prove that another scanner finds a known feature in the
+decoded child, that the output path records XOR, and that already transformed
+input does not recurse indefinitely.
+
+\section{Packaging and portability}
+
+The old manual described platform-specific shared libraries and a separate API
+submodule. In 2.x, in-tree sources use Automake manifests, and
+\code{src/test\_plugin.cpp} plus \code{scan\_test\_plugin.la} are the maintained
+loadable-module example. A separate plug-in project should compile against the
+same source and ABI as the executable and export only the C-linkage factory.
+
+Keep a scanner in one focused implementation file when practical. Add headers
+when they provide a real interface or isolate testable logic, not by habit. Add
+every distributed source and fixture to the authoritative Automake manifests,
+then run \code{make distcheck}; a local build does not prove the release archive
+contains the file.
+
+Do not guess raw \code{.so}, \code{.dylib}, or \code{.dll} linker flags for an
+in-tree module. Follow the Libtool target. A load test must discover the module
+through \code{-P}, call the exported factory, perform the scanner version check,
+and exercise cleanup.
+
+\section{C++ and project style}
+
+The historical style guide emphasized readable, reusable, testable, and
+thread-safe code. The current source and repository formatting checks are the
+authority. The enduring rules are:
+
+\begin{itemize}
+\item use spaces rather than adding tabs, and keep control flow compact enough
+  to inspect;
+\item make ownership explicit; prefer automatic storage and RAII to raw owning
+  pointers;
+\item use const correctness to make read-only data and APIs evident;
+\item check input bounds and integer arithmetic before access or allocation;
+\item keep scanner-global mutable state to the minimum and document its
+  synchronization;
+\item use standard C++ synchronization rather than platform-specific thread
+  primitives;
+\item report findings through feature recorders and derived data through the
+  recursion API; and
+\item write focused tests that prove emitted evidence, negative cases,
+  provenance, lifecycle, and concurrency where relevant.
+\end{itemize}
+
+Warnings are treated as defects. New code must build without compiler warnings
+on supported configurations. Avoid compiler-specific extensions unless a
+guarded platform requirement makes them necessary. A scanner that depends on
+an optional library must configure, compile, and test both with and without
+that dependency.
+
+\subsection{Formatting conventions}
+
+Do not add tab characters; indent with four spaces. Keep an opening brace on
+the same line as an \code{if}, \code{for}, \code{while}, or similar control
+statement. The established scanner functions normally place the opening brace
+of a non-inline function on the following line. Preserve the local style when
+editing older code instead of mechanically reformatting unrelated lines.
+
+Editors can express the essential indentation rule with the historical Emacs
+file-local declaration:
+
+\begin{Verbatim}[fontsize=\small]
+/* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+\end{Verbatim}
+
+Names, comments, and functions should explain the forensic or format concept,
+not merely restate the implementation. Split code when a helper creates a real
+testable contract or removes repeated parsing; do not fragment a short scanner
+into pro-forma classes and headers.
+
+\subsection{Thread-safe library use and lock scope}
+
+Do not call a library interface that stores shared mutable state when SCAN may
+run concurrently. Prefer reentrant or state-owning interfaces, such as a
+platform's safe time-conversion routine, and test both supported platforms when
+the interfaces differ.
+
+Do not place a single ``giant lock'' around an otherwise non-thread-safe scan
+algorithm. That can make the scanner correct while eliminating all parallelism
+whenever it dominates the workload. Redesign the state into immutable tables,
+per-call objects, thread-local objects with explicit cleanup, or independent
+locked shards. If serialization is inherent in an external dependency,
+document the limitation, minimize the protected region, and measure its effect
+on realistic input \cite{programmerstex}.
+
+\subsection{Const correctness and pointers}
+
+Const correctness prevents accidental mutation through an interface and makes
+review of shared state easier. It is not a synchronization mechanism: a const
+object may contain mutable state, and another reference may still modify the
+same object. Pointer declarations are read from the identifier outward:
+
+\begin{longtable}{p{.38\linewidth}p{.56\linewidth}}
+\hline
+\textbf{Declaration} & \textbf{Meaning} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Declaration} & \textbf{Meaning} \\
+\hline
+\endhead
+\code{const std::string *p} & Pointer to a string that cannot be changed through p. \\
+\code{std::string *const p} & Constant pointer to a string that may be changed. \\
+\code{const std::string *const p} & Constant pointer to a string that cannot be changed through p. \\
+\hline
+\end{longtable}
+
+Use const references for non-owning read-only parameters, and prefer an owning
+value or smart pointer when ownership transfers. Avoid \code{const\_cast}; it
+defeats the type-level guarantee and often hides an ownership or API design
+problem \cite{parashift}.
+
+\clearpage
 \section{Further reading and release checklist}
 
 \begin{itemize}
@@ -393,5 +956,8 @@ Before requesting review, answer these questions from the code and its test:
 \item Does a disabled scanner clean up safely without assuming it initialized
   a recorder or processed an sbuf?
 \end{itemize}
+
+\bibliographystyle{plain}
+\bibliography{references}
 
 \end{document}

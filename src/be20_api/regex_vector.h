@@ -46,7 +46,8 @@ public:
         return std::getenv(RE_ENGINE.c_str()) == nullptr ||
             std::getenv(RE_ENGINE.c_str())==engine;
     }
-    explicit regex_vector(bool case_sensitive_ = false) : case_sensitive(case_sensitive_) {};
+    explicit regex_vector(bool case_sensitive_ = false)
+        : regex_strings(), re2_regex_comps(), case_sensitive(case_sensitive_) {};
     ~regex_vector();
 
     // is this a regular expression with meta characters?

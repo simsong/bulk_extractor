@@ -52,25 +52,6 @@ int _CRT_fmode = _O_BINARY;
 
 #include "cxxopts.hpp"
 
-/**
- * Output the #defines for our debug parameters. Used by the automake system.
- */
-[[noreturn]] void debug_help()
-{
-    puts( "#define DEBUG_PEDANTIC    0x0001	// check values more rigorously" );
-    puts( "#define DEBUG_PRINT_STEPS 0x0002     // prints as each scanner is started" );
-    puts( "#define DEBUG_SCANNER     0x0004	// dump all feature writes to stderr" );
-    puts( "#define DEBUG_NO_SCANNERS 0x0008     // do not run the scanners " );
-    puts( "#define DEBUG_DUMP_DATA   0x0010	// dump data as it is seen " );
-    puts( "#define DEBUG_INFO        0x0040	// print extra info" );
-    puts( "#define DEBUG_EXIT_EARLY  1000	// just print the size of the volume and exis " );
-    puts( "#define DEBUG_ALLOCATE_512MiB 1002	// Allocate 512MiB, but don't set any flags " );
-    puts( "// any debug can also be enabled by setting the corresponding environment variables");
-    puts( "// e.g. DEBUG_PRINT_STEPS=1 ./bulk_extractor ...");
-
-    exit( 1);
-}
-
 /****************************************************************
  *** Usage for the stand-alone program
  ****************************************************************/
@@ -247,8 +228,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         ("b,banner_file", "Path of file whose contents are prepended to top of all feature files",cxxopts::value<std::string>())
 	("C,context_window", "Size of context window reported in bytes",
          cxxopts::value<int>()->default_value(std::to_string(sc.context_window_default)))
-        ("d,debug", "enable debugging", cxxopts::value<int>()->implicit_value("1")->default_value("0"))
-        ("D,debug_help", "help on debugging")
+        ("d,debug", "enable debug-level diagnostic logging")
         ("E,enable_exclusive", "disable all scanners except the one specified. Same as -x all -E scanner.", cxxopts::value<std::string>())
         ("e,enable",   "enable a scanner (can be repeated)", cxxopts::value<std::vector<std::string>>())
         ("x,disable",  "disable a scanner (can be repeated)", cxxopts::value<std::vector<std::string>>())
@@ -290,16 +270,36 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
 
     options.positional_help( "image_name" );
     options.parse_positional( "image_name" );
-    auto result = options.parse( argc, argv);
-    if ( result.count( "debug_help" )){ debug_help(); return 3;}
-    const bool debug_requested = std::any_of(argv, argv + argc, [](const char *argument) {
-        const std::string_view value(argument);
-        return value == "-d" || value == "--debug" || value.rfind("--debug=", 0) == 0;
-    });
+    const auto is_numeric_debug_mask = [](std::string_view argument) {
+        std::string_view value;
+        if (argument.rfind("-d", 0) == 0 && argument.size() > 2) {
+            value = argument.substr(2);
+        } else if (argument.rfind("--debug=", 0) == 0) {
+            value = argument.substr(std::string_view("--debug=").size());
+        }
+        return !value.empty() && value.find_first_not_of("0123456789") == std::string_view::npos;
+    };
+    for (int arg = 1; arg < argc; arg++) {
+        const std::string_view argument(argv[arg]);
+        if (is_numeric_debug_mask(argument) || argument == "-D") {
+            cerr << "error: numeric debug masks and -D have been retired; "
+                 << "use -d for debug logging and -x/-e for scanner selection.\n\n"
+                 << options.help() << std::endl;
+            return 1;
+        }
+    }
+
+    cxxopts::ParseResult result;
+    try {
+        result = options.parse( argc, argv);
+    } catch (const cxxopts::OptionException &e) {
+        cerr << "error: " << e.what() << "\n\n" << options.help() << std::endl;
+        return 1;
+    }
+    const bool debug_requested = result.count("debug") != 0;
 
     sc.offset_add  = result["offset_add"].as<int64_t>();
     sc.context_window_default = result["context_window"].as<int>();
-    cfg.debug = result["debug"].as<int>();
     const int max_minute_wait = result["max_minute_wait"].as<int>();
     if (max_minute_wait <= 0) {
         throw std::runtime_error("--max_minute_wait must be positive");
@@ -501,9 +501,22 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
 
         /* The zap option wipes the contents of a directory, useful for debugging */
         if ( result.count( "zap" ) && std::filesystem::is_directory( sc.outdir )) {
-            for (const auto &entry : std::filesystem::directory_iterator(sc.outdir)) {
-                cout << "erasing " << entry.path().string() << std::endl;
-                std::filesystem::remove_all(entry.path());
+            std::error_code error;
+            std::vector<std::filesystem::path> entries;
+            for (std::filesystem::directory_iterator it(sc.outdir, error), end; it != end; it.increment(error)) {
+                if (error) {
+                    cerr << "error reading " << sc.outdir << ": " << error.message() << std::endl;
+                    return 7;
+                }
+                entries.push_back(it->path());
+            }
+            for (const auto &entry : entries) {
+                cout << "erasing " << entry.string() << std::endl;
+                std::filesystem::remove_all(entry, error);
+                if (error) {
+                    cerr << "error erasing " << entry << ": " << error.message() << std::endl;
+                    return 7;
+                }
             }
         }
 	if (std::filesystem::exists( sc.outdir ) == false ){
@@ -574,8 +587,14 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
 
         if ( std::filesystem::exists( sc.outdir/"report.xml" )){
             /* We are restarting! */
-            bulk_extractor_restarter r( sc,cfg);
-            r.restart();                    // load the restart file and rename report.xml
+            bulk_extractor_restarter r(sc, cfg);
+            const auto restart = r.restart();
+            if (!cfg.opt_quiet) {
+                cerr << "Restarting: skipped " << restart.skipped_pages
+                     << " page" << (restart.skipped_pages == 1 ? "" : "s")
+                     << " recorded before the crash; archived report as "
+                     << restart.archived_report << std::endl;
+            }
         }
     }
 
@@ -740,6 +759,13 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         ss.shutdown();
     }
     catch ( const feature_recorder::DiskWriteError &e ) {
+        try {
+            xreport->pop("report");
+            xreport->pop("dfxml");
+            xreport->close();
+        }
+        catch (const std::exception &) {
+        }
         cerr << "Disk write error during Phase 2 ( histogram making). Disk is probably full." << std::endl
                   << "Remove extra files and restart bulk_extractor with the exact same command line to continue." << std::endl;
         return 7;
@@ -788,7 +814,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
         }
         cout << std::endl;
         cout << "Time producer spent waiting for scanners to process data:        "
-             << ss.producer_timer().elapsed_text()
+             << ss.producer_wait_text()
              << " (" << ns_to_sec(ss.producer_wait_ns()) << " seconds)"
              << std::endl;
         cout << "Time consumer scanners spent waiting for data from producer:     "
