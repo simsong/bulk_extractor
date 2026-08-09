@@ -844,7 +844,7 @@ process_dir::process_dir(std::filesystem::path image_dir): image_process(image_d
         image_dir, std::filesystem::directory_options::skip_permission_denied, error);
     const std::filesystem::recursive_directory_iterator end;
     while (!error && it != end) {
-        const auto entry = *it;
+        const auto &entry = *it;
         if (!entry.is_symlink(error) && entry.is_regular_file(error)) {
             files.push_back(entry.path());
         }

@@ -526,7 +526,7 @@ void scan_exif( scanner_params &sp )
                               "Maximum JPEG size to carve");
         jpeg_def.min_carve_size = static_cast<size_t>(min_carve_size);
         jpeg_def.max_carve_size = static_cast<size_t>(max_carve_size);
-	sp.info->feature_defs.push_back( jpeg_def );
+	sp.info->feature_defs.push_back(std::move(jpeg_def));
         sp.get_scanner_config( "exif_debug",&exif_debug,"debug exif decoder" );
 	return;
     }

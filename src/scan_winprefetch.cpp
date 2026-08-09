@@ -133,7 +133,7 @@ bool prefetch_record_t::validate(const sbuf_t &sbuf)
                 std::wstring utf16_filename = filename_stream.getUTF16();
                 std::string filename = safe_utf16to8(utf16_filename);
                 if (!valid_full_path_name(filename)) return isvalid;
-                files.push_back(filename);
+                files.push_back(std::move(filename));
             }
         }
 
@@ -174,7 +174,7 @@ bool prefetch_record_t::validate(const sbuf_t &sbuf)
                 std::wstring utf16_directory_name = directory_stream.getUTF16();
                 std::string directory_name = safe_utf16to8(utf16_directory_name);
                 if (!valid_full_path_name(directory_name)) return isvalid;
-                directories.push_back(directory_name);
+                directories.push_back(std::move(directory_name));
             }
         }
         return isvalid;
