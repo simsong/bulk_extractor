@@ -122,12 +122,30 @@ std::string getLast(const std::vector<std::string> &v)
 
 uint64_t scaled_stoi64(const std::string &str)
 {
-    std::stringstream ss(str);
-    uint64_t val;
-    ss >> val;
-    if(str.find('k')!=std::string::npos  || str.find('K')!=std::string::npos) val *= 1024LL;
-    if(str.find('m')!=std::string::npos  || str.find('m')!=std::string::npos) val *= 1024LL * 1024LL;
-    if(str.find('g')!=std::string::npos  || str.find('g')!=std::string::npos) val *= 1024LL * 1024LL * 1024LL;
-    if(str.find('t')!=std::string::npos  || str.find('T')!=std::string::npos) val *= 1024LL * 1024LL * 1024LL * 1024LL;
-    return val;
+    if (str.empty()) throw std::invalid_argument("Invalid size: " + str);
+    size_t digits = str.size();
+    uint64_t multiplier = 1;
+    switch (str.back()) {
+    case 'k': case 'K': multiplier = 1024; digits--; break;
+    case 'm': case 'M': multiplier = 1024ULL * 1024; digits--; break;
+    case 'g': case 'G': multiplier = 1024ULL * 1024 * 1024; digits--; break;
+    case 't': case 'T': multiplier = 1024ULL * 1024 * 1024 * 1024; digits--; break;
+    }
+    if (digits == 0) throw std::invalid_argument("Invalid size: " + str);
+
+    uint64_t val = 0;
+    for (size_t i = 0; i < digits; i++) {
+        if (str[i] < '0' || str[i] > '9') {
+            throw std::invalid_argument("Invalid size: " + str);
+        }
+        const uint64_t digit = str[i] - '0';
+        if (val > (std::numeric_limits<uint64_t>::max() - digit) / 10) {
+            throw std::out_of_range("Size is too large: " + str);
+        }
+        val = val * 10 + digit;
+    }
+    if (val > std::numeric_limits<uint64_t>::max() / multiplier) {
+        throw std::out_of_range("Size is too large: " + str);
+    }
+    return val * multiplier;
 }

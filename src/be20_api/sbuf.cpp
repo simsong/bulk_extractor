@@ -402,11 +402,14 @@ sbuf_t* sbuf_t::map_file(const std::filesystem::path fname) {
     if (!S_ISREG(st.st_mode)) {
         throw std::runtime_error(Formatter() << "Not a regular file: " << fname);
     }
-    if (st.st_size < 0 || static_cast<std::uintmax_t>(st.st_size) > std::numeric_limits<size_t>::max()) {
+    if (st.st_size < 0) {
         throw std::runtime_error(Formatter() << "Unsupported file size: " << fname);
     }
 
     const size_t bytes = static_cast<size_t>(st.st_size);
+    if (static_cast<std::uintmax_t>(bytes) != static_cast<std::uintmax_t>(st.st_size)) {
+        throw std::runtime_error(Formatter() << "Unsupported file size: " << fname);
+    }
     if (bytes == 0) {
         return new sbuf_t(pos0_t(fname.string() + pos0_t::map_file_delimiter), nullptr,
                           nullptr, 0, 0, NO_FD);

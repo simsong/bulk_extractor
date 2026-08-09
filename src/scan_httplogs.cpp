@@ -134,7 +134,8 @@ void scan_httplogs(scanner_params &sp)
                     size_t np;
                     size_t linestart = 0;
                     bool foundlinestart = false;
-                    for (np = p-1; ((np > 0) && (p - np <= 1024)); np--) {
+                    for (np = p; np > 0 && p - np < 1024;) {
+                        --np;
                         if((!isok(sbuf[np])) || (sbuf[np] == '\n')) {
                             linestart = np + 1;
                             foundlinestart = true;

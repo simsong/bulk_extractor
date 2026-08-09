@@ -124,6 +124,9 @@ through the project's normal pull-request and CI process.
   reading their length fields, and unexpected top-level exceptions are reported
   as diagnostics with a nonzero exit status
   ([PR #605](https://github.com/simsong/bulk_extractor/pull/605)).
+- Follow-up parser hardening rejects overflowing scaled-size arguments,
+  malformed Windows volume paths, invalid or truncated network headers, and
+  unsafe HTTP-log backtracking before accessing their bytes.
 - Hardened `sbuf` bounds, arithmetic, and ownership behavior, including
   zero-length and one-past-end cases
   ([PR #511](https://github.com/simsong/bulk_extractor/pull/511)).
