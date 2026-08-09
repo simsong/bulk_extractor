@@ -9,8 +9,8 @@ credentials, or presigned URLs in GitHub.
 
 A normal pull request runs CI and may create short-lived test artifacts. It
 must not publish release assets or use package-signing credentials. A release
-PR is the sole place to prepare a versioned release: it updates the version in
-`configure.ac`, release notes, package metadata, and any procedure changes.
+PR prepares a versioned release: it updates the version in `configure.ac`,
+release notes, package metadata, and any procedure changes.
 
 Draft pull requests are planning/release-preparation records. Required CI jobs
 skip them and run when the pull request is marked ready for review. GitHub still
@@ -18,19 +18,32 @@ records a skipped workflow run; Actions cannot filter `pull_request` events on
 the draft field before a workflow starts. Pushes to `dev-release` do not run the
 main-branch push workflows.
 
-`configure.ac` is the sole authoritative version source. In the release PR,
-change the version in `AC_INIT([BULK_EXTRACTOR], [X.Y.Z], ...)`; package
-metadata and source-archive names derive from it. Do not duplicate that value
-in a workflow or release script.
+`configure.ac` is the sole authoritative package-version source. For a final
+release, set `AC_INIT([BULK_EXTRACTOR], [X.Y.Z], ...)`: package metadata and
+source-archive names derive from it. The leading `v` belongs only in the Git
+tag, not in the final package version. Promote any development identifier (for
+example, `v2.2.0alpha1`) to its final `X.Y.Z` value before tagging. Do not
+duplicate the value in a workflow or release script.
 
-After the release PR is merged and all required checks are green, create a
-signed annotated tag named `vX.Y.Z` at the reviewed commit. The tag is the
-immutable release identity; never move or reuse it. The tag must exactly match
-the `configure.ac` version. Tag pushes run the existing source-distribution and
-MinGW workflows plus `.github/workflows/release.yml`. The latter waits for the
-successful artifacts from that same tag, invokes
-`scripts/assemble_github_release.py`, and creates a *draft* GitHub Release.
-The release manager reviews the evidence below and explicitly publishes it.
+After the release PR is merged and required checks are green, create a signed
+annotated tag `vX.Y.Z` at the reviewed commit. The tag is immutable: never move
+or reuse it. There are two supported ways to create the GitHub *draft* release:
+
+1. **Automated draft:** Push the signed tag, or dispatch
+   `.github/workflows/release.yml` for that tag. The workflow waits for the
+   successful source-distribution and MinGW runs for the tagged commit,
+   assembles the source archive, Windows executable, and `SHA256SUMS`, then
+   creates a draft release.
+2. **Manual draft:** Go to [Releases](https://github.com/simsong/bulk_extractor/releases),
+   click **Draft a new release**, choose the existing signed tag, title it
+   `BE vX.Y.Z`, generate or paste the reviewed notes, attach the verified
+   artifacts and checksums, and click **Save draft**.
+
+Creating or saving a draft release does **not** run tests. The automated path
+waits for its tag-triggered tests before it creates the draft; the manual path
+requires the release manager to confirm the recorded validation evidence first.
+In either path, the release manager reviews the draft and explicitly clicks
+**Publish release**. That click makes the GitHub release public.
 
 Use a `release/X.Y` branch only when maintaining an established release line
 while `main` continues with new development. Do not create a release branch for
@@ -52,7 +65,9 @@ checkout or from a mutable branch reference.
 
 ## Build and validation gates
 
-Complete and record each gate before artifact publication.
+The release issue selects and records the required gates. Complete the baseline
+gates below before GitHub publication; run the large-image and downstream
+package gates when they are in that release's declared scope.
 
 1. On a clean local macOS installation, bootstrap, configure, build, and run
    `make distcheck`. Record macOS version, architecture, compiler, commands,
@@ -190,12 +205,19 @@ is a release failure.
 
 ## Publication
 
-1. Attach the staged artifacts and `SHA256SUMS` to the draft GitHub Release.
-2. Check the release notes, tag, commit, asset names, checksums, and links.
-3. Publish the signed upstream source archive and its checksums. Distribution
+1. Create the draft by one of the two paths above. If the automated path
+   created it, do not create a second manual draft; inspect and supplement that
+   draft instead.
+2. Check the release title (`BE vX.Y.Z`), notes, tag, commit, asset names,
+   checksums, and links. Attach any verified artifacts and `SHA256SUMS` that
+   are not already present.
+3. Click **Publish release** when the selected GitHub-release gates are green.
+   This publishes the GitHub release; it does not submit packages to external
+   distribution archives or stores.
+4. Publish the signed upstream source archive and its checksums. Distribution
    archives build their own binaries: do not submit a prebuilt `.deb` or RPM to
    Debian, Kali, Fedora, or openSUSE as an archive update.
-4. Submit the Debian *source package* through an authorized Debian maintainer
+5. Submit the Debian *source package* through an authorized Debian maintainer
    or sponsor and record the accepted source-package URL. Kali normally imports
    from Debian; when it carries packaging changes, submit a version-bump request
    or merge request against Kali's packaging repository using the same tagged
@@ -204,14 +226,14 @@ is a release failure.
    sync request. Do not pursue Ubuntu's default third-party-source list for this
    free-software tool. The reproducible build and downstream tracking are in
    [#622][deb-issue].
-5. Run `make release-rpm RELEASE_TAG=vVERSION`. It requires an annotated tag
+6. Run `make release-rpm RELEASE_TAG=vVERSION`. It requires an annotated tag
    at `HEAD` and a completely clean checkout, then builds the tagged source in
    version-pinned Fedora and openSUSE Leap environments. It writes each
    distribution's binary RPM and SRPM to its subdirectory under
    `release-rpm-artifacts/` and verifies the installed binary in the same
    clean environment. These are GitHub
    direct-download/test artifacts only.
-6. Submit source-level RPM packaging changes: for Fedora, determine whether a
+7. Submit source-level RPM packaging changes: for Fedora, determine whether a
    package already exists; otherwise file a new-package review at
    <https://bugzilla.redhat.com/enter_bug.cgi?product=Fedora&component=Package%20Review>.
    For an existing Fedora package, use its dist-git update workflow. For
@@ -221,9 +243,9 @@ is a release failure.
    Let the distribution build service build and archive the RPMs; record each
    accepted request URL and downstream build result in the release issue. The
    reproducible build and downstream tracking are in [#623][rpm-issue].
-7. Publish the GitHub Release only after a release manager has reviewed every
-   required gate and external package publication is either complete or clearly
-   disclosed in the release notes.
+External package and store publication may follow the GitHub release. Record
+their state and URLs in the release issue; do not represent an unsubmitted
+downstream package as published.
 
 The release may attach locally built `.deb`, RPM, and SRPM files to GitHub for
 download and installation testing. Those files are not substitutes for the
@@ -231,16 +253,21 @@ source-package submissions above. Distribution archives apply their own signing
 and build policies; keep any contributor or maintainer credentials outside this
 repository and outside `make release`.
 
-## Automation roadmap
+## Automation status and optional follow-up
 
-The following release-engineering issues close the remaining automation gaps:
+The repository implementation for these release steps is complete:
 
 - [#621][github-release-issue]: tag-driven draft GitHub Release creation,
   Windows artifact assembly, and checksums.
-- [#622][deb-issue]: reproducible Debian source/binary builds and Debian/Kali
-  source-package submissions.
-- [#623][rpm-issue]: reproducible RPM builds and Fedora/openSUSE source-level
-  packaging submissions.
+- [#622][deb-issue]: reproducible Debian source/binary package builds and
+  release artifacts. Archive submission still requires an authorized Debian
+  maintainer or sponsor.
+- [#623][rpm-issue]: reproducible Fedora/openSUSE RPM and SRPM builds. Fedora
+  and openSUSE submission still requires the relevant downstream account.
+
+The following remain optional release-execution work, not prerequisites for
+clicking **Publish release** unless the release issue makes them a gate:
+
 - [#624][aws-issue]: budget-capped AWS large-image validation and secure
   reporting.
 - [#626][snap-issue]: optional project-owned Snap Store publication for Ubuntu
