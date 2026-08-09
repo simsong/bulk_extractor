@@ -9,4 +9,3 @@ XRP|mainnet|rPEPPER7kfTD9w2To4CQk6UCfuHM9c6GDY|address|Classic XRPL address
 SOL|mainnet|Vote111111111111111111111111111111111111111|public_key|Valid program public key, not a wallet
 XLM|mainnet|GBRPYHIL2CI3NFZRMFIQZ2BJKBNQYH3LYU2U5CKLLNTQSEPK4VST6LJX|address|StrKey public address
 EVM|unknown-chain|0x0123456789abcdef0123456789abcdef01234567|ambiguous|Shape only; no checksum/context
-
