@@ -137,14 +137,14 @@ The `Windows MinGW build` GitHub Actions workflow cross-compiles the executable
 on Ubuntu for relevant non-draft pull requests and uploads
 `bulk_extractor64.exe` in the `bulk_extractor-windows-x86_64` artifact. The
 workflow verifies that the PE executable does not import the MinGW, RE2,
-Abseil, Expat, zlib, or GNU crypto
-runtime DLLs. A Windows runner downloads and runs that exact artifact against
+Abseil, Expat, zlib, or GNU crypto runtime DLLs. A Windows runner downloads and
+runs that exact artifact against
 a directory with a Unicode filename and an E01 fixture. The workflow uses the
 x86_64 MinGW-w64 POSIX toolchain, static Expat, RE2, and Abseil from a pinned
 vcpkg checkout, and a checksum-pinned static libewf source release. The CI
 artifact includes E01 support, but is not signed and is not a release installer.
-The workflow file and its maintained build notes are `.github/workflows/mingw.yml` and
-`doc/mingw_notes.md`.
+The workflow file and its maintained build notes are
+`.github/workflows/mingw.yml` and `doc/mingw_notes.md`.
 
 WINDOWS RAW DEVICES
 ===================
