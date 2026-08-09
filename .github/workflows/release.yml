@@ -77,7 +77,7 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --target "$(git rev-parse "$RELEASE_TAG^{commit}")" \
             --draft \
-            --title "bulk_extractor ${RELEASE_TAG#v}" \
+            --title "BE ${RELEASE_TAG}" \
             --generate-notes \
             release-assets/bulk_extractor-*.tar.gz \
             release-assets/bulk_extractor64.exe \
