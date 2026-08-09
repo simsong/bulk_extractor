@@ -15,8 +15,48 @@ permissions:
   actions: read
 
 jobs:
+  snap:
+    name: Build release Snap (${{ matrix.arch }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
+
+      - name: Build Snap
+        id: snap
+        uses: canonical/action-build@v1
+
+      - name: Install and test the Snap
+        run: |
+          set -euo pipefail
+          sudo snap install --dangerous "${{ steps.snap.outputs.snap }}"
+          sudo snap connect bulk-extractor:home :home
+          image="$HOME/bulk_extractor-fat32.dmg"
+          output="$HOME/bulk_extractor-snap-output"
+          cp src/tests/1mb_fat32.dmg "$image"
+          snap run bulk-extractor -0q -o "$output" "$image"
+          test -s "$output/report.xml"
+
+      - name: Upload Snap
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-snap-${{ matrix.arch }}
+          path: ${{ steps.snap.outputs.snap }}
+          if-no-files-found: error
+
   assemble:
     name: Assemble draft release
+    needs: snap
     runs-on: ubuntu-latest
 
     steps:
@@ -25,6 +65,13 @@ jobs:
         with:
           ref: ${{ inputs.tag || github.ref_name }}
           fetch-depth: 0
+
+      - name: Download tested Snap packages
+        uses: actions/download-artifact@v8
+        with:
+          pattern: release-snap-*
+          path: snap-assets
+          merge-multiple: true
 
       - name: Assemble release assets
         env:
@@ -35,6 +82,20 @@ jobs:
             --tag "$RELEASE_TAG" \
             --repo "$GITHUB_REPOSITORY" \
             --output-dir release-assets
+
+      - name: Add Snap packages and regenerate checksums
+        run: |
+          set -euo pipefail
+          amd64=$(find snap-assets -type f -name '*_amd64.snap' -print -quit)
+          arm64=$(find snap-assets -type f -name '*_arm64.snap' -print -quit)
+          test -s "$amd64"
+          test -s "$arm64"
+          cp "$amd64" "$arm64" release-assets/
+          rm release-assets/SHA256SUMS
+          (
+            cd release-assets
+            sha256sum bulk_extractor-*.tar.gz bulk_extractor64.exe *.snap > SHA256SUMS
+          )
 
       - name: Upload release assets
         uses: actions/upload-artifact@v4
@@ -81,4 +142,5 @@ jobs:
             --generate-notes \
             release-assets/bulk_extractor-*.tar.gz \
             release-assets/bulk_extractor64.exe \
+            release-assets/*.snap \
             release-assets/SHA256SUMS

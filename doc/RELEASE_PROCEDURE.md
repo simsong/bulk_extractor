@@ -31,9 +31,10 @@ or reuse it. There are two supported ways to create the GitHub *draft* release:
 
 1. **Automated draft:** Push the signed tag, or dispatch
    `.github/workflows/release.yml` for that tag. The workflow waits for the
-   successful source-distribution and MinGW runs for the tagged commit,
-   assembles the source archive, Windows executable, and `SHA256SUMS`, then
-   creates a draft release.
+   successful source-distribution and MinGW runs for the tagged commit, builds
+   and install-tests amd64 and arm64 Snap packages, assembles the source
+   archive, Windows executable, Snap packages, and `SHA256SUMS`, then creates
+   a draft release.
 2. **Manual draft:** Go to [Releases](https://github.com/simsong/bulk_extractor/releases),
    click **Draft a new release**, choose the existing signed tag, title it
    `BE vX.Y.Z`, generate or paste the reviewed notes, attach the verified
@@ -194,6 +195,7 @@ The staged set must contain:
 | --- | --- | --- |
 | Source archive | `make distcheck` | Version and source-tag match |
 | Windows `.exe` | MinGW workflow | Exact artifact passed Windows test |
+| Snap packages | Release workflow | amd64 and arm64 packages passed confined install tests |
 | Debian `.deb` | [#622][deb-issue] | Clean package build and installed-package smoke test; direct-download artifact only |
 | RPM/SRPM | [#623][rpm-issue] | Clean RPM build and installed-package smoke test; direct-download artifact only |
 | AWS summary | [#624][aws-issue] | Redacted large-image build/scan result and cleanup evidence |
@@ -270,11 +272,11 @@ clicking **Publish release** unless the release issue makes them a gate:
 
 - [#624][aws-issue]: budget-capped AWS large-image validation and secure
   reporting.
-- [#626][snap-issue]: optional project-owned Snap Store publication for Ubuntu
-  users; it does not replace the Debian-to-Ubuntu path. The strict-confinement
-  interface model, local `make snap` entry point, amd64/arm64 install-test
-  workflow, and protected annotated-tag stable publication are documented in
-  [doc/snap.md](snap.md).
+- [#626][snap-issue]: project-owned Snap Store publication for Ubuntu users;
+  it does not replace the Debian-to-Ubuntu path. The release workflow attaches
+  its tested amd64 and arm64 `.snap` packages to the GitHub draft release.
+  Uploading those same packages to the Store remains a protected, separate
+  annotated-tag action documented in [doc/snap.md](snap.md).
 
 Once these are complete, a release manager should be able to direct Codex to
 prepare a release PR, validate the tag, trigger the protected workflow, and
