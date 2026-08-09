@@ -132,7 +132,7 @@ void scan_base16(struct scanner_params &sp)
         sp.info->pathPrefix      = "BASE16";
         feature_recorder_def frd("hex");
         frd.flags.disabled=true; /* disabled by default */
-        sp.info->feature_defs.push_back( frd );
+        sp.info->feature_defs.push_back(std::move(frd));
 
         /* Create the base16 array */
         for (int i=0;i<256;i++){
