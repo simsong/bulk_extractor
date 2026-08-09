@@ -30,6 +30,7 @@ AC_LANG_PUSH(C++)
 AC_CHECK_HEADERS([re2/re2.h])
 PKG_CHECK_MODULES([RE2], [re2],
   [
+    RE2_CFLAGS=`echo "$RE2_CFLAGS" | sed 's/\(^\| \)-I/\1-isystem /g'`
     AC_MSG_NOTICE([re2 detected])
     AC_DEFINE([HAVE_RE2], [1], [Define if you have the RE2 library]) ],
   [AC_MSG_ERROR([Could not find required RE2 library. Please install libre2-dev or equivalent.])]

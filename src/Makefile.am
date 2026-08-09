@@ -15,7 +15,7 @@ ETAGS = etags-emacs
 ACLOCAL_AMFLAGS = -I m4
 
 # So that relative imports from be20_api work
-AM_CPPFLAGS = @RE2_CFLAGS@ -I$(top_srcdir)/src/be20_api -I$(top_srcdir)/src/be20_api/utfcpp/source -I$(top_srcdir)/src/third_party/spdlog
+AM_CPPFLAGS = @RE2_CFLAGS@ -I$(top_srcdir)/src/be20_api -I$(top_srcdir)/src/be20_api/utfcpp/source -isystem $(top_srcdir)/src/third_party/spdlog
 
 noinst_LIBRARIES = libbe20.a
 libbe20_a_SOURCES = $(BE20_API_SRC) $(DFXML_READER) $(DFXML_WRITER) bulk_extractor_logging.cpp bulk_extractor_logging.h
@@ -26,7 +26,7 @@ scan_test_plugin_la_LDFLAGS = -module -avoid-version -rpath $(abs_builddir)/.lib
 
 bulk_extractor_LDADD = libbe20.a @RE2_LIBS@
 test_be_LDADD = libbe20.a @RE2_LIBS@
-test_be_CPPFLAGS = $(AM_CPPFLAGS) -DTEST_PLUGIN_DIR=\"$(abs_builddir)/.libs\" -DTEST_TOP_SRCDIR=\"$(abs_top_srcdir)\"
+test_be_CPPFLAGS = $(AM_CPPFLAGS) -DTEST_PLUGIN_DIR=\"$(abs_builddir)/.libs\" -DTEST_RAR_UNPACK -DTEST_TOP_SRCDIR=\"$(abs_top_srcdir)\"
 test_be20_api_LDADD = libbe20.a @RE2_LIBS@
 test_thread_safety_LDADD = libbe20.a @RE2_LIBS@
 test_pcap_fake_CPPFLAGS = $(AM_CPPFLAGS) -DPCAP_FAKE_TEST
@@ -82,7 +82,6 @@ lightgrep_scanners = \
 	pattern_scanner_utils.cpp pattern_scanner_utils.h \
 	scan_lightgrep.cpp \
 	scan_accts_lg.cpp \
-	scan_base16_lg.cpp \
 	scan_email_lg.cpp \
 	scan_gps_lg.cpp
 
@@ -138,6 +137,9 @@ endif
 
 if RAR_ENABLED
   scanners_builtin += $(AUTO_RAR_FILES)
+else
+check-local:
+	@echo "WARNING: RAR support is disabled; RAR tests were not built or run."
 endif
 
 bulk_extractor_parts = \
@@ -209,7 +211,7 @@ runs.txt: test_be tests/run_each.sh
 #
 
 SUFFIXES = .flex
-FLEX_CXXFLAGS=-Wno-shadow -Wno-effc++ -Wno-redundant-decls -Wno-missing-noreturn
+FLEX_CXXFLAGS=-Wno-shadow -Wno-effc++ -Wno-redundant-decls -Wno-missing-noreturn -Wno-misleading-indentation
 .flex.o:
 	@echo "  FLEX-CXX" $@
 	@$(LEX) -R -t $<  | sed "s/register //" > `basename $@ .o`.cpp

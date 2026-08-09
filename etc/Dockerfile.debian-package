@@ -1,0 +1,21 @@
+FROM debian:bookworm
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    autoconf automake build-essential debhelper devscripts flex g++ libabsl-dev \
+    libexpat1-dev libgcrypt20-dev libgpg-error-dev libre2-dev libssl-dev libtool \
+    make pkg-config python3 zlib1g-dev && rm -rf /var/lib/apt/lists/*
+WORKDIR /src
+COPY . /src
+RUN python3 scripts/prepare_debian_package.py \
+    && bash bootstrap.sh && ./configure --quiet && make dist \
+    && version=$(sed -n 's/^AC_INIT(\[BULK_EXTRACTOR\],\[\([^]]*\)\].*/\1/p' configure.ac) \
+    && package_version=$(printf '%s\n' "$version" | sed 's/-DEVELOP$/~develop/') \
+    && mkdir /build \
+    && tar -C /build -xzf bulk_extractor-"$version".tar.gz \
+    && mv /build/bulk_extractor-"$version" /build/bulk-extractor-"$package_version" \
+    && tar -C /build -czf /build/bulk-extractor_"$package_version".orig.tar.gz bulk-extractor-"$package_version" \
+    && cp -a debian /build/bulk-extractor-"$package_version"/ \
+    && cd /build/bulk-extractor-"$package_version" \
+    && dpkg-buildpackage -us -uc \
+    && cp /build/bulk-extractor_* /
+RUN dpkg -i /bulk-extractor_*_*.deb || (apt-get update && apt-get -fy install)
+RUN bulk_extractor -h >/dev/null

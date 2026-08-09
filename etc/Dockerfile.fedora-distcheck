@@ -1,0 +1,24 @@
+FROM fedora:44
+
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+RUN dnf -y install \
+        abseil-cpp-devel autoconf automake ca-certificates exiv2-devel \
+        expat-devel flex gcc-c++ libgcrypt-devel libtool re2-devel \
+        libxml2-devel make openssl-devel pkgconf-pkg-config sqlite-devel wget \
+        zlib-devel \
+    && dnf clean all
+
+ARG LIBEWF_URL=https://github.com/libyal/libewf-legacy/releases/download/20140814/libewf-20140814.tar.gz
+RUN wget -q "$LIBEWF_URL" -O /tmp/libewf.tar.gz \
+    && tar -C /tmp -xzf /tmp/libewf.tar.gz \
+    && cd /tmp/libewf-* \
+    && ./configure --quiet --enable-silent-rules --prefix=/usr/local \
+    && make -j"$(nproc)" \
+    && make install \
+    && ldconfig \
+    && rm -rf /tmp/libewf /tmp/libewf-* /tmp/libewf.tar.gz
+
+WORKDIR /src
+COPY . /src
+RUN bash bootstrap.sh && ./configure --quiet && make distcheck

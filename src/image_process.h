@@ -68,8 +68,8 @@ public:
     /* These two functions are only used in WIN32 but are defined here so that they can be tested on all platforms */
     static std::string filename_extension(std::filesystem::path fn); // returns extension
 
-    static bool fn_ends_with(std::filesystem::path str,std::string suffix);
-    static bool is_multipart_file(std::filesystem::path fn);
+    static bool fn_ends_with(const std::filesystem::path &str, const std::string &suffix);
+    static bool is_multipart_file(const std::filesystem::path &fn);
     static int multipart_number(const std::filesystem::path &fn);
     static std::filesystem::path multipart_filename(const std::filesystem::path &fn, int number);
 
@@ -239,6 +239,8 @@ class process_raw : public image_process {
     class file_info {
     public:;
         file_info(const std::filesystem::path path_, uint64_t offset_, uint64_t length_);
+        file_info(const file_info&) = delete;
+        file_info& operator=(const file_info&) = delete;
         ~file_info() {
 #ifdef _WIN32
             if (handle != INVALID_HANDLE_VALUE) CloseHandle(handle);

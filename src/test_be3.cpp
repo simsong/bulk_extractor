@@ -225,6 +225,29 @@ TEST_CASE("Windows raw-device paths are recognized narrowly", "[image_process]")
     REQUIRE_FALSE(process_raw::is_windows_raw_device_path("disk.raw"));
 }
 
+TEST_CASE("e2e-email accepts current TLDs", "[end-to-end]")
+{
+    const auto root = NamedTemporaryDirectory();
+    const auto input = root / "input.raw";
+    const auto outdir = root / "output";
+    std::ofstream(input) << "modern@wordcount.solutions punycode@example.xn--p1ai "
+                            "bare.wordcount.solutions\n";
+
+    const std::string input_string = input.string();
+    const std::string outdir_string = outdir.string();
+    const char *argv[] = {
+        "bulk_extractor", "-0q", "-x", "all", "-e", "email",
+        "-o", outdir_string.c_str(), input_string.c_str(), nullptr
+    };
+    std::stringstream output;
+    REQUIRE(run_be(output, argv) == 0);
+
+    const auto email = getLines(outdir / "email.txt");
+    REQUIRE(requireFeature(email, "modern@wordcount.solutions"));
+    REQUIRE(requireFeature(email, "punycode@example.xn--p1ai"));
+    REQUIRE_FALSE(requireFeature(email, "bare.wordcount.solutions"));
+}
+
 TEST_CASE("e2e-stop-list", "[end-to-end]")
 {
     const std::string bitlocker_key =
@@ -356,7 +379,7 @@ class scoped_environment {
     std::string name;
     std::optional<std::string> previous_value;
 public:
-    scoped_environment(const char *name_, const char *value) : name(name_)
+    scoped_environment(const char *name_, const char *value) : name(name_), previous_value()
     {
         if (const char *previous = getenv(name.c_str())) {
             previous_value = previous;
@@ -1022,6 +1045,10 @@ TEST_CASE("e2e-email_test", "[end-to-end]") {
     }
 
     std::filesystem::path inpath = test_dir() / "email_test.E01";
+    if (!std::filesystem::exists(inpath)) {
+        SUCCEED("email_test.E01 fixture unavailable; skipping E01 end-to-end test");
+        return;
+    }
     std::string inpath_string = inpath.string();
     std::filesystem::path outdir = NamedTemporaryDirectory();
     std::string outdir_string = outdir.string();
@@ -1082,8 +1109,12 @@ TEST_CASE("restarter", "[restarter]") {
     bulk_extractor_restarter r(sc, cfg);
 
     REQUIRE( std::filesystem::exists( out_xml ) == true); // because it has not been renamed yet
-    r.restart();
+    const auto restart = r.restart();
     REQUIRE( std::filesystem::exists( out_xml ) == false); // because now it has been renamed
+    REQUIRE(restart.archived_report.parent_path() == sc.outdir);
+    REQUIRE(restart.archived_report.filename().string().rfind("report.xml.", 0) == 0);
+    REQUIRE(restart.skipped_pages == cfg.seen_page_ids.size());
+    REQUIRE(restart.skipped_pages > 0);
     REQUIRE( cfg.seen_page_ids.find("369098752") != cfg.seen_page_ids.end() );
     REQUIRE( cfg.seen_page_ids.find("369098752+") == cfg.seen_page_ids.end() );
 }
@@ -1167,8 +1198,8 @@ TEST_CASE("image_process short EWF read", "[phase1]") {
         size_t max_read;
 
     public:
-        partial_ewf_reader(std::filesystem::path image, size_t page_size, size_t margin, size_t max_read_)
-            : process_ewf(image, page_size, margin), max_read(max_read_) {}
+        partial_ewf_reader(std::filesystem::path image, size_t page_size, size_t margin_, size_t max_read_)
+            : process_ewf(image, page_size, margin_), max_read(max_read_) {}
 
         ssize_t pread(void *buf, size_t bytes, uint64_t offset) const override {
             if (max_read == 0) return 0;

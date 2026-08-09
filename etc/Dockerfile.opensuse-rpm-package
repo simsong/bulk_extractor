@@ -1,0 +1,20 @@
+FROM opensuse/leap:15.6
+RUN zypper --non-interactive install --no-recommends \
+    autoconf automake gcc13-c++ libexpat-devel libexiv2-devel libgcrypt-devel \
+    libtool make pkg-config re2-devel rpm-build zlib-devel flex python3 \
+    && zypper clean --all
+WORKDIR /src
+COPY . /src
+RUN ln -s README.md README \
+    && sed -i 's/-DEVELOP//' configure.ac \
+    && bash bootstrap.sh \
+    && CC=gcc-13 CXX=g++-13 ./configure --quiet --disable-libewf \
+    && make -C specfiles bulk_extractor.opensuse.spec \
+    && make dist \
+    && mkdir -p /build/SOURCES /build/SPECS /artifacts \
+    && cp bulk_extractor-*.tar.gz /build/SOURCES/ \
+    && cp specfiles/bulk_extractor.opensuse.spec /build/SPECS/bulk_extractor.spec \
+    && CC=gcc-13 CXX=g++-13 rpmbuild --define '_topdir /build' -ba /build/SPECS/bulk_extractor.spec \
+    && cp /build/RPMS/*/bulk_extractor-*.rpm /build/SRPMS/bulk_extractor-*.src.rpm /artifacts/
+RUN zypper --non-interactive install --allow-unsigned-rpm /artifacts/bulk_extractor-*.rpm \
+    && bulk_extractor -V >/dev/null

@@ -49,10 +49,8 @@ void pcap_writer::pcap_write2(std::ofstream &fcap, const uint16_t val) const
 
 void pcap_writer::pcap_write4(std::ofstream &fcap, const uint32_t val) const
 {
-    fcap.write(reinterpret_cast<const char *>(&val), 4);
-    if (fcap.rdstate() & (std::ios::failbit|std::ios::badbit)){
-        throw std::runtime_error("scanner pcap_writer is unable to write packet data");
-    }
+    pcap_write2(fcap, static_cast<uint16_t>(val));
+    pcap_write2(fcap, static_cast<uint16_t>(val >> 16));
 }
 
 std::ofstream &pcap_writer::pcap_stream(uint32_t link_type)

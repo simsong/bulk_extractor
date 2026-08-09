@@ -1,0 +1,84 @@
+name: Assemble draft GitHub release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing signed annotated tag, for example v2.2.0.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  assemble:
+    name: Assemble draft release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout release tag
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
+          fetch-depth: 0
+
+      - name: Assemble release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          python3 scripts/assemble_github_release.py \
+            --tag "$RELEASE_TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --output-dir release-assets
+
+      - name: Upload release assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-assets
+          path: release-assets
+          if-no-files-found: error
+
+  publish:
+    name: Publish draft release
+    needs: assemble
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: write
+
+    steps:
+      - name: Checkout release tag
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
+          fetch-depth: 0
+
+      - name: Download release assets
+        uses: actions/download-artifact@v8
+        with:
+          name: release-assets
+          path: release-assets
+
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          if [ "$(git cat-file -t "refs/tags/$RELEASE_TAG")" != tag ]; then
+            echo "$RELEASE_TAG must be an annotated tag" >&2
+            exit 2
+          fi
+          gh release create "$RELEASE_TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$(git rev-parse "$RELEASE_TAG^{commit}")" \
+            --draft \
+            --title "BE ${RELEASE_TAG}" \
+            --generate-notes \
+            release-assets/bulk_extractor-*.tar.gz \
+            release-assets/bulk_extractor64.exe \
+            release-assets/SHA256SUMS
