@@ -20,7 +20,7 @@ families are DOGE/LTC, BCH, TRON, XLM, ADA, AVAX X/P, TON, HBAR, SUI, and XMR.
 
 ## Components
 
-\`\`\`
+```
 scan_crypto.flex           bounded text candidates
       |                         |
       v                         v
@@ -32,23 +32,27 @@ address/key validation  structured container recognition
                                   |
                                   v
                     optional python/crypto_enrich.py
-\`\`\`
+```
 
 ### Flex text scanner
 
-\`src/scan_crypto.flex\` follows the existing \`scan_accts.flex\` design:
+`src/scan_crypto.flex` follows the existing `scan_accts.flex` design:
 Flex performs inexpensive bounded candidate discovery and C++ actions call a
-validator before writing a feature. It uses \`sbuf_flex_scanner.h\`, initializes
-its feature definitions in \`PHASE_INIT\`, obtains recorders in \`PHASE_INIT2\`,
-and has no mutable state during concurrent \`PHASE_SCAN\` calls.
+validator before writing a feature. It uses `sbuf_flex_scanner.h`, initializes
+its feature definitions in `PHASE_INIT`, obtains recorders in `PHASE_INIT2`,
+and has no mutable state during concurrent `PHASE_SCAN` calls.
 
 ### Validation library
 
-\`src/crypto_validate.{h,cpp}\` provides typed, pure validators for Base58Check,
+`src/crypto_validate.{h,cpp}` provides typed, pure validators for Base58Check,
 Bech32/Bech32m, CashAddr, StrKey/CRC, hex, EIP-55, and family-specific
 versions/networks. It returns a structured result rather than a Boolean:
 
-\`\`\`cpp
+`crypto_kind` describes unstructured address and key candidates only. Wallet
+containers are parsed separately by `scan_crypto_wallet.cpp` and written to
+`crypto_wallets.txt`; they do not use `crypto_match.kind`.
+
+```cpp
 enum class crypto_kind {
     address, public_key, private_key, seed_phrase,
     encrypted_wallet, ambiguous
@@ -65,11 +69,11 @@ struct crypto_match {
     bool encrypted;
     bool remote_lookup_allowed;
 };
-\`\`\`
+```
 
 ### Wallet-container scanner
 
-\`src/scan_crypto_wallet.cpp\` recognizes and parses structured artifacts:
+`src/scan_crypto_wallet.cpp` recognizes and parses structured artifacts:
 PKCS#8 encrypted keys, Ethereum V3 keystores, Bitcoin wallet databases,
 wallet manifests, and supported application vault formats. A filename,
 high-entropy blob, or generic ciphertext is never enough to call something a
@@ -85,13 +89,13 @@ format.
 
 | Class | Meaning | May be enriched online |
 | --- | --- | --- |
-| \`address\` | Validated chain/network public address. | Only if high confidence. |
-| \`public_key\` | Recognized serialized public key, not an address. | No. |
-| \`private_key\` | Recognized plaintext private-key serialization. | Never. |
-| \`seed_phrase\` | Recovery phrase or HD seed material. | Never. |
-| \`encrypted_wallet\` | Parsed encrypted key, keystore, or vault. | Never. |
-| \`wallet_container\` | Parsed wallet with no private material exposed. | Never. |
-| \`ambiguous\` | Plausible shape without sufficient validation/context. | No. |
+| `address` | Validated chain/network public address. | Only if high confidence. |
+| `public_key` | Recognized serialized public key, not an address. | No. |
+| `private_key` | Recognized plaintext private-key serialization. | Never. |
+| `seed_phrase` | Recovery phrase or HD seed material. | Never. |
+| `encrypted_wallet` | Parsed encrypted key, keystore, or vault. | Never. |
+| `wallet_container` | Parsed wallet with no private material exposed. | Never. |
+| `ambiguous` | Plausible shape without sufficient validation/context. | No. |
 
 Secret-bearing values are high-sensitivity evidence. The normal report stores
 only location, type, encryption status, and a per-run keyed fingerprint. It
@@ -104,51 +108,51 @@ credential. Normal operation never decrypts a wallet.
 
 This file contains public identifiers only.
 
-\`\`\`text
+```text
 # path offset length family network kind encoding checksum confidence value
 image.dd 1048576 34 bitcoin mainnet address base58check valid high 1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62i
 image.dd 2097152 42 evm unknown address eip55 valid high 0x52908400098527886E0F7030069857D2E4169EE7
 image.dd 3145728 44 solana mainnet public_key base58 n/a high Vote111111111111111111111111111111111111111
-\`\`\`
+```
 
 ### crypto_sensitive.txt
 
 This opt-in, redacted file records material that must not be sent to a remote
 service.
 
-\`\`\`text
+```text
 # path offset length kind family encoding encrypted confidence fingerprint
 image.dd 4194304 241 encrypted_wallet secp256k1 pkcs8-pem yes high HMAC-SHA256:...
 image.dd 5242880 52 private_key bitcoin wif no high HMAC-SHA256:...
-\`\`\`
+```
 
 ### crypto_wallets.txt
 
 This is the wallet-discovery output. Encryption is explicit and never inferred
 from a filename or entropy alone.
 
-\`\`\`text
+```text
 # wallet_id path offset length wallet_format product parse_state container_encryption sensitive_encryption currency_scope currencies key_material confidence
 wallet:... image.dd 0 241 pkcs8-pem unknown parsed encrypted all_detected_sensitive_material_encrypted single unknown encrypted_private_key high
 wallet:... image.dd 0 512 ethereum-v3-json unknown parsed encrypted all_detected_sensitive_material_encrypted single EVM encrypted_private_key high
 wallet:... image.dd 0 1024 application-vault ExampleWallet parsed encrypted unknown multi BTC,ETH,SOL encrypted_vault high
-\`\`\`
+```
 
 The fields use these values:
 
 | Field | Values |
 | --- | --- |
-| \`parse_state\` | \`parsed\`, \`candidate\`, \`corrupt\`, \`unsupported\` |
-| \`container_encryption\` | \`encrypted\`, \`not_encrypted\`, \`mixed\`, \`not_a_container\`, \`unknown\` |
-| \`sensitive_encryption\` | \`all_detected_sensitive_material_encrypted\`, \`some_sensitive_material_encrypted\`, \`not_encrypted\`, \`not_inspected\`, \`unknown\` |
-| \`currency_scope\` | \`single\`, \`multi\`, \`multi_capable\`, \`unknown\` |
-| \`key_material\` | \`none\`, \`public_only\`, \`encrypted_private_key\`, \`private_key\`, \`seed_phrase\`, \`encrypted_vault\`, \`unknown\` |
+| `parse_state` | `parsed`, `candidate`, `corrupt`, `unsupported` |
+| `container_encryption` | `encrypted`, `not_encrypted`, `mixed`, `not_a_container`, `unknown` |
+| `sensitive_encryption` | `all_detected_sensitive_material_encrypted`, `some_sensitive_material_encrypted`, `not_encrypted`, `not_inspected`, `unknown` |
+| `currency_scope` | `single`, `multi`, `multi_capable`, `unknown` |
+| `key_material` | `none`, `public_only`, `encrypted_private_key`, `private_key`, `seed_phrase`, `encrypted_vault`, `unknown` |
 
 An encrypted wallet often leaves public addresses and account metadata
-plaintext. Therefore \`container_encryption=encrypted\` and
-\`sensitive_encryption=all_detected_sensitive_material_encrypted\` are
+plaintext. Therefore `container_encryption=encrypted` and
+`sensitive_encryption=all_detected_sensitive_material_encrypted` are
 different statements. The latter is used only when the parser has inspected
-every recognized sensitive field. Otherwise it is \`unknown\`.
+every recognized sensitive field. Otherwise it is `unknown`.
 
 ## Multi-currency wallets
 
@@ -156,25 +160,25 @@ A multi-currency result needs evidence:
 
 | Result | Meaning |
 | --- | --- |
-| \`single\` | Parsed data identifies one chain/network. |
-| \`multi\` | Parsed account/asset metadata identifies two or more chains. |
-| \`multi_capable\` | An HD seed or equivalent could derive several chains, but data does not prove installed accounts/assets. |
-| \`unknown\` | No justified currency conclusion. |
+| `single` | Parsed data identifies one chain/network. |
+| `multi` | Parsed account/asset metadata identifies two or more chains. |
+| `multi_capable` | An HD seed or equivalent could derive several chains, but data does not prove installed accounts/assets. |
+| `unknown` | No justified currency conclusion. |
 
 A BIP-39 phrase or BIP-32 extended key is not automatically a discovered
 multi-currency wallet; it is secret material that may be multi-currency-capable.
 
 ## Confidence modes
 
-\`\`\`text
+```text
 -S crypto_mode=conservative    # default
 -S crypto_mode=discovery
-\`\`\`
+```
 
 | Mode | Address policy | Wallet policy |
 | --- | --- | --- |
-| \`conservative\` | Only validated checksum/version matches. All-lower EVM and Solana-shaped Base58 require strong context. | Only structurally parsed containers with format-based encryption evidence. |
-| \`discovery\` | Adds contextual candidates marked \`low\`. | Adds candidate artifacts from path/schema/magic evidence, always \`parse_state=candidate\`; encryption remains \`unknown\` unless proven. |
+| `conservative` | Only validated checksum/version matches. All-lower EVM and Solana-shaped Base58 require strong context. | Only structurally parsed containers with format-based encryption evidence. |
+| `discovery` | Adds contextual candidates marked `low`. | Adds candidate artifacts from path/schema/magic evidence, always `parse_state=candidate`; encryption remains `unknown` unless proven. |
 
 Base58Check generally offers about 32 checksum bits and Bech32-family encodings
 about 30. These conditional figures are not corpus-wide false-positive rates.
@@ -217,20 +221,20 @@ format/context classification problem and is always high-sensitivity output.
 Online verification belongs in a separate Python command, not the C++
 executable:
 
-\`\`\`text
+```text
 python/crypto_enrich.py --input report/crypto_addresses.txt \\
   --output report/crypto_enrichment.jsonl --provider-config case-rpc.toml \\
   --minimum-confidence high --lookup-budget 10000
-\`\`\`
+```
 
 The tool uses Pydantic models for configuration, input records, provider
 responses, cache entries, and output records. It deduplicates, caches by
 chain/network/address/query-kind/block-height, rate-limits, and records
 provider/local-node identity and timestamp.
 
-Only high-confidence \`address\` records are accepted. It rejects public keys,
+Only high-confidence `address` records are accepted. It rejects public keys,
 private keys, seed phrases, encrypted wallets, wallet containers, and ambiguous
-values. Results are \`observed\`, \`not_observed\`, or \`unknown\`; neither of
+values. Results are `observed`, `not_observed`, or `unknown`; neither of
 the latter two means invalid. Local nodes/indexers are preferred for sensitive
 cases.
 
@@ -240,22 +244,22 @@ blocking image scanning.
 
 ## Test vectors
 
-The test corpus is under \`tests/Data\`:
+The test corpus is under `tests/Data`:
 
 | Path | Purpose |
 | --- | --- |
-| \`crypto-address-vectors.txt\` | Public address, checksum, and ambiguity examples. |
-| \`crypto-public-key-samples.pem\` | Generated secp256k1 and Ed25519 public keys. |
-| \`crypto-encrypted-test-keys.pem\` | Generated encrypted PKCS#8 private-key fixtures. |
-| \`crypto-wallet-vectors/plaintext-single-wallet.json\` | Test-envelope single-currency wallet with generated plaintext private material. |
-| \`crypto-wallet-vectors/encrypted-multicurrency-wallet.json\` | Test-envelope encrypted multi-currency wallet. |
-| \`crypto-wallet-vectors/encrypted-single-wallet.pem\` | PKCS#8 encrypted single-key wallet material. |
-| \`crypto-wallet-vectors/unknown-ciphertext.txt\` | Negative control: ciphertext alone is not a wallet. |
+| `crypto-address-vectors.txt` | Public address, checksum, and ambiguity examples. |
+| `crypto-public-key-samples.pem` | Generated secp256k1 and Ed25519 public keys. |
+| `crypto-encrypted-test-keys.pem` | Generated encrypted PKCS#8 private-key fixtures. |
+| `crypto-wallet-vectors/plaintext-single-wallet.json` | Test-envelope single-currency wallet with generated plaintext private material. |
+| `crypto-wallet-vectors/encrypted-multicurrency-wallet.json` | Test-envelope encrypted multi-currency wallet. |
+| `crypto-wallet-vectors/encrypted-single-wallet.pem` | PKCS#8 encrypted single-key wallet material. |
+| `crypto-wallet-vectors/unknown-ciphertext.txt` | Negative control: ciphertext alone is not a wallet. |
 
 All private material is deliberately generated test material with no funds or
-production use. The only fixture password is literally \`password\`; it must
+production use. The only fixture password is literally `password`; it must
 never be reused. The plaintext-wallet fixture exists specifically to verify an
-explicit \`not_encrypted\` classification and must never be included in normal
+explicit `not_encrypted` classification and must never be included in normal
 reports.
 
 ### Fixture-generation commands
@@ -264,7 +268,7 @@ The generated key pairs were created in a disposable directory. Re-running
 these random commands creates different valid fixtures; it does not reproduce
 the committed bytes.
 
-\`\`\`sh
+```sh
 # secp256k1 public and encrypted PKCS#8 fixture
 openssl genpkey -algorithm EC -pkeyopt ec_paramgen_curve:secp256k1 \\
   -out secp256k1-private.pem
@@ -283,11 +287,11 @@ openssl pkey -in ed25519-private.pem -aes-256-cbc \\
 openssl enc -aes-256-cbc -pbkdf2 -salt -pass pass:password -a \\
   -in multi-currency-wallet-plaintext.json \\
   -out multi-currency-wallet-ciphertext.txt
-\`\`\`
+```
 
 The first two encrypted outputs are concatenated in
-\`crypto-encrypted-test-keys.pem\`. The last ciphertext is embedded in
-\`encrypted-multicurrency-wallet.json\`; the envelope records its algorithm,
+`crypto-encrypted-test-keys.pem`. The last ciphertext is embedded in
+`encrypted-multicurrency-wallet.json`; the envelope records its algorithm,
 KDF, and test password. Delete plaintext intermediate files after fixture
 creation. The wallet-vector README identifies which fixtures are test-envelope
 contracts rather than product-specific wallet formats.
