@@ -442,7 +442,7 @@ void scan_json(struct scanner_params &sp)
         sp.info->scanner_version = "1.1";
         feature_recorder_def frd("json");
         frd.flags.xml = true;
-        sp.info->feature_defs.push_back( frd );
+        sp.info->feature_defs.push_back(std::move(frd));
 
 	/* Create a fast map of the valid json characters.*/
 	memset(is_json_second_char,0,sizeof(is_json_second_char));

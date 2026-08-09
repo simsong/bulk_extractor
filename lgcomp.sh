@@ -10,7 +10,7 @@ export LD_LIBRARY_PATH=/usr/local/lib
 
 #OPTS="-j 1"
 
-src/bulk_extractor -x accts_lg -x base16_lg -x email_lg -x gps_lg -x lightgrep -o $ODIR $OPTS $1
+src/bulk_extractor -x accts_lg -x email_lg -x gps_lg -x lightgrep -o $ODIR $OPTS $1
 mv $ODIR $TDIR/${GITHASH}
 
 src/bulk_extractor -x accts -x base16 -x email -x gps -o $ODIR $OPTS $1

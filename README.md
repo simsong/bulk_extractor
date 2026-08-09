@@ -34,8 +34,8 @@ make check
 make install
 ```
 
-For detailed instructions on installing packages and building bulk_extractor, read the wiki page here:
-https://github.com/simsong/bulk_extractor/wiki/Installing-bulk_extractor
+For detailed instructions on installing packages and building bulk_extractor,
+read [the source-controlled installation guide](doc/installation.md).
 
 For more information on bulk_extractor, visit: https://forensics.wiki/bulk_extractor
 
@@ -119,6 +119,15 @@ The factory returns a normal scanner_t function. Build modules against the
 same bulk_extractor source version as the executable; the scanner's PHASE_INIT
 handler must call sp.check_version(). Modules remain loaded until scanner
 cleanup completes.
+
+CONTAINER IMAGE
+===============
+
+The source tree includes a multi-stage Debian Bookworm `Dockerfile` for
+reproducible Linux scans of regular image files. Build and run it with an
+input mounted read-only and an output directory mounted read-write. The image
+runs unprivileged and intentionally omits libewf and Lightgrep; it is not a
+privileged raw-device appliance. See [doc/docker.md](doc/docker.md).
 
 BUILDING ON WINDOWS
 ===================

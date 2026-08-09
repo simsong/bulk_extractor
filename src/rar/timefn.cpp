@@ -115,7 +115,7 @@ int64 RarTime::GetRaw()
   return(INT32TO64(ft.dwHighDateTime,ft.dwLowDateTime));
 #elif defined(_UNIX) || defined(_EMX)
   time_t ut=GetUnix();
-  return(INT32TO64(0,ut)*10000000+rlt.Reminder);
+  return(static_cast<int64>(ut)*10000000+static_cast<int64>(rlt.Reminder));
 #else
   // We should never be here. It is better to use standard time functions.
 

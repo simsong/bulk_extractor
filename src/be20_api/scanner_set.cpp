@@ -31,6 +31,7 @@
 #endif
 
 #ifdef _WIN32
+#include <winsock2.h>
 #include <windows.h>
 #endif
 
@@ -241,6 +242,7 @@ std::map<std::string, std::string> scanner_set::get_realtime_stats() const
     uint64_t available_memory = machine_stats::get_available_memory();
     if (available_memory!=0){
         ret[AVAILABLE_MEMORY_STR] = std::to_string(available_memory);
+        ret[AVAILABLE_MEMORY_LEGACY_STR] = std::to_string(available_memory);
     }
     ret[SBUFS_CREATED_STR]   = std::to_string(sbuf_t::sbuf_total);
     ret[SBUFS_REMAINING_STR] = std::to_string(sbuf_t::sbuf_count);
@@ -843,7 +845,7 @@ void scanner_set::process_sbuf(const sbuf_t* sbufp, scanner_t *scanner)
         if (debug_flags.debug_benchmark && writer) {
             writer->xmlout("debug:bypass", "",
                            Formatter()
-                           << "sbuf='" << sbuf.pos0.str() << "' "
+                           << "sbuf='" << dfxml_writer::xmlescape(sbuf.pos0.str()) << "' "
                            << "bufsize='" << sbuf.bufsize << "' "
                            << "scanner='" << get_scanner_name(scanner) << "' "
                            << "reason='seen_before'", true);
@@ -855,7 +857,7 @@ void scanner_set::process_sbuf(const sbuf_t* sbufp, scanner_t *scanner)
     if (ngram_size > 0 && flags.scan_ngram_buffer == false) {
         if (debug_flags.debug_benchmark && writer) {
             writer->xmlout("debug:bypass", "",
-                           Formatter() << "sbuf='" << sbuf.pos0.str() << "' ngram_size='" << ngram_size << "'", true);
+                           Formatter() << "sbuf='" << dfxml_writer::xmlescape(sbuf.pos0.str()) << "' ngram_size='" << ngram_size << "'", true);
         }
         return;
     }
@@ -864,7 +866,7 @@ void scanner_set::process_sbuf(const sbuf_t* sbufp, scanner_t *scanner)
     if (info->min_distinct_chars > distinct_chars) {
         if (debug_flags.debug_benchmark && writer) {
             writer->xmlout("debug:bypass", "",
-                           Formatter() << "sbuf='" << sbuf.pos0.str() << "' min_distinct_chars='" << distinct_chars << "'", true);
+                           Formatter() << "sbuf='" << dfxml_writer::xmlescape(sbuf.pos0.str()) << "' min_distinct_chars='" << distinct_chars << "'", true);
         }
         return;
     }
