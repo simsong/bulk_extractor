@@ -16,6 +16,24 @@ linked from the [historical source map](#historical-source-map).
 **Status:** Unreleased. The source version is currently
 `2.2.0-DEVELOP`.
 
+### Executive summary
+
+bulk_extractor 2.2.0 is a reliability, security, and release-engineering
+update. It fixes CVE-2026-24857 in the bundled RAR decoder, removes fragile
+submodule checkout requirements, improves hostile-input and shutdown handling,
+and adds tested Windows, package, and documentation delivery paths. The release
+also adds practical extraction improvements, including WiFi PCAP preservation,
+Windows raw-device input, and runtime scanner modules.
+
+From the last commit reachable on 1 July 2026 (`898db1b`) through the current
+release candidate (`f6c69639`), the release changes 439 versioned paths and
+109,638 lines: 100,899 additions (92.0%) and 8,739 deletions (8.0%). Vendor
+imports account for 267 paths (60.8%): 155 `be20_api` paths (35.3%), 105
+`spdlog` paths (23.9%), and seven DFXML-schema paths (1.6%). The remaining 172
+paths (39.2%) are project source, tests, documentation, build, CI, and release
+work. The BE2.2.0 milestone has closed 87 issues and has three still open;
+the comparison range contains 109 merged pull-request commits.
+
 ### Release theme
 
 Version 2.2.0 is a reliability and maintainability release. A concentrated
