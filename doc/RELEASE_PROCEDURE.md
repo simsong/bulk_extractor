@@ -249,9 +249,10 @@ To use a different empty staging directory, pass
 
 `scripts/assemble_github_release.py` is the testable assembly path for the
 GitHub source archive and tested MinGW executable. The release workflow then
-adds its tested Snap packages and regenerates the checksums. The script reads
-the version only from `configure.ac`, verifies that the source archive embeds
-that same version, and writes these files to an empty output directory:
+adds its tested Snap packages and appends their checksums to the checksum file.
+The script reads the version only from `configure.ac`, verifies that the source
+archive embeds that same version, and writes these files to an empty output
+directory:
 
 - `bulk_extractor-X.Y.Z.tar.gz`
 - `bulk_extractor64.exe`
