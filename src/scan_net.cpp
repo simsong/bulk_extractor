@@ -495,6 +495,7 @@ bool scan_net_t::sanityCheckIP46Header(const sbuf_t &sbuf, size_t pos, scan_net_
 {
     if (pos >= sbuf.bufsize) return false;
     if (sbuf.get8u_unsafe(pos)==69) {           // v4 20 bytes
+        if (sbuf.bufsize - pos < sizeof(be20::ip4)) return false;
         const struct be20::ip4 *ip = sbuf.get_struct_ptr_unsafe<struct be20::ip4>( pos );
         if (ip->ip_v == 4){                     // ipv4 packet
             if (ip->ip_hl != 5) return false;	// IPv4 header length is 20 bytes (5 quads) (ignores options)
@@ -584,9 +585,10 @@ bool scan_net_t::sanityCheckIP46Header(const sbuf_t &sbuf, size_t pos, scan_net_
  * Return true if we should write the packet
  */
 
-void  scan_net_t::documentIPFields(const sbuf_t &sbuf, size_t pos, const generic_iphdr_t &h) const
+void scan_net_t::documentIPFields(const sbuf_t &sbuf, size_t pos, const generic_iphdr_t &h,
+                                  size_t feature_pos) const
 {
-    pos0_t pos0 = sbuf.pos0 + pos;
+    pos0_t pos0 = sbuf.pos0 + feature_pos;
 
     /* Report the IP address */
     /* based on the TTL, infer whether remote or local */
@@ -953,7 +955,8 @@ size_t scan_net_t::carvePCAPPackets(const sbuf_t &sbuf, size_t pos, sanityCache_
         /* If this is a IPv4 or IPv6 (from the learned header), write it out.*/
         if (h2.is_4or6()) {
             try {
-                documentIPFields(sbuf, packet_pos, h2);
+                const size_t ip_pos = packet_pos + (is_raw_ip ? 0 : ETHER_HEAD_LEN);
+                documentIPFields(sbuf, ip_pos, h2, packet_pos);
                 pwriter.pcap_writepkt(pch, sbuf, packet_pos, is_raw_ip, pseudo_frame_ethertype, link_type);
             }
             catch (port0_exception &e) {
