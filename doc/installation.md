@@ -68,8 +68,8 @@ sudo make install
 Native Windows builds are not supported. The maintained Windows path is the
 MinGW cross-build and Windows execution test in
 [`mingw.yml`](../.github/workflows/mingw.yml). It produces an unsigned CI
-artifact, not a release installer, and does not include E01 support. See
-[Windows build notes](mingw_notes.txt) for its operational limits, including
+artifact with E01 support, not a release installer. See the
+[Windows build notes](mingw_notes.md) for its operational limits, including
 raw-device input.
 
 ## Troubleshooting and support

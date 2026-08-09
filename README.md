@@ -134,16 +134,17 @@ BUILDING ON WINDOWS
 Native Windows builds of bulk_extractor are not currently supported.
 
 The `Windows MinGW build` GitHub Actions workflow cross-compiles the executable
-on Ubuntu for every pull request and uploads `bulk_extractor64.exe` in the
-`bulk_extractor-windows-x86_64` artifact. The workflow verifies that the PE
-executable does not import the MinGW, RE2, Abseil, Expat, zlib, or GNU crypto
-runtime DLLs. A Windows runner downloads and runs that exact artifact against
-a directory with a Unicode filename. The workflow uses the x86_64 MinGW-w64
-POSIX toolchain and static Expat, RE2, and Abseil from a pinned vcpkg checkout.
-The CI artifact is currently built without libewf, so it does not include E01
-support, is not signed, and is not a release installer. The workflow file and
-its maintained build notes are `.github/workflows/mingw.yml` and
-`doc/mingw_notes.txt`.
+on Ubuntu for relevant non-draft pull requests and uploads
+`bulk_extractor64.exe` in the `bulk_extractor-windows-x86_64` artifact. The
+workflow verifies that the PE executable does not import the MinGW, RE2,
+Abseil, Expat, zlib, or GNU crypto runtime DLLs. A Windows runner downloads and
+runs that exact artifact against
+a directory with a Unicode filename and an E01 fixture. The workflow uses the
+x86_64 MinGW-w64 POSIX toolchain, static Expat, RE2, and Abseil from a pinned
+vcpkg checkout, and a checksum-pinned static libewf source release. The CI
+artifact includes E01 support, but is not signed and is not a release installer.
+The workflow file and its maintained build notes are
+`.github/workflows/mingw.yml` and `doc/mingw_notes.md`.
 
 WINDOWS RAW DEVICES
 ===================
@@ -161,7 +162,7 @@ not lock, mount, alter, or write the device. It obtains the exact length with
 the Windows disk-length control code and reads through Win32 handles rather
 than treating a device as a C++ regular file. A volume path is not equivalent
 to its containing physical disk and may be subject to Windows volume-boundary
-rules near its final sectors. See `doc/mingw_notes.txt` for operational limits.
+rules near its final sectors. See `doc/mingw_notes.md` for operational limits.
 
 
 
