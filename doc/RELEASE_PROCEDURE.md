@@ -90,9 +90,9 @@ draft.
    `configure.ac` value exactly (`v` + package version), stop and correct the
    release PR before proceeding.
 5. **Let GitHub build the draft release.** Pushing the tag starts the source,
-   Windows, Snap, and draft-release workflows. The release workflow waits for
-   the tagged source and Windows results, builds and install-tests amd64 and
-   arm64 Snaps, then creates a draft GitHub Release. Wait for the workflow to
+   Windows, and draft-release workflows. The release workflow reuses the Snap
+   build-and-test workflow for amd64 and arm64, then creates a draft GitHub
+   Release. Wait for the workflow to
    finish successfully; do not create a second draft while it is running.
 6. **Inspect the draft.** Go to
    [Releases](https://github.com/simsong/bulk_extractor/releases) and open the
@@ -119,9 +119,9 @@ draft.
    **Publish release**. This is the manual action that makes the GitHub release
    public; saving a draft never publishes it.
 9. **Complete post-publication work.** Add the public release URL and final
-   artifact URLs to the release issue. Verify the tagged Snap workflow's Store
-   result separately; it uploads to the stable channel only when the protected
-   `snap-store` credentials and approvals are configured. Record downstream
+   artifact URLs to the release issue. Verify the release workflow's protected
+   Snap Store job separately; it uploads to the stable channel only when the
+   protected `snap-store` credentials and approvals are configured. Record downstream
    package submission URLs and, for 2.2.0, complete the CVE advisory follow-up
    after confirming the public release contains the fix.
 
