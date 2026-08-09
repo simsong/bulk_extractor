@@ -34,7 +34,7 @@ promise. Scanners compiled into bulk_extractor use `scanner_params`,
 Runtime scanner modules are supported through the versioned
 `bulk_extractor_scanner_v1()` factory. The loader searches directories supplied
 with `-P` and `BE_PATH`; build each module against the same bulk_extractor
-source version as the executable. This is a source-compatible extension
+source version as the executable. This is a source-level extension
 interface, not a stable binary ABI between releases.
 
 ## Path printing
