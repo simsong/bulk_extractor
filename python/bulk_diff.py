@@ -34,6 +34,14 @@ class BulkDiff:
             mode = report.escape_format()
         return bulk_extractor_reader.legacy_hex_to_octal(value) if mode == 'legacy' else value
 
+    def normalized_histogram(self, report, histogram_file):
+        """Normalize keys while preserving counts when representations collide."""
+        result = {}
+        for key, count in report.read_histogram(histogram_file).items():
+            key = self.normalize(report, key)
+            result[key] = result.get(key, 0) + count
+        return result
+
     def only_feature(self, feature):
         self.only_features = set([feature])
 
@@ -110,10 +118,8 @@ class BulkDiff:
 
             (b1,b2) = self.getab()
 
-            b1.hist = {self.normalize(b1, key): value
-                       for key, value in b1.read_histogram(histogram_file).items()}
-            b2.hist = {self.normalize(b2, key): value
-                       for key, value in b2.read_histogram(histogram_file).items()}
+            b1.hist = self.normalized_histogram(b1, histogram_file)
+            b2.hist = self.normalized_histogram(b2, histogram_file)
             b1.keys = set(b1.hist.keys())
             b2.keys = set(b2.hist.keys())
 

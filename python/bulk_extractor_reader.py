@@ -253,7 +253,7 @@ class BulkReport:
         except (AttributeError, IndexError):
             version = None
         if version is None:
-            raise ValueError("report.xml has no parseable bulk_extractor version")
+            raise ValueError("{} has no parseable bulk_extractor version".format(self.name))
         return "legacy" if version < (2, 0, 0) else "v2"
 
     def threads(self):

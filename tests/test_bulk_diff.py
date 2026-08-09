@@ -5,6 +5,8 @@ import io
 import pathlib
 import sys
 
+import pytest
+
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "python"))
 import bulk_diff
 import bulk_extractor_reader
@@ -46,3 +48,32 @@ def test_legacy_hex_matches_current_octal_only_in_auto_mode(tmp_path):
     raw.compare_features()
     assert "No differences" not in raw_output.getvalue()
     assert "differs" in raw_output.getvalue()
+
+
+def test_histogram_normalization_aggregates_colliding_keys(tmp_path):
+    legacy = tmp_path / "legacy"
+    current = tmp_path / "current"
+    legacy.mkdir()
+    current.mkdir()
+    write_report(legacy, "1.6.0", b"placeholder")
+    write_report(current, "2.2.0", b"placeholder")
+    (legacy / "email_histogram.txt").write_bytes(
+        b"n=2\tbad\\xff\n"
+        b"n=3\tbad\\377\n"
+    )
+    (current / "email_histogram.txt").write_bytes(b"n=5\tbad\\377\n")
+
+    output = io.StringIO()
+    comparison = bulk_diff.BulkDiff(
+        str(legacy), str(current), out=output, both=True, escape_mode="auto"
+    )
+    comparison.compare_histograms()
+    assert "No differences" in output.getvalue()
+
+
+def test_unparseable_version_names_the_report(tmp_path):
+    report = tmp_path / "unversioned"
+    report.mkdir()
+    write_report(report, "unknown", b"placeholder")
+    with pytest.raises(ValueError, match=str(report)):
+        bulk_extractor_reader.BulkReport(str(report)).escape_format()
