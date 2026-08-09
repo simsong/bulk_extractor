@@ -153,7 +153,7 @@ HEX		([0-9a-f])
 XPC		[ !#$%&'()*+,\-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ\[\\\]^_`abcdefghijklmnopqrstuvwxyz{|}~]
 PC		[ !#$%&'()*+,\-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ\[\\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"]
 ALNUM		[a-zA-Z0-9]
-TLD		(AC|AD|AE|AERO|AF|AG|AI|AL|AM|AN|AO|AQ|AR|ARPA|AS|ASIA|AT|AU|AW|AX|AZ|BA|BB|BD|BE|BF|BG|BH|BI|BIZ|BJ|BL|BM|BN|BO|BR|BS|BT|BV|BW|BY|BZ|CA|CAT|CC|CD|CF|CG|CH|CI|CK|CL|CM|CN|CO|COM|COOP|CR|CU|CV|CX|CY|CZ|DE|DJ|DK|DM|DO|DZ|EC|EDU|EE|EG|EH|ER|ES|ET|EU|FI|FJ|FK|FM|FO|FR|GA|GB|GD|GE|GF|GG|GH|GI|GL|GM|GN|GOV|GP|GQ|GR|GS|GT|GU|GW|GY|HK|HM|HN|HR|HT|HU|ID|IE|IL|IM|IN|INFO|INT|IO|IQ|IR|IS|IT|JE|JM|JO|JOBS|JP|KE|KG|KH|KI|KM|KN|KP|KR|KW|KY|KZ|LA|LB|LC|LI|LK|LR|LS|LT|LU|LV|LY|MA|MC|MD|ME|MF|MG|MH|MIL|MK|ML|MM|MN|MO|MOBI|MP|MQ|MR|MS|MT|MU|MUSEUM|MV|MW|MX|MY|MZ|NA|NAME|NC|NE|NET|NF|NG|NI|NL|NO|NP|NR|NU|NZ|OM|ORG|PA|PE|PF|PG|PH|PK|PL|PM|PN|PR|PRO|PS|PT|PW|PY|QA|RE|RO|RS|RU|RW|SA|SB|SC|SD|SE|SG|SH|SI|SJ|SK|SL|SM|SN|SO|SR|ST|SU|SV|SY|SZ|TC|TD|TEL|TF|TG|TH|TJ|TK|TL|TM|TN|TO|TP|TR|TRAVEL|TT|TV|TW|TZ|UA|UG|UK|UM|US|UY|UZ|VA|VC|VE|VG|VI|VN|VU|WF|WS|YE|YT|YU|ZA|ZM|ZW)
+TLD		([A-Z0-9][A-Z0-9-]{0,61}[A-Z0-9])
 
 
 DOMAINREF	{ATOM}
@@ -352,7 +352,7 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
     s.pos += yyleng;
 }
 
-[a-zA-Z0-9]\0([a-zA-Z0-9._%\-+]\0){1,62}[a-zA-Z0-9]\0@\0([a-zA-Z0-9._%\-]\0){1,250}\.\0({U_TLD1}|{U_TLD2}|{U_TLD3}|{U_TLD4})/[^a-zA-Z0-9._%\-]\0	{
+[a-zA-Z0-9]\0([a-zA-Z0-9._%\-+]\0){1,62}[a-zA-Z0-9]\0@\0([a-zA-Z0-9._%\-]\0){1,250}\.\0[a-zA-Z0-9]\0([a-zA-Z0-9-]\0){0,61}[a-zA-Z0-9]\0/[^a-zA-Z0-9._%\-]\0	{
     /* UTF-16 URL scanner */
     email_scanner &s = * yyemail_get_extra(yyscanner);
     s.check_margin();

@@ -239,6 +239,8 @@ class process_raw : public image_process {
     class file_info {
     public:;
         file_info(const std::filesystem::path path_, uint64_t offset_, uint64_t length_);
+        file_info(const file_info&) = delete;
+        file_info& operator=(const file_info&) = delete;
         ~file_info() {
 #ifdef _WIN32
             if (handle != INVALID_HANDLE_VALUE) CloseHandle(handle);

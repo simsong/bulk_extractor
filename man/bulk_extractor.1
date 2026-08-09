@@ -1,228 +1,242 @@
-.\" Process this file with
-.\" groff -man -Tascii foo.1
-.\"
-.TH BULK_EXTRACTOR 1 "OCT 2013" "User Manuals"
+.TH BULK_EXTRACTOR 1 "2026-08-02" "bulk_extractor 2.2.0-DEVELOP" "User Commands"
 .SH NAME
-bulk_extractor \- Scans a disk image for regular expressions and other content.
+bulk_extractor \- extract forensic features from disk images, devices, files,
+and directories
 .SH SYNOPSIS
-.B bulk_extractor -o 
-.I output_dir 
-[options] 
-.I [ image | -R dir ]
+.B bulk_extractor
+.B -o
+.I outdir
+.RI [ options ]
+.I image
+.br
+.B bulk_extractor
+.B -o
+.I outdir
+.B -R
+.I directory
+.RI [ options ]
 .SH DESCRIPTION
 .B bulk_extractor
-scans a disk image (or any other file) for a large number of pre-defined regular expressions and 
-other kinds of content. These items are called 
-.I features.
-When it finds a feature, 
-.B bulk_extractor
-writes the output to an output file. Each line of the output file
-contains a byte offset at which the feature was found, a tab, and the actual
-feature. Features therefore cannot contain the end-of-line character.
-
-.B bulk_extractor
-includes native support for EnCase (.E01) and AFFLIB (.aff) files, if
-it compiled and linked on a system containing those
-libraries. Alternatively, the -R option can be used to recursively
-scan and process a directory of individual files (disk images in such
-a directory will be treated as files, not as disk images).
-
-.B bulk_extractor
-is multi-threaded. By specifying the
-.B -j
-option, multiple copies of the program can be run. Each thread writes
-its results into its own feature file. The files are then combined by
-the primary thread when all of the secondary threads complete.
-
-.B bulk_extractor
-is a two-phase program. In phase 1 the features are extracted. In
-phase 2 a histogram is created of relevant features.
-
-.B bulk_extractor
-will also create a 
-.I wordlist
-of all the words that are found in the disk image. This can be used as
-a dictionary for cracking encryption.
-
-The options are as follows:
-.IP "-o outdir"
-Specifies the output directory, which will be created by 
-.B bulk_extractor
-if necessary.
-If the output directory contains data from a partial
-.B bulk_extractor
-run,
-.B bulk_extractor
-will attempt to resume where the previous run left off.
-
-.IP "-b bannerfile.txt"
-Read the contents of 
-.I bannerfile.txt 
-and stamp it at the beginning of each output file. This might be useful if
-you have some kind of privacy banner that needs to be stamped at the
-top of all of your files. 
-
-.IP "-r alert_list.txt"
-Specifies an
-.I alert list,
-(or red list), which is a list of terms that, if found, will be specifically flagged
-in a special
-.I alert file
-that begins with the letters
-.I ALERT.
-The alert list may contain individual terms, which
-must be found in their entirity and are case-sensitive, or wildcards with standard Unix
-globbing (e.g. *@company.com). Globbed terms are case-insensitive. 
-
-.IP "-w stop_list.txt"
-Specifies a 
-.I stop list,
-(or white list),
-which is a list of terms that, if found, will be placed in a special 
-.I "stopped"
-file (rather than in the main file). The whitelist may also contain
-globbed terms.
-
-.IP "-s frac[:passes]"
-Specify 
-.I random sampling
-parameters.
-
-.IP "-p path/format"
-Open a disk image and print the information found at 
-.I path.
-The 
-.I format
-specification may be
-.I r
-for raw output and 
-.I h 
-for hex output.
-.br
-Specify
-.I -p -
-for interactive mode.
-.br
-Specify
-.I -p -http
-for HTTP mode.
-
-.IP "-F <rfile>"
-Specifies a file of regular expressions to be used as search terms.
-
-.IP "-f <regex>"
-Specifies a regular expression to be used as a search term.
-
-.IP "-q nn"
-Quiet mode. Only prints every 
-.I nn
-status reports.
-.br
-Specify
-.I -1
-for no status.
-
-.IP "-Wn1:n2"
-The 
-.I scan_wordlist
-scanner should only extract words that are between 
-.I n1
+scans an image, file, raw device, or recursively selected directory for forensic
+features without parsing the file system.  It writes feature files, histograms,
+diagnostic records, and a DFXML report to
+.IR outdir .
+.
+Scanners can recursively inspect recognized derived data, such as compressed or
+encoded content.  The exact scanners and their defaults depend on the build;
+use
+.B -H
+to list them and their scanner-specific settings.
+.
+An existing output directory containing
+.B report.xml
+is resumed automatically.  Pages recorded as in progress when the prior run
+ended are deliberately skipped so that a data-dependent failure is not repeated.
+Use a new output directory for an independent scan, or
+.B -Z
+to remove an existing directory's contents before starting.
+.SH OUTPUT DIRECTORY
+.TP
+.B -o, --outdir \fIOUTDIR\fR
+Write results to
+.IR OUTDIR .
+This option is required for normal scans. When using
+.BR -p ,
+do not specify
+.BR -o .
+.SH INPUT AND OUTPUT OPTIONS
+.TP
+.B -R, --recurse
+Treat the input as a directory and recursively scan its files.  Do not use this
+option for a directory that represents one split or E01 image; supply the image
+itself instead.
+.TP
+.B -Z, --zap
+Recursively remove the contents of an existing output directory before scanning.
+Use with care.
+.TP
+.B -Y, --scan \fISTART\fR[\-\fIEND\fR]
+Scan only the specified byte-offset range.
+.TP
+.B -z, --page_start \fIPAGE\fR
+Begin scanning at page number
+.IR PAGE .
+.TP
+.B -p, --path \fIPATH\fR
+Print a forensic path instead of performing a normal scan.
+.I PATH
+may include an optional length and
+.B /h
+for hexadecimal or
+.B /r
+for raw output.  Use
+.B -p -
+or
+.B -p -i
+for interactive input, or
+.B -p -http
+or
+.B -p --http
+for HTTP input.
+.TP
+.B -A, --offset_add \fIBYTES\fR
+Add
+.I BYTES
+to reported feature locations.
+.TP
+.B -b, --banner_file \fIFILE\fR
+Prepend the contents of
+.I FILE
+to feature files.
+.TP
+.B -r, --alert_list \fIFILE\fR
+Read the alert list from
+.IR FILE .
+.TP
+.B -w, --stop_list \fIFILE\fR
+Read the stop list from
+.IR FILE .
+.SH SCANNER AND SEARCH OPTIONS
+.TP
+.B -e, --enable \fISCANNER\fR
+Enable a scanner.  May be specified more than once.
+.TP
+.B -x, --disable \fISCANNER\fR
+Disable a scanner.  May be specified more than once.  Use
+.B -x all
+to disable every scanner before selectively enabling scanners.
+.TP
+.B -E, --enable_exclusive \fISCANNER\fR
+Disable all scanners except
+.IR SCANNER .
+.TP
+.B -P, --scanner_dir \fIDIR\fR
+Search
+.I DIR
+for loadable scanner modules.  May be specified more than once.  The default
+search path also includes the directories in the
+.B BE_PATH
+environment variable.
+.TP
+.B -S, --set \fINAME=VALUE\fR
+Set a scanner or feature-recorder configuration value.  May be specified more
+than once.  Use
+.B -H
+to discover supported names, and see
+.I doc/carving.md
+for carving settings.
+.TP
+.B -f, --find \fIPATTERN\fR
+Search for a pattern.  May be specified more than once.
+.TP
+.B -F, --find_file \fIFILE\fR
+Read search patterns from
+.IR FILE .
+May be specified more than once.
+.TP
+.B --find-case-sensitive
+Make patterns supplied by
+.B -f
 and
-.I n2
-characters in length. 
-
-.SH TUNING
-These commands are useful for tuning operation:
-
-.IP "-C NN"
-Specifies the size of the context window.
-
-.IP "-S fr:<name>:window=NN"
-specifies context window for recorder <name> to NN.
-
-.IP "-S fr:<name>:window_before=NN"
-specifies context window after to NN for recorder <name>
-
-.IP "-S fr:<name>:window_after=NN"
-specifies context window before to NN for recorder <name>
-
-.IP "-G NN"
-specify the page size
-
-.IP "-g NN"
-Specifies the size of the margin in bytes.
-
-.IP "-j NN"
-Use 
-.I n
-threads for analysis. Normally you do not need specify this, as the
-default is the number of processors on the current computer.
-
-.IP "-m NN"
-Have
-.B bulk_extractor
-wait at most NN minutes for scanners to finish after all data have been read.
-
-.SH DEBUGGING
-The following commands are useful for debugging:
-
-.IP "-V"
-Print the version number
-
-.IP "-R outdir"
-Restarts the program from where it left off for a particular directory.
-
-.IP "-B nn"
-Set the dedup Bloom filter to 
-.I nn
-bits. This is used by the 
-.I scan_wordlist
-scanner.
-
-.IP "-M nn"
-Specifies a maximum recursion depth of 
-.I nn.
-
-.IP "-z pagenum"
-Start on page number
-.I pagenum.
-
-.IP "-Y <o1>[-<o2>]"
-Start at input offset 
-.I o1
-optionally ending at offset
-.I o2
-
-.IP "-dN"
-Enable debugging level 
-.I N.
-
-.SH SCANNER CONTROL
-Finally, you can control scanners with these options:
-
-.IP "-P <dir>"
-Specifies a directory in which to find plugins.
-
-.IP "-E scanner"
-Turns off all scanners, then enabled scanner scanner.
-
-.IP "-e scanner"
-Enables a scanner.
-
-.IP "-x scanner"
-Disables a scanner.
-
-
-.SH HISTORY
-.BR "bulk_extractor" 
-is based on a feature extractor and named entity
-recognizer developed for SBook in 1991. The feature extractor was
-repurposed for disk images in 2003. The stand-alone 
-.B bulk_extractor
-program was rewritten in 2005 and publicly released in 2007. The
-multi-threaded 
-.B bulk_extractor
-was released in May 2010.
+.B -F
+case-sensitive.  Case-insensitive matching is the default.
+.SH PERFORMANCE OPTIONS
+.TP
+.B -j, --threads \fIN\fR
+Use
+.I N
+worker threads.
+.TP
+.B -J, --no_threads
+Read and process data in the primary thread.
+.TP
+.B -G, --pagesize \fIBYTES\fR
+Set the primary page size.
+.TP
+.B -g, --marginsize \fIBYTES\fR
+Set the page margin size.
+.TP
+.B -M, --max_depth \fIN\fR
+Set the maximum recursive-processing depth.
+.TP
+.B -s, --sampling \fIFRACTION\fR[:\fIPASSES\fR]
+Set random-sampling parameters.
+.TP
+.B --max_minute_wait \fIMINUTES\fR
+Set the maximum time to wait for processing and shutdown after input is read.
+.TP
+.B --max_bad_alloc_errors \fIN\fR
+Set the number of allocation failures tolerated before the scan stops.
+.SH LOGGING AND INFORMATION OPTIONS
+.TP
+.B -d, --debug
+Enable debug-level diagnostic logging.  Numeric debug masks are no longer
+supported.
+.TP
+.B --log-level \fILEVEL\fR
+Set the diagnostic log level to
+.BR trace ,
+.BR debug ,
+.BR info ,
+.BR warning ,
+.BR error ,
+.BR critical ,
+or
+.BR off .
+.TP
+.B --log-file \fIFILE\fR
+Write diagnostics to
+.I FILE
+instead of the default
+.IR outdir /bulk_extractor.log .
+.TP
+.B -q, --quit
+Suppress status and performance output.
+.TP
+.B -0, --no_notify
+Disable real-time notifications.
+.TP
+.B -1, --version1
+Use version-1-style console notifications.
+.TP
+.B --notify_main_thread
+Display notifications in the main thread; useful with ThreadSanitizer.
+.TP
+.B --notify_async
+Display notifications asynchronously (the default).
+.TP
+.B -H, --info_scanners
+Report information about each scanner, including scanner-specific
+.B -S
+settings.
+.TP
+.B -V, --version
+Print the program version and exit.
+.TP
+.B -h, --help
+Print command-line help and exit.
+.SH ENVIRONMENT
+.TP
+.B BE_PATH
+A colon-separated list of directories in which to search for loadable scanner
+modules.
+.TP
+.B LOG_LEVEL
+Default diagnostic log level when
+.B --log-level
+is not supplied.
+.SH FILES
+.TP
+.I outdir/report.xml
+DFXML report describing the scan.
+.TP
+.I outdir/bulk_extractor.log
+Default diagnostic log file.
+.SH SEE ALSO
+.IR README.md ,
+.IR doc/carving.md ,
+.IR doc/logging.md ,
+and the published manuals at
+.B https://simsong.github.io/bulk_extractor/ .
 .SH AUTHOR
 Simson Garfinkel <simsong@acm.org>
-

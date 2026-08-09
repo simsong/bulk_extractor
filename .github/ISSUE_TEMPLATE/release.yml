@@ -1,0 +1,97 @@
+name: Release
+description: Plan, validate, and publish a versioned bulk_extractor release.
+title: "release: "
+labels: [release]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this issue as the release record. Do not attach forensic images, unredacted scan output, credentials, presigned URLs, or other sensitive material. Record only approved image identifiers/checksums and redacted validation evidence.
+  - type: input
+    id: version
+    attributes:
+      label: Target version
+      description: The intended release version, for example `2.2.1`.
+      placeholder: "2.2.1"
+    validations:
+      required: true
+  - type: input
+    id: tag
+    attributes:
+      label: Release tag
+      description: Immutable signed annotated tag to create after release-PR merge.
+      placeholder: "v2.2.1"
+    validations:
+      required: true
+  - type: input
+    id: commit
+    attributes:
+      label: Reviewed commit SHA
+      description: Full SHA at which the tag will be created. Do not use a mutable branch name.
+      placeholder: "0123456789abcdef..."
+    validations:
+      required: true
+  - type: textarea
+    id: people
+    attributes:
+      label: Release manager and package maintainers
+      description: Name the release manager and the maintainers authorized to submit Debian and RPM packages.
+      placeholder: |
+        Release manager: @...
+        Debian repository maintainer: @...
+        RPM repository maintainer: @...
+    validations:
+      required: true
+  - type: textarea
+    id: large_images
+    attributes:
+      label: Approved large-image validation inputs
+      description: Record only a safe image identifier, SHA-256 checksum, approval source, and storage/access policy. Never attach or link case data.
+      placeholder: |
+        Identifier: ...
+        SHA-256: ...
+        Approval: ...
+        Access policy: ...
+    validations:
+      required: true
+  - type: textarea
+    id: build_evidence
+    attributes:
+      label: Build and validation evidence
+      description: Add URLs for macOS, Ubuntu, Fedora/RPM, Windows, and AWS validation jobs as they complete. Include redacted result summaries and checksums only.
+      placeholder: |
+        - [ ] macOS `make distcheck`:
+        - [ ] macOS large-image scan:
+        - [ ] Ubuntu `make distcheck`:
+        - [ ] Fedora/RPM `make distcheck`:
+        - [ ] Windows executable and Unicode test:
+        - [ ] AWS large-image validation and cleanup:
+    validations:
+      required: true
+  - type: textarea
+    id: artifacts
+    attributes:
+      label: Release artifacts and provenance
+      description: Add each artifact filename, SHA-256 checksum, producing job URL, and eventual publication URL.
+      placeholder: |
+        - [ ] Source archive:
+        - [ ] Windows executable:
+        - [ ] Debian package:
+        - [ ] RPM package:
+        - [ ] AWS validation summary:
+        - [ ] SHA256SUMS:
+    validations:
+      required: true
+  - type: checkboxes
+    id: gates
+    attributes:
+      label: Release gates
+      options:
+        - label: The release PR updates `configure.ac`, release notes, and applicable package metadata.
+          required: true
+        - label: The tag will be signed, annotated, immutable, and created at the reviewed SHA only after all required checks pass.
+          required: true
+        - label: I will use a draft GitHub Release and publish it only after the evidence and artifacts are reviewed.
+          required: true
+        - label: I will not include confidential forensic data or credentials in this issue.
+          required: true
