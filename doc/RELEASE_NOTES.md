@@ -14,7 +14,7 @@ linked from the [historical source map](#historical-source-map).
 ## 2.2.0 (draft)
 
 **Status:** Unreleased. The source version is currently
-`2.2.0-DEVELOP`.
+`v2.2.0alpha1`.
 
 ### Executive summary
 
