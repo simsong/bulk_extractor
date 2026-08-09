@@ -3,12 +3,14 @@ name: Windows MinGW build
 on:
   push:
     branches: [main]
+    tags: ["v*"]
   pull_request:
     types: [opened, reopened, synchronize, ready_for_review]
     paths-ignore:
       - '**.md'
       - 'AGENTS.md'
       - 'doc/**'
+      - '.github/workflows/latex-docs.yml'
       - '.github/CODEOWNERS'
       - '.github/ISSUE_TEMPLATE/**'
       - '.github/pull_request_template.md'
@@ -58,6 +60,24 @@ jobs:
             --host-triplet=x64-linux \
             --clean-after-build
 
+      - name: Build static libewf
+        run: |
+          libewf_url=https://github.com/libyal/libewf-legacy/releases/download/20140814/libewf-20140814.tar.gz
+          libewf_sha256=38cdd05f09da2037a8eba50d8f39aeeada39dd2c6008c9ffac4f554cf957e414
+          curl -fsSL --retry 3 -o libewf.tar.gz "$libewf_url"
+          echo "$libewf_sha256  libewf.tar.gz" | sha256sum -c -
+          tar xzf libewf.tar.gz
+          cd libewf-20140814
+          target_root="$VCPKG_ROOT/installed/x64-mingw-static"
+          ./configure --host=x86_64-w64-mingw32 --prefix="$target_root" \
+            --enable-static --disable-shared --disable-nls
+          # The legacy `library` target omits libcthreads even though libewf
+          # links against it. Build that prerequisite explicitly.
+          make -j2 -C libcthreads
+          make -j2 library
+          make -C libewf install-libLTLIBRARIES
+          make -C include install-data
+
       - name: Cross-compile bulk_extractor
         run: |
           bash bootstrap.sh
@@ -68,7 +88,8 @@ jobs:
           PKG_CONFIG_LIBDIR="$target_root/lib/pkgconfig" \
           CPPFLAGS="-I$target_root/include" \
           LDFLAGS="-L$target_root/lib" \
-            ../configure --host=x86_64-w64-mingw32 --disable-libewf --quiet
+            ../configure --host=x86_64-w64-mingw32 --quiet
+          grep -q '^#define HAVE_LIBEWF 1' config.h
           make -j2 LDFLAGS="-L$target_root/lib -all-static"
 
       - name: Verify standalone Windows executable
@@ -140,6 +161,19 @@ jobs:
           if (-not (Select-String -Path output\email.txt `
                 -SimpleMatch "unicode-path@example.com" -Quiet)) {
             throw "bulk_extractor did not scan the Unicode-named file"
+          }
+
+      - name: Scan an E01 image
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          & "$PWD\dist\bulk_extractor64.exe" -0q -o e01-output `
+            "$PWD\src\tests\CFReDS001.E01"
+          if ($LASTEXITCODE -ne 0) {
+            throw "bulk_extractor could not scan the E01 fixture"
+          }
+          if (-not (Test-Path e01-output\report.xml)) {
+            throw "bulk_extractor did not create a report for the E01 fixture"
           }
 
       - name: Scan the IP fixture

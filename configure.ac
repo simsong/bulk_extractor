@@ -8,7 +8,7 @@
 # and http://www.bioinf.uni-freiburg.de/~mmann/HowTo/automake.html
 
 AC_PREREQ([2.69])
-AC_INIT([BULK_EXTRACTOR],[2.2.0-DEVELOP],[bugs@digitalcorpora.org])
+AC_INIT([BULK_EXTRACTOR],[v2.2.0alpha1],[bugs@digitalcorpora.org])
 AC_CONFIG_MACRO_DIR(m4)
 
 AC_MSG_NOTICE([at start CPPFLAGS are $CPPFLAGS])
@@ -82,8 +82,16 @@ fi
 ## rar support
 AC_ARG_ENABLE([rar],
               AS_HELP_STRING([--disable-rar], [Disable RAR decompression]),
-              [],
-	      [AC_DEFINE(USE_RAR, 1, [Use RAR decompression]) rar="yes"])
+              [rar="$enableval"],
+              [rar="yes"])
+case "$rar" in
+  yes) AC_DEFINE(USE_RAR, 1, [Use RAR decompression]) ;;
+  no) ;;
+  *) AC_MSG_ERROR([--enable-rar accepts only yes or no]) ;;
+esac
+if test "x$rar" != "xyes"; then
+  AC_MSG_WARN([RAR support is disabled; RAR tests will not be built or run])
+fi
 AM_CONDITIONAL([RAR_ENABLED], [test "yes" = "$rar"])
 
 

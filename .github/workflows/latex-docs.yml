@@ -4,12 +4,12 @@ on:
   pull_request:
     types: [opened, reopened, synchronize, ready_for_review]
     paths:
-      - 'doc/**/*.tex'
+      - 'doc/**'
       - '.github/workflows/latex-docs.yml'
   push:
     branches: [main]
     paths:
-      - 'doc/**/*.tex'
+      - 'doc/**'
       - '.github/workflows/latex-docs.yml'
   workflow_dispatch:
 
@@ -24,7 +24,6 @@ concurrency:
 
 jobs:
   build:
-    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

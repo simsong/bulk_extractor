@@ -34,8 +34,8 @@ make check
 make install
 ```
 
-For detailed instructions on installing packages and building bulk_extractor, read the wiki page here:
-https://github.com/simsong/bulk_extractor/wiki/Installing-bulk_extractor
+For detailed instructions on installing packages and building bulk_extractor,
+read [the source-controlled installation guide](doc/installation.md).
 
 For more information on bulk_extractor, visit: https://forensics.wiki/bulk_extractor
 
@@ -134,15 +134,16 @@ BUILDING ON WINDOWS
 Native Windows builds of bulk_extractor are not currently supported.
 
 The `Windows MinGW build` GitHub Actions workflow cross-compiles the executable
-on Ubuntu for relevant non-draft pull requests and uploads `bulk_extractor64.exe` in the
-`bulk_extractor-windows-x86_64` artifact. The workflow verifies that the PE
-executable does not import the MinGW, RE2, Abseil, Expat, zlib, or GNU crypto
+on Ubuntu for relevant non-draft pull requests and uploads
+`bulk_extractor64.exe` in the `bulk_extractor-windows-x86_64` artifact. The
+workflow verifies that the PE executable does not import the MinGW, RE2,
+Abseil, Expat, zlib, or GNU crypto
 runtime DLLs. A Windows runner downloads and runs that exact artifact against
-a directory with a Unicode filename. The workflow uses the x86_64 MinGW-w64
-POSIX toolchain and static Expat, RE2, and Abseil from a pinned vcpkg checkout.
-The CI artifact is currently built without libewf, so it does not include E01
-support, is not signed, and is not a release installer. The workflow file and
-its maintained build notes are `.github/workflows/mingw.yml` and
+a directory with a Unicode filename and an E01 fixture. The workflow uses the
+x86_64 MinGW-w64 POSIX toolchain, static Expat, RE2, and Abseil from a pinned
+vcpkg checkout, and a checksum-pinned static libewf source release. The CI
+artifact includes E01 support, but is not signed and is not a release installer.
+The workflow file and its maintained build notes are `.github/workflows/mingw.yml` and
 `doc/mingw_notes.md`.
 
 WINDOWS RAW DEVICES

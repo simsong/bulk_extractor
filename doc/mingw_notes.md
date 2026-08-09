@@ -9,8 +9,9 @@ native Windows developer build or an installer. The workflow runs on pushes to
 documentation-only pull requests are excluded.
 
 On Ubuntu 24.04, the workflow installs the x86_64 MinGW-w64 POSIX toolchain,
-checks out a pinned vcpkg revision, and builds static Expat, RE2, and Abseil.
-It then configures an out-of-tree cross-build with:
+checks out a pinned vcpkg revision, builds static Expat, RE2, and Abseil, and
+builds a checksum-pinned static libewf release. It then configures an
+out-of-tree cross-build with:
 
 ```sh
 bash bootstrap.sh
@@ -19,7 +20,8 @@ PKG_CONFIG="pkg-config --static" \
 PKG_CONFIG_LIBDIR="$target_root/lib/pkgconfig" \
 CPPFLAGS="-I$target_root/include" \
 LDFLAGS="-L$target_root/lib" \
-  ../configure --host=x86_64-w64-mingw32 --disable-libewf --quiet
+  ../configure --host=x86_64-w64-mingw32 --quiet
+grep -q '^#define HAVE_LIBEWF 1' config.h
 make -j2 LDFLAGS="-L$target_root/lib -all-static"
 ```
 
@@ -31,13 +33,14 @@ it rejects MinGW, RE2, Abseil, Expat, zlib, and GNU crypto runtime DLLs.
 A Windows runner downloads that exact artifact and verifies that it can:
 
 - recursively scan a directory containing a Unicode filename;
+- scan the checked-in E01 fixture and create its report;
 - scan the checked-in IP fixture and report its expected IPv4 address; and
 - scan an attached disposable FAT32 VHD as a raw drive-letter volume and
   recover a known email address.
 
-The artifact intentionally omits libewf, so it does not support E01 images. It
-is not signed and is not a release installer. Keep the import check and Windows
-runtime tests in the same pull request as any Windows-build change.
+The artifact includes static libewf support but is not signed and is not a
+release installer. Keep the import check and Windows runtime tests in the same
+pull request as any Windows-build change.
 
 ## Raw-device input
 

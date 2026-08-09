@@ -242,6 +242,7 @@ std::map<std::string, std::string> scanner_set::get_realtime_stats() const
     uint64_t available_memory = machine_stats::get_available_memory();
     if (available_memory!=0){
         ret[AVAILABLE_MEMORY_STR] = std::to_string(available_memory);
+        ret[AVAILABLE_MEMORY_LEGACY_STR] = std::to_string(available_memory);
     }
     ret[SBUFS_CREATED_STR]   = std::to_string(sbuf_t::sbuf_total);
     ret[SBUFS_REMAINING_STR] = std::to_string(sbuf_t::sbuf_count);
