@@ -54,6 +54,7 @@ TEST_CASE("producer wait snapshots are safe while workers run", "[thread_safety]
     std::thread reader([&] {
         while (read_snapshots.load()) {
             observed_wait.store(observed_wait.load() || ss.producer_wait_ns() > 0);
+            std::this_thread::yield();
         }
     });
     std::thread producer([&] { ss.main_thread_wait(); });
