@@ -407,6 +407,18 @@ bool scan_net_t::invalidIP(const uint8_t addr[16], sa_family_t family)
     }
 }
 
+/* Validate the version, type, and minimum header length without excluding
+ * legitimate management, control, or data subtypes. IEEE 802.11 currently
+ * defines protocol version 0; frame type 3 is reserved. */
+bool scan_net_t::validIEEE80211Frame(const sbuf_t &sbuf, size_t pos, size_t packet_len)
+{
+    if (pos > sbuf.bufsize || packet_len > sbuf.bufsize - pos || packet_len < 2) return false;
+    const uint16_t frame_control = sbuf.get16u_unsafe(pos);
+    const uint8_t type = (frame_control >> 2) & 0x3;
+    if ((frame_control & 0x3) != 0 || type == 3) return false;
+    return packet_len >= (type == 1 ? 10 : IEEE80211_BASE_HEADER_LEN);
+}
+
 #ifndef INET4_ADDRSTRLEN
 #define INET4_ADDRSTRLEN 64
 #endif
@@ -915,6 +927,7 @@ size_t scan_net_t::carvePCAPPackets(const sbuf_t &sbuf, size_t pos, sanityCache_
     if ( pcap_at_end_of_sbuf || next_pcap_header_looks_valid ){
         const size_t packet_pos = pos + PCAP_RECORD_HEADER_SIZE;
         if (link_type == DLT_IEEE802_11) {
+            if (!validIEEE80211Frame(sbuf, packet_pos, pch.cap_len)) return 0;
             recordWifiFrame(sbuf, packet_pos, pch.cap_len, pch);
             const size_t ip_offset = ieee80211_payload_offset(sbuf, packet_pos, pch.cap_len);
             if (ip_offset != 0) {

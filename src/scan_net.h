@@ -74,6 +74,7 @@ struct scan_net_t {
     static bool invalidIP4( const uint8_t *const cc);
     static bool invalidIP6(const uint16_t addr[8]);
     static bool invalidIP(const uint8_t addr[16], sa_family_t family);
+    static bool validIEEE80211Frame(const sbuf_t &sbuf, size_t pos, size_t packet_len);
     static std::string ip2string(const struct be20::ip4_addr *const a);
     static std::string ip2string(const uint8_t *addr, sa_family_t family);
     static std::string mac2string(const struct be20::ether_addr *const e);
