@@ -1029,13 +1029,13 @@ TEST_CASE("test regex_vector", "[regex]") {
 
         REQUIRE(rv.size() == 3);
 
-        std::string found;
-        REQUIRE(rv.search_all("hello1", &found) == false);
-        REQUIRE(rv.search_all("check1", &found) == true);
-        REQUIRE(found == "check1");
+        std::string match;
+        REQUIRE(rv.search_all("hello1", &match) == false);
+        REQUIRE(rv.search_all("check1", &match) == true);
+        REQUIRE(match == "check1");
 
-        REQUIRE(rv.search_all("before check2 after", &found) == true);
-        REQUIRE(found == "check2");
+        REQUIRE(rv.search_all("before check2 after", &match) == true);
+        REQUIRE(match == "check2");
 
         rv.clear();
         rv.push_back("[a-z]*@company.com");
@@ -1048,7 +1048,7 @@ TEST_CASE("test regex_vector", "[regex]") {
         std::string bigstring = std::string(bytes,'a')
             + " user@company.com "
             + std::string(1024*1024*2,'b');
-        found="";
+        match="";
         size_t offset = 0;
         size_t len = 0;
         aftimer t;
@@ -1058,13 +1058,13 @@ TEST_CASE("test regex_vector", "[regex]") {
             std::cerr << "Timeout hit!" << std::endl;
             REQUIRE(false);  // Tell catch that we failed.
         }).detach();
-        REQUIRE(rv.search_all(bigstring, &found, &offset, &len) == true);
+        REQUIRE(rv.search_all(bigstring, &match, &offset, &len) == true);
 #ifndef _WIN32
 alarm(0);
 #endif
         t.stop();
         std::cout << "time=" << t.elapsed_seconds() << "\n";
-        REQUIRE(found == "user@company.com");
+        REQUIRE(match == "user@company.com");
         REQUIRE(offset == bytes+1);
         REQUIRE(len == 16 );
     }

@@ -225,7 +225,7 @@ void scan_wordlist(scanner_params &sp)
             def.flags.no_context   = true;
             def.flags.no_stoplist  = true;
             def.flags.no_alertlist = true;
-            sp.info->feature_defs.push_back( def );
+            sp.info->feature_defs.push_back(std::move(def));
         }
         if (word_min > word_max){
             std::cerr << "ERROR: word_min (" << word_min << ") > word_max (" << word_max << ")\n";

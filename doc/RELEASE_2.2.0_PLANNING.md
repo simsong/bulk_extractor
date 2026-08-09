@@ -1,4 +1,4 @@
-# bulk_extractor and be20_api source and technical-debt audit
+# bulk_extractor 2.2.0 release planning and technical-debt audit
 
 Date: 2026-07-19
 
@@ -507,11 +507,9 @@ rather than retained beside current material.
 
 ### Historical planning/status documents
 
-- `doc/ROADMAP_1.4.md`, `ROADMAP_1.5.md`, and `ROADMAP_1.6.md` are historical
-  records but are not labeled archival.
-- `doc/ROADMAP_2.0.md` still says C++14, `master`, be13_api, working plug-ins,
-  SQL by default, and a dependency topology contradicted by the source. It also
-  mixes completed plans with unchecked work.
+- The historical 1.4, 1.5, 1.6, and 2.0 roadmaps are consolidated into
+  `doc/RELEASE_NOTES.md`; its historical source map links immutable,
+  commit-specific copies for research.
 - `src/TODO.md` contains old crash traces and untriaged claims rather than an
   actionable current backlog.
 - `src/be20_api/TODO.md` is a 2021 work log containing completed, superseded,
@@ -803,8 +801,8 @@ appropriate validation in its GitHub issue.
 - [x] Replace the obsolete programmer manual with the 2.x scanner and build manual.
 - [x] Remove the version-1.x user manuals, worked examples, and captured help.
 - [x] Remove the obsolete `src/be13_api` include path from `doc/Makefile.am`.
-- [ ] Mark the 1.4, 1.5, and 1.6 roadmaps as historical.
-- [ ] Mark or replace `ROADMAP_2.0.md`, which mixes obsolete plans and completed work.
+- [x] Consolidate the 1.4, 1.5, 1.6, and 2.0 roadmaps into the release notes,
+  retaining commit-specific historical copies in its source map.
 - [ ] Convert root and be20_api TODO/status work logs into a current owned backlog or archive them.
 - [ ] Reconcile root and be20_api NEWS/ChangeLog histories into a coherent release history.
 - [x] Rewrite the be20_api README so it does not claim an unchanged 1.3-era API.
