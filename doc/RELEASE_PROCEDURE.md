@@ -50,6 +50,90 @@ Use a `release/X.Y` branch only when maintaining an established release line
 while `main` continues with new development. Do not create a release branch for
 an ordinary single-release cycle.
 
+## Step-by-step GitHub release runbook
+
+Follow these steps in order for a normal upstream release. The release manager
+performs the manual GitHub actions; Codex can prepare the release PR, run the
+local checks, create the signed tag when authorized, and inspect the resulting
+draft.
+
+1. **Open the release issue.** Use the
+   [release issue template](../.github/ISSUE_TEMPLATE/release.yml). Record the
+   target `X.Y.Z` package version, proposed `vX.Y.Z` tag, intended commit SHA,
+   required validation gates, and the people authorized for downstream package
+   submissions. Do not include credentials or forensic data.
+2. **Prepare the release PR.** Starting from `main`, change `configure.ac` to
+   the final package version `X.Y.Z` (without a leading `v`), update
+   `doc/RELEASE_NOTES.md`, package metadata, and any release documentation.
+   For example, promote the current development version `v2.2.0alpha1` to
+   `2.2.0` before making tag `v2.2.0`. Review the PR, address review feedback,
+   and merge it only after its required checks are green.
+3. **Record validation evidence.** On the reviewed commit, run the gates
+   selected in the release issue. At minimum, record the macOS
+   `make distcheck` result and the required GitHub Actions results. Include
+   container, large-image, Debian, and RPM gates only when the release issue
+   makes them required. Record job URLs, artifact names, and checksums in the
+   release issue.
+4. **Create the immutable tag.** Update the local `main` checkout, verify that
+   the selected SHA is the reviewed merged commit, then create and verify a
+   signed annotated tag. Substitute the actual version and SHA:
+
+   ```sh
+   git switch main
+   git pull --ff-only
+   git tag -s -a vX.Y.Z <reviewed-commit-sha> -m "bulk_extractor vX.Y.Z"
+   git verify-tag vX.Y.Z
+   git push origin vX.Y.Z
+   ```
+
+   Never retag a release. If the tag does not match the final
+   `configure.ac` value exactly (`v` + package version), stop and correct the
+   release PR before proceeding.
+5. **Let GitHub build the draft release.** Pushing the tag starts the source,
+   Windows, Snap, and draft-release workflows. The release workflow waits for
+   the tagged source and Windows results, builds and install-tests amd64 and
+   arm64 Snaps, then creates a draft GitHub Release. Wait for the workflow to
+   finish successfully; do not create a second draft while it is running.
+6. **Inspect the draft.** Go to
+   [Releases](https://github.com/simsong/bulk_extractor/releases) and open the
+   draft for `vX.Y.Z`. Confirm the title is `BE vX.Y.Z`, the tag points to the
+   reviewed SHA, and the notes accurately describe the release. Confirm these
+   assets and their entries in `SHA256SUMS`:
+
+   - `bulk_extractor-X.Y.Z.tar.gz`;
+   - `bulk_extractor64.exe`;
+   - one tested `*_amd64.snap` and one tested `*_arm64.snap`.
+
+   GitHub also shows its automatically generated source ZIP and tarball. Leave
+   them in place, but treat the verified `bulk_extractor-X.Y.Z.tar.gz` as the
+   project source artifact.
+7. **Add selected manual artifacts.** If the release issue requires direct
+   download packages, run `make release-deb RELEASE_TAG=vX.Y.Z` or
+   `make release-rpm RELEASE_TAG=vX.Y.Z` in a clean tagged checkout, verify
+   the resulting package artifacts, add them to the draft, and regenerate or
+   extend `SHA256SUMS`. Debian, Fedora, and openSUSE archive submissions use
+   source packages and their own signing/build systems; attaching a binary to
+   GitHub is not an archive submission.
+8. **Publish the GitHub Release.** Recheck the title, notes, tag, commit,
+   asset names, checksums, and required validation links. Click
+   **Publish release**. This is the manual action that makes the GitHub release
+   public; saving a draft never publishes it.
+9. **Complete post-publication work.** Add the public release URL and final
+   artifact URLs to the release issue. Verify the tagged Snap workflow's Store
+   result separately; it uploads to the stable channel only when the protected
+   `snap-store` credentials and approvals are configured. Record downstream
+   package submission URLs and, for 2.2.0, complete the CVE advisory follow-up
+   after confirming the public release contains the fix.
+
+### Manual-draft fallback
+
+Use this only when the automated draft workflow is intentionally unavailable
+or has been repaired and rerun. From **Releases**, choose **Draft a new
+release**, select the already-pushed signed `vX.Y.Z` tag, set the title to
+`BE vX.Y.Z`, add the reviewed notes, and upload only artifacts verified for
+that exact tag with their checksums. Saving the draft is safe; use the review
+checklist in step 6 before publishing it.
+
 ## Prerequisites
 
 Before beginning, open a release issue and record:
@@ -161,12 +245,13 @@ make release \
 To use a different empty staging directory, pass
 `RELEASE_ARTIFACT_DIR=/absolute/path` to `make release`.
 
-### GitHub source and Windows assembly
+### GitHub release assembly
 
 `scripts/assemble_github_release.py` is the testable assembly path for the
-GitHub source archive and tested MinGW executable. It reads the version only
-from `configure.ac`, verifies that the source archive embeds that same version,
-and writes these files to an empty output directory:
+GitHub source archive and tested MinGW executable. The release workflow then
+adds its tested Snap packages and regenerates the checksums. The script reads
+the version only from `configure.ac`, verifies that the source archive embeds
+that same version, and writes these files to an empty output directory:
 
 - `bulk_extractor-X.Y.Z.tar.gz`
 - `bulk_extractor64.exe`

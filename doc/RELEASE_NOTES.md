@@ -307,6 +307,9 @@ through the project's normal pull-request and CI process.
   ([#621](https://github.com/simsong/bulk_extractor/issues/621)).
 - The release workflow now assembles and verifies artifacts in a read-only job;
   only its separate draft-publishing job receives repository write permission.
+- Added a step-by-step release-manager runbook covering the release issue,
+  final version promotion, signed tag, automated or manual draft, asset review,
+  public publication, and downstream follow-up.
 - Release managers can run an AWS OIDC large-image gate that uses a disposable,
   fixed-size instance with an eight-hour shutdown cap, encrypted temporary
   storage, least-privilege input/output access, cleanup, and an attested,
