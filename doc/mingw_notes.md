@@ -16,6 +16,7 @@ out-of-tree cross-build with:
 ```sh
 bash bootstrap.sh
 mkdir build-mingw && cd build-mingw
+target_root="$VCPKG_ROOT/installed/x64-mingw-static"
 PKG_CONFIG="pkg-config --static" \
 PKG_CONFIG_LIBDIR="$target_root/lib/pkgconfig" \
 CPPFLAGS="-I$target_root/include" \
