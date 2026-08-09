@@ -17,6 +17,8 @@ permissions:
 jobs:
   snap:
     uses: ./.github/workflows/snap.yml
+    with:
+      ref: ${{ inputs.tag || github.ref_name }}
 
   assemble:
     name: Assemble draft release

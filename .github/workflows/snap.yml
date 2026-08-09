@@ -2,6 +2,11 @@ name: Snap build and test
 
 on:
   workflow_call:
+    inputs:
+      ref:
+        description: Git ref to build; defaults to the triggering ref.
+        required: false
+        type: string
   pull_request:
     paths:
       - '.github/workflows/snap.yml'
@@ -37,6 +42,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.ref || github.ref }}
 
       - name: Build snap
         id: snap
