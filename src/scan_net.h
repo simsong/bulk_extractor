@@ -146,7 +146,10 @@ struct scan_net_t {
     };
 
     /* Each of these carvers looks for a specific structure and if it finds the structure it returns the size in the sbuf */
-    void   documentIPFields(const sbuf_t &sbuf, size_t pos, const generic_iphdr_t &h) const; // write ip fields to ip_recorder and possibly tcp_recorder
+    void   documentIPFields(const sbuf_t &sbuf, size_t pos, const generic_iphdr_t &h, size_t feature_pos) const;
+    void   documentIPFields(const sbuf_t &sbuf, size_t pos, const generic_iphdr_t &h) const {
+        documentIPFields(sbuf, pos, h, pos);
+    }
     void   recordWifiFrame(const sbuf_t &sbuf, size_t pos, size_t packet_len, const pcap_writer::pcap_hdr &pch) const;
     size_t carveIPFrame(const sbuf_t &sbuf, size_t pos, sanityCache_t *sc) const;
     size_t carveTCPTOBJ(const sbuf_t &sbuf, size_t pos) const;

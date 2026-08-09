@@ -413,7 +413,7 @@ bool process_raw::is_windows_raw_device_path(std::string_view path)
         return std::isalpha(static_cast<unsigned char>(path[drive_volume.size()])) &&
                path.back() == ':';
     }
-    if (!starts_with(volume_guid) || path.back() != '}') return false;
+    if (!starts_with(volume_guid) || path.size() <= volume_guid.size() || path.back() != '}') return false;
     const std::string_view guid = path.substr(volume_guid.size(), path.size() - volume_guid.size() - 1);
     if (guid.size() != 36) return false;
     for (size_t i = 0; i < guid.size(); ++i) {

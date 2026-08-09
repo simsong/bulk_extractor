@@ -228,7 +228,7 @@ uint16_t scan_net_t::ip4_cksum(const sbuf_t &sbuf, size_t pos, size_t len)
     while (sum>>16) {
         sum = (sum & 0xFFFF) + (sum >> 16);
     }
-    return ~sum;
+    return static_cast<uint16_t>(~sum);
 }
 
 bool scan_net_t::ip6_cksum_valid(const sbuf_t &sbuf, size_t pos)
@@ -505,7 +505,9 @@ std::string scan_net_t::i2str(const int i)
  */
 bool scan_net_t::sanityCheckIP46Header(const sbuf_t &sbuf, size_t pos, scan_net_t::generic_iphdr_t *h, sanityCache_t *sc)
 {
+    if (pos >= sbuf.bufsize) return false;
     if (sbuf.get8u_unsafe(pos)==69) {           // v4 20 bytes
+        if (sbuf.bufsize - pos < sizeof(be20::ip4)) return false;
         const struct be20::ip4 *ip = sbuf.get_struct_ptr_unsafe<struct be20::ip4>( pos );
         if (ip->ip_v == 4){                     // ipv4 packet
             if (ip->ip_hl != 5) return false;	// IPv4 header length is 20 bytes (5 quads) (ignores options)
@@ -595,9 +597,10 @@ bool scan_net_t::sanityCheckIP46Header(const sbuf_t &sbuf, size_t pos, scan_net_
  * Return true if we should write the packet
  */
 
-void  scan_net_t::documentIPFields(const sbuf_t &sbuf, size_t pos, const generic_iphdr_t &h) const
+void scan_net_t::documentIPFields(const sbuf_t &sbuf, size_t pos, const generic_iphdr_t &h,
+                                  size_t feature_pos) const
 {
-    pos0_t pos0 = sbuf.pos0 + pos;
+    pos0_t pos0 = sbuf.pos0 + feature_pos;
 
     /* Report the IP address */
     /* based on the TTL, infer whether remote or local */
@@ -956,15 +959,17 @@ size_t scan_net_t::carvePCAPPackets(const sbuf_t &sbuf, size_t pos, sanityCache_
         if (is_raw_ip) {
             // It's raw IP if the IP46 header validated. So make a fake header. We've already learned the IPv46 header.
             pseudo_frame_ethertype = (h2.family == AF_INET6) ? ETHERTYPE_IPV6 : ETHERTYPE_IP;
+        } else if (!sanityCheckIP46Header(sbuf, packet_pos+ETHER_HEAD_LEN, &h2, sc)) {
+            return PCAP_RECORD_HEADER_SIZE + pch.cap_len;
         } else {
-            // Otherwise, learn the IPv46 header
-            sanityCheckIP46Header(sbuf, packet_pos+ETHER_HEAD_LEN, &h2, sc);
+            // Otherwise, learn the IPv46 header.
         }
 
         /* If this is a IPv4 or IPv6 (from the learned header), write it out.*/
         if (h2.is_4or6()) {
             try {
-                documentIPFields(sbuf, packet_pos, h2);
+                const size_t ip_pos = packet_pos + (is_raw_ip ? 0 : ETHER_HEAD_LEN);
+                documentIPFields(sbuf, ip_pos, h2, packet_pos);
                 pwriter.pcap_writepkt(pch, sbuf, packet_pos, is_raw_ip, pseudo_frame_ethertype, link_type);
             }
             catch (port0_exception &e) {

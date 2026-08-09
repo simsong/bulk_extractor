@@ -221,6 +221,7 @@ TEST_CASE("Windows raw-device paths are recognized narrowly", "[image_process]")
     REQUIRE_FALSE(process_raw::is_windows_raw_device_path(R"(\\.\PhysicalDrive0\partition1)"));
     REQUIRE_FALSE(process_raw::is_windows_raw_device_path(R"(\\.\C:\)"));
     REQUIRE_FALSE(process_raw::is_windows_raw_device_path(R"(\\.\COM1)"));
+    REQUIRE_FALSE(process_raw::is_windows_raw_device_path(R"(\\?\Volume{)"));
     REQUIRE_FALSE(process_raw::is_windows_raw_device_path(R"(\\?\Volume{not-a-guid})"));
     REQUIRE_FALSE(process_raw::is_windows_raw_device_path("disk.raw"));
 }

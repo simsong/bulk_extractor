@@ -126,6 +126,9 @@ through the project's normal pull-request and CI process.
   reading their length fields, and unexpected top-level exceptions are reported
   as diagnostics with a nonzero exit status
   ([PR #605](https://github.com/simsong/bulk_extractor/pull/605)).
+- Follow-up parser hardening rejects overflowing scaled-size arguments,
+  malformed Windows volume paths, invalid or truncated network headers, and
+  unsafe HTTP-log backtracking before accessing their bytes.
 - Hardened `sbuf` bounds, arithmetic, and ownership behavior, including
   zero-length and one-past-end cases
   ([PR #511](https://github.com/simsong/bulk_extractor/pull/511)).
@@ -255,6 +258,8 @@ through the project's normal pull-request and CI process.
   ([PR #561](https://github.com/simsong/bulk_extractor/pull/561),
   [PR #558](https://github.com/simsong/bulk_extractor/pull/558),
   [PR #557](https://github.com/simsong/bulk_extractor/pull/557)).
+- Renamed and updated the MinGW notes for the current Windows CI artifact,
+  static dependency checks, E01 runtime coverage, and raw-device limitations.
 - Rewrote the installed `bulk_extractor(1)` manual for the 2.2 command-line
   interface, including current logging, scanner controls, path-printer aliases,
   output-directory requirements, and supported documentation.
