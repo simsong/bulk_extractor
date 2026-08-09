@@ -83,7 +83,7 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --output-dir release-assets
 
-      - name: Add Snap packages and regenerate checksums
+      - name: Add Snap packages and append checksums
         run: |
           set -euo pipefail
           amd64=$(find snap-assets -type f -name '*_amd64.snap' -print -quit)
@@ -91,10 +91,9 @@ jobs:
           test -s "$amd64"
           test -s "$arm64"
           cp "$amd64" "$arm64" release-assets/
-          rm release-assets/SHA256SUMS
           (
             cd release-assets
-            sha256sum bulk_extractor-*.tar.gz bulk_extractor64.exe *.snap > SHA256SUMS
+            sha256sum "$(basename "$amd64")" "$(basename "$arm64")" >> SHA256SUMS
           )
 
       - name: Upload release assets
