@@ -7,8 +7,8 @@ EXTRA_DIST = README.md alert_list.txt find_list.txt redlist.txt banner.txt stop_
 PYTHON=python3
 TESTS = test_bulk_diff.py
 TEST_EXTENSIONS = .py
-PY_LOG_COMPILER = $(PYTHON)
-AM_PY_LOG_FLAGS = -v
+PY_LOG_COMPILER = $(PYTHON) -m pytest
+AM_PY_LOG_FLAGS = -q
 
 regress:
 	@echo Making regression tests
