@@ -12,7 +12,6 @@ EXTRA_DIST = .gitignore scan_headers.flex scan_httpheader_lg.cpp $(AUTO_EXTRA_DI
 	be20_api/tests/unilang8.htm
 
 ETAGS = etags-emacs
-ACLOCAL_AMFLAGS = -I m4
 
 # So that relative imports from be20_api work
 AM_CPPFLAGS = @RE2_CFLAGS@ -I$(top_srcdir)/src/be20_api -I$(top_srcdir)/src/be20_api/utfcpp/source -isystem $(top_srcdir)/src/third_party/spdlog
