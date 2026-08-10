@@ -210,8 +210,9 @@ through the project's normal pull-request and CI process.
   breaking `make check`, and explicitly warns that RAR coverage was not run.
 - A multi-stage Debian Bookworm container image provides a reproducible,
   unprivileged environment for scanning regular image files. It documents its
-  libewf and Lightgrep limitations and supplements native platform CI rather
-  than replacing it ([#159](https://github.com/simsong/bulk_extractor/issues/159)).
+  libewf and Lightgrep limitations, omits the unused PCAP runtime library, and
+  supplements native platform CI rather than replacing it
+  ([#159](https://github.com/simsong/bulk_extractor/issues/159)).
 - Builds now enable basic compiler stack-canary protection (`-fstack-protector`)
   when both selected C and C++ compilers support it ([#376](https://github.com/simsong/bulk_extractor/issues/376)).
 - AddressSanitizer now runs on every pull request while redundant workflow
