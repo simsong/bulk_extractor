@@ -603,6 +603,27 @@ TEST_CASE("test_net_80211_management", "[phase1]") {
     REQUIRE(validate_pcap_packet(test_dir() / "wifi_management.pcap", outdir / "packets_80211.pcap", DLT_IEEE802_11));
 }
 
+TEST_CASE("test_net_80211_frame_validation", "[phase1]") {
+    const auto valid = [](uint16_t frame_control, size_t packet_len) {
+        std::vector<uint8_t> frame(packet_len);
+        frame[0] = frame_control & 0xff;
+        frame[1] = frame_control >> 8;
+        const sbuf_t sbuf(pos0_t(), frame.data(), frame.size());
+        return scan_net_t::validIEEE80211Frame(sbuf, 0, frame.size());
+    };
+
+    REQUIRE(valid(0x0080, 24));  // management beacon
+    REQUIRE(valid(0x00d4, 10));  // control acknowledgement
+    REQUIRE(valid(0x00b4, 16));  // control request-to-send
+    REQUIRE(valid(0x0008, 24));  // data
+    REQUIRE_FALSE(valid(0x0081, 24));  // unsupported protocol version
+    REQUIRE_FALSE(valid(0x000c, 24));  // reserved frame type
+    REQUIRE_FALSE(valid(0x0080, 23));
+    REQUIRE_FALSE(valid(0x00d4, 9));
+    REQUIRE_FALSE(valid(0x00b4, 15));
+    REQUIRE_FALSE(valid(0x0008, 23));
+}
+
 TEST_CASE("test_net_80211_management_pair", "[phase1]") {
     std::vector<Check> ex2 {
         Check("wifi.txt", Feature("40", "management", "type=management subtype=beacon to_ds=no from_ds=no protected=no timestamp=*")),

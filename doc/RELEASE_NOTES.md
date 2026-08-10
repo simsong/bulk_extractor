@@ -79,8 +79,10 @@ through the project's normal pull-request and CI process.
   interface, `-P`, and `BE_PATH`, with an end-to-end integration test
   ([PR #528](https://github.com/simsong/bulk_extractor/pull/528)).
 - Network captures now preserve IEEE 802.11 records with their correct PCAP
-  link type and report WiFi frame metadata in `wifi.txt`
-  ([PR #559](https://github.com/simsong/bulk_extractor/pull/559)).
+  link type and report WiFi frame metadata in `wifi.txt`; carved payloads are
+  checked for a valid protocol version, frame type, and minimum header length
+  ([PR #559](https://github.com/simsong/bulk_extractor/pull/559),
+  [issue #617](https://github.com/simsong/bulk_extractor/issues/617)).
 - The carving guide documents recorder-specific `-S <recorder>_carve_mode=`
   settings, defaults, and feature-file behavior ([#264](https://github.com/simsong/bulk_extractor/issues/264)).
 - Release managers can run the AWS large-image matrix from one interactive
