@@ -29,6 +29,24 @@ b'This module needs Python 2.7 or later.'
 import zipfile,os,os.path,glob,codecs,re
 
 property_re = re.compile("# ([a-z0-9\-_]+):(.*)",re.I)
+version_re = re.compile(r"^(\d+)\.(\d+)(?:\.(\d+))?")
+
+def parse_version(value):
+    """Return a comparable bulk_extractor version, or None if it is unknown."""
+    match = version_re.match(value.strip()) if value else None
+    if not match:
+        return None
+    return tuple(int(part or 0) for part in match.groups())
+
+def legacy_hex_to_octal(value):
+    """Translate valid BE 1.x ``\\xHH`` byte escapes to canonical octal.
+
+    The legacy representation is ambiguous by design: only complete two-digit
+    hexadecimal escapes are translated. Malformed escapes and literal
+    backslashes remain byte-for-byte unchanged.
+    """
+    return re.sub(br"\\x([0-9a-fA-F]{2})",
+                  lambda match: b"\\%03o" % int(match.group(1), 16), value)
 
 MIN_FIELDS_PER_FEATURE_FILE_LINE = 3
 MAX_FIELDS_PER_FEATURE_FILE_LINE = 11
@@ -227,6 +245,16 @@ class BulkReport:
     def version(self):
         """Returns the version of bulk_extractor that made the file."""
         return self.xmldoc.getElementsByTagName("version")[0].firstChild.wholeText
+
+    def escape_format(self):
+        """Return the feature-escape format implied by report metadata."""
+        try:
+            version = parse_version(self.version())
+        except (AttributeError, IndexError):
+            version = None
+        if version is None:
+            raise ValueError("{} has no parseable bulk_extractor version".format(self.name))
+        return "legacy" if version < (2, 0, 0) else "v2"
 
     def threads(self):
         """Returns the number of threads used for scanning."""
