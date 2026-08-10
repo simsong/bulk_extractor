@@ -3,8 +3,6 @@
 # perform a diff of two bulk_extractor output directories.
 
 __version__='1.5.0'
-import os
-import path
 import sys
 
 import ttable, bulk_extractor_reader
@@ -13,15 +11,36 @@ html_header = '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.
 __version__ = '2.0.0-dev'
 
 class BulkDiff:
-    def __init__(self, dname1, dname2, *, out, both=False, mode='text'):
+    def __init__(self, dname1, dname2, *, out, both=False, mode='text', escape_mode='auto',
+                 same=False, smaller=False):
         self.b1 = bulk_extractor_reader.BulkReport(dname1)
         self.b2 = bulk_extractor_reader.BulkReport(dname2)
         self.out = out
         self.both = both
         self.mode = mode
+        self.escape_mode = escape_mode
+        self.same = same
+        self.smaller = smaller
+        if escape_mode not in {'auto', 'raw', 'legacy', 'v2'}:
+            raise ValueError("unknown escape mode: {}".format(escape_mode))
         self.only_features = set()
         self.only_features.update(self.b1.feature_files())
         self.only_features.update(self.b2.feature_files())
+
+    def normalize(self, report, value):
+        """Return a comparison key without decoding feature bytes to text."""
+        mode = self.escape_mode
+        if mode == 'auto':
+            mode = report.escape_format()
+        return bulk_extractor_reader.legacy_hex_to_octal(value) if mode == 'legacy' else value
+
+    def normalized_histogram(self, report, histogram_file):
+        """Normalize keys while preserving counts when representations collide."""
+        result = {}
+        for key, count in report.read_histogram(histogram_file).items():
+            key = self.normalize(report, key)
+            result[key] = result.get(key, 0) + count
+        return result
 
     def only_feature(self, feature):
         self.only_features = set([feature])
@@ -65,7 +84,7 @@ class BulkDiff:
             r = a.files.difference(b.files)
             total_diff  = sum([a.count_lines(f) for f in r if ".txt" in f])
             total_other = sum(1 for f in r if ".txt" not in f)
-            if total_diff>0 or total_other>0 or args.both:
+            if total_diff>0 or total_other>0 or self.both:
                 print("Files only in {}:".format(a.name), file=out)
                 for f in r:
                     if ".txt" in f:
@@ -87,7 +106,7 @@ class BulkDiff:
 
         for histogram_file in sorted(common_histograms):
             diffcount = 0
-            if args.html:
+            if self.mode == 'html':
                 out.write('<h2><a name="%s">%s</a></h2>\n' % (histogram_file,histogram_file))
             t = ttable.ttable()
             t.set_col_alignment(0,t.RIGHT)
@@ -99,8 +118,8 @@ class BulkDiff:
 
             (b1,b2) = self.getab()
 
-            b1.hist = b1.read_histogram(histogram_file)
-            b2.hist = b2.read_histogram(histogram_file)
+            b1.hist = self.normalized_histogram(b1, histogram_file)
+            b2.hist = self.normalized_histogram(b2, histogram_file)
             b1.keys = set(b1.hist.keys())
             b2.keys = set(b2.hist.keys())
 
@@ -110,7 +129,7 @@ class BulkDiff:
                 v1 = b1.hist.get(feature,0)
                 v2 = b2.hist.get(feature,0)
                 if v1!=v2: diffcount += 1
-                if v2>v1 or (v2==v1 and args.same) or (v2<v1 and args.smaller):
+                if v2>v1 or (v2==v1 and self.same) or (v2<v1 and self.smaller):
                     data.append((v1, v2, v2-v1, feature.decode('utf-8')))
 
             # Sort according the diff first, then v2 amount, then v1 amount, then alphabetically on value
@@ -121,8 +140,8 @@ class BulkDiff:
                 for row in sorted(data,key=mysortkey):
                     t.append_data(row)
                 out.write(t.typeset(mode=self.mode))
-            if diffcount==0 and args.both:
-                if args.html:
+            if diffcount==0 and self.both:
+                if self.mode == 'html':
                     out.write("{}: No differences\n".format(histogram_file))
                 else:
                     out.write("{}: No differences\n".format(histogram_file))
@@ -151,12 +170,15 @@ class BulkDiff:
                 for line in a.open(feature_file):
                     r = bulk_extractor_reader.parse_feature_line(line)
                     if not r: continue
-                    a_features[r[0]] = r[1]
+                    a_features[r[0]] = self.normalize(a, r[1])
                 for line in b.open(feature_file):
                     r = bulk_extractor_reader.parse_feature_line(line)
                     if not r: continue
                     if r[0] not in a_features:
                         print("{} {} is only in {}".format(r[0].decode('utf-8'),r[1].decode('utf-8'),b.name), file=out)
+                    elif a_features[r[0]] != self.normalize(b, r[1]):
+                        print("{} {} differs in {}".format(r[0].decode('utf-8'),
+                                                          r[1].decode('utf-8'), b.name), file=out)
 
 
 if __name__=="__main__":
@@ -173,6 +195,8 @@ if __name__=="__main__":
     parser.add_argument("--perf", help="Analyze clock-time performance differences", action='store_true')
     parser.add_argument("--feature", help="Only look at this feature")
     parser.add_argument("--summary", help="Only print summary information", action='store_true')
+    parser.add_argument("--escape-mode", choices=['auto', 'raw', 'legacy', 'v2'], default='auto',
+                        help="Comparison escape format (default: infer from report.xml)")
     parser.add_argument("file1", help="First bulk_extractor report (directory or zip file)")
     parser.add_argument("file2", help="Second bulk_extractor report (directory or zip file)")
 
@@ -181,7 +205,9 @@ if __name__=="__main__":
     if args.html:
         out = open(args.html,"w")
 
-    bd = BulkDiff(args.file1, args.file2, out=out, both=args.both, mode='html' if args.html else 'text')
+    bd = BulkDiff(args.file1, args.file2, out=out, both=args.both,
+                  mode='html' if args.html else 'text', escape_mode=args.escape_mode,
+                  same=args.same, smaller=args.smaller)
     if args.html:
         out.write(html_header)
         out.write('<html><head>\n')

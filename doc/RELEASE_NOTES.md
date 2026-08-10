@@ -114,6 +114,9 @@ through the project's normal pull-request and CI process.
 - Email extraction now enforces independent 64-octet local-part and 253-octet
   domain limits for ASCII and UTF-16 input, avoiding truncated suffix features
   from overlong addresses ([#585](https://github.com/simsong/bulk_extractor/issues/585)).
+- `bulk_diff.py` now compares legacy hexadecimal byte escapes with current
+  octal escapes by default, with an explicit raw mode for byte-for-byte audit
+  comparisons ([#225](https://github.com/simsong/bulk_extractor/issues/225)).
 - Hardened the bundled RAR PPM decoder's dictionary-copy boundary handling,
   preventing a malformed archive from writing past its ring buffer
   (fixes CVE-2026-24857; [#601](https://github.com/simsong/bulk_extractor/issues/601)).
