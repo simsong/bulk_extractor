@@ -223,6 +223,8 @@ through the project's normal pull-request and CI process.
 - AddressSanitizer now runs on every pull request while redundant workflow
   execution has been reduced
   ([PR #514](https://github.com/simsong/bulk_extractor/pull/514)).
+- Snap builds use native Snapcraft and LXD commands plus Node 24-compatible
+  artifact upload tooling, removing deprecated Node 20 action dependencies.
 - Optional Exiv2 configuration is honored, tested, and disabled by default; its
   version is recorded in DFXML when enabled
   ([PR #532](https://github.com/simsong/bulk_extractor/pull/532)).

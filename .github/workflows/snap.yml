@@ -47,7 +47,23 @@ jobs:
 
       - name: Build snap
         id: snap
-        uses: canonical/action-build@v1
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo groupadd --force --system lxd
+          sudo usermod --append --groups lxd "$USER"
+          sudo snap install lxd
+          sudo lxd init --auto
+          sudo iptables -P FORWARD ACCEPT
+          sudo snap install snapcraft --classic
+          export SNAPCRAFT_BUILD_ENVIRONMENT=lxd
+          export SNAPCRAFT_BUILD_INFO=1
+          export SNAPCRAFT_IMAGE_INFO="{\"build_url\":\"${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}\"}"
+          sudo -u "$USER" -E snapcraft pack
+          shopt -s nullglob
+          snaps=( ./*.snap )
+          test "${#snaps[@]}" -eq 1
+          echo "snap=${snaps[0]}" >> "$GITHUB_OUTPUT"
 
       - name: Install and run the strictly confined snap
         run: |
@@ -61,7 +77,7 @@ jobs:
           test -s "$output/report.xml"
 
       - name: Upload snap
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: bulk-extractor-snap-${{ matrix.arch }}
           path: ${{ steps.snap.outputs.snap }}
