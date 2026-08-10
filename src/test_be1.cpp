@@ -15,6 +15,7 @@
 #include "config.h"
 
 #include <cstdint>
+#include <cctype>
 #include <algorithm>
 #include <cstring>
 #include <fstream>
@@ -23,6 +24,8 @@
 #include <filesystem>
 #include <cstdio>
 #include <iterator>
+#include <limits>
+#include <map>
 #include <stdexcept>
 #include <unistd.h>
 #include <string>
@@ -257,7 +260,79 @@ bool requireFeature(const std::vector<std::string> &lines, const std::string fea
     return false;
 }
 
-std::filesystem::path test_scanners(const std::vector<scanner_t *> & scanners, sbuf_t *sbuf)
+static sbuf_t *prefixed_sbuf(const sbuf_t &sbuf, size_t prefix_size)
+{
+    auto *prefixed = sbuf_t::sbuf_malloc(sbuf.pos0,
+                                         sbuf.bufsize + prefix_size,
+                                         sbuf.pagesize + prefix_size);
+    std::memset(prefixed->malloc_buf(), 0xa5, prefix_size);
+    std::memcpy(static_cast<uint8_t *>(prefixed->malloc_buf()) + prefix_size,
+                sbuf.get_buf(), sbuf.bufsize);
+    return prefixed;
+}
+
+static std::map<std::filesystem::path, std::vector<std::string>>
+feature_positions(const std::filesystem::path &outdir)
+{
+    std::map<std::filesystem::path, std::vector<std::string>> positions;
+    for (const auto &entry : std::filesystem::directory_iterator(outdir)) {
+        if (!entry.is_regular_file() || entry.path().extension() != ".txt") continue;
+        auto &file_positions = positions[entry.path().filename()];
+        for (const auto &line : getLines(entry.path())) {
+            const auto fields = split(line, '\t');
+            if (fields.size() < 2 || fields[0].empty() ||
+                !std::isdigit(static_cast<unsigned char>(fields[0][0]))) continue;
+            file_positions.push_back(fields[0]);
+        }
+        if (file_positions.empty()) positions.erase(entry.path().filename());
+    }
+    return positions;
+}
+
+bool position_shifted_by(const std::string &before, const std::string &after, size_t delta)
+{
+    const auto before_parts = split(before, '-');
+    const auto after_parts = split(after, '-');
+    if (before_parts.size() != after_parts.size()) return false;
+    bool shifted = false;
+    for (size_t i = 0; i < before_parts.size(); i++) {
+        if (before_parts[i] == after_parts[i]) continue;
+        const auto digits = [](unsigned char ch) { return std::isdigit(ch); };
+        if (shifted || before_parts[i].empty() || after_parts[i].empty() ||
+            !std::all_of(before_parts[i].begin(), before_parts[i].end(), digits) ||
+            !std::all_of(after_parts[i].begin(), after_parts[i].end(), digits)) return false;
+        const uint64_t bvalue = std::stoull(before_parts[i]);
+        const uint64_t avalue = std::stoull(after_parts[i]);
+        if (bvalue > std::numeric_limits<uint64_t>::max() - delta || avalue != bvalue + delta) return false;
+        shifted = true;
+    }
+    return shifted;
+}
+
+void verify_shifted_feature_positions(const std::filesystem::path &baseline,
+                                      const std::filesystem::path &shifted,
+                                      size_t delta)
+{
+    const auto expected = feature_positions(baseline);
+    auto actual = feature_positions(shifted);
+    REQUIRE(actual.size() == expected.size());
+    for (const auto &[filename, positions] : expected) {
+        auto found_file = actual.find(filename);
+        REQUIRE(found_file != actual.end());
+        auto &shifted_positions = found_file->second;
+        REQUIRE(shifted_positions.size() == positions.size());
+        for (const auto &position : positions) {
+            const auto found = std::find_if(shifted_positions.begin(), shifted_positions.end(),
+                                            [&](const auto &shifted_position) {
+                                                return position_shifted_by(position, shifted_position, delta);
+                                            });
+            REQUIRE(found != shifted_positions.end());
+            shifted_positions.erase(found);
+        }
+    }
+}
+
+static std::filesystem::path run_scanners(const std::vector<scanner_t *> & scanners, sbuf_t *sbuf)
 {
     debug = getenv_debug("DEBUG");
 
@@ -294,6 +369,17 @@ std::filesystem::path test_scanners(const std::vector<scanner_t *> & scanners, s
     }
     ss.shutdown();
     return sc.outdir;
+}
+
+std::filesystem::path test_scanners(const std::vector<scanner_t *> &scanners, sbuf_t *sbuf)
+{
+    std::array<sbuf_t *, SCANNER_TEST_OFFSETS.size()> inputs {
+        sbuf, prefixed_sbuf(*sbuf, SCANNER_TEST_OFFSETS[1])
+    };
+    std::array<std::filesystem::path, SCANNER_TEST_OFFSETS.size()> outputs;
+    for (size_t i = 0; i < inputs.size(); i++) outputs[i] = run_scanners(scanners, inputs[i]);
+    verify_shifted_feature_positions(outputs[0], outputs[1], SCANNER_TEST_OFFSETS[1]);
+    return outputs[0];
 }
 
 std::filesystem::path test_scanner(scanner_t scanner, sbuf_t *sbuf)
