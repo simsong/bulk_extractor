@@ -293,20 +293,15 @@ bool position_shifted_by(const std::string &before, const std::string &after, si
 {
     const auto before_parts = split(before, '-');
     const auto after_parts = split(after, '-');
-    if (before_parts.size() != after_parts.size()) return false;
-    bool shifted = false;
-    for (size_t i = 0; i < before_parts.size(); i++) {
-        if (before_parts[i] == after_parts[i]) continue;
-        const auto digits = [](unsigned char ch) { return std::isdigit(ch); };
-        if (shifted || before_parts[i].empty() || after_parts[i].empty() ||
-            !std::all_of(before_parts[i].begin(), before_parts[i].end(), digits) ||
-            !std::all_of(after_parts[i].begin(), after_parts[i].end(), digits)) return false;
-        const uint64_t bvalue = std::stoull(before_parts[i]);
-        const uint64_t avalue = std::stoull(after_parts[i]);
-        if (bvalue > std::numeric_limits<uint64_t>::max() - delta || avalue != bvalue + delta) return false;
-        shifted = true;
-    }
-    return shifted;
+    const auto digits = [](unsigned char ch) { return std::isdigit(ch); };
+    if (before_parts.empty() || before_parts.size() != after_parts.size() ||
+        before_parts[0].empty() || after_parts[0].empty() ||
+        !std::all_of(before_parts[0].begin(), before_parts[0].end(), digits) ||
+        !std::all_of(after_parts[0].begin(), after_parts[0].end(), digits) ||
+        !std::equal(before_parts.begin() + 1, before_parts.end(), after_parts.begin() + 1)) return false;
+    const uint64_t bvalue = std::stoull(before_parts[0]);
+    const uint64_t avalue = std::stoull(after_parts[0]);
+    return bvalue <= std::numeric_limits<uint64_t>::max() - delta && avalue == bvalue + delta;
 }
 
 void verify_shifted_feature_positions(const std::filesystem::path &baseline,
@@ -389,6 +384,11 @@ std::filesystem::path test_scanner(scanner_t scanner, sbuf_t *sbuf)
     return test_scanners(scanners, sbuf);
 }
 
+TEST_CASE("forensic paths shift only at the top level", "[support]")
+{
+    CHECK(position_shifted_by("0-GZIP-0", "65-GZIP-0", 65));
+    CHECK_FALSE(position_shifted_by("0-GZIP-0", "0-GZIP-65", 65));
+}
 
 TEST_CASE("base64_forensic", "[support]") {
     sbuf_t::debug_range_exception = true;
