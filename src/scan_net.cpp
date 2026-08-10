@@ -56,6 +56,8 @@ int opt_report_packet_path = 0;         // if true, report packets to packets.tx
 
 namespace {
 constexpr size_t IEEE80211_BASE_HEADER_LEN = 24;
+constexpr size_t IEEE80211_CONTROL_HEADER_LEN = 16;
+constexpr size_t IEEE80211_SHORT_CONTROL_HEADER_LEN = 10;
 constexpr size_t IEEE80211_LLC_SNAP_LEN = 8;
 
 size_t ieee80211_payload_offset(const sbuf_t &sbuf, size_t pos, size_t packet_len)
@@ -416,7 +418,13 @@ bool scan_net_t::validIEEE80211Frame(const sbuf_t &sbuf, size_t pos, size_t pack
     const uint16_t frame_control = sbuf.get16u_unsafe(pos);
     const uint8_t type = (frame_control >> 2) & 0x3;
     if ((frame_control & 0x3) != 0 || type == 3) return false;
-    return packet_len >= (type == 1 ? 10 : IEEE80211_BASE_HEADER_LEN);
+    if (type != 1) return packet_len >= IEEE80211_BASE_HEADER_LEN;
+
+    const uint8_t subtype = (frame_control >> 4) & 0xf;
+    const size_t header_len = subtype == 12 || subtype == 13
+        ? IEEE80211_SHORT_CONTROL_HEADER_LEN
+        : IEEE80211_CONTROL_HEADER_LEN;
+    return packet_len >= header_len;
 }
 
 #ifndef INET4_ADDRSTRLEN

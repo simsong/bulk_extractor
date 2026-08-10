@@ -614,11 +614,13 @@ TEST_CASE("test_net_80211_frame_validation", "[phase1]") {
 
     REQUIRE(valid(0x0080, 24));  // management beacon
     REQUIRE(valid(0x00d4, 10));  // control acknowledgement
+    REQUIRE(valid(0x00b4, 16));  // control request-to-send
     REQUIRE(valid(0x0008, 24));  // data
     REQUIRE_FALSE(valid(0x0081, 24));  // unsupported protocol version
     REQUIRE_FALSE(valid(0x000c, 24));  // reserved frame type
     REQUIRE_FALSE(valid(0x0080, 23));
     REQUIRE_FALSE(valid(0x00d4, 9));
+    REQUIRE_FALSE(valid(0x00b4, 15));
     REQUIRE_FALSE(valid(0x0008, 23));
 }
 
