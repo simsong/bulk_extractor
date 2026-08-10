@@ -15,8 +15,14 @@ permissions:
   actions: read
 
 jobs:
+  snap:
+    uses: ./.github/workflows/snap.yml
+    with:
+      ref: ${{ inputs.tag || github.ref_name }}
+
   assemble:
     name: Assemble draft release
+    needs: snap
     runs-on: ubuntu-latest
 
     steps:
@@ -25,6 +31,13 @@ jobs:
         with:
           ref: ${{ inputs.tag || github.ref_name }}
           fetch-depth: 0
+
+      - name: Download tested Snap packages
+        uses: actions/download-artifact@v8
+        with:
+          pattern: bulk-extractor-snap-*
+          path: snap-assets
+          merge-multiple: true
 
       - name: Assemble release assets
         env:
@@ -36,12 +49,92 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --output-dir release-assets
 
+      - name: Add Snap packages and append checksums
+        run: |
+          set -euo pipefail
+          amd64=$(find snap-assets -type f -name '*_amd64.snap' -print -quit)
+          arm64=$(find snap-assets -type f -name '*_arm64.snap' -print -quit)
+          test -n "$amd64"
+          test -n "$arm64"
+          test -s "$amd64"
+          test -s "$arm64"
+          cp "$amd64" "$arm64" release-assets/
+          (
+            cd release-assets
+            sha256sum "$(basename "$amd64")" "$(basename "$arm64")" >> SHA256SUMS
+          )
+
       - name: Upload release assets
         uses: actions/upload-artifact@v4
         with:
           name: release-assets
           path: release-assets
           if-no-files-found: error
+
+  publish-snaps:
+    name: Publish annotated-tag snaps to stable
+    if: github.event_name == 'push'
+    needs: snap
+    runs-on: ubuntu-24.04
+    environment: snap-store
+    env:
+      SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Determine whether protected Store credentials are available
+        id: store
+        run: |
+          if [ -z "$SNAPCRAFT_STORE_CREDENTIALS" ]; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            echo "Snap Store credentials are not configured; leaving this tagged build unpublished."
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Verify the annotated release tag and version
+        if: steps.store.outputs.publish == 'true'
+        run: |
+          set -euo pipefail
+          tag=${GITHUB_REF_NAME}
+          version=$(sed -n 's/^AC_INIT(\[BULK_EXTRACTOR\],\[\([^]]*\)\].*/\1/p' configure.ac)
+          test "$tag" = "v$version"
+          test "$(git cat-file -t "refs/tags/$tag")" = tag
+
+      - uses: actions/download-artifact@v4
+        if: steps.store.outputs.publish == 'true'
+        with:
+          pattern: bulk-extractor-snap-*
+          path: snaps
+          merge-multiple: true
+
+      - name: Select architecture-specific packages
+        if: steps.store.outputs.publish == 'true'
+        id: snap-files
+        run: |
+          set -euo pipefail
+          amd64=$(find snaps -name '*_amd64.snap' -type f -print -quit)
+          arm64=$(find snaps -name '*_arm64.snap' -type f -print -quit)
+          test -n "$amd64"
+          test -n "$arm64"
+          printf 'amd64=%s\narm64=%s\n' "$amd64" "$arm64" >> "$GITHUB_OUTPUT"
+
+      - name: Publish amd64 snap
+        if: steps.store.outputs.publish == 'true'
+        uses: canonical/action-publish@v1
+        with:
+          snap: ${{ steps.snap-files.outputs.amd64 }}
+          release: stable
+
+      - name: Publish arm64 snap
+        if: steps.store.outputs.publish == 'true'
+        uses: canonical/action-publish@v1
+        with:
+          snap: ${{ steps.snap-files.outputs.arm64 }}
+          release: stable
 
   publish:
     name: Publish draft release
@@ -81,4 +174,5 @@ jobs:
             --generate-notes \
             release-assets/bulk_extractor-*.tar.gz \
             release-assets/bulk_extractor64.exe \
+            release-assets/*.snap \
             release-assets/SHA256SUMS

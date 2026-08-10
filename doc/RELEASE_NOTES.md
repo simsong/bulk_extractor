@@ -308,13 +308,17 @@ through the project's normal pull-request and CI process.
   checkout, and copies generated `.deb`, `.dsc`, `.changes`, `.buildinfo`,
   `.orig.tar.gz`, and `.debian.tar.*` artifacts to `$(RELEASE_ARTIFACT_DIR)`
   on the host.
-- Added tag-driven draft-release assembly for the source archive and tested
-  Windows executable. The Python driver derives the version from `configure.ac`,
-  can assemble and checksum supplied artifacts with `--dry-run`, and never
-  publishes a GitHub Release without a release-manager action
+- Added tag-driven draft-release assembly for the source archive, tested
+  Windows executable, and tested amd64/arm64 Snap packages. The Python driver
+  derives the version from `configure.ac`, can assemble and checksum supplied
+  artifacts with `--dry-run`, and never publishes a GitHub Release without a
+  release-manager action
   ([#621](https://github.com/simsong/bulk_extractor/issues/621)).
 - The release workflow now assembles and verifies artifacts in a read-only job;
   only its separate draft-publishing job receives repository write permission.
+- Added a step-by-step release-manager runbook covering the release issue,
+  final version promotion, signed tag, automated or manual draft, asset review,
+  public publication, and downstream follow-up.
 - Release managers can run an AWS OIDC large-image gate that uses a disposable,
   fixed-size instance with an eight-hour shutdown cap, encrypted temporary
   storage, least-privilege input/output access, cleanup, and an attested,
