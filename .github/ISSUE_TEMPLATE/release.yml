@@ -76,10 +76,13 @@ body:
       placeholder: |
         - [ ] Source archive:
         - [ ] Windows executable:
+        - [ ] amd64 Snap package:
+        - [ ] arm64 Snap package:
         - [ ] Debian package:
         - [ ] RPM package:
         - [ ] AWS validation summary:
         - [ ] SHA256SUMS:
+        - [ ] Public GitHub Release URL:
     validations:
       required: true
   - type: checkboxes
