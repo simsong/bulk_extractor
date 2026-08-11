@@ -121,7 +121,7 @@ struct machine_stats {
 	FILE *f = fopen(statm_path,"r");
 	if(f){
 	    unsigned long size, resident, share, text, lib, data, dt;
-	    if(fscanf(f,"%ld %ld %ld %ld %ld %ld %ld", &size,&resident,&share,&text,&lib,&data,&dt) == 7){
+	    if(fscanf(f,"%lu %lu %lu %lu %lu %lu %lu", &size,&resident,&share,&text,&lib,&data,&dt) == 7){
 		const long page_size = sysconf(_SC_PAGESIZE);
 		if (page_size > 0) {
 		    *virtual_size  = size * static_cast<uint64_t>(page_size);

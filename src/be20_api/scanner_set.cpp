@@ -247,9 +247,7 @@ std::map<std::string, std::string> scanner_set::get_realtime_stats() const
     uint64_t virtual_size = 0;
     uint64_t resident_size = 0;
     machine_stats::get_memory(&virtual_size, &resident_size);
-    if (resident_size != 0) {
-        ret[PROCESS_MEMORY_STR] = std::to_string(resident_size);
-    }
+    ret[PROCESS_MEMORY_STR] = std::to_string(resident_size);
     ret[SBUFS_CREATED_STR]   = std::to_string(sbuf_t::sbuf_total);
     ret[SBUFS_REMAINING_STR] = std::to_string(sbuf_t::sbuf_count);
     return ret;
