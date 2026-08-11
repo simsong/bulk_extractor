@@ -1357,8 +1357,12 @@ void scan_duplicate_opt_in_test(scanner_params& sp) {
 }
 
 #ifdef _WIN32
-TEST_CASE("machine_stats", "[!mayfail][machine_stats]") {
-    WARN("machine_stats not implemented on Windows (ps and /proc/ don't exist)");
+TEST_CASE("machine_stats", "[machine_stats]") {
+    REQUIRE(machine_stats::get_available_memory() != 0);
+    uint64_t virtual_size = 0;
+    uint64_t resident_size = 0;
+    machine_stats::get_memory(&virtual_size, &resident_size);
+    REQUIRE(resident_size > 0);
 }
 #else
 TEST_CASE("machine_stats", "[machine_stats]") {
@@ -1385,6 +1389,8 @@ TEST_CASE("scanner_stats", "[scanner_set]") {
     std::map<scanner_t*, const struct scanner_params::scanner_info*> scanner_info_db{};
     atomic_set<std::string> seen_set {}; // hex hash values of sbuf pages that have been seen
     auto ss = new scanner_set(sc, feature_recorder_set::flags_t(), nullptr);
+    const auto stats = ss->get_realtime_stats();
+    REQUIRE(std::stoull(stats.at(scanner_set::PROCESS_MEMORY_STR)) > 0);
     delete ss;
 }
 
