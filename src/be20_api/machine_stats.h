@@ -18,6 +18,11 @@
 #include <sys/vmmeter.h>
 #endif
 
+#ifdef _WIN32
+#include <windows.h>
+#include <psapi.h>
+#endif
+
 #include <cmath>
 #include <unistd.h>
 
@@ -45,6 +50,11 @@ struct machine_stats {
     };
 
     static uint64_t get_available_memory() {
+#ifdef _WIN32
+        MEMORYSTATUSEX memory_status{};
+        memory_status.dwLength = sizeof(memory_status);
+        return GlobalMemoryStatusEx(&memory_status) ? memory_status.ullAvailPhys : 0;
+#else
         // If there is a /proc/meminfo, use it
         std::ifstream meminfo("/proc/meminfo");
         if (meminfo.is_open()) {
@@ -76,11 +86,21 @@ struct machine_stats {
 #else
 	return 0;
 #endif
+#endif
     };
 
     static void get_memory(uint64_t *virtual_size, uint64_t *resident_size) {
         *virtual_size = 0;
         *resident_size = 0;
+
+#ifdef _WIN32
+        PROCESS_MEMORY_COUNTERS_EX counters{};
+        if (GetProcessMemoryInfo(GetCurrentProcess(),
+                                 reinterpret_cast<PROCESS_MEMORY_COUNTERS *>(&counters),
+                                 sizeof(counters))) {
+            *resident_size = static_cast<uint64_t>(counters.WorkingSetSize);
+        }
+#else
 
 #ifdef HAVE_TASK_INFO
         kern_return_t error;
@@ -102,14 +122,18 @@ struct machine_stats {
 	if(f){
 	    unsigned long size, resident, share, text, lib, data, dt;
 	    if(fscanf(f,"%ld %ld %ld %ld %ld %ld %ld", &size,&resident,&share,&text,&lib,&data,&dt) == 7){
-		*virtual_size  = size * 4096;
-		*resident_size = resident * 4096;
+		const long page_size = sysconf(_SC_PAGESIZE);
+		if (page_size > 0) {
+		    *virtual_size  = size * static_cast<uint64_t>(page_size);
+		    *resident_size = resident * static_cast<uint64_t>(page_size);
+		}
                 fclose(f);
 		return ;
 	    }
+	    fclose(f);
 	}
-	fclose(f);
 	return ;
+#endif
     };
 };
 

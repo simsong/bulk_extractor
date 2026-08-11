@@ -110,9 +110,13 @@ through the project's normal pull-request and CI process.
 - Progress displays now adapt to Windows console-width changes, matching the
   periodic terminal-width refresh already used on Unix-like systems
   ([#311](https://github.com/simsong/bulk_extractor/issues/311)).
-- The progress display now provides the explicit `available_memory_bytes`
-  metric alongside the legacy `available_memory` alias, and renders byte-valued
-  status metrics in MiB ([#240](https://github.com/simsong/bulk_extractor/issues/240)).
+- Realtime statistics provide cross-platform `process_memory_bytes` and the
+  explicit `available_memory_bytes` metric alongside the legacy
+  `available_memory` alias. The progress display suppresses the duplicate
+  explicit field everywhere and the misleading available-memory value on macOS,
+  while rendering displayed byte-valued metrics in MiB
+  ([#240](https://github.com/simsong/bulk_extractor/issues/240),
+  [#672](https://github.com/simsong/bulk_extractor/issues/672)).
 - Email extraction now enforces independent 64-octet local-part and 253-octet
   domain limits for ASCII and UTF-16 input, avoiding truncated suffix features
   from overlong addresses ([#585](https://github.com/simsong/bulk_extractor/issues/585)).

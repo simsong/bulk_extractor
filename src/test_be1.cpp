@@ -115,9 +115,22 @@ TEST_CASE("notify_thread formats byte statistics as MiB", "[notify]")
 {
     REQUIRE(notify_thread::format_stat_value("available_memory_bytes", "10485760") == "10 MiB");
     REQUIRE(notify_thread::format_stat_value("available_memory", "1048576") == "1 MiB");
+    REQUIRE(notify_thread::format_stat_value("process_memory_bytes", "20971520") == "20 MiB");
     REQUIRE(notify_thread::format_stat_value("max_offset", "2097152") == "2 MiB");
     REQUIRE(notify_thread::format_stat_value("bytes_queued", "1048575") == "0 MiB");
     REQUIRE(notify_thread::format_stat_value("tasks_queued", "12") == "12");
+}
+
+TEST_CASE("notify_thread suppresses the duplicate memory statistic", "[notify]")
+{
+    REQUIRE_FALSE(notify_thread::should_display_stat("available_memory_bytes"));
+#ifdef __APPLE__
+    REQUIRE_FALSE(notify_thread::should_display_stat("available_memory"));
+#else
+    REQUIRE(notify_thread::should_display_stat("available_memory"));
+#endif
+    REQUIRE(notify_thread::should_display_stat("process_memory_bytes"));
+    REQUIRE(notify_thread::should_display_stat("bytes_queued"));
 }
 
 /* return --notify_async or --notify_main_thread depending on if DEBUG_THREAD_SANITIZER is set or not */
