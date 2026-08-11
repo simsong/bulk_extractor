@@ -870,8 +870,12 @@ TEST_CASE("winpe hashes short sbufs", "[phase1]") {
 TEST_CASE("winpe skips carves beyond the sbuf", "[phase1]") {
     std::unique_ptr<sbuf_t> source(map_file("hello_win64_exe"));
     REQUIRE(source->bufsize >= 0x3c + sizeof(uint32_t));
-    auto *patched = sbuf_t::sbuf_malloc(source->pos0, source->bufsize, source->pagesize);
-    std::memcpy(patched->malloc_buf(), source->get_buf(), source->bufsize);
+    constexpr size_t omitted_size = 4096;
+    REQUIRE(source->bufsize > omitted_size);
+    REQUIRE(source->bufsize <= std::numeric_limits<uint32_t>::max());
+    const size_t scan_size = source->bufsize - omitted_size;
+    auto *patched = sbuf_t::sbuf_malloc(source->pos0, scan_size, scan_size);
+    std::memcpy(patched->malloc_buf(), source->get_buf(), scan_size);
 
     // Point the PE certificate table beyond the bytes available to this scanner call.
     const size_t optional_header_offset = source->get32u(0x3c) + 4 + 20;
@@ -881,16 +885,16 @@ TEST_CASE("winpe skips carves beyond the sbuf", "[phase1]") {
     const size_t data_directory_offset = optional_header_offset
         + (optional_header_magic == 0x10b ? 96 : 112);
     const size_t certificate_directory_offset = data_directory_offset + 4 * 8;
-    REQUIRE(certificate_directory_offset + 8 <= source->bufsize);
-    const uint32_t certificate_offset = static_cast<uint32_t>(source->bufsize + 4096);
+    REQUIRE(certificate_directory_offset + 8 <= scan_size);
+    constexpr uint32_t certificate_size = 512;
+    const uint32_t certificate_offset = static_cast<uint32_t>(source->bufsize - certificate_size);
     auto *bytes = static_cast<uint8_t *>(patched->malloc_buf());
     for (size_t i = 0; i < sizeof(certificate_offset); i++) {
         bytes[certificate_directory_offset + i] = (certificate_offset >> (i * 8)) & 0xff;
     }
-    bytes[certificate_directory_offset + 4] = 0x00;
-    bytes[certificate_directory_offset + 5] = 0x02;
-    bytes[certificate_directory_offset + 6] = 0x00;
-    bytes[certificate_directory_offset + 7] = 0x00;
+    for (size_t i = 0; i < sizeof(certificate_size); i++) {
+        bytes[certificate_directory_offset + 4 + i] = (certificate_size >> (i * 8)) & 0xff;
+    }
 
     const auto outdir = test_scanner(scan_winpe, patched);
     REQUIRE(requireFeature(getLines(outdir / "winpe.txt"), "<PE>"));
