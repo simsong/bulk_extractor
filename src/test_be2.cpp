@@ -852,3 +852,54 @@ TEST_CASE("test_winpe", "[phase1]") {
     };
     validate("hello_win64_exe", ex2);
 }
+
+TEST_CASE("winpe hashes short sbufs", "[phase1]") {
+    std::unique_ptr<sbuf_t> source(map_file("hello_win64_exe"));
+    constexpr size_t short_size = 512;
+    REQUIRE(source->bufsize >= short_size);
+    auto *short_pe = sbuf_t::sbuf_malloc(source->pos0, short_size, short_size);
+    std::memcpy(short_pe->malloc_buf(), source->get_buf(), short_size);
+
+    const auto outdir = test_scanner(scan_winpe, short_pe);
+    REQUIRE(requireFeature(getLines(outdir / "winpe.txt"), "<PE>"));
+    for (const auto &line : getLines(outdir / "alerts.txt")) {
+        REQUIRE(line.find("sbuf_t::range_exception_t") == std::string::npos);
+    }
+}
+
+TEST_CASE("winpe skips carves beyond the sbuf", "[phase1]") {
+    std::unique_ptr<sbuf_t> source(map_file("hello_win64_exe"));
+    REQUIRE(source->bufsize >= 0x3c + sizeof(uint32_t));
+    constexpr size_t omitted_size = 4096;
+    REQUIRE(source->bufsize > omitted_size);
+    REQUIRE(source->bufsize <= std::numeric_limits<uint32_t>::max());
+    const size_t scan_size = source->bufsize - omitted_size;
+    auto *patched = sbuf_t::sbuf_malloc(source->pos0, scan_size, scan_size);
+    std::memcpy(patched->malloc_buf(), source->get_buf(), scan_size);
+
+    // Point the PE certificate table beyond the bytes available to this scanner call.
+    const size_t optional_header_offset = source->get32u(0x3c) + 4 + 20;
+    REQUIRE(optional_header_offset + sizeof(uint16_t) <= source->bufsize);
+    const uint16_t optional_header_magic = source->get16u(optional_header_offset);
+    REQUIRE((optional_header_magic == 0x10b || optional_header_magic == 0x20b));
+    const size_t data_directory_offset = optional_header_offset
+        + (optional_header_magic == 0x10b ? 96 : 112);
+    const size_t certificate_directory_offset = data_directory_offset + 4 * 8;
+    REQUIRE(certificate_directory_offset + 8 <= scan_size);
+    constexpr uint32_t certificate_size = 512;
+    const uint32_t certificate_offset = static_cast<uint32_t>(source->bufsize - certificate_size);
+    auto *bytes = static_cast<uint8_t *>(patched->malloc_buf());
+    for (size_t i = 0; i < sizeof(certificate_offset); i++) {
+        bytes[certificate_directory_offset + i] = (certificate_offset >> (i * 8)) & 0xff;
+    }
+    for (size_t i = 0; i < sizeof(certificate_size); i++) {
+        bytes[certificate_directory_offset + 4 + i] = (certificate_size >> (i * 8)) & 0xff;
+    }
+
+    const auto outdir = test_scanner(scan_winpe, patched);
+    REQUIRE(requireFeature(getLines(outdir / "winpe.txt"), "<PE>"));
+    for (const auto &line : getLines(outdir / "alerts.txt")) {
+        REQUIRE(line.find("sbuf_t::range_exception_t") == std::string::npos);
+    }
+    REQUIRE_FALSE(std::filesystem::exists(outdir / "winpe_carved"));
+}
