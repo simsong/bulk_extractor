@@ -1064,8 +1064,9 @@ void scan_winpe (scanner_params &sp)
 
 		xml = scan_winpe_verify(data);
 		if (xml != "") {
-		    // If we have 4096 bytes, generate hash of first 4K
-                    sbuf_t first4k = data.slice(0, 4096);
+		    // Generate a hash of up to the first 4K.
+                    const size_t hash_size = data.bufsize < 4096 ? data.bufsize : 4096;
+                    sbuf_t first4k = data.slice(0, hash_size);
 		    f.write(data.pos0, first4k.hash(), xml);
 
                     size_t carve_size = get_carve_size(data);
