@@ -1069,8 +1069,10 @@ void scan_winpe (scanner_params &sp)
 		    f.write(data.pos0, first4k.hash(), xml);
 
                     size_t carve_size = get_carve_size(data);
-                    feature_recorder &f_carved = sp.named_feature_recorder("winpe_carved");
-                    f_carved.carve(data.slice(0, carve_size), ".winpe");
+                    if (carve_size <= data.bufsize) {
+                        feature_recorder &f_carved = sp.named_feature_recorder("winpe_carved");
+                        f_carved.carve(data.slice(0, carve_size), ".winpe");
+                    }
 		}
 	    }
 	}

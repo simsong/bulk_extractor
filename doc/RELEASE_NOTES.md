@@ -129,6 +129,9 @@ through the project's normal pull-request and CI process.
   reading their length fields, and unexpected top-level exceptions are reported
   as diagnostics with a nonzero exit status
   ([PR #605](https://github.com/simsong/bulk_extractor/pull/605)).
+- Windows PE scanning no longer reports `sbuf` range exceptions when a
+  recognized executable extends beyond the current scanner buffer; its feature
+  is recorded, but the incomplete executable is not carved.
 - Follow-up parser hardening rejects overflowing scaled-size arguments,
   malformed Windows volume paths, invalid or truncated network headers, and
   unsafe HTTP-log backtracking before accessing their bytes.

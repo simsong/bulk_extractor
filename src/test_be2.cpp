@@ -852,3 +852,28 @@ TEST_CASE("test_winpe", "[phase1]") {
     };
     validate("hello_win64_exe", ex2);
 }
+
+TEST_CASE("winpe skips carves beyond the sbuf", "[phase1]") {
+    std::unique_ptr<sbuf_t> source(map_file("hello_win64_exe"));
+    auto *truncated = sbuf_t::sbuf_malloc(source->pos0, source->bufsize, source->pagesize);
+    std::memcpy(truncated->malloc_buf(), source->get_buf(), source->bufsize);
+
+    // Point the PE certificate table beyond the bytes available to this scanner call.
+    constexpr size_t certificate_directory_offset = 280;
+    const uint32_t certificate_offset = static_cast<uint32_t>(source->bufsize + 4096);
+    auto *bytes = static_cast<uint8_t *>(truncated->malloc_buf());
+    for (size_t i = 0; i < sizeof(certificate_offset); i++) {
+        bytes[certificate_directory_offset + i] = (certificate_offset >> (i * 8)) & 0xff;
+    }
+    bytes[certificate_directory_offset + 4] = 0x00;
+    bytes[certificate_directory_offset + 5] = 0x02;
+    bytes[certificate_directory_offset + 6] = 0x00;
+    bytes[certificate_directory_offset + 7] = 0x00;
+
+    const auto outdir = test_scanner(scan_winpe, truncated);
+    REQUIRE(requireFeature(getLines(outdir / "winpe.txt"), "<PE>"));
+    for (const auto &line : getLines(outdir / "alerts.txt")) {
+        REQUIRE(line.find("sbuf_t::range_exception_t") == std::string::npos);
+    }
+    REQUIRE_FALSE(std::filesystem::exists(outdir / "winpe_carved"));
+}
