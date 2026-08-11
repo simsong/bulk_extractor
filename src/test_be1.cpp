@@ -462,6 +462,14 @@ TEST_CASE("scan_email3", "[support]") {
     REQUIRE( requireFeature(email_txt,"0\tplain_text_pdf@textedit.com"));
 }
 
+TEST_CASE("scan_email_end_of_sentence", "[support]") {
+    /* Email followed by end-of-sentence '.' should still be extracted */
+    auto *sbufp = new sbuf_t("user@example.com. Next sentence.");
+    auto outdir = test_scanner(scan_email, sbufp);
+    auto email_txt = getLines(outdir / "email.txt");
+    REQUIRE(requireFeature(email_txt, "0\tuser@example.com"));
+}
+
 static std::string valid_email_domain(size_t length)
 {
     REQUIRE(length >= 5);

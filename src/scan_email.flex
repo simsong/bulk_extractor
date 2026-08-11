@@ -97,6 +97,7 @@ bool email_has_left_boundary(const sbuf_t &sbuf, size_t pos)
 bool email_has_left_boundary_utf16(const sbuf_t &sbuf, size_t pos)
 {
     if (pos < 2) return true;
+    if (sbuf[pos - 1] != 0) return true;  // non-ASCII preceding code unit is always a boundary
     const unsigned char previous = sbuf[pos - 2];
     return !std::isalnum(previous) && previous != '.' && previous != '_' &&
            previous != '%' && previous != '+' && previous != '-';
@@ -223,7 +224,7 @@ Host:[ \t]?([a-zA-Z0-9._]{1,64}) {
     s.pos += yyleng;
 }
 
-{EMAIL}/[^a-zA-Z0-9._%\-]	{
+{EMAIL}/[^a-zA-Z]	{
     email_scanner &s = * yyemail_get_extra(yyscanner);
     s.check_margin();
     if (email_has_left_boundary(SBUF, POS) && extra_validate_email(yytext)){
