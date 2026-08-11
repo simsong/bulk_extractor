@@ -107,3 +107,4 @@ README
 *.pdf
 *.zip
 etc/Docker*/
+.tmp/
