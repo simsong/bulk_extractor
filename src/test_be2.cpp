@@ -859,7 +859,12 @@ TEST_CASE("winpe skips carves beyond the sbuf", "[phase1]") {
     std::memcpy(truncated->malloc_buf(), source->get_buf(), source->bufsize);
 
     // Point the PE certificate table beyond the bytes available to this scanner call.
-    constexpr size_t certificate_directory_offset = 280;
+    const size_t optional_header_offset = source->get32u(0x3c) + 4 + 20;
+    const uint16_t optional_header_magic = source->get16u(optional_header_offset);
+    REQUIRE((optional_header_magic == 0x10b || optional_header_magic == 0x20b));
+    const size_t data_directory_offset = optional_header_offset
+        + (optional_header_magic == 0x10b ? 96 : 112);
+    const size_t certificate_directory_offset = data_directory_offset + 4 * 8;
     const uint32_t certificate_offset = static_cast<uint32_t>(source->bufsize + 4096);
     auto *bytes = static_cast<uint8_t *>(truncated->malloc_buf());
     for (size_t i = 0; i < sizeof(certificate_offset); i++) {
