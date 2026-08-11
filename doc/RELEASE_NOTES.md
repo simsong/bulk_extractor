@@ -14,7 +14,7 @@ linked from the [historical source map](#historical-source-map).
 ## 2.2.0 (draft)
 
 **Status:** Unreleased. The source version is currently
-`v2.2.0alpha1`.
+`2.2.0beta1`; the corresponding Git tag will be `v2.2.0beta1`.
 
 ### Executive summary
 

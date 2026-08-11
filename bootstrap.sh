@@ -11,11 +11,18 @@ python3 etc/makefile_builder.py
 # autoreconf force-installs Automake's generic INSTALL template; retain the
 # project-specific installation guide that is maintained in the repository.
 install_backup=$(mktemp ./INSTALL.XXXXXX)
-cp -p INSTALL "$install_backup"
+if ! cp -p INSTALL "$install_backup"; then
+  rm -f "$install_backup"
+  exit 1
+fi
 restore_install() {
-  [ -f "$install_backup" ] && mv -f "$install_backup" INSTALL
+  [ ! -f "$install_backup" ] || mv -f "$install_backup" INSTALL
 }
-trap restore_install EXIT HUP INT TERM
+cleanup_install() {
+  restore_install || :
+}
+trap cleanup_install EXIT
+trap 'exit 1' HUP INT TERM
 autoreconf --force --install
 restore_install
 trap - EXIT HUP INT TERM
