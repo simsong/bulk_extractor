@@ -23,7 +23,6 @@ AC_CONFIG_AUX_DIR([build-aux])
 
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
-AC_PROG_RANLIB
 AC_PREFIX_PROGRAM(bulk_extractor) dnl build for same location
 
 # Programs we will be using

@@ -1,5 +1,6 @@
 LATEXMK ?= latexmk
-PDFS = BECurrentGuide.pdf
+MANUAL = BECurrentGuide
+PDFS = $(MANUAL).pdf
 USER_MANUAL_ASSETS = \
 	archPics/howitworks.pdf \
 	archPics/margindepiction.pdf \
@@ -37,10 +38,8 @@ all:
 	@echo "Run make pdfs to build the LaTeX manuals."
 doc pdfs: $(PDFS)
 
-BECurrentGuide.pdf: $(USER_MANUAL_DEPS)
-
-%.pdf: %.tex
-	$(LATEXMK) -pdf -halt-on-error -file-line-error $<
+$(PDFS): $(USER_MANUAL_DEPS)
+	$(LATEXMK) -pdf -halt-on-error -file-line-error $(MANUAL).tex
 
 clean:
-	$(LATEXMK) -C $(basename $(PDFS))
+	$(LATEXMK) -C $(MANUAL)

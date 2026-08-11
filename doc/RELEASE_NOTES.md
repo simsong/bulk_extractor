@@ -211,6 +211,8 @@ through the project's normal pull-request and CI process.
 
 ### Build, configuration, and testing
 
+- Source-tree bootstrap no longer reports obsolete Libtool setup or GNU Make
+  portability warnings from the project Autotools inputs.
 - A build configured with `--disable-rar` now omits RAR-only tests without
   breaking `make check`, and explicitly warns that RAR coverage was not run.
 - A multi-stage Debian Bookworm container image provides a reproducible,
