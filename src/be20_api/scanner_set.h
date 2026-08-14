@@ -16,7 +16,6 @@
 #endif
 
 #include "utils.h"
-#include "atomic_map.h"
 #include "sbuf.h"
 #include "scanner_config.h"
 #include "scanner_params.h"
@@ -119,7 +118,9 @@ class scanner_set {
     void *cpu_benchmark();
     static void launch_cpu_benchmark_thread(void *arg);
     class feature_recorder_set fs;      // the feature recorders
-    atomic_map<std::string, std::atomic<uint64_t>> previously_processed_counter {};
+    std::map<std::string, std::multiset<pos0_t>> previously_processed {};
+    mutable std::mutex Mpreviously_processed {};
+    void write_duplicate_report();
     std::map<std::thread::id, std::string> thread_status {}; // the status of each thread::id
     mutable std::mutex Mthread_status {};                       // mutex for thread_status
 
@@ -203,6 +204,7 @@ public:
     static const inline std::string SBUFS_CREATED_STR {"sbufs_created"};
     static const inline std::string SBUFS_REMAINING_STR {"sbufs_remaining"};
     static const inline std::string MAX_OFFSET {"max_offset"};
+    static const inline std::string DUPLICATES_RECORDER_NAME {"duplicates"};
 
     bool get_threading() const   { return threading;};
     int get_worker_count() const { return threading ? pool.get_worker_count()  : 1; };

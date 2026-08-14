@@ -299,8 +299,19 @@ Scanners receive bounds-checked safe buffers, or \code{sbuf}s. A recursive
 scanner can decode a validated region and return the derived buffer to the
 framework for another pass. This permits, for example, the email scanner to
 find an address in text extracted from a PDF or decompressed from a GZIP
-stream. Depth limits, duplicate detection, buffer characteristics, and scanner
-flags prevent or limit inappropriate recursion.
+stream. Depth limits, buffer characteristics, and scanner flags prevent or
+limit inappropriate recursion. By default, equal recursive buffers are all
+scanned so that their distinct forensic paths are preserved. The optional
+\code{--deduplicate} switch suppresses repeated buffer content to reduce work
+and output size, but concurrent runs may retain different paths for that equal
+content.
+
+Every scan creates \code{duplicates.txt}. Its data rows have the form
+\code{path1<TAB>path2<TAB>hash}, where \code{path1} is the lowest forensic
+path for the content, \code{path2} is each additional path, and \code{hash} is
+the SHA-1 content hash. Hashes and paths are written in sorted order, so the
+report itself does not depend on worker scheduling. The file is empty when the
+scan finds no duplicate buffers.
 
 \begin{figure}[ht]
 \centering
@@ -843,6 +854,7 @@ the installed \code{bulk\_extractor(1)} manual are authoritative.
 \code{-G BYTES} & Set the primary page size. \\
 \code{-g BYTES} & Set the page margin. \\
 \code{-M N} & Set maximum recursive depth. \\
+\code{--deduplicate} & Bypass buffers whose content was already processed; disabled by default. \\
 \code{-s FRACTION[:PASSES]} & Randomly sample the input. \\
 \code{--max\_minute\_wait N} & Bound processing and shutdown wait time. \\
 \code{--max\_bad\_alloc\_errors N} & Set tolerated allocation failures. \\

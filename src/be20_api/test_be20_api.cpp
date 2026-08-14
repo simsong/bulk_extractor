@@ -1404,11 +1404,21 @@ TEST_CASE("previously_processed", "[scanner_set]") {
     REQUIRE(ss.previously_processed_count(slg) == 2);
 }
 
+TEST_CASE("duplicates report is always created", "[scanner_set]") {
+    scanner_config sc;
+    sc.outdir = NamedTemporaryDirectory();
+    scanner_set ss(sc, feature_recorder_set::flags_t(), nullptr);
+    const auto report = sc.outdir / "duplicates.txt";
+    REQUIRE(std::filesystem::exists(report));
+    REQUIRE(std::filesystem::file_size(report) == 0);
+}
+
 TEST_CASE("duplicate sbufs bypass scanner fan-out unless requested", "[scanner_set]") {
     scanner_config sc;
-    sc.outdir = get_tempdir();
+    sc.outdir = NamedTemporaryDirectory();
+    sc.deduplicate = true;
     sc.enable_all_scanners();
-    const auto dfxml_file = get_tempdir() / "duplicate_bypass.xml";
+    const auto dfxml_file = sc.outdir / "duplicate_bypass.xml";
     dfxml_writer writer(dfxml_file, false);
     duplicate_bypass_scans = 0;
     scanner_set ss(sc, feature_recorder_set::flags_t(), &writer);
@@ -1430,7 +1440,8 @@ TEST_CASE("duplicate sbufs bypass scanner fan-out unless requested", "[scanner_s
 
 TEST_CASE("duplicate sbufs reach scanners that opt in", "[scanner_set]") {
     scanner_config sc;
-    sc.outdir = get_tempdir();
+    sc.outdir = NamedTemporaryDirectory();
+    sc.deduplicate = true;
     sc.enable_all_scanners();
     duplicate_bypass_scans = 0;
     duplicate_opt_in_scans = 0;
@@ -1445,6 +1456,29 @@ TEST_CASE("duplicate sbufs reach scanners that opt in", "[scanner_set]") {
     REQUIRE(duplicate_opt_in_scans == 2);
     REQUIRE(ss.get_duplicate_sbufs_bypassed() == 0);
     ss.shutdown();
+}
+
+TEST_CASE("duplicate sbuf bypass is disabled by default", "[scanner_set]") {
+    scanner_config sc;
+    sc.outdir = NamedTemporaryDirectory();
+    sc.enable_all_scanners();
+    duplicate_bypass_scans = 0;
+    sbuf_t duplicate("duplicate");
+    const auto hash = duplicate.hash();
+    scanner_set ss(sc, feature_recorder_set::flags_t(), nullptr);
+    ss.add_scanner(scan_duplicate_bypass_test);
+    ss.apply_scanner_commands();
+    ss.phase_scan();
+    ss.schedule_sbuf(sbuf_t::sbuf_malloc(pos0_t("zeta"), "duplicate"));
+    ss.schedule_sbuf(sbuf_t::sbuf_malloc(pos0_t("alpha"), "duplicate"));
+    ss.schedule_sbuf(sbuf_t::sbuf_malloc(pos0_t("middle"), "duplicate"));
+    REQUIRE(duplicate_bypass_scans == 3);
+    REQUIRE(ss.get_dup_bytes_encountered() == 18);
+    REQUIRE(ss.get_duplicate_sbufs_bypassed() == 0);
+    ss.shutdown();
+    const auto lines = getLines(sc.outdir / "duplicates.txt");
+    REQUIRE(std::find(lines.begin(), lines.end(), "alpha-0\tmiddle-0\t" + hash) != lines.end());
+    REQUIRE(std::find(lines.begin(), lines.end(), "alpha-0\tzeta-0\t" + hash) != lines.end());
 }
 
 
@@ -1471,10 +1505,10 @@ TEST_CASE("enable/disable", "[scanner_set]") {
         REQUIRE(ss.is_scanner_enabled(SHA1_TEST) == true);
         REQUIRE(ss.is_find_scanner_enabled() == false); // only sha1 scanner is enabled
 
-        /* Make sure that the scanner set has a two feature recorders:
-         * the alert recorder and the sha1_bufs recorder
+        /* Make sure that the scanner set has three feature recorders:
+         * the duplicates recorder, alert recorder, and sha1_bufs recorder
          */
-        REQUIRE(ss.feature_recorder_count() == 2);
+        REQUIRE(ss.feature_recorder_count() == 3);
 
         /* Make sure it has a single histogram */
         REQUIRE(ss.histogram_count() == 1);

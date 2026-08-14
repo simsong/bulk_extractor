@@ -226,9 +226,10 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     ("image_name", image_name_help.c_str(), cxxopts::value<std::string>())
         ("A,offset_add", "Offset added (in bytes) to feature locations", cxxopts::value<int64_t>()->default_value("0"))
         ("b,banner_file", "Path of file whose contents are prepended to top of all feature files",cxxopts::value<std::string>())
-	("C,context_window", "Size of context window reported in bytes",
+        ("C,context_window", "Size of context window reported in bytes",
          cxxopts::value<int>()->default_value(std::to_string(sc.context_window_default)))
         ("d,debug", "enable debug-level diagnostic logging")
+        ("deduplicate", "bypass buffers whose content was already processed")
         ("E,enable_exclusive", "disable all scanners except the one specified. Same as -x all -E scanner.", cxxopts::value<std::string>())
         ("e,enable",   "enable a scanner (can be repeated)", cxxopts::value<std::vector<std::string>>())
         ("x,disable",  "disable a scanner (can be repeated)", cxxopts::value<std::vector<std::string>>())
@@ -300,6 +301,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
 
     sc.offset_add  = result["offset_add"].as<int64_t>();
     sc.context_window_default = result["context_window"].as<int>();
+    sc.deduplicate = result.count("deduplicate") != 0;
     const int max_minute_wait = result["max_minute_wait"].as<int>();
     if (max_minute_wait <= 0) {
         throw std::runtime_error("--max_minute_wait must be positive");

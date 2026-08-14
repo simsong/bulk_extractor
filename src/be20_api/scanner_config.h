@@ -114,6 +114,7 @@ public:
     std::string hash_algorithm {"sha1"};          // which hash algorithm are using; default to SHA1
 
     bool allow_recurse { true };         // can be turned off for testing
+    bool deduplicate { false };          // bypass duplicate sbufs when enabled
 
     inline static const std::string NO_INPUT = "<NO-INPUT>"; // 'filename' indicator that the FRS has no input file
     inline static const std::string NO_OUTDIR = "<NO-OUTDIR>"; // 'dirname' indicator that the FRS produces no file output

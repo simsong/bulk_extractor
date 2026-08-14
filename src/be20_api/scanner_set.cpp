@@ -79,6 +79,11 @@ scanner_set::scanner_set(scanner_config& sc_, const feature_recorder_set::flags_
     fs.banner_filename                     = sc.banner_file;
     pool.debug                             = getenv_debug("DEBUG_THREAD_POOL");
 
+    feature_recorder_def::flags_t duplicate_flags;
+    duplicate_flags.no_stoplist = true;
+    duplicate_flags.no_alertlist = true;
+    fs.create_feature_recorder(feature_recorder_def(DUPLICATES_RECORDER_NAME, duplicate_flags));
+
     const char *dsi = std::getenv("DEBUG_SCANNERS_IGNORE");
     if (dsi!=nullptr) debug_flags.debug_scanners_ignore=dsi;
 
@@ -1008,14 +1013,12 @@ void scanner_set::process_sbuf(const sbuf_t* sbufp)
 
     update_maximum<unsigned int>(max_depth_seen, sbuf.depth());
 
-    /* Determine if we have seen this buffer before.
-     * Some scanners are okay with duplicate processing, but the default is that they are not.
-     * Nevertheless, we will add dupliate bytes to the hash of the disk image.
-     */
-    sbufp->seen_before = previously_processed_count(sbuf) > 0; // abstraction violation
-    if (sbufp->seen_before) {
+    /* Always record duplicate paths. Only mark or bypass duplicate content when requested. */
+    const bool seen_before = previously_processed_count(sbuf) > 0;
+    sbufp->seen_before = sc.deduplicate && seen_before; // abstraction violation
+    if (seen_before) {
         dup_bytes_encountered += sbuf.bufsize;
-        if (!scan_seen_before_enabled) {
+        if (sc.deduplicate && !scan_seen_before_enabled) {
             duplicate_sbufs_bypassed++;
             if (debug_flags.debug_benchmark && writer) {
                 writer->xmlout("debug:bypass", "",
@@ -1142,6 +1145,7 @@ void scanner_set::shutdown()
     scanner_params sp(sc, this, nullptr, scanner_params::PHASE_SHUTDOWN, nullptr);
     for (const auto &it : enabled_scanners) { (*it)(sp); }
 
+    write_duplicate_report();
     fs.feature_recorders_shutdown();
 
     /* Tell every feature recorder to flush all of its histograms if they haven't been generated.
@@ -1176,6 +1180,23 @@ std::string scanner_set::hash(const sbuf_t& sbuf) const
 }
 
 uint64_t scanner_set::previously_processed_count(const sbuf_t& sbuf) {
-    std::string hash = sbuf.hash();
-    return previously_processed_counter[ hash ]++;
+    const std::string hash = sbuf.hash();
+    const std::lock_guard<std::mutex> lock(Mpreviously_processed);
+    auto &paths = previously_processed[hash];
+    const uint64_t count = paths.size();
+    paths.insert(sbuf.pos0);
+    return count;
+}
+
+void scanner_set::write_duplicate_report() {
+    feature_recorder &recorder = fs.named_feature_recorder(DUPLICATES_RECORDER_NAME);
+    const std::lock_guard<std::mutex> lock(Mpreviously_processed);
+    for (const auto &[hash, paths] : previously_processed) {
+        if (paths.size() < 2) continue;
+        const auto first = paths.begin();
+        auto path = first;
+        for (++path; path != paths.end(); ++path) {
+            recorder.write(*first, path->str(), hash);
+        }
+    }
 }
