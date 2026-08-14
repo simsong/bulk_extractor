@@ -83,6 +83,30 @@ TEST_CASE("idle_workers_shutdown", "[thread_pool]") {
     ss.shutdown();
 }
 
+TEST_CASE("timed_join_stops_all_idle_workers", "[thread_pool]") {
+    constexpr size_t attempts = 25;
+    constexpr size_t worker_count = 32;
+
+    for (size_t attempt = 0; attempt < attempts; attempt++) {
+        scanner_config sc;
+        sc.outdir = get_tempdir() / "timed_join_stops_all_idle_workers" / std::to_string(attempt);
+        std::filesystem::create_directories(sc.outdir);
+
+        feature_recorder_set::flags_t f;
+        scanner_set ss(sc, f, nullptr);
+        ss.apply_scanner_commands();
+        ss.phase_scan();
+        ss.launch_workers(worker_count);
+
+        INFO("shutdown attempt " << attempt);
+        REQUIRE(ss.get_worker_count() == worker_count);
+        REQUIRE(ss.join(std::chrono::seconds(5)));
+        REQUIRE(ss.get_worker_count() == 0);
+        REQUIRE(ss.get_tasks_queued() == 0);
+        ss.shutdown();
+    }
+}
+
 TEST_CASE("timed_join_reports_timeout", "[thread_pool]") {
     scanner_config sc;
     sc.outdir = get_tempdir() / "timed_join_reports_timeout";

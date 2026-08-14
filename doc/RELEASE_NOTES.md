@@ -14,7 +14,7 @@ linked from the [historical source map](#historical-source-map).
 ## 2.2.0 (draft)
 
 **Status:** Unreleased. The source version is currently
-`2.2.0beta1`; the corresponding Git tag will be `v2.2.0beta1`.
+`2.2.0beta2`; the corresponding Git tag will be `v2.2.0beta2`.
 
 ### Executive summary
 
@@ -163,6 +163,9 @@ through the project's normal pull-request and CI process.
 - Fixed notifier and disk-write error shutdown so worker failures are reported
   and cleaned up instead of hanging or terminating incorrectly
   ([PR #513](https://github.com/simsong/bulk_extractor/pull/513)).
+- Thread-pool shutdown again tracks live workers under the pool mutex, preventing
+  timed joins from sleeping until their deadline after every worker has exited
+  ([#678](https://github.com/simsong/bulk_extractor/issues/678)).
 - `-Z` now removes stale nested output directories as well as files before a
   new run ([#239](https://github.com/simsong/bulk_extractor/issues/239)).
 - Fixed scanner controls: `jpeg_carve_mode=0` now disables JPEG carving, and
