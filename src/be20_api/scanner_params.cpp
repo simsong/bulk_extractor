@@ -31,8 +31,8 @@ feature_recorder& scanner_params::named_feature_recorder(const std::string featu
 bool scanner_params::check_previously_processed(const sbuf_t &s) const
 {
     assert(ss!=nullptr);
-    const bool first_seen = ss->previously_processed_count(s)==0;
-    return sc.deduplicate && first_seen;
+    const bool seen_before = ss->previously_processed_count(s) > 0;
+    return sc.deduplicate && seen_before;
 }
 
 void scanner_params::recurse(const sbuf_t* new_sbuf) const {

@@ -1404,6 +1404,28 @@ TEST_CASE("previously_processed", "[scanner_set]") {
     REQUIRE(ss.previously_processed_count(slg) == 2);
 }
 
+TEST_CASE("scanner duplicate check skips only repeated content", "[scanner_set]") {
+    scanner_config sc;
+    sc.outdir = NamedTemporaryDirectory();
+    sc.deduplicate = true;
+    scanner_set ss(sc, feature_recorder_set::flags_t(), nullptr);
+    sbuf_t slg("Simson");
+    scanner_params sp(sc, &ss, nullptr, scanner_params::PHASE_SCAN, &slg);
+    REQUIRE_FALSE(sp.check_previously_processed(slg));
+    REQUIRE(sp.check_previously_processed(slg));
+}
+
+TEST_CASE("scanner duplicate check records content when bypass is disabled", "[scanner_set]") {
+    scanner_config sc;
+    sc.outdir = NamedTemporaryDirectory();
+    scanner_set ss(sc, feature_recorder_set::flags_t(), nullptr);
+    sbuf_t slg("Simson");
+    scanner_params sp(sc, &ss, nullptr, scanner_params::PHASE_SCAN, &slg);
+    REQUIRE_FALSE(sp.check_previously_processed(slg));
+    REQUIRE_FALSE(sp.check_previously_processed(slg));
+    REQUIRE(ss.previously_processed_count(slg) == 2);
+}
+
 TEST_CASE("duplicates report is always created", "[scanner_set]") {
     scanner_config sc;
     sc.outdir = NamedTemporaryDirectory();
