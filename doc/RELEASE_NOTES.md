@@ -224,6 +224,9 @@ through the project's normal pull-request and CI process.
 
 ### Build, configuration, and testing
 
+- Release source archives now define unavailable Git metadata as `unknown`, so
+  their `make check` target compiles and runs outside a Git checkout
+  ([#681](https://github.com/simsong/bulk_extractor/issues/681)).
 - Source-tree bootstrap no longer reports obsolete Libtool setup or GNU Make
   portability warnings from the project Autotools inputs.
 - A build configured with `--disable-rar` now omits RAR-only tests without

@@ -9,8 +9,8 @@ sudo yum install mingw32-libgcrypt-static mingw64-libgcrypt-static  mingw32-zlib
 export WINEPATH=/usr/x86_64-w64-mingw32/sys-root/mingw/bin/
 sh bootstrap.sh
 mingw64-configure --quiet --enable-silent-rules
-make test_dfxml.exe
-wine test_dfxml.exe
+make dfxml_cpp_test.exe
+wine dfxml_cpp_test.exe
 ```
 To compile under ubuntu:
 ```

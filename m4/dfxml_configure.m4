@@ -24,13 +24,22 @@ AC_CHECK_LIB([expat],[XML_ParserCreate],,[have_expat="no ";AC_MSG_WARN([expat no
 # Determine UTC date offset
 CPPFLAGS="$CPPFLAGS -DUTC_OFFSET=`TZ=UTC date +%z`"
 
-# Get the GIT commit into the GIT_COMMIT variable
+# Get the Git commit when configuring a checkout. Release archives have no
+# repository metadata, so use an explicit fallback instead of omitting it.
+GIT_COMMIT=unknown
 AC_CHECK_PROG([git],[git],[yes],[no])
 AM_CONDITIONAL([FOUND_GIT],[test "x$git" = xyes])
 AM_COND_IF([FOUND_GIT],
-        [GIT_COMMIT=`git describe --dirty --always`
-         AC_MSG_NOTICE([git commit $GIT_COMMIT])],
+        [if test -e "$srcdir/.git"; then
+           git_commit=`git -C "$srcdir" describe --dirty --always 2>/dev/null`
+           if test -n "$git_commit"; then
+             GIT_COMMIT=$git_commit
+           fi
+         fi],
         [AC_MSG_WARN([git not found])])
+AC_MSG_NOTICE([git commit $GIT_COMMIT])
+AC_DEFINE_UNQUOTED([GIT_COMMIT], ["$GIT_COMMIT"],
+                   [Define to the Git commit description or "unknown".])
 
 # Do we have the CPUID instruction?
 # Based on https://www.gnu.org/software/autoconf-archive/ax_gcc_x86_cpuid.html
