@@ -222,24 +222,24 @@ TEST_CASE("deduplication is opt-in and reports duplicate paths", "[end-to-end]")
     input_file.write(gzip.data(), gzip.size());
     input_file.close();
 
-    const auto run = [&](const std::filesystem::path &outdir, bool deduplicate) {
+    const auto run = [&](const std::filesystem::path &outdir, bool legacy_deduplication) {
         const std::string input_string = input.string();
         const std::string outdir_string = outdir.string();
         const char *default_argv[] = {
             "bulk_extractor", "-0q", "-J", "-x", "all", "-e", "email", "-e", "gzip",
             "-o", outdir_string.c_str(), input_string.c_str(), nullptr
         };
-        const char *deduplicate_argv[] = {
-            "bulk_extractor", "-0q", "-J", "--deduplicate", "-x", "all",
+        const char *legacy_deduplication_argv[] = {
+            "bulk_extractor", "-0q", "-J", "--deduplciate-mode", "2", "-x", "all",
             "-e", "email", "-e", "gzip", "-o", outdir_string.c_str(),
             input_string.c_str(), nullptr
         };
         std::stringstream output;
-        REQUIRE(run_be(output, deduplicate ? deduplicate_argv : default_argv) == 0);
+        REQUIRE(run_be(output, legacy_deduplication ? legacy_deduplication_argv : default_argv) == 0);
     };
 
     const auto default_outdir = root / "default";
-    const auto deduplicate_outdir = root / "deduplicate";
+    const auto deduplicate_outdir = root / "legacy-deduplication";
     run(default_outdir, false);
     run(deduplicate_outdir, true);
 

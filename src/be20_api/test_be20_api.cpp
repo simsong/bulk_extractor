@@ -1404,43 +1404,83 @@ TEST_CASE("previously_processed", "[scanner_set]") {
     REQUIRE(ss.previously_processed_count(slg) == 2);
 }
 
-TEST_CASE("scanner duplicate check skips only repeated content", "[scanner_set]") {
-    scanner_config sc;
-    sc.outdir = NamedTemporaryDirectory();
-    sc.deduplicate = true;
-    scanner_set ss(sc, feature_recorder_set::flags_t(), nullptr);
-    sbuf_t slg("Simson");
-    scanner_params sp(sc, &ss, nullptr, scanner_params::PHASE_SCAN, &slg);
-    REQUIRE_FALSE(sp.check_previously_processed(slg));
-    REQUIRE(sp.check_previously_processed(slg));
+TEST_CASE("recursive deduplication follows the configured mode", "[scanner]") {
+    const auto repeated = [](scanner_config::deduplicate_mode_t mode) {
+        scanner_config sc;
+        sc.deduplicate_mode = mode;
+        sc.outdir = get_tempdir();
+        feature_recorder_set::flags_t flags;
+        flags.no_alert = true;
+        scanner_set ss(sc, flags, nullptr);
+        scanner_params sp(sc, &ss, nullptr, scanner_params::PHASE_SCAN, nullptr);
+        const sbuf_t sbuf("duplicate");
+        REQUIRE_FALSE(sp.check_previously_processed(sbuf));
+        return sp.check_previously_processed(sbuf);
+    };
+
+    REQUIRE_FALSE(repeated(scanner_config::deduplicate_mode_t::NONE));
+    REQUIRE(repeated(scanner_config::deduplicate_mode_t::RECURSIVE));
+    REQUIRE(repeated(scanner_config::deduplicate_mode_t::LEGACY));
 }
 
-TEST_CASE("scanner duplicate check records content when bypass is disabled", "[scanner_set]") {
+TEST_CASE("disabled recursive deduplication does not track inputs", "[scanner]") {
     scanner_config sc;
-    sc.outdir = NamedTemporaryDirectory();
-    scanner_set ss(sc, feature_recorder_set::flags_t(), nullptr);
-    sbuf_t slg("Simson");
-    scanner_params sp(sc, &ss, nullptr, scanner_params::PHASE_SCAN, &slg);
-    REQUIRE_FALSE(sp.check_previously_processed(slg));
-    REQUIRE_FALSE(sp.check_previously_processed(slg));
-    REQUIRE(ss.previously_processed_count(slg) == 2);
+    sc.outdir = get_tempdir();
+    feature_recorder_set::flags_t flags;
+    flags.no_alert = true;
+    scanner_set ss(sc, flags, nullptr);
+    scanner_params sp(sc, &ss, nullptr, scanner_params::PHASE_SCAN, nullptr);
+    const sbuf_t sbuf("duplicate");
+
+    REQUIRE_FALSE(sp.check_previously_processed(sbuf));
+    REQUIRE_FALSE(sp.check_previously_processed(sbuf));
+    REQUIRE(ss.previously_processed_count(sbuf) == 0);
 }
 
 TEST_CASE("duplicates report is always created", "[scanner_set]") {
     scanner_config sc;
-    sc.outdir = NamedTemporaryDirectory();
+    sc.outdir = get_tempdir();
     scanner_set ss(sc, feature_recorder_set::flags_t(), nullptr);
     const auto report = sc.outdir / "duplicates.txt";
     REQUIRE(std::filesystem::exists(report));
     REQUIRE(std::filesystem::file_size(report) == 0);
 }
 
+TEST_CASE("carve deduplication follows the configured mode", "[feature_recorder]") {
+    const auto carve_twice = [](scanner_config::deduplicate_mode_t mode) {
+        scanner_config sc;
+        sc.deduplicate_mode = mode;
+        sc.outdir = get_tempdir();
+        feature_recorder_set::flags_t flags;
+        flags.no_alert = true;
+        feature_recorder_set frs(flags, sc);
+        auto& fr = frs.create_feature_recorder("carved");
+        fr.carve_mode = feature_recorder_def::CARVE_ALL;
+        const auto first = std::unique_ptr<sbuf_t>(sbuf_t::sbuf_malloc(pos0_t("100"), "duplicate"));
+        const auto second = std::unique_ptr<sbuf_t>(sbuf_t::sbuf_malloc(pos0_t("200"), "duplicate"));
+        return std::pair{fr.carve(*first, ".bin"), fr.carve(*second, ".bin")};
+    };
+
+    const auto no_dedup = carve_twice(scanner_config::deduplicate_mode_t::NONE);
+    REQUIRE(no_dedup.first != feature_recorder::CACHED);
+    REQUIRE(no_dedup.second != feature_recorder::CACHED);
+    REQUIRE(std::filesystem::path(no_dedup.first).parent_path() == std::filesystem::path(no_dedup.second).parent_path());
+
+    const auto recursive_only = carve_twice(scanner_config::deduplicate_mode_t::RECURSIVE);
+    REQUIRE(recursive_only.first != feature_recorder::CACHED);
+    REQUIRE(recursive_only.second != feature_recorder::CACHED);
+
+    const auto legacy = carve_twice(scanner_config::deduplicate_mode_t::LEGACY);
+    REQUIRE(legacy.first != feature_recorder::CACHED);
+    REQUIRE(legacy.second == feature_recorder::CACHED);
+}
+
 TEST_CASE("duplicate sbufs bypass scanner fan-out unless requested", "[scanner_set]") {
     scanner_config sc;
-    sc.outdir = NamedTemporaryDirectory();
-    sc.deduplicate = true;
+    sc.deduplicate_mode = scanner_config::deduplicate_mode_t::LEGACY;
+    sc.outdir = get_tempdir();
     sc.enable_all_scanners();
-    const auto dfxml_file = sc.outdir / "duplicate_bypass.xml";
+    const auto dfxml_file = get_tempdir() / "duplicate_bypass.xml";
     dfxml_writer writer(dfxml_file, false);
     duplicate_bypass_scans = 0;
     scanner_set ss(sc, feature_recorder_set::flags_t(), &writer);
@@ -1462,8 +1502,8 @@ TEST_CASE("duplicate sbufs bypass scanner fan-out unless requested", "[scanner_s
 
 TEST_CASE("duplicate sbufs reach scanners that opt in", "[scanner_set]") {
     scanner_config sc;
-    sc.outdir = NamedTemporaryDirectory();
-    sc.deduplicate = true;
+    sc.deduplicate_mode = scanner_config::deduplicate_mode_t::LEGACY;
+    sc.outdir = get_tempdir();
     sc.enable_all_scanners();
     duplicate_bypass_scans = 0;
     duplicate_opt_in_scans = 0;
@@ -1478,29 +1518,6 @@ TEST_CASE("duplicate sbufs reach scanners that opt in", "[scanner_set]") {
     REQUIRE(duplicate_opt_in_scans == 2);
     REQUIRE(ss.get_duplicate_sbufs_bypassed() == 0);
     ss.shutdown();
-}
-
-TEST_CASE("duplicate sbuf bypass is disabled by default", "[scanner_set]") {
-    scanner_config sc;
-    sc.outdir = NamedTemporaryDirectory();
-    sc.enable_all_scanners();
-    duplicate_bypass_scans = 0;
-    sbuf_t duplicate("duplicate");
-    const auto hash = duplicate.hash();
-    scanner_set ss(sc, feature_recorder_set::flags_t(), nullptr);
-    ss.add_scanner(scan_duplicate_bypass_test);
-    ss.apply_scanner_commands();
-    ss.phase_scan();
-    ss.schedule_sbuf(sbuf_t::sbuf_malloc(pos0_t("zeta"), "duplicate"));
-    ss.schedule_sbuf(sbuf_t::sbuf_malloc(pos0_t("alpha"), "duplicate"));
-    ss.schedule_sbuf(sbuf_t::sbuf_malloc(pos0_t("middle"), "duplicate"));
-    REQUIRE(duplicate_bypass_scans == 3);
-    REQUIRE(ss.get_dup_bytes_encountered() == 18);
-    REQUIRE(ss.get_duplicate_sbufs_bypassed() == 0);
-    ss.shutdown();
-    const auto lines = getLines(sc.outdir / "duplicates.txt");
-    REQUIRE(std::find(lines.begin(), lines.end(), "alpha-0\tmiddle-0\t" + hash) != lines.end());
-    REQUIRE(std::find(lines.begin(), lines.end(), "alpha-0\tzeta-0\t" + hash) != lines.end());
 }
 
 
@@ -1528,7 +1545,7 @@ TEST_CASE("enable/disable", "[scanner_set]") {
         REQUIRE(ss.is_find_scanner_enabled() == false); // only sha1 scanner is enabled
 
         /* Make sure that the scanner set has three feature recorders:
-         * the duplicates recorder, alert recorder, and sha1_bufs recorder
+         * alerts, duplicates, and sha1_bufs
          */
         REQUIRE(ss.feature_recorder_count() == 3);
 

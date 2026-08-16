@@ -349,6 +349,7 @@ static std::filesystem::path run_scanners(const std::vector<scanner_t *> & scann
     frs_flags.pedantic = true;          // for testing
     scanner_config sc;
     sc.outdir           = NamedTemporaryDirectory();
+    sc.deduplicate_mode = scanner_config::deduplicate_mode_t::LEGACY;
     sc.enable_all_scanners();
 
     scanner_set ss(sc, frs_flags, nullptr);
@@ -1295,4 +1296,10 @@ TEST_CASE("zip_carve_filename_limit", "[scanners]") {
     REQUIRE(carved.size() == 64);
     REQUIRE(carved.front() == '_');
     REQUIRE(zip_carve_filename("dir\\file") == "_dir_file");
+}
+
+TEST_CASE("zip_depth_counts_only_zip_recursion", "[scanners]") {
+    REQUIRE(zip_depth(pos0_t("0")) == 0);
+    REQUIRE(zip_depth(pos0_t("0-ZIP-0")) == 1);
+    REQUIRE(zip_depth(pos0_t("0-ZIP-0-GZIP-0-ZIP-0")) == 2);
 }

@@ -116,12 +116,11 @@ concurrent scanner calls; protect any other shared scanner state with an
 appropriate mutex or atomics.
 
 The framework can bypass a scanner for a small buffer, an ngram buffer,
-excessive depth, or scanner flags. With `--deduplicate`, it can also bypass a
-buffer whose content hash was seen earlier. Deduplication is disabled by
-default because concurrent scans can otherwise choose different forensic paths
-for equal content. Duplicate detection still runs and produces
-`duplicates.txt`; only the bypass is optional. A scanner must not assume it
-will see every input buffer.
+excessive depth, or scanner flags. `--deduplciate-mode 2` also bypasses a
+buffer whose content hash was seen earlier; mode 0 preserves every path, and
+mode 1 limits deduplication to recursive ZIP processing. Duplicate detection
+always produces `duplicates.txt`; a scanner must not assume it will see every
+input buffer in mode 2.
 
 ## Feature recorders
 

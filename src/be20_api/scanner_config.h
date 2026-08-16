@@ -9,7 +9,7 @@
  * This class is also used to build the help string.
  *
  * All of the scanners get the same config, so the names that the scanners want need to be unique.
- * We could have adopted a system where each scanner had its own configuraiton space, but we didn't.
+ * We could have adopted a system where each scanner had its own configuration space, but we didn't.
  * Scanner histograms are added to 'histograms' by machinery.
  */
 
@@ -59,6 +59,12 @@ private:
     scanner_commands_t scanner_commands {};
 
 public:
+    enum class deduplicate_mode_t : uint8_t {
+        NONE = 0,      // Preserve every recursive path and carved object.
+        RECURSIVE = 1, // Deduplicate ZIP recursion only.
+        LEGACY = 2,    // Deduplicate recursive scanner work and carved objects.
+    };
+
     const scanner_commands_t get_scanner_commands() {
         return static_cast<const scanner_commands_t>(scanner_commands);
     }
@@ -114,7 +120,7 @@ public:
     std::string hash_algorithm {"sha1"};          // which hash algorithm are using; default to SHA1
 
     bool allow_recurse { true };         // can be turned off for testing
-    bool deduplicate { false };          // bypass duplicate sbufs when enabled
+    deduplicate_mode_t deduplicate_mode {deduplicate_mode_t::NONE};
 
     inline static const std::string NO_INPUT = "<NO-INPUT>"; // 'filename' indicator that the FRS has no input file
     inline static const std::string NO_OUTDIR = "<NO-OUTDIR>"; // 'dirname' indicator that the FRS produces no file output

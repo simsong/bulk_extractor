@@ -26,8 +26,14 @@ TEST_CASE("dfxml writer", "[dfxml]") {
     char program[] = "test_dfxml";
     char *argv[] = {program};
 
+#ifdef GIT_COMMIT
+    const char *git_commit = GIT_COMMIT;
+#else
+    const char *git_commit = "unknown";
+#endif
+
     dfxml_writer writer(output, false);
-    writer.add_DFXML_creator("test_dfxml", VERSION, GIT_COMMIT, 1, argv);
+    writer.add_DFXML_creator("test_dfxml", VERSION, git_commit, 1, argv);
     writer.comment("writer integration test");
     writer.close();
 

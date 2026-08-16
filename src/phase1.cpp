@@ -236,8 +236,11 @@ void Phase1::dfxml_write_create(int argc, char * const *argv)
     xreport.push("metadata", "xmlns:dc='http://purl.org/dc/elements/1.1/'");
     xreport.xmlout("dc:type","Feature Extraction","",false);
     xreport.pop();
+#ifndef GIT_COMMIT
+#define GIT_COMMIT "unknown"
+#endif
     if (argc && argv){
-        xreport.add_DFXML_creator(PACKAGE_NAME, PACKAGE_VERSION, "", argc, argv);
+        xreport.add_DFXML_creator(PACKAGE_NAME, PACKAGE_VERSION, GIT_COMMIT, argc, argv);
     }
     xreport.push("source");
     xreport.xmlout("image_filename",p.image_fname());

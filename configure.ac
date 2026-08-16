@@ -8,7 +8,7 @@
 # and http://www.bioinf.uni-freiburg.de/~mmann/HowTo/automake.html
 
 AC_PREREQ([2.69])
-AC_INIT([BULK_EXTRACTOR],[2.2.0beta3],[bugs@digitalcorpora.org])
+AC_INIT([BULK_EXTRACTOR],[2.2.0beta4],[bugs@digitalcorpora.org])
 AC_CONFIG_MACRO_DIR(m4)
 
 AC_MSG_NOTICE([at start CPPFLAGS are $CPPFLAGS])
@@ -396,6 +396,3 @@ echo "#define CFLAGS   \"$CFLAGS\""   >> config.h
 echo "#define CXXFLAGS \"$CXXFLAGS\"" >> config.h
 echo "#define LIBS     \"$LIBS\""     >> config.h
 echo "#define LDFLAGS  \"$LDFLAGS\""  >> config.h
-if test x"$GIT_COMMIT" != "x" ; then
-  echo "#define GIT_COMMIT  \"$GIT_COMMIT\""  >> config.h
-fi

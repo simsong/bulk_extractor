@@ -274,6 +274,7 @@ static std::filesystem::path validate_once(const std::string &image_fname,
     scanner_config sc;
 
     sc.outdir           = NamedTemporaryDirectory();
+    sc.deduplicate_mode = scanner_config::deduplicate_mode_t::LEGACY;
     sc.enable_all_scanners();
     sc.allow_recurse    = recurse;
 
