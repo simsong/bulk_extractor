@@ -1012,7 +1012,8 @@ void scanner_set::process_sbuf(const sbuf_t* sbufp)
      * Some scanners are okay with duplicate processing, but the default is that they are not.
      * Nevertheless, we will add dupliate bytes to the hash of the disk image.
      */
-    sbufp->seen_before = previously_processed_count(sbuf) > 0; // abstraction violation
+    sbufp->seen_before = sc.deduplicate_mode == scanner_config::deduplicate_mode_t::LEGACY
+                         && previously_processed_count(sbuf) > 0; // abstraction violation
     if (sbufp->seen_before) {
         dup_bytes_encountered += sbuf.bufsize;
         if (!scan_seen_before_enabled) {

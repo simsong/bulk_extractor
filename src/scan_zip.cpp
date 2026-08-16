@@ -19,7 +19,20 @@ static const std::string  ZIP_RECORDER_NAME {"zip_carved"};
 static uint32_t  zip_max_uncompr_size = 256*1024*1024; // don't decompress objects larger than this
 static uint32_t  zip_min_uncompr_size = 6;	// don't bother with objects smaller than this
 static uint32_t  zip_name_len_max = 1024;
+static uint32_t  max_zip_depth = 4;
 static const size_t ZIP_CARVE_FILENAME_MAX = 64;
+
+uint32_t zip_depth(const pos0_t &pos0)
+{
+    const std::string path = pos0.str();
+    uint32_t count = 0;
+    size_t pos = 0;
+    while ((pos = path.find("-ZIP-", pos)) != std::string::npos) {
+        ++count;
+        pos += 5;
+    }
+    return count;
+}
 
 std::string zip_carve_filename(const std::string &name)
 {
@@ -135,13 +148,16 @@ inline void scan_zip_component(scanner_params &sp, feature_recorder &zip_recorde
             return;
         }
 
-        /* If depth is more than 0, don't decompress if we have seen this component before */
-        if (sbuf_src.depth() > 0){
-            if (sp.check_previously_processed(sbuf_src)){
-                xmlstream << "<disposition>previously-processed</disposition></zipinfo>";
-                zip_recorder.write(pos0+pos,name,xmlstream.str());
-                return;
-            }
+        if (zip_depth(sbuf.pos0) >= max_zip_depth) {
+            xmlstream << "<disposition>max-zip-depth</disposition></zipinfo>";
+            zip_recorder.write(pos0+pos,name,xmlstream.str());
+            return;
+        }
+
+        if (sp.check_previously_processed(sbuf_src)) {
+            xmlstream << "<disposition>previously-processed</disposition></zipinfo>";
+            zip_recorder.write(pos0+pos,name,xmlstream.str());
+            return;
         }
 
         auto *decomp = sbuf_decompress::sbuf_new_decompress(sbuf_src, uncompr_size, "ZIP", sbuf_decompress::mode_t::ZIP, header_size);
@@ -175,6 +191,7 @@ void scan_zip(scanner_params &sp)
         sp.get_scanner_config("zip_min_uncompr_size",&zip_min_uncompr_size,"Minimum size of a ZIP uncompressed object");
         sp.get_scanner_config("zip_max_uncompr_size",&zip_max_uncompr_size,"Maximum size of a ZIP uncompressed object");
         sp.get_scanner_config("zip_name_len_max",&zip_name_len_max,"Maximum name of a ZIP component filename");
+	sp.get_scanner_config("max_zip_depth", &max_zip_depth, "Maximum nested ZIP recursion depth");
 	return;
     }
 

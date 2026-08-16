@@ -224,6 +224,11 @@ through the project's normal pull-request and CI process.
 
 ### Build, configuration, and testing
 
+- Recursive duplicate processing is now controlled by `--deduplciate-mode`.
+  Mode 0 (the default) preserves all recursive paths and carved objects; mode 1
+  deduplicates ZIP recursion; mode 2 preserves the legacy recursive and carved-object
+  deduplication behavior. ZIP recursion now defaults to four nested ZIP levels and
+  is configurable with `-S max_zip_depth=N`.
 - Release source archives now define unavailable Git metadata as `unknown`, so
   their `make check` target compiles and runs outside a Git checkout
   ([#681](https://github.com/simsong/bulk_extractor/issues/681)).

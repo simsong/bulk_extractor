@@ -495,7 +495,9 @@ bulk_extractor -S jpeg_carve_mode=2 -o output image.raw
 
 Mode 0 disables carving, mode 1 carves objects reached through an encoded or
 derived path, and mode 2 carves every object accepted by that recorder, subject
-to validation, deduplication, and size limits. JPEG and RAR recorders default
+to validation and size limits. The global code{--deduplciate-mode} controls
+duplicate-object handling; modes 0 and 1 preserve every accepted object, while
+mode 2 retains the legacy cache. JPEG and RAR recorders default
 to mode 1; \code{zip\_carved} and \code{sqlite\_carved} default to mode 2.
 There is no global carve-mode switch. Consult \code{doc/carving.md} and
 \code{-H} for current recorder names, defaults, and size settings.

@@ -1404,8 +1404,57 @@ TEST_CASE("previously_processed", "[scanner_set]") {
     REQUIRE(ss.previously_processed_count(slg) == 2);
 }
 
+TEST_CASE("recursive deduplication follows the configured mode", "[scanner]") {
+    const auto repeated = [](scanner_config::deduplicate_mode_t mode) {
+        scanner_config sc;
+        sc.deduplicate_mode = mode;
+        sc.outdir = get_tempdir();
+        feature_recorder_set::flags_t flags;
+        flags.no_alert = true;
+        scanner_set ss(sc, flags, nullptr);
+        scanner_params sp(sc, &ss, nullptr, scanner_params::PHASE_SCAN, nullptr);
+        const sbuf_t sbuf("duplicate");
+        REQUIRE_FALSE(sp.check_previously_processed(sbuf));
+        return sp.check_previously_processed(sbuf);
+    };
+
+    REQUIRE_FALSE(repeated(scanner_config::deduplicate_mode_t::NONE));
+    REQUIRE(repeated(scanner_config::deduplicate_mode_t::RECURSIVE));
+    REQUIRE(repeated(scanner_config::deduplicate_mode_t::LEGACY));
+}
+
+TEST_CASE("carve deduplication follows the configured mode", "[feature_recorder]") {
+    const auto carve_twice = [](scanner_config::deduplicate_mode_t mode) {
+        scanner_config sc;
+        sc.deduplicate_mode = mode;
+        sc.outdir = get_tempdir();
+        feature_recorder_set::flags_t flags;
+        flags.no_alert = true;
+        feature_recorder_set frs(flags, sc);
+        auto& fr = frs.create_feature_recorder("carved");
+        fr.carve_mode = feature_recorder_def::CARVE_ALL;
+        const auto first = std::unique_ptr<sbuf_t>(sbuf_t::sbuf_malloc(pos0_t("100"), "duplicate"));
+        const auto second = std::unique_ptr<sbuf_t>(sbuf_t::sbuf_malloc(pos0_t("200"), "duplicate"));
+        return std::pair{fr.carve(*first, ".bin"), fr.carve(*second, ".bin")};
+    };
+
+    const auto no_dedup = carve_twice(scanner_config::deduplicate_mode_t::NONE);
+    REQUIRE(no_dedup.first != feature_recorder::CACHED);
+    REQUIRE(no_dedup.second != feature_recorder::CACHED);
+    REQUIRE(std::filesystem::path(no_dedup.first).parent_path() == std::filesystem::path(no_dedup.second).parent_path());
+
+    const auto recursive_only = carve_twice(scanner_config::deduplicate_mode_t::RECURSIVE);
+    REQUIRE(recursive_only.first != feature_recorder::CACHED);
+    REQUIRE(recursive_only.second != feature_recorder::CACHED);
+
+    const auto legacy = carve_twice(scanner_config::deduplicate_mode_t::LEGACY);
+    REQUIRE(legacy.first != feature_recorder::CACHED);
+    REQUIRE(legacy.second == feature_recorder::CACHED);
+}
+
 TEST_CASE("duplicate sbufs bypass scanner fan-out unless requested", "[scanner_set]") {
     scanner_config sc;
+    sc.deduplicate_mode = scanner_config::deduplicate_mode_t::LEGACY;
     sc.outdir = get_tempdir();
     sc.enable_all_scanners();
     const auto dfxml_file = get_tempdir() / "duplicate_bypass.xml";
@@ -1430,6 +1479,7 @@ TEST_CASE("duplicate sbufs bypass scanner fan-out unless requested", "[scanner_s
 
 TEST_CASE("duplicate sbufs reach scanners that opt in", "[scanner_set]") {
     scanner_config sc;
+    sc.deduplicate_mode = scanner_config::deduplicate_mode_t::LEGACY;
     sc.outdir = get_tempdir();
     sc.enable_all_scanners();
     duplicate_bypass_scans = 0;

@@ -331,13 +331,19 @@ std::string feature_recorder::carve(const sbuf_t& header, const sbuf_t& data, st
     std::string carved_hash_hexvalue = hash(data);
     std::string carved_relative_path; // carved path reported in feature file, relative to outdir
     std::filesystem::path carved_absolute_path; // used for opening
-    bool in_cache = carve_cache.check_for_presence_and_insert(carved_hash_hexvalue);
+    const bool in_cache = fs.sc.deduplicate_mode == scanner_config::deduplicate_mode_t::LEGACY
+                          && carve_cache.check_for_presence_and_insert(carved_hash_hexvalue);
 
     if (in_cache) {
         carved_relative_path = CACHED;
     } else {
         /* Determine the directory and filename */
-        int64_t myfileNumber = carved_file_count++; // atomic operation
+        int64_t myfileNumber = 0;
+        if (fs.sc.deduplicate_mode == scanner_config::deduplicate_mode_t::LEGACY) {
+            myfileNumber = carved_file_count++; // atomic operation
+        } else {
+            myfileNumber = std::stoll(carved_hash_hexvalue.substr(0, 8), nullptr, 16) % 1000;
+        }
         std::ostringstream seq;
         seq << std::setw(3) << std::setfill('0') << int(myfileNumber / 1000);
         const std::string thousands{seq.str()};

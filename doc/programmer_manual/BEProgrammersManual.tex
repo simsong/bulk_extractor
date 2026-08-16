@@ -648,8 +648,9 @@ input, and handling of malformed or unexpectedly large features.
 
 A carving recorder declares the carve flag, default mode, and minimum and
 maximum sizes. The framework implements mode 0 (none), mode 1 (derived or
-encoded paths), mode 2 (all accepted objects), hashing, deduplication, safe
-filenames, and the carving feature record. The scanner remains responsible for
+encoded paths), mode 2 (all accepted objects), hashing, safe filenames, and
+the carving feature record. Global code{--deduplciate-mode} selects whether
+carved objects are deduplicated; only mode 2 retains the legacy cache. The scanner remains responsible for
 validating that the candidate is a real object and for passing its correct
 extent. A signature alone is rarely sufficient validation.
 
