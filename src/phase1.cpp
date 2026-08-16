@@ -237,7 +237,7 @@ void Phase1::dfxml_write_create(int argc, char * const *argv)
     xreport.xmlout("dc:type","Feature Extraction","",false);
     xreport.pop();
 #ifndef GIT_COMMIT
-#define GIT_COMMIT ""
+#define GIT_COMMIT "unknown"
 #endif
     if (argc && argv){
         xreport.add_DFXML_creator(PACKAGE_NAME, PACKAGE_VERSION, GIT_COMMIT, argc, argv);

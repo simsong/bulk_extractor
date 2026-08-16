@@ -342,7 +342,7 @@ std::string feature_recorder::carve(const sbuf_t& header, const sbuf_t& data, st
         if (fs.sc.deduplicate_mode == scanner_config::deduplicate_mode_t::LEGACY) {
             myfileNumber = carved_file_count++; // atomic operation
         } else {
-            myfileNumber = std::stoll(carved_hash_hexvalue.substr(0, 8), nullptr, 16) % 1000;
+            myfileNumber = (std::stoll(carved_hash_hexvalue.substr(0, 8), nullptr, 16) % 1000) * 1000;
         }
         std::ostringstream seq;
         seq << std::setw(3) << std::setfill('0') << int(myfileNumber / 1000);

@@ -1423,6 +1423,20 @@ TEST_CASE("recursive deduplication follows the configured mode", "[scanner]") {
     REQUIRE(repeated(scanner_config::deduplicate_mode_t::LEGACY));
 }
 
+TEST_CASE("disabled recursive deduplication does not track inputs", "[scanner]") {
+    scanner_config sc;
+    sc.outdir = get_tempdir();
+    feature_recorder_set::flags_t flags;
+    flags.no_alert = true;
+    scanner_set ss(sc, flags, nullptr);
+    scanner_params sp(sc, &ss, nullptr, scanner_params::PHASE_SCAN, nullptr);
+    const sbuf_t sbuf("duplicate");
+
+    REQUIRE_FALSE(sp.check_previously_processed(sbuf));
+    REQUIRE_FALSE(sp.check_previously_processed(sbuf));
+    REQUIRE(ss.previously_processed_count(sbuf) == 0);
+}
+
 TEST_CASE("carve deduplication follows the configured mode", "[feature_recorder]") {
     const auto carve_twice = [](scanner_config::deduplicate_mode_t mode) {
         scanner_config sc;
