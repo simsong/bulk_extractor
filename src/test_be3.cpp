@@ -209,6 +209,58 @@ TEST_CASE("report DFXML validates against the bundled schema", "[end-to-end]")
     REQUIRE(std::system(command.c_str()) == 0);
 }
 
+TEST_CASE("deduplication is opt-in and reports duplicate paths", "[end-to-end]")
+{
+    const auto root = NamedTemporaryDirectory();
+    const auto input = root / "duplicate-gzip.raw";
+    const auto gzip_path = test_dir() / "test_hello.gz";
+    std::ifstream gzip_file(gzip_path, std::ios::binary);
+    const std::string gzip((std::istreambuf_iterator<char>(gzip_file)),
+                           std::istreambuf_iterator<char>());
+    std::ofstream input_file(input, std::ios::binary);
+    input_file.write(gzip.data(), gzip.size());
+    input_file.write(gzip.data(), gzip.size());
+    input_file.close();
+
+    const auto run = [&](const std::filesystem::path &outdir, bool deduplicate) {
+        const std::string input_string = input.string();
+        const std::string outdir_string = outdir.string();
+        const char *default_argv[] = {
+            "bulk_extractor", "-0q", "-J", "-x", "all", "-e", "email", "-e", "gzip",
+            "-o", outdir_string.c_str(), input_string.c_str(), nullptr
+        };
+        const char *deduplicate_argv[] = {
+            "bulk_extractor", "-0q", "-J", "--deduplicate", "-x", "all",
+            "-e", "email", "-e", "gzip", "-o", outdir_string.c_str(),
+            input_string.c_str(), nullptr
+        };
+        std::stringstream output;
+        REQUIRE(run_be(output, deduplicate ? deduplicate_argv : default_argv) == 0);
+    };
+
+    const auto default_outdir = root / "default";
+    const auto deduplicate_outdir = root / "deduplicate";
+    run(default_outdir, false);
+    run(deduplicate_outdir, true);
+
+    const auto email_count = [](const std::filesystem::path &outdir) {
+        const auto lines = getLines(outdir / "email.txt");
+        return std::count_if(lines.begin(), lines.end(), [](const auto &line) {
+            return line.find("\thello@world.com\t") != std::string::npos;
+        });
+    };
+    REQUIRE(email_count(default_outdir) == 2);
+    REQUIRE(email_count(deduplicate_outdir) == 1);
+
+    const sbuf_t decoded("hello@world.com\n");
+    const std::string duplicate = "0-GZIP-0\t" + std::to_string(gzip.size())
+        + "-GZIP-0\t" + decoded.hash();
+    for (const auto &outdir : {default_outdir, deduplicate_outdir}) {
+        const auto lines = getLines(outdir / "duplicates.txt");
+        REQUIRE(std::find(lines.begin(), lines.end(), duplicate) != lines.end());
+    }
+}
+
 TEST_CASE("Windows raw-device paths are recognized narrowly", "[image_process]")
 {
     REQUIRE(process_raw::is_windows_raw_device_path(R"(\\.\PhysicalDrive0)"));
