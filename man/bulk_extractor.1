@@ -237,6 +237,11 @@ is not supplied.
 .I outdir/report.xml
 DFXML report describing the scan.
 .TP
+.I outdir/duplicates.txt
+Duplicate-buffer report.  Each data row contains the canonical first forensic
+path, an additional path, and the SHA-1 content hash, separated by tabs.  The
+file is created even when no duplicate buffers are found.
+.TP
 .I outdir/bulk_extractor.log
 Default diagnostic log file.
 .SH SEE ALSO

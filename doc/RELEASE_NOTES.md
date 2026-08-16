@@ -14,7 +14,7 @@ linked from the [historical source map](#historical-source-map).
 ## 2.2.0 (draft)
 
 **Status:** Unreleased. The source version is currently
-`2.2.0beta2`; the corresponding Git tag will be `v2.2.0beta2`.
+`2.2.0beta3`; the corresponding Git tag will be `v2.2.0beta3`.
 
 ### Executive summary
 
@@ -94,6 +94,12 @@ through the project's normal pull-request and CI process.
 
 ### Reliability and correctness
 
+- Buffer deduplication is now disabled by default so concurrent runs
+  preserve every forensic path for equal content. `--deduplicate` restores the
+  previous space-saving behavior, whose first-seen path can depend on worker
+  scheduling. Every scan creates `duplicates.txt`; its deterministic rows list
+  the canonical first path, each additional path, and the SHA-1 content hash
+  ([#682](https://github.com/simsong/bulk_extractor/issues/682)).
 - Restart records the start of each page so a resumed run deliberately skips
   pages that were in progress at the crash, avoiding repeated data-dependent
   crashes; the behavior is covered by a controlled-crash regression test

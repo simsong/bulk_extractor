@@ -1437,6 +1437,15 @@ TEST_CASE("disabled recursive deduplication does not track inputs", "[scanner]")
     REQUIRE(ss.previously_processed_count(sbuf) == 0);
 }
 
+TEST_CASE("duplicates report is always created", "[scanner_set]") {
+    scanner_config sc;
+    sc.outdir = get_tempdir();
+    scanner_set ss(sc, feature_recorder_set::flags_t(), nullptr);
+    const auto report = sc.outdir / "duplicates.txt";
+    REQUIRE(std::filesystem::exists(report));
+    REQUIRE(std::filesystem::file_size(report) == 0);
+}
+
 TEST_CASE("carve deduplication follows the configured mode", "[feature_recorder]") {
     const auto carve_twice = [](scanner_config::deduplicate_mode_t mode) {
         scanner_config sc;
@@ -1535,10 +1544,10 @@ TEST_CASE("enable/disable", "[scanner_set]") {
         REQUIRE(ss.is_scanner_enabled(SHA1_TEST) == true);
         REQUIRE(ss.is_find_scanner_enabled() == false); // only sha1 scanner is enabled
 
-        /* Make sure that the scanner set has a two feature recorders:
-         * the alert recorder and the sha1_bufs recorder
+        /* Make sure that the scanner set has three feature recorders:
+         * alerts, duplicates, and sha1_bufs
          */
-        REQUIRE(ss.feature_recorder_count() == 2);
+        REQUIRE(ss.feature_recorder_count() == 3);
 
         /* Make sure it has a single histogram */
         REQUIRE(ss.histogram_count() == 1);

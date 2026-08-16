@@ -226,7 +226,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     ("image_name", image_name_help.c_str(), cxxopts::value<std::string>())
         ("A,offset_add", "Offset added (in bytes) to feature locations", cxxopts::value<int64_t>()->default_value("0"))
         ("b,banner_file", "Path of file whose contents are prepended to top of all feature files",cxxopts::value<std::string>())
-	("C,context_window", "Size of context window reported in bytes",
+        ("C,context_window", "Size of context window reported in bytes",
          cxxopts::value<int>()->default_value(std::to_string(sc.context_window_default)))
         ("d,debug", "enable debug-level diagnostic logging")
         ("E,enable_exclusive", "disable all scanners except the one specified. Same as -x all -E scanner.", cxxopts::value<std::string>())
