@@ -331,7 +331,7 @@ std::string feature_recorder::carve(const sbuf_t& header, const sbuf_t& data, st
     std::string carved_hash_hexvalue = hash(data);
     std::string carved_relative_path; // carved path reported in feature file, relative to outdir
     std::filesystem::path carved_absolute_path; // used for opening
-    const bool in_cache = fs.sc.deduplicate_mode == scanner_config::deduplicate_mode_t::LEGACY
+    const bool in_cache = fs.sc.dedupe_mode == scanner_config::dedupe_mode_t::LEGACY
                           && carve_cache.check_for_presence_and_insert(carved_hash_hexvalue);
 
     if (in_cache) {
@@ -339,7 +339,7 @@ std::string feature_recorder::carve(const sbuf_t& header, const sbuf_t& data, st
     } else {
         /* Determine the directory and filename */
         int64_t myfileNumber = 0;
-        if (fs.sc.deduplicate_mode == scanner_config::deduplicate_mode_t::LEGACY) {
+        if (fs.sc.dedupe_mode == scanner_config::dedupe_mode_t::LEGACY) {
             myfileNumber = carved_file_count++; // atomic operation
         } else {
             myfileNumber = (std::stoll(carved_hash_hexvalue.substr(0, 8), nullptr, 16) % 1000) * 1000;

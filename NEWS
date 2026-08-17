@@ -1,4 +1,24 @@
 
+bulk_extractor 2.2.0 (2026-08-17)
+
+* Duplicate processing is controlled by --dedupe-mode: mode 0 preserves every
+  recursive and carved path, mode 1 deduplicates ZIP recursion, and mode 2
+  retains legacy recursive and carved-object deduplication (the default).
+  ZIP recursion defaults to a maximum depth of four.
+
+* The bundled RAR decoder rejects a dictionary-copy boundary condition that
+  could write beyond its ring buffer (CVE-2026-24857).
+
+* Windows raw-device input, WiFi PCAP preservation, and runtime scanner
+  modules are included and documented.
+
+* Release source archives are self-contained and build outside a Git checkout.
+  The 2.2 release notes and ChangeLog are maintained in the source tree.
+
+For complete release details, see doc/RELEASE_NOTES.md.
+
+================================================================
+
 BEViewer (with bulk_extractor v1.2):
 Readable Feature entries:
 Features in the scrollable Feature list will be formatted based on their type

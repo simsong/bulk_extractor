@@ -5,11 +5,22 @@ Bruce Allen <bdallen@nps.edu>           (BEViewer, exif analyzer, windows prefet
 Alex Eubanks <endeavor@rainbowsandpwnies.com>  (pe and ELF scanners)
 Luis E. Garcia II <legarcia@nps.edu>    (Initial windows prefetch implementation)
 Michael Shick <mfshick@nps.edu>         (odds and ends)
+Joel Uckelman <uckelman@nomic.net>      (Lightgrep integration and build configuration)
+Mark Richer <mhricher@nps.edu>          (documentation and release material)
+Joachim Metz <joachim.metz@gmail.com>   (release packaging and continuous integration)
 Teru Yamazaki(@4n6ist)                  (scan_evtx, scan_ntfsindx, scan_ntfslogfile, scan_ntfsmft, scan_ntfsusn)
 Alex Eubanks (endeav0r)                 (scan_winpe)
 
+For a list of all contributors, please see:
+https://github.com/simsong/bulk_extractor/graphs/contributors?all=1
 
-LIFT was developed by CMU under contract to the Department of Defense. The team members were:
+Extensive testing on various versions has been performed by:
+
+Matthew Haubach (@the_pgh_cid)
+Jon Stewart <jon@lightboxtechnologies.com>
+
+bulk_extractor version 1.x included support for LIFT, which was developed by Carnegie Mellon University
+under contract to the Department of Defense. The team members were:
   Siddharth Gopal <sgopall@cs.cmu.edu>
   Yiming Yang <yiming@cs.cmu.edu>
   Konstantin Salomatin <ksalomat@cs.cmu.edu>

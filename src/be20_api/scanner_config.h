@@ -59,7 +59,7 @@ private:
     scanner_commands_t scanner_commands {};
 
 public:
-    enum class deduplicate_mode_t : uint8_t {
+    enum class dedupe_mode_t : uint8_t {
         NONE = 0,      // Preserve every recursive path and carved object.
         RECURSIVE = 1, // Deduplicate ZIP recursion only.
         LEGACY = 2,    // Deduplicate recursive scanner work and carved objects.
@@ -120,7 +120,7 @@ public:
     std::string hash_algorithm {"sha1"};          // which hash algorithm are using; default to SHA1
 
     bool allow_recurse { true };         // can be turned off for testing
-    deduplicate_mode_t deduplicate_mode {deduplicate_mode_t::NONE};
+    dedupe_mode_t dedupe_mode {dedupe_mode_t::LEGACY};
 
     inline static const std::string NO_INPUT = "<NO-INPUT>"; // 'filename' indicator that the FRS has no input file
     inline static const std::string NO_OUTDIR = "<NO-OUTDIR>"; // 'dirname' indicator that the FRS produces no file output

@@ -246,7 +246,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
 	("log-file", "diagnostic log file (default: <outdir>/bulk_extractor.log)", cxxopts::value<std::string>())
         ("notify_main_thread", "Display notifications in the main thread after phase1 completes. Useful for running with ThreadSanitizer")
         ("notify_async", "Display notifications asynchronously (default)")
-	("deduplciate-mode", "duplicate processing mode: 0=none, 1=ZIP recursion, 2=legacy", cxxopts::value<unsigned int>()->default_value("0"))
+	("dedupe-mode", "duplicate processing mode: 0=none, 1=ZIP recursion, 2=legacy (default)", cxxopts::value<unsigned int>()->default_value("2"))
         ("o,outdir",        "output directory [REQUIRED]", cxxopts::value<std::string>())
         ("P,scanner_dir",
          "directories for scanner shared libraries (can be repeated). "
@@ -403,11 +403,11 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     cfg.opt_notification       = ( result.count( "no_notify" )==0);
     cfg.opt_legacy             = result.count( "version1" );
 
-    const unsigned int deduplicate_mode = result["deduplciate-mode"].as<unsigned int>();
-    if (deduplicate_mode > static_cast<unsigned int>(scanner_config::deduplicate_mode_t::LEGACY)) {
-        throw std::runtime_error("--deduplciate-mode must be 0, 1, or 2");
+    const unsigned int dedupe_mode = result["dedupe-mode"].as<unsigned int>();
+    if (dedupe_mode > static_cast<unsigned int>(scanner_config::dedupe_mode_t::LEGACY)) {
+        throw std::runtime_error("--dedupe-mode must be 0, 1, or 2");
     }
-    sc.deduplicate_mode = static_cast<scanner_config::deduplicate_mode_t>(deduplicate_mode);
+    sc.dedupe_mode = static_cast<scanner_config::dedupe_mode_t>(dedupe_mode);
 
     if (cfg.opt_notify_main_thread && (result.count("notify_async")>0)){
         throw std::runtime_error("--notify_main_thread and --notify_async conflict");

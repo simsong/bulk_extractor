@@ -116,7 +116,7 @@ concurrent scanner calls; protect any other shared scanner state with an
 appropriate mutex or atomics.
 
 The framework can bypass a scanner for a small buffer, an ngram buffer,
-excessive depth, or scanner flags. `--deduplciate-mode 2` also bypasses a
+excessive depth, or scanner flags. `--dedupe-mode 2` also bypasses a
 buffer whose content hash was seen earlier; mode 0 preserves every path, and
 mode 1 limits deduplication to recursive ZIP processing. Duplicate detection
 always produces `duplicates.txt`; a scanner must not assume it will see every

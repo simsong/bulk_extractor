@@ -349,7 +349,7 @@ static std::filesystem::path run_scanners(const std::vector<scanner_t *> & scann
     frs_flags.pedantic = true;          // for testing
     scanner_config sc;
     sc.outdir           = NamedTemporaryDirectory();
-    sc.deduplicate_mode = scanner_config::deduplicate_mode_t::LEGACY;
+    sc.dedupe_mode = scanner_config::dedupe_mode_t::LEGACY;
     sc.enable_all_scanners();
 
     scanner_set ss(sc, frs_flags, nullptr);

@@ -1405,9 +1405,9 @@ TEST_CASE("previously_processed", "[scanner_set]") {
 }
 
 TEST_CASE("recursive deduplication follows the configured mode", "[scanner]") {
-    const auto repeated = [](scanner_config::deduplicate_mode_t mode) {
+    const auto repeated = [](scanner_config::dedupe_mode_t mode) {
         scanner_config sc;
-        sc.deduplicate_mode = mode;
+        sc.dedupe_mode = mode;
         sc.outdir = get_tempdir();
         feature_recorder_set::flags_t flags;
         flags.no_alert = true;
@@ -1418,13 +1418,14 @@ TEST_CASE("recursive deduplication follows the configured mode", "[scanner]") {
         return sp.check_previously_processed(sbuf);
     };
 
-    REQUIRE_FALSE(repeated(scanner_config::deduplicate_mode_t::NONE));
-    REQUIRE(repeated(scanner_config::deduplicate_mode_t::RECURSIVE));
-    REQUIRE(repeated(scanner_config::deduplicate_mode_t::LEGACY));
+    REQUIRE_FALSE(repeated(scanner_config::dedupe_mode_t::NONE));
+    REQUIRE(repeated(scanner_config::dedupe_mode_t::RECURSIVE));
+    REQUIRE(repeated(scanner_config::dedupe_mode_t::LEGACY));
 }
 
 TEST_CASE("disabled recursive deduplication does not track inputs", "[scanner]") {
     scanner_config sc;
+    sc.dedupe_mode = scanner_config::dedupe_mode_t::NONE;
     sc.outdir = get_tempdir();
     feature_recorder_set::flags_t flags;
     flags.no_alert = true;
@@ -1447,9 +1448,9 @@ TEST_CASE("duplicates report is always created", "[scanner_set]") {
 }
 
 TEST_CASE("carve deduplication follows the configured mode", "[feature_recorder]") {
-    const auto carve_twice = [](scanner_config::deduplicate_mode_t mode) {
+    const auto carve_twice = [](scanner_config::dedupe_mode_t mode) {
         scanner_config sc;
-        sc.deduplicate_mode = mode;
+        sc.dedupe_mode = mode;
         sc.outdir = get_tempdir();
         feature_recorder_set::flags_t flags;
         flags.no_alert = true;
@@ -1461,23 +1462,23 @@ TEST_CASE("carve deduplication follows the configured mode", "[feature_recorder]
         return std::pair{fr.carve(*first, ".bin"), fr.carve(*second, ".bin")};
     };
 
-    const auto no_dedup = carve_twice(scanner_config::deduplicate_mode_t::NONE);
+    const auto no_dedup = carve_twice(scanner_config::dedupe_mode_t::NONE);
     REQUIRE(no_dedup.first != feature_recorder::CACHED);
     REQUIRE(no_dedup.second != feature_recorder::CACHED);
     REQUIRE(std::filesystem::path(no_dedup.first).parent_path() == std::filesystem::path(no_dedup.second).parent_path());
 
-    const auto recursive_only = carve_twice(scanner_config::deduplicate_mode_t::RECURSIVE);
+    const auto recursive_only = carve_twice(scanner_config::dedupe_mode_t::RECURSIVE);
     REQUIRE(recursive_only.first != feature_recorder::CACHED);
     REQUIRE(recursive_only.second != feature_recorder::CACHED);
 
-    const auto legacy = carve_twice(scanner_config::deduplicate_mode_t::LEGACY);
+    const auto legacy = carve_twice(scanner_config::dedupe_mode_t::LEGACY);
     REQUIRE(legacy.first != feature_recorder::CACHED);
     REQUIRE(legacy.second == feature_recorder::CACHED);
 }
 
 TEST_CASE("duplicate sbufs bypass scanner fan-out unless requested", "[scanner_set]") {
     scanner_config sc;
-    sc.deduplicate_mode = scanner_config::deduplicate_mode_t::LEGACY;
+    sc.dedupe_mode = scanner_config::dedupe_mode_t::LEGACY;
     sc.outdir = get_tempdir();
     sc.enable_all_scanners();
     const auto dfxml_file = get_tempdir() / "duplicate_bypass.xml";
@@ -1502,7 +1503,7 @@ TEST_CASE("duplicate sbufs bypass scanner fan-out unless requested", "[scanner_s
 
 TEST_CASE("duplicate sbufs reach scanners that opt in", "[scanner_set]") {
     scanner_config sc;
-    sc.deduplicate_mode = scanner_config::deduplicate_mode_t::LEGACY;
+    sc.dedupe_mode = scanner_config::dedupe_mode_t::LEGACY;
     sc.outdir = get_tempdir();
     sc.enable_all_scanners();
     duplicate_bypass_scans = 0;

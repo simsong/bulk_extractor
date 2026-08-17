@@ -11,10 +11,10 @@ The historical roadmaps were planning documents, not release records. Their
 relevant context is incorporated below; preserved, commit-specific copies are
 linked from the [historical source map](#historical-source-map).
 
-## 2.2.0 (draft)
+## 2.2.0 (release preparation)
 
-**Status:** Unreleased. The source version is currently
-`2.2.0beta3`; the corresponding Git tag will be `v2.2.0beta3`.
+**Status:** The source version is `2.2.0`. Publication remains pending the
+signed `v2.2.0` tag, release-artifact validation, and GitHub Release review.
 
 ### Executive summary
 
@@ -25,22 +25,17 @@ and adds tested Windows, package, and documentation delivery paths. The release
 also adds practical extraction improvements, including WiFi PCAP preservation,
 Windows raw-device input, and runtime scanner modules.
 
-From the last commit reachable on 1 July 2026 (`898db1b`) through the current
-head (`f6c69639`), the release changes 439 versioned paths and
-109,638 lines: 100,899 additions (92.0%) and 8,739 deletions (8.0%). Vendor
-imports account for 267 paths (60.8%): 155 `be20_api` paths (35.3%), 105
-`spdlog` paths (23.9%), and seven DFXML-schema paths (1.6%). The remaining 172
-paths (39.2%) are project source, tests, documentation, build, CI, and release
-work. The BE2.2.0 milestone has closed 87 issues and has three still open;
-the comparison range contains 109 merged pull-request commits.
+The release combines in-tree dependency integration with source, test,
+documentation, build, CI, and release-engineering updates. Its issue and
+pull-request history remains available through the BE2.2.0 milestone and the
+public Git history.
 
 ### Release theme
 
-Version 2.2.0 is a reliability and maintainability release. A concentrated
-source, build, CI, documentation, and test audit found defects in core buffer
-handling, hostile-input parsing, shutdown, scanner selection, and feature
-recording. The resulting fixes substantially improve reliability, although they
-do not establish that every malformed-input defect has been found.
+Version 2.2.0 addresses defects in core buffer handling, hostile-input parsing,
+shutdown, scanner selection, and feature recording. The fixes are covered by
+focused tests, but they do not establish that every malformed-input defect has
+been found.
 
 Much of this reliability campaign was performed with Codex: Codex analyzed the
 codebase, converted findings into tracked changes, implemented focused tests and
@@ -94,12 +89,12 @@ through the project's normal pull-request and CI process.
 
 ### Reliability and correctness
 
-- Buffer deduplication is now disabled by default so concurrent runs
-  preserve every forensic path for equal content. `--deduplicate` restores the
-  previous space-saving behavior, whose first-seen path can depend on worker
-  scheduling. Every scan creates `duplicates.txt`; its deterministic rows list
-  the canonical first path, each additional path, and the SHA-1 content hash
-  ([#682](https://github.com/simsong/bulk_extractor/issues/682)).
+- Duplicate processing is controlled by `--dedupe-mode`; mode 2 is the default
+  and retains legacy recursive and carved-object deduplication. Use
+  `--dedupe-mode=0` to preserve every forensic path and carved object for
+  reproducible output. Every scan creates `duplicates.txt`; its deterministic
+  rows list the canonical first path, each additional path, and the SHA-1
+  content hash ([#682](https://github.com/simsong/bulk_extractor/issues/682)).
 - Restart records the start of each page so a resumed run deliberately skips
   pages that were in progress at the crash, avoiding repeated data-dependent
   crashes; the behavior is covered by a controlled-crash regression test
@@ -230,11 +225,16 @@ through the project's normal pull-request and CI process.
 
 ### Build, configuration, and testing
 
-- Recursive duplicate processing is now controlled by `--deduplciate-mode`.
-  Mode 0 (the default) preserves all recursive paths and carved objects; mode 1
-  deduplicates ZIP recursion; mode 2 preserves the legacy recursive and carved-object
-  deduplication behavior. ZIP recursion now defaults to four nested ZIP levels and
+- Recursive duplicate processing is now controlled by `--dedupe-mode`.
+  Mode 0 preserves all recursive paths and carved objects; mode 1 deduplicates
+  ZIP recursion; mode 2 (the default) preserves the legacy recursive and
+  carved-object deduplication behavior. ZIP recursion now defaults to four nested ZIP levels and
   is configurable with `-S max_zip_depth=N`.
+- During the beta cycle, the internal `deduplicate_mode` name and the temporary
+  `--deduplciate-mode` CLI spelling were replaced with the final
+  `dedupe_mode` and `--dedupe-mode` names. Related duplicate-processing spelling
+  inconsistencies were corrected. The misspelled CLI option appeared only in
+  beta releases and is not retained as a compatibility alias.
 - Release source archives now define unavailable Git metadata as `unknown`, so
   their `make check` target compiles and runs outside a Git checkout
   ([#681](https://github.com/simsong/bulk_extractor/issues/681)).
@@ -277,8 +277,12 @@ through the project's normal pull-request and CI process.
 
 ### Documentation and project maintenance
 
-- Consolidated release history and this 2.2.0 draft in one versioned document
+- Consolidated release history and the 2.2.0 release notes in one versioned document
   ([PR #544](https://github.com/simsong/bulk_extractor/pull/544)).
+- Updated `ChangeLog` from the public Git history for all changesets after
+  2024-04-26; the generated entries retain their source commit IDs.
+- Added a current `NEWS` entry for 2.2.0; `NEWS` lists user-visible changes,
+  while these release notes provide the detailed narrative.
 - Moved the living technical-debt scoreboard to
   [Discussion #545](https://github.com/simsong/bulk_extractor/discussions/545),
   with GitHub issues remaining the actionable work records
@@ -320,11 +324,9 @@ through the project's normal pull-request and CI process.
   and published documentation site are the supported user documentation.
 - Removed the unmaintained version-1 performance notebook with obsolete
   benchmarks, platforms, and SQL tuning guidance.
-- Moved the historical source and technical-debt audit to
-  [`doc/RELEASE_2.2.0_PLANNING.md`](RELEASE_2.2.0_PLANNING.md) as the 2.2.0
-  release-planning record; the live technical-debt backlog remains in
-  [Discussion #545](https://github.com/simsong/bulk_extractor/discussions/545)
-  and its linked issues.
+- Carried forward active follow-up work in
+  [`doc/RELEASE_2.3.0_PLANNING.md`](RELEASE_2.3.0_PLANNING.md), which links to
+  the authoritative BE2.3.0 GitHub milestone and its issues.
 - Documented a controlled release procedure and release-issue template, with
   isolated artifact assembly, macOS and container `distcheck` gates, and
   source-level downstream submission paths for Debian/Kali and
@@ -367,6 +369,12 @@ through the project's normal pull-request and CI process.
   GitHub download testing; distribution archives continue to build submitted
   source packages themselves ([#623](https://github.com/simsong/bulk_extractor/issues/623)).
 
+### Acknowledgements
+
+Thank you to Matthew Haubach ([@the_pgh_cid](https://github.com/the_pgh_cid))
+for exhaustive testing of the 2.2 betas and for uncovering the long-standing
+dedupe and reproducibility issues fixed in this release.
+
 ### Known limitations and release work
 
 - Keep the Windows artifact workflow green and attach its `.exe` to the 2.2.0
@@ -379,8 +387,8 @@ through the project's normal pull-request and CI process.
 - The focused repairs and current corpus do not prove safety for every hostile
   or malformed input. Additional malformed-corpus, fuzz, and scanner-specific
   boundary testing remains useful.
-- Replace this draft status with the final date, tag, commit, and release
-  artifact/check summary when 2.2.0 is published.
+- Before publication, record the final signed tag, commit, and release
+  artifact/check summary here.
 
 For the detailed July 2026 audit and delivery record, see
 [`doc/RECENT_WORK_REPORT.md`](RECENT_WORK_REPORT.md).

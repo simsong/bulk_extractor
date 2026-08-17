@@ -1,3 +1,2130 @@
+Entries dated after 2024-04-26 are generated from the public Git history; bracketed commit IDs identify each changeset.
+
+2026-08-17  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [dc87bb61] dedup mode is now --dedupe-mode, with default 2
+
+2026-08-17  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [0ba99351] dedup mode is now --dedupe-mode, with default 2
+
+2026-08-17  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [187c361f] updated AUTHORS
+
+2026-08-16  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [13322831] Merge pull request #685 from simsong/fix-git-commit-beta-4
+
+2026-08-16  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [bee3a564] Merge remote-tracking branch 'origin/main' into fix-git-commit-beta-4
+
+2026-08-16  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [ff7e0bf9] Merge tag 'v2.2.0beta3' into fix-git-commit-beta-4
+
+2026-08-16  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [46ad815e] Merge pull request #683 from simsong/codex/issue-682-deduplication-switch
+
+2026-08-16  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [fa7c0133] Address beta4 review feedback
+
+2026-08-16  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [472df5e0] Add beta4 deduplication modes
+
+2026-08-15  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [6719bf93] fixed another GIT_COMMIT
+
+2026-08-15  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [e21c094d] Fix DFXML Git commit fallback for beta4
+
+2026-08-14  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [572af197] Fix duplicate scanner bypass semantics
+
+2026-08-14  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [7a02c17e] Make deduplication opt-in for beta3
+
+2026-08-14  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [aa5b1365] Merge pull request #679 from simsong/codex/issue-678-threadpool-shutdown
+
+2026-08-13  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [cbc2cc99] Prepare v2.2.0beta2
+
+2026-08-13  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [6a2af6da] Fix thread pool shutdown synchronization
+
+2026-08-11  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [586a75a3] Merge pull request #675 from simsong/v2.2.0beta1
+
+2026-08-11  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [9b1df929] Address release review feedback
+
+2026-08-11  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [7ed5ce96] Revert "Merge remote-tracking branch 'origin/copilot/turn-comments-into-issues' into v2.2.0beta1"
+
+2026-08-11  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [7cd5e88a] Merge remote-tracking branch 'origin/copilot/turn-comments-into-issues' into v2.2.0beta1
+
+2026-08-11  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [44915260] Merge remote-tracking branch 'origin/codex/issue-424-install-guide' into v2.2.0beta1
+
+2026-08-11  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [b40f8023] Merge remote-tracking branch 'origin/main' into v2.2.0beta1
+
+2026-08-11  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [12de1837] Merge pull request #674 from simsong/codex/winpe-sbuf-range
+
+2026-08-11  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [906acc60] set version to 2.2.0beta1
+
+2026-08-10  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [0390de6d] Model truncated PE input in regression test
+
+2026-08-10  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [eec903fa] Guard winpe fixture mutations in tests
+
+2026-08-10  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [6ce0a3a6] Bound winpe hashes to short scanner buffers
+
+2026-08-10  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [62d3b006] Derive PE certificate directory in regression test
+
+2026-08-10  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [46cc6172] Avoid winpe carves beyond scanner buffers
+
+2026-08-10  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [96387779] Merge pull request #673 from simsong/codex/issue-672-memory-display
+
+2026-08-10  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [5021379c] Stabilize process memory statistics
+
+2026-08-10  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [ec6b96e0] Merge pull request #671 from simsong/codex/bootstrap-warning-cleanup
+
+2026-08-10  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [0102f249] Report process memory in progress display
+
+2026-08-10  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [d3a8fe72] Eliminate bootstrap portability warnings
+
+2026-08-10  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [ac275dc5] Merge pull request #670 from simsong/codex/issue-238-scanner-offset-tests
+
+2026-08-09  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [61b50268] Require top-level forensic offset shifts
+
+2026-08-09  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [65b29e8f] Update Snap workflow for Node 24
+
+2026-08-09  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [8a0fd41f] Test scanner output positions at nonzero offsets
+
+2026-08-09  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [f69f9302] Merge pull request #668 from simsong/codex/issue-617-wifi-pcap-validation
+
+2026-08-09  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [01a68932] Merge remote-tracking branch 'origin/codex/issue-617-wifi-pcap-validation' into codex/issue-617-wifi-pcap-validation
+
+2026-08-09  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [8ff3754e] Merge remote-tracking branch 'origin/main' into codex/issue-617-wifi-pcap-validation
+
+2026-08-09  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [84f20a60] Distinguish short WiFi control headers
+
+2026-08-09  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [1f2c13b2] Merge pull request #660 from simsong/codex/release-snap-assets
+
+2026-08-09  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [f11f2595] Merge branch 'main' into codex/issue-617-wifi-pcap-validation
+
+2026-08-09  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [525ab7b5] Merge pull request #664 from simsong/codex/issue-225-bulk-diff-escapes
+
+2026-08-09  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [578833e8] Merge pull request #666 from simsong/codex/issue-159-docker-appliance
+
+2026-08-09  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [a952239b] Merge remote-tracking branch 'origin/main' into codex/issue-617-wifi-pcap-validation
+
+2026-08-09  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [9691322c] Validate carved IEEE 802.11 frames
+
+2026-08-09  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [8554e249] Merge pull request #661 from simsong/codex/coverity-correctness
+
+2026-08-09  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [a4c0f1af] Merge pull request #667 from simsong/doc-mingw-notes
+
+2026-08-09  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [56c6aa10] Merge branch 'main' into doc-mingw-notes
+
+2026-08-09  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [f884492b] Merge branch 'main' into codex/release-snap-assets
+
+2026-08-09  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [44634926] Merge branch 'main' into codex/issue-159-docker-appliance
+
+2026-08-09  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [b457bb71] Merge pull request #665 from simsong/codex/thread-safety-tsan
+
+2026-08-09  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [76ad3587] Merge pull request #662 from simsong/codex/coverity-performance
+
+2026-08-09  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [40d8e733] Merge branch 'main' into codex/issue-159-docker-appliance
+
+2026-08-09  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [61dc8e8f] Merge branch 'main' into codex/release-snap-assets
+
+2026-08-09  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [eba2af20] Merge branch 'main' into doc-mingw-notes
+
+2026-08-09  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [03a3b133] Merge pull request #663 from simsong/codex/fix-coverity-review
+
+2026-08-09  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [15d988e0] Pass release ref to reusable Snap build
+
+2026-08-09  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [a9947cd0] Address parser hardening review findings
+
+2026-08-09  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [dfe6a5dd] Address bulk diff review findings
+
+2026-08-09  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [219010b0] Define MinGW dependency target root
+
+2026-08-09  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [f4e90278] Reuse Snap build workflow for releases
+
+2026-08-09  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [53c395ac] Clarify Snap asset validation
+
+2026-08-09  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [94325529] Document Docker runtime cleanup
+
+2026-08-09  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [db53e984] Document parser hardening
+
+2026-08-09  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [68bb83e3] Fix MinGW documentation references
+
+2026-08-09  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [75d603cd] Run bulk diff regression with pytest
+
+2026-08-09  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [64f518ea] Preserve release asset checksums
+
+2026-08-09  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [ff29f929] Add release manager runbook
+
+2026-08-09  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [1f027d5d] Attach tested Snap packages to releases
+
+2026-08-09  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [35abfc96] Merge remote-tracking branch 'origin/main' into doc-mingw-notes
+
+2026-08-09  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [6b89caef] Merge remote-tracking branch 'origin/main' into codex/issue-159-docker-appliance
+
+2026-08-09  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [f0ed270d] Merge remote-tracking branch 'origin/main' into codex/fix-coverity-review
+
+2026-08-09  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [7dfe54d0] Merge remote-tracking branch 'origin/main' into codex/thread-safety-tsan
+
+2026-08-09  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [567d0a72] Merge remote-tracking branch 'origin/main' into codex/issue-225-bulk-diff-escapes
+
+2026-08-09  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [2602ca92] Merge remote-tracking branch 'origin/main' into codex/coverity-performance
+
+2026-08-09  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [8892ea7f] Merge remote-tracking branch 'origin/main' into codex/coverity-correctness
+
+2026-08-09  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [a85f10c7] Merge pull request #659 from simsong/codex/release-2-2-executive-summary
+
+2026-08-09  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [6be5a914] Clarify GitHub release publication
+
+2026-08-09  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [45dcc640] Set v2.2.0alpha1 development version
+
+2026-08-08  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [2dc72ee9] Clarify 2.2 documentation terminology
+
+2026-08-08  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [2c17f6b7] Clarify 2.2 release summary and plugin support
+
+2026-08-08  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [f6c69639] Merge pull request #657 from simsong/codex/issue-240-status-display
+
+2026-08-08  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [2cdde50f] Merge branch 'main' into codex/issue-240-status-display
+
+2026-08-08  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [1fd044b5] Address progress display review feedback
+
+2026-08-08  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [c8d04618] Merge pull request #656 from simsong/codex/issue-655-windows-e01
+
+2026-08-08  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [2e3eb8d5] Merge main into codex/issue-424-install-guide
+
+2026-08-08  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [048c0f90] Potential fix for pull request finding
+
+2026-08-08  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [6b4f9997] Fix MinGW libewf build dependency
+
+2026-08-08  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [4ce22d49] Replace generic INSTALL instructions
+
+2026-08-08  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [69cee854] Merge branch 'main' into codex/issue-655-windows-e01
+
+2026-08-08  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [66fbbafe] Improve progress memory display
+
+2026-08-08  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [65c1469e] Enable E01 support in Windows artifact
+
+2026-08-07  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [e956bec1] Merge pull request #648 from simsong/release-aws-624
+
+2026-08-07  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [b7570d40] Merge branch 'main' into release-aws-624
+
+2026-08-07  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [d25c68df] Merge pull request #654 from simsong/codex/wiki-doc-migration
+
+2026-08-06  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [f2cb20f2] docs: begin wiki documentation migration
+
+2026-08-06  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [7f1ff5d2] Default AWS validation to default VPC subnet
+
+2026-08-06  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [0768ae75] Replace AWS release validation launcher
+
+2026-08-06  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [f628c5f0] Merge pull request #647 from simsong/codex/issue-626-snap-package
+
+2026-08-05  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [81ebb53b] Merge branch 'main' into release-aws-624
+
+2026-08-05  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [e6e522e6] Merge pull request #652 from simsong/codex/manual-migration-scanner-api
+
+2026-08-05  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [e3499d71] Fix migration guide grammar
+
+2026-08-05  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [faf75ab3] Clarify scanner lifecycle diagrams
+
+2026-08-05  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [a38cff29] Document release migration and scanner lifecycle
+
+2026-08-05  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [d6b3bd6b] Merge pull request #650 from simsong/doc-release-2.2-planning
+
+2026-08-05  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [6cbdc1dd] Render Windows raw paths literally
+
+2026-08-05  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [c7419cd5] Correct restored investigation prose
+
+2026-08-05  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [d39e7426] Clarify pull request CI scope
+
+2026-08-05  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [6790d31e] Polish restored worked examples
+
+2026-08-05  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [ee05663a] Make manual asset manifest portable
+
+2026-08-05  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [d040940e] Skip code CI for LaTeX-only workflow changes
+
+2026-08-05  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [4d9d9289] Correct worked example details
+
+2026-08-05  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [c1b6f984] Correct manual bibliography styling
+
+2026-08-05  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [c89eb227] Address final manual grammar findings
+
+2026-08-05  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [1900276d] Address suppressed manual review findings
+
+2026-08-05  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [e40be944] Address manual review and build drafts
+
+2026-08-05  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [2a4b8d94] Restore comprehensive 2.2 manuals
+
+2026-08-05  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [fb35f876] Merge remote-tracking branch 'origin/codex/issue-626-snap-package' into codex/issue-626-snap-package
+
+2026-08-05  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [21c75d64] Fix Snap packaging review findings
+
+2026-08-05  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [615ef2d8] Merge branch 'main' into codex/issue-626-snap-package
+
+2026-08-05  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [78ec89a9] Merge pull request #649 from simsong/release-rpm-623
+
+2026-08-05  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [6a4b94fc] Fail closed AWS large-image validation
+
+2026-08-04  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [18cb787c] Harden RPM release build gate
+
+2026-08-04  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [ef0a68c7] Run installed Snap through snap command
+
+2026-08-04  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [414f9a2f] Add reproducible RPM release builds
+
+2026-08-04  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [3078922b] Disable optional Lightgrep in Snap build
+
+2026-08-04  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [05c1e186] Fix core22 Snap runtime package
+
+2026-08-04  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [9286168e] Add AWS large-image release gate
+
+2026-08-04  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [cb3ed1c0] Gate Snap publication on configured credentials
+
+2026-08-04  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [4e78ae92] Add strict Snap package workflow
+
+2026-08-04  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [6d2ee617] Merge pull request #645 from simsong/codex/rar-optional-tests
+
+2026-08-04  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [febbd71a] Merge pull request #638 from simsong/fix-637-package-provenance
+
+2026-08-04  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [f0026196] Merge branch 'main' into codex/rar-optional-tests
+
+2026-08-04  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [b33bc02b] Merge pull request #640 from simsong/codex/update-pr-review-lifecycle
+
+2026-08-04  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [8fe8de43] Merge pull request #644 from simsong/codex/retire-todo-ledgers
+
+2026-08-04  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [ec309ddf] Merge pull request #639 from simsong/fix-636-release-permissions
+
+2026-08-04  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [22ddca59] Document periodic release follow-through
+
+2026-08-04  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [5daff3a7] Support out-of-tree Debian release builds
+
+2026-08-04  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [d064ab08] Name the Copilot-to-Ready lifecycle
+
+2026-08-04  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [02400967] Add Debian revision to quilt packages
+
+2026-08-03  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [b53cccae] Preserve artifact access in release publishing
+
+2026-08-03  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [188d0143] Honor explicit RAR enablement
+
+2026-08-03  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [88f6f422] Preserve Debian package artifacts
+
+2026-08-03  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [672cc3e3] Handle RAR-disabled test builds
+
+2026-08-03  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [3738b45f] Retire stale source TODO ledgers
+
+2026-08-03  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [f9aa85a3] Document Copilot review lifecycle
+
+2026-08-03  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [ecc496e3] Harden Debian release package gating
+
+2026-08-03  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [3ec2b504] Scope draft release write permission
+
+2026-08-03  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [ff341aa1] Preserve Debian source package provenance
+
+2026-08-03  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [ba99f002] Merge pull request #637 from simsong/release-debian-622
+
+2026-08-03  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [a6e4d289] Merge branch 'main' into release-debian-622
+
+2026-08-03  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [8256e16a] Merge pull request #636 from simsong/release-automation-621
+
+2026-08-03  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [9a99a905] Fix release-deb to extract artifacts to RELEASE_ARTIFACT_DIR
+
+2026-08-03  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [2de8b11c] Potential fix for pull request finding
+
+2026-08-03  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [438e8511] Potential fix for pull request finding
+
+2026-08-03  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [e8957e74] Potential fix for pull request finding
+
+2026-08-03  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [1e0ac97a] Merge branch 'main' into release-debian-622
+
+2026-08-03  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [896f3b58] Merge branch 'main' into release-automation-621
+
+2026-08-03  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [952700ab] Merge pull request #635 from simsong/fix-license-attribution-628
+
+2026-08-03  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [f6850dee] Merge pull request #634 from simsong/doc-release-2.2-planning
+
+2026-08-03  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [a518bdd8] Merge pull request #633 from simsong/doc-man-copilot-fixes
+
+2026-08-03  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [f0c3e233] Potential fix for pull request finding
+
+2026-08-03  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [5c42922e] Merge pull request #625 from simsong/dev-release
+
+2026-08-03  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [7fbeff05] Add Debian release package build
+
+2026-08-03  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [3ea71a98] Automate draft GitHub release assembly
+
+2026-08-02  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [81d01c23] Correct license attribution metadata
+
+2026-08-02  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [da822b15] Move technical-debt audit to release planning
+
+2026-08-02  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [33c141c6] Correct path-printer man page options
+
+2026-08-02  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [bc2b992b] Merge pull request #630 from simsong/doc-man
+
+2026-08-02  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [3d0b1f91] Merge branch 'dev-release' into doc-man
+
+2026-08-02  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [adf0c6f8] Merge pull request #628 from simsong/codex/gpl-license
+
+2026-08-02  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [c98248d4] Merge pull request #629 from simsong/doc-fix-release-notes
+
+2026-08-02  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [0d819a83] Merge branch 'dev-release' into doc-fix-release-notes
+
+2026-08-02  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [2d2df8dd] Remove obsolete performance notes
+
+2026-08-02  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [fcce808e] Rename and update MinGW notes
+
+2026-08-02  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [fed5755d] Update man page for bulk_extractor 2.2
+
+2026-08-02  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [b7326e09] Remove obsolete HTML overview
+
+2026-08-02  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [61773d9e] Consolidate historical roadmaps into release notes
+
+2026-08-02  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [9c27bc51] Clarify GPL licensing after NPS
+
+2026-08-02  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [d79d91bf] Harden release preparation workflow
+
+2026-08-02  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [e2735214] Document distribution source-package submissions
+
+2026-08-02  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [f4b20252] Skip Debian CI job for draft pull requests
+
+2026-08-02  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [b52aff25] Merge current main into dev-release
+
+2026-08-02  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [cb7bc274] Merge origin/main into dev-release
+
+2026-08-02  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [0b21e6e2] Merge pull request #612 from simsong/codex/issue-376-stack-protector
+
+2026-08-02  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [f1cccb54] Isolate release orchestration in a script
+
+2026-08-02  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [e1e6e557] Add release procedure and automation gates
+
+2026-08-02  copilot-swe-agent[bot]  <198982749+Copilot@users.noreply.github.com>
+
+	* [3e8cff6d] doc: update RELEASE_NOTES for email boundary fixes
+
+2026-08-02  copilot-swe-agent[bot]  <198982749+Copilot@users.noreply.github.com>
+
+	* [62ea3a2c] Fix ASCII email trailing context regression and add end-of-sentence test
+
+2026-08-02  copilot-swe-agent[bot]  <198982749+Copilot@users.noreply.github.com>
+
+	* [d85e45ff] Fix review-comment bugs from PRs #559, #562, #583, #593
+
+2026-08-02  copilot-swe-agent[bot]  <198982749+Copilot@users.noreply.github.com>
+
+	* [f7407c59] Initial plan
+
+2026-08-02  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [e02264af] Merge pull request #614 from simsong/codex/release-copilot-audit
+
+2026-08-02  copilot-swe-agent[bot]  <198982749+Copilot@users.noreply.github.com>
+
+	* [a8739974] Fix stack-protector probes to use warning-free trivial program body
+
+2026-08-02  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [e074e6db] Address missed release Copilot findings
+
+2026-08-02  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [65adade7] Merge pull request #613 from simsong/codex/copilot-thread-reply-policy
+
+2026-08-02  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [58543daf] Skip build workflows for documentation-only PRs
+
+2026-08-02  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [df96d523] Document Copilot fix thread replies
+
+2026-08-02  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [810d2ad0] Merge branch 'main' into codex/issue-376-stack-protector
+
+2026-08-02  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [ddfd5cb3] Merge pull request #606 from simsong/codex/thread-safety-tsan
+
+2026-08-02  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [c9c02b88] Enable basic compiler stack protection
+
+2026-08-02  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [45505f2c] Handle ThreadSanitizer test configuration
+
+2026-08-02  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [d0e6483a] Fix thread pool worker shutdown synchronization
+
+2026-08-02  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [7fcf5c9e] Merge pull request #602 from simsong/codex/fix-rar-ppm-copystring-bounds
+
+2026-08-02  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [56e988ad] Merge branch 'main' into codex/fix-rar-ppm-copystring-bounds
+
+2026-08-02  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [057c075a] Merge pull request #610 from simsong/codex/issue-319-restart-status
+
+2026-08-02  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [508073cb] Merge pull request #609 from simsong/codex/issue-246-remove-base16-lg
+
+2026-08-02  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [b48b2366] Merge pull request #604 from simsong/codex/issue-586-tld-support
+
+2026-08-02  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [70e49b53] Merge branch 'main' into codex/fix-rar-ppm-copystring-bounds
+
+2026-08-02  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [2c2406bb] Merge branch 'main' into codex/issue-586-tld-support
+
+2026-08-02  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [0dde2df5] Merge branch 'main' into codex/issue-246-remove-base16-lg
+
+2026-08-02  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [dc2db2ad] Join workers before scanner set destruction
+
+2026-08-02  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [1347e18f] Merge branch 'main' into codex/issue-319-restart-status
+
+2026-08-02  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [d9432024] Remove stale Lightgrep Base16 scanner
+
+2026-08-02  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [349d953e] Merge pull request #608 from simsong/codex/fix-coverity-review
+
+2026-08-02  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [ef1dc1cd] Merge pull request #607 from simsong/codex/issue-159-docker-appliance
+
+2026-08-02  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [375a0eef] Merge pull request #603 from simsong/codex/fix-scoped-environment-werror
+
+2026-08-02  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [41cb7409] Trim unused PCAP runtime library
+
+2026-08-01  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [52f8c93c] Stabilize ThreadSanitizer pool test
+
+2026-08-01  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [39ccf517] Keep Codecov coverage informational
+
+2026-08-01  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [4e48f2a3] Harden truncated hibernation headers
+
+2026-08-01  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [681adede] Accept punycode email TLDs
+
+2026-08-01  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [190b3407] Merge pull request #605 from simsong/codex/coverity-new-2026
+
+2026-08-01  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [216093d8] Include Winsock before Windows headers
+
+2026-08-01  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [c3abc4e5] Normalize legacy escapes in bulk diff
+
+2026-08-01  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [ae6437b8] Initialize RAR DBCS mode
+
+2026-08-01  Simson Garfinkel  <simsong@acm.org>
+
+	* [9fc1a13b] Add ThreadSanitizer thread-pool test
+
+2026-08-01  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [d381489a] Add container image for regular scans
+
+2026-08-01  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [85873aff] Accept current email TLDs
+
+2026-08-01  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [dcd39c05] Fix Coverity 2026 parser findings
+
+2026-08-01  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [4fe2cc56] Fix warning-fatal cross-platform builds
+
+2026-08-01  Simson Garfinkel  <simsong@acm.org>
+
+	* [e53d9643] Merge branch 'main' of github-codex:simsong/bulk_extractor into codex/pr602-warning-clean
+
+2026-08-01  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [2ce3fb44] Initialize scoped environment state
+
+2026-08-01  Simson Garfinkel  <simsong@acm.org>
+
+	* [b5df127e] Make C++ warnings fatal
+
+2026-08-01  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [f99a0c2c] Report restart recovery status
+
+2026-08-01  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [45b6f0d7] Merge pull request #597 from simsong/codex/issue-202-restart-self-test
+
+2026-08-01  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [fa73711f] Merge branch 'main' into codex/issue-202-restart-self-test
+
+2026-08-01  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [9bec6d91] Merge branch 'main' into codex/fix-rar-ppm-copystring-bounds
+
+2026-08-01  Simson Garfinkel  <simsong@acm.org>
+
+	* [e3992892] Fix RAR Coverity bounds findings
+
+2026-08-01  Simson Garfinkel  <simsong@acm.org>
+
+	* [730cdfb6] Avoid unnecessary Coverity-reported copies
+
+2026-08-01  Simson Garfinkel  <simsong@acm.org>
+
+	* [8417c285] Fix Coverity parser and bounds findings
+
+2026-08-01  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [5bfe87b2] Merge pull request #599 from simsong/codex/issue-403-debug-options
+
+2026-08-01  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [3db59415] Report retired numeric debug options clearly
+
+2026-08-01  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [ef1cdcee] Strengthen RAR PPM bounds regression
+
+2026-08-01  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [b1d357f1] Merge pull request #600 from simsong/codex/copilot-review-instructions
+
+2026-08-01  copilot-swe-agent[bot]  <198982749+Copilot@users.noreply.github.com>
+
+	* [0c5d9589] Merge main into codex/issue-202-restart-self-test
+
+2026-08-01  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [8a4dc691] Merge pull request #598 from simsong/codex/issue-244-dfxml-schema
+
+2026-08-01  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [33af249b] Merge pull request #596 from simsong/codex/issue-264-carve-mode-docs
+
+2026-08-01  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [4b175fbc] Merge branch 'main' into codex/issue-202-restart-self-test
+
+2026-08-01  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [66f1540a] Merge branch 'main' into codex/issue-403-debug-options
+
+2026-08-01  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [dab0f0a3] Merge branch 'main' into codex/fix-rar-ppm-copystring-bounds
+
+2026-08-01  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [26af74b4] Document CVE-2026-24857 fix
+
+2026-08-01  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [dce29151] Fix deterministic DFXML schema validation
+
+2026-08-01  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [a5d15cad] Bound RAR PPM dictionary copies
+
+2026-08-01  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [d125951e] Merge pull request #594 from simsong/codex/issue-212-rar-jpegs
+
+2026-08-01  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [2fcb390c] Merge branch 'main' into codex/issue-212-rar-jpegs
+
+2026-08-01  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [29c8743f] Merge pull request #595 from simsong/codex/issue-311-window-resize
+
+2026-08-01  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [4ddb9d31] Make restart crash hook thread-safe
+
+2026-08-01  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [b7e85403] Bound RAR relative seek arithmetic
+
+2026-08-01  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [4b60ad3e] Correct carving recorder documentation
+
+2026-08-01  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [40fc2f17] Verify Copilot review requests
+
+2026-08-01  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [b5aec96d] Retire obsolete numeric debug mask
+
+2026-08-01  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [e4d71415] Preserve restart skipping of interrupted work
+
+2026-08-01  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [c34c2d17] Validate report DFXML against bundled schema
+
+2026-08-01  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [7280166e] Test and repair interrupted-run restart
+
+2026-08-01  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [7aac558d] Document carve mode behavior
+
+2026-07-31  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [6e7b8237] Adapt progress display to Windows resize
+
+2026-07-31  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [3f9d180f] Merge branch 'main' into codex/issue-212-rar-jpegs
+
+2026-07-31  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [8e832e00] Merge pull request #592 from simsong/codex/issue-249-findopts
+
+2026-07-31  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [a3d0032d] Merge pull request #593 from simsong/codex/issue-585-email-lengths
+
+2026-07-31  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [c1746a3a] Merge pull request #588 from simsong/codex/issue-258-raw-devices
+
+2026-07-31  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [54912f87] Recover all members from RAR archives
+
+2026-07-31  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [fc57594c] Avoid redundant raw-device EOF read
+
+2026-07-31  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [df54335b] Bound email local parts and domains independently
+
+2026-07-31  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [63810a15] Add scanner configuration isolation regression
+
+2026-07-31  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [82de2a4e] Merge branch 'main' into codex/issue-258-raw-devices
+
+2026-07-31  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [3a76152e] Merge pull request #587 from simsong/codex/issue-483-find-case-sensitive
+
+2026-07-31  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [903a4f87] Merge branch 'main' into codex/issue-258-raw-devices
+
+2026-07-31  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [a3f16806] Merge pull request #591 from simsong/codex/issue-49-pdf-email-regression
+
+2026-07-31  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [be01d740] Complete expected Windows exit-code checks
+
+2026-07-31  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [7797343e] Show Windows raw-device forms in help
+
+2026-07-31  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [d1d7bdc0] Make Windows raw-device help check platform-neutral
+
+2026-07-31  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [ca933d4a] Normalize Windows drive volumes correctly
+
+2026-07-31  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [ae748464] Fix Windows drive-root diagnostic build
+
+2026-07-31  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [9a1c7104] Merge remote-tracking branch 'origin/codex/issue-258-raw-devices' into codex/issue-258-raw-devices
+
+2026-07-31  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [ace5d5e6] Merge remote-tracking branch 'origin/codex/issue-258-raw-devices' into codex/issue-258-raw-devices
+
+2026-07-31  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [e99cd887] Clarify Windows raw-volume input
+
+2026-07-31  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [7dce5fcf] Test Word PDF email extraction
+
+2026-07-31  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [d4f2a728] Merge branch 'main' into codex/issue-258-raw-devices
+
+2026-07-31  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [05d4f029] Merge pull request #589 from simsong/codex/project-maintenance-release-notes
+
+2026-07-31  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [bd10e14b] Merge pull request #590 from simsong/codex/issue-242-jpeg-carve-limits
+
+2026-07-31  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [37ac81f9] Honor JPEG recorder carve limits
+
+2026-07-31  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [c049dff2] Allow recognized Windows raw devices at startup
+
+2026-07-31  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [30c35d6f] Use a valid FAT32 volume label in raw-device test
+
+2026-07-31  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [1c87e23d] Use a valid FAT32 size in Windows raw-device test
+
+2026-07-31  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [e071ad44] Use a valid FAT32 size in Windows raw-device test
+
+2026-07-31  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [4d9afe1d] Document contributor review policy and ignore build outputs
+
+2026-07-31  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [5e9eb2b8] Harden Windows raw-device CI setup
+
+2026-07-30  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [d04ec197] Add case-sensitive find option
+
+2026-07-30  Simson Garfinkel  <simsong@acm.org>
+
+	* [67d7e16c] Merge remote-tracking branch 'origin/main' into codex/issue-258-raw-devices
+
+2026-07-30  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [0305d60a] Support Windows raw device input
+
+2026-07-30  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [e102a54d] Merge pull request #584 from simsong/codex/fix-duplicate-bypass-review
+
+2026-07-30  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [788e29a3] Exercise duplicate-bypass diagnostic
+
+2026-07-30  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [4e497f22] Merge pull request #581 from simsong/codex/issue-239-zap-directories
+
+2026-07-30  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [ae382912] Merge pull request #575 from simsong/codex/issue-488-logging-foundation
+
+2026-07-30  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [14d4e004] Merge pull request #583 from simsong/codex/issue-380-context-stop-list-test
+
+2026-07-30  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [627b3ca6] Merge pull request #582 from simsong/codex/issue-336-zip-carved-dir
+
+2026-07-30  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [b81e7731] Potential fix for pull request finding
+
+2026-07-30  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [f2b553a0] Harden duplicate-sbuf diagnostics
+
+2026-07-30  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [3dc57edb] Test context-sensitive stop lists
+
+2026-07-30  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [c15510fb] Require release-note updates
+
+2026-07-30  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [4fde5c55] Close logging test case
+
+2026-07-30  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [9a5b1b37] Use zip_carved output directory
+
+2026-07-30  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [1d1cedd0] Remove nested output directories with -Z
+
+2026-07-30  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [d7241cfa] Merge pull request #580 from simsong/codex/remove-dead-mt-test
+
+2026-07-30  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [fa912b08] Merge branch 'main' into codex/remove-dead-mt-test
+
+2026-07-30  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [46adde32] Merge branch 'main' into codex/issue-488-logging-foundation
+
+2026-07-30  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [f5223309] Merge pull request #576 from simsong/codex/reapply-o3-warning-stderr
+
+2026-07-30  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [b3848760] Merge pull request #578 from simsong/codex/issue-310-duplicate-bypass
+
+2026-07-30  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [b616e60b] Merge pull request #579 from simsong/codex/release-notes-recent-closures
+
+2026-07-30  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [b37253c2] Remove disabled scanner set test
+
+2026-07-30  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [f8d269c0] Refresh release notes for recent closures
+
+2026-07-30  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [99ee2ef8] Merge pull request #577 from simsong/codex/fix-xmllint-path-quoting
+
+2026-07-30  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [a63d3c37] Bypass duplicate sbuf scanner fan-out
+
+2026-07-30  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [432ebe2b] Exclude vendored third-party code from coverage
+
+2026-07-30  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [15ea2dcd] Quote xmllint test paths
+
+2026-07-30  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [bca939e5] Send O3 warning to diagnostic stream
+
+2026-07-30  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [540d947a] Add diagnostic logging foundation
+
+2026-07-30  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [1e9ecfd9] Merge pull request #574 from simsong/codex/tighten-windows-ip-assertion
+
+2026-07-30  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [e0e3ee74] Tighten Windows IP regression assertion
+
+2026-07-30  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [7a89aa70] Merge pull request #571 from simsong/codex/issue-566-cpp-cleanups
+
+2026-07-30  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [c71c9c57] Merge pull request #564 from simsong/codex/issue-349-optimization-warning
+
+2026-07-30  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [ba4ece78] Merge pull request #573 from simsong/codex/issue-388-windows-net
+
+2026-07-30  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [c8c13e1b] Merge pull request #572 from simsong/codex/document-debian-ci-scope-codex
+
+2026-07-30  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [8840480a] Fix Windows IP address formatting
+
+2026-07-29  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [592ff862] Clean up C++ initialization warnings
+
+2026-07-29  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [a92823f6] Merge pull request #567 from simsong/copilot/fix-with-copilot
+
+2026-07-29  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [80ae10bb] Document Debian CI scope
+
+2026-07-28  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [25eaffea] Gate optional-dependency end-to-end test paths
+
+2026-07-28  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [b08f4ab3] Merge pull request #563 from simsong/codex/issue-363-big-endian-utmp
+
+2026-07-28  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [378e5980] Merge branch 'main' into codex/issue-363-big-endian-utmp
+
+2026-07-28  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [3131b7a8] Merge pull request #568 from simsong/codex/issue-69-url-html-entity
+
+2026-07-28  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [8958b420] Exclude HTML quote entities from URLs
+
+2026-07-28  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [cac8cf40] Merge pull request #565 from simsong/codex/issue-452-debian-build
+
+2026-07-28  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [13f38e1d] Test builds in Debian Bookworm
+
+2026-07-28  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [e3030c30] Warn when built without O3 optimization
+
+2026-07-28  simsong-codex  <simsong-codex@users.noreply.github.com>
+
+	* [c4967ff3] Support big-endian utmp records
+
+2026-07-28  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [bf719875] Merge pull request #561 from simsong/codex/issue-424-install-guide
+
+2026-07-27  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [8d91c752] Replace generic INSTALL instructions
+
+2026-07-28  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [eb218ceb] Merge pull request #558 from simsong/codex/latex-manuals-pages
+
+2026-07-28  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [5ffc5c9f] Merge branch 'main' into codex/latex-manuals-pages
+
+2026-07-28  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [717bed45] Merge pull request #559 from simsong/codex/issue-515-wifi-pcap-pr
+
+2026-07-28  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [fe6155c8] Merge pull request #560 from simsong/codex/refresh-release-notes
+
+2026-07-28  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [02a6bfb9] Merge pull request #562 from simsong/codex/issue-273-enable-all
+
+2026-07-28  Simson Garfinkel  <simsong@acm.org>
+
+	* [d36c86cd] Test -e all scanner selection
+
+2026-07-28  Simson Garfinkel (Codex)  <simsong+codex@acm.org>
+
+	* [b68d0020] Add bulk extractor Pages icon
+
+2026-07-28  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [bdbc20e0] Refresh 2.2.0 release notes
+
+2026-07-28  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [1a874ef6] Fix #515: preserve 802.11 PCAP frames
+
+2026-07-27  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [7664c3ed] Expand scanner development manual
+
+2026-07-27  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [b9a5d362] Merge pull request #557 from simsong/codex/latex-manuals-pages
+
+2026-07-27  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [ad1adb93] Add documentation landing page
+
+2026-07-27  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [adba52c7] Merge main and scope LaTeX builds
+
+2026-07-27  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [a7720e1f] Merge pull request #554 from simsong/codex/issue-351-ipv6
+
+2026-07-27  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [f043935c] Merge pull request #552 from simsong/codex/issue-356-stop-lists
+
+2026-07-27  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [109fb58f] Use captured IPv6 checksum fixtures
+
+2026-07-27  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [9331d400] Merge branch 'main' into codex/latex-manuals-pages
+
+2026-07-27  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [23cab0b4] Merge pull request #556 from simsong/codex/issue-460-rtti
+
+2026-07-27  Codex  <simsong+codex@acm.org>
+
+	* [bd5a8c92] Publish current LaTeX documentation on Pages
+
+2026-07-27  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [3fd2bcbf] Accept documented RTTI portrait dimensions
+
+2026-07-27  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [8308abb3] Restore Codecov baseline target
+
+2026-07-27  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [c840250f] Limit RTTI thumbnails by configurable dimensions
+
+2026-07-27  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [3c666991] Embed RTTI test vector in PPM image
+
+2026-07-27  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [07a8a450] Set Codecov coverage targets to 80 percent
+
+2026-07-27  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [b6dc7801] Merge pull request #553 from simsong/codex/issue-357-alert-lists
+
+2026-07-27  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [d1063763] Add RTTI Image8 test fixture
+
+2026-07-27  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [531a9a40] Own generated RTTI carve headers
+
+2026-07-27  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [447a84ea] Merge updated stop-list base
+
+2026-07-27  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [5207c665] Avoid redundant alert-list processing
+
+2026-07-27  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [5e227207] Protect alerts from stop-list diversion
+
+2026-07-27  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [779b117a] Add RawTherapee thumbnail carver
+
+2026-07-27  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [24641579] Fix IPv6 packet checksum validation
+
+2026-07-27  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [a0cacd65] Restore alert-list processing
+
+2026-07-27  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [c087e0f3] Merge pull request #551 from simsong/codex/community-guidelines
+
+2026-07-27  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [507cc1e4] Restore stop-list processing
+
+2026-07-27  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [b8cd88cb] Add community contribution guidelines
+
+2026-07-27  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [aeb9c3df] Merge pull request #549 from simsong/codex/issue-91-windows-unicode
+
+2026-07-27  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [5b7d8625] Merge branch 'main' into codex/issue-91-windows-unicode
+
+2026-07-27  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [5b03b624] Merge pull request #546 from simsong/codex/move-tech-debt-scoreboard
+
+2026-07-27  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [c7c2b5b2] Test Unicode filenames with Windows executable
+
+2026-07-27  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [bca5f539] Move technical debt scoreboard to GitHub Discussion
+
+2026-07-27  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [4d2bde1d] Merge pull request #540 from simsong/codex/honor-max-minute-wait
+
+2026-07-27  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [7f10f879] Merge pull request #538 from simsong/codex/fix-code-scanning-alerts
+
+2026-07-27  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [5028f016] Merge branch 'main' into codex/fix-code-scanning-alerts
+
+2026-07-27  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [b8710133] Merge branch 'main' into codex/honor-max-minute-wait
+
+2026-07-27  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [d0d846cd] Merge pull request #543 from simsong/codex/ubuntu-mingw-artifact
+
+2026-07-27  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [645c9b6c] Merge pull request #544 from simsong/codex/release-notes-2.2.0
+
+2026-07-26  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [20a6b0e7] Merge remote-tracking branch 'origin/main' into codex/fix-code-scanning-alerts
+
+2026-07-26  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [2e0c8887] Make timed thread join honor deadline
+
+2026-07-26  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [dbb291da] Fix SQLite carve length
+
+2026-07-26  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [05317a1d] Merge branch 'main' into codex/ubuntu-mingw-artifact
+
+2026-07-26  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [3aeb7f22] Merge pull request #541 from simsong/codex/safe-directory-traversal
+
+2026-07-26  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [d8dfaa73] Add consolidated release notes
+
+2026-07-26  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [392d19c8] Print non-system MinGW DLL imports
+
+2026-07-26  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [a5876b48] Handle libtool static executable layout
+
+2026-07-26  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [0ff30af5] Force static MinGW dependency linking
+
+2026-07-26  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [9c316f4a] Upload the linked Windows executable
+
+2026-07-26  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [c5503017] Use Node 24 artifact upload action
+
+2026-07-26  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [6248a8a9] Add Ubuntu MinGW Windows artifact build
+
+2026-07-26  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [a9b1d93b] Fix PR checks and integrate Exiv2 testing
+
+2026-07-26  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [91eabf59] Apply suggestions from code review
+
+2026-07-26  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [70fcbe2c] Merge branch 'main' into codex/safe-directory-traversal
+
+2026-07-26  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [a5ed827f] Merge pull request #539 from simsong/codex/limit-zip-filenames
+
+2026-07-26  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [3aad8d21] Merge pull request #542 from simsong/codex/github-identity-guidance
+
+2026-07-26  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [f49a88e7] Document Codex GitHub identity
+
+2026-07-26  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [b7ad29f5] Limit ZIP carved filenames
+
+2026-07-26  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [2f65fff6] Make directory traversal deterministic and safe
+
+2026-07-26  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [7962aace] Honor max minute wait
+
+2026-07-26  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [3c292197] Fix code scanning alerts
+
+2026-07-25  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [757f962b] Merge pull request #537 from simsong/codex/fix-msxml-sbuf-leak
+
+2026-07-25  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [d9a0e2d1] Fix MSXML sbuf leak handling
+
+2026-07-21  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [9167afee] Merge pull request #536 from simsong/codex/recent-work-report
+
+2026-07-21  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [a6b12fdf] Add recent work report and briefing
+
+2026-07-21  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [ce00e352] Merge pull request #532 from simsong/codex/issue-433-exiv2-config
+
+2026-07-21  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [c929c36d] Merge pull request #528 from simsong/codex/issue-505-plugin-loader
+
+2026-07-21  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [9a1ef84d] Install Exiv2 CI test prerequisites
+
+2026-07-21  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [a6316666] Print Exiv2 test failures in CI
+
+2026-07-21  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [6155b019] Merge branch 'main' into codex/issue-505-plugin-loader
+
+2026-07-21  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [6654dd3b] Merge pull request #535 from simsong/codex/issue-534-histogram-low-memory
+
+2026-07-21  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [65f70a7d] Install RE2 for Exiv2 CI job
+
+2026-07-21  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [3f2bd8c5] Test enabled Exiv2 scanner in CI
+
+2026-07-21  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [df724d4b] Update Codecov action runtime
+
+2026-07-21  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [8724817f] Fix histogram low-memory merge integration
+
+2026-07-21  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [be7ca5c1] Merge remote-tracking branch 'origin/main' into codex/issue-534-histogram-low-memory
+
+2026-07-21  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [a50ac6f3] Merge remote-tracking branch 'origin/main' into codex/issue-433-exiv2-config
+
+2026-07-21  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [c7d0198d] Merge branch 'main' into codex/issue-505-plugin-loader
+
+2026-07-21  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [603dfd66] Merge pull request #533 from simsong/codex/issue-370-banner
+
+2026-07-21  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [28dc7047] Preserve features after histogram allocation failures
+
+2026-07-21  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [6759cb9f] Merge pull request #531 from simsong/codex/issue-510-feature-recorder
+
+2026-07-20  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [846f976e] Restore loadable scanner modules
+
+2026-07-21  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [1db4b03d] Propagate banner file to feature recorders
+
+2026-07-21  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [af074629] Fix feature recorder banner and histogram contract
+
+2026-07-21  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [c6553c3a] Fix optional Exiv2 configuration
+
+2026-07-21  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [86e0ce62] Merge pull request #529 from simsong/codex/issue-522-scanner-api-docs
+
+2026-07-21  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [61f3c180] Merge pull request #530 from simsong/codex/issue-501-pcap-bounds
+
+2026-07-21  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [4157656e] Bound fallback PCAP reads
+
+2026-07-21  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [cb7ab941] Merge branch 'main' into codex/issue-522-scanner-api-docs
+
+2026-07-21  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [c061d142] Add scanner lifecycle call diagrams
+
+2026-07-20  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [b06ad188] Document scanner API lifecycle
+
+2026-07-20  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [182707a1] Merge pull request #526 from simsong/codex/issue-420
+
+2026-07-20  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [01eb160b] Merge pull request #524 from simsong/codex/issue-504
+
+2026-07-20  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [1c94a2a1] Merge pull request #525 from simsong/codex/issue-480
+
+2026-07-20  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [6f3169f7] Merge pull request #527 from simsong/codex/issue-412
+
+2026-07-20  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [556f7f49] Cover explicit Outlook scanner selection
+
+2026-07-20  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [2bfd0b99] Remove resolved issue 420 from debt tracker
+
+2026-07-20  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [d87ee631] Honor disabled carve modes
+
+2026-07-20  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [c839af42] Repair sbuf file mapping ownership
+
+2026-07-20  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [71203c97] Merge pull request #518 from simsong/codex/issue-507-short-reads
+
+2026-07-20  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [93fc1cc2] Cover early end of EWF reads
+
+2026-07-20  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [87a23263] Test short EWF image reads
+
+2026-07-20  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [476e4fa6] Avoid signed short-read comparison
+
+2026-07-20  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [9bd7e5d7] Handle short image reads
+
+2026-07-20  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [5abbd866] Merge pull request #519 from simsong/codex/fix-image-reader-cleanup
+
+2026-07-20  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [df98876d] Merge pull request #520 from simsong/codex/version-develop
+
+2026-07-20  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [522f92ee] Let image reader clean up on disk errors
+
+2026-07-20  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [1a5037f6] Merge pull request #514 from simsong/codex/one-asan-per-pr
+
+2026-07-20  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [b4b02e81] Merge pull request #516 from simsong/codex/issue-509-packet-parsing
+
+2026-07-20  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [d6f43d60] Mark 2.2.0 development builds
+
+2026-07-20  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [13d34581] Let the image reader clean up on disk errors
+
+2026-07-20  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [bd41af07] Merge pull request #517 from simsong/codex/issue-508-e01-input
+
+2026-07-20  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [a9dab2a2] Merge pull request #513 from simsong/codex/issue-503-notifier-shutdown
+
+2026-07-20  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [f8fc296e] Make E01 input selection safe
+
+2026-07-20  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [e7c227d1] Repair packet address parsing
+
+2026-07-20  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [91afc4d3] Own phase-one hash state
+
+2026-07-20  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [7084121c] Clean up email scanner on write failure
+
+2026-07-20  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [b5e39cba] Clean up phase-one write failures
+
+2026-07-20  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [c000ce62] Handle phase-one disk write failures
+
+2026-07-20  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [3300af90] Run AddressSanitizer once per pull request
+
+2026-07-20  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [f81331a2] Stop notifier on phase-one write failures
+
+2026-07-19  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [1eeac2c5] Merge pull request #511 from simsong/codex/fix-sbuf-contract
+
+2026-07-19  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [5f381424] Fix sbuf bounds contract
+
+2026-07-19  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [db71cd9a] Merge pull request #498 from simsong/dev-tech-debt
+
+2026-07-19  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [ec32e66b] Bump version to 2.2.0
+
+2026-07-19  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [dace0933] Finish worker shutdown before join returns
+
+2026-07-19  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [93682cbe] Fix thread pool shutdown deadlock
+
+2026-07-19  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [b72994d7] Make Codecov PR uploads deterministic
+
+2026-07-19  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [4da06b00] Make scheduled Coverity scans upload
+
+2026-07-19  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [2d6500b4] Repair release and action workflows
+
+2026-07-19  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [5070547f] Consolidate CI validation
+
+2026-07-19  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [dd0670a2] Mark imported dependencies as vendored
+
+2026-07-19  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [26c9272c] Fix integrated dependency CI build
+
+2026-07-19  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [822f3f15] Vendor all remaining dependencies
+
+2026-07-19  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [ea73c509] Restore external dependencies as submodules
+
+2026-07-19  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [1d02b4f2] Integrate be20 sources into bulk_extractor
+
+2026-07-19  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [24d0e107] Add technical debt remediation checklist
+
+2026-07-18  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [cd3f02a9] Document technical debt and repair bootstrap
+
+2026-01-29  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [898db1b7] Revise security policy for clarity and reporting
+
+2025-11-06  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [a6be88e7] Merge pull request #494 from kamwoods/new-vinscan
+
+2025-11-06  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [b313ccc4] Merge pull request #495 from simsong/patch-maint
+
+2025-11-06  Kam Woods  <kamwoods@gmail.com>
+
+	* [19d0afdd] VIN histogram cleanup
+
+2025-11-06  Simson Garfinkel  <simsong@acm.org>
+
+	* [b1ac17cc] get bugfix from be20_api
+
+2025-11-06  Simson Garfinkel  <simsong@acm.org>
+
+	* [3e6c4db7] install lcov
+
+2025-11-06  Simson Garfinkel  <simsong@acm.org>
+
+	* [81a1352d] move codecov to ubuntu
+
+2025-11-06  Simson Garfinkel  <simsong@acm.org>
+
+	* [25bddab4] move codecov to ubuntu
+
+2025-11-06  Simson Garfinkel  <simsong@acm.org>
+
+	* [2b53bb8d] upgrade be20_api
+
+2025-11-06  Simson Garfinkel  <simsong@acm.org>
+
+	* [949d6389] hotfix
+
+2025-11-06  Simson Garfinkel  <simsong@acm.org>
+
+	* [77cb946e] simplified ci-cd
+
+2025-11-06  Simson Garfinkel  <simsong@acm.org>
+
+	* [b1691b79] new codecov action
+
+2025-11-06  Kam Woods  <kamwoods@gmail.com>
+
+	* [90fdd271] Code cleanup
+
+2025-11-06  Simson Garfinkel  <simsong@acm.org>
+
+	* [50d162de] updated [[noreturn]] in API
+
+2025-11-06  Simson Garfinkel  <simsong@acm.org>
+
+	* [ce39790d] simplified CI/CD to just run on macos-latest and ubuntu-latest
+
+2025-11-06  Simson Garfinkel  <simsong@acm.org>
+
+	* [e953bfc1] removed a test we have not used in years
+
+2025-11-06  Simson Garfinkel  <simsong@acm.org>
+
+	* [76196f5c] renamed file to be something sensible
+
+2025-11-06  Simson Garfinkel  <simsong@acm.org>
+
+	* [68b5d1aa] new codecov
+
+2025-11-06  Simson Garfinkel  <simsong@acm.org>
+
+	* [82d939e2] updated be20_api
+
+2025-11-06  Kam Woods  <kamwoods@gmail.com>
+
+	* [91c78a0d] Resolved some issues identified by Copilot
+
+2025-11-06  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [74d4a2f9] Merge pull request #492 from rick-gnous/main
+
+2025-11-05  Kam Woods  <kamwoods@gmail.com>
+
+	* [1f8fc286] Additional tests for VIN scanner
+
+2025-11-05  Kam Woods  <kamwoods@gmail.com>
+
+	* [c4f5e7e0] Unit tests for VIN scanner (scan_vin.cpp)
+
+2025-10-30  Kam Woods  <kamwoods@gmail.com>
+
+	* [5fb68737] Initial commit of Vehicle Identification Number (VIN) scanner New files associated with this scanner are:
+
+2025-05-14  rick  <rick@gnous.eu>
+
+	* [4edd5caa] add missing include
+
+2024-12-20  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [659c1e03] Merge pull request #478 from simsong/simsong-patch-copyright
+
+2024-12-20  Simson Garfinkel  <simsong@acm.org>
+
+	* [1da3c267] Merge branch 'main' into simsong-patch-copyright
+
+2024-12-17  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [b42e4127] Merge pull request #482 from h-ssh/main
+
+2024-12-17  h-ssh  <57681015+h-ssh@users.noreply.github.com>
+
+	* [0697d7ca] Update identify_filenames.py
+
+2024-12-14  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [b0a498c5] Merge pull request #479 from simsong/simsong-patch-upload-artifact
+
+2024-12-11  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [6c8bdfb9] Update continuous-integration-pip.yml
+
+2024-12-11  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [cd1d6e57] Update LICENSE.md
+
+2024-04-27  Simson L. Garfinkel  <simsong@acm.org>
+
+	* [b2279ce0] Merge pull request #470 from simsong/dev-hotfix-nist-cfreds
+
+2024-04-27  Simson Garfinkel  <simsong@acm.org>
+
+	* [46f445f7] update help for scanner carving mode
+
+
 2024-04-26 Simson Garfinkel <simsong@acm.org>
 	* renamed jpeg_carved feature recorder to jpeg, so that the jpeg carve mode can be set with -S jpeg_carve_mode=2, rather than -S jpeg_carved_carve_mode=2, which was confusing.
 
@@ -1176,7 +3303,7 @@
 
 2011-08-14  Simson Garfinkel  <simsong@t.nitroba.org>
 
-	* src/bulk_extractor.cpp (usage): To remove the OpenSSL dependency, the wordlist is now deduplciated with a red/black tree, and not with a bloom filter. This may require the use of a 64-bit computer in some cases.
+	* src/bulk_extractor.cpp (usage): To remove the OpenSSL dependency, the wordlist is now deduplicated with a red/black tree, and not with a bloom filter. This may require the use of a 64-bit computer in some cases.
 
 2011-07-31  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
 
