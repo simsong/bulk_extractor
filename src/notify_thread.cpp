@@ -38,10 +38,24 @@ int notify_thread::terminal_width( int default_width )
     return default_width;
 }
 
+bool notify_thread::should_display_stat(const std::string &name)
+{
+    if (name == scanner_set::AVAILABLE_MEMORY_STR) {
+        return false;
+    }
+#ifdef __APPLE__
+    if (name == scanner_set::AVAILABLE_MEMORY_LEGACY_STR) {
+        return false;
+    }
+#endif
+    return true;
+}
+
 std::string notify_thread::format_stat_value(const std::string &name, const std::string &value)
 {
     if (name != scanner_set::AVAILABLE_MEMORY_STR &&
         name != scanner_set::AVAILABLE_MEMORY_LEGACY_STR &&
+        name != scanner_set::PROCESS_MEMORY_STR &&
         name != scanner_set::DEPTH0_BYTES_QUEUED_STR &&
         name != scanner_set::BYTES_QUEUED_STR &&
         name != scanner_set::MAX_OFFSET) {
@@ -121,6 +135,9 @@ void *notify_thread::run()
         if ( !cfg.opt_legacy) {
             os << ho << "bulk_extractor      " << asctime( &timeinfo) << "  " << std::endl;
             for( const auto &it : stats ){
+                if (!should_display_stat(it.first)) {
+                    continue;
+                }
                 const std::string value = format_stat_value(it.first, it.second);
                 os << it.first << ": " << value;
                 if ( ce[0] ){

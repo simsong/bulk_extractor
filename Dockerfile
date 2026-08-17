@@ -15,7 +15,7 @@ RUN bash bootstrap.sh \
 FROM debian:bookworm-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libabsl20220623 libexpat1 libgcrypt20 libgpg-error0 libpcap0.8 libre2-9 \
+    libabsl20220623 libexpat1 libgcrypt20 libgpg-error0 libre2-9 \
     libssl3 libsqlite3-0 libstdc++6 zlib1g \
  && rm -rf /var/lib/apt/lists/* \
  && useradd --create-home --uid 10001 bulk_extractor

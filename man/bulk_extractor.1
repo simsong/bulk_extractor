@@ -159,6 +159,13 @@ Set the page margin size.
 .B -M, --max_depth \fIN\fR
 Set the maximum recursive-processing depth.
 .TP
+.B --deduplciate-mode \fIN\fR
+Set duplicate processing: 0 preserves all recursive paths and carved objects,
+1 deduplicates ZIP recursion, and 2 uses legacy recursive and carved-object
+deduplication. The default is 0. Set the ZIP recursion limit with
+.B -S max_zip_depth=\fIN\fR
+(default 4).
+.TP
 .B -s, --sampling \fIFRACTION\fR[:\fIPASSES\fR]
 Set random-sampling parameters.
 .TP
@@ -229,6 +236,11 @@ is not supplied.
 .TP
 .I outdir/report.xml
 DFXML report describing the scan.
+.TP
+.I outdir/duplicates.txt
+Duplicate-buffer report.  Each data row contains the canonical first forensic
+path, an additional path, and the SHA-1 content hash, separated by tabs.  The
+file is created even when no duplicate buffers are found.
 .TP
 .I outdir/bulk_extractor.log
 Default diagnostic log file.

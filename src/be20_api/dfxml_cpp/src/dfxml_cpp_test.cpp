@@ -1,4 +1,5 @@
 
+// Standalone tests for the bundled DFXML C++ component.
 #define CATCH_CONFIG_MAIN
 #include "config.h"
 

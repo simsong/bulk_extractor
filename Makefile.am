@@ -20,6 +20,8 @@ SUBDIRS = doc doc/latex_manuals man src src/tests specfiles tests
 
 include Makefile.auto_defs
 
+ACLOCAL_AMFLAGS = -I m4
+
 EXTRA_DIST = $(SRC_WIN_DIST) $(AUTO_DOC_FILES) $(AUTO_ETC_FILES) $(AUTO_LICENSES) \
 	$(srcdir)/etc/Dockerfile.fedora-distcheck \
 	$(srcdir)/etc/Dockerfile.ubuntu-distcheck \
@@ -41,9 +43,6 @@ EXTRA_DIST = $(SRC_WIN_DIST) $(AUTO_DOC_FILES) $(AUTO_ETC_FILES) $(AUTO_LICENSES
 	$(srcdir)/dfxml_schema/dfxml.xsd \
 	$(srcdir)/dfxml_schema/ref/dc.xsd \
 	$(srcdir)/dfxml_schema/ref/xml.xsd
-
-
-# ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
 
 distclean2:
 	@echo Deleting:

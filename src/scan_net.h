@@ -74,6 +74,7 @@ struct scan_net_t {
     static bool invalidIP4( const uint8_t *const cc);
     static bool invalidIP6(const uint16_t addr[8]);
     static bool invalidIP(const uint8_t addr[16], sa_family_t family);
+    static bool validIEEE80211Frame(const sbuf_t &sbuf, size_t pos, size_t packet_len);
     static std::string ip2string(const struct be20::ip4_addr *const a);
     static std::string ip2string(const uint8_t *addr, sa_family_t family);
     static std::string mac2string(const struct be20::ether_addr *const e);
@@ -145,7 +146,10 @@ struct scan_net_t {
     };
 
     /* Each of these carvers looks for a specific structure and if it finds the structure it returns the size in the sbuf */
-    void   documentIPFields(const sbuf_t &sbuf, size_t pos, const generic_iphdr_t &h) const; // write ip fields to ip_recorder and possibly tcp_recorder
+    void   documentIPFields(const sbuf_t &sbuf, size_t pos, const generic_iphdr_t &h, size_t feature_pos) const;
+    void   documentIPFields(const sbuf_t &sbuf, size_t pos, const generic_iphdr_t &h) const {
+        documentIPFields(sbuf, pos, h, pos);
+    }
     void   recordWifiFrame(const sbuf_t &sbuf, size_t pos, size_t packet_len, const pcap_writer::pcap_hdr &pch) const;
     size_t carveIPFrame(const sbuf_t &sbuf, size_t pos, sanityCache_t *sc) const;
     size_t carveTCPTOBJ(const sbuf_t &sbuf, size_t pos) const;

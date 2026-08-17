@@ -115,9 +115,12 @@ callback returns. feature_recorder::write() and write_buf() are safe for
 concurrent scanner calls; protect any other shared scanner state with an
 appropriate mutex or atomics.
 
-The framework can bypass a scanner for a small buffer, a duplicate buffer, an
-ngram buffer, excessive depth, or scanner flags. A scanner must not assume it
-will see every input buffer.
+The framework can bypass a scanner for a small buffer, an ngram buffer,
+excessive depth, or scanner flags. `--deduplciate-mode 2` also bypasses a
+buffer whose content hash was seen earlier; mode 0 preserves every path, and
+mode 1 limits deduplication to recursive ZIP processing. Duplicate detection
+always produces `duplicates.txt`; a scanner must not assume it will see every
+input buffer in mode 2.
 
 ## Feature recorders
 

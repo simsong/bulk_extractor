@@ -9,6 +9,7 @@
 
 #include "config.h"
 
+#include <cctype>
 #include <cstring>
 #include <array>
 #include <iostream>
@@ -123,7 +124,18 @@ TEST_CASE("test_validate", "[phase1]" ) {
 }
 
 
-bool feature_match(const Feature &feature, const std::string &line)
+static std::string normalize_embedded_position(std::string value, const std::string &position)
+{
+    for (const char delimiter : {'-', '.', '_', '/'}) {
+        const std::string from = "/" + position + delimiter;
+        for (size_t at = 0; (at = value.find(from, at)) != std::string::npos; at += 3) {
+            value.replace(at, from.size(), "/<>" + std::string(1, delimiter));
+        }
+    }
+    return value;
+}
+
+bool feature_match(const Feature &feature, const std::string &line, size_t delta=0)
 {
     auto words = split(line, '\t');
     if (words.size() <2 || words.size() > 3) return false;
@@ -140,27 +152,39 @@ bool feature_match(const Feature &feature, const std::string &line)
         }
     }
 
-    if ( pos0_t(words[0]) != feature.pos ){
+    const bool position_matches = delta > 0 && !feature.pos.path.empty() &&
+        std::isdigit(static_cast<unsigned char>(feature.pos.path[0]))
+        ? position_shifted_by(feature.pos.path, words[0], delta)
+        : pos0_t(words[0]) == feature.pos;
+    if (!position_matches) {
         if (debug) std::cerr << "  pos " << feature.pos.str() << " does not match '" << words[0] << "'" << std::endl;
         return false;
     }
 
-    if ( words[1] != feature.feature ){
+    const std::string expected_feature = delta > 0
+        ? normalize_embedded_position(feature.feature, feature.pos.path) : feature.feature;
+    const std::string actual_feature = delta > 0
+        ? normalize_embedded_position(words[1], words[0]) : words[1];
+    if (actual_feature != expected_feature) {
         if (debug)std::cerr << "  feature '" << feature.feature << "' does not match feature '" << words[1] << "'" << std::endl;
         return false;
     }
 
-    std::string ctx = feature.context;
+    std::string ctx = delta > 0
+        ? normalize_embedded_position(feature.context, feature.pos.path) : feature.context;
     if (words.size()==2) return ctx=="";
 
-    if ( (ctx=="") || (ctx==words[2]) )  return true;
+    const std::string actual_context = delta > 0
+        ? normalize_embedded_position(words[2], words[0]) : words[2];
+
+    if ( (ctx=="") || (ctx==actual_context) )  return true;
 
     if (debug) std::cerr << "  context '" << ctx << "' (len=" << ctx.size() << ") "
-                         << "does not match context '" << words[2] << "' (" << words[2].size() << ")\n";
+                         << "does not match context '" << actual_context << "' (" << actual_context.size() << ")\n";
 
     if ( ends_with(ctx, "*") ) {
         ctx.resize(ctx.size()-1 );
-        if (starts_with(words[2], ctx )){
+        if (starts_with(actual_context, ctx )){
             return true;
         }
         if (debug) std::cerr << "  context did not start with '" << ctx << "'\n";
@@ -201,7 +225,7 @@ void grep(const std::string str, std::filesystem::path fname )
 }
 
 /* Look for a line in a file and print an error if not found */
-void grep(const Feature &feature, std::filesystem::path fname )
+void grep(const Feature &feature, std::filesystem::path fname, size_t delta)
 {
     for (int pass=0 ; pass<2 ; pass++){
         std::string line;
@@ -214,7 +238,7 @@ void grep(const Feature &feature, std::filesystem::path fname )
         while (std::getline(inFile, line)) {
             switch (pass) {
             case 0:
-                if (feature_match(feature, line)){
+                if (feature_match(feature, line, delta)){
                     return;             // found!
                 }
                 break;
@@ -236,7 +260,11 @@ void grep(const Feature &feature, std::filesystem::path fname )
  * Run all of the built-in scanners on a specific image, look for the given features, and return the directory.
  * These are run single-threading for ease of debugging.
  */
-std::filesystem::path validate(std::string image_fname, std::vector<Check> &expected, bool recurse=true, size_t offset=0)
+static std::filesystem::path validate_once(const std::string &image_fname,
+                                           const std::vector<Check> &expected,
+                                           bool recurse,
+                                           size_t offset,
+                                           size_t prefix_size)
 {
     int start_sbuf_count = sbuf_t::sbuf_count;
 
@@ -246,24 +274,26 @@ std::filesystem::path validate(std::string image_fname, std::vector<Check> &expe
     scanner_config sc;
 
     sc.outdir           = NamedTemporaryDirectory();
+    sc.deduplicate_mode = scanner_config::deduplicate_mode_t::LEGACY;
     sc.enable_all_scanners();
     sc.allow_recurse    = recurse;
 
     std::cerr << "## image_fname: " << image_fname << " outdir: " << sc.outdir << std::endl;
 
-    if (offset==0) {
+    if (offset == 0 && prefix_size == 0) {
         sc.input_fname = test_dir() / image_fname;
     } else {
-        std::filesystem::path offset_name = sc.outdir / "offset_file";
+        const std::filesystem::path offset_name = sc.outdir / "offset_file";
 
         std::ifstream in(  test_dir() / image_fname, std::ios::binary);
-        std::ofstream out( offset_name );
+        std::ofstream out(offset_name, std::ios::binary);
+        REQUIRE(in.is_open());
+        REQUIRE(out.is_open());
         in.seekg(offset);
+        for (size_t i = 0; i < prefix_size; i++) out.put(static_cast<char>(0xa5));
         char ch;
-        //size_t written = 0;
         while (in.get(ch)) {
             out << ch;
-            //written ++;
         }
         in.close();
         out.close();
@@ -307,10 +337,21 @@ std::filesystem::path validate(std::string image_fname, std::vector<Check> &expe
     delete xreport;
 
     for (const auto &exp : expected ) {
-        grep( exp.feature, sc.outdir / exp.fname );
+        grep(exp.feature, sc.outdir / exp.fname, prefix_size);
     }
     REQUIRE(start_sbuf_count == sbuf_t::sbuf_count);
     return sc.outdir;
+}
+
+std::filesystem::path validate(std::string image_fname, std::vector<Check> &expected,
+                               bool recurse=true, size_t offset=0)
+{
+    std::array<std::filesystem::path, SCANNER_TEST_OFFSETS.size()> outputs;
+    for (size_t i = 0; i < SCANNER_TEST_OFFSETS.size(); i++) {
+        outputs[i] = validate_once(image_fname, expected, recurse, offset,
+                                   SCANNER_TEST_OFFSETS[i]);
+    }
+    return outputs[0];
 }
 
 
@@ -603,6 +644,27 @@ TEST_CASE("test_net_80211_management", "[phase1]") {
     REQUIRE(validate_pcap_packet(test_dir() / "wifi_management.pcap", outdir / "packets_80211.pcap", DLT_IEEE802_11));
 }
 
+TEST_CASE("test_net_80211_frame_validation", "[phase1]") {
+    const auto valid = [](uint16_t frame_control, size_t packet_len) {
+        std::vector<uint8_t> frame(packet_len);
+        frame[0] = frame_control & 0xff;
+        frame[1] = frame_control >> 8;
+        const sbuf_t sbuf(pos0_t(), frame.data(), frame.size());
+        return scan_net_t::validIEEE80211Frame(sbuf, 0, frame.size());
+    };
+
+    REQUIRE(valid(0x0080, 24));  // management beacon
+    REQUIRE(valid(0x00d4, 10));  // control acknowledgement
+    REQUIRE(valid(0x00b4, 16));  // control request-to-send
+    REQUIRE(valid(0x0008, 24));  // data
+    REQUIRE_FALSE(valid(0x0081, 24));  // unsupported protocol version
+    REQUIRE_FALSE(valid(0x000c, 24));  // reserved frame type
+    REQUIRE_FALSE(valid(0x0080, 23));
+    REQUIRE_FALSE(valid(0x00d4, 9));
+    REQUIRE_FALSE(valid(0x00b4, 15));
+    REQUIRE_FALSE(valid(0x0008, 23));
+}
+
 TEST_CASE("test_net_80211_management_pair", "[phase1]") {
     std::vector<Check> ex2 {
         Check("wifi.txt", Feature("40", "management", "type=management subtype=beacon to_ds=no from_ds=no protected=no timestamp=*")),
@@ -790,4 +852,55 @@ TEST_CASE("test_winpe", "[phase1]") {
                                     "<PE><FileHeader Machine=\"IMAGE_FILE_MACHINE_I386*"))
     };
     validate("hello_win64_exe", ex2);
+}
+
+TEST_CASE("winpe hashes short sbufs", "[phase1]") {
+    std::unique_ptr<sbuf_t> source(map_file("hello_win64_exe"));
+    constexpr size_t short_size = 512;
+    REQUIRE(source->bufsize >= short_size);
+    auto *short_pe = sbuf_t::sbuf_malloc(source->pos0, short_size, short_size);
+    std::memcpy(short_pe->malloc_buf(), source->get_buf(), short_size);
+
+    const auto outdir = test_scanner(scan_winpe, short_pe);
+    REQUIRE(requireFeature(getLines(outdir / "winpe.txt"), "<PE>"));
+    for (const auto &line : getLines(outdir / "alerts.txt")) {
+        REQUIRE(line.find("sbuf_t::range_exception_t") == std::string::npos);
+    }
+}
+
+TEST_CASE("winpe skips carves beyond the sbuf", "[phase1]") {
+    std::unique_ptr<sbuf_t> source(map_file("hello_win64_exe"));
+    REQUIRE(source->bufsize >= 0x3c + sizeof(uint32_t));
+    constexpr size_t omitted_size = 4096;
+    REQUIRE(source->bufsize > omitted_size);
+    REQUIRE(source->bufsize <= std::numeric_limits<uint32_t>::max());
+    const size_t scan_size = source->bufsize - omitted_size;
+    auto *patched = sbuf_t::sbuf_malloc(source->pos0, scan_size, scan_size);
+    std::memcpy(patched->malloc_buf(), source->get_buf(), scan_size);
+
+    // Point the PE certificate table beyond the bytes available to this scanner call.
+    const size_t optional_header_offset = source->get32u(0x3c) + 4 + 20;
+    REQUIRE(optional_header_offset + sizeof(uint16_t) <= source->bufsize);
+    const uint16_t optional_header_magic = source->get16u(optional_header_offset);
+    REQUIRE((optional_header_magic == 0x10b || optional_header_magic == 0x20b));
+    const size_t data_directory_offset = optional_header_offset
+        + (optional_header_magic == 0x10b ? 96 : 112);
+    const size_t certificate_directory_offset = data_directory_offset + 4 * 8;
+    REQUIRE(certificate_directory_offset + 8 <= scan_size);
+    constexpr uint32_t certificate_size = 512;
+    const uint32_t certificate_offset = static_cast<uint32_t>(source->bufsize - certificate_size);
+    auto *bytes = static_cast<uint8_t *>(patched->malloc_buf());
+    for (size_t i = 0; i < sizeof(certificate_offset); i++) {
+        bytes[certificate_directory_offset + i] = (certificate_offset >> (i * 8)) & 0xff;
+    }
+    for (size_t i = 0; i < sizeof(certificate_size); i++) {
+        bytes[certificate_directory_offset + 4 + i] = (certificate_size >> (i * 8)) & 0xff;
+    }
+
+    const auto outdir = test_scanner(scan_winpe, patched);
+    REQUIRE(requireFeature(getLines(outdir / "winpe.txt"), "<PE>"));
+    for (const auto &line : getLines(outdir / "alerts.txt")) {
+        REQUIRE(line.find("sbuf_t::range_exception_t") == std::string::npos);
+    }
+    REQUIRE_FALSE(std::filesystem::exists(outdir / "winpe_carved"));
 }

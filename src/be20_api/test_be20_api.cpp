@@ -287,7 +287,11 @@ TEST_CASE("scale_stoi64","[utils]") {
     REQUIRE(scaled_stoi64("10") == 10);
     REQUIRE(scaled_stoi64("2k") == 2048);
     REQUIRE(scaled_stoi64("4m") == 4194304);
+    REQUIRE(scaled_stoi64("4M") == 4194304);
     REQUIRE(scaled_stoi64("1g") == 1073741824);
+    REQUIRE_THROWS_AS(scaled_stoi64("1k0"), std::invalid_argument);
+    REQUIRE_THROWS_AS(scaled_stoi64("1kg"), std::invalid_argument);
+    REQUIRE_THROWS_AS(scaled_stoi64("18446744073709551615k"), std::out_of_range);
 }
 
 /*** BE-specific tests continue ***/
@@ -1353,8 +1357,12 @@ void scan_duplicate_opt_in_test(scanner_params& sp) {
 }
 
 #ifdef _WIN32
-TEST_CASE("machine_stats", "[!mayfail][machine_stats]") {
-    WARN("machine_stats not implemented on Windows (ps and /proc/ don't exist)");
+TEST_CASE("machine_stats", "[machine_stats]") {
+    REQUIRE(machine_stats::get_available_memory() != 0);
+    uint64_t virtual_size = 0;
+    uint64_t resident_size = 0;
+    machine_stats::get_memory(&virtual_size, &resident_size);
+    REQUIRE(resident_size > 0);
 }
 #else
 TEST_CASE("machine_stats", "[machine_stats]") {
@@ -1381,6 +1389,8 @@ TEST_CASE("scanner_stats", "[scanner_set]") {
     std::map<scanner_t*, const struct scanner_params::scanner_info*> scanner_info_db{};
     atomic_set<std::string> seen_set {}; // hex hash values of sbuf pages that have been seen
     auto ss = new scanner_set(sc, feature_recorder_set::flags_t(), nullptr);
+    const auto stats = ss->get_realtime_stats();
+    REQUIRE(std::stoull(stats.at(scanner_set::PROCESS_MEMORY_STR)) > 0);
     delete ss;
 }
 
@@ -1394,8 +1404,80 @@ TEST_CASE("previously_processed", "[scanner_set]") {
     REQUIRE(ss.previously_processed_count(slg) == 2);
 }
 
+TEST_CASE("recursive deduplication follows the configured mode", "[scanner]") {
+    const auto repeated = [](scanner_config::deduplicate_mode_t mode) {
+        scanner_config sc;
+        sc.deduplicate_mode = mode;
+        sc.outdir = get_tempdir();
+        feature_recorder_set::flags_t flags;
+        flags.no_alert = true;
+        scanner_set ss(sc, flags, nullptr);
+        scanner_params sp(sc, &ss, nullptr, scanner_params::PHASE_SCAN, nullptr);
+        const sbuf_t sbuf("duplicate");
+        REQUIRE_FALSE(sp.check_previously_processed(sbuf));
+        return sp.check_previously_processed(sbuf);
+    };
+
+    REQUIRE_FALSE(repeated(scanner_config::deduplicate_mode_t::NONE));
+    REQUIRE(repeated(scanner_config::deduplicate_mode_t::RECURSIVE));
+    REQUIRE(repeated(scanner_config::deduplicate_mode_t::LEGACY));
+}
+
+TEST_CASE("disabled recursive deduplication does not track inputs", "[scanner]") {
+    scanner_config sc;
+    sc.outdir = get_tempdir();
+    feature_recorder_set::flags_t flags;
+    flags.no_alert = true;
+    scanner_set ss(sc, flags, nullptr);
+    scanner_params sp(sc, &ss, nullptr, scanner_params::PHASE_SCAN, nullptr);
+    const sbuf_t sbuf("duplicate");
+
+    REQUIRE_FALSE(sp.check_previously_processed(sbuf));
+    REQUIRE_FALSE(sp.check_previously_processed(sbuf));
+    REQUIRE(ss.previously_processed_count(sbuf) == 0);
+}
+
+TEST_CASE("duplicates report is always created", "[scanner_set]") {
+    scanner_config sc;
+    sc.outdir = get_tempdir();
+    scanner_set ss(sc, feature_recorder_set::flags_t(), nullptr);
+    const auto report = sc.outdir / "duplicates.txt";
+    REQUIRE(std::filesystem::exists(report));
+    REQUIRE(std::filesystem::file_size(report) == 0);
+}
+
+TEST_CASE("carve deduplication follows the configured mode", "[feature_recorder]") {
+    const auto carve_twice = [](scanner_config::deduplicate_mode_t mode) {
+        scanner_config sc;
+        sc.deduplicate_mode = mode;
+        sc.outdir = get_tempdir();
+        feature_recorder_set::flags_t flags;
+        flags.no_alert = true;
+        feature_recorder_set frs(flags, sc);
+        auto& fr = frs.create_feature_recorder("carved");
+        fr.carve_mode = feature_recorder_def::CARVE_ALL;
+        const auto first = std::unique_ptr<sbuf_t>(sbuf_t::sbuf_malloc(pos0_t("100"), "duplicate"));
+        const auto second = std::unique_ptr<sbuf_t>(sbuf_t::sbuf_malloc(pos0_t("200"), "duplicate"));
+        return std::pair{fr.carve(*first, ".bin"), fr.carve(*second, ".bin")};
+    };
+
+    const auto no_dedup = carve_twice(scanner_config::deduplicate_mode_t::NONE);
+    REQUIRE(no_dedup.first != feature_recorder::CACHED);
+    REQUIRE(no_dedup.second != feature_recorder::CACHED);
+    REQUIRE(std::filesystem::path(no_dedup.first).parent_path() == std::filesystem::path(no_dedup.second).parent_path());
+
+    const auto recursive_only = carve_twice(scanner_config::deduplicate_mode_t::RECURSIVE);
+    REQUIRE(recursive_only.first != feature_recorder::CACHED);
+    REQUIRE(recursive_only.second != feature_recorder::CACHED);
+
+    const auto legacy = carve_twice(scanner_config::deduplicate_mode_t::LEGACY);
+    REQUIRE(legacy.first != feature_recorder::CACHED);
+    REQUIRE(legacy.second == feature_recorder::CACHED);
+}
+
 TEST_CASE("duplicate sbufs bypass scanner fan-out unless requested", "[scanner_set]") {
     scanner_config sc;
+    sc.deduplicate_mode = scanner_config::deduplicate_mode_t::LEGACY;
     sc.outdir = get_tempdir();
     sc.enable_all_scanners();
     const auto dfxml_file = get_tempdir() / "duplicate_bypass.xml";
@@ -1420,6 +1502,7 @@ TEST_CASE("duplicate sbufs bypass scanner fan-out unless requested", "[scanner_s
 
 TEST_CASE("duplicate sbufs reach scanners that opt in", "[scanner_set]") {
     scanner_config sc;
+    sc.deduplicate_mode = scanner_config::deduplicate_mode_t::LEGACY;
     sc.outdir = get_tempdir();
     sc.enable_all_scanners();
     duplicate_bypass_scans = 0;
@@ -1461,10 +1544,10 @@ TEST_CASE("enable/disable", "[scanner_set]") {
         REQUIRE(ss.is_scanner_enabled(SHA1_TEST) == true);
         REQUIRE(ss.is_find_scanner_enabled() == false); // only sha1 scanner is enabled
 
-        /* Make sure that the scanner set has a two feature recorders:
-         * the alert recorder and the sha1_bufs recorder
+        /* Make sure that the scanner set has three feature recorders:
+         * alerts, duplicates, and sha1_bufs
          */
-        REQUIRE(ss.feature_recorder_count() == 2);
+        REQUIRE(ss.feature_recorder_count() == 3);
 
         /* Make sure it has a single histogram */
         REQUIRE(ss.histogram_count() == 1);

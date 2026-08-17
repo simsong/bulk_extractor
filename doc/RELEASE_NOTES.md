@@ -27,7 +27,7 @@ linked from the [historical source map](#historical-source-map).
 ## 2.2.0 (draft)
 
 **Status:** Unreleased. The source version is currently
-`v2.2.0alpha1`.
+`2.2.0beta3`; the corresponding Git tag will be `v2.2.0beta3`.
 
 ### Executive summary
 
@@ -91,9 +91,14 @@ through the project's normal pull-request and CI process.
 - Runtime scanner plug-ins are supported again through a versioned factory
   interface, `-P`, and `BE_PATH`, with an end-to-end integration test
   ([PR #528](https://github.com/simsong/bulk_extractor/pull/528)).
+- The source and release archives now provide project-specific installation
+  instructions, including the distinct bootstrap workflow for Git checkouts
+  ([#424](https://github.com/simsong/bulk_extractor/issues/424)).
 - Network captures now preserve IEEE 802.11 records with their correct PCAP
-  link type and report WiFi frame metadata in `wifi.txt`
-  ([PR #559](https://github.com/simsong/bulk_extractor/pull/559)).
+  link type and report WiFi frame metadata in `wifi.txt`; carved payloads are
+  checked for a valid protocol version, frame type, and minimum header length
+  ([PR #559](https://github.com/simsong/bulk_extractor/pull/559),
+  [issue #617](https://github.com/simsong/bulk_extractor/issues/617)).
 - The carving guide documents recorder-specific `-S <recorder>_carve_mode=`
   settings, defaults, and feature-file behavior ([#264](https://github.com/simsong/bulk_extractor/issues/264)).
 - Release managers can run the AWS large-image matrix from one interactive
@@ -102,6 +107,12 @@ through the project's normal pull-request and CI process.
 
 ### Reliability and correctness
 
+- Buffer deduplication is now disabled by default so concurrent runs
+  preserve every forensic path for equal content. `--deduplicate` restores the
+  previous space-saving behavior, whose first-seen path can depend on worker
+  scheduling. Every scan creates `duplicates.txt`; its deterministic rows list
+  the canonical first path, each additional path, and the SHA-1 content hash
+  ([#682](https://github.com/simsong/bulk_extractor/issues/682)).
 - Restart records the start of each page so a resumed run deliberately skips
   pages that were in progress at the crash, avoiding repeated data-dependent
   crashes; the behavior is covered by a controlled-crash regression test
@@ -121,12 +132,19 @@ through the project's normal pull-request and CI process.
 - Progress displays now adapt to Windows console-width changes, matching the
   periodic terminal-width refresh already used on Unix-like systems
   ([#311](https://github.com/simsong/bulk_extractor/issues/311)).
-- The progress display now provides the explicit `available_memory_bytes`
-  metric alongside the legacy `available_memory` alias, and renders byte-valued
-  status metrics in MiB ([#240](https://github.com/simsong/bulk_extractor/issues/240)).
+- Realtime statistics provide cross-platform `process_memory_bytes` and the
+  explicit `available_memory_bytes` metric alongside the legacy
+  `available_memory` alias. The progress display suppresses the duplicate
+  explicit field everywhere and the misleading available-memory value on macOS,
+  while rendering displayed byte-valued metrics in MiB
+  ([#240](https://github.com/simsong/bulk_extractor/issues/240),
+  [#672](https://github.com/simsong/bulk_extractor/issues/672)).
 - Email extraction now enforces independent 64-octet local-part and 253-octet
   domain limits for ASCII and UTF-16 input, avoiding truncated suffix features
   from overlong addresses ([#585](https://github.com/simsong/bulk_extractor/issues/585)).
+- `bulk_diff.py` now compares legacy hexadecimal byte escapes with current
+  octal escapes by default, with an explicit raw mode for byte-for-byte audit
+  comparisons ([#225](https://github.com/simsong/bulk_extractor/issues/225)).
 - Hardened the bundled RAR PPM decoder's dictionary-copy boundary handling,
   preventing a malformed archive from writing past its ring buffer
   (fixes CVE-2026-24857; [#601](https://github.com/simsong/bulk_extractor/issues/601)).
@@ -137,6 +155,12 @@ through the project's normal pull-request and CI process.
   reading their length fields, and unexpected top-level exceptions are reported
   as diagnostics with a nonzero exit status
   ([PR #605](https://github.com/simsong/bulk_extractor/pull/605)).
+- Windows PE scanning no longer reports `sbuf` range exceptions when a
+  recognized executable extends beyond the current scanner buffer; its feature
+  is recorded, but the incomplete executable is not carved.
+- Follow-up parser hardening rejects overflowing scaled-size arguments,
+  malformed Windows volume paths, invalid or truncated network headers, and
+  unsafe HTTP-log backtracking before accessing their bytes.
 - Hardened `sbuf` bounds, arithmetic, and ownership behavior, including
   zero-length and one-past-end cases
   ([PR #511](https://github.com/simsong/bulk_extractor/pull/511)).
@@ -158,6 +182,9 @@ through the project's normal pull-request and CI process.
 - Fixed notifier and disk-write error shutdown so worker failures are reported
   and cleaned up instead of hanging or terminating incorrectly
   ([PR #513](https://github.com/simsong/bulk_extractor/pull/513)).
+- Thread-pool shutdown again tracks live workers under the pool mutex, preventing
+  timed joins from sleeping until their deadline after every worker has exited
+  ([#678](https://github.com/simsong/bulk_extractor/issues/678)).
 - `-Z` now removes stale nested output directories as well as files before a
   new run ([#239](https://github.com/simsong/bulk_extractor/issues/239)).
 - Fixed scanner controls: `jpeg_carve_mode=0` now disables JPEG carving, and
@@ -216,17 +243,30 @@ through the project's normal pull-request and CI process.
 
 ### Build, configuration, and testing
 
+- Recursive duplicate processing is now controlled by `--deduplciate-mode`.
+  Mode 0 (the default) preserves all recursive paths and carved objects; mode 1
+  deduplicates ZIP recursion; mode 2 preserves the legacy recursive and carved-object
+  deduplication behavior. ZIP recursion now defaults to four nested ZIP levels and
+  is configurable with `-S max_zip_depth=N`.
+- Release source archives now define unavailable Git metadata as `unknown`, so
+  their `make check` target compiles and runs outside a Git checkout
+  ([#681](https://github.com/simsong/bulk_extractor/issues/681)).
+- Source-tree bootstrap no longer reports obsolete Libtool setup or GNU Make
+  portability warnings from the project Autotools inputs.
 - A build configured with `--disable-rar` now omits RAR-only tests without
   breaking `make check`, and explicitly warns that RAR coverage was not run.
 - A multi-stage Debian Bookworm container image provides a reproducible,
   unprivileged environment for scanning regular image files. It documents its
-  libewf and Lightgrep limitations and supplements native platform CI rather
-  than replacing it ([#159](https://github.com/simsong/bulk_extractor/issues/159)).
+  libewf and Lightgrep limitations, omits the unused PCAP runtime library, and
+  supplements native platform CI rather than replacing it
+  ([#159](https://github.com/simsong/bulk_extractor/issues/159)).
 - Builds now enable basic compiler stack-canary protection (`-fstack-protector`)
   when both selected C and C++ compilers support it ([#376](https://github.com/simsong/bulk_extractor/issues/376)).
 - AddressSanitizer now runs on every pull request while redundant workflow
   execution has been reduced
   ([PR #514](https://github.com/simsong/bulk_extractor/pull/514)).
+- Snap builds use native Snapcraft and LXD commands plus Node 24-compatible
+  artifact upload tooling, removing deprecated Node 20 action dependencies.
 - Optional Exiv2 configuration is honored, tested, and disabled by default; its
   version is recorded in DFXML when enabled
   ([PR #532](https://github.com/simsong/bulk_extractor/pull/532)).
@@ -266,6 +306,8 @@ through the project's normal pull-request and CI process.
   ([PR #561](https://github.com/simsong/bulk_extractor/pull/561),
   [PR #558](https://github.com/simsong/bulk_extractor/pull/558),
   [PR #557](https://github.com/simsong/bulk_extractor/pull/557)).
+- Renamed and updated the MinGW notes for the current Windows CI artifact,
+  static dependency checks, E01 runtime coverage, and raw-device limitations.
 - Rewrote the installed `bulk_extractor(1)` manual for the 2.2 command-line
   interface, including current logging, scanner controls, path-printer aliases,
   output-directory requirements, and supported documentation.
@@ -312,13 +354,17 @@ through the project's normal pull-request and CI process.
   checkout, and copies generated `.deb`, `.dsc`, `.changes`, `.buildinfo`,
   `.orig.tar.gz`, and `.debian.tar.*` artifacts to `$(RELEASE_ARTIFACT_DIR)`
   on the host.
-- Added tag-driven draft-release assembly for the source archive and tested
-  Windows executable. The Python driver derives the version from `configure.ac`,
-  can assemble and checksum supplied artifacts with `--dry-run`, and never
-  publishes a GitHub Release without a release-manager action
+- Added tag-driven draft-release assembly for the source archive, tested
+  Windows executable, and tested amd64/arm64 Snap packages. The Python driver
+  derives the version from `configure.ac`, can assemble and checksum supplied
+  artifacts with `--dry-run`, and never publishes a GitHub Release without a
+  release-manager action
   ([#621](https://github.com/simsong/bulk_extractor/issues/621)).
 - The release workflow now assembles and verifies artifacts in a read-only job;
   only its separate draft-publishing job receives repository write permission.
+- Added a step-by-step release-manager runbook covering the release issue,
+  final version promotion, signed tag, automated or manual draft, asset review,
+  public publication, and downstream follow-up.
 - Release managers can run an AWS OIDC large-image gate that uses a disposable,
   fixed-size instance with an eight-hour shutdown cap, encrypted temporary
   storage, least-privilege input/output access, cleanup, and an attested,

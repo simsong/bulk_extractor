@@ -226,7 +226,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     ("image_name", image_name_help.c_str(), cxxopts::value<std::string>())
         ("A,offset_add", "Offset added (in bytes) to feature locations", cxxopts::value<int64_t>()->default_value("0"))
         ("b,banner_file", "Path of file whose contents are prepended to top of all feature files",cxxopts::value<std::string>())
-	("C,context_window", "Size of context window reported in bytes",
+        ("C,context_window", "Size of context window reported in bytes",
          cxxopts::value<int>()->default_value(std::to_string(sc.context_window_default)))
         ("d,debug", "enable debug-level diagnostic logging")
         ("E,enable_exclusive", "disable all scanners except the one specified. Same as -x all -E scanner.", cxxopts::value<std::string>())
@@ -245,7 +245,8 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
 	("log-level", "diagnostic log level: trace, debug, info, warning, error, critical, or off", cxxopts::value<std::string>())
 	("log-file", "diagnostic log file (default: <outdir>/bulk_extractor.log)", cxxopts::value<std::string>())
         ("notify_main_thread", "Display notifications in the main thread after phase1 completes. Useful for running with ThreadSanitizer")
-        ("notify_async", "Display notificaitons asynchronously (default)")
+        ("notify_async", "Display notifications asynchronously (default)")
+	("deduplciate-mode", "duplicate processing mode: 0=none, 1=ZIP recursion, 2=legacy", cxxopts::value<unsigned int>()->default_value("0"))
         ("o,outdir",        "output directory [REQUIRED]", cxxopts::value<std::string>())
         ("P,scanner_dir",
          "directories for scanner shared libraries (can be repeated). "
@@ -402,6 +403,12 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
     cfg.opt_notification       = ( result.count( "no_notify" )==0);
     cfg.opt_legacy             = result.count( "version1" );
 
+    const unsigned int deduplicate_mode = result["deduplciate-mode"].as<unsigned int>();
+    if (deduplicate_mode > static_cast<unsigned int>(scanner_config::deduplicate_mode_t::LEGACY)) {
+        throw std::runtime_error("--deduplciate-mode must be 0, 1, or 2");
+    }
+    sc.deduplicate_mode = static_cast<scanner_config::deduplicate_mode_t>(deduplicate_mode);
+
     if (cfg.opt_notify_main_thread && (result.count("notify_async")>0)){
         throw std::runtime_error("--notify_main_thread and --notify_async conflict");
     }
@@ -415,7 +422,7 @@ int bulk_extractor_main( std::ostream &cout, std::ostream &cerr, int argc,char *
 
     /* Create a configuration that will be used to initialize the scanners */
     /* Make individual configuration options appear on the command line interface. */
-    sc.get_global_config( "notify_rate", &cfg.opt_notify_rate, "seconds between notificaiton update" );
+    sc.get_global_config( "notify_rate", &cfg.opt_notify_rate, "seconds between notification updates" );
     sc.get_global_config( "debug_histogram_malloc_fail_frequency",
                          &AtomicUnicodeHistogram::debug_histogram_malloc_fail_frequency,
                          "Set >0 to make histogram maker fail with memory allocations" );

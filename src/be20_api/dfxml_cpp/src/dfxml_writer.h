@@ -198,7 +198,7 @@ private:
             std::cerr << "tag '" << tag << "' contains space. Cannot continue.\n";
             exit(1);
         }
-        tags.insert(tag);
+        tags.insert(std::move(tag));
     }
     void  spaces(int delta=0){   // print spaces corresponding to tag stack
         for(unsigned int i=0;i<tag_stack.size()+delta && !oneline;i++){

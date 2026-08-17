@@ -15,6 +15,7 @@
 #include "config.h"
 
 #include <cstdint>
+#include <cctype>
 #include <algorithm>
 #include <cstring>
 #include <fstream>
@@ -23,6 +24,8 @@
 #include <filesystem>
 #include <cstdio>
 #include <iterator>
+#include <limits>
+#include <map>
 #include <stdexcept>
 #include <unistd.h>
 #include <string>
@@ -112,9 +115,22 @@ TEST_CASE("notify_thread formats byte statistics as MiB", "[notify]")
 {
     REQUIRE(notify_thread::format_stat_value("available_memory_bytes", "10485760") == "10 MiB");
     REQUIRE(notify_thread::format_stat_value("available_memory", "1048576") == "1 MiB");
+    REQUIRE(notify_thread::format_stat_value("process_memory_bytes", "20971520") == "20 MiB");
     REQUIRE(notify_thread::format_stat_value("max_offset", "2097152") == "2 MiB");
     REQUIRE(notify_thread::format_stat_value("bytes_queued", "1048575") == "0 MiB");
     REQUIRE(notify_thread::format_stat_value("tasks_queued", "12") == "12");
+}
+
+TEST_CASE("notify_thread suppresses the duplicate memory statistic", "[notify]")
+{
+    REQUIRE_FALSE(notify_thread::should_display_stat("available_memory_bytes"));
+#ifdef __APPLE__
+    REQUIRE_FALSE(notify_thread::should_display_stat("available_memory"));
+#else
+    REQUIRE(notify_thread::should_display_stat("available_memory"));
+#endif
+    REQUIRE(notify_thread::should_display_stat("process_memory_bytes"));
+    REQUIRE(notify_thread::should_display_stat("bytes_queued"));
 }
 
 /* return --notify_async or --notify_main_thread depending on if DEBUG_THREAD_SANITIZER is set or not */
@@ -257,7 +273,74 @@ bool requireFeature(const std::vector<std::string> &lines, const std::string fea
     return false;
 }
 
-std::filesystem::path test_scanners(const std::vector<scanner_t *> & scanners, sbuf_t *sbuf)
+static sbuf_t *prefixed_sbuf(const sbuf_t &sbuf, size_t prefix_size)
+{
+    auto *prefixed = sbuf_t::sbuf_malloc(sbuf.pos0,
+                                         sbuf.bufsize + prefix_size,
+                                         sbuf.pagesize + prefix_size);
+    std::memset(prefixed->malloc_buf(), 0xa5, prefix_size);
+    std::memcpy(static_cast<uint8_t *>(prefixed->malloc_buf()) + prefix_size,
+                sbuf.get_buf(), sbuf.bufsize);
+    return prefixed;
+}
+
+static std::map<std::filesystem::path, std::vector<std::string>>
+feature_positions(const std::filesystem::path &outdir)
+{
+    std::map<std::filesystem::path, std::vector<std::string>> positions;
+    for (const auto &entry : std::filesystem::directory_iterator(outdir)) {
+        if (!entry.is_regular_file() || entry.path().extension() != ".txt") continue;
+        auto &file_positions = positions[entry.path().filename()];
+        for (const auto &line : getLines(entry.path())) {
+            const auto fields = split(line, '\t');
+            if (fields.size() < 2 || fields[0].empty() ||
+                !std::isdigit(static_cast<unsigned char>(fields[0][0]))) continue;
+            file_positions.push_back(fields[0]);
+        }
+        if (file_positions.empty()) positions.erase(entry.path().filename());
+    }
+    return positions;
+}
+
+bool position_shifted_by(const std::string &before, const std::string &after, size_t delta)
+{
+    const auto before_parts = split(before, '-');
+    const auto after_parts = split(after, '-');
+    const auto digits = [](unsigned char ch) { return std::isdigit(ch); };
+    if (before_parts.empty() || before_parts.size() != after_parts.size() ||
+        before_parts[0].empty() || after_parts[0].empty() ||
+        !std::all_of(before_parts[0].begin(), before_parts[0].end(), digits) ||
+        !std::all_of(after_parts[0].begin(), after_parts[0].end(), digits) ||
+        !std::equal(before_parts.begin() + 1, before_parts.end(), after_parts.begin() + 1)) return false;
+    const uint64_t bvalue = std::stoull(before_parts[0]);
+    const uint64_t avalue = std::stoull(after_parts[0]);
+    return bvalue <= std::numeric_limits<uint64_t>::max() - delta && avalue == bvalue + delta;
+}
+
+void verify_shifted_feature_positions(const std::filesystem::path &baseline,
+                                      const std::filesystem::path &shifted,
+                                      size_t delta)
+{
+    const auto expected = feature_positions(baseline);
+    auto actual = feature_positions(shifted);
+    REQUIRE(actual.size() == expected.size());
+    for (const auto &[filename, positions] : expected) {
+        auto found_file = actual.find(filename);
+        REQUIRE(found_file != actual.end());
+        auto &shifted_positions = found_file->second;
+        REQUIRE(shifted_positions.size() == positions.size());
+        for (const auto &position : positions) {
+            const auto found = std::find_if(shifted_positions.begin(), shifted_positions.end(),
+                                            [&](const auto &shifted_position) {
+                                                return position_shifted_by(position, shifted_position, delta);
+                                            });
+            REQUIRE(found != shifted_positions.end());
+            shifted_positions.erase(found);
+        }
+    }
+}
+
+static std::filesystem::path run_scanners(const std::vector<scanner_t *> & scanners, sbuf_t *sbuf)
 {
     debug = getenv_debug("DEBUG");
 
@@ -266,6 +349,7 @@ std::filesystem::path test_scanners(const std::vector<scanner_t *> & scanners, s
     frs_flags.pedantic = true;          // for testing
     scanner_config sc;
     sc.outdir           = NamedTemporaryDirectory();
+    sc.deduplicate_mode = scanner_config::deduplicate_mode_t::LEGACY;
     sc.enable_all_scanners();
 
     scanner_set ss(sc, frs_flags, nullptr);
@@ -296,6 +380,17 @@ std::filesystem::path test_scanners(const std::vector<scanner_t *> & scanners, s
     return sc.outdir;
 }
 
+std::filesystem::path test_scanners(const std::vector<scanner_t *> &scanners, sbuf_t *sbuf)
+{
+    std::array<sbuf_t *, SCANNER_TEST_OFFSETS.size()> inputs {
+        sbuf, prefixed_sbuf(*sbuf, SCANNER_TEST_OFFSETS[1])
+    };
+    std::array<std::filesystem::path, SCANNER_TEST_OFFSETS.size()> outputs;
+    for (size_t i = 0; i < inputs.size(); i++) outputs[i] = run_scanners(scanners, inputs[i]);
+    verify_shifted_feature_positions(outputs[0], outputs[1], SCANNER_TEST_OFFSETS[1]);
+    return outputs[0];
+}
+
 std::filesystem::path test_scanner(scanner_t scanner, sbuf_t *sbuf)
 {
     // I couldn't figure out how to pass a vector of scanner_t objects...
@@ -303,6 +398,11 @@ std::filesystem::path test_scanner(scanner_t scanner, sbuf_t *sbuf)
     return test_scanners(scanners, sbuf);
 }
 
+TEST_CASE("forensic paths shift only at the top level", "[support]")
+{
+    CHECK(position_shifted_by("0-GZIP-0", "65-GZIP-0", 65));
+    CHECK_FALSE(position_shifted_by("0-GZIP-0", "0-GZIP-65", 65));
+}
 
 TEST_CASE("base64_forensic", "[support]") {
     sbuf_t::debug_range_exception = true;
@@ -1196,4 +1296,10 @@ TEST_CASE("zip_carve_filename_limit", "[scanners]") {
     REQUIRE(carved.size() == 64);
     REQUIRE(carved.front() == '_');
     REQUIRE(zip_carve_filename("dir\\file") == "_dir_file");
+}
+
+TEST_CASE("zip_depth_counts_only_zip_recursion", "[scanners]") {
+    REQUIRE(zip_depth(pos0_t("0")) == 0);
+    REQUIRE(zip_depth(pos0_t("0-ZIP-0")) == 1);
+    REQUIRE(zip_depth(pos0_t("0-ZIP-0-GZIP-0-ZIP-0")) == 2);
 }
