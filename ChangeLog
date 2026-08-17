@@ -1176,7 +1176,7 @@
 
 2011-08-14  Simson Garfinkel  <simsong@t.nitroba.org>
 
-	* src/bulk_extractor.cpp (usage): To remove the OpenSSL dependency, the wordlist is now deduplciated with a red/black tree, and not with a bloom filter. This may require the use of a 64-bit computer in some cases.
+	* src/bulk_extractor.cpp (usage): To remove the OpenSSL dependency, the wordlist is now deduplicated with a red/black tree, and not with a bloom filter. This may require the use of a 64-bit computer in some cases.
 
 2011-07-31  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
 

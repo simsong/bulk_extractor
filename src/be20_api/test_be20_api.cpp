@@ -1425,6 +1425,7 @@ TEST_CASE("recursive deduplication follows the configured mode", "[scanner]") {
 
 TEST_CASE("disabled recursive deduplication does not track inputs", "[scanner]") {
     scanner_config sc;
+    sc.deduplicate_mode = scanner_config::deduplicate_mode_t::NONE;
     sc.outdir = get_tempdir();
     feature_recorder_set::flags_t flags;
     flags.no_alert = true;

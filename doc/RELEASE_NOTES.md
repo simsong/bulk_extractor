@@ -230,10 +230,10 @@ through the project's normal pull-request and CI process.
 
 ### Build, configuration, and testing
 
-- Recursive duplicate processing is now controlled by `--deduplciate-mode`.
-  Mode 0 (the default) preserves all recursive paths and carved objects; mode 1
-  deduplicates ZIP recursion; mode 2 preserves the legacy recursive and carved-object
-  deduplication behavior. ZIP recursion now defaults to four nested ZIP levels and
+- Recursive duplicate processing is now controlled by `--dedupe-mode`.
+  Mode 0 preserves all recursive paths and carved objects; mode 1 deduplicates
+  ZIP recursion; mode 2 (the default) preserves the legacy recursive and
+  carved-object deduplication behavior. ZIP recursion now defaults to four nested ZIP levels and
   is configurable with `-S max_zip_depth=N`.
 - Release source archives now define unavailable Git metadata as `unknown`, so
   their `make check` target compiles and runs outside a Git checkout
@@ -366,6 +366,12 @@ through the project's normal pull-request and CI process.
   tests binary RPMs and SRPMs in pinned Fedora and openSUSE environments for
   GitHub download testing; distribution archives continue to build submitted
   source packages themselves ([#623](https://github.com/simsong/bulk_extractor/issues/623)).
+
+### Acknowledgements
+
+Thank you to Matthew Haubach ([@the_pgh_cid](https://github.com/the_pgh_cid))
+for exhaustive testing of the 2.2 betas and for uncovering the long-standing
+dedupe and reproducibility issues fixed in this release.
 
 ### Known limitations and release work
 

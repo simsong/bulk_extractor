@@ -209,7 +209,7 @@ TEST_CASE("report DFXML validates against the bundled schema", "[end-to-end]")
     REQUIRE(std::system(command.c_str()) == 0);
 }
 
-TEST_CASE("deduplication is opt-in and reports duplicate paths", "[end-to-end]")
+TEST_CASE("dedupe mode defaults to legacy behavior and reports duplicate paths", "[end-to-end]")
 {
     const auto root = NamedTemporaryDirectory();
     const auto input = root / "duplicate-gzip.raw";
@@ -222,26 +222,34 @@ TEST_CASE("deduplication is opt-in and reports duplicate paths", "[end-to-end]")
     input_file.write(gzip.data(), gzip.size());
     input_file.close();
 
-    const auto run = [&](const std::filesystem::path &outdir, bool legacy_deduplication) {
-        const std::string input_string = input.string();
-        const std::string outdir_string = outdir.string();
-        const char *default_argv[] = {
-            "bulk_extractor", "-0q", "-J", "-x", "all", "-e", "email", "-e", "gzip",
-            "-o", outdir_string.c_str(), input_string.c_str(), nullptr
-        };
-        const char *legacy_deduplication_argv[] = {
-            "bulk_extractor", "-0q", "-J", "--deduplciate-mode", "2", "-x", "all",
-            "-e", "email", "-e", "gzip", "-o", outdir_string.c_str(),
-            input_string.c_str(), nullptr
-        };
+    const auto run = [&](const std::filesystem::path &outdir, const char **argv) {
         std::stringstream output;
-        REQUIRE(run_be(output, legacy_deduplication ? legacy_deduplication_argv : default_argv) == 0);
+        REQUIRE(run_be(output, argv) == 0);
     };
-
+    const std::string input_string = input.string();
+    const auto mode0_outdir = root / "mode-0";
     const auto default_outdir = root / "default";
-    const auto deduplicate_outdir = root / "legacy-deduplication";
-    run(default_outdir, false);
-    run(deduplicate_outdir, true);
+    const auto mode2_outdir = root / "mode-2";
+    const std::string mode0_outdir_string = mode0_outdir.string();
+    const std::string default_outdir_string = default_outdir.string();
+    const std::string mode2_outdir_string = mode2_outdir.string();
+    const char *mode0_argv[] = {
+        "bulk_extractor", "-0q", "-J", "--dedupe-mode", "0", "-x", "all",
+        "-e", "email", "-e", "gzip", "-o", mode0_outdir_string.c_str(),
+        input_string.c_str(), nullptr
+    };
+    const char *default_argv[] = {
+        "bulk_extractor", "-0q", "-J", "-x", "all", "-e", "email", "-e", "gzip",
+        "-o", default_outdir_string.c_str(), input_string.c_str(), nullptr
+    };
+    const char *mode2_argv[] = {
+        "bulk_extractor", "-0q", "-J", "--dedupe-mode", "2", "-x", "all",
+        "-e", "email", "-e", "gzip", "-o", mode2_outdir_string.c_str(),
+        input_string.c_str(), nullptr
+    };
+    run(mode0_outdir, mode0_argv);
+    run(default_outdir, default_argv);
+    run(mode2_outdir, mode2_argv);
 
     const auto email_count = [](const std::filesystem::path &outdir) {
         const auto lines = getLines(outdir / "email.txt");
@@ -249,13 +257,15 @@ TEST_CASE("deduplication is opt-in and reports duplicate paths", "[end-to-end]")
             return line.find("\thello@world.com\t") != std::string::npos;
         });
     };
-    REQUIRE(email_count(default_outdir) == 2);
-    REQUIRE(email_count(deduplicate_outdir) == 1);
+    REQUIRE(email_count(mode0_outdir) == 2);
+    REQUIRE(email_count(default_outdir) == 1);
+    REQUIRE(email_count(mode2_outdir) == 1);
+    REQUIRE(getLines(default_outdir / "email.txt") == getLines(mode2_outdir / "email.txt"));
 
     const sbuf_t decoded("hello@world.com\n");
     const std::string duplicate = "0-GZIP-0\t" + std::to_string(gzip.size())
         + "-GZIP-0\t" + decoded.hash();
-    for (const auto &outdir : {default_outdir, deduplicate_outdir}) {
+    for (const auto &outdir : {mode0_outdir, default_outdir, mode2_outdir}) {
         const auto lines = getLines(outdir / "duplicates.txt");
         REQUIRE(std::find(lines.begin(), lines.end(), duplicate) != lines.end());
     }
