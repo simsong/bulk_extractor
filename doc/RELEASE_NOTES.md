@@ -89,12 +89,12 @@ through the project's normal pull-request and CI process.
 
 ### Reliability and correctness
 
-- Buffer deduplication is now disabled by default so concurrent runs
-  preserve every forensic path for equal content. `--deduplicate` restores the
-  previous space-saving behavior, whose first-seen path can depend on worker
-  scheduling. Every scan creates `duplicates.txt`; its deterministic rows list
-  the canonical first path, each additional path, and the SHA-1 content hash
-  ([#682](https://github.com/simsong/bulk_extractor/issues/682)).
+- Duplicate processing is controlled by `--dedupe-mode`; mode 2 is the default
+  and retains legacy recursive and carved-object deduplication. Use
+  `--dedupe-mode=0` to preserve every forensic path and carved object for
+  reproducible output. Every scan creates `duplicates.txt`; its deterministic
+  rows list the canonical first path, each additional path, and the SHA-1
+  content hash ([#682](https://github.com/simsong/bulk_extractor/issues/682)).
 - Restart records the start of each page so a resumed run deliberately skips
   pages that were in progress at the crash, avoiding repeated data-dependent
   crashes; the behavior is covered by a controlled-crash regression test
@@ -230,6 +230,11 @@ through the project's normal pull-request and CI process.
   ZIP recursion; mode 2 (the default) preserves the legacy recursive and
   carved-object deduplication behavior. ZIP recursion now defaults to four nested ZIP levels and
   is configurable with `-S max_zip_depth=N`.
+- During the beta cycle, the internal `deduplicate_mode` name and the temporary
+  `--deduplciate-mode` CLI spelling were replaced with the final
+  `dedupe_mode` and `--dedupe-mode` names. Related duplicate-processing spelling
+  inconsistencies were corrected. The misspelled CLI option appeared only in
+  beta releases and is not retained as a compatibility alias.
 - Release source archives now define unavailable Git metadata as `unknown`, so
   their `make check` target compiles and runs outside a Git checkout
   ([#681](https://github.com/simsong/bulk_extractor/issues/681)).

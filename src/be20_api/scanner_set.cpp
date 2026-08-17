@@ -1015,7 +1015,7 @@ void scanner_set::process_sbuf(const sbuf_t* sbufp)
 
     /* Always record duplicate paths. Only mark or bypass duplicate content when requested. */
     const bool seen_before = previously_processed_count(sbuf) > 0;
-    sbufp->seen_before = sc.deduplicate_mode == scanner_config::deduplicate_mode_t::LEGACY
+    sbufp->seen_before = sc.dedupe_mode == scanner_config::dedupe_mode_t::LEGACY
                          && seen_before; // abstraction violation
     if (seen_before) {
         dup_bytes_encountered += sbuf.bufsize;
