@@ -1,0 +1,11 @@
+{
+  "format": "be-wallet-test-v1",
+  "wallet_id": "multi-encrypted",
+  "currency_scope": "multi",
+  "currencies": ["BTC", "EVM"],
+  "container_encryption": "encrypted",
+  "cipher": "AES-256-CBC",
+  "kdf": "PBKDF2",
+  "password_for_test_only": "password",
+  "ciphertext_base64": "U2FsdGVkX1/vgxX9OM/S7d4/NHaSGbF4N43Lw7KI95Ff2jmpLDlsH4+Jxfz4aopmrezNJDghrX9+EgcNsOhYLdCtqCnPlsTWGAUN3vWpGLAQQVE3PeXj70mBqoQ/pQ4mIeDAA/JNmg6j6JAdUcNQO0g1N0wq9XnwbwRwhwFbpxrrP6oE6vxYatF+kDC87jmcq2+YlaoALpL/5bZS6iAAeYl/POtLdkL3pH2tKyBIYcdlaO2kR17+xxE6MHvF6UkESeZ5kXtKHgmKGkegyX3UB5dtBvD6CV+hCYXgPEjBtzGQ/B7dECkACDENXmE4tZ+3HcLq+FYPJfawmIljZU8r2vejS3Opkbe0KT2QjOomU2WWti7AgV937EZINH0OY2bk0XxTOnQ3on3qlLWdq9TfWm5fMO3AXhG41OSgGuV+FfJxRRlEot5glgxGmQ0djvotZdjir+XCrjjHlZ9VECg/8Q=="
+}
