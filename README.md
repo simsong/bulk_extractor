@@ -170,7 +170,7 @@ rules near its final sectors. See `doc/mingw_notes.md` for operational limits.
 BULK_EXTRACTOR RELEASE NOTES
 ============================
 
-## Release 2.2.0 (July 19, 2026)
+## Release 2.2.0 (August 17, 2026)
 
 Integrated the be20 API and its source dependencies into the bulk_extractor
 source tree, eliminating recursive submodule setup. The unified build now

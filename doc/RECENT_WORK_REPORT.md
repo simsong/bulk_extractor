@@ -31,7 +31,7 @@ Nineteen PRs merged during the period. The table groups related deliveries; link
 
 ## 3. Technical debt: erased versus remaining
 
-**Erased or materially reduced.** The submodule/worktree failure mode; stale source-discovery build logic; duplicated/obsolete CI paths; unsafe `sbuf_t` boundary/ownership behavior; short-read tail exposure; unsafe E01/split-image selection; packet and fallback-PCAP bounds defects; the phase-one notifier shutdown failure; JPEG-disable and explicit-Outlook selection regressions; feature-recorder banner/histogram failures; and Exiv2-disabled build failure.
+**Resolved or materially reduced.** The submodule/worktree failure mode; stale source-discovery build logic; duplicated/obsolete CI paths; unsafe `sbuf_t` boundary/ownership behavior; short-read tail exposure; unsafe E01/split-image selection; packet and fallback-PCAP bounds defects; the phase-one notifier shutdown failure; JPEG-disable and explicit-Outlook selection regressions; feature-recorder banner/histogram failures; and Exiv2-disabled build failure.
 
 **Still open and material.** Parent tracker [#497](https://github.com/simsong/bulk_extractor/issues/497) remains open. The immediate choices are: complete or deliberately remove the runtime plug-in interface ([#505](https://github.com/simsong/bulk_extractor/issues/505)); port or retire source-broken Lightgrep ([#506](https://github.com/simsong/bulk_extractor/issues/506)); investigate zero-E01-chunk skipping without compromising forensic correctness ([#500](https://github.com/simsong/bulk_extractor/issues/500)); and finish scanner API documentation ([#522](https://github.com/simsong/bulk_extractor/issues/522)).
 

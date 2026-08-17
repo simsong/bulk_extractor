@@ -17,7 +17,13 @@
  * \image latex BEViewer_blank.eps "The \a BEViewer UI when \a BEViewer is first opened." width=10cm
  * \image html BEViewer_blank.png "The \a BEViewer UI when \a BEViewer is first opened."
 
-\a bulk_extractor is distinguished from other forensic tools by its speed and thoroughness. Because it ignores file system structure, \a bulk_extractor can process different parts of the disk in parallel. In practice, the program splits the disk up into 16MiByte pages and processes one page on each available core. This means that 24-core machines process a disk roughly 24 times faster than a 1-core machine. bulk_extractor is also thorough. That’s because bulk_extractor automatically detects, decompresses, and recursively re-processes compressed data that is compressed with a variety of algorithms. Our testing has shown that there is a significant amount of compressed data in the unallocated regions of file systems that is missed by most forensic tools that are commonly in use today. Another advantage of ignoring file systems is that bulk_extractor can be used to process any digital media. We have used the program to process hard drives, SSDs, optical media, camera cards, cell phones, network packet dumps, and other kinds of digital information. 
+Because it does not depend on file-system parsing, \a bulk_extractor can process
+independent regions of an input in parallel. It divides input into 16 MiB pages
+and scans them with the enabled scanners. The program recognizes several
+compressed formats, decompresses matching data, and recursively processes the
+resulting content. It can process raw data from hard drives, SSDs, optical
+media, camera cards, cell phones, and network packet dumps. Performance depends
+on the input, storage, enabled scanners, and available hardware.
 
 \section architecture Architecture Overview
 \a bulk_extractor consists of several parts:
@@ -56,4 +62,3 @@ TBD
  * \copydoc threadpool.h
 TBD
  */
-

@@ -7,7 +7,7 @@ crash diagnosis
 
 Diagnosing and Overcoming bulk_extractor crashes
 
-All forensic programs occasionally crash on some input files, and bulk_extractor is no different. Given some input files, bulk_extractor will crash. These crashes are usually the result of input data that is corrupted or damaged in some way. Unfortunately we can’t go back to the bad guys and ask them to give us clean data, so forensic software needs to be tolerant of any kind of input. Although it is possible to write such software, it can be exceedingly difficult to cover every possible data corruption case.
+All forensic programs occasionally crash on some input files, and bulk_extractor is no different. Given some input files, bulk_extractor will crash. These crashes are usually the result of input data that is corrupted or damaged in some way. The original source data may be unavailable or impossible to reproduce, so forensic software needs to tolerate a wide range of input. Although it is possible to write such software, it can be exceedingly difficult to cover every possible data corruption case.
 
 The good news is that bulk_extractor has a variety of command-line switches that you can use to get past most crashes.
 
