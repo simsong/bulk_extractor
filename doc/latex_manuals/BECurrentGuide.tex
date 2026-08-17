@@ -300,11 +300,39 @@ scanner can decode a validated region and return the derived buffer to the
 framework for another pass. This permits, for example, the email scanner to
 find an address in text extracted from a PDF or decompressed from a GZIP
 stream. Depth limits, buffer characteristics, and scanner flags prevent or
-limit inappropriate recursion. By default, equal recursive buffers are all
-scanned so that their distinct forensic paths are preserved. The optional
-\code{--deduplicate} switch suppresses repeated buffer content to reduce work
-and output size, but concurrent runs may retain different paths for that equal
-content.
+limit inappropriate recursion.
+
+\subsection{Duplicate-processing modes}
+
+The global \code{--dedupe-mode=N} setting controls how equal content reached
+through different forensic paths is handled. It is distinct from each
+recorder's carve mode: a carve mode decides which candidates may be carved,
+whereas a dedupe mode controls repeated recursive work and duplicate carved
+objects.
+
+\begin{description}
+\item[Mode 0] Process every recursive path and write every accepted
+carved copy. This is the reproducible mode: paths and output do not depend on
+worker count. Its cost can be high on a shallow, wide archive containing many
+equal members, because all of those paths are expanded and recorded.
+\item[Mode 1] Skip repeated ZIP content during recursive processing, but do
+not use the feature-recorder carve cache. This reduces repeated decompression
+while retaining accepted carved copies. Concurrent workers can nevertheless
+choose different surviving paths for equal nested content, so mode 1 is not a
+general reproducibility guarantee.
+\item[Mode 2 (legacy, default)] Skip repeated recursive content and use the
+feature-recorder cache; later duplicate carvings are recorded as
+\code{<CACHED>}. This produces the smallest duplicate-rich output and matches
+the legacy behavior, at the cost of scheduling-dependent attribution and
+omitted duplicate carved files.
+\end{description}
+
+The modes trade redundant work and storage against path reproducibility; they
+do not deliberately discard a distinct recovered content hash. Use mode 0 when
+stable forensic paths are paramount. Use mode 1 or 2 when processing an
+untrusted or duplicate-heavy archive requires less repeated work, while
+recognizing that deduplication may make equal-content attribution depend on
+which worker arrives first.
 
 Every scan creates \code{duplicates.txt}. Its data rows have the form
 \code{path1<TAB>path2<TAB>hash}, where \code{path1} is the lowest forensic
@@ -506,12 +534,25 @@ bulk_extractor -S jpeg_carve_mode=2 -o output image.raw
 
 Mode 0 disables carving, mode 1 carves objects reached through an encoded or
 derived path, and mode 2 carves every object accepted by that recorder, subject
-to validation and size limits. The global \code{--deduplciate-mode} controls
+to validation and size limits. The global \code{--dedupe-mode} controls
 duplicate-object handling; modes 0 and 1 preserve every accepted object, while
 mode 2 retains the legacy cache. JPEG and RAR recorders default
 to mode 1; \code{zip\_carved} and \code{sqlite\_carved} default to mode 2.
 There is no global carve-mode switch. Consult \code{doc/carving.md} and
 \code{-H} for current recorder names, defaults, and size settings.
+
+In dedupe modes 0 and 1, carve directories are derived deterministically from
+the object hash rather than from processing order. This makes the output tree
+reproducible, but scatters files across recorder buckets; do not rely on a glob
+such as \code{zip\_carved/000/*} to select the first carved files. Mode 2 keeps
+the legacy sequential directory layout.
+
+ZIP recursion is separately limited to four nested ZIP levels by default;
+\code{-S max\_zip\_depth=N} changes that limit. It bounds nesting depth, not
+member count, decompressed bytes, or fanout, so it is not a complete archive
+resource budget. Components skipped at the limit are recorded in
+\code{zip\_carved.txt} with the \code{max-zip-depth} disposition. Review those
+records before concluding that a deep archive was fully examined.
 
 Carving does not reconstruct a file system. It writes byte sequences accepted
 by a scanner's validator. Treat carved extensions and filenames as analytical
@@ -856,7 +897,7 @@ the installed \code{bulk\_extractor(1)} manual are authoritative.
 \code{-G BYTES} & Set the primary page size. \\
 \code{-g BYTES} & Set the page margin. \\
 \code{-M N} & Set maximum recursive depth. \\
-\code{--deduplicate} & Bypass buffers whose content was already processed; disabled by default. \\
+\code{--dedupe-mode N} & Set duplicate processing: 0 reproducible, 1 ZIP-recursion deduplication, 2 legacy recursive and carved-object deduplication (default). \\
 \code{-s FRACTION[:PASSES]} & Randomly sample the input. \\
 \code{--max\_minute\_wait N} & Bound processing and shutdown wait time. \\
 \code{--max\_bad\_alloc\_errors N} & Set tolerated allocation failures. \\
