@@ -26,6 +26,8 @@ RUNS_KEY = "workflow_runs"
 ID_KEY = "id"
 STATUS_KEY = "status"
 CONCLUSION_KEY = "conclusion"
+POLL_INTERVAL_SECONDS = 15
+PROGRESS_INTERVAL_SECONDS = 60
 
 
 @dataclass(frozen=True)
@@ -33,6 +35,10 @@ class ReleaseIdentity:
     version: str
     tag: str
     commit: str
+
+
+def progress(message: str) -> None:
+    print(f"[release-assembler] {message}", flush=True)
 
 
 def command(*args: str, capture_output: bool = False) -> subprocess.CompletedProcess[str]:
@@ -65,7 +71,10 @@ def release_identity(source_dir: Path, tag: str | None, require_tag: bool) -> Re
 
 def workflow_run(repo: str, workflow: str, commit: str, timeout: int) -> int:
     deadline = time.monotonic() + timeout
+    next_progress = 0.0
+    previous_state: tuple[str | None, str | None] | None = None
     endpoint = f"repos/{repo}/actions/workflows/{workflow}/runs?event=push&head_sha={commit}&per_page=100"
+    progress(f"waiting up to {timeout}s for {workflow} at {commit}")
     while time.monotonic() < deadline:
         response = command("gh", "api", endpoint, capture_output=True)
         payload: dict[str, Any] = json.loads(response.stdout)
@@ -74,21 +83,33 @@ def workflow_run(repo: str, workflow: str, commit: str, timeout: int) -> int:
             run = runs[0]
             status = run.get(STATUS_KEY)
             conclusion = run.get(CONCLUSION_KEY)
+            state = (status, conclusion)
+            if state != previous_state or time.monotonic() >= next_progress:
+                progress(f"{workflow} status={status} conclusion={conclusion}")
+                previous_state = state
+                next_progress = time.monotonic() + PROGRESS_INTERVAL_SECONDS
             if status == "completed":
                 if conclusion == "success":
-                    return int(run[ID_KEY])
+                    run_id = int(run[ID_KEY])
+                    progress(f"{workflow} completed successfully (run {run_id})")
+                    return run_id
                 raise RuntimeError(f"{workflow} failed for {commit}: {conclusion}")
-        time.sleep(15)
+        elif time.monotonic() >= next_progress:
+            progress(f"{workflow} has no matching push workflow run yet")
+            next_progress = time.monotonic() + PROGRESS_INTERVAL_SECONDS
+        time.sleep(POLL_INTERVAL_SECONDS)
     raise TimeoutError(f"timed out waiting for {workflow} at {commit}")
 
 
 def download_artifact(repo: str, run_id: int, artifact: str, destination: Path) -> Path:
     destination.mkdir(parents=True, exist_ok=True)
+    progress(f"downloading artifact {artifact} from run {run_id}")
     command("gh", "run", "download", str(run_id), "--repo", repo, "--name", artifact, "--dir", str(destination))
     matches = list(destination.rglob("*"))
     files = [path for path in matches if path.is_file()]
     if len(files) != 1:
         raise RuntimeError(f"expected one file in downloaded {artifact} artifact, found {len(files)}")
+    progress(f"downloaded {artifact}: {files[0].name}")
     return files[0]
 
 
@@ -131,6 +152,7 @@ def assemble(identity: ReleaseIdentity, source_archive: Path, windows_executable
     shutil.copy2(windows_executable, staged_windows)
     checksums = output_dir / "SHA256SUMS"
     checksums.write_text("".join(f"{sha256(path)}  {path.name}\n" for path in (staged_archive, staged_windows)))
+    progress(f"assembled source archive, Windows executable, and SHA256SUMS in {output_dir}")
     return [staged_archive, staged_windows, checksums]
 
 
@@ -166,18 +188,22 @@ def main() -> int:
     if args.source_archive is None and args.repo is None:
         parser.error("--repo is required when artifacts are not supplied locally")
     identity = release_identity(args.source_dir, args.tag, args.publish or args.source_archive is None)
+    progress(f"release identity: tag={identity.tag} version={identity.version} commit={identity.commit}")
     temporary: tempfile.TemporaryDirectory[str] | None = None
     try:
         if args.source_archive is None:
             temporary = tempfile.TemporaryDirectory(prefix="bulk-extractor-release-")
             download_dir = Path(temporary.name)
+            progress(f"using temporary download directory {download_dir}")
             source_run = workflow_run(args.repo, SOURCE_WORKFLOW, identity.commit, args.wait_seconds)
             windows_run = workflow_run(args.repo, WINDOWS_WORKFLOW, identity.commit, args.wait_seconds)
             args.source_archive = download_artifact(args.repo, source_run, f"bulk_extractor-{identity.version}", download_dir / "source")
             args.windows_executable = download_artifact(args.repo, windows_run, WINDOWS_ARTIFACT, download_dir / "windows")
         assets = assemble(identity, args.source_archive, args.windows_executable, args.output_dir)
         if args.publish:
+            progress(f"creating draft release for {identity.tag}")
             publish_draft(args.repo, identity, assets)
+            progress(f"created draft release for {identity.tag}")
         print(f"Release assets assembled in {args.output_dir}")
         return 0
     finally:
