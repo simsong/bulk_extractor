@@ -8,6 +8,7 @@
 #include <string>
 #include <exception>
 #include <filesystem>
+#include <utility>
 
 #include "be20_api/formatter.h"
 
@@ -97,7 +98,7 @@ public:
         /* Now rename the report filename */
         std::filesystem::path report_path_bak = report_path.string() + "." + std::to_string(time(nullptr));
         std::filesystem::rename(report_path, report_path_bak);
-        return {report_path_bak, cfg.seen_page_ids.size()};
+        return {std::move(report_path_bak), cfg.seen_page_ids.size()};
     }
 #else
     restart_summary restart() {
