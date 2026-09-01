@@ -317,7 +317,7 @@ void RarTime::SetAgeText(const char *TimeText)
   }
   SetCurrentTime();
   int64 RawTime=GetRaw();
-  SetRaw(RawTime-INT32TO64(0,Seconds)*10000000);
+  SetRaw(RawTime-static_cast<int64>(Seconds)*10000000);
 }
 #endif
 
