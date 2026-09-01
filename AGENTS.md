@@ -65,3 +65,8 @@ Update [doc/RELEASE_NOTES.md](doc/RELEASE_NOTES.md) in the same pull request
 for every user-visible behavior, build or platform-support, packaging, or
 documentation change. Do not add release-note entries for test-only or purely
 internal refactors.
+
+Every pull request that resolves a Coverity finding must update both
+[doc/RELEASE_NOTES.md](doc/RELEASE_NOTES.md) and [ChangeLog](ChangeLog) in the
+same pull request. Cite each resolved CID and describe the correction, even
+when the change is an internal refactor or performance fix.

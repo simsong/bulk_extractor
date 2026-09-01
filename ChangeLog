@@ -1,5 +1,12 @@
 Entries dated after 2024-04-26 are generated from the public Git history; bracketed commit IDs identify each changeset.
 
+2026-09-01  Codex AI Assistant  <simsong+codex@acm.org>
+
+	* [937b82f8] Kept RAR age subtraction in signed int64 arithmetic
+	  (Coverity CID 655320; PR #689).
+	* [1b5529dd] Moved the archived report path into the restart summary
+	  (Coverity CID 655322; PR #690).
+
 2026-08-17  Simson L. Garfinkel  <simsong@acm.org>
 
 	* [dc87bb61] dedup mode is now --dedupe-mode, with default 2

@@ -130,6 +130,11 @@ through the project's normal pull-request and CI process.
 - Hardened the bundled RAR PPM decoder's dictionary-copy boundary handling,
   preventing a malformed archive from writing past its ring buffer
   (fixes CVE-2026-24857; [#601](https://github.com/simsong/bulk_extractor/issues/601)).
+- Resolved two Coverity findings: RAR age subtraction now remains in signed
+  64-bit arithmetic (CID 655320), and restart moves the archived report path
+  into its result instead of copying it (CID 655322)
+  ([PR #689](https://github.com/simsong/bulk_extractor/pull/689),
+  [PR #690](https://github.com/simsong/bulk_extractor/pull/690)).
 - Email extraction now accepts syntactically valid two-to-63-character TLDs,
   including current TLDs such as `.solutions`, without requiring a stale
   scanner-specific allow-list ([#586](https://github.com/simsong/bulk_extractor/issues/586)).
