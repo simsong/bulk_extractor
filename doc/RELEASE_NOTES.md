@@ -11,6 +11,17 @@ The historical roadmaps were planning documents, not release records. Their
 relevant context is incorporated below; preserved, commit-specific copies are
 linked from the [historical source map](#historical-source-map).
 
+## Unreleased
+
+- Use the shared `@simsong-agent` GitHub account for Codex and Claude Code,
+  retain their separate commit identities and signing keys, and prohibit
+  personal-account fallbacks for agent writes.
+
+- Standardize the agent PR workflow as `pr-to-ready`, retain
+  `codex-to-complete` and `codex-to-ready` aliases, and add shared
+  Codex, Claude, and Copilot implementer/reviewer instructions.
+
+
 ## 2.2.0 (release preparation)
 
 **Status:** The source version is `2.2.0`. Publication remains pending the
